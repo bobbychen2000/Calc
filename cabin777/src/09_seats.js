@@ -321,6 +321,19 @@ function roomSeatCore(B, bed, lod) {
   B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(-0.04, 0.436, -0.44), SEATMAT.buckle);
 }
 
+// charcoal frame round an ash panel (every ash face in the photos sits in a ~3 cm dark frame, c_27312-27315):
+// panel in the plane x = px (thickness t) spanning y0..y1, z0..z1
+function ashFrameX(B, px, t, y0, y1, z0, z1) {
+  const f = 0.028, T = t + 0.008, m = SEATMAT.jShell;
+  for (const z of [z0 + f / 2, z1 - f / 2]) B.add(gRBox(T, y1 - y0, f, 0.006, 1), M4.trs(px, (y0 + y1) / 2, z), m);
+  for (const y of [y0 + f / 2, y1 - f / 2]) B.add(gRBox(T, f, z1 - z0, 0.006, 1), M4.trs(px, y, (z0 + z1) / 2), m);
+}
+// panel in the plane z = pz spanning x0..x1, y0..y1
+function ashFrameZ(B, pz, t, x0, x1, y0, y1) {
+  const f = 0.028, T = t + 0.008, m = SEATMAT.jShell;
+  for (const x of [x0 + f / 2, x1 - f / 2]) B.add(gRBox(f, y1 - y0, T, 0.006, 1), M4.trs(x, (y0 + y1) / 2, pz), m);
+  for (const y of [y0 + f / 2, y1 - f / 2]) B.add(gRBox(x1 - x0, f, T, 0.006, 1), M4.trs((x0 + x1) / 2, y, pz), m);
+}
 // shared bits of the shell: rounded cap rail on a wall top, door leading edge with a finger pull
 function capRail(B, w, d, x, y, z) { B.add(gRBox(w + 0.012, 0.03, d + 0.012, 0.012, 2), M4.trs(x, y + 0.012, z), SEATMAT.jRail); }
 function doorEdge(B, x, z, h) {
@@ -354,6 +367,7 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.45, 0.035, 0.56, 0.01, 1), M4.trs(0.345, top - 0.018, -0.30), ash);
     B.add(gRBox(0.04, wall, 0.56, 0.012, 1), M4.trs(0.565, wall / 2, -0.30), ash);
     B.add(gRBox(0.045, 0.10, 0.56, 0.01, 1), M4.trs(0.565, 0.05, -0.30), SEATMAT.jShell);
+    ashFrameX(B, 0.565, 0.04, 0.10, wall, -0.58, -0.02);
     capRail(B, 0.04, 0.56, 0.565, wall, -0.30);
     B.add(gRBox(0.02, top - 0.02, 0.56, 0.008, 1), M4.trs(0.13, (top - 0.02) / 2, -0.30), shell); // inner face beside O's legs
     B.add(gRBox(0.40, 0.03, 0.56, 0.01, 1), M4.trs(0.345, 0.58, -0.30), SEATMAT.jShellIn);     // footwell ceiling
@@ -362,6 +376,7 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.30, 0.52, 0.17, 0.015, 1), M4.trs(0.28, top + 0.26, -0.12), ash);
     capRail(B, 0.30, 0.17, 0.28, top + 0.52, -0.12);
     B.add(gRBox(0.26, 0.46, 0.006, 0.006, 1), M4.trs(0.28, top + 0.26, -0.207), ash);
+    ashFrameZ(B, -0.205, 0.004, 0.13, 0.43, top, top + 0.52);
     B.add(gBox(0.004, 0.40, 0.004), M4.trs(0.415, top + 0.26, -0.211), SEATMAT.jShellIn);
     B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(0.22, top + 0.30, -0.212), SEATMAT.mirror);
     B.add(gRBox(0.04, 0.02, 0.012, 0.004, 1), M4.trs(0.38, top + 0.36, -0.21), SEATMAT.blueAccent);
@@ -419,6 +434,7 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.34, 0.52, 0.18, 0.015, 1), M4.trs(-0.33, top + 0.26, 0.66), ash);
     capRail(B, 0.34, 0.18, -0.33, top + 0.52, 0.66);
     B.add(gRBox(0.30, 0.46, 0.006, 0.006, 1), M4.trs(-0.33, top + 0.26, 0.752), ash);
+    ashFrameZ(B, 0.75, 0.004, -0.50, -0.16, top, top + 0.52);
     B.add(gBox(0.004, 0.40, 0.004), M4.trs(-0.485, top + 0.26, 0.756), SEATMAT.jShellIn);
     B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(-0.26, top + 0.30, 0.758), SEATMAT.mirror);
     if (!lod) {
@@ -482,6 +498,7 @@ function roomDivider() {
   B.add(gRBox(0.036, 0.40, 1.30, 0.012, 1), M4.trs(0, 0.86, -0.66), SEATMAT.ash);
   B.add(gRBox(0.036, 0.36, 1.26, 0.012, 1), M4.trs(0, 0.84, 0.68), SEATMAT.ash);
   for (const z of [-0.66, 0.68]) B.add(gRBox(0.06, 0.035, 1.26, 0.012, 2), M4.trs(0, 0.675, z), SEATMAT.jRail);
+  for (const z of [-1.30, -0.02, 0.06, 1.30]) B.add(gRBox(0.05, 0.40, 0.03, 0.008, 1), M4.trs(0, 0.86, z), SEATMAT.jShell);
   B.add(gRBox(0.05, 0.03, 2.6, 0.012, 2), M4.trs(0, 1.07, 0.0), SEATMAT.jRail);
   for (const [z, s] of [[-0.9, 1], [0.9, -1], [-0.9, -1], [0.9, 1]]) {
     B.add(gRBox(0.004, 0.14, 0.34, 0.004, 1), M4.trs(s * 0.026, 0.45, z), SEATMAT.jShellIn);     // stowage door
