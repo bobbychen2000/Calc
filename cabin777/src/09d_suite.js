@@ -23,7 +23,9 @@ function suiteUnit(opts = {}) {
   const hx = w / 2, H = 1.30, L = 2.20;
   const shelfW = center ? 0.14 : 0.19;
   const xo = -hx + 0.03;                      // inner face of the outer side
-  const SW = 0.72;                            // w1: seat 34 in incl. side bolsters (thepointsanalyst) -> 0.72 cushion [D]
+  // w1: seat 34 in incl. side bolsters (thepointsanalyst) -> 0.72 cushion [D]; w2: capped by the room between the console
+  // and the armrest so the 1.10 m centre suite (0.63) no longer overlaps its armrest
+  const SW = Math.min(0.72, (hx - 0.16) - (xo + shelfW) - 0.14);
   const seatX = xo + shelfW + 0.04 + SW / 2;  // cushion centre
   const xa = hx - 0.16;                       // inner face of the aisle-side wardrobe wall
   // w1: squared flat-topped taupe cap with small edge radii, ~6 mm overhang, top at H + 0.0625 (omaat_f7 / f5, pb_20; the old
@@ -63,6 +65,9 @@ function suiteUnit(opts = {}) {
   const pX0 = Math.min(scx + 0.488, hx - 0.07), pAng = (center ? 55 : 45) * DEG, pw = (hx - 0.045 - pX0) / Math.cos(pAng);
   const P = M4.trs(pX0, 0, -L + 0.135, -pAng), pt = (x, y, z, ry = 0, rx = 0) => M4.mul(P, M4.trs(x, y, z, ry, rx));
   B.add(gRBox(pw, H - 0.62, 0.03, 0.01, 1), pt(pw / 2, 0.62 + (H - 0.62) / 2, 0), SEATMAT.fWood);
+  // w2: taupe top closing the open triangle between the angled pier and the screen wall (dark notch from above, w2b)
+  const pzE = -L + 0.135 + pw * Math.sin(pAng), pxE = pX0 + pw * Math.cos(pAng);
+  B.add(gExtrude([[pX0, L - 0.12], [pxE + 0.015, L - 0.12], [pxE + 0.015, -pzE - 0.015], [pxE, -pzE - 0.015]], 0.02), M4.trs(0, H + 0.01, 0, 0, -Math.PI / 2), SEATMAT.fCap);
   const mW = Math.min(0.13, pw - 0.05), mX = pw / 2 - 0.005;
   B.add(gRBox(mW, 0.44, 0.012, Math.min(0.05, mW / 2 - 0.002), 3), pt(mX, 0.95, 0.02), SEATMAT.fCap);
   B.add(gRBox(mW - 0.018, 0.422, 0.004, Math.min(0.045, mW / 2 - 0.011), 3), pt(mX, 0.95, 0.027), SEATMAT.fMirror);
@@ -153,18 +158,17 @@ function suiteUnit(opts = {}) {
   B.add(gRBox(0.004, 0.36, 0.26, 0.004, 1), M4.trs(xa - 0.016, 0.96, -0.62), SEATMAT.fWood);           // closed door: wood face (f35)
   if (!lod) B.add(gBox(0.003, 0.03, 0.20), M4.trs(xa - 0.0165, 0.795, -0.62), { c: '#cfcac2', r: 0.6 }); // safety label strip
   if (!lod) {
-    B.add(gRBox(0.02, 0.018, 0.10, 0.006, 1), M4.trs(xa - 0.02, 1.16, -0.25), SEATMAT.frame);                  // coat hook rail
-    B.add(gRBox(0.05, 0.10, 0.20, 0.008, 1), M4.trs(xa - 0.03, 0.66, -0.20), SEATMAT.fInner);                   // lit literature niche
-    B.add(gBox(0.004, 0.06, 0.16), M4.trs(xa - 0.056, 0.67, -0.20), SEATMAT.fWarm);
+    // coat hook rail forward of the niche jamb (w2: it was half buried in the jamb); the literature pocket is the armrest's
+    // (the separate lit niche poked out between armrest and jamb as a white notch, w2b)
+    B.add(gRBox(0.02, 0.018, 0.10, 0.006, 1), M4.trs(xa - 0.01, 1.16, -0.32), SEATMAT.frame);
   }
   // front aisle corner: the aisle box (above) + a thin outer wall holding the parked door, open between it and the
   // pier above the box (f11: taupe side wall left of the pier)
   B.add(gRBox(0.04, H, 0.50, 0.012, 1), M4.trs(hx - 0.02, H / 2, -L + 0.35), SEATMAT.fShell);
-  // w2: the forward aisle corner carries a thick rounded taupe hood cantilevered over the aisle and the pier, with a
-  // down-turned forward end (omaat_f4 both aisles, f47 from inside) [V shape, A size]
+  // w2: the forward aisle corner carries a thick rounded taupe hood cantilevered over the aisle and the pier, one smooth
+  // rounded prow (w2: a separate down-turned lip read as a knob) (omaat_f4 both aisles, f47 from inside) [V shape, A size]
   cap(0.04, 0.50, hx - 0.02, H, -L + 0.35);
-  B.add(gRBox(0.13, 0.08, 0.36, 0.035, 3), M4.trs(hx - 0.045, H + 0.03, -L + 0.23), SEATMAT.fCap);
-  B.add(gRBox(0.13, 0.12, 0.035, 0.015, 2), M4.trs(hx - 0.045, H - 0.01, -L + 0.07), SEATMAT.fCap);
+  B.add(gRBox(0.13, 0.085, 0.40, 0.04, 3), M4.trs(hx - 0.045, H + 0.02, -L + 0.23), SEATMAT.fCap);
   // aisle-facing exterior (w1): two EQUAL 0.50 m sliding leaves parked at either end of a ~0.64 m opening (omaat_f7 /
   // up_empty ~1.3 leaf), each a dark frame round flat vertical slats with dark grooves, pitch ~0.024, ~20 per leaf (pb_20
   // closed, omaat_f49); the fixed wardrobe run aft of the aft leaf is dark wood in a dark frame (pb_20 flanks) + LED line
@@ -203,8 +207,8 @@ function suiteUnit(opts = {}) {
   if (!lod) B.add(gRBox(0.006, 0.16, 0.26, 0.004, 1), M4.mul(S, M4.trs(ax - 0.051, 0.45, -0.40)), SEATMAT.fInner);
   // w1: the seat back stands in a sculpted taupe niche - side jambs ~0.10 and a ~0.10 header on the aft wall - with the two
   // black dome reading lamps in the header corners, facing forward (omaat_f5 / f9 / f1) [V shape, D size]
-  for (const s of [-1, 1]) B.add(gRBox(0.10, H - 0.66, 0.12, 0.025, 2), M4.trs(seatX + s * (SW / 2 + 0.055), 0.66 + (H - 0.66) / 2, -0.16), SEATMAT.fShell);
-  B.add(gRBox(SW + 0.21, 0.10, 0.12, 0.025, 2), M4.trs(seatX, H - 0.05, -0.16), SEATMAT.fShell);
+  for (const s of [-1, 1]) B.add(gRBox(0.10, H - 0.66, 0.12, 0.025, 2), M4.trs(seatX + s * (SW / 2 + 0.05), 0.66 + (H - 0.66) / 2, -0.16), SEATMAT.fShell);
+  B.add(gRBox(SW + 0.20, 0.10, 0.12, 0.025, 2), M4.trs(seatX, H - 0.05, -0.16), SEATMAT.fShell);
   for (const s of [-1, 1]) spot(M4.trs(seatX + s * 0.33, H - 0.05, -0.225, 0, -Math.PI / 2));
   if (bed) {
     B.add(gLoft(cushionSecs(SW, 1.96, 0.06, -0.03, { edge: 0.03, r: 0.035, crown: 0.004 }), 3), M4.trs(seatX - 0.01, 0.44, -1.08), { c: '#f0efea', r: 0.9, l: LAYER.fabric });
@@ -216,8 +220,9 @@ function suiteUnit(opts = {}) {
       const duv = { c: '#e2dfd8', r: 0.95, l: LAYER.fabric };
       B.add(gLoft(cushionSecs(SW + 0.07, 0.20, 0.035, -0.0175, { edge: 0.016, r: 0.03, crown: 0.004 }), 3), M4.trs(seatX - 0.01, 0.545, -0.50, 0, 3 * DEG), duv);
     }
-    B.add(gLoft(cushionSecs(0.5, 0.32, 0.13, -0.065, { edge: 0.05, r: 0.05 }), 3), M4.trs(seatX, 0.52, -0.25), SEATMAT.pillow);
-    B.add(gLoft(cushionSecs(0.44, 0.28, 0.10, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.trs(seatX + 0.05, 0.56, -0.40), SEATMAT.fCushionBlue);
+    // w2: pillows propped up against the aft niche, lavender in front (omaat_f46, up_bed_made) [V]
+    B.add(gLoft(cushionSecs(0.5, 0.32, 0.13, -0.065, { edge: 0.05, r: 0.05 }), 3), M4.trs(seatX, 0.66, -0.29, 0, -60 * DEG), SEATMAT.pillow);
+    B.add(gLoft(cushionSecs(0.44, 0.28, 0.10, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.trs(seatX + 0.04, 0.63, -0.40, 0, -55 * DEG), SEATMAT.fCushionBlue);
   } else {
     B.add(gLoft(cushionSecs(SW, 0.62, 0.075, -0.035, { edge: 0.022, r: 0.02, crown: 0.004 }), lod ? 3 : 4), M4.mul(S, M4.trs(0, 0.375, -0.36, 0, 2 * DEG)), F);
     // w1: taller, nearly upright back - top ~1.14 m, 5 deg (omaat_f5 level view) [D]

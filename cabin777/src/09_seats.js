@@ -97,14 +97,14 @@ const SEATMAT = {
   // exterior, floor LED line and window console
   fShell: { c: '#69655f', r: 0.45, l: LAYER.plastic },
   fFlute: { c: '#5a5347', r: 0.5, l: LAYER.plastic },        // rounded door ribs (omaat_f60)
-  fFluteGap: { c: '#34302a', r: 0.7 },
+  fFluteGap: { c: '#433c34', r: 0.7 },                         // w2: lifted toward the ribs - ~20 slats per leaf alias to moire at grazing angles (w2b); the rib shading keeps the grooves
   // QA r2: veneer under neutral window light #403430 (up_Privacy-Wall crop, SD 10; the console there reads #74706a ~ fConsole)
   fWood: { c: '#3e332d', r: 0.38, l: LAYER.fWood },
   fDoor: { c: '#736c65', r: 0.45, l: LAYER.plastic },
   fInner: { c: '#6a635d', r: 0.5, l: LAYER.plastic },       // QA r3: +15 %, ottoman base / aisle box read #474141 vs omaat_f11 #70635c
   fFabric: { c: '#6c655d', r: 0.92, l: LAYER.fTweed },      // warm grey, no mauve: omaat_f9 #756c66, f10 ottoman #81716a (w1)
   fLeather: { c: '#4f4b49', r: 0.48, l: LAYER.leather },
-  fFlap: { c: '#868a88', r: 0.6, l: LAYER.leather },          // light cool slate, ~15 % lighter than the back: omaat_f9 #92938e vs #7d766e (w1)
+  fFlap: { c: '#7a7e80', r: 0.6, l: LAYER.leather },          // light cool slate, ~15 % lighter than the back: omaat_f9 #92938e vs #7d766e (w1)
   fCap: { c: '#8a8272', r: 0.42, l: LAYER.plastic },
   fConsole: { c: '#7a736c', r: 0.45, l: LAYER.plastic },
   fCushionBlue: { c: '#9488d0', r: 0.85, l: LAYER.fabric },  // lavender, ~1.3x the seat fabric: omaat_f9 #a194e2 (w1)
