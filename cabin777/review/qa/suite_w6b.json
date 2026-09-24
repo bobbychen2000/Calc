@@ -1,0 +1,101 @@
+{
+  "area": "suite",
+  "rater": "B",
+  "score": 7.2,
+  "scale_note": "Scaled by the 43in screen (0.952 m). Colours are 1x1 box-averages (PIL) of matching regions. Studio renders are lit differently from the cabin, so I compared ratios there, not absolute values.",
+  "details": [
+    {"detail": "Shells + caps (window and centre), overall suite massing and height", "score": 7.5, "refs": ["omaat_7", "omaat_32", "omaat_40"]},
+    {"detail": "Aisle doors / fluting (open, default)", "score": 7.0, "refs": ["omaat_7", "omaat_60", "tlfl_14"]},
+    {"detail": "Closed-door variant (v1)", "score": 5.5, "refs": ["omaat_60"]},
+    {"detail": "Screen wall: 43in screen, rim, window wing", "score": 6.5, "refs": ["omaat_11", "omaat_7", "omaat_60"]},
+    {"detail": "Window-suite pier + pill mirror + reading lamp", "score": 8.0, "refs": ["omaat_11 (pier ~0.30, mirror ~0.15 x 0.47, mirror #5c697c vs wood #636772; render #485a69 vs #443d3a)"]},
+    {"detail": "Centre-suite pier + mirror (2D/2G, 1D/1G)", "score": 4.5, "refs": ["omaat_32 (2D mirror ~0.37 tall, full pill; 1D mirror visible)", "q02"]},
+    {"detail": "Centre fin board + lowered divider with wood band", "score": 7.5, "refs": ["omaat_32 fin #3d3228 vs render #2c221e", "omaat_5"]},
+    {"detail": "Raised-divider variant (v3)", "score": 7.0, "refs": ["tlfl_14"]},
+    {"detail": "Console: taupe fascia, dark lower body, tapered wood tray, keypad wedge, handset dock", "score": 8.0, "refs": ["omaat_9 keypad #93846c vs #8a8882", "omaat_57", "omaat_7"]},
+    {"detail": "Stowed table + PULL tab + aisle box with latch", "score": 7.5, "refs": ["omaat_11", "omaat_32 table #3c3a34 vs render #403f41"]},
+    {"detail": "Ottoman (cantilevered cushion, tray, belt)", "score": 8.0, "refs": ["omaat_11 ottoman #766862 vs render #7a7269"]},
+    {"detail": "Seat, slate flap, channel seams, lavender pillow", "score": 7.5, "refs": ["omaat_9 flap/back 1.18 vs render 1.15"]},
+    {"detail": "Niche (jambs, header, dome lamps)", "score": 7.0, "refs": ["omaat_9", "omaat_57"]},
+    {"detail": "Armrest (wood body, taupe pad) + wardrobe inner door", "score": 7.5, "refs": ["omaat_9", "omaat_57"]},
+    {"detail": "Bed mode (pad, duvet, pillows, belt)", "score": 6.5, "refs": ["omaat_57", "omaat_58"]}
+  ],
+  "issues": [
+    {
+      "severity": "high",
+      "issue": "Centre suites: the aisle-side pier is a 0.085 m sliver and its mirror is a 0.035 m slot. In the main aisle view (q02, 2D) it reads as a grey slit beside the screen. The real 2D and 1D piers carry a full pill mirror.",
+      "evidence": "q02 crop: the 2D pier is about 20 px wide and the mirror is a 1-2 px line. omaat_32: the 2D mirror is about 75 x 140 px against a 200 px screen height (about 0.14 x 0.37 m), and 1D shows the same. Code: pX0 = scx+0.488 = 0.456 and hx-0.045 = 0.505, so pw = 0.049/cos55 = 0.085 and mW = min(0.13, pw-0.05) = 0.035.",
+      "fix": "Line 73: pAng = (center ? 72 : 60)*DEG. Then pw = 0.049/cos72 = 0.159 and mW = min(0.13, 0.109) = 0.109 (pier depth 0.151, ends at z = -L+0.286, clear of the aisle box top at 0.64). Also use mW = Math.min(0.13, pw - 0.04) so the mirror keeps a 0.02 wood margin each side."
+    },
+    {
+      "severity": "medium",
+      "issue": "The screen's bezel pokes 0.0175 m into the cap: there is no rim above the screen.",
+      "evidence": "Screen y = 0.98 and bezel half-height 0.2775 give a top of 1.2575, but H = 1.24 and the cap underside is at 1.2425. In q03 the screen's top edge runs straight into the cap. omaat_11 shows a ~0.04 dark rim between the glass top and the cap (25 px / 605 px x 0.952).",
+      "fix": "Lines 52-53: screen y 0.98 -> 0.95 (bezel top 1.2275, glass top 1.2175, rim ~0.023 + cap). Line 65: fy1 = 0.95 + 0.2775 (1.2275). Lines 80-81: mirror y 0.98 -> 0.95. Screen bottom becomes 0.6725, 0.01 above the table top (0.6625), which matches f11."
+    },
+    {
+      "severity": "medium",
+      "issue": "Closed-door variant: it adds two new 0.32 m leaves and keeps the three parked ones, so the aisle face shows five fluted leaves. In the real closed state the two 0.5 m leaves slide together and the pocket flanks show bare dark wood.",
+      "evidence": "v1: five framed fluted panels in a row. omaat_60: two ~0.5 m leaves meeting at centre handles, with dark straight-grain wood flanks (#29210f) either side and no fluting there.",
+      "fix": "Line 195: when doorsShut, drop the separate [zo0,zm],[zm,zo1] leaves. Instead use [[zm-0.50, zm], [zm, zm+0.50], [-0.46, -0.08]] (zm = -1.28), set x = hx+0.012 on those two leaves so they sit proud of the flanks, and add fWood faces gBox(0.006, H-0.24, len) at x = hx+0.003 over the exposed flanks z in [-L+0.10, zm-0.50] and [zm+0.50, -0.46]. Keep the pull positions at zm +/- 0.035."
+    },
+    {
+      "severity": "medium",
+      "issue": "A 0.10 m plain taupe band sits between the top rail of each door leaf and the cap. On the real suite the leaf's top rail tucks directly under the cap.",
+      "evidence": "s6 / s1 / v1: a lighter band (#989187) about 0.10 m tall above every leaf. omaat_7 (2K) and omaat_60: the fluted frames run up to the cap underside with no band.",
+      "fix": "Lines 192-202: move the leaf top from H-0.10 to H-0.015. The rails go at y in [0.14+0.0275, H-0.015-0.0275], the stile / leaf-box height becomes H-0.155, the flute-gap height H-0.215 and the rib height H-0.255, with yc = 0.14 + (H-0.155)/2 = 0.6825."
+    },
+    {
+      "severity": "medium",
+      "issue": "The window-side wing is a 0.038 m strip with no visible rounded corner. The real wing is ~0.13 m dark wood with a large rounded upper-outer corner, and it is a signature part of the screen wall.",
+      "evidence": "q03 / q05: the wing is ~12 px against a 317 px screen (0.036 m). omaat_11: the wing is 85 px against 605 px (0.13 m) with a ~0.08 fillet. omaat_7 / f60 (left) show the same large round corner. The rounding in gRBox(wing-0.012, ..., 0.033, 3) is lost at this width.",
+      "fix": "Line 50: wing = center ? 0 : 0.10. Line 73: window pAng 60 -> 70, so pw = (0.575-0.486)/cos70 = 0.26 and mW stays 0.13. Line 58: build the wing as gExtrude of an outline with an r = 0.08 quarter-circle at the top-outer corner (8 segments), 0.03 thick, x in [xo, xo+wing-0.006], y in [0.68, H]."
+    },
+    {
+      "severity": "medium",
+      "issue": "Bed: the duvet is a narrow (0.42 m), flat, hard-edged slab and the turned-down corner is a paper-thin triangle. It reads as a board lying on the pad. In the real bed the duvet is voluminous, covers most of the width at the foot and drapes over the window edge.",
+      "evidence": "q04: a flat rectangle with sharp edges over half the bed width and a crisp triangle. omaat_57 / 58: the duvet covers ~65 % at the head (diagonal fold) and ~100 % at the foot, with soft lofted edges.",
+      "fix": "Line 235: dw = SW*0.80, dx = seatX - SW*0.08; cushionSecs crown 0.012 -> 0.03, edge 0.035 -> 0.05, r 0.05 -> 0.07. Line 240: extrude thickness 0.012 -> 0.03 and loft it (or add a 0.02 roll gCyl r = 0.02 along the fold hypotenuse). Line 241: drape height 0.06 -> 0.12, centred y 0.45."
+    },
+    {
+      "severity": "low",
+      "issue": "The fin's taupe aft-edge strip shimmers: there are dark dashes along its inboard edge, because the strip is only 1 mm proud of the 0.012 board.",
+      "evidence": "q02 crop around the 2D/2G fin: jagged dark speckle on the edge strip.",
+      "fix": "Lines 67-68: widen the edge strips to 0.018 (centred at -hx+0.009) so they stand 3 mm proud of the board face, or make the board 0.010 thick."
+    },
+    {
+      "severity": "low",
+      "issue": "Raised divider: there is an extra taupe vertical at z = -L+0.17 in addition to the fin's own aft edge at -L+0.44. The real raised divider shows one frame member, between the main wood panel and the forward fin section.",
+      "evidence": "v3 vs tlfl_14 (a single taupe member ~0.35 m aft of the screen wall).",
+      "fix": "Line 113: use z in [-L+0.44, -0.19] instead of [-L+0.17, -0.19]. The main panel then runs from -L+0.44 aft."
+    },
+    {
+      "severity": "low",
+      "issue": "The niche header is thin (0.075) and the header-to-jamb corners are square. The real header is ~0.13 with large inner fillets.",
+      "evidence": "omaat_9: the header is 90 px against a 480 px back (0.72 m), about 0.135, and the jamb/header inner corner radius is ~0.06. s4: a thin square header.",
+      "fix": "Line 225: add two 0.06 x 0.06 fillet blocks (gExtrude quarter-round, fConsole) at the inner corners (x = seatX +/- SW/2, y = H-0.075). If the back top allows it, lower the back by 0.03 (line 253 SEC 0.70 -> 0.67, flap y 0.625/0.727 -> 0.595/0.697) and deepen the header to 0.105."
+    },
+    {
+      "severity": "low",
+      "issue": "The pier reading lamp sits at the pier's outer edge; its disc touches the edge. The real lamp is inset about 0.06 from the top and side.",
+      "evidence": "q03 crop: the lamp's ring is clipped by the pier edge. omaat_11: the lamp is inset from the edges.",
+      "fix": "Line 82: spot(pt(Math.max(0.04, pw - 0.06), H - 0.10, 0.02, 0, Math.PI/2))."
+    },
+    {
+      "severity": "low",
+      "issue": "The fluted leaf field is warm brown. The real field is olive / taupe-grey, much the same hue as the frame.",
+      "evidence": "Ratios: s6 field #6b5f4e vs omaat_60 / omaat_7 #424230 / #423a25 (the real field has a green-grey cast).",
+      "fix": "In SEATMAT.fFlute (09_seats.js, shared: one-line edit), shift the hue toward #6a6656, about 5 % less red, and keep the luminance."
+    },
+    {
+      "severity": "low",
+      "issue": "Out of scope, noted only: the seat plaque (2G) is a large navy box, and the sun patches in bed mode (q04) are very hard-edged.",
+      "evidence": "q02, q04",
+      "fix": "Atlas / lighting owners."
+    }
+  ],
+  "questions": [
+    "The centre suite is 1.10 m wide by the accepted aisle rule, but omaat_32 shows a full mirror pier on 2D. Is steepening the centre pier to ~72 deg acceptable, or should the centre screen shift under the fin? The fin sits 0.03 from the screen edge, so there is ~0.02 to gain.",
+    "For the closed-door variant, should the parked leaves physically slide (sharing the same leaf geometry as the open state), so that the seat-card toggle can animate them later?"
+  ]
+}
