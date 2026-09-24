@@ -1,0 +1,162 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w3",
+ "lens": "geometry/proportion first, then materials/colour, lighting on seats, artefacts",
+ "score": 6.4,
+ "details": [
+  {
+   "detail": "Fabric colour holds. q15 mosaic back #2b3559 (R/B 0.49, G/B 0.60) vs y_47300 seat 2 #2c3a64 (0.45/0.59) and seat 4 #27345a. q16 foreground back #3b476e vs y_47301 #363c60. The belt renders #2f4881 in the cabin vs y_47303 #345995.",
+   "score": 8,
+   "refs": ["ref/ana/y_47300-lang-multi.jpg", "ref/ana/y_47301-lang-multi.jpg", "scratchpad/r4/q15_econFronts.png", "scratchpad/r4/q16_econAisle.png"]
+  },
+  {
+   "detail": "Diamond variant: the contrast fix worked. q15 near-right p10/p50/p90 luminance is 40/67/117 vs y_47302 middle seat 46/73/111. It is still a perfectly regular lattice of equal diamonds with straight edges (h_front, e4), where the photo (y_47306 left seat) shows stepped, chained ikat diamonds. It no longer dominates the cabin views.",
+   "score": 6.5,
+   "refs": ["ref/ana/y_47306-lang-multi.jpg", "scratchpad/raterB3/h_front.png", "scratchpad/s4/e4_head.png"]
+  },
+  {
+   "detail": "Tick and mosaic variants: the scale matches y_47306 at equal px/m (cmp_tick.png). Two faults remain. The ticks on the top of the back go brighter and blurrier at grazing angles (q16/q17 foreground tops read pale and streaky, where the photo tops stay dark navy). The mosaic dashes on the headrest wing end caps swirl in concentric arcs because of UV stretch on the loft caps.",
+   "score": 6.5,
+   "refs": ["scratchpad/raterB3/cmp_tick.png", "scratchpad/raterB3/q16fg.png", "scratchpad/raterB3/q17fg.png"]
+  },
+  {
+   "detail": "Headrest and back top (w2 fix verified): the headrest is now a separate cushion with rounded wings, and the back rises above it. Three proportion faults remain. (a) The back rises about 0.088 m above the cushion (BH 0.78 to 0.868), against 0.024 m in y_47300 seat 3 (22 px at 907 px/m, zoomed) and about 0.05 m in y_47306 right. (b) The top corners are straight 45-degree chamfers, not radii (h_front, h_side): the last two sections jump from w 0.39 to 0.36 to 0.30. y_47300 shows a flat top with r of about 0.045 corners. (c) The headrest is always the mosaic fabric, so on the mosaic-back seat (yFabricC) it disappears into the back (o_front left seat, h_side). In the photos the cushion always uses a different weave from the back and has a visible seam or shadow outline.",
+   "score": 6,
+   "refs": ["ref/ana/y_47300-lang-multi.jpg", "ref/ana/y_47306-lang-multi.jpg", "scratchpad/raterB3/y00z.png", "scratchpad/raterB3/h_front.png", "scratchpad/raterB3/h_side.png", "scratchpad/raterB3/o_front.png"]
+  },
+  {
+   "detail": "Headrest cover (w2 fix partly verified): it now lies on the cushion front, and the leather pebble is gone. New artefact: the top fold is a separate 6 mm plank that meets the plate only at a corner, so a groove with blue fabric showing through runs the full width between plank and plate (h_top_z.png). The plate's lower 0.03 m stands about 0.035 m in front of the cushion's lower rounded edge (o_side). The ANA mark is a bright grey 20x12 mm sticker (#9aa0ae), where the photo shows a barely visible embossed logo. Size: 0.27 wide is on the high side. y_47300 gives 0.23 (0.57 of the back at that level), y_47306 gives 0.64. Keep 0.26-0.27.",
+   "score": 5.5,
+   "refs": ["ref/ana/y_47306-lang-multi.jpg", "scratchpad/raterB3/h_top_z.png", "scratchpad/raterB3/o_side.png"]
+  },
+  {
+   "detail": "Rear shell. The hood is right: 0.372 wide with the 0.316 glass at 0.85 of it, and 0.35 tall along the back, vs sans15 0.33 tall. The skirt fix is verified: no pan fabric shows under the shell in e6, o_back or q17. New finding: the width relationship is inverted. The lower panel RS rows (-0.12 to 0.44) are 0.44-0.446 wide, wider than the hood and even than the 0.43 fabric back, so the lower shell steps OUT below the hood lip (o_back, e5 shoulders). In sans15 and sans25 the tray band directly under the hood lip is only about 0.86-0.89 of the hood width. sans25: hood 338 px, tray band 292 px. sans15 zoom: 716 vs 635. The hood overhangs it, and the blue fabric flank shows beside the tray band down to tray level. Only at pocket level do the tray-arm ears and hubs fill the full width again (sans23).",
+   "score": 6,
+   "refs": ["ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-25-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "scratchpad/raterB3/s15z.png", "scratchpad/raterB3/o_back.png", "scratchpad/s4/e5_screen.png"]
+  },
+  {
+   "detail": "Screen, bezel and handset: the proportions match y_47305 (active 1.77:1, border margins). The D-pad ring and OK key are 8-segment cylinders that read as octagons in e5 and q18.",
+   "score": 7.5,
+   "refs": ["ref/ana/y_47305-lang-multi.jpg", "scratchpad/s4/e5_screen.png"]
+  },
+  {
+   "detail": "Lower seat-back furniture. The AC/USB fix is verified: it now reads as a clean socket at the upper left, as in sans23. Remaining faults: (1) The safety card is a white quad on the white shell and so invisible. Only the blue magazine strip and the purple header strip show, as two coloured stripes floating above the flap (e2, e6, seated). (2) There are no tray arms, hubs or cross rail. The hinge 'bosses' are faint grey discs on the tray face, while sans20/23 show white arms outboard with 0.05 m cylindrical hubs at pocket-top level and a silver rail across under the tray. (3) The net is a flat black slab with no mesh. (4) The coat-hook recess and the pictogram sit on the hood lip slope (BH 0.48), but in sans15 they sit on the tray's top band. The long 'stow and latch' placard sits at the tray's bottom edge, not its top.",
+   "score": 5.5,
+   "refs": ["ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg", "scratchpad/s4/e6_lowback.png", "scratchpad/raterB3/seated.png"]
+  },
+  {
+   "detail": "Armrests (w2 fix verified): the ball on a stick is gone. There is now one grey bracket loft with a pivot ring at 0.46 and a dark centre. It still reads as a square column with a visible break under the arm nose (e7), because the arm loft ends in a flat cap and the bracket starts separately. This is acceptable for now.",
+   "score": 6.5,
+   "refs": ["ref/ana/y_47302-lang-multi.jpg", "scratchpad/s4/e7_arm.png"]
+  },
+  {
+   "detail": "Pillows: the size (0.33 x 0.24, matching y_47300's 0.36 x 0.26) and the colour are fixed. q16 renders #313b67 vs the photo #232a48, a little light. The shape is now the worst element on the seat front. cushionSecs ends in a flat 0.23 x 0.14 cap with its own +y normal and constant UV, so every pillow shows a sharply outlined inner plateau, like a visor or a moulded headrest. The corners facet at segC 3 (e1, e7, aisle, o_front, q16). y_47300 shows a soft, domed cushion with pinched, pointed corners and slightly concave sides.",
+   "score": 4.5,
+   "refs": ["ref/ana/y_47300-lang-multi.jpg", "scratchpad/raterB3/y00z.png", "scratchpad/s4/e1_front.png", "scratchpad/s4/e7_arm.png"]
+  },
+  {
+   "detail": "Under-seat (w2 fix verified): the life-vest saucer (0.17 m) and its red strap now read clearly in o_front and e1, matching y_47302. The legs, spreaders, baggage bar and electronics boxes are plausible.",
+   "score": 7,
+   "refs": ["ref/ana/y_47302-lang-multi.jpg", "scratchpad/raterB3/o_front.png"]
+  },
+  {
+   "detail": "Footrest (w2 fix verified): the hangers now clamp to the rear spreader, and the pedals have ribs and end caps. The hangers are 0.025 m straight sticks. In y_47304 each hanger is a wide (about 0.045-0.05, the same as the pedal depth), smoothly bowed off-white arm whose foot wraps the pedal end.",
+   "score": 6.5,
+   "refs": ["ref/ana/y_47304-lang-multi.jpg", "scratchpad/s4/e8_foot.png"]
+  },
+  {
+   "detail": "Lighting on the seat backs is still dim from the seat. The q18 hood face is #888b91 (L 138) vs y_47305 #bbbfcb (L 190), and the q17 lower shell is #82868f. The studio renders (e5) look right, so this is cabin AO or light. In harsh studio light the shell's plastic grain reads as stucco (e5, e6), where the photos show smooth satin.",
+   "score": 5,
+   "refs": ["ref/ana/y_47305-lang-multi.jpg", "scratchpad/r4/q18_seat35C.png", "scratchpad/s4/e5_screen.png"]
+  },
+  {
+   "detail": "Overall height (unsourced, for the question list): the back top is 1.358 m (o_side, 321 px/m). In y_47300 seat 3 the back top stands about 0.58-0.61 m above the arm's rear top at the back. The model has 0.67 (1.358 - 0.685). Either the back is about 0.06 m too tall or the arm is low. This is not actionable without a source, and it would clash with the screen position (bezel top at BH 0.83).",
+   "score": 6.5,
+   "refs": ["scratchpad/raterB3/y00z.png", "scratchpad/raterB3/o_side.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "The pillow reads as a hard moulded visor with a flat inner plateau and faceted corners.",
+   "problem": "econSeat uses gLoft(cushionSecs(0.33, 0.24, 0.10, -0.05, {edge 0.05, ...}), 3). cushionSecs finishes at a ring inset by 2*edge (0.23 x 0.14) and gLoft closes it with a flat fan cap (normal +y, UV 0,0), so the face is a flat panel with a hard crease around it. segC 3 facets the 0.06 corners.",
+   "evidence": "e1_front, e7_arm, raterB3/aisle and o_front: every pillow has a darker inner rounded rectangle and a bevel ring. y_47300 (raterB3/y00z.png): a soft domed cushion with pinched pointed corners and concave sides.",
+   "fix": "Replace the pillow with a superellipse loft through its thickness, so both faces dome down to a tiny cap: `const PS = []; for (let k = 0; k <= 12; k++) { const t = -1 + 2 * k / 12, s = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(t), 3)), 1 / 3); PS.push(SEC(t * 0.05, Math.max(0.02, 0.33 * s), Math.max(0.015, 0.24 * s), 0, 0.012 + 0.05 * (1 - s))); } B.add(gLoft(PS, 5), M4.mul(BH, M4.trs(0, 0.14, -0.10, 0, -80 * DEG)), SEATMAT.yPillow);`. The small r at mid-thickness keeps the corners pointed (pinched). The r growing toward the faces rounds them. For concave sides, scale the mid sections' w by 0.97 on the straight parts, or accept it. Also darken yPillow a touch, to #404a74.",
+   "files": ["src/09a_econ.js", "src/09_seats.js (SEATMAT.yPillow, one line)"]
+  },
+  {
+   "severity": "medium",
+   "detail": "The lower rear shell is wider than the hood. In the photos the hood overhangs a narrower tray band.",
+   "problem": "RS rows at y -0.12 to 0.44 are 0.44-0.446 wide, and the hood rows (0.53-0.80) are 0.372-0.38. The shell therefore steps outward below the hood lip, and even overhangs the 0.43 fabric back. The tray (0.40 wide) is wider than the hood.",
+   "evidence": "o_back.png and e5_screen.png show the shoulder where the lower panel widens. sans25: hood 338 px, tray band under the lip 292 px (0.86). sans15 (raterB3/s15z.png): 716 vs 635 (0.89), with the navy fabric flank visible beside the band down to tray level. sans23: the full width returns only at pocket level, through the white tray-arm ears and hubs.",
+   "fix": "In RS, narrow the tray band and keep the pocket zone wide: [[-0.12,0.066,0.03,0.44,0.018],[-0.06,0.07,0.03,0.446,0.018],[0.1,0.078,0.03,0.446,0.018],[0.2,0.08,0.032,0.44,0.018],[0.24,0.081,0.034,0.345,0.016],[0.44,0.086,0.04,0.345,0.016],[0.49,0.106,0.06,0.37,0.026], ...hood rows unchanged]. Tray: gRBox(0.325, 0.20, 0.018, 0.01, 1) at on(0.34, 0.009). Add tray arms and hubs: for s of [-1, 1], gRBox(0.022, 0.19, 0.03, 0.008, 1) at on(0.30, 0.004, s*0.19) in SEATMAT.yShell, and gCyl(0.026, 0.026, 0.035, 16) at hz(0.205, 0.012, s*0.19). Also add a silver rail, gCyl(0.006, 0.006, 0.36, 8) rotated to x, at on(0.235, 0.02) in SEATMAT.frame. Check the tray hinge-boss discs and the AC plate (dx -0.17 becomes -0.14) still sit on the narrowed band.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "medium",
+   "detail": "The cover's top fold is a separate plank with a gap showing fabric, and the lower flap floats.",
+   "problem": "The fold is gRBox(0.27, 0.006, 0.03) centred at BH (0, 0.783, -0.083), spanning z -0.098 to -0.068. The plate spans z -0.103 to -0.098 and ends at y 0.780. They touch only along one edge, and the rounded-box radii open a groove. The plate is planar at z -0.1005 down to y 0.555, while the cushion's lower rounded edge at y 0.58 is at z -0.065.",
+   "evidence": "raterB3/h_top_z.png shows a blue fabric line between the fold and the plate across the whole width. o_side shows the dark plate standing off the cushion at its lower edge. y_47306 and y_47301 show one continuous leatherette sheet rolling over the top and hanging softly at the bottom.",
+   "fix": "Build the cover as one loft of thin sections so it bends. Simpler option: make the fold overlap both the plate and the cushion top, with gRBox(0.27, 0.016, 0.046, 0.008, 2) at BH (0, 0.779, -0.080). Split the plate into an upper part, gRBox(0.27, 0.19, 0.005) centred at y 0.685, z -0.1005, and a lower hem, gRBox(0.27, 0.04, 0.005) at y 0.575 rotated +20 deg about x so that its bottom edge tucks back to z ≈ -0.075. Reduce the ANA mark to gQuad(0.014, 0.008) with c '#6a7086'.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "medium",
+   "detail": "The back rises too far above the headrest cushion, and its top corners are chamfered.",
+   "problem": "The cushion top is at BH 0.78 and the back top at 0.868, a 0.088 fabric band. The back loft ends with SEC(0.80, 0.39), SEC(0.845, 0.36), SEC(0.868, 0.30), and the linear loft between them produces 45-degree bevels.",
+   "evidence": "raterB3/h_front.png and h_side.png show an octagonal top. y_47300 seat 3 (raterB3/y00z.png): the back rises 0.024 above the cushion and has a flat top with r of about 0.045 corners. y_47306 right seat shows about 0.05.",
+   "fix": "Raise the headrest cushion and cover by 0.03 (headrest sections 0.61/0.63/0.78/0.80/0.81; cover centres +0.03). This leaves about 0.055 of back above it. The screen and hood are unaffected. Round the top with circular-profile sections: SEC(0.818, 0.39, 0.062, 0.006, 0.026), SEC(0.838, 0.382, 0.062, 0.010, 0.026), SEC(0.853, 0.361, 0.058, 0.014, 0.024), SEC(0.863, 0.334, 0.052, 0.018, 0.02), SEC(0.868, 0.29, 0.044, 0.02, 0.016). Give the headrest its own weave so it separates from the back: pick the headrest fabric as the next variant in the fabs rotation, e.g. pass opts.headFab = fabs[(k*7+n*3+1)%3] and use it for the headrest loft instead of SEATMAT.yHead.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The safety card is invisible, so the pocket top reads as blue and purple decal stripes.",
+   "problem": "The card is gQuad(0.10, 0.045) in #f0f0f0 on the #d9dbde shell. The purple header gQuad(0.10, 0.012) and the magazine gQuad(0.12, 0.045) in #3b5b98 are flat quads 0.016 proud of the rear face, with no thickness or pocket opening.",
+   "evidence": "e2_back, e6_lowback and raterB3/seated show two coloured bars above the flap. sans20/23 show a white card with a purple header, and pictograms protruding from a shadowed pocket mouth.",
+   "fix": "Add a dark pocket-mouth quad, gQuad(0.36, 0.012) in '#3a3c42' at on(0.184, 0.0125). Make the card gRBox(0.11, 0.06, 0.003, 0.002, 1) in '#e6e6ea' at on(0.19, 0.014, 0.07), and keep the header quad at its top. Add three small grey pictogram quads (0.015) along it. Make the magazine gRBox(0.12, 0.05, 0.004) in '#2f5596' at on(0.188, 0.012, -0.08), tilted 4 deg. Move the coat-hook discs and the pictogram placard from 0.48 down onto the tray top band (on(0.41, 0.019, ±0.12)), and the long placard to on(0.255, 0.0185).",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The footrest hangers are thin straight sticks.",
+   "problem": "Each hanger is two gRBox(0.025, ~0.12, 0.03) links.",
+   "evidence": "y_47304: a bowed off-white arm about 0.045-0.05 wide (the same as the pedal depth), whose foot wraps the pedal end. e8_foot: thin 25 mm sticks.",
+   "fix": "Widen both links to 0.045 (x) and 0.028 (z). Replace them with a 4-section loft along a bow: loftAt with SEC y 0.30 → 0.11, and z centres -0.10, -0.075, -0.035, 0.0, so the arm curves forward. Add a wrap block, gRBox(0.05, 0.03, 0.055, 0.01, 1), at the pedal end.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The D-pad ring and OK key are octagons.",
+   "problem": "key() uses gCyl(r, r, h, 8, true) for all keys.",
+   "evidence": "e5_screen and q18: octagonal ring. y_47305: round ring.",
+   "fix": "Use segments r > 0.008 ? 24 : 12 in key().",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The rear shells are dim from the seat (lighting owner), and the plastic grain reads as stucco.",
+   "problem": "The cabin render of the shell is about 27 % darker than the photo. The LAYER.plastic grain on yShell is visible at studio scale.",
+   "evidence": "q18 hood face #888b91 (L 138) vs y_47305 #bbbfcb (L 190). q17 lower shell #82868f. e5/e6: speckled surface.",
+   "fix": "In 12_scene.js / 04_shaders.js (lighting owner): floor the AO term on the econ shell faces (e.g. ao = max(ao, 0.8) for material yShell), or add PSU downlight fill. In 03_tex.js (shared, one line): lower the plastic layer's normal amplitude by about 40 %.",
+   "files": ["src/12_scene.js", "src/04_shaders.js", "src/03_tex.js (shared, one line)"]
+  }
+ ],
+ "verifiedFixes": {
+  "headrest separate cushion + back above": "partly: present, but the rise is 0.088 m vs 0.024-0.05 in the photos, and the top is chamfered",
+  "shell cap / hood": "yes: hood 0.372 x 0.35, glass 0.85 of the width",
+  "cover": "partly: it lies on the cushion and the grain is smooth, but the fold/plate groove is a new artefact",
+  "pocket": "yes: full-width flap + net (still a flat black slab)",
+  "arm bracket": "yes: continuous grey bracket + pivot ring",
+  "pillow": "colour and size yes; shape no (flat cap plateau)",
+  "life-vest pouch": "yes",
+  "footrest clamps": "yes (hangers still thin)",
+  "skirt under shell": "yes: no fabric band under the shell",
+  "AC/USB plate": "yes: visible socket at the upper left",
+  "diamond lattice": "contrast yes (p90 117 vs 111); regularity remains"
+ },
+ "questionsForUser": [
+  "Overall seat-back height is still unsourced. The model back top is 1.358 m. Photo proportions (y_47300) suggest about 0.06 m less above the armrest. Is there a Recaro CL3710 / ANA drawing with the seat height?"
+ ],
+ "extraRefsSearched": "Web search for Recaro CL3710 dimensions (recaro-as.com, aeroexpo, economyclassandbeyond) gave no height figure. No new photos were downloaded; the existing sans_15/20/23/25 and y_47300-47306 were enough."
+}
