@@ -28,7 +28,7 @@ uniform vec3 u_camPos;
 uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_sideLed; uniform vec3 u_winGlow;
-uniform vec3 u_vault; uniform vec3 u_lowTint; uniform float u_bandCut; uniform vec2 u_sideLow; uniform vec3 u_extBounce; uniform vec2 u_aoTune;
+uniform vec3 u_vault; uniform vec3 u_lowTint; uniform float u_bandCut; uniform float u_sideLow; uniform vec3 u_sideWall; uniform vec3 u_extBounce; uniform vec2 u_aoTune; uniform vec3 u_fZone;
 uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
@@ -164,6 +164,12 @@ void main(){
   } else {
     vec3 auv = (v_wpos + N*0.07 - u_aoMin) / u_aoSize;
     ao = texture(u_ao, auv).r;
+    // QA r3: THE Suite interior (z in u_fZone.xy, below the 1.3 m shell tops, away from the sidewall) sees the bright
+    // open ceiling over the shells: AO eased toward 1 by u_fZone.z [V: f_17300, omaat_f2 / f5 open-topped suites;
+    // omaat_f11 ottoman #9f8c85 vs q03 #312f2d]
+    float inF = smoothstep(u_fZone.x, u_fZone.x + 0.3, v_wpos.z) * (1.0 - smoothstep(u_fZone.y - 0.3, u_fZone.y, v_wpos.z))
+              * (1.0 - smoothstep(1.2, 1.5, v_wpos.y)) * (1.0 - smoothstep(2.4, 2.75, abs(v_wpos.x)));
+    ao = mix(ao, 1.0, u_fZone.z * inF);
     // QA r3: up-facing floor (fl) takes the AO 2.5 cm above the carpet as well, so the seat bases / monument toes
     // leave a contact line [V: c_27312 dark line along every monument base]
     float fl = step(0.7, N.y) * (1.0 - smoothstep(0.02, 0.15, v_wpos.y));
@@ -194,8 +200,9 @@ void main(){
     // bounce and wash on top the blue/amber sideLed washed out to #b8c0d5. Those terms are cut inside the band and the
     // lens ramp starts lower so the colour reaches the window tops (glass top ~1.32 m), fading to white at the belt
     // [V: tlfl_IMG_9217 band #5d5eca / #5458dd, belt #867db2; sany_12 #4c5edc; ff_door-gap amber lens #ffa43d]
-    // QA r3: the coloured band runs down past the windows (u_sideLow.x of the lens level at the belt, out by 0.35 m;
-    // u_sideLow.y = the wall's share of the lens colour)
+    // QA r3: the coloured band runs down past the windows (u_sideLow of the lens level at the belt, out by 0.35 m;
+    // u_sideWall = per-channel share of the lens light on the wall: 1 for blue, a less red share for amber, which
+    // otherwise reads blood-orange at wall level while the lens clips to amber [V: bins #945a2a h27 at low light])
     // instead of fading to white 0.3 m under the bins [V: sany_12 #556df7 at the bins, #5362e0 at the window line;
     // tlfl_IMG_9217 belt between the windows #736a88; sans-18 lavender to the floor]. u_bandCut = how much of the
     // ceiling light the band loses; both per mood (the white boarding lens needs little cut, amber stays at the lens)
@@ -213,7 +220,7 @@ void main(){
     // vs c_27312 #394049-#414755, ash ends #848078 vs #bdbaab)
     amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band)
         + u_wash * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW)
-        + u_sideLed * u_sideLow.y * wallProx * facingIn * mix(u_sideLow.x, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
+        + u_sideLed * u_sideWall * wallProx * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                     * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - band)
         + u_winGlow * wl.rgb * reveal * 1.4;

@@ -18,7 +18,7 @@ const MOODS = {
   // down past the windows is the in-service cruise look [V: tlfl_IMG_9217 #5c5dc6, belt #736a88; sany_12 #556df7,
   // window line #5362e0; stwis_img_6082 #1961f9]
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.30, 0.31, 0.33], bandCut: 0.25, k: 1.05, exposure: 1.20 },
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.02, 0.05, 1.5], bandCut: 1.0, sideLow: 0.25, k: 0.95, exposure: 1.0 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.0, 0.03, 1.7], bandCut: 0.8, sideLow: 0.2, k: 0.95, exposure: 1.0 },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
@@ -26,7 +26,7 @@ const MOODS = {
   // ~1.5 before ACES and clipped to lemon #fce04f) [D]; the vault wash is soft warm beige [V: ff_seat-with-door-closed
   // ceiling #d9b77d]; lowTint neutralises the amber below 1.25 m, so seat-level ash stays grey [V: ff_door-gap ash
   // #afafaf / #acb1ba, grey shell #6f7982]
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0, sideWall: 0.4, bandCut: 0.3, vault: [1.1, 0.55, 0.24], lowTint: [0.93, 1.87, 4.7], k: 0.9, exposure: 1.3, strips: true },
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0, sideWall: [0.35, 1.2, 1.5], bandCut: 0.3, vault: [0.62, 0.31, 0.13], lowTint: [1.3, 2.6, 6.5], k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -34,7 +34,7 @@ const MOODS = {
   // QA r3: cove / lens saturated amber (was warm white) [V: stwis_img_6223 cove #dc9340 / #b0671a (h25-32, s0.71-0.85),
   // ucr PSU lamp #9f5e39]; hemi unchanged (image mean already matches ucr 39/35/33)
   sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.070, 0.024, 0.004], sideLed: [0.035, 0.012, 0.002], sideLow: 0, vault: [0.045, 0.030, 0.018], k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0, sideWall: 0.4, bandCut: 0.3, vault: [1.1, 0.5, 0.34], lowTint: [0.93, 1.87, 3.3], k: 0.9, exposure: 1.3 },
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0, sideWall: [0.35, 1.2, 1.2], bandCut: 0.3, vault: [0.62, 0.28, 0.19], lowTint: [1.3, 2.6, 4.5], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -46,7 +46,7 @@ const SKIES = {
   // (8.5) #2a4f86 (15) #1f4274 (25), between F-GSQR_1 and _2 [V photos, D fit].
   // extBounce = the lit deck seen by the exterior's undersides (0.55 x cloudLit) and extSun the exterior's sun scale
   // (the sun side of the cowl saturated at 5.2) [D: from_exterior 1 / 6; alv_ANA77W_NH211_26K cowl #9fabb7-#a9c0ce]
-  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.019, 0.05, 0.095], horizon: [0.20, 0.37, 1.0], skyK: 12, haze: [0.55, 0.66, 0.85], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], extBounce: [0.69, 0.69, 0.69], extSun: 0.6, winGlow: [0.45, 0.52, 0.62], winExp: 3.0, sunVis: 1, night: 0, sheer: 1.0 },
+  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.019, 0.05, 0.095], horizon: [0.20, 0.37, 1.0], skyK: 12, haze: [0.55, 0.66, 0.85], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], extBounce: [0.69, 0.69, 0.69], extSun: 0.6, winGlow: [0.45, 0.52, 0.62], winExp: 4.0, sunVis: 1, night: 0, sheer: 1.0 },
   // QA r3: dim blue-grey deck under a narrow orange horizon band, blue upper sky [V: Air_France_777-300ER_Greenland_
   // Sunrise deck #50595d-#646a67, band #d2a46d, sky #9cabaa; Emirates_77W_wing_view / alv_7282 zenith #527dc2]; dark cool
   // deck bounce and a grazing sun at 0.35 on the exterior, so the wing takes the sky colour (from_exterior 3)
@@ -56,8 +56,8 @@ const SKIES = {
 // QA r3 ambient-occlusion tuning [D: q06 / q15 / q03 / q05 / q14 against c_27312, y_47300, omaat_f11, f_17313,
 // py_37301]: hemi = unoccluded share of the hemisphere fill (was 0.15), bounce = interreflection gain, emitLens /
 // emitCtr = sky value of the air under the outboard bins (sidewall lens band) and under the centre bins, kAttF = voxel
-// attenuation inside THE Suite zone (1.35 elsewhere)
-const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8 };
+// attenuation inside THE Suite zone (1.35 elsewhere), fLift = share of the AO lifted toward 1 inside the suites (shader)
+const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8, fLift: 0.35 };
 // Shade states per window: 0 open, 1 half (manual) / sheer (electric), 2 closed (manual) / blackout (electric)
 const SHADE_STATE = {
   label: (w, lv) => (w.electric ? ['open', 'sheer blind', 'blackout'] : ['open', 'half down', 'closed'])[lv],
@@ -468,7 +468,9 @@ class Scene {
     G.set('u_vault', mood.vault || mood.led);
     G.set('u_lowTint', mood.lowTint || [1, 1, 1]);
     G.set('u_aoTune', [AO_TUNE.hemi, AO_TUNE.bounce]);
-    G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', [mood.sideLow ?? 0.4, mood.sideWall ?? 1]);
+    const fz = this.layout.zones.find((zn) => zn.cls === 'F');
+    G.set('u_fZone', fz ? [fz.z0, fz.z1, AO_TUNE.fLift] : [0, 0, 0]);
+    G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4); G.set('u_sideWall', mood.sideWall || [1, 1, 1]);
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
     const sp = new Float32Array(32), st = new Float32Array(32);
