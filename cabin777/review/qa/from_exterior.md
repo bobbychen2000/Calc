@@ -29,3 +29,8 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
 5. **QA views (low).** Every exterior QA view is on the A side. The right wing carries the ANA registration (JA795A),
    and the right engine's inboard strake faces the K windows. Please consider adding `q23_wingK: __look('26K')` to
    `test/qa.js`. (It is not my file; my scratch renders cover 11K/17K/26K/30K.)
+6. **Exterior sun exposure headroom (medium, added in w3).** At the day sun of 5.2, even a #a6a9ad cowl albedo renders
+   #dee0e1 on the sun side (13K, 11K). ACES saturates, so the split lines, pylon hump and falloff vanish; photos show
+   #9fabb7–#a9c0ce with a clear gradient. The sunset cowl (s_13A) glows cream the same way. **Fix:** scale `u_sunCol`
+   by about 0.6 for the exterior draw (`u_exterior = 1`), or give the exterior its own exposure of about 0.7 × winExp.
+   The wing (#636466) is fine either way, since it renders #b6bcc2.

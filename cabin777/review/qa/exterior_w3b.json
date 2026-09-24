@@ -1,0 +1,103 @@
+{
+ "area": "exterior",
+ "rater": "B (geometry and proportion first), round w3 on commit 8220ed6",
+ "score": 7.1,
+ "details": [
+  {
+   "detail": "Planform, raked tip and cruise bending. Unchanged and still verified seat for seat: 11A inlet 11.6 deg forward of the beam (photo about 11.5); 26K tip 5.0 deg above horizontal (photo about 4.7).",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r5/d_26K.png"]
+  },
+  {
+   "detail": "JA795A registration. Now at 50 % chord with 1.4 m glyphs in #3a3e44 ink. Zoomed d_26K (x 500-720, y 170-230) is almost a one-to-one match to _7345 (x 340-690, y 230-340): a letter-high band of skin ahead of the text, bottoms just ahead of the spoiler line, the J inboard reading upright, and a grey (not black) ink tone. The span range matches the canoes under it, as in _7331.",
+   "score": 8.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "/tmp/r5/d_26K.png", "/tmp/r5/st/o_reg.png"]
+  },
+  {
+   "detail": "Canoe count and positions (s 8.4, 11.1, 14.7, 20.4). The outer tail lands inboard of the aileron notch from 26K.",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "/tmp/r5/d_26K.png"]
+  },
+  {
+   "detail": "Canoe shape. The teardrop sections with no floors removed the notch. The tail now closes to a sharp needle: depth lerp(0.25, ...) and a 0.25*e end cap (k_canoe_side). In _7331/_7329 the tails end in a small rounded nose about 35-40 % of the maximum depth, blunter than the render. The d_26K silhouette is otherwise very close.",
+   "score": 7,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "/tmp/r5/st/k_canoe_side.png", "/tmp/r5/d_26K.png"]
+  },
+  {
+   "detail": "Canoe tone. K side (sun): flank #cbcfd1 against wing #b6bcc2, like _7331 (#d3d6d3 against #c0ccd4). A side (shade): #4e5667 against about #a6acb3, like _7329 (#3b444e against #abb2b9). Sunset sun side (s_26A): still cream, brighter than the wing. This is plausible for low sun on vertical flanks; lighting owns the deck bounce.",
+   "score": 7,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7329.jpg", "/tmp/r5/d_26K.png", "/tmp/r5/d_26A.png"]
+  },
+  {
+   "detail": "Gear stripe, skin seams, panel tone (now ±5 %), static dischargers. All read right from 17A/17K/26K/30K and do not alias.",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7242.jpg", "/tmp/r5/d_17K.png", "/tmp/r5/d_30K.png"]
+  },
+  {
+   "detail": "GE90 cowl tone. The A (shade) side is now good: the baked falloff gives #a2b3c6 to #9babbf (11A/13A), against #818c9e-#8695a4 on ANA 11A (_136) and #a9c0ce on B-KQZ. The K (sun) side is still clipped flat white: #e7ecee at every sample on d_13K and d_11K, split lines barely visible, the hump indistinguishable from the cowl (#e4eaed). The s_13A sunset cowl glows cream the same way. The sun term saturates on a #d6d9dd albedo; the #636466 wing albedo stays unclipped at #b6bcc2. Photos of sunlit cowls sit only slightly above the wing (B-KQZ cowl #a9c0ce against pylon/wing #a8b2b4).",
+   "score": 5.5,
+   "refs": ["ref/web/exterior/B-KQZ_right_engine_20251029-074140.jpg", "ref/web/exterior/Leaving_Sri_Lanka_(2476362502).jpg", "/tmp/r5/d_13K.png", "/tmp/r5/d_11K.png", "/tmp/r5/s_13A.png"]
+  },
+  {
+   "detail": "Strake. The station is now right: 1.8-3.1 m, just ahead of the aft split (n_strake), as in B-KQZ_074140. In grey #9aa0a8 at 6 cm it reads as a separate raised grey bar or handle (m_pylon, n_strake). In B-KQZ and Leaving_Sri_Lanka the strake is cowl-coloured and only reads through its thin dark shadow line. The dark root-seam box (1.34 m) is longer than the 1.30 m plate and shows as a dark sliver beyond its lower edge in n_strake.",
+   "score": 6.5,
+   "refs": ["ref/web/exterior/B-KQZ_right_engine_20251029-074140.jpg", "ref/web/exterior/Leaving_Sri_Lanka_(2476362502).jpg", "/tmp/r5/st/n_strake.png", "/tmp/r5/st/m_pylon.png"]
+  },
+  {
+   "detail": "Pylon. Now a smooth, broad hump with a long nose blend and no tent crease (m_pylon, d_13A); the shape matches lalf_137. On the A side the hump (#cfd7de) is still clearly lighter than the cowl flank (#a2b3c6). In lalf_137 the hump and cowl are about the same tone (#4d515d against #4a4e59). Part of this is physical (it faces the sky); the rest is the white albedo. See the cowl fix.",
+   "score": 7,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "/tmp/r5/d_13A.png", "/tmp/r5/st/m_pylon.png"]
+  },
+  {
+   "detail": "Nav lights: a point with glow at the tip.",
+   "score": 6.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r5/n_17A.png"]
+  },
+  {
+   "detail": "Day sky (owner: lighting). Unchanged: pale #bdccdc against #527dc2 (_7282).",
+   "score": 4,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r5/d_26K.png"]
+  },
+  {
+   "detail": "Sunset (owner: lighting). The shade-side wing (s_26K) is cool and dark, as in _7282. On the sun side the cowl (s_13A) and canoes (s_26A) glow cream and clip.",
+   "score": 5.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r5/s_26K.png", "/tmp/r5/s_13A.png"]
+  },
+  {
+   "detail": "Night (owner: lighting). Dark silhouette with the nav light; the beacon is still pending.",
+   "score": 6,
+   "refs": ["/tmp/r5/n_17A.png", "/tmp/r5/n_26K.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "problem": "Sun-side GE90 cowl still clips to flat white",
+   "detail": "The w2 change to #d6d9dd was not enough. The K side is #e7ecee everywhere, so the split lines, hump and baked falloff are all lost; the sunset cowl glows. Keep the cowl in proportion to the tuned wing: Boeing grey #636466 renders #b6bcc2. Real white against Boeing grey paint is about 1.45-1.55x albedo, which gives about #9a9da1.",
+   "evidence": "d_13K / d_11K #e7ecee; s_13A. Photos: B-KQZ cowl #a9c0ce against wing/pylon #a8b2b4; Leaving_Sri_Lanka #9fabb7; A side now fine at #a2b3c6.",
+   "fix": "const cowl = { c: '#9a9da1', r: 0.3, m: 0.1 }. Check the A side stays at or above #80899a (_136). If the sun side still clips, (owner: lighting) add exposure headroom to the exterior sun term."
+  },
+  {
+   "severity": "low",
+   "problem": "Strake reads as a grey bar; the root-seam box overhangs the plate",
+   "detail": "The real strake is cowl-coloured and reads through its shadow line.",
+   "evidence": "n_strake, m_pylon against B-KQZ_074140 and Leaving_Sri_Lanka_(2476362502).",
+   "fix": "Strake plate material -> cowl, or { c: '#c4c8cd', r: 0.35, m: 0.1 } if the cowl albedo is lowered as above. Seam: gBox(0.03, 1.24, 0.07) at M4.trs(-0.115, 0, 0) so it stays inside the plate footprint."
+  },
+  {
+   "severity": "low",
+   "problem": "Canoe tails close to a needle",
+   "detail": "The cruise photos show a small rounded tail nose.",
+   "evidence": "_7331/_7329 (26K) against st/k_canoe_side.",
+   "fix": "In the canoe loop use depth lerp(0.35, 1, Math.pow(c, 0.8)) and width lerp(0.40, 1, Math.pow(c, 0.6)), and end cap sec(x1 + u * RE, 0.40 * e, 0.35 * e)."
+  },
+  {
+   "severity": "medium",
+   "problem": "(owner: lighting) Pale day sky; no deck bounce in the exterior ambient; night beacon",
+   "detail": "Unchanged, as handed over in from_exterior.md.",
+   "evidence": "_7282 zenith #527dc2 against the render's #bdccdc.",
+   "fix": "(owner: lighting) As requested in review/qa/from_exterior.md."
+  }
+ ],
+ "questionsForUser": []
+}

@@ -172,7 +172,8 @@ function buildExterior(gl) {
   // #232732 / #2d3447 -> wing #9ba1a1; spoiler panel seams dark too, a shade lighter [V photos, Boeing_777_(4139974954)]
   const line = { c: '#343940', r: 0.95 };   // matte: a glossy strip mirrors the sky at grazing view [A]
   const gap = { c: '#1e2228', r: 1.0, m: 0 };
-  const cowl = { c: '#d6d9dd', r: 0.3, m: 0.1 };                // ANA white fan cowl, no titles [V photos]; w2: w1 gloss mirrored the
+  const cowl = { c: '#b0b3b7', r: 0.3, m: 0.1 };   // w3: #d6d9dd clipped flat white on the sun side (13K); white paint ~1.5x the
+                                                  // Boeing-grey albedo (#636466 renders #b6bcc2 unclipped) [D]              // ANA white fan cowl, no titles [V photos]; w2: w1 gloss mirrored the
                                                                 // pale sky into a flat blob; darkening now baked from the normal below [A]
   const seam = { c: '#b9bdc2', r: 0.4 };
   const core = { c: '#8e9398', r: 0.34, m: 0.7 };
@@ -221,6 +222,14 @@ function buildExterior(gl) {
     const skin = { c: '#55575a', r: 0.7, m: 0.05 }, lef = (s) => pwl(WING.le, s), mid = (s) => lef(s) + 0.45 * (pwl(WING.te, s) - lef(s));
     wingLine(B, side, spanPath(4.0, 29.0, mid, 18), skin, 0.025);
     for (let s = 12.6; s < 29; s += 2.4) wingLine(B, side, chordPath(s, lef(s) + 0.7, s < 21 ? pwl(WING.te, s) - lerp(1.6, 1.2, (s - 11.8) / 9.2) : pwl(WING.te, s) - 0.7), skin, 0.025);
+    // fastener rows along the front and rear spars (~12 % / 62 % chord): dashed 3 cm strips, 0.3 m on / 0.2 m off, a shade
+    // under the paint [V dotted rows in ANA 26K _7345 and F-GSQR_1; A spacing]
+    const riv = { c: '#5a5c5f', r: 0.75, m: 0.05 };
+    for (const fc of [0.12, 0.62]) for (let s = 4.0; s < 29.5; s += 0.5) {
+      const xa = (q) => lef(q) + fc * (pwl(WING.te, q) - lef(q));
+      if (fc > 0.5 && s > 11.3 && s < 21.5) continue;   // spoiler hinge line already drawn there
+      wingLine(B, side, [[s, xa(s)], [s + 0.3, xa(s + 0.3)]], riv, 0.03);
+    }
     // right-wing registration JA795A on the upper skin [V: ANA JA795A seat-26K photos alv_*_7250/_7331/_7345, new 212-seat
     // layout, NH211 2026]: dark block capitals ~1.25 m tall at ~50 % chord (a letter-high band of skin ahead of it, bottoms just ahead of the spoilers) from s 13.5 outboard, J inboard, glyph tops toward
     // the leading edge, so it reads upright left-to-right from the aft K seats (zoomed _7345; the raters' "upside down" was
@@ -265,10 +274,10 @@ function buildExterior(gl) {
       for (let k = 0; k <= 12; k++) {
         const t = k / 12, c = Math.cos(((t - 0.22) / 0.78) * Math.PI / 2);
         const rise = t < 0.22 ? Math.sin((t / 0.22) * Math.PI / 2) : 0;
-        secs.push(sec(lerp(x0, x1, t), t < 0.22 ? rise : lerp(0.35, 1, Math.pow(c, 0.6)), t < 0.22 ? rise : lerp(0.25, 1, Math.pow(c, 0.8))));
+        secs.push(sec(lerp(x0, x1, t), t < 0.22 ? rise : lerp(0.40, 1, Math.pow(c, 0.6)), t < 0.22 ? rise : lerp(0.35, 1, Math.pow(c, 0.8))));
       }
       // rounded end: quarter-ellipse over RE, closed by the loft cap
-      for (const u of [0.35, 0.62, 0.84, 0.97]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.35 * e, 0.25 * e)); }
+      for (const u of [0.35, 0.62, 0.84, 0.97]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, Math.max(0.2, 0.40 * e), Math.max(0.15, 0.35 * e))); }   // w3: ~8 cm rounded tip [V ANA 26K]
       B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
     }
     // GE90-115B nacelle
@@ -283,8 +292,8 @@ function buildExterior(gl) {
     // Lathe space: +y = aft, +x = world x, +z = world down, so inboard = -side on x
     const ca = Math.cos(25 * DEG), sa = Math.sin(25 * DEG);
     const stM = M4.mul(rot, M4.trs(-side * ca * 2.18, 2.45, -sa * 2.18, side < 0 ? 25 * DEG : 155 * DEG));
-    B.add(gRBox(0.26, 1.3, 0.06, 0.02, 1), stM, { c: '#9aa0a8', r: 0.4, m: 0.3 });   // w2: 6 cm, grey so it reads edge-on [A]
-    B.add(gBox(0.04, 1.34, 0.09), M4.mul(stM, M4.trs(-0.12, 0, 0)), dark);            // dark root seam
+    B.add(gRBox(0.26, 1.3, 0.06, 0.02, 1), stM, cowl);                              // w3: cowl-coloured, reads by its shadow line [V]
+    B.add(gBox(0.03, 1.24, 0.07), M4.mul(stM, M4.trs(-0.115, 0, 0)), dark);           // dark root seam
     // round access panel on the upper cowl, 2.6 m aft, 15 deg outboard of top dead centre [V B-KQZ_074140 / EVA p97zMaCMWRg; A size]
     { const d = [side * Math.sin(15 * DEG), 0, -Math.cos(15 * DEG)], R = 2.087, e2 = [d[2], 0, -d[0]], ring = [];
       for (let k = 0; k <= 24; k++) { const a = (k / 24) * Math.PI * 2, u = Math.cos(a) * 0.26, w = Math.sin(a) * 0.26; ring.push([d[0] * R + e2[0] * w, 2.6 + u, d[2] * R + e2[2] * w]); }
@@ -334,7 +343,7 @@ function buildExterior(gl) {
     }
     shadeVerts(B, vC, vN, (p, n) => 1 - 0.35 * Math.max(0, -n[1]));
     // w2: visible flank falls ~0.6 from top to lower cowl (#8d96a6 -> #556171 in ANA 11A _136) [V]: f = 0.62 + 0.38 * ((n.y+1)/2)^1.3
-    shadeVerts(B, vN, vP, (p, n) => 0.62 + 0.38 * Math.pow((n[1] + 1) / 2, 1.3));
+    shadeVerts(B, vN, vP, (p, n) => 0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6));
     shadeVerts(B, vP, B.vcount, (p, n) => 1 - 0.25 * Math.max(0, -n[1]));
     const foot = [...WING.canoes.map(([cs]) => cs), E.s];
     shadeVerts(B, v0, vW, (p, n) => {
@@ -344,7 +353,7 @@ function buildExterior(gl) {
     });
     // nav (red L / green R) + white strobe at the raked tip [A positions]
     const tip = stations[stations.length - 1];
-    B.add(gSphere(0.07, 10, 6), M4.trs(tip.s * side, tip.y0 + 0.02, tip.le + 0.12 + WING.dz, 0, 0, 0, 1, 0.7, 2.2), { c: side < 0 ? '#c83a36' : '#3ab86a', r: 0.15, e: 2.5 });
+    B.add(gSphere(0.07, 10, 6), M4.trs(tip.s * side, tip.y0 + 0.01, tip.le + 0.05 + WING.dz, 0, 0, 0, 1, 0.5, 1.6), { c: side < 0 ? '#c83a36' : '#3ab86a', r: 0.15, e: 2.5 });
     // w1: brighter point source (a star point with glow at dusk in ANA 26K _7282) [V]
     lights.push({ p: [tip.s * side, tip.y0 + 0.05, tip.le + 0.1 + WING.dz], c: side < 0 ? [2.5, 0.12, 0.08] : [0.1, 2.2, 0.35], s: 1.6, blink: 0 });
     // static dischargers on the aileron and raked-tip trailing edges (~8 per side in ANA 26K _7282) [V count, A positions]
