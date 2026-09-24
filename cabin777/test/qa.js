@@ -17,10 +17,10 @@ const walk = (x, y, z, yaw, pitch) => `__app.setView([${x},${y},${z}], ${yaw}, $
 // [camera expression, reference photos (ref/ana or ref/web), what the view should show]
 const VIEWS = {
   q01_door1: [walk(-0.35, 1.62, 6.3, 'Math.PI+0.12', -0.08), [], 'boarding at L1: galley/lav front monuments, THE Suite ahead'],
-  q02_suiteAisle: [`__rel('2D',1.3,1.75,0.7,-0.75,-0.5)`, ['f_17301'], 'THE Suite from the aisle, fluted shells, 43in screens'],
+  q02_suiteAisle: [`__rel('2D',1.9,1.75,0.02,0.65,-0.5)`, ['f_17301'], 'THE Suite from the aisle, fluted shells, 43in screens'],
   q03_suite1A: [`__sit('1A',0.12,-0.2)`, ['f_17306', 'f_17300'], 'seated in 1A: screen wall, ottoman, window console'],
   q04_suite1Abed: [`(()=>{__sit('1A'); __app.toggleBed(); __settle();})()`, ['f_17304'], '1A in bed mode'],
-  q05_suiteBehind: [`__rel('1A',0.42,1.58,0.35,0.05,-0.36)`, ['f_17313'], 'window suite seen from behind: console, ottoman, screen wall'],
+  q05_suiteBehind: [`__rel('1A',0.29,1.62,0.2,0.15,-0.42)`, ['f_17313'], 'window suite seen from behind: console, ottoman, screen wall'],
   q06_roomMain: [walk(1.15, 1.8, 24.0, 0.05, -0.3), ['c_27312'], 'THE Room main cabin from the right aisle'],
   q07_seat11A: [`__sit('11A',Math.PI,-0.25)`, ['c_27316'], 'seated in 11A'],
   q08_seat12H: [`__rel('12H',0.25,1.72,0.75,0,-0.75)`, ['c_27300', 'c_27303'], '12H seat from above/behind'],
@@ -42,7 +42,7 @@ const VIEWS = {
 (async () => {
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: +(process.env.DPR || 1) });
   const logs = [];
   page.on('pageerror', (e) => logs.push('pageerror ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/ERR_TUNNEL|ERR_CERT/.test(m.text())) logs.push('console ' + m.text()); });
