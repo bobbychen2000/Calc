@@ -1,0 +1,83 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": 5,
+ "score": 6.8,
+ "summary": "The geometry is essentially right and most w4 fixes are in: the fabric fillet and three soft grooves on the back, the header band in the flap's slate leather (as in tpg_42), the flap tab, a visible diagonal belt with a buckle, the pillow bundle, the handset, and a thinner duvet with flush stitching. Once you are in the cabin, though, the unit does not read like the photos. The photos show a high-contrast product: dark charcoal shells and a dark grey-violet sofa set against bright ash panels. The w5 renders show a pale, flat, blue-grey product with a light lilac sofa. Part of this comes from the lighting snapshot (r3 in progress), but part is the seat materials. Measured against the ash on the same frame, the sofa fabric sits at 0.65-0.76x (q08, q09, q06). Ignoring c_27312, which is shot at a steep front angle, the photos sit at 0.38-0.64x (c_27313 0.38, c_27315 0.44-0.49, tt_seat-1 0.51-0.64). Fabric and shell render at about the same brightness, while in the photos the fabric is about 0.75x the shell. Bed mode is the weakest unit: a flat pastel-lavender tile covers the whole bed, where the photos show a saturated indigo duvet, crumpled and diagonal, with the white mattress pad showing along its edges. Smaller issues: the back reads as one flat board, not the inset padded panel with rounded, piped edges; the belt is a short, saturated cyan strip rather than a long dark teal strap; and the centre divider reads as a broad flat wall. Not yet at 8.5.",
+ "photos_collected": "ref/web/room/: lalf_* (Live and Let's Fly, 56 in-flight shots under blue mood light: 4-38 cabin, seat, controls, footwell, lamp, 95 door handle, 96/98 aisle-end ash doors, 100 bed), gstp_* (God Save The Points, 22: seat, flap, controls 38, cabinet 37, bed 7/8), tt_* (Thrifty Traveler, 33 daylight: seat-1/2, seats-center(-2), seats-3, honeymoon, footwell, seat-controls, storage 2-5, suite-door-1/2, tray, bed/bed-2/bedding), tpg_* (The Points Guy / Zach Griff, 36 daylight: 29-58 seats/pairs/console/cabinet/controls, 65-75 bed mode, 76 cabin, 81 aisle-end doors). Over 140 relevant photos in total.",
+ "details": [
+  {"detail": "Nested-pair layout: O bench, E seat, footwells under the monitors, table over the other seat's footwell", "score": 7.8, "refs": ["c_27313", "c_27315", "tpg_31", "tpg_42", "tt_seats-center", "r1", "r2"]},
+  {"detail": "Shell tone in the cabin: charcoal shells and caps against the ash", "score": 6.0, "refs": ["c_27312 shell back L81 vs ash end L203 (0.40)", "q06 L146 vs L171-183 (0.80-0.85)", "c_27313 shell inner #6c747c L115 vs ash end L229 (0.50)", "q09 #8c929d L145 vs #d4d2ce (0.69)"]},
+  {"detail": "Back, header band and lamps: back under a padded band, a lamp in each corner", "score": 7.5, "refs": ["tpg_31", "tpg_42", "c_27315", "r7", "q08"]},
+  {"detail": "Back and cushion upholstery: shape, channels, fabric tone", "score": 6.0, "refs": ["tpg_42 (inset back pad with rounded piped edges, seams at 58 % / 80 % from the top)", "tpg_31", "c_27313 #56555e", "c_27315 #585362", "tt_seat-1 #666564", "q08 #8b8995", "q09 #868e9e", "r7"]},
+  {"detail": "Headrest flap: tone, size, tab", "score": 7.5, "refs": ["c_27313 flap/fabric 1.42x", "c_27315 1.50x", "tt_seat-1 0.90x", "q08 1.17x", "tpg_42"]},
+  {"detail": "Pillows: white plus blue yagasuri", "score": 7.5, "refs": ["tpg_31 #616288", "tt_seat-1 #4c5179", "tpg_72 #7879b5", "q08 #6069a5"]},
+  {"detail": "Seat belt", "score": 5.5, "refs": ["tpg_31", "c_27313 belt #2c3b45 (G-R 14)", "q09 belt #296070 (G-R 55)", "r7"]},
+  {"detail": "Monitor, bezel, sill, drawer LED, literature slot", "score": 8.0, "refs": ["tpg_53", "c_27316", "q07", "tt_storage-5"]},
+  {"detail": "Angled lamp wing beside the monitor", "score": 7.0, "refs": ["tpg_53", "lalf_27", "gstp_40", "q07"]},
+  {"detail": "Ash cabinet door beside the monitor", "score": 8.0, "refs": ["tpg_53", "tt_storage-2", "gstp_37", "q07"]},
+  {"detail": "Side table: ash inlay, charcoal rim, silver lip", "score": 7.5, "refs": ["tpg_72", "tt_tray", "tt_storage-3", "q10", "r8"]},
+  {"detail": "Seat controls plate and handset", "score": 6.0, "refs": ["tpg_53", "tt_seat-controls", "gstp_38", "lalf_24"]},
+  {"detail": "Footwell: ottoman, cavity", "score": 6.5, "refs": ["tpg_53 ottoman/monument face 1.16x", "q07 0.90x", "tt_footwell", "lalf_31", "lalf_32"]},
+  {"detail": "Outer console: safety card, red tab, stowage", "score": 7.0, "refs": ["tpg_72", "tpg_53", "c_27315", "q08", "q09"]},
+  {"detail": "Aisle armrest ledges: silver, slot", "score": 7.5, "refs": ["c_27313", "tt_seat-1", "lalf_95", "q08"]},
+  {"detail": "Aisle-end ash, cap and seat-number plaques", "score": 7.0, "refs": ["c_27313", "tt_seat-1 (14H plaque)", "lalf_96", "lalf_98", "tpg_81", "q06"]},
+  {"detail": "Centre divider", "score": 6.5, "refs": ["c_27313", "c_27314", "tt_seats-honeymoon", "tpg_39", "q09", "r4"]},
+  {"detail": "Sliding door and door edges", "score": 7.0, "refs": ["tt_suite-door-1", "tt_suite-door-2", "lalf_95", "c_27312"]},
+  {"detail": "Bed mode: mattress, duvet, pillows", "score": 5.0, "refs": ["tpg_72", "tpg_74", "tpg_75", "gstp_7", "lalf_100", "r6"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "The sofa fabric (and with it the whole seat) reads too light next to the ash, so the product looks pale lilac rather than dark charcoal",
+   "problem": "In every w5 cabin view the fabric renders at about the same brightness as the shell and header band, at 0.65-0.76x the ash. In the photos the fabric is the darkest large surface after the base: about 0.75x the shell and 0.38-0.64x the ash. The shells are also too light in the q06 aisle view (0.80x the ash vs 0.40x in c_27312). The fabric also has a slight lilac cast (B-R +10 in q08), so it reads lilac-grey where the photos show dark grey (c_27315 violet-grey #585362, tt_seat-1 neutral #666564).",
+   "evidence": "Fabric/ash pixel ratios: c_27313 back #56555e L86 vs ash end #e5e5e3 L229 = 0.38. c_27315 back L86 vs table L194 = 0.44. tt_seat-1 back L101 vs table L199 = 0.51. q08 back #8b8995 L139 vs table #d9d7d3 L215 = 0.65. q09 fabric L141 vs ash end #d4d2ce L209 = 0.67. Shell: c_27312 shell back #4e5057 L81 vs ash end L203; q06 #8893a2 L146 vs ash L171-183. The floor matches (c_27312 aisle L60 vs q06 L64), so the exposure is comparable and the difference is in the seat surfaces.",
+   "fix": "09_seats.js (shared, one key each): SEATMAT.jFabric c '#86838a' -> '#6c6970' (about 0.8x in sRGB, a neutral hue; the target is fabric/ash-end about 0.45-0.55 in q09 and fabric/shell about 0.8). SEATMAT.jShell '#5f636a' -> '#555960' and jCap '#62666c' -> '#585c62'. Leave jHead as it is: band/flap already match tpg_42 and c_27313 (0.84). Re-measure after the lighting worker's r3 lands, because the w1 value was raised from a darker lighting state. If that pass brings the fabric back down, keep the old key and hand the ratio target to lighting instead."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed-mode duvet is a flat pastel-lavender tile over the whole bed",
+   "problem": "roomDuvet covers almost the whole mattress (W = w+0.08 = 0.80 on a 0.76 mattress, L 1.35) as a smooth, evenly crowned loft, and SEATMAT.duvet '#5a5c9a' renders as pastel #a1a2dc. In every bed photo the duvet is a saturated indigo-violet, crumpled and laid slightly diagonally, and the white mattress pad shows along both sides and the foot. The blue pillow leans on the white one instead of lying beside it.",
+   "evidence": "tpg_72: duvet #6f7bd9 (B-R 106), duvet/ash 0.67, mattress pad visible for about 8 cm at the side and 20 cm at the foot, blue pillow on top of the white one. tpg_74, tpg_75 and gstp_7 are similar. r6: duvet #a1a2dc (B-R 59), duvet/ash 0.73, no mattress showing at the sides.",
+   "fix": "09_seats.js SEATMAT.duvet c '#5a5c9a' -> '#4a55b4' (keeps the luminance and roughly doubles the chroma; shared, one key). 09c_room.js roomDuvet: W = w - 0.10 (not w + 0.08) and L - 0.15, so the pad shows. Rotate the loft 5 deg about y (M4.trs(x, ROOM.bed+0.07, z, 0, 0, 0.09)), put the stitch-line colour q at '#3d4796', and add 2-3 soft wrinkle ridges: gCyl(0.015, 0.015, W*0.6, 8) lying diagonally on top in SEATMAT.duvet at y+0.02. O bed branch: move the roomPillow to lean on the white pillow (x SX-0.05, y ROOM.bed+0.12, rotated 25 deg about x) instead of beside it. Mirror all of this in the E bed branch (~line 409)."
+  },
+  {
+   "severity": "low",
+   "detail": "The back is a flat board; the real back is an inset padded panel with rounded, piped edges",
+   "problem": "roomSeatCore lofts the back with only a 0.02 edge taper, so from above (r7, q08) it reads as a flat board with a light rim. In tpg_42 and tpg_31 the back is a separate padded pad about 5 cm thick with rounded corners (r ≈ 0.04) and a piped perimeter, inset about 2 cm from the shell sides. Below it the cushion also has a piped rounded front edge. The model's three grooves are fine, but the photos show two seams, at about 58 % and 80 % of the pad height from its top.",
+   "evidence": "tpg_42: the pad spans y 205-612 px with seams at 440 and 530 px and rounded piped corners. tpg_31 is the same, with piping visible at the corners. r7 / q08: square-cornered slab.",
+   "fix": "09c_room.js roomSeatCore: replace the back loftAt SECs with a rounded-rectangle loft of radius 0.04 (SEC(..., r=0.04)) and width w-0.04, and add a piping bead: a gRBox(w-0.04, 0.008, 0.008, 0.004) in SEATMAT.jSeam at the pad top (sy 0.545) and along both vertical edges (0.008 x 0.52). Change the groove loop to for (const sy of [0.11, 0.23]). Add the same bead along the cushion nose at M4.trs(0, 0.43, -0.64)."
+  },
+  {
+   "severity": "low",
+   "detail": "Belt too cyan and too short",
+   "problem": "The belt is a single 0.34 m strip in '#2f5f66', which renders as a saturated cyan-teal (#296070). The real belt is a very dark teal-grey webbing, and each seat has two halves: a long strap from the outer side bolster lying across the cushion to a silver tongue, and a short buckle half at the other side.",
+   "evidence": "c_27313 belt pixels #2c3b45 (G-R 14); tpg_31 #3a3e31 (warm light); q09 #296070 (G-R 55).",
+   "fix": "09c_room.js roomSeatCore: belt colour { c: '#2e454d', r: 0.75 }, length 0.46 (gBox(0.045, 0.004, 0.46)) starting from the side bolster at x -0.25*fs. Add a short buckle half gBox(0.045, 0.004, 0.12) plus SEATMAT.buckle at the opposite side of the cushion front (x +0.22*fs, z -0.52)."
+  },
+  {
+   "severity": "low",
+   "detail": "Centre divider reads as a broad flat charcoal wall",
+   "problem": "In c_27313 and c_27314 the E/F centre divider is a slim T: a narrow spine carrying two thin upright privacy fins (grey-metal edges) with a gap between them. It ends at the aisle in the ash end panel under a charcoal cap that holds both seat-number plaques. q09 shows a single wide flat-topped charcoal wall running to the monument.",
+   "evidence": "c_27313 crop (300,120)-(640,575): two fins about 3 cm thick with light metal top edges and about 12 cm between them. q09 (380,100)-(720,575): one wall about 20 cm wide with a flat top.",
+   "fix": "09c_room.js roomDivider: keep the 0.66 lower band, but split each upper ash panel into two fins at x ±0.045 (gRBox(0.02, ...)) with an SEATMAT.jRail top edge gRBox(0.024, 0.012, ...) on each, and leave the gap open. Check that whatever element makes the wide top in q09 (roomPart centre console cap?) is no wider than 0.12."
+  }
+ ],
+ "verifiedFixed": [
+  "Fabric fillet between back and cushion; three soft grooves on the back (r7, q08)",
+  "Header band in the flap's slate leather; band/flap 0.84 in q08 vs 0.84 in c_27313",
+  "Flap tab present (r7)",
+  "Belt now visible on the cushion with a buckle (q08, q09), though its tone and length are still off",
+  "Boarding bundle (plastic-wrapped duvet and pad) under the pillows (r3, r7) per tpg_31 / 42",
+  "Blue pillow chroma down: q08 #6069a5 ((B-R)/B 0.42) vs photos 0.29-0.38",
+  "Monitor, sill, cabinet and wing as in w4; the q07 bezel #434650 against the monument face reads as in tpg_53"
+ ],
+ "other_areas": [
+  "lighting: the in-cabin views are flat and over-bright on vertical surfaces. The shell backs in q06 are L146, against L81 in c_27312, with the floor matched, which washes out the charcoal/ash contrast of the whole cabin. The ceiling and bins render almost pure white (#f4f4f4-ish) against the photos' slightly grey-warm tone.",
+  "harness: the q06 / q09 / q10 cameras do not match their paired ANA shots (c_27312 is taken from further aft and higher, c_27313 looks straight down the E/F aisle end, c_27315 is centred on 14D). Aligning them would make the ratio comparisons exact.",
+  "carpet: the aisle carpet in q06 (#4c3d3d) matches c_27312 (#43393b)."
+ ],
+ "questions": [
+  "Fabric tone depends heavily on the lighting: the official photos show a violet-grey sofa, the in-flight daylight ones a neutral or warm grey. Should the model follow the official ANA photos (violet-grey, strong contrast) or the in-flight look?"
+ ]
+}
