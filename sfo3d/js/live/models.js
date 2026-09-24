@@ -39,7 +39,42 @@ async function decodeImage(bytes, type) {
   }
 }
 
-// stretch: {cut1, cut2, d1, d2} in model x (nose = 0, aft negative): vertices aft of cut1 move back by d1, aft of cut2 by d1+d2
+// stretch (js/aircraft/fit.js), all in model units of the unstretched model (x forward, nose = 0, aft negative; y up; z right):
+//   cut1, cut2, d1, d2  fuselage plugs: vertices aft of cut1 move back by d1, aft of cut2 by d1 + d2
+//   wing {z0, z1, dz, xMin}  span fit: outboard of z0 the wing is stretched spanwise, linearly up to z1, and everything
+//                        outboard of z1 (the tip device) moves rigidly by dz (only vertices ahead of xMin: not the tailplane)
+//   fin {yF, xF, k}      fin height fit: vertices aft of xF and above the fuselage top yF (not engines, pylons, gear)
+//                        are scaled vertically about yF by k
+const ZONE_NOFIN = new Set([2, 3, 7]); // engine, gear, pylon (tools/convert_models.py ZONE)
+export function applyStretch(pos, zone, nv, st, dims) {
+  const W = st.wing, Fn = st.fin;
+  if (W) {
+    const { z0, z1, dz, xMin } = W; const sc = dz / (z1 - z0);
+    for (let i = 0; i < nv; i++) {
+      if (pos[i * 3] < xMin) continue;
+      const z = pos[i * 3 + 2], az = Math.abs(z); if (az <= z0) continue;
+      pos[i * 3 + 2] = z + Math.sign(z) * (az >= z1 ? dz : (az - z0) * sc);
+    }
+    dims.span += 2 * dz;
+  }
+  if (Fn) {
+    const { yF, xF, k } = Fn; let top = -1e9;
+    for (let i = 0; i < nv; i++) {
+      const y = pos[i * 3 + 1];
+      if (pos[i * 3] < xF && y > yF && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = yF + (y - yF) * k;
+      if (pos[i * 3 + 1] > top) top = pos[i * 3 + 1];
+    }
+    dims.H = top;
+  }
+  if (st.cut1 != null) {
+    const { cut1, cut2, d1, d2 } = st;
+    for (let i = 0; i < nv; i++) {
+      const x = pos[i * 3];
+      if (x < cut2) pos[i * 3] = x - d1 - d2; else if (x < cut1) pos[i * 3] = x - d1;
+    }
+    dims.L += d1 + d2; dims.tailX -= d1 + d2;
+  }
+}
 export async function decodeModel(buf, stretch = null) {
   const b0 = new Uint8Array(buf, 0, 2);
   const raw = (b0[0] === 0x1f && b0[1] === 0x8b) ? await gunzip(buf) : buf; // accept already-decompressed data too
@@ -57,14 +92,7 @@ export async function decodeModel(buf, stretch = null) {
     extra[i * 4] = zq[i];
   }
   const dims = { ...head.dims };
-  if (stretch) {
-    const { cut1, cut2, d1, d2 } = stretch;
-    for (let i = 0; i < nv; i++) {
-      const x = pos[i * 3];
-      if (x < cut2) pos[i * 3] = x - d1 - d2; else if (x < cut1) pos[i * 3] = x - d1;
-    }
-    dims.L += d1 + d2; dims.tailX -= d1 + d2;
-  }
+  if (stretch) applyStretch(pos, zq, nv, stretch, dims);
   const idxIn = head.idxType === 'u16' ? new Uint16Array(raw, B + o.idx, head.ni) : new Uint32Array(raw, B + o.idx, head.ni);
   // bake material properties into vertices; regroup triangles by texture
   const mats = head.mats;

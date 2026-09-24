@@ -11,6 +11,7 @@ import { Geo } from '../geom.js';
 import { rng, m4, v3, smoother } from '../math.js';
 import { stToWorld, GROUND_Y } from '../geo.js';
 import { TYPES } from '../aircraft/types.js';
+import '../aircraft/fit.js'; // fits the imported models to the published dimensions: T.dockX1/2, T.dockSill/2, T.dockHW
 import { inst, buildVehicleMeshes } from '../world/gates.js';
 import { makeAtlas } from './signs.js';
 
@@ -51,12 +52,21 @@ function cyl(g, p, r, h, col, ext, seg = 16) { g.cylinder(r, h, seg, col, ext, m
 // representative (largest common) aircraft of a stand class: sets where each bridge's rotunda stands
 const REF_TYPE = { B: 'crj9', C: 'b38m', CL: 'a21n', D: 'b763', E: 'b789', EL: 'b77w', F: 'b748' };
 const clampN = (x, a, b) => Math.min(b, Math.max(a, x));
+// Where the bridge cab meets the aircraft (js/aircraft/fit.js): door `which` = 1 is door 1L, 2 the door the second bridge
+// of a wide-body stand docks to (T.dock2, from the manufacturers' documents). x = door CENTRE station from the nose tip
+// (the rendered door of the imported model where it has one, else the published centre), cab floor = published door sill
+// above the ground, and the cab stops at the rendered fuselage side at door height (T.dockHW).
 function doorOf(nose, f, T, which) {
   const left = v3.mul(v3.norm(v3.cross(f, [0, 1, 0])), -1);
-  const x = T.doors[Math.min(which - 1, T.doors.length - 1)];
-  const d = v3.add(v3.sub(nose, v3.mul(f, x + 0.5)), v3.mul(left, T.R + 0.15)); d[1] = G + T.Hc - 0.3 * T.R;
+  const two = which >= 2 && T.dockX2 != null;
+  // (a type without a documented second-bridge door, e.g. the 767-300 whose door 2 is optional, is not docked by the
+  // second bridge (docks()); its retracted bridge still points at door 2 or the aft door)
+  const x = two ? T.dockX2 : which >= 2 ? ((T.doorsOpt && T.doorsOpt[0]) ?? T.doors[1] ?? T.dockX1) : (T.dockX1 ?? T.doors[0]);
+  const sill = two ? (T.dockSill2 ?? T.dockSill) : (T.dockSill ?? (T.sill ?? T.Hc - 0.3 * T.R));
+  const d = v3.add(v3.sub(nose, v3.mul(f, x)), v3.mul(left, (T.dockHW ?? T.R) + 0.15)); d[1] = G + sill;
   return { door: d, left };
 }
+export { doorOf };
 
 export class LiveGateSystem {
   constructor(gates, { atlasExtra = [] } = {}) {
@@ -203,7 +213,7 @@ export class LiveGateSystem {
     signQuad(sgn, [v3.add(g0, v3.add(v3.mul(tW, gw / 2), [0, -gh / 2, 0])), v3.add(g0, v3.add(v3.mul(tW, -gw / 2), [0, -gh / 2, 0])), v3.add(g0, v3.add(v3.mul(tW, -gw / 2), [0, gh / 2, 0])), v3.add(g0, v3.add(v3.mul(tW, gw / 2), [0, gh / 2, 0]))], outW, gr, true);
   }
   // the second (L2) bridge of a wide-body stand only docks wide-body aircraft
-  docks(g, b) { if (b.door === 1) return true; const T = TYPES[g.acType] || TYPES[g._lastType]; return !!(T && (T.cls === 'E' || T.cls === 'F')); }
+  docks(g, b) { if (b.door === 1) return true; const T = TYPES[g.acType] || TYPES[g._lastType]; return !!(T && (T.cls === 'E' || T.cls === 'F') && T.dockX2 != null); }
   // typeKey: TYPES key of the parked aircraft (null = empty); pose: {nose:[s,t], dir:[s,t]}; icao: type designator
   setOccupant(g, typeKey, animate, now, pose, icao) {
     if (typeKey) { g.dock = pose || null; g.dockType = icao || null; }

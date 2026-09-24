@@ -70,7 +70,11 @@ def app(t):
 
 
 def accepted_types(s, app_rule=False):
+    """types the stand accepts. app_rule=False: the data's rule (class limits, span_max / len_max, and the whitelist
+    types_ok where the builder set one); app_rule=True: what js/live/traffic.js standFits does today (no types_ok,
+    plus the >= 64 m oversize clause)"""
     sp, L = limits(s); out = []
+    if s.get('types_ok') and not app_rule: return [t for t in s['types_ok'] if t in APP]
     for t, r in APP.items():
         if r['span'] is None: continue
         if (r['span'] <= sp + 0.6 and r['L'] <= L + 2) or (app_rule and sp >= 64 and r['span'] <= 80): out.append(t)

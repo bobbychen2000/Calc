@@ -133,9 +133,24 @@ export function fitType(t, m) {
     dockHW = +(sec.hw * Math.sqrt(Math.max(0.05, 1 - ((y - yc) / R) ** 2)) * s).toFixed(3);
   }
   const top = crownOf(F, d.L);
+  // fin height fit: where the model's fin top misses the published overall height (the artist's fin is too short or too
+  // tall relative to the fuselage, e.g. FAM A330/787, FG 737-800), the fin (everything above the fuselage top aft of
+  // 60 % of the length, except engines, pylons and gear) is scaled vertically about the fuselage top so that its height
+  // above the fuselage top is the published one: mid(H) - mid(crown) where the document gives the fuselage top, else
+  // mid(H) - the rendered fuselage top.
+  let fin = null;
+  if (top != null && S.H) {
+    const Hr = Hc + d.H * s, [h0, h1] = S.H, tol = 0.005 * (h0 + h1) / 2;
+    if (Hr < h0 - tol || Hr > h1 + tol) {
+      const want = (h0 + h1) / 2 - (S.crown ? (S.crown[0] + S.crown[1]) / 2 : Hc + top * s);
+      const k = want / ((d.H - top) * s);
+      if (k > 0.7 && k < 1.4) { fin = { yF: +top.toFixed(3), xF: +(-0.6 * d.L).toFixed(3), k: +k.toFixed(4) }; stretch.fin = fin; }
+    }
+  }
+  const finTop = fin ? top + (d.H - top) * fin.k : d.H;
   const fit = { model: m, base, s: +s.toFixed(5), s0: +s0.toFixed(5), plugs: pl, wing, stretch: Object.keys(stretch).length ? stretch : null, rx,
-    Hc, seat, door: dm ? { name: dm.name, from: dm.from, x: dockX1, sill: +(Hc + dm.ySill * s).toFixed(3) } : null,
-    renderedSpan: +(2 * (semi + (wing ? wing.dz : 0)) * s).toFixed(3), renderedL: +((d.L + plugM) * s).toFixed(3), renderedH: +(Hc + d.H * s).toFixed(3),
+    Hc, seat, fin, door: dm ? { name: dm.name, from: dm.from, x: dockX1, sill: +(Hc + dm.ySill * s).toFixed(3) } : null,
+    renderedSpan: +(2 * (semi + (wing ? wing.dz : 0)) * s).toFixed(3), renderedL: +((d.L + plugM) * s).toFixed(3), renderedH: +(Hc + finTop * s).toFixed(3),
     renderedCrown: top != null ? +(Hc + top * s).toFixed(3) : null };
   T.fit = fit; T.Hc = Hc; T.dockX1 = dockX1; T.dockSill = dockSill; T.dockHW = dockHW;
   return fit;
@@ -173,7 +188,7 @@ export function typeForIcao(icao) {
     if (!TYPES[key]) {
       const B = TYPES.crj2, f = BIZ_LEN[icao] / B.L;
       const T = scaleObj(B, f); T.name = icao; T.key = key; T.cls = 'B'; T.uniform = true; T.wing.y = B.wing.y; T.win.forEach((w, i) => { w.y = B.win[i].y * f; });
-      T.fit = B.fit ? { ...B.fit, s: B.fit.s * f, stretch: null } : null;
+      T.fit = B.fit ? { ...B.fit, s: B.fit.s * f } : null;
       TYPES[key] = T;
     }
     return { t: key, m: 'crj2', generic: 'business jet' };

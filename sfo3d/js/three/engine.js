@@ -19,10 +19,10 @@ export class Engine {
   async init() {
     const Q = this.Q; const q = new URLSearchParams(location.search);
     const forceWebGL = q.get('webgl') === '1' || this.opts.forceWebGL;
-    const renderer = new THREE.WebGPURenderer({ antialias: false, forceWebGL, reversedDepthBuffer: true, powerPreference: 'high-performance', alpha: false });
+    const renderer = new THREE.WebGPURenderer({ canvas: this.opts.canvas || undefined, antialias: false, forceWebGL, reversedDepthBuffer: q.get('revz') !== '0', powerPreference: 'high-performance', alpha: false });
     await renderer.init();
     this.renderer = renderer; this.backend = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl2';
-    renderer.domElement.id = 'gl'; this.parent.prepend(renderer.domElement);
+    if (!this.opts.canvas) { renderer.domElement.id = 'gl'; this.parent.prepend(renderer.domElement); }
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.AgXToneMapping; renderer.toneMappingExposure = 1.0;
     this.reversed = !!renderer.reversedDepthBuffer;

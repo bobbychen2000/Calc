@@ -329,7 +329,7 @@ def main():
     # then each stand is limited to the largest span / length SFO (or accepted ADS-B) actually put there
     # ('span_max' / 'len_max'), and only if that still does not clear 3 m the pair becomes exclusive.
     pass  # geom imported at module level
-    for s in stands: s['excl'] = []; s['clear'] = {}; s['span_max'] = None; s['len_max'] = None
+    for s in stands: s['excl'] = []; s['clear'] = {}; s['span_max'] = None; s['len_max'] = None; s['types_ok'] = None
     def sim_count(a, b):
         n_ = 0
         for x in [q for n0 in a['aodb'] or [a['name']] for q in ivs.get(n0, [])]:
@@ -356,6 +356,16 @@ def main():
             d2 = GM.stand_env(a).distance(GM.stand_env(b))
             if d2 >= PHYS:
                 how[(a['name'], b['name'])] = 'span_max / len_max = largest types SFO parks there (clear %.1f m)' % d2; continue
+            # review round 2: still < 3 m with every type inside the limits -> both stands accept only the types SFO /
+            # ADS-B actually put there ('types_ok', at their per-family stop points); the app needs the request
+            # (js/live/traffic.js standFits: honour g.typesOk) for this to hold at runtime
+            for s_ in (a, b):
+                if s_['obs_types']: s_['types_ok'] = sorted(set(ALIAS_T.get(t, t) for t in s_['obs_types']) & set(GM.APP))
+            d3 = GM.stand_env(a).distance(GM.stand_env(b))
+            if d3 >= PHYS:
+                how[(a['name'], b['name'])] = 'types_ok = the types SFO parks there (observed), per-family stops: clear %.1f m (SFO plans both at once %d times)' % (d3, sim)
+                continue
+            d2 = d3
             if d2 > 0.0:
                 # SFO really parks both at once, and with the limits the envelopes no longer overlap: making them
                 # exclusive would push real, simultaneously parked aircraft off their stands. Kept, reported as a
@@ -638,7 +648,7 @@ def build_output(stands, remote, positions, naip_off, info, osm):
                'largest_type': s['largest_type'], 'obs_types': s['obs_types'], 'span_max': s.get('span_max'), 'len_max': s.get('len_max'),
                'a380': s['cls'] == 'F', 'osm_id': s['osm_way']['osm_id'],
                'tight_with': sorted((disp[n] for n in s.get('tight', [])), key=gkey),
-               'conflict': s.get('conflict'), 'type_stops': s.get('type_stops'), 'verified_unconfirmed': s.get('verified_unconfirmed'),
+               'types_ok': s.get('types_ok'), 'conflict': s.get('conflict'), 'type_stops': s.get('type_stops'), 'verified_unconfirmed': s.get('verified_unconfirmed'),
                'resid': {'naip': {k: s['naip'][k] for k in ('resid_along', 'resid_lat')} if s.get('naip') else None,
                          'adsb': {k: s['adsb'][k] for k in ('n_aircraft', 'along_med', 'lat_med', 'dhdg_med')} if s.get('adsb') else None,
                          'paint': s.get('paint_after') or s.get('paint'),
