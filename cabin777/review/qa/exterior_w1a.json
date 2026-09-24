@@ -1,0 +1,152 @@
+{
+ "area": "exterior",
+ "rater": "A (skeptic)",
+ "score": 4.4,
+ "details": [
+  {
+   "detail": "Wing planform, sweep and raked tip seen from 13A to 33A and in studio a_plan and c_34. Sweep, rake and nacelle overhang ahead of the leading edge match the ACAP data and the United 777-300ER cruise frame. From 30A and 33A the wing reads as a thin, featureless blade.",
+   "score": 7,
+   "refs": ["ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg", "ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg", "/tmp/r1/st/a_plan.png", "/tmp/r1/d_30A.png"]
+  },
+  {
+   "detail": "In-flight wing bending. The leading edge now curves up to the tip in 17A, 19A and 26A. In the EK 2015 sunset photo and the UA frame the curvature is similar or stronger. Acceptable.",
+   "score": 6.5,
+   "refs": ["ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg", "/tmp/r1/d_17A.png"]
+  },
+  {
+   "detail": "Tone of the lit upper wing: #9fa5ae (17A), #9ea5af (19A) and #b6bbc1 (26A). The UA 777-300ER cruise frame shows #acb6c1 near and #8495a6 far. The mean colour is right, but the model surface is perfectly uniform. It has no sky-reflection gradient toward the tip, no panel-to-panel tone differences, and no fastener rows. There are also no small stencils or walkway markings, which the UA frame and 'Wing of a Boeing' show clearly, and no yellow marking.",
+   "score": 4,
+   "refs": ["ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg", "ref/web/exterior/commons_Wing_of_a_Boeing.jpg", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "/tmp/r1/q12_wing.png"]
+  },
+  {
+   "detail": "Black gear-alignment stripe. It is now present: #26292f, 0.38 m wide, at s 6.4. It reads as a horizontal band across 17A and 19A, which is plausible. The ANA yellow ice-detection spot is still missing. No ANA over-wing photo was found to fix its size and position.",
+   "score": 6,
+   "refs": ["/tmp/r1/d_17A.png", "/tmp/r1/q12_wing.png"]
+  },
+  {
+   "detail": "Seams on the slats, spoilers, flaperon, flaps and aileron. Hairline widths are plausible and there is no shimmer. The bare-metal slat noses, however, are only a 2 % chord sliver (paintVerts uv<0.022). In the ANA 11A photo (137) the slats read as a wide, mirror-bright silver band (#8a8d8e against a #777677 skin under a hazy sky), with a strong specular streak.",
+   "score": 5.5,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "/tmp/r1/d_15A.png"]
+  },
+  {
+   "detail": "Flap-track fairings (canoes) seen from 19A to 33A. In daylight they render as dark blue-slate slabs (#3c4352 sides) under a #b6bbc1 wing, which is the single most 'CG' element in the aft views. In real photos they are the same light grey as the wing, lit from below by the cloud deck (UA frame, 'Wing of a Boeing'). In shape they read as flat-topped planks with a bright rim and a near-vertical cut end. The EK sunset silhouette shows a deep convex belly that sweeps up into a rounded tail. At sunset their flanks turn sandy yellow (#b59569), where the EK photo shows dark silhouettes (#3f302f).",
+   "score": 2.5,
+   "refs": ["ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg", "ref/web/exterior/commons_Wing_of_a_Boeing.jpg", "/tmp/r1/d_26A.png", "/tmp/r1/s_26A.png"]
+  },
+  {
+   "detail": "GE90-115B nacelle size and position from 11A and 13A. The cowl top sits about 5 deg below the horizon in the renders, against 5.8 to 8 deg in ANA 11A photos 136 and 137, and the inlet faces forward correctly. Proportions are plausible.",
+   "score": 6,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "/tmp/r1/d_11A.png"]
+  },
+  {
+   "detail": "GE90 cowl surface and details. The model cowl is flat and matte, nearly the brightness of the sky (#bfcbd7 against a #acc2d7 sky), with a weak top-to-bottom gradient (#e1e7ea to #c2cdd7, ratio 0.87). In the ANA 11A photo (136) it goes from #8d96a6 to #556171 (ratio 0.6) and mirrors its surroundings strongly (EVA sunset: violet top #7056a1 with a hot orange lower rim). Three details visible in ANA 137 and the EVA frame are missing: the inboard nacelle chine (strake) blade on the fan cowl, the round access panel on the upper inboard inlet cowl, and the stencil or logo on the lower aft cowl.",
+   "score": 3,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "ref/web/exterior/yt_p97zMaCMWRg_EVA77W_sunset_GE90.jpg", "/tmp/r1/d_13A.png"]
+  },
+  {
+   "detail": "Pylon. From 13A it is still a thin blue-grey plank (#76859b) running along the cowl crest. In ANA 137 the pylon fairing over the fan cowl is a broad, smooth, bulbous hump, the same colour as the cowl (#4f535f against a #4e525e cowl in that exposure). It is roughly 1/3 of the nacelle width at its base and flows into the wing leading edge with a large fillet.",
+   "score": 2.5,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "ref/web/exterior/yt_p97zMaCMWRg_EVA77W_sunset_GE90.jpg", "/tmp/r1/d_13A.png"]
+  },
+  {
+   "detail": "Static dischargers (wicks) on the aileron and raked-tip trailing edges are missing. They are visible as small spikes in the UA frame and in 'Wing of a Boeing' (a row of dots at the tip trailing edge).",
+   "score": 1,
+   "refs": ["ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg", "ref/web/exterior/commons_Wing_of_a_Boeing.jpg", "/tmp/r1/st/j_tip.png"]
+  },
+  {
+   "detail": "(owner: lighting) Day sky. At the window the top is #acc2d7 and the horizon #abb2bb: pale and grey. This is unchanged since round 2. The UA cruise frame shows #114892 at the top and #2472ca low, and the 'Wing of a Boeing' sky is deep blue #2f5cb0. The cloud deck is a flat, low-contrast texture (#b4b9be) with no bright white tops (UA cloud #fcfdfe) and no depth.",
+   "score": 3,
+   "refs": ["ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg", "ref/web/exterior/commons_Wing_of_a_Boeing.jpg", "/tmp/r1/d_17A.png"]
+  },
+  {
+   "detail": "(owner: lighting) Sunset sky and deck. The upper sky is dusty pink (#bca2ab), where EVA shows #567ae0 and EK #202b42: blue above, with only a narrow orange/pink horizon band (EK #dbbf83, EVA #fec9bf). The deck is bright beige (#c7b5a9), against EK #1a191e and EVA #976aa1.",
+   "score": 3,
+   "refs": ["ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg", "ref/web/exterior/yt_p97zMaCMWRg_EVA77W_sunset_GE90.jpg", "/tmp/r1/s_13A.png"]
+  },
+  {
+   "detail": "Wing and cowl at sunset. The wing's upper surface (#82665c) matches the sun-side EK wing (#7f5b52). The cowl, however, renders neutral near-white (#e5e1d5) under a dim pink sky. EVA shows it violet with an orange sun-lit lower rim, and ANA 136/137 show it grey. The sandy-lit canoe flanks look wrong.",
+   "score": 4,
+   "refs": ["ref/web/exterior/yt_p97zMaCMWRg_EVA77W_sunset_GE90.jpg", "ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg", "/tmp/r1/s_13A.png", "/tmp/r1/s_26A.png"]
+  },
+  {
+   "detail": "Night. The wing is a dark silhouette (#0b0d13) against the sky (#101524), with a red tip light and a dense star field. Two things are missing: the strobe flash lighting the tip area, and the red belly-beacon wash on the nacelle and wing underside, which the EVA night frame shows as an orange-lit lower cowl (#8d7043).",
+   "score": 5,
+   "refs": ["ref/web/exterior/yt_p97zMaCMWRg_EVA77W_night_beacon.jpg", "/tmp/r1/n_17A.png"]
+  },
+  {
+   "detail": "Nav and strobe lights at the raked tip. Present and the right colour, but the nav lens is a 0.07 m blob on the upper skin, where it should be flush in the tip leading edge. The EK photo shows a single point light at the extreme tip.",
+   "score": 6,
+   "refs": ["ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg", "/tmp/r1/st/j_tip.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Flap-track fairings render as dark blue-slate planks.",
+   "problem": "In every aft view (19A, 26A, 30A, 33A) the canoes are the darkest objects in the scene (#3c4352), under a #b6bbc1 wing. Real canoes are light grey like the wing, because the bright cloud deck and ground light them from below. At sunset their flanks turn sandy yellow.",
+   "evidence": "/tmp/r1/d_26A.png (canoe side #3c4352) against the UA 77W cruise frame and commons_Wing_of_a_Boeing.jpg (fairings the same white-grey as the wing). EK sunset silhouette: #3f302f, uniformly dark with the wing.",
+   "fix": "11_exterior.js buildExterior: make the canoes a separate material, canoe = { c: '#7a7c80', r: 0.55, m: 0.1 }, in place of paintLow at the B.add(gLoft(secs,3)...) canoe call. Replace shadeVerts(B, vC, vN, 1-0.25*max(0,-n.y)) with a bounce bake like the pylon's: for k in [vC,vN), f = 1 + 0.7*smooth(0.2,0.9,|n.x|) + 0.5*max(0,-n.y), then clamp. The target is day sides #9aa2ab. Better (owner: lighting): give the 'exterior' layer a hemispheric ambient whose lower hemisphere is SKIES[sky].cloudLit*0.6, so every down- or side-facing exterior surface picks up deck bounce. Then drop both hand-tuned bakes (canoes and pylon flanks x1.6)."
+  },
+  {
+   "severity": "high",
+   "detail": "The GE90 cowl lacks form, material and the details seen in the ANA 11A photos.",
+   "problem": "The cowl is flat, matte and sky-coloured (#bfcbd7 against a #acc2d7 sky), with a 0.87 top-to-bottom shading ratio. Three details visible from ANA seat 11A are missing: the inboard nacelle chine (strake), the round access panel, and the lower cowl stencil.",
+   "evidence": "lalf_ANA77W_NH212_136.jpg: cowl #8d96a6 at the top to #556171 low (ratio 0.6). lalf_ANA77W_NH212_137.jpg (crop): a strake blade about 1.2 m long on the inboard upper fan cowl at about the 10 o'clock position, a round panel about 0.35 m across on the upper inboard inlet cowl, and faint text on the lower aft cowl. yt_p97zMaCMWRg: the same strake, the panel and a 'GE90' logo; the cowl mirrors the violet sky.",
+   "fix": "11_exterior.js: change cowl to { c: '#e6e8eb', r: 0.16, m: 0.3 } so it reflects the sky. Change shadeVerts(B, vN, vP, ...) to 1 - 0.45*max(0,-n.y) - 0.15*max(0, n.x*side) (a darker lower and inboard half). Add the strake: B.add(gBox(0.02, 1.1, 0.24), M4.mul(rot, M4.trs(side*cos(55deg)*2.09, 3.2, sin(55deg)*2.09, 0, 0, side*55deg)), cowl). Also add the access panel: a seam ring gCyl(0.18,0.18,0.01,24) laid on the inlet cowl at x=0.9, 30 deg inboard of top. Axis conventions follow nacelleGeo (lathe along +y)."
+  },
+  {
+   "severity": "high",
+   "detail": "Pylon reads as a thin blue plank.",
+   "problem": "In ANA 137 the pylon fairing over the fan cowl is a broad, smooth hump, cowl-coloured, flowing into the wing leading edge. The model builds a ridge 0.6 m wide narrowing to 0.26 m, 0.10 to 0.45 m tall, which renders #76859b from 13A.",
+   "evidence": "lalf_ANA77W_NH212_137.jpg: the hump is about 1/3 of the nacelle diameter wide (about 1.3 m) and tops out just above the cowl crest. /tmp/r1/d_13A.png: a thin line.",
+   "fix": "11_exterior.js pylon loop: w = lerp(1.3, 0.55, pow(k/14, 1.2)). ridge = nacTop(x) + lerp(0.30, 0.45, smooth(1.6, leE-E.x0, x)). Set r = w*0.5 (fully rounded). Add the fairing loft with the cowl material for xn < leE and paint only for the strut under the wing: two B.add calls splitting secs at leE."
+  },
+  {
+   "severity": "medium",
+   "detail": "(owner: lighting) The day sky is still pale grey-blue.",
+   "problem": "The window sky at the top is #acc2d7 and at the horizon #abb2bb. This was flagged in round 2 and is unchanged. Cruise photos show deep blue and bright white cloud tops, and the pale sky also kills the cowl's contrast.",
+   "evidence": "yt_SQVXQbY9kto: top #114892, low #2472ca, cloud #fcfdfe. commons_Wing_of_a_Boeing: #2f5cb0.",
+   "fix": "12_scene.js SKIES.day: zenith [0.03, 0.12, 0.48], horizon [0.35, 0.55, 0.88], haze [0.55, 0.66, 0.85]. Reduce winExp from 1.6 to about 1.2, or apply it to the interior only, so the pane reads about #2a5fae at the top and #7aa6dc near the horizon. Raise cloudLit to 1.6 for white tops."
+  },
+  {
+   "severity": "medium",
+   "detail": "(owner: lighting) Sunset sky and deck are wrong.",
+   "problem": "The model shows a dusty-pink upper sky (#bca2ab) and a bright beige deck (#c7b5a9). Real sunsets have a blue upper sky, a narrow orange/pink band, and a dark violet or near-black deck. The cowl renders near-white (#e5e1d5).",
+   "evidence": "commons_Emirates_77W_wing_view_2015.jpg: sky #202b42 above, band #dbbf83, deck #1a191e. yt_p97zMaCMWRg: top #567ae0, band #fec9bf, deck #976aa1, cowl #7056a1 with an orange lower rim.",
+   "fix": "12_scene.js SKIES.sunset: skyTop [0.18, 0.24, 0.55], zenith [0.08, 0.14, 0.42], haze [0.55, 0.40, 0.42] confined to 6 deg above the horizon, cloudLit [0.60, 0.40, 0.45], cloudShade [0.10, 0.08, 0.14]. Check that the exterior tonemap does not clip the sun-lit cowl to white."
+  },
+  {
+   "severity": "medium",
+   "detail": "Canoe shape is a flat plank with a cut end.",
+   "problem": "The sections are boxy (corner r = min(0.14*rw+0.02, 0.45w)) with a flat top rim, and the tail holds 75 % depth then a small 0.40 m dome. In the EK silhouette the fairing belly is convex and sweeps up into a rounded tail roughly half the maximum depth.",
+   "evidence": "commons_Emirates_77W_wing_view_2015.jpg: the two canoes at x 1030-1300 and 1450-1830. /tmp/r1/d_26A.png and d_30A.png.",
+   "fix": "11_exterior.js canoe loop: r = w*0.48. Depth law for t >= 0.22: rd = max(0.45, sqrt(max(0, 1 - pow((t-0.35)/0.72, 2)))), which gives a convex belly rising aft. Width: rw = max(0.7, pow(c, 0.35)). Keep RE = 0.40."
+  },
+  {
+   "severity": "medium",
+   "detail": "The wing surface is a featureless CG plane.",
+   "problem": "There are no fastener rows along the spars, no panel tone variation, no stencils or walkway marks, and no sky-reflection gradient. The bare slat band is too narrow and too dull.",
+   "evidence": "yt_SQVXQbY9kto (panel lines and stencils), commons_Wing_of_a_Boeing (dotted fastener rows along the LE and spars, a yellow marking), lalf_ANA77W_NH212_137 (mirror-bright slats and fastener rows).",
+   "fix": "11_exterior.js buildExterior: add low-contrast wingLine runs, material { c: '#56585c', r: 0.8 }, w 0.012. Place them along the front spar (le + 0.14c) and rear spar (le + 0.62c) from s 3.3 to 30, plus chordwise lines every 2.0 m between the spars. Add ±4 % panel tone via paintVerts, keyed by hash(floor(uv[1]/2.2), floor(uv[0]*4)). Widen the metal band to uv[0] < 0.045 and set metal r to 0.15."
+  },
+  {
+   "severity": "low",
+   "detail": "Static dischargers are missing.",
+   "problem": "The aileron and raked-tip trailing edges have no wicks. They are visible in cruise photos.",
+   "evidence": "commons_Wing_of_a_Boeing.jpg (a dot row along the tip trailing edge), yt_SQVXQbY9kto.",
+   "fix": "11_exterior.js: for s in [24.5, 26.5, 28.5, 30.4, 31.2, 31.9, 32.3], add gCyl(0.008, 0.008, 0.28) pointing aft from wingAt(s, te(s), side), material dark."
+  },
+  {
+   "severity": "low",
+   "detail": "(owner: lighting) Night lacks strobe and beacon wash.",
+   "problem": "At night nothing lights the wing or nacelle. Real views show the belly beacon washing the lower cowl red-orange and the tip strobes flashing on the raked tip.",
+   "evidence": "yt_p97zMaCMWRg_EVA77W_night_beacon.jpg: lower cowl #8d7043.",
+   "fix": "11_exterior.js: push a beacon light, lights.push({ p: [0, -2.5, 33 + WING.dz], c: [3, 0.25, 0.1], s: 8, blink: 1.0 }). 12_scene.js: let blinking exterior lights add a point-light term on the exterior layer, not only a glow sprite."
+  }
+ ],
+ "questionsForUser": [
+  "Do ANA 777-300ER GE90 cowls carry a 'GE90' logo on the lower aft fan cowl, as EVA's do? ANA seat-11A photo 137 shows faint lettering there that is too blurred to read.",
+  "The ANA yellow ice-detection spot on the black gear stripe is still unsourced. Do you have an ANA over-wing photo (rows 17-22, left or right) that shows it?",
+  "Is the reference sky for the 'day' mood high cruise (deep blue, as in the UA and 'Wing of a Boeing' frames) or a hazy low-altitude look? The current pale grey-blue matches neither."
+ ]
+}
