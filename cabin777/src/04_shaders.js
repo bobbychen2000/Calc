@@ -28,7 +28,7 @@ uniform vec3 u_camPos;
 uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_sideLed; uniform vec3 u_winGlow;
-uniform vec3 u_vault; uniform vec3 u_lowTint; uniform float u_bandCut; uniform float u_sideLow; uniform vec3 u_extBounce;
+uniform vec3 u_vault; uniform vec3 u_lowTint; uniform float u_bandCut; uniform vec2 u_sideLow; uniform vec3 u_extBounce; uniform vec2 u_aoTune;
 uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
@@ -108,10 +108,10 @@ void main(){
   } else if (layer == 12) {
     // two LED circuits [V: tlfl_IMG_9217, sany_10/12, roame_7672]: the ceiling cove (u_led) stays near-white while the
     // sidewall lens under the outboard bins (the only layer-12 part below 2 m) drives the blue sidewall band (u_sideLed)
-    // QA r3: the vault wash (e < 0.1, CEILMAT.vault) takes its own colour u_vault: in the amber phase the LED line is
-    // saturated amber but the vault reads soft warm beige [V: ff_door-gap lens #ffa33c, ff_seat-with-door-closed
-    // ceiling #d9b77d]; = u_led in the white moods
-    vec3 lc = u_exterior > 0.5 ? u_led : v_wpos.y < 2.0 ? u_sideLed : emis < 0.1 ? u_vault : u_led;
+    // QA r3: the dim vault wash (CEILMAT.vault eFn 0.04-0.3) takes its own colour u_vault, blending to the LED colour
+    // at the cove (e 0.85): in the amber phase the LED line is saturated amber but the vault reads soft warm beige
+    // [V: ff_door-gap lens #ffa33c, ff_seat-with-door-closed ceiling #d9b77d]; u_vault = u_led in the white moods
+    vec3 lc = u_exterior > 0.5 ? u_led : v_wpos.y < 2.0 ? u_sideLed : mix(u_vault, u_led, smoothstep(0.3, 0.85, emis));
     emissive = lc * emis * 6.0;
     base *= 0.3;
   } else if (layer > 0 && u_detailOn > 0.5) {
@@ -194,11 +194,13 @@ void main(){
     // bounce and wash on top the blue/amber sideLed washed out to #b8c0d5. Those terms are cut inside the band and the
     // lens ramp starts lower so the colour reaches the window tops (glass top ~1.32 m), fading to white at the belt
     // [V: tlfl_IMG_9217 band #5d5eca / #5458dd, belt #867db2; sany_12 #4c5edc; ff_door-gap amber lens #ffa43d]
-    // QA r3: the coloured band runs down past the windows (u_sideLow of the lens level at the belt, out by 0.35 m)
+    // QA r3: the coloured band runs down past the windows (u_sideLow.x of the lens level at the belt, out by 0.35 m;
+    // u_sideLow.y = the wall's share of the lens colour)
     // instead of fading to white 0.3 m under the bins [V: sany_12 #556df7 at the bins, #5362e0 at the window line;
     // tlfl_IMG_9217 belt between the windows #736a88; sans-18 lavender to the floor]. u_bandCut = how much of the
     // ceiling light the band loses; both per mood (the white boarding lens needs little cut, amber stays at the lens)
     float band = wallProx * facingIn * smoothstep(0.7, 1.2, v_wpos.y) * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * u_bandCut;
+    float bandW = min(1.0, band * 1.25);   // the wash is cut a little harder (r2: 0.8 vs 0.65)
     // QA r3, amber phase: only the bins, cove and lens are amber, seat-level faces stay neutral (u_lowTint below
     // 1.25 m, 1 above 1.95 m; 1 in the white moods) [V: ff_door-gap ash doors #afafaf / #acb1ba (s <= 0.08) under
     // bins #945a2a]
@@ -206,13 +208,14 @@ void main(){
     // QA r3: the aisle floor took nearly the full hemisphere and read as a bright flat strip; carpet sits in a 1.3 m
     // trench of shells and sees the ceiling through a slot [V: c_27312 aisle #312828-#423b39, darker at the bases]
     hemi *= lt * mix(1.0, 0.55, fl); bounce *= lt * mix(1.0, 0.6, fl);
-    // QA r3: AO weight on the hemisphere 0.85 -> 0.70 and bounce x1.15: vertical faces between the seats read 2-3x
-    // too dark against the lit tops (charcoal shells #191b1f vs c_27312 #394049-#414755, ash ends #848078 vs #bdbaab)
-    amb = (hemi * (0.30 + 0.70*ao) + bounce * 1.15) * binShade * (1.0 - 0.65*band)
-        + u_wash * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - 0.8*band)
-        + u_sideLed * wallProx * facingIn * mix(u_sideLow, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
+    // QA r3: unoccluded share of the hemisphere (u_aoTune.x, was 0.15) and a bounce gain (u_aoTune.y), AO_TUNE in
+    // 12_scene.js: vertical faces between the seats read 2-3x too dark against the lit tops (charcoal shells #191b1f
+    // vs c_27312 #394049-#414755, ash ends #848078 vs #bdbaab)
+    amb = (hemi * (u_aoTune.x + (1.0 - u_aoTune.x)*ao) + bounce * u_aoTune.y) * binShade * (1.0 - band)
+        + u_wash * lt * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - bandW)
+        + u_sideLed * u_sideLow.y * wallProx * facingIn * mix(u_sideLow.x, 1.0, smoothstep(0.95, 1.55, v_wpos.y)) * smoothstep(0.35, 0.8, v_wpos.y)
                     * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown
-        + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - 0.65*band)
+        + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - band)
         + u_winGlow * wl.rgb * reveal * 1.4;
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
