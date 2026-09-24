@@ -44,7 +44,7 @@ const BINMAT = {
   doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10 },
   bandC: { c: '#e4e3df', r: 0.5, l: LAYER.plastic, e: 0.10 },
   signPod: { c: '#2a2e34', r: 0.45 },
-  seam: { c: '#959aa0', r: 0.8 },   // thin mid-grey hairline, not a black arc (c_th1, b_sany_y22 [V])
+  seam: { c: '#a7abb0', r: 0.8 },   // thin mid-grey hairline, not a black arc (c_th1, b_sany_y22 [V])
   lipGap: { c: '#4a4f56', r: 0.8 },
   lip: { c: '#e2e2df', r: 0.36, l: LAYER.plastic },
   bezel: { c: '#d3d5d6', r: 0.4 },
@@ -172,8 +172,8 @@ function faceShell(face, xs, inward, out, inn) {
 function addDoor(B, face, L, xs, inward, mat = BINMAT.door) {
   B.add(gExtrude(faceShell(face, xs, inward, 0.006, 0.004), L - 0.006, 45), null, mat);
 }
-// hairline between modules: fills the 6 mm door gap 1 mm below the skin (w1: a 12 mm gap read as a black arc)
-const doorSeam = (B, face, xs, inward, z = 0) => B.add(gExtrude(faceShell(face, xs, inward, 0.005, 0.002), 0.0062, 45), M4.trs(0, 0, z), BINMAT.seam);
+// hairline between modules: fills the 6 mm door gap just below the skin (w1: a 12 mm gap read as a black arc)
+const doorSeam = (B, face, xs, inward, z = 0) => B.add(gExtrude(faceShell(face, xs, inward, 0.0058, 0.002), 0.0064, 45), M4.trs(0, 0, z), BINMAT.seam);
 // baked shading for the bins (the shader's hemisphere fill leaves them flat): x1.0 (ny 0.5) .. x0.95 (facing down),
 // continuous in the normal, calibrated on photo samples (y_47301 door #c7c6cb..#dcdcdc, bin bottom #c0c3c8,
 // centre bin #c2c3c7; c_27312 centre bin #c3c7cb; py_37302 door #b2bcc6, vault #f0f1ef) [D factors; r2 raised
