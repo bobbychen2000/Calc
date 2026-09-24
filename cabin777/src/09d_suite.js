@@ -56,9 +56,10 @@ function suiteUnit(opts = {}) {
     B.add(gRBox(wing - 0.012, H - 0.68, 0.03, 0.033, 3), M4.trs(xo + wing / 2, 0.68 + (H - 0.68) / 2, -L + 0.135), SEATMAT.fWood);
     B.add(gRBox(0.12, 0.02, 0.14, 0.008, 1), M4.trs(xo + 0.06, 0.70, -L + 0.19), SEATMAT.fCap);
   } else {
-    // w3: yaw so the aft end stays inside its own suite (the pair opens aft as a V), plain wood with no cap (w3b: an X)
-    const fin = M4.trs(-hx + 0.02, 0, -L + 0.15, 18 * DEG);
-    B.add(gRBox(0.02, H - 0.62, 0.28, 0.006, 1), M4.mul(fin, M4.trs(0, 0.62 + (H - 0.62) / 2, 0.14)), SEATMAT.fWood);
+    // w4: a SOLID half-wedge from the divider plane to an 18-deg face; with the mirrored neighbour the pair is one dark-wood
+    // wedge opening aft (w3b: an X; w4b: two thin boards read as open cabinet doors)
+    const fz = 0.27, fx = fz * Math.tan(18 * DEG) + 0.012;
+    B.add(gExtrude([[-hx, L - 0.12], [-hx + 0.012, L - 0.12], [-hx + fx, L - 0.12 - fz], [-hx, L - 0.12 - fz]], H - 0.62), M4.trs(0, 0.62 + (H - 0.62) / 2, 0, 0, -Math.PI / 2), SEATMAT.fWood);
   }
   // w1: the aisle pier is a wider wood face angled 45 deg (centre 55) toward the seat from the screen edge (omaat_f10: pier 188 px vs
   // screen 610 px; up_forward_look 1D), holding a tall grey-rimmed pill mirror (~0.13 x 0.44, reflective blue-grey #667fa1)
@@ -171,7 +172,7 @@ function suiteUnit(opts = {}) {
   // w3: ONE flat-topped arm replacing the corner cap - top flush with the other caps, 0.16 wide (flush with the wardrobe inner
   // face), running aft over the parked leaf and 0.03 forward past the screen wall, with a thick rounded underside (w3b: the
   // separate box read as a bolster)
-  B.add(gRBox(0.172, 0.09, 0.66, 0.035, 3), M4.trs(hx - 0.08, H + 0.0175, -L + 0.30), SEATMAT.fCap);
+  B.add(gRBox(0.13, 0.09, 0.66, 0.035, 3), M4.trs(hx - 0.059, H + 0.0175, -L + 0.30), SEATMAT.fCap);   // w4: outboard so the inner edge clears the pier
   // aisle-facing exterior (w1): two EQUAL 0.50 m sliding leaves parked at either end of a ~0.64 m opening (omaat_f7 /
   // up_empty ~1.3 leaf), each a dark frame round flat vertical slats with dark grooves, pitch ~0.024, ~20 per leaf (pb_20
   // closed, omaat_f49); the fixed wardrobe run aft of the aft leaf is dark wood in a dark frame (pb_20 flanks) + LED line
