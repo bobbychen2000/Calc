@@ -104,7 +104,7 @@ const SEATMAT = {
   fInner: { c: '#6a635d', r: 0.5, l: LAYER.plastic },       // QA r3: +15 %, ottoman base / aisle box read #474141 vs omaat_f11 #70635c
   fFabric: { c: '#6c655d', r: 0.92, l: LAYER.fTweed },      // warm grey, no mauve: omaat_f9 #756c66, f10 ottoman #81716a (w1)
   fLeather: { c: '#4f4b49', r: 0.48, l: LAYER.leather },
-  fFlap: { c: '#7a7e80', r: 0.6, l: LAYER.leather },          // light cool slate, ~15 % lighter than the back: omaat_f9 #92938e vs #7d766e (w1)
+  fFlap: { c: '#76766f', r: 0.6, l: LAYER.leather },          // neutral grey, ~1.17x the back: omaat_f9 145/146/141 vs 128/121/113 (w3)
   fCap: { c: '#8a8272', r: 0.42, l: LAYER.plastic },
   fConsole: { c: '#7a736c', r: 0.45, l: LAYER.plastic },
   fCushionBlue: { c: '#9488d0', r: 0.85, l: LAYER.fabric },  // lavender, ~1.3x the seat fabric: omaat_f9 #a194e2 (w1)

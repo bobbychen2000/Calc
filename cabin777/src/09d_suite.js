@@ -55,9 +55,9 @@ function suiteUnit(opts = {}) {
     B.add(gRBox(wing - 0.012, H - 0.68, 0.03, 0.05, 3), M4.trs(xo + wing / 2, 0.68 + (H - 0.68) / 2, -L + 0.135), SEATMAT.fWood);
     B.add(gRBox(0.12, 0.02, 0.14, 0.008, 1), M4.trs(xo + 0.06, 0.70, -L + 0.19), SEATMAT.fCap);
   } else {
-    const fin = M4.trs(-hx + 0.03, 0, -L + 0.15, -18 * DEG);
+    // w3: yaw so the aft end stays inside its own suite (the pair opens aft as a V), plain wood with no cap (w3b: an X)
+    const fin = M4.trs(-hx + 0.02, 0, -L + 0.15, 18 * DEG);
     B.add(gRBox(0.02, H - 0.62, 0.28, 0.006, 1), M4.mul(fin, M4.trs(0, 0.62 + (H - 0.62) / 2, 0.14)), SEATMAT.fWood);
-    B.add(gRBox(0.03, 0.02, 0.29, 0.006, 1), M4.mul(fin, M4.trs(0, H + 0.01, 0.14)), SEATMAT.fCap);
   }
   // w1: the aisle pier is a wider wood face angled 45 deg (centre 55) toward the seat from the screen edge (omaat_f10: pier 188 px vs
   // screen 610 px; up_forward_look 1D), holding a tall grey-rimmed pill mirror (~0.13 x 0.44, reflective blue-grey #667fa1)
@@ -167,8 +167,10 @@ function suiteUnit(opts = {}) {
   B.add(gRBox(0.04, H, 0.50, 0.012, 1), M4.trs(hx - 0.02, H / 2, -L + 0.35), SEATMAT.fShell);
   // w2: the forward aisle corner carries a thick rounded taupe hood cantilevered over the aisle and the pier, one smooth
   // rounded prow (w2: a separate down-turned lip read as a knob) (omaat_f4 both aisles, f47 from inside) [V shape, A size]
-  cap(0.04, 0.50, hx - 0.02, H, -L + 0.35);
-  B.add(gRBox(0.13, 0.085, 0.40, 0.04, 3), M4.trs(hx - 0.045, H + 0.02, -L + 0.23), SEATMAT.fCap);
+  // w3: ONE flat-topped arm replacing the corner cap - top flush with the other caps, 0.16 wide (flush with the wardrobe inner
+  // face), running aft over the parked leaf and 0.03 forward past the screen wall, with a thick rounded underside (w3b: the
+  // separate box read as a bolster)
+  B.add(gRBox(0.172, 0.09, 0.66, 0.035, 3), M4.trs(hx - 0.08, H + 0.0175, -L + 0.30), SEATMAT.fCap);
   // aisle-facing exterior (w1): two EQUAL 0.50 m sliding leaves parked at either end of a ~0.64 m opening (omaat_f7 /
   // up_empty ~1.3 leaf), each a dark frame round flat vertical slats with dark grooves, pitch ~0.024, ~20 per leaf (pb_20
   // closed, omaat_f49); the fixed wardrobe run aft of the aft leaf is dark wood in a dark frame (pb_20 flanks) + LED line
@@ -177,9 +179,9 @@ function suiteUnit(opts = {}) {
     for (const [z0, z1] of [[-0.96, -0.46], [-L + 0.10, -L + 0.60]]) {
       const len = z1 - z0;
       B.add(gBox(0.004, H - 0.30, len - 0.06), M4.trs(hx + 0.002, yc, (z0 + z1) / 2), SEATMAT.fFluteGap);
-      // w2: 0.055 stiles / rails (~12 % of the leaf, pb_20), 0.019 pitch with rounded 0.011 ribs -> ~45 % dark groove
-      // (pb_20: 23 grooves per leaf; omaat_f4 / f7 convex ribs) [D]
-      for (let z = z0 + 0.066; z < z1 - 0.058; z += 0.019) B.add(gRBox(0.010, H - 0.34, 0.011, 0.004, 1), M4.trs(hx + 0.005, yc, z), SEATMAT.fFlute);
+      // w2: 0.055 stiles / rails (~12 % of the leaf, pb_20), rounded ribs with a ~45 % dark groove (omaat_f4 / f7 convex ribs).
+      // w3: pitch 0.026 (15 per leaf, real pb_20 ~23 at ~0.017) - finer ribs alias to moire at cabin distance [A, deliberate]
+      for (let z = z0 + 0.068; z < z1 - 0.058; z += 0.026) B.add(gRBox(0.010, H - 0.34, 0.015, 0.005, 1), M4.trs(hx + 0.005, yc, z), SEATMAT.fFlute);
       for (const z of [z0 + 0.0275, z1 - 0.0275]) B.add(gRBox(0.016, H - 0.24, 0.055, 0.006, 1), M4.trs(hx + 0.007, yc, z), SEATMAT.fDoorFrame);
       for (const y of [0.14 + 0.0275, H - 0.10 - 0.0275]) B.add(gRBox(0.016, 0.055, len, 0.006, 1), M4.trs(hx + 0.007, y, (z0 + z1) / 2), SEATMAT.fDoorFrame);
       B.add(gBox(0.006, 0.008, len - 0.02), M4.trs(hx + 0.004, 0.06, (z0 + z1) / 2), SEATMAT.fLed);
@@ -222,7 +224,7 @@ function suiteUnit(opts = {}) {
     }
     // w2: pillows propped up against the aft niche, lavender in front (omaat_f46, up_bed_made) [V]
     B.add(gLoft(cushionSecs(0.5, 0.32, 0.13, -0.065, { edge: 0.05, r: 0.05 }), 3), M4.trs(seatX, 0.66, -0.29, 0, -60 * DEG), SEATMAT.pillow);
-    B.add(gLoft(cushionSecs(0.44, 0.28, 0.10, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.trs(seatX + 0.04, 0.63, -0.40, 0, -55 * DEG), SEATMAT.fCushionBlue);
+    B.add(gLoft(cushionSecs(0.44, 0.28, 0.10, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.trs(seatX + 0.04, 0.53, -0.52, 0, -15 * DEG), SEATMAT.fCushionBlue);
   } else {
     B.add(gLoft(cushionSecs(SW, 0.62, 0.075, -0.035, { edge: 0.022, r: 0.02, crown: 0.004 }), lod ? 3 : 4), M4.mul(S, M4.trs(0, 0.375, -0.36, 0, 2 * DEG)), F);
     // w1: taller, nearly upright back - top ~1.14 m, 5 deg (omaat_f5 level view) [D]
@@ -237,7 +239,7 @@ function suiteUnit(opts = {}) {
       B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(S, M4.trs(0, 0.418, -0.40)), SEATMAT.buckle);
     }
     // w2: plump pillow tapering to thin edges (omaat_f9 / f5), not a slab
-    B.add(gLoft([SEC(0, 0.36, 0.03, 0, 0.012), SEC(0.05, 0.43, 0.09, 0, 0.04), SEC(0.15, 0.45, 0.13, 0, 0.05), SEC(0.25, 0.43, 0.09, 0, 0.04), SEC(0.30, 0.36, 0.03, 0, 0.012)], 3), M4.mul(BH, M4.trs(-0.08, 0.05, -0.11, 0.25, 6 * DEG)), SEATMAT.fCushionBlue);
+    B.add(gLoft([SEC(0, 0.38, 0.03, 0, 0.012), SEC(0.025, 0.42, 0.07, 0, 0.025), SEC(0.07, 0.44, 0.11, 0, 0.03), SEC(0.15, 0.45, 0.13, 0, 0.03), SEC(0.23, 0.44, 0.11, 0, 0.03), SEC(0.275, 0.42, 0.07, 0, 0.025), SEC(0.30, 0.38, 0.03, 0, 0.012)], 4), M4.mul(BH, M4.trs(-0.08, 0.05, -0.11, 0.25, 6 * DEG)), SEATMAT.fCushionBlue);
     // w1: leg rest flush with the base front (-0.67 local), one seam, no protruding plate (omaat_f9 / f5)
     B.add(gLoft([SEC(0.0, SW - 0.02, 0.05, 0, 0.02), SEC(0.30, SW - 0.01, 0.055, 0, 0.022)], 3), M4.mul(S, M4.trs(0, 0.04, -0.68, 0, -3 * DEG)), F);
   }
