@@ -11,6 +11,7 @@ Landing gear: electromechanically actuated tricycle (PC-12 NG MSN 1451+ / NGX / 
 Geometry is built in the gear-DOWN position; each unit stores its retraction
 axis/angle (and each door its opening angle) for the viewer's gear animation.
 Wheel track 4.53 m (Pilatus), wheelbase 3.48 m (POH three-view).
+Stage 2 (rev B): axle, pivot and brace positions from the Pilatus NGX drawing (side / front views).
 """
 from __future__ import annotations
 import numpy as np
@@ -24,12 +25,30 @@ from model import fuselage as F
 
 TRACK = 4.53
 WHEELBASE = 3.48
-MAIN_AXLE = np.array([6.43, TRACK / 2, 0.265])
-NOSE_AXLE = np.array([MAIN_AXLE[0] - WHEELBASE, 0.0, 0.212])
-MAIN_TRUNNION = np.array([6.02, TRACK / 2, 0.990])   # sets the ~1 in retracted tyre protrusion (POH)
-NOSE_PIVOT = np.array([3.08, 0.0, 1.12])
+# Stage 2 (rev B): axles and leg geometry from the Pilatus drawing side / front views.  The drawing's axles are
+# 3.515 m apart; the POH 3.48 m is kept and the pair is centred on the drawn axles (each unit moved rigidly by
+# GEAR_SHIFT, forward for the main gear, aft for the nose gear).
+GEAR_SHIFT = 0.0175
 MAIN_TYRE = dict(R=0.2795, W=0.216, rim=0.127)      # 22 x 8.50-10
 NOSE_TYRE = dict(R=0.2225, W=0.159, rim=0.076)      # 17.5 x 6.25-6
+MAIN_AXLE = np.array([6.428 - GEAR_SHIFT, TRACK / 2, 0.279])        # static, tyre on the ground line
+NOSE_AXLE = np.array([MAIN_AXLE[0] - WHEELBASE, 0.0, 0.222])
+# retraction pivot (axis along x): x at the drawn leg top; WL at the wing lower skin, which with the moved wing
+# still gives the POH ~1 in tyre protrusion when retracted (see retracted_wheel())
+MAIN_TRUNNION = np.array([5.950 - GEAR_SHIFT, TRACK / 2, 1.070])
+MAIN_LINK_PIVOT = np.array([6.118 - GEAR_SHIFT, TRACK / 2, 0.517])  # trailing-link pivot on the leg
+MAIN_SHOCK = ((6.333 - GEAR_SHIFT, 0.930), (6.380 - GEAR_SHIFT, 0.400))   # shock strut top / bottom (x, z)
+MAIN_BRACE = ((5.950 - GEAR_SHIFT, 1.330, 1.220), (6.040 - GEAR_SHIFT, 2.250, 0.840))  # side brace A, B0
+NOSE_PIVOT = np.array([2.970 + GEAR_SHIFT, 0.0, 1.040])
+NOSE_FORK = np.array([2.930 + GEAR_SHIFT, 0.0, 0.520])             # fork crown / piston bottom
+NOSE_BRACE = ((3.470 + GEAR_SHIFT, 0.0, 1.070), (3.030 + GEAR_SHIFT, 0.0, 0.785))      # drag brace A, B0
+
+
+def retracted_wheel(side=1):
+    """Main-wheel centre after the 90 deg inward retraction about MAIN_TRUNNION (x-axis)."""
+    T, A = MAIN_TRUNNION, MAIN_AXLE
+    return np.array([A[0], side * (T[1] - (T[2] - A[2])), T[2] + (A[1] - T[1])])
+
 
 from model.bays import WELL, SLOT, NOSE_BAY, main_opening_sdf, nose_bay_sdf
 
@@ -68,7 +87,7 @@ def build_main(parts, side):
     S = np.array([1, sgn, 1.0])
     T = MAIN_TRUNNION * S
     A = MAIN_AXLE * S
-    L = np.array([6.02, TRACK / 2, 0.43]) * S          # trailing-link pivot
+    L = MAIN_LINK_PIVOT * S                            # trailing-link pivot
     yax = np.array([0, 1.0, 0])
     struct = []
     # trunnion + leg
@@ -93,14 +112,14 @@ def build_main(parts, side):
     struct.append(cylinder(A - fy * yax, A + fy * yax, 0.026, n=16))      # axle
     # shock absorber (inboard side so it stows inside the wing)
     s_in = -sgn * 0.19
-    S1 = np.array([6.05, T[1] + s_in, 0.95])
-    S2 = np.array([6.30, T[1] + s_in * 0.95, 0.37])
+    S1 = np.array([MAIN_SHOCK[0][0], T[1] + s_in, MAIN_SHOCK[0][1]])
+    S2 = np.array([MAIN_SHOCK[1][0], T[1] + s_in * 0.95, MAIN_SHOCK[1][1]])
     mid = S1 + 0.55 * (S2 - S1)
     shock_body = cylinder(S1, mid, 0.042, n=18)
     shock_rod = cylinder(mid - 0.05 * (S2 - S1), S2, 0.027, n=14)
     lugs = [cylinder(S1 - [0, 0.04 * sgn, 0], S1 + [0, 0.04 * sgn, 0], 0.03, n=12),
             box(S2 + [0.0, -s_in * 0.4, 0.0], (0.06, abs(s_in) * 0.9, 0.04)),
-            box(np.array([6.03, T[1] + s_in * 0.5, 0.95]), (0.06, abs(s_in), 0.05))]
+            box(np.array([MAIN_SHOCK[0][0], T[1] + s_in * 0.5, MAIN_SHOCK[0][1]]), (0.06, abs(s_in), 0.05))]
     wh = wheel(A, yax, MAIN_TYRE, n=44, brake_side=-sgn)
 
     # leg door: wing lower-skin patch over the leg slot (retracted position) rotated down with the leg
@@ -163,7 +182,7 @@ def build_nose(parts):
     P = NOSE_PIVOT
     A = NOSE_AXLE
     yax = np.array([0, 1.0, 0])
-    low = np.array([2.975, 0, 0.40])            # piston bottom / fork crown
+    low = NOSE_FORK.copy()                      # piston bottom / fork crown
     u = (low - P) / np.linalg.norm(low - P)
     struct = []
     struct.append(cylinder(P - 0.12 * yax, P + 0.12 * yax, 0.035, n=16))           # trunnion
@@ -285,12 +304,12 @@ def brace_parts(parts):
     specs = []
     for side, sgn in (("R", 1), ("L", -1)):
         T = MAIN_TRUNNION * [1, sgn, 1]
-        A = np.array([6.0, 1.95 * sgn, 1.00])
-        B0 = np.array([6.0, 2.215 * sgn, 0.76])
+        A = np.array(MAIN_BRACE[0]) * [1, sgn, 1]
+        B0 = np.array(MAIN_BRACE[1]) * [1, sgn, 1]
         ref = np.array([0, -0.30 * sgn, 0.95])
         specs.append((f"brace_main_{side}", f"gear_main_{side}", A, B0, T, np.array([1.0, 0, 0]), ref,
                       f"{'Right' if sgn > 0 else 'Left'} main-gear folding side brace"))
-    specs.append(("brace_nose", "gear_nose", np.array([3.46, 0, 1.16]), np.array([3.033, 0, 0.80]), NOSE_PIVOT,
+    specs.append(("brace_nose", "gear_nose", np.array(NOSE_BRACE[0]), np.array(NOSE_BRACE[1]), NOSE_PIVOT,
                   np.array([0, 1.0, 0]), np.array([0.72, 0, -0.695]), "Nose-gear folding drag brace"))
     for pid, gear_id, A, B0, T, axis, ref, name in specs:
         L = np.linalg.norm(B0 - A) / 2 * 1.0005
