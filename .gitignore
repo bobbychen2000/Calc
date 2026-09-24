@@ -4,3 +4,6 @@ __pycache__/
 pc12/web/three_local/
 # scratch screenshots / overlays
 pc12/out/tmp/
+# third-party reference material (Pilatus drawings, photos) and data derived from it:
+# fetched by pc12/refs scripts, never committed (public repo)
+pc12/refs/cache/
