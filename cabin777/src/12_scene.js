@@ -33,16 +33,17 @@ const MOODS = {
   // (hemi x lowTint = [0.81, 0.78, 0.72]) so seat-level ash stays grey and brighter than the bins [V: ff_door-gap ash
   // #afafaf / #acb1ba (s <= 0.08), grey shell #6f7982]; the lens light reaches the wall less red (sideWall) and not past
   // the window tops (sideLow 0) [A: no amber-phase sidewall photo, questions_lighting.md 2]
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0, sideWall: [0.35, 1.2, 1.5], bandCut: 0.3, vault: [0.62, 0.31, 0.13], lowTint: [1.3, 2.6, 6.5], k: 0.9, exposure: 1.3, strips: true },
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0, sideWall: [0.35, 1.2, 1.5], bandCut: 0.3, vault: [0.52, 0.26, 0.11], lowTint: [1.3, 2.6, 6.5], k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
   // used in r1 (roame_7672, sany_10) were boarding shots on the ground (daylight in the windows), so not the night scene
   // QA r3: cove / lens saturated amber (was warm white) [V: stwis_img_6223 cove #dc9340 / #b0671a (h25-32, s0.71-0.85),
-  // ucr PSU lamp #9f5e39], the lens light kept to the upper wall (ucr sidewall #24211c); vault wash dim warm (mid-vault
-  // <= #2a2219); hemi unchanged (image mean already matches ucr 39/35/33)
-  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.070, 0.024, 0.004], sideLed: [0.035, 0.012, 0.002], sideLow: 0, vault: [0.045, 0.030, 0.018], k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0, sideWall: [0.35, 1.2, 1.2], bandCut: 0.3, vault: [0.62, 0.28, 0.19], lowTint: [1.3, 2.6, 4.5], k: 0.9, exposure: 1.3 },
+  // ucr PSU lamp #9f5e39], the lens light kept to the upper wall (ucr sidewall #24211c); vault wash the same amber hue
+  // (G/R 0.36, as the photo's dim amber h25-30), mid-vault <= #2a2219 [D]; hemi unchanged (image mean already matches
+  // ucr 39/35/33)
+  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.10, 0.034, 0.0056], sideLed: [0.035, 0.012, 0.002], sideLow: 0, vault: [0.022, 0.008, 0.0016], k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0, sideWall: [0.35, 1.2, 1.2], bandCut: 0.3, vault: [0.52, 0.235, 0.16], lowTint: [1.3, 2.6, 4.5], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
