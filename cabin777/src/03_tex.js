@@ -12,13 +12,15 @@ let PHOTO_PIX = null;
 //  19 J ash 0.3 (SD 0.025-0.05 on omaat_room_10 / c_27313), 21 F tweed 0.5 (reads as a uniform fine weave, omaat_f11 / f2),
 //  20 F wood 0.7 (near-black veneer with fine lighter streaks, omaat_f60)
 // QA r2: 17 PY dashes 1.0 (high-passed re-cut; the light dashes carry the brightness, py_37301 p10/p90 100/201),
-//  18 J tweed 0.5 (luminance-only re-cut, fine weave), 19 J ash 1.8 (c_27305 cabinet: high-pass SD 6.1 % in sRGB = ~13 %
-//  linear vs 7.3 % in the swatch -> x1.8) [D], 23 PY / Y confetti 1.0 (white flakes ~220 on a 55-65 ground, py_37305)
-const PHOTO_GAIN = { 17: 1.0, 18: 0.5, 19: 1.8, 20: 0.7, 21: 0.5, 23: 1.0 };
+//  18 J tweed 0.5 (luminance-only re-cut, fine weave), 19 J ash 2.0 (c_27305 cabinet: high-pass SD 6.1 % in sRGB = ~13 %
+//  linear vs 6.3 % in the column-normalised swatch -> x2) [D], 23 PY / Y confetti 1.0 (white flakes ~220 on a 55-65
+//  ground, py_37305)
+const PHOTO_GAIN = { 17: 1.0, 18: 0.5, 19: 2.0, 20: 0.7, 21: 0.5, 23: 1.0 };
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
 // in linear light and clipped away at 2x. photoBase() lifts the material colour by ENC/2 to compensate.
-// QA r2: 6 (was 8) so the brighter cobalt base (#3c4c8a, y_47301) lifted by ENC/2 stays below 1 in blue
-const PHOTO_ENC = { y_tick: 6, y_diamond: 6 };
+// QA r2: 5 (was 8) so the brighter cobalt base (#5468a8) lifted by ENC/2 stays below 1 in blue
+// py_back 4 / py_confetti 6: white dashes / flakes 4.6x / ~17x their charcoal ground (py_37301 / 37305)
+const PHOTO_ENC = { y_tick: 5, y_diamond: 5, py_back: 4, py_confetti: 6 };
 function photoBase(hex, name) {
   const k = (typeof PHOTO_TEX !== 'undefined' && PHOTO_TEX && PHOTO_TEX[name] && PHOTO_ENC[name]) ? PHOTO_ENC[name] / 2 : 1;
   if (k === 1) return hex;

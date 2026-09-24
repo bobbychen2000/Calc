@@ -7,14 +7,17 @@ const SEATMAT = {
   // headrest covers, off-white shells + arms, cerulean belts, navy pillows -- all read from ANA's official Y photos
   // (ref/ana/y_4730x; REFERENCE777.md). Fabric mean #2a3a70 (ground ~#1f3068, ticks ~#bccdf5 in y_47306); photoBase()
   // compensates the wide-range swatch encoding
-  // QA r2: the old #2a3a70 rendered ~3x too dark and too saturated (render #0f163e vs photo #495d9c y_47301, #495d99
-  // y_47306, #36406f-#3d4676 y_47302; photo R/B 0.5-0.6) -> brighter, less saturated cobalt mean
-  yFabric: { c: photoBase('#3c4c8a', 'y_tick'), r: 0.9, l: LAYER.yJacq },
-  yFabricB: { c: photoBase('#3c4c8a', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
-  yFabricC: { c: '#3c4c8a', r: 0.9, l: LAYER.yMosaic },   // third variant: dash mosaic (y_47302 left, y_47306 right)
+  // QA r2: the old #2a3a70 rendered ~3x too dark and too saturated (render #0f163e vs photo #415390 y_47301, #495d99
+  // y_47306). The pale ticks carry most of the red, and the ACES toe crushes the dark ground's red, so the seat reads
+  // more saturated than its albedo: #5468a8 is the base whose tick swatch averages #415596 through the renderer's tone
+  // curve at studio exposure (4x4 texel average, test/sim of 04_shaders toLin + aces) ~ photo #415390 [D]
+  yFabric: { c: photoBase('#5468a8', 'y_tick'), r: 0.9, l: LAYER.yJacq },
+  yFabricB: { c: photoBase('#5468a8', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
+  yFabricC: { c: '#5064a4', r: 0.9, l: LAYER.yMosaic },   // third variant: dash mosaic (y_47302 left, y_47306 right)
   // headrest cushion: sparse white confetti on cobalt, a different fabric from the back (y_47306 / 47302 wings,
   // REFERENCE777.md) - shares the luminance-only confetti swatch with the PY wings
-  yHead: { c: '#3a4a88', r: 0.9, l: LAYER.pyConfetti },
+  // (same tone-curve match: wing photo mean #334276 in y_47306 -> base #4a5a98 averages #324384) [D]
+  yHead: { c: photoBase('#4a5a98', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
   yCover: { c: '#50566c', r: 0.45, l: LAYER.leather },
@@ -40,11 +43,13 @@ const SEATMAT = {
   // cabin wall both photo sets give near-neutral greys: back fabric (97,97,105) py_37305, wing (94,96,111), shell ~#525352
   // py_37303 -> the blue cast of the old values removed
   // QA r2: darker ground under a high-passed dash swatch at gain 1 so the light dashes carry the brightness (py_37301 back
-  // p10/p90 100/201); flap / back luminance 0.47-0.56 (py_37305 46/97, py_37302 69/124) -> lighter navy flap;
-  // wings: white flakes (~220) on charcoal-navy (55-65, py_37305)
-  pyFabric: { c: '#6e7076', r: 0.9, l: LAYER.pyFleck },
-  pyCover: { c: '#373f63', r: 0.5, l: LAYER.leather },
-  pyWing: { c: '#4a4d58', r: 0.9, l: LAYER.pyConfetti },
+  // p10/p90 100/201); flap / back luminance 0.43-0.56 (py_37305 41/97, py_37302 69/124): QA r2 render gave 0.61 and an
+  // over-saturated navy (ACES toe) with #373f63 -> greyer navy;
+  // wings: white flakes (~220) on charcoal-navy (55-65, py_37305). Tone-curve matched as for Y: back #6e7076 averages
+  // #5c5f66 (py_37305 back #5f5f68), wing #6e7182 averages #585c6e (py_37305 wing #5d5f6e) [D]
+  pyFabric: { c: photoBase('#6e7076', 'py_back'), r: 0.9, l: LAYER.pyFleck },
+  pyCover: { c: '#343850', r: 0.5, l: LAYER.leather },   // photo flap #232740, R/B 0.55 (py_37305): less saturated
+  pyWing: { c: photoBase('#6e7182', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
   pyShell: { c: '#5e6062', r: 0.42, l: LAYER.plastic },
   pyArm: { c: '#595b5e', r: 0.45, l: LAYER.plastic },
   pyArmPad: { c: '#6f7173', r: 0.5, l: LAYER.leather },
@@ -897,19 +902,6 @@ function seatBedCenter(s) {
 }
 const seatHasBed = (s) => s.kind === 'room' || s.kind === 'suite';
 
-// Geometry the AO volume (12_scene computeAO) voxelises for a suite: the open-topped 1.30 m shells made the enclosed
-// 2.2 x 1.2 m box saturate (QA r2: console / ottoman rendered #272423 / #2c2929 beside a #ebeef1 sidewall, while the real
-// suite f_17313 reads console #74706d, ottoman #6a6268, sidewall #dee0df). Keep the parts below the console top (seat,
-// ottoman, footwell, console) and only every third triangle of the walls above it, so the walls still cast a soft
-// occlusion but light falls in from the open top as it does in the photos [D]
-function suiteAOGeo(geo, yCut = 0.70) {
-  const P = geo.pos, I = geo.idx, idx = [];
-  for (let t = 0; t < I.length; t += 3) {
-    const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
-    if ((P[a + 1] + P[b + 1] + P[c + 1]) / 3 < yCut || (t / 3) % 3 === 0) idx.push(I[t], I[t + 1], I[t + 2]);
-  }
-  return { pos: P, idx };
-}
 function buildSeats(gl, layout) {
   const meshes = {};
   const inst = {};
@@ -975,7 +967,7 @@ function buildSeats(gl, layout) {
     const hiGeo = gen(false);
     const hi = gl.mesh(hiGeo, { name: key, layer: 'seats', instances: v.mats, tints: v.tints });
     const lo = hasLod ? gl.mesh(gen(true), { name: key + 'Lo', layer: 'seats', instances: [], castShadow: false }) : null;
-    groups[key] = { key, hi, lo, master, n, refs: v.refs, dirty: true, geo: key.startsWith('suite') ? suiteAOGeo(hiGeo) : hiGeo, mats: v.mats, nearK: /^(y|py)/.test(key) ? 0.66 : 1.25 };
+    groups[key] = { key, hi, lo, master, n, refs: v.refs, dirty: true, geo: hiGeo, mats: v.mats, nearK: /^(y|py)/.test(key) ? 0.66 : 1.25 };
     meshes[key] = hi;
     if (lo) meshes[key + 'Lo'] = lo;
   }

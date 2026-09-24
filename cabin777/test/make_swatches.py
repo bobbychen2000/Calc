@@ -42,7 +42,10 @@ SW = {
     'f_wood':      ('web/suite/omaat_f60.jpg', (0, 490, 100, 590), 0.11),
     'y_carpet':    ('y_47304', (24, 384, 226, 556), 0.26),
 }
-ENC = {'y_tick': 6, 'y_diamond': 6}       # default 2 (= ratio x 0.5); QA r2: 6 (was 8), see 03_tex.js PHOTO_ENC
+# QA r2: Y 5 (was 8), see 03_tex.js PHOTO_ENC; py_back 4: its white dashes are ~4.6x the charcoal ground in linear light
+# (py_37301 luminance p10 / p90 100 / 201) and were clipped at 1.5x, which left the dark gaps dominant (pattern read
+# inverted); py_confetti 6: white flakes ~220 on a 55-65 ground (py_37305, ~17x linear)
+ENC = {'y_tick': 5, 'y_diamond': 5, 'py_back': 4, 'py_confetti': 6}       # default 2 (= ratio x 0.5)
 # grey-pattern materials: keep only the luminance pattern (the per-channel ratio of these phone photos is JPEG chroma
 # noise and lilac / green casts); the model's material colour sets the hue
 MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave (QA r1, wall-balanced py_37305)
@@ -50,6 +53,9 @@ MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave
 # high-pass radius of the lighting / blotch removal (default 40 px on the 256 px tile); py_back: the swatch's low-frequency
 # dark blotches dominated the fine white dashes at seat distance (py_37301 / 37305 read as even dashes on charcoal)
 HP = {'py_back': 20}
+# straight horizontal grain: divide each column by its mean, so only the along-grain streaks remain (the c_27305 crop's
+# faint vertical light bands were amplified into a banded look by the QA r2 gain)
+COLNORM = {'j_ash'}
 
 
 def tileable(a):
@@ -84,6 +90,7 @@ def make(name, photo, box, size, rot=0):
     blur = np.asarray(Image.fromarray((a * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(HP.get(name, 40)))).astype(np.float32) / 255.0
     ratio = lin / np.maximum(blur ** 2.2, 1e-3)
     if name in MONO: ratio = np.repeat(ratio.mean(2, keepdims=True), 3, 2)
+    if name in COLNORM: ratio = ratio / ratio.mean(0, keepdims=True)
     ratio = tileable(ratio)
     # clip specular glints (reflections of cabin lights) so only the material pattern remains
     # (the Y ticks are real ~10x highlights, so the glint limit scales with the encoding range)
