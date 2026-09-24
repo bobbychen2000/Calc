@@ -354,6 +354,9 @@ class Reference:
                 near = Q[Q[:, 0] > xo - 0.03]
                 yo = float(np.mean(near[:, 1])) if len(near) else s * 0.47
                 self.add(f"exhaust_out_{lab}", (xo, yo, zo), 0.03, "drawing exhaust-stack aft extreme (side+plan)")
+                io = np.argmax(np.abs(Q[:, 1]))
+                self.add(f"exhaust_outboard_{lab}", (Q[io, 0], Q[io, 1], zo), 0.03,
+                         "drawing exhaust-stack outboard extreme (plan) at the outlet WL")
         # tailplane and winglet tips, stabiliser and wing leading edges (plan + front view).  The model's
         # tailplane tip sits ~0.5 m aft of the drawing's and its winglet top ~0.28 m lower (outside the glazing
         # scope, reported in PHOTO_MATCH.md), so these replace the model-derived points when available.
@@ -645,6 +648,11 @@ class Solver:
             rr = []
             for i, (c, uv) in enumerate(self.on):
                 q, z, s3 = proj[c]
+                if len(q) == 0:                                  # curve behind the camera
+                    rr.append(1e3 if i in self.active else 0.0)
+                    if detail:
+                        info.append((f"{c}@{i}", "on", np.array([1e3, 0.0]), 1.0, i in self.active))
+                    continue
                 dd = np.hypot(q[:, 0] - uv[0], q[:, 1] - uv[1])
                 j = np.argmin(dd)
                 sig = np.hypot(self.sigma_px * self.weights.get(c, 1.0), s3 * cam.f / max(z[j], 1e-3))
@@ -848,10 +856,11 @@ PHOTOS["unk_top_front"] = dict(
         "stab_tip_out_L": (3164.0, 495.0),
         "winglet_top_te_R": (386.0, 1568.0),     # in flight: wing bending raises the tips (sigma 5 cm + weight)
         "winglet_top_te_L": (4683.0, 1597.0),
-        "exhaust_out_stbd": (2348.0, 2226.0),    # outboard extreme of the stack's outlet end: weight 2
-        "exhaust_out_port": (2772.0, 2228.0),
+        "exhaust_outboard_stbd": (2348.0, 2226.0),   # outboard extreme of the stack (plan): weight 2
+        "exhaust_outboard_port": (2772.0, 2228.0),
     },
-    weights={"exhaust_out_stbd": 2.0, "exhaust_out_port": 2.0, "winglet_top_te_R": 3.0, "winglet_top_te_L": 3.0},
+    weights={"exhaust_outboard_stbd": 2.0, "exhaust_outboard_port": 2.0, "winglet_top_te_R": 3.0,
+             "winglet_top_te_L": 3.0},
     # leading-edge boots: forward (lower-in-image) edge of the black band, from column intensity profiles
     on=[("stab_le_R", uv) for uv in [(1920, 545), (2000, 550), (2100, 555), (2200, 561), (2300, 567), (2400, 572)]]
     + [("stab_le_L", uv) for uv in [(2600, 575), (2700, 571), (2800, 568), (2900, 565), (3000, 562), (3100, 558)]]
