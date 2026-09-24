@@ -303,6 +303,7 @@ const UNITS = {
   roomO: () => roomPart('O'),
   roomE: () => roomPart('E'),
   roomPair: () => { const B = new Builder(); B.addBuilt(roomPart('O')); B.addBuilt(roomPart('E')); return B.build(); },
+  roomPairDoors: () => { const B = new Builder(); B.addBuilt(roomPart('O', { doors: 1 })); B.addBuilt(roomPart('E', { doors: 1 })); return B.build(); },
   roomBedO: () => { const B = new Builder(); B.addBuilt(roomPart('O', { bed: true })); B.addBuilt(roomPart('E')); return B.build(); },
   roomCentre: () => { const B = new Builder(); B.addBuilt(mirrorGeo(roomPart('O')), M4.trs(-0.585, 0, 0)); B.addBuilt(mirrorGeo(roomPart('E')), M4.trs(-0.585, 0, 0)); B.addBuilt(roomPart('O'), M4.trs(0.585, 0, 0)); B.addBuilt(roomPart('E'), M4.trs(0.585, 0, 0)); B.addBuilt(roomDivider()); return B.build(); },
   suiteW: () => suiteUnit(),

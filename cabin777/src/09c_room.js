@@ -81,6 +81,22 @@ function doorEdge(B, x, z, h) {
   B.add(gRBox(0.012, 0.16, 0.02, 0.005, 1), M4.trs(x - 0.02, 0.86, z + 0.025), SEATMAT.jBase);
   B.add(gBox(0.046, 0.004, 0.044), M4.trs(x, 0.142, z), SEATMAT.jRail);                          // silver leaf bottom edge
 }
+// closed sliding door across the entry, z0..z1 at the aisle (x 0.545-0.585), leading edge at zl: aisle face an ash panel
+// in a charcoal frame like the aisle-end panels, seat face charcoal, silver bottom edge, top level with the aisle-end cap
+// (door height = the monument end, c_27312 / c_27313 [D]; closed doors: user toggle, geometry [A])
+function roomDoorClosed(B, z0, z1, zl) {
+  const h = ROOM.wall - 0.14, zc = (z0 + z1) / 2, L = z1 - z0;
+  B.add(gRBox(0.04, h, L, 0.012, 1), M4.trs(0.565, 0.14 + h / 2, zc), SEATMAT.jShell);
+  B.add(gRBox(0.006, h - 0.07, L - 0.05, 0.003, 1), M4.trs(0.585, 0.14 + h / 2, zc), SEATMAT.ash);
+  B.add(gBox(0.04, 0.004, L), M4.trs(0.565, 0.142, zc), SEATMAT.jRail);
+  B.add(gRBox(0.012, 0.16, 0.02, 0.005, 1), M4.trs(0.537, 0.86, zl - Math.sign(zl - zc) * 0.04), SEATMAT.jBase);   // finger pull
+}
+// raised pop-up privacy panel out of the armrest ledge slot (x = slot centre): charcoal panel with the grey-metal top edge,
+// ~0.40 up to just under the shell cap (retracted edge omaat_room_13 [V]; raised height [A])
+function roomPopUp(B, xg, z, L) {
+  B.add(gRBox(0.012, 0.40, L - 0.02, 0.004, 1), M4.trs(xg, ROOM.top + 0.225, z), SEATMAT.jShellIn);
+  B.add(gRBox(0.016, 0.012, L - 0.02, 0.005, 1), M4.trs(xg, ROOM.top + 0.428, z), SEATMAT.jPanelEdge);
+}
 // plan-view (x, z) outline -> slab of height h with its bottom at y0 (gExtrude runs along its own z: turn it to y)
 function planSlab(B, pts, y0, h, mat) { B.add(gExtrude(pts.map(([x, z]) => [x, -z]), h), M4.trs(0, y0 + h / 2, 0, 0, -Math.PI / 2), mat); }
 // rounded rectangle in plan, corner radii [x0z0, x1z0, x1z1, x0z1]
@@ -226,14 +242,14 @@ function roomCard(B, px, s, y, z) {
 }
 // aisle armrest ledge: silver stepped ledge (6 mm lower step on its aisle edge) with a dark lengthwise slot holding the
 // grey-metal top edge of the retracted pop-up privacy panel (omaat_room_13, c_27313 bottom corners; QA r3 had an ash strip) [V]
-function roomLedge(B, w, x, z, L) {
+function roomLedge(B, w, x, z, L, up = false) {
   const y = ROOM.top;
   const xg = x + w / 2 - 0.05;
   B.add(gRBox(w - 0.03, 0.03, L + 0.02, 0.012, 1), M4.trs(x - 0.015, y + 0.01, z), SEATMAT.jLedge);
   for (const e of [-1, 1]) for (let k = 0; k < 3; k++) B.add(gBox(w - 0.03, 0.008, 0.006), M4.trs(x - 0.015, y - 0.012 - k * 0.018, z + e * (L / 2 + 0.013)), SEATMAT.jRail);
   B.add(gRBox(0.03, 0.03, L + 0.02, 0.008, 1), M4.trs(x + w / 2 - 0.015, y + 0.004, z), SEATMAT.jRail);
   B.add(gBox(0.03, 0.008, L), M4.trs(xg, y + 0.023, z), SEATMAT.jVoid);
-  B.add(gBox(0.012, 0.004, L - 0.02), M4.trs(xg, y + 0.026, z), SEATMAT.jPanelEdge);
+  if (up) roomPopUp(B, xg, z, L); else B.add(gBox(0.012, 0.004, L - 0.02), M4.trs(xg, y + 0.026, z), SEATMAT.jPanelEdge);
 }
 
 // Central monument of a pair between z = MON.zO (O's face, looking -z at O) and MON.zE (E's face, +z): O's monitor
@@ -265,7 +281,7 @@ function roomDuvet(B, x, z, w, L) {
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();
-  const bed = !!opts.bed, lod = !!opts.lod;
+  const bed = !!opts.bed, lod = !!opts.lod, doors = !!opts.doors;   // doors: sliding door + pop-up panel closed (seat-card toggle)
   const { hx, hz, top, wall } = ROOM;
   const shell = SEATMAT.jShell, ash = SEATMAT.ash;
   if (part === 'O') {
@@ -284,7 +300,7 @@ function roomPart(part, opts = {}) {
     // narrow aisle armrest (~0.24) along the seat, LOW ledge (0.66) holding the retracted pop-up privacy panel, stowage
     // pocket on its seat-facing side (tpg_31 / 42, c_27313) [V]
     B.add(gRBox(hx - ax0, top, az1 + 1.34, 0.02, 1), M4.trs((ax0 + hx) / 2, top / 2, (az1 - 1.34) / 2), shell);
-    roomLedge(B, hx - ax0, (ax0 + hx) / 2, (az1 - 1.34) / 2, az1 + 1.32);
+    roomLedge(B, hx - ax0, (ax0 + hx) / 2, (az1 - 1.34) / 2, az1 + 1.32, doors);
     roomAisleAsh(B, hx, -1.34, az1);
     if (!lod) {
       B.add(gRBox(0.004, 0.16, 0.30, 0.004, 1), M4.trs(ax0 - 0.002, 0.44, -1.02), SEATMAT.jShellIn);     // side pocket
@@ -314,7 +330,7 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.45, 0.02, MON.zO - tz0 - 0.03, 0.006, 1), M4.trs(0.2375, 0.57, (MON.zO + tz0 + 0.03) / 2), SEATMAT.jShellIn);
     roomFootwell(B, 0.02, 0.455, MON.zE, tz0 + 0.035, 1);
     // sliding door parked in the monument; its leading edge (ash face, charcoal frame, finger pull) faces aft
-    doorEdge(B, 0.56, -0.60, wall - 0.14);
+    if (doors) roomDoorClosed(B, az1, -0.58, az1); else doorEdge(B, 0.56, -0.60, wall - 0.14);
     // central monument body (both columns) + the pillar between the two footwell mouths
     B.add(gRBox(1.13, MON.top - MON.bot, MON.zE - MON.zO, 0.01, 1), M4.trs(-0.02, (MON.top + MON.bot) / 2, (MON.zO + MON.zE) / 2), shell);
     B.add(gRBox(0.05, MON.bot, MON.zE - MON.zO, 0.01, 1), M4.trs(-0.005, MON.bot / 2, (MON.zO + MON.zE) / 2), shell);
@@ -364,7 +380,7 @@ function roomPart(part, opts = {}) {
     roomLamp(B, 0.50, 1.225, -1);
     // narrow aisle armrest with the pop-up privacy panel retracted inside (ash edge flush in the cap)
     B.add(gRBox(0.09, top, 0.60, 0.02, 1), M4.trs(0.54, top / 2, 0.95), shell);
-    roomLedge(B, 0.10, 0.54, 0.95, 0.60);
+    roomLedge(B, 0.10, 0.54, 0.95, 0.60, doors);
     roomAisleAsh(B, hx, 0.65, 1.25);
     // outer column beside E: ash side table only over O's footwell (monument to z 0.62, large-radius seat-side corner),
     // then a charcoal console at the outer-console height to the back shell (QA w2: the old 1.27 m ash slab; c_27315
@@ -388,7 +404,7 @@ function roomPart(part, opts = {}) {
     roomMonitor(B, 0.15, MON.zE, 1, -1);
     roomWing(B, 0.4475, 0.535, MON.zE, 1, MON.bot, 0.20, 1.0);
     // E's sliding door parked in the monitor monument; leading edge faces aft toward E's entry
-    doorEdge(B, 0.56, 0.06, wall - 0.14);
+    if (doors) roomDoorClosed(B, MON.zE, 0.65, 0.65); else doorEdge(B, 0.56, 0.06, wall - 0.14);
     if (bed) {
       B.add(gLoft(cushionSecs(0.58, 1.80, 0.05, -0.02, { edge: 0.02, r: 0.03, crown: 0.004 }), 3), M4.trs(0.24, ROOM.bed + 0.02, 0.38), SEATMAT.mattress);
       roomDuvet(B, 0.24, 0.20, 0.54, 1.35);
