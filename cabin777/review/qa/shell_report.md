@@ -21,7 +21,7 @@ downloaded about 280 new real photos (SANspotter PY/Y, OMAAT THE Room, MileLion 
 The w4 fixes (graded upper tub, faint ribs, darker blackout) were made after the w4 rating and verified in renders,
 not re-rated.
 
-## What changed (commits 86849fe, 060714f, 87d19d4, ab79912, 361a102, and the w4 commit)
+## What changed (commits 86849fe, 060714f, 87d19d4, ab79912, 361a102, aebf9a1)
 
 - **THE Room footwell intrusion (room_r3 high):** over the J seat zones the dado follows `DADO_J`, flush behind the pod
   walls (|x| ≥ 2.862 against 2.847), with no grilles. Caps close the step where a J zone meets a door surround. [V: 09c_room geometry]
