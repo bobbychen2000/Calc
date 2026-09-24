@@ -288,7 +288,7 @@ SH.skyFS = `
 precision highp float;
 in vec2 v_ndc;
 uniform mat4 u_invViewProj; uniform vec3 u_camPos; uniform vec3 u_sunDir; uniform float u_time;
-uniform vec3 u_zenith; uniform vec3 u_horizon; uniform vec3 u_haze; uniform vec3 u_sunTint; uniform float u_night;
+uniform vec3 u_zenith; uniform vec3 u_horizon; uniform vec3 u_haze; uniform vec3 u_sunTint; uniform float u_night; uniform float u_skyK;
 uniform vec3 u_cloudLit; uniform vec3 u_cloudShade; uniform float u_exposure; uniform float u_sunVis;
 uniform sampler2D u_cloud;
 out vec4 o;
@@ -301,7 +301,9 @@ void main(){
   vec3 col;
   float sd = max(dot(dir, u_sunDir), 0.0);
   if (h >= -0.02) {
-    float t = pow(clamp(h, 0.0, 1.0), 0.42);
+    // u_skyK > 0 (day): exponential falloff, pale band only in the lowest few degrees, deep blue above ~10 deg
+    // [V: F-GSQR_1/_2 cruise window views, #93c3f3 at the horizon -> #2f5b98 -> #15305d; user: deep-blue cruise sky]
+    float t = u_skyK > 0.0 ? 1.0 - exp(-u_skyK * max(h, 0.0)) : pow(clamp(h, 0.0, 1.0), 0.42);
     col = mix(u_horizon, u_zenith, t);
     col += u_sunTint * (pow(sd, 6.0)*0.35 + pow(sd, 64.0)*0.8) * u_sunVis;
     col += u_sunTint * smoothstep(0.99955, 0.99975, sd) * 40.0 * u_sunVis;

@@ -42,9 +42,11 @@ const SKIES = {
   // QA r3: winExp 1.6 -> 3.0: day panes must be the brightest thing in a cabin view, near-white against the wall
   // [V: c_27316 pane #ffffff vs wall #d1d1d1-#e2e2e2; y_47300 #fcfcfb; tlfl_IMG_9217 #fefefc]. Deeper day sky for the
   // look-out view (winExp eases to 1 at the window) [V: F-GSQR_1/_2 zenith #114892-#2472ca, from_exterior 2].
+  // Exterior w5 (user: deep-blue cruise sky): zenith / horizon fitted with skyK 12 to #8fb8e6 (1 deg) #5d8cc4 (3) #3a66a0
+  // (8.5) #2a4f86 (15) #1f4274 (25), between F-GSQR_1 and _2 [V photos, D fit].
   // extBounce = the lit deck seen by the exterior's undersides (0.55 x cloudLit) and extSun the exterior's sun scale
   // (the sun side of the cowl saturated at 5.2) [D: from_exterior 1 / 6; alv_ANA77W_NH211_26K cowl #9fabb7-#a9c0ce]
-  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.03, 0.12, 0.48], horizon: [0.35, 0.55, 0.88], haze: [0.55, 0.66, 0.85], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], extBounce: [0.69, 0.69, 0.69], extSun: 0.6, winGlow: [0.45, 0.52, 0.62], winExp: 3.0, sunVis: 1, night: 0, sheer: 1.0 },
+  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.019, 0.05, 0.095], horizon: [0.20, 0.37, 1.0], skyK: 12, haze: [0.55, 0.66, 0.85], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], extBounce: [0.69, 0.69, 0.69], extSun: 0.6, winGlow: [0.45, 0.52, 0.62], winExp: 3.0, sunVis: 1, night: 0, sheer: 1.0 },
   // QA r3: dim blue-grey deck under a narrow orange horizon band, blue upper sky [V: Air_France_777-300ER_Greenland_
   // Sunrise deck #50595d-#646a67, band #d2a46d, sky #9cabaa; Emirates_77W_wing_view / alv_7282 zenith #527dc2]; dark cool
   // deck bounce and a grazing sun at 0.35 on the exterior, so the wing takes the sky colour (from_exterior 3)
@@ -541,7 +543,7 @@ class Scene {
     G.set('u_camPos', cam.pos);
     G.set('u_sunDir', L);
     G.set('u_time', time);
-    G.set('u_zenith', sky.zenith); G.set('u_horizon', sky.horizon); G.set('u_haze', sky.haze);
+    G.set('u_zenith', sky.zenith); G.set('u_horizon', sky.horizon); G.set('u_haze', sky.haze); G.set('u_skyK', sky.skyK || 0);
     G.set('u_sunTint', sky.sun.map((v) => v / 5));
     G.set('u_night', sky.night);
     G.set('u_cloudLit', sky.cloudLit); G.set('u_cloudShade', sky.cloudShade);

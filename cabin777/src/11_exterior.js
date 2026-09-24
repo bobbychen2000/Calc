@@ -324,23 +324,12 @@ function buildExterior(gl) {
     // fairing over the cowl in cowl white, strut under the wing in wing grey [V ANA 11A _137 / JA797A EGLL]
     const kLE = secs.findIndex((q) => q.y - WING.dz >= leE);
     B.add(gLoft(secs.slice(0, kLE + 1), 8, [true, false]), M4.trs(0, 0, 0, 0, Math.PI / 2), cowl);
-    const vS = B.vcount;
     B.add(gLoft(secs.slice(kLE), 4, [false, true]), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
-    // pylon flanks: the exterior pass has no bounce light, so the side away from the sun rendered sky-blue (#46536a) where
-    // photos show it light grey like the wing (JA797A EGLL crop) [V]; bake the fill from the sunlit cowl + cloud deck
-    // as x1.6 albedo on the flanks [A]
-    for (let k = vS; k < B.vcount; k++) {   // strut only; w2: the white fairing was lifted above the cowl
-      const f = 1 + 0.6 * smooth(0.3, 0.9, Math.abs(B.n[k * 3])) * (B.n[k * 3 + 1] > -0.3 ? 1 : 0);
-      for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.min(255, Math.round(B.c[k * 4 + c] * f));
-    }
     // baked occlusion (the exterior pass has no shadow map): canoe and pylon undersides -25 %, nacelle lower half
     // down to x0.7, lower wing skin in the canoe / pylon footprint -25 % [A; shading seen in Boeing_777_(4139974954)_(2)
     // and the p97zMaCMWRg GE90 wing view, nacelle half in shadow]
-    // canoes: flanks filled like the pylon (lit flank #d3d6d3 vs wing #c0ccd4, belly #59636c in ANA 26K _7331) [V], belly -35 %
-    for (let k = vC; k < vN; k++) {
-      const f = 1 + 0.1 * smooth(0.2, 0.9, Math.abs(B.n[k * 3])) * (B.n[k * 3 + 1] > -0.4 ? 1 : 0);
-      for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.min(255, Math.round(B.c[k * 4 + c] * f));
-    }
+    // canoe / pylon flank fills (w1-w3) dropped in w5: the exterior pass now has the cloud-deck bounce (u_extBounce,
+    // lighting r3). Canoe bellies -35 % (belly #59636c vs flank #d3d6d3 in ANA 26K _7331) [V]
     shadeVerts(B, vC, vN, (p, n) => 1 - 0.35 * Math.max(0, -n[1]));
     // w2: visible flank falls ~0.6 from top to lower cowl (#8d96a6 -> #556171 in ANA 11A _136) [V]: f = 0.62 + 0.38 * ((n.y+1)/2)^1.3
     shadeVerts(B, vN, vP, (p, n) => 0.55 + 0.45 * Math.pow((n[1] + 1) / 2, 1.6));
@@ -363,6 +352,10 @@ function buildExterior(gl) {
     }
     lights.push({ p: [tip.s * side, tip.y0 + 0.06, tip.le + tip.c * 0.8 + WING.dz], c: [4, 4, 4], s: 2.2, blink: side < 0 ? 2.0 : 2.5 });
   }
+  // red belly anti-collision beacon under the wing-to-body fairing: flashes and washes the lower cowls red-orange at night
+  // (the lighting pass lights the airframe from ext.lights with a 'light' gain, night only) [V wash: yt_p97zMaCMWRg EVA
+  // GE90 night view; A position / strength]
+  lights.push({ p: [0, -2.78, 34.4 + WING.dz], c: [3, 0.25, 0.1], s: 0.6, blink: 3.3, light: 8 });
   // wing-to-body fairing below the cabin (nose stations ~26 -> 43.3, belly 2.35 m above ground) [D ACAP side view]
   B.add(gRBox(6.3, 1.9, 17.3, 0.8, 3), M4.trs(0, -1.78, 34.65 + WING.dz), paintLow);
   const geo = B.build();

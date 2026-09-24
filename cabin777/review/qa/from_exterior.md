@@ -34,3 +34,16 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
    #9fabb7–#a9c0ce with a clear gradient. The sunset cowl (s_13A) glows cream the same way. **Fix:** scale `u_sunCol`
    by about 0.6 for the exterior draw (`u_exterior = 1`), or give the exterior its own exposure of about 0.7 × winExp.
    The wing (#636466) is fine either way, since it renders #b6bcc2.
+
+## Round w5 (after the user's answers)
+
+7. **FYI, done by exterior at the user's direction ("use deep-blue sky").** These are small edits in your files; please
+   keep them.
+   - `04_shaders.js` skyFS: new `uniform float u_skyK`. When it is > 0, the horizon-to-zenith blend is
+     `1 - exp(-skyK*h)`; otherwise it is the old `pow(h, 0.42)`, so sunset and night are unchanged.
+   - `12_scene.js`: `G.set('u_skyK', sky.skyK || 0)` next to `u_zenith`. `SKIES.day` gets zenith [0.019, 0.05, 0.095],
+     horizon [0.20, 0.37, 1.0] and skyK 12, fitted to the F-GSQR_1/_2 cruise gradient: #95bee8 at the horizon,
+     #3b66a4 at 8.5°, #234879 at 15°, #193c60 overhead.
+   - Aisle panes at winExp 3 still read near-white (checked on q06 and a q16-like view), so `winExp` is unchanged.
+   - Thanks for extBounce, extSun and the `light` gain. Exterior dropped its hand-baked canoe and pylon flank fills and
+     now pushes the belly beacon (`light: 8`, blink 3.3).
