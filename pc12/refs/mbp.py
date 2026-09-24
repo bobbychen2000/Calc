@@ -245,9 +245,29 @@ def _read_pieces(page, tol=2e-3):
     return pieces
 
 
-DASH_MAX = 20.0      # pt, longest dash of any line type on the sheet (long dash ~8.5 / 16.4 pt)
+DASH_MAX = 24.0      # pt, longest dash of any line type on the sheet (long dash ~8.5 / 16.4 / 21 pt)
 DOT_MAX = 0.3        # pt
 GAP_MIN, GAP_MAX = 0.8, 5.0
+
+
+def _dedupe(pieces, tol=0.06):
+    """Drop pieces drawn twice (same end points, length and centroid)."""
+    from scipy.spatial import cKDTree
+    if not pieces:
+        return pieces
+    sig = []
+    for P in pieces:
+        a, b = P[0], P[-1]
+        if (a[0], a[1]) > (b[0], b[1]):
+            a, b = b, a
+        c = P.mean(0) if len(P) > 2 else 0.5 * (a + b)
+        sig.append([a[0], a[1], b[0], b[1], c[0], c[1], plen(P)])
+    sig = np.array(sig)
+    drop = set()
+    for i, j in sorted(cKDTree(sig).query_pairs(tol)):
+        if i not in drop:
+            drop.add(j)
+    return [P for k, P in enumerate(pieces) if k not in drop]
 
 
 def _dash_chains(pieces):
@@ -630,7 +650,7 @@ def _find_hatch(polys, idx):
 def _extract_page(page):
     """All stroked geometry of a page -> list of dict(pts, kind, tag) in PAGE points."""
     raw = _read_pieces(page)
-    pieces = [_rdp(P, 0.01) for P in raw]
+    pieces = _dedupe([_rdp(P, 0.01) for P in raw])
     chains = _dash_chains(pieces)
     in_chain = set(i for order, _ in chains for i in order)
     items = []
@@ -933,14 +953,21 @@ def _separate(items, W, H):
                 views[j] = "sheet"
     names_of_group = {}
     sec_loops = _find_section_loops(items)
-    for name, i in sec_loops.items():
+    sec_seed_item = {}
+    for name, p in SECTION_SEEDS_P8.items():
+        i = sec_loops.get(name)
+        if i is None:
+            i, d = _snap_item(items, p, kinds=("outline",))
+            if i < 0 or d > 40:
+                continue
+        sec_seed_item[name] = i
         names_of_group.setdefault(glab[i], set()).add("sec:" + name)
     for view, pts in SEEDS_P8.items():
         for p in pts:
             i, d = _snap_item(items, p, kinds=("outline",))
             if i >= 0 and d < 30 and views[i] != "sheet":
                 names_of_group.setdefault(glab[i], set()).add(view)
-    sec_box = {n: _bbox(items[i]["pts"]) for n, i in sec_loops.items()}
+    sec_box = {n: _bbox(items[i]["pts"]) for n, i in sec_seed_item.items()}
 
     def nearest_section(P, names):
         c = 0.5 * (P.min(0) + P.max(0))
@@ -968,9 +995,32 @@ def _separate(items, W, H):
             views[i] = "sec:" + n
         else:
             views[i] = mains[0] if mains else "sheet"
-    # attach the remaining core groups to the nearest view core
+    # centre lines: primary view = the core they run along the most; 'also' = others crossed
     cores = {}
     for i in core_idx:
+        if views[i] not in (None, "sheet"):
+            cores.setdefault(views[i], []).append(densify(items[i]["pts"], 2.0))
+    trees = {v: cKDTree(np.vstack(P)) for v, P in cores.items()}
+    also = [[] for _ in items]
+    for i, it in enumerate(items):
+        if it["kind"] != "centerline":
+            continue
+        D = densify(it["pts"], 2.0)
+        score = {v: int((t.query(D, k=1, distance_upper_bound=6.0)[0] < 6.0).sum()) for v, t in trees.items()}
+        hits = sorted([(s, v) for v, s in score.items() if s > 0], reverse=True)
+        if hits:
+            views[i] = hits[0][1]
+            also[i] = [v for s, v in hits[1:]]
+        else:
+            best, bd = "sheet", MAX_ATTACH
+            for v, t in trees.items():
+                d = t.query(D, k=1)[0].min()
+                if d < bd:
+                    best, bd = v, d
+            views[i] = best
+    # attach the remaining core groups (labels, dimensions) to the nearest assigned geometry
+    cores = {}
+    for i in range(len(items)):
         if views[i] not in (None, "sheet"):
             cores.setdefault(views[i], []).append(densify(items[i]["pts"], 2.0))
     trees = {v: cKDTree(np.vstack(P)) for v, P in cores.items()}
@@ -989,22 +1039,4 @@ def _separate(items, W, H):
                 best, bd = v, d
         for i in mem:
             views[i] = best
-    # centre lines: primary view = the core they run along the most; 'also' = others crossed
-    also = [[] for _ in items]
-    for i, it in enumerate(items):
-        if it["kind"] != "centerline":
-            continue
-        D = densify(it["pts"], 2.0)
-        score = {v: int((t.query(D, k=1, distance_upper_bound=6.0)[0] < 6.0).sum()) for v, t in trees.items()}
-        hits = sorted([(s, v) for v, s in score.items() if s > 0], reverse=True)
-        if hits:
-            views[i] = hits[0][1]
-            also[i] = [v for s, v in hits[1:]]
-        else:
-            best, bd = "sheet", MAX_ATTACH
-            for v, t in trees.items():
-                d = t.query(D, k=1)[0].min()
-                if d < bd:
-                    best, bd = v, d
-            views[i] = best
-    return views, also, sec_loops
+    return views, also, sec_seed_item
