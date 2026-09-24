@@ -1,6 +1,6 @@
 // Render review sheets of individual units. Usage: node test/studio.js <outdir> <spec.json>
 let chromium;
-try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require('/home/claude/.npm-global/lib/node_modules/playwright')); }
+try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require('/opt/node22/lib/node_modules/playwright')); }
 const path = require('path');
 const out = process.argv[2];
 const spec = JSON.parse(require('fs').readFileSync(process.argv[3], 'utf8'));
@@ -10,7 +10,7 @@ const spec = JSON.parse(require('fs').readFileSync(process.argv[3], 'utf8'));
   page.on('pageerror', (e) => console.log('pageerror', e.message));
   page.on('console', (m) => { if (m.type() === 'error') console.log('console', m.text()); });
   await page.addInitScript(() => { window.__TEST__ = true; });
-  await page.goto('file://' + path.resolve(__dirname, '../dist/test.html'));
+  await page.goto('file://' + (process.env.CABIN_PAGE || path.resolve(__dirname, '../dist/test.html')));
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 180000 });
   await page.evaluate(() => { for (const id of ['top', 'bottom', 'hint', 'loading']) { const e = document.getElementById(id); if (e) e.style.display = 'none'; } __app.loop = () => {}; });
   for (const shot of spec.shots) {

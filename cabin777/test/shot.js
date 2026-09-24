@@ -1,6 +1,6 @@
 // Usage: node test/shot.js <outdir> [w h dpr] [views...]
 let chromium;
-try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require('/home/claude/.npm-global/lib/node_modules/playwright')); }
+try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require('/opt/node22/lib/node_modules/playwright')); }
 const path = require('path');
 const out = process.argv[2] || '/tmp/shots';
 const W = +(process.argv[3] || 960), H = +(process.argv[4] || 600), DPR = +(process.argv[5] || 1);
@@ -26,7 +26,7 @@ const VIEWS = {
   page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));
   await page.addInitScript(() => { window.__TEST__ = true; });
   const t0 = Date.now();
-  await page.goto('file://' + path.resolve(__dirname, '../dist/test.html'));
+  await page.goto('file://' + (process.env.CABIN_PAGE || path.resolve(__dirname, '../dist/test.html')));
   await page.waitForFunction(() => window.__ready === true || document.querySelector('#fatal:not([hidden])'), null, { timeout: 120000 });
   console.log('ready in', Date.now() - t0, 'ms; build', await page.evaluate(() => window.__app && Math.round(__app.scene.buildTime)));
   await page.evaluate(() => { const h = document.getElementById('hint'); if (h) h.classList.add('gone'); });

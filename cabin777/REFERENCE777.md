@@ -43,7 +43,16 @@ Row/door relations are verified from ANA's seat map; spacing is derived from ver
 - Seat not centred: narrow console shelf full length by the window, slim wardrobe on the aisle side (closet in the thick door). [V]
 - Width ≈ 33–34 in seat, suite up to 38 in, bed ≈ 76–81 in. Wall height [C] ("not that high" vs "can't see anyone unless standing"). Model 1.30 m. [A]
 - Colours: official dark wood; in person grey-brown/bronze shell, wood-grain panels + grey door, grey seat, blue cushion accent. [V]
+- Photos f_17300-17314 [V]: real photos show warm taupe-grey shells, dark straight-grain wood caps, warm mid-grey tweed seat
+  and ottoman, violet-navy pillow; renders show vertically fluted exterior shells with an LED line at the floor, a long window
+  console with keypad + touch remote, a lit reading spot + vertical light strip on the screen-wall pier, flat seat back with a
+  slate flap headrest, wardrobe with coat hook and lit literature niche.
 - Electric two-stage shades (sheer + blackout), buttons under each window. [V]
+
+## Official ANA photos of this exact cabin (reference only, not embedded)
+ANA seat-detail pages "B777-300ER (new 212-seat)" F/C/PY/Y (ana.co.jp/en/jp/guide/flight_service_info/int-service/{f,c,py,y}/...):
+41 images (f_173xx, c_273xx, py_373xx, y_473xx) saved to ref/ana/ (gitignored). Colours in the model are sampled from them
+(ref/sample.py); several F/C images are renderings — where a real photo disagrees (f_17313/17314), the real photo wins.
 
 ## THE Room (Business) — heavily customised Safran "Fusio"; Acumen + Kengo Kuma [V]
 - Odd rows rear-facing (A E F K) further from the aisle, even rows forward-facing (C D G H) closer to the aisle. [V]
@@ -51,6 +60,10 @@ Row/door relations are verified from ANA's seat map; spacing is derived from ver
 - 107 in per nested pair; 35–38 in wide; bed 71–72 in; footwell 21 in at mouth → 12 in, 14 in high. [V]
 - Two-part door: sliding panel from the monitor monument + pop-up panel from the armrest. [V]
 - 24 in 4K touchscreen; bi-fold rosewood-grain table under the monitor; cabinet with swivel mirror. [V]
+- Photos c_27300-27316 [V]: thin flat cushion + flat back (one seam) on a dark base; slate Ultraleather headrest flap;
+  navy pillow; teal belt; charcoal shells with lighter cap rails; pale grey-beige ash (fine straight grain) on aisle-facing
+  monument ends, door leaves, cabinets and the centreline wall's upper band; round reading spots in the shell corners;
+  red life-vest tabs; seat controls in a dark rounded pod; seat-number plaques on the aisle caps.
 - Colours: light wood-tone exterior (light Japanese ash), dark-grey/charcoal seat textiles (in person light grey [C]),
   Ultraleather on armrests/headrests, deep-blue accent inside compartments, dark slate stone accent. [V]
 - Electric two-stage shades; individual air nozzles; centre bins present. [V]
@@ -58,10 +71,13 @@ Row/door relations are verified from ANA's seat map; spacing is derived from ver
 ## Premium Economy — ZIM (PC-01 per The Alviator) [V]
 - 2-4-2, 38 in pitch, ≈ 19 in wide, 15.6 in touchscreen, fold-up leg rest + bicycle footrest, 6-way headrest,
   gooseneck reading light, cocktail table, bottle holder, AC + USB. [V]
-- Fabric: calm grey base, pattern differs seat to seat; reviewer: "blue, not as vivid as ANA A321neo". → muted blue-grey. [V]/[A]
+- Fabric: charcoal ground with white broken horizontal dashes (reads light grey); headrest wings white "confetti" on charcoal;
+  navy leatherette headrest flap; mid-grey shells + consoles with a silver trim line; leg rest in seat fabric. [V photo py_37301-06]
 
 ## Economy — Recaro [V]
 - 3-4-3 (rows 39–41 2-4-2, row 42 A C D E F G), 34 in pitch, 17 in wide, 13.3 in touchscreen (11.6 in row 30),
   6-way headrest, footrest from row 31, AC outlet near the seat pocket, USB. [V]
-- Fabric colour: **not found in any text source**; same "Journey" fabric concept as PY → modelled muted blue-grey. [A]
+- Fabric: royal blue with short light-blue ticks; some seats carry a diamond-lattice variant; headrest cushions blue with
+  white confetti; slate-blue leatherette headrest covers; off-white/light-grey seat-back shells, screen surrounds, armrests
+  and legs; teal-blue belts; navy pillows on seats; navy carpet with blue flecks. [V photo y_47300-07]
 - Window shades in PY/Y: not described; modelled as standard 777 manual pull-down shades. [A]
