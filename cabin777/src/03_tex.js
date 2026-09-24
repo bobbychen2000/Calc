@@ -5,7 +5,17 @@
 const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24 };
 const N_LAYERS = 25;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
-const PHOTO_LAYERS = { 16: 'y_tick', 17: 'py_back', 18: 'j_tweed', 19: 'j_ash', 20: 'f_wood', 21: 'f_tweed', 22: 'y_carpet', 23: 'py_confetti', 24: 'y_diamond' };
+const PHOTO_LAYERS = {
+  16: 'y_tick',
+  17: 'py_back',
+  18: 'j_tweed',
+  19: 'j_ash',
+  20: 'f_wood',
+  21: 'f_tweed',
+  22: 'y_carpet',
+  23: 'py_confetti',
+  24: 'y_diamond',
+};
 let PHOTO_PIX = null;
 // photo pattern strength per layer (1 = as photographed). QA r1 (relative luminance SD measured on the photos):
 //  17 PY dash weave 0.8 (clean re-cut, py_37305), 18 J tweed 0.35 (SD 0.17-0.23 on c_27315 / omaat_room_13 vs 0.42 rendered),
@@ -15,12 +25,24 @@ let PHOTO_PIX = null;
 //  18 J tweed 0.5 (luminance-only re-cut, fine weave), 19 J ash 2.0 (c_27305 cabinet: high-pass SD 6.1 % in sRGB = ~13 %
 //  linear vs 6.3 % in the column-normalised swatch -> x2) [D], 23 PY / Y confetti 1.0 (white flakes ~220 on a 55-65
 //  ground, py_37305)
-const PHOTO_GAIN = { 17: 1.0, 18: 0.5, 19: 2.0, 20: 0.7, 21: 0.5, 23: 1.0 };
+const PHOTO_GAIN = {
+  17: 1.0,
+  18: 0.5,
+  19: 2.0,
+  20: 0.7,
+  21: 0.5,
+  23: 1.0,
+};
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
 // in linear light and clipped away at 2x. photoBase() lifts the material colour by ENC/2 to compensate.
 // QA r2: 5 (was 8) so the brighter cobalt base (#5468a8) lifted by ENC/2 stays below 1 in blue
 // py_back 4 / py_confetti 6: white dashes / flakes 4.6x / ~17x their charcoal ground (py_37301 / 37305)
-const PHOTO_ENC = { y_tick: 5, y_diamond: 5, py_back: 4, py_confetti: 6 };
+const PHOTO_ENC = {
+  y_tick: 5,
+  y_diamond: 5,
+  py_back: 4,
+  py_confetti: 6,
+};
 function photoBase(hex, name) {
   const k = (typeof PHOTO_TEX !== 'undefined' && PHOTO_TEX && PHOTO_TEX[name] && PHOTO_ENC[name]) ? PHOTO_ENC[name] / 2 : 1;
   if (k === 1) return hex;

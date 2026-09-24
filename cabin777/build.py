@@ -8,7 +8,7 @@ for f in sorted(glob.glob(os.path.join(root, 'src', '*.js'))):
 # photo swatches cut from the official ANA photos (test/make_swatches.py; ref/ is gitignored). Set CABIN_NO_PHOTO=1
 # to build with the procedural layers only.
 import base64, json
-sw = os.path.join(root, 'ref', 'swatch')
+sw = os.path.join(root, 'tex')   # processed swatch tiles (tracked; cut by test/make_swatches.py from ref/)
 photo = 'null'
 if not os.environ.get('CABIN_NO_PHOTO') and os.path.exists(os.path.join(sw, 'sizes.json')):
     sizes = json.load(open(os.path.join(sw, 'sizes.json')))

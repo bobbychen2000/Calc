@@ -17,9 +17,10 @@ It is a single self-contained HTML page. It runs on a custom WebGL2 engine with 
 - **Build unit by unit.** Render each unit on its own in the studio (`test/studio.js`), review the render, fix it, and only then assemble. Share the review renders with the user.
 - **Run a visual QA loop** on the assembled cabin, fix what it finds, and re-render.
 - **Detail matters.** The user pushed for more detail on ceilings and seats in the 787 project.
-- **Photo textures:** the user suggested reusing textures from ANA photos found online.
-  - Photos the user supplies can be used as a colour and pattern reference. Paint the textures procedurally from that reference.
-  - Don't paste other people's copyrighted photos into a published page. The user's own photos are fine to use directly.
+- **Photo textures:** the user asked to reuse textures from ANA's official website photos.
+  - The official photos are reference only and live in `ref/ana/` (gitignored; `python3 test/fetch_refs.py` re-downloads them). Web photos found during QA go to `ref/web/<area>/` (gitignored).
+  - Patterns (fabrics, ash, wood, carpet) are small processed tiles cut from those photos by `test/make_swatches.py` into `tex/` (tracked). They are flattened, tileable and colour-relative, and `build.py` embeds them. The material colour in code still sets the mean colour.
+  - Never embed or commit whole photos. The user's own photos (`photos/`, if any) may be used directly.
 - **Deliverable:** publish as a claude.ai artifact.
   - The file is page content without html/head/body tags, with `<title>` first.
   - Fonts come only from Google Fonts; everything else is inline.
@@ -28,17 +29,21 @@ It is a single self-contained HTML page. It runs on a custom WebGL2 engine with 
 ## Build and test
 
 ```bash
-python3 build.py                       # -> dist/cabin.html (artifact body) + dist/test.html (standalone page)
-open dist/test.html                    # any WebGL2 browser
-npm i -D playwright && npx playwright install chromium   # once, for headless renders
-node test/studio.js out review/spec1.json               # studio renders of units (UNITS / STUDIO_UNITS)
-node test/shot.js out 960 600 1 door1                   # assembled-cabin shots (VIEWS in the script)
-node test/qa.js out 800 500                             # QA views  (NOTE: still the 787 list, rewrite for the 777)
-python3 test/sheet.py out sheet.png 2                   # contact sheet of out/q*.png
+pip install pillow numpy                                 # once (tests + swatches)
+python3 test/fetch_refs.py                               # once: official ANA photos -> ref/ana (reference only)
+python3 build.py                                         # -> dist/cabin.html (artifact body) + dist/test.html (standalone)
+CABIN_DIST=/tmp/x python3 build.py                       # build somewhere else (parallel workers: never commit dist/)
+node test/studio.js <out> review/spec_room.json          # studio renders of units (UNITS / STUDIO_UNITS)
+node test/qa.js <out> 930 575 [view ...]                 # the 22 QA views + <out>/pairs.json (view -> ANA reference photo)
+DPR=2 CABIN_PAGE=/tmp/x/test.html node test/qa.js ...     # 2x close-ups of another build
+python3 test/make_swatches.py                            # re-cut the photo swatch tiles in tex/ (needs ref/)
+node test/blender/export.js <out> test/blender/spec_review.json && blender -b -P test/blender/render.py -- <out>/<unit>.json --out <out>
+                                                         # optional Cycles reality-check render (apt install blender)
 ```
 
+- Playwright and Chromium are preinstalled at `/opt/node22/lib/node_modules/playwright` and `/opt/pw-browsers`. Headless SwiftShader takes about 20 s per page load and 10–30 s per 930×575 frame.
 - In the tests, `window.__app` is the running App.
-  - `__app.setView(pos, yaw, pitch)` places the camera.
+  - `__app.setView(pos, yaw, pitch)` places the camera. yaw 0 looks forward (−z), −π/2 looks right (+x).
   - `__app.sit(seat, {instant:true})` sits in a seat.
   - `__app.renderNow()` renders a frame.
   - `studioRender(__app, geo, opts)` renders one unit (see `src/14_studio.js`).
@@ -66,9 +71,11 @@ python3 test/sheet.py out sheet.png 2                   # contact sheet of out/q
   - Shades are instanced; `shadeMats(w, fraction)` gives each instance its transform.
 - **07b_ceiling.js:** curved aisle ceiling panels between the outboard and centre bins, with cove light. Also the door-area domes and monument ceilings.
 - **08_bins.js:** 777 outboard pivot bins (4-frame modules) and double-sided centre bins (2-frame modules), PSUs and row placards.
-- **09_seats.js:** seat models.
-  - Recaro economy, ZIM premium economy, the THE Room nested-pair parts (`roomPart('O'|'E')`) and THE Suite (`suiteUnit`).
-  - Also far LODs, bed variants, per-kind helpers (`seatPickBox`, `seatEye`, `seatBedCenter`), the seat LOD system, and the `UNITS` studio catalogue.
+- **09_seats.js:** the shared seat code.
+  - `SEATMAT` (every seat material), `SEC`/`loftAt` helpers, `mirrorGeo`, per-kind helpers (`seatPickBox`, `seatEye`, `seatBedCenter`), `buildSeats`, the seat LOD system and the `UNITS` studio catalogue.
+- **09a_econ.js / 09b_py.js / 09c_room.js / 09d_suite.js:** the product builders.
+  - Recaro economy (`econSeat`/`econUnit`), ZIM premium economy (`pySeat`/`pyUnit`), the THE Room nested-pair parts (`roomPart('O'|'E')`, `roomDivider`) and THE Suite (`suiteUnit`), each with its far LOD and bed variants.
+  - New materials for a product: `Object.assign(SEATMAT, {...})` at the top of that product's file.
 - **10_mono.js:** lavatories, galleys, the door-3 self-service bar, closets, partitions, Type A door linings and jump seats.
 - **11_exterior.js:** 777-300ER wing with raked tips, and the GE90-115B nacelles.
 - **12_scene.js:** scene assembly, AO volume, shade states (`setWindow`, `setAllWindows`), moods, skies and rendering.
@@ -76,35 +83,39 @@ python3 test/sheet.py out sheet.png 2                   # contact sheet of out/q
 - **14_studio.js:** studio renderer and extra review units: wing, ceiling slice, window shades, the door-3 bar group and the door-4 galley group.
 - **page.html:** UI shell and styles. Its about panel lists the sources and approximations.
 
+## Parallel work (several Claude sessions on one branch)
+
+- Each worker owns a set of files and edits only those:
+  - suite: `09d_suite.js`
+  - room: `09c_room.js`
+  - py/econ: `09a_econ.js` and `09b_py.js`
+  - ceiling/bins: `07b_ceiling.js` and `08_bins.js`
+  - shell (sidewall, windows, shades, floor): `07_shell.js`
+  - monuments: `10_mono.js`
+  - exterior: `11_exterior.js`
+  - lighting/integration: `04_shaders.js`, `12_scene.js` and `13_app.js`
+- Shared files take small, local edits only, one line per key: `SEATMAT` values in `09_seats.js`, and `PHOTO_GAIN`/`PHOTO_ENC`/`LAYER_PARAMS` in `03_tex.js`.
+- When editing a shared file, say so in the commit message.
+- Never commit `dist/`. Build with `CABIN_DIST` outside the repo; the integrator rebuilds `dist/`.
+- Commit with explicit paths: `git commit -m ... -- <your files>`.
+- Before pushing, run `git pull --rebase origin <branch>`. When resolving a conflict, keep both sides; the other side is another worker's area.
+- Retry the push on rejection.
+
 ## Status
 
-**Done**
+- **Unit pass 1 (done).** Every unit was rebuilt against the 41 official ANA photos, using colours sampled from them:
+  - all four seat products
+  - the ceiling and bins
+  - the sidewall and windows
+  - the monuments, including the door-3 bar
+  - the wing and GE90
+- **Photo swatch textures (done).** The fabric, ash, wood and carpet patterns come from `tex/`.
+- **Adversarial photo QA** (`test/qa.js`, 22 views): raters score each area 0–10 against the ANA photos plus in-flight trip-report photos, then fixers work per file group.
 
-- Research is complete; see REFERENCE777.md.
-- Layout, shell and shades, bins and ceiling, all four seat products, monuments, exterior and the app are wired up.
-- The page builds and runs. It loads in about 18 s in headless SwiftShader; build time is about 1.7 s.
+  | Round | Suite | Room | PY | Econ | Ceiling | Sidewall | Monuments | Exterior | Lighting | Mean |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | 1 | 5 | 3.5 | 5 | 4.5 | 4.5 | 5.5 | 4 | 4.5 | 4.5 | 4.6 |
+  | 2 | 5.8 | 6.5 | 4.5 | 5 | 6.3 | 6.6 | 4.5 | 5.2 | 4.5 | 5.4 |
 
-**First unit review** (`review/units-review-1.png`, `review/assembled-door1.png`) found these problems to fix next:
-
-1. **THE Room reads as disjointed parts.**
-   - The O seat's aisle corner has a tall 0.36 m-wide ash slab. It should be a low armrest ledge (0.66 m) with the pop-up privacy panel retracted inside.
-   - The shells should read as continuous shoulder-height walls. Reviews say "walls along the aisle all have a slight curve", "beige wood panelling and muted dark grey finishes".
-   - The seat "plinth" box makes each seat look like an armchair. The cushions should be thin ("as thick as ironing boards") on a dark recessed base.
-   - The door-edge strips look like sticks.
-2. **THE Suite's reclined seat back pokes through the aft wall.** Move the seat forward in `suiteUnit`: `S = M4.trs(seatX, 0, -0.42)`. Check that leg room to the ottoman still works.
-3. **The wood detail layer is too strong and wavy, and the ash is too pale.** Tone down `LAYER_PARAMS[10]` (for example `[2.4, 0.12, 0.28, 0.25]`) and darken the ash to about `#bfae90`.
-4. **Still to studio-review:**
-   - `econ3`, `econ4`, `py2`, `py4`
-   - `ceiling`, `windows`, `door3`, `galley4`, `wing`
-5. **Rewrite `test/qa.js` views for the 777.** Suggested views:
-   - door 1 and THE Suite, seat 1A, and 1A in lie-flat
-   - THE Room main cabin, 11A, 12C, and the centre pair 11E/F
-   - the bar at door 3
-   - 17A window view of the wing and GE90
-   - PY 25–27 and 26A
-   - economy forward and aft, and 35C
-   - rear galley, night mood, sunset, x-ray
-
-   Then run the QA loop and publish.
-
-**Open item:** no text source gives the Economy and Premium Economy fabric colour. Both are modelled as muted blue-grey and flagged in the about panel. If the user supplies photos, match their colours. ANA's official photos are `new212-01..07.jpg` on ana.co.jp's 777-300ER economy page. They are image-only, so ask the user to attach them.
+  Round 3 is being rated. Target: every area at 8.5 or above with no high-severity issues.
+- **Still to do:** run QA rounds until the target is met, then write the before/after sheet, update the about panel's sources and approximations, and publish `dist/cabin.html`.

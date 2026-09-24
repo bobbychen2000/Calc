@@ -1,4 +1,5 @@
-# Cut tileable texture swatches from the official ANA photos (ref/ana, gitignored) -> ref/swatch/tex_*.png.
+# Cut tileable texture swatches from the official ANA photos (ref/ana, gitignored) -> tex/tex_*.png (tracked;
+# the page embeds them anyway). Source photos stay in ref/ (gitignored; python3 test/fetch_refs.py re-downloads the ANA set).
 # Each tile stores colour RELATIVE to its mean (x0.5, so 128 = mean) after removing the photo's lighting gradient;
 # the model's material colour still sets the mean, the tile only adds the real weave / grain / fleck pattern.
 # Photo names without a folder are ANA pages (ref/ana/<name>-lang-multi.jpg); 'web/...' names are ref/web/<path>
@@ -6,7 +7,7 @@
 # ENC: swatches whose pattern exceeds 2x the mean (Y: pale ticks ~10x the navy ground in linear light) are stored as
 # ratio / ENC instead of ratio / 2; 03_tex.js PHOTO_ENC holds the same factors and photoBase() lifts the material colour
 # by ENC/2 so the product is unchanged.
-# build.py embeds ref/swatch/tex_*.png when present (otherwise the procedural layers in 03_tex.js are used).
+# build.py embeds tex/tex_*.png when present (otherwise the procedural layers in 03_tex.js are used).
 import os
 import numpy as np
 from PIL import Image, ImageFilter
@@ -100,13 +101,13 @@ def make(name, photo, box, size, rot=0):
     ratio = np.where(lum > lim, ratio * lim / np.maximum(lum, 1e-6), ratio)
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / enc, 0, 1)
-    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'ref/swatch', f'tex_{name}.png'))
+    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', f'tex_{name}.png'))
     return size
 
 
 if __name__ == '__main__':
-    os.makedirs(os.path.join(root, 'ref/swatch'), exist_ok=True)
+    os.makedirs(os.path.join(root, 'tex'), exist_ok=True)
     sizes = {k: make(k, *v) for k, v in SW.items()}
     import json
-    json.dump(sizes, open(os.path.join(root, 'ref/swatch/sizes.json'), 'w'))
+    json.dump(sizes, open(os.path.join(root, 'tex/sizes.json'), 'w'))
     print('swatches', sizes)
