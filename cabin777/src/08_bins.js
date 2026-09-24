@@ -228,7 +228,8 @@ function centerBinModule() {
     B.add(gBox(0.012, 0.002, L), M4.trs((CBIN_DOOR[0][0] + 0.005) * s, CBIN_Y - 0.0065, 0), BINMAT.lipGap);
   }
   B.add(gBox(CBIN_BAND, 0.004, L - 0.004), M4.trs(0, CBIN_Y - 0.0045, 0), BINMAT.bandC);
-  for (let k = 0; k < 8; k++) B.add(gBox(CBIN_BAND - 0.03, 0.002, 0.0015), M4.trs(0, CBIN_Y - 0.0075, -L / 2 + (k + 0.5) * L / 8), BINMAT.joint);
+  // channel filler-panel joints, irregular (b_sany_y22 shows unequal panels, not a slatted run [V look, A spacing])
+  for (const f of [-0.41, -0.16, 0.13, 0.37]) B.add(gBox(CBIN_BAND - 0.03, 0.002, 0.0015), M4.trs(0, CBIN_Y - 0.0075, f * L), BINMAT.joint);
   return shadeUpper(B.build());
 }
 // seams between neighbouring modules (instanced at the joints only, so no dark outline at the run ends)

@@ -28,11 +28,11 @@ const VAULT = (() => {
 })();
 
 const FRAME = CAB.win.pitch;
-// slotted grille against the outboard bin top only (see header). t = 0.10: the vault's first ~5 cm (t < 0.06) sits
-// behind the outboard door crest seen from the aisle, so the grille starts where the visible panel starts [D];
-// w 0.08 m [A]. 4-5 fore-aft slots in segments of ~0.36 m (3 per 2-frame panel, a bridge on every panel joint)
-// with ~25 mm solid bridges (b_lalf_c119 close-up, sany_py_10 [V pattern, A lengths])
-const TROUGH = { ts: [0.10], w: 0.08, seg: 3, gap: 0.025 };
+// slotted grille on the outboard side only (see header), inboard of a bright cove diffuser band 1.5-3x the grille
+// width that runs from the bin crest to the grille (b_lalf_c119, b_sany_y22 [V ratio]): grille at t = 0.20, diffuser
+// t 0.015..0.16 [D]; w 0.08 m [A]. 4-5 fore-aft slots in segments of ~0.5 m (2 per 2-frame panel, a bridge on every
+// panel joint) with ~25 mm solid bridges (b_lalf_c119 close-up, sany_py_10 [V pattern, A lengths])
+const TROUGH = { ts: [0.20], w: 0.08, seg: 2, gap: 0.025, cove: [0.015, 0.16] };
 function zoneModules(z0, z1, target = 2 * FRAME) {
   const n = Math.max(1, Math.round((z1 - z0) / target));
   const L = (z1 - z0) / n, b = [];
@@ -72,7 +72,7 @@ function paintCeilingDecals(A) {
 
 const CEILMAT = {
   vault: { c: '#f3f2ee', r: 0.82, l: 12, e: 0.05 },
-  seam: { c: '#c4c7ca', r: 0.8 },
+  seam: { c: '#d6d8da', r: 0.8 },
   trough: { c: '#7d8288', r: 0.7 },   // dark slots in a white frame (sany_10/11 [V])
   troughRim: { c: '#e9e8e4', r: 0.45, l: LAYER.plastic },
   slat: { c: '#ffffff', r: 0.5, l: LAYER.atlasLit },   // stripe texture carries the slat/slot colours
@@ -85,6 +85,8 @@ const CEILMAT = {
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.45 },
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
   lightStrip: { c: '#fff4d6', r: 0.5, e: 0.8 },
+  // cove diffuser band on the cove LED circuit (layer 12 = u_led): near white like the c119 / y22 band [V]
+  cove: { c: '#ffffff', r: 0.5, l: 12, e: 0.17 },
   signBox: { c: '#e2e1dd', r: 0.45, l: LAYER.plastic },   // light housing (thrifty_j_cabin-1 header sign [V])
 };
 
@@ -153,11 +155,14 @@ function buildCeilings(upper, layout) {
           const ax = Math.abs(p[0]);
           if (ax > 1.66) return 0.85;
           if (ax < 0.73) return 0.04;
-          return 0.04 + 0.36 * Math.exp(-Math.max(1.655 - ax, 0) / 0.16) + 0.42 * Math.exp(-Math.abs(ax - xg) / 0.10);
+          return 0.04 + 0.30 * Math.exp(-Math.max(xg - ax, 0) / 0.16) + 0.30 * Math.exp(-Math.abs(ax - xg) / 0.08);
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
-        for (let k = 1; k < mods.length - 1; k++) upper.add(profileRibbon(VAULT.slice(2, -2), side, mods[k], 0.004, 0.0015), null, CEILMAT.seam);
+        for (let k = 1; k < mods.length - 1; k++) upper.add(profileRibbon(VAULT.slice(2, -2), side, mods[k], 0.008, 0.0015), null, CEILMAT.seam);
+        // cove diffuser: a continuous near-white lit band between the outboard bin crest and the grille
+        { const [c0, c1] = TROUGH.cove, tm = (c0 + c1) / 2, a = vaultAt(c0), b = vaultAt(c1);
+          upper.add(vaultStrip(tm, side, z0 + 0.03, z1 - 0.03, Math.hypot(b[0] - a[0], b[1] - a[1]), 0.0014), null, CEILMAT.cove); }
         // slotted grille flush against the outboard bin top: white frame, dark channel, one slotted strip per
         // segment (TROUGH.seg per panel) between solid white bridges
         const sl = raw(), sg = raw();
@@ -178,14 +183,14 @@ function buildCeilings(upper, layout) {
         }
         upper.add(sl, null, CEILMAT.slat, (k, g) => [g.u[k * 2], g.u[k * 2 + 1]]);
         upper.add(sg, null, CEILMAT.troughRim);
-        // every panel: a raised stadium-ended speaker fitting near the centre-bin side (long side across the aisle,
-        // ~3.4:1, raised rim around a recessed perforated slot: b_lalf_c119, b_sany_y12/y22, thrifty_j_cabin-1 [V
+        // every panel: a raised rounded-rect speaker fitting near the centre-bin side (long side across the aisle,
+        // ~3.4:1, small corner radii, a thin rim round a perforated face: b_lalf_c119 close-up, b_sany_y12/y22 [V
         // shape]; 0.34 x 0.10 m [A]) and a small dark-windowed fitting with a lens near mid-vault (the emergency light)
         for (let k = 0; k < mods.length - 1; k++) {
           const zc = (mods[k] + mods[k + 1]) / 2;
-          upper.add(vaultPanel(0.78, side, zc, 0.34, 0.10, 0.05, 0.0015, 16), null, CEILMAT.seam);
-          upper.add(vaultPanel(0.78, side, zc, 0.332, 0.092, 0.046, 0.003, 16), null, CEILMAT.bezel);
-          upper.add(vaultPanel(0.78, side, zc, 0.30, 0.06, 0.03, 0.0036, 16), null, CEILMAT.bezelIn);
+          upper.add(vaultPanel(0.78, side, zc, 0.34, 0.10, 0.025, 0.0015, 12), null, CEILMAT.seam);
+          upper.add(vaultPanel(0.78, side, zc, 0.332, 0.092, 0.022, 0.003, 12), null, CEILMAT.bezel);
+          upper.add(vaultPanel(0.78, side, zc, 0.312, 0.074, 0.014, 0.0036, 12), null, CEILMAT.bezelIn);
           upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), vaultXF(0.45, side, zc + 0.25, 0.003), CEILMAT.emergBase);
           upper.add(gRBox(0.05, 0.004, 0.022, 0.004, 1), vaultXF(0.45, side, zc + 0.25, 0.0068), CEILMAT.emerg);
         }
@@ -202,7 +207,13 @@ function buildCeilings(upper, layout) {
           for (const g of [f, -f]) upper.add(gQuad(0.33, 0.08), M4.trs(X, y, zs + g * 0.0155, g > 0 ? 0 : Math.PI), MAT.exitGlow, atlasUV('exitJ'));   // double-faced
         }
       }
-      upper.add(gBox(1.30, 0.02, z1 - z0), M4.trs(0, 2.325, (z0 + z1) / 2), MAT.ceiling);
+      upper.add(gBox(1.30, 0.02, z1 - z0 + 0.08), M4.trs(0, 2.325, (z0 + z1) / 2), MAT.ceiling);
+      // header closures at the zone ends: the open vault sweep let the sky show between the centre-bin end, the vault
+      // and the door dome (w2b v3 leak)
+      for (const side of [-1, 1]) {
+        const poly = [...VAULT.map(([x, y]) => [x * side, y]), [VAULT[VAULT.length - 1][0] * side, 2.62], [VAULT[0][0] * side, 2.62]];
+        for (const z of [z0 - 0.006, z1 + 0.006]) upper.add(gExtrude(poly, 0.01), M4.trs(0, 0, z), CEILMAT.flat);
+      }
     } else if (zn.type === 'door') {
       const zc = (z0 + z1) / 2;
       for (const side of [-1, 1]) {
@@ -227,7 +238,7 @@ function buildCeilings(upper, layout) {
       }
       const len = z1 - z0;
       if (len > 0.6) {
-        upper.add(gRBox(1.1, 0.012, Math.min(0.55, len * 0.5), 0.03, 1), M4.trs(0, 2.229, (z0 + z1) / 2), CEILMAT.lightPanel);
+        upper.add(gBox(1.1, 0.003, Math.min(0.55, len * 0.5)), M4.trs(0, 2.2335, (z0 + z1) / 2), CEILMAT.lightPanel);   // near-flush (w2b: a 12 mm box read as a black frame)
         for (const s of [-1, 1]) upper.add(gCyl(0.04, 0.04, 0.01, 12), M4.trs(1.7 * s, 2.214, (z0 + z1) / 2), { c: '#fffaf0', r: 0.4, e: 0.7 });
       }
     }
