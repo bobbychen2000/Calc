@@ -10,17 +10,26 @@ The Pilatus NGX model drawing 190.10.40.432 shows that every edge of the flight-
 the centre post is a straight line in SIDE projection, i.e. the trace of a plane normal to the plane
 of symmetry.  Measured on sheet 1 (residuals of the shared lines < 3 mm):
 
-  * SILL_LINE    windshield lower edge AND the side window's short lower-front edge (-29.7 deg,
+  * SILL_LINE    windshield lower edge AND the side window's short lower-front edge (30.1 deg,
                  rising forward) -- one plane;
-  * ROOF_LINE    windshield roof edge AND the side window's top edge (rising forward ~9 deg) -- one plane;
+  * ROOF_LINE    the side window's top edge (rising forward 9.5 deg);
+  * WS_ROOF_LINE the windshield roof edge, nearly parallel to ROOF_LINE (11 deg) and ~9 mm above it
+                 (the A-pillar top lies between the two);
   * PILLAR_LINE  A-pillar centre line (34 deg); the windshield's outboard edge and the side window's
                  front edge are parallel lines PILLAR_WIDTH apart (photos: 32-39 deg);
   * SW_SILL      horizontal side-window sill; SW_AFT vertical aft edge of the "D";
   * WS_POST      the centre post is the only lateral (butt-line) edge: |y| = WS_POST.
 
 The PRO has no direct-vision (DV) window: the side window is the NGX starboard single pane, used on
-both sides (photo_notes (a)).  Corner radii follow the drawing and the photos: the D-shaped aft end
-has radii SW_R['top_aft'] / SW_R['bot_aft'] with a short straight vertical between them.
+both sides (photo_notes (a)).  The D-shaped aft end has radii SW_R['top_aft'] / SW_R['bot_aft'] with
+a short straight vertical between them.  Drawing and photos disagree on the bottom radius (drawing
+~0.21 m, long-lens NGX photo ~0.10 m, close NGX HB-FXK ~0.15 m): 0.175 is the smallest value that keeps
+the outline within 15 mm of the drawing -- flagged for the owner on sheet L2.
+
+Deviations from the drawing are tabulated on sheet L2 (max 6-14 mm per pane and view).  The
+windshield roof edge has its own plane (WS_ROOF_LINE): the crown section of model/fuselage.py at
+STA 3.9 is 5-12 mm fuller than the drawing's, so a single shared roof plane cannot satisfy the plan
+view (28 mm) and the front view at the same time.
 
 The PRO dark mask is ONE side-projection region (photo_notes (d)): lower edge MASK_LOW below the
 sill, a ramp rising forward at MASK_RAMP_DEG to the point where it meets the nose crown just ahead of
@@ -32,6 +41,11 @@ and the roof band -- one continuous area around all four panes.
 
 Coordinates: x station aft (m), y butt line (+ starboard), z water line.  s = signed arc length
 from the crown (+ starboard; old callers pass it instead of y).
+
+Public API (kept for fuselage_parts / livery): windshield_sdf(x, s, z, y), sidewindow_sdf(x, y, z),
+surround_sdf(x, y, z, s, grow), smax, smin, x_pillar, z_sw_top, EYE, and the legacy names PILLAR,
+PILLAR_HALF, SW_BOTTOM, SW_REAR, SW_TOP.  New: side_outline(), key_points(), edges(), vision(),
+z_ws_roof(), z_ws_sill(), SW_BOX / WS_BOX / KEY_STATIONS (skin-patch extents for the builders).
 """
 from __future__ import annotations
 
@@ -44,7 +58,9 @@ import numpy as np
 # =====================================================================================================
 # -- windshield / side-window construction planes (fitted to drawing 190.10.40.432 sheet 1)
 SILL_LINE = ((3.3800, 2.1993), -30.10)      # point, slope: windshield lower edge + side-window lower-front edge
-ROOF_LINE = ((4.0000, 2.5471), -9.50)       # windshield roof edge + side-window top edge
+ROOF_LINE = ((4.0000, 2.5471), -9.50)       # side-window top edge
+WS_ROOF_LINE = ((4.0000, 2.5563), -11.00)   # windshield roof edge (drawing side view: 2.554 at 4.0, -10.3 deg;
+                                            # set 2-3 mm higher to balance plan vs front on our fuller crown)
 PILLAR_LINE = ((3.8000, 2.3794), 34.80)     # A-pillar centre line
 PILLAR_WIDTH = 0.025                        # between windshield and side-window glass, normal to the line
 WS_POST = 0.023                             # half-width of the centre post (butt line), drawing 46 mm
@@ -53,13 +69,14 @@ SW_AFT = 4.350                              # side-window aft extreme (vertical 
 
 # -- corner radii
 SW_R = dict(bot_aft=0.175, top_aft=0.110, top_front=0.012, pillar_low=0.015, sill_front=0.022)
-WS_R = dict(low_aft=0.065, top_aft=0.006, post=0.035)    # 'post': the two corners at the centre post
+WS_R = dict(low_aft=0.065, top_aft=0.015, post=0.035)    # 'post': the two corners at the centre post
 
 # -- the PRO dark mask
 MASK_LOW = 0.070                 # lower edge below SW_SILL (photos 0.06-0.08)
 MASK_RAMP_X = 3.600              # the ramp leaves the lower edge here (photos: from about STA 3.6) ...
 MASK_RAMP_DEG = 25.0             # ... and rises forward at this angle (photos 21-27 deg, notes ~23)
-MASK_TOP_MARGIN = 0.035          # top edge above ROOF_LINE, normal to it (photos 0-0.05)
+MASK_TOP_MARGIN = 0.060          # top edge above ROOF_LINE, normal to it (PRO photos 3010 / 3036 and the kenia
+                                 # overlay: 0.055-0.068; photo_notes "0-0.05" was read at the forward end)
 MASK_AFT_X = 4.560               # aft edge at the top line (airstair door fwd frame 4.650 - 0.09)
 MASK_AFT_LEAN_DEG = 12.0         # aft edge: bottom forward of the top (photos 7-23 deg)
 MASK_R = dict(low_aft=0.060, top_aft=0.040, ramp=0.100)
@@ -144,7 +161,7 @@ def ws_lines():
     """Windshield in side projection (the post is the lateral constraint |y| >= WS_POST)."""
     sill = _line(*SILL_LINE)
     aft = _pillar_edge(-1)
-    top = _rev(_line(*ROOF_LINE))
+    top = _rev(_line(*WS_ROOF_LINE))
     return [sill, aft, top], [WS_R["low_aft"], WS_R["top_aft"], 0.0]
 
 
@@ -166,7 +183,7 @@ _OUTLINE_CACHE = {}
 def side_outline(name):
     """Closed (N, 2) outline in side projection (x, z): 'sw' side window, 'ws' windshield (its
     projection is additionally cut by the post / crown), 'mask' dark surround region."""
-    key = (name, SILL_LINE, ROOF_LINE, PILLAR_LINE, PILLAR_WIDTH, SW_SILL, SW_AFT, tuple(SW_R.values()),
+    key = (name, SILL_LINE, ROOF_LINE, WS_ROOF_LINE, PILLAR_LINE, PILLAR_WIDTH, SW_SILL, SW_AFT, tuple(SW_R.values()),
            tuple(WS_R.values()), MASK_LOW, MASK_RAMP_X, MASK_RAMP_DEG, MASK_TOP_MARGIN, MASK_AFT_X,
            MASK_AFT_LEAN_DEG, tuple(MASK_R.values()))
     if key not in _OUTLINE_CACHE:
@@ -177,7 +194,7 @@ def side_outline(name):
 
 def key_points():
     """Named construction points in side projection (x, z), for dimensions and checks."""
-    sill, roof = _line(*SILL_LINE), _line(*ROOF_LINE)
+    sill, roof, wroof = _line(*SILL_LINE), _line(*ROOF_LINE), _line(*WS_ROOF_LINE)
     pw, ps = _pillar_edge(-1), _pillar_edge(+1)
     hz = lambda z: (np.array([0.0, z]), np.array([1.0, 0.0]))
     vx = lambda x: (np.array([x, 0.0]), np.array([0.0, 1.0]))
@@ -185,7 +202,7 @@ def key_points():
     return dict(
         sw_top_front=_isect(roof, ps), sw_low_front=_isect(sill, ps), sw_sill_front=_isect(sill, hz(SW_SILL)),
         sw_top_aft=_isect(roof, vx(SW_AFT)), sw_bot_aft=np.array([SW_AFT, SW_SILL]),
-        ws_low_aft=_isect(sill, pw), ws_top_aft=_isect(roof, pw),
+        ws_low_aft=_isect(sill, pw), ws_top_aft=_isect(wroof, pw),
         mask_low_aft=_isect(L[0], L[1]), mask_top_aft=_isect(L[1], L[2]), mask_ramp=_isect(L[4], L[0]),
     )
 
@@ -224,6 +241,12 @@ def z_sw_top(x):
     return z0 + (np.asarray(x, float) - x0) * math.tan(math.radians(deg))
 
 
+def z_ws_roof(x):
+    """Windshield roof edge plane at station x."""
+    (x0, z0), deg = WS_ROOF_LINE
+    return z0 + (np.asarray(x, float) - x0) * math.tan(math.radians(deg))
+
+
 def z_ws_sill(x):
     """Windshield lower edge plane at station x."""
     (x0, z0), deg = SILL_LINE
@@ -239,9 +262,33 @@ SW_TOP = tuple((x, float(z_sw_top(x))) for x in (4.04, SW_AFT))
 
 # skin-patch extents for the builders (fuselage_parts.build_glazing / build_skin), with margin:
 # side window (x, z) box, windshield (x0, x1, |y|max), stations worth a mesh line
-SW_BOX = dict(cx=3.925, cz=2.311, hx=0.455, hz=0.244, r=0.0)       # x 3.47-4.38, z 2.067-2.555
-WS_BOX = dict(x0=3.24, x1=4.03, ymax=0.66)
-KEY_STATIONS = (3.27, 3.44, 3.49, 3.60, 4.00, 4.36, 4.44, 4.56)
+def _box(name, pad=0.02):
+    O = side_outline(name)
+    lo, hi = O.min(0) - pad, O.max(0) + pad
+    return dict(cx=float(0.5 * (lo[0] + hi[0])), cz=float(0.5 * (lo[1] + hi[1])), hx=float(0.5 * (hi[0] - lo[0])),
+                hz=float(0.5 * (hi[1] - lo[1])), r=0.0)
+
+
+SW_BOX = _box("sw")                                 # x 3.47-4.37, z 2.067-2.558 (rev A values)
+WS_BOX = dict(x0=3.24, x1=4.06, ymax=0.66)
+
+
+def _key_stations():
+    """Stations worth a skin-mesh line: glazing / mask corners and where the sill plane and the mask
+    ramp meet the crown (windshield tip, mask point)."""
+    from model import fuselage as F
+    K = key_points()
+    xs = np.linspace(3.0, 3.6, 1201)
+    zc = F.z_top(xs)
+    tip = xs[np.argmin(np.abs(zc - z_ws_sill(xs)))]
+    ramp = (SW_SILL - MASK_LOW) + (MASK_RAMP_X - xs) * math.tan(math.radians(MASK_RAMP_DEG))
+    mpt = xs[np.argmin(np.abs(zc - ramp))]
+    v = [tip, mpt] + [K[k][0] for k in ("sw_low_front", "sw_sill_front", "mask_ramp", "ws_low_aft", "ws_top_aft",
+                                        "sw_top_front", "sw_bot_aft", "mask_low_aft", "mask_top_aft")]
+    return tuple(sorted({round(float(x), 3) for x in v}))
+
+
+KEY_STATIONS = _key_stations()         # rev A: 3.175 3.267 3.456 3.48 3.574 3.6 4.025 4.051 4.35 4.454 4.56
 
 
 # =====================================================================================================
@@ -376,12 +423,14 @@ def vision(eye=None, n=721):
     e = np.asarray(EYE if eye is None else eye, float)
     side = np.sign(e[1]) or -1.0
     yb = abs(e[1])
-    # over the nose: the lowest ray ahead in the plane y = eye_y grazes the skin or the glass sill
+    # over the nose: the lowest ray ahead in the plane y = eye_y grazes the skin (cowling, nose, windshield
+    # sill frame) forward of the glass; everything from the glass lower edge aft is transparent or above
     xs = np.linspace(1.10, e[0] - 0.05, n)
     z_skin = F.z_at(xs, np.full_like(xs, yb), upper=True)
     glass = windshield_sdf(xs, None, z_skin, np.full_like(xs, side * yb)) < 0
-    zz = np.where(glass, -np.inf, z_skin)                # the view passes through the glass
-    down_nose = float(np.degrees(np.max(np.arctan2(zz - e[2], e[0] - xs))))
+    x_glass = float(xs[np.argmax(glass)]) if glass.any() else float(xs[-1])
+    fwd = xs < x_glass
+    down_nose = float(np.degrees(np.max(np.arctan2(z_skin[fwd] - e[2], e[0] - xs[fwd]))))
     # abeam: down over the side-window sill and up to its top (at the eye station)
     ys = float(F.side_y(e[0], SW_SILL))
     down_side = float(np.degrees(np.arctan2(e[2] - SW_SILL, ys - yb)))
@@ -390,7 +439,7 @@ def vision(eye=None, n=721):
     # straight ahead up: the roof edge in the eye's butt plane
     xr = np.linspace(3.5, 4.3, 801)
     zr = F.z_at(xr, np.full_like(xr, yb), upper=True)
-    k = np.argmin(np.abs(zr - z_sw_top(xr)))
+    k = np.argmin(np.abs(zr - z_ws_roof(xr)))
     up_fwd = float(np.degrees(np.arctan2(zr[k] - e[2], e[0] - xr[k])))
-    return dict(eye=e.tolist(), over_nose_down=-down_nose, abeam_down_over_sill=down_side,
+    return dict(eye=e.tolist(), over_nose_down=-down_nose, glass_sill_x=x_glass, abeam_down_over_sill=down_side,
                 abeam_up_to_top=up_side, ahead_up_to_roof_edge=up_fwd, roof_edge_x=float(xr[k]))
