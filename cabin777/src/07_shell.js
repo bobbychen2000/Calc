@@ -3,21 +3,27 @@
 // with air-return grilles, Type A door surrounds, window shades (electric pleated sheer + blackout in F/J, manual in PY/Y)
 // ------------------------------------------------------------------
 const MAT = {
-  sidewall: { c: '#e9e7e2', r: 0.52, l: LAYER.plastic },
-  dado: { c: '#3e444e', r: 0.6, l: LAYER.plastic },            // dark slate dado (ANA py_37301/37303, y_47303)
-  grille: { c: '#474d58', r: 0.55 },
+  // QA r1: sidewall / reveal / lining / end walls carry no detail layer: the plastic bump layer read as stucco under
+  // grazing window light; real panels and reveals are smooth satin [V: ref/web/windows tt_window, omaat_24, lalf_37, f_17313]
+  sidewall: { c: '#e9e7e2', r: 0.52 },
+  dado: { c: '#464d5c', r: 0.6, l: LAYER.plastic },            // bluer slate dado [V: sampled #474e61 / #4a505c on py_37301]
+  grille: { c: '#3f4553', r: 0.55 },                            // louvres a shade darker than the dado frame (py_37301)
   ceiling: { c: '#f1f0ec', r: 0.75, l: LAYER.plastic },
   bin: { c: '#e6e4df', r: 0.42, l: LAYER.plastic },
   binDoor: { c: '#eeede9', r: 0.34, l: LAYER.plastic },
   binLip: { c: '#c6c8cb', r: 0.4 },
   latch: { c: '#6a7078', r: 0.35, m: 0.4 },
   led: { c: '#ffffff', r: 0.5, l: 12, e: 1.0 },
-  reveal: { c: '#e7e4dd', r: 0.45, l: LAYER.plastic },
+  reveal: { c: '#e7e4dd', r: 0.45 },
   // Y/PY: dark navy with cyan flecks (photo swatch y_47304); F/J: dark warm charcoal-brown (c_27313, f_17300)
   carpet: { c: '#2c3345', r: 0.95, l: LAYER.yCarpet },
-  carpetJ: { c: '#302a2a', r: 0.95, l: LAYER.carpet },
+  // F/J: plain fine heather, no motif [V: c_27312 aisle sampled #403638, f_17313 footwell #312825]; the fine fabric
+  // layer stands in for the heather (no J carpet swatch is mapped) [A: grain]
+  carpetJ: { c: '#3a3033', r: 0.95, l: LAYER.fabric },
   vinyl: { c: '#8d9096', r: 0.55, l: LAYER.vinyl },
-  pathStrip: { c: '#8e9194', r: 0.5, e: 0.01 },
+  // floor path strips: carpet-toned, not visible as rails in any ANA photo (y_47301, py_37301, c_27312) [A: tone]
+  pathStrip: { c: '#3a4150', r: 0.8 },
+  pathStripJ: { c: '#3b3234', r: 0.8 },
   door: { c: '#dddbd5', r: 0.45, l: LAYER.plastic },
   doorGap: { c: '#2a2d31', r: 0.8 },
   handle: { c: '#b8bcc1', r: 0.3, m: 0.85 },
@@ -29,10 +35,11 @@ const MAT = {
   nozzle: { c: '#b9bdc2', r: 0.3, m: 0.6 },
   exitGlow: { c: '#ffffff', r: 0.5, l: LAYER.atlasGlow, e: 0.8 },
   decal: { c: '#ffffff', r: 0.6, l: LAYER.atlasLit },
-  wallEnd: { c: '#e4e2dc', r: 0.5, l: LAYER.plastic },
+  wallEnd: { c: '#e4e2dc', r: 0.5 },
   shade: { c: '#e2e0da', r: 0.5, l: LAYER.plastic },           // manual PY/Y shade [A: colour]
   shadeRail: { c: '#c4c2bc', r: 0.4 },                          // its finger grip (grey lip, py_37301 / y_47303)
-  sheer: { c: '#dcd7cc', r: 0.9, l: LAYER.fabric, e: 0.32 },    // translucent pleated sheer (OMAAT, LALF, GSTP photos)
+  // translucent pleated sheer: backlit glow raised 0.32 -> 0.5 (QA r1: read as an opaque slab; kn_36 / gstp_23 show it glowing)
+  sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   blackout: { c: '#cbc7bf', r: 0.85, l: LAYER.fabric },         // opaque pleated blackout, light grey (KN Aviation night photo)
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
@@ -76,7 +83,7 @@ const HOLE_R = 0.105;
 // 21 in window pitch: recess ~0.39 wide, bottom ~0.14 below the pane, top at the bin line (see notes in REFERENCE777)
 const REC = { hw: 0.195, top: 0.42, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 0.034, btn: -0.268 };
 const WMAT = {
-  lining: { c: '#c3bfb7', r: 0.5, l: LAYER.plastic },           // grey tunnel lining round the pane (c_27300, tt photo)
+  lining: { c: '#c3bfb7', r: 0.5 },           // grey tunnel lining round the pane (c_27300, tt photo)
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
   grilleBack: { c: '#1b1f25', r: 0.8 },
   label: { c: '#ecebe6', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
@@ -97,11 +104,11 @@ function windowCellPattern(cellW, holeW, holeH, holeR, vc, rayFn) {
   const hw = cellW / 2, hh0 = vc - WALL.vb0, hh1 = WALL.vb1 - vc;
   const cornerAng = [Math.atan2(hh1, hw), Math.PI - Math.atan2(hh1, hw), Math.PI + Math.atan2(hh0, hw), 2 * Math.PI - Math.atan2(hh0, hw)];
   const base = [];
-  if (rayFn) {                                                  // recess: 32 angles spaced evenly along its outline
-    const M = 720, pts = [], acc = [0];
+  if (rayFn) {                                                  // recess: 48 angles spaced evenly along its outline
+    const M = 720, pts = [], acc = [0], NR = 48;                // (was 32: faceted corners on the soft lip, QA r1)
     for (let i = 0; i <= M; i++) pts.push(rayFn((i / M) * Math.PI * 2));
     for (let i = 1; i <= M; i++) acc.push(acc[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
-    for (let k = 0, i = 0; k < 32; k++) { while (acc[i] < (k / 32) * acc[M]) i++; base.push((i / M) * Math.PI * 2); }
+    for (let k = 0, i = 0; k < NR; k++) { while (acc[i] < (k / NR) * acc[M]) i++; base.push((i / M) * Math.PI * 2); }
   } else for (let i = 0; i < 44; i++) base.push((i / 44) * Math.PI * 2);
   const angs = [...new Set([...base, ...cornerAng].map((a) => +a.toFixed(6)))].sort((a, b) => a - b);
   const ring = angs.map((th) => {
@@ -225,9 +232,15 @@ function windowParts(side, pat) {
   const inset = (pts, s) => pts.map(([a, b]) => { const l = Math.hypot(a, b) || 1; return [a * (1 - s / l), b * (1 - s / l)]; });
   const scl = (pts, k) => pts.map(([a, b]) => [a * k, b * k]);
   const D = REC.depth;
+  // outer lip: soft quarter-round (r ~16 mm) tangent to the wall, then a slightly drafted wall to the sill.
+  // QA r1: the old 5 mm / 11 mm step drew a crisp double outline; real 777 reveals roll in softly
+  // [V: tt_window, lalf_37, f_17313; A: radius]. Ring 0 takes the wall normal so the roll-in has no seam.
+  const q = [0, 20, 40, 60, 75, 90].map((a) => (a * Math.PI) / 180), LR = 0.016;
+  const lip = ringLoft([...q.map((a) => [inset(rec, LR * Math.sin(a)), LR * (1 - Math.cos(a))]), [inset(rec, 0.019), D]], map, hint);
+  for (let i = 0; i < rec.length; i++) { const [, , wnx, wny] = wallAt(vc + rec[i][1]); lip.n.splice(i * 3, 3, wnx * side, wny, 0); }
   const parts = [
-    [ringLoft([[rec, 0], [inset(rec, 0.005), 0.011], [inset(rec, 0.014), D]], map, hint), MAT.reveal],
-    [ringLoft([[inset(rec, 0.014), D], [scl(open, 1.085), D]], map, hint), MAT.reveal],
+    [lip, MAT.reveal],
+    [ringLoft([[inset(rec, 0.019), D], [scl(open, 1.085), D]], map, hint), MAT.reveal],
     [ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal],
     // lining: straight shade channel (both shades run here), then necks down to the pane
     [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.986), D + 0.056], [pane, 0.106]], map, hint), WMAT.lining],
@@ -250,10 +263,10 @@ function windowParts(side, pat) {
     const b = lv.p.length / 3; lv.p.push(...p0, ...p1, ...p2, ...p3); for (let k = 0; k < 4; k++) { lv.n.push(0, 0, 0); lv.u.push(0, 0); }
     lv.i.push(b, b + 1, b + 2, b, b + 2, b + 3);
   };
-  const nSl = 16, v0 = gc - ghh + 0.008, v1 = gc + ghh - 0.008;
+  const nSl = 30, v0 = gc - ghh + 0.008, v1 = gc + ghh - 0.008;  // ~30 fine slats [V: py_37301 crop, QA r1]
   for (let k = 0; k < nSl; k++) {                               // horizontal louvres, tilted down-and-out
     const v = lerp(v0, v1, (k + 0.5) / nSl), zz = ghw - 0.012;
-    quad(gm(-zz, v, 0.0055), gm(zz, v, 0.0055), gm(zz, v - 0.008, 0.0018), gm(-zz, v - 0.008, 0.0018));
+    quad(gm(-zz, v, 0.0055), gm(zz, v, 0.0055), gm(zz, v - 0.005, 0.0018), gm(-zz, v - 0.005, 0.0018));
   }
   for (let k = 0; k < 9; k++) {                                 // vertical ribs (9, py_37301)
     const z = lerp(-ghw + 0.02, ghw - 0.02, k / 8);
@@ -284,9 +297,9 @@ function shadePanelGeo(kind) {
   if (kind === 'manual') {
     B.add(gBox(w, h, 0.003), null, MAT.shade);
   } else {
-    const g = raw(), n = 80;                                    // 40 pleats
+    const g = raw(), n = 80;                                    // 40 pleats (~11 mm, kn_36 / omaat_24 / gstp_23)
     for (let k = 0; k <= n; k++) {
-      const y = -h / 2 + (h * k) / n, zz = (k % 2) * 0.003;
+      const y = -h / 2 + (h * k) / n, zz = (k % 2) * 0.005;       // 5 mm zig-zag (was 3 mm: shaded flat, QA r1) [A]
       g.p.push(-w / 2, y, zz, w / 2, y, zz); g.n.push(0, 0, 1, 0, 0, 1); g.u.push(0, k / n, 1, k / n);
     }
     for (let k = 0; k < n; k++) { const q = k * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
@@ -294,6 +307,11 @@ function shadePanelGeo(kind) {
     let dot = 0; for (let v = 2; v < g.n.length; v += 3) dot += g.n[v];
     if (dot < 0) { for (let v = 0; v < g.n.length; v++) g.n[v] = -g.n[v]; for (let t = 0; t < g.i.length; t += 3) { const tmp = g.i[t + 1]; g.i[t + 1] = g.i[t + 2]; g.i[t + 2] = tmp; } }
     B.add(g, null, kind === 'sheer' ? MAT.sheer : MAT.blackout);
+    // pleat stripes baked into vertex colour: valley rows x0.86, crest rows x1.0 (QA r1: closed shades read as plain
+    // slabs; the photos show distinct horizontal stripes) [A: contrast]
+    const geo = B.build();
+    for (let k = 0; k < geo.col.length / 4; k++) if (((k >> 1) & 1) === 0) for (let c = 0; c < 3; c++) geo.col[k * 4 + c] = Math.round(geo.col[k * 4 + c] * 0.86);
+    return geo;
   }
   return B.build();
 }
@@ -424,7 +442,15 @@ function buildShell(gl, layout) {
   const pat = windowCellPattern(W.pitch, W.holeW, W.holeH, HOLE_R, W.yc, recessRay);
 
   // ---- floor ----
+  // the seat zone aft of door 3 holds THE Room rows 19-20 and PY rows 25-27: split it at z20 (the J/PY partition) so
+  // PY gets the navy Y/PY carpet (QA r1: PY had the brown J carpet; py_37301 / py_37303 show navy) [V]
+  const floorZones = [];
   for (const zn of zones) {
+    if (zn.type === 'seat' && zn.cls === 'J' && layout.z20 > zn.z0 && layout.z20 < zn.z1) {
+      floorZones.push({ ...zn, z1: layout.z20 }, { ...zn, z0: layout.z20, cls: 'PY' });
+    } else floorZones.push(zn);
+  }
+  for (const zn of floorZones) {
     const carpet = zn.type === 'seat';
     const f = gBox(CAB.floorHalf * 2, 0.02, zn.z1 - zn.z0);
     shell.add(f, M4.trs(0, -0.01, (zn.z0 + zn.z1) / 2), carpet ? (zn.cls === 'F' || zn.cls === 'J' ? MAT.carpetJ : MAT.carpet) : MAT.vinyl);
@@ -507,11 +533,11 @@ function buildShell(gl, layout) {
     shell.add(gExtrude(full, 0.04, 5), M4.trs(0, 0, z + f * 0.02), MAT.wallEnd);
   }
   // ---- floor path strips along aisles ----
-  for (const zn of zones) {
+  for (const zn of floorZones) {
     if (zn.type !== 'seat') continue;
-    const xs = AISLE_STRIPS[zn.cls] || AISLE_STRIPS.Y;
-    for (const side of [-1, 1]) for (const x of xs) {
-      shell.add(gBox(0.018, 0.004, zn.z1 - zn.z0 - 0.1), M4.trs(x * side, 0.002, (zn.z0 + zn.z1) / 2), MAT.pathStrip);
+    const xs = AISLE_STRIPS[zn.cls] || AISLE_STRIPS.Y, fj = zn.cls === 'F' || zn.cls === 'J';
+    for (const side of [-1, 1]) for (const x of xs) {                // 12 mm wide, 1 mm proud, carpet-toned [A]
+      shell.add(gBox(0.012, 0.002, zn.z1 - zn.z0 - 0.1), M4.trs(x * side, 0.0, (zn.z0 + zn.z1) / 2), fj ? MAT.pathStripJ : MAT.pathStrip);
     }
   }
 
