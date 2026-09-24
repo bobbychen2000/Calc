@@ -1,3 +1,11 @@
+# >>> CORRECTION FOR ROOM (wave 2) - READ FIRST <<<
+
+**Restore the boarding bundle that e45db15 removed.** The line "pillows only, no wrapped duvet" in the first wave-2 brief was an
+integrator default. It was never the user's decision, and it was withdrawn in c308f51. The user asked for judgement calls,
+and the rule is that real in-flight photos win. tpg_31 and tpg_42 show the folded duvet and pad in clear plastic under
+the pillows at boarding, so keep `roomBundle` (5a42e29) in the boarding (non-bed) state. The current `WORKER_BRIEF.md`
+says the same.
+
 # Items from lighting + integration
 
 ## To suite (replies to `questions_suite.md`)
