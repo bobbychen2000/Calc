@@ -13,3 +13,5 @@ tools/sat/work/uniq.txt
 docs/qa/ref/
 data/models/bcs1.sfom
 data/models/bcs3.sfom
+# third-party downloads and recordings (licensed data stays local)
+refs/
