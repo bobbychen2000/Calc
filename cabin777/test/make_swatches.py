@@ -69,67 +69,71 @@ def _blur_wrap(a, s):
 
 
 def synth_py_back(ratio, seed=7):
-    """PY QA w1-w3: the 140 px photo crop upsampled to 256 renders as soft blobs up close, so the weave is redrawn crisply
-    and only the photo's mottling (low-pass of the crop) is kept, as stroke density (cloud zones). w3: real close-ups
-    (ref/web/py alv_02 seat top + wings, alv_17) show short cream strokes, ~10-25 mm x 3-4.5 mm, leaning ~+-25 deg from
-    the vertical in alternating ~27 mm columns (herringbone); from seat distance (san_01, py_37302) they read as fine
-    undirected flecks. ~30 % light coverage, cream ~4x the ground in linear light. The w2 horizontal streak rows read as
-    a barcode (rater A) and the ground mottling as dark blotches (rater B) [D]"""
+    """PY: redrawn crisply from ANA's official photos (user decision: ANA official look; the 2026 trip-report herringbone
+    is a later fabric generation). Measured on py_37305 / 37301 (fabric research, ~980-1250 px/m) [D]:
+    horizontal light dashes in rows, pitch 8.15 mm (20 rows per 0.163 m tile), dash bands 3.5-4 mm thick; dashes sit in
+    columns (not brick bond), column pitch ~20 mm (8 per tile), dash length p50 13-15 mm (N(21, 5) px), gaps ~5 mm, ends
+    square; light fraction ~0.38; dash ~5x the ground (linear); rectangular cell-snapped dark patches (1-2 cols x 1-3
+    rows, dashes x0.3-0.5, ~7 per tile) and light patches (1-3 cols x 2-4 rows, x1.3 with gaps closed, ~5 per tile);
+    no soft blobs"""
     rng = np.random.default_rng(seed)
-    mot = _blur_wrap(ratio.mean(2), 12)
-    mot = (mot - mot.mean()) / (mot.std() + 1e-6)
-    # w4: soft diagonal light / dark drifts about half a tile across (raters A + B: 'leaf wallpaper' without them)
-    drift = _blur_wrap(rng.normal(0, 1, (S, S)), 22); drift = (drift - drift.mean()) / drift.std()
-    drift = 0.6 * drift + 0.4 * np.roll(np.roll(drift, 40, 0), 40, 1)
-    y = np.arange(S)[:, None]; x = np.arange(S)[None, :]
+    rows, cols = 20, 8
+    ph, cw = S / rows, S / cols
+    dim = np.ones((rows, cols)); close = np.zeros((rows, cols), bool)
+    for _ in range(10):                            # dark patches
+        r0, c0 = rng.integers(0, rows), rng.integers(0, cols)
+        for r in range(r0, r0 + rng.integers(1, 4)):
+            for c in range(c0, c0 + rng.integers(1, 3)): dim[r % rows, c % cols] = rng.uniform(0.2, 0.4)
+    for _ in range(5):                             # light patches
+        r0, c0 = rng.integers(0, rows), rng.integers(0, cols)
+        for r in range(r0, r0 + rng.integers(2, 5)):
+            for c in range(c0, c0 + rng.integers(1, 4)): dim[r % rows, c % cols] = 1.3; close[r % rows, c % cols] = True
+    y = np.arange(S)[:, None] + 0.5; x = np.arange(S)[None, :] + 0.5
     lite = np.zeros((S, S))
-    cols = 6; cw = S / cols                        # 0.163 m / 6 = 27 mm columns (tileable)
-    for c, lane in [(c, l) for c in range(cols) for l in (-0.3, 0.0, 0.3)]:        # three staggered lanes per column
-        ang = np.radians(25 if c % 2 else -25) + rng.uniform(-0.26, 0.26, 400)   # +-15 deg jitter
-        vy = rng.uniform(0, 12); k = 0
-        while vy < S:
-            ln = rng.uniform(12, 28) * rng.uniform(0.4, 1.6); th = rng.uniform(1.8, 3.8)
-            cx = (c + 0.5 + lane) * cw + rng.normal(0, cw * 0.06); cy = vy + ln / 2
-            m = 0.5 * mot[int(cy) % S, int(cx) % S] + 1.2 * drift[int(cy) % S, int(cx) % S]
-            if rng.random() < np.clip(0.72 + 0.25 * m, 0.3, 1.0):
-                dx = (x - cx + S / 2) % S - S / 2; dy = (y - cy + S / 2) % S - S / 2
-                a = ang[k]; along = dx * np.sin(a) + dy * np.cos(a); across = dx * np.cos(a) - dy * np.sin(a)
-                v = np.clip((ln / 2 - np.abs(along)) / 2.0, 0, 1) * np.clip((th * (1 - 0.35 * (2 * along / ln) ** 2) - np.abs(across)) / 0.9, 0, 1)
-                lite = np.maximum(lite, v * np.clip(rng.normal(1.0, 0.15), 0.6, 1.25))
-            vy += ln * rng.uniform(0.75, 1.1); k += 1
-    for cy, cx in rng.uniform(0, S, (140, 2)):    # small cream dots between the strokes, mostly in the light drifts
-        if drift[int(cy), int(cx)] < -0.3 and rng.random() < 0.7: continue
-        rr = np.hypot((x - cx + S / 2) % S - S / 2, (y - cy + S / 2) % S - S / 2)
-        lite = np.maximum(lite, np.clip((rng.uniform(1.2, 2.6) - rr) / 0.9, 0, 1) * 0.9)
-    out = (1 + 3.0 * lite) * np.exp(0.12 * drift + 0.04 * mot)
+    for r in range(rows):
+        yc = (r + 0.5) * ph
+        band = np.clip((3.2 - np.abs(((y - yc + S / 2) % S) - S / 2)) / 1.0, 0, 1)[:, 0]    # ~6.4 px = 4 mm thick
+        line = np.zeros(S)
+        for c in range(cols):
+            ln = np.clip(rng.normal(21, 5), 10, 30)
+            if close[r, c]: ln = cw - rng.uniform(1.5, 3)
+            x0 = c * cw + (cw - ln) / 2 + rng.uniform(-4, 4) * (not close[r, c])
+            u = (x[0] - x0) % S
+            seg = np.clip(np.minimum(u, ln - u) / 1.0, 0, 1) * (u < ln)
+            line = np.maximum(line, seg * np.clip(rng.normal(1, 0.2), 0.6, 1.4) * dim[r, c])
+        lite = np.maximum(lite, band[:, None] * line[None, :])
+    out = 1 + 2.6 * lite                           # dash ~3.6x ground: 5x read as a barcode at seat distance (render vs py_37302)
+    mot = _blur_wrap(ratio.mean(2), 24); mot = (mot - mot.mean()) / (mot.std() + 1e-6)
+    out *= np.exp(0.05 * mot)                      # very weak low-frequency term only
     return np.repeat(out[:, :, None], 3, 2)
 
 
 def synth_py_confetti(ratio, seed=11):
-    """PY QA w1: crisp white petal flakes instead of the soft upsampled crop. py_37305 wing crop (90 px = 0.07 m):
-    ~22 flakes, median 27 px^2 (~4-5 mm), 6-8 % area above 150, ground p10 72 / flakes 200+ sRGB (~12x linear) [D].
-    In the cabin views the photo-sized chips read as 2-3 cm blotches against real in-cabin photos (san_01, alv_04: fine
-    speckle) -> smaller chips. w2: real wings (alv_04 / alv_17, san_01) carry dense cream speckle, 20-40 % light
-    coverage (rater A: 5 % in w1) -> 40 elongated chips (~1.6-2.4:1, w3) + 90 specks [D]"""
+    """PY headrest wings, ANA official (py_37305 left wing, ~1000 px/m) [D]: sakura-petal chips, equivalent diameter p50
+    6.5 mm (p25 5.4, p90 8.8), elongation 1.2-1.9, 5-7 jittered sides with one pointed end / a shallow notch, ~14 per
+    0.07 m tile (2.2-3.7 per 10 cm^2), 9-12 % of the area, blue-noise spaced >= 12 mm; ~60 small specks 1-3 mm only
+    1.5-2x the ground (boucle grain); petals ~6x the ground (linear); the ground is the wing's own mid slate grey"""
     rng = np.random.default_rng(seed)
     out = np.ones((S, S))
-    yy, xx = np.mgrid[0:S, 0:S]
+    yy, xx = np.mgrid[0:S, 0:S] + 0.5
     pts = []
-    while len(pts) < 40:                           # blue-noise placement (flakes never touch in the photo)
+    while len(pts) < 14:
         p = rng.uniform(0, S, 2)
-        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 24 ** 2 for q in pts): pts.append(p)
+        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 45 ** 2 for q in pts): pts.append(p)
     for cy, cx in pts:
         dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
-        a = rng.uniform(0, np.pi); r0 = rng.uniform(4.0, 6.5)
-        th = np.arctan2(dy, dx); rr = np.hypot(dx, dy)
-        e = rng.uniform(1.6, 2.4); rr = np.hypot((dx * np.cos(a) + dy * np.sin(a)) / e, dx * np.sin(a) - dy * np.cos(a)) * 1.3; th = np.arctan2(dy, dx)
-        # irregular torn-paper chip: random low harmonics, elongated along a random axis
-        lob = 1 + 0.3 * np.cos(2 * (th - a)) + sum(rng.uniform(0, 0.14) * np.cos(k * th + rng.uniform(0, 6)) for k in (3, 4, 5, 7))
-        out += 7 * np.clip((r0 * lob - rr) / 1.0, 0, 1)
-    for cy, cx in rng.uniform(0, S, (90, 2)):      # small specks between the chips + fine ground grain
+        a = rng.uniform(0, 2 * np.pi); e = rng.uniform(1.2, 1.9); req = np.clip(rng.normal(10, 2), 7, 13)
+        u = dx * np.cos(a) + dy * np.sin(a); v = -dx * np.sin(a) + dy * np.cos(a)
+        th = np.arctan2(v * e, u); rr = np.hypot(u / np.sqrt(e), v * np.sqrt(e))
+        k = rng.integers(5, 8); ph0 = rng.uniform(0, 6)
+        # polygonal chip: facets from a k-gon, pointed tip at th=0, shallow notch at th=pi (sakura petal)
+        poly = (np.cos(np.pi / k) / np.cos((th + ph0) % (2 * np.pi / k) - np.pi / k)) ** 0.7   # softened facets
+        prof = req * poly * (1 + 0.18 * np.cos(th)) * (1 - 0.22 * np.exp(-((np.abs(th) - np.pi) / 0.25) ** 2))
+        out += 5.0 * np.clip(rng.normal(1, 0.15), 0.7, 1.3) * np.clip((prof - rr) / 1.0, 0, 1)
+    for cy, cx in rng.uniform(0, S, (60, 2)):
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
-        out += 5 * np.clip((rng.uniform(1.5, 3.2) - rr) / 1.0, 0, 1)
-    out *= np.exp(0.12 * _blur_wrap(rng.normal(0, 1, (S, S)), 1.2) / 0.2)
+        out += rng.uniform(0.5, 1.0) * np.clip((rng.uniform(2, 5) - rr) / 1.0, 0, 1)
+    out *= np.exp(0.08 * _blur_wrap(rng.normal(0, 1, (S, S)), 0.8) / 0.25)
     return np.repeat(out[:, :, None], 3, 2)
 
 

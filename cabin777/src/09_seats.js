@@ -54,14 +54,14 @@ const SEATMAT = {
   // PY w1: real cabins (ref/web/py san_03 / san_04: fabric / wall 107 / 189 = 0.57; ANA py_37301 / 37303 0.8) -> lighter
   // than the r3 render (0.45); wing = back tone (py_37301 B/R 1.26 vs 1.24), flap / back 0.56-0.65 (san_04, py_37302),
   // shells / wall 0.38-0.42 (san_03 71-82 / 189, py_37303) [D]
-  // w3: back + wing greige (san_04 back R/B 1.27 vs wall 1.10); w4: cool lavender-grey ground (rater A B/R 1.07 vs wall,
-  // B (118,122,132)) - cream strokes come from the tile; wings = back tone (w4 render 94 vs 112) [D]
-  pyFabric: { c: photoBase('#94929c', 'py_back'), r: 0.9, l: LAYER.pyFleck },
-  pyCover: { c: '#4b5168', r: 0.45, l: LAYER.leather },   // w2: flap / back 0.31-0.37 -> ~0.5; w3 B/R 1.4 (alv_17 slate-navy, ANA blue cast)   // photo flap #232740, R/B 0.55 (py_37305): less saturated
-  pyWing: { c: photoBase('#aaa8b2', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
-  pyShell: { c: '#7e8084', r: 0.42, l: LAYER.plastic },   // w2: rear shell / wall 0.28-0.34 rendered vs 0.4-0.6 in photos
-  pyArm: { c: '#5c5e62', r: 0.45, l: LAYER.plastic },
-  pyArmPad: { c: '#4a4c50', r: 0.5, l: LAYER.leather },   // dark stitched leatherette lids (san_06, alv_04)
+  // ANA official look (user decision): wall-balanced consensus of py_37301-05 (wall = #e8e8e8): back #7f8490, wing #848899,
+  // flap #3c4770 (B/R ~1.8 sRGB), shell #75808c, console #6c7684; all blue-grey (B > G >= R) [D]
+  pyFabric: { c: photoBase('#848896', 'py_back'), r: 0.9, l: LAYER.pyFleck },
+  pyCover: { c: '#343c5c', r: 0.45, l: LAYER.leather },   // navy satin leatherette, fine pebble grain; #34406e rendered royal blue (ACES) vs py_37302 #2f3c6c
+  pyWing: { c: photoBase('#8a8c9c', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
+  pyShell: { c: '#7a8088', r: 0.42, l: LAYER.plastic },   // w2: rear shell / wall 0.28-0.34 rendered vs 0.4-0.6 in photos
+  pyArm: { c: '#6c7280', r: 0.45, l: LAYER.plastic },
+  pyArmPad: { c: '#8a919c', r: 0.4, l: LAYER.plastic },   // ANA generation: light blue-grey console lid with a groove (py_37303 / 37301)
   pyBin: { c: '#b8bcc0', r: 0.3, m: 0.85, l: LAYER.brushed },
   pyBay: { c: '#4a4c50', r: 0.6, l: LAYER.plastic },
   pyTrim: { c: '#b9bec4', r: 0.28, m: 0.8, l: LAYER.brushed },
@@ -217,6 +217,7 @@ function buildSeats(gl, layout) {
       if (b[0].exitRow) key += 'x';                        // exit row: screen in the armrest (none in the back)
       if (b.some((s) => s.row === 42)) key += 'l';          // last row: no footrest behind
       if (k0 !== 'py') key += 'abc'[b[0].row % 3];         // econ w3: fabric mix varies row by row (y_47300 / 47301)
+      if (k0 === 'py' && n === 2) key += cx < 0 ? 'L' : 'R'; // PY: window end gets the slim armrest (py_37301 / 37302)
       b.forEach((s) => { s.meshKey = key; });
       push(key, M4.trs(cx, 0, b[0].z), screenVar(), b);
     }
@@ -232,7 +233,7 @@ function buildSeats(gl, layout) {
     const kind = key.startsWith('py') ? 'py' : 'y';
     const n = +key.replace(/[^0-9]/g, '');
     const opts = { noScreen: key.includes('x'), footrest: !key.includes('l') };
-    if (kind === 'py') return lod ? pyUnitFar(n) : pyUnit(n, false, opts);
+    if (kind === 'py') { opts.win = key.includes('L') ? 0 : key.includes('R') ? n : -1; return lod ? pyUnitFar(n, opts) : pyUnit(n, false, opts); }
     opts.rot = Math.max(0, 'abc'.indexOf(key.slice(-1)));
     return lod ? econUnitFar(n, opts.rot) : econUnit(n, false, opts);
   };
@@ -305,6 +306,7 @@ const UNITS = {
   econ4: () => econUnit(4),
   py2: () => pyUnit(2),
   py4: () => pyUnit(4),
+  py2w: () => pyUnit(2, false, { win: 2 }),   // H/K pair: window armrest at +x
   roomO: () => roomPart('O'),
   roomE: () => roomPart('E'),
   roomPair: () => { const B = new Builder(); B.addBuilt(roomPart('O')); B.addBuilt(roomPart('E')); return B.build(); },
