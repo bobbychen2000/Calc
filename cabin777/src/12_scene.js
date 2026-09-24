@@ -17,8 +17,8 @@ const MOODS = {
   // band; from_integration / from_shell 1): a near-white lens with a light band cut. The saturated blue band that runs
   // down past the windows is the in-service cruise look [V: tlfl_IMG_9217 #5c5dc6, belt #736a88; sany_12 #556df7,
   // window line #5362e0; stwis_img_6082 #1961f9]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.30, 0.31, 0.33], bandCut: 0.25, k: 1.05, exposure: 1.28 },
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.02, 0.05, 1.5], bandCut: 1.0, sideLow: 0.25, k: 0.95, exposure: 1.06 },
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.30, 0.31, 0.33], bandCut: 0.25, k: 1.05, exposure: 1.20 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.02, 0.05, 1.5], bandCut: 1.0, sideLow: 0.25, k: 0.95, exposure: 1.0 },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
@@ -57,7 +57,7 @@ const SKIES = {
 // py_37301]: hemi = unoccluded share of the hemisphere fill (was 0.15), bounce = interreflection gain, emitLens /
 // emitCtr = sky value of the air under the outboard bins (sidewall lens band) and under the centre bins, kAttF = voxel
 // attenuation inside THE Suite zone (1.35 elsewhere)
-const AO_TUNE = { hemi: 0.30, bounce: 1.15, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8 };
+const AO_TUNE = { hemi: 0.22, bounce: 1.0, emitLens: 0.45, emitCtr: 0.35, kAttF: 0.8 };
 // Shade states per window: 0 open, 1 half (manual) / sheer (electric), 2 closed (manual) / blackout (electric)
 const SHADE_STATE = {
   label: (w, lv) => (w.electric ? ['open', 'sheer blind', 'blackout'] : ['open', 'half down', 'closed'])[lv],
