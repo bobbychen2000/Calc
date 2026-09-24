@@ -76,3 +76,22 @@ Stop early when **both** raters score at least 8.5 with no high-severity issue, 
 - **Photos.** Never commit or embed photos. Texture patterns may come from photos only as processed tiles in `tex/`, made with `test/make_swatches.py`.
 - **Questions for the user.** Append to `review/qa/questions_<area>.md`; never block on them.
 - **Finish.** Write `review/qa/<area>_report.md`: scores per round, what changed, sources, open questions. Add `review/qa/<area>_before_after.jpg`, a compact contact sheet of your own renders only (no photos), under 400 KB. Commit and push both.
+
+## Wave 2 (from 2026-09-24 21:30 UTC)
+
+Wave 1 ended at the 4-round cap with every area below 8.5. The latest ratings are in `review/qa/<area>_w4a.json` and `_w4b.json`, and each area's `<area>_report.md` lists what was done and what is still open. Wave 2 continues the same loop until **both** raters score at least 8.5 with no high-severity issue.
+- Rounds are numbered w5 onward, with at most 6 more rounds.
+- Stop early if two rounds in a row gain less than 0.2.
+
+Start with a fresh two-rater round on the current head; do not reuse the w4 ratings. The fixes made after w4 are not rated yet.
+
+**User decisions** (the user has seen all the `questions_*.md` files and accepts these defaults):
+- **Boarding:** stays white, as in ANA's official photos. Cruise and night carry the blue band (lighting).
+- **THE Suite:** keep the centre suites at 1.10 m (14 CFR 25.815 aisle width). The divider is lowered by default.
+  - Provide `suiteUnit({divider: 1})` for the raised panel and `suiteUnit({doors: 1})` for closed doors, geometry only. The integrator wires the seat-card toggles.
+- **THE Room:** pillows at boarding, but no plastic-wrapped duvet. In bed mode the duvet is open.
+  - Provide `roomPart(part, {doors: 1})` with the sliding door (and, if modelled, the pop-up panel) closed, for the same toggle.
+- **Door-3 lavs** stay 1.05 m deep. The wing registration stays JA795A. The day sky is a deep-blue cruise sky (lighting).
+- **Everything else** in the `questions_*.md` files keeps its current default.
+
+**Performance budget (new).** Report your area's triangle count before and after (`__app.scene` meshes, instances × triangles), and do not grow it by more than 25 % in wave 2. Where the eye cannot see it, prefer detail in texture or normal maps over geometry.
