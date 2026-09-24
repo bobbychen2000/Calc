@@ -24,20 +24,24 @@ fs.writeFileSync(path.join(ROOT, 'vendor', 'three', 'VERSION.json'), JSON.string
 console.log('vendor/three/three.module.js', fs.statSync(vendorOut).size, 'bytes');
 
 if (process.argv.includes('--app')) {
-  // same remaps as the import map in live3.html
+  // the same module swaps as live3.html's import map (imports + the /js/three/ scope that keeps the originals)
+  const J = (...p) => path.join(ROOT, 'js', ...p);
   const remap = {
-    [path.join(ROOT, 'js', 'gl.js')]: path.join(ROOT, 'js', 'three', 'compat', 'gl.js'),
-    [path.join(ROOT, 'js', 'live', 'app.js')]: path.join(ROOT, 'js', 'three', 'app.js'),
+    [J('gl.js')]: J('three', 'compat', 'gl.js'),
+    [J('renderer.js')]: J('three', 'compat', 'renderer.js'),
+    [J('scene.js')]: J('three', 'compat', 'scene.js'),
+    [J('world', 'world.js')]: J('three', 'compat', 'world.js'),
   };
+  const scopeKeep = new Set([J('renderer.js'), J('world', 'world.js')]);
   const plugin = { name: 'sfo-remap', setup(b) {
     b.onResolve({ filter: /.*/ }, (args) => {
-      if (args.path === 'three') return { path: vendorOut };
       if (!args.path.startsWith('.')) return null;
       const abs = path.resolve(args.resolveDir, args.path);
+      if (args.importer && args.importer.startsWith(J('three') + path.sep) && scopeKeep.has(abs)) return { path: abs };
       return remap[abs] ? { path: remap[abs] } : null;
     });
   } };
   const appOut = path.join(ROOT, 'out', 'build3', 'live3.bundle.js');
-  await esbuild.build({ entryPoints: [path.join(ROOT, 'js', 'live', 'entry.js')], bundle: true, format: 'esm', minify: true, target: 'es2020', outfile: appOut, plugins: [plugin], logLevel: 'warning' });
+  await esbuild.build({ entryPoints: [J('live', 'entry.js')], bundle: true, format: 'esm', minify: true, target: 'es2020', outfile: appOut, plugins: [plugin], logLevel: 'warning' });
   console.log('out/build3/live3.bundle.js', fs.statSync(appOut).size, 'bytes');
 }

@@ -23,7 +23,9 @@ DATA checks
      sheet 2025: extension 9.846-41.381 m rotunda centre -> cab pivot, pivot -> door 2.4 m (geom.PIVOT_TO_DOOR),
      cab 92.5 deg standard / 150 deg optional, rotunda swing +-87.5 deg):
      a. docking: L1 -> door 1, L2 -> the type's dock2 (types.js; None = does not dock), the aircraft at its per-family
-        stop: extension outside 9.846-41.381 m -> ISSUE for observed types (obs_types), NOTE for the other accepted.
+        stop; the cab faces the door, so the cab pivot is 2.4 m out from the door along the fuselage normal and the
+        tunnel runs rotunda -> pivot: extension outside 9.846-41.381 m -> ISSUE for observed types (obs_types) when
+        more than 1.0 m outside (WARN within 1.0 m: stop-point / rotunda uncertainty), NOTE for the other accepted.
      b. cab turn beyond 150 deg -> ISSUE (observed) / NOTE; beyond 92.5 deg -> WARN.
      c. rotunda swing (review round 2): the docked tunnel physically crossing its own fixed walkway -> ISSUE (observed
         types) / NOTE; a tunnel more than 87.5 deg from the walkway direction -> NOTE only, because the rotunda's
@@ -124,14 +126,18 @@ def main(quiet=False, app=True):
             if k is None: continue
             nz = GM.nose_for(s, t)
             dp = GM.door(nz, s['hdg'], t, k)
-            L = math.dist(pv, dp); ext = L - GM.PIVOT_TO_DOOR
-            u = ((dp[0] - pv[0]) / L, (dp[1] - pv[1]) / L)
-            cabp = (dp[0] - u[0] * GM.PIVOT_TO_DOOR, dp[1] - u[1] * GM.PIVOT_TO_DOOR)
+            # docked, the cab faces the door squarely: the cab pivot sits PIVOT_TO_DOOR out from the door along the
+            # fuselage normal (left side: -right), and the tunnel runs from the rotunda to that pivot
+            cabp = (dp[0] - rt[0] * GM.PIVOT_TO_DOOR, dp[1] - rt[1] * GM.PIVOT_TO_DOOR)
+            ext = math.dist(pv, cabp)
+            u = ((cabp[0] - pv[0]) / max(ext, 1e-6), (cabp[1] - pv[1]) / max(ext, 1e-6))
             ang = abs(GM.angle(u, rt))
             tag = 'bridge %s L%d / %s' % (b['gate'], b['door'], t)
             bucket = issues if t in obs else notes
             if b.get('rotunda') and not (GM.EXT_MIN <= ext <= GM.EXT_MAX):
-                bucket.append((s['name'], '%s: extension %.1f m outside %.1f-%.1f m' % (tag, ext, GM.EXT_MIN, GM.EXT_MAX)))
+                over = GM.EXT_MIN - ext if ext < GM.EXT_MIN else ext - GM.EXT_MAX
+                # within 1.0 m of a limit = inside the stop-point / OSM rotunda uncertainty: WARN, not ISSUE
+                (bucket if over > 1.0 else warns).append((s['name'], '%s: extension %.1f m outside %.1f-%.1f m' % (tag, ext, GM.EXT_MIN, GM.EXT_MAX)))
             if ang > GM.CAB_ROT_OPT: bucket.append((s['name'], '%s: cab turn %.0f deg > %.0f' % (tag, ang, GM.CAB_ROT_OPT)))
             elif ang > GM.CAB_ROT_STD and t in obs: warns.append((s['name'], '%s: cab turn %.0f deg > standard %.1f (needs the optional cab)' % (tag, ang, GM.CAB_ROT_STD)))
             if wdir:

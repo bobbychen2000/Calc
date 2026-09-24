@@ -40,6 +40,8 @@ function RUNWAY_SIGNS() {
 const QUALITY = {
   high: { name: 'high', msaa: 4, shadow: 3072, scaleMax: 1.0, dprMax: 2, maxPx: 3.2e6, terrainStep: 15, mapRes: 1.0, aptRes: 0.8, cityRes: 4096, lod: 1800, shadowDist: 1600 },
   medium: { name: 'medium', msaa: 4, shadow: 2048, scaleMax: 0.9, dprMax: 1.5, maxPx: 2.0e6, terrainStep: 20, mapRes: 1.25, aptRes: 1.0, cityRes: 4096, lod: 1300, shadowDist: 1100 },
+  // stills / visual QA only (?quality=ultra): full-resolution, no dynamic scaling (see FIXED_RES), large shadow map
+  ultra: { name: 'ultra', msaa: 4, shadow: 4096, scaleMax: 1.0, dprMax: 3, maxPx: 3.4e7, terrainStep: 10, mapRes: 0.75, aptRes: 0.6, cityRes: 8192, lod: 4000, shadowDist: 2500 },
   low: { name: 'low', msaa: 2, shadow: 2048, scaleMax: 0.8, dprMax: 2, maxPx: 1.1e6, terrainStep: 30, mapRes: 1.6, aptRes: 1.25, cityRes: 2048, lod: 1000, shadowDist: 700 },
 };
 const store = { get(k, d) { try { const v = localStorage.getItem('sfolive.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('sfolive.' + k, JSON.stringify(v)); } catch (e) { } } };
@@ -47,10 +49,14 @@ function pickQuality(pref) {
   const ua = navigator.userAgent || '';
   const mobile = /iPhone|iPad|iPod|Android/i.test(ua) || (matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900);
   const mem = navigator.deviceMemory || 8;
-  const q = pref && pref !== 'auto' ? pref : mobile ? 'low' : mem <= 4 ? 'medium' : 'high';
+  const url = new URLSearchParams(location.search).get('quality');   // ?quality=high|medium|low|ultra overrides the setting
+  const q = url && QUALITY[url] ? url : pref && pref !== 'auto' ? pref : mobile ? 'low' : mem <= 4 ? 'medium' : 'high';
   return QUALITY[q] || QUALITY.medium;
 }
 const nextFrame = () => new Promise(r => setTimeout(r, 0));
+// ?fixedres=1 pins the render scale at the tier maximum (no dynamic resolution): for stills and QA renders on slow
+// (software) GPUs, where the frame-time controller would otherwise drop the scale to 0.4 before the screenshot
+const FIXED_RES = new URLSearchParams(location.search).has('fixedres');
 
 // cfg: { mode: 'live'|'snapshot', airport, snapshot: {now, ac|aircraft}, snapshotLabel, metar, models: {key: source}, relay: bool, about, attrib }
 export async function startApp(cfg) {
@@ -371,7 +377,7 @@ export async function startApp(cfg) {
     } catch (e) { console.error(e); }
     // dynamic resolution: keep the frame time near 33 ms
     const ft = performance.now() - tp; ftEMA += (ft - ftEMA) * 0.05;
-    if ((tScale += wall) > 2.5) { tScale = 0; const ns = ftEMA > 36 ? scale * 0.88 : ftEMA < 20 ? Math.min(Q.scaleMax, scale * 1.08) : scale; if (Math.abs(ns - scale) > 0.02) { scale = clamp(ns, 0.4, Q.scaleMax); onResize(); } }
+    if (!FIXED_RES && (tScale += wall) > 2.5) { tScale = 0; const ns = ftEMA > 36 ? scale * 0.88 : ftEMA < 20 ? Math.min(Q.scaleMax, scale * 1.08) : scale; if (Math.abs(ns - scale) > 0.02) { scale = clamp(ns, 0.4, Q.scaleMax); onResize(); } }
     requestAnimationFrame(tick);
   }
   function status(now) {

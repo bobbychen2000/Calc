@@ -29,6 +29,7 @@
 //   air.acc / air.lat / air.turn / air.vacc / air.vs      along-track > 3 m/s2, lateral > 6 m/s2 (31 deg bank; x1.7
 //                         light), turn > 7 deg/s (x1.8 light), vertical acc > 3 m/s2, |vs| > 8000 fpm below 10,000 ft
 //   teleport              a frame displacement that differs from the previous velocity * dt by > 20 m (+ reason)
+//   jump.gnd_1_20m / jump.air_5_20m  the same deviation > 1 m on the ground (> 100 m/s2 implied) / > 5 m in the air
 //   hdg.flip              heading change > 20 deg in one 0.1 s frame
 //   vert.ground           ground aircraft with y != GROUND_Y;  vert.below: y < GROUND_Y
 //   vert.float            airborne, < 1 m AGL, < 50 kt, not a rotorcraft (hovering on the ramp)
@@ -125,18 +126,18 @@ function shapeOf(key) {
   // sample points (1 m grid inside each piece + its outline) with height bands
   const pts = [];
   const inPoly = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
-  for (const pc of pieces) {
+  pieces.forEach((pc, pi) => {
     const P = pc.poly; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of P) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
     const add = (x, y) => {
       const ay = Math.abs(y); let lo, hi;
       if (pc.kind === 'fus') { const e = Math.sqrt(Math.max(0, 1 - (ay / R) ** 2)) * R; lo = Hc - e; hi = Hc + e; }
       else if (pc.kind === 'wing') { const z = Hc - wy * R + ay * dih; lo = z - 0.35; hi = z + 0.35; }
       else { const z = Hc + hy * R + ay * hdih; lo = z - 0.3; hi = z + 0.3; }
-      pts.push([x, y, lo, hi, pc.kind]);
+      pts.push([x, y, lo, hi, pc.kind, pi]);
     };
     for (let x = Math.ceil(x0); x <= x1; x += 1) for (let y = Math.ceil(y0); y <= y1; y += 1) if (inPoly(P, x, y)) add(x, y);
     for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]); const n = Math.max(1, Math.ceil(L)); for (let k = 0; k < n; k++) add(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n); }
-  }
+  });
   const gear = [[T.xNose ?? 3, 0], [T.xMain, (T.track || 6) / 2], [T.xMain, -(T.track || 6) / 2]];
   const code = (() => { const s = w ? w.span : 36; return s < 24 ? 'B' : s < 36 ? 'C' : s < 52 ? 'D' : s < 65 ? 'E' : 'F'; })();
   S = { T, pieces, pts, gear, code, reach: Math.hypot(T.L, span) + 2 }; shapeCache.set(key, S); return S;
@@ -182,6 +183,7 @@ function bridgeBoxes(g, b, k) {
   out.push({ c: cc, u: fu, hl: (front + 1.8) / 2, hw: 1.9, lo: P.cab[1] - G - 0.1, hi: P.cab[1] - G + 3.4, part: 'cab', front: [P.cab[0] + fu[0] * front, P.cab[2] + fu[1] * front] });
   return { boxes: out, door: P.door, P };
 }
+function boxPoly(bx) { if (bx.poly) return bx.poly; const P = []; if (bx.round) { for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; P.push([bx.c[0] + Math.cos(a) * bx.round * 1.083, bx.c[1] + Math.sin(a) * bx.round * 1.083]); } } else { const u = bx.u, v = [-u[1], u[0]]; for (const [sa, sc] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) P.push([bx.c[0] + u[0] * bx.hl * sa + v[0] * bx.hw * sc, bx.c[1] + u[1] * bx.hl * sa + v[1] * bx.hw * sc]); } return bx.poly = P; }
 function inBox(bx, x, z) { const dx = x - bx.c[0], dz = z - bx.c[1]; if (bx.round) return Math.hypot(dx, dz) < bx.round; const a = dx * bx.u[0] + dz * bx.u[1], c = -dx * bx.u[1] + dz * bx.u[0]; return Math.abs(a) < bx.hl && Math.abs(c) < bx.hw; }
 // displayed door (L1/L2) of an aircraft, same formula as gates.js doorOf
 function doorW(B, which) { const T = B.S.T; const x = T.doors[Math.min(which - 1, T.doors.length - 1)]; const left = [-B.r[0], -B.r[1]]; const p = B.W(x + 0.5, 0); return [p[0] + left[0] * (T.R + 0.15), p[1] + left[1] * (T.R + 0.15)]; }
@@ -247,7 +249,7 @@ const K = new Map();
 const EXC = { gAccRoll: 3.5, gAccTaxi: 2.0, gLat: 3.0, gJerk: 6.0, gYaw: 25, slip: 5, aAcc: 3.0, aLat: 6.0, aVacc: 3.0, aTurn: 7 };
 const finalRwy = new Map(); // hex -> {rwy, t}
 const phaseHist = new Map(); // hex -> [times of display-phase changes]
-const gndSince = new Map();
+const surfCache = new Map(), pairCache = new Map(), offCells = new Map();
 
 async function* readLines(f) { const rl = readline.createInterface({ input: fs.createReadStream(f).pipe(zlib.createGunzip()), crlfDelay: Infinity }); for await (const l of rl) if (l) yield l; }
 const plans = []; if (GATES && fs.existsSync(GATES)) for await (const l of readLines(GATES)) plans.push(JSON.parse(l));
@@ -316,6 +318,8 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       const dh = wrapD((D.hdg - s.hdg) / DEG);
       if (chk) {
         if (pred > 20) viol('teleport', tr, pred, { d: +disp.toFixed(1), reset: tr._reset || null, g: D.ground ? 1 : 0 });
+        else if (D.ground && s.g && pred > 1.0) viol('jump.gnd_1_20m', tr, pred, { d: +disp.toFixed(2), reset: tr._reset || null, towing: tr.ctl && tr.ctl.towing ? 1 : 0, v: +D.gs.toFixed(2), stand: tr.gate ? tr.gate.name : null, parkMode: tr.parkMode || null });
+        else if (!D.ground && !s.g && pred > 5) viol('jump.air_5_20m', tr, pred, { d: +disp.toFixed(1), reset: tr._reset || null });
         if (Math.abs(dh) > 20) viol('hdg.flip', tr, Math.abs(dh), { dh: +dh.toFixed(0), g: D.ground ? 1 : 0, reset: tr._reset || null });
         // touchdown / liftoff transitions (display)
         if (D.ground && !s.g && tr.m.rwy !== undefined) {
@@ -360,21 +364,27 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       if (D.ground) gnd.push(B); else if (agl < 15) low.push(B);
     }
   }
-  for (const [hex] of K) if (!traffic.tracks.has(hex)) K.delete(hex);
+  for (const [hex] of K) if (!traffic.tracks.has(hex)) { K.delete(hex); surfCache.delete(hex); }
+  if (frames % 600 === 0) pairCache.clear();
   if (!chk) { simNow += DT * 1000; continue; }
-  // ---------------- surface: pavement, buildings
+  // ---------------- surface: pavement, buildings (cached per aircraft while its displayed pose is unchanged)
   for (const B of gnd) {
-    const tr = B.tr;
-    let om = 0, ou = 0, worst = null; for (const gp of B.S.gear) { const q = B.W(gp[0], gp[1]); if (!pavedMask(q[0], q[1])) { om++; worst = q; } if (!pavedAll(q[0], q[1])) ou++; }
-    if (om) viol('offpave.mask', tr, om, { gearOff: om, gx: +worst[0].toFixed(1), gz: +worst[1].toFixed(1) });
-    if (ou) viol('offpave.union', tr, ou, { gearOff: ou });
-    let nb = 0, bk = null; for (const q0 of B.S.pts) { const q = B.W(q0[0], q0[1]); if (building(q[0], q[1])) { nb++; bk = bk || q0[4]; } }
-    if (nb) viol('building', tr, nb, { pts: nb, part: bk, moving: tr.disp.gs > 0.3 ? 1 : 0, stand: tr.gate ? tr.gate.name : null });
+    const tr = B.tr; const key = B.key = Math.round(tr.disp.x * 20) + ',' + Math.round(tr.disp.z * 20) + ',' + Math.round(tr.disp.hdg * 1000) + ',' + B.S.T.L;
+    let C = surfCache.get(tr.hex);
+    if (!C || C.key !== key) {
+      C = { key, om: 0, ou: 0, worst: null, nb: 0, bk: null };
+      for (const gp of B.S.gear) { const q = B.W(gp[0], gp[1]); if (!pavedMask(q[0], q[1])) { C.om++; C.worst = q; } if (!pavedAll(q[0], q[1])) { C.ou++; C.wu = q; } }
+      for (const q0 of B.S.pts) { const q = B.W(q0[0], q0[1]); if (building(q[0], q[1])) { C.nb++; C.bk = C.bk || q0[4]; } }
+      surfCache.set(tr.hex, C);
+    }
+    if (C.om) viol('offpave.mask', tr, C.om, { gearOff: C.om, gx: +C.worst[0].toFixed(1), gz: +C.worst[1].toFixed(1) });
+    if (C.ou) { viol('offpave.union', tr, C.ou, { gearOff: C.ou, gx: +C.wu[0].toFixed(1), gz: +C.wu[1].toFixed(1), v: +tr.disp.gs.toFixed(1) }); const ck = Math.round(C.wu[0] / 25) * 25 + ',' + Math.round(C.wu[1] / 25) * 25; let cl = offCells.get(ck); if (!cl) offCells.set(ck, cl = { frames: 0, hex: new Set(), moving: 0 }); cl.frames++; cl.hex.add(tr.info.flight || tr.hex); if (tr.disp.gs > 0.3) cl.moving++; }
+    if (C.nb) viol('building', tr, C.nb, { pts: C.nb, part: C.bk, moving: tr.disp.gs > 0.3 ? 1 : 0, stand: tr.gate ? tr.gate.name : null });
   }
   // ---------------- aircraft pairs
   for (let i = 0; i < gnd.length; i++) for (let j = i + 1; j < gnd.length; j++) {
     const A = gnd[i], B = gnd[j]; if (Math.hypot(A.c[0] - B.c[0], A.c[1] - B.c[1]) > (A.S.reach + B.S.reach) / 2 + 10) continue;
-    const c = clearance(A, B); const still = A.tr.disp.gs < 0.2 && B.tr.disp.gs < 0.2;
+    const pk = A.tr.hex + '~' + B.tr.hex; let pc = pairCache.get(pk); if (!pc || pc.a !== A.key || pc.b !== B.key) pairCache.set(pk, pc = { a: A.key, b: B.key, c: clearance(A, B) }); const c = pc.c; const still = A.tr.disp.gs < 0.2 && B.tr.disp.gs < 0.2;
     const pair = [A.tr.info.flight || A.tr.hex, B.tr.info.flight || B.tr.hex].sort().join('~'); const key = [A.tr.hex, B.tr.hex].sort().join('~');
     const ex = { key, pair, other: B.tr.hex, types: (A.tr.info.icao || '?') + '/' + (B.tr.info.icao || '?'), phases: A.tr.phase + '/' + B.tr.phase, stands: (A.tr.gate ? A.tr.gate.name : '-') + '/' + (B.tr.gate ? B.tr.gate.name : '-'), stale: (A.tr.stale ? 1 : 0) + (B.tr.stale ? 1 : 0) };
     if (c < 0) viol('overlap.gnd', null, -c, { ...ex, area: -c, still: still ? 1 : 0 }, A.tr.disp.x, A.tr.disp.z);
@@ -386,33 +396,41 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
   for (const g of gates) {
     if (!g.bridge) continue;
     for (const b of g.bridges) {
-      const k = bridgeK(g, b); const BB = bridgeBoxes(g, b, k);
-      const rc = BB.P.rc; const ot = occ.get(g.name) || null;
-      // aircraft inside the bridge
+      const k = bridgeK(g, b);
+      let BB = b._inv; const bkey = k.toFixed(3) + '|' + (g.acType || '') + '|' + JSON.stringify(g.dock || null);
+      if (!BB || BB.bkey !== bkey) { BB = b._inv = bridgeBoxes(g, b, k); BB.bkey = bkey; let cx = 0, cz = 0; for (const bx of BB.boxes) { cx += bx.c[0]; cz += bx.c[1]; } cx /= BB.boxes.length; cz /= BB.boxes.length; let r = 0; for (const bx of BB.boxes) for (const q of boxPoly(bx)) r = Math.max(r, Math.hypot(q[0] - cx, q[1] - cz)); BB.cc = [cx, cz]; BB.r = r; BB.ver = (BB.ver || 0) + 1; }
+      const ot = occ.get(g.name) || null;
+      // aircraft inside the bridge: SAT of each planform piece against each bridge box, then 3-D point test
       for (const A of gnd) {
-        if (Math.hypot(A.c[0] - rc[0], A.c[1] - rc[2]) > A.S.reach / 2 + 60) continue;
-        const own = ot && ot === A.tr && k > 0.05; let hit = null, n = 0;
-        for (const q0 of A.S.pts) {
-          const q = A.W(q0[0], q0[1]);
+        if (Math.hypot(A.c[0] - BB.cc[0], A.c[1] - BB.cc[1]) > A.S.reach / 2 + BB.r + 2) continue;
+        const own = ot && ot === A.tr && k > 0.05; const ck = A.key + '|' + bkey + '|' + (own ? 1 : 0);
+        let H = b._hit && b._hit.get(A.tr.hex);
+        if (!H || H.ck !== ck) {
+          H = { ck, n: 0, hit: null }; const PA = worldPolys(A);
           for (const bx of BB.boxes) {
             if (own && bx.part === 'cab') continue; // the docked cab touches its own aircraft (bellows) by design
-            if (!inBox(bx, q[0], q[1])) continue; if (q0[3] < bx.lo || q0[2] > bx.hi) continue;
-            n++; if (!hit || (q0[4] === 'fus' && hit.kind !== 'fus')) hit = { kind: q0[4], part: bx.part };
+            const bp = boxPoly(bx);
+            PA.forEach((pa, pi) => {
+              if (sepAxis(pa, bp)) return;
+              for (const q0 of A.S.pts) { if (q0[5] !== pi) continue; if (q0[3] < bx.lo || q0[2] > bx.hi) continue; const q = A.W(q0[0], q0[1]); if (!inBox(bx, q[0], q[1])) continue; H.n++; if (!H.hit || (q0[4] === 'fus' && H.hit.kind !== 'fus')) H.hit = { kind: q0[4], part: bx.part }; }
+            });
           }
+          if (!b._hit) b._hit = new Map(); b._hit.set(A.tr.hex, H);
         }
-        if (n) viol('bridge.hit.' + hit.kind, A.tr, n, { stand: g.name, bridge: b.door, part: hit.part, k: +k.toFixed(2), own: own ? 1 : 0, pts: n, phase: A.tr.phase });
+        if (H.n) viol('bridge.hit.' + H.hit.kind, A.tr, H.n, { stand: g.name, bridge: b.door, part: H.hit.part, k: +k.toFixed(2), own: own ? 1 : 0, pts: H.n, phase: A.tr.phase, v: +A.tr.disp.gs.toFixed(1) });
       }
       if (k > 0.5) {
         // door target vs the displayed door of the occupant
         const tgt = [BB.door[0], BB.door[2]];
         const Bo = ot && ot.disp && ot.disp.valid && traffic.tracks.has(ot.hex) ? gnd.find(q => q.tr === ot) : null;
-        if (!Bo) { let nearest = 1e9; for (const A of gnd) nearest = Math.min(nearest, Math.hypot(doorW(A, b.door)[0] - tgt[0], doorW(A, b.door)[1] - tgt[1])); if (nearest > 10) viol('bridge.orphan', ot || null, nearest, { key: g.name + '/' + b.door, stand: g.name, bridge: b.door, k: +k.toFixed(2), occupant: ot ? ot.hex : null, removed: ot && ot.removed ? 1 : 0, nearestDoor: nearest > 1e8 ? null : +nearest.toFixed(1) }, tgt[0], tgt[1]); }
+        if (!Bo) { let nearest = 1e9; for (const A of gnd) { if (Math.hypot(A.c[0] - tgt[0], A.c[1] - tgt[1]) > A.S.reach) continue; const d = doorW(A, b.door); nearest = Math.min(nearest, Math.hypot(d[0] - tgt[0], d[1] - tgt[1])); } if (nearest > 10) viol('bridge.orphan', ot || null, nearest, { key: g.name + '/' + b.door, stand: g.name, bridge: b.door, k: +k.toFixed(2), occupant: ot ? ot.hex : null, removed: ot && ot.removed ? 1 : 0, nearestDoor: nearest > 1e8 ? null : +nearest.toFixed(1) }, tgt[0], tgt[1]); }
         else {
           const dW = doorW(Bo, b.door); const e = Math.hypot(dW[0] - tgt[0], dW[1] - tgt[1]);
-          const pp = Bo.tr.parkPos; let parkErr = null, dispPark = null; if (pp) { const Tq = Bo.S.T; const hq = hdgVec(Bo.tr.parkHdg ?? Bo.tr.disp.hdg); const f = hq, r = [-f[1], f[0]], k0 = ANT * Tq.L; const nose = [pp[0] + f[0] * k0, pp[1] + f[1] * k0]; const Bp = { S: Bo.S, r, W: (x, y) => [nose[0] - f[0] * x + r[0] * y, nose[1] - f[1] * x + r[1] * y] }; const dP = doorW(Bp, b.door); parkErr = +Math.hypot(dP[0] - tgt[0], dP[1] - tgt[1]).toFixed(2); dispPark = +Math.hypot(pp[0] - Bo.tr.disp.x, pp[1] - Bo.tr.disp.z).toFixed(2); }
-          const tk = gsys.docks(g, b) && g.acType;
-          if (e > 1.5) viol('bridge.misdock', Bo.tr, e, { stand: g.name, bridge: b.door, err: +e.toFixed(1), acType: g.acType, model: Bo.tr.model ? Bo.tr.model.t : null, parkMode: Bo.tr.parkMode || null, parkErr, dispPark, physOff: Bo.tr.physOff ? +Math.hypot(...Bo.tr.physOff).toFixed(2) : 0, towing: Bo.tr.ctl && Bo.tr.ctl.towing ? 1 : 0, v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase });
-          if (Bo.tr.disp.gs > 0.3) viol('bridge.attached.moving', Bo.tr, Bo.tr.disp.gs, { stand: g.name, bridge: b.door, k: +k.toFixed(2), v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase });
+          if (e > 1.5) {
+            const pp = Bo.tr.parkPos; let parkErr = null, dispPark = null; if (pp) { const Tq = Bo.S.T; const f = hdgVec(Bo.tr.parkHdg ?? Bo.tr.disp.hdg), r = [-f[1], f[0]], k0 = ANT * Tq.L; const nose = [pp[0] + f[0] * k0, pp[1] + f[1] * k0]; const Bp = { S: Bo.S, r, W: (x, y) => [nose[0] - f[0] * x + r[0] * y, nose[1] - f[1] * x + r[1] * y] }; const dP = doorW(Bp, b.door); parkErr = +Math.hypot(dP[0] - tgt[0], dP[1] - tgt[1]).toFixed(2); dispPark = +Math.hypot(pp[0] - Bo.tr.disp.x, pp[1] - Bo.tr.disp.z).toFixed(2); }
+            viol('bridge.misdock', Bo.tr, e, { stand: g.name, bridge: b.door, err: +e.toFixed(1), acType: g.acType, model: Bo.tr.model ? Bo.tr.model.t : null, parkMode: Bo.tr.parkMode || null, parkErr, dispPark, physOff: Bo.tr.physOff ? +Math.hypot(...Bo.tr.physOff).toFixed(2) : 0, towing: Bo.tr.ctl && Bo.tr.ctl.towing ? 1 : 0, v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase });
+          }
+          if (Bo.tr.disp.gs > 0.3) viol('bridge.attached.moving', Bo.tr, Bo.tr.disp.gs, { stand: g.name, bridge: b.door, k: +k.toFixed(2), v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase, mphase: Bo.tr.m.phase });
         }
       }
     }
@@ -440,6 +458,7 @@ for (const [cls, v] of [...V.entries()].sort()) {
   const aircraft = new Set([...v.who.keys()]).size;
   report.classes[cls] = { frames: v.frames, episodes: v.eps, keys: aircraft, worst: who.slice(0, 12).map(w => ({ ...w.ex, frames: w.n })), longest: who.slice().sort((a, b) => b.n - a.n).slice(0, 6).map(w => ({ ...w.ex, frames: w.n })) };
 }
+report.offpaveCells = [...offCells.entries()].sort((a, b) => b[1].hex.size - a[1].hex.size || b[1].frames - a[1].frames).slice(0, 25).map(([k, v]) => { const [x, z] = k.split(',').map(Number); const ll = toLL(x, z); return { x, z, lat: +ll[0].toFixed(6), lon: +ll[1].toFixed(6), frames: v.frames, movingFrames: v.moving, aircraft: v.hex.size, who: [...v.hex].slice(0, 8) }; });
 fs.writeFileSync(OUTF, JSON.stringify(report, null, 1));
 console.log(`${OUTF}: checked ${checkedFrames} frames (${(checkedFrames * DT / 3600).toFixed(2)} h) in ${report.meta.wallS}s`);
 for (const [cls, c] of Object.entries(report.classes)) console.log(cls.padEnd(28), String(c.frames).padStart(8), 'frames', String(c.episodes).padStart(6), 'episodes', String(c.keys).padStart(5), 'keys');

@@ -513,7 +513,7 @@ def main():
             if not doors: continue
             path = [tuple(q) for q in b['walk']] + [tuple(b['rotunda'])]
             def ok(pt, pre):
-                if min(math.dist(pt, dp) for dp in doors) - GM.PIVOT_TO_DOOR < GM.EXT_MIN: return False
+                if min(math.dist(pt, dp) for dp in doors) - GM.PIVOT_TO_DOOR < GM.EXT_MIN: return False   # (pivot on the door normal: distance >= this)
                 g = unary_union([LineString(pre + [pt]).buffer(GM.WALK_W / 2, cap_style=2) if len(pre) else _P(pt).buffer(0.01), _P(pt).buffer(GM.ROT_R)])
                 return g.intersection(eo).area <= 0.3
             if ok(path[-1], path[:-1]): continue

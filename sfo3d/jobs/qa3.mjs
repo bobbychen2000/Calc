@@ -1,7 +1,7 @@
 // load, report stand occupancy + physics stats, then render named views
 export default async ({ page, shot, base }) => {
   const mode = process.env.MODE || 'snapshot';
-  await page.goto(base + 'live.html?mode=' + mode);
+  await page.goto(base + 'live.html?mode=' + mode + (process.env.QS || ''));
   await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
   const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
   await page.evaluate(async () => { SFO.qa.hideUI(true); await new Promise(r => setTimeout(r, 2500)); await Promise.all(SFO.scene.aircraft.map(a => a.ready)); });

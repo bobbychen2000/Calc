@@ -10,12 +10,12 @@ import { THREE, TSL } from './lib.js';
 const { Fn, attribute, vec2, vec3, vec4, float, max, min, pow, length, normalize, dot, exp, uniform, cameraPosition, Discard, If, varying, select } = TSL;
 
 export class Sprites {
-  constructor(max = 24000) {
-    this.max = max;
+  constructor(maxN = 24000) {
+    this.max = maxN;
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3));
     g.setIndex([0, 1, 2, 0, 2, 3]);
-    this.aP = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4); this.aC = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4); this.aD = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4);
+    this.aP = new THREE.InstancedBufferAttribute(new Float32Array(maxN * 4), 4); this.aC = new THREE.InstancedBufferAttribute(new Float32Array(maxN * 4), 4); this.aD = new THREE.InstancedBufferAttribute(new Float32Array(maxN * 4), 4);
     for (const a of [this.aP, this.aC, this.aD]) a.setUsage(THREE.DynamicDrawUsage);
     g.setAttribute('iP', this.aP); g.setAttribute('iC', this.aC); g.setAttribute('iD', this.aD); g.instanceCount = 0;
     this.camRight = uniform(new THREE.Vector3(1, 0, 0)); this.camUp = uniform(new THREE.Vector3(0, 1, 0)); this.fovScale = uniform(0.001);

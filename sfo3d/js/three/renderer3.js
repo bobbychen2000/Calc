@@ -23,6 +23,8 @@ import { geometryOf, textureOf } from './convert.js';
 import { glCanvas } from './compat/gl.js';
 
 const { uniform } = TSL;
+const T0 = performance.now();
+const tlog = (m) => console.log('[r3] ' + m + ' at ' + ((performance.now() - T0) / 1000).toFixed(1) + ' s');
 
 // tier: ?tier=high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
 // (js/live/app.js QUALITY: high = 3072 shadow map, low = 2x MSAA)
@@ -79,7 +81,7 @@ export class Renderer3 {
     if (!this.bakes) this.bakes = new GroundBakes(this.engine, world, this.sky, this.Q); // takes the source maps now
     const sunOnly = !!opts.sunOnly && this.bakedOnce;
     this.bakedOnce = true;
-    this.run(() => { this.bakes.run(this.engine.renderer, { sunOnly }); });
+    this.run(() => { this.bakes.run(this.engine.renderer, { sunOnly }); tlog('bake' + (sunOnly ? ' (sun)' : '')); });
   }
   run(fn) { if (this.ready) fn(); else this.jobs.push(fn); }
   // ------------------------------------------------------------ init
@@ -101,7 +103,7 @@ export class Renderer3 {
     this.sprites = new Sprites(); S.add(this.sprites.mesh);
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, liveries: this.liveries || null, track: (ac) => window.SFO && window.SFO.traffic ? window.SFO.traffic.tracks.get(ac.id) : null });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
-    this.built = true;
+    this.built = true; tlog('static scene built');
   }
   _signMats() { if (!this.signMats && this.font) this.signMats = signMaterials(this.font, { night: this.night, noiseTex: this.noiseTex, reversed: this.engine.reversed }); return this.signMats; }
   // world.items -> three objects (items appended later, e.g. the approach-light piers, are picked up too)
@@ -168,7 +170,8 @@ export class Renderer3 {
     // light sprites
     const sp = this.sprites; sp.begin(); for (const s of fr && fr.sprites || []) sp.put(s); sp.end(E.camera, this.H);
     R.toneMappingExposure = (post.exposure ?? 0.45) * this.exposureScale;
-    E.render(); this.frames++;
+    const tr0 = performance.now(); E.render(); this.frames++;
+    if (this.frames <= 3 || this.frames % 50 === 0) console.log('[r3] frame ' + this.frames + ' ' + (performance.now() - tr0).toFixed(0) + ' ms (t=' + ((performance.now() - T0) / 1000).toFixed(1) + ' s)');
     return C;
   }
   // camera record for the app (labels / picking use C.vpNear = projection x rotation-only view, C.pos, C.fov)

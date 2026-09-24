@@ -63,13 +63,14 @@ export class SignBuilder {
       B.idx.push(b, b + 1, b + 2, b, b + 2, b + 3); }
     // glyphs: centred at (W/2, H/2 + 3) like makeAtlas fillText with textBaseline 'middle'; condensed to fit W - 44
     const F = this.font.meta.fonts[st.font]; const px = st.px; const text = face.text;
-    let adv = 0; for (const ch of text) { const g = F.glyphs[ch] || F.glyphs['?']; adv += g.advance; }
+    const glyphOf = (ch) => F.glyphs[ch] || (ch === ' ' ? { advance: st.font === 'mono' ? 0.6 : 0.278 } : F.glyphs['?']); // space: advance only (Liberation metrics)
+    let adv = 0; for (const ch of text) adv += glyphOf(ch).advance;
     const natural = adv * px, avail = Math.max(1, W - (face.kind === 'paint' ? 60 : 44));
     const sx = natural > avail ? avail / natural : 1;
     let x = W / 2 - natural * sx / 2; const base = H / 2 + 3 + F.capHeight * px / 2;
     const A = this.font.meta.atlas; const G = this.gl; const lift = painted ? 0.004 : 0.006;
     for (const ch of text) {
-      const g = F.glyphs[ch] || F.glyphs['?'];
+      const g = glyphOf(ch);
       if (g.atlas) {
         const [l, bo, rr, t] = g.plane; const [ax, ay, aw, ah] = g.atlas;
         const x0 = x + l * px * sx, x1 = x + rr * px * sx, y0 = base - t * px, y1 = base - bo * px;
