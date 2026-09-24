@@ -1,0 +1,106 @@
+{
+  "area": "room",
+  "rater": "B-geometry",
+  "round": 3,
+  "score": 6.3,
+  "summary": "Big step up from w2 (5.0). The bench width, flap size and placement, bezel (0.595 x 0.405), sill (0.49 x 0.084, flush with the column-side frame edge), cabinet (0.34 x 0.43, top 0.04 above the frame), table-top height and the O footwell (0.475, 0.07 toward the column) now all match tpg_53 / c_27316 within about 1-2 cm. What still stops it passing as a photo is the seat-back / header proportions, the narrow square lamp column where the photos show angled side wings, and the handset/control-plate arrangement. No z-fighting, gaps or floating parts were found in the unit renders. I checked with extra studio renders: scratchpad/rb/b1_Eback.png and b2_Oback.png.",
+  "details": [
+    {"detail": "O bench width and aisle armrest", "score": 8, "refs": ["tpg_31", "tpg_42", "c11_benchO"]},
+    {"detail": "Headrest flap: size, position, tab", "score": 7.5, "refs": ["tpg_42 (62 % of the width, 0.06 inset from the aisle edge, h/w 0.39)", "c11_benchO (64 %)"]},
+    {"detail": "Seat back height, charcoal header band, seams", "score": 4.5, "refs": ["tpg_42", "tpg_31", "c_27315", "rb/b2_Oback", "q10 crop"]},
+    {"detail": "Monitor bezel and screen", "score": 8.5, "refs": ["tpg_53 (596 x 404 mm)", "c_27316", "c12"]},
+    {"detail": "Sill, drawer and literature slot", "score": 7, "refs": ["tpg_53", "c_27316", "c12 crop"]},
+    {"detail": "Cabinet door", "score": 7.5, "refs": ["tpg_53 (0.33 opening x 0.43, top +0.013)", "c_27316 (0.38 incl. stiles x 0.40)"]},
+    {"detail": "Side table and console body", "score": 7, "refs": ["c_27316", "tpg_53", "c8_controls"]},
+    {"detail": "Controls and handset", "score": 5, "refs": ["tpg_53", "c_27316", "c8_controls"]},
+    {"detail": "Lamp column and monument side wings", "score": 4.5, "refs": ["c_27316 crop (wing ~0.16 projected, angled)", "tpg_53 left", "c12"]},
+    {"detail": "Footwells (O / E)", "score": 7, "refs": ["tpg_53 (0.46, offset 0.048)", "c_27316 (0.42)", "c10", "c7"]},
+    {"detail": "Aisle-end ash panel, cap and plaques", "score": 7, "refs": ["c_27313", "c_27314", "c1", "c2"]},
+    {"detail": "Centre divider", "score": 6.5, "refs": ["c_27314", "c3_centre"]},
+    {"detail": "Reading lamps (count and placement)", "score": 5.5, "refs": ["tpg_42", "tpg_31", "c_27315", "rb/b1_Eback"]},
+    {"detail": "Pillows", "score": 7, "refs": ["tpg_31", "tpg_42"]},
+    {"detail": "Bed mode: mattress and duvet", "score": 5.5, "refs": ["fb_a96b7a65", "c4_bedO"]},
+    {"detail": "Safety-card pocket", "score": 4, "refs": ["tpg_53", "c_27316"]},
+    {"detail": "Materials and colour (relative)", "score": 6, "refs": ["c_27315", "tpg_31", "q10", "q07"]}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Seat back too tall, so the charcoal padded header above it is missing",
+      "problem": "The back loft is 0.625 m (SEC 0.60/0.625), which puts its top at y 1.04 against a 1.12 wall. Only about 0.08 of dark shell shows above the cushion, and the jLeather band at y 0.78-1.08 is almost entirely hidden. The lamps (y 1.03) end up beside the cushion top instead of on a header.",
+      "evidence": "tpg_42: a charcoal header 140 px tall over a 450 px back (ratio 0.31), with the lamps in the header's two corners. tpg_31 shows the same ratio (105 / 360 px). Model: 0.08 / 0.625 = 0.13 (rb/b2_Oback, rb/b1_Eback, q10 crop).",
+      "fix": "09c_room.js roomSeatCore: shorten the back to about 0.545 (SEC(0.52, w, ...), SEC(0.545, w-0.02, ...)), which puts its top near y 0.965. Move the flap down to BH y 0.445 (top flush with the new back top) and its tab to y 0.33. In roomPart O, replace the hidden jLeather band with a proud header: gRBox(SW + 0.06, 0.155, 0.05, 0.02, 1) at M4.trs(SX, 1.04, -1.25). For E, use gRBox(0.68, 0.155, 0.05, 0.02, 1) at M4.trs(0.20, 1.04, 1.25). Put the lamps on the header face at y 1.045."
+    },
+    {
+      "severity": "medium",
+      "detail": "Back seams too high: the upper piped panel should be about 60 % of the back",
+      "problem": "The seams sit at 0.29 and 0.44 m up the back, i.e. 46 % and 70 % of the height. The upper panel with the flap is therefore only 30 % of the back, and the upper seam cuts through the flap tab.",
+      "evidence": "tpg_42: the piped upper panel runs from 240 to 530 px of a 240-690 back (64 %), then a narrow lumbar band from 530 to 600 and the lower part from 600 to 690, which puts the seams about 20 % and 36 % up from the bottom. tpg_31: the upper panel is 57 %. c11 and q10 show seams at about 1/2 and 3/4 of the height.",
+      "fix": "roomSeatCore: for (const sy of [0.11, 0.21]) (on the shortened 0.545 back). Add a 3 mm piping cord around the upper panel's sides and bottom: a gBox(w-0.03, 0.006, 0.006) in jBase at sy 0.215 z -0.040, plus two vertical cords at x ±(w/2-0.015)."
+    },
+    {
+      "severity": "medium",
+      "detail": "Lamp column is a narrow square post; the photos show angled side wings",
+      "problem": "roomColumn is a 0.08 x 0.06 box standing 0.06 proud next to the bezel. In the photos, both sides of the monitor/cabinet face are closed by angled charcoal wings about 0.15 m long, turned about 45-55 deg toward the seat. The column-side wing carries the big reading lamp over a round air nozzle. The cabinet-side wing carries one small round fixture at about table height plus 0.05. From the seated view (c12) the model reads as a flat wall with a thin pole.",
+      "evidence": "c_27316 crop: the left wing spans 60-175 px of the 731 px/m face (about 0.16 projected) and is angled, with the lamp at about y 1.03 and the nozzle at about 0.95. The right wing (830-960 px) has a fixture at (860,320). tpg_53 left: a large angled face from 0 to 215 px with the lamp at 185 and the nozzle at 290.",
+      "fix": "09c_room.js roomColumn(x, zf, dir, y0): build a wing gRBox(0.15, h, 0.03, 0.01, 1). Hinge it on the bezel edge (O: x -0.4975, E: x 0.4475) and rotate it about y by ±50 deg so its free edge reaches the unit side (O: x -0.585 at about zf + dir*0.11). Put roomLamp at 0.99 and the existing small fitting (as a 0.02 ring nozzle) at 0.945 on its face, using its own normal. Add a mirrored wing on the far side of the cabinet (O: x 0.445 to about 0.53, E: x -0.495 to about -0.58) carrying one 0.012 radius fixture at y ROOM.top + 0.05. Keep the O door edge at 0.56 behind it."
+    },
+    {
+      "severity": "medium",
+      "detail": "Handset and control plate: wrong side and wrong vertical order (O)",
+      "problem": "roomControls is called for O with side -1 under M4.trs(0.30, ..., PI). That puts the handset at world x 0.46, on the aisle side of the plate, at the same height as the plate (0.555 vs 0.545), with the plate's top 0.03 above the handset's. In the photos the handset sits on the monitor/footwell side of the plate, in a recess just under the table rail on the console's rounded corner, and the plate sits clearly lower.",
+      "evidence": "tpg_53: the handset is at 835-995 x 745-900 px (top just under the table lip) and the plate at 1020-1250 x 815-1045 (centre about 110 px lower), to the right of the handset, away from the monitor. In c_27316 the handset is on the curved corner at 570-640 x 390-470 and the plate is lower-right at 655-740 x 455-535. The model (c8) has them level, with the handset on the far side.",
+      "fix": "09c_room.js O: roomControls(B, M4.trs(0.30, 0, tz0 + 0.012, Math.PI), +1). This puts the handset at world x 0.14, on the R 0.11 corner as in c_27316; if needed, turn it about 25 deg to follow the curve. In roomControls, lower the plate and all its buttons by 0.08 (plate centre 0.465, wheel 0.518, rings 0.486, pill 0.452, bottom row 0.417). Raise the handset and its recess to y 0.568 so its top sits about 0.015 under the table rail (0.619). Apply the same vertical order to the E call."
+    },
+    {
+      "severity": "low",
+      "detail": "E seat has one lamp, half buried behind the back top; O's aisle lamp is too far outboard",
+      "problem": "E: roomLamp(-0.07, 1.258, -1, y 1.03) sits inside the cushion span (-0.12..0.52), where the back top (y 1.04, z about 1.24) covers half of it (rb/b1_Eback). There is no lamp at the aisle corner. O: the aisle-side lamp at x 0.52 is 0.175 outboard of the cushion edge (0.345), above the armrest.",
+      "evidence": "c_27315 (14D, E) has lamps in both top corners. tpg_42 / tpg_31 (O) have lamps about 0.05 outside each cushion edge, in the header.",
+      "fix": "After the header fix: E lamps at x -0.10 and 0.55, y 1.045, on the header face (z 1.225). O lamps at x SX ± (SW/2 + 0.05), i.e. -0.545 and 0.395, y 1.045."
+    },
+    {
+      "severity": "low",
+      "detail": "Safety-card pocket undersized",
+      "problem": "The model's pocket is a 0.045 x 0.075 blue quad at the column foot. In the photos a full-size safety card stands in a pocket on the lower column-side wing / console face, beside the footwell.",
+      "evidence": "tpg_53: the card and pocket are about 0.20 x 0.25 (20-230 x 740-1000 px). c_27316: the card is about 0.06 x 0.18 visible edge-on, on the angled face at 175-220 x 370-500.",
+      "fix": "roomColumn: extend the angled wing down to about y 0.30 and add a pocket gRBox(0.13, 0.20, 0.012) in jShellIn with a 0.12 x 0.22 card quad (white #eef1f5 with a blue #2f5fb0 top band, or an atlas 'card' tile) standing 0.03 proud of the pocket top, on the wing face at y 0.40-0.62."
+    },
+    {
+      "severity": "low",
+      "detail": "Literature slot reads as a flat bright-blue panel",
+      "problem": "The 0.18 x 0.04 emissive quad (#2a4f9a, e 0.18) fills the whole slot, so it looks like a blue plastic insert or screen. The real slot is a dark navy recess lit softly from inside, with the silver sill forming its lip.",
+      "evidence": "c_27316 crop (390-515 px: dark navy with a light top edge), tpg_53 (527-750). c12 crop: saturated uniform blue.",
+      "fix": "roomMonitor: move the quad back to zo(0.012) (recess depth about 0.015). Set its colour to #1c2b5e with e 0.06, and add a 0.17 x 0.006 strip in #6f8fd6 (e 0.25) at y - 0.024 for the internal light line."
+    },
+    {
+      "severity": "low",
+      "detail": "Bed-mode duvet is a rigid slab with raised grid lines",
+      "problem": "roomDuvet is a 0.07 thick loft with crisp edges, and its quilt grid is made of raised gBox strips, so it reads as a padded mat (c4). The real duvet is soft and drapes over the mattress edge, and its quilt lines are sunken.",
+      "evidence": "fb_a96b7a65 (top-down): soft folds, the duvet hanging below the mattress edge on the open side, grid lines visible only as shallow creases.",
+      "fix": "roomDuvet: cushionSecs(W, L, 0.05, -0.08, {edge: 0.08, r: 0.08, crown: 0.025}) so the edges fall about 0.08. Make the grid gQuad strips in a slightly darker duvet tone (#414c84) at y + 0.001 rather than raised boxes, or drop the grid and rely on the fabric layer."
+    },
+    {
+      "severity": "low",
+      "detail": "Aisle-end cap finger recess renders as a black hole",
+      "problem": "The oval recess between the plaques is jBase #2a2b2f and reads as a black puck (c1, c2, c4).",
+      "evidence": "c_27314: the recess is a barely visible grey oval, the same tone as the cap.",
+      "fix": "09c_room.js line 276: use {c: '#5f6267', r: 0.5} and sink it to y wall + 0.017."
+    },
+    {
+      "severity": "low",
+      "detail": "Seat fabric too light and cool relative to the shell; the flap's tone flips between views",
+      "problem": "In the cabin, the back fabric renders at L about 130 (#7f828f, q10) against the shell's 130. The flap renders darker than the fabric in q10 (L 93) but paler in c11. In the photos the flap is equal to or lighter than the back fabric, and the fabric is darker than the pale ash by about 2.3x.",
+      "evidence": "c_27315: flap #747f90 (L 125) vs back #585462 (L 85). tpg_31: flap #827c66 vs back #7f746b. q10: flap #545f70 vs back #7f828f.",
+      "fix": "SEATMAT.jFabric about #77747b (small shared edit). Give jHead a lower gloss (r 0.5) so the -3 deg flap stops going dark away from the key light, or tilt the flap to 0 deg."
+    },
+    {
+      "severity": "low",
+      "detail": "E footwell narrower and further off-centre than O's",
+      "problem": "The E mouth is 0.435 wide (x 0.02-0.455), centred 0.09 toward the column from the monitor centre (0.15). O's is 0.475 with a 0.0675 offset, and the photo has 0.46 with a 0.048 offset.",
+      "evidence": "tpg_53 (square-on, 1073 px/m): opening 250-745 px under a 228-868 frame.",
+      "fix": "This is limited by the column at 0.455-0.535. With the angled wing (issue 3) the E wing starts at the bezel edge 0.4475, so the footwell can run 0.02-0.46 and E's monitor can move to xm 0.165. The 0.015 shift keeps the frame clear of the pillar."
+    }
+  ],
+  "questionsForUser": []
+}

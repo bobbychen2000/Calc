@@ -33,16 +33,17 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   }
   B.add(gLoft(cushionSecs(w, 0.60, 0.075, -0.035, { edge: 0.022, r: 0.02, crown: 0.004 }), lod ? 3 : 4), M4.trs(0, 0.39, -0.34, 0, 2 * DEG), F);
   const BH = M4.trs(0, 0.43, -0.17, 0, 12 * DEG);     // top of the back leans on the shell (shell face at z = -0.005)
-  loftAt(B, [SEC(0.0, w - 0.02, 0.06, 0, 0.02), SEC(0.025, w, 0.075, 0, 0.026), SEC(0.60, w, 0.075, 0, 0.026), SEC(0.625, w - 0.02, 0.06, 0.002, 0.02)], BH, F, lod ? 2 : 3);
+  loftAt(B, [SEC(0.0, w - 0.02, 0.06, 0, 0.02), SEC(0.025, w, 0.075, 0, 0.026), SEC(0.52, w, 0.075, 0, 0.026), SEC(0.545, w - 0.02, 0.06, 0.002, 0.02)], BH, F, lod ? 2 : 3);
+  // QA w3: back 0.545 tall so a ~0.16 padded header band shows above it on the shell (tpg_31 / 42) [D]
   // flap ~60 % of the back width, height / width ~0.38, hanging from the back top flush toward the aisle side (QA w2:
   // tpg_31 185 / 305 px, 70 / 185 px; omaat_room_13, c_27313 / 27315) [D]
   const fw = 0.6 * w, fx = fs * (w / 2 - 0.05 - fw / 2);
-  B.add(gRBox(fw, 0.20, 0.018, 0.008, 1), M4.mul(BH, M4.trs(fx, 0.525, -0.058, 0, -3 * DEG)), SEATMAT.jHead);
+  B.add(gRBox(fw, 0.20, 0.018, 0.008, 1), M4.mul(BH, M4.trs(fx, 0.445, -0.058, 0, -3 * DEG)), SEATMAT.jHead);
   if (lod) return;
   // QA w3: soft fabric-toned channels ~0.58 / 0.82 of the back height down from its top (tpg_31, c_27315) [D]
-  for (const sy of [0.11, 0.25]) B.add(gBox(w - 0.04, 0.006, 0.003), M4.mul(BH, M4.trs(0, sy, -0.0385)), SEATMAT.jSeam);
+  for (const sy of [0.10, 0.21]) B.add(gBox(w - 0.04, 0.006, 0.003), M4.mul(BH, M4.trs(0, sy, -0.0385)), SEATMAT.jSeam);
   B.add(gBox(w - 0.04, 0.005, 0.004), M4.mul(M4.trs(0, 0.39, -0.34, 0, 2 * DEG), M4.trs(0, 0.041, -0.10, 0, Math.PI / 2)), SEATMAT.jBase);
-  B.add(gRBox(0.03, 0.05, 0.012, 0.004, 1), M4.mul(BH, M4.trs(fx, 0.41, -0.05)), SEATMAT.jHead); // flap tab
+  B.add(gRBox(0.03, 0.05, 0.012, 0.004, 1), M4.mul(BH, M4.trs(fx, 0.33, -0.05)), SEATMAT.jHead); // flap tab
   // seat front: continuous fabric apron (the stowed leg rest) from the cushion nose down to a dark kick strip (QA w2:
   // was a detached board; c_27313 / 27315) [V]
   B.add(gRBox(w - 0.02, 0.29, 0.04, 0.015, 1), M4.trs(0, 0.225, -0.62), F);
@@ -156,8 +157,9 @@ function roomCabinet(B, xc, zf, dir) {
 // it a black gamepad-shaped handset ~0.13 x 0.075 with a colour screen between two round button pads [V].
 // xf: local x along the face, +z out of it
 const RING = { c: '#d8dde3', r: 0.4, e: 0.15 };
-function roomControls(B, xf, side) {
-  const P = (x, y, z, rx = 0) => M4.mul(xf, M4.trs(x, y, z, 0, rx));
+// QA w3 (tpg_53, c_27316): on O's table the handset sits on the monitor side just under the table edge, plate ~0.08 lower
+function roomControls(B, xf, side, dy = 0, hy = 0.555) {
+  const P0 = (x, y, z, rx = 0) => M4.mul(xf, M4.trs(x, y, z, 0, rx)), P = (x, y, z, rx) => P0(x, y + dy, z, rx);
   B.add(gRBox(0.14, 0.15, 0.006, 0.03, 1), P(0, 0.545, 0.002), SEATMAT.jCap);
   B.add(gRBox(0.09, 0.02, 0.006, 0.01, 1), P(0, 0.598, 0.005), SEATMAT.black);                      // thumb wheel
   const ring = (x, y, r, blue) => {
@@ -173,12 +175,12 @@ function roomControls(B, xf, side) {
   ring(-0.044, 0.497, 0.012); pill(0.004, 0.497, 0.055); ring(0.05, 0.50, 0.01);
   // handset: black gamepad capsule in a dark recess, colour screen between two round button pads
   const hx = side * 0.16;
-  B.add(gRBox(0.14, 0.085, 0.004, 0.035, 1), P(hx, 0.555, 0.001), SEATMAT.jBase);
-  B.add(gRBox(0.13, 0.075, 0.016, 0.034, 1), P(hx, 0.555, 0.008), SEATMAT.black);
-  B.add(gQuad(0.074, 0.064), P(hx, 0.556, 0.0165), { c: '#6b8fd0', r: 0.3, e: 0.3 });   // QA w3: screen ~57 % x 90 % (tpg_53)
+  B.add(gRBox(0.14, 0.085, 0.004, 0.035, 1), P0(hx, hy, 0.001), SEATMAT.jBase);
+  B.add(gRBox(0.13, 0.075, 0.016, 0.034, 1), P0(hx, hy, 0.008), SEATMAT.black);
+  B.add(gQuad(0.074, 0.064), P0(hx, hy + 0.001, 0.0165), { c: '#6b8fd0', r: 0.3, e: 0.3 });   // QA w3: screen ~57 % x 90 % (tpg_53)
   for (const e of [-1, 1]) {
-    B.add(gCyl(0.012, 0.012, 0.003, 10), P(hx + e * 0.051, 0.555, 0.016, Math.PI / 2), SEATMAT.jBezel);
-    for (let k = 0; k < 4; k++) B.add(gBox(0.004, 0.004, 0.002), P(hx + e * 0.051 + 0.007 * Math.cos(k * Math.PI / 2), 0.555 + 0.007 * Math.sin(k * Math.PI / 2), 0.018), RING);
+    B.add(gCyl(0.012, 0.012, 0.003, 10), P0(hx + e * 0.051, hy, 0.016, Math.PI / 2), SEATMAT.jBezel);
+    for (let k = 0; k < 4; k++) B.add(gBox(0.004, 0.004, 0.002), P0(hx + e * 0.051 + 0.007 * Math.cos(k * Math.PI / 2), hy + 0.007 * Math.sin(k * Math.PI / 2), 0.018), RING);
   }
 }
 // ash panels in ~28 mm charcoal frames on an aisle face (x = px) below the armrest ledge, charcoal kick below
@@ -195,15 +197,25 @@ function roomLamp(B, x, z, dir, y = 1.03) {
   B.add(gCyl(0.015, 0.015, 0.004, 10), M4.trs(x, y, z + dir * 0.0185, 0, rx), SEATMAT.jLens);   // off: dark frosted lens
   B.add(gCyl(0.014, 0.014, 0.014, 10), M4.trs(x, y - 0.045, z + dir * 0.006, 0, rx), SEATMAT.black);
 }
-// QA w1: tall charcoal column on the far side of the monitor from the cabinet, from the console top to the shell top,
-// carrying the big reading lamp over a smaller air nozzle and the blue safety-card pocket at its foot (c_27316 left of
-// the monitor, c_27315 top right + foreground, c_27312 centre, omaat_room_14) [V]; ~0.08 wide, stands ~0.11 proud [D]
-function roomColumn(B, x, zf, dir, y0) {
-  const d = 0.06, z = zf + dir * d / 2, zf2 = zf + dir * d, h = MON.top + 0.02 - y0;   // QA w3: flush with the monument cap
-  B.add(gRBox(0.08, h, d, 0.012, 1), M4.trs(x, y0 + h / 2, z), SEATMAT.jShell);
-  roomLamp(B, x, zf2, dir, 0.99);
-  B.add(gQuad(0.045, 0.075), M4.trs(x, y0 + 0.06, zf2 + dir * 0.002, dir > 0 ? 0 : Math.PI), { c: '#35568f', r: 0.5 });
-  B.add(gQuad(0.037, 0.018), M4.trs(x, y0 + 0.07, zf2 + dir * 0.003, dir > 0 ? 0 : Math.PI), { c: '#b8c0cc', r: 0.6 });
+// QA w3: angled charcoal wing on the far side of the monitor from the cabinet (c_27316 / tpg_53: ~0.15 long, running from
+// the frame edge back toward the passenger, top flush with the monument), the big reading lamp over a round air nozzle on
+// its face [V]; (xa, zf) = hinge at the frame edge, (xb, zf + dir * 0.12) = free edge; faces the passenger at (px, pz)
+function roomWing(B, xa, xb, zf, dir, y0, px, pz) {
+  const zb = zf + dir * 0.12, L = Math.hypot(xb - xa, zb - zf), h = MON.top + 0.02 - y0;
+  let nx = (zb - zf) / L, nz = -(xb - xa) / L;
+  const cx = (xa + xb) / 2, cz = (zf + zb) / 2;
+  if (nx * (px - cx) + nz * (pz - cz) < 0) { nx = -nx; nz = -nz; }
+  const ry = Math.atan2(nx, nz);
+  B.add(gRBox(L, h, 0.03, 0.008, 1), M4.trs(cx - nx * 0.015, y0 + h / 2, cz - nz * 0.015, ry), SEATMAT.jShell);
+  const T = new Builder(); roomLamp(T, 0, 0, 1, 1.0); B.addBuilt(T.build(), M4.trs(cx, 0, cz, ry));
+}
+// full-size safety card (~0.20 x 0.25, white with a blue header 'B777-300') in a pocket on the wall beside the footwell
+// mouth (tpg_53, c_27316, up_ANA-The-Room-Seat-6H) [V]; plane x = px facing +x (s = 1) or -x
+function roomCard(B, px, s, y, z) {
+  const ry = s * Math.PI / 2;
+  B.add(gRBox(0.006, 0.20, 0.22, 0.004, 1), M4.trs(px + s * 0.002, y - 0.02, z), SEATMAT.jShellIn);
+  B.add(gQuad(0.20, 0.25), M4.trs(px + s * 0.0055, y, z, ry), { c: '#e6e9ef', r: 0.7 });
+  B.add(gQuad(0.20, 0.05), M4.trs(px + s * 0.006, y + 0.09, z, ry), { c: '#2d5bb0', r: 0.6 });
 }
 // aisle armrest ledge: silver stepped ledge (6 mm lower step on its aisle edge) with a dark lengthwise slot holding the
 // grey-metal top edge of the retracted pop-up privacy panel (omaat_room_13, c_27313 bottom corners; QA r3 had an ash strip) [V]
@@ -251,10 +263,10 @@ function roomPart(part, opts = {}) {
     // back shell across the whole unit: charcoal wall, padded band above the seat back, cap, a reading light at each end
     // (tpg_31 / 42: lamps in both top corners) [V]
     B.add(gRBox(1.17, wall, 0.07, 0.03, 2), M4.trs(0, wall / 2, -1.31), shell);
-    B.add(gRBox(SW, 0.30, 0.02, 0.012, 1), M4.trs(SX, 0.93, -1.268), SEATMAT.jLeather);
+    B.add(gRBox(1.17, 0.155, 0.05, 0.02, 1), M4.trs(0, 1.0425, -1.25), SEATMAT.jLeather);          // padded header band
     capRail(B, 1.17, 0.07, 0, wall, -1.31);
-    roomLamp(B, -0.52, -1.258, 1);
-    roomLamp(B, 0.52, -1.258, 1);
+    roomLamp(B, -0.50, -1.225, 1);
+    roomLamp(B, 0.45, -1.225, 1);
     // narrow aisle armrest (~0.24) along the seat, LOW ledge (0.66) holding the retracted pop-up privacy panel, stowage
     // pocket on its seat-facing side (tpg_31 / 42, c_27313) [V]
     B.add(gRBox(hx - ax0, top, az1 + 1.34, 0.02, 1), M4.trs((ax0 + hx) / 2, top / 2, (az1 - 1.34) / 2), shell);
@@ -273,7 +285,7 @@ function roomPart(part, opts = {}) {
     planSlab(B, planRRect(tx0 + 0.022, tx1 - 0.022, tz0 + 0.022, MON.zO - 0.004, [R - 0.022, 0.004, 0.004, 0.004]), top - 0.004, 0.005, ash);
     planSlab(B, planRRect(tx0 + 0.004, tx1, tz0 + 0.004, MON.zO, [R - 0.004, 0.004, 0.004, 0.004]), top - 0.041, 0.006, SEATMAT.jRail);
     planSlab(B, planBand(tx0 + 0.012, tx1, tz0 + 0.012, MON.zO, R - 0.012, 0.02), 0, top - 0.041, shell);
-    if (!lod) roomControls(B, M4.trs(0.30, 0, tz0 + 0.012, Math.PI), -1);
+    if (!lod) roomControls(B, M4.trs(0.33, 0, tz0 + 0.012, Math.PI), 1, -0.08, 0.568);
     // tall ash monument end at the aisle with a wide flat cap (seat plaques lie on it, c_27313) + kick
     const ez0 = -0.58, ez1 = MON.zE, ezc = (ez0 + ez1) / 2;
     B.add(gRBox(0.04, wall, ez1 - ez0, 0.012, 1), M4.trs(0.565, wall / 2, ezc), ash);
@@ -281,7 +293,7 @@ function roomPart(part, opts = {}) {
     ashFrameX(B, 0.565, 0.04, 0.10, wall, ez0, ez1);
     // shared aisle-end cap: mid grey, a little darker than the plaques, oval finger recess between them (c_27314)
     B.add(gRBox(0.10, 0.02, ez1 - ez0 + 0.006, 0.006, 1), M4.trs(0.54, wall + 0.01, ezc), { c: '#86837e', r: 0.28, m: 0.35, l: LAYER.brushed });   // QA w3: slight metallic sheen (tpg_78)
-    if (!lod) B.add(gCyl(1, 1, 1, 16), M4.trs(0.545, wall + 0.0205, ezc, 0, 0, 0, 0.0175, 0.003, 0.035), SEATMAT.jBase);
+    if (!lod) B.add(gCyl(1, 1, 1, 16), M4.trs(0.545, wall + 0.0205, ezc, 0, 0, 0, 0.0175, 0.003, 0.035), SEATMAT.jShellIn);   // QA w3: was a black hole
     // E's footwell under the table + monument (aisle column), mouth under E's monitor
     // QA w2: both footwell mouths sit square under their monitors, ~0.475 wide from the column-side frame edge, split by a
     // thin 0.05 pillar (tpg_53: opening under the monitor, 0.475 m) [D]
@@ -295,7 +307,8 @@ function roomPart(part, opts = {}) {
     // O's face: monitor (outer column) + O's cabinet (aisle column)
     roomMonitor(B, -0.20, MON.zO, -1, 1);
     roomCabinet(B, 0.275, MON.zO, -1);
-    roomColumn(B, -0.545, MON.zO, -1, CON.top);
+    roomWing(B, -0.4975, -0.585, MON.zO, -1, CON.top, -0.075, -1.0);
+    if (!lod) roomCard(B, -0.4995, 1, 0.36, -0.33);
     // O's footwell under E's console (outer column), mouth under O's monitor
     B.add(gRBox(0.52, 0.02, 0.585, 0.006, 1), M4.trs(-0.30, 0.57, 0.33), SEATMAT.jShellIn);
     roomFootwell(B, -0.505, -0.03, MON.zO, 0.62, -1);
@@ -330,9 +343,10 @@ function roomPart(part, opts = {}) {
     const S = M4.trs(0.20, 0, 1.27);
     const tmp = new Builder(); roomSeatCore(tmp, bed, lod, 0.64, 1); B.addBuilt(tmp.build(), S);
     B.add(gRBox(0.69, wall, 0.07, 0.03, 2), M4.trs(0.235, wall / 2, 1.31), shell);
-    B.add(gRBox(0.62, 0.30, 0.02, 0.012, 1), M4.trs(0.21, 0.93, 1.268), SEATMAT.jLeather);
+    B.add(gRBox(0.69, 0.155, 0.05, 0.02, 1), M4.trs(0.235, 1.0425, 1.25), SEATMAT.jLeather);        // padded header band
     capRail(B, 0.69, 0.07, 0.235, wall, 1.31);
-    roomLamp(B, -0.07, 1.258, -1);
+    roomLamp(B, -0.07, 1.225, -1);
+    roomLamp(B, 0.50, 1.225, -1);
     // narrow aisle armrest with the pop-up privacy panel retracted inside (ash edge flush in the cap)
     B.add(gRBox(0.09, top, 0.60, 0.02, 1), M4.trs(0.54, top / 2, 0.95), shell);
     roomLedge(B, 0.10, 0.54, 0.95, 0.60);
@@ -357,7 +371,7 @@ function roomPart(part, opts = {}) {
     // E's face of the monument: E's cabinet (outer column) + E's monitor (aisle column); mouth of E's footwell below
     roomCabinet(B, -0.325, MON.zE, 1);
     roomMonitor(B, 0.15, MON.zE, 1, -1);
-    roomColumn(B, 0.495, MON.zE, 1, MON.bot);
+    roomWing(B, 0.4475, 0.535, MON.zE, 1, MON.bot, 0.20, 1.0);
     // E's sliding door parked in the monitor monument; leading edge faces aft toward E's entry
     doorEdge(B, 0.56, 0.06, wall - 0.14);
     if (bed) {
