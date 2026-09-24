@@ -36,7 +36,9 @@ SW = {
     'f_tweed':     ('web/suite/omaat_f11.jpg', (500, 600, 620, 720), 0.15),
     # QA r2: strong straight horizontal streaks of the cabinet door in c_27305 (cabinet 0.34 m = 155 px -> 100 px =
     # 0.22 m) [D], above the door split (the old c_27316 crop was nearly uniform)
-    'j_ash':       ('c_27305', (262, 88, 362, 188), 0.22),
+    # room QA w1: the 2.2 mm/px source gave 4-8 mm wavy streaks; real veneer shows long straight 1-2 mm hairlines
+    # (tt_suite-door-1, c_27305 aisle-end panels) -> blurred along the grain (ALONG) and the tile shrunk to 0.14 m [A]
+    'j_ash':       ('c_27305', (262, 88, 362, 188), 0.14),
     # near-black straight-grain veneer of the suite flank, real photo OMAAT f60 (doors 2 x 0.55 m ~ 1000 px -> 130 px =
     # 0.11 m for 100 px) [D]; the grain already runs along U (horizontal)
     'f_wood':      ('web/suite/omaat_f60.jpg', (0, 490, 100, 590), 0.11),
@@ -56,6 +58,8 @@ HP = {'py_back': 20}
 # straight horizontal grain: divide each column by its mean, so only the along-grain streaks remain (the c_27305 crop's
 # faint vertical light bands were amplified into a banded look by the QA r2 gain)
 COLNORM = {'j_ash'}
+# along-grain (x) box blur, px on the 256 px tile: straightens wavy streaks into continuous hairlines
+ALONG = {'j_ash': 24}
 
 
 def tileable(a):
@@ -90,6 +94,9 @@ def make(name, photo, box, size, rot=0):
     blur = np.asarray(Image.fromarray((a * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(HP.get(name, 40)))).astype(np.float32) / 255.0
     ratio = lin / np.maximum(blur ** 2.2, 1e-3)
     if name in MONO: ratio = np.repeat(ratio.mean(2, keepdims=True), 3, 2)
+    if name in ALONG:
+        k = ALONG[name]
+        ratio = sum(np.roll(ratio, d, 1) for d in range(-k // 2, k // 2 + 1)) / (k + 1)
     if name in COLNORM: ratio = ratio / ratio.mean(0, keepdims=True)
     ratio = tileable(ratio)
     # clip specular glints (reflections of cabin lights) so only the material pattern remains

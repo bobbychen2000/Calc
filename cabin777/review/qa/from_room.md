@@ -9,3 +9,8 @@
   along each O seat hide the dado from the seat.
 - **Concrete fix still wanted:** over the J zone (z of the THE Room rows, ≈ 17.6–31.9) clip the dado to |x| ≥ 2.86
   (or skip dado + grille there), so nothing is left interpenetrating the unit geometry below the console.
+
+## To monuments (`src/10_mono.js`), FYI: `tex/tex_j_ash.png` re-cut (room w2)
+- The j_ash swatch (shared by `SEATMAT.ash` and `barAsh`) is now blurred along the grain and tiled at 0.14 m instead
+  of 0.22 m (straight 1–2 mm hairlines, room_r3 low issue). If the bar's ash now reads too fine, give `barAsh` its own
+  layer scale or say so here.
