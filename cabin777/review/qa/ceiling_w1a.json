@@ -1,0 +1,220 @@
+{
+ "area": "ceiling",
+ "rater": "A",
+ "score": 5.2,
+ "note": "The studio close-ups handed over in scratchpad/r1st/*.png are STALE. They were rendered from dist/test.html, which does not contain paintBinDecals and still has the navy placards, octagonal fittings and per-slat grille. I re-rendered the studio unit from a fresh build (scratchpad/raterA/build/test.html) into scratchpad/raterA/st/*.png and added 5 extra views (scratchpad/raterA/v/*.png, script scratchpad/raterA/views.js). The r1 QA views match the current build in the ceiling region. q01_door1 and q13_pyFront are unusable for the ceiling: the camera sits inside or behind a monument. All ratings below are for the CURRENT build.",
+ "details": [
+  {
+   "detail": "Aisle vault panels and joints. The arched joints on the 2-frame grid are right, and the vault tone matches: model #f9f9f9 (q15 215,50) against photo #f5f5f5..#f7f7f5 (y_47300). In the J cabin the model reads #e3e3e2..#e6e5e4 (q06) against photo #edefee..#f0f0f0 (c_27312), which is acceptable. Weakness: both edges of every vault are washed bright, but the photos show a bright band only at the outboard edge, and the vault darkens toward the centre bin.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_sany_y22.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/v/v2_jAisleFwdUp.png"
+   ]
+  },
+  {
+   "detail": "Cove lighting. The model has a MAT.led strip and an eFn glow at BOTH vault edges: x=1.70 on the outboard bin and x=0.70 on the centre bin. In every real photo the saturated cove band runs only along the outboard-bin top edge. In b_sany_y22 both aisles are visible in one frame, and neither shows cove light at the centre-bin edge. The same holds in y_47300, sany_py_10 and thrifty_j_cabin-1.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_sany_y22.jpg",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_y22_left.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_y22_right.png"
+   ]
+  },
+  {
+   "detail": "Slatted grilles are wrong three ways. (1) Slot orientation: the model paints TRANSVERSE slats at a 22 mm pitch. The real grille has 4-5 LONGITUDINAL slots running fore-aft, in segments separated by short solid bridges; crops at native resolution are c_py10_grille (5 slots) and c_y301_grille. The r2 rater misread this. (2) Position: the model has a grille at both vault edges (TROUGH.ts [0.10, 0.96]), but the photos show one only at the outboard edge. (3) Segments: the model uses 0.55 m runs with 0.05 m bridges. Estimated from perspective against the latch spacing, the real segments are about 0.33-0.36 m (3 per 2-frame module) with bridges of about 0.02-0.03 m.",
+   "score": 3,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_py10_grille.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_y301_grille.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_py_10.jpg",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/st/h_trough.png"
+   ]
+  },
+  {
+   "detail": "Outboard bins. The near-upright convex door, 2-frame modules and latch height match (photo latch at 44 % down the door in thrifty cabin-1 vs model 38 %), and the door tone matches (#d6d8db..#dcdde0 vs photo #d1d1d1..#dededc). Missing: the separate light top rail about 35 mm tall that carries the row placard (y22 '32', thrifty '13'/'14'). The module seams render as heavy black curves.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_th1_right.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_ph_placard.png"
+   ]
+  },
+  {
+   "detail": "Centre bins. The r2 darkness fix did land: the lower door now reads #dadcdf (q16) and #d1d3d7 (q06), against photo #d7d7d7 (y_47300) and #b5b9c3..#b8beca (c_27312, y_47301). Proportions are now the main fault. The PSU channel reads about 2.5x too wide relative to the bin: in matched framing at the far end, channel / centre-bin width is about 0.23 in y_47300 against about 0.60 in q15 (cmp_vp.png). The photo's broad, gently curving lower door wraps become narrow, steep strips in the model. The door module seams draw as 8-px black arcs (v2 top-left), where the photos show thin grey hairlines.",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/cmp_vp.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/cmp_y300_q15.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_sany_y22.jpg",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/v/v1_yCentreFwd.png"
+   ]
+  },
+  {
+   "detail": "Latches. Position and aspect are right: 0.14 x 0.05 (2.8:1) against photo 42x15 px (2.8:1), and width about 0.33 of door height against photo 0.27. Shape is wrong: the model renders a squarish rounded rectangle, while the photo latch is a full stadium (pill) ring with a light rim, a dark well and a paddle.",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_th1_left.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_v1_left.png"
+   ]
+  },
+  {
+   "detail": "Outboard PSUs. The model uses raised white rectangular boxes (0.16 x 0.14 x 0.03), each with one gasper and one lens, one per window bay. The real units are RECESSED stadium wells in the PSU band, long axis across the band, about 0.22 x 0.09 m, each holding TWO round fittings (2 gaspers in J; lights or gaspers alternate). The signs sit in a separate narrower pill well with the two icons stacked along the long axis. The band is built from separate transverse panels, with ribbed narrow filler strips beside the wells.",
+   "score": 3,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/thrifty_j_overhead-vent.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/frugal_j_airvents.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c27.jpg",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_py14_psu.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/st/e_obin.png"
+   ]
+  },
+  {
+   "detail": "Outboard PSU band (bin bottom) colour: far too dark. Model #a3a3a5..#a6a6a6 (q15) against photo #d9d9db..#dddddd (y_47300), about 55 levels. Model #9ea2a7..#acafb5 (q06) against #b5bcc5..#ebf0f4 (c_27312). Model #939598 (q16) against #ced5dc..#d8e1e8 (y_47301). r2 only fixed the centre bin.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r1/q15_econFronts.png"
+   ]
+  },
+  {
+   "detail": "Centre PSU channel (Y). The model has 4 separate pendant gasper pods, a separate light rail with 4 oval pods, a large grey outlined O2-door rectangle (0.34 x 0.1), a dark round speaker and a black sign strip. The photo (b_sany_y22, from row 34 looking forward) shows ONE recessed stadium well about 0.30 x 0.08 m holding a transverse row of 4 round fittings about 45 mm across, at about 70 mm pitch. There is a separate dark rounded sign window with both icons amber, and flat transverse panels. No large outlined plate is visible.",
+   "score": 4,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_y22_right.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_v1_psu.png"
+   ]
+  },
+  {
+   "detail": "No-smoking and fasten-belt signs. The icon colours are now right (red-orange and amber). On the outboard band the model uses a proud black rounded pod (0.12 x 0.05). The photos show a pill-shaped recess in band colour with a small smoky lens behind two icons stacked along the pill (thrifty_j_overhead-vent). On the centre channel the dark window is right.",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/thrifty_j_overhead-vent.jpg",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/st/e_obin.png"
+   ]
+  },
+  {
+   "detail": "Row placards. The r2 fix landed: dark ink on a light ground, with seat icons. But they are illegible in normal views. v1 shows a faint smudge, while from the same distance y22 shows a readable '32'. The placard also sits on the door face, not on a top rail.",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_ph_placard.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_v1_left.png"
+   ]
+  },
+  {
+   "detail": "Ceiling EXIT signs. The bilingual '← 非常口 EXIT →' in red on a light face matches the real header sign (thrifty_j_cabin-1 at the J zone end, b_sany_y22 at the Y zone end). Seen from the door area, their backs are blank dark #2a2e34 boxes.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/c_th1_left.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/v/v3_door3Up.png"
+   ]
+  },
+  {
+   "detail": "Vault fittings. The model has a fat raised pill of 0.33 x 0.15 m (2.2:1). The photos show a SLIM curved strip following the arch, about 0.40 x 0.05 m (about 7:1), with squared rounded returns at the ends (thrifty crop), or a thin ring outline of about 5:1 (y22). The small emergency-light fitting is inverted: the model has a dark base with a light lens, while the photo has a light frame around a dark slot, about 0.08 x 0.02 m.",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_th_fit.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_y22_fit.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/v/v2_jAisleFwdUp.png"
+   ]
+  },
+  {
+   "detail": "Door-area ceilings. The flat grey plane (#c8c8c8 in v3) is darker than the vault, and its light strips and downlight are plausible but not verified. No photo of a door-area ceiling was found this round. The QA view q01 cannot show it (the camera is inside a monument).",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/v/v3_door3Up.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Grille slot orientation",
+   "problem": "The aisle grille is drawn as transverse slats (22 mm pitch stripe running along z). The real grille is 4-5 longitudinal slots running fore-aft, in segments with short solid bridges. It is one of the most visible ceiling details in every aisle view.",
+   "evidence": "At native resolution, sany_py_10.jpg crop (590..680, 0..170) shows 5 parallel fore-aft dark slots per segment, with bridges (c_py10_grille.png). y_47301 (640..700, 0..110) and c_27312 (650..690, 0..60) show the same vertical-line blocks (c_y301_grille.png, c_c312_grille.png). The model, st/h_trough.png and v/v1, shows ladder rungs across the strip.",
+   "fix": "07b_ceiling.js paintCeilingDecals: repaint 'grille' as 5 slots ACROSS the strip, a vertical stripe pattern in atlas v. For i in 0..4: fill #7d8288 at y + 2 + i*8 (height 5 px) on a #efeeea ground, 40 px long in u. Then in buildCeilings map 'across' (0..1) onto the 5-slot atlas height and 'along' onto a constant atlas u. The texture no longer repeats along z, so set q.u[k] = gr[0] + 0.5*(gr[2]-gr[0]). Simpler alternative: build 5 thin vaultStrip slots (width 0.009, spaced 0.016 across, dark #7d8288) over a white strip per segment. Set TROUGH.run 0.36 and TROUGH.gap 0.025, and align segments to zoneModules so there are 3 per 2-frame module."
+  },
+  {
+   "severity": "high",
+   "detail": "Grille and cove light on both vault edges",
+   "problem": "The model puts a grille (TROUGH.ts [0.10, 0.96]), a cove LED (sideBinModule x=1.70 and centerBinModule x=0.70) and an eFn glow on both edges of each aisle vault. Real photos show the cove band plus grille only along the OUTBOARD bin edge. The centre-bin edge is a plain crease and the vault darkens toward it.",
+   "evidence": "b_sany_y22.jpg (Y, looking forward from 34E) shows both aisles. Left aisle: cove and grille at the outboard bin (crop c_y22_left, 150..650 x 60..500 in the crop), plain crease at the centre-bin door crest. Right aisle: cove and grille at the outboard bin (c_y22_right, 650..1200 x 220..500), plain edge at the centre bin. The same pattern holds in y_47300 (bright line only at x 230..390 on the outboard side), sany_py_10 (J) and thrifty_j_cabin-1 (J, grille at the left outboard edge). Model v2_jAisleFwdUp.png shows grilles and cove on both edges. Vault near the centre bin in y22: #55504c against #cfc8bb near the cove, in the same exposure.",
+   "fix": "07b_ceiling.js: set TROUGH.ts = [0.10] (outboard only). In eFn drop the centre term: return 0.05 + 0.40*exp(-max(1.655-ax,0)/0.13), with an extra grille glow only for g = xg[0]. Optionally shade toward the centre bin with eFn floor 0.02 for ax < 0.9. 08_bins.js centerBinModule: delete the MAT.led gBox at x=0.70*s. Note: y_47301 appears to show the grille beside the centre bin, which conflicts with this (see questions). Five real photos agree on outboard only."
+  },
+  {
+   "severity": "high",
+   "detail": "Centre-bin PSU channel far too wide; door wraps too narrow",
+   "problem": "CBIN_BAND = 0.84 (door-edge gaps at |x| = 0.425) is about 51 % of the 1.65 m bin in plan and reads about 60 % in views. In the photos the channel is about 23-30 % of the bin, and the lower door wraps are broad, gently curved surfaces that take most of the underside.",
+   "evidence": "Matched framing near the far end (cmp_vp.png): y_47300 channel between the gap lines is 27 px against a centre-bin end of about 120 px (0.23). q15 is 200 of 330 display px (0.60). b_sany_y22 at row y=50: the 4-gasper well spans about 0.7 of the channel. With the well at about 0.30 m, the channel is about 0.43 m. Top-of-frame comparison: cmp_y300_q15.png.",
+   "fix": "08_bins.js: CBIN_BAND = 0.44. Change CBIN_DOOR to start at the new gap: crResample([[0.22,1.80],[0.42,1.815],[0.60,1.86],[0.74,1.93],[0.815,2.03],[0.815,2.12],[0.78,2.2],[0.725,2.262]]). Keep the crest (0.725, 2.262). Move the lipGap boxes to x = ±0.225 and set CBIN_Y = 1.80 (the channel stays about 3.5 cm lower than today's door edge). psuXF: centre PSUs at CBIN_Y - 0.007. PSU_C_PITCH is now irrelevant because the 4 fittings sit in one well (see the next issue). Re-check head clearance at the aisle edge (x 0.75, y 1.93, unchanged)."
+  },
+  {
+   "severity": "high",
+   "detail": "Outboard PSUs are raised white boxes; real ones are recessed stadium wells",
+   "problem": "psuBoxModule is a proud 0.16 x 0.14 x 0.03 box with one gasper and one lens. The real 777 Signature PSU has recessed stadium-shaped wells (long axis across the band, fully rounded ends) in the band panels, each holding two round fittings, plus separate pill wells for the signs. Nothing stands proud of the band.",
+   "evidence": "thrifty_j_overhead-vent.jpg: a stadium well about 2.4:1 with 2 gaspers along its long axis, a second well of the same kind, and a narrower sign pill (about 3.5:1) with two stacked icons. Transverse band panels with ribbed filler strips at about 3 cm pitch sit right of the sign. The same in frugal_j_airvents.jpg, b_lalf_c26/c27.jpg and PY sany_py_14 top band (crop c_py14_psu.png: oval wells with a gasper, the sign inside a well). Model: st/e_obin.png and v/v4_jPsuUp.png.",
+   "fix": "08_bins.js psuBoxModule: replace the gRBox housing with a recess. (a) A dark-rim stadium outline gRBox(0.10, 0.002, 0.23, 0.05, 2) in BINMAT.o2gap #cfd2d5 at y -0.0005. (b) A well floor gRBox(0.092, 0.002, 0.222, 0.046, 2) at y +0.006, colour #d9dadb, so it reads recessed; or build it with gExtrude of a stadium outline as a 6 mm-deep tray. (c) Two fittings at z = ±0.055 along the long axis: gasper gCyl(0.026,0.026,0.006) plus nozzle gCyl(0.016,0.018,0.010), or lens gCyl(0.02,...) + MAT.lens. Rotate the well so its long axis runs across the band (x), not along z. signPodModule: drop the black gRBox. Use a band-coloured stadium recess gRBox(0.05, 0.002, 0.16, 0.024, 2) with a smoky lens gRBox(0.03, 0.001, 0.09, 0.01) #3a2f28 and the psuSigns quad rotated so the two icons stack along the long axis. In paintBinDecals draw the icons stacked vertically (the no-smoking icon under the belt icon), both amber #ffa634 with a red-orange #ff5a2a slash."
+  },
+  {
+   "severity": "medium",
+   "detail": "Outboard PSU band renders about 55 levels too dark",
+   "problem": "The bin-bottom band (BINMAT.band / bw 1.19) under the outboard bins is mid-grey in the model and near-white in every photo.",
+   "evidence": "y_47300 (40,112) #dcdcde, (150,118) #d9d9db, (800,118) #dddddd; q15 (40,125) #a6a3a6, (150,140) #a3a3a5, (800,140) #a6a6a6. c_27312 (200,100) #ebf0f4, (850,110) #b5bcc5; q06 (200,130) #a6a7a8, (850,130) #9ea2a7. y_47301 (60,112) #d8e1e8; q16 (100,40) #939598.",
+   "fix": "08_bins.js: BINMAT.band e 0.05 -> 0.12, the same self-lift as bandC. In shadeUpper keep 0.99 for the band. Or give sideBinModule's band its own mat and do not apply the 0.95 factor (the band's normals point down, ny about -0.99, so it gets the 0.95 minimum). Target about #d6d7d9 in q15 at (150,140)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Centre PSU layout (Y) does not match",
+   "problem": "psuModule draws four pendant gasper pods, a separate raised light rail with four oval pods, a large outlined O2-door plate (0.34 x 0.106, visible as a grey rectangle), a dark round speaker and a blue call square. The real channel has one recessed stadium well per seat-row group, holding a row of 4 round fittings, plus a dark rounded sign window and plain transverse panels.",
+   "evidence": "b_sany_y22 crop c_y22_right: a stadium well about 480x160 crop px holding 4 round fittings (one gasper nozzle visible). The sign window at (140,555) crop is dark with 2 amber icons. There is no outlined plate. Model: z_v1_psu.png.",
+   "fix": "08_bins.js psuModule (centre, lights=true): replace the rail, pods and pendant gaspers with a stadium recess gRBox(0.30, 0.002, 0.085, 0.04, 2) in #cfd2d5 plus a floor inset 5 mm. Inside it put n round fittings at pitch 0.07 (x = (k-(n-1)/2)*0.07): alternate lens (MAT.lens gCyl 0.018) and gasper (gCyl 0.02 + nozzle 0.012), each protruding at most 4 mm. Delete the O2-door outline (or reduce it to a 0.0005 hairline) and the grille disc. Keep the sign quad at z 0.065, in a gRBox(0.12, 0.001, 0.035, 0.015, 2) #1a1c20 window. For the F/J one-seat units use the same well with 2 fittings (as in frugal_j_airvents)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Vault fitting proportions",
+   "problem": "vaultPanel(0.78, side, zc, 0.33, 0.15, 0.03, ...) is a fat pill (2.2:1). The real fitting is a slim strip curved along the arch, about 7:1, near mid-vault.",
+   "evidence": "thrifty_j_cabin-1 crop z_th_fit.png: the strip is about 300x45 crop px, curved with the arch, with squared rounded ends. b_sany_y22 z_y22_fit.png: a thin ring outline of about 5:1. sany_py_10 c_py10_vault.png: a U-outline at mid-vault. Model: v2 top, st/h_trough.",
+   "fix": "07b_ceiling.js buildCeilings: vaultPanel(0.62, side, zc, 0.40, 0.055, 0.022, 0.0015, 24) (seam), (0.62, ..., 0.392, 0.047, 0.02, 0.003, 24) (bezel), (0.62, ..., 0.37, 0.028, 0.012, 0.0045, 24) (bezelIn, colour #dcdcd8 so it reads as a recessed slot). Emergency light: swap the materials so a light frame gRBox(0.08,0.006,0.028) in CEILMAT.bezel surrounds a dark slot gRBox(0.06,0.003,0.012) in #3a3e44."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bin module seams too heavy",
+   "problem": "doorSeam extrudes 13 mm of #3d4147 through the full door profile. On the centre bin it draws as a thick black arc (about 8 px in v2 at 1.5 m), where the photos show thin mid-grey hairlines.",
+   "evidence": "v/v2_jAisleFwdUp.png top-left black curve; qa q16 (122,62) black streak; q13 (240..330, 40..90). Photo seams in c_th1_right (x 775 crop) and c_y22_left are thin grey (about 2-3 px at similar distance, roughly #8a8a88 in the phone exposure).",
+   "fix": "08_bins.js doorSeam: width 0.013 -> 0.005, and BINMAT.seam c '#3d4147' -> '#7b8087'. Keep the shell offsets."
+  },
+  {
+   "severity": "medium",
+   "detail": "Outboard door top rail and row-placard legibility",
+   "problem": "The outboard door runs straight up to the crease, with the placard printed on the face at y 2.165 as a 0.115 x 0.032 quad with 19 px ink. Real doors have a separate light top rail about 35 mm tall, divided from the face by a groove, and the placard numerals on it are readable from several rows away.",
+   "evidence": "b_sany_y22 z_ph_placard.png: '32' with icons on the top rail, readable at about 3 m. thrifty c_th1_right: '13'/'14' on the top rail, placed toward one end of the door (not centred). Model v1 z_v1_left.png: placard barely visible.",
+   "fix": "08_bins.js sideBinModule: add the rail as gExtrude(faceShell(OBIN_DOOR.slice(-3), side, 1, 0.009, 0.002), L-0.014, 25) in BINMAT.lip, with a groove line gBox(0.002, 0.003, L-0.02) #9aa0a6 just below it at faceAtY(OBIN_DOOR, 2.17). placardXF: y 2.19 on the rail, z offset toward the module's forward third. PLACARD = [0.15, 0.036]. paintBinDecals: numeral font 700 24px, ink #3a3f47."
+  },
+  {
+   "severity": "low",
+   "detail": "Latch shape",
+   "problem": "addLatch gRBox(0.14, 0.05, 0.006, 0.024, 1) renders as a squarish rounded rectangle; the photo latch is a full stadium ring.",
+   "evidence": "Model z_v1_left.png and st/g_latch (585,140); photo c_th1_left.png (940,215) and c_th1_right.png (497,330): pill ends, light rim, dark well.",
+   "fix": "08_bins.js addLatch: raise the corner segment count (the last gRBox arg 1 -> 4, if that is segments) and use radius = h/2 exactly: gRBox(0.14, 0.05, 0.006, 0.025, 4) and gRBox(0.114, 0.028, 0.004, 0.014, 4)."
+  },
+  {
+   "severity": "low",
+   "detail": "EXIT sign backs and door-area ceiling tone",
+   "problem": "Seen from the door area, the zone-end and fascia signs show blank dark #2a2e34 backs. The flat door-area ceiling renders #c8c8c8 against the #f0-#f9 vault.",
+   "evidence": "v/v3_door3Up.png: two dark slabs at (90..235, 268..300) and (480..590, 270..298); flat ceiling at (400,60) is #c8c8c8.",
+   "fix": "07b_ceiling.js: add a second gQuad(0.33, 0.08) facing the opposite way (rotation + π, offset -f*0.0155) so the header signs are double-faced, or at least use CEILMAT.flat for the box. Door zone: give the DOME/flat material e 0.08 or use CEILMAT.vault's colour and eFn floor 0.08."
+  },
+  {
+   "severity": "low",
+   "detail": "Studio renders handed to raters were stale",
+   "problem": "scratchpad/r1st/*.png were rendered from dist/test.html, which predates the r2 fixes (grep: no paintBinDecals). Raters judging those would re-report fixed issues (navy placards, octagon fittings, dark centre bins).",
+   "evidence": "grep -c paintBinDecals dist/test.html = 0, while a fresh build has 2. ImageChops diff r1st vs raterA/st differs in every frame.",
+   "fix": "Always pass CABIN_PAGE=<fresh CABIN_DIST build>/test.html to test/studio.js. Fresh renders: scratchpad/raterA/st/."
+  }
+ ],
+ "questionsForUser": [
+  "Grille and cove side: five real photos (b_sany_y22 both aisles, sany_py_10, thrifty_j_cabin-1, y_47300) show the slatted grille and cove band only along the OUTBOARD bin edge. ANA's official y_47301 seems to show it beside the centre bin in the right aisle. Is that official photo mirrored or retouched, or does the grille side differ between zones? Do you have an onboard photo looking up in the right aisle of the rear Y cabin?",
+  "Do you have (or can you take) a close photo of the centre-bin PSU in economy? b_sany_y22 shows one stadium well with 4 round fittings per seat group. Are those 4 gaspers with the reading lights elsewhere, or 2 lights plus 2 gaspers?",
+  "No photo found shows a door-area (cross-aisle) ceiling of the new-config 777-300ER. The model's flat panel with fore-aft light strips is unverified. Is there one in your photos?"
+ ]
+}
