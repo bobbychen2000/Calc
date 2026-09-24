@@ -20,6 +20,19 @@ python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
 ```
 
+## Method (owner's directive: drawings first, then 3D, then rendering)
+Work in this order and don't skip ahead:
+1. **Reference drawings** — the Pilatus drawing 190.10.40.432 (NGX Model Building Plan p. 8/9, registered into
+   model coordinates by `refs/mbp.py`) and camera-matched photos (`refs/photos.json`).
+2. **Our 2-D drawing set, drawn from the parameters** (the same control lines / outline tables the 3-D builder
+   uses, not from the mesh): lines plan (profile, half-breadth, body plan at the Pilatus frames), cockpit glazing +
+   PRO mask detail, general layout (doors, windows, wing, tail, gear, prop), livery profiles. Each sheet is
+   overlaid on the Pilatus drawing with deviation call-outs; iterate the parameters until it fits, and get the
+   owner's review before moving on.
+3. **3-D build** from the approved parameters (`model/build.py`), then check the mesh projects back onto the 2-D set.
+4. **Rendering** — Blender (`/opt/venv-blender`, Cycles) beauty renders and the three.js viewer.
+The repo is public: Pilatus drawings, photos and data extracted from them live only in the gitignored `refs/cache/`.
+
 ## Coordinates & conventions
 - Model axes (Python): **x = fuselage station, m aft of the W&B datum** (datum = 3.000 m ahead of the
   firewall, per POH), **y = butt line (+ starboard)**, **z = water line (ground = 0, static on gear)**.
