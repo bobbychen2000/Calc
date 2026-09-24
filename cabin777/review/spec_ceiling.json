@@ -1,0 +1,11 @@
+{"w": 800, "h": 560, "shots": [
+ {"name": "a_below", "unit": "ceiling", "opts": {"eye": [0.3, 1.25, 2.6], "look": [0.9, 2.1, -1.2], "fov": 62}},
+ {"name": "b_aisle", "unit": "ceiling", "opts": {"eye": [1.15, 1.62, 2.9], "look": [1.1, 1.9, -2], "fov": 60}},
+ {"name": "c_oblique", "unit": "ceiling", "opts": {"az": 0.6, "el": -0.25, "dist": 1.1, "noFloor": true}},
+ {"name": "d_up", "unit": "ceiling", "opts": {"eye": [1.15, 1.2, 0.4], "look": [1.15, 2.3, -0.2], "fov": 75}},
+ {"name": "e_obin", "unit": "ceiling", "opts": {"eye": [0.9, 1.45, 1.1], "look": [2.2, 1.85, -0.2], "fov": 55}},
+ {"name": "f_cbin", "unit": "ceiling", "opts": {"eye": [1.6, 1.45, 1.1], "look": [0.6, 1.95, -0.2], "fov": 55}}
+,
+ {"name": "g_latch", "unit": "ceiling", "opts": {"eye": [0.95, 1.62, 0.9], "look": [1.5, 2.05, 0.1], "fov": 50}},
+ {"name": "h_trough", "unit": "ceiling", "opts": {"eye": [1.1, 1.75, 0.6], "look": [1.0, 2.4, -0.4], "fov": 55}}
+]}

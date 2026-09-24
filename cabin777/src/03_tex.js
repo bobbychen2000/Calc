@@ -8,7 +8,7 @@ const N_LAYERS = 25;
 const PHOTO_LAYERS = { 16: 'y_tick', 17: 'py_back', 18: 'j_tweed', 19: 'j_ash', 20: 'f_wood', 21: 'f_tweed', 22: 'y_carpet', 23: 'py_confetti', 24: 'y_diamond' };
 let PHOTO_PIX = null;
 // photo pattern strength per layer (1 = as photographed); PY fleck toned down: at seat distance the photo reads finer
-const PHOTO_GAIN = { 17: 0.65, 23: 0.8 };   // decoded swatches: { name: Uint8ClampedArray RGBA 256x256 }
+const PHOTO_GAIN = { 17: 0.5, 23: 0.8 };   // decoded swatches: { name: Uint8ClampedArray RGBA 256x256 }
 // per-layer params: [scale (tiles per meter), normal strength, albedo strength, roughness strength]
 const LAYER_PARAMS = {
   1: [22, 0.26, 0.14, 0.18], 2: [9, 0.32, 0.14, 0.3], 3: [3.2, 0.7, 0.5, 0.2], 4: [9, 0.1, 0.04, 0.12],

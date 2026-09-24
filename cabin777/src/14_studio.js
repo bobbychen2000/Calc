@@ -59,42 +59,8 @@ function studioRender(app, geo, opts = {}) {
 // states, and the door-3 monument group (lavs + bar)
 const STUDIO_UNITS = {
   wing: () => buildExterior(null).geo,
-  ceiling: () => {
-    const B = new Builder();
-    const L = BIN.side;
-    const zones = [{ type: 'seat', z0: -L, z1: L, cls: 'Y' }];
-    buildCeilings(B, { zones, seats: [] });
-    const side = { R: sideBinModule(1), L: sideBinModule(-1), C: centerBinModule() };
-    for (const zc of [-L / 2, L / 2]) for (const k of ['R', 'L']) B.addBuilt(side[k], M4.trs(0, 0, zc));
-    for (const zc of [-1.5, -0.5, 0.5, 1.5]) B.addBuilt(side.C, M4.trs(0, 0, zc * BIN.center));
-    for (const x of [-2.2, 2.2]) B.addBuilt(psuModule(3), M4.trs(x, binBottomY(x) - 0.012, 0, 0, 0, Math.atan2(0.195, 1.315) * (x > 0 ? 1 : -1)));
-    B.addBuilt(psuModule(4), M4.trs(0, 1.83, 0));
-    return B.build();
-  },
-  windows: () => {
-    const B = new Builder();
-    const P = CAB.win.pitch;
-    const pat = windowCellPattern(P, CAB.win.holeW, CAB.win.holeH, HOLE_R, CAB.win.yc);
-    const g = raw();
-    const zs = [-P * 2, -P, 0, P, P * 2];
-    buildSidewallRun(g, -1, -P * 2.5, P * 2.5, zs, pat, WALL.vTop);
-    fixWinding(g); B.add(g, null, MAT.sidewall);
-    const wp = windowParts(-1);
-    const states = [['manual', 0], ['manual', 0.5], ['manual', 1], ['sheer', 1], ['blackout', 1]];
-    zs.forEach((z, k) => {
-      B.add(wp.reveal, M4.trs(0, 0, z), MAT.reveal);
-      const w = { z, side: -1 };
-      const [kind, f] = states[k];
-      const m = shadeMats(w, f, kind === 'blackout' ? -0.012 : 0);
-      B.addBuilt(shadePanelGeo(kind), m.panel);
-      B.addBuilt(shadeRailGeo(kind), m.rail);
-      if (kind === 'sheer' || kind === 'blackout') {
-        const F = M4.mul(M4.trs(0, 0, z), windowFrame(-1, -0.004));
-        B.add(gRBox(0.06, 0.028, 0.008, 0.004, 1), M4.mul(F, M4.trs(0, -CAB.win.holeH / 2 - 0.05, 0)), { c: '#cfccc5', r: 0.4 });
-      }
-    });
-    return B.build();
-  },
+  ceiling: () => ceilingSlice(),
+  windows: () => windowStudioGeo(),
   door3: () => {
     const L = buildLayout();
     const z3 = L.doorsZ[2][0];

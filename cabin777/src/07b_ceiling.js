@@ -1,7 +1,8 @@
 // ------------------------------------------------------------------
 // Ceilings (777 Signature Interior): curved aisle panels between the outboard and centre bins with cove
-// up-lighting at both edges, panel seams on the 21 in frame grid, speakers, emergency lights, EXIT signs
-// over the aisles near exits; raised curved ceilings in the door areas; flat ceilings over monuments
+// up-lighting at both edges and a continuous slatted light/air trough running down each aisle (seen in
+// y_47301, c_27312 and a THE Suite aisle photo [V]); faint panel joints on the 2-frame grid, small emergency
+// lights, EXIT signs over the aisles near exits; raised curved ceilings in the door areas; flat over monuments
 // ------------------------------------------------------------------
 const VAULT_A = [1.655, 2.232], VAULT_B = [0.735, 2.262], VAULT_CROWN = 2.44;
 function vaultY(t) {
@@ -25,6 +26,7 @@ const VAULT = (() => {
 })();
 
 const FRAME = CAB.win.pitch;
+const TROUGH = { t: 0.66, w: 0.07 };
 function zoneModules(z0, z1, target = 2 * FRAME) {
   const n = Math.max(1, Math.round((z1 - z0) / target));
   const L = (z1 - z0) / n, b = [];
@@ -34,11 +36,10 @@ function zoneModules(z0, z1, target = 2 * FRAME) {
 
 const CEILMAT = {
   vault: { c: '#f3f2ee', r: 0.82, l: 12, e: 0.05 },
-  seam: { c: '#9aa0a6', r: 0.8 },
-  slot: { c: '#5d636b', r: 0.7, l: LAYER.grille },
-  slotRim: { c: '#e6e5e1', r: 0.5 },
-  speaker: { c: '#c3c6ca', r: 0.6, l: LAYER.grille },
-  speakerRim: { c: '#e6e5e1', r: 0.45 },
+  seam: { c: '#c4c7ca', r: 0.8 },
+  trough: { c: '#a4a9ae', r: 0.7 },
+  troughRim: { c: '#e9e8e4', r: 0.45, l: LAYER.plastic },
+  slat: { c: '#efeeea', r: 0.5, e: 0.12 },
   emerg: { c: '#fff7e8', r: 0.3, e: 0.25 },
   emergBase: { c: '#d8d7d2', r: 0.4 },
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
@@ -94,20 +95,21 @@ function buildCeilings(upper, layout) {
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
-        for (let k = 1; k < mods.length - 1; k++) upper.add(profileRibbon(VAULT.slice(2, -2), side, mods[k], 0.006, 0.0015), null, CEILMAT.seam);
-        for (let k = 0; k < mods.length - 1; k++) {
-          const a = mods[k], b = mods[k + 1], zc = (a + b) / 2;
-          // air outlet slot along the outboard edge of the panel
-          upper.add(vaultStrip(0.09, side, a + 0.06, b - 0.06, 0.03, 0.0012), null, CEILMAT.slotRim);
-          upper.add(vaultStrip(0.09, side, a + 0.07, b - 0.07, 0.013, 0.0022), null, CEILMAT.slot);
-          if (k % 2 === 1) {
-            upper.add(gCyl(0.055, 0.055, 0.006, 22), vaultXF(0.55, side, zc, 0.001), CEILMAT.speakerRim);
-            upper.add(gCyl(0.045, 0.045, 0.006, 22), vaultXF(0.55, side, zc, 0.003), CEILMAT.speaker);
-          }
-          if (k % 3 === 0) {
-            upper.add(gRBox(0.15, 0.012, 0.055, 0.01, 1), vaultXF(0.40, side, zc - 0.2, 0.003), CEILMAT.emergBase);
-            upper.add(gRBox(0.11, 0.01, 0.03, 0.008, 1), vaultXF(0.40, side, zc - 0.2, 0.008), CEILMAT.emerg);
-          }
+        for (let k = 1; k < mods.length - 1; k++) upper.add(profileRibbon(VAULT.slice(2, -2), side, mods[k], 0.004, 0.0015), null, CEILMAT.seam);
+        // slatted trough, nearer the centre bin (continuous down the aisle in the photos) [V]; slat pitch 22 mm [A]
+        upper.add(vaultStrip(TROUGH.t, side, z0 + 0.03, z1 - 0.03, TROUGH.w + 0.024, 0.0012), null, CEILMAT.troughRim);
+        upper.add(vaultStrip(TROUGH.t, side, z0 + 0.04, z1 - 0.04, TROUGH.w, 0.0024), null, CEILMAT.trough);
+        const sl = raw();
+        for (let z = z0 + 0.06; z < z1 - 0.05; z += 0.022) {
+          const q = vaultStrip(TROUGH.t, side, z - 0.0065, z + 0.0065, TROUGH.w - 0.006, 0.0034), b = sl.p.length / 3;
+          sl.p.push(...q.p); sl.n.push(...q.n); sl.u.push(...q.u); sl.i.push(...q.i.map((v) => v + b));
+        }
+        upper.add(sl, null, CEILMAT.slat);
+        // small emergency lights along the outboard side of the panel [A spacing]
+        for (let k = 0; k < mods.length - 1; k += 3) {
+          const zc = (mods[k] + mods[k + 1]) / 2;
+          upper.add(gRBox(0.12, 0.01, 0.045, 0.01, 1), vaultXF(0.22, side, zc - 0.2, 0.003), CEILMAT.emergBase);
+          upper.add(gRBox(0.09, 0.008, 0.026, 0.008, 1), vaultXF(0.22, side, zc - 0.2, 0.007), CEILMAT.emerg);
         }
         // EXIT signs over the aisle near the exits (both directions)
         const prev = zones[zi - 1], next = zones[zi + 1];
