@@ -29,10 +29,10 @@ const VAULT = (() => {
 
 const FRAME = CAB.win.pitch;
 // slotted grille on the outboard side only (see header), inboard of a bright cove diffuser band 1.5-3x the grille
-// width that runs from the bin crest to the grille (b_lalf_c119, b_sany_y22 [V ratio]): grille at t = 0.20, diffuser
-// t 0.015..0.16 [D]; w 0.08 m [A]. 4-5 fore-aft slots in segments of ~0.5 m (2 per 2-frame panel, a bridge on every
+// width that runs from the bin crest to the grille (b_lalf_c119, b_sany_y22 [V ratio]): grille at t = 0.24, diffuser
+// t 0.004..0.215 [D]; w 0.05 m, slim mid-grey (w3b) [A]. 4-5 fore-aft slots in segments of ~0.5 m (2 per 2-frame panel, a bridge on every
 // panel joint) with ~25 mm solid bridges (b_lalf_c119 close-up, sany_py_10 [V pattern, A lengths])
-const TROUGH = { ts: [0.20], w: 0.08, seg: 2, gap: 0.025, cove: [0.015, 0.16] };
+const TROUGH = { ts: [0.24], w: 0.05, seg: 2, gap: 0.025, cove: [0.004, 0.215] };   // w3b: band 3-4x the grille (c119 115 vs 40 px)
 function zoneModules(z0, z1, target = 2 * FRAME) {
   const n = Math.max(1, Math.round((z1 - z0) / target));
   const L = (z1 - z0) / n, b = [];
@@ -44,7 +44,7 @@ function zoneModules(z0, z1, target = 2 * FRAME) {
 // buildAtlas, before the ceiling is built):
 //  - 'exitJ': ANA's bilingual ceiling EXIT sign '← 非常口 EXIT →', dark red on a light face, ~4:1
 //    (up_F_Forward-Look, sign over the door-1 cross-aisle [V text/colours]; 280x72 px, red #c21e1e [A shade])
-//  - 'grille': the slotted grille as a texture across the strip: 5 thin dark fore-aft slits #464a50 (5 of every 12 px, w2a) between white bars
+//  - 'grille': the slotted grille as a texture across the strip: 4 dark fore-aft slits #55595e (w2a/w3b: thin, mid-dark) between white bars
 //    #efeeea (b_lalf_c119 close-up [V look]); constant along the run, so it cannot alias into a moire.
 function paintCeilingDecals(A) {
   const g = A.canvas.getContext('2d'), S = A.canvas.width;
@@ -64,8 +64,8 @@ function paintCeilingDecals(A) {
   // grille slots across a 64 px tall rect (u along the run is constant), with a white margin for the mips
   y = 816;
   g.fillStyle = '#efeeea'; g.fillRect(x, y, 48, 80);
-  g.fillStyle = '#464a50';
-  for (let i = 0; i < 5; i++) g.fillRect(x, y + 12 + i * 12, 48, 5);
+  g.fillStyle = '#55595e';
+  for (let i = 0; i < 4; i++) g.fillRect(x, y + 14 + i * 14, 48, 6);
   put('grille', x + 16, y + 8, 16, 64);
 }
 { const base = buildAtlas; buildAtlas = function (layout) { const A = base(layout); paintCeilingDecals(A); return A; }; }
@@ -87,7 +87,7 @@ const CEILMAT = {
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
   lightStrip: { c: '#fff4d6', r: 0.5, e: 0.8 },
   // cove diffuser band on the cove LED circuit (layer 12 = u_led): near white like the c119 / y22 band [V]
-  cove: { c: '#ffffff', r: 0.5, l: 12, e: 0.17 },
+  cove: { c: '#ffffff', r: 0.5, l: 12, e: 0.30 },   // the brightest thing in the ceiling (w3a)
   signBox: { c: '#e2e1dd', r: 0.45, l: LAYER.plastic },   // light housing (thrifty_j_cabin-1 header sign [V])
 };
 
@@ -156,7 +156,7 @@ function buildCeilings(upper, layout) {
           const ax = Math.abs(p[0]);
           if (ax > 1.66) return 0.85;
           if (ax < 0.73) return 0.08;
-          return 0.08 + 0.26 * Math.exp(-Math.max(xg - ax, 0) / 0.16) + 0.30 * Math.exp(-Math.abs(ax - xg) / 0.08);
+          return 0.08 + 0.22 * Math.exp(-Math.max(xg - ax, 0) / 0.25);   // inboard of the grille ~0.55 of the band, falling (w3b)
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
@@ -212,7 +212,7 @@ function buildCeilings(upper, layout) {
       // header closures at the zone ends: the open vault sweep let the sky show between the centre-bin end, the vault
       // and the door dome (w2b v3 leak)
       for (const side of [-1, 1]) {
-        const poly = [...VAULT.map(([x, y]) => [x * side, y]), [VAULT[VAULT.length - 1][0] * side, 2.62], [VAULT[0][0] * side, 2.62]];
+        const poly = [...VAULT.map(([x, y]) => [x * side, y]), [0, 2.27], [0, 2.62], [VAULT[0][0] * side, 2.62]];   // over the centre-bin crest too (w3b sliver)
         for (const z of [z0 - 0.006, z1 + 0.006]) upper.add(gExtrude(poly, 0.01), M4.trs(0, 0, z), CEILMAT.flat);
       }
     } else if (zn.type === 'door') {

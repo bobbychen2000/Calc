@@ -1,0 +1,186 @@
+{
+ "area": "ceiling",
+ "rater": "A",
+ "round": 3,
+ "score": 6.8,
+ "note": "Rated on the handed-over HEAD renders (r3, r3st, r3v). I added close-ups from the same build (b/test.html) with raterA3/z.js: z1_cSign (34E, looking straight up at the centre PSU), z2_oSign (outboard band), z3_emerg and z4_door2. q15's new camera shows almost no ceiling, so the bright-scene tone checks now use v1/v6 and y_47300 rather than q15. q13 has the same problem.",
+ "round2Status": {
+  "fixed": [
+   "Outboard row placards now face the aisle and read ('35 [seat icons]' in p1; '34' and '35' in p2). The ground matches the rail: 230 vs 231 luma.",
+   "Centre channel width: in the y22 camera the channel is 345 px in the model against 365 px in the photo (cmp_chan.png). It was 1.5x too wide.",
+   "Grille slits: the dark fraction is 0.18 in p1, the same as c119. The heavy grey hatch is gone.",
+   "O2 plate outline and blue call square removed",
+   "Centre-channel ladder: 4 irregular light joints",
+   "Emergency light: now a light frame round a grey lens (v2 at 608,200)",
+   "Speaker: a rounded rectangle with a perforated face (v2, h_trough)",
+   "Centre-bin door no longer mid-grey from the aisle (p2 door 234..241)"
+  ],
+  "partlyFixed": [
+   "Cove band: a band now exists between the crest and the grille, about 1.4x the grille width (v6 col 60: 56 px against 40 px; photos show about 2x). But it is no brighter than the vault next to it (band 241..252, vault 245..251), so it does not read as the light source (issue 2).",
+   "Outboard PSU band: brighter (v4 band 214..216), but the wells still have a hard dark ring (121..159 luma) and the band is still one flat plate (issue 4)",
+   "Centre sign window: the pill is longer (0.235 m), but its smoked face now z-fights with the well floor and shows as a sliver (issue 1, worse)",
+   "Centre bins: tone fixed, but the lower wrap is now flat and unshaded when seen from the seats (issue 3)"
+  ],
+  "notFixed": [
+   "Door-3 flat panel with a thick black frame (v3 at 0..600, 0..95). This belongs to the monuments worker (BAR canopy); the from_ceiling note has been sent.",
+   "Door-area ceilings are still unverified against any photo"
+  ]
+ },
+ "details": [
+  {
+   "detail": "Aisle vault panels and joints. The 8 mm light joints sweep as arcs, which is right (v2, h_trough). The vault is nearly uniform: 245..251 by the cove and 215..220 at the centre-bin crease (v6). In the photos the vault next to the grille is about 0.6..0.75 of the band (c119 row 200: band 246, vault 146..185).",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/v2_jAisleFwdUp.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"
+   ]
+  },
+  {
+   "detail": "Cove light band. Width is now OK (about 1.4x the grille against about 2x in the photos). Luminance is not: the band matches the vault. In every photo the band is the brightest thing in the ceiling (255 saturated in sany_py_10 row 60, c119, b_sany_y22).",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/v6_y34Eup.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_sany_y22.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_py_10.jpg"
+   ]
+  },
+  {
+   "detail": "Slotted grille. Thin dark slits (dark fraction 0.18, the same as c119), 2 segments per panel with bridges, on the outboard side only. This matches.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/p1_placardL.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"
+   ]
+  },
+  {
+   "detail": "Outboard bins. The door, 2-frame modules, hairline seams, lowered rail with groove and a readable placard all match y22 ('32 [icons]' on the rail) and thrifty.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/p1_placardL.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/y22_placL.png"
+   ]
+  },
+  {
+   "detail": "Centre bins. The channel width is now right. From the seats (v1, v6, z1) the door underside and wrap render one flat tone: 219 in every sample in v1 cols 250/700, y 0..220. y_47300 runs 245 down to 190 across the same door, and b_sany_y22 shows a strong top-to-wrap gradient, so the rolled form is lost. From the aisle (v2, v5, p2) it shades acceptably.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/cmp_chan.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/v1_yCentreFwd.png",
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Latches. Stadium ring, dark well and paddle. Height and size are right.",
+   "score": 8,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3st/g_latch.png"
+   ]
+  },
+  {
+   "detail": "Outboard PSUs. The wells are not recessed: they are drawn PROUD. The rim plate spans 1.5..2.5 mm below the band and the well floor 1.9..2.9 mm below, so the well sticks out further than the rim, and the plate side walls render as a dark outline (v4 rim 121..159 against band 214). thrifty_j_overhead-vent shows a soft dished well with a light bevel, proud stepped modules, and ribbed filler strips.",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/v4_jPsuUp.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/z2_oSign.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/thrifty_j_overhead-vent.jpg"
+   ]
+  },
+  {
+   "detail": "Centre PSU. The two slim transverse rows match y_47300. b_sany_y22 (closer) shows a large raised rounded-rect housing about 0.83 of the channel with 4 deep sockets, and a channel of stepped transverse panels. The model is flat, with small fittings (about 0.65 of the channel).",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/cmp_chan.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/y300_chan.png"
+   ]
+  },
+  {
+   "detail": "No-smoking and fasten-belt signs. Broken rendering: the smoked face shows as a thin dark sliver with fragments of icons, centre and outboard alike (z1_cSign, v6 zoom, v8). Cause: the gQuad sits at y -0.0014, exactly on the lower cap of the well-floor plate (padM plate at -0.0009, 1 mm thick, centred), so the two z-fight. Also, the 140x64 atlas rect (2.2:1) is stretched onto a 0.205 x 0.033 quad (6.2:1).",
+   "score": 4,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/z1_sign_crop.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/v6_sign.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/y22_chan.png"
+   ]
+  },
+  {
+   "detail": "Row placards. Readable on both bins. A faint rectangular quad outline shows round the outboard placard (p1 zoom). There is no plate in the photos.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/p1_plac.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/y22_placL.png"
+   ]
+  },
+  {
+   "detail": "Ceiling EXIT signs. Bilingual, double-faced, light housing. OK.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/v3_door3Up.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/v7_door4Fwd.png"
+   ]
+  },
+  {
+   "detail": "Vault fittings. Speaker and emergency light now match c119 in shape and polarity. The c119 speaker face is a shade darker than the vault; the model's is about the same. Minor.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3st/h_trough.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"
+   ]
+  },
+  {
+   "detail": "Door-area ceilings. Still unverified. The door-3 black-framed panel persists (monuments). Near door 2 (z4) a dark-brown ceiling panel with 4 downlights hangs over the galley (also monuments). Flat grey dome panels.",
+   "score": 5.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r3v/v3_door3Up.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA3/z4_door2.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "PSU sign windows render as a z-fighting sliver (centre and outboard)",
+   "problem": "signWindow puts the smoked gQuad at y -0.0014. stadiumWell's floor plate is gPlate(...,0.001) at padM(x,-0.0009,z); gExtrude is centred, so the plate spans -0.0014..-0.0004, and its lower cap is coplanar with the quad. Only fragments of the dark face and icons survive. The icons are also squeezed: the 140x64 atlas rect is stretched onto 0.205 x 0.033 m on the centre channel.",
+   "evidence": "z1_cSign (looking straight up at 34E's PSU): the dark face covers about 35 % of the pill height, with a grey wedge cutting through the icons. v6 zoom (raterA3/v6_sign.png) and v8 (raterA3/v8_psu.png) show the same. b_sany_y22 shows a fully dark window with the icons centred.",
+   "fix": "08_bins.js signWindow: quad y -0.0014 -> -0.0022 (clear of the floor, still inside the rim's 3 mm), or drop the well floor under sign windows. Keep the icon aspect: centre quad gQuad(Math.min(w-0.03, (d-0.012)*2.2*1.6), d-0.012), and paint psuSigns' dark ground across a wider rect (e.g. 06_atlas put('psuSigns', x, y, 140, 64) -> repaint in paintBinDecals a 200x64 rect with the icons centred), so the dark face fills the long pill."
+  },
+  {
+   "severity": "medium",
+   "detail": "Cove band is no brighter than the vault",
+   "problem": "CEILMAT.cove e 0.17 on the LED layer, but the vault eFn peaks at about 0.64 (0.08 + 0.26 + 0.30) at the grille. Band and vault render the same (241..252 against 245..251), so the eye reads a white vault with a grille on it, not a glowing cove.",
+   "evidence": "v6 col 60: vault 245..251, grille, band 241..252. Photos: sany_py_10 row 60 band 255 against vault/grille 17..240; c119 row 200 band 246 against vault 146..185 just inboard of the grille; b_sany_y22 band saturated, vault far darker.",
+   "fix": "07b_ceiling.js: CEILMAT.cove e 0.17 -> 0.45 (target band 255, near-saturated). In eFn drop the grille spike 0.30*exp(-|ax-xg|/0.08) -> 0.12*..., and 0.26 -> 0.20, so the vault just inboard of the grille lands at about 0.8 of the band. Check v6: band luma >= 1.1x the vault at the same row."
+  },
+  {
+   "severity": "medium",
+   "detail": "Centre-bin underside and wrap flat when seen from the seats",
+   "problem": "doorC e 0.14, plus shadeUpper's 1.0..0.95 range, flattens the rolled lower door into one tone when seen from below. The wrap no longer reads as a curve.",
+   "evidence": "v1: cols 250 and 700 are 219 at every sample y 0..220. y_47300 across the same door: 245 -> 190. b_sany_y22: a strong gradient to a dark wrap. v6 and z1 look flat too.",
+   "fix": "08_bins.js: bake a height gradient into the centre door only. After addDoor(B, CBIN_DOOR, ...), or in a shadeCentre pass, scale the vertex colour by f = lerp(0.82, 1.0, clamp((y - 1.84) / 0.25, 0, 1)) for |x| < 0.83, and lower doorC e 0.14 -> 0.10. The top of the door stays about #e3, and the wrap goes to about #bcc0c4 (c_27312 lower door #c3c7cb)."
+  },
+  {
+   "severity": "medium",
+   "detail": "PSU wells drawn proud, with a dark outline ring",
+   "problem": "psuXF hangs the PSU origin 1.5 mm below the band's lower face (binBottomY-0.0065 against band bottom binBottomY-0.005; the centre is the same at CBIN_Y-0.009 against CBIN_Y-0.0065). stadiumWell then stacks the rim (-0.0005 ± 0.0005) and a well floor that sits FURTHER down (-0.0009 ± 0.0005). The 'recess' therefore sticks out, and its side walls render as a dark ring.",
+   "evidence": "v4: rim 121..159 against band 214 and well 190. z2_oSign: a grey outlined stadium plate. thrifty_j_overhead-vent: a soft dished well, light bevel, no dark line; the fitting panels are proud as separate modules instead.",
+   "fix": "08_bins.js: psuXF outboard offset -0.0065 -> -0.0052 and centre CBIN_Y-0.009 -> CBIN_Y-0.0067, so the rim sits flush. stadiumWell: rim at padM(x,-0.0002,z) with thickness 0.0004 and colour '#d2d4d5'; floor at padM(x,-0.0001,z) with thickness 0.0002, colour #d6d7d7 e 0.04 (it reads recessed by tone, not by sticking out). Optionally add, per bay, a proud module plate gBox(bw-0.04, 0.003, 0.24) behind each psuBox and 5 rib strips at 0.03 m pitch beside the sign pods (thrifty)."
+  },
+  {
+   "severity": "low",
+   "detail": "Centre channel lacks stepped transverse panels; PSU housing small",
+   "problem": "The channel is one flat plate with 4 hairlines. b_sany_y22 shows several proud, stepped transverse panels, and the gasper housing is a raised rounded-rect bezel about 0.83 of the channel.",
+   "evidence": "cmp_chan.png (left: photo, right: model at the same camera).",
+   "fix": "08_bins.js centerBinModule: replace the joint hairlines with 3 step strips gBox(CBIN_BAND-0.02, 0.003, 0.006) in BINMAT.wellRim tone at f = -0.30, 0.05, 0.30, each paired with a 2 mm drop of the next bandC section. psuModule: add a bezel gPlate(w+0.06, 0.16, 0.03, 0.002) around both rows (about 0.39 m, 0.8 of the channel)."
+  },
+  {
+   "severity": "low",
+   "detail": "Placard quad edge visible; door-area ceilings (monuments)",
+   "problem": "A faint outline round the outboard placard quad, probably atlas bleed from the neighbouring rect at mip levels. Door-3 black-framed canopy and door-2 dark-brown galley ceiling panel are monuments-owned and unverified.",
+   "evidence": "raterA3/p1_plac.png; v3 (0..600, 0..95); z4_door2.",
+   "fix": "06_atlas / 08_bins: pad each row placard rect by 4 px of its ground colour on every side, or inset the UVs by 1 px. Pass the door-area items to the monuments worker again."
+  }
+ ],
+ "questionsForUser": [
+  "Centre PSU: y_47300 (official, far) shows two slim rows, and b_sany_y22 (trip report, close) shows one large 4-socket housing. Is there a close-up of the new-config economy centre PSU that settles it?",
+  "Door-area (cross-aisle) ceilings of the new 212-seat 777-300ER: still no photo. Do you have one?"
+ ]
+}
