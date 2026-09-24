@@ -1,0 +1,100 @@
+{
+  "area": "room",
+  "rater": "A-skeptic",
+  "round": 3,
+  "score": 6.4,
+  "summary": "The w2 structural fixes hold up against the photos. The E side table is ash only at the monument end, the O bench is wide, footwells sit under the monitors, the sill is silver with a drawer and slot, the aisle ledge has ribs, and the duvet is quilted indigo. Flap and fabric tones now match the official photos (flap/back luminance 1.2 vs 1.35-1.44). What remains is finish detail that a photo comparison still catches: the side-table edges are ash where the photos show a dark rim, the blue pillow renders about 25% too dark, the back seams are hard black lines in the wrong place, the handset screen is too small, and the literature slot glows.",
+  "details": [
+    {"detail": "Nested-pair layout (O bench wide, E seat, footwells under monitors, E ash only over O footwell)", "score": 7.5, "refs": ["c_27313", "c_27315", "tpg_31", "tpg_53", "fb_a96b7a65"]},
+    {"detail": "Seat back + cushion (tweed colour, shape, seams)", "score": 6.0, "refs": ["tpg_31", "tpg_42", "c_27315", "c_27313"]},
+    {"detail": "Headrest flap (size, position, colour)", "score": 7.0, "refs": ["tpg_31", "tpg_42", "c_27315", "c_27313"]},
+    {"detail": "Pillows (white + blue, pose)", "score": 6.0, "refs": ["tpg_31", "tpg_42", "c_27303"]},
+    {"detail": "Monitor, bezel, sill with drawer + literature slot", "score": 6.5, "refs": ["tpg_53", "c_27316"]},
+    {"detail": "Cabinet (ash door, split, stiles)", "score": 7.0, "refs": ["tpg_53", "c_27316", "tpg_155"]},
+    {"detail": "Side tables (ash top, rim, rounded corner)", "score": 5.5, "refs": ["fb_a96b7a65", "tpg_53", "tpg_155", "c_27316"]},
+    {"detail": "Seat controls plate + handset", "score": 6.0, "refs": ["tpg_81", "tpg_155", "tpg_53"]},
+    {"detail": "Lamp column, reading light, nozzle, safety-card pocket", "score": 6.5, "refs": ["tpg_53", "c_27316", "c_27315"]},
+    {"detail": "Outer console with red life-vest tab + stowage", "score": 7.0, "refs": ["c_27313", "c_27316", "fb_a96b7a65"]},
+    {"detail": "Aisle armrest ledge (silver top, slot, ribs)", "score": 6.5, "refs": ["c_27313", "tpg_31", "tpg_42"]},
+    {"detail": "Aisle-end ash panels, cap, seat-number plaques", "score": 6.5, "refs": ["c_27312", "c_27313", "tpg_78"]},
+    {"detail": "Ash material (tone, grain)", "score": 6.5, "refs": ["c_27312", "c_27313", "c_27316", "fb_a96b7a65"]},
+    {"detail": "Centre divider + door edges", "score": 6.0, "refs": ["c_27313", "c_27314", "tpg_78"]},
+    {"detail": "Bed mode (mattress, quilted duvet, pillows)", "score": 6.5, "refs": ["fb_a96b7a65", "tt_bed-2"]}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Side-table edge: the whole 35 mm slab is ash",
+      "problem": "In the model the ash top is a 0.035 m ash slab, so a thick pale ash edge shows all round, including the big rounded corner (c8: edge #aeadaa L173, same as the top). Every in-flight photo shows the ash as an inlay inside a dark charcoal/gunmetal rim about 20-25 mm wide, with a fine silver line on its outer lip. The dark rim is what frames the table in top views.",
+      "evidence": "fb_a96b7a65 crop (0,460)-(420,753): the ash top is framed by a dark rim that follows the rounded corner, and a blue LED line runs in the console below. tpg_53: the table front shows a dark edge band. tpg_155 / tpg_81: the console top edge is a dark grey moulded band with a light lip (#a9b3bd). c_27316: the table shows a thin grey edge.",
+      "fix": "09c_room.js roomPart. Keep the rounded plan but split it into a rim and an inlay: planSlab(B, planRRect(tx0, tx1, tz0, MON.zO, [R, 0.01, 0.004, 0.004]), top - 0.035, 0.035, SEATMAT.jShellIn) for the rim body, then the ash inlay planSlab(B, planRRect(tx0 + 0.022, tx1 - 0.004, tz0 + 0.022, MON.zO - 0.004, [R - 0.022, 0.004, 0.004, 0.004]), top - 0.002, 0.003, ash) and a silver lip planSlab(..., planRRect(tx0, tx1, tz0, MON.zO, ...), top - 0.006, 0.004, SEATMAT.jRail) inset by 0.001. Make the same change to the E table (planRRect(-0.58, tx1, cz0, zT, [0.004, 0.004, R, 0.004]) -> jShellIn rim, ash inlay inset 0.022 on the x1 and zT sides)."
+    },
+    {
+      "severity": "medium",
+      "detail": "Blue pillow still too dark (navy, not royal/periwinkle)",
+      "problem": "In the cabin renders the blue pillow is #27316b (L53, q08) and #252e65 (L50, q09), 0.64x the luminance of the seat back beside it (#53525c L83). In the in-flight photos the pillow is 0.74-0.9x the back: tpg_42 #4a67c0 L105 vs back L141, and tpg_31 #60648b-#716f9d L103-117 vs back L116-130. Even ANA's darker CG (c_27303) gives #30345a L56 vs fabric L73, a ratio of 0.77. The model's pillow reads as a near-black navy block.",
+      "evidence": "q08 (600,450), q09 (60,500), q10 (680,540) vs tpg_42 (1060,700), tpg_31 (620,760)/(1000,730), c_27303 (610,440).",
+      "fix": "In SEATMAT (shared file, one line): pillowBlue c '#55609a' -> '#6671b8' (about +25% L), keeping LAYER.yagasuri. Alternatively, if the layer darkens it, lower the yagasuri contrast in LAYER_PARAMS. Target in the q08 cabin view: about #3c4a90, L about 70."
+    },
+    {
+      "severity": "low",
+      "detail": "Seat-back seams: hard black lines, set too high",
+      "problem": "roomSeatCore draws two jBase (#2a2b2f) 5 mm bars across the back at sy 0.29 and 0.44 (0.54 and 0.30 of the back height from the top). They render as crisp black stripes (c11, q08, q10). In the photos the back is a tall upper panel carrying the flap, with two soft sewn channels low down: tpg_42 at 0.59 / 0.80 of the height from the top, tpg_31 at 0.56 / 0.86. They are fabric-coloured shadows, not black lines.",
+      "evidence": "tpg_42 back top y240 - seat y690, seams y505/y600. tpg_31 back y395-750, seams y595/y700. c11_benchO shows black lines at 0.30 / 0.54.",
+      "fix": "roomSeatCore: for (const sy of [0.11, 0.25]) B.add(gBox(w - 0.04, 0.006, 0.003), M4.mul(BH, M4.trs(0, sy, -0.0385)), {c: '#46444b', r: 0.95}). Use a darkened fabric tone, not jBase."
+    },
+    {
+      "severity": "low",
+      "detail": "Handset: the screen is too small; the pads are single discs",
+      "problem": "The handset capsule is 0.13 x 0.075 but its screen is only 0.052 x 0.04 (40% x 53%). On the real handset the colour screen fills about 57% of the width and about 90% of the height. Each end carries a round cluster of 4-5 small buttons (a D-pad ring), not one flat disc.",
+      "evidence": "tpg_81: handset 315 px wide, screen 180 px, screen nearly full height. tpg_155 and tpg_53 show the same. c8_controls shows a small square screen.",
+      "fix": "roomControls: gQuad(0.052, 0.04) -> gQuad(0.074, 0.064); move the end pads to hx + e * 0.051 with r 0.012. On each pad add 4 dots gCyl(0.003, ...) at 90-degree spacing, radius 0.007, colour RING."
+    },
+    {
+      "severity": "low",
+      "detail": "Literature slot reads as a glowing blue screen",
+      "problem": "roomMonitor fills the slot with an emissive quad {c:'#2a4f9a', e:0.18} (c12 #214fb1 L76, a bright flat panel). In the photos it is an open pocket: a grey sill lip with a small printed 'No stowage' label, a black opening, and a deep royal-navy lined interior that is not lit.",
+      "evidence": "tpg_53 crop (200,620)-(1000,760): the slot is a grey-framed box with a dark navy inside; the drawer beside it has a grey face with a green LED. c_27316 shows the same.",
+      "fix": "roomMonitor: set the blue quad to {c: '#1f2c7a', r: 0.6, e: 0.04}, recessed to zo(0.012). Keep the jVoid box as the back, and add a 0.004 jSill lip under the opening at y - 0.028."
+    },
+    {
+      "severity": "low",
+      "detail": "Monitor bezel near-black in cabin light",
+      "problem": "The bezel renders #111215-#1c1d20 (L18-29, q07 / q06). The photos show a dark charcoal with a visible frame edge: c_27316 #20212b (L34), tpg_53 #302c24 (L45).",
+      "evidence": "q07 (360,300), q06 (285,360) vs c_27316 (345,90), tpg_53 (245,420).",
+      "fix": "09c_room.js SEATMAT jBezel c '#2c2e32' -> '#3a3c42'."
+    },
+    {
+      "severity": "low",
+      "detail": "Lamp column cap stands above the monument top",
+      "problem": "roomColumn adds capRail at MON.top on a column 0.06 proud, so it reads as a separate light box poking up at the monitor's top corner (q07 x750-830 y160-180, c6). In tpg_53 and c_27316 the lamp column runs flush into the shell top with no separate cap.",
+      "evidence": "tpg_53 top-left column; c_27316 left of the monitor.",
+      "fix": "roomColumn: drop capRail(B, 0.08, d, x, MON.top, z) and set h = MON.top + 0.02 - y0, so the column top is flush with the monument cap."
+    },
+    {
+      "severity": "low",
+      "detail": "Ash slightly grey/cold",
+      "problem": "The cabin ash is neutral grey (#aeadaa, R-B = 4). The official photos show a faintly warm pale ash: c_27312 end panel #d8d4c6 (R-B 18), table #b5a796; c_27316 #beb6b9; fb_a96b7a65 table #dac7a7. The grain contrast now matches (hf-std/mean 0.04-0.08 vs 0.05 in c_27316/13), so only the hue needs attention.",
+      "evidence": "q09 table (590,420), q10 end (840,380) vs c_27312 (470,300) / (390,380).",
+      "fix": "SEATMAT ash c '#d6d2ca' -> '#dcd5c8' (shared file, one line)."
+    },
+    {
+      "severity": "low",
+      "detail": "Aisle-end cap finish",
+      "problem": "The cap is a flat matte mid grey (#7c7f84, r 0.45). In tpg_78 it is a wide glossy metallic T-cap (a warm taupe-gunmetal with specular streaks) spanning both seats, with the two recessed blue-lit plaques. c_27313 shows it neutral grey #898a8c but also with a sheen.",
+      "evidence": "tpg_ANA-...-seats-foot-to-foot_78 (cap at y650-800), c_27313 (470,405).",
+      "fix": "roomPart O: cap material {c: '#86837e', r: 0.28, m: 0.35, l: LAYER.brushed}."
+    }
+  ],
+  "verifiedFixedSinceW2": [
+    "E outer side: ash only over O's footwell, then a charcoal console (c2, q09 vs c_27315 / fb_a96b7a65)",
+    "The headrest flap is now the palest part of the back: flap/back L ratio 1.2 vs 1.35-1.44 in c_27315 / c_27313, a close enough slate-blue tone",
+    "Wide O bench with 2 corner lamps on a full-width back shell (c11 vs tpg_31 / tpg_42)",
+    "Footwells centred under the monitors; silver sill with the drawer and green LED on the column side (c12 vs tpg_53)",
+    "Pillow pair white + blue leaning on the back (pose OK; colour still dark, see issue)",
+    "Indigo quilted duvet with white + blue pillows at the head (c4 vs fb_a96b7a65)",
+    "Ribbed aisle end on the ledge; the ledge top is no longer near-white",
+    "Seat front: a continuous apron, no detached board"
+  ],
+  "questionsForUser": []
+}
