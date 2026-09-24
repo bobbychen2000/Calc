@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+# three.js r160 is fetched by pc12/setup.sh (npm pack three@0.160.0), not committed
+pc12/web/three_local/
+# scratch screenshots / overlays
+pc12/out/tmp/

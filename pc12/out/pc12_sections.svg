@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 594 420" width="594mm" height="420mm">
+<title>PC-12 Sections</title>
+<desc>PC12-SEC-002 rev A, A2. Reconstruction from published data, not for manufacture.</desc>
+<defs><style><![CDATA[@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');]]></style></defs>
+<rect width="594" height="420" fill="#FCFCFA"/>
+<g fill="none" stroke="#1B2429" stroke-linecap="round" stroke-linejoin="round">
+<path stroke-width="0.5" d="M20 10l564 0 0 400-564 0z"/>
+<path stroke-width="0.18" d="M67 10l0-5M67 410l0 5M114 10l0-5M114 410l0 5M161 10l0-5M161 410l0 5M208 10l0-5M208 410l0 5M255 10l0-5M255 410l0 5M302 10l0-5M302 410l0 5M349 10l0-5M349 410l0 5M396 10l0-5M396 410l0 5M443 10l0-5M443 410l0 5M490 10l0-5M490 410l0 5M537 10l0-5M537 410l0 5M20 60l-5 0M584 60l5 0M20 110l-5 0M584 110l5 0M20 160l-5 0M584 160l5 0M20 210l-5 0M584 210l5 0M20 260l-5 0M584 260l5 0M20 310l-5 0M584 310l5 0M20 360l-5 0M584 360l5 0"/>
+<text x="43.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">1</text>
+<text x="43.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">1</text>
+<text x="90.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2</text>
+<text x="90.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2</text>
+<text x="137.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">3</text>
+<text x="137.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">3</text>
+<text x="184.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">4</text>
+<text x="184.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">4</text>
+<text x="231.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">5</text>
+<text x="231.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">5</text>
+<text x="278.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">6</text>
+<text x="278.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">6</text>
+<text x="325.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">7</text>
+<text x="325.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">7</text>
+<text x="372.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">8</text>
+<text x="372.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">8</text>
+<text x="419.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">9</text>
+<text x="419.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">9</text>
+<text x="466.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">10</text>
+<text x="466.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">10</text>
+<text x="513.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">11</text>
+<text x="513.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">11</text>
+<text x="560.5" y="6.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">12</text>
+<text x="560.5" y="416.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">12</text>
+<text x="10" y="36.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">A</text>
+<text x="589" y="36.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">A</text>
+<text x="10" y="86.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">B</text>
+<text x="589" y="86.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">B</text>
+<text x="10" y="136.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">C</text>
+<text x="589" y="136.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">C</text>
+<text x="10" y="186.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">D</text>
+<text x="589" y="186.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">D</text>
+<text x="10" y="236.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">E</text>
+<text x="589" y="236.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">E</text>
+<text x="10" y="286.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">F</text>
+<text x="589" y="286.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">F</text>
+<text x="10" y="336.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">G</text>
+<text x="589" y="336.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">G</text>
+<text x="10" y="386.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">H</text>
+<text x="589" y="386.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">H</text>
+<path stroke-width="0.5" d="M297 0l0 15M297 420l0-15M0 210l20 0M594 210l-15 0"/>
+<path stroke-width="0.35" d="M264 62.61l-0.02 0-0.07 0.01-0.1 0.01-0.15 0.01-0.19 0.02-0.23 0.02-0.27 0.02-0.32 0.03-0.36 0.03-0.39 0.04-0.44 0.04-0.49 0.05-0.52 0.05-0.56 0.06-0.61 0.06-0.64 0.06-0.68 0.07-0.73 0.08-0.76 0.08-0.81 0.09-0.84 0.09-0.88 0.09-0.92 0.1-0.96 0.11-0.99 0.11-1.03 0.12-1.07 0.12-1.11 0.13-1.14 0.14-1.17 0.14-1.22 0.14-1.24 0.15-1.28 0.16-1.32 0.16-1.35 0.17-1.38 0.17-1.41 0.18-1.44 0.19-1.48 0.19-1.5 0.19-1.54 0.2-1.56 0.21-1.6 0.21-1.62 0.21-1.64 0.22-1.68 0.22-1.7 0.23-1.73 0.23-1.75 0.24-1.78 0.23-1.8 0.25-1.82 0.24-1.84 0.25-1.87 0.25-1.88 0.25-1.91 0.26-1.92 0.25-1.95 0.26-1.96 0.26-1.98 0.26-1.99 0.26-2.01 0.26-2.03 0.26-2.03 0.26-2.05 0.26-2.07 0.25-2.07 0.26-2.09 0.25-2.09 0.25-2.11 0.25-2.11 0.24-2.12 0.24-2.13 0.24-2.13 0.23-2.14 0.23-2.14 0.22-2.14 0.21-2.15 0.21-2.15 0.21-2.15 0.2-2.15 0.19-2.15 0.18-2.15 0.18-2.14 0.17-2.14 0.16-2.14 0.15-2.13 0.14-2.13 0.14-2.12 0.13-2.11 0.11-2.11 0.11-2.09 0.1-2.09 0.09-2.07 0.08-2.07 0.08-2.05 0.06-2.04 0.06-2.02 0.05-2.01 0.04-1.99 0.04-1.98 0.02-1.96 0.02-1.95 0.01-1.92 0.01-1.91 0-1.88-0.01-1.87-0.02-1.84-0.02-1.83-0.03-1.8-0.04-1.77-0.04-1.75-0.05-1.73-0.06-1.7-0.06-1.68-0.08-1.64-0.08-1.63-0.09-1.59-0.09-1.56-0.11-1.54-0.11-1.5-0.12-1.48-0.13-1.44-0.14-1.41-0.15-1.38-0.16-1.35-0.17-1.32-0.19-1.28-0.19-1.24-0.2-1.22-0.21-1.17-0.23-1.14-0.24-1.11-0.25-1.07-0.27-1.03-0.27-1-0.3-0.95-0.3-0.92-0.32-0.88-0.34-0.84-0.35-0.81-0.37-0.76-0.38-0.73-0.4-0.68-0.42-0.64-0.43-0.61-0.45-0.56-0.47-0.52-0.49-0.49-0.5-0.44-0.53-0.39-0.54-0.36-0.56-0.32-0.58-0.27-0.6-0.23-0.61-0.19-0.64-0.15-0.66-0.11-0.67-0.06-0.7-0.02-0.71 0.02-0.71 0.06-0.7 0.11-0.67 0.15-0.66 0.19-0.64 0.23-0.61 0.27-0.6 0.32-0.58 0.36-0.56 0.39-0.55 0.44-0.52 0.49-0.51 0.52-0.49 0.56-0.47 0.61-0.46 0.64-0.44 0.68-0.43 0.73-0.41 0.76-0.39 0.81-0.38 0.84-0.37 0.88-0.36 0.92-0.34 0.95-0.33 1-0.32 1.03-0.31 1.07-0.3 1.11-0.29 1.14-0.28 1.17-0.28 1.22-0.26 1.24-0.26 1.28-0.25 1.32-0.25 1.35-0.24 1.38-0.24 1.41-0.23 1.44-0.23 1.48-0.22 1.5-0.22 1.54-0.22 1.56-0.22 1.59-0.21 1.63-0.21 1.64-0.21 1.68-0.21 1.7-0.21 1.73-0.2 1.75-0.21 1.77-0.2 1.8-0.2 1.83-0.2 1.84-0.2 1.87-0.19 1.88-0.2 1.91-0.19 1.92-0.19 1.95-0.19 1.96-0.18 1.98-0.18 1.99-0.18 2.01-0.17 2.02-0.17 2.04-0.16 2.05-0.15 2.07-0.15 2.07-0.14 2.09-0.13 2.09-0.12 2.11-0.12 2.11-0.1 2.12-0.09 2.13-0.08 2.13-0.07 2.14-0.06 2.14-0.05 2.14-0.04 2.15-0.02 2.15-0.01 2.15 0 2.15 0.02 2.15 0.03 2.15 0.04 2.14 0.05 2.14 0.07 2.14 0.08 2.13 0.1 2.13 0.11 2.12 0.12 2.11 0.14 2.11 0.15 2.09 0.16 2.09 0.18 2.07 0.19 2.07 0.21 2.05 0.22 2.03 0.23 2.03 0.24 2.01 0.26 1.99 0.27 1.98 0.28 1.96 0.29 1.95 0.31 1.92 0.31 1.91 0.33 1.88 0.34 1.87 0.34 1.84 0.36 1.82 0.36 1.8 0.38 1.78 0.38 1.75 0.39 1.73 0.4 1.7 0.4 1.68 0.41 1.64 0.41 1.62 0.42 1.6 0.42 1.56 0.43 1.54 0.42 1.5 0.43 1.48 0.43 1.44 0.44 1.41 0.43 1.38 0.43 1.35 0.43 1.32 0.42 1.28 0.42 1.24 0.42 1.22 0.42 1.17 0.41 1.14 0.4 1.11 0.4 1.07 0.39 1.03 0.38 0.99 0.37 0.96 0.37 0.92 0.35 0.88 0.35 0.84 0.33 0.81 0.32 0.76 0.31 0.73 0.29 0.68 0.28 0.64 0.27 0.61 0.25 0.56 0.24 0.52 0.22 0.49 0.21 0.44 0.19 0.39 0.17 0.36 0.16 0.32 0.14 0.27 0.12 0.23 0.1 0.19 0.08 0.15 0.07 0.1 0.05 0.07 0.03 0.02 0.01 0 1.22z"/>
+<path stroke-width="0.13" stroke-dasharray="12 1.5 1.2 1.5" stroke-linecap="butt" d="M39 62l231 0"/>
+<path stroke-width="0.13" stroke-dasharray="10 1.2 1.2 1.2 1.2 1.2" stroke-linecap="butt" d="M45 62l0.08 0 0.26 0 0.42 0 0.59 0 0.75 0 0.93 0 1.08-0.01 1.25-0.01 1.41 0 1.57-0.02 1.72-0.02 1.87-0.02 2.03-0.03 2.18-0.04 2.31-0.04 2.46-0.05 2.6-0.07 2.73-0.07 2.85-0.09 2.98-0.09 3.1-0.11 3.22-0.12 3.32-0.13 3.43-0.15 3.52-0.15 3.63-0.17 3.71-0.18 3.79-0.19 3.87-0.19 3.94-0.21 4-0.21 4.06-0.22 4.12-0.22 4.16-0.22 4.2-0.22 4.23-0.22 4.26-0.22 4.28-0.21 4.29-0.2 4.3-0.19 4.3-0.18 4.29-0.16 4.28-0.15 4.26-0.14 4.23-0.11 4.2-0.09 4.16-0.07 4.12-0.04 4.06-0.02 4 0 3.94 0.03 3.87 0.05 3.79 0.08 3.71 0.1 3.62 0.13 3.53 0.15 3.43 0.17 3.32 0.19 3.22 0.2 3.1 0.23 2.98 0.24 2.85 0.25 2.73 0.25 2.6 0.27 2.46 0.27 2.31 0.27 2.18 0.27 2.02 0.26 1.88 0.25 1.72 0.25 1.57 0.23 1.41 0.21 1.25 0.2 1.08 0.18 0.93 0.15 0.75 0.13 0.59 0.1 0.42 0.08 0.25 0.04 0.09 0.02"/>
+<path stroke-width="0.13" d="M132.6 40.16l0 37.23"/>
+<path stroke="none" fill="#1B2429" d="M132.6 40.16l0.5 3-1 0zM132.6 77.39l-0.5-3 1 0z"/>
+<path stroke-width="0.13" d="M132.6 39.16l0-3.35"/>
+<text x="134.1" y="34.61" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.6" stroke="none" fill="#1B2429">t max 372 (17.0 % c) AT 40 % c</text>
+<path stroke-width="0.13" d="M45 64.7l0 24.43M264 64.7l0 24.43M45 87.13l219 0"/>
+<path stroke="none" fill="#1B2429" d="M45 87.13l3-0.5 0 1zM264 87.13l-3 0.5 0-1z"/>
+<text x="154.5" y="86.13" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.2" stroke="none" fill="#1B2429" text-anchor="middle">2,190</text>
+<text x="271" y="62.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429">CHORD LINE</text>
+<text x="45" y="22" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="4.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">SECTION A–A</text>
+<text x="45" y="26.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">WING ROOT · BL 0 · LS(1)-0417MOD · INCIDENCE +2.0° · SCALE 1:10</text>
+<path stroke-width="0.35" d="M439.5 62.24l-0.01 0-0.03 0-0.06 0.01-0.07 0-0.09 0.01-0.12 0.01-0.14 0.01-0.15 0.01-0.18 0.01-0.2 0.02-0.22 0.01-0.24 0.02-0.26 0.02-0.29 0.02-0.3 0.03-0.32 0.02-0.34 0.03-0.36 0.03-0.39 0.03-0.4 0.04-0.42 0.03-0.44 0.04-0.46 0.04-0.48 0.04-0.5 0.04-0.51 0.05-0.54 0.05-0.55 0.05-0.57 0.05-0.59 0.05-0.6 0.06-0.63 0.06-0.64 0.06-0.65 0.06-0.68 0.07-0.69 0.07-0.7 0.07-0.73 0.07-0.73 0.07-0.76 0.08-0.76 0.07-0.79 0.08-0.79 0.08-0.81 0.08-0.83 0.09-0.83 0.08-0.86 0.09-0.86 0.09-0.87 0.09-0.89 0.09-0.9 0.1-0.91 0.09-0.93 0.1-0.93 0.09-0.94 0.1-0.95 0.1-0.97 0.09-0.97 0.1-0.98 0.1-0.99 0.1-1 0.1-1 0.1-1.01 0.1-1.02 0.1-1.03 0.1-1.03 0.09-1.04 0.1-1.04 0.1-1.05 0.09-1.05 0.09-1.06 0.1-1.06 0.09-1.06 0.09-1.07 0.09-1.06 0.08-1.07 0.09-1.08 0.08-1.07 0.08-1.08 0.08-1.07 0.07-1.08 0.07-1.07 0.07-1.07 0.07-1.08 0.06-1.07 0.06-1.07 0.06-1.06 0.06-1.06 0.05-1.07 0.04-1.05 0.05-1.05 0.04-1.05 0.04-1.04 0.03-1.04 0.03-1.03 0.03-1.03 0.02-1.02 0.02-1.01 0.02-1 0.01-1 0.01-0.99 0.01-0.98 0.01-0.97 0-0.97 0-0.95 0-0.94-0.01-0.93-0.01-0.93-0.01-0.91-0.02-0.9-0.01-0.89-0.03-0.87-0.02-0.86-0.03-0.86-0.03-0.83-0.03-0.83-0.04-0.81-0.04-0.79-0.04-0.79-0.04-0.76-0.05-0.76-0.06-0.73-0.05-0.73-0.06-0.7-0.06-0.69-0.07-0.68-0.07-0.65-0.08-0.64-0.08-0.63-0.08-0.6-0.09-0.59-0.09-0.57-0.09-0.55-0.1-0.54-0.11-0.52-0.11-0.49-0.11-0.48-0.12-0.46-0.13-0.44-0.13-0.42-0.13-0.4-0.14-0.39-0.15-0.36-0.15-0.34-0.16-0.32-0.16-0.3-0.17-0.29-0.17-0.26-0.18-0.24-0.19-0.22-0.19-0.2-0.2-0.18-0.21-0.15-0.21-0.14-0.22-0.12-0.22-0.09-0.23-0.08-0.24-0.05-0.24-0.03-0.25-0.01-0.26 0.01-0.26 0.03-0.25 0.05-0.24 0.08-0.24 0.09-0.23 0.12-0.22 0.14-0.22 0.15-0.21 0.18-0.21 0.2-0.2 0.22-0.19 0.24-0.19 0.26-0.18 0.29-0.18 0.3-0.17 0.32-0.16 0.34-0.16 0.36-0.16 0.39-0.15 0.4-0.15 0.42-0.14 0.44-0.14 0.46-0.13 0.48-0.13 0.49-0.12 0.52-0.12 0.54-0.12 0.55-0.12 0.57-0.11 0.59-0.11 0.6-0.1 0.63-0.11 0.64-0.1 0.65-0.1 0.68-0.1 0.69-0.09 0.7-0.09 0.73-0.1 0.73-0.09 0.76-0.09 0.76-0.09 0.79-0.08 0.79-0.09 0.81-0.09 0.83-0.08 0.83-0.08 0.86-0.09 0.86-0.08 0.87-0.08 0.89-0.08 0.9-0.08 0.91-0.08 0.93-0.08 0.93-0.08 0.94-0.07 0.95-0.08 0.97-0.07 0.97-0.07 0.98-0.07 0.99-0.07 1-0.07 1-0.07 1.01-0.06 1.02-0.06 1.03-0.06 1.03-0.06 1.04-0.05 1.04-0.05 1.05-0.04 1.05-0.05 1.05-0.04 1.07-0.03 1.06-0.03 1.06-0.03 1.07-0.02 1.07-0.02 1.08-0.01 1.07-0.01 1.07 0 1.08 0 1.07 0.01 1.08 0.01 1.07 0.02 1.08 0.02 1.07 0.02 1.06 0.04 1.07 0.03 1.06 0.04 1.06 0.05 1.06 0.05 1.05 0.06 1.05 0.07 1.04 0.06 1.04 0.08 1.03 0.08 1.03 0.08 1.02 0.09 1.01 0.09 1 0.1 1 0.1 0.99 0.11 0.98 0.11 0.97 0.12 0.97 0.12 0.95 0.12 0.94 0.13 0.93 0.13 0.93 0.14 0.91 0.14 0.9 0.14 0.89 0.14 0.87 0.15 0.86 0.15 0.86 0.16 0.83 0.15 0.83 0.16 0.81 0.16 0.79 0.16 0.79 0.16 0.76 0.16 0.76 0.17 0.73 0.16 0.73 0.16 0.7 0.17 0.69 0.16 0.68 0.16 0.65 0.17 0.64 0.16 0.63 0.16 0.6 0.15 0.59 0.16 0.57 0.15 0.55 0.15 0.54 0.15 0.51 0.15 0.5 0.14 0.48 0.14 0.46 0.13 0.44 0.13 0.42 0.13 0.4 0.12 0.39 0.12 0.36 0.11 0.34 0.1 0.32 0.11 0.3 0.09 0.29 0.09 0.26 0.09 0.24 0.07 0.22 0.08 0.2 0.06 0.18 0.06 0.15 0.05 0.14 0.05 0.12 0.04 0.09 0.03 0.07 0.03 0.06 0.01 0.03 0.02 0.01 0 0 0.48z"/>
+<path stroke-width="0.13" stroke-dasharray="12 1.5 1.2 1.5" stroke-linecap="butt" d="M324 62l121.5 0"/>
+<path stroke-width="0.13" stroke-dasharray="10 1.2 1.2 1.2 1.2 1.2" stroke-linecap="butt" d="M330 62l0.04 0 0.13 0 0.21 0 0.29 0 0.38 0 0.46 0 0.55 0 0.62-0.01 0.7 0 0.79 0 0.86-0.01 0.94-0.01 1.01-0.01 1.09-0.01 1.16-0.02 1.23-0.02 1.29-0.03 1.37-0.02 1.43-0.03 1.49-0.04 1.55-0.04 1.6-0.05 1.66-0.05 1.72-0.05 1.76-0.06 1.81-0.06 1.86-0.07 1.89-0.07 1.94-0.07 1.97-0.08 2-0.08 2.03-0.08 2.06-0.08 2.08-0.09 2.1-0.08 2.12-0.08 2.12-0.08 2.14-0.08 2.15-0.08 2.15-0.07 2.15-0.07 2.15-0.06 2.13-0.05 2.13-0.05 2.12-0.05 2.1-0.03 2.08-0.03 2.06-0.01 2.03-0.01 2 0 1.97 0.01 1.94 0.02 1.89 0.03 1.86 0.04 1.81 0.05 1.76 0.05 1.72 0.07 1.66 0.07 1.6 0.07 1.55 0.09 1.49 0.09 1.43 0.09 1.37 0.1 1.29 0.1 1.23 0.1 1.16 0.1 1.09 0.1 1.01 0.1 0.94 0.09 0.86 0.1 0.79 0.08 0.7 0.08 0.62 0.08 0.55 0.06 0.46 0.06 0.38 0.05 0.29 0.04 0.21 0.03 0.13 0.01 0.04 0.01"/>
+<path stroke-width="0.13" d="M373.8 53.67l0 14.24"/>
+<path stroke="none" fill="#1B2429" d="M373.8 53.67l0.5 3-1 0zM373.8 67.91l-0.5-3 1 0z"/>
+<path stroke-width="0.13" d="M373.8 52.67l0-3"/>
+<text x="375.3" y="48.47" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.6" stroke="none" fill="#1B2429">t max 142 (13.0 % c) AT 40 % c</text>
+<path stroke-width="0.13" d="M330 64.7l0 14.47M439.5 64.7l0 14.47M330 77.17l109.5 0"/>
+<path stroke="none" fill="#1B2429" d="M330 77.17l3-0.5 0 1zM439.5 77.17l-3 0.5 0-1z"/>
+<text x="384.75" y="76.17" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.2" stroke="none" fill="#1B2429" text-anchor="middle">1,095</text>
+<text x="446.5" y="62.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429">CHORD LINE</text>
+<text x="330" y="22" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="4.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">SECTION B–B</text>
+<text x="330" y="26.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">WING TIP · BL 7,857 · LS(1)-0313 · INCIDENCE -1.0° · SCALE 1:10</text>
+<path stroke-width="0.35" d="M149.32 116.73l1.71-0.03 1.71-0.02 1.71-0.02 1.72-0.02 1.71-0.01 1.71-0.01 1.71 0 1.71 0.01 1.71 0 1.72 0.02 1.71 0.01 1.71 0.02 1.71 0.03 1.71 0.03 1.72 0.04 1.71 0.04 1.71 0.05 1.71 0.05 1.71 0.05 1.71 0.06 1.72 0.07 1.71 0.07 1.71 0.08 1.71 0.08 1.71 0.09 1.72 0.09 1.71 0.1 1.71 0.1 1.71 0.11 1.71 0.11 1.71 0.12 1.72 0.12 1.71 0.13 1.71 0.14 1.71 0.14 1.71 0.14 1.72 0.16 1.71 0.15 1.71 0.17 1.71 0.17 1.71 0.17 1.71 0.18 1.72 0.19 1.71 0.19 1.71 0.2 1.71 0.2 1.71 0.21 1.72 0.22 1.71 0.22 1.71 0.23 1.71 0.24 1.71 0.24 1.71 0.24 1.72 0.26 1.71 0.26 1.71 0.26 1.71 0.27 1.71 0.28 1.72 0.29 0 1.95-7.18 2.18-6.04 2.77-4.93 3.23-3.88 3.57-2.89 3.78-1.93 3.85-1.02 3.8-0.17 3.62 0.64 3.31 1.4 2.87 2.11 2.31 2.78 1.61 3.39 0.78-1.41 0.17-1.42 0.17-1.41 0.17-1.41 0.17-1.41 0.16-1.41 0.17-1.41 0.17-1.42 0.17-1.41 0.16-1.41 0.17-1.41 0.16-1.41 0.16-1.41 0.17-1.41 0.16-1.42 0.16-1.41 0.16-1.41 0.16-1.41 0.16-1.41 0.15-1.41 0.16-1.41 0.16-1.42 0.15-1.41 0.15-1.41 0.16-1.41 0.15-1.41 0.15-1.41 0.15-1.42 0.14-1.41 0.15-1.41 0.15-1.41 0.14-1.41 0.14-1.41 0.15-1.41 0.14-1.42 0.13-1.41 0.14-1.41 0.14-1.41 0.13-1.41 0.14-1.41 0.13-1.42 0.13-1.41 0.13-1.41 0.13-1.41 0.12-1.41 0.13-1.41 0.12-1.41 0.12-1.42 0.12-1.41 0.12-1.41 0.12-1.41 0.11-1.41 0.11-1.41 0.12-1.41 0.11-1.42 0.1-1.41 0.11-1.41 0.1-1.41 0.11-1.41 0.1"/>
+<path stroke-width="0.18" d="M149.32 116.73l4.25 9.16-8.5 9.17 8.5 9.17-8.5 9.16 8.5 9.17-4.25 9.17"/>
+<path stroke-width="0.13" stroke-dasharray="12 1.5 1.2 1.5" stroke-linecap="butt" d="M138.69 150l308.31 0"/>
+<path stroke-width="0.35" d="M247.13 125.85l0.79-0.14 2.37-0.42 3.84-0.64 5.2 0.68 6.38 1.25 7.34 1.56 8.05 1.85 8.49 2.13 8.63 2.36 8.49 2.5 8.04 2.56 7.34 2.49 6.38 2.29 5.21 1.96 3.84 1.51 2.37 0.96 0.79 0.33 0 1.84-0.88 0.07-2.61 0.22-4.26 0.39-5.75 0.56-7.06 0.72-8.11 0.88-8.91 1-9.38 1.09-9.55 1.15-9.39 1.14-8.9 1.1-8.12 1.01-7.05 0.88-5.76 0.71-4.25 0.52-2.62 0.32-0.88 0.11-3.02-1.1-2.47-2.03-1.82-2.81-1.11-3.42-0.33-3.87 0.54-4.16 1.47-4.29 2.47-4.26 3.55-4.07 4.71-3.72 5.94-3.21z"/>
+<path stroke-width="0.13" d="M243.2 142.34l3.6 0M245 140.54l0 3.6"/>
+<path stroke-width="0.18" stroke-dasharray="10 1.2 1.2 1.2 1.2 1.2" stroke-linecap="butt" d="M277.9 131.61l0.81 0.07 2.39 0.21 3.88 0.37 4.85 2.01 5.84 2.86 6.68 3.4 7.3 3.88 7.64 4.25 7.73 4.51 7.55 4.62 7.11 4.55 6.45 4.31 5.57 3.86 4.51 3.24 3.33 2.45 2.03 1.54 0.69 0.52-0.48 1.79-0.87-0.17-2.58-0.46-4.21-0.72-5.7-0.95-7.01-1.13-8.06-1.26-8.86-1.34-9.35-1.37-9.52-1.36-9.36-1.32-8.89-1.25-8.1-1.12-7.04-0.98-5.74-0.81-4.25-0.59-2.61-0.37-0.87-0.12-2.64-1.85-1.86-2.6-1.03-3.18-0.19-3.59 0.69-3.82 1.59-3.88 2.53-3.77 3.49-3.48 4.49-3.01 5.51-2.37 6.56-1.57z"/>
+<path stroke-width="0.13" d="M269.78 146.99l3.6 0M271.58 145.19l0 3.6"/>
+<path stroke-width="0.18" stroke-dasharray="10 1.2 1.2 1.2 1.2 1.2" stroke-linecap="butt" d="M308.24 138.43l0.77 0.27 2.25 0.82 3.65 1.37 4.17 3.19 4.9 4.27 5.57 5.02 6.05 5.63 6.28 6.09 6.3 6.35 6.1 6.42 5.69 6.24 5.11 5.82 4.38 5.18 3.52 4.3 2.58 3.23 1.57 2 0.52 0.69-0.92 1.6-0.8-0.38-2.37-1.12-3.88-1.79-5.26-2.39-6.48-2.9-7.46-3.31-8.21-3.58-8.68-3.75-8.84-3.78-8.7-3.7-8.26-3.5-7.53-3.18-6.55-2.77-5.34-2.26-3.95-1.68-2.42-1.03-0.82-0.35-2.07-2.46-1.12-2.99-0.17-3.35 0.74-3.51 1.66-3.51 2.54-3.34 3.42-2.98 4.27-2.46 5.11-1.75 5.94-0.86 6.74 0.19z"/>
+<path stroke-width="0.13" d="M296.36 151.65l3.6 0M298.16 149.85l0 3.6"/>
+<path stroke-width="0.18" stroke-dasharray="10 1.2 1.2 1.2 1.2 1.2" stroke-linecap="butt" d="M328.11 143.48l0.7 0.4 2.07 1.2 3.37 1.98 3.54 3.87 4.09 5.06 4.62 5.91 4.97 6.59 5.13 7.09 5.1 7.35 4.89 7.37 4.52 7.14 4.02 6.62 3.42 5.86 2.72 4.84 1.98 3.63 1.2 2.25 0.39 0.77-1.18 1.41-0.72-0.51-2.15-1.51-3.51-2.44-4.76-3.27-5.87-3.98-6.78-4.55-7.47-4.96-7.89-5.19-8.05-5.26-7.93-5.15-7.52-4.88-6.87-4.45-5.97-3.87-4.86-3.15-3.6-2.33-2.2-1.44-0.75-0.48-1.61-2.79-0.58-3.14 0.41-3.32 1.34-3.34 2.24-3.17 3.08-2.84 3.89-2.35 4.63-1.67 5.34-0.83 6 0.17 6.61 1.36z"/>
+<path stroke-width="0.13" d="M314.08 154.75l3.6 0M315.88 152.95l0 3.6"/>
+<path stroke-width="0.13" stroke-dasharray="1.5 1" stroke-linecap="butt" d="M245 142.34l8.86 1.55 8.86 1.55 8.86 1.55 8.86 1.55 8.86 1.56 8.86 1.55 8.86 1.55 8.86 1.55"/>
+<path stroke-width="0.13" d="M228 111.85l16.5 29.99"/>
+<circle cx="245" cy="142.34" r="0.5" stroke="none" fill="#1B2429"/>
+<text x="227" y="110.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.5" stroke="none" fill="#1B2429" text-anchor="end">HINGE 0.73 c ON MEAN LINE</text>
+<path stroke-width="0.13" d="M330.88 119.85l-14.5 34.4"/>
+<text x="331.88" y="118.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.5" stroke="none" fill="#1B2429">HINGE PATH 0° → 40°</text>
+<text x="343.18" y="151" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429">0°</text>
+<text x="364.52" y="180.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429">15°</text>
+<text x="379.69" y="207.12" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429">30°</text>
+<text x="386.75" y="223.12" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429">40°</text>
+<text x="149.32" y="99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="4.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">DETAIL C  ·  FOWLER FLAP</text>
+<text x="149.32" y="103.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">SECTION AT BL 3,000 · CHORD 1,772 · FLAP 0° SOLID, 15° / 30° / 40° PHANTOM · SCALE 1:5</text>
+<path stroke-width="0.35" d="M462 128l90 0 0 31-90 0z"/>
+<text x="473" y="131.94" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SETTING</text>
+<text x="495" y="131.94" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">ROTATION</text>
+<text x="519" y="131.94" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">AFT TRAVEL</text>
+<text x="542" y="131.94" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DROP</text>
+<text x="473" y="138.31" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">0°</text>
+<text x="495" y="138.31" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">0°</text>
+<text x="519" y="138.31" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">0</text>
+<text x="542" y="138.31" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">0</text>
+<path stroke-width="0.18" d="M462 134.2l90 0"/>
+<text x="473" y="144.51" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">15°</text>
+<text x="495" y="144.51" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">15°</text>
+<text x="519" y="144.51" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">133</text>
+<text x="542" y="144.51" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">23</text>
+<path stroke-width="0.18" d="M462 140.4l90 0"/>
+<text x="473" y="150.71" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">30°</text>
+<text x="495" y="150.71" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">30°</text>
+<text x="519" y="150.71" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">266</text>
+<text x="542" y="150.71" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">47</text>
+<path stroke-width="0.18" d="M462 146.6l90 0"/>
+<text x="473" y="156.91" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">40°</text>
+<text x="495" y="156.91" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">40°</text>
+<text x="519" y="156.91" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">354</text>
+<text x="542" y="156.91" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.9" stroke="none" fill="#1B2429" text-anchor="middle">62</text>
+<path stroke-width="0.18" d="M462 152.8l90 0M484 128l0 31M506 128l0 31M532 128l0 31"/>
+<text x="462" y="126" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429" font-weight="600">FLAP SETTINGS (mm AT BL 3,000)</text>
+<path stroke-width="0.35" d="M67.5 319.02l2.07-0.18 2.07-0.19 2.07-0.24 2.08-0.49 2.07-0.5 2.07-0.5 2.07-0.4 4.02-0.37 4.02-0.36 4.02-0.37 4.02-0.36 4.02-0.12 4.02-0.08 4.02-0.07 4.02-0.07 4.02-0.08 4.02-0.07 4.02-0.04 4.02 0.09 4.02 0.11 4.02 0.16 4.02 0.24 4.02 0.3 4.02 0.37 4.02 0.52 4.02 0.67 4.02 0.73 4.02 0.8 4.02 0.87 4.02 1.15 4.02 1.38 4.02 1.89 1 0.81 1 0.81 0.6 0.49 0 5.68-0.6 0.53-1 0.89-1 0.89-4.02 1.17-4.02 0.42-4.02 0.19-4.02-0.14-4.02-0.08-4.02-0.01-4.02 0.06-4.02 0-4.02-0.1-4.02-0.03-4.02 0.04-4.02 0.1-4.02 0.17-4.02 0.18-4.02-0.08-4.02-0.14-4.02-0.13-4.02-0.14-4.02-0.14-4.02-0.13-4.02-0.23-4.02-0.68-4.02-0.67-4.02-0.68-4.02-0.68-2.07-0.75-2.07-0.92-2.07-0.93-2.08-0.92-2.07-0.45-2.07-0.34-2.07-0.34 0-8.51z"/>
+<path stroke-width="0.13" stroke-dasharray="12 1.5 1.2 1.5" stroke-linecap="butt" d="M48 322l143.5 0"/>
+<text x="192.5" y="322.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429">PITCH AXIS</text>
+<path stroke-width="0.13" stroke-dasharray="10 1.2 1.2 1.2 1.2 1.2" stroke-linecap="butt" d="M81.1 308l0 30"/>
+<text x="80.1" y="307" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" text-anchor="end">SPINNER</text>
+<path stroke-width="0.13" d="M52 317l0 10"/>
+<text x="51" y="331" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" text-anchor="middle">℄ HUB</text>
+<path stroke-width="0.13" d="M52 328.7l0 20.18M185.5 334.3l0 14.58M52 346.88l133.5 0"/>
+<path stroke="none" fill="#1B2429" d="M52 346.88l3-0.5 0 1zM185.5 346.88l-3 0.5 0-1z"/>
+<text x="118.75" y="345.88" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.2" stroke="none" fill="#1B2429" text-anchor="middle">1,335</text>
+<text x="48" y="290" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="4.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">DETAIL D  ·  PROPELLER BLADE</text>
+<text x="48" y="294.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">HARTZELL 5-BLADE · Ø2,670 · PLANFORM ABOUT THE PITCH AXIS, LE UP · SCALE 1:10</text>
+<text x="218" y="303.64" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">r / R</text>
+<text x="235" y="303.64" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">r</text>
+<text x="253" y="303.64" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CHORD</text>
+<text x="270" y="303.64" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">β</text>
+<text x="287" y="303.64" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">t / c</text>
+<text x="218" y="309.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.20</text>
+<text x="235" y="309.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">267</text>
+<text x="253" y="309.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">137</text>
+<text x="270" y="309.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">60.0°</text>
+<text x="287" y="309.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">43.1 %</text>
+<path stroke-width="0.18" d="M210 305.6l86 0"/>
+<text x="218" y="314.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.30</text>
+<text x="235" y="314.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">400</text>
+<text x="253" y="314.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">183</text>
+<text x="270" y="314.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">49.1°</text>
+<text x="287" y="314.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">19.1 %</text>
+<path stroke-width="0.18" d="M210 311.2l86 0"/>
+<text x="218" y="320.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.40</text>
+<text x="235" y="320.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">534</text>
+<text x="253" y="320.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">204</text>
+<text x="270" y="320.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">40.9°</text>
+<text x="287" y="320.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">13.4 %</text>
+<path stroke-width="0.18" d="M210 316.8l86 0"/>
+<text x="218" y="326.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.50</text>
+<text x="235" y="326.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">668</text>
+<text x="253" y="326.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">210</text>
+<text x="270" y="326.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">34.7°</text>
+<text x="287" y="326.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">12.1 %</text>
+<path stroke-width="0.18" d="M210 322.4l86 0"/>
+<text x="218" y="331.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.60</text>
+<text x="235" y="331.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">801</text>
+<text x="253" y="331.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">210</text>
+<text x="270" y="331.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">30.0°</text>
+<text x="287" y="331.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">11.0 %</text>
+<path stroke-width="0.18" d="M210 328l86 0"/>
+<text x="218" y="337.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.70</text>
+<text x="235" y="337.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">934</text>
+<text x="253" y="337.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">201</text>
+<text x="270" y="337.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">26.3°</text>
+<text x="287" y="337.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">10.0 %</text>
+<path stroke-width="0.18" d="M210 333.6l86 0"/>
+<text x="218" y="342.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.80</text>
+<text x="235" y="342.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">1,068</text>
+<text x="253" y="342.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">184</text>
+<text x="270" y="342.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">23.4°</text>
+<text x="287" y="342.94" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">8.9 %</text>
+<path stroke-width="0.18" d="M210 339.2l86 0"/>
+<text x="218" y="348.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.90</text>
+<text x="235" y="348.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">1,202</text>
+<text x="253" y="348.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">157</text>
+<text x="270" y="348.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">21.0°</text>
+<text x="287" y="348.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">7.9 %</text>
+<path stroke-width="0.18" d="M210 344.8l86 0"/>
+<text x="218" y="354.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">0.95</text>
+<text x="235" y="354.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">1,268</text>
+<text x="253" y="354.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">129</text>
+<text x="270" y="354.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">20.0°</text>
+<text x="287" y="354.14" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">7.4 %</text>
+<path stroke-width="0.18" d="M210 350.4l86 0"/>
+<text x="218" y="359.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">1.00</text>
+<text x="235" y="359.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">1,331</text>
+<text x="253" y="359.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">57</text>
+<text x="270" y="359.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">19.1°</text>
+<text x="287" y="359.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.7" stroke="none" fill="#1B2429" text-anchor="middle">6.9 %</text>
+<path stroke-width="0.18" d="M210 356l86 0M226 300l0 61.6M244 300l0 61.6M262 300l0 61.6M278 300l0 61.6"/>
+<path stroke-width="0.35" d="M210 300l86 0 0 61.6-86 0z"/>
+<text x="210" y="298" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#1B2429" font-weight="600">BLADE STATIONS (β FROM THE PLANE OF ROTATION)</text>
+<path stroke-width="0.35" d="M324 333l254 0 0 71-254 0z"/>
+<path stroke-width="0.18" d="M324 357l254 0M324 371l254 0M324 384l254 0M508 333l0 24"/>
+<text x="328" y="343.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="8" stroke="none" fill="#1B2429" font-weight="700" letter-spacing="0.4">PILATUS PC-12 PRO</text>
+<text x="328" y="352" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="5" stroke="none" fill="#1B2429" font-weight="500" letter-spacing="0.6">SECTIONS</text>
+<path stroke-width="0.35" d="M531.5 338l9 2.25 0 4.5-9 2.25z"/>
+<circle cx="550" cy="342.5" r="4.5" stroke-width="0.35"/>
+<circle cx="550" cy="342.5" r="2.25" stroke-width="0.35"/>
+<path stroke-width="0.13" stroke-dasharray="3 0.8 0.6 0.8" stroke-linecap="butt" d="M530 342.5l26 0M550 336.5l0 12"/>
+<text x="543" y="353.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.5" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="500">FIRST ANGLE PROJECTION</text>
+<text x="326" y="360.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">DWG NO</text>
+<text x="326" y="368.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">PC12-SEC-002</text>
+<path stroke-width="0.18" d="M384.34 357l0 14"/>
+<text x="386.34" y="360.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">REV</text>
+<text x="386.34" y="368.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">B</text>
+<path stroke-width="0.18" d="M405.39 357l0 14"/>
+<text x="407.39" y="360.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">SCALE</text>
+<text x="407.39" y="368.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.2" stroke="none" fill="#1B2429" font-weight="500">AS SHOWN</text>
+<path stroke-width="0.18" d="M434.86 357l0 14"/>
+<text x="436.86" y="360.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">SHEET</text>
+<text x="436.86" y="368.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.6" stroke="none" fill="#1B2429" font-weight="500">A2 · 1 OF 1</text>
+<path stroke-width="0.18" d="M490.99 357l0 14"/>
+<text x="492.99" y="360.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">UNITS</text>
+<text x="492.99" y="368.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">mm</text>
+<text x="326" y="374.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">DRAWN</text>
+<text x="326" y="381.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="4.4" stroke="none" fill="#1B2429" font-weight="500">Claude · loftkit parametric model</text>
+<path stroke-width="0.18" d="M490.99 371l0 13"/>
+<text x="492.99" y="374.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">DATE</text>
+<text x="492.99" y="381.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.6" stroke="none" fill="#1B2429" font-weight="500">2026-09-24</text>
+<path stroke-width="0.35" fill="#1B2429" d="M324 384l254 0 0 20-254 0z"/>
+<text x="451" y="395.26" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.6" stroke="none" fill="#FCFCFA" text-anchor="middle" font-weight="700" letter-spacing="0.25">RECONSTRUCTION FROM PUBLISHED DATA — NOT FOR MANUFACTURE</text>
+<text x="324" y="303.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">NOTES</text>
+<text x="324" y="308.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">1.</text>
+<text x="329.5" y="308.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">Dimensions in millimetres unless stated. Aerofoils drawn in their chord frame (chord line horizontal).</text>
+<text x="324" y="313.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">2.</text>
+<text x="329.5" y="313.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">LS(1)-0417MOD / LS(1)-0313 sections are model reconstructions (NACA modified four-digit thickness, aft-loaded mean line), not certified ordinates.</text>
+<text x="324" y="318.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">3.</text>
+<text x="329.5" y="318.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">Flap kinematics per model: rotation about the hinge at 0.73 c on the mean line, aft travel 0.20 c and drop 0.035 c, both proportional to deflection (full at 40°).</text>
+<text x="324" y="323.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">4.</text>
+<text x="329.5" y="323.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.7" stroke="none" fill="#1B2429">Blade chord, angle β and t/c measured from the lofted blade at flight-fine pitch (geometric pitch 2.9 m).</text>
+</g></svg>

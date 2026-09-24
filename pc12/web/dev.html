@@ -1,0 +1,62 @@
+<!doctype html><html><head><meta charset="utf-8"><title>dev</title>
+<style>html,body{margin:0;height:100%;background:#dfe3e6}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"./three_local/build/three.module.js","three/addons/":"./three_local/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+const params = new URLSearchParams(location.search);
+const W = +(params.get('w')||1400), H = +(params.get('h')||800);
+const renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+renderer.setSize(W,H); renderer.setPixelRatio(1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xdfe3e6);
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(5,10,-6); scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.6));
+const grid = new THREE.GridHelper(40, 40, 0x889099, 0xb8bec4); scene.add(grid);
+const ortho = params.get('ortho');
+let camera;
+if (ortho) { const s=+(params.get('s')||9); camera = new THREE.OrthographicCamera(-s*W/H, s*W/H, s, -s, 0.1, 200); }
+else camera = new THREE.PerspectiveCamera(+(params.get('fov')||35), W/H, 0.05, 500);
+const pos = (params.get('cam')||'14,6,-10').split(',').map(Number);
+const tgt = (params.get('tgt')||'0,1.5,7').split(',').map(Number);
+camera.position.set(...pos); camera.lookAt(...tgt);
+const wire = params.get('wire');
+new GLTFLoader().load(params.get('f')||'../out/test.glb', g => {
+  const only = params.get('only'); const hide = params.get('hide');
+  if (only||hide) { const keep=new Set(); g.scene.traverse(o=>{ const d=o.userData||{}; if(d.part){ const m = only? only.split(',').some(p=>d.part.startsWith(p)) : true; const h = hide? hide.split(',').some(p=>d.part.startsWith(p)) : false; o.visible = m && !h; if(o.visible) keep.add(o);} }); }
+  const nm = params.get('mat');
+  if (params.get('clip')) { renderer.localClippingEnabled = true; const pl=[new THREE.Plane(new THREE.Vector3(1,0,0), 0)];
+    g.scene.traverse(o=>{ if(o.isMesh){ let p=o; while(p && !(p.userData&&p.userData.part)) p=p.parent; const id=p?p.userData.part:''; if(/^(fus_|cowl_|door_|glazing|exit|belly|chin)/.test(id)){ o.material=o.material.clone(); o.material.clippingPlanes=pl; } }}); }
+  g.scene.traverse(o=>{ if(o.isMesh){ if(nm==='normal'){o.material=new THREE.MeshNormalMaterial({side:THREE.DoubleSide});} else if(nm==='flat'){o.material=new THREE.MeshStandardMaterial({color:0xdddddd, flatShading:true, side:THREE.DoubleSide});} if(wire){o.material.wireframe=true;} o.material.side = THREE.DoubleSide; if(params.get('opaque')){o.material.transparent=false; o.material.opacity=1;} if(params.get('noenv')){o.material.envMapIntensity=0;} if(params.get('front')){o.material.side=THREE.FrontSide;} }});
+  scene.add(g.scene);
+  const info = {meshes:0, tris:0};
+  g.scene.traverse(o=>{ if(o.isMesh){info.meshes++; info.tris += o.geometry.index.count/3;}});
+  const f2 = params.get('f2');
+  if (f2) {
+    new GLTFLoader().load(f2, g2 => {
+      const only2 = params.get('only2');
+      g2.scene.traverse(o => { if (o.isMesh) {
+        const nm = (o.parent && o.parent.name) || o.name;
+        if (only2 && !only2.split(',').some(p => (o.name + '|' + nm).includes(p))) { o.visible = false; return; }
+        if (params.get('f2edges')) {
+          const eg = new THREE.EdgesGeometry(o.geometry, 25);
+          const ln = new THREE.LineSegments(eg, new THREE.LineBasicMaterial({color: 0xff2200, depthTest: false}));
+          o.add(ln); o.material.visible = false;
+        } else { o.material = new THREE.MeshStandardMaterial({color: 0xd0785a, roughness: .6, side: THREE.DoubleSide}); }
+      }});
+      if (params.get('f2dx')) g2.scene.position.x += +params.get('f2dx');
+      scene.add(g2.scene);
+      renderer.render(scene, camera);
+      window.__info = info; window.__ready = true;
+    });
+    return;
+  }
+  renderer.render(scene, camera);
+  window.__info = info; window.__ready = true;
+}, undefined, e => { window.__err = String(e); window.__ready = true; });
+</script></body></html>
