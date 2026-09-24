@@ -3201,10 +3201,15 @@ function pySeat(B, x0, lod, opts = {}) {
   B.add(gRBox(0.49, 0.05, 0.48, 0.012, 1), M4.trs(x0, 0.335, -0.29), SEATMAT.pyShell);
   loftAt(B, [SEC(0.0, 0.44, 0.09, -0.01, 0.025), SEC(0.05, 0.47, 0.115, -0.02), SEC(0.18, 0.48, 0.13, -0.032, 0.045), SEC(0.34, 0.48, 0.12, -0.024, 0.045),
     SEC(0.52, 0.47, 0.11, -0.014, 0.042), SEC(0.64, 0.45, 0.095, -0.008, 0.036), SEC(0.68, 0.42, 0.07, 0.0, 0.028)], BH, F, lod ? 3 : 4);
-  // thick rear shell
+  // sculpted side bolsters either side of the lumbar area (py_37301 / 37303: deep contoured back)
+  for (const sd of [-1, 1]) {
+    const BX = M4.mul(BH, M4.trs(sd * 0.205, 0, -0.03, -sd * 14 * DEG));
+    loftAt(B, [SEC(0.02, 0.07, 0.10, 0, 0.03), SEC(0.10, 0.085, 0.13, -0.01, 0.04), SEC(0.40, 0.085, 0.14, -0.014, 0.042), SEC(0.60, 0.075, 0.11, -0.006, 0.036), SEC(0.66, 0.06, 0.08, 0, 0.028)], BX, F, lod ? 2 : 3);
+  }
+  // thick rear shell that wraps round the back's sides (grey edge visible from the front)
   const zr = (y) => 0.105 + 0.014 * Math.sin(Math.PI * clamp(y / 0.84, 0, 1));
-  const ds = [[-0.04, 0.04], [0.12, 0.04], [0.34, 0.046], [0.5, 0.064], [0.68, 0.074], [0.78, 0.066], [0.85, 0.05]];
-  loftAt(B, ds.map(([y, d]) => SEC(y, 0.505, d, zr(y) - d / 2, 0.022)), BH, SEATMAT.pyShell, lod ? 2 : 3);
+  const ds = [[-0.04, 0.05], [0.12, 0.06], [0.34, 0.07], [0.5, 0.084], [0.68, 0.09], [0.78, 0.08], [0.85, 0.06]];
+  loftAt(B, ds.map(([y, d]) => SEC(y, 0.535, d, zr(y) - d / 2 + 0.01, 0.026)), BH, SEATMAT.pyShell, lod ? 2 : 3);
   // 6-way headrest with wings
   loftAt(B, [SEC(0.68, 0.37, 0.08, -0.006, 0.032), SEC(0.71, 0.39, 0.092, -0.012, 0.04), SEC(0.85, 0.39, 0.092, -0.012, 0.04), SEC(0.895, 0.37, 0.075, -0.006, 0.032), SEC(0.91, 0.33, 0.05, -0.002, 0.02)], BH, F, lod ? 3 : 4);
   for (const s of [-1, 1]) {
