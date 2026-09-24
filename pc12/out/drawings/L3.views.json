@@ -1,0 +1,174 @@
+{
+ "sheet": "L3",
+ "size": "A1",
+ "sheet_mm": [
+  841.0,
+  594.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "port": {
+   "name": "port",
+   "axes": "xz",
+   "A": [
+    [
+     50.0,
+     0.0
+    ],
+    [
+     0.0,
+     -50.0
+    ]
+   ],
+   "t": [
+    -66.0,
+    211.5
+   ],
+   "scale": 20.0,
+   "box": [
+    2.6,
+    0.85,
+    10.0,
+    2.95
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "plan": {
+   "name": "plan",
+   "axes": "xy",
+   "A": [
+    [
+     50.0,
+     0.0
+    ],
+    [
+     0.0,
+     -50.0
+    ]
+   ],
+   "t": [
+    -66.0,
+    247.0
+   ],
+   "scale": 20.0,
+   "box": [
+    2.6,
+    -0.95,
+    10.0,
+    0.95
+   ],
+   "note": "seen from above, starboard up",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "stbd": {
+   "name": "stbd",
+   "axes": "xz",
+   "A": [
+    [
+     -50.0,
+     0.0
+    ],
+    [
+     0.0,
+     -50.0
+    ]
+   ],
+   "t": [
+    564.0,
+    495.5
+   ],
+   "scale": 20.0,
+   "box": [
+    2.6,
+    0.85,
+    10.0,
+    2.95
+   ],
+   "note": "seen from starboard, nose right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "detA": {
+   "name": "detA",
+   "axes": "xz",
+   "A": [
+    [
+     200.0,
+     0.0
+    ],
+    [
+     0.0,
+     -200.0
+    ]
+   ],
+   "t": [
+    -629.0,
+    523.5
+   ],
+   "scale": 5.0,
+   "box": [
+    5.385000000000001,
+    1.9275,
+    5.825,
+    2.4475
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "detB": {
+   "name": "detB",
+   "axes": "xz",
+   "A": [
+    [
+     -100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    1218.5,
+    306.15
+   ],
+   "scale": 10.0,
+   "box": [
+    5.905,
+    1.8415,
+    6.505,
+    2.5614999999999997
+   ],
+   "note": "seen from starboard, nose right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "secA": {
+   "name": "secA",
+   "axes": "yz_aft",
+   "A": [
+    [
+     40.0,
+     0.0
+    ],
+    [
+     0.0,
+     -40.0
+    ]
+   ],
+   "t": [
+    781.0,
+    142.0
+   ],
+   "scale": 25.0,
+   "box": [
+    -2.2,
+    -0.05,
+    1.0,
+    3.2
+   ],
+   "note": "seen from aft, starboard right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  }
+ }
+}

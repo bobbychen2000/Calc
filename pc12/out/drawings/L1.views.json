@@ -1,0 +1,120 @@
+{
+ "sheet": "L1",
+ "size": "A1",
+ "sheet_mm": [
+  841.0,
+  594.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "profile": {
+   "name": "profile",
+   "axes": "xz",
+   "A": [
+    [
+     50.0,
+     0.0
+    ],
+    [
+     0.0,
+     -50.0
+    ]
+   ],
+   "t": [
+    38.0,
+    186.0
+   ],
+   "scale": 20.0,
+   "box": [
+    0.3,
+    0.8,
+    13.8,
+    3.0
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "halfbreadth": {
+   "name": "halfbreadth",
+   "axes": "xy",
+   "A": [
+    [
+     50.0,
+     0.0
+    ],
+    [
+     0.0,
+     -50.0
+    ]
+   ],
+   "t": [
+    38.0,
+    224.0
+   ],
+   "scale": 20.0,
+   "box": [
+    0.3,
+    -0.02,
+    13.8,
+    0.95
+   ],
+   "note": "seen from above, starboard up",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "body_fwd": {
+   "name": "body_fwd",
+   "axes": "yz",
+   "A": [
+    [
+     -100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    140.0,
+    559.0
+   ],
+   "scale": 10.0,
+   "box": [
+    0.0,
+    0.8,
+    0.95,
+    2.9
+   ],
+   "note": "seen from ahead, starboard left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "body_aft": {
+   "name": "body_aft",
+   "axes": "yz_aft",
+   "A": [
+    [
+     100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    140.0,
+    559.0
+   ],
+   "scale": 10.0,
+   "box": [
+    0.0,
+    0.8,
+    0.95,
+    2.9
+   ],
+   "note": "seen from aft, starboard right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  }
+ }
+}
