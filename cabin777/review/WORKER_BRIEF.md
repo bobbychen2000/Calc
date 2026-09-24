@@ -89,7 +89,7 @@ Start with a fresh two-rater round on the current head; do not reuse the w4 rati
 - **Boarding:** stays white, as in ANA's official photos. Cruise and night carry the blue band (lighting).
 - **THE Suite:** keep the centre suites at 1.10 m (14 CFR 25.815 aisle width). The divider is lowered by default.
   - Provide `suiteUnit({divider: 1})` for the raised panel and `suiteUnit({doors: 1})` for closed doors, geometry only. The integrator wires the seat-card toggles.
-- **THE Room:** pillows at boarding, but no plastic-wrapped duvet. In bed mode the duvet is open.
+- **THE Room:** follow the evidence-based decisions recorded in `review/qa/questions_room.md` (commit 5a42e29, from trip photos tpg_31/42): the wrapped duvet and pad bundle under the pillows at boarding, the open duvet in bed mode, the 0.84 m bench, the ledge finish and the blue-lit plaque numbers. These supersede the earlier default of no wrapped duvet.
   - Provide `roomPart(part, {doors: 1})` with the sliding door (and, if modelled, the pop-up panel) closed, for the same toggle.
 - **Door-3 lavs** stay 1.05 m deep. The wing registration stays JA795A. The day sky is a deep-blue cruise sky (lighting).
 - **Everything else** in the `questions_*.md` files keeps its current default.
