@@ -172,9 +172,10 @@ function buildExterior(gl) {
   // #232732 / #2d3447 -> wing #9ba1a1; spoiler panel seams dark too, a shade lighter [V photos, Boeing_777_(4139974954)]
   const line = { c: '#343940', r: 0.95 };   // matte: a glossy strip mirrors the sky at grazing view [A]
   const gap = { c: '#1e2228', r: 1.0, m: 0 };
-  const cowl = { c: '#b3b4b5', r: 0.3, m: 0.1 };   // w3: #d6d9dd clipped flat white on the sun side (13K); white paint ~1.5x the
-                                                  // Boeing-grey albedo (#636466 renders #b6bcc2 unclipped) [D]; w4 neutral: B-R 0x1d on the ANA 11A cowl [V]              // ANA white fan cowl, no titles [V photos]; w2: w1 gloss mirrored the
-                                                                // pale sky into a flat blob; darkening now baked from the normal below [A]
+  // ANA white fan cowl, no titles [V photos]. w2: w1 gloss mirrored the pale sky into a flat blob, darkening now baked from
+  // the normal below [A]; w3: #d6d9dd clipped flat white on the sun side (white paint ~1.5x the Boeing-grey albedo, which
+  // renders #b6bcc2 unclipped) [D]; w4: neutral, B-R 0x1d on the ANA 11A cowl [V]
+  const cowl = { c: '#b3b4b5', r: 0.3, m: 0.1 };
   const seam = { c: '#b9bdc2', r: 0.4 };
   const core = { c: '#8e9398', r: 0.34, m: 0.7 };
   const plug = { c: '#6e6b67', r: 0.4, m: 0.6 };
@@ -222,13 +223,12 @@ function buildExterior(gl) {
     const skin = { c: '#55575a', r: 0.7, m: 0.05 }, lef = (s) => pwl(WING.le, s), mid = (s) => lef(s) + 0.45 * (pwl(WING.te, s) - lef(s));
     wingLine(B, side, spanPath(4.0, 29.0, mid, 18), skin, 0.025);
     for (let s = 12.6; s < 29; s += 2.4) wingLine(B, side, chordPath(s, lef(s) + 0.7, s < 21 ? pwl(WING.te, s) - lerp(1.6, 1.2, (s - 11.8) / 9.2) : pwl(WING.te, s) - 0.7), skin, 0.025);
-    // fastener rows along the front and rear spars (~12 % / 62 % chord): dashed 3 cm strips, 0.3 m on / 0.2 m off, a shade
-    // under the paint [V dotted rows in ANA 26K _7345 and F-GSQR_1; A spacing]
-    const riv = { c: '#5a5c5f', r: 0.75, m: 0.05 };
-    for (const fc of [0.12, 0.62]) for (let s = 4.0; s < 29.5; s += 0.5) {
+    // fastener rows along the front and rear spars (~12 % / 62 % chord): at window range the rivets merge into a faint
+    // continuous line a shade under the paint (w4: 0.3 m dashes read as road marking) [V ANA 26K _7345, F-GSQR_1; A width]
+    const riv = { c: '#6a6d72', r: 0.75, m: 0.05 };
+    for (const fc of [0.12, 0.62]) {
       const xa = (q) => lef(q) + fc * (pwl(WING.te, q) - lef(q));
-      if (fc > 0.5 && s > 11.3 && s < 21.5) continue;   // spoiler hinge line already drawn there
-      wingLine(B, side, [[s, xa(s)], [s + 0.3, xa(s + 0.3)]], riv, 0.03);
+      for (const [a, b] of fc > 0.5 ? [[4.0, 11.3], [21.5, 29.5]] : [[4.0, 29.5]]) wingLine(B, side, spanPath(a, b, xa, Math.ceil((b - a) / 1.5)), riv, 0.016);   // no rear row under the spoiler hinge line
     }
     // right-wing registration JA795A on the upper skin [V: ANA JA795A seat-26K photos alv_*_7250/_7331/_7345, new 212-seat
     // layout, NH211 2026]: dark block capitals ~1.25 m tall at ~50 % chord (a letter-high band of skin ahead of it, bottoms just ahead of the spoilers) from s 13.5 outboard, J inboard, glyph tops toward

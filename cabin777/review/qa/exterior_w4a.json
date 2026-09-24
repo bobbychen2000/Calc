@@ -1,0 +1,52 @@
+{
+ "area": "exterior",
+ "rater": "A (skeptic), round w4 (final)",
+ "score": 6.1,
+ "details": [
+  {"detail": "Wing planform, sweep, raked tip. Correct against ACAP and the cruise photos.", "score": 7, "refs": ["/tmp/r7/st/a_plan.png", "ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg"]},
+  {"detail": "In-flight bending. Plausible against ANA _7345 and EK 2015.", "score": 6.5, "refs": ["/tmp/r7/d_26K.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Upper-skin surface. The panel tone is faint, and fastener rows now exist: the fine leading-edge row reads well. Near the root in 17A, the 62 % chord row reads as a coarse dashed road-marking line (dashes about 0.3 m) and not as a rivet row. Still no grime or streaks.", "score": 6, "refs": ["/tmp/r7/d_17A.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Gear-alignment stripe. Plausible. Still the heaviest mark in 17A.", "score": 6.5, "refs": ["/tmp/r7/d_17A.png"]},
+  {"detail": "JA795A registration. Upright and left to right, grey block capitals at 50 % chord. I accept B's one-to-one measurement against _7345.", "score": 7, "refs": ["/tmp/r7/d_26K.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Slat nose band and control-surface seams. Fine.", "score": 6, "refs": ["/tmp/r7/d_26K.png"]},
+  {"detail": "Canoe tone. Matches the ANA _7345 ratio on the shaded side. The sun side is plausibly light.", "score": 6.5, "refs": ["/tmp/r7/d_26A.png", "/tmp/r7/d_26K.png"]},
+  {"detail": "Canoe shape. Smooth teardrops ending in about 8 cm rounded tips (k_canoe_side). They read like _7345 from 26K.", "score": 7.5, "refs": ["/tmp/r7/st/k_canoe_side.png", "/tmp/r7/d_26K.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Nacelle size and position. Plausible.", "score": 6, "refs": ["/tmp/r7/d_11A.png", "ref/web/exterior/lalf_ANA77W_NH212_136.jpg"]},
+  {"detail": "Cowl surface, shaded (A) side. Now matches ANA 11A _136 closely. From 13A it is #8b9eb5 at the top and #7b8ca5 low, against the photo's #8d96a6 and #78889a. From 11A it goes #d2d8de to #95a2b3 (0.7). It reads as a solid, shaded white cowl, still blue-tinted by the pale sky (owner: lighting).", "score": 6.5, "refs": ["/tmp/r7/d_13A.png", "/tmp/r7/d_11A.png", "ref/web/exterior/lalf_ANA77W_NH212_136.jpg"]},
+  {"detail": "(owner: lighting, item 6) Cowl surface, sun side. Still clipped flat white from 13K (#d9dcdf and #e7e9eb, unchanged even at albedo #b0b3b7). That confirms it is an exposure problem.", "score": 3.5, "refs": ["/tmp/r7/d_13K.png", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg"]},
+  {"detail": "Pylon fairing hump. A smooth blister, close to ANA _137.", "score": 7, "refs": ["/tmp/r7/st/m_pylon.png", "/tmp/r7/d_13A.png"]},
+  {"detail": "Strake and access panel. The strake, now in cowl colour with its root seam, reads as in _137. The panel is visible in the studio.", "score": 7, "refs": ["/tmp/r7/st/n_strake.png", "/tmp/r7/d_13A.png", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg"]},
+  {"detail": "Static dischargers. Fine.", "score": 6.5, "refs": ["/tmp/r7/st/j_tip.png"]},
+  {"detail": "Nav and strobe lights. The nav lens now sits flush in the tip leading edge (j_tip).", "score": 6.5, "refs": ["/tmp/r7/st/j_tip.png"]},
+  {"detail": "(owner: lighting) Day sky. Unchanged pale #acc2d7, against the #114892 to #2472ca cruise references.", "score": 3, "refs": ["/tmp/r7/d_13A.png", "ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg"]},
+  {"detail": "(owner: lighting) Sunset: sky, deck, cream canoes, near-white cowl. Unchanged.", "score": 3, "refs": ["/tmp/r7/s_26A.png", "/tmp/r7/s_13A.png", "ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg", "ref/web/exterior/yt_p97zMaCMWRg_EVA77W_sunset_GE90.jpg"]},
+  {"detail": "(owner: lighting) Night: no beacon wash or strobe lighting. Unchanged.", "score": 5, "refs": ["/tmp/r7/n_17A.png", "ref/web/exterior/yt_p97zMaCMWRg_EVA77W_night_beacon.jpg"]}
+ ],
+ "issues": [
+  {
+   "severity": "low",
+   "detail": "The inboard fastener row reads as a painted dashed line.",
+   "problem": "Near the root, the dashes of the 62 % chord row are long and well spaced. From 17A they read like a road marking or walkway boundary, not like rivets.",
+   "evidence": "/tmp/r7/d_17A.png (zoomed wing root) against the fine dot row in alv_*_7345.",
+   "fix": "11_exterior.js fastener rows: shorten the dashes to about 0.03 m on and 0.12 m off, lighten the material from #4c4f54 to about #6a6d72, and keep w 0.02. Alternatively use a continuous 0.012 m line at that colour, which reads as a rivet row at 10-30 m."
+  },
+  {
+   "severity": "low",
+   "detail": "The upper wing has no grime or streak variation.",
+   "problem": "The wing is still clean CG grey. ANA _7345 shows faint chordwise streaks aft of the spoilers and grey mottling.",
+   "evidence": "/tmp/r7/d_17A.png against alv_*_7345.",
+   "fix": "11_exterior.js paintVerts: f *= 1 - 0.04*smooth(0.55, 0.95, uv[0])*frac(sin(floor(uv[1]*3)*91.7)*4375.5)."
+  },
+  {
+   "severity": "medium",
+   "detail": "(owner: lighting) Open lighting items.",
+   "problem": "Still open: sun-side cowl clipping (item 6), the pale day sky that tints the cowl blue, the sunset sky, deck and cream canoes, the near-white sunset cowl, and the missing night beacon.",
+   "evidence": "/tmp/r7/d_13K.png, d_13A.png, s_26A.png, s_13A.png, n_17A.png against the refs in exterior_w1a.json.",
+   "fix": "See review/qa/from_exterior.md items 1-6."
+  }
+ ],
+ "questionsForUser": [
+  "Do ANA's GE90 cowls carry a 'GE90' logo on the lower aft cowl? This is still open.",
+  "Is there an ANA 11A-13A photo at cruise in clear daylight? It would confirm the sun-side cowl tone once lighting fixes the exposure."
+ ]
+}
