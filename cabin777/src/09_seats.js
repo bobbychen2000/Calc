@@ -67,7 +67,7 @@ const SEATMAT = {
   // pale grey-beige ash with fine straight grain, charcoal shells with flat charcoal tops (QA r1: shell / console
   // #45484d omaat_room_16, #45454c c_27312; tops #545557 omaat_room_10), silver line only on armrest ledges + door-leaf
   // edges (c_27313 / 27300), charcoal tweed seat, slate Ultraleather headrest flap (#767a7e omaat_room_13), navy pillow
-  ash: { c: '#d6d2ca', r: 0.44, l: LAYER.ashGrain },   // QA w2: near-neutral pale ash (c_27313 #e7e8e4, c_27315 table #c9c6c2)
+  ash: { c: '#dcd5c8', r: 0.44, l: LAYER.ashGrain },   // QA w2: near-neutral pale ash (c_27313 #e7e8e4, c_27315 table #c9c6c2)
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
   // QA r3: shells rendered ~0.5x the photo luminance (q10 #292d34 vs c_27315 #4c4e60) -> lifted
@@ -85,7 +85,7 @@ const SEATMAT = {
   mattress: { c: '#f0efea', r: 0.9, l: LAYER.fabric },
   duvet: { c: '#4a5690', r: 0.95, l: LAYER.fabric },   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
-  pillowBlue: { c: '#55609a', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center)   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
+  pillowBlue: { c: '#6671b8', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center)   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
   lampGlow: { c: '#ffe2b0', r: 0.4, e: 0.35 },
   moodGlow: { c: '#ffd9a0', r: 0.5, e: 0.25 },
   hole: { c: '#0b0d10', r: 1.0 },

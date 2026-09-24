@@ -11,7 +11,8 @@
 // QA w1: monitor bezel dark charcoal with a slight sheen, not black (omaat_room_16, c_27316 #2c2e32) [V]; pillow reverse
 // panel + piping grey-taupe (c_27303, omaat_room_13) [V]; ledge slot + retracted privacy-panel edge (omaat_room_13) [V]
 Object.assign(SEATMAT, {
-  jBezel: { c: '#2c2e32', r: 0.35, l: LAYER.plastic },
+  jBezel: { c: '#3a3c42', r: 0.35, l: LAYER.plastic },   // QA w3: rendered near-black (L 18-29 vs photos 34-45)
+  jSeam: { c: '#46444b', r: 0.95 },
   jPillowBack: { c: '#6b665e', r: 0.8, l: LAYER.fabric },
   jPanelEdge: { c: '#5d6166', r: 0.34, m: 0.5, l: LAYER.brushed },
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
@@ -38,7 +39,8 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   const fw = 0.6 * w, fx = fs * (w / 2 - 0.05 - fw / 2);
   B.add(gRBox(fw, 0.20, 0.018, 0.008, 1), M4.mul(BH, M4.trs(fx, 0.525, -0.058, 0, -3 * DEG)), SEATMAT.jHead);
   if (lod) return;
-  for (const sy of [0.29, 0.44]) B.add(gBox(w - 0.04, 0.005, 0.004), M4.mul(BH, M4.trs(0, sy, -0.0385)), SEATMAT.jBase);   // stitched seams
+  // QA w3: soft fabric-toned channels ~0.58 / 0.82 of the back height down from its top (tpg_31, c_27315) [D]
+  for (const sy of [0.11, 0.25]) B.add(gBox(w - 0.04, 0.006, 0.003), M4.mul(BH, M4.trs(0, sy, -0.0385)), SEATMAT.jSeam);
   B.add(gBox(w - 0.04, 0.005, 0.004), M4.mul(M4.trs(0, 0.39, -0.34, 0, 2 * DEG), M4.trs(0, 0.041, -0.10, 0, Math.PI / 2)), SEATMAT.jBase);
   B.add(gRBox(0.03, 0.05, 0.012, 0.004, 1), M4.mul(BH, M4.trs(fx, 0.41, -0.05)), SEATMAT.jHead); // flap tab
   // seat front: continuous fabric apron (the stowed leg rest) from the cushion nose down to a dark kick strip (QA w2:
@@ -131,7 +133,8 @@ function roomMonitor(B, xm, zf, dir, slotSide) {
   B.add(gCyl(0.003, 0.003, 0.004, 8), M4.mul(M4.trs(dx + slotSide * 0.07, y - 0.005, zo(0.032)), M4.trs(0, 0, 0, 0, Math.PI / 2)), SEATMAT.ledG);
   // literature slot: recess glowing soft blue from inside, the sill forms its lip (tpg_53, omaat_room_14 / 16)
   B.add(gBox(0.19, 0.05, 0.004), M4.trs(lx, y - 0.004, zo(0.0255)), SEATMAT.jVoid);
-  B.add(gQuad(0.18, 0.04), M4.trs(lx, y - 0.006, zo(0.028), ry), { c: '#2a4f9a', r: 0.5, e: 0.18 });
+  B.add(gQuad(0.18, 0.04), M4.trs(lx, y - 0.006, zo(0.028), ry), { c: '#1f2c7a', r: 0.6, e: 0.04 });   // QA w3: unlit navy lining (tpg_53)
+  B.add(gBox(0.19, 0.004, 0.006), M4.trs(lx, y - 0.028, zo(0.029)), SEATMAT.jSill);
 }
 // closed cabinet door beside the monitor on the same plane: plain ash with fine horizontal grain, 0.34 x 0.38 with its
 // top level with the monitor frame top, 4 mm silver bottom trim (omaat_room_16; mirror + navy interior only when open,
@@ -172,8 +175,11 @@ function roomControls(B, xf, side) {
   const hx = side * 0.16;
   B.add(gRBox(0.14, 0.085, 0.004, 0.035, 1), P(hx, 0.555, 0.001), SEATMAT.jBase);
   B.add(gRBox(0.13, 0.075, 0.016, 0.034, 1), P(hx, 0.555, 0.008), SEATMAT.black);
-  B.add(gQuad(0.052, 0.04), P(hx, 0.558, 0.0165), { c: '#6b8fd0', r: 0.3, e: 0.3 });
-  for (const e of [-1, 1]) B.add(gCyl(0.013, 0.013, 0.003, 10), P(hx + e * 0.044, 0.555, 0.016, Math.PI / 2), SEATMAT.jBezel);
+  B.add(gQuad(0.074, 0.064), P(hx, 0.556, 0.0165), { c: '#6b8fd0', r: 0.3, e: 0.3 });   // QA w3: screen ~57 % x 90 % (tpg_53)
+  for (const e of [-1, 1]) {
+    B.add(gCyl(0.012, 0.012, 0.003, 10), P(hx + e * 0.051, 0.555, 0.016, Math.PI / 2), SEATMAT.jBezel);
+    for (let k = 0; k < 4; k++) B.add(gBox(0.004, 0.004, 0.002), P(hx + e * 0.051 + 0.007 * Math.cos(k * Math.PI / 2), 0.555 + 0.007 * Math.sin(k * Math.PI / 2), 0.018), RING);
+  }
 }
 // ash panels in ~28 mm charcoal frames on an aisle face (x = px) below the armrest ledge, charcoal kick below
 // (c_27313 bottom row, omaat_room_10)
@@ -193,9 +199,8 @@ function roomLamp(B, x, z, dir, y = 1.03) {
 // carrying the big reading lamp over a smaller air nozzle and the blue safety-card pocket at its foot (c_27316 left of
 // the monitor, c_27315 top right + foreground, c_27312 centre, omaat_room_14) [V]; ~0.08 wide, stands ~0.11 proud [D]
 function roomColumn(B, x, zf, dir, y0) {
-  const d = 0.06, z = zf + dir * d / 2, zf2 = zf + dir * d, h = MON.top - y0;
+  const d = 0.06, z = zf + dir * d / 2, zf2 = zf + dir * d, h = MON.top + 0.02 - y0;   // QA w3: flush with the monument cap
   B.add(gRBox(0.08, h, d, 0.012, 1), M4.trs(x, y0 + h / 2, z), SEATMAT.jShell);
-  capRail(B, 0.08, d, x, MON.top, z);
   roomLamp(B, x, zf2, dir, 0.99);
   B.add(gQuad(0.045, 0.075), M4.trs(x, y0 + 0.06, zf2 + dir * 0.002, dir > 0 ? 0 : Math.PI), { c: '#35568f', r: 0.5 });
   B.add(gQuad(0.037, 0.018), M4.trs(x, y0 + 0.07, zf2 + dir * 0.003, dir > 0 ? 0 : Math.PI), { c: '#b8c0cc', r: 0.6 });
@@ -262,7 +267,10 @@ function roomPart(part, opts = {}) {
     // O's side table over E's footwell (aisle column): ash top with a large-radius rounded front corner, thin silver band
     // under it, charcoal console body whose seat-facing face carries the controls (omaat_room_14 / 18, c_27316)
     const tx0 = 0.0, tx1 = 0.55, tz0 = -0.62, R = 0.11;   // QA w2: over the whole E footwell mouth (tpg_53) [D]
-    planSlab(B, planRRect(tx0, tx1, tz0, MON.zO, [R, 0.01, 0.004, 0.004]), top - 0.035, 0.035, ash);
+    // QA w3: ash inlay in a ~22 mm charcoal rim with a fine silver lip, not a solid ash slab (fb_a96b7a65, tpg_53, c_27316) [V]
+    planSlab(B, planRRect(tx0, tx1, tz0, MON.zO, [R, 0.01, 0.004, 0.004]), top - 0.035, 0.033, SEATMAT.jShellIn);
+    planSlab(B, planRRect(tx0 + 0.001, tx1 - 0.001, tz0 + 0.001, MON.zO, [R - 0.001, 0.009, 0.004, 0.004]), top - 0.006, 0.004, SEATMAT.jRail);
+    planSlab(B, planRRect(tx0 + 0.022, tx1 - 0.022, tz0 + 0.022, MON.zO - 0.004, [R - 0.022, 0.004, 0.004, 0.004]), top - 0.004, 0.005, ash);
     planSlab(B, planRRect(tx0 + 0.004, tx1, tz0 + 0.004, MON.zO, [R - 0.004, 0.004, 0.004, 0.004]), top - 0.041, 0.006, SEATMAT.jRail);
     planSlab(B, planBand(tx0 + 0.012, tx1, tz0 + 0.012, MON.zO, R - 0.012, 0.02), 0, top - 0.041, shell);
     if (!lod) roomControls(B, M4.trs(0.30, 0, tz0 + 0.012, Math.PI), -1);
@@ -272,7 +280,7 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.045, 0.10, ez1 - ez0, 0.01, 1), M4.trs(0.565, 0.05, ezc), shell);
     ashFrameX(B, 0.565, 0.04, 0.10, wall, ez0, ez1);
     // shared aisle-end cap: mid grey, a little darker than the plaques, oval finger recess between them (c_27314)
-    B.add(gRBox(0.10, 0.02, ez1 - ez0 + 0.006, 0.006, 1), M4.trs(0.54, wall + 0.01, ezc), { c: '#7c7f84', r: 0.45, l: LAYER.plastic });
+    B.add(gRBox(0.10, 0.02, ez1 - ez0 + 0.006, 0.006, 1), M4.trs(0.54, wall + 0.01, ezc), { c: '#86837e', r: 0.28, m: 0.35, l: LAYER.brushed });   // QA w3: slight metallic sheen (tpg_78)
     if (!lod) B.add(gCyl(1, 1, 1, 16), M4.trs(0.545, wall + 0.0205, ezc, 0, 0, 0, 0.0175, 0.003, 0.035), SEATMAT.jBase);
     // E's footwell under the table + monument (aisle column), mouth under E's monitor
     // QA w2: both footwell mouths sit square under their monitors, ~0.475 wide from the column-side frame edge, split by a
@@ -334,7 +342,9 @@ function roomPart(part, opts = {}) {
     // 14D, fb_a96b7a65 bed from above, c_27314: ash only at the monument end) [V]
     const cz0 = MON.zE, zT = 0.62, cz1 = 1.30, czc = (cz0 + zT) / 2, R = 0.11;
     const tx1 = -0.03;   // QA w2: over the whole O footwell mouth (tpg_53) [D]
-    planSlab(B, planRRect(-0.58, tx1, cz0, zT, [0.004, 0.004, R, 0.004]), top - 0.035, 0.035, ash);
+    planSlab(B, planRRect(-0.58, tx1, cz0, zT, [0.004, 0.004, R, 0.004]), top - 0.035, 0.033, SEATMAT.jShellIn);
+    planSlab(B, planRRect(-0.579, tx1 - 0.001, cz0, zT - 0.001, [0.004, 0.004, R - 0.001, 0.004]), top - 0.006, 0.004, SEATMAT.jRail);
+    planSlab(B, planRRect(-0.558, tx1 - 0.022, cz0 + 0.004, zT - 0.022, [0.004, 0.004, R - 0.022, 0.004]), top - 0.004, 0.005, ash);
     planSlab(B, planRRect(-0.576, tx1, cz0, zT - 0.004, [0.004, 0.004, R - 0.004, 0.004]), top - 0.041, 0.006, SEATMAT.jRail);
     planSlab(B, planBand(-tx1 + 0.012, 0.572, -zT + 0.012, -cz0, R - 0.012, 0.02).map(([x, z]) => [-x, -z]), 0, top - 0.041, shell);
     B.add(gRBox(0.45, CON.top, cz1 - zT, 0.01, 1), M4.trs(-0.355, CON.top / 2, (zT + cz1) / 2), shell);
