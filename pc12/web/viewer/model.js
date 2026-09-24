@@ -25,7 +25,7 @@ const SHADOW_CASTERS = /^(gear_|blade_|propeller|brace_|exhaust_stacks|antennas|
 
 const PAINT_RE = /^(paint_|trim_black$)/;
 const GLASS_RE = /^glass/;
-export const PRIMER_HEX = 0xb4bea5;   // light grey-green zinc-chromate-ish primer
+export const PRIMER_HEX = 0x9fae8c;   // light grey-green zinc-chromate-ish primer
 const LINING_HEX = 0xdcd6cb;          // cabin lining (matches the 'lining' material)
 
 export function loadGLB(url, onProgress) {
@@ -79,7 +79,7 @@ function makeXray(clipPlanes) {
   m.onBeforeCompile = (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   float fres = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
-  diffuseColor.a = mix(0.035, 0.42, pow(fres, 2.5));`);
+  diffuseColor.a = mix(0.05, 0.5, pow(fres, 2.2));`);
   };
   m.customProgramCacheKey = () => 'pc12:xray';
   return m;
@@ -121,8 +121,8 @@ export class Model {
     this.xrayCutMat = makeXray(this.clipPlanes);
     const accent = 0x1d7bff;
     this.ov = {
-      sel: makeOverlay(accent, 0.34), selCut: makeOverlay(accent, 0.34, { clip: this.clipPlanes }),
-      ghost: makeOverlay(accent, 0.13, { depthTest: false }), ghostCut: makeOverlay(accent, 0.13, { depthTest: false, clip: this.clipPlanes }),
+      sel: makeOverlay(accent, 0.24), selCut: makeOverlay(accent, 0.24, { clip: this.clipPlanes }),
+      ghost: makeOverlay(accent, 0.08, { depthTest: false }), ghostCut: makeOverlay(accent, 0.08, { depthTest: false, clip: this.clipPlanes }),
       hover: makeOverlay(0xffb020, 0.22), hoverCut: makeOverlay(0xffb020, 0.22, { clip: this.clipPlanes }),
     };
     this.overlays = { sel: [], hover: [] };
@@ -156,7 +156,9 @@ export class Model {
         if (!ch.isMesh) continue;
         const base = ch.material;
         const name = base.name || '';
-        const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name) };
+        const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name),
+          // structure: clip the fuselage frames/stringers but keep the wing spars & ribs whole
+          cut: rec.cut && !(rec.id === 'structure' && name === 'interior_green') };
         if (mr.paint && !patched.has(base)) { patchMaterial(base, this.U, { paint: true }); patched.add(base); }
         ch.castShadow = rec.xray || SHADOW_CASTERS.test(rec.id);
         ch.receiveShadow = false;
@@ -201,7 +203,7 @@ export class Model {
   applyMaterials() {
     for (const mr of this.meshRecs) {
       const p = mr.part;
-      const cut = this.cutaway && p.cut;
+      const cut = this.cutaway && mr.cut;
       let m = mr.base;
       if (this.xray && p.xray) {
         m = mr.glass ? this.glassXray(mr, cut) : (cut ? this.xrayCutMat : this.xrayMat);
@@ -219,7 +221,9 @@ export class Model {
 
   // paint sweep: target +100 = fully painted, -100 = all primer; animated in update()
   setPaint(on, instant) {
-    this.paint.target = on ? 100 : -100;
+    const target = on ? 100 : -100;
+    if (target === this.paint.target && (instant ? this.paint.cur === target : true)) return;
+    this.paint.target = target;
     if (instant) { this.paint.cur = this.paint.target; this.U.paintSweep.value = this.paint.cur; }
     else if (Math.abs(this.paint.cur) > 50) {
       // start the sweep just outside the aircraft (nose for painting, tail for stripping)
@@ -284,7 +288,7 @@ export class Model {
   _refreshOverlays() {
     for (const kind of ['sel', 'hover']) {
       for (const o of this.overlays[kind]) {
-        const cut = this.cutaway && o.userData.rec.cut;
+        const cut = this.cutaway && o.userData.mr.cut;
         o.material = kind === 'hover' ? (cut ? this.ov.hoverCut : this.ov.hover)
           : o.userData.ghost ? (cut ? this.ov.ghostCut : this.ov.ghost) : (cut ? this.ov.selCut : this.ov.sel);
       }
@@ -304,7 +308,7 @@ export class Model {
           const layers = kind === 'sel' ? [false, true] : [false];
           for (const ghost of layers) {
             const o = new THREE.Mesh(mr.mesh.geometry, this.ov.sel);
-            o.userData = { rec: p, ghost };
+            o.userData = { mr, ghost };
             o.raycast = noRaycast;
             o.renderOrder = ghost ? 10 : 5;
             o.castShadow = false;

@@ -109,8 +109,9 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 .tb-group button:hover { background: var(--surface-2); border-color: var(--border); }
 .tb-group button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
 .tb-slider { padding: 3px 10px; gap: 8px; }
+.tb-sep { width: 1px; align-self: stretch; margin: 3px 3px; background: var(--border); }
 .tb-slider span { font-size: 13px; }
-.tb-slider input { width: 120px; }
+.tb-slider input { width: 110px; }
 
 #stepCaption {
   position: absolute; left: 50%; transform: translateX(-50%);
@@ -168,7 +169,8 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 .step-now p { color: var(--text); }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .chips button { font: 11.5px var(--mono); padding: 2px 7px; min-height: 24px; border-radius: 999px; }
-.step-list { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.step-list { position: relative; list-style: none; margin: 0; padding: 0; max-height: 42vh; overflow-y: auto; overscroll-behavior: contain;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .step-list li { margin: 0; }
 .step-list button {
   width: 100%; text-align: left; border: 0; border-radius: 6px; background: none; padding: 6px 8px;
@@ -202,14 +204,15 @@ table.readouts td:last-child { text-align: right; font-family: var(--mono); font
 #partTree li .pname { min-width: 0; overflow-wrap: anywhere; }
 #partTree li.hidden-part .pname { text-decoration: line-through; color: var(--text-2); }
 
-/* info card */
+/* info card (top of the panel) */
 #infoCard {
-  position: absolute; left: var(--gutter); bottom: var(--gutter); z-index: 5; width: 340px;
-  max-width: calc(100% - var(--panel-w) - 3 * var(--gutter)); max-height: 55vh; overflow: auto;
-  background: var(--surface-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); padding: 10px 12px;
+  margin: 10px 14px 0; padding: 10px 12px; max-height: 42vh; flex: 0 0 auto;
+  display: flex; flex-direction: column; min-height: 0;
+  background: var(--surface-2); border: 1px solid var(--accent); border-radius: 10px;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
-#app:not(.panel-open) #infoCard { max-width: calc(100% - 2 * var(--gutter)); }
+#infoCard[hidden] { display: none; }
+#infoCard .ic-body { overflow-y: auto; min-height: 0; flex: 1 1 auto; }
 #infoCard header { display: flex; gap: 8px; justify-content: space-between; align-items: flex-start; }
 #infoCard h2 { font-size: 15px; }
 #icMeta { font: 11.5px var(--mono); margin-top: 2px; }
@@ -226,6 +229,7 @@ table.data th, table.data td { padding: 4px 5px; border-bottom: 1px solid var(--
 table.data th:first-child, table.data td:first-child { text-align: left; }
 table.data th { color: var(--text-2); font-weight: 600; }
 table.data td { font-variant-numeric: tabular-nums; }
+table.data td:not(:first-child), table.data th:not(:first-child) { white-space: nowrap; }
 .d-ok { color: var(--ok); }
 .d-warn { color: var(--warn); }
 .d-bad { color: var(--bad); }
@@ -267,6 +271,8 @@ table.data td { font-variant-numeric: tabular-nums; }
   #toolbar { left: 0; right: 0; top: 0; padding: 10px var(--gutter); flex-wrap: nowrap; overflow-x: auto;
     scrollbar-width: none; pointer-events: auto; }
   #toolbar::-webkit-scrollbar { display: none; }
+  /* hint that the toolbar scrolls sideways */
+  #toolbar { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
   .tb-group { flex: 0 0 auto; }
   .tb-slider input { width: 90px; }
   #panel {
@@ -284,13 +290,12 @@ table.data td { font-variant-numeric: tabular-nums; }
   .panel-head { padding: 16px var(--gutter) 4px; }
   #tabs { padding: 0 calc(var(--gutter) - 6px); }
   #panelBody { padding: 12px var(--gutter) 24px; }
-  #infoCard { left: var(--gutter); right: var(--gutter); width: auto; max-width: none;
-    bottom: calc(var(--sheet-h) + 8px); max-height: 30vh; }
-  #app:not(.panel-open) #infoCard { bottom: 100px; max-width: none; }
+  #infoCard { margin: 8px var(--gutter) 0; max-height: 22vh; }
   #stepCaption, #app.panel-open #stepCaption { left: 50%; bottom: calc(var(--sheet-h) + 8px); }
   #app:not(.panel-open) #stepCaption { bottom: 100px; }
   #drawingView, #app:not(.panel-open) #drawingView { right: 0; bottom: var(--sheet-h); top: 52px; }
   .slider { grid-template-columns: 6.5em 1fr auto; }
+  .step-list { max-height: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }

@@ -19,8 +19,9 @@ export const PRESETS = {
   front: { label: 'Front', dir: [0, 0.07, -1], fov: 30 },
   side: { label: 'Side', dir: [-1, 0.04, 0], fov: 30 },         // port side: airstair + cargo doors
   top: { label: 'Top', dir: [0, 1, 0.0015], fov: 30 },
-  cockpit: { label: 'Cockpit', pos: [-0.30, 2.06, 4.02], target: [-0.26, 1.93, 3.55], fov: 68 },
-  gear_bay: { label: 'Gear bay', pos: [3.35, 0.32, 4.75], target: [2.2, 0.92, 6.25], fov: 55 },
+  // cockpit: flight_deck extras 'design eye' STA 3,980 / BL -335 / WL 2,360 (left seat)
+  cockpit: { label: 'Cockpit', pos: [-0.335, 2.34, 3.98], target: [-0.29, 1.99, 3.1], fov: 74 },
+  gear_bay: { label: 'Gear bay', pos: [4.3, 0.42, 3.55], target: [2.05, 0.78, 6.15], fov: 48 },
 };
 
 export class Stage {
@@ -60,7 +61,7 @@ export class Stage {
     key.shadow.normalBias = 0.02;
     key.shadow.radius = 3;
     scene.add(key, key.target);
-    this.hemi = new THREE.HemisphereLight(0xffffff, 0x8a96a3, 0.35);
+    this.hemi = new THREE.HemisphereLight(0xffffff, 0xb4bcc4, 0.9);
     scene.add(this.hemi);
 
     // ground: shadow catcher + grid (faded by fog)
@@ -99,7 +100,7 @@ export class Stage {
     grid.position.y = -0.002;
     this.scene.add(grid);
     this.shadowPlane.material.opacity = dark ? 0.35 : 0.2;
-    this.hemi.groundColor.set(dark ? 0x3a4450 : 0x8a96a3);
+    this.hemi.groundColor.set(dark ? 0x6a7480 : 0xb4bcc4);
     this.dark = dark;
     this.needsRender = true;
   }
@@ -166,7 +167,7 @@ export class Stage {
     const target = box.getCenter(new THREE.Vector3());
     if (name === 'three_quarter') target.y -= 0.35;
     const dir = new THREE.Vector3().fromArray(p.dir).normalize();
-    const d = this.fitDistance(dir, target, box, p.fov, name === 'three_quarter' ? 1.02 : 1.06);
+    const d = this.fitDistance(dir, target, box, p.fov, name === 'three_quarter' ? 0.93 : name === 'top' ? 1.14 : 1.06);
     return { pos: target.clone().addScaledVector(dir, d), target, fov: p.fov };
   }
 
@@ -177,7 +178,7 @@ export class Stage {
     if (dir.lengthSq() < 1e-8) dir.set(-0.6, 0.35, -0.7);
     dir.normalize();
     const fov = Math.min(this.camera.fov, 45);
-    const d = Math.max(minDist, this.fitDistance(dir, target, box, fov, 1.35));
+    const d = Math.max(minDist, this.fitDistance(dir, target, box, fov, 1.6));
     this.goTo({ pos: target.clone().addScaledVector(dir, d), target, fov }, { instant });
   }
 
@@ -197,6 +198,7 @@ export class Stage {
       this.camera.fov = fov;
       this.camera.updateProjectionMatrix();
       c.update();
+      this.camera.updateMatrixWorld();
       this.needsRender = true;
       return;
     }

@@ -95,32 +95,34 @@ export class Kinematics {
     this.apply();
   }
 
-  // translucent blurred disc for a fast-turning propeller (cheap motion blur)
+  // translucent blurred disc for a fast-turning propeller (cheap motion blur): a dark disc whose
+  // alpha comes from an opaque greyscale canvas (alphaMap, no premultiplied-alpha surprises) plus
+  // a light ring where the white blade tips sweep
   _makePropDisc() {
     const prop = this.surf.propeller;
     if (!prop) return;
     const cv = document.createElement('canvas');
     cv.width = cv.height = 256;
     const g = cv.getContext('2d');
-    const R = 128;
-    const grd = g.createRadialGradient(R, R, 0, R, R, R);
-    grd.addColorStop(0.0, 'rgba(20,20,22,0)');
-    grd.addColorStop(0.14, 'rgba(20,20,22,0)');
-    grd.addColorStop(0.2, 'rgba(20,20,22,0.55)');
-    grd.addColorStop(0.7, 'rgba(22,22,24,0.32)');
-    grd.addColorStop(0.9, 'rgba(24,24,26,0.22)');
-    grd.addColorStop(0.915, 'rgba(235,235,230,0.6)');
-    grd.addColorStop(0.985, 'rgba(235,235,230,0.45)');
-    grd.addColorStop(1.0, 'rgba(235,235,230,0)');
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, 256, 256);
+    const grd = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+    grd.addColorStop(0.0, '#000');
+    grd.addColorStop(0.14, '#000');
+    grd.addColorStop(0.2, 'rgb(200,200,200)');
+    grd.addColorStop(0.7, 'rgb(135,135,135)');
+    grd.addColorStop(0.9, 'rgb(105,105,105)');
+    grd.addColorStop(0.93, '#000');
+    grd.addColorStop(1.0, '#000');
     g.fillStyle = grd;
     g.fillRect(0, 0, 256, 256);
-    const tex = new THREE.CanvasTexture(cv);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, toneMapped: true });
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(1.34, 72), m);
+    const alpha = new THREE.CanvasTexture(cv);
+    const common = { transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false };
+    const disc = new THREE.Group();
+    disc.add(new THREE.Mesh(new THREE.CircleGeometry(1.34, 72), new THREE.MeshBasicMaterial({ ...common, color: 0x17181a, alphaMap: alpha })));
+    disc.add(new THREE.Mesh(new THREE.RingGeometry(1.225, 1.32, 72), new THREE.MeshBasicMaterial({ ...common, color: 0xe6e6e0 })));
     disc.position.set(0, 0, 0.02);   // blade pitch-axis plane, relative to the hub origin
-    disc.renderOrder = 3;
-    disc.raycast = () => {};
+    for (const m of disc.children) { m.renderOrder = 3; m.raycast = () => {}; }
     disc.visible = false;
     prop.rec.node.add(disc);
     this.disc = disc;
@@ -140,7 +142,8 @@ export class Kinematics {
     if (instant) this.c[key] = this.t[key];
   }
 
-  setProp({ rpm, pitch } = {}, instant) {
+  setProp({ rpm, pitch, angle } = {}, instant) {
+    if (angle != null) this.c.propAngle = +angle;          // spin phase (radians), e.g. 0 for tests
     if (rpm != null) this.t.rpm = clamp(+rpm, 0, 1700);
     if (pitch != null) this.t.pitch = clamp(+pitch, -38, 62);
     if (instant) { this.c.rpm = this.t.rpm; this.c.pitch = this.t.pitch; }
@@ -172,7 +175,7 @@ export class Kinematics {
 
   get gearMoving() {
     const g = this.gear;
-    return g.pos !== g.target || g.door > 0;
+    return g.pos !== g.target || (g.door > 0 && (g.pos <= 0 || g.pos >= 1));
   }
 
   // ------------------------------------------------------------------ update
@@ -201,6 +204,7 @@ export class Kinematics {
     lag('roll', 7, 1e-3); lag('pitchCmd', 7, 1e-3); lag('yaw', 7, 1e-3);
     approach('stabTrim', 1.2); approach('ailTrim', 6); approach('rudTrim', 6);
     lag('rpm', 1.1, 0.5);
+    const movedBeforeSpin = moved;
     if (c.rpm > 0) {
       c.propAngle = (c.propAngle + (c.rpm / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
       moved = true;
@@ -219,10 +223,12 @@ export class Kinematics {
         if (r.s >= 1) { g.pos = r.to; g.run = null; }
       }
       moved = true;
-    } else if (g.door > 0) {
+    } else if (g.door > 0 && (g.pos <= 0 || g.pos >= 1)) {
+      // doors close only once the gear is locked up or down (a gear stopped mid-travel keeps them open)
       g.door = Math.max(0, g.door - dt / 0.8);
       moved = true;
     }
+    this.onlySpin = moved && !movedBeforeSpin && g.pos === g.target && !(g.door > 0 && (g.pos <= 0 || g.pos >= 1));
     if (moved) this.apply();
     return moved;
   }
@@ -321,7 +327,8 @@ export class Kinematics {
       for (let k = 1; k <= 5; k++) this._rot('blade_' + k, c.pitch);
       if (this.disc) {
         const f = clamp((c.rpm - PROP_BLUR_RPM) / 900, 0, 1);
-        this.disc.material.opacity = 0.85 * f;
+        this.disc.children[0].material.opacity = 0.8 * f;
+        this.disc.children[1].material.opacity = 0.45 * f;
         this.disc.visible = f > 0.01 && S.propeller.rec.shown;
       }
     }

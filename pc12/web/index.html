@@ -6,6 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>PC-12 PRO Model Viewer</title>
 <meta name="description" content="Interactive viewer for a from-scratch parametric Pilatus PC-12 PRO model: step-by-step build, explode, cutaway, X-ray, animated controls, landing gear and propeller, parts list, drawings and dimension checks.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3l2 10 11 3v3l-11-1-1 7 4 3v2l-5-1-5 1v-2l4-3-1-7-11 1v-3l11-3z%22 fill=%22%231d5fbf%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="viewer/viewer.css">
 <script>
   // Inject the three.js import map before any module script is parsed.
@@ -24,10 +25,26 @@
   })();
 </script>
 <script type="module" src="viewer/main.js"></script>
+<script>
+  // A module graph that fails to fetch (e.g. the CDN is unreachable) fires 'error' on its script element.
+  (function () {
+    var s = document.currentScript.previousElementSibling;
+    function show() {
+      var l = document.getElementById('loading'), m = document.getElementById('loadMsg');
+      if (!l) { document.addEventListener('DOMContentLoaded', show); return; }
+      l.classList.add('error');
+      m.textContent = 'Could not load the viewer scripts (three.js from ' + window.__threeBase + ').\n' +
+        'Check the network connection, or put three.js r160 in web/three_local/ and add ?three=local to the URL.';
+      window.__error = m.textContent;
+      window.__ready = true;
+    }
+    s.addEventListener('error', show);
+  })();
+</script>
 </head>
 <body>
 <div id="app" class="panel-open">
-  <div id="stage" aria-label="3-D view of the PC-12 PRO model. Drag to orbit, scroll to zoom, right-drag to pan, click a part to select it." role="img"></div>
+  <div id="stage" role="region" aria-label="3-D view of the PC-12 PRO model. Drag to orbit, scroll to zoom, right-drag to pan, click a part to select it."></div>
   <div id="labels" aria-hidden="true"></div>
 
   <!-- toolbar over the canvas -->
@@ -50,34 +67,13 @@
       <button type="button" class="toggle" id="tXray" aria-pressed="false" title="X-ray: translucent skins, show structure (X)">X-ray</button>
       <button type="button" class="toggle" id="tLines" aria-pressed="false" title="Construction lines (L)">Lines</button>
       <button type="button" class="toggle" id="tPrimer" aria-pressed="false" title="Primer instead of paint">Primer</button>
-    </div>
-    <div class="tb-group">
+      <span class="tb-sep" aria-hidden="true"></span>
       <button type="button" id="tReset" title="Reset view and animation (R)">Reset</button>
       <button type="button" id="tHelp" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
     </div>
   </div>
 
   <div id="stepCaption" hidden></div>
-
-  <!-- selected-part card -->
-  <section id="infoCard" hidden aria-live="polite" aria-label="Selected part">
-    <header>
-      <div>
-        <h2 id="icName"></h2>
-        <div id="icMeta" class="muted"></div>
-      </div>
-      <button type="button" class="icon" id="icClose" aria-label="Clear selection (Esc)">×</button>
-    </header>
-    <p id="icNote"></p>
-    <dl id="icInfo"></dl>
-    <p id="icHint" class="muted" hidden></p>
-    <div class="row">
-      <button type="button" id="icFrame">Frame</button>
-      <button type="button" id="icIsolate" aria-pressed="false" class="toggle">Isolate</button>
-      <button type="button" id="icHide">Hide</button>
-      <button type="button" id="icShowAll" hidden>Show hidden</button>
-    </div>
-  </section>
 
   <!-- drawing viewer (shown while the Drawings tab is active) -->
   <div id="drawingView" hidden>
@@ -103,6 +99,27 @@
       <button role="tab" id="tab-drawings" aria-controls="pane-drawings" aria-selected="false" tabindex="-1">Drawings</button>
       <button role="tab" id="tab-specs" aria-controls="pane-specs" aria-selected="false" tabindex="-1">Specs</button>
     </div>
+    <!-- selected-part card (inside the panel so it never covers the framed part) -->
+    <section id="infoCard" hidden aria-live="polite" aria-label="Selected part">
+      <header>
+        <div>
+          <h2 id="icName"></h2>
+          <div id="icMeta" class="muted"></div>
+        </div>
+        <button type="button" class="icon" id="icClose" aria-label="Clear selection (Esc)">×</button>
+      </header>
+      <div class="ic-body">
+        <p id="icNote"></p>
+        <dl id="icInfo"></dl>
+        <p id="icHint" class="muted" hidden></p>
+      </div>
+      <div class="row">
+        <button type="button" id="icFrame">Frame</button>
+        <button type="button" id="icIsolate" aria-pressed="false" class="toggle">Isolate</button>
+        <button type="button" id="icHide">Hide</button>
+        <button type="button" id="icShowAll" hidden>Show hidden</button>
+      </div>
+    </section>
     <div id="panelBody">
       <!-- BUILD -->
       <section role="tabpanel" id="pane-build" aria-labelledby="tab-build">
