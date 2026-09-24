@@ -504,7 +504,7 @@ class Scene {
     G.tex('u_win', 4, this.winTex);
     G.set('u_winZ', this.winZ);
     G.set('u_R', CAB.R + 0.10);
-    G.set('u_yc', CAB.yc);
+    G.set('u_yc', CAB.yc); G.set('u_winY', [CAB.win.yc, CAB.win.h / 2]);
     G.set('u_exposure', mood.exposure);
     G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);

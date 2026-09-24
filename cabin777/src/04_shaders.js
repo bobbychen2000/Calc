@@ -36,7 +36,7 @@ uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[25]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
-uniform float u_R; uniform float u_yc;
+uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
 uniform float u_exposure; uniform float u_exterior; uniform float u_fill;
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
@@ -61,8 +61,9 @@ float shadowF(vec3 wp, vec3 n){
 }
 // sun transmission through the fuselage: the ray to the sun is intersected with the skin circle and looked up in the
 // window LUT (rgb = shade transmittance, 0 between windows: the skin is opaque). QA r3: the hit must also lie within
-// the glass height, 15 in = +-0.19 m about y 1.02 [V: Boeing D6-58329-2 fig 2.5.1]; without it every ray in a window's z span
-// leaked through the wall above / below the pane as dashed sun stripes on the shells (q01, q14, q15)
+// the glass height, 15 in = +-0.19 m about the pane centre (u_winY = CAB.win yc, h/2: y 1.02, Boeing D6-58329-2 fig
+// 2.5.1 [V]); without it every ray in a window's z span leaked through the wall above / below the pane as dashed sun
+// stripes on the shells (q01, q14, q15)
 vec3 windowT(vec3 wp){
   vec2 o2 = vec2(wp.x, wp.y - u_yc); vec2 d = u_sunDir.xy;
   float a = dot(d, d);
@@ -73,7 +74,7 @@ vec3 windowT(vec3 wp){
   float t = (-b + sqrt(disc)) / (2.0*a);
   float zh = wp.z + u_sunDir.z * t;
   vec2 hit = o2 + d * t;
-  float wy = 1.0 - smoothstep(0.17, 0.22, abs(hit.y + u_yc - 1.02));
+  float wy = 1.0 - smoothstep(u_winY.y - 0.02, u_winY.y + 0.03, abs(hit.y + u_yc - u_winY.x));
   return wy * texture(u_win, vec2((zh - u_winZ.x)/(u_winZ.y - u_winZ.x), hit.x < 0.0 ? 0.25 : 0.75)).rgb;
 }
 vec3 envInside(vec3 R){
@@ -195,7 +196,7 @@ void main(){
     // reveal glow: faces within ~0.12 m of a pane pick up the window light (alpha of the window LUT = window span in z,
     // rgb = shade transmittance) [V: tlfl_IMG_9217 / 9518 glowing reveals]
     vec4 wl = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), v_wpos.x < 0.0 ? 0.25 : 0.75));
-    float reveal = wl.a * smoothstep(2.72, 2.84, abs(v_wpos.x)) * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - 1.02)));
+    float reveal = wl.a * smoothstep(2.72, 2.84, abs(v_wpos.x)) * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - u_winY.x)));
     // QA r2: the sidewall band between the window tops and the bin lens is lit by the lens only; with the full hemi,
     // bounce and wash on top the blue/amber sideLed washed out to #b8c0d5. Those terms are cut inside the band and the
     // lens ramp starts lower so the colour reaches the window tops (glass top ~1.32 m), fading to white at the belt
