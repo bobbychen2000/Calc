@@ -1,0 +1,236 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w5",
+ "lens": "Skeptic: every detail is assumed wrong until a real photo shows it right. In-service trip-report photos of the NH 777-300ER 3-4-3 cabin (SANspotter NH7 set, flight-report NH5 LAX-NRT 2022) outrank ANA's page images, which are partly retouched or rendered. Renders were built at 21:42 (/tmp/claude-0/b). src/09_seats.js has since been modified in the working tree (yFabric base #56659a -> #5a6597, yCover #454b63 -> #3a3f55); the values quoted below are the ones that were rendered.",
+ "score": 6.3,
+ "details": [
+  {
+   "detail": "Fabric brightness: tick and diamond seats are far too light. Same view, median L: q15 tick 103 and diamond 114 against y_47300 front-row backs 46/52/69/92 (median about 60). The mosaic seat in the same render is 59, so the tick/diamond material is the outlier, not the lighting. q16 foreground back is L 103 against y_47301 at 44. Seen from behind, the fabric over the back top is q17 L 127 (#65749e) against fr57325 124234 at L 30 (#24265a, dark navy). In-service backs: fr57325 124108 #1f283f (L 34), sans 14 #34354a (L 48). Hue holds (q15 R/B 0.52, G/B 0.65 against y_47300 0.44-0.53 / 0.58-0.66).",
+   "score": 5.5,
+   "refs": [
+    "/tmp/claude-0/r5/q15_econFronts.png",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "/tmp/claude-0/r5/q16_econAisle.png",
+    "ref/ana/y_47301-lang-multi.jpg",
+    "/tmp/claude-0/r5/q17_econBacks.png",
+    "ref/web/econ/fr57325_20220604_124234.jpg",
+    "ref/web/econ/fr57325_20220604_124108.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-14.jpg"
+   ]
+  },
+  {
+   "detail": "Fabric set: the sakura-petal fleck weave is missing. It is a dark navy ground with scattered pale petal-shaped flecks of about 5-10 mm. It covers seats 2 and 4 of the y_47300 front row (half the row), the in-service NH7 seat back in sans 14 (#34354a, L p10/50/90 34/48/87) and the centre back in sans 13. The model only has tick (yJacq), diamond (yDiamond) and mosaic (yMosaic). The most common dark seat in the photos does not exist in the model.",
+   "score": 4.5,
+   "refs": [
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-14.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-13.jpg",
+    "/tmp/claude-0/raterA5/fabrics.png"
+   ]
+  },
+  {
+   "detail": "Diamond variant: figure and ground are inverted and the scale is too large. In the photos, pale stepped ikat diamonds float on a DOMINANT navy ground, touching only at the tips. The blurred median sits near p10: (p50-p10)/(p90-p10) is 0.29 in y_47306 and 0.32 in y_47302. In the render the pale diamonds dominate and the navy shrinks to a crisp dark LATTICE of lines, so it reads as an argyle net (e4 0.47, q15 0.43). Same-row pitch is about 0.125 m in e4 against about 0.09 m in y_47302 (about 5 across a 0.41 m back, against 3.5 in the render).",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/raterA5/diamond_cmp.png",
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "/tmp/claude-0/r5/studio/e4_head.png",
+    "/tmp/claude-0/raterA5/a_headfront.png"
+   ]
+  },
+  {
+   "detail": "Tick and mosaic weaves: the pattern character is right. The tick's vertical broken ribs match y_47300 seats 1/3, and the mosaic's pale block checker matches y_47306 right. Tick contrast is low (q15 blurred p90/p10 1.13 against y_47306 1.29) and the tick is too bright (see above).",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/r5/q15_econFronts.png",
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47300-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Headrest: the cushion wings show on both sides of the cover and the cover/cushion width ratio is right (0.72 against y_47306 0.73). The cover reads lighter than the surrounding fabric in the aft-facing views (q15 L 110, cover/back 1.07), where y_47300 in the same view is L 47 (0.72) and sans 13 foreground is 0.63: dark navy-slate leatherette. The cushion wings are flat-faced with chamfers, where the photos show soft round bolster ends. The ANA mark is a plain grey sticker.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/raterA5/hf_zoom.png",
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-13.jpg"
+   ]
+  },
+  {
+   "detail": "Rear shell from behind: the hood is too narrow and does not cap the back. In fr57325 124234 and sans 15 the white shell spans essentially the full back width and wraps over the top. The navy fabric shows only as a thin rim of about 0.01-0.015 m along the top and sides (L 30). In q17 and q18 each back shows a thick fabric cap (0.06-0.09 m deep, seen from above) and wide fabric side strips: the hood is 0.372-0.38 against a back of 0.39-0.43.",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/raterA5/back_cmp.png",
+    "/tmp/claude-0/r5/q17_econBacks.png",
+    "ref/web/econ/fr57325_20220604_124234.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-15.jpg"
+   ]
+  },
+  {
+   "detail": "Screen, bezel and handset: the glass size, black border, dock gap (0.024 m, fixed) and handset keys match y_47305 and sans 18. The shell margin beside the bezel is too thin. Bezel/hood width is 0.89 in e5 and 0.94 in q18, against 0.835 in y_47305 and 0.875 in sans 15 (photo margins 0.029 m of flat shell). The hood's 0.03 corner radius eats the flat margin.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/r5/studio/e5_screen.png",
+    "/tmp/claude-0/raterA5/q18crop.png",
+    "ref/ana/y_47305-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-15.jpg"
+   ]
+  },
+  {
+   "detail": "Tray face, latch, pictogram, cup recess and long placard: the layout now matches sans 15/20 (latch centre top, pictogram left, round recess right). The pictogram is a blank white rectangle and the long 'Stow and latch handset' placard is still barely visible.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/r5/studio/e5_screen.png",
+    "ref/web/econ/sans_ana-777-300er-economy-15.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-20.jpg"
+   ]
+  },
+  {
+   "detail": "Tray arms and hubs, literature pocket, safety card and AC plate: the orientation is now right (barrel hubs at the rail ends, arms dropping), and the purple-headed B777-300 card above a light flap and the AC plate at upper left are verified by sans 20/21. The net reads as a solid black grille slab. sans 20 shows a see-through mesh with a ruched elastic top, visible at the flap sides as well as below it.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/r5/studio/e6_lowback.png",
+    "ref/web/econ/sans_ana-777-300er-economy-20.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-21.jpg",
+    "ref/ana/y_47307-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Armrests and aisle ends: the off-white slim arms, grey front knuckle and aisle-end panel with black button strip are plausible against y_47302/47301. The arm top is a little boxy.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/raterA5/a_y302.png",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/ana/y_47301-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Seat belts are wrong in form and doubtful in colour. The render has 0.16 m stubs lying near the back crease with the buckle about 0.2 m behind the pan front. In y_47302 and y_47301 the webbing drapes across the whole pan from the side crease and the latch sits near mid-pan to the front third. In those two photos (the 777 cabin, with the B777-300 placard in y_47302) the webbing is CHARCOAL. Only y_47303 shows cerulean.",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/raterA5/belts.png",
+    "/tmp/claude-0/r5/studio/e7_arm.png",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Pillow: navy, domed, resting at the crease; plausible. In-service pillows (sans 14, 13) are larger (about 0.83 of the pan width against 0.77) and softer, with wrinkles. Luminance ratio to the back: q15 0.7 against y_47300 0.9.",
+   "score": 7,
+   "refs": [
+    "ref/web/econ/sans_ana-777-300er-economy-14.jpg",
+    "ref/ana/y_47300-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Legs, footrest and life-vest pouch: the ribbed pedals and red life-vest strap are fine. The footrest hangers are still two straight kinked narrow boxes (0.038 wide), where y_47304 shows one broad (about 0.05) smoothly curved off-white arm.",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/r5/studio/e8_foot.png",
+    "ref/ana/y_47304-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Far LOD: the fabric mix and covers match the near LOD in q15/q16, with no visible pop at these distances. It inherits the brightness and missing-fleck issues.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/r5/q15_econFronts.png",
+    "/tmp/claude-0/r5/q16_econAisle.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "id": "w5a-1",
+   "severity": "high",
+   "what": "The sakura-petal fleck fabric is missing, and it is the commonest dark Y seat fabric in the photos.",
+   "evidence": "y_47300 front row: seats 2 and 4 are petal fleck on navy (#2c3a64, L 52; #27345a, L 46). sans 14 (in-service NH7) fleck back #34354a, L p10/50/90 34/48/87, flecks about 5-10 mm at about 12-15 % cover. See raterA5/fabrics.png. The model has only tick, diamond and mosaic (econUnit fabs[3]).",
+   "fix": "test/make_swatches.py: add y_fleck(). Cut or synthesise a 0.2 m tile of navy ground (linear ratio 1) with random pale petal flecks: ellipses 4-9 x 2-4 mm at random angles, about 13 % cover, lift about (4.5, 4.5, 3) so the flecks sit near #a9b4d6. 03_tex.js: new LAYER yFleck 25 (N_LAYERS 26), PHOTO_LAYERS[25] 'y_fleck', PHOTO_ENC y_fleck 5, LAYER_PARAMS 25: [5.0, 0.12, 1.4, 0.15]. 09_seats.js SEATMAT.yFabricD = { c: photoBase('#48578a','y_fleck'), r: 0.9, l: LAYER.yFleck }. 09a_econ.js econUnit and econUnitFar: fabs = [yFabric, yFabricD, yFabricC, yFabricD, yFabricB], so fleck is about 40 %, index (k*7+n*3+rot)%5. Pan: fleck seats use yFabricD or yFabric (y_47300 pans are the tick)."
+  },
+  {
+   "id": "w5a-2",
+   "severity": "high",
+   "what": "From behind, the fabric forms a thick cap over the top of every seat back and wide strips at the sides. The real shell covers the full width and wraps the top, leaving only a thin navy rim.",
+   "evidence": "raterA5/back_cmp.png: q17 fabric band over the back top is about 0.06-0.09 m deep in the view from above, L 127. In fr57325_20220604_124234 the rim is about 0.01-0.015 m, L 30 (#24265a). sans 15 shows the same. The hood is 0.372-0.38 wide, against back sections 0.39 (y 0.818) to 0.43.",
+   "fix": "09a_econ.js econSeat RS. Widen the hood rows to cover the back: [0.53, 0.12, 0.08, 0.41, 0.016], [0.80, 0.122, 0.09, 0.41, 0.016]. Add a top cap that rolls forward over the back top: replace the last three rows with [0.84, 0.112, 0.085, 0.405, 0.02], [0.862, 0.085, 0.07, 0.40, 0.02], [0.876, 0.04, 0.10, 0.39, 0.02]. Its front edge (z - d/2 = -0.01) then reaches the back's front plane minus about 0.015, so only a thin fabric rim shows. Lower the back loft's top sections by about 0.008 (SEC(0.853..0.868) -> 0.845..0.86) so they stay under the cap. Far LOD econUnitFar: hood box 0.375 -> 0.41 wide."
+  },
+  {
+   "id": "w5a-3",
+   "severity": "high",
+   "what": "The tick and diamond fabrics render 1.6-2x too light next to the mosaic in the same view and against every real photo.",
+   "evidence": "q15 median L: tick 103, diamond 114, mosaic 59. y_47300 front row: 46/52/69/92. q16 foreground 103 against y_47301 44. Tick-to-mosaic ratio is 1.75 in the render against 1.28 in y_47306 (78/61).",
+   "fix": "09_seats.js SEATMAT.yFabric and yFabricB base (rendered #56659a; working tree now #5a6597) -> about #46537f, roughly -35 % linear, bringing the q15 median to about 65-70. Leave yFabricC (#5f6fa0) alone as the anchor. Re-check q15 against y_47300 at a target tick/mosaic ratio of 1.2-1.3."
+  },
+  {
+   "id": "w5a-4",
+   "severity": "medium",
+   "what": "The diamond weave reads as a dark argyle net on a pale field. In the photos it is pale, stepped diamonds on a dominant navy ground, touching only at the tips. The render's pitch is also about 35 % too large.",
+   "evidence": "raterA5/diamond_cmp.png. Blurred (p50-p10)/(p90-p10): y_47306 0.29, y_47302 0.32, e4 0.47, q15 0.43 (pale is over-represented). Same-row pitch: e4 about 0.125 m, y_47302 about 0.09 m.",
+   "fix": "test/make_swatches.py y_diamond(): shrink the diamond half-diagonals from 0.040/0.037 to 0.030/0.028 m, so they meet near the tips and cover about 30 % with navy dominant. Increase the step jaggedness (step 0.008 -> 0.006, plus more edge noise), and use lift (2.8, 2.3, 1.5) so the pale peaks stay but occupy less area. 03_tex.js LAYER_PARAMS[24] scale 5.5 -> 7.5 tiles/m (tile about 0.133 m, same-row pitch about 0.067-0.09 m; verify in e4 that about 5 diamonds span the 0.41 m back)."
+  },
+  {
+   "id": "w5a-5",
+   "severity": "medium",
+   "what": "The seat belts are 0.16 m stubs near the back crease, the buckle is misplaced, and the cerulean colour is contradicted by the 777 photos.",
+   "evidence": "raterA5/belts.png. In y_47302 and y_47301 (777 cabin, B777-300 placard) the charcoal webbing drapes across the whole pan and the silver latch sits at mid-pan to the front third. Only y_47303 shows blue webbing. Render e7/a_y302: short cyan strips with the buckle about 0.03 m off centre at z -0.25.",
+   "fix": "09a_econ.js belt loop: webbing gBox(0.045, 0.004, 0.30) from the side crease (x0 ± 0.17, z -0.08) angled 25-30 deg to meet at (x0 ± 0.03, z -0.33). Buckle at M4.trs(x0 ± 0.03, 0.478, -0.33). Follow the pan crown with two segments (lift y by 0.01 over the middle). SEATMAT.yBelt: '#3a64a6' -> '#3b3e45' (charcoal) unless the user confirms blue (see the question below)."
+  },
+  {
+   "id": "w5a-6",
+   "severity": "medium",
+   "what": "The headrest cover reads lighter than the fabric in the forward-facing cabin views. In y_47300 and in-service sans 13 it is a dark navy-slate leatherette, darker than the fabric, which only turns light where it catches window sheen.",
+   "evidence": "q15 cover L 110 (#616c91), cover/back 1.07. y_47300 cover L 47 (#272d48), 0.72. sans 13 foreground 51/81 = 0.63. y_47306 and y_47303 are lighter only as grazing-light sheen.",
+   "fix": "09_seats.js SEATMAT.yCover: rendered '#454b63', r 0.45. The working tree's '#3a3f55' is a step; go to about '#30354a' with r 0.32, so the sheen comes from specular rather than albedo. Target q15 cover/back about 0.75-0.85."
+  },
+  {
+   "id": "w5a-7",
+   "severity": "medium",
+   "what": "The screen bezel nearly fills the hood face from the seated view (thin shell margins).",
+   "evidence": "Bezel/hood: q18 0.94, e5 0.89. Photos: y_47305 0.835 (55 px = 0.029 m margins at 1908 px/m), sans 15 0.875, fr57325 124234 0.88.",
+   "fix": "Covered by w5a-2 if the hood widens to 0.41 with corner r 0.016 (0.316/0.41 = 0.77 overall, about 0.85 of the flat face). Otherwise set only the RS corner r at y 0.53-0.80 from 0.03/0.032 to 0.014."
+  },
+  {
+   "id": "w5a-8",
+   "severity": "low",
+   "what": "The pocket net renders as a solid black slab.",
+   "evidence": "e6 shows a black gRBox 0.27 x 0.07 in LAYER.grille. sans 20 shows a see-through black mesh with a ruched elastic top edge, visible either side of the flap as well as below it.",
+   "fix": "09a_econ.js: net gRBox(0.27, 0.07, 0.016) -> r 0.9 with c '#2a2c31', raising the grille layer albedo so the shell behind shows (or make it a 2 mm gQuad with alpha if the Builder supports it). Add a 0.008 ruched band gCyl(0.005, 0.005, 0.30) at the net top in '#3a3c42' and extend the net 0.02 beyond the flap on each side."
+  },
+  {
+   "id": "w5a-9",
+   "severity": "low",
+   "what": "The footrest hangers are still two straight kinked narrow boxes.",
+   "evidence": "e8 shows gRBox 0.038-wide links at -20/-34 deg. y_47304 shows one broad (about 0.05 m) smoothly curved off-white arm.",
+   "fix": "09a_econ.js footrest: replace the two gRBox links with one loftAt of 5 SEC along a quarter arc (radius about 0.25, from (0.30, -0.10) to (0.12, 0.0)), width 0.05, depth 0.024, r 0.01, in SEATMAT.arm."
+  },
+  {
+   "id": "w5a-10",
+   "severity": "low",
+   "what": "The headrest cushion wing ends are flat and chamfered rather than soft bolsters, and the ANA mark on the cover is a blank grey patch.",
+   "evidence": "raterA5/hf_zoom.png against y_47306 (round, domed wing ends) and y_47300.",
+   "fix": "econSeat headrest loft: at y 0.62-0.77 set the corner r to about d/2 (0.045 -> 0.047 with d 0.095, already near) and add SEC x-bulge: insert SEC(0.695, 0.38, 0.10, -0.052, 0.049) so the ends dome. ANA mark: gQuad(0.02, 0.006) in '#8e95a8' (a thin logotype bar), not the 0.012-tall patch."
+  },
+  {
+   "id": "w5a-11",
+   "severity": "low",
+   "what": "The pillow is small and board-like compared with in-service pillows.",
+   "evidence": "sans 14: pillow about 0.83 of the pan width, soft, wrinkled. Render 0.33 wide (0.77) with an even dome.",
+   "fix": "09a_econ.js pillow PS: width 0.33 -> 0.36, height 0.24 -> 0.27, add 2-3 mm of random vertex jitter or a slight saddle (t-dependent z offset of 0.01)."
+  }
+ ],
+ "questionsForUser": [
+  "Seat-belt webbing: ANA's y_47302 and y_47301 photos (777 cabin) show charcoal belts, but y_47303 shows cerulean. Do you have an NH7/NH8 photo that settles it, or should we use charcoal?",
+  "Blankets in plastic bags on every seat (sans 13/14, flight-report NH5): should the boarding-state cabin show them, or keep ANA's clean-cabin look?"
+ ],
+ "extraRefsSearched": [
+  "https://www.sanspotter.com/ana-777-300er-economy/ (NH7 set already in ref/web/econ/sans_*.jpg; used 13, 14, 15, 18, 20, 21, 23)",
+  "https://flight-report.com/en/report/57325/ana-nh5-los-angeles-lax-tokyo-nrt/ (downloaded fr57325_20220604_123934/124108/124124/124234.jpg)",
+  "https://www.ana.co.jp/en/jp/guide/flight_service_info/int-service/y/seat-b787_10/ (the images are byte-identical to y_47302-47307, so ANA's 777 and 787-10 Y pages share photos; duplicates deleted)",
+  "https://onemileatatime.com/ana-new-first-business-class/ (no economy images)",
+  "https://www.travelcodex.com/review-ana-boeing-787-economy-class-tokyo-haneda-to-los-angeles/ (no images extractable)",
+  "https://pointmetotheplane.boardingarea.com/ana-economy-777-300-flight-review/ (old 2-4-3 cabin; no images extracted)"
+ ]
+}

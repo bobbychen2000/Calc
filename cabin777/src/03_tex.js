@@ -2,8 +2,8 @@
 // Procedural textures (generated at load; no external image assets)
 //  Detail layers are RGBA: RG = tangent normal (xy), B = albedo mod, A = roughness mod
 // ------------------------------------------------------------------
-const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24 };
-const N_LAYERS = 25;
+const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24, yFleck: 25 };
+const N_LAYERS = 26;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
 const PHOTO_LAYERS = {
   16: 'y_tick',
@@ -15,6 +15,7 @@ const PHOTO_LAYERS = {
   22: 'y_carpet',
   23: 'py_confetti',
   24: 'y_diamond',
+  25: 'y_fleck',   // econ w5: petal-fleck Y fabric
 };
 let PHOTO_PIX = null;
 // photo pattern strength per layer (1 = as photographed). QA r1 (relative luminance SD measured on the photos):
@@ -40,6 +41,7 @@ const PHOTO_GAIN = {
 const PHOTO_ENC = {
   y_tick: 5,
   y_diamond: 5,
+  y_fleck: 5,
   py_back: 4,
   py_confetti: 6,
 };
@@ -63,6 +65,7 @@ const LAYER_PARAMS = {
   // Y normal strength 0.12 (was 0.3: read as a knit; the Y jacquard is a flat woven face, y_47306)
   16: [5.5, 0.12, 1.4, 0.15], 17: [7.5, 0.3, 0.8, 0.15], 18: [14, 0.5, 0.35, 0.2], 19: [1.6, 0.06, 0.22, 0.2],
   20: [2.4, 0.08, 0.28, 0.25], 21: [14, 0.5, 0.35, 0.2], 22: [3.2, 0.7, 0.5, 0.2], 23: [5.0, 0.3, 0.8, 0.15], 24: [5.5, 0.12, 1.4, 0.15],
+  25: [5.0, 0.12, 1.4, 0.15],   // econ w5: Y petal fleck (0.2 m tile)
 };
 
 function hash2(ix, iy, seed) {
@@ -238,7 +241,7 @@ function buildDetailLayers(S = 256) {
     const a = vnoise(u * 3, (v + w) * 160, 160, 122), b = vnoise(u * 6, (v + w) * 64, 64, 123);
     return clamp(0.5 + 0.55 * (a - 0.5) + 0.3 * (b - 0.5), 0, 1);
   }, () => 0.5, 0.2);
-  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16];
+  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16]; L[25] = L[16];
   // photo swatches: tile scale from the swatch's physical size; normal + roughness from its luminance
   if (PHOTO_PIX) for (const [k, name] of Object.entries(PHOTO_LAYERS)) {
     const px = PHOTO_PIX[name]; if (!px) continue;

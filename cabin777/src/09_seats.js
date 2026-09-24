@@ -12,22 +12,27 @@ const SEATMAT = {
   // more saturated than its albedo: #5468a8 is the base whose tick swatch averages #415596 through the renderer's tone
   // curve at studio exposure (4x4 texel average, test/sim of 04_shaders toLin + aces) ~ photo #415390 [D]
   // econ QA w1: #5468a8 rendered too pure a blue (q15 R/B 0.33, G/B 0.46 vs y_47300 0.44 / 0.58) -> greyer #6a79a8 [D]
-  yFabric: { c: photoBase('#6a79a8', 'y_tick'), r: 0.9, l: LAYER.yJacq },
-  yFabricB: { c: photoBase('#6a79a8', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
+  // econ w5 (A + B high): after the lighting r3 AO lift the tick / diamond seats rendered 1.6-2x too light (q15 L50 103 / 114
+  // vs y_47300 backs 46-92); mosaic (L50 59) is the anchor, target tick ~70, diamond ~80, fleck ~55 [D]
+  yFabric: { c: photoBase('#52597f', 'y_tick'), r: 0.9, l: LAYER.yJacq },
+  yFabricB: { c: photoBase('#565e82', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
   yFabricC: { c: '#5f6fa0', r: 0.9, l: LAYER.yMosaic },   // third variant: dash mosaic (y_47302 left, y_47306 right)
+  yFabricD: { c: photoBase('#464b6e', 'y_fleck'), r: 0.9, l: LAYER.yFleck },   // econ w5: petal fleck (y_47300 seats 2 / 4, sans 14 L50 48)
   // headrest cushion: sparse white confetti on cobalt, a different fabric from the back (y_47306 / 47302 wings,
   // REFERENCE777.md) - shares the luminance-only confetti swatch with the PY wings
   // (same tone-curve match: wing photo mean #334276 in y_47306 -> base #4a5a98 averages #324384) [D]
   // econ QA w1: the cushion is the pale-dash fabric (y_47306 right seat: back and cushion alike; wings of the other two
   // seats: short white dashes ~6 x 2 mm, not the 11-22 mm PY confetti blobs) -> the dash mosaic layer [D]
-  yHead: { c: '#6272a4', r: 0.9, l: LAYER.yMosaic },
+  // econ w5: the procedural mosaic's big white dashes read as blotches on the wings (q16); the wing weave is short pale
+  // dashes on navy (y_47306), i.e. the fleck swatch, one step lighter than the fleck backs (w5 B) [D]
+  yHead: { c: photoBase('#4d5479', 'y_fleck'), r: 0.9, l: LAYER.yFleck },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
-  yCover: { c: '#5f6680', r: 0.45, l: LAYER.plastic },     // econ w2: smooth leatherette (the leather grain read ~4 mm cells)
+  yCover: { c: '#343a52', r: 0.32, l: LAYER.plastic },     // econ w2: smooth leatherette; w5: q15 L 110 vs y_47300 #272d48 L 47 -> darker, sheen from specular
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
-  yBelt: { c: '#3a64a6', r: 0.7, l: LAYER.fabric },        // y_47303 (58,102,173), G/B 0.59
+  yBelt: { c: '#2e4c86', r: 0.8, l: LAYER.fabric },        // y_47303 #325495 / #456198 (w5 B: #3a64a6 rendered sky-cyan)
   yPillow: { c: '#4d5579', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f
   arm: { c: '#c4c8cd', r: 0.45, l: LAYER.plastic },       // econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
   armPad: { c: '#b6bac0', r: 0.5, l: LAYER.plastic },

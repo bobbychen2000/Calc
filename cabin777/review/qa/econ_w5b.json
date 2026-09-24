@@ -1,0 +1,186 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w5",
+ "lens": "geometry/proportion first, then materials/colour, lighting on seats, artefacts",
+ "score": 6.3,
+ "details": [
+  {
+   "detail": "Fabric tone and pattern (the main problem). The white bins match the photo: q15 bins L50 211 vs y_47300 210. Even so, the q15 seat zone is L p10/50/90 62/102/161 vs 36/69/144 in the photo, so the seats read denim/light-blue where the photo reads deep navy with sparse bright flecks. The problem is the tick and diamond seats: q15 tick back #5367a1 L50 103 and diamond #5469a2 L50 113, vs y_47300 backs #2c3a64 / #344169 (L50 52 / 66). The mosaic seats are correct: q15 #344477 L50 59. Relative to the covers, the photo has cover about equal to back (y_47306 79 vs 66-99; sans13 86 vs 79), while the render has cover 110 against tick 103 and mosaic 59, so it is the tick and diamond bases that are too light. The flecks also lose their skew at distance: photo p90/p50 1.9 (y_47300) to 2.2 (y_47306), render 1.51 in q15 and 1.33 in b_front. In the photo the light flecks are sparse and very bright on a dark ground; in the render they average into a lighter mid-blue. Figure and ground are reversed on the diamond: the photo has small solid pale-lavender stepped diamonds (about 0.055 m) on a dominant navy ground, with Otsu light-area 0.15 (y_47306) and 0.10 (y_47302). The render has large light diamonds with ticks inside and a thin dark lattice, light-area 0.47 (b_head) and 0.45 (q15). The mosaic reads as blotchy camouflage, not the horizontal-dash blocks seen in y_47306 right.",
+   "score": 4.5,
+   "refs": [
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-13.jpg",
+    "ref/web/econ/fr57325_20220604_124108.jpg",
+    "/tmp/claude-0/r5/q15_econFronts.png",
+    "/tmp/claude-0/raterB5/st/b_head.png",
+    "/tmp/claude-0/raterB5/diamond.jpg",
+    "/tmp/claude-0/raterB5/diamond2.jpg",
+    "/tmp/claude-0/raterB5/tick.jpg"
+   ]
+  },
+  {
+   "detail": "Headrest and leatherette cover. The proportions are verified: cover 0.27 wide = 0.72 of the cushion (y_47306 0.74), plate plus hem about 0.23 tall (aspect 0.85 vs 0.87). The hem now tucks back correctly (hem top z -0.1008 meets the plate). The colour is too grey and too light: q15 cover #616c91 (R/B 0.67, G/B 0.74, L 110) vs y_47300 #272d48 (0.54/0.63, L 47) and y_47306 #475274 (0.61/0.70). In q15/q16 the covers read as light lavender-grey cards, where the photos (and flight-report 124108) show dark slate, as dark as the back. The ANA mark (#9aa0ae, 20 x 12 mm) still reads as a white sticker at every distance in q15. The cushion wings barely read beside the cover in q15 (same fabric as the back, no shading break), whereas the rounded wings stand out in y_47300 / sans13.",
+   "score": 6.5,
+   "refs": [
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/web/econ/fr57325_20220604_124108.jpg",
+    "/tmp/claude-0/r5/q15_econFronts.png",
+    "/tmp/claude-0/raterB5/st/b_head.png"
+   ]
+  },
+  {
+   "detail": "Pillow. The size is fine (0.33 x 0.24, 0.76 of the back width; aspect 0.73 vs y_47300 0.65) and so is the colour relative to the back (e1 pillow/pan 0.67, photo about 0.6-1.1). The shape is a rigid bevelled slab. The loft is 0.10 m thick with a |t|^3 superellipse, so the edges are blunt and the outline is straight (e4, b_front47300). y_47300 and sans13 show a soft pillow: concave sagging edges, pinched pointed corners, thickness falling to about 1 cm at the rim, and a centre seam.",
+   "score": 6,
+   "refs": [
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-13.jpg",
+    "/tmp/claude-0/r5/studio/e4_head.png",
+    "/tmp/claude-0/raterB5/st/b_front47300.png"
+   ]
+  },
+  {
+   "detail": "Rear shell, hood, screen and handset. These match sans15 and y_47305. Glass/bezel ratio is 0.93 wide x 0.81 tall (y_47305 0.94 x 0.82). The black bezel sits in a light shadow ring. The dock and handset (black, ~0.76 of the dock), the round D-pad and the diamond colour keys all match. On the tray back: pictogram placard left, latch at the top centre, round recess right, as in sans15. On-seat lighting has improved: q18 hood L50 181 vs y_47305 192 (w4 was 136). The shell reads slightly cold and white against the warm grey #b1a982 in sans15, but that is cabin light.",
+   "score": 8,
+   "refs": [
+    "ref/ana/y_47305-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-15.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-16.jpg",
+    "/tmp/claude-0/r5/q18_seat35C.png",
+    "/tmp/claude-0/r5/studio/e5_screen.png"
+   ]
+  },
+  {
+   "detail": "Tray rail, hubs, AC and literature pocket. The w4 fixes are verified against sans23 and y_47307: the rail runs above the AC; large off-white horizontal barrel hubs sit at the pocket-top corners; the portrait AC with lit USB and green LED sits left under the rail; the light flap has piping over a black net. Remaining: the net's black band (0.07 tall, opaque, grille layer) reads as a solid black bar in e2 and e6, while sans23 shows see-through mesh with a ruffled elastic binding. The hub barrels poke about 7 mm past the shell side (seen in e3).",
+   "score": 7.5,
+   "refs": [
+    "ref/web/econ/sans_ana-777-300er-economy-23.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-20.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-21.jpg",
+    "ref/ana/y_47307-lang-multi.jpg",
+    "/tmp/claude-0/r5/studio/e6_lowback.png",
+    "/tmp/claude-0/r5/studio/e2_back.png"
+   ]
+  },
+  {
+   "detail": "Armrests. The loft runs from y 0.60 to 0.685, so the arm is 8.5 cm thick with a square, level nose. y_47303 shows a slim bar about 5.5 cm thick (28 px against a 0.33 m arm of 160 px) with a rounded nose that droops forward. The same slim bars appear in fr57325 124108, where the seat letters sit on the arm sides. The grey front bracket (0.058 x 0.05) plus the white fairing reads as a heavy square 'n' frame in e1, e7 and b_side47303. The photos show a slim grey strut running from under the nose to a pivot ring at pan level.",
+   "score": 6,
+   "refs": [
+    "ref/ana/y_47303-lang-multi.jpg",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/web/econ/fr57325_20220604_124108.jpg",
+    "/tmp/claude-0/r5/studio/e7_arm.png",
+    "/tmp/claude-0/raterB5/arm.jpg",
+    "/tmp/claude-0/raterB5/st/b_side47303.png"
+   ]
+  },
+  {
+   "detail": "Footrest. The w4 question is now answered by sans23. The hangers come down at the seat centreline: two off-white bars about 0.07 apart between the passenger's feet, with no hangers at the pedal outer ends. y_47304 agrees, with one broad bowed arm landing on the joint block between the two pedals. The model hangs its arms at x0 +/- 0.13 (the pedal outer ends) as two straight boxes with an overlap kink (b_foot, e8).",
+   "score": 5.5,
+   "refs": [
+    "ref/web/econ/sans_ana-777-300er-economy-23.jpg",
+    "ref/ana/y_47304-lang-multi.jpg",
+    "/tmp/claude-0/raterB5/st/b_foot.png",
+    "/tmp/claude-0/r5/studio/e8_foot.png"
+   ]
+  },
+  {
+   "detail": "Belts, buckle, pan front, life-vest pouch, electronics box, legs and baggage bar hold (y_47302, y_47303). The belt webbing renders sky-cyan: e1 #74acda (G/B 0.79, L 165, 1.7x the pan). The photos show #325495 / #456198 (G/B 0.56-0.64), about the pan's luminance; y_47302 belts are dark slate.",
+   "score": 7,
+   "refs": [
+    "ref/ana/y_47303-lang-multi.jpg",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "/tmp/claude-0/r5/studio/e1_front.png"
+   ]
+  },
+  {
+   "detail": "Far LOD and artefacts. There is no visible pop, z-fighting or floating part in q15, q16 or q17 at 930x575. The far rows keep covers, screens and the fabric mix. The far seats inherit the same too-light tick and diamond bases, so the rear half of the cabin reads pale blue (q15 top rows, q16 left block).",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/r5/q15_econFronts.png",
+    "/tmp/claude-0/r5/q16_econAisle.png",
+    "/tmp/claude-0/r5/q17_econBacks.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "id": "econ-w5b-1",
+   "severity": "high",
+   "what": "The tick and diamond fabrics are too light and read as denim/light blue instead of deep navy with sparse bright flecks. This dominates q15 and q16 and the whole Y cabin.",
+   "evidence": "The white bins match (q15 L50 211 vs y_47300 210), but the seat zone is q15 L 62/102/161 vs photo 36/69/144. Tick back q15 #5367a1 L50 103 and diamond #5469a2 L50 113, vs y_47300 backs #2c3a64 L50 52 and #344169 L50 66. The mosaic is correct (q15 #344477 L50 59). Fleck skew p90/p50: photo 1.9-2.2, render 1.51 (q15) and 1.33 (b_front). The real in-service photos (sans13, flight-report 57325 JA794A 124108) show near-navy seats.",
+   "fix": "SEATMAT (09_seats.js, one line each): yFabric c: photoBase('#56659a','y_tick') -> photoBase('#3f4b7a','y_tick'); yFabricB c: photoBase('#56659a','y_diamond') -> photoBase('#44528a','y_diamond') (y_47306 diamond is about 1.25x the tick). Target q15 L50: tick ~70-75, diamond ~85, mosaic unchanged ~60-66. Keep yHead '#6272a4' -> '#56659a' so the tick/diamond seats' headrests stay one step lighter than the back, as in y_47306. To keep the flecks bright on the darker ground, in 03_tex.js (shared, one line) set PHOTO_GAIN 16: 1.3 and 24: 1.3. Optionally, in test/make_swatches.py y_tick(), thin the ticks so about 12 % of pixels exceed 2x the median (now 24.5 %) at the same mean, e.g. ratio = ratio**1.5 * mean(ratio) / mean(ratio**1.5)."
+  },
+  {
+   "id": "econ-w5b-2",
+   "severity": "medium",
+   "what": "The diamond fabric has figure and ground reversed: large light diamonds carrying ticks inside a thin dark lattice, instead of small solid pale stepped diamonds spaced out on a dominant navy ground.",
+   "evidence": "Otsu light-area: y_47306 left seat 0.15, y_47302 middle seat 0.10, vs render b_head 0.47 and q15 0.45. The light/dark mean ratio is 2.15-2.57 in the photos vs 1.37-1.44 in the render. Side by side in raterB5/diamond.jpg and diamond2.jpg; sans13 is a real in-service photo.",
+   "fix": "test/make_swatches.py y_diamond(): keep the stagger period (0.12 / 0.108 m) and shrink each diamond from ~0.08 x 0.074 to ~0.055 x 0.05 m, keeping the ~4.5 mm steps. That makes the navy gaps about as wide as the diamonds (light-area ~0.2). Fill the diamonds almost solid: suppress the tick modulation inside them to ~30 %, so they read as flat pale lavender blocks. Then re-run make_swatches.py (y_diamond only) and rebuild."
+  },
+  {
+   "id": "econ-w5b-3",
+   "severity": "medium",
+   "what": "The headrest cover is too grey and too light, so it reads as a pale lavender card on every seat in q15 and q16. The ANA mark reads as a white sticker.",
+   "evidence": "q15 cover #616c91 (R/B 0.67, G/B 0.74, L50 110) vs y_47300 #272d48 (0.54/0.63, L 47) and y_47306 #475274 (0.61/0.70). In the photos the cover is about as dark as the back fabric (y_47306 79 vs 66-99; sans13 86 vs 79).",
+   "fix": "SEATMAT.yCover '#454b63' -> '#363e5e' (R/B 0.57, G/B 0.66) and keep r 0.45. In econSeat, change the ANA mark to B.add(gQuad(0.014, 0.008), M4.mul(BH, M4.trs(-0.11, 0.625, -0.1035, Math.PI)), { c: '#5a6079', r: 0.45 }). In econUnitFar the yCover box follows automatically."
+  },
+  {
+   "id": "econ-w5b-4",
+   "severity": "medium",
+   "what": "The footrest hangers are at the pedal outer ends (x0 +/- 0.13). The real footrest hangs from the seat centreline, with the arm(s) landing on the joint between the two pedals.",
+   "evidence": "sans23: two off-white bars about 0.07 m apart between the passenger's feet at the seat centre, none at the outer ends. y_47304: a broad bowed arm lands on the dark joint block between the pedals. Render b_foot and e8 show two straight kinked hangers at the ends.",
+   "fix": "econSeat footrest block: hx = x0 + s * 0.035 (was 0.13). Replace the two gRBox links with one bowed flat arm, e.g. for (let i = 0; i < 4; i++) { const a = (-12 - i * 9) * DEG; B.add(gRBox(0.036, 0.062, 0.022, 0.009, 1), M4.trs(hx, 0.28 - i * 0.052, -0.095 + i * 0.03 + i * i * 0.004, 0, a), SEATMAT.arm); }, overlapping segments that bend from -12 deg to -39 deg. Move the clamp gRBox to hx as well. Pedals: px = x0 + s * 0.085 with the dark end cap only at the outer end (e === s) plus one shared dark joint block gBox(0.02, 0.024, 0.054) at x0."
+  },
+  {
+   "id": "econ-w5b-5",
+   "severity": "medium",
+   "what": "The pillow is a rigid bevelled slab with straight edges and blunt 5 cm-radius rims. The real pillow is soft, with pinched corners and sagging edges.",
+   "evidence": "e4_head, b_front47300 vs y_47300 (all four pillows) and sans13. The photo pillow aspect is 0.65; the render's is 0.73.",
+   "fix": "econSeat pillow: replace the PS gLoft with a deformed gSphere(1, 24, 12) whose vertices are mapped (sx,sy,sz) -> x = 0.165*sx*(1 - 0.07*(1 - sy*sy)), y = 0.11*sy*(1 - 0.08*(1 - sx*sx)), z = 0.035*sz*Math.pow((1 - Math.pow(Math.abs(sx), 4)) * (1 - Math.pow(Math.abs(sy), 4)), 0.5). Recompute the normals and keep the same M4.trs(0, 0.14, -0.10, 0, -80*DEG) placement. This gives concave sides, pointed corners and a 7 cm dome that thins to the rim. If the geometry arrays can't be edited in place, keep gLoft but use e = Math.pow(1 - t*t, 0.5), total thickness 0.07 (t * 0.035), corner radius 0.006, and height 0.22."
+  },
+  {
+   "id": "econ-w5b-6",
+   "severity": "medium",
+   "what": "The armrests are too thick with a square nose, and the front bracket is heavy, so between seats the arm reads as a boxy 'n' frame.",
+   "evidence": "The loft is 0.60-0.685 (8.5 cm) vs about 5.5 cm in y_47303 (28 px against a 160 px, 0.33 m arm) and the slim bars in fr57325 124108. The bracket loft is 0.058 x 0.05 (e7, b_side47303, arm.jpg).",
+   "fix": "econUnit arm loft: [SEC(0.625, 0.046, 0.32, -0.24, 0.016), SEC(0.64, 0.054, 0.34, -0.24, 0.024), SEC(0.668, 0.052, 0.335, -0.24, 0.024), SEC(0.68, 0.044, 0.32, -0.235, 0.018)] (5.5 cm). Add a drooping nose: B.add(gRBox(0.05, 0.045, 0.05, 0.02, 2), M4.trs(xa, 0.64, -0.40, 0, -20 * DEG), SEATMAT.arm). Slim the front bracket loft to w 0.038, d 0.034: SEC(0.30, 0.036, 0.032, -0.37, 0.014), SEC(0.46, 0.04, 0.036, -0.385, 0.016), SEC(0.62, 0.04, 0.036, -0.395, 0.016). Optional: small grey seat-letter quads on the arm side, as in fr57325 124108."
+  },
+  {
+   "id": "econ-w5b-7",
+   "severity": "low",
+   "what": "The mosaic fabric reads as blobby camouflage, not the checker of horizontal pale dashes.",
+   "evidence": "y_47306 right seat (ref306 mosaic p10/50/90 29/66/140, p90/p50 2.12) vs render b_front mosaic p90/p50 1.67, p10/p50 0.86 (flat ground). See tick.jpg, right pair.",
+   "fix": "03_tex.js (shared) LAYER 11 generator: build the dashes as horizontal 6 x 1.2 mm strokes, dense in alternate ~33 mm checks and sparse in the others, with a darker ground (albedo strength 1.5 -> 1.8). Or photo-swatch it from y_47306 right seat as 'y_mosaic' via make_swatches.py, in the same way as y_tick."
+  },
+  {
+   "id": "econ-w5b-8",
+   "severity": "low",
+   "what": "The belt webbing renders sky-cyan and 1.7x brighter than the pan.",
+   "evidence": "e1 belt #74acda L 165 (G/B 0.79) vs y_47303 #325495 / #456198 (G/B 0.56-0.64), about the pan's luminance. y_47302 belts are dark slate.",
+   "fix": "SEATMAT.yBelt '#3a64a6' -> '#2e4c86', and l: LAYER.fabric -> LAYER.vinyl, or lower r to 0.8 if the cyan comes from a sheen term."
+  },
+  {
+   "id": "econ-w5b-9",
+   "severity": "low",
+   "what": "The pocket net is an opaque black slab, and the tray hub barrels poke past the shell side.",
+   "evidence": "e2 / e6: a solid 0.07 black band. sans23: see-through mesh with a ruffled black elastic top. e3: the hub disc shows beside the shell (hub at dx 0.205 +/- 0.025 vs shell half-width ~0.223).",
+   "fix": "econSeat: net gRBox color '#18191c' -> '#26282d', r 0.8, keep LAYER.grille and raise its albedo strength so the mesh reads. Make the binding a gCyl tube of r 0.007 with LAYER.fabric. Hubs: s * 0.205 -> s * 0.198, with length 0.045."
+  }
+ ],
+ "questionsForUser": [
+  "The footrest hangers: sans23 shows two white bars close together at the seat centre, and y_47304 shows a bowed arm landing on the pedal joint. Can you confirm (for example from your own photo) that there is no hanger at the pedal outer ends?",
+  "The belt colour differs between official photos: blue webbing in y_47303, dark slate in y_47302. Which one does your aircraft have?"
+ ],
+ "extraRefsSearched": [
+  "https://www.sanspotter.com/ana-777-300er-economy/ (downloaded 30 images as ref/web/econ/sans_ana-777-300er-economy-NN.jpg; the econ-relevant ones are 13-30)",
+  "https://flight-report.com/en/report/57325/ana-nh5-los-angeles-lax-tokyo-nrt/ (JA794A, new 212-seat cabin, 2022; downloaded 31 images as ref/web/econ/fr57325_*.jpg; seat views 123934, 124108, 124124, 124234, 134011, 144049)",
+  "https://pointmetotheplane.boardingarea.com/ana-economy-777-300-flight-review/ (2018-19, old cabin, not used)",
+  "https://thepointsguy.com/airline/reviews/ana-777-300-economy-flight-review/ (2017, old cabin, not used)",
+  "https://www.ana.co.jp/en/jp/guide/flight_service_info/int-service/y/seat-b777_300er_new/ (same set as ref/ana)",
+  "https://www.airlineratings.com/articles/no-revolution-ana-787-10-average (787-10 CL3710 background)"
+ ]
+}

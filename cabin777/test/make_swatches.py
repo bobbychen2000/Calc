@@ -47,7 +47,7 @@ SW = {
 # QA r2: Y 5 (was 8), see 03_tex.js PHOTO_ENC; py_back 4: its white dashes are ~4.6x the charcoal ground in linear light
 # (py_37301 luminance p10 / p90 100 / 201) and were clipped at 1.5x, which left the dark gaps dominant (pattern read
 # inverted); py_confetti 6: white flakes ~220 on a 55-65 ground (py_37305, ~17x linear)
-ENC = {'y_tick': 5, 'y_diamond': 5, 'py_back': 4, 'py_confetti': 6}       # default 2 (= ratio x 0.5)
+ENC = {'y_tick': 5, 'y_diamond': 5, 'y_fleck': 5, 'py_back': 4, 'py_confetti': 6}       # default 2 (= ratio x 0.5)
 # grey-pattern materials: keep only the luminance pattern (the per-channel ratio of these phone photos is JPEG chroma
 # noise and lilac / green casts); the model's material colour sets the hue
 MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave (QA r1, wall-balanced py_37305)
@@ -193,35 +193,70 @@ def make(name, photo, box, size, rot=0):
 def y_diamond():
     """econ QA w1: the Y diamond variant, synthesised on the tick weave. The old photo crop (y_47306 far-left seat, seen
     at ~55 deg and upsampled 2x) tiled into blurry snowflakes. The real fabric (y_47306 left seat, y_47302 middle seat) is
-    the same navy tick ground with a staggered lattice of pale, stepped (ikat-like) diamonds: same-row period 0.12 /
-    0.095 m, same-column 0.108 m -> 2 per row, 4 staggered rows per 0.26 m tile (0.13 m) [D]; diamonds ~0.08 wide x
-    0.074 tall with ~4.5 mm steps, near-touching (w2) [D]; diamond / ground linear ratio R 6.8 G 4.8 B 2.3 (blur-3 p70 / p30, y_47306) and 8.0 / 6.9 / 3.3 (y_47302),
-    i.e. pale lavender diamonds -> lift (3.4, 2.7, 1.7) over the tick ground, with the ticks dimmed inside [D]"""
+    the same navy tick ground with a staggered lattice of pale, stepped (ikat-like) diamonds [D].
+    econ w5 (A + B): figure and ground were inverted (light area 0.45-0.47 vs Otsu 0.10-0.15 in y_47306 / y_47302;
+    light/dark mean 1.4 vs 2.2-2.6). Now near-solid pale diamonds ~0.052 x 0.044 m with ~5 mm steps on a dominant navy
+    ground, same-row pitch ~0.087 m (y_47302 middle seat: ~4 per 0.34 m), 6 staggered rows per 0.26 m tile -> light
+    area ~0.3; ticks kept at ~30 % inside the diamonds [D]"""
     t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
     n = S
     v, u = np.mgrid[0:n, 0:n] / n            # tile coords, 0.26 m
     rng = np.random.default_rng(7)
     m = np.zeros((n, n), np.float32)
-    step = 0.008 / 0.26                      # ~8 mm weave steps (w3 A: ~10 mm read at cabin distance; 4.5 mm vanished)
-    for cu, cv in [(a + (0.25 if r % 2 else 0), 0.125 + 0.25 * r) for r in range(4) for a in (0.0, 0.5)]:
+    step = 0.005 / 0.26
+    for cu, cv in [(a + (1 / 6 if r % 2 else 0), 1 / 12 + r / 6) for r in range(6) for a in (0.0, 1 / 3, 2 / 3)]:
         for ou in (-1, 0, 1):
             for ov in (-1, 0, 1):
                 du = np.floor(np.abs(u - cu - ou) / step) * step
                 dv = np.floor(np.abs(v - cv - ov) / step) * step
-                m = np.maximum(m, (du / (0.040 / 0.26) + dv / (0.037 / 0.26) <= 1).astype(np.float32))
+                m = np.maximum(m, (du / (0.026 / 0.26) + dv / (0.022 / 0.26) <= 1).astype(np.float32))
     # ragged ikat edges: a little value noise on the mask, then a 1 px soften
     m = np.clip(m + (rng.random((n, n)) - 0.5) * 0.9 * (np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.FIND_EDGES)) > 0), 0, 1)
     m = (m > 0.5).astype(np.float32)
     m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.4))).astype(np.float32)[..., None] / 255
-    # w2: near-touching lattice (~45 % cover, w2 A), ragged edges; lower lift - with the bigger cover the ground darkens
-    # after normalising (w2 B: p10/p90 51/142 vs photo 54/120)
-    lift = np.array([2.4, 2.0, 1.4], np.float32)
-    inside = lift * (0.6 + 0.4 * t)
+    lift = np.array([2.0, 1.8, 1.4], np.float32)          # pale lavender-grey blocks, low contrast (y_47302 / y_47306)
+    inside = lift * (0.7 + 0.3 * t / t.reshape(-1, 3).mean(0))
     ratio = t * (1 - m) + inside * m
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_diamond'], 0, 1)
     Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_y_diamond.png'))
     return 0.26
+
+
+def y_fleck():
+    """econ w5 (A high): the fourth Y fabric, the commonest dark one - scattered pale petal-shaped flecks on dark navy
+    (y_47300 front-row seats 2 / 4, sans 13 / 14, fr57325 124108). Flecks ~4-7 x 2-3.6 mm at random angles, evenly spread, ~10 % cover,
+    near #a9b4d6 on a #27345a ground (sans 14 back L p10/50/90 34/48/87) -> lift (7.5, 6.8, 4.0) over a faint weave
+    ground (the tick tile at ~25 % contrast); 0.2 m tile [D]"""
+    n = S; size = 0.2; mm = n / (size * 1000)
+    t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
+    t = np.asarray(Image.fromarray((np.clip(t / t.max(), 0, 1) * 255).astype(np.uint8)).resize((n, n))).astype(np.float32) / 255
+    ground = 0.75 + 0.25 * t / t.reshape(-1, 3).mean(0)
+    rng = np.random.default_rng(11)
+    y, x = np.mgrid[0:n, 0:n].astype(np.float32)
+    m = np.zeros((n, n), np.float32)
+    pts = []
+    while m.mean() < 0.095:
+        cx, cy = rng.random(2) * n
+        # evenly spread (y_47300 seat 2: flecks never clump): reject centres within 4.5 mm of another (tile-wrapped)
+        if any(min(abs(cx - px), n - abs(cx - px)) ** 2 + min(abs(cy - py), n - abs(cy - py)) ** 2 < (4.5 * mm) ** 2 for px, py in pts): continue
+        pts.append((cx, cy))
+        a, b = rng.uniform(2.0, 3.6) * mm, rng.uniform(1.0, 1.8) * mm      # half-axes
+        th = rng.random() * np.pi
+        for ox in (-n, 0, n):
+            for oy in (-n, 0, n):
+                dx, dy = x - cx - ox, y - cy - oy
+                pu = dx * np.cos(th) + dy * np.sin(th); pv = -dx * np.sin(th) + dy * np.cos(th)
+                # petal: an ellipse pinched toward one end
+                w = b * (1 - 0.45 * np.clip(pu / a, -1, 1))
+                m = np.maximum(m, ((pu / a) ** 2 + (pv / np.maximum(w, 1e-3)) ** 2 <= 1).astype(np.float32))
+    m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.5))).astype(np.float32)[..., None] / 255
+    lift = np.array([7.5, 6.8, 4.0], np.float32)
+    ratio = ground * (1 - m) + lift * m
+    ratio /= ratio.reshape(-1, 3).mean(0)
+    out = np.clip(ratio / ENC['y_fleck'], 0, 1)
+    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_y_fleck.png'))
+    return size
 
 
 if __name__ == '__main__':
@@ -232,5 +267,6 @@ if __name__ == '__main__':
     sizes = json.load(open(os.path.join(root, 'tex/sizes.json'))) if only else {}
     sizes.update({k: make(k, *v) for k, v in SW.items() if not only or k in only})
     if not only or 'y_diamond' in only: sizes['y_diamond'] = y_diamond()
+    if not only or 'y_fleck' in only: sizes['y_fleck'] = y_fleck()
     json.dump(sizes, open(os.path.join(root, 'tex/sizes.json'), 'w'))
     print('swatches', sizes)

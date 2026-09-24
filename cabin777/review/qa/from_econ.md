@@ -13,3 +13,9 @@
   match the photo albedos (`yShell` #d9dbde, `yTray` #cfd2d6), so the gap is shading/AO.
 - **Plastic grain (03_tex.js layer 4, shared):** in harsh light the off-white shells read slightly as stucco. A ~40 %
   lower normal amplitude on layer 4 would fix it, but it affects every area, so I left it to the integrator.
+- **w5, done by econ in `04_shaders.js` (one token, please keep):** the main shader's `uniform vec4 u_layer[25]` is now
+  `u_layer[${N_LAYERS}]`, because econ added detail layer 25 (`LAYER.yFleck`, the petal-fleck Y fabric) in `03_tex.js`.
+  No visual change for other layers.
+- **w5 note:** after the r3 AO lift (hemi 0.30) the w2-w4 lighting items above are resolved for economy: the q18 hood
+  now reads L 181 vs 192 in y_47305 (econ_w5b). The economy fabrics were re-tuned to the new light, so please ping
+  `from_integration.md` if the seat-zone exposure changes again.

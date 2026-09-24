@@ -33,7 +33,7 @@ uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
-uniform sampler2DArray u_detail; uniform vec4 u_layer[25]; uniform sampler2DArray u_photo; uniform float u_photoOn;
+uniform sampler2DArray u_detail; uniform vec4 u_layer[${N_LAYERS}]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc; uniform vec2 u_winY;
