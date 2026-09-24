@@ -4,8 +4,10 @@
 // Type A door linings and flight-attendant jump seats
 // ------------------------------------------------------------------
 const MONMAT = {
-  laminate: { c: '#dcdad4', r: 0.45, l: LAYER.plastic },
-  lavDoor: { c: '#e7e5df', r: 0.4, l: LAYER.plastic },
+  // [V] near-white monument laminate: ANA photos sample #efefed (y_47300 aft wall), #dcdbd6 (y_47302), #d1d7df
+  //     (py_37302, cool balance); the old #dcdad4 rendered #bcbcbb under the bins (QA r1 q19)
+  laminate: { c: '#eceae6', r: 0.45, l: LAYER.plastic },
+  lavDoor: { c: '#f0efeb', r: 0.4, l: LAYER.plastic },
   steel: { c: '#b5bbc2', r: 0.3, m: 0.85, l: LAYER.brushed },
   steelDark: { c: '#8e949c', r: 0.35, m: 0.8, l: LAYER.brushed },
   ovenGlass: { c: '#101318', r: 0.1 },
@@ -34,7 +36,8 @@ const MONMAT = {
   washi: { c: '#f2f3f6', r: 0.8, l: LAYER.atlasGlow, e: 0.6 },       // neutral-white backlit washi band (render)
   washiGalley: { c: '#d4d3e0', r: 0.8, l: LAYER.atlasGlow, e: 0.45 }, // lavender-grey galley washi (welcome render)
   downlight: { c: '#eef4ff', r: 0.3, e: 1.6 },
-  fridgeLit: { c: '#8e9aa8', r: 0.5, e: 0.12 },
+  fridgeLit: { c: '#2c2f36', r: 0.08, e: 0.03 },     // [V] smoked-glass door: #3a3941 (render), #3b3834 (omaat_room_32)
+  latch: { c: '#7a7d82', r: 0.35, m: 0.6 },           // [V] light-grey oval fridge latch (render)
   bottleClear: { c: '#9fb2b6', r: 0.05, m: 0.3 },
   bottleBlue: { c: '#2346c8', r: 0.08, e: 0.12 },
   label: { c: '#f4f2ec', r: 0.6 },
@@ -52,7 +55,23 @@ const MONMAT = {
   // class curtains sampled from ANA photos: F/J lavender-grey (f_17313), J/PY and PY/Y dark slate (py_37301/37302)
   curtainF: { c: '#8f90a8', r: 0.9, l: LAYER.fabric },
   curtainY: { c: '#474b5e', r: 0.9, l: LAYER.fabric },
+  curtainC: { c: '#36363c', r: 0.9, l: LAYER.fabric },  // [V] J-cabin charcoal curtains, omaat_room_36 samples #302f35-#3d3c42
   rail: { c: '#dcdbd6', r: 0.4 },
+  // full-height class bulkheads (QA r1): F side of F/J = pale mottled washi print (omaatF_2 samples #c0bcb1 under warm
+  // light -> #c9cad2, atlas washi fibres multiplied in); J faces = cream laminate (omaat_room_36 #c3baa6, lifted by
+  // the frame's under-exposure [A] -> #ddd5c3); PY face of J/PY = off-white laminate (py_37303, #e3e3df class)
+  bulkF: { c: '#c9cad2', r: 0.7, l: LAYER.atlasLit },
+  bulkJ: { c: '#ddd5c3', r: 0.5, l: LAYER.plastic },
+  bulkPY: { c: '#e3e3df', r: 0.45, l: LAYER.plastic },
+  bulkCore: { c: '#d8d6d0', r: 0.5, l: LAYER.plastic },
+  kick: { c: '#5a6478', r: 0.5, l: LAYER.plastic },       // [V] slate-grey kick strip (py_37303, py_37302)
+  monHousing: { c: '#9ba1a9', r: 0.45, l: LAYER.plastic }, // [V] light-grey tilted monitor housings (py_37303)
+  pocketGrey: { c: '#aeb3ba', r: 0.5, l: LAYER.plastic },  // [V] grey literature pockets (py_37303)
+  pocketWhite: { c: '#e6e4de', r: 0.45, l: LAYER.plastic }, // [V] white framed pockets (y_47302)
+  wallBox: { c: '#d9d8d3', r: 0.45, l: LAYER.plastic },     // [V] J wall boxes (omaat_room_36, omaatF_2)
+  cardWhite: { c: '#f2f2ee', r: 0.7 },
+  cardBlue: { c: '#2f6fb8', r: 0.6 },                       // [V] B777-300 safety-card cover bands (py_37303, y_47302)
+  cardGreen: { c: '#3c9a6a', r: 0.6 },
 };
 
 function monoSection(x0, x1, h) {
@@ -110,6 +129,23 @@ function ringPull(B, xf) {
   B.add(gBox(0.024, 0.006, 0.008), M4.mul(xf, M4.trs(0, 0, 0.011)), MONMAT.steel);
 }
 
+// open-top literature pocket / wall box on a face frame xf (+z out of the face): box w x h, cards sticking out of the
+// top [V py_37303: ~0.25 m wide grey pockets; y_47302: white framed pockets; omaat_room_36: shallow wall boxes]
+function litPocket(B, xf, mat, h = 0.26, w = 0.25) {
+  B.add(gRBox(w, h, 0.05, 0.01, 1), M4.mul(xf, M4.trs(0, 0, 0.025)), mat);
+  B.add(gBox(w - 0.03, 0.01, 0.036), M4.mul(xf, M4.trs(0, h / 2 - 0.006, 0.024)), { c: '#3b3d42', r: 0.8 });   // opening
+  B.add(gQuad(w - 0.03, 0.10), M4.mul(xf, M4.trs(0, h / 2 - 0.01, 0.045)), MONMAT.cardWhite);
+  B.add(gQuad(w - 0.03, 0.035), M4.mul(xf, M4.trs(0, h / 2 + 0.015, 0.0455)), mat === MONMAT.pocketWhite ? MONMAT.cardGreen : MONMAT.cardBlue);
+}
+// shared monitor in a thick light-grey housing tilted down (py_37303) on a face frame xf (+z out of the face)
+function tiltMonitor(B, xf) {
+  const T = M4.mul(xf, M4.trs(0, 0, 0.045, 0, 0.17));   // +rx leans the top out, the screen normal points down
+  B.add(gRBox(0.48, 0.32, 0.07, 0.02, 1), T, MONMAT.monHousing);
+  B.add(gRBox(0.42, 0.25, 0.01, 0.006, 1), M4.mul(T, M4.trs(0, 0, 0.034)), SEATMAT.bezel);
+  B.add(gQuad(0.40, 0.23), M4.mul(T, M4.trs(0, 0, 0.0395)), SEATMAT.screen, atlasUV('screen'));
+  B.add(gBox(0.16, 0.05, 0.05), M4.mul(xf, M4.trs(0, 0.1, 0.012)), MONMAT.monHousing);                     // wall bracket
+}
+
 // ---- Door-3 self-service bar ("New self-service bar counter with monitor and mini-fridge", ANA 2019 press kit).
 // Layout read off the official render (ref/web/mono/tda_barcounter, = ANA 20190711-008): 7 light-ash doors with
 // dark-bronze frames + round flush pulls, stainless grab rail, black basalt counter; set back behind it a black
@@ -161,7 +197,7 @@ function buildBar(B, m) {
     B.add(gBox(up(1480) - up(1345), 0.008, 0.02), V(fc, sy, oU + 0.086), MONMAT.bronze);
     for (let k = 0; k < 3; k++) bottle(B, V(up(1372) + k * 0.06, sy + 0.004, oU + 0.1), bh, 0.028, MONMAT.bottleBlue, false);
   }
-  B.add(gRBox(0.07, 0.085, 0.02, 0.03, 2), V(up(1362), uy(470), oU + 0.125), MONMAT.bronze);
+  B.add(gRBox(0.07, 0.11, 0.02, 0.035, 2), V(up(1362), uy(470), oU + 0.125), MONMAT.latch);          // oval latch plate
   B.add(gCyl(0.022, 0.022, 0.012, 14), M4.mul(V(up(1362), uy(470), oU + 0.136), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.steel);
   // tumblers on the counter (render: four at the left)
   for (const p of [490, 535, 578, 655]) B.add(gCyl(0.04, 0.034, 0.085, 12), V(up(p), BAR.deck + 0.078, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
@@ -171,9 +207,17 @@ function buildBar(B, m) {
   const cd = BAR.set + 0.12, cy = BAR.canopy, co = (0.12 - BAR.set) / 2;
   B.add(gBox(w, 0.05, cd), V(0, cy + 0.025, co), MONMAT.blackGloss);
   B.add(gBox(uw - 0.02, cy - BAR.upTop, 0.02), V(0, (cy + BAR.upTop) / 2, oU + 0.02), MONMAT.blackGloss);
-  B.add(gQuad(w - 0.02, 0.10), V(0, cy - 0.001, 0.06, Math.PI / 2), MONMAT.washi, atlasUV('washi'));
-  for (const s of [-1, 1]) B.add(gQuad(0.10, cd - 0.12), V(s * (w / 2 - 0.06), cy - 0.001, co - 0.06, Math.PI / 2), MONMAT.washi, atlasUV('washi'));
-  B.add(gBox(w, 0.06, 0.012), V(0, cy - 0.03, 0.125), MONMAT.blackGloss);                                 // soffit lip
+  // soffit fascia (front + sides, 0.14 m deep) whose undersides carry the lit washi bands, so the bands frame the
+  // black soffit as in the render instead of hiding behind a thin lip (QA r1 m02)
+  const fy = cy - 0.06, bw = 0.14;
+  B.add(gBox(w, 0.06, bw), V(0, cy - 0.03, 0.131 - bw / 2), MONMAT.blackGloss);
+  B.add(gQuad(w - 0.02, bw - 0.02), V(0, fy - 0.002, 0.131 - bw / 2, Math.PI / 2), MONMAT.washi, atlasUV('washi'));
+  B.add(gQuad(w - 0.02, 0.04), V(0, cy - 0.032, 0.1325), MONMAT.washi, atlasUV('washi'));                  // lit fascia edge
+  for (const s of [-1, 1]) {
+    const sd = cd - bw + 0.012, sz = 0.131 - bw - sd / 2;
+    B.add(gBox(bw, 0.06, sd), V(s * (w / 2 - bw / 2), cy - 0.03, sz), MONMAT.blackGloss);
+    B.add(gQuad(bw - 0.02, sd - 0.01), V(s * (w / 2 - bw / 2), fy - 0.002, sz, Math.PI / 2), MONMAT.washi, atlasUV('washi'));
+  }
   for (const u of [-0.5, 0, 0.5]) {
     B.add(gCyl(0.045, 0.045, 0.006, 16), V(u, cy - 0.003, -0.22), MONMAT.steel);
     B.add(gCyl(0.034, 0.034, 0.006, 16), V(u, cy - 0.005, -0.22), MONMAT.downlight);
@@ -242,7 +286,9 @@ function buildWelcomeGalley(B, m) {
 // upper bank with a work light under it
 function buildGalley(B, m, premium) {
   const w = m.x1 - m.x0, cx = (m.x0 + m.x1) / 2, set = 0.3, dk = 1.03;
-  const body = premium ? MONMAT.ash : MONMAT.galleyWhite;
+  // standard aluminium/white inserts in every class (omaatF_33: grey aluminium units at the F galley too); ash stays on
+  // the door-3 bar and the door-2 welcome galley only
+  const body = MONMAT.galleyWhite;
   monoStepBody(B, m, dk, set, body, body);
   const F = (x, y, o) => faceXF(m, x, y, o);
   const nC = m.carts || 2, usable = w - 0.1;
@@ -274,15 +320,20 @@ function buildGalley(B, m, premium) {
       B.add(gRBox(uW * 0.55, 0.12, 0.01, 0.006, 1), F(x - uW * 0.12, 1.55, o + 0.042), { c: '#9c9a74', r: 0.2, e: 0.05 });
       B.add(gRBox(uW * 0.5, 0.035, 0.03, 0.01, 1), F(x - uW * 0.12, 1.4, o + 0.05), MONMAT.aluDark);
       for (const s of [-1, 1]) B.add(gRBox(0.02, 0.05, 0.03, 0.008, 1), F(x + s * uW * 0.3, 1.3, o + 0.05), MONMAT.copper);
-    } else if (t === 1) { // beverage maker: black face, green-lit button, steel jug in its bay
-      B.add(gRBox(uW, 0.32, 0.12, 0.01, 1), F(x, 1.47, o + 0.06), MONMAT.bevBlack);
+    } else if (t === 1) { // beverage maker (sans_38): black brew head with green-lit key over a recessed bay; the steel
+      //                     jug stands inside the bay on a drip tray, under the head
+      B.add(gRBox(uW, 0.12, 0.12, 0.01, 1), F(x, 1.57, o + 0.06), MONMAT.bevBlack);
       B.add(gBox(0.022, 0.018, 0.006), F(x, 1.6, o + 0.122), MONMAT.green);
-      B.add(gCyl(0.055, 0.06, 0.14, 12), F(x, 1.39, o + 0.13), MONMAT.steel);
+      B.add(gBox(uW, 0.2, 0.01), F(x, 1.41, o + 0.005), MONMAT.bevBlack);                                   // bay back
+      for (const s of [-1, 1]) B.add(gBox(0.015, 0.2, 0.12), F(x + s * (uW / 2 - 0.0075), 1.41, o + 0.06), MONMAT.bevBlack);
+      B.add(gBox(uW - 0.04, 0.01, 0.1), F(x, 1.295, o + 0.06), MONMAT.steelDark);                          // drip tray
+      B.add(gCyl(0.05, 0.055, 0.13, 12), F(x, 1.365, o + 0.06), MONMAT.steel);
+      B.add(gBox(0.04, 0.02, 0.05), F(x, 1.5, o + 0.07), MONMAT.steelDark);                                // brew spout
     } else {              // standard unit with recessed pull
       B.add(gRBox(uW, 0.32, 0.03, 0.01, 1), F(x, 1.47, o + 0.015), MONMAT.aluDark);
       B.add(gRBox(0.08, 0.025, 0.02, 0.006, 1), F(x, 1.59, o + 0.035), MONMAT.bevBlack);
     }
-    B.add(gRBox(uW, 0.36, 0.03, 0.01, 1), F(x, 1.86, o + 0.015), premium ? MONMAT.ashDark : MONMAT.galleyWhite);
+    B.add(gRBox(uW, 0.36, 0.03, 0.01, 1), F(x, 1.86, o + 0.015), MONMAT.galleyWhite);
     for (const s of [-1, 1]) B.add(gRBox(0.02, 0.045, 0.03, 0.008, 1), F(x + s * uW * 0.3, 1.69, o + 0.04), MONMAT.copper);
   }
   B.add(gQuad(0.2, 0.04), F(cx, 1.655, o + 0.032), MAT.decal, atlasUV('galleyLbl'));
@@ -301,90 +352,121 @@ function addCurtain(B, xa, xb, z, xg, mat) {
   B.add(_curtainGeo, M4.trs(xg, CURTAIN_H / 2 + 0.01, z, 0, Math.PI / 2), mat);
 }
 
+// one monument, z-facing (face +1: front at z1 facing aft, -1: front at z0 facing forward)
+function buildMon(B, m, layout, cls) {
+  const w = m.x1 - m.x0, cx = (m.x0 + m.x1) / 2;
+  const inner = Math.abs(m.x0) < Math.abs(m.x1) ? m.x0 : m.x1;
+  const premium = cls === 'F' || cls === 'J';
+  const F = (x, y, o) => faceXF(m, x, y, o);
+  if (m.kind === 'lav') {
+    // exterior per the bar render (J lavs flanking the bar): ash door with dark-bronze frame lines, occupancy
+    // plate (VACANT window) inboard of a recessed square pull, small ashtray high on the outboard side, lit sign
+    monoBody(B, m, cls === 'F' ? MONMAT.darkWood : premium ? MONMAT.ash : MONMAT.laminate);
+    const dw = Math.min(m.access ? 0.78 : 0.62, w - 0.14);
+    const dx = Math.abs(inner) < 0.05 ? cx : inner + Math.sign(cx - inner) * (dw / 2 + 0.06);
+    const J = cls === 'J', hw = J ? MONMAT.bronze : MONMAT.steelDark;
+    const so = Math.abs(cx) < 0.05 ? 1 : Math.sign(cx) * m.face;          // viewer-right sign of the outboard side
+    const at = (u, y, o) => F(dx + u * m.face, y, o);
+    B.add(gRBox(dw, 1.86, 0.02, 0.01, 1), F(dx, 0.95, 0.008), cls === 'F' ? { c: '#5a4536', r: 0.4, l: LAYER.wood } : J ? MONMAT.barAsh : MONMAT.lavDoor);
+    B.add(gBox(0.006, 1.8, 0.024), F(dx, 0.95, 0.009), { c: '#9ea3a9', r: 0.5 });                   // bi-fold seam
+    if (J) {
+      for (const s of [-1, 1]) B.add(gBox(0.014, 1.86, 0.026), at(s * (dw / 2 + 0.007), 0.95, 0.01), MONMAT.bronze);
+      B.add(gBox(dw + 0.03, 0.014, 0.026), at(0, 1.887, 0.01), MONMAT.bronze);
+    }
+    B.add(gRBox(0.075, 0.085, 0.012, 0.006, 1), at(so * dw * 0.38, 1.15, 0.024), hw);                  // recessed pull
+    B.add(gRBox(0.05, 0.055, 0.01, 0.004, 1), at(so * dw * 0.38, 1.15, 0.028), MONMAT.bevBlack);
+    B.add(gRBox(0.11, 0.05, 0.012, 0.006, 1), at(so * dw * 0.18, 1.15, 0.024), hw);                    // occupancy plate
+    B.add(gRBox(0.08, 0.022, 0.006, 0.003, 1), at(so * dw * 0.18, 1.15, 0.03), { c: '#dfe6dc', r: 0.4, e: 0.25 });
+    B.add(gBox(0.03, 0.006, 0.004), at(so * dw * 0.18 - 0.02, 1.15, 0.034), MONMAT.green);
+    B.add(gRBox(0.06, 0.07, 0.014, 0.006, 1), at(so * (dw / 2 + 0.07), 1.62, 0.008), hw);             // ashtray
+    B.add(gRBox(0.045, 0.02, 0.008, 0.003, 1), at(so * (dw / 2 + 0.07), 1.64, 0.016), MONMAT.bevBlack);
+    B.add(gRBox(dw - 0.1, 0.12, 0.006, 0.004, 1), F(dx, 0.12, 0.02), MAT.grille);
+    B.add(gQuad(0.17, 0.082), F(dx, 1.99, 0.021), MAT.exitGlow, atlasUV('lav'));
+    if (m.access) B.add(gRBox(0.09, 0.09, 0.006, 0.01, 1), F(dx - dw * 0.3, 1.45, 0.02), { c: '#2d62b8', r: 0.5 });
+  } else if (m.kind === 'sideStorage') {
+    monoBody(B, m, MONMAT.closet);
+    B.add(gRBox(Math.abs(m.x1 - m.x0) - 0.06, 0.02, m.z1 - m.z0 - 0.06, 0.01, 1), M4.trs(cx, m.h + 0.005, (m.z0 + m.z1) / 2), { c: '#cfccc5', r: 0.4, l: LAYER.plastic });
+  } else if (m.kind === 'closet') {
+    monoBody(B, m, premium ? MONMAT.ash : MONMAT.closet);
+    const dw = Math.min(0.72, w - 0.1);
+    B.add(gRBox(dw, m.h - 0.12, 0.02, 0.01, 1), F(cx, m.h / 2, 0.008), premium ? (cls === 'F' ? MONMAT.darkWood : MONMAT.ashDark) : MONMAT.lavDoor);
+    B.add(gRBox(0.03, 0.14, 0.03, 0.01, 1), F(cx - dw * 0.38, Math.min(1.05, m.h * 0.6), 0.03), MONMAT.steel);
+    if (m.low) B.add(gRBox(w - 0.02, 0.03, m.z1 - m.z0 - 0.02, 0.01, 1), M4.trs(cx, m.h + 0.012, (m.z0 + m.z1) / 2), cls === 'F' ? MONMAT.darkWood : MONMAT.ash);
+  } else if (m.kind === 'bar') {
+    buildBar(B, m);
+  } else if (m.kind === 'galley') {
+    if (m.welcome) buildWelcomeGalley(B, m); else buildGalley(B, m, premium);
+    if (!premium && m.face === -1) {
+      // aft face over the first centre row (row 31 D-G): shared monitors + bassinet mounts (ANA seat map)
+      const zb = m.z1 + 0.004;
+      for (const x of [-0.5, 0.5]) tiltMonitor(B, M4.trs(x, 1.78, zb));     // housings as on the J/PY wall (py_37303)
+      B.add(gQuad(0.09, 0.06), M4.trs(0, 1.30, zb), MAT.decal, atlasUV('bassinet'));
+      B.add(gRBox(0.3, 0.03, 0.02, 0.01, 1), M4.trs(0, 1.22, zb + 0.008), MONMAT.steelDark);
+    }
+  } else if (m.kind === 'cockpit') {
+    const m2 = { ...m, face: 1 };
+    B.add(gRBox(0.90, 1.96, 0.05, 0.01, 1), faceXF(m2, 0, 0.99, 0.0), MONMAT.cockpitDoor);
+    B.add(gRBox(0.05, 0.1, 0.03, 0.01, 1), faceXF(m2, 0.34, 1.02, 0.03), MONMAT.steel);
+    B.add(gCyl(0.012, 0.012, 0.01, 10), faceXF(m2, 0, 1.55, 0.03), MONMAT.ovenGlass);
+    B.add(gQuad(0.08, 0.1), faceXF(m2, 0.56, 1.25, 0.0), MAT.decal, atlasUV('keypad'));
+  } else if (m.kind === 'partition') {
+    buildBulkhead(B, m, layout);
+  } else if (m.kind === 'curtain') {
+    // explicit curtain: M('curtain', xa, xb, z, z, { xg, tone: 'F' | 'Y' | 'C' }) - track xa..xb, gathered at xg
+    addCurtain(B, m.x0, m.x1, m.z0, m.xg ?? m.x0 + 0.09, m.tone === 'F' ? MONMAT.curtainF : m.tone === 'C' ? MONMAT.curtainC : MONMAT.curtainY);
+  }
+  // door-4 lav facing the door-4 cross-aisle: white framed literature pockets outboard of its door (y_47302: pair at
+  // ~0.95 / 1.35 m on the wall ahead of the exit row)
+  if (m.kind === 'lav' && m.face === 1 && !m.xFacing && Math.abs(m.z1 - layout.doorsZ[3][0]) < 0.05 && Math.abs(cx) > 1.2)
+    for (const y of [0.95, 1.35]) litPocket(B, M4.trs(Math.sign(cx) * 2.42, y, m.z1 + 0.002), MONMAT.pocketWhite);
+}
+
+// ---- Class bulkheads (F/J and J/PY), full height to the bin line and following the sidewall (omaatF_2,
+// omaat_room_36, py_37303 / py_37302). The finish is per face and per cabin: F = washi print, J = cream laminate,
+// PY = off-white laminate, each with a slate kick strip; literature pockets / wall boxes on the outboard panels,
+// tilted shared monitors + bassinet mounts on the J/PY aft face.
+function buildBulkhead(B, m, layout) {
+  const H = Math.max(m.h, 2.10), t = m.z1 - m.z0, w = m.x1 - m.x0, cx = (m.x0 + m.x1) / 2;
+  const sec = monoSection(m.x0, m.x1, H), outboard = Math.abs(cx) > 1.3;
+  B.add(gExtrude(sec, t - 0.008, 20), M4.trs(0, 0, (m.z0 + m.z1) / 2), MONMAT.bulkCore);
+  const face = gExtrude(sec, 0.004, 20);
+  const wr = ATL.rects.washi, washiUV = (k, g) => [wr[0] + clamp((g.p[k * 3] + 2.9) / 5.8, 0, 1) * (wr[2] - wr[0]), wr[1] + clamp(1 - g.p[k * 3 + 1] / H, 0, 1) * (wr[3] - wr[1])];
+  for (const f of [-1, 1]) {                     // -1: forward face (z0), +1: aft face (z1)
+    const zf = f > 0 ? m.z1 : m.z0, c = clsAt(layout, zf + f * 0.5);
+    const mat = c === 'F' ? MONMAT.bulkF : c === 'J' ? MONMAT.bulkJ : MONMAT.bulkPY;
+    B.add(face, M4.trs(0, 0, zf - f * 0.002), mat, c === 'F' ? washiUV : undefined);
+    B.add(gBox(w - 0.02, 0.08, 0.006), M4.trs(cx, 0.04, zf + f * 0.002), MONMAT.kick);
+    if (!outboard) continue;
+    const X = (x, y) => M4.trs(x, y, zf + f * 0.003, f > 0 ? 0 : Math.PI);
+    if (c === 'PY') for (const [u, y] of [[-0.12, 0.38], [0.14, 0.78]]) litPocket(B, X(cx + u, y), MONMAT.pocketGrey);   // staggered pair
+    else litPocket(B, X(cx - Math.sign(cx) * 0.1, 1.30), MONMAT.wallBox, 0.14, 0.26);                               // F / J wall box
+  }
+  const zf = m.z1 + 0.004;
+  if (m.bassinet) {
+    const n = Math.max(1, Math.round(w / 0.9));
+    for (let k = 0; k < n; k++) {
+      const x = m.x0 + (w / n) * (k + 0.5);
+      if (Math.abs(x) > 2.5) continue;
+      B.add(gQuad(0.09, 0.06), M4.trs(x, 1.30, zf), MAT.decal, atlasUV('bassinet'));
+      B.add(gRBox(0.3, 0.03, 0.02, 0.01, 1), M4.trs(x, 1.22, zf + 0.008), MONMAT.steelDark);
+    }
+  }
+  if (m.monitor) for (const x of Math.abs(cx) < 0.1 ? [-0.55, 0.55] : [cx]) tiltMonitor(B, M4.trs(x, 1.78, zf));
+}
+
 function buildMonuments(gl, layout, opts = {}) {
   const B = new Builder();
   for (const m of layout.mon) {
-    const w = m.x1 - m.x0, cx = (m.x0 + m.x1) / 2;
-    const inner = Math.abs(m.x0) < Math.abs(m.x1) ? m.x0 : m.x1;
     const cls = clsAt(layout, (m.z0 + m.z1) / 2);
-    const premium = cls === 'F' || cls === 'J';
-    const F = (x, y, o) => faceXF(m, x, y, o);
-    if (m.kind === 'lav') {
-      // exterior per the bar render (J lavs flanking the bar): ash door with dark-bronze frame lines, occupancy
-      // plate (VACANT window) inboard of a recessed square pull, small ashtray high on the outboard side, lit sign
-      monoBody(B, m, cls === 'F' ? MONMAT.darkWood : premium ? MONMAT.ash : MONMAT.laminate);
-      const dw = Math.min(m.access ? 0.78 : 0.62, w - 0.14);
-      const dx = Math.abs(inner) < 0.05 ? cx : inner + Math.sign(cx - inner) * (dw / 2 + 0.06);
-      const J = cls === 'J', hw = J ? MONMAT.bronze : MONMAT.steelDark;
-      const so = Math.abs(cx) < 0.05 ? 1 : Math.sign(cx) * m.face;          // viewer-right sign of the outboard side
-      const at = (u, y, o) => F(dx + u * m.face, y, o);
-      B.add(gRBox(dw, 1.86, 0.02, 0.01, 1), F(dx, 0.95, 0.008), cls === 'F' ? { c: '#5a4536', r: 0.4, l: LAYER.wood } : J ? MONMAT.barAsh : MONMAT.lavDoor);
-      B.add(gBox(0.006, 1.8, 0.024), F(dx, 0.95, 0.009), { c: '#9ea3a9', r: 0.5 });                   // bi-fold seam
-      if (J) {
-        for (const s of [-1, 1]) B.add(gBox(0.014, 1.86, 0.026), at(s * (dw / 2 + 0.007), 0.95, 0.01), MONMAT.bronze);
-        B.add(gBox(dw + 0.03, 0.014, 0.026), at(0, 1.887, 0.01), MONMAT.bronze);
-      }
-      B.add(gRBox(0.075, 0.085, 0.012, 0.006, 1), at(so * dw * 0.38, 1.15, 0.024), hw);                  // recessed pull
-      B.add(gRBox(0.05, 0.055, 0.01, 0.004, 1), at(so * dw * 0.38, 1.15, 0.028), MONMAT.bevBlack);
-      B.add(gRBox(0.11, 0.05, 0.012, 0.006, 1), at(so * dw * 0.18, 1.15, 0.024), hw);                    // occupancy plate
-      B.add(gRBox(0.08, 0.022, 0.006, 0.003, 1), at(so * dw * 0.18, 1.15, 0.03), { c: '#dfe6dc', r: 0.4, e: 0.25 });
-      B.add(gBox(0.03, 0.006, 0.004), at(so * dw * 0.18 - 0.02, 1.15, 0.034), MONMAT.green);
-      B.add(gRBox(0.06, 0.07, 0.014, 0.006, 1), at(so * (dw / 2 + 0.07), 1.62, 0.008), hw);             // ashtray
-      B.add(gRBox(0.045, 0.02, 0.008, 0.003, 1), at(so * (dw / 2 + 0.07), 1.64, 0.016), MONMAT.bevBlack);
-      B.add(gRBox(dw - 0.1, 0.12, 0.006, 0.004, 1), F(dx, 0.12, 0.02), MAT.grille);
-      B.add(gQuad(0.17, 0.082), F(dx, 1.99, 0.021), MAT.exitGlow, atlasUV('lav'));
-      if (m.access) B.add(gRBox(0.09, 0.09, 0.006, 0.01, 1), F(dx - dw * 0.3, 1.45, 0.02), { c: '#2d62b8', r: 0.5 });
-    } else if (m.kind === 'sideStorage') {
-      monoBody(B, m, MONMAT.closet);
-      B.add(gRBox(Math.abs(m.x1 - m.x0) - 0.06, 0.02, m.z1 - m.z0 - 0.06, 0.01, 1), M4.trs(cx, m.h + 0.005, (m.z0 + m.z1) / 2), { c: '#cfccc5', r: 0.4, l: LAYER.plastic });
-    } else if (m.kind === 'closet') {
-      monoBody(B, m, premium ? MONMAT.ash : MONMAT.closet);
-      const dw = Math.min(0.72, w - 0.1);
-      B.add(gRBox(dw, m.h - 0.12, 0.02, 0.01, 1), F(cx, m.h / 2, 0.008), premium ? (cls === 'F' ? MONMAT.darkWood : MONMAT.ashDark) : MONMAT.lavDoor);
-      B.add(gRBox(0.03, 0.14, 0.03, 0.01, 1), F(cx - dw * 0.38, Math.min(1.05, m.h * 0.6), 0.03), MONMAT.steel);
-      if (m.low) B.add(gRBox(w - 0.02, 0.03, m.z1 - m.z0 - 0.02, 0.01, 1), M4.trs(cx, m.h + 0.012, (m.z0 + m.z1) / 2), cls === 'F' ? MONMAT.darkWood : MONMAT.ash);
-    } else if (m.kind === 'bar') {
-      buildBar(B, m);
-    } else if (m.kind === 'galley') {
-      if (m.welcome) buildWelcomeGalley(B, m); else buildGalley(B, m, premium);
-      if (!premium && m.face < 0) {
-        // aft face over the first centre row (row 31 D-G): shared monitors + bassinet mounts (ANA seat map)
-        const zb = m.z1 + 0.004;
-        for (const x of [-0.5, 0.5]) {
-          B.add(gRBox(0.40, 0.25, 0.03, 0.012, 1), M4.trs(x, 1.62, zb + 0.012), SEATMAT.bezel);
-          B.add(gQuad(0.36, 0.2), M4.trs(x, 1.62, zb + 0.029), SEATMAT.screen, atlasUV('screen'));
-        }
-        B.add(gQuad(0.09, 0.06), M4.trs(0, 1.30, zb), MAT.decal, atlasUV('bassinet'));
-        B.add(gRBox(0.3, 0.03, 0.02, 0.01, 1), M4.trs(0, 1.22, zb + 0.008), MONMAT.steelDark);
-      }
-    } else if (m.kind === 'cockpit') {
-      const m2 = { ...m, face: 1 };
-      B.add(gRBox(0.90, 1.96, 0.05, 0.01, 1), faceXF(m2, 0, 0.99, 0.0), MONMAT.cockpitDoor);
-      B.add(gRBox(0.05, 0.1, 0.03, 0.01, 1), faceXF(m2, 0.34, 1.02, 0.03), MONMAT.steel);
-      B.add(gCyl(0.012, 0.012, 0.01, 10), faceXF(m2, 0, 1.55, 0.03), MONMAT.ovenGlass);
-      B.add(gQuad(0.08, 0.1), faceXF(m2, 0.56, 1.25, 0.0), MAT.decal, atlasUV('keypad'));
-    } else if (m.kind === 'partition') {
-      const wood = m.wood;
-      B.add(gRBox(w, m.h, m.z1 - m.z0, 0.01, 1), M4.trs(cx, m.h / 2, (m.z0 + m.z1) / 2), wood ? MONMAT.ash : MONMAT.partition);
-      B.add(gBox(w - 0.02, 0.12, m.z1 - m.z0 + 0.006), M4.trs(cx, 0.06, (m.z0 + m.z1) / 2), MONMAT.darkWood);
-      const zf = m.z1 + 0.004;
-      if (m.bassinet) {
-        const n = Math.max(1, Math.round(w / 0.9));
-        for (let k = 0; k < n; k++) {
-          const x = m.x0 + (w / n) * (k + 0.5);
-          if (Math.abs(x) > 2.5) continue;
-          B.add(gQuad(0.09, 0.06), M4.trs(x, 1.30, zf), MAT.decal, atlasUV('bassinet'));
-          B.add(gRBox(0.3, 0.03, 0.02, 0.01, 1), M4.trs(x, 1.22, zf + 0.008), MONMAT.steelDark);
-        }
-      }
-      if (m.monitor) {
-        const xs = Math.abs(cx) < 0.1 ? [-0.55, 0.55] : [cx];
-        for (const x of xs) {
-          B.add(gRBox(0.40, 0.25, 0.03, 0.012, 1), M4.trs(x, 1.52, zf + 0.012), SEATMAT.bezel);
-          B.add(gQuad(0.36, 0.2), M4.trs(x, 1.52, zf + 0.029), SEATMAT.screen, atlasUV('screen'));
-        }
-      }
-    }
+    if (m.face === '+x' || m.face === '-x') {
+      // x-facing monument (e.g. the fore-aft door-5 galley blocks): built z-facing in a local frame whose width runs
+      // along world z, then turned about y so the front points to +x / -x. No sidewall clipping in this frame, so
+      // use it only for monuments inboard of the sidewall.
+      const L = m.z1 - m.z0, D = m.x1 - m.x0;
+      const R = M4.trs((m.x0 + m.x1) / 2, 0, (m.z0 + m.z1) / 2, m.face === '+x' ? Math.PI / 2 : -Math.PI / 2);
+      const P = { add: (g, xf, mat, uv) => B.add(g, xf ? M4.mul(R, xf) : R, mat, uv) };
+      buildMon(P, { ...m, x0: -L / 2, x1: L / 2, z0: -D / 2, z1: D / 2, face: 1, xFacing: true }, layout, cls);
+    } else buildMon(B, m, layout, cls);
   }
   // ---- class curtains, drawn open: in each aisle gap of the F/J and J/PY bulkheads (f_17313, py_37301/37302) and
   //      in the aisles beside the door-4 galley's aft face at the PY/Y break (y_47300); gathered at the centre side
@@ -396,7 +478,7 @@ function buildMonuments(gl, layout, opts = {}) {
     addCurtain(B, a.x1, b.x0, zc, right ? a.x1 + 0.09 : b.x0 - 0.09, clsAt(layout, a.z0 - 0.5) === 'F' ? MONMAT.curtainF : MONMAT.curtainY);
   }
   for (const m of layout.mon) {
-    if (m.kind !== 'galley' || m.face > 0 || clsAt(layout, m.z0) !== 'Y' || m.x1 - m.x0 > 3) continue;
+    if (m.kind !== 'galley' || m.face !== -1 || clsAt(layout, m.z0) !== 'Y' || m.x1 - m.x0 > 3) continue;
     for (const s of [-1, 1]) {
       const xi = s > 0 ? m.x1 : m.x0;
       addCurtain(B, xi, xi + s * 0.52, m.z1 - 0.04, xi + s * 0.09, MONMAT.curtainY);
