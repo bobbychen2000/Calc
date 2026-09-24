@@ -1,0 +1,97 @@
+{
+ "area": "py",
+ "rater": "A",
+ "score": 6.5,
+ "details": [
+  {
+   "detail": "Round-3 fix claims checked against the w4r renders. Back strokes are now short, run up the back and sit in slanted columns: yes (st/p1, p4, x2/p14c). Wing flecks are elongated: yes. Back and wings are warmed to greige: yes, but they are now TOO neutral (see the fabric item). Flap bluish: yes, it reads as a softer navy. Shell top is wider: yes, and no wing peeks out behind in p15back. Literature pocket is flatter with tray lip + panel + mesh: yes (st/p6). Blue marks are right-angled, top-left on the upper cubby and top-right on the lower: yes (st/p5, matches alv_09). Slate shroud caps are lighter: yes. Bottle-bin cups: yes. One off-centre footrest arm: yes. Champagne diagonal struts: yes, visible from behind in p15back and st/p6. Not done, as stated: placard text, coat hook, reading-light head angle and lens.",
+   "score": 7,
+   "refs": ["/home/user/Calc/cabin777/src/09b_py.js"]
+  },
+  {
+   "detail": "Overall massing is unchanged and right: bolstered back, wing pillows, wrap shell, console, shrouds and leg rest (p13a against san_01 and py_37302). The shell arch corner radius still looks tighter than the broad arch in alv_13 and san_01. This is minor.",
+   "score": 7,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/p13a.png", "/home/user/Calc/cabin777/ref/web/py/san_01_overview_rows26-27_aisle.jpg"]
+  },
+  {
+   "detail": "Back fabric. The stroke direction is fixed, and the barcode or TV-static look is gone. But at seat distance (p13a, x2/p14c) the back now reads as a stylised white LEAF or feather print. The strokes are uniform in size, evenly spaced, near-white and cover the whole back at even density. The real cloth reads differently in all three photo sets. At the alv_04 and san_01 seat distance it is an irregular cream speckle whose chips vary in size and shape (dots, flecks, short dashes). It also has a LARGE-SCALE cloudy mottle: light and dark drifts 10-20 cm across, like the chevron clouds on the alv_09 cushion, the light patches on the alv_04 back and the dark zones in alv_17. The model has no low-frequency variation at all, so every back is a flat, even wallpaper. Hue: the model back is B/R 0.97 against a wall of 1.01 (relative 0.96, p13a 440-540 x 380-500). Round 3 measured the real relative B/R at about 1.07 (alv_02, san_01), and alv_04, alv_09 and alv_17 visibly show a lavender or blue-grey ground under cream chips. The warming overshot: the ground should stay cool lavender-grey, and only the CHIPS should be cream. Contrast, p10/p90: model 93/180 (p13a) and 90/156 (p14c); real 128/210 (alv_04) and 111/190 (san_01). This is close.",
+   "score": 5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/p13a.png", "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/x2/p14c.png", "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg", "/home/user/Calc/cabin777/ref/web/py/alv_09_console_front_cubbies.jpg", "/home/user/Calc/cabin777/ref/web/py/alv_17_headrest_reading_light_fabric.jpg", "/home/user/Calc/cabin777/ref/web/py/san_01_overview_rows26-27_aisle.jpg"]
+  },
+  {
+   "detail": "Headrest wings: the flecks are now elongated and the tone is close to the back (p4, p13a; wing mean 95-96 against back 110-112 in p14c). They are still white flecks on a neutral ground, where alv_04 and alv_17 show larger, irregular cream chips on lavender-grey. At 2x (x2/p14c, near-left wing) they are very dark charcoal with bright white dashes, which reads as a different material. This is acceptable at normal distance.",
+   "score": 6.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/st/p4_py_head.png", "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg"]
+  },
+  {
+   "detail": "Navy flap: the saturation is now within the real range and the hem stitch shows. It is still a flat board. The real flap drapes and curls at the lower corners (alv_04, alv_17).",
+   "score": 7,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/st/p4_py_head.png"]
+  },
+  {
+   "detail": "Rear shell, screen and pocket: they read like san_05 and alv_13. The new flat pocket (tray lip, panel, mesh window) is a good match. The placards are still blank white rectangles; the real ones carry two lines of JP and EN text, which reads as grey texture from a row away.",
+   "score": 7,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/p15back.png", "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/st/p6_back_close.png", "/home/user/Calc/cabin777/ref/web/py/san_05_seatbacks_row26_aisle.jpg"]
+  },
+  {
+   "detail": "Reading lights: unchanged. The heads hang vertical in parallel pairs and the lens is on the end cap (st/p4, p13a, x2/p14c). In alv_04 and alv_17 the hose arcs forward, the head angles about 40-50 degrees forward-down, and the lens is a black ring on the SIDE of the cylinder near the tip.",
+   "score": 6,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/st/p4_py_head.png", "/home/user/Calc/cabin777/ref/web/py/alv_17_headrest_reading_light_fabric.jpg"]
+  },
+  {
+   "detail": "Console front: the triangles are right. The cubbies are still small proud plates, about 0.05-0.06 tall, with a black slot above. In alv_09 they are open U-pockets. The upper one is roughly square (about 12 cm tall, about 80% of the face width) and the lower one is about 60% of its height. Each has a visible side return and a recess moulded into the face behind it. There is no black gap above them; the back of the pocket is the grey face itself.",
+   "score": 6.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/st/p5_console.png", "/home/user/Calc/cabin777/ref/web/py/alv_09_console_front_cubbies.jpg"]
+  },
+  {
+   "detail": "Legs, footrest and bottle bin: the champagne diagonal struts now show from the row behind, as in san_05. The footrest and bin match alv_05, alv_06, alv_07 and san_07.",
+   "score": 7.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/p15back.png", "/home/user/Calc/cabin777/ref/web/py/san_05_seatbacks_row26_aisle.jpg"]
+  },
+  {
+   "detail": "Shrouds, arm caps and leg rest: right against py_37301 and san_01.",
+   "score": 7.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w4r/st/p7_side.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Back fabric reads as a regular leaf print on a neutral ground",
+   "problem": "The strokes are uniform, evenly distributed and near-white, and there is no large-scale mottle, so every back is flat wallpaper. The ground was warmed to neutral greige, which lost the lavender-blue cast visible in every real set.",
+   "evidence": "Model back relative B/R 0.96 (p13a) against about 1.07 real. alv_04, alv_09 and alv_17 show cream chips on a lavender-grey ground, with 10-20 cm light/dark cloud drifts. The model has zero low-frequency variation.",
+   "fix": "In synth_py_back (test/make_swatches.py): (1) Multiply the ground by a low-frequency noise (blurred random field, wavelength about 1/2 to 1/1 tile, amplitude ±12-15% luminance) and modulate stroke density by the same field (dense in the light drifts, sparse in the dark). (2) Randomise the stroke length 6-30 mm, width 2-6 mm and angle jitter ±15°, and mix in about 30% small irregular dots so it stops reading as leaves. (3) Tint the strokes cream (about #d8d0bc relative) and keep the ground cool: in SEATMAT.pyFabric set the base to about '#948f99' (a lavender-grey that is slightly blue relative to the wall). Target back/wall relative B/R about 1.04-1.07."
+  },
+  {
+   "severity": "medium",
+   "detail": "Reading-light head angle and lens position",
+   "problem": "The heads hang vertically with the lens on the end cap.",
+   "evidence": "alv_04 and alv_17: the head is angled about 45° forward-down, with a side lens ring near the tip.",
+   "fix": "Rotate the head to about 50° forward and move the lens disc to the cylinder's side face, near the tip."
+  },
+  {
+   "severity": "medium",
+   "detail": "Console cubbies too small",
+   "problem": "The pockets are short proud plates with a black slot above them, where the real ones are tall open U-pockets, the upper one about 1.5x the lower.",
+   "evidence": "alv_09 against st/p5.",
+   "fix": "Upper pocket h about 0.12 and lower about 0.075, both about 0.8 of the face width, with side returns. Replace the black slot with a shallow grey recess in the face."
+  },
+  {
+   "severity": "low",
+   "detail": "Wing fleck contrast / hue",
+   "problem": "The flecks are white on a neutral ground, and they read darker and colder than the real cream-on-lavender at close range.",
+   "evidence": "x2/p14c near wing against alv_04 and alv_17.",
+   "fix": "Tint the flecks cream, use slightly larger irregular chips, and apply the same lavender-grey ground as the back."
+  },
+  {
+   "severity": "low",
+   "detail": "Placards blank; coat hook; flap flat",
+   "problem": "The placards have no text, and the hook size is unchanged. The flap has no drape.",
+   "evidence": "alv_13, san_05, alv_04.",
+   "fix": "Add placard text to the atlas (2 lines JP/EN). Hook gCyl(0.016,0.018,0.10). Give the flap a slight curl on its lower corners."
+  }
+ ],
+ "questionsForUser": [
+  "The three photo sets disagree on fine pattern (dash weave, speckle, herringbone strokes), but all of them show a lavender-grey ground with cream marks and large cloudy light/dark drifts. Should the model target that common reading rather than any one set's micro-pattern?"
+ ]
+}

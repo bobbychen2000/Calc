@@ -78,23 +78,30 @@ def synth_py_back(ratio, seed=7):
     rng = np.random.default_rng(seed)
     mot = _blur_wrap(ratio.mean(2), 12)
     mot = (mot - mot.mean()) / (mot.std() + 1e-6)
+    # w4: soft diagonal light / dark drifts about half a tile across (raters A + B: 'leaf wallpaper' without them)
+    drift = _blur_wrap(rng.normal(0, 1, (S, S)), 22); drift = (drift - drift.mean()) / drift.std()
+    drift = 0.6 * drift + 0.4 * np.roll(np.roll(drift, 40, 0), 40, 1)
     y = np.arange(S)[:, None]; x = np.arange(S)[None, :]
     lite = np.zeros((S, S))
     cols = 6; cw = S / cols                        # 0.163 m / 6 = 27 mm columns (tileable)
     for c, lane in [(c, l) for c in range(cols) for l in (-0.3, 0.0, 0.3)]:        # three staggered lanes per column
-        ang = np.radians(25 if c % 2 else -25) + rng.normal(0, 0.06, 400)
+        ang = np.radians(25 if c % 2 else -25) + rng.uniform(-0.26, 0.26, 400)   # +-15 deg jitter
         vy = rng.uniform(0, 12); k = 0
         while vy < S:
-            ln = rng.uniform(12, 28); th = rng.uniform(2.4, 3.6)
+            ln = rng.uniform(12, 28) * rng.uniform(0.4, 1.6); th = rng.uniform(1.8, 3.8)
             cx = (c + 0.5 + lane) * cw + rng.normal(0, cw * 0.06); cy = vy + ln / 2
-            m = mot[int(cy) % S, int(cx) % S]
+            m = 0.5 * mot[int(cy) % S, int(cx) % S] + 1.2 * drift[int(cy) % S, int(cx) % S]
             if rng.random() < np.clip(0.72 + 0.25 * m, 0.3, 1.0):
                 dx = (x - cx + S / 2) % S - S / 2; dy = (y - cy + S / 2) % S - S / 2
                 a = ang[k]; along = dx * np.sin(a) + dy * np.cos(a); across = dx * np.cos(a) - dy * np.sin(a)
                 v = np.clip((ln / 2 - np.abs(along)) / 2.0, 0, 1) * np.clip((th * (1 - 0.35 * (2 * along / ln) ** 2) - np.abs(across)) / 0.9, 0, 1)
                 lite = np.maximum(lite, v * np.clip(rng.normal(1.0, 0.15), 0.6, 1.25))
             vy += ln * rng.uniform(0.75, 1.1); k += 1
-    out = (1 + 3.0 * lite) * np.exp(0.05 * mot)
+    for cy, cx in rng.uniform(0, S, (140, 2)):    # small cream dots between the strokes, mostly in the light drifts
+        if drift[int(cy), int(cx)] < -0.3 and rng.random() < 0.7: continue
+        rr = np.hypot((x - cx + S / 2) % S - S / 2, (y - cy + S / 2) % S - S / 2)
+        lite = np.maximum(lite, np.clip((rng.uniform(1.2, 2.6) - rr) / 0.9, 0, 1) * 0.9)
+    out = (1 + 3.0 * lite) * np.exp(0.12 * drift + 0.04 * mot)
     return np.repeat(out[:, :, None], 3, 2)
 
 

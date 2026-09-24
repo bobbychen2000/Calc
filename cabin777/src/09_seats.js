@@ -54,10 +54,11 @@ const SEATMAT = {
   // PY w1: real cabins (ref/web/py san_03 / san_04: fabric / wall 107 / 189 = 0.57; ANA py_37301 / 37303 0.8) -> lighter
   // than the r3 render (0.45); wing = back tone (py_37301 B/R 1.26 vs 1.24), flap / back 0.56-0.65 (san_04, py_37302),
   // shells / wall 0.38-0.42 (san_03 71-82 / 189, py_37303) [D]
-  // w3: back + wing warm greige (real cabins san_04 back R/B 1.27 vs wall 1.10; alv_02 / alv_04 cream strokes) [D]
-  pyFabric: { c: photoBase('#9a9692', 'py_back'), r: 0.9, l: LAYER.pyFleck },
+  // w3: back + wing greige (san_04 back R/B 1.27 vs wall 1.10); w4: cool lavender-grey ground (rater A B/R 1.07 vs wall,
+  // B (118,122,132)) - cream strokes come from the tile; wings = back tone (w4 render 94 vs 112) [D]
+  pyFabric: { c: photoBase('#94929c', 'py_back'), r: 0.9, l: LAYER.pyFleck },
   pyCover: { c: '#4b5168', r: 0.45, l: LAYER.leather },   // w2: flap / back 0.31-0.37 -> ~0.5; w3 B/R 1.4 (alv_17 slate-navy, ANA blue cast)   // photo flap #232740, R/B 0.55 (py_37305): less saturated
-  pyWing: { c: photoBase('#a09c98', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
+  pyWing: { c: photoBase('#aaa8b2', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
   pyShell: { c: '#7e8084', r: 0.42, l: LAYER.plastic },   // w2: rear shell / wall 0.28-0.34 rendered vs 0.4-0.6 in photos
   pyArm: { c: '#5c5e62', r: 0.45, l: LAYER.plastic },
   pyArmPad: { c: '#4a4c50', r: 0.5, l: LAYER.leather },   // dark stitched leatherette lids (san_06, alv_04)

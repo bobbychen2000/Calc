@@ -30,14 +30,14 @@ function pySeat(B, x0, lod, opts = {}) {
   // PY w2: the top is a large-radius arch that ends level with the headrest (0.925 vs 0.91), not a square board 6 cm
   // above it (py_37302 / 37303, san_13, alv_02; raters A + B) [D]
   const ds = [[-0.04, 0.05, 0.525], [0.12, 0.06, 0.525], [0.34, 0.07, 0.525], [0.5, 0.084, 0.525], [0.68, 0.09, 0.525], [0.78, 0.085, 0.522],
-    [0.84, 0.08, 0.515], [0.88, 0.075, 0.50], [0.905, 0.066, 0.47], [0.925, 0.05, 0.41], [0.935, 0.03, 0.32]];   // w3: covers the wings from behind
+    [0.84, 0.08, 0.52], [0.88, 0.075, 0.515], [0.905, 0.068, 0.505], [0.925, 0.055, 0.475], [0.94, 0.035, 0.41], [0.948, 0.015, 0.30]];   // w3/w4: square-shouldered so the wings never show from behind
   loftAt(B, ds.map(([y, d, w]) => SEC(y, w, d, zr(y) - d / 2 + 0.01, y > 0.85 ? d / 2 - 0.002 : 0.026)), BH, SEATMAT.pyShell, lod ? 2 : 3);
   // 6-way headrest with wings
   loftAt(B, [SEC(0.67, 0.42, 0.085, -0.008, 0.036), SEC(0.71, 0.39, 0.092, -0.012, 0.04), SEC(0.85, 0.39, 0.092, -0.012, 0.04), SEC(0.895, 0.37, 0.075, -0.006, 0.032), SEC(0.91, 0.33, 0.05, -0.002, 0.02)], BH, F, lod ? 3 : 4);
   for (const s of [-1, 1]) {
     // soft round pillow bolsters either side of the flap, ~0.10 wide x 0.25 tall with domed ends, bulging ~3.5 cm
     // forward of the flap (py_37301 / 37305)
-    const WX = M4.mul(BH, M4.trs(s * 0.195, 0, -0.045, -s * 18 * DEG));
+    const WX = M4.mul(BH, M4.trs(s * 0.182, 0, -0.045, -s * 14 * DEG));   // w4: pulled in (rater B: poked past the shell)
     loftAt(B, [SEC(0.66, 0.05, 0.05, 0, 0.024), SEC(0.69, 0.085, 0.095, 0, 0.042), SEC(0.72, 0.10, 0.11, 0, 0.05), SEC(0.87, 0.10, 0.11, 0, 0.05),
       SEC(0.90, 0.085, 0.095, 0, 0.042), SEC(0.92, 0.05, 0.05, 0, 0.024)], WX, SEATMAT.pyWing, lod ? 2 : 3);
   }
@@ -71,25 +71,26 @@ function pySeat(B, x0, lod, opts = {}) {
     // literature pocket low on the shell, just above the footrest (alv_05, san_10, san_05): rigid grey upper tray lip
     // standing ~4 cm proud, a flat grey panel below it with a black mesh window, slightly narrower at the bottom
     // (w3: the w2 5 cm hood + deep basket was too bulky, rater B) [D]
-    B.add(gRBox(0.40, 0.03, 0.045, 0.012, 1), on(0.235, 0.022), SEATMAT.pyShell);
+    B.add(gRBox(0.44, 0.045, 0.05, 0.014, 1), on(0.232, 0.024), SEATMAT.pyShell);
     B.add(gRBox(0.36, 0.17, 0.016, 0.012, 1), on(0.135, 0.01), SEATMAT.pyShell);
-    loftAt(B, [SEC(0.07, 0.27, 0.012, 0.018, 0.005), SEC(0.14, 0.30, 0.018, 0.021, 0.006), SEC(0.20, 0.32, 0.018, 0.021, 0.006)],
-      M4.mul(BH, M4.trs(0, 0, zr(0.13))), { c: '#16181b', r: 0.9, l: LAYER.grille }, 2);
+    B.add(gBox(0.30, 0.065, 0.003), on(0.12, 0.019), { c: '#16181b', r: 0.9, l: LAYER.grille });           // w4: shallow mesh window
+    for (const [sx, sy, w_, h_] of [[0, 0.156, 0.32, 0.002], [0, 0.084, 0.32, 0.002], [-0.16, 0.12, 0.002, 0.074], [0.16, 0.12, 0.002, 0.074]])
+      B.add(gBox(w_, h_, 0.002), on(sy, 0.0185, sx), { c: '#9a9ca0', r: 0.6 });                                  // stitched border
     B.add(gBox(0.36, 0.008, 0.006), on(0.216, 0.036), SEATMAT.black);                               // pocket mouth shadow
   }
   if (!opts.noScreen) {
     // coat hook: horizontal silver bullet high on the shell side + small round grey button below it (san_24)
-    B.add(gCyl(0.012, 0.016, 0.07, 10), M4.mul(on(0.80, 0.03, 0.20), M4.trs(0, 0, 0, 0, Math.PI / 2)), { c: '#c9ccd0', r: 0.25, m: 0.9, l: LAYER.brushed });
-    B.add(gCyl(0.009, 0.009, 0.006, 10), M4.mul(on(0.74, 0.012, 0.20), M4.trs(0, 0, 0, 0, Math.PI / 2)), { c: '#c7c9cc', r: 0.4 });
+    B.add(gCyl(0.015, 0.017, 0.05, 10), M4.mul(on(0.80, 0.025, 0.17), M4.trs(0, 0, 0, 0, Math.PI / 2)), { c: '#c9ccd0', r: 0.25, m: 0.9, l: LAYER.brushed });
+    B.add(gCyl(0.009, 0.009, 0.006, 10), M4.mul(on(0.74, 0.012, 0.17), M4.trs(0, 0, 0, 0, Math.PI / 2)), { c: '#c7c9cc', r: 0.4 });
     // gooseneck reading light: leaves the shell side at headrest height, arcs down + forward to a brushed-aluminium
     // head with a black lens at shoulder height; one per seat, on the console side (py_37305 / 37301, san_14)
     const sd = x0 > 0 ? -1 : 1, P = (x, y, z) => M4.point(BH, [sd * x, y, z]);
-    B.add(gCyl(0.016, 0.016, 0.03, 10), M4.mul(BH, M4.trs(sd * 0.265, 0.80, zr(0.80) - 0.02, 0, 0, Math.PI / 2)), SEATMAT.frame);
+    B.add(gCyl(0.016, 0.016, 0.03, 10), M4.mul(BH, M4.trs(sd * 0.25, 0.80, zr(0.80) - 0.02, 0, 0, Math.PI / 2)), SEATMAT.frame);
     B.add(gTube([P(0.262, 0.80, zr(0.80) - 0.02), P(0.262, 0.80, 0.0), P(0.265, 0.74, -0.10), P(0.24, 0.62, -0.16)], 0.0095, 8), null, SEATMAT.black);
-    const hd = M4.mul(BH, M4.trs(sd * 0.238, 0.585, -0.177, 0, 26 * DEG));
+    const hd = M4.mul(BH, M4.trs(sd * 0.238, 0.583, -0.204, 0, 50 * DEG));   // w4: head points forward-down ~45 deg (py_37305)
     B.add(gCyl(0.019, 0.019, 0.11, 12), hd,   // head ~38 x 115 mm (alv_17) [D]
     { c: '#c9ccd0', r: 0.25, m: 0.9, l: LAYER.brushed });
-    B.add(gCyl(0.006, 0.006, 0.002, 10), M4.mul(hd, M4.trs(0, -0.0555, 0)), SEATMAT.black);
+    B.add(gCyl(0.007, 0.007, 0.002, 10), M4.mul(hd, M4.trs(0, -0.025, 0.0192, 0, Math.PI / 2)), SEATMAT.black);   // lens on the side (py_37305)
   }
   // PY w2: ONE fold-down footrest for the passenger behind (alv_05 / alv_06, san_10): two ribbed dark pads (~0.13 m) on a
   // common axle with silver end caps + centre hub, hung from the seat pan on one silver arm just off centre (w3; alv_06) [D]
@@ -140,13 +141,13 @@ function pyUnit(n, lod = false, opts = {}) {
         // front face (alv_08 / alv_09, py_37306): two open moulded cubbies (upper larger) with a royal-blue triangle in
         // the corner, a black panel with two universal AC + USB sockets, then a lower block with the red life-vest tab
         // each cubby: a grey front plate standing ~2.5 cm proud over the lower 3/4, dark opening only above it
-        for (const [y, h] of [[0.50, 0.10], [0.37, 0.08]]) {
-          B.add(gBox(w - 0.03, 0.02, 0.004), M4.trs(xa, y + h / 2 - 0.012, -0.543), SEATMAT.hole);
-          B.add(gRBox(w - 0.012, h * 0.74, 0.028, 0.007, 1), M4.trs(xa, y - h * 0.13, -0.554), SEATMAT.pyArm);
+        for (const [y, h] of [[0.50, 0.12], [0.36, 0.075]]) {     // w4: upper ~1.5x the lower (alv_09)
+          B.add(gBox(w - 0.026, 0.016, 0.004), M4.trs(xa, y + h / 2 - 0.012, -0.543), { c: '#2a2c30', r: 0.8 });
+          B.add(gRBox(w - 0.02, h * 0.74, 0.028, 0.007, 1), M4.trs(xa, y - h * 0.13, -0.554), SEATMAT.pyArm);
           // royal-blue right-angled triangle: top-left corner on the upper cubby, top-right on the lower (alv_09) [V]
           const up = y > 0.45;
-          const L = 0.028, sx = up ? 1 : -1;   // legs along the plate's top edge and outer side (top-left / top-right seen from the front)
-          B.add(gExtrude([[0, 0], [-sx * L, 0], [0, -L]], 0.002), M4.trs(xa + sx * (w / 2 - 0.009), y + h * 0.24 - 0.008, -0.5695), { c: '#2f47a8', r: 0.6 });
+          const L = 0.026, sx = up ? 1 : -1;   // legs along the plate's top edge and outer side (top-left / top-right seen from the front)
+          B.add(gExtrude([[0, 0], [-sx * L, 0], [0, -L]], 0.002), M4.trs(xa + sx * (w / 2 - 0.013), y + h * 0.24 - 0.008, -0.5695), { c: '#2f47a8', r: 0.6 });
         }
         for (const s of [-1, 1]) {
           B.add(gRBox(0.037, 0.045, 0.004, 0.003, 1), M4.trs(xa + s * 0.021, 0.245, -0.542), SEATMAT.port);
@@ -175,8 +176,7 @@ function pyUnit(n, lod = false, opts = {}) {
       // PY w2: floor-standing silver bin, two square ~7 cm cups at the top (~0.44), white placard (alv_07, san_07) [D]
       B.add(gRBox(0.145, 0.44, 0.08, 0.012, 1), M4.trs(xa, 0.22, 0.045), SEATMAT.pyBin);
       for (const s of [-1, 1]) {        // recessed brushed cups with thin walls, grey floor (alv_07)
-        B.add(gRBox(0.056, 0.004, 0.058, 0.01, 1), M4.trs(xa + s * 0.033, 0.4405, 0.045), { c: '#8a8e92', r: 0.45, m: 0.6 });
-        B.add(gBox(0.05, 0.003, 0.052), M4.trs(xa + s * 0.033, 0.4425, 0.045), { c: '#3a3d40', r: 0.7 });
+        B.add(gRBox(0.056, 0.004, 0.058, 0.01, 1), M4.trs(xa + s * 0.033, 0.4405, 0.045), { c: '#6e7276', r: 0.45, m: 0.6 });   // shadowed cup floor
       }
       B.add(gQuad(0.08, 0.03), M4.trs(xa, 0.36, 0.0855), { c: '#e6e6e2', r: 0.6 });
     }
@@ -185,7 +185,7 @@ function pyUnit(n, lod = false, opts = {}) {
   const legX = n >= 3 ? [-(W / 2 - 0.28), W / 2 - 0.28] : [-0.28, 0.28];
   for (const lx of legX) {
     // w3: pale champagne leg frames with a diagonal rear strut, seen from the row behind (san_05, alv_03; rater A) [A]
-    const leg = { c: '#bdb298', r: 0.35, m: 0.7, l: LAYER.brushed };
+    const leg = { c: '#bab7ae', r: 0.35, m: 0.75, l: LAYER.brushed };   // w4: light warm aluminium (A: champagne, B: cool alu)
     B.add(gRBox(0.035, 0.44, 0.045, 0.01, 1), M4.trs(lx, 0.19, 0.0, 0, 35 * DEG), leg);
     B.add(gRBox(0.04, 0.34, 0.05, 0.01, 1), M4.trs(lx, 0.16, -0.40, 0, -20 * DEG), leg);
     B.add(gBox(0.055, 0.025, 0.14), M4.trs(lx, 0.012, -0.08), SEATMAT.black);
