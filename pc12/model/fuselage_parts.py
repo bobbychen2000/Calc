@@ -18,17 +18,41 @@ SPLIT_AFT = 9.85          # aft pressure bulkhead
 N_AROUND = 144
 
 # ---------------------------------------------------------------------------
-# opening definitions (side projection x/z, rounded rectangles)
+# opening definitions (side projection x/z)
+#
+# Stage-2 refit (sheet L3, drawing/openings_sheet.py).  Positions follow the registered Pilatus NGX
+# drawing: port openings from its side view, STARBOARD windows from its plan view (the sheet-1
+# starboard detail repeats the port stations), cross-checked against photos (window pitch pattern
+# within 15 mm after a scale + offset fit, PRO s/n 3001 closed airstair door has no window).  Door sizes are the published clear
+# openings (passenger door 0.61 x 1.35 m, cargo door 1.35 x 1.32 m, W x H), centred on the drawn doors.
 # ---------------------------------------------------------------------------
-WIN_HX, WIN_HZ, WIN_R, WIN_CZ = 0.155, 0.215, 0.060, 2.010   # 'rectangular' PC-24-style (Pilatus)
-FIXED_WINDOWS = {  # side -> stations
-    -1: [5.52, 6.32, 7.12, 7.92],
-    +1: [4.72, 6.32, 7.12, 7.92, 8.72],
+CABIN_CROWN_WL = float(F.z_top(6.0))       # 2.769: constant cabin section STA 4.6-8.2 (model/fuselage.py)
+# cabin windows: 'rectangular' PC-24 style = a Lame curve |dx/a|^n + |dz/b|^n = 1 (drawing: 300 x 385 mm,
+# n = 4.23 fits the drawn outline within 0.7 mm; photos: w/h 0.78-0.82)
+WIN_W, WIN_H, WIN_N = 0.300, 0.385, 4.2
+WIN_HX, WIN_HZ = 0.5 * WIN_W, 0.5 * WIN_H
+WIN_R = 0.084                              # corner radius of the best-fit round-cornered rectangle (rms 1.2 mm)
+WIN_CROWN_DROP = 0.5815                    # window centre below the cabin crown (drawing: WL 1995-2380)
+WIN_CZ = round(CABIN_CROWN_WL - WIN_CROWN_DROP, 4)          # 2.1875
+FIXED_WINDOWS = {  # side -> window centre stations (windows in doors / the exit: DOOR_WINDOWS)
+    -1: [5.605, 6.200, 6.980],                      # port, aft of the airstair door (side view)
+    +1: [5.359, 6.980, 7.730, 8.494],               # starboard, exit window between 1 and 2 (plan view)
 }
-AIRSTAIR = dict(side=-1, cx=4.715, cz=1.775, hx=0.305, hz=0.675, r=0.09)   # 0.61 x 1.35 m
-CARGO = dict(side=-1, cx=8.925, cz=1.780, hx=0.675, hz=0.660, r=0.10)      # 1.35 x 1.32 m
-EXIT = dict(side=+1, cx=5.520, cz=1.905, hx=0.255, hz=0.455, r=0.08)       # Type III 0.51 x 0.91 m
-DOOR_WINDOWS = {"door_airstair": 4.715, "door_cargo": 8.72, "exit_hatch": 5.52}
+DOOR_SILL_WL = 1.254                       # both door sills: drawn airstair outline 1229-2629 less the margin
+AIRSTAIR = dict(side=-1, cx=4.970, cz=DOOR_SILL_WL + 0.675, hx=0.305, hz=0.675, r=0.085,
+                hinge="bottom")            # 0.61 x 1.35 m, drawn outline 4650-5290 x 1229-2629, r 100
+CARGO = dict(side=-1, cx=8.240, cz=DOOR_SILL_WL + 0.660, hx=0.675, hz=0.660, r=0.055,
+             hinge="top")                  # 1.35 x 1.32 m, drawn outline 7540-8940 x 1157-2629, r 76
+EXIT = dict(side=+1, cx=6.205, cz=2.2015, hx=0.241, hz=0.3205, r=0.100,
+            hinge=None)                    # over-wing emergency exit (plug), drawn 5964-6446 x 1881-2522
+DOOR_WINDOWS = {"door_airstair": None, "door_cargo": 7.958, "exit_hatch": 6.205}   # None: no window
+# small features for the drawings / Stage-3 details (x, z centre, half sizes, radius)
+DOOR_DETAILS = {
+    "exit_handle": dict(side=+1, cx=6.205, cz=2.478, hx=0.060, hz=0.019, r=0.019),      # release handle
+    "airstair_handle": dict(side=-1, cx=4.956, cz=1.710, hx=0.190, hz=0.032, r=0.032),  # sheet 2, +-45 mm
+    "cargo_handle": dict(side=-1, cx=8.250, cz=1.650, hx=0.031, hz=0.155, r=0.031),     # sheet 2, +-45 mm
+}
+DOOR_HINGE_OFFSET = 0.010                  # hinge line inside the sill (airstair) / top edge (cargo), as build_door
 
 # windshield panes (x, s) where s = signed arc length from crown (+ starboard)
 WS_CORE = [(3.345, 0.034), (3.470, 0.470), (3.880, 0.455), (3.905, 0.034)]
@@ -42,8 +66,66 @@ def rr(p, o):
     return sdf2d.rrect(p[0], p[1], o["cx"], o["cz"], o["hx"], o["hz"], o["r"])
 
 
+def lame_sdf(px, py, cx, cy, a, b, n):
+    """Signed distance (m, negative inside) to the Lame curve |dx/a|^n + |dy/b|^n = 1: first-order
+    (Sampson) distance of the degree-1 form G = (|u|^n + |v|^n)^(1/n); exact on the axes and on the curve,
+    within a few % of the true distance over the few cm used for trims and seals."""
+    u = np.abs(np.asarray(px, float) - cx) / a
+    v = np.abs(np.asarray(py, float) - cy) / b
+    G = (u ** n + v ** n) ** (1.0 / n)
+    Gs = np.maximum(G, 1e-9)
+    g = np.sqrt(((u / Gs) ** (n - 1) / a) ** 2 + ((v / Gs) ** (n - 1) / b) ** 2)
+    return np.where(G < 1e-9, -min(a, b), (G - 1.0) / np.maximum(g, 1e-9))
+
+
 def window_sdf(x, z, cx):
-    return sdf2d.rrect(x, z, cx, WIN_CZ, WIN_HX, WIN_HZ, WIN_R)
+    """Cabin window centred at station cx (side projection x/z)."""
+    return lame_sdf(x, z, cx, WIN_CZ, WIN_HX, WIN_HZ, WIN_N)
+
+
+def window_outline(cx, n=240):
+    """Closed (n+1, 2) outline (x, z) of the cabin window at station cx."""
+    t = np.linspace(0.0, 2 * np.pi, n + 1)
+    c, s = np.cos(t), np.sin(t)
+    return np.c_[cx + WIN_HX * np.sign(c) * np.abs(c) ** (2.0 / WIN_N),
+                 WIN_CZ + WIN_HZ * np.sign(s) * np.abs(s) ** (2.0 / WIN_N)]
+
+
+def opening_outline(o, n_corner=16):
+    """Closed outline (x, z) of a door / exit / detail dict (round-cornered rectangle)."""
+    P = sdf2d.rrect_outline(o["cx"], o["cz"], o["hx"], o["hz"], o["r"], n_corner)
+    return np.vstack([P, P[:1]])
+
+
+def hinge_line(o):
+    """(x0, x1, z) of a door's hinge line in side projection, or None (EXIT: plug, no hinge)."""
+    h = o.get("hinge")
+    if h is None:
+        return None
+    z = o["cz"] - o["hz"] + DOOR_HINGE_OFFSET if h == "bottom" else o["cz"] + o["hz"] - DOOR_HINGE_OFFSET
+    return o["cx"] - o["hx"], o["cx"] + o["hx"], z
+
+
+def openings_table():
+    """Every fuselage-side opening as a flat record (id, kind, side, cx, cz, w, h, shape, hinge, host): the
+    one list the drawings (and Stage-3 consumers: interior reveals, structure cut-outs, livery) read."""
+    rows = []
+    doors = (("door_airstair", "airstair door", AIRSTAIR), ("door_cargo", "cargo door", CARGO),
+             ("exit_hatch", "emergency exit", EXIT))
+    for pid, name, o in doors:
+        rows.append(dict(id=pid, kind="door" if pid != "exit_hatch" else "exit", name=name, side=o["side"],
+                         cx=o["cx"], cz=o["cz"], w=2 * o["hx"], h=2 * o["hz"], shape=f"rrect r{o['r']:.3f}",
+                         r=o["r"], hinge=o.get("hinge"), host=None))
+        if DOOR_WINDOWS.get(pid) is not None:
+            rows.append(dict(id=pid + "_win", kind="window", name=f"window in {name}", side=o["side"],
+                             cx=DOOR_WINDOWS[pid], cz=WIN_CZ, w=WIN_W, h=WIN_H, shape=f"lame n{WIN_N:g}", r=WIN_R,
+                             hinge=None, host=pid))
+    for side, xs in FIXED_WINDOWS.items():
+        for i, cx in enumerate(xs):
+            rows.append(dict(id=f"win_{'p' if side < 0 else 's'}{i + 1}", kind="window", name="cabin window",
+                             side=side, cx=cx, cz=WIN_CZ, w=WIN_W, h=WIN_H, shape=f"lame n{WIN_N:g}", r=WIN_R,
+                             hinge=None, host=None))
+    return sorted(rows, key=lambda r: (r["side"], r["cx"]))
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +223,8 @@ def openings_field(m: Mesh):
 # ---------------------------------------------------------------------------
 
 def build_skin():
-    xs = F.station_grid(0.030, 0.05, extra=[SPLIT_FWD, 3.215, 3.832, 4.268, 4.41, 5.02, 8.25, 9.6])
+    door_edges = [o["cx"] + s * o["hx"] for o in (AIRSTAIR, CARGO) for s in (-1, 1)]
+    xs = F.station_grid(0.030, 0.05, extra=[SPLIT_FWD, 3.215, 3.832, 4.268] + door_edges)
     ts = np.linspace(0, 1, N_AROUND, endpoint=False)
     P, UV = skin_grid(xs, ts)
     N = grid_normals(P, close_u=False, close_v=True)
@@ -226,8 +309,9 @@ def build_glazing(parts_out):
     ws_glass = trim(p, fn(p) - 0.012, "negative").offset(-0.004)
     ws_seal = band(p, fn, -0.006, 0.014).offset(0.0015)
 
-    g = Part("glazing_cabin", "Cabin windows (9 fixed, stretched acrylic)", "glazing",
-             explode=(0, 0, 0), group="Glazing", qty=9,
+    n_fixed = sum(len(v) for v in FIXED_WINDOWS.values())
+    g = Part("glazing_cabin", f"Cabin windows ({n_fixed} fixed, stretched acrylic)", "glazing",
+             explode=(0, 0, 0), group="Glazing", qty=n_fixed,
              material_note="Two-ply laminated stretched acrylic")
     g.add(Mesh.merge(glass_parts), "glass").add(Mesh.merge(seals), "seal")
     parts_out[g.id] = g
