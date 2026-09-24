@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>PC-12 PRO Model Viewer</title>
+<meta name="description" content="Interactive viewer for a from-scratch parametric Pilatus PC-12 PRO model: step-by-step build, explode, cutaway, X-ray, animated controls, landing gear and propeller, parts list, drawings and dimension checks.">
+<link rel="stylesheet" href="viewer/viewer.css">
+<script>
+  // Inject the three.js import map before any module script is parsed.
+  // Default: jsDelivr CDN.  ?three=local uses ./three_local/ (a checkout of three.js r160, for offline tests).
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var base = q.get('three') === 'local' ? './three_local/' : 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
+    var s = document.createElement('script');
+    s.type = 'importmap';
+    s.textContent = JSON.stringify({ imports: {
+      'three': base + 'build/three.module.js',
+      'three/addons/': base + 'examples/jsm/'
+    } });
+    document.currentScript.after(s);
+    window.__threeBase = base;
+  })();
+</script>
+<script type="module" src="viewer/main.js"></script>
+</head>
+<body>
+<div id="app" class="panel-open">
+  <div id="stage" aria-label="3-D view of the PC-12 PRO model. Drag to orbit, scroll to zoom, right-drag to pan, click a part to select it." role="img"></div>
+  <div id="labels" aria-hidden="true"></div>
+
+  <!-- toolbar over the canvas -->
+  <div id="toolbar" role="toolbar" aria-label="View tools">
+    <div class="tb-group" role="group" aria-label="Camera">
+      <button type="button" data-cam="three_quarter" title="3/4 view (1)">3/4</button>
+      <button type="button" data-cam="front" title="Front (2)">Front</button>
+      <button type="button" data-cam="side" title="Side (3)">Side</button>
+      <button type="button" data-cam="top" title="Top (4)">Top</button>
+      <button type="button" data-cam="cockpit" title="Cockpit (5)">Cockpit</button>
+      <button type="button" data-cam="gear_bay" title="Gear bay (6)">Gear bay</button>
+    </div>
+    <label class="tb-group tb-slider" title="Explode (E)">
+      <span>Explode</span>
+      <input id="explode" type="range" min="0" max="1.5" step="0.01" value="0" aria-label="Explode factor">
+      <output id="explodeOut">0.00</output>
+    </label>
+    <div class="tb-group" role="group" aria-label="Display modes">
+      <button type="button" class="toggle" id="tCut" aria-pressed="false" title="Cutaway: remove the port half of the skin (C)">Cutaway</button>
+      <button type="button" class="toggle" id="tXray" aria-pressed="false" title="X-ray: translucent skins, show structure (X)">X-ray</button>
+      <button type="button" class="toggle" id="tLines" aria-pressed="false" title="Construction lines (L)">Lines</button>
+      <button type="button" class="toggle" id="tPrimer" aria-pressed="false" title="Primer instead of paint">Primer</button>
+    </div>
+    <div class="tb-group">
+      <button type="button" id="tReset" title="Reset view and animation (R)">Reset</button>
+      <button type="button" id="tHelp" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">?</button>
+    </div>
+  </div>
+
+  <div id="stepCaption" hidden></div>
+
+  <!-- selected-part card -->
+  <section id="infoCard" hidden aria-live="polite" aria-label="Selected part">
+    <header>
+      <div>
+        <h2 id="icName"></h2>
+        <div id="icMeta" class="muted"></div>
+      </div>
+      <button type="button" class="icon" id="icClose" aria-label="Clear selection (Esc)">×</button>
+    </header>
+    <p id="icNote"></p>
+    <dl id="icInfo"></dl>
+    <p id="icHint" class="muted" hidden></p>
+    <div class="row">
+      <button type="button" id="icFrame">Frame</button>
+      <button type="button" id="icIsolate" aria-pressed="false" class="toggle">Isolate</button>
+      <button type="button" id="icHide">Hide</button>
+      <button type="button" id="icShowAll" hidden>Show hidden</button>
+    </div>
+  </section>
+
+  <!-- drawing viewer (shown while the Drawings tab is active) -->
+  <div id="drawingView" hidden>
+    <div id="drawingPane" tabindex="0" aria-label="Drawing. Drag to pan, scroll or pinch to zoom.">
+      <img id="drawingImg" alt="" draggable="false">
+    </div>
+  </div>
+
+  <!-- side panel / bottom sheet -->
+  <aside id="panel" aria-label="Viewer panel">
+    <header class="panel-head">
+      <button type="button" id="sheetHandle" class="sheet-handle" aria-label="Collapse or expand panel"><span></span></button>
+      <div class="brand">
+        <h1>PC-12 PRO</h1>
+        <span class="muted">parametric model</span>
+      </div>
+      <button type="button" class="icon" id="panelToggle" aria-expanded="true" aria-controls="panelBody" title="Collapse panel">⟩</button>
+    </header>
+    <div role="tablist" id="tabs" aria-label="Panel sections">
+      <button role="tab" id="tab-build" aria-controls="pane-build" aria-selected="true">Build</button>
+      <button role="tab" id="tab-animate" aria-controls="pane-animate" aria-selected="false" tabindex="-1">Animate</button>
+      <button role="tab" id="tab-parts" aria-controls="pane-parts" aria-selected="false" tabindex="-1">Parts</button>
+      <button role="tab" id="tab-drawings" aria-controls="pane-drawings" aria-selected="false" tabindex="-1">Drawings</button>
+      <button role="tab" id="tab-specs" aria-controls="pane-specs" aria-selected="false" tabindex="-1">Specs</button>
+    </div>
+    <div id="panelBody">
+      <!-- BUILD -->
+      <section role="tabpanel" id="pane-build" aria-labelledby="tab-build">
+        <div class="build-controls">
+          <button type="button" id="bPrev" aria-label="Previous step (←)">◀</button>
+          <button type="button" id="bPlay" aria-label="Play build (Space)" class="primary">▶ Play</button>
+          <button type="button" id="bNext" aria-label="Next step (→)">▶</button>
+          <button type="button" id="bAll" title="Jump to the finished aircraft">Show all</button>
+        </div>
+        <div class="step-now">
+          <div class="muted" id="bCounter"></div>
+          <h2 id="bTitle"></h2>
+          <p id="bText"></p>
+          <div id="bParts" class="chips"></div>
+        </div>
+        <ol id="stepList" class="step-list"></ol>
+      </section>
+
+      <!-- ANIMATE -->
+      <section role="tabpanel" id="pane-animate" aria-labelledby="tab-animate" hidden>
+        <div class="row">
+          <button type="button" id="aDemo" class="primary">▶ Demo</button>
+          <button type="button" id="aCentre">Neutral</button>
+        </div>
+
+        <h3>Propeller <span class="readout" id="rProp"></span></h3>
+        <div class="seg" role="group" aria-label="Propeller speed">
+          <button type="button" data-rpm="0" aria-pressed="true">Off</button>
+          <button type="button" data-rpm="1000" aria-pressed="false" title="Ground idle (viewer estimate)">Idle</button>
+          <button type="button" data-rpm="1550" aria-pressed="false">1,550</button>
+          <button type="button" data-rpm="1700" aria-pressed="false">1,700</button>
+        </div>
+        <label class="slider"><span>Blade pitch</span>
+          <input id="sPitch" type="range" min="-38" max="62" step="1" value="0" aria-label="Blade pitch in degrees">
+          <output id="oPitch">0°</output></label>
+        <div class="row">
+          <button type="button" id="aReverse">Reverse −38°</button>
+          <button type="button" id="aFine">Fine 0°</button>
+          <button type="button" id="aFeather">Feather 62°</button>
+        </div>
+
+        <h3>Landing gear <span class="readout" id="rGear"></span></h3>
+        <div class="row">
+          <button type="button" id="aGearUp">Gear up</button>
+          <button type="button" id="aGearDown">Gear down</button>
+        </div>
+        <label class="slider"><span>Scrub</span>
+          <input id="sGear" type="range" min="0" max="1" step="0.01" value="0" aria-label="Gear position, 0 down to 1 up">
+          <output id="oGear">0 %</output></label>
+
+        <h3>Flaps <span class="readout" id="rFlaps"></span></h3>
+        <div class="seg" role="group" aria-label="Flap setting">
+          <button type="button" data-flap="0" aria-pressed="true">0°</button>
+          <button type="button" data-flap="15" aria-pressed="false">15°</button>
+          <button type="button" data-flap="30" aria-pressed="false">30°</button>
+          <button type="button" data-flap="40" aria-pressed="false">40°</button>
+        </div>
+
+        <h3>Doors</h3>
+        <div class="row">
+          <button type="button" class="toggle" id="aAirstair" aria-pressed="false">Airstair door</button>
+          <button type="button" class="toggle" id="aCargo" aria-pressed="false">Cargo door</button>
+        </div>
+
+        <h3>Flight controls</h3>
+        <label class="slider"><span>Roll</span>
+          <input id="sRoll" type="range" min="-1" max="1" step="0.01" value="0" aria-label="Roll command, positive = right roll">
+          <output id="oRoll">0</output></label>
+        <label class="slider"><span>Pitch</span>
+          <input id="sPitchCtl" type="range" min="-1" max="1" step="0.01" value="0" aria-label="Pitch command, positive = pull (nose up)">
+          <output id="oPitchCtl">0</output></label>
+        <label class="slider"><span>Yaw</span>
+          <input id="sYaw" type="range" min="-1" max="1" step="0.01" value="0" aria-label="Yaw command, positive = right rudder">
+          <output id="oYaw">0</output></label>
+        <h4>Trim</h4>
+        <label class="slider"><span>Stabiliser</span>
+          <input id="sStab" type="range" min="-4" max="2" step="0.1" value="0" aria-label="Stabiliser incidence in degrees, negative = leading edge down = nose-up trim">
+          <output id="oStab">0.0°</output></label>
+        <label class="slider"><span>Aileron tab (L)</span>
+          <input id="sAilTrim" type="range" min="-10" max="10" step="0.5" value="0" aria-label="Left aileron tab trim in degrees">
+          <output id="oAilTrim">0.0°</output></label>
+        <label class="slider"><span>Rudder tab</span>
+          <input id="sRudTrim" type="range" min="-12" max="12" step="0.5" value="0" aria-label="Rudder tab trim in degrees">
+          <output id="oRudTrim">0.0°</output></label>
+        <table class="readouts" aria-label="Surface deflections">
+          <tbody id="surfTable"></tbody>
+        </table>
+        <p class="muted small">Signs: surface angles are trailing edge down (+) / up (−); rudder and rudder tab + = trailing edge to starboard; stabiliser − = leading edge down (nose-up trim).</p>
+      </section>
+
+      <!-- PARTS -->
+      <section role="tabpanel" id="pane-parts" aria-labelledby="tab-parts" hidden>
+        <input id="partSearch" type="search" placeholder="Search parts…" aria-label="Search parts" autocomplete="off">
+        <div class="row small">
+          <button type="button" id="pShowAll">Show all parts</button>
+          <span class="muted" id="pCount"></span>
+        </div>
+        <div id="partTree" role="tree" aria-label="Bill of materials"></div>
+      </section>
+
+      <!-- DRAWINGS -->
+      <section role="tabpanel" id="pane-drawings" aria-labelledby="tab-drawings" hidden>
+        <div class="seg" role="group" aria-label="Drawing sheet">
+          <button type="button" data-sheet="0" aria-pressed="true">General arrangement</button>
+          <button type="button" data-sheet="1" aria-pressed="false">Sections</button>
+        </div>
+        <div class="row">
+          <button type="button" id="dFit">Fit</button>
+          <button type="button" id="dIn" aria-label="Zoom in">+</button>
+          <button type="button" id="dOut" aria-label="Zoom out">−</button>
+          <a id="dOpen" href="#" target="_blank" rel="noopener">Open full size ↗</a>
+        </div>
+        <p class="muted small" id="dDesc"></p>
+        <p class="muted small">Hidden-line drawings generated from the same model (drawing/sheet.py). Drag to pan, scroll or pinch to zoom.</p>
+      </section>
+
+      <!-- SPECS -->
+      <section role="tabpanel" id="pane-specs" aria-labelledby="tab-specs" hidden>
+        <h3>Dimension checks</h3>
+        <div class="table-wrap"><table class="data" id="checksTable"></table></div>
+        <h3>Wing</h3>
+        <dl class="kv" id="wingList"></dl>
+        <h3>Model</h3>
+        <dl class="kv" id="statsList"></dl>
+        <h3>Sources</h3>
+        <div id="sourcesList"></div>
+        <h4>Estimated / reconstructed</h4>
+        <ul id="estList" class="small"></ul>
+        <h4>Animation values</h4>
+        <ul id="animList" class="small"></ul>
+      </section>
+    </div>
+  </aside>
+  <button type="button" id="panelOpen" aria-label="Open panel" hidden>☰ Panel</button>
+
+  <!-- keyboard help -->
+  <div id="help" hidden role="dialog" aria-modal="false" aria-labelledby="helpTitle">
+    <div class="help-card">
+      <header><h2 id="helpTitle">Keyboard shortcuts</h2><button type="button" class="icon" id="helpClose" aria-label="Close">×</button></header>
+      <dl class="kv keys">
+        <dt>← / →</dt><dd>Previous / next build step</dd>
+        <dt>Space</dt><dd>Play / pause the build</dd>
+        <dt>E</dt><dd>Explode on / off</dd>
+        <dt>X</dt><dd>X-ray</dd>
+        <dt>C</dt><dd>Cutaway</dd>
+        <dt>L</dt><dd>Construction lines</dd>
+        <dt>G</dt><dd>Gear up / down</dd>
+        <dt>F</dt><dd>Cycle flaps 0 / 15 / 30 / 40</dd>
+        <dt>P</dt><dd>Cycle propeller off / idle / 1,550 / 1,700</dd>
+        <dt>1 – 6</dt><dd>Camera presets</dd>
+        <dt>R</dt><dd>Reset</dd>
+        <dt>Esc</dt><dd>Clear selection</dd>
+      </dl>
+    </div>
+  </div>
+
+  <!-- loading / error -->
+  <div id="loading" role="status" aria-live="polite">
+    <div class="load-card">
+      <div class="load-title">PC-12 PRO</div>
+      <div class="muted" id="loadMsg">Loading model…</div>
+      <div class="bar"><span id="loadBar"></span></div>
+      <div class="muted small" id="loadBytes"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
