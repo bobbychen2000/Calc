@@ -1,0 +1,179 @@
+{
+ "area": "ceiling",
+ "rater": "A",
+ "round": 4,
+ "score": 7.2,
+ "note": "Rated on the HEAD renders (r4, r4st, r4v). I re-ran raterA3/z.js on b/test.html to get the raterA4/z1..z4 close-ups, and made crops and luma samples in raterA4/. The r4 QA views show little ceiling, so the tone checks use v1, v2 and v6 against b_sany_y22, b_lalf_c119 and y_47300.",
+ "round3Status": {
+  "fixed": [
+   "PSU sign windows: no z-fight. The pill renders solid black (16 luma) with legible amber and red icons at the atlas aspect (z1_cSign, v6_sign). This matches the smoked window in b_sany_y22.",
+   "Cove band: a continuous white band 3-4x the grille width, saturated at 247 (v6, v1, p1). The grille is now a slim strip.",
+   "Channel tone: the channel against the centre bin is 163/192 = 0.85 (v6). In y_47300 it is about 175/203 = 0.87. The channel gap lines are thinner.",
+   "Centre-bin form from directly below: z1 shows a gradient across the door underside and a visible wrap seam. From the aisle (v5, f_cbin) the rolled form reads well.",
+   "Zone-end closure: no sky sliver over the centre-bin crest in v3 or f_cbin."
+  ],
+  "partlyFixed": [
+   "Vault against band: the code eFn now falls to about 0.55 inboard of the grille, but the rendered result has not changed. The band is 247 and the vault next to the grille is 245, falling only to about 225 at the centre bin (v2 row 60, a ratio of 0.91 to 0.99). In c119 the vault is 146..185 against a band of 246 (0.6..0.75). The band is brighter only because it clips, so the glowing-cove read is weak.",
+   "Outboard PSU wells: the plates are thinner, but they still read as flat mid-grey stickers: well 156 against band 209 (0.75), with a darker stadium outline (v4, z2). In thrifty_j_overhead-vent the wells are the same tone as the band, with a soft dished bevel and proud stepped modules.",
+   "Light-blue hairline: still a 1 px (88,154,197) line along the lower edge of the outboard PSU band and rail (v4_blue, v9). It is the sky showing through a gap. The seam may be shared with shell."
+  ],
+  "notFixed": [
+   "Centre channel is still 3 flat panels with hairlines. There are no stepped transverse panels (b_sany_y22).",
+   "Row-placard ground quad is visible as a lighter rectangle on the centre-bin door (p2 '35', clearly) and faintly on the outboard bin (p1)",
+   "Door-3 black-framed canopy (monuments, v3) and the door-area ceilings are still unverified"
+  ]
+ },
+ "details": [
+  {
+   "detail": "Aisle vault panels and joints. The arcs sweep correctly. Tone is uniform and too bright against the band: 245 by the grille, 225 at the centre bin (v2), against c119's 146..185 next to a 246 band. The joints are hairlines. In c119 and y22 they are raised light ribs with a shadowed lip.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v2_jAisleFwdUp.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"
+   ]
+  },
+  {
+   "detail": "Cove light band. The width is now right (3-4x the grille) and it is a continuous white strip, so it reads as the light line in v1 and v6. It is only 2..20 luma above the adjacent vault, so it does not glow the way the photos do.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v6_y34Eup.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/cmp_v6_y22.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_sany_y22.jpg"
+   ]
+  },
+  {
+   "detail": "Slotted grille. Slim, with 2 segments per panel, outboard only. From low aisle angles (v2, v5) the slats still read darker and more ladder-like than c119's mid-grey slot grille. Minor.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/p1_placardL.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v2_jAisleFwdUp.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"
+   ]
+  },
+  {
+   "detail": "Outboard bins. The modules, seams, rail with groove, latch and readable '35/34' placards match y22 and c119. The only defect is a faint placard plate outline (p1).",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/p1_placardL.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_sany_y22.jpg"
+   ]
+  },
+  {
+   "detail": "Centre bins. From the aisle and from directly below (v5, z1, f_cbin) the rolled form and wrap read. From a seated eye looking up (v6), the door band is 190..194 across its whole width with no top-to-wrap gradient. In b_sany_y22 the bins are strongly shaded and bulbous, and the bin/vault boundary is a clear crease. In the model, bin and vault merge into one pale surface.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v6_y34Eup.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/z1_cSign.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/cmp_v6_y22.png"
+   ]
+  },
+  {
+   "detail": "Latches. Stadium ring, dark well and paddle, at the correct height and size.",
+   "score": 8,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4st/g_latch.png"
+   ]
+  },
+  {
+   "detail": "Outboard PSUs. Flat mid-grey stadium plates (156) on a 209 band, with a darker outline ring: stickers, not the photo's dished wells. The band is one flat plate with no proud stepped modules or ribbed fillers. The blue hairline persists along the lower edge.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v4_jPsuUp.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/z2_oSign.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/v4_blue.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/thrifty_j_overhead-vent.jpg"
+   ]
+  },
+  {
+   "detail": "Centre PSU. The large 4-socket housing now exists, at the right size and pill shape (v6, top). Its polarity is wrong: the model draws 4 bright white rings that read as lit lamps, while y22 shows 4 deep dark sockets in a dished housing of the channel's tone. The two slim rows below the sign match y_47300. The channel has no stepped transverse panels.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/v6_gasper.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/y22_gasper.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/cmp_v6_y22.png"
+   ]
+  },
+  {
+   "detail": "No-smoking and fasten-belt signs. Fixed: a black smoked pill with legible icons. Nit: the icon quad's background is (70,63,59) against the pill's (16,15,15), so a brownish rectangle shows inside the pill (z1_sign_crop).",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/z1_sign_crop.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/v6_sign.png"
+   ]
+  },
+  {
+   "detail": "Row placards. Readable on both bins. The centre-bin placard sits on a visibly lighter rectangular plate (p2), and the outboard one shows a faint plate edge (p1). Neither photo shows a plate.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/p2_placardC.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/p1_placardL.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"
+   ]
+  },
+  {
+   "detail": "Ceiling EXIT signs. Bilingual, double-faced, light housing. OK.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v3_door3Up.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v7_door4Fwd.png"
+   ]
+  },
+  {
+   "detail": "Vault fittings. The speaker and emergency light match c119 in shape. The speaker face is still no darker than the vault. Minor.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v2_jAisleFwdUp.png",
+    "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"
+   ]
+  },
+  {
+   "detail": "Door-area ceilings. Unchanged. The door-3 thick black-framed panel (monuments) and the flat grey domes are unverified.",
+   "score": 5.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r4v/v3_door3Up.png",
+    "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA4/z4_door2.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "The vault renders almost as bright as the cove band",
+   "problem": "The eFn change to about 0.55 of the band does not reach the image. Band 247 (clipped) against vault 245 by the grille, falling to only 225 at the centre bin (v2, v6). The photos show 0.6..0.75 by the grille and darker toward the centre-bin crease (c119, y22). A likely cause is the albedo #fff-ish vault plus ambient/AO fill dominating over the emissive term.",
+   "fix": "Lower the CEILMAT.vault base colour or diffuse response (not just e), so the vault falls to about 185..200 beside a 247 band and to about 160..175 at the centre-bin crease. Keep the cove at e 0.30 or above. Verify with a v2 luma sample."
+  },
+  {
+   "severity": "medium",
+   "detail": "Outboard PSU wells read as flat grey stickers with a dark outline",
+   "problem": "Well 156 against band 209 (v4, z2), with a hard darker rim line. thrifty_j_overhead-vent shows band-tone wells with a light bevel and a soft shadow, sitting in proud stepped modules separated by ribbed fillers.",
+   "fix": "Well floor at about the band tone (0.95), a light bevelled rim instead of the dark outline, and alternating proud 5..8 mm module plates or fillers along the band."
+  },
+  {
+   "severity": "medium",
+   "detail": "Centre gasper housing has reversed polarity, and the channel has no stepped panels",
+   "problem": "The v6 top housing shows 4 bright white rings. y22 shows 4 deep dark sockets in a dished housing of the channel's tone. The channel is 3 flat panels, where y22 shows many proud transverse steps.",
+   "fix": "Make the socket interiors dark (about 0.35 of the channel) with a light lip and no bright ring. Add 5..8 thin proud transverse steps (3..5 mm) along the channel between the PSU groups."
+  },
+  {
+   "severity": "low",
+   "detail": "Light-blue hairline along the lower edge of the outboard PSU band and rail",
+   "problem": "1 px (88,154,197) sky leak (v4_blue, v9).",
+   "fix": "Extend the band or lens underside 5 mm down and outboard to close the gap to the sidewall top (coordinate with shell if the seam is theirs)."
+  },
+  {
+   "severity": "low",
+   "detail": "Placard plates and the sign icon quad show as rectangles",
+   "problem": "p2 centre placard sits on a lighter plate. z1: icon-quad ground (70,63,59) inside a (16,15,15) pill.",
+   "fix": "Match the placard ground to the door tone, or cut the quad to the glyph bounds. Make the sign icon atlas background black."
+  },
+  {
+   "severity": "low",
+   "detail": "Door-area ceilings (monuments-owned door-3 canopy) are unverified",
+   "problem": "v3 thick black frame persists.",
+   "fix": "Monuments worker. Keep the from_ceiling note open."
+  }
+ ],
+ "questionsForUser": [
+  "Do you have any photo of the ANA 77W door-2 or door-3 ceiling and galley canopy? Without one, the door-area ceilings stay unverified."
+ ]
+}
