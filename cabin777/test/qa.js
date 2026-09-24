@@ -16,7 +16,7 @@ window.__settle=()=>{const a=__app.anim; if(a&&a.to){__app.cam.pos=[...a.to.pos]
 const walk = (x, y, z, yaw, pitch) => `__app.setView([${x},${y},${z}], ${yaw}, ${pitch})`;
 // [camera expression, reference photos (ref/ana or ref/web), what the view should show]
 const VIEWS = {
-  q01_door1: [walk(-0.35, 1.62, 6.3, 'Math.PI+0.12', -0.08), [], 'boarding at L1: galley/lav front monuments, THE Suite ahead'],
+  q01_door1: [walk(-1.35, 1.62, 5.7, 'Math.PI+0.12', -0.08), [], 'boarding at L1: galley/lav front monuments, THE Suite ahead'],
   q02_suiteAisle: [`__rel('2D',1.82,1.8,-0.6,0.75,-0.55)`, ['f_17301'], 'THE Suite from the aisle, fluted shells, 43in screens'],
   q03_suite1A: [`__sit('1A',0.12,-0.2)`, ['f_17306', 'f_17300'], 'seated in 1A: screen wall, ottoman, window console'],
   q04_suite1Abed: [`(()=>{__sit('1A'); __app.toggleBed(); __settle();})()`, ['f_17304'], '1A in bed mode'],
@@ -26,9 +26,9 @@ const VIEWS = {
   q08_seat12H: [`__rel('12H',-0.8,1.78,1.3,-0.7,-0.55)`, ['c_27300', 'c_27303'], '12H seat from above/behind'],
   q09_centrePair: [`__rel('18D',-0.62,1.72,-0.95,-Math.PI/2,-0.5)`, ['c_27314', 'c_27313'], 'centre pair 17E/18D seen across the aisle'],
   q10_seat14D: [`__rel('14D',-0.57,1.72,1.02,-0.6,-0.55)`, ['c_27315'], '14D from above the aisle'],
-  q11_bar3: [walk(-0.2, 1.62, 35.4, 0.9, -0.1), [], 'door-3 self-service bar'],
+  q11_bar3: [walk(-1.35, 1.62, 31.6, 'Math.PI+0.35', -0.1), [], 'door-3 self-service bar'],
   q12_wing: [`(()=>{const s=__S('19A'); __app.sit(s,{instant:true}); __app.lookOut(s); __settle();})()`, [], 'window view of the wing and GE90'],
-  q13_pyFront: [`__rel('25C',0.35,1.75,-1.2,Math.PI+0.45,-0.3)`, ['py_37302'], 'PY cabin from the front'],
+  q13_pyFront: [`__rel('25C',0.35,1.75,-0.72,Math.PI+0.45,-0.3)`, ['py_37302'], 'PY cabin from the front'],
   q14_seat26A: [`__rel('26A',1.3,1.3,-0.85,Math.PI*0.7,-0.2)`, ['py_37301', 'py_37303'], 'PY window pair from the side'],
   q15_econFronts: [walk(0, 1.45, 46.75, 'Math.PI', -0.2), ['y_47300'], 'economy seat fronts looking aft'],
   q16_econAisle: [`__rel('32C',0.55,1.7,-1.3,Math.PI+0.5,-0.35)`, ['y_47301'], 'economy from the left aisle looking aft'],
