@@ -721,7 +721,7 @@ function buildMonuments(gl, layout, opts = {}) {
         for (let k = 0; k <= 12; k++) {
           const v = lerp(0.03, 1.9, k / 12);
           const [x, y, nx, ny] = wallAt(v);
-          for (const dz of [-0.006, 0.006]) { g.p.push((x + nx * 0.003) * side, y + ny * 0.003, zz + dz); g.n.push(nx * side, ny, 0); g.u.push(0, 0); }
+          for (const dz of [-0.0025, 0.0025]) { g.p.push((x + nx * 0.003) * side, y + ny * 0.003, zz + dz); g.n.push(nx * side, ny, 0); g.u.push(0, 0); }   // 5 mm seam (from_shell)
         }
         for (let k = 0; k < 12; k++) { const q = k * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
         fixWinding(g);
@@ -736,13 +736,18 @@ function buildMonuments(gl, layout, opts = {}) {
       const [hx, hy] = at(1.05, 0.045);
       B.add(gRBox(0.05, 0.42, 0.06, 0.02, 1), M4.trs(hx, hy + 0.02, c + 0.26, 0, 0, side * 0.12), MAT.handle);
       B.add(gRBox(0.06, 0.06, 0.08, 0.02, 1), M4.trs(hx + side * 0.01, hy - 0.19, c + 0.26), MAT.handle);
-      const [rx, ry] = at(1.62, 0.02);
-      B.add(gRBox(0.03, 0.05, 0.10, 0.01, 1), M4.trs(rx, ry, c - 0.25), MAT.handleRed);
+      // red arming arc (~0.2 m semicircle) at ~1.15 m on the door centre line (sans_09 / sp_py_09 / lalf_133)
+      const arc = [];
+      for (let k = 0; k <= 12; k++) { const t = (k / 12) * Math.PI, [ax, ay] = at(1.15 + 0.1 * Math.sin(t), 0.008); arc.push([ax, ay, c + 0.1 * Math.cos(t)]); }
+      B.add(gTube(arc, 0.008, 6), null, MAT.handleRed);
       const [px, py] = at(0.95, 0.006);
       B.add(gQuad(0.2, 0.106), M4.trs(px, py, c - 0.2, side > 0 ? -Math.PI / 2 : Math.PI / 2), MAT.decal, atlasUV('doorPlacard'));
-      const [sx, sy] = at(0.30, 0.05);
-      const [, , snx, sny] = wallAt(0.30);
-      B.add(gRBox(0.10, 0.36, 0.92, 0.04, 2), M4.trs(sx, sy, c, 0, 0, side > 0 ? -Math.atan2(sny, -snx) : Math.atan2(sny, -snx)), MAT.slide);
+      // slide bustle: full-width off-white box from the floor to ~0.80 m with a ledge on top (sans_09, from_shell)
+      const [sx, sy] = at(0.41, 0.08);
+      const [, , snx, sny] = wallAt(0.41), sr = side > 0 ? -Math.atan2(sny, -snx) : Math.atan2(sny, -snx);
+      B.add(gRBox(0.16, 0.78, 0.98, 0.05, 2), M4.trs(sx, sy, c, 0, 0, sr), MAT.slide);
+      const [lx, ly] = at(0.815, 0.09);
+      B.add(gRBox(0.18, 0.03, 1.0, 0.012, 1), M4.trs(lx, ly, c, 0, 0, sr), MAT.slide);
       for (const dz of [-0.64, 0.64]) {
         const p0 = at(0.95, 0.06), p1 = at(1.55, 0.06);
         B.add(gTube([[p0[0], p0[1], c + dz], [p1[0], p1[1], c + dz]], 0.014, 8), null, MAT.handle);
