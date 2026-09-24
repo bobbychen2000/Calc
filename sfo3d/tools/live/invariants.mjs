@@ -105,7 +105,7 @@ const RW = RWY.map(R => ({ ...R }));
 const rwyCoords = (R, x, z) => { const dx = x - R.thr[0], dz = z - R.thr[1]; return [dx * R.dir[0] + dz * R.dir[1], -dx * R.dir[1] + dz * R.dir[0]]; };
 const rwyPhys = (R, x, z) => { const dx = x - R.start[0], dz = z - R.start[1]; return [dx * R.dir[0] + dz * R.dir[1], -dx * R.dir[1] + dz * R.dir[0]]; };
 function runwaysAt(x, z, halfW = 30.5) { const out = []; for (const R of RW) { const [a, c] = rwyPhys(R, x, z); if (a > -5 && a < R.len + 5 && Math.abs(c) < halfW) out.push(R); } return out; }
-function nearRunwayCL(x, z) { let best = 1e9; for (const R of RW) { const [a, c] = rwyPhys(R, x, z); const aa = Math.max(0, Math.min(R.len, a)); best = Math.min(best, Math.hypot(a - aa, c)); } return best; }
+function nearRunwayCL(x, z, ext = 0) { let best = 1e9; for (const R of RW) { const [a, c] = rwyPhys(R, x, z); const aa = Math.max(-ext, Math.min(R.len + ext, a)); best = Math.min(best, Math.hypot(a - aa, c)); } return best; }
 const inAirport = (x, z) => x > -2700 && x < 1950 && z > -2350 && z < 1800;
 
 // planform: convex pieces in body coordinates (x aft of the nose, y to the right) with height bands (m AGL)
@@ -211,12 +211,17 @@ function rawTruth(a, t) {
   let s = RAW.get(a.hex); if (!s) RAW.set(a.hex, s = { lastT: 0, air: null, arm: null, lastFastGnd: null, lastAirT: null, flight: null });
   if (t <= s.lastT) return; s.lastT = t; s.flight = a.flight || s.flight;
   const gs = a.gs ?? 0;
+  // direction of motion: reported track in the air; on the surface the relay drops `track` (audit s.4.3), so use the
+  // chord from the previous report, else the last airborne track
+  const chord = s.lx != null && Math.hypot(x - s.lx, z - s.lz) > 15 ? Math.atan2(x - s.lx, -(z - s.lz)) / DEG : null; s.lx = x; s.lz = z;
+  const dirDeg = a.ground ? (chord ?? s.airTrk) : (a.track ?? chord);
+  if (!a.ground && a.track != null) s.airTrk = a.track;
   if (a.ground) {
     if (inAirport(x, z) && gs > 40) {
-      const rs = runwaysAt(x, z, 40); const trk = a.track; let R = null;
-      if (rs.length) { R = rs[0]; if (trk != null) { let bd = 1e9; for (const q of rs) { const dd = Math.abs(wrapD(trk - q.hdg / DEG)); if (dd < bd) { bd = dd; R = q; } } } else R = null; }
+      const rs = runwaysAt(x, z, 40); let R = null;
+      if (rs.length && dirDeg != null) { let bd = 30; for (const q of rs) { const dd = Math.abs(wrapD(dirDeg - q.hdg / DEG)); if (dd < bd) { bd = dd; R = q; } } }
       // landing: the first fast ground report after being airborne (within 60 s)
-      if (s.air === true && s.lastAirT != null && t - s.lastAirT < 60000 && !s.landedT && R) { truth.landings.push({ hex: a.hex, flight: s.flight, t, rwy: R ? R.name : null, a: R ? Math.round(rwyCoords(R, x, z)[0]) : null }); s.landedT = t; }
+      if (s.air === true && s.lastAirT != null && t - s.lastAirT < 60000 && !s.landedT && R) { truth.landings.push({ hex: a.hex, flight: s.flight, t, rwy: R.name, a: Math.round(rwyCoords(R, x, z)[0]) }); s.landedT = t; }
       s.lastFastGnd = { t, rwy: R ? R.name : null };
     }
     s.air = false; s.arm = null; return;
@@ -284,8 +289,8 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       // vertical placement
       if (D.ground && Math.abs(D.y - GROUND_Y) > 0.01) viol('vert.ground', tr, Math.abs(D.y - GROUND_Y), { y: +D.y.toFixed(2) });
       if (D.y < GROUND_Y - 0.01) viol('vert.below', tr, GROUND_Y - D.y);
-      if (!D.ground && agl < 1 && D.gs < 50 * KT && !rotor) viol('vert.float', tr, 50 - D.gs / KT, { agl: +agl.toFixed(2), gs: +(D.gs / KT).toFixed(0) });
-      if (!D.ground && !rotor && agl < 60 && inAirport(D.x, D.z)) { const dc = nearRunwayCL(D.x, D.z); if (dc > 400) viol('vert.lowfly', tr, dc, { agl: +agl.toFixed(1), dRwyCL: Math.round(dc) }); }
+      if (!D.ground && agl < 1 && D.gs < 50 * KT && !rotor) viol(inAirport(D.x, D.z) ? 'vert.float' : 'vert.float.other_airfield', tr, 50 - D.gs / KT, { agl: +agl.toFixed(2), gs: +(D.gs / KT).toFixed(0) });
+      if (!D.ground && !rotor && agl < 60 && inAirport(D.x, D.z)) { const dc = nearRunwayCL(D.x, D.z, 4000); if (dc > 400) viol('vert.lowfly', tr, dc, { agl: +agl.toFixed(1), dRwyCL: Math.round(dc) }); }
       // wrong phase vs geometry
       const ph = tr.phase;
       if (D.ground && ['enroute', 'approach', 'departure', 'goaround'].includes(ph)) viol('phase.airphase_on_ground', tr, 1, { gs: +(D.gs / KT).toFixed(0) });
@@ -404,8 +409,9 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
         if (!Bo) { let nearest = 1e9; for (const A of gnd) nearest = Math.min(nearest, Math.hypot(doorW(A, b.door)[0] - tgt[0], doorW(A, b.door)[1] - tgt[1])); if (nearest > 10) viol('bridge.orphan', ot || null, nearest, { key: g.name + '/' + b.door, stand: g.name, bridge: b.door, k: +k.toFixed(2), occupant: ot ? ot.hex : null, removed: ot && ot.removed ? 1 : 0, nearestDoor: nearest > 1e8 ? null : +nearest.toFixed(1) }, tgt[0], tgt[1]); }
         else {
           const dW = doorW(Bo, b.door); const e = Math.hypot(dW[0] - tgt[0], dW[1] - tgt[1]);
+          const pp = Bo.tr.parkPos; let parkErr = null, dispPark = null; if (pp) { const Tq = Bo.S.T; const hq = hdgVec(Bo.tr.parkHdg ?? Bo.tr.disp.hdg); const f = hq, r = [-f[1], f[0]], k0 = ANT * Tq.L; const nose = [pp[0] + f[0] * k0, pp[1] + f[1] * k0]; const Bp = { S: Bo.S, r, W: (x, y) => [nose[0] - f[0] * x + r[0] * y, nose[1] - f[1] * x + r[1] * y] }; const dP = doorW(Bp, b.door); parkErr = +Math.hypot(dP[0] - tgt[0], dP[1] - tgt[1]).toFixed(2); dispPark = +Math.hypot(pp[0] - Bo.tr.disp.x, pp[1] - Bo.tr.disp.z).toFixed(2); }
           const tk = gsys.docks(g, b) && g.acType;
-          if (e > 1.5) viol('bridge.misdock', Bo.tr, e, { stand: g.name, bridge: b.door, err: +e.toFixed(1), acType: g.acType, model: Bo.tr.model ? Bo.tr.model.t : null, parkMode: Bo.tr.parkMode || null, towing: Bo.tr.ctl && Bo.tr.ctl.towing ? 1 : 0, v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase });
+          if (e > 1.5) viol('bridge.misdock', Bo.tr, e, { stand: g.name, bridge: b.door, err: +e.toFixed(1), acType: g.acType, model: Bo.tr.model ? Bo.tr.model.t : null, parkMode: Bo.tr.parkMode || null, parkErr, dispPark, physOff: Bo.tr.physOff ? +Math.hypot(...Bo.tr.physOff).toFixed(2) : 0, towing: Bo.tr.ctl && Bo.tr.ctl.towing ? 1 : 0, v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase });
           if (Bo.tr.disp.gs > 0.3) viol('bridge.attached.moving', Bo.tr, Bo.tr.disp.gs, { stand: g.name, bridge: b.door, k: +k.toFixed(2), v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase });
         }
       }

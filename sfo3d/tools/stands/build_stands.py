@@ -328,7 +328,7 @@ def main():
     # type per class. A pair closer than PHYS (3 m) is made mutually exclusive, unless SFO plans both at the same time;
     # then each stand is limited to the largest span / length SFO (or accepted ADS-B) actually put there
     # ('span_max' / 'len_max'), and only if that still does not clear 3 m the pair becomes exclusive.
-    import geom as GM
+    pass  # geom imported at module level
     for s in stands: s['excl'] = []; s['clear'] = {}; s['span_max'] = None; s['len_max'] = None
     def sim_count(a, b):
         n_ = 0
@@ -474,7 +474,7 @@ def main():
     # An OSM rotunda closer to the door than the shortest apron-drive bridge can retract (9.846 m + 3 m cab, geom.py)
     # or inside the wing sweep of the types SFO parks there is moved back along the OSM fixed walkway (0.5 m steps,
     # at most to 1 m from the building end) until both hold; 'rotunda_osm' keeps the mapped point.
-    import geom as GM
+    pass  # geom imported at module level
     from shapely.geometry import Point as _P
     for st in stands:
         obs = [ALIAS_T.get(t, t) for t in st['obs_types']] or [CLS_REF[st['cls']]]
