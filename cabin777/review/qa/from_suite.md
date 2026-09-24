@@ -19,3 +19,8 @@
    - The window sun patches have stair-stepped edges and are fully clipped white; omaat_f57 / f58 show only soft light.
    - Suggested fix: use PCF / a 3×3 tap for the sun-LUT lookup, or soften the patch edge. The duvet albedo has been lowered
      to #e2dfd8.
+3. **Tint the glowing atlas text by the material colour, so THE Suite seat plaques glow blue-violet.** (suite_w2a, medium)
+   - Real plaques (omaat_f7 / f9 '2K') show blue-violet lit characters. The suite tag material in 09_seats.js already sets
+     `c: '#8f9cff'` on LAYER.atlasGlow, but 04_shaders.js line ~92 ignores base for layers 13–15, so the text stays white.
+   - Fix: in that branch, for layer 15 use `emissive = tc * base * u_emisGain * emis * 4.0` (tagGlow and exitGlow are white; the
+     10_mono washi materials #f2f3f6 / #d4d3e0 would pick up their intended slight lavender tint, so check q11 after the change).

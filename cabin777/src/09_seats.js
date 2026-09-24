@@ -252,11 +252,11 @@ function buildSeats(gl, layout) {
     let p, plate;
     // QA r2: neutral grey rounded squares slightly lighter than the cap (c_27314 cap #878787)
     if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.50 : -0.06]); plate = '#6b6e72'; }
-    else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.30 + 0.0625, -0.80]); plate = '#2b2b2e'; }
+    else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.30 + 0.0625, -0.80]); plate = '#6f675c'; }   // suite: flush pill slot a shade darker than the cap (omaat_f9 / f7)
     const face = s.mir ? -1 : 1;             // text top points away from the aisle
     const room = s.kind === 'room';
-    T.add(room ? gRBox(0.055, 0.004, 0.065, 0.012, 1) : gRBox(0.032, 0.004, 0.06, 0.008, 1), M4.trs(p[0], p[1] + 0.002, p[2]), { c: plate, r: 0.45 });
-    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.055, 0.028), M4.trs(p[0], p[1] + 0.0045, p[2], face * Math.PI / 2, -Math.PI / 2), room ? tagGlow : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
+    T.add(room ? gRBox(0.055, 0.004, 0.065, 0.012, 1) : gRBox(0.034, 0.002, 0.075, 0.012, 1), M4.trs(p[0], p[1] + (room ? 0.002 : 0.0005), p[2]), { c: plate, r: 0.45 });
+    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.055, 0.028), M4.trs(p[0], p[1] + (room ? 0.0045 : 0.002), p[2], face * Math.PI / 2, -Math.PI / 2), room ? tagGlow : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
   }
   meshes.seatTags = gl.mesh(T.build(), { name: 'seatTags', layer: 'seats', castShadow: false });
   return { meshes, groups };
