@@ -1,8 +1,10 @@
 // ------------------------------------------------------------------
 // Ceilings (777 Signature Interior): curved aisle panels between the outboard and centre bins with cove
-// up-lighting at both edges and a continuous slatted light/air trough running down each aisle (seen in
-// y_47301, c_27312 and a THE Suite aisle photo [V]); faint panel joints on the 2-frame grid, small emergency
-// lights, EXIT signs over the aisles near exits; raised curved ceilings in the door areas; flat over monuments
+// up-lighting at both edges and a slatted light/air grille run hard against a bin top edge (seen in y_47301,
+// c_27312, sany_10/11/12 and a THE Suite aisle photo [V]); faint panel joints on the 2-frame grid, a raised
+// rounded-rect panel and a small lens fitting on every panel (sany_10/11/12 [V]), flush EXIT signs on the header
+// at the zone ends over the aisles near exits (roame THE Suite aisle, y_47300 [V]); raised curved ceilings in the
+// door areas; flat over monuments
 // ------------------------------------------------------------------
 const VAULT_A = [1.655, 2.232], VAULT_B = [0.735, 2.262], VAULT_CROWN = 2.44;
 function vaultY(t) {
@@ -26,7 +28,12 @@ const VAULT = (() => {
 })();
 
 const FRAME = CAB.win.pitch;
-const TROUGH = { t: 0.66, w: 0.07 };
+// slatted grilles run hard against both bin top edges: against the outboard bin in c_27312 and sany_10/11
+// (right aisle looking fwd, left aisle looking aft), against the centre bin in y_47301 (right aisle looking aft) [V].
+// Outboard t = 0.10: the vault's first ~5 cm (t < 0.06) sits behind the outboard door crest seen from the aisle,
+// so the grille starts where the visible panel starts [D]; centre t = 0.96. w 0.08 m [A]. Slat runs of 0.55 m with
+// 0.05 m solid bridges (breaks in the run in the y_47301 crop) [A lengths]
+const TROUGH = { ts: [0.10, 0.96], w: 0.08, run: 0.6, gap: 0.05 };
 function zoneModules(z0, z1, target = 2 * FRAME) {
   const n = Math.max(1, Math.round((z1 - z0) / target));
   const L = (z1 - z0) / n, b = [];
@@ -37,11 +44,14 @@ function zoneModules(z0, z1, target = 2 * FRAME) {
 const CEILMAT = {
   vault: { c: '#f3f2ee', r: 0.82, l: 12, e: 0.05 },
   seam: { c: '#c4c7ca', r: 0.8 },
-  trough: { c: '#a4a9ae', r: 0.7 },
+  trough: { c: '#7d8288', r: 0.7 },   // dark slots in a white frame (sany_10/11 [V])
   troughRim: { c: '#e9e8e4', r: 0.45, l: LAYER.plastic },
   slat: { c: '#efeeea', r: 0.5, e: 0.12 },
-  emerg: { c: '#fff7e8', r: 0.3, e: 0.25 },
-  emergBase: { c: '#d8d7d2', r: 0.4 },
+  emerg: { c: '#fff7e8', r: 0.3, e: 0.2 },
+  emergBase: { c: '#2a2e34', r: 0.4 },
+  // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
+  bezel: { c: '#f1f0ec', r: 0.7, l: LAYER.plastic, e: 0.12 },
+  bezelIn: { c: '#e4e4e0', r: 0.6, l: LAYER.plastic, e: 0.08 },
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.45 },
   signBox: { c: '#2a2e34', r: 0.45 },
@@ -72,6 +82,19 @@ function vaultStrip(t, side, z0, z1, width, off) {
   g.i.push(0, 1, 3, 0, 3, 2);
   return fixWinding(g);
 }
+// rounded rectangle (w across the aisle along the arc, d along the cabin, corner radius r) conforming to the vault,
+// offset off below it: a flat box would sink into the arch at its ends
+function vaultPanel(tc, side, zc, w, d, r, off, n = 10) {
+  const e = 0.01, a = vaultAt(tc - e), b = vaultAt(tc + e), dsdt = Math.hypot(b[0] - a[0], b[1] - a[1]) / (2 * e);
+  const g = raw();
+  for (let k = 0; k <= n; k++) {
+    const u = -w / 2 + (w * k) / n, [x, y, nx, ny] = vaultAt(tc + u / dsdt);
+    const q = Math.max(0, Math.abs(u) - (w / 2 - r)), h = d / 2 - r + Math.sqrt(Math.max(0, r * r - q * q));
+    for (const z of [zc - h, zc + h]) { g.p.push((x + nx * off) * side, y + ny * off, z); g.n.push(nx * side, ny, 0); g.u.push(k / n, z); }
+  }
+  for (let k = 0; k < n; k++) { const q = k * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+  return fixWinding(g);
+}
 function vaultXF(t, side, z, off = 0) {
   const [x, y, nx, ny] = vaultAt(t);
   const ang = Math.atan2(nx * side, -ny);
@@ -86,43 +109,53 @@ function buildCeilings(upper, layout) {
     if (zn.type === 'seat') {
       const mods = zoneModules(z0, z1);
       for (const side of [-1, 1]) {
-        // curved aisle panel; cove LEDs at both edges wash up onto it
+        // curved aisle panel; cove LEDs at both edges wash up onto it, extra glow beside the grille (c_27312, sany_11)
+        const xg = TROUGH.ts.map((t) => lerp(VAULT_A[0], VAULT_B[0], t));
         const eFn = (p) => {
           const ax = Math.abs(p[0]);
           if (ax > 1.66 || ax < 0.73) return 0.85;
           const d = Math.min(1.655 - ax, (ax - 0.735) * 1.1);
-          return 0.05 + 0.34 * Math.exp(-Math.max(d, 0) / 0.13);
+          return Math.max(0.05 + 0.34 * Math.exp(-Math.max(d, 0) / 0.13), 0.05 + 0.5 * Math.exp(-Math.min(...xg.map((g) => Math.abs(ax - g))) / 0.10));
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
         for (let k = 1; k < mods.length - 1; k++) upper.add(profileRibbon(VAULT.slice(2, -2), side, mods[k], 0.004, 0.0015), null, CEILMAT.seam);
-        // slatted trough, nearer the centre bin (continuous down the aisle in the photos) [V]; slat pitch 22 mm [A]
-        upper.add(vaultStrip(TROUGH.t, side, z0 + 0.03, z1 - 0.03, TROUGH.w + 0.024, 0.0012), null, CEILMAT.troughRim);
-        upper.add(vaultStrip(TROUGH.t, side, z0 + 0.04, z1 - 0.04, TROUGH.w, 0.0024), null, CEILMAT.trough);
-        const sl = raw();
-        for (let z = z0 + 0.06; z < z1 - 0.05; z += 0.022) {
-          const q = vaultStrip(TROUGH.t, side, z - 0.0065, z + 0.0065, TROUGH.w - 0.006, 0.0034), b = sl.p.length / 3;
-          sl.p.push(...q.p); sl.n.push(...q.n); sl.u.push(...q.u); sl.i.push(...q.i.map((v) => v + b));
+        // slatted grilles flush against the bin tops: white frame, dark slot, slats at 22 mm pitch [A pitch]
+        const sl = raw(), sg = raw();
+        const push = (g, q) => { const b = g.p.length / 3; g.p.push(...q.p); g.n.push(...q.n); g.u.push(...q.u); g.i.push(...q.i.map((v) => v + b)); };
+        for (const tg of TROUGH.ts) {
+          upper.add(vaultStrip(tg, side, z0 + 0.03, z1 - 0.03, TROUGH.w + 0.024, 0.0012), null, CEILMAT.troughRim);
+          upper.add(vaultStrip(tg, side, z0 + 0.04, z1 - 0.04, TROUGH.w, 0.0024), null, CEILMAT.trough);
+          for (let z = z0 + 0.06; z < z1 - 0.05; z += 0.022) {
+            if ((z - z0 - 0.06) % TROUGH.run > TROUGH.run - TROUGH.gap) continue;
+            push(sl, vaultStrip(tg, side, z - 0.0065, z + 0.0065, TROUGH.w - 0.006, 0.0034));
+          }
+          // solid white bridges between the slat runs
+          for (let z = z0 + 0.06 + TROUGH.run - TROUGH.gap; z < z1 - 0.1; z += TROUGH.run) push(sg, vaultStrip(tg, side, z, z + TROUGH.gap, TROUGH.w, 0.0034));
         }
         upper.add(sl, null, CEILMAT.slat);
-        // small emergency lights along the outboard side of the panel [A spacing]
-        for (let k = 0; k < mods.length - 1; k += 3) {
+        upper.add(sg, null, CEILMAT.troughRim);
+        // every panel: raised rounded-rect panel near the centre-bin side (long side across the aisle) and a small
+        // dark-windowed fitting with a lens near mid-vault (sany_10/11/12 [V]; sizes [A]); the lens fitting doubles
+        // as the emergency light
+        for (let k = 0; k < mods.length - 1; k++) {
           const zc = (mods[k] + mods[k + 1]) / 2;
-          upper.add(gRBox(0.12, 0.01, 0.045, 0.01, 1), vaultXF(0.22, side, zc - 0.2, 0.003), CEILMAT.emergBase);
-          upper.add(gRBox(0.09, 0.008, 0.026, 0.008, 1), vaultXF(0.22, side, zc - 0.2, 0.007), CEILMAT.emerg);
+          upper.add(vaultPanel(0.78, side, zc, 0.33, 0.15, 0.03, 0.0015), null, CEILMAT.seam);
+          upper.add(vaultPanel(0.78, side, zc, 0.322, 0.142, 0.027, 0.003), null, CEILMAT.bezel);
+          upper.add(vaultPanel(0.78, side, zc, 0.30, 0.12, 0.025, 0.0045), null, CEILMAT.bezelIn);
+          upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), vaultXF(0.45, side, zc + 0.25, 0.003), CEILMAT.emergBase);
+          upper.add(gRBox(0.05, 0.004, 0.022, 0.004, 1), vaultXF(0.45, side, zc + 0.25, 0.0068), CEILMAT.emerg);
         }
-        // EXIT signs over the aisle near the exits (both directions)
+        // EXIT signs fixed flush under the ceiling on the zone-end header over the aisle, facing into the zone
         const prev = zones[zi - 1], next = zones[zi + 1];
         const nearDoor = (zz) => zones.some((q) => q.type === 'door' && Math.abs((q.z0 + q.z1) / 2 - zz) < 2.4);
         const signs = [];
-        if (prev && (prev.type === 'door' || nearDoor(z0))) signs.push(z0 + 1.1);
-        if (next && (next.type === 'door' || nearDoor(z1))) signs.push(z1 - 1.1);
-        for (const zs of signs) {
-          const [x, y] = vaultAt(0.5);
-          const X = x * side;
-          upper.add(gBox(0.02, 0.08, 0.02), M4.trs(X, y - 0.04, zs), CEILMAT.signBox);
-          upper.add(gRBox(0.32, 0.12, 0.035, 0.012, 1), M4.trs(X, y - 0.14, zs), CEILMAT.signBox);
-          for (const f of [-1, 1]) upper.add(gQuad(0.28, 0.10), M4.trs(X, y - 0.14, zs + f * 0.0185, f > 0 ? 0 : Math.PI), MAT.exitGlow, atlasUV('exit'));
+        if (prev && (prev.type === 'door' || nearDoor(z0))) signs.push([z0 + 0.03, 1]);
+        if (next && (next.type === 'door' || nearDoor(z1))) signs.push([z1 - 0.03, -1]);
+        for (const [zs, f] of signs) {
+          const [x] = vaultAt(0.5), y = vaultY(0.5) - 0.07, X = x * side;
+          upper.add(gRBox(0.30, 0.10, 0.03, 0.01, 1), M4.trs(X, y, zs), CEILMAT.signBox);
+          upper.add(gQuad(0.26, 0.085), M4.trs(X, y, zs + f * 0.0155, f > 0 ? 0 : Math.PI), MAT.exitGlow, atlasUV('exit'));
         }
       }
       upper.add(gBox(1.30, 0.02, z1 - z0), M4.trs(0, 2.325, (z0 + z1) / 2), MAT.ceiling);
