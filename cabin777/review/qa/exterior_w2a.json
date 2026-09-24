@@ -1,0 +1,78 @@
+{
+ "area": "exterior",
+ "rater": "A (skeptic), round w2",
+ "score": 5.0,
+ "details": [
+  {"detail": "Wing planform, sweep and raked tip. Unchanged and still right against the ACAP data and the cruise photos.", "score": 7, "refs": ["/tmp/r3/st/a_plan.png", "ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg"]},
+  {"detail": "In-flight bending. The leading edge curves up to the tip in 17A, 17K and 26K, consistent with the EK 2015 and ANA 26K (_7345) photos.", "score": 6.5, "refs": ["/tmp/r3/d_17K.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Upper-skin surface. The faint panel seams and the 45 % chord splice now show in 26A and 26K. The +-3 % panel tone is invisible in every view (17A wing is a uniform #a0a6b0). Missing: fastener dot rows along the leading edge and spars (ANA _7345 shows a dotted row behind the slats), grime and streaks, and small stencils.", "score": 5, "refs": ["/tmp/r3/d_26K.png", "/tmp/r3/d_17A.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Black gear-alignment stripe at 0.46 m. Present, but from 17K and 17A it is now the heaviest mark in the frame: a solid #2a2e34 band much thicker than the registration strokes. Plausible, but at the upper end.", "score": 6.5, "refs": ["/tmp/r3/d_17K.png", "/tmp/r3/d_17A.png"]},
+  {"detail": "JA795A registration on the right wing. VERIFIED: the orientation is correct. In the zoomed alv_*_7345 the text reads left to right with J inboard and the glyph tops (the A apexes and the 7 bar) toward the leading edge. It is upright from 26K, and studio o_reg matches. The position (forward third of the chord, starting about s 13.5) matches. The ink is too black, though: #141619 in the material, darkest 5 % of pixels #363b43 in the render, against #4e555e in the photo on a #c1ced9 wing. In the render the thin strokes break into calligraphic dashes; the photo shows bold, legible block capitals.", "score": 6.5, "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg", "/tmp/r3/d_26K.png", "/tmp/r3/st/o_reg.png"]},
+  {"detail": "Slat nose band and control-surface seams. The wider bare-metal leading-edge band now reads in 15A, 17K and 26K. Seams are clean.", "score": 6, "refs": ["/tmp/r3/d_15A.png", "/tmp/r3/d_26K.png"]},
+  {"detail": "Canoe tone. Canoes are now in wing paint. 26A shaded flank #5b6576 against wing #b7bdc3 (ratio 0.5) is close to the overcast ANA _7345 flank #46505a against wing #9aa5af. The sun-side 26K flank is #cdd1d3, brighter than the #acb1b7 wing. That is possible in direct sun, but the flank fill (x1.25) pushes it too far.", "score": 6, "refs": ["/tmp/r3/d_26A.png", "/tmp/r3/d_26K.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Canoe shape. The tail taper is new, but the lower profile has a visible kink: a step where the depth floor (max(0.4, ...)) kicks in, then a flat run and a knob-like rounded end. It reads as a ski or boot. The sections are still boxy (r = min(0.14rw+0.02, 0.45w)), with a flat top edge and a bright rim. In ANA _7345 the canoes are smooth teardrop cones, deepest near mid-length, with the belly curving continuously up to a rounded tail point.", "score": 4, "refs": ["/tmp/r3/d_26K.png", "/tmp/r3/st/k_canoe_side.png", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg"]},
+  {"detail": "Nacelle size and position from 11A, 13A, 11K and 13K. Unchanged and plausible.", "score": 6, "refs": ["/tmp/r3/d_11A.png", "ref/web/exterior/lalf_ANA77W_NH212_136.jpg"]},
+  {"detail": "Cowl surface. It is WORSE from 13A. The glossier cowl (r 0.2, m 0.25) now mirrors the pale sky: #b5c4d4 at the top and #b4c3d2 low, against a #acc2d7 sky. There is no gradient, and the cowl is the sky's colour. From 13K it is a flat white #e7e9eb blob. The extra 0.4 lower-half darkening only reaches the underside, which no window sees. ANA 11A _136 shows the visible upper flank going from #8d96a6 to #78889a to #556171. The strake and access panel are invisible from 11A, 13A and 11K. The strake is a 0.03 m plate seen edge-on and the panel ring is #b9bdc2 on #e6e8eb. In ANA _137 the strake reads as a dark line with a shadow and the panel as a clear ring.", "score": 3, "refs": ["/tmp/r3/d_13A.png", "/tmp/r3/d_13K.png", "/tmp/r3/d_11A.png", "/tmp/r3/st/n_strake.png", "ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg"]},
+  {"detail": "Pylon fairing. It is now a broad, cowl-white hump (#cfd7e0 from 13A), which is an improvement. But it reads as a faceted tent: a flat roof, a hard diagonal crease running aft, and an overhanging front lip where the loft starts at x = 2.0 with w x 0.35 (see m_pylon). ANA _137 shows a smooth rounded blister blending into the cowl with no visible edge.", "score": 5, "refs": ["/tmp/r3/d_13A.png", "/tmp/r3/st/m_pylon.png", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg"]},
+  {"detail": "Static dischargers. Present on the aileron and tip (j_tip) and visible as small spikes from 17K. Their count matches the ANA 26K photos.", "score": 6.5, "refs": ["/tmp/r3/st/j_tip.png", "/tmp/r3/d_17K.png"]},
+  {"detail": "Nav and strobe lights. The brighter red point shows at night in n_17A. The lens is still a blob sitting on the upper skin.", "score": 6, "refs": ["/tmp/r3/n_17A.png"]},
+  {"detail": "(owner: lighting) Day sky. Still #acc2d7 at the top of the pane, unchanged. Cruise photos show #114892 to #2472ca. The pale sky is also what the glossy cowl now mirrors.", "score": 3, "refs": ["/tmp/r3/d_13A.png", "ref/web/exterior/yt_SQVXQbY9kto_UA77W_cruise_wing.jpg"]},
+  {"detail": "(owner: lighting) Sunset. The sky, deck and cream canoes (#cdb791 in s_26A) are unchanged. The cowl is still near-white (#e2dcd0 in s_13A), where the EVA and EK photos show violet or dark.", "score": 3, "refs": ["/tmp/r3/s_26A.png", "/tmp/r3/s_13A.png", "ref/web/exterior/yt_p97zMaCMWRg_EVA77W_sunset_GE90.jpg", "ref/web/exterior/commons_Emirates_77W_wing_view_2015.jpg"]},
+  {"detail": "(owner: lighting) Night. Unchanged: no beacon wash on the nacelle and no strobe lighting the tip area.", "score": 5, "refs": ["/tmp/r3/n_17A.png", "/tmp/r3/n_26K.png", "ref/web/exterior/yt_p97zMaCMWRg_EVA77W_night_beacon.jpg"]}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "The GE90 cowl is a flat, sky-coloured or blown-white shape with no form.",
+   "problem": "With m 0.25 the cowl mirrors the pale window sky. From 13A the top and low areas are identical (#b5c4d4 against #b4c3d2). From 13K it is uniform white #e7e9eb. The x0.6 darkening via shadeVerts(vN,vP, 1-0.4*max(0,-n.y)) only affects faces pointing down, which no window sees.",
+   "evidence": "ANA 11A lalf_*_136: the visible flank goes from #8d96a6 to #78889a to #556171 (0.88, then 0.6). Renders /tmp/r3/d_13A.png and d_13K.png.",
+   "fix": "11_exterior.js: change cowl to { c: '#dde0e4', r: 0.32, m: 0.08 }. Replace the nacelle shadeVerts with a baked wrap term on all normals: f = 0.62 + 0.38*pow((n[1]+1)/2, 1.3). That gives about 1.0 at the top, 0.85 at 45 deg and 0.62 at the side. Add the cheap sky-reflection read as a gradient, not mirror metalness."
+  },
+  {
+   "severity": "medium",
+   "detail": "The canoe lower profile has a kink and the sections are boxy.",
+   "problem": "The hard floors Math.max(0.5, pow(c,0.4)) and Math.max(0.4, pow(c,0.5)) create a slope break, and the RE end-cap forms a knob. Together they give the ski or boot silhouette. The rounded-box corner r = min(0.14*rw+0.02, 0.45w) leaves flat flanks and a flat top rim.",
+   "evidence": "/tmp/r3/d_26K.png (zoomed tails show a step then a knob), /tmp/r3/st/k_canoe_side.png. ANA alv_*_7345: smooth teardrop cones.",
+   "fix": "11_exterior.js canoe loop: for t >= 0.22, rw = lerp(0.35, 1, pow(c, 0.6)) and rd = lerp(0.25, 1, pow(c, 0.8)), with no max() floors. End cap: sec(x1+u*RE, 0.35*e, 0.25*e) with RE = 0.30. Set r = w*0.48 in sec(). Reduce the flank fill from 0.25 to 0.1."
+  },
+  {
+   "severity": "medium",
+   "detail": "The pylon fairing hump is faceted and has an overhanging nose.",
+   "problem": "It shows a flat roof, a hard crease and a lip at its front edge where it starts on the cowl.",
+   "evidence": "/tmp/r3/st/m_pylon.png, /tmp/r3/d_13A.png against ANA lalf_*_137 (a smooth blister).",
+   "fix": "11_exterior.js pylon loop: start at x = 1.4 with the width factor lerp(0.05, 1, smooth(1.4, 3.0, x)) and ridge = nacTop(x) + lerp(0.0, 0.55, smooth(1.4, leE-E.x0, x)). Keep bot = nacTop(x) - 0.30 for x < 6.35 so the section stays sunk into the cowl. Blend 'top' with smooth(leE-E.x0-2.5, leE-E.x0, x) in place of the 1.2 m window. Use 20 sections, not 14, and gLoft(..., 8)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The strake and access panel are invisible from every cabin window.",
+   "problem": "The strake is a 0.03 m radial plate, seen edge-on from above, and the panel ring is #b9bdc2 on #e6e8eb. Neither shows in 11A, 13A or 11K, while both are obvious in the ANA 11A photo.",
+   "evidence": "/tmp/r3/d_11A.png, d_13A.png, st/n_strake.png against lalf_*_137 (a dark strake line with a shadow, and a clear ring).",
+   "fix": "11_exterior.js: give the strake gRBox(0.26, 1.3, 0.06, ...) and material { c: '#9aa0a8', r: 0.4 }. Add a 0.05 m dark shadow strip on the cowl just below it: a gTube along the strake root, colour '#6a7078'. Panel ring: seam colour '#8e949b', tube radius 0.012 changed to 0.018."
+  },
+  {
+   "severity": "low",
+   "detail": "The registration ink is too black and the strokes are too thin.",
+   "problem": "The ink is near-black (#141619) and, at grazing view, breaks into calligraphic dashes.",
+   "evidence": "Zoomed /tmp/r3/d_26K.png against alv_*_7345: photo ink #4e555e (darkest 5 %) on a #c1ced9 wing, in bold block capitals.",
+   "fix": "11_exterior.js: ink = { c: '#3a3e44', r: 0.8 }. Glyph stroke w 0.22 changed to 0.27. Glyph chord height 1.25 changed to 1.4."
+  },
+  {
+   "severity": "low",
+   "detail": "Panel tone variation is invisible.",
+   "problem": "At +-3 % the per-panel tone does not register. The wing still reads as one uniform CG sheet.",
+   "evidence": "/tmp/r3/d_17A.png (uniform #a0a6b0) against the streaky panels in alv_*_7345.",
+   "fix": "11_exterior.js paintVerts: amplitude 0.06 changed to 0.10. Add fastener rows as dotted wingLine runs (material '#4c4f54', w 0.02) at le+0.12c and le+0.62c."
+  },
+  {
+   "severity": "medium",
+   "detail": "(owner: lighting) Items already handed over are still open.",
+   "problem": "The day sky is pale (#acc2d7). There is no cloud-deck bounce, which leaves the canoes cream at sunset (#cdb791). The sunset cowl is near-white (#e2dcd0). There is no night beacon.",
+   "evidence": "/tmp/r3/d_13A.png, s_26A.png, s_13A.png, n_17A.png against yt_SQVXQbY9kto, commons_Emirates_77W_wing_view_2015, yt_p97zMaCMWRg (sunset and night).",
+   "fix": "See review/qa/from_exterior.md and exterior_w1a.json (SKIES.day/sunset values, a hemispheric exterior ambient, and a beacon point light)."
+  }
+ ],
+ "questionsForUser": [
+  "Is there an ANA seat-11A or 13A photo in clear daylight at cruise? The only engine-side ANA references (NH212 _136/_137) are low-sun climb shots, so the target cowl tone at cruise is still inferred.",
+  "Do ANA's GE90 cowls carry a 'GE90' logo on the lower aft cowl? This is still open."
+ ]
+}
