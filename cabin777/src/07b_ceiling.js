@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------
-// Ceilings (777 Signature Interior): curved aisle panels between the outboard and centre bins with cove
-// up-lighting at both edges and a slatted light/air grille run hard against a bin top edge (seen in y_47301,
-// c_27312, sany_10/11/12 and a THE Suite aisle photo [V]); faint panel joints on the 2-frame grid, a raised
+// Ceilings (777 Signature Interior): curved aisle panels between the outboard and centre bins with the cove
+// up-light and a slotted light/air grille only along the OUTBOARD bin top (b_lalf_c119, b_sany_y12/y22 both aisles,
+// thrifty_j_cabin-1, sany_py_10, y_47300 [V]; y_47301 seems to show it on the centre side - see questions_ceiling); faint panel joints on the 2-frame grid, a raised
 // rounded-rect panel and a small lens fitting on every panel (sany_10/11/12 [V]), flush EXIT signs on the header
 // at the zone ends over the aisles near exits (roame THE Suite aisle, y_47300 [V]); raised curved ceilings in the
 // door areas; flat over monuments
@@ -28,12 +28,11 @@ const VAULT = (() => {
 })();
 
 const FRAME = CAB.win.pitch;
-// slatted grilles run hard against both bin top edges: against the outboard bin in c_27312 and sany_10/11
-// (right aisle looking fwd, left aisle looking aft), against the centre bin in y_47301 (right aisle looking aft) [V].
-// Outboard t = 0.10: the vault's first ~5 cm (t < 0.06) sits behind the outboard door crest seen from the aisle,
-// so the grille starts where the visible panel starts [D]; centre t = 0.96. w 0.08 m [A]. Slat runs of 0.55 m with
-// 0.05 m solid bridges (breaks in the run in the y_47301 crop) [A lengths]
-const TROUGH = { ts: [0.10, 0.96], w: 0.08, run: 0.6, gap: 0.05 };
+// slotted grille against the outboard bin top only (see header). t = 0.10: the vault's first ~5 cm (t < 0.06) sits
+// behind the outboard door crest seen from the aisle, so the grille starts where the visible panel starts [D];
+// w 0.08 m [A]. 4-5 fore-aft slots in segments of ~0.36 m (3 per 2-frame panel, a bridge on every panel joint)
+// with ~25 mm solid bridges (b_lalf_c119 close-up, sany_py_10 [V pattern, A lengths])
+const TROUGH = { ts: [0.10], w: 0.08, seg: 3, gap: 0.025 };
 function zoneModules(z0, z1, target = 2 * FRAME) {
   const n = Math.max(1, Math.round((z1 - z0) / target));
   const L = (z1 - z0) / n, b = [];
@@ -45,10 +44,8 @@ function zoneModules(z0, z1, target = 2 * FRAME) {
 // buildAtlas, before the ceiling is built):
 //  - 'exitJ': ANA's bilingual ceiling EXIT sign '← 非常口 EXIT →', dark red on a light face, ~4:1
 //    (up_F_Forward-Look, sign over the door-1 cross-aisle [V text/colours]; 280x72 px, red #c21e1e [A shade])
-//  - 'grille': the slatted light/air grille as a stripe texture (22 mm pitch, 13 mm white slat #efeeea / 9 mm dark
-//    slot #7d8288, sany_10/11/12 [V look, A pitch]) so the mipmaps blend it into a fine even stripe at distance
-//    instead of the zigzag moire of per-slat geometry. GRILLE_RUN metres of grille = GRILLE_PX canvas pixels.
-const GRILLE_PITCH = 0.022, GRILLE_N = 25, GRILLE_PX = 10;
+//  - 'grille': the slotted grille as a texture across the strip: 5 dark fore-aft slots #7f848a between white bars
+//    #efeeea (b_lalf_c119 close-up [V look]); constant along the run, so it cannot alias into a moire.
 function paintCeilingDecals(A) {
   const g = A.canvas.getContext('2d'), S = A.canvas.width;
   const put = (name, x, y, w, h) => { A.rects[name] = [x / S, y / S, (x + w) / S, (y + h) / S]; };
@@ -64,14 +61,12 @@ function paintCeilingDecals(A) {
     g.fillRect(Math.min(ax - s * 2, ax - s * 16), y + 33, 14, 6);
   }
   put('exitJ', x, y, 280, 72);
-  // grille stripes, painted with a margin of the same pattern so the lower mip levels do not pick up the atlas grey
-  y = 820;
-  const W = GRILLE_N * GRILLE_PX;
-  for (let i = -2; i < GRILLE_N + 2; i++) {
-    g.fillStyle = '#7d8288'; g.fillRect(x + i * GRILLE_PX + 16, y, GRILLE_PX, 40);
-    g.fillStyle = '#efeeea'; g.fillRect(x + i * GRILLE_PX + 16 + 2, y, 6, 40);
-  }
-  put('grille', x + 16, y + 16, W, 8);
+  // grille slots across a 64 px tall rect (u along the run is constant), with a white margin for the mips
+  y = 816;
+  g.fillStyle = '#efeeea'; g.fillRect(x, y, 48, 80);
+  g.fillStyle = '#7f848a';
+  for (let i = 0; i < 5; i++) g.fillRect(x, y + 11 + i * 12, 48, 7);
+  put('grille', x + 16, y + 8, 16, 64);
 }
 { const base = buildAtlas; buildAtlas = function (layout) { const A = base(layout); paintCeilingDecals(A); return A; }; }
 
@@ -85,12 +80,12 @@ const CEILMAT = {
   emergBase: { c: '#2a2e34', r: 0.4 },
   // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
   bezel: { c: '#f1f0ec', r: 0.7, l: LAYER.plastic, e: 0.12 },
-  bezelIn: { c: '#e4e4e0', r: 0.6, l: LAYER.plastic, e: 0.08 },
+  bezelIn: { c: '#d9d9d5', r: 0.7, l: LAYER.grille, e: 0.06 },   // recessed perforated slot [A tone]
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.45 },
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
   lightStrip: { c: '#fff4d6', r: 0.5, e: 0.8 },
-  signBox: { c: '#2a2e34', r: 0.45 },
+  signBox: { c: '#e2e1dd', r: 0.45, l: LAYER.plastic },   // light housing (thrifty_j_cabin-1 header sign [V])
 };
 
 function profileRibbon(prof, side, z, dz, off) {
@@ -123,8 +118,13 @@ function vaultStrip(t, side, z0, z1, width, off) {
 function vaultPanel(tc, side, zc, w, d, r, off, n = 10) {
   const e = 0.01, a = vaultAt(tc - e), b = vaultAt(tc + e), dsdt = Math.hypot(b[0] - a[0], b[1] - a[1]) / (2 * e);
   const g = raw();
+  // columns concentrated in the rounded ends (n/2 per corner, sine-spaced) so the ends read round, not octagonal
+  const m = Math.max(2, n >> 1), us = [];
+  for (let j = 0; j <= m; j++) { const c = w / 2 - r + r * Math.sin((j / m) * Math.PI / 2); us.push(-c, c); }
+  us.sort((p, q) => p - q);
+  n = us.length - 1;
   for (let k = 0; k <= n; k++) {
-    const u = -w / 2 + (w * k) / n, [x, y, nx, ny] = vaultAt(tc + u / dsdt);
+    const u = us[k], [x, y, nx, ny] = vaultAt(tc + u / dsdt);
     const q = Math.max(0, Math.abs(u) - (w / 2 - r)), h = d / 2 - r + Math.sqrt(Math.max(0, r * r - q * q));
     for (const z of [zc - h, zc + h]) { g.p.push((x + nx * off) * side, y + ny * off, z); g.n.push(nx * side, ny, 0); g.u.push(k / n, z); }
   }
@@ -145,48 +145,47 @@ function buildCeilings(upper, layout) {
     if (zn.type === 'seat') {
       const mods = zoneModules(z0, z1);
       for (const side of [-1, 1]) {
-        // curved aisle panel; cove LEDs at both edges wash up onto it, extra glow beside the grille (c_27312, sany_11)
-        const xg = TROUGH.ts.map((t) => lerp(VAULT_A[0], VAULT_B[0], t));
+        // curved aisle panel; the outboard cove LED washes it from that edge only, extra glow beside the grille;
+        // the vault fades toward the plain centre-bin crease (b_sany_y22: #cfc8bb by the cove, much darker at the
+        // centre bin in the same exposure [V]; floor 0.04 [A] so the cabin fill still lights it)
+        const xg = lerp(VAULT_A[0], VAULT_B[0], TROUGH.ts[0]);
         const eFn = (p) => {
           const ax = Math.abs(p[0]);
-          if (ax > 1.66 || ax < 0.73) return 0.85;
-          const d = Math.min(1.655 - ax, (ax - 0.735) * 1.1);
-          return Math.max(0.05 + 0.34 * Math.exp(-Math.max(d, 0) / 0.13), 0.05 + 0.5 * Math.exp(-Math.min(...xg.map((g) => Math.abs(ax - g))) / 0.10));
+          if (ax > 1.66) return 0.85;
+          if (ax < 0.73) return 0.04;
+          return 0.04 + 0.36 * Math.exp(-Math.max(1.655 - ax, 0) / 0.16) + 0.42 * Math.exp(-Math.abs(ax - xg) / 0.10);
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
         for (let k = 1; k < mods.length - 1; k++) upper.add(profileRibbon(VAULT.slice(2, -2), side, mods[k], 0.004, 0.0015), null, CEILMAT.seam);
-        // slatted grilles flush against the bin tops: white frame, dark slot, one striped strip per slat run
-        // (22 mm pitch in the atlas stripe, see paintCeilingDecals) between solid white bridges
+        // slotted grille flush against the outboard bin top: white frame, dark channel, one slotted strip per
+        // segment (TROUGH.seg per panel) between solid white bridges
         const sl = raw(), sg = raw();
         const push = (g, q) => { const b = g.p.length / 3; g.p.push(...q.p); g.n.push(...q.n); g.u.push(...q.u); g.i.push(...q.i.map((v) => v + b)); };
-        const run = TROUGH.run - TROUGH.gap, gr = ATL.rects.grille;
-        for (const tg of TROUGH.ts) {
-          upper.add(vaultStrip(tg, side, z0 + 0.03, z1 - 0.03, TROUGH.w + 0.024, 0.0012), null, CEILMAT.troughRim);
-          upper.add(vaultStrip(tg, side, z0 + 0.04, z1 - 0.04, TROUGH.w, 0.0024), null, CEILMAT.trough);
-          for (let za = z0 + 0.05; za < z1 - 0.06; za += TROUGH.run) {
-            const zb = Math.min(za + run, z1 - 0.05), q = vaultStrip(tg, side, za, zb, TROUGH.w - 0.006, 0.0034);
-            // uv: u across (0..1) -> atlas v, z along the run -> atlas u (GRILLE_N slats per GRILLE_N * pitch)
-            for (let k = 0; k < q.u.length; k += 2) {
-              const across = q.u[k], along = (q.u[k + 1] - za) / (GRILLE_N * GRILLE_PITCH);
-              q.u[k] = gr[0] + along * (gr[2] - gr[0]); q.u[k + 1] = gr[1] + across * (gr[3] - gr[1]);
-            }
+        const gr = ATL.rects.grille, tg = TROUGH.ts[0];
+        upper.add(vaultStrip(tg, side, z0 + 0.03, z1 - 0.03, TROUGH.w + 0.024, 0.0012), null, CEILMAT.troughRim);
+        upper.add(vaultStrip(tg, side, z0 + 0.04, z1 - 0.04, TROUGH.w, 0.0024), null, CEILMAT.trough);
+        for (let k = 0; k < mods.length - 1; k++) {
+          const L = (mods[k + 1] - mods[k]) / TROUGH.seg;
+          for (let j = 0; j < TROUGH.seg; j++) {
+            const za = mods[k] + j * L + TROUGH.gap / 2, zb = za + L - TROUGH.gap;
+            const q = vaultStrip(tg, side, Math.max(za, z0 + 0.04), Math.min(zb, z1 - 0.04), TROUGH.w - 0.006, 0.0034);
+            // uv: across (0..1) -> atlas v over the 5 slots, along the run -> a constant atlas u
+            for (let i = 0; i < q.u.length; i += 2) { const across = side > 0 ? q.u[i] : 1 - q.u[i]; q.u[i] = (gr[0] + gr[2]) / 2; q.u[i + 1] = gr[1] + across * (gr[3] - gr[1]); }
             push(sl, q);
-            // solid white bridge after the run
-            if (zb + TROUGH.gap < z1 - 0.05) push(sg, vaultStrip(tg, side, zb, zb + TROUGH.gap, TROUGH.w, 0.0034));
+            if (zb + TROUGH.gap < z1 - 0.04) push(sg, vaultStrip(tg, side, zb, zb + TROUGH.gap, TROUGH.w, 0.0034));
           }
         }
         upper.add(sl, null, CEILMAT.slat, (k, g) => [g.u[k * 2], g.u[k * 2 + 1]]);
         upper.add(sg, null, CEILMAT.troughRim);
-        // every panel: raised rounded-rect panel near the centre-bin side (long side across the aisle) and a small
-        // dark-windowed fitting with a lens near mid-vault (sany_10/11/12 [V]; sizes [A]); the lens fitting doubles
-        // as the emergency light
+        // every panel: a raised stadium-ended speaker fitting near the centre-bin side (long side across the aisle,
+        // ~3.4:1, raised rim around a recessed perforated slot: b_lalf_c119, b_sany_y12/y22, thrifty_j_cabin-1 [V
+        // shape]; 0.34 x 0.10 m [A]) and a small dark-windowed fitting with a lens near mid-vault (the emergency light)
         for (let k = 0; k < mods.length - 1; k++) {
           const zc = (mods[k] + mods[k + 1]) / 2;
-          // n = 24 columns so the 25-30 mm corner radii read round, not octagonal (sany_11/12 [V])
-          upper.add(vaultPanel(0.78, side, zc, 0.33, 0.15, 0.03, 0.0015, 24), null, CEILMAT.seam);
-          upper.add(vaultPanel(0.78, side, zc, 0.322, 0.142, 0.027, 0.003, 24), null, CEILMAT.bezel);
-          upper.add(vaultPanel(0.78, side, zc, 0.30, 0.12, 0.025, 0.0045, 24), null, CEILMAT.bezelIn);
+          upper.add(vaultPanel(0.78, side, zc, 0.34, 0.10, 0.05, 0.0015, 16), null, CEILMAT.seam);
+          upper.add(vaultPanel(0.78, side, zc, 0.332, 0.092, 0.046, 0.003, 16), null, CEILMAT.bezel);
+          upper.add(vaultPanel(0.78, side, zc, 0.30, 0.06, 0.03, 0.0036, 16), null, CEILMAT.bezelIn);
           upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), vaultXF(0.45, side, zc + 0.25, 0.003), CEILMAT.emergBase);
           upper.add(gRBox(0.05, 0.004, 0.022, 0.004, 1), vaultXF(0.45, side, zc + 0.25, 0.0068), CEILMAT.emerg);
         }
@@ -200,7 +199,7 @@ function buildCeilings(upper, layout) {
         for (const [zs, f] of signs) {
           const [x] = vaultAt(0.5), y = vaultY(0.5) - 0.07, X = x * side;
           upper.add(gRBox(0.36, 0.09, 0.03, 0.01, 1), M4.trs(X, y, zs), CEILMAT.signBox);
-          upper.add(gQuad(0.33, 0.08), M4.trs(X, y, zs + f * 0.0155, f > 0 ? 0 : Math.PI), MAT.exitGlow, atlasUV('exitJ'));
+          for (const g of [f, -f]) upper.add(gQuad(0.33, 0.08), M4.trs(X, y, zs + g * 0.0155, g > 0 ? 0 : Math.PI), MAT.exitGlow, atlasUV('exitJ'));   // double-faced
         }
       }
       upper.add(gBox(1.30, 0.02, z1 - z0), M4.trs(0, 2.325, (z0 + z1) / 2), MAT.ceiling);
@@ -208,7 +207,7 @@ function buildCeilings(upper, layout) {
       const zc = (z0 + z1) / 2;
       for (const side of [-1, 1]) {
         const prof = DOME.map(([x, y]) => [x * side, y]);
-        const eFn = (p) => { const ax = Math.abs(p[0]); return ax > 2.55 ? 0.5 : 0.03 + 0.16 * Math.exp(-(2.55 - ax) / 0.3); };
+        const eFn = (p) => { const ax = Math.abs(p[0]); return ax > 2.55 ? 0.5 : 0.07 + 0.16 * Math.exp(-(2.55 - ax) / 0.3); };   // w1: floor 0.03 read grey #c8c8c8
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: 2 }), null, { ...CEILMAT.vault, eFn });
       }
       // entry lights: two narrow fore-aft strips along the edges of the flat centre panel (up_F_Forward-Look [V];
