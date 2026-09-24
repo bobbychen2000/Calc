@@ -3717,9 +3717,10 @@ function buildSeats(gl, layout) {
     const master = new Float32Array(n * 20);
     v.mats.forEach((m, i) => { master.set(m, i * 20); master.set(v.tints[i], i * 20 + 16); });
     const gen = geos[key] || ((l) => econGeo(key, l));
-    const hi = gl.mesh(gen(false), { name: key, layer: 'seats', instances: v.mats, tints: v.tints });
+    const hiGeo = gen(false);
+    const hi = gl.mesh(hiGeo, { name: key, layer: 'seats', instances: v.mats, tints: v.tints });
     const lo = hasLod ? gl.mesh(gen(true), { name: key + 'Lo', layer: 'seats', instances: [], castShadow: false }) : null;
-    groups[key] = { key, hi, lo, master, n, refs: v.refs, dirty: true, nearK: /^(y|py)/.test(key) ? 0.66 : 1.25 };
+    groups[key] = { key, hi, lo, master, n, refs: v.refs, dirty: true, geo: hiGeo, mats: v.mats, nearK: /^(y|py)/.test(key) ? 0.66 : 1.25 };
     meshes[key] = hi;
     if (lo) meshes[key + 'Lo'] = lo;
   }
@@ -4214,36 +4215,33 @@ class Scene {
       const a = localToWorld(s, [x0, y0, z0]), b = localToWorld(s, [x1, y1, z1]);
       box(Math.min(a[0], b[0]), Math.max(a[0], b[0]), y0, y1, Math.min(a[2], b[2]), Math.max(a[2], b[2]), d);
     };
-    for (const s of this.layout.seats) {
-      const x = s.x, z = s.z;
-      if (s.kind === 'room') {
-        if (s.odd) {
-          boxL(s, -0.585, 0.10, 0, 0.48, -1.345, 0.52, 0.8);
-          boxL(s, -0.585, 0.115, 0, 1.12, -1.345, -1.275);
-          boxL(s, 0.12, 0.585, 0, 0.66, -0.58, -0.02);
-          boxL(s, 0.545, 0.585, 0.66, 1.12, -0.58, -0.02);
-          boxL(s, 0.08, 0.585, 0, 1.12, -1.345, -1.09, 0.8);
-          boxL(s, -0.585, -0.04, 0.66, 1.24, 0.50, 0.56);
-        } else {
-          boxL(s, -0.12, 0.585, 0, 0.48, -0.58, 1.345, 0.8);
-          boxL(s, -0.10, 0.585, 0, 1.12, 1.275, 1.345);
-          boxL(s, -0.585, -0.13, 0, 0.66, 0.02, 1.30);
-          boxL(s, -0.06, 0.585, 0.66, 1.24, -0.04, 0.02);
-          boxL(s, 0.49, 0.585, 0, 0.7, 0.66, 1.25, 0.8);
+    // seats: voxelise the real instanced geometry (surface samples every ~5 cm, each adds partial occupancy) so
+    // footwells, seat undersides, shell corners and console gaps get soft occlusion that matches their shapes
+    const dOcc = 0.34, step2 = 0.05 * 0.05;
+    const mark = (x, y, z) => {
+      const i = Math.floor((x - min[0]) / cell[0]), j = Math.floor((y - min[1]) / cell[1]), k = Math.floor((z - min[2]) / cell[2]);
+      if (i < 0 || j < 0 || k < 0 || i >= nx || j >= ny || k >= nz) return;
+      const q = idx(i, j, k); occ[q] = Math.min(1, occ[q] + dOcc);
+    };
+    for (const g of Object.values(this.seatGroups || {})) {
+      const P = g.geo.pos, I = g.geo.idx;
+      const samples = [];   // local-space sample points of this unit, reused for every instance
+      for (let t = 0; t < I.length; t += 3) {
+        const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
+        const ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2];
+        const vx = P[c] - P[a], vy = P[c + 1] - P[a + 1], vz = P[c + 2] - P[a + 2];
+        const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
+        const area = 0.5 * Math.hypot(cx, cy, cz);
+        const n = Math.min(64, Math.ceil(area / step2));
+        for (let m = 0; m < n; m++) {
+          let r1 = ((m * 0.618034 + t * 0.1234) % 1), r2 = ((m * 0.754878 + t * 0.4321) % 1);
+          if (r1 + r2 > 1) { r1 = 1 - r1; r2 = 1 - r2; }
+          samples.push(P[a] + ux * r1 + vx * r2, P[a + 1] + uy * r1 + vy * r2, P[a + 2] + uz * r1 + vz * r2);
         }
-      } else if (s.kind === 'suite') {
-        const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2;
-        boxL(s, -hx, hx, 0, 1.30, -2.20, -2.08);
-        boxL(s, -hx, hx, 0, 1.30, -0.10, -0.04);
-        boxL(s, hx - 0.16, hx, 0, 1.30, -0.96, -0.10);
-        boxL(s, hx - 0.13, hx, 0, 1.30, -2.20, -1.95);
-        boxL(s, -hx, -hx + 0.03, 0, s.pos === 'center' ? 1.30 : 0.70, -2.20, 0);
-        boxL(s, -hx + 0.2, hx - 0.16, 0, 0.5, -2.08, -0.10, 0.7);
-      } else {
-        const hw = s.kind === 'py' ? 0.29 : 0.24;
-        box(x - hw, x + hw, 0.33, 0.47, z - 0.5, z - 0.02);
-        box(x - hw, x + hw, 0.47, s.kind === 'py' ? 1.30 : 1.22, z - 0.1, z + 0.1);
-        box(x - hw, x + hw, 0.02, 0.33, z - 0.46, z - 0.02, 0.28);
+      }
+      for (const M of g.mats) for (let q = 0; q < samples.length; q += 3) {
+        const x = samples[q], y = samples[q + 1], z = samples[q + 2];
+        mark(M[0] * x + M[4] * y + M[8] * z + M[12], M[1] * x + M[5] * y + M[9] * z + M[13], M[2] * x + M[6] * y + M[10] * z + M[14]);
       }
     }
     for (const zn of this.layout.zones) {

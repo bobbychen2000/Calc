@@ -718,9 +718,10 @@ function buildSeats(gl, layout) {
     const master = new Float32Array(n * 20);
     v.mats.forEach((m, i) => { master.set(m, i * 20); master.set(v.tints[i], i * 20 + 16); });
     const gen = geos[key] || ((l) => econGeo(key, l));
-    const hi = gl.mesh(gen(false), { name: key, layer: 'seats', instances: v.mats, tints: v.tints });
+    const hiGeo = gen(false);
+    const hi = gl.mesh(hiGeo, { name: key, layer: 'seats', instances: v.mats, tints: v.tints });
     const lo = hasLod ? gl.mesh(gen(true), { name: key + 'Lo', layer: 'seats', instances: [], castShadow: false }) : null;
-    groups[key] = { key, hi, lo, master, n, refs: v.refs, dirty: true, nearK: /^(y|py)/.test(key) ? 0.66 : 1.25 };
+    groups[key] = { key, hi, lo, master, n, refs: v.refs, dirty: true, geo: hiGeo, mats: v.mats, nearK: /^(y|py)/.test(key) ? 0.66 : 1.25 };
     meshes[key] = hi;
     if (lo) meshes[key + 'Lo'] = lo;
   }
