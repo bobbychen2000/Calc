@@ -14,3 +14,5 @@
    itself is too dark to tell whether it is carpet or vinyl. The model uses the same vinyl there.
 5. **PY/Y shade colour** (carried over from r2). A closed PY/Y manual shade is not visible in any photo. The model
    uses an off-white panel with a cream grip.
+6. **Door viewing-window jamb.** sans_09 and sp_y_45 suggest that the small door window sits near one jamb, not on the
+   centre line, but they are too dark to tell whether it is the forward or the aft jamb. It is modelled centred.

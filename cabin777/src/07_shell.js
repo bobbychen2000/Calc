@@ -61,7 +61,7 @@ const MAT = {
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#9b958a', r: 0.85, l: LAYER.fabric },          // QA w2: #b9b3a8 still 0.81 of the bezel
+  blackout: { c: '#8f897e', r: 0.85, l: LAYER.fabric },          // QA w2-w4: 0.81 -> 0.73 of the bezel, target 0.62-0.64
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
@@ -122,7 +122,7 @@ const WMAT = {
   // QA w2: the grille is a cut-out in the dado panel; its rounded edge is a low lip at or below the panel tone, not a
   // light bezel (py_37303 crop: no light frame; py_37301's lighter rim is a reflection) [V]
   grilleFrame: { c: '#6c6f76', r: 0.5 },
-  rib: { c: '#6f7279', r: 0.6 },                                // vertical louvre ribs, faint, slat-toned (py_37301)
+  rib: { c: '#4a4e56', r: 0.6 },                                // vertical ribs in the plenum tone: faint (py_37303; QA w4)
   label: { c: '#ecebe6', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
   halo: { c: '#4467ff', r: 0.3, e: 0.8 },                       // blue LED ring round the shade button (LALF/OMAAT photos)
   pin: { c: '#2a2c30', r: 0.6 },
@@ -301,9 +301,12 @@ function windowParts(side, pat) {
   // triangles printed a light wedge at the opening's upper corner)
   const sill = ringLoft([[inset(rr, 0.019), D, mapE], [scl(open, 1.085), D]], map, hint);
   for (let i = 0; i < sill.n.length / 3; i++) { const [, , snx, sny] = wallAt(vc + (i < rr.length ? rr[i][1] : open[i - rr.length][1])); sill.n.splice(i * 3, 3, snx * side, sny, 0); }
+  // QA w4: the tub floor keeps flat normals (see above), so its upper part is darkened in vertex colour instead, x1 at
+  // 0.12 m above the pane centre to x0.78 at the recess top (DSC_1920 upper tub ~0.78 of the wall, sans_14 0.74-0.82) [V]
+  const tubShade = (y) => lerp(1, 0.78, clamp((y - vc - 0.12) / (rec.top - 0.12), 0, 1));
   const parts = [
-    [lip, MAT.reveal],
-    [sill, MAT.reveal],
+    [lip, MAT.reveal, tubShade],
+    [sill, MAT.reveal, tubShade],
     [ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal],
     // lining: straight shade channel (both shades run here), then necks down to the pane
     [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.986), D + 0.056], [scl(pane, 1.02), 0.1045]], map, hint), WMAT.lining],
@@ -357,6 +360,13 @@ function windowParts(side, pat) {
   for (let i = 0; i < N; i++) gl_.i.push(0, 1 + i, 1 + ((i + 1) % N));
   fixWinding(gl_);
   return { parts, grille, glass: gl_ };
+}
+
+// add a windowParts entry to a Builder; parts tagged with a height shade get their vertex colours scaled
+function addPart(B, [pg, m, shade], xf) {
+  const b0 = B.p.length / 3;
+  B.add(pg, xf, m);
+  if (shade) for (let k = b0; k < B.p.length / 3; k++) { const f = shade(B.p[k * 3 + 1]); for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(B.c[k * 4 + c] * f); }
 }
 
 // Shade geometry in the window-local frame: unit panel spanning y in [-H/2, H/2]; scaled per instance by the
@@ -451,7 +461,7 @@ function windowStudioGeo() {
   const states = [['manual', 0], ['manual', 0.5], ['manual', 1], ['sheer', 0], ['sheer', 1], ['blackout', 1]];
   const sky = { c: '#bcd3ec', r: 1, e: 0.9 };
   zs.forEach((z, k) => {
-    for (const [pg, m] of [...(k < 3 ? wpY : wp).parts, ...wp.grille]) B.add(pg, M4.trs(0, 0, z), m);
+    for (const pt of [...(k < 3 ? wpY : wp).parts, ...wp.grille]) addPart(B, pt, M4.trs(0, 0, z));
     B.add(wp.glass, M4.trs(0, 0, z), sky);
     const [kind, f] = states[k];
     const w = { z, side: -1, electric: kind !== 'manual' };
@@ -661,7 +671,7 @@ function buildShell(gl, layout) {
     const wg = windowParts(side, pat).grille, wy = windowParts(side, patY).parts;
     for (const w of layout.windows) if (w.side === side) {
       if (!jz(w.z)) for (const [pg, m] of wg) shell.add(pg, M4.trs(0, 0, w.z), m);
-      if (!w.electric) for (const [pg, m] of wy) shell.add(pg, M4.trs(0, 0, w.z), m);
+      if (!w.electric) for (const pt of wy) addPart(shell, pt, M4.trs(0, 0, w.z));
     }
   }
   const meshes = {
@@ -677,7 +687,7 @@ function buildShell(gl, layout) {
     const wp = windowParts(side, pat);
     winParts[key] = wp;
     const mats = inst[key].map(({ w }) => M4.trs(0, 0, w.z));
-    const rb = new Builder(); for (const [pg, m] of wp.parts) rb.add(pg, null, m);
+    const rb = new Builder(); for (const pt of wp.parts) addPart(rb, pt, null);
     meshes['reveal' + key] = gl.mesh(rb.build(), { name: 'reveal' + key, instances: inst[key].filter(({ w }) => w.electric).map(({ w }) => M4.trs(0, 0, w.z)) });
     const gb = new Builder(); gb.add(wp.glass, null, { c: '#ffffff' });
     meshes['glass' + key] = gl.mesh(gb.build(), { name: 'glass' + key, instances: mats, tints: mats.map(() => [0.93, 0.95, 0.96, 0]), castShadow: false });
