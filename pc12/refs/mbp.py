@@ -1078,6 +1078,10 @@ FR_SECTION_STATIONS_MM = {  # labelled FR10-relative stations of the frames (sid
     "FR30": 5150, "FR33": 5920, "FR36": 6670, "FR38": 7720, "FR40": 8770,
 }
 
+# side view, FR10-relative mm: ranges where the lowest drawn line is NOT the fuselage keel
+# (wing-root fairing + main gear; port ventral strake).  Read off this sheet (see _register).
+KEEL_HIDDEN_MM = [(2220, 4390), (7640, 8880)]
+
 MAX_ATTACH = 60.0
 
 
@@ -1719,7 +1723,17 @@ def _register(P, anchor="spinner", front_z="ground"):
         zb = lambda u: np.interp(u, oml["x"], oml["bot"])
         hw = lambda u: np.interp(u, oml["x"], oml["hw"])
         prof["side_crown"] = _profile(items, "side", xs, 1.0, 9.0, pick=lambda u, vs: vs.max())   # nothing above the crown here
-        prof["side_keel"] = _track(items, "side", xs, 1.0, 13.6, zb)
+        # lowest drawn line along the fuselage (silhouette bottom); the keel proper is hidden behind the
+        # wing-root fairing / main gear and behind the port ventral strake in two ranges (verification
+        # fix): there the track follows the fairing belly (dips to WL 0.88) and the strake's lower edge
+        # (~50-100 mm below the tail-cone keel; the FR38/FR40 sections show the strakes) -> NaN in
+        # 'side_keel', full track kept as 'side_bottom'.  Cabin keel behind the fairing = FR16-30 section
+        # bottom (WL 0.939, the '0' line - 290).
+        prof["side_bottom"] = _track(items, "side", xs, 1.0, 13.6, zb)
+        kl = prof["side_bottom"].copy()
+        for a, b in KEEL_HIDDEN_MM:
+            kl[(kl[:, 0] > x10[anchor] + a / 1000.0) & (kl[:, 0] < x10[anchor] + b / 1000.0), 1] = np.nan
+        prof["side_keel"] = kl
         prof["plan_hb_stbd"] = _track(items, "plan", xp, 1.0, 13.0, hw)
         prof["plan_hb_port"] = _track(items, "plan", xp, 1.0, 13.0, lambda u: -hw(u))
     out["profiles"] = prof
@@ -2092,6 +2106,12 @@ def _register_sections(P, X, x10, z_ref, s):
                 yc = 0.0 if name == "HF1" else 2.270
                 cr = _crossings(items, "plan", xp, 1, yc)
                 cr = cr[cr > 11.5]
+                if name == "HF1":
+                    # HF1 = symmetry-plane section (bullet + stabiliser root).  The plan's bullet ends in a
+                    # blunt 40 mm tip (short strokes < min_size), so no plan crossing at y = 0 reaches it and
+                    # the elevator hinge line (13.96) was taken as the trailing edge -> HF1 sat 0.88 m too far
+                    # forward (verification fix).  Use the side view's bullet end (lens excluded) instead.
+                    cr = np.array([float(xs(P["meas"]["side"]["aft_most"][None])[0, 0])])
                 # z: section top = front-view silhouette top at this butt line
                 zt = _crossings(items, "front", xfr, 0, yc if yc > 0 else 1e-4)
                 zt = zt[zt > 3.2]
@@ -2110,14 +2130,19 @@ def _register_sections(P, X, x10, z_ref, s):
                 zt = _crossings(items, "front", xfr, 0, yc)
                 zt = zt[(zt > 1.0) & (zt < 3.0)]
             te_model = cr.max() if len(cr) else None
-            te_page = A[:, 1].min() if ori > 0 else A[:, 1].max()
+            # _crossings() skips hairline items (e.g. the tail-light lens behind the HF1 bullet), so the
+            # section's trailing edge must be taken from its non-hair outline as well
+            Anh = [it["pts"] for it in its if it["kind"] == "outline" and not it.get("hair")]
+            Ate = np.vstack(Anh) if Anh else A
+            te_page = Ate[:, 1].min() if ori > 0 else Ate[:, 1].max()
             top_model = zt.max() if len(zt) else None
             top_page = A[:, 0].min()
             xf = Xf([[0.0, -s * ori], [-s, 0.0]],
                     [(te_model or 0.0) + te_page * s * ori, (top_model or 0.0) + top_page * s], ("x", "z"))
             rec.update(plane="xz", const=float(yc), y=float(yc), x=None,
-                       registration="x: trailing edge = plan-view outline at this butt line; z: section top = "
-                       "front-view upper silhouette at this butt line")
+                       registration=("x: tail-bullet end = side-view bullet end (lens excluded)" if name == "HF1" else
+                                     "x: trailing edge = plan-view outline at this butt line") +
+                       "; z: section top = front-view upper silhouette at this butt line")
             rec["le_x"] = float(xf(A)[:, 0].min())
             rec["te_found"] = te_model is not None
             rec["top_found"] = top_model is not None
@@ -2617,7 +2642,8 @@ def load(anchor: str = "spinner", front_z: str = "ground", force: bool = False) 
              'sections': {name: {x, lines, plane, const, registration, ...}},
              'glazing': {'side'|'plan'|'front': {'ws_stbd'|'ws_port'|'sw_stbd'|'sw_port'|'dv_port': (N,2) closed}},
              'openings': {'side': {'cabin_win_k'|'door_airstair'|'door_cargo'|'door_cargo_win': (N,2)}},
-             'profiles': {'side_crown'|'side_keel'|'plan_hb_stbd'|'plan_hb_port': (N,2), NaN = not drawn},
+             'profiles': {'side_crown'|'side_keel'|'plan_hb_stbd'|'plan_hb_port': (N,2), NaN = not drawn,
+                          'side_bottom': lowest drawn line (side_keel incl. wing fairing + ventral strake)},
              'meta': {scale_m_per_pt, fr10_station{anchor}, oml_fit, transforms, checks[], sheet2, ...}}
     kind: 'outline' | 'hidden' | 'centerline' | 'annotation' (tag: text, arrow, dim, ext, hatch, ground,
     refmark, leader; 'phantom' for sheet-2 hidden fuselage lines).

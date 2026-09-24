@@ -39,12 +39,19 @@ Perspective ('persp'): camera = dict with either
   plus width/height (or a 'size' WxH).  Blender cameras have square pixels and no skew: fy is set
   to fx (warning if they differ by > 0.1 %), skew dropped; the sidecar P is the one realised.
 
-Styles: shaded (GLB materials, even studio light, glass tinted blue-grey so it reads against the
-black surround trim; --glass original|clear|dark to change), clay (matte grey, glass dark), lines
-(black silhouette / occlusion / crease / material-boundary edges on white, derived with numpy from
-Cycles object-index, material-index, normal and depth passes rendered at 1 spp, supersampled),
-shaded+lines, clay+lines (edges drawn over the shading), freestyle (Blender Freestyle lines;
-~10x slower than 'lines', kept for comparison).
+Styles: shaded (GLB materials, even studio light = uniform white world + camera-relative key/fill
+suns, 8 spp + OIDN; glass tinted blue-grey and opaque so the panes read against the black surround
+trim; glass='original'|'clear'|'dark' to change), clay (matte grey, glass dark), lines (black
+silhouette / occlusion / crease / material-boundary edges on white, derived with numpy from Cycles
+object-index, material-index, normal and depth passes rendered at 1 spp with a 0.01 px box filter,
+i.e. sampled at the (supersampled) pixel centres; supersample 0 = auto: 3x up to 1.5 Mpx, 2x up to
+6 Mpx, else 1x; isolated specks from sliver triangles are dropped), shaded+lines, clay+lines (edges
+over the shading), freestyle (Blender Freestyle; works headless but is ~3-10x slower than 'lines' and
+also draws the mesh split lines between skin parts; kept for comparison).
+Line options: line_px (inner lines) / sil_px (silhouettes) in output pixels, crease_deg (normal
+break), line_detail = outline (silhouette + occlusion) | normal (+ creases + material boundaries,
+livery paints merged) | full (+ livery), fill='glass' (light blue tint on the glazing), line_color.
+Background: bg = white | transparent (RGBA) | '#rrggbb'.
 
 Part filters (prefixes of the node extras 'part' ids; a mesh matches if its own part id or that of
 any ancestor part starts with the prefix, so 'propeller' includes the blades): only=..., hide=...
@@ -52,11 +59,17 @@ Default hide = 'structure'.  With only given and no hide, nothing is hidden.
 
 Sidecar JSON (same basename, .json):  P (3x4) with [u*w, v*w, w] = P @ [x, y, z, 1] (u right,
 v down, origin at the top-left pixel CORNER: the first pixel's centre is (0.5, 0.5); w == 1 for
-ortho), width, height, view, projection, bounds, px_per_m, camera (blender + OpenCV K/R/t),
-image_axes, style, parts shown/hidden, timings, and a 'blender_check_px' self-check (bbox corners
-projected by P vs. by Blender's own camera frame).  Optional extra outputs: <name>.mask.png
-(8-bit coverage), <name>.ids.png (16-bit part index per pixel sampled at the pixel centre; the
-sidecar's 'part_index' maps index -> part id; 0 = background).
+ortho), width, height, view, projection, bounds / bounds_list / px_per_m / centre (ortho),
+fov / warnings (perspective), camera (Blender camera + OpenCV K/R/t/C for perspective), image_axes
+(model directions of image right / down / look), style, settings, parts_shown / parts_hidden,
+timings, and 'blender_check_px' (bbox corners projected by P vs. Blender's own camera frame; ~1e-3
+px, the residue of Blender storing ortho_scale in float32).  Optional outputs: <name>.mask.png
+(8-bit coverage: Cycles alpha for shaded/clay, supersampled geometry coverage for lines) and
+<name>.ids.png (16-bit part index of the first surface hit at the pixel centre -- with an even
+supersampling factor the sample sits 0.25 px off-centre; sidecar 'part_index' maps index -> part
+id; 0 = background).  Verified with render/check_mapping.py: projected extreme vertices (spinner
+tip, tail, fin top, winglet tips, wheel contacts, glazing edges, centre post) land within 0.7 px
+of the rendered silhouettes / part edges in all six test views, perspective renders within 0.6 px.
 
 CLI (from pc12/):
     /opt/venv-blender/bin/python render/blender_ortho.py --view side_port,top,front --style shaded
@@ -76,8 +89,12 @@ Python API:
     P, W, H, info = bo.ortho_setup('top', bounds=(2.6, 4.8, -1, 1), px_per_m=900)   # no rendering
     uv = bo.project(P, pts)                                          # (N,3) -> (N,2) pixels
 
-Timings (4 CPUs): GLB import ~1 s; full side view 2000 px: shaded 16 spp + OIDN ~15-25 s,
-lines (3x supersampled 1-spp passes) ~10-20 s.  See the sidecar 'timings'.
+Timings (4 CPUs, measured while other jobs kept the load average at 5-15, so expect ~2x faster on
+an idle machine): GLB import ~1 s; 2000 px wide: side full shaded 13-35 s, lines 4-19 s; front full
+shaded ~15-20 s, lines 4-10 s; top full (2000x2253) shaded 60-85 s, lines 5-23 s; cockpit crops
+(fully covered, 2.4-3.6 Mpx) shaded 45-105 s, lines 15-25 s.  Shaded time scales with pixels x
+samples (use samples=4 or a smaller width for quick looks); 'lines' is bound by the 1-spp ID render
+and the EXR hand-over (~40 bytes per supersampled pixel, temporary files in out/tmp/render/_work_*).
 """
 from __future__ import annotations
 
@@ -351,20 +368,34 @@ def read_exr(path):
     out = {}
     sizes = {0: 4, 1: 2, 2: 4}
     dts = {0: "<u4", 1: "<f2", 2: "<f4"}
+    b8 = np.frombuffer(b, np.uint8)
+    pre = 4 if multipart else 0
     for pi, pp in enumerate(parts):
         W, H = pp["W"], pp["H"]
         arrs = {nm: np.empty((H, W), np.float32) for nm, _ in pp["chans"]}
         line_bytes = sum(sizes[pt] for _, pt in pp["chans"]) * W
-        for off in offsets[pi]:
-            o = int(off) + (4 if multipart else 0)
+        offs = offsets[pi].astype(np.int64)
+        step = line_bytes + 8 + pre
+        if pp["comp"] == 0 and len(offs) == H and np.all(np.diff(offs) == step):
+            # uncompressed, one line per chunk, chunks back to back: one strided view for the part
+            ys = np.lib.stride_tricks.as_strided(b8[offs[0] + pre:], shape=(H, 4), strides=(step, 1))
+            ys = np.ascontiguousarray(ys).view("<i4").ravel() - pp["y0"]
+            blk = np.lib.stride_tricks.as_strided(b8[offs[0] + pre + 8:], shape=(H, line_bytes), strides=(step, 1))
+            p = 0
+            for nm, pt in pp["chans"]:
+                n = sizes[pt] * W
+                arrs[nm][ys] = np.ascontiguousarray(blk[:, p:p + n]).view(dts[pt])
+                p += n
+            out.update(arrs)
+            continue
+        for off in offs:
+            o = int(off) + pre
             y, size = struct.unpack("<ii", b[o:o + 8])
             data = b[o + 8:o + 8 + size]
             nl = min(pp["lpb"], pp["y0"] + H - y)
             if pp["comp"] in (2, 3) and size < line_bytes * nl:
                 raw = np.frombuffer(zlib.decompress(data), np.uint8)
-                t = np.cumsum(raw.astype(np.int64) - 128)
-                t[0] += 128
-                t = (t & 0xFF).astype(np.uint8)       # undo the predictor ...
+                t = ((np.cumsum(raw.astype(np.int64) - 128) + 128) & 0xFF).astype(np.uint8)   # undo predictor
                 hlf = (t.size + 1) // 2
                 d = np.empty_like(t)
                 d[0::2], d[1::2] = t[:hlf], t[hlf:]  # ... and the byte de-interleave
@@ -464,18 +495,23 @@ def _edges_axis(bg, cls, depth, nrm, pxw, cos_crease, dz_k):
         dot = np.einsum("ijk,ijk->ij", nrm[:, :-1], nrm[:, 1:])
         inner |= both & (dot < cos_crease)
     if depth is not None:
-        z = np.where(bg, np.nan, depth).astype(np.float64)
+        z = np.where(bg, np.float32(np.nan), depth.astype(np.float32))
         d = z[:, 1:] - z[:, :-1]
-        dl = np.full_like(d, np.nan)
-        dr = np.full_like(d, np.nan)
-        dl[:, 1:] = d[:, :-1]
-        dr[:, :-1] = d[:, 1:]
+        e = np.full_like(d, np.inf)
+        np.fmin(np.abs(d[:, 1:] - d[:, :-1]), np.inf, out=e[:, 1:])          # vs. the left neighbour pair
+        e[:, :-1] = np.fmin(e[:, :-1], np.abs(d[:, :-1] - d[:, 1:]))         # vs. the right neighbour pair
         with np.errstate(invalid="ignore"):
-            e = np.fmin(np.abs(d - dl), np.abs(d - dr))
-            e = np.where(np.isnan(e), np.abs(d), e)
+            ad = np.abs(d)
+            e = np.where(np.isfinite(e), e, ad)
             thr = dz_k * (pxw if np.isscalar(pxw) else np.fmin(pxw[:, :-1], pxw[:, 1:]))
-            inner |= both & (e > thr) & (np.abs(d) > thr)
+            inner |= both & (e > thr) & (ad > thr)
     return sil, inner
+
+
+def auto_supersample(W, H):
+    """Supersampling factor for the line passes: 3 up to 1.5 Mpx, 2 up to 6 Mpx, else 1."""
+    n = W * H
+    return 3 if n <= 1.5e6 else 2 if n <= 6.0e6 else 1
 
 
 def _box_count(M, r):
@@ -685,7 +721,7 @@ class Session:
             is_glass = name in GLASS_NAMES
             if kind == "orig":
                 if is_glass and glass == "tint":
-                    vmap[name] = self._principled(name + ".tint", GLASS_TINT, rough=0.12, pass_index=idx)
+                    vmap[name] = self._principled(name + ".tint", GLASS_TINT, rough=0.3, pass_index=idx)
                 elif is_glass and glass == "dark":
                     vmap[name] = self._principled(name + ".dark", (0.02, 0.025, 0.03), rough=0.1, pass_index=idx)
                 elif is_glass and glass == "clear":
@@ -866,6 +902,7 @@ class Session:
         rgba = None            # final straight-alpha sRGB float image
         cover = None
         ids = None
+        k_used = None
         try:
             if style in ("shaded", "clay", "shaded+lines", "clay+lines"):
                 kind = "clay" if style.startswith("clay") else "orig"
@@ -875,11 +912,16 @@ class Session:
                 c.samples = int(job["samples"])
                 c.use_adaptive_sampling = True
                 c.adaptive_threshold = 0.02
-                c.use_denoising = bool(job["denoise"])
+                dn = job["denoise"]
+                c.use_denoising = bool(dn) and str(dn).lower() not in ("0", "false", "off", "none")
+                if c.use_denoising:                         # OIDN: 'high' = HIGH quality + ACCURATE prefilter
+                    high = str(dn).lower() == "high"      # (~2x the render time here), default BALANCED + FAST
+                    c.denoising_quality = "HIGH" if high else "BALANCED"
+                    c.denoising_prefilter = "ACCURATE" if high else "FAST"
                 c.pixel_filter_type = "BLACKMAN_HARRIS"
                 c.filter_width = 1.5
-                c.max_bounces, c.diffuse_bounces, c.glossy_bounces = 4, 2, 2
-                c.transmission_bounces, c.transparent_max_bounces = 2, 8
+                c.max_bounces, c.diffuse_bounces, c.glossy_bounces = 3, 1, 1
+                c.transmission_bounces, c.transparent_max_bounces = 1, 8
                 c.caustics_reflective = c.caustics_refractive = False
                 p, tr, tx = self._render_exr(W, H, work)
                 timings["beauty_render"], timings["beauty_exr_read"] = round(tr, 2), round(tx, 2)
@@ -908,7 +950,8 @@ class Session:
                 cover = a
                 rgba = self._ink_image(ink, None, bgrgb, transparent, job)
             if np_lines or job["ids"]:
-                k = int(job["supersample"]) if np_lines else 1
+                k = (int(job["supersample"]) or auto_supersample(W, H)) if np_lines else 1
+                k_used = k
                 self._apply_materials("ids")
                 self._lighting("white", r, up, back)
                 c = sc.cycles
@@ -987,6 +1030,7 @@ class Session:
             parts_shown=shown, parts_hidden=hidden, only=job["only"], hide=job["hide"],
             settings={k: job[k] for k in ("samples", "denoise", "glass", "bg", "supersample", "line_px", "sil_px",
                                           "crease_deg", "depth_k", "line_detail", "fill")},
+            supersample_used=k_used,
             blender=self.bpy.app.version_string, timings=timings, **extra)
         if ids is not None:
             side["part_index"] = {str(v): k for k, v in self.part_index.items()}
@@ -1059,8 +1103,8 @@ class Session:
 # =============================================================================================
 
 JOB_DEFAULTS = dict(view="side_port", style="shaded", bounds=None, px_per_m=None, width=None, height=None,
-                    margin=0.25, camera=None, only=None, hide=None, bg="white", samples=16, denoise=True,
-                    glass="tint", supersample=3, line_px=1.0, sil_px=1.8, crease_deg=35.0, depth_k=4.0,
+                    margin=0.25, camera=None, only=None, hide=None, bg="white", samples=8, denoise="fast",
+                    glass="tint", supersample=0, line_px=1.0, sil_px=1.8, crease_deg=35.0, depth_k=4.0,
                     line_detail="normal", line_color="black", fill="none", mask=False, ids=False, out=None,
                     name=None)
 
@@ -1094,8 +1138,8 @@ def normalize_job(job):
         j["width"] = j["width"] or j["camera"].get("width")
         j["height"] = j["height"] or j["camera"].get("height")
     if not j.get("out"):
-        nm = j.get("name") or f"{j['view']}_{j['style'].replace('+', '_')}"
-        j["out"] = str(OUT_DIR / f"{nm}.png")
+        nm = j.get("name") or j["view"]
+        j["out"] = str(OUT_DIR / f"{nm}_{j['style'].replace('+', '_')}.png")
     j["out"] = str(Path(j["out"]) if Path(j["out"]).is_absolute() else (Path.cwd() / j["out"]))
     return j
 
@@ -1167,10 +1211,12 @@ def main(argv=None):
     ap.add_argument("--only", help="part-id prefixes to show")
     ap.add_argument("--hide", help="part-id prefixes to hide (default 'structure'; '' shows everything)")
     ap.add_argument("--bg", default="white", help="white | transparent | #rrggbb")
-    ap.add_argument("--samples", type=int, default=16)
-    ap.add_argument("--no-denoise", action="store_true")
+    ap.add_argument("--samples", type=int, default=8, help="Cycles samples for shaded/clay (OIDN denoised)")
+    ap.add_argument("--denoise", default="fast", choices=("fast", "high", "off"),
+                    help="OIDN denoiser: fast (BALANCED quality, FAST prefilter; default), high, off")
     ap.add_argument("--glass", default="tint", choices=("tint", "original", "clear", "dark"))
-    ap.add_argument("--supersample", type=int, default=3, help="line styles: supersampling factor (odd preferred)")
+    ap.add_argument("--supersample", type=int, default=0,
+                    help="line styles: supersampling factor (0 = auto: 3 up to 1.5 Mpx, 2 up to 6 Mpx, else 1)")
     ap.add_argument("--line-px", type=float, default=1.0)
     ap.add_argument("--sil-px", type=float, default=1.8)
     ap.add_argument("--crease-deg", type=float, default=35.0)
@@ -1209,7 +1255,7 @@ def main(argv=None):
                     str(Path(a.out_dir) / f"{nm}_{st.replace('+', '_')}.png")
                 jobs.append(dict(view=v, style=st, bounds=a.bounds, px_per_m=a.px_per_m, width=w, height=h,
                                  margin=a.margin, camera=camera, only=a.only, hide=a.hide, bg=a.bg,
-                                 samples=a.samples, denoise=not a.no_denoise, glass=a.glass,
+                                 samples=a.samples, denoise=a.denoise, glass=a.glass,
                                  supersample=a.supersample, line_px=a.line_px, sil_px=a.sil_px,
                                  crease_deg=a.crease_deg, line_detail=a.line_detail, line_color=a.line_color,
                                  fill=a.fill, mask=a.mask, ids=a.ids, out=out))
