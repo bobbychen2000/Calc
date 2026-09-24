@@ -35,9 +35,11 @@ function econSeat(B, x0, lod, opts = {}) {
   const on = (y, dz = 0, dx = 0) => M4.mul(BH, M4.trs(dx, y, zr(y) + dz));   // on the rear face
   // navy pillow resting on the cushion at the crease (y_47300)
   if (opts.pillow !== false) B.add(gLoft(cushionSecs(0.27, 0.21, 0.08, -0.04, { edge: 0.035, r: 0.04 }), 3), M4.mul(BH, M4.trs(0, 0.12, -0.13, 0, -80 * DEG)), SEATMAT.yPillow);
-  // life-vest pouch: dark holder well under the seat with the red pull tab hanging from it (y_47302)
-  B.add(gRBox(0.12, 0.05, 0.03, 0.01, 1), M4.trs(x0, 0.24, -0.30), { c: '#2e3136', r: 0.6 });
-  B.add(gBox(0.018, 0.06, 0.006), M4.trs(x0 + 0.02, 0.19, -0.31), { c: '#c8252b', r: 0.5 });
+  // life-vest pouch: dark saucer-shaped holder under the pan with a red pull strap hanging ~0.09 from it (y_47302:
+  // ~0.13 m discs under each seat, red strap ~1/3 of the disc height below it) [D]
+  B.add(gCyl(0.065, 0.055, 0.035, 14), M4.trs(x0, 0.235, -0.30), { c: '#2e3136', r: 0.6 });
+  B.add(gBox(0.02, 0.09, 0.005), M4.trs(x0 + 0.015, 0.185, -0.36, 0, 12 * DEG), { c: '#c8252b', r: 0.5 });
+  B.add(gBox(0.03, 0.012, 0.008), M4.trs(x0 + 0.015, 0.14, -0.37), { c: '#c8252b', r: 0.5 });
   if (!opts.noScreen) {
     // 13.3 in touchscreen (0.294 x 0.166) in a black glass border 0.316 x 0.205 set flush in the hood face, top ~0.035
     // below the hood top (y_47305: 600 x 390 px at 1905 px/m, colour (29,26,38); 55 px of shell above) [D]
