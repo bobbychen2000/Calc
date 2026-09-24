@@ -11,7 +11,7 @@ const SEATMAT = {
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
-  yBelt: { c: '#2f7394', r: 0.7, l: LAYER.fabric },
+  yBelt: { c: '#2b5f78', r: 0.7, l: LAYER.fabric },
   yPillow: { c: '#232a4e', r: 0.9, l: LAYER.fabric },
   arm: { c: '#d3d6d9', r: 0.45, l: LAYER.plastic },
   armPad: { c: '#c6c9cd', r: 0.5, l: LAYER.plastic },
@@ -140,12 +140,22 @@ function econUnit(n, lod = false, opts = {}) {
   const xs = []; for (let k = 0; k < n; k++) xs.push((k - (n - 1) / 2) * sp);
   xs.forEach((x) => econSeat(B, x, lod, opts));
   const arms = []; for (let k = 0; k <= n; k++) arms.push((k - n / 2) * sp);
-  for (const xa of arms) {
-    loftAt(B, [SEC(0.61, 0.046, 0.30, -0.235, 0.018), SEC(0.645, 0.05, 0.31, -0.235, 0.022), SEC(0.665, 0.048, 0.30, -0.235, 0.02)], M4.trs(xa, 0, 0), SEATMAT.arm, 2);
-    B.add(gRBox(0.048, 0.012, 0.26, 0.006, 1), M4.trs(xa, 0.668, -0.24), SEATMAT.armPad);
-    B.add(gRBox(0.032, 0.21, 0.05, 0.01, 1), M4.trs(xa, 0.52, -0.09), SEATMAT.arm);
-    if (!lod) B.add(gCyl(0.006, 0.006, 0.01, 8), M4.trs(xa, 0.64, -0.39, 0, Math.PI / 2), SEATMAT.frame);
-  }
+  arms.forEach((xa, k) => {
+    // sculpted off-white armrest (thick, rounded, slightly drooping nose) on a rear pivot post (y_47302 / 47303)
+    loftAt(B, [SEC(0.60, 0.050, 0.33, -0.235, 0.02), SEC(0.63, 0.056, 0.34, -0.235, 0.026), SEC(0.66, 0.054, 0.335, -0.235, 0.026), SEC(0.672, 0.046, 0.32, -0.235, 0.02)], M4.trs(xa, 0, 0), SEATMAT.arm, 3);
+    B.add(gRBox(0.052, 0.07, 0.05, 0.022, 2), M4.trs(xa, 0.625, -0.405, 0, 18 * DEG), SEATMAT.arm);
+    B.add(gRBox(0.05, 0.008, 0.24, 0.004, 1), M4.trs(xa, 0.674, -0.235), SEATMAT.armPad);
+    B.add(gRBox(0.036, 0.23, 0.06, 0.014, 1), M4.trs(xa, 0.51, -0.09), SEATMAT.arm);
+    // off-white fairing hanging under the arm nose down to the leg (the white "paddles" in y_47302)
+    B.add(gRBox(0.03, 0.36, 0.14, 0.012, 2), M4.trs(xa, 0.42, -0.36, 0, -6 * DEG), SEATMAT.arm);
+    if (k === 0 || k === arms.length - 1) {
+      // block end: off-white side shroud under the armrest down to the spreader (y_47302)
+      const o = k === 0 ? -1 : 1;
+      B.add(gRBox(0.018, 0.30, 0.44, 0.012, 1), M4.trs(xa + o * 0.012, 0.44, -0.25), SEATMAT.yShell);
+      B.add(gRBox(0.02, 0.09, 0.05, 0.008, 1), M4.trs(xa + o * 0.024, 0.46, -0.40), SEATMAT.yShellDark);
+    }
+    if (!lod) B.add(gCyl(0.008, 0.008, 0.06, 10), M4.trs(xa, 0.63, -0.08, 0, 0, Math.PI / 2), SEATMAT.frame);
+  });
   const W = n * sp;
   const legX = n >= 3 ? [-(W / 2 - 0.24), W / 2 - 0.24] : [-0.24, 0.24];
   for (const lx of legX) {
