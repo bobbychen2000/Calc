@@ -22,7 +22,7 @@ const MOODS = {
   // 0.2 of it at the belt [V: tlfl_IMG_9217 #5c5dc6, belt #736a88; sany_12 #556df7, window line #5362e0; stwis_img_6082
   // #1961f9]; sideLed from the ACES inverse of #5467ef at the lens [D]. Boarding vs blue: questions_lighting.md 1
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.30, 0.31, 0.33], bandCut: 0.25, k: 1.05, exposure: 1.20 },
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.0, 0.03, 1.7], bandCut: 0.8, sideLow: 0.2, k: 0.95, exposure: 1.0 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.0, 0.03, 1.7], bandCut: 0.8, sideLow: 0.15, k: 0.95, exposure: 1.0 },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
