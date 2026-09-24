@@ -1,0 +1,108 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "score": 5.0,
+ "scale_notes": "Scales from the 24 in display (0.531 x 0.299 m active area). tpg_53 is almost square-on: the screen is 570 x 322 px, so 1073 px/m, and the aspect ratio checks out at 1.77. Unit width 1.17 m from 09c_room.js (ROOM.hx). Photos in ref/web/room/ (new this round: tpg_1..93 = TPG Zach Griff 2020 THE Room flight, up_* = UpgradedPoints JFK-HND, tt_* = Thrifty Traveler). Real photos outrank the ANA CG renders (c_27300/02/03/05/07/08).",
+ "details": [
+  {"detail": "Nested-pair massing: 1.12 m walls, central monitor monument, alternating rear- and forward-facing seats, aisle-end ash panels", "score": 6.5, "refs": ["ref/ana/c_27312-lang-multi.jpg", "w2/q06_roomMain.png", "w2/q10_seat14D.png"]},
+  {"detail": "O seat (rear-facing, outer column) width. Model: 0.58 m cushion plus a 0.50 m-wide aisle-corner box. Real: a wide bench about 0.80-0.87 m (about 75 % of the unit width) with a narrow (~0.18-0.20 m) aisle armrest. tpg_31: bench 570 px of a 765 px half-pair, about two pillow widths. tpg_42: pillow 365 px on a 655 px cushion. This matches ANA's quoted 35-38 in seat width", "score": 3.5, "refs": ["ref/web/room/tpg_31.jpg", "ref/web/room/tpg_42.jpg", "ref/web/room/tpg_43.jpg", "w2/cu/c5_seatO.png", "w2/cu/c1_pair_front.png"]},
+  {"detail": "E seat (forward-facing, aisle column): 0.64 m cushion. c_27303 top-down pillow/bench ratio gives about 0.6-0.65 m, so it is plausible", "score": 6.5, "refs": ["ref/ana/c_27303-lang-multi.jpg", "w2/cu/c2_pair_aisle.png"]},
+  {"detail": "Seat back, headrest flap and top bolster. Real flap: about 62 % of the back width, h/w about 0.38, pushed flush to the aisle-side edge of the cushion. Model: 0.38 x 0.28, h/w 0.74. Real back has TWO horizontal seams (upper panel / lumbar band / lower band). The top bolster is charcoal, about 0.16 m, with a round reading-light fitting at EACH end; the model has one lamp", "score": 5, "refs": ["ref/web/room/tpg_31.jpg", "ref/web/room/tpg_42.jpg", "ref/web/room/tpg_43.jpg", "w2/cu/c5_seatO.png"]},
+  {"detail": "Monitor and bezel. tpg_53 measures the frame at 0.595 x 0.405 m with borders of 0.056 top, 0.049 bottom and 0.034 sides. Model: 0.605 x 0.38 with 0.0255 top and 0.0555 bottom, so the thick lip is on the wrong edge and the top rim is too thin", "score": 6.5, "refs": ["ref/web/room/tpg_53.jpg", "ref/web/room/tpg_61.jpg", "w2/cu/c7_monE.png"]},
+  {"detail": "Under-monitor strip. Real: one continuous silver-grey sill about 0.49 m wide and 0.084 m tall, directly under the bezel. It holds a 0.28 m drawer with a green LED and an open 0.21 m literature slot with a navy-blue interior. Model: charcoal drawer 0.30 x 0.06, slot 0.14 x 0.05, reading as two separate small parts", "score": 5, "refs": ["ref/web/room/tpg_53.jpg", "ref/web/room/tpg_57.jpg", "ref/web/room/tpg_58.jpg", "ref/web/room/tpg_56.jpg", "w2/cu/c6_monO.png"]},
+  {"detail": "Cabinet: width 0.34 is right (real about 0.33). Height is 0.38 against a real 0.43-0.45, and the real top stands about 0.015 above the bezel top", "score": 6, "refs": ["ref/web/room/tpg_53.jpg", "ref/web/room/tpg_45.jpg", "w2/cu/c7_monE.png"]},
+  {"detail": "Lamp/nozzle column beside the monitor: now present with the big lamp over the smaller nozzle and the safety-card pocket at its foot. Placement and proportions are right", "score": 7, "refs": ["ref/web/room/tpg_53.jpg", "ref/web/room/tpg_41.jpg", "w2/q07_seat11A.png"]},
+  {"detail": "Footwell. Real: the mouth sits directly under the monitor, from the monitor's column-side edge across about 80 % of its width (tpg_53: 510 px = 0.475 m). The console edge only reaches under the last ~18 % on the cabinet side. Model: the monument pillar (0.245 wide) fills the cabinet-side ~40 % of the monitor width, and the other side of the mouth runs under the column / door edge. The visible mouth is only about 0.30 m (c7: 165 px at 556 px/m) and 0.37 m (O). The pad and the dark cavity read correctly", "score": 4.5, "refs": ["ref/web/room/tpg_53.jpg", "ref/web/room/tpg_44.jpg", "ref/ana/c_27316-lang-multi.jpg", "w2/cu/c7_monE.png", "w2/cu/c10_footwellO.png", "w2/q07_seat11A.png"]},
+  {"detail": "Seat controls. Real: one raised mid-grey plate, about 1.2x lighter than the console body, carrying the landscape gamepad-style handset (~0.14 x 0.065, colour screen, round button clusters at both ends) and a control block of about 0.14 x 0.15. That block has a scroll wheel on top; a row with flat / blue-ring / upright buttons; a 4-preset pill; and a bottom row of meal / reading-light pill / ceiling light. Model: black 0.11 x 0.075 pod with 8 dots", "score": 4, "refs": ["ref/web/room/tpg_51.jpg", "ref/web/room/tpg_53.jpg", "w2/cu/c8_controls.png"]},
+  {"detail": "Side table (ash top with a large-radius corner over a charcoal body with a thin silver band): shape is right. The ash grain in the render is still coarse and blotchy", "score": 6.5, "refs": ["ref/web/room/tpg_53.jpg", "ref/web/room/tpg_55.jpg", "w2/cu/c8_controls.png"]},
+  {"detail": "Aisle armrest ledge with the privacy-panel slot: now a dark slot with a metal edge. The silver top is plausible", "score": 6, "refs": ["ref/web/room/tpg_41.jpg", "ref/ana/c_27313-lang-multi.jpg", "w2/cu/c9_ledge.png"]},
+  {"detail": "Aisle-end ash panels, shared cap and seat-number plaques. Real plaques are dark-glass squares with blue back-lit numerals (tpg_43 '19K', c_27313). The panel framing is fine", "score": 6.5, "refs": ["ref/web/room/tpg_43.jpg", "ref/ana/c_27314-lang-multi.jpg", "w2/q06_roomMain.png"]},
+  {"detail": "Centre divider between the centreline O seats: a slim charcoal spine (about 0.18 m of total structure between the two benches in tpg_31) that retracts. The model's long 2.6 m ash band with a thin cap rail reads as a floating bar in q09/c3", "score": 6, "refs": ["ref/web/room/tpg_31.jpg", "ref/ana/c_27314-lang-multi.jpg", "w2/q09_centrePair.png", "w2/cu/c3_centre.png"]},
+  {"detail": "Doors and door leading edges", "score": 6.5, "refs": ["ref/web/room/tpg_47.jpg", "ref/ana/c_27313-lang-multi.jpg", "w2/cu/c2_pair_aisle.png"]},
+  {"detail": "Bed mode. Mattress and white pillow are fine. The duvet is now slate grey (#5a6478), but three real in-flight photos show a medium indigo/navy quilted duvet: fb_a96b #424c7a, fb_d8b6 #4e5b8b, tt_bed #44427d, all with B-R of about +0x35. The QA r3 change overcorrected from a warm-night-light photo", "score": 5.5, "refs": ["ref/web/room/fb_a96b7a65-afb9-4642-90bc-5c721e80a604.jpg", "ref/web/room/fb_d8b6dc0d-6542-43d9-b6a1-c050e15ad2cd.jpg", "ref/web/room/tt_bed.jpg", "w2/cu/c4_bedO.png"]},
+  {"detail": "Materials and colour in the cabin. Fabric #464651-#535260 (R/B 0.86) against ANA photos #494553-#555360 (R/B 0.88-0.93): OK. Shell #4e5057: OK. The navy pillow renders #1c214b in the cabin against a real #3d57ad (tpg_42 daylight); only ANA's CG render is that dark (#282841)", "score": 6, "refs": ["ref/ana/c_27315-lang-multi.jpg", "ref/web/room/tpg_42.jpg", "w2/q08_seat12H.png", "w2/q10_seat14D.png"]}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "O seat (odd rows, rear-facing) far too narrow; its aisle-side block is far too wide",
+   "problem": "roomPart('O') builds roomSeatCore(..., 0.58) centred at x -0.21 (cushion -0.50..0.08), then an aisle-corner box gRBox(0.50, top, 0.28) at x 0.335 with a 0.16 jLeather pad and a 0.34 roomLedge. The real O seat is a wide bench of about 0.80-0.87 m. It runs from the outer console to a narrow aisle armrest about 0.18-0.20 m wide (including the door leaf), which carries the ledge/slot and a dark stowage face with a button. The ANA-quoted seat width is 35-38 in.",
+   "evidence": "tpg_31 (17E/F centreline O pair, square-on): the bench spans 570 px of a 765 px half-pair (75 % of 1.17 m, so about 0.87 m) and holds two pillows (blue 290 px each) side by side. The aisle armrest is 130 px (about 0.20 m). tpg_42 (window O seat): the blue pillow is 365 px on a 655 px cushion, and the back cushion is 72 % of the shell-back width. tpg_43 shows the same. Render c5_seatO / c1: the cushion is about 60 % of that, next to a big box.",
+   "fix": "09c_room.js roomPart('O'): call roomSeatCore(tmp, bed, lod, 0.80) with S = M4.trs(-0.095, 0, -1.27, Math.PI), giving a cushion from -0.495 to 0.305. Replace the aisle-corner gRBox(0.50, top, 0.28) at x 0.335 with gRBox(0.16, top, 0.60, 0.02, 1) at M4.trs(0.505, top/2, -1.00), and drop the jLeather 0.16 pad. Change roomLedge(B, 0.34, 0.415, -1.20, 0.26) to roomLedge(B, 0.16, 0.505, -1.00, 0.60). Widen the back shell to gRBox(0.96, wall, 0.07) at x -0.105, with the jLeather band 0.90 wide at x -0.10. Mattress in bed mode: cushionSecs(0.78, ...) at x -0.10. Check that O's side table (tx0 0.12, tz0 -0.62) still clears the pan front (-0.63) and the leg rest. If entry space is too tight, shorten the table to tz0 -0.55 rather than narrowing the seat (see questionsForUser)."
+  },
+  {
+   "severity": "high",
+   "detail": "Footwell mouth is off-centre from the monitor and reads about 0.30-0.37 m wide instead of about 0.48",
+   "problem": "The E footwell roomFootwell(B, 0.135, 0.545, ...) sits under the aisle half of E's monitor (xm 0.15, frame -0.15..0.45) and also runs under the column (0.455-0.535) and the door edge. The monument pillar gRBox(0.245, MON.bot, ...) at x 0.0075 fills the other ~40 % of the monitor width. O is mirrored: footwell -0.56..-0.13 against monitor -0.5025..0.1025. In seat views (q07, c7, c10) a grey slab stands under the monitor and the pad shows as a narrow slot.",
+   "evidence": "tpg_53 (square-on, 1073 px/m): the mouth spans x 250-760 = 0.475 m and starts at the column-side bezel edge (228). The console edge covers only the cabinet-side ~0.12 m of the monitor. c_27316 is the same. Render c7: pillar 113 px = 0.20 m, pad 165 px = 0.30 m at 556 px/m.",
+   "fix": "In roomPart('O'): E's footwell becomes roomFootwell(B, 0.02, 0.455, MON.zE, tz0 + 0.035, 1), with the straight wall on the column-side bezel edge. O's footwell becomes roomFootwell(B, -0.505, -0.03, MON.zO, 0.62, -1). The pillar under the monument becomes gRBox(0.05, MON.bot, MON.zE - MON.zO, 0.01, 1) at x -0.005. The two jShellIn footwell ceilings follow the new x spans: gRBox(0.435, ...) at x 0.2375 and gRBox(0.475, ...) at x -0.2675. Check that the new E wedge (0.02..0.455 at the mouth, 0.30 at z -0.585) clears the widened O leg rest; the wedge taper already keeps it on the aisle side at z < -0.33."
+  },
+  {
+   "severity": "medium",
+   "detail": "Seat controls undersized and wrong layout/colour",
+   "problem": "roomControls: black 0.11 x 0.075 pod with a ring and 8 dots, and a 0.15 x 0.075 black handset. The real controls sit on one raised mid-grey plate (about 1.2x lighter than the console body) with a dropped lower edge under the handset. The control block is about 0.14 x 0.15 and has 4 rows: scroll wheel; flat / blue-ring / upright buttons; a 4-preset pill; meal / reading-light pill / ceiling-light buttons. The handset is a landscape gamepad shape about 0.14 x 0.065.",
+   "evidence": "tpg_51 (close-up): the handset is 370 px and the block's buttons span 350 x 365 px. tpg_53 and c_27316 show the plate and pod as one lighter panel. Render c8 shows a small black pod.",
+   "fix": "roomControls: add a backing plate gRBox(0.36, 0.20, 0.006, 0.02, 1) at M4.trs(side*0.08, 0.555, 0.001) with material {c:'#6c7077', r:0.45, l:LAYER.plastic}. Make the pod gRBox(0.15, 0.16, 0.006, 0.02, 1) at (side*0.17, 0.555), same colour. Scroll wheel: gRBox(0.09, 0.018, 0.008) jBase at y+0.06. Three round buttons r 0.013 at y+0.03, spaced 0.045, the middle one blue-ring #3a6bff e 0.4. Pill gRBox(0.10, 0.022, 0.004, 0.011) at y-0.005. Bottom row: two r 0.011 buttons plus a 0.06 x 0.022 pill at y-0.045, all with a thin silver ring (SEATMAT.jRail). Handset: gRBox(0.14, 0.065, 0.012, 0.03, 1) SEATMAT.black with the screen quad 0.07 x 0.045 centred."
+  },
+  {
+   "severity": "medium",
+   "detail": "Under-monitor strip: slot too narrow and drawer too dark; reads as two separate small parts",
+   "problem": "roomMonitor: the slot recess is 0.14 x 0.05 and the drawer 0.30 x 0.06, both charcoal jShellIn. Real: one continuous sill about 0.49 x 0.084 directly under the bezel. The drawer face is silver-grey (tpg_58 #656055 under warm light, lighter than the console) with a finger recess and a green LED. The literature slot is an open box about 0.21 x 0.075 with a royal-blue interior and a charcoal lip.",
+   "evidence": "tpg_53: strip at y 650-740 (0.084 m), x 222-750 (0.49 m); drawer 300 px = 0.28 m; slot 223 px = 0.21 m. tpg_57, tpg_58 and tpg_56 are close-ups.",
+   "fix": "roomMonitor: slot recess gRBox(0.21, 0.075, 0.04, 0.004, 1) at (xm + slotSide*0.14, 0.60). Blue interior quad 0.195 x 0.06, {c:'#2d4fb0', r:0.5, e:0.12}. Drawer gRBox(0.28, 0.075, 0.014, 0.004, 1) at (xm - slotSide*0.105, 0.60) in SEATMAT.jPanelEdge (brushed #5d6166, or #8a8d91 for a truer silver). Add a finger recess gBox(0.07, 0.008, 0.004) jBase at y 0.575. Move the LED to xm - slotSide*0.20."
+  },
+  {
+   "severity": "medium",
+   "detail": "Headrest flap too tall, wrong position; one reading light instead of two; one back seam instead of two",
+   "problem": "The flap is gRBox(0.38, 0.28, ...) at +0.05 off-centre, h/w 0.74. Real flap is about 62 % of the cushion width with h/w about 0.38, flush with the cushion's aisle-side edge, and its tab hangs from the flap's lower-middle. The shell's top bolster carries a round fitting at BOTH ends (tpg_31, tpg_42, tpg_43 and c_27313 all show two). The back has two horizontal seams, at about 55 % and 80 % of its height from the top.",
+   "evidence": "tpg_31: flap 355 x 135 px on a 570 px back. tpg_42: 380 x 170 on 675. Fittings at x 130 / 750 and 870 / 1510 in tpg_31.",
+   "fix": "roomSeatCore: flap gRBox(0.62*w, 0.23*w, 0.018, 0.008, 1) at M4.trs(±(w/2 - 0.31*w - 0.01), 0.50, -0.052, 0, -8*DEG), with the sign toward the aisle (+x for E; for O local +x also maps to the aisle after the π turn; check). Tab at the same x, y 0.40. Second seam: gBox(w-0.04, 0.005, 0.004) at BH y 0.17. roomPart: add a second roomLamp at the other end of each back shell: O at x 0.30 (after the widening above), E at x 0.52, y 1.03."
+  },
+  {
+   "severity": "medium",
+   "detail": "Monitor bezel proportions: thick lip on the wrong edge",
+   "problem": "roomMonitor frame 0.605 x 0.38 centred at y 0.835 with the screen at 0.85, giving a top border of 0.0255 and a bottom border of 0.0555. Real (tpg_53): frame 0.595 x 0.405, top border 0.056, bottom 0.049, sides 0.034. The real top border is the thickest.",
+   "evidence": "tpg_53: bezel x 228-866, y 190-625; screen x 265-835, y 250-572 at 1073 px/m.",
+   "fix": "roomMonitor: gRBox(0.595, 0.405, 0.03, 0.015, 1) at y 0.8465 (top 1.049 = MON.top); screen gQuad at y 0.843."
+  },
+  {
+   "severity": "medium",
+   "detail": "Cabinet door too short",
+   "problem": "roomCabinet is 0.34 wide x 0.38 high (ROOM.top .. +0.38 = 0.66..1.04). Real is about 0.33 x 0.44 with its top about 0.015 above the bezel top.",
+   "evidence": "tpg_53: cabinet box x 872-1228 (0.33 m), y 175-640 (0.43 m) with the bezel top at y 190. tpg_45 shows it open.",
+   "fix": "roomCabinet: raise the top to 1.065. Main door gRBox(0.34, 0.345, ...) at y ROOM.top + 0.2375 and lower band 0.058 unchanged. Side stiles 0.405 tall centred at ROOM.top + 0.2025. The cap rail / monument top next to it needs +0.015 locally, or set MON.top 1.065."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed-mode duvet overcorrected to slate grey",
+   "problem": "SEATMAT.duvet is #5a6478 (the QA r3 change, based on tt_bed-2 under warm night light). Three in-flight photos show a medium indigo/navy quilted duvet.",
+   "evidence": "Blue-pixel means: fb_a96b7a65 #424c7a, fb_d8b6dc0d #4e5b8b, tt_bed #44427d.",
+   "fix": "09_seats.js SEATMAT.duvet c '#48528a' (shared-file one-liner). Keep the drape and the quilting seams, but darken the seams to '#353d66'."
+  },
+  {
+   "severity": "low",
+   "detail": "Navy pillow renders too dark in the cabin",
+   "problem": "In q08/q10 the pillow renders #1c214b (luminance about 0.13). In a real daylight photo it is #3d57ad (tpg_42), a mid royal-navy with a visible pattern. Only ANA's CG render is as dark (#282841).",
+   "evidence": "tpg_31, tpg_42, tpg_43 all show a clearly mid-blue pillow.",
+   "fix": "09_seats.js SEATMAT.pillowBlue c '#4a58a0' (from '#3e4677')."
+  },
+  {
+   "severity": "low",
+   "detail": "Seat-number plaques",
+   "problem": "Real plaques are dark smoked-glass squares about 0.07 m with back-lit blue numerals (tpg_43 '19K', c_27313 cyan '17E/18D'). The model's plaques read as small pale squares from the aisle.",
+   "evidence": "tpg_43, c_27313, c_27314",
+   "fix": "In the plaque atlas cell (06_atlas.js, not room-owned) use a dark #2a2d33 ground with #4da3ff glyphs. In 09c_room.js give the plaque material e: 0.35."
+  },
+  {
+   "severity": "low",
+   "detail": "Top bolster above the seat back is short",
+   "problem": "The jLeather band gRBox(0.64, 0.30, ...) at y 0.93 is mostly hidden behind the back top (about 1.03), so only about 0.05 shows. Real: a full-width charcoal padded bolster about 0.15-0.16 tall is visible between the back top and the shell cap, carrying the lamps.",
+   "evidence": "tpg_31: 110 px of bolster against 570 px of back width. Also tpg_42.",
+   "fix": "Lower the seat back top: in roomSeatCore make the back loft length 0.56 (SEC 0.60/0.625 become 0.535/0.56). Or move the band to y 0.99 with height 0.17 and 0.035 thickness so it stands proud of the back."
+  }
+ ],
+ "questionsForUser": [
+  "O-seat plan: tpg_31/tpg_42 show the rear-facing (odd-row) seat as a bench of about 0.8-0.87 m with a narrow aisle armrest, while the forward-facing seat looks about 0.62-0.65 m (c_27303). Do you have a plan-view seat drawing (ANA/Safran/Acumen patent or seat map) to confirm the O width and where the O passenger's entry path runs past the side table?",
+  "Bed duvet colour: in-flight photos (fb_*, tt_bed) show an indigo/navy duvet, but QA r3 moved it to slate grey. Which should it be?"
+ ]
+}

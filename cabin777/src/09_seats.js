@@ -67,7 +67,7 @@ const SEATMAT = {
   // pale grey-beige ash with fine straight grain, charcoal shells with flat charcoal tops (QA r1: shell / console
   // #45484d omaat_room_16, #45454c c_27312; tops #545557 omaat_room_10), silver line only on armrest ledges + door-leaf
   // edges (c_27313 / 27300), charcoal tweed seat, slate Ultraleather headrest flap (#767a7e omaat_room_13), navy pillow
-  ash: { c: '#c9c2b3', r: 0.48, l: LAYER.ashGrain },
+  ash: { c: '#d6d2ca', r: 0.44, l: LAYER.ashGrain },   // QA w2: near-neutral pale ash (c_27313 #e7e8e4, c_27315 table #c9c6c2)
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
   // QA r3: shells rendered ~0.5x the photo luminance (q10 #292d34 vs c_27315 #4c4e60) -> lifted
@@ -77,15 +77,15 @@ const SEATMAT = {
   jRail: { c: '#b9bec4', r: 0.26, m: 0.7, l: LAYER.brushed },
   jVoid: { c: '#1d1617', r: 0.9 },
   jBase: { c: '#2a2b2f', r: 0.6 },
-  jFabric: { c: '#827f89', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted
+  jFabric: { c: '#86838a', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted
   jLeather: { c: '#5d6066', r: 0.5, l: LAYER.leather },
-  jHead: { c: '#6e7378', r: 0.45, l: LAYER.leather },
+  jHead: { c: '#8a95a3', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84)
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
   mattress: { c: '#f0efea', r: 0.9, l: LAYER.fabric },
-  duvet: { c: '#5a6478', r: 0.95, l: LAYER.fabric },   // QA r3: slate grey-blue (tt_bed-2), was royal #34558f
+  duvet: { c: '#4a5690', r: 0.95, l: LAYER.fabric },   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
-  pillowBlue: { c: '#3e4677', r: 0.85, l: LAYER.yagasuri },   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
+  pillowBlue: { c: '#55609a', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center)   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
   lampGlow: { c: '#ffe2b0', r: 0.4, e: 0.35 },
   moodGlow: { c: '#ffd9a0', r: 0.5, e: 0.25 },
   hole: { c: '#0b0d10', r: 1.0 },
@@ -141,7 +141,7 @@ function seatPickBox(s) {
   if (s.kind === 'econ') return [s.x - 0.24, s.x + 0.24, 0, 1.34, s.z - 0.5, s.z + 0.13];
   if (s.kind === 'py') return [s.x - 0.28, s.x + 0.28, 0, 1.32, s.z - 0.56, s.z + 0.12];
   let a, b;
-  if (s.kind === 'room') { a = s.odd ? [-0.585, 0, -1.345] : [-0.12, 0, -0.55]; b = s.odd ? [0.10, 1.12, 0.55] : [0.585, 1.12, 1.345]; }
+  if (s.kind === 'room') { a = s.odd ? [-0.585, 0, -1.345] : [-0.12, 0, -0.55]; b = s.odd ? [0.345, 1.12, -0.64] : [0.585, 1.12, 1.345]; }
   else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; a = [-hx, 0, -2.2]; b = [hx, 1.3, 0]; }
   const p = localToWorld(s, a), q = localToWorld(s, b);
   return [Math.min(p[0], q[0]), Math.max(p[0], q[0]), 0, b[1], Math.min(p[2], q[2]), Math.max(p[2], q[2])];
@@ -150,7 +150,7 @@ function seatEye(s, bed) {
   if (s.kind === 'econ') return { pos: [s.x, 1.15, s.z - 0.2], yaw: 0, pitch: -0.1 };
   if (s.kind === 'py') return { pos: [s.x, 1.18, s.z - 0.24], yaw: 0, pitch: -0.1 };
   if (s.kind === 'room') {
-    const p = s.odd ? (bed ? [-0.22, 0.78, -1.0] : [-0.21, 1.13, -1.0]) : (bed ? [0.20, 0.78, 1.0] : [0.20, 1.13, 1.0]);
+    const p = s.odd ? (bed ? [-0.08, 0.78, -1.0] : [-0.075, 1.13, -1.0]) : (bed ? [0.20, 0.78, 1.0] : [0.20, 1.13, 1.0]);
     return { pos: localToWorld(s, p), yaw: s.odd ? Math.PI : 0, pitch: bed ? -0.1 : -0.12 };
   }
   const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2;
@@ -159,7 +159,7 @@ function seatEye(s, bed) {
   return { pos: localToWorld(s, p), yaw: 0, pitch: bed ? -0.12 : -0.1 };
 }
 function seatBedCenter(s) {
-  if (s.kind === 'room') return localToWorld(s, s.odd ? [-0.22, 0.45, -0.4] : [0.24, 0.45, 0.38]);
+  if (s.kind === 'room') return localToWorld(s, s.odd ? [-0.095, 0.45, -0.4] : [0.24, 0.45, 0.38]);
   if (s.kind === 'suite') return localToWorld(s, [-0.1, 0.45, -1.1]);
   return [s.x, 0.45, s.z - 0.5];
 }
@@ -253,12 +253,13 @@ function buildSeats(gl, layout) {
     if (!ATL.rects['tag' + s.id]) continue;
     let p, plate;
     // QA r2: neutral grey rounded squares slightly lighter than the cap (c_27314 cap #878787)
-    if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.50 : -0.06]); plate = '#6b6e72'; }
+    // room QA w2: dark glass tiles with blue-lit numbers (ff_ana-the-room-seat-17e-and-17f, c_27313 cyan '17E' / '18D')
+    if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.50 : -0.06]); plate = '#2c2f35'; }
     else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.30 + 0.0625, -0.80]); plate = '#6f675c'; }   // suite: flush pill slot a shade darker than the cap (omaat_f9 / f7)
     const face = s.mir ? -1 : 1;             // text top points away from the aisle
     const room = s.kind === 'room';
     T.add(room ? gRBox(0.055, 0.004, 0.065, 0.012, 1) : gRBox(0.034, 0.002, 0.075, 0.012, 1), M4.trs(p[0], p[1] + (room ? 0.002 : 0.0005), p[2]), { c: plate, r: 0.45 });
-    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.055, 0.028), M4.trs(p[0], p[1] + (room ? 0.0045 : 0.002), p[2], face * Math.PI / 2, -Math.PI / 2), room ? tagGlow : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
+    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.055, 0.028), M4.trs(p[0], p[1] + (room ? 0.0045 : 0.002), p[2], face * Math.PI / 2, -Math.PI / 2), room ? { ...tagGlow, c: '#5f9dff', e: 0.5 } : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
   }
   meshes.seatTags = gl.mesh(T.build(), { name: 'seatTags', layer: 'seats', castShadow: false });
   return { meshes, groups };

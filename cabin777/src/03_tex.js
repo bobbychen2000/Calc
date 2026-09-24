@@ -58,7 +58,7 @@ const LAYER_PARAMS = {
   //   (c_27303, omaat_room_13) -> albedo strength 0.3 [D]
   // 11 Y mosaic fabric (third Y variant, y_47302 left seat / y_47306 right seat): checker of dense / sparse short pale
   //   dashes, 0.2 m tile (6 x 6 checks of ~33 mm, measured against the 0.27 m flap) [D]
-  9: [4.46, 0.15, 0.3, 0.15], 10: [2.4, 0.12, 0.28, 0.25], 11: [5.0, 0.12, 1.5, 0.15],   // 11 albedo 1.5: econ w2 (q15 p10/p90 57/94 vs photo 41/107)
+  9: [4.46, 0.15, 0.16, 0.15], 10: [2.4, 0.12, 0.28, 0.25], 11: [5.0, 0.12, 1.5, 0.15],   // 11 albedo 1.5: econ w2 (q15 p10/p90 57/94 vs photo 41/107)
   // photo-derived fabrics (ANA seat pages, see REFERENCE777.md): Y blue tick jacquard, PY charcoal/white fleck, J/F tweed, J ash
   // Y normal strength 0.12 (was 0.3: read as a knit; the Y jacquard is a flat woven face, y_47306)
   16: [5.5, 0.12, 1.4, 0.15], 17: [7.5, 0.3, 0.8, 0.15], 18: [14, 0.5, 0.35, 0.2], 19: [1.6, 0.06, 0.22, 0.2],

@@ -1,0 +1,114 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": "w2",
+ "score": 5.4,
+ "notes": "Renders: scratchpad/w2/q06-q10 + cu/c1-c10 (dpr2/ was empty). New real in-flight photos downloaded to ref/web/room/ (gitignored): tt_* (Thrifty Traveler), tpg_*The-Room* (TPG), fb_* (flatbeds.com.au), ff_* (Frugal Flyer), gstp_* (God Save The Points), r7_* (r7aviation), up_* (another rater). Colours are medians of the same element in render and photo (samp.py boxes). Cabin lighting in the model is warmer/dimmer than ANA's daylight photos; that biases the ash and fabric comparisons but not the shape issues.",
+ "details": [
+  {"detail": "Nested-pair massing, 1.12 m walls, monuments, aisle-end ash wings with plaques", "score": 7, "refs": ["ref/ana/c_27312-lang-multi.jpg", "ref/ana/c_27313-lang-multi.jpg", "w2/q06_roomMain.png"]},
+  {"detail": "E seat's outer-side console: ash top runs the full 1.27 m from the monument to the back shell. In the photos the ash table is only at the footwell end; alongside the seat is a charcoal armrest/console", "score": 3, "refs": ["ref/ana/c_27314-lang-multi.jpg", "ref/ana/c_27315-lang-multi.jpg", "ref/web/room/fb_a96b7a65-afb9-4642-90bc-5c721e80a604.jpg", "w2/q09_centrePair.png", "w2/q10_seat14D.png", "w2/cu/c3_centre.png"]},
+  {"detail": "Shell/charcoal tone", "score": 6.5, "refs": ["ref/ana/c_27315-lang-multi.jpg", "ref/ana/c_27312-lang-multi.jpg", "w2/q10_seat14D.png", "w2/q06_roomMain.png"]},
+  {"detail": "Ash colour and grain", "score": 5.5, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/ana/c_27314-lang-multi.jpg", "ref/ana/c_27316-lang-multi.jpg", "w2/q07_seat11A.png", "w2/q09_centrePair.png"]},
+  {"detail": "Seat cushion and back (tweed tone, seams, width)", "score": 6, "refs": ["ref/ana/c_27315-lang-multi.jpg", "ref/ana/c_27313-lang-multi.jpg", "w2/q09_centrePair.png"]},
+  {"detail": "Headrest flap: renders darker than the back. In every photo it is a paler blue-slate leather", "score": 4, "refs": ["ref/ana/c_27315-lang-multi.jpg", "ref/ana/c_27313-lang-multi.jpg", "ref/web/room/tt_seats-center.jpg", "w2/q06_roomMain.png", "w2/q10_seat14D.png"]},
+  {"detail": "Seat front / leg rest: reads as a detached thin board near the floor with a dark gap, not a continuous upholstered apron", "score": 4, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/ana/c_27315-lang-multi.jpg", "w2/cu/c5_seatO.png"]},
+  {"detail": "Teal belt + buckle", "score": 7, "refs": ["ref/ana/c_27315-lang-multi.jpg", "w2/cu/c5_seatO.png"]},
+  {"detail": "Blue pillow: far too dark and saturated. It stands upright mid-cushion, and the white pillow is missing", "score": 4, "refs": ["ref/web/room/tt_seat-1.jpg", "ref/web/room/tt_seats-center.jpg", "ref/web/room/tt_seats-3.jpg", "w2/q08_seat12H.png", "w2/q10_seat14D.png"]},
+  {"detail": "Monitor, bezel, drawer + literature strip", "score": 7, "refs": ["ref/web/room/up_ANA-The-Room-Seat-6H.jpg", "ref/ana/c_27316-lang-multi.jpg", "w2/cu/c6_monO.png"]},
+  {"detail": "Lamp column (reading light, air nozzle, safety-card pocket)", "score": 5, "refs": ["ref/ana/c_27316-lang-multi.jpg", "ref/ana/c_27315-lang-multi.jpg", "ref/web/room/up_ANA-The-Room-Seat-6H.jpg", "ref/web/room/fb_a96b7a65-afb9-4642-90bc-5c721e80a604.jpg", "w2/q07_seat11A.png", "w2/cu/c7_monE.png"]},
+  {"detail": "Cabinet door (ash, beside the monitor)", "score": 7, "refs": ["ref/web/room/up_ANA-The-Room-Seat-6H.jpg", "w2/cu/c6_monO.png"]},
+  {"detail": "O side table / console: the rounded top is right, but the aisle-facing curved end of the console body should be ash-clad, not charcoal", "score": 6, "refs": ["ref/ana/c_27312-lang-multi.jpg", "ref/web/room/tt_suite-2.jpg", "ref/web/room/tt_seat-2.jpg", "w2/cu/c1_pair_front.png"]},
+  {"detail": "Seat controls (handset + button cluster)", "score": 4.5, "refs": ["ref/web/room/up_ANA-The-Room-Seat-Controls.jpg", "ref/web/room/gstp_ana-the-room-new-business-class-777-38.jpg", "ref/web/room/gstp_ana-the-room-new-business-class-777-41.jpg", "w2/cu/c8_controls.png"]},
+  {"detail": "Footwell (ottoman pad, cavity, step)", "score": 6.5, "refs": ["ref/ana/c_27316-lang-multi.jpg", "ref/web/room/fb_036dd03d-75fb-4f4c-8787-f37a7820d425.jpg", "w2/cu/c10_footwellO.png"]},
+  {"detail": "Outer console with the red life-vest tab and stowage latch", "score": 6.5, "refs": ["ref/ana/c_27316-lang-multi.jpg", "ref/web/room/fb_a96b7a65-afb9-4642-90bc-5c721e80a604.jpg", "w2/cu/c10_footwellO.png"]},
+  {"detail": "Aisle armrest ledge with the privacy-panel slot", "score": 5.5, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/web/room/tt_suite-2.jpg", "ref/web/room/tt_seat-2.jpg", "w2/cu/c9_ledge.png"]},
+  {"detail": "Aisle-end ash panels, cap, seat-number plaques", "score": 7, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/ana/c_27314-lang-multi.jpg", "w2/q06_roomMain.png"]},
+  {"detail": "Centre divider", "score": 6, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/web/room/tt_seats-center.jpg", "w2/q09_centrePair.png"]},
+  {"detail": "Doors (parked leading edge; closed state not reviewed)", "score": 6.5, "refs": ["ref/web/room/tpg_nge-NRT_ERosen_ANA-777-The-Room-seat-door-closed-outside_107.jpg", "w2/cu/c2_pair_aisle.png"]},
+  {"detail": "Reading lights in the shell corners", "score": 5, "refs": ["ref/ana/c_27315-lang-multi.jpg", "ref/web/room/fb_a96b7a65-afb9-4642-90bc-5c721e80a604.jpg", "w2/cu/c5_seatO.png"]},
+  {"detail": "Bed mode: mattress OK; the duvet is the wrong colour, too small, and has lengthwise stripes instead of a square quilt grid; the blue pillow is missing", "score": 4.5, "refs": ["ref/web/room/fb_a96b7a65-afb9-4642-90bc-5c721e80a604.jpg", "ref/web/room/fb_d8b6dc0d-6542-43d9-b6a1-c050e15ad2cd.jpg", "ref/web/room/ff_ana-the-room-business-class-lie-flat-bed.jpg", "w2/cu/c4_bedO.png"]}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "E seat outer-side console is one long ash-topped slab (0.45 x 1.27 m)",
+   "problem": "roomPart('E') lays SEATMAT.ash over the whole outer console from MON.zE to 1.30. In every real photo, only the side table over O's footwell (about 0.45 x 0.5, at the monument end) is ash. Alongside the E cushion, the outer side is a charcoal armrest/console, the same as the other charcoal shell parts. It carries the stowage lids and the red life-vest tab. In q09, q10, c3 and c4 the model shows a huge pale ash bench beside every aisle-column seat. This is the most visible wrong surface in the room views.",
+   "evidence": "Same area. Render q09 (520,380)-(680,420) #aca89f (ash) vs c_27314 (250,270)-(300,300) #33353b (charcoal console under the ash wall band). c_27315: 14D's left side is a charcoal wing (#444854) with the small ash table only at the monument end (370-450, 290-400). fb_a96b7a65 (bed from above): no ash along the bed; the only ash is the table at the footwell end (bottom-left). Render c3_centre.png / q10_seat14D.png: ash slab runs the full seat length.",
+   "fix": "09c_room.js roomPart E branch: split the console at zT = 0.62 (end of O's footwell). Ash only over the footwell: B.add(gRBox(0.45, 0.035, zT - MON.zE, 0.01, 1), M4.trs(-0.355, top - 0.018, (MON.zE + zT) / 2), ash), with the jRail band the same length. Give its aft seat-side corner a large radius (use planSlab(planRRect(-0.58, -0.13, MON.zE, zT, [0.004, 0.004, 0.11, 0.004]))) to match the O table. From zT to 1.30: a charcoal armrest at CON.top, B.add(gRBox(0.45, CON.top, 1.30 - zT, 0.01, 1), M4.trs(-0.355, CON.top / 2, (zT + 1.30) / 2), shell) + capRail(B, 0.45, 1.30 - zT, -0.355, CON.top, (zT + 1.30) / 2). Move the red tab (currently z 1.0) and a stowage-lid gRBox(0.004, 0.14, 0.30) onto its seat-facing face at x -0.128. Update roomPartFar('E') the same way: jShell box, with an ash box only for z < 0.62."
+  },
+  {
+   "severity": "high",
+   "detail": "Headrest flap renders darker than the seat back; the photos show it clearly paler, blue-slate",
+   "problem": "jHead #6e7378 is tilted -8 degrees, so it faces the floor and sits in the AO/shadow of the shell top. In the cabin views it reads as a dark screen-like rectangle on every seat back (q06 rows 2-3 look like monitors on the seat backs). In every photo the flap is the palest thing on the seat: a cool blue-grey leather, lighter than the tweed.",
+   "evidence": "Flap vs back: c_27315 #768193 (lum 128) vs #666371 (101); c_27313 #6f7b84 (120) vs back 50-86; tt_seats-center #858a83 (136). Render q10 flap #3f444c (lum 67) vs back #4e4c59 (78); q06 flap region (310,270)-(400,320) #3b4048 (63).",
+   "fix": "09_seats.js SEATMAT.jHead c '#6e7378' -> '#8a95a3' (cool slate), r 0.45 -> 0.38. In roomSeatCore, cut the flap tilt from -8 * DEG to -3 * DEG and move it 6 mm forward (z -0.058) so it is not buried in the shell-top AO. If AO darkening is per-material, exempt jHead."
+  },
+  {
+   "severity": "medium",
+   "detail": "Blue pillow far too dark and saturated; wrong pose; white pillow missing",
+   "problem": "pillowBlue #3e4677 with the yagasuri layer renders almost navy-black. The trip-report photos show a mid periwinkle/indigo jacquard pillow, and it is always paired with a large white pillow and a plastic-wrapped duvet leaning in the back corner. The model's pillow stands nearly vertical in the middle of the cushion like a box (q08, q10).",
+   "evidence": "Render q10 (720,430)-(820,520) #181e49 (lum ~31); q08 #191e4a. Photos: tt_seat-1 #4c5178 (lum 84, warm cabin light); tt_seats-center #737ba9 (126); fb_a96b7a65 pillow about #4b5789.",
+   "fix": "SEATMAT.pillowBlue c -> '#55609a', and cut the yagasuri albedo strength in LAYER_PARAMS[9] by about half so the check stays subtle. roomPillow placement: lean it against the back corner. For O, M4.trs(-0.40, 0.60, -1.12, Math.PI) with rotation (0.35, -62 * DEG); for E, mirror it. Add a white pillow behind it: gLoft(cushionSecs(0.50, 0.34, 0.10, -0.05, {edge:0.04,r:0.04})), SEATMAT.pillow, offset 0.08 toward the wall and 0.03 up."
+  },
+  {
+   "severity": "medium",
+   "detail": "Seat front / leg rest is a detached thin board",
+   "problem": "roomSeatCore's leg-rest loft (M4.trs(0, 0.06, -0.64, 0, -14 * DEG)) shows as a thin pale plank close to the floor, with a dark gap to the cushion (c5: a long strip poking out beside the table). In the photos the cushion front is a continuous upholstered apron that drops almost vertically to a dark kick strip.",
+   "evidence": "w2/cu/c5_seatO.png lower left (strip 0.56 wide, visible gap above it). c_27313 and c_27315: fabric apron under the cushion nose, no gap.",
+   "fix": "In roomSeatCore, replace the leg rest with a fabric apron hung from the cushion nose: loftAt(B, [SEC(0.0, w - 0.02, 0.04, 0, 0.015), SEC(0.30, w, 0.045, 0, 0.018)], M4.mul(M4.trs(0, 0.385, -0.635), M4.trs(0, 0, 0, Math.PI, 0)) with its own axis pointing down (or gRBox(w - 0.02, 0.30, 0.04, 0.015, 1) at M4.trs(0, 0.235, -0.64 - 0.02), F), and a jBase kick gBox(w - 0.06, 0.08, 0.03) at y 0.04. It must touch the cushion underside (y 0.39 - 0.0375)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Ash reads too dark and too warm/yellow everywhere",
+   "problem": "After the w2 grain change, the ash is still about 25-40 luminance darker than the photos and has a yellow cast (R-B about 13 vs 3-8 in the photos). Next to the lightened charcoal this cuts the ash/charcoal contrast that defines the look of THE Room.",
+   "evidence": "c_27313 aisle-end ash #e7e8e4 (231) vs q09 end ash #a09c92 (156); c_27314 back-wall ash #b7afa9 (177) vs the same wall in q09 #a09c92; c_27316 cabinet #b3a9a9 (172) vs q07 cabinet #89847b (132); c_27315 table #c9c6c2 (198) vs q10 table #a8a49b (164).",
+   "fix": "09_seats.js SEATMAT.ash c '#c9c2b3' -> '#dcd8d0' and r 0.48 -> 0.42. If the lighting worker's warm cabin white is the cause, flag it to 12_scene.js; the ash should still come out near-neutral (R-B under 8) in q09/q10."
+  },
+  {
+   "severity": "medium",
+   "detail": "Seat controls look like generic black keypads",
+   "problem": "Real: a black pill/lozenge-shaped handset (rounded ends, about 0.19 x 0.065 m) with a colour screen in the middle and round D-pad clusters at both ends, set in a recess. Beside it, the button cluster has NO black backing plate. It is a set of backlit white-outline icon buttons printed directly on the charcoal console face: a small rocker at the top, then a row of 3 round buttons (the middle one blue-ringed), a long lie-flat pill of 3-4 seat-position icons, and a bottom row of 3. Model (c8): two black rectangles, a flat bright-blue screen and 8 white dots.",
+   "evidence": "ref/web/room/up_ANA-The-Room-Seat-Controls.jpg, gstp_ana-the-room-new-business-class-777-38.jpg (close-up of the button cluster), gstp-41, r7_img_0943.jpg, c_27316 (548-620, 190-270). Render w2/cu/c8_controls.png.",
+   "fix": "roomControls: handset as a capsule, B.add(gRBox(0.19, 0.065, 0.012, 0.032, 2)), SEATMAT.black, inside a jBase recess gRBox(0.205, 0.08, 0.004). Screen gQuad(0.085, 0.045) c '#6b8fd0' e 0.25 (softer, image-like, not flat cyan). Two 3-dot D-pads (gCyl 0.006) at ±0.07. Button cluster: remove the black gRBox(0.11, 0.075) plate. Instead add rows of gCyl(0.009) rings, c '#d8dde3' e 0.15 (outline look via a smaller jShell disc on top), at y +0.045 (a 0.05 rocker gRBox), +0.02 (3 rings, middle ring blue #6c9cff), -0.005 (a gRBox(0.075, 0.018, 0.003, 0.009) pill with 4 dots) and -0.03 (3 rings). The cluster is about 0.09 wide."
+  },
+  {
+   "severity": "medium",
+   "detail": "Aisle-facing end of the side-table console should be ash-clad (waterfall), not charcoal",
+   "problem": "In the photos the ash top wraps down the console's rounded aisle-facing end to about 0.1 m above the floor, with a charcoal kick. The charcoal face with the controls faces the seat. In the model, planBand makes the whole body charcoal.",
+   "evidence": "c_27312 centre (340-440, 330-480): curved ash face under the table; tt_suite-2.jpg right: ash vertical face under the ash top; tt_seat-2.jpg right console.",
+   "fix": "roomPart O: after the planBand body, add an ash skin on the curved corner and on the aisle-facing z0 end only. planSlab(B, planBand(tx0 + 0.010, tx1, tz0 + 0.010, MON.zO, R - 0.010, 0.006), 0.10, top - 0.141, ash), clipped to the corner and z0 run (or a separate gExtrude of the arc). Charcoal kick planBand at y 0..0.10. Do the same on E's shortened ash table (see the first issue)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed-mode duvet: wrong colour, stripes instead of a square quilt, and too small",
+   "problem": "The r3 QA moved the duvet to slate grey-blue #5a6478 (renders #9ba8bf in the studio). The real in-flight duvets are a clear medium indigo/royal blue with a square quilting grid of about 0.25-0.3 m, and they cover the full bed width, spilling into the footwell. The model has 1.1 m of lengthwise-channel stripes over part of the mattress. The blue pillow is also missing from the bed.",
+   "evidence": "fb_a96b7a65 duvet #4b5789, fb_d8b6dc0d #606ea0 (daylight), r7_img_1011 #303243 (dim night light), ff_...lie-flat-bed.jpg. Render w2/cu/c4_bedO.png (500,280)-(570,330) #9ba8bf.",
+   "fix": "SEATMAT.duvet c '#5a6478' -> '#4a5690'. In roomDuvet, lengthen to 1.5 m and centre it 0.2 m further toward the footwell; width w + 0.08 (hangs over). Replace the cross-stripe loop with a square grid: seams every 0.26 m in both x and z (gBox(0.003, 0.003, L) along z plus gBox(W, 0.003, 0.006) along x), c '#3a4476'. Add the blue pillow in bed mode (roomPillow lying flat beside the white pillow, as in fb_a96b7a65)."
+  },
+  {
+   "severity": "low",
+   "detail": "Lamp column: protruding light box with black knob lamps and a tiny safety-card quad",
+   "problem": "Real: the column is flush with the monitor housing and the dark charcoal side wall, not a lighter box standing 0.11 m proud with its own cap rail. The reading light is a recessed dark lens inside a pale grey metal ring, with a smaller ringed fitting below. The safety card is a full-size white/purple card (about 0.12 x 0.22) in a pocket at the column foot beside the footwell.",
+   "evidence": "Column: c_27316 #646a7a is dark and flush; q07 (665,300)-(695,360) #5a6578 is a box with two black cylinders. Ringed lamps in fb_a96b7a65 top-left and c_27315 (100-160, 300-350). Card: up_ANA-The-Room-Seat-6H.jpg bottom-left, c_27315 (200-270, 395-430) 'B777-300'.",
+   "fix": "roomColumn: depth d 0.11 -> 0.05, material jShellIn, drop capRail. roomLamp: outer gCyl ring c '#9aa0a8' m 0.6 r 0.3, then the jLens disc recessed 3 mm, radii 0.03 / 0.02. Safety card: gQuad(0.11, 0.21) c '#e9e6f0' with a '#5b3f8f' band (or an atlas card) in a jShellIn pocket gRBox(0.13, 0.16, 0.02), its top at MON.bot."
+  },
+  {
+   "severity": "low",
+   "detail": "Aisle armrest ledge: too pale; ribbed aisle end missing",
+   "problem": "The ledge top renders almost white. In the photos the silver ledge has a stack of 3-4 horizontal ribs on its aisle-facing end face (visible in the trip photos as a louvred metal end).",
+   "evidence": "c_27313 ledge tops #788087-#b2bbc8 vs render c9 top ~#d0d4d8 (studio) / q08 #868c94 (cabin); ribs in tt_suite-2.jpg, tt_seat-2.jpg, tt_seat-1.jpg (bottom right of each seat).",
+   "fix": "roomLedge: add 3 ribs on the end face, for (k of [0,1,2]) B.add(gRBox(w - 0.03, 0.008, 0.012, 0.004, 1), M4.trs(x - 0.015, y - 0.015 - k * 0.018, z ± (L/2 + 0.012)), SEATMAT.jRail). Give the top slab SEATMAT.ashDark-like brushed grey #8f959c instead of jRail #b9bec4."
+  },
+  {
+   "severity": "low",
+   "detail": "Seat back seams and cushion",
+   "problem": "The real back shows 2-3 horizontal channel seams and the cushion a lengthwise seam; the model has one back seam. The tweed in the cabin views is slightly lilac (B > R by 13) where the photos are neutral-warm grey.",
+   "evidence": "c_27315 back #666371, c_27313 cushion #57555c; render q09 cushion #585663, q10 back #4e4c59.",
+   "fix": "roomSeatCore: add a second seam at BH y 0.44 and a lengthwise cushion seam. SEATMAT.jFabric c '#827f89' -> '#86838a' (less blue)."
+  }
+ ],
+ "questionsForUser": [
+  "Should seats show the boarding set-up that trip photos always show (plastic-wrapped duvet plus white and blue pillows leaning in the back corner), or only the blue pillow as now?",
+  "For bed mode, do you want the duvet turned down over the full bed (as in the flatbeds.com.au photo), or folded at the foot?"
+ ]
+}
