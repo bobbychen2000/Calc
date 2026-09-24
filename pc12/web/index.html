@@ -108,16 +108,18 @@
         </div>
         <button type="button" class="icon" id="icClose" aria-label="Clear selection (Esc)">×</button>
       </header>
-      <div class="ic-body">
+      <!-- the actionable hint comes first so it is never scrolled / folded away -->
+      <p id="icHint" hidden></p>
+      <div class="ic-body" id="icBody">
         <p id="icNote"></p>
         <dl id="icInfo"></dl>
-        <p id="icHint" class="muted" hidden></p>
       </div>
       <div class="row">
         <button type="button" id="icFrame">Frame</button>
         <button type="button" id="icIsolate" aria-pressed="false" class="toggle">Isolate</button>
         <button type="button" id="icHide">Hide</button>
         <button type="button" id="icShowAll" hidden>Show hidden</button>
+        <button type="button" id="icMore" aria-expanded="false" aria-controls="icBody">Details</button>
       </div>
     </section>
     <div id="panelBody">

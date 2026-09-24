@@ -1250,7 +1250,7 @@ def main(argv=None):
         views, styles = _split(a.view), _split(a.style)
         for v in views:
             for st in styles:
-                nm = a.name or view_name(v)
+                nm = (f"{a.name}_{view_name(v)}" if len(views) > 1 else a.name) if a.name else view_name(v)
                 out = a.out if (a.out and len(views) * len(styles) == 1) else \
                     str(Path(a.out_dir) / f"{nm}_{st.replace('+', '_')}.png")
                 jobs.append(dict(view=v, style=st, bounds=a.bounds, px_per_m=a.px_per_m, width=w, height=h,
