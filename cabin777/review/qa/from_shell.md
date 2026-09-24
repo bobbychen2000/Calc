@@ -37,3 +37,10 @@ sans_09 / sp_py_09 (ref/web/shell/sans_09.jpg, the door at L2 seen across the ga
    Fix: a red half-ring (`gTube` half-circle, r 0.10 m) at v 1.15 about z = c.
 3. **Door gap outline.** Now light (see above). If it still reads as a drawn line, narrow the strips from 12 mm to 5 mm and
    inset them 2 mm.
+
+## To lighting: in-progress shader snapshot 44e8c06 (FYI)
+
+- With 04_shaders.js from 44e8c06 and the current 12_scene.js, the lower sidewall below the windows renders a saturated
+  royal blue (s03_yClose, s05_jShades: #1a2fa8-ish from the dado top up to the window sills). The upper wall turns pale
+  lilac. `u_lowTint` / `u_bandCut` / `u_vault` look unset by 12_scene.js (zero), which would explain it. Shell w4 renders
+  were made with the previous 04_shaders.js so that the shell is rated on its own.
