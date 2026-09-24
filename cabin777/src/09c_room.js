@@ -156,7 +156,7 @@ function roomMonitor(B, xm, zf, dir, slotSide) {
   B.add(gCyl(0.003, 0.003, 0.004, 8), M4.mul(M4.trs(dx + slotSide * 0.07, y - 0.005, zo(0.032)), M4.trs(0, 0, 0, 0, Math.PI / 2)), SEATMAT.ledG);
   // literature slot: recess glowing soft blue from inside, the sill forms its lip (tpg_53, omaat_room_14 / 16)
   B.add(gBox(0.19, 0.05, 0.004), M4.trs(lx, y - 0.004, zo(0.0255)), SEATMAT.jVoid);
-  B.add(gQuad(0.18, 0.04), M4.trs(lx, y - 0.006, zo(0.028), ry), { c: '#1a2242', r: 0.7 });   // QA w3/w5b: unlit dark navy, darker than the drawer (tpg_53 #21325d) [V]
+  B.add(gQuad(0.18, 0.04), M4.trs(lx, y - 0.006, zo(0.028), ry), { c: '#0e1330', r: 0.7 });   // QA w3/w6b: unlit dark navy, far darker than the drawer (tpg_53 ~0.13x) [V]
   B.add(gBox(0.19, 0.004, 0.006), M4.trs(lx, y - 0.028, zo(0.029)), SEATMAT.jSill);
 }
 // closed cabinet door beside the monitor on the same plane: plain ash with fine horizontal grain, 0.34 x 0.38 with its
@@ -270,11 +270,11 @@ function roomPillow(B, xf) {
 function roomDuvet(B, x, z, w, L) {
   // QA w4: thinner, softer comforter with flush stitch lines; w5 (A+B): narrower than the pad so the white mattress shows at
   // the sides + foot, turned ~5 deg, wider stitch pitch and a few low wrinkle ridges (tpg_72 / 75, fb_a96b7a65) [V]/[A]
-  const W = w - 0.06, Lq = L - 0.12, y = ROOM.bed + 0.081, q = { c: '#3d4796', r: 0.8 }, T = M4.trs(x, 0, z - 0.06, 0.09);
-  B.add(gLoft(cushionSecs(W, Lq, 0.03, -0.02, { edge: 0.09, r: 0.03, crown: 0.01 }), 3), M4.mul(T, M4.trs(0, ROOM.bed + 0.07, 0)), SEATMAT.duvet);
+  const W = w - 0.06, Lq = L - 0.12, y = ROOM.bed + 0.087, q = { c: '#3d4796', r: 0.8 }, T = M4.trs(x, 0, z - 0.06, 0.09);
+  B.add(gLoft(cushionSecs(W, Lq, 0.03, -0.02, { edge: 0.025, r: 0.03, crown: 0.006 }), 3), M4.mul(T, M4.trs(0, ROOM.bed + 0.07, 0)), SEATMAT.duvet);
   for (let k = 1; k * 0.45 < Lq - 0.05; k++) B.add(gBox(W - 0.10, 0.001, 0.005), M4.mul(T, M4.trs(0, y, -Lq / 2 + k * 0.45)), q);
   B.add(gBox(0.005, 0.001, Lq - 0.10), M4.mul(T, M4.trs(0, y, 0)), q);
-  for (const [dz, a] of [[-0.25, 0.35], [0.12, -0.28], [0.38, 0.22]]) B.add(gCyl(0.012, 0.012, W * 0.55, 8), M4.mul(T, M4.trs(0.02, y - 0.004, dz, a, 0, Math.PI / 2, 0.5, 1, 1)), SEATMAT.duvet);
+  for (const [dz, a] of [[-0.25, 0.35], [0.12, -0.28], [0.38, 0.22]]) B.add(gCyl(0.012, 0.012, W * 0.55, 8), M4.mul(T, M4.trs(0.02, y + 0.001, dz, a, 0, Math.PI / 2, 0.5, 1, 1)), SEATMAT.duvet);
   B.add(gRBox(W - 0.02, 0.02, 0.12, 0.01, 1), M4.mul(T, M4.trs(0, y + 0.004, -Lq / 2 + 0.07)), SEATMAT.duvet);   // w6a: turned-down head strip (tpg_72) [V]
 }
 function roomPart(part, opts = {}) {

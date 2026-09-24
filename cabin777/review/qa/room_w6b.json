@@ -1,0 +1,87 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 6,
+ "score": 7.6,
+ "summary": "Most of the w5b fixes landed and hold up in the renders. (1) Fabric tone is fixed. The seats now read as dark grey sofas: q08 back #4b4a55 (L 76), bench #474851 (73), shell face #3d434e-#707781 (67-118), so fabric/shell is 0.6-1.1 (photos 0.55-1.0: c_27315 fabric 83-95 vs shell 82-109; tpg_42 fabric 145-152 vs lower shell 93 and post 127). (2) The O header band now spans only the seat, with the lamps at its ends and the charcoal aisle post beyond (q08, q10). The aisle post is 15 % of the shell width against about 9 % in tpg_42, which is acceptable. (3) The E wing reaches the floor. Projecting r8 puts its floor corners at px (387,331)/(406,350), which matches the render. q06 no longer shows carpet under it, and the door edge now stands on its 0.14 kick. (4) There are two back grooves. (5) The literature slot no longer glows. (6) The E footwell mouth is fine as it is: in tpg_53 the mouth is also offset toward the wing side of the monitor, so I withdraw the w4b/w5b complaint. New or remaining problems: (a) the band and flap (jHead #8a95a3) were not darkened with the fabric. They render 1.8-1.9x the fabric (q08 band L 136, flap 142-145 vs fabric 73-76), where the photos show 0.9-1.35 (tpg_42 band 138 vs fabric 152; c_27315 flap 126 / band 120 vs fabric 83-95). (b) The bed duvet's stitch lines z-fight with the flat top: the line top at bed+0.092 is coplanar with the loft plateau at bed+0.092, so r6 shows them as dotted lines. The wrinkle ridges stick out only 1.5 mm and are invisible, so the duvet still reads as a rounded slab. (c) In the seat, the opaque royal-blue bundle top joins the blue pillow into one blue L-block that reads as a blue seat cover (q08, r7). In tpg_42 the bundle is mostly white pad and clear plastic under the pillow. (d) The slot still reads 60 against the drawer's 99 (0.6); tpg_53 is about 0.15 (slot RGB 0-30 / B 20-80 vs drawer 116). Note: the uncommitted w6a working tree already changes jHead and adds jBand, but its new duvet buries the stitch lines and the cylinder wrinkles below the new plateau (see issue 2). It also deletes roomBundle entirely, which goes against tpg_42/tpg_31.",
+ "details": [
+  {"detail": "O/E seat back + cushion proportion (bench width, back height, lean)", "score": 8.5, "refs": ["ref/web/room/b_tpg_42.jpg", "/tmp/claude-0/room/w6s/r7_seatO_close.png", "/tmp/claude-0/room/w6/q08_seat12H.png"]},
+  {"detail": "Back seams / channels (two grooves at 57 % / 80 %)", "score": 8.5, "refs": ["ref/web/room/b_tpg_42.jpg", "/tmp/claude-0/room/w6s/r7_seatO_close.png"]},
+  {"detail": "Header band span + lamps at its ends + aisle post (geometry)", "score": 8.5, "refs": ["ref/web/room/b_tpg_42.jpg", "/tmp/claude-0/room/w6/q08_seat12H.png", "/tmp/claude-0/room/w6/q10_seat14D.png"]},
+  {"detail": "Band + flap tone vs fabric (material)", "score": 6.0, "refs": ["ref/web/room/b_tpg_42.jpg (band #8a8b7d 138, flap #818879 133, back fabric #9f9494 152)", "ref/ana/c_27315-lang-multi.jpg (flap #737e90 126, band #6f7889 120, back #5f5c69 95, bench #544f5c 83)", "ref/ana/c_27313-lang-multi.jpg (flap #515d6b-#6a7784, fabric #555359-#6a6b7c)", "/tmp/claude-0/room/w6/q08_seat12H.png (band #7d8a9b 136, flap #8592a3 145, fabric #4b4a55 76)"]},
+  {"detail": "Seat fabric tone vs shell (material)", "score": 8.0, "refs": ["ref/ana/c_27315-lang-multi.jpg", "ref/web/room/b_tpg_42.jpg", "/tmp/claude-0/room/w6/q08_seat12H.png", "/tmp/claude-0/room/w6/q10_seat14D.png"]},
+  {"detail": "Pillows, boarding bundle, teal belt", "score": 7.0, "refs": ["ref/web/room/b_tpg_42.jpg", "ref/web/room/b_tpg_31.jpg", "/tmp/claude-0/room/w6/q08_seat12H.png", "/tmp/claude-0/room/w6s/r7_seatO_close.png"]},
+  {"detail": "Monitor, bezel, sill, drawer, literature slot", "score": 8.0, "refs": ["ref/web/room/b_tpg_53.jpg", "ref/web/room/b_lalf_18.jpg", "/tmp/claude-0/room/w6/q07_seat11A.png"]},
+  {"detail": "Ash cabinet door beside monitor", "score": 8.0, "refs": ["ref/web/room/b_lalf_18.jpg", "/tmp/claude-0/room/w6/q07_seat11A.png"]},
+  {"detail": "Angled lamp wing (O and E, now to the floor)", "score": 8.0, "refs": ["ref/web/room/b_lalf_18.jpg", "ref/web/room/b_tpg_53.jpg", "/tmp/claude-0/room/w6/q06_roomMain.png", "/tmp/claude-0/room/w6s/r8_seatE_close.png"]},
+  {"detail": "Side table, console, controls + handset", "score": 8.0, "refs": ["ref/web/room/b_tpg_53.jpg", "ref/web/room/b_lalf_18.jpg"]},
+  {"detail": "Footwells / ottoman pads / pillar", "score": 8.0, "refs": ["ref/web/room/b_tpg_53.jpg (mouth offset toward the wing side, as in the model)", "/tmp/claude-0/room/w6/q06_roomMain.png", "/tmp/claude-0/room/w6/q07_seat11A.png"]},
+  {"detail": "Safety card + pocket", "score": 7.5, "refs": ["ref/web/room/b_tpg_53.jpg", "ref/ana/c_27315-lang-multi.jpg", "/tmp/claude-0/room/w6/q09_centrePair.png"]},
+  {"detail": "Aisle ledges, aisle-end ash panels, cap + plaques, door edge + kick", "score": 7.5, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/web/room/b_tpg_36.jpg", "/tmp/claude-0/room/w6s/r2_pair_aisle.png"]},
+  {"detail": "Central monument / spine top, centre divider", "score": 7.5, "refs": ["ref/ana/c_27313-lang-multi.jpg", "/tmp/claude-0/room/w6/q09_centrePair.png", "/tmp/claude-0/room/w6s/r5_centre_aisle.png"]},
+  {"detail": "Bed mode (mattress, duvet, pillows)", "score": 6.5, "refs": ["ref/web/room/b_tpg_75.jpg", "ref/web/room/b_tpg_72.jpg", "/tmp/claude-0/room/w6s/r6_bedO.png"]},
+  {"detail": "Artefacts (z-fight, gaps, floating parts)", "score": 7.5, "refs": ["/tmp/claude-0/room/w6s/r6_bedO.png (dotted stitch lines = coplanar z-fight)", "/tmp/claude-0/room/w6/q06_roomMain.png (E wing gap closed)"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "The header band and headrest flap are now 1.8-1.9x the darkened fabric; the photos show 0.9-1.35x",
+   "problem": "jHead #8a95a3 was set when the fabric was #86838a. With jFabric at #5e5c62 the band and flap read as pale powder-blue slabs (B-R +28..+30) on dark sofas. In q06 and q10 they are the brightest seat surface after the ash. In the photos the band and flap are only a step lighter than the fabric, and in daylight (tpg_42) they are even a touch darker. Their tint is grey-green or neutral slate, not powder blue.",
+   "evidence": "q08: band #7d8a9b (L 136), flap #8592a3 (145), fabric back #4b4a55 (76), bench #474851 (73). tpg_42: band #8a8b7d (138), flap #818879 (133), back #9f9494 (152). c_27315: flap #737e90 (126), band #6f7889 (120), back #5f5c69 (95), bench #544f5c (83). c_27313: flap #515d6b-#6a7784 (91-117), fabric #555359-#6a6b7c (84-109).",
+   "fix": "The uncommitted w6a tree already moves in this direction: jHead #737b85 in 09_seats.js line 84, and a separate jBand #656b73 for the O/E bands. Keep that. Check the rendered q08 band/fabric ratio at about 1.1-1.35 and the flap at about 1.2-1.4. If the flap still reads above 1.4, go to #6c747e. Keep B-R at or below +15 (#737b85 is +18 in material, so nudge it to #767c83)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed duvet: the stitch lines z-fight with the flat top, and the wrinkles are invisible. The uncommitted w6a rewrite buries both completely.",
+   "problem": "In the rendered w5 code, cushionSecs(W, Lq, 0.045, -0.035, crown 0.012) puts the duvet plateau at bed+0.07-0.035+0.045+0.012 = bed+0.092. The stitch boxes (height 0.001 at y = bed+0.0915) span 0.091-0.092, which is coplanar with the plateau, so r6 shows them as broken dotted lines. The wrinkle boxes (0.01 high at y-0.003) top out at bed+0.0935, only 1.5 mm proud, so they cannot be seen. The w6a working tree changes the loft to cushionSecs(W, Lq, 0.03, -0.02, crown 0.01), which gives a plateau at bed+0.09. It also moves y to bed+0.081: the stitch lines (0.0805-0.0815) and the cylinder wrinkles (centre 0.077, r 0.012, top 0.089) then all end up inside the duvet. Only the new head strip (top bed+0.095) will show. The duvet will still be a smooth rounded slab.",
+   "evidence": "r6_bedO crop: the duvet lines render as dashes '- - -' and no ridges are visible. Numbers from 02_geo.js cushionSecs (top = y0 + h + crown). Photos tpg_75 and tpg_72 show a thin quilt with soft 1-2 cm rolls and puckered stitch lines.",
+   "fix": "In roomDuvet, derive y from the loft: const top = ROOM.bed + 0.07 - 0.02 + 0.03 + 0.01 (= bed + 0.09), then draw the stitch lines at y = top + 0.0008 (gBox height 0.0015), so they sit 1.5 mm proud and are not coplanar. Put the wrinkle cylinders at top - 0.004 with r 0.012, so each rises 8 mm, scale x about 0.5 (as now), and give them length W * 0.6 so they stay on the plateau. Or bake the wrinkles into the loft by adding two extra cross-sections with ±0.01 y offsets. Keep the head strip."
+  },
+  {
+   "severity": "low",
+   "detail": "Boarding bundle: the opaque royal-blue top merges with the blue pillow into one blue L-block. w6a deletes the bundle, but it is real (tpg_42, tpg_31).",
+   "problem": "roomBundle's blue layer (0.42 x 0.30, #5a5c9a) sticks out in front of the leaning blue pillow, so from above (q08, r7) the seat looks as if it has a blue seat-cover. In tpg_42 the bundle lies under the pillows. It shows mainly as a white pad folded in clear plastic, with a thin blue duvet edge (about 15 % of its footprint) toward the front and one side. Deleting it (w6a) removes a detail that the photos confirm.",
+   "evidence": "q08 crop: blue pillow plus blue bundle top form one continuous blue shape covering about 60 % of the bench. tpg_42: white pad plus plastic cover, with blue #405aae visible only as a strip under the pillow front edge.",
+   "fix": "Keep roomBundle but invert the layers. White pad on top: gRBox(0.44, 0.035, 0.30, 0.012, 1) at y 0.485, colour #eceae4, r 0.25. Put the blue folded duvet under it, 0.02 thick and offset 0.03 toward the seat front and aisle, so only a thin blue edge shows. Move the bundle 0.04 further under the pillows (z -0.96 for O, 0.96 for E)."
+  },
+  {
+   "severity": "low",
+   "detail": "The literature slot is still too bright relative to the drawer",
+   "problem": "With #1a2242 and no emission, the lit render still gives the slot L 60 (#29387d) against the drawer's 99, a ratio of 0.6. In the real photo the slot is almost black-navy.",
+   "evidence": "q07: slot #29387d, drawer #5d646d. tpg_53 raw pixels: slot interior RGB (0-33, 0-39, 4-79), about L 15, vs drawer #7c7461 (116), so the ratio is about 0.13.",
+   "fix": "09c_room.js roomMonitor, the lining quad: { c: '#0e1330', r: 0.85 }. Also consider pushing the quad 0.01 deeper (zo(0.022)) so the sill lip shades it."
+  },
+  {
+   "severity": "low",
+   "detail": "E seats have no safety card on their wing wall",
+   "problem": "roomCard is only called for O (line 343). In c_27315 a wing with a lamp and nozzle has the B777-300 card pocket on its lower wall. In the model the E wing is now a floor-length post (0.555-0 is plain charcoal) with nothing on it.",
+   "evidence": "c_27315 left foreground: the card sits at about 0.35-0.45 m on the wing's lower face. r8 and q06: the E wing's lower half is bare.",
+   "fix": "Add the card inside roomWing's rotated frame for E only. After line 405: const T = new Builder(); T.add(gQuad(0.20,0.25), M4.trs(0, 0.36, 0.0165), {c:'#e6e9ef', r:0.7}); T.add(gQuad(0.20,0.05), M4.trs(0,0.45,0.017), {c:'#2d5bb0', r:0.6}); T.add(gRBox(0.22,0.13,0.008,0.004,1), M4.trs(0,0.29,0.02), SEATMAT.jShellIn); then B.addBuilt(T.build(), M4.trs(cx, 0, cz, ry)), with cx/cz/ry as roomWing computes them. roomWing could return {cx, cz, ry} to make this easy. Mark it [A] if no E-seat photo confirms it."
+  },
+  {
+   "severity": "low",
+   "detail": "Aisle-end ash panels are still square-topped (carried over from w5b)",
+   "problem": "The monument-end ash box (line 319) uses corner radius 0.012. tpg_36 and tpg_48 show radiused top corners in a thin dark frame.",
+   "evidence": "tpg_36 centre panel top corners; r2_pair_aisle and r5 show sharp corners.",
+   "fix": "Line 319: gRBox(0.04, wall, ez1 - ez0, 0.03, 2), and match ashFrameX's top rail radius."
+  }
+ ],
+ "verified_fixed": [
+  "jFabric #5e5c62: the fabric is now the darkest large seat surface (q08 L 73-76 vs shell 67-118)",
+  "jShell #595d64 / jCap #5c6066 render as charcoal (q08 shell face #3d434e, cap #616873)",
+  "The O header band is 0.95 wide at x -0.07 with the lamps at -0.515/0.375, so it spans the seat only. The charcoal aisle post shows beyond it, and both band end faces are clean with no overhang onto the armrest (q08, q10)",
+  "The E roomWing starts at y0 = 0. Projected floor corners (387,331)/(406,350) match r8. q06 no longer shows carpet under the wing",
+  "The 0.14 kick under the parked door edge stands flush on the floor. The door edge no longer floats (q06, r2)",
+  "The E footwell spans 0..0.44 and the pillar is 0.03 wide at x -0.015, butting both footwells with no overlap. The mouth offset toward the wing side matches tpg_53",
+  "The back grooves sit at sy 0.11/0.235, which is 80 %/57 % down (r7)",
+  "The belt is 0.46 long, #30505a, and less cyan. It is mostly under the bundle in the seat views, as in tpg_42",
+  "The literature slot #1a2242 is unlit and no longer glows (still a little bright, see issue 4)",
+  "The duvet is W-0.06 wide and L-0.12 long, rotated 0.09 rad, with a pitch of 0.45 and colour #4d57aa. It is saturated royal blue and the white mattress shows at the side and foot (r6). The wrinkles are not visible (issue 2)"
+ ],
+ "other_areas": [
+  "lighting: the shells still lift to L 100-125 on lit top faces (q08 shell top #707781, q06 #7a7b7f). The photos keep the shells at 80-110. This belongs to exposure/AO, not jShell.",
+  "lighting: q07 shows a blue cast on the monitor bezel and wing faces (#738093 near the wall), probably reflected sky or window LUT.",
+  "sidewall: the window reveals beside the J seats still read pure white in q08 (the photos show warm off-white)."
+ ],
+ "questions": []
+}
