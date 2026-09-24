@@ -39,7 +39,6 @@ The target of 8.5 was not reached. After 4 rounds, the gains per round were +1.0
 - **Triangles** (near LOD, one pair O+E + divider): 15,136 → 19,348 (+28 %). Far LOD pair: 544 → 568. Segment counts were trimmed on the small round parts.
 
 ## Remaining (from w4a / w4b, low)
-- The handset end pads should be a dark ring pad at one end and 4 coloured buttons at the other; the screen is flat blue with no image.
 - The control plate should sit on a slightly raised pod.
 - The footwell pad nose is square (it should be rounded), and there is a grey step bar under it.
 - The E footwell mouth is 0.435 and not centred under the E monitor.
@@ -63,13 +62,15 @@ The target of 8.5 was not reached. After 4 rounds, the gains per round were +1.0
   - UpgradedPoints: up_*
 - Every value in `09c_room.js` carries a [V] / [D] / [A] tag in its comment.
 
-## Open questions
-See `review/qa/questions_room.md`:
-- boarding set-up (wrapped duvet)
-- duvet open or folded
-- O bench width / entry-gap plan view
-- ledge finish
-- plaque style
+## Decisions (the user asked for judgement calls, not questions)
+Recorded in `review/qa/questions_room.md`. Real photos win:
+- the wrapped boarding duvet bundle is added
+- the bed-mode duvet stays open
+- the 0.84 m bench is kept
+- the ledge stays darker brushed grey
+- the plaques stay blue-lit
+
+The handset was also finished after w4: a dark ring pad at one end, 4 coloured keys at the other, and a live screen image.
 
 ## Hand-offs
 `review/qa/from_room.md`:

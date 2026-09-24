@@ -1,12 +1,9 @@
-# Open questions for the user (room area)
+# Room area: decisions on the former open questions
 
-1. **Boarding set-up on the seats.** Trip photos (tpg_31, tpg_42) show a white pillow, the blue pillow and a plastic-wrapped
-   duvet on every seat at boarding. The model shows the white + blue pillows but no wrapped duvet. Add the wrapped duvet?
-2. **Bed mode duvet.** Now open over the bed from below the pillows to the foot (fb_a96b7a65). Or folded at the foot?
-3. **Rear-facing seat width / entry path.** The O (odd-row, rear-facing) seat was widened to a 0.84 m bench from
-   tpg_31 / tpg_42 proportions. No plan-view drawing was found to confirm it or the entry gap between the aisle armrest end
-   and the side table (now ~0.18 m in plan, the sliding door closes it). A Safran / ANA plan view would settle it.
-4. **Armrest ledge finish.** ANA's studio photo c_27313 shows bright silver; in-flight photos read darker brushed grey
-   (now #8f959c). Keep the darker read?
-5. **Seat-number plaques.** Now dark glass with blue-lit numbers (ff_…17e-and-17f, c_27313). c_27315 shows white on grey.
-   OK as is?
+The user asked for judgement calls rather than questions. Rule applied: real in-flight photos win.
+
+1. **Boarding set-up:** added. A folded duvet on a white mattress pad in clear plastic lies under the white and blue pillows (`roomBundle`, from tpg_31 and tpg_42).
+2. **Bed-mode duvet:** open over the bed from below the pillows to the foot, as in the in-use photo fb_a96b7a65.
+3. **Rear-facing seat width:** kept at 0.84 m. tpg_31 and tpg_42 measure it independently, and both w4 raters confirmed it. The entry gap stays as modelled; no plan view was found.
+4. **Armrest ledge finish:** the darker brushed grey (#8f959c) of the in-flight photos, not the bright silver of ANA's studio shot c_27313.
+5. **Seat-number plaques:** dark glass with blue-lit numbers (c_27313 and the in-flight ff_…17e-and-17f photo).

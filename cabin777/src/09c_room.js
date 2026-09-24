@@ -183,11 +183,11 @@ function roomControls(B, xf, side, dy = 0, hy = 0.555) {
   const hx = side * 0.16;
   B.add(gRBox(0.14, 0.085, 0.004, 0.035, 1), P0(hx, hy, 0.001), SEATMAT.jBase);
   B.add(gRBox(0.13, 0.075, 0.016, 0.034, 1), P0(hx, hy, 0.008), SEATMAT.black);
-  B.add(gQuad(0.074, 0.064), P0(hx, hy + 0.001, 0.0165), { c: '#6b8fd0', r: 0.3, e: 0.3 });   // QA w3: screen ~57 % x 90 % (tpg_53)
-  for (const e of [-1, 1]) {
-    B.add(gCyl(0.012, 0.012, 0.003, 10), P0(hx + e * 0.051, hy, 0.016, Math.PI / 2), SEATMAT.jBezel);
-    for (let k = 0; k < 4; k++) B.add(gBox(0.004, 0.004, 0.002), P0(hx + e * 0.051 + 0.007 * Math.cos(k * Math.PI / 2), hy + 0.007 * Math.sin(k * Math.PI / 2), 0.018), RING);
-  }
+  B.add(gQuad(0.074, 0.064), P0(hx, hy + 0.001, 0.0165), SEATMAT.screen, atlasUV('screen'));   // QA w3: screen ~57 % x 90 % (tpg_53)
+  // QA w4: a dark ring pad at one end, four coloured keys at the other (tpg_53, gstp-38) [V]
+  B.add(gCyl(0.012, 0.012, 0.003, 10), P0(hx - 0.051, hy, 0.016, Math.PI / 2), SEATMAT.jBezel);
+  B.add(gCyl(0.009, 0.009, 0.002, 10, false), P0(hx - 0.051, hy, 0.0175, Math.PI / 2), { c: '#8a9098', r: 0.3, m: 0.5 });
+  ['#c8423a', '#3aa55a', '#3a6fd0', '#d8b23a'].forEach((c, k) => B.add(gCyl(0.004, 0.004, 0.003, 8), P0(hx + 0.051 + 0.008 * Math.cos(k * Math.PI / 2), hy + 0.008 * Math.sin(k * Math.PI / 2), 0.0165, Math.PI / 2), { c, r: 0.4 }));
 }
 // ash panels in ~28 mm charcoal frames on an aisle face (x = px) below the armrest ledge, charcoal kick below
 // (c_27313 bottom row, omaat_room_10)
@@ -240,7 +240,13 @@ function roomLedge(B, w, x, z, L) {
 // (outer column) back to back with E's cabinet, O's cabinet (aisle column) back to back with E's monitor; both footwells
 // run under it (omaat_room_14 / 16, c_27316: cabinet flush beside the monitor frame, footwell mouth under the monitor)
 const MON = { zO: -0.21, zE: 0.035, top: 1.10, bot: 0.555 };   // QA w2: top raised to clear the 0.43 cabinet
-const CON = { top: 0.60 };   // outer console top (c_27316 / 27303: ~0.17 above the cushion) [A]
+const CON = { top: 0.60 };
+// boarding set-up: duvet folded on a white mattress pad, both in clear plastic, under the pillows (tpg_31, tpg_42) [V];
+// the plastic reads as a sheen -> low roughness [A]
+function roomBundle(B, x, z) {
+  B.add(gRBox(0.44, 0.03, 0.34, 0.012, 1), M4.trs(x, 0.448, z), { c: '#eceae4', r: 0.25 });
+  B.add(gRBox(0.42, 0.045, 0.30, 0.018, 1), M4.trs(x + 0.01, 0.485, z - 0.01), { c: '#5a5c9a', r: 0.25, l: LAYER.fabric });
+}   // outer console top (c_27316 / 27303: ~0.17 above the cushion) [A]
 // QA w1 pillow: flat piped rectangle ~0.44 x 0.34 x 0.07, navy check jacquard face, grey-taupe reverse panel + piping
 // (c_27303, omaat_room_13) [V]
 function roomPillow(B, xf) {
@@ -328,6 +334,7 @@ function roomPart(part, opts = {}) {
       roomPillow(B, M4.trs(SX + 0.20, ROOM.bed + 0.075, -1.04, 0, 0.1));
     } else {
       // white pillow leaning on the back with the blue one in front of it, toward the aisle half (tpg_31 / 42) [V]
+      roomBundle(B, 0.07, -0.92);
       B.add(gLoft(cushionSecs(0.50, 0.34, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.06, 0.61, -1.10, Math.PI), M4.trs(0, 0, 0, 0.05, -74 * DEG)), SEATMAT.pillow);
       roomPillow(B, M4.mul(M4.trs(0.08, 0.575, -1.02, Math.PI), M4.trs(0, 0, 0, 0.08, -68 * DEG)));
     }
@@ -388,6 +395,7 @@ function roomPart(part, opts = {}) {
       B.add(gLoft(cushionSecs(0.46, 0.30, 0.12, -0.06, { edge: 0.05, r: 0.05 }), 3), M4.trs(0.30, ROOM.bed + 0.08, 1.08), SEATMAT.pillow);
       roomPillow(B, M4.trs(0.06, ROOM.bed + 0.075, 1.02, 0, -0.1));
     } else {
+      roomBundle(B, 0.10, 0.92);
       B.add(gLoft(cushionSecs(0.48, 0.32, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.04, 0.60, 1.08), M4.trs(0, 0, 0, -0.30, -72 * DEG)), SEATMAT.pillow);
       roomPillow(B, M4.mul(M4.trs(0.10, 0.575, 1.00), M4.trs(0, 0, 0, -0.25, -70 * DEG)));
     }
