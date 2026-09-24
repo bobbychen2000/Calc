@@ -20,7 +20,7 @@ class App {
     // start: standing at door 1 looking aft toward THE Suite
     this.cam = { pos: [1.32, 1.62, 5.55], yaw: Math.PI + 0.06, pitch: -0.06, fov: 70 };
     this.orbit = { target: [0, 0.6, 32], dist: 38, az: 0.0, el: 58 * DEG };
-    this.sel = null; this.seated = null; this.bed = null;
+    this.sel = null; this.seated = null; this.bed = null; this.vstate = { bed: false, doors: false, divider: false }; this.vswap = []; this.vmeshes = {};
     this.keys = {};
     this.joy = { x: 0, y: 0, active: false };
     this.anim = null;
@@ -351,31 +351,66 @@ class App {
     this.hideSeatBar();
     this.flyTo({ pos: [q[0], 1.62, q[1]], yaw: this.cam.yaw, pitch: -0.05 }, 0.8);
   }
-  setBed(on) {
-    const S = this.scene.seats, GR = this.scene.seatGroups, G = this.G;
-    if (this.bed) {
-      const { g, i, mat, bedKey } = this.bed;
-      groupSetMatrix(g, i, mat);
-      G.setInstances(S[bedKey], []);
-      this.bed = null;
-      this.scene.shadowDirty = true;
+  // ---- seat variants: lie flat / doors closed / centre-suite divider raised (THE Room, THE Suite) ----
+  // The occupied unit (plus, for the shared centre divider, the neighbouring D/G suite) is hidden in its instanced group
+  // and drawn instead with a variant mesh built on demand by seatVariantGeo (09_seats.js), cached per key + state.
+  variantMesh(key, v) {
+    const k = key + '|' + (v.bed ? 'b' : '') + (v.doors ? 'd' : '') + (v.divider ? 'v' : '');
+    if (!this.vmeshes[k]) {
+      const geo = seatVariantGeo(key, v);
+      if (!geo) return null;
+      const m = this.G.mesh(geo, { name: 'var_' + k, layer: 'seats', instances: [] });
+      this.vmeshes[k] = m;
+      this.scene.seats['var_' + k] = m;
+      this.scene.opaque.push(m);
     }
-    if (!on || !this.seated || !seatHasBed(this.seated)) { this.updateBedBtn(); return; }
-    const s = this.seated;
-    const g = GR[s.meshKey];
-    const i = g.refs.indexOf(s);
-    const mat = g.master.slice(i * 20, i * 20 + 16);
-    groupSetMatrix(g, i, M4.trs(0, -50, 0));
-    const bedKey = 'bed_' + s.meshKey;
-    G.setInstances(S[bedKey], [mat], [[1, 1, 1, g.master[i * 20 + 19]]]);
-    this.bed = { g, i, mat, bedKey };
+    return this.vmeshes[k];
+  }
+  applyVariants() {
+    const GR = this.scene.seatGroups, G = this.G;
+    for (const q of this.vswap) { groupSetMatrix(q.g, q.i, q.mat); G.setInstances(q.mesh, []); }
+    this.vswap = [];
+    const s = this.seated, v = this.vstate;
+    this.bed = s && v.bed ? true : null;
+    if (s && seatHasBed(s)) {
+      const units = [[s, v]];
+      if (v.divider && s.pos === 'center') {
+        const nb = this.L.seats.find((q) => q !== s && q.row === s.row && q.kind === s.kind && q.pos === 'center');
+        if (nb) units.push([nb, { divider: true }]);
+      }
+      const byMesh = new Map();
+      for (const [u, uv] of units) {
+        if (!uv.bed && !uv.doors && !uv.divider) continue;
+        const g = GR[u.meshKey], i = g ? g.refs.indexOf(u) : -1;
+        const mesh = i >= 0 && this.variantMesh(u.meshKey, uv);
+        if (!mesh) continue;
+        const mat = g.master.slice(i * 20, i * 20 + 16);
+        groupSetMatrix(g, i, M4.trs(0, -50, 0));
+        const e = byMesh.get(mesh) || { mats: [], tints: [] };
+        e.mats.push(mat); e.tints.push([1, 1, 1, g.master[i * 20 + 19]]); byMesh.set(mesh, e);
+        this.vswap.push({ g, i, mat, mesh });
+      }
+      for (const [mesh, e] of byMesh) G.setInstances(mesh, e.mats, e.tints);
+    }
     this.scene.shadowDirty = true;
+    this.dirty = true;
     this.updateBedBtn();
+  }
+  setBed(on) {
+    if (!on) this.vstate = { bed: false, doors: false, divider: false };   // leaving the seat resets every toggle
+    else this.vstate.bed = true;
+    this.applyVariants();
+  }
+  toggleVariant(k) {
+    if (!this.seated || !seatHasBed(this.seated)) return;
+    this.vstate[k] = !this.vstate[k];
+    this.applyVariants();
   }
   toggleBed() {
     if (!this.seated || !seatHasBed(this.seated)) return;
-    const on = !this.bed;
-    this.setBed(on);
+    const on = !this.vstate.bed;
+    this.vstate.bed = on;
+    this.applyVariants();
     const s = this.seated;
     if (on) {
       const bed = seatBedCenter(s);
@@ -389,10 +424,13 @@ class App {
     }
   }
   updateBedBtn() {
+    const s = this.seated, ok = (k) => !!(s && seatHasBed(s) && (SEAT_VARIANTS[s.kind] || []).includes(k));
     const b = $('#bedBtn');
-    if (!b) return;
-    b.hidden = !(this.seated && seatHasBed(this.seated));
-    b.textContent = this.bed ? 'Sit up' : 'Lie flat';
+    if (b) { b.hidden = !ok('bed'); b.textContent = this.vstate.bed ? 'Sit up' : 'Lie flat'; }
+    const d = $('#doorsBtn');
+    if (d) { d.hidden = !ok('doors'); d.textContent = this.vstate.doors ? 'Open door' : 'Close door'; d.setAttribute('aria-pressed', String(this.vstate.doors)); }
+    const p = $('#dividerBtn');
+    if (p) { p.hidden = !(ok('divider') && s.pos === 'center'); p.textContent = this.vstate.divider ? 'Lower divider' : 'Raise divider'; p.setAttribute('aria-pressed', String(this.vstate.divider)); }
   }
 
   flyTo(pose, dur) {
@@ -466,6 +504,8 @@ class App {
     $('#lookBtn').addEventListener('click', () => { if (this.sel) this.sit(this.sel, { window: true }); });
     $('#standBtn').addEventListener('click', () => this.standUp());
     $('#bedBtn').addEventListener('click', () => this.toggleBed());
+    $('#doorsBtn').addEventListener('click', () => this.toggleVariant('doors'));
+    $('#dividerBtn').addEventListener('click', () => this.toggleVariant('divider'));
     $('#seatInfoBtn').addEventListener('click', () => { if (this.seated) this.showCard(this.seated, true); });
     $('#lookOutBtn').addEventListener('click', () => { if (this.seated) this.lookOut(this.seated); });
     $('#findForm').addEventListener('submit', (e) => {

@@ -121,6 +121,18 @@ const X = (...m) => m.reduce((a, b) => M4.mul(a, b));
 
 // Product builders: 09a_econ.js, 09b_py.js, 09c_room.js, 09d_suite.js (concatenated after this file by build.py).
 
+// variant geometry of one THE Room / THE Suite unit for the seat-card toggles: v = { bed, doors, divider }
+// (room: roomPart(part, {bed, doors}); suite: suiteUnit({bed, doors, divider}) - options a builder does not know are ignored)
+function seatVariantGeo(key, v) {
+  const m = /^(room|suite)([OEWC])(M?)$/.exec(key);
+  if (!m) return null;
+  const o = { bed: !!v.bed, doors: !!v.doors, divider: v.divider ? 1 : 0 };
+  const g = m[1] === 'room' ? roomPart(m[2], o) : suiteUnit(m[2] === 'C' ? { w: 1.10, center: true, ...o } : o);
+  return m[3] ? mirrorGeo(g) : g;
+}
+// which toggles each product offers (THE Suite divider only between the centre D/G suites)
+const SEAT_VARIANTS = { room: ['bed', 'doors'], suite: ['bed', 'doors', 'divider'] };
+
 function mirrorGeo(geo) {
   const g = { p: Array.from(geo.pos), n: Array.from(geo.nrm), u: Array.from(geo.uv), i: [] };
   for (let k = 0; k < g.p.length; k += 3) { g.p[k] = -g.p[k]; g.n[k] = -g.n[k]; }
@@ -238,14 +250,7 @@ function buildSeats(gl, layout) {
     meshes[key] = hi;
     if (lo) meshes[key + 'Lo'] = lo;
   }
-  // bed variants (shown for the one seat that is lying flat)
-  const bedGeo = {
-    roomO: () => roomPart('O', { bed: true }), roomOM: () => mirrorGeo(roomPart('O', { bed: true })),
-    roomE: () => roomPart('E', { bed: true }), roomEM: () => mirrorGeo(roomPart('E', { bed: true })),
-    suiteW: () => suiteUnit({ bed: true }), suiteWM: () => mirrorGeo(suiteUnit({ bed: true })),
-    suiteC: () => suiteUnit({ w: 1.10, center: true, bed: true }), suiteCM: () => mirrorGeo(suiteUnit({ w: 1.10, center: true, bed: true })),
-  };
-  for (const [k, f] of Object.entries(bedGeo)) meshes['bed_' + k] = gl.mesh(f(), { name: 'bed_' + k, layer: 'seats', instances: [] });
+  // bed / doors / divider variants are built on demand for the occupied unit (seatVariantGeo, used by 13_app.js)
   // seat-number plaques: dark rounded tiles with lit characters lying FLAT on the aisle-corner cap, reading from the aisle
   // (Suite: forward end of the wardrobe cap, omaat_f58 / f60 / f7, tpa_IMG_0220, f_17301; Room: top of the aisle-end
   // post, c_27313 '17E' / '18D', c_27314 / 27315, omaat_room_14). World space, not instanced.
