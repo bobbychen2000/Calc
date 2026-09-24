@@ -8,3 +8,8 @@
 - **Hairline light streak across a seat back in q15_econFronts** (thin bright diagonal line on the right-hand foreground
   seat). It looks like a window sun-shaft projection: clamp the shafts to the floor and sidewall, or soften their edge
   (smoothstep width ~0.05 m).
+- **w4 re-measure (still open):** the q18 hood reads L 136 against 193 in y_47305, and the tray reads L 132 against
+  195-208 in sanspotter 20, so the seat backs are ~30 % too dark from a seat (econ_w4b.json). The seat materials already
+  match the photo albedos (`yShell` #d9dbde, `yTray` #cfd2d6), so the gap is shading/AO.
+- **Plastic grain (03_tex.js layer 4, shared):** in harsh light the off-white shells read slightly as stucco. A ~40 %
+  lower normal amplitude on layer 4 would fix it, but it affects every area, so I left it to the integrator.

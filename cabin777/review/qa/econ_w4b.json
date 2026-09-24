@@ -1,0 +1,143 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w4",
+ "lens": "geometry/proportion first, then materials/colour, lighting on seats, artefacts",
+ "score": 7.0,
+ "details": [
+  {
+   "detail": "Fabric colour and contrast hold. q16 2nd-seat back is #2d375b (R/B 0.49, G/B 0.61), L p10/50/90 30/52/86, vs y_47301 row 2 #34457f (68/96 p50/p90) and y_47300 seat 2 #2c3a63. The q15 foreground mosaic top is 39/78/133 and the q16 foreground diamond is 55/88/154. Both sit inside the range of the close-up photo y_47306: mosaic 28/63/137, tick 44/78/174, diamond 66/97/194. The row-by-row mix works (q15/q16 no longer show a diamond column). The diamond interior still reads as a vertical knit (e4, b_pillow), not the small light blocks in the photo.",
+   "score": 7.5,
+   "refs": ["ref/ana/y_47306-lang-multi.jpg", "ref/ana/y_47301-lang-multi.jpg", "scratchpad/r7/q16_econAisle.png", "scratchpad/raterB4/q16fg.png"]
+  },
+  {
+   "detail": "Headrest and back top (w3 fix verified). The back now rises 0.061 m above the cover fold (fold top BH 0.807, back top 0.868), vs y_47306 about 0.05 and y_47300 about 0.025. The top is now a radius, not a chamfer (c_headfront, b_front). Still open from w3: the cushion is always SEATMAT.yHead (mosaic), so on the mosaic-back seats it merges into the back (c_headfront left seat, e4 left). In y_47306 each headrest carries a different weave from its back. The dashes on the wing end caps still curve in arcs (q16fg right seat).",
+   "score": 7,
+   "refs": ["ref/ana/y_47306-lang-multi.jpg", "scratchpad/raterB4/c_headfront.png", "scratchpad/raterB4/b_front.png"]
+  },
+  {
+   "detail": "Headrest cover. Verified: the fold now overlaps the plate, so there is no fabric groove (c_headtop), and the proportions hold (0.27 wide = 0.69 of the back; plate plus hem is about 0.23 tall, aspect 0.85, vs y_47306 about 0.85). NEW: the hem is rotated the wrong way. gRBox(0.27,0.04,..) at BH (0,0.593,-0.094) with +20 deg puts its top edge at z -0.087 (1.3 cm behind the plate front, making a step) and its bottom edge at z -0.101. So the hem FLARES forward, 3.6 cm in front of the cushion's lower edge (c_headprof shows the lower strip kinking out toward the viewer; c_headfront shows a hard two-tone crease 4 cm above the bottom). The ANA mark is still a bright 20 x 12 mm grey sticker (#9aa0ae).",
+   "score": 6,
+   "refs": ["ref/ana/y_47306-lang-multi.jpg", "scratchpad/raterB4/c_headprof.png", "scratchpad/raterB4/c_headfront.png", "scratchpad/raterB4/c_headtop.png"]
+  },
+  {
+   "detail": "Pillow (the w3 high issue is fixed). The superellipse-through-thickness loft removes the flat visor plateau. It reads as a domed navy cushion 0.33 x 0.24, about 0.76 of the back width, vs y_47300 seat 3 0.76, with aspect 0.70 vs 0.78 (b_front, b_pillow). It is still a little slab-like, with even thickness to the edge and no pinched corners, but acceptable.",
+   "score": 7,
+   "refs": ["ref/ana/y_47300-lang-multi.jpg", "scratchpad/raterB4/b_pillow.png", "scratchpad/raterB4/b_front.png"]
+  },
+  {
+   "detail": "Rear shell and hood (w3 fix verified). The tray band (RS y 0.24-0.44) is 0.345 wide under a 0.372-0.38 hood, so the hood overhangs it and navy fabric shows beside the band, as in sanspotter 15/25 (e2, b_seated). The pocket zone widens back to 0.446. Screen, bezel and dock proportions are unchanged and good. The D-pad and OK keys are now round (e5). NEW small artefact: the coat-hook disc and the pictogram quad at BH 0.48 sit on the 22-degree lip slope (RS 0.44 to 0.49, dz 0.02 over 0.05) but face straight aft. Their upper halves bury in the shell, and the hook reads as a half-moon (e5lip).",
+   "score": 7.5,
+   "refs": ["ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg", "ref/ana/y_47305-lang-multi.jpg", "scratchpad/s8/e5_screen.png", "scratchpad/raterB4/e5lip.png"]
+  },
+  {
+   "detail": "Tray arms, hubs, rail, AC and pocket (w3 fixes partly verified: the rail, placard above the rail, portrait AC with lit USB and LED, 0.31 flap between the arms, and a visible purple safety card are all present). Three geometric faults. (1) The hubs are gCyl discs whose axis points aft (hz), at the rail line (BH 0.222, dx +-0.172), with the grey arm rod ending in their centre. They read as portholes with a stick (b_trayarm, q18). In y_47307 and sanspotter 23 the hubs are horizontal cylinders (axis x, about 0.055 across) at the shell's outer edges at FLAP level. The arms are flat light-grey bars (about 0.035-0.04 wide) running down the shell SIDE, not rods on the tray face. (2) The left hub (x -0.204..-0.14, y 0.19..0.254) intersects the AC bezel (x -0.185..-0.115, y 0.135..0.205) over 1.5 x 4.5 cm (e6ac). (3) The flap (y 0.08-0.15, 3.7 cm proud) covers the bottom 1.5 cm of the AC bezel and 7 mm of the plate, which hides the lower sockets (e6ac, b_trayarm). y_47307 has a 1.4 cm gap between the bezel bottom and the flap's welt, and the bezel's left edge lines up with the flap's left end (model: 3 cm outboard). The flap has the same light tone as the shell and shows strong stucco grain in studio light.",
+   "score": 5.5,
+   "refs": ["ref/ana/y_47307-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "scratchpad/raterB4/e6ac.png", "scratchpad/raterB4/b_trayarm.png", "scratchpad/r7/q18_seat35C.png"]
+  },
+  {
+   "detail": "Lighting on the seat backs is unchanged from w3 and still about 30 % dark. q18 hood face below the dock is #84878e (L 136), vs y_47305 #bac1cf (L 193). q18 tray is L 132 and q17 hood is L 132, vs sanspotter 20 tray L 195 and shell L 208 (warm cabin light). The request in from_econ.md (AO floor / fill on yShell) has not been actioned. The studio renders look correct, so this belongs to the lighting owner.",
+   "score": 5,
+   "refs": ["ref/ana/y_47305-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "scratchpad/r7/q18_seat35C.png", "scratchpad/r7/q17_econBacks.png"]
+  },
+  {
+   "detail": "Armrests, bracket, belts, life-vest pouch, electronics boxes, legs and baggage bar hold (e1, e7, b_front, b_side). The aisle-end panel no longer pokes ahead of the arm nose. Its control-button panel, gRBox(0.02,0.09,0.05) in yShellDark #c2c5c9, is invisible grey on white (b_side). y_47302 and y_47301 show a black button strip on the aisle fairing.",
+   "score": 7,
+   "refs": ["ref/ana/y_47302-lang-multi.jpg", "ref/ana/y_47301-lang-multi.jpg", "scratchpad/raterB4/b_side.png"]
+  },
+  {
+   "detail": "Footrest. The hangers are wider (0.038) and off-white now, but they are still two straight boxes with a visible offset step at the joint (b_foot, e8). Each pedal is 0.13 x 0.05 (aspect 2.6). y_47304 shows one smoothly bowed broad arm and pedals of about 4.5:1 (about 0.22 long), with the arm landing on the dark joint block between the two pedals.",
+   "score": 6.5,
+   "refs": ["ref/ana/y_47304-lang-multi.jpg", "scratchpad/raterB4/b_foot.png", "scratchpad/s8/e8_foot.png"]
+  },
+  {
+   "detail": "Far LOD (econUnitFar, beyond 9.5 m). (a) Every pan uses SEATMAT.yFabric, while the near LOD uses the seat's fabric (yFabricC on mosaic seats), so the mosaic pans switch to tick at 9.5 m. (b) The bezel quad sits 0.5 mm off the hood box face (0.1225 vs 0.122) and the screen 1 mm off the bezel. With near = 0.03 and a 24-bit depth buffer the resolution is about 0.45 mm at 15 m and 0.8 mm at 20 m, so the bezel rim z-fights from about 15 m in motion. It is not visible in the q17 still at this resolution. (c) The far hood box reaches 0.875, above the 0.86 back box, so far seats lose the thin blue top rim that the near LOD shows.",
+   "score": 6.5,
+   "refs": ["scratchpad/raterB4/q17far.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "The headrest-cover hem flares forward instead of tucking back (sign error in the w3 fix).",
+   "problem": "B.add(gRBox(0.27, 0.04, 0.005, 0.003, 1), M4.mul(BH, M4.trs(0, 0.593, -0.094, 0, 20 * DEG)), SEATMAT.yCover). With +20 deg (+y goes to +z) the top edge lands at z -0.087, a 1.3 cm step behind the plate front (-0.103). The bottom edge lands at -0.101, 3.6 cm in front of the cushion's lower edge (SEC 0.60 front -0.065).",
+   "evidence": "raterB4/c_headprof.png: the bottom strip kinks toward the viewer. raterB4/c_headfront.png: a hard two-tone band. y_47306: the sheet hangs flat and curls slightly back at the hem.",
+   "fix": "Use -20 * DEG: M4.trs(0, 0.593, -0.094, 0, -20 * DEG). The top edge then meets the plate front at z -0.1008 (y 0.612), and the bottom edge tucks to z -0.087 at y 0.574. Optionally dim the ANA mark to gQuad(0.014, 0.008) with c '#6a7086'.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "medium",
+   "detail": "The tray hubs intersect the AC bezel, the flap hides the lower third of the AC plate, and the hubs and arms have the wrong form (portholes with sticks).",
+   "problem": "The hubs are gCyl(0.032, 0.032, 0.03) at hz(0.222, 0.008, +-0.172), with the axis aft, and they overlap the bezel gRBox(0.07, 0.07) at on(0.17, 0.004, -0.15). The flap loft at on(0.115, 0.022) reaches y 0.15, over the bezel bottom at 0.135. The arms are grey 0.018 rods on the tray face, at the band edge.",
+   "evidence": "raterB4/e6ac.png (hub disc over the AC top-left, flap over its bottom) and b_trayarm.png. y_47307: the flat grey arm and hinge block run down the shell side, the bezel sits 5 mm under the rail and 1.4 cm above the flap welt, and a white horizontal-axis hub sits at the lower left. sanspotter 23: white hub 'ears' at the shell edges beside the flap.",
+   "fix": "In econSeat (!noScreen): (a) Move the rail up to on(0.228, 0.012). Keep the AC at y 0.17 but set dx -0.125, so the bezel's left edge (-0.16) lines up with the flap's left end (-0.155); move its USB, LED and port quads by the same +0.025. (b) Lower the pocket group by 0.022: mouth on(0.125), card on(0.118, 0.016, 0.04), header on(0.142), pictos on(0.130), flap loft on(0.093, 0.022) (top 0.128, 7 mm under the bezel), net on(0.035, 0.02), binding on(0.064, 0.025). (c) Replace the hub discs with horizontal cylinders at the shell edge, level with the flap: B.add(gCyl(0.028, 0.028, 0.045, 16), M4.mul(on(0.11, 0.02, s * 0.2), M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), SEATMAT.yShell). Drop the grey core cylinder. (d) Replace the arm rods with flat bars on the band's side faces: B.add(gRBox(0.012, 0.33, 0.04, 0.004, 1), on(0.275, 0.0, s * 0.179), { c: '#b9bdc2', r: 0.4 }), running from the hub up to the tray top (0.44).",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "medium",
+   "detail": "The rear shells are about 30 % too dark in the cabin views. This is carried over from w3 and has not been actioned.",
+   "problem": "The shell albedo is #d9dbde, and the studio renders are right. In the cabin the AO volume and the lack of fill give L 132-136 on the hood and tray.",
+   "evidence": "q18 hood L 136 vs y_47305 L 193. q17 hood and tray L 132 vs sanspotter 20 tray L 195 and shell L 208.",
+   "fix": "Lighting owner (12_scene.js / 04_shaders.js), as asked in from_econ.md: clamp the AO term to >= 0.8 for fragments of material yShell/yTray (or for seat instances on normals facing aft), or add a broad PSU downlight fill of about +35 % on the seat-back faces. Target q18 hood L 180-195.",
+   "files": ["src/12_scene.js", "src/04_shaders.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The headrest cushion always uses the mosaic weave, so it vanishes into the mosaic-back seats.",
+   "problem": "SEATMAT.yHead has l: LAYER.yMosaic for every seat.",
+   "evidence": "c_headfront.png left seat and e4 left seat: no visible cushion outline. y_47306: the three headrests have three different weaves, each unlike its back.",
+   "fix": "In econSeat, pick the headrest material from the fabric: const HF = F === SEATMAT.yFabricC ? SEATMAT.yFabric : SEATMAT.yHead. Pass HF instead of SEATMAT.yHead in the headrest loftAt, and do the same in econUnitFar.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The coat-hook disc and the pictogram placard are half buried in the sloped hood lip.",
+   "problem": "They are placed with hz(0.48, ...) and on(0.48, ...), facing straight aft, on a lip that slopes about 22 deg (RS 0.44 z 0.086 to 0.49 z 0.106).",
+   "evidence": "raterB4/e5lip.png: the hook reads as a half-moon, and the placard's top is clipped.",
+   "fix": "Tilt both to the lip: for the discs use M4.mul(on(0.48, 0.002, 0.13), M4.trs(0, 0, 0, 0, Math.PI / 2 + 22 * DEG)), and for the quad use M4.mul(on(0.48, 0.002, -0.13), M4.trs(0, 0, 0, 0, 22 * DEG)). Check the sign in the studio. If both are wrong, use -22.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "Far LOD pops and a latent z-fight.",
+   "problem": "econUnitFar uses SEATMAT.yFabric for every pan. The bezel and screen quads sit 0.5 mm and 1 mm off the face. The hood box top (0.875) is above the back box (0.86).",
+   "evidence": "Code only, plus the depth-resolution estimate (near 0.03, 24-bit): 0.45 mm at 15 m.",
+   "fix": "Use the seat's fabric for the pan, with the diamond seat mapping to yFabric as in the near LOD: const f = fabs[(k*7+n*3+rot)%3]; pan material f === SEATMAT.yFabricB ? SEATMAT.yFabric : f. Move the bezel quad to z 0.1245 and the screen to 0.1265 (2-4 mm). Hood box: gRBox(0.375, 0.37, 0.09, 0.035, 1) at y 0.675, so its top is 0.86.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The footrest hangers are kinked two-box links, and the pedals are short.",
+   "problem": "There are two gRBoxes (-20 / -34 deg) with an offset at the joint. The pedals are 0.13 long.",
+   "evidence": "raterB4/b_foot.png; y_47304 (one smoothly bowed arm, pedals about 4.5:1).",
+   "fix": "Replace the two links with loftAt(B, [SEC(0.30, 0.04, 0.028, -0.10, 0.01), SEC(0.24, 0.042, 0.028, -0.075, 0.01), SEC(0.17, 0.044, 0.028, -0.04, 0.01), SEC(0.12, 0.046, 0.03, -0.005, 0.01)], M4.trs(hx, 0, 0), SEATMAT.arm, 2). Make the pedals gRBox(0.18, 0.02, 0.05) at px = x0 + s*0.095, and keep the end caps at +-0.092.",
+   "files": ["src/09a_econ.js"]
+  },
+  {
+   "severity": "low",
+   "detail": "The aisle-end button panel is invisible.",
+   "problem": "It is gRBox(0.02, 0.09, 0.05) in yShellDark (#c2c5c9) on a white panel.",
+   "evidence": "raterB4/b_side.png; y_47302 and y_47301 show a black strip with buttons.",
+   "fix": "Use { c: '#1e2024', r: 0.4 }, and add two gQuad(0.012, 0.012) buttons in '#6a6e76' on its outer face.",
+   "files": ["src/09a_econ.js"]
+  }
+ ],
+ "verifiedFixes": {
+  "pillow (w3 high)": "yes: domed through the thickness, no plateau or visor",
+  "tray band narrower than the hood": "yes: 0.345 under a 0.372 hood, fabric shows beside it",
+  "cover fold groove": "yes: the fold overlaps the plate, no fabric line",
+  "cover hem tuck": "NO: the rotation sign is reversed, so the hem flares forward",
+  "back rise and rounded top": "yes: 0.061 rise, radiused top",
+  "headrest weave differs from the back": "no (not attempted)",
+  "safety card visible": "yes: purple header and pictos above the flap",
+  "tray arms, hubs, rail": "present, but the hubs are aft-facing discs, collide with the AC and the arms are rods",
+  "round D-pad": "yes",
+  "footrest hangers wider": "yes (still kinked)",
+  "shell lighting": "no (lighting owner)",
+  "fabric mix by row": "yes: no pattern column in q15/q16"
+ },
+ "questionsForUser": [
+  "Footrest: in y_47304 the hanger arm lands between two pedal halves, and a second arm meets the right pedal's outer end. Is each seat's footrest one bar hung at both ends, or two halves on a centre arm? A straight-on photo of one footrest would settle it."
+ ],
+ "extraRefsSearched": "None downloaded. y_47307 (the AC/arm close-up) was used for the hub, arm and rail geometry, and y_47304 for the footrest."
+}
