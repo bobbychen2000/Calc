@@ -13,7 +13,7 @@ Owned file: `src/09b_py.js`. Shared edits, one line per key:
 | w2 (after w1 fixes) | 5.0 | 5.6 | e7bb7d7 |
 | w3 | 6.0 | 6.6 | 0ba3e28 |
 | w4 | 6.5 | 7.0 | 39de8f0 |
-| final fixes after w4 (not re-rated; round limit) | - | - | this commit |
+| final fixes after w4 (not re-rated; round limit) | - | - | see git log "py w4" |
 
 Both raters' w4 JSONs list no geometry high issue. Rater A kept one high issue on the fabric (too regular, and warmed
 too far), and the final pass addresses it (see below). The target of 8.5 was **not reached**. The four-round limit in
