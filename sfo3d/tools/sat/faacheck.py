@@ -6,14 +6,9 @@ from PIL import Image, ImageDraw
 from common import *
 from rectify import sim_of
 from stview import st2w
-lat0, lon0 = 37.6188056, -122.3754167
-mlat = 110990.0; mlon = 111320.0 * math.cos(math.radians(lat0))
-def dms(d, m): return d + m / 60
-def w(lat, lon): return ((lon - lon0) * mlon, -(lat - lat0) * mlat)
-ENDS = {'28R': w(dms(37, 36.812017), -dms(122, 21.428467)), '28L': w(dms(37, 36.702717), -dms(122, 21.500950)),
-        '10L': w(dms(37, 37.724323), -dms(122, 23.603512)), '10R': w(dms(37, 37.577467), -dms(122, 23.586327)),
-        '1L': w(dms(37, 36.473872), -dms(122, 22.975710)), '19R': w(dms(37, 37.588882), -dms(122, 22.236565)),
-        '1R': w(dms(37, 36.379793), -dms(122, 22.862445)), '19L': w(dms(37, 37.640532), -dms(122, 22.026650))}
+# FAA NASR runway ends in the current world frame (tools/geo_frame.py = js/geo.js). sim_of() applies the registration's
+# own frame (legacy registrations convert world -> legacy internally), so the ends must be given in the current frame.
+ENDS = {k: GF.end_world(k) for k in GF.RWY_ENDS}
 def inter(a1, a2, b1, b2):
     p, r = np.array(ENDS[a1]), np.array(ENDS[a2]) - np.array(ENDS[a1]); q, s = np.array(ENDS[b1]), np.array(ENDS[b2]) - np.array(ENDS[b1])
     t = np.cross(q - p, s) / np.cross(r, s); return tuple(p + r * t)

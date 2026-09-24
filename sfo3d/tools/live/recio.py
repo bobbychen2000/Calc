@@ -15,8 +15,8 @@ def _member(raw, pos, ch):
             i += ch
     except zlib.error:
         return out, None, False
-    if d.eof:
-        return out, len(raw) - len(d.unused_data), True
+    if d.eof:   # unused_data is the rest of the last chunk fed (not of the file): the member ended at i - len(it)
+        return out, min(i, len(raw)) - len(d.unused_data), True
     return out, None, True          # the hour still being written: flushed data, no end marker yet
 
 

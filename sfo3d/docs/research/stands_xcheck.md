@@ -108,22 +108,24 @@ Undocumented codes (not verified):
 <!--BEGIN:registration-->
 | source | image (tools/sat/stand_defs.py) | n | rigid shift E / S (m) | RMS cross before → after (m) |
 |---|---|---|---|---|
-| OSM | all `obs` stands | 36 | +0.20 / -0.35 | 2.0 → 1.9 |
-| OSM | 03dcd4ae | 8 | +0.4 / +2.3 | 4.0 → 3.7 |
-| OSM | 151ec51d | 11 | -0.1 / +0.5 | 5.0 → 5.0 |
-| OSM | 39176bb8 | 13 | -1.6 / +4.8 | 6.0 → 5.2 |
-| OSM | b1d51b0f | 21 | +2.1 / -4.4 | 8.3 → 7.1 |
-| OSM | bf5c7afc | 12 | +2.4 / +2.1 | 7.8 → 7.5 |
-| OSM | c235f3b8 | 9 | -4.5 / +1.2 | 6.6 → 5.7 |
-| OSM | d82848c4 | 9 | -1.9 / -0.1 | 4.0 → 3.9 |
-| X-Plane | all `obs` stands | 22 | +0.77 / +0.23 | 2.6 → 2.5 |
-| X-Plane | 03dcd4ae | 6 | +6.5 / -2.3 | 5.9 → 3.5 |
-| X-Plane | 151ec51d | 11 | +2.9 / -4.4 | 9.1 → 8.9 |
-| X-Plane | 39176bb8 | 13 | +0.8 / +3.2 | 6.9 → 6.4 |
-| X-Plane | b1d51b0f | 15 | -6.9 / -6.3 | 9.1 → 7.8 |
-| X-Plane | bf5c7afc | 12 | +0.4 / +6.1 | 9.8 → 8.7 |
-| X-Plane | c235f3b8 | 7 | +0.8 / -9.2 | 12.1 → 9.6 |
-| X-Plane | d82848c4 | 9 | -1.3 / +1.5 | 3.8 → 3.3 |
+| OSM | all `obs` stands | 74 | +0.05 / -0.08 | 0.5 → 0.5 |
+| OSM | 03dcd4ae | 8 | -0.1 / -0.2 | 0.7 → 0.7 |
+| OSM | 151ec51d | 10 | +0.0 / +0.0 | 0.0 → 0.0 |
+| OSM | 39176bb8 | 14 | -0.8 / -0.4 | 2.1 → 2.0 |
+| OSM | ? | 22 | -0.0 / -0.1 | 0.2 → 0.2 |
+| OSM | b1d51b0f | 22 | +0.0 / +0.0 | 0.0 → 0.0 |
+| OSM | bf5c7afc | 13 | +0.3 / -0.3 | 0.9 → 0.8 |
+| OSM | c235f3b8 | 10 | +0.0 / +0.0 | 0.0 → 0.0 |
+| OSM | d82848c4 | 9 | +0.0 / +0.0 | 0.0 → 0.0 |
+| X-Plane | all `obs` stands | 40 | +1.10 / +0.34 | 2.4 → 2.2 |
+| X-Plane | 03dcd4ae | 7 | +4.8 / -2.4 | 4.5 → 2.6 |
+| X-Plane | 151ec51d | 10 | -9.4 / +19.7 | 5.0 → 4.4 |
+| X-Plane | 39176bb8 | 13 | +1.5 / -2.4 | 3.8 → 3.4 |
+| X-Plane | ? | 13 | +3.9 / -1.1 | 5.8 → 5.0 |
+| X-Plane | b1d51b0f | 13 | -10.8 / +2.0 | 10.5 → 8.4 |
+| X-Plane | bf5c7afc | 12 | +1.3 / -1.7 | 2.6 → 2.1 |
+| X-Plane | c235f3b8 | 9 | +10.0 / +0.2 | 11.8 → 9.8 |
+| X-Plane | d82848c4 | 8 | -0.1 / +2.1 | 3.5 → 3.0 |
 <!--END:registration-->
 
 - **Frame accuracy.** The app's equirectangular frame is 0.12 % short in the east–west scale (111 320·cos φ = 88 175 m/deg against 88 285 m/deg on WGS-84 at the ARP latitude 37.6188° [corrected by verifier: was "88 157 against 88 266". Both figures were about 19 m/deg low. The 0.12 % ratio (0.124 %) and the 3.4 m runway shortfall are unchanged.]). This shortens 10L/28R by 3.4 m against its geodesic length (§6). It is irrelevant for distances between neighbouring stands, at most about 0.1 m.
@@ -135,15 +137,10 @@ Undocumented codes (not verified):
 <!--BEGIN:verdict_summary-->
 | position verdict | obs | inf | total |
 |---|---|---|---|
-| agree | 16 | 4 | 20 |
-| agree with OSM; X-Plane differs | 14 | 4 | 18 |
-| OURS OFF (OSM and X-Plane agree) | 4 | 11 | 15 |
-| unresolved (sources disagree) | 4 | 6 | 10 |
-| OURS OFF (ADS-B + SFO) | 3 | 6 | 9 |
-| agree with X-Plane; OSM differs | 0 | 7 | 7 |
-| differs from the only counterpart (OSM) | 1 | 4 | 5 |
-| differs from the only counterpart (X-Plane) | 0 | 3 | 3 |
-| NO COUNTERPART | 0 | 1 | 1 |
+| agree | 41 | 17 | 58 |
+| agree with OSM; X-Plane differs | 22 | 16 | 38 |
+| OURS OFF (ADS-B + SFO) | 9 | 0 | 9 |
+| agree with X-Plane; OSM differs | 2 | 0 | 2 |
 | agree (ADS-B + SFO confirm ours) | 1 | 0 | 1 |
 <!--END:verdict_summary-->
 
@@ -156,16 +153,16 @@ The rows are aircraft stationary for 120 s or more in our recording, where SFO's
 <!--BEGIN:adsb_table-->
 | SFO stand (evidence) | aircraft (reg, type, flight) | ADS-B hdg | ours, same name (in our stand frame; Δhdg = ours − ADS-B) | ours nearest: dist (cross from aircraft axis) | OSM same ref: dist (cross) | OSM nearest | X-Plane same name: dist (cross) | X-Plane nearest |
 |---|---|---|---|---|---|---|---|---|
-| B16 (SFO window) | N107NN, A321, AAL177 | 101° | B16: ADS-B point +2.2 along / -15.7 cross of our stand, Δhdg +17° | B16 15.9 m (x +14.5) | B16: 1.8 m (x +1.6) [2 ways] | B16 1.8 m (x +1.6) | Gate B15 B16: 41.9 m (x -39.1) | Gate B19 B20 18.1 m (x +18.1) |
-| B18 (occupancy) | N968JT, A321, .N968JT | 307° | B18: ADS-B point -4.2 along / +5.0 cross of our stand, Δhdg -9° | B18 6.5 m (x -5.6) | B18: 1.7 m (x +0.6) | B18 1.7 m (x +0.6) | Gate B18: 11.2 m (x -6.3) | Gate B18 11.2 m (x -6.3) |
-| B21 (SFO window) | N937JB, A321, JBU515 | — | B21: ADS-B point +1.7 along / +6.0 cross of our stand | B21 6.2 m | B21: 0.8 m | B21 0.8 m | Gate B21: 15.9 m | Gate B21 15.9 m |
-| B23 (SFO window) | N980UY, A321, AAL2856 | 338° | B23: ADS-B point -4.9 along / +5.2 cross of our stand, Δhdg -9° | B23 7.1 m (x -5.9) | B23: 2.2 m (x +0.2) [2 ways] | B23 2.2 m (x +0.2) | Gate B23: 16.0 m (x -16.0) | Gate B23 16.0 m (x -16.0) |
-| B24 (SFO window) | N437AN, A21N, AAL2506 | — | B25 (as alias): ADS-B point -5.8 along / +26.1 cross of our stand | B23 23.1 m | B24: 0.4 m | B24 0.4 m | Gate B24: 32.8 m | Gate B23 14.1 m |
-| B26 (occupancy) | N161AA, A321, — | — | B26: ADS-B point -1.8 along / +3.7 cross of our stand | B26 4.1 m | B26: 1.8 m [2 ways] | B26 1.8 m | Gate B26 B27: 85.6 m | Gate B25 20.8 m |
-| B5 (SFO window) | N943JT, A321, JBU413 | 53° | B5: ADS-B point -6.7 along / -0.5 cross of our stand, Δhdg -26° | B5 6.7 m (x -2.4) | B5: 0.9 m (x +0.9) [2 ways] | B5 0.9 m (x +0.9) | — (no such name) | Gate B10 B11 76.6 m (x +64.6) |
-| C10 (SFO window) | C-FDUW, BCS3, ACA738 | 321° | C10: ADS-B point -3.4 along / -5.6 cross of our stand, Δhdg -23° | C10 6.5 m (x +3.8) | C10: 1.2 m (x -1.0) | C10 1.2 m (x -1.0) | — (no such name) | Gate C11 9.2 m (x +8.9) |
-| C11 (SFO window) | N316DU, BCS3, DAL2635 | 292° | C11: ADS-B point -3.2 along / -34.1 cross of our stand, Δhdg -48° | C10 30.7 m (x -30.0) | C11: 5.0 m (x -0.9) | C11 5.0 m (x -0.9) | Gate C11: 26.9 m (x -26.9) | Gate C9 7.3 m (x -0.5) |
-| G5 (SFO window) | N2341U, B77W, UAL189 | 208° | G5: ADS-B point -9.8 along / +2.1 cross of our stand, Δhdg -0° | G5 10.0 m (x -2.2) | G5: 6.0 m (x -1.9) | G5 6.0 m (x -1.9) | Gate G5 G6: 3.6 m (x -3.2) | Gate G5 G6 3.6 m (x -3.2) |
+| B16 (SFO window) | N107NN, A321, AAL177 | 101° | B16: ADS-B point +3.7 along / -16.4 cross of our stand, Δhdg +17° | B16 16.8 m (x +14.6) | B16: 1.8 m (x +1.6) [2 ways] | B16 1.8 m (x +1.6) | Gate B15 B16: 41.9 m (x -39.0) | Gate B19 B20 18.2 m (x +18.1) |
+| B18 (occupancy) | N968JT, A321, .N968JT | 307° | B18: ADS-B point -5.6 along / +5.6 cross of our stand, Δhdg -9° | B18 7.9 m (x -6.4) | B18: 1.8 m (x +0.6) | B18 1.8 m (x +0.6) | Gate B18: 11.3 m (x -6.3) | Gate B18 11.3 m (x -6.3) |
+| B21 (SFO window) | N937JB, A321, JBU515 | — | B21: ADS-B point +0.2 along / +6.6 cross of our stand | B21 6.6 m | B21: 0.8 m | B21 0.8 m | Gate B21: 15.9 m | Gate B21 15.9 m |
+| B23 (SFO window) | N980UY, A321, AAL2856 | 338° | B23: ADS-B point -5.8 along / +6.4 cross of our stand, Δhdg -9° | B23 8.6 m (x -7.2) | B23: 2.2 m (x +0.3) [2 ways] | B23 2.2 m (x +0.3) | Gate B23: 16.0 m (x -15.9) | Gate B23 16.0 m (x -15.9) |
+| B24 (SFO window) | N437AN, A21N, AAL2506 | — | B25 (as alias): ADS-B point -5.2 along / +27.6 cross of our stand | B23 21.7 m | B24: 0.3 m | B24 0.3 m | Gate B24: 32.8 m | Gate B23 14.2 m |
+| B26 (occupancy) | N161AA, A321, — | — | B26: ADS-B point -0.5 along / +4.6 cross of our stand | B26 4.6 m | B26: 1.8 m [2 ways] | B26 1.8 m | Gate B26 B27: 85.6 m | Gate B25 20.9 m |
+| B5 (SFO window) | N943JT, A321, JBU413 | 53° | B5: ADS-B point -6.0 along / +1.0 cross of our stand, Δhdg -26° | B5 6.1 m (x -3.5) | B5: 0.9 m (x +0.9) [2 ways] | B5 0.9 m (x +0.9) | — (no such name) | Gate B10 B11 76.7 m (x +64.6) |
+| C10 (SFO window) | C-FDUW, BCS3, ACA738 | 321° | C10: ADS-B point -4.8 along / -5.0 cross of our stand, Δhdg -23° | C10 6.9 m (x +2.8) | C10: 1.2 m (x -0.9) | C10 1.2 m (x -0.9) | — (no such name) | Gate C11 9.3 m (x +9.0) |
+| C11 (SFO window) | N316DU, BCS3, DAL2635 | 292° | C11: ADS-B point -4.6 along / -34.9 cross of our stand, Δhdg -48° | C10 31.5 m (x -30.4) | C11: 5.0 m (x -0.9) | C11 5.0 m (x -0.9) | Gate C11: 26.9 m (x -26.9) | Gate C9 7.3 m (x -0.5) |
+| G5 (SFO window) | N2341U, B77W, UAL189 | 208° | G5: ADS-B point -10.3 along / +0.7 cross of our stand, Δhdg -0° | G5 10.4 m (x -0.8) | G5: 6.0 m (x -1.9) | G5 6.0 m (x -1.9) | Gate G5 G6: 3.7 m (x -3.3) | Gate G5 G6 3.7 m (x -3.3) |
 <!--END:adsb_table-->
 
 What this establishes (observed unless stated):
@@ -191,19 +188,22 @@ Their point − our nose tip, for matches with |cross| ≤ 6 m and |Δhdg| ≤ 1
 <!--BEGIN:along_stats-->
 | class / our src | X-Plane: n, median along (min…max) m | OSM: n, median along (min…max) m |
 |---|---|---|
-| B/inf | 2, +6.5 (+6.4…+6.6) | 1, +3.9 (+3.9…+3.9) |
-| B/obs | 1, +6.5 (+6.5…+6.5) | 3, -1.3 (-1.7…-0.0) |
-| C/inf | 9, -9.8 (-12.4…+10.4) | 8, +4.9 (-6.0…+14.2) |
-| C/obs | 4, -2.1 (-3.3…+1.0) | 11, +0.3 (-2.7…+6.3) |
-| CL/obs | 2, +2.1 (+0.9…+3.4) | 4, -2.6 (-6.7…-1.4) |
-| D/inf | 2, -8.6 (-9.0…-8.1) | 2, +4.2 (+0.6…+7.8) |
-| D/obs | 2, -8.3 (-9.2…-7.5) | 2, +1.4 (-1.9…+4.7) |
-| E/inf | 1, +1.9 (+1.9…+1.9) | 1, +0.9 (+0.9…+0.9) |
-| E/obs | 3, -7.7 (-10.9…-1.0) | 4, -1.4 (-5.6…+4.9) |
-| EL/inf | 3, -8.8 (-11.2…-4.2) | 2, -1.1 (-3.0…+0.9) |
-| EL/obs | 10, -9.6 (-12.6…-6.1) | 12, -2.9 (-4.9…-0.6) |
-| all/inf | 17, -9.0 (-12.4…+10.4) | 14, +2.2 (-6.0…+14.2) |
-| all/obs | 22, -7.6 (-12.6…+6.5) | 36, -1.6 (-6.7…+6.3) |
+| B/inf | 1, +6.7 (+6.7…+6.7) | 3, -1.0 (-1.0…-1.0) |
+| B/obs | 1, -1.1 (-1.1…-1.1) | 3, -1.0 (-1.0…-1.0) |
+| C/inf | 8, -3.2 (-8.5…+5.6) | 17, -1.0 (-1.0…-1.0) |
+| C/obs | 17, +0.1 (-15.2…+9.5) | 43, -1.0 (-1.0…-1.0) |
+| CL/inf | 1, -17.8 (-17.8…-17.8) | 1, -1.0 (-1.0…-1.0) |
+| CL/obs | 3, +4.0 (-18.3…+4.7) | 4, -1.0 (-1.0…-1.0) |
+| D/inf | 3, -1.1 (-17.8…+1.7) | 3, -4.0 (-4.0…-4.0) |
+| D/obs | 4, -11.2 (-12.6…-4.2) | 4, -4.0 (-6.3…-4.0) |
+| E/inf | 3, -9.3 (-17.5…-7.4) | 4, -4.0 (-4.0…-4.0) |
+| E/obs | 3, -10.0 (-13.6…-6.4) | 4, -4.0 (-7.2…-4.0) |
+| EL/inf | 1, -15.7 (-15.7…-15.7) | 4, -4.0 (-4.0…-4.0) |
+| EL/obs | 10, -10.6 (-11.7…-5.3) | 14, -4.0 (-4.0…-4.0) |
+| F/inf | — | 1, -4.0 (-4.0…-4.0) |
+| F/obs | 2, -11.7 (-12.1…-11.3) | 2, -4.0 (-4.0…-4.0) |
+| all/inf | 17, -6.6 (-17.8…+6.7) | 33, -1.0 (-4.0…-1.0) |
+| all/obs | 40, -5.8 (-18.3…+9.5) | 74, -1.0 (-7.2…-1.0) |
 <!--END:along_stats-->
 
 - **X-Plane.** On our observed wide-body stands (class EL), X-Plane points are a median 9.6 m behind our nose tip. That fits the nose-wheel convention: WED draws the nose 8.2 m ahead for category E.
@@ -219,95 +219,114 @@ Their point − our nose tip, for matches with |cross| ≤ 6 m and |Δhdg| ≤ 1
 <!--BEGIN:stands_table-->
 | Ours (aliases) | cls · src | OSM best match: ref: dist (along / cross, Δhdg) | X-Plane best match: name: dist (along / cross, Δhdg) · cat | ADS-B + SFO | position verdict | name verdict · flags | bridges ours / XP / OSM |
 |---|---|---|---|---|---|---|---|
-| G10 (G14) | EL · obs | G10 ⟲: 6.4 m (+1.4 / +6.2, +1°) | Gate G13 G14: 15.4 m (-7.4 / +13.5, -0°) · own name at 62 m · E |  | unresolved (sources disagree) | same as OSM · merged: SFO runs G10/G14 as separate stands | 2 / 2 / 2 |
-| G9 | EL · inf | G9 ⟲: 3.9 m (+0.9 / +3.8, +0°) | Gate G9 G10: 15.1 m (-11.3 / +10.0, -0°) · E |  | unresolved (sources disagree) | same as OSM | 2 / 2 / 2 |
-| G6 | EL · obs | G6 ⟲: 4.4 m (-4.0 / +1.8, -0°) | Terminal G: 12.2 m (-11.8 / +3.1, -0°) · own name at 73 m · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 1 / 2 |
-| G5 | EL · obs | G5 ⟲: 4.0 m (-4.0 / +0.3, -0°) | Gate G5 G6: 11.4 m (-11.3 / -1.1, -0°) · E | G5: ours OK (aircraft +2.1 m across our centreline, Δhdg -0°) | agree (ADS-B + SFO confirm ours) (vote: agree) | same as OSM | 2 / 1 / 2 |
-| G2 | EL · obs | G2 ⟲: 5.1 m (-4.9 / -1.5, -1°) | Terminal G: 13.2 m (-12.6 / -4.0, -0°) · own name at 78 m · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 1 / 2 |
-| G1 | E · obs | G1 ⟲: 5.6 m (-5.6 / +0.1, -0°) | Gate G1 G2: 11.3 m (-10.9 / -2.9, -0°) · E |  | agree | same as OSM | 2 / 1 / 2 |
-| G7 | EL · obs | G7 ⟲: 2.3 m (-2.3 / -0.2, +0°) | Gate G7 G8: 9.9 m (-7.2 / +6.8, -1°) · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 2 / 2 |
-| G4 | EL · obs | G4: 2.7 m (-2.7 / +0.3, +0°) | Gate G3 G4: 8.5 m (-6.1 / +6.0, -1°) · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 2 / 2 |
-| G3 | EL · inf | G3 ⟲: 14.5 m (-1.2 / +14.4, +15°) | Terminal G: 22.3 m (-11.4 / +19.1, +14°) · own name at 66 m · E |  | OURS OFF (OSM and X-Plane agree) | same as OSM | 2 / 2 / 2 |
-| G12 (G11/G13) | EL · obs | G13 ⟲: 4.3 m (-3.4 / +2.6, +1°) | Terminal G: 11.4 m (-10.7 / +3.7, +6°) · own name at 82 m · F |  | agree with OSM; X-Plane differs | OSM = our alias G13 · merged: SFO runs G12/G11/G13 as separate stands (OSM has G13 here) | 2 / 2 / 3 |
-| G8 | E · obs | (no ref): 5.0 m (-4.8 / -1.5, -3°) · own name at 48 m | Terminal G: 12.5 m (-4.8 / -11.6, -16°) · own name at 127 m · F |  | agree with OSM; X-Plane differs | OSM position has no ref · OSM has other positions here: G11 | 2 / 0 / 1 |
-| A3 (A4) | EL · inf | A3: 23.9 m (-21.6 / +10.1, -1°) | Gate A3 A4 A5: 12.5 m (-11.2 / +5.6, +1°) · D |  | OURS OFF (OSM and X-Plane agree) | same as OSM · merged: SFO runs A3/A4 as separate stands | 2 / 1 / 1 |
-| A5 | EL · obs | A5: 4.9 m (-4.9 / +0.0, +0°) | Gate A9 A10: 8.4 m (-8.1 / -2.2, -0°) · own name at 68 m · E |  | agree | same as OSM · X-Plane name A9/A10 | 2 / 1 / 2 |
-| A9 | EL · obs | A9: 1.7 m (-1.7 / -0.5, -0°) | Gate A12: 8.4 m (-8.4 / +0.5, -0°) · own name at 75 m · E |  | agree | same as OSM · X-Plane name A12 | 2 / 1 / 2 |
-| A10 | EL · obs | A10: 2.0 m (-2.0 / +0.3, +0°) | Gate A15: 8.6 m (-8.6 / +0.9, -0°) · own name at 146 m · E |  | agree | same as OSM · X-Plane name A15 | 2 / 1 / 1 |
-| A1 | C · inf | — · own name at 19 m | — · own name at 27 m |  | NO COUNTERPART | no OSM counterpart | 1 / 0 / 2 |
-| A2 | EL · inf | A2 ⟲: 7.1 m (-3.1 / +6.3, +2°) | Gate A1 A2: 4.5 m (-4.2 / +1.6, +2°) · C |  | agree with X-Plane; OSM differs | same as OSM | 2 / 1 / 2 |
-| A6 (A7) | EL · obs | A6: 1.3 m (-0.9 / -0.9, +0°) | Gate A6 A7 A8: 11.9 m (-7.6 / -9.1, -1°) · F |  | agree with OSM; X-Plane differs | same as OSM · merged: SFO runs A6/A7 as separate stands | 2 / 0 / 2 |
-| A8 | EL · inf | A8: 3.2 m (-3.0 / -1.2, +0°) | Gate A11: 9.1 m (-8.8 / -2.0, -2°) · own name at 71 m · E |  | agree | same as OSM · X-Plane name A11 | 2 / 1 / 2 |
-| A11 (A13) | EL · obs | A11: 3.2 m (-3.1 / -0.8, -0°) | Gate A13 A14: 11.3 m (-11.3 / -1.1, +1°) · own name at 79 m · D |  | agree | same as OSM · merged: SFO runs A11/A13 as separate stands | 2 / 1 / 3 |
-| A15 (A12/A14) | C · obs | A15: 2.2 m (+1.6 / -1.4, +0°) | Terminal A: 1.7 m (-1.7 / +0.1, +0°) · own name at 75 m · C |  | agree | same as OSM · merged: SFO runs A15/A12/A14 as separate stands | 1 / 2 / 1 |
-| C3 | C · obs | C3 ⟲: 0.8 m (+0.4 / +0.7, +4°) | — · own name at 51 m |  | agree | same as OSM | 1 / 0 / 1 |
-| C5 | CL · obs | (no ref): 3.5 m (-1.4 / +3.3, +7°) · own name at 2 m | Gate C3: 2.2 m (+0.9 / +2.0, +15°) · own name at 45 m · C |  | unresolved (sources disagree) | same as OSM · X-Plane name C3 | 1 / 0 / 1 |
-| C7 (C9) | CL · obs | C7: 1.7 m (-1.6 / -0.4, +5°) | Gate C5: 4.5 m (+3.4 / -3.0, +8°) · own name at 31 m · C |  | agree | same as OSM · X-Plane name C5 · merged: SFO runs C7/C9 as separate stands | 1 / 1 / 1 |
-| C11 | C · obs | C9: 1.4 m (-1.4 / +0.2, +10°) · own name at 31 m | Gate C7: 4.3 m (+3.9 / -1.6, +20°) · own name at 54 m · C | C11: ours OFF (aircraft -34.1 m across our centreline, Δhdg -48°) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | DIFFERS from OSM (C9) · MISNAMED? position = OSM C9 · X-Plane name C7 · OSM has other positions here: C9 | 1 / 1 / 1 |
-| C4 | C · inf | C4: 10.4 m (-6.9 / +7.8, +4°) | Gate C4: 10.0 m (-0.6 / +10.0, -0°) · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM | 1 / 1 / 1 |
-| C6 | C · inf | C6: 6.5 m (-6.0 / +2.5, +8°) | Gate C6: 7.5 m (-0.1 / +7.5, +7°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
-| C8 | C · inf | C8: 7.7 m (+7.1 / +3.0, -0°) | Gate C8: 6.1 m (+0.2 / +6.1, -0°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
-| C10 | C · inf | C10: 6.6 m (-2.3 / -6.2, +22°) | Gate C11: 5.9 m (-4.7 / +3.6, +40°) · C | C10: ours OFF (aircraft -5.6 m across our centreline, Δhdg -23°) | OURS OFF (ADS-B + SFO) (vote: unresolved (sources disagree)) | same as OSM · X-Plane name C11 | 1 / 1 / 1 |
-| B9 | C · inf | B9: 12.0 m (-7.0 / +9.8, +0°) | Gate B9: 9.9 m (-9.4 / -2.9, +2°) · C |  | agree with X-Plane; OSM differs | same as OSM | 1 / 1 / 1 |
-| B12 | C · inf | B12: 9.3 m (-5.9 / +7.2, +0°) | Gate B12: 10.0 m (-9.8 / -1.8, +2°) · C |  | agree with X-Plane; OSM differs | same as OSM | 1 / 1 / 1 |
-| B13 | C · inf | B13: 11.1 m (-6.1 / +9.3, -0°) | Gate B13: 10.3 m (-9.8 / +3.1, +2°) · C |  | unresolved (sources disagree) | same as OSM | 1 / 1 / 1 |
-| B14 | C · inf | B14: 9.0 m (-6.2 / +6.6, +0°) | Gate B14: 10.9 m (-10.4 / -3.3, +2°) · C |  | unresolved (sources disagree) | same as OSM | 1 / 1 / 1 |
-| B17 | C · inf | B17: 8.8 m (-6.1 / +6.3, -0°) | Gate B17: 12.4 m (-12.4 / -0.5, +2°) · C |  | agree with X-Plane; OSM differs | same as OSM | 1 / 1 / 1 |
-| B18 | C · inf | B18: 7.9 m (-5.8 / +5.3, +8°) | Gate B18: 12.6 m (-12.4 / -2.6, +2°) · C | B18: ours OFF (aircraft +5.0 m across our centreline, Δhdg -9°) | OURS OFF (ADS-B + SFO) (vote: agree with X-Plane; OSM differs) | same as OSM | 1 / 1 / 1 |
-| B21 | C · inf | B21: 5.9 m (+0.9 / +5.8, +8°) | Gate B21: 12.5 m (-12.4 / -1.4, +2°) · C | B21: ours OFF (aircraft +6.0 m across our centreline, no heading) | OURS OFF (ADS-B + SFO) (vote: agree with X-Plane; OSM differs) | same as OSM | 1 / 1 / 1 |
-| B10 | B · obs | B10: 5.7 m (-0.0 / -5.7, -6°) | Gate B10 B11: 21.6 m (+12.9 / -17.2, -21°) · D |  | unresolved (sources disagree) | same as OSM | 1 / 0 / 0 |
-| B11 | B · obs | B11: 5.7 m (-0.8 / -5.6, -15°) | — · own name at 55 m |  | differs from the only counterpart (OSM) | same as OSM | 1 / 0 / 1 |
-| B15 | B · inf | B16: 15.8 m (+9.5 / +12.7, -0°) · own name at 21 m | Gate B15 B16: 20.3 m (+5.5 / -19.5, -21°) · D |  | unresolved (sources disagree) | same as OSM · stop point 6-10 m ahead of our nose in both · OSM has other positions here: B16 | 1 / 0 / 0 |
-| B16 | B · inf | B16: 14.9 m (+3.5 / -14.5, -15°) | Gate B19 B20: 6.6 m (+6.4 / +1.9, +3°) · own name at 58 m · C | B16: ours OFF (aircraft -15.7 m across our centreline, Δhdg +17°) | OURS OFF (ADS-B + SFO) (vote: agree with X-Plane; OSM differs) | same as OSM · X-Plane name B19/B20 | 1 / 0 / 0 |
-| B19 (B20) | B · inf | B20 ⟲: 12.0 m (+7.5 / +9.4, +0°) · own name at 23 m | Gate B26 B27: 7.2 m (+6.6 / -3.0, +3°) · own name at 52 m · C |  | agree with X-Plane; OSM differs | same as OSM · stop point 7-8 m ahead of our nose in both · X-Plane name B26/B27 · merged: SFO runs B19/B20 as separate stands (OSM has B20 here) | 1 / 0 / 1 |
-| B27 | CL · obs | B27: 7.1 m (-6.7 / +2.3, -2°) | Gate B25: 7.7 m (+7.7 / +1.1, -30°) · own name at 71 m · C |  | agree with OSM; X-Plane differs | same as OSM · X-Plane name B25 · OSM has other positions here: B26 | 1 / 2 / 1 |
-| B26 | CL · obs | B26: 4.9 m (-3.6 / +3.4, +2°) | Gate B25: 16.8 m (+5.7 / -15.8, +15°) · own name at 82 m · C | B26: ours OFF (aircraft +3.7 m across our centreline, no heading) | OURS OFF (ADS-B + SFO) (vote: unresolved (sources disagree)) | same as OSM · X-Plane name B25 | 1 / 0 / 0 |
-| B23 (B22) | C · obs | B23: 6.3 m (-2.7 / +5.7, +11°) | Gate B23: 10.6 m (-1.6 / -10.5, +37°) · C | B23: ours OFF (aircraft +5.2 m across our centreline, Δhdg -9°) | OURS OFF (ADS-B + SFO) (vote: unresolved (sources disagree)) | same as OSM · merged: SFO runs B23/B22 as separate stands (OSM has B24 here) | 1 / 0 / 1 |
-| B25 (B24) | C · inf | B25: 10.6 m (-5.4 / -9.1, +5°) | Gate B24: 10.0 m (-7.5 / -6.6, +6°) · own name at 53 m · C | B24: ours OFF (aircraft +26.1 m across our centreline, no heading) [SFO stand is our alias] | OURS OFF (ADS-B + SFO) (vote: OURS OFF (OSM and X-Plane agree)) | same as OSM · merged: SFO runs B25/B24 as separate stands | 1 / 1 / 0 |
-| B6 (B7/B8) | C · obs | B7: 10.1 m (-7.2 / +7.1, +7°) · own name at 42 m | Gate B7 B8: 14.8 m (+13.4 / -6.4, -9°) · own name at 43 m · C |  | unresolved (sources disagree) | OSM = our alias B7 · merged: SFO runs B6/B7/B8 as separate stands (OSM has B7 here) | 1 / 0 / 1 |
-| B3 | C · inf | — · own name at 25 m | Gate B3: 17.9 m (+11.5 / +13.7, +2°) · C |  | differs from the only counterpart (X-Plane) | no OSM counterpart | 1 / 0 / 0 |
-| B1 | B · inf | B1: 10.7 m (-9.6 / -4.7, -22°) | — |  | differs from the only counterpart (OSM) | same as OSM | 1 / 0 / 0 |
-| B2 | B · inf | B2: 7.7 m (+2.5 / +7.2, +3°) | — |  | differs from the only counterpart (OSM) | same as OSM | 1 / 0 / 1 |
-| B4 | B · inf | B4: 8.6 m (-3.6 / -7.9, +39°) | — |  | differs from the only counterpart (OSM) | same as OSM | 1 / 0 / 0 |
-| B5 | B · inf | B5: 7.3 m (-7.3 / +0.1, +23°) | — | B5: ours OFF (aircraft -0.5 m across our centreline, Δhdg -26°) | OURS OFF (ADS-B + SFO) (vote: differs from the only counterpart (OSM)) | same as OSM | 1 / 0 / 0 |
-| C1 | C · inf | C1: 16.6 m (-0.7 / +16.6, +11°) | — |  | differs from the only counterpart (OSM) | same as OSM | 1 / 0 / 1 |
-| D9 | C · obs | D9: 4.5 m (+4.3 / +1.3, +8°) | Gate D9 D10: 3.6 m (-3.3 / +1.6, +5°) · C |  | agree | same as OSM | 1 / 1 / 1 |
-| D8 | C · obs | D8 ⟲: 2.2 m (-1.5 / +1.6, +9°) | Gate D8: 5.3 m (-2.6 / +4.7, +11°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
-| D16 | C · obs | D16: 7.8 m (+2.0 / +7.5, +14°) | Gate D18: 7.7 m (-0.3 / +7.7, +15°) · own name at 60 m · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM · X-Plane name D18 | 1 / 1 / 1 |
-| D5 (D6) | C · obs | D5: 12.5 m (-10.3 / +7.2, +9°) | Gate D5: 11.6 m (-5.1 / +10.4, +7°) · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM · merged: SFO runs D5/D6 as separate stands | 1 / 1 / 1 |
-| D1 (D2) | C · obs | D1 ⟲: 6.3 m (+6.3 / +0.3, +0°) | — · own name at 47 m |  | agree | same as OSM · merged: SFO runs D1/D2 as separate stands | 1 / 0 / 1 |
-| D10 | C · inf | — · own name at 23 m | Gate D11: 16.3 m (+15.1 / +6.3, +21°) · own name at 51 m · C |  | differs from the only counterpart (X-Plane) | no OSM counterpart · X-Plane name D11 | 1 / 0 / 0 |
-| D11 | C · inf | D11 ⟲: 14.8 m (+14.2 / +4.1, -1°) | Gate D12: 10.5 m (+10.4 / +1.2, -1°) · own name at 32 m · C |  | agree with X-Plane; OSM differs | same as OSM · stop point 10-14 m ahead of our nose in both · X-Plane name D12 | 1 / 1 / 1 |
-| D12 | C · inf | D12 ⟲: 9.8 m (+9.7 / +1.3, -21°) | Gate D14: 9.6 m (+9.5 / +1.2, -20°) · own name at 35 m · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM · stop point 10-10 m ahead of our nose in both · X-Plane name D14 | 1 / 1 / 1 |
-| D14 | C · inf | D14 ⟲: 12.7 m (+11.4 / +5.6, +6°) | Gate D15: 15.5 m (+13.9 / +6.9, +7°) · own name at 32 m · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM · stop point 11-14 m ahead of our nose in both · X-Plane name D15 | 1 / 0 / 0 |
-| D15 | C · inf | D15: 14.6 m (+6.5 / +13.1, +17°) | Gate D16 D17: 16.3 m (+9.1 / +13.5, +16°) · own name at 30 m · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM · stop point 6-9 m ahead of our nose in both · X-Plane name D16/D17 | 1 / 0 / 1 |
-| D3 | C · inf | D3 ⟲: 10.6 m (+2.7 / +10.2, -22°) | Gate D3: 11.0 m (+6.8 / +8.7, -18°) · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM | 1 / 1 / 1 |
-| D4 | C · inf | D4: 10.1 m (+6.0 / +8.2, -20°) | Gate D4: 15.6 m (+0.8 / +15.6, -4°) · C |  | unresolved (sources disagree) | same as OSM | 1 / 1 / 1 |
-| D7 | C · inf | D7 ⟲: 16.1 m (+5.2 / +15.3, -22°) | Gate D6: 18.9 m (+0.3 / -18.9, +0°) · own name at 18 m · C |  | unresolved (sources disagree) | same as OSM · X-Plane name D6 · OSM has other positions here: D6 | 1 / 1 / 1 |
-| E9 | C · obs | E9 ⟲: 4.0 m (+3.4 / +2.0, +0°) | Gate E9 E11: 16.7 m (+6.4 / +15.5, -19°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
-| E5 | C · obs | E5 ⟲: 1.7 m (+0.3 / +1.7, +8°) | Gate E5: 17.4 m (+1.9 / +17.3, +8°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
-| E4 | C · obs | E4 ⟲: 2.1 m (-0.9 / -1.9, +4°) | — · own name at 22 m |  | agree | same as OSM | 1 / 0 / 0 |
-| E7 | C · inf | E7 ⟲: 6.6 m (+6.2 / +2.1, +0°) | Gate E7: 19.5 m (+1.7 / +19.4, +1°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
-| E11 | C · inf | — · own name at 2 m | Gate E13: 22.7 m (+4.2 / +22.3, +1°) · own name at 20 m · C |  | differs from the only counterpart (X-Plane) | no OSM counterpart · X-Plane name E13 | 1 / 0 / 0 |
-| E10 | C · obs | E10 ⟲: 2.7 m (-0.8 / +2.6, -2°) | Gate E8 E10: 1.3 m (+1.0 / +0.8, +1°) · C |  | agree | same as OSM · OSM has other positions here: E10A/E12 | 1 / 1 / 1 |
-| E13 (E12) | C · obs | E12 ⟲: 18.6 m (+14.7 / +11.4, +9°) · own name at 33 m | Gate E12: 10.1 m (+8.0 / +6.3, +21°) · own name at 48 m · C |  | OURS OFF (OSM and X-Plane agree) | OSM = our alias E12 · stop point 8-15 m ahead of our nose in both · merged: SFO runs E13/E12 as separate stands (OSM has E12 here) | 1 / 0 / 1 |
-| E8 | C · inf | E8: 3.9 m (+3.6 / +1.4, +2°) | Gate E6: 7.3 m (+7.0 / +2.0, +3°) · own name at 34 m · C |  | agree | same as OSM · X-Plane name E6 · OSM has other positions here: E10A | 1 / 1 / 1 |
-| E6 | C · inf | E6: 16.4 m (+5.1 / +15.5) | Gate E3: 15.7 m (+5.2 / +14.8, +40°) · own name at 50 m · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM · stop point 5-5 m ahead of our nose in both · X-Plane name E3 | 1 / 1 / 0 |
-| E3 (E2) | C · inf | (no ref): 1.3 m (+0.1 / -1.3, -20°) · own name at 8 m | Gate E2: 7.5 m (-0.5 / -7.5, -20°) · own name at 66 m · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM · merged: SFO runs E3/E2 as separate stands | 1 / 1 / 1 |
-| F22 (F21) | E · obs | F22 ⟲: 1.9 m (+1.9 / -0.3, -1°) | Gate F22: 7.7 m (-7.7 / -0.3, +1°) · D |  | agree | same as OSM · merged: SFO runs F22/F21 as separate stands | 2 / 1 / 1 |
-| F15 | E · inf | F15 ⟲: 5.6 m (+0.9 / +5.6, +3°) | Gate F15: 2.1 m (+1.9 / -0.8, -2°) · C |  | agree with X-Plane; OSM differs | same as OSM | 2 / 1 / 2 |
-| F13 | EL · obs | F13: 0.6 m (-0.6 / +0.1, -0°) | Gate F13: 7.1 m (-7.1 / +0.2, +1°) · D |  | agree | same as OSM | 2 / 2 / 2 |
-| F11 | E · obs | F11: 4.9 m (+4.9 / -0.3, +0°) | Gate F11: 1.7 m (-1.0 / -1.3, +1°) · D |  | agree | same as OSM | 2 / 2 / 1 |
-| F17 (F18) | D · obs | F17 ⟲: 4.7 m (+4.7 / +0.5, -0°) | Gate F18 F17: 9.2 m (-9.2 / +0.1, -1°) · C |  | agree | same as OSM · merged: SFO runs F17/F18 as separate stands | 2 / 1 / 1 |
-| F16 | D · inf | F16: 7.8 m (+7.8 / +0.6, -0°) | Gate F16: 9.2 m (-9.0 / +1.8, -1°) · C |  | agree | same as OSM | 2 / 1 / 1 |
-| F14 | D · inf | F14: 1.4 m (+0.6 / +1.3, -0°) | Gate F14: 8.2 m (-8.1 / +1.3, -1°) · C |  | agree | same as OSM | 2 / 1 / 1 |
-| F12 | D · obs | F12 ⟲: 3.1 m (-1.9 / +2.4, -0°) | Gate F12: 8.2 m (-7.5 / +3.4, -1°) · C |  | agree with OSM; X-Plane differs | same as OSM | 2 / 1 / 1 |
-| F19 | E · obs | F19 ⟲: 13.3 m (+1.1 / +13.3, +11°) | Gate F19: 18.7 m (-11.1 / +15.0, +9°) · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM | 2 / 1 / 1 |
-| F20 | C · inf | F20 ⟲: 17.1 m (-6.5 / +15.8, -0°) | Gate F20: 17.1 m (-3.6 / +16.7, +2°) · C |  | OURS OFF (OSM and X-Plane agree) | same as OSM | 1 / 1 / 1 |
-| F8 (F7) | B · obs | F7 ⟲: 1.7 m (-1.7 / +0.4, +3°) · own name at 23 m | Gate F7: 6.4 m (-2.0 / +6.1, +2°) · own name at 33 m · C |  | agree with OSM; X-Plane differs | same as OSM · merged: SFO runs F8/F7 as separate stands (OSM has F7 here) | 1 / 1 / 1 |
-| F6 | B · obs | F6 ⟲: 1.3 m (-1.3 / -0.5, +5°) | Gate F6: 6.5 m (+6.5 / -0.3, +14°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 1 |
-| F10 | B · inf | F8 ⟲: 13.3 m (+2.1 / -13.1, -30°) · own name at 20 m | Gate F8: 11.8 m (+10.5 / -5.2, -42°) · own name at 54 m · C |  | OURS OFF (OSM and X-Plane agree) | DIFFERS from OSM (F8) · X-Plane name F8 · OSM has other positions here: F8 | 1 / 1 / 0 |
-| F5 | B · inf | F5: 4.1 m (+3.9 / +1.5, +2°) | Gate F5: 7.5 m (-1.4 / +7.4, +12°) · B |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| A1 | EL · inf | A1: 4.0 m (-4.0 / +0.0, +0°) | — · own name at 48 m |  | agree | same as OSM | 2 / 0 / 1 |
+| A2 | EL · obs | A2 ⟲: 4.0 m (-4.0 / +0.0, -0°) | Gate A1 A2: 7.0 m (-5.3 / -4.6, -1°) · C |  | agree with OSM; X-Plane differs | same as OSM | 2 / 1 / 2 |
+| A4 | C · obs | A3: 1.0 m (-1.0 / -0.0, -0°) | Gate A3 A4 A5: 10.5 m (+9.5 / -4.4, +2°) · D |  | agree with OSM; X-Plane differs | DIFFERS from OSM (A3) · MISNAMED? position = OSM A3 · OSM has other positions here: A3 | 1 / 0 / 1 |
+| A5 | EL · obs | A5: 4.0 m (-4.0 / +0.0, -0°) | Gate A9 A10: 7.6 m (-7.3 / -2.2, -0°) · own name at 68 m · E |  | agree | same as OSM · X-Plane name A9/A10 | 2 / 1 / 2 |
+| A6 | F · inf | A6: 4.0 m (-4.0 / +0.0, -0°) | Gate A6 A7 A8: 13.5 m (-10.8 / -8.2, -2°) · F |  | agree with OSM; X-Plane differs | same as OSM | 2 / 0 / 2 |
+| A8 | EL · obs | A8: 4.0 m (-4.0 / -0.0, +0°) | Gate A11: 9.9 m (-9.8 / -0.8, -2°) · own name at 73 m · E |  | agree | same as OSM · X-Plane name A11 | 2 / 1 / 2 |
+| A9 | EL · obs | A9: 4.0 m (-4.0 / -0.0, +0°) | Gate A12: 10.8 m (-10.7 / +1.0, -0°) · own name at 74 m · E |  | agree | same as OSM · X-Plane name A12 | 2 / 1 / 2 |
+| A10 | EL · obs | A10: 4.0 m (-4.0 / +0.0, +0°) | Gate A15: 10.6 m (-10.6 / +0.6, -0°) · own name at 147 m · E |  | agree | same as OSM · X-Plane name A15 | 2 / 1 / 1 |
+| A11 | F · obs | A11: 4.0 m (-4.0 / +0.0, +0°) | Gate A13 A14: 12.1 m (-12.1 / -0.4, +1°) · own name at 80 m · D |  | agree | same as OSM · X-Plane name A13/A14 | 2 / 1 / 3 |
+| A12 | E · inf | A12: 4.0 m (-4.0 / +0.0) | Terminal A: 17.6 m (-17.5 / +1.5, +2°) · own name at 119 m · C |  | agree | same as OSM | 1 / 1 / 1 |
+| A13 | EL · obs | A13: 4.0 m (-4.0 / -0.0, -0°) | Terminal A: 9.9 m (-8.9 / +4.3, -31°) · own name at 40 m · C |  | agree with OSM; X-Plane differs | same as OSM | 2 / 1 / 1 |
+| A15 | C · obs | A15: 1.0 m (-1.0 / -0.0, +0°) | Terminal A: 4.5 m (-4.2 / +1.6, -0°) · own name at 72 m · C |  | agree | same as OSM | 1 / 2 / 1 |
+| B2 | C · obs | B2: 1.0 m (-1.0 / +0.0, -0°) | — |  | agree | same as OSM | 1 / 0 / 1 |
+| B3 | C · obs | B3: 1.0 m (-1.0 / +0.0, -0°) | Gate B3: 10.8 m (-1.6 / -10.7, -21°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 1 |
+| B4 | C · obs | B4: 1.0 m (-1.0 / +0.0, +0°) | — |  | agree | same as OSM | 1 / 0 / 0 |
+| B5 | C · obs | B5: 1.0 m (-1.0 / +0.0, +0°) | — | B5: ours OFF (aircraft +1.0 m across our centreline, Δhdg -26°) | OURS OFF (ADS-B + SFO) (vote: agree) | same as OSM | 1 / 0 / 0 |
+| B5S | EL · obs | B5: 4.0 m (-4.0 / -0.0, +0°) | — |  | agree | DIFFERS from OSM (B5) · MISNAMED? position = OSM B5 · OSM has other positions here: B5 | 0 / 0 / 1 |
+| B6 | C · obs | B6: 1.0 m (-1.0 / -0.0, +0°) | Gate B6: 16.9 m (-15.7 / +6.2, +15°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| B7 | C · obs | B7: 1.0 m (-1.0 / +0.0, -0°) | — · own name at 24 m |  | agree | same as OSM | 1 / 0 / 0 |
+| B8 | C · obs | (no ref): 1.0 m (-1.0 / -0.0, -0°) | Gate B7 B8: 18.6 m (+16.2 / +9.1, -43°) · C |  | agree with OSM; X-Plane differs | OSM position has no ref | 1 / 0 / 1 |
+| B9 | C · obs | B9: 1.0 m (-1.0 / -0.0, +0°) | Gate B9: 13.2 m (-3.5 / -12.7, +2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 1 |
+| B10 | C · inf | B10: 1.0 m (-1.0 / -0.0, -0°) | Gate B10 B11: 16.6 m (+13.1 / -10.2, -16°) · D |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 0 |
+| B11 | C · obs | B11: 1.0 m (-1.0 / -0.0, -0°) | — · own name at 49 m |  | agree | same as OSM | 1 / 0 / 1 |
+| B11S | E · obs | B11: 4.0 m (-4.0 / -0.0, -0°) | — |  | agree | DIFFERS from OSM (B11) · MISNAMED? position = OSM B11 · OSM has other positions here: B11 | 1 / 0 / 2 |
+| B12 | C · obs | B12: 1.0 m (-1.0 / -0.0, -0°) | Gate B12: 10.3 m (-5.0 / -9.0, +2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 1 |
+| B13 | C · inf | B13: 1.0 m (-1.0 / -0.0, +0°) | Gate B13: 7.8 m (-4.7 / -6.2, +2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| B14 | C · inf | B14: 1.0 m (-1.0 / -0.0, -0°) | Gate B14: 11.2 m (-5.2 / -9.9, +2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 1 |
+| B15 | C · obs | B15: 1.0 m (-1.0 / -0.0, +0°) | — · own name at 25 m |  | agree | same as OSM | 1 / 0 / 0 |
+| B16 | C · obs | B16: 1.0 m (-1.0 / -0.0, +0°) | Gate B19 B20: 16.7 m (-2.5 / +16.6, +18°) · own name at 43 m · C | B16: ours OFF (aircraft -16.4 m across our centreline, Δhdg +17°) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | same as OSM · X-Plane name B19/B20 | 1 / 1 / 2 |
+| B16S | EL · inf | B16: 4.0 m (-4.0 / +0.0, +0°) | — |  | agree | DIFFERS from OSM (B16) · MISNAMED? position = OSM B16 · OSM has other positions here: B16 | 0 / 0 / 2 |
+| B17 | C · obs | B17: 1.0 m (-1.0 / +0.0, -0°) | Gate B17: 10.0 m (-7.3 / -6.9, +2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| B18 | C · obs | B18: 1.0 m (-1.0 / +0.0, -0°) | Gate B18: 11.0 m (-8.5 / -7.0, -6°) · C | B18: ours OFF (aircraft +5.6 m across our centreline, Δhdg -9°) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | same as OSM | 1 / 0 / 1 |
+| B19 | C · obs | B19: 1.0 m (-1.0 / -0.0, -0°) | — · own name at 46 m |  | agree | same as OSM | 1 / 0 / 0 |
+| B20 | C · obs | B20: 1.0 m (-1.0 / -0.0, -0°) | — · own name at 71 m |  | agree | same as OSM | 1 / 0 / 0 |
+| B21 | C · obs | B21: 1.0 m (-1.0 / +0.0, +0°) | Gate B21: 16.1 m (-15.2 / -5.4, -6°) · C | B21: ours OFF (aircraft +6.6 m across our centreline, no heading) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | same as OSM | 1 / 0 / 1 |
+| B22 | C · obs | B22: 1.0 m (-1.0 / -0.0, -0°) | Gate B22: 14.0 m (-13.8 / -2.9, -7°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| B23 | C · obs | B23: 1.0 m (-1.0 / -0.0, +0°) | Gate B23: 16.4 m (-2.9 / -16.2, +26°) · C | B23: ours OFF (aircraft +6.4 m across our centreline, Δhdg -9°) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | same as OSM | 1 / 0 / 1 |
+| B24 | C · obs | B24: 1.0 m (-1.0 / -0.0, -0°) | Gate B23: 14.0 m (+2.1 / +13.9, -8°) · own name at 33 m · C |  | agree with OSM; X-Plane differs | same as OSM · X-Plane name B23 · OSM has other positions here: B23 | 1 / 2 / 1 |
+| B25 | C · obs | B25: 1.0 m (-1.0 / +0.0, +0°) | Gate B24: 3.9 m (-2.9 / +2.7, +1°) · own name at 45 m · C | B24: ours OFF (aircraft +27.6 m across our centreline, no heading) [SFO stand is our alias] | OURS OFF (ADS-B + SFO) (vote: agree) | same as OSM · X-Plane name B24 | 1 / 1 / 1 |
+| B26 | C · obs | B26: 1.0 m (-1.0 / +0.0, -0°) | Gate B25: 20.9 m (+7.6 / -19.5, +13°) · own name at 86 m · C | B26: ours OFF (aircraft +4.6 m across our centreline, no heading) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | same as OSM · X-Plane name B25 | 1 / 0 / 0 |
+| B27 | C · inf | B27: 1.0 m (-1.0 / +0.0, +0°) | Gate B25: 13.4 m (+13.4 / -0.6, -27°) · own name at 76 m · C |  | agree with OSM; X-Plane differs | same as OSM · X-Plane name B25 | 1 / 1 / 1 |
+| C1 | C · inf | C1: 1.0 m (-1.0 / -0.0, -0°) | — |  | agree | same as OSM | 1 / 0 / 1 |
+| C3 | CL · obs | C3 ⟲: 1.0 m (-1.0 / -0.0, -0°) | — · own name at 52 m |  | agree | same as OSM | 1 / 0 / 1 |
+| C4 | C · obs | C4: 1.5 m (-1.0 / +1.1, +0°) | Gate C4: 6.1 m (+5.4 / +2.8, -4°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| C5 | D · obs | (no ref): 6.5 m (-6.3 / +1.8, +0°) · own name at 4 m | Gate C3: 4.2 m (-4.2 / +0.2, +8°) · own name at 47 m · C |  | agree | same as OSM · X-Plane name C3 | 1 / 0 / 1 |
+| C6 | C · inf | C6: 1.0 m (-1.0 / -0.0, +0°) | Gate C6: 6.9 m (+5.6 / +4.1, -2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| C7 | C · obs | C7: 1.0 m (-1.0 / -0.0, +0°) | Gate C5: 4.9 m (+3.8 / -3.0, +3°) · own name at 31 m · C |  | agree | same as OSM · X-Plane name C5 | 1 / 1 / 1 |
+| C8 | D · obs | C8: 4.0 m (-4.0 / -0.0, -0°) | Gate C8: 11.3 m (-10.9 / +3.0, -0°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| C9 | CL · obs | C9: 1.0 m (-1.0 / -0.0, +0°) | Gate C7: 4.8 m (+4.0 / -2.7, +10°) · own name at 29 m · C |  | agree with OSM; X-Plane differs | same as OSM · X-Plane name C7 | 1 / 1 / 1 |
+| C9V | D · inf | (no ref) ⟲: 4.0 m (-4.0 / -0.0, +0°) | Gate C7: 4.0 m (+1.7 / +3.6, -4°) · C |  | agree with OSM; X-Plane differs | OSM position has no ref · X-Plane name C7 · OSM has other positions here: C11/C9 | 0 / 1 / 1 |
+| C10 | C · obs | C10: 1.0 m (-1.0 / +0.0, +0°) | Gate C11: 10.0 m (+0.4 / +10.0, +18°) · C | C10: ours OFF (aircraft -5.0 m across our centreline, Δhdg -23°) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | same as OSM · X-Plane name C11 | 1 / 1 / 1 |
+| C11 | C · obs | C11 ⟲: 1.0 m (-1.0 / -0.0, +0°) | Gate C9: 1.5 m (+1.4 / +0.5, +11°) · own name at 26 m · C | C11: ours OFF (aircraft -34.9 m across our centreline, Δhdg -48°) | OURS OFF (ADS-B + SFO) (vote: agree with OSM; X-Plane differs) | same as OSM · X-Plane name C9 | 1 / 1 / 1 |
+| D1 | C · inf | D1 ⟲: 1.0 m (-1.0 / -0.0, +0°) | — · own name at 42 m |  | agree | same as OSM | 1 / 0 / 1 |
+| D3 | C · obs | D3 ⟲: 1.0 m (-1.0 / -0.0, -0°) | Gate D3: 3.4 m (+3.4 / +0.1, +3°) · C |  | agree | same as OSM | 1 / 1 / 0 |
+| D4 | C · obs | D4: 1.0 m (-1.0 / -0.0, -0°) | Gate D4: 9.8 m (-8.3 / +5.3, +15°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| D5 | CL · obs | D5: 1.0 m (-1.0 / -0.0, -0°) | Gate D5: 5.3 m (+4.7 / +2.4, -2°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| D6 | C · obs | D6 ⟲: 1.0 m (-1.0 / +0.0, -0°) | Gate D6: 2.9 m (-0.9 / +2.8, +2°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| D7 | C · obs | D7 ⟲: 1.0 m (-1.0 / -0.0, -0°) | Gate D7: 2.3 m (+0.1 / +2.3, -3°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| D8 | C · inf | D8 ⟲: 1.0 m (-1.0 / +0.0, +0°) | Gate D8: 3.6 m (-1.6 / +3.2, +2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| D9 | C · inf | D9: 1.0 m (-1.0 / -0.0, +0°) | Gate D9 D10: 8.6 m (-8.5 / +1.4, -3°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| D10 | C · inf | D10 ⟲: 1.0 m (-1.0 / -0.0, +0°) | Gate D11: 8.7 m (-7.6 / +4.2, +3°) · own name at 40 m · C |  | agree with OSM; X-Plane differs | same as OSM · X-Plane name D11 | 1 / 1 / 1 |
+| D11 | C · obs | D11 ⟲: 1.0 m (-1.0 / -0.0, -0°) | Gate D12: 5.6 m (-4.8 / -2.9, -1°) · own name at 31 m · C |  | agree | same as OSM · X-Plane name D12 | 1 / 1 / 1 |
+| D12 | C · obs | D12 ⟲: 1.0 m (-1.0 / +0.0, +0°) | Gate D14: 1.1 m (-1.1 / -0.1, +1°) · own name at 33 m · C |  | agree | same as OSM · X-Plane name D14 | 1 / 1 / 1 |
+| D14 | C · obs | D14 ⟲: 3.4 m (-1.0 / -3.2, -1°) | Gate D15: 2.7 m (+1.6 / -2.2, +1°) · own name at 37 m · C |  | agree with X-Plane; OSM differs | same as OSM · X-Plane name D15 | 1 / 1 / 1 |
+| D15 | C · obs | D15: 1.0 m (-1.0 / -0.0, -0°) | Gate D16 D17: 1.7 m (+1.6 / -0.4, -1°) · own name at 39 m · C |  | agree | same as OSM · X-Plane name D16/D17 | 1 / 1 / 1 |
+| D16 | C · obs | D16: 1.0 m (-1.0 / +0.0, -0°) | Gate D18: 3.3 m (-3.2 / +0.7, +1°) · own name at 65 m · C |  | agree | same as OSM · X-Plane name D18 | 1 / 1 / 1 |
+| E2 | C · inf | E2 ⟲: 1.0 m (-1.0 / +0.0, -0°) | — · own name at 56 m |  | agree | same as OSM | 1 / 0 / 1 |
+| E3 | C · inf | E3 ⟲: 1.0 m (-1.0 / +0.0, +0°) | Gate E2: 5.0 m (-4.7 / -1.6, -1°) · own name at 61 m · C |  | agree | same as OSM · X-Plane name E2 | 1 / 1 / 1 |
+| E4 | C · obs | E4 ⟲: 1.0 m (-1.0 / -0.0, +0°) | — · own name at 23 m |  | agree | same as OSM | 1 / 0 / 0 |
+| E5 | C · obs | E5 ⟲: 1.0 m (-1.0 / -0.0, -0°) | Gate E5: 15.5 m (+2.7 / +15.3, +0°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| E6 | C · inf | E6: 1.0 m (-1.0 / +0.0) | Gate E3: 1.5 m (-1.4 / -0.6, +3°) · own name at 66 m · C |  | agree | same as OSM · X-Plane name E3 | 1 / 1 / 1 |
+| E7 | C · obs | E7 ⟲: 1.0 m (-1.0 / -0.0, -0°) | Gate E7: 18.1 m (-5.5 / +17.3, +1°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| E8 | C · inf | E8: 1.0 m (-1.0 / +0.0, -0°) | Gate E6: 2.5 m (+2.4 / +0.6, +1°) · own name at 36 m · C |  | agree | same as OSM · X-Plane name E6 · OSM has other positions here: E10A | 1 / 1 / 1 |
+| E9 | C · inf | E9 ⟲: 1.0 m (-1.0 / +0.0, -0°) | Gate E9 E11: 13.6 m (+2.0 / +13.5, -19°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| E10 | C · obs | E10 ⟲: 1.0 m (-1.0 / +0.0, -0°) | Gate E8 E10: 1.9 m (+0.8 / -1.7, +3°) · C |  | agree | same as OSM · OSM has other positions here: E10A | 1 / 1 / 1 |
+| E11 | C · obs | E11: 1.0 m (-1.0 / +0.0, -0°) | Gate E9 E11: 17.3 m (+1.6 / -17.3, +11°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 1 |
+| E12 | D · obs | E12 ⟲: 4.0 m (-4.0 / -0.0, -0°) | Gate E12: 12.1 m (-11.4 / -4.0, +12°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| E13 | C · obs | E13 ⟲: 1.0 m (-1.0 / +0.0, -0°) | Gate E13: 18.5 m (-11.1 / -14.9, -9°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 0 / 1 |
+| F5 | C · inf | F5: 1.0 m (-1.0 / -0.0, +0°) | Gate F5: 8.6 m (-6.0 / +6.1, +10°) · B |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| F6 | B · inf | F6 ⟲: 1.0 m (-1.0 / +0.0, +0°) | Gate F6: 6.7 m (+6.7 / -0.5, +10°) · C |  | agree | same as OSM | 1 / 0 / 1 |
+| F7 | B · obs | F7 ⟲: 1.0 m (-1.0 / -0.0, +0°) | Gate F7: 5.8 m (-1.1 / +5.6, -0°) · C |  | agree with OSM; X-Plane differs | same as OSM · OSM has other positions here: F8 | 1 / 1 / 1 |
+| F8 | B · inf | F8 ⟲: 1.0 m (-1.0 / -0.0, -0°) | Gate F8: 11.3 m (+2.3 / +11.1, -12°) · C |  | agree with OSM; X-Plane differs | same as OSM · OSM has other positions here: F7 | 1 / 1 / 1 |
+| F9 | B · obs | F9 ⟲: 1.0 m (-1.0 / +0.0, -0°) | Gate F9 F10: 9.9 m (-9.0 / -4.0, +24°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| F10 | B · obs | F10 ⟲: 1.0 m (-1.0 / -0.0, -0°) | — · own name at 36 m |  | agree | same as OSM | 0 / 0 / 0 |
+| F11 | E · obs | F11: 4.0 m (-4.0 / +0.0, -0°) | Gate F11: 10.0 m (-10.0 / -1.0, +0°) · D |  | agree | same as OSM | 2 / 2 / 1 |
+| F12 | C · inf | F12 ⟲: 1.0 m (-1.0 / +0.0, +0°) | Gate F12: 6.7 m (-6.6 / +0.9, -1°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| F13 | EL · obs | F13: 4.0 m (-4.0 / +0.0, -0°) | Gate F13: 10.5 m (-10.5 / +0.0, +1°) · D |  | agree | same as OSM | 2 / 2 / 2 |
+| F14 | D · obs | F14: 4.0 m (-4.0 / +0.0, -0°) | Gate F14: 12.6 m (-12.6 / -0.0, -1°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| F15 | E · obs | F15 ⟲: 10.6 m (-7.0 / +8.0, +0°) | Gate F15: 6.6 m (-6.4 / +1.6, -6°) · C |  | agree with X-Plane; OSM differs | same as OSM | 2 / 2 / 2 |
+| F16 | CL · inf | F16: 1.0 m (-1.0 / -0.0, +0°) | Gate F16: 17.8 m (-17.8 / +1.1, -1°) · C |  | agree | same as OSM | 1 / 0 / 0 |
+| F17 | D · inf | F17 ⟲: 4.0 m (-4.0 / -0.0, -0°) | Gate F18 F17: 17.8 m (-17.8 / -0.5, -0°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| F18 | B · inf | F18: 1.0 m (-1.0 / -0.0, -0°) | — · own name at 35 m |  | agree | same as OSM | 0 / 0 / 0 |
+| F19 | EL · inf | F19 ⟲: 4.0 m (-4.0 / +0.0, -0°) | Gate F19: 16.2 m (-15.7 / +4.0, -2°) · C |  | agree with OSM; X-Plane differs | same as OSM | 1 / 1 / 1 |
+| F20 | D · inf | F20 ⟲: 4.0 m (-4.0 / +0.0, +0°) | Gate F20: 1.4 m (-1.1 / +0.9, +2°) · C |  | agree | same as OSM | 1 / 1 / 1 |
+| F21 | CL · obs | F21 ⟲: 1.0 m (-1.0 / -0.0, +0°) | Gate F21: 18.3 m (-18.3 / +0.3, +1°) · C |  | agree | same as OSM | 1 / 0 / 1 |
+| F22 | E · obs | F22 ⟲: 4.0 m (-4.0 / +0.0, +0°) | Gate F22: 13.6 m (-13.6 / -0.3, +2°) · D |  | agree | same as OSM | 2 / 1 / 1 |
+| G1 | E · inf | G1 ⟲: 4.0 m (-4.0 / +0.0, +0°) | Gate G1 G2: 9.8 m (-9.3 / -3.0, +0°) · E |  | agree | same as OSM | 2 / 1 / 2 |
+| G2 | EL · obs | G2 ⟲: 4.0 m (-4.0 / +0.0, -0°) | Terminal G: 11.9 m (-11.7 / -2.6, +1°) · own name at 76 m · E |  | agree | same as OSM | 2 / 1 / 2 |
+| G3 | E · inf | G3 ⟲: 4.0 m (-4.0 / -0.0, +0°) | Terminal G: 14.5 m (-12.6 / +7.2, -1°) · own name at 82 m · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 2 / 2 |
+| G4 | E · inf | G4: 4.0 m (-4.0 / -0.0, -0°) | Gate G3 G4: 9.4 m (-7.4 / +5.7, -1°) · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 2 / 2 |
+| G5 | EL · obs | G5 ⟲: 4.0 m (-4.0 / +0.0, -0°) | Gate G5 G6: 11.4 m (-11.3 / -1.5, +0°) · E | G5: ours OK (aircraft +0.7 m across our centreline, Δhdg -0°) | agree (ADS-B + SFO confirm ours) (vote: agree) | same as OSM | 2 / 1 / 2 |
+| G6 | EL · obs | G6 ⟲: 4.0 m (-4.0 / -0.0, +0°) | Terminal G: 11.8 m (-11.7 / +1.3, -0°) · own name at 75 m · E |  | agree | same as OSM | 2 / 1 / 2 |
+| G7 | EL · obs | G7 ⟲: 4.0 m (-4.0 / +0.0, -0°) | Gate G7 G8: 11.3 m (-8.9 / +7.0, -1°) · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 2 / 2 |
+| G8 | EL · obs | G8 ⟲: 4.0 m (-4.0 / -0.0, -0°) | Gate G11 G12: 9.8 m (-9.7 / +1.2, +1°) · own name at 80 m · E |  | agree | same as OSM · X-Plane name G11/G12 | 2 / 1 / 2 |
+| G9 | EL · inf | G9 ⟲: 4.0 m (-4.0 / +0.0, -0°) | Gate G9 G10: 17.3 m (-16.2 / +6.2, -0°) · E |  | agree with OSM; X-Plane differs | same as OSM | 2 / 2 / 2 |
+| G10 | EL · obs | G10 ⟲: 4.0 m (-4.0 / -0.0, +0°) | Gate G13 G14: 14.6 m (-12.7 / +7.3, -1°) · own name at 69 m · E |  | agree with OSM; X-Plane differs | same as OSM · X-Plane name G13/G14 | 2 / 2 / 2 |
+| G11 (G12) | E · obs | (no ref): 7.2 m (-7.2 / -0.8, +5°) · own name at 4 m | Terminal G: 12.2 m (-5.8 / -10.8, -8°) · own name at 47 m · F |  | agree with OSM; X-Plane differs | same as OSM · merged: SFO runs G11/G12 as separate stands | 2 / 0 / 1 |
+| G13 (G14) | F · obs | G13 ⟲: 4.0 m (-4.0 / -0.0, +0°) | Terminal G: 11.4 m (-11.3 / +1.3, +5°) · own name at 57 m · F |  | agree | same as OSM · merged: SFO runs G13/G14 as separate stands | 2 / 2 / 3 |
 <!--END:stands_table-->
 
 ### 4.5 Stand names by area
@@ -317,13 +336,13 @@ The SFO column is the union of stand names in SFO's AODB (flysfo `stands[]`) and
 <!--BEGIN:names_table-->
 | Area | SFO stands in use (AODB ∪ DataSF, via gate_truth) | ours: own stands | ours: only as alias | OSM refs | X-Plane names | in SFO use but no own stand of ours | X-Plane names not in SFO's maps |
 |---|---|---|---|---|---|---|---|
-| A | A1 A2 A4 A5 A6 A8 A9 A10 A11 A12 A13 A15 | A1 A2 A3 A5 A6 A8 A9 A10 A11 A15 | A4 A7 A12 A13 A14 | A1 A2 A3 A5 A6 A7 A8 A9 A10 A11 A12 A13 A14 A15 | A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11 A12 A13 A14 A15 | A4 A12 A13 | — |
-| B | B2 B3 B4 B5 B6 B7 B8 B9 B10 B11 B12 B13 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B24 B25 B26 B27 | B1 B2 B3 B4 B5 B6 B9 B10 B11 B12 B13 B14 B15 B16 B17 B18 B19 B21 B23 B25 B26 B27 | B7 B8 B20 B22 B24 | B1 B2 B3 B4 B5 B6 B7 B9 B10 B11 B12 B13 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B24 B25 B26 B27 | B3 B6 B7 B8 B9 B10 B11 B12 B13 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B24 B25 B26 B27 | B7 B8 B20 B22 B24 | — |
-| C | C1 C3 C4 C5 C6 C7 C8 C9 C10 C11 | C1 C3 C4 C5 C6 C7 C8 C10 C11 | C9 | C1 C3 C4 C5 C6 C7 C8 C9 C10 C11 | C2 C3 C4 C5 C6 C7 C8 C9 C11 | C9 | — |
-| D | D1 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D14 D15 D16 | D1 D3 D4 D5 D7 D8 D9 D10 D11 D12 D14 D15 D16 | D2 D6 | D1 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D14 D15 D16 | D1 D2 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D14 D15 D16 D17 D18 | D6 | — |
-| E | E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 | E3 E4 E5 E6 E7 E8 E9 E10 E11 E13 | E2 E12 | E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 | E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 | E2 E12 | E1 |
-| F | F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 | F5 F6 F8 F10 F11 F12 F13 F14 F15 F16 F17 F19 F20 F22 | F7 F18 F21 | F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 | F1 F2 F3 F3A F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 | F7 F9 F18 F21 | F1 F2 F3 F3A F4 |
-| G | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G12 G13 G14 G104 G105 | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G12 | G11 G13 G14 | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G13 | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G12 G13 G14 | G11 G13 G14 G104 G105 | — |
+| A | A1 A2 A4 A5 A6 A8 A9 A10 A11 A12 A13 A15 | A1 A2 A4 A5 A6 A8 A9 A10 A11 A12 A13 A15 | — | A1 A2 A3 A5 A6 A7 A8 A9 A10 A11 A12 A13 A14 A15 | A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11 A12 A13 A14 A15 | — | — |
+| B | B2 B3 B4 B5 B6 B7 B8 B9 B10 B11 B12 B13 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B24 B25 B26 B27 | B2 B3 B4 B5 B5S B6 B7 B8 B9 B10 B11 B11S B12 B13 B14 B15 B16 B16S B17 B18 B19 B20 B21 B22 B23 B24 B25 B26 B27 | — | B1 B2 B3 B4 B5 B6 B7 B9 B10 B11 B12 B13 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B24 B25 B26 B27 | B3 B6 B7 B8 B9 B10 B11 B12 B13 B14 B15 B16 B17 B18 B19 B20 B21 B22 B23 B24 B25 B26 B27 | — | — |
+| C | C1 C3 C4 C5 C6 C7 C8 C9 C10 C11 | C1 C3 C4 C5 C6 C7 C8 C9 C9V C10 C11 | — | C1 C3 C4 C5 C6 C7 C8 C9 C10 C11 | C2 C3 C4 C5 C6 C7 C8 C9 C11 | — | — |
+| D | D1 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D14 D15 D16 | D1 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D14 D15 D16 | — | D1 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D14 D15 D16 | D1 D2 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D14 D15 D16 D17 D18 | — | — |
+| E | E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 | E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 | — | E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 | E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 | — | E1 |
+| F | F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 | F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 | — | F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 | F1 F2 F3 F3A F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 | — | F1 F2 F3 F3A F4 |
+| G | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G12 G13 G14 G104 G105 | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G13 | G12 G14 | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G13 | G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G12 G13 G14 | G12 G14 G104 G105 | — |
 <!--END:names_table-->
 
 Findings (observed in the tables above; interpretation marked):
@@ -356,11 +375,11 @@ These are counterparts that are nobody's best match. Zones:
 <!--BEGIN:orphans-->
 | source | zone | n | names (⟨…⟩ = also a secondary candidate of our stand …; cat = X-Plane ICAO size) |
 |---|---|---|---|
-| OSM | contact (at a terminal facade) | 48 | A1, A7, A12 ×2, A13, A14, B3, B5 ⟨B5⟩, B6, B11 ⟨B11⟩, B15 ⟨B15⟩, B19 ⟨B19⟩, B20 ⟨B19⟩, B22, B23 ⟨B23⟩, B24 ⟨B23⟩, B26 ⟨B27/B26⟩, C5 ⟨C5⟩, C11, D6 ⟨D7⟩, D10, E2, E3 ⟨E3⟩, E6 ⟨E6⟩, E10A ⟨E10/E8⟩, E11, E13, F9, F10, F18, F21, G8, G11 ⟨G8⟩, (no ref) ×10, (no ref) ⟨A6⟩, (no ref) ⟨C11⟩, (no ref) ⟨C3⟩, (no ref) ⟨D1⟩, (no ref) ⟨G8⟩ |
+| OSM | contact (at a terminal facade) | 25 | A7, A12 ⟨A12⟩, A14, B1, B20 ⟨B20⟩, B23 ⟨B23/B24⟩, B26 ⟨B26⟩, C5 ⟨C5⟩, E6 ⟨E6⟩, E10A ⟨E8/E10⟩, G11 ⟨G11⟩, (no ref) ×5, (no ref) ⟨A13⟩, (no ref) ⟨A1⟩, (no ref) ⟨A4⟩, (no ref) ⟨A6⟩, (no ref) ⟨C3⟩, (no ref) ⟨E11⟩, (no ref) ⟨E13⟩, (no ref) ⟨E3⟩, (no ref) ⟨G11⟩ |
 | OSM | north field (maintenance / cargo / GA) | 95 | (no ref) ×92, 50-6, 50-7, 50-8 |
-| OSM | terminal apron (remote / hardstand) | 54 | (no ref) ×52, (no ref) ⟨F15⟩ ×2 |
+| OSM | terminal apron (remote / hardstand) | 54 | (no ref) ×53, (no ref) ⟨B19⟩ |
 | OSM | west field (cargo, west of pier G) | 7 | (no ref) ×7 |
-| X-Plane | contact (at a terminal facade) | 18 | Gate B22 [C], Gate B6 [C] ⟨B3⟩, Gate C2 [D], Gate C9 [C], Gate D1 D2 [C], Gate D7 [C] ⟨D7⟩, Gate E1 [C], Gate E4 [C], Gate F1 [C], Gate F2 [C], Gate F21 [C], Gate F3 [C], Gate F4 [C], Gate F9 F10 [C], Gate G11 G12 [E], Terminal A [C] ×3 |
+| X-Plane | contact (at a terminal facade) | 11 | Gate B15 B16 [D], Gate B26 B27 [C], Gate C2 [D], Gate D1 D2 [C], Gate E1 [C], Gate E4 [C], Gate F1 [C], Gate F2 [C], Gate F3 [C], Gate F4 [C], Terminal A [C] |
 | X-Plane | north field (maintenance / cargo / GA) | 33 | Corporate Ramp [B], East Maintenance Ramp [D] ×3, GA Ramp [A] ×11, GA Ramp [B] ×11, North Maintenance Ramp [C] ×4, North Maintenance Ramp [D] ×3 |
 | X-Plane | terminal apron (remote / hardstand) | 4 | Gate A1 [C], Gate F3A [C], Terminal G South [E] ×2 |
 | X-Plane | west field (cargo, west of pier G) | 3 | Terminal G South [E], West Cargo Ramp [B] ×2 |
@@ -506,32 +525,32 @@ Offsets are geodesic (WGS-84), measured along / across the FAA runway axis from 
 <!--BEGIN:runway_table-->
 | End | FAA NASR end (DMS) | elev ft | disp ft | geo.js − NASR (along / cross m) | AirNav − NASR | geo.js elev − NASR ft | X-Plane end − NASR | X-Plane disp m (ft) / blast pad m | OSM runway way end − NASR |
 |---|---|---|---|---|---|---|---|---|---|
-| 10L | 37-37-43.4594N 122-23-36.2107W | 5.5 | 0 | -0.0 / +0.0 | -0.0 / +0.0 | +0.0 | -4.8 / -0.1 | 0 (0) / 250 | -0.3 / +0.2 |
-| 28R | 37-36-48.721N 122-21-25.708W | 13.0 | 300 | +0.0 / +0.0 | +0.0 / +0.0 | +0.0 | +1.1 / -0.5 | 90 (295) / 100 | -1.7 / -0.5 |
-| 10R | 37-37-34.648N 122-23-35.1796W | 7.1 | 0 | -0.0 / -0.0 | -0.0 / -0.0 | +0.0 | -1.3 / +0.4 | 0 (0) / 250 | +1.5 / +0.5 |
-| 28L | 37-36-42.163N 122-21-30.057W | 12.6 | 300 | +0.0 / +0.0 | +0.0 / +0.0 | +0.0 | +1.8 / +2.1 | 90 (295) / 100 | +1.0 / -0.6 |
-| 1L | 37-36-28.4323N 122-22-58.5426W | 10.7 | 640 | +0.0 / -0.0 | +0.0 / -0.0 | +0.0 | +5.0 / -1.1 | 195 (640) / 0 | -10.3 / -2.1 |
-| 19R | 37-37-35.3329N 122-22-14.1939W | 9.2 | 0 | -0.0 / +0.0 | -0.0 / +0.0 | +0.0 | -9.6 / +0.4 | 0 (0) / 0 | -1.6 / +1.8 |
-| 1R | 37-36-22.7876N 122-22-51.7467W | 11.4 | 560 | +0.0 / -0.0 | +0.0 / -0.0 | +0.0 | +5.2 / -3.1 | 170 (558) / 0 | +0.1 / -2.9 |
-| 19L | 37-37-38.4319N 122-22-1.599W | 10.5 | 0 | -0.0 / +0.0 | -0.0 / +0.0 | +0.0 | -9.0 / +0.7 | 0 (0) / 0 | +3.0 / +1.3 |
+| 10L | 37-37-43.4594N 122-23-36.2107W | 5.5 | 0 | -0.0 / +0.0 | -0.0 / +0.0 | +0.0 | -3.3 / -0.7 | 0 (0) / 250 | +1.2 / -0.4 |
+| 28R | 37-36-48.721N 122-21-25.708W | 13.0 | 300 | +0.0 / +0.0 | +0.0 / +0.0 | +0.0 | -0.3 / +0.1 | 90 (295) / 100 | -3.2 / +0.1 |
+| 10R | 37-37-34.648N 122-23-35.1796W | 7.1 | 0 | -0.0 / -0.0 | -0.0 / -0.0 | +0.0 | +0.1 / -0.2 | 0 (0) / 250 | +2.9 / -0.1 |
+| 28L | 37-36-42.163N 122-21-30.057W | 12.6 | 300 | +0.0 / +0.0 | +0.0 / +0.0 | +0.0 | +0.3 / +2.7 | 90 (295) / 100 | -0.4 / +0.0 |
+| 1L | 37-36-28.4323N 122-22-58.5426W | 10.7 | 640 | +0.0 / -0.0 | +0.0 / -0.0 | +0.0 | +5.5 / +0.4 | 195 (640) / 0 | -9.7 / -0.7 |
+| 19R | 37-37-35.3329N 122-22-14.1939W | 9.2 | 0 | -0.0 / +0.0 | -0.0 / +0.0 | +0.0 | -10.2 / -1.1 | 0 (0) / 0 | -2.2 / +0.3 |
+| 1R | 37-36-22.7876N 122-22-51.7467W | 11.4 | 560 | +0.0 / -0.0 | +0.0 / -0.0 | +0.0 | +5.8 / -1.6 | 170 (558) / 0 | +0.7 / -1.5 |
+| 19L | 37-37-38.4319N 122-22-1.599W | 10.5 | 0 | -0.0 / +0.0 | -0.0 / +0.0 | +0.0 | -9.6 / -0.8 | 0 (0) / 0 | +2.4 / -0.2 |
 <!--END:runway_table-->
 
 <!--BEGIN:threshold_table-->
 | End | NASR displaced threshold: along / cross from runway end (m) | app threshold (end + disp along geo.js axis) − NASR DT (along / cross m) | NASR TORA / TODA / ASDA / LDA ft | position source, date |
 |---|---|---|---|---|
-| 28R | +91.5 / -0.0 | +0.0 / -0.0 | 11870 / 11870 / 11870 / 11236 | 3RD PARTY SURVEY, 2014/10/22 |
-| 28L | +91.4 / +0.0 | +0.1 / -0.1 | 11381 / 11381 / 10981 / 10275 | 3RD PARTY SURVEY, 2014/10/22 |
-| 1L | +195.1 / -0.0 | +0.0 / +0.0 | 7650 / 7650 / 7650 / 7010 | 3RD PARTY SURVEY, 2014/10/22 |
-| 1R | +170.7 / -0.0 | +0.0 / +0.0 | 8650 / 8650 / 8650 / 8090 | 3RD PARTY SURVEY, 2014/10/22 |
+| 28R | +91.5 / -0.0 | -0.1 / +0.0 | 11870 / 11870 / 11870 / 11236 | 3RD PARTY SURVEY, 2014/10/22 |
+| 28L | +91.4 / +0.0 | +0.0 / -0.0 | 11381 / 11381 / 10981 / 10275 | 3RD PARTY SURVEY, 2014/10/22 |
+| 1L | +195.1 / -0.0 | -0.0 / +0.0 | 7650 / 7650 / 7650 / 7010 | 3RD PARTY SURVEY, 2014/10/22 |
+| 1R | +170.7 / -0.0 | -0.0 / +0.0 | 8650 / 8650 / 8650 / 8090 | 3RD PARTY SURVEY, 2014/10/22 |
 <!--END:threshold_table-->
 
 <!--BEGIN:length_table-->
 | Runway | NASR published length | geodesic between NASR ends | app (geo.js planar frame) | app − geodesic |
 |---|---|---|---|---|
-| 10L/28R | 11870 ft = 3618.0 m | 3618.0 m | 3614.6 m | -3.43 m |
-| 10R/28L | 11381 ft = 3468.9 m | 3469.0 m | 3465.6 m | -3.36 m |
-| 1L/19R | 7650 ft = 2331.7 m | 2331.8 m | 2331.1 m | -0.63 m |
-| 1R/19L | 8650 ft = 2636.5 m | 2636.5 m | 2635.8 m | -0.71 m |
+| 10L/28R | 11870 ft = 3618.0 m | 3618.0 m | 3618.0 m | -0.00 m |
+| 10R/28L | 11381 ft = 3468.9 m | 3469.0 m | 3469.0 m | +0.00 m |
+| 1L/19R | 7650 ft = 2331.7 m | 2331.8 m | 2331.8 m | -0.00 m |
+| 1R/19L | 8650 ft = 2636.5 m | 2636.5 m | 2636.5 m | +0.00 m |
 <!--END:length_table-->
 
 OSM `aeroway=stopway` ways (OSM uses them here for the paved areas beyond each end):
@@ -539,14 +558,14 @@ OSM `aeroway=stopway` ways (OSM uses them here for the paved areas beyond each e
 <!--BEGIN:stopway_table-->
 | OSM way | nearest FAA end | length m | inner node along / cross from the end (m) | outer node along (m) | tags |
 |---|---|---|---|---|---|
-| way 510551650 | 10L | 269.8 | -0.3 / +0.2 | -270.1 | ref=10L/28R, surface=asphalt, width=61 |
-| way 1065090263 | 10R | 231.4 | +1.5 / +0.5 | -229.9 | ref=10R/28L, surface=asphalt, width=61 |
-| way 510551652 | 19L | 139.2 | +3.0 / +1.3 | -136.2 | ref=1R/19L, surface=asphalt, width=61 |
-| way 23365562 | 19R | 134.6 | -1.6 / +1.8 | -136.2 | ref=1L/19R, surface=asphalt, width=61 |
-| way 586154077 | 1L | 132.2 | -10.3 / -2.1 | -142.5 | length=2286, ref=1L/19R, surface=asphalt, width=61 |
-| way 23365564 | 1R | 123.1 | +0.1 / -2.9 | -123.0 | length=2636, ref=1R/19L, surface=asphalt, width=61 |
-| way 510551654 | 28L | 94.8 | +1.0 / -0.6 | -93.8 | ref=10R/28L, surface=asphalt, width=61 |
-| way 510551656 | 28R | 91.4 | -1.7 / -0.5 | -93.2 | ref=10L/28R, width=61 |
+| way 510551650 | 10L | 269.8 | +1.2 / -0.4 | -268.6 | ref=10L/28R, surface=asphalt, width=61 |
+| way 1065090263 | 10R | 231.4 | +2.9 / -0.0 | -228.4 | ref=10R/28L, surface=asphalt, width=61 |
+| way 510551652 | 19L | 139.2 | +2.4 / -0.2 | -136.8 | ref=1R/19L, surface=asphalt, width=61 |
+| way 23365562 | 19R | 134.6 | -2.2 / +0.3 | -136.8 | ref=1L/19R, surface=asphalt, width=61 |
+| way 586154077 | 1L | 132.2 | -9.7 / -0.7 | -141.9 | length=2286, ref=1L/19R, surface=asphalt, width=61 |
+| way 23365564 | 1R | 123.1 | +0.7 / -1.5 | -122.4 | length=2636, ref=1R/19L, surface=asphalt, width=61 |
+| way 510551654 | 28L | 94.8 | -0.4 / +0.0 | -95.3 | ref=10R/28L, surface=asphalt, width=61 |
+| way 510551656 | 28R | 91.4 | -3.2 / +0.1 | -94.6 | ref=10L/28R, width=61 |
 <!--END:stopway_table-->
 
 Findings:

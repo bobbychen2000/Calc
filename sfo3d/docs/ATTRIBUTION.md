@@ -1,0 +1,50 @@
+# Data sources and required attributions
+
+Which third-party data the shipped app and the committed data files contain, under which terms, and the notice each
+one requires. Quotes were read on 24 Sep 2026 from the pages named (local copies under `refs/cache/`, gitignored).
+Not legal advice; the owner decides.
+
+## Notices to show in the app (About / credits panel) and in any distribution
+
+> Taxiway centreline, holding-position, stand, jet-bridge and parking-position data © OpenStreetMap contributors,
+> available under the Open Database License (ODbL 1.0) - https://www.openstreetmap.org/copyright
+>
+> Airport geometry: SFO Museum, sfomuseum-data-architecture (CDLA-Permissive-1.0)
+>
+> Measurements on imagery, green paint and extra pavement: USDA NAIP 2024 (USDA Farm Production and Conservation
+> Business Center, Geospatial Enterprise Operations) - public domain
+>
+> Runway, lighting and airport data: FAA National Airspace System Resources (NASR), cycle 2026-09-03; FAA Airport
+> Diagram AL-375 - U.S. Government works
+>
+> Stand names: San Francisco International Airport (DataSF dataset chfu-j7tc, PDDL; flysfo.com)
+
+## Per source
+
+| Source | Where it is used | Terms (quoted) | Obligation |
+|---|---|---|---|
+| **OpenStreetMap** (Overpass download 24 Sep 2026, `refs/cache/osm/`) | `data/sfo_stands.json` / `.js`: stand positions and headings (OSM `aeroway=parking_position`), lead-in polylines, jet-bridge geometry (`aeroway=jet_bridge`), unnamed parking positions; built by `tools/stands/build_stands.py`. `data/sfo_details.json` / `.js`: taxiway centrelines (`aeroway=taxiway` ways, 264 lines, locally moved onto the NAIP paint) and the direction / position of 1 holding position (`aeroway=holding_position`); built by `tools/build_airfield_details.py`. `data/sfo_taxigraph.js` (realtime workflow, `tools/live/build_taxigraph.py`) is also OSM-derived. | "You are free to copy, distribute, transmit and adapt our data, as long as you credit OpenStreetMap and its contributors. If you alter or build upon our data, you may distribute the result only under the same license." / "Where you use OpenStreetMap data, you are required to do the following two things: Provide credit to OpenStreetMap by displaying our attribution notice. Make clear that the data is available under the Open Database License." (https://www.openstreetmap.org/copyright) | Each of these files is a Derivative Database (more than 100 features; OSMF Substantial guideline) and is offered under **ODbL 1.0** (notice in the file headers; `licence` / `attribution` fields in the JSON). Show the credit in the app (Produced Work, ODbL §4.3). Offer the database or the method of making it (§4.6): the files themselves plus `tools/stands/`, `tools/build_airfield_details.py` and `tools/xcheck/fetch_osm.py`. They contain no Google-derived content, which keeps share-alike possible. |
+| **USDA NAIP 2024** (`refs/cache/naip/`, docs/research/imagery.md) | `data/sfo_paint.*` (green no-taxi paint) and `data/sfo_pavement.*` (extra pavement) classified from NAIP colour by `tools/imagery/paint_pave_naip.py`; holding-position bars and taxiway-centreline corrections in `data/sfo_details.*` measured on the painted lines (`tools/build_airfield_details.py`, `tools/imagery/paintline.py`); stand nose calibration, painted lead-in corrections (C4, D14), red equipment boxes (`redBoxes`), EMAS and blast-pad dimensions in `js/live/airport.js`. No NAIP pixels are committed. | data.gov: "License: https://www.usa.gov/publicdomain/label/1.0/"; USDA FSA: "Public domain information may be freely distributed or copied, but use of appropriate byline/photo/image credits is requested"; USDA image service: "The Farm Production and Conservation Business Center (FPAC-BC) Geospatial Enterprise Operations (GEO) Branch asks to be credited for derived products." | credit requested (notice above); do not imply USDA endorsement |
+| **FAA** NASR APT CSV (cycle effective 2026-09-03), Airport Diagram AL-375 (2609) | `js/geo.js` RWY_ENDS, APPROACH_LIGHTS, PAPI, TDZ_LIGHTS; `js/world/airfield.js` runway axes | U.S. Government works (17 U.S.C. §105) | none required; credit given as courtesy |
+| **SFO Museum** sfomuseum-data-architecture | `data/sfo_airport.*`, `sfo_buildings.*`, building outlines used in the stand checks | CDLA-Permissive-1.0 | attribution (already in `data/sfo_airport.json`) |
+| **SFO / DataSF** chfu-j7tc | official gate numbers | PDDL (dataset metadata) | none |
+| **flysfo.com** flight-status feed | AODB stand names in `data/sfo_stands.json`; offline verification only | no published terms (docs/research/gate_truth.md §7) | names only; no live dependency without SFO's permission |
+| **ADS-B** (adsb.fi, adsb.lol) own recording | verification residuals, remote-stand positions of SFO-named remote stands | see docs/research/realtime_feeds.md | credit per provider terms in the app |
+| **ICAO** Doc 9157 Part 2 | clearance values quoted in tools/docs only | ICAO copyright | quote only |
+| Google Maps screenshots | **not used** for any shipped data file (checked 24 Sep 2026, review round 1: `data/sfo_paint.*` and `data/sfo_pavement.*`, which until then were frame-migrated screenshot classifications, are now classified from NAIP). The screenshot-derived feature coordinates (`stand_defs.py`, `work/redboxes.json`, `pave_add.json`, `faces.json`, the frozen paint/pavement polygons) were moved out of the repository into the gitignored `refs/cache/sat_legacy/`; the legacy scripts in `tools/sat/` write only there. Still in the repository: `tools/sat/work/reg.json` (screenshot-to-world registrations, no feature coordinates) and the git history of the removed files. | licensed imagery | outputs containing their pixels or coordinates stay in `out/` / `refs/` |
+| X-Plane Scenery Gateway | cross-check only (`tools/xcheck/`), nothing copied into `data/` | GPL v2 or later | none while unused |
+
+## Every shipped data file
+
+| File | Content | Sources (licence) | Generator |
+|---|---|---|---|
+| `data/sfo_airport.*` | runways, taxiways, terminals, structures (outlines) | SFO Museum (CDLA-Permissive-1.0) | `tools/build_sfo_airport.py` |
+| `data/sfo_buildings.*` | terminal building parts | SFO Museum (CDLA-Permissive-1.0) | `tools/build_terminal_parts.py` |
+| `data/sfo_details.*` | taxiway centrelines, holding positions, inferred apron, edges, masts, road lines | OSM (ODbL 1.0), USDA NAIP 2024 (public domain), SFO Museum (CDLA-Permissive-1.0) | `tools/build_airfield_details.py` |
+| `data/sfo_stands.*` | contact stands, lead-ins, jet bridges, remote stands, parking positions, red boxes | OSM (ODbL 1.0), NAIP (public domain), SFO / DataSF names (PDDL), own ADS-B recording | `tools/stands/build_stands.py` |
+| `data/sfo_paint.*` | green no-taxi paint polygons | USDA NAIP 2024 (public domain) | `tools/imagery/paint_pave_naip.py` |
+| `data/sfo_pavement.*` | paved areas not in SFO Museum (shoulders, aprons, service roads) | USDA NAIP 2024 (public domain) | `tools/imagery/paint_pave_naip.py` |
+| `data/sfo_taxigraph.js` | taxi routing graph (realtime workflow) | OSM (ODbL 1.0) | `tools/live/build_taxigraph.py` |
+| `data/lookup.js` | airline / type names (realtime workflow) | Virtual Radar Server standing data (see its header) | - |
+| `data/snapshot.js` | recorded ADS-B snapshot + METAR | adsb.fi / adsb.lol, NOAA (see docs/research/realtime_feeds.md) | - |
+| `data/models/*` | aircraft models (aircraft workflow) | see `data/models/manifest.json` | `tools/convert_models.py` |

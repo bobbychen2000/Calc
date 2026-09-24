@@ -114,8 +114,9 @@ function buildEMAS() {
     face([W3(0, -hw, 0), W3(0, hw, 0), W3(0, hw, H(0)), W3(0, -hw, H(0))], v3.mul(along, -1), BED, BEDE);             // entry face
     face([W3(L, -hw, 0), W3(L, hw, 0), W3(L, hw, H(L)), W3(L, -hw, H(L))], along, BED, BEDE);                          // far face
     for (const sv of [-1, 1]) face([W3(0, sv * hw, 0), W3(L, sv * hw, 0), W3(L, sv * hw, H(L)), W3(0, sv * hw, H(0))], v3.mul(side, sv), BED, BEDE);
-    // chevrons: 3 ft wide, 45 deg arms, apex every 30 m starting 12 m from the entry
-    for (let a = 12; a < L - 4; a += 30) for (const sv of [-1, 1]) {
+    // chevrons: 3 ft wide, 45 deg arms, apex every 100 ft (30.48 m) from the measured first apex (z.chev0, m from the bed
+    // entry; js/live/airport.js END_ZONES, NAIP 2024: 5.4-6.4 m; was 12 m / 30 m, review round 2)
+    for (let a = z.chev0 ?? 6.0; a < L - 1; a += 30.48) for (const sv of [-1, 1]) {
       const d = Math.min(hw - 1, L - 1 - a); if (d <= 0.5) continue;
       const w2 = 0.64; // half-width along u'
       const p0 = [a - w2, 0], p1 = [a + w2, 0], p2 = [a + d + w2, sv * d], p3 = [a + d - w2, sv * d];

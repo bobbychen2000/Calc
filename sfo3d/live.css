@@ -36,7 +36,6 @@ a { color: var(--arr); }
 #clock .wx { color: var(--dim); font-family: var(--mono); font-size: 12px; font-weight: 400; margin-left: 4px; }
 
 @media (max-width: 1480px) and (min-width: 761px) { #clock .wx { display: none; } }
-@media (max-width: 1240px) and (min-width: 761px) { #views { top: calc(56px + var(--safe-t)); } #panel { top: calc(104px + var(--safe-t)); } .pop { top: calc(100px + var(--safe-t)); } }
 /* ---------- view buttons */
 #views { position: absolute; top: calc(12px + var(--safe-t)); right: 12px; display: flex; gap: 6px; z-index: 5; }
 #views button { background: var(--panel); border: 1px solid var(--line); height: 36px; padding: 0 13px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 14px; white-space: nowrap; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
@@ -54,6 +53,8 @@ a { color: var(--arr); }
 .tabs button b { font-family: var(--mono); font-size: 13px; font-weight: 500; }
 .tabs button.on { background: rgba(255, 255, 255, 0.07); color: var(--text); }
 .tabs .t-arr.on b { color: var(--arr); } .tabs .t-dep.on b { color: var(--dep); } .tabs .t-ground.on b { color: var(--gnd); } .tabs .t-all.on b { color: var(--accent); }
+.rwystats { padding: 5px 12px; font-size: 11.5px; color: var(--dim, #9aa4b2); border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rwystats[hidden] { display: none; }
 .search { padding: 8px 10px; border-bottom: 1px solid var(--line); }
 #search { width: 100%; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; outline: none; }
 #search:focus { border-color: var(--accent); }
@@ -155,12 +156,12 @@ a { color: var(--arr); }
   #views button { height: 32px; font-size: 13px; padding: 0 11px; }
   #views button.icon { width: 32px; flex: none; }
   #panel { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: min(62vh, 560px); border-radius: 16px 16px 0 0; border-bottom: 0; transition: transform 0.28s cubic-bezier(.2,.8,.2,1); padding-bottom: var(--safe-b); }
-  #panel.peek { transform: translateY(calc(100% - 104px - var(--safe-b))); }
+  #panel.peek { transform: translateY(calc(100% - 128px - var(--safe-b))); } /* grab + tabs + runway line */
   #grab { display: block; background: none; border: 0; height: 18px; padding: 0; cursor: pointer; flex: none; }
   #grab i { display: block; width: 38px; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.28); margin: 7px auto 0; }
   .tabs { padding: 2px 8px 6px; }
   .search { padding: 6px 10px; }
-  #card { left: 8px; right: 8px; width: auto; bottom: calc(112px + var(--safe-b)); max-height: calc(100vh - 230px); overflow-y: auto; padding: 12px 14px 10px; }
+  #card { left: 8px; right: 8px; width: auto; bottom: calc(136px + var(--safe-b)); max-height: calc(100vh - 254px); overflow-y: auto; padding: 12px 14px 10px; }
   #card .fl b { font-size: 26px; }
   #card dl { grid-template-columns: 70px 1fr; font-size: 13.5px; margin: 10px 0 6px; }
   body.has-card #panel.peek { transform: translateY(calc(100% - 56px - var(--safe-b))); }
@@ -172,3 +173,78 @@ a { color: var(--arr); }
 
 /* QA screenshots: scene only */
 body.qa #panel, body.qa #card, body.qa #views, body.qa #top, body.qa #attrib, body.qa #labels, body.qa .pop { display: none !important; }
+
+/* ---------- ATC button, runway statistics and ATC sheets (stats.js, atc.js) */
+#btn-atc { padding: 0 12px 0 10px; gap: 6px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+#btn-atc svg { width: 17px; height: 17px; fill: currentColor; }
+#btn-atc.on { background: var(--gnd); color: #06140b; border-color: var(--gnd); }
+button.rwystats { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; color: var(--dim); font-family: var(--mono); }
+button.rwystats:hover { color: var(--text); background: rgba(255, 255, 255, 0.03); }
+.pop .x { position: sticky; top: 0; float: right; background: none; border: 0; font-size: 26px; line-height: 1; color: var(--dim); cursor: pointer; padding: 0 2px; margin: -4px -4px 0 8px; z-index: 1; }
+.pop .small, .small { font-size: 12.5px; }
+.pop .warn, .warn { color: var(--accent); }
+.pop table.rt { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 4px 0; }
+.pop table.rt th { text-align: left; color: var(--dim); font-weight: 600; font-size: 12px; padding: 3px 4px; border-bottom: 1px solid var(--line-2); }
+.pop table.rt td { padding: 4px; border-bottom: 1px solid var(--line); }
+.pop table.rt td.c-arr { color: var(--arr); } .pop table.rt td.c-dep { color: var(--dep); }
+.pop table.rt tr.sum td { color: var(--dim); font-weight: 600; border-bottom: 0; }
+.pop ul.evl { list-style: none; padding: 0; margin: 4px 0; }
+.pop ul.evl li { padding: 4px 0; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 13.5px; }
+.pop ul.evl li:hover { background: rgba(255, 255, 255, 0.04); }
+.pop .k-arr { color: var(--arr); } .pop .k-dep { color: var(--dep); } .pop .k-ga { color: var(--emg); }
+.pop .q { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 5px 0; }
+.pop .ql { font-size: 12px; color: var(--dim); font-weight: 600; min-width: 74px; }
+.chip { background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 9px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.chip .dim { font-weight: 500; font-family: var(--mono); font-size: 11.5px; }
+.pop .credit { font-size: 13px; }
+.pop .adl { margin: 10px 0; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: rgba(255, 255, 255, 0.03); }
+.pop .adl label { margin: 0 0 4px; }
+.pop .adl input[type=range] { width: 100%; accent-color: var(--accent); height: 28px; }
+.pop .tuned { margin: 10px 0; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--gnd) 50%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--gnd) 8%, transparent); }
+.pop .tuned > div:first-child { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pop .tuned .untune { background: none; border: 1px solid var(--line-2); border-radius: 8px; padding: 3px 10px; cursor: pointer; color: var(--dim); }
+.pop .lk { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.pop .ag { margin-top: 12px; }
+.pop .agh { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 4px; }
+.pop .agh .dim { text-transform: none; letter-spacing: 0; font-size: 12px; }
+.pop .feed { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; margin: 5px 0; }
+.pop .feed.on { border-color: var(--gnd); background: color-mix(in srgb, var(--gnd) 7%, transparent); }
+.pop .feed .fh { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.pop .feed .ft { font-weight: 700; }
+.pop .feed .fm { font-size: 11px; }
+.pop .fqs { display: flex; flex-wrap: wrap; gap: 4px; margin: 5px 0; }
+.fq { display: inline-flex; align-items: baseline; gap: 4px; border-radius: 6px; padding: 1px 6px; font-size: 12.5px; border: 1px solid; }
+.fq i { font-style: normal; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+.fq.faa { border-color: color-mix(in srgb, var(--gnd) 55%, transparent); color: var(--gnd); }
+.fq.latc { border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); border-style: dashed; }
+.fq b { color: var(--text); font-weight: 500; }
+.pop .fa { display: flex; gap: 6px; margin-top: 4px; }
+.pop .fa .listen { flex: 1; text-align: center; text-decoration: none; background: var(--arr); color: #041018; font-weight: 700; border-radius: 8px; padding: 7px 8px; font-size: 14px; }
+.pop .fa .tune { flex: 1; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line-2); border-radius: 8px; padding: 7px 8px; font-weight: 700; cursor: pointer; font-size: 14px; }
+.pop .fa .tune[aria-pressed="true"] { background: var(--gnd); color: #06140b; border-color: var(--gnd); }
+.pop .url { font-size: 10.5px; color: var(--dim); overflow-wrap: anywhere; margin-top: 4px; user-select: all; }
+.atcchip { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 500; color: #06140b; background: var(--gnd); border-radius: 4px; padding: 0 4px; white-space: nowrap; }
+.row .atcchip { flex: none; }
+#card .ok { color: var(--gnd); font-weight: 800; }
+#card .warn { color: var(--accent); font-weight: 600; }
+.lbl em { display: none; font-style: normal; font-family: var(--mono); font-size: 10px; color: #06140b; background: var(--gnd); border-radius: 3px; padding: 0 3px; margin-top: 1px; }
+.lbl.atc { border-color: var(--gnd); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gnd) 45%, transparent); }
+.lbl.atc em { display: inline-block; }
+@media (max-width: 760px) {
+  #btn-atc { padding: 0 10px 0 8px; font-size: 13px; flex: none; }
+  /* stats and ATC panels are bottom sheets on phones, above the flight list */
+  .pop.sheet { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 78vh; border-radius: 16px 16px 0 0; border-bottom: 0; padding: 12px 14px calc(14px + var(--safe-b)); z-index: 9; }
+  body:has(.pop.sheet:not([hidden])) #card { display: none; }
+  #attrib { font-size: 9.5px; line-height: 1.25; left: 40px; }
+}
+#status .prov { font-weight: 500; color: var(--dim); font-size: 13px; margin-left: -3px; }
+#status .prov:empty { display: none; }
+@media (max-width: 760px) { #status .prov { display: none; } #clock .dim { display: none; } }
+#btn-atc .tn:empty { display: none; }
+#btn-atc .tn::before { content: '· '; }
+@media (max-width: 760px) { #btn-atc.on .al { display: none; } #btn-atc .tn::before { content: ''; } #status { min-width: 104px; } }
+@media (max-width: 1720px) and (min-width: 761px) { #status .prov { display: none; } }
+/* medium screens: the top bar and the view buttons do not fit on one line (placed last so it wins over the base rules) */
+@media (max-width: 1440px) and (min-width: 761px) { #views { top: calc(56px + var(--safe-t)); } #panel { top: calc(104px + var(--safe-t)); } .pop { top: calc(100px + var(--safe-t)); } }
+/* phones: the brand shrinks to its icon so "Live · 3.0 s", the ATC pill and the clock fit on a 390 px screen */
+@media (max-width: 760px) { .brand { padding: 0 9px; } .brand::after { content: none; } #top { gap: 5px; } #clock { padding: 0 9px; } }

@@ -49,5 +49,5 @@ if __name__ == '__main__':
     for b in allb:
         x, z = st2w(b['s'], b['t'])
         res.append([round(x, 2), round(z, 2), round((b['w'] + b['h']) / 2, 2), round(b['ang'] % 90, 1)])
-    json.dump({'frame': GF.FRAME_ID, 'boxes': res}, open(SP + 'redboxes.json', 'w'))   # current world frame (a bare list = legacy frame)
+    json.dump({'frame': GF.FRAME_ID, 'boxes': res}, open(LSP + 'redboxes.json', 'w'))   # current world frame (a bare list = legacy frame)
     print(len(res), 'boxes; size median', np.median([r[2] for r in res]))

@@ -6,7 +6,7 @@ from stview import st_view, annotate, st_px, w2st, st2w
 from rectify import REG
 import stand_defs
 from stands import draw_stands
-from export_stands import door_st
+from export_stands_google_legacy import door_st
 def mosaic(box, res, names=None):
     s0, t0, s1, t1 = box
     W, H = int((s1 - s0) / res), int((t1 - t0) / res)

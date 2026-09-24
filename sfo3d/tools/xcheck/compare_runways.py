@@ -100,10 +100,10 @@ def main():
         if k in AN:
             a = AN[k]; r['airnav'] = {**a, 'along_cross': [round(v, 2) for v in off(ref, az, a['lat'], a['lon'])]}
         if k in XPE:
-            e = XPE[k]; r['xplane'] = {**e, 'along_cross': [round(v, 2) for v in off(ref, az, e['lat'], e['lon'])],
+            e = XPE[k]; r['xplane'] = {**e, 'along_cross': [round(v, 2) for v in off(ref, az, *X.wgs84_to_nad83(e['lat'], e['lon']))],
                                        'disp_ft_equiv': round(e['disp_m'] / X.FT, 0)}
         rows.append(r)
-    # OSM runway ways: extreme nodes along each FAA axis
+    # OSM runway ways: extreme nodes along each FAA axis (OSM / X-Plane are WGS 84: mapped to NAD83(2011) first)
     by = {}
     for w in osm['runways']:
         ref = (w['ref'] or '').replace('01', '1').replace('/0', '/')
@@ -114,12 +114,12 @@ def main():
         a, b = ref.split('/')
         if a not in N: continue
         az, L = axis(N, a); r0 = (N[a]['lat'], N[a]['lon'])
-        pts = [(p, off(r0, az, *p)) for w in ws if not w['closed'] for p in w['pts']]
+        pts = [(p, off(r0, az, *X.wgs84_to_nad83(*p))) for w in ws if not w['closed'] for p in w['pts']]
         if not pts: continue
         pa = min(pts, key=lambda t: t[1][0]); pb = max(pts, key=lambda t: t[1][0])
-        osm_rows[a] = {'along_cross': [round(v, 2) for v in off(r0, az, *pa[0])], 'ways': [w['id'] for w in ws], 'tag_length': [w['tags'].get('length') for w in ws]}
+        osm_rows[a] = {'along_cross': [round(v, 2) for v in off(r0, az, *X.wgs84_to_nad83(*pa[0]))], 'ways': [w['id'] for w in ws], 'tag_length': [w['tags'].get('length') for w in ws]}
         azb, _ = axis(N, b); rb = (N[b]['lat'], N[b]['lon'])
-        osm_rows[b] = {'along_cross': [round(v, 2) for v in off(rb, azb, *pb[0])], 'ways': [w['id'] for w in ws], 'tag_length': [w['tags'].get('length') for w in ws]}
+        osm_rows[b] = {'along_cross': [round(v, 2) for v in off(rb, azb, *X.wgs84_to_nad83(*pb[0]))], 'ways': [w['id'] for w in ws], 'tag_length': [w['tags'].get('length') for w in ws]}
     for r in rows:
         if r['end'] in osm_rows: r['osm'] = osm_rows[r['end']]
     # OSM stopways: which end, length, offset of the outer node
@@ -132,7 +132,7 @@ def main():
             d = min(d0, d1)
             if best is None or d < best[0]: best = (d, k, p0 if d0 < d1 else p1, p1 if d0 < d1 else p0)
         az, _ = axis(N, best[1])
-        inner = off((N[best[1]]['lat'], N[best[1]]['lon']), az, *best[2]); outer = off((N[best[1]]['lat'], N[best[1]]['lon']), az, *best[3])
+        inner = off((N[best[1]]['lat'], N[best[1]]['lon']), az, *X.wgs84_to_nad83(*best[2])); outer = off((N[best[1]]['lat'], N[best[1]]['lon']), az, *X.wgs84_to_nad83(*best[3]))
         stop.append({'end': best[1], 'id': w['id'], 'len_m': round(X.geod_dist(*p0, *p1), 1), 'inner_along_cross': [round(v, 1) for v in inner],
                      'outer_along': round(outer[0], 1), 'tags': w['tags']})
     # app runway lengths (planar geo.js frame) vs geodesic vs NASR published

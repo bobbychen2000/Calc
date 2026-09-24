@@ -115,7 +115,7 @@ def utm_to_world(E, N, epsg=26910, frame='world'):
 
 
 def load_world_png_meta(path=None):
-    path = path or os.path.join(CACHE, 'naip_world.json')
+    path = path or os.path.join(CACHE, 'naip_2024_world_0.5m.json')   
     return json.load(open(path))
 
 

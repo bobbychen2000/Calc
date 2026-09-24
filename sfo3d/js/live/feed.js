@@ -21,8 +21,10 @@ export function normalizeAircraft(a, nowMs) {
     gs: num(a.gs), track: num(a.track), trueHeading: num(a.true_heading), magHeading: num(a.mag_heading), trackRate: num(a.track_rate), roll: num(a.roll),
     baroRate: num(a.baro_rate), geomRate: num(a.geom_rate), squawk: str(a.squawk), category: str(a.category),
     emergency: a.emergency && a.emergency !== 'none' ? a.emergency : null, navAlt: num(a.nav_altitude_mcp), navQnh: num(a.nav_qnh),
-    t: nowMs - seenPos * 1000, seen: num(a.seen) ?? 0,
-    veh: a._veh === 1, src: str(a._src), // relay: sticky ground-vehicle flag, provider of the position
+    // position time: the relay's absolute _pt (s, relay clock) or provider now - seen_pos (readsb README-json.md)
+    t: num(a._pt) != null && !(a.lat == null && a.lastPosition) ? num(a._pt) * 1000 : nowMs - seenPos * 1000, seen: num(a.seen) ?? 0,
+    veh: a._veh === 1, src: str(a._src), prov: str(a._prov), // relay: sticky ground-vehicle flag, position provider, providers
+    mlat: Array.isArray(a.mlat) ? a.mlat : null,
   };
 }
 
@@ -64,6 +66,49 @@ export class Feed {
   }
 }
 
+// Relay stream: Server-Sent Events from sfo_live_server.py /api/stream?delta=1 (one merged update per provider
+// snapshot, ~1 Hz; docs/research/realtime_impl.md s.1). Keeps the full aircraft list (full + delta events) and hands it
+// to onData after every event. Falls back to polling /api/adsb every second when EventSource fails.
+export class StreamFeed {
+  constructor({ url = 'api/stream?delta=1', pollUrl = 'api/adsb', onData, onStatus, pollMs = 1000 } = {}) {
+    Object.assign(this, { url, pollUrl, onData, onStatus, pollMs });
+    this.map = new Map(); this.seq = 0; this.es = null; this.mode = null; this.lastOk = 0; this.fails = 0; this.timer = null; this.running = false; this.head = null;
+  }
+  start() { if (this.running) return; this.running = true; if (typeof EventSource !== 'undefined') this.sse(); else this.poll(); }
+  stop() { this.running = false; if (this.es) this.es.close(); this.es = null; clearTimeout(this.timer); }
+  emit(head) {
+    this.lastOk = Date.now(); this.fails = 0; this.head = head;
+    const json = { ac: [...this.map.values()], now: head.now, _source: head._source };
+    const p = parsePayload(json);
+    this.onStatus && this.onStatus({ ok: true, source: { name: head._source || 'local relay' }, count: p.aircraft.length, mode: this.mode });
+    this.onData && this.onData(p, { name: 'local relay' });
+  }
+  sse() {
+    this.mode = 'stream'; const es = this.es = new EventSource(this.url);
+    es.addEventListener('adsb', (ev) => { try { const j = JSON.parse(ev.data); this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); this.seq = j.seq; this.emit(j); } catch (e) { } });
+    es.addEventListener('delta', (ev) => { try { const j = JSON.parse(ev.data); for (const a of j.ac || []) this.map.set(a.hex, a); for (const k of j.gone || []) this.map.delete(k); this.seq = j.seq; this.emit(j); } catch (e) { } });
+    es.onerror = () => {
+      this.fails++; this.onStatus && this.onStatus({ ok: false, source: { name: 'local relay' }, error: 'stream interrupted' });
+      if (this.fails >= 3 && !this.lastOk) { es.close(); this.es = null; this.poll(); } // no stream at all: poll instead
+    };
+  }
+  async poll() {
+    this.mode = 'poll'; if (!this.running) return;
+    let wait = this.pollMs;
+    try {
+      const r = await fetch(this.pollUrl, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json(); this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); this.emit(j);
+    } catch (e) { this.fails++; wait = Math.min(15000, 1000 * Math.pow(1.6, Math.min(this.fails, 8))); this.onStatus && this.onStatus({ ok: false, source: { name: 'local relay' }, error: e.message || 'failed' }); }
+    this.timer = setTimeout(() => this.poll(), wait);
+  }
+}
+
+// SFO's own stand allocation through the relay (/api/gates: flysfo.com flight-status, fetched upstream at most every
+// 10 min; docs/research/gate_truth.md). Optional: the relay may run with --no-sfo-gates.
+export async function fetchGates(url = 'api/gates') {
+  try { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) return null; const j = await r.json(); return j && j.byCallsign ? j : null; } catch (e) { return null; }
+}
+
 // Route lookup (origin/destination by callsign, Virtual Radar Server standing data via adsb.lol), batched.
 // Only definite answers are cached: an error, an empty body (the adsb.lol routeset API answered HTTP 201 with no body
 // on 24 Sep 2026, traffic_audit F5) or bad JSON leaves the callsigns uncached and pauses lookups for 30 s.
@@ -83,7 +128,7 @@ export class Routes {
         for (const x of arr) {
           if (!x || !x.callsign) continue;
           const codes = (x._airport_codes_iata && x._airport_codes_iata !== 'unknown') ? x._airport_codes_iata.split('-') : null;
-          this.cache.set(x.callsign, codes ? { codes, airports: (x._airports || []).map(a => ({ iata: a.iata, icao: a.icao, name: a.name, city: a.location, country: a.countryiso2 })), plausible: !!x.plausible, sfo: x._sfo || null, src: x._src || null } : null);
+          this.cache.set(x.callsign, codes ? { codes, airports: (x._airports || []).map(a => ({ iata: a.iata, icao: a.icao, name: a.name, city: a.location, country: a.countryiso2, lat: a.lat ?? null, lon: a.lon ?? null })), plausible: !!x.plausible, sfo: x._sfo || null, src: x._src || null } : null);
         }
         ok = true;
       }

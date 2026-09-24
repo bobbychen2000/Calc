@@ -75,13 +75,13 @@ def main():
     # ---- their positions in our frame
     XP = []
     for i, r in enumerate(xp['ramp_starts']):
-        x, z = X.ll_to_world(r['lat'], r['lon'])
+        x, z = X.wgs84_to_world(r['lat'], r['lon'])
         XP.append({'src': 'xp', 'i': i, 'label': r['name'], 'names': gate_names(r['name']), 'x': x, 'z': z,
                    'hdg': r['hdg'], 'cat': r.get('icao_cat'), 'type': r['type'], 'airlines': r.get('airlines', []),
                    'bld': BLD.distance(Point(x, z))})
     OS = []; reversed_ways = []
     for i, p in enumerate(osm['parking_positions']):
-        pts = [X.ll_to_world(*q) for q in p['pts']]
+        pts = [X.wgs84_to_world(*q) for q in p['pts']]
         last, first = pts[-1], pts[0]
         dl, df = BLD.distance(Point(*last)), BLD.distance(Point(*first))
         rev = len(pts) >= 2 and df < 60 and dl - df > 5       # drawn from the stand out to the taxiway
@@ -192,11 +192,11 @@ def main():
     # ---- bridges: our bridge count vs OSM jet_bridge ways and X-Plane 1500 jetways that end near the stand's doors
     JW = []
     for j in xp['jetways']:
-        x, z = X.ll_to_world(j['lat'], j['lon']); f = X.hdg_vec(j['tunnel_hdg'])
+        x, z = X.wgs84_to_world(j['lat'], j['lon']); f = X.hdg_vec(j['tunnel_hdg'])
         JW.append({'base': (x, z), 'cab': (x + f[0] * j['tunnel_len_m'], z + f[1] * j['tunnel_len_m']), 'size': j['size']})
     JB = []
     for j in osm['jet_bridges']:
-        pts = [X.ll_to_world(*q) for q in j['pts']]
+        pts = [X.wgs84_to_world(*q) for q in j['pts']]
         a, b = pts[0], pts[-1]
         # the aircraft end = the end farther from the building
         if BLD.distance(Point(*a)) > BLD.distance(Point(*b)): a, b = b, a
@@ -244,7 +244,7 @@ def main():
 
     # per source image of our survey (tools/sat/stand_defs.py 'img'): would a rigid shift of one image explain it?
     try:
-        import sys as _sys; _sys.path.insert(0, os.path.join(X.ROOT, 'tools', 'sat'))
+        import sys as _sys; _sys.path.insert(0, os.path.join(X.ROOT, 'tools', 'sat')); _sys.path.insert(0, os.path.join(X.ROOT, 'refs', 'cache', 'sat_legacy'))
         import stand_defs as _sd
         IMG = {s_['name']: s_['img'] for s_ in _sd.STANDS}
     except Exception:  # noqa: BLE001

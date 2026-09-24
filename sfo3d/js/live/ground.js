@@ -1,12 +1,15 @@
-// Ground plausibility layer between the ADS-B traffic engine and the renderer: aircraft on the ground are solid
-// bodies. Reported positions of parked aircraft can be off by several metres (and the transponder antenna is not the
-// aircraft's reference point), so without this layer aircraft can end up inside each other, on grass or in a building.
-//  - aircraft snapped to a surveyed contact stand are authoritative (the stand layout is collision-free);
-//  - other stationary aircraft are moved to the nearest pose where their gear stands on pavement, nothing of the
-//    airframe is inside a building and the airframe does not overlap any other aircraft;
-//  - moving aircraft are nudged apart if their displayed positions overlap (positions come from real reports, so this
-//    only removes interpolation artefacts), with the nudge fading out.
-import { GROUND_Y } from '../geo.js';
+// Ground plausibility layer between the traffic engine and the renderer: aircraft on the ground are solid bodies.
+// Reported positions of parked aircraft scatter by metres (and the transponder antenna is not the aircraft's reference
+// point), so without this layer aircraft could end up inside each other, on grass or in a building.
+//  - aircraft parked at a surveyed contact stand in the stand's own pose are authoritative (the layout is collision-free);
+//    a parked aircraft drawn in its own reported pose (it reports a heading that differs from the survey) is checked,
+//    and falls back to the stand pose if that pose would hit a building or a neighbour;
+//  - other stationary aircraft get the nearest pose (<= 6 m away: never further than the report scatter, audit s.6.9)
+//    where their gear stands on pavement, nothing of the airframe is inside a building and nothing overlaps;
+//  - moving aircraft get a fading target offset away from an overlap. Offsets act on the TARGET the kinematic body in
+//    traffic.js follows, so corrections are driven (bounded acceleration and steering), never slid or teleported.
+// Pavement = the rendered airport mask (airport.js) UNION the OSM aprons and taxiway strips (data/sfo_taxigraph.js):
+// the mask lacks the cargo, GA and remote ramps where aircraft really park (audit F6, s.4.9).
 import { TYPES } from '../aircraft/types.js';
 import { ANT } from './traffic.js';
 
@@ -28,10 +31,21 @@ export function buildingGrid(airport, res = 2) {
   cv.width = cv.height = 1;
   return (x, z) => { const i = Math.floor((x - x0) / res), j = Math.floor((z - z0) / res); return i >= 0 && j >= 0 && i < W && j < H && m[j * W + i] === 1; };
 }
+// pavement test: rendered mask OR the OSM taxi net (aprons + taxiway strips); cached on a 1 m grid
+export function pavedUnion(mask, net) {
+  if (!net || !net.ok) return mask;
+  const cache = new Map();
+  return (x, z) => {
+    if (mask && mask(x, z)) return true;
+    const k = Math.round(x) * 8192 + Math.round(z); let v = cache.get(k);
+    if (v === undefined) { v = net.paved(Math.round(x), Math.round(z)); if (cache.size > 400000) cache.clear(); cache.set(k, v); }
+    return v;
+  };
+}
 
 // planform samples of an aircraft in world (x,z): gear points (must be on pavement) and outline points (must be
 // clear of buildings and of other aircraft)
-function samples(T, nose, h) {
+export function samples(T, nose, h) {
   const f = hv(h), r = [-f[1], f[0]];
   const P = (along, side) => [nose[0] - f[0] * along + r[0] * side, nose[1] - f[1] * along + r[1] * side];
   const w = T.wing, span = w ? w.span / 2 : 16, le = w ? w.rootLE : T.L * 0.4, sw = Math.tan(((w && w.sweep) || 27) * Math.PI / 180);
@@ -43,7 +57,7 @@ function samples(T, nose, h) {
   return { gear, outline, f, r };
 }
 // is point q inside the planform of aircraft A (nose, heading, type) with margin m
-function inside(A, q, m) {
+export function inside(A, q, m) {
   const T = A.T, f = A.f, r = A.r;
   const dx = q[0] - A.nose[0], dz = q[1] - A.nose[1];
   const x = -(dx * f[0] + dz * f[1]), y = dx * r[0] + dz * r[1];
@@ -57,78 +71,86 @@ function inside(A, q, m) {
   if (T.hstab && x > T.hstab.x - m && x < T.L + m && Math.abs(y) < T.hstab.span / 2 + m) return true;
   return false;
 }
+export function bodyOf(T, x, z, h) { const f = hv(h); const k = ANT * T.L; return { T, nose: [x + f[0] * k, z + f[1] * k], h, f, r: [-f[1], f[0]] }; }
+export function overlaps(A, B, m = 0) {
+  if (Math.hypot(A.nose[0] - B.nose[0], A.nose[1] - B.nose[1]) > (A.T.L + B.T.L) * 0.5 + 45) return false;
+  const Sa = A.S || (A.S = samples(A.T, A.nose, A.h)), Sb = B.S || (B.S = samples(B.T, B.nose, B.h));
+  return Sa.outline.some(p => inside(B, p, m)) || Sb.outline.some(p => inside(A, p, m));
+}
 
 export class GroundPhysics {
-  constructor({ paved, building }) { this.paved = paved; this.building = building; this.frame = 0; }
-  // pose of a track as displayed: nose point and heading
-  body(tr) {
-    const D = tr.disp, T = tr.model && TYPES[tr.model.t]; if (!T) return null;
-    const f = hv(D.hdg); const k = ANT * T.L;
-    return { tr, T, nose: [D.x + f[0] * k, D.z + f[1] * k], h: D.hdg, f, r: [-f[1], f[0]] };
+  constructor({ paved, building, net = null }) { this.paved = pavedUnion(paved, net); this.building = building; this.frame = 0; this.stats = {}; }
+  body(tr, pose) {
+    const T = tr.model && TYPES[tr.model.t]; if (!T) return null;
+    const D = pose || tr.disp; const B = bodyOf(T, D.x, D.z, D.hdg); B.tr = tr; return B;
   }
-  valid(B, others) {
+  valid(B, others, gear = true) {
     const S = samples(B.T, B.nose, B.h);
-    for (const g of S.gear) if (this.paved && !this.paved(g[0], g[1])) return false;
+    if (gear && this.paved) for (const g of S.gear) if (!this.paved(g[0], g[1])) return false;
     for (const p of S.outline) if (this.building && this.building(p[0], p[1])) return false;
     for (const o of others) {
       if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
-      for (const p of S.outline) if (inside(o, p, 1.5)) return false;
-      const So = samples(o.T, o.nose, o.h); for (const p of So.outline) if (inside(B, p, 1.5)) return false;
+      for (const p of S.outline) if (inside(o, p, 1.0)) return false;
+      const So = samples(o.T, o.nose, o.h); for (const p of So.outline) if (inside(B, p, 1.0)) return false;
     }
     return true;
   }
-  // run after traffic.update(): adjusts tr.disp of ground aircraft in place
+  // run after traffic.update(): sets tr.physOff (target offsets) for the next frame; checks data-pose stand parking
   resolve(traffic, dt) {
-    const fixed = [], free = [], moving = [];
+    const fixed = [], free = [], moving = []; let conflicts = 0;
     for (const tr of traffic.tracks.values()) {
-      const D = tr.disp; if (!D.valid || !D.ground) { tr.phys = null; continue; }
-      const B = this.body(tr); if (!B) continue;
-      if (tr.gate && tr.gate.bridge) { fixed.push(B); tr.phys = null; }
-      else if ((D.gs || 0) < 0.8 && (tr.phase === 'parked' || tr.phase === 'gate' || tr.stale)) free.push(B);
-      else moving.push(B);
+      const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle) { tr.physOff = null; continue; }
+      if (tr.gate && tr.gate.bridge && tr.parkPos && (tr.m.phase === 'still' || tr.stale)) {
+        const B = this.body(tr, { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg }); if (!B) continue;
+        if (tr.parkMode === 'data' && !tr._poseChecked) { tr._poseChecked = true; if (!this.valid(B, fixed, false)) { tr.forceStand = true; traffic.updatePark(tr); continue; } }
+        // two aircraft at neighbouring stands must not touch: an own-pose (data) parking yields to the stand pose
+        if (fixed.some(o => overlaps(o, B, 0.5))) { if (tr.parkMode === 'data') { tr.forceStand = true; traffic.updatePark(tr); } else conflicts++; }
+        fixed.push(B); tr.physOff = null;
+      } else { const B = this.body(tr); if (!B) continue; if ((D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) free.push(B); else moving.push(B); }
     }
-    // stationary aircraft off the surveyed stands: find (once) the nearest valid pose, keep it while stationary
+    // stationary aircraft off the surveyed stands: nearest valid pose (once per pose), within the report scatter
     const placed = fixed.slice();
     free.sort((a, b) => (a.tr.firstSeen || 0) - (b.tr.firstSeen || 0));
+    let moved = 0, unresolved = 0;
     for (const B of free) {
-      const tr = B.tr; const key = Math.round(tr.disp.x) + ',' + Math.round(tr.disp.z) + ',' + Math.round(tr.disp.hdg * 20);
+      const tr = B.tr; const P0 = tr.parkPos || tr.stillPos || [tr.disp.x, tr.disp.z]; const h = tr.parkPos ? tr.parkHdg : tr.disp.hdg;
+      const key = Math.round(P0[0]) + ',' + Math.round(P0[1]) + ',' + Math.round((h || 0) * 20);
+      const base = bodyOf(B.T, P0[0], P0[1], h);
       if (!tr.phys || tr.phys.key !== key || (this.frame % 30 === 0 && !tr.phys.ok)) {
-        let off = [0, 0], ok = this.valid(B, placed);
+        let off = [0, 0], ok = this.valid(base, placed);
         if (!ok) {
-          search: for (let rad = 2; rad <= 36; rad += 2) {
-            const n = Math.max(8, Math.round(rad * 1.6));
+          search: for (let rad = 1; rad <= 6; rad += 1) {
+            const n = Math.max(8, Math.round(rad * 3));
             for (let i = 0; i < n; i++) {
               const a = (i / n) * Math.PI * 2; const o = [Math.cos(a) * rad, Math.sin(a) * rad];
-              const C = { ...B, nose: [B.nose[0] + o[0], B.nose[1] + o[1]] };
+              const C = { ...base, nose: [base.nose[0] + o[0], base.nose[1] + o[1]] };
               if (this.valid(C, placed)) { off = o; ok = true; break search; }
             }
           }
         }
-        tr.phys = { key, off, ok, cur: tr.phys ? tr.phys.cur : [0, 0] };
+        tr.phys = { key, off, ok };
       }
-      const P = tr.phys; const k = Math.min(1, dt / 1.2);
-      P.cur[0] += (P.off[0] - P.cur[0]) * k; P.cur[1] += (P.off[1] - P.cur[1]) * k;
-      tr.disp.x += P.cur[0]; tr.disp.z += P.cur[1];
-      placed.push({ ...B, nose: [B.nose[0] + P.cur[0], B.nose[1] + P.cur[1]] });
+      tr.physOff = tr.phys.off[0] || tr.phys.off[1] ? tr.phys.off : null;
+      if (tr.physOff) moved++; if (!tr.phys.ok) unresolved++;
+      placed.push({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] });
     }
-    // moving aircraft: separate displayed overlaps (fading nudge)
+    // moving aircraft: a fading target offset away from any displayed overlap
     for (const B of moving) {
-      const tr = B.tr; if (!tr.phys || tr.phys.key !== 'mv') tr.phys = { key: 'mv', cur: tr.phys ? tr.phys.cur : [0, 0] };
-      const P = tr.phys; let push = [0, 0];
+      const tr = B.tr; const cur = tr.physOff ? tr.physOff.slice() : [0, 0]; let push = [0, 0];
       for (const o of placed) {
-        const dx = B.nose[0] - o.nose[0], dz = B.nose[1] - o.nose[1]; const d = Math.hypot(dx, dz);
+        const d = Math.hypot(B.nose[0] - o.nose[0], B.nose[1] - o.nose[1]);
         if (d > (o.T.L + B.T.L) * 0.5 + 40) continue;
-        const S = samples(B.T, B.nose, B.h); let hits = 0; for (const p of S.outline) if (inside(o, p, 1.0)) hits++;
+        const S = samples(B.T, B.nose, B.h); let hits = 0; for (const p of S.outline) if (inside(o, p, 1.5)) hits++;
         if (hits) { const cB = [B.nose[0] - B.f[0] * B.T.L * 0.45, B.nose[1] - B.f[1] * B.T.L * 0.45], cO = [o.nose[0] - o.f[0] * o.T.L * 0.45, o.nose[1] - o.f[1] * o.T.L * 0.45];
-          const vx = cB[0] - cO[0], vz = cB[1] - cO[1], vl = Math.hypot(vx, vz) || 1; push[0] += vx / vl * hits * 0.5; push[1] += vz / vl * hits * 0.5; }
+          const vx = cB[0] - cO[0], vz = cB[1] - cO[1], vl = Math.hypot(vx, vz) || 1; push[0] += vx / vl * hits; push[1] += vz / vl * hits; }
       }
-      const decay = Math.exp(-dt / 4);
-      P.cur[0] = P.cur[0] * decay + push[0] * dt * 2; P.cur[1] = P.cur[1] * decay + push[1] * dt * 2;
-      const pl = Math.hypot(P.cur[0], P.cur[1]); if (pl > 12) { P.cur[0] *= 12 / pl; P.cur[1] *= 12 / pl; }
-      tr.disp.x += P.cur[0]; tr.disp.z += P.cur[1];
-      placed.push({ ...B, nose: [B.nose[0] + P.cur[0], B.nose[1] + P.cur[1]] });
+      const decay = Math.exp(-dt / 3);
+      cur[0] = cur[0] * decay + push[0] * dt * 2; cur[1] = cur[1] * decay + push[1] * dt * 2;
+      const pl = Math.hypot(cur[0], cur[1]); if (pl > 10) { cur[0] *= 10 / pl; cur[1] *= 10 / pl; }
+      tr.physOff = pl > 0.05 ? cur : null;
+      placed.push(B);
     }
     this.frame++;
-    this.stats = { fixed: fixed.length, free: free.length, moving: moving.length, moved: free.filter(b => b.tr.phys && (b.tr.phys.off[0] || b.tr.phys.off[1])).length, unresolved: free.filter(b => b.tr.phys && !b.tr.phys.ok).length };
+    this.stats = { fixed: fixed.length, free: free.length, moving: moving.length, moved, unresolved, standConflicts: conflicts };
   }
 }

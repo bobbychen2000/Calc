@@ -1,5 +1,5 @@
 // Airfield lighting: runway edge/centerline/threshold/TDZ, PAPI, approach light systems (with sequenced flashers), taxiway edge
-import { APPROACH_LIGHTS, GROUND_Y, stToWorld } from '../geo.js';
+import { APPROACH_LIGHTS, PAPI, TDZ_LIGHTS, GROUND_Y, stToWorld } from '../geo.js';
 import { RWY, RWY_W, TAXIWAYS } from '../world/airfield.js';
 import { runwayFrame } from './traffic.js';
 import { v3, m4 } from '../math.js';
@@ -40,16 +40,20 @@ export function buildAirfieldLights(level = 1, opts = {}) {
         const pe = v3.add(F.start, v3.mul(F.right, k * 3.2)); pe[1] = GROUND_Y + 0.25;
         L.push({ p: pe, c: RED, i: 35 * level, s: 0.25, dir: F.dir, k: 1.2 });
       }
-      if (name.startsWith('28')) {
+      if (TDZ_LIGHTS.includes(name)) {   // NASR: TDZ lights only at 28R and 19L
         for (let x = 30; x < 900; x += 30.48) for (const sg of [-1, 1]) for (let j = 0; j < 3; j++) {
           const p = v3.add(v3.add(F.thr, v3.mul(F.dir, x)), v3.mul(F.right, sg * (11 + j * 1.5))); p[1] = GROUND_Y + 0.08;
           L.push({ p, c: WHITE, i: 14 * level, s: 0.16, dir: v3.mul(F.dir, -1), k: 2.5 });
         }
-        // PAPI on left side, ~ 350 m past threshold
-        const left = v3.mul(F.right, -1);
+      }
+      const PP = PAPI.find(q => q.end === name);
+      if (PP) {
+        // 4-box PAPI left of the runway at the glide-path intercept (geo.js PAPI.dist, from NASR TCH and angle); boxes
+        // ~15 m from the edge, 9 m apart; unit settings angle +30', +10', -10', -30' from the runway side outwards
+        const left = v3.mul(F.right, -1); const a = PP.angle;
         for (let j = 0; j < 4; j++) {
-          const p = v3.add(v3.add(F.thr, v3.mul(F.dir, 360)), v3.mul(left, RWY_W / 2 + 15 + j * 9)); p[1] = GROUND_Y + 1.0;
-          papis.push({ p, dir: v3.mul(F.dir, -1), angle: [3.5, 3.17, 2.83, 2.5][j] });
+          const p = v3.add(v3.add(F.thr, v3.mul(F.dir, PP.dist)), v3.mul(left, RWY_W / 2 + 15 + j * 9)); p[1] = GROUND_Y + 1.0;
+          papis.push({ p, dir: v3.mul(F.dir, -1), angle: [a + 0.5, a + 1 / 6, a - 1 / 6, a - 0.5][j] });
         }
       }
     }
@@ -57,14 +61,19 @@ export function buildAirfieldLights(level = 1, opts = {}) {
   // approach light systems (over water for 28s)
   for (const A of APPROACH_LIGHTS) {
     const F = runwayFrame(A.end); const back = v3.mul(F.dir, -1);
-    const n = Math.floor(A.len / 30.48);
+    // FAA standard layouts (AIM Fig. 2-1-1): ALSF-2 bars every 100 ft to 2400 ft, red side rows in the inner 1000 ft,
+    // 1000-ft crossbar, sequenced flashers from 1000 ft out; MALS(R/F) bars every 200 ft to 1400 ft with the 1000-ft
+    // crossbar; MALSF flashers on the three outer bars (1000-1400 ft); MALSR RAIL = flashers only, 1600-2400 ft.
+    const step = (A.type === 'ALSF2' ? 100 : 200) * 0.3048, n = Math.floor(A.len / step + 1e-6);
     for (let i = 1; i <= n; i++) {
-      const d = i * 30.48; const base = v3.add(F.thr, v3.mul(back, d));
-      const hLight = Math.max(GROUND_Y + 0.8, GROUND_Y + 0.8 - d * 0.0) ; // lights approx level with threshold
-      for (let j = -2; j <= 2; j++) { const p = v3.add(base, v3.mul(F.right, j * 1.05)); p[1] = hLight + 0.6; L.push({ p, c: WHITE, i: 60 * level, s: 0.3, dir: back, k: 3 }); }
-      if (A.type === 'ALSF2' && d < 300) for (const sg of [-1, 1]) for (let j = 0; j < 3; j++) { const p = v3.add(base, v3.mul(F.right, sg * (11 + j * 1.5))); p[1] = hLight + 0.6; L.push({ p, c: RED, i: 40 * level, s: 0.28, dir: back, k: 3 }); }
-      if (Math.abs(d - 304.8) < 16) for (const sg of [-1, 1]) for (let j = 3; j <= 10; j++) { const p = v3.add(base, v3.mul(F.right, sg * j * 1.5)); p[1] = hLight + 0.6; L.push({ p, c: WHITE, i: 60 * level, s: 0.3, dir: back, k: 3 }); }
-      if (d > 290 || A.type !== 'ALSF2') { const p = v3.add(base, [0, 1.6, 0]); p[1] = hLight + 1.6; flashers.push({ p, order: -d, dir: back, end: A.end }); }
+      const d = i * step; const dft = d / 0.3048; const base = v3.add(F.thr, v3.mul(back, d));
+      const hLight = GROUND_Y + 0.8; // lights approx level with threshold
+      const steady = A.type === 'ALSF2' || dft <= 1400.5;
+      if (steady) for (let j = -2; j <= 2; j++) { const p = v3.add(base, v3.mul(F.right, j * 1.05)); p[1] = hLight + 0.6; L.push({ p, c: WHITE, i: 60 * level, s: 0.3, dir: back, k: 3 }); }
+      if (A.type === 'ALSF2' && dft < 1000) for (const sg of [-1, 1]) for (let j = 0; j < 3; j++) { const p = v3.add(base, v3.mul(F.right, sg * (11 + j * 1.5))); p[1] = hLight + 0.6; L.push({ p, c: RED, i: 40 * level, s: 0.28, dir: back, k: 3 }); }
+      if (Math.abs(dft - 1000) < 1) for (const sg of [-1, 1]) for (let j = 3; j <= 10; j++) { const p = v3.add(base, v3.mul(F.right, sg * j * 1.5)); p[1] = hLight + 0.6; L.push({ p, c: WHITE, i: 60 * level, s: 0.3, dir: back, k: 3 }); }
+      const flash = A.type === 'ALSF2' ? dft >= 999 : A.type === 'MALSR' ? dft >= 1599 : dft >= 999;
+      if (flash) { const p = v3.add(base, [0, 1.6, 0]); p[1] = hLight + 1.6; flashers.push({ p, order: -d, dir: back, end: A.end }); }
       piers.push({ base, right: F.right, water: d > 150 && A.end.startsWith('28'), h: hLight });
     }
   }

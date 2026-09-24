@@ -33,9 +33,9 @@ def main():
     xp = json.load(open(os.path.join(X.ROOT, 'refs', 'cache', 'xplane', 'ksfo_apt_parsed.json')))
     OS = []
     for p in osm['parking_positions']:
-        pts = [X.ll_to_world(*q) for q in p['pts']]
+        pts = [X.wgs84_to_world(*q) for q in p['pts']]
         OS.append({'ref': p['ref'], 'ends': [pts[-1], pts[0]], 'id': p['id']})
-    XP = [{'name': r['name'], 'p': X.ll_to_world(r['lat'], r['lon']), 'hdg': r['hdg']} for r in xp['ramp_starts']]
+    XP = [{'name': r['name'], 'p': X.wgs84_to_world(r['lat'], r['lon']), 'hdg': r['hdg']} for r in xp['ramp_starts']]
     from compare_stands import gate_names
     seen = {}
     for r in G['rows']:
@@ -47,7 +47,7 @@ def main():
         if not stand or r.get('excluded'): continue
         key = (r['reg'] or r['hex'], stand)
         if key in seen and seen[key]['how'] == 'SFO stand window': continue
-        A = (r['x'], r['z']); h = r.get('true_heading')
+        A = X.wgs84_to_world(r['lat'], r['lon']); h = r.get('true_heading')   # ADS-B = WGS 84 (gatecheck's x/z are legacy-frame)
         f = X.hdg_vec(h) if h is not None else None
         def rel(P):
             dx, dz = P[0] - A[0], P[1] - A[1]

@@ -4,13 +4,15 @@ import { rng, clamp } from '../math.js';
 
 export const APT_RECT = { s0: -2800, t0: -1760, w: 4700, h: 3220, res: 1.0 }; // 1 m/px
 
-// Runways axis-aligned in (s,t)
-export const RWY = [
-  { name: ['10L', '28R'], axis: 0, c: 235.0, a0: -1916.1, a1: 1698.2, disp0: 0, disp1: 91.44 },
-  { name: ['10R', '28L'], axis: 0, c: 6.4, a0: -1767.0, a1: 1698.4, disp0: 0, disp1: 91.44 },
-  { name: ['1L', '19R'], axis: 1, c: -21.6, a0: -1380.0, a1: 951.3, disp0: 195.1, disp1: 0 },
-  { name: ['1R', '19L'], axis: 1, c: 206.6, a0: -1456.2, a1: 1179.7, disp0: 170.7, disp1: 0 },
-];
+// Runways axis-aligned in (s,t), derived from the FAA NASR runway ends (geo.js RUNWAYS / RWY_ENDS, cycle 2026-09-03)
+// through the exact frame (24 Sep 2026; the earlier hand constants were in the legacy equirectangular frame and up to
+// 1.9 m off at the ends). c = mean cross-axis coordinate of the two ends (the grid is aligned with 10/28; 1/19 are
+// parallel to t to < 0.05 m), a0/a1 = along-axis coordinates of the first / second named end.
+export const RWY = RUNWAYS.map(r => {
+  const axis = r.ends[0].startsWith('1') && !r.ends[0].startsWith('10') ? 1 : 0;
+  const u0 = r.st0[axis], u1 = r.st1[axis], c = (r.st0[1 - axis] + r.st1[1 - axis]) / 2;
+  return { name: r.ends.slice(), axis, c: +c.toFixed(2), a0: +u0.toFixed(2), a1: +u1.toFixed(2), disp0: +r.dispA.toFixed(2), disp1: +r.dispB.toFixed(2) };
+});
 export const RWY_W = 60.96;
 
 // Taxiway centerlines (polylines in s,t), width

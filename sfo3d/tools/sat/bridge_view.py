@@ -5,7 +5,7 @@ from mosaic2 import mosaic
 from stview import annotate, st_px, w2st
 from stands import draw_stands
 import stand_defs
-from export_stands import door_st
+from export_stands_google_legacy import door_st
 def bview(box, res, out):
     m, b = mosaic(box, res)
     m = annotate(m, *box, res, grid=10, lab=50, gates=False)

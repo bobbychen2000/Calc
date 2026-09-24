@@ -120,6 +120,9 @@ class Gates(unittest.TestCase):
         self.assertEqual(S.norm_cs('SKW249R'), 'SKW249R')
         self.assertEqual(S.stand_base('E10U'), 'E10')
         self.assertEqual(S.stand_base('41-08'), '41-08')
+        self.assertTrue(S.type_match('E75L', {'E175'}))    # flysfo 'E175' vs ADS-B 'E75L' (SKW6274 = AAL6274)
+        self.assertTrue(S.type_match('B738', {'B738'}))
+        self.assertFalse(S.type_match('CRJ2', {'E175'}))
 
     def test_parse_cached_snapshot(self):
         fs = sorted(glob.glob(os.path.join(ROOT, 'refs', 'cache', 'gate_truth', 'flysfo_api_flight-status_2*.json.gz')))
@@ -172,6 +175,30 @@ class Routes(unittest.TestCase):
         self.assertEqual(by['ZZZ1']['_airport_codes_iata'], 'unknown')
 
 
+class RecIO(unittest.TestCase):
+    def test_members_closed_and_open(self):
+        """Two recorder runs appended to one hour file (a closed gzip member, then one still being written, larger
+        than the 64 KiB read step): every line of both must be read (bug fixed 24 Sep: the 2nd member was lost)."""
+        import tempfile, random as rnd
+        sys.path.insert(0, os.path.join(ROOT, 'tools', 'live'))
+        import recio
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, 'adsbfi_20260101_00.jsonl.gz')
+        w = S.RecordWriter(d)
+        rnd.seed(1)
+        blob = lambda: {'now': 1, 'ac': [{'hex': '%06x' % rnd.getrandbits(24), 'x': rnd.random()} for _ in range(50)]}
+        for i in range(300):
+            w.write('adsbfi', 1767225600 + i, 1767225600.2 + i, 200, {}, blob(), None)
+        w.close()
+        w2 = S.RecordWriter(d)
+        for i in range(300, 700):
+            w2.write('adsbfi', 1767225600 + i, 1767225600.2 + i, 200, {}, blob(), None)   # left open (flushed)
+        ts = [r['t'] for r in recio.lines(p)]
+        self.assertEqual(ts, [1767225600 + i for i in range(700)])
+        w2.close()
+        self.assertEqual(len(list(recio.lines(p))), 700)
+
+
 class Schedule(unittest.TestCase):
     def test_adsbfi_even_slots_and_backoff(self):
         p = S.Poller(FI, lambda *a: None)
@@ -195,6 +222,23 @@ class Schedule(unittest.TestCase):
         self.assertEqual(waits, [2.0, 4.0, 8.0, 16.0, 30.0, 30.0, 30.0])
         p._schedule(100.0, 100.4, False, retry_after=45)
         self.assertEqual(round(p.next_due - 100.4), 45)
+
+    def test_adaptive_floor_after_429(self):
+        p = S.Poller(LOL, lambda *a: None)
+        for _ in range(4):                                  # four refusals: floor 2, 3, 4.5, 6.75 s
+            p._schedule(100.0, 100.4, False, status=429)
+        self.assertAlmostEqual(p.floor, 6.75)
+        p._schedule(200.0, 200.2, True)                     # success: next request no sooner than 0.9 x floor
+        self.assertAlmostEqual(p.next_due, 200.0 + 6.075, places=6)
+        p._schedule(210.0, 210.4, False, status=429)        # first refusal after a success waits >= the raised floor
+        self.assertAlmostEqual(p.next_due - 210.4, 6.075 * 1.5, places=6)
+        for i in range(40):                                 # sustained successes decay it back to the normal cadence
+            p._schedule(300.0 + i, 300.2 + i, True)
+        self.assertEqual(p.floor, 0.0)
+        self.assertTrue(339.0 + 1.0 <= p.next_due <= 339.0 + 1.5)
+        q = S.Poller(LOL, lambda *a: None)
+        q._schedule(100.0, 100.4, False, status=503)        # network/server errors back off but leave the floor alone
+        self.assertEqual(q.floor, 0.0)
 
 
 if __name__ == '__main__':

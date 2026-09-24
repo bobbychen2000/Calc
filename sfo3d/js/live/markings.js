@@ -130,6 +130,19 @@ export function buildMarkings(details) {
     const u = h.dir, n = [-u[1], u[0]]; // u points toward the runway
     const a = h.a, b = h.b; const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
     const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    if (h.kind === 'ils') {
+      // ILS critical-area holding position (FAA AC 150/5340-1M fig. A-8): two solid 12 in lines 2 ft apart, joined by
+      // pairs of 12 in bars (2 ft apart) every 10 ft across the taxiway: 4 ft deep in total
+      for (const s of [-1, 1]) {
+        const off = s * 18 * IN; const c = [mid[0] + u[0] * off, mid[1] + u[1] * off];
+        R.line([[c[0] - n[0] * L / 2, c[1] - n[1] * L / 2], [c[0] + n[0] * L / 2, c[1] + n[1] * L / 2]], 6 * IN, YEL, 1);
+      }
+      for (let x = -L / 2 + 0.3; x <= L / 2 - 0.3; x += 10 * FT) for (const d of [-12 * IN, 12 * IN]) {
+        const q = [mid[0] + n[0] * (x + d), mid[1] + n[1] * (x + d)];
+        R.line([[q[0] - u[0] * 6 * IN, q[1] - u[1] * 6 * IN], [q[0] + u[0] * 6 * IN, q[1] + u[1] * 6 * IN]], 6 * IN, YEL, 1);
+      }
+      continue;
+    }
     // four 12 in lines, 12 in apart: two solid (holding side, i.e. away from the runway), two dashed (runway side)
     for (let k = 0; k < 4; k++) {
       const off = (-1.5 + k) * 2 * 12 * IN; // centres at -36, -12, +12, +36 in along u
@@ -139,7 +152,7 @@ export function buildMarkings(details) {
     }
     // enhanced centerline: dashes 9 ft long with 3 ft gaps, 6 in wide, either side of the centerline, over the last
     // 150 ft before the hold line, following the actual centerline polyline
-    const path = centerlineBack(cl, h.p, [-u[0], -u[1]], 150 * FT, 0.6);
+    const path = h.secondary ? null : centerlineBack(cl, h.p, [-u[0], -u[1]], 150 * FT, 0.6);
     if (path) for (const sg of [-1, 1]) R.line(path, 3 * IN, YEL, 1, sg * 12 * IN, [12 * FT, 9 * FT]);
   }
   // taxiway edge markings (continuous: two 6 in lines, 6 in apart)
@@ -150,7 +163,7 @@ export function buildMarkings(details) {
   for (const r of roadPairs) if (r.off > 10) R.line(r.pts, 3 * IN, WHT, 0.85, -3.7, [30 * FT, 10 * FT]);
   return R.mesh();
 }
-// stand markings for the surveyed contact stands: lead-in line on the stand centreline (6 in yellow), nose-gear stop
+// stand markings for the surveyed contact stands: lead-in line along the mapped (possibly curved) lead-in (6 in yellow), nose-gear stop
 // bars for the stand's range of types, and the red equipment-staging boxes found in the satellite imagery
 export function buildStandMarks(gates, boxes = [], gridDir = null) {
   const R = new Ribbons();
@@ -159,7 +172,13 @@ export function buildStandMarks(gates, boxes = [], gridDir = null) {
     const f = [g.w.dx, g.w.dz], n = [-f[1], f[0]];
     const nose = [g.w.x, g.w.z];
     const back = (d) => [nose[0] - f[0] * d, nose[1] - f[1] * d];
-    R.line([back(-1.5), back(g.maxLen + 28)], 3 * IN, YEL, 1);
+    // lead-in: the painted line as mapped (OSM lead-in way, curved where the paint curves; data/sfo_stands.json
+    // 'leadin'), continued straight to 1.5 m past the nose point; a straight line only where the data has none
+    const L = g.leadinW;
+    if (L && L.length >= 2) {
+      const last = L[L.length - 1]; const ahead = (last[0] - nose[0]) * f[0] + (last[1] - nose[1]) * f[1];
+      R.line(ahead < 1.5 ? [...L, back(-1.5)] : L, 3 * IN, YEL, 1);
+    } else R.line([back(-1.5), back(g.maxLen + 28)], 3 * IN, YEL, 1);
     // stop bars for the nose gear of small / large types on this stand (3 ft wide bars, 1 ft deep)
     const bars = g.wide ? [5.2, 6.4] : [3.6, 5.0];
     for (const d of bars) { const c = back(d); R.line([[c[0] - n[0] * 1.2, c[1] - n[1] * 1.2], [c[0] + n[0] * 1.2, c[1] + n[1] * 1.2]], 6 * IN, YEL, 1); }

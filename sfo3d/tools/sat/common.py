@@ -20,6 +20,13 @@ UP = os.environ.get('SFO_SCREENS', os.path.join(_HERE, 'screens')) + os.sep
 # working directory: registrations (reg.json), detections, debug renders
 SP = os.environ.get('SFO_SATWORK', os.path.join(_HERE, 'work')) + os.sep
 os.makedirs(SP, exist_ok=True)
+# Google-screenshot-derived feature coordinates (stand_defs.py, work/redboxes.json, pave_add.json, faces.json, the frozen
+# paint/pavement polygons) were moved out of the repository on 24 Sep 2026 into the gitignored refs/cache/sat_legacy/
+# (owner's rule: no committed coordinates from the screenshots). Legacy scripts find them there.
+LEGACY = os.path.join(os.path.dirname(os.path.dirname(_HERE)), 'refs', 'cache', 'sat_legacy') + os.sep
+LSP = LEGACY + 'work' + os.sep
+os.makedirs(LSP, exist_ok=True)
+if LEGACY not in sys.path: sys.path.insert(0, LEGACY)
 # uniq.txt = absolute paths of the screenshots, resolved from work/screens.txt (basename stems, extension-agnostic)
 def _write_uniq():
     lst = os.path.join(SP, 'screens.txt')

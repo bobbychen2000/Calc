@@ -26,4 +26,4 @@ if __name__ == '__main__':
             out.append((round(p[0], 1), round(p[1], 2), None if nd is None else round(nd, 1)))
         res[lbl] = out
         print(f'{lbl:9s}', out)
-    json.dump(res, open(SP + 'faces.json', 'w'), indent=1)
+    json.dump(res, open(LSP + 'faces.json', 'w'), indent=1)

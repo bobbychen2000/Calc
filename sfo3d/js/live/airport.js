@@ -49,8 +49,13 @@ function extrudePoly(g, rings, y0, y1, wall, roof, opts = {}) {
 function centroid(ring) { let x = 0, z = 0; ring.forEach(p => { x += p[0]; z += p[1]; }); return [x / ring.length, z / ring.length]; }
 
 // ------------------------------------------------------------------ gates / stands
-// Surveyed stand layout (data/sfo_stands.js): one entry per physical contact stand with its nose-stop point, the
-// parked heading, the largest aircraft class it takes and the jet bridges (hold-room attach points) that serve it.
+// Stand layout (data/sfo_stands.js, rebuilt 24 Sep 2026 by tools/stands/build_stands.py from OSM lead-ins, SFO stand
+// names, NAIP 2024 and ADS-B; docs/research/stands_rebuild.md): one entry per physical stand position with its nose
+// stop point, parked heading, largest aircraft class, jet bridges (building attach, rotunda, parked cab), and the
+// fields the matcher can use: gate (display number), excl (stands that cannot be occupied at the same time),
+// alt_of (alternative position of another stand, e.g. B5S of B5), span_max / len_max (per-stand limits where the class
+// envelope is too coarse, e.g. E10U/E12, F9/F10), a380 (only these stands may take an A380 / 747-8), leadin (the painted
+// lead-in polyline, OSM way, world x/z) and the bridge fields below.
 const CLASS_MAX = { B: { span: 28.5, len: 37 }, C: { span: 36.5, len: 45 }, CL: { span: 38.5, len: 48 }, D: { span: 52, len: 62 }, E: { span: 61, len: 68 }, EL: { span: 65.5, len: 77 }, F: { span: 80, len: 80 } };
 export function standGates(stands) {
   const o = worldToST(0, 0);
@@ -59,18 +64,29 @@ export function standGates(stands) {
   for (const s of stands.stands) {
     const h = s.hdg * Math.PI / 180; const fw = [Math.sin(h), -Math.cos(h)]; // world (x,z) unit vector of the parked heading
     const dir = dirST(fw); const nose = worldToST(s.nose[0], s.nose[1]);
-    const bridges = s.bridges.map(b => ({ gate: b.gate, attach: worldToST(b.attach[0], b.attach[1]), attachW: b.attach, door: b.door }));
+    // bridge fields from the data (review round 1): rotundaW (OSM rotunda, moved back along the walkway where it was
+    // infeasible), walkW (fixed walkway polyline building -> rotunda), cabW + cabPose ('docked' / 'parked' as OSM mapped
+    // it - do not use a docked cab as the rest pose), stowW (a rest pose for the tunnel end clear of every aircraft the
+    // stand and its neighbours accept), rotundaMaxR (how large the rotunda may be drawn without touching another)
+    const bridges = s.bridges.map(b => ({ gate: b.gate, attach: worldToST(b.attach[0], b.attach[1]), attachW: b.attach, door: b.door,
+      rotundaW: b.rotunda || null, cabW: b.cab || null, walkW: b.walk || null, cabPose: b.cab_pose || null, stowW: b.stow || null,
+      rotundaMaxR: b.rotunda_max_r ?? null }));
     const cm = CLASS_MAX[s.cls] || CLASS_MAX.C; const wide = cm.span > 40;
+    const maxSpan = s.span_max ? Math.min(cm.span, s.span_max + 0.1) : cm.span;
+    const maxLen = s.len_max ? Math.min(cm.len, s.len_max + 0.1) : cm.len;
     gates.push({
-      id: s.name, name: s.name, alias: s.alias || [], letter: s.letter, pier: s.letter, cls: s.cls, maxSpan: cm.span, maxLen: cm.len, src: s.src,
+      id: s.name, name: s.name, alias: s.alias || [], letter: s.letter, pier: s.letter, cls: s.cls, maxSpan, maxLen, src: s.src,
+      gate: s.gate || s.name, excl: s.excl || [], altOf: s.alt_of || null, aodb: s.aodb || [], a380: !!s.a380, tightWith: s.tight_with || [],
+      leadinW: s.leadin || null, sharesBridgesOf: s.shares_bridges_of || null,
       nose, dir, outN: [-dir[0], -dir[1]], attach: bridges.length ? bridges[0].attach : nose, bridges, wide, len: cm.len, span: cm.span,
       bridge: bridges.length > 0, remote: false, hdg: s.hdg, world: { x: s.nose[0], z: s.nose[1], hdg: s.hdg }, empty: true, acType: null, dynamic: false,
     });
   }
   for (const r of stands.remote || []) {
     const nose = worldToST(r.x, r.z);
-    gates.push({ id: r.name, name: r.name, alias: [], letter: r.name[0], pier: r.name[0], cls: 'E', maxSpan: 65.5, maxLen: 77, nose, dir: [0, 1], outN: [0, -1], attach: nose, bridges: [],
-      wide: true, len: 70, span: 64, bridge: false, remote: true, world: { x: r.x, z: r.z }, empty: true, acType: null, dynamic: false });
+    const dir = r.hdg != null ? dirST([Math.sin(r.hdg * Math.PI / 180), -Math.cos(r.hdg * Math.PI / 180)]) : [0, 1];
+    gates.push({ id: r.name, name: r.name, alias: [], letter: r.name[0], pier: r.name[0], cls: 'E', maxSpan: 65.5, maxLen: 77, nose, dir, outN: [-dir[0], -dir[1]], attach: nose, bridges: [], gate: r.name, excl: [], hdg: r.hdg,
+      wide: true, len: 70, span: 64, bridge: false, remote: true, world: { x: r.x, z: r.z, hdg: r.hdg ?? undefined }, empty: true, acType: null, dynamic: false });
   }
   return gates;
 }
@@ -177,15 +193,28 @@ export function inStandEnvelope(gates, x, z, margin = 0) {
   }
   return null;
 }
-// runway end zones beyond the pavement ends. Blast pads at 28L/28R measured on the satellite imagery (runway width,
-// ~108 m long, yellow chevrons). EMAS beds at 1L/1R/19L/19R: 35 ft (10.7 m) beyond the runway end (Runway Safe SFO
-// reference), lengths measured on the imagery within the published 372-437 ft range, width ~66 m (imagery).
+// runway end zones beyond the pavement ends (re-measured 24 Sep 2026 on NAIP 2024, USDA public domain, 0.5 m world
+// raster; oriented strips along the NASR runway axes, tools/stands/ README in docs/research/stands_rebuild.md §6):
+//   blast pads (type 1, runway width 200 ft, yellow chevrons ~30.5 m apart):
+//     10L 269 m (dark pad edge; OSM stopway 270 m, FAA diagram ~260 m), 10R 231 m (chevrons end at ~230 m, the pad
+//     merges into taxiway pavement - length from OSM 231 m, FAA diagram ~240 m), 28R 98 m, 28L 98 m (pad edge at
+//     the seawall road; OSM 91 / 95 m, FAA diagram ~90 m). The earlier 108 m (Google screenshots) is replaced.
+//   EMAS beds at 1L/1R/19L/19R (type 2): 35 ft (10.7 m) beyond the runway end (Runway Safe SFO reference). Measured on
+//     NAIP 2024 (oriented patches along the NASR axes, 0.25 m/px, 24 Sep 2026; review round 1 + re-check): imaged far
+//     edge from the runway end 1L ~143.9 m, 19R ~135.5 m, 1R ~124.1 m, 19L ~134.8 m -> bed lengths (far edge - 10.67)
+//     1L 133.2, 19R 124.8, 1R 113.4, 19L 124.1 m; imaged width 69.2-69.4 m at all four (centred on the axis within
+//     0.25 m) -> EMAS_W 69.3 m (was 66 m).
+//   EMAS chevrons (review round 2, re-measured 24 Sep 2026: yellow peaks on the runway axis, 0.05 m samples, NAIP 2024):
+//     first apex beyond the runway end 1L 17.0, 19R 16.05, 1R 17.1, 19L 16.5 m -> chev0 = that - EMAS_SETBACK (m from the
+//     bed entry); apex spacing 30.4-30.8 m at all four = 100 ft (30.48 m). Blast-pad chevrons (drawn by js/shaders/ground.js,
+//     not owned here): first apex 10L 16.9, 10R 16.45, 28R 17.2, 28L 16.9 m beyond the end, spacing 30.5 m.
 export const END_ZONES = [
-  { rw: 0, end: 1, type: 1, len: 108 }, { rw: 1, end: 1, type: 1, len: 108 },
-  { rw: 2, end: 0, type: 2, len: 133.2 }, { rw: 2, end: 1, type: 2, len: 122.0 },
-  { rw: 3, end: 0, type: 2, len: 113.4 }, { rw: 3, end: 1, type: 2, len: 117.0 },
+  { rw: 0, end: 0, type: 1, len: 269 }, { rw: 1, end: 0, type: 1, len: 231 },
+  { rw: 0, end: 1, type: 1, len: 98 }, { rw: 1, end: 1, type: 1, len: 98 },
+  { rw: 2, end: 0, type: 2, len: 133.2, chev0: 6.3 }, { rw: 2, end: 1, type: 2, len: 124.8, chev0: 5.4 },
+  { rw: 3, end: 0, type: 2, len: 113.4, chev0: 6.4 }, { rw: 3, end: 1, type: 2, len: 124.1, chev0: 5.8 },
 ];
-export const EMAS_SETBACK = 10.67, EMAS_W = 66;
+export const EMAS_SETBACK = 10.67, EMAS_W = 69.3;
 export function endZoneRects() {
   return END_ZONES.map(z => {
     const r = RWY[z.rw]; const hw = z.type === 2 ? EMAS_W / 2 + 2 : RWY_W / 2;

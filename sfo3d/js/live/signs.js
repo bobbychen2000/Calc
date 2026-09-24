@@ -112,6 +112,7 @@ export function buildSigns(details, runways) {
   const g = new G(), gp = new G();
   const faceH = 0.76; // 30 in legend panel (size 3 sign)
   for (const h of holds) {
+    if (h.signs === false) continue; // second ladder at one hold (data/sfo_details.json 'secondary'): no sign pair of its own
     const u = h.dir; const right = [-u[1], u[0]], left = [u[1], -u[0]];
     const f = [-u[0], -u[1]]; // faces the approaching pilot
     const edgeL = dot(sub(h.a, h.p), left) > 0 ? h.a : h.b, edgeR = edgeL === h.a ? h.b : h.a;
@@ -123,6 +124,7 @@ export function buildSigns(details, runways) {
     }
     // painted holding position signs on the pavement, on the holding side; text reads toward the runway
     const r = A.map['paint:' + h.text]; const Lr = 3.6; // 12 ft deep (along travel)
+    if (h.kind === 'ils') continue; // ILS holds: mandatory "ILS" signs only, no painted surface sign
     const halves = h.w > 10.7 ? [-1, 1] : [0];
     for (const s of halves) {
       const across = Math.min(h.w / (halves.length === 2 ? 2 : 1) - 1.2, Lr * r.aspect);

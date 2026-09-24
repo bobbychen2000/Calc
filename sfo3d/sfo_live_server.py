@@ -25,7 +25,9 @@ Endpoints
 Data sources, terms and measured behaviour: docs/research/realtime_feeds.md (ADS-B), gate_truth.md (flysfo),
 realtime_impl.md (this relay's design and test results).
   adsb.lol  GET https://api.adsb.lol/v2/point/{lat}/{lon}/{nm}  primary: every 1.0-1.5 s (random), one request in
-            flight; on HTTP 429 wait >= 2 s then back off exponentially to 30 s (feeds §5.1). Data licence ODbL 1.0.
+            flight; on HTTP 429 wait >= 2 s then back off exponentially to 30 s (feeds §5.1), plus an adaptive floor
+            (x1.5 per 429, x0.9 per success) so it settles at the rate adsb.lol currently grants this IP instead of
+            cycling through refusals (Poller._schedule; realtime_impl.md §2). Data licence ODbL 1.0.
   adsb.fi   GET https://opendata.adsb.fi/api/v3/lat/{lat}/lon/{lon}/dist/{nm}  every 2.0 s, ~0.3 s after an even
             second (its snapshot changes only on even seconds, feeds §4.2); documented limit 1 request/s;
             personal non-commercial use, cite and link adsb.fi.
@@ -194,10 +196,12 @@ class Poller(threading.Thread):
         self.stop_ev = threading.Event()
         self.phase = prov.get('phase', 0.0)
         self.fails = 0
+        self.t_first = None
+        self.floor = 0.0      # adaptive minimum interval after HTTP 429s (AIMD: x1.5 per 429, x0.9 per success)
         self.next_due = 0.0
         self.lags = deque(maxlen=30)
         self.st = dict(requests=0, ok=0, http429=0, errors=0, dup=0, last_ok=None, last_error=None, last_code=None,
-                       backoff_s=0.0, latency_ms=deque(maxlen=200), lag_s=deque(maxlen=200), last_now=None)
+                       backoff_s=0.0, floor_s=0.0, recent=deque(maxlen=1000), latency_ms=deque(maxlen=200), lag_s=deque(maxlen=200), last_now=None)
 
     @property
     def url(self):
@@ -210,21 +214,38 @@ class Poller(threading.Thread):
             base += 2.0
         return base
 
-    def _schedule(self, t0, t1, ok, retry_after=None):
+    def _schedule(self, t0, t1, ok, retry_after=None, status=None):
+        """Next request time. Success: the provider's cadence, but never faster than the adaptive floor. Failure:
+        exponential back-off (backoff_first x 2^n up to backoff_max, or Retry-After if longer).
+
+        The floor exists because adsb.lol's limits are "dynamic based on the environment load" (its README) and this
+        egress IP is shared: on 24 Sep 15:13-15:16Z, after each back-off (2, 4, 8, 16 s) the first request at the normal
+        1.0-1.5 s cadence was refused again, i.e. 3 of 4 requests were 429s (refs/cache/rec/adsblol_20260924_15). So
+        each 429 raises the floor x1.5 (at least backoff_first) and each success lowers it x0.9 until it is below the
+        normal period again: the poller settles at the rate the provider currently grants, instead of cycling through
+        refusals (which, for adsb.fi, count toward its temporary IP restriction, realtime_feeds §3.2)."""
         p = self.p
         if ok:
             self.fails = 0
             self.st['backoff_s'] = 0.0
+            if self.floor:
+                self.floor *= 0.9
+                if self.floor < (p['period'][1] if p['schedule'] == 'jitter' else p['period']):
+                    self.floor = 0.0
             if p['schedule'] == 'even':
-                self.next_due = self._slot_after(t0 + 1.0)          # next even second + phase (2 s after t0)
+                self.next_due = self._slot_after(max(t0 + 1.0, t0 + self.floor - 1.0))   # next even second + phase
             else:
-                self.next_due = max(t0 + random.uniform(*p['period']), t1 + 0.05)
+                self.next_due = max(t0 + max(random.uniform(*p['period']), self.floor), t1 + 0.05)
+            self.st['floor_s'] = round(self.floor, 2)
             return
         self.fails += 1
-        wait = min(p['backoff_max'], p['backoff_first'] * 2 ** (self.fails - 1))
+        if status == 429:
+            self.floor = min(p['backoff_max'], max(p['backoff_first'], self.floor * 1.5))
+        wait = max(min(p['backoff_max'], p['backoff_first'] * 2 ** (self.fails - 1)), self.floor)
         if retry_after:
             wait = max(wait, min(retry_after, 300.0))
         self.st['backoff_s'] = wait
+        self.st['floor_s'] = round(self.floor, 2)
         self.next_due = self._slot_after(t1 + wait) if p['schedule'] == 'even' else t1 + wait
 
     def _adapt_phase(self, t0, now_s):
@@ -253,6 +274,7 @@ class Poller(threading.Thread):
                     break
                 continue
             t0 = time.time()
+            self.t_first = self.t_first or t0
             status, hd, js, err = None, {}, None, None
             try:
                 status, hd, body = self.http.request('GET', self.url_path)
@@ -268,6 +290,7 @@ class Poller(threading.Thread):
             st = self.st
             st['requests'] += 1
             st['last_code'] = status
+            st['recent'].append((t1, status))
             st['latency_ms'].append(round((t1 - t0) * 1000))
             ok = js is not None
             ra = None
@@ -292,11 +315,20 @@ class Poller(threading.Thread):
                     ra = float(hd.get('retry-after')) if hd.get('retry-after') else None
                 except ValueError:
                     ra = None
-            self._schedule(t0, t1, ok, ra)
+            self._schedule(t0, t1, ok, ra, status)
             try:
                 self.on_result(self.p, t0, t1, status, hd, js, err)
             except Exception as e:  # never let a consumer bug stop polling
                 print('on_result error:', repr(e), file=sys.stderr)
+
+    def _recent(self, window):
+        t = time.time()
+        rr = [(tt, c) for (tt, c) in self.st['recent'] if t - tt <= window]
+        r = [c for _, c in rr]
+        ok = sum(1 for c in r if c == 200)
+        span = min(window, max(1.0, t - self.t_first)) if self.t_first else window
+        return {'window_s': round(span), 'requests': len(r), 'ok': ok, 'http429': sum(1 for c in r if c == 429),
+                'ok_per_min': round(ok * 60.0 / span, 1) if r else 0.0}
 
     def status(self):
         st = self.st
@@ -308,7 +340,8 @@ class Poller(threading.Thread):
                 'last_code': st['last_code'], 'last_error': st['last_error'], 'backoff_s': st['backoff_s'],
                 'latency_ms_p50': q(lat, 0.5), 'latency_ms_p90': q(lat, 0.9),
                 'request_minus_now_s_p50': q(lag, 0.5), 'request_minus_now_s_p90': q(lag, 0.9),
-                'phase_s': self.phase if self.p['schedule'] == 'even' else None,
+                'phase_s': self.phase if self.p['schedule'] == 'even' else None, 'floor_s': st['floor_s'],
+                'last_10min': self._recent(600),
                 'next_in_s': round(max(0.0, self.next_due - time.time()), 2) if self.next_due else None}
 
 
@@ -566,7 +599,10 @@ class Hub:
             if k in PREFER_FI and any(c[0] == 'fi' for c in have):
                 have = [c for c in have if c[0] == 'fi']
             if k in DB_FIELDS:
-                pick = next((c for c in have if c[2] is a), None) or max(have, key=lambda c: c[4])
+                # one database per aircraft, not per report: the providers' databases can disagree (ACA738 C-FDUW was
+                # BCS3 at adsb.fi, BCS1 at adsb.lol on 24 Sep) and the position winner alternates, so the type would
+                # flicker. adsb.fi's value when it has one (it also carries desc/ownOp/year), else the position winner.
+                pick = next((c for c in have if c[0] == 'fi'), None) or next((c for c in have if c[2] is a), None) or max(have, key=lambda c: c[4])
             else:
                 pick = max(have, key=lambda c: c[4])
             out[k] = pick[2][k]
@@ -842,6 +878,14 @@ REGIONAL = {'SKW', 'RPA', 'ENY', 'QXE', 'ASH', 'EDV', 'GJS', 'JIA', 'PDT', 'CPZ'
 # marketing flight a regional ADS-B callsign is, is decided from the data (number + aircraft type + VRS route),
 # never from an assumed partnership table.
 CS_RE = re.compile(r'^([A-Z]{3})0*(\d+)([A-Z]*)$')
+# flysfo type codes that are not ICAO Doc 8643 designators -> the designators ADS-B databases use. flysfo lists
+# American Eagle (SkyWest) E-175s as 'E175' (observed 24 Sep 15:24Z, SKW6274 = AAL6274), while ADS-B says 'E75L';
+# Doc 8643 designates the Embraer 175 as E75L (long wing) / E75S (short wing).
+TYPE_EQUIV = {'E175': {'E75L', 'E75S'}}
+
+
+def type_match(adsb_t, types):
+    return any(adsb_t == t or adsb_t in TYPE_EQUIV.get(t, ()) for t in types)
 
 
 def norm_cs(c):
@@ -1030,7 +1074,7 @@ class Gates:
             return
         if self.snap_path == fs[-1]:
             return
-        union = {}
+        union, d = {}, None
         for p in fs[-8:]:   # a snapshot reaches ~4 h back; 8 x >= 10 min covers the recent ones
             try:
                 d = self._read(p)
@@ -1040,6 +1084,9 @@ class Gates:
                 if not r.get('is_code_share'):
                     f = compact_flight(r)
                     union[f['id']] = f
+        if d is None:
+            self.snap_path = fs[-1]      # unreadable: do not retry on every request
+            return
         self._ingest(d, self._file_time(fs[-1]), fs[-1], union)
 
     # -- payload
@@ -1126,8 +1173,9 @@ class Gates:
                 others = {f['other']['icao'] for f in fl if f['other'].get('icao')}
                 chk, score = {}, 0
                 if adsb_t and types:
-                    chk['type'] = 'agree' if adsb_t in types else 'differ'
-                    score += 2 if adsb_t in types else -1
+                    tm = type_match(adsb_t, types)
+                    chk['type'] = 'agree' if tm else 'differ'
+                    score += 2 if tm else -1
                 if vrs_codes and others:
                     ok = 'KSFO' in vrs_codes and bool(vrs_codes & others)
                     chk['route'] = 'agree' if ok else 'differ'
@@ -1203,11 +1251,31 @@ class Metar:
                 pass
         return best
 
+    def _fill_cache(self):
+        """Replay of a recent recording with no cached METAR near its time: save the last 24 h of KSFO METARs once
+        (aviationweather.gov JSON, `hours` is its documented look-back) in the replay_wx.py cache, at most every 10 min."""
+        if time.time() - getattr(self, '_filled', 0) < 600:
+            return
+        self._filled = time.time()
+        try:
+            code, _, body = http_get('https://aviationweather.gov/api/data/metar?ids=KSFO&format=json&hours=24', timeout=20)
+            if code == 200 and body.strip().startswith(b'['):
+                d = os.path.join(CACHE_DIR, 'replay', 'wx')
+                os.makedirs(d, exist_ok=True)
+                open(os.path.join(d, time.strftime('metar_ksfo_%Y%m%dT%H%M%SZ.json', time.gmtime())), 'wb').write(body)
+        except Exception as e:
+            print('metar cache fill failed:', e, file=sys.stderr)
+
     def get(self, ids, fmt):
         if self.replay is not None and ids == 'KSFO':
-            m = self._cached_obs(self.replay.to_src(time.time()))
-            if m:
+            T = self.replay.to_src(time.time())
+            m = self._cached_obs(T)
+            if (m is None or T - m['obsTime'] > 5400) and time.time() - T < 23 * 3600:
+                self._fill_cache()
+                m = self._cached_obs(T)
+            if m and T - m['obsTime'] <= 5400:   # METARs are hourly (xx56Z); older than 90 min: none is better
                 return (json.dumps([m]).encode(), 'application/json') if fmt == 'json' else (m['rawOb'].encode(), 'text/plain')
+            raise IOError('no cached KSFO METAR within 90 min of the replay time')   # never today's weather in a replay
         key = (ids, fmt)
         with self.lock:
             c = self.cache.get(key)
@@ -1372,6 +1440,9 @@ def make_handler(app):
                     return self._json(app_status(app))
                 if u.path == '/api/gates':
                     gates.want()
+                    t_w = time.time()
+                    while gates.fetching and not gates.flights and time.time() - t_w < 20:   # first fetch ~3 s
+                        time.sleep(0.2)
                     cs = ','.join(q.get('cs', [])).split(',')
                     return self._json(gates.payload(cs))
                 if u.path == '/api/metar':

@@ -59,7 +59,7 @@ def main():
             for b in s['bridges']:
                 ax.plot([b['attach'][0]], [-b['attach'][1]], 's', color='grey', ms=3)
         for p in osm['parking_positions']:
-            pts = [X.ll_to_world(*q) for q in p['pts']]
+            pts = [X.wgs84_to_world(*q) for q in p['pts']]
             fx, fz = pts[0]; sx, sz = p['stop_w']
             ax.plot([q[0] for q in pts], [-q[1] for q in pts], color='#2a9d3a', lw=0.8, alpha=0.7)
             ax.plot(sx, -sz, 'o', color='#2a9d3a', ms=3)
@@ -67,15 +67,15 @@ def main():
             if p['ref']:
                 ax.annotate(p['ref'], (sx, -sz), fontsize=6 if not big else 3.5, color='#2a9d3a', xytext=(-10, -8), textcoords='offset points')
         for j in osm['jet_bridges']:
-            pts = [X.ll_to_world(*q) for q in j['pts']]
+            pts = [X.wgs84_to_world(*q) for q in j['pts']]
             ax.plot([q[0] for q in pts], [-q[1] for q in pts], color='#8e44ad', lw=1.2, alpha=0.8)
         for r in xp['ramp_starts']:
-            x, z = X.ll_to_world(r['lat'], r['lon']); f = X.hdg_vec(r['hdg'])
+            x, z = X.wgs84_to_world(r['lat'], r['lon']); f = X.hdg_vec(r['hdg'])
             ax.plot(x, -z, marker=(3, 0, -r['hdg']), color='#d62728', ms=6, ls='none')
             ax.plot([x, x - f[0] * 12], [-z, -(z - f[1] * 12)], color='#d62728', lw=0.8)
             ax.annotate(r['name'].replace('Gate ', ''), (x, -z), fontsize=6 if not big else 3.5, color='#d62728', xytext=(3, -10), textcoords='offset points')
         for j in xp['jetways']:
-            x, z = X.ll_to_world(j['lat'], j['lon']); f = X.hdg_vec(j['tunnel_hdg'])
+            x, z = X.wgs84_to_world(j['lat'], j['lon']); f = X.hdg_vec(j['tunnel_hdg'])
             ax.plot(x, -z, '+', color='#b22222', ms=5)
             ax.plot([x, x + f[0] * j['tunnel_len_m']], [-z, -(z + f[1] * j['tunnel_len_m'])], color='#b22222', lw=0.8, ls='--')
         ax.set_xlim(x0, x1); ax.set_ylim(-z1, -z0); ax.set_aspect('equal')

@@ -150,17 +150,28 @@ export const AIRPORT_LAND_ST = [
   [1850, 330], [1790, 460], [470, 460], [470, 1320], [300, 1400], [-900, 1400], [-1500, 1350], [-2600, 1200],
 ];
 
-// Approach light systems (lights into the bay). ALSF-2 on 28L/28R 2400ft, MALSF 1400ft on 1L/1R/19L/19R
+// Runway-end lighting from FAA NASR APT_RWY_END.csv, cycle effective 2026-09-03 (APCH_LGT_SYSTEM_CODE,
+// VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT, TDZ_LGT_AVBL_FLAG; cached refs/cache/xcheck/faa/,
+// re-read 24 Sep 2026). NASR lists approach lights only at 28R (ALSF2), 28L (MALSR) and 19L (MALSF) - none at 10L,
+// 10R, 1L, 1R, 19R. System lengths are the FAA standard configurations (ALSF-2 2400 ft; MALSR = MALS 1400 ft + RAIL
+// to 2400 ft; MALSF 1400 ft; AIM 2-1-1, not SFO-specific survey values).
 export const APPROACH_LIGHTS = [
   { end: '28R', len: 2400 * FT, type: 'ALSF2' },
   { end: '28L', len: 2400 * FT, type: 'MALSR' },
-  { end: '10L', len: 2400 * FT, type: 'ALSF2' },
-  { end: '10R', len: 1400 * FT, type: 'MALSR' },
-  { end: '1L', len: 1400 * FT, type: 'MALSF' },
-  { end: '1R', len: 1400 * FT, type: 'MALSF' },
   { end: '19L', len: 1400 * FT, type: 'MALSF' },
-  { end: '19R', len: 1400 * FT, type: 'MALSF' },
 ];
+// PAPI (NASR VGSI_CODE P4L = 4-box PAPI left of the runway) with the published glide path angle (deg) and threshold
+// crossing height (ft). NASR has no PAPI at 1L/1R. The PAPI distance from the threshold is not in NASR: `dist` (m) =
+// TCH / tan(angle), the point where the glide path meets the runway (inferred; ignores eye-to-wheel height and
+// threshold-to-PAPI elevation difference).
+export const PAPI = [
+  { end: '10L', angle: 3.00, tch: 80 }, { end: '10R', angle: 3.00, tch: 68 },
+  { end: '19L', angle: 3.00, tch: 71 }, { end: '19R', angle: 3.15, tch: 58 },
+  { end: '28R', angle: 3.00, tch: 68 }, { end: '28L', angle: 2.85, tch: 67 },
+].map(p => ({ ...p, dist: p.tch * FT / Math.tan(p.angle * Math.PI / 180) }));
+// Touchdown-zone lights: NASR TDZ_LGT_AVBL_FLAG = Y only at 28R and 19L (the Chart Supplement: "TDZL/RCLS Rwys 19L
+// and 28R").
+export const TDZ_LIGHTS = ['28R', '19L'];
 
 // Regional landmarks (lat, lon, height m)
 export const LANDMARKS = {

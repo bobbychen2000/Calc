@@ -28,7 +28,7 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_SRC = os.environ.get('SFOM_DATA', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'refs', 'sfom-arch', 'data'))  # github.com/sfomuseum-data/sfomuseum-data-architecture @5f64ee8
+DEFAULT_SRC = os.environ.get('SFOM_DATA', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'refs', 'sfom-arch', 'data'))  # github.com/sfomuseum-data/sfomuseum-data-architecture @5f64ee8
 DEFAULT_JSON = os.path.join(HERE, '..', 'data', 'sfo_airport.json')
 DEFAULT_REPORT = os.path.join(HERE, '..', 'data', 'sfo_airport_report.md')
 

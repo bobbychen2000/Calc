@@ -386,7 +386,7 @@ def main():
         if r['vehicle']: continue
         for s in r['stops']:
             c = s['stands'][0]
-            print(f"  {utc(s['t0'])}-{utc(s['t1'])} {r['flight'] or r['reg']:8s} {r['icao'] or '?':5s} {s['dur']:5.0f}s jit {s['jit_p95']:5.1f} m hdg {f(s['hdg'])}({s['hdg_n']})"
+            print(f"  {utc(s['t0'])}-{utc(s['t1'])} {r['flight'] or r['reg'] or r['hex']:8s} {r['icao'] or '?':5s} {s['dur']:5.0f}s jit {s['jit_p95']:5.1f} m hdg {f(s['hdg'])}({s['hdg_n']})"
                   f" rwy {s['runway'] or '-'} twy {'+'.join(s['twy']) or '-'} hold {s['hold']} | stand {c['stand']} lat {c['lat']} along {c['along']} dnose {c['dnose']} dhdg {c['dhdg']}")
     print('\nPUSH-BACKS')
     for r in out:

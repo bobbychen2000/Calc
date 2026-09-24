@@ -5,7 +5,8 @@ import '../shaders/ground.js';
 import { Renderer } from '../renderer.js';
 import { bakeGround } from '../world/world.js';
 import { solarPosition, sunVector } from '../world/textures.js';
-import { ARP, GROUND_Y, worldToST, stToWorld } from '../geo.js';
+import * as GEO from '../geo.js';
+const { ARP, GROUND_Y, worldToST, stToWorld } = GEO;
 import { Scene } from '../scene.js';
 import { TYPES } from '../aircraft/types.js';
 import { CLOUD_VS, CLOUD_FS } from '../shaders/env.js';
@@ -16,9 +17,11 @@ import { MODEL_SOURCES } from './models.js';
 import { buildLiveWorld, releaseAirportMap } from './world.js';
 import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, lightSpriteFn, buildPierGeometry } from './lights.js';
-import { Traffic, category, hdgVec, RWY, phaseLabel, ANT } from './traffic.js';
+import { Traffic, category, hdgVec, RWY, phaseLabel, ANT, DELAY_MS } from './traffic.js';
 import { GroundPhysics, buildingGrid } from './ground.js';
-import { Feed, Routes, fetchMetar, parsePayload, SOURCES } from './feed.js';
+import { Feed, StreamFeed, Routes, fetchMetar, fetchGates, parsePayload, SOURCES } from './feed.js';
+import { runwayStats, statsLine, statsHtml, runwayQueue } from './stats.js';
+import { atcRoles, onFeed, roleChip, FEEDS, FEED_BY } from './atc.js';
 import { CameraRig } from './controls.js';
 import { UI } from './ui.js';
 
@@ -59,6 +62,7 @@ export async function startApp(cfg) {
   const ui = new UI(root, {
     onSelect: (hex, fly) => select(hex, fly), onView: (v) => view(v), onFollow: (m) => followCmd(m),
     onSetting: (k, v) => setting(k, v), showOthers: () => showOthers,
+    onAtc: (a, v) => atcCmd(a, v), onStatsOpen: () => statsSheet(Date.now()),
   });
   ui.root.querySelector('[data-set="light"]').value = lightMode; ui.root.querySelector('[data-set="quality"]').value = qPref; ui.root.querySelector('[data-set="others"]').checked = showOthers;
   ui.setAbout(cfg.about || ''); ui.setAttrib(cfg.attrib || '');
@@ -88,6 +92,7 @@ export async function startApp(cfg) {
   const scene = new Scene(R, world);
   const gateSys = new LiveGateSystem(world.gates, { atlasExtra: Object.keys(TYPE_MODELS) }); scene.gateSys = gateSys;
   ui.progress(0.45, 'Airfield lighting…'); await nextFrame();
+  const pavedMask = world.paved; // keep it for GroundPhysics (it used to be nulled before use: traffic_audit F6)
   const lsys = buildLiveLights(cfg.airport, world.paved); world.paved = null;
   const lfn = lightSpriteFn(lsys); let camPos = [0, 100, 0];
   scene.staticLights.push((t) => nightScale(lfn(t, camPos)));
@@ -166,10 +171,39 @@ export async function startApp(cfg) {
   // parked aircraft pose for the jet bridge: nose position & heading in the airport (s,t) frame
   const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const p = tr.parkPos || [tr.last.x, tr.last.z]; const h = hdgVec(tr.parkHdg ?? tr.last.hd); const k = ANT * T.L;
     const n = worldToST(p[0] + h[0] * k, p[1] + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
-  const traffic = new Traffic({ gates: world.gates, airport: cfg.airport, persist: cfg.mode === 'live', centerlines: cfg.details ? cfg.details.centerlines : null,
-    onGateChange: (g, tr) => gateSys.setOccupant(g, tr ? (tr.model && TYPES[tr.model.t] ? tr.model.t : (g.wide ? 'b789' : 'a320')) : null, booted, Date.now(), tr ? poseST(tr) : null, tr ? tr.info.icao : null) });
+  const traffic = new Traffic({ gates: world.gates, airport: cfg.airport, persist: cfg.mode === 'live', centerlines: cfg.details ? cfg.details.centerlines : null, taxigraph: cfg.taxigraph || null, stands: cfg.stands || null,
+    onGateChange: (g, tr) => gateChange(g, tr) });
+  // stand occupancy (jet bridges, VDGS) follows the scene: with an ATC audio delay the change is applied that much later
+  function applyGate(g, tr) { gateSys.setOccupant(g, tr ? (tr.model && TYPES[tr.model.t] ? tr.model.t : (g.wide ? 'b789' : 'a320')) : null, booted, Date.now(), tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
+  const gateQ = [];
+  function gateChange(g, tr) { const d = traffic && traffic.audioDelay || 0; if (d < 500) applyGate(g, tr); else gateQ.push({ due: Date.now() + d, g, tr }); }
+  function flushGates(now) { while (gateQ.length && gateQ[0].due <= now) { const q = gateQ.shift(); applyGate(q.g, q.tr && !q.tr.removed ? q.tr : null); } }
   const buildingAt = buildingGrid(cfg.airport); traffic.buildingAt = buildingAt;
-  const physics = new GroundPhysics({ paved: world.paved, building: buildingAt });
+  // ---------------------------------------------------------------- ATC (atc.js): tuned LiveATC feed + audio delay (per device)
+  let atcTuned = store.get('atc.mount', null); if (atcTuned && !FEED_BY.has(atcTuned)) atcTuned = null;
+  let atcDelayS = clamp(+store.get('atc.delay', 0) || 0, 0, 30); traffic.setAudioDelay(atcDelayS * 1000);
+  let atcRolesBy = new Map(), atcLikely = new Map();
+  function atcUpdate(now) {
+    atcRolesBy = new Map(); atcLikely = new Map(FEEDS.map(f => [f.mount, []]));
+    const tuned = atcTuned ? FEED_BY.get(atcTuned) : null; const mark = new Map();
+    for (const tr of traffic.tracks.values()) {
+      const roles = atcRoles(tr, traffic, now); if (!roles.length) continue; atcRolesBy.set(tr.hex, roles);
+      const name = (tr.cs && tr.cs.display) || tr.info.reg || tr.hex.toUpperCase();
+      for (const f of FEEDS) { const r = onFeed(roles, f); if (r) atcLikely.get(f.mount).push({ hex: tr.hex, name, chip: roleChip(r) }); }
+      if (tuned) { const r = onFeed(roles, tuned); if (r) mark.set(tr.hex, roleChip(r)); }
+    }
+    ui.atcMark = mark;
+    ui.setAtc({ tuned: atcTuned, delayS: atcDelayS, snapshot: cfg.mode === 'snapshot', likely: atcLikely, chip: tuned ? shortFeed(tuned) : null });
+  }
+  const shortFeed = (f) => ({ twr: 'TWR', gnd: 'GND', clr: 'CLR', fin: 'APP', app: 'APP', dep: 'DEP', ramp: 'RAMP', atis: 'ATIS', ctr: 'CTR' }[f.group] || 'on');
+  function atcCmd(a, v) {
+    if (a === 'tune') { atcTuned = v && v !== atcTuned ? v : null; store.set('atc.mount', atcTuned); }
+    else if (a === 'listen') { if (FEED_BY.get(v) && FEED_BY.get(v).keys.length) { atcTuned = v; store.set('atc.mount', v); } }
+    else if (a === 'delay') { atcDelayS = clamp(Math.round(v), 0, 30); store.set('atc.delay', atcDelayS); traffic.setAudioDelay(atcDelayS * 1000); status(Date.now()); }
+    atcUpdate(Date.now()); ui.renderList(true, [...traffic.tracks.values()]);
+  }
+  function statsSheet(now) { if (!ui.statsOpen()) return; const tD = traffic.displayTime(now); ui.setStatsSheet(statsHtml(runwayStats(traffic.events, tD), runwayQueue(traffic.tracks.values(), RWY))); }
+  const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net });
   // footprints of aircraft on the ground (vehicles around a stand must not hit them)
   gateSys.aircraftFootprints = () => {
     const out = [];
@@ -183,7 +217,7 @@ export async function startApp(cfg) {
   const views = new Map(); // hex -> LiveAircraft | 'marker'
   function makeView(tr) {
     const m = tr.model;
-    if (!m || !TYPES[m.t]) return 'marker';
+    if (tr.vehicle || !m || !TYPES[m.t]) return 'marker';
     const ac = new LiveAircraft(m.t, m.m && MODEL_SOURCES[m.m] ? m.m : null, tr.livery, { id: tr.hex, lod: 1, lodDist: Q.lod, shadowDist: Q.shadowDist });
     ac.trackType = m.t; scene.add(ac); return ac;
   }
@@ -202,7 +236,7 @@ export async function startApp(cfg) {
       let v = views.get(tr.hex);
       const want = tr.model ? tr.model.t : null;
       if (v && v !== 'marker' && v.trackType !== want) { scene.aircraft.splice(scene.aircraft.indexOf(v), 1); v = null; }
-      if (v === 'marker' && want && TYPES[want]) v = null;
+      if (v === 'marker' && want && TYPES[want] && !tr.vehicle) v = null;
       if (!v) { v = makeView(tr); views.set(tr.hex, v); }
       if (v === 'marker') continue;
       const D = tr.disp; const h = hdgVec(D.hdg); const back = v.T.xMain - ANT * v.T.L; // model origin = main gear; reported point = antenna
@@ -210,18 +244,18 @@ export async function startApp(cfg) {
       v.pitch = D.pitch; v.roll = D.roll; v.gear = D.gear; v.flaps = D.flaps; v.spoilers = D.spoilers;
       if (v.liv !== tr.livery) { v.liv = tr.livery; v._pu = null; }
       const moving = !D.ground || D.gs > 0.5, air = !D.ground, ph = tr.phase;
-      v.lightsOn.nav = !tr.stale || nightF < 0.5; v.lightsOn.beacon = !tr.stale && (moving || ph === 'pushback' || ph === 'holding');
-      v.lightsOn.strobe = air || ph === 'takeoff' || ph === 'landing';
+      v.lightsOn.nav = !tr.stale || nightF < 0.5; v.lightsOn.beacon = !tr.stale && (moving || ph === 'pushback' || ph === 'holding' || ph === 'lineup');
+      v.lightsOn.strobe = air || ph === 'takeoff' || ph === 'landing' || ph === 'lineup';  // strobes on entering the runway
       v.lightsOn.landing = (air && D.y - GROUND_Y < 3000) || ph === 'takeoff' || (ph === 'landing' && D.gs > 30);
-      v.lightsOn.taxi = D.ground && (ph === 'taxi' || ph === 'holding') && !tr.stale;
+      v.lightsOn.taxi = D.ground && (ph === 'taxi' || ph === 'holding' || ph === 'lineup') && !tr.stale;
       v.cabin = nightF * (tr.stale ? 0.15 : 1) * 0.9; v.selected = tr.hex === selected ? 1 : 0; v.dirt = 0.35;
     }
   }
   function markerSprites() {
     const out = [];
     for (const [hex, v] of views) { if (v !== 'marker') continue; const tr = traffic.tracks.get(hex); if (!tr || !tr.disp.valid) continue; const D = tr.disp;
-      const c = { arr: [0.3, 0.8, 1], dep: [1, 0.7, 0.3], ground: [0.5, 0.9, 0.6], other: [0.85, 0.85, 0.9] }[category(tr)];
-      out.push({ p: [D.x, D.y + 2, D.z], c, i: 120, s: 1.4 }); }
+      const cat = category(tr); const c = { arr: [0.3, 0.8, 1], dep: [1, 0.7, 0.3], ground: [0.5, 0.9, 0.6], other: [0.85, 0.85, 0.9], vehicle: [1, 0.72, 0.1] }[cat] || [0.85, 0.85, 0.9];
+      out.push(cat === 'vehicle' ? { p: [D.x, D.y + 1.6, D.z], c, i: 60, s: 0.7 } : { p: [D.x, D.y + 2, D.z], c, i: 120, s: 1.4 }); }
     return out;
   }
   // ---------------------------------------------------------------- camera
@@ -244,14 +278,15 @@ export async function startApp(cfg) {
     selected = hex; const tr = hex && traffic.tracks.get(hex);
     if (!tr) { selected = null; ui.renderCard(null); if (followMode) { rig.stopFollow(); followMode = null; } ui.renderList(true, [...traffic.tracks.values()]); return; }
     if (fly) { rig.leaveTower(); rig.setFollow(followFn(hex), { chase: false }); followMode = 'follow'; }
-    ui.renderCard(tr, { modelNote: modelNote(tr), follow: followMode }); ui.renderList(true, [...traffic.tracks.values()]);
+    ui.renderCard(tr, cardExtra(tr)); ui.renderList(true, [...traffic.tracks.values()]);
     if (window.innerWidth < 760) ui.setSheet('peek');
   }
+  const cardExtra = (tr) => ({ modelNote: modelNote(tr), follow: followMode, sfo: traffic.planFor(tr), atc: atcRoles(tr, traffic, Date.now()) });
   function followCmd(m) {
     if (!selected) return;
     if (m === 'free') { rig.stopFollow(); followMode = null; }
     else { rig.leaveTower(); rig.setFollow(followFn(selected), { chase: m === 'chase', pitch: m === 'chase' ? 9 * DEG : undefined }); followMode = m; }
-    const tr = traffic.tracks.get(selected); if (tr) ui.renderCard(tr, { modelNote: modelNote(tr), follow: followMode });
+    const tr = traffic.tracks.get(selected); if (tr) ui.renderCard(tr, cardExtra(tr));
   }
   let screenPts = new Map();
   function tap(x, y) {
@@ -266,7 +301,7 @@ export async function startApp(cfg) {
     else if (k === 'clearParked') { traffic.clearParked(); for (const tr of [...traffic.tracks.values()]) if (tr.stale) traffic.remove(tr); }
   }
   // ---------------------------------------------------------------- data
-  let feedState = { state: 'wait', text: 'Connecting…' };
+  let feedState = { state: 'wait', text: 'Connecting…' }; let gatesInfo = null;
   if (cfg.mode === 'snapshot') {
     const snap = cfg.snapshot;
     const load = () => { traffic.tracks.clear(); for (const g of world.gates) { if (g.occupant) gateSys.setOccupant(g, null, false); g.occupant = null; } const p = parsePayload(snap); const off = Date.now() - p.now; p.now += off; for (const a of p.aircraft) a.t += off; traffic.offset = null; traffic.ingest(p, Date.now()); };
@@ -275,18 +310,35 @@ export async function startApp(cfg) {
     feedState = { state: 'snap', text: cfg.snapshotLabel || 'Recorded snapshot' };
   } else {
     const relay = !!cfg.relay;
-    const sources = relay ? [{ name: 'local relay', home: '', url: (lat, lon, nm) => `/api/adsb?lat=${lat}&lon=${lon}&dist=${nm}` }] : SOURCES.filter(s => s.name !== 'airplanes.live');
     let lastSrc = null, fails = 0, fellBack = false;
-    const feed = new Feed({ lat: ARP.lat, lon: ARP.lon, radiusNm: 40, intervalMs: relay ? 5000 : 7000, sources,
-      onData: (p, src) => { lastSrc = p.source || src.name; traffic.ingest(p, Date.now()); fails = 0; if (fellBack) { fellBack = false; } },
-      onStatus: (s) => { if (s.ok) feedState = { state: 'live', text: `Live · ${s.count} aircraft`, src: s.source.name }; else { fails++; feedState = { state: fails > 3 ? 'err' : 'wait', text: fails > 3 ? 'Live feed unavailable' : 'Reconnecting…', err: s.error }; if (fails === 4 && cfg.snapshot && !traffic.tracks.size) { const p = parsePayload(cfg.snapshot); const off = Date.now() - p.now; p.now += off; for (const a of p.aircraft) a.t += off; traffic.ingest(p, Date.now()); fellBack = true; } } } });
-    traffic.delay = (relay ? 5000 : 7000) + 2500;
+    const onData = (p, src) => { lastSrc = p.source || src.name; traffic.ingest(p, Date.now()); fails = 0; if (fellBack) { fellBack = false; } };
+    const onStatus = (s) => {
+      const nAc = () => [...traffic.tracks.values()].filter(t => !t.vehicle && !t.stale).length;
+      if (s.ok) feedState = { state: 'live', text: 'Live', n: nAc(), src: s.source.name };
+      else { fails++; feedState = { state: fails > 3 ? 'err' : 'wait', text: fails > 3 ? 'Live feed unavailable' : 'Reconnecting…', err: s.error }; if (fails === 4 && cfg.snapshot && !traffic.tracks.size) { const p = parsePayload(cfg.snapshot); const off = Date.now() - p.now; p.now += off; for (const a of p.aircraft) a.t += off; traffic.ingest(p, Date.now()); fellBack = true; } }
+    };
+    let feed;
+    if (relay) {
+      // the relay's merged ~1 Hz stream (SSE, deltas), shown DELAY_MS (1.5 s, adapted 1-3 s) behind real time
+      feed = new StreamFeed({ onData, onStatus }); traffic.delay = traffic.delayTarget = DELAY_MS; traffic.adaptDelay = true;
+    } else {
+      // no relay: direct provider polling (browsers are usually blocked by CORS, docs/research/realtime_feeds.md s.3)
+      feed = new Feed({ lat: ARP.lat, lon: ARP.lon, radiusNm: 40, intervalMs: 7000, sources: SOURCES, onData, onStatus });
+      traffic.adaptDelay = false; traffic.delay = traffic.delayTarget = 9500;
+    }
     feed.start();
+    if (relay && cfg.relayInfo && cfg.relayInfo.features && cfg.relayInfo.features.gates) {
+      // SFO's own gate/stand plan through the relay (it fetches flysfo.com at most every 10 min): strong prior for the
+      // stand an aircraft is parked at, plus deep links for the owner's own check (docs/research/gate_truth.md s.6)
+      const gp = async () => { const g = await fetchGates('api/gates'); if (g) { traffic.setPlan(g); gatesInfo = g; } };
+      gp(); setInterval(gp, 60000);
+    }
     const routes = new Routes({ url: relay ? '/api/routeset' : 'https://api.adsb.lol/api/0/routeset' });
     setInterval(async () => {
       const need = [...traffic.tracks.values()].filter(t => t.route === undefined && t.cs && t.cs.airline && t.last && !routes.pending.has(t.cs.callsign)).slice(0, 80);
       if (!need.length) return;
-      const pl = need.map(t => { const ll = [ARP.lat - t.last.z / 110990, ARP.lon + t.last.x / (111320 * Math.cos(ARP.lat * DEG))]; return { callsign: t.cs.callsign, lat: +ll[0].toFixed(3), lng: +ll[1].toFixed(3) }; });
+      const toLL = GEO.worldToWgs84 || GEO.worldToLL;
+      const pl = need.map(t => { const ll = toLL(t.last.x, t.last.z); return { callsign: t.cs.callsign, lat: +ll[0].toFixed(3), lng: +ll[1].toFixed(3) }; });
       await routes.request(pl);
       for (const t of need) { const r = routes.get(t.cs.callsign); if (r !== undefined || routes.cache.has(t.cs.callsign)) traffic.setRoute(t, r || null); }
     }, 6000);
@@ -307,7 +359,7 @@ export async function startApp(cfg) {
     const tp = performance.now(); const wall = (tp - last) / 1000; let dt = Math.min(wall, 0.1); last = tp; simT += dt;
     const now = Date.now();
     try {
-      traffic.update(now, dt); physics.resolve(traffic, dt); syncViews(now); rig.update(dt);
+      traffic.update(now, dt); flushGates(now); physics.resolve(traffic, dt); syncViews(now); rig.update(dt);
       if ((tEnv += wall) > 30) { tEnv = 0; applyEnv(now, false); }
       const cam = rig.camera(); camPos = cam.pos;
       const fr = scene.frame(simT, cam.pos);
@@ -315,7 +367,7 @@ export async function startApp(cfg) {
       const C = R.render(fr, cam, simT, post); scene.commit(); R.present(canvas.width, canvas.height);
       labels(C, now);
       if ((tList += wall) > 1) { tList = 0; ui.renderList(false, [...traffic.tracks.values()]); status(now); }
-      if (selected && (tCard += wall) > 0.5) { tCard = 0; const tr = traffic.tracks.get(selected); if (tr) ui.renderCard(tr, { modelNote: modelNote(tr), follow: followMode }); }
+      if (selected && (tCard += wall) > 0.5) { tCard = 0; const tr = traffic.tracks.get(selected); if (tr) ui.renderCard(tr, cardExtra(tr)); }
     } catch (e) { console.error(e); }
     // dynamic resolution: keep the frame time near 33 ms
     const ft = performance.now() - tp; ftEMA += (ft - ftEMA) * 0.05;
@@ -323,9 +375,14 @@ export async function startApp(cfg) {
     requestAnimationFrame(tick);
   }
   function status(now) {
-    const s = feedState; ui.setStatus({ state: s.state, text: s.text + (s.src ? ' · ' + s.src : ''), title: s.err ? 'Last error: ' + s.err : '' });
+    // "Live · 1.4 s · adsb.fi + adsb.lol": how far the scene runs behind real time (interpolation delay + ATC audio delay)
+    const s = feedState; const lag = (traffic.delay + (traffic.audioDelay || 0)) / 1000; const provs = s.src ? String(s.src).split('+').join(' + ') : '';
+    const txt = s.state === 'live' ? `Live · ${lag.toFixed(1)} s` : s.state === 'snap' ? s.text + (atcDelayS ? ` · +${atcDelayS} s` : '') : s.text;
+    ui.setStatus({ state: s.state, text: txt, sub: s.state === 'snap' ? '' : provs, title: s.err ? 'Last error: ' + s.err : s.state === 'live' ? `${s.n ?? ''} aircraft · scene ${lag.toFixed(1)} s behind real time (interpolation ${(traffic.delay / 1000).toFixed(1)} s${traffic.audioDelay ? ` + ATC audio delay ${(traffic.audioDelay / 1000).toFixed(0)} s` : ''}) · positions from ${provs || 'the relay'}` : '' });
     const M = metar; const wx = M ? `${M.windDir != null ? String(M.windDir).padStart(3, '0') + '°' : 'VRB'} ${M.windKt ?? 0} kt · ${M.visSM ?? '—'} SM${M.clouds.length ? ' · ' + M.clouds.map(c => c.cover + String(c.ft / 100).padStart(3, '0')).join(' ') : ''}` : '';
-    ui.setClock(new Date(cfg.mode === 'snapshot' ? cfg.snapshot.now : now), wx);
+    ui.setClock(new Date(cfg.mode === 'snapshot' ? cfg.snapshot.now : traffic.audioDelay ? traffic.displayTime(now) : now), wx);
+    const tD = traffic.displayTime(now);
+    ui.setStats(statsLine(runwayStats(traffic.events, tD), tD)); statsSheet(now); atcUpdate(now);
   }
   // labels + picking points
   function labels(C, now) {
@@ -334,6 +391,7 @@ export async function startApp(cfg) {
     for (const tr of traffic.tracks.values()) {
       const D = tr.disp; if (!D.valid) continue;
       const cat = category(tr); if (cat === 'other' && !showOthers && tr.hex !== selected) continue;
+      if (cat === 'vehicle' && tr.hex !== selected && Math.hypot(D.x - cp[0], D.y - cp[1], D.z - cp[2]) > 1200) continue;
       const T = tr.model && TYPES[tr.model.t] || null; const hgt = T ? T.Hc + T.R * 2.4 : 6;
       const x = D.x - cp[0], y = D.y + hgt - cp[1], z = D.z - cp[2];
       const cw = vp[3] * x + vp[7] * y + vp[11] * z + vp[15]; if (cw < 0.5) continue;
@@ -350,7 +408,7 @@ export async function startApp(cfg) {
         const alt = !D.ground && !tr.stale && tr.info.altBaro != null ? Math.round(tr.info.altBaro / 100) * 100 : null;
         sub = [tr.info.icao, alt != null ? (alt >= 18000 ? 'FL' + Math.round(alt / 100) : alt.toLocaleString('en-US') + ' ft') : (tr.gate ? tr.gate.name : phaseLabel(tr, now).split(' · ')[0])].filter(Boolean).join(' · ');
       }
-      items.push({ hex: tr.hex, x: px, y: py, depth: dist, cat, text, sub, sel: sel ? 1 : 0, stale: tr.stale });
+      items.push({ hex: tr.hex, x: px, y: py, depth: dist, cat, text, sub, sel: sel ? 1 : 0, stale: tr.stale, atc: ui.atcMark.get(tr.hex) || null });
     }
     ui.updateLabels(items, W, H);
   }
@@ -382,6 +440,6 @@ export async function startApp(cfg) {
     gatesOccupied: () => world.gates.filter(g => g.acType).map(g => g.name),
     tracks: () => [...traffic.tracks.values()].map(t => ({ hex: t.hex, flight: t.info.flight, icao: t.info.icao, phase: t.phase, gate: t.gate && t.gate.name, ground: t.disp.ground })),
   };
-  window.SFO = { R, scene, traffic, physics, rig, ui, world, gateSys, select, view, applyEnv, qa, setLight: (m) => setting('light', m), frameNow: () => { last = performance.now() - 16; tick(); } };
+  window.SFO = { R, scene, traffic, physics, rig, ui, world, gateSys, select, view, applyEnv, qa, stats: () => runwayStats(traffic.events, traffic.displayTime(Date.now())), atc: () => ({ tuned: atcTuned, delayS: atcDelayS, roles: Object.fromEntries(atcRolesBy), likely: Object.fromEntries(atcLikely) }), atcCmd: (a, v) => atcCmd(a, v), setLight: (m) => setting('light', m), frameNow: () => { last = performance.now() - 16; tick(); } };
   return window.SFO;
 }

@@ -3,7 +3,8 @@
 
 Uses exactly the relay's polling code (sfo_live_server.Poller / RecordWriter), so recordings show what the relay sees:
   adsb.lol  https://api.adsb.lol/v2/point/37.6188/-122.3754/40            every 1.0-1.5 s (random), one request in
-            flight; HTTP 429 -> wait 2 s, then 4, 8, 16, 30 s (realtime_feeds.md §5.1)
+            flight; HTTP 429 -> wait 2 s, then 4, 8, 16, 30 s (realtime_feeds.md §5.1), plus the adaptive
+            floor of Poller._schedule (x1.5 per 429, x0.9 per success; realtime_impl.md §2)
   adsb.fi   https://opendata.adsb.fi/api/v3/lat/37.6188/lon/-122.3754/dist/40   every 2.0 s at an even second + 0.3 s
             (its snapshot changes only on even seconds, §4.2; v3 replaces the deprecated v2 lat/lon/dist, §3.2);
             errors -> 4, 8, 16, 32, 60 s

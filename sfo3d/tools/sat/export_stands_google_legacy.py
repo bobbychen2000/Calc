@@ -1,0 +1,131 @@
+"""LEGACY (superseded 24 Sep 2026 by tools/stands/build_stands.py; kept for provenance and for the screenshot-based
+visualisation tools bridge_view.py / mosaic.py). It no longer writes data/: output goes to tools/sat/work/
+sfo_stands_google_legacy.json(.js). The stand layout here was measured on the Google screenshots, which may not be
+used for committed coordinates any more (owner, 24 Sep 2026).
+
+Export the surveyed stand layout (stand_defs.py) to sfo_stands_google_legacy.json/.js in world coordinates (x east, z south).
+Each stand lists the jet bridges that serve it: one per hold-room gate (name + aliases) on the aircraft's left side,
+two for wide-body stands (L1 + L2).
+Frame: output in the current world frame (tools/geo_frame.py = js/geo.js). The bridge derivation below (nearest hold
+room, "does the bridge line cross the building" raster test, facade point) is evaluated in the LEGACY survey frame
+'equirect-v1' in which the stands were measured (stand_defs.LEGACY_STANDS; the SFO Museum outlines and gate points
+are mapped back with geo_frame.world_to_legacy), and only its results are mapped forward with
+geo_frame.legacy_to_world. Reason: several decisions are near-ties (C7/C9 and B25/B24 hold rooms equidistant to 0.1 m,
+F5 bridge line grazing the facade) that flip under the 1-2 m frame change; evaluating in the survey frame makes the
+migration exact (output = legacy output mapped point by point, < 0.1 m). Noses/headings come from
+stand_defs.STANDS (already migrated). The red boxes (work/redboxes.json, legacy frame) are mapped with
+geo_frame.legacy_to_world."""
+import json, math, os
+import numpy as np
+from common import *
+from stview import st2w, w2st, HDGV
+import stand_defs
+from stands import CLS, planform_st, hdg_to_st
+GATE = {g['name']: g for g in D['gates'] if not g.get('dup')}
+# derivation frame = legacy survey frame (see header): world -> legacy world -> legacy grid, and back
+def w2st(x, z): return GF.legacy_world_to_legacy_st(*GF.world_to_legacy(x, z))
+def st2w(s, t): return GF.legacy_to_world(*GF.legacy_st_to_legacy_world(s, t))
+OUTLINE = [[w2st(*q) for q in r] for r in rings_all('complex') + rings_all('ba')]
+import cv2 as _cv2
+_BR = 0.5; _S0, _T1 = -1700.0, -150.0; _BM = np.zeros((int(1350 / _BR), int(1550 / _BR)), np.uint8)
+for poly in [p_ for p_ in D['terminalComplex']] + [b['polys'][0] for b in D['boardingAreas']]:
+    for i, ring in enumerate(poly):
+        pts = np.array([[(w2st(*q)[0] - _S0) / _BR, (_T1 - w2st(*q)[1]) / _BR] for q in ring])
+        _cv2.fillPoly(_BM, [np.round(pts * 4).astype(np.int32)], 1 if i == 0 else 0, shift=2)
+def crosses(a, b):
+    # does the straight bridge line from a to b pass through the building (beyond its first 3 m)?
+    L = math.hypot(b[0] - a[0], b[1] - a[1]); n = max(2, int(L / 0.5))
+    for k in range(n + 1):
+        u = k / n; d = u * L
+        if d < 3.0: continue
+        x = a[0] + (b[0] - a[0]) * u; y = a[1] + (b[1] - a[1]) * u
+        i, j = int((_T1 - y) / _BR), int((x - _S0) / _BR)
+        if 0 <= i < _BM.shape[0] and 0 <= j < _BM.shape[1] and _BM[i, j]: return True
+    return False
+WIDE = {'D', 'E', 'EL', 'F'}
+def door_st(st, which, hdgv=None):
+    """approximate door position (s,t) for the stand's class: L1 / L2, on the aircraft's left side. Current grid by
+    default (check_bridges.py); hdgv = GF.LEGACY_HDG_S for a legacy-frame stand record."""
+    L, B, F = CLS[st['cls']][:3]
+    if hdgv is None: f = hdg_to_st(st['hdg'])
+    else: a = math.radians(hdgv - st['hdg']); f = (math.cos(a), math.sin(a))
+    left = (-f[1], f[0])
+    back = {1: (5.2 if st['cls'] in ('B', 'C', 'CL') else 10.0), 2: 0.33 * L}[which]
+    return (st['nose'][0] - f[0] * back + left[0] * (F / 2), st['nose'][1] - f[1] * back + left[1] * (F / 2))
+def _fwd_legacy(h):
+    a = math.radians(GF.LEGACY_HDG_S - h); return (math.cos(a), math.sin(a))
+def side_of(st, p):
+    """+1 if point p (s,t) is on the stand's left side (legacy-frame stand record)"""
+    f = _fwd_legacy(st['hdg']); left = (-f[1], f[0])
+    return (p[0] - st['nose'][0]) * left[0] + (p[1] - st['nose'][1]) * left[1]
+out = []
+CUR = {s_['name']: s_ for s_ in stand_defs.STANDS}
+for st in stand_defs.LEGACY_STANDS:
+    names = [st['name']] + list(st.get('alias', []))
+    heads = []
+    for n in names:
+        g = GATE.get(n)
+        if not g or g['level'] != 2: continue
+        e = w2st(*g['edge'])
+        heads.append((n, e, g))
+    bridges = []
+    d1 = door_st(st, 1, GF.LEGACY_HDG_S)
+    def facade_point(door, near_edge, maxd=60.0):
+        # the bridge's fixed end: the point of the building outline nearest to the door (e.g. the tip of a fixed
+        # walkway finger), searched within maxd of the hold room's edge point
+        best, bd = None, 1e9
+        for ring in OUTLINE:
+            n = len(ring)
+            for i in range(n):
+                a = np.array(ring[i]); b = np.array(ring[(i + 1) % n]); ab = b - a; L2 = ab @ ab
+                if L2 < 1e-6: continue
+                u = np.clip((np.array(door) - a) @ ab / L2, 0, 1); p = a + ab * u
+                if np.hypot(*(p - np.array(near_edge))) > maxd: continue
+                d = np.hypot(*(p - np.array(door)))
+                if d < bd: bd, best = d, p
+        return best
+    # primary: hold room of the stand name (fall back to the nearest alias); reach check
+    # tie rule (24 Sep 2026): hold rooms within 0.5 m of equal distance count as equidistant and the stand's own name
+    # wins (C7/C9 edge points are 0.1 m apart; B25/B24 differ by 3 mm) - so data rounding cannot flip the label
+    dist = lambda h: math.hypot(h[1][0] - d1[0], h[1][1] - d1[1])
+    heads.sort(key=dist)
+    if len(heads) > 1 and heads[0][0] != st['name']:
+        own = [h for h in heads if h[0] == st['name'] and dist(h) - dist(heads[0]) < 0.5]
+        if own: heads.remove(own[0]); heads.insert(0, own[0])
+    if heads:
+        n, e, g = heads[0]
+        a1 = tuple(e) if not crosses(e, d1) else (tuple(facade_point(d1, e)) if facade_point(d1, e) is not None else tuple(e))
+        bridges.append({'gate': n, 'attach': [round(v, 2) for v in st2w(*a1)], 'door': 1})
+        if st['cls'] in WIDE:
+            d2 = door_st(st, 2, GF.LEGACY_HDG_S)
+            # L2 bridge from a second hold room if one is close, else from the same one
+            n2, e2, g2 = heads[1] if len(heads) > 1 and math.hypot(heads[1][1][0] - d2[0], heads[1][1][1] - d2[1]) < 55 else heads[0]
+            a2 = tuple(e2) if not crosses(e2, d2) else (tuple(facade_point(d2, e2)) if facade_point(d2, e2) is not None else tuple(e2))
+            if math.hypot(a2[0] - a1[0], a2[1] - a1[1]) < 6: # same spot: second bridge 8 m further along the facade, aft
+                f = _fwd_legacy(st['hdg']); a2 = (a2[0] - f[0] * 8, a2[1] - f[1] * 8)
+            bridges.append({'gate': n2, 'attach': [round(v, 2) for v in st2w(*a2)], 'door': 2})
+    cur = CUR[st['name']]; nose_w = GF.st_to_world(*cur['nose'])
+    out.append({'name': st['name'], 'alias': st.get('alias', []), 'letter': st['name'][0], 'nose': [round(nose_w[0], 2), round(nose_w[1], 2)],
+                'hdg': round(cur['hdg'] % 360, 2), 'cls': st['cls'], 'src': st['src'], 'bridges': bridges})
+# remote stands (level-0 records without a letter suffix)
+remote = [g for g in D['gates'] if g['level'] == 0 and not g['variant'] and not g.get('dup')]
+boxes = []
+try:
+    rb = json.load(open(LSP + 'redboxes.json'))
+    legacy = isinstance(rb, list)          # the committed file (23 Sep 2026) is a bare list in the legacy frame
+    for x, z, sz, ang in (rb if legacy else rb['boxes']):
+        if 3.5 <= sz <= 7.5:
+            X, Z = GF.legacy_to_world(x, z) if legacy else (x, z); boxes.append([round(X, 2), round(Z, 2), sz])
+except FileNotFoundError: pass
+res = {'frame': GF.FRAME_ID, 'redBoxes': boxes, 'note': 'Stand layout surveyed from georeferenced satellite screenshots (Google Maps, reference only) against the SFO Museum '
+               'building outlines. src=obs: an aircraft was parked there in the imagery; src=inf: stand inferred from jet-bridge '
+               'positions / stand pitch (empty in the imagery). Gate names follow the SFO Museum hold-room points; names at pier '
+               'tips are the nearest hold room.', 'stands': out,
+       'remote': [{'name': g['name'], 'x': g['x'], 'z': g['z']} for g in remote]}
+json.dump(res, open(LSP + 'sfo_stands_google_legacy.json', 'w'), separators=(',', ':'))
+open(LSP + 'sfo_stands_google_legacy.js', 'w').write('// generated by tools/sat/export_stands_google_legacy.py (NOT the app data)\nexport const STANDS = ' + json.dumps(res, separators=(',', ':')) + ';\n')
+print(len(out), 'stands,', sum(len(s['bridges']) for s in out), 'bridges,', len(remote), 'remote')
+from collections import Counter
+print(Counter(s['cls'] for s in out), Counter(s['src'] for s in out))
+nob = [s['name'] for s in out if not s['bridges']]
+print('no bridge:', nob)

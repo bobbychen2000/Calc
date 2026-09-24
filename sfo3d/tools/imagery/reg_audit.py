@@ -169,7 +169,7 @@ def corrected_sim(sim, a, k, t, wc):
 
 
 def stands_by_image():
-    spec = importlib.util.spec_from_file_location('stand_defs_ro', os.path.join(SAT, 'stand_defs.py'))
+    spec = importlib.util.spec_from_file_location('stand_defs_ro', os.path.join(ROOT, 'refs', 'cache', 'sat_legacy', 'stand_defs.py'))
     m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
     img = {}
     for s_ in m.STANDS:

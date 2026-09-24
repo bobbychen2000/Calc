@@ -1,8 +1,8 @@
 """Shared helpers for the traffic audit (tools/live/replay_*.py, docs/research/traffic_audit.md).
 
 Everything here mirrors the app so that numbers measured in Python are in the app's own frame:
-  * world frame = js/geo.js: x = east, z = south (m), origin = ARP 37.6188056 N 122.3754167 W,
-    110990 m/deg lat, 111320*cos(lat0) m/deg lon (same equirectangular approximation as llToWorld);
+  * world frame = js/geo.js (frame 'ltp-nad83-2011'): x = east, z = south (m), origin = ARP; ADS-B/OSM (WGS 84) via
+    wgs84ToWorld = tools/geo_frame.py wgs84_to_world (since 24 Sep 2026; before: the legacy equirectangular llToWorld);
   * runway ends = js/geo.js RWY_ENDS (FAA/AirNav degrees-minutes, displaced thresholds in ft), parsed from the file
     so this module never drifts from the app;
   * stands = data/sfo_stands.json (surveyed layout, src obs/inf), aircraft sizes = js/aircraft/types.js via node
@@ -21,6 +21,8 @@ REC = os.path.join(ROOT, 'refs', 'cache', 'rec')
 OUT = os.path.join(ROOT, 'refs', 'cache', 'replay')      # derived from the providers' data -> gitignored
 sys.path.insert(0, HERE)
 from recio import lines  # noqa: E402
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import geo_frame  # noqa: E402
 
 FT, KT, NM = 0.3048, 0.514444, 1852.0
 ARP_LAT, ARP_LON = 37.6188056, -122.3754167
@@ -31,8 +33,13 @@ GEOID_N_M = -32.29     # EGM96 undulation at the ARP (docs/research/realtime_fee
 
 
 def ll2w(lat, lon):
-    """js/geo.js llToWorld -> (x east, z south) metres."""
-    return ((np.asarray(lon) - ARP_LON) * M_LON, -(np.asarray(lat) - ARP_LAT) * M_LAT)
+    """WGS 84 lat/lon (ADS-B, OSM) -> world (x east, z south) metres: js/geo.js wgs84ToWorld (exact GRS80 local tangent
+    plane, NAD83(2011) world datum, tools/geo_frame.py). Scalars or arrays."""
+    la = np.asarray(lat, float); lo = np.asarray(lon, float)
+    if la.ndim == 0:
+        return geo_frame.wgs84_to_world(float(la), float(lo))
+    xz = np.array([geo_frame.wgs84_to_world(a, b) for a, b in zip(la.ravel(), lo.ravel())]).reshape(la.shape + (2,))
+    return xz[..., 0], xz[..., 1]
 
 
 def hdg_vec(h):
@@ -54,13 +61,8 @@ def wrap180(a):
 
 # ------------------------------------------------------------------------------------------------ runways
 def _rwy_ends():
-    src = open(os.path.join(ROOT, 'js', 'geo.js')).read()
-    ends = {}
-    for m in re.finditer(r"'(\d+[LR])': \{ lat: dms\((\d+), ([\d.]+)\), lon: -dms\((\d+), ([\d.]+)\), elev: ([\d.]+), disp: (\d+) \}", src):
-        n, a, b, c, d, e, f = m.groups()
-        ends[n] = dict(lat=int(a) + float(b) / 60, lon=-(int(c) + float(d) / 60), elev=float(e), disp=float(f))
-    assert len(ends) == 8, ends
-    return ends
+    """FAA runway ends (NAD83) from tools/geo_frame.py, the Python twin of js/geo.js RWY_ENDS."""
+    return {n: dict(lat=e['lat'], lon=e['lon'], elev=e['elev'], disp=float(e['disp'])) for n, e in geo_frame.RWY_ENDS.items()}
 
 
 RWY_ENDS = _rwy_ends()
@@ -71,7 +73,7 @@ RUNWAY_WIDTH = 200 * FT
 def _runways():
     R = {}
     for a, b in PAIRS:
-        pa = ll2w(RWY_ENDS[a]['lat'], RWY_ENDS[a]['lon']); pb = ll2w(RWY_ENDS[b]['lat'], RWY_ENDS[b]['lon'])
+        pa = geo_frame.end_world(a); pb = geo_frame.end_world(b)   # NAD83 ends: no datum shift
         pa = np.array(pa, float); pb = np.array(pb, float)
         L = float(np.hypot(*(pb - pa)))
         for n, s, e in ((a, pa, pb), (b, pb, pa)):

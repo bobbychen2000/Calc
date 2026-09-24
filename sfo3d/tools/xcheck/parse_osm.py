@@ -55,18 +55,18 @@ def main():
             if not g: continue
             stop = g[-1]
             if len(g) >= 2:
-                p0 = X.ll_to_world(*g[-2]); p1 = X.ll_to_world(*g[-1])
+                p0 = X.wgs84_to_world(*g[-2]); p1 = X.wgs84_to_world(*g[-1])
                 hdg = X.world_hdg(p1[0] - p0[0], p1[1] - p0[1])
-                L = sum(math.dist(X.ll_to_world(*g[i]), X.ll_to_world(*g[i + 1])) for i in range(len(g) - 1))
+                L = sum(math.dist(X.wgs84_to_world(*g[i]), X.wgs84_to_world(*g[i + 1])) for i in range(len(g) - 1))
             else:
                 hdg, L = None, 0.0
-            rec.update({'stop': stop, 'stop_w': [round(v, 2) for v in X.ll_to_world(*stop)], 'hdg': hdg,
+            rec.update({'stop': stop, 'stop_w': [round(v, 2) for v in X.wgs84_to_world(*stop)], 'hdg': hdg,
                         'len_m': round(L, 1), 'n_nodes': len(g), 'first': g[0], 'pts': g})
             out['parking_positions'].append(rec)
         elif a == 'gate':
-            rec.update({'pt': g[0], 'w': [round(v, 2) for v in X.ll_to_world(*g[0])]}); out['gates'].append(rec)
+            rec.update({'pt': g[0], 'w': [round(v, 2) for v in X.wgs84_to_world(*g[0])]}); out['gates'].append(rec)
         elif a == 'jet_bridge':
-            rec.update({'pts': g, 'ends_w': [[round(v, 2) for v in X.ll_to_world(*g[0])], [round(v, 2) for v in X.ll_to_world(*g[-1])]]})
+            rec.update({'pts': g, 'ends_w': [[round(v, 2) for v in X.wgs84_to_world(*g[0])], [round(v, 2) for v in X.wgs84_to_world(*g[-1])]]})
             out['jet_bridges'].append(rec)
         elif a in ('runway', 'stopway', 'blast_pad', 'displaced_threshold', 'threshold'):
             rec.update({'pts': g})

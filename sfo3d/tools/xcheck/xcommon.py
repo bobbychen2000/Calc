@@ -1,29 +1,35 @@
 """Shared helpers for the stand / runway cross-check (tools/xcheck).
 
-Coordinate frame = the app's, reimplemented exactly from js/geo.js:
-  ARP 37.6188056 N, -122.3754167 E; E = (lon - lon0) * 111320 * cos(lat0); N = (lat - lat0) * 110990;
-  world x = E, z = -N (metres); headings: hdgVec(h) = [sin h, -cos h]  =>  h = atan2(dx, -dz).
-(That equirectangular scale is 0.12 % short in E at 37.6 N versus WGS-84 (88 266 m/deg, pyproj); it is the frame
-the stands were surveyed in, so all comparisons here use it; true geodesic distances are computed with pyproj where an
-absolute length is compared, e.g. runway lengths.)
+Coordinate frame = the app's world frame, from the shared module tools/geo_frame.py (= js/geo.js, frame
+'ltp-nad83-2011' since 24 Sep 2026): exact GRS80 local tangent plane at the ARP 37.6188056 N, -122.3754167 E,
+datum NAD83(2011); world x = east, z = south (metres); headings: hdgVec(h) = [sin h, -cos h] => h = atan2(dx, -dz).
+  ll_to_world / world_to_ll   : NAD83(2011) lat/lon (FAA NASR, AirNav, SFO Museum)
+  wgs84_to_world / world_to_wgs84 : WGS 84 lat/lon (OSM, X-Plane Gateway, ADS-B) - applies the measured
+                                    NAD83(2011) -> WGS 84 (G2296) displacement at SFO (dE -1.568 m, dN +0.159 m)
+  wgs84_to_nad83              : WGS 84 lat/lon -> the NAD83(2011) lat/lon of the same ground point (for geodesic
+                                comparisons against NASR)
+The research of 24 Sep 2026 (docs/research/stands_xcheck.md) was computed in the LEGACY equirectangular frame
+(E = (lon - lon0) * 111320 cos(lat0), N = (lat - lat0) * 110990) with every source taken as-is (no datum shift);
+re-running these tools now gives numbers in the new frame, with OSM / X-Plane / ADS-B moved 1.58 m (datum).
 """
 import json, math, os, re
 from pyproj import Geod
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-LAT0, LON0 = 37.6188056, -122.3754167
-MLAT = 110990.0
-MLON = 111320.0 * math.cos(math.radians(LAT0))
-GEOD = Geod(ellps='WGS84')
+import sys as _sys
+_sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import geo_frame as GF
+LAT0, LON0 = GF.ARP_LAT, GF.ARP_LON
+GEOD = Geod(ellps='GRS80')
 FT = 0.3048
+ll_to_world = GF.ll_to_world          # NAD83(2011) lat/lon -> world (x, z)
+world_to_ll = GF.world_to_ll
+wgs84_to_world = GF.wgs84_to_world    # WGS 84 lat/lon -> world (x, z)
+world_to_wgs84 = GF.world_to_wgs84
 
 
-def ll_to_world(lat, lon):
-    return ((lon - LON0) * MLON, -(lat - LAT0) * MLAT)
-
-
-def world_to_ll(x, z):
-    return (LAT0 + (-z) / MLAT, LON0 + x / MLON)
+def wgs84_to_nad83(lat, lon):
+    return GF.world_to_ll(*GF.wgs84_to_world(lat, lon))
 
 
 def world_hdg(dx, dz):

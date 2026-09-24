@@ -38,6 +38,6 @@ for k, i in enumerate(big):
     ys, xs = np.nonzero(m); cy, cx = int(ys.mean()), int(xs.mean())
     cv2.putText(vis, str(k), (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (255, 255, 255), 4)
     info.append((k, int(sz[i - 1]), round(S0 + cx * RES), round(T1 - cy * RES)))
-np.save(SP + 'pave_add_lab.npy', lab); json.dump({'big': big, 'info': info}, open(SP + 'pave_add.json', 'w'))
+np.save(SP + 'pave_add_lab.npy', lab); json.dump({'big': big, 'info': info}, open(LSP + 'pave_add.json', 'w'))
 cv2.imwrite(SP + 'pave_add.jpg', cv2.resize(vis, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_AREA))
 for x in info: print(x)

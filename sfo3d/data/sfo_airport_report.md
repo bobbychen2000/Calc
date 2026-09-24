@@ -1,6 +1,6 @@
 # SFO airport geometry: build report
 
-Built by `tools/build_sfo_airport.py` from the SFO Museum *sfomuseum-data-architecture* checkout (`refs/sfom-arch/data`, commit 5f64ee8e 2025-10-30, CDLA-Permissive-1.0): 2019 GeoJSON files scanned, 366 with `mz:is_current == 1` used.
+Built by `tools/build_sfo_airport.py` from the SFO Museum *sfomuseum-data-architecture* checkout (`/home/user/Calc/sfo3d/tools/../refs/sfom-arch/data`, commit 5f64ee8e 2025-10-30, CDLA-Permissive-1.0): 2019 GeoJSON files scanned, 366 with `mz:is_current == 1` used.
 
 - Output: `/home/user/Calc/sfo3d/data/sfo_airport.json`, **151.6 KB** (155227 bytes, compact JSON).
 - World frame: x = east, z = south (m), origin ARP 37.6188056, -122.3754167; frame `ltp-nad83-2011` (exact GRS80 local tangent plane at the ARP, datum NAD83(2011); `tools/geo_frame.py` = `js/geo.js`); coordinates rounded to 0.1 m. `bounds` = [-2383.9, -2074.1, 1663, 1543.1].
