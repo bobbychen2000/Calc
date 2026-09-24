@@ -52,13 +52,14 @@ const BINMAT = {
   paddle: { c: '#c4c8cc', r: 0.4 },
   // outboard PSU band near-white in every photo (y_47300 #d9d9db..#dddddd, c_27312 #ebf0f4 [V]; was ~#a4a4a5)
   band: { c: '#e4e3df', r: 0.5, l: LAYER.plastic, e: 0.16 },   // w2a: #c1c1c1 vs #d6d6d9
-  well: { c: '#c9cac9', r: 0.55, l: LAYER.plastic, e: 0.05 },   // a shade darker than both bands so it reads recessed   // recessed stadium well floor, a shade darker [A]
-  wellRim: { c: '#c3c6c9', r: 0.6 },
+  well: { c: '#dcdcd9', r: 0.55, l: LAYER.plastic, e: 0.13 },   // band colour, a touch darker: dished, not a grey sticker (w4a/w4b)   // recessed stadium well floor, a shade darker [A]
+  wellRim: { c: '#cfd1d3', r: 0.6, e: 0.10 },
   // centre-channel wells: the channel is baked x0.84 (shadeUpper) but the PSU meshes are not, so darker tones [D]
   wellC: { c: '#aaabaa', r: 0.55, l: LAYER.plastic, e: 0.05 },
   wellRimC: { c: '#9a9da0', r: 0.6 },                             // shadow line around the well [A]
   smoke: { c: '#ffffff', r: 0.3, l: LAYER.atlasGlow, e: 0.55 },  // smoked sign window (dark ground in the atlas)
-  smokeBase: { c: '#2b2826', r: 0.25 },                           // the rest of the smoked pill (atlas ground colour)
+  smokeBase: { c: '#1e1f21', r: 0.25 },
+  socket: { c: '#6a6e73', r: 0.5 },                           // the rest of the smoked pill (atlas ground colour)
   rail: { c: '#e8e8e5', r: 0.36, l: LAYER.plastic },
   groove: { c: '#9aa0a6', r: 0.7 },
   joint: { c: '#dcdedf', r: 0.7 },
@@ -111,7 +112,7 @@ function paintBinDecals(A, layout) {
     // smoked lens: amber cigarette in a red ring + slash, amber belt halves with a red arrow between them
     // (b_lalf_c26 / thrifty_j_overhead-vent close-ups [V]; ground #2b2826 smoke [A])
     const [x, y, w, h] = q, A_ = '#ffa634', R_ = '#e8322a';
-    g.fillStyle = '#2b2826'; g.fillRect(x, y, w, h);
+    g.fillStyle = '#1e1f21'; g.fillRect(x, y, w, h);
     g.lineCap = 'round';
     g.fillStyle = A_; g.fillRect(x + 16, y + 28, 30, 8); g.fillRect(x + 48, y + 28, 5, 8);
     g.fillStyle = '#d8d0c0'; g.fillRect(x + 54, y + 20, 3, 6);
@@ -121,7 +122,7 @@ function paintBinDecals(A, layout) {
     g.fillStyle = A_;
     g.beginPath(); g.roundRect(x + 72, y + 25, 20, 14, 3); g.fill();
     g.beginPath(); g.roundRect(x + 114, y + 25, 20, 14, 3); g.fill();
-    g.fillStyle = '#2b2826'; g.fillRect(x + 77, y + 29, 10, 6);
+    g.fillStyle = '#1e1f21'; g.fillRect(x + 77, y + 29, 10, 6);
     g.strokeStyle = R_; g.lineWidth = 3;
     g.beginPath(); g.moveTo(x + 110, y + 32); g.lineTo(x + 96, y + 32); g.moveTo(x + 102, y + 26); g.lineTo(x + 96, y + 32); g.lineTo(x + 102, y + 38); g.stroke();
   }
@@ -251,8 +252,8 @@ function stadiumWell(B, w, d, x, z, fl = BINMAT.well, rim = BINMAT.wellRim) {
   B.add(gPlate(w + 0.006, d + 0.006, (d + 0.006) / 2, 0.0003), padM(x, -0.00015, z), rim);
   B.add(gPlate(w, d, d / 2, 0.0003), padM(x, -0.00035, z), fl);
 }
-function eyeball(B, x, z, r = 0.02) {       // reading light: light bezel, dark socket, lens ball (b_lalf_c26 [V])
-  B.add(gCyl(r, r, 0.003, 18), M4.trs(x, -0.0018, z), BINMAT.pod);
+function eyeball(B, x, z, r = 0.02, pod = BINMAT.pod) {   // reading light: bezel, dark socket, lens ball (b_lalf_c26 [V])
+  B.add(gCyl(r, r, 0.003, 18), M4.trs(x, -0.0018, z), pod);
   B.add(gCyl(r * 0.72, r * 0.72, 0.002, 16), M4.trs(x, -0.0032, z), BINMAT.bezelDark);
   B.add(gSphere(r * 0.52, 12, 8), M4.trs(x, -0.003, z, 0, 0, 0, 1, 0.6, 1), MAT.lens);
 }
@@ -281,7 +282,7 @@ function psuModule(n, pitch = PSU_C_PITCH) {
   stadiumWell(B, w, 0.05, 0, -0.03, BINMAT.wellC, BINMAT.wellRimC);
   for (let k = 0; k < n; k++) {
     const x = (k - (n - 1) / 2) * pitch;
-    eyeball(B, x, -0.10);
+    eyeball(B, x, -0.10, 0.02, BINMAT.socket);   // deep dark sockets, not white rings (b_sany_y22, w4a)
     gasper(B, x, -0.03);
   }
   signWindow(B, 0, 0.065, Math.max(0.16, w * 0.75), 0.045);   // long smoked pill (b_sany_y22 [V]); no O2 plate or

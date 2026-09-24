@@ -156,10 +156,17 @@ function buildCeilings(upper, layout) {
           const ax = Math.abs(p[0]);
           if (ax > 1.66) return 0.85;
           if (ax < 0.73) return 0.08;
-          return 0.08 + 0.22 * Math.exp(-Math.max(xg - ax, 0) / 0.25);   // inboard of the grille ~0.55 of the band, falling (w3b)
+          return 0.06 + 0.10 * Math.exp(-Math.max(xg - ax, 0) / 0.35);   // well under the cove band, falling (w4a/w4b)
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
+        const v0 = upper.p.length / 3;
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
+        // baked falloff x1.0 at the grille -> x0.84 at the centre-bin crease: emissive alone cannot darken a lit white
+        // surface (b_sany_y22: ~0.8 -> ~0.6 of the band; w4b) [D]
+        for (let k = v0; k < upper.p.length / 3; k++) {
+          const f = lerp(1, 0.84, clamp((xg - Math.abs(upper.p[k * 3])) / (xg - 0.735), 0, 1));
+          for (let c = 0; c < 3; c++) upper.c[k * 4 + c] = Math.round(upper.c[k * 4 + c] * f);
+        }
         for (let k = 1; k < mods.length - 1; k++) upper.add(profileRibbon(VAULT.slice(2, -2), side, mods[k], 0.008, 0.0015), null, CEILMAT.seam);
         // cove diffuser: a continuous near-white lit band between the outboard bin crest and the grille
         { const [c0, c1] = TROUGH.cove, tm = (c0 + c1) / 2, a = vaultAt(c0), b = vaultAt(c1);
