@@ -1,12 +1,32 @@
 """
-PC-12 wing: tapered, unswept quarter-chord, LS(1)-0417MOD root -> LS(1)-0313 tip,
-single-piece Fowler flap (67 % of trailing edge), short-span mass-balanced
-aileron, blended winglet, pneumatic de-ice boots, flap-track fairings.
+PC-12 wing: tapered, (almost) unswept quarter-chord, LS(1)-0417MOD root -> LS(1)-0313 tip,
+single-piece Fowler flap, aileron with Flettner geared balance tab, blended winglet,
+pneumatic de-ice boots, flap-track fairings.
 
-Planform (reference trapezoid to the winglet root, both halves):
-    area 25.81 m^2, winglet-tip span 16.28 m, root chord 2.151 m, tip chord 1.075 m
-    -> MAC 1.673 m at y = 3.556 m, LEMAC = STA 5.337 m (from the POH aft CG limit
-       6.107 m = 46 % MAC), quarter chord STA 5.755 m.
+Planform (Stage 2, rev B): taken from the Pilatus NGX model drawing 190.10.40.432 (plan view,
+registered to model coordinates by refs/mbp.py), which is the primary geometric source:
+    leading edge   x = 5.3302 + 0.0400 y          (straight, 2.3 deg sweep; BL 1000 -> STA 5370)
+    trailing edge  x = 7.5666 - 0.1139 y          (flap span), kinked at the flap / aileron junction
+                   BL 5680 to 0.0771 / m outboard (constant 440 mm aileron chord)
+    tip rib        BL 7430 (winglet root), chord 1,151 mm (1,087 mm on the straight trailing edge)
+    -> root chord 2,224 mm at BL 0 (solved, see below; the drawn lines give 2,236), taper 0.489
+       (straight trailing edge), MAC 1,724 mm at BL 3,306 (panel 0..7430, kink included),
+       LEMAC STA 5,462, quarter chord of the MAC STA 5,893 (the drawing's wing reference line,
+       2,820 aft of FR10, is STA 5,901; the quarter-chord line is within 12 mm of it root to tip).
+    Reference area: the published 25.81 m^2 is reproduced (0.1 %) by the drawing's TOTAL projected
+    plan area -- both halves through the fuselage, including the aileron trailing-edge kink and the
+    winglets' plan projection -- so AREA_REF is held by solving the root chord with that definition
+    (planform_area()).  The earlier rev A planform was solved from an assumed 46 % MAC aft-CG limit
+    (LEMAC 5.323); against the drawing that put the wing 130-160 mm too far forward.  The POH aft CG
+    limit STA 6,107 now lies at 37 % MAC.
+Heights (front view of the drawing + its wing sections WR1-WR4): the wing chord plane has 6.15 deg
+dihedral from BL 700 outboard, with a flat carry-through inside the fuselage (quarter chord at WL 1,036).
+The drawing's WR dimension line reads 5.0 deg, but the drawn upper / lower surfaces (fit rms 6 mm) and the
+Pilatus front render both give ~6 deg.  Incidence +1.45 deg at BL 0 -> -0.91 at BL 5.56 -> -2.64 at the tip
+(WR1 +1.05, WR2 -0.91, WR3 -1.88, WR4 -2.61 deg measured on the drawn sections).
+Winglet: cant, bend and plan shape as drawn (51 deg from vertical, 0.77 m bend radius); the drawing's
+span is 16.137 m (label 16.114 m) against the official 16.28 m -- the wing panel is kept as drawn and the
+straight part of the winglet is lengthened (72 mm per side laterally) so the outer skin reaches BL 8,140.
 """
 from __future__ import annotations
 import numpy as np
@@ -17,50 +37,152 @@ from model.lifting import Section, skin, strip, curve_patch, closed_body, bezier
 from model.parts import Part
 
 # ---- design constraints (official data) ---------------------------------
-SPAN_TOTAL = 16.28          # m, over the winglets
-AREA_REF = 25.81            # m^2, reference trapezoid
-TAPER = 0.50                # tip / root chord (estimated from planform)
-AFT_CG = 6.107              # m aft of datum at MTOW = 46 % MAC (POH / Jane's)
-AFT_CG_MAC = 0.46
+SPAN_TOTAL = 16.28          # m, over the winglets (Pilatus)
+AREA_REF = 25.81            # m^2 (Pilatus); total projected plan area, see planform_area()
+AFT_CG = 6.107              # m aft of datum at MTOW (POH); reference only (no longer sets the planform)
+AFT_CG_MAC = 0.46           # rev A assumption (the drawing's planform puts STA 6.107 at 37 % MAC)
 
-# ---- winglet shape ("PC-21 style", Series 10A onward; POPA variant guide) ------
-# Pilatus publishes no winglet geometry.  Values below are estimates cross-checked
-# against an independent open-source PC-12 model: small fin blended into the aft
-# half of the tip, ~30 deg cant, ~32 deg LE sweep, ~0.27 m above the upper skin.
-WL_BEND_R = 0.14
-WL_CANT = np.radians(30.0)       # from vertical, outward
-WL_HEIGHT = 0.30                 # straight part above the bend
-WL_MID_CHORD = 0.45              # chord at the end of the blend
-WL_TIP_CHORD = 0.32
-WL_TE_SWEEP = 0.06               # trailing edge moves aft by this much tip-to-top (m)
-WL_LE_SWEEP = np.radians(32.0)   # nominal, for reporting
-_a_end = np.pi / 2 - WL_CANT
-WL_LATERAL = WL_BEND_R * np.sin(_a_end) + WL_HEIGHT * np.cos(_a_end)
+# ---- planform (Stage 2 fit to the Pilatus drawing, plan view) ------------
+SEMI = 7.430                # tip-rib butt line = winglet root (drawn BL 7,430)
+X_LE0 = 5.3302              # leading-edge station extrapolated to BL 0
+LE_SWEEP = np.arctan(0.0400)  # straight leading edge (dx/dy = 0.040)
+TAPER = 0.4887              # tip / root chord of the straight-trailing-edge trapezoid
+Y_KINK = 5.680              # trailing-edge kink at the flap / aileron junction
+TE_KINK = 0.0368            # outboard of Y_KINK the trailing edge sweeps back 0.0368 m/m less
 
-# ---- derived planform -------------------------------------------------------
-WL_SKIN = 0.0118                                   # winglet outer skin beyond its chord path at the tip
-SEMI = SPAN_TOTAL / 2 - WL_LATERAL - WL_SKIN        # winglet-root butt line
-C_ROOT = AREA_REF / SEMI / (1 + TAPER)
-C_TIP = TAPER * C_ROOT
-MAC = 2 / 3 * C_ROOT * (1 + TAPER + TAPER ** 2) / (1 + TAPER)
-LEMAC = AFT_CG - AFT_CG_MAC * MAC
-X_QC = LEMAC + 0.25 * MAC                           # unswept quarter-chord line
-DIHEDRAL = np.radians(4.5)
-Z_QC0 = 0.905
-INC_ROOT, INC_TIP = np.radians(2.0), np.radians(-1.0)
+# ---- winglet ("PC-21 style", Series 10A onward; POPA variant guide) ------------
+# Shape from the drawing (front + plan + side views): large-radius blend from the wing's dihedral into
+# a straight part canted 51 deg from vertical; chord 1.15 m at the tip rib -> 0.74 m at the end of the
+# blend -> 0.37 m at the top; trailing edge sweeps back 0.26 m, mostly on the straight part.  Fitted with the
+# drawn outer extreme (BL 8,050); the straight part is then lengthened to the official span.
+WL_BEND_R = 0.770
+WL_CANT = np.radians(51.0)       # from vertical, outward
+WL_MID_CHORD = 0.740             # chord at the end of the blend
+WL_TIP_CHORD = 0.370
+WL_TE_SWEEP = 0.260              # trailing edge moves aft by this much tip-to-top (m)
+WL_TE_EXP = 2.35                 # ... as (s / L)^WL_TE_EXP of the path length
+WL_TIP_AF_T = 0.09               # winglet top section NACA 0009
+WL_LE_SWEEP = np.radians(63.0)   # nominal plan-view LE sweep of the straight part, for reporting
 
-Y_FLAP = (0.80, 5.90)
-Y_AIL = (5.96, 7.62)
+# ---- heights / incidence (front view + WR sections of the drawing) --------------
+DIHEDRAL = np.radians(6.15)
+Y_DIH0 = 0.70                    # dihedral starts here: flat carry-through inside the fuselage (see z_ref)
+Z_QC0 = 1.036                    # WL of the chord line at the quarter chord on the flat centre section
+TWIST = ((0.0, 1.45), (5.56, -0.91), (SEMI, -2.64))   # (BL, incidence deg), + = leading edge up
+INC_ROOT, INC_TIP = np.radians(TWIST[0][1]), np.radians(TWIST[-1][1])
+
+Y_FLAP = (0.450, 5.667)          # flap ends (inboard end under the wing-root fairing, dashed in the plan)
+Y_AIL = (5.690, 7.400)           # aileron ends (drawn 5,690 - 7,450; kept inside the tip rib)
 FLAP_X_LO, FLAP_X_LIP = 0.695, 0.745
-AIL_XH = 0.765
-BOOT_Y = (0.95, 7.55)
+AIL_XH = 0.685                   # aileron hinge (chord fraction; drawing: constant 440 mm aileron chord)
+BOOT_Y = (0.95, 7.43)
 GAP = 0.012   # spanwise gap between control surface and wing (m)
 
 ROOT_AF, TIP_AF = ls0417mod(), ls0313()
 
 
+# ---------------------------------------------------------------------------
+# planform
+# ---------------------------------------------------------------------------
+def _chord_law(y, c_root):
+    y = np.clip(np.asarray(y, float), 0, SEMI)
+    return c_root * (1 - (1 - TAPER) * y / SEMI) + TE_KINK * np.maximum(y - Y_KINK, 0.0)
+
+
+def x_le(y):
+    """Leading-edge station of the wing panel at butt line |y| (before twist)."""
+    return X_LE0 + np.clip(np.abs(np.asarray(y, float)), 0, SEMI) * np.tan(LE_SWEEP)
+
+
+def _winglet_frame(c_tip, n_bend=14, n_straight=8):
+    """Winglet chord path in the (y, z - z_tip) plane and the plan-view chord law along it.
+    Returns (arr (N, 3) = y, dz, path angle; s arc length; chord c(s); straight length)."""
+    a0, a1 = DIHEDRAL, np.pi / 2 - WL_CANT
+    th = np.linspace(a0, a1, n_bend)
+    cy, cz = SEMI - WL_BEND_R * np.sin(a0), WL_BEND_R * np.cos(a0)
+    bend = np.stack([cy + WL_BEND_R * np.sin(th), cz - WL_BEND_R * np.cos(th), th], 1)
+    # straight part: long enough for the outer skin of the top section to reach SPAN_TOTAL / 2
+    skin_out = WL_TIP_AF_T / 2 * 0.99 * WL_TIP_CHORD * np.sin(a1)     # lower-surface offset outboard
+    L_s = (SPAN_TOTAL / 2 - skin_out - bend[-1, 0]) / np.cos(a1)
+    d = L_s * np.arange(1, n_straight + 1) / n_straight
+    straight = np.stack([bend[-1, 0] + d * np.cos(a1), bend[-1, 1] + d * np.sin(a1), np.full(n_straight, a1)], 1)
+    arr = np.vstack([bend, straight])
+    s = np.r_[0, np.cumsum(np.hypot(np.diff(arr[:, 0]), np.diff(arr[:, 1])))]
+    s1 = WL_BEND_R * (a1 - a0)
+    u = np.clip(s / s1, 0, 1)
+    blend = u * u * (3 - 2 * u)
+    c = np.where(s <= s1, c_tip + (WL_MID_CHORD - c_tip) * blend,
+                 WL_MID_CHORD + (WL_TIP_CHORD - WL_MID_CHORD) * (s - s1) / max(s[-1] - s1, 1e-9))
+    return arr, s, c, L_s
+
+
+def _tip_area(c_tip):
+    arr, s, c, _ = _winglet_frame(c_tip, 60, 40)
+    return float(np.trapezoid(c, arr[:, 0]))
+
+
+def _solve_root_chord():
+    """Root chord such that the total projected plan area (both halves: panel 0..SEMI incl. the aileron
+    kink + the winglets' plan projection) equals AREA_REF."""
+    ys = np.linspace(0, SEMI, 801)
+    kink = float(np.trapezoid(TE_KINK * np.maximum(ys - Y_KINK, 0.0), ys))
+    c_root = 2.2
+    for _ in range(8):
+        c_tip = float(_chord_law(SEMI, c_root))
+        c_root = (AREA_REF / 2 - kink - _tip_area(c_tip)) / (SEMI * (1 + TAPER) / 2)
+    return c_root
+
+
+C_ROOT = _solve_root_chord()                          # chord at BL 0 (straight trailing edge = actual there)
+C_TIP_TRAP = TAPER * C_ROOT                           # straight trailing edge extended to the tip rib
+C_TIP = float(_chord_law(SEMI, C_ROOT))               # actual tip-rib chord (with the aileron kink)
+# rev A names kept for compatibility: straight-part length, winglet lateral extent beyond the tip rib (chord path)
+# and the outer-skin allowance at the top section
+_wl_arr, _, _, WL_HEIGHT = _winglet_frame(C_TIP)
+WL_LATERAL = float(_wl_arr[-1, 0] - SEMI)
+WL_SKIN = SPAN_TOTAL / 2 - SEMI - WL_LATERAL
+
+
 def chord(y):
-    return C_ROOT + (C_TIP - C_ROOT) * np.clip(y, 0, SEMI) / SEMI
+    return _chord_law(np.abs(np.asarray(y, float)), C_ROOT)
+
+
+def x_te(y):
+    """Trailing-edge station of the wing panel at butt line |y| (before twist)."""
+    return x_le(y) + chord(y)
+
+
+def twist(y):
+    """Incidence (rad, + = leading edge up) at butt line |y|."""
+    ys, ds = zip(*TWIST)
+    return np.radians(np.interp(np.abs(np.asarray(y, float)), ys, ds))
+
+
+def z_ref(y):
+    """WL of the chord line at the quarter chord (the dihedral reference line).  The centre section is flat
+    out to BL Y_DIH0 (inside the fuselage): the drawn wing-root fairing bottoms out at WL ~870, which a
+    straight 6 deg dihedral line continued to the centre line (wing lower surface WL 794) would pierce."""
+    return Z_QC0 + np.maximum(np.abs(np.asarray(y, float)) - Y_DIH0, 0.0) * np.tan(DIHEDRAL)
+
+
+def _mac_numeric():
+    ys = np.linspace(0, SEMI, 2001)
+    c = chord(ys)
+    S = np.trapezoid(c, ys)
+    m = np.trapezoid(c * c, ys) / S
+    ym = np.trapezoid(c * ys, ys) / S
+    lemac = np.trapezoid(c * x_le(ys), ys) / S
+    return float(m), float(ym), float(lemac)
+
+
+MAC, Y_MAC, LEMAC = _mac_numeric()                    # wing panel 0..SEMI (winglets excluded)
+X_QC = LEMAC + 0.25 * MAC                             # quarter chord of the MAC (the QC line is ~unswept)
+
+
+def planform_area():
+    """Total projected plan area (m^2): both halves, panel incl. the kink, plus the winglets' projection."""
+    ys = np.linspace(0, SEMI, 2001)
+    return float(2 * (np.trapezoid(chord(ys), ys) + _tip_area(C_TIP)))
 
 
 def airfoil_at(y):
@@ -70,19 +192,14 @@ def airfoil_at(y):
 
 def section_at(y):
     """Right-wing section at butt line y (>= 0)."""
-    c = chord(y)
-    x_le = X_QC - 0.25 * c
-    z_ref = Z_QC0 + y * np.tan(DIHEDRAL)
-    tw = INC_ROOT + (INC_TIP - INC_ROOT) * np.clip(y, 0, SEMI) / SEMI
-    return Section(le=np.array([x_le, y, z_ref]), chord=c, e_c=np.array([1.0, 0, 0]),
-                   e_t=np.array([0, 0, 1.0]), twist=tw, airfoil=airfoil_at(y))
+    c = float(chord(y))
+    return Section(le=np.array([float(x_le(y)), y, float(z_ref(y))]), chord=c, e_c=np.array([1.0, 0, 0]),
+                   e_t=np.array([0, 0, 1.0]), twist=float(twist(y)), airfoil=airfoil_at(y))
 
 
 def mac():
-    lam = C_TIP / C_ROOT
-    m = 2 / 3 * C_ROOT * (1 + lam + lam ** 2) / (1 + lam)
-    ym = SEMI / 3 * (1 + 2 * lam) / (1 + lam)
-    return m, ym, X_QC - 0.25 * m
+    """(MAC, its butt line, LEMAC station) of the wing panel 0..SEMI."""
+    return MAC, Y_MAC, LEMAC
 
 
 # ---------------------------------------------------------------------------
@@ -300,45 +417,43 @@ def build_right(n=60):
 # winglet
 # ---------------------------------------------------------------------------
 def winglet_path(n_bend=14, n_straight=8):
+    """Winglet chord path: rows (y, z, path angle from horizontal) and arc length.  Starts at the tip rib
+    (BL SEMI, on the dihedral reference line) tangent to the dihedral, bends with WL_BEND_R to the cant
+    angle, then runs straight until the outer skin of the top section reaches SPAN_TOTAL / 2."""
+    arr, s, _, _ = _winglet_frame(C_TIP, n_bend, n_straight)
+    arr = arr.copy()
+    arr[:, 1] += float(z_ref(SEMI))
+    return arr, s
+
+
+def winglet_sections(n_bend=14, n_straight=8):
+    """Winglet sections along winglet_path() (parameter-derived; used by the 3-D loft and the drawings)."""
+    arr, s, c, _ = _winglet_frame(C_TIP, n_bend, n_straight)
+    z0 = float(z_ref(SEMI))
+    L = s[-1]
+    a0, a1 = DIHEDRAL, np.pi / 2 - WL_CANT
+    s1 = WL_BEND_R * (a1 - a0)
     sec0 = section_at(SEMI)
-    y0, z0 = SEMI, sec0.le[2]
-    # bend: circle centre above the tip
-    a_end = np.pi / 2 - WL_CANT                    # final path angle from horizontal
-    th = np.linspace(0, a_end, n_bend)
-    cy, cz = y0, z0 + WL_BEND_R
-    pts = [(cy + WL_BEND_R * np.sin(t), cz - WL_BEND_R * np.cos(t), t) for t in th]
-    yb, zb, _ = pts[-1]
-    for k in range(1, n_straight + 1):
-        d = WL_HEIGHT * k / n_straight
-        pts.append((yb + d * np.cos(a_end), zb + d * np.sin(a_end), a_end))
-    arr = np.array(pts)
-    # arc length
-    seg = np.r_[0, np.cumsum(np.hypot(np.diff(arr[:, 0]), np.diff(arr[:, 1])))]
-    return arr, seg
+    te0 = sec0.le[0] + sec0.chord
+    tipaf = naca00(WL_TIP_AF_T)
+    out = []
+    for (y, dz, a), sk, ck in zip(arr, s, c):
+        u = min(sk / s1, 1.0)
+        blend = u * u * (3 - 2 * u)                  # smoothstep through the bend
+        te = te0 + WL_TE_SWEEP * (sk / L) ** WL_TE_EXP
+        at = a - DIHEDRAL * (1 - blend)              # thickness direction: vertical at the tip rib
+        e_t = np.array([0.0, -np.sin(at), np.cos(at)])
+        af = sec0.airfoil.blend(tipaf, blend)
+        tw = INC_TIP * (1 - blend)
+        out.append(Section(le=np.array([te - ck, y, z0 + dz]), chord=float(ck), e_c=np.array([1.0, 0, 0]),
+                           e_t=e_t, twist=tw, airfoil=af))
+    return out
 
 
 def build_winglet():
-    arr, seg = winglet_path()
-    L = seg[-1]
-    s1 = WL_BEND_R * (np.pi / 2 - WL_CANT)          # arc length of the blend
-    sec0 = section_at(SEMI)
-    te0 = sec0.le[0] + sec0.chord
-    tipaf = naca00(0.09)
+    secs = winglet_sections()
     rows = []
-    for (y, z, a), s in zip(arr, seg):
-        u = min(s / s1, 1.0)
-        blend = u * u * (3 - 2 * u)                  # smoothstep through the bend
-        if s <= s1:
-            c = C_TIP + (WL_MID_CHORD - C_TIP) * blend
-        else:
-            c = WL_MID_CHORD + (WL_TIP_CHORD - WL_MID_CHORD) * (s - s1) / (L - s1)
-        te = te0 + WL_TE_SWEEP * s / L
-        x_le = te - c
-        e_t = np.array([0.0, -np.sin(a), np.cos(a)])
-        af = sec0.airfoil.blend(tipaf, min(1.0, s / s1))
-        tw = INC_TIP * (1 - blend)
-        sec = Section(le=np.array([x_le, y, z]), chord=c, e_c=np.array([1.0, 0, 0]), e_t=e_t,
-                      twist=tw, airfoil=af)
+    for sec in secs:
         n = 60
         xl = cos_pts(n)[::-1]
         xu = cos_pts(n)[1:]
@@ -373,7 +488,8 @@ def build(parts: dict):
                  info={"root chord": f"{C_ROOT*1000:,.0f} mm, LS(1)-0417MOD",
                        "tip chord": f"{C_TIP*1000:,.0f} mm, LS(1)-0313",
                        "MAC": f"{MAC*1000:,.0f} mm, LEMAC STA {LEMAC*1000:,.0f}",
-                       "dihedral": "4.5 deg (est.)", "incidence": "+2.0 root / -1.0 tip (est.)"})
+                       "dihedral": f"{np.degrees(DIHEDRAL):.1f} deg (drawing)",
+                       "incidence": f"{TWIST[0][1]:+.2f} root / {TWIST[-1][1]:+.2f} tip (drawing WR1-WR4)"})
         p.add(skin_m, "paint_white").add(boot_m, "deice_boot")
         parts[p.id] = p
         w = Part(f"winglet_{side}", f"{'Right' if sgn > 0 else 'Left'} winglet", "winglets",
@@ -426,10 +542,11 @@ def build(parts: dict):
 
 
 if __name__ == "__main__":
-    m, ym, lemac = mac()
-    print("SEMI %.3f  C_ROOT %.4f C_TIP %.4f" % (SEMI, C_ROOT, C_TIP))
-    print("MAC %.4f m at y=%.3f, LEMAC STA %.4f  X_QC %.4f" % (m, ym, lemac, X_QC))
-    S = 2 * SEMI * (C_ROOT + C_TIP) / 2
-    print("reference area %.2f m2" % S)
+    print("SEMI %.3f  C_ROOT %.4f C_TIP %.4f (straight TE %.4f)  taper %.3f" % (SEMI, C_ROOT, C_TIP, C_TIP_TRAP, TAPER))
+    print("MAC %.4f m at y=%.3f, LEMAC STA %.4f  X_QC %.4f;  POH aft CG %.3f = %.1f %% MAC"
+          % (MAC, Y_MAC, LEMAC, X_QC, AFT_CG, 100 * (AFT_CG - LEMAC) / MAC))
+    print("projected plan area %.3f m2 (AREA_REF %.2f)" % (planform_area(), AREA_REF))
     arr, seg = winglet_path()
-    print("winglet top y=%.3f  (span = %.3f m)" % (arr[-1, 0], 2 * arr[-1, 0]))
+    secs = winglet_sections()
+    ymax = max(float(np.max(s.lower(cos_pts(40))[:, 1])) for s in secs)
+    print("winglet path top y=%.3f z=%.3f; outer skin y=%.4f (span = %.3f m)" % (arr[-1, 0], arr[-1, 1], ymax, 2 * ymax))

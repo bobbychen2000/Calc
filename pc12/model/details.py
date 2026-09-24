@@ -1,6 +1,6 @@
 """
 External details: wing-to-body belly fairing, flap-track canoes, weather-radar
-pod (right wing, standard on PC-12s), navigation/strobe/beacon lights,
+pod (right wing tip, standard on PC-12s), navigation/strobe/beacon lights,
 antennas, pitot-static probes and static dischargers.
 """
 from __future__ import annotations
@@ -53,9 +53,12 @@ def teardrop(x0, length, depth, half_w, n=28, m=24):
     return mm.scaled((1.0, half_w / depth, 1.0), origin=(x0, 0, 0))
 
 
+FLAP_CANOE_Y = (1.00, 3.07, 4.885)     # drawing front / plan views (rev A 1.55, 3.30, 5.15)
+
+
 def flap_canoes():
     out = []
-    for y in (1.55, 3.30, 5.15):
+    for y in FLAP_CANOE_Y:
         sec = W.section_at(y)
         x0 = sec.le[0] + 0.55 * sec.chord
         L = 0.60 * sec.chord
@@ -68,27 +71,40 @@ def flap_canoes():
     return Mesh.merge(out)
 
 
-def radar_pod():
-    y = 3.90
-    sec = W.section_at(y)
-    zc = float(sec.camber_pt(np.array(0.12))[2])
-    # PRO: Garmin GWX 8000 with a 12-in antenna -> radome slightly enlarged (Skies Mag)
-    RP = 0.175
-    x_tip = sec.le[0] - 0.46
-    L = 1.18
+# weather-radar pod: at the STARBOARD WING TIP, on the leading edge just inboard of the winglet (Pilatus drawing
+# plan + front views; photos ngx_kenia_stbd_pilatus, pro3008_stbd34_pilatus; Pilatus tech-data front render).
+# Round pod, black radome ahead of the joint, body faired into the winglet root.  PRO: radome enlarged for the
+# 12-in GWX 8000 antenna -> R 0.165 (the NGX drawing shows 0.155).  Rev A had it at BL 3.90 (wrong).
+POD_Y, POD_Z = 7.635, 1.760            # pod axis (butt line, water line)
+POD_X_TIP, POD_X_JOINT, POD_X_END = 5.150, 5.575, 6.000
+POD_R = 0.165
+POD_NOSE_L = 0.305                     # elliptic nose length (tip -> full radius)
+POD_CYL_END = 5.720                    # end of the cylindrical part; tapers into the winglet root aft of it
+
+
+def radar_pod_profile(n=36):
+    """(x, r) meridian of the pod, x = station."""
+    L = POD_X_END - POD_X_TIP
     prof = []
-    for t in np.linspace(0, 1, 36):
-        if t < 0.40:
-            r = RP * max(0.0, 1 - (1 - t / 0.40) ** 2) ** 0.5
-        elif t < 0.85:
-            r = RP
+    for t in np.linspace(0, 1, n):
+        x = POD_X_TIP + t * L
+        if x < POD_X_TIP + POD_NOSE_L:
+            r = POD_R * max(0.0, 1 - (1 - (x - POD_X_TIP) / POD_NOSE_L) ** 2) ** 0.5
+        elif x < POD_CYL_END:
+            r = POD_R
         else:
-            r = RP * max(0.0, 1 - ((t - 0.85) / 0.15) ** 2) ** 0.5
-        prof.append((t * L, r))
+            u = (x - POD_CYL_END) / (POD_X_END - POD_CYL_END)
+            r = POD_R * max(0.0, 1 - u ** 2) ** 0.5
+        prof.append((x, r))
+    return prof
+
+
+def radar_pod():
+    prof = [(x - POD_X_TIP, r) for x, r in radar_pod_profile()]
     prof[0] = (0.0, 0.0)
-    body = revolve(prof, n=40, axis_origin=(x_tip, y, zc), axis_dir=(1, 0, 0))
-    radome = trim_x(body, x_tip + 0.42, keep_less=True)
-    rest = trim_x(body, x_tip + 0.42, keep_less=False)
+    body = revolve(prof, n=40, axis_origin=(POD_X_TIP, POD_Y, POD_Z), axis_dir=(1, 0, 0))
+    radome = trim_x(body, POD_X_JOINT, keep_less=True)
+    rest = trim_x(body, POD_X_JOINT, keep_less=False)
     return radome, rest
 
 
@@ -134,7 +150,7 @@ def build(parts):
 
     # -------- weather radar pod (right wing)
     radome, body = radar_pod()
-    rp = Part("radar_pod", "Weather-radar pod, right wing (GWX 8000, 12-in antenna)", "details",
+    rp = Part("radar_pod", "Weather-radar pod, right wing tip (GWX 8000, 12-in antenna)", "details",
               explode=(-0.7, 0.3, 0), group="Avionics", material_note="Radome enlarged on the PRO")
     rp.add(body, "paint_white").add(radome, "paint_belly")
     parts[rp.id] = rp
