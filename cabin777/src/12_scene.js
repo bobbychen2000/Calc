@@ -3,14 +3,24 @@
 // ------------------------------------------------------------------
 const MOODS = {
   // boarding = the ANA photo look: neutral-cool white LED light, high key (ref/ana y_47300, c_27312, py_37302)
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.44, 0.45, 0.48], wash: [0.62, 0.64, 0.68], led: [0.92, 0.96, 1.0], k: 1.05, exposure: 1.28 },
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.34, 0.34, 0.38], wash: [0.46, 0.48, 0.56], led: [0.62, 0.72, 1.0], k: 0.95, exposure: 1.05 },
-  dining: { label: 'Dining', hemiTop: [1.0, 0.80, 0.60], hemiBot: [0.40, 0.31, 0.23], wash: [0.62, 0.46, 0.32], led: [1.0, 0.64, 0.32], k: 0.9, exposure: 1.08 },
-  sleep: { label: 'Night', hemiTop: [0.06, 0.065, 0.15], hemiBot: [0.022, 0.024, 0.05], wash: [0.05, 0.05, 0.14], led: [0.26, 0.24, 0.72], k: 1, exposure: 1.9, readingLights: true },
-  wake: { label: 'Sunrise', hemiTop: [0.95, 0.66, 0.56], hemiBot: [0.34, 0.24, 0.22], wash: [0.60, 0.40, 0.34], led: [1.0, 0.50, 0.36], k: 0.9, exposure: 1.08 },
+  // QA r1: two LED circuits. led = ceiling cove (stays near-white in boarding/cruise: aisle ceiling + aisle-side bins lit
+  // white), sideLed = the lens under the outboard bins, ANA's saturated blue sidewall band fading to white at the window
+  // belt [V: tlfl_IMG_9217 #5b5cc4 (cruise), sany_10 #5466e8 / sany_12 #4c5edc (boarding), roame_7672 #5e7fef].
+  // hemiBot lowered and exposure raised with the fill/AO rework (u_fill 0.7 -> 0.45) so mean tones stay put while
+  // undersides, footwells and the floor darken [V: tlfl_IMG_9217 PSU underside #615c5d, c_27312 footwell #2d2c30]
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.21, 0.28, 0.70], k: 1.05, exposure: 1.40 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.255, 0.34, 0.85], k: 0.95, exposure: 1.15 },
+  // dining / sunrise: no photo of ANA's warm scenes on the sidewall, the lens follows the cove colour [A]
+  dining: { label: 'Dining', hemiTop: [1.0, 0.80, 0.60], hemiBot: [0.34, 0.26, 0.19], wash: [0.50, 0.37, 0.26], led: [1.0, 0.64, 0.32], sideLed: [0.6, 0.38, 0.19], k: 0.9, exposure: 1.18 },
+  // night: the blue band under the bins is the brightest element, the ceiling dimmer, grey shells readable with a
+  // blue-violet cast [V: roame_7672 sidewall #5e7fef, tlfl_IMG_9377 shell #555c61, sany_10 hue ~232 deg]
+  sleep: { label: 'Night', hemiTop: [0.07, 0.08, 0.18], hemiBot: [0.035, 0.04, 0.08], wash: [0.03, 0.035, 0.08], led: [0.10, 0.12, 0.30], sideLed: [0.20, 0.29, 0.90], k: 1, exposure: 2.2, readingLights: true },
+  wake: { label: 'Sunrise', hemiTop: [0.95, 0.66, 0.56], hemiBot: [0.28, 0.20, 0.18], wash: [0.50, 0.33, 0.28], led: [1.0, 0.50, 0.36], sideLed: [0.6, 0.30, 0.22], k: 0.9, exposure: 1.18 },
 };
+// winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
+// reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
 const SKIES = {
-  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.10, 0.26, 0.72], horizon: [0.62, 0.78, 0.98], haze: [0.72, 0.80, 0.92], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], winGlow: [0.20, 0.25, 0.32], sunVis: 1, night: 0, sheer: 1.0 },
+  day: { label: 'Day', sunEl: 30, sunAz: -60, sun: [5.2, 4.9, 4.4], zenith: [0.10, 0.26, 0.72], horizon: [0.62, 0.78, 0.98], haze: [0.72, 0.80, 0.92], cloudLit: [1.25, 1.25, 1.25], cloudShade: [0.62, 0.68, 0.78], skyTop: [0.55, 0.68, 0.95], skyBot: [0.55, 0.55, 0.58], winGlow: [0.45, 0.52, 0.62], winExp: 1.6, sunVis: 1, night: 0, sheer: 1.0 },
   sunset: { label: 'Sunset', sunEl: 5, sunAz: 110, sun: [4.2, 2.2, 0.9], zenith: [0.10, 0.14, 0.38], horizon: [1.1, 0.55, 0.30], haze: [0.75, 0.48, 0.38], cloudLit: [1.3, 0.72, 0.48], cloudShade: [0.36, 0.28, 0.34], skyTop: [0.45, 0.35, 0.45], skyBot: [0.4, 0.26, 0.2], winGlow: [0.22, 0.12, 0.08], sunVis: 1, night: 0, sheer: 0.7 },
   night: { label: 'Night', sunEl: 38, sunAz: -40, sun: [0.07, 0.08, 0.12], zenith: [0.004, 0.006, 0.016], horizon: [0.02, 0.028, 0.05], haze: [0.018, 0.022, 0.036], cloudLit: [0.05, 0.055, 0.07], cloudShade: [0.012, 0.014, 0.02], skyTop: [0.02, 0.025, 0.04], skyBot: [0.01, 0.01, 0.015], winGlow: [0.0, 0.0, 0.0], sunVis: 0, night: 1, sheer: 0.06 },
 };
@@ -67,7 +77,8 @@ class Scene {
 
   // ---------------- ambient visibility volume ----------------
   computeAO() {
-    const nx = 60, ny = 28, nz = 592;
+    // ~8.3 cm voxels (QA r1: 10 cm cells could not resolve the 0.1 m footwells / console gaps) [D]
+    const nx = 72, ny = 34, nz = 712;
     const min = [-3.0, 0, 2.6], size = [6.0, 2.8, 59.2];
     const cell = [size[0] / nx, size[1] / ny, size[2] / nz];
     const occ = new Float32Array(nx * ny * nz);
@@ -163,15 +174,20 @@ class Scene {
     gl.setInstances(this.glowMesh, mats, tints);
     const rnd = mulberry32(42);
     const rm = [], rt = [];
+    // QA r1: a small lit lens (4 cm sprite) at the lamp + a warm pool on the seat from the shader spot term, not a floating
+    // halo [V: tlfl_IMG_9377 / roame_7672 dimmed cabins: small lens, pool of light on the seat]
+    this.spots = [];
     for (const s of this.layout.seats) {
       if (rnd() > 0.18) continue;
-      if (s.kind === 'room' || s.kind === 'suite') {
-        const p = s.kind === 'room' ? localToWorld(s, s.odd ? [0.03, 1.02, -1.18] : [-0.07, 1.02, 1.18]) : localToWorld(s, [0.1, 1.06, -0.2]);
-        rm.push(M4.trs(p[0], p[1], p[2], 0, 0, 0, 0.14, 0.14, 0.14)); rt.push([1.4, 1.1, 0.7, 0]);
-        continue;
+      let p, t;
+      if (s.kind === 'room') { p = localToWorld(s, s.odd ? [0.03, 1.02, -1.18] : [-0.07, 1.02, 1.18]); t = localToWorld(s, s.odd ? [-0.24, 0.55, -0.75] : [0.20, 0.55, 0.75]); }
+      else if (s.kind === 'suite') { p = localToWorld(s, [0.1, 1.06, -0.2]); t = localToWorld(s, [-0.1, 0.55, -0.55]); }
+      else {
+        const y = Math.abs(s.x) < 1.1 ? 1.82 : binBottomY(s.x * 0.92) - 0.03;
+        p = [s.x * 0.92, y, s.z - (s.kind === 'py' ? 0.5 : 0.45)]; t = [s.x, 0.62, s.z - 0.3];
       }
-      const y = Math.abs(s.x) < 1.1 ? 1.82 : binBottomY(s.x * 0.92) - 0.03;
-      rm.push(M4.trs(s.x * 0.92, y, s.z - (s.kind === 'py' ? 0.5 : 0.45), 0, 0, 0, 0.12, 0.12, 0.12)); rt.push([1.6, 1.3, 0.85, 0]);
+      rm.push(M4.trs(p[0], p[1], p[2], 0, 0, 0, 0.04, 0.04, 0.04)); rt.push([2.4, 2.0, 1.4, 0]);
+      this.spots.push({ p, t });
     }
     gl.setInstances(this.readingMesh, rm, rt);
   }
@@ -215,15 +231,16 @@ class Scene {
   updateWindowLUT() {
     const N = 1024, d = new Uint8Array(N * 2 * 4);
     const z0 = this.ao ? this.ao.min[2] : 2.6, z1 = z0 + 59.2;
-    for (let r = 0; r < 2; r++) for (let x = 0; x < N; x++) { const o = (r * N + x) * 4; d[o] = d[o + 1] = d[o + 2] = 235; d[o + 3] = 255; }
+    for (let r = 0; r < 2; r++) for (let x = 0; x < N; x++) { const o = (r * N + x) * 4; d[o] = d[o + 1] = d[o + 2] = 235; d[o + 3] = 0; }
     let open = 0;
     this.layout.windows.forEach((w, i) => {
       const lv = this.winLevels[i];
       const T = SHADE_STATE.T(w, lv);
       open += SHADE_STATE.open(w, lv);
       const r = w.side > 0 ? 1 : 0;
+      // alpha marks the window span (reveal glow in the shader), rgb the shade transmittance
       const a = Math.floor(((w.z - 0.24 - z0) / (z1 - z0)) * N), b = Math.ceil(((w.z + 0.24 - z0) / (z1 - z0)) * N);
-      for (let x = Math.max(0, a); x <= Math.min(N - 1, b); x++) { const o = (r * N + x) * 4; d[o] = T[0] * 255; d[o + 1] = T[1] * 255; d[o + 2] = T[2] * 255; }
+      for (let x = Math.max(0, a); x <= Math.min(N - 1, b); x++) { const o = (r * N + x) * 4; d[o] = T[0] * 255; d[o + 1] = T[1] * 255; d[o + 2] = T[2] * 255; d[o + 3] = 255; }
     });
     this.openness = open / Math.max(1, this.layout.windows.length);
     const gl = this.gl.gl;
@@ -295,6 +312,7 @@ class Scene {
     const vp = M4.mul(cam.proj, cam.view);
     const L = this.sunDir();
     const op = this.openness ?? 1;
+    const winExp = this.xray ? 1 : 1 + ((sky.winExp || 1) - 1) * (1 - clamp((Math.abs(cam.pos[0]) - 2.0) / 0.45, 0, 1));
     const winGlow = sky.winGlow.map((v) => v * (0.15 + 0.85 * op));
     const P = this.progs.main;
     G.use(P);
@@ -310,6 +328,15 @@ class Scene {
     G.set('u_hemiBot', mood.hemiBot.map((v) => v * k));
     G.set('u_wash', mood.wash);
     G.set('u_led', mood.led);
+    G.set('u_sideLed', mood.sideLed || mood.led);
+    // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
+    const sp = new Float32Array(32), st = new Float32Array(32);
+    if (mood.readingLights && !this.xray) {
+      const near = this.spots.map((q) => [V3.len(V3.sub(q.p, cam.pos)), q]).sort((a, b) => a[0] - b[0]).slice(0, 8);
+      near.forEach(([, q], i) => { sp.set([...q.p, 1], i * 4); st.set([...q.t, 0], i * 4); });
+    }
+    G.set('u_spotP', sp); G.set('u_spotT', st);
+    G.set('u_spotCol', [1.0, 0.85, 0.65].map((v) => v * 0.5));   // warm lamp colour [V: tlfl_IMG_9377], gain [A]
     G.set('u_winGlow', winGlow);
     G.tex('u_ao', 1, this.ao.tex, gl.TEXTURE_3D);
     G.set('u_aoMin', this.ao.min);
@@ -328,7 +355,7 @@ class Scene {
     G.set('u_R', CAB.R + 0.10);
     G.set('u_yc', CAB.yc);
     G.set('u_exposure', mood.exposure);
-    G.set('u_fill', this.fill ?? 0.7);
+    G.set('u_fill', this.fill ?? 0.45);   // QA r1: 0.7 flattened AO and the ceiling-to-floor falloff [V: c_27312 shell gradients]
     G.set('u_exterior', 0);
     G.set('u_skyTop', sky.skyTop);
     G.set('u_skyBot', sky.skyBot);
@@ -339,7 +366,7 @@ class Scene {
     }
     if (!this.xray) {
       G.set('u_exterior', 1);
-      G.set('u_exposure', 1.0);
+      G.set('u_exposure', winExp);
       G.draw(this.ext.mesh);
     }
     gl.depthFunc(gl.LEQUAL);
@@ -354,7 +381,7 @@ class Scene {
     G.set('u_sunTint', sky.sun.map((v) => v / 5));
     G.set('u_night', sky.night);
     G.set('u_cloudLit', sky.cloudLit); G.set('u_cloudShade', sky.cloudShade);
-    G.set('u_exposure', 1.0);
+    G.set('u_exposure', winExp);
     G.set('u_sunVis', sky.sunVis);
     G.tex('u_cloud', 0, this.tex.cloud);
     gl.bindVertexArray(this.emptyVAO);

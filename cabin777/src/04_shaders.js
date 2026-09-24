@@ -27,7 +27,8 @@ in vec3 v_wpos; in vec3 v_nrm; in vec2 v_uv; in vec4 v_col; in vec4 v_mat; flat 
 uniform vec3 u_camPos;
 uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
-uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_winGlow;
+uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_sideLed; uniform vec3 u_winGlow;
+uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[25]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -89,7 +90,9 @@ void main(){
     if (layer == 14) base *= tc;
     else { emissive = tc * (layer == 13 ? u_screenGain : u_emisGain) * emis * 4.0; base = tc * 0.04; rough = 0.25; }
   } else if (layer == 12) {
-    emissive = u_led * emis * 6.0;
+    // two LED circuits [V: tlfl_IMG_9217, sany_10/12, roame_7672]: the ceiling cove (u_led) stays near-white while the
+    // sidewall lens under the outboard bins (the only layer-12 part below 2 m) drives the blue sidewall band (u_sideLed)
+    emissive = (v_wpos.y < 2.0 && u_exterior < 0.5 ? u_sideLed : u_led) * emis * 6.0;
     base *= 0.3;
   } else if (layer > 0 && u_detailOn > 0.5) {
     vec4 P = u_layer[layer];
@@ -125,15 +128,41 @@ void main(){
   } else {
     vec3 auv = (v_wpos + N*0.07 - u_aoMin) / u_aoSize;
     ao = texture(u_ao, auv).r;
-    vec3 hemi = mix(u_hemiBot, u_hemiTop, clamp(N.y*0.5 + 0.5, 0.0, 1.0));
+    float up = clamp(N.y*0.5 + 0.5, 0.0, 1.0);
+    float down = clamp(-N.y, 0.0, 1.0);
+    vec3 hemi = mix(u_hemiBot, u_hemiTop, up);
     float wallProx = smoothstep(1.7, 2.55, abs(v_wpos.x));
     float facingIn = clamp(-sign(v_wpos.x) * N.x, 0.0, 1.0);
+    // the outboard bins overhang the sidewall from ~1.6 m: the wall just below sees the lens, not the ceiling
+    // (tlfl_IMG_9217 / sany_10: the band under the bins is lit blue only, the aisle side of the bins white) [D]
+    float binShade = 1.0 - 0.75 * wallProx * facingIn * smoothstep(1.15, 1.6, v_wpos.y);
     // interreflection fill: a white-lined cabin bounces the cove/ceiling light onto every face (ANA photos show
-    // charcoal shells and navy fabric reading mid-tone, not black); scaled by AO so crevices stay dark
-    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * (0.35 + 0.65*ao);
-    amb = hemi * (0.32 + 0.68*ao) + bounce
-        + u_wash * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao)
-        + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5;
+    // charcoal shells and navy fabric reading mid-tone, not black); scaled by AO so crevices stay dark. QA r1: weaker
+    // on down-facing faces and towards the floor, so bin undersides / PSU band and footwells keep the shadow line and
+    // falloff of the photos [V: tlfl_IMG_9217 PSU underside #615c5d, c_27312 footwell #2d2c30]
+    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * (0.35 + 0.65*ao)
+                * mix(0.45, 1.0, up) * mix(0.55, 1.0, smoothstep(0.0, 1.4, v_wpos.y));
+    // reveal glow: faces within ~0.12 m of a pane pick up the window light (alpha of the window LUT = window span in z,
+    // rgb = shade transmittance) [V: tlfl_IMG_9217 / 9518 glowing reveals]
+    vec4 wl = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), v_wpos.x < 0.0 ? 0.25 : 0.75));
+    float reveal = wl.a * smoothstep(2.72, 2.84, abs(v_wpos.x)) * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - 1.13)));
+    float noDown = 1.0 - down;
+    amb = (hemi * (0.15 + 0.85*ao) + bounce) * binShade
+        + u_wash * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown
+        + u_sideLed * wallProx * facingIn * smoothstep(1.05, 1.62, v_wpos.y) * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown
+        + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5
+        + u_winGlow * wl.rgb * reveal * 1.4;
+    // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
+    for (int i = 0; i < 8; i++) {
+      if (u_spotP[i].w < 0.5) continue;
+      vec3 a = u_spotT[i].xyz - u_spotP[i].xyz; float la = length(a); a /= la;
+      vec3 d = v_wpos - u_spotP[i].xyz; float t = dot(d, a);
+      if (t <= 0.0) continue;
+      float r = length(d - a*t) * la / max(t, 0.05);        // radius projected to the target distance
+      float cone = 1.0 - smoothstep(0.12, 0.35, r);
+      vec3 Ld = -normalize(d);
+      amb += u_spotCol * cone * max(dot(N, Ld), 0.0) * (la*la) / max(dot(d, d), 0.04);
+    }
   }
   vec3 L = u_sunDir;
   float ndl = max(dot(N, L), 0.0);
