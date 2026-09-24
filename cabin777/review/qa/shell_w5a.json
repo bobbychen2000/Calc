@@ -1,0 +1,341 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "w5",
+ "score": 6.6,
+ "details": [
+  {
+   "detail": "Sidewall panels and seams (joint every second window, satin white)",
+   "score": 7.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/tt_cabin1.jpg"
+   ]
+  },
+  {
+   "detail": "F/J recess geometry (bowl width, bottom under the opening, pill position)",
+   "score": 8.0,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room38.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg"
+   ]
+  },
+  {
+   "detail": "PY/Y full-height tub geometry",
+   "score": 7.3,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py13.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Recess tonal modelling (upper tub shading, lower tub brighter, crease at the opening ring)",
+   "score": 5.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg"
+   ]
+  },
+  {
+   "detail": "Pane tunnel lining and seal rim",
+   "score": 6.0,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg",
+    "/home/user/Calc/cabin777/ref/ana/f_17313-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Electric shades: sheer/blackout pleats, tone, shade-button LED pill",
+   "score": 6.3,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room38.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg"
+   ]
+  },
+  {
+   "detail": "Manual PY/Y shades (stowed grip band, half, closed)",
+   "score": 6.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Dado panel, air-return grilles, placards",
+   "score": 5.3,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py13.jpg"
+   ]
+  },
+  {
+   "detail": "Carpets (F brown, J brown-grey, PY/Y navy) and Y seat-track covers",
+   "score": 7.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_cabin1.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/tt_cabin2.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room7.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_y13.jpg"
+   ]
+  },
+  {
+   "detail": "Door/galley vinyl floor",
+   "score": 7.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py09.jpg"
+   ]
+  },
+  {
+   "detail": "Type A door surround/lining and viewing window",
+   "score": 6.0,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py09.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py53.jpg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Recess (tub) has almost no top-to-bottom shading; every window reads as flat white on white",
+   "problem": "In real photos the upper tub (it faces down) is clearly darker than the lower tub (it faces up), and the pier sits between them. In the render the tub is nearly uniform, so the 777 bathtub reveal loses its depth. tubShade only starts 0.12 m above the pane centre and bottoms out at 0.78, and only at the very top.",
+   "evidence": "tt_window.jpg (real THE Room, daylight): upper tub #8d8167 L130 at (1100-1300,300-400) vs lower bezel #dfd2b5 L211 at (1100-1300,2100-2200), ratio 0.62; tub face beside the opening L176, wall outside the tub L151. sp_py14.jpg (real PY, night): upper tub #8b887e L136 at (700-760,195-210), pier #b2afa4 L175, tub below the window #d0cdc1 L205, so up/pier 0.78 and low/pier 1.17. Render s09_fWall: upper tub #c9cacc L203 at (540-620,195-215) vs lower bezel L231, ratio 0.88; wall between L228 is the same as the bezel. Render s02_yWall: upper tub L201 at (730-790,240-260) vs pier L218, ratio 0.92; top L183 (0.84).",
+   "fix": "src/07_shell.js l.306: tubShade = (y) => y > vc ? lerp(1, 0.68, smoothstep(clamp((y - vc - 0.04) / (rec.top - 0.04), 0, 1))) : 1, which starts the grade just above the opening and takes it deeper. Also apply tubShade to the rolled-opening ring part (l.310, add tubShade as the 3rd tuple entry) so the upper ring darkens with the tub. Raise MAT.reveal (l.25) '#e7e4dd' -> '#f1efea' so the lower tub lands at about 1.05-1.1x the sidewall, as in the photos. Target render ratios: upper tub/pier about 0.75, lower tub/pier about 1.08."
+  },
+  {
+   "severity": "medium",
+   "detail": "Dado air-return grilles are the wrong shape: squarish, when the real ones are wide landscape panels",
+   "problem": "The grilles are modelled as 0.33 x 0.28 m (aspect 1.18), about 0.66 of the window pitch wide. Every ANA and real photo shows a wide, low grille about 0.8 of the pitch wide with a narrow gap and a placard between grilles. The render's squares read as a row of dark tiles (s04, win_front and win_low).",
+   "evidence": "y_47303 (px at 930 w): window pitch about 100 px (centres 297/393/500); grille 405->440 visible, then a 22 px gap (placard at 445-460), then the next grille. Height 262->305 = 43 px. So about 0.41 x 0.23 m with a 0.12 m gap. py_37303: pitch 162 px (window centres about 298/460); grille 270->345+, gap about 30 px (0.10 m); height 245->312 = 67 px. py_37301 (low oblique): grille 45->205 = 160 px wide by 80-90 px tall even though foreshortened, so the aspect is at least 1.9. It has 8 vertical ribs. Render win_front: grille 55 px wide over an 84 px pitch (0.65), aspect about 1.15. s04_dado: grille (635-720, 310-420) is square.",
+   "fix": "l.321: gc 0.195 -> 0.19, ghw 0.165 -> 0.205, ghh 0.140 -> 0.115 (0.41 x 0.23 m panel; with the l.326 frame about 0.434 x 0.254, leaving about 0.10 m between grilles). l.326 frame corner radii 0.036/0.03/0.027 -> 0.028/0.024/0.022. l.338 nSl 32 -> 30. l.345-346: 8 ribs, lerp(-ghw+0.045, ghw-0.045, k/7). l.351 placard to fit the gap: lz ± 0.035 (70 mm), at v 0.16-0.178."
+  },
+  {
+   "severity": "medium",
+   "detail": "Dado panel renders as mid-grey (0.52 of the wall), lighter than both the ANA and the real photos",
+   "problem": "The dado renders #6b727e, 0.52 of the adjacent wall. ANA photos show 0.40-0.49 with a slate-blue hue. Real night photos show it near black. Grille ribs in the plenum tone are invisible, although py_37301 shows them clearly as lighter dividers.",
+   "evidence": "Render s04_dado: dado #6b727e L114 s0.15 at (720-800,330-420); wall above L220; grille #3d424c L66. ANA py_37301 dado #536078 L95 / #4d5568 L85 vs wall #b9c0d0 L192 (0.44-0.49, s0.26-0.31). py_37303 dado between grilles #3d4b5f L74 vs wall L184 (0.40). Real sp_py14.jpg: dado #191919 L25 at (488-505,480-510) vs pier L191 (0.13; in the shadow of the console). Grille #272727 L40.",
+   "fix": "l.15 MAT.dado c '#777b83' -> '#58606e' (target in-cabin dado/wall about 0.38, with some slate hue, s about 0.2). l.18 MAT.grille '#7a7d84' -> '#50545c' so the grille stays about 0.75 of the panel (py_37303 54/74). l.125 WMAT.rib '#4a4e56' -> '#6a6e76' and bring the ribs forward from 0.0045 to 0.0058 (l.347) so the 8 dividers read as in py_37301."
+  },
+  {
+   "severity": "medium",
+   "detail": "Blackout shade too light and pleats too faint",
+   "problem": "Closed blackout is 0.76 of the bezel against 0.64 in the photo. The pleat stripe has about a third of the photo's contrast, so it reads as a light textured slab.",
+   "evidence": "omaat_room24.jpg: shade #7d796e L122 vs bezel #c7bfad L192 = 0.64. Row-profile std 27.3 on mean 117 (cv 0.23), p5/p95 81/169. Render s05_jShades: blackout #96938d L148 at (530-650,280-450) vs bezel #c4c3c1 L196 = 0.76. Pleat profile std 10.5 on mean 148 (cv 0.07), p5/p95 133/165.",
+   "fix": "l.64 MAT.blackout '#8f897e' -> '#7e786d'. l.399 kf blackout 0.76 -> 0.62. l.388 zig-zag 0.006 -> 0.008. If moire returns at distance, fade kf toward 1 with view distance in the shader (lighting file) rather than keeping the contrast low."
+  },
+  {
+   "severity": "medium",
+   "detail": "Pane tunnel lining renders as bright as, or brighter than, the bezel; real linings are a shadowed grey band",
+   "problem": "WMAT.lining #c3bfb7 renders L216-234 because the window light lifts it. Real 777 tunnels read as a distinct grey band round the glass. Without it the opening looks like a hole punched straight to the glass (q12, s03, s09).",
+   "evidence": "tt_window.jpg: lining #736f63 L112 at (1575-1620,1300-1500) vs bezel face #bcae93 L176 (0.64). sp_py24.jpg: lining L189 vs rolled ring L218 (0.87). f_17313 shows a thick grey lining ring. Render s09: lining #e4eaee L234 at (612-616,300-360) vs bezel L221 (1.06). Render s03: lining L216 vs ring L236 (0.92).",
+   "fix": "l.119 WMAT.lining '#c3bfb7' -> '#a39e95'. Add a depth grade on the lining loft (l.312): give it a shade fn like tubShade that takes vertex colour from 1.0 at the lip ring to 0.8 at the pane ring (by depth), so the inner end reads darker. Target lining/bezel 0.70-0.75 in-cabin."
+  },
+  {
+   "severity": "medium",
+   "detail": "Stowed manual shade grip is almost hidden: the photos show a clear band across the top of the glass",
+   "problem": "Stowed manual shades rail at top - 0.036 = 0.1865 m, only 3.5 mm below the pane top (0.19). The band therefore sits over the lining and reads as part of it (s03: about 9-14 mm visible). In real PY/Y photos the stowed shade and grip hang across the top of the glass as a distinct band with a lip.",
+   "evidence": "sp_py24.jpg: band from the ring inner edge y about 150 to 195 (full-res) over the glass, about 30 mm (8 % of glass height), with a raised lip. sp_py14.jpg: band 225-240 of an opening 222-350 (about 14 % of the opening height) on every PY window. y_47303: grey band across the top of each Y pane. Render s03_yClose: light strip y 140-152 on a 330 px glass. Render s02: no band readable.",
+   "fix": "l.420: manual stowed railY lerp(top - 0.036, ...) -> lerp(top - 0.068, ...), so the shade covers the top about 35 mm of the pane. l.408 grip gRBox height 0.026 -> 0.032 with depth 0.018 -> 0.022, so the lip catches light. l.59 shadeRail '#d6d0c2' is fine."
+  },
+  {
+   "severity": "low",
+   "detail": "Shade-button LED ring renders pale cyan-white instead of saturated violet-blue",
+   "problem": "WMAT.halo #4467ff with e 0.8 clips in tone mapping to a pastel cyan.",
+   "evidence": "omaat_room24.jpg LED pixels mean #716ef0 (bbox 588-641 x 1092-1203 at 1200 w). tt_window.jpg pill #757bea. Render s05 pill #a0d3fb at (572-595,500-535); s09 #b5dcf9.",
+   "fix": "l.127 halo { c: '#5a50ff', e: 0.45 }. Optionally scale the pill (l.434) from 0.022 x 0.046 to 0.026 x 0.054: room24 measures about 28 x 59 mm against the 0.305 m opening."
+  },
+  {
+   "severity": "low",
+   "detail": "PY/Y pane sits centred in its tub; real photos show more tub above than below",
+   "problem": "The model has 0.455 m above and 0.47 m below the pane centre (ratio 0.97). sp_py14 shows 174 px above and 148 px below the opening centre (ratio 1.18). This was already an open question (CAB.win.yc in 05_layout.js).",
+   "evidence": "sp_py14.jpg tub 3: top y 48, opening centre 222, bottom 370 (crop 100,50 origin).",
+   "fix": "Needs the user's decision on yc. Inside 07_shell only: REC_Y.top 0.455 -> 0.47 (l.117) if the bin lip allows. Do not shorten bot."
+  },
+  {
+   "severity": "low",
+   "detail": "Door surround reads as a flat white slab; viewing window centred on the leaf",
+   "problem": "There is no visible jamb/liner frame depth or leaf outline. The real door-2 area (sp_py09) shows the leaf framed by a darker jamb reveal, and the small window sits near one jamb (about 0.14 of the leaf width from the forward jamb), not on the centreline.",
+   "evidence": "sp_py09.jpg: dark window square about x 340-362 on a leaf spanning about 325-510 (1000 w scale), above the red arming arc. Render s06_door2 (g coords): window centred at x 485 on a leaf of about 410-560. The leaf edge is a faint line only (door #c2bfb9 L192 vs lower panel L195).",
+   "fix": "l.604/611-612: call windowCell(g, side, c + side * 0.33, dp, topRows) and shift the two fill ranges by the same offset (the pattern stays 1.14 wide; clamp to the zone). Add a 60 mm raised jamb liner round the leaf (a ringLoft 12 mm proud, with MAT.doorGap l.45 darkened to '#b4afa6') so the leaf reads as a door, not a wall. Size is unverified [A]; see the question."
+  },
+  {
+   "severity": "low",
+   "detail": "[OTHER AREA: lighting] Shell renders near clipping and colour-neutral everywhere",
+   "problem": "Wall, tub, ring and lining all land at L 220-236 with saturation ≤ 0.02. Real photos under cabin light sit around L 150-200 with warm cream (s 0.08-0.14). Most of the flatness above is made worse by exposure, which is outside the shell's scope.",
+   "evidence": "Render s09 wall L228 s0.01; s03 tub L226 s0.00. Real sp_py14 pier L175 s0.08; tt_window bezel L176 s0.22 (daylight WB).",
+   "fix": "Lighting (12_scene / 04_shaders): lower exposure about 10 % in Boarding (still white). Shell-side, MAT.sidewall (l.8) '#e9e7e2' -> '#e6e2d9' adds a hint of cream (s about 0.06)."
+  }
+ ],
+ "questionsForUser": [
+  "Dado tone: ANA's official photos show a mid slate-blue dado (about 0.45 of the wall). The only real in-flight photos I found (SANspotter PY, night) show it near black. Do you have your own photo of the PY/Y lower sidewall in normal cabin light to settle this?",
+  "Type A door viewing window: the real door-2 photo (sp_py09) suggests the small window sits near the forward jamb, not centred. Do you have an inside photo of an ANA 777 door (L2/L4) to confirm its size and position before it is moved?",
+  "PY/Y pane position: the photos show more tub above the pane than below (1.18:1). Should CAB.win.yc (shared 05_layout.js) come down from 1.13 to about 1.08, or should the pane stay put and only the tub top rise?"
+ ],
+ "photosDownloaded": [
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg",
+   "url": "https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-24.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/omaat_room37.jpg",
+   "url": "https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-37.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/omaat_room38.jpg",
+   "url": "https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-38.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/omaat_room4.jpg",
+   "url": "https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-4.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/omaat_room6.jpg",
+   "url": "https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-6.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/omaat_room7.jpg",
+   "url": "https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-7.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py09.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-09.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py10.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-10.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py11.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-11.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py13.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-13.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-14.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py15.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-15.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py21.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-21.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-24.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py52.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-52.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_py53.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-53.jpeg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y10.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-10.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y12.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-12.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y13.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-13.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y24.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-24.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y41.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-41.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y42.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-42.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y44.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-44.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y45.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-45.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y52.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-52.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y54.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-54.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y56.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-56.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/sp_y63.jpg",
+   "url": "https://www.sanspotter.com/wp-content/uploads/2023/07/ana-777-300er-economy-63.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_cabin1.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-cabin-1.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_cabin2.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-cabin-2.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_hpjack.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-headphone-jack.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_seat1.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-seat-1.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_seat2.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-seat-2.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_suite.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-suite.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_suite2.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-suite-2.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_suite3.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-suite-3.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_suite5.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-suite-5.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+   "url": "https://thriftytraveler.com/wp-content/uploads/2023/03/ana-business-class-window.jpg"
+  }
+ ],
+ "notes": "38 curated real photos are in ref/web/shell/ (plus 234 raw downloads in ref/web/shell/all/, from SANspotter PY/Y, OMAAT THE Room and Thrifty Traveler THE Room). Pixel coordinates are in the named image's own resolution unless a 1000 w scale is stated. Render coords are in 930x575 PNGs in scratchpad/r0. Verified good: F/J recess width 0.38-0.39 m (room38: 157 px recess / 105 px glass), opening 0.31 m, bottom about 0.11 m below the opening (tt_window), pill about 37 mm under the opening, seams every second window (sp_py14), J/Y carpet tones (render J #3e3234 vs c_27312 #2c211f / tt_cabin2 #474437; render Y #29334b vs y_47301 #2a3157), vinyl #56565d vs sp_py09 #666165."
+}

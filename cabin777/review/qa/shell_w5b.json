@@ -1,0 +1,251 @@
+{
+ "area": "shell",
+ "rater": "B",
+ "round": "w5",
+ "score": 7.5,
+ "details": [
+  {
+   "detail": "Sidewall panels and seams. The wall is smooth satin. The joints fall mid-pier after every second window, and sans_14 shows the same spacing (seams at x~390 and ~730 with the windows in between). No gaps or z-fighting show in win_front, s01, s02 or s09. The tone is near-neutral (s0.00-0.01 in-cabin) against a faintly warm cream in the OMAAT photos (wall s0.07-0.08); most of that difference is camera white balance and lighting.",
+   "score": 8.0,
+   "refs": [
+    "ref/web/shell_b/sans_14.jpg",
+    "ref/web/shell_b/fr_20220604_124108.jpg",
+    "r0/s09_fWall.png",
+    "r0/win_front.png"
+   ]
+  },
+  {
+   "detail": "F/J bowl (REC). The width checks out: the bowl is 0.73-0.74 of the pitch in omf_7 (160/218 px) and DSC_1920 (285/385 px), against the model's 0.39/0.533 = 0.73. The glass is 0.48 of the pitch in both photos (0.256 m), which matches the 10 in pane. The pill button sits about 32 mm under the opening, as in Room-24 and omf_34. The vertical shade grade is inverted, though. The render is darkest at the recess top: s03 col 520 reads 181 = 0.80 of the wall at the top and 233 just above the bezel, and win_close col 450 reads 202 rising to 220. The photos are darkest just above the opening and light at the top: omf_34 reads #757166 at the top and #625e53 just above the opening, and DSC_1920 has the bowl above the opening at 0.74 of the wall with the outer tub at 1.2. The bowl reads as a two-level surround (bowl plus a rolled ring) with no artefacts.",
+   "score": 7.6,
+   "refs": [
+    "ref/web/shell_b/omf_34.jpg",
+    "ref/web/shell_b/omf_7.jpg",
+    "ref/web/shell_b/ml_DSC_1920.jpg",
+    "ref/web/shell_b/omaat_room_24.jpg",
+    "r0/s09_fWall.png",
+    "r0/win_close.png"
+   ]
+  },
+  {
+   "detail": "PY/Y tub (REC_Y). The tub width (0.77 of the pitch against 0.78-0.80 in fr_124108 and sans_14) and its round top at the bin line are right. The bezel is too big for its tub. The bezel outer is 0.64 of the tub width in fr_124108 (90/140 and 120/185 px) and 0.63 in sans_14 (145/230 px); the model is 0.331/0.41 = 0.81. The bezel is also still centred vertically. The space above the bezel over the space below it is 1.33 in fr_124108 (120/90 px, near-level camera) and 1.36 in sans_14 (190/140 px); the model is 0.215/0.23 = 0.93. The bezel frame ring in the photos is about 0.03-0.04 m wide with a crisp outer step (sans_24: 35-40 px on a 425 px opening). The model's rolled ring is 13-19 mm. The upper-tub grade is inverted, as for F/J: sans_14 col 485 reads 185 (1.0) at the top and 121 (0.65) just above the bezel, while s03 reads 0.80 at the top and 1.03 near the bezel.",
+   "score": 6.9,
+   "refs": [
+    "ref/web/shell_b/fr_20220604_124108.jpg",
+    "ref/web/shell_b/sans_14.jpg",
+    "ref/web/shell_b/sans_24.jpg",
+    "ref/ana/y_47303-lang-multi.jpg",
+    "r0/s03_yClose.png",
+    "r0/s02_yWall.png"
+   ]
+  },
+  {
+   "detail": "Pane seal rim and lining tunnel. A thin grey-blue rim runs round the glass, as in sans_24 and DSC_1920. The tunnel is clean, with no light leaks. The rim is a little heavy only at the q12 close range (about 5 px).",
+   "score": 8.2,
+   "refs": [
+    "ref/web/shell_b/sans_24.jpg",
+    "r0/q12_wing.png",
+    "r0/win_close.png"
+   ]
+  },
+  {
+   "detail": "F/J electric shades and button. The pleat pitch is verified: an FFT of omaat Room-24 over the 810 px shade span gives 28-30 cycles (27-29 px pitch), against 31 modelled. The sheer glows, and the hems and corners are clean. The blackout is still light: 0.74 of the sill in win_front (168,161,148 against 218,216,211) and 0.71 in s05, against 0.56 in omf_34 and 0.60 in Room-24. A faint diagonal beat remains in win_front: column x 254 alternates ±5 at the top and ±30 in the middle. The pill with its blue ring matches omf_34 and Room-24.",
+   "score": 7.6,
+   "refs": [
+    "ref/web/shell_b/omaat_room_24.jpg",
+    "ref/web/shell_b/omf_34.jpg",
+    "r0/win_front.png",
+    "r0/s05_jShades.png"
+   ]
+  },
+  {
+   "detail": "PY/Y manual shade. The stowed grip band is about 36 mm, as in sans_24 (a light band 35 px deep at the top of a 425 px opening) and in every opening in sans_14. The half and closed states read correctly (win_front, s08).",
+   "score": 8.1,
+   "refs": [
+    "ref/web/shell_b/sans_24.jpg",
+    "ref/web/shell_b/sans_14.jpg",
+    "r0/win_front.png",
+    "r0/s08_pyShades.png"
+   ]
+  },
+  {
+   "detail": "Dado, grilles and placards. The geometry is good: a facet under a short ledge, and a squarish grille filling about 85 % of the dado. The dado reads too light in the cabin, though. In the s04 zoom the dado is L110-147 against a wall of L222, i.e. 0.50-0.66. The photos give 0.38 (py_37303: #3a4352 L66 against #abb4c5 L175), 0.21 (y_47303: #1d202f against #8b96b6) and 0.12 (fr_124108: #11161c). At that tone it reads as a light slate band rather than the dark base of the photos. The 7 ribs still print as a column grid: in the win_low row at y 360 the grille alternates 117 and 131 over a 20 px period, while py_37303 row 285 has no periodic part. The placard is pure white (L241 in win_low); py_37303's label is a small greyish tag at L110.",
+   "score": 6.8,
+   "refs": [
+    "ref/ana/py_37303-lang-multi.jpg",
+    "ref/ana/y_47303-lang-multi.jpg",
+    "ref/web/shell_b/fr_20220604_124108.jpg",
+    "ref/web/shell_b/tpg_Three-Seats-1.jpg",
+    "r0/s04_dado.png",
+    "r0/win_low.png"
+   ]
+  },
+  {
+   "detail": "Carpets, vinyl and track covers. The Y navy (#1b1d2b in s04, against #1a1f35 in y_47303) and the royal-blue track covers are right. The door and galley vinyl (#57565d in s06) matches sans_09's #68676f. The J carpet is slightly plum (s01 #3c2e2f, hue 355) where OMAAT Room-31/38 show a warm brown-grey (#595248 hue 35, #615853 hue 21). The F carpet (q03 #473733, hue 11) is a little redder than MileLion DSC_1917 (#564943, hue 18).",
+   "score": 7.9,
+   "refs": [
+    "ref/web/shell_b/omaat_room_31.jpg",
+    "ref/web/shell_b/omaat_room_38.jpg",
+    "ref/web/shell_b/ml_DSC_1917.jpg",
+    "ref/web/shell_b/sans_09.jpg",
+    "r0/s01_jWall.png",
+    "r0/s04_dado.png"
+   ]
+  },
+  {
+   "detail": "Type A door surround and viewing window. The leaf proportion is right (the render is 1.74 tall per unit width, against 74/42 = 1.76). The window height (centre at 1.52 m) and size (0.16 x 0.21 m in render pixels) match sans_09, which gives about 0.18 x 0.21 m at 1.55 m. The window is centred on the leaf, though. In both real door photos it sits in the upper corner by one jamb, the forward one when seen across the cabin. In sans_09 it is about 0.35 m off the door centreline while the red arc is centred; fr_123806 is the same. The window is still an unglazed white card (s06).",
+   "score": 7.0,
+   "refs": [
+    "ref/web/shell_b/sans_09.jpg",
+    "ref/web/shell_b/fr_20220604_123806.jpg",
+    "r0/s06_door2.png",
+    "r0/s07_door4.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Upper-tub shading is inverted: dark at the top, light just above the opening",
+   "problem": "The w4 vertex grade (tubShade) darkens the tub toward its top. The ext sink tilts the upper face the same way. Every real photo shows the reverse: the tub is light at the top and at the bin line, and darkest right above the opening or bezel.",
+   "evidence": "sans_14 col 485 (PY): 185 at y102 (wall 187) falls to 121 at y182, just above the bezel (0.65). omf_34 (F): #757166 at the bowl top (780,150), #625e53 above the opening (780,270). ml_DSC_1920: bowl above the opening #7c7b79 = 0.74 of the wall #a8a7a5; outer tub at the top #c9c7c8 = 1.2. Render r0/s03 col 520: 181 at y36 (0.80 of wall 226), rising to 233 at y168 just above the bezel. r0/win_close col 450: 202 at y80, rising to 220 at y152.",
+   "fix": "src/07_shell.js line 306: flip the grade so it is darkest just above the opening. Use `const oTop = W.holeH / 2 * 1.085; const tubShade = (y) => lerp(0.74, 1, clamp((y - vc - oTop) / (rec.top - oTop - 0.04), 0, 1)) ** 0.7;`. That gives about x0.74 at the bezel top and 1.0 by 40 mm under the lip. Optionally halve REC.ext / REC_Y.ext (lines 113 and 117: 0.045 -> 0.025, 0.055 -> 0.03) so the geometric shading no longer darkens the top."
+  },
+  {
+   "severity": "medium",
+   "detail": "PY/Y bezel too large for the tub and centred in it",
+   "problem": "The window bezel fills 0.81 of the PY/Y tub width; the photos show 0.63-0.65. It sits centred, where the photos show 1.33-1.36 times more tub above it than below. The frame ring is also about half the photo width, so the PY/Y window reads as a big flat opening instead of a small framed window low in a tall tub.",
+   "evidence": "fr_20220604_124108 (near-level): tub 1 is 140 px wide, bezel 90 px (0.64), 120 px above and 90 px below; tub 2 is 185 px, bezel 120 px (0.65). sans_14 zoom: tub 230 px, bezel 145 px (0.63), 190 px above and 140 px below. sans_24: frame ring 35-40 px on a 425 px opening, about 0.035 m. Model: ring outer 0.305*1.085 = 0.331 m against the tub's 0.41 m, 0.215 m above and 0.23 m below (REC_Y line 117; ring line 310).",
+   "fix": "Tub-relative proportion, all in src/07_shell.js. (1) Line 117: REC_Y = { ...REC, hw: 0.215, top: 0.47, bot: -0.40, rTop: 0.15, rBot: 0.12, ext: 0.03 }, which puts 0.23 above and 0.16 below the ring (ratio 1.4) without moving the shared pane centre. That lifts the tub bottom from 0.66 m to 0.73 m, so check the lower wall still clears the dado ledge. (2) In windowParts, give PY/Y a wider, stepped frame: `const bz = rec === REC_Y ? 1.14 : 1.085;` and use scl(open, bz) at lines 302 and 310. Add a 3 mm proud step for PY/Y: prepend [scl(open, bz), D - 0.003] to the line-310 ring with WMAT.seam at the outer edge. If the user approves CAB.win.yc 1.13 -> ~1.06 (shared 05_layout.js), use that instead of (1)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Dado reads too light in the cabin",
+   "problem": "After the w3/w4 lightening, the dado renders at 0.50-0.66 of the wall tone. The photos give 0.12-0.38, so the base band reads as mid-grey slate instead of the dark dado.",
+   "evidence": "r0/s04 zoom (560-930, 180-480): the column at x 800 reads 147 at y310 and 108-111 at y400-490, against a wall of 222. py_37303: dado #3a4352 L66, wall #abb4c5 L175 (0.38). y_47303: #1d202f L32 against #8b96b6 L150 (0.21). fr_20220604_124108: #11161c L21 against wall L174 (0.12).",
+   "fix": "src/07_shell.js line 15: MAT.dado c '#777b83' -> '#555960' (x0.72). That should land at about 0.38-0.45 of the wall in s04. Keep grille/dado near 0.75 (py_37303 grille2 L50 against dado L66) by moving MAT.grille '#7a7d84' -> '#5a5d64' and WMAT.grilleFrame '#6c6f76' -> '#4f5258' (lines 18 and 124)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Door viewing window is centred on the leaf, not near a jamb",
+   "problem": "Both real door photos put the small viewing window in the upper corner by the forward jamb, with the red arming arc centred below. The model centres it on the door.",
+   "evidence": "sans_09 crop (250-440, 170-380): the door leaf spans x 95-450; the window centre is at x ~150, about 0.35 m off centre (0.17 m from the jamb), and the arc centre is at 245 (centred). fr_20220604_123806 crop (590-780, 290-560): the window at x 45-110 of a leaf from 45 to 500 hugs the left (forward) jamb; the EXIT sign is centred. r0/s06 zoom: the window is at x 250-325 of a leaf from 40 to 540, dead centre.",
+   "fix": "src/07_shell.js lines 601-612 (door loop): build the cell off-centre. `const zw = c - 0.33;` (forward is -z on both sides). Set cellW 0.46. Pass zw instead of c to windowCell (line 604) and to dmap's `c + dz`. Change the fillers to wallGrid(g, side, [zn.z0, zw - cellW/2], vset) and [zw + cellW/2, zn.z1]. Tell MONUMENTS the arc and handle stay centred."
+  },
+  {
+   "severity": "low",
+   "detail": "Blackout still light against the bezel, with a residual beat",
+   "problem": "The closed blackout is 0.71-0.74 of the sill against 0.56-0.60 in the photos, and the 2-row stripe still beats at studio distance.",
+   "evidence": "r0/win_front (236-272, 250-295): (168,161,148) against a sill of (218,216,211), 0.74; r0/s05 0.71. omf_34 shade (107,104,94) against a sill of (190,182,168), 0.56; omaat_room_24 0.60. The win_front column at x 254 swings from ±5 (y245-255) to ±30 (y265-285).",
+   "fix": "src/07_shell.js line 64: MAT.blackout '#8f897e' -> '#7a7469'. Line 399: bake a 3-level stripe instead of the binary ((k>>2)&1) step, e.g. f = [1.0, 0.88, 0.76, 0.88][(k >> 2) & 3] (that needs n = 62 kept even, and pleat rows in 4-row groups), to halve the edge contrast behind the moire."
+  },
+  {
+   "severity": "low",
+   "detail": "Grille ribs still print as a 7-column grid",
+   "problem": "The ribs are now darker than the slats, but they still make a regular column pattern. py_37303 shows horizontal louvres only.",
+   "evidence": "r0/win_low row y360 over x 110-245: 117 at the ribs, 131 between them, period about 20 px. py_37303 row 285 over x 270-335: no periodic component (62-92 random).",
+   "fix": "src/07_shell.js lines 345-349: delete the rib loop, or cut it to 2 ribs at ±(ghw - 0.03) and push them to off 0.0020 so they sit behind the slats (line 347 offset 0.0045 -> 0.0020)."
+  },
+  {
+   "severity": "low",
+   "detail": "Dado placard too white and bright",
+   "problem": "The placard is a pure-white bar (L241 in the studio). py_37303's label is a small grey-white tag, about 1.7 times the dado tone, with fine print.",
+   "evidence": "r0/win_low (290,337) #f2f1f0 against a dado L~170. py_37303 label (255,285) #66707c L110 against a dado of L66.",
+   "fix": "src/07_shell.js line 126: WMAT.label c '#ecebe6' -> '#bfc1c4', r 0.5 -> 0.6. Optionally shrink the placard to 70 x 20 mm (line 351: lz ± 0.035)."
+  },
+  {
+   "severity": "low",
+   "detail": "No glass on the door viewing window (carried over)",
+   "problem": "The door window is still a flat white card. The photos show a framed, glazed pane that reads darker than the lining.",
+   "evidence": "r0/s06 zoom: the window (250-325, 180-275) is a uniform near-white. sans_09 and fr_123806: a darker framed square.",
+   "fix": "src/07_shell.js door loop after line 607: add a fan disc at d 0.092 inside sc(0.86, 0.89) and return it as meshes.glassDoor for the 12_scene glass program (tell LIGHTING)."
+  },
+  {
+   "severity": "low",
+   "detail": "J carpet slightly plum; F carpet slightly red",
+   "problem": "The rendered J carpet hue is about 355 (red-violet). OMAAT's THE Room aisle photos show warm brown-grey at hue 21-35.",
+   "evidence": "r0/s01 (15,480) #3c2e2f hue 355 s0.23. omaat_room_31 (100,850) #595248 hue 35; omaat_room_38 (560,760) #615853 hue 21. r0/q03 F carpet #473733 hue 11 against ml_DSC_1917 #564943 hue 18.",
+   "fix": "src/07_shell.js line 33: carpetJ c '#645554' -> '#615851'. Line 35: carpetF c '#574843' -> '#574a42'."
+  },
+  {
+   "severity": "low",
+   "detail": "Reveal and bowl a touch cool and neutral against the warm-cream bowls in the photos",
+   "problem": "The F/J bowls in the OMAAT photos are a warm cream, slightly warmer than the wall (Room-24 bowl s0.13 against wall s0.08). The render reveal is s0.00-0.02.",
+   "evidence": "omaat_room_24 bowl (250,500) #d0c7b6 against wall (1100,600) #d8cfc6. omf_34 bowl side #c8c0ab. r0/s05 tub side #d5d5d5 and sill #e3e4e4. Note that DSC_1920 is neutral, so part of this is camera white balance.",
+   "fix": "src/07_shell.js line 25: MAT.reveal c '#e7e4dd' -> '#e6e0d3' (F/J only if preferred: a separate MAT.revealJ for electric windows)."
+  },
+  {
+   "severity": "low",
+   "detail": "[MONUMENTS] Door-lining furniture (flag only)",
+   "problem": "The bustle is now tall and the red arc sits at about 1.2 m (improved). fr_123806 also shows a long horizontal recessed handhold near the top of the leaf and a lower grey-cream bustle handle recess. Neither is modelled.",
+   "evidence": "fr_20220604_123806 crop: a horizontal recess across the leaf under the EXIT sign; the arc sits above a rectangular handle recess. r0/s06 zoom has neither.",
+   "fix": "10_mono.js (monuments owner)."
+  }
+ ],
+ "questionsForUser": [
+  "Could the PY/Y pane centre come down from CAB.win.yc 1.13 m to about 1.06 m (shared 05_layout.js)? Two new real photos (fr_124108, sans_14) again show 1.33-1.36 times more tub above the bezel than below. The alternative is to reshape REC_Y alone, which changes the tub bottom height.",
+  "Should the Type A door viewing window move to the forward upper corner of the leaf, about 0.33 m off centre, as in sans_09 and fr_123806 (both right-side doors seen across the cabin)? A left-side door photo would confirm it is mirrored."
+ ],
+ "photosDownloaded": [
+  "ref/web/shell_b/sans_09.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-09-1024x768.jpg",
+  "ref/web/shell_b/sans_10.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-10-1024x768.jpg",
+  "ref/web/shell_b/sans_11.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-11-1024x768.jpg",
+  "ref/web/shell_b/sans_13.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-13-1024x768.jpg",
+  "ref/web/shell_b/sans_14.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-14-1024x768.jpg",
+  "ref/web/shell_b/sans_15.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-15-1024x768.jpg",
+  "ref/web/shell_b/sans_21.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-21-1024x768.jpg",
+  "ref/web/shell_b/sans_22.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-22-1024x768.jpg",
+  "ref/web/shell_b/sans_24.jpg  <-  https://www.sanspotter.com/wp-content/uploads/2023/08/ana-777-300er-premium-economy-24-1024x768.jpg",
+  "ref/web/shell_b/omaat_room_13.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-13.jpg",
+  "ref/web/shell_b/omaat_room_14.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-14.jpg",
+  "ref/web/shell_b/omaat_room_15.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-15.jpg",
+  "ref/web/shell_b/omaat_room_23.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-23.jpg",
+  "ref/web/shell_b/omaat_room_31.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-31.jpg",
+  "ref/web/shell_b/omaat_room_38.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-38.jpg",
+  "ref/web/shell_b/ml_DSC_1917.jpg  <-  https://milelion.com/wp-content/uploads/2020/02/DSC_1917-696x464.jpg",
+  "ref/web/shell_b/ml_DSC_1920.jpg  <-  https://milelion.com/wp-content/uploads/2020/02/DSC_1920-696x464.jpg",
+  "ref/web/shell_b/ml_DSC_1924.jpg  <-  https://milelion.com/wp-content/uploads/2020/02/DSC_1924-696x464.jpg",
+  "ref/web/shell_b/ml_DSC_1939-1.jpg  <-  https://milelion.com/wp-content/uploads/2020/02/DSC_1939-1-696x464.jpg",
+  "ref/web/shell_b/ml_IMG_20200208_0949242.jpg  <-  https://milelion.com/wp-content/uploads/2020/02/IMG_20200208_0949242-696x464.jpg",
+  "ref/web/shell_b/ml_IMG_20200208_0644464.jpg  <-  https://milelion.com/wp-content/uploads/2020/02/IMG_20200208_0644464-696x464.jpg",
+  "ref/web/shell_b/omf_2.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-First-Class-Suite-777-2.jpg",
+  "ref/web/shell_b/omf_5.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-First-Class-Suite-777-5.jpg",
+  "ref/web/shell_b/omf_7.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-First-Class-Suite-777-7.jpg",
+  "ref/web/shell_b/omf_8.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-First-Class-Suite-777-8.jpg",
+  "ref/web/shell_b/omf_34.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-First-Class-Suite-777-34.jpg",
+  "ref/web/shell_b/gf_IMG_0517.jpg  <-  https://gourmetflyer.com/wp-content/uploads/2022/10/IMG_0517-38281022.jpg",
+  "ref/web/shell_b/fr_20220604_123806.jpg  <-  https://static.flight-report.com/media/photos/14035/1654748799EWBT/20220604_123806.jpg (ANA NH5 777-300ER LAX-NRT 2022, older config)",
+  "ref/web/shell_b/fr_20220604_123934.jpg  <-  https://static.flight-report.com/media/photos/14035/1654748799EWBT/20220604_123934.jpg (ANA NH5 777-300ER LAX-NRT 2022, older config)",
+  "ref/web/shell_b/fr_20220604_124108.jpg  <-  https://static.flight-report.com/media/photos/14035/1654748799EWBT/20220604_124108.jpg (ANA NH5 777-300ER LAX-NRT 2022, older config)",
+  "ref/web/shell_b/fr_20220604_163128.jpg  <-  https://static.flight-report.com/media/photos/14035/1654748799EWBT/20220604_163128.jpg (ANA NH5 777-300ER LAX-NRT 2022, older config)",
+  "ref/web/shell_b/tpg_3-seats-and-some-2-1.jpg  <-  https://runway-media-production.global.ssl.fastly.net/us/originals/2017/05/3-seats-and-some-2-1.jpg (TPG ANA 777-300 Y, older config)",
+  "ref/web/shell_b/tpg_Three-Seats-1.jpg  <-  https://runway-media-production.global.ssl.fastly.net/us/originals/2017/05/Three-Seats-1.jpg (TPG ANA 777-300 Y, older config)",
+  "ref/web/shell_b/tpg_3-4-3-Configuratin-1.jpg  <-  https://runway-media-production.global.ssl.fastly.net/us/originals/2017/05/3-4-3-Configuratin-1.jpg (TPG ANA 777-300 Y, older config)",
+  "ref/web/shell_b/omaat_room_24.jpg  <-  https://cdn.onemileatatime.com/wp-content/uploads/2020/01/ANA-Business-Class-The-Room-24.jpg"
+ ],
+ "previousIssues": [
+  {
+   "from": "w4b medium: grille ribs visible",
+   "status": "partly fixed: ribs are darker than the slats now, still a 7-column grid (±6 %)"
+  },
+  {
+   "from": "w4b low: blackout light / moire",
+   "status": "not fixed (0.71-0.74 against 0.56-0.60)"
+  },
+  {
+   "from": "w4b low: upper tub face not graded",
+   "status": "graded, but in the opposite direction to the photos (see medium issue)"
+  },
+  {
+   "from": "w4b low: no door window glass",
+   "status": "not fixed"
+  },
+  {
+   "from": "w4b low: light wedge on the lip",
+   "status": "not visible in r0/win_close (fixed or below threshold)"
+  },
+  {
+   "from": "w4b medium: [MONUMENTS] door furniture",
+   "status": "improved (tall bustle, arc at about 1.2 m)"
+  }
+ ]
+}

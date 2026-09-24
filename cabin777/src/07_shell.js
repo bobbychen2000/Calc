@@ -12,17 +12,17 @@ const MAT = {
   // blue is cut at the same luminance (renders ~0.58x the albedo at the floor) [V: tone]
   // QA w2: still rendered s0.37-0.39 (#2f374d); the floor light supplies the cool tint, so near-neutral albedo
   // (sans_14, a real ungraded photo: #252625) [V]
-  dado: { c: '#777b83', r: 0.6, l: LAYER.plastic },             // QA w3: dado/wall 0.25 vs ~0.36 (py_37303)
+  dado: { c: '#5c6069', r: 0.6, l: LAYER.plastic },             // QA w3: dado/wall 0.25 vs ~0.36; w5: rendered 0.52, photos 0.40-0.49 (py_37301/37303) [V]
   // louvre slats a little darker than the panel over a dark plenum: the grille field reads darker than the dado
   // (py_37303 grille #2e3643 vs dado #455162; QA w1: slats and panel rendered the same) [V]
-  grille: { c: '#7a7d84', r: 0.55 },
+  grille: { c: '#63666d', r: 0.55 },                           // QA w5: follows the darker dado
   ceiling: { c: '#f1f0ec', r: 0.75, l: LAYER.plastic },
   bin: { c: '#e6e4df', r: 0.42, l: LAYER.plastic },
   binDoor: { c: '#eeede9', r: 0.34, l: LAYER.plastic },
   binLip: { c: '#c6c8cb', r: 0.4 },
   latch: { c: '#6a7078', r: 0.35, m: 0.4 },
   led: { c: '#ffffff', r: 0.5, l: 12, e: 1.0 },
-  reveal: { c: '#e7e4dd', r: 0.45 },
+  reveal: { c: '#ebe6dc', r: 0.45 },                            // QA w5: warmer cream bowl (tt_window, DSC_1920)
   // Y/PY: dark navy with cyan flecks (photo swatch y_47304); F/J: dark warm charcoal-brown (c_27313, f_17300)
   // QA r2: #2c3345 rendered #232a41 (Y) / #181c2a (PY) against photo #36445f (y_47301) / #282f41-#354156 (py_37302)
   carpet: { c: '#3d4659', r: 0.95, l: LAYER.yCarpet },  // swatch layer adds the blue; kept greyer [V: tone]
@@ -30,10 +30,10 @@ const MAT = {
   // footwell #312825]; QA r2: #3a3033 rendered plum #1a1517 in the aisle between the tall shells, so warmer
   // brown-grey, raised until the q06 aisle renders near the photo; the fine fabric layer
   // stands in for the heather (no J carpet swatch is mapped) [A: grain]
-  carpetJ: { c: '#645554', r: 0.95, l: LAYER.fabric },
+  carpetJ: { c: '#635650', r: 0.95, l: LAYER.fabric },
   // F: its own warm brown heather (B well below G), darker than J: the open F aisle rendered carpetJ as mauve #887573
   // [V: f_17300 #423838, f_17313 footwell #2e2623, from_suite: omaat f33 / f2 / f7 aisle #5e4d32 / #5b4d3a / #4d3f31]
-  carpetF: { c: '#574843', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)
+  carpetF: { c: '#56493f', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
   vinyl: { c: '#5a585c', r: 0.55, l: LAYER.vinyl },
@@ -62,21 +62,22 @@ const MAT = {
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#8f897e', r: 0.85, l: LAYER.fabric },          // QA w2-w4: 0.81 -> 0.73 of the bezel, target 0.62-0.64
+  blackout: { c: '#79736a', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
 const circX = (y) => Math.sqrt(Math.max(0, CAB.R * CAB.R - (y - CAB.yc) * (y - CAB.yc)));
 // Sidewall profile: v (height) -> [x, y, nx, ny] for the RIGHT side (inward normal)
-// dado: one planar facet 0.03-0.36 m carrying the grilles, under a short ledge to the window-belt circle at 0.40 m.
-// QA w1: grilles fill ~85 % of the dado height (py_37303 crop: grille 260 px of a ~300 px dado; py_37301 84 %) [V]
-const DADO = [[2.70, 0], [2.706, 0.03], [2.800, 0.36], [2.830, 0.385], [circX(0.40), 0.40]];
+// dado: one planar facet 0.03-0.25 m carrying the grilles, under a short ledge to the window-belt circle at 0.29 m.
+// QA w5: the dark dado is ~0.24 m tall scaled by the window pitch (py_37303 73 px / 162 px pitch, y_47303 43 / 100 px;
+// was 0.40); grilles fill ~0.86 of it (py_37303) [V: ratios; D: metres]
+const DADO = [[2.70, 0], [2.706, 0.03], [2.790, 0.25], [2.820, 0.27], [circX(0.29), 0.29]];
 // THE Room zones: the window pods' outer walls stand at |x| 2.847 down to the floor (09c_room: ux 2.275 + 0.572), so
 // the kicked-in dado and its grilles poked 0.15 m into the footwells (room_r3 high issue). There the dado is set
 // flush behind the pod walls and carries no grille; c_27316 / omaat_room_14 show only the pod console below 0.6 m [V]
-const DADO_J = [[2.862, 0], [2.864, 0.03], [2.876, 0.36], [2.880, 0.385], [circX(0.40), 0.40]];
+const DADO_J = [[2.862, 0], [2.8625, 0.03], [2.863, 0.25], [2.864, 0.27], [circX(0.29), 0.29]];
 function wallAt(v, prof = DADO) {
-  if (v <= 0.40) {
+  if (v <= 0.29) {
     for (let k = 0; k < prof.length - 1; k++) {
       const a = prof[k], b = prof[k + 1];
       if (v <= b[1] + 1e-9) {
@@ -103,7 +104,7 @@ function rrectRay(th, hw, hh, r) {
 }
 
 // Window cell band (the part of the wall that carries the window recess) and the sidewall top (bins start)
-const WALL = { vb0: 0.50, vb1: 1.595, vTop: 1.60, dadoTop: 0.40, bottomRows: [0, 0.03, 0.36, 0.385, 0.40, 0.45, 0.50] };
+const WALL = { vb0: 0.50, vb1: 1.595, vTop: 1.60, dadoTop: 0.29, bottomRows: [0, 0.03, 0.25, 0.27, 0.29, 0.40, 0.45, 0.50] };
 const HOLE_R = 0.105;
 // 777 window recess, relative to the pane centre (y 1.02, Boeing D6-58329-2 fig 2.5.1 cross-section: pane 0.82-1.23 m): a tall "bathtub" bezel, round-topped just under the bins,
 // with a sill below the pane that carries the shade button. Width/height from ANA + review photos scaled by the
@@ -116,17 +117,18 @@ const REC = { hw: 0.195, top: 0.46, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 
 // ~1.0 bezel width under the bezel (y_47303: recess 175 px / pitch 240 px, 150 px above / ~120 px below a 115 px bezel;
 // sans_14 recess 1.4x taller above the bezel than below, bottom 0.30 m under the glass) [V: ratios; D: metres from the
 // 21 in pitch and the 1.02 m pane centre]. F/J top 0.46: ~0.24 m of tub above the bezel (f_17313) [V]
-const REC_Y = { ...REC, hw: 0.205, top: 0.565, bot: -0.49, rTop: 0.15, rBot: 0.12, ext: 0.055 };
+// QA w5: tub/bezel width 1.5-1.6 (y_47303 pane-scaled tub ~0.46 m, sp_py14; was 1.24) -> hw 0.222 [V: ratio; D]
+const REC_Y = { ...REC, hw: 0.222, top: 0.565, bot: -0.49, rTop: 0.15, rBot: 0.12, ext: 0.055 };
 const WMAT = {
-  lining: { c: '#c3bfb7', r: 0.5 },           // grey tunnel lining round the pane (c_27300, tt photo)
+  lining: { c: '#aba69d', r: 0.5 },           // grey tunnel lining round the pane; QA w5: rendered ~bezel tone, tt_window 0.64 of the bezel [V]
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
   grilleBack: { c: '#43474f', r: 0.8 },                         // QA w3: grille/panel 0.57-0.69 vs ~0.85 (py_37303)                         // plenum behind the louvres, keeps their depth [A]
   // QA w2: the grille is a cut-out in the dado panel; its rounded edge is a low lip at or below the panel tone, not a
   // light bezel (py_37303 crop: no light frame; py_37301's lighter rim is a reflection) [V]
-  grilleFrame: { c: '#6c6f76', r: 0.5 },
+  grilleFrame: { c: '#5d6067', r: 0.5 },
   rib: { c: '#4a4e56', r: 0.6 },                                // vertical ribs in the plenum tone: faint (py_37303; QA w4)
-  label: { c: '#ecebe6', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
-  halo: { c: '#4467ff', r: 0.3, e: 0.8 },                       // blue LED ring round the shade button (LALF/OMAAT photos)
+  label: { c: '#d6d5cf', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
+  halo: { c: '#5a55ff', r: 0.3, e: 0.55 },                      // violet-blue LED ring (tt_window #716ef0; QA w5: e 0.8 read pale cyan) [V]
   pin: { c: '#2a2c30', r: 0.6 },
   seal: { c: '#74767b', r: 0.5 },                              // DSC_1920 rim #8d95aa, 2-3 px [V]
 };
@@ -305,11 +307,15 @@ function windowParts(side, pat) {
   for (let i = 0; i < sill.n.length / 3; i++) { const [, , snx, sny] = wallAt(vc + (i < rr.length ? rr[i][1] : open[i - rr.length][1])); sill.n.splice(i * 3, 3, snx * side, sny, 0); }
   // QA w4: the tub floor keeps flat normals (see above), so its upper part is darkened in vertex colour instead, x1 at
   // 0.12 m above the pane centre to x0.78 at the recess top (DSC_1920 upper tub ~0.78 of the wall, sans_14 0.74-0.82) [V]
-  const tubShade = (y) => lerp(1, 0.78, clamp((y - vc - 0.12) / (rec.top - 0.12), 0, 1));
+  // QA w5: the photos are darkest just above the opening and light again toward the lip (sans_14 1.0 -> 0.65 above the
+  // bezel, DSC_1920 0.74, tt_window, sp_py14); w4 graded the other way (darkest at the recess top) [V]. x0.60 albedo lands
+  // ~0.8 on screen against the reveal glow (04_shaders) [A]
+  const oTop = W.holeH / 2 + 0.01;
+  const tubShade = (y) => { const d = y - vc; return d < oTop ? lerp(1, 0.60, clamp((d - 0.08) / (oTop - 0.08), 0, 1)) : lerp(0.60, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 0.7); };
   const parts = [
     [lip, MAT.reveal, tubShade],
     [sill, MAT.reveal, tubShade],
-    [ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal],
+    [ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal, tubShade],
     // lining: straight shade channel (both shades run here), then necks down to the pane
     [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.986), D + 0.056], [scl(pane, 1.02), 0.1045]], map, hint), WMAT.lining],
     // dark rubber seal / scratch-pane rim round the glass, ~4 mm (sp_py_24, MileLion DSC_1920; QA w2) [V]
@@ -320,7 +326,9 @@ function windowParts(side, pat) {
   const gmap = (dz, v, off) => { const [x, y, nx, ny] = wallAt(v); return [(x + nx * off) * side, y + ny * off, dz]; };
   // QA w1: squarer grille nearly filling the dado facet, ~0.33 x 0.30 m, one per bay (py_37303 crop: 275 x 260 px at a
   // 415 px bay pitch -> 0.35 x 0.33 m; py_37301 aspect ~1.3 oblique) [V: proportion; D: size]
-  const gc = 0.195, ghw = 0.165, ghh = 0.140;
+  // QA w5: wide, low panels ~0.41 x 0.19 m, ~0.78 of the pitch with a narrow placard gap (py_37303: gap 35 px of a
+  // 162 px pitch, grille 67 px tall; y_47303, py_37301 aspect >= 1.9) [V: ratios; D: metres]
+  const gc = 0.14, ghw = 0.205, ghh = 0.095;
   const gr = (hw, hh, r) => rrectPts(hw * 2, hh * 2, r, 3).map(([a, b]) => [a, gc + b]), NG = gr(0.1, 0.1, 0.02).length;
   const gm = (a, b, d) => gmap(a, b, d);
   const ghint = [wallAt(gc)[2] * side, wallAt(gc)[3], 0];
@@ -337,20 +345,20 @@ function windowParts(side, pat) {
     const b = qg.p.length / 3; qg.p.push(...p0, ...p1, ...p2, ...p3); for (let k = 0; k < 4; k++) { qg.n.push(0, 0, 0); qg.u.push(0, 0); }
     qg.i.push(b, b + 1, b + 2, b, b + 2, b + 3);
   };
-  const nSl = 32, v0 = gc - ghh + 0.008, v1 = gc + ghh - 0.008;  // ~30 fine slats [V: py_37301 / py_37303 crops]
+  const nSl = 22, v0 = gc - ghh + 0.008, v1 = gc + ghh - 0.008;  // ~8 mm slat pitch as before [V: py_37301 / py_37303 crops]
   for (let k = 0; k < nSl; k++) {                               // horizontal louvres, tilted down-and-out
     const v = lerp(v0, v1, (k + 0.5) / nSl), zz = ghw - 0.012;
     quad(gm(-zz, v, 0.0055), gm(zz, v, 0.0055), gm(zz, v - 0.005, 0.0018), gm(-zz, v - 0.005, 0.0018));
   }
   grille.push([faceTo(lv, ghint), MAT.grille]);
   const rb = raw(); qg = rb;
-  for (let k = 0; k < 7; k++) {                                 // vertical ribs, recessed behind the slat edges and slat-
-    const z = lerp(-ghw + 0.03, ghw - 0.03, k / 6);             // toned (QA w1: read as white bars) [V: py_37301 ~7-8 ribs]
+  for (let k = 0; k < 8; k++) {                                 // vertical ribs, recessed behind the slat edges and slat-
+    const z = lerp(-ghw + 0.03, ghw - 0.03, k / 7);             // toned (QA w1: read as white bars) [V: py_37301 8 ribs]
     quad(gm(z - 0.002, v0 - 0.004, 0.0045), gm(z + 0.002, v0 - 0.004, 0.0045), gm(z + 0.002, v1 + 0.004, 0.0045), gm(z - 0.002, v1 + 0.004, 0.0045));
   }
   grille.push([faceTo(rb, ghint), WMAT.rib]);
-  // placard mid-pier, ~100 x 20 mm (py_37303: white label between the grilles, by the panel joint) [V]
-  const lb = raw(), lz = W.pitch / 2 - 0.006, lp = [[lz - 0.05, 0.20], [lz + 0.05, 0.20], [lz + 0.05, 0.22], [lz - 0.05, 0.22]].map(([a, b]) => gmap(a, b, 0.0012));
+  // placard mid-pier, ~70 x 18 mm in the gap between the grilles, a little above their centre (py_37303) [V: position]
+  const lb = raw(), lz = W.pitch / 2, lp = [[lz - 0.035, 0.155], [lz + 0.035, 0.155], [lz + 0.035, 0.173], [lz - 0.035, 0.173]].map(([a, b]) => gmap(a, b, 0.0012));
   lb.p.push(...lp.flat()); lb.u.push(0, 0, 0, 0, 0, 0, 0, 0); lb.n.push(...Array(12).fill(0));
   lb.i.push(0, 1, 2, 0, 2, 3);
   grille.push([faceTo(lb, ghint), WMAT.label]);
@@ -398,7 +406,7 @@ function shadePanelGeo(kind) {
     // pleat stripes baked into vertex colour on the valley rows. QA w1: x0.86 read as a plain slab; omaat Room-24
     // valley/crest ~0.46 in the photo (part of that is the shading the zig-zag already gives), so x0.72 blackout,
     // x0.84 for the backlit sheer [V: contrast; A: split]; QA w3: blackout 0.76 with the darker albedo (moire)
-    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 0.76;
+    const geo = B.build(), kf = kind === 'sheer' ? 0.84 : 0.68;   // QA w5: pleat cv 0.07 vs 0.23 (omaat Room-24)
     for (let k = 0; k < geo.col.length / 4; k++) if (((k >> 2) & 1) === 0) for (let c = 0; c < 3; c++) geo.col[k * 4 + c] = Math.round(geo.col[k * 4 + c] * kf);
     return geo;
   }
@@ -418,8 +426,9 @@ function shadeMats(w, f, depthOff = 0) {
   const F = windowFrame(w.side, SHADE.depth + depthOff);
   const Tz = M4.trs(0, 0, w.z);
   const top = SHADE.h / 2, man = !w.electric;
-  // stowed manual: ~36 mm of shade + grip stays in view under the top of the opening (sp_py_24 band ~0.04 m) [V]
-  const railY = man ? lerp(top - 0.036, -top + 0.022, f) : lerp(top + 0.012, -top + 0.009, f);
+  // stowed manual: shade + grip hang ~30 mm across the top of the glass (sp_py24 / sp_py14 / y_47303 band 30-60 mm;
+  // QA w5: at top - 0.036 the grip sat 3.5 mm under the pane top and read as lining) [V]
+  const railY = man ? lerp(top - 0.062, -top + 0.022, f) : lerp(top + 0.012, -top + 0.009, f);
   const hgt = Math.max(top - railY, 0.0004);
   const s = hgt / SHADE.h;
   // stowed electric shade (f = 0): collapse the instance entirely. QA r2: the 0.4 mm sliver left at the top of the
@@ -600,6 +609,7 @@ function buildShell(gl, layout) {
   // belt, 0.28 m aft of the door centre, glass ~0.14 x 0.32 m in a ~0.20 x 0.46 m reveal, centre ~0.95-1.0 m
   // [V: ANA 777 door lining face-on (YouTube vEERVra5lKs), TPG ANA 777-300ER door 2L exterior, JA744A L1/L2]. The
   // small square high on the forward side in sans_09 is the arming-indicator box (10_mono), not the window (w1 error)
+  const doorGlass = { R: [], L: [] };
   for (let di = 0; di < CAB.doors.length; di++) {
     const zn = zones.find((z) => z.type === 'door' && z.door === di);
     for (const side of [-1, 1]) {
@@ -614,6 +624,9 @@ function buildShell(gl, layout) {
       const hr = dp.ring.map((p) => p.h), sc = (k, kv) => hr.map(([a, b]) => [a * k, b * kv]), dh = [wallAt(dp.vc)[2] * side, wallAt(dp.vc)[3], 0];
       shell.add(ringLoft([[hr, 0], [sc(0.93, 0.95), 0.015], [sc(0.72, 0.72), 0.09]], dmap, dh), null, MAT.door);
       shell.add(ringLoft([[sc(0.72, 0.72), 0.09], [sc(0.68, 0.69), 0.092]], dmap, dh), null, WMAT.seal);
+      // glass: the cabin pane mapped into the seal (0.136 x 0.317 m) as extra glass instances (QA w4 / w5 low: no glass)
+      const S = M4.trs(0, 0, 0, 0, 0, 0, (0.68 * 0.20) / W.w, (0.69 * 0.46) / W.h, 1);
+      doorGlass[side > 0 ? 'R' : 'L'].push(M4.mul(M4.trs(0, 0, wz), M4.mul(windowFrame(side, 0.093, dp.vc - W.yc), M4.mul(S, M4.invert(windowFrame(side, 0.106))))));
       const vset = [...new Set([...dp.rows.slice(0, -1), ...dp.sideV.map((v) => v + dp.vc), ...topRows.slice(1)].map((v) => +v.toFixed(5)))].sort((a, b) => a - b);
       if (wz - cellW / 2 - zn.z0 > 1e-3) wallGrid(g, side, [zn.z0, wz - cellW / 2], vset);
       if (zn.z1 - (wz + cellW / 2) > 1e-3) wallGrid(g, side, [wz + cellW / 2, zn.z1], vset);
@@ -693,7 +706,7 @@ function buildShell(gl, layout) {
   for (const [key, side] of [['R', 1], ['L', -1]]) {
     const wp = windowParts(side, pat);
     winParts[key] = wp;
-    const mats = inst[key].map(({ w }) => M4.trs(0, 0, w.z));
+    const mats = [...inst[key].map(({ w }) => M4.trs(0, 0, w.z)), ...doorGlass[key]];
     const rb = new Builder(); for (const pt of wp.parts) addPart(rb, pt, null);
     meshes['reveal' + key] = gl.mesh(rb.build(), { name: 'reveal' + key, instances: inst[key].filter(({ w }) => w.electric).map(({ w }) => M4.trs(0, 0, w.z)) });
     const gb = new Builder(); gb.add(wp.glass, null, { c: '#ffffff' });

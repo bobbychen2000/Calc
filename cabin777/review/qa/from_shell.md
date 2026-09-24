@@ -85,3 +85,14 @@ galley and lav floors stay vinyl.
 window literals in 04_shaders.js (the sun LUT band and the reveal glow) were changed from 1.13 to 1.02 to match; lighting,
 please keep them in step. Anything placed relative to the window, such as pod consoles, window-side lamps or look-out
 cameras, should be checked. q07 and q12 look fine.
+## Wave 2 (w5)
+
+### To lighting (`src/04_shaders.js`): the reveal glow flattens the upper window tub
+- **Evidence:** w5 raters (shell_w5a/b) and every real photo (sans_14, tt_window, sp_py14, MileLion DSC_1920) show the tub
+  darkest just above the opening, at 0.65-0.78 of the pier. In the render (s03_yClose, column x520) the upper tub stays at
+  0.90-0.92 of the pier from lip to opening. The shell now grades the tub in vertex colour down to x0.60 just above the
+  opening, but that moves the screen value only from 209 to 203 of 255. The `reveal` term (04_shaders ~l.192, |y - 1.13| < 0.2-0.34)
+  lights the whole tub (the band is now centred on 1.02), and at this level `aces` compresses whites.
+- **Fix:** weight `reveal` by how much the face looks at the pane: fade it on down-facing faces above the opening, e.g.
+  `reveal *= mix(1.0, 0.35, smoothstep(0.24, 0.40, v_wpos.y - 1.02) * down)`. Or narrow it to `smoothstep(0.14, 0.24, ...)`,
+  so it lights the tunnel and the sill but not the upper tub.
