@@ -37,6 +37,7 @@ const MAT = {
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
   vinyl: { c: '#5a585c', r: 0.55, l: LAYER.vinyl },
+  doorCarpet: { c: '#5c4f49', r: 0.95, l: LAYER.fabric },
   // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
   // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
   trackCover: { c: '#2965bd', r: 0.35 },
@@ -102,19 +103,20 @@ function rrectRay(th, hw, hh, r) {
 }
 
 // Window cell band (the part of the wall that carries the window recess) and the sidewall top (bins start)
-const WALL = { vb0: 0.62, vb1: 1.595, vTop: 1.60, dadoTop: 0.40, bottomRows: [0, 0.03, 0.36, 0.385, 0.40, 0.52, 0.62] };
+const WALL = { vb0: 0.50, vb1: 1.595, vTop: 1.60, dadoTop: 0.40, bottomRows: [0, 0.03, 0.36, 0.385, 0.40, 0.45, 0.50] };
 const HOLE_R = 0.105;
-// 777 window recess, relative to the pane centre (y 1.13): a tall "bathtub" bezel, round-topped just under the bins,
+// 777 window recess, relative to the pane centre (y 1.02, Boeing D6-58329-2 fig 2.5.1 cross-section: pane 0.82-1.23 m): a tall "bathtub" bezel, round-topped just under the bins,
 // with a sill below the pane that carries the shade button. Width/height from ANA + review photos scaled by the
 // 21 in window pitch: recess ~0.39 wide, bottom ~0.11 below the opening (F/J: f_17313, omaat Room-24 / Room-38) [V].
 // ext: extra depth toward the recess top, so the upper tub faces down and reads shaded as in sans_14 / sp_py_13
 // (upper recess ~0.74-0.82 of the wall; MileLion DSC_1920 ~0.78) [V: tone; A: 45 / 55 mm - 20 mm still read flat, QA w3]. btn -0.255: pill centre ~32 mm under the opening
 // (omaat Room-24) [V]
-const REC = { hw: 0.195, top: 0.42, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 0.034, btn: -0.255, ext: 0.045 };
+const REC = { hw: 0.195, top: 0.46, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 0.034, btn: -0.255, ext: 0.045 };
 // PY/Y (QA w1): the older sidewall panels keep the full 777 tub - 0.77 of the pitch wide, top at the bin line, bottom
 // ~1.0 bezel width under the bezel (y_47303: recess 175 px / pitch 240 px, 150 px above / ~120 px below a 115 px bezel;
-// sans_14, sp_py_13 same) [V: ratios; D: metres from the 21 in pitch]
-const REC_Y = { ...REC, hw: 0.205, top: 0.455, bot: -0.47, rTop: 0.15, rBot: 0.12, ext: 0.055 };
+// sans_14 recess 1.4x taller above the bezel than below, bottom 0.30 m under the glass) [V: ratios; D: metres from the
+// 21 in pitch and the 1.02 m pane centre]. F/J top 0.46: ~0.24 m of tub above the bezel (f_17313) [V]
+const REC_Y = { ...REC, hw: 0.205, top: 0.565, bot: -0.49, rTop: 0.15, rBot: 0.12, ext: 0.055 };
 const WMAT = {
   lining: { c: '#c3bfb7', r: 0.5 },           // grey tunnel lining round the pane (c_27300, tt photo)
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
@@ -545,7 +547,10 @@ function buildShell(gl, layout) {
   for (const zn of floorZones) {
     const carpet = zn.type === 'seat';
     const f = gBox(CAB.floorHalf * 2, 0.02, zn.z1 - zn.z0);
-    shell.add(f, M4.trs(0, -0.01, (zn.z0 + zn.z1) / 2), carpet ? (zn.cls === 'F' ? MAT.carpetF : zn.cls === 'J' ? MAT.carpetJ : MAT.carpet) : MAT.vinyl);
+    // door cross-aisles: dark warm brown carpet up to the door sill (TPG ANA 777-300ER door 2L, sans_09 #4a433b);
+    // vinyl stays in the galley / lav (monument) zones (sans_09 galley #666268) [V: door 2; A: doors 1, 3-5]
+    const m = carpet ? (zn.cls === 'F' ? MAT.carpetF : zn.cls === 'J' ? MAT.carpetJ : MAT.carpet) : zn.type === 'door' ? MAT.doorCarpet : MAT.vinyl;
+    shell.add(f, M4.trs(0, -0.01, (zn.z0 + zn.z1) / 2), m);
   }
   // ---- sidewalls (continuous through seat + monument zones; door zones get their own surround) ----
   const runs = [];
@@ -590,26 +595,28 @@ function buildShell(gl, layout) {
     shell.add(faceTo(g, [0, 0, dir]), null, MAT.dado);
   }
 
-  // ---- door surrounds (door-leaf lining with its small viewing window) ----
-  // QA w1: the Type A door's viewing window is small and high, about 0.2 x 0.25 m at ~1.5 m (sp_py_09 / sans_09: dark
-  // square at head height above the red arming arc) [V: position; A: size], not a cabin window at the belt line
+  // ---- door surrounds (door-leaf lining with its viewing window) ----
+  // The Type A door hinges on its forward edge; its viewing window is a tall narrow rounded slot at the cabin-window
+  // belt, 0.28 m aft of the door centre, glass ~0.14 x 0.32 m in a ~0.20 x 0.46 m reveal, centre ~0.95-1.0 m
+  // [V: ANA 777 door lining face-on (YouTube vEERVra5lKs), TPG ANA 777-300ER door 2L exterior, JA744A L1/L2]. The
+  // small square high on the forward side in sans_09 is the arming-indicator box (10_mono), not the window (w1 error)
   for (let di = 0; di < CAB.doors.length; di++) {
     const zn = zones.find((z) => z.type === 'door' && z.door === di);
     for (const side of [-1, 1]) {
       const g = raw();
       const c = CAB.doors[di];
-      const cellW = 1.14;
-      const dp = windowCellPattern(cellW, 0.19, 0.25, 0.06, 1.52, null, [[...WALL.bottomRows, 0.95, 1.28], 1.76]);
-      const topRows = [1.76, 1.80, 2.02];
-      windowCell(g, side, c, dp, topRows);
-      // viewing-window tunnel: grey lining necking in over 9 cm to a dark seal rim; the sky shows past it (QA w2)
-      const dmap = (dz, dv, d) => { const [x, y, nx, ny] = wallAt(dp.vc + dv); return [(x - nx * d) * side, y - ny * d, c + dz]; };
+      const cellW = 0.50, wz = c + 0.28;                        // aft of centre on both sides (forward hinge) [V]
+      const dp = windowCellPattern(cellW, 0.20, 0.46, 0.05, 0.98, null, [[...WALL.bottomRows, 0.62], 1.36]);
+      const topRows = [1.36, 1.60, 1.80, 2.02];
+      windowCell(g, side, wz, dp, topRows);
+      // deep reveal necking to the glass over 9 cm, then a dark seal rim; the sky shows past it
+      const dmap = (dz, dv, d) => { const [x, y, nx, ny] = wallAt(dp.vc + dv); return [(x - nx * d) * side, y - ny * d, wz + dz]; };
       const hr = dp.ring.map((p) => p.h), sc = (k, kv) => hr.map(([a, b]) => [a * k, b * kv]), dh = [wallAt(dp.vc)[2] * side, wallAt(dp.vc)[3], 0];
-      shell.add(ringLoft([[hr, 0], [sc(0.96, 0.97), 0.012], [sc(0.90, 0.92), 0.09]], dmap, dh), null, WMAT.lining);
-      shell.add(ringLoft([[sc(0.90, 0.92), 0.09], [sc(0.86, 0.89), 0.092]], dmap, dh), null, WMAT.seal);
+      shell.add(ringLoft([[hr, 0], [sc(0.93, 0.95), 0.015], [sc(0.72, 0.72), 0.09]], dmap, dh), null, MAT.door);
+      shell.add(ringLoft([[sc(0.72, 0.72), 0.09], [sc(0.68, 0.69), 0.092]], dmap, dh), null, WMAT.seal);
       const vset = [...new Set([...dp.rows.slice(0, -1), ...dp.sideV.map((v) => v + dp.vc), ...topRows.slice(1)].map((v) => +v.toFixed(5)))].sort((a, b) => a - b);
-      if (c - cellW / 2 - zn.z0 > 1e-3) wallGrid(g, side, [zn.z0, c - cellW / 2], vset);
-      if (zn.z1 - (c + cellW / 2) > 1e-3) wallGrid(g, side, [c + cellW / 2, zn.z1], vset);
+      if (wz - cellW / 2 - zn.z0 > 1e-3) wallGrid(g, side, [zn.z0, wz - cellW / 2], vset);
+      if (zn.z1 - (wz + cellW / 2) > 1e-3) wallGrid(g, side, [wz + cellW / 2, zn.z1], vset);
       fixWinding(g);
       shell.add(g, null, MAT.door);
     }

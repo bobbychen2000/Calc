@@ -10,7 +10,7 @@ const CAB = {
   zFront: 2.80, zAft: 61.40,
   doors: [5.40, 16.80, 32.70, 44.30, 58.70],
   doorW: 1.07, doorH: 1.88,      // Type A, 42 x 74 in
-  win: { w: 0.254, h: 0.381, yc: 1.13, pitch: 0.5334, holeW: 0.305, holeH: 0.445 },
+  win: { w: 0.254, h: 0.381, yc: 1.02, pitch: 0.5334, holeW: 0.305, holeH: 0.445 },
   floorHalf: 2.70,
   pairLen: 107 * 0.0254,         // THE Room nested pair
 };
