@@ -31,7 +31,7 @@ const MAT = {
   carpetJ: { c: '#645554', r: 0.95, l: LAYER.fabric },
   // F: its own warm brown heather (B well below G), darker than J: the open F aisle rendered carpetJ as mauve #887573
   // [V: f_17300 #423838, f_17313 footwell #2e2623, from_suite: omaat f33 / f2 / f7 aisle #5e4d32 / #5b4d3a / #4d3f31]
-  carpetF: { c: '#4d4034', r: 0.95, l: LAYER.fabric },
+  carpetF: { c: '#594a3c', r: 0.95, l: LAYER.fabric },
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
   vinyl: { c: '#5a585c', r: 0.55, l: LAYER.vinyl },
