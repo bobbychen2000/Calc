@@ -138,12 +138,25 @@ def classify(m, env, feat):
     z2 = np.where(paint & (tz == 2) & np.array([not FAN_TEX.search(t) for t in texn]))[0]
     ecl, eng = engine_clusters(C[z2])
     eng_of = np.full(len(idx), -1, np.int16)
+    z0p = np.where(paint & (tz == 0) & (part == 0))[0]
     for j, e in enumerate(eng):
         sel = z2[ecl == j]
+        # inlet cowls modelled in the body zone (e.g. FG 737-800): body-zone triangles ahead of the engine-zone part,
+        # inside the nacelle cylinder
+        rr = np.hypot(C[z0p, 1] - e['yc'], C[z0p, 2] - e['zc'])
+        cand = z0p[(rr < 1.4 * e["r"]) & (C[z0p, 1] - e['yc'] < 1.05 * e['r']) & (C[z0p, 0] > e["x0"] - 0.2) & (C[z0p, 0] < e['x1'] + 3.2 * e['r'])]
+        if len(cand):
+            sel = np.concatenate([sel, cand]); e['x1'] = round(float(max(e['x1'], P[idx[cand]][:, :, 0].max())), 3)
         rad = C[sel][:, 1:] - np.array([e['yc'], e['zc']]); rl = np.linalg.norm(rad, axis=1)
-        radn = rad / np.maximum(rl[:, None], 1e-6)
-        outward = (Nf[sel][:, 1:] * radn).sum(1)
-        ok = (np.abs(Nf[sel][:, 0]) < 0.8) & (outward > 0.15) & (rl > 0.45 * e['r'])
+        # outer skin = the outermost surface at its station and angle around the nacelle axis (the source normals are
+        # not reliable: single-sided cowls, mirrored engines); fan faces and exhaust faces (|nx| > 0.8) excluded
+        ang = np.arctan2(rad[:, 1], rad[:, 0])
+        bx = np.floor((C[sel, 0] - e['x0']) / 0.25).astype(int); ba = np.floor((ang + np.pi) / (np.pi / 9)).astype(int)
+        key = bx * 100 + ba
+        rmax = np.zeros(len(sel))
+        for k_ in np.unique(key):
+            q = key == k_; rmax[q] = rl[q].max()
+        ok = (np.abs(Nf[sel][:, 0]) < 0.8) & (rl > 0.9 * rmax) & (rl > 0.45 * e['r'])
         part[sel[ok]] = PID['eng']; eng_of[sel[ok]] = j
     # degenerate triangles stay where they are
     part[area < 1e-10] = 0
@@ -281,7 +294,7 @@ def process(key, S=2048, preview=None, outdir=None):
     src = source_path(key)
     m = sfom.load(src)
     h = m['head']; A = common.app(); F = common.features()[key]
-    env = common.Envelope(F['sec'], h['dims']['L'])
+    env = common.Envelope(m['pos'], m['idx'], m['zone'], h['dims']['L'])
     part, eng_of, eng, Nf, area = classify(m, env, F)
     P, idx, UV, Nv, Z = m['pos'], m['idx'], m['uv'], m['nrm'], m['zone']
     charts = build_charts(m, part, eng_of, Nf, area)

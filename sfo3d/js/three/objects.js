@@ -121,6 +121,6 @@ export function objectMaterial(opts) {
   const C = Fn(() => { A(); return vec4(R.nPert, R.ao); }).once();
   mat.colorNode = vec4(A().xyz, 1.0); mat.roughnessNode = A().w; mat.metalnessNode = B().w; mat.emissiveNode = B().xyz;
   mat.aoNode = C().w;
-  mat.normalNode = normalize(cameraViewMatrix.mul(vec4(normalize(normalWorld.mul(select(TSL.frontFacing, float(1.0), float(-1.0))).add(C().xyz)), 0.0)).xyz);
+  mat.normalNode = normalize(cameraViewMatrix.mul(vec4(normalize(normalWorld.add(C().xyz)), 0.0)).xyz); // normalWorld is already flipped on back faces (as the old gl_FrontFacing flip)
   return mat;
 }

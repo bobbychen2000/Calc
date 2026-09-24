@@ -92,7 +92,7 @@ export class Renderer3 {
   // ------------------------------------------------------------ init
   _onReady() {
     this.ready = true; this.resize(this.W, this.H); const E = this.engine;
-    const qs = new URLSearchParams(location.search); if (qs.get('sat')) E.grade.sat.value = +qs.get('sat'); if (qs.get('gamma')) E.grade.gamma.value = +qs.get('gamma');
+    const qs = new URLSearchParams(location.search); if (qs.get('sat')) E.grade.sat.value = +qs.get('sat'); if (qs.get('contrast')) E.grade.contrast.value = +qs.get('contrast');
     for (const fn of this.jobs.splice(0)) fn();
     console.log('three.js r' + THREE.REVISION + ' ' + E.backend + (E.reversed ? ' (reversed depth)' : '') + ', tier ' + this.tier);
   }
@@ -109,6 +109,11 @@ export class Renderer3 {
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, liveries: this.liveries || null, track: (ac) => window.SFO && window.SFO.traffic ? window.SFO.traffic.tracks.get(ac.id) : null });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');
+    // compile the scene's programs off the frame loop where the backend can (KHR_parallel_shader_compile / WebGPU
+    // async pipelines); frames are held until then (at most 30 s) so the first frames do not stall one by one
+    this._syncItems();
+    this.compiling = Promise.race([E.renderer.compileAsync(S, E.camera), new Promise(r => setTimeout(r, 30000))])
+      .then(() => { this.compiled = true; tlog('programs compiled'); }, (e) => { this.compiled = true; console.warn('compileAsync', e); });
   }
   _signMats() { if (!this.signMats && this.font) this.signMats = signMaterials(this.font, { night: this.night, noiseTex: this.noiseTex, reversed: this.engine.reversed }); return this.signMats; }
   // world.items -> three objects (items appended later, e.g. the approach-light piers, are picked up too)
@@ -163,7 +168,7 @@ export class Renderer3 {
   render(fr, cam, t, post = {}) {
     const E = this.engine;
     const C = this._camInfo(cam);
-    if (!this.ready || !this.built) return C;
+    if (!this.ready || !this.built || !this.compiled) return C;
     const R = E.renderer, S = E.scene, L = this.light;
     // environment: GPU sky, sun, IBL (after the app's night-floor adjustment of R.light)
     if (this.envDirty) {
@@ -203,7 +208,7 @@ export class Renderer3 {
   }
   // for QA jobs: a summary of what is drawn
   debugInfo() {
-    const R = this.engine.renderer; const out = { backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H, calls: R.info.render.calls, tris: R.info.render.triangles, frames: this.frames };
+    const R = this.engine.renderer; let nObj = 0, nVis = 0; this.engine.scene.traverse(o => { if (o.isMesh) { nObj++; if (o.visible) nVis++; } }); const out = { meshes: nObj, visible: nVis, backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H, calls: R.info.render.calls, tris: R.info.render.triangles, frames: this.frames };
     if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; const U = {}; for (const k of ['top', 'tail', 'belly']) if (e.U[k]) U[k] = e.U[k].toArray().map(v => +v.toFixed(3)); out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name, U }); } }
     return out;
   }

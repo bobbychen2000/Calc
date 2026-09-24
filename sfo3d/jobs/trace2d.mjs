@@ -8,6 +8,11 @@ import fs from 'fs'; import path from 'path';
 export default async ({ page, base }) => {
   const OUTD = path.resolve(process.env.DRAW_OUT || 'out/draw'); fs.mkdirSync(OUTD, { recursive: true });
   const N = +(process.env.TRACE_N || 40), DT = +(process.env.TRACE_DT || 3);
+  // the harness mock relay serves /api/adsb only; js/live/feed.js StreamFeed opens /api/stream (SSE) first and falls
+  // back to polling only after 3 stream errors, but a 404 closes an EventSource after ONE error, so against the mock
+  // live mode would receive no traffic at all. Hide EventSource so the app polls /api/adsb (what this trace tests is
+  // the traffic engine + GroundPhysics, not the transport).
+  await page.addInitScript(() => { try { delete window.EventSource; window.EventSource = undefined; } catch (e) { } });
   await page.goto(base + 'live.html?mode=live');
   await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
   const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
@@ -32,6 +37,7 @@ export default async ({ page, base }) => {
   }
   const frameId = await page.evaluate(async () => (await import(new URL('js/geo.js', location.href).href)).FRAME_ID || 'equirect-v1');
   let git = null; try { git = (await import('child_process')).execSync('git rev-parse --short HEAD', { cwd: path.resolve(OUTD, '..', '..') }).toString().trim(); } catch (e) { }
-  fs.writeFileSync(path.join(OUTD, 'trace.json'), JSON.stringify({ mode: 'live (mock relay: recorded snapshot + straight-line kinematics)', frameId, git, generated: new Date().toISOString(), dt: DT, frames }));
+  fs.writeFileSync(path.join(OUTD, 'trace.json'), JSON.stringify({ mode: 'live (mock relay polled at /api/adsb: recorded snapshot + straight-line kinematics)', frameId, git, generated: new Date().toISOString(), dt: DT, frames }));
+  if (!frames.some(f => f.aircraft.length)) console.log('WARNING: no ground aircraft in any frame - the feed delivered nothing');
   console.log('trace.json:', frames.length, 'frames');
 };

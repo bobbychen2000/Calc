@@ -207,9 +207,9 @@ def sheet_defs(L):
         for e in rw['ends']:
             end = np.array(e['end']); inw = np.array(e['inward']); lat = np.array([-inw[1], inw[0]])
             # outward: the end zone and the approach-light piers of this end (up to 900 m), at least 220 m
-            out = [220.0] + [float(-(np.array([p['pt'][0], -p['pt'][1]]) - end) @ inw) + 40 for p in L.piers if p['pr'].get('end') == e['name']]
-            out += [float(max(-(np.array([c[0], -c[1]]) - end) @ inw for c in np.asarray(z['poly'].exterior.coords))) + 40 for z in L.endZones if z['end'] == e['name']]
-            ob = min(900.0, max(out))
+            outw = [220.0] + [float(-(np.array([p['pt'][0], -p['pt'][1]]) - end) @ inw) + 40 for p in L.piers if p['pr'].get('end') == e['name']]
+            outw += [float(max(-(np.array([c[0], -c[1]]) - end) @ inw for c in np.asarray(z['poly'].exterior.coords))) + 40 for z in L.endZones if z['end'] == e['name']]
+            ob = min(900.0, max(outw))
             q = [end - inw * ob + lat * 170, end - inw * ob - lat * 170, end + inw * (e['disp'] + 380) + lat * 170, end + inw * (e['disp'] + 380) - lat * 170]
             q = np.array(q); bx = (q[:, 0].min(), -q[:, 1].max(), q[:, 0].max(), -q[:, 1].min())
             out.append(dict(id=f'30-rwy-{e["name"]}', title=f'Runway {e["name"]} end - threshold, markings, end zone', box=bx, scale=2000, detail=1))
@@ -541,8 +541,8 @@ def render_sheet(L, sd, variant, src=None, outdir=None, stats=None):
              ('Deviation dots: ' + (f'measured on {L.S and devsrc} imagery' if devsrc else 'not measured'), 4.6, 'normal'),
              (f'Features on sheet: {nf} measured, {nflag} with median > 1.0 m', 4.8, 'normal'),
              (f'Conflicts on sheet: ' + ', '.join(f'{k} {v}' for k, v in sorted(cc.items())) if cc else 'Conflicts on sheet: none', 4.8, 'normal'),
-             (f'Scene: {S["meta"]["url"].split("/")[-1]}  git {PV["git"]}  extracted {PV["generated"][:16]}Z  inputs {PV["inputsHash"]}', 4.2, 'normal'),
-             (f'World frame {PV["frame"]}  |  ' + ('scene matches the working tree' if PV['stale'] == [] else f'STALE: {len(PV["stale"])} input file(s) changed since extraction' if PV['stale'] else 'staleness unknown'), 4.2, 'bold' if PV['stale'] else 'normal'),
+             (f'Scene: git {PV["git"]}, extracted {PV["generated"][:16]}Z, inputs {PV["inputsHash"]}', 4.2, 'normal'),
+             (f'World frame {PV["frame"]}  |  ' + ('matches the working tree' if PV['stale'] == [] else f'STALE: {len(PV["stale"])} input(s) changed since' if PV['stale'] else 'staleness unknown'), 4.2, 'bold' if PV['stale'] else 'normal'),
              (('Imagery: ' + L.imgprov.get(variant, '')) [:110], 3.9, 'normal'),
              ('World grid: x east / z south (m from ARP)  |  s/t: airport grid (js/geo.js)', 4.2, 'normal'),
              ('Geometry: SFO Museum (CDLA-Permissive-1.0) + surveyed stands/paint/pavement', 4.2, 'normal'),

@@ -38,11 +38,11 @@ NASR zip, which was already in `refs/cache/xcheck/faa/`.
    - RVR at touchdown, midfield and rollout (TMR) on every end.
    - Rotating beacon white-green, operating sunset to sunrise (SS-SR).
    - Lighted wind indicator.
-   - **Runway Status Lights (RWSL) in operation.** The FAA site graphic shows Takeoff Hold Lights at 10L, 10R, 28L, 28R, 1L and 1R, and REL arrays at 27 labelled taxiway entrances.
+   - **Runway Status Lights (RWSL) in operation.** The FAA site graphic shows Takeoff Hold Lights at 10L, 10R, 28L, 28R, 1L and 1R, and REL arrays at ~~27~~ **28** labelled taxiway entrances *[corrected by verifier: the graphic has 28 taxiway labels; taxiway N on 10R/28L, between P and the 28L THL, was omitted; see §15]*.
 2. **New observations (obs), measured on NAIP 2024 in the app's world frame.**
    - **All six PAPIs** are clearly resolved: four lamp housings on a concrete pad, 30 ft apart.
      - Their distances from the threshold match the NASR TCH/angle geometry within ±31 ft at five ends.
-     - **28R is the exception: its PAPI sits 71 ft further out than its published 68-ft TCH implies.** The measured 1,369 ft equals the ILS glide-slope source (1,049 ft) plus the 300-ft "height group 4" rule in JO 6850.2C.
+     - **28R is the exception: its PAPI sits 71 ft further out than its published 68-ft TCH implies.** The measured 1,369 ft equals the ILS glide-slope source (1,049 ft) plus the 300-ft "height group 4" rule in JO 6850.2C. *[corrected by verifier: "equals" should read "falls inside": the HG4 window is source + 300 ft +50/−0, i.e. 1,349–1,399 ft. The same window also contains 28L (ILS source 1,065 ft → 1,365–1,415 ft; observed 1,369 ft), and 19L is 5 ft short of its window (1,349 ft vs observed 1,344 ft). So HG4 siting explains all three ILS ends. What is unique to 28R is that its published TCH of 68 ft does not match the observed siting, which implies 71.7 ft.]*
    - **The approach-light piers over the Bay are resolved.**
      - The 28R pier has crossmembers every 100 ft from 700 to 1,300 ft.
      - The 28L pier has crossmembers at 1,000 and 1,300 ft and runs on past 3,000 ft.
@@ -136,7 +136,7 @@ All values are from NASR APT_RWY_END (cycle 2026-09-03) and agree with the CS, e
 | 1R | 27.8 | **560** | — | **yes** | — | none | — | — | none | **no** | none | yes |
 | 19L | 207.8 | 0 | **MALSF** | — | **yes** | 3.00 / 71 | 1,355 | **1,344** / 161-191-221-251 | ILS GS 3.00 / 55 | yes | 2,000 ft | no |
 
-- **Glide paths on the plates.** The plates carry the notes "(VGSI Angle 3.00/TCH 68). VGSI and ILS glidepath not coincident" (28R), "(VGSI Angle 2.85/TCH 67)" (28L), "(VGSI Angle 3.00/TCH 71)" (19L), "(VGSI Angle 3.00/TCH 80)" (10L) and "(VGSI Angle 3.00/TCH 68). VGSI and descent angles not coincident" (10R). There is no note at 19R, where the VGSI and the GP are within the non-coincidence thresholds. The VGSI and the electronic glide paths are deliberately different.
+- **Glide paths on the plates.** The plates carry the notes "(VGSI Angle 3.00/TCH 68). VGSI and ILS glidepath not coincident" (28R), "(VGSI Angle 2.85/TCH 67)" (28L), "(VGSI Angle 3.00/TCH 71)" (19L), "(VGSI Angle 3.00/TCH 80)" (10L) and "(VGSI Angle 3.00/TCH 68). VGSI and descent angles not coincident" (10R). There is no note at 19R, where the VGSI and the GP are within the non-coincidence thresholds. The VGSI and the electronic glide paths are deliberately different. *[verifier: the 28L, 19L and 10L plates also say "VGSI and ILS/RNAV glidepath not coincident"; only the angle/TCH part was quoted above.]*
 - **Caution zone.** The caution zone is the yellow edge-light zone seen by traffic using that end: the last min(2,000 ft, half the runway length). It applies only to instrument ends (ac30j 2.3.1.1.2 items 1–4). No IAP exists to 1L or 1R, so traffic landing on 1L or 1R sees white edge lights to the end *[std rule applied; as-built unverified]*.
 - **RVR.** RVR is TMR at all ends.
 - **Declared distances.** Declared distances are in the JSON. The 10L and 10R ASDA/LDA end 677 ft before the east pavement end. Lights are still measured from the pavement end, per Fig A-9 notes 5 and 6 (§5.1).
@@ -282,7 +282,7 @@ The steady lights have 3 steps (100 / 20 / 4 %) and the flashers 3 steps (100 / 
 ### 6.3 What NAIP 2024 shows on the piers (obs)
 
 The imagery was resampled along each runway at 0.25 m; ±10 ft; positions in ft from the NASR landing threshold.
-- **28R.** The pier starts at the shoreline, about 650 ft out. It has **7 equal crossmembers, about 110 ft wide, at 700, 800, 900, 1,000, 1,100, 1,200 and 1,300 ft**, pile caps every 100 ft, and platforms at about 1,150 and 1,390 ft. It continues past the NAIP edge, at about 2,350 ft.
+- **28R.** The pier starts at the shoreline, about 650 ft out. It has **7 equal crossmembers, about 110 ft wide, at 700, 800, 900, 1,000, 1,100, 1,200 and 1,300 ft**, pile caps every 100 ft, and platforms at about 1,150 and 1,390 ft. It continues past the NAIP edge, ~~at about 2,350 ft~~ *[corrected by verifier: the NAIP world grid ends at about 2,650 ft on the 28R centreline. Pile caps are visible every 100 ft out to about 2,600 ft.]*
 - **28L.** There are crossmembers at **1,000 ft (about 82 ft wide) and 1,300 ft (about 103 ft)**, and pile caps every 100 ft. The pier continues **past 3,000 ft**, beyond the 2,400-ft MALSR.
 - **19L.** The pier runs from the shoreline, at about 500 ft, to about **1,400 ft**, which matches the MALSF length. It has crossmembers at **about 1,000 and about 1,200 ft**.
 - **19R.** There is no structure in the water, which is consistent with "no ALS".
@@ -316,7 +316,7 @@ The overlay check on NAIP (`refs/cache/lighting/naip/qa_east.png` and `qa_19.png
 
   The contour extents were read from the figure (±0.25°). The red/white transition must be "within 3 minutes of arc at the beam center and within 5 minutes of arc at the beam edges" (§3.2.1). Night modes are about 5 % and 20 % of day intensity (§3.3.8). An LED PAPI emits only within ±10.5° of azimuth; an incandescent one is visible to about ±14° (6850.2C 504b).
 - **Day/night switching.** Photo-electric: day mode when the north-sky vertical illuminance reaches 50–60 fc, night mode below 25–35 fc, with a 45–75 s delay (28H §3.3.6).
-- **Observation method.** On runway-aligned NAIP crops (0.125 m resample), the orange lamp housings were detected by colour and fitted to a 4-unit row at 30-ft pitch. 4 of 4 units were found at 19L, 19R, 28L and 28R; 10L and 10R were confirmed visually. The accuracy is about ±5 ft (0.6 m source pixels plus NAIP registration of 0.3–1 m, docs/research/imagery.md). OSM nodes at 19L and 10R (1,344 and 1,299 ft) and X-Plane rows agree with the NAIP positions except at 19L, where X-Plane has 1,244 ft.
+- **Observation method.** On runway-aligned NAIP crops (0.125 m resample), the orange lamp housings were detected by colour and fitted to a 4-unit row at 30-ft pitch. 4 of 4 units were found at 19L, 19R, 28L and 28R; 10L and 10R were confirmed visually. The accuracy is about ±5 ft (0.6 m source pixels plus NAIP registration of 0.3–1 m, docs/research/imagery.md). OSM nodes at 19L and 10R (1,344 and 1,299 ft) and X-Plane rows agree with the NAIP positions except at 19L, where X-Plane has 1,244 ft. *[verifier: the OSM part is unverifiable. `refs/cache/osm/overpass_ksfo_latest.json` has no PAPI- or VASI-tagged element, `refs/cache/lighting/osm_lighting_query.json` is an Overpass "406 Not Acceptable" error page, and a live Overpass re-query failed (504 on overpass.kumi.systems). The X-Plane rows re-projected here give 10L 1,557, 10R 1,298 (typed "VASI" there), 19L 1,246, 19R 1,043, 28L 1,369 and 28R 1,370 ft.]*
 
 ### 7.2 REIL (10L, 1L, 1R; std JO 6850.2C Ch. 4, AC 150/5345-51B)
 
@@ -339,11 +339,11 @@ The overlay check on NAIP (`refs/cache/lighting/naip/qa_east.png` and `qa_19.png
 
 | DOF OAS | Type | AGL / AMSL ft | Lighting | Accuracy | World x, z (m) | Note |
 |---|---|---|---|---|---|---|
-| 06-323169 | **CTRL TWR** | **245 / 258** | R (red) | **4D** (±250 ft H, ±50 ft V), verified | −741, 336 | FAA study 2008AWP00286NR. Over 150 ft AGL, so AC 70/7460-1N 5.5.1.2 applies: "At least one red flashing (L-864) light" at the top, and L-810(F) flashing at intermediate levels ("configured to flash simultaneously with the L-864 … at a rate of 30 flashes per minute"). The position accuracy is too coarse for placement: use the tower model's top. |
+| 06-323169 | **CTRL TWR** | **245 / 258** | R (red) | **4D** (±250 ft H, ±50 ft V), verified | −741, 336 | FAA study 2008AWP00286NR. Over 150 ft AGL, so AC 70/7460-1N 5.5.1.2 applies: "At least one red flashing (L-864) light" at the top, and L-810(F) flashing at intermediate levels ("configured to flash simultaneously with the L-864 … at a rate of 30 flashes per minute"). *[corrected by verifier: §5.5 covers "Poles, Towers, and Similar Skeletal Structures" (radio/TV towers, power-line supports). A control tower is a solid building, so §5.6 applies. §5.6.2.2: "At least three L-864 lights should be installed" at the top. §5.6.3: structures of 150–350 ft AGL "should have a second level of steady-burning red-light units installed approximately at the midpoint". §5.6.1 gives 3 units per level (4 if the top is 20–100 ft across). As-built lighting is still unverified.]* The position accuracy is too coarse for placement: use the tower model's top. |
 | 06-001451 | BLDG | 135 / 144 | R | 1A | −106, −800 | north field building. 150 ft or less, so steady red L-810, double at the top (5.2.2.1) |
 | 06-001425 | BLDG | 126 / 137 | L (type unknown) | 1A | 447, 1852 | |
 | 06-001440, 06-028374 … 06-034631 | T-L TWR (power line) | 68–102 | R | 1A–5E | around (−1,000, 1,600) | SW of the 1L/1R ends |
-| NAVAID ×6 | localizer/GS structures | 8–20 | R | 1A | around 10L/10R and 1L | |
+| NAVAID ×~~6~~ **5** *[corrected by verifier: the DOF of 2026-09-18 and `lighting_spec.json` both have 5]* | localizer/GS structures | 8–20 | R | 1A | around 10L/10R and 1L | |
 
 **Photometry.**
 - L-810: 32.5 cd red, at least 10° vertical spread centred at +4° to +20° (ac43j 3.4.1.2).
@@ -358,7 +358,7 @@ The overlay check on NAIP (`refs/cache/lighting/naip/qa_east.png` and `qa_19.png
 
   It gives no illuminance numbers; it refers to IES RP-37-15, which is not freely available.
 - **Cancelled guidance.** The cancelled AC 150/5360-13 (1988), §52 and Table 4-1, gave 5.0 fc (54 lx) for "apron areas" and 0.15 fc (1.6 lx) for the "General aircraft operations area". Floodlights were "typically mounted at a height of 25 to 50 feet (8 to 15 m) with a maximum spacing of 200 feet (60 m)". This is **historical guidance, useful only as an order of magnitude.**
-- **SFO masts (pub + obs).** The DOF has **54 poles 60–157 ft AGL within 3 km**: 30 in the 100–109 ft band, 13 at 60–69 ft and 5 at 150–159 ft. Most are surveyed in 2013 at accuracy 1A (±20 ft H, ±3 ft V). **28 of them coincide within 15 m (median 1.9 m) with OSM `man_made=mast` + `tower:type=lighting` nodes.** These are SFO's high-mast apron lights. DOF lighting for them is "U" (unknown), so red obstruction lights are not asserted.
+- **SFO masts (pub + obs).** The DOF has **54 poles 60–157 ft AGL within 3 km**: 30 in the 100–109 ft band, 13 at 60–69 ft and 5 at 150–159 ft. Most are surveyed in 2013 at accuracy 1A (±20 ft H, ±3 ft V). **28 of them coincide within 15 m (median 1.9 m) with OSM `man_made=mast` + `tower:type=lighting` nodes.** These are SFO's high-mast apron lights. DOF lighting for them is "U" (unknown), so red obstruction lights are not asserted. *[verifier: that is 49 "U" and 5 "N" (none).]*
 
   The app's masts in `data/sfo_details.js` are procedural (roughly 120 m spacing, "inferred"). Replace them with the DOF poles (`apron_masts[]`, public domain) and use OSM only as a cross-check. Only a boolean flag is stored from OSM, which respects the ODbL guidance in stands_xcheck.md.
 
@@ -375,9 +375,11 @@ The overlay check on NAIP (`refs/cache/lighting/naip/qa_east.png` and `qa_19.png
   | Runway | Taxiway entrances with REL |
   |---|---|
   | 10L/28R | R, E ×2, L, C |
-  | 10R/28L | Q, K, D, T, E, L, P, F2, C, F |
+  | 10R/28L | Q, K, D, T, E, L, P, **N** *[added by verifier]*, F2, C, F |
   | 1L/19R | M, H ×2, G ×2, F1 ×2, F, C |
   | 1R/19L | F, C, E |
+
+  *[corrected by verifier: the graphic has 28 REL labels, not 27. Taxiway N (PDF word box at x 478, y 382 pt) sits south of 10R/28L between P and the 28L THL. `lighting_spec.json` `rwsl.rel` also has only 27 entries, with no N, and needs regenerating. The runway assignment of the second F1, G and H labels, which sit between 1L/19R and 1R/19L, is ambiguous. Their orange tabs point east, toward 1R/19L, so assigning them to 1L/19R is unverified.]*
 
 - The graphic sits on a satellite image. An 8-point affine fit of its runway polygons to the NASR ends leaves residuals of 40–80 m, so it is schematic.
 - Each label is snapped to the nearest same-name, same-runway hold in `data/sfo_details.js` (`rwsl.rel[]`; offsets 28–113 m).
@@ -470,7 +472,7 @@ Twilight, where needed, is "from sunset to 30 minutes after sunset and from 30 m
 **Renderer consequences:**
 
 1. On a clear night with visibility over 3 SM, SFO shows:
-   - HIRL, RCL and TDZ at step 1: 0.15 % of peak;
+   - HIRL, RCL and TDZ at step 1: 0.15 % of peak; *[corrected by verifier: TBL 3-4-8 gives night step 1 only for "More than 5 miles". From 3 to 5 miles inclusive the setting is step 2, 1.2 % (ac30j 2.6.4.1). The ALS and SSALR items below are right for anything over 3 SM.]*
    - the 28R system as **SSALR without the red side rows or the 500-ft bar**, at step 1 (0.16 %);
    - **no rabbits** unless visibility is under 3 SM or a pilot asks;
    - the PAPIs at night mode, about 5–20 %.
@@ -597,3 +599,69 @@ Counts: edge 392; RCL 783; TDZ 360; threshold/end/wing bars 96; ALS 416 (28R 272
 7. **Photometry of the ALS lamps, flashers and apron floodlights.** No public FAA source was found.
 8. **THL reference point**: runway end or landing threshold, at the displaced-threshold ends.
 9. **SFO tower facility directives** that override the JO 7110.65 steps.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 15. Verification (adversarial check)
+
+Independent fact-check, 24 Sep 2026. Every cited primary source was downloaded again into `refs/cache/lighting_verify/` (gitignored). The re-downloaded CS, AD, RWSL PDF, 6850.2C, ac30j, 46F, 28H, 51B, 12F, 43J, EB 67D, AC 70/7460-1N, JO 7110.65BB §3-4 and AIM §2-1 are byte-identical to the author's cache where the author cached them.
+
+Also re-downloaded:
+- the NASR `03_Sep_2026_APT_CSV.zip` from nfdc.faa.gov;
+- the d-TPP 2609 metafile, and the IL28R, IL28L, IL19L, R10L, RY10R, RY19R and RZ19R plates;
+- the FAA DOF (DOF.CSV 2026-09-18);
+- the FAA ALS page and the NTSB-hosted 2013 SFO memo.
+
+Tools re-run (outputs written to the session scratchpad; the author's files were not overwritten):
+- `build_lighting_spec.py` reproduces `lighting_fixtures.json` exactly (only `generated` differs) and gives the same counts.
+- `lighting_naip_measure.py` `papi_fit` was run with the shipped seeds, with seeds at the TCH/tan distances and with ±40-ft offsets. It converges to the same positions every time.
+
+Verdicts: **confirmed**, **refuted** (corrected inline above, marked *[corrected by verifier]*) or **unverifiable**.
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| V1 | CS: HIRL CL on all 4 runways; REIL 10L/1L/1R; ALSF2+TDZL 28R; MALSR 28L; MALSF+TDZL 19L; PAPI P4L angles/TCH as tabled; RVR-TMR everywhere; displaced thresholds 300/300/560/640; "Rwy status lgts in operation"; "Attended continuously" | confirmed | sw_275_03SEP2026.pdf re-fetched, text identical to §3.1 |
+| V2 | NASR: CL flag Y at all 8 ends; `RWY_END_LGTS_FLAG` = REIL (Y at 1L, 1R, 10L); TDZ Y at 28R/19L; ALS ALSF2/MALSR/MALSF; VGSI P4L ×6 with the tabled angle/TCH; RWY_LGT_CODE HIGH ×4; BCN WG, SS-SR; WIND Y-L; LGT_SKED blank; remark "RWY STATUS LGTS IN OPN." | confirmed | re-downloaded NASR 2026-09-03 zip; "APT DATA LAYOUT.pdf" defines RWY_END_LGTS_FLAG as "Runway End Identifier Lights (REIL) Availability" |
+| V3 | AD AL-375 note "TDZL/RCLS Rwys 19L and 28R / REIL Rwys 1R, 1L and 10L / HIRL …"; RWSL note; conflict C1 | confirmed | 00375ad.pdf (SW-2 03 SEP–01 OCT 2026) re-fetched. The plates carry the same line (the RZ19R text extraction reads "TDZE/RCLS", not checked visually) |
+| V4 | Plate VGSI notes and GP/TCH (28R 3.00/55, 28L 2.85/53, 19L 3.00/55, 10L 3.00/55, 10R TCH 60, 19R 3.15/55); amendment numbers | confirmed (nuance) | d-TPP 2609 plates. 28L, 19L and 10L also say "not coincident"; annotated in §3.2 |
+| V5 | No IAP to 1L/1R; 22 SFO IAPs | confirmed | d-TPP 2609 metafile lists 22 IAP entries, none for 1L or 1R |
+| V6 | JO 6850.2C quotes (200a–f, 203a, 209c, 401, 402a, 502, 504b, 506a/b), Table 2-1/2-2 aiming, Fig 2-10 (d = 1,246 ft), Table 2-3 steps and flasher mapping, Table 5-2 HG4 ±35′/±15′, §15d "49 … 54 … 144 … 15" | confirmed | text search of the re-fetched order: every quoted phrase present verbatim |
+| V7 | ALSF-2 expansion = 144 white + 54 red + 15 flashers; 59 green on a 200-ft runway (C4) | confirmed | recount 24×5 + 2×8 + 2×4 = 144; 9×2×3 = 54. 290 ft / 5 + 1 = 59 (the FAA's 49 fits a 150-ft runway: 240/5 + 1). The regenerated fixtures give 28R 272 = 144 + 54 + 15 + 59 |
+| V8 | ac30j quotes (2.3.1.1.2, 2.3.1.2.1/2, 2.3.2.1/2, 3.3.1.x, 3.3.2.x, Fig A-7/A-9/A-34/A-35 notes, 2.6.4.1 steps, 4.1.3.3, 4.3.2.1.1, Table 4-1, 4.7.1, 4.8.6.2.5, 6.1.2–6.1.4, G.2.3, G.2.4) | confirmed | re-fetched 150-5340-30J.pdf. The ">400 ft gap" rule for non-CAT III HIRL is item 5 of 2.3.1.2.2 |
+| V9 | AC 150/5345-46F Tables 3-1/3-2 candela and beam values; L-804 45–50 fpm, off-state ≤17 %; ITE traffic-signal colour notes | confirmed | re-fetched PDF pp. 3-2 to 3-5 and 3-16/3-17 |
+| V10 | AC 150/5345-28H Fig 3-1 contours (30k/15k ±2°, 20k/10k ±4×±2.5, 14k/7k ±6×±3, 8k/4k ±8×±3.5, 5k/2.5k ±10×±4); 3′/5′ transition; night 5 %/20 %; photocell 50–60 / 25–35 fc, 45–75 s | confirmed | figure rendered from the re-fetched PDF (p. 12) and read directly |
+| V11 | AC 150/5345-51B: Styles A/C/E 120 fpm, B/D/F 60 fpm, sync ≤20 ms, Style E 15,000/1,500/300 cd in 10°×30°, ±50 % | confirmed | §3.4.1–3.4.2, Table 1 |
+| V12 | AC 150/5345-12F: L-802A 37,500/75,000/37,500 cd, green ≥0.15×, 22–26 fpm, 75–300 ms; ac30j/AIM 24–30 fpm (C3) | confirmed | §3.3.1–3.3.3, Table 1; AIM 2-1-9 |
+| V13 | AC 150/5345-43J: L-810 32.5 cd; L-864 2,000 cd ±25 %, ≥750 cd over 3°, 30 ±3 fpm; red boundaries y = 0.980 − x, y = 0.335; white 4,000–8,000 K | confirmed | §3.3.3, 3.4.1.2, 3.4.1.5, Table 3-5 |
+| V14 | AC 70/7460-1N (2026-08-11, cancels -1M): 5.3 photocell 60/35 fc; 5.2.2.1; Table B-1 values | confirmed | re-fetched PDF; cancellation is on the FAA AC page (`acpage_70_7460-1.html`) |
+| V15 | Tower lighting per AC 70/7460-1N **5.5.1.2** (one L-864 + L-810(F) intermediates) | **refuted** | §5.5 is for skeletal structures; a building/solid structure falls under §5.6 (≥3 L-864, steady L-810 midpoint level). Corrected in §7.4 |
+| V16 | DOF: CTRL TWR 06-323169 245/258 ft, R, 4D, study 2008AWP00286NR; 43 lighted obstacles within 4.5 km; 54 poles 60–157 ft within 3 km (30 / 13 / 5 by band; 49 at 1A, 2013); 28 within 15 m of OSM lighting masts | confirmed | re-downloaded DOF.CSV (2026-09-18) and the cached Overpass extract (70 `tower:type=lighting` masts) |
+| V17 | "NAVAID ×6" lighted | **refuted** (minor) | 5 in the DOF and in `lighting_spec.json`. Also, one T-L TWR (06-001450, 138 ft AGL, west of the field) lies outside the "68–102 ft" SW cluster in the table |
+| V18 | EB 67D intersection points; centroids and linear sRGB | confirmed | re-fetched PDF §2.1.1–2.1.2; centroids and sRGB recomputed independently (same values to 3 dp) |
+| V19 | JO 7110.65BB §3-4 tables (TBL 3-4-1, -4, -5, -7, -8, -12), 3-4-5, 3-4-7, 3-4-9, 3-4-10, 3-4-17/18/19, twilight definition | confirmed | re-fetched `chap3_section_4.html` (7110.65BB). Nuance: under 3-4-9, ALSF-2 at ≤¾ SM or RVR ≤4,000 is run "as requested by the pilot / as you deem necessary"; SSALR otherwise |
+| V20 | §9 renderer consequence: night, visibility >3 SM → HIRL/RCL/TDZ step 1 | **refuted** | TBL 3-4-8 night step 1 is ">5 miles"; 3–5 miles inclusive is step 2 (1.2 %). Corrected in §9 |
+| V21 | AIM 2-1-6 RWSL behaviour (~30 kt, ~1 mile, 3–4 s, "airborne"); stop-bar note | confirmed | re-fetched `chap2_section_1.html` |
+| V22 | RWSL graphic: THL at 10L, 10R, 28L, 28R, 1L, 1R (none at 19s); PDF created 2017-11-13 | confirmed | re-fetched SFO.pdf, rendered and inspected |
+| V23 | RWSL graphic: **27** REL labels, per-runway list in §8.1 | **refuted** | 28 taxiway labels; N (10R/28L) was missing. Runway assignment of the between-runway F1/G/H labels is unverified. `rwsl.rel` in the spec also lacks N |
+| V24 | NAIP PAPI positions (10L 1,556; 10R 1,298; 19L 1,344; 19R 1,023; 28L 1,369; 28R 1,369 ft), lateral 157–177 ft inboard, 30-ft pitch; 4/4 hits at 19L, 19R, 28L, 28R | confirmed | fit re-run with independent seeds (TCH/tan, ±40 ft) returns identical values. The 28R crop shows four orange LHAs on a pad at 1,369 ft and nothing at 1,298 ft; the 10L/10R crops show four faint units at the fitted distances |
+| V25 | 28R PAPI 71 ft beyond TCH/tan; five ends within ±31 ft; app 22 m off | confirmed | arithmetic: +30, 0, −11, −31, +23, +71 ft; 71 ft = 21.6 m |
+| V26 | 1,369 ft "equals" GS source 1,049 + 300 (HG4) | confirmed with correction | inside the 1,349–1,399 ft window rather than equal to it. HG4 also fits 28L, and 19L is 5 ft short, so HG4 does not single out 28R. Annotated in §1 |
+| V27 | X-Plane PAPI 28R 1,365 ft, 19L 1,244 ft | confirmed | re-projected apt.dat row-21 points: 28R 1,370, 19L 1,246 ft (difference within the WGS 84/NAD83 shift) |
+| V28 | OSM PAPI nodes at 19L/10R (1,344 / 1,299 ft) | **unverifiable** | no PAPI-tagged element in the cached Overpass extract; the author's `osm_lighting_query.json` is a 406 error page; live Overpass re-query failed (504) |
+| V29 | Piers: 28R crossmembers 700–1,300 ft every 100 ft (~110 ft wide), shoreline ~650 ft, platforms ~1,150/~1,390 ft; 28L crossmembers 1,000 (~82 ft) and 1,300 (~103 ft), pier to ≥3,000 ft; 19L pier ~500–1,400 ft, crossmembers ~1,000/~1,200 ft; 19R none | confirmed | own runway-aligned NAIP strips: 28R members at 695–1,295 ft; 28L at 1,001/1,300 ft (widths 80/104 ft) with pile caps to the grid edge (~3,050 ft); 19L 519–1,420 ft, members at 1,012/1,214 ft; 19R open water |
+| V30 | 28R pier "continues past the NAIP edge, at about 2,350 ft" | **refuted** (minor) | the world-grid edge on the 28R centreline is at about 2,650 ft; pile caps are visible to about 2,600 ft. Corrected in §6.3 |
+| V31 | 2013 SFO memo: thresholds relocated 27/29 Jun 2013; "replacement of the Runway 28L approach lighting system, needed changes to the Runway 28R approach lighting system"; new PAPIs by 2 Jul 2013 | confirmed | re-fetched NTSB docket PDF (identical) |
+| V32 | FAA ALS page "247 … 49 … 54 … 144 … 15" | confirmed | re-fetched https://www.faa.gov/about/office_org/headquarters_offices/ato/service_units/techops/navservices/lsg/als |
+| V33 | AC 150/5360-13A §7.5.2 quote; cancelled AC 150/5360-13 Table 4-1 (5.0 fc apron, 0.15 fc general AOA; 25–50 ft masts, ≤200 ft spacing) | confirmed | re-fetched 13A (identical); 1988 text from the author's OCR cache, where the OCR table layout is garbled but the values match |
+| V34 | Fixture counts (edge 392, RCL 783, TDZ 360, thr/end/wing 96, ALS 416 = 272/73/71, PAPI 24, REIL 6, THL 192; total 2,269); edge spacings and RCL end gaps | confirmed | regenerated; hand recount of the RCL (235/226/151/171), MALSR 73 = 23 + 35 + 10 + 5 and MALSF 71 |
+| V35 | §12 gap analysis of `js/anim/lights.js` (60.96 m white edge 1 m out, RCL from 15 m with a white reverse face, 19-light bars at 3.2 m, TDZ 30–900 m, PAPI TCH/tan at 15 + 9j m ±30′/±10′, same 8/side 1000-ft bar for all ALS, lights at GROUND_Y + 1.4 m, 45 m blue edges at ±13.5 m); C5 geo.js comment | confirmed | read `js/anim/lights.js` and `js/geo.js` at HEAD |
+| V36 | RWSL graphic affine-fit residuals 40–80 m; REL snap offsets 28–113 m | partly verified | the snap offsets (`dist_m`) are in the regenerated spec (28–113 m); the affine residuals were not re-derived |
+
+**Net result.** The FAA-sourced facts, quotes, photometry, colour limits and tower operating rules are accurate. The NAIP PAPI and pier observations reproduce. Five statements were wrong:
+- the REL count (28, not 27; taxiway N was missing, and the spec needs regenerating);
+- the tower obstruction-light section (§5.6, not §5.5);
+- the night HIRL step at 3–5 SM (step 2, not step 1);
+- the NAIP edge on the 28R pier (about 2,650 ft, not 2,350 ft);
+- the lighted-NAVAID count (5, not 6).
+
+One cross-check (OSM PAPI nodes) is unverifiable.

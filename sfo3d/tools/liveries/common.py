@@ -41,33 +41,43 @@ def features():
 
 
 class Envelope:
-    """Fuselage section of a model along the body, per station s (m aft of the nose, model units): top / bottom of the
-    skin on the centre plane and the half width, from data/models/features.json `sec` (1 m spacing, planar cuts of the
-    body + fin zones). The raw cuts also catch the wing (half width jumps to the semi-span where the dihedral wing crosses
-    mid height), the tailplane and the fin (top jumps to the fin tip). Those are removed here:
-      - half width: values above 1.15 x the cabin half width, or far wider than the local section is high, are dropped
-        and interpolated;
+    """Fuselage section of a model along the body, per station s (m aft of the nose, model units): top and bottom of the
+    skin on the centre plane and the maximum half width, measured on the mesh by planar cuts every 0.5 m through the
+    body, fin and gear-door zones. The raw cuts also catch the wing (the half width jumps to the semi-span), the
+    tailplane and the fin (the top jumps to the fin tip). Those are removed:
+      - half width: max |z| of the cut between the corrected top and bottom, bounded by 1.25 x the cabin aspect ratio x
+        the local half height (the wing root fillet is counted, the wing is not); isolated outliers (door gaps) are
+        replaced by the running median;
       - top: aft of the fin leading edge (first aft station where the top rises > 0.12 m above the cabin top), the tail
         cone top is a straight line from the fin root to the tail tip (last station before the bottom line jumps up to
         the fin, + 10 % of the cabin height), which is how the tail cones of these aircraft are drawn in side view.
     """
-    def __init__(self, sec, L):
-        dx = sec['dx']; n = len(sec['top'])
-        s = np.arange(n) * dx
-        def fill(a, bad=None):
-            a = np.array([np.nan if v is None else v for v in a], float)
-            if bad is not None: a[bad] = np.nan
+    def __init__(self, P, idx, zone, L, dx=0.5):
+        sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
+        from model_features import plane_segments
+        tri = idx[np.isin(zone[idx], (0, 1, 4)).all(1)]
+        s = np.arange(0, L + dx, dx); n = len(s)
+        cuts = []
+        top = np.full(n, np.nan); bot = np.full(n, np.nan)
+        for i, st in enumerate(s):
+            seg = plane_segments(P, tri, -min(max(st, 0.02), L - 0.02))
+            pts = seg.reshape(-1, 2) if len(seg) else np.zeros((0, 2))
+            cuts.append(pts)
+            if not len(pts): continue
+            c = pts[np.abs(pts[:, 1]) < 0.3]
+            if not len(c): c = pts
+            top[i] = c[:, 0].max(); q = pts[np.abs(pts[:, 1]) < max(0.5 * np.abs(pts[:, 1]).max(), 0.3), 0]; bot[i] = q.min() if len(q) else pts[:, 0].min()
+        def fill(a):
             ok = ~np.isnan(a)
             return np.interp(s, s[ok], a[ok]) if ok.any() else np.zeros(n)
-        top = fill(sec['top']); bot = fill(sec['bot']); hw = fill(sec['hw'])
+        top = fill(top); bot = fill(bot)
         m = (s > 0.45 * L) & (s < 0.7 * L)
         self.mainTop = float(np.median(top[m])); self.mainBot = float(np.median(bot[m]))
         H = self.mainTop - self.mainBot
-        # tail tip: last station before the bottom line jumps (> 0.25 H in one step) onto the fin
-        iend = n - 1
-        for i in range(int(0.7 * n), n - 1):
-            if bot[i + 1] - bot[i] > 0.25 * H or np.isnan(bot[i + 1]): iend = i; break
-        # fin leading edge on the top line
+        # tail tip: last station before the bottom line jumps (> 0.25 H within 1 m) onto the fin
+        iend = n - 1; k = max(1, int(round(1.0 / dx)))
+        for i in range(int(0.7 * n), n - k):
+            if bot[i + k] - bot[i] > 0.25 * H: iend = i; break
         ifin = None
         for i in range(int(0.5 * n), iend):
             if top[i] > self.mainTop + 0.12 and top[min(i + 1, n - 1)] >= top[i] - 0.05: ifin = i; break
@@ -77,43 +87,30 @@ class Envelope:
             for i in range(ifin, n):
                 f = (s[i] - s[ifin - 1]) / max(s[iend] - s[ifin - 1], 1e-6)
                 topr[i] = t0 + (t1 - t0) * min(f, 1.0)
-        topr = np.minimum(topr, np.maximum(top, bot + 0.05)) if ifin is None else topr
-        self.sEnd = float(s[iend]); self.iFin = ifin
-        botr = bot.copy(); botr[iend + 1:] = botr[iend]
-        topr[iend + 1:] = topr[iend]
-        okw = m & (hw < 0.75 * (top - bot) + 0.3)
-        mainHW = float(np.median(hw[okw])) if okw.any() else float(np.median(hw[m]))
-        bad = (hw > 1.15 * mainHW) | (hw > 0.75 * (topr - botr) + 0.3)
-        bad[:2] = False
-        hwr = fill(hw, bad); hwr[iend + 1:] = np.minimum(hwr[iend + 1:], hwr[iend])
-        self.s = s; self.top = topr; self.bot = botr; self.hw = hwr; self.L = L; self.mainHW = mainHW
-        self.rawTop = top
-
-    def refine_hw(self, P, idx, zone):
-        """re-measure the half width on the mesh at the corrected mid height (the features cut used the raw top, which
-        on the tail cone is the fin tip): max |z| of the body cut within 10 % of the section height of the mid height,
-        bounded by the cabin aspect ratio (so the wing and tailplane are not counted)"""
-        sys.path.insert(0, os.path.join(ROOT, 'tools', 'models'))
-        from model_features import plane_segments
-        tri = idx[np.isin(zone[idx], (0, 1)).all(1)]
-        asp = self.mainHW / max((self.mainTop - self.mainBot) / 2, 1e-6)
-        hw = self.hw.copy()
-        for i, st in enumerate(self.s):
-            if st < 0.5 or st > self.sEnd: continue
-            seg = plane_segments(P, tri, -st)
-            if not len(seg): continue
-            pts = seg.reshape(-1, 2)          # (y, z)
-            yc = (self.top[i] + self.bot[i]) / 2; hh = (self.top[i] - self.bot[i]) / 2
-            sel = (np.abs(pts[:, 0] - yc) < 0.2 * hh) & (np.abs(pts[:, 1]) < 1.25 * asp * hh + 0.15)
-            if sel.sum() >= 2: hw[i] = float(np.abs(pts[sel, 1]).max())
-        # outliers (cuts through a door gap, engine fairings): compare with a running median
+        botr = bot.copy(); botr[iend + 1:] = botr[iend]; topr[iend + 1:] = topr[iend]
+        # cabin aspect (half width / half height) from mid-height widths
+        mw = []
+        for i in np.where(m)[0]:
+            pts = cuts[i]; yc = (topr[i] + botr[i]) / 2; hh = (topr[i] - botr[i]) / 2
+            q = pts[np.abs(pts[:, 0] - yc) < 0.15 * hh] if len(pts) else pts
+            if len(q): mw.append(np.abs(q[:, 1]).max() / hh)
+        asp = float(np.median(mw)) if mw else 1.0
+        asp = min(asp, 1.2)
+        hw = np.full(n, np.nan)
+        for i in range(n):
+            pts = cuts[i]
+            if not len(pts) or s[i] > s[iend] + dx: continue
+            hh = max((topr[i] - botr[i]) / 2, 0.05)
+            sel = (pts[:, 0] > botr[i] - 0.1) & (pts[:, 0] < topr[i] + 0.1) & (np.abs(pts[:, 1]) < 1.25 * asp * hh + 0.15)
+            if sel.any(): hw[i] = np.abs(pts[sel, 1]).max()
+        hw = fill(hw)
         from scipy.ndimage import median_filter
         med = median_filter(hw, size=5, mode='nearest')
-        bad = (np.abs(hw - med) > 0.25 * np.maximum(med, 0.2)) & (self.s > 1.5)
-        if bad.any():
-            ok = ~bad; hw = np.interp(self.s, self.s[ok], hw[ok])
-        self.hw = hw
-        return self
+        bad = (np.abs(hw - med) > 0.25 * np.maximum(med, 0.2)) & (s > 1.5)
+        if bad.any(): ok = ~bad; hw = np.interp(s, s[ok], hw[ok])
+        hw[iend + 1:] = np.minimum(hw[iend + 1:], hw[iend])
+        self.s = s; self.top = topr; self.bot = botr; self.hw = hw; self.L = L; self.sEnd = float(s[iend]); self.iFin = ifin
+        self.mainHW = float(np.median(hw[m])); self.asp = asp; self.rawTop = top
 
     def at(self, st):
         st = np.asarray(st, float)

@@ -1,5 +1,7 @@
 // Loader for converted airliner models (.sfom = gzip(SFOM header + JSON + blob)).
 // Materials are baked into vertex attributes so a whole airframe draws in one call per texture.
+// Texture 0 of an atlased model (head.atlas, tools/liveries/atlas.py) is the livery atlas: its draw carries uAtlas = 1 and
+// can wear a brand livery texture (getLiveryTexture, js/aircraft/liveries.js); its alpha marks cabin-window glass.
 import { gl, Mesh } from '../gl.js';
 
 const cache = new Map();      // key -> Promise<Model>
@@ -26,6 +28,7 @@ function srgbTexture(src) {
   const e = gl.getExtension('EXT_texture_filter_anisotropic'); if (e) gl.texParameterf(gl.TEXTURE_2D, e.TEXTURE_MAX_ANISOTROPY_EXT, 4);
   return { tex: t, w, h };
 }
+const MIME = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
 async function decodeImage(bytes, type) {
   const blob = new Blob([bytes], { type });
   try {
@@ -119,11 +122,12 @@ export async function decodeModel(buf, stretch = null) {
   const mesh = new Mesh({ pos, nrm, uv, col, extra, idx });
   const textures = [];
   for (const t of head.textures) {
-    const im = await decodeImage(new Uint8Array(raw, B + t.offset, t.length), t.fmt === 'png' ? 'image/png' : 'image/jpeg');
+    const im = await decodeImage(new Uint8Array(raw, B + t.offset, t.length), MIME[t.fmt] || 'image/jpeg');
     textures.push(srgbTexture(im.img)); im.close();
   }
   const white = { tex: null };
-  const drawList = draws.map(d => ({ ...d, U: { uAlbedo: d.tex >= 0 ? textures[d.tex] : (textures[0] || white), uHasTex: d.tex >= 0 ? 1 : 0 },
+  const atlas = !!head.atlas;
+  const drawList = draws.map(d => ({ ...d, atlas: atlas && d.tex === 0, U: { uAlbedo: d.tex >= 0 ? textures[d.tex] : (textures[0] || white), uHasTex: d.tex >= 0 ? 1 : 0, uAtlas: atlas && d.tex === 0 ? 1 : 0, uLivTex: 0 },
     sub: { draw: () => mesh.drawRange(d.first, d.count) } }));
   const all = { draw: () => mesh.drawRange(0, head.ni) };
   return { key: head.key, name: head.name, head, dims, mesh, draws: drawList, all, bbox: [mn, mx], verts: nv, tris: head.ni / 3, anchors };
@@ -164,4 +168,20 @@ export function getModel(key, stretch) {
     cache.set(ck, p);
   }
   return cache.get(ck);
+}
+
+// brand livery textures (data/liveries/<brand>/<model>[@type]-<res>.webp): fetched on demand, shared by every aircraft
+// wearing them, kept for the session (a few MB each at the default resolution)
+const livCache = new Map();
+export function getLiveryTexture(url) {
+  if (!livCache.has(url)) {
+    const p = (async () => {
+      const r = await fetch(url); if (!r.ok) throw new Error('livery fetch ' + r.status + ' ' + url);
+      const im = await decodeImage(new Uint8Array(await r.arrayBuffer()), MIME[url.split('.').pop()] || 'image/webp');
+      const t = srgbTexture(im.img); im.close(); return t;
+    })();
+    p.catch(e => console.log('livery load failed', url, e.message));
+    livCache.set(url, p);
+  }
+  return livCache.get(url);
 }

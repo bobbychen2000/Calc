@@ -9,6 +9,7 @@
 // border #f4c21b, VDGS text #ffb020 (monospace), others #f2f2f2; 70 px text on 96 px faces, 150 px on 190 px paint faces.
 import { THREE, TSL } from './lib.js';
 import { makeAtlas } from '../live/signs.js';
+import { facingNormalView } from './tsl/common.js';
 const { Fn, attribute, vec2, vec3, vec4, float, texture, max, min, mix, smoothstep, clamp, fwidth, abs, length, select, step, uniform } = TSL;
 
 const hex = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; }; // THREE.Color(hex) converts sRGB -> linear
@@ -22,7 +23,8 @@ const STYLE = {
 };
 
 export async function loadSignFont() {
-  const base = new URL('./assets/', import.meta.url);
+  // window.SFO_ASSET_BASE: where the atlas is served when this module is bundled (tools/build3/build.mjs --app)
+  const base = window.SFO_ASSET_BASE ? new URL(window.SFO_ASSET_BASE, location.href) : new URL('./assets/', import.meta.url);
   const meta = await (await fetch(new URL('msdf_signs.json', base))).json();
   const tex = await new THREE.TextureLoader().loadAsync(new URL('msdf_signs.png', base).href);
   tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter; tex.anisotropy = 8; tex.needsUpdate = true;
@@ -132,6 +134,7 @@ export function signMaterials(font, { night, noiseTex, reversed }) {
   glyph.colorNode = vec4(attribute('color', 'vec4').rgb, 1.0); glyph.opacityNode = cov(); glyph.roughnessNode = float(0.45);
   glyph.emissiveNode = attribute('color', 'vec4').rgb.mul(attribute('color', 'vec4').a).mul(night).mul(1.6);
   const dark = new THREE.MeshStandardNodeMaterial({ color: new THREE.Color(0.05, 0.05, 0.05), roughness: 0.5, metalness: 0.1, side: THREE.DoubleSide });
+  for (const m of [bg, glyph, dark]) m.normalNode = facingNormalView(); // signs.js SIGN_FS: N faces the viewer
   return { bg, glyph, dark };
 }
 export function signMeshes(builder, mats, name = 'signs') {

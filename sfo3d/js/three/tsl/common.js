@@ -49,3 +49,15 @@ export const band = (x, a, b, fw) => smoothstep(float(a).sub(fw), float(a).add(f
 export const sat = (x) => TSL.clamp(x, 0.0, 1.0);
 export const absf = abs;
 export const PI = Math.PI;
+
+// Normal facing the viewer (view space), as the old shaders' `if (dot(N, V) < 0.0) N = -N` (aircraft_real.js,
+// aircraft.js, signs.js): the imported and procedural meshes do not have a consistent winding, so three.js's
+// front-facing flip (negateOnBackSide) would darken outward-facing back faces. extraWorld: optional world-space
+// perturbation added before normalising.
+export const facingNormalView = (extraWorld = null) => {
+  const { normalViewGeometry, positionView, cameraViewMatrix, normalize, dot, select, vec4 } = TSL;
+  let n = normalViewGeometry;
+  n = select(dot(n, positionView).greaterThan(0.0), n.negate(), n);
+  if (extraWorld) n = n.add(cameraViewMatrix.mul(vec4(extraWorld, 0.0)).xyz);
+  return normalize(n);
+};

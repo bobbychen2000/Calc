@@ -421,9 +421,13 @@ def run():
             au.stats[('STATIC', what + '-surface', 'tested')] += 1
             if hits:
                 kinds = sorted({h[0] for h in hits}); names = ', '.join(sorted({h[1] for h in hits}))
-                dep = max(float(h[2].boundary.distance(c)) if h[2].contains(c) else 0.0 for h in hits)
+                # depth: how far inside the surface (centre to its edge), or the overlap's short side when only the
+                # footprint's edge reaches onto it
+                dep = max(float(h[2].boundary.distance(c)) if h[2].contains(c) else depth_of(h[2].intersection(U)) for h in hits)
+                top = max(o.y1 for o in os_) - g
                 au.add('STATIC', what + '-on-movement-surface', 'OBSTRUCTION', rep, dict(cat='surface', id='surface:' + '+'.join(kinds), label=names), area=U.area, depth=dep, loc=(c.x, c.y),
-                       note=f'{rep.extra.get("elabel", rep.label)} ({rep.y1 - g:.1f} m high) stands {dep:.1f} m inside {names}')
+                       note=f'{rep.extra.get("elabel", rep.label)} ({top:.1f} m high) stands {dep:.1f} m inside {names}' if any(h[2].contains(c) for h in hits)
+                       else f'{rep.extra.get("elabel", rep.label)} ({top:.1f} m high) reaches {dep:.2f} m onto {names}')
             else:
                 d = depth_in_paved(c.x, c.y)
                 if d > 1.0: au.add('STATIC', what + '-on-physics-pavement', 'WARNING', rep, dict(cat='pavement', id='paved raster', label='paved raster (GroundPhysics-legal ground)'), depth=d, loc=(c.x, c.y),

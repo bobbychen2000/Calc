@@ -32,15 +32,18 @@
 //   jump.gnd_1_20m / jump.air_5_20m  the same deviation > 1 m on the ground (> 100 m/s2 implied) / > 5 m in the air
 //   hdg.flip              heading change > 20 deg in one 0.1 s frame
 //   vert.ground           ground aircraft with y != GROUND_Y;  vert.below: y < GROUND_Y
-//   vert.float            airborne, < 1 m AGL, < 50 kt, not a rotorcraft (hovering on the ramp)
+//   vert.float            airborne, < 1 m AGL, < 50 kt, not a rotorcraft, inside SFO (hovering on the ramp);
+//                         vert.float.other_airfield: the same elsewhere (GA fields, where GROUND_Y is not the terrain)
 //   vert.lowfly           airborne < 60 m AGL inside the airport more than 400 m from every runway centreline
 //   rwy.change.final      the displayed runway of an aircraft on final changes
 //   rwy.td.before_thr     displayed touchdown before the landing threshold (a < 0) of the assigned runway
 //   rwy.td.offrunway      displayed touchdown not on the assigned runway's pavement (|c| > 30.5 m) / wrong runway
 //   rwy.td.norwy          touchdown displayed with no assigned runway
 //   rwy.truth.*           engine events vs an independent raw-data detector: landings (runway of the first fast
-//                         ground report), take-offs (runway of the last fast ground report), go-arounds (descended
-//                         < 1200 ft within 6 nm aligned with a runway, then climbed >= 400 ft without a ground report)
+//                         ground report), take-offs (runway of the last fast ground report), go-arounds (descending
+//                         >= 400 fpm at > 90 kt below 1200 ft within 6 nm, aligned with a runway, then climbed >= 400 ft
+//                         without a ground report; runway = nearest centreline at the lowest point). Limitation: E175
+//                         landings flagged airborne down to ~50 kt can be missed by the landing detector.
 //   phase.*               displayed phase contradicts displayed geometry (air phase on the ground, ground phase in
 //                         the air, 'taxi' > 50 kt on a runway, 'gate' > 30 m from its stand, 'landing'/'takeoff' off a
 //                         runway, push-back moving forward, flicker = > 3 phase changes within 30 s)
@@ -241,9 +244,10 @@ function rawTruth(a, t) {
   // armed only by a real descent at approach speed: E175s report 'airborne' from ~50 kt on the take-off roll with
   // baro_rate -64..0 (24 Sep 15:25Z SKW6014), which must not arm the detector
   if (!s.arm && alt < 1200 && alt > 100 && gs > 90 && d < 11000 && trk != null && (a.baroRate ?? 0) <= -400) {
-    for (const R of RW) { if (Math.abs(wrapD(trk - R.hdg / DEG)) > 20) continue; const [aa, c] = rwyCoords(R, x, z); if (aa < 500 && aa > -12000 && Math.abs(c) < 300 + 0.05 * Math.abs(aa)) { s.arm = { t, rwy: R.name, min: alt, minT: t }; break; } }
+    let best = null; for (const R of RW) { if (Math.abs(wrapD(trk - R.hdg / DEG)) > 20) continue; const [aa, c] = rwyCoords(R, x, z); if (aa < 500 && aa > -12000 && Math.abs(c) < 300 + 0.05 * Math.abs(aa) && (!best || Math.abs(c) < best.c)) best = { R, c: Math.abs(c) }; }
+    if (best) s.arm = { t, rwy: best.R.name, min: alt, minT: t };
   } else if (s.arm) {
-    if (alt < s.arm.min) { s.arm.min = alt; s.arm.minT = t; }
+    if (alt < s.arm.min) { s.arm.min = alt; s.arm.minT = t; let bc = 1e9; for (const R of RW) { if (Math.abs(wrapD((trk ?? 0) - R.hdg / DEG)) > 20) continue; const c = Math.abs(rwyCoords(R, x, z)[1]); if (c < bc) { bc = c; s.arm.rwy = R.name; } } }
     if (alt >= s.arm.min + 400 && (a.baroRate ?? 0) > 300) { truth.goarounds.push({ hex: a.hex, flight: s.flight, t: s.arm.minT, tClimb: t, rwy: s.arm.rwy, min: s.arm.min }); s.arm = null; }
     else if (t - s.arm.t > 300000 || d > 20000) s.arm = null;
   }
@@ -319,12 +323,14 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
     }
     if (s && near && !veh) {
       const dx = PX - s.x, dz = PZ - s.z; const disp = Math.hypot(dx, dz); const vx = dx / DT, vz = dz / DT, vy = (D.y - s.y) / DT;
-      const pred = Math.hypot(dx - s.vx * DT, dz - s.vz * DT);
+      // teleport / jump tests at the displayed reference point (the main-gear point used for the ground kinematics moves
+      // by the antenna->main-gear offset when the air/ground state flips, which is not a displacement)
+      const rdx = D.x - s.rx, rdz = D.z - s.rz; const pred = s.n0 >= 1 ? Math.hypot(rdx - s.rvx * DT, rdz - s.rvz * DT) : 0;
       const dh = wrapD((D.hdg - s.hdg) / DEG);
       if (chk) {
-        if (pred > 20) viol('teleport', tr, pred, { d: +disp.toFixed(1), reset: tr._reset || null, g: D.ground ? 1 : 0 });
-        else if (D.ground && s.g && pred > 1.0) viol('jump.gnd_1_20m', tr, pred, { d: +disp.toFixed(2), reset: tr._reset || null, towing: tr.ctl && tr.ctl.towing ? 1 : 0, v: +D.gs.toFixed(2), stand: tr.gate ? tr.gate.name : null, parkMode: tr.parkMode || null });
-        else if (!D.ground && !s.g && pred > 5) viol('jump.air_5_20m', tr, pred, { d: +disp.toFixed(1), reset: tr._reset || null });
+        if (pred > 20) viol('teleport', tr, pred, { d: +Math.hypot(rdx, rdz).toFixed(1), reset: tr._reset || null, g: D.ground ? 1 : 0 });
+        else if (D.ground && s.g && pred > 1.0) viol('jump.gnd_1_20m', tr, pred, { d: +Math.hypot(rdx, rdz).toFixed(2), reset: tr._reset || null, towing: tr.ctl && tr.ctl.towing ? 1 : 0, v: +D.gs.toFixed(2), stand: tr.gate ? tr.gate.name : null, parkMode: tr.parkMode || null });
+        else if (!D.ground && !s.g && pred > 5) viol('jump.air_5_20m', tr, pred, { d: +Math.hypot(rdx, rdz).toFixed(1), reset: tr._reset || null });
         if (Math.abs(dh) > 20) viol('hdg.flip', tr, Math.abs(dh), { dh: +dh.toFixed(0), g: D.ground ? 1 : 0, reset: tr._reset || null });
         // touchdown / liftoff transitions (display)
         if (D.ground && !s.g && tr.m.rwy !== undefined) {
@@ -360,8 +366,8 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
           if (Math.abs(vy) * 196.85 > 8000 && D.y < 3100) viol('air.vs', tr, Math.abs(vy) * 196.85, { fpm: Math.round(vy * 196.85), agl: +agl.toFixed(0) });
         }
       }
-      K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, y: D.y, vx, vz, vy, hdg: D.hdg, g: D.ground, n: s.g === D.ground ? s.n + 1 : 1, ax: s.g === D.ground ? (vx - s.vx) / DT : null, az: s.g === D.ground ? (vz - s.vz) / DT : null, ph: tr.phase, agl });
-    } else K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, y: D.y, vx: 0, vz: 0, vy: 0, hdg: D.hdg, g: D.ground, n: 1, ax: null, az: null, ph: tr.phase, agl });
+      K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, rvx: rdx / DT, rvz: rdz / DT, n0: (s.n0 || 0) + 1, y: D.y, vx, vz, vy, hdg: D.hdg, g: D.ground, n: s.g === D.ground ? s.n + 1 : 1, ax: s.g === D.ground && s.n >= 2 ? (vx - s.vx) / DT : null, az: s.g === D.ground && s.n >= 2 ? (vz - s.vz) / DT : null, ph: tr.phase, agl });
+    } else K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, rvx: 0, rvz: 0, n0: 0, y: D.y, vx: 0, vz: 0, vy: 0, hdg: D.hdg, g: D.ground, n: 1, ax: null, az: null, ph: tr.phase, agl });
     tr._reset = null;
     // bodies for the surface checks
     if (!veh && T && Math.abs(D.x) < 3200 && Math.abs(D.z) < 3200) {
@@ -372,7 +378,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
   for (const [hex] of K) if (!traffic.tracks.has(hex)) { K.delete(hex); surfCache.delete(hex); }
   if (frames % 600 === 0) pairCache.clear();
   if (TRACE && frames % 5 === 0) { const tr = traffic.tracks.get(TRACE); if (tr && tr.disp.valid) { const D = tr.disp, d = tr._dbg || {}; const f2 = (v) => v == null ? '-' : (+v).toFixed(1);
-    console.error(iso(simNow), tr.phase, tr.m.phase, 'disp', f2(D.x), f2(D.z), 'y', f2(D.y), 'hdg', f2(D.hdg / DEG), 'v', f2(tr.ctl && tr.ctl.v), 'g', D.ground ? 1 : 0, '| tgt', f2(d.ox), f2(d.oz), 'tv', f2(Math.hypot(d.ovx || 0, d.ovz || 0)), d.stop ? 'STOP' : '', 'ex', f2(d.ex), '| park', tr.parkPos ? f2(tr.parkPos[0]) + ',' + f2(tr.parkPos[1]) + '@' + f2((tr.parkHdg ?? 0) / DEG) : '-', tr.parkMode || '', tr.gate ? tr.gate.name : '-', tr.ctl && tr.ctl.towing ? 'TOW' : '', tr.stale ? 'STALE' : '', 'last', tr.last ? f2((simNow - tr.last.t) / 1000) + 's gs' + f2(tr.last.gs) + (tr.last.push ? ' PUSH' : '') + (tr.last.ground ? ' G' : ' A') : ''); } }
+    console.error(iso(simNow), tr.phase, tr.m.phase, 'disp', f2(D.x), f2(D.z), 'y', f2(D.y), 'hdg', f2(D.hdg / DEG), 'v', f2(tr.ctl && tr.ctl.v), 'g', D.ground ? 1 : 0, '| tgt', f2(d.ox), f2(d.oz), 'tv', f2(Math.hypot(d.ovx || 0, d.ovz || 0)), d.stop ? 'STOP' : '', 'ex', f2(d.ex), '| park', tr.parkPos ? f2(tr.parkPos[0]) + ',' + f2(tr.parkPos[1]) + '@' + f2((tr.parkHdg ?? 0) / DEG) : '-', tr.parkMode || '', tr.gate ? tr.gate.name : '-', tr.ctl && tr.ctl.towing ? 'TOW' : '', tr.stale ? 'STALE' : '', tr.gate && tr.gate.dock && tr.parkPos ? 'dockPoseVsPark ' + f2(Math.hypot(poseST(tr).nose[0] - tr.gate.dock.nose[0], poseST(tr).nose[1] - tr.gate.dock.nose[1])) + 'm' : '', 'last', tr.last ? f2((simNow - tr.last.t) / 1000) + 's gs' + f2(tr.last.gs) + (tr.last.push ? ' PUSH' : '') + (tr.last.ground ? ' G' : ' A') : ''); } }
   if (!chk || FAST) { simNow += DT * 1000; continue; }
   // ---------------- surface: pavement, buildings (cached per aircraft while its displayed pose is unchanged)
   for (const B of gnd) {

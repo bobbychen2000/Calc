@@ -5,7 +5,7 @@
 //   low (phones): one pass with MRT (colour, normal, velocity) -> half-resolution GTAO applied to the colour -> TRAA
 // Decisions and their sources: docs/research/engine.md (verified), docs/research/engine_impl.md (this port).
 import { THREE, TSL } from './lib.js';
-const { pass, mrt, output, velocity, normalView, packNormalToRGB, unpackRGBToNormal, sample, screenUV, builtinAOContext, vec4, float, mix, uniform, renderOutput, saturation, pow, max } = TSL;
+const { pass, mrt, output, velocity, normalView, packNormalToRGB, unpackRGBToNormal, sample, screenUV, builtinAOContext, vec4, float, mix, uniform, renderOutput, saturation, pow, max, clamp, step, vec3 } = TSL;
 
 // quality tiers (js/live/app.js QUALITY, plus the new-renderer settings)
 export const QUALITY3 = {
@@ -74,9 +74,14 @@ export class Engine {
     // output: AgX (exposure = renderer.toneMappingExposure), then the grade of the old renderer's final pass
     // (js/shaders/post.js: saturation, js/live/app.js post.sat = 1.1) in display-linear, then sRGB
     pipe.outputColorTransform = false;
-    this.grade = { sat: uniform(1.1), gamma: uniform(1.0) };
+    // plus an S-curve contrast around a display-linear pivot (the "punchy" look often paired with AgX: AgX base keeps
+    // the darks much higher than the old ACES fit, e.g. bay water 101 vs 58 sRGB in the overview; contrast 1.35 at
+    // pivot 0.45 brings it to ~80 and leaves the airfield mid-tones unchanged). ?contrast= / ?sat= override.
+    this.grade = { sat: uniform(1.1), contrast: uniform(1.35), pivot: uniform(0.45) };
     const tm = renderOutput(outN, THREE.AgXToneMapping, THREE.NoColorSpace);
-    const graded = pow(max(saturation(tm.rgb, this.grade.sat), 0.0), this.grade.gamma);
+    const x = clamp(saturation(tm.rgb, this.grade.sat), 0.0, 1.0); const P = this.grade.pivot, G = this.grade.contrast;
+    const lo = P.mul(pow(x.div(P), G)), hi = float(1.0).sub(float(1.0).sub(P).mul(pow(float(1.0).sub(x).div(float(1.0).sub(P)), G)));
+    const graded = mix(hi, lo, step(x, vec3(P)));
     pipe.outputNode = renderOutput(vec4(graded, 1.0), THREE.NoToneMapping, THREE.SRGBColorSpace);
   }
   // rig camera {pos, target|dir, fov, near, far, shadowSplits} -> three camera + cascade splits

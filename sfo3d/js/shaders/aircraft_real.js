@@ -1,5 +1,8 @@
 // Shader for imported (artist-built) airliner models: textured albedo, airline paint zones, flat-glass windows.
 // Per-vertex material: aCol = (color.rgb, texture white level), aExtra = (zone, kind + 8*alphaTest, roughness, metalness)
+// uAtlas = 1: this draw uses the model's livery atlas (tools/liveries/atlas.py); its alpha < 0.5 marks cabin-window glass
+//   painted into the atlas (models without window geometry): dark glass by day, warm cabin light at night.
+// uLivTex = 1: the atlas is a baked brand livery (data/liveries/): its colours are the paint, no zone recolouring.
 export const ACR_VS = `
 #include <common>
 #include <vout>
@@ -24,7 +27,7 @@ export const ACR_FS = `
 in vec3 vWP; in vec3 vN; in vec2 vUV; in vec3 vLP; flat in vec4 vMat; flat in vec4 vMat2;
 uniform sampler2D uAlbedo; uniform float uHasTex; uniform vec4 uFusB; // crown, belly, cockpit-glass x threshold, cabin light
 uniform vec3 uLivTop; uniform vec3 uLivBelly; uniform vec3 uLivTail; uniform vec3 uLivTail2; uniform vec3 uLivEngine; uniform vec4 uLivStripe;
-uniform float uBellyLine; uniform float uTailStyle; uniform float uDirt;
+uniform float uBellyLine; uniform float uTailStyle; uniform float uDirt; uniform float uAtlas; uniform float uLivTex;
 uniform vec4 uFus;   // R, Rz, tailX, length (model units)
 uniform float uLights; // 1 = landing/taxi lights on (lens glow)
 uniform float uSel;    // selection highlight
@@ -55,7 +58,11 @@ void main(){
     emis = cockpit ? vec3(0.02, 0.03, 0.05) : vec3(1.0, 0.78, 0.5) * (0.55 + 0.45 * h) * step(0.08, h);
     emis *= uFusB.w;
   }
-  if (kind == 0) {
+  float winA = (uAtlas > 0.5 && kind == 0) ? 1.0 - smoothstep(0.35, 0.6, tx.a) : 0.0;   // painted cabin window
+  if (kind == 0 && uLivTex > 0.5) {
+    albedo = tx.rgb;                                            // baked brand livery
+    albedo *= 1.0 - uDirt * 0.18 * smoothstep(-0.3, -0.9, vLP.y / max(uFus.x, 0.5));
+  } else if (kind == 0) {
     // neutralised (white) base keeps its panel shading; airline colours are applied by region
     // texture white level is stored in sRGB; texture samples are linear
     float lumL = dot(tx.rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -90,7 +97,15 @@ void main(){
   if (kind == 1) {
     float Fg; vec3 refl = glassRefl(N, V, sh, 0.06, Fg) * vec3(0.92, 0.95, 0.97);
     col = col * (1.0 - Fg) + refl + emis * (1.0 - Fg);
-  } else if (kind == 0) {
+  } else if (kind == 0 && winA > 0.01) {
+    // painted cabin window: smooth glass over a dark cabin, warm light at night (as the kind-1 windows)
+    float Fg; vec3 refl = glassRefl(N, V, sh, 0.06, Fg) * vec3(0.92, 0.95, 0.97);
+    float h = hash12(floor(vec2(vLP.x * 2.0, sign(vLP.z)) + 13.0));
+    vec3 cab = vec3(1.0, 0.78, 0.5) * (0.55 + 0.45 * h) * step(0.08, h) * uFusB.w;
+    vec3 gl = col * 0.35 * (1.0 - Fg) + refl + cab * (1.0 - Fg);
+    col = mix(col, gl, winA);
+  }
+  if (kind == 0 && winA < 0.99) {
     // clear-coat on paint
     vec3 R2 = reflect(-V, N); float F = 0.04 + 0.96 * pow(1.0 - max(dot(N, V), 0.0), 5.0);
     vec3 env = skyEnv(R2.y < 0.0 ? vec3(R2.x, -R2.y * 0.3, R2.z) : R2, 1.5);

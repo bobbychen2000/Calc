@@ -59,29 +59,33 @@ class Source:
     def pixel(self, img_id, X, Z):  # world -> pixel coords in image img_id
         raise NotImplementedError
 
-    def raster(self, x0, z0, x1, z1, res):
+    def raster(self, x0, z0, x1, z1, res, chunk=768):
+        """north-up world raster (BGR, valid, gsd of the source per pixel); built in bands of `chunk` rows so a 0.25 m/px
+        airport-scale raster does not need gigabytes of coordinate arrays"""
         W, H = int(round((x1 - x0) / res)), int(round((z1 - z0) / res))
-        jj, ii = np.meshgrid(np.arange(W, dtype=np.float64), np.arange(H, dtype=np.float64))
-        X = x0 + (jj + 0.5) * res; Z = z0 + (ii + 0.5) * res
         out = np.zeros((H, W, 3), np.uint8); best = np.full((H, W), np.inf, np.float32)
-        for k in self.images():
-            mx, my = self.pixel(k, X.ravel(), Z.ravel()); mx = mx.reshape(H, W).astype(np.float32); my = my.reshape(H, W).astype(np.float32)
-            v = self.valid(k, mx, my); r = self.gsd(k)
-            take = v & (r < best)
-            if not take.any(): continue
-            im = self.image(k)
-            interp = cv2.INTER_AREA if res > r * 1.5 else cv2.INTER_LINEAR
-            if interp == cv2.INTER_AREA and res / r > 2:  # pre-shrink so remap does not alias (cached per image and factor)
-                f = round(r / res * 1.5, 4)
-                if not hasattr(self, '_small'): self._small = {}
-                if (k, f) not in self._small:
-                    if len(self._small) > 6: self._small.clear()
-                    self._small[(k, f)] = cv2.resize(im, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
-                small = self._small[(k, f)]
-                rr = cv2.remap(small, mx * f, my * f, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-            else:
-                rr = cv2.remap(im, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-            out[take] = rr[take]; best[take] = r
+        for r0 in range(0, H, chunk):
+            r1 = min(H, r0 + chunk); h = r1 - r0
+            jj, ii = np.meshgrid(np.arange(W, dtype=np.float64), np.arange(r0, r1, dtype=np.float64))
+            X = (x0 + (jj + 0.5) * res).ravel(); Z = (z0 + (ii + 0.5) * res).ravel(); del jj, ii
+            ob = out[r0:r1]; bb = best[r0:r1]
+            for k in self.images():
+                mx, my = self.pixel(k, X, Z); mx = np.asarray(mx, np.float32).reshape(h, W); my = np.asarray(my, np.float32).reshape(h, W)
+                v = self.valid(k, mx, my); r = self.gsd(k)
+                take = v & (r < bb)
+                if not take.any(): continue
+                im = self.image(k)
+                interp = cv2.INTER_AREA if res > r * 1.5 else cv2.INTER_LINEAR
+                if interp == cv2.INTER_AREA and res / r > 2:  # pre-shrink so remap does not alias (cached per image and factor)
+                    f = round(r / res * 1.5, 4)
+                    if not hasattr(self, '_small'): self._small = {}
+                    if (k, f) not in self._small:
+                        if len(self._small) > 6: self._small.clear()
+                        self._small[(k, f)] = cv2.resize(im, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
+                    rr = cv2.remap(self._small[(k, f)], mx * f, my * f, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+                else:
+                    rr = cv2.remap(im, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+                ob[take] = rr[take]; bb[take] = r
         return out, np.isfinite(best), best
 
     def profiles(self, P, only=None, need=0.9, exclude=None):
@@ -141,11 +145,25 @@ class GoogleScreens(Source):
         if k not in self._im: self._im[k] = cv2.imread(self.files[k])
         return self._im[k]
 
+    def _legacy(self, X, Z):
+        """exact world -> legacy (geo_frame.world_to_legacy_np), memoised for the last coordinate arrays: profiles() and
+        raster() map the same points into all 19 screenshots"""
+        key = (X.__array_interface__['data'][0], X.size, Z.__array_interface__['data'][0], float(X.flat[0]) if X.size else 0.0, float(Z.flat[-1]) if Z.size else 0.0)
+        if getattr(self, '_lkey', None) != key:
+            self._lkey = key; self._lval = GF.world_to_legacy_np(X, Z)
+        return self._lval
+
     def pixel(self, k, X, Z):
-        # frame-aware similarity (legacy registrations: world -> equirect-v1 first); + the NAIP residual shift c: a
-        # ground feature at world p (NAIP) shows at p + c in the uncorrected mapping
-        X = np.asarray(X, float); Z = np.asarray(Z, float); c = self.corr.get(k, (0.0, 0.0))
-        q = self.sim[k].fwd(np.stack([X + c[0], Z + c[1]], -1))
+        # tools/sat/common.py Sim, frame-aware: legacy registrations (all of reg.json) map world -> equirect-v1 (exact)
+        # first; + the NAIP residual shift c (a ground feature at world p shows at p + c in the uncorrected mapping),
+        # applied in the legacy plane through the map's Jacobian (d legacy / d world = diag(LEGACY_MLON / MLON,
+        # LEGACY_MLAT / MLAT) to 3e-4, i.e. < 2 mm for the <= 5 m shifts)
+        X = np.asarray(X, float); Z = np.asarray(Z, float); c = self.corr.get(k, (0.0, 0.0)); sim = self.sim[k]
+        if sim.frame == LEGACY_FRAME:
+            LX, LZ = self._legacy(X, Z)
+            P = np.stack([LX + c[0] * GF.LEGACY_MLON / GF.MLON, LZ + c[1] * GF.LEGACY_MLAT / GF.MLAT], -1)
+        else: P = np.stack([X + c[0], Z + c[1]], -1)
+        A, t = sim.M(); q = P @ A.T + t
         return q[..., 0], q[..., 1]
 
     def uncorrected(self):
