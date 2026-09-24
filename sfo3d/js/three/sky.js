@@ -184,6 +184,39 @@ export class Sky {
       return col;
     })();
   }
+  // low overcast slab (js/shaders/env.js CLOUD_VS/CLOUD_FS; js/live/app.js setClouds pushes three layers 32 m apart
+  // when the METAR main layer is BKN/OVC below 5,000 ft). U = { H, extent, layer (cover, k, uv offset, opacity) }
+  cloudSlabMaterial(L) {
+    const U = this.u; const nt = this.noiseTex, ct = this.cloudTex;
+    const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
+    const p = TSL.attribute('position', 'vec3');
+    m.positionNode = vec3(p.x.mul(L.extent), L.H, p.z.mul(L.extent));
+    const dens = (xz, thr) => {
+      const uvc = xz.add(U.cloudWind.mul(U.time)).div(U.cloud.z).add(L.layer.z);
+      const n = texture(ct, uvc).r.add(texture(nt, xz.mul(0.0021).add(L.layer.z).add(U.time.mul(0.0006))).b.sub(0.5).mul(0.28)).add(texture(nt, xz.mul(0.011).sub(U.time.mul(0.001))).g.sub(0.5).mul(0.09));
+      return smoothstep(thr, thr.add(0.2), n);
+    };
+    const core = Fn(() => {
+      const wp = positionWorld; const V = normalize(cameraPosition.sub(wp));
+      const k = L.layer.y; const thr = float(1.0).sub(L.layer.x).add(k.mul(0.13));
+      const d = dens(wp.xz, thr).toVar();
+      const d2 = dens(wp.xz.add(U.sunDir.xz.div(max(U.sunDir.y, 0.25)).mul(70.0)), thr.sub(0.05));
+      const mu = dot(V.negate(), U.sunDir); const g = 0.6; const hg = float(1 - g * g).div(pow(float(1 + g * g).sub(mu.mul(2 * g)), 1.5)).mul(0.08);
+      const col = vec3(0).toVar();
+      If(cameraPosition.y.lessThan(L.H), () => {
+        const od = float(1.0).sub(d);
+        col.assign(U.skyUp.mul(0.5).add(U.ground.mul(0.3)).add(U.sunColor.mul(od.mul(od).mul(0.14).add(0.035)).mul(hg.mul(6.0).add(0.5))));
+        col.mulAssign(mix(float(0.72), float(1.0), k).mul(mix(float(1.0), float(0.82), d)));
+      }).Else(() => {
+        const shade = exp(d2.mul(-1.4).mul(float(1.0).sub(k.mul(0.6))));
+        col.assign(U.sunColor.mul(shade.mul(0.3).add(0.08)).mul(hg.mul(3.0).add(0.8)).add(U.skyUp.mul(k.mul(0.25).add(0.8))));
+      });
+      const a = d.mul(L.layer.w).mul(float(1.0).sub(smoothstep(20000.0, 38000.0, length(wp.xz.sub(cameraPosition.xz)))));
+      return vec4(col, a);
+    }).once();
+    m.colorNode = core().rgb; m.opacityNode = core().a;
+    return m;
+  }
   // blurred sky radiance for fog in-scatter (skyEnv(hd, 5.0) in applyFog): the 64x32 precompute, bilinear
   skyEnvBlur(d) { return this.smallTex.sample(dirToEquirect(normalize(d))).rgb; }
   // applyFog as a fog node: returns { color, factor } for TSL.fog()

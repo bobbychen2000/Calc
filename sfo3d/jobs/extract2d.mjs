@@ -10,7 +10,7 @@
 // Nothing is re-typed by hand except where noted in meta.replicated.
 //
 // World frame: x east, z south, y up (m), origin ARP; ground at GROUND_Y. Airport grid s/t via js/geo.js.
-import fs from 'fs'; import path from 'path'; import { execSync } from 'child_process';
+import fs from 'fs'; import path from 'path'; import crypto from 'crypto'; import { execSync } from 'child_process';
 
 export default async ({ page, base }) => {
   const OUTD = path.resolve(process.env.DRAW_OUT || 'out/draw');
@@ -19,6 +19,14 @@ export default async ({ page, base }) => {
   await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
   const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
   const tLoad = Date.now();
+  // every file the app loaded (performance resource entries), hashed on disk now and again at the end: the drawing
+  // tools compare these hashes with the working tree (tools/drawing/common.py stale_inputs) and refuse stale scenes
+  const ROOTD = path.resolve(path.dirname(OUTD), '..');
+  const sha = (f) => { try { return crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex').slice(0, 16); } catch (e) { return null; } };
+  const loaded = async () => (await page.evaluate(() => performance.getEntriesByType('resource').map(e => e.name).concat([location.href])))
+    .filter(u => u.startsWith(base)).map(u => decodeURIComponent(new URL(u).pathname.slice(1)).split('?')[0]).filter(p => p && !p.startsWith('api/'));
+  const hashInputs = (list) => Object.fromEntries([...new Set(list)].sort().map(p => [p, sha(path.join(ROOTD, p))]));
+  const inputs0 = hashInputs(await loaded());
   // let traffic + ground physics run a few frames, then freeze the render loop (a static, consistent state; llvmpipe
   // frames would otherwise starve the extraction of GPU time)
   await page.evaluate(async () => {
@@ -35,7 +43,7 @@ export default async ({ page, base }) => {
     window.requestAnimationFrame = () => 0; await new Promise(r => setTimeout(r, 1500));
     console.log('frozen after', SFO.physics.frame, 'physics frames');
   });
-  let git = null; try { git = execSync('git rev-parse --short HEAD', { cwd: path.dirname(OUTD) }).toString().trim() + (execSync('git status --porcelain js data', { cwd: path.dirname(OUTD) }).toString().trim() ? '+dirty(js/data)' : ''); } catch (e) { }
+  let git = null, gitHead = null, gitDirty = null; try { gitHead = execSync('git rev-parse --short HEAD', { cwd: ROOTD }).toString().trim(); gitDirty = execSync('git status --porcelain js data live.html', { cwd: ROOTD }).toString().trim().split('\n').filter(Boolean).map(l => l.slice(3)); git = gitHead + (gitDirty.length ? '+dirty' : ''); } catch (e) { }
 
   const res = await page.evaluate(async () => {
     const abs = (p) => new URL(p, location.href).href; const T00 = performance.now(); const say = (m) => console.log('[extract] ' + m + ' @' + ((performance.now() - T00) / 1000).toFixed(1) + 's');
@@ -45,7 +53,9 @@ export default async ({ page, base }) => {
       const url = abs(p); let src = await (await fetch(url)).text();
       src = src.replace(/(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(['"])(\.{1,2}\/[^'"]+)\2/g, (m, a, q, s) => a + q + new URL(s, url).href + q);
       for (const [re, rep] of patches) { const before = src; src = src.replace(re, rep); if (src === before) throw new Error('patch did not apply in ' + p + ': ' + re); }
-      src += '\nexport { ' + names.join(', ') + ' };\n';
+      // names the module already exports (e.g. gates.js doorOf) must not be exported twice
+      const extra = names.filter(n => !new RegExp('export\\s+(const|let|var|function|class|async\\s+function)\\s+' + n + '\\b|export\\s*\\{[^}]*\\b' + n + '\\b').test(src));
+      if (extra.length) src += '\nexport { ' + extra.join(', ') + ' };\n';
       return import(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
     };
     const geo = await mod('js/geo.js'), airportM = await mod('js/live/airport.js'), airfield = await mod('js/world/airfield.js');
@@ -63,6 +73,11 @@ export default async ({ page, base }) => {
     // vehicle meshes: keep the CPU geometry (Mesh stubbed in the copy)
     const vehI = await internals('js/world/gates.js', [], [[/import \{ Mesh \} from '[^']+';/, 'const Mesh = class { constructor(d) { this.data = d; } };']]);
     const terminalsI = await internals('js/live/terminals.js', ['greatHall']);
+    // builders that make their own Geo: patched copies that build with the recording sink (globalThis.__RecGeo)
+    const recPatch = [[/const g = new Geo\(\);/, 'const g = new (globalThis.__RecGeo || Geo)(); globalThis.__lastGeo = g;']];
+    const itemsI = await internals('js/live/items.js', ['buildMasts'], recPatch);
+    const lightsI = await internals('js/anim/lights.js', ['buildAirfieldLights', 'buildPierGeometry'], recPatch);
+    const animTrafficM = await mod('js/anim/traffic.js'), liveLightsM = await mod('js/live/lights.js');
     say('modules loaded'); const { Geo } = geomM; const { m4 } = mathM; const G = geo.GROUND_Y;
     const SFO = window.SFO; const world = SFO.world, gateSys = SFO.gateSys, traffic = SFO.traffic;
 
@@ -81,7 +96,13 @@ export default async ({ page, base }) => {
         P.v.push(p[0], p[1], p[2]); return super.vert(p, n, c, e, uv);
       }
       _wrap(kind, info, fn) { const lastL = this.prims[this.prims.length - 1]; if (lastL && lastL.kind === 'loose') lastL.open = false; if (this.cur) return fn(); this.cur = this.open(kind, info); try { return fn(); } finally { this.cur = null; } }
-      box(min, max, c, e, M, faces) { return this._wrap('box', { min, max, col: c }, () => super.box(min, max, c, e, M, faces)); }
+      box(min, max, c, e, M, faces) {
+        // exact solid: parallelepiped o + a e1 + b e2 + c e3 (a, b, c in [0, 1]) -> per-point vertical extent in audit.py
+        const X = (p) => M ? mathM.m4.xform(M, p) : p; const o = X([min[0], min[1], min[2]]);
+        const d = (p) => { const q = X(p); return [q[0] - o[0], q[1] - o[1], q[2] - o[2]]; };
+        const pp = { o, E: [d([max[0], min[1], min[2]]), d([min[0], max[1], min[2]]), d([min[0], min[1], max[2]])] };
+        return this._wrap('box', { min, max, col: c, pp }, () => super.box(min, max, c, e, M, faces));
+      }
       cylinder(r, h, seg, c, e, M, caps) { return this._wrap('cyl', { r, h, col: c }, () => super.cylinder(r, h, seg, c, e, M, caps)); }
       lathe(profile, seg, c, e, M, capTop) { return this._wrap('lathe', { rmax: Math.max(...profile.map(q => q[0])), col: c }, () => super.lathe(profile, seg, c, e, M, capTop)); }
     }
@@ -94,7 +115,11 @@ export default async ({ page, base }) => {
       return lo.slice(0, -1).concat(up.slice(0, -1)).map(q => [+q[0].toFixed(3), +q[1].toFixed(3)]);
     };
     const yr = (v) => { let a = 1e9, b = -1e9; for (let i = 1; i < v.length; i += 3) { a = Math.min(a, v[i]); b = Math.max(b, v[i]); } return [+a.toFixed(3), +b.toFixed(3)]; };
-    const primOut = (p, name) => ({ part: name, kind: p.kind, hull: hull2(p.v), y: yr(p.v), r: p.r ?? p.rmax, col: Array.isArray(p.col) ? p.col.slice(0, 3).map(x => +x.toFixed(3)) : null });
+    const ppOut = (pp) => pp ? { o: rnd(pp.o, 4), E: rnd(pp.E, 5) } : null;
+    const primOut = (p, name) => ({ part: name, kind: p.kind, hull: hull2(p.v), y: yr(p.v), r: p.r ?? p.rmax, col: Array.isArray(p.col) ? p.col.slice(0, 3).map(x => +x.toFixed(3)) : null, pp: p.pp ? [ppOut(p.pp)] : null });
+    // gates.js tube(): loose sides P(0,hw,0) P(L,hw,0) P(L,hw,h) P(0,hw,h), P(0,-hw,0) ... -> the tube's parallelepiped
+    const tubePP = (v) => { if (v.length < 24) return null; const V = (i) => [v[i * 3], v[i * 3 + 1], v[i * 3 + 2]]; const s = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+      const v0 = V(0), v1 = V(1), v3 = V(3), v4 = V(4); return { o: v4, E: [s(v1, v0), s(v0, v4), s(v3, v0)] }; };
     const rnd = (a, k = 3) => Array.isArray(a) ? a.map(x => rnd(x, k)) : (typeof a === 'number' ? +a.toFixed(k) : a);
     const W2 = (p) => [+p[0].toFixed(3), +p[2].toFixed(3)];
     const stWorld = (st) => { const w = geo.stToWorld(st[0], st[1], 0); return [+w[0].toFixed(3), +w[2].toFixed(3)]; };
@@ -107,6 +132,8 @@ export default async ({ page, base }) => {
     const meta = {
       generated: new Date().toISOString(), url: location.href, userAgent: navigator.userAgent, deviceMemory: navigator.deviceMemory,
       quality: Q, groundY: G, frame: 'world x east, z south, y up (m), origin = ARP (js/geo.js); airport grid s/t: s = x*V[0] - z*V[1] ... see stBasis',
+      frameId: geo.FRAME_ID || 'equirect-v1', datum: geo.DATUM || null, mPerDeg: { lat: geo.M_PER_DEG_LAT ?? null, lon: geo.M_PER_DEG_LON ?? null },
+      probe: { arpWorld: geo.llToWorld(geo.ARP.lat, geo.ARP.lon), end10L: (() => { const e = geo.RWY_ENDS['10L']; return geo.llToWorld(e.lat, e.lon); })(), end28R: (() => { const e = geo.RWY_ENDS['28R']; return geo.llToWorld(e.lat, e.lon); })() },
       stBasis: { V: geo.V, U: geo.U, note: 'e = s*V0 + t*U0, n = s*V1 + t*U1, x = e, z = -n' },
       aptRect: airfield.APT_RECT, ARP: geo.ARP, runwayWidth: airfield.RWY_W,
     };
@@ -152,7 +179,9 @@ export default async ({ page, base }) => {
         shoulderPaved: { hw: hw + 7.5, u0: r.a0 - 60, u1: r.axis === 0 ? r.a1 : r.a1 + 60, poly: r.axis === 0 ? [P(r.a0 - 60, -hw - 7.5), P(r.a1, -hw - 7.5), P(r.a1, hw + 7.5), P(r.a0 - 60, hw + 7.5)] : [P(r.a0 - 60, -hw - 7.5), P(r.a1 + 60, -hw - 7.5), P(r.a1 + 60, hw + 7.5), P(r.a0 - 60, hw + 7.5)] },
         paint: { edgeStripe: [29.27, 30.18], thrStripes: { x0: 6.1, x1: 51.8, lat0: 1.75, pitch: 3.5, width: 1.75, n: 8 }, dispBar: [-3.05, 0], centreline: { start: 120, dash: 36.58, period: 60.96, hw: 0.45 }, aiming: { x0: 310.9, x1: 356.6, y0: 11.0, y1: 20.1 }, src: 'js/shaders/ground.js endMarkings()/runwayAt() constants (replicated)' } };
     });
-    replicated.push('runway paint geometry (edge stripes, threshold stripes, displaced-threshold bar, centreline dashes) copied from js/shaders/ground.js (GLSL, not callable)');
+    replicated.push('runway paint geometry (edge stripes, threshold stripes, displaced-threshold bar, centreline dashes) copied from js/shaders/ground.js (GLSL, not callable); meta.paintCheck = the GLSL still contains each copied constant');
+    { const glsl = await (await fetch(abs('js/shaders/ground.js'))).text();
+      meta.paintCheck = Object.fromEntries(['band(abs(dv), 29.27, 30.18', 'band(xt, 6.1, 51.8', 'band(f, 0.0, 1.75', '(ay - 1.75) / 3.5', 'band(xt, -3.05, 0.0', 'band(xt, 310.9, 356.6, fw) * band(ay, 11.0, 20.1', 'band(fract(xc / 60.96) * 60.96, 0.0, 36.58', '120.0 + info.x'].map(k => [k, glsl.includes(k)])); }
     const faa = geo.RUNWAYS.map(r => ({ ends: r.ends, a: [r.a[0], -r.a[1]], b: [r.b[0], -r.b[1]], width: r.width, length: r.length, dispA: r.dispA, dispB: r.dispB }));
     const endZones = airportM.endZoneRects().map(z => ({ ...z, rectW: stRing(z.rect), kind: z.type === 2 ? 'EMAS' : 'blastpad', end: airfield.RWY[z.rw].name[z.end] }));
     // EMAS beds: one hull per bed (the bed faces are emitted as quads; group vertices by nearest end zone)
@@ -163,9 +192,9 @@ export default async ({ page, base }) => {
 
     // ------------------------------------------------ pavement (vector sources + the exact raster the app uses)
     const gatesW = world.gates;
-    const pave = {}; const rasterOut = {};
+    const pave = {}; const rasterOut = {}; const mapPaved = {};
     for (const res of [1.0, Q.mapRes, 1.6].filter((v, i, a) => a.indexOf(v) === i)) {
-      const M = airportM.paintAirportMapReal(D.AIRPORT, gatesW, res, D.DETAILS, { paint: D.PAINT, pavement: D.PAVEMENT, endZones: airportM.endZoneRects() });
+      const M = airportM.paintAirportMapReal(D.AIRPORT, gatesW, res, D.DETAILS, { paint: D.PAINT, pavement: D.PAVEMENT, endZones: airportM.endZoneRects() }); mapPaved[res] = M.paved;
       const cv = document.createElement('canvas'); cv.width = M.w; cv.height = M.h; const cx = cv.getContext('2d'); const im = cx.createImageData(M.w, M.h);
       for (let i = 0; i < M.w * M.h; i++) { im.data[i * 4] = M.data[i * 4]; im.data[i * 4 + 1] = M.data[i * 4 + 1]; im.data[i * 4 + 2] = M.paint ? M.paint[i * 4] : 0; im.data[i * 4 + 3] = 255; }
       cx.putImageData(im, 0, 0); rasterOut['pave_' + res.toFixed(2)] = { png: cv.toDataURL('image/png'), w: M.w, h: M.h, res, channels: 'R = paved (physics + ground shader), G = concrete, B = green paint', mapping: 'pixel column i, row j <-> s = s0 + (i + 0.5) res, t = t0 + h - (j + 0.5) res' };
@@ -207,7 +236,34 @@ export default async ({ page, base }) => {
 
     // ------------------------------------------------ masts (world.js keeps masts outside stand envelopes)
     const mastsAll = D.DETAILS.masts || [];
-    const masts = mastsAll.map(([x, z]) => ({ x, z, removed: !!airportM.inStandEnvelope(gatesW, x, z, 4), r: 0.85, headHalf: 2.1, h: itemsM.MAST_H }));
+    globalThis.__RecGeo = RecGeo;
+    const masts = mastsAll.map(([x, z], i) => {
+      const removed = !!airportM.inStandEnvelope(gatesW, x, z, 4); const m = { x, z, removed, r: 0.85, headHalf: 2.1, h: itemsM.MAST_H };
+      // the geometry items.js buildMasts() emits for this mast (base, pole, platform ring, head bar, luminaires), recorded
+      if (!removed) { itemsI.buildMasts([[x, z]]); const names = ['base', 'pole', 'platform', 'head-bar']; m.prims = globalThis.__lastGeo.prims.filter(p => p.v.length).map((p, k) => primOut(p, names[k] || 'luminaire')); }
+      return m;
+    });
+
+    say('masts'); // ------------------------------------------------ airfield lighting (js/anim/lights.js via js/live/lights.js)
+    // approach-light piers: app.js buildPierGeometry(lsys.piers) -> world.items; each pier's boxes recorded separately
+    const LS = lightsI.buildAirfieldLights(1.0, { taxiways: false });
+    const alsEnds = geo.APPROACH_LIGHTS.map(A => ({ ...A, F: animTrafficM.runwayFrame(A.end) }));
+    const piers = LS.piers.map((P, i) => {
+      lightsI.buildPierGeometry([P]); const prims = globalThis.__lastGeo.prims.filter(p => p.v.length);
+      let sys = null, best = 1e9;
+      for (const A of alsEnds) { const F = A.F; const dx = P.base[0] - F.thr[0], dz = P.base[2] - F.thr[2]; const along = -(dx * F.dir[0] + dz * F.dir[2]), lat = dx * F.right[0] + dz * F.right[2];
+        if (along > 0 && Math.abs(lat) < best) { best = Math.abs(lat); sys = { end: A.end, type: A.type, fromThr: +along.toFixed(2), lateral: +lat.toFixed(3) }; } }
+      const F = sys && alsEnds.find(A => A.end === sys.end).F;
+      return { i, ...sys, fromEnd: F ? +(sys.fromThr - Math.hypot(F.thr[0] - F.start[0], F.thr[2] - F.start[2])).toFixed(2) : null, base: W2(P.base), right: rnd([P.right[0], P.right[2]], 5), water: !!P.water, h: P.h,
+        prims: prims.map((p, k) => primOut(p, P.water ? ['leg', 'leg', 'cap', 'catwalk', 'rail', 'rail'][k] || 'pier' : 'post')) };
+    });
+    replicated.push('approach-light pier system/end labels: nearest APPROACH_LIGHTS end on the extended centreline (piers carry no label in js/anim/lights.js)');
+    // all light sprites as the app builds them (app.js: buildLiveLights(cfg.airport, world.paved) - world.paved is the
+    // pavement raster at quality mapRes, rebuilt here with the same inputs)
+    const LL = liveLightsM.buildLiveLights(D.AIRPORT, mapPaved[Q.mapRes] || null);
+    const lightCol = (c) => c[2] > 0.9 && c[0] < 0.3 ? 'blue' : c[1] > 0.9 && c[0] < 0.3 ? 'green' : c[1] < 0.1 ? 'red' : c[1] > 0.7 && c[2] < 0.3 ? 'yellow' : 'white';
+    const lights = { taxiEdgeCount: LL.taxiCount, points: LL.L.map(l => [+l.p[0].toFixed(2), +l.p[1].toFixed(2), +l.p[2].toFixed(2), lightCol(l.c)]), flashers: LS.flashers.map(f => ({ p: rnd(f.p, 2), end: f.end })),
+      papis: LS.papis.map(q => ({ p: rnd(q.p, 2), angle: +q.angle.toFixed(3), dir: rnd([q.dir[0], q.dir[2]], 5) })), note: 'js/anim/lights.js buildAirfieldLights(1, {taxiways:false}) sprites (no solid bodies except the piers); js/live/lights.js adds blue taxiway edge lights along the taxiway outlines' };
 
     // ------------------------------------------------ stands + jet bridges
     const TY = typesM.TYPES;
@@ -233,7 +289,7 @@ export default async ({ page, base }) => {
         const p = nxt();
         if (p.kind === 'loose') { // a tube: loose sides followed by its two end frames
           const f1 = prims[i], f2 = prims[i + 1]; i += 2; const v = p.v.concat(f1.v, f2.v);
-          out.push({ part: tubeN === 0 ? 'walkway' : 'tunnel' + tubeN, kind: 'tube', hull: hull2(v), y: yr(v) }); tubeN++; continue;
+          out.push({ part: tubeN === 0 ? 'walkway' : 'tunnel' + tubeN, kind: 'tube', hull: hull2(v), y: yr(v), pp: [ppOut(tubePP(p.v)), ppOut(f1.pp), ppOut(f2.pp)].filter(Boolean) }); tubeN++; continue;
         }
         let name = 'misc';
         if (p.kind === 'cyl' || p.kind === 'lathe') { const r = p.r ?? p.rmax; name = Math.abs(r - 0.35) < 1e-6 ? 'column' : Math.abs(r - 0.6) < 1e-6 ? 'pedestal' : Math.abs(r - 2.45) < 1e-6 ? 'rotunda' : Math.abs(r - 0.48) < 1e-6 ? 'wheel' : Math.abs(r - 0.14) < 1e-6 ? 'beacon' : 'cyl'; }
@@ -329,7 +385,14 @@ export default async ({ page, base }) => {
       typeRender[k] = { icao, modelKey: mk, stretch: la.stretch || null, placement: la.model ? Array.from(la.placement()) : null, dims: la.model ? la.model.dims : null, Hc: typesM.TYPES[k].Hc };
     }
     say('aircraft'); // ------------------------------------------------ physics view of the world (what GroundPhysics / traffic use)
-    const physics = { stats: SFO.physics.stats || null, buildingGridSources: 'airport.terminalComplex + boardingAreas + structures except rail and hangar (ground.js buildingGrid, 2 m cells)', paved: 'world.paved = paintAirportMapReal raster at quality mapRes (' + Q.mapRes + ' m)' };
+    const physics = { stats: SFO.physics.stats || null, buildingGridSources: 'airport.terminalComplex + boardingAreas + structures except rail and hangar (ground.js buildingGrid, 2 m cells)', paved: 'ground.js pavedUnion(world.paved, traffic.net): paintAirportMapReal raster at quality mapRes (' + Q.mapRes + ' m) OR TaxiNet.paved(round(x), round(z))', mapRes: Q.mapRes };
+    // the OSM taxi net GroundPhysics adds to the raster (traffic.js TaxiNet.paved: within hw of an edge, 30.5 m of a
+    // runway edge, or inside an apron ring), exported so tools/drawing can test gear points the way the physics does
+    const net = traffic.net && traffic.net.ok ? { hw: traffic.net.hw, rwHw: 30.5, edges: traffic.net.E.map(e => [+e.x0.toFixed(2), +e.z0.toFixed(2), +e.x1.toFixed(2), +e.z1.toFixed(2), e.rw ? 1 : 0]), aprons: traffic.net.aprons.map(a => a.r.map(q => [+q[0].toFixed(2), +q[1].toFixed(2)])) } : null;
+    replicated.push('TaxiNet.paved() test (traffic.js) re-implemented in tools/drawing/common.py net_paved(); checked against physics.samples (the page\'s own SFO.physics.paved at random points)');
+    if (net) { const smp = []; let seed = 12345; const rnd01 = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+      for (let i = 0; i < 20000; i++) { const x = -2600 + rnd01() * 4400, z = -2300 + rnd01() * 4100; smp.push([+x.toFixed(2), +z.toFixed(2), SFO.physics.paved(x, z) ? 1 : 0, traffic.net.paved(Math.round(x), Math.round(z)) ? 1 : 0]); }
+      physics.samples = smp; }
 
     // ------------------------------------------------ assemble
     const u8 = new Uint8Array(binLen); { let o = 0; for (const b of bin) { u8.set(b, o); o += b.length; } }
@@ -338,16 +401,20 @@ export default async ({ page, base }) => {
         meta: { ...meta, replicated, snapshotLabel: document.querySelector('#status') ? document.querySelector('#status').textContent : null },
         types, typeRender, typeModels: acM.TYPE_MODELS, modelDims: manifest.MODEL_DIMS, modelBase: acM.MODEL_BASE, classMax, refType, classTypes, gseCheckDims,
         buildings, buildingMesh, tower: towerOut, itbRoof, runways: RW, runwaysFAA: faa, endZones, emasBeds, pave, markings, signs, signLegs, masts,
-        stands, bridges, gse, vehicleFootprints: vehFoot, aircraft, bodies, physics,
+        stands, bridges, gse, vehicleFootprints: vehFoot, aircraft, bodies, physics, net, piers, lights,
       },
       bin: b64(u8), rasters: rasterOut,
     };
   });
   // write outputs
   for (const [k, r] of Object.entries(res.rasters)) { fs.writeFileSync(path.join(OUTD, k + '.png'), Buffer.from(r.png.split(',')[1], 'base64')); r.file = k + '.png'; delete r.png; }
-  res.json.rasters = res.rasters; res.json.meta.git = git; res.json.meta.secondsAfterLoad = (Date.now() - tLoad) / 1000; res.json.meshBin = 'meshes.bin';
+  res.json.rasters = res.rasters; res.json.meta.git = git; res.json.meta.gitHead = gitHead; res.json.meta.gitDirty = gitDirty; res.json.meta.secondsAfterLoad = (Date.now() - tLoad) / 1000; res.json.meshBin = 'meshes.bin';
+  res.json.meta.typesHash = crypto.createHash('sha256').update(JSON.stringify(res.json.types)).digest('hex').slice(0, 16);
+  const inputs1 = hashInputs(await loaded());
+  res.json.meta.inputs = inputs1; res.json.meta.inputsChangedDuringExtraction = Object.keys(inputs1).filter(k => k in inputs0 && inputs0[k] !== inputs1[k]);
+  res.json.meta.inputsHash = crypto.createHash('sha256').update(JSON.stringify(inputs1)).digest('hex').slice(0, 16);
   fs.writeFileSync(path.join(OUTD, 'meshes.bin'), Buffer.from(res.bin, 'base64'));
   fs.writeFileSync(path.join(OUTD, 'scene2d.json'), JSON.stringify(res.json));
   const J = res.json;
-  console.log('scene2d.json:', (fs.statSync(path.join(OUTD, 'scene2d.json')).size / 1e6).toFixed(1), 'MB;', J.buildings.length, 'building footprints,', J.stands.length, 'stands,', J.bridges.length, 'bridges,', J.gse.length, 'GSE,', J.aircraft.length, 'aircraft,', J.markings.ribbons.length, 'ribbons,', J.signs.length, 'signs');
+  console.log('scene2d.json:', (fs.statSync(path.join(OUTD, 'scene2d.json')).size / 1e6).toFixed(1), 'MB;', J.buildings.length, 'building footprints,', J.stands.length, 'stands,', J.bridges.length, 'bridges,', J.gse.length, 'GSE,', J.aircraft.length, 'aircraft,', J.markings.ribbons.length, 'ribbons,', J.signs.length, 'signs,', J.piers.length, 'approach-light piers,', J.lights.points.length, 'lights; frame', J.meta.frameId, 'git', J.meta.git, 'inputs', Object.keys(J.meta.inputs).length, 'changed during extraction', J.meta.inputsChangedDuringExtraction.length);
 };

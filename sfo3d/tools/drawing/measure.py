@@ -12,7 +12,18 @@ averaged over 5 parallel lines 0.3 m apart) from ONE source image, and find the 
                its flanks, width-matched; nearest strong ridge
   line-white   white runway edge stripe (0.91 m): ridge of luminance
   bar          fixed jet-bridge walkway: box ridge of either polarity, width 2.8 m
+  stripe-start runway threshold stripes (select='stripe-start'): the start of the stripe block is the OUTERMOST
+               bright->dark step (reading outward, toward the approach) whose inner side is uniformly bright for >= 7 m
+               (a stripe, 45.7 m long) and whose outer side is dark for >= 2 m (the gap before the stripes / the end of
+               pavement); a 10 ft threshold bar (3 m bright, then a gap) fails the uniform-inner test, so the pick can
+               no longer flip between the bar and the stripes when the image moves by a metre or two
+  approach-light piers over water (js/anim/lights.js): along-axis position of the imaged pier crossbar, 'bar' ridge
+               of either polarity, width 1 m, +-12 m (half the 30.48 m pier spacing)
 Offsets are signed along the outward normal (+ = the imaged edge lies outside / right of the modelled one).
+Buildings: an outline edge belongs to ONE building - the terminal part (pier / hall / structure) wins over the
+ramp-level complex it sits on; complex samples within 1 m of a same-orientation part sample are dropped - and each
+building is one feature (the ramp-level complex included), so building counts are per building.
+RULES_VERSION is written to deviations.json and selftest.json; report.py refuses a self-test made with other rules.
 Per feature: median / p90 / max absolute offset of the measured samples, signed median (bias), n measured / sampled.
 Buildings additionally get a best-fit translation (relief displacement of roofs + registration) and the residual
 after removing it: aerial imagery shows roof edges displaced away from nadir by height x tan(off-nadir angle), so a
@@ -27,9 +38,10 @@ import cv2
 from shapely.geometry import Point, Polygon
 from shapely.prepared import prep
 from shapely.ops import unary_union
-from common import scene, OUT, poly_rings, w2st, st2w, G, hull_poly, buildings
+from common import scene, OUT, poly_rings, w2st, st2w, G, hull_poly, buildings, provenance
 import background
 
+RULES_VERSION = '2026-09-24b: stripe-start rule, building edge de-duplication, rotunda boundary = not found, approach-light piers'
 STEP = 0.1; R = 10.0; TAN = (-0.6, -0.3, 0.0, 0.3, 0.6)
 D = np.arange(-R, R + 1e-9, STEP)
 
@@ -127,6 +139,24 @@ def find_step(prof, gsd, polarity=None, D=D):
     return out
 
 
+def find_stripe_start(prof, gsd, D=D):
+    """start of a threshold-stripe block: candidates [(d, strength, dL)] of bright->dark steps along +D (outward)
+    with >= 7 m of uniform bright stripe inward and >= 2 m dark outward (see module doc)"""
+    if np.isnan(prof).any(): return []
+    Lb = lab(prof)[:, 0]; sig = max(0.25, 0.6 * gsd) / STEP; Ls = gsmooth(Lb, sig)
+    g = np.gradient(Ls, STEP)
+    (ix,) = local_max(-g); ix = ix + 1
+    i1, i8, i05, i25 = int(1.0 / STEP), int(8.0 / STEP), int(0.5 / STEP), int(2.5 / STEP)
+    out = []
+    for i in ix:
+        if i - i8 < 0 or i + i25 >= len(Ls) or -g[i] < 2.0: continue
+        inner = Ls[i - i8:i - i1]; outer = Ls[i + i05:i + i25]
+        # bright stripe inward (uniformly: its darkest 10 % still clearly above the gap), dark gap outward
+        if inner.mean() - outer.mean() < 8 or np.percentile(inner, 10) - outer.mean() < 4 or outer.max() > inner.mean() - 4: continue
+        out.append((float(D[i]), float(-g[i]), float(outer.mean() - inner.mean())))
+    return out
+
+
 def find_ridge(prof, gsd, width, kind, D=D):
     """painted line / bar: ridge response of a width-matched box vs its flanks; kind 'yellow' | 'white' | 'bar'"""
     if np.isnan(prof).any(): return []
@@ -170,12 +200,15 @@ def build_features(S):
         if inside_paved: k &= pave(i[:, 0], i[:, 1])
         if not_building: k &= ~contains(B.buffer(1.0), o[:, 0], o[:, 1]) & ~contains(B.buffer(1.0), i[:, 0], i[:, 1])
         return k
-    # --- buildings: outline edges that face open ground (an edge whose outside is another building is internal)
+    # --- buildings: outline edges that face open ground (an edge whose outside is another building is internal); an
+    # edge shared by a terminal part and the ramp-level complex under it belongs to the part (one owner per edge)
+    from scipy.spatial import cKDTree
     bl = [b for b in buildings() if b['kind'] not in ('rail', 'walkway')]
     bpoly = [poly_rings(b['rings']) for b in bl]
-    parts = [(b, p) for b, p in zip(bl, bpoly) if b['kind'] in ('pier', 'hall')]
-    seen = set()
-    for bi, b in enumerate(bl):
+    order = sorted(range(len(bl)), key=lambda i: (bl[i]['kind'] == 'apron-level', i))   # parts / structures first
+    owned_P, owned_N = [], []; dropped = {}
+    for bi in order:
+        b = bl[bi]
         oth = unary_union([p for j, p in enumerate(bpoly) if j != bi]).buffer(0.8)
         P, N, T = [], [], []
         for ri, ring in enumerate(b['rings']):
@@ -187,15 +220,18 @@ def build_features(S):
             P.append(p[k]); N.append(n[k]); T.append(t[k])
         if not P or not sum(len(x) for x in P): continue
         P, N, T = np.concatenate(P), np.concatenate(N), np.concatenate(T)
-        # long outlines (the ramp-level complex) are reported in ~150 m pieces named after the nearest terminal part
-        chunks = [np.arange(len(P))] if len(P) <= 110 else np.array_split(np.arange(len(P)), max(1, len(P) // 75))
-        for ci, ix in enumerate(chunks):
-            name = b['name']
-            if len(chunks) > 1:
-                c = Point(P[ix].mean(0)); near = min(parts, key=lambda q: q[1].distance(c))[0]['name'] if parts else '?'
-                name = f'{b["name"]} near {near} (part {ci + 1}/{len(chunks)})'
-            fid = f'bldg:{b["id"]}:{ci}:{name[:48]}'
-            F.append(dict(id=fid, cls='building', name=name, kind=b['kind'], height=b['y1'] - G(), mode='step', width=0, pts=P[ix], nrm=N[ix], tan=T[ix], rings=b['rings']))
+        if owned_P:
+            tree = cKDTree(np.concatenate(owned_P)); ON = np.concatenate(owned_N)
+            d, j = tree.query(P, k=4, distance_upper_bound=1.0)
+            dup = np.zeros(len(P), bool)
+            for c in range(d.shape[1]):
+                ok = np.isfinite(d[:, c]); jj = np.where(ok, j[:, c], 0)
+                dup |= ok & ((N * ON[jj]).sum(1) > 0.7)
+            dropped[b['id']] = int(dup.sum()); P, N, T = P[~dup], N[~dup], T[~dup]
+        if not len(P): continue
+        owned_P.append(P); owned_N.append(N)
+        F.append(dict(id=f'bldg:{b["id"]}:{b["name"][:48]}', cls='building', name=b['name'], kind=b['kind'], height=b['y1'] - G(), mode='step', width=0, pts=P, nrm=N, tan=T, rings=b['rings'],
+                      dedup=dropped.get(b['id'], 0)))
     # --- taxiway pavement polygons (SFO Museum) and extra pavement (imagery-derived): edges between pavement and unpaved
     def pave_feats(polys, cls, names):
         for pi, (poly, name) in enumerate(zip(polys, names)):
@@ -226,21 +262,45 @@ def build_features(S):
             # threshold stripes: step into the stripes 6.1 m past the threshold, read at every stripe centre
             tp = r['paint']['thrStripes']; ycs = [(tp['lat0'] + tp['pitch'] * k + tp['width'] / 2) * sg for k in range(tp['n']) for sg in (-1, 1)]
             p = np.array([thr + inw * tp['x0'] + lat * y for y in ycs]); n = np.tile(inw, (len(ycs), 1)); t = np.tile(lat, (len(ycs), 1))
-            F.append(dict(range=25.0, pol=-1, maxgsd=0.8, select='nearest', id=f'rwy-thr:{e["name"]}', cls='runway-threshold', name=f'RWY {e["name"]} threshold stripes (start {tp["x0"]} m past threshold)', mode='step', width=0, pts=p, nrm=-n, tan=t, group=True, line=[(thr + lat * 30).tolist(), (thr - lat * 30).tolist()]))
+            F.append(dict(range=25.0, pol=-1, maxgsd=0.8, select='stripe-start', id=f'rwy-thr:{e["name"]}', cls='runway-threshold', name=f'RWY {e["name"]} threshold stripes (start {tp["x0"]} m past threshold)', mode='step', width=0, pts=p, nrm=-n, tan=t, group=True, line=[(thr + lat * 30).tolist(), (thr - lat * 30).tolist()]))
+            # 10 ft threshold bar (every end): imaged bar centre along the axis from the threshold line (+ = landing
+            # side); the model draws it only at displaced thresholds, on the approach side (js/shaders/ground.js
+            # endMarkings(): band(xt, -3.05, 0.0) when disp > 1). Lateral read positions avoid the arrowheads (7.6 /
+            # 22.9 m), the centreline arrows and the edge stripe.
+            bd = r['paint']['dispBar']; model = (bd[0] + bd[1]) / 2 if e['disp'] > 1 else None
+            ys3 = np.array([-27, -18.5, -16, -13.5, -11, 11, 13.5, 16, 18.5, 27.0]); p = np.array([thr + inw * (model or 0.0) + lat * y for y in ys3])
+            F.append(dict(range=12.0, select='strongest', maxgsd=1.3, id=f'rwy-bar:{e["name"]}', cls='runway-threshold-bar', model_off=model,
+                          name=f'RWY {e["name"]} threshold bar (' + (f'model: approach side, centre {model:+.2f} m; displaced {e["disp"]:.1f} m' if model is not None else 'model: none drawn') + ')',
+                          mode='line-white', width=3.05, pts=p, nrm=np.tile(inw, (len(ys3), 1)), tan=np.tile(lat, (len(ys3), 1)), group=True, line=[(thr + lat * 30).tolist(), (thr - lat * 30).tolist()]))
             # pavement end (the runway end line), read across the runway; at EMAS ends the pavement continues into the
             # 35 ft setback, so the visible edge is the EMAS bed entry (measured with the bed below)
             ez = [z for z in S['endZones'] if z['end'] == e['name']]
             if ez and ez[0]['kind'] == 'EMAS': continue
             ys2 = np.arange(-24, 24.1, 4.0); p = np.array([end + lat * y for y in ys2])
             F.append(dict(range=25.0, id=f'rwy-end:{e["name"]}', cls='runway-end', name=f'RWY {e["name"]} pavement end', mode='step', width=0, pts=p, nrm=np.tile(-inw, (len(ys2), 1)), tan=np.tile(lat, (len(ys2), 1)), group=True, line=[(end + lat * 30).tolist(), (end - lat * 30).tolist()]))
-            if e['disp'] > 1:
-                bar = thr - inw * 1.525; ys3 = np.arange(-26, 26.1, 4.0); p = np.array([bar + lat * y for y in ys3])
-                F.append(dict(range=25.0, select='strongest', maxgsd=1.3, id=f'rwy-dthr:{e["name"]}', cls='runway-displaced-threshold', name=f'RWY {e["name"]} displaced threshold bar ({e["disp"]:.1f} m)', mode='line-white', width=3.05, pts=p, nrm=np.tile(inw, (len(ys3), 1)), tan=np.tile(lat, (len(ys3), 1)), group=True, line=[(bar + lat * 30).tolist(), (bar - lat * 30).tolist()]))
     # --- EMAS beds (3-D geometry, world.js buildEMAS): outline against the setback pavement / grass
     for b in S['emasBeds']:
         ring = b['hull']; sg = ring_orientation_outward(ring)
         p, n, t = sample_ring(ring, 3.0, trim=2.0, outward_sign=sg)
         if len(p): F.append(dict(id=f'emas:{b["end"]}', cls='emas-bed', name=f'EMAS bed beyond RWY {b["end"]}', mode='step', width=0, pts=p, nrm=n, tan=t, rings=[ring]))
+    # --- approach-light piers over water (js/anim/lights.js buildPierGeometry, pushed into world.items by app.js):
+    # along-axis position of each imaged pier crossbar, read along the extended centreline through the pier
+    by_end = {}
+    for pr in S.get('piers') or []:
+        if pr.get('end'): by_end.setdefault(pr['end'], []).append(pr)
+    for end, prs in sorted(by_end.items()):
+        prs = sorted(prs, key=lambda q: q['fromThr'])
+        if len(prs) < 2: continue
+        b0, b1 = np.array(prs[0]['base']), np.array(prs[-1]['base']); u = (b1 - b0) / np.linalg.norm(b1 - b0)   # outward (away from the runway)
+        wat = [q for q in prs if q['water']]
+        if len(wat) < 2: continue
+        # read on the crossbar arms (+-4.5 m from the axis), clear of the catwalk that runs along the axis
+        lat = np.array([-u[1], u[0]]); P0 = np.array([q['base'] for q in wat])
+        p = np.concatenate([P0 + lat * 4.5, P0 - lat * 4.5]); n = np.tile(u, (len(p), 1)); t = np.tile(lat, (len(p), 1))
+        # model crossbar half-length: widest lateral extent of the pier's recorded boxes
+        hl = [max(abs((np.array(h) - np.array(q['base'])) @ lat) for pr_ in q['prims'] for h in pr_['hull']) for q in wat]
+        F.append(dict(range=12.0, select='nearest', maxgsd=0.8, id=f'als-pier:{end}', cls='approach-light-pier', name=f'RWY {end} {wat[0]["type"]} approach-light piers over water ({len(wat)}, {wat[0]["fromThr"]:.0f}-{wat[-1]["fromThr"]:.0f} m from the threshold)',
+                      mode='bar', width=1.0, pts=p, nrm=n, tan=t, group=True, piers=[q['i'] for q in wat] * 2, centres=np.concatenate([P0, P0]), model_halflen=float(np.median(hl))))
     # --- painted lines (recorded ribbons): taxiway centrelines, stand lead-ins, hold bars (solid pair)
     tnames_polys = [(t['name'], poly_rings(p)) for t in tw for p in t['polys']]
     def twy_name(pt):
@@ -307,7 +367,8 @@ def measure_feature(f, src, only=None, exclude=None):
     for k in range(len(pts)):
         if ids[k] is None: res['why'][k] = 'no imagery'; cands.append(None); continue
         if gsd[k] > mg: res['why'][k] = f'resolution {gsd[k]:.2f} m/px too coarse for a {f["width"]:.2f} m line'; cands.append(None); continue
-        if f['mode'] == 'step': c = find_step(vals[k], gsd[k], D=Dv)
+        if f.get('select') == 'stripe-start': c = find_stripe_start(vals[k], gsd[k], D=Dv)
+        elif f['mode'] == 'step': c = find_step(vals[k], gsd[k], D=Dv)
         elif f['mode'] == 'line-yellow': c = find_ridge(vals[k], gsd[k], f['width'], 'yellow', D=Dv)
         elif f['mode'] == 'line-white': c = find_ridge(vals[k], gsd[k], f['width'], 'white', D=Dv)
         else: c = find_ridge(vals[k], gsd[k], f['width'], 'bar', D=Dv)
@@ -323,15 +384,53 @@ def measure_feature(f, src, only=None, exclude=None):
         # candidate rule per feature: self-test (selftest.py) recovery of known shifts is higher with 'strongest' for step
         # edges and bars, and with 'nearest' for thin ridges and runway pavement ends
         sel = f.get('select') or os.environ.get('MEASURE_SELECT') or ('strongest' if f['mode'] in ('step', 'bar') and f['cls'] != 'runway-end' else 'nearest')
-        best, amb = choose(c) if sel != 'strongest' else ((max(c, key=lambda q: q[1]), 1) if c else (None, 0))
+        if sel == 'stripe-start': best, amb = (max(c, key=lambda q: q[0]), len(c)) if c else (None, 0)   # outermost qualifying step
+        else: best, amb = choose(c) if sel != 'strongest' else ((max(c, key=lambda q: q[1]), 1) if c else (None, 0))
         if best is None: res['why'][k] = 'no edge found'; continue
         res['off'][k] = best[0]; res['strength'][k] = best[1]; res['amb'][k] = amb
     res['polarity'] = pol
+    if f['cls'] == 'approach-light-pier': crossbar_halflen(f, src, res, only)
     return res
 
 
+def crossbar_halflen(f, src, res, only=None):
+    """imaged half-length of each approach-light pier crossbar: at the measured along-axis position, a lateral profile
+    (+-16 m) through the pier centre; the crossbar is where the colour departs from the open water (Lab distance to the
+    median of the profile's outer 3 m > 12); half-length = mean of the two contiguous runs from the centre"""
+    res['xbar'] = np.full(len(f['pts']), np.nan)
+    if len(f.get('centres', [])) != len(f['pts']): return
+    ok = ~np.isnan(res['off'])
+    if not ok.any(): return
+    Dl = np.arange(-16, 16 + 1e-9, STEP)
+    C = f['centres'][ok] + f['nrm'][ok] * res['off'][ok][:, None]
+    vals, ids, gsd = read_profiles(src, C, f['tan'][ok], f['nrm'][ok], only=only, Dv=Dl)
+    out = np.full(ok.sum(), np.nan)
+    for k in range(len(C)):
+        if ids[k] is None or np.isnan(vals[k]).any(): continue
+        Lb = lab(vals[k]); Ls = np.stack([gsmooth(Lb[:, c], 0.3 / STEP) for c in range(3)], 1)
+        water = np.median(np.concatenate([Ls[:int(3 / STEP)], Ls[-int(3 / STEP):]]), 0)
+        st = np.linalg.norm(Ls - water, axis=1) > 12
+        c0 = len(Dl) // 2; runs = []
+        for sgn in (1, -1):
+            i = c0; miss = 0; last = c0
+            while 0 <= i < len(Dl):
+                if st[i]: last = i; miss = 0
+                else:
+                    miss += 1
+                    if miss > int(1.0 / STEP): break
+                i += sgn
+            runs.append(abs(Dl[last]))
+        out[k] = float(np.mean(runs))
+    res['xbar'][ok] = out
+
+
+
+DISC_R = 6.0
+
+
 def measure_disc(f, src, res):
-    """jet-bridge rotunda: best disc (bright or dark, r 2-3 m) against its ring within 10 m of the modelled centre"""
+    """jet-bridge rotunda: best disc (bright or dark, r 2-3 m) against its ring within DISC_R = 6 m of the modelled
+    centre; a best disc within 1 m of that boundary is 'not found' (the search failed rather than measured)"""
     c = f['pts'][0]; half = 14.0; r = 0.2
     img, valid, best = src.raster(c[0] - half, c[1] - half, c[0] + half, c[1] + half, r)
     if valid.mean() < 0.95: res['why'][0] = 'no imagery'; return res
@@ -347,13 +446,14 @@ def measure_disc(f, src, res):
         score = np.abs(md - mr) - 0.5 * sd
         H, W = score.shape; ii, jj = np.mgrid[0:H, 0:W]
         dist = np.hypot((jj + 0.5) * r - half, (ii + 0.5) * r - half)
-        score[dist > 6] = -1e9; score[:R2] = -1e9; score[-R2:] = -1e9; score[:, :R2] = -1e9; score[:, -R2:] = -1e9
+        score[dist > DISC_R] = -1e9; score[:R2] = -1e9; score[-R2:] = -1e9; score[:, :R2] = -1e9; score[:, -R2:] = -1e9
         i, j = np.unravel_index(np.argmax(score), score.shape)
         if top is None or score[i, j] > top[0]: top = (float(score[i, j]), (j + 0.5) * r - half, (i + 0.5) * r - half, rad)
     s, dx, dz, rad = top
     res['off'][0] = math.hypot(dx, dz); res['strength'][0] = s; res['gsd'][0] = float(np.median(best[np.isfinite(best)]))
     res['vec'] = [dx, dz]; res['rad'] = rad; res['img'][0] = 'raster'
     if s < 12: res['why'][0] = f'weak disc (score {s:.0f})'; res['off'][0] = np.nan
+    elif math.hypot(dx, dz) > DISC_R - 1.0: res['why'][0] = f'not found: best disc {math.hypot(dx, dz):.1f} m away, at the {DISC_R:.0f} m search boundary'; res['off'][0] = np.nan
     return res
 
 
@@ -370,9 +470,17 @@ def summarize(f, r):
         if np.linalg.cond(A) < 50:
             t = np.linalg.solve(A, N.T @ o[m]); res = o[m] - N @ t; ra = np.abs(res)
             out.update(shift=[float(t[0]), float(t[1])], shiftLen=float(np.hypot(*t)), resid_median=float(np.median(ra)), resid_p90=float(np.percentile(ra, 90)))
+    if f['cls'] == 'runway-threshold-bar' and m.sum():
+        raw = r['off'][m] + (f.get('model_off') or 0.0)   # imaged bar centre from the threshold line (+ = landing side)
+        out['imaged_centre'] = float(np.median(raw)); out['model_centre'] = f.get('model_off')
+        if f.get('model_off') is None:   # the model draws no bar: the imaged bar is the deviation (missing marking)
+            out.update(median=float(np.median(np.abs(raw))), bias=float(np.median(raw)), missing_in_model=True)
+    if f['cls'] == 'approach-light-pier' and 'xbar' in r and np.isfinite(r['xbar']).any():
+        out.update(xbar_imaged=float(np.nanmedian(r['xbar'])), xbar_model=f.get('model_halflen'))
     frac = out['measured'] / max(1, out['n'])
     # rotunda positions come from an automatic disc search (low confidence): reported, never flagged
     out['flag'] = bool(out.get('median') is not None and out['median'] > 1.0 and (out['measured'] >= 3 or f.get('group')) and f['cls'] != 'bridge-rotunda')
+    if out.get('missing_in_model'): out['flag'] = bool(out['measured'] >= max(3, 0.5 * out['n']))
     out['coverage'] = frac
     return out
 
@@ -396,7 +504,7 @@ def run(which=None):
             samples[f['id']] = dict(pts=np.round(f['pts'], 2).tolist(), nrm=np.round(f['nrm'], 4).tolist(), off=[None if np.isnan(x) else round(float(x), 2) for x in r['off']],
                                     img=[str(x) if x is not None else None for x in r['img']], why=r['why'], polarity=r.get('polarity', 0), vec=r.get('vec'))
             if i % 200 == 0: print(f'    [{name}] {i}/{len(F)} features, {time.time() - t1:.0f} s', flush=True)
-        results[name] = dict(source=src.name, public=src.public, licence=src.licence, features=per)
+        results[name] = dict(source=src.name, public=src.public, licence=src.licence, features=per, rules=RULES_VERSION, provenance=src.provenance(), scene=provenance())
         json.dump(dict(source=src.name, samples=samples), open(os.path.join(OUT, f'dev_samples_{name}.json'), 'w'))
         print(f'  [{name}] done in {time.time() - t1:.0f} s')
     # lean model per Google image: roof shift of each building ~ height * lambda(image)

@@ -10,10 +10,14 @@ Sources and their roles (details and licences: docs/research/stands_rebuild.md, 
   jet bridges            OSM aeroway=jet_bridge ways (ODbL): building attach point, fixed walkway, rotunda (start
                          of the last segment = parked tunnel), parked cab; assigned by ref / name, else geometrically.
   classes                the largest aircraft type SFO allocates to the stand (flysfo AODB stands[] types, all cached
-                         snapshots) + types seen parked there in ADS-B; dimensions from the manufacturers' airport
-                         planning documents (tools/models/check_dims.py REF).
-  verification           NAIP 2024 (USDA, public domain) readings of parked aircraft (stand_table.NAIP_OBS) and ADS-B
-                         parked stays with SFO stand windows (adsb_parked.py): residuals per stand.
+                         snapshots) + types seen parked there in ADS-B; dimensions, planforms and doors are the app's
+                         (js/aircraft/types.js via geom.APP; review round 2), whose SPEC values are the manufacturers'
+                         airport-planning numbers (tools/models/check_dims.py).
+  per-type stops         type_stops: ADS-B (adsb.lol) families stopping short of the stand nose; types_ok: whitelist
+                         where class limits alone would let a simultaneously planned neighbour within 3 m.
+  verification           NAIP 2024 (USDA, public domain) readings of parked aircraft (stand_table.NAIP_OBS), corrected
+                         for relief displacement (naip_relief.py), and ADS-B parked stays (adsb.lol only) with SFO stand
+                         windows (adsb_parked.py): residuals per stand; disagreeing ADS-B -> 'conflict'.
   mutual exclusion       stands whose reference aircraft would overlap / come within the physical minimum (3 m) of
                          each other are mutually exclusive ('excl'); pairs SFO plans simultaneously are reported.
 Google screenshots are NOT used for anything here.
@@ -196,7 +200,7 @@ def main():
                 nose = (stop[0] + f[0] * off, stop[1] + f[1] * off)
                 s['pos_src'] = 'osm'; s['nose_rule'] = 'OSM stop + %.1f m (%s-body NAIP calibration)' % (off, s['grp'])
             # painted lead-in line on NAIP (tools/imagery/paintline.py): lateral offset and heading of the paint over
-            # the last 3-22 m behind the nose. Applied when the fit is clean (>= 8 samples, rms <= 0.3 m) and
+            # the last 3-22 m behind the nose. Applied when the fit is clean (>= 7 samples (review round 2; was 8), rms <= 0.3 m) and
             # disagrees by > 0.8 m or > 1.5 deg (review round 1: D14 3.1 m, C4 1.7 m / 2.5 deg).
             pf = paint_fit(YEL, nose, h)
             s['paint'] = pf
@@ -211,7 +215,7 @@ def main():
                 h2 = (h + pf['dh']) % 360; n2 = (nose[0] + rt[0] * pf['lat_nose'], nose[1] + rt[1] * pf['lat_nose'])
                 b0, b1 = naip_lat(nose, h), naip_lat(n2, h2)
                 ok_naip = b0 is None or b1 is None or b1 <= b0 + 0.5          # never move a line away from the parked NAIP aircraft
-            if pf and ok_naip and pf['n'] >= 8 and pf['rms'] <= 0.3 and (abs(pf['lat_nose']) > 0.8 or abs(pf['dh']) > 1.5) \
+            if pf and ok_naip and pf['n'] >= 7 and pf['rms'] <= 0.3 and (abs(pf['lat_nose']) > 0.8 or abs(pf['dh']) > 1.5) \
                     and abs(pf['lat_nose']) < 4.5 and abs(pf['dh']) < 8 and not np_:
                 h = (h + pf['dh']) % 360
                 nose = (nose[0] + rt[0] * pf['lat_nose'], nose[1] + rt[1] * pf['lat_nose'])
@@ -234,7 +238,7 @@ def main():
                 # review round 2: only a numerically measured, relief-corrected fuselage centre verifies the line (within
                 # 1.5 m; the relief fit leaves 0.7 m rms), never the reading the position was taken from (F15)
                 if rd[1] is not None and abs(c) <= 1.5 and 'u' not in rd[3] and not np_: vb.append('naip')
-            if s.get('paint') and s['paint']['n'] >= 8 and s['paint']['rms'] <= 0.3:
+            if s.get('paint') and s['paint']['n'] >= 7 and s['paint']['rms'] <= 0.3:
                 pa = s.get('paint_after') or s['paint']
                 if abs(pa['lat_nose']) <= 0.8 and abs(pa['dh']) <= 1.5: vb.append('paint')
             good = []; rej = []
@@ -559,6 +563,10 @@ def main():
              if len(b['walk']) >= 1 and math.dist(b['walk'][0], b.get('rotunda') or b['attach']) > 0.5]
     for st, b in allb:
         if b.get('rotunda'):
+            # two rotundas < 4 m apart at the end of one fixed walkway (F15, G11): NAIP shows both tunnels leaving one
+            # elevated junction at the walkway end - a twin head (inferred), modelled as two small drums (rotunda_max_r)
+            twin = [ob for so, ob in allb if ob is not b and ob.get('rotunda') and math.dist(ob['rotunda'], b['rotunda']) < 4.0 and ob['attach'] == b['attach']]
+            if twin: b['rotunda_twin_of'] = twin[0]['osm_id']
             dm = min([math.dist(b['rotunda'], r) for i, r in rots if i != id(b)] or [99])
             dw = min([w.distance(Point(b['rotunda'])) for i, at, w in walks if i != id(b) and at != tuple(b['attach'])] or [99])
             b['rotunda_max_r'] = round(max(0.0, min(GM.ROT_R, dm / 2 - 0.05, dw - GM.WALK_W / 2 - 0.05)), 2)
@@ -655,6 +663,9 @@ def build_output(stands, remote, positions, naip_off, info, osm):
     for s in stands:
         def br(b):
             b = dict(b); b['gate'] = s['gate']      # bridge sign = the stand's gate number (not the OSM ref / AODB name)
+            # review round 2: bridge geometry is OSM-traced and NOT verified on NAIP (the imaged roofs lean east ~0.54 m
+            # per m of height, ~3-4 m for a bridge; the parked cab pose changes between images)
+            b['geom_src'] = 'osm (traced; not NAIP-verified)'
             return b
         rec = {'name': disp[s['name']], 'alias': s['alias'], 'letter': s['name'][0], 'nose': [round(v, 2) for v in s['nose']],
                'hdg': round(s['hdg'] % 360, 2), 'cls': s['cls'], 'src': s['src'],

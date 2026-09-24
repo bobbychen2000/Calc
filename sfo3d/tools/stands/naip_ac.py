@@ -10,7 +10,8 @@ The fuselage centre per row = centroid of object pixels within |v| < 3.5 m in ro
 (nose-34 .. nose-22); a line through both gives the lateral offset at the nose and the heading residual.
 The automatic result is only a proposal: every stand is checked by eye on the montage (tools/stands/naip_review.py) and
 overridden in tools/stands/naip_obs.py where wrong. Relief displacement of a ~4 m high fuselage in NAIP (off-nadir
-view, orthorectified to the ground) shifts it by up to ~1 m; nose positions are therefore +/- ~1 m.
+view, orthorectified to the ground) shifts it EAST by about 0.54 m per m of height (review round 2, naip_relief.py:
+1.2-2.9 m for a fuselage - the earlier "up to ~1 m" was wrong); nose positions are +/- ~1.5 m after that correction.
 """
 import math
 import numpy as np

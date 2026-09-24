@@ -30,6 +30,8 @@ export default async ({ page, base }) => {
     frames.push(f);
     console.log('trace', i + 1, '/', N, 'ground aircraft', f.aircraft.length, 'physics frame', f.physFrame, JSON.stringify(f.stats));
   }
-  fs.writeFileSync(path.join(OUTD, 'trace.json'), JSON.stringify({ mode: 'live (mock relay: recorded snapshot + straight-line kinematics)', dt: DT, frames }));
+  const frameId = await page.evaluate(async () => (await import(new URL('js/geo.js', location.href).href)).FRAME_ID || 'equirect-v1');
+  let git = null; try { git = (await import('child_process')).execSync('git rev-parse --short HEAD', { cwd: path.resolve(OUTD, '..', '..') }).toString().trim(); } catch (e) { }
+  fs.writeFileSync(path.join(OUTD, 'trace.json'), JSON.stringify({ mode: 'live (mock relay: recorded snapshot + straight-line kinematics)', frameId, git, generated: new Date().toISOString(), dt: DT, frames }));
   console.log('trace.json:', frames.length, 'frames');
 };

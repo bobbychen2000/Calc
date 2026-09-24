@@ -13,19 +13,19 @@ are refreshed by `tools/stands/report.py`.
 | quantity | value |
 |---|---|
 | contact stands | 108 (104 stands + 4 alternative positions: B5S, B11S, B16S, C9V) |
-| position source (pos_src) | osm 105, osm+paint 2, naip 1 |
+| position source (pos_src) | osm 103, osm+paint 2, osm+adsb 2, naip 1 |
 | name source (name_src) | sfo 108 |
-| verified_by | OSM only 33, naip 28, adsb 23, paint 10, paint+adsb 7, naip+adsb 7 |
-| src (legacy field) | obs 75, inf 33 |
-| classes | B 6, C 60, CL 5, D 7, E 9, EL 18, F 3 |
+| verified_by | adsb 40, OSM only 26, naip 14, paint 11, paint+adsb 10, naip+adsb 7 |
+| src (legacy field) | obs 71, inf 37 |
+| classes | B 6, C 61, CL 6, D 5, E 9, EL 18, F 3 |
 | jet bridges | 131 OSM bridges: 128 main-deck bridges on 103 stands (1: 78, 2: 25), 3 upper-deck (`bridges_upper`: A6, A11, G13); no bridge of its own: B5S (uses B5), B16S (uses B16), C9V (uses C9), F10, F18 |
 | mutually exclusive pairs | 8 |
 | remote stands (SFO names, ADS-B) | 1: 2-2A |
 | unnamed OSM parking positions (`positions`) | north 95, apron 50, contact-unused 27, west 7 |
-| red boxes (NAIP) | 309 |
-| painted lead-in vs model axis (NAIP yellow-line fit, 3-22 m behind the nose, clean fits), 18 stands | lateral at the nose: median |r| 0.23 m, max 4.73 m; heading: median |dh| 0.42 deg, max 17.97 deg; corrected: C4 (-1.1 m, -0.2 deg), D14 (+3.2 m, +0.6 deg) |
-| NAIP parked-aircraft reading (by eye, +-1.5 m along / +-0.7 m lateral; lateral 0.0 = within the reading resolution, not a measured zero), 44 stands | lateral: median |r| 0.0 m, max |r| 5.2 m; along: median 0.0 m, median |r| 1.4 m |
-| ADS-B residual (antenna median in the stand frame), 41 stands / 45 aircraft | lateral: median |r| 0.4 m, max |r| 5.0 m; along (antenna behind the nose): median -9.5 m, range -30.8..0.5 m; heading: median |dh| 0.7 deg |
+| red boxes (NAIP) | 257 |
+| painted lead-in vs model axis (NAIP yellow-line fit, 3-22 m behind the nose, clean fits), 22 stands | lateral at the nose: median |r| 0.28 m, max 4.70 m; heading: median |dh| 0.38 deg, max 17.74 deg; corrected: C4 (-1.1 m, -0.3 deg), D14 (+3.2 m, +0.6 deg) |
+| NAIP parked aircraft, relief-corrected (lean k = 0.54 +- 0.04 m/m, residual 0.70 m rms; `naip_relief.py`): along = by-eye nose reading (+-1.5 m) corrected at nose height, 44 stands; lateral = measured fuselage centre, 26 stands | lateral: median |r| 0.3 m, max |r| 2.3 m; along: median -0.1 m, median |r| 1.1 m |
+| ADS-B residual (antenna median in the stand frame), 64 stands / 101 aircraft | lateral: median |r| 0.4 m, max |r| 8.5 m; along (antenna behind the nose): median -9.4 m, range -29.2..1.6 m; heading: median |dh| 0.6 deg |
 <!--END:summary-->
 
 - The Google-screenshot survey (`tools/sat/stand_defs.py`, 89 stands) is no longer used for any committed coordinate. It
@@ -33,10 +33,16 @@ are refreshed by `tools/stands/report.py`.
 - Every stand carries SFO's own name (AODB stand name from flysfo, or the official gate number); positions come from
   OpenStreetMap lead-in lines, calibrated along the axis and verified on NAIP 2024 and against ADS-B positions of
   aircraft that SFO's stand plan put on that stand.
-- `check_stands.py` (rewritten after review round 1, §11): aircraft are the envelope of **every** type the app accepts
-  on a stand, bridges are buffered footprints in docked and rest poses with the manufacturer's extension range. Result:
-  3 issues, all F5 (its OSM bridge is 6.4-6.9 m from the door, shorter than any apron-drive bridge; §10). Pairs below
-  the ICAO stand clearance are listed in §5 (they exist at SFO: ICAO allows reduced clearance with VDGS guidance).
+- `check_stands.py` (rewritten in review rounds 1 and 2, §11, §12): aircraft are the app's own planforms and door
+  tables (`js/aircraft/types.js`, all 48 designators it knows), the envelope of every type a stand accepts, each at its
+  per-family stop point; bridges are buffered footprints in docked and rest poses with the manufacturer's extension
+  range. Result: **4 DATA ISSUES** (F5 L1 7.1-7.5 m, shorter than any apron-drive bridge; A2 L2 42.4 m for the 787-10,
+  1.0 m over the longest model) and **30 APP ISSUES** that come from how `js/live/traffic.js` uses the data today
+  (oversize clause, one stop point per stand, stop-short parking; `docs/requests/static_geometry_round2.md`). Pairs
+  below the ICAO stand clearance are listed in §5.
+- **The rendered bridges are not yet the data bridges**: `js/live/gates.js` derives its own rotundas and rest poses and
+  ignores `rotundaW` / `walkW` / `stowW` (review round 2, critical). Nothing in this file verifies what the app draws
+  until that request is implemented; the bridge geometry here is OSM-traced and **not verified on NAIP** (`geom_src`).
 
 ## 2. Sources and roles
 
@@ -46,8 +52,8 @@ are refreshed by `tools/stands/report.py`.
 | Bridges | OSM `aeroway=jet_bridge` ways (133) | ODbL 1.0 | building attach point, fixed walkway, rotunda (start of the final segment), parked cab; assignment to stands §4 |
 | Names | flysfo.com flight-status `stands[]` (AODB stand names, 8 snapshots 07:32-16:32 UTC 24 Sep), DataSF `chfu-j7tc` gates with operations 18-31 Aug 2026, flysfo terminal maps | DataSF PDDL; flysfo no published terms (used for names/checks only, docs/research/gate_truth.md §7) | stand name = AODB name; stands without an AODB name in the snapshots = DataSF gate number. OSM refs only link the two. |
 | Along-axis calibration, verification | NAIP 2024 (USDA, 0.6 m, flown 2024-05-20; `refs/cache/naip/`) | public domain (USDA credit requested) | parked aircraft read by eye on oriented patches (§3.2), red boxes by colour, pavement check |
-| Verification, names of ambiguous lines | own ADS-B recording (`refs/cache/rec/`, 07:27-10:28 and 15:13-16:33 UTC 24 Sep) + flysfo stand windows (`tools/stands/adsb_parked.py`) | adsb.fi / adsb.lol terms (gate_truth.md, realtime_feeds.md) | parked stays (on ground, < 1 kt, >= 180 s), median antenna position with NACp >= 8, tied to SFO's stand window of the aircraft's callsign |
-| Aircraft dimensions | manufacturers' airport-planning documents (`tools/models/check_dims.py` REF, docs/research/aircraft_models_check.md) | - | class of each SFO type, reference planforms |
+| Verification, names of ambiguous lines | own ADS-B recording, **adsb.lol files only** (`refs/cache/rec/adsblol_*`, 07:28-10:28 and 15:13-19:12 UTC 24 Sep, read 19:15 UTC) + flysfo stand windows (`tools/stands/adsb_parked.py`) | adsb.lol: ODbL 1.0 (realtime_feeds.md §3.1). adsb.fi is not used: its terms forbid licensing the data (§3.2), and the stand file is ODbL (review round 2) | parked stays (on ground, < 1 kt, >= 180 s), median antenna position with NACp >= 8, tied to SFO's stand window of the aircraft's callsign; each stay records its provider |
+| Aircraft dimensions and planforms | `js/aircraft/types.js` after applySpec (its SPEC values are the manufacturers' airport-planning numbers, checked by `tools/models/check_dims.py`; dumped by `tools/stands/dump_types.mjs`) | - | class of each type, collision planforms (as js/live/ground.js), door tables and dock2 - the geometry the app renders (review round 2; before: a class-shaped planform from REF) |
 | Clearances | ICAO Doc 9157 Part 2 (Aerodrome Design Manual, 4th ed. 2005) §3.4.4, p. 3-10 (skybrary copy `refs/cache/icao/sky3090.pdf`, read 24 Sep 2026): code A, B 3.0 m; C 4.5 m; D, E, F 7.5 m; "can be reduced ... between the terminal (including passenger loading bridges) and the nose of an aircraft; and ... over a portion of the stand provided with azimuth guidance by a visual docking guidance system" | - | notes; the physical limit used for exclusivity is 3.0 m |
 | Not used | Google screenshots (reference only, owner 24 Sep 2026); X-Plane Gateway (GPL, names shifted, stands_xcheck.md §5.3) | | |
 
@@ -78,6 +84,16 @@ in `tools/stands/stand_table.py` (`OVERRIDES`, `DROPPED`), in the table in §7, 
   12.8 m behind A4T, E11 1096433104).
 
 ### 3.2 Nose position along the line
+
+> **Review round 2 - NAIP relief.** NAIP is orthorectified to the terrain, so parked aircraft lean EAST in the image
+> by k x height. `tools/stands/naip_relief.py` measures the imaged fuselage centre numerically on 26 stands (bright
+> band midpoint, rows 4-22 m behind the nose) and fits **k = 0.54 +- 0.04 m/m** (residual 0.70 m rms, 25 stands; model
+> lat_img = lat_true + k h cos(hdg), h = 3.4 m narrow / 5.3 m wide fuselage band). The imaged fuselages sit 1.2-2.6 m
+> east of the lines - the by-eye "lateral 0.0" readings below did not see this, and the "relief up to ~1 m" statement
+> was wrong by a factor 2-3. Now: along readings are corrected at nose height (h 2.5 / 4.5 m), the lateral check uses
+> only the measured, corrected fuselage centre, and the calibration below is recomputed from corrected readings:
+> **narrow bodies +1.2 m, wide bodies +3.3 m** (was +1.0 / +4.0). F15 is placed on the corrected reading (lateral
+> -5.9 m instead of -8.0 m, nose +8.3 m instead of +7.0 m); ADS-B (UAL1189 B39M) now lies 0.9 m from its axis (was 3.1 m).
 
 OSM mappers end the lead-in near the painted stop marks, not at a type's nose wheel (stands_xcheck.md §4.3). The app's
 `nose` is the nose tip of the stopped aircraft. I read 45 parked aircraft on NAIP 2024 (oriented patches, 0.1-0.2 m
@@ -121,13 +137,19 @@ resolution; a lateral 0.0 there means "within the reading resolution", not a mea
 
 ### 3.4 Evidence per stand
 
-`verified_by` lists `naip` when a NAIP aircraft sits on the line within 1.5 m laterally (reading not flagged uncertain;
-2.5 m before review round 1, so G1, G3, G4, G9 lost it), `paint` when the painted lead-in line on NAIP (yellow-ridge
-fit 3-22 m behind the nose, `build_stands.paint_fit`, >= 8 samples, rms <= 0.3 m) lies within 0.8 m / 1.5 deg of the
-model axis, and `adsb` when the ADS-B antenna median of the aircraft SFO had on that stand lies within 3 m of the line and its
-heading within 10°. ADS-B stays far from the line (push-back / waiting / plan changes) are listed in
-`refs/cache/stands/stands_built.json` (`adsb_rejected`) and not used. `src` (legacy meaning) = `obs` if anything
-verified the stand, else `inf`.
+`verified_by` lists `naip` when the relief-corrected, numerically measured NAIP fuselage centre lies within 1.5 m of
+the axis (review round 2; about 2 sigma of the relief fit - a NAIP check cannot resolve better than ~+-1.5 m; never
+for the stand positioned on that same reading, F15), `paint` when the painted lead-in line on NAIP (yellow-ridge fit
+3-22 m behind the nose, `build_stands.paint_fit`, >= 7 samples, rms <= 0.3 m) lies within 0.8 m / 1.5 deg of the
+model axis, and `adsb` when the ADS-B (adsb.lol) antenna median of the aircraft SFO had on that stand lies within
+**1.5 m** of the line (was 3 m; review round 2, G5) and its heading within 10 deg (ADS-B surface headings come in
+2.8125 deg steps: 426 of 439 stay headings are multiples of 360/128). ADS-B stays far from the line (push-back /
+waiting / plan changes) are listed in `refs/cache/stands/stands_built.json` (`adsb_rejected`) and not used.
+ADS-B medians more than 3 m or 10 deg off the axis are recorded as `conflict` (D3, D4 three aircraft each, D8, D9) and
+empty `verified_by` (the evidence that would otherwise verify is kept in `verified_unconfirmed`).
+`src` = `obs` only when an aircraft was seen on the line (`naip` or `adsb`); a painted lead-in alone confirms the axis,
+not the stop point, so paint-only stands are `inf` (review round 2: the data file's note and this section had
+disagreed).
 
 ## 4. Jet bridges
 
@@ -136,6 +158,10 @@ verified the stand, else `inf`.
   `attach` = building end (for a bridge branching off another bridge's fixed walkway: that bridge's building end),
   `walk` = polyline from the building to the rotunda, `rotunda` = first node of the final segment when the way has a
   fixed part before it (else null - the app derives it), `cab` = the parked cab end as mapped, `osm_id`, `assoc`.
+- **Forced** (review round 2, `stand_table.BRIDGE_FORCE`): at the B10 / B11 hold room 1096422714 (OSM ref B11; NAIP
+  shows its cab at the L1 door of the aircraft on the curved B11 line) -> B11; 1096422712 (ref "B11S"; the only bridge on
+  B10's door side, cab 20.7 m left of the nose) -> B10; 1096422713 (ref "B10"; 13.7 m to the RIGHT of the B10 axis, so it
+  cannot serve B10's left doors) -> B11S. The review asked to follow the OSM refs for B10; rejected on that geometry.
 - Assignment: optimal assignment (Hungarian) of bridges to door slots (narrow body 1, wide body 2, class F 3). A bridge
   can serve a stand only if its pivot (rotunda, else attach) or its parked cab is not on the stand's right side and the
   pivot is 8-48 m from the door; cost = pivot-door distance, +10 m when the OSM ref/name gate differs from the stand's
@@ -155,7 +181,12 @@ verified the stand, else `inf`.
   150 m (own, alternative and exclusive stands included), of the building and (+0.5 m) of the other bridges' fixed
   parts and rest poses; the pose nearest the OSM direction is kept. Every main-deck and upper-deck bridge has one.
 - `rotunda_max_r`: half the distance to the nearest other rotunda and the clearance to other fixed walkways, capped at
-  2.45 m (G pier pairs 4.6-4.9 m apart need r ~2.3 m).
+  2.45 m (G pier pairs 4.6-4.9 m apart need r ~2.3 m). F15 and G11 have two rotundas 3.4 m apart at the end of one fixed
+  walkway; NAIP shows both tunnels leaving one elevated junction there (`refs/cache/stands/view/F15rot.png`,
+  `G11rot.png`): a twin head (inferred), modelled as two drums of r 1.64 m (`rotunda_twin_of`).
+- `geom_src`: every bridge is `osm (traced; not NAIP-verified)`. The imaged bridge roofs lean ~0.54 m per m of height
+  (~3-4 m east for a bridge; review round 2 saw the C3 walkway roof 4 m east of the OSM line) and the parked cab pose
+  changes between images, so NAIP cannot confirm the walkways to 1.5 m.
 - F10's OSM bridge is no longer used (`stand_table.BRIDGE_IGNORE`): it lies right-front of the F10 nose, NAIP shows it
   parked ahead of the regional jet, and docking needs a ~150 deg cab turn. F10 is modelled without a bridge (inferred).
 - Door numbers: ordered by the parked cab's position along the aircraft (nearest the nose = 1). A third bridge
@@ -197,7 +228,15 @@ at once; then both stands are limited to the largest span / length SFO (or accep
 `len_max`). If that clears 3 m, done; if the limited envelopes still come within 3 m but no longer overlap, the pair is
 kept (`tight_with`: E10/E12 0.4 m, F19/F20 1.9 m - SFO plans them together 26 and 29 times, so making them exclusive
 would push really parked aircraft off their stands; our single stop point per stand is the likely error, real stop
-marks are per type). Pairs below the ICAO clearance:
+marks are per type).
+
+Review round 2: clearances are computed on the app's planforms (types.js) with every designator the app knows, at the
+per-family stop points (`type_stops`: ADS-B shows 737s stopping 15-18 m short at E12, F15, F21, an A319 29 m short at
+G7, ...). E10/E12 and F19/F20 still came within 1.1 / 1.9 m with the class limits - only through types never seen
+there (an A319neo at E12's nose, a 777-200LR at F19). Both stands of such a pair now carry **`types_ok`**, the types
+SFO / ADS-B actually put there; with them they clear 4.2 m and 5.1 m (> 3 m, below ICAO C 4.5 / D-F 7.5 m; SFO plans
+them simultaneously 42 and 26 times). The app honours `types_ok` / `type_stops` only after the traffic.js request.
+Pairs below the ICAO clearance:
 
 <!--BEGIN:pairs-->
 | pair | clearance m (envelope of all accepted types, final limits) | ICAO | SFO plans both at once (overlaps) | handled |
@@ -210,17 +249,16 @@ marks are per type). Pairs below the ICAO clearance:
 | B16 / B16S | 0.0 | 7.5 | 0 | alternative positions (excl) |
 | C9 / C9V | 0.0 | 7.5 | 0 | alternative positions (excl) |
 | C9V / C11 | 0.0 | 7.5 | 0 | excl |
-| E10 / E12 | 0.4 | 7.5 | 26 | kept: SFO plans both at once 26 times; span/len limits; model clearance 0.4 m < 3 m (tight, no overlap) |
-| F19 / F20 | 1.9 | 7.5 | 29 | kept: SFO plans both at once 29 times; span/len limits; model clearance 1.9 m < 3 m (tight, no overlap) |
-| F17 / F18 | 3.2 | 7.5 | 7 | kept (below ICAO, above 3 m) |
-| F18 / F19 | 4.6 | 7.5 | 12 | span_max / len_max = largest types SFO parks there (clear 4.6 m) |
-| F20 / F21 | 5.7 | 7.5 | 30 | kept (below ICAO, above 3 m) |
-| C8 / C10 | 6.1 | 7.5 | 4 | kept (below ICAO, above 3 m) |
-| A10 / A12 | 6.3 | 7.5 | 16 | kept (below ICAO, above 3 m) |
-| G7 / G8 | 6.6 | 7.5 | 21 | kept (below ICAO, above 3 m) |
-| A5 / A9 | 6.9 | 7.5 | 10 | kept (below ICAO, above 3 m) |
-| G2 / G5 | 7.0 | 7.5 | 12 | kept (below ICAO, above 3 m) |
-| F21 / F22 | 7.3 | 7.5 | 18 | kept (below ICAO, above 3 m) |
+| E10 / E12 | 4.2 | 4.5 | 42 | types_ok = the types SFO parks there (observed), per-family stops: clear 4.2 m (SFO plans both at once 42 times) |
+| F19 / F20 | 5.1 | 7.5 | 26 | types_ok = the types SFO parks there (observed), per-family stops: clear 5.1 m (SFO plans both at once 26 times) |
+| C8 / C10 | 5.7 | 7.5 | 6 | kept (below ICAO, above 3 m) |
+| F21 / F22 | 5.8 | 7.5 | 18 | kept (below ICAO, above 3 m) |
+| F20 / F21 | 6.4 | 7.5 | 27 | kept (below ICAO, above 3 m) |
+| G7 / G8 | 6.5 | 7.5 | 28 | kept (below ICAO, above 3 m) |
+| A5 / A9 | 6.9 | 7.5 | 15 | kept (below ICAO, above 3 m) |
+| F18 / F19 | 7.0 | 7.5 | 13 | kept (below ICAO, above 3 m) |
+| G2 / G5 | 7.0 | 7.5 | 13 | kept (below ICAO, above 3 m) |
+| C6 / C8 | 7.3 | 7.5 | 11 | kept (below ICAO, above 3 m) |
 <!--END:pairs-->
 
 ## 6. Runway ends and lighting (same session)
@@ -230,8 +268,11 @@ marks are per type). Pairs below the ICAO clearance:
   pavement; OSM 231, diagram ~240), 28R 98 m and 28L 98 m (pad edge at the seawall road; OSM 91/95, diagram ~90,
   replacing 108 m). Chevron apexes (`tools/imagery/check_markings.py`, yellow peaks on the axis): 10L 17.1, 47.5, 78.1,
   108.5, 139.0, 169.5, 199.8, 230.5 m; 10R 16.6 ... 199.7 m; 28R 17.3, 47.8, 78.3 m; 28L 17.1, 47.6, 78.1 m - spacing
-  30.5 m (100 ft), first apex ~17 m. The shader keeps 29.7 m / 15 m (`js/shaders/ground.js` is not mine; request in
-  docs/requests/static_geometry_round1.md).
+  30.5 m (100 ft), first apex ~17 m. The shaders keep 29.7 m / 15 m (`js/shaders/ground.js`, `js/three/ground.js` are
+  not mine; request in docs/requests/static_geometry_round2.md).
+- **EMAS chevrons** (review round 2, `js/live/world.js`, which I own): first apex beyond the runway end 1L 17.2, 19R 16.3,
+  1R 17.2, 19L 16.6 m (0.05 m samples) = 5.4-6.4 m after the bed entry (`END_ZONES[].chev0`), spacing 30.4-30.8 m ->
+  30.48 m. Was 12 m / 30 m (4.4-5.9 m off).
 - **EMAS beds** (review round 1, re-checked on NAIP oriented patches): 19R 124.8 m (was 122.0), 19L 124.1 m (was 117.0),
   1L 133.2 and 1R 113.4 m unchanged, width 69.3 m at all four (was 66 m); 10.67 m setback confirmed.
 - **Runway axes** (`js/world/airfield.js` RWY) now derive from the NASR ends through the exact frame (were legacy
@@ -246,116 +287,116 @@ marks are per type). Pairs below the ICAO clearance:
 ## 7. Every stand
 
 <!--BEGIN:stands-->
-| stand | gate | AODB | cls (largest type) | pos_src | verified_by | NAIP resid along/lat m | ADS-B n, along/lat m, dhdg | paint lat m / dh deg | bridges | excl / alt_of / tight | name / position evidence |
+| stand | gate | AODB | cls (largest type) | pos_src | verified_by | NAIP resid along/lat m (relief-corrected; n/m = lateral not measured) | ADS-B (adsb.lol) n, along/lat m, dhdg | paint lat m / dh deg | bridges | excl / alt_of / tight / types_ok / per-family stops | name / position evidence |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | A1 | A1 | A1V | EL (B77W) | osm | - | - | - | - | 2 | - | AODB stand A1V (only A1 variant in the feed) on the OSM A1 lead-in |
-| A2 | A2 | A2 | EL (B77W) | osm | paint | - | - | -0.29 / +0.35 | 2 | - | OSM ref = SFO name |
-| A4 | A4 | A4T | C (B39M) | osm | naip | +0.7 / -0.0 | - | - | 1 | - | OSM ref A3 = SFO stand A4T (A3 hold-room label only; AODB narrow-body types; NAIP narrow-body at this stop) |
-| A5 | A5 | A5 | EL (B77W) | osm | paint | - | - | +0.03 / -0.01 | 2 | - | OSM ref = SFO name |
-| A6 | A6 | A6 | F (A388) | osm | - | - | - | -0.42 / -0.14 (noisy) | 3 | - | OSM ref = SFO name |
-| A8 | A8 | A8 | EL (B77W) | osm | paint | - | - | -0.17 / -0.13 | 2 | - | OSM ref = SFO name |
-| A9 | A9 | A9 | EL (B77W) | osm | naip | +0.5 / -0.0 | - | - | 2 | - | OSM ref = SFO name |
-| A10 | A10 | A10 | EL (A359) | osm | naip | -5.0 / -0.0 | - | - | 2 | - | OSM ref = SFO name |
-| A11 | A11 | A11 | F (A388) | osm | naip | -2.7 / +1.0 | - | - | 3 | - | OSM ref = SFO name |
-| A12 | A12 | A12 | E (A332) | osm | - | +9.0 / -0.0 (u) | - | - | 1 | - | OSM ref = SFO name |
-| A13 | A13 | A13V | EL (B77W) | osm | paint | - | - | -0.66 / -0.70 | 2 | - | AODB stand A13V (only A13 variant in the feed) on the OSM A13 lead-in |
-| A15 | A15 | A15 | C (B38M) | osm | naip | +1.3 / +0.3 | - | -4.03 / -1.39 (noisy) | 1 | - | OSM ref = SFO name |
-| B2 | B2 | B2 | C (B39M) | osm | naip | -1.0 / +0.0 | - | - | 1 | - | OSM ref = SFO name |
-| B3 | B3 | B3 | C (B39M) | osm | adsb | - | 1, -8.5 / +0.2, -0 | - | 1 | - | OSM ref = SFO name |
-| B4 | B4 | B4 | C (A21N) | osm | naip | +2.0 / -0.0 | - | - | 1 | B5S | OSM ref = SFO name |
-| B5 | B5 | B5 | C (A321) | osm | paint+adsb | - | 1, -0.6 / -0.8, +3 | -0.38 / -0.75 | 1 | B5S | curved OSM B5 lead-in; ADS-B A321 JBU413 at AODB B5 |
-| B5S | B5 | B5S | EL (B77W) | osm | paint | - | - | -0.13 / -0.26 | 0 | B4 B5 alt of B5 | straight OSM B5 lead-in = wide-body alternative (AODB B5S takes A359/B77W/A333) |
-| B6 | B6 | B6 | C (B39M) | osm | paint | - | - | -0.10 / -0.36 | 1 | - | OSM ref = SFO name |
-| B7 | B7 | B7 | C (B39M) | osm | adsb | - | 1, -11.8 / +0.5, -1 | - | 1 | - | OSM ref = SFO name |
-| B8 | B8 | B8 | C (B39M) | osm | naip+adsb | -3.5 / +0.0 | 1, -7.7 / +0.2, +0 | - | 1 | - | unreferenced OSM lead-in between B7 and B9 at the OSM B8 jet bridge; ADS-B ASA424 B39M at AODB B8 and NAIP narrow-body on it |
-| B9 | B9 | B9 | C (B38M) | osm | adsb | - | 1, -6.2 / -0.4, +0 | - | 1 | - | OSM ref = SFO name |
+| A2 | A2 | A2 | EL (B77W) | osm | paint | - | - | -0.30 / +0.31 | 2 | - | OSM ref = SFO name |
+| A4 | A4 | A4T | C (B39M) | osm | naip | -0.7 / +0.8 | - | - | 1 | - | OSM ref A3 = SFO stand A4T (A3 hold-room label only; AODB narrow-body types; NAIP narrow-body at this stop) |
+| A5 | A5 | A5 | EL (B77W) | osm | paint | - | - | +0.03 / -0.02 | 2 | - | OSM ref = SFO name |
+| A6 | A6 | A6 | F (A388) | osm | paint | - | - | -0.42 / -0.09 | 3 | - | OSM ref = SFO name |
+| A8 | A8 | A8 | EL (B77W) | osm | paint | - | - | -0.18 / -0.17 | 2 | - | OSM ref = SFO name |
+| A9 | A9 | A9 | EL (B77W) | osm | - | -0.9 / +1.7 | - | - | 2 | - | OSM ref = SFO name |
+| A10 | A10 | A10 | EL (B77W) | osm | - | -6.4 / n/m | - | - | 2 | - | OSM ref = SFO name |
+| A11 | A11 | A11 | F (A388) | osm | naip | +0.2 / -0.4 | - | - | 3 | - | OSM ref = SFO name |
+| A12 | A12 | A12 | E (A332) | osm | - | +7.3 / n/m (u) | - | - | 1 | - | OSM ref = SFO name |
+| A13 | A13 | A13V | EL (B77W) | osm | paint | - | - | -0.61 / -0.54 | 2 | - | AODB stand A13V (only A13 variant in the feed) on the OSM A13 lead-in |
+| A15 | A15 | A15 | C (B38M) | osm | naip | +0.1 / -0.1 | - | -4.09 / -1.56 (noisy) | 1 | - | OSM ref = SFO name |
+| B2 | B2 | B2 | C (B39M) | osm | - | -1.9 / n/m | - | - | 1 | - | OSM ref = SFO name |
+| B3 | B3 | B3 | C (B39M) | osm | adsb | - | 2, -10.7 / +0.4, -0 | - | 1 | - | OSM ref = SFO name |
+| B4 | B4 | B4 | C (A21N) | osm | - | +0.6 / n/m | - | - | 1 | B5S | OSM ref = SFO name |
+| B5 | B5 | B5 | C (A321) | osm | paint+adsb | - | 1, -0.6 / -0.7, +3 | -0.38 / -0.76 | 1 | B5S | curved OSM B5 lead-in; ADS-B A321 JBU413 at AODB B5 |
+| B5S | B5 | B5S | EL (B77W) | osm | paint | - | - | -0.15 / -0.38 | 0 | B4 B5 alt of B5 | straight OSM B5 lead-in = wide-body alternative (AODB B5S takes A359/B77W/A333) |
+| B6 | B6 | B6 | C (B39M) | osm | paint | - | - | -0.10 / -0.38 | 1 | - | OSM ref = SFO name |
+| B7 | B7 | B7 | C (B39M) | osm | adsb | - | 2, -10.7 / +0.3, -1 | - | 1 | - | OSM ref = SFO name |
+| B8 | B8 | B8 | C (B39M) | osm | adsb | -2.5 / n/m | 2, -7.9 / +0.3, +0 | - | 1 | - | unreferenced OSM lead-in between B7 and B9 at the OSM B8 jet bridge; ADS-B ASA424 B39M at AODB B8 and NAIP narrow-body on it |
+| B9 | B9 | B9 | C (B38M) | osm | adsb | - | 1, -6.4 / -0.4, +0 | - | 1 | - | OSM ref = SFO name |
 | B10 | B10 | B10 | C (A321) | osm | - | - | - | - | 1 | B11S | OSM ref = SFO name |
-| B11 | B11 | B11 | C (A320) | osm | naip | +2.0 / -0.0 | - | - | 1 | B11S | curved OSM B11 lead-in (NAIP narrow-body on it) |
-| B11S | B11 | B11S | E (B772) | osm | adsb | - | 1, -11.7 / -0.4, +0 | - | 1 | B10 B11 alt of B11 | straight OSM B11 lead-in; ADS-B ASA811 A332 at AODB B11S |
-| B12 | B12 | B12 | C (B38M) | osm | adsb | - | 1, +0.3 / -0.2, +0 | -0.11 / +0.10 (noisy) | 1 | - | OSM ref = SFO name |
-| B13 | B13 | B13 | C (B39M) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| B14 | B14 | B14 | C (A20N) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| B15 | B15 | B15 | C (B39M) | osm | naip | +2.5 / +0.0 | - | - | 1 | B16S | OSM ref = SFO name |
-| B16 | B16 | B16 | C (B739) | osm | adsb | - | 1, -0.3 / -0.6, - | - | 1 | B16S | curved OSM B16 lead-in; ADS-B AAL177 A321 at AODB B16 |
+| B11 | B11 | B11 | C (A320) | osm | - | +0.5 / n/m | - | - | 1 | B11S | curved OSM B11 lead-in (NAIP narrow-body on it) |
+| B11S | B11 | B11S | E (B772) | osm | adsb | - | 1, -11.0 / -0.4, +0 | - | 1 | B10 B11 alt of B11 | straight OSM B11 lead-in; ADS-B ASA811 A332 at AODB B11S |
+| B12 | B12 | B12 | C (B38M) | osm | paint+adsb | - | 2, -6.6 / -0.3, +0 | -0.13 / +0.10 | 1 | - | OSM ref = SFO name |
+| B13 | B13 | B13 | C (B39M) | osm | adsb | - | 1, -13.8 / -0.2, +0 | - | 1 | - | OSM ref = SFO name |
+| B14 | B14 | B14 | C (A20N) | osm | adsb | - | 1, -3.3 / -0.1, +0 | - | 1 | - | OSM ref = SFO name |
+| B15 | B15 | B15 | C (B39M) | osm | - | +1.1 / n/m | - | +4.05 / +0.38 (noisy) | 1 | B16S | OSM ref = SFO name |
+| B16 | B16 | B16 | C (B739) | osm | adsb | - | 1, -0.5 / -0.6, - | - | 1 | B16S | curved OSM B16 lead-in; ADS-B AAL177 A321 at AODB B16 |
 | B16S | B16 | B16S | EL (A339) | osm | - | - | - | - | 0 | B15 B16 alt of B16 | straight OSM B16 lead-in = wide-body alternative (AODB B16S takes B763/B76W/A339) |
-| B17 | B17 | B17 | C (A21N) | osm | adsb | - | 2, -1.1 / +0.7, +1 | - | 1 | - | OSM ref = SFO name |
-| B18 | B18 | B18 | C (A321) | osm | adsb | - | 1, +0.5 / -0.4, +1 | - | 1 | - | OSM ref = SFO name |
-| B19 | B19 | B19 | C (A321) | osm | adsb | - | 1, +0.1 / +1.4, -0 | - | 1 | - | OSM ref = SFO name |
-| B20 | B20 | B20 | C (B38M) | osm | naip | +3.0 / -0.0 | - | - | 1 | - | curved OSM B20 lead-in (NAIP narrow-body on it); straight 1096422706 has no SFO name |
-| B21 | B21 | B21 | C (A321) | osm | adsb | - | 2, +0.5 / -0.4, +1 | - | 1 | - | OSM ref = SFO name |
-| B22 | B22 | B22 | C (B738) | osm | naip+adsb | -5.0 / +0.0 | 1, -16.3 / -0.8, +0 | - | 1 | - | OSM ref = SFO name |
-| B23 | B23 | B23 | C (B38M) | osm | naip+adsb | -0.5 / +0.9 | 2, -3.6 / +0.2, -2 | - | 1 | - | OSM B23 lead-in hdg 339 (NAIP + ADS-B AAL2856 A321 on it); the second OSM B23 way 1096422699 has no SFO name |
-| B24 | B24 | B24 | C (A21N) | osm | adsb | - | 1, -0.7 / +0.2, -2 | - | 1 | - | OSM ref = SFO name |
-| B25 | B25 | B25 | C (A21N) | osm | adsb | - | 1, +0.4 / -0.9, +1 | - | 1 | - | OSM ref = SFO name |
-| B26 | B26 | B26 | C (B38M) | osm | adsb | - | 1, -9.1 / -0.2, -2 | - | 1 | - | OSM B26 lead-in hdg 64 (ADS-B AAL2799 B38M on it); straight 1096422703 has no SFO name |
-| B27 | B27 | B27 | C (A21N) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| C1 | C1 | C1 | C (B738) | osm | - | - | - | -0.33 / +0.08 (noisy) | 1 | - | OSM ref = SFO name |
-| C3 | C3 | C3 | CL (B752) | osm | naip | +0.0 / -0.0 | - | - | 1 | - | OSM ref = SFO name |
-| C4 | C4 | C4 | C (B38M) | osm+paint | paint | - | - | +0.01 / +0.02 | 1 | - | OSM ref = SFO name |
-| C5 | C5 | C5 | D (B753) span_max 38.1 len_max 54.4 | osm | naip | +1.0 / -0.0 | - | - | 1 | - | OSM ref = SFO name |
-| C6 | C6 | C6 | C (A21N) | osm | - | - | - | +0.43 / +10.12 (noisy) | 1 | - | OSM ref = SFO name |
-| C7 | C7 | C7 | C (B739) span_max 35.8 | osm | naip+adsb | -1.0 / -0.0 | 1, -12.8 / +1.3, +0 | - | 1 | - | OSM ref = SFO name |
-| C8 | C8 | C8 | D (B763) | osm | paint | - | - | -0.63 / -0.03 | 1 | - | OSM ref = SFO name |
-| C9 | C9 | C9 | CL (B752) | osm | naip+adsb | +0.0 / -0.0 | 1, -8.5 / +0.9, -0 | - | 1 | C9V | OSM ref = SFO name |
-| C9V | C9 | C9V | D (B763) | osm | - | - | - | +0.09 / -0.35 (noisy) | 0 | C9 C11 alt of C9 | INFERRED: unreferenced OSM lead-in at the C9 bridge, the only other line there; AODB C9V = 767 alternative of C9 |
-| C10 | C10 | C10 | C (BCS3) | osm | paint+adsb | - | 1, -2.6 / +0.2, +1 | -0.08 / -1.24 | 1 | - | OSM ref = SFO name |
-| C11 | C11 | C11 | C (BCS3) | osm | adsb | -15.0 / -0.0 (u) | 1, -5.3 / +0.4, +3 | +0.50 / +1.20 (noisy) | 1 | C9V | OSM ref = SFO name |
-| D1 | D1 | D1 | C (B38M) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| D3 | D3 | D3 | C (B38M) | osm | naip | -1.5 / +0.3 | 1, -3.7 / -5.0, +12 | - | 1 | - | OSM ref = SFO name |
-| D4 | D4 | D4 | C (B38M) | osm | naip | +0.0 / +0.0 | 1, -11.2 / -2.3, +24 | -4.66 / -6.44 (noisy) | 1 | - | OSM ref = SFO name |
-| D5 | D5 | D5 | CL (B752) | osm | naip | -2.5 / -0.5 | - | - | 1 | - | OSM ref = SFO name |
-| D6 | D6 | D6 | C (B38M) | osm | naip | -0.0 / +0.0 | - | - | 1 | - | OSM ref = SFO name |
-| D7 | D7 | D7 | C (B38M) | osm | naip | -1.0 / -0.0 | - | - | 1 | - | OSM ref = SFO name |
-| D8 | D8 | D8 | C (B38M) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| D9 | D9 | D9 | C (B38M) | osm | - | - | 1, -13.2 / +4.6, +12 | - | 1 | - | OSM ref = SFO name |
-| D10 | D10 | D10 | C (B38M) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| D11 | D11 | D11 | C (BCS3) | osm | naip | -7.0 / +0.0 | - | - | 1 | - | OSM ref = SFO name |
-| D12 | D12 | D12 | C (A21N) | osm | adsb | - | 1, -16.2 / -0.3, -0 | - | 1 | - | OSM ref = SFO name |
-| D14 | D14 | D14 | C (B39M) | osm+paint | adsb | - | 1, -6.9 / -0.6, -1 | -1.80 / -15.55 (noisy) | 1 | - | OSM ref = SFO name |
-| D15 | D15 | D15 | C (A21N) | osm | adsb | - | 1, -14.1 / -1.5, -1 | - | 1 | - | OSM ref = SFO name |
-| D16 | D16 | D16 | C (B738) | osm | naip | -3.0 / +0.0 | - | - | 1 | - | OSM ref = SFO name |
-| E2 | E2 | E2 | C (B39M) | osm | - | - | - | +0.27 / +0.45 (noisy) | 1 | - | OSM ref = SFO name |
-| E3 | E3 | E3 | C (B39M) | osm | - | - | - | +0.87 / +1.79 (noisy) | 1 | - | OSM ref = SFO name |
-| E4 | E4 | E4 | C (B39M) | osm | naip | -2.5 / +0.0 | - | +4.00 / +0.00 (noisy) | 1 | - | OSM ref = SFO name |
-| E5 | E5 | E5 | C (B39M) | osm | adsb | - | 1, -8.2 / +0.5, -0 | -0.30 / -0.36 (noisy) | 1 | - | OSM ref = SFO name |
-| E6 | E6 | E6 | C (B39M) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| E7 | E7 | E7 | C (B38M) | osm | adsb | - | 1, -10.6 / +0.1, +0 | -1.92 / -5.64 (noisy) | 1 | - | OSM ref = SFO name |
+| B17 | B17 | B17 | C (A21N) | osm | adsb | - | 3, +1.6 / +0.6, +1 | - | 1 | - | OSM ref = SFO name |
+| B18 | B18 | B18 | C (A321) | osm | adsb | - | 2, +1.0 / -0.2, +1 | - | 1 | - | OSM ref = SFO name |
+| B19 | B19 | B19 | C (A321) | osm | adsb | - | 2, -2.8 / +0.4, -0 | - | 1 | - | OSM ref = SFO name |
+| B20 | B20 | B20 | C (B38M) | osm | adsb | +1.5 / n/m | 1, -1.9 / -0.3, +1 | - | 1 | - | curved OSM B20 lead-in (NAIP narrow-body on it); straight 1096422706 has no SFO name |
+| B21 | B21 | B21 | C (A321) | osm | adsb | - | 2, -0.1 / -0.1, +1 | - | 1 | - | OSM ref = SFO name |
+| B22 | B22 | B22 | C (B738) | osm | adsb | -4.1 / n/m | 3, -16.6 / -0.7, +0 | - | 1 | - | OSM ref = SFO name |
+| B23 | B23 | B23 | C (B38M) | osm | adsb | -0.2 / n/m | 3, -3.8 / +0.2, -2 | - | 1 | - | OSM B23 lead-in hdg 339 (NAIP + ADS-B AAL2856 A321 on it); the second OSM B23 way 1096422699 has no SFO name |
+| B24 | B24 | B24 | C (A21N) | osm | adsb | - | 3, -2.5 / -0.2, +1 | - | 1 | - | OSM ref = SFO name |
+| B25 | B25 | B25 | C (A21N) | osm | adsb | - | 3, -0.4 / -0.5, +1 | - | 1 | - | OSM ref = SFO name |
+| B26 | B26 | B26 | C (B38M) | osm | adsb | - | 2, -9.2 / -0.3, -0 | - | 1 | - | OSM B26 lead-in hdg 64 (ADS-B AAL2799 B38M on it); straight 1096422703 has no SFO name |
+| B27 | B27 | B27 | C (A21N) | osm | adsb | - | 1, -4.4 / -0.5, -0 | - | 1 | - | OSM ref = SFO name |
+| C1 | C1 | C1 | C (B738) | osm | paint | - | - | -0.33 / +0.10 | 1 | - | OSM ref = SFO name |
+| C3 | C3 | C3 | CL (B752) | osm | naip | +0.7 / -0.2 | - | - | 1 | - | OSM ref = SFO name |
+| C4 | C4 | C4 | C (B38M) | osm+paint | paint+adsb | - | 1, -5.9 / -0.0, -2 | +0.00 / +0.03 | 1 | - | OSM ref = SFO name |
+| C5 | C5 | C5 | D (B753) span_max 38.1 len_max 54.4 | osm | naip | +2.5 / -0.3 | - | - | 1 | - | OSM ref = SFO name |
+| C6 | C6 | C6 | C (A21N) | osm | adsb | - | 1, -6.4 / -0.7, -2 | +0.42 / +10.02 (noisy) | 1 | - | OSM ref = SFO name |
+| C7 | C7 | C7 | C (B739) span_max 35.8 | osm | naip+adsb | -0.3 / -0.1 | 2, -12.8 / +0.8, +0 | - | 1 | - | OSM ref = SFO name |
+| C8 | C8 | C8 | D (B763) | osm | paint | - | - | -0.63 / +0.00 | 1 | - | OSM ref = SFO name |
+| C9 | C9 | C9 | CL (B752) | osm | naip+adsb | +1.1 / -0.3 | 2, -5.4 / +0.5, -0 | - | 1 | C9V | OSM ref = SFO name |
+| C9V | C9 | C9V | D (B763) | osm | - | - | - | +0.14 / -0.08 (noisy) | 0 | C9 C11 alt of C9 | INFERRED: unreferenced OSM lead-in at the C9 bridge, the only other line there; AODB C9V = 767 alternative of C9 |
+| C10 | C10 | C10 | C (BCS3) | osm | paint+adsb | - | 1, -2.8 / +0.2, +1 | -0.09 / -1.21 | 1 | - | OSM ref = SFO name |
+| C11 | C11 | C11 | C (BCS3) | osm | paint+adsb | -13.9 / n/m (u) | 1, -5.5 / +0.4, +3 | +0.53 / +1.41 | 1 | C9V | OSM ref = SFO name |
+| D1 | D1 | D1 | C (B38M) | osm | adsb | - | 2, -10.1 / +0.1, +0 | - | 1 | - | OSM ref = SFO name |
+| D3 | D3 | D3 | C (B38M) | osm | - | -2.0 / +0.5 | 3, -3.9 / -5.0, +12 | - | 1 | - | OSM ref = SFO name **CONFLICT: ADS-B (3 aircraft) -5.0 m / +12 deg off the axis** |
+| D4 | D4 | D4 | C (B38M) | osm | - | -0.2 / +0.2 | 3, -12.4 / -2.3, +24 | -4.63 / -6.30 (noisy) | 1 | - | OSM ref = SFO name **CONFLICT: ADS-B (3 aircraft) -2.3 m / +24 deg off the axis** |
+| D5 | D5 | D5 | CL (B752) | osm | naip | -2.3 / -0.1 | 1, +0.9 / -2.5, -2 | - | 1 | - | OSM ref = SFO name |
+| D6 | D6 | D6 | C (B38M) | osm | adsb | +1.0 / n/m | 1, -7.0 / +0.7, +1 | - | 1 | - | OSM ref = SFO name |
+| D7 | D7 | D7 | C (B38M) | osm | naip+adsb | +0.1 / -0.4 | 2, -6.7 / +0.4, +1 | - | 1 | - | OSM ref = SFO name |
+| D8 | D8 | D8 | C (B38M) | osm | - | - | 1, +0.2 / -8.5, +1 | - | 1 | - | OSM ref = SFO name **CONFLICT: ADS-B (1 aircraft) -8.5 m / +1 deg off the axis** |
+| D9 | D9 | D9 | C (B38M) | osm | - | - | 1, -13.3 / +4.6, +12 | - | 1 | - | OSM ref = SFO name **CONFLICT: ADS-B (1 aircraft) +4.6 m / +12 deg off the axis** |
+| D10 | D10 | D10 | C (B38M) | osm | adsb | - | 2, -15.9 / +0.1, +1 | - | 1 | stops A220 -12 | OSM ref = SFO name |
+| D11 | D11 | D11 | C (BCS3) | osm | adsb | -6.7 / n/m | 2, -15.0 / +0.5, +0 | +4.12 / +5.12 (noisy) | 1 | - | OSM ref = SFO name |
+| D12 | D12 | D12 | C (B39M) | osm | adsb | - | 2, -15.7 / -0.2, -0 | - | 1 | stops A320 -14 | OSM ref = SFO name |
+| D14 | D14 | D14 | C (B39M) | osm+paint | adsb | - | 1, -7.1 / -0.6, -1 | -1.99 / -15.76 (noisy) | 1 | - | OSM ref = SFO name |
+| D15 | D15 | D15 | C (B38M) | osm | adsb | - | 2, -9.7 / -0.2, -0 | - | 1 | - | OSM ref = SFO name |
+| D16 | D16 | D16 | C (B38M) | osm | naip | -4.2 / +0.1 | - | - | 1 | - | OSM ref = SFO name |
+| E2 | E2 | E2 | C (B39M) | osm | - | - | - | +0.28 / +0.49 (noisy) | 1 | - | OSM ref = SFO name |
+| E3 | E3 | E3 | C (B39M) | osm | - | - | - | +0.86 / +1.67 (noisy) | 1 | - | OSM ref = SFO name |
+| E4 | E4 | E4 | C (B39M) | osm | adsb | -1.4 / n/m | 1, -10.4 / -0.7, +2 | +4.00 / +0.00 (noisy) | 1 | - | OSM ref = SFO name |
+| E5 | E5 | E5 | C (B39M) | osm | adsb | - | 2, -8.9 / +0.1, -0 | -0.33 / -0.45 (noisy) | 1 | - | OSM ref = SFO name |
+| E6 | E6 | E6 | C (B39M) | osm | adsb | - | 2, -7.8 / +0.0, -0 | - | 1 | - | OSM ref = SFO name |
+| E7 | E7 | E7 | C (B38M) | osm | adsb | - | 1, -11.3 / +0.4, +0 | -1.95 / -5.71 (noisy) | 1 | - | OSM ref = SFO name |
 | E8 | E8 | E8 | C (B38M) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| E9 | E9 | E9 | C (B39M) | osm | - | - | - | -3.13 / -11.07 (noisy) | 1 | - | OSM ref = SFO name |
-| E10 | E10 | E10U | C (B39M) len_max 42.1 | osm | adsb | - | 1, -9.5 / +0.1, -0 | +2.30 / +14.44 (noisy) | 1 | tight E12 | OSM E10 lead-in; ADS-B UAL2647 B39M (AODB E10U) antenna 8.4 m behind its stop, hdg 137.8 |
-| E11 | E11 | E11U | C (B38M) | osm | paint+adsb | - | 1, -10.5 / +0.3, +0 | -0.09 / -0.32 | 1 | - | OSM E11 lead-in (hdg 261); the unreferenced 1096433104 (hdg 297) is not used |
-| E12 | E12 | E12 | D (B753) span_max 38.1 len_max 54.4 | osm | paint+adsb | - | 1, -29.4 / -0.0, -1 | +0.21 / -0.02 | 1 | tight E10 | OSM ref = SFO name |
-| E13 | E13 | E13T | C (B38M) | osm | paint | - | - | -0.48 / -0.98 | 1 | - | OSM E13 lead-in |
+| E9 | E9 | E9 | C (B39M) | osm | adsb | - | 1, -8.3 / -0.9, +7 | +1.73 / +27.95 (noisy) | 1 | - | OSM ref = SFO name |
+| E10 | E10 | E10U | C (B39M) len_max 42.1 | osm | - | - | - | +2.30 / +14.44 (noisy) | 1 | types_ok B38M B39M B738 B739 E75L | OSM E10 lead-in; ADS-B UAL2647 B39M (AODB E10U) antenna 8.4 m behind its stop, hdg 137.8 |
+| E11 | E11 | E11U | C (B38M) | osm | paint+adsb | - | 1, -10.7 / +0.3, +0 | -0.09 / -0.31 | 1 | - | OSM E11 lead-in (hdg 261); the unreferenced 1096433104 (hdg 297) is not used |
+| E12 | E12 | E12 | C (B39M) len_max 42.1 | osm | paint+adsb | - | 2, -27.4 / +0.5, -1 | +0.19 / -0.15 | 1 | types_ok B38M B39M B738 E75L stops B737 -18 | OSM ref = SFO name |
+| E13 | E13 | E13T | C (B38M) | osm | paint | - | - | -0.48 / -0.97 | 1 | - | OSM E13 lead-in |
 | F5 | F5 | F5 | C (B38M) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| F6 | F6 | F6 | B (E75L) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| F7 | F7 | F7 | B (E75L) | osm | naip+adsb | +1.0 / +0.0 | 2, -10.3 / +0.4, -1 | - | 1 | - | OSM ref = SFO name |
-| F8 | F8 | F8 | B (E75L) | osm | - | -1.0 / -0.0 (u) | - | +6.12 / +22.80 (noisy) | 1 | - | OSM ref = SFO name |
-| F9 | F9 | F9 | B (E75L) len_max 31.7 | osm | naip+adsb | -1.0 / +0.0 | 1, -11.0 / +0.9, -0 | - | 1 | - | OSM ref = SFO name |
-| F10 | F10 | F10 | B (CRJ2) span_max 21.2 len_max 26.8 | osm | naip | +1.0 / -0.0 | - | - | 0 | - | OSM ref = SFO name |
-| F11 | F11 | F11 | E (B789) | osm | paint+adsb | - | 1, -21.8 / +0.2, -0 | +0.25 / -0.56 | 2 | - | OSM ref = SFO name |
-| F12 | F12 | F12 | C (B39M) | osm | - | - | - | -4.43 / -18.54 (noisy) | 1 | - | OSM ref = SFO name |
-| F13 | F13 | F13 | EL (B77W) | osm | naip | -9.0 / -1.0 | - | - | 2 | - | OSM ref = SFO name |
-| F14 | F14 | F14 | D (B753) | osm | naip | -1.0 / +0.0 | - | -4.11 / -1.84 (noisy) | 1 | - | OSM ref = SFO name |
-| F15 | F15 | F15 | E (B772) | naip | naip | +0.0 / -0.0 | 1, -20.7 / +3.1, -3 | -4.00 / -0.00 (noisy) | 2 | - | OSM ref = SFO name |
-| F16 | F16 | F16 | CL (B752) | osm | - | - | - | -4.73 / -17.97 | 1 | - | OSM ref = SFO name |
-| F17 | F17 | F17 | D (B753) | osm | - | - | - | - | 1 | - | OSM ref = SFO name |
-| F18 | F18 | F18 | B (CRJ2) span_max 21.2 len_max 26.8 | osm | - | - | - | -1.63 / -4.88 (noisy) | 0 | - | OSM ref = SFO name |
-| F19 | F19 | F19 | EL (B77W) span_max 64.8 len_max 73.9 | osm | - | - | - | -4.87 / -17.35 (noisy) | 1 | tight F20 | OSM ref = SFO name |
-| F20 | F20 | F20 | D (B753) span_max 38.1 len_max 54.4 | osm | - | - | - | - | 1 | tight F19 | OSM ref = SFO name |
-| F21 | F21 | F21 | CL (B752) | osm | adsb | - | 1, -23.3 / -0.1, +0 | +0.78 / +0.42 (noisy) | 1 | - | OSM ref = SFO name |
-| F22 | F22 | F22 | E (B772) | osm | paint+adsb | - | 1, -17.5 / +0.0, -1 | -0.51 / -0.67 | 2 | - | OSM ref = SFO name |
-| G1 | G1 | G1 | E (B772) | osm | - | -2.0 / -5.2 | - | - | 2 | - | OSM ref = SFO name |
-| G2 | G2 | G2 | EL (B77W) | osm | paint | - | - | +0.05 / +0.49 | 2 | - | OSM ref = SFO name |
-| G3 | G3 | G3 | E (B772) | osm | - | +0.0 / +1.5 | - | -2.82 / +4.58 (noisy) | 2 | - | OSM ref = SFO name |
-| G4 | G4 | G4 | E (B772) | osm | - | +0.0 / +1.6 | - | - | 2 | - | OSM ref = SFO name |
-| G5 | G5 | G5 | EL (B77W) | osm | paint+adsb | - | 1, -9.7 / +1.8, +1 | +0.56 / +0.59 | 2 | - | OSM ref = SFO name |
-| G6 | G6 | G6 | EL (B77W) | osm | naip | -1.0 / -0.7 | - | - | 2 | - | OSM ref = SFO name |
-| G7 | G7 | G7 | EL (B77W) | osm | adsb | +3.0 / +2.0 | 1, -30.8 / +0.1, +0 | - | 2 | - | OSM ref = SFO name |
-| G8 | G8 | G8 | EL (B77W) | osm | naip | +0.5 / +0.7 | - | - | 2 | - | OSM ref = SFO name |
-| G9 | G9 | G9 | EL (B77W) | osm | - | +1.8 / -2.4 | - | - | 2 | - | OSM ref = SFO name |
-| G10 | G10 | G10 | EL (B77W) | osm | naip | -4.7 / -1.1 | - | -2.46 / -21.67 (noisy) | 2 | - | OSM ref = SFO name |
-| G11 | G11 | - | E (-) | osm | naip | +3.8 / -0.7 | - | +4.95 / +5.73 (noisy) | 2 | - | OSM G11 lead-in at the G11-G12 hold room bridges (DataSF gates G11, G12) |
-| G13 | G13 | G13S | F (A388) | osm | adsb | +1.8 / -3.7 | 1, -15.0 / +0.3, -3 | - | 3 | - | OSM G13 lead-in at the three-bridge G13-G14 hold room (AODB G13S takes A388/B748/B77W) |
+| F6 | F6 | F6 | B (E75L) | osm | adsb | - | 1, -11.0 / +1.2, +2 | - | 1 | - | OSM ref = SFO name |
+| F7 | F7 | F7 | B (E75L) | osm | - | +2.0 / n/m | - | - | 1 | - | OSM ref = SFO name |
+| F8 | F8 | F8 | B (E75L) | osm | adsb | +0.2 / n/m (u) | 1, -10.7 / +0.7, -0 | +6.12 / +22.77 (noisy) | 1 | - | OSM ref = SFO name |
+| F9 | F9 | F9 | B (E75L) len_max 31.7 | osm | adsb | -0.3 / n/m | 3, -11.8 / +0.9, -0 | - | 1 | - | OSM ref = SFO name |
+| F10 | F10 | F10 | B (CRJ2) span_max 21.2 len_max 26.8 | osm | naip | +0.7 / +0.6 | - | - | 0 | - | OSM ref = SFO name |
+| F11 | F11 | F11 | E (B789) | osm | paint+adsb | - | 1, -21.1 / +0.2, -0 | +0.25 / -0.62 | 2 | - | OSM ref = SFO name |
+| F12 | F12 | F12 | C (B39M) | osm | - | - | - | -4.48 / -18.69 (noisy) | 1 | - | OSM ref = SFO name |
+| F13 | F13 | F13 | EL (B77W) | osm | naip | -7.2 / -0.2 | - | - | 2 | - | OSM ref = SFO name |
+| F14 | F14 | F14 | D (B753) | osm | naip | -0.9 / +0.4 | - | -4.10 / -1.85 (noisy) | 1 | - | OSM ref = SFO name |
+| F15 | F15 | F15 | E (B772) | naip | adsb | +0.0 / -0.0 | 1, -21.9 / +0.9, -3 | +4.00 / -0.00 (noisy) | 2 | stops B737 -12 | OSM ref = SFO name |
+| F16 | F16 | F16 | CL (B752) | osm+adsb | adsb | - | 1, -26.3 / +0.4, +0 | -4.70 / -17.74 | 1 | - | OSM ref = SFO name |
+| F17 | F17 | F17 | D (B753) span_max 38.1 len_max 54.4 | osm+adsb | - | - | 1, -25.0 / -1.7, +0 | - | 1 | - | OSM ref = SFO name |
+| F18 | F18 | F18 | B (CRJ2) span_max 21.2 len_max 26.8 | osm | adsb | - | 1, -8.8 / -0.4, +0 | -1.54 / -4.55 (noisy) | 0 | - | OSM ref = SFO name |
+| F19 | F19 | F19 | EL (B77W) span_max 64.8 len_max 73.9 | osm | - | - | - | -4.25 / -16.37 (noisy) | 1 | types_ok A319 B39M B738 B752 B753 B77W | OSM ref = SFO name |
+| F20 | F20 | F20 | CL (B752) | osm | adsb | - | 1, -9.1 / -0.1, +0 | - | 1 | types_ok A21N B39M B738 B739 B752 | OSM ref = SFO name |
+| F21 | F21 | F21 | CL (B752) | osm | adsb | - | 2, -24.1 / -0.2, +0 | - | 1 | stops B737 -15 | OSM ref = SFO name |
+| F22 | F22 | F22 | E (B772) | osm | paint+adsb | - | 2, -16.8 / +0.4, -1 | -0.50 / -0.65 | 2 | - | OSM ref = SFO name |
+| G1 | G1 | G1 | E (B772) | osm | - | -0.2 / -2.3 | 1, -14.1 / -3.0, -9 | - | 2 | - | OSM ref = SFO name |
+| G2 | G2 | G2 | EL (B77W) | osm | paint | - | - | +0.05 / +0.56 | 2 | - | OSM ref = SFO name |
+| G3 | G3 | G3 | E (B772) | osm | naip+adsb | -1.0 / +0.3 | 1, -15.1 / +0.5, -1 | -2.69 / +5.48 (noisy) | 2 | - | OSM ref = SFO name |
+| G4 | G4 | G4 | E (B772) | osm | naip | -0.4 / +0.2 | - | - | 2 | - | OSM ref = SFO name |
+| G5 | G5 | G5 | EL (B77W) | osm | paint+adsb | - | 1, -14.9 / +0.4, - | +0.57 / +0.70 | 2 | - | OSM ref = SFO name |
+| G6 | G6 | G6 | EL (B77W) | osm | naip | +0.8 / +0.1 | - | - | 2 | - | OSM ref = SFO name |
+| G7 | G7 | G7 | EL (B77W) | osm | naip+adsb | +2.6 / -0.3 | 1, -29.2 / -0.3, +0 | - | 2 | stops A320 -29 | OSM ref = SFO name |
+| G8 | G8 | G8 | EL (B77W) | osm | naip | +0.1 / -0.3 | - | - | 2 | - | OSM ref = SFO name |
+| G9 | G9 | G9 | EL (B77W) | osm | naip+adsb | +3.6 / -0.1 | 1, -13.8 / +0.5, -1 | - | 2 | - | OSM ref = SFO name |
+| G10 | G10 | G10 | EL (B77W) | osm | - | -2.8 / n/m | - | -2.23 / -21.04 (noisy) | 2 | - | OSM ref = SFO name |
+| G11 | G11 | - | E (-) | osm | naip | +2.1 / -0.9 | - | +5.02 / +6.90 (noisy) | 2 | - | OSM G11 lead-in at the G11-G12 hold room bridges (DataSF gates G11, G12) |
+| G13 | G13 | G13S | F (A388) | osm | naip+adsb | +1.6 / +1.0 | 1, -14.3 / +0.3, -3 | - | 3 | - | OSM G13 lead-in at the three-bridge G13-G14 hold room (AODB G13S takes A388/B748/B77W) |
 <!--END:stands-->
 
 Remote stands with SFO names (ADS-B parked stays with an SFO remote-stand window, snapped to the nearest OSM parking
@@ -397,6 +438,11 @@ base stand - review round 1 restored this; before it `name` had become the AODB 
 | `resid` | stand | `{naip: {resid_along, resid_lat}, adsb: {n_aircraft, along_med, lat_med, dhdg_med}, osm}` residuals in the stand frame (m, deg) |
 | `rotunda`, `cab`, `walk`, `osm_id`, `assoc` | bridge | §4 |
 | `bridges_upper` | stand | third (A380 upper-deck) bridges, `door: 3`; not in `bridges` because the app cannot dock them yet |
+| `types_ok` | stand | review round 2: whitelist of ICAO designators where the class limits alone let a simultaneously planned neighbour come within 3 m (E10, E12, F19, F20): the types SFO / ADS-B put there |
+| `type_stops` | stand | review round 2: `{FAMILY: {along, n, src}}` - ADS-B shows that family stopping `along` m (negative) short of the stand nose (geom.py FAMILY) |
+| `conflict` | stand | review round 2: ADS-B aircraft with SFO's stand window more than 3 m / 10 deg off the axis (`n_aircraft`, `lat_med`, `dhdg_med`, aircraft); `verified_by` is then empty and `verified_unconfirmed` keeps what would have verified it |
+| `resid.naip` | stand | relief-corrected (review round 2); `resid_lat` null where the fuselage centre was not measured |
+| `geom_src`, `rotunda_twin_of` | bridge | review round 2: provenance of the bridge geometry (OSM, not NAIP-verified); the other rotunda of a twin head (F15, G11) |
 | `shares_bridges_of` | stand | an alternative position without bridges of its own uses the bridges of this stand |
 | `hdg`, `pos_src`, `name_src`, `verified_by`, `osm_id` | remote | parked heading and provenance of SFO-named remote stands |
 | `positions` | top | unnamed OSM parking positions (remote apron, cargo, maintenance, GA; `zone`: apron / north / west / contact-unused) with stop point and heading - candidates for parking aircraft that match no named stand (no SFO name, positions from OSM only, not verified) |
@@ -415,6 +461,17 @@ It no longer contains anything measured on the Google screenshots (which could n
 can be combined with it. The app must show the OSM attribution (request for the UI owner).
 
 ## 10. Remaining doubts
+
+- Review round 2 (see §12): the app does not yet use the data bridges, `types_ok`, `type_stops` or the `a380` flag, so
+  what the owner sees still differs from what is checked here (30 APP ISSUES). The drawing workflow's audit could not
+  be re-run this round: `jobs/extract2d.mjs` fails on the current `js/live/gates.js` ("Duplicate export of 'doorOf'";
+  both files belong to other workflows).
+- A2 L2: the 787-10 door 2 is 1.0 m beyond the longest apron-drive bridge (42.4 m vs 41.381 m); either the stop for that
+  type is further forward or the bridge is a longer unit - not resolved.
+- The relief fit assumes the OSM / paint lines are unbiased on average; k varies across NAIP frames (the Super Bay
+  Hangar leans the other way), so the per-stand correction is good to ~0.7 m rms near the terminals only.
+- `type_stops` rest on one or two ADS-B stays per stand; the along reference per family (antenna behind the nose) is
+  itself a median over stands.
 
 - C9V's lead-in and A4T's identity are inferred (no ADS-B on them yet); G13R and G14T are not modelled.
 - F18 and F10 have no bridge (see §4); F15 is placed on one imaged wide body.
@@ -436,6 +493,39 @@ can be combined with it. The app must show the OSM attribution (request for the 
   D3/D4 sit on the lines) - not resolved.
 - Remote stands: only those SFO allocated while the recorder ran (daytime coverage from 15:13 UTC) have positions.
 - Classes follow one day of AODB data; rarer larger types will raise some classes.
+
+## 12. Review round 2 (24 Sep 2026): what changed here
+
+| finding (severity) | change | evidence now |
+|---|---|---|
+| NAIP relief: F15 placed on a leaning image; NAIP_OBS lateral 0.0 wrong; 'relief ~1 m' (major x2) | `naip_relief.py`: fuselage centres measured numerically, lean fitted (k = 0.54 +- 0.04 m/m, 0.70 m rms, 25 stands); along readings corrected; calibration +1.2 / +3.3 m; F15 on the corrected reading; `naip` verification only from measured, corrected centres (accuracy ~+-1.5 m), never circular | F15 ADS-B lateral 0.9 m (was 3.1 m); verified_by naip 21 stands |
+| red boxes: ~20 % false positives (major) | `redboxes_naip.py` filter: painted outline on the perimeter, grey concrete ring, not coloured inside, hollow (not vehicles), not next to hold markings / within 15 m of a hold, within 200 m of a stand or OSM parking position | 257 boxes (was 309); rejected list with reasons in `refs/cache/stands/redboxes_naip.json`; montages `out/review/r2/redbox_rejected.jpg`, `redbox_kept_sample.jpg` (1-2 doubtful in 60) |
+| bridges not NAIP-verifiable (minor) | `geom_src` on every bridge; stated in §1 / §4 | - |
+| G5 ADS-B 1.8 m accepted at 3 m (minor) | `adsb` threshold 1.5 m | G5 now 0.4 m with more stays |
+| gates.js ignores the data bridges; 767 L2 over the wing; bridges at rest in aircraft (critical x3) | not my files: `docs/requests/static_geometry_round2.md` (gates.js #1-#5); §1 says the rendered bridges are unverified | - |
+| E10/E12, F19/F20 overlap with the app planforms (critical) | checker and builder on types.js planforms; `type_stops` (ADS-B per family); `types_ok` for pairs SFO plans together | E10/E12 4.2 m, F19/F20 5.1 m (DATA); 1.1 m in the APP view until traffic.js honours `typesOk` |
+| A380 clause on EL stands / F19 (critical) | request traffic.js #1; the checker models the clause as APP ISSUES | 15 APP ISSUES from the clause (+ E10/E12 from the single stop point) |
+| F16 / F17 noses at the facade (critical) | stands whose envelope comes within 2 m of the building move back to the ADS-B family stop when one exists (F16 16.9 m, F17 15.6 m; `pos_src osm+adsb`); nose-to-building < 2 m is an ISSUE, < 3.5 m a NOTE | F16 / F17 clear; closest now F12 2.4 m (NOTE) |
+| checker used REF / class planforms, missed 7 app types (major) | `geom.py` reads `js/aircraft/types.js` (`dump_types.mjs`, re-dumped when types.js changes); all 48 designators; doors and dock2 from types.js; cab pivot on the door normal | - |
+| rotunda swing (major) | check added: tunnel crossing its own walkway = ISSUE; > 87.5 deg from the walkway direction = NOTE only, because NAIP shows F-pier walkways running along the facade with the parked tunnels pointing away from it (the rotunda's neutral axis is not the walkway direction; `refs/cache/stands/view/F16F17osm.png`). Partly rejected: the "fold-back" reading assumed the neutral axis | no tunnel crosses its own walkway |
+| pairs below 3 m / ICAO with app planforms (major) | pair logic on types.js geometry | §5 table: nothing below 3 m in the data; F7/F8 4.7 m (> 4.5 m) |
+| app parks up to 25 m short (major) | checker: stop-short combinations as APP ISSUES; request traffic.js #4 | 14 APP ISSUES |
+| F5 / F16 short retraction (major) | F16 moved back (above); F5 stays open (DATA ISSUE) | F5 L1 7.1-7.5 m |
+| F15 / G11 twin rotundas (minor) | NAIP: one junction, two tunnels; `rotunda_twin_of` | - |
+| cab pivot 3.0 vs 2.5 m (minor) | one constant `geom.PIVOT_TO_DOOR = 2.4 m` (12.224 - 9.846 m, sheet footnote), builder and checker | - |
+| licence: adsb.fi in the ODbL file (major) | `adsb_parked.py` reads adsb.lol only, records `prov`; ATTRIBUTION.md updated | 624 stays, all `prov: adsblol` |
+| src='obs' overstated for paint-only (major) | paint-only stands are `inf`; note in the data file rewritten | src obs 71 / inf 37 |
+| D3 / D4 / D9 conflict (major) | `conflict` field, `verified_by` empty; NAIP 2024 (relief-corrected) puts the imaged aircraft on the D3 / D4 axes (0.5 / 0.2 m), so the 2026 ADS-B offset (three Southwest aircraft each, -5.0 m / +12 deg at D3, -2.3 m / +24 deg at D4) is unresolved: re-striping after May 2024 or a feed bias - not decided | D3, D4, D8, D9 flagged |
+| B10 / B11 bridge assignment (major) | `BRIDGE_FORCE`: 1096422714 -> B11 (OSM ref + NAIP); 1096422712 -> B10, 1096422713 -> B11S by geometry (following the OSM refs would put B10's bridge on its right side: rejected) | - |
+| F15 circular verification (major) | not `naip`-verified; ADS-B is the independent check | verified_by adsb |
+
+Reproduce (order matters): `python3 tools/stands/adsb_parked.py; python3 tools/stands/naip_relief.py;
+python3 tools/stands/build_stands.py; python3 tools/stands/redboxes_naip.py; python3 tools/stands/build_stands.py;
+python3 tools/stands/check_stands.py; python3 tools/stands/report.py` (the red-box filter reads the stand positions, the
+builder reads the boxes). `geom.py` re-dumps `js/aircraft/types.js` with node when it is newer than the cache.
+
+Not changed (with evidence): the SFO Museum hangar offset (building outlines are not generated from NAIP; a lean-free
+check needs a true orthophoto or wall-base measurement, see imagery.md §6 - open).
 
 ## 11. Review round 1 (24 Sep 2026): what changed here
 

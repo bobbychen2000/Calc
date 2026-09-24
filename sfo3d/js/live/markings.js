@@ -181,6 +181,9 @@ export function buildStandMarks(gates, boxes = [], gridDir = null) {
     } else R.line([back(-1.5), back(g.maxLen + 28)], 3 * IN, YEL, 1);
     // stop bars for the nose gear of small / large types on this stand (3 ft wide bars, 1 ft deep)
     const bars = g.wide ? [5.2, 6.4] : [3.6, 5.0];
+    // extra nose-gear stop bars where ADS-B shows a family stopping short of the stand nose (data type_stops, e.g. 737s
+    // at E12 / F21; nose gear ~4.7 m behind the nose of a 737 / A320)
+    for (const k in g.typeStops || {}) { const a = g.typeStops[k].along; if (a < -2) bars.push(-a + 4.7); }
     for (const d of bars) { const c = back(d); R.line([[c[0] - n[0] * 1.2, c[1] - n[1] * 1.2], [c[0] + n[0] * 1.2, c[1] + n[1] * 1.2]], 6 * IN, YEL, 1); }
   }
   const u = gridDir || [0.884, 0.467], v = [-u[1], u[0]];

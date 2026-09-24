@@ -1,7 +1,60 @@
 # Aircraft models: dimension, gear, door and type-mapping check
 
-Status: research note, 24 Sep 2026. Tool: `tools/models/check_dims.py` (re-run it after any change to `data/models/*.sfom`,
-`js/aircraft/types.js` or `js/live/aircraft.js`). Nothing in `data/` or `js/` was modified.
+Status: research note, 24 Sep 2026; **fixes applied the same day (§0)**. Tool: `tools/models/check_dims.py` (re-run it after
+any change to `data/models/*.sfom`, `js/aircraft/types.js`, `js/aircraft/fit.js` or `js/live/models.js`). §1–§10 below are
+the findings BEFORE the fixes and are kept as the record; §0 is the current state.
+
+## 0. Current state (after the fixes)
+
+What changed:
+
+- **`js/aircraft/types.js`**: `SPEC` holds the published data per type, each entry with its document, page/figure and
+  `inf`/`unv` lists: L, span, overall height range H, fuselage-top and door-1 sill ranges (ground-clearance tables), nose-
+  and main-gear stations (747/A380: wing then body gear, with the body-gear track), track, passenger-door **centres**
+  (`doors`: 1L, 2L, …; optional doors in `doorsOpt`), and `dock2` (the door the second bridge of a wide-body stand docks to).
+  `applySpec` writes them over the procedural geometry. New airframes: b736, b37m, b3xm, b762, b764 (own span 51.92), b772
+  (60.93) vs b77l (64.80), b773, b779 (folded span on the ground), a19n, a338, a339 (64.00), a35k (6-wheel bogie), e170, e75s,
+  e195, md11. `ICAO_TYPES` maps Doc 8643 designators; E290/E295, A318, CRJX, B778 are deliberately unmapped (markers)
+  because no primary document was obtained (E2 APM: techcare.embraer.com still returns 502, re-tried 24 Sep 2026).
+- **`js/aircraft/fit.js`** (new; `js/live/aircraft.js` re-exports it): designator → (airframe, model) mapping and the fit
+  of each imported model to its type: uniform scale from the published length of the type the model was built as;
+  fuselage plugs at per-model stations (`PLUG_AT`) whose forward length is the documented door-2 shift where door 2 lies
+  between the plugs (787-9/-10, A330-200/-800, A350-1000) else the main-gear shift; **wing span fit** (outer wing
+  stretched spanwise, tip device moved rigidly) where the rendered span is > 0.5 % off (A320neo family sharklet span on
+  the fence-tip models, A330neo, 767-400ER, E175 long/short wing, CRJ900 late build, ...); **fin height fit** (fin scaled
+  vertically about the fuselage top) where the rendered height is outside the published range by > 0.5 % (FAM A330 and 787
+  fins about 1 m short, FG 737-800 fin 0.36 m tall, CRJ700/900 fins short, ...); **seating** on the door-1 sill of the
+  model's own door object (A320 family, A220-100, CRJ700/900, E-Jets), else on the published fuselage top, else on the
+  overall height; the 737-800 model stands on its own gear. The HEIGHT table and the old `stretchFor` are gone.
+- **`js/live/models.js`**: `applyStretch` implements plugs + wing + fin on the decoded vertices.
+- **`js/live/gates.js`** (`doorOf`): the cab docks at the door **centre** (the old `+ 0.5 m` is removed): the model's own
+  rendered door object where it has one (so the bridge meets the painted door), else the published centre; cab floor on
+  the published door sill (`dockSill`, door 2: `sill2`); the cab stops at the rendered fuselage side at door height
+  (`dockHW`, from the model's measured section). The second bridge docks only where the document gives a door for it
+  (`dock2`); the 767-300 (door 2 optional) gets one bridge.
+
+`python3 tools/models/check_dims.py` now measures the **rendered** geometry (it ports `applyStretch` and runs `fit.js` in
+node) against `REF` (independent transcription, §8) or, for designators without a REF row (B736, B37M, B762, B773, B74F,
+A338, E170, MD11), against `SPEC`. Result: **18 flags, all explained, 0 unexplained** (exit code 0):
+
+| Flag | Types | Deviation | Explanation / source |
+|---|---|---|---|
+| model's own main gear | all 737 variants (FG 737-800 model with gear) | +0.43 m (1.1 % of L) | The artist's gear. TYPES, ground physics and procedural parts use the ACAP station (737NG D6-58325-7 §2.2.6 / 737 MAX D6-38A004 §2.2.2: nose gear 4.09 m, wheelbase 15.60 m); the nose gear is +0.23 m (not flagged). |
+| L1 door / bridge dock x | E75L, E75S | +0.41 m vs 5.14 m (inf) | The FAM E175 has no door object; its door is the E170 model's `door.l1` (vertex-identical nose, `model_features.py`), scaled with the E175 model (s = 1.028: the FAM E175 is 0.86 m short and is scaled uniformly). The reference itself is inferred (APM-2259 Fig 2.2: 1L forward edge 4.71 m + half of the 0.85 m door, Fig 2.3). The bridge docks at the painted door; its 3.1 m bellows covers both. |
+
+Checks that pass for every mapped type (1 % of size, or 1 % of L for positions): rendered length, rendered span (after the
+span fit), rendered height (after the fin fit) against the H range, rendered fuselage top where published, TYPES nose/main
+gear, track, span, bridge dock x (door 1L and the `dock2` door) and cab floor vs the door-1 sill; for models with a door
+object also its rendered centre and sill, and dock x = rendered door. The E-Jet H references are now ranges from the APMs
+(ground-clearance table value – "Height (maximum)": E175 9.54–9.86 m, APM-2259 §2.2.1 p.30 and Table 2.2 p.37; E190
+10.33–10.57 m, APM-1901 Fig 2.1 p.30 and Table 2.3 p.35; E195 10.29–10.57 m, APM-1997 Fig 2.1 p.34 and Table 2.3 p.37).
+
+Still open (unchanged from §10): E2 and A318/CRJ1000/777-8 documents; A220 door stations (ACP not obtainable, the A220
+doors are the A220-100 model's door objects, inf); per-airframe A321neo door layout (4-door vs ACF) and 757/767 winglet
+STCs; A380 texture licence; the 777 family has no artist model (procedural airframe). Headless check (snapshot mode,
+SOFTGL, 24 Sep 2026): the app loads with no page errors, all 39 model-backed aircraft of the snapshot decode with their
+stretches (plugs/wing/fin), and every docked bridge's door point coincides with the door computed from the drawn aircraft's
+world matrix.
 
 **Scope.** For every converted model (`data/models/*.sfom`, 21 models) and every ICAO designator in
 `TYPE_MODELS` (`js/live/aircraft.js`), I compared what the app renders and uses with the manufacturers'

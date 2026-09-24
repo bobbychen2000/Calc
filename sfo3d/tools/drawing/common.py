@@ -4,8 +4,13 @@ real .sfom models / the procedural (TYPES) bodies, and small raster utilities.
 
 World frame (js/geo.js): x east, z south, y up, metres from the ARP; ground at GROUND_Y = 3. Airport grid (s, t):
 e = s*V0 + t*U0, n = s*V1 + t*U1, x = e, z = -n (V/U are stored in scene2d.json meta.stBasis).
+Frame guard: scene2d.json records the app's world frame id (js/geo.js FRAME_ID). scene() refuses a scene whose frame
+differs from tools/geo_frame.py (the Python twin every imagery transform goes through) or from js/geo.js now; a scene
+extracted before frame ids existed is treated as the legacy 'equirect-v1' frame and refused too (re-extract).
+Staleness: scene2d.json meta.inputs holds the hash of every file the app loaded; stale_inputs() lists those that differ
+in the working tree now (report.py refuses to publish a stale scene unless ALLOW_STALE=1).
 """
-import gzip, json, math, os, struct, functools
+import gzip, hashlib, json, math, os, re, struct, sys, functools
 import numpy as np
 import cv2
 import shapely
@@ -20,10 +25,76 @@ os.makedirs(OUT, exist_ok=True)
 FT = 0.3048
 
 
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import geo_frame as GF  # noqa: E402  (the Python twin of js/geo.js; tools/test_geo_frame.py)
+LEGACY_FRAME = 'equirect-v1'
+
+
+def js_frame_id():
+    """FRAME_ID declared in js/geo.js now (None if the file has none: the legacy frame)"""
+    m = re.search(r"FRAME_ID\s*=\s*'([^']+)'", open(os.path.join(ROOT, 'js', 'geo.js')).read())
+    return m.group(1) if m else LEGACY_FRAME
+
+
+class FrameMismatch(SystemExit):
+    pass
+
+
+def check_frame(S):
+    """the scene's world frame must be the frame of tools/geo_frame.py (all imagery georeferencing) and of js/geo.js"""
+    fid = S['meta'].get('frameId') or LEGACY_FRAME
+    if os.environ.get('DRAW_FRAME_CHECK', '1') == '0': return fid
+    bad = []
+    if fid != GF.FRAME_ID: bad.append(f'tools/geo_frame.py FRAME_ID = {GF.FRAME_ID!r}')
+    if fid != js_frame_id(): bad.append(f'js/geo.js FRAME_ID = {js_frame_id()!r}')
+    # the frame id is not enough on its own: the extracted runway ends must equal the Python twin's (1 cm)
+    pr = S['meta'].get('probe')
+    if pr and not bad:
+        for k, e in (('end10L', '10L'), ('end28R', '28R')):
+            w = GF.end_world(e); d = math.hypot(pr[k][0] - w[0], pr[k][2] - w[1])
+            if d > 0.01: bad.append(f'runway end {e} extracted at ({pr[k][0]:.3f}, {pr[k][2]:.3f}) but geo_frame gives ({w[0]:.3f}, {w[1]:.3f}) ({d:.3f} m)')
+    if bad:
+        raise FrameMismatch(f'out/draw/scene2d.json was extracted in world frame {fid!r}, but ' + '; '.join(bad)
+                            + ' - re-extract (tools/drawing/run_all.sh without SKIP_EXTRACT) before measuring or drawing')
+    return fid
+
+
+def _sha(path):
+    try:
+        h = hashlib.sha256()
+        with open(path, 'rb') as f:
+            for b in iter(lambda: f.read(1 << 20), b''): h.update(b)
+        return h.hexdigest()[:16]
+    except OSError: return None
+
+
+def stale_inputs(S=None):
+    """files the app loaded at extraction whose content differs now ([] = the scene describes the working tree);
+    None when the scene predates input hashing"""
+    S = S or scene(); inp = S['meta'].get('inputs')
+    if not inp: return None
+    return sorted(p for p, h in inp.items() if _sha(os.path.join(ROOT, p)) != h)
+
+
+def git_head():
+    try:
+        import subprocess
+        return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=ROOT, text=True).strip()
+    except Exception: return None
+
+
+def provenance(S=None):
+    """one-line provenance for title blocks and the report: frame, git, extraction time, staleness"""
+    S = S or scene(); m = S['meta']; st = stale_inputs(S)
+    return dict(frame=m.get('frameId') or LEGACY_FRAME, git=m.get('git'), gitHead=m.get('gitHead'), generated=m['generated'], inputsHash=m.get('inputsHash'),
+                nInputs=len(m.get('inputs') or {}), stale=st, typesHash=m.get('typesHash'), changedDuring=m.get('inputsChangedDuringExtraction') or [])
+
+
 # ------------------------------------------------------------------------------------------------ scene
 @functools.lru_cache(None)
 def scene():
     S = json.load(open(os.path.join(OUT, 'scene2d.json')))
+    check_frame(S)
     S['_bin'] = np.fromfile(os.path.join(OUT, S.get('meshBin', 'meshes.bin')), np.uint8)
     return S
 
@@ -137,8 +208,11 @@ def read_sfom(key):
     hl = struct.unpack('<I', raw[8:12])[0]; head = json.loads(raw[12:12 + hl]); B = 12 + hl
     nv, ni, q, o = head['nv'], head['ni'], head['quant'], head['offsets']
     pq = np.frombuffer(raw, np.uint16, nv * 3, B + o['pos']).reshape(-1, 3).astype(np.float64)
-    pos = np.array(q['pmin']) + pq * np.array(q['pscale'])
+    # float32 like the page (models.js decodeModel: Float32Array)
+    pos = (np.array(q['pmin']) + pq * np.array(q['pscale'])).astype(np.float32).astype(np.float64)
     idx = np.frombuffer(raw, np.uint16 if head['idxType'] == 'u16' else np.uint32, ni, B + o['idx']).astype(np.int64).reshape(-1, 3)
+    zone = np.frombuffer(raw, np.uint8, nv, B + o['zone']).copy() if 'zone' in o else None
+    head['_zone'] = zone
     return head, pos, idx
 
 
@@ -182,21 +256,44 @@ class AcGeom:
         return lo, hi
 
 
-def _stretch(pos, st):
+ZONE_NOFIN = {2, 3, 7}  # engine, gear, pylon (tools/convert_models.py ZONE; js/live/models.js ZONE_NOFIN)
+
+
+def _stretch(pos, st, zone=None, dims=None):
+    """js/live/models.js applyStretch(), same order: wing span fit, fin height fit, fuselage plugs; dims updated"""
     if not st: return pos
-    pos = pos.copy(); x = pos[:, 0]
-    x2 = np.where(x < st['cut2'], x - st['d1'] - st['d2'], np.where(x < st['cut1'], x - st['d1'], x))
-    pos[:, 0] = x2; return pos
+    pos = pos.copy(); dims = dims if dims is not None else {}
+    W = st.get('wing'); Fn = st.get('fin')
+    if W:
+        z0, z1, dz, xMin = W['z0'], W['z1'], W['dz'], W['xMin']; sc = dz / (z1 - z0)
+        x = pos[:, 0]; z = pos[:, 2]; az = np.abs(z)
+        m = (x >= xMin) & (az > z0)
+        pos[m, 2] = z[m] + np.sign(z[m]) * np.where(az[m] >= z1, dz, (az[m] - z0) * sc)
+        if 'span' in dims: dims['span'] += 2 * dz
+    if Fn:
+        yF, xF, k = Fn['yF'], Fn['xF'], Fn['k']
+        x = pos[:, 0]; y = pos[:, 1]
+        m = (x < xF) & (y > yF)
+        if zone is not None: m &= ~np.isin(zone, list(ZONE_NOFIN))
+        pos[m, 1] = yF + (y[m] - yF) * k
+        dims['H'] = float(pos[:, 1].max())
+    if st.get('cut1') is not None:
+        x = pos[:, 0]
+        pos[:, 0] = np.where(x < st['cut2'], x - st['d1'] - st['d2'], np.where(x < st['cut1'], x - st['d1'], x))
+        if 'L' in dims: dims['L'] += st['d1'] + st['d2']
+    return pos
 
 
 @functools.lru_cache(None)
 def model_geom(model_key, stretch_json, placement_json):
-    """real model (.sfom) in aircraft-local frame: placement * stretched model"""
+    """real model (.sfom) in aircraft-local frame: placement * stretched model (exactly as js/live/models.js)"""
     head, pos, idx = read_sfom(model_key)
     st = json.loads(stretch_json) if stretch_json else None
-    pos = _stretch(pos, st)
+    dims = dict(head.get('dims') or {})
+    pos = _stretch(pos, st, head.get('_zone'), dims)
     M = m4(json.loads(placement_json))
-    return AcGeom(xform(M, pos), idx, 'model:' + model_key)
+    g = AcGeom(xform(M, pos), idx, 'model:' + model_key); g.model_dims = dims
+    return g
 
 
 @functools.lru_cache(None)
@@ -271,3 +368,40 @@ def _buildings():
 
 def buildings():
     return _buildings()
+
+
+# ------------------------------------------------------------------------------------------------ physics pavement
+class NetPaved:
+    """traffic.js TaxiNet.paved(x, z) (GroundPhysics adds it to the raster: ground.js pavedUnion, which tests the net
+    at Math.round(x), Math.round(z)): distance to an OSM taxi-net edge < hw (runway edges: 30.5 m), or inside an apron
+    ring. Re-implemented with shapely from scene2d.json `net`; verified against the page's own answers
+    (scene2d.json physics.samples) by check()."""
+    def __init__(self):
+        S = scene(); N = S.get('net')
+        self.ok = bool(N)
+        if not self.ok: return
+        from shapely.geometry import LineString as LS
+        E = np.array(N['edges'], float)
+        segs = [LS([(e[0], e[1]), (e[2], e[3])]).buffer(N['rwHw'] if e[4] else N['hw'], quad_segs=16) for e in E if (e[0], e[1]) != (e[2], e[3])]
+        rings = [Polygon(r).buffer(0) for r in N['aprons'] if len(r) >= 3]
+        self.geom = unary_union(segs + rings); shapely.prepare(self.geom)
+
+    def __call__(self, x, z):
+        x = np.round(np.asarray(x, float)); z = np.round(np.asarray(z, float))
+        if not self.ok: return np.zeros(np.shape(x), bool)
+        return shapely.contains_xy(self.geom, x, z)
+
+    def check(self):
+        smp = scene()['physics'].get('samples')
+        if not smp or not self.ok: return None
+        A = np.array(smp, float); mine = self(A[:, 0], A[:, 1])
+        return dict(n=len(A), agree=float((mine == (A[:, 3] > 0)).mean()))
+
+
+def phys_gear_points(T, W):
+    """GroundPhysics gear points (js/live/ground.js samples(): nose gear xNose (default 3 m) behind the nose, main gear
+    at xMain +- track/2 (default 6 m)) in world x, z for an aircraft-local -> world matrix W (x forward, origin = main
+    gear); replicated (meta.replicated lists it)"""
+    xn = T.get('xNose') if T.get('xNose') is not None else 3.0; tr = (T.get('track') or 6) / 2
+    P = np.array([[T['xMain'] - xn, 0, 0], [0, 0, tr], [0, 0, -tr]], float); Q = P @ W[:3, :3].T + W[:3, 3]
+    return Q[:, 0], Q[:, 2], ['nose', 'main', 'main']

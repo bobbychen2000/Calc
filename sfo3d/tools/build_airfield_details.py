@@ -6,10 +6,13 @@ Outputs data/sfo_details.json (+ debug PNGs in out/details/):
                  terminal surroundings (SFO Museum data has no apron features; this is an inferred outline)
   centerlines    taxiway centreline polylines: OSM aeroway=taxiway ways (ODbL), cut at runway edges, checked against the
                  painted yellow line on NAIP 2024 and moved onto it where NAIP shows a consistent offset > 0.5 m
-                 (centerlineMeta: per line OSM id, ref, src 'osm' / 'osm+naip'; centerlineStats: residuals vs paint)
+                 (centerlineMeta: per line OSM id, ref, src 'osm' / 'osm+naip'; centerlineStats: residuals vs paint);
+                 plus painted lines OSM lacks, traced on NAIP from two locator points (PAINT_TRACES, src 'naip')
   holds          runway holding positions: the painted 4-line marking measured on NAIP 2024 on every centreline
                  approach to a runway (position, bar angle, painted length; src 'naip'), else an OSM
-                 aeroway=holding_position on the line (src 'osm'); 'dist' = m from the runway centreline
+                 aeroway=holding_position on the line (src 'osm'); then every OSM holding position (runway / ILS) with
+                 no model hold within 15 m is used as a locator and its bar measured on the paint (locator 'osm',
+                 kind 'runway' | 'ils'; review round 2); 'dist' = m from the runway centreline
   edges          taxiway edge polylines where the taxiway borders unpaved ground
   masts          apron floodlight mast positions (typical spacing along the ramp boundary)
   roads          ramp service-road lines offset from the terminal face
@@ -609,7 +612,8 @@ for ac in snap['ac']:
 print('patches', len(patches))
 out = {'attribution': 'Taxiway centrelines: OpenStreetMap aeroway=taxiway ways ((c) OpenStreetMap contributors, ODbL 1.0), '
                       'checked and locally moved onto the paint measured on USDA NAIP 2024 (public domain). Holding positions: '
-                      'painted markings measured on NAIP 2024 (src naip) or OSM aeroway=holding_position (src osm). Apron outline, '
+                      'painted markings measured on NAIP 2024 (src naip; locator osm = found via an OSM aeroway=holding_position) or OSM '
+                      'aeroway=holding_position (src osm). Centrelines with src naip: traced on the NAIP paint where OSM has no way. Apron outline, '
                       'edges, masts and road lines: derived from SFO Museum sfomuseum-data-architecture (CDLA-Permissive-1.0), inferred. '
                       'See tools/build_airfield_details.py and docs/ATTRIBUTION.md',
        'frame': geo_frame.FRAME_ID, 'apron': apron_polys, 'centerlines': centerlines, 'centerlineMeta': cl_meta, 'centerlineStats': CL_STATS,

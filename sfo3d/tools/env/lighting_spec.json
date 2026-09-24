@@ -1,0 +1,4786 @@
+{
+ "schema": "sfo3d.airfield_lighting.v1",
+ "generated": "2026-09-24T20:16Z",
+ "generator": "tools/env/build_lighting_spec.py",
+ "report": "docs/research/airfield_lighting.md",
+ "frame": {
+  "id": "ltp-nad83-2011",
+  "axes": "x east, z south, metres from the ARP (FAA NASR 37.6188056 N, -122.3754167 E)",
+  "ground_note": "heights h are metres above local ground/pavement; ALS light plane = threshold elevation (NAVD88 ft per NASR)"
+ },
+ "provenance": {
+  "pub": "published SFO fact (NASR, Chart Supplement, TPP, FAA RWSL graphic, DOF)",
+  "std": "FAA standard applied to SFO, as-built not surveyed",
+  "obs": "measured on NAIP 2024 public-domain orthoimagery",
+  "inf": "inferred / chosen inside a standard tolerance"
+ },
+ "sources": {
+  "nasr": {
+   "title": "FAA NASR 28-day subscription, APT_BASE/APT_RWY/APT_RWY_END/APT_RMK.csv, cycle effective 2026-09-03",
+   "url": "https://www.faa.gov/air_traffic/flight_info/aeronav/aero_data/NASR_Subscription/",
+   "cache": "refs/cache/xcheck/faa/03_Sep_2026_APT_CSV.zip"
+  },
+  "nasr_layout": {
+   "title": "FAA NASR \"APT DATA LAYOUT.pdf\" (field/code definitions), in the same zip",
+   "cache": "refs/cache/xcheck/faa/03_Sep_2026_APT_CSV.zip"
+  },
+  "cs": {
+   "title": "FAA Chart Supplement Southwest, SAN FRANCISCO INTL p.275-276, 3 SEP 2026 to 29 OCT 2026",
+   "url": "https://aeronav.faa.gov/afd/03sep2026/sw_275_03SEP2026.pdf",
+   "cache": "refs/cache/lighting/sw_275_03SEP2026.pdf"
+  },
+  "ad": {
+   "title": "FAA Airport Diagram AL-375, SW-2 03 SEP 2026 to 01 OCT 2026",
+   "url": "https://aeronav.faa.gov/d-tpp/2609/00375ad.pdf",
+   "cache": "refs/cache/xcheck/faa/00375ad_2609.pdf"
+  },
+  "tpp": {
+   "title": "FAA d-TPP cycle 2609 SFO approach plates (ILS 28R/28L/19L, CAT II/III, GLS, RNAV)",
+   "url": "https://aeronav.faa.gov/d-tpp/2609/00375IL28R.PDF",
+   "cache": "refs/cache/lighting/tpp/"
+  },
+  "ac30j": {
+   "title": "FAA AC 150/5340-30J Design and Installation Details for Airport Visual Aids (2018-02-12, current; errata 2020-11-17)",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/150-5340-30J.pdf",
+   "cache": "refs/cache/lighting/150-5340-30J.pdf"
+  },
+  "jo6850": {
+   "title": "FAA Order JO 6850.2C Visual Guidance Lighting Systems (effective 2022-08-30, status Active)",
+   "url": "https://www.faa.gov/documentLibrary/media/Order/FAA_Order_6850.2C.pdf",
+   "cache": "refs/cache/lighting/FAA_Order_6850.2C.pdf"
+  },
+  "ac46f": {
+   "title": "FAA AC 150/5345-46F Specification for Runway, Taxiway, Heliport and Vertiport Light Fixtures (2024-09-30)",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC-150-5345-46F-Fixtures.pdf",
+   "cache": "refs/cache/lighting/AC-150-5345-46F-Fixtures.pdf"
+  },
+  "ac28h": {
+   "title": "FAA AC 150/5345-28H Precision Approach Path Indicator (PAPI) Systems (2019-07-29)",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/150-5345-28H.pdf",
+   "cache": "refs/cache/lighting/150-5345-28H.pdf"
+  },
+  "ac51b": {
+   "title": "FAA AC 150/5345-51B Specification for Discharge-Type Flashing Light Equipment (REIL/ODALS) (2010-09-08)",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/150_5345_51b.pdf",
+   "cache": "refs/cache/lighting/150_5345_51b.pdf"
+  },
+  "ac12f": {
+   "title": "FAA AC 150/5345-12F Specification for Airport and Heliport Beacons (2010-09-24)",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/150_5345_12f.pdf",
+   "cache": "refs/cache/lighting/150_5345_12f.pdf"
+  },
+  "ac43j": {
+   "title": "FAA AC 150/5345-43J Specification for Obstruction Lighting Equipment (2019-03-11)",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/150-5345-43J.pdf",
+   "cache": "refs/cache/lighting/150-5345-43J.pdf"
+  },
+  "ac7460": {
+   "title": "FAA AC 70/7460-1N Obstruction Marking and Lighting (2026-08-11, cancels 7460-1M)",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/2026-07-13_AC_70_7460-1N_Obstruction_Marking_and_Lighting_FINAL_CLEAN.pdf",
+   "cache": "refs/cache/lighting/2026-07-13_AC_70_7460-1N_Obstruction_Marking_and_Lighting_FINAL_CLEAN.pdf"
+  },
+  "eb67d": {
+   "title": "FAA Engineering Brief 67D Light Sources Other Than Incandescent and Xenon (chromaticity boundaries)",
+   "url": "https://www.faa.gov/sites/faa.gov/files/2024-07/eb_67d_rev.pdf",
+   "cache": "refs/cache/lighting/eb_67d_rev.pdf"
+  },
+  "jo7110": {
+   "title": "FAA JO 7110.65BB Air Traffic Control, Chapter 3 Section 4 Airport Lighting (online edition)",
+   "url": "https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap3_section_4.html",
+   "cache": "refs/cache/lighting/jo7110_65_chap3_section_4.html"
+  },
+  "aim": {
+   "title": "FAA AIM Chapter 2 Section 1 Airport Lighting Aids (online)",
+   "url": "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap2_section_1.html",
+   "cache": "refs/cache/lighting/aim_chap2_section_1.html"
+  },
+  "rwsl": {
+   "title": "FAA \"Runway Status Lights at San Francisco (SFO)\" graphic (PDF created 2017-11-13)",
+   "url": "https://www.faa.gov/air_traffic/technology/rwsl/media/SFO.pdf",
+   "cache": "refs/cache/lighting/rwsl_SFO.pdf"
+  },
+  "dof": {
+   "title": "FAA Digital Obstacle File, DAILY_DOF_CSV.ZIP (DOF.CSV dated 2026-09-18), horizontal datum WGS 84",
+   "url": "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP",
+   "cache": "refs/cache/lighting/DAILY_DOF_CSV.ZIP"
+  },
+  "naip": {
+   "title": "USDA NAIP 2024 (flown 2024-05-20) 0.6 m orthoimagery, public domain, resampled to the world grid (docs/research/imagery.md)",
+   "cache": "refs/cache/naip/naip_2024_world_0.5m_bgr.npy"
+  },
+  "sfo2013": {
+   "title": "SFO Airport Commission memo \"Runway Safety Area Project Update - Runway Threshold Changes\" 2013-06-20 (NTSB docket copy)",
+   "url": "https://data.ntsb.gov/Docket/Document/docBLOB?FileExtension=pdf&FileName=ATC+3-SFO+RSA+Construction+Update-Rel.pdf&ID=398528",
+   "cache": "refs/cache/lighting/ntsb_ATC3_SFO_RSA_Construction_Update.pdf"
+  },
+  "ac5360": {
+   "title": "FAA AC 150/5360-13A Airport Terminal Planning (2018-07-13) para 7.5 Apron Lighting; cancelled AC 150/5360-13 (1988) Table 4-1",
+   "url": "https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC-150-5360-13A-Airport-Terminal-Planning.pdf",
+   "cache": "refs/cache/lighting/AC-150-5360-13A.pdf"
+  },
+  "xplane": {
+   "title": "X-Plane Scenery Gateway KSFO pack 112022 apt.dat (community data, cross-check only)",
+   "cache": "refs/cache/xplane/"
+  },
+  "osm": {
+   "title": "OpenStreetMap via Overpass, 2026-09-24T09:07Z (ODbL; cross-check flags only, no geometry copied)",
+   "cache": "refs/cache/osm/overpass_ksfo_latest.json"
+  }
+ },
+ "colours": {
+  "white": {
+   "xy": [
+    [
+     0.32,
+     0.356
+    ],
+    [
+     0.44,
+     0.433
+    ],
+    [
+     0.44,
+     0.383
+    ],
+    [
+     0.32,
+     0.292
+    ]
+   ],
+   "centroid": [
+    0.378,
+    0.364
+   ],
+   "lin_srgb": [
+    1.0,
+    0.6137,
+    0.4107
+   ],
+   "in_gamut": true
+  },
+  "green": {
+   "xy": [
+    [
+     0.014,
+     0.75
+    ],
+    [
+     0.129,
+     0.6
+    ],
+    [
+     0.312,
+     0.6
+    ],
+    [
+     0.302,
+     0.692
+    ]
+   ],
+   "centroid": [
+    0.18,
+    0.665
+   ],
+   "lin_srgb": [
+    0.0,
+    1.0,
+    0.0358
+   ],
+   "in_gamut": false,
+   "note": "\"Green (ICAO Modified)\""
+  },
+  "blue": {
+   "xy": [
+    [
+     0.09,
+     0.137
+    ],
+    [
+     0.186,
+     0.214
+    ],
+    [
+     0.233,
+     0.167
+    ],
+    [
+     0.148,
+     0.025
+    ]
+   ],
+   "centroid": [
+    0.161,
+    0.129
+   ],
+   "lin_srgb": [
+    0.0,
+    0.1587,
+    1.0
+   ],
+   "in_gamut": false,
+   "note": "\"Blue (ICAO)\""
+  },
+  "yellow": {
+   "xy": [
+    [
+     0.547,
+     0.452
+    ],
+    [
+     0.536,
+     0.444
+    ],
+    [
+     0.593,
+     0.387
+    ],
+    [
+     0.613,
+     0.387
+    ]
+   ],
+   "centroid": [
+    0.573,
+    0.417
+   ],
+   "lin_srgb": [
+    1.0,
+    0.1887,
+    0.0
+   ],
+   "in_gamut": false,
+   "note": "\"Yellow (CIE S 004/E-2001)\""
+  },
+  "red": {
+   "xy": [
+    [
+     0.68,
+     0.32
+    ],
+    [
+     0.66,
+     0.32
+    ],
+    [
+     0.69,
+     0.29
+    ],
+    [
+     0.71,
+     0.29
+    ]
+   ],
+   "centroid": [
+    0.685,
+    0.305
+   ],
+   "lin_srgb": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "in_gamut": false,
+   "note": "\"Restricted Red (CIE S 004/E-2001 restricted region)\""
+  }
+ },
+ "fixtures": {
+  "L-850A": {
+   "use": "runway centreline (in-pavement), bi/unidirectional white, red",
+   "main": {
+    "h": [
+     -5,
+     5
+    ],
+    "v": [
+     0.2,
+     9
+    ]
+   },
+   "ten": {
+    "h": [
+     -7,
+     7
+    ],
+    "v": [
+     -4,
+     13
+    ]
+   },
+   "cd": {
+    "white": 5000,
+    "red": 750
+   },
+   "src": "ac46f T1-1,T3-1"
+  },
+  "L-850B": {
+   "use": "touchdown zone (in-pavement), unidirectional white, toed 4 deg",
+   "main": {
+    "h": [
+     -1,
+     9
+    ],
+    "v": [
+     2,
+     9
+    ]
+   },
+   "ten": {
+    "h": [
+     -3,
+     11
+    ],
+    "v": [
+     -0.5,
+     11.5
+    ]
+   },
+   "cd": {
+    "white": 5000
+   },
+   "src": "ac46f T3-1 note (i): data for toed-left"
+  },
+  "L-850C": {
+   "use": "runway edge in pavement (intersections, displaced thr)",
+   "main": {
+    "h": [
+     -2,
+     9
+    ],
+    "v": [
+     0.2,
+     7
+    ]
+   },
+   "ten": {
+    "h": [
+     -4,
+     11
+    ],
+    "v": [
+     -2.5,
+     9.5
+    ]
+   },
+   "cd": {
+    "white": 10000,
+    "yellow": 5000,
+    "green": 3300,
+    "red": 1500
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-850D": {
+   "use": "runway threshold/end in pavement",
+   "beams": [
+    {
+     "colour": "green",
+     "main": {
+      "h": [
+       -2,
+       9
+      ],
+      "v": [
+       1,
+       10
+      ]
+     },
+     "cd": 3300,
+     "note": "toed"
+    },
+    {
+     "colour": "red",
+     "main": {
+      "h": [
+       -6,
+       6
+      ],
+      "v": [
+       0.2,
+       4.7
+      ]
+     },
+     "ten": {
+      "h": [
+       -7.5,
+       7.5
+      ],
+      "v": [
+       -2.5,
+       7.5
+      ]
+     },
+     "cd": 2500
+    }
+   ],
+   "src": "ac46f T3-1"
+  },
+  "L-850E": {
+   "use": "MALS / runway threshold, unidirectional green in pavement",
+   "main": {
+    "h": [
+     -6,
+     6
+    ],
+    "v": [
+     1,
+     9
+    ]
+   },
+   "cd": {
+    "green": 5000
+   },
+   "note": "minimum (not average) intensity",
+   "src": "ac46f T3-1"
+  },
+  "L-850T": {
+   "use": "RWSL takeoff hold light, unidirectional red",
+   "main": {
+    "h": [
+     -5,
+     5
+    ],
+    "v": [
+     0.2,
+     9
+    ]
+   },
+   "ten": {
+    "h": [
+     -7,
+     7
+    ],
+    "v": [
+     -4,
+     13
+    ]
+   },
+   "cd": {
+    "red": 1500
+   },
+   "note": "traffic-signal red (ITE ST-017)",
+   "src": "ac46f T3-1"
+  },
+  "L-852A": {
+   "use": "taxiway CL straight, >=1200 RVR, narrow",
+   "main": {
+    "h": [
+     -10,
+     10
+    ],
+    "v": [
+     1,
+     4
+    ]
+   },
+   "ten": {
+    "h": [
+     -16,
+     16
+    ],
+    "v": [
+     0.5,
+     10
+    ]
+   },
+   "cd": {
+    "yellow": 20,
+    "green": 20
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852B": {
+   "use": "taxiway CL curves, >=1200 RVR, wide",
+   "main": {
+    "h": [
+     -30,
+     30
+    ],
+    "v": [
+     1,
+     4
+    ]
+   },
+   "ten": {
+    "h": [
+     -30,
+     30
+    ],
+    "v": [
+     0.5,
+     10
+    ]
+   },
+   "cd": {
+    "yellow": 20,
+    "green": 20
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852C": {
+   "use": "taxiway CL straight, <1200 RVR, narrow",
+   "main": {
+    "h": [
+     -3.5,
+     3.5
+    ],
+    "v": [
+     1,
+     8
+    ]
+   },
+   "ten": {
+    "h": [
+     -4.5,
+     4.5
+    ],
+    "v": [
+     0,
+     13
+    ]
+   },
+   "cd": {
+    "yellow": 200,
+    "green": 200
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852D": {
+   "use": "taxiway CL curves, <1200 RVR, wide",
+   "main": {
+    "h": [
+     -30,
+     30
+    ],
+    "v": [
+     1,
+     10
+    ]
+   },
+   "ten": {
+    "h": [
+     -30,
+     30
+    ],
+    "v": [
+     0,
+     15
+    ]
+   },
+   "cd": {
+    "white": 150,
+    "yellow": 100,
+    "green": 100
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852E": {
+   "use": "taxiway intersection omni yellow >=1200 RVR",
+   "main": {
+    "h": [
+     -180,
+     180
+    ],
+    "v": [
+     1,
+     8
+    ]
+   },
+   "cd": {
+    "yellow": 50
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852F": {
+   "use": "taxiway intersection omni yellow <1200 RVR",
+   "main": {
+    "h": [
+     -180,
+     180
+    ],
+    "v": [
+     1,
+     10
+    ]
+   },
+   "cd": {
+    "yellow": 200
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852G": {
+   "use": "in-pavement runway guard light, yellow, alternately flashing",
+   "main": {
+    "h": [
+     -24,
+     24
+    ],
+    "v": [
+     1,
+     10
+    ]
+   },
+   "ten": {
+    "h": [
+     -30,
+     30
+    ],
+    "v": [
+     0.5,
+     13
+    ]
+   },
+   "cd": {
+    "yellow": 1000
+   },
+   "flash": {
+    "fpm": [
+     30,
+     32
+    ],
+    "duty": 0.5,
+    "pattern": "even/odd fixtures alternate"
+   },
+   "src": "ac46f T3-1; ac30j 4.8.6.2.5"
+  },
+  "L-852J": {
+   "use": "taxiway CL curves >=1200 RVR",
+   "main": {
+    "h": [
+     -3.5,
+     35
+    ],
+    "v": [
+     1,
+     4
+    ]
+   },
+   "ten": {
+    "h": [
+     -4.5,
+     36
+    ],
+    "v": [
+     0.5,
+     15
+    ]
+   },
+   "cd": {
+    "yellow": 20,
+    "green": 20
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852K": {
+   "use": "taxiway CL curves <1200 RVR",
+   "main": {
+    "h": [
+     -3.5,
+     35
+    ],
+    "v": [
+     1,
+     10
+    ]
+   },
+   "ten": {
+    "h": [
+     -5.5,
+     37
+    ],
+    "v": [
+     0,
+     15
+    ]
+   },
+   "cd": {
+    "yellow": 100,
+    "green": 100
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852S": {
+   "use": "stop bar (in-pavement) and RWSL runway entrance light, unidirectional red",
+   "main": {
+    "h": [
+     -24,
+     24
+    ],
+    "v": [
+     1,
+     10
+    ]
+   },
+   "ten": {
+    "h": [
+     -30,
+     30
+    ],
+    "v": [
+     0.5,
+     13
+    ]
+   },
+   "cd": {
+    "red": 300
+   },
+   "src": "ac46f T3-1"
+  },
+  "L-852T": {
+   "use": "taxiway edge in pavement, omni blue",
+   "main": {
+    "h": [
+     -180,
+     180
+    ],
+    "v": [
+     1,
+     6
+    ]
+   },
+   "cd": {
+    "blue": 2
+   },
+   "note": "minimum; visible 15-90 deg",
+   "src": "ac46f T3-1 note (h)"
+  },
+  "L-804": {
+   "use": "elevated runway guard light, 2 yellow lamps alternately flashing",
+   "main": {
+    "circle_deg": 8
+   },
+   "ten": {
+    "circle_deg": 25
+   },
+   "cd": {
+    "yellow": 3000
+   },
+   "note": ">=1000 cd within +-15 deg circle",
+   "flash": {
+    "fpm": [
+     45,
+     50
+    ],
+    "duty": 0.5,
+    "off_ratio": 0.17
+   },
+   "src": "ac46f T3-2 note (f); ac46f 3.x flasher"
+  },
+  "L-861E": {
+   "use": "elevated threshold/end, non-precision",
+   "beams": [
+    {
+     "colour": "green",
+     "main": {
+      "h": [
+       -1.5,
+       1.5
+      ],
+      "v": [
+       3.5,
+       5.5
+      ]
+     },
+     "cd": 300
+    },
+    {
+     "colour": "green",
+     "main": {
+      "h": [
+       -3,
+       3
+      ],
+      "v": [
+       1.5,
+       7.5
+      ]
+     },
+     "cd": 180
+    },
+    {
+     "colour": "green",
+     "main": {
+      "h": [
+       -5,
+       5
+      ],
+      "v": [
+       0,
+       9
+      ]
+     },
+     "cd": 90
+    },
+    {
+     "colour": "red",
+     "main": {
+      "h": [
+       -5,
+       5
+      ],
+      "v": [
+       0,
+       9
+      ]
+     },
+     "cd": 10
+    }
+   ],
+   "src": "ac46f T3-2"
+  },
+  "L-861T": {
+   "use": "elevated taxiway/apron edge, omni blue",
+   "main": {
+    "h": [
+     -180,
+     180
+    ],
+    "v": [
+     0,
+     6
+    ]
+   },
+   "cd": {
+    "blue": 2
+   },
+   "note": "minimum 2 cd 0-6 deg; visible 15-90 deg",
+   "src": "ac46f T3-3"
+  },
+  "L-862": {
+   "use": "elevated HIRL edge (precision runways)",
+   "main": {
+    "h": [
+     -2,
+     9
+    ],
+    "v": [
+     0,
+     7
+    ]
+   },
+   "ten": {
+    "h": [
+     -4,
+     11
+    ],
+    "v": [
+     -2.5,
+     9.5
+    ]
+   },
+   "cd": {
+    "white": 10000,
+    "yellow": 5000,
+    "green": 2500,
+    "red": 2000
+   },
+   "note": "plus >=50 cd white omnidirectionally at all elevations to 15 deg (circling)",
+   "src": "ac46f T3-2 note (c)"
+  },
+  "L-862E": {
+   "use": "elevated threshold/end (precision runways)",
+   "beams": [
+    {
+     "colour": "red",
+     "main": {
+      "h": [
+       -6,
+       6
+      ],
+      "v": [
+       0.2,
+       4.7
+      ]
+     },
+     "ten": {
+      "h": [
+       -7.5,
+       7.5
+      ],
+      "v": [
+       -2.5,
+       7.5
+      ]
+     },
+     "cd": 2500
+    },
+    {
+     "colour": "green",
+     "main": {
+      "h": [
+       -2,
+       9
+      ],
+      "v": [
+       1,
+       10
+      ]
+     },
+     "cd": 3200
+    }
+   ],
+   "src": "ac46f T3-2"
+  },
+  "L-862S": {
+   "use": "elevated stop bar, unidirectional red",
+   "main": {
+    "h": [
+     -7,
+     7
+    ],
+    "v": [
+     -4,
+     4
+    ]
+   },
+   "ten": {
+    "h": [
+     -14,
+     14
+    ],
+    "v": [
+     -8,
+     8
+    ]
+   },
+   "cd": {
+    "red": 2000
+   },
+   "src": "ac46f T3-2"
+  },
+  "PAPI_LHA": {
+   "use": "PAPI lamp housing assembly (L-880), white above / red below a sharp transition",
+   "isocandela": [
+    {
+     "white": 30000,
+     "red": 15000,
+     "h": [
+      -2,
+      2
+     ],
+     "v": [
+      -2,
+      2
+     ],
+     "shape": "circle r=2"
+    },
+    {
+     "white": 20000,
+     "red": 10000,
+     "h": [
+      -4,
+      4
+     ],
+     "v": [
+      -2.5,
+      2.5
+     ]
+    },
+    {
+     "white": 14000,
+     "red": 7000,
+     "h": [
+      -6,
+      6
+     ],
+     "v": [
+      -3,
+      3
+     ]
+    },
+    {
+     "white": 8000,
+     "red": 4000,
+     "h": [
+      -8,
+      8
+     ],
+     "v": [
+      -3.5,
+      3.5
+     ]
+    },
+    {
+     "white": 5000,
+     "red": 2500,
+     "h": [
+      -10,
+      10
+     ],
+     "v": [
+      -4,
+      4
+     ]
+    }
+   ],
+   "transition": {
+    "arcmin_centre": 3,
+    "arcmin_edge": 5
+   },
+   "note": "contour extents read from AC 150/5345-28H Figure 3-1 (stadium shapes; +-0.25 deg reading error); V measured from the LHA aiming angle; LED PAPI light only within +-10.5 deg azimuth (JO 6850.2C 504b); night modes ~5 % and ~20 % of day (28H 3.3.8)",
+   "src": "ac28h Fig 3-1, 3.2.1, 3.3.6-3.3.8"
+  },
+  "L-849E_REIL": {
+   "use": "REIL unidirectional, 3 steps (style E)",
+   "main": {
+    "h": [
+     -15,
+     15
+    ],
+    "v": [
+     0,
+     10
+    ]
+   },
+   "cd_effective": {
+    "high": 15000,
+    "medium": 1500,
+    "low": 300
+   },
+   "flash": {
+    "fpm": 120,
+    "sync_ms": 20
+   },
+   "note": "tolerance +-50 %; omni style F: 5000/1500/300 cd at 2-10 deg, 60 fpm; SFO REIL style not published",
+   "src": "ac51b T1, 3.4.2"
+  },
+  "L-802A_beacon": {
+   "use": "high-intensity rotating beacon, alternating white/green",
+   "cd_effective_white": {
+    "1-2": 37500,
+    "3-7": 75000,
+    "8-10": 37500
+   },
+   "green_factor": 0.15,
+   "beam_centre_deg": 5,
+   "flash": {
+    "fpm_equipment": [
+     22,
+     26
+    ],
+    "fpm_installation": [
+     24,
+     30
+    ],
+    "duration_ms": [
+     75,
+     300
+    ]
+   },
+   "note": "AC 150/5345-12F 3.3.1 (equipment 22-26 fpm) vs AC 150/5340-30J 6.1.3 and AIM (24-30 fpm)",
+   "src": "ac12f T1; ac30j 6.1"
+  },
+  "L-810": {
+   "use": "red obstruction light, steady (or L-810(F) flashing 30 fpm)",
+   "cd": {
+    "red": 32.5
+   },
+   "v_beam": {
+    "spread_min": 10,
+    "centre": [
+     4,
+     20
+    ]
+   },
+   "flash_F": {
+    "fpm": [
+     27,
+     33
+    ]
+   },
+   "src": "ac43j 3.4.1.2"
+  },
+  "L-864": {
+   "use": "medium-intensity flashing red obstruction light",
+   "cd_effective": {
+    "red": 2000
+   },
+   "tol": 0.25,
+   "v_beam_min": 3,
+   "min_in_beam": 750,
+   "flash": {
+    "fpm": [
+     27,
+     33
+    ],
+    "duration": "1/2-2/3 period (incandescent) or 100-1333 ms"
+   },
+   "src": "ac43j 3.4.1.5, T3-5"
+  },
+  "L-865": {
+   "use": "medium-intensity flashing white",
+   "cd_effective": {
+    "day": 20000,
+    "night": 2000
+   },
+   "flash": {
+    "fpm": 40
+   },
+   "src": "ac43j T3-4, T3-5"
+  },
+  "ALS_PAR56_300W": {
+   "use": "ALSF-2 steady-burning white (FAA-E-2408 Q20A/PAR-56 300 W 20 A; coloured = 500 W)",
+   "vertical_spread_deg": 12,
+   "cd": null,
+   "note": "12 deg vertical spread from JO 6850.2C 206a; intensity NOT in any FAA document we could obtain (a vendor listing gives ~38,000 cd centre for Q20A/PAR56/C - unverified)",
+   "src": "jo6850 204a, 206a"
+  },
+  "MALS_PAR38": {
+   "use": "MALS steady-burning white (PAR-38 spot; 150PAR38/SP in Table 2-2); threshold PAR-56 300 W green",
+   "cd": null,
+   "note": "intensity not published in the obtained FAA documents",
+   "src": "jo6850 204b"
+  },
+  "SFL_flasher": {
+   "use": "sequenced flasher (ALSF-2 / RAIL / MALSF), bluish-white",
+   "aim_deg": 6,
+   "rate": "each flasher 2 flashes/s, sequence outermost -> threshold",
+   "cd": null,
+   "steps": "ALSF-2 3 steps 100/20/2.3 %; MALS* 100/10/2.3 %",
+   "note": "FAA-E-2998/FAA-E-2689 photometry not obtained",
+   "src": "jo6850 200b, 206, T2-3"
+  }
+ },
+ "intensity_steps": {
+  "HIRL_RCL_TDZ_TWYCL_5step_pct": [
+   100,
+   25,
+   5,
+   1.2,
+   0.15
+  ],
+  "HIRL_lamp_current_A": [
+   6.6,
+   5.2,
+   4.1,
+   3.4,
+   2.8
+  ],
+  "src_hirl": "ac30j 2.6.4.1",
+  "MIRL_MITL_3step_pct": [
+   100,
+   30,
+   10
+  ],
+  "src_mirl": "ac30j 2.6.4.2",
+  "ALSF2_steady_pct": [
+   100,
+   20,
+   4,
+   0.8,
+   0.16
+  ],
+  "ALSF2_flasher_pct": [
+   100,
+   20,
+   2.3
+  ],
+  "MALS_steady_pct": [
+   100,
+   20,
+   4
+  ],
+  "MALS_flasher_pct": [
+   100,
+   10,
+   2.3
+  ],
+  "ALSF2_flasher_mapping": "steady steps 4-5 -> flashers high, step 3 -> medium, steps 1-2 -> low",
+  "src_als": "jo6850 T2-3",
+  "REIL_pct_from_cd": [
+   100,
+   10,
+   2
+  ],
+  "src_reil": "ac51b T1 (15000/1500/300 cd)",
+  "REIL_follows_HIRL": "HIRL step 1-2 -> REIL low, 3 -> medium, 4-5 -> high (jo6850 405a)",
+  "PAPI_night_pct": [
+   5,
+   20
+  ],
+  "src_papi": "ac28h 3.3.8"
+ },
+ "operation": {
+  "src": "jo7110 3-4-2..3-4-19 (tables transcribed); SFO tower facility directives may override (unknown)",
+  "twilight_note": "TBL 3-4-3: twilight = sunset to 30 min after sunset and 30 min before sunrise to sunrise",
+  "hirl_rcl_tdz_steps": {
+   "src": "jo7110 TBL 3-4-8",
+   "day": {
+    "5": "<1",
+    "4": "1-<2",
+    "3": "2-<3",
+    "2": "on request",
+    "1": "on request"
+   },
+   "night": {
+    "5": "on request",
+    "4": "<1",
+    "3": "1-<3",
+    "2": "3-5",
+    "1": ">5"
+   },
+   "note": "\"*and/or appropriate RVR equivalent\""
+  },
+  "runway_edge_on": "sunset-sunrise for runways in use; sunrise-sunset when surface visibility < 2 SM (jo7110 3-4-10)",
+  "als_on": "sunset-sunrise when serving the landing runway (or approach to it); day when ceiling < 1000 ft or visibility <= 5 SM (jo7110 3-4-5)",
+  "als_steps": {
+   "src": "jo7110 TBL 3-4-5",
+   "day": {
+    "5": "<1 (or RVR <= 6000 ft)",
+    "4": "1-<3",
+    "3": "3-<5",
+    "2": "5-<7",
+    "1": "on request"
+   },
+   "night": {
+    "5": "on request",
+    "4": "on request",
+    "3": "<1 (or RVR <= 6000 ft)",
+    "2": "1-3",
+    "1": ">3"
+   }
+  },
+  "alsf2_vs_ssalr": "operate ALSF-2 when prevailing visibility <= 3/4 SM or RVR <= 4000 ft (pilot request / controller); otherwise operate the SSALR mode (jo7110 3-4-9)",
+  "sfl_on": "visibility < 3 SM and instrument approaches to that runway, or on request; SFL cannot run when the ALS is off (jo7110 3-4-7)",
+  "malsr_3step": {
+   "src": "jo7110 TBL 3-4-7",
+   "day": {
+    "3": "<2",
+    "2": "2-5",
+    "1": "on request"
+   },
+   "night": {
+    "3": "<1",
+    "2": "1-<3",
+    "1": ">=3"
+   }
+  },
+  "reil_3step": {
+   "src": "jo7110 TBL 3-4-1",
+   "day": {
+    "3": "<2",
+    "2": "2-5",
+    "1": "on request"
+   },
+   "night": {
+    "3": "<1",
+    "2": "1-<3",
+    "1": ">=3"
+   },
+   "on": "when the associated runway lights are lighted"
+  },
+  "papi_5step": {
+   "src": "jo7110 TBL 3-4-4",
+   "day": "step 4",
+   "night": "step 3",
+   "other": "1,2,5 on request",
+   "note": "basic FAA PAPI is photo-electric: day mode when north-sky vertical illuminance rises to 50-60 fc, night below 25-35 fc, 45-75 s delay (AC 150/5345-28H 3.3.6)"
+  },
+  "taxiway_5step": {
+   "src": "jo7110 TBL 3-4-12",
+   "day": {
+    "5": "<1",
+    "4": "on request",
+    "3": "on request"
+   },
+   "night": {
+    "4": "<1",
+    "3": ">=1"
+   }
+  },
+  "obstruction": "sunset-sunrise if controls exist (jo7110 3-4-17); red lights switch on when north-sky illuminance falls below 60 fc, before 35 fc (AC 70/7460-1N 5.3)",
+  "beacon": "sunset-sunrise, and by day when ceiling or visibility below basic VFR (jo7110 3-4-18); NASR BCN_LGT_SKED = SS-SR",
+  "rwsl": "automatic intensity, operated continuously (jo7110 3-4-19); RELs light when high-speed traffic on runway or arrival within ~1 mi; THLs when runway occupied ahead of a departure (AIM 2-1-6)"
+ },
+ "airport": {
+  "beacon": {
+   "lens": "WG",
+   "lens_meaning": "WG = white-green, lighted land airport",
+   "schedule": "SS-SR",
+   "type": "L-802A (std: high-intensity systems present, ac30j 6.1.4.1)",
+   "position": null,
+   "position_note": "NOT published in NASR/CS/AD; not in X-Plane or the cached OSM - open question",
+   "src": "pub nasr APT_BASE BCN_LENS_COLOR, BCN_LGT_SKED"
+  },
+  "airport_lighting_schedule": null,
+  "lgt_sked_note": "blank in NASR: no published schedule - lights per ATC (tower attended continuously, CS)",
+  "wind_indicator": "Y-L",
+  "wind_indicator_note": "Y-L = lighted wind indicator (NASR); X-Plane has 8 windsocks, OSM 1 - positions not FAA-published",
+  "rwsl": {
+   "in_operation": true,
+   "src": "pub nasr APT_RMK \"RWY STATUS LGTS IN OPN.\"; CS \"Rwy status lgts in operation\"; AD \"Runway Status Lights in operation.\""
+  },
+  "rvr": "TMR (touchdown, midfield, rollout) at all 8 ends (NASR RWY_VISUAL_RANGE_EQUIP_CODE)"
+ },
+ "runways": [
+  {
+   "id": "10L/28R",
+   "length_ft": 11870.0,
+   "width_ft": 200.0,
+   "geodesic_length_m": 3618.0,
+   "surface": "ASPH-GRVD",
+   "edge": {
+    "type": "HIRL",
+    "src": "pub nasr RWY_LGT_CODE=HIGH; CS \"HIRL\""
+   },
+   "centreline": {
+    "present": true,
+    "src": "pub CS \"CL\"; nasr CNTRLN_LGTS_AVBL_FLAG=Y both ends"
+   },
+   "edge_lateral_ft": {
+    "value": 110.0,
+    "prov": "inf",
+    "note": "std 2-10 ft outside the 200-ft pavement; 10 ft chosen (jet runways, and MALS threshold row of 23 lights on 10-ft centres coincident with the edge lights, JO 6850.2C 200d)"
+   },
+   "ends": {
+    "10L": {
+     "heading_true": 117.8,
+     "runway_end": {
+      "lat": 37.62873872,
+      "lon": -122.39339186,
+      "world": [
+       -1586.73,
+       -1102.62
+      ],
+      "elev_ft": 5.5,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       -1586.73,
+       -1102.62
+      ],
+      "displaced_ft": 0.0,
+      "elev_ft": 5.5,
+      "tdze_ft": 7.0,
+      "lat": 37.62873872,
+      "lon": -122.39339186,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 11870.0,
+      "TODA": 11870.0,
+      "ASDA": 11193.0,
+      "LDA": 11193.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": true,
+     "iap": "RNAV (GPS) RWY 10L",
+     "marking": "PIR",
+     "ils": null,
+     "als": null,
+     "reil": true,
+     "tdz": false,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": "P4L",
+     "vgsi_angle": 3.0,
+     "vgsi_tch_ft": 80.0,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 2000.0,
+     "plate_glidepath": {
+      "gs": 3.0,
+      "tch": 55,
+      "plate": "00375R10L Amdt 3 (RNAV GP)"
+     },
+     "plate_vgsi_note": [
+      3.0,
+      80
+     ],
+     "thl": true,
+     "papi": {
+      "side": "left",
+      "n": 4,
+      "angle_deg": 3.0,
+      "tch_ft": 80.0,
+      "src": "pub nasr VGSI_CODE P4L + CS \"PAPI(P4L)-GA x TCH y\"",
+      "dist_from_tch_ft": 1526.0,
+      "dist_obs_ft": 1556,
+      "dist_obs_minus_pub_ft": 30.0,
+      "lateral_obs_ft": [
+       177,
+       207,
+       237,
+       268
+      ],
+      "lha_world": [
+       [
+        -1142.05,
+        -929.12,
+        0.8
+       ],
+       [
+        -1137.78,
+        -937.21,
+        0.8
+       ],
+       [
+        -1133.52,
+        -945.3,
+        0.8
+       ],
+       [
+        -1129.11,
+        -953.66,
+        0.8
+       ]
+      ],
+      "lha_h_m": {
+       "value": 0.8,
+       "prov": "inf",
+       "note": "beam centres within +-1 in of one plane, +-1 ft of the runway CL elevation at the glide-path intercept (JO 6850.2C 506d)"
+      },
+      "aiming_deg_std": [
+       3.5,
+       3.1667,
+       2.8333,
+       2.5
+      ],
+      "aiming_deg_hg4": [
+       3.5833,
+       3.25,
+       2.75,
+       2.4167
+      ],
+      "aiming_note": "LHA1 = nearest runway. JO 6850.2C Table 5-2: standard +30/+10/-10/-30 arcmin, height group 4 on runways with a published GPA +35/+15/-15/-35; which SFO uses is not published (HG4 likely: B747/777/A350 traffic, all six ends have a GPA) - inf",
+      "obs_prov": "obs naip 2024 (+-5 ft)"
+     }
+    },
+    "28R": {
+     "heading_true": 297.8,
+     "runway_end": {
+      "lat": 37.61353361,
+      "lon": -122.35714111,
+      "world": [
+       1613.58,
+       584.98
+      ],
+      "elev_ft": 13.0,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       1532.64,
+       542.31
+      ],
+      "displaced_ft": 300.0,
+      "elev_ft": 12.9,
+      "tdze_ft": 12.9,
+      "lat": 37.61391813,
+      "lon": -122.35805769,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 11870.0,
+      "TODA": 11870.0,
+      "ASDA": 11870.0,
+      "LDA": 11236.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": true,
+     "iap": "ILS or LOC, SA CAT I, CAT II-III, GLS, RNAV RWY 28R",
+     "marking": "PIR",
+     "ils": "ILS/DME",
+     "als": "ALSF2",
+     "reil": false,
+     "tdz": true,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": "P4L",
+     "vgsi_angle": 3.0,
+     "vgsi_tch_ft": 68.0,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 2000.0,
+     "plate_glidepath": {
+      "gs": 3.0,
+      "tch": 55,
+      "plate": "00375IL28R Amdt 15B"
+     },
+     "plate_vgsi_note": [
+      3.0,
+      68
+     ],
+     "thl": true,
+     "tdz_rule": "bars 100..3000 ft from the landing threshold (pub flag, std geometry)",
+     "papi": {
+      "side": "left",
+      "n": 4,
+      "angle_deg": 3.0,
+      "tch_ft": 68.0,
+      "src": "pub nasr VGSI_CODE P4L + CS \"PAPI(P4L)-GA x TCH y\"",
+      "dist_from_tch_ft": 1298.0,
+      "dist_obs_ft": 1369,
+      "dist_obs_minus_pub_ft": 71.0,
+      "lateral_obs_ft": [
+       173,
+       204,
+       234,
+       264
+      ],
+      "lha_world": [
+       [
+        1138.95,
+        394.32,
+        0.8
+       ],
+       [
+        1134.54,
+        402.68,
+        0.8
+       ],
+       [
+        1130.28,
+        410.77,
+        0.8
+       ],
+       [
+        1126.01,
+        418.86,
+        0.8
+       ]
+      ],
+      "lha_h_m": {
+       "value": 0.8,
+       "prov": "inf",
+       "note": "beam centres within +-1 in of one plane, +-1 ft of the runway CL elevation at the glide-path intercept (JO 6850.2C 506d)"
+      },
+      "aiming_deg_std": [
+       3.5,
+       3.1667,
+       2.8333,
+       2.5
+      ],
+      "aiming_deg_hg4": [
+       3.5833,
+       3.25,
+       2.75,
+       2.4167
+      ],
+      "aiming_note": "LHA1 = nearest runway. JO 6850.2C Table 5-2: standard +30/+10/-10/-30 arcmin, height group 4 on runways with a published GPA +35/+15/-15/-35; which SFO uses is not published (HG4 likely: B747/777/A350 traffic, all six ends have a GPA) - inf",
+      "obs_prov": "obs naip 2024 (+-5 ft)"
+     },
+     "als_detail": {
+      "type": "ALSF2",
+      "plane_elev_ft": 12.9,
+      "plane_note": "single horizontal plane at the threshold centreline elevation (JO 6850.2C 201a); SFO piers over the bay - see als_piers_observed",
+      "stations_referenced_to": "landing (displaced) threshold per JO 6850.2C 15/200 and the SFO 2013 memo (ALS changed when 28L/28R thresholds moved); pier crossmembers do not settle which stations are lit",
+      "piers_observed": {
+       "shoreline_ft": -650,
+       "crossmembers_ft": [
+        700,
+        800,
+        900,
+        1000,
+        1100,
+        1200,
+        1300
+       ],
+       "crossmember_width_ft": 110,
+       "far_end_ft": "beyond NAIP coverage (> ~2350 ft)",
+       "pile_caps_every_ft": 100,
+       "note": "7 crossmembers of equal width; equipment platforms at ~1150 and ~1390 ft"
+      },
+      "modes": {
+       "ALSF2": "full",
+       "SSALR": "threshold row 10-ft, bars 200..1400 @200 ft, 70-ft crossbar at 1000, RAIL 1600..2400",
+       "rule": "jo7110 3-4-9"
+      },
+      "elevation_setting_deg": {
+       "src": "JO 6850.2C Table 2-1 (3 deg glide slope; shift by GS-3; 6..9 deg limits)",
+       "3000": 8.0,
+       "2900": 7.9,
+       "2800": 7.9,
+       "2700": 7.8,
+       "2600": 7.7,
+       "2500": 7.7,
+       "2400": 7.6,
+       "2300": 7.6,
+       "2200": 7.5,
+       "2100": 7.4,
+       "2000": 7.4,
+       "1900": 7.3,
+       "1800": 7.2,
+       "1700": 7.2,
+       "1600": 7.1,
+       "1500": 7.0,
+       "1400": 7.0,
+       "1300": 6.9,
+       "1200": 6.9,
+       "1100": 6.8,
+       "1000": 6.7,
+       "900": 6.7,
+       "800": 6.6,
+       "700": 6.5,
+       "600": 6.5,
+       "500": 6.4,
+       "400": 6.3,
+       "300": 6.3,
+       "200": 6.2,
+       "100": 6.2,
+       "0": 6.1
+      }
+     }
+    }
+   },
+   "edge_spacing_ft": {
+    "value": 197.83,
+    "n_spaces": 60,
+    "prov": "inf",
+    "rule": "uniform, <= 200 ft, symmetric, referenced to threshold/runway-end lights (ac30j 2.3.1.2.1)"
+   },
+   "rcl": {
+    "spacing_ft": 50,
+    "end_gap_ft": 85.0,
+    "n_lights": 235,
+    "prov": "std+inf",
+    "rule": "50 ft +-2 ft, first light 75 ft +12.5/-25 from the runway end (ac30j 3.3.1.1, Fig A-34); lateral offset <= 2.5 ft to one side unknown (0 used)"
+   }
+  },
+  {
+   "id": "10R/28L",
+   "length_ft": 11381.0,
+   "width_ft": 200.0,
+   "geodesic_length_m": 3468.97,
+   "surface": "ASPH-GRVD",
+   "edge": {
+    "type": "HIRL",
+    "src": "pub nasr RWY_LGT_CODE=HIGH; CS \"HIRL\""
+   },
+   "centreline": {
+    "present": true,
+    "src": "pub CS \"CL\"; nasr CNTRLN_LGTS_AVBL_FLAG=Y both ends"
+   },
+   "edge_lateral_ft": {
+    "value": 110.0,
+    "prov": "inf",
+    "note": "std 2-10 ft outside the 200-ft pavement; 10 ft chosen (jet runways, and MALS threshold row of 23 lights on 10-ft centres coincident with the edge lights, JO 6850.2C 200d)"
+   },
+   "ends": {
+    "10R": {
+     "heading_true": 117.8,
+     "runway_end": {
+      "lat": 37.62629111,
+      "lon": -122.39310544,
+      "world": [
+       -1561.5,
+       -830.96
+      ],
+      "elev_ft": 7.1,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       -1561.5,
+       -830.96
+      ],
+      "displaced_ft": 0.0,
+      "elev_ft": 7.1,
+      "tdze_ft": 8.0,
+      "lat": 37.62629111,
+      "lon": -122.39310544,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 11381.0,
+      "TODA": 11381.0,
+      "ASDA": 10704.0,
+      "LDA": 10704.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": true,
+     "iap": "RNAV (RNP) Z / RNAV (GPS) Y RWY 10R",
+     "marking": "PIR",
+     "ils": null,
+     "als": null,
+     "reil": false,
+     "tdz": false,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": "P4L",
+     "vgsi_angle": 3.0,
+     "vgsi_tch_ft": 68.0,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 2000.0,
+     "plate_glidepath": {
+      "gs": 3.0,
+      "tch": 60,
+      "plate": "00375RY10R Amdt 2A (LNAV/VNAV descent angle)"
+     },
+     "plate_vgsi_note": [
+      3.0,
+      68
+     ],
+     "thl": true,
+     "papi": {
+      "side": "left",
+      "n": 4,
+      "angle_deg": 3.0,
+      "tch_ft": 68.0,
+      "src": "pub nasr VGSI_CODE P4L + CS \"PAPI(P4L)-GA x TCH y\"",
+      "dist_from_tch_ft": 1298.0,
+      "dist_obs_ft": 1298,
+      "dist_obs_minus_pub_ft": 0.0,
+      "lateral_obs_ft": [
+       157,
+       188,
+       218,
+       248
+      ],
+      "lha_world": [
+       [
+        -1189.22,
+        -688.74,
+        0.8
+       ],
+       [
+        -1184.82,
+        -697.1,
+        0.8
+       ],
+       [
+        -1180.55,
+        -705.19,
+        0.8
+       ],
+       [
+        -1176.29,
+        -713.28,
+        0.8
+       ]
+      ],
+      "lha_h_m": {
+       "value": 0.8,
+       "prov": "inf",
+       "note": "beam centres within +-1 in of one plane, +-1 ft of the runway CL elevation at the glide-path intercept (JO 6850.2C 506d)"
+      },
+      "aiming_deg_std": [
+       3.5,
+       3.1667,
+       2.8333,
+       2.5
+      ],
+      "aiming_deg_hg4": [
+       3.5833,
+       3.25,
+       2.75,
+       2.4167
+      ],
+      "aiming_note": "LHA1 = nearest runway. JO 6850.2C Table 5-2: standard +30/+10/-10/-30 arcmin, height group 4 on runways with a published GPA +35/+15/-15/-35; which SFO uses is not published (HG4 likely: B747/777/A350 traffic, all six ends have a GPA) - inf",
+      "obs_prov": "obs naip 2024 (+-5 ft)"
+     }
+    },
+    "28L": {
+     "heading_true": 297.8,
+     "runway_end": {
+      "lat": 37.61171194,
+      "lon": -122.35834916,
+      "world": [
+       1506.95,
+       787.18
+      ],
+      "elev_ft": 12.6,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       1426.1,
+       744.52
+      ],
+      "displaced_ft": 300.0,
+      "elev_ft": 12.6,
+      "tdze_ft": 12.6,
+      "lat": 37.6120965,
+      "lon": -122.35926477,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 11381.0,
+      "TODA": 11381.0,
+      "ASDA": 10981.0,
+      "LDA": 10275.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": true,
+     "iap": "ILS or LOC, SA CAT II, GLS, RNAV (GPS) RWY 28L",
+     "marking": "PIR",
+     "ils": "ILS/DME",
+     "als": "MALSR",
+     "reil": false,
+     "tdz": false,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": "P4L",
+     "vgsi_angle": 2.85,
+     "vgsi_tch_ft": 67.0,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 2000.0,
+     "plate_glidepath": {
+      "gs": 2.85,
+      "tch": 53,
+      "plate": "00375IL28L Amdt 27C"
+     },
+     "plate_vgsi_note": [
+      2.85,
+      67
+     ],
+     "thl": true,
+     "papi": {
+      "side": "left",
+      "n": 4,
+      "angle_deg": 2.85,
+      "tch_ft": 67.0,
+      "src": "pub nasr VGSI_CODE P4L + CS \"PAPI(P4L)-GA x TCH y\"",
+      "dist_from_tch_ft": 1346.0,
+      "dist_obs_ft": 1369,
+      "dist_obs_minus_pub_ft": 23.0,
+      "lateral_obs_ft": [
+       173,
+       203,
+       233,
+       263
+      ],
+      "lha_world": [
+       [
+        1032.41,
+        596.52,
+        0.8
+       ],
+       [
+        1028.15,
+        604.6,
+        0.8
+       ],
+       [
+        1023.88,
+        612.69,
+        0.8
+       ],
+       [
+        1019.62,
+        620.78,
+        0.8
+       ]
+      ],
+      "lha_h_m": {
+       "value": 0.8,
+       "prov": "inf",
+       "note": "beam centres within +-1 in of one plane, +-1 ft of the runway CL elevation at the glide-path intercept (JO 6850.2C 506d)"
+      },
+      "aiming_deg_std": [
+       3.35,
+       3.0167,
+       2.6833,
+       2.35
+      ],
+      "aiming_deg_hg4": [
+       3.4333,
+       3.1,
+       2.6,
+       2.2667
+      ],
+      "aiming_note": "LHA1 = nearest runway. JO 6850.2C Table 5-2: standard +30/+10/-10/-30 arcmin, height group 4 on runways with a published GPA +35/+15/-15/-35; which SFO uses is not published (HG4 likely: B747/777/A350 traffic, all six ends have a GPA) - inf",
+      "obs_prov": "obs naip 2024 (+-5 ft)"
+     },
+     "als_detail": {
+      "type": "MALSR",
+      "plane_elev_ft": 12.6,
+      "plane_note": "single horizontal plane at the threshold centreline elevation (JO 6850.2C 201a); SFO piers over the bay - see als_piers_observed",
+      "stations_referenced_to": "landing (displaced) threshold per JO 6850.2C 15/200 and the SFO 2013 memo (ALS changed when 28L/28R thresholds moved); pier crossmembers do not settle which stations are lit",
+      "piers_observed": {
+       "shoreline_ft": -650,
+       "crossmembers_ft": [
+        1000,
+        1300
+       ],
+       "crossmember_width_ft": {
+        "1000": 82,
+        "1300": 103
+       },
+       "far_end_ft": "> 3000 ft (continues past the NAIP edge)",
+       "pile_caps_every_ft": 100
+      },
+      "elevation_setting_deg": {
+       "src": "JO 6850.2C Table 2-2 (MALS, 3 deg GS; shift by GS-3)",
+       "0": 3.1,
+       "200": 3.2,
+       "400": 3.3,
+       "600": 3.4,
+       "800": 3.4,
+       "1000": 3.5,
+       "1200": 3.6,
+       "1400": 3.7
+      }
+     }
+    }
+   },
+   "edge_spacing_ft": {
+    "value": 199.67,
+    "n_spaces": 57,
+    "prov": "inf",
+    "rule": "uniform, <= 200 ft, symmetric, referenced to threshold/runway-end lights (ac30j 2.3.1.2.1)"
+   },
+   "rcl": {
+    "spacing_ft": 50,
+    "end_gap_ft": 65.5,
+    "n_lights": 226,
+    "prov": "std+inf",
+    "rule": "50 ft +-2 ft, first light 75 ft +12.5/-25 from the runway end (ac30j 3.3.1.1, Fig A-34); lateral offset <= 2.5 ft to one side unknown (0 used)"
+   }
+  },
+  {
+   "id": "1L/19R",
+   "length_ft": 7650.0,
+   "width_ft": 200.0,
+   "geodesic_length_m": 2331.76,
+   "surface": "ASPH-GRVD",
+   "edge": {
+    "type": "HIRL",
+    "src": "pub nasr RWY_LGT_CODE=HIGH; CS \"HIRL\""
+   },
+   "centreline": {
+    "present": true,
+    "src": "pub CS \"CL\"; nasr CNTRLN_LGTS_AVBL_FLAG=Y both ends"
+   },
+   "edge_lateral_ft": {
+    "value": 110.0,
+    "prov": "inf",
+    "note": "std 2-10 ft outside the 200-ft pavement; 10 ft chosen (jet runways, and MALS threshold row of 23 lights on 10-ft centres coincident with the edge lights, JO 6850.2C 200d)"
+   },
+   "ends": {
+    "1L": {
+     "heading_true": 27.8,
+     "runway_end": {
+      "lat": 37.60789786,
+      "lon": -122.3829285,
+      "world": [
+       -663.28,
+       1210.61
+      ],
+      "elev_ft": 10.7,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       -572.28,
+       1038.03
+      ],
+      "displaced_ft": 640.0,
+      "elev_ft": 10.4,
+      "tdze_ft": 10.9,
+      "lat": 37.60945288,
+      "lon": -122.38189805,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 7650.0,
+      "TODA": 7650.0,
+      "ASDA": 7650.0,
+      "LDA": 7010.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": false,
+     "iap": null,
+     "marking": "NPI",
+     "ils": null,
+     "als": null,
+     "reil": true,
+     "tdz": false,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": null,
+     "vgsi_angle": null,
+     "vgsi_tch_ft": null,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 0.0,
+     "plate_glidepath": null,
+     "plate_vgsi_note": null,
+     "thl": true
+    },
+    "19R": {
+     "heading_true": 207.8,
+     "runway_end": {
+      "lat": 37.62648136,
+      "lon": -122.37060941,
+      "world": [
+       424.37,
+       -851.94
+      ],
+      "elev_ft": 9.2,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       424.37,
+       -851.94
+      ],
+      "displaced_ft": 0.0,
+      "elev_ft": 9.2,
+      "tdze_ft": 11.2,
+      "lat": 37.62648136,
+      "lon": -122.37060941,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 7650.0,
+      "TODA": 7650.0,
+      "ASDA": 7650.0,
+      "LDA": 7650.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": true,
+     "iap": "GLS, RNAV (GPS) Y/Z RWY 19R",
+     "marking": "NPI",
+     "ils": null,
+     "als": null,
+     "reil": false,
+     "tdz": false,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": "P4L",
+     "vgsi_angle": 3.15,
+     "vgsi_tch_ft": 58.0,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 2000.0,
+     "plate_glidepath": {
+      "gs": 3.15,
+      "tch": 55,
+      "plate": "00375RY19R Amdt 4 (RNAV GP)"
+     },
+     "plate_vgsi_note": null,
+     "thl": false,
+     "papi": {
+      "side": "left",
+      "n": 4,
+      "angle_deg": 3.15,
+      "tch_ft": 58.0,
+      "src": "pub nasr VGSI_CODE P4L + CS \"PAPI(P4L)-GA x TCH y\"",
+      "dist_from_tch_ft": 1054.0,
+      "dist_obs_ft": 1023,
+      "dist_obs_minus_pub_ft": -31.0,
+      "lateral_obs_ft": [
+       176,
+       206,
+       236,
+       266
+      ],
+      "lha_world": [
+       [
+        326.38,
+        -551.1,
+        0.8
+       ],
+       [
+        334.46,
+        -546.84,
+        0.8
+       ],
+       [
+        342.55,
+        -542.57,
+        0.8
+       ],
+       [
+        350.64,
+        -538.31,
+        0.8
+       ]
+      ],
+      "lha_h_m": {
+       "value": 0.8,
+       "prov": "inf",
+       "note": "beam centres within +-1 in of one plane, +-1 ft of the runway CL elevation at the glide-path intercept (JO 6850.2C 506d)"
+      },
+      "aiming_deg_std": [
+       3.65,
+       3.3167,
+       2.9833,
+       2.65
+      ],
+      "aiming_deg_hg4": [
+       3.7333,
+       3.4,
+       2.9,
+       2.5667
+      ],
+      "aiming_note": "LHA1 = nearest runway. JO 6850.2C Table 5-2: standard +30/+10/-10/-30 arcmin, height group 4 on runways with a published GPA +35/+15/-15/-35; which SFO uses is not published (HG4 likely: B747/777/A350 traffic, all six ends have a GPA) - inf",
+      "obs_prov": "obs naip 2024 (+-5 ft)"
+     }
+    }
+   },
+   "edge_spacing_ft": {
+    "value": 196.15,
+    "n_spaces": 39,
+    "prov": "inf",
+    "rule": "uniform, <= 200 ft, symmetric, referenced to threshold/runway-end lights (ac30j 2.3.1.2.1)"
+   },
+   "rcl": {
+    "spacing_ft": 50,
+    "end_gap_ft": 75.0,
+    "n_lights": 151,
+    "prov": "std+inf",
+    "rule": "50 ft +-2 ft, first light 75 ft +12.5/-25 from the runway end (ac30j 3.3.1.1, Fig A-34); lateral offset <= 2.5 ft to one side unknown (0 used)"
+   }
+  },
+  {
+   "id": "1R/19L",
+   "length_ft": 8650.0,
+   "width_ft": 200.0,
+   "geodesic_length_m": 2636.55,
+   "surface": "ASPH-GRVD",
+   "edge": {
+    "type": "HIRL",
+    "src": "pub nasr RWY_LGT_CODE=HIGH; CS \"HIRL\""
+   },
+   "centreline": {
+    "present": true,
+    "src": "pub CS \"CL\"; nasr CNTRLN_LGTS_AVBL_FLAG=Y both ends"
+   },
+   "edge_lateral_ft": {
+    "value": 110.0,
+    "prov": "inf",
+    "note": "std 2-10 ft outside the 200-ft pavement; 10 ft chosen (jet runways, and MALS threshold row of 23 lights on 10-ft centres coincident with the edge lights, JO 6850.2C 200d)"
+   },
+   "ends": {
+    "1R": {
+     "heading_true": 27.8,
+     "runway_end": {
+      "lat": 37.60632988,
+      "lon": -122.38104075,
+      "world": [
+       -496.6,
+       1384.65
+      ],
+      "elev_ft": 11.4,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       -416.99,
+       1233.65
+      ],
+      "displaced_ft": 560.0,
+      "elev_ft": 11.1,
+      "tdze_ft": 11.2,
+      "lat": 37.60769047,
+      "lon": -122.38013927,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 8650.0,
+      "TODA": 8650.0,
+      "ASDA": 8650.0,
+      "LDA": 8090.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": false,
+     "iap": null,
+     "marking": "PIR",
+     "ils": null,
+     "als": null,
+     "reil": true,
+     "tdz": false,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": null,
+     "vgsi_angle": null,
+     "vgsi_tch_ft": null,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 0.0,
+     "plate_glidepath": null,
+     "plate_vgsi_note": null,
+     "thl": true
+    },
+    "19L": {
+     "heading_true": 207.8,
+     "runway_end": {
+      "lat": 37.62734219,
+      "lon": -122.36711083,
+      "world": [
+       733.2,
+       -947.5
+      ],
+      "elev_ft": 10.5,
+      "src": "pub nasr"
+     },
+     "landing_threshold": {
+      "world": [
+       733.2,
+       -947.5
+      ],
+      "displaced_ft": 0.0,
+      "elev_ft": 10.5,
+      "tdze_ft": 11.0,
+      "lat": 37.62734219,
+      "lon": -122.36711083,
+      "src": "pub nasr"
+     },
+     "declared_ft": {
+      "TORA": 8650.0,
+      "TODA": 8650.0,
+      "ASDA": 8650.0,
+      "LDA": 8650.0,
+      "src": "pub nasr = CS"
+     },
+     "instrument": true,
+     "iap": "ILS or LOC, GLS, RNAV (GPS) RWY 19L",
+     "marking": "PIR",
+     "ils": "ILS/DME",
+     "als": "MALSF",
+     "reil": false,
+     "tdz": true,
+     "rcl_flag": true,
+     "rvr": "TMR",
+     "vgsi": "P4L",
+     "vgsi_angle": 3.0,
+     "vgsi_tch_ft": 71.0,
+     "src_flags": "pub nasr APT_RWY_END (APCH_LGT_SYSTEM_CODE, RWY_END_LGTS_FLAG=REIL, TDZ_LGT_AVBL_FLAG, CNTRLN_LGTS_AVBL_FLAG, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE, THR_CROSSING_HGT) = CS p.275",
+     "caution_zone_ft": 2000.0,
+     "plate_glidepath": {
+      "gs": 3.0,
+      "tch": 55,
+      "plate": "00375IL19L Amdt 23A"
+     },
+     "plate_vgsi_note": [
+      3.0,
+      71
+     ],
+     "thl": false,
+     "tdz_rule": "bars 100..3000 ft from the landing threshold (pub flag, std geometry)",
+     "papi": {
+      "side": "left",
+      "n": 4,
+      "angle_deg": 3.0,
+      "tch_ft": 71.0,
+      "src": "pub nasr VGSI_CODE P4L + CS \"PAPI(P4L)-GA x TCH y\"",
+      "dist_from_tch_ft": 1355.0,
+      "dist_obs_ft": 1344,
+      "dist_obs_minus_pub_ft": -11.0,
+      "lateral_obs_ft": [
+       161,
+       191,
+       221,
+       251
+      ],
+      "lha_world": [
+       [
+        585.53,
+        -562.26,
+        0.8
+       ],
+       [
+        593.62,
+        -557.99,
+        0.8
+       ],
+       [
+        601.71,
+        -553.73,
+        0.8
+       ],
+       [
+        609.79,
+        -549.46,
+        0.8
+       ]
+      ],
+      "lha_h_m": {
+       "value": 0.8,
+       "prov": "inf",
+       "note": "beam centres within +-1 in of one plane, +-1 ft of the runway CL elevation at the glide-path intercept (JO 6850.2C 506d)"
+      },
+      "aiming_deg_std": [
+       3.5,
+       3.1667,
+       2.8333,
+       2.5
+      ],
+      "aiming_deg_hg4": [
+       3.5833,
+       3.25,
+       2.75,
+       2.4167
+      ],
+      "aiming_note": "LHA1 = nearest runway. JO 6850.2C Table 5-2: standard +30/+10/-10/-30 arcmin, height group 4 on runways with a published GPA +35/+15/-15/-35; which SFO uses is not published (HG4 likely: B747/777/A350 traffic, all six ends have a GPA) - inf",
+      "obs_prov": "obs naip 2024 (+-5 ft)"
+     },
+     "als_detail": {
+      "type": "MALSF",
+      "plane_elev_ft": 10.5,
+      "plane_note": "single horizontal plane at the threshold centreline elevation (JO 6850.2C 201a); SFO piers over the bay - see als_piers_observed",
+      "stations_referenced_to": "landing (displaced) threshold per JO 6850.2C 15/200 and the SFO 2013 memo (ALS changed when 28L/28R thresholds moved); pier crossmembers do not settle which stations are lit",
+      "piers_observed": {
+       "shoreline_ft": -500,
+       "crossmembers_ft": [
+        1000,
+        1200
+       ],
+       "far_end_ft": 1400,
+       "pile_caps_every_ft": 100,
+       "note": "pier ends at ~1400 ft = MALSF length; the 1200-ft member is wider and brighter (newer?)"
+      },
+      "elevation_setting_deg": {
+       "src": "JO 6850.2C Table 2-2 (MALS, 3 deg GS; shift by GS-3)",
+       "0": 3.1,
+       "200": 3.2,
+       "400": 3.3,
+       "600": 3.4,
+       "800": 3.4,
+       "1000": 3.5,
+       "1200": 3.6,
+       "1400": 3.7
+      }
+     }
+    }
+   },
+   "edge_spacing_ft": {
+    "value": 196.59,
+    "n_spaces": 44,
+    "prov": "inf",
+    "rule": "uniform, <= 200 ft, symmetric, referenced to threshold/runway-end lights (ac30j 2.3.1.2.1)"
+   },
+   "rcl": {
+    "spacing_ft": 50,
+    "end_gap_ft": 75.0,
+    "n_lights": 171,
+    "prov": "std+inf",
+    "rule": "50 ft +-2 ft, first light 75 ft +12.5/-25 from the runway end (ac30j 3.3.1.1, Fig A-34); lateral offset <= 2.5 ft to one side unknown (0 used)"
+   }
+  }
+ ],
+ "rwsl": {
+  "src": "pub rwsl graphic (schematic, 2017) + nasr/CS/AD remark \"in operation\"",
+  "thl_ends": [
+   "10L",
+   "10R",
+   "28L",
+   "28R",
+   "1L",
+   "1R"
+  ],
+  "thl_rule": {
+   "type": "L-850T",
+   "rows": 2,
+   "lateral_ft": 6,
+   "first_ft": 375,
+   "tol_ft": 25,
+   "spacing_ft": 100,
+   "per_row": 16,
+   "length_ft": 1500,
+   "reference": "runway end (start of takeoff roll) - inf; ac30j G.2.4 says \"from the runway threshold\"; for displaced-threshold ends the two readings differ by 300-640 ft",
+   "src": "ac30j G.2.4, Fig G-3"
+  },
+  "rel_rule": {
+   "type": "L-852S red",
+   "first": "2 ft before the hold marking (holding side)",
+   "lateral": "2 ft from taxiway CL, opposite side of the CL lights",
+   "spacing_ft": "<= 50, >= 12.5, equidistant",
+   "next_to_last": "2 ft before the runway edge stripe",
+   "last": "2 ft beside the runway CL lights toward the taxiway",
+   "min_count": 6,
+   "src": "ac30j G.2.1-G.2.3, Fig G-1/G-2"
+  },
+  "rel": [
+   {
+    "taxiway": "R",
+    "runway": "10L/28R",
+    "graphic_xy": [
+     -1206,
+     -935
+    ],
+    "hold": {
+     "p": [
+      -1267.23,
+      -1029.95
+     ],
+     "text": "28R-10L",
+     "twy": "R",
+     "dist_m": 113.0
+    }
+   },
+   {
+    "taxiway": "E",
+    "runway": "10L/28R",
+    "graphic_xy": [
+     -165,
+     -230
+    ],
+    "hold": {
+     "p": [
+      -161.22,
+      -257.65
+     ],
+     "text": "10L-28R",
+     "twy": "E",
+     "dist_m": 28.0
+    }
+   },
+   {
+    "taxiway": "E",
+    "runway": "10L/28R",
+    "graphic_xy": [
+     -89,
+     -339
+    ],
+    "hold": {
+     "p": [
+      -18.49,
+      -384.09
+     ],
+     "text": "28R-10L",
+     "twy": "E",
+     "dist_m": 84.0
+    }
+   },
+   {
+    "taxiway": "L",
+    "runway": "10L/28R",
+    "graphic_xy": [
+     386,
+     61
+    ],
+    "hold": {
+     "p": [
+      392.1,
+      25.77
+     ],
+     "text": "10L-28R",
+     "twy": "L",
+     "dist_m": 36.0
+    }
+   },
+   {
+    "taxiway": "C",
+    "runway": "10L/28R",
+    "graphic_xy": [
+     1601,
+     557
+    ],
+    "hold": {
+     "p": [
+      1639.5,
+      502.54
+     ],
+     "text": "28R-10L",
+     "twy": "C",
+     "dist_m": 67.0
+    }
+   },
+   {
+    "taxiway": "Q",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     -1145,
+     -621
+    ],
+    "hold": {
+     "p": [
+      -1099.76,
+      -685.11
+     ],
+     "text": "28L-10R",
+     "twy": "Q",
+     "dist_m": 78.0
+    }
+   },
+   {
+    "taxiway": "K",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     -858,
+     -469
+    ],
+    "hold": {
+     "p": [
+      -852.05,
+      -542.63
+     ],
+     "text": "28L-10R",
+     "twy": "K",
+     "dist_m": 74.0
+    }
+   },
+   {
+    "taxiway": "D",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     -648,
+     -357
+    ],
+    "hold": {
+     "p": [
+      -640.57,
+      -430.94
+     ],
+     "text": "28L-10R",
+     "twy": "D",
+     "dist_m": 74.0
+    }
+   },
+   {
+    "taxiway": "T",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     -553,
+     -330
+    ],
+    "hold": {
+     "p": [
+      -515.06,
+      -381.62
+     ],
+     "text": "28L-10R",
+     "twy": "T",
+     "dist_m": 64.0
+    }
+   },
+   {
+    "taxiway": "E",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     -358,
+     -42
+    ],
+    "hold": {
+     "p": [
+      -337.83,
+      -99.82
+     ],
+     "text": "10R-28L",
+     "twy": "E",
+     "dist_m": 61.0
+    }
+   },
+   {
+    "taxiway": "L",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     269,
+     283
+    ],
+    "hold": {
+     "p": [
+      284.8,
+      229.37
+     ],
+     "text": "10R-28L",
+     "twy": "L",
+     "dist_m": 56.0
+    }
+   },
+   {
+    "taxiway": "P",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     608,
+     465
+    ],
+    "hold": {
+     "p": [
+      605.58,
+      396.99
+     ],
+     "text": "10R-28L",
+     "twy": "P",
+     "dist_m": 68.0
+    }
+   },
+   {
+    "taxiway": "F2",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     1290,
+     828
+    ],
+    "hold": {
+     "p": [
+      1317.51,
+      772.43
+     ],
+     "text": "10R-28L",
+     "twy": "F2",
+     "dist_m": 62.0
+    }
+   },
+   {
+    "taxiway": "C",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     1534,
+     676
+    ],
+    "hold": {
+     "p": [
+      1528.74,
+      712.87
+     ],
+     "text": "28L-10R",
+     "twy": "C",
+     "dist_m": 37.0
+    }
+   },
+   {
+    "taxiway": "F",
+    "runway": "10R/28L",
+    "graphic_xy": [
+     1419,
+     894
+    ],
+    "hold": {
+     "p": [
+      1458.07,
+      846.92
+     ],
+     "text": "10R-28L",
+     "twy": "F",
+     "dist_m": 61.0
+    }
+   },
+   {
+    "taxiway": "M",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -597,
+     1222
+    ],
+    "hold": {
+     "p": [
+      -537.68,
+      1134.28
+     ],
+     "text": "1L-19R",
+     "twy": "M",
+     "dist_m": 106.0
+    }
+   },
+   {
+    "taxiway": "H",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -613,
+     1015
+    ],
+    "hold": {
+     "p": [
+      -589.85,
+      909.03
+     ],
+     "text": "19R-1L",
+     "twy": "H",
+     "dist_m": 108.0
+    }
+   },
+   {
+    "taxiway": "H",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -444,
+     1010
+    ],
+    "hold": {
+     "p": [
+      -406.55,
+      920.85
+     ],
+     "text": "1L-19R",
+     "twy": "H",
+     "dist_m": 97.0
+    }
+   },
+   {
+    "taxiway": "G",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -318,
+     719
+    ],
+    "hold": {
+     "p": [
+      -275.27,
+      636.38
+     ],
+     "text": "1L-19R",
+     "twy": "G",
+     "dist_m": 93.0
+    }
+   },
+   {
+    "taxiway": "G",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -426,
+     658
+    ],
+    "hold": {
+     "p": [
+      -408.67,
+      565.75
+     ],
+     "text": "19R-1L",
+     "twy": "G",
+     "dist_m": 94.0
+    }
+   },
+   {
+    "taxiway": "F1",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -243,
+     305
+    ],
+    "hold": {
+     "p": [
+      -234.39,
+      234.86
+     ],
+     "text": "19R-1L",
+     "twy": "B/A/F1",
+     "dist_m": 71.0
+    }
+   },
+   {
+    "taxiway": "F1",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -111,
+     332
+    ],
+    "hold": {
+     "p": [
+      -70.48,
+      255.51
+     ],
+     "text": "1L-19R",
+     "twy": "F1",
+     "dist_m": 87.0
+    }
+   },
+   {
+    "taxiway": "F",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     -181,
+     171
+    ],
+    "hold": {
+     "p": [
+      -165.01,
+      104.01
+     ],
+     "text": "19R-1L",
+     "twy": "F",
+     "dist_m": 69.0
+    }
+   },
+   {
+    "taxiway": "C",
+    "runway": "1L/19R",
+    "graphic_xy": [
+     102,
+     -338
+    ],
+    "hold": {
+     "p": [
+      94.6,
+      -388.69
+     ],
+     "text": "19R-1L",
+     "twy": "C",
+     "dist_m": 51.0
+    }
+   },
+   {
+    "taxiway": "F",
+    "runway": "1R/19L",
+    "graphic_xy": [
+     30,
+     255
+    ],
+    "hold": {
+     "p": [
+      47.88,
+      189.69
+     ],
+     "text": "19L-1R",
+     "twy": "F",
+     "dist_m": 68.0
+    }
+   },
+   {
+    "taxiway": "C",
+    "runway": "1R/19L",
+    "graphic_xy": [
+     288,
+     -234
+    ],
+    "hold": {
+     "p": [
+      296.79,
+      -281.8
+     ],
+     "text": "19L-1R",
+     "twy": "C",
+     "dist_m": 49.0
+    }
+   },
+   {
+    "taxiway": "E",
+    "runway": "1R/19L",
+    "graphic_xy": [
+     715,
+     -745
+    ],
+    "hold": {
+     "p": [
+      695.67,
+      -695.19
+     ],
+     "text": "1R-19L",
+     "twy": "E",
+     "dist_m": 53.0
+    }
+   }
+  ],
+  "rel_note": "one entry per label on the FAA graphic, snapped to the nearest app hold (data/sfo_details.js) with the same taxiway and runway; which side/which of two parallel holds is lit is not resolvable from the graphic (dist_m shows the schematic offset)"
+ },
+ "rules": {
+  "runway_edge": {
+   "src": "ac30j 2.3.1",
+   "colour": "white; yellow in the caution zone (last 2000 ft or half length, whichever less) toward an instrument-approach end; red before a displaced threshold toward that approach",
+   "lateral": "2-10 ft outside full-strength pavement (10 ft recommended for jets)",
+   "spacing": "<= 200 ft, uniform, symmetric",
+   "intersections": "HIRL on CAT III runways: L-850C in-pavement at intersections to keep spacing; others: in-pavement if gap > 400 ft",
+   "height_max_in": 14,
+   "steps": 5
+  },
+  "threshold_end": {
+   "src": "ac30j 2.3.2",
+   "rule": "2 groups of 4 (instrument) on 10-ft centres, outermost in line with edge lights, 2-10 ft before threshold; green outward / red inward; displaced threshold: green wing bars outboard (inner light in line with edge lights), red end lights at the pavement end"
+  },
+  "stopway": {
+   "src": "ac30j 2.4",
+   "rule": "unidirectional red in the takeoff direction along the stopway edges; SFO: NASR/CS publish no stopway (blast pads only) - do not draw"
+  },
+  "rcl": {
+   "src": "ac30j 3.3.1, Fig A-34; AIM 2-1-5",
+   "spacing_ft": 50,
+   "colour": "white; alternating red/white from 3000 to 1000 ft remaining; red last 1000 ft",
+   "displaced": "<= 700 ft displaced area: blanked in the approach direction"
+  },
+  "tdz": {
+   "src": "ac30j 3.3.2, Fig A-35",
+   "rule": "2 rows of 3-light bars, 100-ft spacing, 100..3000 ft, inner light 36 ft from CL, 5-ft light spacing, toed 4 deg"
+  },
+  "alsf2": {
+   "src": "jo6850 200a-b, Fig 2-1, 202-206, T2-1, T2-3",
+   "summary": "bars every 100 ft to 2400 ft, 1000-ft 100-ft-wide crossbar, 500-ft barrettes, red side rows 100-900 ft in line with TDZ, green threshold bar, 15 SFL 1000-2400"
+  },
+  "ssalr": {
+   "src": "jo6850 200c, Fig 2-2; jo7110 3-4-9",
+   "summary": "mode of ALSF-2 for better weather: bars 200..1400 every 200 ft, 70-ft crossbar at 1000, threshold row on 10-ft centres, RAIL flashers 1600..2400"
+  },
+  "mals": {
+   "src": "jo6850 200d, Fig 2-3",
+   "summary": "threshold row 10-ft centres (23 lights on 200-ft runway), 7 five-light bars 200..1400, 66-ft crossbar at 1000"
+  },
+  "malsf": {
+   "src": "jo6850 200e",
+   "summary": "MALS + 3 SFL on the three outermost bars"
+  },
+  "malsr": {
+   "src": "jo6850 200f, Fig 2-4",
+   "summary": "MALS + RAIL: 5 SFL at 1600..2400"
+  },
+  "papi": {
+   "src": "jo6850 500-506, T5-1, T5-2; ac28h",
+   "rule": "4 LHAs, left side, inboard LHA 50 ft +25/-0 from the edge, 30 ft +-1 apart, perpendicular to CL; sited so the visual path matches the published GPA/TCH (HG4: GPA source distance + 300 ft +50/-0); aiming +-30/10 arcmin (HG4 +-35/15)",
+   "obstacle_surface": "OCS from 300 ft in front of the PAPI at (3rd LHA aim - 1 deg), +-10 deg, 4 SM",
+   "coverage": "incandescent ~+-14 deg, LED +-10.5 deg azimuth"
+  },
+  "reil": {
+   "src": "jo6850 400-407; ac51b",
+   "rule": "2 synchronised flashers, 40 ft from edge in line with threshold lights; unidirectional aimed 10 deg up / 15 deg toe-out (120 fpm) or omni (60 fpm)"
+  },
+  "taxiway_centreline": {
+   "src": "ac30j 4.3, T4-1; ac46f",
+   "colour": "green; lead-on/lead-off alternate green/yellow from runway CL (green first) to one light beyond the runway hold or ILS critical-area hold (ending yellow); crossing a runway: alternating",
+   "spacing_ft": {
+    "straight": [
+     100,
+     50
+    ],
+    "curve_R_ge_1200": [
+     100,
+     50
+    ],
+    "curve_R_400_1199": [
+     50,
+     25
+    ],
+    "curve_R_75_399": [
+     25,
+     12.5
+    ],
+    "acute_exit": [
+     50,
+     50
+    ],
+    "note": "[>=1200 RVR, <1200 RVR]"
+   },
+   "lateral": "<= 2 ft offset (2.5 ft to fixture CL), consistent side",
+   "beam": "straight: parallel to path; curves bidirectional parallel to tangent, unidirectional toed-in to meet CL at ~4 spacings",
+   "sfo_status": "SFO taxiway CL lights: NOT FAA-published per taxiway (X-Plane community data draws them widely) - unverified"
+  },
+  "taxiway_edge": {
+   "src": "ac30j 2.5, T2-1, Fig A-16",
+   "colour": "blue omni (L-861T elevated <= 14 in / L-852T inset)",
+   "spacing": "straight > 200 ft: <= 200 ft; 100-200 ft sections: <= 100 ft; curves per Fig A-16 by radius; >= 3 lights on arcs > 30 deg",
+   "lateral": "2-10 ft outside the full-strength pavement",
+   "sfo_status": "unverified per taxiway"
+  },
+  "rgl_elevated": {
+   "src": "ac30j 4.4.2, 4.4.5-4.4.6; ac46f L-804",
+   "rule": "pair of alternately flashing yellow lamps each side of the taxiway at the runway hold, 10-17 ft outside the taxiway edge, aimed at the cockpit 150-200 ft before the hold, 5-10 deg up; 45-50 flashes/min",
+   "sfo_status": "unverified"
+  },
+  "rgl_in_pavement": {
+   "src": "ac30j 4.4.3-4.4.4, 4.8.6.2.5; ac46f L-852G",
+   "rule": "row across the full taxiway 2 ft on the holding side of the hold marking, 9 ft 10 in centres, facing away from the runway; even/odd alternate, each 30-32 flashes/min",
+   "sfo_status": "unverified"
+  },
+  "stop_bar": {
+   "src": "ac30j 4.5; AIM 2-1-5",
+   "rule": "in-pavement red L-852S 2 ft on the holding side of the hold marking, 9 ft 10 in centres + elevated red L-862S each side <= 10 ft outside the edge; required below 600 RVR on lit taxiways to active runways",
+   "sfo_status": "SFO SMGCS plan / low-visibility routes not found - unverified"
+  },
+  "clearance_bar": {
+   "src": "ac30j 4.7",
+   "rule": "3 in-pavement yellow lights on 5-ft centres, 2 ft on the holding side of a taxiway/taxiway hold"
+  },
+  "beacon": {
+   "src": "ac30j 6.1; ac12f; AIM",
+   "rule": "white/green alternating, 24-30 flashes/min (installation AC & AIM) / 22-26 fpm (equipment spec), beam centre 5 deg, mounted above surrounding obstructions"
+  },
+  "obstruction": {
+   "src": "ac7460 5.2, 5.5; ac43j",
+   "rule": "<= 150 ft AGL: steady red L-810 (double at top); > 150 ft: flashing red L-864 (2000 cd, 30 fpm) at top, L-810(F) flashing at intermediate levels (150-350 ft), all synchronised"
+  },
+  "apron_flood": {
+   "src": "ac5360 7.5 (current, no numbers; refers to IES RP-37-15); cancelled AC 150/5360-13 (1988) para 52 + Table 4-1",
+   "rule": "mounted floodlights preferred, aimed/shielded against glare to pilots and ATC, overlapping sources from several directions; cancelled 1988 guidance: 5.0 fc (54 lx) at apron areas, 0.15 fc (1.6 lx) general AOA, mounts 25-50 ft at <= 200 ft spacing",
+   "sfo": "DOF-surveyed poles 60-157 ft AGL around the aprons (high masts), see apron_masts"
+  },
+  "wind_cone": {
+   "src": "ac30j 6.6",
+   "rule": "lit wind cones required for night air-carrier ops; constant illumination independent of lighting step; SFO: NASR \"Y-L\" (lighted), positions not FAA-published"
+  }
+ },
+ "obstructions": [
+  {
+   "oas": "06-035342",
+   "type": "POLE",
+   "agl_ft": 28,
+   "amsl_ft": 38,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -245.7,
+    59.0
+   ],
+   "dist_m": 253,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-001451",
+   "type": "BLDG",
+   "agl_ft": 135,
+   "amsl_ft": 144,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -105.6,
+    -799.7
+   ],
+   "dist_m": 807,
+   "study": null,
+   "jdate": "2011356",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-323169",
+   "type": "CTRL TWR",
+   "agl_ft": 245,
+   "amsl_ft": 258,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": true,
+   "world": [
+    -741.1,
+    335.8
+   ],
+   "dist_m": 814,
+   "study": "2008AWP00286NR",
+   "jdate": "2025084",
+   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+  },
+  {
+   "oas": "06-041718",
+   "type": "POLE",
+   "agl_ft": 51,
+   "amsl_ft": 62,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "1A",
+   "verified": false,
+   "world": [
+    903.3,
+    -123.6
+   ],
+   "dist_m": 912,
+   "study": null,
+   "jdate": "2018135",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034690",
+   "type": "POLE",
+   "agl_ft": 11,
+   "amsl_ft": 19,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    819.9,
+    691.9
+   ],
+   "dist_m": 1073,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-033970",
+   "type": "DAM",
+   "agl_ft": 3,
+   "amsl_ft": 14,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    499.1,
+    -988.6
+   ],
+   "dist_m": 1107,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034691",
+   "type": "POLE",
+   "agl_ft": 11,
+   "amsl_ft": 19,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    1134.5,
+    100.3
+   ],
+   "dist_m": 1139,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034632",
+   "type": "DAM",
+   "agl_ft": 5,
+   "amsl_ft": 15,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    739.3,
+    -1117.8
+   ],
+   "dist_m": 1340,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034633",
+   "type": "DAM",
+   "agl_ft": 8,
+   "amsl_ft": 15,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    874.2,
+    -1046.7
+   ],
+   "dist_m": 1364,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034441",
+   "type": "POLE",
+   "agl_ft": 11,
+   "amsl_ft": 14,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1290.0,
+    -1032.9
+   ],
+   "dist_m": 1653,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-033961",
+   "type": "NAVAID",
+   "agl_ft": 20,
+   "amsl_ft": 29,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -682.8,
+    1510.8
+   ],
+   "dist_m": 1658,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-028381",
+   "type": "T-L TWR",
+   "agl_ft": 92,
+   "amsl_ft": 94,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "5E",
+   "verified": true,
+   "world": [
+    -1109.5,
+    1384.3
+   ],
+   "dist_m": 1774,
+   "study": "2012AWP07578OE",
+   "jdate": "2013067",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-001440",
+   "type": "T-L TWR",
+   "agl_ft": 102,
+   "amsl_ft": 107,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1150.8,
+    1390.8
+   ],
+   "dist_m": 1805,
+   "study": null,
+   "jdate": "2011352",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-028376",
+   "type": "T-L TWR",
+   "agl_ft": 72,
+   "amsl_ft": 75,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "5E",
+   "verified": true,
+   "world": [
+    -1036.0,
+    1495.3
+   ],
+   "dist_m": 1819,
+   "study": "2012AWP07574OE",
+   "jdate": "2013067",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-035340",
+   "type": "NAVAID",
+   "agl_ft": 9,
+   "amsl_ft": 17,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1619.3,
+    -861.8
+   ],
+   "dist_m": 1834,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034144",
+   "type": "NAVAID",
+   "agl_ft": 17,
+   "amsl_ft": 25,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1666.9,
+    -808.7
+   ],
+   "dist_m": 1853,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-028382",
+   "type": "T-L TWR",
+   "agl_ft": 70,
+   "amsl_ft": 74,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "1E",
+   "verified": true,
+   "world": [
+    -965.9,
+    1594.9
+   ],
+   "dist_m": 1865,
+   "study": "2012AWP07575OE",
+   "jdate": "2016295",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-001425",
+   "type": "BLDG",
+   "agl_ft": 126,
+   "amsl_ft": 137,
+   "lighting": "L",
+   "marking": "N",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    447.0,
+    1851.5
+   ],
+   "dist_m": 1905,
+   "study": "1982AWP00044OE",
+   "jdate": "2013289",
+   "fixture_inferred": null
+  },
+  {
+   "oas": "06-028374",
+   "type": "T-L TWR",
+   "agl_ft": 70,
+   "amsl_ft": 75,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "5E",
+   "verified": true,
+   "world": [
+    -903.6,
+    1680.3
+   ],
+   "dist_m": 1908,
+   "study": "2012AWP07568OE",
+   "jdate": "2013066",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-033964",
+   "type": "T-L TWR",
+   "agl_ft": 68,
+   "amsl_ft": 75,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -900.7,
+    1683.7
+   ],
+   "dist_m": 1909,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-028375",
+   "type": "T-L TWR",
+   "agl_ft": 75,
+   "amsl_ft": 79,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "5E",
+   "verified": true,
+   "world": [
+    -830.0,
+    1772.8
+   ],
+   "dist_m": 1957,
+   "study": "2012AWP07573OE",
+   "jdate": "2013067",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-001452",
+   "type": "BLDG",
+   "agl_ft": 60,
+   "amsl_ft": 71,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1285.7,
+    -1519.9
+   ],
+   "dist_m": 1991,
+   "study": null,
+   "jdate": "2014152",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034222",
+   "type": "T-L TWR",
+   "agl_ft": 71,
+   "amsl_ft": 80,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -770.9,
+    1865.6
+   ],
+   "dist_m": 2019,
+   "study": "2012AWP07501OE",
+   "jdate": "2015035",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-233654",
+   "type": "BLDG",
+   "agl_ft": 68,
+   "amsl_ft": 80,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -851.1,
+    1842.2
+   ],
+   "dist_m": 2029,
+   "study": "2022AWP12181OE",
+   "jdate": "2024019",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-279521",
+   "type": "BLDG",
+   "agl_ft": 63,
+   "amsl_ft": 74,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -809.9,
+    1902.7
+   ],
+   "dist_m": 2068,
+   "study": "2022AWP12245OE",
+   "jdate": "2023121",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034155",
+   "type": "T-L TWR",
+   "agl_ft": 72,
+   "amsl_ft": 81,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -640.2,
+    2004.7
+   ],
+   "dist_m": 2104,
+   "study": "2012AWP07576OE",
+   "jdate": "2014079",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034142",
+   "type": "NAVAID",
+   "agl_ft": 17,
+   "amsl_ft": 21,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1692.6,
+    -1262.2
+   ],
+   "dist_m": 2111,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-235854",
+   "type": "BLDG",
+   "agl_ft": 87,
+   "amsl_ft": 101,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -842.8,
+    1936.2
+   ],
+   "dist_m": 2112,
+   "study": "2022AWP12247OE",
+   "jdate": "2024019",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034143",
+   "type": "NAVAID",
+   "agl_ft": 8,
+   "amsl_ft": 13,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1754.6,
+    -1191.3
+   ],
+   "dist_m": 2121,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034631",
+   "type": "T-L TWR",
+   "agl_ft": 86,
+   "amsl_ft": 93,
+   "lighting": "R",
+   "marking": "P",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -573.7,
+    2055.5
+   ],
+   "dist_m": 2134,
+   "study": "2012AWP07577OE",
+   "jdate": "2014079",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-241243",
+   "type": "BLDG",
+   "agl_ft": 91,
+   "amsl_ft": 103,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -820.9,
+    1984.3
+   ],
+   "dist_m": 2147,
+   "study": "2022AWP12248OE",
+   "jdate": "2024019",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-034259",
+   "type": "BLDG",
+   "agl_ft": 31,
+   "amsl_ft": 41,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1866.9,
+    -1343.7
+   ],
+   "dist_m": 2300,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-033971",
+   "type": "POLE",
+   "agl_ft": 51,
+   "amsl_ft": 51,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    1266.4,
+    -1949.7
+   ],
+   "dist_m": 2325,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-001450",
+   "type": "T-L TWR",
+   "agl_ft": 138,
+   "amsl_ft": 145,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -2529.0,
+    -891.6
+   ],
+   "dist_m": 2682,
+   "study": null,
+   "jdate": "2012342",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-035243",
+   "type": "BLDG",
+   "agl_ft": 138,
+   "amsl_ft": 153,
+   "lighting": "R",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    1014.0,
+    2686.7
+   ],
+   "dist_m": 2872,
+   "study": null,
+   "jdate": "2013289",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-314302",
+   "type": "POLE",
+   "agl_ft": 130,
+   "amsl_ft": 191,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    1765.4,
+    3139.4
+   ],
+   "dist_m": 3602,
+   "study": "2019AWP01913OE",
+   "jdate": "2025263",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-307863",
+   "type": "POLE",
+   "agl_ft": 170,
+   "amsl_ft": 231,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    1882.2,
+    3075.2
+   ],
+   "dist_m": 3605,
+   "study": "2022AWP09113OE",
+   "jdate": "2025057",
+   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+  },
+  {
+   "oas": "06-307887",
+   "type": "POLE",
+   "agl_ft": 170,
+   "amsl_ft": 231,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    1928.1,
+    3116.6
+   ],
+   "dist_m": 3665,
+   "study": "2022AWP09117OE",
+   "jdate": "2025263",
+   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+  },
+  {
+   "oas": "06-001448",
+   "type": "MONUMENT",
+   "agl_ft": 81,
+   "amsl_ft": 233,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "1B",
+   "verified": true,
+   "world": [
+    -856.2,
+    -3908.3
+   ],
+   "dist_m": 4001,
+   "study": "0067_WE03643OE",
+   "jdate": "2016133",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-021147",
+   "type": "BLDG",
+   "agl_ft": 92,
+   "amsl_ft": 184,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "5E",
+   "verified": true,
+   "world": [
+    -571.1,
+    -3974.2
+   ],
+   "dist_m": 4015,
+   "study": "2010AWP01713OE",
+   "jdate": "2010343",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-001420",
+   "type": "BLDG",
+   "agl_ft": 173,
+   "amsl_ft": 177,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    2872.6,
+    3195.2
+   ],
+   "dist_m": 4297,
+   "study": "0080_WE00675OE",
+   "jdate": "2011350",
+   "fixture_inferred": "L-864 flashing red at top (+ L-810(F) intermediate), inf from AC 70/7460-1N 5.5"
+  },
+  {
+   "oas": "06-318009",
+   "type": "BLDG",
+   "agl_ft": 76,
+   "amsl_ft": 166,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": true,
+   "world": [
+    -4267.2,
+    -1055.1
+   ],
+   "dist_m": 4396,
+   "study": "2021AWP22054OE",
+   "jdate": "2025329",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  },
+  {
+   "oas": "06-305561",
+   "type": "BLDG",
+   "agl_ft": 69,
+   "amsl_ft": 166,
+   "lighting": "R",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -4283.1,
+    -1171.6
+   ],
+   "dist_m": 4440,
+   "study": "2021AWP22046OE",
+   "jdate": "2024095",
+   "fixture_inferred": "L-810 steady red (double at top), inf from AC 70/7460-1N 5.2.2.1"
+  }
+ ],
+ "apron_masts": [
+  {
+   "oas": "06-034805",
+   "type": "POLE",
+   "agl_ft": 107,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -471.8,
+    187.6
+   ],
+   "dist_m": 508,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034806",
+   "type": "POLE",
+   "agl_ft": 107,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -507.1,
+    75.0
+   ],
+   "dist_m": 513,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034700",
+   "type": "POLE",
+   "agl_ft": 65,
+   "amsl_ft": 75,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    64.0,
+    -627.9
+   ],
+   "dist_m": 631,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034699",
+   "type": "POLE",
+   "agl_ft": 62,
+   "amsl_ft": 72,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    97.4,
+    -688.4
+   ],
+   "dist_m": 695,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034701",
+   "type": "POLE",
+   "agl_ft": 99,
+   "amsl_ft": 110,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -594.2,
+    455.5
+   ],
+   "dist_m": 749,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034698",
+   "type": "POLE",
+   "agl_ft": 62,
+   "amsl_ft": 71,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    130.8,
+    -750.6
+   ],
+   "dist_m": 762,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-035343",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -761.4,
+    -75.2
+   ],
+   "dist_m": 765,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-035350",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -767.8,
+    -24.2
+   ],
+   "dist_m": 768,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034808",
+   "type": "POLE",
+   "agl_ft": 106,
+   "amsl_ft": 117,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -648.6,
+    447.2
+   ],
+   "dist_m": 788,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034809",
+   "type": "POLE",
+   "agl_ft": 107,
+   "amsl_ft": 118,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -717.6,
+    365.7
+   ],
+   "dist_m": 805,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034697",
+   "type": "POLE",
+   "agl_ft": 62,
+   "amsl_ft": 71,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    163.6,
+    -813.5
+   ],
+   "dist_m": 830,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034811",
+   "type": "POLE",
+   "agl_ft": 108,
+   "amsl_ft": 119,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -879.8,
+    44.5
+   ],
+   "dist_m": 881,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034986",
+   "type": "POLE",
+   "agl_ft": 62,
+   "amsl_ft": 69,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -418.5,
+    -786.0
+   ],
+   "dist_m": 890,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034696",
+   "type": "POLE",
+   "agl_ft": 63,
+   "amsl_ft": 71,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    196.0,
+    -874.8
+   ],
+   "dist_m": 897,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034810",
+   "type": "POLE",
+   "agl_ft": 105,
+   "amsl_ft": 113,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -361.4,
+    -841.9
+   ],
+   "dist_m": 916,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034812",
+   "type": "POLE",
+   "agl_ft": 109,
+   "amsl_ft": 112,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -877.9,
+    305.0
+   ],
+   "dist_m": 929,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034813",
+   "type": "POLE",
+   "agl_ft": 101,
+   "amsl_ft": 105,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -908.1,
+    203.8
+   ],
+   "dist_m": 931,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034694",
+   "type": "POLE",
+   "agl_ft": 65,
+   "amsl_ft": 72,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    228.9,
+    -936.9
+   ],
+   "dist_m": 964,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034815",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -964.5,
+    29.9
+   ],
+   "dist_m": 965,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034407",
+   "type": "POLE",
+   "agl_ft": 99,
+   "amsl_ft": 106,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -710.2,
+    659.6
+   ],
+   "dist_m": 969,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034817",
+   "type": "POLE",
+   "agl_ft": 105,
+   "amsl_ft": 113,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -763.4,
+    635.5
+   ],
+   "dist_m": 993,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034818",
+   "type": "POLE",
+   "agl_ft": 107,
+   "amsl_ft": 114,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -844.1,
+    540.3
+   ],
+   "dist_m": 1002,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034408",
+   "type": "POLE",
+   "agl_ft": 107,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -725.6,
+    696.9
+   ],
+   "dist_m": 1006,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034767",
+   "type": "POLE",
+   "agl_ft": 106,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -995.1,
+    -228.7
+   ],
+   "dist_m": 1021,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034816",
+   "type": "POLE",
+   "agl_ft": 107,
+   "amsl_ft": 114,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -285.9,
+    -986.5
+   ],
+   "dist_m": 1027,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034987",
+   "type": "POLE",
+   "agl_ft": 66,
+   "amsl_ft": 72,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -574.7,
+    -860.4
+   ],
+   "dist_m": 1035,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034820",
+   "type": "POLE",
+   "agl_ft": 111,
+   "amsl_ft": 121,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1030.7,
+    -163.0
+   ],
+   "dist_m": 1043,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034819",
+   "type": "POLE",
+   "agl_ft": 107,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -521.8,
+    -916.2
+   ],
+   "dist_m": 1054,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034821",
+   "type": "POLE",
+   "agl_ft": 104,
+   "amsl_ft": 115,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1075.8,
+    -86.3
+   ],
+   "dist_m": 1079,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034823",
+   "type": "POLE",
+   "agl_ft": 102,
+   "amsl_ft": 113,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1133.9,
+    136.0
+   ],
+   "dist_m": 1142,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034822",
+   "type": "POLE",
+   "agl_ft": 105,
+   "amsl_ft": 113,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -442.0,
+    -1067.5
+   ],
+   "dist_m": 1155,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034825",
+   "type": "POLE",
+   "agl_ft": 108,
+   "amsl_ft": 117,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1088.1,
+    397.2
+   ],
+   "dist_m": 1158,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034826",
+   "type": "POLE",
+   "agl_ft": 108,
+   "amsl_ft": 117,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1134.5,
+    248.5
+   ],
+   "dist_m": 1161,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034827",
+   "type": "POLE",
+   "agl_ft": 108,
+   "amsl_ft": 117,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -911.8,
+    736.3
+   ],
+   "dist_m": 1172,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034988",
+   "type": "POLE",
+   "agl_ft": 65,
+   "amsl_ft": 69,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -712.8,
+    -949.2
+   ],
+   "dist_m": 1187,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034824",
+   "type": "POLE",
+   "agl_ft": 109,
+   "amsl_ft": 117,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -407.3,
+    -1132.7
+   ],
+   "dist_m": 1204,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034829",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 113,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1205.0,
+    -222.0
+   ],
+   "dist_m": 1225,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034828",
+   "type": "POLE",
+   "agl_ft": 106,
+   "amsl_ft": 111,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -666.7,
+    -1037.7
+   ],
+   "dist_m": 1233,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034991",
+   "type": "POLE",
+   "agl_ft": 63,
+   "amsl_ft": 70,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -859.8,
+    -1044.5
+   ],
+   "dist_m": 1353,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-035353",
+   "type": "POLE",
+   "agl_ft": 157,
+   "amsl_ft": 163,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1346.1,
+    467.0
+   ],
+   "dist_m": 1425,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-035354",
+   "type": "POLE",
+   "agl_ft": 157,
+   "amsl_ft": 163,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1384.6,
+    337.8
+   ],
+   "dist_m": 1425,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034992",
+   "type": "POLE",
+   "agl_ft": 62,
+   "amsl_ft": 66,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -996.7,
+    -1071.7
+   ],
+   "dist_m": 1463,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-035355",
+   "type": "POLE",
+   "agl_ft": 153,
+   "amsl_ft": 164,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1427.1,
+    421.1
+   ],
+   "dist_m": 1488,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-034993",
+   "type": "POLE",
+   "agl_ft": 65,
+   "amsl_ft": 70,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1088.2,
+    -1120.6
+   ],
+   "dist_m": 1562,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-035356",
+   "type": "POLE",
+   "agl_ft": 154,
+   "amsl_ft": 162,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1509.7,
+    447.0
+   ],
+   "dist_m": 1575,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": true
+  },
+  {
+   "oas": "06-035357",
+   "type": "POLE",
+   "agl_ft": 156,
+   "amsl_ft": 165,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1620.8,
+    520.1
+   ],
+   "dist_m": 1702,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034735",
+   "type": "POLE",
+   "agl_ft": 60,
+   "amsl_ft": 64,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -474.1,
+    1841.9
+   ],
+   "dist_m": 1902,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034971",
+   "type": "POLE",
+   "agl_ft": 72,
+   "amsl_ft": 92,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -1378.9,
+    1447.2
+   ],
+   "dist_m": 1999,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-316943",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 114,
+   "lighting": "N",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -765.2,
+    2169.0
+   ],
+   "dist_m": 2300,
+   "study": "2024AWP07057OE",
+   "jdate": "2025263",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-316945",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 114,
+   "lighting": "N",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -765.2,
+    2170.8
+   ],
+   "dist_m": 2302,
+   "study": "2024AWP07059OE",
+   "jdate": "2025263",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-316946",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 114,
+   "lighting": "N",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -766.5,
+    2171.8
+   ],
+   "dist_m": 2303,
+   "study": "2024AWP07060OE",
+   "jdate": "2025263",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-316944",
+   "type": "POLE",
+   "agl_ft": 103,
+   "amsl_ft": 114,
+   "lighting": "N",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    -768.5,
+    2170.8
+   ],
+   "dist_m": 2303,
+   "study": "2024AWP07058OE",
+   "jdate": "2025263",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-034973",
+   "type": "POLE",
+   "agl_ft": 133,
+   "amsl_ft": 142,
+   "lighting": "U",
+   "marking": "U",
+   "accuracy": "1A",
+   "verified": true,
+   "world": [
+    -2582.4,
+    -465.6
+   ],
+   "dist_m": 2624,
+   "study": null,
+   "jdate": "2013289",
+   "osm_lighting_mast_within_15m": false
+  },
+  {
+   "oas": "06-165058",
+   "type": "POLE",
+   "agl_ft": 144,
+   "amsl_ft": 154,
+   "lighting": "N",
+   "marking": "N",
+   "accuracy": "4D",
+   "verified": false,
+   "world": [
+    1044.1,
+    2703.9
+   ],
+   "dist_m": 2898,
+   "study": "2017AWP02810OE",
+   "jdate": "2017261",
+   "osm_lighting_mast_within_15m": false
+  }
+ ],
+ "conflicts": [
+  {
+   "id": "rcl_coverage",
+   "text": "Chart Supplement \"HIRL CL\" on all four runways and NASR CNTRLN_LGTS_AVBL_FLAG=Y at all 8 ends vs the lighting note on the airport diagram and plates \"TDZL/RCLS Rwys 19L and 28R\".",
+   "resolution": "spec follows CS+NASR (RCL on all runways); flagged for owner/imagery confirmation",
+   "severity": "medium"
+  },
+  {
+   "id": "papi_28R_distance",
+   "text": "NASR/CS/plate VGSI TCH 68 ft at 3.00 deg puts the 28R PAPI 1298 ft from the threshold; NAIP 2024 shows the LHAs at 1369 ft (71 ft further, = ILS GS source 1049 ft + 300 ft HG4 rule). 10L +30 ft, 28L +23 ft, 19R -31 ft, 19L -11 ft, 10R 0 ft.",
+   "resolution": "use the observed LHA positions with the published angle; keep the published TCH as a label",
+   "severity": "low"
+  },
+  {
+   "id": "beacon_rate",
+   "text": "Beacon flash rate: AC 150/5345-12F equipment 22-26 fpm vs AC 150/5340-30J 6.1.3 and AIM 24-30 fpm.",
+   "resolution": "use 24 fpm (inside both)",
+   "severity": "low"
+  },
+  {
+   "id": "als_count",
+   "text": "ALSF-2 green threshold lights: FAA pages \"49\" (typical, 150-ft runway) vs geometry rule (5-ft centres, 45 ft beyond each edge) = 59 on SFO 200-ft runways.",
+   "resolution": "59 (rule), inf",
+   "severity": "low"
+  },
+  {
+   "id": "app_approach_lights",
+   "text": "js/geo.js already lists only the 3 NASR ALS (28R ALSF2, 28L MALSR, 19L MALSF); its comment attributes \"TDZL/RCLS Rwys 19L and 28R\" to the Chart Supplement - that wording is on the AD/plates; the CS says \"TDZL\" under 28R and 19L.",
+   "resolution": "comment fix only",
+   "severity": "info"
+  }
+ ],
+ "open_questions": [
+  "Rotating beacon position (not in NASR/CS/AD/X-Plane/cached OSM): ask the owner or find a photo; do not draw until located.",
+  "Which ALS stations are lit on the 28L/28R piers: pier crossmembers (NAIP) sit at 700-1300 ft (28R) and 1000/1300 ft (28L) from the displaced thresholds; lights assumed at FAA stations from the landing threshold. Night imagery/photos would settle it.",
+  "RCL on 10R/28L and 1L/19R (CS/NASR yes vs AD/plate note) - check a close photo or higher-resolution imagery for in-pavement fixtures.",
+  "SFO taxiway lighting per taxiway (centreline green vs blue edge, lead-on/off colour coding, clearance bars, stop bars, elevated vs in-pavement RGLs): no FAA publication; X-Plane KSFO has 837 green-CL, 732 blue-edge, 108 amber hold-line and 81 alternating green/amber segments (community data). Needs the SFO SMGCS plan or imagery/photos.",
+  "REIL style (unidirectional vs omnidirectional) at 10L/1L/1R.",
+  "PAPI aiming set (standard vs height-group 4).",
+  "Apron floodlight fixture photometry and aiming at SFO (no public source); DOF gives pole positions/heights only.",
+  "SFO tower facility directives for lighting steps (JO 7110.65 tables are the default)."
+ ],
+ "fixture_file": "tools/env/lighting_fixtures.json",
+ "fixture_counts": {
+  "runway_edge": 392,
+  "runway_centreline": 783,
+  "threshold_end": 32,
+  "reil": 6,
+  "papi": 24,
+  "runway_end": 32,
+  "threshold_wingbar": 32,
+  "tdz": 360,
+  "als_centreline_bar": 190,
+  "als_side_row": 54,
+  "als_500ft_bar": 8,
+  "als_1000ft_bar": 36,
+  "als_threshold_bar": 105,
+  "als_flasher": 23,
+  "rwsl_thl": 192
+ }
+}

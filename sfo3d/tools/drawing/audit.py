@@ -19,8 +19,18 @@ Scenarios
             blocked when their noses are closer than 0.5 (spanA + spanB) + 8 m): every overlapped neighbour must be
             blocked, and the oversize aircraft must clear the neighbours' parked bridges and buildings
 Severities
-  COLLISION   solids intersect (plan overlap AND height ranges overlap)
-  OFF-PAVEMENT a gear contact point (TYPES nose + main gear, as rendered) is not on the app's paved raster
+  COLLISION   solids intersect (plan overlap AND the vertical extents overlap at the same plan point: aircraft by their
+              per-cell height rasters, boxes and jet-bridge tubes as exact parallelepipeds recorded by extract2d.mjs -
+              a sloping tunnel is as high as it is at that point, not its whole y range)
+  OFF-PAVEMENT two views, reported separately:
+              gear-off-pavement          visual: a rendered gear contact point (TYPES nose + main gear) is not on the
+                                         rendered paved raster (tyres drawn on grass / sand)
+              gear-off-physics-pavement  physics: a GroundPhysics gear point (ground.js samples(): xNose, xMain +-
+                                         track/2) is neither on that raster nor on the OSM taxi net (ground.js
+                                         pavedUnion: raster OR TaxiNet.paved) - what GroundPhysics itself would accept
+  OBSTRUCTION a raised solid (approach-light pier / post, sign) stands on a surface aircraft use: the runway (incl. the
+              displaced-threshold area), a blast pad, an EMAS bed or a taxiway polygon; a sign on other physics-legal
+              pavement (paved raster, where GroundPhysics may put an aircraft) is a WARNING
   CLEARANCE   aircraft closer than the ICAO Annex 14 stand clearance (3.0 / 4.5 / 7.5 m by code letter) - a design
               check, not a physical conflict (SFO has measured real spacings below the design value)
   WARNING     tight (< 0.5 m between bridges / GSE, < 3 m aircraft to building), bridge tunnel slope > 1:12,
@@ -33,20 +43,52 @@ from shapely.geometry import Polygon, Point, MultiPolygon, box as sbox
 from shapely.strtree import STRtree
 from shapely.ops import unary_union
 from common import (scene, OUT, buildings, poly_rings, hull_poly, circle, AcGeom, ac_instance_geom, plan_world, model_geom, body_geom,
-                    stand_W, gear_points_world, m4, G, polys_of, w2st)
+                    stand_W, gear_points_world, m4, G, polys_of, w2st, NetPaved, provenance, phys_gear_points)
 from measure import PaveMask
 
+SCEN_SAME_STAND_SKIP = {'DOCK-REF', 'DOCK-MAX', 'ENVELOPE'}   # one aircraft per stand by construction there; never in LIVE
 ICAO = {'A': 3.0, 'B': 3.0, 'C': 4.5, 'CL': 4.5, 'D': 7.5, 'E': 7.5, 'EL': 7.5, 'F': 7.5}  # Annex 14 3.13.6
 CAB_GROUP = {'cab', 'cab-roof', 'bellows', 'floodlight', 'beacon'}
 T_CODE = lambda T: 'F' if T['wing']['span'] >= 65 else 'E' if T['wing']['span'] >= 52 else 'D' if T['wing']['span'] >= 36 else 'C' if T['wing']['span'] >= 24 else 'B'
 
 
-class Obj:
-    __slots__ = ('cat', 'id', 'poly', 'y0', 'y1', 'stand', 'part', 'label', 'ac', 'bridge', 'extra')
+def pp_heights(pps, X, Z, eps=1e-4):
+    """vertical extent (lo, hi) at plan points (X, Z) of a union of parallelepipeds {o, E=[e1, e2, e3]} (points o + a e1
+    + b e2 + c e3, a, b, c in [0, 1]); nan where the vertical line misses every one. Exact for boxes and tubes in any
+    orientation (a sloping tunnel, a 40 deg stair)."""
+    X = np.asarray(X, float); Z = np.asarray(Z, float); n = len(X)
+    lo = np.full(n, np.nan); hi = np.full(n, np.nan)
+    for pp in pps or []:
+        o = np.asarray(pp['o'], float); E = np.asarray(pp['E'], float).T
+        if abs(np.linalg.det(E)) < 1e-12: continue
+        Ei = np.linalg.inv(E)
+        base = Ei @ np.vstack([X - o[0], np.full(n, -o[1]), Z - o[2]]); slope = Ei[:, 1]
+        ylo = np.full(n, -np.inf); yhi = np.full(n, np.inf)
+        for i in range(3):
+            b = base[i]; sl = slope[i]
+            if abs(sl) < 1e-12:
+                out = (b < -eps) | (b > 1 + eps); ylo[out] = np.inf; yhi[out] = -np.inf
+            else:
+                y1 = (-eps - b) / sl; y2 = (1 + eps - b) / sl
+                ylo = np.maximum(ylo, np.minimum(y1, y2)); yhi = np.minimum(yhi, np.maximum(y1, y2))
+        ok = ylo <= yhi
+        lo[ok] = np.fmin(lo[ok], ylo[ok]); hi[ok] = np.fmax(hi[ok], yhi[ok])
+    return lo, hi
 
-    def __init__(self, cat, oid, poly, y0, y1, stand=None, part=None, label=None, ac=None, bridge=None, extra=None):
+
+class Obj:
+    __slots__ = ('cat', 'id', 'poly', 'y0', 'y1', 'stand', 'part', 'label', 'ac', 'bridge', 'extra', 'pp')
+
+    def __init__(self, cat, oid, poly, y0, y1, stand=None, part=None, label=None, ac=None, bridge=None, extra=None, pp=None):
         self.cat, self.id, self.poly, self.y0, self.y1 = cat, oid, poly, y0, y1
         self.stand, self.part, self.label, self.ac, self.bridge, self.extra = stand, part, label or oid, ac, bridge, extra or {}
+        self.pp = pp or None
+
+    def heights(self, X, Z):
+        """(lo, hi) of the solid at plan points: aircraft height rasters, exact parallelepipeds, else the y band"""
+        if self.ac is not None: return self.ac.heights(X, Z)
+        if self.pp: return pp_heights(self.pp, X, Z)
+        n = len(X); return np.full(n, self.y0), np.full(n, self.y1)
 
     def ent(self):
         """(entity key, entity label): conflicts are aggregated per pair of entities (a whole bridge, a stand's
@@ -54,7 +96,7 @@ class Obj:
         if self.cat == 'bridge': return f'bridge:{self.bridge}', self.extra.get('elabel', self.label)
         if self.cat in ('envelope', 'envelope-type'): return f'env:{self.stand}', f'{self.stand} class envelope'
         if self.cat == 'vdgs': return f'vdgs:{self.stand}', f'{self.stand} VDGS / stand sign'
-        if self.cat == 'mast': return self.id.replace('-head', ''), self.label.replace(' head', '')
+        if self.cat in ('mast', 'pier'): return self.id.split(':')[0], self.extra.get('elabel', self.label)
         return self.id, self.label
 
     def ref(self):
@@ -108,15 +150,24 @@ def static_objects():
             if p.area > 5: out.append(Obj('building', f'itb-roof-overhang{i}', p, g + 20.7, S['itbRoof']['y'][1], label='ITB wing-roof overhang (underside >= 20.7 m, terminals.js greatHall)', extra=dict(kind='roof')))
     for i, m in enumerate(S['masts']):
         if m['removed']: continue
-        out.append(Obj('mast', f'mast{i}', circle((m['x'], m['z']), m['r']), g, g + m['h'], label=f'floodlight mast {i}'))
-        out.append(Obj('mast', f'mast{i}-head', sbox(m['x'] - m['headHalf'], m['z'] - m['headHalf'], m['x'] + m['headHalf'], m['z'] + m['headHalf']), g + m['h'] - 0.9, g + m['h'] + 0.1, label=f'floodlight mast {i} head'))
+        el = f'floodlight mast {i}'
+        if m.get('prims'):   # the geometry items.js buildMasts() emits: base, pole, platform ring, yawed head bar, luminaires
+            for k, p in enumerate(m['prims']):
+                if len(p['hull']) >= 3: out.append(Obj('mast', f'mast{i}:{p["part"]}:{k}', hull_poly(p['hull']), p['y'][0], p['y'][1], part=p['part'], label=f'{el} {p["part"]}', pp=p.get('pp'), extra=dict(elabel=el)))
+        else:
+            out.append(Obj('mast', f'mast{i}:pole', circle((m['x'], m['z']), m['r']), g, g + m['h'], label=el, extra=dict(elabel=el)))
     for i, s in enumerate(S['signs']):
         c = np.array(s['c']); u = np.array(s['u']); n = np.array([-u[1], u[0]]); hw, hd = s['w'] / 2, s['d'] / 2
         P = [c - u * hw - n * hd, c + u * hw - n * hd, c + u * hw + n * hd, c - u * hw + n * hd]
         out.append(Obj('sign', f'sign{i}', Polygon(P), s['y0'], s['y0'] + s['h'], label=f'{s["kind"]} sign {i}'))
     for st in S['stands']:
         for j, p in enumerate(st.get('vdgs') or []):
-            if len(p['hull']) >= 3: out.append(Obj('vdgs', f'{st["name"]}:{p["part"]}:{j}', hull_poly(p['hull']), p['y'][0], p['y'][1], stand=st['name'], part=p['part'], label=f'{st["name"]} {p["part"]}'))
+            if len(p['hull']) >= 3: out.append(Obj('vdgs', f'{st["name"]}:{p["part"]}:{j}', hull_poly(p['hull']), p['y'][0], p['y'][1], stand=st['name'], part=p['part'], label=f'{st["name"]} {p["part"]}', pp=p.get('pp')))
+    for pr in S.get('piers') or []:
+        el = f'RWY {pr.get("end") or "?"} {pr.get("type") or ""} approach-light {"pier" if pr["water"] else "post"} {pr.get("fromThr") or 0:.0f} m from the threshold'
+        for k, p in enumerate(pr['prims']):
+            if len(p['hull']) >= 3: out.append(Obj('pier', f'pier{pr["i"]}:{p["part"]}:{k}', hull_poly(p['hull']), p['y'][0], p['y'][1], part=p['part'], label=f'{el} ({p["part"]})', pp=p.get('pp'),
+                                                   extra=dict(elabel=el, water=pr['water'], end=pr.get('end'), fromThr=pr.get('fromThr'), fromEnd=pr.get('fromEnd'), base=pr['base'])))
     return out
 
 
@@ -128,7 +179,7 @@ def bridge_objects(pose):
         for pi, p in enumerate(P['parts']):
             if len(p['hull']) < 3: continue
             el = f'{b["stand"]} bridge {b["gate"]} (L{b["door"]})'
-            out.append(Obj('bridge', f'{b["stand"]}/{b["gate"]}/L{b["door"]}:{p["part"]}:{pi}', hull_poly(p['hull']), p['y'][0], p['y'][1], stand=b['stand'], part=p['part'], bridge=bi, label=f'{el} {p["part"]}', extra=dict(elabel=el, door=b['door'])))
+            out.append(Obj('bridge', f'{b["stand"]}/{b["gate"]}/L{b["door"]}:{p["part"]}:{pi}', hull_poly(p['hull']), p['y'][0], p['y'][1], stand=b['stand'], part=p['part'], bridge=bi, label=f'{el} {p["part"]}', extra=dict(elabel=el, door=b['door']), pp=p.get('pp')))
     return out
 
 
@@ -155,13 +206,10 @@ def sample_region(R, step=0.25):
 
 
 def vertical(a, b, R):
-    """(collide, min vertical gap) of objects a, b over their plan-overlap region R"""
+    """(collide, min vertical gap) of objects a, b over their plan-overlap region R (per-point vertical extents)"""
     P = sample_region(R)
     if not len(P): return False, None
-    if a.ac is not None: alo, ahi = a.ac.heights(P[:, 0], P[:, 1])
-    else: alo, ahi = np.full(len(P), a.y0), np.full(len(P), a.y1)
-    if b.ac is not None: blo, bhi = b.ac.heights(P[:, 0], P[:, 1])
-    else: blo, bhi = np.full(len(P), b.y0), np.full(len(P), b.y1)
+    alo, ahi = a.heights(P[:, 0], P[:, 1]); blo, bhi = b.heights(P[:, 0], P[:, 1])
     ok = ~(np.isnan(alo) | np.isnan(blo))
     if not ok.any(): return False, None
     gap = np.maximum(blo[ok] - ahi[ok], alo[ok] - bhi[ok])
@@ -176,7 +224,7 @@ def depth_of(R):
     except Exception: return 0.0
 
 
-SEV = {'COLLISION': 0, 'OFF-PAVEMENT': 1, 'CLEARANCE': 2, 'WARNING': 3}
+SEV = {'COLLISION': 0, 'OFF-PAVEMENT': 1, 'OBSTRUCTION': 2, 'CLEARANCE': 3, 'WARNING': 4}
 
 
 class Audit:
@@ -247,10 +295,11 @@ def bridge_building_skip(a, b):
 def run():
     S = scene(); t0 = time.time(); au = Audit(); g = G()
     stands = {s['name']: s for s in S['stands']}
-    pave = PaveMask(); pave16 = PaveMask16()
+    pave = PaveMask(); pave16 = PaveMask16(); net = NetPaved(); netcheck = net.check()
+    if netcheck: print(f'  taxi-net replica vs the page: {netcheck["agree"] * 100:.2f} % of {netcheck["n"]} points agree')
     statics = static_objects()
     buildings = [o for o in statics if o.cat == 'building']; masts = [o for o in statics if o.cat == 'mast']
-    signs = [o for o in statics if o.cat == 'sign']; vdgs = [o for o in statics if o.cat == 'vdgs']
+    signs = [o for o in statics if o.cat == 'sign']; vdgs = [o for o in statics if o.cat == 'vdgs']; piers = [o for o in statics if o.cat == 'pier']
     attach = {bi: np.array(b['attach']) for bi, b in enumerate(S['bridges'])}
 
     def bridge_vs_static(scen, BR):
@@ -295,14 +344,19 @@ def run():
         def clear(a, b):
             if not clearance or a.stand is None or b.stand is None: return None
             ca, cb = stands[a.stand]['cls'], stands[b.stand]['cls']; return max(ICAO[ca], ICAO[cb])
-        au.pairs(scen, 'aircraft-aircraft', ACS, ACS, same=True, skip=lambda a, b: a.stand is not None and a.stand == b.stand, clear=clear, maxd=10)
+        # the same-stand skip only where one aircraft per stand holds by construction; in LIVE two aircraft assigned
+        # to one gate must be tested against each other
+        same = (lambda a, b: a.stand is not None and a.stand == b.stand) if scen in SCEN_SAME_STAND_SKIP else None
+        au.pairs(scen, 'aircraft-aircraft', ACS, ACS, same=True, skip=same, clear=clear, maxd=10)
         au.pairs(scen, 'aircraft-building', ACS, buildings, warn=lambda a, b: 3.0 if (a.stand and b.extra.get('kind') != 'walkway') else None, maxd=4)
         au.pairs(scen, 'aircraft-mast', ACS, masts, maxd=3)
         au.pairs(scen, 'aircraft-vdgs', ACS, vdgs, skip=lambda a, b: False, maxd=2)
         au.pairs(scen, 'aircraft-sign', ACS, signs, maxd=2)
+        au.pairs(scen, 'aircraft-pier', ACS, piers, maxd=2)
 
     def pavement(scen, items):
-        """items: list of (Obj, T type dict, W)"""
+        """items: list of (Obj, T type dict, W). Visual view: rendered gear on the rendered paved raster; physics view:
+        GroundPhysics' own gear points on raster OR OSM taxi net (ground.js pavedUnion)"""
         for o, T, W in items:
             gp = gear_points_world(T, W)
             X = np.array([p[0] for p in gp]); Z = np.array([p[1] for p in gp])
@@ -310,9 +364,20 @@ def run():
             au.stats[(scen, 'gear-on-pavement', 'tested')] += 1
             if not on.all():
                 bad = [gp[i][2] for i in range(len(gp)) if not on[i]]
-                au.add(scen, 'gear-off-pavement', 'OFF-PAVEMENT', o, dict(cat='pavement', id='paved raster 1.0 m', label='app paved raster (ground.js physics, 1.0 m)'), loc=(X[~on][0], Z[~on][0]), note='unpaved under ' + ', '.join(bad) + ' gear')
+                au.add(scen, 'gear-off-pavement', 'OFF-PAVEMENT', o, dict(cat='pavement', id='paved raster 1.0 m', label='rendered paved raster (1.0 m): visual'), loc=(X[~on][0], Z[~on][0]),
+                       note='visual: rendered ' + ', '.join(bad) + ' gear on unpaved ground' + (' (physics accepts it: OSM taxi net)' if phys_ok(T, W) else ''))
             elif not on16.all():
                 au.add(scen, 'gear-off-pavement', 'WARNING', o, dict(cat='pavement', id='paved raster 1.6 m', label='mobile-quality paved raster (1.6 m)'), loc=(X[~on16][0], Z[~on16][0]), note='on pavement at 1.0 m but not on the 1.6 m (mobile/low quality) raster')
+            PX, PZ, names = phys_gear(T, W); ok = pave(PX, PZ) | net(PX, PZ)
+            au.stats[(scen, 'gear-on-physics-pavement', 'tested')] += 1
+            if not ok.all():
+                au.add(scen, 'gear-off-physics-pavement', 'OFF-PAVEMENT', o, dict(cat='pavement', id='physics pavement', label='GroundPhysics pavement (raster OR OSM taxi net): physics'), loc=(PX[~ok][0], PZ[~ok][0]),
+                       note='physics: GroundPhysics ' + ', '.join(n for n, k in zip(names, ok) if not k) + ' gear point off raster and taxi net')
+
+    phys_gear = phys_gear_points
+
+    def phys_ok(T, W):
+        X, Z, _ = phys_gear(T, W); return bool((pave(X, Z) | net(X, Z)).all())
 
     # ---------------------------------------------------------------- static: overlapping building footprints (both
     # extruded -> coincident walls / roofs fight in the depth buffer). Terminal parts sit on the ramp-level complex by
@@ -333,6 +398,39 @@ def run():
                     else f'walls interpenetrate: {frac * 100:.0f} % of {small.label} lies inside {big.label} ({small.y1 - G():.1f} vs {big.y1 - G():.1f} m high)')
             if frac > 0.5 and ka == kb == 'airtrain': note += ' - probably one station listed twice under two names (airport.js only skips exact-name duplicates)'
             au.add('STATIC', 'building-building', 'WARNING', a, b, dist=0, area=R.area, depth=depth_of(R), loc=R.representative_point().coords[0], note=note)
+    # ---------------------------------------------------------------- STATIC: raised solids on movement surfaces
+    surf = []
+    for rw in S['runways']: surf.append(('runway', f'RWY {rw["name"][0]}/{rw["name"][1]}', Polygon(rw['corners'])))
+    for z in S['endZones']: surf.append(('emas' if z['kind'] == 'EMAS' else 'blastpad', f'{"EMAS area" if z["kind"] == "EMAS" else "blast pad"} {z["end"]}', Polygon(z['rectW'])))
+    for b in S.get('emasBeds') or []: surf.append(('emas-bed', f'EMAS bed {b["end"]} (3-D)', hull_poly(b['hull'])))
+    for t in S['pave']['taxiways']:
+        for poly in t['polys']: surf.append(('taxiway', f'taxiway {t["name"]}', poly_rings(poly)))
+    stree = STRtree([q[2] for q in surf])
+    import cv2
+    from scipy import ndimage
+    pv = pave.pave; dt_in = ndimage.distance_transform_edt(pv) * pave.res   # depth inside the paved raster (m)
+    def depth_in_paved(x, z):
+        s_, t_ = w2st(x, z); i = int((s_ - pave.s0) / pave.res); j = int((pave.t0 + pave.h - t_) / pave.res)
+        return float(dt_in[j, i]) if 0 <= j < dt_in.shape[0] and 0 <= i < dt_in.shape[1] else 0.0
+    def obstruction(objs, what):
+        by = collections.defaultdict(list)
+        for o in objs: by[o.ent()[0]].append(o)
+        for ent, os_ in by.items():
+            U = unary_union([o.poly for o in os_]); c = U.representative_point(); rep = max(os_, key=lambda o: o.poly.area)
+            hits = [surf[j] for j in stree.query(U) if surf[j][2].intersects(U)]
+            au.stats[('STATIC', what + '-surface', 'tested')] += 1
+            if hits:
+                kinds = sorted({h[0] for h in hits}); names = ', '.join(sorted({h[1] for h in hits}))
+                dep = max(float(h[2].boundary.distance(c)) if h[2].contains(c) else 0.0 for h in hits)
+                au.add('STATIC', what + '-on-movement-surface', 'OBSTRUCTION', rep, dict(cat='surface', id='surface:' + '+'.join(kinds), label=names), area=U.area, depth=dep, loc=(c.x, c.y),
+                       note=f'{rep.extra.get("elabel", rep.label)} ({rep.y1 - g:.1f} m high) stands {dep:.1f} m inside {names}')
+            else:
+                d = depth_in_paved(c.x, c.y)
+                if d > 1.0: au.add('STATIC', what + '-on-physics-pavement', 'WARNING', rep, dict(cat='pavement', id='paved raster', label='paved raster (GroundPhysics-legal ground)'), depth=d, loc=(c.x, c.y),
+                                   note=f'{d:.1f} m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there)')
+    obstruction(piers, 'pier'); obstruction(signs, 'sign')
+    print(f'  STATIC: {len(piers)} pier parts, {len(signs)} signs vs {len(surf)} movement surfaces ({time.time() - t0:.0f} s)')
+
     # ---------------------------------------------------------------- LIVE
     scen = 'LIVE'; ACS = []; pav = []; markers = []
     for a in S['aircraft']:
@@ -466,31 +564,43 @@ def run():
         if run > 1 and abs(drop) / run > 1 / 12:
             au.add('KINEMATICS', 'tunnel-slope', 'WARNING', ref, dict(cat='rule', id='1:12', label='PBB slope limit 1:12 (ADA / ABA 410.1)'), loc=b['rc'],
                    note=f'docked to {Dk["type"]}: floor {fl - g:.1f} m at the rotunda -> {cab[1] - g:.1f} m at the cab over {run:.1f} m = 1:{run / max(abs(drop), 1e-3):.1f}')
-    au.meta = dict(seconds=time.time() - t0, tested={f'{k[0]}|{k[1]}': v for k, v in au.stats.items()})
-    items = merge_scenarios(au.items)
+    raw = au.items
+    per_scen = collections.Counter(f'{x["scenario"]}|{x["severity"]}' for x in raw)
+    au.meta = dict(seconds=time.time() - t0, tested={f'{k[0]}|{k[1]}': v for k, v in au.stats.items()}, per_scenario=dict(per_scen),
+                   per_scenario_note='counts of the UNMERGED records: one per (scenario, kind, object pair) at that scenario\'s own severity', netcheck=netcheck,
+                   provenance=provenance())
+    items = merge_scenarios(raw)
     items.sort(key=lambda x: (SEV[x['severity']], -(x['depth'] or 0), -(x['area'] or 0), x['dist'] if x['dist'] is not None else 0))
     for i, x in enumerate(items): x['n'] = i + 1
     envj = {n: shapely.to_geojson(shapely.set_precision(p, 0.01)) for n, p in env.items()}
     json.dump(dict(meta=au.meta, conflicts=items, envelopes=envj), open(os.path.join(OUT, 'audit.json'), 'w'), indent=0)
-    c = collections.Counter((sc, x['severity']) for x in items for sc in x.get('scenarios', [x['scenario']]))
-    for k in sorted(c): print('   ', k, c[k])
+    for k in sorted(per_scen): print('   ', k, per_scen[k])
     return au
 
 
 def merge_scenarios(items):
-    """one record per (kind, entity pair): the same parked bridge collides in LIVE and REST alike"""
-    kind_of = lambda k: k.replace('envelope-', 'aircraft-')
+    """one record per (kind, entity pair) - the same parked bridge collides in LIVE and REST alike - keeping the worst
+    record, with scenarios = {scenario: that scenario's own severity} (a pair that only warns in LIVE is not listed as
+    a LIVE collision)"""
     best = {}
+    w = lambda x: (SEV[x['severity']], -(x['depth'] or 0), -(x['area'] or 0))
     for r in items:
         key = (r['kind'], r['a']['ent'], r['b']['ent'])
         o = best.get(key)
-        w = lambda x: (SEV[x['severity']], -(x['depth'] or 0), -(x['area'] or 0))
-        if o is None: r = dict(r); r['scenarios'] = [r['scenario']]; best[key] = r
-        else:
-            sc = sorted(set(o['scenarios'] + [r['scenario']]))
-            if w(r) < w(o): r = dict(r); r['scenarios'] = sc; best[key] = r
-            else: o['scenarios'] = sc
+        if o is None: r = dict(r); r['scenarios'] = {r['scenario']: r['severity']}; best[key] = r; continue
+        sc = dict(o['scenarios']); prev = sc.get(r['scenario'])
+        if prev is None or SEV[r['severity']] < SEV[prev]: sc[r['scenario']] = r['severity']
+        if w(r) < w(o): r = dict(r); r['scenarios'] = sc; best[key] = r
+        else: o['scenarios'] = sc
     return list(best.values())
+
+
+def scen_label(c):
+    """'LIVE, REST (W)' style: scenarios at the record's severity first, others with their own severity initial"""
+    sc = c.get('scenarios') or {c['scenario']: c['severity']}
+    if isinstance(sc, list): sc = {k: c['severity'] for k in sc}
+    same = [k for k, v in sorted(sc.items()) if v == c['severity']]; other = [f'{k} ({v[0]})' for k, v in sorted(sc.items()) if v != c['severity']]
+    return ', '.join(same + other)
 
 
 class PaveMask16(PaveMask):

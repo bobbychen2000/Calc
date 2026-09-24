@@ -12,7 +12,7 @@ export default async ({ page, shot, base }) => {
     const three = /live3/.test(pg);
     const prefix = process.env['PREFIX_' + pg.replace(/\W/g, '_')] || (three ? 'new' : 'old');
     const t0 = Date.now();
-    await page.goto(base + pg + '?' + (process.env.QS || 'mode=snapshot'));
+    await page.goto(base + pg + '?' + (process.env.QS || 'mode=snapshot&res=1'));
     await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
     const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
     await page.evaluate(async () => { SFO.qa.hideUI(true); await Promise.all(SFO.scene.aircraft.map(a => a.ready)); });
@@ -29,14 +29,19 @@ export default async ({ page, shot, base }) => {
         if (k === 'hold') return q.hold(+args[0], +(args[1] || 32));
         if (k === 'ac') return q.aircraft(args[0], +(args[1] || 60), args[2] ? +args[2] : null, +(args[3] || 10));
         if (k === 'light') { SFO.setLight(args[0]); return true; }
+        if (k === 'thr') return q.threshold(args[0], +(args[1] || 180), +(args[2] || 7));
         return false;
       }, [kind, arg]);
       if (!ok) { console.log('view failed', v); continue; }
       if (kind === 'light') continue;
       const tv = Date.now();
       if (three) { const f0 = await page.evaluate(() => SFO.R.frames); const n = +(process.env.FRAMES || 8); await page.waitForFunction(([f, n]) => SFO.R.frames >= f + n, [f0, n], { timeout: 0, polling: 200 }); }
-      else await page.waitForTimeout(+(process.env.SETTLE || 2500));
-      console.log(pg, v, ((Date.now() - tv) / 1000).toFixed(1), 's');
+      else {
+        await page.waitForTimeout(+(process.env.SETTLE || 2500));
+        // the old app's dynamic resolution drops to 0.4x on a software rasteriser: render one frame at full size
+        await page.evaluate(() => { const c = document.querySelector('canvas#gl'); SFO.R.resize(c.width, c.height); SFO.frameNow(); });
+      }
+      console.log(pg, v, ((Date.now() - tv) / 1000).toFixed(1), 's', three ? JSON.stringify(await page.evaluate(() => SFO.R.debugInfo())) : '');
       await shot(prefix + '_' + v.replace(/[^a-zA-Z0-9]+/g, '_'));
     }
   }

@@ -10,7 +10,7 @@ const { Fn, attribute, varying, vec3, vec4, float, texture, max, mod, smoothstep
 
 export function markingMaterial({ noiseTex, pxScale, reversed }) {
   const off = reversed ? 1 : -1;
-  const mat = new THREE.MeshStandardNodeMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: off * 2, polygonOffsetUnits: off * 6, roughness: 0.6, metalness: 0 });
+  const mat = new THREE.MeshStandardNodeMaterial({ side: THREE.DoubleSide, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: off * 2, polygonOffsetUnits: off * 6, roughness: 0.6, metalness: 0 });
   const aPos = attribute('position', 'vec3'), aNrm = attribute('normal', 'vec3'), aExt = attribute('extra', 'vec4');
   // aNrm.xz = unit perpendicular, aNrm.y = dash duty ratio; aExt = (half width, side -1/+1, distance along, dash period)
   const dist = length(aPos.sub(cameraPosition)); const px = dist.mul(pxScale).mul(0.75); const hw = max(aExt.x, px);

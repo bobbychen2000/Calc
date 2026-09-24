@@ -137,7 +137,7 @@ def main(quiet=False, app=True):
             if b.get('rotunda') and not (GM.EXT_MIN <= ext <= GM.EXT_MAX):
                 over = GM.EXT_MIN - ext if ext < GM.EXT_MIN else ext - GM.EXT_MAX
                 # within 1.0 m of a limit = inside the stop-point / OSM rotunda uncertainty: WARN, not ISSUE
-                (bucket if over > 1.0 else warns).append((s['name'], '%s: extension %.1f m outside %.1f-%.1f m' % (tag, ext, GM.EXT_MIN, GM.EXT_MAX)))
+                (bucket if over > 1.0 else (warns if t in obs else notes)).append((s['name'], '%s: extension %.1f m outside %.1f-%.1f m' % (tag, ext, GM.EXT_MIN, GM.EXT_MAX)))
             if ang > GM.CAB_ROT_OPT: bucket.append((s['name'], '%s: cab turn %.0f deg > %.0f' % (tag, ang, GM.CAB_ROT_OPT)))
             elif ang > GM.CAB_ROT_STD and t in obs: warns.append((s['name'], '%s: cab turn %.0f deg > standard %.1f (needs the optional cab)' % (tag, ang, GM.CAB_ROT_STD)))
             if wdir:

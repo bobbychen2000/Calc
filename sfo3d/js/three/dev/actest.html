@@ -1,0 +1,51 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>aircraft material test</title>
+<!-- Dev check of js/three/aircraft.js on imported models: livery zones, glass, metal, lights.
+     ?types=b738,a320,b788&livs=UAL,DAL,ASA  (TYPES keys, AIRLINE_LIVERY codes). Result in window.__probe. -->
+<script type="importmap">
+{ "imports": { "../../gl.js": "../compat/gl.js" } }
+</script>
+<style>html,body{margin:0;height:100%;background:#000}canvas{display:block;width:100%;height:100%}</style></head>
+<body>
+<script type="module">
+import { THREE, TSL } from '../lib.js';
+import { AircraftRenderer } from '../aircraft.js';
+import { LiveAircraft, TYPE_MODELS } from '../../live/aircraft.js';
+import { MODEL_SOURCES } from '../../live/models.js';
+import { AIRLINE_LIVERY, LIVERIES } from '../../aircraft/fleet.js';
+import { makeNoiseTexture } from '../../world/textures.js';
+import { textureOf } from '../convert.js';
+import { Engine, QUALITY3 } from '../engine.js';
+const q = new URLSearchParams(location.search);
+const out = {};
+try {
+  let r, scene, E = null;
+  if (q.get('engine')) { E = await new Engine(document.body, QUALITY3[q.get('engine')] || QUALITY3.high).init(); r = E.renderer; E.resize(innerWidth, innerHeight, 1); scene = E.scene; }
+  else { r = new THREE.WebGPURenderer({ antialias: true }); r.setPixelRatio(1); r.setSize(innerWidth, innerHeight); document.body.appendChild(r.domElement); await r.init(); scene = new THREE.Scene(); }
+  r.toneMapping = THREE.AgXToneMapping; r.toneMappingExposure = 0.5; r.shadowMap.enabled = true;
+  scene.background = new THREE.Color(0.5, 0.6, 0.75);
+  const sun = new THREE.DirectionalLight(0xffffff, 12); sun.position.set(40, 60, 30); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, far: 400 }); scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0x9ab8e0, 0x5a5040, 3));
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardNodeMaterial({ color: 0x777777, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g);
+  const types = (q.get('types') || 'b738,a320,b788').split(','); const livs = (q.get('livs') || 'UAL,DAL,ASA').split(',');
+  for (const k of ['a319', 'a320', 'a321', 'a333', 'a359', 'a388', 'b738', 'b744', 'b748', 'b752', 'b763', 'b788', 'crj2', 'crj7', 'crj9', 'e170', 'e190', 'e75l', 'md11']) MODEL_SOURCES[k] = '../../../data/models/' + k + '.sfom';
+  const noise = textureOf(makeNoiseTexture()); noise.wrapS = noise.wrapT = THREE.RepeatWrapping;
+  const AR = new AircraftRenderer(scene, { noiseTex: noise });
+  const list = [];
+  types.forEach((t, i) => {
+    let L = AIRLINE_LIVERY[livs[i % livs.length]]; if (typeof L === 'string') L = AIRLINE_LIVERY[L]; L = L || LIVERIES[i % LIVERIES.length];
+    const ac = new LiveAircraft(t, t, L, { id: 'T' + i, lodDist: 5000 }); ac.pos = [0, 0, -i * 45 + 45]; ac.fwd = [1, 0, 0]; ac.lightsOn.nav = true; list.push(ac);
+  });
+  await Promise.all(list.map(a => a.ready));
+  const cam = E ? E.camera : new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.5, 2000);
+  if (E) { E.setSun([0.5, 0.7, 0.4], [12, 12, 12]); E.setCamera({ pos: [+(q.get('cx') || 70), +(q.get('cy') || 25), +(q.get('cz') || 75)], target: [0, 3, 0], fov: 35 * Math.PI / 180, near: 0.5, far: 5000, shadowSplits: [100, 300, 1000] }, innerWidth, innerHeight); }
+  else { cam.position.set(+(q.get('cx') || 70), +(q.get('cy') || 25), +(q.get('cz') || 75)); cam.lookAt(0, 3, 0); }
+  AR.sync(list, [cam.position.x, cam.position.y, cam.position.z]);
+  const e = AR.entries.get(list[0]); out.U = Object.fromEntries(Object.entries(e.U).filter(([k, v]) => v && v.toArray).map(([k, v]) => [k, v.toArray().map(x => +x.toFixed(3))]));
+  out.real = !!e.real; out.mats = e.real ? e.real.material.length : 0;
+  for (let i = 0; i < 3; i++) { AR.sync(list, [cam.position.x, cam.position.y, cam.position.z]); if (E) E.render(); else r.render(scene, cam); await new Promise(res => setTimeout(res, 50)); }
+  out.ok = true;
+} catch (err) { out.err = String(err && err.stack || err); }
+window.__probe = out;
+</script>
+</body></html>

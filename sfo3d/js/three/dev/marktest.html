@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>marking material test</title>
+<!-- Dev check of js/three/markings.js: the taxiway / hold-line ribbons of js/live/markings.js on a flat grey plane,
+     camera at SFO.qa.hold(i). ?hold=12&revz=0|1&plain=1 (plain: MeshBasic instead of the TSL material). -->
+<script type="importmap">
+{ "imports": { "../../gl.js": "../compat/gl.js" } }
+</script>
+<style>html,body{margin:0;height:100%;background:#000}canvas{display:block;width:100%;height:100%}</style></head>
+<body>
+<script type="module">
+import { THREE, TSL } from '../lib.js';
+import { markingMaterial } from '../markings.js';
+import { buildMarkings } from '../../live/markings.js';
+import { DETAILS } from '../../../data/sfo_details.js';
+import { GROUND_Y } from '../../geo.js';
+import { geometryOf, textureOf } from '../convert.js';
+import { makeNoiseTexture } from '../../world/textures.js';
+const q = new URLSearchParams(location.search); const out = {};
+try {
+  const r = new THREE.WebGPURenderer({ antialias: true, reversedDepthBuffer: q.get('revz') !== '0' }); r.setPixelRatio(1); r.setSize(innerWidth, innerHeight); document.body.appendChild(r.domElement); await r.init();
+  out.reversed = r.reversedDepthBuffer;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0.5, 0.6, 0.75);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x888888, 3));
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000), new THREE.MeshStandardNodeMaterial({ color: 0x333333, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.position.y = GROUND_Y; scene.add(g);
+  const mm = buildMarkings(DETAILS); const geo = geometryOf(mm); out.verts = geo.attributes.position.count; out.attrs = Object.keys(geo.attributes);
+  const p = geo.attributes.position.array; out.y = [p[1], p[4], p[7]];
+  const noise = textureOf(makeNoiseTexture()); noise.wrapS = noise.wrapT = THREE.RepeatWrapping;
+  const pxScale = TSL.uniform(2 * Math.tan(25 * Math.PI / 180) / innerHeight * +(q.get('px') || 1));
+  const mat = q.get('plain') ? new THREE.MeshBasicNodeMaterial({ color: 0xffff00 }) : markingMaterial({ noiseTex: noise, pxScale, reversed: r.reversedDepthBuffer });
+  if (q.get('opaque')) { mat.transparent = false; mat.opacityNode = null; mat.depthWrite = true; }
+  if (q.get('nopos')) mat.positionNode = null;
+  const m = new THREE.Mesh(geo, mat); m.frustumCulled = false; scene.add(m);
+  const h = DETAILS.holds[+(q.get('hold') || 12)];
+  const off = [-h.dir[0] * 0.95 + h.dir[1] * 0.3, -h.dir[1] * 0.95 - h.dir[0] * 0.3];
+  const cam = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.5, 20000);
+  const yaw = Math.atan2(off[0], -off[1]), pitch = +(q.get('pitch') || 9) * Math.PI / 180, dist = +(q.get('dist') || 32);
+  const t = [h.p[0], GROUND_Y + 1.5, h.p[1]];
+  cam.position.set(t[0] + Math.cos(pitch) * Math.sin(yaw) * dist, t[1] + Math.sin(pitch) * dist, t[2] - Math.cos(pitch) * Math.cos(yaw) * dist); cam.lookAt(...t);
+  for (let i = 0; i < 2; i++) await r.renderAsync(scene, cam);
+  out.ok = true;
+} catch (err) { out.err = String(err && err.stack || err); }
+window.__probe = out;
+</script>
+</body></html>

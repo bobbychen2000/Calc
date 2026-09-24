@@ -5,7 +5,7 @@
 //   low (phones): one pass with MRT (colour, normal, velocity) -> half-resolution GTAO applied to the colour -> TRAA
 // Decisions and their sources: docs/research/engine.md (verified), docs/research/engine_impl.md (this port).
 import { THREE, TSL } from './lib.js';
-const { pass, mrt, output, velocity, normalView, packNormalToRGB, unpackRGBToNormal, sample, screenUV, builtinAOContext, vec4, float, mix, uniform } = TSL;
+const { pass, mrt, output, velocity, normalView, packNormalToRGB, unpackRGBToNormal, sample, screenUV, builtinAOContext, vec4, float, mix, uniform, renderOutput, saturation, pow, max } = TSL;
 
 // quality tiers (js/live/app.js QUALITY, plus the new-renderer settings)
 export const QUALITY3 = {
@@ -71,7 +71,13 @@ export class Engine {
     let outN = color;
     if (Q.traa) { const tr = THREE.traa(color, depth, vel, camera); tr.useSubpixelCorrection = false; this.traaNode = tr; outN = tr; }
     if (Q.bloom) { const bl = THREE.bloom(outN, 0.12, 0.35, 2.2); this.bloomNode = bl; outN = outN.add(bl); }
-    pipe.outputNode = outN;
+    // output: AgX (exposure = renderer.toneMappingExposure), then the grade of the old renderer's final pass
+    // (js/shaders/post.js: saturation, js/live/app.js post.sat = 1.1) in display-linear, then sRGB
+    pipe.outputColorTransform = false;
+    this.grade = { sat: uniform(1.1), gamma: uniform(1.0) };
+    const tm = renderOutput(outN, THREE.AgXToneMapping, THREE.NoColorSpace);
+    const graded = pow(max(saturation(tm.rgb, this.grade.sat), 0.0), this.grade.gamma);
+    pipe.outputNode = renderOutput(vec4(graded, 1.0), THREE.NoToneMapping, THREE.SRGBColorSpace);
   }
   // rig camera {pos, target|dir, fov, near, far, shadowSplits} -> three camera + cascade splits
   setCamera(c, W, H) {

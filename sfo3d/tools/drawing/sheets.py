@@ -8,6 +8,10 @@ Variants per sheet
   overlay-google  over the owner's Google screenshots - REFERENCE ONLY, written to out/draw/sheets/ (gitignored)
   overlay-naip    over NAIP (public domain) when refs/cache/naip/ holds imagery - out/draw/sheets/
 Drawings are north-up (true north); plot coordinates are (x, -z).
+Deviation dots / call-outs come from NAIP (public, independently georeferenced) on the vector and NAIP sheets, and from
+the Google screenshots (re-registered to NAIP by imreg.py when available) on the Google overlays.
+Title blocks carry the provenance: world frame id, git commit (+dirty), whether the scene is stale against the working
+tree, and the imagery files (sha) and frames.
 """
 import json, math, os, sys, time, collections, datetime
 import numpy as np
@@ -21,7 +25,7 @@ import shapely
 from shapely.geometry import Polygon, LineString, MultiPolygon, Point, box as sbox
 from shapely.ops import unary_union
 from shapely import affinity
-from common import scene, OUT, DOCS, buildings, poly_rings, hull_poly, w2st, st2w, G, polys_of, mask_to_polys, ROOT
+from common import scene, OUT, DOCS, buildings, poly_rings, hull_poly, w2st, st2w, G, polys_of, mask_to_polys, ROOT, provenance
 import background
 
 PAPER = {'A3': (420, 297), 'A2': (594, 420), 'A1': (841, 594), 'A0': (1189, 841)}
@@ -34,7 +38,7 @@ plt.rcParams.update({'font.family': FONT, 'svg.fonttype': 'none', 'path.simplify
 C = dict(pave='#e4e4e0', paveEdge='#7a8aa0', twy='#9a9a9a', rwy='#bdbdbd', rwyEdge='#555555', paint='#6fb36f', bldg='#8d949c', bldgEdge='#222222',
          walk='#b5bcc4', yellow='#d9a400', red='#c62828', white='#ffffff', stand='#006d77', env='#00a6b8', bridge='#6a1b9a', bridgeRest='#9c27b0',
          dock='#e91e63', gse='#ef6c00', ac='#1565c0', mast='#000000', sign='#c62828', vdgs='#37474f', blast='#f2c200', emas='#f7d774',
-         gridW='#b0b0b0', gridST='#7fb3d5', dev0='#1a9850', dev1='#f4a300', dev2='#d73027', devNA='#bdbdbd', conflict='#d50000')
+         gridW='#b0b0b0', gridST='#7fb3d5', dev0='#1a9850', dev1='#f4a300', dev2='#d73027', devNA='#bdbdbd', conflict='#d50000', pier='#4e342e', obstr='#aa00ff')
 
 
 def P(g):
@@ -137,6 +141,15 @@ class Layers:
         for s in S['signs']:
             c = np.array(s['c']); u = np.array(s['u']); n = np.array([-u[1], u[0]]); hw, hd = s['w'] / 2, s['d'] / 2
             self.signs.append(P(Polygon([c - u * hw - n * hd, c + u * hw - n * hd, c + u * hw + n * hd, c - u * hw + n * hd])))
+        # approach-light piers / posts (recorded boxes), light sprites, PAPI units
+        self.piers = []
+        for pr in S.get('piers') or []:
+            ps = [P(hull_poly(p['hull'])) for p in pr['prims'] if len(p['hull']) >= 3]
+            if ps: self.piers.append(dict(pr=pr, poly=unary_union(ps), pt=(pr['base'][0], -pr['base'][1])))
+        LT = S.get('lights') or {}
+        self.lights = np.array([[q[0], -q[2]] for q in LT.get('points', [])]) if LT.get('points') else np.zeros((0, 2))
+        self.lightCol = [q[3] for q in LT.get('points', [])]
+        self.papis = [(q['p'][0], -q['p'][2]) for q in LT.get('papis', [])]
         # stands, bridges, gse, aircraft
         self.stands = S['stands']; self.bridges = S['bridges']
         self.gse = [(v['kind'], P(hull_poly(v['hull']))) for v in S['gse'] if len(v['hull']) >= 3]
@@ -161,6 +174,13 @@ class Layers:
                 self.devSummary[src] = {f['id']: f for f in R['features']}
                 sf = os.path.join(OUT, f'dev_samples_{src}.json')
                 if os.path.exists(sf): self.dev[src] = json.load(open(sf))['samples']
+        self.prov = provenance(S); self.imgprov = {'vector': 'none on this sheet; deviation dots from NAIP' if 'naip' in self.dev else 'none'}
+        dvj = os.path.join(OUT, 'deviations.json')
+        if os.path.exists(dvj):
+            for src, R in json.load(open(dvj)).items():
+                pv = R.get('provenance') or {}
+                if src == 'naip': self.imgprov['overlay-naip'] = '; '.join(f'{p.get("file", "?").split("/")[-1]} sha {p.get("sha")} ({p.get("frame")})' for p in pv.get('parts', []))
+                if src == 'google': self.imgprov['overlay-google'] = f'{pv.get("images")} screenshots, reg.json sha {pv.get("reg_sha")} ({",".join(pv.get("reg_frames", []))} -> {pv.get("frame")}); NAIP residual {pv.get("naip_correction", "?")}'
         print(f'  layers ready ({time.time() - t0:.0f} s)')
 
 
@@ -186,7 +206,11 @@ def sheet_defs(L):
     for rw in L.rwy:
         for e in rw['ends']:
             end = np.array(e['end']); inw = np.array(e['inward']); lat = np.array([-inw[1], inw[0]])
-            q = [end - inw * 220 + lat * 170, end - inw * 220 - lat * 170, end + inw * (e['disp'] + 380) + lat * 170, end + inw * (e['disp'] + 380) - lat * 170]
+            # outward: the end zone and the approach-light piers of this end (up to 900 m), at least 220 m
+            out = [220.0] + [float(-(np.array([p['pt'][0], -p['pt'][1]]) - end) @ inw) + 40 for p in L.piers if p['pr'].get('end') == e['name']]
+            out += [float(max(-(np.array([c[0], -c[1]]) - end) @ inw for c in np.asarray(z['poly'].exterior.coords))) + 40 for z in L.endZones if z['end'] == e['name']]
+            ob = min(900.0, max(out))
+            q = [end - inw * ob + lat * 170, end - inw * ob - lat * 170, end + inw * (e['disp'] + 380) + lat * 170, end + inw * (e['disp'] + 380) - lat * 170]
             q = np.array(q); bx = (q[:, 0].min(), -q[:, 1].max(), q[:, 0].max(), -q[:, 1].min())
             out.append(dict(id=f'30-rwy-{e["name"]}', title=f'Runway {e["name"]} end - threshold, markings, end zone', box=bx, scale=2000, detail=1))
     # cargo / maintenance / remote: clusters of the extra paved areas away from the terminal and runways
@@ -354,6 +378,19 @@ def draw_layers(ax, L, box, sc, variant, detail, highlight=None):
                 parts = [P(hull_poly(p['hull'])) for p in Pz['parts'] if len(p['hull']) >= 3 and p['part'] not in ('column',)]
                 add_poly(ax, unary_union(parts), **sty)
             ax.text(b['rc'][0], -b['rc'][1], b['gate'], fontsize=3.4, ha='center', va='center', color='white', zorder=8)
+    # approach-light piers (water: legs, cap, catwalk, rails; land: post), light sprites, PAPI units
+    for p in L.piers:
+        if not fr.contains(Point(p['pt'])): continue
+        add_poly(ax, p['poly'], fc=C['pier'], ec=C['pier'], lw=0.25, z=5.5)
+        if not p['pr']['water']: ax.plot(*p['pt'], marker='s', ms=1.8 if detail else 1.0, mfc='none', mec=C['pier'], mew=0.4, zorder=5.6)
+    if detail and len(L.lights):
+        inb = (L.lights[:, 0] > box[0]) & (L.lights[:, 0] < box[2]) & (L.lights[:, 1] > box[1]) & (L.lights[:, 1] < box[3])
+        if inb.any():
+            lc = {'white': '#9e9e9e', 'red': '#e53935', 'green': '#43a047', 'blue': '#1e88e5', 'yellow': '#fbc02d'}
+            cols = [lc.get(L.lightCol[i], '#9e9e9e') for i in np.where(inb)[0]]
+            ax.scatter(L.lights[inb, 0], L.lights[inb, 1], s=0.35, c=cols, linewidths=0, zorder=5.4, rasterized=over)
+        for q in L.papis:
+            if fr.contains(Point(q)): ax.add_patch(Rectangle((q[0] - 1.0, q[1] - 0.6), 2.0, 1.2, fc='#ff6f00', ec='k', lw=0.2, zorder=5.6))
     # GSE and aircraft
     for kind, g in L.gse:
         g = clip(g)
@@ -424,6 +461,9 @@ def draw_conflicts(ax, L, box, detail):
         if c['severity'] in ('COLLISION', 'OFF-PAVEMENT'):
             ax.plot(*p, marker='x', ms=4.5 if detail else 3, mew=0.9, color=C['conflict'], zorder=13)
             if detail or cnt[c['severity']] < 60: ax.text(p[0] + 1.5, p[1] + 1.5, f'#{c["n"]}', fontsize=3.8, color=C['conflict'], zorder=13, fontweight='bold')
+        elif c['severity'] == 'OBSTRUCTION':
+            ax.plot(*p, marker='^', ms=4 if detail else 2.5, mfc='none', mew=0.7, color=C['obstr'], zorder=13)
+            if detail: ax.text(p[0] + 1.5, p[1] - 3.0, f'#{c["n"]}', fontsize=3.4, color=C['obstr'], zorder=13)
         elif c['severity'] == 'CLEARANCE':
             ax.plot(*p, marker='o', ms=2.2, mfc='none', mew=0.4, color='#ff6d00', zorder=12)
     return cnt
@@ -446,7 +486,10 @@ def legend(ax, x, y, over):
     for col, t in ((C['dev0'], 'imaged edge <= 0.5 m from model'), (C['dev1'], 'imaged edge 0.5 - 1.0 m'), (C['dev2'], 'imaged edge > 1.0 m (call-out: feature median > 1 m)')):
         ax.scatter([x + 3], [yy], s=6, c=col); ax.text(x + 8, yy, t, fontsize=5.2, va='center'); yy -= 4.2
     ax.plot([x + 3], [yy], marker='x', ms=5, mew=1, color=C['conflict']); ax.text(x + 8, yy, 'conflict #n (see report.md)', fontsize=5.2, va='center'); yy -= 4.2
+    ax.plot([x + 3], [yy], marker='^', ms=4, mfc='none', mew=0.8, color=C['obstr']); ax.text(x + 8, yy, 'obstruction: pier / sign on a movement surface', fontsize=5.2, va='center'); yy -= 4.2
     ax.plot([x + 3], [yy], marker='o', ms=3, mfc='none', color='#ff6d00'); ax.text(x + 8, yy, 'below ICAO stand clearance', fontsize=5.2, va='center'); yy -= 4.2
+    ax.add_patch(Rectangle((x, yy - 1.4), 6, 2.8, lw=0.4, fc=C['pier'], ec=C['pier'])); ax.text(x + 8, yy, 'approach-light pier (water) / post (land, square)', fontsize=5.2, va='center'); yy -= 4.2
+    ax.scatter([x + 1.5, x + 3, x + 4.5], [yy, yy, yy], s=3, c=['#9e9e9e', '#e53935', '#43a047']); ax.text(x + 8, yy, 'light sprite (runway / approach / taxi edge); PAPI box orange', fontsize=5.2, va='center'); yy -= 4.2
     ax.plot([x, x + 6], [yy, yy], color=C['gridST'], lw=0.6, ls=(0, (4, 3))); ax.text(x + 8, yy, 'airport grid s / t (100 m)', fontsize=5.2, va='center')
     return yy
 
@@ -467,8 +510,8 @@ def render_sheet(L, sd, variant, src=None, outdir=None, stats=None):
         ax.set_facecolor('#202020'); img_note = src.name
     draw_grid(ax, box, sc)
     draw_layers(ax, L, box, sc, variant, sd.get('detail', 1))
-    devsrc = 'google' if 'google' in L.dev else (next(iter(L.dev)) if L.dev else None)
-    if variant == 'overlay-naip' and 'naip' in L.dev: devsrc = 'naip'
+    devsrc = 'naip' if 'naip' in L.dev else (next(iter(L.dev)) if L.dev else None)
+    if variant == 'overlay-google' and 'google' in L.dev: devsrc = 'google'
     nf, nflag = draw_deviations(ax, L, box, devsrc, sd.get('detail', 1)) if devsrc else (0, 0)
     cc = draw_conflicts(ax, L, box, sd.get('detail', 1))
     # right-hand strip: north arrow, scale bar, legend, title block
@@ -490,7 +533,7 @@ def render_sheet(L, sd, variant, src=None, outdir=None, stats=None):
     sx.text(4, y + 3.5, f'Scale 1:{sc} on {fs["paper"]}', fontsize=6, fontweight='bold')
     yy = legend(sx, 4, y - 10, variant != 'vector')
     # title block
-    S = scene(); tb_h = 62; y0 = 2
+    S = scene(); tb_h = 70; y0 = 2; PV = L.prov
     sx.add_patch(Rectangle((1, y0), STRIP - 5, tb_h, fc='white', ec='k', lw=0.8))
     lines = [('SFO Live 3D - 2-D drawing set (drawn from the 3-D parameters)', 5.2, 'bold'), (sd['title'], 6.6, 'bold'),
              (f'Sheet {sd["id"]}  |  variant: {variant}  |  1:{sc} {fs["paper"]}', 5.0, 'normal'),
@@ -498,7 +541,9 @@ def render_sheet(L, sd, variant, src=None, outdir=None, stats=None):
              ('Deviation dots: ' + (f'measured on {L.S and devsrc} imagery' if devsrc else 'not measured'), 4.6, 'normal'),
              (f'Features on sheet: {nf} measured, {nflag} with median > 1.0 m', 4.8, 'normal'),
              (f'Conflicts on sheet: ' + ', '.join(f'{k} {v}' for k, v in sorted(cc.items())) if cc else 'Conflicts on sheet: none', 4.8, 'normal'),
-             (f'Scene: {S["meta"]["url"].split("/")[-1]}  git {S["meta"].get("git")}  extracted {S["meta"]["generated"][:16]}Z', 4.2, 'normal'),
+             (f'Scene: {S["meta"]["url"].split("/")[-1]}  git {PV["git"]}  extracted {PV["generated"][:16]}Z  inputs {PV["inputsHash"]}', 4.2, 'normal'),
+             (f'World frame {PV["frame"]}  |  ' + ('scene matches the working tree' if PV['stale'] == [] else f'STALE: {len(PV["stale"])} input file(s) changed since extraction' if PV['stale'] else 'staleness unknown'), 4.2, 'bold' if PV['stale'] else 'normal'),
+             (('Imagery: ' + L.imgprov.get(variant, '')) [:110], 3.9, 'normal'),
              ('World grid: x east / z south (m from ARP)  |  s/t: airport grid (js/geo.js)', 4.2, 'normal'),
              ('Geometry: SFO Museum (CDLA-Permissive-1.0) + surveyed stands/paint/pavement', 4.2, 'normal'),
              (('Google imagery: reference only - do not redistribute' if variant == 'overlay-google' else 'No imagery pixels on this sheet' if variant == 'vector' else 'NAIP imagery: public domain (USDA)'), 4.4, 'bold'),
@@ -538,7 +583,8 @@ def crop(L, c, variant, src, outdir, size_m=None):
     for k, col in (('a', '#d50000'), ('b', '#ff9100')):
         for ring in c[k].get('geom') or []:
             r = np.asarray(ring); ax.plot(r[:, 0], -r[:, 1], color=col, lw=1.4, zorder=19)
-    ax.set_title(f'#{c["n"]} {c["severity"]} [{",".join(c.get("scenarios", [c["scenario"]]))}] {c["kind"]}', fontsize=6, loc='left', pad=2)
+    from audit import scen_label
+    ax.set_title(f'#{c["n"]} {c["severity"]} [{scen_label(c)}] {c["kind"]}', fontsize=6, loc='left', pad=2)
     fig.text(0.02, 0.02, ('red: ' + c['a'].get('label', '') + '   orange: ' + c['b'].get('label', ''))[:130] + '\n' + (c.get('note') or '')[:130], fontsize=4.2, va='bottom')
     ax.plot([box[0] + 2, box[0] + 12], [box[1] + 2, box[1] + 2], color='k', lw=1.5, zorder=20); ax.text(box[0] + 7, box[1] + 3, '10 m', fontsize=5, ha='center', zorder=20)
     os.makedirs(outdir, exist_ok=True); f = os.path.join(outdir, f'conflict_{c["n"]:04d}' + ('' if variant == 'vector' else '_' + variant) + '.png')
@@ -562,7 +608,7 @@ def run(only=None, crops_docs=60, crops_out=250):
     # conflict close-ups
     if L.audit and not only:
         cs = [c for c in L.audit['conflicts'] if c.get('loc') and c['scenario'] != 'KINEMATICS']
-        imp = [c for c in cs if c['severity'] in ('COLLISION', 'OFF-PAVEMENT')]
+        imp = [c for c in cs if c['severity'] in ('COLLISION', 'OFF-PAVEMENT', 'OBSTRUCTION')]
         t0 = time.time()
         for c in imp[:crops_out]:
             if 'google' in srcs: crop(L, c, 'overlay-google', srcs['google'], os.path.join(OUT, 'crops'))

@@ -32,14 +32,16 @@ def tables():
          '| remote stands (SFO names, ADS-B) | %d: %s |' % (len(D['remote']), ', '.join(r['name'] for r in D['remote'])),
          '| unnamed OSM parking positions (`positions`) | %s |' % ', '.join('%s %d' % kv for kv in Counter(p['zone'] for p in D['positions']).most_common()),
          '| red boxes (NAIP) | %d |' % len(D['redBoxes'])]
-    pf = [s.get('paint_after') or s.get('paint') for s in S]; pf = [p for p in pf if p and p['n'] >= 8 and p['rms'] <= 0.3]
+    pf = [s.get('paint_after') or s.get('paint') for s in S]; pf = [p for p in pf if p and p['n'] >= 7 and p['rms'] <= 0.3]
     if pf:
         L += ['| painted lead-in vs model axis (NAIP yellow-line fit, 3-22 m behind the nose, clean fits), %d stands | lateral at the nose: median |r| %.2f m, max %.2f m; heading: median |dh| %.2f deg, max %.2f deg; corrected: %s |' % (
             len(pf), np.median([abs(p['lat_nose']) for p in pf]), max(abs(p['lat_nose']) for p in pf), np.median([abs(p['dh']) for p in pf]), max(abs(p['dh']) for p in pf),
             ', '.join('%s (%+.1f m, %+.1f deg)' % (s['disp'], s['paint']['lat_nose'], s['paint']['dh']) for s in S if (s.get('paint') or {}).get('applied')) or '-')]
     if na:
-        L += ['| NAIP parked-aircraft reading (by eye, +-1.5 m along / +-0.7 m lateral; lateral 0.0 = within the reading resolution, not a measured zero), %d stands | lateral: median |r| %.1f m, max |r| %.1f m; along: median %.1f m, median |r| %.1f m |' % (
-            len(na), np.median([abs(n['resid_lat']) for n in na]), max(abs(n['resid_lat']) for n in na),
+        nl = [n for n in na if n['resid_lat'] is not None]
+        RL = json.load(open(os.path.join(WORK, 'naip_relief.json')))
+        L += ['| NAIP parked aircraft, relief-corrected (lean k = %.2f +- %.2f m/m, residual %.2f m rms; `naip_relief.py`): along = by-eye nose reading (+-1.5 m) corrected at nose height, %d stands; lateral = measured fuselage centre, %d stands | lateral: median |r| %.1f m, max |r| %.1f m; along: median %.1f m, median |r| %.1f m |' % (
+            RL['k'], RL['k_sigma'], RL['resid_sigma_m'], len(na), len(nl), np.median([abs(n['resid_lat']) for n in nl]), max(abs(n['resid_lat']) for n in nl),
             np.median([n['resid_along'] for n in na]), np.median([abs(n['resid_along']) for n in na]))]
     if ad:
         L += ['| ADS-B residual (antenna median in the stand frame), %d stands / %d aircraft | lateral: median |r| %.1f m, max |r| %.1f m; along (antenna behind the nose): median %.1f m, range %.1f..%.1f m; heading: median |dh| %.1f deg |' % (
@@ -47,7 +49,7 @@ def tables():
             np.median([a['along_med'] for a in ad]), min(a['along_med'] for a in ad), max(a['along_med'] for a in ad),
             np.median([abs(a['dhdg_med']) for a in ad if a['dhdg_med'] is not None]))]
     out['summary'] = '\n'.join(L)
-    T = ['| stand | gate | AODB | cls (largest type) | pos_src | verified_by | NAIP resid along/lat m | ADS-B n, along/lat m, dhdg | paint lat m / dh deg | bridges | excl / alt_of / tight | name / position evidence |',
+    T = ['| stand | gate | AODB | cls (largest type) | pos_src | verified_by | NAIP resid along/lat m (relief-corrected; n/m = lateral not measured) | ADS-B (adsb.lol) n, along/lat m, dhdg | paint lat m / dh deg | bridges | excl / alt_of / tight / types_ok / per-family stops | name / position evidence |',
          '|---|---|---|---|---|---|---|---|---|---|---|---|']
     Dn = {s['name']: s for s in D['stands']}
     for s in S:
@@ -56,11 +58,13 @@ def tables():
             s['disp'], s['gate'], ' '.join(s['aodb']) or '-', s['cls'], s['largest_type'] or '-', ' span_max %.1f' % s['span_max'] if s.get('span_max') else '',
             ' len_max %.1f' % s['len_max'] if s.get('len_max') else '',
             s['pos_src'], '+'.join(s['verified_by']) or '-',
-            '%+.1f / %+.1f%s' % (n['resid_along'], n['resid_lat'], ' (u)' if 'u' in n['flags'] else '') if n else '-',
+            '%+.1f / %s%s' % (n['resid_along'], '%+.1f' % n['resid_lat'] if n['resid_lat'] is not None else 'n/m', ' (u)' if 'u' in n['flags'] else '') if n else '-',
             '%d, %+.1f / %+.1f, %s' % (a['n_aircraft'], a['along_med'], a['lat_med'], '-' if a['dhdg_med'] is None else '%+.0f' % a['dhdg_med']) if a else '-',
-            ('%+.2f / %+.2f%s' % (pa['lat_nose'], pa['dh'], '' if pa['n'] >= 8 and pa['rms'] <= 0.3 else ' (noisy)')) if pa else '-',
-            len(d['bridges']) + len(d['bridges_upper']), (' '.join(d['excl']) + (' alt of ' + d['alt_of'] if d.get('alt_of') else '') + (' tight ' + ' '.join(d['tight_with']) if d.get('tight_with') else '')).strip() or '-',
-            s['why'].replace('|', '/')))
+            ('%+.2f / %+.2f%s' % (pa['lat_nose'], pa['dh'], '' if pa['n'] >= 7 and pa['rms'] <= 0.3 else ' (noisy)')) if pa else '-',
+            len(d['bridges']) + len(d['bridges_upper']), (' '.join(d['excl']) + (' alt of ' + d['alt_of'] if d.get('alt_of') else '') + (' tight ' + ' '.join(d['tight_with']) if d.get('tight_with') else '')
+                                                          + (' types_ok ' + ' '.join(d['types_ok']) if d.get('types_ok') else '')
+                                                          + (' stops ' + ', '.join('%s %+.0f' % (k, v['along']) for k, v in d['type_stops'].items()) if d.get('type_stops') else '')).strip() or '-',
+            s['why'].replace('|', '/') + (' **CONFLICT: ADS-B (%d aircraft) %+.1f m / %+.0f deg off the axis**' % (d['conflict']['n_aircraft'], d['conflict']['lat_med'], d['conflict']['dhdg_med'] or 0) if d.get('conflict') else '')))
     out['stands'] = '\n'.join(T)
     R = ['| remote stand | position | pos_src | ADS-B aircraft | OSM residual |', '|---|---|---|---|---|']
     for r in B['remote']:

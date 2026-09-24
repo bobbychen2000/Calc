@@ -47,6 +47,7 @@
 //
 // Usage: CANVAS_MODULE=/abs/node_modules/@napi-rs/canvas/index.js node tools/live/invariants.mjs --stream S.jsonl.gz
 //          [--gates G.jsonl.gz] [--from ISO|epoch] [--until ISO|epoch] [--warm 600] [--root <code root>] [--out R.json]
+//          [--fast] (skip surface/pair/bridge checks) [--trace <hex>] (per-0.5 s display/target/park state to stderr)
 // --from/--until bound the CHECKED window; the replay starts --warm seconds earlier (tracks, stands, delay settle).
 // --root runs another copy of the code (e.g. a frozen snapshot) with the same data layout.
 import fs from 'fs'; import path from 'path'; import zlib from 'zlib'; import readline from 'readline'; import { fileURLToPath } from 'url';
@@ -57,6 +58,8 @@ const ROOT = path.resolve(opt('root', path.resolve(HERE, '..', '..')));
 const STREAM = opt('stream'); const GATES = opt('gates', STREAM && path.join(path.dirname(STREAM), 'gates.jsonl.gz'));
 const pt = (s) => s == null ? null : /^\d+(\.\d+)?$/.test(s) ? +s : Date.parse(s) / 1000;
 const FROM = pt(opt('from')), UNTIL = pt(opt('until')), WARM = +opt('warm', 600), DT = 0.1, LAT = 0.08;
+const FAST = argv.includes('--fast'); // skip the surface / pair / bridge checks (kinematics, phases, runways, truth only)
+const TRACE = opt('trace', null); // hex: print that aircraft's display/target/park state every 0.5 s to stderr
 const OUTF = opt('out', STREAM ? STREAM.replace(/stream\.jsonl\.gz$/, 'invariants.json') : 'invariants.json');
 if (!STREAM) { console.error('--stream required'); process.exit(1); }
 
@@ -94,7 +97,7 @@ function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.dock
 function animStep(now) { for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
 
 const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr) => applyGate(g, tr) });
-traffic.buildingAt = building;
+traffic.buildingAt = building; if (TRACE) traffic.debug = TRACE;
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net });
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
 
@@ -235,7 +238,9 @@ function rawTruth(a, t) {
   // go-around detector: armed below 1200 ft within 6 nm, aligned with a runway and on its extended centreline, before
   // (or just past) the threshold, having descended
   const trk = a.track;
-  if (!s.arm && alt < 1200 && d < 11000 && trk != null && (a.baroRate ?? -1) < 0) {
+  // armed only by a real descent at approach speed: E175s report 'airborne' from ~50 kt on the take-off roll with
+  // baro_rate -64..0 (24 Sep 15:25Z SKW6014), which must not arm the detector
+  if (!s.arm && alt < 1200 && alt > 100 && gs > 90 && d < 11000 && trk != null && (a.baroRate ?? 0) <= -400) {
     for (const R of RW) { if (Math.abs(wrapD(trk - R.hdg / DEG)) > 20) continue; const [aa, c] = rwyCoords(R, x, z); if (aa < 500 && aa > -12000 && Math.abs(c) < 300 + 0.05 * Math.abs(aa)) { s.arm = { t, rwy: R.name, min: alt, minT: t }; break; } }
   } else if (s.arm) {
     if (alt < s.arm.min) { s.arm.min = alt; s.arm.minT = t; }
@@ -366,7 +371,9 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
   }
   for (const [hex] of K) if (!traffic.tracks.has(hex)) { K.delete(hex); surfCache.delete(hex); }
   if (frames % 600 === 0) pairCache.clear();
-  if (!chk) { simNow += DT * 1000; continue; }
+  if (TRACE && frames % 5 === 0) { const tr = traffic.tracks.get(TRACE); if (tr && tr.disp.valid) { const D = tr.disp, d = tr._dbg || {}; const f2 = (v) => v == null ? '-' : (+v).toFixed(1);
+    console.error(iso(simNow), tr.phase, tr.m.phase, 'disp', f2(D.x), f2(D.z), 'y', f2(D.y), 'hdg', f2(D.hdg / DEG), 'v', f2(tr.ctl && tr.ctl.v), 'g', D.ground ? 1 : 0, '| tgt', f2(d.ox), f2(d.oz), 'tv', f2(Math.hypot(d.ovx || 0, d.ovz || 0)), d.stop ? 'STOP' : '', 'ex', f2(d.ex), '| park', tr.parkPos ? f2(tr.parkPos[0]) + ',' + f2(tr.parkPos[1]) + '@' + f2((tr.parkHdg ?? 0) / DEG) : '-', tr.parkMode || '', tr.gate ? tr.gate.name : '-', tr.ctl && tr.ctl.towing ? 'TOW' : '', tr.stale ? 'STALE' : '', 'last', tr.last ? f2((simNow - tr.last.t) / 1000) + 's gs' + f2(tr.last.gs) + (tr.last.push ? ' PUSH' : '') + (tr.last.ground ? ' G' : ' A') : ''); } }
+  if (!chk || FAST) { simNow += DT * 1000; continue; }
   // ---------------- surface: pavement, buildings (cached per aircraft while its displayed pose is unchanged)
   for (const B of gnd) {
     const tr = B.tr; const key = B.key = Math.round(tr.disp.x * 20) + ',' + Math.round(tr.disp.z * 20) + ',' + Math.round(tr.disp.hdg * 1000) + ',' + B.S.T.L;
@@ -452,7 +459,8 @@ const truthCmp = { landings: match(truth.landings, byKind('touchdown')), takeoff
 for (const [k, list] of [['rwy.truth.landing_missed', truthCmp.landings.missed], ['rwy.truth.landing_wrong_rwy', truthCmp.landings.rwyDiff], ['rwy.truth.landing_extra', truthCmp.landings.extra], ['rwy.truth.takeoff_missed', truthCmp.takeoffs.missed], ['rwy.truth.takeoff_wrong_rwy', truthCmp.takeoffs.rwyDiff], ['rwy.truth.takeoff_extra', truthCmp.takeoffs.extra], ['rwy.truth.goaround_missed', truthCmp.goarounds.missed], ['rwy.truth.goaround_extra', truthCmp.goarounds.extra]])
   V.set(k, { frames: list.length, eps: list.length, who: new Map(list.map((q, i) => [q.hex + i, { n: 1, max: 1, ex: q }])), worst: [] });
 
-const report = { meta: { stream: STREAM, root: ROOT, from: new Date(checkFrom).toISOString(), until: new Date(simNow).toISOString(), warm: WARM, frames, checkedFrames, dt: DT, wallS: Math.round((Date.now() - wall0) / 1000), counters: traffic.counters, delay: Math.round(traffic.delay) }, truth: truthCmp, classes: {} };
+const engineEvents = EV.filter(e => ['touchdown', 'liftoff', 'go-around', 'runway-change', 'rejected-takeoff'].includes(e.kind)).map(e => ({ ...e, t: iso(e.t) }));
+const report = { engineEvents, meta: { stream: STREAM, root: ROOT, from: new Date(checkFrom).toISOString(), until: new Date(simNow).toISOString(), warm: WARM, frames, checkedFrames, dt: DT, wallS: Math.round((Date.now() - wall0) / 1000), counters: traffic.counters, delay: Math.round(traffic.delay) }, truth: truthCmp, classes: {} };
 for (const [cls, v] of [...V.entries()].sort()) {
   const who = [...v.who.values()].sort((a, b) => b.max - a.max);
   const aircraft = new Set([...v.who.keys()]).size;

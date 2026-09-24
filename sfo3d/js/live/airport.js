@@ -70,7 +70,7 @@ export function standGates(stands) {
     // stand and its neighbours accept), rotundaMaxR (how large the rotunda may be drawn without touching another)
     const bridges = s.bridges.map(b => ({ gate: b.gate, attach: worldToST(b.attach[0], b.attach[1]), attachW: b.attach, door: b.door,
       rotundaW: b.rotunda || null, cabW: b.cab || null, walkW: b.walk || null, cabPose: b.cab_pose || null, stowW: b.stow || null,
-      rotundaMaxR: b.rotunda_max_r ?? null }));
+      rotundaMaxR: b.rotunda_max_r ?? null, rotundaTwinOf: b.rotunda_twin_of ?? null }));
     const cm = CLASS_MAX[s.cls] || CLASS_MAX.C; const wide = cm.span > 40;
     const maxSpan = s.span_max ? Math.min(cm.span, s.span_max + 0.1) : cm.span;
     const maxLen = s.len_max ? Math.min(cm.len, s.len_max + 0.1) : cm.len;
@@ -78,6 +78,11 @@ export function standGates(stands) {
       id: s.name, name: s.name, alias: s.alias || [], letter: s.letter, pier: s.letter, cls: s.cls, maxSpan, maxLen, src: s.src,
       gate: s.gate || s.name, excl: s.excl || [], altOf: s.alt_of || null, aodb: s.aodb || [], a380: !!s.a380, tightWith: s.tight_with || [],
       leadinW: s.leadin || null, sharesBridgesOf: s.shares_bridges_of || null,
+      // review round 2 (docs/requests/static_geometry_round2.md): typesOk = whitelist of ICAO designators where the class
+      // limits alone would let neighbours overlap (E10/E12, F19/F20: the types SFO parks there); typeStops = per-family
+      // stop offsets along the axis ({B737: {along: -18, ...}}, m, - = short of the nose; ADS-B evidence); conflict =
+      // evidence that disagrees with the stand axis (D3, D4, D8, D9)
+      typesOk: s.types_ok || null, typeStops: s.type_stops || null, conflict: s.conflict || null,
       nose, dir, outN: [-dir[0], -dir[1]], attach: bridges.length ? bridges[0].attach : nose, bridges, wide, len: cm.len, span: cm.span,
       bridge: bridges.length > 0, remote: false, hdg: s.hdg, world: { x: s.nose[0], z: s.nose[1], hdg: s.hdg }, empty: true, acType: null, dynamic: false,
     });

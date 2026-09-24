@@ -18,13 +18,34 @@ Sources
                    pixel_to_world | p2w                        the inverse of the above (inverted here)
                    res_m | gsd | resolution                   ground sample distance (m/px), else from the transform
                    name, date, source, license                 reported in the sheets / report
-                 A GeoTIFF with its own CRS is mapped world -> lat/lon (the app's local equirectangular frame, js/geo.js)
-                 -> image CRS (pyproj) -> pixel (rasterio affine).
+                   frame                                       world frame of the transform (js/geo.js FRAME_ID):
+                                                               'ltp-nad83-2011' (current) is used as is, 'equirect-v1'
+                                                               (legacy) through tools/geo_frame.py world_to_legacy
+                                                               (exact); a sidecar without 'frame' is assumed to be in the
+                                                               current frame and reported as "frame unstated"
+                 A GeoTIFF with its own CRS is mapped world -> NAD83(2011) lat/lon (tools/geo_frame.py world_to_ll_np,
+                 the exact inverse of js/geo.js llToWorld) -> image CRS (pyproj, from the image CRS's own geodetic datum:
+                 a pure projection, no datum shift - world lat/lon ARE NAD83, like NAIP's EPSG:26910) -> pixel.
+Frames: every source maps the CURRENT world frame (tools/geo_frame.FRAME_ID, which common.scene() checks against the
+extracted scene and js/geo.js). Google registrations (reg.json, no 'frame' key = legacy) go through
+tools/sat/common.py sim_from_reg(), which converts world -> legacy first.
+Google vs NAIP: imreg.py measures each screenshot's residual translation against NAIP (ground-level gradients,
+buildings masked); GoogleScreens applies it (out/draw/google_vs_naip.json, only when it was made for the current
+reg.json and NAIP files; GOOGLE_NAIP=0 disables) so that Google-derived numbers share NAIP's georeference.
 """
-import glob, json, math, os
+import glob, hashlib, json, math, os, sys
 import numpy as np
 import cv2
-from common import ROOT, scene
+from common import ROOT, OUT, scene, GF, LEGACY_FRAME, _sha
+
+
+def _sat_common():
+    """tools/sat/common.py (its own module name: tools/drawing/common.py is `common` here)"""
+    import importlib.util
+    if 'sat_common' not in sys.modules:
+        spec = importlib.util.spec_from_file_location('sat_common', os.path.join(ROOT, 'tools', 'sat', 'common.py'))
+        m = importlib.util.module_from_spec(spec); sys.modules['sat_common'] = m; spec.loader.exec_module(m)
+    return sys.modules['sat_common']
 
 SAT = os.path.join(ROOT, 'tools', 'sat')
 SCREENS = os.environ.get('SFO_SCREENS', os.path.join(SAT, 'screens'))
@@ -50,8 +71,13 @@ class Source:
             if not take.any(): continue
             im = self.image(k)
             interp = cv2.INTER_AREA if res > r * 1.5 else cv2.INTER_LINEAR
-            if interp == cv2.INTER_AREA and res / r > 2:  # pre-shrink so remap does not alias
-                f = r / res * 1.5; small = cv2.resize(im, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
+            if interp == cv2.INTER_AREA and res / r > 2:  # pre-shrink so remap does not alias (cached per image and factor)
+                f = round(r / res * 1.5, 4)
+                if not hasattr(self, '_small'): self._small = {}
+                if (k, f) not in self._small:
+                    if len(self._small) > 6: self._small.clear()
+                    self._small[(k, f)] = cv2.resize(im, None, fx=f, fy=f, interpolation=cv2.INTER_AREA)
+                small = self._small[(k, f)]
                 rr = cv2.remap(small, mx * f, my * f, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
             else:
                 rr = cv2.remap(im, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
@@ -84,14 +110,28 @@ class GoogleScreens(Source):
     kind = 'google'; name = 'Google Maps screenshots (owner, reference only)'; licence = 'Google imagery - reference only, never redistributed'; public = False
     SKIP_OVERVIEW = '8b334c52'  # 3.2 m/px overview shot: used only where nothing better exists
 
-    def __init__(self):
+    def __init__(self, correct=None):
         self.reg = json.load(open(REGF)); self._im = {}
+        SC = _sat_common(); self.sim = {k: SC.sim_from_reg(r) for k, r in self.reg.items()}
+        self.frames = sorted({v.frame for v in self.sim.values()})
         files = os.listdir(SCREENS) if os.path.isdir(SCREENS) else []
         self.files = {}
         for k in self.reg:
             m = [f for f in files if f.startswith(k)]
             if m: self.files[k] = os.path.join(SCREENS, m[0])
         if not self.files: raise FileNotFoundError('no screenshots in ' + SCREENS)
+        # residual translation against NAIP (imreg.py): applied when made for these registrations and NAIP files
+        self.corr = {}; self.corr_note = 'not applied (no out/draw/google_vs_naip.json)'
+        want = os.environ.get('GOOGLE_NAIP', '1') != '0' if correct is None else correct
+        cf = os.path.join(OUT, 'google_vs_naip.json')
+        if want and os.path.exists(cf):
+            C = json.load(open(cf))
+            if C.get('reg_sha') != _sha(REGF) or C.get('frame') != GF.FRAME_ID: self.corr_note = 'not applied (google_vs_naip.json is for other registrations / another frame: re-run imreg.py)'
+            else:
+                self.corr = {k: tuple(v['shift']) for k, v in C['images'].items() if v.get('use')}
+                self.corr_note = f'applied: per-screenshot translation to NAIP for {len(self.corr)} of {len(self.files)} screenshots (imreg.py)'
+        elif not want: self.corr_note = 'disabled (GOOGLE_NAIP=0)'
+        self.name = 'Google Maps screenshots (owner, reference only' + (', re-registered to NAIP)' if self.corr else ')')
 
     def images(self): return list(self.files)
 
@@ -102,8 +142,19 @@ class GoogleScreens(Source):
         return self._im[k]
 
     def pixel(self, k, X, Z):
-        r = self.reg[k]; t = math.radians(r['th']); c, s = math.cos(t), math.sin(t)
-        return r['tx'] + r['s'] * (c * X - s * Z), r['ty'] + r['s'] * (s * X + c * Z)
+        # frame-aware similarity (legacy registrations: world -> equirect-v1 first); + the NAIP residual shift c: a
+        # ground feature at world p (NAIP) shows at p + c in the uncorrected mapping
+        X = np.asarray(X, float); Z = np.asarray(Z, float); c = self.corr.get(k, (0.0, 0.0))
+        q = self.sim[k].fwd(np.stack([X + c[0], Z + c[1]], -1))
+        return q[..., 0], q[..., 1]
+
+    def uncorrected(self):
+        g = GoogleScreens.__new__(GoogleScreens); g.__dict__.update(self.__dict__); g.corr = {}; g._im = self._im
+        g.name = 'Google Maps screenshots (owner, reference only)'; g.corr_note = 'not applied'; return g
+
+    def provenance(self):
+        return dict(kind=self.kind, name=self.name, frame=GF.FRAME_ID, registrations=os.path.relpath(REGF, ROOT), reg_sha=_sha(REGF), reg_frames=self.frames,
+                    images=len(self.files), naip_correction=self.corr_note, public=False)
 
     def valid(self, k, mx, my):
         # map area of the 1290 x 2796 iPhone screenshot without the status bar / search box, the right-hand buttons and
@@ -136,7 +187,7 @@ class GeoImage(Source):
     kind = 'naip'; public = True
 
     def __init__(self, path):
-        self.path = path; self._im = None; meta = {}
+        self.path = path; self._im = None; meta = {}; self.frame_note = ''
         if path.endswith('.json'):
             meta = json.load(open(path)); img = meta.get('image') or meta.get('file') or meta.get('path')
             self.imgf = os.path.join(os.path.dirname(path), img)
@@ -151,12 +202,19 @@ class GeoImage(Source):
             if T.shape == (2, 3): T = np.vstack([T, [0, 0, 1]])
             self.H = np.linalg.inv(T) if inv else T; self.crs = None
             self.res = float(meta.get('res_m') or meta.get('gsd') or meta.get('resolution') or 1.0 / math.sqrt(abs(np.linalg.det(self.H[:2, :2]))))
+            fr = meta.get('frame')
+            if fr is None: self.frame = GF.FRAME_ID; self.frame_note = 'frame unstated (assumed ' + GF.FRAME_ID + ')'; print('  WARNING', os.path.relpath(path, ROOT), 'has no "frame" key: assumed', GF.FRAME_ID)
+            elif fr in (GF.FRAME_ID, LEGACY_FRAME): self.frame = fr; self.frame_note = fr + (' (converted exactly: geo_frame.world_to_legacy)' if fr == LEGACY_FRAME else '')
+            else: raise ValueError(f'unknown world frame {fr!r} (known: {GF.FRAME_ID}, {LEGACY_FRAME})')
         else:
             import rasterio
+            from pyproj import CRS, Transformer
             self.imgf = path; ds = rasterio.open(path); self.crs = ds.crs; self.aff = ds.transform; self.H = None
-            from pyproj import Transformer
-            self.tr = Transformer.from_crs('EPSG:4326', ds.crs, always_xy=True)
+            # world lat/lon are NAD83(2011) (geo_frame); project with the image CRS's own geodetic datum (NAIP:
+            # EPSG:26910 = NAD83 / UTM 10N): a pure projection. Never EPSG:4326 (that would claim WGS 84 input).
+            C = CRS.from_user_input(ds.crs.to_wkt()); self.tr = Transformer.from_crs(C.geodetic_crs, C, always_xy=True)
             self.res = abs(ds.transform.a) if ds.crs.is_projected else abs(ds.transform.a) * 111000
+            self.frame = 'crs:' + (C.to_string() or '?'); self.frame_note = f'GeoTIFF {C.name}: world -> NAD83(2011) lat/lon (geo_frame.world_to_ll) -> {C.name} (datum {C.geodetic_crs.name}, no datum shift)'
         self.source_file = meta.get('source')
         self.name = meta.get('name') or ('NAIP ' + os.path.basename(self.imgf) + (f' ({meta["source_tags"]["YEAR"]})' if meta.get('source_tags', {}).get('YEAR') else ''))
         self.date = meta.get('date'); self.source = meta.get('source'); self.licence = meta.get('license') or meta.get('licence') or ('public domain (USDA NAIP)' if 'naip' in path.lower() else 'see source')
@@ -178,14 +236,20 @@ class GeoImage(Source):
         return self._im
 
     def pixel(self, k, X, Z):
+        X = np.asarray(X, float); Z = np.asarray(Z, float)
         if self.H is not None:
+            if self.frame == LEGACY_FRAME: X, Z = GF.world_to_legacy_np(X, Z)
             d = self.H[2, 0] * X + self.H[2, 1] * Z + self.H[2, 2]
             return (self.H[0, 0] * X + self.H[0, 1] * Z + self.H[0, 2]) / d, (self.H[1, 0] * X + self.H[1, 1] * Z + self.H[1, 2]) / d
-        A = scene()['meta']['ARP']; lat0, lon0 = A['lat'], A['lon']
-        lat = lat0 + (-Z) / 110990.0; lon = lon0 + X / (111320.0 * math.cos(math.radians(lat0)))
+        lat, lon = GF.world_to_ll_np(X, Z)
         ex, ny = self.tr.transform(lon, lat)
         col, row = ~self.aff * (ex, ny)
         return np.asarray(col) - 0.5, np.asarray(row) - 0.5
+
+    def provenance(self):
+        f = self.imgf
+        return dict(kind='naip', name=self.name, file=os.path.relpath(f, ROOT), sha=_sha(f), bytes=os.path.getsize(f) if os.path.exists(f) else None,
+                    sidecar=os.path.relpath(self.path, ROOT) if self.path.endswith('.json') else None, frame=self.frame, frame_note=self.frame_note, res=self.res, public=self.public)
 
     def valid(self, k, mx, my):
         im = self.image(k); h, w = im.shape[:2]
@@ -206,6 +270,7 @@ class Mosaic(Source):
     def pixel(self, k, X, Z): return self.parts[k[0]].pixel(k[1], X, Z)
     def valid(self, k, mx, my): return self.parts[k[0]].valid(k[1], mx, my)
     def describe(self, k): return self.parts[k[0]].describe(k[1])
+    def provenance(self): return dict(kind=self.kind, name=self.name, parts=[p.provenance() for p in self.parts], public=self.public)
 
 
 def find_georef(d=NAIP_DIR):
@@ -231,12 +296,12 @@ def find_georef(d=NAIP_DIR):
 
 
 def sources():
-    """available backgrounds, finest first: {'google': GoogleScreens, 'naip': Mosaic}"""
+    """available backgrounds, primary first: {'naip': Mosaic (public, independent georeference), 'google': GoogleScreens}"""
     out = {}
-    try: out['google'] = GoogleScreens()
-    except Exception as e: print('  Google screenshots unavailable:', e)
     n = find_georef()
     if n: out['naip'] = n
+    try: out['google'] = GoogleScreens()
+    except Exception as e: print('  Google screenshots unavailable:', e)
     return out
 
 
@@ -250,7 +315,7 @@ def export_layers(out_dir=None):
             img, valid, gsd = src.raster(*box, res)
             f = f'{name}_{tag}_{res:g}m'
             cv2.imwrite(os.path.join(out_dir, f + '.jpg'), img, [cv2.IMWRITE_JPEG_QUALITY, 90])
-            json.dump(dict(image=f + '.jpg', world_to_pixel=[[1 / res, 0, -box[0] / res - 0.5], [0, 1 / res, -box[1] / res - 0.5]], res_m=res, name=f'{src.name} mosaic ({tag})',
+            json.dump(dict(image=f + '.jpg', frame=GF.FRAME_ID, world_to_pixel=[[1 / res, 0, -box[0] / res - 0.5], [0, 1 / res, -box[1] / res - 0.5]], res_m=res, name=f'{src.name} mosaic ({tag})',
                            license=src.licence, note='north-up; pixel (col, row) centre <-> world x = x0 + (col + .5) res, z = z0 + (row + .5) res; finest registered source per pixel'),
                       open(os.path.join(out_dir, f + '.json'), 'w'), indent=1)
             print(f'  background {f}: {img.shape[1]}x{img.shape[0]} px, {valid.mean() * 100:.0f} % covered')

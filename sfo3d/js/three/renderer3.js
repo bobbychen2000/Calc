@@ -39,12 +39,12 @@ function tierOf(opts) {
 export class Renderer3 {
   constructor(W, H, opts = {}) {
     this.W = W; this.H = H; this.tier = tierOf(opts); this.Q = QUALITY3[this.tier];
-    this.canvas = glCanvas;
+    this.canvas = glCanvas; this.fixedRes = new URLSearchParams(location.search).get('res') === '1';
     this.engine = new Engine(document.getElementById('app') || document.body, this.Q, { canvas: this.canvas });
     this.ready = false; this.failed = null; this.frames = 0; this.jobs = [];
     this.light = { sunDir: [0, 1, 0], sunColor: [1, 1, 1], skyUp: [0.3, 0.4, 0.6], skyHorizon: [0.5, 0.55, 0.6], ground: [0.1, 0.1, 0.1] };
     this.baseLight = null; this.extraCommon = {}; this.progs = {}; this.curCam = null; this.curRange = null;
-    this.world = null; this.sceneShim = null; this.seen = new Set(); this.pendingSigns = [];
+    this.world = null; this.sceneShim = null; this.seen = new Set(); this.pendingSigns = []; this.clouds = new Map();
     this.pxScale = uniform(0.001); this.time = uniform(0); this.night = uniform(0);
     this.exposureScale = +(new URLSearchParams(location.search).get('expo') || 1.0);
     this.initP = this.engine.init().then(() => this._onReady()).catch((e) => {
@@ -56,7 +56,12 @@ export class Renderer3 {
   }
   // ------------------------------------------------------------ old Renderer interface
   addProgram(name) { this.progs[name] = true; }
-  resize(w, h) { this.W = w; this.H = h; if (this.ready) this.engine.resize(w, h, 1); }
+  // ?res=1 pins the render size to the canvas size x devicePixelRatio (QA renders: the app's dynamic resolution
+  // otherwise drops to 0.4x on a software rasteriser)
+  resize(w, h) {
+    if (this.fixedRes && this.canvas) { const d = Math.min(window.devicePixelRatio || 1, 2); w = Math.max(2, Math.round(this.canvas.clientWidth * d)); h = Math.max(2, Math.round(this.canvas.clientHeight * d)); }
+    this.W = w; this.H = h; if (this.ready) this.engine.resize(w, h, 1);
+  }
   present() { }
   // sky model + ambient terms (synchronous, as js/renderer.js setupSky); GPU sky textures and the PMREM IBL follow at
   // the next frame, after the app has adjusted R.light (night floor)
@@ -86,8 +91,8 @@ export class Renderer3 {
   run(fn) { if (this.ready) fn(); else this.jobs.push(fn); }
   // ------------------------------------------------------------ init
   _onReady() {
-    const E = this.engine; E.resize(this.W, this.H, 1);
-    this.ready = true;
+    this.ready = true; this.resize(this.W, this.H); const E = this.engine;
+    const qs = new URLSearchParams(location.search); if (qs.get('sat')) E.grade.sat.value = +qs.get('sat'); if (qs.get('gamma')) E.grade.gamma.value = +qs.get('gamma');
     for (const fn of this.jobs.splice(0)) fn();
     console.log('three.js r' + THREE.REVISION + ' ' + E.backend + (E.reversed ? ' (reversed depth)' : '') + ', tier ' + this.tier);
   }
@@ -98,7 +103,7 @@ export class Renderer3 {
     S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode();
     this.gMat = groundMaterial(W, this.bakes, sky, Q); this.wMat = waterMaterial(W, this.bakes, sky);
     const common = { noiseTex: this.noiseTex, night: this.night, time: this.time };
-    this.objMat = objectMaterial(common); this.objMatInst = objectMaterial({ ...common, instanced: true, instColor: true }); this.tubeMat = objectMaterial({ ...common, instanced: true });
+    this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
     this.sprites = new Sprites(); S.add(this.sprites.mesh);
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, liveries: this.liveries || null, track: (ac) => window.SFO && window.SFO.traffic ? window.SFO.traffic.tracks.get(ac.id) : null });
@@ -122,9 +127,16 @@ export class Renderer3 {
       } else if (p === 'mark') {
         const m = new THREE.Mesh(geometryOf(it.mesh), this.markMat); m.frustumCulled = false; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; G.add(m);
       } else if (p === 'sign') this.pendingSigns.push(it);
-      // 'decal' (stand centrelines, off by default in world.js) and 'cloud' (low overcast slab) are not ported yet:
-      // docs/research/engine_impl.md §6
+      else if (p === 'cloud') {
+        const L = { H: uniform(1000), extent: uniform(40000), layer: uniform(new THREE.Vector4()) };
+        const m = new THREE.Mesh(geometryOf(it.mesh), this.sky.cloudSlabMaterial(L)); m.frustumCulled = false; m.renderOrder = 5; m.matrixAutoUpdate = false;
+        m.onBeforeRender = () => { const u = typeof it.uniforms === 'function' ? it.uniforms() : it.uniforms; if (u) { L.H.value = u.uH; L.extent.value = u.uExtent; L.layer.value.fromArray(u.uLayer); } };
+        this.clouds.set(it, m); this.engine.scene.add(m);
+      }
+      // 'decal' (stand centrelines) is off by default in js/live/world.js (standMarkings) and not ported
     }
+    // cloud layers removed by the app (setClouds rebuilds them when the METAR changes)
+    if (this.clouds.size) { const live = new Set(W.items); for (const [it, m] of this.clouds) if (!live.has(it)) { this.engine.scene.remove(m); m.material.dispose(); this.clouds.delete(it); } }
     if (this.pendingSigns.length && this._signMats()) {
       if (!this.worldLookup) this.worldLookup = faceIndex(worldSignAtlasMap(W.details || {}));
       for (const it of this.pendingSigns.splice(0)) {
@@ -140,7 +152,7 @@ export class Renderer3 {
     if (!this.built) this._buildStatic();
     this._syncItems();
     if (sc.gateSys && !this.bridges && this._signMats()) {
-      this.bridges = new Bridges3(sc.gateSys, { objMat: this.objMat, objMatInst: this.objMatInst, tubeMat: this.tubeMat, signFont: this.font, signMats: this.signMats });
+      this.bridges = new Bridges3(sc.gateSys, { objMat: this.objMat, vehMat: this.vehMat, signFont: this.font, signMats: this.signMats });
       this.engine.scene.add(this.bridges.group);
     }
     if (this.bridges) { this.bridges.update(Date.now()); sc.gateSys.sprites = this.bridges.sprites; }
@@ -188,6 +200,12 @@ export class Renderer3 {
     for (let c = 0; c < 4; c++) for (let rr = 0; rr < 4; rr++) { let s = 0; for (let k = 0; k < 4; k++) s += P[k * 4 + rr] * V[c * 4 + k]; M[c * 4 + rr] = s; }
     this.curCam = { pos, dir: f, up: u, fov: cam.fov };
     return { vpNear: M, vp: M, pos, fov: cam.fov, dir: f, up: u };
+  }
+  // for QA jobs: a summary of what is drawn
+  debugInfo() {
+    const R = this.engine.renderer; const out = { backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H, calls: R.info.render.calls, tris: R.info.render.triangles, frames: this.frames };
+    if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; const U = {}; for (const k of ['top', 'tail', 'belly']) if (e.U[k]) U[k] = e.U[k].toArray().map(v => +v.toFixed(3)); out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name, U }); } }
+    return out;
   }
   // for QA jobs: everything drawable is on screen
   isComplete() { return this.ready && this.built && !!this.bridges && !this.pendingSigns.length; }

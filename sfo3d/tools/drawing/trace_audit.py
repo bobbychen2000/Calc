@@ -9,7 +9,7 @@ GroundPhysics is meant to prevent (it nudges moving aircraft apart and relocates
 import json, os, collections
 import numpy as np
 import shapely
-from common import OUT, scene, ac_instance_geom, gear_points_world
+from common import OUT, scene, ac_instance_geom, gear_points_world, phys_gear_points, NetPaved, provenance
 from audit import Ac, ac_obj, static_objects, vertical, depth_of
 from measure import PaveMask
 
@@ -17,7 +17,8 @@ from measure import PaveMask
 def run():
     fp = os.path.join(OUT, 'trace.json')
     if not os.path.exists(fp): print('  no trace.json (run jobs/trace2d.mjs)'); return None
-    T = json.load(open(fp)); S = scene(); pave = PaveMask()
+    T = json.load(open(fp)); S = scene(); pave = PaveMask(); net = NetPaved()
+    if T.get('frameId') and T['frameId'] != S['meta'].get('frameId'): raise SystemExit(f'trace.json frame {T["frameId"]} != scene frame {S["meta"].get("frameId")}: re-run jobs/trace2d.mjs')
     bld = [o for o in static_objects() if o.cat == 'building']
     tree = shapely.STRtree([b.poly for b in bld])
     agg = {}; per_frame = []; t0 = T['frames'][0]['t'] if T['frames'] else 0
@@ -50,10 +51,13 @@ def run():
                 if col and depth_of(R) > 0.1: n_cf += 1; rec('aircraft-building', oi.label, b.label, depth_of(R), f'{ai["phase"]} ({ai["gs"]:.1f} m/s)', t)
             Td = S['types'].get(ai['typeKey'])
             if Td:
+                # visual: rendered gear on the rendered raster; physics: GroundPhysics gear points on raster OR taxi net
                 gp = gear_points_world(Td, Wi); X = np.array([p[0] for p in gp]); Z = np.array([p[1] for p in gp])
-                if not pave(X, Z).all(): n_cf += 1; rec('gear-off-pavement', oi.label, 'paved raster', 0.0, f'{ai["phase"]} ({ai["gs"]:.1f} m/s)', t)
+                if not pave(X, Z).all(): n_cf += 1; rec('gear-off-pavement', oi.label, 'rendered paved raster (visual)', 0.0, f'{ai["phase"]} ({ai["gs"]:.1f} m/s)', t)
+                PX, PZ, _ = phys_gear_points(Td, Wi)
+                if not (pave(PX, PZ) | net(PX, PZ)).all(): rec('gear-off-physics-pavement', oi.label, 'raster OR taxi net (physics)', 0.0, f'{ai["phase"]} ({ai["gs"]:.1f} m/s)', t)
         per_frame.append(dict(t=t, aircraft=len(objs), conflicts=n_cf, stats=F.get('stats')))
-    out = dict(mode=T['mode'], frames=len(T['frames']), span_s=per_frame[-1]['t'] if per_frame else 0, per_frame=per_frame,
+    out = dict(mode=T['mode'], provenance=provenance(), traceGit=T.get('git'), traceGenerated=T.get('generated'), frames=len(T['frames']), span_s=per_frame[-1]['t'] if per_frame else 0, per_frame=per_frame,
                conflicts=sorted(agg.values(), key=lambda r: (r['kind'] != 'aircraft-aircraft', -r['frames'], -r['depth'])))
     json.dump(out, open(os.path.join(OUT, 'trace_audit.json'), 'w'), indent=0)
     c = collections.Counter(r['kind'] for r in out['conflicts'])
