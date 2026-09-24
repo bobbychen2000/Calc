@@ -1,0 +1,146 @@
+{
+  "area": "exterior (src/11_exterior.js): wing, GE90-115B nacelle, pylon, wing-to-body fairing, ANA wing livery",
+  "rater": "A skeptic",
+  "score": 6.0,
+  "details": {
+    "wing planform / raked tip / bending": 7,
+    "wing surface detail (seams, fastener rows, panel tone, gear stripe)": 5.5,
+    "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 6.5,
+    "canoes (flap-track fairings)": 6,
+    "pylon": 7,
+    "nacelle shape (cowl, lip, strake, access panel)": 7,
+    "nacelle colour / materials": 5.5,
+    "inlet / fan / spinner": 6,
+    "livery / registration JA795A": 5,
+    "lights & static dischargers": 5.5,
+    "artefacts": 6
+  },
+  "issues": [
+    {
+      "severity": "high",
+      "detail": "livery / registration JA795A",
+      "problem": "The registration ink is neutral grey. Two ANA 777-300ER cabin photos show it in dark ANA navy. In sun the letters are the darkest thing on the wing (lum ratio ink/wing 0.21); in the render they are a mid grey (ratio 0.67) and read as a faint stencil, not a livery mark. The w2 value (#4e555e from _7345) was taken under overcast, which removes the hue.",
+      "evidence": "ref/web/exterior/a_tpg_ANA77W_TheRoom_ZGriff-63.jpg (ANA JA78xA right wing, sunlit): ink darkest-15% #03244f, adjacent wing #8098b1. ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_36.jpg (shade): ink #243959, wing #314c71, blue hue retained. Render r5/w26K.png: ink #697484, wing #a6adb6 (b-r +27 on the ink, which is only the sky tint).",
+      "fix": "In the JA795A block (the `const ink = ...` line, ~l.245) set ink = { c: '#15264a', r: 0.6, m: 0 }. That gives an albedo ratio of about 0.33 to the paint (#636466), close to the photo ratio once the specular is added."
+    },
+    {
+      "severity": "medium",
+      "detail": "livery / registration JA795A",
+      "problem": "The glyphs read as brush or italic script: stroke width collapses at every corner (the J hook, the bowls of 9 and 5), so letters look mushy and 9/5 merge from 17K. The photo letters are a clean upright sans with constant stroke width.",
+      "evidence": "Render crop r5/w17K.png (window 170-490 x 150-460, 3x) against ZGriff-63 and samchui_36 letters (uniform stroke, about 0.19 x height).",
+      "fix": "In wingLine() (l.106-121), miter the offset. Compute the segment normals of the incoming and outgoing segments, average them, and scale the half-width by 1/max(0.55, dot(n_avg, n_seg)), so the ribbon keeps its width through corners. Or split each glyph polyline into straight sub-strokes at corners sharper than 35 deg, each drawn with its own wingLine call. Keep the 0.27 m stroke and 1.4 m height."
+    },
+    {
+      "severity": "medium",
+      "detail": "nacelle colour / materials",
+      "problem": "The cowl split rings render LIGHTER than the cowl and read as painted white pinstripes wrapping the nacelle, most visibly from 13A. On the real cowls the splits are thin dark lines.",
+      "evidence": "Render r5/w13A.png: two bright arcs across the cowl top (seam albedo #b9bdc2 > cowl #b3b4b5, and the rings stand 4 mm proud so they catch the sky). Photos ref/web/exterior/b_lalf_ANA77W_11A_136.jpg and _137.jpg, and a_yt_eX2WMn0xe48_ANA77W_JFK_GE90_max.jpg, show the aft split as a dark hairline.",
+      "fix": "l.179: seam = { c: '#5f646a', r: 0.7 }. In the split loop at l.289, use r + 0.002 and width 0.018."
+    },
+    {
+      "severity": "medium",
+      "detail": "nacelle colour / materials",
+      "problem": "The ANA cowls do carry a GE monogram and 'GE' script on the inboard (cabin-facing) flank, aft and low on the fan cowl. The header claim 'white cowls with no titles [V]' is contradicted by two ANA 777-300ER window videos.",
+      "evidence": "ref/web/exterior/a_yt_IQCFQpV_T1A_ANA77W_HND_GE90_max.jpg: dark grey 'GE' script plus the circular GE monogram at about (1180-1230, 580-640), on the aft lower inboard cowl. ref/web/exterior/a_yt_eX2WMn0xe48_ANA77W_JFK_GE90_max.jpg: 'GE' at about (1140, 600), same place.",
+      "fix": "After the access-panel ring (l.298-300), add a decal on the inboard side at lathe x = 3.5 m, 35 deg below horizontal (dir d = [-side*cos35, 0, +sin35], R = 2.08). Use the same ring construction as the access panel: a gTube circle of radius 0.22 m and tube 0.02 in { c: '#3e4450', r: 0.5 }, plus two short gTube strokes for 'GE' ~0.3 m tall just ahead of it. Update the header comment to [V IQCFQpV_T1A, eX2WMn0xe48]."
+    },
+    {
+      "severity": "medium",
+      "detail": "wing surface detail",
+      "problem": "The fastener rows (riv #6a6d72) render LIGHTER than the paint, so the 12 %/62 % chord rows read as thin white painted lines running spanwise across the gear stripe in 17A/17K. In photos, rivet and splice lines are darker than the skin.",
+      "evidence": "Render r5/w17A.png row y=400: skin #8b93a0, line #96a0ae (+8 %). r5/w17K.png row y=400: #9ea5ae -> line #a8b1bb. Photo ZGriff-63: the spanwise lines are dark (#1f2a3a-ish).",
+      "fix": "l.228: riv = { c: '#56595d', r: 0.75, m: 0.05 } (just under the paint #636466). Keep the width at 0.016."
+    },
+    {
+      "severity": "medium",
+      "detail": "canoes",
+      "problem": "The canoes stick out too far behind the trailing edge. From 26K the tail beyond the TE is about 3.0-3.7 x its depth at the TE, against about 2 x in the ANA cruise photo. They read as long cigars / fingers, especially in 19A and 26K.",
+      "evidence": "Render r5/w26K.png: nearest canoe TE->tip about 520 px vs depth about 170 px; next about 490 vs 130. Photo ref/web/exterior/a_tpg_ANA77W_TheRoom_ZGriff-63.jpg: near canoe about 170 px beyond the TE vs 60-90 px depth; outboard about 70 vs 35.",
+      "fix": "l.268: x1 = te(cs) + 0.28 * len - RE (was 0.40), keeping x0 = x1 - len + RE, so the canoe shifts forward about 0.5 m and more of it sits under the flap. Re-check the side-view tail in the studio (k_canoe_side)."
+    },
+    {
+      "severity": "medium",
+      "detail": "lights & static dischargers",
+      "problem": "Too few static dischargers. Sam Chui's ANA 777-300ER tip photo shows about 12-13 dischargers along the raked-tip trailing edge alone, a distinctive 'comb'. The model has 4 on the tip and 4 on the aileron.",
+      "evidence": "ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_37.jpg: count the rods from (545,405) to (570,625) along the raked TE. The same comb shows in _36. Model l.360: 8 stations total.",
+      "fix": "l.360: stations = [23.8, 25.0, 26.2, 27.4, 28.6, 29.6, 30.45, 30.7, 30.95, 31.15, 31.35, 31.55, 31.75, 31.9, 32.05, 32.2, 32.32] (the raked TE is highly swept, so 0.2 m spanwise is about 0.4 m along the edge). Keep the gCyl 0.008 x 0.28."
+    },
+    {
+      "severity": "low",
+      "detail": "nacelle colour / materials",
+      "problem": "The inlet lip uses the slat-nose 'metal' (m 0.85), which mirrors the sky and renders blue-silver (#b8c3ce, b-r +22). In the photos the lip is a neutral-to-warm light grey, only slightly brighter than the cowl.",
+      "evidence": "Render r5/w11K.png lip #b8c3ce. Photos: a_yt_IQCFQpV_T1A lower lip lit #d3cbca (b-r -9); a_yt_eX2WMn0xe48 lip in shade #5a5555 (b-r -5); b_lalf_11A_136 lip grey gradient.",
+      "fix": "l.287: B.add(nac.lip, rot, { c: '#bdbbb7', r: 0.3, m: 0.5 }) (a separate lip material; leave `metal` for the slat noses)."
+    },
+    {
+      "severity": "low",
+      "detail": "inlet / fan / spinner",
+      "problem": "From 11K the inlet reads as a smooth grey-to-black tube with no inner-lip highlight, which is plausible at that angle. The inner lip band just inside the highlight, lit in every forward-seat photo, is missing: the inlet material jumps straight to #3a3e44.",
+      "evidence": "Render r5/w11K.png inlet #4e5259 uniform gradient. Photos a_yt_IQCFQpV_T1A / eX2WMn0xe48 / b_lalf_11A_136: a light lip band then near-black interior (#121116).",
+      "fix": "l.132: extend the lip profile inward to [1.66, 0.15] and draw the first 0.15 m of the inlet in the lip material. Then darken the inlet material to { c: '#26292e', r: 0.6 } so the interior matches #121116."
+    },
+    {
+      "severity": "low",
+      "detail": "nacelle shape",
+      "problem": "The upper cowl access panel is a round ring. In the ANA photos it is a rounded rectangle, about 0.45 x 0.35 m.",
+      "evidence": "b_lalf_ANA77W_11A_136.jpg (about 360-440 x 700-740) and _137.jpg (about 800-870 x 730-770): a rounded-square outline.",
+      "fix": "In the access-panel block (l.298-300), build `ring` as a superellipse: u = 0.22*sign(cos a)*|cos a|^0.4, w = 0.17*sign(sin a)*|sin a|^0.4, with 32 points."
+    },
+    {
+      "severity": "low",
+      "detail": "artefacts",
+      "problem": "Dashed or shimmering lines at grazing angles. The strake (cowl-colour plate plus black root box) seen edge-on from 13A turns into a black/white dashed line at the window bottom. From 17K and 26A the slat-line and LE fastener strips alias into dotted ticks along the far leading edge.",
+      "evidence": "Render r5/w13A.png about (520-637, 430-453). Render r5/w17K.png along the LE (350,150)->(780,25) in the 3x crop.",
+      "fix": "Strake root seam (l.296): gBox height 0.07 -> 0.04 and colour #3a3f46 instead of `dark`, so it does not alternate with the cowl white. Slat chord line (l.201): width 0.03 -> 0.022 and lift 0.012 -> 0.02 beyond s > 24 (grazing range). Or fade the gap colour toward the paint with distance by vertex colour (lerp to paint for s > 26)."
+    },
+    {
+      "severity": "low",
+      "detail": "lights",
+      "problem": "At night (19A) the tip light is a large white disc about 25 px across with a red rim, about 1 m apparent size at 23 m. Photos show a small red point with a tight halo; the white strobe only flashes.",
+      "evidence": "Render r5/n19A.png at about (510,155).",
+      "fix": "l.358 nav sprite s: 1.6 -> 0.9. The white core and bloom are lighting-owned; see below."
+    },
+    {
+      "severity": "low",
+      "detail": "wing surface detail",
+      "problem": "The ANA photos show small stencils ('NO STEP'-type red/black text) near the gear stripe and a row of small dark dots (slat track/fastener heads) along the LE. Both are missing, and the wing reads clean CG. Minor at window range.",
+      "evidence": "a_tpg_ANA77W_TheRoom_ZGriff-63.jpg: red stencil at about (10-40, 940-975) next to the stripe; LE dot row at about (170,600), (290,590), (410,580)... b_samchui_..._37.jpg: a dot row near the tip.",
+      "fix": "Optional: a spanwise row of 0.06 m dark squares (wingLine with 2-point paths) at LE + 0.35 m every 1.6 m from s 12-31, colour #3a3f46."
+    },
+    {
+      "severity": "medium",
+      "detail": "(owner: lighting) not scored",
+      "problem": "Lighting-owned items, not counted in the score: (1) the day sky is pale #86aed2 against deep cruise blue #065191 in ZGriff-63, which also washes the wing and cowl contrast; (2) the sun-side cowl clips flat (w11K #dbdfe3 across the whole lit face, no gradient); (3) the q21 sunset view barely shows the exterior; s13A/s26K put a violet-navy cast over wing and cowl; (4) at night the wing is a black silhouette with a white bloom disc and no nav-light wash on the tip.",
+      "evidence": "r5/w26K.png sky #86aed2; ZGriff-63 sky #065191. r5/w11K.png cowl. r5/s26K.png wing navy. r5/n19A.png.",
+      "fix": "Owner: lighting (12_scene.js SKIES / 04_shaders.js exterior exposure)."
+    }
+  ],
+  "questionsForUser": [
+    "Registration ink: TPG (JA78xA, sunlit) and Sam Chui ANA 777-300ER photos show dark navy letters. Earlier rounds used grey from an overcast shot (_7345). Can you confirm JA795A's wing registration is ANA navy, or send a sunlit close-up?",
+    "GE logo: two ANA 777-300ER window videos (IQCFQpV_T1A at HND, eX2WMn0xe48 at JFK) show a dark 'GE' script plus the GE monogram on the inboard fan cowl. Should JA795A show it? Some ANA airframes may have been repainted without it.",
+    "The ANA yellow ice-detection spot on the gear stripe is still unverified. It is not visible in the TPG photo's stripe. Keep it out?",
+    "The seat of the TPG ZGriff-63 photo is not stated (a right-side THE Room seat, 2020). If you have a photo from a known seat (e.g. 26K or 17K) in clear sun, the canoe protrusion and registration position could be checked 1:1."
+  ],
+  "photos": [
+    {"path": "ref/web/exterior/a_tpg_ANA77W_TheRoom_ZGriff-63.jpg", "url": "https://runway-media-production.global.ssl.fastly.net/us/originals/2020/01/ANA_777_New_Business_Class_The_Room_Zach_Griff_ZGriff-63.jpg", "seat": "right side, THE Room (row unknown), cruise, sun", "what": "ANA 777-300ER right wing in cruise: navy registration JA78xA, gear stripe, spoiler/aileron panels, canoes, raked tip, deep-blue sky"},
+    {"path": "ref/web/exterior/a_yt_IQCFQpV_T1A_ANA77W_HND_GE90_max.jpg", "url": "https://i.ytimg.com/vi/IQCFQpV_T1A/maxresdefault.jpg", "seat": "right side, forward of the engine (takeoff HND)", "what": "ANA GE90 inboard flank: GE monogram decal, strake, lip, fan, spinner swirl, pylon hump, wing registration from below"},
+    {"path": "ref/web/exterior/a_yt_IQCFQpV_T1A_ANA77W_HND_GE90_hq2.jpg", "url": "https://i.ytimg.com/vi/IQCFQpV_T1A/hq2.jpg", "seat": "same", "what": "same view, lower resolution"},
+    {"path": "ref/web/exterior/a_yt_eX2WMn0xe48_ANA77W_JFK_GE90_max.jpg", "url": "https://i.ytimg.com/vi/eX2WMn0xe48/maxresdefault.jpg", "seat": "right side, forward of the engine (approach JFK)", "what": "ANA GE90: cowl tone lit #aaaeab / lower #726b63, dark inlet interior, fan, spinner, GE script, strake, pylon fairing, wing underside"},
+    {"path": "ref/web/exterior/a_yt_eX2WMn0xe48_ANA77W_JFK_GE90_hq1.jpg", "url": "https://i.ytimg.com/vi/eX2WMn0xe48/hq1.jpg", "seat": "same", "what": "ANA GE90 on the ground at JFK, inlet and fan"},
+    {"path": "ref/web/exterior/a_yt_RbZTYP0kGbE_ANA77W_ORD_evening_max.jpg", "url": "https://i.ytimg.com/vi/RbZTYP0kGbE/maxresdefault.jpg", "seat": "left side, over/behind the engine (ORD evening takeoff)", "what": "ANA GE90 cowl from behind in low sun, wing LE and flaps, warm evening tone"},
+    {"path": "ref/web/exterior/a_yt_RbZTYP0kGbE_ANA77W_ORD_cowl_hq1.jpg", "url": "https://i.ytimg.com/vi/RbZTYP0kGbE/hq1.jpg", "seat": "same", "what": "ANA cowl flank at low sun (ground)"},
+    {"path": "ref/web/exterior/a_yt_7pGTCDIoJMU_ANA77W_wing_hq2.jpg", "url": "https://i.ytimg.com/vi/7pGTCDIoJMU/hq2.jpg", "seat": "right side economy, HND ground", "what": "ANA 777-300ER wing and outboard canoes from the aft cabin, overcast (low res)"},
+    {"path": "ref/web/exterior/a_yt_p97zMaCMWRg_EVA77W_sunset_GE90.jpg", "url": "https://i.ytimg.com/vi/p97zMaCMWRg/maxresdefault.jpg", "seat": "EVA 777-300ER, forward of the engine", "what": "GE90 and wing at sunset (lighting reference)"},
+    {"path": "ref/web/exterior/a_yt_QZNFdQuhu1s_77W_LHR_GE90.jpg", "url": "https://i.ytimg.com/vi/QZNFdQuhu1s/maxresdefault.jpg", "seat": "777-300ER (blue cowl operator), forward of the engine", "what": "GE90 inlet/fan/spinner geometry reference"},
+    {"path": "ref/web/exterior/commons_Air_France_Boeing_777_300ER_Greenland_Sunrise_2022.jpg", "url": "https://commons.wikimedia.org/wiki/File:Air_France_Boeing_777-300ER_Greenland_Sunrise_2022.jpg", "seat": "AF 777-300ER, aft of the wing", "what": "wing silhouette with canoes at sunrise"},
+    {"path": "ref/web/exterior/commons_Boeing_777_4139974954_2_.jpg", "url": "https://commons.wikimedia.org/wiki/File:Boeing_777_(4139974954)_(2).jpg", "seat": "777 over-wing, ground", "what": "flap / canoe close-up, TE gaps"},
+    {"path": "ref/web/exterior/commons_Boeing_777_Turbine.jpg", "url": "https://commons.wikimedia.org/wiki/File:Boeing-777-Turbine.jpg", "seat": "terminal window", "what": "GE90 front: inlet, fan, spinner swirl"},
+    {"path": "ref/web/exterior/commons_34_000_feet_over_the_Pacific_February_2026.jpg", "url": "https://commons.wikimedia.org/wiki/File:34,000_feet_over_the_Pacific_February_2026.jpg", "seat": "777, aft cabin", "what": "distant wing-tip silhouette over clouds (bending / tip rise)"},
+    {"path": "ref/web/exterior/commons_Unimak_Island_and_Ugamak_Island_from_transpacific_flight_Feb.jpg", "url": "https://commons.wikimedia.org/wiki/File:Unimak_Island_and_Ugamak_Island_from_transpacific_flight_February_2026_2.jpg", "seat": "777, aft cabin", "what": "wing-tip silhouette, cruise sky colour"},
+    {"path": "ref/web/exterior/commons_KLM_Boeing_777_PH_BVS_in_flight_2023_01_.jpg", "url": "https://commons.wikimedia.org/wiki/File:KLM_Boeing_777_PH-BVS_in_flight_2023_(01).jpg", "seat": "KLM 777-300ER", "what": "dusk tip with nav light (night/dusk lights reference)"},
+    {"path": "ref/web/exterior/commons_Wing_of_a_Boeing.jpg", "url": "https://commons.wikimedia.org/wiki/File:Wing_of_a_Boeing.jpg", "seat": "unknown Boeing", "what": "sunlit wing tip and canoes (type not confirmed; tone only)"},
+    {"path": "ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_36.jpg", "url": "(downloaded by rater B)", "seat": "ANA THE Room, right side", "what": "raked tip, navy registration in shade, discharger comb"},
+    {"path": "ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_37.jpg", "url": "(downloaded by rater B)", "seat": "ANA THE Room, right side", "what": "raked tip: about 13 static dischargers on the raked TE, LE dot row"},
+    {"path": "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg / _137.jpg", "url": "(downloaded by rater B)", "seat": "ANA 11A", "what": "GE90 flank: dark split lines, rounded-square access panel, strake, lip, pylon hump; the glossy cowl mirrors the fuselage titles"}
+  ]
+}

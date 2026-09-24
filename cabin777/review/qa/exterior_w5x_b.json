@@ -1,0 +1,336 @@
+{
+ "area": "exterior",
+ "rater": "B geometry",
+ "score": 6.7,
+ "details": [
+  {
+   "detail": "Planform and raked tip",
+   "score": 7.0,
+   "note": "The LE and TE follow ACAP. The registration position on the chord and the rise of the tip match _7250/_7282 from 26K. Sam Chui _37 shows the aileron running right up to the rake kink, and the rake TE carrying about 5 dischargers at even spacing. The model's aileron stops at s 29.3, 1.7 m short of the TE kink at 31.0, and its rake spans only 1.3-1.4 m.",
+   "refs": [
+    "ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_37.jpg",
+    "scratchpad/r5/w30K.png",
+    "scratchpad/r5/q12_wing.png"
+   ]
+  },
+  {
+   "detail": "Cruise bending",
+   "score": 7.5,
+   "note": "The upward curve of the LE toward the tip reads like _7282 and Sam Chui _36. No change is needed.",
+   "refs": [
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg",
+    "scratchpad/r5/w19A.png"
+   ]
+  },
+  {
+   "detail": "Surface detail: seams, fasteners, slat band, gear stripe",
+   "score": 7.0,
+   "note": "The slat line and the bare LE band are right. The gear stripe is bold but matches the black band in _7242. The skin seams are fine.",
+   "refs": [
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7242-2-scaled.jpeg",
+    "scratchpad/r5/w17K.png"
+   ]
+  },
+  {
+   "detail": "Control-surface lines (spoilers, flaperon, aileron)",
+   "score": 6.0,
+   "note": "Every spoiler break renders as a near-black line of the same weight, so the spoilers read as a row of outlined tiles. In _7250/_7331 the only strong dark line is the spoiler TE/flap gap; the chordwise breaks and the spoiler hinge line are faint.",
+   "refs": [
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+    "scratchpad/r5/w26K.png"
+   ]
+  },
+  {
+   "detail": "Flap-track fairings (canoes)",
+   "score": 5.0,
+   "note": "The count and spacing are right: 3 visible outboard from 26K, as in _7250. The shape is wrong. The render gives constant-depth round 'sausages' with a blunt rounded end, which read as flat paddles in q12/19A. The photos (_7250, _7211, Boeing_777_(4139974954)) show slab-sided wedges: deepest at the TE, with the underside rising in a straight line to a small pointed tail about 10-15 % of the max depth.",
+   "refs": [
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7211-2-scaled.jpeg",
+    "ref/web/exterior/commons_Boeing_777_4139974954_2_.jpg",
+    "scratchpad/r5/q12_wing.png",
+    "scratchpad/r5/w26K.png"
+   ]
+  },
+  {
+   "detail": "Pylon",
+   "score": 7.0,
+   "note": "The forward fairing's nose starts just aft of the first cowl split, as in LALF _137 and JAL IMG_3371, and rises into the LE. It is acceptable.",
+   "refs": [
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+    "ref/web/exterior/b_alr_JAL77W_IMG_3371-1536x1152.jpeg",
+    "scratchpad/r5/w13A.png"
+   ]
+  },
+  {
+   "detail": "Nacelle geometry (cowl, splits, strake, access panel)",
+   "score": 6.0,
+   "note": "The cowl profile and the thick lip band are right: all photos show a lip band about 8-10 % of D. The access panel is in the wrong place and the wrong shape. The photos (LALF _136/_137, JAL IMG_3397/3371/3428) show a rounded rectangle on the INLET cowl, between the lip and the first split (~0.85 m aft of the highlight). The model has a circle on the fan cowl at 2.6 m, where it is never visible. The strake is invisible in the renders; in _137/_3371/_3428 it reads as a lit edge with a dark shadow line below.",
+   "refs": [
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+    "ref/web/exterior/b_alr_JAL77W_IMG_3397-1536x1152.jpeg",
+    "ref/web/exterior/b_alr_JAL77W_IMG_3428-1536x1152.jpeg",
+    "scratchpad/r5/w11A.png",
+    "scratchpad/r5/w13A.png"
+   ]
+  },
+  {
+   "detail": "Nacelle materials",
+   "score": 6.0,
+   "note": "The cowl splits render as LIGHT hairlines (seam #b9bdc2) on the shade side. Every photo shows them as thin dark lines. The lip renders slightly brighter than the cowl (11A: lip #94a6bd, cowl #8c9eb4). In photos the lip is a satin band darker than the cowl (ANA _136 #9ea2ab highlight falling to #56606a; JAL #2c3c4c).",
+   "refs": [
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+    "ref/web/exterior/b_alr_JAL77W_IMG_3397-1536x1152.jpeg",
+    "scratchpad/r5/w13A.png",
+    "scratchpad/r5/w11A.png"
+   ]
+  },
+  {
+   "detail": "Inlet, fan, spinner",
+   "score": 6.5,
+   "note": "From 11A/11K the inlet interior is flat, uniform near-black (11A #1b1d24, 11K #3e434a). The photos show a graded interior (#151e27 at the lip shadow, then #323c48, then #56606a acoustic liner), so the render reads as a hole. The fan and spinner cannot be judged from these views.",
+   "refs": [
+    "ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+    "scratchpad/r5/w11A.png",
+    "scratchpad/r5/w11K.png"
+   ]
+  },
+  {
+   "detail": "ANA livery: JA795A registration",
+   "score": 7.5,
+   "note": "The orientation is confirmed on the enhanced _7250 crop: glyphs upright, tops toward the LE, J inboard. Position and size are right. The ink contrast is too low: the ink/skin luminance ratio is 0.61 in w26K and 0.63 in w17K, against 0.29 (_7331), 0.39 (_7250) and 0.41 (_7282) in the photos.",
+   "refs": [
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7331-2-scaled.jpeg",
+    "scratchpad/r5/w26K.png"
+   ]
+  },
+  {
+   "detail": "Lights and static dischargers",
+   "score": 6.0,
+   "note": "The model has 8 dischargers per side. Sam Chui _37 (ANA 77W tip) shows 5 on the rake TE plus at least 8 along the aileron TE, each on a small white base pad. At night (n19A) the left nav light blooms to a white core with a pink rim, where a red point is expected.",
+   "refs": [
+    "ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_37.jpg",
+    "scratchpad/r5/n19A.png"
+   ]
+  },
+  {
+   "detail": "Artefacts",
+   "score": 7.0,
+   "note": "There is no z-fighting on the wing strips. In w13A a dark dashed/aliased line appears at the window bottom: the 3 cm dark strake root box (gBox 0.03 wide) shimmers at 10+ m. There are no gaps or floating parts.",
+   "refs": [
+    "scratchpad/r5/w13A.png"
+   ]
+  },
+  {
+   "detail": "(owner: lighting) Sky, sun-side clipping, sunset palette, night bloom",
+   "score": null,
+   "note": "Excluded from the overall. The K-side cowl is clipped at #dadfe2 in 11K. In s26K the wing is saturated royal blue, where the dusk photo _7282 shows #6f83b7 grey-blue. The shade-side cowl tint is b-r 0x28 in the render against 0x1a in ANA _136.",
+   "refs": [
+    "scratchpad/r5/w11K.png",
+    "scratchpad/r5/s26K.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "problem": "Canoes are round constant-depth sausages with blunt ends, not tapered wedges",
+   "detail": "The render keeps 35-40 % of the max depth to the tail, with a rounded 22 cm end and a round section (r = 0.48 w). From 19A (q12) they read as flat paddles, and from 26K as tubes. Real flaps-up canoes have flat sides and a straight underside rising to a small tail. At the TE, depth is at least the width.",
+   "evidence": "Photo _7250 middle canoe: about 45 px deep at the TE, tapering to a point about 200 px aft. Lower-left canoe in _7211 and commons Boeing_777_(4139974954)_(2): clear triangular side profile. Render w26K: depth about 55 px held nearly constant over about 330 px, with a round end.",
+   "fix": "11_exterior.js canoe loop (lines ~274-280). Aft of te(cs), make the depth linear: rd = lerp(1, 0.12, clamp((xn - te(cs)) / (x1 + RE - te(cs)), 0, 1)) and rw = lerp(1, 0.35, same). Keep the 0.22 rise at the nose. Section corner radius r: w*0.48 -> Math.min(w*0.3, d*0.25), for slab sides with a rounded keel. End cap: RE 0.22 -> 0.08, and end sections Math.max(0.2,0.40*e)/Math.max(0.15,0.35*e) -> 0.35*e / 0.12*e. Keep the 0.4*len protrusion."
+  },
+  {
+   "severity": "medium",
+   "problem": "GE90 access panel on the wrong cowl panel, and the wrong shape",
+   "detail": "On the GE90-115B the rounded-rectangle access panel sits on the inlet cowl, ahead of the first split, at about 55-60 % of the way from the split to the lip. The model puts a circle 2.6 m aft on the fan cowl, which is never visible from 11A-13A.",
+   "evidence": "LALF _136 (ANA): the panel is between the lip and the split. JAL IMG_3397: lip rear edge x 570, panel 450, split 360 at panel height. JAL IMG_3371: lip 960, panel 825, split 735. The render w11A shows no panel.",
+   "fix": "Lines 298-300. Axial centre 2.6 -> 0.85. R 2.087 -> 2.06 (cowl radius at x 0.85). Shape: a rounded rectangle, e.g. u = Math.sign(cos a)*Math.pow(Math.abs(cos a),0.4)*0.25 (axial) and w = Math.sign(sin a)*Math.pow(Math.abs(sin a),0.4)*0.16 (circumferential). Keep 15 deg outboard of TDC. Colour '#8e949b' -> '#7a8087', so it reads as a thin dark outline as in the photos."
+  },
+  {
+   "severity": "medium",
+   "problem": "Cowl splits render as light lines; photos show dark hairlines",
+   "detail": "seam = {c:'#b9bdc2'} is brighter than the shaded cowl, so on the shade side (w13A) the splits read as white scratches.",
+   "evidence": "w13A zoom: the splits are pale against a #8x9xbx cowl. LALF _136/_137 and JAL IMG_3397/3371: the splits are thin dark lines.",
+   "fix": "Line 179: seam -> { c: '#6f757c', r: 0.7 }. Optionally reduce the ring width 0.025 -> 0.018."
+  },
+  {
+   "severity": "medium",
+   "problem": "Spoiler and control-surface breaks too dark and too uniform (tile look)",
+   "detail": "The spoiler front hinge (spF) and every chordwise break use `line` #343940, the same weight as the true gaps, so the spoilers read as outlined boxes.",
+   "evidence": "Photo _7250/_7331: the chordwise spoiler seams are about 10-15 % darker than the skin, and only the spoiler TE/flap gap is near-black. Render w26K: all lines near-black.",
+   "fix": "Line 173: line c '#343940' -> '#4f545b' (keep r 0.95), used for spF and the chordwise breaks. Keep `gap` (#1e2228) only for the spoiler TE (spA), the flap/aileron hinge lines and the slat TE. Optionally drop the chordwise break width to 0.025."
+  },
+  {
+   "severity": "medium",
+   "problem": "Static dischargers: 8 per side instead of about 13",
+   "detail": "The photo shows 5 on the rake TE on white base pads, plus about 8 along the aileron TE at about 0.75 m pitch.",
+   "evidence": "Sam Chui _37 (ANA 777-300ER right tip), cropped: 5 dischargers on the rake and 8 on the aileron within the frame.",
+   "fix": "Line 360: the list -> [23.7, 24.45, 25.2, 25.95, 26.7, 27.45, 28.2, 28.95, 31.15, 31.45, 31.75, 32.05, 32.3]. Add a 0.06 m white pad per discharger (gBox(0.05,0.03,0.08) at p, colour '#d8dadc'). Keep the 0.28 m length."
+  },
+  {
+   "severity": "medium",
+   "problem": "Inboard strake is invisible in every render",
+   "detail": "The strake plate is cowl-coloured and the exterior pass has no shadow map, so all that shows is the 3 cm dark root box. That box aliases into a dashed line (w13A bottom). In the photos the strake is one of the most visible nacelle features: a lit upper edge with a dark shadow line below.",
+   "evidence": "LALF _137, JAL IMG_3371, IMG_3428: strake clearly visible as a highlight plus shadow slot. Render w13A: only a dashed dark line at the window bottom.",
+   "fix": "Lines 294-296. Replace the gBox(0.03,1.24,0.07) root seam with a baked shadow strip lying on the cowl just below the strake: gBox(0.12, 1.3, 0.01), offset M4.trs(-0.12, 0, 0.02) in strake space, colour '#5f656c', r 0.9. Record the vertex index before the strake and apply shadeVerts(B, vStrake, B.vcount, (p,n)=> n[1] < -0.2 ? 0.6 : 1), so its underside reads dark."
+  },
+  {
+   "severity": "medium",
+   "problem": "Registration ink too light (low contrast)",
+   "detail": "The ink/skin luminance ratio is 0.61-0.63 in the render against 0.29-0.41 in the photos, so JA795A reads as a faint grey print.",
+   "evidence": "_7331 ink #343a45 on skin #c8d1d5 (0.29). _7250 #4f5a67 on #ddeaf4 (0.39). Render w26K #647081 on the wing (0.61).",
+   "fix": "Line 245: ink c '#3a3e44' -> '#1f2227' (keep r 0.85, m 0)."
+  },
+  {
+   "severity": "low",
+   "problem": "Inlet lip brighter than the cowl; interior a flat black hole",
+   "detail": "The lip shares the `metal` material with the slat nose (#c3c7cc, m 0.85), which mirrors the bright sky. The inlet interior renders uniform #1b1d24.",
+   "evidence": "w11A: lip #94a6bd, cowl #8c9eb4, inside flat #1b1d24. LALF _136: lip #9ea2ab, then the interior grades #151e27 -> #323c48 -> #56606a. JAL IMG_3397: lip #2c3c4c, liner #5a6770-#66727e.",
+   "fix": "Line 287. Give the lip its own material, lipM = { c: '#9aa0a7', r: 0.38, m: 0.6 }. Change the inlet { c: '#3a3e44', r: 0.6 } -> { c: '#646a71', r: 0.45, m: 0.35 }, and bake a gradient with shadeVerts over the inlet vertices (darker near x<0.3: f = 0.6 + 0.4*smooth(0,0.8,x))."
+  },
+  {
+   "severity": "low",
+   "problem": "Aileron ends 1.7 m short of the rake kink / rake possibly short",
+   "detail": "In Sam Chui _37 the aileron's outboard edge coincides with the TE kink where the rake starts. The model has aileron 23.3-29.3 and TE kink 31.0, with the LE rake from 31.1 (1.3 m of rake). The 777-300ER extension is about 1.94 m per side (60.93 -> 64.80 m).",
+   "evidence": "Sam Chui _37 crop: the aileron hinge bar and the TE end at y\u2248275, next to the kink at y\u2248265. The discharger spacing on the rake (about 60 px) is similar to the aileron's (about 64 px), which suggests a longer rake TE.",
+   "fix": "Lines 261-262. Aileron outboard end 29.3 -> 30.4 (spanPath(23.3, 30.4, ...), chordPath(30.4, ...)). Consider moving the WING.le kink [31.10,45.93] -> [30.45, pwl-extrapolated \u224845.48] and the WING.te kink [31.0,47.98] -> [30.45,47.73], keeping the tip at 32.40/48.50/49.05 [ACAP]. Verify against ACAP 9.9.1 before changing (see question 2)."
+  },
+  {
+   "severity": "low",
+   "problem": "(co-owner: lighting) Left nav light blooms white",
+   "detail": "The core reads white with a pink rim, not red.",
+   "evidence": "n19A: the tip light is a white disc with a red fringe.",
+   "fix": "Line 358: c [2.5,0.12,0.08] -> [1.5,0.05,0.03] and s 1.6 -> 1.2. Green, if that looks off: [0.06,1.4,0.25]."
+  },
+  {
+   "severity": "low",
+   "problem": "(owner: lighting) Sun-side cowl clipping, saturated sunset wing, blue shade tint",
+   "detail": "This is not a material issue, and it is excluded from the overall score.",
+   "evidence": "w11K cowl #dadfe2. s26K wing saturated blue against _7282 #6f83b7. Shade-side b-r 0x28 against 0x1a (_136).",
+   "fix": "(owner: lighting) As in from_exterior.md."
+  }
+ ],
+ "questionsForUser": [
+  "Do you have your own window photos from the SFO-NRT 212-seat aircraft (JA795A or a sister ship)? Over-wing seats on the left (13A-19A) would settle the canoe tail shape and the aileron/rake extent. So far the only over-wing photos are from 26K and forward of the wing.",
+  "Rake start: the file digitises ACAP 9.9.1 with the LE rake from s 31.1 and the aileron ending at 29.3. Sam Chui's ANA tip photo suggests the aileron runs out to the rake kink. Should the photo override the ACAP digitisation here?",
+  "The GE90 spinner (black with a white swirl) and the fan are never visible from the cabin views we render. Is it worth any further detail, or should the effort go to the cowl side (panel, strake, splits)?"
+ ],
+ "photos": [
+  {
+   "path": "cabin777/ref/web/exterior/b_lalf_ANA77W_11A_136.jpg",
+   "url": "https://liveandletsfly.com/wp-content/uploads/2021/12/ANA-777-300ER-The-Room-Business-Class-Review-136.jpeg",
+   "seat": "ANA 77W NH212, 11A",
+   "what": "GE90 left engine from behind: lip band, access panel on the inlet cowl, split, graded inlet interior"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+   "url": "https://liveandletsfly.com/wp-content/uploads/2021/12/ANA-777-300ER-The-Room-Business-Class-Review-137.jpeg",
+   "seat": "ANA 77W NH212, 11A",
+   "what": "Wing LE, pylon fairing hump, strake with shadow line, cowl splits"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_lalf_ANA77W_11A_138.jpg",
+   "url": "https://liveandletsfly.com/wp-content/uploads/2021/12/ANA-777-300ER-The-Room-Business-Class-Review-138.jpeg",
+   "seat": "ANA 77W NH212, 11A",
+   "what": "Engine and landscape on approach"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_36.jpg",
+   "url": "https://samchui.com/wp-content/uploads/2019/09/ANA_New_Business_Class_The_Room_36.jpg",
+   "seat": "ANA 77W THE Room, right side",
+   "what": "Right wing, raked tip, JA79xA registration (tops toward LE), canoes"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_samchui_ANA77W_ANA_New_Business_Class_The_Room_37.jpg",
+   "url": "https://samchui.com/wp-content/uploads/2019/09/ANA_New_Business_Class_The_Room_37.jpg",
+   "seat": "ANA 77W THE Room, right side",
+   "what": "Raked tip close-up: 5 dischargers on the rake plus 8 or more on the aileron with white pads; aileron reaches the kink"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alr_JAL77W_IMG_3371-1536x1152.jpeg",
+   "url": "https://www.airlinereporter.com/wp-content/uploads/2023/03/IMG_3371-1536x1152.jpeg",
+   "seat": "JAL 77W business, left side (GE90-115B)",
+   "what": "Pylon ridge, strake, both cowl splits, access panel position, dark lip"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alr_JAL77W_IMG_3397-1536x1152.jpeg",
+   "url": "https://www.airlinereporter.com/wp-content/uploads/2023/03/IMG_3397-1536x1152.jpeg",
+   "seat": "JAL 77W business, left side",
+   "what": "Inlet lip band and liner tones, panel ahead of the first split"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alr_JAL77W_IMG_3406-1536x1152.jpeg",
+   "url": "https://www.airlinereporter.com/wp-content/uploads/2023/03/IMG_3406-1536x1152.jpeg",
+   "seat": "JAL 77W business, left side",
+   "what": "GE90 cowl in cruise"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alr_JAL77W_IMG_3413-1536x1152.jpeg",
+   "url": "https://www.airlinereporter.com/wp-content/uploads/2023/03/IMG_3413-1536x1152.jpeg",
+   "seat": "JAL 77W business, left side",
+   "what": "GE90 cowl in cruise"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alr_JAL77W_IMG_3428-1536x1152.jpeg",
+   "url": "https://www.airlinereporter.com/wp-content/uploads/2023/03/IMG_3428-1536x1152.jpeg",
+   "seat": "JAL 77W business, left side",
+   "what": "Strake highlight and shadow slot, pylon, LE slat band, access panel"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7250-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K (PY)",
+   "what": "JA795A registration (upright, tops to LE), wedge canoes, spoiler seams faint"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7331-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7331-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K",
+   "what": "Registration ink contrast (0.29), canoe profile"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7282-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7282-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K, dusk",
+   "what": "Tip rise, nav light, dusk wing tone"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7211-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7211-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K, gate",
+   "what": "Inboard canoe side profile: a slab-sided wedge"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7242-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7242-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K, taxi",
+   "what": "Gear stripe, spoiler and flap panels, surface markings"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7246-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7246-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K",
+   "what": "Wing after take-off"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7329-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7329-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K",
+   "what": "Canoes and registration"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7345-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7345-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K",
+   "what": "Registration, zoomed"
+  },
+  {
+   "path": "cabin777/ref/web/exterior/b_alv_ANA77W_PY_IMG_7361-2-scaled.jpeg",
+   "url": "https://thealviator.com/wp-content/uploads/2026/04/IMG_7361-2-scaled.jpeg",
+   "seat": "ANA 77W JA795A, 26K",
+   "what": "Approach, wing and canoes"
+  }
+ ]
+}
