@@ -35,7 +35,7 @@ export class Sky {
       sunDir: uniform(new THREE.Vector3(0, 1, 0)), sunColor: uniform(new THREE.Color(1, 1, 1)), skyUp: uniform(new THREE.Color(0.3, 0.4, 0.6)),
       skyHorizon: uniform(new THREE.Color(0.5, 0.55, 0.6)), ground: uniform(new THREE.Color(0.1, 0.1, 0.1)),
       fog: uniform(new THREE.Vector4(0.0001, 1 / 700, 1, 0.97)), cloud: uniform(new THREE.Vector4(0.12, 1500, 14000, 0.5)), cloudWind: uniform(new THREE.Vector2(0, 0)),
-      time: uniform(0), night: uniform(0), mie: uniform(21e-6), sunI: uniform(20), camH: uniform(30), skyClouds: uniform(1), refPos: uniform(new THREE.Vector3(0, 60, 0)),
+      time: uniform(0), night: uniform(0), skyFloor: uniform(new THREE.Color(0, 0, 0)), mie: uniform(21e-6), sunI: uniform(20), camH: uniform(30), skyClouds: uniform(1), refPos: uniform(new THREE.Vector3(0, 60, 0)),
     };
     const W = baseRes, H = baseRes / 2;
     const rtOpts = { type: THREE.HalfFloatType, depthBuffer: false, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, wrapS: THREE.RepeatWrapping, wrapT: THREE.ClampToEdgeWrapping };
@@ -176,8 +176,9 @@ export class Sky {
         const a = smoothstep(0.0, 0.6, dd).mul(float(1.0).sub(smoothstep(18000.0, 60000.0, t)));
         col.assign(mix(col, mix(col, lit, exp(t.mul(-0.00004))), a));
       });
+      col.assign(max(col, U.skyFloor)); // night: moon / city-glow floor (js/live/app.js applyEnv)
       If(rd.y.lessThan(0.0), () => {
-        const hz = this.baseTex.sample(vec2(dirToEquirect(rd).x, 0.49)).rgb;
+        const hz = max(this.baseTex.sample(vec2(dirToEquirect(rd).x, 0.49)).rgb, U.skyFloor);
         col.assign(mix(hz, U.ground.mul(0.9), smoothstep(0.0, -0.35, rd.y)));
       });
       return col;
@@ -208,44 +209,29 @@ export class Sky {
     return TSL.fog(color, factor);
   }
   // ------------------------------------------------------------ per-environment setup (Renderer.setupSky)
-  async setup(env, renderer) {
-    const U = this.u;
-    U.sunDir.value.set(...env.sunDir); U.mie.value = env.mie; U.sunI.value = env.sunI; U.camH.value = 30;
-    U.fog.value.set(...env.fog); U.cloud.value.set(...env.cloud); U.cloudWind.value.set(...env.cloudWind); U.refPos.value.set(...(env.refPos || [0, 60, 0]));
-    U.skyClouds.value = env.slab ? 0 : 1;
-    const prevRT = renderer.getRenderTarget();
-    renderer.setRenderTarget(this.base); this.quad.render(renderer);
-    renderer.setRenderTarget(this.small); this.quad.render(renderer);
-    renderer.setRenderTarget(prevRT);
-    // ambient integration from the 64x32 readback (renderer.js setupSky)
-    let px = null;
-    try { px = await renderer.readRenderTargetPixelsAsync(this.small, 0, 0, 64, 32); } catch (e) { console.warn('sky readback failed', e); }
-    let up = [0.25, 0.35, 0.55], hz = [0.45, 0.5, 0.55];
-    if (px) {
-      const get = px instanceof Uint16Array ? (i) => THREE.DataUtils.fromHalfFloat(px[i]) : (i) => px[i];
-      let su = [0, 0, 0], wu = 0, sh = [0, 0, 0], wh = 0;
-      // three's render-target readback returns rows bottom-up on WebGL and top-down on WebGPU; both halves are summed
-      // by elevation so detect the orientation from the brighter (zenith vs nadir-clamped) rows is unnecessary: use the
-      // direction of each texel computed the same way the shader does, with row order taken from the backend
-      const flip = renderer.backend.isWebGLBackend ? true : false;
-      for (let y = 0; y < 32; y++) for (let x = 0; x < 64; x++) {
-        const vy = flip ? (y + 0.5) / 32 : (y + 0.5) / 32; // uv().y of the texel; both backends map uv.y to row y here
-        const th = vy * Math.PI, phi = ((x + 0.5) / 64 - 0.5) * 2 * Math.PI;
-        const d = [Math.sin(th) * Math.sin(phi), Math.cos(th), -Math.sin(th) * Math.cos(phi)];
-        const i = (y * 64 + x) * 4; const sa = Math.sin(th);
-        if (d[1] > 0) { const w = d[1] * sa; for (let k = 0; k < 3; k++) su[k] += get(i + k) * w; wu += w; }
-        if (d[1] > 0 && d[1] < 0.5) { for (let k = 0; k < 3; k++) sh[k] += get(i + k) * sa; wh += sa; }
-      }
-      if (wu > 0 && wh > 0) { up = su.map(v => v / wu); hz = sh.map(v => v / wh); }
-    }
+  // light terms on the CPU (synchronous, so js/live/app.js can post-process R.light right after setupSky as it does with
+  // the old renderer); the GPU sky textures are rendered by renderSky() once the renderer is ready
+  static lightFor(env) {
+    const { up, hz } = skyAmbientCPU(env.sunDir, env.mie, env.sunI, 30);
     const T = sunTransmittance(env.sunDir, env.mie, 30);
     const sunColor = T.map(t => t * env.sunI);
     const E = sunColor.map((s, k) => s * Math.max(env.sunDir[1], 0) + up[k] * Math.PI);
     const ground = E.map(e => e * 0.16 / Math.PI);
     const cc = env.cloud ? env.cloud[0] : 0;
     const direct = sunColor.map(s => s * (1 - 0.55 * cc));
-    this.light = { sunDir: env.sunDir, sunColor: direct, skyUp: up.map(v => v * (1 + 0.3 * cc)), skyHorizon: hz.map((v, k) => v * 0.6 + ground[k] * 0.4), ground };
-    return this.light;
+    return { sunDir: env.sunDir, sunColor: direct, skyUp: up.map(v => v * (1 + 0.3 * cc)), skyHorizon: hz.map((v, k) => v * 0.6 + ground[k] * 0.4), ground };
+  }
+  setEnv(env) {
+    const U = this.u;
+    U.sunDir.value.set(...env.sunDir); U.mie.value = env.mie; U.sunI.value = env.sunI; U.camH.value = 30;
+    U.fog.value.set(...env.fog); U.cloud.value.set(...env.cloud); U.cloudWind.value.set(...env.cloudWind); U.refPos.value.set(...(env.refPos || [0, 60, 0]));
+    U.skyClouds.value = env.slab ? 0 : 1;
+  }
+  renderSky(renderer) {
+    const prevRT = renderer.getRenderTarget();
+    renderer.setRenderTarget(this.base); this.quad.render(renderer);
+    renderer.setRenderTarget(this.small); this.quad.render(renderer);
+    renderer.setRenderTarget(prevRT);
   }
   applyLight(L) {
     const U = this.u; U.sunColor.value.setRGB(...L.sunColor); U.skyUp.value.setRGB(...L.skyUp); U.skyHorizon.value.setRGB(...L.skyHorizon); U.ground.value.setRGB(...L.ground);
@@ -253,9 +239,45 @@ export class Sky {
   // GGX-prefiltered environment (PMREM) of the ENV_FS composition
   updateEnvironment(renderer, scene) {
     if (!this.pmrem) this.pmrem = new THREE.PMREMGenerator(renderer);
-    const rt = this.pmrem.fromScene(this.envScene, 0, 0.1, 100);
-    if (this.envRT) this.envRT.dispose();
+    const rt = this.pmrem.fromScene(this.envScene, 0, 0.1, 100, { size: 256, renderTarget: this.envRT || null });
     this.envRT = rt; scene.environment = rt.texture;
     return rt.texture;
   }
+}
+
+// CPU evaluation of SKY_PRECOMPUTE_FS on a 32x16 equirect grid and the ambient integration of js/renderer.js
+// setupSky (sky-up: cosine-weighted upper hemisphere; horizon: 0 < d.y < 0.5 band). Same constants and step counts
+// as the shader; the grid is coarser than the old 64x32 readback (the averages differ by < 1 %).
+export function skyAmbientCPU(sunDir, mie, sunI, camH = 30) {
+  const NX = 32, NY = 16; const bRc = [5.8e-6, 13.5e-6, 33.1e-6], bOc = [0.65e-6 * 1.8, 1.881e-6 * 1.8, 0.085e-6 * 1.8];
+  const rs = (ro, rd, r) => { const b = ro[0] * rd[0] + ro[1] * rd[1] + ro[2] * rd[2], c = ro[0] * ro[0] + ro[1] * ro[1] + ro[2] * ro[2] - r * r; const d = b * b - c; if (d < 0) return [-1, -1]; const q = Math.sqrt(d); return [-b - q, -b + q]; };
+  const g = 0.76; let up = [0, 0, 0], wu = 0, hz = [0, 0, 0], wh = 0;
+  for (let y = 0; y < NY; y++) for (let x = 0; x < NX; x++) {
+    const th = (y + 0.5) / NY * Math.PI, phi = ((x + 0.5) / NX - 0.5) * 2 * Math.PI;
+    const d = [Math.sin(th) * Math.sin(phi), Math.cos(th), -Math.sin(th) * Math.cos(phi)];
+    if (d[1] <= 0) continue;
+    let rd = d.slice(); if (rd[1] < 0.02) { rd[1] = 0.02 + (0.02 - rd[1]) * 0.02; const l = Math.hypot(...rd); rd = rd.map(v => v / l); }
+    const ro = [0, Re + camH, 0];
+    let tmax = rs(ro, rd, Ra)[1]; const tg = rs(ro, rd, Re); if (tg[0] > 0) tmax = Math.min(tmax, tg[0]);
+    const N = 32, seg = tmax / N; let t = 0; const sumR = [0, 0, 0], sumM = [0, 0, 0], msR = [0, 0, 0], msM = [0, 0, 0]; let odR = 0, odM = 0;
+    const mu = rd[0] * sunDir[0] + rd[1] * sunDir[1] + rd[2] * sunDir[2];
+    const pR = 3 / (16 * Math.PI) * (1 + mu * mu), pM = 3 / (8 * Math.PI) * ((1 - g * g) * (1 + mu * mu)) / ((2 + g * g) * Math.pow(1 + g * g - 2 * g * mu, 1.5));
+    for (let i = 0; i < N; i++) {
+      const p = [ro[0] + rd[0] * (t + seg * 0.5), ro[1] + rd[1] * (t + seg * 0.5), ro[2] + rd[2] * (t + seg * 0.5)]; const h = Math.hypot(...p) - Re;
+      const hr = Math.exp(-h / Hr) * seg, hm = Math.exp(-h / Hm) * seg; odR += hr; odM += hm;
+      const sl = rs(p, sunDir, Ra)[1] / 8; let odlR = 0, odlM = 0, ok = true;
+      for (let j = 0; j < 8; j++) { const q = [p[0] + sunDir[0] * sl * (j + 0.5), p[1] + sunDir[1] * sl * (j + 0.5), p[2] + sunDir[2] * sl * (j + 0.5)]; const hq = Math.hypot(...q) - Re; if (hq < 0) { ok = false; break; } odlR += Math.exp(-hq / Hr) * sl; odlM += Math.exp(-hq / Hm) * sl; }
+      for (let k = 0; k < 3; k++) {
+        if (ok) { const att = Math.exp(-((bRc[k] + bOc[k]) * (odR + odlR) + mie * 1.1 * (odM + odlM))); sumR[k] += att * hr; sumM[k] += att * hm; }
+        const tv = Math.exp(-((bRc[k] + bOc[k]) * odR + mie * 1.1 * odM)); msR[k] += tv * hr; msM[k] += tv * hm;
+      }
+      t += seg;
+    }
+    const sunUp = Math.min(1, Math.max(0, sunDir[1] * 1.2 + 0.08));
+    const col = [0, 1, 2].map(k => (sumR[k] * bRc[k] * pR + sumM[k] * mie * pM) * sunI + (msR[k] * bRc[k] + msM[k] * mie * 0.9) * sunI * 0.055 * sunUp);
+    const sa = Math.sin(th); const w = d[1] * sa;
+    for (let k = 0; k < 3; k++) up[k] += col[k] * w; wu += w;
+    if (d[1] < 0.5) { for (let k = 0; k < 3; k++) hz[k] += col[k] * sa; wh += sa; }
+  }
+  return { up: up.map(v => v / wu), hz: hz.map(v => v / wh) };
 }

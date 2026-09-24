@@ -137,10 +137,14 @@ export class GroundBakes {
     this.apt = mk(this.aw, this.ah); this.aux = mk(Math.round(APT_RECT.w / 2), Math.round(APT_RECT.h / 2));
     this.city = mk(Q.cityRes, Q.cityRes); this.cityFar = mk(Q.cityRes, Q.cityRes);
     this.urban = makeUrban();
+    // the airfield source maps are released by js/live/world.js releaseAirportMap right after the (synchronous) bake
+    // call, while this bake runs at the next frame: take the three.js textures (which keep the pixel arrays) now
+    const T = world.textures;
+    this.src = { apt: textureOf(T.aptTex, { anisotropy: 1 }), paint: T.paintTex ? textureOf(T.paintTex) : null };
   }
   aptPoly() { const a = this.W.aptPoly; const P = []; for (let i = 0; i < a.length; i += 2) P.push([a[i], a[i + 1]]); return P; }
   aptMaterial() {
-    const T = this.W.textures; const aptTex = textureOf(T.aptTex, { anisotropy: 1 }); const paintTex = T.paintTex ? textureOf(T.paintTex) : null;
+    const aptTex = this.src.apt, paintTex = this.src.paint;
     const A = [APT_RECT.s0, APT_RECT.t0, APT_RECT.w, APT_RECT.h]; const poly = this.aptPoly(); const fw = float(this.res);
     const m = new THREE.NodeMaterial(); m.depthTest = m.depthWrite = false;
     m.colorNode = Fn(() => {
@@ -179,7 +183,7 @@ export class GroundBakes {
     return m;
   }
   auxMaterial() {
-    const aptTex = textureOf(this.W.textures.aptTex); const A = [APT_RECT.s0, APT_RECT.t0, APT_RECT.w, APT_RECT.h]; const poly = this.aptPoly();
+    const aptTex = this.src.apt; const A = [APT_RECT.s0, APT_RECT.t0, APT_RECT.w, APT_RECT.h]; const poly = this.aptPoly();
     const m = new THREE.NodeMaterial(); m.depthTest = m.depthWrite = false;
     m.colorNode = Fn(() => {
       const vu = uv(); const st = vec2(float(A[0]).add(vu.x.mul(A[2])), float(A[1]).add(float(1.0).sub(vu.y).mul(A[3])));
@@ -232,6 +236,7 @@ export class GroundBakes {
     if (!sunOnly) { draw(this.apt, this.aptMaterial()); draw(this.aux, this.auxMaterial()); }
     draw(this.city, this.cityMaterial(CITY_RECT, false)); draw(this.cityFar, this.cityMaterial(CITYFAR_RECT, true));
     renderer.setRenderTarget(prev);
+    if (!sunOnly && this.src) { for (const t of [this.src.apt, this.src.paint]) if (t) t.dispose(); this.src = null; } // airfield source maps: one-time
   }
 }
 

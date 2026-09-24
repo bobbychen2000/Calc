@@ -150,13 +150,13 @@ REF = {
     'BCS3': dict(doc=A223, name='A220-300', L=38.69, span=34.98, H=(11.73, 11.73), nose=3.39, main=3.39 + 15.31, track=6.73,
                  src='§2.1 Table 5 + Fig 1 (A=1523.2 in, E=1377.3 in, C=461.9 in, W=133.4 in, Z=602.6 in, Y=265.0 in)'),
     # ---- Embraer
-    'E75L': dict(doc=E175, name='E175 enhanced wingtip ("long wing")', L=31.68, span=28.65, H=(9.86, 9.86), nose=4.13, main=4.13 + 11.40, track=5.20,
+    'E75L': dict(doc=E175, name='E175 enhanced wingtip ("long wing")', L=31.68, span=28.65, H=(9.54, 9.86), nose=4.13, main=4.13 + 11.40, track=5.20,
                  doors={1: 5.14}, src='§2.2.2 p.2-3, Fig 2.2 p.2-5 (plan view, nose left: lower = left side; door 1L forward edge 4.71, 1R 4.27; L1 centre = 4.71 + 0.85/2, inf)'),
-    'E75S': dict(doc=E175, name='E175 winglet ("short wing")', L=31.68, span=26.00, H=(9.86, 9.86), nose=4.13, main=4.13 + 11.40, track=5.20,
+    'E75S': dict(doc=E175, name='E175 winglet ("short wing")', L=31.68, span=26.00, H=(9.54, 9.86), nose=4.13, main=4.13 + 11.40, track=5.20,
                  doors={1: 5.14}, src='§2.2.1 p.2-3, Fig 2.1 p.2-4 (door as E75L, inf)'),
-    'E190': dict(doc=E190, name='E190', L=36.24, span=28.72, H=(10.57, 10.57), nose=4.13, main=4.13 + 13.83, track=5.94,
+    'E190': dict(doc=E190, name='E190', L=36.24, span=28.72, H=(10.33, 10.57), nose=4.13, main=4.13 + 13.83, track=5.94,
                  doors={1: 5.14}, src='Fig 2.1 p.2-4 (door 1L forward edge 4.71 in the plan view, centre inf)'),
-    'E195': dict(doc='Embraer APM-1997 E195 (Oct 07/08; web.archive.org copy)', name='E195', L=38.65, span=28.72, H=(10.57, 10.57), track=5.94,
+    'E195': dict(doc='Embraer APM-1997 E195 (Oct 07/08; web.archive.org copy)', name='E195', L=38.65, span=28.72, H=(10.29, 10.57), track=5.94,
                  doors={1: 5.14}, src='§2.2.3 p.2-3 (length), Fig 2.1 p.2-4 (span, height, track; door 1L forward edge 4.71, centre inf)'),
     # ---- CRJ
     'CRJ2': dict(doc=CRJ2, name='CRJ200', L=26.77, span=21.23, H=(6.18, 6.32), crown=(3.84, 4.04), track=3.14, doors={1: 4.72}, sill1=(1.50, 1.73),
@@ -166,6 +166,9 @@ REF = {
     'CRJ9': dict(doc=CRJ9, name='CRJ900 (15036+; early a/c span 23.24)', L=36.24, span=24.85, H=(7.35, 7.35), track=4.07, doors={1: 4.22 + 0.455},
                  sill1=(1.73, 1.73), src='00-02-02 Table 1 p.1/p.8, Table 2 (wheelbase 17.30), 00-02-04 Table 1 (I: 4.22 m; centre inf)'),
 }
+# E-Jet heights: H = (ground-clearance table value at the loading conditions, "Height (maximum)" of §2.2): E175 APM-2259
+# §2.2.1 p.30 "Height (maximum) - 9.86 m", Table 2.2 p.37 9.54 m; E190 APM-1901 Fig 2.1 p.30 10.57 m, Table 2.3 p.35-37
+# 10.33 m; E195 APM-1997 Fig 2.1 p.34 10.57 m, Table 2.3 p.37 10.29 m (PyMuPDF text of the cached PDFs).
 WHEELBASE = {'CRJ2': 11.4, 'CRJ7': 15.01, 'CRJ9': 17.30}   # wheelbase only (nose-gear position not dimensioned)
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -179,7 +182,7 @@ def load_sfom(path):
     zone = np.frombuffer(raw, dtype=np.uint8, count=nv, offset=B + o['zone'])
     idx = np.frombuffer(raw, dtype=np.uint16 if head['idxType'] == 'u16' else np.uint32, count=head['ni'], offset=B + o['idx'])
     used = np.unique(idx)
-    return head, pos[used], zone[used]
+    return head, pos[used].copy(), zone[used].copy()
 
 
 def measure(head, P, Z):
@@ -260,175 +263,188 @@ def source_features(key, fam):
     return sorted(out, key=lambda r: r['x'])
 
 
-# ---- app tables
-def load_types():
-    js = ("import {TYPES} from './js/aircraft/types.js'; const o={}; for (const k in TYPES) { const T=TYPES[k]; "
-          "o[k]={name:T.name,L:T.L,R:T.R,Hc:T.Hc,cls:T.cls,span:T.wing.span,rootLE:T.wing.rootLE,rootC:T.wing.rootC,main:T.gear.main.map(g=>g.x),"
-          "track:T.track,nose:T.gear.nose.x,doors:T.doors,xMain:T.xMain,uniform:!!T.uniform}; } console.log(JSON.stringify(o));")
-    r = subprocess.run(['node', '--no-warnings', '--input-type=module', '-e', js], cwd=ROOT, capture_output=True, text=True)
+# ---- runtime tables and fits: js/aircraft/types.js (TYPES, SPEC) + js/aircraft/fit.js (mapping, model fits), run in node
+NODE_DUMP = r"""
+import { TYPES, SPEC } from './js/aircraft/types.js';
+import { TYPE_MODELS, MODEL_BASE } from './js/aircraft/fit.js';
+const o = { map: TYPE_MODELS, base: MODEL_BASE, types: {} };
+for (const k in TYPES) { const T = TYPES[k]; if (k !== T.key) continue; const f = T.fit || null;
+  o.types[k] = { name: T.name, L: T.L, R: T.R, Hc: T.Hc, cls: T.cls, span: T.wing.span, main: T.gear.main.map(g => g.x), track: T.track,
+    nose: T.gear.nose.x, xMain: T.xMain, doors: T.doors, dock2: T.dock2, dockX1: T.dockX1, dockX2: T.dockX2, dockSill: T.dockSill,
+    dockSill2: T.dockSill2, dockHW: T.dockHW, spec: SPEC[k] || null,
+    fit: f && { model: f.model, base: f.base, s: f.s, plugs: f.plugs, stretch: f.stretch, seat: f.seat, door: f.door, renderedSpan: f.renderedSpan, renderedH: f.renderedH } };
+}
+console.log(JSON.stringify(o));
+"""
+
+
+def load_app():
+    r = subprocess.run(['node', '--no-warnings', '--input-type=module', '-e', NODE_DUMP], cwd=ROOT, capture_output=True, text=True)
     if r.returncode: raise RuntimeError(r.stderr)
     return json.loads(r.stdout)
 
 
-def js_object(src, name):
-    m = re.search(r'(?:const|let)\s+' + name + r'\s*=\s*\{', src)
-    i = m.end() - 1; depth = 0
-    for j in range(i, len(src)):
-        depth += {'{': 1, '}': -1}.get(src[j], 0)
-        if depth == 0: body = src[i:j + 1]; break
-    body = re.sub(r'//[^\n]*', '', body)
-    body = re.sub(r'([{,]\s*)([A-Za-z_$][\w$]*)\s*:', r'\1"\2":', body)
-    body = body.replace("'", '"').replace('null', 'null')
-    body = re.sub(r',\s*}', '}', body)
-    return json.loads(body)
+ZONE_NOFIN = (2, 3, 7)   # engine, gear, pylon (tools/convert_models.py ZONE)
 
 
-def load_mapping():
-    src = open(os.path.join(ROOT, 'js', 'live', 'aircraft.js')).read()
-    return js_object(src, 'TYPE_MODELS'), js_object(src, 'HEIGHT'), js_object(src, 'MODEL_BASE')
+def apply_stretch(P, Z, st):
+    """Python port of js/live/models.js applyStretch (wing span fit, fin height fit, fuselage plugs), model units."""
+    P = P.copy()
+    if not st: return P
+    W, F = st.get('wing'), st.get('fin')
+    if W:
+        az = np.abs(P[:, 2]); m = (P[:, 0] >= W['xMin']) & (az > W['z0'])
+        add = np.where(az >= W['z1'], W['dz'], (az - W['z0']) * W['dz'] / (W['z1'] - W['z0']))
+        P[m, 2] += np.sign(P[m, 2]) * add[m]
+    if F:
+        m = (P[:, 0] < F['xF']) & (P[:, 1] > F['yF']) & ~np.isin(Z, ZONE_NOFIN)
+        P[m, 1] = F['yF'] + (P[m, 1] - F['yF']) * F['k']
+    if st.get('cut1') is not None:
+        x = P[:, 0].copy()
+        P[x < st['cut2'], 0] -= st['d1'] + st['d2']
+        P[(x >= st['cut2']) & (x < st['cut1']), 0] -= st['d1']
+    return P
 
 
-def stretch_for(t, m, TYPES, MODEL_BASE):
-    base = MODEL_BASE.get(m)
-    if not base or base == t: return None
-    T, B = TYPES.get(t), TYPES.get(base)
-    if not T or not B or T['uniform']: return None
-    dL = T['L'] - B['L']
-    if abs(dL) < 0.3: return None
-    d1 = T['rootLE'] - B['rootLE']
-    return dict(cut1=-(B['rootLE'] - 1.0), cut2=-(B['rootLE'] + B['rootC'] + 1.0), d1=d1, d2=dL - d1)
+def xr_of(st, s):
+    """model station (m aft of the nose, model units, unstretched) -> rendered metres aft of the nose"""
+    def f(xa):
+        x = -xa
+        if st and st.get('cut1') is not None:
+            if x < st['cut2']: x -= st['d1'] + st['d2']
+            elif x < st['cut1']: x -= st['d1']
+        return -x * s
+    return f
+
+
+def rendered(P, Z, head, fitd, T):
+    """measure the model as the app renders it (after stretch, uniform scale and seating)"""
+    st = fitd['stretch']; s = fitd['s']; Q = apply_stretch(P, Z, st)
+    d = head['dims']; hasGear = d['hasGear']
+    L = float(Q[:, 0].max() - Q[:, 0].min())
+    Hc = -float(Q[:, 1].min()) * s if hasGear else T['Hc']     # placement(): gear models on their wheels, else T.Hc
+    body = (Z == 0) & (np.abs(Q[:, 2]) < 0.3) & (Q[:, 0] < -0.1 * L) & (Q[:, 0] > -0.5 * L)
+    out = dict(L=L * s, span=float(Q[:, 2].max() - Q[:, 2].min()) * s, H=Hc + float(Q[:, 1].max()) * s, Hc=Hc,
+               crown=Hc + float(Q[body, 1].max()) * s if body.any() else None)
+    if hasGear:
+        g = Q[Z == 3]; bottom = g[g[:, 1] < g[:, 1].min() + 0.35]
+        mains = bottom[bottom[:, 0] < -0.3 * L]; noses = bottom[bottom[:, 0] > -0.3 * L]
+        out['gear'] = dict(main=-float(np.median(mains[:, 0])) * s if len(mains) else None, nose=-float(np.median(noses[:, 0])) * s if len(noses) else None,
+                           track=(float(np.median(mains[mains[:, 2] > 0][:, 2])) - float(np.median(mains[mains[:, 2] < 0][:, 2]))) * s if len(mains) else None)
+    return out
 
 
 def pct(a, b): return None if a is None or b is None or not b else 100.0 * (a - b) / b
+
+
+# explanations of flags that remain after the fixes (docs/research/aircraft_models_check.md §11 has the sources)
+_E175_DOOR = ('source model: the FAM E175 has no door object; its door is the E170 model\'s door.l1 (vertex-identical nose, '
+              'tools/models/model_features.py), scaled with the E175 model (s 1.028: the FAM E175 is 0.86 m short and is scaled '
+              'uniformly), so the painted door is 0.41 m aft of the APM-derived centre (1L forward edge 4.71 m + 0.85/2, inf). '
+              'The bridge docks at the painted door; the 3.1 m bellows covers both')
+_B738_GEAR = ('source model: the FlightGear 737-800 model\'s own main gear is 0.43 m aft of the ACAP station (nose gear +0.23 m); '
+              'TYPES, ground physics and gear contact use the ACAP station, the rendered wheels are the artist\'s')
+EXPLAINED = {('E75L', 'door'): _E175_DOOR, ('E75L', 'dock'): _E175_DOOR, ('E75S', 'door'): _E175_DOOR, ('E75S', 'dock'): _E175_DOOR}
+for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--md'); ap.add_argument('--json'); ap.add_argument('--tol', type=float, default=1.0)
-    ap.add_argument('--fam', default=os.environ.get('FAM_DIR', os.path.join(ROOT, 'refs', 'cache', 'src', 'fam3d')))
-    a = ap.parse_args()
-    TYPES = load_types(); TYPE_MODELS, HEIGHT, MODEL_BASE = load_mapping()
+    a = ap.parse_args(); tol = a.tol
+    app = load_app(); TY = app['types']; MAP = app['map']
+    feats = json.load(open(os.path.join(MODELS_DIR, 'features.json')))
     models = {}
     for fn in sorted(os.listdir(MODELS_DIR)):
         if fn.endswith('.sfom'):
-            k = fn[:-5]; head, P, Z = load_sfom(os.path.join(MODELS_DIR, fn))
-            models[k] = measure(head, P, Z); models[k]['src'] = head.get('source', ''); models[k]['license'] = head.get('license', '')
-            models[k]['feat'] = source_features(k, a.fam)
-    rows = []; flags = []
-    tol = a.tol
-    icaos = sorted(set(TYPE_MODELS) | set(REF))
-    for icao in icaos:
-        tm = TYPE_MODELS.get(icao); ref = REF.get(icao)
+            k = fn[:-5]; head, P, Z = load_sfom(os.path.join(MODELS_DIR, fn)); models[k] = (head, P, Z)
+    rows, flags = [], []
+    for icao in sorted(set(MAP) | set(REF)):
+        tm = MAP.get(icao); ref = REF.get(icao)
         if not tm:
-            rows.append(dict(icao=icao, note='no TYPE_MODELS entry (falls back to generic handling)')); continue
-        t, mk = tm['t'], tm.get('m'); T = dict(TYPES[t])
-        r = dict(icao=icao, t=t, m=mk, ref=ref and ref['name'])
-        st = stretch_for(t, mk, TYPES, MODEL_BASE) if mk else None
-        if mk and mk in models:
-            d = models[mk]; plug = (st['d1'] + st['d2']) if st else 0.0
-            s = T['L'] / (d['L'] + plug)
-            r.update(scale=s, stretch=st)
-            r['L_model'] = d['L'] * s + 0.0
-            r['span'] = d['span'] * s
-            r['hstab'] = d['hstab'] * s if d.get('hstab') else None
-            if d['hasGear']:
-                Hc = -d['low'] * s; r['H'] = (d['finTop'] - d['low']) * s
-            else:
-                Hc = T['Hc']
-                if t in HEIGHT:
-                    hc = HEIGHT[t] - d['finTop'] * s
-                    if d['R'] * s + 0.4 < hc < d['R'] * s + 4: Hc = round(hc, 2)
-                r['H'] = Hc + d['finTop'] * s
-            r['Hc'] = Hc
-            r['bridge_floor'] = T['Hc'] - 0.3 * T['R']     # gates.js doorOf uses the TYPES value (seatType updates T.Hc in place)
-            if not d['hasGear']: r['bridge_floor'] = Hc - 0.3 * T['R']
-            if d.get('engZ'): r['engZ'] = [e * s for e in d['engZ']]
-            if d.get('gear'): r['model_gear'] = {k: (v * s if v else v) for k, v in d['gear'].items()}
-            if d.get('feat'):
-                def xr(x):  # model x (m from nose, model units) -> rendered metres from nose, including plugs
-                    if st:
-                        if -x < st['cut2']: x = x + st['d1'] + st['d2']
-                        elif -x < st['cut1']: x = x + st['d1']
-                    return x * s
-                r['model_doors'] = [dict(name=f['name'], x=round(xr(f['x']), 2), side='L' if f['z'] < 0 else 'R') for f in d['feat'] if f['kind'] == 'pax']
-                r['model_gear_doors'] = [dict(name=f['name'], x=round(xr(f['x']), 2)) for f in d['feat'] if f['kind'] == 'gear']
-        else:
-            r['span'] = T['span']; r['L_model'] = T['L']; r['H'] = None; r['procedural'] = True
-        r['T'] = dict(L=T['L'], span=T['span'], nose=T['nose'], main=T['main'], track=T['track'], doors=T['doors'], cls=T['cls'])
-        # ---- comparisons
-        cmp = []
-        def add(what, got, want, src='', pos=False):
+            rows.append(dict(icao=icao, note='not mapped: shown as a marker (no model, no verified airframe)')); continue
+        t, mk = tm['t'], tm.get('m'); T = TY[t]; S = T['spec'] or {}
+        refsrc = 'REF' if ref else 'SPEC'
+        R = ref or dict(name=T['name'] + ' (no independent REF: checked against SPEC in types.js)', L=S.get('L'), span=S.get('span'), H=S.get('H'),
+                        crown=S.get('crown'), nose=S.get('nose'), main=(S.get('main') or [None])[0], track=S.get('track'),
+                        doors={i + 1: x for i, x in enumerate(S.get('doors') or [])}, sill1=S.get('sill'))
+        r = dict(icao=icao, t=t, m=mk, ref=R['name'], refsrc=refsrc, cmp=[])
+        def add(what, got, want, pos=False, key=None, inf=False):
             if got is None or want is None: return
+            if isinstance(want, (list, tuple)):
+                lo, hi = want; want = lo if got < lo else hi if got > hi else got
             dv = got - want; p = pct(got, want)
-            lim = (0.01 * tol * ref['L']) if pos else None
-            bad = (abs(dv) > lim) if pos else (abs(p) > tol)
-            cmp.append(dict(what=what, got=round(got, 2), ref=round(want, 2), delta=round(dv, 2), pct=None if pos else round(p, 1), flag=bool(bad)))
-        if ref:
-            add('length (TYPES L = rendered)', T['L'], ref['L'])
-            add('wingspan (rendered model)' if mk else 'wingspan (procedural TYPES)', r['span'], ref['span'])
-            if mk: add('wingspan (TYPES, used by ground physics)', T['span'], ref['span'])
-            if ref.get('H') and r.get('H'):
-                lo_, hi_ = ref['H']; h = r['H']; want = lo_ if h < lo_ else hi_ if h > hi_ else h
-                add('height (fin top, rendered)', h, want)
-            if ref.get('crown') and r.get('Hc') is not None and mk:
-                lo_, hi_ = ref['crown']; cr = r['Hc'] + models[mk]['R'] * r['scale']; want = lo_ if cr < lo_ else hi_ if cr > hi_ else cr
-                add('fuselage top above ground (rendered)', cr, want, pos=True)
-            if ref.get('nose') is not None: add('nose gear x (TYPES)', T['nose'], ref['nose'], pos=True)
-            if ref.get('main') is not None: add('main gear x (TYPES, first unit)', T['main'][0], ref['main'], pos=True)
-            if icao in WHEELBASE: add('wheelbase (TYPES)', T['main'][0] - T['nose'], WHEELBASE[icao], pos=True)
-            if ref.get('track'): add('main-gear track (TYPES)', T['track'], ref['track'])
-            dr = ref.get('doors', {})
-            if 1 in dr:
-                add('door L1 centre (TYPES.doors[0], shader)', T['doors'][0], dr[1], pos=True)
-                add('bridge dock x, door 1 (gates.js: doors[0]+0.5)', T['doors'][0] + 0.5, dr[1], pos=True)
-            if 2 in dr and len(T['doors']) > 1 and T['cls'] in ('E', 'F'):   # only wide-bodies dock a second bridge (gates.js docks())
-                add('door L2 centre (TYPES.doors[1]; 2nd bridge docks here)', T['doors'][1], dr[2], pos=True)
-                add('bridge dock x, door 2 (doors[1]+0.5)', T['doors'][1] + 0.5, dr[2], pos=True)
-            if ref.get('sill1') and r.get('bridge_floor') is not None:
-                lo_, hi_ = ref['sill1']; bf = r['bridge_floor']; want = lo_ if bf < lo_ else hi_ if bf > hi_ else bf
-                add('bridge cab floor vs L1 sill (gates.js Hc-0.3R)', bf, want, pos=True)
-            for md in r.get('model_doors', []):   # first left-side passenger door mesh = the model's own L1
-                if md['side'] == 'L':
-                    if 1 in dr: add(f"model's own L1 door mesh ({md['name']})", md['x'], dr[1], pos=True)
-                    break
-        r['cmp'] = cmp
-        for c in cmp:
+            bad = abs(dv) > 0.01 * tol * R['L'] if pos else abs(p) > tol
+            c = dict(what=what, got=round(got, 2), ref=round(want, 2), delta=round(dv, 2), pct=None if pos else round(p, 1), flag=bool(bad), inf=inf)
+            if bad: c['why'] = EXPLAINED.get((icao, key)) or EXPLAINED.get((icao, what))
+            r['cmp'].append(c)
+        src_inf = 'inf' in (R.get('src') or '')
+        if mk and mk in models:
+            head, P, Z = models[mk]; f = T['fit']
+            rd = rendered(P, Z, head, f, T); r['render'] = rd; r['fit'] = f
+            add('length (rendered)', rd['L'], R['L'])
+            add('wingspan (rendered, after span fit)', rd['span'], R['span'], key='span')
+            add('height (rendered fin top)', rd['H'], R.get('H'), key='H')
+            add('fuselage top above ground (rendered)', rd['crown'], R.get('crown'), pos=True, key='crown')
+            if rd.get('gear'):
+                add('model main gear x (rendered) vs TYPES.xMain', rd['gear']['main'], T['xMain'], pos=True, key='mgear')
+                add('model main gear x (rendered)', rd['gear']['main'], R.get('main'), pos=True, key='mgear')
+                add('model nose gear x (rendered)', rd['gear']['nose'], R.get('nose'), pos=True, key='ngear')
+            # the model's own L1 door object, as rendered, and the painted door the bridge meets
+            F = feats.get(mk, {}); dm = next((d for d in F.get('doors', []) if d['side'] == 'L'), None)
+            if not dm:
+                for o in F.get('sameNose', []):
+                    dm = next((d for d in feats.get(o, {}).get('doors', []) if d['side'] == 'L'), None)
+                    if dm: break
+            if dm:
+                xr = xr_of(f['stretch'], f['s'])
+                r['modelDoor'] = dict(name=dm['name'], x=round(xr(dm['x']), 3), sill=round(rd['Hc'] + dm['ySill'] * f['s'], 3))
+                add(f"model's own L1 door object {dm['name']} (rendered centre)", r['modelDoor']['x'], R.get('doors', {}).get(1), pos=True, key='door', inf=src_inf)
+                add(f"model's own L1 door sill (rendered)", r['modelDoor']['sill'], R.get('sill1'), pos=True, key='doorsill')
+                add('bridge dock x = rendered door object', T['dockX1'], r['modelDoor']['x'], pos=True, key='dockmesh')
+        else:
+            r['procedural'] = True
+            add('wingspan (procedural TYPES)', T['span'], R['span'], key='span')
+        add('length (TYPES L)', T['L'], R['L'])
+        add('wingspan (TYPES: ground physics, far LOD)', T['span'], R['span'], key='tspan')
+        if R.get('nose') is not None: add('nose gear x (TYPES)', T['nose'], R['nose'], pos=True)
+        if R.get('main') is not None: add('main gear x (TYPES, first unit)', T['main'][0], R['main'], pos=True)
+        if icao in WHEELBASE: add('wheelbase (TYPES)', T['main'][0] - T['nose'], WHEELBASE[icao], pos=True)
+        if R.get('track'): add('main-gear track (TYPES)', T['track'], R['track'])
+        dr = R.get('doors', {})
+        if 1 in dr: add('bridge dock x, door 1L centre', T['dockX1'], dr[1], pos=True, key='dock', inf=src_inf)
+        if T['dock2']:
+            add(f"bridge 2 dock x, door {T['dock2']}L centre", T['dockX2'], dr.get(T['dock2']), pos=True, key='dock2')
+        if T['cls'] in ('E', 'F') and not T['dock2']: r['note'] = 'wide-body without a documented second-bridge door: one bridge'
+        add('bridge cab floor vs door 1L sill', T['dockSill'], R.get('sill1'), pos=True, key='sill')
+        for c in r['cmp']:
             if c['flag']: flags.append((icao, c))
         rows.append(r)
-    res = dict(models={k: {kk: vv for kk, vv in v.items() if kk != 'feat'} for k, v in models.items()},
-               features={k: v['feat'] for k, v in models.items() if v.get('feat')}, rows=rows)
     # ---- print
-    print('model native dims (model units ~ m; nose at 0, centreline at 0):')
-    for k, v in models.items():
-        print(f"  {k:5s} L={v['L']:6.2f} span={v['span']:6.2f} finTop={v['finTop']:5.2f} low={v['low']:5.2f} R={v['R']:.2f} Rz={v['Rz']:.2f} "
-              f"hstab={v['hstab'] and round(v['hstab'], 2)} eng={v.get('engZ') and [round(e, 2) for e in v['engZ']]}")
-    print(f'\nICAO type checks (flag: |%| > {tol} % or position error > {tol} % of L):')
+    print(f'ICAO type checks (rendered / used by the app vs the manufacturer documents; flag: |%| > {tol} % or position error > {tol} % of L)')
     for r in rows:
         if 'cmp' not in r: print(f"  {r['icao']}: {r.get('note')}"); continue
-        print(f"  {r['icao']} -> TYPES {r['t']} / model {r['m']}  s={r.get('scale', 0):.4f} stretch={r.get('stretch')}")
+        f = r.get('fit') or {}
+        print(f"  {r['icao']} -> TYPES {r['t']} / model {r['m']}  [{r['refsrc']}: {r['ref']}]  s={f.get('s')} seat={f.get('seat')} "
+              f"plugs={f.get('plugs') and (f['plugs']['d1'], f['plugs']['d2'], f['plugs']['by'])} wing={f.get('stretch') and f['stretch'].get('wing') and f['stretch']['wing']['dz']} "
+              f"fin={f.get('stretch') and f['stretch'].get('fin') and f['stretch']['fin']['k']}" + (f"  NOTE: {r['note']}" if r.get('note') else ''))
         for c in r['cmp']:
-            print(f"      {'!!' if c['flag'] else '  '} {c['what']:52s} {c['got']:8.2f} vs {c['ref']:8.2f}  d={c['delta']:+6.2f}" + (f"  {c['pct']:+5.1f}%" if c['pct'] is not None else ''))
-        if r.get('model_doors'): print('         model door meshes:', ', '.join(f"{d['name']}@{d['x']}{d['side']}" for d in r['model_doors']))
-        if r.get('model_gear_doors'): print('         model gear-door meshes:', ', '.join(f"{d['name']}@{d['x']}" for d in r['model_gear_doors'][:8]))
-    print(f'\n{len(flags)} flagged items')
-    if a.json: json.dump(res, open(a.json, 'w'), indent=1, default=float)
+            mark = '!!' if c['flag'] and not c.get('why') else ('~~' if c['flag'] else '  ')
+            print(f"      {mark} {c['what']:58s} {c['got']:8.2f} vs {c['ref']:8.2f}  d={c['delta']:+6.2f}" + (f"  {c['pct']:+5.1f}%" if c['pct'] is not None else '')
+                  + (' (ref inf)' if c.get('inf') else '') + (f"   <- {c['why']}" if c.get('why') else ''))
+    unexpl = [x for x in flags if not x[1].get('why')]
+    print(f'\n{len(flags)} flagged items, {len(flags) - len(unexpl)} explained (~~), {len(unexpl)} unexplained (!!)')
+    if a.json: json.dump(dict(rows=rows), open(a.json, 'w'), indent=1, default=float)
     if a.md:
-        with open(a.md, 'w') as f:
-            f.write('| ICAO | TYPES / model | check | app | ref | Δ | % |\n|---|---|---|---|---|---|---|\n')
+        with open(a.md, 'w') as fo:
+            fo.write('| ICAO | TYPES / model | check | app | ref | Δ | % | note |\n|---|---|---|---|---|---|---|---|\n')
             for r in rows:
                 for c in r.get('cmp', []):
                     pc = '' if c['pct'] is None else '%+.1f' % c['pct']
-                    f.write(f"| {r['icao']} | {r['t']} / {r['m']} | {c['what']} | {c['got']} | {c['ref']} | {c['delta']:+.2f} | {pc} {'**!**' if c['flag'] else ''} |\n")
-            f.write('\n### Door / gear-door meshes found in the source models (rendered metres from the nose)\n\n')
-            seen = set()
-            for r in rows:
-                if r.get('m') in seen or not (r.get('model_doors') or r.get('model_gear_doors')): continue
-                if r.get('stretch'): continue
-                seen.add(r.get('m'))
-                f.write(f"- **{r['m']}** (as {r['icao']}): doors " + ', '.join(f"{d['name']} {d['x']}{d['side']}" for d in r.get('model_doors', [])) +
-                        '; gear doors ' + ', '.join(f"{d['name']} {d['x']}" for d in r.get('model_gear_doors', [])) + '\n')
+                    fo.write(f"| {r['icao']} | {r['t']} / {r['m']} | {c['what']} | {c['got']} | {c['ref']} | {c['delta']:+.2f} | {pc} {'**!**' if c['flag'] else ''} | {c.get('why') or ''} |\n")
+    return 1 if unexpl else 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

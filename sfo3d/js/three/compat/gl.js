@@ -16,6 +16,13 @@
 const K = typeof WebGL2RenderingContext !== 'undefined' ? WebGL2RenderingContext : {};
 const ANISO_EXT = { TEXTURE_MAX_ANISOTROPY_EXT: 0x84FE, MAX_TEXTURE_MAX_ANISOTROPY_EXT: 0x84FF };
 let texSerial = 0;
+// Image sources are copied at upload time: the builders release them right after the gl upload (models.js closes the
+// ImageBitmap, signs.js makeAtlas shrinks its canvas to 1x1), while three.js uploads lazily at first use.
+function snapshot(src) {
+  if (!src || typeof document === 'undefined' || !(src.width > 0)) return src;
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  c.getContext('2d').drawImage(src, 0, 0); return c;
+}
 
 // texture record: { id, w, h, internal, format, type, data | source, mips, minFilter, magFilter, wrapS, wrapT, aniso, version, deleted }
 export function newTexRecord(extra = {}) { return { id: ++texSerial, isTexRecord: true, w: 0, h: 0, internal: K.RGBA8, format: K.RGBA, type: K.UNSIGNED_BYTE, data: null, source: null, mips: false, minFilter: K.LINEAR, magFilter: K.LINEAR, wrapS: K.CLAMP_TO_EDGE, wrapT: K.CLAMP_TO_EDGE, aniso: 1, version: 0, deleted: false, ...extra }; }
@@ -31,7 +38,7 @@ function makeFakeGL() {
     texSubImage2D: (...a) => {
       if (!bound) return;
       if (a.length >= 9) { const [, , , , w, h, format, type, data] = a; bound.w = bound.w || w; bound.h = bound.h || h; bound.format = format; bound.type = type; bound.data = data; }
-      else { const src = a[a.length - 1]; bound.format = a[a.length - 3]; bound.type = a[a.length - 2]; bound.source = src; if (src && !bound.w) { bound.w = src.width; bound.h = src.height; } }
+      else { const src = snapshot(a[a.length - 1]); bound.format = a[a.length - 3]; bound.type = a[a.length - 2]; bound.source = src; if (src && !bound.w) { bound.w = src.width; bound.h = src.height; } }
       bound.version++;
     },
     texParameteri: (target, p, v) => {
@@ -54,7 +61,9 @@ function makeFakeGL() {
   });
 }
 export let gl = makeFakeGL();
-export function initGL() { return gl; }
+// the page's canvas (js/live/app.js creates it and calls initGL(canvas)); the three.js renderer draws into it
+export let glCanvas = null;
+export function initGL(canvas) { glCanvas = canvas || null; return gl; }
 export function defineChunk() { }
 export class Program { constructor() { this.u = {}; } use() { return this; } set() { return this; } setAll() { return this; } }
 export class FBO { constructor(w, h) { this.w = w; this.h = h; this.tex = []; } bind() { } dispose() { } }
@@ -77,7 +86,7 @@ export class Mesh {
 }
 export function texture(w, h, opts = {}) {
   const r = newTexRecord({ w, h, internal: opts.internal || K.RGBA8, format: opts.format || K.RGBA, type: opts.type || K.UNSIGNED_BYTE,
-    data: opts.data || null, source: opts.source || null, mips: !!opts.mips, repeat: !!opts.repeat, nearest: !!opts.nearest, aniso: opts.aniso || 1 });
+    data: opts.data || null, source: snapshot(opts.source) || null, mips: !!opts.mips, repeat: !!opts.repeat, nearest: !!opts.nearest, aniso: opts.aniso || 1 });
   r.minFilter = opts.mips ? K.LINEAR_MIPMAP_LINEAR : opts.nearest ? K.NEAREST : K.LINEAR; r.magFilter = opts.nearest ? K.NEAREST : K.LINEAR;
   r.wrapS = r.wrapT = opts.repeat ? K.REPEAT : K.CLAMP_TO_EDGE;
   return { tex: r, w, h };

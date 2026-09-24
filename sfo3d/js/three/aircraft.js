@@ -216,8 +216,8 @@ function procU(ac, U) {
 
 // ---------------------------------------------------------------- scene objects per aircraft
 export class AircraftRenderer {
-  constructor(scene, { noiseTex, liveries = null }) {
-    this.scene = scene; this.noiseTex = noiseTex; this.liveries = liveries;
+  constructor(scene, { noiseTex, liveries = null, track = null }) {
+    this.scene = scene; this.noiseTex = noiseTex; this.liveries = liveries; this.track = track || (() => null);
     this.group = new THREE.Group(); this.group.name = 'aircraft'; scene.add(this.group);
     this.entries = new Map(); this.realMats = new Map(); this.realGeo = new Map();
     this.procDetailed = procMaterial(noiseTex, true); this.procSimple = procMaterial(noiseTex, false);
@@ -261,7 +261,7 @@ export class AircraftRenderer {
     if (useReal) {
       if (e.realModel !== M) {
         if (e.real) e.group.remove(e.real);
-        const brandTex = this.liveries ? this.liveries.textureFor(ac, M.key) : null;
+        const brandTex = this.liveries ? this.liveries.textureFor(this.track(ac), M.key) : null;
         e.real = new THREE.Mesh(this.geometryFor(M), this.materialsFor(M, brandTex)); e.real.matrixAutoUpdate = false; e.real.userData.acU = e.U; e.group.add(e.real); e.realModel = M;
       }
       e.real.matrix.fromArray(ac.placement()); e.real.visible = true; e.real.castShadow = shadow; e.real.receiveShadow = true;
@@ -295,9 +295,9 @@ export class LiveryLibrary {
     } catch (e) { return null; }
   }
   constructor() { this.map = new Map(); this.tex = new Map(); this.loader = new THREE.TextureLoader(); }
-  brandOf(ac) { const tr = ac.track || null; return (tr && (tr.brand || (tr.livery && tr.livery.brand) || (tr.info && tr.info.brand) || (tr.cs && tr.cs.airline && tr.cs.airline.icao))) || null; }
-  textureFor(ac, modelKey) {
-    const b = this.brandOf(ac); if (!b) return null; const f = this.map.get(b + ':' + modelKey); if (!f) return null;
+  brandOf(tr) { return (tr && (tr.brand || (tr.livery && tr.livery.brand) || (tr.info && tr.info.brand) || (tr.cs && tr.cs.airline && tr.cs.airline.icao))) || null; }
+  textureFor(tr, modelKey) {
+    const b = this.brandOf(tr); if (!b) return null; const f = this.map.get(b + ':' + modelKey); if (!f) return null;
     let t = this.tex.get(f);
     if (!t) { t = this.loader.load(this.base + f); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; this.tex.set(f, t); }
     return t;

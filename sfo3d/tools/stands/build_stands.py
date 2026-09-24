@@ -320,6 +320,24 @@ def main():
             if (len(v) >= 2 and abs(d_) >= 5) or abs(d_) >= 10:
                 tsd[fm] = {'along': round(min(d_, 0.0), 1), 'n': len(v), 'src': 'adsb (median %.1f m vs family %.1f m)' % (float(np.median(v)), fam_ref[fm])}
         s['type_stops'] = {k: v for k, v in tsd.items() if v['along'] < 0} or None
+    # Stands whose calibrated nose puts the aircraft against the building (review round 2: F16 0.05 m, F17 0.59 m from the
+    # Boarding Area F facade; their OSM lead-ins end at the facade) are moved back to the stop ADS-B shows there, when
+    # it does: the stand nose takes the family stop (pos_src 'osm+adsb'), the other families keep their offsets.
+    bpoly = unary_union([Polygon(r).buffer(0) for r in building_rings()])
+    for s in stands:
+        if not s['type_stops'] or s['pos_src'] == 'naip': continue
+        dB = GM.stand_env(s).distance(bpoly)
+        if dB >= 2.0: continue
+        fm, v = min(s['type_stops'].items(), key=lambda kv: kv[1]['along'])
+        a0 = v['along']; f = hdg_vec(s['hdg'])
+        s['nose'] = (s['nose'][0] + f[0] * a0, s['nose'][1] + f[1] * a0)
+        s['pos_src'] = s['pos_src'] + '+adsb'
+        s['nose_rule'] += '; moved %.1f m back to the stop ADS-B shows for %s (%s; the calibrated nose was %.2f m from the building)' % (-a0, fm, v['src'], dB)
+        ts2 = {}
+        for k, w in s['type_stops'].items():
+            if k != fm and w['along'] - a0 < -1.0: ts2[k] = dict(w, along=round(w['along'] - a0, 1))
+        s['type_stops'] = ts2 or None
+        print('  moved back from the building:', s['name'], round(a0, 1), 'm')
     print('family ADS-B reference offsets', {k: round(v, 1) for k, v in fam_ref.items()})
     print('type_stops', {s['name']: s['type_stops'] for s in stands if s['type_stops']})
     # ---------------------------------------------------------------- mutual exclusion / clearances
@@ -491,7 +509,7 @@ def main():
         eo = GM.envelope(st['nose'], st['hdg'], obs)
         for b in st['bridge_list']:
             if not b.get('rotunda'): continue
-            doors = [GM.door(st['nose'], st['hdg'], t, GM.dock_door(t, b['door'])) for t in obs if GM.dock_door(t, b['door'])]
+            doors = [GM.door(GM.nose_for(st, t), st['hdg'], t, GM.dock_door(t, b['door'])) for t in obs if GM.dock_door(t, b['door'])]
             if not doors: continue
             path = [tuple(q) for q in b['walk']] + [tuple(b['rotunda'])]
             def ok(pt, pre):

@@ -11,7 +11,7 @@ const out = {};
 for (const [icao, key] of Object.entries(ICAO_TYPES)) {
   const T = TYPES[key]; if (!T) continue;
   const w = T.wing, h = T.hstab;
-  out[icao] = { key, L: T.L, span: w ? w.span : null, R: T.R,
+  out[icao] = { key, L: T.L, span: w ? w.span : null, R: T.R, Ln: T.Ln ?? null,
     wing: w ? { rootLE: w.rootLE, rootC: w.rootC, tipC: w.tipC, sweep: w.sweep ?? 27, kinkZ: w.kinkZ, kinkC: w.kinkC } : null,
     hstab: h ? { span: h.span, x: h.x, rootC: h.rootC } : null,
     doors: T.doors || [], doorsOpt: T.doorsOpt || [], dock2: T.dock2 ?? null,

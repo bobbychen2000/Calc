@@ -81,11 +81,18 @@ def accepted_types(s, app_rule=False):
     return out
 
 
-def planform(nose, hdg, t):
-    """js/live/ground.js inside() shape of type t with its nose at `nose`"""
+def planform(nose, hdg, t, visual=False):
+    """js/live/ground.js inside() shape of type t with its nose at `nose` (the app's collision shape: square nose).
+    visual=True: the fuselage nose tapers elliptically over types.js Ln, as the rendered airframe does - used where a
+    bridge tunnel meets the fuselage near door 1 (the collision rectangle would claim empty air beside the nose)."""
     r = app(t); f, rt = hv(hdg), rv(hdg)
     def P(x, y): return (nose[0] - f[0] * x + rt[0] * y, nose[1] - f[1] * x + rt[1] * y)
-    L, R = r['L'], r['R']; parts = [Polygon([P(0, -R), P(L, -R), P(L, R), P(0, R)])]
+    L, R = r['L'], r['R']
+    if visual and r.get('Ln'):
+        Ln = r['Ln']; xs = [Ln * i / 12 for i in range(13)]
+        side = [(x, R * math.sqrt(max(0.0, 1 - (1 - x / Ln) ** 2))) for x in xs]
+        parts = [Polygon([P(x, -w) for x, w in side] + [P(L, -R), P(L, R)] + [P(x, w) for x, w in reversed(side)])]
+    else: parts = [Polygon([P(0, -R), P(L, -R), P(L, R), P(0, R)])]
     w = r['wing']
     if w:
         b = r['span'] / 2; tn = math.tan(math.radians(w['sweep']))
