@@ -18,7 +18,8 @@ Object.assign(SEATMAT, {
   jPanelEdge: { c: '#5d6166', r: 0.34, m: 0.5, l: LAYER.brushed },
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
   jSill: { c: '#8e9399', r: 0.35, m: 0.4, l: LAYER.brushed },   // silver-grey sill + drawer under the monitor (tpg_53) [V]
-  jLens: { c: '#55585d', r: 0.25 },   // reading-lamp lens, switched off (c_27315 / 27316 lamps read dark grey) [V]
+  jLens: { c: '#55585d', r: 0.25 },
+  jBand: { c: '#656b73', r: 0.4, l: LAYER.leather },   // w6a: header band 0.9-1.35x the fabric, a touch darker than the flap (tpg_42, c_27313) [V]   // reading-lamp lens, switched off (c_27315 / 27316 lamps read dark grey) [V]
 });
 const ROOM = { hx: 0.585, hz: 1.359, top: 0.66, wall: 1.12, bed: 0.43 };
 // seat itself (passenger faces -z, back at z = 0): upright or bed. Per c_27302/27315/27316: thin flat cushion and a flat
@@ -256,13 +257,7 @@ function roomLedge(B, w, x, z, L, up = false) {
 // (outer column) back to back with E's cabinet, O's cabinet (aisle column) back to back with E's monitor; both footwells
 // run under it (omaat_room_14 / 16, c_27316: cabinet flush beside the monitor frame, footwell mouth under the monitor)
 const MON = { zO: -0.21, zE: 0.035, top: 1.10, bot: 0.555 };   // QA w2: top raised to clear the 0.43 cabinet
-const CON = { top: 0.60 };
-// boarding set-up: duvet folded on a white mattress pad, both in clear plastic, under the pillows (tpg_31, tpg_42) [V];
-// the plastic reads as a sheen -> low roughness [A]
-function roomBundle(B, x, z) {
-  B.add(gRBox(0.44, 0.03, 0.34, 0.012, 1), M4.trs(x, 0.448, z), { c: '#eceae4', r: 0.25 });
-  B.add(gRBox(0.42, 0.045, 0.30, 0.018, 1), M4.trs(x + 0.01, 0.485, z - 0.01), { c: '#5a5c9a', r: 0.25, l: LAYER.fabric });
-}   // outer console top (c_27316 / 27303: ~0.17 above the cushion) [A]
+const CON = { top: 0.60 };   // outer console top (c_27316 / 27303: ~0.17 above the cushion) [A]
 // QA w1 pillow: flat piped rectangle ~0.44 x 0.34 x 0.07, navy check jacquard face, grey-taupe reverse panel + piping
 // (c_27303, omaat_room_13) [V]
 function roomPillow(B, xf) {
@@ -275,11 +270,12 @@ function roomPillow(B, xf) {
 function roomDuvet(B, x, z, w, L) {
   // QA w4: thinner, softer comforter with flush stitch lines; w5 (A+B): narrower than the pad so the white mattress shows at
   // the sides + foot, turned ~5 deg, wider stitch pitch and a few low wrinkle ridges (tpg_72 / 75, fb_a96b7a65) [V]/[A]
-  const W = w - 0.06, Lq = L - 0.12, y = ROOM.bed + 0.0915, q = { c: '#3d4796', r: 0.8 }, T = M4.trs(x, 0, z - 0.06, 0.09);
-  B.add(gLoft(cushionSecs(W, Lq, 0.045, -0.035, { edge: 0.05, r: 0.045, crown: 0.012 }), 3), M4.mul(T, M4.trs(0, ROOM.bed + 0.07, 0)), SEATMAT.duvet);
+  const W = w - 0.06, Lq = L - 0.12, y = ROOM.bed + 0.081, q = { c: '#3d4796', r: 0.8 }, T = M4.trs(x, 0, z - 0.06, 0.09);
+  B.add(gLoft(cushionSecs(W, Lq, 0.03, -0.02, { edge: 0.09, r: 0.03, crown: 0.01 }), 3), M4.mul(T, M4.trs(0, ROOM.bed + 0.07, 0)), SEATMAT.duvet);
   for (let k = 1; k * 0.45 < Lq - 0.05; k++) B.add(gBox(W - 0.10, 0.001, 0.005), M4.mul(T, M4.trs(0, y, -Lq / 2 + k * 0.45)), q);
   B.add(gBox(0.005, 0.001, Lq - 0.10), M4.mul(T, M4.trs(0, y, 0)), q);
-  for (const [dz, a] of [[-0.25, 0.35], [0.12, -0.28], [0.38, 0.22]]) B.add(gRBox(W * 0.55, 0.01, 0.035, 0.005, 1), M4.mul(T, M4.trs(0.02, y - 0.003, dz, a)), SEATMAT.duvet);
+  for (const [dz, a] of [[-0.25, 0.35], [0.12, -0.28], [0.38, 0.22]]) B.add(gCyl(0.012, 0.012, W * 0.55, 8), M4.mul(T, M4.trs(0.02, y - 0.004, dz, a, 0, Math.PI / 2, 0.5, 1, 1)), SEATMAT.duvet);
+  B.add(gRBox(W - 0.02, 0.02, 0.12, 0.01, 1), M4.mul(T, M4.trs(0, y + 0.004, -Lq / 2 + 0.07)), SEATMAT.duvet);   // w6a: turned-down head strip (tpg_72) [V]
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();
@@ -295,7 +291,7 @@ function roomPart(part, opts = {}) {
     // back shell across the whole unit: charcoal wall, padded band above the seat back, cap, a reading light at each end
     // (tpg_31 / 42: lamps in both top corners) [V]
     B.add(gRBox(1.17, wall, 0.07, 0.03, 2), M4.trs(0, wall / 2, -1.31), shell);
-    B.add(gRBox(0.95, 0.155, 0.05, 0.02, 1), M4.trs(-0.07, 1.0425, -1.25), SEATMAT.jHead);   // w5b: over the seat only, charcoal aisle post beyond (tpg_42) [V]          // padded header band, same pale slate leather as the flap (QA w4b: tpg_42 band = flap) [V]
+    B.add(gRBox(0.95, 0.155, 0.05, 0.02, 1), M4.trs(-0.07, 1.0425, -1.25), SEATMAT.jBand);   // padded header band over the seat only, charcoal aisle post beyond (w5b: tpg_42) [V]
     capRail(B, 1.17, 0.07, 0, wall, -1.31);
     roomLamp(B, -0.515, -1.225, 1);
     roomLamp(B, 0.375, -1.225, 1);
@@ -349,10 +345,9 @@ function roomPart(part, opts = {}) {
       B.add(gLoft(cushionSecs(0.76, 1.76, 0.05, -0.02, { edge: 0.02, r: 0.03, crown: 0.004 }), 3), M4.trs(SX - 0.02, ROOM.bed + 0.02, -0.40), SEATMAT.mattress);
       roomDuvet(B, SX - 0.02, -0.20, 0.72, 1.35);
       B.add(gLoft(cushionSecs(0.46, 0.30, 0.12, -0.06, { edge: 0.05, r: 0.05 }), 3), M4.trs(SX - 0.12, ROOM.bed + 0.08, -1.08), SEATMAT.pillow);
-      roomPillow(B, M4.trs(SX + 0.20, ROOM.bed + 0.075, -1.04, 0, 0.1));
+      roomPillow(B, M4.mul(M4.trs(SX - 0.08, ROOM.bed + 0.13, -0.98), M4.trs(0, 0, 0, 0.05, 25 * DEG)));   // w6a: leaning on the white one (fb_a96b7a65) [V]
     } else {
       // white pillow leaning on the back with the blue one in front of it, toward the aisle half (tpg_31 / 42) [V]
-      roomBundle(B, 0.07, -0.92);
       B.add(gLoft(cushionSecs(0.50, 0.34, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.06, 0.61, -1.10, Math.PI), M4.trs(0, 0, 0, 0.05, -74 * DEG)), SEATMAT.pillow);
       roomPillow(B, M4.mul(M4.trs(0.08, 0.575, -1.02, Math.PI), M4.trs(0, 0, 0, 0.08, -68 * DEG)));
     }
@@ -376,7 +371,7 @@ function roomPart(part, opts = {}) {
     const S = M4.trs(0.20, 0, 1.27);
     const tmp = new Builder(); roomSeatCore(tmp, bed, lod, 0.64, 1); B.addBuilt(tmp.build(), S);
     B.add(gRBox(0.69, wall, 0.07, 0.03, 2), M4.trs(0.235, wall / 2, 1.31), shell);
-    B.add(gRBox(0.69, 0.155, 0.05, 0.02, 1), M4.trs(0.235, 1.0425, 1.25), SEATMAT.jHead);        // padded header band (as O)
+    B.add(gRBox(0.69, 0.155, 0.05, 0.02, 1), M4.trs(0.235, 1.0425, 1.25), SEATMAT.jBand);        // padded header band (as O)
     capRail(B, 0.69, 0.07, 0.235, wall, 1.31);
     roomLamp(B, -0.07, 1.225, -1);
     roomLamp(B, 0.50, 1.225, -1);
@@ -412,9 +407,8 @@ function roomPart(part, opts = {}) {
       B.add(gLoft(cushionSecs(0.58, 1.80, 0.05, -0.02, { edge: 0.02, r: 0.03, crown: 0.004 }), 3), M4.trs(0.24, ROOM.bed + 0.02, 0.38), SEATMAT.mattress);
       roomDuvet(B, 0.24, 0.20, 0.54, 1.35);
       B.add(gLoft(cushionSecs(0.46, 0.30, 0.12, -0.06, { edge: 0.05, r: 0.05 }), 3), M4.trs(0.30, ROOM.bed + 0.08, 1.08), SEATMAT.pillow);
-      roomPillow(B, M4.trs(0.06, ROOM.bed + 0.075, 1.02, 0, -0.1));
+      roomPillow(B, M4.mul(M4.trs(0.30, ROOM.bed + 0.13, 0.98), M4.trs(0, 0, 0, -0.05, -25 * DEG)));
     } else {
-      roomBundle(B, 0.10, 0.92);
       B.add(gLoft(cushionSecs(0.48, 0.32, 0.10, -0.05, { edge: 0.04, r: 0.04 }), 3), M4.mul(M4.trs(0.04, 0.60, 1.08), M4.trs(0, 0, 0, -0.30, -72 * DEG)), SEATMAT.pillow);
       roomPillow(B, M4.mul(M4.trs(0.10, 0.575, 1.00), M4.trs(0, 0, 0, -0.25, -70 * DEG)));
     }

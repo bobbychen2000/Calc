@@ -1,0 +1,87 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": 6,
+ "score": 7.0,
+ "summary": "The fabric darkening worked. Sofa fabric/ash is now 0.38 in q06 (c_27312: 0.35) and 0.40 in q08 (photos 0.36-0.52), so the seats finally read as dark grey sofas. That exposed a new mismatch: the header band and flap (both SEATMAT.jHead '#8a95a3') were not darkened with the fabric. They now render as pale powder-blue slabs, 1.7-2.0x the fabric and bluer (B-R +30) than any photo (band/fabric 0.86-1.35, B-R +0..+22). In q06 the row of pale-blue bands is the most un-ANA thing in the cabin. The other changes are in: the O band spans the seat only with lamps at its ends, the E lamp wing reaches the floor with a kick, two back grooves, a longer and less cyan belt, a dark navy literature slot, and a narrower, turned royal-blue duvet with the pad showing. The bed duvet is still a stiff rounded slab: the wrinkle ridges are invisible (buried in the crown), the edges are vertical walls rather than a thin drape, and the blue pillow still lies flat beside the white one. In seat mode, the boarding bundle's opaque royal-blue top merges with the blue pillow into one L-shaped blue block that reads like a blue seat cover. Still unchanged: the back is a flat board without the piped inset pad, and the centre divider is a broad wall. Shells render too light relative to the (now correct) fabric. Not yet at 8.5.",
+ "photos_collected": "No new downloads; used ref/web/room tpg_42, tpg_53, tpg_72, tt_seat-1 plus ANA c_27312, 27313, 27315, 27316 (real photos weighted over the CG).",
+ "details": [
+  {"detail": "Nested-pair layout: O bench, E seat, footwells under the monitors, table over the other seat's footwell", "score": 8.0, "refs": ["c_27313", "c_27315", "tpg_42", "q08", "q10", "r1", "r2"]},
+  {"detail": "Shell tone: charcoal shells and caps against the fabric and ash", "score": 6.3, "refs": ["q06 shell top #777e89 L126 vs fabric L66 (1.9x)", "c_27312 shell back L81 vs fabric L73 (1.1x)", "c_27313 shell top #4e5561 L85 vs fabric L83 (1.0x)", "q08 shell side #3a3f4a L62 (good), tops L128"]},
+  {"detail": "Header band and lamps: geometry", "score": 8.0, "refs": ["tpg_42", "q08: band over the seat only, lamps at both ends, charcoal aisle post beyond"]},
+  {"detail": "Header band and flap: tone", "score": 5.0, "refs": ["q06 band #748293 L129 / fabric L66 = 1.95", "c_27312 band #565b61 L91 / fabric L73 = 1.25", "q08 band #8e9bac-#a9b5c2 ~L160 / fabric #595863 L85 = 1.9", "c_27313 band #667177 1.35x, flap #6a7784 1.42x", "c_27315 band #5b6171 1.05x, flap #758092 1.38x", "tpg_42 band 0.98x, flap 0.88x", "tt_seat-1 band 0.86x, flap 0.78x"]},
+  {"detail": "Back and cushion upholstery: tone, grooves, shape", "score": 7.0, "refs": ["fabric/ash q06 0.38 vs c_27312 0.35; q08 0.40 vs c_27313 0.36, c_27315 0.47", "two grooves visible (q08, r7) as in tpg_42", "back is still a flat slab without the piped inset pad (tpg_42)"]},
+  {"detail": "Pillows and boarding bundle (seat mode)", "score": 6.3, "refs": ["tpg_42", "tt_seat-1", "q08 pillow #535c9a vs tpg_42 #4059ad, tt_seat-1 #4c5178 (tone OK)", "q08/r7 bundle top #54579d = pillow tone -> one blue L-block"]},
+  {"detail": "Seat belt", "score": 7.0, "refs": ["q09 #496976 (G-R 32, down from 55)", "r7: only a short wedge shows from under the pillows (tpg_42 also hides it: plausible)"]},
+  {"detail": "Monitor, bezel, sill, drawer LED, literature slot", "score": 8.2, "refs": ["tpg_53", "c_27316 slot #0d275e (0.38x drawer)", "q07 slot #29387d (0.67x drawer), placed on the cabinet side as in both photos"]},
+  {"detail": "Angled lamp wing beside the monitor", "score": 7.5, "refs": ["tpg_53", "r2 (E wing now reaches the floor)", "q07"]},
+  {"detail": "Ash cabinet door beside the monitor", "score": 8.0, "refs": ["c_27316", "q07"]},
+  {"detail": "Side table: ash inlay, charcoal rim, silver lip", "score": 7.5, "refs": ["tpg_72", "q10", "r4"]},
+  {"detail": "Seat controls plate and handset", "score": 6.0, "refs": ["not visible in the w6 views; unchanged since w5"]},
+  {"detail": "Footwell and ottoman", "score": 7.0, "refs": ["c_27316", "tpg_53", "q07"]},
+  {"detail": "Outer console: safety card, red tab, stowage", "score": 7.0, "refs": ["tpg_72", "q08", "q09"]},
+  {"detail": "Aisle armrest ledges", "score": 7.5, "refs": ["c_27313", "tt_seat-1", "q08"]},
+  {"detail": "Aisle-end ash, cap and seat-number plaques", "score": 7.0, "refs": ["c_27313", "tt_seat-1", "q06"]},
+  {"detail": "Centre divider", "score": 6.5, "refs": ["c_27313", "q09 (unchanged since w5)"]},
+  {"detail": "Sliding door edge and kick", "score": 7.3, "refs": ["tt_suite-door-1", "r2: the kick now grounds the parked leaf"]},
+  {"detail": "Bed mode: mattress, duvet, pillows", "score": 6.0, "refs": ["tpg_72 duvet #6d78d7, duvet/ash 0.66; r6 #8f9fe4, 0.70 (tone OK)", "pad shows at the foot now", "slab edges, no visible wrinkles, pillow flat (r6)"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Header band and headrest flap are pale powder blue: too light and too blue next to the darkened fabric",
+   "problem": "The fabric was darkened to #5e5c62 but jHead stayed at '#8a95a3', which is used for both the band and the flap. Both now render about 1.9x the fabric and 0.74x the ash, with a clear blue cast. In every photo the band sits close to the fabric tone (0.86-1.35x), and the flap is at most 1.4x the fabric, in a neutral slate or grey-green. The whole q06 cabin now reads as rows of light-blue bars across dark seats, which the photos never show. The band and flap also share one colour, but the photos show the band slightly darker than the flap in the official shots (c_27313, c_27315).",
+   "evidence": "q06 band #748293 L129, flap #778496 L131, fabric #42414a L66, ash end L175; band/fabric 1.95, band/ash 0.74, B-R +31. c_27312 band #565b61 L91, fabric L73, ash L210: band/fabric 1.25, band/ash 0.43, B-R +11. q08 band ~#8e9bac-#a9b5c2 (L150-175), flap #8794a6 L146, fabric #595863 L85. c_27313 band #667177 1.35x, flap #6a7784 1.42x. c_27315 band #5b6171 1.05x, flap #758092 1.38x. tpg_42 band #949685 0.98x, flap #81887b 0.88x. tt_seat-1 band #585957 0.86x, flap #4f514e 0.78x.",
+   "fix": "09_seats.js (shared, one key): SEATMAT.jHead c '#8a95a3' -> '#6b727a' (sRGB x ~0.78, B-R down from +25 to +15; target flap/fabric ~1.35). 09c_room.js: add a band material at the top, Object.assign(SEATMAT, { jBand: { c: '#60666d', r: 0.40, l: LAYER.leather } }) (target band/fabric ~1.15), and use SEATMAT.jBand instead of SEATMAT.jHead on the two header-band lines: O at M4.trs(-0.07, 1.0425, -1.25) and E at M4.trs(0.235, 1.0425, 1.25). Keep jHead for the flap and flap tab. Re-measure q06: band/ash should come out around 0.45-0.5."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed duvet still reads as a stiff rounded slab: invisible wrinkles, vertical edges, pillow flat",
+   "problem": "The width, turn and colour are better, and the pad now shows at the foot. But roomDuvet lofts a 0.045 thick body with edge 0.05 / r 0.045, which gives a square-walled cushion with a rolled rim. The three wrinkle ridges sit at y - 0.003 with height 0.01, inside the 0.012 crown, so none shows in r6. In tpg_72 the comforter is thin and soft, feathers to nothing at its edges, has a diagonal fold-back at the head and visible creases. The blue pillow leans on the white one (overlapping it about 40 %) and is tilted up. In the model it lies flat beside the white pillow (line ~352 / ~415), and at L184 it is paler than the duvet (tpg_72: pillow L118, about equal to the duvet L125).",
+   "evidence": "r6 crop (380,200)-(640,400): duvet edge is a 0.045 m vertical wall with a bright rim highlight, no ridges visible, pillow flat. r6 duvet #8f9fe4 L161, duvet/ash 0.70 vs tpg_72 #6d78d7 0.66 (tone OK). r6 blue pillow #b0b6de L184 vs tpg_72 pillow #7172ac.",
+   "fix": "09c_room.js roomDuvet: cushionSecs(W, Lq, 0.028, -0.02, { edge: 0.09, r: 0.03, crown: 0.010 }) for a thin, feathered edge. Raise the ridges so they clear the crown: y + 0.004, and use gCyl(0.014, 0.014, W * 0.55, 8) laid along x (M4.trs(0.02, y + 0.004, dz, a, 0, Math.PI / 2)) in place of gRBox. Add a fold-back at the head: a second, thinner loft of 0.28 depth (W, 0.28, 0.02) at z = -Lq/2 + 0.14 lifted by 0.02 and turned 0.18 rad further, as in tpg_72. O bed (~line 352): roomPillow(B, M4.mul(M4.trs(SX + 0.05, ROOM.bed + 0.13, -1.00), M4.trs(0, 0, 0, 0.1, 0, -25 * DEG))) so it leans on the white one. Mirror this in the E bed branch (~line 415)."
+  },
+  {
+   "severity": "low",
+   "detail": "Boarding bundle's opaque royal-blue top merges with the blue pillow into one blue L-block",
+   "problem": "roomBundle puts a 0.42 x 0.30 opaque slab in '#5a5c9a' on top of the white pad, and it sticks out about 0.15 m in front of the pillow. It renders at the same tone as the pillow (#54579d vs #535c9a), so from above (q08, r7) the pillow and bundle read as one bright blue seat cover. In tpg_42 and tt_seat-1 the bundle is wrapped in clear plastic and reads silvery white: the white pad is folded on top, the blue duvet shows only as a band along the edges, with creased plastic highlights.",
+   "evidence": "q08 bundle #54579d, pillow #535c9a. tpg_42 (720-1050, 560-750): mostly white/silver with a thin blue band at the front. tt_seat-1 (570-690, 450-590): silver plastic with blue showing through.",
+   "fix": "09c_room.js roomBundle: swap the layers. Put the blue duvet at the bottom, gRBox(0.40, 0.03, 0.28, 0.012) at y 0.448, and the white pad fold on top, gRBox(0.42, 0.03, 0.30, 0.012) at y 0.478 in { c: '#e6e7ea', r: 0.2 }, so only a blue edge band shows. Move the bundle 0.06 toward the back (z -0.98 for O, 0.98 for E) so the pillow covers more of it."
+  },
+  {
+   "severity": "low",
+   "detail": "Shell tops and caps render too light and too blue next to the now-correct fabric",
+   "problem": "With the fabric right, the shell top faces and cap rails render about 1.9x the fabric (q06). In c_27312 and c_27313 the shells and caps are about 1.0-1.1x the fabric. The vertical shell faces (q08 L62) are fine, so what is off is the lit top and cap faces, with a blue cast (B-R +18 vs +9). Part of this is the overhead lighting (out of scope), but jCap and jShell can take a small neutral darkening.",
+   "evidence": "q06 shell top #777e89 L126, fabric L66. c_27312 shell #565b61-#4e5057 L81-91, fabric L73. c_27313 top #4e5561 L85, fabric L83.",
+   "fix": "09_seats.js (shared, one key each): SEATMAT.jCap '#5c6066' -> '#54575b', and jShell '#595d64' -> '#54575c' (less blue). Leave jShellIn. Re-check q06 after the header-band fix, since the pale band currently lifts the whole impression."
+  },
+  {
+   "severity": "low",
+   "detail": "Back still a flat board; the real back is an inset piped pad (carried over from w5, not addressed)",
+   "problem": "In tpg_42 the back is a separate padded panel. It has rounded corners (r about 0.04) and a piped perimeter, and it is inset from the shell sides with a visible gap under the band. The model's back is a square-cornered slab (the grooves are right).",
+   "evidence": "tpg_42 pad corners rounded, piping on all edges; q08 crop / r7: square slab edges.",
+   "fix": "09c_room.js roomSeatCore: change the back loftAt SECs to width w - 0.04 with corner radius 0.04. Add piping beads, gRBox(w - 0.04, 0.008, 0.008, 0.004) in SEATMAT.jSeam, at sy 0.545 and along both sides (0.008 x 0.52)."
+  },
+  {
+   "severity": "low",
+   "detail": "Centre divider still a broad flat wall (carried over from w5)",
+   "problem": "q09 is unchanged: a wide flat-topped charcoal spine. c_27313 shows two slim fins with light metal top edges and a gap between them.",
+   "evidence": "c_27313 (300,120)-(640,575) vs q09 (380,100)-(720,575).",
+   "fix": "As in w5: in roomDivider, split each upper ash panel into fins at x +/-0.045 (gRBox(0.02, ...)), each with a SEATMAT.jRail top edge, and leave the gap open."
+  }
+ ],
+ "verifiedFixed": [
+  "Fabric darkened: fabric/ash 0.38 (q06) and 0.40 (q08), within the photo range 0.35-0.52; neutral grey, the lilac cast is gone",
+  "O header band spans the seat only, with lamps at its ends and a charcoal post beyond (q08 vs tpg_42)",
+  "E lamp wing reaches the floor as the footwell side wall; kick under the parked door leaf (r2)",
+  "Two back grooves at about 57 % and 80 % (q08, r7), as in tpg_42",
+  "Belt less cyan (q09 G-R 32, was 55) and longer",
+  "Literature slot dark navy (#29387d), on the cabinet side as in tpg_53 and c_27316",
+  "Duvet narrower with the pad showing at the foot, turned, royal blue (r6 duvet/ash 0.70 vs tpg_72 0.66)"
+ ],
+ "other_areas": [
+  "lighting: horizontal top faces (shell caps, tables) are lit much more strongly than in the photos, which exaggerates the light-top/dark-side split. The studio renders (r*) are flat and over-bright, so they cannot be used for tone.",
+  "harness: the q06/q09/q10 cameras still do not match their paired ANA framings."
+ ],
+ "questions": []
+}

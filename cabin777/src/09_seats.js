@@ -81,7 +81,7 @@ const SEATMAT = {
   jBase: { c: '#2a2b2f', r: 0.6 },
   jFabric: { c: '#5e5c62', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted; room w5 (A+B): the lift overshot, fabric rendered 1.4x the shell, photos 0.55-0.8x (c_27313, c_27315, tpg_75) [V]
   jLeather: { c: '#5d6066', r: 0.5, l: LAYER.leather },
-  jHead: { c: '#8a95a3', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84)
+  jHead: { c: '#737b85', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84); room w6a: ~1.3x the darker w5 fabric, neutral slate
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
   mattress: { c: '#f0efea', r: 0.9, l: LAYER.fabric },
