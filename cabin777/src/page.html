@@ -1,0 +1,237 @@
+<title>777-300ER Cabin Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #070b13;
+    --glass: rgba(9, 14, 25, 0.74);
+    --glass-strong: rgba(9, 14, 25, 0.92);
+    --line: rgba(170, 195, 235, 0.16);
+    --line-strong: rgba(170, 195, 235, 0.32);
+    --text: #eef3fb;
+    --muted: #9aabc6;
+    --led: #8fb8ff;
+    --amber: #f5b945;
+    --press: rgba(143, 184, 255, 0.18);
+    --radius: 12px;
+    --ui: "B612", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "B612 Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--text); font: 14px/1.4 var(--ui); overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; outline: none; }
+  #view:active { cursor: grabbing; }
+  button, input { font: inherit; color: inherit; }
+  button { touch-action: manipulation; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+  .panel { background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+
+  /* top bar */
+  #top { position: fixed; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 0; display: flex; flex-direction: column; gap: 8px; pointer-events: none; z-index: 5; }
+  #top .row1 { display: flex; gap: 8px; align-items: flex-start; }
+  #top .row1 > *, #row2 > * { pointer-events: auto; }
+  .brand { padding: 8px 12px 9px; min-width: 0; }
+  .brand h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+  .brand p { margin: 1px 0 0; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .spacer { flex: 1 1 auto; }
+  .iconbtn { height: 40px; min-width: 40px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: 10px; }
+  .iconbtn svg { width: 17px; height: 17px; }
+  .iconbtn[aria-pressed="true"], .iconbtn[aria-expanded="true"] { background: var(--glass-strong); border-color: var(--led); }
+  #row2 { display: flex; gap: 8px; }
+  .seg { display: inline-flex; padding: 3px; gap: 3px; }
+  .seg button { border: 0; background: transparent; border-radius: 8px; padding: 7px 13px; font-size: 13px; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: var(--press); color: var(--text); box-shadow: inset 0 0 0 1px rgba(143, 184, 255, 0.45); }
+  #findForm { display: inline-flex; align-items: center; padding: 3px 3px 3px 10px; gap: 6px; flex: 1 1 150px; max-width: 250px; min-width: 0; }
+  #findForm label { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  #findInput { width: 100%; min-width: 0; background: transparent; border: 0; font-family: var(--mono); font-size: 15px; letter-spacing: 0.06em; padding: 6px 2px; }
+  #findInput::placeholder { color: rgba(154, 171, 198, 0.6); }
+  #findForm button { border: 0; border-radius: 8px; background: var(--press); padding: 7px 11px; font-size: 13px; }
+
+  /* bottom: map strip */
+  #bottom { position: fixed; left: 0; right: 0; bottom: 0; padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 12px); display: flex; flex-direction: column; gap: 8px; pointer-events: none; z-index: 4; }
+  #bottom > * { pointer-events: auto; }
+  #mapWrap { padding: 8px 10px 7px; }
+  #mapHead { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  #mapHead strong { color: var(--text); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 11px; margin-right: auto; }
+  .key { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .key i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+  #map { width: 100%; height: 58px; display: block; touch-action: none; cursor: crosshair; }
+  .nose { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; margin-top: 2px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* joystick */
+  #joy { position: relative; width: 112px; height: 112px; border-radius: 50%; align-self: flex-start; display: none; background: radial-gradient(circle, rgba(143, 184, 255, 0.08), rgba(9, 14, 25, 0.55)); border: 1px solid var(--line-strong); touch-action: none; }
+  #joyKnob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(238, 243, 251, 0.85); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); transition: transform 0.08s; pointer-events: none; }
+  @media (pointer: coarse) { body[data-mode="walk"] #joy { display: block; } }
+  .keys-hint { font-size: 11px; color: var(--muted); display: none; }
+  @media (pointer: fine) { body[data-mode="walk"] .keys-hint { display: block; } }
+
+  /* seat card */
+  #card { position: fixed; z-index: 7; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); padding: 14px 16px 14px; max-height: min(62vh, 520px); overflow: auto; }
+  #cardTop { display: flex; align-items: flex-start; gap: 12px; }
+  #cardSeat { font-family: var(--mono); font-weight: 700; font-size: 40px; line-height: 1; letter-spacing: 0.02em; color: var(--amber); }
+  #cardClass { --cls: #9aa7ba; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; margin-top: 3px; }
+  #cardClass::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--cls); }
+  #cardPos { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  #cardClose { margin-left: auto; border: 0; background: transparent; width: 36px; height: 36px; border-radius: 8px; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
+  #cardSpecs { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 12px 0 0; font-size: 13px; }
+  #cardSpecs dt { color: var(--muted); }
+  #cardSpecs dd { margin: 0; font-family: var(--mono); font-size: 12.5px; }
+  #cardNotes { margin: 10px 0 0; padding: 0 0 0 16px; font-size: 13px; color: #d5deec; display: grid; gap: 3px; }
+  #cardNotes:empty { display: none; }
+  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .btn { border: 1px solid var(--line-strong); background: rgba(238, 243, 251, 0.06); border-radius: 10px; padding: 9px 14px; font-size: 13px; }
+  .btn.primary { background: var(--text); color: #0b1220; border-color: var(--text); font-weight: 700; }
+
+  /* seated bar */
+  #seatBar { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; flex-wrap: wrap; }
+  #seatBarId { font-family: var(--mono); font-weight: 700; font-size: 20px; color: var(--amber); }
+  #seatBarCls { font-size: 12px; color: var(--muted); margin-right: auto; }
+  #seatBar .btn { padding: 8px 11px; }
+
+  /* settings */
+  #settings { position: fixed; z-index: 8; right: 16px; left: 16px; top: calc(env(safe-area-inset-top, 0px) + 60px); max-height: calc(100% - 140px); overflow: auto; padding: 14px 16px 16px; }
+  #settings h2 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .sgroup { margin-top: 14px; }
+  .sgroup h3 { margin: 0 0 7px; font-size: 11px; font-weight: 400; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line-strong); background: transparent; border-radius: 999px; padding: 7px 13px; font-size: 13px; }
+  .chip.dim { font-family: var(--mono); min-width: 44px; }
+  .chip[aria-pressed="true"] { background: var(--press); border-color: var(--led); }
+  .about { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); display: grid; gap: 6px; }
+  .about a { color: var(--led); }
+  #settingsHead { display: flex; align-items: center; }
+  #settingsClose { margin-left: auto; border: 0; background: transparent; width: 34px; height: 34px; border-radius: 8px; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
+
+  /* tour caption */
+  #caption { padding: 11px 14px 12px; max-width: 520px; }
+  #capStep { font-family: var(--mono); font-size: 11px; color: var(--amber); letter-spacing: 0.06em; }
+  #capTitle { margin: 2px 0 2px; font-size: 16px; font-weight: 700; text-wrap: balance; }
+  #capText { margin: 0; font-size: 13px; color: #d5deec; }
+
+  #toast { position: fixed; z-index: 9; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 112px); transform: translate(-50%, -8px); opacity: 0; transition: opacity 0.2s, transform 0.2s; padding: 8px 14px; font-size: 13px; pointer-events: none; max-width: calc(100% - 32px); text-align: center; }
+  #toast.on { opacity: 1; transform: translate(-50%, 0); }
+  #hint { position: fixed; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 12px 16px; font-size: 13px; text-align: center; max-width: min(320px, calc(100% - 32px)); transition: opacity 0.35s; }
+  #hint.gone { opacity: 0; pointer-events: none; }
+  #hint b { display: block; font-size: 14px; margin-bottom: 4px; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: var(--ground); z-index: 20; transition: opacity 0.4s; }
+  body[data-ready="1"] #loading { opacity: 0; pointer-events: none; }
+  #loading p { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  #fatal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--ground); padding: 0 16px; }
+  #fatal div { max-width: 420px; padding: 18px; }
+
+  @media (max-width: 420px) {
+    #tourLabel { display: none; }
+    #mapHead strong { display: none; }
+    #mapHead { justify-content: space-between; }
+    .key.long { display: none; }
+    #mapHead { gap: 9px; }
+  }
+  @media (min-width: 900px) {
+    #top { flex-direction: row; align-items: flex-start; }
+    #top .row1 { flex: 1 1 auto; }
+    #row2 { order: 0; }
+    #card { left: auto; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 74px); bottom: auto; width: 340px; max-height: calc(100% - 200px); }
+    #settings { left: auto; width: 360px; }
+    #bottom { flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
+    #mapWrap { flex: 1 1 100%; order: 3; }
+    #map { height: 70px; }
+    #seatBar, #caption { order: 2; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<canvas id="view" aria-label="Interactive 3D view of the 777-300ER cabin" tabindex="0"></canvas>
+
+<div id="loading"><p>Building cabin…</p></div>
+
+<header id="top">
+  <div class="row1">
+    <div class="panel brand">
+      <h1>777-300ER Cabin Walk</h1>
+      <p>Unofficial · ANA layout · 212 seats</p>
+    </div>
+    <div class="spacer"></div>
+    <button id="tourBtn" class="panel iconbtn" aria-pressed="false">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg><span id="tourLabel">Guided tour</span>
+    </button>
+    <button id="settingsBtn" class="panel iconbtn" aria-label="Lighting and view settings" aria-expanded="false" aria-controls="settings">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.2M10 15.3v2.2M17.5 10h-2.2M4.7 10H2.5M15.3 4.7l-1.6 1.6M6.3 13.7l-1.6 1.6M15.3 15.3l-1.6-1.6M6.3 6.3 4.7 4.7"/></svg>
+    </button>
+  </div>
+  <div id="row2">
+    <div class="panel seg" role="group" aria-label="View mode">
+      <button data-setmode="walk" aria-pressed="true">Walk</button>
+      <button data-setmode="xray" aria-pressed="false">X-ray</button>
+    </div>
+    <form id="findForm" class="panel" autocomplete="off">
+      <label for="findInput">Seat</label>
+      <input id="findInput" inputmode="text" maxlength="4" placeholder="e.g. 11A" aria-label="Seat number">
+      <button type="submit">Sit</button>
+    </form>
+  </div>
+</header>
+
+<div id="hint" class="panel"><b>Drag to look around</b><span id="hintText">Tap a seat to see it or sit in it. Tap a window to move its shade. Walk with the joystick.</span></div>
+
+<section id="settings" class="panel" hidden aria-label="Settings">
+  <div id="settingsHead"><h2>Cabin settings</h2>
+    <button id="settingsClose" aria-label="Close settings"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+  </div>
+  <div class="sgroup"><h3>Mood lighting</h3><div class="chips" id="moodRow"></div></div>
+  <div class="sgroup"><h3>Outside</h3><div class="chips" id="skyRow"></div></div>
+  <div class="sgroup"><h3>All window shades</h3><div class="chips" id="dimRow"></div></div>
+  <div class="sgroup"><h3>Render quality</h3><div class="chips" id="qualityRow"></div></div>
+  <div class="about">
+    <span>Unofficial 3D model, not affiliated with ANA, Boeing, Safran or JAMCO. Rows, letters, seat directions, galleys, lavatories and the bar follow ANA's "new 212 seats" 777-300ER map (THE Suite / THE Room), flown on some SFO–NRT (NH7/8) rotations.</span>
+    <span>Built from written sources only: seat geometry and finishes from reviews and maker statements; door spacing derived from ANA's row pitches. Approximated: Economy and Premium Economy fabric colour (not described in any source), manual shades in Premium Economy / Economy, exact monument shapes.</span>
+    <span>Sources: <a href="https://www.ana.co.jp/en/us/travel-information/seat-map/b777-300er/" target="_blank" rel="noopener">ANA seat map</a> · <a href="https://www.anahd.co.jp/group/en/pr/201907/20190711.html" target="_blank" rel="noopener">ANA 2019 release</a> · <a href="https://runwaygirlnetwork.com/2019/07/safran-reveals-details-of-new-fusio-business-suite-on-ana/" target="_blank" rel="noopener">Safran Fusio (RGN)</a> · <a href="https://thepointsguy.com/airline/ana-the-room-business-class/" target="_blank" rel="noopener">TPG THE Room</a> · <a href="https://onemileatatime.com/ana-777-business-class-review/" target="_blank" rel="noopener">OMAAT</a> · <a href="https://www.businesstraveller.com/features/designing-anas-new-business-class-seat/" target="_blank" rel="noopener">Business Traveller</a> · <a href="https://milelion.com/2020/02/12/review-ana-b777-300er-the-suite-new-first-class-new-york-to-tokyo/" target="_blank" rel="noopener">MileLion THE Suite</a> · <a href="https://thealviator.com/2026/09/ana-777-premium-economy-review/" target="_blank" rel="noopener">The Alviator PY</a></span>
+  </div>
+</section>
+
+<section id="card" class="panel" hidden aria-live="polite">
+  <div id="cardTop">
+    <div>
+      <div id="cardSeat">—</div>
+      <div id="cardClass">—</div>
+      <div id="cardPos"></div>
+    </div>
+    <button id="cardClose" aria-label="Close seat details"><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+  </div>
+  <dl id="cardSpecs"></dl>
+  <ul id="cardNotes"></ul>
+  <div class="actions">
+    <button id="sitBtn" class="btn primary">Sit here</button>
+    <button id="lookBtn" class="btn">Window view</button>
+  </div>
+</section>
+
+<footer id="bottom">
+  <div id="joy" aria-label="Walk joystick"><div id="joyKnob"></div></div>
+  <div id="seatBar" class="panel" hidden>
+    <span id="seatBarId">—</span><span id="seatBarCls"></span>
+    <button id="lookOutBtn" class="btn">Look out</button>
+    <button id="bedBtn" class="btn" hidden>Lie flat</button>
+    <button id="seatInfoBtn" class="btn">Info</button>
+    <button id="standBtn" class="btn primary">Stand up</button>
+  </div>
+  <div id="caption" class="panel" hidden><div id="capStep"></div><h2 id="capTitle"></h2><p id="capText"></p></div>
+  <div id="mapWrap" class="panel">
+    <div id="mapHead"><strong>Seat map</strong>
+      <span class="key"><i style="background:#c9a86a"></i>THE Suite</span>
+      <span class="key"><i style="background:#5f93d6"></i>THE Room</span>
+      <span class="key"><i style="background:#8b7fd0"></i>Prem. Economy</span>
+      <span class="key"><i style="background:#9aa7ba"></i>Economy</span>
+    </div>
+    <canvas id="map" aria-label="Seat map: tap to jump to a spot or pick a seat"></canvas>
+    <div class="nose"><span>◀ Nose</span><span class="keys-hint">W A S D to walk · Q E to turn · drag to look</span><span>Tail ▶</span></div>
+  </div>
+</footer>
+
+<div id="toast" class="panel" role="status"></div>
+<div id="fatal" hidden><div class="panel"><b>3D view unavailable</b><p id="fatalMsg"></p></div></div>
+
+<script>
+/*__SCRIPT__*/
+</script>
