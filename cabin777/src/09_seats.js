@@ -50,12 +50,15 @@ const SEATMAT = {
   // over-saturated navy (ACES toe) with #373f63 -> greyer navy;
   // wings: white flakes (~220) on charcoal-navy (55-65, py_37305). Tone-curve matched as for Y: back #6e7076 averages
   // #5c5f66 (py_37305 back #5f5f68), wing #6e7182 averages #585c6e (py_37305 wing #5d5f6e) [D]
-  pyFabric: { c: photoBase('#6e7076', 'py_back'), r: 0.9, l: LAYER.pyFleck },
-  pyCover: { c: '#343850', r: 0.5, l: LAYER.leather },   // photo flap #232740, R/B 0.55 (py_37305): less saturated
-  pyWing: { c: photoBase('#6e7182', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
-  pyShell: { c: '#5e6062', r: 0.42, l: LAYER.plastic },
-  pyArm: { c: '#595b5e', r: 0.45, l: LAYER.plastic },
-  pyArmPad: { c: '#6f7173', r: 0.5, l: LAYER.leather },
+  // PY w1: real cabins (ref/web/py san_03 / san_04: fabric / wall 107 / 189 = 0.57; ANA py_37301 / 37303 0.8) -> lighter
+  // than the r3 render (0.45); wing = back tone (py_37301 B/R 1.26 vs 1.24), flap / back 0.56-0.65 (san_04, py_37302),
+  // shells / wall 0.38-0.42 (san_03 71-82 / 189, py_37303) [D]
+  pyFabric: { c: photoBase('#94969b', 'py_back'), r: 0.9, l: LAYER.pyFleck },
+  pyCover: { c: '#40486c', r: 0.45, l: LAYER.leather },   // photo flap #232740, R/B 0.55 (py_37305): less saturated
+  pyWing: { c: photoBase('#86888e', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
+  pyShell: { c: '#74767a', r: 0.42, l: LAYER.plastic },
+  pyArm: { c: '#5c5e62', r: 0.45, l: LAYER.plastic },
+  pyArmPad: { c: '#4a4c50', r: 0.5, l: LAYER.leather },   // dark stitched leatherette lids (san_06, alv_04)
   pyBin: { c: '#b8bcc0', r: 0.3, m: 0.85, l: LAYER.brushed },
   pyBay: { c: '#4a4c50', r: 0.6, l: LAYER.plastic },
   pyTrim: { c: '#b9bec4', r: 0.28, m: 0.8, l: LAYER.brushed },

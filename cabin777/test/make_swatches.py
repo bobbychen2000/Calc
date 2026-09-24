@@ -62,6 +62,81 @@ COLNORM = {'j_ash'}
 ALONG = {'j_ash': 24}
 
 
+def _blur_wrap(a, s):
+    """periodic gaussian blur (tile stays seamless)"""
+    k = np.fft.fftfreq(a.shape[0])[:, None] ** 2 + np.fft.fftfreq(a.shape[1])[None, :] ** 2
+    return np.real(np.fft.ifft2(np.fft.fft2(a) * np.exp(-2 * (np.pi * s) ** 2 * k)))
+
+
+def synth_py_back(ratio, seed=7):
+    """PY QA w1: the 140 px photo crop upsampled to 256 renders as soft blobs up close. Keep only the photo's mottling
+    (low-pass of the crop) and redraw the weave crisply: light horizontal dashes in rows on a charcoal ground.
+    py_37305 crop (860 px/m): row period 7.5 px = 8.7 mm (y autocorrelation peaks 7-8 / 15 / 22 px), dash half-length
+    ~6 px -> dashes ~9-18 mm, ~4 mm tall; p10 / p90 76 / 118 sRGB; dark rectangular patches where dashes are dim [D]"""
+    rng = np.random.default_rng(seed)
+    mot = _blur_wrap(ratio.mean(2), 5)
+    mot = (mot - mot.mean()) / (mot.std() + 1e-6)
+    rows = 19                                      # 0.163 m / 19 = 8.6 mm
+    ph = S / rows
+    y = np.arange(S)[:, None]; x = np.arange(S)[None, :]
+    out = np.full((S, S), 1.0)
+    for r in range(rows):
+        yc = (r + 0.5) * ph
+        prof = np.exp(-0.5 * (((y - yc + S / 2) % S - S / 2) / (ph * 0.2)) ** 4)[:, 0]   # ~3.5 mm tall flat-top dash
+        xs = rng.uniform(0, 30); line = np.zeros(S)
+        while xs < S + 30:
+            ln = rng.uniform(10, 22); gap = rng.uniform(2.5, 5)
+            u = (np.arange(S) - xs) % S
+            seg = np.clip(np.minimum(u, ln - u) / 1.5, 0, 1) * (u < ln)
+            m = mot[int(yc) % S, int(xs + ln / 2) % S]
+            amp = np.clip(0.95 + 0.7 * m + rng.normal(0, 0.25), 0.1, 2.2)           # dim dashes in the dark patches
+            line = np.maximum(line, seg * amp)
+            xs += ln + gap
+        out += prof[:, None] * line[None, :]
+    out *= np.exp(0.22 * mot)                      # faint large-scale variation of the ground
+    # real cabins (san_01 / san_02 / alv_04 / alv_17, ref/web/py) show the same cloth as a large-repeat mix: dash
+    # weave toward the edges, white chips / speckle over it in the lighter zones (ANA py_37302 backs too) [V]
+    yy, xx = np.mgrid[0:S, 0:S]
+    for cy, cx in rng.uniform(0, S, (90, 2)):
+        m = mot[int(cy), int(cx)]
+        if m < -0.4: continue
+        dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
+        a = rng.uniform(0, np.pi); r0 = rng.uniform(2.5, 6.0)
+        rr = np.hypot(dx * 0.8, dy / 0.8); th = np.arctan2(dy, dx)
+        lob = 1 + 0.3 * np.cos(2 * (th - a)) + rng.uniform(0, 0.2) * np.cos(3 * th + rng.uniform(0, 6))
+        out = np.maximum(out, (2.9 + 0.5 * m) * np.clip((r0 * lob - rr) / 1.0, 0, 1))
+    return np.repeat(out[:, :, None], 3, 2)
+
+
+def synth_py_confetti(ratio, seed=11):
+    """PY QA w1: crisp white petal flakes instead of the soft upsampled crop. py_37305 wing crop (90 px = 0.07 m):
+    ~22 flakes, median 27 px^2 (~4-5 mm), 6-8 % area above 150, ground p10 72 / flakes 200+ sRGB (~12x linear) [D].
+    In the cabin views the photo-sized chips read as 2-3 cm blotches against real in-cabin photos (san_01, alv_04: fine
+    speckle) -> 34 smaller chips (same ~7 % area) [A]"""
+    rng = np.random.default_rng(seed)
+    out = np.ones((S, S))
+    yy, xx = np.mgrid[0:S, 0:S]
+    pts = []
+    while len(pts) < 34:                           # blue-noise placement (flakes never touch in the photo)
+        p = rng.uniform(0, S, 2)
+        if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 30 ** 2 for q in pts): pts.append(p)
+    for cy, cx in pts:
+        dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
+        a = rng.uniform(0, np.pi); r0 = rng.uniform(4.0, 7.5)
+        th = np.arctan2(dy, dx); rr = np.hypot(dx, dy)
+        # irregular torn-paper chip: random low harmonics, elongated along a random axis
+        lob = 1 + 0.3 * np.cos(2 * (th - a)) + sum(rng.uniform(0, 0.14) * np.cos(k * th + rng.uniform(0, 6)) for k in (3, 4, 5, 7))
+        out += 7 * np.clip((r0 * lob - rr) / 1.0, 0, 1)
+    for cy, cx in rng.uniform(0, S, (40, 2)):      # small specks between the chips + fine ground grain
+        rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
+        out += 3 * np.clip((rng.uniform(1.5, 3.0) - rr) / 1.0, 0, 1)
+    out *= np.exp(0.12 * _blur_wrap(rng.normal(0, 1, (S, S)), 1.2) / 0.2)
+    return np.repeat(out[:, :, None], 3, 2)
+
+
+SYNTH = {'py_back': synth_py_back, 'py_confetti': synth_py_confetti}
+
+
 def tileable(a):
     """offset-and-blend, one axis at a time: cross-fade with a half-period roll along x (mask depends on x only), then the
     result with its roll along y. QA r2: the old 2-D mask used the rolled copy near the corners, where its own seams lie
@@ -105,6 +180,7 @@ def make(name, photo, box, size, rot=0):
     lim = 1.5 if enc == 2 else enc * 0.95
     lum = ratio.mean(2, keepdims=True)
     ratio = np.where(lum > lim, ratio * lim / np.maximum(lum, 1e-6), ratio)
+    if name in SYNTH: ratio = SYNTH[name](ratio)
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / enc, 0, 1)
     Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', f'tex_{name}.png'))

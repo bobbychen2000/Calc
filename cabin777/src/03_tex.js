@@ -26,7 +26,7 @@ let PHOTO_PIX = null;
 //  linear vs 6.3 % in the column-normalised swatch -> x2) [D], 23 PY / Y confetti 1.0 (white flakes ~220 on a 55-65
 //  ground, py_37305)
 const PHOTO_GAIN = {
-  17: 1.0,
+  17: 0.65,   // PY w1: synthesised crisp dash tile (make_swatches synth_py_back) read as static at 1.0 vs san_01 / alv_04 [D]
   18: 0.5,
   19: 2.0,
   20: 0.7,
