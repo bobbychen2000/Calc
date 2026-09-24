@@ -14,7 +14,7 @@ const SEATMAT = {
   // econ QA w1: #5468a8 rendered too pure a blue (q15 R/B 0.33, G/B 0.46 vs y_47300 0.44 / 0.58) -> greyer #6a79a8 [D]
   yFabric: { c: photoBase('#6a79a8', 'y_tick'), r: 0.9, l: LAYER.yJacq },
   yFabricB: { c: photoBase('#6a79a8', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
-  yFabricC: { c: '#6676a4', r: 0.9, l: LAYER.yMosaic },   // third variant: dash mosaic (y_47302 left, y_47306 right)
+  yFabricC: { c: '#5f6fa0', r: 0.9, l: LAYER.yMosaic },   // third variant: dash mosaic (y_47302 left, y_47306 right)
   // headrest cushion: sparse white confetti on cobalt, a different fabric from the back (y_47306 / 47302 wings,
   // REFERENCE777.md) - shares the luminance-only confetti swatch with the PY wings
   // (same tone-curve match: wing photo mean #334276 in y_47306 -> base #4a5a98 averages #324384) [D]
@@ -23,14 +23,15 @@ const SEATMAT = {
   yHead: { c: '#6272a4', r: 0.9, l: LAYER.yMosaic },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
-  yCover: { c: '#50566c', r: 0.45, l: LAYER.leather },
+  yCover: { c: '#545a70', r: 0.45, l: LAYER.plastic },     // econ w2: smooth leatherette (the leather grain read ~4 mm cells)
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
   yBelt: { c: '#3a64a6', r: 0.7, l: LAYER.fabric },        // y_47303 (58,102,173), G/B 0.59
-  yPillow: { c: '#2e3860', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88)
+  yPillow: { c: '#48527c', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f
   arm: { c: '#c4c8cd', r: 0.45, l: LAYER.plastic },       // econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
   armPad: { c: '#b6bac0', r: 0.5, l: LAYER.plastic },
+  armPost: { c: '#a9aeb4', r: 0.45, l: LAYER.plastic },    // econ w2: grey arm front bracket (y_47302 / 47303)
   frame: { c: '#a3a8ae', r: 0.32, m: 0.85, l: LAYER.brushed },
   black: { c: '#15181c', r: 0.45 },
   port: { c: '#0b0c0e', r: 0.4 },
@@ -137,7 +138,7 @@ function mirrorGeo(geo) {
 function unitXF(s) { return s.kind === 'room' ? M4.trs(s.ux, 0, s.uz) : M4.trs(s.x, 0, s.z); }
 function localToWorld(s, p) { const q = [s.mir ? -p[0] : p[0], p[1], p[2]]; return M4.point(unitXF(s), q); }
 function seatPickBox(s) {
-  if (s.kind === 'econ') return [s.x - 0.24, s.x + 0.24, 0, 1.22, s.z - 0.5, s.z + 0.09];
+  if (s.kind === 'econ') return [s.x - 0.24, s.x + 0.24, 0, 1.34, s.z - 0.5, s.z + 0.13];
   if (s.kind === 'py') return [s.x - 0.28, s.x + 0.28, 0, 1.32, s.z - 0.56, s.z + 0.12];
   let a, b;
   if (s.kind === 'room') { a = s.odd ? [-0.585, 0, -1.345] : [-0.12, 0, -0.55]; b = s.odd ? [0.10, 1.12, 0.55] : [0.585, 1.12, 1.345]; }

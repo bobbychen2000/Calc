@@ -1,0 +1,81 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "score": 6.2,
+ "details": [
+  {"detail": "Fabric colour (chroma fix from r3): now correct. q15 plain seat #303d68 (R/B 0.47, G/B 0.59) vs y_47300 #2c3a63 (0.45/0.59); q16 fg seat #2c3451 (0.55/0.65) vs y_47301 #353b60 (0.55/0.62).", "score": 8, "refs": ["ref/ana/y_47300-lang-multi.jpg", "ref/ana/y_47301-lang-multi.jpg", "r2/q15_econFronts.png", "r2/q16_econAisle.png"]},
+  {"detail": "Tick / mosaic fabrics: the scale is plausible, but at cabin distance the mosaic seat reads as a flat mottle. q15 left seat luminance p10/p90 is 57/94; the photo's y_47300 left seat is 41/107, with crisp separate flecks and, on the right seat, vertical stripes.", "score": 6, "refs": ["ref/ana/y_47300-lang-multi.jpg", "ref/ana/y_47306-lang-multi.jpg", "raterA/q15c.png", "raterA/p300c.png"]},
+  {"detail": "Diamond variant: no longer blurry snowflakes, but it now reads as isolated, soft-edged pale polka-diamonds covering about 21 % of the area, on the back AND the pan. Photos show a denser (about 45 % coverage), stepped, ragged ikat lattice (houndstooth-like), and the diamond seat's pan is plain tick fabric.", "score": 4.5, "refs": ["ref/ana/y_47306-lang-multi.jpg", "ref/ana/y_47302-lang-multi.jpg", "raterA/p306dia.png", "raterA/p302dia.png", "s2/e4_head.png", "s2/e7_arm.png"]},
+  {"detail": "Headrest front view: the cover/cushion width ratio is 0.73, matching the photos (0.73-0.76 in y_47306 and y_47302), and the corner logo is present. The cushion is the top of the seat, whereas in y_47306 and y_47301 the backrest rises about 0.03-0.07 m above the headrest, with the cushion inset in it.", "score": 6.5, "refs": ["ref/ana/y_47306-lang-multi.jpg", "ref/ana/y_47301-lang-multi.jpg", "raterA/q16head.png", "raterA/p301head.png"]},
+  {"detail": "Headrest from behind: a 0.085 m band of blue mosaic fabric plus the dark cover fold stands above the rear shell on every seat (q17, q18). Rear photos show the off-white shell running to the top of the seat, with at most a thin (under 0.01 m) blue rim.", "score": 3.5, "refs": ["ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-26-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-27-768x576.jpg", "ref/ana/y_47305-lang-multi.jpg", "raterA/q18top.png"]},
+  {"detail": "Rear shell / screen hood: fixed. Measured glass bezel / hood width in q18 is 336/390 px = 0.86 (y_47305 0.865, sanspotter 15 0.86). The top margin is about 0.035-0.05 m against about 0.024 m in the photos, which is minor.", "score": 7.5, "refs": ["ref/ana/y_47305-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg", "r2/q18_seat35C.png", "s2/e5_screen.png"]},
+  {"detail": "IFE screen and bezel: black border with a thin shadow gap, and active-area insets of about 4-6 %. Good.", "score": 7.5, "refs": ["ref/ana/y_47305-lang-multi.jpg"]},
+  {"detail": "Handset dock: width 0.45 of the hood (photo 0.43). D-pad ring, rockers and diamond of colour keys all present. The photo dock is glossy black and the handset black with a silver ring; the model uses navy-slate, which is acceptable.", "score": 7.5, "refs": ["ref/ana/y_47305-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-16-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-30-768x576.jpg"]},
+  {"detail": "Coat-hook recess right of the handset: matches y_47303 (it is not visible in sanspotter 15, so there may be a mix).", "score": 7, "refs": ["ref/ana/y_47303-lang-multi.jpg"]},
+  {"detail": "Tray: a light panel with a latch and a small pictogram placard. It lacks the long 'Stow and latch handset during taxi' placard across the upper tray (sanspotter 23) and the two round bosses at the lower tray corners (sanspotter 15).", "score": 6.5, "refs": ["ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg"]},
+  {"detail": "Literature / mesh pocket: the layout and colour are wrong. The model has a small centre leatherette flap flanked by two LIGHT grey (#9aa0a8) mesh boxes. The photos show ONE full-width light-grey leatherette flap with a full-width BLACK elastic net below it (sanspotter 20/23 net #3c3733, y_47303 net #1d1a28), and the purple 'B777-300' safety card or blue magazine above the flap.", "score": 4, "refs": ["ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "ref/ana/y_47303-lang-multi.jpg", "raterA/p303L.png", "s2/e6_lowback.png"]},
+  {"detail": "AC/USB plate: black portrait plate in a light bezel, which is correct. It is on the wrong side: the model puts it at the viewer's right (dx +0.185); y_47307 and sanspotter 20, 21 and 23 all show it at the viewer's LEFT, beside the left tray-arm hinge.", "score": 5.5, "refs": ["ref/ana/y_47307-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "s2/e6_lowback.png"]},
+  {"detail": "Armrests: light grey with a vertical front post and a dark knuckle, as r3 asked. Acceptable against y_47302 and y_47303 (#b5b7bf).", "score": 7, "refs": ["ref/ana/y_47302-lang-multi.jpg", "ref/ana/y_47303-lang-multi.jpg", "s2/e7_arm.png"]},
+  {"detail": "Belts: material #3a64a6 matches y_47303 (#345690 to #486fa2). They lie as short flat tabs, which is acceptable.", "score": 7, "refs": ["ref/ana/y_47303-lang-multi.jpg"]},
+  {"detail": "Pillows: navy pillow upright at the crease, as in y_47300 (#252d4c vs material #2e3860).", "score": 7, "refs": ["ref/ana/y_47300-lang-multi.jpg", "s2/e1_front.png"]},
+  {"detail": "Legs, frame and baggage bar: silver legs, spreaders and a low baggage bar are now present. The white SEB boxes with dark faces under the front beam of each seat (y_47302) are missing; there is only one black box under the end seat.", "score": 6.5, "refs": ["ref/ana/y_47302-lang-multi.jpg", "s2/e8_foot.png"]},
+  {"detail": "Life-vest pouch: dark saucer with a red strap, as in y_47302.", "score": 7, "refs": ["ref/ana/y_47302-lang-multi.jpg"]},
+  {"detail": "Footrest: split ribbed pedals, dark end caps and two-link off-white hangers. Good against y_47304.", "score": 7.5, "refs": ["ref/ana/y_47304-lang-multi.jpg", "s2/e8_foot.png"]}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "From behind, the headrest shows as a 0.085 m blue fabric block with a dark cover fold above the rear shell on every seat.",
+   "problem": "The rear shell loft RS ends at y 0.775 (top width 0.34), while the headrest loft runs to y 0.83 and the cover fold sits at y 0.838. Everything from about 0.76 to 0.84 is bare fabric seen from the rear, and it dominates q17 and q18.",
+   "evidence": "q18_seat35C: blue band 75 px above the shell top on a 390 px (0.372 m) hood, about 0.07-0.085 m (crop raterA/q18top.png). Rear-facing photos show the off-white shell forming the seat top: sanspotter 15, 25, 26, 27 and 28 show no blue above the centre shell; y_47305 shows about 8 px of 697, under 0.006 m.",
+   "fix": "In econSeat, replace the last RS entry [0.775,0.092,0.05,0.34,0.022] with [0.79,0.10,0.07,0.35,0.03], [0.83,0.072,0.045,0.33,0.022] and [0.85,0.05,0.02,0.30,0.01], so the shell caps the back. Lower the headrest loft by 0.02 (sections 0.60→0.81 instead of 0.62→0.83) and extend the back fabric loft F with SEC(0.70,0.40,0.07,0.0,0.03), SEC(0.80,0.38,0.06,0.004,0.025) and SEC(0.84,0.34,0.045,0.006,0.02). The backrest then rises about 0.03-0.04 m above the headrest from the front, as in y_47301 and y_47306. Move the cover to y 0.705 and the fold to y 0.818. Mirror this in econUnitFar: shell box height 0.74→0.80, centre 0.35→0.38."
+  },
+  {
+   "severity": "medium",
+   "detail": "The seat-back pocket layout and colour are wrong: two light-grey mesh boxes either side of a small flap.",
+   "problem": "B.add(gRBox(0.22,0.12,..), on(0.12,0.02)) plus two #9aa0a8 LAYER.grille boxes at dx ±0.158 with #3a3e45 bindings. The real seat has one full-width leatherette flap over one full-width black net.",
+   "evidence": "sanspotter 23 and 20: light-grey leatherette flap across the whole pocket (#a7a296 in warm light), a black elastic net across the whole width below it (#3c3733), and a black binding band. y_47303 left seats show the same, net #1d1a28. The mesh 'pockets' at the photo edges belong to neighbouring seats.",
+   "fix": "Replace the flap and the two mesh loops with: a flap gRBox(0.38,0.075,0.014,0.012,1) at on(0.155,0.02), {c:'#c9ccd1',r:0.5,l:LAYER.leather}; a net gRBox(0.36,0.065,0.010,0.006,1) at on(0.085,0.022), {c:'#26272c',r:0.7,l:LAYER.grille}; and a binding gBox(0.362,0.012,0.016) at on(0.118,0.027), {c:'#1c1d22',r:0.6}. Keep the magazine/card strip at on(0.195,0.02), and consider a purple '#5b3a8e' header 0.18 x 0.015 over a white 0.18 x 0.02 pictogram body (sanspotter 20/21 safety card)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The diamond fabric reads as isolated, soft, pale polka-diamonds, and it is also used on the pan.",
+   "problem": "make_swatches.y_diamond() uses half-widths 0.031/0.029 m on a 0.13 x 0.065 staggered cell (about 21 % coverage), a GaussianBlur(0.8) and a light edge noise of 0.35. econSeat uses the same fabric F for the pan loft.",
+   "evidence": "y_47306 left seat and y_47302 middle seat (raterA/p306dia.png, p302dia.png): stepped, ragged ikat diamonds covering about 45 % of the surface, almost touching in a houndstooth-like lattice, with the tick texture still visible inside. Light tone #90a9e4 over dark #314686. The diamond seat's pan in y_47302 is plain tick fabric. Model e4 and e7: rounded blobs with wide gaps, and diamonds on the pan.",
+   "fix": "In y_diamond(): half-widths 0.031/0.029 → 0.044/0.041; edge noise 0.35 → 0.6; drop the GaussianBlur (or use 0.4); inside = lift*(0.6+0.4*t) so the ticks show through; then re-run make_swatches.py. In econSeat: const PF = F === SEATMAT.yFabricB ? SEATMAT.yFabric : F; and use PF for the pan gLoft (the first B.add)."
+  },
+  {
+   "severity": "low",
+   "detail": "The AC/USB power plate is on the wrong side.",
+   "problem": "on(0.205, 0.011, 0.185) puts it at the viewer's right.",
+   "evidence": "y_47307, sanspotter 20, 21 and 23: the black portrait plate sits at the viewer's LEFT, beside the left tray-arm hinge.",
+   "fix": "Change dx 0.185 to -0.185 in both AC plate adds."
+  },
+  {
+   "severity": "low",
+   "detail": "The mosaic/tick seats read as a low-contrast mottle at cabin distance.",
+   "problem": "The yMosaic procedural layer 11 [5.0, 0.12, 1.0, 0.15] gives a narrow luminance spread.",
+   "evidence": "q15 left seat p10/p90 57/94 against y_47300 left seat 41/107. The photo flecks are crisp and discrete.",
+   "fix": "Raise LAYER_PARAMS[11] albedo strength 1.0 → 1.5 (shared file 03_tex.js, one-line edit) and darken the yFabricC base slightly (#6676a4 → #5f6fa0) to keep the mean. Target p10/p90 about 45/105 in q15."
+  },
+  {
+   "severity": "low",
+   "detail": "The white seat-electronics boxes under each seat front are missing.",
+   "problem": "There is only one black 0.22 x 0.10 x 0.30 box under the last seat.",
+   "evidence": "y_47302: white boxes about 0.07 m with dark faces at the front beam under each seat (x 315-345 and 485-520 px, y 360-390), plus a white vertical box with a dark strip on the aisle leg.",
+   "fix": "In econUnit (!lod), per seat: B.add(gRBox(0.07,0.07,0.05,0.008,1), M4.trs(x-0.12, 0.26, -0.43), SEATMAT.yShell) plus a dark face gQuad(0.05,0.04) at z -0.456, #22252b. Recolour the end box to SEATMAT.yShellDark."
+  },
+  {
+   "severity": "low",
+   "detail": "The tray is missing its long handset placard.",
+   "problem": "Only a 0.05 x 0.02 pictogram placard is present.",
+   "evidence": "sanspotter 23: a 'Stow and latch handset during taxi, takeoff and landing' placard about 0.22 x 0.02 across the top centre of the tray. sanspotter 15: two round bosses at the lower tray corners.",
+   "fix": "Add gQuad(0.22,0.022) at on(0.37,0.0185,0.02), {c:'#dfe0e2',r:0.5}, and two gCyl(0.022,0.022,0.004,12) at on(0.235,0.019,±0.15) in #c3c6ca."
+  }
+ ],
+ "questionsForUser": [
+  "Coat hook: y_47303 shows a round recess right of the handset, but sanspotter 15 (the 2023 in-service aircraft) shows none. Should the model keep it?",
+  "Pocket contents: official y_47303 shows the blue ANA magazine; sanspotter 20/21 shows the purple 'B777-300 安全のしおり' safety card. Which should the model show, or both?",
+  "Headrest cover shade varies a lot across the official photos (y_47300 cover darker than the fabric; y_47301 foreground cover lighter). Is a mid slate (#5a6078) acceptable, rather than the current #50566c?"
+ ]
+}

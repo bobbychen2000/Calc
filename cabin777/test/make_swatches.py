@@ -191,26 +191,29 @@ def y_diamond():
     """econ QA w1: the Y diamond variant, synthesised on the tick weave. The old photo crop (y_47306 far-left seat, seen
     at ~55 deg and upsampled 2x) tiled into blurry snowflakes. The real fabric (y_47306 left seat, y_47302 middle seat) is
     the same navy tick ground with a staggered lattice of pale, stepped (ikat-like) diamonds: same-row period 0.12 /
-    0.095 m, same-column 0.108 m -> 2 per row, 4 staggered rows per 0.26 m tile (0.13 m) [D]; diamonds ~0.062 wide x
-    0.058 tall with ~6 mm steps, ground showing between them [D]; diamond / ground linear ratio R 6.8 G 4.8 B 2.3 (blur-3 p70 / p30, y_47306) and 8.0 / 6.9 / 3.3 (y_47302),
+    0.095 m, same-column 0.108 m -> 2 per row, 4 staggered rows per 0.26 m tile (0.13 m) [D]; diamonds ~0.08 wide x
+    0.074 tall with ~4.5 mm steps, near-touching (w2) [D]; diamond / ground linear ratio R 6.8 G 4.8 B 2.3 (blur-3 p70 / p30, y_47306) and 8.0 / 6.9 / 3.3 (y_47302),
     i.e. pale lavender diamonds -> lift (3.4, 2.7, 1.7) over the tick ground, with the ticks dimmed inside [D]"""
     t = np.asarray(Image.open(os.path.join(root, 'tex/tex_y_tick.png'))).astype(np.float32) / 255 * ENC['y_tick']
     n = S
     v, u = np.mgrid[0:n, 0:n] / n            # tile coords, 0.26 m
     rng = np.random.default_rng(7)
     m = np.zeros((n, n), np.float32)
-    step = 0.006 / 0.26                      # ~6 mm weave steps
+    step = 0.0045 / 0.26                     # ~4-5 mm weave steps (w2 B: 3-4 mm)
     for cu, cv in [(a + (0.25 if r % 2 else 0), 0.125 + 0.25 * r) for r in range(4) for a in (0.0, 0.5)]:
         for ou in (-1, 0, 1):
             for ov in (-1, 0, 1):
                 du = np.floor(np.abs(u - cu - ou) / step) * step
                 dv = np.floor(np.abs(v - cv - ov) / step) * step
-                m = np.maximum(m, (du / (0.031 / 0.26) + dv / (0.029 / 0.26) <= 1).astype(np.float32))
+                m = np.maximum(m, (du / (0.040 / 0.26) + dv / (0.037 / 0.26) <= 1).astype(np.float32))
     # ragged ikat edges: a little value noise on the mask, then a 1 px soften
-    m = np.clip(m + (rng.random((n, n)) - 0.5) * 0.35 * (np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.FIND_EDGES)) > 0), 0, 1)
-    m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.8))).astype(np.float32)[..., None] / 255
-    lift = np.array([2.8, 2.3, 1.5], np.float32)          # w1 render: p90/p10 8.4 vs photo 4.5-6.6 at (3.4, 2.7, 1.7)
-    inside = lift * (0.75 + 0.25 * t)
+    m = np.clip(m + (rng.random((n, n)) - 0.5) * 0.9 * (np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.FIND_EDGES)) > 0), 0, 1)
+    m = (m > 0.5).astype(np.float32)
+    m = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.4))).astype(np.float32)[..., None] / 255
+    # w2: near-touching lattice (~45 % cover, w2 A), ragged edges; lower lift - with the bigger cover the ground darkens
+    # after normalising (w2 B: p10/p90 51/142 vs photo 54/120)
+    lift = np.array([2.4, 2.0, 1.4], np.float32)
+    inside = lift * (0.6 + 0.4 * t)
     ratio = t * (1 - m) + inside * m
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / ENC['y_diamond'], 0, 1)
