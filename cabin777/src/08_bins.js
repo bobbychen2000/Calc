@@ -56,7 +56,9 @@ const BINMAT = {
   pod: { c: '#eceae6', r: 0.4, l: LAYER.plastic },
   bezelDark: { c: '#8a9096', r: 0.4 },
   call: { c: '#6f8fb8', r: 0.4 },
-  o2gap: { c: '#b2b6ba', r: 0.7 },
+  o2gap: { c: '#cfd2d5', r: 0.7 },   // hairline only: no outlined plate reads in y_47300 [V]
+  // centre gasper nozzles: small light-grey (y_47300 shows them barely darker than the channel) [V]
+  nozzleC: { c: '#d0d3d6', r: 0.35, m: 0.3 },
   grille: { c: '#9ea3a8', r: 0.6, l: LAYER.grille },
 };
 
@@ -71,16 +73,18 @@ function paintBinDecals(A, layout) {
   const g = A.canvas.getContext('2d'), S = A.canvas.width;
   const rect = (name) => { const r = A.rects[name]; return r && [r[0] * S, r[1] * S, (r[2] - r[0]) * S, (r[3] - r[1]) * S]; };
   const INK = '#4a4f57';
-  const seatIcon = (x, y, s) => {          // seat pictogram: backrest + cushion as rounded squares
-    g.beginPath(); g.roundRect(x, y - s * 0.5, s * 0.34, s, s * 0.12); g.fill();
-    g.beginPath(); g.roundRect(x + s * 0.2, y + s * 0.12, s * 0.7, s * 0.38, s * 0.12); g.fill();
+  const seatIcon = (x, y, s, bg) => {      // seat pictogram (plan view): rounded square outline, thick backrest edge
+    g.fillStyle = INK; g.beginPath(); g.roundRect(x, y - s * 0.5, s, s, s * 0.25); g.fill();
+    g.fillStyle = bg; g.beginPath(); g.roundRect(x + s * 0.16, y - s * 0.5 + s * 0.36, s * 0.68, s * 0.48, s * 0.12); g.fill();
   };
   const rows = [...new Set(layout.seats.map((s) => s.row))];
   for (const r of rows) for (let i = 0; i < 3; i++) {
     const q = rect(`row${r}_${i}`);
     if (!q) continue;
     const [x, y, w, h] = q, sx = (w / h) / (PLACARD[0] / PLACARD[1]);
-    g.fillStyle = i === 1 ? '#f6f7f9' : '#e3e5e8'; g.fillRect(x, y, w, h);
+    // ground = door colour after shadeUpper (x0.97) outboard; lighter on the self-lit centre door [D]
+    const bg = i === 1 ? '#f6f7f9' : '#dcdee1';
+    g.fillStyle = bg; g.fillRect(x, y, w, h);
     const n = layout.seats.filter((s) => s.row === r && (i === 1 ? Math.abs(s.x) <= 1.1 : i === 0 ? s.x < -1.1 : s.x > 1.1)).length;
     g.save(); g.translate(x, y); g.scale(sx, 1);
     const W = w / sx;                         // virtual width before the quad stretch
@@ -89,7 +93,7 @@ function paintBinDecals(A, layout) {
     const total = tw + 6 + Math.min(n, 4) * (ic + gap);
     let cx = (W - total) / 2;
     g.fillText(String(r), cx, h / 2 + 1); cx += tw + 6;
-    for (let k = 0; k < Math.min(n, 4); k++) { seatIcon(cx, h / 2, ic); cx += ic + gap; }
+    for (let k = 0; k < Math.min(n, 4); k++) { seatIcon(cx, h / 2, ic, bg); cx += ic + gap; }
     g.restore();
   }
   const q = rect('psuSigns');
@@ -226,7 +230,7 @@ function psuModule(n, lights = true, pitch = 0.15) {
       B.add(gBox(0.014, 0.003, 0.010), M4.trs(x + 0.028, -0.0105, -0.10), BINMAT.bezelDark);
     }
     B.add(gCyl(0.022, 0.022, 0.004, 12), M4.trs(x, -0.002, -0.02), BINMAT.pod);
-    B.add(gCyl(0.013, 0.016, 0.010, 10), M4.trs(x, -0.009, -0.02), MAT.nozzle);
+    B.add(gCyl(0.013, 0.016, 0.010, 10), M4.trs(x, -0.009, -0.02), BINMAT.nozzleC);
     B.add(gCyl(0.005, 0.005, 0.002, 6), M4.trs(x, -0.0142, -0.02), MAT.darkPlastic);
   }
   B.add(gBox(0.028, 0.004, 0.02), M4.trs(w / 2 - 0.04, -0.002, 0.05), BINMAT.call);
