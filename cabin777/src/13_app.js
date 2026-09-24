@@ -763,8 +763,9 @@ function rayBox(r, b) {
   return t0;
 }
 
-function boot() {
+async function boot() {
   try {
+    await loadPhotoTex();
     new App();
     document.body.dataset.ready = '1';
     window.__ready = true;

@@ -2,7 +2,8 @@
 // Scene assembly: meshes, ambient-visibility volume, sun shadows, lighting moods, window shades, rendering
 // ------------------------------------------------------------------
 const MOODS = {
-  boarding: { label: 'Boarding', hemiTop: [1.0, 0.94, 0.86], hemiBot: [0.42, 0.39, 0.36], wash: [0.62, 0.57, 0.50], led: [1.0, 0.86, 0.68], k: 1.05, exposure: 1.05 },
+  // boarding = the ANA photo look: neutral-cool white LED light, high key (ref/ana y_47300, c_27312, py_37302)
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.44, 0.45, 0.48], wash: [0.62, 0.64, 0.68], led: [0.92, 0.96, 1.0], k: 1.05, exposure: 1.28 },
   cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.34, 0.34, 0.38], wash: [0.46, 0.48, 0.56], led: [0.62, 0.72, 1.0], k: 0.95, exposure: 1.05 },
   dining: { label: 'Dining', hemiTop: [1.0, 0.80, 0.60], hemiBot: [0.40, 0.31, 0.23], wash: [0.62, 0.46, 0.32], led: [1.0, 0.64, 0.32], k: 0.9, exposure: 1.08 },
   sleep: { label: 'Night', hemiTop: [0.06, 0.065, 0.15], hemiBot: [0.022, 0.024, 0.05], wash: [0.05, 0.05, 0.14], led: [0.26, 0.24, 0.72], k: 1, exposure: 1.9, readingLights: true },
@@ -29,6 +30,7 @@ class Scene {
     buildAtlas(this.layout);
     this.tex = {
       detail: gl.textureArray(buildDetailLayers(256), 256),
+      photo: gl.textureArray(buildPhotoLayers(256), 256),
       atlas: gl.texture2D(ATL.canvas, { srgb: false }),
       cloud: gl.texture2D(buildCloudNoise(256), { w: 256, h: 256 }),
     };
@@ -316,6 +318,7 @@ class Scene {
     G.set('u_aoMin', this.ao.min);
     G.set('u_aoSize', this.ao.size);
     G.tex('u_detail', 2, this.tex.detail, gl.TEXTURE_2D_ARRAY);
+    G.tex('u_photo', 5, this.tex.photo, gl.TEXTURE_2D_ARRAY); G.set('u_photoOn', PHOTO_PIX ? 1 : 0);
     const lp = new Float32Array(N_LAYERS * 4);
     for (const [kk, v] of Object.entries(LAYER_PARAMS)) lp.set(v, +kk * 4);
     G.set('u_layer', lp);

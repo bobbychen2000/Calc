@@ -5,6 +5,15 @@ os.makedirs(dist, exist_ok=True)
 js = []
 for f in sorted(glob.glob(os.path.join(root, 'src', '*.js'))):
     js.append('// ==== ' + os.path.basename(f) + ' ====\n' + open(f).read())
+# photo swatches cut from the official ANA photos (test/make_swatches.py; ref/ is gitignored). Set CABIN_NO_PHOTO=1
+# to build with the procedural layers only.
+import base64, json
+sw = os.path.join(root, 'ref', 'swatch')
+photo = 'null'
+if not os.environ.get('CABIN_NO_PHOTO') and os.path.exists(os.path.join(sw, 'sizes.json')):
+    sizes = json.load(open(os.path.join(sw, 'sizes.json')))
+    photo = json.dumps({k: {'size': v, 'src': 'data:image/png;base64,' + base64.b64encode(open(os.path.join(sw, f'tex_{k}.png'), 'rb').read()).decode()} for k, v in sizes.items()})
+js.insert(0, '// ==== photo swatches ====\nconst PHOTO_TEX = ' + photo + ';\n')
 script = '\n'.join(js) + '\nboot();\n'
 page = open(os.path.join(root, 'src', 'page.html')).read()
 out = page.replace('/*__SCRIPT__*/', script)

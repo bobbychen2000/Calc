@@ -2,8 +2,13 @@
 // Procedural textures (generated at load; no external image assets)
 //  Detail layers are RGBA: RG = tangent normal (xy), B = albedo mod, A = roughness mod
 // ------------------------------------------------------------------
-const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, knit: 9, wood: 10, perf: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19 };
-const N_LAYERS = 20;
+const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, knit: 9, wood: 10, perf: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24 };
+const N_LAYERS = 25;
+// layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
+const PHOTO_LAYERS = { 16: 'y_tick', 17: 'py_back', 18: 'j_tweed', 19: 'j_ash', 20: 'f_wood', 21: 'f_tweed', 22: 'y_carpet', 23: 'py_confetti', 24: 'y_diamond' };
+let PHOTO_PIX = null;
+// photo pattern strength per layer (1 = as photographed); PY fleck toned down: at seat distance the photo reads finer
+const PHOTO_GAIN = { 17: 0.65, 23: 0.8 };   // decoded swatches: { name: Uint8ClampedArray RGBA 256x256 }
 // per-layer params: [scale (tiles per meter), normal strength, albedo strength, roughness strength]
 const LAYER_PARAMS = {
   1: [22, 0.26, 0.14, 0.18], 2: [9, 0.32, 0.14, 0.3], 3: [3.2, 0.7, 0.5, 0.2], 4: [9, 0.1, 0.04, 0.12],
@@ -11,6 +16,7 @@ const LAYER_PARAMS = {
   9: [20, 0.4, 0.2, 0.2], 10: [2.4, 0.12, 0.28, 0.25], 11: [7, 0.45, 0.28, 0.3],
   // photo-derived fabrics (ANA seat pages, see REFERENCE777.md): Y blue tick jacquard, PY charcoal/white fleck, J/F tweed, J ash
   16: [5.5, 0.3, 1.4, 0.15], 17: [7.5, 0.3, 0.8, 0.15], 18: [14, 0.5, 0.35, 0.2], 19: [1.6, 0.06, 0.22, 0.2],
+  20: [2.4, 0.08, 0.28, 0.25], 21: [14, 0.5, 0.35, 0.2], 22: [3.2, 0.7, 0.5, 0.2], 23: [5.0, 0.3, 0.8, 0.15], 24: [5.5, 0.3, 1.4, 0.15],
 };
 
 function hash2(ix, iy, seed) {
@@ -181,7 +187,38 @@ function buildDetailLayers(S = 256) {
     const a = vnoise(u * 3, (v + w) * 160, 160, 122), b = vnoise(u * 6, (v + w) * 64, 64, 123);
     return clamp(0.5 + 0.55 * (a - 0.5) + 0.3 * (b - 0.5), 0, 1);
   }, () => 0.5, 0.2);
+  L[20] = L[10]; L[21] = L[18]; L[22] = L[3]; L[23] = L[17]; L[24] = L[16];
+  // photo swatches: tile scale from the swatch's physical size; normal + roughness from its luminance
+  if (PHOTO_PIX) for (const [k, name] of Object.entries(PHOTO_LAYERS)) {
+    const px = PHOTO_PIX[name]; if (!px) continue;
+    LAYER_PARAMS[k] = [1 / PHOTO_TEX[name].size, LAYER_PARAMS[k][1], PHOTO_GAIN[k] ?? 1, LAYER_PARAMS[k][3]];
+    const lum = (u, v) => { const i = ((Math.floor(v * 256) & 255) * 256 + (Math.floor(u * 256) & 255)) * 4; return (px[i] + px[i + 1] + px[i + 2]) / 765; };
+    L[k] = makeLayer(S, lum, () => 0.5, (u, v, h) => 0.5 + 0.3 * (0.5 - h), 0.9);
+  }
   return L;
+}
+// RGB photo-swatch array (layer k-16), colour relative to the swatch mean x0.5; neutral grey where no photo
+function buildPhotoLayers(S = 256) {
+  const out = [];
+  for (let k = 16; k < N_LAYERS; k++) {
+    const px = PHOTO_PIX && PHOTO_PIX[PHOTO_LAYERS[k]];
+    const d = new Uint8Array(S * S * 4);
+    if (px) d.set(px); else d.fill(128);
+    out.push(d);
+  }
+  return out;
+}
+async function loadPhotoTex() {
+  if (typeof PHOTO_TEX === 'undefined' || !PHOTO_TEX) return;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  PHOTO_PIX = {};
+  for (const [name, t] of Object.entries(PHOTO_TEX)) {
+    const im = new Image(); im.src = t.src;
+    try { await im.decode(); } catch (e) { continue; }
+    g.clearRect(0, 0, 256, 256); g.drawImage(im, 0, 0, 256, 256);
+    PHOTO_PIX[name] = g.getImageData(0, 0, 256, 256).data;
+  }
 }
 
 // Tileable cloud noise texture (R: fbm, G: detail fbm), 256^2

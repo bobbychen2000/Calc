@@ -29,7 +29,7 @@ uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_winGlow;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
-uniform sampler2DArray u_detail; uniform vec4 u_layer[20];
+uniform sampler2DArray u_detail; uniform vec4 u_layer[25]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc;
@@ -103,7 +103,12 @@ void main(){
     vec2 nx = tx.xy*2.0 - 1.0, ny = ty.xy*2.0 - 1.0, nz = tz.xy*2.0 - 1.0;
     vec3 dn = vec3(0.0, nx.y, nx.x)*w.x + vec3(ny.x, 0.0, ny.y)*w.y + vec3(nz.x, nz.y, 0.0)*w.z;
     N = normalize(N + dn * P.y);
-    base *= 1.0 + (t.b - 0.5) * 2.0 * P.z;
+    if (layer < 16 || u_photoOn < 0.5) base *= 1.0 + (t.b - 0.5) * 2.0 * P.z;
+    else {
+      float PL = float(layer - 16);
+      vec3 c = texture(u_photo, vec3(q.zy, PL)).rgb*w.x + texture(u_photo, vec3(q.xz, PL)).rgb*w.y + texture(u_photo, vec3(q.xy, PL)).rgb*w.z;
+      base *= mix(vec3(1.0), c * 2.0, P.z);
+    }
     rough = clamp(rough * (1.0 + (t.a - 0.5) * 2.0 * P.w), 0.04, 1.0);
   }
   if (emis > 0.0 && (layer < 12 || layer > 15)) emissive += base * emis * u_emisGain * 3.0;

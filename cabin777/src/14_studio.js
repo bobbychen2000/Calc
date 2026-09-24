@@ -36,6 +36,7 @@ function studioRender(app, geo, opts = {}) {
   G.set('u_wash', [0, 0, 0]); G.set('u_led', opts.led || [0.8, 0.85, 1.0]); G.set('u_winGlow', [0, 0, 0]);
   G.tex('u_ao', 1, S.ao.tex, gl.TEXTURE_3D); G.set('u_aoMin', S.ao.min); G.set('u_aoSize', S.ao.size);
   G.tex('u_detail', 2, S.tex.detail, gl.TEXTURE_2D_ARRAY);
+  G.tex('u_photo', 5, S.tex.photo, gl.TEXTURE_2D_ARRAY); G.set('u_photoOn', PHOTO_PIX ? 1 : 0);
   const lp = new Float32Array(N_LAYERS * 4);
   for (const [kk, v] of Object.entries(LAYER_PARAMS)) lp.set(v, +kk * 4);
   G.set('u_layer', lp);

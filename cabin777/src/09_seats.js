@@ -5,9 +5,9 @@
 const SEATMAT = {
   // Economy (Recaro): royal-blue tick jacquard, slate leatherette headrest covers, off-white shells + arms,
   // teal belts, navy pillows -- all read from ANA's official Y photos (ref/ana/y_4730x; REFERENCE777.md)
-  yFabric: { c: '#42569c', r: 0.9, l: LAYER.yJacq },
-  yHead: { c: '#42569c', r: 0.9, l: LAYER.yJacq },
-  yCover: { c: '#5d6678', r: 0.5, l: LAYER.leather },
+  yFabric: { c: '#3d4d88', r: 0.9, l: LAYER.yJacq },
+  yHead: { c: '#3d4d88', r: 0.9, l: LAYER.yJacq },
+  yCover: { c: '#3e4661', r: 0.5, l: LAYER.leather },
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
@@ -27,10 +27,11 @@ const SEATMAT = {
   ledG: { c: '#39e07a', r: 0.3, e: 0.8 },
   // Premium Economy (ZIM): charcoal/white fleck heather (reads light grey), navy leatherette headrest flap,
   // mid-grey shells + consoles with a silver trim line (ref/ana/py_3730x)
-  pyFabric: { c: '#8f97a6', r: 0.9, l: LAYER.pyFleck },
+  pyFabric: { c: '#7c8494', r: 0.9, l: LAYER.pyFleck },
   pyCover: { c: '#3d4459', r: 0.5, l: LAYER.leather },
-  pyShell: { c: '#6a6f76', r: 0.42, l: LAYER.plastic },
-  pyArm: { c: '#5f646a', r: 0.45, l: LAYER.plastic },
+  pyWing: { c: '#5f6676', r: 0.9, l: LAYER.pyConfetti },
+  pyShell: { c: '#5c6470', r: 0.42, l: LAYER.plastic },
+  pyArm: { c: '#56606c', r: 0.45, l: LAYER.plastic },
   pyArmPad: { c: '#767b82', r: 0.5, l: LAYER.leather },
   pyTrim: { c: '#b9bec4', r: 0.28, m: 0.8, l: LAYER.brushed },
   // THE Room (Safran Fusio custom). Colours sampled from ANA's official seat photos (ref/ana/c_273xx, see REFERENCE777.md):
@@ -61,14 +62,14 @@ const SEATMAT = {
   // fluted exterior, floor LED line, window console controls and headrest flap
   fShell: { c: '#69655f', r: 0.45, l: LAYER.plastic },
   fFlute: { c: '#5f5852', r: 0.5, l: LAYER.plastic },
-  fWood: { c: '#3b322d', r: 0.38, l: LAYER.wood },
+  fWood: { c: '#3b322d', r: 0.38, l: LAYER.fWood },
   fDoor: { c: '#736c65', r: 0.45, l: LAYER.plastic },
   fInner: { c: '#5d5752', r: 0.5, l: LAYER.plastic },
-  fFabric: { c: '#5e5857', r: 0.92, l: LAYER.tweed },
+  fFabric: { c: '#5e5857', r: 0.92, l: LAYER.fTweed },
   fLeather: { c: '#4f4b49', r: 0.48, l: LAYER.leather },
   fFlap: { c: '#6d6a68', r: 0.45, l: LAYER.leather },
   fCushionBlue: { c: '#3d3875', r: 0.85, l: LAYER.fabric },
-  fShelf: { c: '#342b26', r: 0.35, l: LAYER.wood },
+  fShelf: { c: '#342b26', r: 0.35, l: LAYER.fWood },
   fWarm: { c: '#ffe7c4', r: 0.5, e: 0.55 },
   fLed: { c: '#f4f1ea', r: 0.5, e: 0.7 },
 };
@@ -98,8 +99,8 @@ function econSeat(B, x0, lod, opts = {}) {
     loftAt(B, [SEC(0.65, 0.05, 0.07, 0, 0.02), SEC(0.79, 0.05, 0.07, 0, 0.02), SEC(0.81, 0.04, 0.055, 0, 0.018)], WX, SEATMAT.yHead, 2);
   }
   // slate leatherette cover draped over the headrest front + top (y_47302 / 47306)
-  B.add(gRBox(0.29, 0.17, 0.008, 0.006, 1), M4.mul(BH, M4.trs(0, 0.735, -0.062)), SEATMAT.yCover);
-  B.add(gRBox(0.29, 0.008, 0.06, 0.004, 1), M4.mul(BH, M4.trs(0, 0.822, -0.035)), SEATMAT.yCover);
+  B.add(gRBox(0.27, 0.13, 0.008, 0.006, 1), M4.mul(BH, M4.trs(0, 0.76, -0.062)), SEATMAT.yCover);
+  B.add(gRBox(0.27, 0.008, 0.06, 0.004, 1), M4.mul(BH, M4.trs(0, 0.822, -0.035)), SEATMAT.yCover);
   if (lod) return;
   const on = (y, dz = 0, dx = 0) => M4.mul(BH, M4.trs(dx, y, zr(y) + dz));
   // navy pillow leaning on the back (y_47300)
@@ -172,7 +173,7 @@ function econUnitFar(n) {
     B.add(gRBox(0.43, 0.62, 0.10, 0.035, 1), M4.mul(BH, M4.trs(0, 0.31, -0.012)), SEATMAT.yFabric);
     B.add(gRBox(0.446, 0.74, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.35, 0.064)), SEATMAT.yShell);
     B.add(gRBox(0.35, 0.2, 0.08, 0.03, 1), M4.mul(BH, M4.trs(0, 0.72, -0.008)), SEATMAT.yHead);
-    B.add(gBox(0.29, 0.17, 0.01), M4.mul(BH, M4.trs(0, 0.735, -0.055)), SEATMAT.yCover);
+    B.add(gBox(0.27, 0.13, 0.01), M4.mul(BH, M4.trs(0, 0.76, -0.055)), SEATMAT.yCover);
     B.add(gQuad(0.294, 0.166), M4.mul(BH, M4.trs(0, 0.575, 0.09)), SEATMAT.screen, atlasUV('screen'));
   }
   for (let k = 0; k <= n; k++) B.add(gBox(0.048, 0.05, 0.30), M4.trs((k - n / 2) * sp, 0.64, -0.235), SEATMAT.arm);
@@ -196,15 +197,17 @@ function pySeat(B, x0, lod, opts = {}) {
   // 6-way headrest with wings
   loftAt(B, [SEC(0.68, 0.37, 0.08, -0.006, 0.032), SEC(0.71, 0.39, 0.092, -0.012, 0.04), SEC(0.85, 0.39, 0.092, -0.012, 0.04), SEC(0.895, 0.37, 0.075, -0.006, 0.032), SEC(0.91, 0.33, 0.05, -0.002, 0.02)], BH, F, lod ? 3 : 4);
   for (const s of [-1, 1]) {
-    const WX = M4.mul(BH, M4.trs(s * 0.205, 0, -0.012, -s * 22 * DEG));
-    loftAt(B, [SEC(0.71, 0.06, 0.08, 0, 0.022), SEC(0.87, 0.06, 0.08, 0, 0.022), SEC(0.89, 0.05, 0.06, 0, 0.018)], WX, F, 2);
+    // large rounded wing pads either side of the flap (py_37301 / 37302)
+    const WX = M4.mul(BH, M4.trs(s * 0.195, 0, -0.03, -s * 18 * DEG));
+    loftAt(B, [SEC(0.69, 0.08, 0.09, 0, 0.03), SEC(0.72, 0.095, 0.11, 0, 0.042), SEC(0.87, 0.095, 0.11, 0, 0.042), SEC(0.90, 0.08, 0.08, 0, 0.03)], WX, SEATMAT.pyWing, lod ? 2 : 3);
   }
   // navy leatherette flap over the headrest front + top, silver trim line low on the back shell (py_37303)
-  B.add(gRBox(0.30, 0.17, 0.008, 0.006, 1), M4.mul(BH, M4.trs(0, 0.80, -0.064)), SEATMAT.pyCover);
-  B.add(gRBox(0.30, 0.008, 0.07, 0.004, 1), M4.mul(BH, M4.trs(0, 0.904, -0.03)), SEATMAT.pyCover);
+  B.add(gRBox(0.27, 0.20, 0.008, 0.006, 1), M4.mul(BH, M4.trs(0, 0.795, -0.064)), SEATMAT.pyCover);
+  B.add(gRBox(0.27, 0.008, 0.07, 0.004, 1), M4.mul(BH, M4.trs(0, 0.904, -0.03)), SEATMAT.pyCover);
   B.add(gBox(0.50, 0.008, 0.006), M4.mul(BH, M4.trs(0, 0.04, zr(0.04) + 0.022)), SEATMAT.pyTrim);
   // fold-up leg rest (stowed below the pan front)
-  B.add(gLoft([SEC(0.0, 0.42, 0.05, 0, 0.018), SEC(0.30, 0.44, 0.055, 0, 0.02)], 3), M4.trs(x0, 0.10, -0.555, 0, -10 * DEG), F);
+  B.add(gLoft([SEC(0.0, 0.44, 0.05, 0, 0.018), SEC(0.30, 0.46, 0.06, 0, 0.022)], 3), M4.trs(x0, 0.07, -0.545, 0, -4 * DEG), F);
+  B.add(gRBox(0.46, 0.02, 0.05, 0.008, 1), M4.trs(x0, 0.075, -0.54), SEATMAT.pyArm);            // leg-rest foot bar
   if (lod) return;
   const on = (y, dz = 0, dx = 0) => M4.mul(BH, M4.trs(dx, y, zr(y) + dz));
   if (!opts.noScreen) {
@@ -232,11 +235,25 @@ function pyUnit(n, lod = false, opts = {}) {
   arms.forEach((xa, k) => {
     const inner = k > 0 && k < n;
     const w = inner ? 0.085 : 0.07;
-    B.add(gRBox(w - 0.01, 0.30, 0.46, 0.014, 1), M4.trs(xa, 0.48, -0.27), SEATMAT.pyArm);
-    loftAt(B, [SEC(0.63, w, 0.42, -0.27, 0.02), SEC(0.655, w + 0.004, 0.43, -0.27, 0.025), SEC(0.672, w - 0.004, 0.42, -0.27, 0.02)], M4.trs(xa, 0, 0), SEATMAT.pyArmPad, 2);
-    B.add(gBox(w - 0.004, 0.006, 0.42), M4.trs(xa, 0.628, -0.27), SEATMAT.pyTrim);
-    if (inner && !lod) {
-      // cocktail table + bottle holders, controls, AC + USB, gooseneck reading light
+    if (inner) {
+      // floor-standing console between seats: blue-grey body, silver trim round the top, cubbies + controls on
+      // its front face, red life-vest tab at the bottom (py_37301)
+      B.add(gRBox(w, 0.62, 0.52, 0.014, 1), M4.trs(xa, 0.31, -0.28), SEATMAT.pyArm);
+      loftAt(B, [SEC(0.62, w + 0.01, 0.53, -0.28, 0.02), SEC(0.645, w + 0.014, 0.54, -0.28, 0.025), SEC(0.665, w + 0.006, 0.53, -0.28, 0.02)], M4.trs(xa, 0, 0), SEATMAT.pyArmPad, 2);
+      B.add(gBox(w + 0.016, 0.008, 0.545), M4.trs(xa, 0.618, -0.28), SEATMAT.pyTrim);
+      if (!lod) {
+        for (const [y, h] of [[0.52, 0.07], [0.43, 0.07]]) B.add(gRBox(w - 0.02, h, 0.006, 0.006, 1), M4.trs(xa, y, -0.543), SEATMAT.pyShell);
+        B.add(gRBox(w - 0.03, 0.05, 0.004, 0.004, 1), M4.trs(xa, 0.33, -0.544), SEATMAT.black);
+        B.add(gBox(0.02, 0.07, 0.006), M4.trs(xa, 0.12, -0.545), { c: '#c8252b', r: 0.5 });
+      }
+    } else {
+      // aisle / window end: large rounded arm shroud from the floor with a silver strip low down (py_37301 / 37303)
+      const o = k === 0 ? -1 : 1;
+      B.add(gRBox(0.05, 0.64, 0.62, 0.025, 2), M4.trs(xa + o * 0.01, 0.32, -0.27), SEATMAT.pyShell);
+      loftAt(B, [SEC(0.62, w, 0.46, -0.27, 0.02), SEC(0.648, w + 0.006, 0.47, -0.27, 0.028), SEC(0.668, w - 0.004, 0.46, -0.27, 0.02)], M4.trs(xa, 0, 0), SEATMAT.pyArmPad, 2);
+      B.add(gBox(0.006, 0.012, 0.58), M4.trs(xa + o * 0.037, 0.13, -0.27, 0, 8 * DEG), SEATMAT.pyTrim);
+    }
+    if (inner && !lod) {      // cocktail table + bottle holders, controls, AC + USB, gooseneck reading light
       B.add(gRBox(w + 0.03, 0.012, 0.12, 0.004, 1), M4.trs(xa, 0.69, -0.02), SEATMAT.pyTrim);
       for (const s of [-1, 1]) B.add(gCyl(0.022, 0.022, 0.1, 12), M4.trs(xa + s * 0.018, 0.63, -0.02), SEATMAT.black);
       B.add(gRBox(0.05, 0.006, 0.08, 0.004, 1), M4.trs(xa, 0.676, -0.3), SEATMAT.black);
