@@ -11,8 +11,8 @@ S = 256
 # name: (photo, crop box in the 930x575 image, physical tile size in m (estimated from known seat widths in the same photo),
 #        optional rotation in degrees that straightens the grain before cropping)
 SW = {
-    'y_tick':      ('y_47306', (250, 362, 412, 556), 0.30),
-    'y_diamond':   ('y_47306', (48, 382, 162, 536), 0.21),
+    'y_tick':      ('y_47306', (250, 362, 412, 556), 0.16),
+    'y_diamond':   ('y_47306', (48, 382, 162, 536), 0.13),
     'py_back':     ('py_37305', (262, 442, 398, 566), 0.05),
     'py_confetti': ('py_37305', (238, 134, 326, 256), 0.07),
     'j_tweed':     ('c_27302', (112, 172, 238, 298), 0.24),
