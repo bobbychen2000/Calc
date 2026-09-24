@@ -316,7 +316,7 @@ class Scene {
     G.set('u_aoMin', this.ao.min);
     G.set('u_aoSize', this.ao.size);
     G.tex('u_detail', 2, this.tex.detail, gl.TEXTURE_2D_ARRAY);
-    const lp = new Float32Array(64);
+    const lp = new Float32Array(N_LAYERS * 4);
     for (const [kk, v] of Object.entries(LAYER_PARAMS)) lp.set(v, +kk * 4);
     G.set('u_layer', lp);
     G.tex('u_atlas', 3, this.tex.atlas);

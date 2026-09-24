@@ -29,7 +29,7 @@ uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_winGlow;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
-uniform sampler2DArray u_detail; uniform vec4 u_layer[16];
+uniform sampler2DArray u_detail; uniform vec4 u_layer[20];
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc;
