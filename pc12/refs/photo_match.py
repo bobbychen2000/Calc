@@ -1,8 +1,51 @@
 """
 refs.photo_match -- camera-match real PC-12 photos to out/pc12.glb and show where the model's cockpit
-glazing (and the nose around it) differs from the real aircraft.
+glazing (and the nose around it) differs from the real aircraft.  Findings: refs/PHOTO_MATCH.md.
 
-(work in progress -- full documentation at the end of the build)
+Pipeline (re-runnable; photos come from refs/cache/photos/ via refs/fetch_photos.py, everything written
+goes to the git-ignored out/tmp/photo_match/):
+  1. reference features  -- Reference(): 3-D points / curves of the REAL aircraft in MODEL coordinates:
+       * model points pinned by sourced dimensions (spinner tip, tail-bullet end, tailplane / winglet tips,
+         wheel centres: track 4.53),
+       * Pilatus drawing 190.10.40.432 features, evaluated at run time from refs/mbp.py (git-ignored cache):
+         cowling joints and the cowl split line, exhaust-stack outlet, airstair / cargo door outlines,
+         cabin windows, exit hatch, tailplane tips and LE, winglet top, wheel axle stations.  Side-view
+         (x, z) features are lifted onto the fuselage side with the model skin half-width (after
+         removing the drawing-vs-model crown offset).  No drawing coordinates are stored in this file.
+     The glazing itself is never used for the solve (it is what is being checked).
+  2. keypoints -- PHOTOS[...]: our own pixel measurements (corner-origin pixel coordinates of the cached
+     image), read off 2-6x zoomed crops with a pixel grid or from intensity profiles:
+       pts   {reference point: (u, v)}                 2-D constraints
+       on    [(reference curve, (u, v)), ...]          pixel lying ON a feature line (1-D constraint)
+       trace {glazing feature: [(u, v), ...]}          photo outlines to compare (never used in the solve)
+       auto_mask                                       dark-surround outline segmented from the image
+  3. camera -- Solver: DLT start (or a multi-start over view directions) + scipy least_squares (soft-L1)
+     over rotation vector, camera centre and focal length (square pixels, principal point at the image
+     centre unless free_pp), residuals scaled by image sigma (1.5 px x weight) combined with the 3-D
+     reference sigma projected at the point's depth; points beyond 4 sigma are rejected (reported).
+  4. render -- render/blender_ortho.py perspective mode (Blender 5 / Cycles, /opt/venv-blender) with the
+     solved camera, full frame and a cockpit crop, 'lines' and 'shaded'; overlays (model edges in magenta
+     on a dimmed photo, 50 % blend) with the model glass (cyan) and dark-surround (orange) outlines taken
+     vector-exact from the GLB, the Pilatus drawing glazing (dashed yellow) and the photo traces (dashed
+     green).  Renders are reused while the camera and the GLB are unchanged.
+  5. compare -- traced photo outlines are back-projected onto a reference skin (the model skin re-mapped
+     section by section onto the drawing's crown / keel / half-breadth, since the model's cabin sits lower)
+     and measured in model terms (side window sill / top / aft extreme / A-pillar angle, mask edges,
+     windshield sill / roof / post / outboard edge); image-space offsets to the model outlines in px and
+     mm at the feature depth; upper-silhouette (crown) offsets per image column (crown_check).
+     --jackknife re-solves every camera without each point keypoint and reports the largest change of
+     every measure (camera-solution sensitivity).
+
+CLI (from pc12/, system python3; Blender is launched in its own venv by render/blender_ortho.py):
+    python3 -m refs.photo_match                       # all photos -> out/tmp/photo_match/
+    python3 -m refs.photo_match --photos pro3010_rfds_port --no-render
+    python3 -m refs.photo_match --jackknife           # + leave-one-point-out sensitivity
+Outputs per photo <pid>: _keypoints.jpg (measured o vs reprojected +, curve samples), _render_{lines,shaded}.png
+(+ sidecar .json with P), _overlay_lines.jpg, _blend50.jpg, _ck_{photo,overlay,blend50,mosaic}.jpg,
+_model_terms.png (back-projected traces vs model outlines, side / plan projection), _camera.json;
+summary.json for all photos.
+
+Model coordinates: x = station aft of the datum, y = butt line (+ starboard), z = water line (ground 0).
 """
 from __future__ import annotations
 
@@ -790,6 +833,8 @@ PHOTOS["pro3010_rfds_port"] = dict(
                         (1225.7, 535.7), (1197.1, 535.0), (1175.7, 533.6), (1161.4, 528.6), (1156, 525)]},
     # black surround: dark region (max RGB < 75) around the glazing; outline kept where white skin borders it
     auto_mask=dict(box=(1000, 400, 1400, 580), max_rgb=75, min_lum=150),
+    # upper fuselage silhouette against the blue sky, cowling to door (photo vs model)
+    crown_check=dict(box=(700, 380, 1560, 620), step=10),
 )
 
 
@@ -840,8 +885,29 @@ PHOTOS["pro3001_stbd34_close"] = dict(
     on=[("cowl_joint_aft_stbd", uv) for uv in [(1300, 700), (1245, 775), (1200, 850), (1170, 925), (1152.5, 1000),
                                                (1147.5, 1075), (1146.5, 1150)]]
     + [("cowl_joint_fwd_stbd", uv) for uv in [(1770, 672.5), (1700, 765), (1665, 825), (1640, 897.5)]]
-    + [("cowl_split_stbd", uv) for uv in [(1250, 1171), (1400, 1167), (1550, 1163)]],
+    + [("cowl_split_stbd", uv) for uv in [(1250, 1171), (1400, 1167), (1550, 1163)]]
+    # tailplane leading edge seen from below-front: upper edge of the dark boot band against the sky
+    + [("stab_le_R", uv) for uv in [(100, 278), (300, 276), (500, 273)]]
+    + [("stab_le_L", uv) for uv in [(850, 276), (950, 280), (1050, 285)]],
     glazing_side=+1,
+    trace={
+        # windshield glass (inside the dark riveted frame), both panes seen almost face-on; image left = stbd
+        "ws_stbd": [(1162.5, 308.1), (1350, 289.4), (1475, 278.8), (1568.8, 273.8), (1643.0, 373.0), (1718.8, 473.8),
+                    (1631.3, 483.1), (1475, 508.1), (1287.5, 536.3), (1162.5, 570.6), (1150, 480), (1156.3, 355),
+                    (1162.5, 308.1)],
+        "ws_port": [(1650, 273.8), (1725, 276.9), (1850, 292.5), (1943.8, 317.5), (2006.3, 355), (2068.8, 411.3),
+                    (2125, 480), (2137.5, 517.5), (2037.5, 508), (1912.5, 489.4), (1812.5, 473.8), (1731, 373.0),
+                    (1650, 273.8)],
+        # starboard side-window glass, seen at ~10 deg grazing (x poorly determined; z usable)
+        "sw_glass": [(1106.7, 336), (1106.5, 400), (1106, 470), (1105, 540), (1103, 600), (1097, 618), (1085, 628),
+                     (1050, 650), (1015, 677), (970, 693), (930, 707), (890, 720), (862, 728), (872, 690),
+                     (880, 643), (887, 577), (902, 510), (927, 460), (950, 433), (977, 400), (1003, 377),
+                     (1030, 353), (1063, 340), (1106.7, 336)],
+        # outer (lower) edge of the dark surround below the windshield
+        "mask_lower": [(1137.5, 592.5), (1225, 580), (1350, 542.5), (1475, 523.8), (1662.5, 505), (1787.5, 498.8),
+                       (1975, 514.4), (2131, 523.8)],
+    },
+    ws_panes=("ws_stbd", "ws_port"),
 )
 
 PHOTOS["unk_top_front"] = dict(
@@ -859,14 +925,64 @@ PHOTOS["unk_top_front"] = dict(
         "exhaust_outboard_stbd": (2348.0, 2226.0),   # outboard extreme of the stack (plan): weight 2
         "exhaust_outboard_port": (2772.0, 2228.0),
     },
-    weights={"exhaust_outboard_stbd": 2.0, "exhaust_outboard_port": 2.0, "winglet_top_te_R": 3.0,
-             "winglet_top_te_L": 3.0},
+    weights={"exhaust_outboard_stbd": 2.0, "exhaust_outboard_port": 2.0, "winglet_top_te_R": 4.0,
+             "winglet_top_te_L": 4.0},
     # leading-edge boots: forward (lower-in-image) edge of the black band, from column intensity profiles
-    on=[("stab_le_R", uv) for uv in [(1920, 545), (2000, 550), (2100, 555), (2200, 561), (2300, 567), (2400, 572)]]
-    + [("stab_le_L", uv) for uv in [(2600, 575), (2700, 571), (2800, 568), (2900, 565), (3000, 562), (3100, 558)]]
-    + [("wing_le_R", uv) for uv in [(1200, 1877), (1400, 1905), (1600, 1932), (1800, 1960), (2000, 1985), (2150, 2005)]]
-    + [("wing_le_L", uv) for uv in [(2850, 2021), (3000, 2004), (3200, 1982), (3400, 1960), (3600, 1937), (3800, 1914)]],
+    on=[("stab_le_R", uv) for uv in [(2000, 550), (2100, 555), (2200, 561), (2300, 567), (2400, 572)]]
+    + [("stab_le_L", uv) for uv in [(2600, 575), (2700, 571), (2800, 568), (2900, 565), (3000, 562)]]
+    # cowling joints over the top of the nose (contrast-stretched crop): the forward joint's arc and the
+    # corners of the narrow top hinge panel that spans aft joint -> forward joint
+    + [("cowl_joint_fwd_top", uv) for uv in [(2445, 2120), (2500, 2096.7), (2560, 2089.3), (2620, 2093.3),
+                                              (2680, 2113.3), (2543, 2089), (2578, 2089)]]
+    + [("cowl_joint_aft_top", uv) for uv in [(2539.5, 1966.5), (2574.5, 1966.5)]],
+    # not used: wing LE boots (in-flight bending and the estimated dihedral make their WL uncertain)
+    unused_on=[("wing_le_R", uv) for uv in [(1200, 1877), (1400, 1905), (1600, 1932), (1800, 1960), (2000, 1985)]]
+    + [("wing_le_L", uv) for uv in [(3000, 2004), (3200, 1982), (3400, 1960), (3600, 1937), (3800, 1914)]],
     glazing_side=None,
+    trace={
+        # windshield glass seen from above-ahead (contrast-stretched crop); image left = stbd
+        "ws_stbd": [(2416.7, 1776), (2475, 1776), (2536, 1777), (2537, 1845), (2537, 1911), (2465, 1913),
+                    (2390, 1913.3), (2403, 1845), (2416.7, 1776)],
+        "ws_port": [(2571.7, 1777), (2620, 1777), (2660, 1776.7), (2688, 1845), (2716.7, 1916.7), (2640, 1915),
+                    (2571.7, 1913), (2571.7, 1845), (2571.7, 1777)],
+        # dark surround: roof band's upper edge and the lower band's lower edge across the nose
+        "mask_roof": [(2395, 1745), (2450, 1752), (2500, 1759), (2550, 1762), (2600, 1759), (2650, 1754), (2705, 1751)],
+        "mask_lower": [(2350, 1922), (2400, 1932), (2450, 1935), (2500, 1936), (2550, 1937), (2600, 1936), (2650, 1934),
+                       (2700, 1931), (2750, 1924)],
+    },
+    ws_panes=("ws_stbd", "ws_port"),
+)
+
+PHOTOS["ngx_kenia_stbd"] = dict(
+    file="ngx_kenia_stbd_pilatus.webp", variant="NGX (winglet reads 'PC-12 NGX'; stbd glazing = PRO)", side="stbd",
+    view="starboard near-broadside, ground level, gear static (grass strip); the only high-resolution "
+         "starboard broadside -- the PRO set lacks one",
+    pts={
+        "spinner_tip": (3108.75, 1740.0),
+        "exhaust_out_stbd": (2841.0, 1732.5),
+        "cowl_T_aft_stbd": (2672.5, 1750.8),
+        "cowl_T_fwd_stbd": (2828.0, 1750.5),
+        "nose_hub_R": (2696.5, 1975.0),          # hub centre on the starboard face
+        "main_axle_R": (2056.0, 1953.0),         # near wheel, hub disc centre (outboard face): weight 3
+        "main_axle_L": (2185.0, 1954.0),         # far wheel seen under the belly: weight 3
+        "stbd_win_1": (2285.8, 1652.5),
+        "stbd_win_2": (2149.2, 1654.2),          # window in the Type III exit
+    },
+    weights={"nose_hub_R": 2.0, "main_axle_R": 3.0, "main_axle_L": 3.0, "exhaust_out_stbd": 2.0},
+    on=[("cowl_joint_aft_stbd", uv) for uv in [(2678.5, 1662), (2675.5, 1690), (2674, 1720), (2673, 1745)]]
+    + [("cowl_joint_fwd_stbd", uv) for uv in [(2835, 1675), (2832, 1700), (2830, 1725)]]
+    + [("cowl_split_stbd", uv) for uv in [(2720, 1750.7), (2780, 1750.6)]]
+    + [("exit_hatch", uv) for uv in [(2130, 1601), (2150, 1601), (2175, 1602), (2111, 1640), (2192, 1640)]],
+    glazing_side=+1,
+    trace={
+        # starboard side-window glass: outer edge of the bright rim, closed, from the bottom-front corner
+        "sw_glass": [(2590, 1657.5), (2572, 1645.2), (2548, 1628.7), (2525, 1612.9), (2505, 1599.2), (2490, 1600),
+                     (2475, 1602), (2460, 1604.2), (2455, 1610), (2452.5, 1621.7), (2451.7, 1635), (2452.5, 1648),
+                     (2456, 1656), (2463, 1662), (2475, 1665.5), (2500, 1665.8), (2540, 1665.8), (2570, 1665.5),
+                     (2582, 1663), (2590, 1657.5)],
+    },
+    auto_mask=dict(box=(2380, 1560, 2680, 1700), max_rgb=75, min_lum=140),
+    crown_check=dict(box=(1900, 1540, 3060, 1720), step=10, sky_tol=35),
 )
 
 # =============================================================================================
@@ -945,6 +1061,40 @@ def _font(size):
         except Exception:
             pass
     return ImageFont.load_default()
+
+
+def legend(img, pid, blend=False):
+    from PIL import ImageDraw
+    dr = ImageDraw.Draw(img)
+    k = max(1.0, img.width / 1800)
+    f = _font(int(15 * k))
+    rows = ([("50 % blend: photo + model (shaded, glass tinted)", (255, 255, 255))] if blend else
+            [("model edges (Blender 'lines' render)", COL["model"])])
+    rows += [("model glass outline (GLB)", COL["glass"]), ("model dark-surround outline (GLB)", COL["mask"]),
+             ("Pilatus drawing glazing (NGX sheet), dashed", COL["dwg"]), ("photo traces, dashed", COL["trace"])]
+    x, y = 10 * k, 10 * k
+    w = 430 * k
+    dr.rectangle([x - 5 * k, y - 5 * k, x + w, y + 22 * k * (len(rows) + 1)], fill=(0, 0, 0))
+    dr.text((x, y), f"{pid}  (camera-matched; see PHOTO_MATCH.md)", fill=(255, 255, 255), font=f)
+    for i, (t, c) in enumerate(rows, 1):
+        yy = y + 22 * k * i
+        dr.line([(x, yy + 9 * k), (x + 30 * k, yy + 9 * k)], fill=c, width=int(3 * k))
+        dr.text((x + 40 * k, yy), t, fill=(255, 255, 255), font=f)
+
+
+def mosaic_ck(out_dir, pid):
+    """photo crop | overlay | blend, side by side (scaled to 1100 px high max)."""
+    from PIL import Image
+    ims = [Image.open(out_dir / f"{pid}_{n}.jpg") for n in ("ck_photo", "ck_overlay", "ck_blend50")]
+    h = min(900, ims[0].height)
+    ims = [im.resize((int(im.width * h / im.height), h), Image.LANCZOS) for im in ims]
+    W = sum(im.width for im in ims) + 20
+    M = Image.new("RGB", (W, h), "white")
+    x = 0
+    for im in ims:
+        M.paste(im, (x, 0))
+        x += im.width + 10
+    M.save(out_dir / f"{pid}_ck_mosaic.jpg", quality=88)
 
 
 def draw_polyline(dr, uv, color, width=2, dash=None, closed=False):
@@ -1109,8 +1259,6 @@ def draw_diagnostics(ctx, pid, cam, S, out):
     lw = max(1, int(round(1.5 * k)))
     dr = ImageDraw.Draw(im)
     fnt = _font(int(13 * k))
-    for c, uv in S.on:
-        pass
     drawn = set()
     for c, _ in S.on:
         if c in drawn:
@@ -1230,12 +1378,20 @@ def process(ctx, pid, do_render=True, out_dir=None, samples=16, verbose=True, re
     crop = photo.crop(box).resize((ccam.W, ccam.H), Image.LANCZOS)
     crop.save(out_dir / f"{pid}_ck_photo.jpg", quality=92)
     tr = {k: (np.asarray(v, float) - box[:2]) * cs for k, v in trace.items()}
-    ov = ink_overlay(crop, out_dir / f"{pid}_ck_render_lines.png", dim=0.7)
+    ov = ink_overlay(crop, out_dir / f"{pid}_ck_render_lines.png", dim=0.85, alpha=0.8)
     draw_vectors(ctx, ov, ccam, tr, width=2)
+    legend(ov, pid)
     ov.save(out_dir / f"{pid}_ck_overlay.jpg", quality=92)
     bl = blend(crop, out_dir / f"{pid}_ck_render_shaded.png")
     draw_vectors(ctx, bl, ccam, tr, width=2)
+    legend(bl, pid, blend=True)
     bl.save(out_dir / f"{pid}_ck_blend50.jpg", quality=92)
+    mosaic_ck(out_dir, pid)
+    plot_model_terms(ctx, pid, res, out_dir / f"{pid}_model_terms.png")
+    cc = crown_check(ctx, pid, cam, photo, out_dir / f"{pid}_render_lines.png")
+    if cc:
+        res["crown_check"] = cc
+    (out_dir / f"{pid}_camera.json").write_text(json.dumps(res, indent=1, default=float))
     return res, cam, ccam
 
 
@@ -1264,12 +1420,14 @@ def dark_region(img, box, max_rgb=75, seed=None, close=2):
     return out
 
 
-def region_outline(img, M, min_lum=150, step=2.0, probe=3.0):
+def region_outline(img, M, min_lum=150, step=2.0, probe=3.0, max_chroma=40):
     """Outline of mask M (corner-origin pixel coords) where the pixels just outside are bright
     (painted skin) -> list of polylines."""
     import contourpy
     from scipy import ndimage
     L = np.asarray(img.convert("L"), np.float32)
+    A = np.asarray(img.convert("RGB"), np.int16)
+    Ch = (A.max(-1) - A.min(-1)).astype(np.float32)          # chroma: sky (blue / sunset) is not "skin"
     Ms = ndimage.gaussian_filter(M.astype(np.float32), 1.0)
     gy, gx = np.gradient(Ms)
     cg = contourpy.contour_generator(z=Ms, line_type="Separate")
@@ -1289,7 +1447,7 @@ def region_outline(img, M, min_lum=150, step=2.0, probe=3.0):
         pr = Q - probe * g                       # outside (gradient points into the region)
         px = np.clip(np.round(pr[:, 0]).astype(int), 0, M.shape[1] - 1)
         py = np.clip(np.round(pr[:, 1]).astype(int), 0, M.shape[0] - 1)
-        ok = L[py, px] > min_lum
+        ok = (L[py, px] > min_lum) & (Ch[py, px] < max_chroma)
         Q = Q + 0.5                              # pixel-centre index -> corner-origin coordinate
         cur = []
         for q, o in zip(Q, ok):
@@ -1374,6 +1532,27 @@ def measure_side_outline(P):
     return out
 
 
+def measure_ws(P):
+    """Windshield pane outline (one side) in MODEL coordinates -> post / outboard butt lines, sill and roof
+    edge stations and WLs (plan-view WS_PLAN terms)."""
+    P = P[np.isfinite(P).all(1)]
+    if len(P) < 6:
+        return {}
+    ay = np.abs(P[:, 1])
+    inb = P[ay < ay.min() + 0.012]
+    i_s = np.argmin(P[:, 0])
+    i_r = np.argmax(P[:, 0])
+    sill = P[P[:, 0] < P[i_s, 0] + 0.03]
+    roof = P[P[:, 0] > P[i_r, 0] - 0.03]
+    near = P[ay < ay.min() + 0.10]
+    io = np.argmax(ay)
+    return dict(post_half_width=float(np.median(np.abs(inb[:, 1]))), outboard_y=float(ay.max()),
+                roof_x_inboard=float(near[:, 0].max()), x_at_outboard=float(P[io, 0]),
+                sill_x=float(P[i_s, 0]), sill_z=float(np.median(sill[:, 2])), roof_x=float(P[i_r, 0]),
+                roof_z=float(np.median(roof[:, 2])), inboard_len=float(np.ptp(inb[:, 0])) if len(inb) > 1 else None,
+                z_min=float(P[:, 2].min()), z_max=float(P[:, 2].max()))
+
+
 def model_outline_pts(ctx, key, side=None, cam=None):
     A, B = ctx.mg[key]
     P = np.vstack([A, B])
@@ -1425,6 +1604,29 @@ def compare(ctx, pid, cam, photo):
                                    hit_frac=float(np.isfinite(X[:, 0]).mean()),
                                    X=np.round(X, 4).tolist(), d_px=np.round(d, 2).tolist(),
                                    d_mm=np.round(mm, 1).tolist())
+    # windshield panes: plan / front measures (photo pane outline back-projected vs model pane outline)
+    for name in ph.get("ws_panes", ()):
+        if name not in res["traces"]:
+            continue
+        sgn = +1 if name.endswith("stbd") else -1
+        Pp = np.asarray(res["traces"][name]["X"], float)
+        Pm = model_outline_pts(ctx, "ws", sgn)
+        res["measures"][name] = dict(photo=measure_ws(Pp), model=measure_ws(Pm))
+    for name in ("mask_lower", "mask_roof"):
+        if name in res["traces"]:
+            Pp = np.asarray(res["traces"][name]["X"], float)
+            Pp = Pp[np.isfinite(Pp).all(1)]
+            Pm = model_outline_pts(ctx, "mask", None, cam)
+            Pm = Pm[(np.abs(Pm[:, 1]) < 0.35) & (Pm[:, 0] < 4.0)]
+            c = np.abs(Pp[:, 1]) < 0.15 if len(Pp) else np.zeros(0, bool)
+            pm = Pm[np.abs(Pm[:, 1]) < 0.15]
+            # model: forward-most (lower band) / aft-most (roof band) outer mask boundary near the centre line
+            j = (np.argmin(pm[:, 0]) if name == "mask_lower" else np.argmax(pm[:, 0])) if len(pm) else None
+            res["measures"][name] = dict(
+                photo=dict(x_at_centre=float(np.median(Pp[c, 0])) if c.any() else None,
+                           z_at_centre=float(np.median(Pp[c, 2])) if c.any() else None),
+                model=dict(x_at_centre=float(pm[j, 0]) if j is not None else None,
+                           z_at_centre=float(pm[j, 2]) if j is not None else None))
     # side-view measures of the side window glass and the mask outline
     if side is not None:
         sw = [k for k in traces if k.startswith("sw")]
@@ -1432,12 +1634,50 @@ def compare(ctx, pid, cam, photo):
             Pp = np.vstack([np.asarray(res["traces"][k]["X"], float) for k in sw])
             res["measures"]["side_window"] = dict(photo=measure_side_outline(Pp),
                                                   model=measure_side_outline(model_outline_pts(ctx, "sw", side)))
-        mk = [k for k in traces if k.startswith("mask")]
+        mk = [k for k in traces if k.startswith("mask") and not k.startswith(("mask_lower", "mask_roof"))]
         if mk:
             Pp = np.vstack([np.asarray(res["traces"][k]["X"], float) for k in mk])
             Pm = model_outline_pts(ctx, "mask", side, cam)
             res["measures"]["mask_side"] = dict(photo=_mask_measures(Pp, side), model=_mask_measures(Pm, side))
     return res
+
+
+def crown_check(ctx, pid, cam, photo, lines_png, out_png=None):
+    """Upper silhouette of the fuselage: photo (first non-sky pixel from the top, sky = blue) vs model
+    (first ink pixel of the 'lines' render) per image column; offsets converted to mm at the depth of the
+    model's upper silhouette point (back-projected onto the model skin)."""
+    from PIL import Image
+    cfg = PHOTOS[pid].get("crown_check")
+    if not cfg:
+        return None
+    A = np.asarray(photo.convert("RGB"), np.int16)
+    L = np.asarray(Image.open(lines_png).convert("L").resize(photo.size, Image.BILINEAR), np.float32)
+    u0, v0, u1, v1 = cfg["box"]                          # (left, top, right, bottom) like PIL boxes
+    # topmost projected skin vertex per column gives the model silhouette point (and its depth)
+    V = select(ctx.prims, ["fus_fwd", "fus_center", "cowl_upper", "glazing_flightdeck"])[0]
+    q, zc = cam.project(V, True)
+    rows = []
+    for u in range(u0, u1, cfg.get("step", 10)):
+        col = A[v0:v1, u].astype(np.float32)
+        ref = np.median(col[:5], axis=0)                    # sky colour at the top of the search box
+        far = np.linalg.norm(col - ref, axis=1) > cfg.get("sky_tol", 40)
+        run = np.convolve(far.astype(int), np.ones(3, int), "valid") == 3
+        nz = np.where(run)[0]
+        if not len(nz):
+            continue
+        vp = v0 + nz[0]
+        ink = np.where(L[v0:v1, u] < 128)[0]
+        if not len(ink):
+            continue
+        vm = v0 + ink[0]
+        m = np.abs(q[:, 0] - (u + 0.5)) < 1.5
+        if not m.any():
+            continue
+        j = np.where(m)[0][np.argmin(q[m, 1])]
+        X, depth = V[j], float(zc[j])
+        rows.append(dict(u=u, v_photo=int(vp), v_model=int(vm), x_model=float(X[0]), z_model=float(X[2]),
+                         dv_px=int(vm - vp), dz_mm=float((vm - vp) * depth / cam.f * 1000)))
+    return rows
 
 
 def _mask_measures(P, side):
@@ -1461,8 +1701,228 @@ def _mask_measures(P, side):
                    aft_z_top=float(z1), aft_z_bottom=float(z0))
     mid = P[(P[:, 0] > 3.8) & (P[:, 0] < xa - 0.1)]
     if len(mid):
-        xb = np.round(mid[:, 0] / 0.02)
-        lo = np.array([mid[xb == k, 2].min() for k in np.unique(xb)])
-        hi = np.array([mid[xb == k, 2].max() for k in np.unique(xb)])
-        out.update(bottom_z=float(np.median(lo)), top_z=float(np.median(hi)))
+        zc = 0.5 * (P[:, 2].min() + P[:, 2].max())
+        lo, hi = mid[mid[:, 2] < zc], mid[mid[:, 2] > zc]
+        if len(lo):
+            out["bottom_z"] = float(np.median(lo[:, 2]))
+        if len(hi):
+            out["top_z"] = float(np.median(hi[:, 2]))
     return out
+
+
+# =============================================================================================
+# 9. model-terms plots (side view x-z / plan view x-y) of the back-projected photo traces
+# =============================================================================================
+def plot_model_terms(ctx, pid, res, out_png):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    ph = PHOTOS[pid]
+    cmp_ = res["compare"]
+    side = ph.get("glazing_side")
+    panes = ph.get("ws_panes", ())
+    views = []
+    if side is not None:
+        views.append(("side", side))
+    if panes:
+        views.append(("plan", None))
+    if not views:
+        return None
+    fig, axs = plt.subplots(1, len(views), figsize=(9 * len(views), 5.2), squeeze=False)
+    for ax, (v, sd) in zip(axs[0], views):
+        ia, ib = (0, 2) if v == "side" else (0, 1)
+
+        def segs(key, col, lw, lab, side_=None):
+            A, B = ctx.mg[key]
+            m = np.ones(len(A), bool) if side_ is None else side_ * A[:, 1] > 0.02
+            if v == "plan":
+                m &= A[:, 0] < 4.0
+            for i, (a, b) in enumerate(zip(A[m], B[m])):
+                ax.plot([a[ia], b[ia]], [a[ib], b[ib]], color=col, lw=lw, label=lab if i == 0 else None)
+        if v == "side":
+            segs("sw", "tab:cyan", 1.2, "model side-window glass", sd)
+            segs("mask", "tab:orange", 1.2, "model dark surround", sd)
+            segs("ws", "tab:blue", 1.0, "model windshield", sd)
+        else:
+            segs("ws", "tab:blue", 1.2, "model windshield glass")
+            segs("mask", "tab:orange", 1.0, "model dark surround")
+        g = getattr(ctx.ref, "glazing", {}) or {}
+        for k, P in g.items():
+            if v == "side" and not k.endswith("port" if sd < 0 else "stbd"):
+                continue
+            if v == "plan" and not k.startswith("ws"):
+                continue
+            ax.plot(P[:, ia], P[:, ib], "--", color="goldenrod", lw=1.0,
+                    label="Pilatus drawing (lifted)" if k.startswith(("sw", "ws")) and "dwg" not in ax.get_legend_handles_labels()[1] else None)
+        for name, t in cmp_["traces"].items():
+            X = np.asarray(t["X"], float)
+            X = X[np.isfinite(X).all(1)]
+            if v == "side" and not (name.startswith(("sw", "mask")) and not name.startswith(("mask_lower", "mask_roof"))):
+                continue
+            if v == "plan" and not name.startswith(("ws", "mask_lower", "mask_roof")):
+                continue
+            ax.plot(X[:, ia], X[:, ib], ".", ms=2.5, color="green" if not name.startswith("mask") else "black",
+                    label=f"photo: {name}")
+        ax.set_aspect("equal")
+        ax.grid(True, lw=0.3)
+        ax.set_xlabel("STA x [m]")
+        ax.set_ylabel("WL z [m]" if v == "side" else "BL y [m] (+ stbd)")
+        ax.set_title(f"{pid}: {'side projection' if v == 'side' else 'plan projection'} (photo traces back-projected)")
+        if v == "side":
+            ax.set_xlim(3.0, 4.7); ax.set_ylim(1.85, 2.75)
+        else:
+            ax.set_xlim(3.0, 4.2); ax.set_ylim(-0.9, 0.9)
+        h, l = ax.get_legend_handles_labels()
+        uniq = dict(zip(l, h))
+        ax.legend(uniq.values(), uniq.keys(), fontsize=7, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(out_png, dpi=110)
+    plt.close(fig)
+    return out_png
+
+
+# =============================================================================================
+# 10. driver
+# =============================================================================================
+def plot_consensus(ctx, out_dir):
+    """All photos' back-projected glazing traces in one side projection (port side mirrored to +y) and
+    one plan projection, over the model outlines -> consensus_side.png, consensus_plan.png."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    out_dir = Path(out_dir)
+    runs = {}
+    for pid in PHOTOS:
+        f = out_dir / f"{pid}_camera.json"
+        if f.exists():
+            runs[pid] = json.loads(f.read_text())["compare"]["traces"]
+    cols = dict(zip(PHOTOS, ["tab:green", "tab:purple", "tab:brown", "tab:red", "tab:olive", "tab:gray"]))
+    reliable_side = {"pro3010_rfds_port", "pro3066_port34", "ngx_kenia_stbd"}
+    for view in ("side", "plan"):
+        fig, ax = plt.subplots(figsize=(11, 6.2))
+        ia, ib = (0, 2) if view == "side" else (0, 1)
+        for key, col, lab in (("sw", "tab:cyan", "model side-window glass"), ("mask", "tab:orange", "model dark surround"),
+                              ("ws", "tab:blue", "model windshield glass")):
+            A, B = ctx.mg[key]
+            m = A[:, 1] > 0.02 if view == "side" else A[:, 0] < 4.05
+            for i, (a, b) in enumerate(zip(A[m], B[m])):
+                ax.plot([a[ia], b[ia]], [a[ib], b[ib]], color=col, lw=1.3, label=lab if i == 0 else None)
+        for pid, tr in runs.items():
+            for name, t in tr.items():
+                X = np.asarray(t["X"], float)
+                X = X[np.isfinite(X).all(1)]
+                if not len(X):
+                    continue
+                if view == "side":
+                    if not name.startswith(("sw", "mask")) or name.startswith(("mask_lower", "mask_roof")):
+                        continue
+                    if pid not in reliable_side:
+                        continue
+                    X = X[np.abs(X[:, 1]) > 0.3]
+                else:
+                    if not name.startswith(("ws", "mask_lower", "mask_roof")):
+                        continue
+                mk = "." if name.startswith(("sw", "ws")) else "x"
+                ax.plot(X[:, ia], X[:, ib], mk, ms=2.2, color=cols.get(pid, "k"),
+                        label=f"{pid} ({'glass' if mk == '.' else 'mask'})")
+        ax.set_aspect("equal")
+        ax.grid(True, lw=0.3)
+        ax.set_xlabel("STA x [m]")
+        if view == "side":
+            ax.set_ylabel("WL z [m]"); ax.set_xlim(3.1, 4.65); ax.set_ylim(1.9, 2.7)
+            ax.set_title("Side projection: photo glass / dark-surround outlines back-projected (both sides) vs model")
+        else:
+            ax.set_ylabel("BL y [m] (+ stbd)"); ax.set_xlim(3.1, 4.25); ax.set_ylim(-0.85, 0.85)
+            ax.set_title("Plan projection: photo windshield panes / mask bands back-projected vs model")
+        h, l = ax.get_legend_handles_labels()
+        u = dict(zip(l, h))
+        ax.legend(u.values(), u.keys(), fontsize=7, loc="upper left" if view == "side" else "lower right",
+                  markerscale=3)
+        fig.tight_layout()
+        fig.savefig(out_dir / f"consensus_{view}.png", dpi=120)
+        plt.close(fig)
+
+
+def _fmt_measures(m):
+    lines = []
+    for feat, v in m.items():
+        ph, mo = v.get("photo") or {}, v.get("model") or {}
+        for k in sorted(set(ph) | set(mo)):
+            a, b = ph.get(k), mo.get(k)
+            if a is None or b is None:
+                continue
+            unit = "deg" if k.endswith("deg") else "m"
+            d = (b - a) if unit == "deg" else 1000 * (b - a)
+            lines.append(f"  {feat:13s} {k:17s} photo {a:8.3f}  model {b:8.3f}  model-photo {d:+7.1f} "
+                         f"{'deg' if unit == 'deg' else 'mm'}")
+    return lines
+
+
+def jackknife(ctx, pid, base_measures):
+    """Leave-one-point-out re-solves: max |change| of every measure (camera-solution sensitivity)."""
+    from PIL import Image
+    ph = PHOTOS[pid]
+    photo = Image.open(PHOTO_DIR / ph["file"]).convert("RGB")
+    W, H = photo.size
+    spread = {}
+    for drop in ph["pts"]:
+        pts = {k: v for k, v in ph["pts"].items() if k != drop}
+        S = Solver(ctx.ref, W, H, pts, ph.get("on", ()), sigma_px=ph.get("sigma_px", 1.5),
+                   free_pp=ph.get("free_pp", False), weights=ph.get("weights"))
+        cam = S.solve(reject_sigma=ph.get("reject_sigma", 4.0))
+        m = compare(ctx, pid, cam, photo)["measures"]
+        for feat, v in m.items():
+            for k, a in (v.get("photo") or {}).items():
+                b = ((base_measures.get(feat) or {}).get("photo") or {}).get(k)
+                if a is None or b is None:
+                    continue
+                d = abs(a - b) * (1 if k.endswith("deg") else 1000)
+                key = f"{feat}.{k}"
+                if d >= spread.get(key, (0, ""))[0]:
+                    spread[key] = (round(d, 1), drop)
+    return spread
+
+
+def main(argv=None):
+    import argparse
+    import time
+    ap = argparse.ArgumentParser(prog="python3 -m refs.photo_match", description=__doc__.strip().split("\n")[0])
+    ap.add_argument("--photos", default=",".join(PHOTOS), help="comma-separated photo keys (default: all)")
+    ap.add_argument("--no-render", action="store_true", help="solve, trace and measure only (no Blender)")
+    ap.add_argument("--force-render", action="store_true", help="re-render even if the camera is unchanged")
+    ap.add_argument("--no-drawing", action="store_true", help="model-only reference points (no Pilatus drawing)")
+    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--list", action="store_true", help="list photos and reference features, then exit")
+    ap.add_argument("--jackknife", action="store_true",
+                    help="also re-solve each camera without each point keypoint and report the measure spread")
+    a = ap.parse_args(argv)
+    if a.list:
+        for k, ph in PHOTOS.items():
+            print(f"{k:24s} {ph['file']:40s} {ph['variant']}: {ph['view']}")
+        return 0
+    t0 = time.time()
+    ctx = Context(use_drawing=not a.no_drawing)
+    out = Path(a.out)
+    summary = {}
+    for pid in [p.strip() for p in a.photos.split(",") if p.strip()]:
+        res, cam, _ = process(ctx, pid, do_render=not a.no_render, out_dir=out, reuse=not a.force_render)
+        if a.no_render:
+            plot_model_terms(ctx, pid, res, out / f"{pid}_model_terms.png")
+        rep = res["report"]
+        summary[pid] = dict(file=res["file"], camera=res["camera_text"], rms_px=rep["rms_px"],
+                            rms_pt_px=rep["rms_pt_px"], n_points=rep["n_pt"], n_constraints=rep["n_used"],
+                            rejected=rep["rejected"], measures=res["compare"]["measures"],
+                            residuals=[(r["name"], round(r["err_px"], 1), round(r["sigma_px"], 1), r["used"])
+                                       for r in rep["rows"]],
+                            crown_check=res.get("crown_check"))
+        if a.jackknife:
+            summary[pid]["jackknife"] = jackknife(ctx, pid, res["compare"]["measures"])
+        print("\n".join(_fmt_measures(res["compare"]["measures"])))
+    (out / "summary.json").write_text(json.dumps(summary, indent=1, default=float))
+    plot_consensus(ctx, out)
+    print(f"done in {time.time() - t0:.0f} s -> {out}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

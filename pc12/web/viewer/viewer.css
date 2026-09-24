@@ -177,9 +177,10 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 .chips button { font: 11.5px var(--mono); padding: 2px 7px; min-height: 24px; border-radius: 999px; }
 .step-list { position: relative; list-style: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain;
   border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-#pane-build > .step-list { flex: 0 1 auto; min-height: 96px; }
-/* on short panels (small window, info card open) the step text shrinks first and scrolls itself */
-#pane-build > .step-now { flex: 0 3 auto; min-height: 64px; overflow-y: auto; margin: 10px 0; }
+/* the list gives way first (down to 3 rows); only then does the step text shrink and scroll itself
+   (short windows, info card open) */
+#pane-build > .step-list { flex: 0 1000 auto; min-height: 96px; }
+#pane-build > .step-now { flex: 0 1 auto; min-height: 64px; overflow-y: auto; margin: 10px 0; }
 .step-list li { margin: 0; }
 .step-list button {
   width: 100%; text-align: left; border: 0; border-radius: 6px; background: none; padding: 6px 8px;

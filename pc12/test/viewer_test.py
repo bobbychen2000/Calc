@@ -108,9 +108,10 @@ async def launch(pw):
         return await pw.chromium.launch(args=LAUNCH_ARGS)
     except Exception as first:
         base = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/opt/pw-browsers")
-        cands = sorted(glob.glob(f"{base}/chromium_headless_shell-*/chrome-linux*/headless_shell"))
-        cands += sorted(glob.glob(f"{base}/chromium-*/chrome-linux*/chrome"))
-        for c in reversed(cands):
+        # newest first; the headless shell (Playwright's default headless binary) before full Chromium
+        cands = sorted(glob.glob(f"{base}/chromium_headless_shell-*/chrome-linux*/headless_shell"), reverse=True)
+        cands += sorted(glob.glob(f"{base}/chromium-*/chrome-linux*/chrome"), reverse=True)
+        for c in cands:
             try:
                 return await pw.chromium.launch(executable_path=c, args=LAUNCH_ARGS)
             except Exception:
@@ -1084,10 +1085,14 @@ async def run(args):
             errors, failed = [], []
             page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
             page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
-            page.on("requestfailed", lambda r: failed.append(f"{r.url} ({r.failure}) at {time.time() - t0:.1f} s"))
-            page.on("request", lambda r: print(f"[t] request {r.url} {r.resource_type} {time.time() - t0:.2f}") if ".glb" in r.url or ".json" in r.url else None)
-            page.on("requestfinished", lambda r: print(f"[t] finished {r.url} {time.time() - t0:.2f}") if ".glb" in r.url else None)
-            page.on("response", lambda r: failed.append(f"{r.url} HTTP {r.status}") if r.status >= 400 else None)
+            # full Chromium sometimes reports a streamed fetch that was read to the end (the GLB, read
+            # through three's progress reader) as net::ERR_ABORTED after a 200 response; the original
+            # viewer does the same.  Only count it when no successful response arrived (a truncated GLB
+            # would fail the load / Blender box checks anyway).
+            ok_resp = set()
+            page.on("response", lambda r: ok_resp.add(r.url) if r.status < 400 else failed.append(f"{r.url} HTTP {r.status}"))
+            page.on("requestfailed", lambda r: None if (r.failure == "net::ERR_ABORTED" and r.url in ok_resp)
+                    else failed.append(f"{r.url} ({r.failure}) at {time.time() - t0:.1f} s"))
             await page.goto(base)
             await page.wait_for_function("window.__ready === true", timeout=180000)
             err = await page.evaluate("window.__error || ''")
@@ -1100,11 +1105,8 @@ async def run(args):
             await fit_check(page, "960x600 3/4", refit_panel=True)
             if not args.no_shots:
                 await screenshots(page)
-            print(f"[t] numeric start {time.time() - t0:.1f}")
             await numeric_checks(page)
-            print(f"[t] regression start {time.time() - t0:.1f}")
             await regression_checks(page)
-            print(f"[t] regression end {time.time() - t0:.1f}")
             if args.blender:
                 await blender_check(page)
             check("no console errors / page errors", not errors, "; ".join(errors[:4]))
