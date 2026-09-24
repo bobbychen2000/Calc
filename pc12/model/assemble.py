@@ -50,6 +50,19 @@ MATERIALS = {
     "lens":          ((0.85, 0.87, 0.90, 0.5), 0.0, 0.05),
     "inlet_dark":    ((0.02, 0.02, 0.025), 0.0, 0.9),
     "composite":     ((0.20, 0.21, 0.22), 0.1, 0.55),
+    # ---- livery: PC-12 PRO MSN 3008 (N81DW) scheme.  Linear base colours of the sRGB design colours in
+    # model/livery.PALETTE (livery.check_materials() compares); 'paint_*' + 'trim_black' are primed by the
+    # viewer until its paint step, the polished metal and propeller colours are not.  The first model's
+    # paint_white / paint_belly / paint_accent / paint_stripe stay for the parts not yet repainted.
+    "paint_blue":       ((0.0110, 0.0529, 0.2831), 0.6, 0.3),    # sRGB #1B4191 deep metallic blue (base)
+    "paint_blue_light": ((0.2086, 0.3467, 0.5972), 0.6, 0.3),    # sRGB #7E9FCB light metallic blue
+    "paint_pinstripe":  ((0.8879, 0.8963, 0.8632), 0.05, 0.25),  # sRGB #F2F3EF white pinstripes / swooshes
+    "paint_navy":       ((0.0052, 0.0123, 0.0467), 0.4, 0.3),    # sRGB #101D3D navy pinstripe
+    "paint_wing_dark":  ((0.0123, 0.0185, 0.0331), 0.5, 0.35),   # sRGB #1D2533 wing lower surfaces
+    "paint_silver":     ((0.4020, 0.4342, 0.4678), 0.7, 0.3),    # sRGB #AAB0B6 tailplane
+    "paint_black":      ((0.0080, 0.0091, 0.0110), 0.0, 0.25),   # sRGB #16181B radar-pod radome
+    "exhaust_polished": ((0.6240, 0.5583, 0.4564), 1.0, 0.18),   # sRGB #CFC5B4 polished exhaust stacks
+    "prop_band_red":    ((0.5520, 0.0194, 0.0123), 0.0, 0.4),    # sRGB #C4261D propeller red band
 }
 
 

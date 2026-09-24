@@ -1,0 +1,147 @@
+{
+ "sheet": "L5",
+ "size": "A1",
+ "sheet_mm": [
+  841.0,
+  594.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "port": {
+   "name": "port",
+   "axes": "xz",
+   "A": [
+    [
+     33.333333333333336,
+     0.0
+    ],
+    [
+     0.0,
+     -33.333333333333336
+    ]
+   ],
+   "t": [
+    35.0,
+    164.0
+   ],
+   "scale": 30.0,
+   "box": [
+    0.2,
+    -0.1,
+    15.0,
+    4.4
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "starboard": {
+   "name": "starboard",
+   "axes": "xz",
+   "A": [
+    [
+     -33.333333333333336,
+     0.0
+    ],
+    [
+     0.0,
+     -33.333333333333336
+    ]
+   ],
+   "t": [
+    541.0,
+    346.0
+   ],
+   "scale": 30.0,
+   "box": [
+    0.2,
+    -0.1,
+    15.0,
+    4.4
+   ],
+   "note": "seen from starboard, nose right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "plan_upper": {
+   "name": "plan_upper",
+   "axes": "xy",
+   "A": [
+    [
+     20.0,
+     0.0
+    ],
+    [
+     0.0,
+     -20.0
+    ]
+   ],
+   "t": [
+    529.2,
+    183.0
+   ],
+   "scale": 50.0,
+   "box": [
+    0.2,
+    0.0,
+    15.0,
+    8.3
+   ],
+   "note": "seen from above, starboard up",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "plan_lower": {
+   "name": "plan_lower",
+   "axes": "xy",
+   "A": [
+    [
+     20.0,
+     0.0
+    ],
+    [
+     0.0,
+     20.0
+    ]
+   ],
+   "t": [
+    529.2,
+    183.0
+   ],
+   "scale": 50.0,
+   "box": [
+    0.2,
+    0.0,
+    15.0,
+    8.3
+   ],
+   "note": "starboard half seen from below (mirror of the upper half about the centre line)",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "front": {
+   "name": "front",
+   "axes": "yz",
+   "A": [
+    [
+     -33.333333333333336,
+     0.0
+    ],
+    [
+     0.0,
+     -33.333333333333336
+    ]
+   ],
+   "t": [
+    444.0,
+    556.0
+   ],
+   "scale": 30.0,
+   "box": [
+    -2.8,
+    -0.1,
+    2.8,
+    4.4
+   ],
+   "note": "seen from ahead, starboard left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  }
+ }
+}
