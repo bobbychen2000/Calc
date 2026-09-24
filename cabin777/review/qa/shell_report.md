@@ -94,3 +94,18 @@ See `questions_shell.md`:
 - Whether the pane height is sourced.
 - Carpet or vinyl at the door cross-aisle.
 - The colour of the PY/Y shade.
+
+## Addendum: open questions resolved by sourcing (d72c593, c4f1130)
+
+- **Pane height.** Changed from 1.13 m to 1.02 m, using the Boeing 777-200LR/-300ER Airplane Characteristics for Airport
+  Planning, D6-58329-2:
+  - Fig. 2.5.1 cross-section: pane 0.82–1.23 m. Scale checked against the 229 in cabin width and the 6.20 m skin.
+  - Fig. 2.2.2 side view: 0.97–0.98 m above the door sill.
+  - The recesses were re-anchored to the new height. The PY/Y tub now runs 0.53–1.585 m, with 1.4× more tub above the bezel
+    than below, as in sans_14. That clears the w2–w4 "opening centred in the tub" issue. The F/J tub top is at 1.48 m.
+  - The two window literals in 04_shaders.js follow the change (shared edit).
+- **Door viewing window.** Face-on ANA door-lining photos show a tall narrow slot at the window belt, 0.28 m aft of the door
+  centre, on a door hinged at its forward edge. The w1 "small high window" had misread the arming-indicator box in a distant
+  photo. The window is fixed in 07_shell. A corrected lining spec (handle housing, red arc, arming box, bustle, grab bar) went
+  to monuments in from_shell.md.
+- **Door floors.** The cross-aisles are dark warm-brown carpet (TPG door 2L, sans_09); the galleys stay vinyl.
