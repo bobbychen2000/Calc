@@ -33,7 +33,7 @@ uniform sampler2DArray u_detail; uniform vec4 u_layer[20];
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
 uniform sampler2D u_win; uniform vec2 u_winZ;
 uniform float u_R; uniform float u_yc;
-uniform float u_exposure; uniform float u_exterior;
+uniform float u_exposure; uniform float u_exterior; uniform float u_fill;
 uniform vec3 u_skyTop; uniform vec3 u_skyBot;
 uniform float u_detailOn;
 out vec4 o;
@@ -123,7 +123,10 @@ void main(){
     vec3 hemi = mix(u_hemiBot, u_hemiTop, clamp(N.y*0.5 + 0.5, 0.0, 1.0));
     float wallProx = smoothstep(1.7, 2.55, abs(v_wpos.x));
     float facingIn = clamp(-sign(v_wpos.x) * N.x, 0.0, 1.0);
-    amb = hemi * (0.32 + 0.68*ao)
+    // interreflection fill: a white-lined cabin bounces the cove/ceiling light onto every face (ANA photos show
+    // charcoal shells and navy fabric reading mid-tone, not black); scaled by AO so crevices stay dark
+    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * (0.35 + 0.65*ao);
+    amb = hemi * (0.32 + 0.68*ao) + bounce
         + u_wash * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao)
         + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5;
   }

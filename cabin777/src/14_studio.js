@@ -43,7 +43,7 @@ function studioRender(app, geo, opts = {}) {
   G.set('u_emisGain', 1.0); G.set('u_screenGain', 0.8);
   G.tex('u_win', 4, S.winTex); G.set('u_winZ', S.winZ);
   G.set('u_R', CAB.R); G.set('u_yc', CAB.yc);
-  G.set('u_exposure', opts.exposure || 1.0);
+  G.set('u_exposure', opts.exposure || 1.0); G.set('u_fill', opts.fill || 0);
   G.set('u_exterior', 1);
   G.set('u_skyTop', opts.fillTop || [0.62, 0.64, 0.68]); G.set('u_skyBot', opts.fillBot || [0.30, 0.30, 0.31]);
   G.set('u_detailOn', 1);

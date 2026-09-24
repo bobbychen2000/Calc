@@ -328,6 +328,7 @@ class Scene {
     G.set('u_R', CAB.R + 0.10);
     G.set('u_yc', CAB.yc);
     G.set('u_exposure', mood.exposure);
+    G.set('u_fill', this.fill ?? 0.7);
     G.set('u_exterior', 0);
     G.set('u_skyTop', sky.skyTop);
     G.set('u_skyBot', sky.skyBot);
