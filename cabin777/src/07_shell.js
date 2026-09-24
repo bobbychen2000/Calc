@@ -10,10 +10,12 @@ const MAT = {
   // #374157 / #363f4c, dado:wall ~0.33 on py_37301 / py_37303), so the albedo is raised to land there in-cabin [V: tone]
   // QA w1: in-cabin it read saturated royal blue (#293666 s0.60 in s04) against slate #455162 (s0.30, py_37303), so the
   // blue is cut at the same luminance (renders ~0.58x the albedo at the floor) [V: tone]
-  dado: { c: '#6e7787', r: 0.6, l: LAYER.plastic },
+  // QA w2: still rendered s0.37-0.39 (#2f374d); the floor light supplies the cool tint, so near-neutral albedo
+  // (sans_14, a real ungraded photo: #252625) [V]
+  dado: { c: '#6c6f76', r: 0.6, l: LAYER.plastic },
   // louvre slats a little darker than the panel over a dark plenum: the grille field reads darker than the dado
   // (py_37303 grille #2e3643 vs dado #455162; QA w1: slats and panel rendered the same) [V]
-  grille: { c: '#747b8a', r: 0.55 },
+  grille: { c: '#6c6f76', r: 0.55 },
   ceiling: { c: '#f1f0ec', r: 0.75, l: LAYER.plastic },
   bin: { c: '#e6e4df', r: 0.42, l: LAYER.plastic },
   binDoor: { c: '#eeede9', r: 0.34, l: LAYER.plastic },
@@ -31,7 +33,7 @@ const MAT = {
   carpetJ: { c: '#645554', r: 0.95, l: LAYER.fabric },
   // F: its own warm brown heather (B well below G), darker than J: the open F aisle rendered carpetJ as mauve #887573
   // [V: f_17300 #423838, f_17313 footwell #2e2623, from_suite: omaat f33 / f2 / f7 aisle #5e4d32 / #5b4d3a / #4d3f31]
-  carpetF: { c: '#594a3c', r: 0.95, l: LAYER.fabric },
+  carpetF: { c: '#574843', r: 0.95, l: LAYER.fabric },          // QA w2: redder, h ~15 (MileLion DSC_1917 #2d2421)
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
   vinyl: { c: '#5a585c', r: 0.55, l: LAYER.vinyl },
@@ -40,7 +42,7 @@ const MAT = {
   trackCover: { c: '#2965bd', r: 0.35 },
   door: { c: '#e2ddd3', r: 0.45, l: LAYER.plastic },           // warm off-white lining (sans_09 / sp_py_09) [V: tone]
   // door perimeter: a shadowed same-colour seam, not a black line (sans_09 shows no dark outline; QA w1) [V]
-  doorGap: { c: '#8f8a82', r: 0.8 },
+  doorGap: { c: '#c9c4bb', r: 0.5 },                            // QA w2: #8f8a82 still read as an outline
   handle: { c: '#b8bcc1', r: 0.3, m: 0.85 },
   handleRed: { c: '#b3262a', r: 0.4 },
   slide: { c: '#d3d0c9', r: 0.5, l: LAYER.plastic },
@@ -59,7 +61,7 @@ const MAT = {
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#b9b3a8', r: 0.85, l: LAYER.fabric },
+  blackout: { c: '#9b958a', r: 0.85, l: LAYER.fabric },          // QA w2: #b9b3a8 still 0.81 of the bezel
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
@@ -106,9 +108,9 @@ const HOLE_R = 0.105;
 // with a sill below the pane that carries the shade button. Width/height from ANA + review photos scaled by the
 // 21 in window pitch: recess ~0.39 wide, bottom ~0.11 below the opening (F/J: f_17313, omaat Room-24 / Room-38) [V].
 // ext: extra depth toward the recess top, so the upper tub faces down and reads shaded as in sans_14 / sp_py_13
-// (upper recess ~0.74-0.82 of the wall) [V: tone; A: 12 / 30 mm]. btn -0.255: pill centre ~32 mm under the opening
+// (upper recess ~0.74-0.82 of the wall) [V: tone; A: 20 / 30 mm]. btn -0.255: pill centre ~32 mm under the opening
 // (omaat Room-24) [V]
-const REC = { hw: 0.195, top: 0.42, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 0.034, btn: -0.255, ext: 0.012 };
+const REC = { hw: 0.195, top: 0.42, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 0.034, btn: -0.255, ext: 0.02 };
 // PY/Y (QA w1): the older sidewall panels keep the full 777 tub - 0.77 of the pitch wide, top at the bin line, bottom
 // ~1.0 bezel width under the bezel (y_47303: recess 175 px / pitch 240 px, 150 px above / ~120 px below a 115 px bezel;
 // sans_14, sp_py_13 same) [V: ratios; D: metres from the 21 in pitch]
@@ -116,13 +118,15 @@ const REC_Y = { ...REC, hw: 0.205, top: 0.455, bot: -0.47, rTop: 0.15, rBot: 0.1
 const WMAT = {
   lining: { c: '#c3bfb7', r: 0.5 },           // grey tunnel lining round the pane (c_27300, tt photo)
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
-  grilleBack: { c: '#30353f', r: 0.8 },                         // plenum behind the louvres, keeps their depth [A]
-  // rounded frame round the grille, lighter than the dado panel (py_37301 frame #5c6a82-#5f6e8a vs panel #30394e) [V]
-  grilleFrame: { c: '#7d8595', r: 0.5 },                        // QA w1: desaturated with the dado
-  rib: { c: '#5a606d', r: 0.6 },                                // vertical louvre ribs, slat-toned (py_37301)
+  grilleBack: { c: '#34373e', r: 0.8 },                         // plenum behind the louvres, keeps their depth [A]
+  // QA w2: the grille is a cut-out in the dado panel; its rounded edge is a low lip at or below the panel tone, not a
+  // light bezel (py_37303 crop: no light frame; py_37301's lighter rim is a reflection) [V]
+  grilleFrame: { c: '#62656c', r: 0.5 },
+  rib: { c: '#55585f', r: 0.6 },                                // vertical louvre ribs, faint, slat-toned (py_37301)
   label: { c: '#ecebe6', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
   halo: { c: '#4467ff', r: 0.3, e: 0.8 },                       // blue LED ring round the shade button (LALF/OMAAT photos)
   pin: { c: '#2a2c30', r: 0.6 },
+  seal: { c: '#5c5d60', r: 0.5 },
 };
 function sdRecess(px, py, rec = REC) {
   const cy = (rec.top + rec.bot) / 2, hh = (rec.top - rec.bot) / 2;
@@ -142,9 +146,15 @@ function windowCellPattern(cellW, holeW, holeH, holeR, vc, rayFn, band = [WALL.b
   const cornerAng = [Math.atan2(hh1, hw), Math.PI - Math.atan2(hh1, hw), Math.PI + Math.atan2(hh0, hw), 2 * Math.PI - Math.atan2(hh0, hw)];
   const base = [];
   if (rayFn) {                                                  // recess: 48 angles spaced evenly along its outline
-    const M = 720, pts = [], acc = [0], NR = 48;                // (was 32: faceted corners on the soft lip, QA r1)
+    // QA w2: arc length + 0.12 m per radian of turn, so the round corners get ~3x the points of the straights (the
+    // soft lip showed kinks at the 0.15 m top corners with plain arc-length spacing)
+    const M = 720, pts = [], acc = [0], NR = 56;                // (was 32: faceted corners on the soft lip, QA r1)
     for (let i = 0; i <= M; i++) pts.push(rayFn((i / M) * Math.PI * 2));
-    for (let i = 1; i <= M; i++) acc.push(acc[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const dir = (i) => Math.atan2(pts[(i + 1) % M][1] - pts[i][1], pts[(i + 1) % M][0] - pts[i][0]);
+    for (let i = 1; i <= M; i++) {
+      let dt = Math.abs(dir(i % M) - dir(i - 1)); if (dt > Math.PI) dt = 2 * Math.PI - dt;
+      acc.push(acc[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]) + 0.12 * dt);
+    }
     for (let k = 0, i = 0; k < NR; k++) { while (acc[i] < (k / NR) * acc[M]) i++; base.push((i / M) * Math.PI * 2); }
   } else for (let i = 0; i < 44; i++) base.push((i / 44) * Math.PI * 2);
   const angs = [...new Set([...base, ...cornerAng].map((a) => +a.toFixed(6)))].sort((a, b) => a - b);
@@ -287,12 +297,18 @@ function windowParts(side, pat) {
   const q = [0, 20, 40, 60, 75, 90].map((a) => (a * Math.PI) / 180), LR = 0.016;
   const lip = ringLoft([...q.map((a) => [inset(rr, LR * Math.sin(a)), LR * (1 - Math.cos(a))]), [inset(rr, 0.019), D]], mapE, hint);
   for (let i = 0; i < rr.length; i++) { const [, , wnx, wny] = wallAt(vc + rr[i][1]); lip.n.splice(i * 3, 3, wnx * side, wny, 0); }
+  // sill / tub floor: near-planar, so it takes the wall normal (QA w2: smoothed normals across its long thin
+  // triangles printed a light wedge at the opening's upper corner)
+  const sill = ringLoft([[inset(rr, 0.019), D, mapE], [scl(open, 1.085), D]], map, hint);
+  for (let i = 0; i < sill.n.length / 3; i++) { const [, , snx, sny] = wallAt(vc + (i < rr.length ? rr[i][1] : open[i - rr.length][1])); sill.n.splice(i * 3, 3, snx * side, sny, 0); }
   const parts = [
     [lip, MAT.reveal],
-    [ringLoft([[inset(rr, 0.019), D, mapE], [scl(open, 1.085), D]], map, hint), MAT.reveal],
+    [sill, MAT.reveal],
     [ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal],
     // lining: straight shade channel (both shades run here), then necks down to the pane
-    [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.986), D + 0.056], [pane, 0.106]], map, hint), WMAT.lining],
+    [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.986), D + 0.056], [scl(pane, 1.03), 0.1045]], map, hint), WMAT.lining],
+    // dark rubber seal / scratch-pane rim round the glass, ~4 mm (sp_py_24, MileLion DSC_1920; QA w2) [V]
+    [ringLoft([[scl(pane, 1.03), 0.1045], [pane, 0.106]], map, hint), WMAT.seal],
   ];
   // dado air-return grille under the window: louvred panel in a rounded frame (py_37301 / py_37303); modelled
   // proud of the dado skin (frame 6 mm, louvres behind it) so the dado needs no cut-out
@@ -304,7 +320,7 @@ function windowParts(side, pat) {
   const gm = (a, b, d) => gmap(a, b, d);
   const ghint = [wallAt(gc)[2] * side, wallAt(gc)[3], 0];
   const grille = [];
-  grille.push([ringLoft([[gr(ghw + 0.012, ghh + 0.012, 0.036), 0.0004], [gr(ghw + 0.004, ghh + 0.004, 0.03), 0.0064], [gr(ghw - 0.001, ghh - 0.001, 0.027), 0.0012]], gm, ghint), WMAT.grilleFrame]);
+  grille.push([ringLoft([[gr(ghw + 0.012, ghh + 0.012, 0.036), 0.0004], [gr(ghw + 0.004, ghh + 0.004, 0.03), 0.0024], [gr(ghw - 0.001, ghh - 0.001, 0.027), 0.0010]], gm, ghint), WMAT.grilleFrame]);
   const back = raw();
   back.p.push(...gm(0, gc, 0.0012)); back.n.push(0, 0, 0); back.u.push(0, 0);
   for (const [a, b] of gr(ghw - 0.001, ghh - 0.001, 0.027)) { back.p.push(...gm(a, b, 0.0012)); back.n.push(0, 0, 0); back.u.push(0, 0); }
@@ -354,10 +370,10 @@ function shadePanelGeo(kind) {
     B.add(gBox(w, h, 0.003), null, MAT.shade);
   } else {
     // QA w1: 31 pleats of ~14 mm (omaat Room-24 FFT: ~30 over the opening; was 40, moire at distance) [V]
-    const g = raw(), n = 62, e = 0.012, xs = [-w / 2, -w / 2 + e, w / 2 - e, w / 2];
+    const g = raw(), n = 62, e = 0.02, xs = [-w / 2, -w / 2 + e, w / 2 - e, w / 2];
     for (let k = 0; k <= n; k++) {
       const y = -h / 2 + (h * k) / n, zz = (k % 2) * 0.005;       // 5 mm zig-zag (was 3 mm: shaded flat, QA r1) [A]
-      // the outer 12 mm run flat (a hem) so the pleats do not saw-tooth through the lining (QA w1, s05) [A]
+      // the outer 20 mm run flat (a hem) so the pleats do not saw-tooth through the lining (QA w1, s05) [A]
       for (let c = 0; c < 4; c++) { g.p.push(xs[c], y, c % 3 ? zz : 0.0025); g.n.push(0, 0, 1); g.u.push(c / 3, k / n); }
     }
     for (let k = 0; k < n; k++) for (let c = 0; c < 3; c++) { const q = k * 4 + c; g.i.push(q, q + 1, q + 5, q, q + 5, q + 4); }
@@ -378,7 +394,7 @@ function shadeRailGeo(kind) {
   const B = new Builder();
   if (kind === 'manual') {
     B.add(gRBox(SHADE.w, 0.026, 0.018, 0.008, 1), M4.trs(0, 0, 0.008), MAT.shadeRail);                 // grip (sp_py_24)
-    B.add(gRBox(0.09, 0.007, 0.006, 0.003, 1), M4.trs(0, -0.007, 0.0175), { c: '#9c957a', r: 0.45 }); // finger scoop
+    B.add(gRBox(0.09, 0.007, 0.006, 0.003, 1), M4.trs(0, -0.013, 0.012), { c: '#bdb6a5', r: 0.45 }); // finger scoop, underside
   } else B.add(gRBox(SHADE.w, 0.011, 0.009, 0.004, 1), M4.trs(0, 0, 0.004), kind === 'sheer' ? { c: '#b3aea5', r: 0.4 } : { c: '#bab6ad', r: 0.4 });
   return B.build();
 }
@@ -541,9 +557,10 @@ function buildShell(gl, layout) {
       shell.addBuilt(wallSeamGeo(side, sz));
     }
   }
-  // upper sidewall above the bin line where there are no bins (monument + door zones)
+  // upper sidewall above the bin line where there are no bins (monument zones; the door surround reaches 2.02 itself -
+  // QA w2: the sweep behind it blocked the top of the door window)
   for (const zn of zones) {
-    if (zn.type === 'seat') continue;
+    if (zn.type === 'seat' || zn.type === 'door') continue;
     for (const side of [-1, 1]) {
       const prof = [];
       const y1 = zn.type === 'door' ? 2.02 : 2.0;
@@ -573,6 +590,11 @@ function buildShell(gl, layout) {
       const dp = windowCellPattern(cellW, 0.19, 0.25, 0.06, 1.52, null, [[...WALL.bottomRows, 0.95, 1.28], 1.76]);
       const topRows = [1.76, 1.80, 2.02];
       windowCell(g, side, c, dp, topRows);
+      // viewing-window tunnel: grey lining necking in over 9 cm to a dark seal rim; the sky shows past it (QA w2)
+      const dmap = (dz, dv, d) => { const [x, y, nx, ny] = wallAt(dp.vc + dv); return [(x - nx * d) * side, y - ny * d, c + dz]; };
+      const hr = dp.ring.map((p) => p.h), sc = (k, kv) => hr.map(([a, b]) => [a * k, b * kv]), dh = [wallAt(dp.vc)[2] * side, wallAt(dp.vc)[3], 0];
+      shell.add(ringLoft([[hr, 0], [sc(0.96, 0.97), 0.012], [sc(0.90, 0.92), 0.09]], dmap, dh), null, WMAT.lining);
+      shell.add(ringLoft([[sc(0.90, 0.92), 0.09], [sc(0.86, 0.89), 0.092]], dmap, dh), null, WMAT.seal);
       const vset = [...new Set([...dp.rows.slice(0, -1), ...dp.sideV.map((v) => v + dp.vc), ...topRows.slice(1)].map((v) => +v.toFixed(5)))].sort((a, b) => a - b);
       if (c - cellW / 2 - zn.z0 > 1e-3) wallGrid(g, side, [zn.z0, c - cellW / 2], vset);
       if (zn.z1 - (c + cellW / 2) > 1e-3) wallGrid(g, side, [c + cellW / 2, zn.z1], vset);
