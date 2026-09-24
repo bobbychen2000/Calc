@@ -23,8 +23,10 @@ N_AROUND = 144
 # Stage-2 refit (sheet L3, drawing/openings_sheet.py).  Positions follow the registered Pilatus NGX
 # drawing: port openings from its side view, STARBOARD windows from its plan view (the sheet-1
 # starboard detail repeats the port stations), cross-checked against photos (window pitch pattern
-# within 15 mm after a scale + offset fit, PRO s/n 3001 closed airstair door has no window).  Door sizes are the published clear
-# openings (passenger door 0.61 x 1.35 m, cargo door 1.35 x 1.32 m, W x H), centred on the drawn doors.
+# within 15 mm after a scale + offset fit, PRO s/n 3001 closed airstair door has no window) and against the
+# Pilatus PC-12 technical-data side render (port openings within 7 mm of the drawing, no airstair-door window).
+# Door sizes are the published clear openings (passenger door 0.61 x 1.35 m, cargo door 1.35 x 1.32 m, W x H),
+# centred on the drawn doors; the drawn door outlines are kept as the panel seams (DOOR_PANELS).
 # ---------------------------------------------------------------------------
 CABIN_CROWN_WL = float(F.z_top(6.0))       # 2.769: constant cabin section STA 4.6-8.2 (model/fuselage.py)
 # cabin windows: 'rectangular' PC-24 style = a Lame curve |dx/a|^n + |dz/b|^n = 1 (drawing: 300 x 385 mm,
@@ -38,13 +40,29 @@ FIXED_WINDOWS = {  # side -> window centre stations (windows in doors / the exit
     -1: [5.605, 6.200, 6.980],                      # port, aft of the airstair door (side view)
     +1: [5.359, 6.980, 7.730, 8.494],               # starboard, exit window between 1 and 2 (plan view)
 }
-DOOR_SILL_WL = 1.254                       # both door sills: drawn airstair outline 1229-2629 less the margin
+# Doors carry two outlines (side projection; W x H = projected x / z extents):
+#  * the dicts AIRSTAIR / CARGO are the CLEAR OPENINGS: the published sizes (Pilatus PC-12 technical data:
+#    passenger door 0.61 W x 1.35 H, cargo door 1.35 W x 1.32 H), sills on the cabin floor, centred on the doors;
+#  * DOOR_PANELS are the door-panel SEAMS (the skin cut seen outside): the drawn door outlines of the Pilatus
+#    drawing (0.64 x 1.40 and 1.40 x 1.47), confirmed by the Pilatus tech-data side render (seams 0.639 x 1.404
+#    and 1.400 wide; its opening pattern fits the drawing within 7 mm).  Stage 3: cut the skin and the door slab
+#    along the panel seam, build the jamb (door frame) along the clear opening.
+DOOR_SILL_WL = 1.254                       # both clear-opening sills (cabin floor): drawn airstair seam 1229 + 25
 AIRSTAIR = dict(side=-1, cx=4.970, cz=DOOR_SILL_WL + 0.675, hx=0.305, hz=0.675, r=0.085,
-                hinge="bottom")            # 0.61 x 1.35 m, drawn outline 4650-5290 x 1229-2629, r 100
+                hinge="bottom", open_deg=160.0)   # 0.61 x 1.35 m; integral airstair, opens down until its free
+#                                                   edge is ~5 cm off the ground (ground contact at ~164 deg)
 CARGO = dict(side=-1, cx=8.240, cz=DOOR_SILL_WL + 0.660, hx=0.675, hz=0.660, r=0.055,
-             hinge="top")                  # 1.35 x 1.32 m, drawn outline 7540-8940 x 1157-2629, r 76
+             hinge="top", open_deg=120.0)         # 1.35 x 1.32 m; opens up ~120 deg (Pilatus render with the door
+#                                                   open: free edge ~0.99 m above the hinge line)
 EXIT = dict(side=+1, cx=6.205, cz=2.2015, hx=0.241, hz=0.3205, r=0.100,
-            hinge=None)                    # over-wing emergency exit (plug), drawn 5964-6446 x 1881-2522
+            hinge=None, open_deg=None)     # over-wing emergency exit (plug), drawn 5964-6446 x 1881-2522 = the hatch
+#                                            seam: 0.482 x 0.641 projected, 0.696 along the skin (FAR 23.807(b)
+#                                            minimum 19 x 26 in); not a FAR-25 Type III (20 x 36 in)
+DOOR_PANELS = {                            # door-panel seams (x/z centre, half sizes, corner radius), see above
+    "door_airstair": dict(side=-1, cx=4.970, cz=1.929, hx=0.320, hz=0.700, r=0.100),   # 4650-5290 x 1229-2629
+    "door_cargo": dict(side=-1, cx=8.240, cz=1.8945, hx=0.700, hz=0.7345, r=0.076),   # 7540-8940 x 1160-2629
+    "exit_hatch": EXIT,                                                               # plug: seam = EXIT
+}
 DOOR_WINDOWS = {"door_airstair": None, "door_cargo": 7.958, "exit_hatch": 6.205}   # None: no window
 # small features for the drawings / Stage-3 details (x, z centre, half sizes, radius)
 DOOR_DETAILS = {
@@ -52,7 +70,8 @@ DOOR_DETAILS = {
     "airstair_handle": dict(side=-1, cx=4.956, cz=1.710, hx=0.190, hz=0.032, r=0.032),  # sheet 2, +-45 mm
     "cargo_handle": dict(side=-1, cx=8.250, cz=1.650, hx=0.031, hz=0.155, r=0.031),     # sheet 2, +-45 mm
 }
-DOOR_HINGE_OFFSET = 0.010                  # hinge line inside the sill (airstair) / top edge (cargo), as build_door
+DOOR_HINGE_OFFSET = 0.025                  # hinge line inside the panel seam: bottom (airstair) / top (cargo); the
+#                                            render shows a second line 25 mm below the cargo-door top seam
 
 # windshield panes (x, s) where s = signed arc length from crown (+ starboard)
 WS_CORE = [(3.345, 0.034), (3.470, 0.470), (3.880, 0.455), (3.905, 0.034)]
@@ -97,13 +116,23 @@ def opening_outline(o, n_corner=16):
     return np.vstack([P, P[:1]])
 
 
+def door_panel(o):
+    """The door-panel seam dict (DOOR_PANELS) of an opening dict (AIRSTAIR / CARGO / EXIT); o itself if none."""
+    for pid, od in (("door_airstair", AIRSTAIR), ("door_cargo", CARGO), ("exit_hatch", EXIT)):
+        if o is od:
+            return DOOR_PANELS.get(pid, o)
+    return o
+
+
 def hinge_line(o):
-    """(x0, x1, z) of a door's hinge line in side projection, or None (EXIT: plug, no hinge)."""
+    """(x0, x1, z) of a door's hinge line in side projection -- on the door panel, DOOR_HINGE_OFFSET inside its
+    bottom (airstair) or top (cargo) seam -- or None (EXIT: plug, no hinge)."""
     h = o.get("hinge")
     if h is None:
         return None
-    z = o["cz"] - o["hz"] + DOOR_HINGE_OFFSET if h == "bottom" else o["cz"] + o["hz"] - DOOR_HINGE_OFFSET
-    return o["cx"] - o["hx"], o["cx"] + o["hx"], z
+    p = door_panel(o)
+    z = p["cz"] - p["hz"] + DOOR_HINGE_OFFSET if h == "bottom" else p["cz"] + p["hz"] - DOOR_HINGE_OFFSET
+    return p["cx"] - p["hx"], p["cx"] + p["hx"], z
 
 
 def openings_table():
@@ -113,9 +142,12 @@ def openings_table():
     doors = (("door_airstair", "airstair door", AIRSTAIR), ("door_cargo", "cargo door", CARGO),
              ("exit_hatch", "emergency exit", EXIT))
     for pid, name, o in doors:
+        p = DOOR_PANELS.get(pid, o)
         rows.append(dict(id=pid, kind="door" if pid != "exit_hatch" else "exit", name=name, side=o["side"],
                          cx=o["cx"], cz=o["cz"], w=2 * o["hx"], h=2 * o["hz"], shape=f"rrect r{o['r']:.3f}",
-                         r=o["r"], hinge=o.get("hinge"), host=None))
+                         r=o["r"], hinge=o.get("hinge"), host=None, open_deg=o.get("open_deg"),
+                         panel=dict(x0=p["cx"] - p["hx"], x1=p["cx"] + p["hx"], z0=p["cz"] - p["hz"],
+                                    z1=p["cz"] + p["hz"], r=p["r"])))
         if DOOR_WINDOWS.get(pid) is not None:
             rows.append(dict(id=pid + "_win", kind="window", name=f"window in {name}", side=o["side"],
                              cx=DOOR_WINDOWS[pid], cz=WIN_CZ, w=WIN_W, h=WIN_H, shape=f"lame n{WIN_N:g}", r=WIN_R,

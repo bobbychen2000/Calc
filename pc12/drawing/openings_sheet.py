@@ -8,9 +8,12 @@ DOOR_DETAILS) on the refitted OML of model/fuselage.py -- never from the mesh.
 Views: port elevation (seen from port, 1:20) with station ordinates to every opening; plan (1:20) with the
 openings projected through the OML (y = side_y(x, z); parts below the max-breadth WL hidden) -- the view the
 starboard windows were read from; starboard elevation (seen from starboard, nose right, 1:20); detail A cabin
-window (1:5), detail B emergency exit (1:10), section A-A with the door hinges and swings (1:25).  Tables:
-openings (our stations), deviations vs the registered Pilatus drawing / photos / rev A, Stage-3 hand-over.
-The overlay variant adds the Pilatus drawing in red and photo-derived stations in blue.
+window (1:5), detail B emergency exit (1:10), section A-A with the door hinges and swings (1:30).  Tables:
+openings (our stations; doors as clear opening + panel seam, DOOR_PANELS), deviations vs the registered Pilatus
+drawing / the Pilatus tech-data side render (render_check(), measured at run time from the git-ignored cache
+image) / photos / rev A, Stage-3 hand-over.  The overlay variant adds the Pilatus drawing in red, photo-derived
+stations in blue and the render-derived stations in purple; refs/cache/overlays/L3_render_check.png shows our port
+openings drawn onto the render.
 """
 from __future__ import annotations
 
@@ -82,9 +85,96 @@ def openings():
                      z0=FP.WIN_CZ - FP.WIN_HZ, z1=FP.WIN_CZ + FP.WIN_HZ, cz=FP.WIN_CZ, w=FP.WIN_W, h=FP.WIN_H)
         else:
             o = r["o"]
+            p = FP.door_panel(o)
             r.update(outline=FP.opening_outline(o), cx=o["cx"], cz=o["cz"], x0=o["cx"] - o["hx"],
-                     x1=o["cx"] + o["hx"], z0=o["cz"] - o["hz"], z1=o["cz"] + o["hz"], w=2 * o["hx"], h=2 * o["hz"])
+                     x1=o["cx"] + o["hx"], z0=o["cz"] - o["hz"], z1=o["cz"] + o["hz"], w=2 * o["hx"], h=2 * o["hz"],
+                     panel=p, poutline=FP.opening_outline(p), px0=p["cx"] - p["hx"], px1=p["cx"] + p["hx"],
+                     pz0=p["cz"] - p["hz"], pz1=p["cz"] + p["hz"], pw=2 * p["hx"], ph=2 * p["hz"],
+                     has_seam=p is not o)
     return R
+
+
+RENDER_FILE = M.ROOT / "refs" / "cache" / "photos" / "cand" / "pil_techdata_side_5000.webp"
+RENDER_URL = ("pilatus-aircraft.com/en/pc-12/technical-data (image PC-12G_techdata_exterior_side_desktop, 5000 px "
+              "variant, 3500 x 1351)")
+
+
+def render_check():
+    """Pilatus PC-12 technical-data side render (port side, current production: single-pane cockpit side window,
+    no window in the airstair door).  Measured at run time from the git-ignored cache image (no pixel data in git):
+    cabin-window blobs (half-maximum edges), the four vertical door-panel seams (dark lines between the door tops
+    and the window tops, refined row by row between the window rows), the airstair-door top seam.  The port
+    opening pattern [D1 seams, P1-P4, D2 seams] is fitted to OUR stations with a scale + offset (perspective
+    render; every feature lies on the fuselage side), giving residuals and render-derived stations.
+    Returns None when the image is not cached."""
+    if not RENDER_FILE.exists():
+        return None
+    from PIL import Image
+    from scipy import ndimage as ndi
+    from scipy.signal import find_peaks
+    im = np.asarray(Image.open(RENDER_FILE).convert("L")).astype(float)
+    # cabin windows: dark blobs in the window band
+    y0, y1, x0, x1 = 400, 560, 1000, 2100
+    m = ndi.binary_fill_holes(ndi.binary_opening(im[y0:y1, x0:x1] < 190, iterations=2))
+    lab, n = ndi.label(m)
+    wins = []
+    for i in range(1, n + 1):
+        yy, xx = np.nonzero(lab == i)
+        if len(yy) < 800:
+            continue
+        cx, cy = 0.5 * (xx.min() + xx.max()) + x0, 0.5 * (yy.min() + yy.max()) + y0
+
+        def half_max(p):
+            hi, lo = np.median(np.r_[p[:5], p[-5:]]), np.percentile(p, 10)
+            th = 0.5 * (hi + lo)
+            idx = np.nonzero(p < th)[0]
+            a, b = idx.min(), idx.max()
+            return (b + (p[b] - th) / (p[b] - p[b + 1])) - (a - 1 + (p[a - 1] - th) / (p[a - 1] - p[a]))
+
+        ic, jc = int(round(cy)), int(round(cx))
+        w = np.median([half_max(im[r, jc - 45:jc + 46]) for r in range(ic - 14, ic + 15, 3)])
+        h = np.median([half_max(im[ic - 60:ic + 61, c]) for c in range(jc - 10, jc + 11, 3)])
+        wins.append((cx, cy, w, h, len(yy) / ((xx.max() - xx.min() + 1) * (yy.max() - yy.min() + 1))))
+    wins.sort()
+    # vertical seams: minima of the band between the door tops and the window tops, refined row by row
+    band = im[398:440, 1030:2050].mean(0)
+    base = np.convolve(band, np.ones(21) / 21, "same")
+    pk, pr = find_peaks(-(band - base), prominence=5)
+    cand = sorted(1030 + pk[np.argsort(pr["prominences"])[-4:]])
+    seams = []
+    for c in cand:
+        v = []
+        for r in range(430, 561, 10):
+            p = im[r - 3:r + 4, c - 7:c + 8].mean(0)
+            k = int(np.argmin(p))
+            if 0 < k < len(p) - 1:
+                a, b, cc = p[k - 1], p[k], p[k + 1]
+                v.append(c - 7 + k + (0.5 * (a - cc) / (a - 2 * b + cc) if (a - 2 * b + cc) else 0.0))
+        seams.append(float(np.median(v)))
+    # airstair-door top seam (dark gutter line) over the door's middle
+    p = im[370:410, int(seams[0]) + 30:int(seams[1]) - 30].mean(1)
+    k = int(np.argmin(p))
+    d1_top = 370 + k + 0.5 * (p[k - 1] - p[k + 1]) / (p[k - 1] - 2 * p[k] + p[k + 1])
+    if len(wins) != 4 or len(seams) != 4:
+        return dict(ok=False, note=f"render: found {len(wins)} windows / {len(seams)} seams (expected 4 / 4)")
+    by = {r["id"]: r for r in openings()}
+    names = ["D1 fwd seam", "D1 aft seam", "P1", "P2", "P3", "P4", "D2 fwd seam", "D2 aft seam"]
+    px = np.array([seams[0], seams[1]] + [w[0] for w in wins] + [seams[2], seams[3]])
+    ours = np.array([by["D1"]["px0"], by["D1"]["px1"]] + [by[f"P{i}"]["cx"] for i in range(1, 5)] +
+                    [by["D2"]["px0"], by["D2"]["px1"]])
+    A = np.c_[px, np.ones_like(px)]
+    c, *_ = np.linalg.lstsq(A, ours, rcond=None)
+    fit = A @ c
+    s = 1.0 / c[0]                                             # px per m on the fuselage side
+    ww, hh = np.median([w[2] for w in wins]), np.median([w[3] for w in wins])
+    cy = np.median([w[1] for w in wins])
+    return dict(ok=True, names=names, px=px, ours=ours, fit=fit, res=(fit - ours) * 1000, px_per_m=s,
+                win_w=ww / s, win_h=hh / s, win_wh=ww / hh, d1_w=(seams[1] - seams[0]) / s,
+                d2_w=(seams[3] - seams[2]) / s, d2_over_d1=(seams[3] - seams[2]) / (seams[1] - seams[0]),
+                win_cl_below_d1_top=(cy - d1_top) / s, coef=c, d1_top_px=d1_top,
+                win_fill=wins[0][4] if len(wins[0]) > 4 else None,
+                note=f"{len(wins)} windows, 4 seams, {s:.1f} px/m, pattern residual max "
+                     f"{np.max(np.abs((fit - ours) * 1000)):.1f} mm")
 
 
 def rev_a_outlines(side):
@@ -335,8 +425,12 @@ def draw_elevation(ds, v, side, R, row_y):
     # openings of this side
     mine = [r for r in R if r["side"] == side]
     for r in mine:
-        lw = W_OBJ
-        cv.path(v.pts(r["outline"]), lw, closed=True)
+        if r["kind"] == "door":
+            # door-panel seam (visible outline) + clear opening inside it (door frame, hidden: dashed)
+            cv.path(v.pts(r["poutline"]), W_OBJ, closed=True)
+            cv.path(v.pts(r["outline"]), W_FINE, (1.4, 0.8), closed=True, color=MUTED)
+        else:
+            cv.path(v.pts(r["outline"]), W_OBJ, closed=True)
         if r["kind"] == "window":
             centre_marks(ds, v, r["cx"], r["cz"], FP.WIN_HX, FP.WIN_HZ, 0.025)
             X, Y = v.pt(r["cx"], r["z0"] + 0.06)
@@ -356,21 +450,25 @@ def draw_elevation(ds, v, side, R, row_y):
         if r["kind"] == "window":
             items.append((r["cx"], r["z1"], f"{r['cx'] * 1000:.0f}"))
         else:
-            items += [(r["x0"], r["z1"], f"{r['x0'] * 1000:.0f}"), (r["x1"], r["z1"], f"{r['x1'] * 1000:.0f}")]
+            items += [(r["px0"], r["pz1"], f"{r['px0'] * 1000:.0f}"), (r["px1"], r["pz1"], f"{r['px1'] * 1000:.0f}")]
     items.sort(key=lambda t: t[0])
     ordinates(ds, v, items, row_y)
     X, _ = v.pt(X0 if side < 0 else X1, 0)
     ds.text(X + (1 if side < 0 else -1) * 0.0, row_y - 15.5,
-            "STATIONS (mm aft of datum): door / exit edges, window centre lines", 2.1, "label",
-            "start" if side < 0 else "start", fill=MUTED, tag="lbl")
+            "STATIONS (mm aft of datum): door-panel seams / exit hatch edges, window centre lines "
+            "(clear openings: table)", 2.1, "label", "start" if side < 0 else "start", fill=MUTED, tag="lbl")
     # WL ordinates on the sheet-left edge
     ents = [(float(F.z_top(6.0)), f"{F.z_top(6.0) * 1000:.0f} CROWN"),
             (FP.WIN_CZ + FP.WIN_HZ, f"{(FP.WIN_CZ + FP.WIN_HZ) * 1000:.0f}"),
             (FP.WIN_CZ, f"{FP.WIN_CZ * 1000:.0f} WIN CL"),
             (FP.WIN_CZ - FP.WIN_HZ, f"{(FP.WIN_CZ - FP.WIN_HZ) * 1000:.0f}")]
     for r in mine:
-        if r["kind"] != "window":
+        if r["kind"] == "door":
+            ents += [(r["pz0"], f"{r['pz0'] * 1000:.0f} {r['id']} SEAM"), (r["pz1"], f"{r['pz1'] * 1000:.0f} {r['id']} SEAM")]
+        elif r["kind"] == "exit":
             ents += [(r["z0"], f"{r['z0'] * 1000:.0f} {r['id']} SILL"), (r["z1"], f"{r['z1'] * 1000:.0f} {r['id']} TOP")]
+    if side < 0:
+        ents.append((FP.DOOR_SILL_WL, f"{FP.DOOR_SILL_WL * 1000:.0f} D1/D2 SILL"))
     groups = {}
     for z, s in ents:
         groups.setdefault(round(z, 4), []).append(s)
@@ -392,10 +490,11 @@ def _door_text(ds, v, r):
              None: "PLUG TYPE - REMOVED INWARD"}[o.get("hinge")]
     if r["kind"] == "door":
         X, Y = v.pt(o["cx"], o["cz"] + 0.34) if r["id"] == "D1" else v.pt(o["cx"] + 0.33, o["cz"] - 0.05)
-        lines = [f"{r['id']}  {r['name']}", f"{w * 1000:.0f} x {h * 1000:.0f}", hinge.split(" - ")[0],
-                 hinge.split(" - ")[1]]
+        lines = [f"{r['id']}  {r['name']}", f"CLEAR {w * 1000:.0f} x {h * 1000:.0f}",
+                 f"PANEL {r['pw'] * 1000:.0f} x {r['ph'] * 1000:.0f}", hinge.split(" - ")[0],
+                 hinge.split(" - ")[1] + (f" {o['open_deg']:.0f} DEG" if o.get("open_deg") else "")]
         for i, s in enumerate(lines):
-            ds.text(X, Y + 3.0 * i, s, 2.1 if i else 2.3, "label" if i != 1 else "mono", "middle",
+            ds.text(X, Y + 3.0 * i, s, 2.1 if i else 2.3, "label" if i not in (1, 2) else "mono", "middle",
                     weight=600 if i == 0 else 400, tag="door")
         # hinge label
         hl = FP.hinge_line(o)
@@ -428,7 +527,7 @@ def draw_plan(ds, v, R):
             P = np.c_[x + np.array([0, 0.03, -0.03, 0.0]), s * np.array([yy + 0.03, yy * 0.66, yy * 0.33, 0.0])]
             cv.path(v.pts(P), W_THIN)
     for r in R:
-        for P, vis in plan_projection(r["outline"], r["side"]):
+        for P, vis in plan_projection(r["poutline"] if r["kind"] == "door" else r["outline"], r["side"]):
             cv.path(v.pts(P), W_FINE if r["kind"] == "window" else W_OBJ, None if vis else (1.4, 0.8),
                     color=INK if vis else MUTED)
     for key, o in FP.DOOR_DETAILS.items():
@@ -487,9 +586,12 @@ def draw_section(ds, v, R):
     ds.text(X - 1.5, Y + 1.0, "E1 (PLUG)", 1.9, "label", "end", tag="lbl")
     X, Y = v.pt(-float(F.side_y(x, FP.WIN_CZ)), FP.WIN_CZ)
     ds.text(X + 2.0, Y + 0.7, "P2", 2.0, "label", "start", weight=600, tag="lbl")
-    # doors: closed arc, hinge, open position, swing of the free edge
-    for o, ang, lab, col, off in ((FP.AIRSTAIR, 128.0, "D1", D1_COL, 0.020), (FP.CARGO, -100.0, "D2", D2_COL, 0.045)):
-        A = arc(o["cx"], o["cz"] - o["hz"], o["cz"] + o["hz"], -1)
+    # doors: closed panel arc, hinge, open position (open_deg of the constants), swing of the free edge
+    for o, sgn, lab, col, off in ((FP.AIRSTAIR, 1.0, "D1", D1_COL, 0.020), (FP.CARGO, -1.0, "D2", D2_COL, 0.045)):
+        ang = sgn * float(o.get("open_deg") or 0.0)
+        pn = FP.door_panel(o)
+        z0, z1 = pn["cz"] - pn["hz"], pn["cz"] + pn["hz"]
+        A = arc(o["cx"], z0, z1, -1)
         hl = FP.hinge_line(o)
         zh = hl[2]
         yh = -float(F.side_y(o["cx"], zh))
@@ -497,7 +599,7 @@ def draw_section(ds, v, R):
         a = math.radians(ang)
         Rm = np.array([[math.cos(a), -math.sin(a)], [math.sin(a), math.cos(a)]])
         Op = (A - H) @ Rm.T + H
-        cv.path(v.pts(arc(o["cx"], o["cz"] - o["hz"], o["cz"] + o["hz"], -1, off=off)), W_OBJ, color=col)
+        cv.path(v.pts(arc(o["cx"], z0, z1, -1, off=off)), W_OBJ, color=col)
         cv.path(v.pts(Op), W_FINE, PHANTOM, color=col)
         free = A[-1] if o["hinge"] == "bottom" else A[0]
         rr = np.linalg.norm(free - H)
@@ -509,12 +611,15 @@ def draw_section(ds, v, R):
         if lab == "D1":
             ds.text(X + 1.8, Y + 3.4, f"D1 HINGE WL {zh * 1000:.0f}", 1.9, "label", "start", fill=col, tag="hinge")
         else:
-            ds.text(X + 1.8, Y - 1.8, f"D2 HINGE WL {zh * 1000:.0f}", 1.9, "label", "start", fill=col, tag="hinge")
+            ds.text(X + 1.6, Y + 3.2, f"D2 HINGE WL {zh * 1000:.0f}", 1.9, "label", "start", fill=col, tag="hinge")
         e = Op[-1] if o["hinge"] == "bottom" else Op[0]
         X, Y = v.pt(*e)
         sta = f"STA {o['cx'] * 1000:.0f}"
         if lab == "D1":
-            ds.text(X, Y + 3.2, f"D1 AIRSTAIR ({sta}) OPEN {abs(ang):.0f} DEG", 1.9, "label", "start", fill=col,
+            X, Y = v.pt(-0.84, 0.66)                    # clear area between the open door and the keel
+            ds.text(X, Y, f"D1 AIRSTAIR ({sta})", 1.9, "label", "start", fill=col, tag="swing")
+            ds.text(X, Y + 2.6, f"OPEN {abs(ang):.0f} DEG, FREE EDGE", 1.9, "label", "start", fill=col, tag="swing")
+            ds.text(X, Y + 5.2, f"{float(Op[:, 1].min()) * 1000:.0f} ABOVE GROUND", 1.9, "label", "start", fill=col,
                     tag="swing")
         else:
             ds.text(X, Y - 1.6, f"D2 CARGO ({sta}) OPEN {abs(ang):.0f} DEG", 1.9, "label", "start", fill=col,
@@ -580,8 +685,9 @@ def draw_detail_exit(ds, v):
 
 def legend(ds, x0, y0):
     cv = ds.cv
-    items = [("OML silhouette / opening outline", W_OBJ, None, INK), ("hidden (plan: below max-breadth WL)", W_OBJ,
-             (1.4, 0.8), MUTED), ("hinge line / door open position", W_FINE, PHANTOM, ACCENT),
+    items = [("OML silhouette / opening outline / door-panel seam", W_OBJ, None, INK),
+             ("door clear opening (published size, door frame)", W_FINE, (1.4, 0.8), MUTED),
+             ("hidden (plan: below max-breadth WL)", W_OBJ, (1.4, 0.8), MUTED), ("hinge line / door open position", W_FINE, PHANTOM, ACCENT),
              ("max-breadth WL, centre lines", W_THIN, CHAIN, LIGHT), ("door sills / cabin floor reference", W_THIN,
              (3.0, 1.2), MUTED), ("context: cockpit side window / PRO mask (dashed)", W_FINE, None, MUTED),
              ("frame station grid (fuselage.FRAMES)", W_GRID, None, GRID),
@@ -605,17 +711,27 @@ def openings_rows(R):
             o = r["o"]
             shape = f"R{o['r'] * 1000:.0f}"
             hl = FP.hinge_line(o)
-            note = {"bottom": f"hinge WL {hl[2] * 1000:.0f} (sill), opens down; no window" if hl else "",
-                    "top": f"hinge WL {hl[2] * 1000:.0f} (top), opens up; window P4" if hl else "",
-                    None: "plug, removed inward; window S2, handle above"}[o.get("hinge")]
+            od = o.get("open_deg")
+            note = {"bottom": f"CLEAR OPENING (published); hinge WL {hl[2] * 1000:.0f} at the sill, opens down {od:.0f} "
+                              f"deg; no window" if hl else "",
+                    "top": f"CLEAR OPENING (published); hinge WL {hl[2] * 1000:.0f} at the top, opens up {od:.0f} deg; "
+                           f"window P4" if hl else "",
+                    None: "hatch seam = opening; plug, removed inward; window S2, handle above"}[o.get("hinge")]
         rows.append((r["id"], r["name"], side, f"{r['x0'] * 1000:.0f}", f"{r['cx'] * 1000:.0f}",
                      f"{r['x1'] * 1000:.0f}", f"{r['z0'] * 1000:.0f}", f"{r['cz'] * 1000:.0f}",
                      f"{r['z1'] * 1000:.0f}", f"{r['w'] * 1000:.0f} x {r['h'] * 1000:.0f}", shape, note))
+        if r["kind"] == "door":
+            pn = r["panel"]
+            rows.append((r["id"] + "s", "  PANEL SEAM", side, f"{r['px0'] * 1000:.0f}", f"{pn['cx'] * 1000:.0f}",
+                         f"{r['px1'] * 1000:.0f}", f"{r['pz0'] * 1000:.0f}", f"{pn['cz'] * 1000:.0f}",
+                         f"{r['pz1'] * 1000:.0f}", f"{r['pw'] * 1000:.0f} x {r['ph'] * 1000:.0f}",
+                         f"R{pn['r'] * 1000:.0f}", "DOOR_PANELS: skin cut / door slab outline (drawing = render seams)"))
     return rows
 
 
-def deviation_rows(R, ref, ph):
-    """(item, ours, delta vs drawing, delta vs rev A, evidence).  Deltas = ours - reference (mm)."""
+def deviation_rows(R, ref, ph, rd=None):
+    """(item, ours, delta vs drawing, delta vs the Pilatus render, delta vs rev A, evidence).  Deltas = ours -
+    reference (mm).  Render deltas: ours - render-derived value after the scale + offset pattern fit (render_check)."""
     rows = []
     f0 = lambda v: f"{v:+.0f}" if abs(v) >= 0.5 else "0"
     fl = lambda vs: " / ".join(f0(v) for v in vs)
@@ -624,9 +740,16 @@ def deviation_rows(R, ref, ph):
     stbd_w = [r["cx"] for r in R if r["side"] > 0 and r["kind"] == "window"]
     ra = REV_A
     have = ref is not None
+    rok = bool(rd and rd.get("ok"))
 
     def d(vals, refs):
         return fl([(a - b) * 1000 for a, b in zip(vals, refs)]) if have else "n/a"
+
+    def rdev(names):
+        """ours - render for the named pattern features."""
+        if not rok:
+            return "n/a"
+        return fl([-rd["res"][rd["names"].index(n)] for n in names])
 
     if have:
         cw = [ref[k] for k in ("cabin_win_1", "cabin_win_2", "cabin_win_3", "door_cargo_win")]
@@ -635,67 +758,99 @@ def deviation_rows(R, ref, ph):
         dz = np.mean([0.5 * (c[2] + c[3]) for c in cw])
     rows.append(("Cabin window W x H", f"{FP.WIN_W * 1000:.0f} x {FP.WIN_H * 1000:.0f}",
                  d([FP.WIN_W, FP.WIN_H], [dw, dh]) if have else "n/a",
+                 fl([(FP.WIN_W - rd["win_w"]) * 1000, (FP.WIN_H - rd["win_h"]) * 1000]) if rok else "n/a",
                  fl([(FP.WIN_W - ra["win"][0]) * 1000, (FP.WIN_H - ra["win"][1]) * 1000]),
-                 "photos: w/h 0.78-0.82 (PRO s/n 3001 close-up 0.80), visible height ~0.36"))
-    rows.append(("Cabin window shape", f"Lame n {FP.WIN_N:g}", "fit n 4.23, rms 0.4",
-                 "rrect r60", f"equivalent rrect R{FP.WIN_R * 1000:.0f} (rms 1.2 mm); PC-24 style"))
+                 f"w/h ours {FP.WIN_W / FP.WIN_H:.2f}, render {rd['win_wh']:.2f}, photos 0.78-0.82 (s/n 3001 0.80); "
+                 "drawing kept (primary)" if rok else "photos: w/h 0.78-0.82 (PRO s/n 3001 close-up 0.80)"))
+    from math import gamma
+    lame_fill = gamma(1 + 1 / FP.WIN_N) ** 2 / gamma(1 + 2 / FP.WIN_N)
+    rfill = rd.get("win_fill") if rok else None
+    rows.append(("Cabin window shape", f"Lame n {FP.WIN_N:g}", "fit n 4.23",
+                 f"fill {rfill - lame_fill:+.3f}" if rfill else "n/a",
+                 "rrect r60", f"equivalent rrect R{FP.WIN_R * 1000:.0f} (rms 1.2 mm); area / box: ours {lame_fill:.3f}"
+                 + (f", render P1 blob {rfill:.3f}" if rfill else "")))
     rows.append(("Cabin window CL WL", f"{FP.WIN_CZ * 1000:.0f}", d([FP.WIN_CZ], [dz]) if have else "n/a",
+                 f0((FP.WIN_CZ - (FP.DOOR_PANELS['door_airstair']['cz'] + FP.DOOR_PANELS['door_airstair']['hz'] -
+                                  rd["win_cl_below_d1_top"])) * 1000) + "*" if rok else "n/a",
                  f0((FP.WIN_CZ - ra["win"][2]) * 1000),
-                 f"= cabin crown - {FP.WIN_CROWN_DROP * 1000:.0f}; plan-view y through the OML within 3 mm"))
+                 f"= cabin crown - {FP.WIN_CROWN_DROP * 1000:.0f}; *render: CL below the D1 top seam (perspective "
+                 "not modelled)"))
     rows.append(("Port windows P1-P3 CL", " / ".join(f"{x * 1000:.0f}" for x in port_w),
                  d(port_w, [0.5 * (ref[k][0] + ref[k][1]) for k in ("cabin_win_1", "cabin_win_2", "cabin_win_3")])
-                 if have else "n/a", fl([(a - b) * 1000 for a, b in zip(port_w, ra["port"])]),
+                 if have else "n/a", rdev(["P1", "P2", "P3"]),
+                 fl([(a - b) * 1000 for a, b in zip(port_w, ra["port"])]),
                  "photo pattern (NGX broadside, port) fit residual " +
                  "/".join(f"{abs(v):.0f}" for v in ph["port_fit_res"][1:4]) + " mm"))
     p4 = FP.DOOR_WINDOWS["door_cargo"]
     rows.append(("Cargo-door window P4 CL", f"{p4 * 1000:.0f}",
                  d([p4], [0.5 * (ref["door_cargo_win"][0] + ref["door_cargo_win"][1])]) if have else "n/a",
-                 f0((p4 - ra["door_win"]["door_cargo"]) * 1000), "PRO s/n 3001 air-to-air: 4th window aft of D1"))
+                 rdev(["P4"]), f0((p4 - ra["door_win"]["door_cargo"]) * 1000),
+                 "PRO s/n 3001 air-to-air and the render: 4th window aft of D1, in D2"))
     rows.append(("Stbd windows S1-S5 CL", " / ".join(f"{x * 1000:.0f}" for x in stbd_w),
-                 d(stbd_w, ref["plan_win"][1]) if have and len(ref["plan_win"][1]) == 5 else "n/a",
+                 d(stbd_w, ref["plan_win"][1]) if have and len(ref["plan_win"][1]) == 5 else "n/a", "",
                  fl([(a - b) * 1000 for a, b in zip(stbd_w, sorted(ra["stbd"] + [ra["door_win"]["exit_hatch"]]))]),
-                 "from the PLAN view (S2 in E1); rev A had 6 (4720 ... 8720); photo (NGX Kenia) pattern "
-                 f"residual <= {max(abs(v) for v in ph['stbd_fit_res']):.0f} mm"))
-    rows.append(("Stbd windows, photo absolute", "", "",
+                 "from the PLAN view (S2 in E1); photo (NGX Kenia) pattern residual "
+                 f"<= {max(abs(v) for v in ph['stbd_fit_res']):.0f} mm"))
+    rows.append(("Stbd windows, photo absolute", "", "", "",
                  "", "Kenia, spinner/cowl registered: " + " / ".join(f"{v * 1000:.0f}" for v in ph["stbd_abs"]) +
                  " (perspective: aft under-read)"))
     A, C, E = FP.AIRSTAIR, FP.CARGO, FP.EXIT
+    PA, PC = FP.DOOR_PANELS["door_airstair"], FP.DOOR_PANELS["door_cargo"]
     ra_a, ra_c, ra_e = ra["airstair"], ra["cargo"], ra["exit"]
-    for lab, o, key, rv, ev in (
-            ("D1 airstair fwd / aft", A, "door_airstair", ra_a,
-             "0.61 clear inside the drawn 0.64 outline; sheet 2 draws " +
-             (f"{(ref['s2_airstair'][1] - ref['s2_airstair'][0]) * 1000:.0f}" if have and "s2_airstair" in ref else "0.61")),
-            ("D2 cargo fwd / aft", C, "door_cargo", ra_c, "published 1.35 wide inside the drawn 1.40 outline"),
-            ("E1 exit fwd / aft", E, "plan_exit", ra_e, "plan = stbd detail; photo hatch outline (spinner-registered) " +
-             " - ".join(f"{v * 1000:.0f}" for v in ph["exit_abs"]))):
-        ours = [o["cx"] - o["hx"], o["cx"] + o["hx"]]
+    rvx = lambda o, rv: fl([(o["cx"] - o["hx"] - (rv[0] - rv[2])) * 1000, (o["cx"] + o["hx"] - (rv[0] + rv[2])) * 1000])
+    rvz = lambda o, rv: fl([(o["cz"] - o["hz"] - (rv[1] - rv[3])) * 1000, (o["cz"] + o["hz"] - (rv[1] + rv[3])) * 1000])
+    xs = lambda o: [o["cx"] - o["hx"], o["cx"] + o["hx"]]
+    zs = lambda o: [o["cz"] - o["hz"], o["cz"] + o["hz"]]
+    mm2 = lambda v: " / ".join(f"{a * 1000:.0f}" for a in v)
+    s2 = (f"{(ref['s2_airstair'][1] - ref['s2_airstair'][0]) * 1000:.0f}" if have and "s2_airstair" in ref else "?")
+    for lab, o, key, rn, rv, ev in (
+            ("D1 panel seam fwd / aft", PA, "door_airstair", ["D1 fwd seam", "D1 aft seam"], ra_a,
+             f"drawn outline = render seams ({rd['d1_w'] * 1000:.0f} wide)" if rok else "drawn outline"),
+            ("D1 clear opening fwd / aft", A, "door_airstair", None, ra_a,
+             f"published 0.61, centred in the seam (15 mm frame each side); sheet 2 draws {s2}"),
+            ("D2 panel seam fwd / aft", PC, "door_cargo", ["D2 fwd seam", "D2 aft seam"], ra_c,
+             f"drawn outline = render seams ({rd['d2_w'] * 1000:.0f} wide)" if rok else "drawn outline"),
+            ("D2 clear opening fwd / aft", C, "door_cargo", None, ra_c, "published 1.35 W, centred in the seam"),
+            ("E1 hatch fwd / aft", E, "plan_exit", None, ra_e, "plan = stbd detail; photo hatch seam (spinner-"
+             "registered) " + " - ".join(f"{v * 1000:.0f}" for v in ph["exit_abs"]))):
         refs = [ref[key][0], ref[key][1]] if have and key in ref else None
-        rows.append((lab, " / ".join(f"{v * 1000:.0f}" for v in ours), d(ours, refs) if refs else "n/a",
-                     fl([(ours[0] - (rv[0] - rv[2])) * 1000, (ours[1] - (rv[0] + rv[2])) * 1000]), ev))
+        rows.append((lab, mm2(xs(o)), d(xs(o), refs) if refs else "n/a", rdev(rn) if rn else "",
+                     rvx(o, rv), ev))
     for lab, o, key, rv, ev in (
-            ("D1 airstair sill / top", A, "door_airstair", ra_a, "1.35 clear, centred in the drawn 1229-2629"),
-            ("D2 cargo sill / top", C, "door_cargo", ra_c, "1.32 clear, sill = D1 sill (floor); drawn 1.47 tall"),
-            ("E1 exit sill / top", E, "detail_exit", ra_e, "0.482 x 0.641 (drawing; < FAR 25 Type III 0.51 x 0.91)")):
-        ours = [o["cz"] - o["hz"], o["cz"] + o["hz"]]
+            ("D1 panel seam low / top", PA, "door_airstair", ra_a, "drawn outline 1229-2629 (render top seam = anchor)"),
+            ("D1 clear sill / top", A, "door_airstair", ra_a, "1.35 H published; sill = cabin floor, 25 mm frame"),
+            ("D2 panel seam low / top", PC, "door_cargo", ra_c, "drawn outline; lower seam behind the wing fairing"),
+            ("D2 clear sill / top", C, "door_cargo", ra_c, "1.32 H published; sill = D1 sill (floor)"),
+            ("E1 hatch sill / top", E, "detail_exit", ra_e, "0.482 x 0.641 projected = 0.696 along the skin: FAR 23.807(b) "
+             "19 x 26 in min.")):
         refs = [ref[key][2], ref[key][3]] if have and key in ref else None
-        rows.append((lab, " / ".join(f"{v * 1000:.0f}" for v in ours), d(ours, refs) if refs else "n/a",
-                     fl([(ours[0] - (rv[1] - rv[3])) * 1000, (ours[1] - (rv[1] + rv[3])) * 1000]), ev))
-    rows.append(("D1 window", "none", "none" if have else "n/a", "removed",
-                 "PRO s/n 3001 (air-to-air, door closed): no window"))
-    rows.append(("Corner radii D1 / D2 / E1", f"{A['r'] * 1000:.0f} / {C['r'] * 1000:.0f} / {E['r'] * 1000:.0f}",
-                 "outline 100 / 76 / 100", fl([(A['r'] - ra_a[4]) * 1000, (C['r'] - ra_c[4]) * 1000,
-                                               (E['r'] - ra_e[4]) * 1000]),
-                 "door radii = drawn outline radius less the 15-25 mm margin"))
-    rows.append(("D2 / D1 width ratio", f"{2 * C['hx'] / (2 * A['hx']):.2f}", "outline 2.19", "",
-                 f"photo (NGX broadside) {ph['d2_over_d1']:.2f}"))
+        rows.append((lab, mm2(zs(o)), d(zs(o), refs) if refs else "n/a", "", rvz(o, rv), ev))
+    rows.append(("D1 window", "none", "none" if have else "n/a", "none" if rok else "n/a", "removed",
+                 "PRO s/n 3001 (air-to-air, door closed) and the render: no window"))
+    rows.append(("Corner radii D1 / D2 / E1", f"{PA['r'] * 1000:.0f} / {PC['r'] * 1000:.0f} / {E['r'] * 1000:.0f}",
+                 "0 / 0 / 0", "", fl([(PA['r'] - ra_a[4]) * 1000, (PC['r'] - ra_c[4]) * 1000, (E['r'] - ra_e[4]) * 1000]),
+                 f"panel seams (drawn); clear openings R{A['r'] * 1000:.0f} / R{C['r'] * 1000:.0f}"))
+    rows.append(("D2 / D1 seam width ratio", f"{PC['hx'] / PA['hx']:.3f}", "0", f"{PC['hx'] / PA['hx'] - rd['d2_over_d1']:+.3f}"
+                 if rok else "n/a", "", f"photo (NGX broadside, door openings) {ph['d2_over_d1']:.2f}"))
+    rows.append(("Open angle D1 / D2 (deg)", f"{A['open_deg']:.0f} / {C['open_deg']:.0f}", "", "",
+                 f"{A['open_deg'] - 128:+.0f} / {C['open_deg'] - 100:+.0f}", "D1: free edge ~5 cm off the ground (contact ~164, section A-A); D2: render, door open (~120)"))
     return rows
 
 
-def photo_rows(ph):
+def photo_rows(ph, rd=None):
     k = ", ".join(f"{v * 1000:.0f}" for v in ph["stbd_abs"])
-    return [
+    rows = []
+    if rd and rd.get("ok"):
+        rows.append(("Pilatus tech-data render", "current PC-12 (PRO), port",
+                     f"orthographic-like CGI side view: D1 / D2 seams + P1-P4 fit OUR stations within "
+                     f"{max(abs(v) for v in rd['res']):.0f} mm (rms {np.sqrt(np.mean(rd['res'] ** 2)):.0f}); seams "
+                     f"{rd['d1_w'] * 1000:.0f} / {rd['d2_w'] * 1000:.0f} wide; window {rd['win_w'] * 1000:.0f} x "
+                     f"{rd['win_h'] * 1000:.0f}; no D1 window"))
+        rows.append(("Pilatus render, D2 open", "current PC-12 (PRO), port", "cargo door raised ~120 deg (free edge "
+                     "~0.99 m above the hinge); sill at the cabin floor, 3 latches in the lower frame"))
+    rows += [
         ("ngx_kenia_stbd_pilatus", "NGX, stbd broadside", f"S1-S5 at STA {k} (spinner/cowl registered, 166.7 px/m); "
-         f"pattern fit to ours <= {max(abs(v) for v in ph['stbd_fit_res']):.0f} mm; E1 hatch 0.49 wide"),
+         f"pattern fit to ours <= {max(abs(v) for v in ph['stbd_fit_res']):.0f} mm; E1 hatch ~0.49-0.50 x 0.62-0.64"),
         ("ngx_ownership_port_pilatus", "NGX, port broadside", "D1 open (0.61 = scale bar), P1-P3, D2 open (hinged at "
          f"top); pattern fit <= {max(abs(v) for v in ph['port_fit_res']):.0f} mm; D2/D1 width {ph['d2_over_d1']:.2f}"),
         ("pro3001_air_port34_pilatus", "PRO s/n 3001, port 3/4", "airstair door CLOSED: outline visible, NO window; "
@@ -705,31 +860,45 @@ def photo_rows(ph):
         ("pro3001_stbd_side_aero25", "PRO s/n 3001, stbd", "S1, E1 (outlined, red placard above its window = "
          "handle), S3-S5: same row as the NGX, S1-E1 the widest pitch"),
     ]
+    return rows
 
 
 def stage3_items():
+    PA, PC = FP.DOOR_PANELS["door_airstair"], FP.DOOR_PANELS["door_cargo"]
     return [
-        "model/interior.py build_structure(): frames are placed at window +/- 0.40 m from FIXED_WINDOWS; place them "
-        "at the Pilatus frames (fuselage.FRAMES FR16-FR33) and interrupt them at the cut-outs of openings_table() "
-        "(windows P3 / S3 at 6980 straddle FR25 6971: needs a window-frame forging or local frame jog).",
-        "Interior window reveals / sidewall lining: read the Lame outline (fuselage_parts.window_outline, WIN_N) and "
-        f"WIN_CZ {FP.WIN_CZ * 1000:.0f} (+178 mm vs rev A); 7 fixed windows (was 9) + windows in D2 and E1.",
-        f"Cabin floor at the door sills WL {FP.DOOR_SILL_WL * 1000:.0f} (L1 proposes WL 1259); seats / "
-        "divider positions must clear D1 4665-5275 and D2 7565-8915 (both moved: D1 +255 mm aft, D2 -685 mm fwd).",
-        "Door kinematics: build_doors() still passes hinge / open_angle literally -- read AIRSTAIR['hinge'], "
-        "CARGO['hinge'] and hinge_line(); airstair steps / handrails and the cargo-door gas struts move with the doors; "
-        "the airstair door now has NO window (DOOR_WINDOWS['door_airstair'] = None). At 128 deg the D1 free edge stays "
-        "~0.6 m above the ground (section A-A): the step extension / handrail geometry must reach it.",
-        "Emergency exit: part name 'Type III' in build_doors() -- the drawn hatch is 0.482 x 0.641 m (plug); "
-        "E1 moved from STA 5520 to 6205, over the wing: check the wing-root fairing and flap clearance.",
-        "Livery (model/livery.py): stripes and window-surround trims keyed to the old window belt must follow "
-        "WIN_CZ / the new stations; the PRO dark cockpit mask's aft edge meets the D1 forward frame (STA ~4.65).",
-        "Wing-root fairing (wing / details): hides the lower D2 corners in side view; the fairing must not cut into "
-        "the D2 sill (WL 1254) aft of STA 7565.",
+        f"Door cut-outs: cut the skin and the door slabs along DOOR_PANELS (seams {2 * PA['hx'] * 1000:.0f} x "
+        f"{2 * PA['hz'] * 1000:.0f} / {2 * PC['hx'] * 1000:.0f} x {2 * PC['hz'] * 1000:.0f}), build the jambs / door "
+        f"frames along the clear openings AIRSTAIR / CARGO ({2 * FP.AIRSTAIR['hx'] * 1000:.0f} x "
+        f"{2 * FP.AIRSTAIR['hz'] * 1000:.0f} / {2 * FP.CARGO['hx'] * 1000:.0f} x {2 * FP.CARGO['hz'] * 1000:.0f}); "
+        "openings_field(), "
+        "build_skin() door_edges, build_door() and build_doors() still use the clear openings only.",
+        "Door kinematics: build_doors() passes open_angle 128 / 100 literally -- read AIRSTAIR['open_deg'] "
+        f"{FP.AIRSTAIR['open_deg']:.0f} (free edge ~5 cm off the ground, section A-A) and CARGO['open_deg'] "
+        f"{FP.CARGO['open_deg']:.0f}, the hinge WLs from hinge_line() "
+        f"({FP.hinge_line(FP.AIRSTAIR)[2] * 1000:.0f} / {FP.hinge_line(FP.CARGO)[2] * 1000:.0f}, on the panel); "
+        "airstair steps / handrails and the cargo-door struts move with the doors; the airstair door has NO window.",
+        "model/interior.py: FLOOR_Z 1.12 -> the door sills WL "
+        f"{FP.DOOR_SILL_WL * 1000:.0f} (L1 proposes 1259); carpet 4.46-9.52 and the seats must clear D1 "
+        f"{(FP.AIRSTAIR['cx'] - FP.AIRSTAIR['hx']) * 1000:.0f}-{(FP.AIRSTAIR['cx'] + FP.AIRSTAIR['hx']) * 1000:.0f} "
+        f"and D2 {(FP.CARGO['cx'] - FP.CARGO['hx']) * 1000:.0f}-{(FP.CARGO['cx'] + FP.CARGO['hx']) * 1000:.0f} "
+        "(D1 moved +255 mm aft, D2 -685 mm fwd); window reveals from window_outline() (Lame n 4.2) at WIN_CZ "
+        f"{FP.WIN_CZ * 1000:.0f} (+178 mm).",
+        "model/interior.py build_structure(): frames at window +/- 0.40 m -> the Pilatus frames (fuselage.FRAMES "
+        "FR16-FR33), interrupted at openings_table() (P3 / S3 at 6980 straddle FR25 6971: window-frame forging or local "
+        "jog); the window-belt stringer gap 1.70 < z < 2.32 -> about 1.95-2.43 (belt 1995-2380).",
+        "Emergency exit: build_doors() names it 'Type III' -- the drawn plug hatch is 0.482 x 0.641 m projected "
+        "(0.696 along the skin, FAR 23.807(b) 19 x 26 in); E1 moved from STA 5520 to 6205, over the wing: check the "
+        "wing-root fairing and flap clearance.",
+        "Livery (model/livery.py): the swoosh (WL 1.28-1.52) crosses both door panels -- paint the panel slabs, not "
+        "the clear openings; the PRO dark cockpit mask's aft edge meets the D1 forward seam (STA "
+        f"{(PA['cx'] - PA['hx']) * 1000:.0f}).",
+        "Wing-root fairing (wing / details): hides the lower D2 seam in side view (drawn low seam WL "
+        f"{(PC['cz'] - PC['hz']) * 1000:.0f}); the fairing must not cut into the D2 panel aft of STA "
+        f"{(PC['cx'] - PC['hx']) * 1000:.0f}.",
         "refs/mbp.py '[vs model]' checks hard-code the rev-A stations (5.52 ... 8.72): switch them to "
-        "fuselage_parts.openings_table().",
-        "Door frames / jambs (build_doors seams): skin-station grid now uses the new door edges; re-check the "
-        "jamb loop pick and the D2 slab against the aft fuselage split SPLIT_AFT 9.85.",
+        "fuselage_parts.openings_table() (rows now carry panel and open_deg).",
+        "Door frames / jambs (build_doors seams): re-check the jamb loop pick and the D2 slab against the aft "
+        "fuselage split SPLIT_AFT 9.85 (D2 panel ends at 8940).",
     ]
 
 
@@ -742,6 +911,11 @@ def draw(ds):
         ref = None
         ds.log.append(f"reference not available ({e}); deviation table without drawing deltas")
     ph = photo_check()
+    try:
+        rd = render_check()
+    except Exception as e:                                                # noqa: BLE001
+        rd = dict(ok=False, note=f"render check failed: {e}")
+    ds.log.append("render: " + ("not cached" if rd is None else rd.get("note", "")))
     ds.frame_and_title()
 
     # ---------------- views (1:20)
@@ -772,10 +946,10 @@ def draw(ds):
                                box=(E["cx"] - 0.3, E["cz"] - 0.36, E["cx"] + 0.3, E["cz"] + 0.36)))
     draw_detail_exit(ds, vB)
     view_title(ds, 598.0, 153.0, "DETAIL B - EXIT E1", "SEEN FROM STARBOARD - SCALE 1:10")
-    vS = ds.add_view(aft_view("secA", origin=(781.0, 142.0), scale=25, model_origin=(0.0, 0.0),
-                              box=(-2.2, -0.05, 1.0, 3.2)))
+    vS = ds.add_view(aft_view("secA", origin=(772.0, 145.0), scale=30, model_origin=(0.0, 0.0),
+                              box=(-2.3, -0.05, 1.0, 3.7)))
     draw_section(ds, vS, R)
-    view_title(ds, 745.0, 153.0, "SECTION A-A - DOORS, HINGES", "STA 6205 LOOKING FWD - SCALE 1:25")
+    view_title(ds, 745.0, 153.0, "SECTION A-A - DOORS, HINGES", "STA 6205 LOOKING FWD - SCALE 1:30")
 
     # ---------------- tables
     cols = [("ID", 9, "l"), ("OPENING", 33, "l"), ("SIDE", 12, "c"), ("FWD", 14, "r"), ("CL STA", 15, "r"),
@@ -784,16 +958,17 @@ def draw(ds):
     y = table(ds, 455.0, 168.0, cols, openings_rows(R), title="OPENINGS (model/fuselage_parts.py) - STA / WL mm",
               zebra=lambda i: i % 2 == 1, size=2.6, row_h=4.2)
     ds.text(455.0, y + 3.6, "Windows: Lame curve n 4.2 (detail A), 9 in all. Doors: published clear openings "
-            "(W x H), round corners. Section A-A shows the hinge lines and the open positions of build_door().",
+            "(W x H, projected) inside the drawn panel seams (rows D1s / D2s). Section A-A: hinges and open positions.",
             2.1, "label", "start", fill=MUTED, tag="tnote")
-    dcols = [("ITEM", 39, "l"), ("OURS", 43, "l"), ("D DWG", 27, "l"), ("D REV A", 51, "l"),
-             ("EVIDENCE / NOTE", 211, "l")]
-    drows = deviation_rows(R, ref, ph)
+    dcols = [("ITEM", 39, "l"), ("OURS", 45, "l"), ("D DWG", 27, "l"), ("D RENDER", 23, "l"), ("D REV A", 44, "l"),
+             ("EVIDENCE / NOTE", 193, "l")]
+    drows = deviation_rows(R, ref, ph, rd)
     y2 = table(ds, 455.0, y + 9.0, dcols, drows,
-               title="DEVIATIONS (mm, OURS - REFERENCE): PILATUS NGX DRAWING, PHOTOS, REV A",
+               title="DEVIATIONS (mm, OURS - REFERENCE): PILATUS NGX DRAWING, PILATUS RENDER, PHOTOS, REV A",
                zebra=lambda i: i % 2 == 1, size=2.45, row_h=4.1, font="label")
     ds.text(455.0, y2 + 3.6, "D DWG: vs the registered Pilatus NGX drawing (sheet-1 side view; starboard: its plan "
-            "view; exit WLs: sheet-1 stbd detail, confirmed through the OML in plan). REV A: the model before this refit.",
+            "view; exit WLs: sheet-1 stbd detail). D RENDER: vs the Pilatus tech-data side render after a scale + offset "
+            "fit of the port pattern. REV A: the model before this refit.",
             2.1, "label", "start", fill=MUTED, tag="tnote")
     ds.log.append("deviations: " + "; ".join(f"{r[0]}: {r[2]}" for r in drows))
 
@@ -805,21 +980,22 @@ def draw(ds):
         "(sheet L1), never from the mesh. STA = mm aft of the datum (3000 fwd of the firewall); WL above the static "
         "ground line.",
         "Positions follow the registered Pilatus NGX drawing (port: side view; starboard: plan view -- the sheet-1 "
-        "starboard detail repeats the port window stations and is not used). Door sizes are the published clear "
-        "openings, centred on the drawn door outlines (15-100 mm larger).",
-        "PRO: no window in the airstair door (s/n 3001 photo, door closed). The cockpit side window is context only "
-        "(model/cockpit_glazing.py, glazing sheet).",
+        "starboard detail repeats the port window stations and is not used). The drawn door outlines are the door-"
+        "panel seams (the Pilatus tech-data render shows the same 0.64 / 1.40 m seams); the published door sizes "
+        "(projected W x H) are the clear openings inside them.",
+        "PRO: no window in the airstair door (s/n 3001 photo, door closed; Pilatus render). The cockpit side window is "
+        "context only (model/cockpit_glazing.py, glazing sheet).",
     ], title="NOTES", size=2.5, line_h=3.4)
-    pcols = [("PHOTO (refs/photos.json)", 62, "l"), ("VARIANT / VIEW", 50, "l"), ("WHAT IT SHOWS FOR THE OPENINGS", 259, "l")]
-    y5 = table(ds, 455.0, y4 + 2.0, pcols, photo_rows(ph), title="PHOTO EVIDENCE", size=2.3, row_h=3.9,
+    pcols = [("PHOTO (refs/photos.json) / RENDER", 62, "l"), ("VARIANT / VIEW", 50, "l"), ("WHAT IT SHOWS FOR THE OPENINGS", 259, "l")]
+    y5 = table(ds, 455.0, y4 + 2.0, pcols, photo_rows(ph, rd), title="PHOTO / RENDER EVIDENCE", size=2.3, row_h=3.9,
                font="label", zebra=lambda i: i % 2 == 1)
     ds.log.append(f"right column ends at y={y5:.0f} (title block starts at {ds.title_box[1]:.0f})")
 
-    draw_overlay(ds, vport, vplan, vst, vA, vB, R, ph)
+    draw_overlay(ds, vport, vplan, vst, vA, vB, R, ph, rd)
 
 
 # ============================================================================================ overlay
-def draw_overlay(ds, vport, vplan, vst, vA, vB, R, ph):
+def draw_overlay(ds, vport, vplan, vst, vA, vB, R, ph, rd=None):
     try:
         n = ds.ov_mbp(vport, "side")
         n += ds.ov_mbp(vplan, "plan")
@@ -845,6 +1021,68 @@ def draw_overlay(ds, vport, vplan, vst, vA, vB, R, ph):
     ds.ov_text(X, Y, "RED: Pilatus sheet-1 side view (outer door outlines: 0.64 x 1.40 / 1.40 x 1.47)", 2.0, RED)
     ds.ov_text(X, Y + 3.0, "BLUE: photo pattern (NGX Ownership, port) scale+offset fit: D1, P1-P3, D2 centres", 2.0,
                BLUE)
+    if rd and rd.get("ok"):
+        # Pilatus render: seams and window centres after the pattern fit (triangles above the openings)
+        for nm, xf in zip(rd["names"], rd["fit"]):
+            zz = (FP.DOOR_PANELS["door_airstair"]["cz"] + FP.DOOR_PANELS["door_airstair"]["hz"] + 0.05 if "seam" in nm
+                  else FP.WIN_CZ + FP.WIN_HZ + 0.03)
+            Xs, Ys = vport.pt(xf, zz)
+            ds.ov.polygon([(Xs - 0.9, Ys - 1.4), (Xs + 0.9, Ys - 1.4), (Xs, Ys)], fill="#7A3FB0")
+        ds.ov_text(X, Y + 6.0, "PURPLE: Pilatus tech-data render (port), scale+offset fit: D1/D2 panel seams, P1-P4 "
+                   f"centres (max residual {np.max(np.abs(rd['res'])):.0f} mm)", 2.0, "#7A3FB0")
+        try:
+            f = render_overlay_png(rd, R)
+            ds.log.append(f"render check image: {f}")
+        except Exception as e:                                            # noqa: BLE001
+            ds.log.append(f"render check image failed: {e}")
+
+
+def render_overlay_png(rd, R, path=None):
+    """Private check image (git-ignored): the Pilatus tech-data render with OUR port openings (panel seams, clear
+    openings, windows) mapped by the pattern fit (x) and the D1 top seam + the same scale (z)."""
+    if not rd or not rd.get("ok"):
+        return None
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from PIL import Image
+    im = np.asarray(Image.open(RENDER_FILE).convert("RGB"))
+    c0, c1 = rd["coef"]
+    s = rd["px_per_m"]
+    ztop = FP.DOOR_PANELS["door_airstair"]["cz"] + FP.DOOR_PANELS["door_airstair"]["hz"]
+    X = lambda x: (np.asarray(x) - c1) / c0
+    Z = lambda z: rd["d1_top_px"] + (ztop - np.asarray(z)) * s
+    fig = plt.figure(figsize=(16, 7.2), dpi=110)
+    ax = fig.add_axes([0, 0, 1, 1])
+    x0p, x1p, y0p, y1p = int(X(4.2)), int(X(9.4)), int(Z(3.0)), int(Z(0.8))
+    ax.imshow(im[y0p:y1p, x0p:x1p], extent=(x0p, x1p, y1p, y0p))
+    for r in R:
+        if r["side"] > 0:
+            continue
+        if r["kind"] == "door":
+            P = r["poutline"]
+            ax.plot(X(P[:, 0]), Z(P[:, 1]), "-", color="#E0231C", lw=1.2)
+            P = r["outline"]
+            ax.plot(X(P[:, 0]), Z(P[:, 1]), "--", color="#1F6FD1", lw=1.0)
+        else:
+            P = r["outline"]
+            ax.plot(X(P[:, 0]), Z(P[:, 1]), "-", color="#E0231C", lw=1.0)
+    xs = np.linspace(4.2, 9.4, 300)
+    ax.plot(X(xs), Z(F.z_top(xs)), ":", color="#0E6E62", lw=1.0)
+    ax.plot(X(xs), Z(F.z_bot(xs)), ":", color="#0E6E62", lw=1.0)
+    ax.plot(X(xs), Z(np.full_like(xs, FP.DOOR_SILL_WL)), "--", color="#0E6E62", lw=0.6)
+    ax.text(x0p + 10, y0p + 25, "Pilatus PC-12 tech-data render (private reference) + OURS: red = panel seams / "
+            "windows, blue dashed = clear openings, green dotted = OML crown/keel (centre plane: perspective), "
+            f"green dashed = door sills WL {FP.DOOR_SILL_WL * 1000:.0f}.  x: pattern fit (max residual "
+            f"{np.max(np.abs(rd['res'])):.0f} mm), z: D1 top seam + same scale", fontsize=8, color="k",
+            bbox=dict(fc="w", ec="none", alpha=0.8))
+    ax.set_xlim(x0p, x1p)
+    ax.set_ylim(y1p, y0p)
+    ax.axis("off")
+    path = path or (M.OUT_OVERLAY / "L3_render_check.png")
+    fig.savefig(path)
+    plt.close(fig)
+    return path
 
 
 if __name__ == "__main__":
