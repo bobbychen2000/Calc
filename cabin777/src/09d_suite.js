@@ -182,7 +182,7 @@ function suiteUnit(opts = {}) {
       B.add(gBox(0.004, H - 0.30, len - 0.06), M4.trs(hx + 0.002, yc, (z0 + z1) / 2), SEATMAT.fFluteGap);
       // w2: 0.055 stiles / rails (~12 % of the leaf, pb_20), rounded ribs with a ~45 % dark groove (omaat_f4 / f7 convex ribs).
       // w3: pitch 0.026 (15 per leaf, real pb_20 ~23 at ~0.017) - finer ribs alias to moire at cabin distance [A, deliberate]
-      for (let z = z0 + 0.068; z < z1 - 0.058; z += 0.026) B.add(gRBox(0.010, H - 0.34, 0.015, 0.005, 1), M4.trs(hx + 0.005, yc, z), SEATMAT.fFlute);
+      for (let z = z0 + 0.068; z < z1 - 0.058; z += 0.026) B.add(gCyl(0.0075, 0.0075, H - 0.34, 4, false, -Math.PI / 2, Math.PI), M4.trs(hx + 0.002, yc, z), SEATMAT.fFlute);   // 8-tri half-round rib (a gRBox was 108)
       for (const z of [z0 + 0.0275, z1 - 0.0275]) B.add(gRBox(0.016, H - 0.24, 0.055, 0.006, 1), M4.trs(hx + 0.007, yc, z), SEATMAT.fDoorFrame);
       for (const y of [0.14 + 0.0275, H - 0.10 - 0.0275]) B.add(gRBox(0.016, 0.055, len, 0.006, 1), M4.trs(hx + 0.007, y, (z0 + z1) / 2), SEATMAT.fDoorFrame);
       B.add(gBox(0.006, 0.008, len - 0.02), M4.trs(hx + 0.004, 0.06, (z0 + z1) / 2), SEATMAT.fLed);
