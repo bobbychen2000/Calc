@@ -106,7 +106,7 @@ const SEATMAT = {
   fInner: { c: '#6a635d', r: 0.5, l: LAYER.plastic },       // QA r3: +15 %, ottoman base / aisle box read #474141 vs omaat_f11 #70635c
   fFabric: { c: '#6c655d', r: 0.92, l: LAYER.fTweed },      // warm grey, no mauve: omaat_f9 #756c66, f10 ottoman #81716a (w1)
   fLeather: { c: '#4f4b49', r: 0.48, l: LAYER.leather },
-  fFlap: { c: '#76766f', r: 0.6, l: LAYER.leather },          // neutral grey, ~1.17x the back: omaat_f9 145/146/141 vs 128/121/113 (w3)
+  fFlap: { c: '#7e7f79', r: 0.55, l: LAYER.leather },         // neutral grey, ~1.17x the back: omaat_f9 145/146/141 vs 128/121/113 (w3); w5: rendered 0.94x in studio light
   fCap: { c: '#8a8272', r: 0.42, l: LAYER.plastic },
   fConsole: { c: '#7a736c', r: 0.45, l: LAYER.plastic },
   fCushionBlue: { c: '#9488d0', r: 0.85, l: LAYER.fabric },  // lavender, ~1.3x the seat fabric: omaat_f9 #a194e2 (w1)
@@ -262,11 +262,11 @@ function buildSeats(gl, layout) {
     // QA r2: neutral grey rounded squares slightly lighter than the cap (c_27314 cap #878787)
     // room QA w2: dark glass tiles with blue-lit numbers (ff_ana-the-room-seat-17e-and-17f, c_27313 cyan '17E' / '18D')
     if (s.kind === 'room') { p = localToWorld(s, [0.545, ROOM.wall + 0.0205, s.odd ? -0.50 : -0.06]); plate = '#2c2f35'; }
-    else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.30 + 0.0625, -0.80]); plate = '#6f675c'; }   // suite: flush pill slot a shade darker than the cap (omaat_f9 / f7)
+    else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.24 + 0.0625, -0.80]); plate = '#6f675c'; }   // suite: flush pill slot a shade darker than the cap (omaat_f9 / f7)
     const face = s.mir ? -1 : 1;             // text top points away from the aisle
     const room = s.kind === 'room';
     T.add(room ? gRBox(0.055, 0.004, 0.065, 0.012, 1) : gRBox(0.034, 0.002, 0.075, 0.012, 1), M4.trs(p[0], p[1] + (room ? 0.002 : 0.0005), p[2]), { c: plate, r: 0.45 });
-    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.055, 0.028), M4.trs(p[0], p[1] + (room ? 0.0045 : 0.002), p[2], face * Math.PI / 2, -Math.PI / 2), room ? { ...tagGlow, c: '#5f9dff', e: 0.5 } : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
+    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.047, 0.025), M4.trs(p[0], p[1] + (room ? 0.0045 : 0.002), p[2], face * Math.PI / 2, -Math.PI / 2), room ? { ...tagGlow, c: '#5f9dff', e: 0.5 } : { ...tagGlow, c: '#8f9cff' }, atlasUV('tag' + s.id)); // suite: lit blue-violet (omaat_f7 '2K')
   }
   meshes.seatTags = gl.mesh(T.build(), { name: 'seatTags', layer: 'seats', castShadow: false });
   return { meshes, groups };

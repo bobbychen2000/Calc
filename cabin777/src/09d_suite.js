@@ -8,9 +8,9 @@
 // w = outer width. Seat sits off-centre: full-length shelf on the outer side, slim wardrobe on the aisle side.
 // w1 (rater A, omaat_f7 / pb_20 / up_privacy_wall): dark door-leaf frames and the near-black lower console body
 Object.assign(SEATMAT, {
-  fDoorFrame: { c: '#655d53', r: 0.5, l: LAYER.plastic },     // w2: between pb_20 (night, #423631) and omaat_f4 (cabin light, ~rib crest tone) [V]
+  fDoorFrame: { c: '#57524a', r: 0.5, l: LAYER.plastic },     // w5: ~1.15x the fluted field, not a light picture frame (omaat_f60 1.17x) [V]
   fTray: { c: '#4a3d33', r: 0.35, l: LAYER.fWood },           // console tray: warm dark striped wood, omaat_f47 #4d3e2e [V]
-  fMirror: { c: '#8593a8', r: 0.18, m: 0.25 },                 // pill mirror reflecting wood + cabin, omaat_f10 #5b6680 [V]
+  fMirror: { c: '#566a78', r: 0.14, m: 0.3 },                  // w5: dark teal-grey, about the wood's luminance (omaat_f11 #5b717e, f5) [V]
   lampRing: { c: '#9a9894', r: 0.3, m: 0.9 }, lampLens: { c: '#1b1b1c', r: 0.2 },   // reading spots OFF: chrome ring, dark lens (omaat_f9 / f5)
   fConsoleLow: { c: '#2b2824', r: 0.55, l: LAYER.plastic },   // console body below the taupe fascia, omaat_f7 #1a1a15 [V]
 });
@@ -20,7 +20,9 @@ function suiteUnit(opts = {}) {
   // centre divider height: lowered to the console by default, as in most in-flight photos (omaat_f1 / f3 / f5, tlfl_21);
   // opts.divider = 1 raises it (up_privacy_wall, f_17314)
   const divUp = opts.divider ?? 0;
-  const hx = w / 2, H = 1.30, L = 2.20;
+  // w5: H 1.30 -> 1.24: the rim above the 43 in screen is ~0.05 (omaat_f11 0.044, f32 0.058 scaled by the 0.952 m screen) and the
+  // header sits ~0.12 above the seat back (omaat_f9) [D]
+  const hx = w / 2, H = 1.24, L = 2.20;
   const shelfW = center ? 0.14 : 0.19;
   const xo = -hx + 0.03;                      // inner face of the outer side
   // w1: seat 34 in incl. side bolsters (thepointsanalyst) -> 0.72 cushion [D]; w2: capped by the room between the console
@@ -45,21 +47,25 @@ function suiteUnit(opts = {}) {
   // is ~0.07 m on the window side and ~0.16 m on the aisle side in f11 (px scaled by the 0.952 m screen) [D]
   // QA r3: the centre suite (1.07 m between inner faces) cannot fit a 0.10 wing + 0.976 bezel + 0.16 pier; in omaat_f5 /
   // f33 its screen sits against the divider behind a slim taupe edge and the aisle-side pier is narrow [D]
-  const wing = center ? 0.0 : 0.08;          // w3: 0.08 wing so the 60-deg pier reaches ~0.22 (omaat_f10 pier ~0.28, 1.24 m suite)          // w1: 0.08 window wing (omaat_f10 ~0.14 incl. its curve) leaves room for the pier
+  const wing = center ? 0.0 : 0.05;          // w5: 0.05 wing so the 60-deg pier reaches ~0.28 (omaat_f11 pier ~0.30 of the screen) [D]
   const scx = xo + wing + 0.488;
-  B.add(gRBox(0.976, 0.555, 0.02, 0.006, 1), M4.trs(scx, 0.95, -L + 0.13), SEATMAT.bezel);
-  B.add(gQuad(0.952, 0.535), M4.trs(scx, 0.95, -L + 0.141), SEATMAT.screen, atlasUV('screen'));
+  B.add(gRBox(0.976, 0.555, 0.02, 0.006, 1), M4.trs(scx, 0.98, -L + 0.13), SEATMAT.bezel);
+  B.add(gQuad(0.952, 0.535), M4.trs(scx, 0.98, -L + 0.141), SEATMAT.screen, atlasUV('screen'));
   // w2: window wing ~0.10 with a well-rounded upper outer corner, small taupe shelf at the console's forward end (omaat_f10 /
   // f47); centre suites: an angled dark-wood fin at the divider end of each screen - the pair forms a V in plan, ~0.28 deep
   // (omaat_f4 1D/1G, f3 2D/2G) [V shape, D size]
   if (!center) {
     B.add(gRBox(wing - 0.012, H - 0.68, 0.03, 0.033, 3), M4.trs(xo + wing / 2, 0.68 + (H - 0.68) / 2, -L + 0.135), SEATMAT.fWood);
-    B.add(gRBox(0.12, 0.02, 0.14, 0.008, 1), M4.trs(xo + 0.06, 0.70, -L + 0.19), SEATMAT.fCap);
+    // w5: the console's forward end is a dark-wood plate level with the table, not a floating chip (omaat_f11) [V]
+    B.add(gRBox(shelfW, 0.008, 0.24, 0.003, 1), M4.trs(xo + shelfW / 2, 0.667, -L + 0.25), SEATMAT.fShelf);
   } else {
-    // w4: a SOLID half-wedge from the divider plane to an 18-deg face; with the mirrored neighbour the pair is one dark-wood
-    // wedge opening aft (w3b: an X; w4b: two thin boards read as open cabinet doors)
-    const fz = 0.27, fx = fz * Math.tan(18 * DEG) + 0.012;
-    B.add(gExtrude([[-hx, L - 0.12], [-hx + 0.012, L - 0.12], [-hx + fx, L - 0.12 - fz], [-hx, L - 0.12 - fz]], H - 0.62), M4.trs(0, 0.62 + (H - 0.62) / 2, 0, 0, -Math.PI / 2), SEATMAT.fWood);
+    // w5: ONE thin dark-wood board in the divider plane between the D and G screens (each mirrored unit builds half), from table
+    // height to the screen top, ~0.32 deep, with a light taupe edge on its top and aft edges (omaat_f32 2D/2G, f33 1D/1G,
+    // tlfl_14 raised) [V shape, D size]; the w4 V-wedge read as a post
+    const fy0 = 0.64, fy1 = 1.2575, fz0 = -L + 0.12, fz1 = -L + 0.44;
+    B.add(gRBox(0.012, fy1 - fy0, fz1 - fz0, 0.003, 1), M4.trs(-hx + 0.006, (fy0 + fy1) / 2, (fz0 + fz1) / 2), SEATMAT.fWood);
+    B.add(gRBox(0.013, 0.02, fz1 - fz0 + 0.01, 0.004, 1), M4.trs(-hx + 0.0065, fy1 + 0.01, (fz0 + fz1) / 2 + 0.005), SEATMAT.fCap);
+    B.add(gRBox(0.013, fy1 - fy0 + 0.02, 0.02, 0.004, 1), M4.trs(-hx + 0.0065, (fy0 + fy1) / 2 + 0.01, fz1), SEATMAT.fCap);
   }
   // w1: the aisle pier is a wider wood face angled 45 deg (centre 55) toward the seat from the screen edge (omaat_f10: pier 188 px vs
   // screen 610 px; up_forward_look 1D), holding a tall grey-rimmed pill mirror (~0.13 x 0.44, reflective blue-grey #667fa1)
@@ -71,19 +77,20 @@ function suiteUnit(opts = {}) {
   const pzE = -L + 0.135 + pw * Math.sin(pAng), pxE = pX0 + pw * Math.cos(pAng);
   B.add(gExtrude([[pX0, L - 0.12], [pxE + 0.015, L - 0.12], [pxE + 0.015, -pzE - 0.015], [pxE, -pzE - 0.015]], 0.02), M4.trs(0, H + 0.01, 0, 0, -Math.PI / 2), SEATMAT.fCap);
   const mW = Math.min(0.13, pw - 0.05), mX = pw / 2 - 0.005;
-  B.add(gRBox(mW, 0.44, 0.012, Math.min(0.05, mW / 2 - 0.002), 3), pt(mX, 0.95, 0.02), SEATMAT.fCap);
-  B.add(gRBox(mW - 0.018, 0.422, 0.004, Math.min(0.045, mW / 2 - 0.011), 3), pt(mX, 0.95, 0.027), SEATMAT.fMirror);
-  spot(pt(Math.max(0.03, pw - 0.035), 1.20, 0.02, 0, Math.PI / 2));
+  B.add(gRBox(mW, 0.44, 0.012, Math.min(0.05, mW / 2 - 0.002), 3), pt(mX, 0.98, 0.02), SEATMAT.fCap);
+  B.add(gRBox(mW - 0.018, 0.422, 0.004, Math.min(0.045, mW / 2 - 0.011), 3), pt(mX, 0.98, 0.027), SEATMAT.fMirror);
+  spot(pt(Math.max(0.03, pw - 0.035), H - 0.08, 0.02, 0, Math.PI / 2));
   // stowed dining table under the screen: dark-wood slab ~0.72 wide (460 / 605 px of the screen width in f11) x 0.20
   // filling the gap between the aisle box and the window console, black front lip (omaat_f11 / f33 / f23) [D]
   const tX0 = xo + shelfW, tX1 = xa - 0.16, tXc = (tX0 + tX1) / 2;
-  B.add(gRBox(tX1 - tX0, 0.035, 0.20, 0.008, 1), M4.trs(tXc, 0.625, -L + 0.22), SEATMAT.fShelf);
-  B.add(gRBox(tX1 - tX0, 0.03, 0.012, 0.004, 1), M4.trs(tXc, 0.60, -L + 0.325), SEATMAT.black);
-  if (!lod) B.add(gRBox(0.05, 0.012, 0.006, 0.003, 1), M4.trs(tXc, 0.60, -L + 0.333), { c: '#b9b6b0', r: 0.35, m: 0.8 });   // PULL tab
+  B.add(gRBox(tX1 - tX0, 0.035, 0.20, 0.008, 1), M4.trs(tXc, 0.645, -L + 0.22), SEATMAT.fShelf);
+  B.add(gRBox(tX1 - tX0, 0.03, 0.012, 0.004, 1), M4.trs(tXc, 0.62, -L + 0.325), SEATMAT.black);
+  if (!lod) B.add(gRBox(0.05, 0.012, 0.006, 0.003, 1), M4.trs(tXc, 0.62, -L + 0.333), { c: '#b9b6b0', r: 0.35, m: 0.8 });   // PULL tab
   // aisle box beside the ottoman, its top level with the table (f11: box top at the table top) [D]
   const bX0 = xa - 0.16, bX1 = hx - 0.04;
-  B.add(gRBox(bX1 - bX0, 0.60, 0.36, 0.015, 1), M4.trs((bX0 + bX1) / 2, 0.30, -L + 0.30), SEATMAT.fInner);
-  B.add(gRBox(bX1 - bX0 + 0.01, 0.02, 0.37, 0.008, 1), M4.trs((bX0 + bX1) / 2, 0.61, -L + 0.30), SEATMAT.fConsole);
+  B.add(gRBox(bX1 - bX0, 0.62, 0.36, 0.015, 1), M4.trs((bX0 + bX1) / 2, 0.31, -L + 0.30), SEATMAT.fInner);
+  B.add(gRBox(bX1 - bX0 + 0.01, 0.02, 0.37, 0.008, 1), M4.trs((bX0 + bX1) / 2, 0.63, -L + 0.30), SEATMAT.fConsole);
+  if (!lod) B.add(gRBox(0.06, 0.012, 0.025, 0.004, 1), M4.trs(bX0 + 0.05, 0.635, -L + 0.47), SEATMAT.black);   // w5: lid latch (omaat_f11) [V]
   // ottoman (padded, same tweed as the seat) with belt
   const ow = xa - xo - 0.19;
   const ox = xo + ow / 2 + 0.005;
@@ -108,6 +115,7 @@ function suiteUnit(opts = {}) {
     // QA r3: a thin taupe top rail with a small raise/lower tab at mid-length, not the wall bullnose (up_Privacy-Wall,
     // tpa_IMG_0220, f_17314 round tab) [V shape, A size]
     B.add(gRBox(0.035, 0.022, L - 0.14, 0.006, 1), M4.trs(-hx + 0.015, DH + 0.011, -L / 2), SEATMAT.fDoor);
+    if (DH <= 0.75) B.add(gRBox(0.034, 0.04, L - 0.16, 0.004, 1), M4.trs(-hx + 0.015, DH - 0.03, -L / 2), SEATMAT.fWood);   // w5: dark-wood band under the rail (omaat_f5) [V]
     B.add(gRBox(0.012, 0.035, 0.07, 0.006, 1), M4.trs(-hx + 0.035, DH - 0.01, -L / 2), SEATMAT.fCap);
   } else B.add(gRBox(0.03, 0.70, L - 0.14, 0.01, 1), M4.trs(-hx + 0.015, 0.35, -L / 2), SEATMAT.fShell);
   // w1: taupe fascia band (~0.16) over a near-black body with a bin-door seam, trim line and long floor grille (omaat_f7,
@@ -172,33 +180,34 @@ function suiteUnit(opts = {}) {
   // w3: ONE flat-topped arm replacing the corner cap - top flush with the other caps, 0.16 wide (flush with the wardrobe inner
   // face), running aft over the parked leaf and 0.03 forward past the screen wall, with a thick rounded underside (w3b: the
   // separate box read as a bolster)
-  B.add(gRBox(0.13, 0.09, 0.66, 0.035, 3), M4.trs(hx - 0.059, H + 0.0175, -L + 0.30), SEATMAT.fCap);   // w4: outboard so the inner edge clears the pier
+  // w5: square, flush inboard part + a rounded prow only on the aisle side (from the seat the round arm read as a bolster)
+  B.add(gRBox(0.09, 0.06, 0.66, 0.012, 2), M4.trs(hx - 0.084, H + 0.0325, -L + 0.30), SEATMAT.fCap);
+  B.add(gRBox(0.06, 0.09, 0.66, 0.035, 3), M4.trs(hx - 0.024, H + 0.0175, -L + 0.30), SEATMAT.fCap);
   // aisle-facing exterior (w1): two EQUAL 0.50 m sliding leaves parked at either end of a ~0.64 m opening (omaat_f7 /
   // up_empty ~1.3 leaf), each a dark frame round flat vertical slats with dark grooves, pitch ~0.024, ~20 per leaf (pb_20
   // closed, omaat_f49); the fixed wardrobe run aft of the aft leaf is dark wood in a dark frame (pb_20 flanks) + LED line
+  // wave 2: opts.doors = 1 closes the suite - two leaves slide out of the pockets and meet mid-opening (pb_20, omaat_f49
+  // closed); geometry only, the seat-card toggle is the integrator's [V closed look, A leaf split]
+  const doorsShut = !!opts.doors, zo0 = -L + 0.60, zo1 = -0.96, zm = (zo0 + zo1) / 2;
+  if (doorsShut) B.add(gBox(0.03, H - 0.24, zo1 - zo0), M4.trs(hx - 0.02, 0.14 + (H - 0.24) / 2, zm), SEATMAT.fShell);   // leaf inner face (taupe) [A]
   if (!lod) {
     const yc = 0.14 + (H - 0.24) / 2;
-    for (const [z0, z1] of [[-0.96, -0.46], [-L + 0.10, -L + 0.60]]) {
+    for (const [z0, z1] of [[-0.96, -0.46], [-0.46, -0.08], [-L + 0.10, -L + 0.60], ...(doorsShut ? [[zo0, zm], [zm, zo1]] : [])]) {
       const len = z1 - z0;
       B.add(gBox(0.004, H - 0.30, len - 0.06), M4.trs(hx + 0.002, yc, (z0 + z1) / 2), SEATMAT.fFluteGap);
       // w2: 0.055 stiles / rails (~12 % of the leaf, pb_20), rounded ribs with a ~45 % dark groove (omaat_f4 / f7 convex ribs).
       // w3: pitch 0.026 (15 per leaf, real pb_20 ~23 at ~0.017) - finer ribs alias to moire at cabin distance [A, deliberate]
-      for (let z = z0 + 0.068; z < z1 - 0.058; z += 0.026) B.add(gCyl(0.0075, 0.0075, H - 0.34, 4, false, -Math.PI / 2, Math.PI), M4.trs(hx + 0.002, yc, z), SEATMAT.fFlute);   // 8-tri half-round rib (a gRBox was 108)
+      for (let z = z0 + 0.068; z < z1 - 0.058; z += 0.026) B.add(gCyl(0.0095, 0.0095, H - 0.34, 4, false, -Math.PI / 2, Math.PI), M4.trs(hx + 0.002, yc, z, 0, 0, 0, 0.6, 1, 1), SEATMAT.fFlute);   // 8-tri rib (a gRBox was 108); w5: broad flattened slat, ~27 % groove (omaat_f60 ~30 %) [V]
       for (const z of [z0 + 0.0275, z1 - 0.0275]) B.add(gRBox(0.016, H - 0.24, 0.055, 0.006, 1), M4.trs(hx + 0.007, yc, z), SEATMAT.fDoorFrame);
       for (const y of [0.14 + 0.0275, H - 0.10 - 0.0275]) B.add(gRBox(0.016, 0.055, len, 0.006, 1), M4.trs(hx + 0.007, y, (z0 + z1) / 2), SEATMAT.fDoorFrame);
       B.add(gBox(0.006, 0.008, len - 0.02), M4.trs(hx + 0.004, 0.06, (z0 + z1) / 2), SEATMAT.fLed);
     }
   }
-  if (!lod) {
-    B.add(gBox(0.004, H - 0.28, 0.32), M4.trs(hx + 0.003, 0.14 + (H - 0.24) / 2, -0.27), SEATMAT.fWood);
-    for (const z of [-0.46 + 0.012, -0.08 - 0.012]) B.add(gRBox(0.012, H - 0.24, 0.024, 0.004, 1), M4.trs(hx + 0.006, 0.14 + (H - 0.24) / 2, z), SEATMAT.fDoorFrame);
-    for (const y of [0.14 + 0.012, H - 0.10 - 0.012]) B.add(gRBox(0.012, 0.024, 0.38, 0.004, 1), M4.trs(hx + 0.006, y, -0.27), SEATMAT.fDoorFrame);
-    B.add(gBox(0.006, 0.008, 0.36), M4.trs(hx + 0.004, 0.06, -0.27), SEATMAT.fLed);
-  }
+  // w5: the wardrobe's aisle face is fluted all the way to the aft wall (omaat_f7 / f58, jsh_2); the dark wood is only inside
   // (the sliding doors are parked inside the wardrobe wall and the front outer wall; QA r2: the old parked-door boxes
   // stood 3 mm proud of the rib plane and showed as pale bands above / below the rib frames)
   // small silver pulls on the frame stiles at the leaves' meeting edges, ~0.6 m up (omaat_f60 / f33)
-  if (!lod) for (const zz of [-0.96 + 0.035, -L + 0.60 - 0.035]) B.add(gRBox(0.012, 0.09, 0.02, 0.004, 1), M4.trs(hx + 0.019, 0.60, zz), { c: '#b9b6b0', r: 0.3, m: 0.85 });
+  if (!lod) for (const zz of doorsShut ? [zm - 0.035, zm + 0.035] : [-0.96 + 0.035, -L + 0.60 - 0.035]) B.add(gRBox(0.012, 0.09, 0.02, 0.004, 1), M4.trs(hx + 0.019, 0.60, zz), { c: '#b9b6b0', r: 0.3, m: 0.85 });
   // the seat: upholstered base, thin cushion, flat back leaning on the aft wall, slate headrest flap (f_17302 / 17309)
   const S = M4.trs(seatX, 0, -0.14);
   const F = SEATMAT.fFabric;
@@ -206,24 +215,33 @@ function suiteUnit(opts = {}) {
   // solid taupe box armrest beside the wardrobe, flat taupe top at ~0.62, literature pocket in its inner face
   // (omaat_f13 both seats, omaat_f5 / f2) [D]
   const ax = xa - seatX - 0.05;               // armrest centre (local), against the wardrobe
-  B.add(gRBox(0.10, 0.62, 0.62, 0.02, 1), M4.mul(S, M4.trs(ax, 0.31, -0.40)), SEATMAT.fConsole);
-  B.add(gRBox(0.11, 0.025, 0.63, 0.01, 1), M4.mul(S, M4.trs(ax, 0.632, -0.40)), SEATMAT.fShell);
+  // w5: dark-wood body under a slim rounded taupe pad that overhangs forward (omaat_f9 / f57) [V shape, A size]
+  B.add(gRBox(0.10, 0.62, 0.62, 0.02, 1), M4.mul(S, M4.trs(ax, 0.31, -0.40)), SEATMAT.fWood);
+  B.add(gRBox(0.085, 0.05, 0.66, 0.024, 3), M4.mul(S, M4.trs(ax, 0.645, -0.41)), SEATMAT.fCap);
   if (!lod) B.add(gRBox(0.006, 0.16, 0.26, 0.004, 1), M4.mul(S, M4.trs(ax - 0.051, 0.45, -0.40)), SEATMAT.fInner);
   // w1: the seat back stands in a sculpted taupe niche - side jambs ~0.10 and a ~0.10 header on the aft wall - with the two
   // black dome reading lamps in the header corners, facing forward (omaat_f5 / f9 / f1) [V shape, D size]
   for (const s of [-1, 1]) B.add(gRBox(0.10, H - 0.66, 0.12, 0.025, 2), M4.trs(seatX + s * (SW / 2 + 0.05), 0.66 + (H - 0.66) / 2, -0.16), SEATMAT.fConsole);
-  B.add(gRBox(SW + 0.20, 0.10, 0.12, 0.025, 2), M4.trs(seatX, H - 0.05, -0.16), SEATMAT.fConsole);   // w3: niche 1.17x the back (omaat_f9)
-  for (const s of [-1, 1]) spot(M4.trs(seatX + s * (SW / 2 + 0.01), H - 0.05, -0.225, 0, -Math.PI / 2));
+  B.add(gRBox(SW + 0.20, 0.075, 0.12, 0.025, 2), M4.trs(seatX, H - 0.0375, -0.16), SEATMAT.fConsole);   // w3: niche 1.17x the back (omaat_f9); w5: 0.075 header clears the back top under H 1.24
+  for (const s of [-1, 1]) spot(M4.trs(seatX + s * (SW / 2 + 0.01), H - 0.0375, -0.225, 0, -Math.PI / 2));
   if (bed) {
-    B.add(gLoft(cushionSecs(SW, 1.96, 0.06, -0.03, { edge: 0.03, r: 0.035, crown: 0.004 }), 3), M4.trs(seatX - 0.01, 0.44, -1.08), { c: '#f0efea', r: 0.9, l: LAYER.fabric });
+    // w5: white pad narrower than the tweed bed and offset to the window side, so a ~0.10 tweed margin and the black belt show on
+    // the aisle side (omaat_f57) [V]
+    B.add(gRBox(SW, 0.05, 1.96, 0.015, 1), M4.trs(seatX - 0.01, 0.405, -1.08), SEATMAT.fFabric);
+    B.add(gLoft(cushionSecs(SW - 0.10, 1.96, 0.06, -0.03, { edge: 0.03, r: 0.035, crown: 0.004 }), 3), M4.trs(seatX - 0.06, 0.44, -1.08), { c: '#f0efea', r: 0.9, l: LAYER.fabric });
     B.add(gRBox(ow, 0.44, 0.9, 0.03, 1), M4.trs(ox, 0.22, -1.40), SEATMAT.fInner);
     // white duvet from the pillows to the ottoman, white pillow + lavender pillow (omaat_f57 / f58 / f59, f_17304)
     // w4: duvet narrower than the pad and offset to the window side, warmer white, so it separates from the pad (omaat_f47) [A]
-    B.add(gLoft(cushionSecs(SW * 0.62, 1.55, 0.07, -0.045, { edge: 0.035, r: 0.05, crown: 0.015 }), 3), M4.trs(seatX - SW * 0.17, 0.50, -1.12), { c: '#d9d4ca', r: 0.95, l: LAYER.fabric });
-    // QA r3: not a flat slab - a turned-down top fold across the chest, sides draping over the pad edge, soft crown (w1: the ridge wrinkles read as rings) (omaat_f57 / f58, f_17304) [A]
+    const duv = { c: '#d9d4ca', r: 0.95, l: LAYER.fabric }, dx = seatX - SW * 0.20, dw = SW * 0.58, xe = dx + dw / 2;
+    B.add(gLoft(cushionSecs(dw, 1.55, 0.055, -0.035, { edge: 0.035, r: 0.05, crown: 0.012 }), 3), M4.trs(dx, 0.50, -1.12), duv);
     if (!lod) {
-      const duv = { c: '#d9d4ca', r: 0.95, l: LAYER.fabric };
-      B.add(gLoft(cushionSecs(SW * 0.62 + 0.01, 0.20, 0.035, -0.0175, { edge: 0.016, r: 0.03, crown: 0.004 }), 3), M4.trs(seatX - SW * 0.17, 0.545, -0.50, 0, 3 * DEG), duv);
+      // w5: turned-down diagonal corner on the aisle side of the chest instead of a full-width fold, the window edge draping over
+      // the pad (omaat_f57 / f58 / f59) [V shape, A size]; the seat belt lies across the bare pad (omaat_f57) [V]
+      B.add(gExtrude([[xe - 0.28, 0.70], [xe, 0.70], [xe - 0.28, 0.98]], 0.012), M4.trs(0, 0.534, 0, 0, -Math.PI / 2), { c: '#e6e2da', r: 0.95, l: LAYER.fabric });
+      B.add(gRBox(0.012, 0.06, 1.45, 0.006, 1), M4.trs(dx - dw / 2 - 0.004, 0.475, -1.14), duv);
+      const bz = -0.95, bx = seatX + SW / 2 - 0.21, ba = 20 * DEG;
+      for (const sg of [-1, 1]) B.add(gBox(0.035, 0.004, 0.16), M4.trs(bx + sg * 0.09 * Math.cos(ba), 0.476, bz - sg * 0.09 * Math.sin(ba), Math.PI / 2 + ba), SEATMAT.black);
+      B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(bx, 0.48, bz), SEATMAT.buckle);
     }
     // w2: pillows propped up against the aft niche, lavender in front (omaat_f46, up_bed_made) [V]
     B.add(gLoft(cushionSecs(0.5, 0.32, 0.13, -0.065, { edge: 0.05, r: 0.05 }), 3), M4.trs(seatX, 0.66, -0.29, 0, -60 * DEG), SEATMAT.pillow);
@@ -239,6 +257,7 @@ function suiteUnit(opts = {}) {
     if (!lod) {
       B.add(gBox(SW - 0.04, 0.005, 0.004), M4.mul(BH, M4.trs(0, 0.36, -0.041)), SEATMAT.fInner);
       B.add(gBox(SW - 0.04, 0.005, 0.004), M4.mul(BH, M4.trs(0, 0.18, -0.041)), SEATMAT.fInner);
+      B.add(gBox(SW - 0.04, 0.005, 0.004), M4.mul(BH, M4.trs(0, 0.54, -0.041)), SEATMAT.fInner);   // w5: three channel seams (omaat_f9)
       B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.mul(S, M4.trs(0, 0.418, -0.40)), SEATMAT.buckle);
     }
     // w2: plump pillow tapering to thin edges (omaat_f9 / f5), not a slab
@@ -250,12 +269,12 @@ function suiteUnit(opts = {}) {
 }
 function suiteFar(opts = {}) {
   const B = new Builder();
-  const w = opts.w || 1.24, hx = w / 2, H = 1.30, L = 2.20;
+  const w = opts.w || 1.24, hx = w / 2, H = 1.24, L = 2.20;
   B.add(gBox(w, H, 0.06), M4.trs(0, H / 2, -0.07), SEATMAT.fShell);
   B.add(gBox(w, H, 0.12), M4.trs(0, H / 2, -L + 0.06), SEATMAT.fShell);
   B.add(gBox(0.16, H, 0.86), M4.trs(hx - 0.08, H / 2, -0.53), SEATMAT.fShell);
   B.add(gBox(0.03, opts.center ? H : 0.7, L), M4.trs(-hx + 0.015, (opts.center ? H : 0.7) / 2, -L / 2), SEATMAT.fShell);
   B.add(gRBox(0.66, 0.5, 0.7, 0.04, 1), M4.trs(-hx + 0.6, 0.25, -0.45), SEATMAT.fFabric);
-  B.add(gQuad(0.952, 0.535), M4.trs(-0.05, 0.93, -L + 0.151), SEATMAT.screen, atlasUV('screen'));
+  B.add(gQuad(0.952, 0.535), M4.trs(-0.05, 0.96, -L + 0.151), SEATMAT.screen, atlasUV('screen'));
   return B.build();
 }
