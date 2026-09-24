@@ -19,7 +19,7 @@ const spec = JSON.parse(require('fs').readFileSync(process.argv[3], 'utf8'));
       const geo = f();
       studioRender(__app, geo, s.opts || {});
     }, shot);
-    await page.screenshot({ path: path.join(out, shot.name + '.png') });
+    await page.screenshot({ path: path.join(out, shot.name + '.png'), timeout: 240000 });
     console.log('shot', shot.name);
   }
   await browser.close();

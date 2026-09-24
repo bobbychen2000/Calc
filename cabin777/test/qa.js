@@ -57,7 +57,7 @@ const VIEWS = {
     try { await page.evaluate(expr); } catch (e) { logs.push(n + ' view error ' + e.message); }
     await page.evaluate(() => __app.renderNow());
     await page.evaluate(() => __app.renderNow());
-    await page.screenshot({ path: path.join(out, n + '.png') });
+    await page.screenshot({ path: path.join(out, n + '.png'), timeout: 240000 });
     await page.evaluate(() => { if (__app.seated) { __app.setBed(false); __app.seated = null; __app.hideSeatBar(); } __app.mode = 'walk'; __app.scene.xray = false; __app.applyMood('boarding'); __app.applySky('day'); });
     pairs[n] = { img: path.resolve(out, n + '.png'), refs: refs.map((r) => path.resolve(__dirname, '../ref/ana', r + '-lang-multi.jpg')), what };
     console.log('shot', n);
