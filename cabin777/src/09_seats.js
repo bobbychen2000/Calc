@@ -11,13 +11,16 @@ const SEATMAT = {
   // y_47306). The pale ticks carry most of the red, and the ACES toe crushes the dark ground's red, so the seat reads
   // more saturated than its albedo: #5468a8 is the base whose tick swatch averages #415596 through the renderer's tone
   // curve at studio exposure (4x4 texel average, test/sim of 04_shaders toLin + aces) ~ photo #415390 [D]
-  yFabric: { c: photoBase('#5468a8', 'y_tick'), r: 0.9, l: LAYER.yJacq },
-  yFabricB: { c: photoBase('#5468a8', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
-  yFabricC: { c: '#5064a4', r: 0.9, l: LAYER.yMosaic },   // third variant: dash mosaic (y_47302 left, y_47306 right)
+  // econ QA w1: #5468a8 rendered too pure a blue (q15 R/B 0.33, G/B 0.46 vs y_47300 0.44 / 0.58) -> greyer #6a79a8 [D]
+  yFabric: { c: photoBase('#6a79a8', 'y_tick'), r: 0.9, l: LAYER.yJacq },
+  yFabricB: { c: photoBase('#6a79a8', 'y_diamond'), r: 0.9, l: LAYER.yDiamond },
+  yFabricC: { c: '#6676a4', r: 0.9, l: LAYER.yMosaic },   // third variant: dash mosaic (y_47302 left, y_47306 right)
   // headrest cushion: sparse white confetti on cobalt, a different fabric from the back (y_47306 / 47302 wings,
   // REFERENCE777.md) - shares the luminance-only confetti swatch with the PY wings
   // (same tone-curve match: wing photo mean #334276 in y_47306 -> base #4a5a98 averages #324384) [D]
-  yHead: { c: photoBase('#4a5a98', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
+  // econ QA w1: the cushion is the pale-dash fabric (y_47306 right seat: back and cushion alike; wings of the other two
+  // seats: short white dashes ~6 x 2 mm, not the 11-22 mm PY confetti blobs) -> the dash mosaic layer [D]
+  yHead: { c: '#6272a4', r: 0.9, l: LAYER.yMosaic },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
   yCover: { c: '#50566c', r: 0.45, l: LAYER.leather },
@@ -26,8 +29,8 @@ const SEATMAT = {
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
   yBelt: { c: '#3a64a6', r: 0.7, l: LAYER.fabric },        // y_47303 (58,102,173), G/B 0.59
   yPillow: { c: '#2e3860', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88)
-  arm: { c: '#d3d6d9', r: 0.45, l: LAYER.plastic },
-  armPad: { c: '#c6c9cd', r: 0.5, l: LAYER.plastic },
+  arm: { c: '#c4c8cd', r: 0.45, l: LAYER.plastic },       // econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
+  armPad: { c: '#b6bac0', r: 0.5, l: LAYER.plastic },
   frame: { c: '#a3a8ae', r: 0.32, m: 0.85, l: LAYER.brushed },
   black: { c: '#15181c', r: 0.45 },
   port: { c: '#0b0c0e', r: 0.4 },
