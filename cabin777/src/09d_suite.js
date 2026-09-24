@@ -218,11 +218,12 @@ function suiteUnit(opts = {}) {
     B.add(gLoft(cushionSecs(SW, 1.96, 0.06, -0.03, { edge: 0.03, r: 0.035, crown: 0.004 }), 3), M4.trs(seatX - 0.01, 0.44, -1.08), { c: '#f0efea', r: 0.9, l: LAYER.fabric });
     B.add(gRBox(ow, 0.44, 0.9, 0.03, 1), M4.trs(ox, 0.22, -1.40), SEATMAT.fInner);
     // white duvet from the pillows to the ottoman, white pillow + lavender pillow (omaat_f57 / f58 / f59, f_17304)
-    B.add(gLoft(cushionSecs(SW + 0.08, 1.55, 0.07, -0.045, { edge: 0.06, r: 0.06, crown: 0.015 }), 3), M4.trs(seatX - 0.01, 0.50, -1.12), { c: '#e2dfd8', r: 0.95, l: LAYER.fabric });
+    // w4: duvet narrower than the pad and offset to the window side, warmer white, so it separates from the pad (omaat_f47) [A]
+    B.add(gLoft(cushionSecs(SW * 0.62, 1.55, 0.07, -0.045, { edge: 0.035, r: 0.05, crown: 0.015 }), 3), M4.trs(seatX - SW * 0.17, 0.50, -1.12), { c: '#d9d4ca', r: 0.95, l: LAYER.fabric });
     // QA r3: not a flat slab - a turned-down top fold across the chest, sides draping over the pad edge, soft crown (w1: the ridge wrinkles read as rings) (omaat_f57 / f58, f_17304) [A]
     if (!lod) {
-      const duv = { c: '#e2dfd8', r: 0.95, l: LAYER.fabric };
-      B.add(gLoft(cushionSecs(SW + 0.07, 0.20, 0.035, -0.0175, { edge: 0.016, r: 0.03, crown: 0.004 }), 3), M4.trs(seatX - 0.01, 0.545, -0.50, 0, 3 * DEG), duv);
+      const duv = { c: '#d9d4ca', r: 0.95, l: LAYER.fabric };
+      B.add(gLoft(cushionSecs(SW * 0.62 + 0.01, 0.20, 0.035, -0.0175, { edge: 0.016, r: 0.03, crown: 0.004 }), 3), M4.trs(seatX - SW * 0.17, 0.545, -0.50, 0, 3 * DEG), duv);
     }
     // w2: pillows propped up against the aft niche, lavender in front (omaat_f46, up_bed_made) [V]
     B.add(gLoft(cushionSecs(0.5, 0.32, 0.13, -0.065, { edge: 0.05, r: 0.05 }), 3), M4.trs(seatX, 0.66, -0.29, 0, -60 * DEG), SEATMAT.pillow);

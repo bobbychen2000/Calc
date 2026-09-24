@@ -10,3 +10,5 @@
    seat card? That lives in 13_app.js, which belongs to the integrator.
 3. **Closed doors.** The doors are always parked open, as when boarding (omaat_f7). Closed doors (pb_20, omaat_f49, roame_20)
    would need an animated leaf mesh plus a seat-card toggle in 13_app.js. Is that wanted?
+4. **Wood between the centre screens.** omaat_f3 / f4 show dark wood between the D and G screens. It is now modelled as one
+   solid wedge (each centre unit builds half). If you know it is two separate angled panels, or one flat panel, say so.
