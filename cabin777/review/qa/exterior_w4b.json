@@ -1,0 +1,81 @@
+{
+ "area": "exterior",
+ "rater": "B (geometry and proportion first), round w4 (final) on commit a38dde8",
+ "score": 7.4,
+ "details": [
+  {
+   "detail": "Planform, raked tip and cruise bending. Still verified seat for seat: the 11A inlet sits 11.6 deg forward of the beam (photo about 11.5), and the 26K tip sits 5.0 deg above horizontal (photo about 4.7).",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r7/d_26K.png"]
+  },
+  {
+   "detail": "JA795A registration: unchanged since w3, and still a near one-to-one match to _7345 from 26K.",
+   "score": 8.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg", "/tmp/r7/d_26K.png", "/tmp/r7/st/o_reg.png"]
+  },
+  {
+   "detail": "Canoes. The count and positions are right. The tails now end in a small rounded nose instead of a needle (k_canoe_side), which matches _7331/_7329. Tone: the K side flank is #cbcfd1 against a #b6bcc2 wing, and the A side is dark, as in both photos.",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7329.jpg", "/tmp/r7/st/k_canoe_side.png", "/tmp/r7/d_26K.png", "/tmp/r7/d_26A.png"]
+  },
+  {
+   "detail": "Gear stripe, skin seams, fastener rows at 12 %/62 % chord, panel tone, static dischargers and the flush nav light. All read right and none alias at 20-30 m.",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7242.jpg", "/tmp/r7/st/j_tip.png", "/tmp/r7/d_17K.png"]
+  },
+  {
+   "detail": "Strake. It is now cowl-coloured with the seam inside the footprint, and it reads through its shadow line as in B-KQZ_074140 and Leaving_Sri_Lanka. It sits at the right station, 1.8-3.1 m, ahead of the aft split.",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/B-KQZ_right_engine_20251029-074140.jpg", "/tmp/r7/st/n_strake.png", "/tmp/r7/st/m_pylon.png"]
+  },
+  {
+   "detail": "Pylon hump. The shape matches lalf_137. On the A side it renders #bec8d2 against the cowl flank at #8294ae. This is lighter than the photo (hump about equal to the cowl), but it is plausible for an up-facing surface under a bright sky.",
+   "score": 7,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "/tmp/r7/d_13A.png"]
+  },
+  {
+   "detail": "GE90 cowl tone. On the A (shade) side it is #8294ae-#7889a2 at 13A and #8597b0-#94a1b2 at 11A. That is inside the ANA 11A range (#818c9e-#8695a4) to B-KQZ (#a9c0ce), with a slightly bluer cast (b-r about 0x2c against about 0x1d). The K (sun) side still clips: #dfe4e7-#e0e6e8 across d_13K/d_11K, with the hump (#dee3e6) merged into the cowl. The s_13A sunset cowl is still near white. This is exposure headroom, filed with lighting as from_exterior.md item 6.",
+   "score": 6,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/B-KQZ_right_engine_20251029-074140.jpg", "/tmp/r7/d_13A.png", "/tmp/r7/d_13K.png", "/tmp/r7/s_13A.png"]
+  },
+  {
+   "detail": "Day sky (owner: lighting). Unchanged: pale #bdccdc against #527dc2 in _7282.",
+   "score": 4,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r7/d_26K.png"]
+  },
+  {
+   "detail": "Sunset (owner: lighting). The shade-side wing is right. The sun-side cowl and canoes glow and clip.",
+   "score": 5.5,
+   "refs": ["/tmp/r7/s_13A.png", "/tmp/r7/s_26K.png"]
+  },
+  {
+   "detail": "Night (owner: lighting). A dark silhouette with the nav light; the beacon is still pending.",
+   "score": 6,
+   "refs": ["/tmp/r7/n_17A.png", "/tmp/r7/n_26K.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "problem": "(owner: lighting) Sun-side exterior clips: the K-side cowl is flat white and the sunset cowl glows",
+   "detail": "The albedo is now correct: #b0b3b7 puts the shade side inside the photo range. The remaining clipping is exposure on the exterior sun term, not material.",
+   "evidence": "d_13K #dfe4e7, d_11K #e0e6e8, s_13A. Photos: B-KQZ sunlit cowl #a9c0ce with visible split lines.",
+   "fix": "(owner: lighting) from_exterior.md item 6: exterior exposure headroom. Nothing left to do in 11_exterior.js."
+  },
+  {
+   "severity": "low",
+   "problem": "Shade-side cowl slightly too blue",
+   "detail": "The blue minus red difference is about 0x2c in the render against about 0x1d on the ANA 11A cowl. The sky-ambient tint on a near-neutral albedo causes this.",
+   "evidence": "d_13A #8294ae against lalf_ANA77W_NH212_136 #818c9e-#8695a4.",
+   "fix": "Optional: warm the cowl albedo a touch, from '#b0b3b7' to '#b3b4b5'."
+  },
+  {
+   "severity": "medium",
+   "problem": "(owner: lighting) Pale day sky, no deck bounce, night beacon",
+   "detail": "Unchanged, as handed over in from_exterior.md.",
+   "evidence": "_7282 zenith #527dc2 against the render's #bdccdc.",
+   "fix": "(owner: lighting) As requested in review/qa/from_exterior.md."
+  }
+ ],
+ "questionsForUser": []
+}

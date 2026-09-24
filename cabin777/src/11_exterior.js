@@ -172,8 +172,8 @@ function buildExterior(gl) {
   // #232732 / #2d3447 -> wing #9ba1a1; spoiler panel seams dark too, a shade lighter [V photos, Boeing_777_(4139974954)]
   const line = { c: '#343940', r: 0.95 };   // matte: a glossy strip mirrors the sky at grazing view [A]
   const gap = { c: '#1e2228', r: 1.0, m: 0 };
-  const cowl = { c: '#b0b3b7', r: 0.3, m: 0.1 };   // w3: #d6d9dd clipped flat white on the sun side (13K); white paint ~1.5x the
-                                                  // Boeing-grey albedo (#636466 renders #b6bcc2 unclipped) [D]              // ANA white fan cowl, no titles [V photos]; w2: w1 gloss mirrored the
+  const cowl = { c: '#b3b4b5', r: 0.3, m: 0.1 };   // w3: #d6d9dd clipped flat white on the sun side (13K); white paint ~1.5x the
+                                                  // Boeing-grey albedo (#636466 renders #b6bcc2 unclipped) [D]; w4 neutral: B-R 0x1d on the ANA 11A cowl [V]              // ANA white fan cowl, no titles [V photos]; w2: w1 gloss mirrored the
                                                                 // pale sky into a flat blob; darkening now baked from the normal below [A]
   const seam = { c: '#b9bdc2', r: 0.4 };
   const core = { c: '#8e9398', r: 0.34, m: 0.7 };
