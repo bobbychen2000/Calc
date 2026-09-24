@@ -1,120 +1,231 @@
 // ------------------------------------------------------------------
-// Exterior seen through the windows: 777-300ER wings (64.8 m span incl. raked tips, 31.6 deg quarter-chord
-// sweep) and GE90-115B nacelles (fan 3.25 m, nacelle max ~4 m, ~9.9 m from the centreline)
-// Wing root leading edge placed ~7 m ahead of the overwing door 3 (door in Section 44 near the rear spar).
+// Exterior seen through the windows: 777-300ER wing (raked tips) + GE90-115B nacelles.
+// Source: Boeing D6-58329-2 "777-200LR/-300ER Airplane Characteristics for Airport Planning" (ACAP):
+//   2.2.2 general dimensions (span 64.80, nose->wing LE at side of body 26.89, nose->inlet 25.76, nacelle 9.61 off CL,
+//   nose->tip 48.50 / 49.11), 2.3.2 ground clearances, 2.7.1 door stations (D3 32.92), 9.9.1 1:500 plan (planform,
+//   slat breaks, spoilers, aileron and flap-track marks digitised) [V]. Stations are ACAP nose stations shifted so ACAP
+//   door 3 lands on the model's door 3; heights are above the cabin floor (ACAP floor 5.08 m above ground) [D].
+//   Check [D]: gross area 449.7 m2 (LE extended to CL) vs 436.8 m2 reference, c/4 sweep 31.1 deg vs 31.6 deg.
+// Colours: ANA 777-300ER photos (JA787A/791A/796A/797A, 2024-25): white cowls with no titles, silver inlet lip, grey
+// core cowl, black spinner with a white swirl, grey wing with bare-metal slat noses [V].
 // ------------------------------------------------------------------
 function naca(x, t) { return 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x * x * x - 0.1036 * x * x * x * x); }
-const WING = { x0: 3.10, x1: 32.40, rootLE: 25.6, rootY: -1.30, leSweep: 34, kinkX: 10.8, teRoot: 38.4 };
+const WING = {
+  dz: CAB.doors[2] - 32.92,        // ACAP nose station -> model z (door-3 anchor) [D]
+  s0: 2.9,                         // root buried in the body side (6.20 m fuselage); tip at 32.40 = 64.80 m span [V]
+  // leading / trailing edge [spanwise from CL, nose station]; LE sweep 34.2 deg to the rake, TE straight to the
+  // yehudi kink at ~9-12 m then ~20 deg; raked tip from 31.1 m [D, ACAP 9.9.1]
+  le: [[3.10, 26.89], [31.10, 45.93], [31.40, 46.42], [31.80, 47.22], [32.10, 47.90], [32.40, 48.50]],
+  te: [[3.10, 39.96], [8.60, 39.96], [10.0, 40.17], [11.0, 40.36], [12.0, 40.69], [20.0, 43.40], [29.5, 47.05], [31.0, 47.98], [32.40, 49.05]],
+  crest: (s) => -0.02 + (s - 4) * 0.0915,  // upper-surface crest above the floor: ACAP front view, 5.2 deg on the ground [D]
+  th: [0.155, 0.115],              // NACA thickness param root -> tip (x0.81 with the flattened lower side): ~12.6 -> 9.3 % [A]
+  eng: { s: 9.61, y: -2.19, x0: 25.76 },   // nacelle axis off CL [V], axis height [D ACAP side view], inlet highlight [V]
+  slats: [11.7, 13.6, 16.6, 19.6, 22.6, 25.4, 28.1, 31.0],   // 7 outboard slats (ACAP break ticks) + 1 inboard 3.3-8.2 [D]
+  canoes: [[8.4, 4.6], [14.0, 4.3], [19.5, 3.4]],            // 3 flap-track fairings per side [V ACAP 9.9.1 + HL8007 photo] (s, length [D])
+};
+function pwl(tab, s) {
+  let k = 0;
+  while (k < tab.length - 2 && s > tab[k + 1][0]) k++;
+  const [a, b] = [tab[k], tab[k + 1]];
+  return a[1] + ((s - a[0]) / (b[0] - a[0])) * (b[1] - a[1]);
+}
+function wingStation(s) {
+  const le = pwl(WING.le, s), te = pwl(WING.te, s), c = te - le;
+  const th = lerp(WING.th[0], WING.th[1], clamp((s - 3) / 29.4, 0, 1));
+  const y0 = WING.crest(s) - (0.018 * Math.sin(0.3 * Math.PI) + naca(0.3, th)) * c;
+  return { s, le, c, th, y0 };
+}
+function wingSurf(st, cx, sgn, side, lift = 0) {
+  cx = clamp(cx, 0, 1);
+  const yy = (0.018 * Math.sin(Math.PI * cx) + sgn * naca(Math.max(cx, 1e-4), st.th) * (sgn < 0 ? 0.62 : 1)) * st.c;
+  return [st.s * side, st.y0 + yy + lift * sgn, st.le + cx * st.c + WING.dz];
+}
+// upper (sgn 1) / lower (-1) surface point at spanwise s and nose station xn
+const wingAt = (s, xn, side, sgn = 1, lift = 0) => { const st = wingStation(s); return wingSurf(st, (xn - st.le) / st.c, sgn, side, lift); };
 
 function wingGeo(side) {
   const g = raw();
-  const NS = 32, NC = 18;
-  const { x0, x1 } = WING;
-  const stations = [];
-  for (let s = 0; s <= NS; s++) {
-    const t = s / NS;
-    const x = lerp(x0, x1, t);
-    const span = x - x0, S = x1 - x0;
-    let le = WING.rootLE + span * Math.tan(WING.leSweep * DEG);
-    if (t > 0.9) le += Math.pow((t - 0.9) / 0.1, 2) * 1.6;               // raked tip
-    // trailing edge: nearly straight inboard (yehudi), swept ~24 deg outboard of the kink
-    const teK = WING.teRoot + (WING.kinkX - x0) * 0.12;
-    let te = x < WING.kinkX ? WING.teRoot + (x - x0) * 0.12 : teK + (x - WING.kinkX) * Math.tan(24 * DEG);
-    if (t > 0.9) te = lerp(te, le + 0.7, Math.pow((t - 0.9) / 0.1, 1.3));
-    const chord = te - le;
-    const th = lerp(0.14, 0.095, t);
-    const y = WING.rootY + span * Math.tan(6 * DEG) + 1.3 * Math.pow(span / S, 2);
-    stations.push({ x, le, chord, th, y });
-  }
-  const pts = [];
-  for (let k = 0; k <= NC; k++) pts.push([Math.pow(k / NC, 1.7), 1]);
-  for (let k = NC - 1; k >= 1; k--) pts.push([Math.pow(k / NC, 1.7), -1]);
-  const NP = pts.length;
-  for (const st of stations) {
-    for (const [cx, sgn] of pts) {
-      const camber = 0.018 * Math.sin(Math.PI * cx);
-      const yy = (camber + sgn * naca(Math.max(cx, 1e-4), st.th) * (sgn < 0 ? 0.62 : 1)) * st.chord;
-      g.p.push(st.x * side, st.y + yy, st.le + cx * st.chord); g.n.push(0, 1, 0); g.u.push(cx, st.x);
-    }
-  }
-  for (let s = 0; s < NS; s++) for (let k = 0; k < NP; k++) {
+  const S = [WING.s0, 3.6, 4.5, 5.5, 6.5, 7.5, 8.6, 9.3, 10, 10.5, 11, 11.5, 12];
+  for (let s = 13; s <= 30; s++) S.push(s);
+  S.push(30.5, 31.0, 31.2, 31.4, 31.6, 31.8, 32.0, 32.2, 32.4);
+  const NC = 24, pts = [];
+  for (let k = 0; k <= NC; k++) pts.push([0.5 - 0.5 * Math.cos(Math.PI * (NC - k) / NC), 1]);   // upper TE -> LE
+  for (let k = 1; k < NC; k++) pts.push([0.5 - 0.5 * Math.cos(Math.PI * k / NC), -1]);          // lower LE -> TE
+  const NP = pts.length, stations = S.map(wingStation);
+  for (const st of stations) for (const [cx, sgn] of pts) { g.p.push(...wingSurf(st, cx, sgn, side)); g.n.push(0, 1, 0); g.u.push(cx, st.s); }
+  for (let s = 0; s < S.length - 1; s++) for (let k = 0; k < NP; k++) {
     const a = s * NP + k, b = s * NP + ((k + 1) % NP), c = a + NP, d = b + NP;
     g.i.push(a, b, d, a, d, c);
   }
   computeNormals(g);
   const topIdx = Math.floor(NC / 2);
   if (g.n[topIdx * 3 + 1] < 0) { for (let k = 0; k < g.n.length; k++) g.n[k] = -g.n[k]; for (let t = 0; t < g.i.length; t += 3) { const tmp = g.i[t + 1]; g.i[t + 1] = g.i[t + 2]; g.i[t + 2] = tmp; } }
+  // root + tip caps (fans)
+  for (const [j, dir] of [[0, -side], [S.length - 1, side]]) {
+    const c0 = g.p.length / 3, base = j * NP;
+    let cx = 0, cy = 0, cz = 0;
+    for (let k = 0; k < NP; k++) { cx += g.p[(base + k) * 3] / NP; cy += g.p[(base + k) * 3 + 1] / NP; cz += g.p[(base + k) * 3 + 2] / NP; }
+    g.p.push(cx, cy, cz); g.n.push(dir, 0, 0); g.u.push(0.5, S[j]);
+    for (let k = 0; k < NP; k++) { g.p.push(g.p[(base + k) * 3], g.p[(base + k) * 3 + 1], g.p[(base + k) * 3 + 2]); g.n.push(dir, 0, 0); g.u.push(0.5, S[j]); }
+    for (let k = 0; k < NP; k++) {
+      const a = c0 + 1 + k, b = c0 + 1 + ((k + 1) % NP), p = g.p;
+      const e1 = [p[a * 3] - cx, p[a * 3 + 1] - cy, p[a * 3 + 2] - cz], e2 = [p[b * 3] - cx, p[b * 3 + 1] - cy, p[b * 3 + 2] - cz];
+      if (V3.cross(e1, e2)[0] * dir > 0) g.i.push(c0, a, b); else g.i.push(c0, b, a);
+    }
+  }
   return { g, stations };
 }
 
+// recolour vertices [v0, end) of a Builder where fn(p, uv) returns a material
+function paintVerts(B, v0, fn) {
+  for (let k = v0; k < B.vcount; k++) {
+    const m = fn([B.p[k * 3], B.p[k * 3 + 1], B.p[k * 3 + 2]], [B.u[k * 2], B.u[k * 2 + 1]]);
+    if (!m) continue;
+    const c = hexRGB(m.c);
+    B.c[k * 4] = c[0]; B.c[k * 4 + 1] = c[1]; B.c[k * 4 + 2] = c[2];
+    B.m[k * 4] = Math.round(clamp(m.r ?? 0.6, 0.02, 1) * 255); B.m[k * 4 + 1] = Math.round(clamp(m.m ?? 0, 0, 1) * 255);
+  }
+}
+// thin strip lying on the wing surface along a polyline in (s, nose station) space
+function wingLine(B, side, path, mat, w = 0.035, sgn = 1) {
+  const g = raw();
+  for (let k = 0; k < path.length; k++) {
+    const a = path[Math.max(0, k - 1)], b = path[Math.min(path.length - 1, k + 1)];
+    const ts = b[0] - a[0], tx = b[1] - a[1], l = Math.hypot(ts, tx) || 1;
+    const ps = (-tx / l) * w / 2, px = (ts / l) * w / 2;
+    g.p.push(...wingAt(path[k][0] + ps, path[k][1] + px, side, sgn, 0.006), ...wingAt(path[k][0] - ps, path[k][1] - px, side, sgn, 0.006));
+    g.n.push(0, sgn, 0, 0, sgn, 0); g.u.push(0, 0, 1, 0);
+  }
+  for (let k = 0; k < path.length - 1; k++) { const q = k * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+  B.add(fixWinding(g), null, mat);
+}
+const spanPath = (s0, s1, xnFn, n = 12) => Array.from({ length: n + 1 }, (_, k) => { const s = lerp(s0, s1, k / n); return [s, xnFn(s)]; });
+const chordPath = (s, x0, x1) => [[s, x0], [s, lerp(x0, x1, 0.5)], [s, x1]];
+
 function nacelleGeo() {
-  // lathe along -y then rotated to +z; ~7.9 m long, max radius ~1.98 m, inlet lip radius ~1.78 m
-  const outer = [[1.74, 0.0], [1.86, 0.14], [1.95, 0.6], [1.98, 1.6], [1.93, 3.4], [1.74, 5.0], [1.46, 5.9], [1.30, 6.2]];
-  const core = [[1.18, 6.15], [1.05, 6.8], [0.86, 7.4], [0.58, 7.9]];
-  const inlet = [[1.74, 0.0], [1.66, 0.3], [1.63, 0.95]];
-  return { outer: gLathe(outer.map(([r, y]) => [r, -y]), 40), core: gLathe(core.map(([r, y]) => [r, -y]), 30), inlet: gLathe(inlet.map(([r, y]) => [r, -y]), 40) };
+  // lathe profiles [r, x aft of the inlet highlight] along +y, rotated onto +z. Max 4.18 m (164-166 in) [V Wikipedia/GE
+  // via a.net], inlet 3.43 m (135 in) [V a.net], fan 3.25 m / 22 blades [V], fan nozzle 2.96 m, core 2.1 -> 1.6 m,
+  // plug to 7.28 m (engine length 7.281 m) [D ACAP side view + V Wikipedia]; lip/section shapes [A]
+  const lip = [[1.715, 0.0], [1.79, 0.035], [1.87, 0.11], [1.94, 0.26]];
+  const cowl = [[1.94, 0.26], [2.02, 0.6], [2.07, 1.1], [2.09, 1.7], [2.09, 2.4], [2.06, 3.1], [1.99, 3.8], [1.87, 4.4], [1.70, 4.84], [1.50, 5.0]];
+  const nozIn = [[1.50, 5.0], [1.44, 4.82], [1.40, 4.55]].reverse();
+  const inlet = [[1.715, 0.0], [1.695, 0.08], [1.665, 0.3], [1.645, 0.75], [1.635, 1.3]].reverse();
+  const core = [[1.13, 4.3], [1.10, 5.0], [1.02, 5.6], [0.92, 6.1], [0.84, 6.35]];
+  const coreIn = [[0.84, 6.35], [0.76, 6.3], [0.70, 6.1]].reverse();
+  const plug = [[0.64, 6.1], [0.62, 6.45], [0.52, 6.8], [0.34, 7.08], [0.10, 7.25], [0.0, 7.28]];
+  const spinner = [[0.0, 0.42], [0.1, 0.46], [0.22, 0.56], [0.34, 0.72], [0.44, 0.94], [0.51, 1.2], [0.53, 1.45]];
+  const L = (p, seg = 48) => gLathe(p.map(([r, x]) => [r, x]), seg);
+  return { lip: L(lip), cowl: L(cowl), nozIn: L(nozIn), inlet: L(inlet), core: L(core, 40), coreIn: L(coreIn, 40), plug: L(plug, 32), spinner: L(spinner, 32) };
+}
+function fanBlades(n = 22) {
+  // swept, twisted composite blades: chord 0.32 -> 0.60 m, stagger 28 -> 58 deg (hub -> tip) [A]
+  const g = raw();
+  for (let b = 0; b < n; b++) {
+    const a0 = (b / n) * Math.PI * 2, base = g.p.length / 3;
+    for (let j = 0; j <= 4; j++) {
+      const t = j / 4, r = lerp(0.5, 1.615, t), ch = lerp(0.32, 0.60, t), st = lerp(28, 58, t) * DEG, sw = 0.10 * t * t;
+      const a = a0 + sw / r;
+      for (const e of [-0.5, 0.5]) {
+        const dt = e * ch * Math.sin(st), dx = e * ch * Math.cos(st);
+        const aa = a + dt / r;
+        g.p.push(Math.cos(aa) * r, 1.42 + dx + 0.06 * t, Math.sin(aa) * r); g.n.push(0, -1, 0); g.u.push(e + 0.5, t);
+      }
+    }
+    for (let j = 0; j < 4; j++) { const q = base + j * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+  }
+  computeNormals(g);
+  // back faces: duplicate with flipped winding and normals (the exterior is drawn with culling)
+  const nv = g.p.length / 3, ni = g.i.length;
+  for (let k = 0; k < nv; k++) { g.p.push(g.p[k * 3], g.p[k * 3 + 1], g.p[k * 3 + 2]); g.n.push(-g.n[k * 3], -g.n[k * 3 + 1], -g.n[k * 3 + 2]); g.u.push(g.u[k * 2], g.u[k * 2 + 1]); }
+  for (let t = 0; t < ni; t += 3) g.i.push(g.i[t] + nv, g.i[t + 2] + nv, g.i[t + 1] + nv);
+  return g;
 }
 
 function buildExterior(gl) {
   const B = new Builder();
-  const paint = { c: '#c9ced4', r: 0.42, m: 0.15 };
-  const paintDark = { c: '#a0a7af', r: 0.38, m: 0.4 };
-  const cowl = { c: '#dde0e4', r: 0.35, m: 0.1 };
-  const fanDark = { c: '#1a1d22', r: 0.5, m: 0.5 };
+  const paint = { c: '#9ba1a8', r: 0.42, m: 0.12 };             // Boeing grey upper wing [V photos]
+  const paintLow = { c: '#949aa1', r: 0.45, m: 0.12 };
+  const metal = { c: '#c3c7cc', r: 0.26, m: 0.85 };             // bare slat nose / inlet lip
+  const line = { c: '#848b93', r: 0.5 };
+  const gap = { c: '#5d636a', r: 0.6 };
+  const cowl = { c: '#eceef0', r: 0.3, m: 0.08 };               // ANA white fan cowl, no titles [V photos]
+  const seam = { c: '#b9bdc2', r: 0.4 };
+  const core = { c: '#8e9398', r: 0.34, m: 0.7 };
+  const plug = { c: '#6e6b67', r: 0.4, m: 0.6 };
+  const dark = { c: '#141619', r: 0.55, m: 0.3 };
+  const blade = { c: '#2b2e33', r: 0.35, m: 0.6 };
+  const spin = { c: '#16181b', r: 0.22, m: 0.2 };
+  const white = { c: '#f2f2f2', r: 0.3 };
   const lights = [];
+  const E = WING.eng;
   for (const side of [-1, 1]) {
+    const v0 = B.vcount;
     const { g, stations } = wingGeo(side);
     B.add(g, null, paint);
-    const tip = stations[stations.length - 1];
-    B.add(gSphere(0.12, 8, 6), M4.trs(tip.x * side, tip.y, tip.le + tip.chord * 0.4), paint);
-    // flap track fairings (canoes) under the trailing edge
-    for (const fx of [7.4, 14.6, 19.8, 24.6]) {
-      const st = stations.reduce((a, b) => (Math.abs(b.x - fx) < Math.abs(a.x - fx) ? b : a));
-      const len = Math.max(2.6, st.chord * 0.62);
-      const zc = st.le + st.chord * 0.66 + len * 0.45;
-      const secs = [];
-      const N = 10;
-      for (let k = 0; k <= N; k++) {
-        const t = k / N;
-        const r = (t < 0.25 ? Math.sin((t / 0.25) * Math.PI / 2) : Math.pow(Math.cos(((t - 0.25) / 0.75) * Math.PI / 2), 0.7)) * 0.24 + 0.012;
-        secs.push({ y: -len / 2 + t * len, x: 0, z: 0, w: r * 1.3, d: r * 1.9, r: r * 0.62 });
+    paintVerts(B, v0, (p, uv) => (uv[0] < 0.022 ? metal : null));
+    // slats (outboard 7 + inboard 1): chord line and breaks
+    wingLine(B, side, spanPath(11.7, 31.0, (s) => pwl(WING.le, s) + 0.66, 16), gap, 0.03);
+    for (const s of WING.slats) wingLine(B, side, chordPath(s, pwl(WING.le, s) - 0.05, pwl(WING.le, s) + 0.66), gap, 0.03);
+    wingLine(B, side, spanPath(3.3, 8.2, (s) => pwl(WING.le, s) + 0.95, 4), gap, 0.03);
+    for (const s of [3.3, 8.2]) wingLine(B, side, chordPath(s, pwl(WING.le, s) - 0.05, pwl(WING.le, s) + 0.95), gap, 0.03);
+    // spoilers: 2 inboard (37.82-38.82) + 5 outboard ahead of the outboard flap [D ACAP 9.9.1]; split of the inboard pair [A]
+    const spF = (s) => pwl(WING.te, s) - lerp(1.6, 1.2, (s - 11.8) / 9.2), spA = (s) => pwl(WING.te, s) - lerp(0.75, 0.55, (s - 11.8) / 9.2);
+    wingLine(B, side, spanPath(4.5, 8.6, () => 37.82, 2), line);
+    wingLine(B, side, spanPath(3.1, 9.8, () => 38.82, 3), gap);
+    for (const s of [4.5, 6.55, 8.6]) wingLine(B, side, chordPath(s, 37.82, 38.82), line);
+    wingLine(B, side, spanPath(11.8, 21.0, spF, 8), line);
+    wingLine(B, side, spanPath(11.8, 23.3, (s) => (s < 21 ? spA(s) : spA(21) + (s - 21) * 0.34), 10), gap);
+    for (let k = 0; k <= 5; k++) { const s = lerp(11.8, 21.0, k / 5); wingLine(B, side, chordPath(s, spF(s), spA(s)), line); }
+    // flaperon behind the engine (9.8-11.8) [A span], outboard flap to 23.3, aileron 23.3-29.3 [D ACAP]
+    const te = (s) => pwl(WING.te, s);
+    wingLine(B, side, spanPath(9.8, 11.8, (s) => te(s) - 1.15, 3), gap);
+    for (const s of [9.8, 11.8]) wingLine(B, side, chordPath(s, te(s) - 1.15, te(s) + 0.02), gap, 0.03);
+    wingLine(B, side, chordPath(23.3, te(23.3) - 0.62, te(23.3) + 0.02), gap, 0.03);
+    wingLine(B, side, spanPath(23.3, 29.3, (s) => te(s) - lerp(0.62, 0.40, (s - 23.3) / 6), 8), gap);
+    wingLine(B, side, chordPath(29.3, te(29.3) - 0.40, te(29.3) + 0.02), gap, 0.03);
+    // flap-track fairings (canoes) under the trailing edge: ~60 % of each ahead of the TE [A from HL8007 photo]
+    for (const [cs, len] of WING.canoes) {
+      const x1 = te(cs) + 0.4 * len, x0 = x1 - len, secs = [];
+      for (let k = 0; k <= 12; k++) {
+        const t = k / 12, xn = lerp(x0, x1, t);
+        const r = (t < 0.22 ? Math.sin((t / 0.22) * Math.PI / 2) : Math.pow(Math.cos(((t - 0.22) / 0.78) * Math.PI / 2), 0.8)) + 0.03;
+        const top = xn < te(cs) ? wingAt(cs, xn, side, -1)[1] + 0.05 : wingAt(cs, te(cs), side, -1)[1] + 0.05 - (xn - te(cs)) * 0.03;
+        const d = 0.82 * r + 0.04;
+        secs.push({ y: xn + WING.dz, x: cs * side, z: -(top - d / 2), w: 0.54 * r + 0.03, d, r: 0.24 * r + 0.02 });
       }
-      B.add(gLoft(secs, 3), M4.mul(M4.trs(fx * side, st.y - 0.18, zc), M4.trs(0, 0, 0, 0, -Math.PI / 2)), paintDark);
+      B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paintLow);
     }
-    // panel lines: slat line, hinge line, flap / aileron breaks
-    const top = (st, cx) => { const camber = 0.018 * Math.sin(Math.PI * cx); return [st.x * side, st.y + (camber + naca(Math.max(cx, 1e-4), st.th)) * st.chord + 0.004, st.le + cx * st.chord]; };
-    const line = { c: '#8f969e', r: 0.5 };
-    const spanLine = (cx, i0, i1) => {
-      const g2 = raw();
-      for (let i = i0; i <= i1; i++) { const p = top(stations[i], cx), q = top(stations[i], cx + 0.012); g2.p.push(...p, ...q); g2.n.push(0, 1, 0, 0, 1, 0); g2.u.push(0, 0, 1, 0); }
-      for (let i = 0; i < i1 - i0; i++) { const q = i * 2; g2.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
-      B.add(fixWinding(g2), null, line);
-    };
-    spanLine(0.12, 3, 29);
-    spanLine(0.72, 2, 27);
-    for (const fx of [WING.kinkX, 14.6, 19.8, 24.6, 28.2]) {
-      const i = stations.reduce((bi, b, k) => (Math.abs(b.x - fx) < Math.abs(stations[bi].x - fx) ? k : bi), 0);
-      const g3 = raw();
-      for (let k = 0; k <= 8; k++) { const cx = 0.72 + (0.28 * k) / 8; const p = top(stations[i], cx); g3.p.push(p[0] - 0.02 * side, p[1], p[2], p[0] + 0.02 * side, p[1], p[2]); g3.n.push(0, 1, 0, 0, 1, 0); g3.u.push(0, 0, 1, 0); }
-      for (let k = 0; k < 8; k++) { const q = k * 2; g3.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
-      B.add(fixWinding(g3), null, line);
-    }
-    // GE90-115B nacelle + pylon
-    const est = stations.reduce((a, b) => (Math.abs(b.x - 9.9) < Math.abs(a.x - 9.9) ? b : a));
-    const ex = 9.9 * side, ey = est.y - 2.45, ez = est.le - 4.2;
+    // GE90-115B nacelle
     const nac = nacelleGeo();
-    const rot = M4.trs(ex, ey, ez, 0, -Math.PI / 2);
-    B.add(nac.outer, rot, cowl);
-    B.add(nac.inlet, rot, paintDark);
-    B.add(nac.core, rot, paintDark);
-    B.add(gCyl(1.62, 1.62, 0.02, 40), M4.mul(rot, M4.trs(0, -0.95, 0)), fanDark);
-    B.add(gCyl(0.02, 0.42, 0.55, 16), M4.mul(rot, M4.trs(0, -0.68, 0)), { c: '#e6e8ea', r: 0.3, m: 0.7 });
-    B.add(gRBox(0.55, 1.7, 7.4, 0.24, 2), M4.trs(ex, est.y - 0.75, est.le + 0.6, 0, -5 * DEG), paint);
-    lights.push({ p: [tip.x * side, tip.y + 0.05, tip.le + tip.chord * 0.35], c: side < 0 ? [2.5, 0.12, 0.08] : [0.1, 2.2, 0.35], s: 0.9, blink: 0 });
-    lights.push({ p: [tip.x * side, tip.y + 0.08, tip.le + tip.chord * 0.7], c: [4, 4, 4], s: 2.2, blink: side < 0 ? 2.0 : 2.5 });
+    const rot = M4.trs(E.s * side, E.y, E.x0 + WING.dz, 0, Math.PI / 2);
+    B.add(nac.lip, rot, metal); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark); B.add(nac.inlet, rot, { c: '#3a3e44', r: 0.6 });
+    B.add(nac.core, rot, core); B.add(nac.coreIn, rot, dark); B.add(nac.plug, rot, plug); B.add(nac.spinner, rot, spin);
+    for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.004, r + 0.004, 0.025, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
+    B.add(gCyl(1.64, 1.64, 0.02, 40), M4.mul(rot, M4.trs(0, 1.62, 0)), dark);    // fan-case back face behind the blades
+    B.add(fanBlades(22), rot, blade);
+    const sw = [];   // white swirl on the spinner [V photo JA796A]
+    for (let k = 0; k <= 16; k++) { const t = k / 16, x = lerp(0.47, 1.4, t), r = pwl([[0.42, 0], [0.46, 0.1], [0.56, 0.22], [0.72, 0.34], [0.94, 0.44], [1.2, 0.51], [1.45, 0.53]], x) + 0.006, a = t * Math.PI * 1.6; sw.push([Math.cos(a) * r, x, Math.sin(a) * r]); }
+    B.add(gTube(sw, 0.02, 5), rot, white);
+    // pylon: fairing over the fan cowl into the wing LE, strut under the wing with the aft fairing ending near the flap hinge [A]
+    const leE = pwl(WING.le, E.s), nacTop = (x) => E.y + pwl([[0, 1.715], [0.6, 2.02], [1.7, 2.09], [2.4, 2.09], [3.8, 1.99], [5.0, 1.5], [5.6, 1.02], [6.35, 0.84]], x);
+    const secs = [];
+    for (let k = 0; k <= 14; k++) {
+      const x = lerp(1.6, 10.6, k / 14), xn = E.x0 + x;
+      const wl = wingAt(E.s, Math.max(xn, leE), side, -1)[1];
+      const bot = x < 6.35 ? nacTop(x) - 0.12 : lerp(nacTop(6.35), wl - 0.05, (x - 6.35) / 4.25);
+      const top = xn >= leE ? wl + 0.12 : lerp(nacTop(x) + 0.04, Math.max(wl + 0.12, nacTop(x) + 0.04), smooth(leE - E.x0 - 1.2, leE - E.x0, x));
+      const w = lerp(0.6, 0.26, Math.pow(k / 14, 1.5));
+      secs.push({ y: xn + WING.dz, x: E.s * side, z: -(top + bot) / 2, w, d: top - bot, r: w * 0.45 });
+    }
+    B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paintLow);
+    // nav (red L / green R) + white strobe at the raked tip [A positions]
+    const tip = stations[stations.length - 1];
+    B.add(gSphere(0.07, 10, 6), M4.trs(tip.s * side, tip.y0 + 0.02, tip.le + 0.12 + WING.dz, 0, 0, 0, 1, 0.7, 2.2), { c: side < 0 ? '#c83a36' : '#3ab86a', r: 0.15, e: 0.5 });
+    lights.push({ p: [tip.s * side, tip.y0 + 0.05, tip.le + 0.1 + WING.dz], c: side < 0 ? [2.5, 0.12, 0.08] : [0.1, 2.2, 0.35], s: 0.9, blink: 0 });
+    lights.push({ p: [tip.s * side, tip.y0 + 0.06, tip.le + tip.c * 0.8 + WING.dz], c: [4, 4, 4], s: 2.2, blink: side < 0 ? 2.0 : 2.5 });
   }
-  // wing-to-body fairing below the cabin between the wing roots
-  B.add(gRBox(6.2, 1.6, 17.0, 0.7, 3), M4.trs(0, -2.25, 32.0), paint);
+  // wing-to-body fairing below the cabin (nose stations ~26 -> 43.3, belly 2.35 m above ground) [D ACAP side view]
+  B.add(gRBox(6.3, 1.9, 17.3, 0.8, 3), M4.trs(0, -1.78, 34.65 + WING.dz), paintLow);
   const geo = B.build();
   return { mesh: gl ? gl.mesh(geo, { name: 'exterior', layer: 'exterior', castShadow: false }) : null, lights, geo };
 }

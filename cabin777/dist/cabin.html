@@ -3834,11 +3834,12 @@ const MONMAT = {
   steel: { c: '#b5bbc2', r: 0.3, m: 0.85, l: LAYER.brushed },
   steelDark: { c: '#8e949c', r: 0.35, m: 0.8, l: LAYER.brushed },
   ovenGlass: { c: '#101318', r: 0.1 },
-  galleyWhite: { c: '#e3e3df', r: 0.4, l: LAYER.plastic },
+  galleyWhite: { c: '#d6d3cc', r: 0.4, l: LAYER.plastic },       // galley structure, warm light grey (sans_38)
   workLight: { c: '#fff6e6', r: 0.4, e: 0.8 },
   green: { c: '#35d06a', r: 0.4, e: 0.7 },
+  blueLed: { c: '#3d8bff', r: 0.4, e: 0.8 },
+  amber: { c: '#ff9a3a', r: 0.4, e: 0.8 },
   red: { c: '#c62828', r: 0.5 },
-  blue: { c: '#2d62b8', r: 0.5 },
   partition: { c: '#d0d2d4', r: 0.5, l: LAYER.plastic },
   cockpitDoor: { c: '#cfccc5', r: 0.45, l: LAYER.plastic },
   jump: { c: '#3a4049', r: 0.6, l: LAYER.fabric },
@@ -3847,10 +3848,36 @@ const MONMAT = {
   ash: { c: '#cdbfa6', r: 0.5, l: LAYER.wood },
   ashDark: { c: '#8a7560', r: 0.5, l: LAYER.wood },
   darkWood: { c: '#4a3629', r: 0.42, l: LAYER.wood },
-  washi: { c: '#ffffff', r: 0.8, l: LAYER.atlasGlow, e: 0.55 },
-  blind: { c: '#d8d2c4', r: 0.8, l: LAYER.fabric },
-  bottle: { c: '#6d8a6a', r: 0.15 },
-  snack: { c: '#c9793d', r: 0.6 },
+  // door-3 bar / door-2 welcome galley, sampled from ANA's official bar-counter render (Jul 2019 press kit) and
+  // OMAAT's in-service photos: light ash doors, dark-bronze frames, black basalt counter, black upper unit
+  barAsh: { c: '#b9a687', r: 0.5, l: LAYER.ashGrain },
+  bronze: { c: '#6f5f50', r: 0.35, m: 0.55, l: LAYER.brushed },
+  basalt: { c: '#28262b', r: 0.22, l: LAYER.marble },
+  black: { c: '#1b1a20', r: 0.35, l: LAYER.plastic },
+  blackGloss: { c: '#0f0e13', r: 0.15 },
+  blind: { c: '#1d1c22', r: 0.85, l: LAYER.fabric },                // decorative blind, pulled down (render)
+  washi: { c: '#f2f3f6', r: 0.8, l: LAYER.atlasGlow, e: 0.6 },       // neutral-white backlit washi band (render)
+  washiGalley: { c: '#d4d3e0', r: 0.8, l: LAYER.atlasGlow, e: 0.45 }, // lavender-grey galley washi (welcome render)
+  downlight: { c: '#eef4ff', r: 0.3, e: 1.6 },
+  fridgeLit: { c: '#8e9aa8', r: 0.5, e: 0.12 },
+  bottleClear: { c: '#9fb2b6', r: 0.05, m: 0.3 },
+  bottleBlue: { c: '#2346c8', r: 0.08, e: 0.12 },
+  label: { c: '#f4f2ec', r: 0.6 },
+  juice: { c: '#f0a526', r: 0.15 },
+  tumbler: { c: '#c9d2d6', r: 0.05, m: 0.2 },
+  navyPanel: { c: '#16172a', r: 0.35, l: LAYER.plastic },          // welcome end panel (render + sans_09)
+  // standard galley inserts (SANspotter PY snack-bar photo): aluminium ovens/trolleys, black beverage makers,
+  // black work deck, red-copper turn-button latches
+  alu: { c: '#9c9fa3', r: 0.35, m: 0.7, l: LAYER.brushed },
+  aluDark: { c: '#8f9194', r: 0.4, m: 0.7, l: LAYER.brushed },
+  bevBlack: { c: '#17171a', r: 0.3 },
+  copper: { c: '#a4533a', r: 0.3, m: 0.7 },
+  deck: { c: '#26252a', r: 0.3, l: LAYER.plastic },
+  card: { c: '#ece7c8', r: 0.7 },
+  // class curtains sampled from ANA photos: F/J lavender-grey (f_17313), J/PY and PY/Y dark slate (py_37301/37302)
+  curtainF: { c: '#8f90a8', r: 0.9, l: LAYER.fabric },
+  curtainY: { c: '#474b5e', r: 0.9, l: LAYER.fabric },
+  rail: { c: '#dcdbd6', r: 0.4 },
 };
 
 function monoSection(x0, x1, h) {
@@ -3883,6 +3910,222 @@ function clsAt(layout, z) {
   return 'Y';
 }
 
+// viewer-relative placement on a monument face: u = metres to the right of the face centre as seen from the
+// aisle, o = out of the face; rx tilts the local frame (PI/2 turns a +z quad to face down)
+function faceUV(m, u, y, o, rx = 0) {
+  const xf = faceXF(m, (m.x0 + m.x1) / 2 + u * m.face, y, o);
+  return rx ? M4.mul(xf, M4.trs(0, 0, 0, 0, rx)) : xf;
+}
+// body split into a full-depth lower part (to the work deck) and an upper part set back by `set`
+function monoStepBody(B, m, deckY, set, lowMat, upMat) {
+  monoBody(B, { ...m, h: deckY }, lowMat);
+  const up = { ...m };
+  if (m.face > 0) up.z1 = m.z1 - set; else up.z0 = m.z0 + set;
+  monoBody(B, up, upMat);
+}
+function bottle(B, xf, h, r, mat, lbl = true) {
+  B.add(gCyl(r, r, h * 0.66, 10), M4.mul(xf, M4.trs(0, h * 0.33, 0)), mat);
+  B.add(gCyl(r * 0.36, r, h * 0.24, 10), M4.mul(xf, M4.trs(0, h * 0.78, 0)), mat);
+  if (lbl) B.add(gCyl(r * 1.04, r * 1.04, h * 0.2, 10, false), M4.mul(xf, M4.trs(0, h * 0.22, 0)), MONMAT.label);
+}
+// round flush stainless pull (bar render), on a face
+function ringPull(B, xf) {
+  B.add(gCyl(0.028, 0.028, 0.008, 16), M4.mul(xf, M4.trs(0, 0, 0.004, 0, Math.PI / 2)), MONMAT.steel);
+  B.add(gCyl(0.019, 0.019, 0.008, 12), M4.mul(xf, M4.trs(0, 0, 0.006, 0, Math.PI / 2)), MONMAT.bronze);
+  B.add(gBox(0.024, 0.006, 0.008), M4.mul(xf, M4.trs(0, 0, 0.011)), MONMAT.steel);
+}
+
+// ---- Door-3 self-service bar ("New self-service bar counter with monitor and mini-fridge", ANA 2019 press kit).
+// Layout read off the official render (ref/web/mono/tda_barcounter, = ANA 20190711-008): 7 light-ash doors with
+// dark-bronze frames + round flush pulls, stainless grab rail, black basalt counter; set back behind it a black
+// upper unit (blind pulled down on the left, ~24 in monitor over a closed cubby + open bottle shelf, glass-door
+// mini-fridge with round latch on the right); black soffit with three downlights framed by backlit washi bands.
+// Render px -> metres: counter front 155..1845 px = monument width; the set-back upper unit at 1.9 mm/px (sized
+// off the 720 ml sake bottles, ~0.30 m = 160 px), giving a ~2.0 m wide unit, ~35 in monitor, 0.35 m wide fridge.
+const BAR = { deck: 1.0, set: 0.5, K: 0.0019, upW: 1045 * 0.0019, upTop: 1.035 + 550 * 0.0019, canopy: 2.13 };
+function buildBar(B, m) {
+  const w = m.x1 - m.x0, V = (u, y, o, rx) => faceUV(m, u, y, o, rx);
+  monoStepBody(B, m, BAR.deck, BAR.set, MONMAT.barAsh, MONMAT.barAsh);
+  // lower: bronze frame, 7 ash doors, pulls
+  const cw = w - 0.06, px = (p) => ((p - 1000) / 1690) * cw;
+  B.add(gRBox(cw, BAR.deck - 0.02, 0.02, 0.006, 1), V(0, BAR.deck / 2, 0.006), MONMAT.bronze);
+  B.add(gBox(cw, 0.07, 0.024), V(0, 0.035, 0.008), MONMAT.black);                         // toe kick
+  for (const [a, b] of [[200, 335], [340, 598], [605, 862], [912, 1155], [1160, 1400], [1445, 1700], [1705, 1790]])
+    B.add(gRBox(px(b) - px(a) - 0.006, 0.84, 0.014, 0.004, 1), V((px(a) + px(b)) / 2, 0.5, 0.022), MONMAT.barAsh);
+  for (const p of [265, 395, 1340, 1640, 1760]) ringPull(B, V(px(p), 0.71, 0.029));
+  // counter + stainless grab rail on stand-offs
+  B.add(gRBox(w - 0.02, 0.035, BAR.set + 0.05, 0.008, 1), V(0, BAR.deck + 0.0175, (0.05 - BAR.set) / 2), MONMAT.basalt);
+  B.add(gRBox(w - 0.03, 0.022, 0.02, 0.008, 1), V(0, BAR.deck - 0.012, 0.062), MONMAT.steel);
+  for (const u of [-0.9, -0.3, 0.3, 0.9]) B.add(gBox(0.016, 0.014, 0.04), V(u * w / 2.2, BAR.deck - 0.012, 0.04), MONMAT.steel);
+  // upper black unit
+  const oU = -BAR.set, uw = BAR.upW, uy0 = BAR.deck + 0.035, uh = BAR.upTop - uy0;
+  const up = (p) => (p - 1002) * BAR.K, uy = (p) => uy0 + (715 - p) * BAR.K;
+  const box = (a, b, ya, yb, d, o, mat) => B.add(gRBox(up(b) - up(a), uy(ya) - uy(yb), d, 0.004, 1), V((up(a) + up(b)) / 2, (uy(ya) + uy(yb)) / 2, o), mat);
+  B.add(gRBox(uw, uh, 0.06, 0.01, 1), V(0, uy0 + uh / 2, oU + 0.03), MONMAT.black);
+  B.add(gBox(uw + 0.01, 0.05, 0.065), V(0, BAR.upTop - 0.025, oU + 0.034), MONMAT.blackGloss);        // fascia
+  // left: blind pulled down (fine slat lines), bronze bottom rail
+  box(490, 850, 210, 700, 0.012, oU + 0.066, MONMAT.blind);
+  for (let k = 1; k < 9; k++) B.add(gBox(up(850) - up(490) - 0.01, 0.003, 0.004), V((up(490) + up(850)) / 2, uy(700) + (k * (uy(210) - uy(700))) / 9, oU + 0.073), MONMAT.blackGloss);
+  B.add(gBox(up(850) - up(490) + 0.01, 0.018, 0.02), V((up(490) + up(850)) / 2, uy(700), oU + 0.07), MONMAT.bronze);
+  // monitor (screen 405 x 235 px = 0.77 x 0.45 m, ~35 in class) with bezel + shelf lip under it
+  box(862, 1318, 210, 480, 0.03, oU + 0.075, SEATMAT.bezel);
+  B.add(gQuad(up(1290) - up(885), uy(225) - uy(460)), V((up(885) + up(1290)) / 2, (uy(225) + uy(460)) / 2, oU + 0.091), SEATMAT.screen, atlasUV('screen'));
+  B.add(gRBox(up(1310) - up(870), 0.02, 0.07, 0.006, 1), V((up(870) + up(1310)) / 2, uy(490), oU + 0.09), MONMAT.blackGloss);
+  // closed cubby door + open bottle shelf (7 clear sake/water bottles, one juice)
+  box(865, 1060, 510, 695, 0.012, oU + 0.066, MONMAT.blackGloss);
+  const sx0 = up(1070), sx1 = up(1310), sc = (sx0 + sx1) / 2;
+  B.add(gBox(sx1 - sx0, uy(510) - uy(695), 0.01), V(sc, (uy(510) + uy(695)) / 2, oU + 0.02), { c: '#2a2a30', r: 0.5 });
+  B.add(gBox(sx1 - sx0, 0.01, 0.08), V(sc, uy(690), oU + 0.07), MONMAT.blackGloss);
+  B.add(gBox(sx1 - sx0, 0.025, 0.006), V(sc, uy(680), oU + 0.108), { c: '#2a2a30', r: 0.3 });   // shelf fence
+  for (let k = 0; k < 8; k++) bottle(B, V(sx0 + 0.03 + (k * (sx1 - sx0 - 0.06)) / 7, uy(690) + 0.005, oU + 0.07), k ? 0.30 : 0.2, k ? 0.036 : 0.032, k ? MONMAT.bottleClear : MONMAT.juice);
+  // glass-door mini-fridge: frame, lit interior, two shelves of blue bottles, round latch on a pill
+  const fc = (up(1325) + up(1510)) / 2;
+  box(1325, 1510, 250, 700, 0.02, oU + 0.07, MONMAT.blackGloss);
+  B.add(gQuad(up(1480) - up(1345), uy(275) - uy(670)), V((up(1345) + up(1480)) / 2, (uy(275) + uy(670)) / 2, oU + 0.081), MONMAT.fridgeLit);
+  for (const [sy, bh] of [[uy(668), 0.3], [uy(470), 0.3]]) {
+    B.add(gBox(up(1480) - up(1345), 0.008, 0.02), V(fc, sy, oU + 0.086), MONMAT.bronze);
+    for (let k = 0; k < 3; k++) bottle(B, V(up(1372) + k * 0.06, sy + 0.004, oU + 0.1), bh, 0.028, MONMAT.bottleBlue, false);
+  }
+  B.add(gRBox(0.07, 0.085, 0.02, 0.03, 2), V(up(1362), uy(470), oU + 0.125), MONMAT.bronze);
+  B.add(gCyl(0.022, 0.022, 0.012, 14), M4.mul(V(up(1362), uy(470), oU + 0.136), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.steel);
+  // tumblers on the counter (render: four at the left)
+  for (const p of [490, 535, 578, 655]) B.add(gCyl(0.04, 0.034, 0.085, 12), V(up(p), BAR.deck + 0.078, p === 655 ? -0.16 : -0.26), MONMAT.tumbler);
+  // ash cheeks either side of the upper unit, up to the soffit
+  for (const s of [-1, 1]) B.add(gBox((w - uw) / 2 - 0.02, BAR.canopy - uy0, 0.02), V(s * (uw / 2 + (w - uw) / 4), (uy0 + BAR.canopy) / 2, oU + 0.012), MONMAT.barAsh);
+  // black soffit over the bar with three downlights, framed by backlit washi bands
+  const cd = BAR.set + 0.12, cy = BAR.canopy, co = (0.12 - BAR.set) / 2;
+  B.add(gBox(w, 0.05, cd), V(0, cy + 0.025, co), MONMAT.blackGloss);
+  B.add(gBox(uw - 0.02, cy - BAR.upTop, 0.02), V(0, (cy + BAR.upTop) / 2, oU + 0.02), MONMAT.blackGloss);
+  B.add(gQuad(w - 0.02, 0.10), V(0, cy - 0.001, 0.06, Math.PI / 2), MONMAT.washi, atlasUV('washi'));
+  for (const s of [-1, 1]) B.add(gQuad(0.10, cd - 0.12), V(s * (w / 2 - 0.06), cy - 0.001, co - 0.06, Math.PI / 2), MONMAT.washi, atlasUV('washi'));
+  B.add(gBox(w, 0.06, 0.012), V(0, cy - 0.03, 0.125), MONMAT.blackGloss);                                 // soffit lip
+  for (const u of [-0.5, 0, 0.5]) {
+    B.add(gCyl(0.045, 0.045, 0.006, 16), V(u, cy - 0.003, -0.22), MONMAT.steel);
+    B.add(gCyl(0.034, 0.034, 0.006, 16), V(u, cy - 0.005, -0.22), MONMAT.downlight);
+  }
+}
+
+// ---- Door-2 welcome galley (OMAAT in-service photo "ANA business class galley 777": black upper unit with the
+// landscape welcome monitor, control panel, two ovens with blue LED readouts, beverage maker, glass-door
+// cabinet under a "return to seat" placard; black counter, ash lower doors with aluminium edge) + portrait
+// welcome monitors on navy end panels facing the aisles (ANA "new welcome monitors" render, SANspotter photo)
+function buildWelcomeGalley(B, m) {
+  const w = m.x1 - m.x0, V = (u, y, o, rx) => faceUV(m, u, y, o, rx), set = 0.38, dk = 1.0;
+  monoStepBody(B, m, dk, set, MONMAT.barAsh, MONMAT.black);
+  const cw = w - 0.06, n = 6;
+  B.add(gRBox(cw, dk - 0.02, 0.02, 0.006, 1), V(0, dk / 2, 0.006), MONMAT.bronze);
+  B.add(gBox(cw, 0.07, 0.024), V(0, 0.035, 0.008), MONMAT.black);
+  for (let k = 0; k < n; k++) {
+    const u = -cw / 2 + (cw / n) * (k + 0.5);
+    B.add(gRBox(cw / n - 0.01, 0.84, 0.014, 0.004, 1), V(u, 0.5, 0.022), MONMAT.barAsh);
+    ringPull(B, V(u + (k % 2 ? -1 : 1) * (cw / n / 2 - 0.05), 0.82, 0.029));
+  }
+  B.add(gRBox(w - 0.02, 0.035, set + 0.05, 0.008, 1), V(0, dk + 0.0175, (0.05 - set) / 2), MONMAT.basalt);
+  B.add(gRBox(w - 0.03, 0.03, 0.03, 0.01, 1), V(0, dk + 0.005, 0.04), MONMAT.alu);
+  const o = -set + 0.012;
+  B.add(gBox(w - 0.04, 0.05, 0.03), V(0, 1.98, o + 0.02), MONMAT.blackGloss);
+  // left column: control panel over two ovens
+  const lc = -w / 2 + 0.26;
+  B.add(gRBox(0.40, 0.2, 0.02, 0.006, 1), V(lc, 1.78, o + 0.01), MONMAT.alu);
+  for (let k = 0; k < 4; k++) B.add(gCyl(0.008, 0.008, 0.01, 8), M4.mul(V(lc - 0.12 + k * 0.035, 1.76, o + 0.025), M4.trs(0, 0, 0, 0, Math.PI / 2)), k < 2 ? MONMAT.red : MONMAT.amber);
+  B.add(gRBox(0.1, 0.03, 0.01, 0.004, 1), V(lc + 0.1, 1.76, o + 0.022), MONMAT.ovenGlass);
+  for (const s of [-1, 1]) {
+    const x = lc + s * 0.1;
+    B.add(gRBox(0.19, 0.48, 0.04, 0.008, 1), V(x, 1.36, o + 0.02), MONMAT.alu);
+    B.add(gRBox(0.15, 0.05, 0.01, 0.004, 1), V(x, 1.56, o + 0.042), MONMAT.bevBlack);
+    B.add(gBox(0.02, 0.006, 0.004), V(x - 0.05, 1.56, o + 0.048), MONMAT.blueLed);
+    B.add(gRBox(0.03, 0.14, 0.03, 0.012, 1), V(x, 1.33, o + 0.055), MONMAT.aluDark);
+    B.add(gQuad(0.09, 0.07), V(x, 1.44, o + 0.041), MONMAT.card);
+  }
+  // centre: landscape welcome monitor; beverage maker + open cubby beneath it
+  const mc = -w / 2 + 0.82;
+  B.add(gRBox(0.70, 0.43, 0.03, 0.01, 1), V(mc, 1.66, o + 0.02), SEATMAT.bezel);
+  B.add(gQuad(0.66, 0.37), V(mc, 1.66, o + 0.036), SEATMAT.screen, atlasUV('screen'));
+  B.add(gRBox(0.74, 0.02, 0.07, 0.006, 1), V(mc, 1.42, o + 0.04), MONMAT.blackGloss);
+  B.add(gRBox(0.2, 0.3, 0.2, 0.01, 1), V(mc - 0.2, 1.19, o + 0.1), MONMAT.bevBlack);
+  B.add(gCyl(0.05, 0.05, 0.12, 12), V(mc - 0.2, 1.1, o + 0.2), MONMAT.steel);
+  B.add(gBox(0.04, 0.02, 0.004), V(mc - 0.17, 1.31, o + 0.202), MONMAT.green);
+  B.add(gBox(0.3, 0.34, 0.01), V(mc + 0.17, 1.2, o), { c: '#121115', r: 0.5 });
+  // right: tall glass-door cabinet with round latch and a placard above
+  const gc = w / 2 - 0.3;
+  B.add(gRBox(0.44, 0.8, 0.03, 0.01, 1), V(gc, 1.44, o + 0.02), MONMAT.blackGloss);
+  B.add(gQuad(0.34, 0.66), V(gc + 0.02, 1.44, o + 0.037), { c: '#2c3036', r: 0.05, e: 0.06 });
+  B.add(gRBox(0.08, 0.1, 0.02, 0.035, 2), V(gc - 0.17, 1.44, o + 0.045), MONMAT.aluDark);
+  B.add(gRBox(0.3, 0.07, 0.012, 0.03, 2), V(gc, 1.92, o + 0.02), MONMAT.label);
+  // portrait welcome monitors on navy end panels facing each aisle
+  for (const s of [-1, 1]) {
+    const x = s > 0 ? m.x1 : m.x0, zc = m.face > 0 ? m.z1 - 0.3 : m.z0 + 0.3;
+    B.add(gBox(0.02, 2.0, 0.6), M4.trs(x + s * 0.01, 1.0, zc), MONMAT.navyPanel);
+    for (const y of [0.35, 0.7]) B.add(gBox(0.012, 0.012, 0.56), M4.trs(x + s * 0.022, y, zc), MONMAT.steel);
+    B.add(gRBox(0.3, 0.52, 0.012, 0.008, 1), M4.trs(x + s * 0.026, 1.55, zc, s * Math.PI / 2), SEATMAT.bezel);
+    B.add(gQuad(0.27, 0.48), M4.trs(x + s * 0.033, 1.55, zc, s * Math.PI / 2), SEATMAT.screen, atlasUV('screen'));
+  }
+}
+
+// ---- Standard galley (SANspotter "self serve snack bar" photo at door 4): full-size trolleys under a black work
+// deck with red-copper turn-button latches; ovens / beverage makers / standard units and stowage in a set-back
+// upper bank with a work light under it
+function buildGalley(B, m, premium) {
+  const w = m.x1 - m.x0, cx = (m.x0 + m.x1) / 2, set = 0.3, dk = 1.03;
+  const body = premium ? MONMAT.ash : MONMAT.galleyWhite;
+  monoStepBody(B, m, dk, set, body, body);
+  const F = (x, y, o) => faceXF(m, x, y, o);
+  const nC = m.carts || 2, usable = w - 0.1;
+  const cw = Math.min(0.31, usable / nC - 0.02);
+  for (let k = 0; k < nC; k++) {
+    const x = m.x0 + 0.05 + (usable / nC) * (k + 0.5);
+    if (Math.abs(x) > wallAt(0.5)[0] - 0.2) continue;
+    const G = (dx, y, o) => F(x + dx, y, o);
+    B.add(gRBox(cw, 0.98, 0.05, 0.012, 1), G(0, 0.5, 0.02), MONMAT.alu);
+    B.add(gRBox(cw - 0.03, 0.03, 0.02, 0.008, 1), G(0, 0.94, 0.05), MONMAT.aluDark);            // push handle
+    B.add(gQuad(0.12, 0.08), G(0, 0.8, 0.046), MONMAT.card);
+    if (k % 2 === 0) B.add(gQuad(cw * 0.55, 0.16), G(0, 0.26, 0.046), MAT.grille);             // air-chilled vent
+    for (const s of [-1, 1]) {
+      B.add(gRBox(0.03, 0.05, 0.05, 0.01, 1), G(s * (cw / 2 + 0.005), dk - 0.03, 0.05), MONMAT.copper);
+      B.add(gRBox(0.05, 0.02, 0.02, 0.008, 1), G(s * (cw / 2 - 0.02), 0.04, 0.06), MONMAT.copper);
+    }
+  }
+  B.add(gRBox(w - 0.04, 0.035, set + 0.03, 0.008, 1), F(cx, dk + 0.0175, (0.03 - set) / 2), MONMAT.deck);
+  B.add(gRBox(w - 0.06, 0.03, 0.025, 0.01, 1), F(cx, dk + 0.005, 0.03), MONMAT.alu);
+  const o = 0.01 - set;
+  B.add(gBox(w - 0.12, 0.012, 0.03), F(cx, 1.285, o + 0.02), MONMAT.workLight);
+  const nU = Math.max(2, Math.round(w / 0.38));
+  for (let k = 0; k < nU; k++) {
+    const x = m.x0 + 0.05 + ((w - 0.1) / nU) * (k + 0.5);
+    if (Math.abs(x) > wallAt(1.5)[0] - 0.25) continue;
+    const uW = (w - 0.1) / nU - 0.03, t = k % 3;
+    if (t === 0) {        // oven: aluminium door, meal-label window, lever latch
+      B.add(gRBox(uW, 0.32, 0.04, 0.01, 1), F(x, 1.47, o + 0.02), MONMAT.alu);
+      B.add(gRBox(uW * 0.55, 0.12, 0.01, 0.006, 1), F(x - uW * 0.12, 1.55, o + 0.042), { c: '#9c9a74', r: 0.2, e: 0.05 });
+      B.add(gRBox(uW * 0.5, 0.035, 0.03, 0.01, 1), F(x - uW * 0.12, 1.4, o + 0.05), MONMAT.aluDark);
+      for (const s of [-1, 1]) B.add(gRBox(0.02, 0.05, 0.03, 0.008, 1), F(x + s * uW * 0.3, 1.3, o + 0.05), MONMAT.copper);
+    } else if (t === 1) { // beverage maker: black face, green-lit button, steel jug in its bay
+      B.add(gRBox(uW, 0.32, 0.12, 0.01, 1), F(x, 1.47, o + 0.06), MONMAT.bevBlack);
+      B.add(gBox(0.022, 0.018, 0.006), F(x, 1.6, o + 0.122), MONMAT.green);
+      B.add(gCyl(0.055, 0.06, 0.14, 12), F(x, 1.39, o + 0.13), MONMAT.steel);
+    } else {              // standard unit with recessed pull
+      B.add(gRBox(uW, 0.32, 0.03, 0.01, 1), F(x, 1.47, o + 0.015), MONMAT.aluDark);
+      B.add(gRBox(0.08, 0.025, 0.02, 0.006, 1), F(x, 1.59, o + 0.035), MONMAT.bevBlack);
+    }
+    B.add(gRBox(uW, 0.36, 0.03, 0.01, 1), F(x, 1.86, o + 0.015), premium ? MONMAT.ashDark : MONMAT.galleyWhite);
+    for (const s of [-1, 1]) B.add(gRBox(0.02, 0.045, 0.03, 0.008, 1), F(x + s * uW * 0.3, 1.69, o + 0.04), MONMAT.copper);
+  }
+  B.add(gQuad(0.2, 0.04), F(cx, 1.655, o + 0.032), MAT.decal, atlasUV('galleyLbl'));
+}
+
+// ---- Class curtains: ceiling track across the aisle opening, curtain gathered open as a pleated bundle at xg
+const CURTAIN_H = 2.18;
+let _curtainGeo = null;
+function addCurtain(B, xa, xb, z, xg, mat) {
+  if (!_curtainGeo) {
+    const pts = [];
+    for (let k = 0; k < 44; k++) { const a = (k / 44) * Math.PI * 2, r = 1 + 0.16 * Math.sin(a * 11); pts.push([Math.cos(a) * 0.085 * r, Math.sin(a) * 0.05 * r]); }
+    _curtainGeo = gExtrude(pts, CURTAIN_H - 0.03, 55);
+  }
+  B.add(gBox(Math.abs(xb - xa), 0.02, 0.035), M4.trs((xa + xb) / 2, CURTAIN_H + 0.01, z), MONMAT.rail);
+  B.add(_curtainGeo, M4.trs(xg, CURTAIN_H / 2 + 0.01, z, 0, Math.PI / 2), mat);
+}
+
 function buildMonuments(gl, layout, opts = {}) {
   const B = new Builder();
   for (const m of layout.mon) {
@@ -3892,13 +4135,27 @@ function buildMonuments(gl, layout, opts = {}) {
     const premium = cls === 'F' || cls === 'J';
     const F = (x, y, o) => faceXF(m, x, y, o);
     if (m.kind === 'lav') {
+      // exterior per the bar render (J lavs flanking the bar): ash door with dark-bronze frame lines, occupancy
+      // plate (VACANT window) inboard of a recessed square pull, small ashtray high on the outboard side, lit sign
       monoBody(B, m, cls === 'F' ? MONMAT.darkWood : premium ? MONMAT.ash : MONMAT.laminate);
       const dw = Math.min(m.access ? 0.78 : 0.62, w - 0.14);
       const dx = Math.abs(inner) < 0.05 ? cx : inner + Math.sign(cx - inner) * (dw / 2 + 0.06);
-      B.add(gRBox(dw, 1.86, 0.02, 0.01, 1), F(dx, 0.95, 0.008), premium ? (cls === 'F' ? { c: '#5a4536', r: 0.4, l: LAYER.wood } : MONMAT.ashDark) : MONMAT.lavDoor);
-      B.add(gBox(0.006, 1.8, 0.024), F(dx, 0.95, 0.009), { c: '#9ea3a9', r: 0.5 });
-      B.add(gRBox(0.10, 0.03, 0.03, 0.01, 1), F(dx + dw * 0.36, 1.02, 0.03), MONMAT.steel);
-      B.add(gRBox(0.07, 0.025, 0.012, 0.005, 1), F(dx + dw * 0.36, 1.12, 0.022), MONMAT.green);
+      const J = cls === 'J', hw = J ? MONMAT.bronze : MONMAT.steelDark;
+      const so = Math.abs(cx) < 0.05 ? 1 : Math.sign(cx) * m.face;          // viewer-right sign of the outboard side
+      const at = (u, y, o) => F(dx + u * m.face, y, o);
+      B.add(gRBox(dw, 1.86, 0.02, 0.01, 1), F(dx, 0.95, 0.008), cls === 'F' ? { c: '#5a4536', r: 0.4, l: LAYER.wood } : J ? MONMAT.barAsh : MONMAT.lavDoor);
+      B.add(gBox(0.006, 1.8, 0.024), F(dx, 0.95, 0.009), { c: '#9ea3a9', r: 0.5 });                   // bi-fold seam
+      if (J) {
+        for (const s of [-1, 1]) B.add(gBox(0.014, 1.86, 0.026), at(s * (dw / 2 + 0.007), 0.95, 0.01), MONMAT.bronze);
+        B.add(gBox(dw + 0.03, 0.014, 0.026), at(0, 1.887, 0.01), MONMAT.bronze);
+      }
+      B.add(gRBox(0.075, 0.085, 0.012, 0.006, 1), at(so * dw * 0.38, 1.15, 0.024), hw);                  // recessed pull
+      B.add(gRBox(0.05, 0.055, 0.01, 0.004, 1), at(so * dw * 0.38, 1.15, 0.028), MONMAT.bevBlack);
+      B.add(gRBox(0.11, 0.05, 0.012, 0.006, 1), at(so * dw * 0.18, 1.15, 0.024), hw);                    // occupancy plate
+      B.add(gRBox(0.08, 0.022, 0.006, 0.003, 1), at(so * dw * 0.18, 1.15, 0.03), { c: '#dfe6dc', r: 0.4, e: 0.25 });
+      B.add(gBox(0.03, 0.006, 0.004), at(so * dw * 0.18 - 0.02, 1.15, 0.034), MONMAT.green);
+      B.add(gRBox(0.06, 0.07, 0.014, 0.006, 1), at(so * (dw / 2 + 0.07), 1.62, 0.008), hw);             // ashtray
+      B.add(gRBox(0.045, 0.02, 0.008, 0.003, 1), at(so * (dw / 2 + 0.07), 1.64, 0.016), MONMAT.bevBlack);
       B.add(gRBox(dw - 0.1, 0.12, 0.006, 0.004, 1), F(dx, 0.12, 0.02), MAT.grille);
       B.add(gQuad(0.17, 0.082), F(dx, 1.99, 0.021), MAT.exitGlow, atlasUV('lav'));
       if (m.access) B.add(gRBox(0.09, 0.09, 0.006, 0.01, 1), F(dx - dw * 0.3, 1.45, 0.02), { c: '#2d62b8', r: 0.5 });
@@ -3911,54 +4168,19 @@ function buildMonuments(gl, layout, opts = {}) {
       B.add(gRBox(dw, m.h - 0.12, 0.02, 0.01, 1), F(cx, m.h / 2, 0.008), premium ? (cls === 'F' ? MONMAT.darkWood : MONMAT.ashDark) : MONMAT.lavDoor);
       B.add(gRBox(0.03, 0.14, 0.03, 0.01, 1), F(cx - dw * 0.38, Math.min(1.05, m.h * 0.6), 0.03), MONMAT.steel);
       if (m.low) B.add(gRBox(w - 0.02, 0.03, m.z1 - m.z0 - 0.02, 0.01, 1), M4.trs(cx, m.h + 0.012, (m.z0 + m.z1) / 2), cls === 'F' ? MONMAT.darkWood : MONMAT.ash);
-    } else if (m.kind === 'galley' || m.kind === 'bar') {
-      const back = { ...m };
-      if (m.face > 0) back.z1 = m.z1 - 0.02; else back.z0 = m.z0 + 0.02;
-      monoBody(B, back, premium ? MONMAT.ash : MONMAT.galleyWhite);
-      const usable = w - 0.1;
-      if (m.kind === 'galley') {
-        const nC = m.carts || 2;
-        const cw = Math.min(0.31, usable / nC - 0.02);
-        for (let k = 0; k < nC; k++) {
-          const x = m.x0 + 0.05 + (usable / nC) * (k + 0.5);
-          if (Math.abs(x) > wallAt(0.5)[0] - 0.2) continue;
-          const G = (dx, y, o) => faceXF(m, x + dx, y, o);
-          B.add(gRBox(cw, 1.02, 0.05, 0.012, 1), G(0, 0.53, 0.02), MONMAT.steel);
-          for (let r = -2; r <= 2; r++) B.add(gBox(0.008, 0.9, 0.008), G(r * cw * 0.2, 0.54, 0.047), MONMAT.steelDark);
-          B.add(gRBox(cw * 0.6, 0.04, 0.03, 0.01, 1), G(0, 0.97, 0.06), k % 2 ? MONMAT.red : MONMAT.blue);
+    } else if (m.kind === 'bar') {
+      buildBar(B, m);
+    } else if (m.kind === 'galley') {
+      if (m.welcome) buildWelcomeGalley(B, m); else buildGalley(B, m, premium);
+      if (!premium && m.face < 0) {
+        // aft face over the first centre row (row 31 D-G): shared monitors + bassinet mounts (ANA seat map)
+        const zb = m.z1 + 0.004;
+        for (const x of [-0.5, 0.5]) {
+          B.add(gRBox(0.40, 0.25, 0.03, 0.012, 1), M4.trs(x, 1.62, zb + 0.012), SEATMAT.bezel);
+          B.add(gQuad(0.36, 0.2), M4.trs(x, 1.62, zb + 0.029), SEATMAT.screen, atlasUV('screen'));
         }
-        B.add(gRBox(w - 0.08, 0.035, 0.18, 0.01, 1), F(cx, 1.06, 0.08), MONMAT.steel);
-        B.add(gBox(w - 0.12, 0.012, 0.03), F(cx, 1.265, 0.035), MONMAT.workLight);
-        const nU = Math.max(2, Math.round(w / 0.38));
-        for (let k = 0; k < nU; k++) {
-          const x = m.x0 + 0.05 + ((w - 0.1) / nU) * (k + 0.5);
-          if (Math.abs(x) > wallAt(1.5)[0] - 0.25) continue;
-          const uW = (w - 0.1) / nU - 0.03;
-          if (k % 3 === 0) { B.add(gRBox(uW, 0.30, 0.03, 0.01, 1), F(x, 1.46, 0.02), MONMAT.steel); B.add(gRBox(uW * 0.8, 0.2, 0.01, 0.006, 1), F(x, 1.46, 0.04), MONMAT.ovenGlass); }
-          else if (k % 3 === 1) { B.add(gRBox(uW, 0.30, 0.1, 0.01, 1), F(x, 1.46, 0.05), MONMAT.steelDark); B.add(gRBox(0.05, 0.02, 0.01, 0.004, 1), F(x, 1.56, 0.105), MONMAT.green); }
-          else { B.add(gRBox(uW, 0.30, 0.03, 0.01, 1), F(x, 1.46, 0.02), MONMAT.galleyWhite); B.add(gRBox(0.08, 0.025, 0.02, 0.006, 1), F(x, 1.58, 0.04), MONMAT.steelDark); }
-          B.add(gRBox(uW, 0.36, 0.03, 0.01, 1), F(x, 1.86, 0.02), premium ? MONMAT.ashDark : MONMAT.galleyWhite);
-        }
-        B.add(gQuad(0.2, 0.04), F(cx, 1.635, 0.041), MAT.decal, atlasUV('galleyLbl'));
-        if (m.welcome) B.add(gRBox(0.9, 0.5, 0.02, 0.01, 1), F(cx, 1.85, 0.045), MONMAT.darkWood);
-      } else {
-        // self-service bar: counter, snacks and drinks, mini-fridges, roller blinds up, backlit washi panels
-        B.add(gRBox(w - 0.1, 0.04, 0.34, 0.012, 1), F(cx, 1.02, 0.14), MONMAT.darkWood);
-        B.add(gRBox(w - 0.14, 0.94, 0.04, 0.012, 1), F(cx, 0.5, 0.04), MONMAT.ashDark);
-        for (const fx of [-0.55, 0.55]) {
-          B.add(gRBox(0.36, 0.5, 0.02, 0.01, 1), F(cx + fx, 0.45, 0.065), { c: '#2c2e31', r: 0.2, m: 0.3 });
-          B.add(gRBox(0.02, 0.3, 0.02, 0.006, 1), F(cx + fx + 0.14, 0.5, 0.08), MONMAT.steel);
-        }
-        const panels = 4, pw = (w - 0.2) / panels;
-        for (let k = 0; k < panels; k++) {
-          const x = m.x0 + 0.1 + pw * (k + 0.5);
-          B.add(gQuad(pw - 0.05, 0.62), F(x, 1.52, 0.012), MONMAT.washi, atlasUV('washi'));
-          B.add(gRBox(pw - 0.02, 0.022, 0.03, 0.008, 1), F(x, 1.85, 0.03), MONMAT.darkWood);     // blind roll housing
-          B.add(gRBox(pw - 0.06, 0.05, 0.012, 0.006, 1), F(x, 1.815, 0.025), MONMAT.blind);       // rolled-up blind
-          for (let j = 0; j < 3; j++) B.add(gRBox(0.05, 0.1, 0.05, 0.01, 1), F(x - 0.08 + j * 0.08, 1.10, 0.09 + (j % 2) * 0.08), j === 1 ? MONMAT.bottle : MONMAT.snack);
-        }
-        for (let k = 0; k <= panels; k++) B.add(gBox(0.02, 0.66, 0.03), F(m.x0 + 0.1 + pw * k, 1.52, 0.02), MONMAT.darkWood);
-        B.add(gBox(w - 0.16, 0.012, 0.03), F(cx, 1.18, 0.12), MONMAT.workLight);
+        B.add(gQuad(0.09, 0.06), M4.trs(0, 1.30, zb), MAT.decal, atlasUV('bassinet'));
+        B.add(gRBox(0.3, 0.03, 0.02, 0.01, 1), M4.trs(0, 1.22, zb + 0.008), MONMAT.steelDark);
       }
     } else if (m.kind === 'cockpit') {
       const m2 = { ...m, face: 1 };
@@ -3987,6 +4209,22 @@ function buildMonuments(gl, layout, opts = {}) {
           B.add(gQuad(0.36, 0.2), M4.trs(x, 1.52, zf + 0.029), SEATMAT.screen, atlasUV('screen'));
         }
       }
+    }
+  }
+  // ---- class curtains, drawn open: in each aisle gap of the F/J and J/PY bulkheads (f_17313, py_37301/37302) and
+  //      in the aisles beside the door-4 galley's aft face at the PY/Y break (y_47300); gathered at the centre side
+  const parts = layout.mon.filter((m) => m.kind === 'partition').sort((a, b) => a.z0 - b.z0 || a.x0 - b.x0);
+  for (let k = 0; k + 1 < parts.length; k++) {
+    const a = parts[k], b = parts[k + 1];
+    if (Math.abs(a.z0 - b.z0) > 0.01 || b.x0 - a.x1 < 0.2) continue;
+    const zc = (a.z0 + a.z1) / 2, right = a.x1 > 0;
+    addCurtain(B, a.x1, b.x0, zc, right ? a.x1 + 0.09 : b.x0 - 0.09, clsAt(layout, a.z0 - 0.5) === 'F' ? MONMAT.curtainF : MONMAT.curtainY);
+  }
+  for (const m of layout.mon) {
+    if (m.kind !== 'galley' || m.face > 0 || clsAt(layout, m.z0) !== 'Y' || m.x1 - m.x0 > 3) continue;
+    for (const s of [-1, 1]) {
+      const xi = s > 0 ? m.x1 : m.x0;
+      addCurtain(B, xi, xi + s * 0.52, m.z1 - 0.04, xi + s * 0.09, MONMAT.curtainY);
     }
   }
   // ---- Type A door linings (translating door): outline, lever handle, arming flag, viewing window,
@@ -4043,122 +4281,233 @@ function buildMonuments(gl, layout, opts = {}) {
 
 // ==== 11_exterior.js ====
 // ------------------------------------------------------------------
-// Exterior seen through the windows: 777-300ER wings (64.8 m span incl. raked tips, 31.6 deg quarter-chord
-// sweep) and GE90-115B nacelles (fan 3.25 m, nacelle max ~4 m, ~9.9 m from the centreline)
-// Wing root leading edge placed ~7 m ahead of the overwing door 3 (door in Section 44 near the rear spar).
+// Exterior seen through the windows: 777-300ER wing (raked tips) + GE90-115B nacelles.
+// Source: Boeing D6-58329-2 "777-200LR/-300ER Airplane Characteristics for Airport Planning" (ACAP):
+//   2.2.2 general dimensions (span 64.80, nose->wing LE at side of body 26.89, nose->inlet 25.76, nacelle 9.61 off CL,
+//   nose->tip 48.50 / 49.11), 2.3.2 ground clearances, 2.7.1 door stations (D3 32.92), 9.9.1 1:500 plan (planform,
+//   slat breaks, spoilers, aileron and flap-track marks digitised) [V]. Stations are ACAP nose stations shifted so ACAP
+//   door 3 lands on the model's door 3; heights are above the cabin floor (ACAP floor 5.08 m above ground) [D].
+//   Check [D]: gross area 449.7 m2 (LE extended to CL) vs 436.8 m2 reference, c/4 sweep 31.1 deg vs 31.6 deg.
+// Colours: ANA 777-300ER photos (JA787A/791A/796A/797A, 2024-25): white cowls with no titles, silver inlet lip, grey
+// core cowl, black spinner with a white swirl, grey wing with bare-metal slat noses [V].
 // ------------------------------------------------------------------
 function naca(x, t) { return 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x * x * x - 0.1036 * x * x * x * x); }
-const WING = { x0: 3.10, x1: 32.40, rootLE: 25.6, rootY: -1.30, leSweep: 34, kinkX: 10.8, teRoot: 38.4 };
+const WING = {
+  dz: CAB.doors[2] - 32.92,        // ACAP nose station -> model z (door-3 anchor) [D]
+  s0: 2.9,                         // root buried in the body side (6.20 m fuselage); tip at 32.40 = 64.80 m span [V]
+  // leading / trailing edge [spanwise from CL, nose station]; LE sweep 34.2 deg to the rake, TE straight to the
+  // yehudi kink at ~9-12 m then ~20 deg; raked tip from 31.1 m [D, ACAP 9.9.1]
+  le: [[3.10, 26.89], [31.10, 45.93], [31.40, 46.42], [31.80, 47.22], [32.10, 47.90], [32.40, 48.50]],
+  te: [[3.10, 39.96], [8.60, 39.96], [10.0, 40.17], [11.0, 40.36], [12.0, 40.69], [20.0, 43.40], [29.5, 47.05], [31.0, 47.98], [32.40, 49.05]],
+  crest: (s) => -0.02 + (s - 4) * 0.0915,  // upper-surface crest above the floor: ACAP front view, 5.2 deg on the ground [D]
+  th: [0.155, 0.115],              // NACA thickness param root -> tip (x0.81 with the flattened lower side): ~12.6 -> 9.3 % [A]
+  eng: { s: 9.61, y: -2.19, x0: 25.76 },   // nacelle axis off CL [V], axis height [D ACAP side view], inlet highlight [V]
+  slats: [11.7, 13.6, 16.6, 19.6, 22.6, 25.4, 28.1, 31.0],   // 7 outboard slats (ACAP break ticks) + 1 inboard 3.3-8.2 [D]
+  canoes: [[8.4, 4.6], [14.0, 4.3], [19.5, 3.4]],            // 3 flap-track fairings per side [V ACAP 9.9.1 + HL8007 photo] (s, length [D])
+};
+function pwl(tab, s) {
+  let k = 0;
+  while (k < tab.length - 2 && s > tab[k + 1][0]) k++;
+  const [a, b] = [tab[k], tab[k + 1]];
+  return a[1] + ((s - a[0]) / (b[0] - a[0])) * (b[1] - a[1]);
+}
+function wingStation(s) {
+  const le = pwl(WING.le, s), te = pwl(WING.te, s), c = te - le;
+  const th = lerp(WING.th[0], WING.th[1], clamp((s - 3) / 29.4, 0, 1));
+  const y0 = WING.crest(s) - (0.018 * Math.sin(0.3 * Math.PI) + naca(0.3, th)) * c;
+  return { s, le, c, th, y0 };
+}
+function wingSurf(st, cx, sgn, side, lift = 0) {
+  cx = clamp(cx, 0, 1);
+  const yy = (0.018 * Math.sin(Math.PI * cx) + sgn * naca(Math.max(cx, 1e-4), st.th) * (sgn < 0 ? 0.62 : 1)) * st.c;
+  return [st.s * side, st.y0 + yy + lift * sgn, st.le + cx * st.c + WING.dz];
+}
+// upper (sgn 1) / lower (-1) surface point at spanwise s and nose station xn
+const wingAt = (s, xn, side, sgn = 1, lift = 0) => { const st = wingStation(s); return wingSurf(st, (xn - st.le) / st.c, sgn, side, lift); };
 
 function wingGeo(side) {
   const g = raw();
-  const NS = 32, NC = 18;
-  const { x0, x1 } = WING;
-  const stations = [];
-  for (let s = 0; s <= NS; s++) {
-    const t = s / NS;
-    const x = lerp(x0, x1, t);
-    const span = x - x0, S = x1 - x0;
-    let le = WING.rootLE + span * Math.tan(WING.leSweep * DEG);
-    if (t > 0.9) le += Math.pow((t - 0.9) / 0.1, 2) * 1.6;               // raked tip
-    // trailing edge: nearly straight inboard (yehudi), swept ~24 deg outboard of the kink
-    const teK = WING.teRoot + (WING.kinkX - x0) * 0.12;
-    let te = x < WING.kinkX ? WING.teRoot + (x - x0) * 0.12 : teK + (x - WING.kinkX) * Math.tan(24 * DEG);
-    if (t > 0.9) te = lerp(te, le + 0.7, Math.pow((t - 0.9) / 0.1, 1.3));
-    const chord = te - le;
-    const th = lerp(0.14, 0.095, t);
-    const y = WING.rootY + span * Math.tan(6 * DEG) + 1.3 * Math.pow(span / S, 2);
-    stations.push({ x, le, chord, th, y });
-  }
-  const pts = [];
-  for (let k = 0; k <= NC; k++) pts.push([Math.pow(k / NC, 1.7), 1]);
-  for (let k = NC - 1; k >= 1; k--) pts.push([Math.pow(k / NC, 1.7), -1]);
-  const NP = pts.length;
-  for (const st of stations) {
-    for (const [cx, sgn] of pts) {
-      const camber = 0.018 * Math.sin(Math.PI * cx);
-      const yy = (camber + sgn * naca(Math.max(cx, 1e-4), st.th) * (sgn < 0 ? 0.62 : 1)) * st.chord;
-      g.p.push(st.x * side, st.y + yy, st.le + cx * st.chord); g.n.push(0, 1, 0); g.u.push(cx, st.x);
-    }
-  }
-  for (let s = 0; s < NS; s++) for (let k = 0; k < NP; k++) {
+  const S = [WING.s0, 3.6, 4.5, 5.5, 6.5, 7.5, 8.6, 9.3, 10, 10.5, 11, 11.5, 12];
+  for (let s = 13; s <= 30; s++) S.push(s);
+  S.push(30.5, 31.0, 31.2, 31.4, 31.6, 31.8, 32.0, 32.2, 32.4);
+  const NC = 24, pts = [];
+  for (let k = 0; k <= NC; k++) pts.push([0.5 - 0.5 * Math.cos(Math.PI * (NC - k) / NC), 1]);   // upper TE -> LE
+  for (let k = 1; k < NC; k++) pts.push([0.5 - 0.5 * Math.cos(Math.PI * k / NC), -1]);          // lower LE -> TE
+  const NP = pts.length, stations = S.map(wingStation);
+  for (const st of stations) for (const [cx, sgn] of pts) { g.p.push(...wingSurf(st, cx, sgn, side)); g.n.push(0, 1, 0); g.u.push(cx, st.s); }
+  for (let s = 0; s < S.length - 1; s++) for (let k = 0; k < NP; k++) {
     const a = s * NP + k, b = s * NP + ((k + 1) % NP), c = a + NP, d = b + NP;
     g.i.push(a, b, d, a, d, c);
   }
   computeNormals(g);
   const topIdx = Math.floor(NC / 2);
   if (g.n[topIdx * 3 + 1] < 0) { for (let k = 0; k < g.n.length; k++) g.n[k] = -g.n[k]; for (let t = 0; t < g.i.length; t += 3) { const tmp = g.i[t + 1]; g.i[t + 1] = g.i[t + 2]; g.i[t + 2] = tmp; } }
+  // root + tip caps (fans)
+  for (const [j, dir] of [[0, -side], [S.length - 1, side]]) {
+    const c0 = g.p.length / 3, base = j * NP;
+    let cx = 0, cy = 0, cz = 0;
+    for (let k = 0; k < NP; k++) { cx += g.p[(base + k) * 3] / NP; cy += g.p[(base + k) * 3 + 1] / NP; cz += g.p[(base + k) * 3 + 2] / NP; }
+    g.p.push(cx, cy, cz); g.n.push(dir, 0, 0); g.u.push(0.5, S[j]);
+    for (let k = 0; k < NP; k++) { g.p.push(g.p[(base + k) * 3], g.p[(base + k) * 3 + 1], g.p[(base + k) * 3 + 2]); g.n.push(dir, 0, 0); g.u.push(0.5, S[j]); }
+    for (let k = 0; k < NP; k++) {
+      const a = c0 + 1 + k, b = c0 + 1 + ((k + 1) % NP), p = g.p;
+      const e1 = [p[a * 3] - cx, p[a * 3 + 1] - cy, p[a * 3 + 2] - cz], e2 = [p[b * 3] - cx, p[b * 3 + 1] - cy, p[b * 3 + 2] - cz];
+      if (V3.cross(e1, e2)[0] * dir > 0) g.i.push(c0, a, b); else g.i.push(c0, b, a);
+    }
+  }
   return { g, stations };
 }
 
+// recolour vertices [v0, end) of a Builder where fn(p, uv) returns a material
+function paintVerts(B, v0, fn) {
+  for (let k = v0; k < B.vcount; k++) {
+    const m = fn([B.p[k * 3], B.p[k * 3 + 1], B.p[k * 3 + 2]], [B.u[k * 2], B.u[k * 2 + 1]]);
+    if (!m) continue;
+    const c = hexRGB(m.c);
+    B.c[k * 4] = c[0]; B.c[k * 4 + 1] = c[1]; B.c[k * 4 + 2] = c[2];
+    B.m[k * 4] = Math.round(clamp(m.r ?? 0.6, 0.02, 1) * 255); B.m[k * 4 + 1] = Math.round(clamp(m.m ?? 0, 0, 1) * 255);
+  }
+}
+// thin strip lying on the wing surface along a polyline in (s, nose station) space
+function wingLine(B, side, path, mat, w = 0.035, sgn = 1) {
+  const g = raw();
+  for (let k = 0; k < path.length; k++) {
+    const a = path[Math.max(0, k - 1)], b = path[Math.min(path.length - 1, k + 1)];
+    const ts = b[0] - a[0], tx = b[1] - a[1], l = Math.hypot(ts, tx) || 1;
+    const ps = (-tx / l) * w / 2, px = (ts / l) * w / 2;
+    g.p.push(...wingAt(path[k][0] + ps, path[k][1] + px, side, sgn, 0.006), ...wingAt(path[k][0] - ps, path[k][1] - px, side, sgn, 0.006));
+    g.n.push(0, sgn, 0, 0, sgn, 0); g.u.push(0, 0, 1, 0);
+  }
+  for (let k = 0; k < path.length - 1; k++) { const q = k * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+  B.add(fixWinding(g), null, mat);
+}
+const spanPath = (s0, s1, xnFn, n = 12) => Array.from({ length: n + 1 }, (_, k) => { const s = lerp(s0, s1, k / n); return [s, xnFn(s)]; });
+const chordPath = (s, x0, x1) => [[s, x0], [s, lerp(x0, x1, 0.5)], [s, x1]];
+
 function nacelleGeo() {
-  // lathe along -y then rotated to +z; ~7.9 m long, max radius ~1.98 m, inlet lip radius ~1.78 m
-  const outer = [[1.74, 0.0], [1.86, 0.14], [1.95, 0.6], [1.98, 1.6], [1.93, 3.4], [1.74, 5.0], [1.46, 5.9], [1.30, 6.2]];
-  const core = [[1.18, 6.15], [1.05, 6.8], [0.86, 7.4], [0.58, 7.9]];
-  const inlet = [[1.74, 0.0], [1.66, 0.3], [1.63, 0.95]];
-  return { outer: gLathe(outer.map(([r, y]) => [r, -y]), 40), core: gLathe(core.map(([r, y]) => [r, -y]), 30), inlet: gLathe(inlet.map(([r, y]) => [r, -y]), 40) };
+  // lathe profiles [r, x aft of the inlet highlight] along +y, rotated onto +z. Max 4.18 m (164-166 in) [V Wikipedia/GE
+  // via a.net], inlet 3.43 m (135 in) [V a.net], fan 3.25 m / 22 blades [V], fan nozzle 2.96 m, core 2.1 -> 1.6 m,
+  // plug to 7.28 m (engine length 7.281 m) [D ACAP side view + V Wikipedia]; lip/section shapes [A]
+  const lip = [[1.715, 0.0], [1.79, 0.035], [1.87, 0.11], [1.94, 0.26]];
+  const cowl = [[1.94, 0.26], [2.02, 0.6], [2.07, 1.1], [2.09, 1.7], [2.09, 2.4], [2.06, 3.1], [1.99, 3.8], [1.87, 4.4], [1.70, 4.84], [1.50, 5.0]];
+  const nozIn = [[1.50, 5.0], [1.44, 4.82], [1.40, 4.55]].reverse();
+  const inlet = [[1.715, 0.0], [1.695, 0.08], [1.665, 0.3], [1.645, 0.75], [1.635, 1.3]].reverse();
+  const core = [[1.13, 4.3], [1.10, 5.0], [1.02, 5.6], [0.92, 6.1], [0.84, 6.35]];
+  const coreIn = [[0.84, 6.35], [0.76, 6.3], [0.70, 6.1]].reverse();
+  const plug = [[0.64, 6.1], [0.62, 6.45], [0.52, 6.8], [0.34, 7.08], [0.10, 7.25], [0.0, 7.28]];
+  const spinner = [[0.0, 0.42], [0.1, 0.46], [0.22, 0.56], [0.34, 0.72], [0.44, 0.94], [0.51, 1.2], [0.53, 1.45]];
+  const L = (p, seg = 48) => gLathe(p.map(([r, x]) => [r, x]), seg);
+  return { lip: L(lip), cowl: L(cowl), nozIn: L(nozIn), inlet: L(inlet), core: L(core, 40), coreIn: L(coreIn, 40), plug: L(plug, 32), spinner: L(spinner, 32) };
+}
+function fanBlades(n = 22) {
+  // swept, twisted composite blades: chord 0.32 -> 0.60 m, stagger 28 -> 58 deg (hub -> tip) [A]
+  const g = raw();
+  for (let b = 0; b < n; b++) {
+    const a0 = (b / n) * Math.PI * 2, base = g.p.length / 3;
+    for (let j = 0; j <= 4; j++) {
+      const t = j / 4, r = lerp(0.5, 1.615, t), ch = lerp(0.32, 0.60, t), st = lerp(28, 58, t) * DEG, sw = 0.10 * t * t;
+      const a = a0 + sw / r;
+      for (const e of [-0.5, 0.5]) {
+        const dt = e * ch * Math.sin(st), dx = e * ch * Math.cos(st);
+        const aa = a + dt / r;
+        g.p.push(Math.cos(aa) * r, 1.42 + dx + 0.06 * t, Math.sin(aa) * r); g.n.push(0, -1, 0); g.u.push(e + 0.5, t);
+      }
+    }
+    for (let j = 0; j < 4; j++) { const q = base + j * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+  }
+  computeNormals(g);
+  // back faces: duplicate with flipped winding and normals (the exterior is drawn with culling)
+  const nv = g.p.length / 3, ni = g.i.length;
+  for (let k = 0; k < nv; k++) { g.p.push(g.p[k * 3], g.p[k * 3 + 1], g.p[k * 3 + 2]); g.n.push(-g.n[k * 3], -g.n[k * 3 + 1], -g.n[k * 3 + 2]); g.u.push(g.u[k * 2], g.u[k * 2 + 1]); }
+  for (let t = 0; t < ni; t += 3) g.i.push(g.i[t] + nv, g.i[t + 2] + nv, g.i[t + 1] + nv);
+  return g;
 }
 
 function buildExterior(gl) {
   const B = new Builder();
-  const paint = { c: '#c9ced4', r: 0.42, m: 0.15 };
-  const paintDark = { c: '#a0a7af', r: 0.38, m: 0.4 };
-  const cowl = { c: '#dde0e4', r: 0.35, m: 0.1 };
-  const fanDark = { c: '#1a1d22', r: 0.5, m: 0.5 };
+  const paint = { c: '#9ba1a8', r: 0.42, m: 0.12 };             // Boeing grey upper wing [V photos]
+  const paintLow = { c: '#949aa1', r: 0.45, m: 0.12 };
+  const metal = { c: '#c3c7cc', r: 0.26, m: 0.85 };             // bare slat nose / inlet lip
+  const line = { c: '#848b93', r: 0.5 };
+  const gap = { c: '#5d636a', r: 0.6 };
+  const cowl = { c: '#eceef0', r: 0.3, m: 0.08 };               // ANA white fan cowl, no titles [V photos]
+  const seam = { c: '#b9bdc2', r: 0.4 };
+  const core = { c: '#8e9398', r: 0.34, m: 0.7 };
+  const plug = { c: '#6e6b67', r: 0.4, m: 0.6 };
+  const dark = { c: '#141619', r: 0.55, m: 0.3 };
+  const blade = { c: '#2b2e33', r: 0.35, m: 0.6 };
+  const spin = { c: '#16181b', r: 0.22, m: 0.2 };
+  const white = { c: '#f2f2f2', r: 0.3 };
   const lights = [];
+  const E = WING.eng;
   for (const side of [-1, 1]) {
+    const v0 = B.vcount;
     const { g, stations } = wingGeo(side);
     B.add(g, null, paint);
-    const tip = stations[stations.length - 1];
-    B.add(gSphere(0.12, 8, 6), M4.trs(tip.x * side, tip.y, tip.le + tip.chord * 0.4), paint);
-    // flap track fairings (canoes) under the trailing edge
-    for (const fx of [7.4, 14.6, 19.8, 24.6]) {
-      const st = stations.reduce((a, b) => (Math.abs(b.x - fx) < Math.abs(a.x - fx) ? b : a));
-      const len = Math.max(2.6, st.chord * 0.62);
-      const zc = st.le + st.chord * 0.66 + len * 0.45;
-      const secs = [];
-      const N = 10;
-      for (let k = 0; k <= N; k++) {
-        const t = k / N;
-        const r = (t < 0.25 ? Math.sin((t / 0.25) * Math.PI / 2) : Math.pow(Math.cos(((t - 0.25) / 0.75) * Math.PI / 2), 0.7)) * 0.24 + 0.012;
-        secs.push({ y: -len / 2 + t * len, x: 0, z: 0, w: r * 1.3, d: r * 1.9, r: r * 0.62 });
+    paintVerts(B, v0, (p, uv) => (uv[0] < 0.022 ? metal : null));
+    // slats (outboard 7 + inboard 1): chord line and breaks
+    wingLine(B, side, spanPath(11.7, 31.0, (s) => pwl(WING.le, s) + 0.66, 16), gap, 0.03);
+    for (const s of WING.slats) wingLine(B, side, chordPath(s, pwl(WING.le, s) - 0.05, pwl(WING.le, s) + 0.66), gap, 0.03);
+    wingLine(B, side, spanPath(3.3, 8.2, (s) => pwl(WING.le, s) + 0.95, 4), gap, 0.03);
+    for (const s of [3.3, 8.2]) wingLine(B, side, chordPath(s, pwl(WING.le, s) - 0.05, pwl(WING.le, s) + 0.95), gap, 0.03);
+    // spoilers: 2 inboard (37.82-38.82) + 5 outboard ahead of the outboard flap [D ACAP 9.9.1]; split of the inboard pair [A]
+    const spF = (s) => pwl(WING.te, s) - lerp(1.6, 1.2, (s - 11.8) / 9.2), spA = (s) => pwl(WING.te, s) - lerp(0.75, 0.55, (s - 11.8) / 9.2);
+    wingLine(B, side, spanPath(4.5, 8.6, () => 37.82, 2), line);
+    wingLine(B, side, spanPath(3.1, 9.8, () => 38.82, 3), gap);
+    for (const s of [4.5, 6.55, 8.6]) wingLine(B, side, chordPath(s, 37.82, 38.82), line);
+    wingLine(B, side, spanPath(11.8, 21.0, spF, 8), line);
+    wingLine(B, side, spanPath(11.8, 23.3, (s) => (s < 21 ? spA(s) : spA(21) + (s - 21) * 0.34), 10), gap);
+    for (let k = 0; k <= 5; k++) { const s = lerp(11.8, 21.0, k / 5); wingLine(B, side, chordPath(s, spF(s), spA(s)), line); }
+    // flaperon behind the engine (9.8-11.8) [A span], outboard flap to 23.3, aileron 23.3-29.3 [D ACAP]
+    const te = (s) => pwl(WING.te, s);
+    wingLine(B, side, spanPath(9.8, 11.8, (s) => te(s) - 1.15, 3), gap);
+    for (const s of [9.8, 11.8]) wingLine(B, side, chordPath(s, te(s) - 1.15, te(s) + 0.02), gap, 0.03);
+    wingLine(B, side, chordPath(23.3, te(23.3) - 0.62, te(23.3) + 0.02), gap, 0.03);
+    wingLine(B, side, spanPath(23.3, 29.3, (s) => te(s) - lerp(0.62, 0.40, (s - 23.3) / 6), 8), gap);
+    wingLine(B, side, chordPath(29.3, te(29.3) - 0.40, te(29.3) + 0.02), gap, 0.03);
+    // flap-track fairings (canoes) under the trailing edge: ~60 % of each ahead of the TE [A from HL8007 photo]
+    for (const [cs, len] of WING.canoes) {
+      const x1 = te(cs) + 0.4 * len, x0 = x1 - len, secs = [];
+      for (let k = 0; k <= 12; k++) {
+        const t = k / 12, xn = lerp(x0, x1, t);
+        const r = (t < 0.22 ? Math.sin((t / 0.22) * Math.PI / 2) : Math.pow(Math.cos(((t - 0.22) / 0.78) * Math.PI / 2), 0.8)) + 0.03;
+        const top = xn < te(cs) ? wingAt(cs, xn, side, -1)[1] + 0.05 : wingAt(cs, te(cs), side, -1)[1] + 0.05 - (xn - te(cs)) * 0.03;
+        const d = 0.82 * r + 0.04;
+        secs.push({ y: xn + WING.dz, x: cs * side, z: -(top - d / 2), w: 0.54 * r + 0.03, d, r: 0.24 * r + 0.02 });
       }
-      B.add(gLoft(secs, 3), M4.mul(M4.trs(fx * side, st.y - 0.18, zc), M4.trs(0, 0, 0, 0, -Math.PI / 2)), paintDark);
+      B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paintLow);
     }
-    // panel lines: slat line, hinge line, flap / aileron breaks
-    const top = (st, cx) => { const camber = 0.018 * Math.sin(Math.PI * cx); return [st.x * side, st.y + (camber + naca(Math.max(cx, 1e-4), st.th)) * st.chord + 0.004, st.le + cx * st.chord]; };
-    const line = { c: '#8f969e', r: 0.5 };
-    const spanLine = (cx, i0, i1) => {
-      const g2 = raw();
-      for (let i = i0; i <= i1; i++) { const p = top(stations[i], cx), q = top(stations[i], cx + 0.012); g2.p.push(...p, ...q); g2.n.push(0, 1, 0, 0, 1, 0); g2.u.push(0, 0, 1, 0); }
-      for (let i = 0; i < i1 - i0; i++) { const q = i * 2; g2.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
-      B.add(fixWinding(g2), null, line);
-    };
-    spanLine(0.12, 3, 29);
-    spanLine(0.72, 2, 27);
-    for (const fx of [WING.kinkX, 14.6, 19.8, 24.6, 28.2]) {
-      const i = stations.reduce((bi, b, k) => (Math.abs(b.x - fx) < Math.abs(stations[bi].x - fx) ? k : bi), 0);
-      const g3 = raw();
-      for (let k = 0; k <= 8; k++) { const cx = 0.72 + (0.28 * k) / 8; const p = top(stations[i], cx); g3.p.push(p[0] - 0.02 * side, p[1], p[2], p[0] + 0.02 * side, p[1], p[2]); g3.n.push(0, 1, 0, 0, 1, 0); g3.u.push(0, 0, 1, 0); }
-      for (let k = 0; k < 8; k++) { const q = k * 2; g3.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
-      B.add(fixWinding(g3), null, line);
-    }
-    // GE90-115B nacelle + pylon
-    const est = stations.reduce((a, b) => (Math.abs(b.x - 9.9) < Math.abs(a.x - 9.9) ? b : a));
-    const ex = 9.9 * side, ey = est.y - 2.45, ez = est.le - 4.2;
+    // GE90-115B nacelle
     const nac = nacelleGeo();
-    const rot = M4.trs(ex, ey, ez, 0, -Math.PI / 2);
-    B.add(nac.outer, rot, cowl);
-    B.add(nac.inlet, rot, paintDark);
-    B.add(nac.core, rot, paintDark);
-    B.add(gCyl(1.62, 1.62, 0.02, 40), M4.mul(rot, M4.trs(0, -0.95, 0)), fanDark);
-    B.add(gCyl(0.02, 0.42, 0.55, 16), M4.mul(rot, M4.trs(0, -0.68, 0)), { c: '#e6e8ea', r: 0.3, m: 0.7 });
-    B.add(gRBox(0.55, 1.7, 7.4, 0.24, 2), M4.trs(ex, est.y - 0.75, est.le + 0.6, 0, -5 * DEG), paint);
-    lights.push({ p: [tip.x * side, tip.y + 0.05, tip.le + tip.chord * 0.35], c: side < 0 ? [2.5, 0.12, 0.08] : [0.1, 2.2, 0.35], s: 0.9, blink: 0 });
-    lights.push({ p: [tip.x * side, tip.y + 0.08, tip.le + tip.chord * 0.7], c: [4, 4, 4], s: 2.2, blink: side < 0 ? 2.0 : 2.5 });
+    const rot = M4.trs(E.s * side, E.y, E.x0 + WING.dz, 0, Math.PI / 2);
+    B.add(nac.lip, rot, metal); B.add(nac.cowl, rot, cowl); B.add(nac.nozIn, rot, dark); B.add(nac.inlet, rot, { c: '#3a3e44', r: 0.6 });
+    B.add(nac.core, rot, core); B.add(nac.coreIn, rot, dark); B.add(nac.plug, rot, plug); B.add(nac.spinner, rot, spin);
+    for (const [x, r] of [[1.3, 2.075], [3.15, 2.055]]) B.add(gCyl(r + 0.004, r + 0.004, 0.025, 48, false), M4.mul(rot, M4.trs(0, x, 0)), seam);   // cowl splits [A photo]
+    B.add(gCyl(1.64, 1.64, 0.02, 40), M4.mul(rot, M4.trs(0, 1.62, 0)), dark);    // fan-case back face behind the blades
+    B.add(fanBlades(22), rot, blade);
+    const sw = [];   // white swirl on the spinner [V photo JA796A]
+    for (let k = 0; k <= 16; k++) { const t = k / 16, x = lerp(0.47, 1.4, t), r = pwl([[0.42, 0], [0.46, 0.1], [0.56, 0.22], [0.72, 0.34], [0.94, 0.44], [1.2, 0.51], [1.45, 0.53]], x) + 0.006, a = t * Math.PI * 1.6; sw.push([Math.cos(a) * r, x, Math.sin(a) * r]); }
+    B.add(gTube(sw, 0.02, 5), rot, white);
+    // pylon: fairing over the fan cowl into the wing LE, strut under the wing with the aft fairing ending near the flap hinge [A]
+    const leE = pwl(WING.le, E.s), nacTop = (x) => E.y + pwl([[0, 1.715], [0.6, 2.02], [1.7, 2.09], [2.4, 2.09], [3.8, 1.99], [5.0, 1.5], [5.6, 1.02], [6.35, 0.84]], x);
+    const secs = [];
+    for (let k = 0; k <= 14; k++) {
+      const x = lerp(1.6, 10.6, k / 14), xn = E.x0 + x;
+      const wl = wingAt(E.s, Math.max(xn, leE), side, -1)[1];
+      const bot = x < 6.35 ? nacTop(x) - 0.12 : lerp(nacTop(6.35), wl - 0.05, (x - 6.35) / 4.25);
+      const top = xn >= leE ? wl + 0.12 : lerp(nacTop(x) + 0.04, Math.max(wl + 0.12, nacTop(x) + 0.04), smooth(leE - E.x0 - 1.2, leE - E.x0, x));
+      const w = lerp(0.6, 0.26, Math.pow(k / 14, 1.5));
+      secs.push({ y: xn + WING.dz, x: E.s * side, z: -(top + bot) / 2, w, d: top - bot, r: w * 0.45 });
+    }
+    B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paintLow);
+    // nav (red L / green R) + white strobe at the raked tip [A positions]
+    const tip = stations[stations.length - 1];
+    B.add(gSphere(0.07, 10, 6), M4.trs(tip.s * side, tip.y0 + 0.02, tip.le + 0.12 + WING.dz, 0, 0, 0, 1, 0.7, 2.2), { c: side < 0 ? '#c83a36' : '#3ab86a', r: 0.15, e: 0.5 });
+    lights.push({ p: [tip.s * side, tip.y0 + 0.05, tip.le + 0.1 + WING.dz], c: side < 0 ? [2.5, 0.12, 0.08] : [0.1, 2.2, 0.35], s: 0.9, blink: 0 });
+    lights.push({ p: [tip.s * side, tip.y0 + 0.06, tip.le + tip.c * 0.8 + WING.dz], c: [4, 4, 4], s: 2.2, blink: side < 0 ? 2.0 : 2.5 });
   }
-  // wing-to-body fairing below the cabin between the wing roots
-  B.add(gRBox(6.2, 1.6, 17.0, 0.7, 3), M4.trs(0, -2.25, 32.0), paint);
+  // wing-to-body fairing below the cabin (nose stations ~26 -> 43.3, belly 2.35 m above ground) [D ACAP side view]
+  B.add(gRBox(6.3, 1.9, 17.3, 0.8, 3), M4.trs(0, -1.78, 34.65 + WING.dz), paintLow);
   const geo = B.build();
   return { mesh: gl ? gl.mesh(geo, { name: 'exterior', layer: 'exterior', castShadow: false }) : null, lights, geo };
 }
