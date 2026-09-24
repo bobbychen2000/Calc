@@ -3036,12 +3036,12 @@ const SEATMAT = {
   // THE Room (Safran Fusio custom). Colours sampled from ANA's official seat photos (ref/ana/c_273xx, see REFERENCE777.md):
   // pale grey-beige ash with fine straight grain, charcoal shells with lighter cap rails, charcoal tweed seat,
   // slate Ultraleather headrest flap, navy pillow, dark recessed seat base
-  ash: { c: '#c3bcad', r: 0.5, l: LAYER.ashGrain },
+  ash: { c: '#c9c2b3', r: 0.48, l: LAYER.ashGrain },
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
-  jShell: { c: '#606369', r: 0.46, l: LAYER.plastic },
-  jShellIn: { c: '#55585d', r: 0.5, l: LAYER.plastic },
-  jRail: { c: '#74787e', r: 0.32, m: 0.3, l: LAYER.brushed },
+  jShell: { c: '#505358', r: 0.46, l: LAYER.plastic },
+  jShellIn: { c: '#46494e', r: 0.5, l: LAYER.plastic },
+  jRail: { c: '#8a8e94', r: 0.26, m: 0.45, l: LAYER.brushed },
   jBase: { c: '#2a2b2f', r: 0.6 },
   jFabric: { c: '#55545b', r: 0.92, l: LAYER.tweed },
   jLeather: { c: '#4b4d53', r: 0.5, l: LAYER.leather },
@@ -3357,11 +3357,13 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.02, top - 0.02, 0.56, 0.008, 1), M4.trs(0.13, (top - 0.02) / 2, -0.30), shell); // inner face beside O's legs
     B.add(gRBox(0.40, 0.03, 0.56, 0.01, 1), M4.trs(0.345, 0.58, -0.30), SEATMAT.jShellIn);     // footwell ceiling
     // cabinet with swivel mirror + literature pocket at the aft end of the side table
-    B.add(gRBox(0.28, 0.30, 0.16, 0.015, 1), M4.trs(0.28, top + 0.15, -0.12), ash);
-    capRail(B, 0.28, 0.16, 0.28, top + 0.30, -0.12);
-    B.add(gRBox(0.24, 0.24, 0.01, 0.008, 1), M4.trs(0.28, top + 0.15, -0.203), SEATMAT.jShellIn);
-    B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(0.22, top + 0.16, -0.21), SEATMAT.mirror);
-    B.add(gRBox(0.04, 0.02, 0.012, 0.004, 1), M4.trs(0.38, top + 0.2, -0.21), SEATMAT.blueAccent);
+    // (cabinet rises to the monitor top: ash door with swivel mirror inside, c_27305 / 27311 / 27312)
+    B.add(gRBox(0.30, 0.52, 0.17, 0.015, 1), M4.trs(0.28, top + 0.26, -0.12), ash);
+    capRail(B, 0.30, 0.17, 0.28, top + 0.52, -0.12);
+    B.add(gRBox(0.26, 0.46, 0.006, 0.006, 1), M4.trs(0.28, top + 0.26, -0.207), ash);
+    B.add(gBox(0.004, 0.40, 0.004), M4.trs(0.415, top + 0.26, -0.211), SEATMAT.jShellIn);
+    B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(0.22, top + 0.30, -0.212), SEATMAT.mirror);
+    B.add(gRBox(0.04, 0.02, 0.012, 0.004, 1), M4.trs(0.38, top + 0.36, -0.21), SEATMAT.blueAccent);
     // seat controls (knob, slider, presets) in a dark rounded pod on the side table (c_27308)
     if (!lod) {
       B.add(gRBox(0.12, 0.012, 0.20, 0.006, 1), M4.trs(0.22, top + 0.008, -0.46), SEATMAT.jShell);
@@ -3413,10 +3415,11 @@ function roomPart(part, opts = {}) {
     B.add(gRBox(0.02, top - 0.02, 1.28, 0.008, 1), M4.trs(-0.125, (top - 0.02) / 2, 0.66), shell);
     if (!lod) B.add(gRBox(0.02, 0.05, 0.10, 0.004, 1), M4.trs(-0.114, 0.50, 1.0), { c: '#b3262a', r: 0.5 });   // life-vest tab (red, c_27302)
     // cabinet (mirror + pouches, deep-blue interior) just aft of O's monitor panel
-    B.add(gRBox(0.34, 0.30, 0.18, 0.015, 1), M4.trs(-0.33, top + 0.15, 0.66), ash);
-    capRail(B, 0.34, 0.18, -0.33, top + 0.30, 0.66);
-    B.add(gRBox(0.30, 0.24, 0.01, 0.008, 1), M4.trs(-0.33, top + 0.15, 0.752), SEATMAT.jShellIn);
-    B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(-0.26, top + 0.16, 0.758), SEATMAT.mirror);
+    B.add(gRBox(0.34, 0.52, 0.18, 0.015, 1), M4.trs(-0.33, top + 0.26, 0.66), ash);
+    capRail(B, 0.34, 0.18, -0.33, top + 0.52, 0.66);
+    B.add(gRBox(0.30, 0.46, 0.006, 0.006, 1), M4.trs(-0.33, top + 0.26, 0.752), ash);
+    B.add(gBox(0.004, 0.40, 0.004), M4.trs(-0.485, top + 0.26, 0.756), SEATMAT.jShellIn);
+    B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(-0.26, top + 0.30, 0.758), SEATMAT.mirror);
     if (!lod) {
       B.add(gRBox(0.12, 0.012, 0.20, 0.006, 1), M4.trs(-0.30, top + 0.008, 1.02), SEATMAT.jShell);
       B.add(gRBox(0.10, 0.004, 0.18, 0.004, 1), M4.trs(-0.30, top + 0.016, 1.02), SEATMAT.black);
