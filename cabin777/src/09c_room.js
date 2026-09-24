@@ -13,6 +13,7 @@
 Object.assign(SEATMAT, {
   jBezel: { c: '#3a3c42', r: 0.35, l: LAYER.plastic },   // QA w3: rendered near-black (L 18-29 vs photos 34-45)
   jSeam: { c: '#46444b', r: 0.95 },
+  jCavity: { c: '#2c2d32', r: 0.9 },   // QA w4: footwell space reads charcoal, not black (tpg_53, c_27316) [V]
   jPillowBack: { c: '#6b665e', r: 0.8, l: LAYER.fabric },
   jPanelEdge: { c: '#5d6166', r: 0.34, m: 0.5, l: LAYER.brushed },
   jLedge: { c: '#8f959c', r: 0.3, m: 0.6, l: LAYER.brushed },   // ledge top, darker than the edge trim (c_27313 #788087-#b2bbc8) [V]
@@ -41,7 +42,10 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   B.add(gRBox(fw, 0.20, 0.018, 0.008, 1), M4.mul(BH, M4.trs(fx, 0.445, -0.058, 0, -3 * DEG)), SEATMAT.jHead);
   if (lod) return;
   // QA w3: soft fabric-toned channels ~0.58 / 0.82 of the back height down from its top (tpg_31, c_27315) [D]
-  for (const sy of [0.10, 0.21]) B.add(gBox(w - 0.04, 0.006, 0.003), M4.mul(BH, M4.trs(0, sy, -0.0385)), SEATMAT.jSeam);
+  // QA w4: one continuous sofa - the back rolls into the cushion (fabric fillet) with three soft grooves across its lower
+  // half (c_27315, c_27313, tpg_31) [V]
+  for (const sy of [0.07, 0.15, 0.23]) B.add(gRBox(w - 0.04, 0.008, 0.004, 0.002, 1), M4.mul(BH, M4.trs(0, sy, -0.0385)), SEATMAT.jSeam);
+  B.add(gRBox(w - 0.02, 0.07, 0.09, 0.03, 2), M4.trs(0, 0.445, -0.075), F);
   B.add(gBox(w - 0.04, 0.005, 0.004), M4.mul(M4.trs(0, 0.39, -0.34, 0, 2 * DEG), M4.trs(0, 0.041, -0.10, 0, Math.PI / 2)), SEATMAT.jBase);
   B.add(gRBox(0.03, 0.05, 0.012, 0.004, 1), M4.mul(BH, M4.trs(fx, 0.33, -0.05)), SEATMAT.jHead); // flap tab
   // seat front: continuous fabric apron (the stowed leg rest) from the cushion nose down to a dark kick strip (QA w2:
@@ -50,8 +54,9 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   B.add(gBox(w - 0.06, 0.08, 0.03), M4.trs(0, 0.04, -0.615), SEATMAT.jBase);
   B.add(gBox(w - 0.06, 0.004, 0.004), M4.trs(0, 0.25, -0.641), SEATMAT.jBase);                      // leg-rest seam
   // teal shoulder belt (c_27313 / 27316 show it lying on the cushion)
-  B.add(gBox(0.045, 0.004, 0.34), M4.trs(-0.12, 0.433, -0.30, 0.5), { c: '#2f5f66', r: 0.7 });
-  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(-0.04, 0.436, -0.44), SEATMAT.buckle);
+  // QA w4: on the half away from the pillows so it shows, diagonal with the silver buckle (tpg_31 / 42) [V]
+  B.add(gBox(0.045, 0.004, 0.34), M4.trs(0.14, 0.433, -0.30, -0.5), { c: '#2f5f66', r: 0.7 });
+  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(0.06, 0.436, -0.44), SEATMAT.buckle);
 }
 
 // charcoal frame round an ash panel (every ash face in the photos sits in a ~3 cm dark frame, c_27312-27315):
@@ -114,7 +119,7 @@ function roomFootwell(B, x0, x1, zm, zf, wall) {
   const s = Math.sign(zf - zm);
   planSlab(B, footwellPlan(x0, x1, zm, zf, wall), 0.38, 0.02, SEATMAT.jShellIn);
   planSlab(B, footwellPlan(x0, x1, zm, zf, wall, 0.012), 0.40, 0.04, SEATMAT.jFabric);
-  planSlab(B, footwellPlan(x0, x1, zm + s * 0.04, zf - s * 0.04, wall), 0.01, 0.36, SEATMAT.jVoid);
+  planSlab(B, footwellPlan(x0, x1, zm + s * 0.04, zf - s * 0.04, wall), 0.01, 0.36, SEATMAT.jCavity);
   B.add(gRBox(x1 - x0, 0.02, 0.16, 0.006, 1), M4.trs((x0 + x1) / 2, 0.12, zm + s * 0.08), SEATMAT.jShellIn);
 }
 // monitor + sill on the central monument face (plane z = zf, facing dir). QA w2 (tpg_53 square-on at 1073 px/m, omaat_room_16,
@@ -163,7 +168,8 @@ function roomControls(B, xf, side, dy = 0, hy = 0.555) {
   B.add(gRBox(0.14, 0.15, 0.006, 0.03, 1), P(0, 0.545, 0.002), SEATMAT.jCap);
   B.add(gRBox(0.09, 0.02, 0.006, 0.01, 1), P(0, 0.598, 0.005), SEATMAT.black);                      // thumb wheel
   const ring = (x, y, r, blue) => {
-    B.add(gCyl(r, r, 0.002, 10, false), P(x, y, 0.0055, Math.PI / 2), blue ? { c: '#6c9cff', r: 0.4, e: 0.35 } : RING);
+    B.add(gCyl(r, r, 0.002, 10, !!blue), P(x, y, 0.0055, Math.PI / 2), blue ? { c: '#6c9cff', r: 0.4, e: 0.35 } : RING);
+    if (blue) return;                                   // lie-flat key: a filled glowing blue disc (gstp-38) [V]
     B.add(gCyl(r - 0.0025, r - 0.0025, 0.002, 10), P(x, y, 0.0065, Math.PI / 2), SEATMAT.jCap);
   };
   const pill = (x, y, w) => {
@@ -216,6 +222,7 @@ function roomCard(B, px, s, y, z) {
   B.add(gRBox(0.006, 0.20, 0.22, 0.004, 1), M4.trs(px + s * 0.002, y - 0.02, z), SEATMAT.jShellIn);
   B.add(gQuad(0.20, 0.25), M4.trs(px + s * 0.0055, y, z, ry), { c: '#e6e9ef', r: 0.7 });
   B.add(gQuad(0.20, 0.05), M4.trs(px + s * 0.006, y + 0.09, z, ry), { c: '#2d5bb0', r: 0.6 });
+  B.add(gRBox(0.008, 0.13, 0.22, 0.004, 1), M4.trs(px + s * 0.012, y - 0.07, z), SEATMAT.jShellIn);   // pocket front
 }
 // aisle armrest ledge: silver stepped ledge (6 mm lower step on its aisle edge) with a dark lengthwise slot holding the
 // grey-metal top edge of the retracted pop-up privacy panel (omaat_room_13, c_27313 bottom corners; QA r3 had an ash strip) [V]

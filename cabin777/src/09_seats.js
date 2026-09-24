@@ -83,9 +83,9 @@ const SEATMAT = {
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
   mattress: { c: '#f0efea', r: 0.9, l: LAYER.fabric },
-  duvet: { c: '#4a5690', r: 0.95, l: LAYER.fabric },   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
+  duvet: { c: '#5a5c9a', r: 0.95, l: LAYER.fabric },   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
-  pillowBlue: { c: '#6671b8', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center)   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
+  pillowBlue: { c: '#5f6596', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center)   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
   lampGlow: { c: '#ffe2b0', r: 0.4, e: 0.35 },
   moodGlow: { c: '#ffd9a0', r: 0.5, e: 0.25 },
   hole: { c: '#0b0d10', r: 1.0 },

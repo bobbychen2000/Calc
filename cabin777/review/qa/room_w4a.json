@@ -1,0 +1,98 @@
+{
+ "area": "room",
+ "rater": "A-skeptic",
+ "round": 4,
+ "score": 6.9,
+ "summary": "Every round-3 fix is in and reads right in the cabin views: the table has an ash inlay in a charcoal rim, the back is shorter under a padded header band with a lamp in each corner, the angled lamp wing sits beside the monitor, the literature slot is unlit navy (c12 #121969 vs c_27316 #102861), the full-size safety card is in place, the O handset is on the monitor side under the table edge, the pillow is paler and the ash is warmer (#b0ada7 vs c_27314 #cbc6c2, same R-B). The largest remaining gap is the upholstery: the back is a flat board with a hard crease at the cushion and only two thin lines on it. The real seat is a channel-quilted sofa whose back rolls into the cushion, with 3 evenly spaced channels and a long teal lap belt lying on it. Smaller gaps: the handset buttons look like a toy, the duvet is a rigid cyan-blue slab, the footwell reads as a black box, and the safety card has no pocket front. Not yet indistinguishable.",
+ "details": [
+  {"detail": "Nested-pair layout: O bench, E seat, footwells under the monitors, table over the other seat's footwell", "score": 7.8, "refs": ["c_27313", "c_27315", "c_27312", "tpg_31", "tpg_53"]},
+  {"detail": "Shell tone and walls: charcoal shells, ash panels in dark frames, caps", "score": 7.5, "refs": ["c_27312", "c_27314", "q06", "q08"]},
+  {"detail": "Back, header band and lamps: shorter back under the padded band, a lamp in each corner (O and E)", "score": 7.5, "refs": ["tpg_31", "c_27315", "c11", "c5"]},
+  {"detail": "Back and cushion upholstery: shape, junction, channels, fabric tone", "score": 5.5, "refs": ["c_27315", "c_27313", "tpg_31", "c11", "c5"]},
+  {"detail": "Headrest flap: tone relative to the fabric, width, tab", "score": 7.5, "refs": ["tpg_31 flap/fabric 1.18x", "c_27314 1.41x", "q08 1.17x", "q10 1.28x"]},
+  {"detail": "Pillows: white plus blue yagasuri", "score": 7.0, "refs": ["tpg_31 #5d5b80", "c_27303 #303456", "q08 #333e84"]},
+  {"detail": "Seat belt", "score": 4.5, "refs": ["c_27313", "c_27315", "c_27316", "tpg_31", "c5"]},
+  {"detail": "Monitor, bezel, sill, drawer LED, literature slot", "score": 8.0, "refs": ["tpg_53", "c_27316", "c12", "q07"]},
+  {"detail": "Angled lamp wing beside the monitor", "score": 7.0, "refs": ["tpg_53", "c_27316", "q07", "c6"]},
+  {"detail": "Ash cabinet door beside the monitor", "score": 8.0, "refs": ["tpg_53 0.55 of the monitor width", "c12 0.53"]},
+  {"detail": "Side table: ash inlay, charcoal rim, silver lip", "score": 7.5, "refs": ["tpg_53", "fb_a96b7a65", "c8", "c_27315 #cdcac7 vs q10 #b8b5af"]},
+  {"detail": "Seat controls plate and handset", "score": 5.5, "refs": ["tpg_53 crop (800,700)-(1300,1080)", "c8", "c6"]},
+  {"detail": "Footwell: ottoman, cavity", "score": 6.0, "refs": ["tpg_84 footwell", "c10", "c12"]},
+  {"detail": "Outer console: safety card, red tab, stowage", "score": 6.5, "refs": ["tpg_84", "tpg_53", "c_27316", "c10"]},
+  {"detail": "Aisle armrest ledges: silver, slot, slats", "score": 7.5, "refs": ["c_27313", "c_27303", "c9"]},
+  {"detail": "Aisle-end ash, cap and plaques", "score": 7.5, "refs": ["c_27313", "c_27314 cap #858585", "q06"]},
+  {"detail": "Centre divider", "score": 7.0, "refs": ["c_27313", "c_27314", "q09", "c3"]},
+  {"detail": "Door edges", "score": 7.0, "refs": ["c_27312", "c_27313", "c1", "c2"]},
+  {"detail": "Bed mode: mattress, duvet, pillows", "score": 5.0, "refs": ["tpg_183 bed-overhead-2", "tt_ana-business-class-bed", "fb_a96b7a65", "c4"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Back and cushion are two flat boards with a hard crease; the channel quilting is missing",
+   "problem": "roomSeatCore builds the back as a flat loft tilted 12 deg on BH, meeting the cushion at a sharp inside corner (c11, c5: a clear dark crease line with a gap). There are only two thin jSeam bars (sy 0.10 / 0.21), and the cushion has one dark jBase line. In every photo the seat is one upholstered sofa. The back rolls into the cushion with a ~6-8 cm radius and has 3 evenly spaced horizontal channels in its lower half, at about 55 %, 70 % and 85 % of its height from the top. The cushion also carries 1-2 soft channels across its width. The channels are soft grooves, not lines.",
+   "evidence": "c_27315 crop (380,60)-(930,480): 14D back with 3 channels and a rounded back-to-cushion roll, with no crease. c_27313: both 17E and 18D show the same roll and channels. tpg_31: the seam sits at 58 % of the back height. Model c11: the back ends at the cushion with a dark crease at y 385-395 and shows only 2 lines, at 69 % and 85 % from the top.",
+   "fix": "09c_room.js roomSeatCore (upright branch): (1) Add a jFabric fillet: a quarter-round loft of radius 0.07 spanning w, centred at M4.trs(0, 0.465, -0.07). Build it with loftAt and 4 SECs rotated 0..90 deg, or use gCyl(0.07,0.07,w-0.02,10) turned by rz=PI/2 and scaled to 0.07 x 0.05. This hides the crease. (2) Replace the seam loop: for (const sy of [0.08, 0.16, 0.245]). Make each channel a jSeam gBox(w-0.06, 0.008, 0.004) at z -0.038 and lower jSeam's contrast (jSeam c '#5a5860'), so each reads as a soft groove. (3) Add one cushion channel: gBox(w-0.06, 0.004, 0.004) jSeam at M4.trs(0, 0.467, -0.22) under the same 2-deg rotation as the cushion."
+  },
+  {
+   "severity": "low",
+   "detail": "Lap belt effectively invisible",
+   "problem": "The teal belt is a 0.34 m strip at x -0.12 running along the seat depth under the pillows (c5: only a 3 cm teal tab and a grey buckle square show). In every official and in-flight photo, a long teal lap belt lies diagonally across the cushion from the side bolster, with a silver buckle. It is one of the most visible accents on the seat.",
+   "evidence": "c_27313: a teal belt runs diagonally across both 17E and 18D. c_27315: the belt runs from the console side toward the centre with a silver buckle at (485,540) in the crop. c_27316 bottom: a teal belt lies across the cushion front. tpg_31: black/teal belts with silver buckles lie on both seats.",
+   "fix": "09c_room.js roomSeatCore: move the belt out from under the pillows and lay it diagonally. Use B.add(gBox(0.045,0.004,0.42), M4.trs(fs*0.12, 0.437, -0.33, 0, 0, fs*0.55), {c:'#2f5f66', r:0.7}) with the half from the side opposite fs, plus a matching half from the other side and a buckle gRBox(0.06,0.012,0.04) SEATMAT.buckle where they meet at x ~0. Colour stays teal (c_27315 #3a6b75)."
+  },
+  {
+   "severity": "low",
+   "detail": "Handset buttons look like a toy: white 4-dot crosses on both pads, blank screen",
+   "problem": "roomControls draws two jBezel discs, each with 4 tiny white RING squares, so both ends read as identical white crosses (c8). On the real handset the left end is a dark round D-pad ring with small white arrow marks. The right end has 4 small coloured buttons (green / red / yellow / blue, gamepad style) plus a black side button. The screen shows a picture, not flat light blue.",
+   "evidence": "tpg_53 crop (800,700)-(1300,1080): left pad is a dark ring, right pad has 4 coloured dots, screen shows a photo (mountain). c8: both pads show white 4-square crosses and the screen is flat #8ec0e8-ish.",
+   "fix": "09c_room.js roomControls handset loop: for the pad at e = -side (the far end), draw a black ring only (gCyl r 0.013 SEATMAT.black plus a thin RING annulus of r 0.0125, 0.001 wide). For the pad at e = +side, draw 4 gCyl(0.0035) dots in {c:'#3cae5a',e:.3}, {c:'#d0413a',e:.3}, {c:'#e0c040',e:.3} and {c:'#4a78d8',e:.3}. Put atlasUV('screen') on the handset screen quad in place of the flat colour: B.add(gQuad(0.074,0.064), ..., SEATMAT.screen, atlasUV('screen'))."
+  },
+  {
+   "severity": "low",
+   "detail": "Bed-mode duvet: rigid slab in cyan-leaning blue with a raised grid",
+   "problem": "This was flagged in round 3 (B) and has not changed. roomDuvet is a 0.07 thick loft with raised gBox quilt strips (c4: a blue tiled mat). It renders #7f93d4 in the studio, with G above R by 20, a cyan-leaning royal blue. The real comforter is a violet-indigo that drapes and wrinkles. Its quilting is barely visible.",
+   "evidence": "tpg_183 bed-overhead-2: duvet #64608e / #757bca (G about equal to R, violet). fb_a96b7a65: #485587. c4 duvet: #7f93d4, lighter than the charcoal shell beside it (#9e9ca7 in the studio: 0.94x). In the photos the duvet sits well below the shell's luminance under the same light.",
+   "fix": "09_seats.js SEATMAT.duvet c '#4d4f8c' (one key). 09c_room.js roomDuvet: drop the thickness to 0.04 with crown 0.01 and edge 0.08 so the edges droop. Make the grid flush darker lines (gQuad strips 0.004 wide lying at y+0.001, colour '#43467c') in place of raised boxes. Optionally rotate the loft 2-3 deg about z, and add a second, shorter folded layer at the foot, to break the slab look."
+  },
+  {
+   "severity": "low",
+   "detail": "Footwell reads as a black box under a thin, sharp-edged ottoman",
+   "problem": "The ottoman is a 0.04 planSlab with square edges on a jVoid block, so the cavity below renders pure black (c10, c12). The cavity also has a floating grey step bar (the 0.02 jShellIn at y 0.12). In the photo the ottoman pad is thicker, with a soft rolled front nose. Below it the cavity is dark charcoal with the carpet visible on its floor, not an abyss.",
+   "evidence": "tpg_84 footwell: the pad nose is rounded, ~5 cm thick, the cavity walls are charcoal #2a2c30-ish and the brown carpet is visible at the bottom. c10: the cavity is #0b0b0d black, and a grey bar floats at mid-height.",
+   "fix": "09c_room.js roomFootwell: change jVoid to SEATMAT.jShellIn for the cavity slab, or lighten jVoid to '#26272b' (a shared key, one line). Leave the lower 0.12 open so the cabin carpet shows: set the void slab's y0 to 0.12 and h to 0.25, and delete the step gRBox. Add a rounded front nose on the pad: a gRBox(x1-x0-0.02, 0.05, 0.05, 0.022, 1) jFabric at the mouth edge, zm + s*0.025, y 0.415."
+  },
+  {
+   "severity": "low",
+   "detail": "Safety card fully exposed; no pocket front",
+   "problem": "roomCard puts the pocket panel behind the card, so the whole white card with its blue header shows (c10). In the photos a charcoal pocket flap covers the lower ~60 % of the card, so only the header and top third show. The pocket flap also carries a small printed label.",
+   "evidence": "tpg_84: the card top (purple/blue header 'B777-300', icons) stands out of a charcoal pocket flap that covers it from about 40 % down. tpg_53 left: the same. c10: the card is fully visible, and a white panel with a blue stripe runs down its whole height.",
+   "fix": "09c_room.js roomCard: add the pocket front B.add(gRBox(0.006, 0.15, 0.21, 0.02, 1), M4.trs(px + s*0.011, y - 0.06, z), SEATMAT.jShell) in front of the card. Keep the backing panel."
+  },
+  {
+   "severity": "low",
+   "detail": "Blue pillow still over-saturated",
+   "problem": "Its luminance is now right (q08 0.80x the back fabric; photos 0.73-0.88x), but the pillow is a saturated royal blue. In the photos it is a greyed violet-navy.",
+   "evidence": "q08 #333e84 (chroma (B-R)/B 0.61). c_27303 #303456 (0.44). tpg_31 #5d5b80 (0.29, warm light). fb_a96b7a65 pillow is similar.",
+   "fix": "09_seats.js SEATMAT.pillowBlue c '#5f6499' (one key; keeps the luminance and cuts the chroma to about 0.4)."
+  },
+  {
+   "severity": "low",
+   "detail": "Control plate is flat and printed on; the real one is a raised pod",
+   "problem": "The control plate is a 6 mm jCap slab whose buttons are white outline rings, and the handset recess is a flat dark rectangle. On the real console the controls sit on a slightly raised, lighter, matte rounded pod that wraps the curved console face. The handset sits in its own raised pod with a lighter surround. The lie-flat button is a filled, glowing blue disc, not a ring.",
+   "evidence": "tpg_53 crop: both pods stand ~5-8 mm proud with soft shadows, and the lie-flat button is a solid glowing blue disc. c8: the plate's outline is barely visible against the console, and the blue button is a thin ring.",
+   "fix": "09c_room.js roomControls: set the plate depth to 0.012 and colour it slightly lighter than the console face ({c:'#6c7077', r:0.5}). Add a handset surround gRBox(0.16, 0.10, 0.008, 0.045, 1) in the same colour behind the jBase recess. For the blue ring, also add a filled disc gCyl(r-0.0025,...) using {c:'#3f6fe0', e:0.5} in place of jCap."
+  }
+ ],
+ "verifiedFixed": [
+  "Table: ash inlay in a charcoal rim with a silver lip (c8, q08, q10)",
+  "Back shortened under a padded charcoal header band; 2 corner lamps on O and E (c11, c5, q08, q10)",
+  "Angled lamp wing with lamp and nozzle beside the monitor (c6, c12, q07); the q07 wing / monument face ratio 69/53 is close to c_27316 77/73",
+  "Literature slot: unlit navy (c12 #121969 vs c_27316 #102861)",
+  "Bezel/monument-face luminance ratio 0.45 (q07) vs 0.47 (c_27316)",
+  "Full-size safety card beside the O footwell (only the pocket front is missing)",
+  "O handset on the monitor side just under the table edge, plate lower and further out (c6 vs tpg_53)",
+  "Warmer ash: q08 #b0ada7 vs c_27314 #cbc6c2 (both R-B about 9)",
+  "Brushed aisle cap #86837e vs c_27314 cap #858585; finger recess no longer a black hole"
+ ],
+ "questionsForUser": []
+}
