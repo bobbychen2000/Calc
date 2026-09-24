@@ -359,10 +359,11 @@ def _dash_chains(pieces):
             pass
         lens = L[order]
         ndot = int((lens < DOT_MAX).sum())
-        dashes = lens[lens >= DOT_MAX]
+        inner = lens[1:-1] if len(lens) > 3 else lens      # end dashes may be truncated
+        inner = inner[inner >= DOT_MAX]
         if ndot > 0:
             kind = "centerline"
-        elif len(dashes) >= 3 and dashes.max() > 2.5 * np.median(dashes) and dashes.min() < 0.5 * dashes.max():
+        elif len(inner) >= 2 and inner.min() < 0.4 * inner.max():
             kind = "centerline"           # long-short (phantom / chain) line
         else:
             kind = "hidden"
@@ -620,7 +621,7 @@ def _find_hatch(polys, idx):
         # members must form a run: each has a neighbour within 10 pt
         from scipy.spatial import cKDTree
         dd, _ = cKDTree(C).query(C, k=2)
-        ok = dd[:, 1] < 10.0
+        ok = dd[:, 1] < max(10.0, 0.8 * key[1] * 0.3)
         if ok.sum() >= 8:
             out.update(i for (i, _), o in zip(mem, ok) if o)
     return out
@@ -761,3 +762,249 @@ def plot_page(items, path, clip=None, lw=0.4, dpi=150, size=None, tags=False):
     ax.grid(True, lw=0.2)
     fig.savefig(path, dpi=dpi)
     plt.close(fig)
+
+
+def _merge_straight(items, kind, ang_tol=0.05, off_tol=0.12, gap=6.0):
+    """Merge duplicated / fragmented straight dashed chains lying on the same line."""
+    keep, lines = [], []
+    for it in items:
+        if it["kind"] != kind:
+            keep.append(it)
+            continue
+        P = it["pts"]
+        ch, dev = _straightness(P)
+        if ch < 2.0 or dev > 0.1:
+            keep.append(it)
+            continue
+        d = (P[-1] - P[0]) / ch
+        if d[0] < -1e-9 or (abs(d[0]) < 1e-9 and d[1] < 0):
+            d = -d
+        nrm = np.array([-d[1], d[0]])
+        lines.append((d, float(nrm @ P[0]), P, it))
+    used = [False] * len(lines)
+    for i, (d, off, P, it) in enumerate(lines):
+        if used[i]:
+            continue
+        grp = [i]
+        used[i] = True
+        changed = True
+        while changed:
+            changed = False
+            lo = min(float(lines[k][2] @ d if False else (lines[k][2] @ d).min()) for k in grp)
+            hi = max(float((lines[k][2] @ d).max()) for k in grp)
+            for j in range(len(lines)):
+                if used[j]:
+                    continue
+                dj, offj, Pj, _ = lines[j]
+                if abs(dj @ d) < math.cos(math.radians(ang_tol)) or abs(offj - off) > off_tol:
+                    continue
+                t = Pj @ d
+                if t.min() > hi + gap or t.max() < lo - gap:
+                    continue
+                grp.append(j)
+                used[j] = True
+                changed = True
+        T = np.concatenate([lines[k][2] @ d for k in grp])
+        base = P[0] - (P[0] @ d) * d
+        nrm = np.array([-d[1], d[0]])
+        offm = np.mean([lines[k][1] for k in grp])
+        base = nrm * offm
+        seg = np.array([base + T.min() * d, base + T.max() * d])
+        keep.append(dict(pts=seg, kind=kind, tag=it["tag"], merged=len(grp)))
+    return keep
+
+
+# =============================================================================================
+# 5. view separation
+# =============================================================================================
+# Page-8 seed points (page pt) on the main outline of each view.  They are snapped to the nearest
+# outline polyline; everything connected to it (dilated raster, ~4 pt) forms the view core, and
+# the remaining small groups (labels, dimensions) join the nearest core within MAX_ATTACH pt.
+SEEDS_P8 = {
+    "side": [(350.2, 2726.6), (532.2, 2000.0)],          # crown at FR16, the '0' reference line
+    "plan": [(1002.0, 1045.0), (1084.0, 300.0), (1084.0, 1700.0)],
+    "front": [(1752.0, 2328.0), (1468.0, 2328.0)],       # spinner, T-tail (front view)
+    "detail_stbd": [(248.0, 810.0), (300.0, 500.0)],      # starboard cabin side detail over the wing
+}
+# sections: seed = a point inside the section outline (label centre for the frame sections)
+SECTION_SEEDS_P8 = {
+    "EF1": (1031.0, 3051.0), "EF2": (1054.0, 2936.0), "FR10": (1053.0, 2773.0),
+    "FR12": (1053.0, 2560.0), "FR14": (1053.0, 2334.0),
+    "FR16-30": (1346.0, 3047.0), "FR33": (1346.0, 2824.0), "FR36": (1346.0, 2608.0),
+    "FR38": (1305.0, 2406.0), "FR40": (1287.0, 2194.0),
+    "VF1": (761.0, 1892.0), "VF2": (761.0, 1623.0), "HF1": (808.0, 748.0), "HF2": (651.0, 732.0),
+    "WR1": (2194.0, 2512.0), "WR2": (2188.0, 2758.0), "WR3": (2188.0, 2931.0), "WR4": (2188.0, 3110.0),
+}
+FR_SECTION_STATIONS_MM = {  # labelled FR10-relative stations of the frames (side view chain dims)
+    "EF1": -1880, "EF2": -1005, "FR10": 0, "FR12": 500, "FR14": 1000, "FR16": 1510,
+    "FR30": 5150, "FR33": 5920, "FR36": 6670, "FR38": 7720, "FR40": 8770,
+}
+MAX_ATTACH = 60.0
+
+
+def _bbox(P):
+    return np.r_[P.min(0), P.max(0)]
+
+
+def _raster_groups(items, W, H, res=1.0, dil=2):
+    from scipy import ndimage
+    nx, ny = int(W / res) + 3, int(H / res) + 3
+    grid = np.zeros((nx, ny), bool)
+    pix = []
+    for it in items:
+        D = densify(it["pts"], 0.5 * res) if len(it["pts"]) > 1 else it["pts"]
+        ij = np.clip(np.round(D / res).astype(int), 0, [nx - 1, ny - 1])
+        grid[ij[:, 0], ij[:, 1]] = True
+        pix.append(ij)
+    grid = ndimage.binary_dilation(grid, iterations=dil)
+    lab, n = ndimage.label(grid, structure=np.ones((3, 3)))
+    glab = []
+    for ij in pix:
+        v = lab[ij[:, 0], ij[:, 1]]
+        glab.append(int(np.bincount(v).argmax()))
+    return np.array(glab)
+
+
+def _snap_item(items, p, kinds=("outline",)):
+    best, bi = 1e9, -1
+    for i, it in enumerate(items):
+        if it["kind"] not in kinds:
+            continue
+        P = it["pts"]
+        lo, hi = P.min(0) - 40, P.max(0) + 40
+        if not (lo[0] <= p[0] <= hi[0] and lo[1] <= p[1] <= hi[1]):
+            continue
+        D = densify(P, 1.0)
+        d = np.hypot(*(D - p).T).min()
+        if d < best:
+            best, bi = d, i
+    return bi, best
+
+
+def _point_in_poly(p, P):
+    x, y = p
+    xs, ys = P[:, 0], P[:, 1]
+    x1, y1 = np.roll(xs, -1), np.roll(ys, -1)
+    c = ((ys > y) != (y1 > y)) & (x < (x1 - xs) * (y - ys) / np.where(y1 != ys, y1 - ys, 1e-12) + xs)
+    return bool(c.sum() % 2)
+
+
+def _area(P):
+    x, y = P[:, 0], P[:, 1]
+    return 0.5 * float(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
+
+
+def _find_section_loops(items):
+    """Section outline = the largest closed outline loop (< 450 pt) containing the section seed."""
+    loops = {}
+    for name, p in SECTION_SEEDS_P8.items():
+        best = None
+        for i, it in enumerate(items):
+            P = it["pts"]
+            if it["kind"] != "outline" or not _is_closed(P, 0.5):
+                continue
+            b = _bbox(P)
+            if max(b[2] - b[0], b[3] - b[1]) > 450:
+                continue
+            if not (b[0] <= p[0] <= b[2] and b[1] <= p[1] <= b[3]) or not _point_in_poly(p, P):
+                continue
+            a = abs(_area(P))
+            if best is None or a > best[0]:
+                best = (a, i)
+        if best is not None:
+            loops[name] = best[1]
+    return loops
+
+
+def _separate(items, W, H):
+    """Assign every item a 'view' (side/plan/front/detail_stbd/sec:<name>/sheet).
+    Centre lines additionally get 'also': every other view/section they run through."""
+    from scipy.spatial import cKDTree
+    core_idx = [i for i, it in enumerate(items) if it["kind"] != "centerline"]
+    glab_core = _raster_groups([items[i] for i in core_idx], W, H)
+    glab = -np.ones(len(items), int)
+    glab[core_idx] = glab_core
+    views = [None] * len(items)
+    # sheet: page frame + whatever is connected to it (title block, zone marks)
+    for i in core_idx:
+        b = _bbox(items[i]["pts"])
+        if b[2] - b[0] > 0.8 * W or b[3] - b[1] > 0.8 * H:
+            for j in np.where(glab == glab[i])[0]:
+                views[j] = "sheet"
+    names_of_group = {}
+    sec_loops = _find_section_loops(items)
+    for name, i in sec_loops.items():
+        names_of_group.setdefault(glab[i], set()).add("sec:" + name)
+    for view, pts in SEEDS_P8.items():
+        for p in pts:
+            i, d = _snap_item(items, p, kinds=("outline",))
+            if i >= 0 and d < 30 and views[i] != "sheet":
+                names_of_group.setdefault(glab[i], set()).add(view)
+    sec_box = {n: _bbox(items[i]["pts"]) for n, i in sec_loops.items()}
+
+    def nearest_section(P, names):
+        c = 0.5 * (P.min(0) + P.max(0))
+        best, bd = None, 1e9
+        for n in names:
+            b = sec_box[n]
+            d = math.hypot(max(b[0] - c[0], 0, c[0] - b[2]), max(b[1] - c[1], 0, c[1] - b[3]))
+            if d < bd:
+                best, bd = n, d
+        return best, bd
+
+    for i in core_idx:
+        if views[i] is not None:
+            continue
+        v = names_of_group.get(glab[i])
+        if not v:
+            continue
+        secs = [n[4:] for n in v if n.startswith("sec:")]
+        mains = [n for n in v if not n.startswith("sec:")]
+        if len(v) == 1:
+            views[i] = next(iter(v))
+            continue
+        n, d = nearest_section(items[i]["pts"], secs) if secs else (None, 1e9)
+        if n is not None and (d < 12 or not mains):
+            views[i] = "sec:" + n
+        else:
+            views[i] = mains[0] if mains else "sheet"
+    # attach the remaining core groups to the nearest view core
+    cores = {}
+    for i in core_idx:
+        if views[i] not in (None, "sheet"):
+            cores.setdefault(views[i], []).append(densify(items[i]["pts"], 2.0))
+    trees = {v: cKDTree(np.vstack(P)) for v, P in cores.items()}
+    groups = {}
+    for i in core_idx:
+        if views[i] is None:
+            groups.setdefault(glab[i], []).append(i)
+    for g, mem in groups.items():
+        P = np.vstack([densify(items[i]["pts"], 2.0) for i in mem])
+        if len(P) > 400:
+            P = P[:: len(P) // 400 + 1]
+        best, bd = "sheet", MAX_ATTACH
+        for v, t in trees.items():
+            d = t.query(P, k=1)[0].min()
+            if d < bd:
+                best, bd = v, d
+        for i in mem:
+            views[i] = best
+    # centre lines: primary view = the core they run along the most; 'also' = others crossed
+    also = [[] for _ in items]
+    for i, it in enumerate(items):
+        if it["kind"] != "centerline":
+            continue
+        D = densify(it["pts"], 2.0)
+        score = {v: int((t.query(D, k=1, distance_upper_bound=6.0)[0] < 6.0).sum()) for v, t in trees.items()}
+        hits = sorted([(s, v) for v, s in score.items() if s > 0], reverse=True)
+        if hits:
+            views[i] = hits[0][1]
+            also[i] = [v for s, v in hits[1:]]
+        else:
+            best, bd = "sheet", MAX_ATTACH
+            for v, t in trees.items():
+                d = t.query(D, k=1)[0].min()
+                if d < bd:
+                    best, bd = v, d
+            views[i] = best
+    return views, also, sec_loops
