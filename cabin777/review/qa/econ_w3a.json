@@ -1,0 +1,97 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "score": 6.8,
+ "details": [
+  {"detail": "Fabric colour: holds. q15 foreground left seat #29345a (R/B 0.46, G/B 0.58) vs y_47300 second seat #2c3b64 (0.44/0.58); q15 second row #2c375c. q16 foreground #41507e is lighter than the shadowed y_47301 foreground (#282d54) but matches y_47301 mid-rows (#435796).", "score": 8, "refs": ["ref/ana/y_47300-lang-multi.jpg", "ref/ana/y_47301-lang-multi.jpg", "r4/q15_econFronts.png", "r4/q16_econAisle.png"]},
+  {"detail": "Mosaic contrast fix: verified. q15 left seat luminance p10/p90 is 41/107 against y_47300 second seat 42/107, an exact match (it was 57/94 in w2).", "score": 8, "refs": ["ref/ana/y_47300-lang-multi.jpg", "raterA3/p300c.png", "raterA3/q15c.png"]},
+  {"detail": "Diamond lattice fix: mostly verified. It is now a near-touching lattice with plain tick fabric on the pan, as asked. p10/p90 is 48/130 in q15 (y_47302 55/124). Two problems remain. The 4.5 mm steps are sub-pixel, so the edges read as soft blurred lozenges rather than the stepped, dog-tooth ikat edges in y_47306 (steps about 10 mm). The pattern is also too regular and pale-solid inside, where the photo diamonds are broken into small light blocks.", "score": 6.5, "refs": ["ref/ana/y_47306-lang-multi.jpg", "ref/ana/y_47302-lang-multi.jpg", "raterA3/diamond_cmp.png"]},
+  {"detail": "Pattern distribution: every row of a block uses the same fabric in the same seat, because y3/y4 are single instanced geometries with fabs[(k*7+n*3)%3]. The diamond seat therefore forms an unbroken column down the cabin (q15 x 520-650 in rows 1-4; q16 left block). The photos vary the pattern row by row (y_47300 column 2: fleck in row 1, mosaic in row 2). The far LOD (econUnitFar) also drops every seat to yFabric, so the diamonds pop off at about 6.3 m.", "score": 5, "refs": ["ref/ana/y_47300-lang-multi.jpg", "r4/q15_econFronts.png", "r4/q16_econAisle.png"]},
+  {"detail": "Back rises above a separate headrest cushion: verified. The back top is at 0.868 and the cushion top at 0.78, so it rises 0.088 m; y_47306 centre seat gives about 0.08 m (45 px at about 1.8 mm/px). Cover/cushion width is 0.72 (y_47306 0.74). The cover hangs 0.025 m below the cushion (y_47306 about 0.045 m).", "score": 7.5, "refs": ["ref/ana/y_47306-lang-multi.jpg", "raterA3/head_cmp.png"]},
+  {"detail": "Headrest cover shade: 10-25 % darker than the photos. q16 foreground #2a2f46 (L 53) vs y_47301 foreground #3a3e5d (L 71); q15 row 2 #39405a (L 70) vs y_47300 #3e4667 (L 79). The top fold renders as a hard 3 cm box lid rather than a rounded wrap.", "score": 6.5, "refs": ["ref/ana/y_47301-lang-multi.jpg", "ref/ana/y_47300-lang-multi.jpg", "raterA3/head_cmp.png"]},
+  {"detail": "Shell capping the top from behind: fixed. The 0.085 m blue band is gone. What remains is a blue rim of about 0.02-0.025 m above and around the hood when seen from above (q17). I checked this against the y_47303 side profile: the real fabric also caps the top forward of the shell, and sans 22 shows about 0.03 m of blue on the foreground seat top from a standing eye. It is acceptable; I withdraw my w2 demand for zero blue.", "score": 7.5, "refs": ["ref/web/econ/sans_ana-777-300er-economy-22-768x576.jpg", "ref/ana/y_47303-lang-multi.jpg", "raterA3/s22c.png", "raterA3/q17mid.png", "raterA3/p303side.png"]},
+  {"detail": "Hood, screen and bezel: verified. In q18 the bezel spans x 268-660 and the hood 210-690, a ratio of 0.82 (the studio e5 gives 0.876; y_47305 603/690 = 0.874). Bezel margins are 3.5 % at the sides and 9.5 % top and bottom (photo 3 % / 9 %). The shell above the bezel is 0.032 m (sans 15 0.026 m). Hood colour in q18 is #878a90 (L 138) vs sans 15 L 165 and y_47305 L 197, so it reads a little grey.", "score": 8, "refs": ["ref/ana/y_47305-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg", "r4/q18_seat35C.png", "s4/e5_screen.png"]},
+  {"detail": "Handset: the dock is 0.44 of the hood width (photo 0.435), but the gap under the bezel is 0.013 m against about 0.020 m. In the photo the handset fills only 0.76 of the dock, with a separate oval release key in the dock's left end; the model's handset fills 0.91 and puts the oval key on the handset. It is navy-slate where the photo is glossy black.", "score": 7, "refs": ["ref/ana/y_47305-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-16-768x576.jpg"]},
+  {"detail": "Coat hook, pictogram placard and latch under the hood: they match sans 15 (placard left, latch centre, round recess right). The coat hook IS present in-service, which answers my own w2 question.", "score": 7.5, "refs": ["ref/web/econ/sans_ana-777-300er-economy-15-768x576.jpg"]},
+  {"detail": "Tray and the long placard: the placard is at on(0.41), the TOP of the tray. In sans 20 and 23 (looking down at the tray's lower edge) it sits just above the tray's bottom rail. My own w2 advice about its position was wrong. The tray-arm structure is missing: there is no metal bottom rail, no side arms and no large hinge hubs, only 4 mm flat discs.", "score": 5.5, "refs": ["ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "ref/ana/y_47307-lang-multi.jpg", "s4/e6_lowback.png"]},
+  {"detail": "Pocket: the layout is now right (grey leatherette flap over black net with a dark binding), but it is too wide. In e6 the flap fills 0.87 of the lower shell (0.38 of 0.446). sans 23 gives flap / hub span 410/610 = 0.67 and sans 20 gives 383/530 = 0.72, with the tray arms flanking it. The flap is also a flat slab, where the photo shows a bulged pouch with a rounded top.", "score": 6, "refs": ["ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "s4/e6_lowback.png"]},
+  {"detail": "AC/USB plate: it has moved to the left, as asked, but it is LANDSCAPE and small (black 0.036 x 0.024, bezel 0.05 x 0.036; e6 shows it at 27 x 20 px). sans 21 and y_47307 show a PORTRAIT universal-socket plate (w/h 0.87; about 0.046 x 0.054) in a square light bezel about 1.5x the plate, with a lit blue USB-A and a green LED. It sits between the tray rail and the flap top, and its left edge lines up with the flap's left edge.", "score": 5, "refs": ["ref/web/econ/sans_ana-777-300er-economy-21-768x576.jpg", "ref/ana/y_47307-lang-multi.jpg", "s4/e6_lowback.png"]},
+  {"detail": "Safety card: the model shows two small slips (a blue 0.12 magazine and a white 0.10 card with a 0.012 purple strip). sans 20 and 21 show ONE card about 0.26-0.30 wide with a tall purple header (about 0.03 m) carrying white 'B777-300' text.", "score": 5.5, "refs": ["ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-21-768x576.jpg"]},
+  {"detail": "Pillow: the size is right (0.33 x 0.24 against about 0.32 in y_47300) and so is the colour (q16 #2b3665 vs y_47300 #2d3558, a little more saturated, R/B 0.43 vs 0.51). The shape is wrong: cushionSecs with crown 0.03 and edge 0.05 makes a faceted mesa with a hard ridge (e1, e7), like a moulded seat cushion. The photo pillows are soft squares with pinched, pointed corners and thin seamed edges.", "score": 5.5, "refs": ["ref/ana/y_47300-lang-multi.jpg", "s4/e1_front.png", "s4/e7_arm.png"]},
+  {"detail": "Armrests and front bracket: the continuous grey bracket with its pivot ring at pan height reads correctly against y_47302 and y_47303.", "score": 7.5, "refs": ["ref/ana/y_47302-lang-multi.jpg", "s4/e7_arm.png"]},
+  {"detail": "Aisle-end side panel: the loft's top section SEC(0.62, 0.018, 0.44, -0.25) runs from z -0.47 to -0.03. That is 0.065 m ahead of the arm nose (-0.405), so a sharp white fin pokes above and in front of every aisle armrest (q16 aisle crop). y_47301 and y_47302 show a thick rounded white end fairing with a black button panel, flush with the arm nose.", "score": 5.5, "refs": ["ref/ana/y_47301-lang-multi.jpg", "ref/ana/y_47302-lang-multi.jpg", "raterA3/q16aisle.png", "s4/e3_side.png"]},
+  {"detail": "Belts and buckle: they hold at #3a64a6 against y_47303 #345690-#486fa2.", "score": 7, "refs": ["ref/ana/y_47303-lang-multi.jpg"]},
+  {"detail": "Life-vest pouch, seat-electronics boxes, legs and baggage bar: verified. There is a dark saucer with a red strap under each seat and a white box with a dark face under each pan front (e1), as in y_47302.", "score": 7.5, "refs": ["ref/ana/y_47302-lang-multi.jpg", "s4/e1_front.png", "s4/e8_foot.png"]},
+  {"detail": "Footrest: split ribbed pedals with end caps, and clamps on the spreader tube. The hangers are two straight boxes with a kink; y_47304 shows one broad (about 0.035 m), smoothly curved off-white arm meeting the pedal at a dark joint block.", "score": 7, "refs": ["ref/ana/y_47304-lang-multi.jpg", "s4/e8_foot.png"]}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Every row repeats the same fabric per seat position, so each pattern (most visibly the diamond) runs as a stripe down the whole cabin, and it pops to plain tick at the far LOD.",
+   "problem": "buildSeats instances one geometry per key (y3, y4, ...). econUnit picks fabs[(k*7+n*3)%3], which depends only on the seat index and block size. econUnitFar uses SEATMAT.yFabric for every seat.",
+   "evidence": "q15: the diamond seat sits in the same column (x 520-650 px) in rows 1-4; q16: the left block's diamond column. y_47300 varies by row: column 2 is fleck in row 1 and mosaic in row 2, and the headrest fabrics differ.",
+   "fix": "09_seats.js buildSeats (shared, one-line edits): key += 'abc'[b[0].row % 3]. In econGeo, parse the letter and pass opts.rot = 'abc'.indexOf(letter). In econUnit use fabs[(k*7 + n*3 + (opts.rot||0)) % 3]. Give econUnitFar(n, rot) the same selection for its back and pan boxes, so the LOD keeps each seat's pattern."
+  },
+  {
+   "severity": "medium",
+   "detail": "The tray-table arms, their large hinge hubs and the metal bottom rail are missing, and the long placard is at the wrong end of the tray.",
+   "problem": "There are only flat gCyl(0.02, 0.02, 0.004) discs at on(0.245, ±0.16). No side arms and no rail. The 'Stow and latch handset' placard is at on(0.41), the tray top.",
+   "evidence": "sans 23: off-white cylindrical hubs about 0.064 m in diameter (85 px against a 0.31 m / 410 px flap) at both sides just below a horizontal grey rail spanning hub to hub. The placard sits just above that rail. y_47307: a vertical grey tray arm with a hinge block under the silver rail. y_47303 side view: the arm runs down the shell side to a hub at armrest height.",
+   "fix": "In econSeat (!noScreen), replace the two discs with: hubs gCyl(0.032, 0.032, 0.045, 16) rotated so the axis is along x (M4.mul(on(0.205, -0.01, s*0.205), M4.trs(0,0,0,0,0,Math.PI/2))) in SEATMAT.arm; arms gRBox(0.026, 0.25, 0.022, 0.008, 1) at on(0.33, 0.012, s*0.205) in SEATMAT.armPost; and a rail gCyl(0.007, 0.007, 0.39, 10) along x at on(0.222, 0.02) in SEATMAT.frame. Move the long placard gQuad(0.22, 0.022) from on(0.41, 0.0185) to on(0.245, 0.0185)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The AC/USB plate is landscape and small; the real one is a portrait universal socket in a square bezel.",
+   "problem": "The bezel is gRBox(0.05, 0.036) and the plate gRBox(0.036, 0.024) at on(0.201, …, -0.17). Both are wider than tall, and the plate has no lit USB or LED.",
+   "evidence": "sans 21: black plate 200 x 230 px (w/h 0.87) with a blue-lit USB-A at the top, a green LED and two universal sockets, in a light bezel 325 x 330 px. y_47307 is the same (145 x 185 px plate). e6 renders it at 27 x 20 px, landscape.",
+   "fix": "Bezel gRBox(0.072, 0.074, 0.006, 0.008, 1) at on(0.175, 0.006, -0.125) in '#c9ccd0'; plate gRBox(0.046, 0.054, 0.004, 0.003, 1) at on(0.175, 0.009, -0.125) in SEATMAT.black; USB gQuad(0.016, 0.006) at on(0.195, 0.0115, -0.125) {c:'#4a8cff', e:0.8}; LED gQuad(0.003, 0.003) at on(0.184, 0.0115, -0.115) {c:'#40ff60', e:0.9}. Move the pocket group down 0.04 so the plate fits between the rail and the flap: flap on(0.11), binding on(0.076), net on(0.043)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The pocket flap and net fill the full width of the lower shell. In the photos they sit inset between the tray arms.",
+   "problem": "Flap gRBox(0.38, 0.07), net 0.36 and binding 0.362 fill 0.87 of the 0.446 shell (e6).",
+   "evidence": "Flap / hub span is 410/610 = 0.67 in sans 23 and 383/530 = 0.72 in sans 20, so the flap is about 0.30-0.32 m. The photo flap is a bulged pouch with a rounded, stitched top edge.",
+   "fix": "Flap gRBox(0.31, 0.07, 0.022, 0.02, 2) (deeper and rounder, so it bulges) with l:LAYER.leather. Net gRBox(0.30, 0.065, 0.010, 0.006, 1). Binding gBox(0.302, 0.014, 0.018). Keep them centred (dx 0) so the new tray arms at ±0.205 flank them. Replace the two pocket slips with one card: white gQuad(0.26, 0.04) at on(0.15, 0.016) and a purple header gQuad(0.26, 0.028) at on(0.176, 0.0162) in '#5b3a8e' (sans 20 / 21), or add a 'safetycard' atlas rect."
+  },
+  {
+   "severity": "medium",
+   "detail": "The pillow reads as a hard moulded block (a faceted mesa with a ridge), not a soft square pillow with pinched corners.",
+   "problem": "gLoft(cushionSecs(0.33, 0.24, 0.10, -0.05, {edge: 0.05, r: 0.06, crown: 0.03}), 3) gives a flat raised plateau with a crease (e1 and e7), and the corners are rounded.",
+   "evidence": "y_47300: four pillows, each a soft square with pointed corner 'ears', edges thinning to a seam and a smooth dome, #2d3558. The model renders #2b3665 in q16 (R/B 0.43 vs 0.51).",
+   "fix": "Build the pillow as a loft across its height, with the depth going to zero at the seams: loftAt(B, [SEC(-0.12, 0.30, 0.012, 0, 0.006), SEC(-0.10, 0.33, 0.06, 0, 0.03), SEC(-0.05, 0.34, 0.095, 0, 0.045), SEC(0.05, 0.34, 0.095, 0, 0.045), SEC(0.10, 0.33, 0.06, 0, 0.03), SEC(0.12, 0.30, 0.012, 0, 0.006)], M4.mul(BH, M4.trs(0, 0.13, -0.15, 0, -80*DEG)), SEATMAT.yPillow, 4). Using corner r = depth/2 makes the section edges lens-shaped, so the corners pinch. Set yPillow to '#4d5579' (less blue) in 09_seats.js (shared, one line)."
+  },
+  {
+   "severity": "low",
+   "detail": "The aisle-end side panel sticks out as a sharp fin 0.065 m ahead of the armrest nose.",
+   "problem": "The block-end loft's top section SEC(0.62, 0.018, 0.44, -0.25, 0.007) spans z -0.47 to -0.03, past the arm nose at -0.405.",
+   "evidence": "raterA3/q16aisle.png: white spikes above every aisle armrest. y_47301 and y_47302 show a thick, rounded end fairing flush with the arm nose, with a black button panel (y_47302 x 600-625, y 440-505).",
+   "fix": "Top section SEC(0.60, 0.04, 0.33, -0.24, 0.015), middle SEC(0.40, 0.04, 0.28, -0.29, 0.015), bottom SEC(0.16, 0.035, 0.14, -0.35, 0.012) (thicker and flush). Add a black panel gRBox(0.004, 0.09, 0.04, 0.002, 1) {c:'#1c1d22'} on its outer face at y 0.45, z -0.38."
+  },
+  {
+   "severity": "low",
+   "detail": "The headrest cover is 10-25 % too dark, and its top fold is a hard box lid.",
+   "problem": "yCover #545a70 renders #2a2f46 (L 53) in the q16 foreground and #39405a (L 70) in q15. The fold is a separate gRBox 0.006 x 0.03.",
+   "evidence": "y_47301 foreground #3a3e5d (L 71); y_47300 #3e4667 (L 79); y_47302 #464960 (L 80).",
+   "fix": "yCover c '#5f6680' in 09_seats.js (shared, one line). Replace the fold box with a quarter-round: gCyl(0.018, 0.018, 0.27, 10) along x at M4.mul(BH, M4.trs(0, 0.772, -0.085)) in SEATMAT.yCover, which gives a rounded wrap over the cushion top."
+  },
+  {
+   "severity": "low",
+   "detail": "The diamond edges are too fine to read, so the lattice looks like soft lozenges.",
+   "problem": "In y_diamond(), step = 0.0045/0.26 is below one texel at cabin distance, and the diamonds are solid pale inside.",
+   "evidence": "y_47306 left seat: dog-tooth steps of about 10 mm (5 px at about 450 px/m), with diamonds broken into small light blocks. q15 and q16 read as smooth argyle (raterA3/diamond_cmp.png).",
+   "fix": "In make_swatches.y_diamond, set step = 0.010/0.26. Multiply the mask by a small checker, m *= 0.75 + 0.25*((np.floor(u/step)+np.floor(v/step)) % 2), so the diamond interiors break up. Re-run python3 test/make_swatches.py y_diamond."
+  },
+  {
+   "severity": "low",
+   "detail": "The handset fills its dock; in the photo it sits right of a separate release key and is black.",
+   "problem": "The handset gRBox(0.15, 0.04) fills 0.91 of the 0.165 dock. The oval key at dx -0.058 is on the handset, and the colour is #262b3d.",
+   "evidence": "y_47305: dock 300 px, handset 228 px (0.76) starting at x 370, oval release key at x 347 in the dock. The handset is black with a silver D-pad ring.",
+   "fix": "Handset gRBox(0.125, 0.04, 0.012, 0.018, 1) at on(HY, 0.004, 0.012) in '#1a1b20'. Move the oval key to on(HY, 0.006, -0.066) at dock level. Shift the D-pad, rockers and colour keys +0.012 in dx. Make the D-pad ring outer '#9aa0a8' (silver). Raise the dock gap: HY 0.587 → 0.58."
+  }
+ ],
+ "questionsForUser": [
+  "The safety card: sanspotter 20/21 (in service, 2023) shows the purple 'B777-300 安全のしおり' card standing above the pocket flap, and official y_47303 shows a blue magazine. Should the model show the card only, or both?",
+  "The fabric mix: the photos show three back patterns (tick/fleck, mosaic, diamond) and several headrest patterns. Do you know whether ANA assigns them by seat letter or randomly? The model currently repeats the same letter-to-pattern mapping in every row.",
+  "Do you have (or can you take) a straight-on, seated photo of the lower seat back, showing the tray, arms, AC plate and pocket? The 61 SANspotter photos only show it looking steeply down (sans 20 / 23) or cut off (sans 15)."
+ ]
+}

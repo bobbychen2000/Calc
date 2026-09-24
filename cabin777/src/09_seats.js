@@ -23,12 +23,12 @@ const SEATMAT = {
   yHead: { c: '#6272a4', r: 0.9, l: LAYER.yMosaic },
   // slate-grey leatherette cover, lighter + greyer than the fabric (y_47302 #474960-#4d526f, y_47306 #445072,
   // y_47301 #434765; QA r2 was #3e4661 -> rendered as black slabs)
-  yCover: { c: '#545a70', r: 0.45, l: LAYER.plastic },     // econ w2: smooth leatherette (the leather grain read ~4 mm cells)
+  yCover: { c: '#5f6680', r: 0.45, l: LAYER.plastic },     // econ w2: smooth leatherette (the leather grain read ~4 mm cells)
   yShell: { c: '#d9dbde', r: 0.42, l: LAYER.plastic },
   yShellDark: { c: '#c2c5c9', r: 0.5, l: LAYER.plastic },
   yTray: { c: '#cfd2d6', r: 0.4, l: LAYER.plastic },
   yBelt: { c: '#3a64a6', r: 0.7, l: LAYER.fabric },        // y_47303 (58,102,173), G/B 0.59
-  yPillow: { c: '#48527c', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f
+  yPillow: { c: '#4d5579', r: 0.9, l: LAYER.fabric },      // y_47300 (44,53,88); econ w2: #2e3860 rendered #151b3e vs photo #30395f
   arm: { c: '#c4c8cd', r: 0.45, l: LAYER.plastic },       // econ QA w1: light grey, y_47303 #afb2bc / y_47302 #9fa6ab
   armPad: { c: '#b6bac0', r: 0.5, l: LAYER.plastic },
   armPost: { c: '#a9aeb4', r: 0.45, l: LAYER.plastic },    // econ w2: grey arm front bracket (y_47302 / 47303)
@@ -202,6 +202,7 @@ function buildSeats(gl, layout) {
       let key = (k0 === 'py' ? 'py' : 'y') + n;
       if (b[0].exitRow) key += 'x';                        // exit row: screen in the armrest (none in the back)
       if (b.some((s) => s.row === 42)) key += 'l';          // last row: no footrest behind
+      if (k0 !== 'py') key += 'abc'[b[0].row % 3];         // econ w3: fabric mix varies row by row (y_47300 / 47301)
       b.forEach((s) => { s.meshKey = key; });
       push(key, M4.trs(cx, 0, b[0].z), screenVar(), b);
     }
@@ -218,7 +219,8 @@ function buildSeats(gl, layout) {
     const n = +key.replace(/[^0-9]/g, '');
     const opts = { noScreen: key.includes('x'), footrest: !key.includes('l') };
     if (kind === 'py') return lod ? pyUnitFar(n) : pyUnit(n, false, opts);
-    return lod ? econUnitFar(n) : econUnit(n, false, opts);
+    opts.rot = Math.max(0, 'abc'.indexOf(key.slice(-1)));
+    return lod ? econUnitFar(n, opts.rot) : econUnit(n, false, opts);
   };
   const groups = {};
   for (const [key, v] of Object.entries(inst)) {

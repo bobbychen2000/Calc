@@ -199,7 +199,7 @@ def y_diamond():
     v, u = np.mgrid[0:n, 0:n] / n            # tile coords, 0.26 m
     rng = np.random.default_rng(7)
     m = np.zeros((n, n), np.float32)
-    step = 0.0045 / 0.26                     # ~4-5 mm weave steps (w2 B: 3-4 mm)
+    step = 0.008 / 0.26                      # ~8 mm weave steps (w3 A: ~10 mm read at cabin distance; 4.5 mm vanished)
     for cu, cv in [(a + (0.25 if r % 2 else 0), 0.125 + 0.25 * r) for r in range(4) for a in (0.0, 0.5)]:
         for ou in (-1, 0, 1):
             for ov in (-1, 0, 1):
