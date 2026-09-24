@@ -1,0 +1,97 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 5,
+ "score": 7.2,
+ "summary": "Most proportions still hold against the 145 new in-flight photos (TPG Zach Griff 2020, God Save The Points, Live and Let's Fly; ref/web/room/b_*). The O bench back is h/w 0.65 (tpg_42: 0.66). The flap is about 60 % of the back width and sits toward the aisle. The monitor, cabinet and sill measure right square-on against tpg_53. The w4b fixes landed: the header band is now jHead, the card has a pocket front, the duvet is thinner with flush stitch lines, and the handset has a ring pad and four keys. The biggest gap left is tonal and shows in every in-cabin view. In the photos the seat fabric is the darkest large surface in the suite: fabric/shell is 0.55-0.8 (c_27313 fabric 78 vs shell ~100-150; c_27315 82 vs 99-153; tpg_75 seat 97 vs shell 79). The model renders the fabric as pale lavender-grey, lighter than the shell (q08 fabric #93919c vs shell top #afb2b6 and spine #898f97, a ratio of about 1.0-1.07). This is because jFabric #86838a is set 1.4x lighter than jShell #5f636a. Ash/shell contrast is also compressed (photo lalf_11 about 2x, q06 1.17x), which is partly lighting. Geometry issues: (1) The O header band runs the full 1.17 m shell width, over the aisle armrest. In tpg_42 it spans only the seat (band/back 1.10) between two charcoal posts, with the lamps at its ends. (2) The E lamp wing ends at the sill (0.555), leaving a see-through void and a floating door-edge strip under it (q06 and r8). In lalf_18 and tpg_53 the wing continues down to the floor as the footwell side wall that carries the safety card. (3) The back has three seam grooves; the photos show two, at 57 % and 80 % down (tpg_42 profile). (4) The literature slot glows saturated blue (#2840ba); the photos show dark navy darker than the drawer (c_27316 #21325d vs drawer #535e72; tpg_53 #292935). (5) Carried over: the E footwell mouth is off-centre, and the bed duvet is still a tidy tiled blanket instead of a rumpled, saturated royal-blue comforter (tpg_72/74/75).",
+ "details": [
+  {"detail": "O/E seat back + cushion proportion (bench width, back height, lean)", "score": 8.5, "refs": ["ref/web/room/b_tpg_42.jpg", "ref/web/room/b_tpg_31.jpg", "/tmp/claude-0/room/w5s/r7_seatO_close.png", "/tmp/claude-0/room/w5/q08_seat12H.png"]},
+  {"detail": "Back seams / channels", "score": 7.5, "refs": ["ref/web/room/b_tpg_42.jpg (column profile x=600-700: back top y250, seams y503 / y603, cushion y695)", "/tmp/claude-0/room/w5s/r7_seatO_close.png"]},
+  {"detail": "Headrest flap + header band + corner lamps (geometry)", "score": 7.5, "refs": ["ref/web/room/b_tpg_42.jpg", "ref/web/room/b_tpg_31.jpg", "ref/ana/c_27315-lang-multi.jpg", "/tmp/claude-0/room/w5/q08_seat12H.png", "/tmp/claude-0/room/w5/q10_seat14D.png"]},
+  {"detail": "Seat fabric tone vs shell (material)", "score": 5.0, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/ana/c_27315-lang-multi.jpg", "ref/web/room/b_tpg_75.jpg", "ref/web/room/b_lalf_11.jpg", "/tmp/claude-0/room/w5/q08_seat12H.png", "/tmp/claude-0/room/w5/q06_roomMain.png"]},
+  {"detail": "Pillows (white + blue yagasuri), boarding bundle, teal belt", "score": 8.0, "refs": ["ref/web/room/b_tpg_31.jpg", "ref/web/room/b_tpg_42.jpg", "ref/web/room/b_tpg_67.jpg", "/tmp/claude-0/room/w5/q08_seat12H.png"]},
+  {"detail": "Monitor, bezel, sill, drawer, literature slot", "score": 7.5, "refs": ["ref/web/room/b_tpg_53.jpg", "ref/ana/c_27316-lang-multi.jpg", "ref/web/room/b_lalf_18.jpg", "/tmp/claude-0/room/w5/q07_seat11A.png"]},
+  {"detail": "Ash cabinet door beside monitor", "score": 8.0, "refs": ["ref/web/room/b_tpg_53.jpg", "ref/web/room/b_lalf_18.jpg", "/tmp/claude-0/room/w5/q07_seat11A.png"]},
+  {"detail": "Angled lamp wing (O ok; E floats above a void)", "score": 6.5, "refs": ["ref/web/room/b_lalf_18.jpg", "ref/web/room/b_tpg_53.jpg", "ref/web/room/b_tpg_75.jpg", "/tmp/claude-0/room/w5/q06_roomMain.png", "/tmp/claude-0/room/w5s/r8_seatE_close.png"]},
+  {"detail": "Side table (ash inlay in charcoal rim), console, controls + handset", "score": 8.0, "refs": ["ref/web/room/b_tpg_53.jpg", "ref/web/room/b_tpg_51.jpg", "ref/web/room/b_lalf_24.jpg", "ref/ana/c_27316-lang-multi.jpg"]},
+  {"detail": "Footwells / ottoman pads", "score": 7.0, "refs": ["ref/web/room/b_tpg_44.jpg", "ref/web/room/b_lalf_31.jpg", "ref/web/room/b_tpg_53.jpg", "/tmp/claude-0/room/w5/q06_roomMain.png"]},
+  {"detail": "Safety card + pocket", "score": 7.5, "refs": ["ref/web/room/b_tpg_53.jpg", "ref/web/room/b_tpg_75.jpg", "ref/web/room/b_lalf_18.jpg"]},
+  {"detail": "Aisle ledges, aisle-end ash panels, cap + plaques", "score": 7.5, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/ana/c_27314-lang-multi.jpg", "ref/web/room/b_tpg_36.jpg", "ref/web/room/b_tpg_75.jpg", "/tmp/claude-0/room/w5/q09_centrePair.png"]},
+  {"detail": "Central monument / spine top, centre divider", "score": 7.5, "refs": ["ref/ana/c_27313-lang-multi.jpg", "ref/web/room/b_lalf_12.jpg", "/tmp/claude-0/room/w5s/r5_centre_aisle.png"]},
+  {"detail": "Bed mode (mattress, duvet, pillows)", "score": 6.5, "refs": ["ref/web/room/b_tpg_72.jpg", "ref/web/room/b_tpg_74.jpg", "ref/web/room/b_tpg_75.jpg", "/tmp/claude-0/room/w5s/r6_bedO.png"]},
+  {"detail": "Artefacts (z-fight, gaps, floating parts)", "score": 7.5, "refs": ["/tmp/claude-0/room/w5/q06_roomMain.png (E wing + door edge float)", "/tmp/claude-0/room/w5/q08_seat12H.png (band end over armrest)"]}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Seat fabric renders lighter than the charcoal shell; in every photo it is the darkest large surface",
+   "problem": "jFabric #86838a (L~134) is set 1.4x lighter than jShell #5f636a (L~97). In the cabin renders the bench, back and footwell pads therefore read as pale lavender-grey, level with or lighter than the shell and header band. This is the single most visible difference in q06/q08/q10 against c_27312/13/15 and lalf_11: the photos read as dark sofas in charcoal shells with pale ash accents.",
+   "evidence": "Photo fabric/shell: c_27313 fabric (78,76,82) vs shell ~100-150; c_27315 fabric (82,80,94), back fabric (103,101,115), dark shell (99,100,115), lit shell top (153,157,165), header (128,136,150); tpg_75 bed/seat (97,92,92) vs shell (79,80,82). Model: q08 seat fabric (147,145,156) #93919c, back (156,168,183), shell top (175,178,182), spine q09 (137,143,151); footwell pad q07 (129,127,139). The model fabric also carries a blue cast (B-R +9..+21 vs photos +4..+12).",
+   "fix": "09_seats.js line 82 (shared, one line): jFabric { c: '#5e5c62', r: 0.92, l: LAYER.tweed }, which sets fabric/shell to about 0.97 in material and lets the lit top faces keep the fabric at or below the shell. Keep the flap and band at jHead #8a95a3 so they read about 1.5x the fabric, as in c_27315 (header 128 vs fabric 82). If the w1 'renders too dark' concern comes back, have the lighting integrator raise the exposure rather than lifting this one material. Re-sample q08: the target is seat fabric about 0.6-0.7 of the ash/header band luminance."
+  },
+  {
+   "severity": "medium",
+   "detail": "E lamp wing ends in mid-air at the sill; a void and a floating door-edge strip show under it",
+   "problem": "roomWing for E starts at y0 = MON.bot (0.555). Below it, between the E footwell's aisle wall (x 0.455) and the aisle-end panel (x 0.545), nothing closes the gap: from the aisle (q06) you see the floor through it, and doorEdge (x 0.56, z 0.06) is a thin ash strip hanging 0.14 above the floor. In the photos the wing is the upper part of a charcoal post that continues to the floor as the footwell's side wall. The safety card pocket is on that lower part.",
+   "evidence": "q06 crop (x 430-500, y 330-575): the wing's bottom edge is at the sill line, with carpet visible below. r8_seatE_close: the wing and the door-edge strip both float. lalf_18: the wing runs down into the side wall that holds the B777-300 card. tpg_53 left edge: the same post runs from the lamp to the floor, and the card pocket is on it.",
+   "fix": "09c_room.js line 405: roomWing(B, 0.4475, 0.535, MON.zE, 1, 0.0, 0.20, 1.0), so the wing reaches the floor. The lamp keeps y = 1.0 because roomLamp is called with 1.0 inside roomWing. Also add the card on the wing's seat-facing lower face: a roomCard variant in the wing's rotated frame at y 0.36. Or simpler, B.add(gQuad(0.20,0.25), M4.trs(cx, 0.36, cz + 0.02, ry)) using the same cx/cz/ry that roomWing computes, with the white-card and blue-header quads, so E has its card as in tpg_53/lalf_18 (the O card is already by its footwell). For the door edge (line 407), lower it: doorEdge's leaf starts at 0.14, so add a 0.14-tall jShell kick under it, B.add(gRBox(0.05, 0.14, 0.04, 0.01, 1), M4.trs(0.56, 0.07, 0.06), SEATMAT.jShell)."
+  },
+  {
+   "severity": "medium",
+   "detail": "O header band spans the whole 1.17 m shell, over the aisle armrest; in the photos it spans only the seat, between two charcoal posts, with the lamps at its ends",
+   "problem": "The O band is gRBox(1.17, 0.155, 0.05) centred at x 0, so it runs past the seat back (x -0.495..0.345) over the 0.24 armrest to the aisle edge. The O band/back width ratio is 1.39. In q08 and q10 the band's aisle end hangs over the ledge as a pale bar with an exposed end face.",
+   "evidence": "tpg_42: shell 440-1350 px, band 520-1270 (band/back 750/680 = 1.10), charcoal posts about 80 px (9 %) each side, lamps at x 510 and 1265 at the band ends. tpg_31: the same for both centre seats. z_q08a crop: the pale band reaches the aisle edge above the ledge.",
+   "fix": "09c_room.js line 296: B.add(gRBox(0.95, 0.155, 0.05, 0.02, 1), M4.trs(-0.07, 1.0425, -1.25), SEATMAT.jHead). Lines 298-299: move the lamps to the band ends, roomLamp(B, -0.515, -1.225, 1) and roomLamp(B, 0.375, -1.225, 1). The charcoal shell (line 295) then shows as the aisle post above the armrest. E (lines 377-380) already has band/back 1.08 and can stay."
+  },
+  {
+   "severity": "low",
+   "detail": "Three seam grooves on the back; photos show two, at 57 % and 80 % down from the top",
+   "problem": "Line 47 draws grooves at sy 0.07/0.15/0.23 on a 0.545 back, which is 87/72/58 % down. The photo back has a big upper panel, a seam at 57 %, one at 80 %, then the roll into the cushion.",
+   "evidence": "tpg_42 luminance profile at x = 600/650/700: back top y 250, seams y 503 and y 603, cushion crease y 695 (57 % and 80 %). c_27315 and c_27313 show two soft grooves.",
+   "fix": "Line 47: for (const sy of [0.11, 0.235]) ..., which puts them at 80 % and 57 % down."
+  },
+  {
+   "severity": "low",
+   "detail": "Literature slot glows saturated blue; photos show dark navy, darker than the drawer",
+   "problem": "In the render the slot lining reads (40,64,186), brighter in blue than the silver drawer next to it, so it looks like a lit LED bar.",
+   "evidence": "q07 slot (40,64,186) vs drawer (103,110,120). c_27316 slot (33,50,93) vs drawer (83,94,114). tpg_53 slot (41,41,53) vs sill (123,115,97).",
+   "fix": "09c_room.js line 158: { c: '#1a2242', r: 0.7 } (drop e: 0.04). If it still pops, darken it to #151a30."
+  },
+  {
+   "severity": "low",
+   "detail": "Bed-mode duvet: neat pale tiled blanket; the real one is a rumpled, saturated royal-blue comforter",
+   "problem": "In r6 the duvet is periwinkle with a regular 0.26 grid of flush lines and a flat top. The photos show a saturated royal blue (#5863b0 in daylight) with a satin sheen and soft wrinkles. The stitching is in long rectangles running lengthwise, about 0.45 x 0.25, and the comforter spills down into the footwell under the table.",
+   "evidence": "tpg_75 duvet (88,99,176) #5863b0, tpg_72 and tpg_74. Model r6 duvet (159,161,215) under studio light; SEATMAT.duvet #5a5c9a is less saturated than the photo.",
+   "fix": "09_seats.js line 88 (shared): duvet { c: '#4a54a8', r: 0.6, l: LAYER.fabric }, less rough for the satin sheen. roomDuvet (lines 275-281): cross-line pitch 0.45 instead of 0.26, keep one lengthwise line at dx 0, and add 3-4 low wrinkle ridges, e.g. gRBox(W*0.6, 0.012, 0.03, 0.01, 1) rotated ±15-25 deg about y at random z, 2 mm proud, so the top is not a flat tile."
+  },
+  {
+   "severity": "low",
+   "detail": "E footwell mouth still off-centre under the E monitor (carried over from w4b)",
+   "problem": "roomFootwell(B, 0.02, 0.455, ...) is centred at x 0.2375, but the E monitor is centred at 0.15. The mouth is 0.435 wide against O's 0.475.",
+   "evidence": "Line 331 vs line 344; tpg_53 / lalf_18 show the mouth square under the monitor.",
+   "fix": "If the E wing is extended to the floor (issue 2), its inner face sits at x 0.4475, so keep the aisle wall at about 0.44 and move the column side to -0.035: roomFootwell(B, -0.035, 0.44, ...), centre 0.2025, width 0.475. The pillar at line 336 (x -0.005, width 0.05) must then shrink to 0.03 at x -0.05, or accept 5 mm of overlap with the O footwell edge at -0.03."
+  },
+  {
+   "severity": "low",
+   "detail": "Aisle-end ash panels are square-topped boxes; photos show rounded top corners and a charcoal edge frame",
+   "problem": "The monument-end ash panel (line 321) and the aisle-face panels are sharp rectangles; tpg_36 and tpg_48 show the tall aisle-end panel with rounded top corners (radius about 0.04) inside a thin dark frame.",
+   "evidence": "tpg_36 centre panel (x 660-975, top y 565): rounded upper corners; tpg_47 / tpg_81 ash leaves with radiused corners.",
+   "fix": "Line 321: gRBox(0.04, wall, ez1 - ez0, 0.04, 2), i.e. a larger corner radius on the ash box, and match the jShell frame by using r = 0.04 in ashFrameX's top rail (or skip the top rail where the cap covers it)."
+  }
+ ],
+ "verified_fixed": [
+  "header band now jHead, the same slate as the flap (tone ratio vs shell about 1.15, photos 1.25)",
+  "safety card has a pocket front covering its lower part",
+  "duvet thinner, with flush stitch lines instead of raised strips",
+  "handset has a ring pad, 4 coloured keys and a live screen",
+  "boarding bundle (white pad + folded duvet) under the pillows"
+ ],
+ "other_areas": [
+  "lighting: global tonal range is compressed. Ash/shell renders 1.17x in q06 against about 2x in lalf_11 / c_27312, even though the materials are 2.3x apart (#dcd5c8 vs #5f636a). The cabin looks flat and over-bright; shells read #a1a1a0-#afb2b6 where the photos show #4f5052-#999da5. This needs exposure/AO in 12_scene.js/04_shaders.js, not seat materials.",
+  "lighting: the monitor bezel picks up a blue cast in q07 (#344a6a vs photo neutral #3a342b), probably screen or sky reflection on r 0.35.",
+  "sidewall: the window reveals near the J seats read pure white; in tpg_36/75 they are warm off-white with a visible shade (outside Room scope)."
+ ],
+ "questions": [
+  "Should the fabric/shell balance be fixed in materials (jFabric darker, issue 1) or by the lighting pass? If the lighting pass later lowers exposure globally, jFabric should drop even more so the fabric stays darker than the shell."
+ ]
+}

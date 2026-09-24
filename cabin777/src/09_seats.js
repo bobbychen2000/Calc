@@ -73,19 +73,19 @@ const SEATMAT = {
   ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
   rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
   // QA r3: shells rendered ~0.5x the photo luminance (q10 #292d34 vs c_27315 #4c4e60) -> lifted
-  jShell: { c: '#5f636a', r: 0.46, l: LAYER.plastic },
+  jShell: { c: '#595d64', r: 0.46, l: LAYER.plastic },
   jShellIn: { c: '#4a4d53', r: 0.5, l: LAYER.plastic },
-  jCap: { c: '#62666c', r: 0.45, l: LAYER.plastic },
+  jCap: { c: '#5c6066', r: 0.45, l: LAYER.plastic },
   jRail: { c: '#b9bec4', r: 0.26, m: 0.7, l: LAYER.brushed },
   jVoid: { c: '#1d1617', r: 0.9 },
   jBase: { c: '#2a2b2f', r: 0.6 },
-  jFabric: { c: '#86838a', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted
+  jFabric: { c: '#5e5c62', r: 0.92, l: LAYER.tweed },   // uniform mid grey #5d5d62-#636164 (c_27315, omaat_room_13); QA w1: rendered #393a43 vs photo #5e5b69 -> lifted; room w5 (A+B): the lift overshot, fabric rendered 1.4x the shell, photos 0.55-0.8x (c_27313, c_27315, tpg_75) [V]
   jLeather: { c: '#5d6066', r: 0.5, l: LAYER.leather },
   jHead: { c: '#8a95a3', r: 0.38, l: LAYER.leather },   // QA w2: flap is the palest part of the seat (c_27315 #768193, c_27313 #6f7b84)
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
   mattress: { c: '#f0efea', r: 0.9, l: LAYER.fabric },
-  duvet: { c: '#5a5c9a', r: 0.95, l: LAYER.fabric },   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
+  duvet: { c: '#4d57aa', r: 0.7, l: LAYER.fabric },   // room w5: satin royal blue (tpg_72 #6f7bd9, b_tpg #5863b0) [V]   // QA w2: indigo (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0)
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
   pillowBlue: { c: '#5f6596', r: 0.85, l: LAYER.yagasuri },   // QA w2: rendered #181e49; photos #4c5178-#737ba9 (tt_seat-1, tt_seats-center)   // yagasuri jacquard #32355d / #3e457b (c_27302 / 27303)
   lampGlow: { c: '#ffe2b0', r: 0.4, e: 0.35 },
