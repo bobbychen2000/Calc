@@ -54,10 +54,10 @@ const SEATMAT = {
   // PY w1: real cabins (ref/web/py san_03 / san_04: fabric / wall 107 / 189 = 0.57; ANA py_37301 / 37303 0.8) -> lighter
   // than the r3 render (0.45); wing = back tone (py_37301 B/R 1.26 vs 1.24), flap / back 0.56-0.65 (san_04, py_37302),
   // shells / wall 0.38-0.42 (san_03 71-82 / 189, py_37303) [D]
-  pyFabric: { c: photoBase('#94969b', 'py_back'), r: 0.9, l: LAYER.pyFleck },
-  pyCover: { c: '#40486c', r: 0.45, l: LAYER.leather },   // photo flap #232740, R/B 0.55 (py_37305): less saturated
-  pyWing: { c: photoBase('#86888e', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
-  pyShell: { c: '#74767a', r: 0.42, l: LAYER.plastic },
+  pyFabric: { c: photoBase('#95949c', 'py_back'), r: 0.9, l: LAYER.pyFleck },
+  pyCover: { c: '#4c536e', r: 0.45, l: LAYER.leather },   // w2: flap / back 0.31-0.37 -> ~0.5, B/R 1.45 (alv_17 slate-navy; ANA blue cast)   // photo flap #232740, R/B 0.55 (py_37305): less saturated
+  pyWing: { c: photoBase('#9c9ca4', 'py_confetti'), r: 0.9, l: LAYER.pyConfetti },
+  pyShell: { c: '#7e8084', r: 0.42, l: LAYER.plastic },   // w2: rear shell / wall 0.28-0.34 rendered vs 0.4-0.6 in photos
   pyArm: { c: '#5c5e62', r: 0.45, l: LAYER.plastic },
   pyArmPad: { c: '#4a4c50', r: 0.5, l: LAYER.leather },   // dark stitched leatherette lids (san_06, alv_04)
   pyBin: { c: '#b8bcc0', r: 0.3, m: 0.85, l: LAYER.brushed },

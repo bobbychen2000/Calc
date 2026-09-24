@@ -1,0 +1,243 @@
+{
+ "area": "py",
+ "rater": "A",
+ "score": 5.0,
+ "details": [
+  {
+   "detail": "Views. p13a is usable and close to py_37302 (front of right aisle looking aft). q14_seat26A is usable. p14c and x2/p14c put the camera about 5 cm from a seat back, so only fabric at macro scale shows (useful for pattern only). Studio p4 'headrest' does not frame the headrest; it shows the mid-back and pan.",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/p13a.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/p14c.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p4_py_head.png",
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Overall massing: tall back with bolsters, headrest pillows with a flap between them, wrap shell, floor console, aisle and window shrouds, leg rest and hinge roller all read right in st/p3 against py_37301/37302. Shell top corners are square and the shell stands about 6 cm above the headrest crown. The real shell top is a large-radius arch that is flush with, or just below, the fabric crown (alv_13, san_13, alv_03 show a fabric strip over the shell top).",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p3_py4_front.png",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_13_seatback_screen.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_13_seatback_screens_window.jpg"
+   ]
+  },
+  {
+   "detail": "Back fabric (py_back tile, 0.163 m): the dashes sit on a regular brick lattice, 15% light coverage, over blurred dark blotches, cool (B/R 1.10-1.18). The real weave (alv_04, alv_09, alv_17) is dense and irregular. It has short slanted cream strokes plus chips at 30-48% coverage over a warm-grey or lavender ground, with large lighter 'cloud' zones. Chips are cream (R>B, e.g. 219,213,204). Tiling at 0.163 m is visible as rows in p13a and q14.",
+   "score": 3.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/x2/p14c.png",
+    "/home/user/Calc/cabin777/tex/tex_py_back.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_09_console_front_cubbies.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_17_headrest_reading_light_fabric.jpg"
+   ]
+  },
+  {
+   "detail": "Headrest wings (py_confetti): rendered as dark charcoal capsules with sparse white blobs. Wing/back luminance is 0.62-0.68 in the model, against 0.82 in alv_04 and 1.02 in py_37305 (85/83). Chip coverage is 5.4% in the tile, against 26% in py_37305 and 48% in the alv_17 speckle zones. In every real photo the wings are the same light fabric as the back.",
+   "score": 3,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/p13a.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/q14_seat26A.png",
+    "/home/user/Calc/cabin777/ref/ana/py_37305-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg"
+   ]
+  },
+  {
+   "detail": "Navy flap: size and position are fine, but it is saturated royal blue with a coarse pebble grain (about 2 cm cells in x2/p14c). In the real photos it is a dark slate-navy smooth leather with a stitched border. Flap B/R relative to the wall is 2.0-2.2 in the model and 1.22-1.27 in alv_04/alv_17 (#34343b). Flap/back luminance is 0.31-0.37 in the model and 0.46-0.47 in alv_04/alv_17 (ANA 0.40-0.60).",
+   "score": 4.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/x2/p14c.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_17_headrest_reading_light_fabric.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37305-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Rear shells render too dark. In p15back the shell/wall ratio is 0.28-0.34 (57-71 against 206), and 0.47 at the lit top. The real range is 0.48-0.64 (alv_13, 91-121 against 190) and about 0.85 on the lit side in alv_03. This was flagged in r3 and is not fixed.",
+   "score": 4.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/p15back.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_13_seatback_screen.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_03_cabin_overview_from_rear.jpg"
+   ]
+  },
+  {
+   "detail": "Screen housing and bezel: the proportions and the recessed frame match alv_13/san_13, and the two white placards are in the right place. The placards are blank white where the real ones carry two lines of JP and EN text.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p2_py2_back.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_13_seatback_screen.jpg"
+   ]
+  },
+  {
+   "detail": "Literature pocket: the lip and trapezoid black mesh basket are now present (st/p6) and roughly match san_05/alv_03.",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p6_back_close.png",
+    "/home/user/Calc/cabin777/ref/web/py/san_05_seatbacks_row26_aisle.jpg"
+   ]
+  },
+  {
+   "detail": "Coat hook: the bullet exists but renders mid-grey (L 132, against a real 185 in san_13) and is thin. The real hook is a fat brushed bullet about 10 x 3.5 cm with a round grey button below it.",
+   "score": 5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/q14_seat26A.png",
+    "/home/user/Calc/cabin777/ref/web/py/san_13_seatback_screens_window.jpg"
+   ]
+  },
+  {
+   "detail": "Reading light: the routing is right (from the shell edge at the headrest, arcing forward and down to shoulder height). It reads as a thin wire, though: the model hose is 12 mm with a 30 x 75 mm head. In alv_17 and py_37305 the hose is a thick ribbed black hose about 20 mm across, and the head is a brushed cylinder about 35-40 mm by 110-120 mm with a lens on its side face.",
+   "score": 4.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/p13a.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p1_py2_front.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_17_headrest_reading_light_fabric.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37305-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Centre console: the dark lid, silver trim, cubbies, sockets and red tab are present. Problems: (a) the cubbies are closed protruding boxes, where the real ones are open U-trays with a rolled rim and a visible slot; (b) the blue marks are 14 mm diamonds, where the real ones are right triangles about 1/4 of the cubby width, top-left on the upper cubby and top-right on the lower; (c) there are no cupholders, although two round brushed cup wells at the lid's front end show clearly in alv_04, san_05, san_06 and alv_03; (d) the face is too narrow: the real sockets take 23% of the face width each (alv_09), so the face is about 0.15-0.16 m, the same as py_37301 (face about 0.35 of cushion width), against the model's 0.095.",
+   "score": 4.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p5_console.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_09_console_front_cubbies.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Aisle and window shrouds and armrest caps: broadly right, with a light-grey shroud, dark cap turning down at the front, silver strip and recessed panel.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p3_py4_front.png",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Leg rest: the fabric panel and dark hinge roller are present. There is a bright light strip between the cushion and the roller in st/p3 that the photos do not show.",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p3_py4_front.png",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Foot bar and footrest: the black padded bar with silver ends and the folded pedals are OK against san_05 and alv_06.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p6_back_close.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_06_footbar_closeup.jpg"
+   ]
+  },
+  {
+   "detail": "Bottle bin: a two-cell brushed box on the console rear, which is fine. The real bin is brighter silver (alv_03 bin top/wall 0.89).",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p6_back_close.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_03_cabin_overview_from_rear.jpg"
+   ]
+  },
+  {
+   "detail": "Legs: the model has vertical plus 20-degree boxes. alv_03 and san_05 show pale champagne diagonal struts running from the seat pan forward and down to the track, clearly visible from the row behind.",
+   "score": 4.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p6_back_close.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_03_cabin_overview_from_rear.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_05_seatbacks_row26_aisle.jpg"
+   ]
+  },
+  {
+   "detail": "Lumbar crease: a crisp dark line across every back (p13a, st/p1, st/p3). No real photo shows a line there.",
+   "score": 4,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w2r/st/p1_py2_front.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Headrest wing fabric",
+   "problem": "The wings render as a dark charcoal pillow with sparse white blobs. In real cabins they are the same light warm-grey fabric as the back, with dense cream speckles.",
+   "evidence": "Wing/back luminance: model 0.62 (p13a 77/125) and 0.68; real alv_04 0.82, py_37305 1.02 (85/83). Tile ground 25 against the back tile's 33. Chip coverage: tex_py_confetti 5.4%, py_37305 26%, alv_17 up to 48%. Real wing ground is about (92,84,71) and chips (187,179,171) in alv_04.",
+   "fix": "In test/make_swatches.py synth_py_confetti: raise the ground to the py_back ground level, raise chip density about 4-5x (target 25-35% coverage, chips 6-15 mm on a 0.07 m tile, i.e. 20-50 px), and lower ENC['py_confetti'] from 6 to about 3. In 09_seats.js set SEATMAT.pyWing.c = photoBase('#9a978f','py_confetti'), which is warmer and lighter. Verify that wing/back luminance comes out 0.85-1.0 in p13a."
+  },
+  {
+   "severity": "high",
+   "detail": "Navy flap colour and grain",
+   "problem": "The flap is saturated royal blue with a coarse pebble grain. The real flap is a dark slate navy, smooth leather with a thin stitched border, clearly greyer than the navy pillow.",
+   "evidence": "Flap B/R relative to wall: model 2.2 (p13a #252c53, wall 1.02), 2.0 (x2/p14c #303861); real 1.27 (alv_17 #34343b), 1.22 (alv_04 #4e4f56, wall 0.89). Flap/back luminance: model 0.31-0.37; real 0.46-0.47. Pebble cells about 2 cm in x2/p14c.",
+   "fix": "In 09_seats.js set SEATMAT.pyCover = { c: '#3b3f50', r: 0.38, l: LAYER.leather } and tune until rendered flap B/R is at most 1.4x the wall B/R and flap/back is 0.45. Reduce the leather layer grain scale or amplitude for pyCover (or use LAYER.vinyl). In pySeat, add a stitch border: a gBox frame about 1.5 cm inside the flap edge, 2 mm wide, c '#5a5e6c'."
+  },
+  {
+   "severity": "high",
+   "detail": "Back fabric pattern",
+   "problem": "The py_back tile is a regular brick lattice of blurred rectangles over dark blotches, which reads as a digital pattern. The real fabric is dense, irregular, slanted short strokes and chips in cream on a warm lavender-grey ground, with large lighter cloud zones, and its tiling rows do not show.",
+   "evidence": "Tile light coverage is 15%. Real back coverage is 30-40% (py_37305 lower back 39%, alv_09 and alv_04 crops). Real p90/p10 is 211/131 (alv_04) with a warm ground (130,125,120) and cream chips (219,213,204), B/R 0.92 against the wall's 0.89. Model back B/R is 1.10-1.18 against the wall's 1.02, with bluish chips (147,151,159).",
+   "fix": "Rewrite test/make_swatches.py synth_py_back: jitter dash positions (no row grid), lengths 5-20 mm, 5-15 degree random slant, add small chips, target 35% coverage, and drop the low-frequency blotches. Add a second, very large-scale (about 0.5 m) lighter cloud modulation in the shader for LAYER.pyFleck, or make the tile 0.33 m. Take it off MONO and give chips a cream tint and the ground a slight lavender tint, or set SEATMAT.pyFabric.c = photoBase('#a29d95','py_back')."
+  },
+  {
+   "severity": "medium",
+   "detail": "Rear shell too dark / shell top shape",
+   "problem": "The seat backs seen from the aisle read as charcoal. The shell top is a square-cornered slab standing about 6 cm above the headrest crown.",
+   "evidence": "p15back shell/wall is 0.28-0.34, against 0.48-0.64 in alv_13 and about 0.85 lit in alv_03. alv_13 shows about 8-10 cm top corner radii, and a fabric strip over the shell top shows in san_13 and alv_03.",
+   "fix": "SEATMAT.pyShell.c '#74767a' becomes '#8a8c8e' (or raise the fill or AO floor for shells, which is the lighting owner's job). In pySeat's ds[], lower the last sections to [0.88,0.08],[0.91,0.06],[0.925,0.035] so the shell tops at or below the headrest crown (0.91). Give the shell top a stronger lateral round-over (a larger corner radius arg in SEC for y>0.8, e.g. 0.08)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Reading light too thin",
+   "problem": "The gooseneck reads as a wire with a small head. The real one is a thick ribbed hose with a long brushed cylinder head.",
+   "evidence": "alv_17 and py_37305 show a hose about 20 mm across and a head about 38 x 115 mm with a lens on its side. Model: gTube radius 0.006, head gCyl 0.015 x 0.075.",
+   "fix": "In pySeat: gTube radius 0.006 becomes 0.0095. Head: gCyl(0.019,0.019,0.115,14) with the lens moved to the cylinder's side face (rotate the lens disc 90 degrees and offset it 0.019 radially, 0.03 from the tip). The collar gCyl at the shell becomes 0.016 in radius."
+  },
+  {
+   "severity": "medium",
+   "detail": "Console: no cupholders, closed cubbies, narrow face",
+   "problem": "The two brushed cup wells at the front of the lid are missing. The cubbies are protruding closed boxes, not open U-trays. The face is too narrow for its sockets.",
+   "evidence": "Cup wells show in alv_04, san_05, san_06 and alv_03. alv_09 shows open trays with rolled rims and large right-triangle blue marks. Sockets take 23% of the face width in alv_09, against 39% in the model (0.037 of 0.095), which puts the real face at about 0.15 m (py_37301 face about 0.35 of cushion width).",
+   "fix": "In pyUnit (inner): add two gCyl rings (r 0.035, brushed pyTrim) plus dark discs, inset 0.01 into the lid at z -0.47 and -0.40 (or side by side if w is widened). Replace each cubby plate with an open tray: a front plate h*0.7 tall, two side cheeks, and a SEATMAT.hole back panel visible above the plate rim, with a 6 mm rolled rim (gCyl along x). Replace the blue diamond with a right triangle (gQuad clipped, or two thin boxes), 0.03 per side, top-left on the upper tray and top-right on the lower. If the layout allows, widen w from 0.095 to 0.13-0.15 by narrowing the cushion (cushionSecs 0.455 to 0.43); otherwise shrink the sockets to 0.028."
+  },
+  {
+   "severity": "medium",
+   "detail": "Lumbar crease line",
+   "problem": "A crisp dark line crosses every seat back. No photo shows one.",
+   "evidence": "st/p1, st/p3, p13a against alv_04, py_37301, py_37302.",
+   "fix": "In pySeat delete the gBox(0.40,0.005,0.004) '#5e6066' crease, or replace it with a shallow loft indentation in the back SEC depths at y 0.30."
+  },
+  {
+   "severity": "medium",
+   "detail": "Seat legs",
+   "problem": "The legs are simple boxes. The real seats show pale champagne diagonal struts from under the pan to the floor track, prominent from the row behind.",
+   "evidence": "alv_03 (the struts under each row-26 seat) and san_05.",
+   "fix": "In pyUnit legs: replace the -20 degree box with a gRBox(0.03,0.42,0.035) at about -35 degrees running from (y 0.36, z -0.05) to the floor at z -0.40, using c '#b8ab8a' metal (champagne anodised)."
+  },
+  {
+   "severity": "low",
+   "detail": "Coat hook",
+   "problem": "The hook is dark and small.",
+   "evidence": "q14 hook L 132 against 185 in san_13, where it is about 10 x 3.5 cm.",
+   "fix": "Hook gCyl becomes (0.016,0.018,0.10) and c '#d4d6d8' m 0.9 r 0.2."
+  },
+  {
+   "severity": "low",
+   "detail": "Placards blank",
+   "problem": "The placards are plain white quads.",
+   "evidence": "alv_13 shows two lines of JP and EN text on each.",
+   "fix": "Add an atlas entry for the placard text in 06_atlas.js and use atlasUV in pySeat for both quads (0.13 x 0.035)."
+  },
+  {
+   "severity": "low",
+   "detail": "QA views",
+   "problem": "The p14c camera sits inside or against a seat back, and st/p4 does not frame the headrest.",
+   "evidence": "p14c and x2/p14c.",
+   "fix": "Move the p14c camera back 0.5 m into the aisle. Aim p4 at BH y 0.78 (headrest) of the right seat."
+  }
+ ],
+ "questionsForUser": [
+  "The console face measures about 0.15 m wide in alv_09 and py_37301 against 0.095 in the model, which conflicts with a 19-in cushion at 0.5525 m seat spacing. Is the ANA PY seat pitch across (seat centre to centre) known? Otherwise, should the cushion be narrowed?",
+  "The real fabric has large lighter cloud zones about 0.3-0.5 m across. Is a larger texture tile (for example 0.33 m, 512 px) acceptable for page size?"
+ ]
+}
