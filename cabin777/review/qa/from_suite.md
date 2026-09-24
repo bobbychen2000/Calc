@@ -6,6 +6,8 @@
      The model's `MAT.carpetJ` '#645554' has B ≈ G, so it renders #433a3a in q02_suiteAisle.
    - Fix: add `carpetF: { c: '#5c4b3a', r: 0.95, l: LAYER.fabric }` and use it for `zn.cls === 'F'` at the carpet line
      (~l.466). Keep carpetJ for THE Room unless the room photos also show brown.
+   - Close-up ref/web/suite/pb_30.jpg (daylight, under the ottoman) shows the pattern: brown heather (#6b5b47) with scattered
+     navy/slate-blue fleck clusters about 1–3 cm across. Blue-lit photos (tlfl_25, up_empty) read blue-grey only because of mood lighting.
 
 ## To lighting / integration (`src/12_scene.js`)
 1. **The suite interior renders much darker than the photos when seen from the seat (q03 / q05).** (suite_r3, medium)
