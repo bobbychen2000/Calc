@@ -1,0 +1,35 @@
+// Time series of the aircraft poses the app displays, for the moving-traffic physics audit (tools/drawing/trace_audit.py).
+// Loads live.html in LIVE mode, so the harness's mock relay (livetest.mjs) feeds the recorded snapshot with simple
+// kinematics (aircraft with ground speed move along their track; taxiing ones at 0.35 x speed), and samples every
+// aircraft's displayed pose (the render matrix, model placement) every TRACE_DT seconds for TRACE_N samples.
+// Run: SOFTGL=1 W=320 H=200 node livetest.mjs jobs/trace2d.mjs     -> out/draw/trace.json
+import fs from 'fs'; import path from 'path';
+
+export default async ({ page, base }) => {
+  const OUTD = path.resolve(process.env.DRAW_OUT || 'out/draw'); fs.mkdirSync(OUTD, { recursive: true });
+  const N = +(process.env.TRACE_N || 40), DT = +(process.env.TRACE_DT || 3);
+  await page.goto(base + 'live.html?mode=live');
+  await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
+  const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
+  await page.evaluate(async () => { const t0 = performance.now(); while (!SFO.traffic.tracks.size && performance.now() - t0 < 60000) await new Promise(r => setTimeout(r, 500)); await Promise.all(SFO.scene.aircraft.map(a => a.ready)); });
+  const frames = [];
+  for (let i = 0; i < N; i++) {
+    await page.waitForTimeout(DT * 1000);
+    const f = await page.evaluate(async () => {
+      await Promise.all(SFO.scene.aircraft.map(a => a.ready));
+      const out = [];
+      for (const tr of SFO.traffic.tracks.values()) {
+        const D = tr.disp; if (!D.valid || !D.ground) continue;
+        const ac = SFO.scene.aircraft.find(a => a.id === tr.hex) || null;
+        out.push({ hex: tr.hex, flight: tr.info.flight || null, icao: tr.info.icao || null, typeKey: tr.model ? tr.model.t : null, phase: tr.phase, gs: D.gs, stale: !!tr.stale, gate: tr.gate ? tr.gate.name : null,
+          pos: [D.x, D.y, D.z], hdg: D.hdg, phys: tr.phys ? { key: tr.phys.key || null, off: tr.phys.off || null, cur: tr.phys.cur || null, ok: tr.phys.ok ?? null } : null,
+          W: ac ? Array.from(ac.matrix()) : null, modelKeyUsed: ac ? ac.modelKey || null : null, stretch: ac ? ac.stretch || null : null, placement: ac && ac.model ? Array.from(ac.placement()) : null, rendered: ac ? (ac.model ? 'model' : 'procedural') : 'marker' });
+      }
+      return { t: Date.now(), physFrame: SFO.physics.frame, stats: SFO.physics.stats, aircraft: out };
+    });
+    frames.push(f);
+    console.log('trace', i + 1, '/', N, 'ground aircraft', f.aircraft.length, 'physics frame', f.physFrame, JSON.stringify(f.stats));
+  }
+  fs.writeFileSync(path.join(OUTD, 'trace.json'), JSON.stringify({ mode: 'live (mock relay: recorded snapshot + straight-line kinematics)', dt: DT, frames }));
+  console.log('trace.json:', frames.length, 'frames');
+};
