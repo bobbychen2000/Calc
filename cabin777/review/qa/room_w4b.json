@@ -1,0 +1,162 @@
+{
+ "area": "room",
+ "rater": "B-geometry",
+ "round": 4,
+ "score": 7.3,
+ "summary": "The w3 geometry fixes check out against tpg_42, tpg_31 and tpg_53. The back is now 0.545 under a 0.155 header band (photo header/back 0.31, model 0.28). Seams sit at 61 % and 82 % down the back (photo 64 % and 80 %). The flap is 56-60 % of the back width with h/w about 0.42, and it sits toward the aisle. Both corner lamps sit in the band. The angled lamp wing is hinged at the frame edge with a lamp over a nozzle. The monitor square-on measures 0.595 x 0.405 bezel, 0.531 screen and 0.49 sill with the slot on the cabinet side. The O handset is on the monitor side, above a lower plate, which matches c_27316 and tpg_53. The full-size card sits beside the O footwell, the finger recess is grey and the slot is dark navy. What still separates the model from the photos: the header band is charcoal (shell tone), where every photo shows the same pale slate leather as the flap. The safety card stands fully exposed, where the photo shows it tucked in a pocket. The duvet still has a raised grid and hard edges. The E footwell offset is unchanged.",
+ "details": [
+  {
+   "detail": "Seat back proportion + header band geometry",
+   "score": 8.5,
+   "refs": [
+    "ref/web/room/tpg_42.jpg",
+    "ref/web/room/tpg_31.jpg",
+    "w4/cu/c11_benchO.png",
+    "w4/cu/c5_seatO.png"
+   ]
+  },
+  {
+   "detail": "Back seams / flap size and position / pillows",
+   "score": 8.0,
+   "refs": [
+    "ref/web/room/tpg_42.jpg",
+    "w4/cu/c11_benchO.png"
+   ]
+  },
+  {
+   "detail": "Header band + lamps: material/tone",
+   "score": 5.5,
+   "refs": [
+    "ref/ana/c_27313-lang-multi.jpg",
+    "ref/ana/c_27315-lang-multi.jpg",
+    "ref/web/room/tpg_42.jpg",
+    "w4/q10_seat14D.png",
+    "w4/q09_centrePair.png"
+   ]
+  },
+  {
+   "detail": "Monitor, bezel, sill, drawer, literature slot (square-on)",
+   "score": 8.0,
+   "refs": [
+    "ref/web/room/tpg_53.jpg",
+    "rb4/b3_mon_square.png",
+    "w4/cu/c12_monO_seated.png"
+   ]
+  },
+  {
+   "detail": "Angled lamp wing",
+   "score": 7.5,
+   "refs": [
+    "ref/web/room/tpg_53.jpg",
+    "ref/ana/c_27316-lang-multi.jpg",
+    "w4/cu/c6_monO.png",
+    "rb4/b2_Ewing.png"
+   ]
+  },
+  {
+   "detail": "Side table (ash inlay in charcoal rim), cabinet",
+   "score": 7.5,
+   "refs": [
+    "ref/ana/c_27316-lang-multi.jpg",
+    "w4/cu/c8_controls.png",
+    "rb4/b6_Oface_aisle.png"
+   ]
+  },
+  {
+   "detail": "Controls plate + handset layout",
+   "score": 7.5,
+   "refs": [
+    "ref/web/room/tpg_53.jpg",
+    "w4/cu/c8_controls.png",
+    "w4/cu/c6_monO.png"
+   ]
+  },
+  {
+   "detail": "Footwells / ottoman",
+   "score": 7.0,
+   "refs": [
+    "ref/web/room/tpg_53.jpg",
+    "ref/ana/c_27316-lang-multi.jpg",
+    "w4/cu/c10_footwellO.png",
+    "rb4/b5_Efoot.png"
+   ]
+  },
+  {
+   "detail": "Outer console + safety card",
+   "score": 6.5,
+   "refs": [
+    "ref/web/room/tpg_53.jpg",
+    "w4/cu/c10_footwellO.png"
+   ]
+  },
+  {
+   "detail": "Aisle ledges, aisle-end ash + cap + plaques",
+   "score": 7.5,
+   "refs": [
+    "ref/ana/c_27313-lang-multi.jpg",
+    "w4/cu/c9_ledge.png",
+    "w4/cu/c1_pair_front.png"
+   ]
+  },
+  {
+   "detail": "Bed mode (duvet)",
+   "score": 5.5,
+   "refs": [
+    "w4/cu/c4_bedO.png",
+    "rb4/b1_bedtop.png"
+   ]
+  },
+  {
+   "detail": "Artefacts (z-fight, gaps, floating parts)",
+   "score": 8.0,
+   "refs": [
+    "w4/cu/c1_pair_front.png",
+    "w4/cu/c2_pair_aisle.png",
+    "rb4/b5_Efoot.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Padded header band is charcoal shell tone; it should be the same pale slate leather as the flap",
+   "problem": "jLeather is #5d6066, which is almost the jShell tone (#5f636a). The band therefore disappears into the shell and reads as part of the charcoal wall (q10 header about (55,59,67); c11 header 132 vs flap 198, ratio 0.65). In every photo the band is the same slate Ultraleather as the flap and clearly lighter than the charcoal shell wings around it.",
+   "evidence": "tpg_42: header (138,139,125) vs flap (129,136,121), equal. c_27315: header of the 14D neighbour (156,165,169) vs shell (58,64,80) vs flap (115,127,145). In c_27313 all four headers read pale slate, against dark wings.",
+   "fix": "09c_room.js lines 266 and 346: draw the header band with SEATMAT.jHead (or a new jHeadBand {c:'#838d99', r:0.4, l:LAYER.leather}, a touch darker than the flap) instead of SEATMAT.jLeather. Optionally add a 3 mm jSeam line along its bottom edge where it meets the back, so the two padded parts read as separate."
+  },
+  {
+   "severity": "low",
+   "detail": "Safety card fully exposed; the real card is tucked into a pocket whose front covers its lower ~60 %",
+   "problem": "roomCard lays the 0.20 x 0.25 white card flat on the wall, so all of it shows (c10 and b6 read as a white placard). In tpg_53 only the top ~0.10 (the blue 'B777-300' header and the first icons) rises above a charcoal pocket front, and the card leans out slightly.",
+   "evidence": "tpg_53 x 20-240, y 740-1000: card top above a dark grey pocket lip at about y 900; c10_footwellO shows the whole white card.",
+   "fix": "roomCard: add a pocket front, B.add(gRBox(0.008, 0.15, 0.23, 0.004, 1), M4.trs(px + s*0.012, y - 0.07, z), SEATMAT.jShellIn), covering the lower card. Tilt the card quad about 5 deg (rz) so its top stands off the wall, and put the pocket's top edge at y + 0.005."
+  },
+  {
+   "severity": "low",
+   "detail": "Bed-mode duvet still a rigid slab with raised grid strips (unchanged since w3)",
+   "problem": "roomDuvet is still a 0.07 loft with raised gBox quilt lines at 0.26 pitch. In c4 and b1 it reads as a padded tile mat with hard corners, not a soft comforter draped over the mattress edge.",
+   "evidence": "c4_bedO and b1_bedtop: big crisp blue squares. fb_a96b7a65 / fb_d8b6dc0d show a soft comforter with sunken stitch lines.",
+   "fix": "roomDuvet: use thickness 0.04 with edge 0.03 and crown 0.03. Replace the raised gBox lines with dark quads 0.5 mm above the surface (gQuad, q colour, no height). Add two 0.02 x 0.12 fabric flaps hanging over the mattress side edges (rotate 80 deg) so it drapes."
+  },
+  {
+   "severity": "low",
+   "detail": "E footwell mouth narrower and off-centre compared with O's (unchanged)",
+   "problem": "The E mouth is still roomFootwell(0.02, 0.455): 0.435 wide and centred 0.09 toward the column from the E monitor centre (0.15). O's is 0.475. In tpg_53 the mouth is 0.46 to 0.475 wide and sits nearly square under the monitor.",
+   "evidence": "09c_room.js line 301 vs line 314; tpg_53.",
+   "fix": "Line 301: roomFootwell(B, -0.08, 0.40, ...) or similar, keeping the aisle-side wall 0.05 inside the monument end. Also move the matching jShellIn roof (line 300) to x centre 0.16, width 0.48."
+  }
+ ],
+ "verified_fixed": [
+  "back 0.545 + 0.155 header band + 2 corner lamps (O and E)",
+  "seams at 61 % / 82 % down the back (photo 64 / 80)",
+  "angled 0.15 m lamp wing replaces the post",
+  "full-size safety card by the O footwell",
+  "O handset on the monitor side under the table edge, plate lower",
+  "finger recess grey, not black",
+  "ash table inlay in charcoal rim",
+  "literature slot unlit navy",
+  "lighter bezel",
+  "brushed aisle cap"
+ ],
+ "questionsForUser": []
+}

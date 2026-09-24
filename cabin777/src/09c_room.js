@@ -251,10 +251,11 @@ function roomPillow(B, xf) {
 // hanging over the mattress edges (fb_a96b7a65 #4b5789, fb_d8b6dc0d #606ea0 daylight; w1's slate read of tt_bed-2 was a
 // night-light cast) [V]; white pillow + the blue one lying beside it (fb_a96b7a65) [V]
 function roomDuvet(B, x, z, w, L) {
-  const W = w + 0.08, y = ROOM.bed + 0.113, q = { c: '#3a4476', r: 0.95 };
-  B.add(gLoft(cushionSecs(W, L, 0.07, -0.05, { edge: 0.06, r: 0.06, crown: 0.02 }), 3), M4.trs(x, ROOM.bed + 0.07, z), SEATMAT.duvet);
-  for (let k = 1; k * 0.26 < L - 0.05; k++) B.add(gBox(W - 0.10, 0.003, 0.006), M4.trs(x, y, z - L / 2 + k * 0.26), q);
-  for (const dx of [-0.13, 0.13]) B.add(gBox(0.006, 0.003, L - 0.10), M4.trs(x + dx, y, z), q);
+  // QA w4: thinner, softer comforter with flush stitch lines (was a rigid slab with raised grid)
+  const W = w + 0.08, y = ROOM.bed + 0.0915, q = { c: '#4a4c84', r: 0.95 };
+  B.add(gLoft(cushionSecs(W, L, 0.045, -0.035, { edge: 0.05, r: 0.045, crown: 0.012 }), 3), M4.trs(x, ROOM.bed + 0.07, z), SEATMAT.duvet);
+  for (let k = 1; k * 0.26 < L - 0.05; k++) B.add(gBox(W - 0.10, 0.001, 0.005), M4.trs(x, y, z - L / 2 + k * 0.26), q);
+  for (const dx of [-0.13, 0.13]) B.add(gBox(0.005, 0.001, L - 0.10), M4.trs(x + dx, y, z), q);
 }
 function roomPart(part, opts = {}) {
   const B = new Builder();
@@ -270,7 +271,7 @@ function roomPart(part, opts = {}) {
     // back shell across the whole unit: charcoal wall, padded band above the seat back, cap, a reading light at each end
     // (tpg_31 / 42: lamps in both top corners) [V]
     B.add(gRBox(1.17, wall, 0.07, 0.03, 2), M4.trs(0, wall / 2, -1.31), shell);
-    B.add(gRBox(1.17, 0.155, 0.05, 0.02, 1), M4.trs(0, 1.0425, -1.25), SEATMAT.jLeather);          // padded header band
+    B.add(gRBox(1.17, 0.155, 0.05, 0.02, 1), M4.trs(0, 1.0425, -1.25), SEATMAT.jHead);          // padded header band, same pale slate leather as the flap (QA w4b: tpg_42 band = flap) [V]
     capRail(B, 1.17, 0.07, 0, wall, -1.31);
     roomLamp(B, -0.50, -1.225, 1);
     roomLamp(B, 0.45, -1.225, 1);
@@ -350,7 +351,7 @@ function roomPart(part, opts = {}) {
     const S = M4.trs(0.20, 0, 1.27);
     const tmp = new Builder(); roomSeatCore(tmp, bed, lod, 0.64, 1); B.addBuilt(tmp.build(), S);
     B.add(gRBox(0.69, wall, 0.07, 0.03, 2), M4.trs(0.235, wall / 2, 1.31), shell);
-    B.add(gRBox(0.69, 0.155, 0.05, 0.02, 1), M4.trs(0.235, 1.0425, 1.25), SEATMAT.jLeather);        // padded header band
+    B.add(gRBox(0.69, 0.155, 0.05, 0.02, 1), M4.trs(0.235, 1.0425, 1.25), SEATMAT.jHead);        // padded header band (as O)
     capRail(B, 0.69, 0.07, 0.235, wall, 1.31);
     roomLamp(B, -0.07, 1.225, -1);
     roomLamp(B, 0.50, 1.225, -1);
