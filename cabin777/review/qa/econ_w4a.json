@@ -1,0 +1,95 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w4",
+ "score": 7.0,
+ "details": [
+  {"detail": "Fabric colour: holds. q15 row 2 back #2f3b64 (R/B 0.48, G/B 0.59) vs y_47300 seat 2 #2c3a63 (0.45/0.59). q16 row 2 back #252f56 vs y_47301 row 2 #3c4e8c (same hue ratios 0.43/0.56). q16 foreground #4e5f94 (L p50 90) is lighter than the shadowed y_47301 foreground (#222957, L 41) but within the y_47300 seat 1 range (#495b8b, L 92).", "score": 8, "refs": ["ref/ana/y_47300-lang-multi.jpg", "ref/ana/y_47301-lang-multi.jpg", "r7/q15_econFronts.png", "r7/q16_econAisle.png", "raterA4/fab_cmp.png"]},
+  {"detail": "Row-to-row fabric mix: fixed. The diamond seat no longer runs as a column. In q15 it is seat 2 in row 2 of the left block, while row 1 shows tick and mosaic. In q16 it is at different positions in consecutive rows, as in y_47300 (fleck, tick and mosaic mixed by row). The far LOD keeps the per-seat pattern.", "score": 8, "refs": ["r7/q15_econFronts.png", "r7/q16_econAisle.png", "ref/ana/y_47300-lang-multi.jpg"]},
+  {"detail": "Diamond variant: the luminance statistics are right. q16 p10/50/90 is 44/84/120 and q15 37/61/90, against y_47302 46/77/182 and y_47306 67/97/171. It still reads bolder than the photos: e4 shows dark lattice lines around pale, knit-textured lozenges with soft edges. In y_47302 the diamonds are faint lighter patches with barely visible outlines.", "score": 7, "refs": ["ref/ana/y_47302-lang-multi.jpg", "ref/ana/y_47306-lang-multi.jpg", "s8/e4_head.png", "r7/q16_econAisle.png"]},
+  {"detail": "Tick and mosaic at close range: in the q15 foreground (about 930 px/m) the tick strokes are about 15-20 px, or 0.02 m long, and they are blurred, so the back top reads as a coarse brush-stroke smear. In y_47306 the ticks are about 0.01-0.015 m and crisp. The swatch tile is being magnified past its resolution at seat-top distance.", "score": 6.5, "refs": ["r7/q15_econFronts.png", "ref/ana/y_47306-lang-multi.jpg", "raterA4/fab_cmp.png"]},
+  {"detail": "Headrest cover: colour verified. Cover/back luminance is 57/46 = 1.24 in q15 and 79/55 = 1.44 in q16, against photos ranging from 0.55 (y_47300) through 1.2-1.25 (y_47302, y_47306 right) to 1.56 (y_47306 centre). Size: the cover is 0.76 of the headrest face in q15 and 0.63 in y_47300, but 0.74 in y_47306 and larger in y_47301, so it is within the photo range. Back rise above the cover top: q15 about 0.05 m, y_47300 about 0.035 m. Acceptable.", "score": 7.5, "refs": ["raterA4/head_cmp.png", "ref/ana/y_47300-lang-multi.jpg", "ref/ana/y_47306-lang-multi.jpg", "ref/ana/y_47302-lang-multi.jpg"]},
+  {"detail": "Headrest cushion fabric: not fixed (w3b issue c). SEATMAT.yHead is the mosaic layer (#6272a4, LAYER.yMosaic), and yFabricC is the same layer (#5f6fa0). On every mosaic-back seat the cushion merges into the back. In the photos the cushion always uses a different weave from its back: y_47306 has mosaic on diamond, fleck on tick and a pale diamond on mosaic. y_47300 shows a visible outline on every seat.", "score": 6, "refs": ["src/09_seats.js:23", "src/09a_econ.js econSeat headrest loft", "ref/ana/y_47306-lang-multi.jpg", "raterA4/head_cmp.png"]},
+  {"detail": "Hood, screen and bezel: the proportions hold. The glass is 0.316 x 0.205 with active area 0.93 x 0.81 of it (y_47305 0.934 x 0.826). The hood still renders a little grey: q18 L 140 (#898c92) against y_47305 L 192 and sans 15 L 182.", "score": 8, "refs": ["ref/ana/y_47305-lang-multi.jpg", "r7/q18_seat35C.png"]},
+  {"detail": "Handset: the black handset at 0.76 of the dock and the separate release key at the dock's left end are verified in q18 and e5. The dock gap under the bezel is still 0.010 m: HY 0.587 puts the dock top at 0.612 and the bezel bottom at 0.622. y_47305 gives 38 px at 1915 px/m = 0.020 m. I asked for HY 0.58 in w3 and it was not changed.", "score": 7.5, "refs": ["ref/ana/y_47305-lang-multi.jpg", "r7/q18_seat35C.png", "s8/e5_screen.png"]},
+  {"detail": "Tray arms and hubs: newly wrong. The w3 fix put two proud grey poles (0.018 x 0.20, #a9aeb4) UP beside the stowed tray, ending in face-on disc 'donuts' (axis along z) at the rail. In the seated view (q18) they are the most conspicuous thing below the handset and read as crutch poles. The real arrangement is the reverse. In y_47307 the grey arm drops DOWN from a hinge block at the rail end, along the side of the lower panel. The hub is a large off-white BARREL with its axis along x, about 0.06 m, whose top is about 0.10 m below the rail (305 px at 3150 px/m), level with the pocket-flap top. sans 23 agrees: barrels at the outer ends just below the rail, flat off-white ears under them. sans 15 shows nothing proud beside the tray, only the rounded shell edge.", "score": 4.5, "refs": ["raterA4/tray_cmp.png", "raterA4/q18z.png", "raterA4/s15z.png", "ref/ana/y_47307-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "s8/e5_screen.png", "s8/e6_lowback.png"]},
+  {"detail": "Tray face and the band under the hood: not fixed (w3b issue 4). In sans 15 the stowed tray starts right under the hood lip. The pictogram placard (upper left), the dark latch (centre, straddling the lip) and the large round cup recess (right, about 0.054 m, 105/635 of the tray width) are all ON the tray face. The long 'stow and latch' placard is a visible light strip with a dark text line near the tray's bottom edge. In the model the tray only spans BH 0.23-0.44. The placard and recess sit at BH 0.48 on the hood-lip slope, above the tray top, with a blank strip of shell between (e5, q18z). The long placard (#dfe0e2 on #cfd2d6) is invisible.", "score": 5, "refs": ["raterA4/tray_cmp.png", "raterA4/s15z.png", "s8/e5_screen.png"]},
+  {"detail": "AC/USB plate: verified. It is portrait (0.046 x 0.054 against y_47307 0.046 x 0.059), with a lit blue USB, a green LED and a light bezel, upper left, just under the rail (a 0.009 gap; photo about 0.003). The bezel is 0.07 x 0.07, where the photo's is 0.071 x 0.087, a little taller than wide.", "score": 8, "refs": ["ref/ana/y_47307-lang-multi.jpg", "ref/web/econ/sans_ana-777-300er-economy-21-768x576.jpg", "s8/e6_lowback.png"]},
+  {"detail": "Pocket, net and card: better but still off. (1) The net is a solid black trough (0.33 x 0.06 x 0.010 plus a 0.332 binding bar) that is WIDER than the flap and stands out like a black plastic bin (e6, pocket_cmp). In sans 23 it is a see-through black elastic mesh with a ruched top band, the same width as the flap and hanging below it. (2) The flap renders brighter than the shell with a coarse pebble grain (LAYER.leather at this scale). The photo flap is smooth light-grey leatherette with a piped, rounded top edge. (3) Flap/rail ratio is 0.83 against 0.63 in sans 23, because the rail (0.36) and hubs (±0.172) are too far inboard. (4) The card body is 0.13 wide and white on the white shell, so only a floating purple bar with three grey squares shows. sans 20 shows a card about 0.20-0.22 wide with a tall purple header and white 'B777-300' text.", "score": 5.5, "refs": ["raterA4/pocket_cmp.png", "ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg", "ref/web/econ/sans_ana-777-300er-economy-23-768x576.jpg", "s8/e6_lowback.png", "s8/e2_back.png"]},
+  {"detail": "Pillow: the colour is now right, q16 #272f54 against y_47300 #232a48 / #313a61, and the size is fine. The shape reads as a padded board: a flat face, uniform, with no visible seam or piping and no pinched corners (q16 crop, e1, e7).", "score": 6.5, "refs": ["raterA4/q16pil.png", "ref/ana/y_47300-lang-multi.jpg", "s8/e1_front.png", "s8/e7_arm.png"]},
+  {"detail": "Armrests and front bracket: they hold against y_47302 and y_47303.", "score": 7.5, "refs": ["ref/ana/y_47302-lang-multi.jpg", "s8/e7_arm.png"]},
+  {"detail": "Aisle-end panel: the w3 fin is gone (q16 aisle crop). The panel still reads as a thin board. The black button panel is missing: the model has a light-grey yShellDark box on the side face. y_47302 (x 600-625, y 440-505) and y_47301 show a black panel with lit buttons on the vertical FRONT face, just below the arm nose. In y_47301 the end slab is a thick, flat rectangle; e3 shows a tapering panel that reaches almost to the floor.", "score": 6.5, "refs": ["raterA4/y301aisle.png", "raterA4/q16aisle.png", "ref/ana/y_47302-lang-multi.jpg", "s8/e3_side.png"]},
+  {"detail": "Belts: the cabin render gives #2c559f against y_47303 #31538f. This holds. The belts in y_47301 and y_47302 look dark grey, so the photos may show mixed belts, but I would not change this.", "score": 7.5, "refs": ["ref/ana/y_47303-lang-multi.jpg", "r7/q16_econAisle.png"]},
+  {"detail": "Life-vest pouch, electronics boxes, legs and baggage bar: they hold (e1, e8, y_47302).", "score": 7.5, "refs": ["ref/ana/y_47302-lang-multi.jpg", "s8/e1_front.png", "s8/e8_foot.png"]},
+  {"detail": "Footrest: the ribbed pedals and end caps hold. The hangers are still two straight boxes with a kink. y_47304 shows one broad, smoothly curved (banana) off-white arm meeting the pedal at the joint between the two pedal halves.", "score": 7, "refs": ["ref/ana/y_47304-lang-multi.jpg", "s8/e8_foot.png"]}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Tray arms and hubs are inverted. Grey poles stand UP beside the stowed tray and end in face-on discs, where the real arms drop DOWN from the rail ends to large barrel hubs beside the pocket top. In the seated view this is the most conspicuous error.",
+   "problem": "09a_econ.js, the !noScreen block: for s = ±1, gRBox(0.018, 0.20, 0.026) at on(0.33, 0.011, s*0.172) '#a9aeb4' (poles), plus gCyl(0.032, 0.032, 0.03) and gCyl(0.012, …) via hz(0.222, …, s*0.172). hz rotates the axis to z, so the discs face the viewer. The rail is gCyl(0.008, 0.008, 0.36).",
+   "evidence": "q18 (zoom raterA4/q18z.png) and e5: two poles flank the tray from its top down to the donut hubs. y_47307: hinge block at the rail end, flat grey arm down the panel side, off-white ribbed barrel (axis x) whose top is about 0.10 m below the rail. sans 23: barrels at the outermost ends just below the rail, flat ears below them. sans 15 (raterA4/s15z.png): nothing proud beside the tray.",
+   "fix": "Delete the pole gRBox and both hz discs. Replace with, for s = ±1: hinge block gRBox(0.022, 0.032, 0.03, 0.006, 1) at on(0.222, 0.012, s*0.198) in SEATMAT.armPost; arm gRBox(0.02, 0.11, 0.018, 0.006, 1) at on(0.165, 0.012, s*0.205) in SEATMAT.armPost; barrel hub gCyl(0.03, 0.03, 0.05, 16) at M4.mul(on(0.105, 0.022, s*0.205), M4.trs(0, 0, 0, 0, 0, Math.PI/2)) in SEATMAT.arm (axis x); two dark grooves gCyl(0.0305, 0.0305, 0.003, 16) with the same rotation at dx s*0.205 ± 0.012 in '#9ea3a9'. Lengthen the rail to gCyl(0.008, 0.008, 0.40, 8)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The tray does not reach the hood lip. The pictogram placard, latch and cup recess sit on a blank band of shell above the tray, where they belong on the tray face, and the long placard is invisible.",
+   "problem": "Tray gRBox(0.325, 0.21) at on(0.335) spans BH 0.23-0.44. The placard is gQuad(0.05, 0.02) at on(0.48, …, -0.13), the recess hz(0.48, …, 0.13) r 0.022, the latch on(0.455). The long placard #dfe0e2 sits on the #cfd2d6 tray with no text line.",
+   "evidence": "sans 15 zoom (raterA4/tray_cmp.png): the tray top is directly under the hood lip, with the latch straddling it. Pictogram upper left, recess (about 0.054 m across) right, both on the tray face; the long placard is a visible light strip with a dark text line just above the rail. e5 / q18z: a blank shell strip with the placard and recess above the tray top.",
+   "fix": "Tray gRBox(0.33, 0.235, 0.018, 0.01, 1) at on(0.353, 0.009), spanning 0.235-0.47 so its top tucks under the hood lip at 0.49. Pictogram gQuad(0.055, 0.022) at on(0.425, 0.0185, -0.10) '#eceded'. Recess: gCyl(0.027, 0.027, 0.004, 16) at hz(0.415, 0.0185, 0.10) '#b9bdc3' and inner r 0.02 '#c9ccd0'. Latch gRBox(0.052, 0.022, 0.014, 0.004, 1) at on(0.47, 0.012) '#6f737a' (dark, as in sans 15). Long placard gQuad(0.24, 0.018) at on(0.252, 0.0185) '#eef0f2', plus a text line gQuad(0.20, 0.003) at on(0.25, 0.019) '#8a8e94'."
+  },
+  {
+   "severity": "medium",
+   "detail": "The pocket net is a solid black trough wider than the flap. The flap is too bright and coarse-grained, and the flap sits too wide between the hubs. The safety card shows only as a floating purple bar.",
+   "problem": "Net gRBox(0.33, 0.06, 0.010) LAYER.grille and binding gBox(0.332, 0.012, 0.016) are wider than the 0.30-0.31 flap loft. The flap uses l: LAYER.leather '#c9ccd1'. The card body gRBox(0.13, 0.06) '#e6e6ea' is invisible on the shell, leaving the 0.13 purple quad and grey squares.",
+   "evidence": "raterA4/pocket_cmp.png against sans 23: the mesh is see-through with a ruched band and the same width as the flap; the flap is smooth leatherette with a piped top; flap/rail is 0.63 (model 0.83). sans 20: card about 0.20-0.22 wide with a tall purple header.",
+   "fix": "Flap loft widths 0.30/0.31 → 0.26/0.27, colour '#bdc0c4', l: LAYER.plastic. Add piping gCyl(0.004, 0.004, 0.27, 8) along x at on(0.15, 0.032) '#a9acb1'. Net gRBox(0.27, 0.07, 0.016, 0.02, 2) at on(0.05, 0.022) '#18191c' with LAYER.grille at a finer scale if LAYER_PARAMS allows. The binding becomes a ruched band gRBox(0.27, 0.012, 0.02, 0.005, 1) at on(0.083, 0.026) '#2a2b30'. Card: gRBox(0.21, 0.055, 0.003, 0.002, 1) at on(0.152, 0.016, 0.035) '#f4f4f6', header gQuad(0.21, 0.024) at on(0.168, 0.0177, 0.035) '#5b3a8e', white text gQuad(0.10, 0.008) at on(0.168, 0.0179, 0.035) '#ffffff'. Keep the pictogram squares on the white body at y 0.145. Together with the hubs moved to ±0.205 (issue 1), flap/rail comes to about 0.67."
+  },
+  {
+   "severity": "medium",
+   "detail": "On every mosaic-back seat the headrest cushion uses the same weave as the back and vanishes (w3b issue c, not fixed).",
+   "problem": "SEATMAT.yHead = LAYER.yMosaic '#6272a4' and yFabricC = LAYER.yMosaic '#5f6fa0': the same pattern and almost the same colour.",
+   "evidence": "y_47306: the cushion always contrasts with its back (mosaic on diamond, fleck on tick, pale diamond on mosaic). raterA4/head_cmp.png: in the model the cushion outline is lost on mosaic seats.",
+   "fix": "09a_econ.js econSeat: const HF = F === SEATMAT.yFabricC ? SEATMAT.yFabric : SEATMAT.yHead; and use HF in the headrest loftAt. Apply the same rule to the yHead box in econUnitFar, using the rotated fab."
+  },
+  {
+   "severity": "low",
+   "detail": "The handset dock still sits 0.010 m under the bezel, where the photo gap is 0.020 m.",
+   "problem": "HY = 0.587 and the dock is 0.05 tall, so the dock top is at 0.612 and the bezel bottom at 0.622.",
+   "evidence": "y_47305: bezel bottom y 450, dock top y 488, 38 px at 1915 px/m = 0.020 m. q18: 14 px at 1244 px/m = 0.011 m.",
+   "fix": "HY = 0.577. Every key uses HY, so they all move with it. The dock bottom at 0.552 stays on the hood face, which starts at 0.53."
+  },
+  {
+   "severity": "low",
+   "detail": "The aisle-end button panel is missing: there is a light-grey box on the side face instead of a black panel on the front face.",
+   "problem": "gRBox(0.02, 0.09, 0.05) at M4.trs(xa + o*0.024, 0.46, -0.40) in SEATMAT.yShellDark.",
+   "evidence": "y_47302 x 600-625, y 440-505 and y_47301: a black panel with lit buttons on the vertical front edge of the end slab, just below the arm nose.",
+   "fix": "Replace it with gRBox(0.022, 0.075, 0.006, 0.003, 1) at M4.trs(xa + o*0.012, 0.55, -0.414) {c: '#1b1c20', r: 0.3}, plus two gQuad(0.008, 0.008) at y 0.57 and 0.54 with {c: '#d8dce4', e: 0.3} (buttons)."
+  },
+  {
+   "severity": "low",
+   "detail": "The pillow reads as a padded board: flat face, no seam, no pinched corners.",
+   "problem": "The superellipse loft PS has corner r 0.012 + 0.05*(1-e), so the corners are rounded rather than pinched, and there is no piping.",
+   "evidence": "y_47300: four pillows with piped edges and pointed corner ears. raterA4/q16pil.png and e1: a smooth rounded slab.",
+   "fix": "In the PS loop set the corner radius r = 0.004 + 0.02*(1-e), so the section corners stay tight and the pinch reads. Add a piping ring: 4 gCyl(0.004, 0.004, len, 6) edges around the pillow's mid-plane in SEATMAT.yPillow with c '#1f2645'."
+  },
+  {
+   "severity": "low",
+   "detail": "The tick fabric blurs into coarse 2 cm brush strokes on the seat tops nearest the camera.",
+   "problem": "The swatch tile is magnified past its resolution at about 1 m distance.",
+   "evidence": "q15 foreground left: strokes of 15-20 px at about 930 px/m, soft. y_47306: 1-1.5 cm crisp ticks.",
+   "fix": "In test/make_swatches.py, cut y_tick at 2x the texel density (a 512 tile over the same metres). Alternatively, in LAYER_PARAMS (03_tex.js, shared) lower the yJacq detail scale about 0.7x, so the ticks are shorter and a procedural fine-grain octave shows up close."
+  },
+  {
+   "severity": "low",
+   "detail": "The footrest hangers are still two straight boxes with a kink.",
+   "problem": "Two gRBox links at -20° and -34°.",
+   "evidence": "y_47304: one broad, smoothly curved off-white arm reaching the pedal joint.",
+   "fix": "Replace them with a sweep through 4 points (0.30, -0.10) → (0.24, -0.075) → (0.17, -0.04) → (0.12, -0.005) as three short gRBox segments at -12°, -25° and -40°, each 0.038 x 0.07 x 0.03 and overlapping by 0.01. Alternatively use gLoft along y with the z offsets of those points."
+  }
+ ],
+ "questionsForUser": [
+  "Belts: y_47303 shows light-blue webbing, but y_47301 and y_47302 look dark grey. Do ANA's 777 economy belts vary by seat or by refit? The model uses blue everywhere.",
+  "Do you have a seated, straight-on photo of the lower seat back (tray stowed, hubs, pocket)? sans 15 is the only one, and it is dim and warm-lit."
+ ]
+}

@@ -32,7 +32,7 @@ function econSeat(B, x0, lod, opts = {}) {
   loftAt(B, RS.map(([y, z, d, w, r]) => SEC(y, w, d, z - d / 2, r)), BH, SEATMAT.yShell, lod ? 2 : 3);
   // 6-way headrest: a separate cushion ~0.2 tall, ~0.065 proud of the back, with rounded wing ends (y_47306 / 47302 /
   // 47300, w2 A + B) [D]
-  loftAt(B, [SEC(0.60, 0.33, 0.06, -0.035, 0.028), SEC(0.62, 0.37, 0.09, -0.05, 0.045), SEC(0.77, 0.375, 0.095, -0.05, 0.047), SEC(0.79, 0.35, 0.07, -0.045, 0.035), SEC(0.80, 0.30, 0.04, -0.038, 0.02)], BH, SEATMAT.yHead, lod ? 3 : 4);
+  loftAt(B, [SEC(0.60, 0.33, 0.06, -0.035, 0.028), SEC(0.62, 0.37, 0.09, -0.05, 0.045), SEC(0.77, 0.375, 0.095, -0.05, 0.047), SEC(0.79, 0.35, 0.07, -0.045, 0.035), SEC(0.80, 0.30, 0.04, -0.038, 0.02)], BH, F === SEATMAT.yFabricC ? SEATMAT.yFabric : SEATMAT.yHead, lod ? 3 : 4);   // w4 A: cushion vanished on mosaic backs
   // slate leatherette cover lying on the cushion front, wrapped ~3 cm over its top and hanging ~2.5 cm below it (the
   // flap hangs past the cushion onto the back, y_47306 right seat) [D]
   // one piece: plate on the cushion front, a fold overlapping both it and the cushion top, a hem tucking back (w3 B)
@@ -64,7 +64,7 @@ function econSeat(B, x0, lod, opts = {}) {
     // IFE handset docked in a dark recess 0.04 below the bezel (y_47305, sanspotter 15/27): dark-navy pill with an oval
     // key, a D-pad ring + OK, +/- rockers, a round key and four colour keys in a diamond (blue top, green left, red
     // right, yellow bottom) [D]
-    const HY = 0.587, hz = (y, dz, dx) => M4.mul(on(y, dz, dx), M4.trs(0, 0, 0, 0, Math.PI / 2));
+    const HY = 0.577, hz = (y, dz, dx) => M4.mul(on(y, dz, dx), M4.trs(0, 0, 0, 0, Math.PI / 2));
     B.add(gRBox(0.165, 0.05, 0.01, 0.022, 1), on(HY, 0.0), { c: '#15171d', r: 0.5 });
     // black handset filling ~0.76 of the dock, with the separate release key at the dock's left end (w3 A) [D]
     const HX = 0.012;
@@ -75,38 +75,43 @@ function econSeat(B, x0, lod, opts = {}) {
     for (const dy of [0.008, -0.008]) B.add(gBox(0.006, 0.011, 0.005), on(HY + dy, 0.011, HX - 0.012), { c: '#3a3f52', r: 0.35 });
     key(HX + 0.004, 0, 0.0045, '#3a3f52');
     [['#3aa0ff', 0, 0.008], ['#40c070', -0.008, 0], ['#e04040', 0.008, 0], ['#e0c040', 0, -0.008]].forEach(([c, dx, dy]) => key(HX + 0.036 + dx, dy, 0.0034, c));
-    // under the hood: round coat-hook recess (y_47303) mirroring a small white pictogram placard, tray latch between
-    // (sanspotter 15: two light fittings either side under the handset) [D]
-    B.add(gCyl(0.022, 0.022, 0.004, 12), hz(0.48, 0.0, 0.13), { c: '#b9bdc3', r: 0.45 });
-    B.add(gCyl(0.015, 0.015, 0.004, 12), hz(0.48, 0.0015, 0.13), { c: '#d6d8db', r: 0.45 });
-    B.add(gQuad(0.05, 0.02), on(0.48, 0.001, -0.13), { c: '#eceded', r: 0.5 });
-    B.add(gRBox(0.05, 0.012, 0.012, 0.005, 1), on(0.455, 0.004), { c: '#9ea3a9', r: 0.4 });
-    // plain light-grey tray on grey side arms from large hinge hubs at its lower corners, a metal rail along its
-    // bottom and the long "stow and latch handset" placard just above the rail (sanspotter 20 / 23, w3 A) [D]
-    B.add(gRBox(0.325, 0.21, 0.018, 0.01, 1), on(0.335, 0.009), SEATMAT.yTray);
-    B.add(gQuad(0.22, 0.02), on(0.245, 0.0185), { c: '#dfe0e2', r: 0.5 });
-    B.add(gCyl(0.008, 0.008, 0.36, 8), M4.mul(on(0.222, 0.012), M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), SEATMAT.frame);
+    // stowed tray reaching up under the hood lip, carrying the pictogram placard (left), the dark latch and the round
+    // cup / coat-hook recess (right) (sanspotter 15, y_47303); the long "stow and latch handset" placard along its foot
+    // above the metal rail; flat arms drop from hinge blocks at the rail ends to off-white barrel hubs at pocket-top
+    // level (sanspotter 15 / 23, y_47307; w4 A: the w3 arms stood up the wrong way) [D]
+    B.add(gRBox(0.33, 0.235, 0.018, 0.01, 1), on(0.353, 0.009), SEATMAT.yTray);
+    B.add(gQuad(0.055, 0.022), on(0.425, 0.0185, -0.10), { c: '#eceded', r: 0.5 });
+    B.add(gCyl(0.027, 0.027, 0.004, 16), hz(0.415, 0.0185, 0.10), { c: '#b9bdc3', r: 0.45 });
+    B.add(gCyl(0.02, 0.02, 0.004, 16), hz(0.415, 0.02, 0.10), { c: '#c9ccd0', r: 0.45 });
+    B.add(gRBox(0.052, 0.022, 0.014, 0.004, 1), on(0.47, 0.012), { c: '#6f737a', r: 0.4 });
+    B.add(gQuad(0.24, 0.018), on(0.252, 0.0185), { c: '#eef0f2', r: 0.5 });
+    B.add(gQuad(0.20, 0.003), on(0.25, 0.019), { c: '#8a8e94', r: 0.5 });
+    B.add(gCyl(0.008, 0.008, 0.40, 8), M4.mul(on(0.222, 0.012), M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), SEATMAT.frame);
     for (const s of [-1, 1]) {
-      B.add(gRBox(0.018, 0.20, 0.026, 0.006, 1), on(0.33, 0.011, s * 0.172), { c: '#a9aeb4', r: 0.45 });
-      B.add(gCyl(0.032, 0.032, 0.03, 14), hz(0.222, 0.008, s * 0.172), { c: '#c3c6ca', r: 0.45 });
-      B.add(gCyl(0.012, 0.012, 0.032, 10), hz(0.222, 0.009, s * 0.172), { c: '#8e9399', r: 0.45 });
+      const xa = (y, dz, dx) => M4.mul(on(y, dz, dx), M4.trs(0, 0, 0, 0, 0, Math.PI / 2));
+      B.add(gRBox(0.022, 0.032, 0.03, 0.006, 1), on(0.222, 0.012, s * 0.198), SEATMAT.armPost);
+      B.add(gRBox(0.02, 0.11, 0.018, 0.006, 1), on(0.165, 0.012, s * 0.205), SEATMAT.armPost);
+      B.add(gCyl(0.03, 0.03, 0.05, 16), xa(0.105, 0.022, s * 0.205), SEATMAT.arm);
+      for (const g of [-0.012, 0.012]) B.add(gCyl(0.0305, 0.0305, 0.003, 16), xa(0.105, 0.022, s * 0.205 + g), { c: '#9ea3a9', r: 0.45 });
     }
     // universal AC socket (portrait, ~0.046 x 0.054) with a lit blue USB port and green LED in a square light bezel, left,
     // between the tray rail and the pocket (y_47307, sanspotter 21) [V]
-    B.add(gRBox(0.07, 0.07, 0.006, 0.006, 1), on(0.17, 0.004, -0.15), { c: '#c2c5c9', r: 0.45 });
-    B.add(gRBox(0.046, 0.054, 0.004, 0.003, 1), on(0.17, 0.007, -0.15), { c: '#26282c', r: 0.45 });
-    B.add(gQuad(0.014, 0.005), on(0.19, 0.0092, -0.15), { c: '#4a90ff', r: 0.3, e: 0.8 });
-    B.add(gQuad(0.004, 0.004), on(0.178, 0.0092, -0.137), { c: '#40e060', r: 0.3, e: 0.9 });
-    for (const [dx, dy] of [[0, 0.004], [-0.013, -0.014], [0.013, -0.014]]) B.add(gQuad(0.007, 0.009), on(0.17 + dy, 0.0092, -0.15 + dx), SEATMAT.port);
-    // literature pocket between the tray arms: a bulging light-grey leatherette flap (~0.31 wide) over a black net, the
-    // purple-headed "B777-300" safety card showing above the flap (sanspotter 20 / 21 / 23; w3 A) [V]
-    B.add(gQuad(0.30, 0.01), on(0.147, 0.0135), { c: '#3a3c42', r: 0.7 });                       // pocket mouth
-    B.add(gRBox(0.13, 0.06, 0.003, 0.002, 1), on(0.14, 0.016, 0.04), { c: '#e6e6ea', r: 0.6 });
-    B.add(gQuad(0.13, 0.012), on(0.164, 0.0176, 0.04), { c: '#5b3a8e', r: 0.6 });
-    for (let k = 0; k < 3; k++) B.add(gQuad(0.015, 0.012), on(0.152, 0.0176, 0.0 + k * 0.03), { c: '#8a8d94', r: 0.6 });
-    B.add(gLoft([SEC(-0.035, 0.30, 0.012, 0, 0.005), SEC(0.0, 0.31, 0.022, 0.004, 0.008), SEC(0.035, 0.30, 0.012, 0, 0.005)], 2), on(0.115, 0.022), { c: '#c9ccd1', r: 0.5, l: LAYER.leather });
-    B.add(gRBox(0.33, 0.06, 0.010, 0.006, 1), on(0.05, 0.02), { c: '#26272c', r: 0.7, l: LAYER.grille });
-    B.add(gBox(0.332, 0.012, 0.016), on(0.08, 0.025), { c: '#1c1d22', r: 0.6 });
+    B.add(gRBox(0.07, 0.07, 0.006, 0.006, 1), on(0.17, 0.004, -0.14), { c: '#c2c5c9', r: 0.45 });
+    B.add(gRBox(0.046, 0.054, 0.004, 0.003, 1), on(0.17, 0.007, -0.14), { c: '#26282c', r: 0.45 });
+    B.add(gQuad(0.014, 0.005), on(0.19, 0.0092, -0.14), { c: '#4a90ff', r: 0.3, e: 0.8 });
+    B.add(gQuad(0.004, 0.004), on(0.178, 0.0092, -0.127), { c: '#40e060', r: 0.3, e: 0.9 });
+    for (const [dx, dy] of [[0, 0.004], [-0.013, -0.014], [0.013, -0.014]]) B.add(gQuad(0.007, 0.009), on(0.17 + dy, 0.0092, -0.14 + dx), SEATMAT.port);
+    // literature pocket between the hubs: a bulging light-grey flap (~0.27 wide) with piping over a see-through black
+    // net, the purple-headed "B777-300" safety card (~0.21 wide) standing above the flap (sanspotter 20 / 21 / 23) [V]
+    B.add(gQuad(0.26, 0.01), on(0.147, 0.0135), { c: '#3a3c42', r: 0.7 });                       // pocket mouth
+    B.add(gRBox(0.21, 0.055, 0.003, 0.002, 1), on(0.152, 0.016, 0.035), { c: '#f4f4f6', r: 0.6 });
+    B.add(gQuad(0.21, 0.024), on(0.168, 0.0177, 0.035), { c: '#5b3a8e', r: 0.6 });
+    B.add(gQuad(0.10, 0.008), on(0.168, 0.0179, 0.035), { c: '#ffffff', r: 0.6 });
+    for (let k = 0; k < 4; k++) B.add(gQuad(0.015, 0.012), on(0.15, 0.0176, -0.02 + k * 0.035), { c: '#8a8d94', r: 0.6 });
+    B.add(gLoft([SEC(-0.035, 0.26, 0.012, 0, 0.005), SEC(0.0, 0.27, 0.022, 0.004, 0.008), SEC(0.035, 0.26, 0.012, 0, 0.005)], 2), on(0.115, 0.022), { c: '#bdc0c4', r: 0.5, l: LAYER.plastic });
+    B.add(gCyl(0.004, 0.004, 0.27, 8), M4.mul(on(0.15, 0.032), M4.trs(0, 0, 0, 0, 0, Math.PI / 2)), { c: '#a9acb1', r: 0.5 });
+    B.add(gRBox(0.27, 0.07, 0.016, 0.02, 2), on(0.05, 0.022), { c: '#18191c', r: 0.7, l: LAYER.grille });
+    B.add(gRBox(0.27, 0.012, 0.02, 0.005, 1), on(0.083, 0.026), { c: '#2a2b30', r: 0.6 });
   }
   // footrest for the passenger behind: two off-white hanger arms clamped to the rear spreader tube, carrying ribbed
   // aluminium pedals (y_47304)
@@ -201,7 +206,7 @@ function econUnitFar(n, rot = 0) {
     B.add(gRBox(0.42, 0.86, 0.08, 0.035, 1), M4.mul(BH, M4.trs(0, 0.43, -0.005)), fabs[(k * 7 + n * 3 + rot) % 3]);   // same mix as econUnit
     B.add(gRBox(0.446, 0.62, 0.045, 0.015, 1), M4.mul(BH, M4.trs(0, 0.25, 0.058)), SEATMAT.yShell);
     B.add(gRBox(0.375, 0.39, 0.09, 0.035, 1), M4.mul(BH, M4.trs(0, 0.68, 0.077)), SEATMAT.yShell);    // screen hood
-    B.add(gRBox(0.37, 0.2, 0.09, 0.035, 1), M4.mul(BH, M4.trs(0, 0.70, -0.05)), SEATMAT.yHead);
+    B.add(gRBox(0.37, 0.2, 0.09, 0.035, 1), M4.mul(BH, M4.trs(0, 0.70, -0.05)), fabs[(k * 7 + n * 3 + rot) % 3] === SEATMAT.yFabricC ? SEATMAT.yFabric : SEATMAT.yHead);
     B.add(gBox(0.27, 0.225, 0.01), M4.mul(BH, M4.trs(0, 0.6875, -0.1)), SEATMAT.yCover);
     B.add(gQuad(0.316, 0.205), M4.mul(BH, M4.trs(0, 0.7275, 0.1225)), SEATMAT.bezel);
     B.add(gQuad(0.294, 0.166), M4.mul(BH, M4.trs(0, 0.7275, 0.1235)), SEATMAT.screen, atlasUV('screen'));
