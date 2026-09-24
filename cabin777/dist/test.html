@@ -3067,6 +3067,8 @@ const SEATMAT = {
   fFabric: { c: '#5e5857', r: 0.92, l: LAYER.fTweed },
   fLeather: { c: '#4f4b49', r: 0.48, l: LAYER.leather },
   fFlap: { c: '#6d6a68', r: 0.45, l: LAYER.leather },
+  fCap: { c: '#4a4541', r: 0.35, m: 0.2, l: LAYER.plastic },
+  fConsole: { c: '#7a736c', r: 0.45, l: LAYER.plastic },
   fCushionBlue: { c: '#3d3875', r: 0.85, l: LAYER.fabric },
   fShelf: { c: '#342b26', r: 0.35, l: LAYER.fWood },
   fWarm: { c: '#ffe7c4', r: 0.5, e: 0.55 },
@@ -3527,7 +3529,7 @@ function suiteUnit(opts = {}) {
   const xo = -hx + 0.03;                      // inner face of the outer side
   const seatX = xo + shelfW + 0.08 + 0.325;   // cushion centre
   const xa = hx - 0.16;                       // inner face of the aisle-side wardrobe wall
-  const cap = (cw, cd, x, y, z) => B.add(gRBox(cw + 0.014, 0.035, cd + 0.014, 0.014, 2), M4.trs(x, y + 0.012, z), SEATMAT.fWood);
+  const cap = (cw, cd, x, y, z) => B.add(gRBox(cw + 0.016, 0.04, cd + 0.016, 0.018, 2), M4.trs(x, y + 0.014, z), SEATMAT.fCap);
   // aft wall (behind the seat) + front wall with the 43 in screen; dark wood caps on every wall top (f_17313)
   B.add(gRBox(w, H, 0.06, 0.02, 1), M4.trs(0, H / 2, -0.07), SEATMAT.fShell);
   cap(w, 0.06, 0, H, -0.07);
@@ -3555,7 +3557,7 @@ function suiteUnit(opts = {}) {
   // outer side: low skirt (window) or full-height partition half (centre), plus the long console
   if (center) B.add(gRBox(0.03, H, L - 0.14, 0.01, 1), M4.trs(-hx + 0.015, H / 2, -L / 2), SEATMAT.fDoor);
   else B.add(gRBox(0.03, 0.70, L - 0.14, 0.01, 1), M4.trs(-hx + 0.015, 0.35, -L / 2), SEATMAT.fShell);
-  B.add(gRBox(shelfW, 0.64, L - 0.30, 0.02, 1), M4.trs(xo + shelfW / 2, 0.32, -L / 2 - 0.04), SEATMAT.fInner);
+  B.add(gRBox(shelfW, 0.64, L - 0.30, 0.02, 1), M4.trs(xo + shelfW / 2, 0.32, -L / 2 - 0.04), SEATMAT.fConsole);
   B.add(gRBox(shelfW + 0.01, 0.025, L - 0.30, 0.008, 1), M4.trs(xo + shelfW / 2, 0.652, -L / 2 - 0.04), SEATMAT.fShell);
   // recessed dark-wood tray in the console top, forward of the controls
   B.add(gRBox(shelfW - 0.05, 0.006, 0.95, 0.004, 1), M4.trs(xo + shelfW / 2, 0.666, -1.25), SEATMAT.fShelf);
