@@ -45,7 +45,7 @@ PID = {p: i for i, p in enumerate(PARTS)}
 DENSITY = dict(fus=1.0, fin=1.0, hstab=0.55, eng=0.8, pylon=0.5, tip=0.9, gdoor=0.45)
 DIRS = ['+x', '-x', '+y', '-y', '+z', '-z']
 # textures that are never livery skin (cockpit / cabin interiors, gear, glazing, fan faces, chrome)
-NONSKIN_TEX = re.compile(r'cockpit|interior|carpet|seat|landing|gear|windshield|inside|chrome|panel|lights?\b|lights-', re.I)
+NONSKIN_TEX = re.compile(r'interior|carpet|seat|landing|gear|windshield|inside|chrome|^lights?\.', re.I)
 FAN_TEX = re.compile(r'fan', re.I)
 # models whose source has no cabin-window geometry: windows are painted into the atlas (js/aircraft/types.js win rows)
 PAINT_WINDOWS = {'b738', 'b744', 'a333', 'a388', 'crj2'}
@@ -57,10 +57,11 @@ PAD = 6                  # chart padding at 2048 px (1.5 px at 512)
 def source_path(key):
     os.makedirs(common.ORIG, exist_ok=True)
     cur = os.path.join(common.MD, key + '.sfom'); bak = os.path.join(common.ORIG, key + '.sfom')
-    if not os.path.exists(bak):
-        h = sfom.load(cur, textures=False)['head']
-        if 'atlas' in h: raise RuntimeError(f'{key}: model already atlased and no backup in {common.ORIG}; re-run tools/convert_models.py {key}')
-        shutil.copy2(cur, bak)
+    h = sfom.load(cur, textures=False)['head']
+    if 'atlas' not in h:
+        shutil.copy2(cur, bak)          # a fresh conversion (tools/convert_models.py): it becomes the source
+    elif not os.path.exists(bak):
+        raise RuntimeError(f'{key}: model already atlased and no source in {common.ORIG}; re-run tools/convert_models.py {key}')
     return bak
 
 
@@ -99,7 +100,7 @@ def engine_clusters(C):
 
 
 # ---------------------------------------------------------------- classification
-def classify(m, env, feat):
+def classify(m, env, feat, seeds=None):
     h = m['head']; mats = h['mats']; texs = h['textures']
     P, N, idx, Z = m['pos'], m['nrm'], m['idx'], m['zone']
     L = h['dims']['L']; semi = feat['wing']['semi']
@@ -135,18 +136,56 @@ def classify(m, env, feat):
     part[paint & (tz == 7)] = PID['pylon']
     part[paint & (tz == 4)] = PID['gdoor']
     # engines: nacelle skin only (outward-facing, not the fan face / inlet inside / exhaust faces)
-    z2 = np.where(paint & (tz == 2) & np.array([not FAN_TEX.search(t) for t in texn]))[0]
+    ENG_TEX = re.compile(r'engine|turbofan|nacelle|cowl', re.I)
+    etex = np.array([bool(ENG_TEX.search(t)) for t in texn])
+    z2 = np.where(paint & ((tz == 2) | ((tz == 0) & etex & (part == 0))) & np.array([not FAN_TEX.search(t) for t in texn]))[0]
     ecl, eng = engine_clusters(C[z2])
+    # real nacelles only: not the radome ('nose cone' names), not long thin strips, not APU / light bits
+    good = [j for j, e in enumerate(eng) if e['r'] >= 0.35 and e['x1'] < -0.06 * L and (e['x1'] - e['x0']) < 8 * e['r']]
+    remap = {j: i for i, j in enumerate(good)}
+    keepz2 = np.array([c in remap for c in ecl], bool) if len(ecl) else np.zeros(0, bool)
+    z2 = z2[keepz2]; ecl = np.array([remap[c] for c in ecl[keepz2]], int); eng = [eng[j] for j in good]
     eng_of = np.full(len(idx), -1, np.int16)
     z0p = np.where(paint & (tz == 0) & (part == 0))[0]
+    # models whose nacelles are not in the engine zone (E175, MD-11: merged into the wing mesh): find them from the type's
+    # engine stations (js/aircraft/types.js eng z, r; seeds only) by fitting a circle to the body-zone triangles there
+    if seeds and len(z0p):
+        from scipy.sparse import coo_matrix
+        from scipy.sparse.csgraph import connected_components
+        q_ = np.round(P / 0.002).astype(np.int64); _, inv = np.unique(q_, axis=0, return_inverse=True); inv = inv.reshape(-1)
+        Tq = inv[idx[z0p]]; nvq = inv.max() + 1
+        g = coo_matrix((np.ones(2 * len(Tq)), (np.concatenate([Tq[:, 0], Tq[:, 1]]), np.concatenate([Tq[:, 1], Tq[:, 2]]))), shape=(nvq, nvq))
+        _, lab = connected_components(g, directed=False)
+        tl = lab[Tq[:, 0]]
+        comps = []
+        for cc in np.unique(tl):
+            sel_ = z0p[tl == cc]
+            if len(sel_) < 40: continue
+            V = P[idx[sel_]].reshape(-1, 3); lo, hi = V.min(0), V.max(0)
+            comps.append(dict(tris=sel_, lo=lo, hi=hi, area=float(area[sel_].sum())))
+        for (zs, rs) in seeds:
+            if any(abs(e['zc'] - zs) < 1.5 * rs for e in eng): continue
+            best = None
+            for cp in comps:
+                dy, dz = cp['hi'][1] - cp['lo'][1], cp['hi'][2] - cp['lo'][2]; zc = (cp['lo'][2] + cp['hi'][2]) / 2
+                if np.sign(zc) != np.sign(zs) or abs(zc - zs) > 2.5 * rs: continue
+                if not (1.2 * rs < dy < 3.4 * rs and 1.2 * rs < dz < 3.4 * rs and 0.65 < dy / dz < 1.5): continue
+                if best is None or cp['area'] > best['area']: best = cp
+            if best is None: continue
+            lo, hi = best['lo'], best['hi']
+            eng.append(dict(yc=round(float((lo[1] + hi[1]) / 2), 3), zc=round(float((lo[2] + hi[2]) / 2), 3), r=round(float(((hi[1] - lo[1]) + (hi[2] - lo[2])) / 4), 3),
+                            x0=round(float(lo[0]), 3), x1=round(float(hi[0]), 3), seed=True))
+            z2 = np.concatenate([z2, best['tris']]); ecl = np.concatenate([ecl, np.full(len(best['tris']), len(eng) - 1)])
     for j, e in enumerate(eng):
         sel = z2[ecl == j]
         # inlet cowls modelled in the body zone (e.g. FG 737-800): body-zone triangles ahead of the engine-zone part,
         # inside the nacelle cylinder
         rr = np.hypot(C[z0p, 1] - e['yc'], C[z0p, 2] - e['zc'])
-        cand = z0p[(rr < 1.4 * e["r"]) & (C[z0p, 1] - e['yc'] < 1.05 * e['r']) & (C[z0p, 0] > e["x0"] - 0.2) & (C[z0p, 0] < e['x1'] + 3.2 * e['r'])]
+        cand = z0p[(rr < 1.4 * e["r"]) & (C[z0p, 1] - e['yc'] < 1.05 * e['r']) & (C[z0p, 0] > e["x0"] - 3.0 * e['r']) & (C[z0p, 0] < e['x1'] + 3.2 * e['r'])]
+        cand = np.setdiff1d(cand, sel)
         if len(cand):
             sel = np.concatenate([sel, cand]); e['x1'] = round(float(max(e['x1'], P[idx[cand]][:, :, 0].max())), 3)
+            e['x0'] = round(float(min(e['x0'], P[idx[cand]][:, :, 0].min())), 3)
         rad = C[sel][:, 1:] - np.array([e['yc'], e['zc']]); rl = np.linalg.norm(rad, axis=1)
         # outer skin = the outermost surface at its station and angle around the nacelle axis (the source normals are
         # not reliable: single-sided cowls, mirrored engines); fan faces and exhaust faces (|nx| > 0.8) excluded
@@ -262,14 +301,19 @@ def pack(charts, P, idx, S):
 
 
 # ---------------------------------------------------------------- detail (high-pass of the neutralised source texture)
-def detail_maps(m):
-    """per source texture: (D ratio map, K keep-dark map) in that texture's pixel space"""
+def detail_maps(m, orig=None):
+    """per source texture, in that texture's pixel space:
+      D  thin dark lines (panel lines, door and hatch outlines): black top-hat of the luminance (3 cm structuring
+         element) restricted to features longer than 0.8 m horizontally or vertically, as a multiplier 0..1. Lettering,
+         logos and windows of the source livery are not kept, so no ghost titles show through a new livery.
+      K  dark areas of the skin that stay as they are (anti-glare panel, radome, walkways): low-pass luminance below 55 %
+         of the white level, only regions up to 1.5 m^2 (a whole dark crown or belly of the source livery is repainted)
+      rgb the neutralised source colour (for K)"""
     out = {}
     h = m['head']; P, idx, UV = m['pos'], m['idx'], m['uv']
     for ti, im in enumerate(m['textures']):
         a = np.asarray(im).astype(np.float32) / 255
         lum = a[..., :3] @ np.array([0.299, 0.587, 0.114], np.float32)
-        # texel density of this texture on the model (px per metre), from the triangles that use it
         mats = [i for i, mm in enumerate(h['mats']) if mm['tex'] == ti]
         sel = np.isin(m['tri_mat'], mats)
         dens = 200.0
@@ -280,12 +324,57 @@ def detail_maps(m):
             A2 = np.abs(np.cross(U[:, 1] - U[:, 0], U[:, 2] - U[:, 0])) / 2
             ok = (A3 > 1e-4) & (A2 > 1e-3)
             if ok.any(): dens = float(np.median(np.sqrt(A2[ok] / A3[ok])))
-        sig = max(2.0, 0.35 * dens)
-        base = ndimage.gaussian_filter(lum, sig, mode='wrap')
+        r = max(1, int(round(0.03 * dens)))
+        closed = ndimage.grey_closing(lum, size=(2 * r + 1, 2 * r + 1), mode='wrap')
+        th = np.maximum(closed - lum, 0)
+        # only line-like features: longer than 0.8 m horizontally or vertically (panel lines, door outlines), so the
+        # lettering, logos and windows of the source livery are dropped
+        Lp = max(5, int(round(0.8 * dens)))
+        tb = th > 0.06
+        lines = ndimage.binary_opening(tb, structure=np.ones((1, Lp), bool)) | ndimage.binary_opening(tb, structure=np.ones((Lp, 1), bool))
+        lines = ndimage.binary_dilation(lines, iterations=1) & tb
+        D = np.clip(1 - np.where(lines, th, 0) / np.maximum(closed, 0.05), 0, 1)
+        base = ndimage.gaussian_filter(lum, max(2.0, 0.35 * dens), mode='wrap')
         wl = h['textures'][ti]['white']
-        D = np.clip(lum / np.maximum(base, 0.05), 0, 1.15)
-        K = base < 0.55 * wl
-        out[ti] = (D, K.astype(np.float32), a[..., :3])
+        K0 = base < 0.55 * wl
+        lab, n = ndimage.label(K0)
+        if n:
+            sizes = ndimage.sum(K0, lab, index=np.arange(1, n + 1))
+            K0 = np.isin(lab, np.where(sizes <= 1.5 * dens * dens)[0] + 1)
+        # where the source livery was painted (the original texture differs from the neutralised one), the old titles
+        # and logos leave outlines: no detail and no kept-dark area there
+        src = (orig or {}).get(h['textures'][ti]['name'])
+        if src is not None:
+            o = np.asarray(src.convert('RGB').resize(im.size, Image.BILINEAR)).astype(np.float32) / 255
+            diff = np.abs(o - a[..., :3]).sum(-1) > 0.12
+            diff = ndimage.binary_dilation(diff, iterations=max(2, int(round(0.05 * dens))))
+            D[diff] = 1.0; K0[diff] = False
+        out[ti] = (D, K0.astype(np.float32), a[..., :3])
+    return out
+
+
+def source_images(key):
+    """the original (not neutralised) textures of the model's source, by image name (FlightAirMap .glb or FlightGear
+    files, as tools/convert_models.py reads them); {} when the source checkout is not available"""
+    os.environ.setdefault('FAM_DIR', os.path.join(common.ROOT, 'refs', 'cache', 'src', 'fam3d'))
+    sys.path.insert(0, os.path.join(common.ROOT, 'tools'))
+    try:
+        import convert_models as cm
+    except Exception:
+        return {}
+    out = {}
+    if key in cm.MODELS and os.path.exists(cm.MODELS[key][0]):
+        _, _, images, _ = cm.glb_primitives(cm.MODELS[key][0])
+        for im in images:
+            try: out[im['name']] = Image.open(io.BytesIO(im['data']))
+            except Exception: pass
+    elif key == 'b738':
+        import subprocess
+        repo = os.path.join(common.ROOT, 'refs', 'cache', 'src', 'fg', '737-800')
+        try:
+            data = subprocess.run(['git', 'show', 'HEAD:Models/737-800.png'], cwd=repo, capture_output=True, check=True).stdout
+            out['737-800.png'] = Image.open(io.BytesIO(data))
+        except Exception: pass
     return out
 
 
@@ -295,7 +384,9 @@ def process(key, S=2048, preview=None, outdir=None):
     m = sfom.load(src)
     h = m['head']; A = common.app(); F = common.features()[key]
     env = common.Envelope(m['pos'], m['idx'], m['zone'], h['dims']['L'])
-    part, eng_of, eng, Nf, area = classify(m, env, F)
+    T = A['types'][A['base'][key]]; s0 = T['fit']['s0'] if T['fit'] else 1.0
+    seeds = [(sg * e['z'] / s0, e['r'] / s0) for e in (T['eng'] or []) for sg in (-1, 1)]
+    part, eng_of, eng, Nf, area = classify(m, env, F, seeds)
     P, idx, UV, Nv, Z = m['pos'], m['idx'], m['uv'], m['nrm'], m['zone']
     charts = build_charts(m, part, eng_of, Nf, area)
     charts, kpm = pack(charts, P, idx, S)
@@ -386,7 +477,7 @@ def bake_neutral(m, key, S, charts, tri_new, tri_atlas, P2, SUV, UV2, env, A):
     Vi = tri_new[tt]                                   # (S, S, 3) new vertex ids
     pos = (P2[Vi] * bary[..., None]).sum(-2)
     suv = (SUV[Vi] * bary[..., None]).sum(-2)
-    dm = detail_maps(m)
+    dm = detail_maps(m, source_images(key))
     D = np.ones((S, S), np.float32); K = np.zeros((S, S), np.float32); orig = np.full((S, S, 3), WHITE, np.float32)
     texi = np.array([mats[i]['tex'] for i in m['tri_mat']])[tt]
     for ti, (Dm, Km, rgb) in dm.items():

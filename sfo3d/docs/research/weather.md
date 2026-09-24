@@ -81,7 +81,7 @@ Written 24 Sep 2026 (UTC) by a research agent. Tools: `tools/env/metar_decode.py
 
    | Source | Terms and access |
    |---|---|
-   | aviationweather.gov | NWS public domain. 100 requests/min, at most 400 entries per request. A custom User-Agent is asked for. Responses carry `cache-control: max-age=60` **[V/M]**. KSFO METARs reach the API 4.1–4.4 min after observation (p10–p90). |
+   | aviationweather.gov | NWS public domain. 100 requests/min, at most 400 entries per request. A custom User-Agent is asked for. Responses carry `cache-control: max-age=60` **[V/M]**. KSFO METARs reach the API 4.1–4.4 min after observation (p10–p90). **[corrected by verifier]** About 8 % of routine METARs arrived 6.6–28.6 min late, and one SPECI 89 min late (see 5.1). |
    | api.weather.gov | Public domain; "User Agent is required". The rate limit is not public. Also serves 5-minute unaugmented ASOS data **[V/M]**. |
    | atis.info D-ATIS | **No terms, licence or rate limit are published anywhere on the site.** Its only statement is "Do not use for real world flight planning or navigation." **[V]** It stays third-party/optional. |
    | IEM ASOS archive | Public domain, attribution appreciated **[V]**. Rate-limited in practice: it returned "Too many requests from your IP address" to a second quick query **[M]**. |
@@ -160,11 +160,15 @@ describe the condition in the remarks … For example, CIG LWR N would indicate 
   not an FAA-coded remark: JO 7900.5E has no such entry, and a search of the text finds none **[V]**. It could only
   appear as observer plain language. The decoder still records it (`rmk.fog_bank`) if it ever appears.
 - **`FG IN GAP W` / `FOG IN GAP W`: 96 reports.** 42 in 2017 and 31 in 2018, then rare. Peak months are August (31) and
-  July (15) **[M]**. The "gap" to the west of SFO is the terrain gap the marine layer flows through. Its name, the San
+  July (15) **[M]**.
+  **[corrected by verifier]** The 96 are all reports, including SPECIs: 75 `FG IN GAP W`, 19 `FOG IN GAP W` and
+  2 `FG IN GAP NW`. The per-year and per-month figures count **routine METARs only** (87 reports). Over all 96 reports
+  the counts are 45 in 2017, 33 in 2018 (UTC year), August 32 and July 16. The "gap" to the west of SFO is the terrain gap the marine layer flows through. Its name, the San
   Bruno Gap, is **[I]**: the remark itself does not name it. The count depends on observer habit, so do not use it
   as a climatology. When present, it should add a westward fog bank on the horizon (`rmk.fog_in_gap`).
 - Other KSFO plain language seen **[M]**:
-  - `VIS LWR W` (29×, "visibility lower west");
+  - `VIS LWR W` (29×, "visibility lower west"); **[corrected by verifier]** 26× exactly `VIS LWR W`, plus
+    `VIS LWR W-NW`, `VIS LWR NW` and `VIS LWR NW-NE` once each (29 `VIS LWR` in all);
   - `BINOVC` (13×, breaks in overcast);
   - `FU DSNT E`, `FU FEW004`;
   - `TS DSIPTD`;
@@ -276,6 +280,12 @@ surface wetness, wind{dir, speed, gust, variability}, lightning, aerosol tint}`.
   - "ASOS computes a running 10-minute harmonic mean";
   - "Visibilities of 10 miles or greater are reported as '10SM'".
 - FMH-1 (2005) RVR tables are also built on day contrast thresholds of "5.5 Percent" and "5.0 Percent" **[V]**.
+- **Verifier note (not a refutation).** The ASOS constants (ε = 0.055, I₀ = 25 cd, CDB = 0.084 mi⁻¹) come from
+  Rasmussen 1999, a peer-reviewed paper *describing* the NWS algorithm. The NWS algorithm specification itself was not
+  located; a web search did not find it, and the ASOS User's Guide gives no numeric constants. So the constants are
+  secondary. The two sources also disagree in size. With R99's constants, night V / day V at fixed σ is 2.66 at
+  0.05 mi, 2.45 at 0.1 mi, 1.97 at 0.5 mi, 1.77 at 1 mi, 1.31 at 5 mi and 1.13 at 10 mi. That matches the guide's
+  "1/2 to 1/3" only below about 0.3 mi. The σ table below follows R99; if the NWS spec is found, re-check it.
 
 **Mapping [V formula; M numbers].** σ_day = −ln(0.055)/V = 2.900/V. σ_night = ln(I0 / (CDB·V_mi)) / V_mi, converted to m⁻¹.
 
@@ -329,7 +339,8 @@ Recommended profile **[I]**. Use three slabs instead of today's single exponenti
    - In-cloud extinction is σ_c ≈ 3·LWC / (2·ρ_w·r_eff), assuming an extinction efficiency of about 2 for droplets
      much larger than the wavelength **[I, textbook relation]**.
    - With LWC 0.1–0.5 g m⁻³ and r_eff 6–10 µm, σ_c ≈ 0.025–0.075 m⁻¹, an in-cloud visual range of 40–120 m. The
-     values are **[2nd/I]**. MODIS–MISR marine-stratocumulus r_eff is 4–17 µm (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6988446/).
+     values are **[2nd/I]**. *Verifier note:* this range pairs low LWC with small r_eff and high LWC with large r_eff.
+     Taking the extremes independently gives 0.015–0.125 m⁻¹ (visual range 23–190 m with ε = 0.055). MODIS–MISR marine-stratocumulus r_eff is 4–17 µm (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6988446/).
    - This matters when the camera follows an arrival through the deck.
 3. **Free troposphere** above the inversion: clear-air σ.
 
@@ -403,6 +414,14 @@ https://www.cs.columbia.edu/CAVE/publications/pdfs/Garg_IJCV07.pdf, quotes the M
 In diameter form, Λ = 4.1 R^−0.21 mm⁻¹ and N₀ = 8,000 m⁻³ mm⁻¹. The median-volume diameter is D₀ = 3.67/Λ, a property of
 the exponential distribution. The values below are **[M]**:
 
+> **[corrected by verifier]** N₀ = 8,000 m⁻³ mm⁻¹ does **not** follow from the Garg & Nayar formula quoted above. Their
+> radius form, 8 × 10⁶ m⁻⁴ per metre of radius, converts to 4,000 m⁻³ mm⁻¹ per mm of diameter (da = 0.5 × 10⁻³ dD).
+> Integrated as printed, it gives **half** the drop counts in this table (976 instead of 1,951 drops/m³ at 1 mm/h).
+> 8,000 m⁻³ mm⁻¹ (0.08 cm⁻⁴) is the usual textbook Marshall–Palmer value, and it is what `render_params` uses.
+> However, neither Marshall & Palmer (1948) nor a glossary stating it could be fetched here: the AMS glossary returned a
+> Cloudflare 403 and Wikipedia a 429. Treat N₀, and so the two drop-count columns, as **[2nd/NV]**. Λ, D₀ and the fall
+> speeds do not depend on N₀ and stand.
+
 | Rate (mm/h) | Class | Drops > 0.5 mm per m³ | All drops per m³ | D₀ (mm) | Fall speed at D₀ (m/s) |
 |---|---|---|---|---|---|
 | 1 | light | 251 | 1,951 | 0.90 | 4.2 |
@@ -420,6 +439,8 @@ What the renderer should do **[I]**:
 - `TS`: lightning at the Table 13-7 rate. It is at the station if in the body, 5–10 NM away for VCTS, and on the horizon
   in the given direction for `LTG DSNT`.
 - Hail `GR`/`GS`: rare (2 reports in 10 years **[M]**).
+  **[corrected by verifier]** 3 reports in 2016–2025, all SPECIs and none routine: `GRRA` on 2 Mar 2024 04:48Z
+  (hail), and `-RAGS` on 6 Mar 2016 and `RAGS` on 23 Jan 2017 (small hail/snow pellets).
 
 ### 3.6 Wet surfaces, puddles, darkening
 
@@ -702,6 +723,12 @@ fetched 2026-09-24.
 - Response headers **[M]**: `cache-control: max-age=60`, an `etag`, no `access-control-allow-origin`.
 - Latency **[M]**, 141 KSFO reports: METAR `receiptTime − obsTime` p10 4.1, median 4.2, p90 4.4 min (one COR 28.6 min).
   SPECIs 3.1–5.0 min.
+  > **[corrected by verifier]** The percentiles are right (recomputed from `refs/cache/weather/metar_json_120h.json`
+  > and a fresh 120 h fetch: p10 4.12, median 4.22, p90 4.39 min over 117 routine METARs). The outliers are wrong:
+  > the 28.6 min report (`METAR KSFO 231456Z`) is **not** a COR (the only COR, `202356Z COR`, took 4.3 min), and
+  > **9** routine METARs, about 8 %, arrived 6.6–28.6 min late (e.g. 200756Z 20.7 min, 210356Z 20.9 min). SPECIs were
+  > 3.1–5.0 min except `SPECI KSFO 200301Z`, which arrived **89.4 min** late. The relay should keep polling after
+  > hh:03 and must tolerate a missing routine METAR for up to about 30 min.
 - Terms: NWS web content "is in the public domain, unless specifically noted otherwise, and may be used without charge
   for any lawful purpose so long as you do not: 1) claim it is your own …, 2) use it in a manner that implies an
   endorsement or affiliation with NOAA/NWS, or 3) modify its content and then present it as official government
@@ -864,3 +891,66 @@ Documentation: https://www.weather.gov/documentation/services-web-api (fetched 2
 - atis.info: https://atis.info/api/KSFO, https://atis.info/api/history/KSFO
 - Secondary: MODIS–MISR r_eff (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6988446/); NASA S'COOL cloud-cover formula
   (https://scool.larc.nasa.gov/lesson_plans/CloudCoverSolarRadiation.pdf)
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Verification (adversarial check)
+
+This check was run on 24 Sep 2026, 20:40–21:10Z, by an independent verifier. Every cited source that could be reached
+was fetched again, into the verifier's scratch directory, not `refs/cache/`. The tools and tests were run again, and key
+statistics were recomputed with an independent regex parser that does not use `metar_decode.py`. Nothing in `js/`,
+`data/` or `tools/` was changed, and nothing was committed. Statements that turned out wrong are corrected inline above,
+marked **[corrected by verifier]**.
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 1 | `js/livedata.js` `parseMetar` reads `M1/4SM` and `1 1/4SM` as 4 SM and `1/2SM` as 2 SM | **confirmed** | Ran in node: `visSM` = 4, 4 and 2. `3/4SM` also gives 4. With `VV002` the result has `clouds: []` and there is no gust field. The regex is `/\b(\d{1,2})SM\b/` (line 10). |
+| 2 | Fog capped at 0.004 m⁻¹ and at 97 % opacity; the app uses 3.912/V | **confirmed** | `js/live/app.js:125,129`: `Math.max(800, visSM*1609)`, `Math.min(3.912/vis, 0.004)*0.9` (0.0036 in effect) and `fog.w = 0.97`. `js/shaders/common.js:64` has `T = max(T, 1.0 - uFog.w)`. The "app now" column of the 3.1 table recomputes exactly. |
+| 3 | The live app renders one cloud layer (the lowest non-FEW) with an independent per-layer coverage | **confirmed** | `app.js` `main = layers.find(c => c.cover !== 'FEW')` feeds a single `uCloud` vec4, and `COVER` maps each amount separately. |
+| 4 | aviationweather.gov: "Cross-origin resource sharing is not permitted at this time"; 100 requests/min; 400 entries; custom UA; 30 days; footer v4.31; no ACAO; `max-age=60` | **confirmed** | https://aviationweather.gov/data/api/ fetched again; all quotes match verbatim, footer "v4.31". A GET with `Origin: https://example.com` and an OPTIONS preflight both returned no `access-control-allow-origin`; `cache-control: max-age=60` and an `etag` are present. `js/live/feed.js:144` falls back to that URL, so it fails in a browser. The cache files update "Once a minute" and TAFs "Every 10 minutes" (verbatim). OpenAPI `version: "v4.0"`, and `wxString` is "Encoded present weather string". The cached `hours=720` response has 400 reports. |
+| 5 | Median METAR latency 4.2 min (p10 4.1, p90 4.4); "one COR 28.6 min"; SPECIs 3.1–5.0 min | **partly refuted** | Percentiles confirmed: 4.12, 4.22 and 4.39 min over 117 routine METARs, in both the cached and a fresh 120 h JSON. However, the 28.6 min report is not a COR, 9 routine METARs took 6.6–28.6 min, and `SPECI KSFO 200301Z` took 89.4 min. Corrected in 1.8 and 5.1. |
+| 6 | ASOS uses Koschmieder with ε = 0.055 by day and simplified Allard (I₀ = 25 cd, CDB = 0.084 mi⁻¹) at night (Rasmussen 1999) | **confirmed as quoted; constants are secondary** | https://opensky.ucar.edu/system/files/2024-08/articles_15245.pdf fetched again; §6c and the Fig. 24 caption quote match. The statements "a little less than twice" (0.5 mi) and "more than 2.4 times" (< 0.1 mi) also match, and my recomputation gives 1.97 and 2.45. The NWS algorithm specification was not located (web search), so the constants rest on this secondary paper. See the note in 3.1. |
+| 7 | ASOS User's Guide: "1/2 to 1/3", "running 10-minute harmonic mean", "10 miles or greater", photocell at 0.5–3 fc, visibility sensors near the TDZ | **confirmed** | https://www.weather.gov/media/asos/aum-toc.pdf fetched again (918,728 bytes); all quoted. Caveat: the "1/2 to 1/3" ratio is not consistent with R99's constants above about 0.3 mi (note in 3.1). |
+| 8 | Extinction table in 3.1 (day, night, ratio 1.17 → 2.44, and 2.68 at ⅛ SM; the ε = 0.02 and app columns) | **confirmed** | Recomputed every cell independently; all match to the printed precision. |
+| 9 | WMO MOR 5 %, and CIE says the same | **confirmed** | WMO OSCAR page fetched again, definition verbatim. The CIE e-ILV 17-31-018 page says "attenuate by 95 %", which is equivalent. |
+| 10 | JO 7900.5E: summation principle (10.4o / 10.7), wind "true" (13.10), VRB ≤ 6 kt, visibility coding, FG/BR/MIFG/BCFG/VC/HZ/FU definitions, squall, RVR increments, Table 13-7 lightning, ALDARS 5/10 NM, Tables 9-2/9-4, 13-5, 13-6, haze/smoke tints, SLP982, trace 60000, P-group, CIG 005V010, FG SCT000/FU BKN020, $, 12,000 ft limit | **confirmed** | https://www.faa.gov/documentLibrary/media/Order/JO_7900.5E_with_Change_1.pdf downloaded again (4,864,356 bytes) and text-searched. Every quote was found verbatim or with trivial differences ("1 minute" is verbatim in 9.4b). The summation text is at both 10.4o ("Summation Amount") and 10.7 ("Summation Layer Amount"), so both citations are valid. The registry page shows "Status Active" and cancels JO 7900.5D (2016-12-20). |
+| 11 | AIM "Effective: 7/9/2026, Change 3"; 7-1 TAF/METAR key quotes (Plus6SM, 24/30 h, FM, RVR reporting) | **confirmed** | The AIM index and chap7_section_1 were fetched again; the quotes are verbatim. |
+| 12 | FMH-1 2019 official PDF is in AWS DEEP_ARCHIVE; 2005 mirror has 5.5 %/5.0 % RVR tables | **confirmed** | The icams-portal URL returned 403 `InvalidObjectState … DEEP_ARCHIVE`. The met.nps.edu mirror is FCM-H1-2005 (September 2005), and both table titles are found. |
+| 13 | Climatology tables 4.2, 4.3, 4.4, summer ceilings, clearing and onset times, FG by hour, RVR 28R only, remark counts | **confirmed** | `python3 tools/env/ksfo_climatology.py` run again on the cached IEM CSV reproduces every table exactly. An independent regex parser gives the same monthly "below 2500/5", the Jul/Aug hourly rows, FG ≤ 0.63 % (Jan), summer ceilings n = 6,389 / 700 / 1,100 / 1,900, clearing quartiles 09:56/10:56/11:56 with 25 never cleared, onset 18:56/20:56/22:56 on 281 days, tailwind ≥ 5 kt on 28 in 5.48 %, and HZ/FU clusters of 270/146/70 h. RA alone is 8.5–9.3 % Dec–Mar. |
+| 14 | Routine METARs at :56 (87,533 of 87,672 hours); AUTO in 21 reports; `$` in 4,881 of 10,708 | **confirmed** | 87,533 hours have a :56 report; 10 years are 87,672 hours. `AUTO` appears in 21 reports (20 in the body). `$` appears in 4,881 of 10,708. |
+| 15 | "FG BNK" never appears; "FG/FOG IN GAP W" 96 reports (42 in 2017, 31 in 2018; Aug 31, Jul 15) | **partly refuted (minor)** | 0 matches for `BNK` anywhere: confirmed. Of the 96, 2 are `FG IN GAP NW`, and the per-year and per-month figures come from routine METARs only (87 reports). Corrected in 2.4. |
+| 16 | Other plain language: `VIS LWR W` 29×, `BINOVC` 13×, `A02` 76×, `CIG 030 RWY L10` (122) | **partly refuted (minor)** | `BINOVC` 13 and `A02` 76 confirmed. `VIS LWR W` is exactly 26×; 29 is all `VIS LWR` (corrected in 2.4). `CIG hhh RWY L10` appears 122×, of which `CIG 030` is 6; 122 is the count of the format, not of the example value. `CHINO RWY L10` appears 57×. |
+| 17 | Hail GR/GS: 2 reports in 10 years | **refuted (minor)** | 3 reports, all SPECIs: `GRRA` (2024-03-02 04:48Z), `-RAGS` (2016-03-06) and `RAGS` (2017-01-23). Corrected in 3.5. |
+| 18 | ATIS wind = METAR minus 10° in all 22 non-calm pairs, same speed | **confirmed** | https://atis.info/api/history/KSFO fetched again and paired with METARs. All 22 non-calm pairs in 23 Sep 19:56Z – 24 Sep 18:56Z show −10°, and the new 24 Sep 19:56Z broadcast also does (35008 ↔ 34008). 07:56Z was calm in both; at 08:56Z the ATIS said 00000KT against METAR 28003KT. AirNav variation "14E (2015)". |
+| 19 | D-ATIS approach cycle (visuals → ILS 28R → ILS 28L → Quiet Bridge → visuals), VFR throughout, departures 28L/28R, "RY 1L, 1R CLSD" | **confirmed** | The broadcast-by-broadcast table reproduces the time bands exactly. None of the 25 METARs in the window had a ceiling below 3,000 ft or visibility below 5 SM. |
+| 20 | flysfo.com: West Plan "95-98% of the time", Southeast "Less than 5%", 45 and 36 arrivals/h; alert "reopen in early October 2026" | **confirmed** | Both pages fetched again; the quotes are verbatim. Note: the alert does not name the runway. Linking it to 1L/1R comes from the D-ATIS and is **[I]**. |
+| 21 | Quiet Bridge 28R "Orig 09JUL26" and Tipp Toe 28L/R "Amdt 3 24MAR22" minimums "SFO 2500'/5 or SFO 1000'/3 … eastern quadrant (030° to 120°)", SQL/San Mateo AWOS 2400'/5 | **confirmed** | https://aeronav.faa.gov/d-tpp/2609/00375quietbridge_vis28r.pdf and `…tipptoe_vis28lr.pdf` downloaded again, byte-identical to the cache. The text is verbatim, and the cycle is "SW-2, 03 SEP 2026 to 01 OCT 2026". |
+| 22 | JO 7110.65 3-5-1 runway selection quote | **confirmed** | chap3_section_5.html fetched again; the quote is verbatim. |
+| 23 | MIT LL ATC-252 and ATC-319 quotes | **confirmed** | Both PDFs downloaded again. The ATC-252 introduction has the quoted text verbatim ("25 June 1996", Clark & Wilson), as do the "5-15 miles", "3500 feet" and "must be staggered" passages. ATC-319 has "usually less than 1000 feet" and "base of the inversion height". |
+| 24 | AC 150/5345-27F: 15 kt full extension; 3 kt / ±5°; Size 1/2 dimensions; white/yellow/orange; 2 fc; 27E cancelled | **confirmed** | The PDF was downloaded again. It is dated 12/15/2021 and the header says "Change: 1". Every quote is verbatim, including "AC 150/5345-27E … dated September 26, 2013, is canceled". |
+| 25 | Garg & Nayar: Marshall–Palmer radius form and v = 200√a; table of drop densities | **quotes confirmed; N₀ unverifiable** | The quotes are verbatim. However, the diameter-form N₀ = 8,000 used in the table is 2× the conversion of the quoted formula. The original value (MP 1948, 0.08 cm⁻⁴) could not be fetched (AMS 403, Wikipedia 429). Corrected note in 3.5. |
+| 26 | Lagarde 2013 quotes | **confirmed** | The post was fetched again; all seven quotes are verbatim. |
+| 27 | NCEI 1991–2020 normals USW00023234: annual 19.64 in, 58.7 °F, monthly table | **confirmed** | The v1 API was queried again (monthly and annualseasonal). Name "SAN FRANCISCO INTL AP, CA US"; all values match, and the monthly values sum to 19.64. |
+| 28 | Licences: IEM public domain, attribution appreciated; NWS disclaimer; NWS API UA and rate-limit quotes | **confirmed** | The disclaimer and API documentation pages were fetched again; the quotes are verbatim (including the site's "execeed" typo). |
+| 29 | api.weather.gov and atis.info send `access-control-allow-origin: *` | **confirmed** | Both return `*` when an Origin header is sent. atis.info `/api/history` omitted the header when no Origin was sent, which is normal for browser CORS. |
+| 30 | api.weather.gov serves 5-minute unaugmented observations (empty `rawMessage`, `CLR` 3,810 m vs METAR SCT200, spurious 4 SM) | **confirmed** | A fresh fetch shows 5-minute stamps with `rawMessage` "" and `CLR` at 3,810 m, while the 19:56Z METAR has SCT200. At 20:00Z it read 6,437 m while the METAR said 10SM, the same artefact. The `cache-control` differs per response (`max-age=300, s-maxage=120` today), so the printed value is one sample only. |
+| 31 | atis.info publishes no terms, licence or rate limit | **confirmed (to the extent checkable)** | The SPA routes in the bundle are only `/`, `/:station` and `/api`. The only statement is "Do not use for real world flight planning or navigation." `/terms`, `/tos`, `/privacy` and `/about` all return the same 1,532-byte shell. |
+| 32 | Station coordinates; 868 m E and 89 m N of the ARP | **confirmed** | api.weather.gov gives −122.36558, 37.61961, 3.048 m, and AWC stationinfo gives 37.61961, −122.36561, elev 2. `js/geo.js llToWorld` gives x = 868.4 and z = −89.3. |
+| 33 | MTR AFD quotes of 24 Sep; OAK 12Z sounding 15.8 °C at the surface, 25.2 °C at 453 m | **confirmed** | The AFD issued 2026-09-24T17:33Z contains both quotes verbatim. IEM raob KOAK 202609241200: 15.8 °C at 3 m and 25.2 °C at 452.6 m. |
+| 34 | NASA S'COOL "P = 990 (1-0.75F³)"; MODIS–MISR r_eff 4–17 µm; OSM windsock at 37.6245391, −122.3871016 | **confirmed** | The PDF was fetched again. PMC6988446 says "ranges from 4 to 17 μm". An Overpass query over SFO returns exactly one `aeroway=windsock` node at those coordinates. |
+| 35 | Kasten & Czeplak exponent 3.4; Alduchov & Eskridge Magnus coefficients | **unverifiable** | The originals were not fetched; the report already tags both **[2nd]**. |
+| 36 | IEM returns "Too many requests from your IP address" to a quick second query | **unverifiable** | Not re-tested, to avoid loading the shared service. |
+| 37 | 38 tests pass; 30 + 28 real fixtures; mutation check (T-group +0.1 °C fails 33; visibility ×1.01 fails 42) | **confirmed** | `python3 tools/env/test_metar_decode.py`: 38 OK. All 30 recent fixtures appear verbatim in a fresh AWC 120 h fetch, and all 28 archive fixtures match IEM rows verbatim with the same timestamps. The two mutations were applied to scratch copies and gave exactly 33 and 42 failures. |
+| 38 | Decoder sweep over 107,075 archive rows leaves only malformed rows unparsed | **confirmed** | 107,075 = 96,367 + 10,708 non-GHCNH rows. No exceptions; 19 rows have leftover tokens, all malformed (`9012 10`, TAF text stored as a METAR, `10SMSM`, `VRB/05`, `BKN0080`, `SCT1040`, `FWE025`, winds without `KT`). |
+
+**Overall.** The report's key findings hold. The parser bug, fog caps, CORS block, ASOS day/night inversion, cumulative
+cloud amounts, climatology, runway-use facts, ATIS magnetic wind and KSFO remark facts were all reproduced against
+re-fetched primary sources or recomputed data. Corrections:
+- the latency outliers: the 28.6 min report is not a COR, about 8 % of routine METARs are late, and one SPECI took 89 min;
+- the hail count;
+- the fog-in-gap and `VIS LWR W` breakdowns;
+- the Marshall–Palmer N₀: the drop counts are 2× what the cited Garg & Nayar formula gives, and the textbook value used
+  could not be fetched.
+
+Caveats: the ASOS constants rest on Rasmussen 1999 (secondary) and disagree in size with the ASOS guide's "1/2 to 1/3".
+The in-cloud σ range assumes that LWC and r_eff co-vary.

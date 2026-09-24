@@ -519,6 +519,17 @@ can be combined with it. The app must show the OSM attribution (request for the 
 | B10 / B11 bridge assignment (major) | `BRIDGE_FORCE`: 1096422714 -> B11 (OSM ref + NAIP); 1096422712 -> B10, 1096422713 -> B11S by geometry (following the OSM refs would put B10's bridge on its right side: rejected) | - |
 | F15 circular verification (major) | not `naip`-verified; ADS-B is the independent check | verified_by adsb |
 
+Static geometry in the same round (`tools/build_airfield_details.py`, `tools/imagery/`, `js/live/world.js`; checked by
+`python3 tools/imagery/check_markings.py`: centrelines median 0.15 m from the paint, 90 holds median 0.10 m / max 0.70 m):
+12 holds added from the paint with OSM holding positions as locators (incl. ladders 100-125 m out, the T ladder pair,
+the 2 ILS holds with their own marking pattern; the OSM node at (306, 189) has no paint and was rejected), the painted
+E-W taxiway across 1L/1R that OSM lacks (traced on NAIP, named F1 by the SFO Museum polygon) with its 4 holds, hold
+bars clipped to the painted length (holds 23 / 24 / 26 / 41 of the reviewed file: 3.5 / 8.5 / 4.0 / 2.0 m shorter; review measured 4.0 / 9.5 / 3.0 / 1.7 m), NAIP centreline corrections
+above 1.5 m only when consistent over 24 m and smoothed (centreline 24's zig-zag gone; centreline 191 checked by eye and
+left: it lies on the western of three painted curves, the 2.8 m offset was to the middle one -
+`out/review/r2/cl191_check.png`), EMAS chevrons from the measured first apex with a 30.48 m pitch, and a 3 m pavement
+band under every hold bar (`data/sfo_pavement.*`; 1.5 ha; the ladders' outer ends had lain on unpaved ground in the model).
+
 Reproduce (order matters): `python3 tools/stands/adsb_parked.py; python3 tools/stands/naip_relief.py;
 python3 tools/stands/build_stands.py; python3 tools/stands/redboxes_naip.py; python3 tools/stands/build_stands.py;
 python3 tools/stands/check_stands.py; python3 tools/stands/report.py` (the red-box filter reads the stand positions, the

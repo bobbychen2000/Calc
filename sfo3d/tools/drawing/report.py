@@ -58,12 +58,14 @@ def run():
     now = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M')
     w('# SFO Live 3D — 2-D drawing set: deviations and physical conflicts')
     w('')
-    if PV['stale']: w(f'> **STALE (ALLOW_STALE=1): {len(PV["stale"])} file(s) the app loaded changed after the extraction** ({", ".join(PV["stale"][:8])}). The numbers below describe the extracted state, not the working tree.')
+    if PV['stale']: w(f'> **STALE (ALLOW_STALE=1): {len(PV["stale"])} file(s) the app loaded changed after the extraction** ({", ".join(PV["stale"][:8])}). The numbers below describe the extracted state, not the working tree.'); w('')
     w(f'Generated {now}Z by `tools/drawing/run_all.sh` (report: `tools/drawing/report.py`).')
     w(f'Scene extracted from the running app (`jobs/extract2d.mjs`, {S["meta"]["url"].split("/")[-1]}) at {PV["generated"][:19]}Z: **world frame `{PV["frame"]}`**, git `{PV["git"]}` (HEAD now `{git_head()}`), '
       f'{PV["nInputs"]} input files hashed (inputs `{PV["inputsHash"]}`, TYPES `{PV["typesHash"]}`) - '
       + ('**all unchanged in the working tree at report time**' if PV['stale'] == [] else 'staleness unknown' if PV['stale'] is None else '**stale**') + f', quality tier `{S["meta"]["quality"]["name"]}`.')
-    if S['meta'].get('gitDirty'): w(f'Uncommitted app files at extraction (their content is what the hashes pin): {", ".join(S["meta"]["gitDirty"][:10])}' + (' ...' if len(S["meta"]["gitDirty"]) > 10 else '') + '.')
+    import re
+    dirty = sorted({m.group(0) for d in S['meta'].get('gitDirty') or [] for m in [re.search(r'(js|data)/\S+|live\.html', d)] if m} & set(S['meta'].get('inputs') or {}))
+    if dirty: w(f'Uncommitted files among those the app loaded at extraction (their content is what the hashes pin): {", ".join(dirty[:12])}' + (' ...' if len(dirty) > 12 else '') + '.')
     if PV['changedDuring']: w(f'**Changed while the extraction ran** (the scene may mix both versions): {", ".join(PV["changedDuring"])}.')
     w('Everything below is drawn/measured from the objects the 3-D app actually places (window.SFO world / gateSys / traffic / physics, and the app\'s own builder functions), not re-derived from the data files.')
     w('')
@@ -80,7 +82,7 @@ def run():
         by = collections.defaultdict(list)
         for f in R['features']:
             if f.get('measured'): by[f['cls']].append(f)
-        rel = ['runway-edge-stripe', 'runway-end', 'runway-threshold', 'runway-threshold-bar', 'emas-bed', 'approach-light-pier']
+        rel = ['runway-edge-stripe', 'runway-end', 'runway-threshold', 'runway-threshold-bar', 'emas-bed', 'approach-light-pier', 'approach-light-catwalk']
         w(f'  - `{src}` by class (flagged / measured): ' + '; '.join(f'{c} {sum(f["flag"] for f in by[c])}/{len(by[c])}' for c in rel + ['taxiway-edge', 'extra-pavement', 'apron-edge', 'building', 'bridge-walkway', 'hold-line'] if by.get(c)) + '.')
     w('  - How far each class can be trusted is in the self-test section; building and pavement-edge classes recover a known shift less reliably than runway markings, so read their numbers with the overlay sheets.')
     if 'naip' not in D: w('- **NAIP** was not present in `refs/cache/naip/` at run time: every measurement used the Google screenshots only.')
@@ -166,10 +168,14 @@ def run():
         w('')
         als = [f for f in D[prim]['features'] if f['cls'] == 'approach-light-pier']
         if als:
-            w('Approach-light piers over water (`js/anim/lights.js`): along-axis position of each imaged crossbar relative to the modelled pier (read on both crossbar arms), and the imaged crossbar half-length against the widest part of the modelled pier.')
+            w('Approach-light piers over open water (`js/anim/lights.js`; piers the model marks as water but that stand on the paved raster are audited as obstructions instead): along-axis offset of the imaged pier - the strongest bar of either polarity within 0.55 x the pier spacing, i.e. the structure or its shadow on the bay (<= ~2.5 m apart); a system laid out from another reference shows as ~half a spacing - the catwalk\'s lateral offset between piers, and the imaged crossbar half-length against the widest part of the modelled pier.')
             w('')
             w('| system | samples measured | along-axis offset median / bias (m) | imaged crossbar half-length (m) | model half-length (m) |'); w('|---|---|---|---|---|')
-            for f in als: w(f'| {f["name"]} | {f.get("measured", 0)}/{f["n"]} | {f1(f.get("median"), 2)} / {f1(f.get("bias"), 2)} | {f1(f.get("xbar_imaged"), 1)} | {f1(f.get("xbar_model"), 1)} |')
+            cw = {f['id'].split(':')[1]: f for f in D[prim]['features'] if f['cls'] == 'approach-light-catwalk'}
+            w('| system | piers measured | along-axis offset median / bias (m) | catwalk lateral offset (spans measured) | imaged crossbar half-length (m) | model half-length (m) |'); w('|---|---|---|---|---|---|')
+            for f in als:
+                c = cw.get(f['id'].split(':')[1]) or {}
+                w(f'| {f["name"]} | {f.get("measured", 0)}/{f["n"]} | {f1(f.get("median"), 2)} / {f1(f.get("bias"), 2)} | {f1(c.get("bias"), 2)} ({c.get("measured", 0)}/{c.get("n", 0)}) | {f1(f.get("xbar_imaged"), 1)} | {f1(f.get("xbar_model"), 1)} |')
             w('')
         prs = S.get('piers') or []
         if prs:
@@ -288,7 +294,7 @@ def run():
             m = [f for f in by[c] if f.get('measured')]
             w(f'| {c} | {len(by[c])} | {len(m)} | {sum(f["flag"] for f in by[c])} | {f1(np.median([f["median"] for f in m]) if m else None, 2)} | {f1(np.median([f["p90"] for f in m]) if m else None, 2)} | {f1(np.median([f["gsd"] for f in m]) if m else None, 2)} | {notes.get(c, "")} |')
         w('')
-        for c in ['runway-end', 'runway-threshold', 'runway-threshold-bar', 'runway-edge-stripe', 'emas-bed', 'approach-light-pier', 'building', 'taxiway-edge', 'apron-edge', 'extra-pavement', 'bridge-walkway', 'bridge-rotunda']:
+        for c in ['runway-end', 'runway-threshold', 'runway-threshold-bar', 'runway-edge-stripe', 'emas-bed', 'approach-light-pier', 'approach-light-catwalk', 'building', 'taxiway-edge', 'apron-edge', 'extra-pavement', 'bridge-walkway', 'bridge-rotunda']:
             m = sorted([f for f in by.get(c, []) if f.get('measured')], key=lambda f: -f['median'])
             if not m: continue
             lim = 40 if c in ('building', 'taxiway-edge', 'extra-pavement', 'bridge-rotunda') else 999

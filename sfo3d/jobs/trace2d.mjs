@@ -36,7 +36,7 @@ export default async ({ page, base }) => {
     console.log('trace', i + 1, '/', N, 'ground aircraft', f.aircraft.length, 'physics frame', f.physFrame, JSON.stringify(f.stats));
   }
   const frameId = await page.evaluate(async () => (await import(new URL('js/geo.js', location.href).href)).FRAME_ID || 'equirect-v1');
-  let git = null; try { git = (await import('child_process')).execSync('git rev-parse --short HEAD', { cwd: path.resolve(OUTD, '..', '..') }).toString().trim(); } catch (e) { }
+  let git = null; try { git = (await import('child_process')).execSync('git rev-parse --short HEAD', { cwd: path.dirname(new URL(import.meta.url).pathname) }).toString().trim(); } catch (e) { }
   fs.writeFileSync(path.join(OUTD, 'trace.json'), JSON.stringify({ mode: 'live (mock relay polled at /api/adsb: recorded snapshot + straight-line kinematics)', frameId, git, generated: new Date().toISOString(), dt: DT, frames }));
   if (!frames.some(f => f.aircraft.length)) console.log('WARNING: no ground aircraft in any frame - the feed delivered nothing');
   console.log('trace.json:', frames.length, 'frames');

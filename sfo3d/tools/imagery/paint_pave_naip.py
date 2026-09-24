@@ -79,18 +79,15 @@ def main(preview=False):
     gl = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32)
     lap = cv2.blur(np.abs(cv2.Laplacian(cv2.GaussianBlur(gl, (3, 3), 0), cv2.CV_32F)), (7, 7))
     grey = (S < 32) & (V > 55) & (V < 245) & (lap < 3.5)
-    # review round 2: airfield paint lies on pavement - yellow markings (min(R, G) - B > 25, V > 110) and the red
-    # holding-position signs (R - (G + B) / 2 > 40) count as pavement, and so does a 3 m band along every hold bar
-    # measured on NAIP (data/sfo_details.json holds; before, the ladders' outer ends lay on 'sand' in the model because
-    # the shoulders broke up at the painted edge lines and ladders and fell below the component size limit)
-    bgr = img.astype(np.int16)
-    yel = (np.minimum(bgr[..., 2], bgr[..., 1]) - bgr[..., 0] > 25) & (V > 110)
-    redp = (bgr[..., 2] - (bgr[..., 1] + bgr[..., 0]) / 2 > 40) & (V > 110)
+    # review round 2: a 3 m band along every hold bar measured on NAIP (data/sfo_details.json holds) is pavement by
+    # definition - before, the ladders' outer ends lay on 'sand' in the model: the shoulders break up at the painted edge
+    # lines / ladders and fell below the component size limit. (Counting yellow paint pixels as pavement was tried and
+    # rejected: bright dry grass has the same hue and added ~25 ha of grass, checked on NAIP.)
     holdm = np.zeros((H, W), np.uint8)
     for h in Dt.get('holds', []):
         a_, b_ = np.array(h['a']), np.array(h['b']); u_ = np.array(h['dir']) * 1.5
         fill(holdm, [[list(a_ - u_), list(b_ - u_), list(b_ + u_), list(a_ + u_)]])
-    p = (grey | g | yel | redp | (holdm > 0)) & (pav == 0) & (bld == 0) & (dpav < 60)
+    p = (grey | g) & (pav == 0) & (bld == 0) & (dpav < 60)
     p = ndi.binary_opening(p, iterations=3)
     lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
     p = np.isin(lab, 1 + np.nonzero(sz * RES * RES >= 300)[0])
@@ -102,15 +99,17 @@ def main(preview=False):
     lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
     keep = 1 + np.nonzero(sz * RES * RES >= 300)[0]
     p = np.isin(lab, keep)
+    p |= (holdm > 0) & (pav == 0) & (bld == 0)          # the measured hold bars are on pavement by definition
     pave_polys, conc = [], []
     lab, n = ndi.label(p)
     big = []
     for L in range(1, n + 1):
         m = lab == L
         ys, xs = np.nonzero(m)
-        if len(ys) * RES * RES < 300: continue
+        onhold = bool(holdm[m].any())
+        if len(ys) * RES * RES < 300 and not onhold: continue
         sub = m[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
-        polys = contours(sub, 0.8 / RES, 300, lambda q, ox=xs.min(), oy=ys.min(): world((q[0] + ox, q[1] + oy)))
+        polys = contours(sub, 0.5 / RES, 4 if onhold else 300, lambda q, ox=xs.min(), oy=ys.min(): world((q[0] + ox, q[1] + oy)))
         vmed = float(np.median(V[m]))
         for poly in polys: pave_polys.append(poly); conc.append(bool(vmed >= 150))
         big.append((round(len(ys) * RES * RES), world((xs.mean(), ys.mean())), round(vmed)))

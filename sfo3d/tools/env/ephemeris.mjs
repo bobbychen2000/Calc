@@ -385,8 +385,8 @@ export function naturalIlluminance(sunGeoEl, moonGeoEl, moonElongDeg, sky = 1) {
 /** Convenience: natural illuminance at a date for an observer (uses this module's Sun/Moon). */
 export function naturalIlluminanceAt(date, obs = SFO, sky = 1) {
   const o = { ...obs, elevM: 0 };
-  const s = sunPosition(date, o, { refraction: 'none' });
-  const jd = julianDay(date), n = nutation(jd + deltaT(date) / 86400);
+  const jd = julianDay(date), jde = jd + deltaT(date) / 86400, n = nutation(jde);
+  const s = sunCoordinates((jde - 2451545) / 36525);                       // geocentric apparent Sun
   const sunGeo = equatorialToHorizontal(gmst(jd) + n.dpsi * cosd(n.eps) + obs.lon - s.ra, s.dec, obs.lat).el;
   const mo = moonPosition(date, o, { refraction: 'none' });
   const el = mo.elongation > 180 ? 360 - mo.elongation : mo.elongation;

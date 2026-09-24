@@ -21,7 +21,7 @@ export default async ({ page, base }) => {
   const tLoad = Date.now();
   // every file the app loaded (performance resource entries), hashed on disk now and again at the end: the drawing
   // tools compare these hashes with the working tree (tools/drawing/common.py stale_inputs) and refuse stale scenes
-  const ROOTD = path.resolve(path.dirname(OUTD), '..');
+  const ROOTD = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');   // repo root (this file is jobs/extract2d.mjs)
   const sha = (f) => { try { return crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex').slice(0, 16); } catch (e) { return null; } };
   const loaded = async () => (await page.evaluate(() => performance.getEntriesByType('resource').map(e => e.name).concat([location.href])))
     .filter(u => u.startsWith(base)).map(u => decodeURIComponent(new URL(u).pathname.slice(1)).split('?')[0]).filter(p => p && !p.startsWith('api/'));
@@ -43,7 +43,7 @@ export default async ({ page, base }) => {
     window.requestAnimationFrame = () => 0; await new Promise(r => setTimeout(r, 1500));
     console.log('frozen after', SFO.physics.frame, 'physics frames');
   });
-  let git = null, gitHead = null, gitDirty = null; try { gitHead = execSync('git rev-parse --short HEAD', { cwd: ROOTD }).toString().trim(); gitDirty = execSync('git status --porcelain js data live.html', { cwd: ROOTD }).toString().trim().split('\n').filter(Boolean).map(l => l.slice(3)); git = gitHead + (gitDirty.length ? '+dirty' : ''); } catch (e) { }
+  let git = null, gitHead = null, gitDirty = null; try { gitHead = execSync('git rev-parse --short HEAD', { cwd: ROOTD }).toString().trim(); gitDirty = execSync('git status --porcelain js data live.html', { cwd: ROOTD }).toString().split('\n').filter(l => l.trim()).map(l => l.slice(3)); git = gitHead + (gitDirty.length ? '+dirty' : ''); } catch (e) { }
 
   const res = await page.evaluate(async () => {
     const abs = (p) => new URL(p, location.href).href; const T00 = performance.now(); const say = (m) => console.log('[extract] ' + m + ' @' + ((performance.now() - T00) / 1000).toFixed(1) + 's');

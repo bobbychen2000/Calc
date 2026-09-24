@@ -3,7 +3,9 @@
 import { m4 } from '../math.js';
 import { Aircraft, linearLivery } from '../aircraft/fleet.js';
 import { TYPES } from '../aircraft/types.js';
-import { getModel } from './models.js';
+import { getModel, getLiveryTexture } from './models.js';
+import { resolveLivery } from './lookup.js';
+import { liveryTextureFor } from '../aircraft/liveries.js';
 import { TYPE_MODELS, MODEL_BASE, TYPE_MODEL, stretchFor, seatType, typeForIcao, BIZ_LEN } from '../aircraft/fit.js';
 
 // The ICAO designator -> (airframe, model) mapping and the fit of each model to the published dimensions of its type
@@ -12,7 +14,21 @@ import { TYPE_MODELS, MODEL_BASE, TYPE_MODEL, stretchFor, seatType, typeForIcao,
 export { TYPE_MODELS, MODEL_BASE, TYPE_MODEL, stretchFor, seatType, typeForIcao, BIZ_LEN };
 
 const I4 = m4.ident();
+// ICAO designator of a TYPES key (reverse of ICAO_TYPES for the brand series lookup, first match)
+const TYPE_ICAO = {};
+for (const k in TYPE_MODELS) { const t = TYPE_MODELS[k].t; if (t && !TYPE_ICAO[t]) TYPE_ICAO[t] = k; }
+
+// Livery: the app hands every aircraft the livery object of its track (js/live/lookup.js liveryForAirline). Until the
+// track carries the registration, the aircraft resolves its brand itself from its ICAO address (US N-number) and type
+// (lookup.js resolveLivery), so a SkyWest E175 in Alaska colours is painted Alaska. `liv` returns the resolved livery;
+// assigning the same track livery again is a no-op. Imported models then wear the baked brand texture for their model and
+// type when one exists (js/aircraft/liveries.js), else the neutral atlas recoloured by the livery's colour family.
 export class LiveAircraft extends Aircraft {
+  get liv() {
+    if (this._livR === undefined || this._livRid !== this.id) { this._livR = resolveLivery(this._livIn, this.id, TYPE_ICAO[this.type] || null); this._livRid = this.id; }
+    return this._livR;
+  }
+  set liv(L) { if (L === this._livIn) return; this._livIn = L; this._livR = undefined; }
   constructor(typeKey, modelKey, livery, opts = {}) {
     if (modelKey) seatType(typeKey, modelKey);
     super(typeKey, livery, opts);
@@ -22,6 +38,17 @@ export class LiveAircraft extends Aircraft {
       this.stretch = stretchFor(typeKey, modelKey);
       this.ready = getModel(modelKey, this.stretch).then(m => { this.model = m; this._items = null; }).catch(e => { console.log('model load failed', modelKey, e.message); });
     } else this.ready = Promise.resolve();
+    this.livTex = null; this._livTexKey = null;
+  }
+  // brand livery texture for the loaded model (fetched once per brand x model x type group, shared)
+  updateLiveryTexture() {
+    const M = this.model; if (!M || !M.draws.some(d => d.atlas)) return;
+    const L = this.liv; const f = L && L.brand ? liveryTextureFor(L.brand, this.modelKey, this.type) : null;
+    const key = f ? f.url : null;
+    if (key === this._livTexKey) return;
+    this._livTexKey = key; this.livTex = null; this._items = null;
+    if (!f) return;
+    getLiveryTexture(f.url).then(t => { if (this._livTexKey === key) { this.livTex = t; this._items = null; } }).catch(() => {});
   }
   placement() {
     const T = this.T, d = this.model.dims; const s = T.L / d.L;   // d.L includes the fuselage plugs: s = T.fit.s
@@ -52,9 +79,10 @@ export class LiveAircraft extends Aircraft {
     const saved = this.M.A.lights; this.M.A.lights = this._lt;
     try { return super.lightSprites(t); } finally { this.M.A.lights = saved; }
   }
+  // cached per livery object (js/live/app.js clears `_pu` when it re-assigns the track livery; the resolved livery decides)
   procUniforms() {
-    if (!this._pu || this._puLiv !== this.liv) { this._pu = super.uniforms(); this._puLiv = this.liv; }
-    return this._pu;
+    if (!this._puc || this._puLiv !== this.liv) { this._puc = super.uniforms(); this._puLiv = this.liv; }
+    return this._puc;
   }
   uniforms() { return this.procUniforms(); }
   // items(camPos): real model near, procedural body at mid range, nothing far away (label/lights only)
@@ -76,9 +104,11 @@ export class LiveAircraft extends Aircraft {
     }
     const model = m4.mul(W, this.placement());
     const prevModel = this.prev.real || model; this.nextPrev.real = model;
+    this.updateLiveryTexture();
     if (!this._items) {
       this._U = {};
-      this._items = M.draws.map(dr => ({ mesh: dr.sub, prog: 'acr', uniforms: Object.assign(Object.create(this._U), dr.U), noCull: true }));
+      this._items = M.draws.map(dr => ({ mesh: dr.sub, prog: 'acr', noCull: true,
+        uniforms: Object.assign(Object.create(this._U), dr.U, dr.atlas && this.livTex ? { uAlbedo: this.livTex, uLivTex: 1 } : null) }));
     }
     this.realUniforms(this._U);
     const out = [];

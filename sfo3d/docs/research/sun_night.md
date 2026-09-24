@@ -7,7 +7,7 @@ in `js/` or data in `data/` was changed. It adds:
   civil/nautical/astronomical twilight, Moon phase, illuminated fraction and bright-limb angle, and natural
   illuminance (USNO Circular 171). It also has EV100 exposure helpers and a `skyState(date)` call for the renderer.
   Minified it is 11.4 KB (5.4 KB gzip).
-- `tools/env/test_ephemeris.mjs`: a Node test (`node tools/env/test_ephemeris.mjs`) with 33 checks against NOAA, JPL
+- `tools/env/test_ephemeris.mjs`: a Node test (`node tools/env/test_ephemeris.mjs`) with 32 checks against NOAA, JPL
   Horizons, USNO and Meeus. **All pass.**
 - `tools/env/fixtures/ephemeris_ref.json` holds the reference numbers, with the URL, fetch date and SHA-256 of every
   raw file. It is built by `tools/env/build_ephemeris_fixtures.mjs` from raw files that
@@ -36,7 +36,7 @@ Written 24 Sep 2026. Every source was fetched that day unless a note says otherw
    | Sun | 0.0066° | 0.0070° | |
    | Moon | 0.0008° | 0.0010° | illuminated fraction ±0.008 percentage points; phase angle ±0.007° |
 
-   The Sun is off by at most 1/80 of its own diameter. It also matches **USNO's 2026 SFO tables**:
+   The Sun is off by at most 1/80 of its own diameter. [corrected by verifier: that bound holds only for these 125 epochs. Against a fresh Horizons table covering all of 2026 (1,658 epochs, one every 317 min, same site, airless), the maximum error is 0.0094° in elevation and 0.0098° in azimuth × cos el for the Sun, about 1/57 of its diameter and still under 0.01°. For the Moon it is 0.0023°, and the lit fraction is within 0.0094 percentage points.] It also matches **USNO's 2026 SFO tables**:
    - 730 sunrise/sunset times, 2 × 730 civil and nautical twilight times, 730 astronomical twilight times and 705 moonrise/moonset times;
    - every one agrees within 1 minute, and 97.4–98.9 % agree to the minute;
    - all 50 principal Moon phases agree within 2 minutes.
@@ -45,7 +45,7 @@ Written 24 Sep 2026. Every source was fetched that day unless a note says otherw
 2. **The NOAA algorithm is good enough for the Sun; the current app lacks refraction (T, obs).**
    - The app's `solarPosition` (`js/world/textures.js:111`) is the NOAA algorithm without refraction. Airless, it is within 0.014° of Horizons.
    - Without refraction, the app's Sun reaches the horizon **2.9 min before the real apparent sunset** (23 Sep 2026). Refraction is 29′ at the horizon.
-   - The "dusk"/"night" light modes (`js/live/app.js:114`) hard-code UTC−7. They are 1 h wrong from November to March.
+   - The "dusk"/"night" light modes (`js/live/app.js:114`) hard-code UTC−7. They are 1 h wrong from November to March. [corrected by verifier: in PST the preset lands 1 h *earlier* on the local clock (dusk 19:27 becomes 18:27 PST), not later. DST is also the smaller problem. The preset picks a fixed UTC hour, so the Sun's position does not depend on DST at all, but it moves with the season. At the "dusk" preset (02:27 UTC) the Sun is at +11.2° on 21 Jun, −4.3° on 23 Sep and −17.1° on 21 Dec. Switching to UTC−8 in winter would make it worse (−28.7° on 21 Dec). Only a preset derived from `sunEvents()` fixes this.]
 3. **Twilight light levels (V: USNO Circular 171).** The public-domain USNO illuminance model gives these values for a clear sky:
 
    | Sun elevation | Horizontal illuminance |
@@ -53,11 +53,11 @@ Written 24 Sep 2026. Every source was fetched that day unless a note says otherw
    | 0° | 984 lx |
    | −4° | 24 lx |
    | −6° (end of civil twilight) | 3.0 lx |
-   | −12° | 0.004 lx |
+   | −12° | 0.005 lx [corrected by verifier: the model gives 0.0049 lx (§3 table), which rounds to 0.005, not 0.004] |
 
    - Full Moon at the zenith: 0.40 lx.
    - Night-sky floor: 0.0005 lx.
-   - Our transcription reproduces the Circular's printed sample run within 0.3 %–2.3 %.
+   - Our transcription reproduces the Circular's printed sample run within 0.3 %–2.6 %.
    - This gives the renderer physically grounded ambient light, exposure and lamp-switching thresholds.
 4. **Sky (V, obs).** For the r186 WebGPU renderer the best option is **@takram/three-atmosphere 0.19.1**.
    - It uses Bruneton precomputed scattering with Hillaire's multiple-scattering LUT.
@@ -72,7 +72,7 @@ Written 24 Sep 2026. Every source was fetched that day unless a note says otherw
    - three.js's own `SkyMesh` (Preetham) has no night sky, no aerial perspective, and an exposure constant baked in.
 5. **Night sky over SFO (V, obs coarse).**
    - Natural sky background: 22.0 mag/arcsec² = 174 µcd/m² (Falchi et al. 2016).
-   - The Bay Area sits in the atlas's red–magenta classes: artificial light is 10–41 × natural, 17.9–19.4 mag/arcsec². We read this off the published continental figure; we did not query the raster.
+   - The Bay Area sits in the atlas's red–magenta classes: artificial light is 10–41 × natural, 17.9–19.4 mag/arcsec². We read this off the published continental figure; we did not query the raster. [corrected by verifier: in Falchi Table 1, red is 5.12–10.2 × natural, magenta 10.2–20.5 × and pink 20.5–41 ×. The verifier's crop of Fig. 3 shows red, magenta and some pink over the Bay Area. Once red is included, the range is **5.1–41 × natural, 1.07–7.30 mcd/m² total, about 20.0–17.9 mag/arcsec²**. "10–41 ×" covers only magenta and pink.]
    - The Milky Way is not visible. Overcast skies over a city can be about 10 × brighter than clear skies (Kyba et al. 2011, Berlin).
    - **The atlas data are CC BY-NC 4.0**, and the raster download needs a request form. **NV** for a per-pixel SFO value.
 6. **Aircraft lights (V: 14 CFR 25.1385–25.1401, 91.209, AIM 4-3-24).**
@@ -210,7 +210,7 @@ The fractional minutes are ours (for example 07:03.24 = 07:03 and 14 s). USNO ro
   - It is fine for shadows.
   - For the horizon: the apparent Sun centre sets **2.86 min later** than the app's (23 Sep, T). At the horizon the Sun is drawn 29′ too low, about one solar diameter. That is visible in sunset views.
 - **`js/live/app.js:114` `lightDate`.**
-  - Its `{day: 13.0, dusk: 19.45, night: 22.5}` "local solar-ish times" add a fixed 7 h (PDT). In PST (1 Nov – 8 Mar 2026) "dusk" falls 1 h after the intended time.
+  - Its `{day: 13.0, dusk: 19.45, night: 22.5}` "local solar-ish times" add a fixed 7 h (PDT). In PST (1 Nov – 8 Mar 2026) "dusk" falls 1 h after the intended time. [corrected by verifier: it falls 1 h *before* on the local clock (02:27 UTC = 18:27 PST, not 19:27). The bigger error is seasonal: at a fixed UTC hour the Sun is at +11.2° on 21 Jun and −17.1° on 21 Dec (T, `ephemeris.mjs`). Also, `setUTCHours(26 % 24)` stays on the same UTC date, so "dusk" is the previous local evening.]
   - Use `sunEvents()` instead, for example dusk = civil dusk − 10 min.
 - **Night blend.**
   - `app.js:146–148`: `nightF = sstep(6, -4, el)`, `dark = sstep(2, -10, el)`, and exposure 0.45 → 2.4. These are heuristics.
@@ -251,15 +251,15 @@ Faithful details:
 - The authors' caveat:
   > "There are situations in which the calculated illuminance differs from the real light level by a factor of 10 or more"
   > "Illuminance is given in lux … formally accurate to one or two digits."
-- Cloud divisors (Brown, quoted in Appendix B): "divided by two" for thin cloud over the Sun, "three" for average cloud, "ten" for dark stratus.
+- Cloud divisors (Brown, quoted in Appendix B): "divided by two" for thin cloud over the Sun, "three" for average cloud, "ten" for dark stratus. [corrected by verifier: Brown's ÷10 is for "dark stratus clouds preceding a heavy thunder storm", and the program's menu labels it "(RARE)". Using it for SFO's ordinary marine stratus is **inf**. The listing also divides the 0.0005 lx night-sky term by the same divisor (`IS=IS+IL+.0005/SK`), so under cloud the model *darkens* the night floor, the opposite of the city-glow amplification in §4.3/§7.]
 
 **Our reproduction of the Circular's sample run** (Figure 3: 58° N, 4° W, 11 May 1987, 22:15 UT):
 
 | Quantity | Ours | Printed |
 |---|---|---|
-| Sun | 0.0284 lx | 0.0278 |
+| Sun | 0.0285 lx | 0.0278 |
 | Moon | 0.0316 lx | 0.0317 |
-| Total | 0.0605 lx | 0.0600 |
+| Total | 0.0606 lx | 0.0600 |
 | Moon illuminated | 97 % | 97 % |
 
 The small differences come from our more accurate positions (T).
@@ -298,9 +298,11 @@ The ASOS day/night photocell switches "between 0.5 and 3 foot candles (deep twil
 | UTC | Phase | Sun el | Moon | Illuminance | EV100 |
 |---|---|---|---|---|---|
 | 17:51 (snapshot) | day | +41.6° | below the horizon | 73,900 lx | 15.0 |
-| 02:04 on the 24th | sunset | −0.1° | at 14° | 702 lx | 8.3 |
-| 02:30 | civil | −5.2° | | 3.5 lx | 0.7 |
-| 03:01 | nautical | −11.3° | | 0.041 lx | −5.7 |
+| 02:04 on the 24th | sunset | −0.1° | at 14° | 703 lx | 8.3 |
+| 02:30 | civil | −5.2° | [corrected by verifier: at 19°, 93 % lit (0.026 lx)] | 3.5 lx | 0.7 |
+| 03:01 | nautical | −11.3° | [corrected by verifier: at 24°, 93 % lit. The Moon gives 0.036 lx of the 0.041 lx total; the Sun alone gives 0.0045 lx] | 0.041 lx | −5.7 |
+
+[corrected by verifier] The blank Moon cells hid the fact that the Moon was up. The 03:01 value is mostly moonlight. In the 02:04 row, `skyState` itself returns phase `day`, because −0.12° is above the −50′ sunset depression; "sunset" is a description, not the function's output.
 | 26 Sep 08:00 | night | | full Moon at 53° | 0.20 lx | −3.5 |
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -317,8 +319,10 @@ The ASOS day/night photocell switches "between 0.5 and 3 foot candles (deep twil
 | Aerial perspective | None (fog only) | Exponential height fog with a sky-coloured in-scatter | `AerialPerspectiveNode` (post-process on colour and depth), plus `ShadowLengthNode` light shafts via epipolar sampling |
 | Scene lighting | None | Hemisphere terms + PMREM | `AtmosphereLight` (sun and sky irradiance for built-in materials) and `SkyEnvironmentNode` (PMREM) |
 | WebGPU / WebGL2 | WebGPU only (a `Sky` class exists for WebGLRenderer) | Both (TSL) | The `webgpu` entry works on both. `AtmosphereLUTNode` picks `AtmosphereLUTTexturesWebGPU` (compute) or `…WebGL` (render targets) (src, obs). It needs `three >= 0.182.0` (CHANGELOG 0.18.0). |
-| Size | In three | Ours | 84,503 B minified / 25,320 B gzip (three external): atmosphere 58.0 KB + three-geospatial 26.3 KB (esbuild 0.28.2, obs) |
+| Size | In three | Ours | 84,503 B minified / 25,320 B gzip (three external): atmosphere 58.0 KB + three-geospatial 26.3 KB (esbuild 0.28.2, obs). [corrected by verifier: that is for a tree-shaken import of the recommended nodes; the verifier got 84,386 B / 25,334 B. Re-exporting the whole `webgpu` entry gives 108,090 B / 31.5 KB gzip.] |
 | Licence | MIT | Ours | MIT (© 2024 Shota Matsuda), "except where indicated otherwise". Headers inside: BSD-3-Clause (© 2017 Eric Bruneton, © 2008 INRIA), MIT (© 2020 Epic Games, Hillaire), Apache-2.0 (© 2017 Intel, `ShadowLengthNode`) (V, source headers). |
+
+[corrected by verifier: the table leaves out that r186 `SkyMesh` has built-in procedural 2-D clouds. Their uniforms are `cloudCoverage`, `cloudDensity`, `cloudElevation`, `cloudScale` and `cloudSpeed`. They use fbm noise, Beer–powder shading and a Henyey–Greenstein silver lining, and the "aerial composite" is applied to those clouds only (`examples/jsm/objects/SkyMesh.js` in three 0.186.0). This matters for the weather work. The scene still gets no aerial perspective from `SkyMesh`.]
 
 Takram details (V from the package):
 - Dependencies are `@takram/three-geospatial` 0.9.1 (MIT) and `astronomy-engine` ^2.1.19 (MIT).
@@ -331,7 +335,7 @@ Takram caveats (obs, **must handle**):
 2. **Entry points.** The sun/moon direction helpers live in the root entry (`getSunDirectionECI`, `getMoonDirectionECI`, `getECIToECEFRotationMatrix`). That entry imports the WebGL build, which needs `postprocessing` (230.8 KB minified with it external). Use only `@takram/three-atmosphere/webgpu`.
    - Feed `sunDirectionECEF` and `moonDirectionECEF` from `ephemeris.mjs`: convert az/el to ENU, then to ECEF with `Ellipsoid.WGS84.getNorthUpEastFrame` (**inf**).
    - The stars need the ECI→ECEF rotation. Rz(GAST) from our `gmst()` + nutation is enough for rendering; it ignores precession of about 0.36° since J2000 (**inf**).
-   - The Moon's surface orientation (`matrixMoonFixedToECEF`) needs a lunar rotation model. If we want the real libration, `astronomy-engine`'s `RotationAxis` costs 53 KB minified / 23.5 KB gzip for the subset takram uses (obs).
+   - The Moon's surface orientation (`matrixMoonFixedToECEF`) needs a lunar rotation model. If we want the real libration, `astronomy-engine`'s `RotationAxis` costs 53 KB minified / 23.5 KB gzip for the subset takram uses (obs). [corrected by verifier: 53.3 KB / 23.5 KB is the whole subset takram imports (`AstroTime, Body, GeoVector, KM_PER_AU, Pivot, Rotation_EQJ_EQD, RotationAxis, SiderealTime`). `RotationAxis` + `Body` alone bundle to 11.5 KB minified / 5.5 KB gzip (esbuild 0.28.2, astronomy-engine 2.1.19).]
 3. **Deep import.** It imports `three/src/nodes/core/NodeUtils.js`. The esbuild bundle against three 0.186.0 resolves every import (obs), but deep imports can break on three upgrades. **It was not run on a GPU here** (the brief forbids Chromium). A render test is required before adoption.
 4. **Coordinates.** The atmosphere works in ECEF with world-origin rebasing (`matrixWorldToECEF`). Our world is x = east, y = up, z = south. Use `getNorthUpEastFrame` at the ARP and swap axes (x_east → E, y → U, z_south → −N).
 5. **Stars.** The default `starsNode.intensity = 1000` is documented as "far too bright from a physical standpoint … Set this value to 1 when physically correct star luminance is needed" (WEBGPU.md, V). With a physical camera and the SFO sky background, only the brightest stars should show (§4.3).
@@ -366,7 +370,7 @@ Takram caveats (obs, **must handle**):
 
   - The Milky Way is lost above 688 µcd/m² artificial.
   - The atlas notes "almost half of the United States experience light-polluted nights". Its maps were "calibrated to match the time of satellite overpass, at around 1 a.m." and "brighter skies should typically be expected … earlier in the night".
-- **SFO value (obs, coarse; NV exact).** We read Figure 3 (North America; from the PMC supplementary zip, 700 px wide) at the San Francisco Bay: the region is in the red/magenta/pink band. That is about 10–41 × natural, **1.96–7.3 mcd/m² total, about 19.4–17.9 mag/arcsec²**.
+- **SFO value (obs, coarse; NV exact).** We read Figure 3 (North America; from the PMC supplementary zip, 700 px wide) at the San Francisco Bay: the region is in the red/magenta/pink band. That is about 10–41 × natural, **1.96–7.3 mcd/m² total, about 19.4–17.9 mag/arcsec²**. [corrected by verifier: red/magenta/pink is **5.12–41 × natural, 1.07–7.30 mcd/m² total, about 20.0–17.9 mag/arcsec²** (Falchi Table 1, re-fetched). Every class from red upward is above the 688 µcd/m² artificial level at which Falchi says the Milky Way is lost, so "no Milky Way" still holds.]
   - The exact pixel value needs the 2.9 GB GeoTIFF ([GFZ doi:10.5880/GFZ.1.4.2016.001](https://doi.org/10.5880/GFZ.1.4.2016.001)). Its download is behind a request form ("Access to the FTP site … can be requested via the data request form").
   - The alternative is the lightpollutionmap.info API, which answered "Invalid or missing authentication. Please request a key for API use."
   - **Licence: CC BY-NC 4.0** (GFZ DataCite `rightsList`, V). Even a single derived value used in a public app should be attributed. Discuss the "non-commercial" condition with the owner before any commercial use.
@@ -380,7 +384,7 @@ Takram caveats (obs, **must handle**):
   - Under a 18–19.4 mag/arcsec² sky only first- to third-magnitude stars stand out. The exact naked-eye limit depends on the observer model (**inf**). A physical camera at EV −3 to −6 would show only a handful of stars and the Moon.
   - Recommendation: render stars with `intensity = 1` (physical), plus a user "star boost" off by default, so the SFO sky is not falsely dark.
 - **Moon (T).**
-  - Angular diameter at SFO in 2026 ranges from about 29.4′ to 33.5′ (the Horizons check covers this range within 0.2″).
+  - Topocentric angular diameter at SFO while the Moon is up in 2026: 29.4′ to 34.1′. This is computed hourly with `ephemeris.mjs`, whose diameter matches Horizons to 0.2″.
   - The bright-limb angle and the phase come from `moonPosition`. Moonlight on the scene is §3 (≤ 0.4 lx).
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -455,7 +459,7 @@ This is the right exposure anchor for night apron views (T/inf).
 | When to light | "During the period from sunset to sunrise … Operate an aircraft unless it has lighted position lights"; anti-collision lights "need not be lighted when the pilot-in-command determines that, because of operating conditions, it would be in the interest of safety to turn the lights off" | 14 CFR 91.209 |
 | Landing lights | Only qualitative: "enough light for night landing"; no candela minimum | §25.1383 |
 
-The eCFR history API shows §25.1389 was last amended on 2016-12-30. Links: [25.1385](https://www.ecfr.gov/current/title-14/part-25/section-25.1385) … [25.1401](https://www.ecfr.gov/current/title-14/part-25/section-25.1401), [91.209](https://www.ecfr.gov/current/title-14/part-91/section-91.209).
+The eCFR version history for §25.1389 lists a single content version, dated 2016-12-30, which is the eCFR history baseline. The section itself cites amendments from 1964–1977. Links: [25.1385](https://www.ecfr.gov/current/title-14/part-25/section-25.1385) … [25.1401](https://www.ecfr.gov/current/title-14/part-25/section-25.1401), [91.209](https://www.ecfr.gov/current/title-14/part-91/section-91.209).
 
 **Operating practice (V, [AIM 4-3-24](https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap4_section_3.html), "Effective: 7/9/2026, Change 3").** The section was renumbered from 4-3-23. It says:
 
@@ -490,7 +494,7 @@ The eCFR history API shows §25.1389 was last amended on 2016-12-30. Links: [25.
    - strobes on only from runway entry until the runway is vacated;
    - landing lights below 10,000 ft (3,048 m, not the current 3,000 m) and from takeoff clearance, that is the takeoff roll;
    - beacon from before pushback while engines run.
-   - Nav lights on parked aircraft: position lights are required only when "operated" or moving at night (91.209(a)(2) also allows "clearly illuminated"). Whether parked, powered aircraft at SFO show nav lights is **NV**. Default to off at gates without a beacon, and let the owner decide.
+   - Nav lights on parked aircraft: position lights are required only when "operated" or moving at night (91.209(a)(2) also allows "clearly illuminated"). [corrected by verifier: 91.209(a)(2) also covers *parking*: "Park or move an aircraft in, or in dangerous proximity to, a night flight operations area of an airport unless the aircraft— (i) Is clearly illuminated; (ii) Has lighted position lights; or (iii) is in an area that is marked by obstruction lights" (eCFR, re-fetched). A parked aircraft at a floodlit gate meets (i), so nav lights off at the gate is still lawful, but "required only when operated or moving" is wrong.] Whether parked, powered aircraft at SFO show nav lights is **NV**. Default to off at gates without a beacon, and let the owner decide.
 4. **Colours.** Use the CIE boxes of §25.1397, the same aviation colours as `airfield_lighting.md` §10.2 (FAA EB 67D). The current `[1,0.06,0.04]` and `[0.1,1,0.3]` values are not converted from those boxes.
 
 ### 5.5 Road vehicles (partly V)
@@ -509,8 +513,8 @@ The eCFR history API shows §25.1389 was last amended on 2016-12-30. Links: [25.
 - **Frostbite** (Lagarde & de Rousiers, SIGGRAPH 2014, v3.2, [PDF](https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf)):
   - §4.3: "EV = log2(L_avg S / K) … ISO 2720:1974 recommends a range for K between 10.6 and 13.4. Two values for K are in common use: 12.5 (Canon, Nikon, and Sekonic) and 14 (Minolta, Kenko, and Pentax)."
   - Converting EV to luminance: "L = 2^(EV−3)" (Table 7).
-  - §5.1: EV100 = log2(N²/t · 100/S), and the saturation-based `maxLuminance = 1.2f * pow(2.0f, EV100)`, with the exposure being its reciprocal. "Sunny 16": f/16, ISO 100, 1/125 s gives EV 14.97.
-  - Measured illuminance in Stockholm in July: Sun + sky 85,500–113,600 lx; sky alone 19,300–29,000 lx (Table 11).
+  - §5.1: EV100 = log2(N²/t · 100/S), and the saturation-based `maxLuminance = 1.2f * pow(2.0f, EV100)`, with the exposure being its reciprocal. "Sunny 16": f/16, ISO 100, 1/125 s gives EV 14.97. [corrected by verifier: 14.97 is our own log₂(16² × 125). Frostbite §5.1.4 states the rule and the f/16, ISO 100, 1/125 s test but prints no EV number.]
+  - Illuminance measured in Stockholm in July, sensor horizontal (Table 11): Sun + sky 85,500–113,600 lx from 9 am to 2:30 pm; sky alone 19,300–29,000 lx from 9 am to 5 pm.
 - **Filament** ([Filament.md](https://google.github.io/filament/Filament.md.html)):
   - "from 10⁻⁵ cd·m⁻² for starlight to 10⁹ cd·m⁻² for the sun".
   - "Pre-exposed lights": "simply apply the camera exposure … before writing out the result of the lighting pass", or pre-expose the lights so half floats never overflow.
@@ -536,7 +540,7 @@ The eCFR history API shows §25.1389 was last amended on 2016-12-30. Links: [25.
 | Floodlit apron, 54 lx (1988 FAA target) | 54 lx | 4.6 (concrete 5.6) |
 | Full Moon at 53°, no floodlights | 0.20 lx | −3.5 |
 | Nautical twilight end (−12°) | 0.005 lx | −8.8 |
-| Night sky itself, 18–19.4 mag/arcsec² | 3–7 × 10⁻³ cd/m² | −4 to −5 |
+| Night sky itself, 17.9–19.4 mag/arcsec² (coarse atlas reading) | 1.9–7.5 × 10⁻³ cd/m² | −6.1 to −4.1 [corrected by verifier: with the red class included (§4.3), 17.9–20.0 mag/arcsec², 1.07–7.30 × 10⁻³ cd/m², EV100 −6.9 to −4.1] |
 
 ### 6.3 Auto-exposure recipe for the WebGPU renderer (inf, built on 6.1)
 
@@ -597,7 +601,7 @@ The eCFR history API shows §25.1389 was last amended on 2016-12-30. Links: [25.
 ```bash
 python3 tools/env/fetch_ephemeris_refs.py        # raw NOAA/Horizons/USNO/IERS/C171 files -> refs/cache/sun_night/ (skips existing)
 node tools/env/build_ephemeris_fixtures.mjs      # -> tools/env/fixtures/ephemeris_ref.json (numbers + URLs + SHA-256)
-node tools/env/test_ephemeris.mjs                # 33 checks; exit 1 on failure (about 5 s)
+node tools/env/test_ephemeris.mjs                # 32 checks; exit 1 on failure (about 5 s)
 ```
 
 - The NOAA reference values come from running NOAA's own `main.js` in a Node `vm`: SHA-256 `3832956f…856`, 20,880 bytes. Its calculation functions are plain JS with no DOM access at load.
@@ -659,3 +663,88 @@ All fetched on 24 Sep 2026.
 - Frostbite PBR v3.2: https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
 - Filament: https://google.github.io/filament/Filament.md.html
 - Thompson, Shirley & Ferwerda 2002 (abstract only): https://www.researchgate.net/publication/255682295
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Verification (adversarial check)
+
+This is an independent check of the claims above, done on 24 Sep 2026.
+- Every source was downloaded again into the verifier's scratch directory, not taken from the author's cache.
+- Scratch copies of the author's tools were re-run.
+- No Chromium was launched and nothing in `js/`, `data/` or `tools/` was edited.
+
+**Verdicts:** confirmed = re-derived from the primary source; refuted = the source or the code says otherwise, corrected inline and marked [corrected by verifier]; unverifiable = could not be checked here.
+
+**What was re-run:**
+1. `node tools/env/test_ephemeris.mjs`: 32/32 PASS, `ALL PASSED`, 6 s.
+2. `build_ephemeris_fixtures.mjs`, run in a scratch copy against the cached raw files. The Horizons, NOAA, USNO and C171 blocks and all 32 source SHA-256s are **identical** to the committed `ephemeris_ref.json`.
+3. Fresh downloads were byte-identical to the author's cache:
+   - `main.js`: SHA-256 `3832956f…9f54856`, 20,880 B;
+   - all 5 USNO year tables;
+   - the takram 0.19.1 tarball: `7fc3ce70…d79649`;
+   - AC 150/5360-13A: `3e3e6720…716a5`.
+4. The verifier's own comparison scripts, independent of the author's test: its own USNO table parser, its own Horizons queries at dates not in the fixtures, and NOAA `calcAzEl` run in a Node `vm`.
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 1 | 32 test checks pass | confirmed | Re-run: all PASS. |
+| 2 | Sun vs Horizons max 0.0066° el / 0.0070° az; Moon 0.0008° / 0.0010° (125 epochs) | confirmed for the sample; **generalisation refuted** (§1 corrected) | The 125-epoch numbers reproduce. A fresh Horizons query for all of 2026 (1,658 epochs, 317-min step, DE441, SITE_COORD as in §2.2, airless) gives Sun 0.0094° el / 0.0098° az, RMS 0.0032°; Moon 0.0023° el / 0.0023° az; lit fraction 0.0094 percentage points. Still within 0.01°, but "at most 1/80 of the solar diameter" is about 1/57 over the year. |
+| 3 | NOAA mode reproduces NOAA `main.js` to 2e-7° | confirmed (better) | NOAA `calcAzEl` run in a `vm` on 500 random 2026 instants against `sunPosition(...,{mode:'noaa'})`: max 9e-14° el, 2e-11° az. |
+| 4 | USNO 2026: 730 rise/set, 730 × 3 twilights, 705 moonrise/set, all within 1 min, 97.4–98.9 % to the minute | confirmed | The verifier's own fixed-width parser of freshly fetched `calculated/rstt/year` tasks 0–4 gives 97.7 / 98.4 / 98.9 / 97.4 / 98.2 %, max 1 min, no missing or extra events. |
+| 5 | 50 phases within 1.93 min, mean +0.65 min | confirmed | Against the fresh `api/moon/phases/year?year=2026`: n = 50, mean +0.65, range −0.62 … +1.93 min. The truncation explanation stays **inf**. |
+| 6 | Snapshot: az 133.781°, el 41.586°; USNO celnav Hc 41.5671, Zn 133.7795, pa 0.0018; Moon 90.6 %, rise 17:39 PDT; full Moon 26 Sep 09:49 PDT | confirmed | Fresh celnav: `hc 41.567056, zn 133.779516, pa 0.001816`. Fresh oneday: `fracillum 91%`, Moon rise `17:39 DT`, closest phase Full Moon `09:49 DT` (phases API 16:49 UT). Note: our airless topocentric value equals USNO's *geocentric* Hc, so it is 0.0019° above USNO's topocentric value. That is inside the error budget in row 2. |
+| 7 | IERS: TAI−UTC 37 s, UT1−UTC −0.0148 s on 25 Sep, no leap second at end of 2026; ΔT 69.2 s | confirmed | Fresh Bulletin A (Vol. XXXIX No. 039, 24 Sep 2026): `TAI-UTC = 37.000 000`, `2026 9 25 … -0.01481`, "There will NOT be a leap second introduced in UTC". |
+| 8 | USNO RST definitions (90.8333°, 16′ + 34′, twilight texts, 90.5666° + SD − HP, "a minute or more") | confirmed | Fresh `faq/RST_defs`. All quotes present. The sunrise quote joins two sentences with "…". |
+| 9 | NOAA accuracy quote and "no longer actively supported" notice | confirmed | Fresh calcdetails.html and solcalc/ page. |
+| 10 | Horizons refraction "yellow light, 10 C, 1010 mb" | confirmed | Horizons manual: "assuming yellow-light observations at 10 deg C sea-level with pressure of 1010 millibars". |
+| 11 | App's `solarPosition` (`js/world/textures.js:111`) is NOAA without refraction or ΔT; apparent sunset 2.86 min later on 23 Sep; 29′ at true horizon | confirmed | Code read. The verifier imported the app's own `solarPosition`: centre sets at 02:00:24 UTC against the apparent centre at 02:03:15, a 2.85 min difference. `refraction(0)` = 29.0′. The 2.9 min corresponds to Bennett's 34.5′ at apparent 0°, so both figures are consistent. |
+| 12 | `app.js:114` presets hard-code UTC−7, "1 h wrong", "dusk falls 1 h after" | **refuted in part** (corrected in §1, §2.4) | The hard-coding is true. In PST the preset is 1 h *earlier* on the clock, not later. The Sun's position at a fixed UTC hour does not depend on DST. The real defect is seasonal: dusk-preset Sun elevation is +11.2° on 21 Jun, −4.3° on 23 Sep, −8.5° on 11 Feb and −17.1° on 21 Dec. |
+| 13 | `app.js:146–148` heuristics; `app.js:253–256` light logic incl. landing < 3000 m; `sky.js:179` skyFloor; `gates.js:156–160` amber beacon; `fleet.js:125–126` strobe 1.1 Hz double flash, beacon 1.0 Hz; no Moon or stars in either renderer | confirmed | Code read at those lines. `grep -rni "moon\|stars" js` finds only comments. |
+| 14 | Circular 171 constants and transcription (133775, ATMOS X = 753.66156, REFR 8.6/4.42, Lumme–Bowell 0.892/3.343/0.632/0.0344, 0.418/…/0.03, `+0.0005/SK`), Appendix B ".0003 lux", printed sample 0.0278/0.0317/0.0600, caveat quotes, Brown's 12,000 measurements 1943–47 | confirmed | Fresh `DTIC_ADA182110_djvu.txt` from archive.org. FORTRAN lines 750/790 and the REFR/ATMOS subroutines match `ephemeris.mjs`. "Distribution Statement A, approved for public release". |
+| 15 | C171 table values (984 lx at 0°, 24.4 lx at −4°, 2.99 lx at −6°, 0.0049 lx at −12°, full Moon 0.397 lx), thresholds (32 lx at −3.73°, 5.4 lx at −5.45°) | confirmed; §1 "0.004 lx" refuted as a rounding error | Recomputed with `naturalIlluminance`. §1 corrected to 0.005. |
+| 16 | Cloud divisors 2/3/10 | confirmed, with a caveat added inline | Brown's ÷10 is for "dark stratus clouds preceding a heavy thunder storm"; the program labels it "(RARE)". The code also divides the night-sky term by the divisor. |
+| 17 | SFO examples table (23–26 Sep) | numbers confirmed; **Moon column refuted** (corrected) | `skyState` reproduces 73,900 / 703 / 3.47 / 0.0406 / 0.198 lx. At 02:30 and 03:01 UTC the Moon was up (19°/24°, 93 %), and at 03:01 it supplies 0.036 of the 0.041 lx. |
+| 18 | ASOS photocell "between 0.5 and 3 foot candles (deep twilight)" → Sun −3.7° to −5.5° | confirmed (quote) / **inf** (mapping) | `refs/cache/weather/asos_users_guide.txt` has the quote. Thresholds recomputed. |
+| 19 | takram 0.19.1: Bruneton + Hillaire; ray-marched in-scatter; Moon/stars; 0.19.0 "preliminary support for moonlight…"; 0.18.0 needs three ≥ 0.182.0; `stars.bin` 90,960 B from media.githubusercontent.com; star intensity 1000 quote; WebGPU/WebGL LUT switch; `three/src/nodes/core/NodeUtils.js` deep import; root entry imports `postprocessing` | confirmed | Fresh npm tarball, fresh WEBGPU.md (lines 7, 107, 690–691), CHANGELOG, `src/constants.ts`, `AtmosphereLUTNode.ts:194–196`, `build/webgpu.js:7`, `build/shared.js` imports. npm time 0.19.1 = 2026-05-06; CHANGELOG says 2026-05-26 (as reported). |
+| 20 | takram licence MIT "except where indicated otherwise" plus BSD-3 (Bruneton/INRIA), MIT (Epic), Apache-2.0 (Intel) | confirmed | GitHub LICENSE: "MIT … Copyright (c) 2024 Shota Matsuda". README: "[MIT](LICENSE), except where indicated otherwise." Headers in `precompute.ts`, `multiscattering.ts` and `ShadowLengthNode.ts`. The npm tarball itself contains **no LICENSE file**, so ship the repository LICENSE with the attribution. |
+| 21 | takram webgpu 84.5 KB / 25.3 KB gzip (three external); imports resolve against three 0.186.0 | confirmed with a qualifier (corrected inline) | A tree-shaken import of sky, aerial perspective, light, environment and context gives 84,386 / 25,334 B. `export *` of the whole entry gives 108,090 / 31.5 KB. A full esbuild bundle *including* three 0.186.0 finished with no errors, and every named import from `three/webgpu`, `three/tsl` and `three/src/...` exists at runtime. The GPU render is **unverifiable** here (no Chromium). |
+| 22 | astronomy-engine `RotationAxis` costs 53 KB / 23.5 KB | **refuted as stated** (corrected inline) | 53.3 / 23.5 KB is the whole subset takram imports. `RotationAxis` + `Body` alone is 11.5 KB / 5.5 KB gzip. |
+| 23 | three r186: SkyMesh is Preetham, constant `vec3(0.1)·Fex` night term, `.mul(0.04)`; point and spot lights in candela; Frostbite 1/d² window; directional light in lux (inf); no auto-exposure node; AgX/Neutral tone mapping | confirmed; **omission** added inline | three 0.186.0 tarball: `SkyMesh.js:272,278`, `PointLight.js:25`, `SpotLight.js:33`, `LightUtils.js`, `DirectionalLight.js:38` (no unit). No auto-exposure or adaptation node in `examples/jsm/tsl/display` or `src/nodes`. The report missed that r186 `SkyMesh` has procedural clouds (`cloudCoverage/Density/Elevation/Scale/Speed`). |
+| 24 | Falchi 2016: 22.0 mag/arcsec² = 174 µcd/m² quote; 1 a.m. calibration; "almost half of the United States"; Table 1; Milky Way lost above 688 µcd/m² | confirmed | Fresh Europe PMC full-text XML, Table 1 parsed row by row. |
+| 25 | Bay Area 10–41 × natural, 1.96–7.3 mcd/m², 17.9–19.4 mag/arcsec² | **refuted (internal inconsistency)**, corrected inline | The report names the red class, which is 5.12–10.2 ×. The verifier's crop of Fig. 3 shows red, magenta and pink. Range: 5.1–41 ×, 1.07–7.30 mcd/m², about 20.0–17.9 mag/arcsec². Per-pixel value still NV. |
+| 26 | Atlas data CC BY-NC 4.0; 2.9 GB GeoTIFF behind a request form; lightpollutionmap.info needs a key | confirmed | DataCite API `rightsList`: "Creative Commons Attribution Non Commercial 4.0 International". The description gives "2.9 Gb geotiff" and "Access to the FTP site … can be requested via the data request form", and adds that a **kmz quick-view file** is also provided. Fresh API call: "Invalid or missing authentication. Please request a key for API use." |
+| 27 | Kyba 2011 quote (×10.1 Berlin, ×2.8 at 32 km, ×4.1); luminance formula 10.8×10⁴·10^(−0.4m) | confirmed (quote) / confirmed numerically (formula) | Fresh PMC3047560 XML. The formula is an image in the XML, but the text attributes it to Unihedron/Schlyter, and it maps 22.0 mag to 1.71×10⁻⁴ cd/m², within 2 % of Falchi's 174 µcd/m². |
+| 28 | BSC5: 9,110 stars, "more or less complete to V=7"; no terms of use on the page | confirmed | Fresh tdc-www.harvard.edu page. |
+| 29 | eCFR 14 CFR 25.1383/1385/1387/1391/1393/1395/1397/1401 and 91.209 texts and tables; 25.1389 has a single eCFR version dated 2016-12-30 | confirmed | eCFR versioner API (2026-09-01, compressed). Every table value and quote matches. |
+| 30 | "Position lights required only when operated or moving" (§5.4 rule 3) | **refuted** (corrected inline) | 91.209(a)(2) also covers parking: "Park or move … unless … clearly illuminated; … lighted position lights; or … obstruction lights". |
+| 31 | AIM 4-3-24, "Effective 7/9/2026, Change 3", and all five quotes | confirmed; renumbering from 4-3-23 **unverifiable** | Fresh chap4_section_3.html (section title "Use of Aircraft Lights"; 4-3-23 is now "Option Approach"). The AIM index page reads "Effective: 7/9/2026 Change: Change 3". Also missed: "At the discretion of the pilot-in-command, all exterior lights should be illuminated when taxiing on or across any runway". The strobe rule in §5.4 should also cover runway crossings (**inf**). |
+| 32 | Blondel–Rey flash maths: 5,200 cd (1 frame), 2,800 cd (2 frames) | confirmed | 400·(0.2 + 1/60)/(1/60) = 5,200; 400·(0.2 + 2/60)/(2/60) = 2,800. |
+| 33 | Honeywell 770,000 cd, 15° × 16°, 737NG/757/767/777, 1 per wing root | confirmed | Fresh honeywellaerospace.com page. |
+| 34 | AC 150/5360-13A §7.5.2 quote; no numbers in the current AC; 1988 Table 4-1 values and mast height/spacing | confirmed | Fresh FAA PDF, same SHA-256 as cache. §7.5.3 refers to IES RP-37-15 (not fetched, paywalled), which is where current apron illuminance targets would be. The 1988 values come from the sibling cache text. |
+| 35 | SFPUC (22 Jan 2025) 2,000+ metal-halide→LED at the Rental Car Center and 500+ LED in QTA; QTL/Janet Nolan T1 Boarding Area B phrases | confirmed | Fresh pages. The QTL phrases are image `alt` captions on the portfolio page, not body text. |
+| 36 | Schembri "SFO – High Mast Lighting Replacement"; apron lamp type at SFO | unverifiable | Not re-fetched; the author reports 403/503. Lamp type stays NV. |
+| 37 | Oshkosh sell sheet and BWI PEGS 15.4.7 quotes | confirmed | Fresh PDF and page. BWI has no amber-beacon requirement, which supports keeping the `gates.js` beacon as NV. |
+| 38 | NASA media guidelines quote; SVS 4720 `lroc_color_2k.jpg` 447 KB | confirmed | Fresh pages: "[447.2 KB]". |
+| 39 | Frostbite quotes (K 10.6–13.4; 12.5/14; `1.2f * pow(2.0f, EV100)`; Table 7 L = 2^(EV−3); Table 11 Stockholm ranges) and Filament quotes | confirmed; "EV 14.97" is **our computation** (marked inline) | Fresh Frostbite v3.2 PDF: Table 11 Sky+Sun 85,500 … 113,600 lx (9 am–2:30 pm), Sky 19,300 … 29,000 lx (9 am–5 pm). Fresh Filament.md.html. |
+| 40 | FMVSS 108 upper-beam DRL "at test point H-V is not more than 7,000 cd" | confirmed | eCFR 49 CFR 571.108 S7.10.13(b). Context: other DRLs are capped at 3,000 cd. |
+| 41 | Moon diameter 29.4′–34.1′ while up in 2026; EV100 table arithmetic | confirmed | Recomputed: 29.41′–34.09′. EV values recomputed from `ev100ForIlluminance`. |
+| 42 | `ephemeris.mjs` 11.4 KB minified / 5.4 KB gzip | confirmed (≈) | esbuild `--minify`: 11,517 B / 5,368 B. |
+| 43 | Babylon.js `@babylonjs/addons` 9.28; `astronomy-engine` 2.1.19 MIT | confirmed | npm registry dist-tags. |
+| 44 | Thompson, Shirley & Ferwerda 2002 abstract wording | unverifiable | ResearchGate not fetched. The item is already marked "formula not fetched". |
+| 45 | Stars at `intensity = 1` show "only the brightest stars" | unverifiable (tension noted) | WEBGPU.md l. 690: at 1 stars "would be completely invisible, which is physically correct but useless in most scenes". Whether any show depends on the exposure the renderer uses, so a GPU test is needed. The phrase "so the SFO sky is not falsely dark" in §4.3 presumably means "not falsely starry". |
+| 46 | Housekeeping: WIP commit 1ae6fa8 contains `sun_night.md`; the email address is not in project files | confirmed | `git show --stat 1ae6fa8`. `grep` for the address in docs/, tools/, js/, data/, jobs/ and refs/cache/sun_night found nothing. The fetch script uses the generic UA `sfo3d-ephemeris-refs/1.0`. |
+
+**Overall.** The core deliverable, the ephemeris and its verification, holds up. It reproduces from the raw files and matches NOAA, JPL Horizons and USNO on fresh, independent queries. The year-long check shows the quoted 125-epoch maxima understate the worst case by about 1.4× for the Sun and 3× for the Moon, but everything stays under 0.01°.
+
+The regulatory and product quotes (eCFR, AIM, AC, Honeywell, Oshkosh, BWI, SFPUC, NASA, Falchi, Kyba, Circular 171) are accurate.
+
+Refuted or corrected:
+- the direction and cause of the preset-time bug;
+- the Bay Area light-pollution range, which omitted the red class;
+- the 91.209 parked-aircraft reading;
+- a rounding slip (0.004 → 0.005 lx);
+- the blank Moon cells in the SFO examples;
+- the astronomy-engine size attribution;
+- the takram bundle-size qualifier.
+
+Nothing refuted changes the recommendations in §8, except that dusk presets must come from `sunEvents()`, which §8 already recommends.

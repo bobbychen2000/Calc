@@ -53,6 +53,7 @@ class Canvas:
         ok = tid >= 0
         self.ok = ok; self.flat = np.flatnonzero(ok.reshape(-1))
         V = T[tid[ok]]; b = bary[ok]
+        self._tri = np.flatnonzero(atl)[tid[ok]]; self._bary = b.astype(np.float32)
         self.pos = (P[V] * b[..., None]).sum(1)
         n = (m['nrm'][V] * b[..., None]).sum(1); self.nrm = n / np.maximum(np.linalg.norm(n, axis=1, keepdims=True), 1e-6)
         # chart per texel -> part, texel size
@@ -71,7 +72,7 @@ class Canvas:
         self.neutral = na[:, :3]; alpha = na[:, 3]
         wl = srgb_to_lin(A['white'])
         lum = self.neutral @ np.array([0.299, 0.587, 0.114])
-        self.detail = np.clip(srgb_to_lin(lum) / wl, 0, 1.25)
+        self.detail0 = np.clip(srgb_to_lin(lum) / wl, 0, 1.25)
         self.keep = np.clip(1 - np.abs(alpha - 0.75) / 0.12, 0, 1) * (alpha > 0.55)
         self.win = np.clip((0.55 - alpha) / 0.5, 0, 1)
         # geometry frames
@@ -83,13 +84,18 @@ class Canvas:
         self.yc = (top + bot) / 2; self.hh = np.maximum((top - bot) / 2, 0.05)
         self.eta = (self.y - self.yc) / self.hh
         self.H = self.env.mainTop - self.env.mainBot
+        self.ycM = (self.env.mainTop + self.env.mainBot) / 2; self.hhM = self.H / 2
         nz = self.nrm[:, 2]
         self.side = np.where(np.abs(nz) > 0.3, np.sign(nz), np.sign(self.z + 1e-9))   # +1 starboard, -1 port
         self._windows()
         self._fin()
         self.eng = A['eng']
-        # output (linear); start: bare white
+        self.reset()
+
+    def reset(self):
+        """start a new livery on the same airframe: bare white"""
         self.col = np.tile(lin('#FFFFFF') * 0.93, (len(self.flat), 1))
+        self.detail = self.detail0.copy()
         self.notes = []
 
     # ------------------------------------------------------------------ frames
@@ -127,7 +133,7 @@ class Canvas:
         """fin + rudder + the dorsal fillet on the tail cone"""
         if self.fin is None: return self.part == 'fin'
         sle0 = np.polyval(self.fin['le'], self.fin['yR'])
-        dors = (self.part == 'fus') & (self.y > self.top + 0.03) & (self.s > sle0 - 0.25 * self.H * 3)
+        dors = (self.part == 'fus') & (self.y > self.top + 0.03) & (self.s > sle0 - 0.25 * self.H * 3) & (np.abs(self.z) < 0.25 + 0.06 * self.hw)
         return (self.part == 'fin') | dors
 
     def fin_proper(self, margin=0.0):
@@ -156,6 +162,7 @@ class Canvas:
             v = PchipInterpolator(P[:, 0], P[:, 1], extrapolate=True)(np.clip(sn, P[0, 0], P[-1, 0]))
         except Exception: pass
         if key == 'sn': return self.yc + v * self.hh
+        if key == 'cabin': return self.ycM + v * self.hhM
         if key == 'win': return self.winY + v * self.H
         return v
 
@@ -189,6 +196,54 @@ class Canvas:
         col = np.stack([np.interp(t, T, C[:, k]) for k in range(3)], -1)
         a = np.ones(len(t)) if where is None else where.astype(float)
         self.col = self.col * (1 - a[:, None]) + col * a[:, None]
+
+    # ------------------------------------------------------------------ polygons in design coordinates
+    def coords(self, space):
+        """per-texel design coordinates and their metric scales (m per unit) for antialiasing:
+        'side' (sn = s/L, eta), 'fin' (fu, fv), 'abs' (s, y) metres, 'win' (sn, (y - winY) / H)"""
+        if space == 'side': return self.s / self.L, self.eta, self.L, self.hh
+        if space == 'cabin': return self.s / self.L, (self.y - self.ycM) / self.hhM, self.L, self.hhM
+        if space == 'win': return self.s / self.L, (self.y - self.winY) / self.H, self.L, self.H
+        if space == 'abs': return self.s, self.y, 1.0, 1.0
+        if space == 'fin':
+            F = self.fin; ch = np.maximum(np.polyval(F['te'], self.y) - np.polyval(F['le'], self.y), 0.3)
+            return self.fu, self.fv, ch, F['yT'] - F['yR']
+        raise ValueError(space)
+
+    def poly_alpha(self, pts, space='side', sel=None):
+        """antialiased coverage of a polygon [(a, b), ...] in design coordinates"""
+        a, b, sa, sb = self.coords(space)
+        if sel is None: sel = np.ones(len(a), bool)
+        idx = np.flatnonzero(sel)
+        out = np.zeros(len(a))
+        if not len(idx): return out
+        A = a[idx]; Bv = b[idx]
+        SA = sa[idx] if np.ndim(sa) else np.full(len(idx), sa); SB = sb[idx] if np.ndim(sb) else np.full(len(idx), sb)
+        P = np.asarray(pts, float)
+        # bbox cull
+        lo = P.min(0); hi = P.max(0); m = (A >= lo[0] - 0.05) & (A <= hi[0] + 0.05) & (Bv >= lo[1] - 0.05) & (Bv <= hi[1] + 0.05)
+        if not m.any(): return out
+        idx = idx[m]; A = A[m]; Bv = Bv[m]; SA = SA[m]; SB = SB[m]
+        inside = np.zeros(len(A), bool); d2 = np.full(len(A), np.inf)
+        n = len(P)
+        for i in range(n):
+            x0, y0 = P[i]; x1, y1 = P[(i + 1) % n]
+            if True:
+                cond = ((y0 > Bv) != (y1 > Bv)) & (A < (x1 - x0) * (Bv - y0) / ((y1 - y0) if y1 != y0 else 1e-12) + x0)
+                inside ^= cond
+            # distance to the segment in metres
+            ex, ey = (x1 - x0) * SA, (y1 - y0) * SB; px, py = (A - x0) * SA, (Bv - y0) * SB
+            L2 = ex * ex + ey * ey
+            t = np.clip((px * ex + py * ey) / np.maximum(L2, 1e-12), 0, 1)
+            d2 = np.minimum(d2, (px - t * ex) ** 2 + (py - t * ey) ** 2)
+        sd = np.sqrt(d2) * np.where(inside, -1, 1)
+        out[idx] = np.clip(0.5 - sd / self.tex[idx], 0, 1)
+        return out
+
+    def poly(self, pts, color, space='side', where=None):
+        sel = where if where is not None else (self.finzone() if space == 'fin' else None)
+        self.paint(self.poly_alpha(pts, space, sel), color)
+
 
     # ------------------------------------------------------------------ parts
     def engines(self, color, lip='#B9BDC2', lip_len=0.07, where=None):
@@ -275,6 +330,40 @@ class Canvas:
         a = smp[:, 3]; col = smp[:, :3] / np.maximum(a[:, None], 1e-6)
         self.col[inb] = self.col[inb] * (1 - a[:, None]) + col * a[:, None]
 
+    # ------------------------------------------------------------------ GPL source liveries
+    def source_uv(self):
+        """per texel: the UV of the same surface point in the ORIGINAL (pre-atlas) model, i.e. in the UV layout of the
+        FlightGear / FlightAirMap source textures (triangles matched by their quantised vertex positions)"""
+        if getattr(self, '_suv', None) is not None: return self._suv
+        orig = sfom.load(os.path.join(common.ORIG, self.key + '.sfom'), textures=False)
+        raw = self.m['raw']; h = self.h
+        def qpos(mm, hh):
+            q = hh['quant']; return np.round((mm['pos'] - np.array(q['pmin'])) / np.maximum(np.array(q['pscale']), 1e-12)).astype(np.int64)
+        qa = qpos(self.m, h); qo = qpos(orig, orig['head'])
+        key = lambda Q, I: [tuple(Q[I[t]].reshape(-1)) for t in range(len(I))]
+        omap = {}
+        for t, k in enumerate(key(qo, orig['idx'])): omap.setdefault(k, t)
+        tris = np.unique(self._tri)
+        amap = {}
+        for t in tris:
+            k = tuple(qa[self.m['idx'][t]].reshape(-1)); amap[t] = omap.get(k, -1)
+        ot = np.array([amap[t] for t in self._tri]); okm = ot >= 0
+        uv = np.zeros((len(self._tri), 2)); OU = orig['uv']; OI = orig['idx']
+        uv[okm] = (OU[OI[ot[okm]]] * self._bary[okm][..., None]).sum(1)
+        self._suv = (uv, okm)
+        return self._suv
+
+    def from_texture(self, img, where=None, keep_detail=False):
+        """paint texels from a livery texture made for the source model's UV layout (e.g. a GPL FlightGear livery)"""
+        uv, okm = self.source_uv()
+        sel = okm if where is None else (okm & where)
+        arr = np.asarray(img.convert('RGBA')).astype(np.float32) / 255
+        smp = sample_bilinear(arr, uv[sel, 0] % 1.0, uv[sel, 1] % 1.0)
+        a = smp[:, 3:4]
+        self.col[sel] = self.col[sel] * (1 - a) + srgb_to_lin(smp[:, :3]) * a
+        if not keep_detail: self.detail[sel] = np.where(a[:, 0] > 0.5, 1.0, self.detail[sel])
+        return sel
+
     # ------------------------------------------------------------------ output
     def finish(self, white_detail=True):
         """apply skin detail, kept dark areas and windows; returns RGBA uint8 image (S x S)"""
@@ -342,3 +431,18 @@ if __name__ == '__main__':
         import preview
         m, P = preview.load_for(a.model, a.type)
         preview.sheet(m, P, ['side', '34', 'stbd34', 'rear34'], img, 1000, 470, title=f'{a.brand} {a.type or ""}').save(a.preview)
+
+
+def spline(ctrl, n=16, closed=False):
+    """Catmull-Rom points through control points (for smooth outlines in design coordinates)"""
+    P = np.asarray(ctrl, float)
+    if closed: P = np.vstack([P[-1:], P, P[:2]])
+    else: P = np.vstack([P[:1], P, P[-1:]])
+    out = []
+    for i in range(1, len(P) - 2):
+        p0, p1, p2, p3 = P[i - 1], P[i], P[i + 1], P[i + 2]
+        for t in np.linspace(0, 1, n, endpoint=False):
+            t2, t3 = t * t, t * t * t
+            out.append(0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3))
+    if not closed: out.append(P[-2])
+    return [tuple(q) for q in out]

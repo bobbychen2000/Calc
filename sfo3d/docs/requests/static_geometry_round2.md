@@ -55,6 +55,7 @@ atlas face list, so it follows automatically; `worldSignAtlasMap` needs no chang
 
 - Data table: `sfo_details.js` = 267 centrelines (OSM + 1 NAIP-traced E-W crossing of 1L/1R that OSM lacks), 90 holds
   (88 runway, 2 ILS; 10 located by OSM holding-position features and measured on the paint); `sfo_stands.js` = 108
-  contact stands, 128 OSM bridges, 257 NAIP red boxes (plausibility-filtered), ADS-B evidence from adsb.lol only.
+  contact stands, 128 OSM bridges, 257 NAIP red boxes (plausibility-filtered), ADS-B evidence from adsb.lol only;
+  `sfo_pavement.js` now also covers a 3 m band under every hold bar.
 - Checks: `python3 tools/stands/check_stands.py` (DATA ISSUES + APP ISSUES), `python3 tools/stands/naip_relief.py`
   (NAIP lean fit), `python3 tools/imagery/check_markings.py`.

@@ -87,6 +87,17 @@ class Envelope:
             for i in range(ifin, n):
                 f = (s[i] - s[ifin - 1]) / max(s[iend] - s[ifin - 1], 1e-6)
                 topr[i] = t0 + (t1 - t0) * min(f, 1.0)
+        # where the cut shows the body beside the fin (|z| 0.35-0.8 m), the tail-cone top is measured there instead
+        # (extrapolated to the centre plane with the local section curvature); the straight line is only a fallback
+        if ifin is not None:
+            for i in range(ifin, iend + 1):
+                pts = cuts[i]
+                if not len(pts): continue
+                q = pts[(np.abs(pts[:, 1]) > 0.35) & (np.abs(pts[:, 1]) < 0.8) & (pts[:, 0] > bot[i])]
+                if len(q) < 2: continue
+                R = max((topr[i] - bot[i]) / 2, 0.3)
+                est = float(np.max(q[:, 0] + q[:, 1] ** 2 / (2 * R)))
+                if est < top[i] - 0.05 and est > topr[i]: topr[i] = est
         botr = bot.copy(); botr[iend + 1:] = botr[iend]; topr[iend + 1:] = topr[iend]
         # cabin aspect (half width / half height) from mid-height widths
         mw = []

@@ -14,10 +14,11 @@
    "belly": -2.0704999566078186,
    "hasGear": false
   },
-  "nv": 37293,
+  "nv": 37825,
   "ni": 66507,
   "file": "a320.sfom",
-  "size": 559049
+  "size": 414573,
+  "atlas": true
  },
  "b788": {
   "name": "Boeing 787-8",
@@ -34,10 +35,11 @@
    "belly": -3.2829599380493164,
    "hasGear": false
   },
-  "nv": 16517,
+  "nv": 18075,
   "ni": 44370,
   "file": "b788.sfom",
-  "size": 389700
+  "size": 405189,
+  "atlas": true
  },
  "e75l": {
   "name": "Embraer E175",
@@ -54,10 +56,11 @@
    "belly": -1.9340219087311616,
    "hasGear": false
   },
-  "nv": 15407,
+  "nv": 17297,
   "ni": 59871,
   "file": "e75l.sfom",
-  "size": 538406
+  "size": 477419,
+  "atlas": true
  },
  "bcs3": {
   "name": "Airbus A220-300",
@@ -74,10 +77,11 @@
    "belly": -2.1534975377620658,
    "hasGear": false
   },
-  "nv": 28820,
+  "nv": 34239,
   "ni": 95940,
   "file": "bcs3.sfom",
-  "size": 1117137
+  "size": 1180968,
+  "atlas": true
  },
  "b738": {
   "name": "Boeing 737-800",
@@ -97,7 +101,8 @@
   "nv": 72552,
   "ni": 72552,
   "file": "b738.sfom",
-  "size": 432523
+  "size": 473615,
+  "atlas": true
  },
  "a321": {
   "name": "Airbus A321",
@@ -114,10 +119,11 @@
    "belly": -2.0704999566078186,
    "hasGear": false
   },
-  "nv": 41210,
+  "nv": 41578,
   "ni": 73992,
   "file": "a321.sfom",
-  "size": 460871
+  "size": 389280,
+  "atlas": true
  },
  "a319": {
   "name": "Airbus A319",
@@ -134,10 +140,11 @@
    "belly": -2.070500075817108,
    "hasGear": false
   },
-  "nv": 36526,
+  "nv": 37100,
   "ni": 64206,
   "file": "a319.sfom",
-  "size": 417950
+  "size": 362268,
+  "atlas": true
  },
  "a333": {
   "name": "Airbus A330-300",
@@ -154,10 +161,11 @@
    "belly": -3.0894784904959427,
    "hasGear": false
   },
-  "nv": 17383,
+  "nv": 19804,
   "ni": 53952,
   "file": "a333.sfom",
-  "size": 589224
+  "size": 595582,
+  "atlas": true
  },
  "a359": {
   "name": "Airbus A350-900",
@@ -174,10 +182,11 @@
    "belly": -3.4270660281181335,
    "hasGear": false
   },
-  "nv": 45317,
+  "nv": 49490,
   "ni": 127656,
   "file": "a359.sfom",
-  "size": 1319262
+  "size": 1392373,
+  "atlas": true
  },
  "a388": {
   "name": "Airbus A380-800",
@@ -194,10 +203,11 @@
    "belly": -4.634495184310694,
    "hasGear": false
   },
-  "nv": 36269,
+  "nv": 41351,
   "ni": 109326,
   "file": "a388.sfom",
-  "size": 669062
+  "size": 563436,
+  "atlas": true
  },
  "b744": {
   "name": "Boeing 747-400",
@@ -214,10 +224,11 @@
    "belly": -4.199375152587891,
    "hasGear": false
   },
-  "nv": 16358,
+  "nv": 18221,
   "ni": 47295,
   "file": "b744.sfom",
-  "size": 489121
+  "size": 478485,
+  "atlas": true
  },
  "b748": {
   "name": "Boeing 747-8",
@@ -234,10 +245,11 @@
    "belly": -4.161313533782959,
    "hasGear": false
   },
-  "nv": 23552,
+  "nv": 26193,
   "ni": 78552,
   "file": "b748.sfom",
-  "size": 402717
+  "size": 395893,
+  "atlas": true
  },
  "b752": {
   "name": "Boeing 757-200",
@@ -254,10 +266,11 @@
    "belly": -1.9806000590324402,
    "hasGear": false
   },
-  "nv": 30907,
+  "nv": 34077,
   "ni": 100362,
   "file": "b752.sfom",
-  "size": 772440
+  "size": 759461,
+  "atlas": true
  },
  "b763": {
   "name": "Boeing 767-300",
@@ -274,10 +287,11 @@
    "belly": -2.8635300174355507,
    "hasGear": false
   },
-  "nv": 12064,
+  "nv": 13762,
   "ni": 39492,
   "file": "b763.sfom",
-  "size": 428694
+  "size": 441137,
+  "atlas": true
  },
  "bcs1": {
   "name": "Airbus A220-100",
@@ -294,10 +308,11 @@
    "belly": -2.1611798298460365,
    "hasGear": false
   },
-  "nv": 24334,
+  "nv": 26548,
   "ni": 76287,
   "file": "bcs1.sfom",
-  "size": 747337
+  "size": 761330,
+  "atlas": true
  },
  "crj2": {
   "name": "Bombardier CRJ200",
@@ -314,10 +329,11 @@
    "belly": -1.6204531461113363,
    "hasGear": false
   },
-  "nv": 7649,
+  "nv": 8467,
   "ni": 17271,
   "file": "crj2.sfom",
-  "size": 258133
+  "size": 216132,
+  "atlas": true
  },
  "crj7": {
   "name": "Bombardier CRJ700",
@@ -334,10 +350,11 @@
    "belly": -1.6869365572929382,
    "hasGear": false
   },
-  "nv": 14831,
+  "nv": 15535,
   "ni": 41973,
   "file": "crj7.sfom",
-  "size": 302863
+  "size": 254892,
+  "atlas": true
  },
  "crj9": {
   "name": "Bombardier CRJ900",
@@ -354,10 +371,11 @@
    "belly": -1.6869365572929382,
    "hasGear": false
   },
-  "nv": 15380,
+  "nv": 16100,
   "ni": 43461,
   "file": "crj9.sfom",
-  "size": 310556
+  "size": 262703,
+  "atlas": true
  },
  "e170": {
   "name": "Embraer E170",
@@ -374,10 +392,11 @@
    "belly": -1.9299420740455389,
    "hasGear": false
   },
-  "nv": 15722,
+  "nv": 17745,
   "ni": 58704,
   "file": "e170.sfom",
-  "size": 559343
+  "size": 586924,
+  "atlas": true
  },
  "e190": {
   "name": "Embraer E190",
@@ -394,10 +413,11 @@
    "belly": -1.8524357625842096,
    "hasGear": false
   },
-  "nv": 16013,
+  "nv": 17934,
   "ni": 60228,
   "file": "e190.sfom",
-  "size": 727135
+  "size": 751187,
+  "atlas": true
  },
  "md11": {
   "name": "McDonnell Douglas MD-11",
@@ -414,9 +434,10 @@
    "belly": -3.0460950136184692,
    "hasGear": false
   },
-  "nv": 47206,
+  "nv": 52483,
   "ni": 153738,
   "file": "md11.sfom",
-  "size": 586329
+  "size": 657856,
+  "atlas": true
  }
 }

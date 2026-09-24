@@ -32,7 +32,7 @@ export class Engine {
     // sun + cascaded shadows (CSMShadowNode; splits follow the camera distance like js/renderer.js computeCascades)
     const sun = new THREE.DirectionalLight(0xffffff, 1); sun.castShadow = true;
     sun.shadow.mapSize.set(Q.shadow, Q.shadow); sun.shadow.camera.near = 1; sun.shadow.camera.far = 40000;
-    sun.shadow.bias = this.reversed ? 0.0001 : -0.0002; sun.shadow.normalBias = 0.6; sun.shadow.radius = 2;
+    sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.4; sun.shadow.radius = 2; // three flips the bias itself for a reversed depth buffer (ShadowNode.js coordZ.sub(bias))
     this.splits = [84, 300, 960];
     this.csm = new THREE.CSMShadowNode(sun, { cascades: Q.cascades, maxFar: 3000, mode: 'custom', lightMargin: 600,
       customSplitsCallback: (n, near, far, target) => { const s = this.splits; for (let i = 0; i < n - 1; i++) target.push(Math.min(0.99, s[i] / far)); target.push(1); } });

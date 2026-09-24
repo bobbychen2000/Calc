@@ -1,1024 +1,1216 @@
 # SFO Live 3D — 2-D drawing set: deviations and physical conflicts
 
-Generated 2026-09-24 10:05Z by `tools/drawing/run_all.sh` (report: `tools/drawing/report.py`).
-Scene extracted from the running app (`jobs/extract2d.mjs`, live.html?mode=snapshot, git `dbdaf2b`, 2026-09-24T09:06:15Z, quality tier `high`).
+> **STALE (ALLOW_STALE=1): 6 file(s) the app loaded changed after the extraction** (data/sfo_details.js, data/sfo_pavement.js, js/live/aircraft.js, js/live/lookup.js, js/live/models.js, js/shaders/aircraft_real.js). The numbers below describe the extracted state, not the working tree.
+Generated 2026-09-24 21:27Z by `tools/drawing/run_all.sh` (report: `tools/drawing/report.py`).
+Scene extracted from the running app (`jobs/extract2d.mjs`, live.html?mode=snapshot) at 2026-09-24T20:22:11Z: **world frame `ltp-nad83-2011`**, git `d1977bf+dirty` (HEAD now `1ae6fa8`), 83 input files hashed (inputs `9cd42856d0612435`, TYPES `40dc9734a52fde37`) - **stale**, quality tier `high`.
+Uncommitted app files at extraction (their content is what the hashes pin): fo3d/data/sfo_stands.js, sfo3d/data/sfo_stands.json, sfo3d/js/live/airport.js, sfo3d/js/live/markings.js, sfo3d/js/three/bridges.js, sfo3d/js/three/engine.js, sfo3d/js/three/markings.js, sfo3d/js/three/renderer3.js, sfo3d/js/three/sky.js, sfo3d/js/three/dev/actest.html ....
 Everything below is drawn/measured from the objects the 3-D app actually places (window.SFO world / gateSys / traffic / physics, and the app's own builder functions), not re-derived from the data files.
 
 ## Headline
 
-- **Imagery `google`** (Google Maps screenshots (owner, reference only); reference only, not redistributable): 914 features sampled, **329 measured** (+116 jet-bridge rotunda candidates), **270 with median offset > 1.0 m**; 324 with p90 > 1.0 m.
-- **Imagery `naip`** (NAIP (2 image(s)); public): 914 features sampled, **434 measured** (+115 jet-bridge rotunda candidates), **320 with median offset > 1.0 m**; 399 with p90 > 1.0 m.
-  - `google` by class (flagged / measured): runway-edge-stripe 1/4; runway-end 3/4; runway-threshold 2/2; runway-displaced-threshold 2/2; emas-bed 4/4; taxiway-edge 86/110; extra-pavement 54/57; building 101/117; bridge-walkway 16/28. The runway/EMAS classes are the dependable ones (self-test recovery >= 0.9 for ~1 m shifts, except pavement ends); building and pavement edges recover a known 1-2 m shift only 50-90 % of the time, so their flag counts mostly measure how often the picker chose a neighbouring edge - use the overlay sheets for those.
-  - `naip` by class (flagged / measured): runway-edge-stripe 0/8; runway-end 1/4; runway-threshold 3/8; runway-displaced-threshold 2/2; emas-bed 2/4; taxiway-edge 79/128; extra-pavement 59/59; building 129/130; bridge-walkway 16/28; hold-line 28/62. The runway/EMAS classes are the dependable ones (self-test recovery >= 0.9 for ~1 m shifts, except pavement ends); building and pavement edges recover a known 1-2 m shift only 50-90 % of the time, so their flag counts mostly measure how often the picker chose a neighbouring edge - use the overlay sheets for those.
-- **Physical audit**: 377 distinct findings (one per pair of objects, merged across scenarios): **114 COLLISION**, **4 OFF-PAVEMENT**, **50 CLEARANCE**, **209 WARNING**.
+- **Imagery `naip`** (NAIP (2 image(s)); public, primary): 1116 features sampled, **620 measured** (+71 jet-bridge rotundas found), **395 with median offset > 1.0 m**; 501 with p90 > 1.0 m.
+- **Imagery `google`** (Google Maps screenshots (owner, reference only, re-registered to NAIP); reference only, not redistributable): 1116 features sampled, **484 measured** (+77 jet-bridge rotundas found), **396 with median offset > 1.0 m**; 476 with p90 > 1.0 m.
+  - `naip` by class (flagged / measured): runway-edge-stripe 0/8; runway-end 0/4; runway-threshold 0/8; runway-threshold-bar 8/8; emas-bed 1/4; approach-light-pier 2/2; taxiway-edge 90/164; extra-pavement 218/241; apron-edge 2/2; building 38/39; bridge-walkway 34/48; hold-line 0/90.
+  - `google` by class (flagged / measured): runway-edge-stripe 1/4; runway-end 4/4; runway-threshold 0/2; runway-threshold-bar 5/6; emas-bed 3/4; approach-light-pier 2/2; taxiway-edge 97/145; extra-pavement 208/234; apron-edge 2/2; building 32/33; bridge-walkway 42/48.
+  - How far each class can be trusted is in the self-test section; building and pavement-edge classes recover a known shift less reliably than runway markings, so read their numbers with the overlay sheets.
+- **Physical audit**: 444 distinct findings (one per pair of objects, merged across scenarios, worst severity kept): **58 COLLISION**, **0 OFF-PAVEMENT**, **36 OBSTRUCTION**, **41 CLEARANCE**, **309 WARNING**.
 
-| scenario | COLLISION | OFF-PAVEMENT | CLEARANCE | WARNING |
-|---|---|---|---|---|
-| DOCK-MAX (every stand with its largest type, bridges docked) | 46 | 0 | 16 | 5 |
-| DOCK-REF (every stand with its reference type, bridges docked) | 46 | 0 | 11 | 5 |
-| ENVELOPE (class envelopes (all accepted types) vs neighbours / parked bridges / buildings) | 47 | 0 | 20 | 5 |
-| KINEMATICS (bridge tunnel geometry rest vs docked) | 0 | 0 | 0 | 168 |
-| LIVE (snapshot as displayed) | 42 | 4 | 0 | 8 |
-| OVERSIZE (747 / A380 on EL-F stands vs blocking rule) | 1 | 0 | 12 | 0 |
-| REST (all stands empty, bridges parked) | 33 | 0 | 0 | 2 |
-| STATIC (buildings vs buildings) | 0 | 0 | 0 | 25 |
+Per scenario (each scenario counted at its own severity - a pair that collides in DOCK-MAX but only warns in LIVE counts as a LIVE warning):
+
+| scenario | COLLISION | OFF-PAVEMENT | OBSTRUCTION | CLEARANCE | WARNING |
+|---|---|---|---|---|---|
+| DOCK-MAX (every stand with its largest type, bridges docked) | 26 | 0 | 0 | 6 | 13 |
+| DOCK-REF (every stand with its reference type, bridges docked) | 33 | 0 | 0 | 6 | 12 |
+| ENVELOPE (class envelopes (all accepted types) vs neighbours / parked bridges / buildings) | 20 | 0 | 0 | 21 | 1 |
+| KINEMATICS (bridge tunnel geometry rest vs docked) | 0 | 0 | 0 | 0 | 187 |
+| LIVE (snapshot as displayed) | 27 | 0 | 0 | 0 | 13 |
+| OVERSIZE (747 / A380 on EL-F stands vs blocking rule) | 0 | 0 | 0 | 8 | 0 |
+| REST (all stands empty, bridges parked) | 26 | 0 | 0 | 0 | 10 |
+| STATIC (buildings vs buildings; piers / signs vs movement surfaces) | 0 | 0 | 36 | 0 | 103 |
 
 ## Key findings (worst first)
 
-- **46 x envelope-rest-bridge** - parked (retracted) jet bridge inside the arrival envelope of its own stand: the cab parks min(15 m, reach - 2 m) from the rotunda towards the door, i.e. within ~2 m of the fuselage line on short-reach stands.
-- **21 x bridge-vdgs** - VDGS / stand-sign box inside a bridge tunnel or stair (the VDGS is placed on the stand centreline at the attach-point depth, where tunnels also pass).
-- **20 x bridge-aircraft** - docked bridge (tunnel / rotunda / stair / drive column) intersecting its own or a neighbouring aircraft (wing, engine or fuselage) in 3-D.
-- **18 x bridge-bridge** - two bridges intersecting in 3-D (mostly the L1 and L2 bridges of one wide-body stand at rest).
-- **5 x aircraft-building** - parked aircraft overlapping a terminal building in the LIVE snapshot - GroundPhysics never tested them (see the classification finding below); note also that its tests use 13 outline points of the TYPES planform, not the rendered model.
-- **1 x aircraft-vdgs** - aircraft intersecting a VDGS unit.
-- **1 x bridge-building** - bridge part inside a building / elevated walkway.
-- **1 x envelope-envelope** - two neighbouring class envelopes overlap.
-- **1 x oversize-not-blocked** - oversize aircraft (747/A380) reaches a neighbour the blocking rule leaves available.
-- **GroundPhysics never checks 9 parked aircraft**: tracks with phase `parked` and a stale transponder that still carry their last reported ground speed (UAL875 0.8 m/s, UAL34 6.1 m/s, ASA528 3.5 m/s, UAL1116 4.2 m/s, UAL852 6.1 m/s, UAL2467 6.8 m/s, SKW3490 9.5 m/s, UAL2649 6.3 m/s, JBU578 6.3 m/s) fall into the *moving* branch of `ground.js resolve()` (`(D.gs || 0) < 0.8` fails), which only nudges aircraft apart and never tests buildings or pavement. 7 of them account for the LIVE building / VDGS / off-pavement conflicts below.
-- **4 aircraft with a gear leg off the paved raster** the app uses (ground.js physics / ground shader): UAL2467 B39M (parked), SKW3490 E75L (parked), UAL2649 A319 (parked), JBU578 A321 (parked).
-- **Bridge kinematics**: 109 bridges whose three tunnel sections change length between parked and docked (they scale instead of telescoping - visible "morphing"); 59 docked tunnels steeper than 1:12.
-- **25 overlapping building footprints** that are both extruded (coplanar roofs that z-fight, or walls that cut through each other), among them AirTrain stations listed twice under two names: West Field Road AirTrain Station (Outbound) / Westfield Road AirTrain Station (Outbound)g; Terminal 1 Air Train Station / Terminal One AirTrain Station; Terminal 2 Air Train Station / Terminal Two AirTrain Station; Terminal 3 Air Train Station / Terminal Three AirTrain Station; International Terminal (A) AirTrain Station / International Terminal G Air Train Station; International Terminal (G) AirTrain Station / International Terminal A Air Train Station; West Field Road AirTrain Station (Inbound) / Westfield Road AirTrain Station (Inbound).
+- **18 COLLISION x envelope-rest-bridge** - parked (retracted) jet bridge inside the arrival envelope of a stand: an arriving aircraft of an accepted type would hit it (ENVELOPE 18).
+- **17 COLLISION x bridge-bridge** - two bridges intersecting in 3-D (DOCK-MAX 17, DOCK-REF 17, LIVE 17, REST 17).
+- **10 COLLISION x bridge-aircraft** - docked bridge part (tunnel / rotunda / stair / drive column) intersecting an aircraft in 3-D (DOCK-MAX 1, DOCK-REF 8, LIVE 1).
+- **7 COLLISION x bridge-building** - bridge part inside a building / elevated walkway (DOCK-MAX 7, DOCK-REF 7, LIVE 7, REST 7).
+- **2 COLLISION x envelope-envelope** - two neighbouring class envelopes overlap (ENVELOPE 2).
+- **2 COLLISION x aircraft-aircraft** - two aircraft overlapping in 3-D (DOCK-MAX 1, DOCK-REF 1).
+- **2 COLLISION x bridge-vdgs** - VDGS / stand-sign box inside a bridge tunnel, cab or stair (LIVE 2, REST 2).
+- **25 OBSTRUCTION x sign-on-movement-surface** - airfield sign standing on a runway / taxiway / blast pad / EMAS surface (STATIC 25).
+- **11 OBSTRUCTION x pier-on-movement-surface** - approach-light pier or post standing on a runway / displaced-threshold area / blast pad / EMAS bed / taxiway (STATIC 11).
+- LIVE aircraft involved in a collision / off-pavement finding (1): SKW5212 CRJ2 at F10 (gate) (phase gate, gs 0.0 m/s, stale, at F10).
+- **Bridge kinematics**: 121 bridges whose three tunnel sections change length between parked and docked (they scale instead of telescoping); 66 docked tunnels steeper than 1:12.
+- **25 overlapping building footprints** that are both extruded (coplanar roofs that z-fight, or walls that cut through each other), among them stations listed twice under two names: West Field Road AirTrain Station (Outbound) / Westfield Road AirTrain Station (Outbound)g; Terminal 1 Air Train Station / Terminal One AirTrain Station; Terminal 2 Air Train Station / Terminal Two AirTrain Station; Terminal 3 Air Train Station / Terminal Three AirTrain Station; International Terminal (G) AirTrain Station / International Terminal A Air Train Station; International Terminal (A) AirTrain Station / International Terminal G Air Train Station; West Field Road AirTrain Station (Inbound.
+- 78 signs stand more than 1 m inside the paved raster that GroundPhysics treats as legal aircraft ground (deepest 20.6 m) - GroundPhysics does not know about signs, so a relocated aircraft can end up on one (WARNING).
 - 1 aircraft on the ground drawn as a marker (no TYPES entry) - GroundPhysics treats it as no body at all.
+- The OSM taxi-net pavement test the physics view uses is re-implemented from the exported net; it agrees with the page's own `TaxiNet.paved` at 100.00 % of 20000 random points.
 
-## Visually verified on the overlay sheets
+## Runway markings and ends measured on `naip`
 
-- **28R / 28L displaced-threshold bar is on the wrong side of the threshold line (3.05 m)** - verified on NAIP 2024 (0.5 m, independently georeferenced) and on the Google screenshot 1a26bbeb: the modelled threshold stripes coincide with the imaged ones to about half a metre at both ends, but the imaged 10 ft bar lies on the landing side of the threshold (x = 0 .. +3.05 m, then a ~3 m gap to the stripes starting at +6.1 m), while `js/shaders/ground.js` endMarkings() draws it at x = -3.05 .. 0 (approach side, where the imagery shows the arrowheads). Candidate fix: `band(xt, 0.0, 3.05, fw)` instead of `band(xt, -3.05, 0.0, fw)`; re-check the arrowhead tips against the bar afterwards (AC 150/5340-1M Fig. A-7). The automatic bar number in the tables over-states the shift because the ridge detector locks onto the stripe block.
-- **Threshold bar missing at the non-displaced ends (10L, 10R, 19L, 19R)** - the NAIP along-axis profiles in `refs/cache/naip/naip_faa_check_2022.json` / `_2024.json` (produced by the imagery research task) show a 3.4-3.7 m bright band from x = -0.9..0 to +2.7..3.5 m at all four ends, presumably the 10 ft bar blurred by the imagery; `endMarkings()` draws a bar only when the threshold is displaced. The same profiles confirm the rest of the model at those ends: stripes start at 5.3-6.3 m (model 6.1 m) and end at 51.3-52.2 m (model 51.8 m); EMAS beds start 10.5-11.1 m beyond the end (model setback 10.67 m).
-- The EMAS "pavement end" at 1L/1R/19L/19R is not a visible edge (the 35 ft setback is paved); these ends are measured by the EMAS bed outline instead.
+Along-axis numbers in metres from the threshold line (+ = landing side). `stripe start`: offset of the imaged start of the threshold-stripe block from the model's 6.1 m (stripe-start rule, module doc of measure.py). `threshold bar`: imaged centre of the 10 ft bar vs the model (`js/shaders/ground.js` endMarkings() draws a bar only at displaced thresholds, centred 1.525 m on the approach side).
+
+| end | stripe start offset (n) | imaged bar centre | model bar centre | bar verdict | pavement end offset | EMAS bed median |
+|---|---|---|---|---|---|---|
+| 10L | 0.85 (16/16) | 0.90 (10/10) | none | **bar imaged, model draws none** | 0.90 | – |
+| 28R | -0.10 (16/16) | 1.67 (10/10) | -1.52 | **wrong side of the threshold** | -0.40 | – |
+| 10R | 0.50 (16/16) | 1.30 (10/10) | none | **bar imaged, model draws none** | 0.50 | – |
+| 28L | -0.10 (16/16) | 1.87 (10/10) | -1.52 | **wrong side of the threshold** | -0.60 | – |
+| 1L | -0.00 (16/16) | 1.72 (10/10) | -1.52 | **wrong side of the threshold** | (EMAS end) | 0.20 |
+| 19R | -0.10 (16/16) | 1.50 (10/10) | none | **bar imaged, model draws none** | (EMAS end) | 1.20 |
+| 1R | -0.10 (16/16) | 1.77 (10/10) | -1.52 | **wrong side of the threshold** | (EMAS end) | 0.10 |
+| 19L | 0.20 (16/16) | 1.50 (10/10) | none | **bar imaged, model draws none** | (EMAS end) | 0.20 |
+
+The EMAS "pavement end" at 1L/1R/19L/19R is not a visible edge (the 35 ft setback is paved); those ends are checked by the EMAS bed outline.
+
+Approach-light piers over water (`js/anim/lights.js`): along-axis position of each imaged crossbar relative to the modelled pier (read on both crossbar arms), and the imaged crossbar half-length against the widest part of the modelled pier.
+
+| system | samples measured | along-axis offset median / bias (m) | imaged crossbar half-length (m) | model half-length (m) |
+|---|---|---|---|---|
+| RWY 28L MALSR approach-light piers over water (9, 244-732 m from the threshold) | 8/9 | 29.45 / -13.40 | 2.2 | 2.6 |
+| RWY 28R ALSF2 approach-light piers over water (18, 213-732 m from the threshold) | 17/18 | 3.30 / -3.10 | 6.1 | 2.6 |
+
+The app builds 43 approach-light structures (30 piers over water, 13 posts on land); 11 of them stand on a runway, displaced-threshold area, blast pad, EMAS bed or taxiway (OBSTRUCTION rows below).
 
 ## Data vs published source (no imagery)
 
-Runway ends of the RWY table the 3-D draws (`js/world/airfield.js`, s/t) against the FAA/AirNav end coordinates (`js/geo.js` RWY_ENDS):
+Runway ends of the RWY table the 3-D draws (`js/world/airfield.js`, s/t) against the FAA/AirNav end coordinates (`js/geo.js` RWY_ENDS), both in the scene's frame `ltp-nad83-2011`:
 
 | end | along-axis diff (m) | lateral diff (m) | displacement model / FAA (m) |
 |---|---|---|---|
-| 10L | +0.25 | -0.07 | 0.0 / 0.0 |
-| 28R | +0.03 | +0.07 | 91.4 / 91.4 |
-| 10R | +0.18 | +0.09 | 0.0 / 0.0 |
-| 28L | +0.03 | +0.00 | 91.4 / 91.4 |
-| 1L | -0.16 | **-1.11** | 195.1 / 195.1 |
-| 19R | -0.02 | **-1.31** | 0.0 / 0.0 |
-| 1R | -0.17 | **-1.36** | 170.7 / 170.7 |
-| 19L | +0.11 | **-1.32** | 0.0 / 0.0 |
+| 10L | +0.00 | +0.00 | 0.0 / 0.0 |
+| 28R | -0.00 | -0.00 | 91.4 / 91.4 |
+| 10R | +0.00 | +0.03 | 0.0 / 0.0 |
+| 28L | +0.00 | +0.03 | 91.4 / 91.4 |
+| 1L | +0.00 | +0.01 | 195.1 / 195.1 |
+| 19R | -0.00 | +0.00 | 0.0 / 0.0 |
+| 1R | +0.00 | -0.00 | 170.7 / 170.7 |
+| 19L | +0.00 | +0.01 | 0.0 / 0.0 |
 
-The RWY table stores every runway axis-aligned in the s/t grid (a single c per runway). The FAA ends of 1L/19R (s = -20.49 / -22.91) and 1R/19L (s = 207.96 / 205.28) show those runways are not exactly perpendicular to 10/28 (about 0.06 deg), so the modelled 1/19 centrelines are 1.1-1.4 m off at both ends (bold, opposite sides) and close to 0 at mid-length - a rotation, not a shift. NAIP agrees: along their whole length the 1/19 edge stripes measure within ~0.8 m of the model, and the NAIP-derived runway centrelines lie within 0.2-0.4 m of the FAA lines (refs/cache/naip/naip_faa_check_*.json). Fix: give 1L/19R and 1R/19L their own direction instead of the t axis.
+Largest difference: 10R (+0.00 m along, +0.03 m across). All eight ends agree with the FAA coordinates to better than 1 m. Displacements match.
 
-Rendered aircraft planform (real model scaled to TYPES length) against the TYPES published span - the audit uses the rendered geometry; GroundPhysics and standFits use TYPES:
+Rendered aircraft planform (the model after `fit.js` scaling, plugs, span and fin fits, as `models.js` applies them - re-implemented in `common.py _stretch` and checked below) against the TYPES span that GroundPhysics and standFits use: 42 model-rendered types, all within 0.5 m.
 
-| type | model | TYPES span (m) | rendered span (m) | diff |
-|---|---|---|---|---|
-| a20n | a320 | 35.8 | 33.3 | -2.5 |
-| a21n | a321 | 35.8 | 34.0 | -1.8 |
-| a319 | a319 | 35.8 | 33.9 | -1.9 |
-| a320 | a320 | 35.8 | 33.3 | -2.5 |
-| a321 | a321 | 35.8 | 34.0 | -1.8 |
-| a332 | a333 | 64.8 | 60.6 | -4.1 |
-| a333 | a333 | 64.8 | 60.5 | -4.2 |
-| b744 | b744 | 68.4 | 65.2 | -3.2 |
-| b752 | b752 | 38.0 | 39.2 | +1.2 |
-| b753 | b752 | 38.0 | 39.1 | +1.1 |
-| b762 | b763 | 50.9 | 46.1 | -4.8 |
-| b763 | b763 | 50.9 | 46.1 | -4.8 |
-| b764 | b763 | 50.9 | 46.2 | -4.7 |
-| bcs3 | bcs3 | 35.1 | 35.7 | +0.6 |
-| crj2 | crj2 | 24.9 | 21.2 | -3.6 |
-| crj7 | crj7 | 24.9 | 23.2 | -1.6 |
-| crj9 | crj9 | 24.9 | 23.9 | -0.9 |
-| e170 | e170 | 28.6 | 25.7 | -2.9 |
-| e75l | e75l | 28.6 | 26.3 | -2.3 |
-| md11 | md11 | 50.9 | 51.9 | +1.0 |
+Check of the re-implemented model fit: model dims (L, span, H in model units) after `_stretch` equal the page's `model.dims` for 42 of 42 types (to 2 cm).
 
-Several TYPES spans are not the published value of the type they name, and standFits() / GroundPhysics use TYPES: e.g. a332/a333 64.8 m is the A350 wing (A330-200/-300: 60.3 m), crj2 24.9 m is the CRJ900 value (CRJ200: 21.2 m). Rendered models are scaled by length only, so their spans differ from TYPES by up to ~5 m. Verify against the manufacturers' airport-planning documents before changing js/aircraft/types.js.
+## Imagery and georeference
+
+- `naip`: `refs/cache/naip/naip_2024_world_0.5m.png` (sha256 `2b202c3e670c0310`, 162,720,797 bytes, 0.50 m/px), transform ltp-nad83-2011, sidecar `refs/cache/naip/naip_2024_world_0.5m.json`.
+- `naip`: `refs/cache/naip/naip_2022_sfo_utm10n.tif` (sha256 `7e8d4db9248aaf3c`, 228,753,426 bytes, 0.60 m/px), transform GeoTIFF NAD83 / UTM zone 10N: world -> NAD83(2011) lat/lon (geo_frame.world_to_ll) -> NAD83 / UTM zone 10N (datum NAD83, no datum shift).
+- `google`: 19 screenshots, registrations `tools/sat/work/reg.json` (sha256 `18369b4f52c29d2f`, frame(s) equirect-v1 mapped exactly into `ltp-nad83-2011` by tools/sat/common.py sim_from_reg); NAIP residual correction: applied: per-screenshot translation to NAIP for 15 of 19 screenshots (imreg.py).
+
+Residual translation of each Google screenshot against NAIP (`imreg.py`, 2026-09-24T21:09Z; ground-level colour gradients, buildings masked, +-15.0 m search). `shift` = where a ground feature shows in the screenshot as registered, relative to NAIP (x east, z south); applied when `use`.
+
+| screenshot | m/px | patches ok / tested | shift x, z (m) | MAD (m) | NCC | used | note |
+|---|---|---|---|---|---|---|---|
+| b1d51b0f | 0.28 | 4 / 16 | +2.29, +4.71 | 1.59 | 0.51 | no | not applied: 4 patch(es), MAD 1.6 m - spread > 3 m: rotation/scale error beyond a translation |
+| 1a26bbeb | 0.57 | 32 / 39 | -3.96, -0.64 | 0.40 | 0.72 | yes | ok |
+| c235f3b8 | 0.24 | 6 / 10 | -1.22, +3.62 | 0.87 | 0.57 | yes | ok - spread > 3 m: rotation/scale error beyond a translation |
+| c1064033 | 1.61 | 10 / 39 | -3.35, +0.46 | 0.73 | 0.58 | yes | ok |
+| 2f0be03d | 1.08 | 24 / 39 | -2.33, +0.81 | 1.01 | 0.64 | yes | ok - spread > 3 m: rotation/scale error beyond a translation |
+| 103723b0 | 1.15 | 20 / 35 | -1.35, +2.04 | 1.03 | 0.68 | yes | ok |
+| e6f569c1 | 0.50 | 10 / 29 | -1.42, +1.72 | 0.39 | 0.64 | yes | ok |
+| 59be8a98 | 0.93 | 22 / 37 | -1.86, +0.70 | 0.69 | 0.64 | yes | ok - spread > 3 m: rotation/scale error beyond a translation |
+| 4637f855 | 0.42 | 13 / 22 | -1.11, +1.45 | 0.48 | 0.51 | yes | ok |
+| c9ff55e8 | 1.27 | 11 / 36 | -1.53, +0.64 | 0.70 | 0.51 | yes | ok |
+| 39176bb8 | 0.27 | 3 / 16 | -1.09, +1.14 | 0.40 | 0.53 | yes | ok |
+| 35809e3e | 1.07 | 10 / 31 | -0.94, +0.93 | 0.93 | 0.62 | yes | ok |
+| bc91df95 | 0.58 | 20 / 29 | -0.81, +0.94 | 0.68 | 0.60 | yes | ok |
+| bf5c7afc | 0.24 | 6 / 11 | -0.59, +1.09 | 0.66 | 0.61 | yes | ok |
+| d82848c4 | 0.25 | 7 / 13 | +0.30, +1.08 | 0.55 | 0.64 | yes | ok |
+| 151ec51d | 0.27 | 5 / 15 | -0.81, +0.68 | 4.25 | 0.51 | no | not applied: 5 patch(es), MAD 4.2 m - spread > 3 m: rotation/scale error beyond a translation |
+| 0af09b78 | 0.56 | 15 / 23 | +0.04, +1.05 | 0.71 | 0.63 | yes | ok |
+| 8b334c52 | 3.17 | 0 / 34 | – | – | – | no | no reliable patch (NCC < 0.35 or flat peak) |
+| 03dcd4ae | 0.17 | 0 / 4 | – | – | – | no | no reliable patch (NCC < 0.35 or flat peak) |
+
+Cross-source check after the correction: median over features of (Google bias - NAIP bias) along the outward normal, per class (a residual georeference difference would show as a common non-zero value):
+
+| class | features on both | median difference (m) | median absolute difference (m) |
+|---|---|---|---|
+| extra-pavement | 234 | +0.00 | 0.85 |
+| taxiway-edge | 145 | -0.10 | 1.90 |
+| bridge-walkway | 40 | +0.70 | 1.57 |
+| building | 32 | -0.07 | 1.32 |
+| runway-threshold-bar | 6 | +0.17 | 0.75 |
+| runway-edge-stripe | 4 | -0.15 | 0.15 |
+| emas-bed | 4 | +0.10 | 0.45 |
+| runway-end | 4 | +1.80 | 1.80 |
+| approach-light-pier | 2 | +8.60 | 8.60 |
+| runway-threshold | 2 | -0.52 | 0.52 |
+| apron-edge | 2 | -1.50 | 1.50 |
 
 ## How far to trust the automatic picks (self-test)
 
-`tools/drawing/selftest.py` resamples the Google imagery of 5 regions into synthetic georeferenced tiles whose content is displaced by a known vector ((0.8, -0.5), (2.0, -1.0) m) and re-measures every feature there. `stable` = same pick on an undisplaced resampled tile (within 0.5 m); `recovered` = the measured offset changed by the known n . shift (within 0.5 m). Low recovery means the class's numbers are dominated by picking a neighbouring edge (parapet, shadow, shoulder, paint): use its overlay sheets, not its numbers.
+`tools/drawing/selftest.py` (rules `2026-09-24c: stripe-start rule, building edge de-duplication, rotunda boundary = not found, approach-light piers`) resamples each source over 13 regions (terminal, airfield, and a box at every threshold) into synthetic tiles whose content is displaced by a known vector ((0.8, -0.5), (2.0, -1.0) m) and re-measures every feature there. `stable` = same pick on an undisplaced resampled tile (within 0.5 m); `recovered` = the measured offset changed by the known n . shift (within 0.5 m). Low recovery means the class's numbers are dominated by picking a neighbouring edge.
+
+**`naip`**
 
 | class | samples in test regions | measured | stable | recovered @ 0.9 m | recovered @ 2.2 m |
 |---|---|---|---|---|---|
-| bridge-walkway | 19 | 19 | 1.00 | 0.53 | 0.16 |
-| building | 2520 | 2398 | 0.87 | 0.76 | 0.60 |
-| emas-bed | 140 | 140 | 0.98 | 0.90 | 0.80 |
-| extra-pavement | 566 | 436 | 0.96 | 0.88 | 0.73 |
-| hold-line | 187 | 0 | – | – | – |
-| runway-displaced-threshold | 28 | 28 | 1.00 | 1.00 | 1.00 |
-| runway-edge-stripe | 187 | 52 | 1.00 | 0.98 | 0.95 |
-| runway-end | 39 | 37 | 0.78 | 0.59 | 0.51 |
-| runway-threshold | 48 | 32 | 1.00 | 0.91 | 0.94 |
-| stand-leadin | 293 | 0 | – | – | – |
-| taxiway-centreline | 467 | 0 | – | – | – |
-| taxiway-edge | 234 | 112 | 0.95 | 0.80 | 0.64 |
+| apron-edge | 16 | 12 | 0.92 | 0.91 | 0.82 |
+| bridge-walkway | 11 | 11 | 1.00 | 0.91 | 0.18 |
+| building | 1563 | 1509 | 0.98 | 0.81 | 0.58 |
+| emas-bed | 237 | 237 | 0.99 | 0.87 | 0.75 |
+| extra-pavement | 1063 | 974 | 0.97 | 0.82 | 0.66 |
+| hold-line | 293 | 271 | 1.00 | 0.97 | 0.92 |
+| runway-edge-stripe | 359 | 359 | 1.00 | 1.00 | 0.90 |
+| runway-end | 65 | 65 | 1.00 | 1.00 | 1.00 |
+| runway-threshold | 176 | 176 | 1.00 | 0.99 | 0.98 |
+| runway-threshold-bar | 110 | 110 | 1.00 | 0.95 | 0.91 |
+| stand-leadin | 262 | 0 | – | – | – |
+| taxiway-centreline | 877 | 0 | – | – | – |
+| taxiway-edge | 515 | 502 | 0.98 | 0.88 | 0.78 |
 
-## Deviations from imagery - `google`
+**`google`**
 
-Source: Google Maps screenshots (owner, reference only) (Google imagery - reference only, never redistributed). Offsets are signed along the outward edge normal (+ = imaged edge outside / right of the model), in metres; `gsd` = ground resolution of the image the profile was read from; `alt` = the same samples read from the next-best image (registration check). Features flagged when the median |offset| > 1.0 m.
-
-| class | features | measured | flagged (median > 1 m) | median of medians | median p90 | typical gsd | notes |
-|---|---|---|---|---|---|---|---|
-| apron-edge | 1 | 1 | 1 | 8.70 | 9.67 | 0.28 |  |
-| bridge-rotunda | 117 | 116 | 0 | 5.09 | 5.09 | 0.27 | automatic disc search, low confidence - read with the sheets |
-| bridge-walkway | 28 | 28 | 16 | 2.33 | 3.65 | 0.27 |  |
-| building | 130 | 117 | 101 | 2.90 | 8.07 | 0.28 | roof edge vs footprint: relief displacement (roofs lean away from nadir) + registration; see `shift`/`resid` columns |
-| emas-bed | 4 | 4 | 4 | 2.35 | 4.92 | 1.38 |  |
-| extra-pavement | 60 | 57 | 54 | 2.90 | 7.52 | 1.07 | derived from the same imagery (circular); checks the vectorisation |
-| hold-line | 81 | 0 | 0 | – | – | – | needs <= 0.6 m/px; on NAIP many picks land on other yellow paint (not covered by the self-test) |
-| runway-displaced-threshold | 2 | 2 | 2 | 7.30 | 7.44 | 0.57 | NAIP: +3.1 / +3.3 m = the bar drawn on the approach side of the threshold (see above); the Google value locks onto the stripe block |
-| runway-edge-stripe | 8 | 4 | 1 | 0.80 | 2.52 | 0.57 | 0.91 m stripe; 1L/19R, 1R/19L only on coarse shots |
-| runway-end | 4 | 4 | 3 | 2.20 | 2.79 | 0.92 |  |
-| runway-threshold | 8 | 2 | 2 | 1.80 | 2.00 | 0.57 | stripe start; needs <= 0.8 m/px. At 19L/19R (bar only ~2.8 m from the stripes) the pick is the bar's outer edge (~6 m); the NAIP along-axis profiles give stripe starts of 6.06 / 6.26 m there, i.e. the model (6.1 m) is right |
-| stand-leadin | 89 | 0 | 0 | – | – | – | lead-in paint not visible (worn / under the parked aircraft on obs stands) |
-| taxiway-centreline | 254 | 0 | 0 | – | – | – | 6 in paint: needs <= 0.35 m/px; the airfield screenshots are 0.5-1.6 m/px and JPEG chroma hides thin yellow lines |
-| taxiway-edge | 128 | 110 | 86 | 3.67 | 6.98 | 1.08 |  |
-
-### runway-end (4 measured, worst first)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| RWY 10L pavement end **>1 m** | 13/13 | 3.90 | 4.52 | 4.8 | +3.90 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| RWY 10R pavement end **>1 m** | 11/13 | 2.80 | 3.30 | 4.1 | +2.80 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| RWY 28L pavement end **>1 m** | 13/13 | 1.60 | 2.28 | 2.4 | -0.90 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| RWY 28R pavement end | 13/13 | 0.70 | 2.00 | 3.8 | -0.60 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-
-### runway-threshold (2 measured, worst first)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| RWY 28L threshold stripes (start 6.1 m past threshold) **>1 m** | 16/16 | 2.10 | 2.20 | 2.4 | +2.10 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| RWY 28R threshold stripes (start 6.1 m past threshold) **>1 m** | 16/16 | 1.50 | 1.80 | 1.8 | +1.50 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-
-### runway-displaced-threshold (2 measured, worst first)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| RWY 28R displaced threshold bar (91.4 m) **>1 m** | 14/14 | 7.50 | 7.60 | 7.7 | +7.50 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| RWY 28L displaced threshold bar (91.4 m) **>1 m** | 14/14 | 7.10 | 7.27 | 7.3 | +7.10 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-
-### runway-edge-stripe (4 measured, worst first)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| RWY 10R/28L edge stripe (south/east side) **>1 m** | 44/341 | 1.30 | 1.60 | 1.8 | +1.25 | 0.57 | 1a26bbeb, bc91df95 | – | – |
-| RWY 10L/28R edge stripe (north/west side) | 26/356 | 0.80 | 3.55 | 3.6 | -0.80 | 0.57 | 1a26bbeb | – | – |
-| RWY 10L/28R edge stripe (south/east side) | 28/356 | 0.80 | 1.53 | 1.6 | +0.20 | 0.57 | 1a26bbeb, bc91df95 | – | – |
-| RWY 10R/28L edge stripe (north/west side) | 42/341 | 0.75 | 3.45 | 3.9 | -0.75 | 0.57 | 1a26bbeb, bc91df95 | – | – |
-
-### emas-bed (4 measured, worst first)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| EMAS bed beyond RWY 19L **>1 m** | 62/118 | 6.10 | 7.60 | 8.0 | -3.25 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| EMAS bed beyond RWY 1L **>1 m** | 130/130 | 2.40 | 3.50 | 7.7 | +0.65 | 1.08 | 103723b0, 2f0be03d | +0.10 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| EMAS bed beyond RWY 1R **>1 m** | 116/116 | 2.30 | 3.30 | 3.8 | +0.05 | 1.15 | 103723b0, 2f0be03d | -1.60 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| EMAS bed beyond RWY 19R **>1 m** | 55/122 | 2.00 | 6.34 | 8.5 | -1.50 | 1.61 | c1064033 | +6.35 (3.18) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-
-### building (117 measured, worst first, top 40)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | fit shift | resid median | sheet |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Central Parking Garage near Harvey Milk Terminal 1 (part 2/5) **>1 m** | 85/85 | 8.70 | 9.66 | 9.9 | -3.60 | 0.42 | 4637f855 | -4.60 (0.55) | 4.41 | 7.54 | – |
-| Central Parking Garage near Terminal 2 (part 3/5) **>1 m** | 85/85 | 8.20 | 9.36 | 9.9 | +7.90 | 0.42 | 4637f855 | +6.90 (0.55) | 9.17 | 2.75 | – |
-| Terminal complex ramp level near Harvey Milk Terminal 1 (part 5/19) **>1 m** | 70/76 | 8.00 | 9.40 | 9.7 | -8.00 | 0.55 | 03dcd4ae, 0af09b78, 4637f855 | -5.00 (0.55) | 9.90 | 2.16 | – |
-| Boarding Area F near Boarding Area F (part 1/6) **>1 m** | 86/86 | 7.35 | 8.35 | 9.4 | -4.60 | 0.27 | 39176bb8, e6f569c1 | -1.00 (0.50) | 4.26 | 3.98 | – |
-| Super Bay Hangar Building near Boarding Area E (part 2/3) **>1 m** | 97/97 | 7.30 | 8.70 | 9.1 | +7.10 | 1.61 | c1064033 | +1.70 (3.18) | 8.78 | 1.00 | – |
-| Boarding Area B near Boarding Area B (part 4/5) **>1 m** | 87/87 | 7.10 | 9.10 | 9.7 | -7.10 | 0.28 | 0af09b78, b1d51b0f | -7.00 (0.55) | – | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Terminal complex ramp level near Boarding Area B (part 11/19) **>1 m** | 75/75 | 6.90 | 6.90 | 9.4 | -6.90 | 0.28 | 0af09b78, b1d51b0f | -4.30 (0.55) | – | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Terminal complex ramp level near Boarding Area B (part 12/19) **>1 m** | 75/75 | 6.80 | 8.90 | 9.4 | -6.70 | 0.28 | 0af09b78, b1d51b0f | -6.80 (0.55) | – | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Terminal complex ramp level near Harvey Milk Terminal 1 (part 14/19) **>1 m** | 75/75 | 6.30 | 9.10 | 9.7 | -1.10 | 0.16 | 03dcd4ae, 4637f855 | -0.70 (0.42) | 3.85 | 3.85 | – |
-| Boarding Area B near Boarding Area B (part 5/5) **>1 m** | 87/87 | 6.30 | 8.44 | 9.7 | -3.80 | 0.28 | 0af09b78, b1d51b0f | -0.40 (0.55) | 2.81 | 5.49 | [30-rwy-1L](30-rwy-1L.png) |
-| Terminal complex ramp level near Terminal 2 (part 3/19) **>1 m** | 74/76 | 6.00 | 8.80 | 9.8 | +2.90 | 0.24 | 4637f855, bf5c7afc, c235f3b8 | +1.15 (0.42) | 6.04 | 4.15 | – |
-| Grand Hyatt Hotel **>1 m** | 102/116 | 5.90 | 8.60 | 9.5 | -0.50 | 1.07 | 35809e3e | -1.50 (3.18) | 1.45 | 5.48 | – |
-| Grand Hyatt Hotel AirTrain Station **>1 m** | 70/73 | 5.75 | 9.11 | 9.6 | +1.40 | 1.07 | 35809e3e | – | 1.19 | 5.83 | – |
-| West Field Road AirTrain Station (Outbound) **>1 m** | 72/80 | 5.35 | 8.67 | 9.4 | -2.15 | 1.27 | c9ff55e8 | – | 3.10 | 4.97 | – |
-| Super Bay Hangar Building near Boarding Area D (part 1/3) **>1 m** | 34/98 | 5.35 | 6.70 | 7.2 | +5.35 | 1.61 | c1064033 | +3.75 (3.18) | 6.71 | 0.75 | [30-rwy-19R](30-rwy-19R.png) |
-| Boarding Area E near Boarding Area E (part 1/2) **>1 m** | 76/76 | 5.30 | 6.05 | 9.8 | -5.20 | 0.24 | 4637f855, c235f3b8 | +0.15 (0.42) | 2.71 | 3.17 | – |
-| Terminal complex ramp level near Terminal 2 (part 17/19) **>1 m** | 70/75 | 5.30 | 8.57 | 9.7 | +5.20 | 0.24 | 03dcd4ae, 4637f855, bf5c7afc | +4.75 (0.42) | 4.34 | 2.50 | – |
-| Terminal complex ramp level near Boarding Area E (part 6/12) **>1 m** | 79/80 | 5.20 | 8.56 | 9.6 | -4.20 | 0.24 | 4637f855, c235f3b8 | +1.80 (0.42) | 2.82 | 3.10 | – |
-| Terminal complex ramp level near Boarding Area E (part 7/12) **>1 m** | 80/80 | 5.20 | 5.70 | 8.5 | -2.30 | 0.24 | 4637f855, c235f3b8 | -0.95 (0.42) | 3.32 | 3.80 | – |
-| Boarding Area B near Boarding Area B (part 3/5) **>1 m** | 87/87 | 5.10 | 7.30 | 8.6 | -5.10 | 0.28 | 0af09b78, b1d51b0f | -0.30 (0.55) | 6.73 | 2.06 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Garage A near International Terminal (part 1/3) **>1 m** | 78/97 | 5.10 | 8.73 | 9.7 | +3.85 | 0.55 | 0af09b78, 35809e3e, 8b334c52 | +5.00 (1.07) | 3.02 | 3.79 | – |
-| Central Parking Garage near Harvey Milk Terminal 1 (part 1/5) **>1 m** | 75/85 | 5.00 | 8.76 | 9.5 | +3.40 | 0.42 | 4637f855, e6f569c1 | +0.90 (0.55) | 5.38 | 4.37 | – |
-| Garage G near International Terminal (part 3/4) **>1 m** | 78/79 | 4.90 | 8.93 | 9.4 | +3.60 | 0.27 | 151ec51d, 35809e3e | +2.80 (1.07) | – | – | – |
-| Central Parking Garage near Terminal 3 (part 5/5) **>1 m** | 78/84 | 4.80 | 9.16 | 9.6 | -3.30 | 0.50 | 103723b0, 4637f855, e6f569c1 | -3.90 (0.55) | 1.60 | 4.39 | – |
-| Garage G near International Terminal (part 4/4) **>1 m** | 79/79 | 4.70 | 9.10 | 9.9 | +3.60 | 1.07 | 151ec51d, 35809e3e | +5.30 (3.18) | – | – | – |
-| Super Bay Hangar Building near Boarding Area D (part 3/3) **>1 m** | 70/97 | 4.70 | 8.41 | 8.8 | +2.10 | 1.27 | c1064033, c9ff55e8 | +3.90 (1.61) | 8.06 | 2.90 | – |
-| Garage A near International Terminal (part 3/3) **>1 m** | 75/96 | 4.70 | 8.90 | 9.7 | +1.70 | 0.55 | 0af09b78, 35809e3e, d82848c4 | -0.75 (1.07) | – | – | – |
-| Harvey Milk Terminal 1 near Harvey Milk Terminal 1 (part 2/4) **>1 m** | 78/86 | 4.65 | 9.30 | 9.8 | -3.40 | 0.55 | 0af09b78, e6f569c1 | +0.70 (1.07) | 5.61 | 3.41 | – |
-| Terminal 2 near Terminal 2 (part 1/3) **>1 m** | 82/86 | 4.60 | 8.39 | 9.6 | +1.50 | 0.24 | 4637f855, bf5c7afc, c235f3b8 | -0.60 (0.42) | 2.74 | 4.47 | – |
-| Westfield Road AirTrain Station (Inbound) **>1 m** | 75/78 | 4.60 | 6.92 | 9.1 | -1.30 | 1.27 | c9ff55e8 | +1.75 (3.18) | – | – | – |
-| Boarding Area C near Boarding Area C (part 1/2) **>1 m** | 81/81 | 4.60 | 8.80 | 9.8 | +0.20 | 0.16 | 03dcd4ae | +1.70 (0.42) | 2.21 | 4.16 | – |
-| Harvey Milk Terminal 1 near Harvey Milk Terminal 1 (part 1/4) **>1 m** | 85/86 | 4.60 | 9.52 | 9.8 | +1.20 | 0.16 | 03dcd4ae, 0af09b78, 4637f855 | -5.05 (0.42) | 3.97 | 4.60 | – |
-| Terminal One AirTrain Station **>1 m** | 26/30 | 4.55 | 8.95 | 9.5 | -1.40 | 0.42 | 4637f855 | -0.70 (0.55) | – | – | – |
-| Terminal complex ramp level near Boarding Area F (part 1/12) **>1 m** | 81/81 | 4.50 | 8.40 | 9.4 | -0.80 | 0.27 | 39176bb8, e6f569c1 | -0.00 (0.50) | 3.62 | 4.07 | – |
-| Westfield Road AirTrain Station (Outbound)g **>1 m** | 55/62 | 4.30 | 7.70 | 8.9 | -3.10 | 1.27 | c9ff55e8 | – | 1.82 | 3.77 | – |
-| Terminal 2 near Terminal 2 (part 2/3) **>1 m** | 86/86 | 4.20 | 7.60 | 9.4 | +3.05 | 0.20 | 03dcd4ae, 4637f855, bf5c7afc | +3.50 (0.42) | 6.07 | 2.90 | – |
-| Central Parking Garage near Terminal 3 (part 4/5) **>1 m** | 85/85 | 4.20 | 8.40 | 9.6 | -0.50 | 0.50 | 4637f855, e6f569c1 | +1.90 (0.55) | 5.10 | 4.58 | – |
-| Terminal 3 near Terminal 3 (part 3/4) **>1 m** | 74/77 | 4.15 | 9.40 | 9.7 | -0.95 | 0.50 | e6f569c1 | -0.80 (0.55) | 0.21 | 4.36 | – |
-| International Terminal (G) AirTrain Station **>1 m** | 16/16 | 4.05 | 8.60 | 9.6 | +2.20 | 0.25 | 0af09b78, d82848c4 | +3.45 (0.55) | 3.43 | 3.54 | [30-rwy-1L](30-rwy-1L.png) |
-| Terminal complex ramp level near Terminal 3 (part 4/12) **>1 m** | 80/80 | 4.00 | 8.20 | 9.6 | +0.80 | 0.50 | e6f569c1 | -0.10 (0.55) | 2.99 | 4.85 | – |
-
-### taxiway-edge (110 measured, worst first, top 40)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| Taxiway L2 **>1 m** | 6/19 | 9.15 | 9.25 | 9.3 | +9.15 | 1.08 | 2f0be03d | +9.00 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway B **>1 m** | 10/15 | 9.00 | 9.11 | 9.2 | -9.00 | 1.07 | 35809e3e | -8.80 (1.08) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway M **>1 m** | 12/53 | 8.85 | 9.10 | 9.2 | +8.85 | 1.08 | 2f0be03d | +9.00 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway H **>1 m** | 67/146 | 8.80 | 9.14 | 9.3 | +8.80 | 1.08 | 2f0be03d | +8.80 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway H **>1 m** | 7/11 | 8.70 | 9.24 | 9.3 | +8.70 | 1.08 | 2f0be03d | +8.80 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway V | 1/16 | 8.70 | 8.70 | 8.7 | +8.70 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| Taxiway Z/S2 **>1 m** | 8/9 | 8.35 | 9.00 | 9.0 | +2.95 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway C/N **>1 m** | 10/29 | 8.20 | 8.52 | 8.7 | -8.20 | 1.61 | c1064033 | – | – |
-| Taxiway P **>1 m** | 5/48 | 8.20 | 8.78 | 8.9 | +8.20 | 1.61 | c1064033 | – | – |
-| Taxiway S2 | 1/3 | 8.10 | 8.10 | 8.1 | -8.10 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway R **>1 m** | 9/23 | 8.00 | 8.30 | 8.3 | +8.00 | 0.93 | 59be8a98 | +8.00 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway F **>1 m** | 6/10 | 7.80 | 8.40 | 8.4 | -7.80 | 1.08 | 2f0be03d | -7.80 (1.15) | – |
-| Taxiway F **>1 m** | 25/72 | 7.70 | 8.66 | 8.9 | -7.50 | 1.08 | 2f0be03d | -6.35 (1.15) | – |
-| Taxiway B/E **>1 m** | 6/13 | 7.65 | 9.00 | 9.0 | -0.85 | 0.93 | 59be8a98 | +4.40 (1.08) | – |
-| Taxiway N **>1 m** | 5/14 | 7.60 | 8.16 | 8.4 | +6.00 | 0.57 | 1a26bbeb | – | – |
-| Taxiway Z | 2/6 | 7.35 | 8.51 | 8.8 | +1.45 | 1.27 | c9ff55e8 | +6.80 (3.18) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway C/R **>1 m** | 4/5 | 7.30 | 7.91 | 8.0 | -5.35 | 0.93 | 59be8a98 | +0.35 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway F1 **>1 m** | 9/13 | 7.30 | 8.12 | 8.2 | +7.30 | 1.08 | 2f0be03d | +7.35 (1.15) | – |
-| Taxiway K **>1 m** | 13/16 | 7.30 | 9.10 | 9.6 | +7.30 | 0.58 | bc91df95 | +7.05 (0.93) | – |
-| Taxiway C/P | 1/43 | 7.00 | 7.00 | 7.0 | -7.00 | 1.61 | c1064033 | – | – |
-| Taxiway Z **>1 m** | 4/9 | 6.80 | 7.11 | 7.2 | -6.80 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway L **>1 m** | 3/56 | 6.80 | 8.00 | 8.3 | +6.80 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| Taxiway T/K/A/B **>1 m** | 5/6 | 6.80 | 7.56 | 8.0 | +6.80 | 0.58 | bc91df95 | +5.30 (0.93) | – |
-| Taxiway B **>1 m** | 12/12 | 6.75 | 7.20 | 7.3 | +6.75 | 0.58 | bc91df95 | +6.30 (0.93) | [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway F **>1 m** | 8/16 | 6.70 | 9.12 | 9.4 | -0.80 | 1.08 | 2f0be03d, 59be8a98 | -4.60 (1.08) | – |
-| Taxiway D | 1/6 | 6.70 | 6.70 | 6.7 | +6.70 | 0.58 | bc91df95 | – | – |
-| Taxiway U **>1 m** | 13/34 | 6.70 | 7.26 | 7.4 | +6.70 | 3.18 | 8b334c52 | – | [30-rwy-10L](30-rwy-10L.png) |
-| Taxiway Z/Z2 **>1 m** | 16/43 | 6.65 | 9.00 | 9.2 | +5.60 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway M **>1 m** | 4/18 | 6.50 | 8.97 | 9.0 | +2.75 | 1.08 | 2f0be03d | +8.20 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway L/C **>1 m** | 10/33 | 6.45 | 8.45 | 8.9 | +4.00 | 1.08 | 2f0be03d, c1064033 | +7.90 (1.61) | – |
-| Taxiway E | 1/53 | 6.40 | 6.40 | 6.4 | +6.40 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| Taxiway L **>1 m** | 3/41 | 6.30 | 6.78 | 6.9 | -6.30 | 1.08 | 2f0be03d | – | – |
-| Taxiway Z | 2/26 | 6.30 | 8.62 | 9.2 | +2.90 | 1.27 | c9ff55e8 | -8.20 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway G **>1 m** | 10/59 | 6.30 | 8.33 | 8.6 | +2.05 | 1.08 | 2f0be03d | +2.00 (1.15) | [30-rwy-1L](30-rwy-1L.png) |
-| Taxiway C **>1 m** | 36/43 | 6.10 | 8.75 | 9.3 | -5.90 | 0.93 | 59be8a98, c9ff55e8 | +2.90 (1.27) | – |
-| Taxiway L **>1 m** | 19/19 | 6.10 | 9.02 | 9.3 | -0.60 | 1.15 | 103723b0, 2f0be03d | +2.30 (3.18) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway F1 **>1 m** | 26/73 | 5.90 | 6.95 | 7.4 | -5.90 | 1.08 | 2f0be03d | -5.65 (1.15) | – |
-| Taxiway R **>1 m** | 21/22 | 5.10 | 8.80 | 9.1 | +3.80 | 0.93 | 59be8a98 | +5.70 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway C **>1 m** | 4/124 | 4.80 | 7.31 | 8.3 | -4.80 | 1.61 | c1064033 | – | – |
-| Taxiway C **>1 m** | 10/67 | 4.80 | 5.82 | 6.0 | -4.80 | 1.61 | c1064033 | – | – |
-
-### apron-edge (1 measured, worst first)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| apron outline #1 **>1 m** | 14/33 | 8.70 | 9.67 | 9.8 | +8.70 | 0.28 | 0af09b78, 35809e3e, b1d51b0f, d82848c4 | +8.80 (0.55) | – |
-
-### extra-pavement (57 measured, worst first, top 40)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| extra pavement #7 **>1 m** | 35/43 | 7.90 | 8.10 | 8.8 | +7.70 | 1.07 | 35809e3e | -1.20 (3.18) | – |
-| extra pavement #13 **>1 m** | 11/11 | 7.90 | 8.10 | 8.2 | +7.90 | 1.07 | 35809e3e | – | – |
-| extra pavement #12 **>1 m** | 27/31 | 7.70 | 8.18 | 8.5 | +7.70 | 1.07 | 35809e3e | – | – |
-| extra pavement #67 **>1 m** | 12/30 | 7.10 | 8.47 | 9.0 | +7.10 | 1.61 | c1064033 | – | – |
-| extra pavement #66 **>1 m** | 130/461 | 6.90 | 8.50 | 9.2 | +6.90 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #45 **>1 m** | 14/143 | 6.80 | 8.38 | 8.9 | -6.80 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #10 **>1 m** | 473/632 | 6.40 | 8.26 | 9.7 | +6.10 | 1.07 | 0af09b78, 103723b0, 2f0be03d, 35809e3e,  | +1.80 (3.18) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #70 **>1 m** | 56/226 | 6.30 | 8.20 | 9.1 | +6.15 | 1.61 | c1064033 | +2.10 (3.18) | [30-rwy-19R](30-rwy-19R.png) |
-| extra pavement #40 **>1 m** | 57/81 | 5.80 | 9.00 | 9.2 | +5.80 | 0.93 | 2f0be03d, 59be8a98 | +4.05 (1.08) | – |
-| extra pavement #68 **>1 m** | 205/315 | 5.60 | 8.90 | 9.6 | +0.80 | 1.27 | 59be8a98, c9ff55e8 | +2.65 (3.18) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #49 **>1 m** | 27/32 | 5.20 | 7.82 | 8.3 | -4.90 | 1.61 | c1064033 | – | – |
-| extra pavement #54 **>1 m** | 16/91 | 5.05 | 6.45 | 9.3 | +4.00 | 0.93 | 59be8a98 | -1.10 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #71 **>1 m** | 401/1056 | 5.00 | 8.60 | 9.5 | -1.90 | 1.61 | 59be8a98, 8b334c52, c1064033, c9ff55e8 | -0.60 (1.61) | – |
-| extra pavement #50 **>1 m** | 34/34 | 4.55 | 7.61 | 9.2 | +4.45 | 1.08 | 2f0be03d | +4.80 (1.61) | – |
-| extra pavement #41 **>1 m** | 33/36 | 4.50 | 7.62 | 8.9 | -0.80 | 0.93 | 59be8a98, bc91df95 | +1.60 (1.07) | – |
-| extra pavement #72 **>1 m** | 89/126 | 4.50 | 8.20 | 8.9 | +4.20 | 1.61 | c1064033 | +2.80 (3.18) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| extra pavement #34 **>1 m** | 9/9 | 4.50 | 7.22 | 8.9 | -0.20 | 0.58 | bc91df95 | -2.70 (0.93) | – |
-| extra pavement #28 **>1 m** | 92/101 | 4.45 | 7.78 | 9.3 | +4.05 | 1.08 | 2f0be03d, 59be8a98 | +2.85 (1.15) | – |
-| extra pavement #37 **>1 m** | 473/914 | 4.40 | 8.40 | 9.6 | -0.30 | 1.27 | 35809e3e, 59be8a98, c9ff55e8 | – | – |
-| extra pavement #43 **>1 m** | 40/49 | 4.20 | 8.90 | 9.2 | -0.15 | 0.93 | 59be8a98, bc91df95 | -0.30 (1.07) | [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #63 **>1 m** | 21/39 | 4.10 | 6.50 | 7.9 | -0.10 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #14 **>1 m** | 45/45 | 4.10 | 6.46 | 8.8 | +4.10 | 1.08 | 2f0be03d | +3.90 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #62 **>1 m** | 31/45 | 4.00 | 7.00 | 8.8 | +2.50 | 0.93 | 59be8a98, c9ff55e8 | +2.35 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #74 **>1 m** | 119/192 | 4.00 | 7.52 | 8.8 | +2.60 | 1.61 | c1064033 | +4.10 (3.18) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| extra pavement #51 **>1 m** | 36/57 | 3.90 | 9.20 | 9.4 | +1.60 | 0.93 | 59be8a98 | +2.20 (1.08) | – |
-| extra pavement #23 **>1 m** | 79/81 | 3.60 | 9.30 | 9.5 | +3.60 | 1.27 | c9ff55e8 | +5.60 (3.18) | – |
-| extra pavement #11 **>1 m** | 18/19 | 3.55 | 7.53 | 7.7 | +1.00 | 0.55 | 0af09b78, 35809e3e, 8b334c52 | -1.50 (1.07) | – |
-| extra pavement #48 **>1 m** | 28/31 | 2.95 | 5.80 | 6.7 | +0.85 | 0.57 | 1a26bbeb, c1064033 | +3.70 (3.18) | – |
-| extra pavement #57 **>1 m** | 55/56 | 2.90 | 6.68 | 8.7 | -2.80 | 0.57 | 1a26bbeb | -2.85 (1.61) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| extra pavement #42 **>1 m** | 71/80 | 2.90 | 6.20 | 9.2 | +2.70 | 0.58 | bc91df95 | +2.30 (0.93) | [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #21 **>1 m** | 194/197 | 2.80 | 3.20 | 9.4 | +2.80 | 1.27 | c9ff55e8 | – | – |
-| extra pavement #8 **>1 m** | 22/27 | 2.70 | 7.66 | 7.9 | +2.70 | 1.08 | 2f0be03d | +2.85 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #69 **>1 m** | 70/79 | 2.60 | 7.91 | 9.6 | -1.00 | 1.27 | 59be8a98, c9ff55e8 | -0.05 (3.18) | – |
-| extra pavement #3 **>1 m** | 310/310 | 2.60 | 3.10 | 4.0 | +2.60 | 1.07 | 35809e3e | – | – |
-| extra pavement #5 **>1 m** | 45/58 | 2.50 | 7.54 | 8.8 | +0.50 | 1.08 | 2f0be03d | +0.30 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #58 **>1 m** | 178/194 | 2.45 | 5.50 | 8.9 | +2.15 | 0.93 | 103723b0, 59be8a98, c1064033 | +3.10 (1.08) | – |
-| extra pavement #32 **>1 m** | 36/42 | 2.35 | 8.00 | 9.1 | -1.35 | 1.08 | 2f0be03d | -0.60 (1.61) | – |
-| extra pavement #26 **>1 m** | 4/4 | 2.35 | 4.18 | 4.6 | +2.35 | 0.93 | 59be8a98 | -2.95 (1.08) | – |
-| extra pavement #2 **>1 m** | 24/24 | 2.30 | 5.65 | 6.5 | -0.35 | 1.15 | 103723b0, 2f0be03d | -3.40 (3.18) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #0 **>1 m** | 115/115 | 2.20 | 2.72 | 8.0 | +2.20 | 1.15 | 103723b0 | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-
-### bridge-walkway (28 measured, worst first)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| G9 bridge G9 fixed walkway | 2/2 | 5.90 | 5.90 | 5.9 | -5.90 | 0.27 | 151ec51d | -5.25 (0.50) | – |
-| E4 bridge E4 fixed walkway **>1 m** | 6/6 | 5.75 | 5.90 | 5.9 | +5.75 | 0.24 | c235f3b8 | +5.25 (0.42) | – |
-| G8 bridge G8 fixed walkway **>1 m** | 3/3 | 4.90 | 5.70 | 5.9 | +4.90 | 0.27 | 151ec51d | -2.45 (0.50) | – |
-| G12 bridge G12 fixed walkway **>1 m** | 3/3 | 4.80 | 5.12 | 5.2 | +4.80 | 0.27 | 151ec51d | +3.10 (0.50) | – |
-| B5 bridge B5 fixed walkway | 2/2 | 4.50 | 4.74 | 4.8 | +4.50 | 0.55 | 0af09b78 | +4.65 (1.07) | [30-rwy-1L](30-rwy-1L.png) |
-| A1 bridge A1 fixed walkway **>1 m** | 14/14 | 4.30 | 5.87 | 5.9 | +0.10 | 0.25 | d82848c4 | +1.30 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
-| C3 bridge C3 fixed walkway | 2/2 | 3.60 | 5.44 | 5.9 | -3.60 | 0.16 | 03dcd4ae | -4.50 (0.42) | – |
-| F11 bridge F11 fixed walkway **>1 m** | 7/7 | 3.30 | 3.48 | 3.6 | -3.30 | 0.27 | 39176bb8 | -3.60 (0.50) | – |
-| A8 bridge A8 fixed walkway | 2/2 | 3.30 | 3.62 | 3.7 | +3.30 | 0.25 | d82848c4 | +4.50 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
-| F22 bridge F22 fixed walkway **>1 m** | 4/4 | 3.15 | 5.36 | 5.9 | +3.15 | 0.50 | e6f569c1 | +3.65 (0.58) | – |
-| B11 bridge B11 fixed walkway **>1 m** | 14/14 | 3.10 | 4.07 | 4.2 | -3.00 | 0.28 | b1d51b0f | -0.35 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| F13 bridge F13 fixed walkway | 2/2 | 3.05 | 3.65 | 3.8 | +3.05 | 0.27 | 39176bb8 | +2.40 (0.50) | – |
-| D8 bridge D8 fixed walkway **>1 m** | 3/3 | 2.90 | 3.30 | 3.4 | -2.90 | 0.24 | bf5c7afc | -3.20 (0.42) | – |
-| F13 bridge F13 fixed walkway **>1 m** | 4/4 | 2.35 | 2.60 | 2.6 | -2.05 | 0.27 | 39176bb8 | -2.75 (0.50) | – |
-| G9 bridge G9 fixed walkway **>1 m** | 3/3 | 2.30 | 4.94 | 5.6 | -2.30 | 0.27 | 151ec51d | -2.70 (0.50) | – |
-| G10 bridge G10 fixed walkway **>1 m** | 4/4 | 2.20 | 2.64 | 2.7 | +2.20 | 0.50 | e6f569c1 | -3.10 (1.07) | – |
-| D14 bridge D14 fixed walkway | 2/2 | 2.05 | 3.29 | 3.6 | -2.05 | 0.24 | bf5c7afc | -2.25 (0.42) | – |
-| D1 bridge D1 fixed walkway | 2/2 | 2.00 | 2.56 | 2.7 | -2.00 | 0.24 | bf5c7afc | -2.05 (0.42) | – |
-| F11 bridge F11 fixed walkway **>1 m** | 5/5 | 2.00 | 4.18 | 4.3 | -2.00 | 0.27 | 39176bb8 | -2.60 (0.50) | – |
-| B16 bridge B16 fixed walkway **>1 m** | 15/15 | 1.90 | 4.32 | 4.7 | +0.60 | 0.28 | b1d51b0f | +3.05 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| D9 bridge D9 fixed walkway | 2/2 | 1.65 | 1.69 | 1.7 | -0.05 | 0.24 | bf5c7afc | -2.15 (0.42) | – |
-| D11 bridge D11 fixed walkway | 2/2 | 1.50 | 1.98 | 2.1 | -0.60 | 0.24 | bf5c7afc | -0.90 (0.42) | – |
-| G8 bridge G8 fixed walkway **>1 m** | 5/5 | 1.20 | 4.22 | 4.5 | -0.10 | 0.27 | 151ec51d | -3.00 (0.50) | – |
-| D10 bridge D10 fixed walkway **>1 m** | 10/10 | 1.10 | 1.38 | 2.1 | -1.05 | 0.24 | bf5c7afc | -1.50 (0.42) | – |
-| F15 bridge F15 fixed walkway **>1 m** | 3/3 | 1.10 | 2.14 | 2.4 | -1.10 | 0.27 | 39176bb8 | -2.00 (0.50) | – |
-| A8 bridge A8 fixed walkway | 3/3 | 0.40 | 2.40 | 2.9 | +0.40 | 0.25 | d82848c4 | +2.70 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
-| G12 bridge G12 fixed walkway | 3/5 | 0.30 | 3.66 | 4.5 | -0.30 | 0.27 | 151ec51d | -2.50 (0.50) | – |
-| D16 bridge D16 fixed walkway | 2/2 | 0.30 | 0.30 | 0.3 | +0.30 | 0.24 | bf5c7afc | -4.15 (0.42) | – |
-
-### bridge-rotunda (116 measured, worst first, top 40)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| A9 bridge A9 rotunda | 1/1 | 5.98 | 5.98 | 6.0 | +5.98 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| D16 bridge D16 rotunda | 1/1 | 5.98 | 5.98 | 6.0 | +5.98 | 0.24 | raster | – | – |
-| B4 bridge B4 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| F15 bridge F15 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.27 | raster | – | – |
-| B27 bridge B27 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| F14 bridge F14 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.27 | raster | – | – |
-| C6 bridge C6 rotunda | 1/1 | 5.96 | 5.96 | 6.0 | +5.96 | 0.16 | raster | – | – |
-| C7 bridge C7 rotunda | 1/1 | 5.96 | 5.96 | 6.0 | +5.96 | 0.16 | raster | – | – |
-| F17 bridge F17 rotunda | 1/1 | 5.95 | 5.95 | 6.0 | +5.95 | 0.27 | raster | – | – |
-| D14 bridge D14 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.24 | raster | – | – |
-| E7 bridge E7 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.24 | raster | – | – |
-| F22 bridge F22 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.27 | raster | – | – |
-| C3 bridge C3 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.16 | raster | – | – |
-| B1 bridge B1 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.55 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| D15 bridge D15 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.24 | raster | – | – |
-| F15 bridge F15 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.27 | raster | – | – |
-| G3 bridge G3 rotunda | 1/1 | 5.92 | 5.92 | 5.9 | +5.92 | 0.27 | raster | – | – |
-| G4 bridge G4 rotunda | 1/1 | 5.92 | 5.92 | 5.9 | +5.92 | 0.27 | raster | – | – |
-| A2 bridge A2 rotunda | 1/1 | 5.92 | 5.92 | 5.9 | +5.92 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| A8 bridge A8 rotunda | 1/1 | 5.92 | 5.92 | 5.9 | +5.92 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| B14 bridge B14 rotunda | 1/1 | 5.91 | 5.91 | 5.9 | +5.91 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| E4 bridge E4 rotunda | 1/1 | 5.91 | 5.91 | 5.9 | +5.91 | 0.24 | raster | – | – |
-| A6 bridge A7 rotunda | 1/1 | 5.91 | 5.91 | 5.9 | +5.91 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| D9 bridge D9 rotunda | 1/1 | 5.91 | 5.91 | 5.9 | +5.91 | 0.24 | raster | – | – |
-| G9 bridge G9 rotunda | 1/1 | 5.91 | 5.91 | 5.9 | +5.91 | 0.27 | raster | – | – |
-| E8 bridge E8 rotunda | 1/1 | 5.90 | 5.90 | 5.9 | +5.90 | 0.24 | raster | – | – |
-| D11 bridge D11 rotunda | 1/1 | 5.89 | 5.89 | 5.9 | +5.89 | 0.24 | raster | – | – |
-| A6 bridge A7 rotunda | 1/1 | 5.86 | 5.86 | 5.9 | +5.86 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| D8 bridge D8 rotunda | 1/1 | 5.85 | 5.85 | 5.8 | +5.85 | 0.24 | raster | – | – |
-| G7 bridge G7 rotunda | 1/1 | 5.77 | 5.77 | 5.8 | +5.77 | 0.27 | raster | – | – |
-| G8 bridge G8 rotunda | 1/1 | 5.74 | 5.74 | 5.7 | +5.74 | 0.27 | raster | – | – |
-| A2 bridge A2 rotunda | 1/1 | 5.74 | 5.74 | 5.7 | +5.74 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| F16 bridge F16 rotunda | 1/1 | 5.72 | 5.72 | 5.7 | +5.72 | 0.27 | raster | – | – |
-| F19 bridge F19 rotunda | 1/1 | 5.70 | 5.70 | 5.7 | +5.70 | 0.27 | raster | – | – |
-| G5 bridge G5 rotunda | 1/1 | 5.68 | 5.68 | 5.7 | +5.68 | 0.27 | raster | – | – |
-| G9 bridge G9 rotunda | 1/1 | 5.67 | 5.67 | 5.7 | +5.67 | 0.27 | raster | – | – |
-| B13 bridge B13 rotunda | 1/1 | 5.61 | 5.61 | 5.6 | +5.61 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| F14 bridge F14 rotunda | 1/1 | 5.59 | 5.59 | 5.6 | +5.59 | 0.27 | raster | – | – |
-| A10 bridge A10 rotunda | 1/1 | 5.58 | 5.58 | 5.6 | +5.58 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| G10 bridge G10 rotunda | 1/1 | 5.54 | 5.54 | 5.5 | +5.54 | 0.27 | raster | – | – |
+| class | samples in test regions | measured | stable | recovered @ 0.9 m | recovered @ 2.2 m |
+|---|---|---|---|---|---|
+| apron-edge | 16 | 11 | 0.82 | 0.64 | 0.55 |
+| bridge-walkway | 11 | 11 | 0.91 | 0.64 | 0.36 |
+| building | 1563 | 1468 | 0.82 | 0.65 | 0.51 |
+| emas-bed | 237 | 199 | 0.87 | 0.78 | 0.70 |
+| extra-pavement | 1063 | 741 | 0.92 | 0.81 | 0.64 |
+| hold-line | 293 | 0 | – | – | – |
+| runway-edge-stripe | 359 | 85 | 1.00 | 1.00 | 0.94 |
+| runway-end | 65 | 61 | 0.52 | 0.62 | 0.44 |
+| runway-threshold | 176 | 64 | 1.00 | 0.82 | 0.66 |
+| runway-threshold-bar | 110 | 66 | 1.00 | 1.00 | 1.00 |
+| stand-leadin | 262 | 0 | – | – | – |
+| taxiway-centreline | 877 | 0 | – | – | – |
+| taxiway-edge | 515 | 216 | 0.92 | 0.85 | 0.57 |
 
 ## Deviations from imagery - `naip`
 
-Source: NAIP (2 image(s)) (USDA NAIP: public domain (U.S. Government work); credit requested: "USDA Farm Production and Conservation - Business Center, Geospatial Enterprise Operations" (see docs/research/imagery.md)). Offsets are signed along the outward edge normal (+ = imaged edge outside / right of the model), in metres; `gsd` = ground resolution of the image the profile was read from; `alt` = the same samples read from the next-best image (registration check). Features flagged when the median |offset| > 1.0 m.
+Source: NAIP (2 image(s)) (USDA NAIP: public domain (U.S. Government work); credit requested: "USDA Farm Production and Conservation - Business Center, Geospatial Enterprise Operations" (see docs/research/imagery.md)). Offsets are signed along the outward edge normal (+ = imaged edge outside / right of the model), in metres; `gsd` = ground resolution of the image the profile was read from; `alt` = the same samples read from the next-best image (NAIP: the other year; Google: another screenshot). Features flagged when the median |offset| > 1.0 m.
 
 | class | features | measured | flagged (median > 1 m) | median of medians | median p90 | typical gsd | notes |
 |---|---|---|---|---|---|---|---|
-| apron-edge | 1 | 1 | 1 | 8.50 | 9.00 | 0.50 |  |
-| bridge-rotunda | 117 | 115 | 0 | 4.93 | 4.93 | 0.50 | automatic disc search, low confidence - read with the sheets |
-| bridge-walkway | 28 | 28 | 16 | 3.33 | 4.35 | 0.50 |  |
-| building | 130 | 130 | 129 | 4.00 | 7.82 | 0.50 | roof edge vs footprint: relief displacement (roofs lean away from nadir) + registration; see `shift`/`resid` columns |
-| emas-bed | 4 | 4 | 2 | 2.07 | 5.90 | 0.50 |  |
-| extra-pavement | 60 | 59 | 59 | 4.20 | 8.46 | 0.50 | derived from the same imagery (circular); checks the vectorisation |
-| hold-line | 81 | 62 | 28 | 5.05 | 6.17 | 0.50 | needs <= 0.6 m/px; on NAIP many picks land on other yellow paint (not covered by the self-test) |
-| runway-displaced-threshold | 2 | 2 | 2 | 3.20 | 3.29 | 0.50 | NAIP: +3.1 / +3.3 m = the bar drawn on the approach side of the threshold (see above); the Google value locks onto the stripe block |
-| runway-edge-stripe | 8 | 8 | 0 | 0.58 | 1.00 | 0.50 | 0.91 m stripe; 1L/19R, 1R/19L only on coarse shots |
-| runway-end | 4 | 4 | 1 | 0.60 | 0.65 | 0.50 |  |
-| runway-threshold | 8 | 8 | 3 | 0.40 | 1.00 | 0.50 | stripe start; needs <= 0.8 m/px. At 19L/19R (bar only ~2.8 m from the stripes) the pick is the bar's outer edge (~6 m); the NAIP along-axis profiles give stripe starts of 6.06 / 6.26 m there, i.e. the model (6.1 m) is right |
-| stand-leadin | 89 | 0 | 0 | – | – | – | lead-in paint not visible (worn / under the parked aircraft on obs stands) |
-| taxiway-centreline | 254 | 0 | 0 | – | – | – | 6 in paint: needs <= 0.35 m/px; the airfield screenshots are 0.5-1.6 m/px and JPEG chroma hides thin yellow lines |
-| taxiway-edge | 128 | 128 | 79 | 1.20 | 4.65 | 0.50 |  |
+| approach-light-catwalk | 2 | 2 | 2 | 2.47 | 2.73 | 0.50 |  |
+| approach-light-pier | 2 | 2 | 2 | 16.38 | 22.35 | 0.50 | along-axis position of each imaged pier crossbar over water |
+| apron-edge | 2 | 2 | 2 | 5.45 | 8.12 | 0.50 |  |
+| bridge-rotunda | 128 | 71 | 0 | 3.47 | 3.47 | 0.50 | automatic disc search (6 m radius; picks at the boundary count as not found), low confidence - read with the sheets |
+| bridge-walkway | 48 | 48 | 34 | 2.95 | 4.69 | 0.50 |  |
+| building | 39 | 39 | 38 | 4.20 | 7.90 | 0.50 | roof edge vs footprint: relief displacement (roofs lean away from nadir) + registration; see `shift`/`resid` columns. One feature per building; edges shared with the ramp-level complex belong to the part |
+| emas-bed | 4 | 4 | 1 | 0.20 | 4.36 | 0.50 |  |
+| extra-pavement | 241 | 241 | 218 | 2.10 | 5.14 | 0.50 | derived from the Google imagery (circular on `google`); checks the vectorisation |
+| hold-line | 90 | 90 | 0 | 0.15 | 0.30 | 0.50 | needs <= 0.6 m/px |
+| runway-edge-stripe | 8 | 8 | 0 | 0.40 | 0.70 | 0.50 | 0.91 m stripe |
+| runway-end | 4 | 4 | 0 | 0.55 | 0.55 | 0.50 |  |
+| runway-threshold | 8 | 8 | 0 | 0.10 | 0.22 | 0.50 | start of the stripe block (stripe-start rule) |
+| runway-threshold-bar | 8 | 8 | 8 | 2.35 | 2.45 | 0.50 | imaged 10 ft bar vs the model bar (see the runway table above) |
+| stand-leadin | 103 | 0 | 0 | – | – | – | lead-in paint: needs <= 0.35 m/px; often under parked aircraft |
+| taxiway-centreline | 265 | 0 | 0 | – | – | – | 6 in paint: needs <= 0.35 m/px |
+| taxiway-edge | 164 | 164 | 90 | 1.10 | 6.23 | 0.50 |  |
 
 ### runway-end (4 measured, worst first)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| RWY 10L pavement end **>1 m** | 13/13 | 1.10 | 1.20 | 1.2 | +1.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| RWY 10R pavement end | 13/13 | 0.70 | 0.70 | 0.8 | +0.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.60 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| RWY 28L pavement end | 13/13 | 0.50 | 0.60 | 0.6 | -0.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.00 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| RWY 28R pavement end | 13/13 | 0.40 | 0.40 | 0.4 | -0.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.90 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 10L pavement end | 13/13 | 0.90 | 0.90 | 1.0 | +0.90 | 0.50 | naip_2024_world_0.5m.jso | +0.50 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 28L pavement end | 13/13 | 0.60 | 0.60 | 0.6 | -0.60 | 0.50 | naip_2024_world_0.5m.jso | +0.90 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 10R pavement end | 13/13 | 0.50 | 0.50 | 0.7 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +0.50 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 28R pavement end | 13/13 | 0.40 | 0.40 | 0.5 | -0.40 | 0.50 | naip_2024_world_0.5m.jso | +0.90 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
 
 ### runway-threshold (8 measured, worst first)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| RWY 19L threshold stripes (start 6.1 m past threshold) **>1 m** | 16/16 | 6.50 | 6.50 | 6.5 | +6.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.50 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| RWY 19R threshold stripes (start 6.1 m past threshold) **>1 m** | 16/16 | 6.00 | 6.10 | 6.1 | +6.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.70 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| RWY 10L threshold stripes (start 6.1 m past threshold) **>1 m** | 16/16 | 1.10 | 1.15 | 1.2 | +1.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| RWY 10R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.60 | 0.85 | 1.0 | +0.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.60 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| RWY 1R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.20 | 3.05 | 5.7 | -0.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.00 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| RWY 1L threshold stripes (start 6.1 m past threshold) | 16/16 | 0.10 | 0.30 | 0.4 | -0.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.10 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| RWY 28R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.00 | 0.10 | 0.1 | +0.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.10 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| RWY 28L threshold stripes (start 6.1 m past threshold) | 16/16 | 0.00 | 0.10 | 0.1 | +0.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.30 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 10L threshold stripes (start 6.1 m past threshold) | 16/16 | 0.85 | 0.90 | 0.9 | +0.85 | 0.50 | naip_2024_world_0.5m.jso | +0.40 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 10R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.50 | 0.70 | 0.9 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +0.40 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 19L threshold stripes (start 6.1 m past threshold) | 16/16 | 0.20 | 0.25 | 13.1 | +0.20 | 0.50 | naip_2024_world_0.5m.jso | +0.20 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| RWY 28R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.10 | 0.20 | 0.2 | -0.10 | 0.50 | naip_2024_world_0.5m.jso | -0.20 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 28L threshold stripes (start 6.1 m past threshold) | 16/16 | 0.10 | 0.20 | 0.2 | -0.10 | 0.50 | naip_2024_world_0.5m.jso | -0.40 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 19R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.10 | 0.10 | 0.2 | -0.10 | 0.50 | naip_2024_world_0.5m.jso | +0.60 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| RWY 1R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.10 | 0.25 | 0.3 | -0.10 | 0.50 | naip_2024_world_0.5m.jso | +0.10 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| RWY 1L threshold stripes (start 6.1 m past threshold) | 16/16 | 0.00 | 0.20 | 0.2 | -0.00 | 0.50 | naip_2024_world_0.5m.jso | -0.00 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
 
-### runway-displaced-threshold (2 measured, worst first)
+### runway-threshold-bar (8 measured, worst first)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| RWY 28L displaced threshold bar (91.4 m) **>1 m** | 14/14 | 3.30 | 3.37 | 3.4 | +3.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.50 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| RWY 28R displaced threshold bar (91.4 m) **>1 m** | 14/14 | 3.10 | 3.20 | 3.2 | +3.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.20 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 28L threshold bar (model: approach side, centre -1.52 m; displaced 91.4 m) **>1 m** | 10/10 | 3.40 | 3.50 | 3.5 | +3.40 | 0.50 | naip_2024_world_0.5m.jso | +3.60 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 1R threshold bar (model: approach side, centre -1.52 m; displaced 170.7 m) **>1 m** | 10/10 | 3.30 | 3.40 | 3.4 | +3.30 | 0.50 | naip_2024_world_0.5m.jso | +3.10 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| RWY 1L threshold bar (model: approach side, centre -1.52 m; displaced 195.1 m) **>1 m** | 10/10 | 3.25 | 3.31 | 3.4 | +3.25 | 0.50 | naip_2024_world_0.5m.jso | +3.20 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| RWY 28R threshold bar (model: approach side, centre -1.52 m; displaced 91.4 m) **>1 m** | 10/10 | 3.20 | 3.21 | 3.3 | +3.20 | 0.50 | naip_2024_world_0.5m.jso | +3.40 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 19R threshold bar (model: none drawn) **>1 m** | 10/10 | 1.50 | 1.70 | 1.7 | +1.50 | 0.50 | naip_2024_world_0.5m.jso | +1.10 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| RWY 19L threshold bar (model: none drawn) **>1 m** | 10/10 | 1.50 | 1.61 | 1.7 | +1.50 | 0.50 | naip_2024_world_0.5m.jso | +1.40 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| RWY 10R threshold bar (model: none drawn) **>1 m** | 10/10 | 1.30 | 1.41 | 1.5 | +1.30 | 0.50 | naip_2024_world_0.5m.jso | +1.30 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 10L threshold bar (model: none drawn) **>1 m** | 10/10 | 0.90 | 1.10 | 1.1 | +0.90 | 0.50 | naip_2024_world_0.5m.jso | +1.35 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
 
 ### runway-edge-stripe (8 measured, worst first)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| RWY 1L/19R edge stripe (north/west side) | 216/228 | 0.80 | 1.50 | 1.8 | +0.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | – |
-| RWY 1R/19L edge stripe (north/west side) | 246/258 | 0.80 | 1.30 | 1.8 | +0.65 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.60 (0.60) | – |
-| RWY 10R/28L edge stripe (north/west side) | 340/341 | 0.70 | 0.90 | 1.0 | +0.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.60 (0.60) | – |
-| RWY 1R/19L edge stripe (south/east side) | 244/258 | 0.60 | 1.20 | 1.4 | +0.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.20 (0.60) | – |
-| RWY 1L/19R edge stripe (south/east side) | 216/228 | 0.55 | 1.10 | 1.3 | +0.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.10 (0.60) | – |
-| RWY 10L/28R edge stripe (north/west side) | 354/356 | 0.50 | 0.70 | 0.9 | +0.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.60 (0.60) | – |
-| RWY 10L/28R edge stripe (south/east side) | 354/356 | 0.20 | 0.50 | 0.7 | +0.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.10 (0.60) | – |
-| RWY 10R/28L edge stripe (south/east side) | 340/341 | 0.10 | 0.50 | 0.7 | +0.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.10 (0.60) | – |
+| RWY 1L/19R edge stripe (north/west side) | 216/228 | 0.60 | 0.90 | 1.0 | +0.60 | 0.50 | naip_2024_world_0.5m.jso | +0.60 (0.60) | – |
+| RWY 10L/28R edge stripe (north/west side) | 355/356 | 0.50 | 0.70 | 0.8 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +0.50 (0.60) | – |
+| RWY 10R/28L edge stripe (north/west side) | 340/341 | 0.50 | 0.70 | 0.8 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +0.50 (0.60) | – |
+| RWY 1R/19L edge stripe (north/west side) | 246/258 | 0.50 | 0.80 | 1.0 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +0.70 (0.60) | – |
+| RWY 10L/28R edge stripe (south/east side) | 355/356 | 0.30 | 0.60 | 0.8 | +0.30 | 0.50 | naip_2024_world_0.5m.jso | +0.20 (0.60) | – |
+| RWY 10R/28L edge stripe (south/east side) | 340/341 | 0.30 | 0.70 | 0.8 | +0.30 | 0.50 | naip_2024_world_0.5m.jso | +0.30 (0.60) | – |
+| RWY 1L/19R edge stripe (south/east side) | 216/228 | 0.30 | 0.40 | 0.5 | +0.30 | 0.50 | naip_2024_world_0.5m.jso | -0.00 (0.60) | – |
+| RWY 1R/19L edge stripe (south/east side) | 245/258 | 0.20 | 0.40 | 0.5 | +0.20 | 0.50 | naip_2024_world_0.5m.jso | +0.10 (0.60) | – |
 
 ### emas-bed (4 measured, worst first)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| EMAS bed beyond RWY 19R **>1 m** | 122/122 | 4.00 | 6.50 | 9.5 | +3.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.40 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| EMAS bed beyond RWY 19L **>1 m** | 118/118 | 3.20 | 7.90 | 9.5 | -0.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.20 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| EMAS bed beyond RWY 1L | 130/130 | 0.95 | 2.80 | 8.2 | +0.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.00 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| EMAS bed beyond RWY 1R | 116/116 | 0.55 | 5.30 | 9.5 | +0.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| EMAS bed beyond RWY 19R **>1 m** | 126/126 | 1.20 | 6.60 | 9.6 | +0.20 | 0.50 | naip_2024_world_0.5m.jso | +0.30 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| EMAS bed beyond RWY 19L | 126/126 | 0.20 | 6.75 | 9.5 | -0.00 | 0.50 | naip_2024_world_0.5m.jso | +0.20 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| EMAS bed beyond RWY 1L | 132/132 | 0.20 | 1.00 | 8.7 | -0.00 | 0.50 | naip_2024_world_0.5m.jso | +0.15 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| EMAS bed beyond RWY 1R | 118/118 | 0.10 | 2.13 | 8.9 | +0.10 | 0.50 | naip_2024_world_0.5m.jso | +0.40 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
 
-### building (130 measured, worst first, top 40)
+### approach-light-pier (2 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| RWY 28L MALSR approach-light piers over water (9, 244-732 m from the threshold) **>1 m** | 8/9 | 29.45 | 30.70 | 30.7 | -13.40 | 0.50 | naip_2024_world_0.5m.jso | +1.40 (0.60) | [30-rwy-28L](30-rwy-28L.png) |
+| RWY 28R ALSF2 approach-light piers over water (18, 213-732 m from the threshold) **>1 m** | 17/18 | 3.30 | 14.00 | 14.7 | -3.10 | 0.50 | naip_2024_world_0.5m.jso | -1.70 (0.60) | [30-rwy-28R](30-rwy-28R.png) |
+
+### building (39 measured, worst first)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | fit shift | resid median | sheet |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Air Traffic Control Tower **>1 m** | 25/25 | 8.90 | 9.18 | 9.7 | +6.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +8.20 (0.60) | 5.09 | 4.17 | – |
-| Garage G near International Terminal (part 3/4) **>1 m** | 78/79 | 8.80 | 9.03 | 9.1 | -7.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -9.30 (0.60) | – | – | – |
-| Terminal 3 near Terminal 3 (part 4/4) **>1 m** | 75/76 | 7.30 | 9.46 | 9.7 | +6.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +7.00 (0.60) | 5.83 | 3.98 | – |
-| Terminal complex ramp level near Terminal 3 (part 5/12) **>1 m** | 78/80 | 7.25 | 9.13 | 9.7 | +7.05 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +7.10 (0.60) | 5.59 | 3.05 | – |
-| Harvey Milk Terminal 1 near Harvey Milk Terminal 1 (part 2/4) **>1 m** | 86/86 | 7.10 | 9.00 | 9.5 | -7.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -7.00 (0.60) | 6.54 | 2.52 | – |
-| Terminal complex ramp level near Boarding Area A (part 7/13) **>1 m** | 56/79 | 6.90 | 9.05 | 9.7 | +6.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +8.20 (0.60) | 7.05 | 1.06 | [30-rwy-1L](30-rwy-1L.png) |
-| Terminal complex ramp level near International Terminal (part 4/13) **>1 m** | 79/79 | 6.80 | 9.22 | 9.7 | -2.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.30 (0.60) | 8.77 | 6.23 | – |
-| Boarding Area A near Boarding Area A (part 3/4) **>1 m** | 60/76 | 6.80 | 8.81 | 9.6 | +6.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +8.00 (0.60) | 6.75 | 1.05 | [30-rwy-1L](30-rwy-1L.png) |
-| Harvey Milk Terminal 1 near Harvey Milk Terminal 1 (part 4/4) **>1 m** | 66/85 | 6.80 | 9.15 | 9.7 | +6.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.40 (0.60) | 4.36 | 2.74 | – |
-| International Terminal near International Terminal (part 2/4) **>1 m** | 94/94 | 6.80 | 9.27 | 9.7 | -1.85 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.05 (0.60) | 2.10 | 6.36 | – |
-| Terminal 3 near Terminal 3 (part 3/4) **>1 m** | 76/77 | 6.75 | 8.70 | 9.4 | +6.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.40 (0.60) | 4.27 | 4.39 | – |
-| Terminal complex ramp level near Boarding Area D (part 19/19) **>1 m** | 69/75 | 6.70 | 8.44 | 9.7 | +6.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.40 (0.60) | 7.37 | 0.52 | – |
-| Boarding Area D near Boarding Area D (part 3/3) **>1 m** | 74/83 | 6.70 | 7.91 | 9.6 | +6.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.40 (0.60) | 7.60 | 0.77 | – |
-| Terminal complex ramp level near Boarding Area B (part 13/19) **>1 m** | 75/75 | 6.30 | 7.66 | 9.4 | +2.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.90 (0.60) | 3.74 | 5.89 | [30-rwy-1L](30-rwy-1L.png) |
-| Central Parking Garage near Terminal 3 (part 5/5) **>1 m** | 80/84 | 6.30 | 8.50 | 9.7 | -0.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.20 (0.60) | 2.79 | 5.14 | – |
-| Boarding Area B near Boarding Area B (part 5/5) **>1 m** | 87/87 | 6.10 | 7.60 | 9.3 | +1.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -5.70 (0.60) | 3.35 | 5.72 | [30-rwy-1L](30-rwy-1L.png) |
-| Terminal complex ramp level near Boarding Area A (part 8/13) **>1 m** | 58/79 | 6.10 | 8.89 | 9.6 | +6.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.35 (0.60) | 7.51 | 2.35 | [30-rwy-1L](30-rwy-1L.png) |
-| Terminal 2 near Terminal 2 (part 3/3) **>1 m** | 77/86 | 6.10 | 9.04 | 9.7 | +5.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.00 (0.60) | 6.26 | 2.59 | – |
-| Boarding Area A near Boarding Area A (part 4/4) **>1 m** | 56/76 | 6.05 | 7.85 | 9.7 | +6.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +5.50 (0.60) | 7.40 | 2.36 | [30-rwy-1L](30-rwy-1L.png) |
-| Terminal complex ramp level near Terminal 2 (part 17/19) **>1 m** | 70/75 | 6.00 | 7.80 | 9.7 | +5.85 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.10 (0.60) | 5.69 | 2.09 | – |
-| Super Bay Hangar Building near Boarding Area E (part 2/3) **>1 m** | 97/97 | 5.90 | 9.50 | 9.7 | +5.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.70 (0.60) | 9.27 | 0.50 | – |
-| Boarding Area B near Boarding Area B (part 3/5) **>1 m** | 87/87 | 5.80 | 9.20 | 9.3 | -4.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -5.90 (0.60) | 1.77 | 7.17 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Terminal complex ramp level near Harvey Milk Terminal 1 (part 5/19) **>1 m** | 76/76 | 5.75 | 9.60 | 9.9 | -5.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -5.80 (0.60) | 9.00 | 3.03 | – |
-| Rental Car Center near Boarding Area F (part 3/4) **>1 m** | 80/81 | 5.65 | 8.50 | 9.5 | -1.35 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.70 (0.60) | 4.45 | 2.92 | – |
-| Garage A **>1 m** | 9/9 | 5.60 | 6.72 | 6.8 | -5.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -2.90 (0.60) | 4.83 | 1.40 | – |
-| Terminal complex ramp level near Boarding Area D (part 18/19) **>1 m** | 72/75 | 5.60 | 9.07 | 9.5 | +5.55 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.65 (0.60) | 6.77 | 2.37 | – |
-| Terminal complex ramp level near Harvey Milk Terminal 1 (part 6/19) **>1 m** | 75/76 | 5.60 | 7.46 | 9.2 | -2.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -6.60 (0.60) | 2.88 | 4.73 | – |
-| Terminal complex ramp level near Boarding Area C (part 15/19) **>1 m** | 75/75 | 5.50 | 9.00 | 9.4 | -2.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.00 (0.60) | 4.54 | 4.43 | – |
-| Central Parking Garage near Terminal 3 (part 4/5) **>1 m** | 85/85 | 5.50 | 9.00 | 9.7 | -1.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.80 (0.60) | 1.43 | 5.15 | – |
-| Garage G AirTrain Station **>1 m** | 125/135 | 5.50 | 7.10 | 9.6 | +5.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.10 (0.60) | 2.37 | 3.39 | – |
-| Grand Hyatt Hotel **>1 m** | 114/116 | 5.40 | 8.37 | 9.7 | -1.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.50 (0.60) | 2.18 | 4.66 | – |
-| Terminal complex ramp level near Boarding Area B (part 10/19) **>1 m** | 74/75 | 5.30 | 6.56 | 8.7 | -4.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.20 (0.60) | 5.06 | 0.83 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Terminal complex ramp level near International Terminal (part 9/13) **>1 m** | 71/79 | 5.30 | 8.70 | 9.6 | +3.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.00 (0.60) | 3.13 | 3.73 | – |
-| Long Term Parking AirTrain Station **>1 m** | 107/108 | 5.30 | 7.84 | 9.6 | +2.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +5.10 (0.60) | 3.97 | 3.64 | – |
-| Boarding Area F near Boarding Area F (part 3/6) **>1 m** | 83/86 | 5.10 | 5.68 | 9.2 | +5.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +5.10 (0.60) | 3.74 | 2.69 | – |
-| Central Parking Garage near Harvey Milk Terminal 1 (part 2/5) **>1 m** | 85/85 | 5.10 | 6.10 | 8.9 | -1.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.40 (0.60) | 8.69 | 0.97 | – |
-| Terminal complex ramp level near Boarding Area B (part 11/19) **>1 m** | 75/75 | 5.00 | 8.90 | 9.4 | -3.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.50 (0.60) | – | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Terminal complex ramp level near Boarding Area C (part 16/19) **>1 m** | 66/75 | 5.00 | 8.00 | 9.4 | +2.85 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.10 (0.60) | 2.04 | 4.25 | – |
-| Boarding Area D near Boarding Area D (part 2/3) **>1 m** | 79/83 | 5.00 | 8.42 | 9.5 | +4.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.05 (0.60) | 5.27 | 2.45 | – |
-| International Terminal near International Terminal (part 3/4) **>1 m** | 83/93 | 5.00 | 8.70 | 9.6 | +3.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +8.40 (0.60) | 3.97 | 3.71 | – |
+| Air Traffic Control Tower **>1 m** | 25/25 | 8.90 | 9.18 | 9.7 | +6.50 | 0.50 | naip_2024_world_0.5m.jso | +9.10 (0.60) | 5.06 | 4.19 | – |
+| Garaga A AirTrain Station | 1/1 | 6.60 | 6.60 | 6.6 | +6.60 | 0.50 | naip_2024_world_0.5m.jso | – | – | – | – |
+| Harvey Milk Terminal 1 **>1 m** | 321/340 | 6.00 | 8.90 | 9.8 | -0.60 | 0.50 | naip_2024_world_0.5m.jso | -2.45 (0.60) | 1.92 | 5.55 | – |
+| Grand Hyatt Hotel **>1 m** | 113/114 | 5.40 | 8.38 | 9.7 | -2.00 | 0.50 | naip_2024_world_0.5m.jso | -0.95 (0.60) | 1.91 | 4.64 | – |
+| Garage G AirTrain Station **>1 m** | 109/119 | 5.30 | 7.20 | 9.6 | +3.00 | 0.50 | naip_2024_world_0.5m.jso | +4.10 (0.60) | 2.02 | 3.73 | – |
+| Long Term Parking AirTrain Station **>1 m** | 107/108 | 5.20 | 7.80 | 9.6 | +2.30 | 0.50 | naip_2024_world_0.5m.jso | +5.00 (0.60) | 3.95 | 3.66 | – |
+| Boarding Area D **>1 m** | 235/248 | 4.90 | 7.80 | 9.7 | +3.20 | 0.50 | naip_2024_world_0.5m.jso | +3.65 (0.60) | 5.67 | 1.67 | – |
+| Terminal Three AirTrain Station **>1 m** | 32/32 | 4.85 | 6.90 | 7.7 | -3.10 | 0.50 | naip_2024_world_0.5m.jso | -3.05 (0.60) | – | – | – |
+| Grand Hyatt Hotel AirTrain Station **>1 m** | 70/73 | 4.80 | 9.22 | 9.7 | +4.45 | 0.50 | naip_2024_world_0.5m.jso | -1.00 (0.60) | 2.86 | 4.26 | – |
+| Boarding Area E **>1 m** | 152/153 | 4.70 | 7.90 | 9.7 | +0.65 | 0.50 | naip_2024_world_0.5m.jso | -1.75 (0.60) | 4.26 | 3.76 | – |
+| International Terminal **>1 m** | 365/381 | 4.70 | 9.06 | 9.8 | +0.40 | 0.50 | naip_2024_world_0.5m.jso | +0.30 (0.60) | 2.64 | 3.75 | – |
+| Central Parking Garage **>1 m** | 425/427 | 4.70 | 8.90 | 9.7 | -0.30 | 0.50 | naip_2024_world_0.5m.jso | +2.10 (0.60) | 1.70 | 4.93 | – |
+| Garage A **>1 m** | 9/9 | 4.70 | 6.88 | 7.2 | -4.30 | 0.50 | naip_2024_world_0.5m.jso | -2.90 (0.60) | 3.96 | 3.43 | – |
+| West Field Road AirTrain Station (Inbound) **>1 m** | 85/85 | 4.60 | 9.10 | 9.7 | -3.20 | 0.50 | naip_2024_world_0.5m.jso | +2.20 (0.60) | – | – | – |
+| Boarding Area C **>1 m** | 160/162 | 4.60 | 7.75 | 9.7 | +1.45 | 0.50 | naip_2024_world_0.5m.jso | +3.40 (0.60) | 3.55 | 4.21 | – |
+| Terminal complex ramp level **>1 m** | 128/137 | 4.60 | 8.23 | 9.5 | -0.15 | 0.50 | naip_2024_world_0.5m.jso | -1.10 (0.60) | 2.66 | 3.54 | – |
+| Terminal complex ramp level **>1 m** | 75/80 | 4.30 | 9.40 | 9.7 | +2.10 | 0.50 | naip_2024_world_0.5m.jso | -0.90 (0.60) | 4.55 | 3.39 | – |
+| Terminal 2 **>1 m** | 241/257 | 4.30 | 8.70 | 9.7 | +2.60 | 0.50 | naip_2024_world_0.5m.jso | +2.90 (0.60) | 2.39 | 4.18 | – |
+| Terminal One AirTrain Station **>1 m** | 30/30 | 4.25 | 7.41 | 8.8 | -3.85 | 0.50 | naip_2024_world_0.5m.jso | -3.65 (0.60) | – | – | – |
+| Boarding Area G **>1 m** | 367/372 | 4.20 | 7.34 | 9.4 | +2.60 | 0.50 | naip_2024_world_0.5m.jso | +4.40 (0.60) | 3.79 | 1.97 | – |
+| Boarding Area A **>1 m** | 278/307 | 4.15 | 8.73 | 9.7 | +2.15 | 0.50 | naip_2024_world_0.5m.jso | -0.40 (0.60) | 3.00 | 4.00 | [30-rwy-1L](30-rwy-1L.png) |
+| Westfield Road AirTrain Station (Inbound) **>1 m** | 69/69 | 3.80 | 6.78 | 9.1 | -3.60 | 0.50 | naip_2024_world_0.5m.jso | +0.80 (0.60) | – | – | – |
+| Terminal complex ramp level **>1 m** | 82/87 | 3.50 | 9.00 | 9.7 | +2.25 | 0.50 | naip_2024_world_0.5m.jso | +0.40 (0.60) | 3.61 | 3.28 | – |
+| Super Bay Hangar Building **>1 m** | 292/292 | 3.45 | 9.40 | 9.8 | +3.40 | 0.50 | naip_2024_world_0.5m.jso | -0.70 (0.60) | 4.86 | 3.63 | [30-rwy-19R](30-rwy-19R.png) |
+| Boarding Area B **>1 m** | 433/438 | 3.40 | 8.88 | 9.7 | -1.40 | 0.50 | naip_2024_world_0.5m.jso | -1.60 (0.60) | 1.01 | 3.34 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Garage A **>1 m** | 286/289 | 3.40 | 6.75 | 9.5 | +1.50 | 0.50 | naip_2024_world_0.5m.jso | +1.80 (0.60) | 3.77 | 2.76 | – |
+| Garage G **>1 m** | 284/302 | 3.40 | 9.00 | 9.8 | +0.10 | 0.50 | naip_2024_world_0.5m.jso | +3.20 (0.60) | 1.06 | 3.83 | – |
+| Long-Term Parking Garage 1 **>1 m** | 243/247 | 3.40 | 8.80 | 9.8 | -0.80 | 0.50 | naip_2024_world_0.5m.jso | +2.25 (0.60) | 1.73 | 2.72 | – |
+| West Field Road AirTrain Station (Outbound) **>1 m** | 80/80 | 3.10 | 8.11 | 8.9 | -1.30 | 0.50 | naip_2024_world_0.5m.jso | +0.40 (0.60) | 1.70 | 3.12 | – |
+| Westfield Road AirTrain Station (Outbound)g **>1 m** | 56/56 | 2.90 | 7.50 | 9.3 | -2.35 | 0.50 | naip_2024_world_0.5m.jso | -0.15 (0.60) | 1.35 | 2.82 | – |
+| Terminal 3 **>1 m** | 290/297 | 2.85 | 8.90 | 9.7 | +2.00 | 0.50 | naip_2024_world_0.5m.jso | +1.80 (0.60) | 3.69 | 2.90 | – |
+| Rental Car Center **>1 m** | 313/326 | 2.70 | 8.50 | 9.7 | +0.90 | 0.50 | naip_2024_world_0.5m.jso | -0.30 (0.60) | 3.85 | 1.86 | – |
+| International Terminal (G) AirTrain Station **>1 m** | 15/15 | 2.50 | 5.46 | 7.9 | +2.40 | 0.50 | naip_2024_world_0.5m.jso | -3.10 (0.60) | 7.14 | 2.18 | [30-rwy-1L](30-rwy-1L.png) |
+| Long-Term Parking Garage 2 **>1 m** | 314/316 | 2.40 | 5.80 | 9.6 | -0.80 | 0.50 | naip_2024_world_0.5m.jso | -0.30 (0.60) | 2.23 | 1.68 | – |
+| Rental Car Center AirTrain Station **>1 m** | 28/28 | 2.40 | 3.27 | 9.7 | +1.50 | 0.50 | naip_2024_world_0.5m.jso | +0.75 (0.60) | 0.20 | 2.43 | – |
+| Boarding Area F **>1 m** | 488/513 | 2.40 | 5.70 | 9.7 | +0.35 | 0.50 | naip_2024_world_0.5m.jso | -0.10 (0.60) | 3.31 | 1.20 | – |
+| Consolidated Administration Campus **>1 m** | 157/158 | 2.10 | 5.30 | 9.7 | +1.30 | 0.50 | naip_2024_world_0.5m.jso | +1.50 (0.60) | 2.73 | 0.71 | – |
+| Terminal 3 Air Train Station **>1 m** | 15/15 | 2.00 | 6.38 | 8.5 | -1.90 | 0.50 | naip_2024_world_0.5m.jso | -1.60 (0.60) | – | – | – |
+| Terminal Two AirTrain Station **>1 m** | 27/27 | 1.80 | 7.00 | 7.0 | -1.80 | 0.50 | naip_2024_world_0.5m.jso | -1.20 (0.60) | – | – | – |
 
-### taxiway-edge (128 measured, worst first, top 40)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| Taxiway E **>1 m** | 7/11 | 9.80 | 9.80 | 9.8 | -9.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.60 (0.60) | – |
-| Taxiway L/G **>1 m** | 22/38 | 9.70 | 9.80 | 9.8 | -9.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway N **>1 m** | 28/29 | 9.60 | 9.70 | 9.7 | -9.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -9.50 (0.60) | [30-rwy-28L](30-rwy-28L.png) |
-| Taxiway C/R **>1 m** | 5/5 | 8.80 | 9.24 | 9.4 | -7.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -7.75 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway B **>1 m** | 48/70 | 8.70 | 8.80 | 9.5 | -8.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.10 (0.60) | – |
-| Taxiway S2/S3 **>1 m** | 8/8 | 7.95 | 9.00 | 9.0 | +7.95 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +7.95 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway B **>1 m** | 12/12 | 7.75 | 8.00 | 8.2 | +7.75 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +7.40 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway P **>1 m** | 45/48 | 7.40 | 9.60 | 9.7 | -1.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.60 (0.60) | – |
-| Taxiway C1 **>1 m** | 8/16 | 7.30 | 8.87 | 9.5 | +4.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.95 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway L **>1 m** | 26/26 | 6.90 | 9.55 | 9.7 | +6.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.20 (0.60) | – |
-| Taxiway C/U **>1 m** | 13/13 | 6.80 | 9.36 | 9.5 | +1.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -2.10 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway K **>1 m** | 15/16 | 6.80 | 8.64 | 8.9 | +6.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.40 (0.60) | – |
-| Taxiway A/D **>1 m** | 9/9 | 6.40 | 9.22 | 9.7 | -5.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.50 (0.60) | – |
-| Taxiway T/K/A/B **>1 m** | 6/6 | 6.25 | 7.55 | 7.7 | +6.25 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.15 (0.60) | – |
-| Taxiway P **>1 m** | 24/26 | 5.75 | 9.07 | 9.7 | +5.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.20 (0.60) | – |
-| Taxiway R **>1 m** | 21/22 | 5.40 | 9.40 | 9.7 | +1.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.30 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway B/H **>1 m** | 9/10 | 5.20 | 6.00 | 7.6 | +5.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway B/G **>1 m** | 11/11 | 4.90 | 6.20 | 6.7 | +4.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | [30-rwy-1L](30-rwy-1L.png) |
-| Taxiway L **>1 m** | 60/118 | 4.70 | 9.70 | 9.8 | -4.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.60 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway A **>1 m** | 11/11 | 4.50 | 7.90 | 9.6 | -0.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | – |
-| Taxiway B/D **>1 m** | 19/23 | 4.50 | 9.02 | 9.5 | -0.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.70 (0.60) | – |
-| Taxiway U **>1 m** | 35/40 | 4.40 | 7.66 | 9.1 | +2.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway S3 **>1 m** | 4/4 | 4.10 | 6.58 | 6.7 | +4.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.40 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway R **>1 m** | 23/23 | 3.90 | 4.40 | 5.1 | -3.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.80 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway F **>1 m** | 197/234 | 3.70 | 4.30 | 9.4 | -3.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.10 (0.60) | [30-rwy-28L](30-rwy-28L.png) |
-| Taxiway S2 **>1 m** | 22/22 | 3.40 | 8.41 | 9.3 | +3.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.60 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway U **>1 m** | 68/80 | 3.35 | 8.54 | 9.6 | +0.45 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +7.80 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway G **>1 m** | 34/59 | 3.15 | 9.15 | 9.7 | -0.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.35 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
-| Taxiway G **>1 m** | 13/15 | 2.80 | 4.32 | 4.8 | +2.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.60 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
-| Taxiway N **>1 m** | 14/14 | 2.80 | 7.61 | 9.4 | +0.55 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.20 (0.60) | – |
-| Taxiway D **>1 m** | 5/6 | 2.40 | 3.12 | 3.6 | -1.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | – |
-| Taxiway R/U **>1 m** | 6/9 | 2.15 | 3.50 | 4.6 | -1.85 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| Taxiway K **>1 m** | 15/15 | 1.90 | 3.16 | 3.6 | +1.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.35 (0.60) | – |
-| Taxiway L **>1 m** | 40/41 | 1.80 | 9.41 | 9.6 | +0.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -8.55 (0.60) | – |
-| Taxiway E **>1 m** | 108/108 | 1.80 | 2.20 | 2.3 | -0.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -2.10 (0.60) | [30-rwy-19R](30-rwy-19R.png) |
-| Taxiway H **>1 m** | 10/11 | 1.80 | 8.75 | 9.2 | +1.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway INTERSECTION L/L2 **>1 m** | 4/4 | 1.65 | 1.80 | 1.8 | -1.65 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.55 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway H **>1 m** | 121/146 | 1.60 | 9.20 | 9.7 | +0.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +9.15 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| Taxiway INTERSECTION L/E **>1 m** | 23/23 | 1.60 | 6.40 | 9.2 | +1.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.20 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| Taxiway L **>1 m** | 56/56 | 1.60 | 8.90 | 9.3 | +1.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.40 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-
-### apron-edge (1 measured, worst first)
+### taxiway-edge (164 measured, worst first, top 40)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| apron outline #1 **>1 m** | 13/33 | 8.50 | 9.00 | 9.6 | +5.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +8.10 (0.60) | – |
+| Taxiway A/G **>1 m** | 3/3 | 9.20 | 9.28 | 9.3 | +9.20 | 0.50 | naip_2024_world_0.5m.jso | +8.90 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| Taxiway C/APRON **>1 m** | 9/14 | 7.60 | 8.80 | 9.2 | +7.60 | 0.50 | naip_2024_world_0.5m.jso | +7.25 (0.60) | – |
+| Taxiway A/D **>1 m** | 6/6 | 7.55 | 9.40 | 9.7 | +5.80 | 0.50 | naip_2024_world_0.5m.jso | +0.70 (0.60) | – |
+| Taxiway B **>1 m** | 16/16 | 7.45 | 8.00 | 8.2 | +7.45 | 0.50 | naip_2024_world_0.5m.jso | +7.40 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway S2/S3 **>1 m** | 12/12 | 7.45 | 9.00 | 9.1 | +7.15 | 0.50 | naip_2024_world_0.5m.jso | +7.45 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C1 **>1 m** | 14/15 | 7.35 | 9.12 | 9.5 | -1.40 | 0.50 | naip_2024_world_0.5m.jso | -0.55 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway L/G **>1 m** | 5/5 | 7.30 | 9.76 | 9.8 | -0.90 | 0.50 | naip_2024_world_0.5m.jso | -1.10 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Taxiway W **>1 m** | 3/3 | 7.30 | 8.82 | 9.2 | -1.80 | 0.50 | naip_2024_world_0.5m.jso | -0.70 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| Taxiway L **>1 m** | 25/25 | 7.00 | 9.56 | 9.8 | +6.60 | 0.50 | naip_2024_world_0.5m.jso | +5.70 (0.60) | – |
+| Taxiway C/K **>1 m** | 8/13 | 6.95 | 7.86 | 8.0 | +6.95 | 0.50 | naip_2024_world_0.5m.jso | +6.80 (0.60) | – |
+| Taxiway K **>1 m** | 11/11 | 6.80 | 7.60 | 8.8 | +6.60 | 0.50 | naip_2024_world_0.5m.jso | -0.20 (0.60) | – |
+| Taxiway R **>1 m** | 25/26 | 6.70 | 9.38 | 9.6 | +5.20 | 0.50 | naip_2024_world_0.5m.jso | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway L **>1 m** | 23/27 | 6.40 | 9.60 | 9.7 | +1.50 | 0.50 | naip_2024_world_0.5m.jso | -0.70 (0.60) | – |
+| Taxiway S4/S **>1 m** | 11/11 | 6.40 | 7.70 | 7.9 | +6.40 | 0.50 | naip_2024_world_0.5m.jso | +4.40 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway B/H **>1 m** | 9/9 | 5.60 | 6.70 | 7.5 | +5.60 | 0.50 | naip_2024_world_0.5m.jso | +0.40 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Taxiway S2 **>1 m** | 15/15 | 5.20 | 7.76 | 8.4 | +4.70 | 0.50 | naip_2024_world_0.5m.jso | +5.40 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway D **>1 m** | 13/13 | 5.00 | 7.80 | 7.9 | +4.10 | 0.50 | naip_2024_world_0.5m.jso | +5.20 (0.60) | – |
+| Taxiway B/G **>1 m** | 9/9 | 5.00 | 6.32 | 6.8 | +5.00 | 0.50 | naip_2024_world_0.5m.jso | +1.25 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| Taxiway R **>1 m** | 3/3 | 5.00 | 5.16 | 5.2 | +5.00 | 0.50 | naip_2024_world_0.5m.jso | +4.10 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway P **>1 m** | 15/15 | 4.90 | 8.26 | 9.1 | +4.90 | 0.50 | naip_2024_world_0.5m.jso | +5.10 (0.60) | – |
+| Taxiway C **>1 m** | 5/5 | 4.80 | 6.76 | 8.0 | +0.30 | 0.50 | naip_2024_world_0.5m.jso | +3.65 (0.60) | – |
+| Taxiway Z/S2 **>1 m** | 3/3 | 4.70 | 7.02 | 7.6 | +0.90 | 0.50 | naip_2024_world_0.5m.jso | +7.40 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway R/U **>1 m** | 12/16 | 4.45 | 8.97 | 9.7 | -2.75 | 0.50 | naip_2024_world_0.5m.jso | -2.90 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway S3 **>1 m** | 7/7 | 4.40 | 6.46 | 6.7 | +4.40 | 0.50 | naip_2024_world_0.5m.jso | +5.50 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C/R **>1 m** | 11/11 | 4.30 | 9.00 | 9.6 | +2.00 | 0.50 | naip_2024_world_0.5m.jso | +0.10 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway U **>1 m** | 35/40 | 4.20 | 7.70 | 9.0 | +1.00 | 0.50 | naip_2024_world_0.5m.jso | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway B/D **>1 m** | 7/9 | 3.90 | 5.46 | 6.6 | -0.90 | 0.50 | naip_2024_world_0.5m.jso | +0.05 (0.60) | – |
+| Taxiway R **>1 m** | 26/27 | 3.85 | 4.35 | 5.1 | -3.80 | 0.50 | naip_2024_world_0.5m.jso | -1.80 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C **>1 m** | 14/15 | 3.85 | 8.00 | 8.3 | +3.85 | 0.50 | naip_2024_world_0.5m.jso | +0.30 (0.60) | [30-rwy-19R](30-rwy-19R.png) |
+| Taxiway S2 **>1 m** | 3/3 | 3.70 | 8.34 | 9.5 | +3.70 | 0.50 | naip_2024_world_0.5m.jso | +0.10 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway S4 **>1 m** | 4/4 | 3.55 | 8.05 | 9.4 | +3.55 | 0.50 | naip_2024_world_0.5m.jso | +2.20 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C **>1 m** | 41/45 | 3.50 | 8.10 | 9.1 | +0.20 | 0.50 | naip_2024_world_0.5m.jso | +0.70 (0.60) | – |
+| Taxiway N **>1 m** | 35/38 | 3.40 | 9.66 | 9.7 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +1.25 (0.60) | [30-rwy-28L](30-rwy-28L.png) |
+| Taxiway H **>1 m** | 8/9 | 3.35 | 5.84 | 8.5 | +1.90 | 0.50 | naip_2024_world_0.5m.jso | +0.35 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Taxiway U **>1 m** | 69/80 | 3.20 | 8.38 | 9.7 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +7.75 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway G **>1 m** | 20/26 | 3.10 | 8.89 | 9.7 | +1.55 | 0.50 | naip_2024_world_0.5m.jso | -1.10 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| Taxiway B **>1 m** | 48/49 | 3.05 | 7.40 | 8.7 | +0.10 | 0.50 | naip_2024_world_0.5m.jso | +0.10 (0.60) | – |
+| Taxiway G **>1 m** | 14/16 | 2.85 | 4.68 | 5.2 | +2.70 | 0.50 | naip_2024_world_0.5m.jso | -2.85 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| Taxiway N **>1 m** | 12/12 | 2.75 | 7.42 | 8.3 | +2.30 | 0.50 | naip_2024_world_0.5m.jso | +1.40 (0.60) | – |
+| Taxiway D **>1 m** | 9/12 | 2.70 | 9.32 | 9.4 | -2.70 | 0.50 | naip_2024_world_0.5m.jso | – | – |
 
-### extra-pavement (59 measured, worst first, top 40)
-
-| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
-|---|---|---|---|---|---|---|---|---|---|
-| extra pavement #26 **>1 m** | 3/4 | 9.40 | 9.64 | 9.7 | +9.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.70 (0.60) | – |
-| extra pavement #23 **>1 m** | 81/81 | 9.00 | 9.70 | 9.8 | +9.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.80 (0.60) | – |
-| extra pavement #73 **>1 m** | 3/3 | 8.70 | 9.26 | 9.4 | +8.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.10 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| extra pavement #7 **>1 m** | 41/43 | 7.90 | 9.20 | 9.6 | +7.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +7.95 (0.60) | – |
-| extra pavement #45 **>1 m** | 46/143 | 7.30 | 9.45 | 9.7 | -7.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -7.20 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #12 **>1 m** | 25/31 | 6.90 | 9.36 | 9.5 | +5.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +6.20 (0.60) | – |
-| extra pavement #13 **>1 m** | 11/11 | 6.10 | 8.70 | 8.8 | -2.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.10 (0.60) | – |
-| extra pavement #67 **>1 m** | 20/30 | 5.80 | 9.41 | 9.7 | +5.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +5.00 (0.60) | – |
-| extra pavement #49 **>1 m** | 30/32 | 5.75 | 9.50 | 9.6 | -4.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.00 (0.60) | – |
-| extra pavement #71 **>1 m** | 731/1056 | 5.70 | 9.00 | 9.8 | -1.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.05 (0.60) | – |
-| extra pavement #10 **>1 m** | 592/632 | 5.60 | 9.10 | 9.7 | +1.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.30 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #43 **>1 m** | 46/49 | 5.55 | 9.35 | 9.6 | -0.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -2.70 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #11 **>1 m** | 19/19 | 5.50 | 9.50 | 9.5 | -2.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.90 (0.60) | – |
-| extra pavement #57 **>1 m** | 55/56 | 5.20 | 7.36 | 9.6 | -3.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.90 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| extra pavement #68 **>1 m** | 238/315 | 5.20 | 8.90 | 9.8 | +2.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #54 **>1 m** | 71/91 | 5.10 | 9.20 | 9.7 | -2.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.10 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #21 **>1 m** | 197/197 | 5.00 | 9.30 | 9.7 | -4.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -5.00 (0.60) | – |
-| extra pavement #66 **>1 m** | 364/461 | 5.00 | 8.80 | 9.7 | +1.35 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.40 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #14 **>1 m** | 45/45 | 4.90 | 7.40 | 9.6 | +4.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.80 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #74 **>1 m** | 169/192 | 4.80 | 8.70 | 9.7 | +1.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.20 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| extra pavement #48 **>1 m** | 28/31 | 4.75 | 7.29 | 8.9 | -4.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.15 (0.60) | – |
-| extra pavement #40 **>1 m** | 52/81 | 4.70 | 8.89 | 9.7 | +3.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.50 (0.60) | – |
-| extra pavement #72 **>1 m** | 100/126 | 4.65 | 8.12 | 9.8 | +3.95 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.30 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
-| extra pavement #37 **>1 m** | 758/914 | 4.60 | 9.10 | 9.8 | -0.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.50 (0.60) | – |
-| extra pavement #3 **>1 m** | 310/310 | 4.55 | 9.10 | 9.7 | -2.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.15 (0.60) | – |
-| extra pavement #70 **>1 m** | 109/226 | 4.50 | 8.92 | 9.7 | +3.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.40 (0.60) | [30-rwy-19R](30-rwy-19R.png) |
-| extra pavement #15 **>1 m** | 115/130 | 4.40 | 8.86 | 9.7 | +1.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.85 (0.60) | – |
-| extra pavement #32 **>1 m** | 40/42 | 4.25 | 6.95 | 9.6 | -2.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.40 (0.60) | – |
-| extra pavement #20 **>1 m** | 104/105 | 4.20 | 8.41 | 9.6 | -3.55 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.70 (0.60) | – |
-| extra pavement #62 **>1 m** | 43/45 | 4.20 | 8.84 | 9.4 | +1.00 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.35 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #28 **>1 m** | 91/101 | 3.90 | 8.20 | 9.4 | +1.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.60 (0.60) | – |
-| extra pavement #69 **>1 m** | 77/79 | 3.60 | 8.44 | 9.5 | -1.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.05 (0.60) | – |
-| extra pavement #64 **>1 m** | 433/515 | 3.60 | 7.30 | 9.7 | +0.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.10 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
-| extra pavement #0 **>1 m** | 115/115 | 3.50 | 8.70 | 9.7 | +0.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.50 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #1 **>1 m** | 111/113 | 3.50 | 8.90 | 9.7 | +1.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.10 (0.60) | – |
-| extra pavement #42 **>1 m** | 73/80 | 3.30 | 5.98 | 9.6 | +3.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.20 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #41 **>1 m** | 36/36 | 3.25 | 8.55 | 9.4 | +0.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.00 (0.60) | – |
-| extra pavement #61 **>1 m** | 39/40 | 3.10 | 6.42 | 8.7 | -2.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -2.60 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
-| extra pavement #5 **>1 m** | 42/58 | 3.00 | 8.46 | 9.1 | -2.25 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.75 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| extra pavement #58 **>1 m** | 182/194 | 2.95 | 6.29 | 9.6 | +2.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.25 (0.60) | – |
-
-### bridge-walkway (28 measured, worst first)
+### apron-edge (2 measured, worst first)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| G9 bridge G9 fixed walkway **>1 m** | 3/3 | 5.40 | 5.40 | 5.4 | -5.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.40 (0.60) | – |
-| D1 bridge D1 fixed walkway | 2/2 | 5.35 | 5.71 | 5.8 | -5.35 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | – |
-| G10 bridge G10 fixed walkway **>1 m** | 4/4 | 4.75 | 5.75 | 5.9 | -3.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +5.25 (0.60) | – |
-| C3 bridge C3 fixed walkway | 1/2 | 4.50 | 4.50 | 4.5 | +4.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | – |
-| A8 bridge A8 fixed walkway **>1 m** | 3/3 | 4.40 | 5.60 | 5.9 | +4.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.80 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
-| D9 bridge D9 fixed walkway | 2/2 | 4.35 | 5.35 | 5.6 | +4.35 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | – |
-| G8 bridge G8 fixed walkway **>1 m** | 4/5 | 4.25 | 5.63 | 5.9 | +3.45 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | – | – |
-| G12 bridge G12 fixed walkway **>1 m** | 3/3 | 4.10 | 5.54 | 5.9 | +4.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.30 (0.60) | – |
-| D16 bridge D16 fixed walkway | 2/2 | 4.05 | 4.97 | 5.2 | +4.05 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.10 (0.60) | – |
-| E4 bridge E4 fixed walkway **>1 m** | 6/6 | 3.85 | 5.25 | 5.8 | +3.85 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.65 (0.60) | – |
-| F22 bridge F22 fixed walkway **>1 m** | 4/4 | 3.85 | 5.81 | 5.9 | +3.85 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.80 (0.60) | – |
-| B5 bridge B5 fixed walkway | 2/2 | 3.75 | 4.11 | 4.2 | +3.75 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -2.45 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
-| D11 bridge D11 fixed walkway | 2/2 | 3.60 | 5.20 | 5.6 | +3.60 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.70 (0.60) | – |
-| A1 bridge A1 fixed walkway **>1 m** | 14/14 | 3.55 | 5.90 | 5.9 | -1.55 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +1.75 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
-| G9 bridge G9 fixed walkway | 2/2 | 3.10 | 3.42 | 3.5 | -3.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.70 (0.60) | – |
-| G12 bridge G12 fixed walkway **>1 m** | 4/5 | 3.10 | 3.87 | 3.9 | -3.10 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.25 (0.60) | – |
-| F11 bridge F11 fixed walkway **>1 m** | 5/5 | 3.10 | 4.76 | 5.8 | +0.50 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.30 (0.60) | – |
-| G8 bridge G8 fixed walkway **>1 m** | 3/3 | 3.00 | 4.20 | 4.5 | -0.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -4.40 (0.60) | – |
-| B11 bridge B11 fixed walkway **>1 m** | 14/14 | 2.65 | 4.04 | 4.6 | -2.65 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -3.35 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| A8 bridge A8 fixed walkway | 2/2 | 2.55 | 3.95 | 4.3 | +2.55 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.15 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
-| D14 bridge D14 fixed walkway | 2/2 | 2.40 | 2.56 | 2.6 | +2.40 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +2.20 (0.60) | – |
-| F13 bridge F13 fixed walkway **>1 m** | 4/4 | 2.30 | 3.60 | 3.9 | +2.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +0.70 (0.60) | – |
-| D8 bridge D8 fixed walkway **>1 m** | 3/3 | 2.20 | 2.20 | 2.2 | -2.20 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -2.70 (0.60) | – |
-| B16 bridge B16 fixed walkway **>1 m** | 15/15 | 1.90 | 3.56 | 4.4 | +1.70 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.80 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| F13 bridge F13 fixed walkway | 2/2 | 1.45 | 1.49 | 1.5 | -0.05 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -0.50 (0.60) | – |
-| F15 bridge F15 fixed walkway **>1 m** | 3/3 | 1.20 | 1.84 | 2.0 | +0.90 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | -1.80 (0.60) | – |
-| D10 bridge D10 fixed walkway | 10/10 | 0.80 | 1.00 | 1.0 | +0.80 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +4.20 (0.60) | – |
-| F11 bridge F11 fixed walkway | 7/7 | 0.30 | 0.76 | 1.0 | +0.30 | 0.50 | (0, '/home/user/Calc/sfo3d/refs/cache/na | +3.00 (0.60) | – |
+| apron outline #0 **>1 m** | 10/10 | 5.70 | 7.24 | 8.5 | -4.70 | 0.50 | naip_2024_world_0.5m.jso | +3.50 (0.60) | – |
+| apron outline #1 **>1 m** | 41/54 | 5.20 | 9.00 | 9.7 | +4.20 | 0.50 | naip_2024_world_0.5m.jso | +4.05 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
 
-### bridge-rotunda (115 measured, worst first, top 40)
+### extra-pavement (241 measured, worst first, top 40)
 
 | feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
 |---|---|---|---|---|---|---|---|---|---|
-| E4 bridge E4 rotunda | 1/1 | 5.98 | 5.98 | 6.0 | +5.98 | 0.50 | raster | – | – |
-| A9 bridge A9 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| F8 bridge F8 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.50 | raster | – | – |
-| C8 bridge C8 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.50 | raster | – | – |
-| F12 bridge F12 rotunda | 1/1 | 5.97 | 5.97 | 6.0 | +5.97 | 0.50 | raster | – | – |
-| A2 bridge A2 rotunda | 1/1 | 5.96 | 5.96 | 6.0 | +5.96 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| C6 bridge C6 rotunda | 1/1 | 5.95 | 5.95 | 6.0 | +5.95 | 0.50 | raster | – | – |
-| A10 bridge A10 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| B27 bridge B27 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| B16 bridge B16 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| G6 bridge G6 rotunda | 1/1 | 5.95 | 5.95 | 5.9 | +5.95 | 0.50 | raster | – | – |
-| A8 bridge A8 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| D11 bridge D11 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | – |
-| E5 bridge E5 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | – |
-| E8 bridge E8 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | – |
-| G12 bridge G12 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | – |
-| F17 bridge F17 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | – |
-| F10 bridge F10 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | – |
-| G12 bridge G12 rotunda | 1/1 | 5.94 | 5.94 | 5.9 | +5.94 | 0.50 | raster | – | – |
-| C1 bridge C1 rotunda | 1/1 | 5.91 | 5.91 | 5.9 | +5.91 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| E3 bridge E2 rotunda | 1/1 | 5.90 | 5.90 | 5.9 | +5.90 | 0.50 | raster | – | – |
-| G6 bridge G6 rotunda | 1/1 | 5.89 | 5.89 | 5.9 | +5.89 | 0.50 | raster | – | – |
-| B4 bridge B4 rotunda | 1/1 | 5.89 | 5.89 | 5.9 | +5.89 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| E9 bridge E9 rotunda | 1/1 | 5.89 | 5.89 | 5.9 | +5.89 | 0.50 | raster | – | – |
-| C4 bridge C4 rotunda | 1/1 | 5.85 | 5.85 | 5.8 | +5.85 | 0.50 | raster | – | – |
-| B5 bridge B5 rotunda | 1/1 | 5.83 | 5.83 | 5.8 | +5.83 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| D14 bridge D14 rotunda | 1/1 | 5.82 | 5.82 | 5.8 | +5.82 | 0.50 | raster | – | – |
-| A6 bridge A7 rotunda | 1/1 | 5.81 | 5.81 | 5.8 | +5.81 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| B25 bridge B24 rotunda | 1/1 | 5.78 | 5.78 | 5.8 | +5.78 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| B14 bridge B14 rotunda | 1/1 | 5.77 | 5.77 | 5.8 | +5.77 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| B23 bridge B22 rotunda | 1/1 | 5.77 | 5.77 | 5.8 | +5.77 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| G10 bridge G14 rotunda | 1/1 | 5.76 | 5.76 | 5.8 | +5.76 | 0.50 | raster | – | – |
-| C10 bridge C10 rotunda | 1/1 | 5.68 | 5.68 | 5.7 | +5.68 | 0.50 | raster | – | – |
-| B13 bridge B13 rotunda | 1/1 | 5.58 | 5.58 | 5.6 | +5.58 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| C7 bridge C7 rotunda | 1/1 | 5.54 | 5.54 | 5.5 | +5.54 | 0.50 | raster | – | – |
-| A11 bridge A13 rotunda | 1/1 | 5.52 | 5.52 | 5.5 | +5.52 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
-| B18 bridge B18 rotunda | 1/1 | 5.51 | 5.51 | 5.5 | +5.51 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| B12 bridge B12 rotunda | 1/1 | 5.50 | 5.50 | 5.5 | +5.50 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| F11 bridge F11 rotunda | 1/1 | 5.46 | 5.46 | 5.5 | +5.46 | 0.50 | raster | – | – |
-| A11 bridge A11 rotunda | 1/1 | 5.38 | 5.38 | 5.4 | +5.38 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| extra pavement #252 **>1 m** | 5/5 | 9.30 | 9.52 | 9.6 | +9.30 | 0.50 | naip_2024_world_0.5m.jso | +1.45 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #6 **>1 m** | 21/21 | 9.20 | 9.60 | 9.7 | -9.20 | 0.50 | naip_2024_world_0.5m.jso | -8.80 (0.60) | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #127 **>1 m** | 31/36 | 9.00 | 9.70 | 9.7 | +9.00 | 0.50 | naip_2024_world_0.5m.jso | +5.20 (0.60) | – |
+| extra pavement #111 **>1 m** | 12/14 | 8.60 | 9.39 | 9.4 | +8.00 | 0.50 | naip_2024_world_0.5m.jso | +4.10 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #10 **>1 m** | 12/12 | 7.80 | 9.50 | 9.6 | +4.50 | 0.50 | naip_2024_world_0.5m.jso | -9.30 (0.60) | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #65 **>1 m** | 22/25 | 7.55 | 9.30 | 9.7 | +7.30 | 0.50 | naip_2024_world_0.5m.jso | +4.50 (0.60) | – |
+| extra pavement #49 **>1 m** | 18/23 | 7.40 | 7.69 | 8.6 | +7.40 | 0.50 | naip_2024_world_0.5m.jso | – | – |
+| extra pavement #9 **>1 m** | 16/20 | 7.20 | 7.90 | 8.2 | +7.20 | 0.50 | naip_2024_world_0.5m.jso | +7.20 (0.60) | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #50 **>1 m** | 28/36 | 6.95 | 8.93 | 9.7 | +6.20 | 0.50 | naip_2024_world_0.5m.jso | +5.60 (0.60) | [30-rwy-19L](30-rwy-19L.png) |
+| extra pavement #81 **>1 m** | 45/51 | 6.90 | 9.52 | 9.6 | +5.00 | 0.50 | naip_2024_world_0.5m.jso | +7.40 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #254 **>1 m** | 13/13 | 6.80 | 9.58 | 9.6 | +2.20 | 0.50 | naip_2024_world_0.5m.jso | -3.85 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #245 **>1 m** | 12/12 | 6.50 | 9.18 | 9.5 | +1.80 | 0.50 | naip_2024_world_0.5m.jso | +6.20 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #97 **>1 m** | 8/12 | 6.50 | 8.96 | 9.1 | +6.50 | 0.50 | naip_2024_world_0.5m.jso | +6.05 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #234 **>1 m** | 4/4 | 6.45 | 6.88 | 7.0 | +6.45 | 0.50 | naip_2024_world_0.5m.jso | +6.45 (0.60) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| extra pavement #4 **>1 m** | 12/20 | 6.40 | 8.79 | 9.7 | +5.15 | 0.50 | naip_2024_world_0.5m.jso | +5.80 (0.60) | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #144 **>1 m** | 4/7 | 6.40 | 7.41 | 7.5 | +6.40 | 0.50 | naip_2024_world_0.5m.jso | +1.40 (0.60) | – |
+| extra pavement #251 **>1 m** | 16/16 | 5.75 | 8.40 | 9.5 | +5.25 | 0.50 | naip_2024_world_0.5m.jso | +6.10 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #54 **>1 m** | 15/28 | 5.70 | 8.00 | 8.1 | +5.70 | 0.50 | naip_2024_world_0.5m.jso | – | – |
+| extra pavement #255 **>1 m** | 6/6 | 5.65 | 9.60 | 9.7 | -5.60 | 0.50 | naip_2024_world_0.5m.jso | -5.80 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #143 **>1 m** | 12/12 | 5.40 | 9.44 | 9.6 | -3.80 | 0.50 | naip_2024_world_0.5m.jso | +1.85 (0.60) | – |
+| extra pavement #117 **>1 m** | 11/11 | 5.30 | 9.20 | 9.3 | +4.60 | 0.50 | naip_2024_world_0.5m.jso | +1.35 (0.60) | – |
+| extra pavement #154 **>1 m** | 4/6 | 5.30 | 7.40 | 7.7 | +5.30 | 0.50 | naip_2024_world_0.5m.jso | +4.65 (0.60) | – |
+| extra pavement #141 **>1 m** | 8/9 | 5.15 | 8.65 | 9.0 | +3.50 | 0.50 | naip_2024_world_0.5m.jso | +3.80 (0.60) | – |
+| extra pavement #55 **>1 m** | 38/82 | 5.10 | 9.00 | 9.7 | +5.10 | 0.50 | naip_2024_world_0.5m.jso | +3.00 (0.60) | – |
+| extra pavement #26 **>1 m** | 11/11 | 5.00 | 8.80 | 9.5 | +2.70 | 0.50 | naip_2024_world_0.5m.jso | +3.05 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #197 **>1 m** | 8/8 | 4.95 | 6.82 | 7.1 | +4.95 | 0.50 | naip_2024_world_0.5m.jso | +7.10 (0.60) | – |
+| extra pavement #128 **>1 m** | 14/16 | 4.90 | 8.94 | 9.1 | +4.40 | 0.50 | naip_2024_world_0.5m.jso | +7.40 (0.60) | – |
+| extra pavement #193 **>1 m** | 12/12 | 4.85 | 6.95 | 8.3 | +2.30 | 0.50 | naip_2024_world_0.5m.jso | +0.40 (0.60) | – |
+| extra pavement #138 **>1 m** | 21/51 | 4.80 | 8.70 | 9.4 | +4.80 | 0.50 | naip_2024_world_0.5m.jso | – | – |
+| extra pavement #63 **>1 m** | 22/22 | 4.75 | 8.48 | 9.4 | +2.70 | 0.50 | naip_2024_world_0.5m.jso | +4.60 (0.60) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #106 **>1 m** | 6/6 | 4.30 | 6.50 | 7.7 | +4.30 | 0.50 | naip_2024_world_0.5m.jso | +3.90 (0.60) | [30-rwy-19R](30-rwy-19R.png) |
+| extra pavement #224 **>1 m** | 21/21 | 4.30 | 9.60 | 9.7 | +1.40 | 0.50 | naip_2024_world_0.5m.jso | +3.20 (0.60) | – |
+| extra pavement #102 **>1 m** | 13/13 | 4.20 | 5.28 | 6.9 | +4.20 | 0.50 | naip_2024_world_0.5m.jso | +1.70 (0.60) | – |
+| extra pavement #13 **>1 m** | 19/21 | 4.00 | 6.96 | 7.8 | +4.00 | 0.50 | naip_2024_world_0.5m.jso | +2.65 (0.60) | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #120 **>1 m** | 35/36 | 3.90 | 7.74 | 8.4 | +3.00 | 0.50 | naip_2024_world_0.5m.jso | +2.10 (0.60) | – |
+| extra pavement #41 **>1 m** | 10/11 | 3.85 | 6.70 | 7.6 | +1.10 | 0.50 | naip_2024_world_0.5m.jso | -1.20 (0.60) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| extra pavement #0 **>1 m** | 51/56 | 3.80 | 9.00 | 9.6 | +3.30 | 0.50 | naip_2024_world_0.5m.jso | +2.90 (0.60) | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #210 **>1 m** | 108/109 | 3.80 | 5.93 | 9.0 | +3.80 | 0.50 | naip_2024_world_0.5m.jso | +3.20 (0.60) | – |
+| extra pavement #256 **>1 m** | 15/15 | 3.80 | 8.72 | 9.4 | +3.80 | 0.50 | naip_2024_world_0.5m.jso | +2.65 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #103 **>1 m** | 5/8 | 3.70 | 7.60 | 9.4 | +3.70 | 0.50 | naip_2024_world_0.5m.jso | +2.00 (0.60) | [30-rwy-10R](30-rwy-10R.png) |
+
+### bridge-walkway (48 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| A13 bridge A13 fixed walkway **>1 m** | 5/5 | 5.20 | 5.82 | 5.9 | +5.20 | 0.50 | naip_2024_world_0.5m.jso | -0.80 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| C1 bridge C1 fixed walkway | 1/3 | 5.20 | 5.20 | 5.2 | +5.20 | 0.50 | naip_2024_world_0.5m.jso | – | [30-rwy-1L](30-rwy-1L.png) |
+| G9 bridge G9 fixed walkway **>1 m** | 8/8 | 5.15 | 5.48 | 5.9 | -5.15 | 0.50 | naip_2024_world_0.5m.jso | -4.55 (0.60) | – |
+| B11S bridge B11 fixed walkway **>1 m** | 4/4 | 5.00 | 5.90 | 5.9 | -5.00 | 0.50 | naip_2024_world_0.5m.jso | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A11 bridge A11 fixed walkway **>1 m** | 3/3 | 4.80 | 5.68 | 5.9 | -4.80 | 0.50 | naip_2024_world_0.5m.jso | +1.80 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| B23 bridge B23 fixed walkway **>1 m** | 7/7 | 4.80 | 5.90 | 5.9 | +4.80 | 0.50 | naip_2024_world_0.5m.jso | +5.00 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B20 bridge B20 fixed walkway **>1 m** | 11/11 | 4.70 | 5.40 | 5.7 | +4.70 | 0.50 | naip_2024_world_0.5m.jso | +2.10 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| G13 bridge G13 fixed walkway **>1 m** | 7/7 | 4.60 | 5.40 | 5.4 | +3.90 | 0.50 | naip_2024_world_0.5m.jso | +1.90 (0.60) | – |
+| B8 bridge B8 fixed walkway **>1 m** | 3/4 | 4.50 | 4.98 | 5.1 | -4.50 | 0.50 | naip_2024_world_0.5m.jso | -4.90 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| A1 bridge A1 fixed walkway **>1 m** | 21/26 | 4.40 | 5.90 | 5.9 | -3.10 | 0.50 | naip_2024_world_0.5m.jso | -3.20 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| G10 bridge G10 fixed walkway **>1 m** | 8/8 | 4.25 | 5.69 | 5.9 | -3.25 | 0.50 | naip_2024_world_0.5m.jso | +4.35 (0.60) | – |
+| G10 bridge G10 fixed walkway **>1 m** | 5/5 | 4.20 | 4.84 | 5.0 | -4.20 | 0.50 | naip_2024_world_0.5m.jso | -5.20 (0.60) | – |
+| B19 bridge B19 fixed walkway **>1 m** | 12/12 | 4.15 | 5.90 | 5.9 | +2.90 | 0.50 | naip_2024_world_0.5m.jso | +3.10 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A6 bridge A6 fixed walkway **>1 m** | 6/6 | 4.15 | 5.50 | 5.8 | +4.15 | 0.50 | naip_2024_world_0.5m.jso | +4.50 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| F11 bridge F11 fixed walkway **>1 m** | 7/7 | 4.00 | 5.42 | 5.9 | -4.00 | 0.50 | naip_2024_world_0.5m.jso | -1.30 (0.60) | – |
+| A2 bridge A2 fixed walkway **>1 m** | 8/8 | 3.90 | 5.41 | 5.9 | -2.45 | 0.50 | naip_2024_world_0.5m.jso | -2.00 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| E4 bridge E4 fixed walkway **>1 m** | 6/6 | 3.75 | 5.20 | 5.6 | +3.75 | 0.50 | naip_2024_world_0.5m.jso | +3.20 (0.60) | – |
+| B18 bridge B18 fixed walkway | 2/2 | 3.65 | 4.57 | 4.8 | -3.65 | 0.50 | naip_2024_world_0.5m.jso | -5.15 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B9 bridge B9 fixed walkway **>1 m** | 5/5 | 3.60 | 5.54 | 5.9 | +0.40 | 0.50 | naip_2024_world_0.5m.jso | -2.60 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B11 bridge B11 fixed walkway **>1 m** | 12/12 | 3.50 | 3.99 | 4.1 | -3.20 | 0.50 | naip_2024_world_0.5m.jso | -3.85 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| G9 bridge G9 fixed walkway **>1 m** | 3/3 | 3.50 | 3.82 | 3.9 | -3.50 | 0.50 | naip_2024_world_0.5m.jso | -2.10 (0.60) | – |
+| A1 bridge A1 fixed walkway **>1 m** | 22/24 | 3.40 | 5.85 | 5.9 | -2.95 | 0.50 | naip_2024_world_0.5m.jso | -0.50 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| A6 bridge A6 fixed walkway **>1 m** | 11/11 | 3.30 | 4.50 | 5.4 | -0.20 | 0.50 | naip_2024_world_0.5m.jso | +0.10 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| A4 bridge A4 fixed walkway **>1 m** | 5/5 | 3.00 | 3.10 | 3.1 | +3.00 | 0.50 | naip_2024_world_0.5m.jso | +2.70 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| D8 bridge D8 fixed walkway **>1 m** | 4/4 | 2.90 | 2.97 | 3.0 | -2.90 | 0.50 | naip_2024_world_0.5m.jso | -3.35 (0.60) | – |
+| F13 bridge F13 fixed walkway **>1 m** | 5/5 | 2.80 | 3.84 | 4.2 | -2.80 | 0.50 | naip_2024_world_0.5m.jso | +0.80 (0.60) | – |
+| G11 bridge G11 fixed walkway | 2/3 | 2.80 | 3.04 | 3.1 | +2.80 | 0.50 | naip_2024_world_0.5m.jso | – | – |
+| G13 bridge G13 fixed walkway **>1 m** | 9/9 | 2.80 | 5.52 | 5.6 | +1.70 | 0.50 | naip_2024_world_0.5m.jso | +3.20 (0.60) | – |
+| A8 bridge A8 fixed walkway **>1 m** | 6/6 | 2.25 | 3.55 | 4.6 | -0.30 | 0.50 | naip_2024_world_0.5m.jso | +1.70 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| D5 bridge D5 fixed walkway | 2/2 | 2.25 | 2.77 | 2.9 | +2.25 | 0.50 | naip_2024_world_0.5m.jso | -0.90 (0.60) | – |
+| B17 bridge B17 fixed walkway | 2/3 | 2.20 | 3.48 | 3.8 | -1.60 | 0.50 | naip_2024_world_0.5m.jso | -0.95 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| E2 bridge E2 fixed walkway **>1 m** | 5/5 | 2.20 | 4.58 | 5.5 | -1.40 | 0.50 | naip_2024_world_0.5m.jso | +1.20 (0.60) | – |
+| B26 bridge B26 fixed walkway **>1 m** | 21/21 | 2.10 | 4.80 | 5.2 | +2.10 | 0.50 | naip_2024_world_0.5m.jso | +0.20 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B24 bridge B24 fixed walkway **>1 m** | 10/10 | 2.00 | 3.79 | 4.6 | -1.45 | 0.50 | naip_2024_world_0.5m.jso | -1.50 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B27 bridge B27 fixed walkway **>1 m** | 22/22 | 2.00 | 3.28 | 4.3 | +0.70 | 0.50 | naip_2024_world_0.5m.jso | +1.05 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B25 bridge B25 fixed walkway **>1 m** | 8/8 | 1.90 | 5.42 | 5.7 | +1.55 | 0.50 | naip_2024_world_0.5m.jso | -0.40 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| F11 bridge F11 fixed walkway | 2/2 | 1.80 | 2.92 | 3.2 | -1.80 | 0.50 | naip_2024_world_0.5m.jso | -2.35 (0.60) | – |
+| A8 bridge A8 fixed walkway | 2/2 | 1.75 | 2.91 | 3.2 | -1.45 | 0.50 | naip_2024_world_0.5m.jso | -2.80 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| B14 bridge B14 fixed walkway **>1 m** | 4/4 | 1.75 | 5.06 | 5.9 | -1.55 | 0.50 | naip_2024_world_0.5m.jso | -2.70 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B7 bridge B7 fixed walkway **>1 m** | 11/13 | 1.70 | 2.00 | 2.3 | -1.70 | 0.50 | naip_2024_world_0.5m.jso | -1.40 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| B2 bridge B2 fixed walkway | 2/3 | 1.40 | 2.52 | 2.8 | -1.40 | 0.50 | naip_2024_world_0.5m.jso | -3.30 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| B16 bridge B16 fixed walkway **>1 m** | 8/8 | 1.00 | 1.66 | 1.8 | -0.85 | 0.50 | naip_2024_world_0.5m.jso | -1.70 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B13 bridge B13 fixed walkway | 3/4 | 0.90 | 4.90 | 5.9 | +0.50 | 0.50 | naip_2024_world_0.5m.jso | +0.80 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A10 bridge A10 fixed walkway | 5/5 | 0.80 | 1.30 | 1.3 | +0.80 | 0.50 | naip_2024_world_0.5m.jso | -2.60 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| A9 bridge A9 fixed walkway | 4/4 | 0.70 | 1.01 | 1.1 | +0.45 | 0.50 | naip_2024_world_0.5m.jso | +0.30 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| A2 bridge A2 fixed walkway | 4/4 | 0.45 | 3.02 | 4.1 | -0.25 | 0.50 | naip_2024_world_0.5m.jso | -0.00 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| B5 bridge B5 fixed walkway | 5/5 | 0.40 | 1.00 | 1.2 | +0.40 | 0.50 | naip_2024_world_0.5m.jso | -3.40 (0.60) | [30-rwy-1L](30-rwy-1L.png) |
+| B12 bridge B12 fixed walkway | 4/4 | 0.20 | 4.19 | 5.9 | -0.05 | 0.50 | naip_2024_world_0.5m.jso | -0.15 (0.60) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+
+### bridge-rotunda (71 measured, worst first, top 40)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| E5 bridge E5 rotunda | 1/1 | 4.98 | 4.98 | 5.0 | +4.98 | 0.50 | raster | – | – |
+| G8 bridge G8 rotunda | 1/1 | 4.97 | 4.97 | 5.0 | +4.97 | 0.50 | raster | – | – |
+| E9 bridge E9 rotunda | 1/1 | 4.97 | 4.97 | 5.0 | +4.97 | 0.50 | raster | – | – |
+| D15 bridge D15 rotunda | 1/1 | 4.95 | 4.95 | 4.9 | +4.95 | 0.50 | raster | – | – |
+| A5 bridge A5 rotunda | 1/1 | 4.88 | 4.88 | 4.9 | +4.88 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| F11 bridge F11 rotunda | 1/1 | 4.83 | 4.83 | 4.8 | +4.83 | 0.50 | raster | – | – |
+| G5 bridge G5 rotunda | 1/1 | 4.75 | 4.75 | 4.8 | +4.75 | 0.50 | raster | – | – |
+| F13 bridge F13 rotunda | 1/1 | 4.70 | 4.70 | 4.7 | +4.70 | 0.50 | raster | – | – |
+| E8 bridge E8 rotunda | 1/1 | 4.70 | 4.70 | 4.7 | +4.70 | 0.50 | raster | – | – |
+| G7 bridge G7 rotunda | 1/1 | 4.70 | 4.70 | 4.7 | +4.70 | 0.50 | raster | – | – |
+| F13 bridge F13 rotunda | 1/1 | 4.68 | 4.68 | 4.7 | +4.68 | 0.50 | raster | – | – |
+| G10 bridge G10 rotunda | 1/1 | 4.55 | 4.55 | 4.5 | +4.55 | 0.50 | raster | – | – |
+| G11 bridge G11 rotunda | 1/1 | 4.51 | 4.51 | 4.5 | +4.51 | 0.50 | raster | – | – |
+| D8 bridge D8 rotunda | 1/1 | 4.37 | 4.37 | 4.4 | +4.37 | 0.50 | raster | – | – |
+| B27 bridge B27 rotunda | 1/1 | 4.36 | 4.36 | 4.4 | +4.36 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| G1 bridge G1 rotunda | 1/1 | 4.25 | 4.25 | 4.3 | +4.25 | 0.50 | raster | – | – |
+| F20 bridge F20 rotunda | 1/1 | 4.24 | 4.24 | 4.2 | +4.24 | 0.50 | raster | – | – |
+| B21 bridge B21 rotunda | 1/1 | 4.16 | 4.16 | 4.2 | +4.16 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A9 bridge A9 rotunda | 1/1 | 4.16 | 4.16 | 4.2 | +4.16 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| G2 bridge G2 rotunda | 1/1 | 4.11 | 4.11 | 4.1 | +4.11 | 0.50 | raster | – | – |
+| A11 bridge A11 rotunda | 1/1 | 4.05 | 4.05 | 4.1 | +4.05 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| B8 bridge B8 rotunda | 1/1 | 3.98 | 3.98 | 4.0 | +3.98 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| A6 bridge A6 rotunda | 1/1 | 3.92 | 3.92 | 3.9 | +3.92 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| G3 bridge G3 rotunda | 1/1 | 3.91 | 3.91 | 3.9 | +3.91 | 0.50 | raster | – | – |
+| A8 bridge A8 rotunda | 1/1 | 3.89 | 3.89 | 3.9 | +3.89 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| F12 bridge F12 rotunda | 1/1 | 3.83 | 3.83 | 3.8 | +3.83 | 0.50 | raster | – | – |
+| F14 bridge F14 rotunda | 1/1 | 3.82 | 3.82 | 3.8 | +3.82 | 0.50 | raster | – | – |
+| G11 bridge G11 rotunda | 1/1 | 3.81 | 3.81 | 3.8 | +3.81 | 0.50 | raster | – | – |
+| C8 bridge C8 rotunda | 1/1 | 3.71 | 3.71 | 3.7 | +3.71 | 0.50 | raster | – | – |
+| A15 bridge A15 rotunda | 1/1 | 3.64 | 3.64 | 3.6 | +3.64 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| C3 bridge C3 rotunda | 1/1 | 3.64 | 3.64 | 3.6 | +3.64 | 0.50 | raster | – | – |
+| B25 bridge B25 rotunda | 1/1 | 3.61 | 3.61 | 3.6 | +3.61 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| E7 bridge E7 rotunda | 1/1 | 3.54 | 3.54 | 3.5 | +3.54 | 0.50 | raster | – | – |
+| E3 bridge E3 rotunda | 1/1 | 3.54 | 3.54 | 3.5 | +3.54 | 0.50 | raster | – | – |
+| D12 bridge D12 rotunda | 1/1 | 3.48 | 3.48 | 3.5 | +3.48 | 0.50 | raster | – | – |
+| B22 bridge B22 rotunda | 1/1 | 3.47 | 3.47 | 3.5 | +3.47 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| F6 bridge F6 rotunda | 1/1 | 3.44 | 3.44 | 3.4 | +3.44 | 0.50 | raster | – | – |
+| G5 bridge G5 rotunda | 1/1 | 3.42 | 3.42 | 3.4 | +3.42 | 0.50 | raster | – | – |
+| F16 bridge F16 rotunda | 1/1 | 3.36 | 3.36 | 3.4 | +3.36 | 0.50 | raster | – | – |
+| B10 bridge B10 rotunda | 1/1 | 3.31 | 3.31 | 3.3 | +3.31 | 0.50 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+
+## Deviations from imagery - `google`
+
+Source: Google Maps screenshots (owner, reference only, re-registered to NAIP) (Google imagery - reference only, never redistributed). Offsets are signed along the outward edge normal (+ = imaged edge outside / right of the model), in metres; `gsd` = ground resolution of the image the profile was read from; `alt` = the same samples read from the next-best image (NAIP: the other year; Google: another screenshot). Features flagged when the median |offset| > 1.0 m.
+
+| class | features | measured | flagged (median > 1 m) | median of medians | median p90 | typical gsd | notes |
+|---|---|---|---|---|---|---|---|
+| approach-light-catwalk | 2 | 0 | 0 | – | – | – |  |
+| approach-light-pier | 2 | 2 | 2 | 1.45 | 5.53 | 0.57 | along-axis position of each imaged pier crossbar over water |
+| apron-edge | 2 | 2 | 2 | 6.77 | 8.62 | 0.78 |  |
+| bridge-rotunda | 128 | 77 | 0 | 3.42 | 3.42 | 0.27 | automatic disc search (6 m radius; picks at the boundary count as not found), low confidence - read with the sheets |
+| bridge-walkway | 48 | 48 | 42 | 2.82 | 4.78 | 0.28 |  |
+| building | 39 | 33 | 32 | 3.65 | 8.01 | 0.50 | roof edge vs footprint: relief displacement (roofs lean away from nadir) + registration; see `shift`/`resid` columns. One feature per building; edges shared with the ramp-level complex belong to the part |
+| emas-bed | 4 | 4 | 3 | 1.55 | 3.08 | 1.38 |  |
+| extra-pavement | 241 | 234 | 208 | 2.70 | 4.97 | 0.93 | derived from the Google imagery (circular on `google`); checks the vectorisation |
+| hold-line | 90 | 0 | 0 | – | – | – | needs <= 0.6 m/px |
+| runway-edge-stripe | 8 | 4 | 1 | 0.80 | 2.51 | 0.57 | 0.91 m stripe |
+| runway-end | 4 | 4 | 4 | 2.00 | 2.92 | 0.92 |  |
+| runway-threshold | 8 | 2 | 0 | 0.63 | 0.93 | 0.57 | start of the stripe block (stripe-start rule) |
+| runway-threshold-bar | 8 | 6 | 5 | 2.32 | 2.62 | 1.08 | imaged 10 ft bar vs the model bar (see the runway table above) |
+| stand-leadin | 103 | 0 | 0 | – | – | – | lead-in paint: needs <= 0.35 m/px; often under parked aircraft |
+| taxiway-centreline | 265 | 0 | 0 | – | – | – | 6 in paint: needs <= 0.35 m/px |
+| taxiway-edge | 164 | 145 | 97 | 2.70 | 6.36 | 1.08 |  |
+
+### runway-end (4 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| RWY 28R pavement end **>1 m** | 13/13 | 3.10 | 3.48 | 6.3 | +3.10 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 10L pavement end **>1 m** | 13/13 | 2.30 | 3.52 | 3.7 | +2.30 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 10R pavement end **>1 m** | 11/13 | 1.70 | 2.20 | 2.8 | +1.70 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 28L pavement end **>1 m** | 13/13 | 1.60 | 2.36 | 2.7 | +1.60 | 0.57 | 1a26bbeb | +4.45 (1.61) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+
+### runway-threshold (2 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| RWY 28R threshold stripes (start 6.1 m past threshold) | 16/16 | 0.90 | 1.25 | 1.4 | -0.90 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 28L threshold stripes (start 6.1 m past threshold) | 16/16 | 0.35 | 0.60 | 0.7 | -0.35 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+
+### runway-threshold-bar (6 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| RWY 28R threshold bar (model: approach side, centre -1.52 m; displaced 91.4 m) **>1 m** | 10/10 | 3.80 | 3.91 | 4.0 | +3.80 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 28L threshold bar (model: approach side, centre -1.52 m; displaced 91.4 m) **>1 m** | 10/10 | 3.45 | 3.60 | 3.6 | +3.45 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| RWY 1R threshold bar (model: approach side, centre -1.52 m; displaced 170.7 m) **>1 m** | 9/10 | 2.40 | 2.64 | 2.8 | +2.40 | 1.08 | 2f0be03d | +2.95 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| RWY 1L threshold bar (model: approach side, centre -1.52 m; displaced 195.1 m) **>1 m** | 10/10 | 2.25 | 2.61 | 2.7 | +2.25 | 1.08 | 2f0be03d | +2.90 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| RWY 10R threshold bar (model: none drawn) | 1/10 | 2.20 | 2.20 | 2.2 | +2.20 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| RWY 10L threshold bar (model: none drawn) **>1 m** | 5/10 | 1.20 | 1.36 | 1.4 | +1.20 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+
+### runway-edge-stripe (4 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| RWY 10L/28R edge stripe (south/east side) **>1 m** | 32/356 | 1.10 | 2.69 | 6.5 | -1.10 | 0.58 | 1a26bbeb, bc91df95 | – | – |
+| RWY 10R/28L edge stripe (north/west side) | 42/341 | 1.00 | 2.49 | 2.6 | +0.40 | 0.57 | 1a26bbeb, bc91df95 | – | – |
+| RWY 10L/28R edge stripe (north/west side) | 22/356 | 0.60 | 2.19 | 2.4 | +0.50 | 0.57 | 1a26bbeb | – | – |
+| RWY 10R/28L edge stripe (south/east side) | 48/341 | 0.30 | 2.53 | 5.4 | +0.10 | 0.57 | 1a26bbeb, bc91df95 | – | – |
+
+### emas-bed (4 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| EMAS bed beyond RWY 19L **>1 m** | 70/126 | 3.10 | 4.51 | 5.3 | -1.85 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| EMAS bed beyond RWY 1L **>1 m** | 132/132 | 1.90 | 2.60 | 9.1 | +0.30 | 1.08 | 103723b0, 2f0be03d | +0.15 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| EMAS bed beyond RWY 19R **>1 m** | 65/126 | 1.20 | 3.46 | 4.3 | +0.80 | 1.61 | c1064033 | +6.10 (3.18) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| EMAS bed beyond RWY 1R | 117/118 | 0.90 | 2.70 | 6.7 | -0.00 | 1.15 | 103723b0, 2f0be03d | -0.15 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+
+### approach-light-pier (2 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| RWY 28L MALSR approach-light piers over water (9, 244-732 m from the threshold) **>1 m** | 1/9 | 1.80 | 1.80 | 1.8 | +1.80 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png) |
+| RWY 28R ALSF2 approach-light piers over water (18, 213-732 m from the threshold) **>1 m** | 3/18 | 1.10 | 9.26 | 11.3 | -1.10 | 0.57 | 1a26bbeb | – | [30-rwy-28R](30-rwy-28R.png) |
+
+### building (33 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | fit shift | resid median | sheet |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Garage A | 2/9 | 9.35 | 9.39 | 9.4 | +0.05 | 0.55 | 0af09b78 | – | – | – | – |
+| Grand Hyatt Hotel AirTrain Station **>1 m** | 69/73 | 6.90 | 9.12 | 9.7 | +1.60 | 1.07 | 35809e3e | – | 1.42 | 6.54 | – |
+| Super Bay Hangar Building **>1 m** | 187/292 | 6.60 | 8.00 | 9.1 | +6.60 | 1.61 | c1064033, c9ff55e8 | +2.50 (3.18) | 7.37 | 3.23 | [30-rwy-19R](30-rwy-19R.png) |
+| Grand Hyatt Hotel **>1 m** | 103/114 | 6.20 | 9.04 | 9.5 | +0.70 | 1.07 | 35809e3e | -1.50 (3.18) | 1.97 | 5.76 | – |
+| Central Parking Garage **>1 m** | 408/427 | 5.30 | 9.30 | 9.9 | -1.40 | 0.42 | 4637f855, e6f569c1 | +0.45 (0.55) | 0.70 | 5.36 | – |
+| Westfield Road AirTrain Station (Outbound)g **>1 m** | 50/56 | 4.65 | 7.93 | 9.3 | -3.30 | 1.27 | c9ff55e8 | – | 2.84 | 3.07 | – |
+| International Terminal (G) AirTrain Station **>1 m** | 14/15 | 4.60 | 8.21 | 9.7 | +3.25 | 0.25 | 0af09b78, d82848c4 | +3.20 (0.55) | 3.73 | 4.42 | [30-rwy-1L](30-rwy-1L.png) |
+| Boarding Area E **>1 m** | 150/153 | 4.50 | 7.41 | 9.7 | -2.80 | 0.24 | 4637f855, c235f3b8 | -0.30 (0.42) | 2.75 | 4.43 | – |
+| Terminal One AirTrain Station **>1 m** | 24/30 | 4.50 | 8.64 | 9.7 | -2.10 | 0.42 | 4637f855 | -0.75 (0.55) | – | – | – |
+| Terminal 2 **>1 m** | 253/257 | 4.40 | 8.78 | 9.8 | +2.90 | 0.24 | 03dcd4ae, 4637f855, bf5c7afc, c235f3b8 | +3.10 (0.42) | 2.23 | 3.63 | – |
+| Terminal 3 **>1 m** | 289/297 | 4.30 | 7.80 | 9.7 | +0.70 | 0.50 | 39176bb8, 4637f855, c235f3b8, e6f569c1 | +0.80 (0.55) | 3.34 | 2.27 | – |
+| Garage G **>1 m** | 301/302 | 4.10 | 9.00 | 9.8 | +2.70 | 1.07 | 151ec51d, 35809e3e | +4.55 (1.07) | 3.59 | 3.97 | – |
+| West Field Road AirTrain Station (Outbound) **>1 m** | 73/80 | 4.10 | 7.78 | 9.3 | -3.70 | 1.27 | c9ff55e8 | – | 1.77 | 4.93 | – |
+| Terminal complex ramp level **>1 m** | 86/87 | 4.00 | 8.15 | 9.7 | +1.35 | 0.27 | 39176bb8, 4637f855, c235f3b8, e6f569c1 | +1.45 (0.50) | 1.72 | 3.48 | – |
+| Terminal complex ramp level **>1 m** | 80/80 | 3.85 | 8.01 | 9.8 | +2.10 | 0.27 | 0af09b78, 151ec51d, c9ff55e8, d82848c4, e6f569c1 | +1.60 (0.55) | 1.88 | 3.48 | – |
+| Westfield Road AirTrain Station (Inbound) **>1 m** | 66/69 | 3.75 | 9.05 | 9.4 | -2.80 | 1.27 | c9ff55e8 | +2.00 (3.18) | – | – | – |
+| International Terminal **>1 m** | 356/381 | 3.65 | 8.30 | 9.7 | +2.10 | 0.50 | 0af09b78, 151ec51d, 35809e3e, d82848c4, e6f569c1 | +2.40 (1.07) | 2.39 | 2.40 | – |
+| Terminal Three AirTrain Station **>1 m** | 10/32 | 3.55 | 8.05 | 9.4 | +0.45 | 0.50 | e6f569c1 | -2.30 (0.55) | – | – | – |
+| Terminal Two AirTrain Station **>1 m** | 11/27 | 3.50 | 4.00 | 4.3 | +3.50 | 0.42 | 4637f855 | +3.70 (0.55) | – | – | – |
+| Harvey Milk Terminal 1 **>1 m** | 338/340 | 3.45 | 8.80 | 9.7 | -0.75 | 0.50 | 03dcd4ae, 0af09b78, 4637f855, b1d51b0f, e6f569c1 | -1.00 (1.07) | 2.60 | 4.00 | – |
+| West Field Road AirTrain Station (Inbound) **>1 m** | 82/85 | 3.05 | 6.10 | 8.2 | -1.95 | 1.27 | c9ff55e8 | +2.20 (3.18) | – | – | – |
+| Garage A **>1 m** | 245/289 | 2.80 | 8.50 | 9.7 | +1.10 | 1.07 | 0af09b78, 35809e3e, 8b334c52, d82848c4 | +5.20 (1.07) | 2.97 | 2.71 | – |
+| Terminal 3 Air Train Station **>1 m** | 15/15 | 2.80 | 3.06 | 3.1 | +2.80 | 0.50 | e6f569c1 | +2.80 (0.55) | – | – | – |
+| Boarding Area B **>1 m** | 435/438 | 2.60 | 7.20 | 9.8 | -1.60 | 0.28 | 0af09b78, 2f0be03d, b1d51b0f | -1.60 (0.55) | 3.25 | 2.83 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Garage G AirTrain Station **>1 m** | 107/119 | 2.60 | 7.54 | 9.3 | +1.90 | 1.07 | 35809e3e | +3.90 (3.18) | 3.19 | 1.56 | – |
+| Boarding Area C **>1 m** | 162/162 | 2.40 | 8.89 | 9.7 | +0.95 | 0.16 | 03dcd4ae | +2.10 (0.42) | 0.69 | 2.27 | – |
+| Boarding Area A **>1 m** | 306/307 | 2.30 | 8.75 | 9.8 | +0.80 | 0.25 | d82848c4 | +0.90 (0.55) | 1.94 | 2.22 | [30-rwy-1L](30-rwy-1L.png) |
+| Boarding Area F **>1 m** | 512/513 | 2.30 | 6.30 | 9.9 | +0.60 | 0.27 | 39176bb8, c235f3b8, e6f569c1 | +0.80 (0.50) | 1.12 | 1.39 | – |
+| Terminal complex ramp level **>1 m** | 134/137 | 2.10 | 8.01 | 9.8 | +0.80 | 0.28 | 03dcd4ae, 0af09b78, 2f0be03d, 4637f855, b1d51b0f | +1.70 (0.55) | 0.51 | 2.15 | – |
+| Boarding Area G **>1 m** | 362/372 | 1.50 | 6.89 | 9.7 | +0.80 | 0.27 | 151ec51d, c9ff55e8, e6f569c1 | +2.70 (0.50) | 2.36 | 1.31 | – |
+| Air Traffic Control Tower **>1 m** | 25/25 | 1.50 | 5.46 | 9.7 | +1.50 | 0.16 | 03dcd4ae | +2.20 (0.42) | 3.48 | 0.54 | – |
+| Boarding Area D **>1 m** | 247/248 | 1.40 | 6.70 | 9.6 | +1.40 | 0.24 | 4637f855, bf5c7afc | +1.90 (0.42) | 1.14 | 1.51 | – |
+| Consolidated Administration Campus **>1 m** | 157/158 | 1.10 | 5.84 | 9.5 | +0.90 | 1.27 | c9ff55e8 | +2.85 (3.18) | 2.67 | 1.30 | – |
+
+### taxiway-edge (145 measured, worst first, top 40)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| Taxiway Z | 1/8 | 9.30 | 9.30 | 9.3 | +9.30 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C/D **>1 m** | 10/24 | 9.00 | 9.20 | 9.2 | -9.00 | 0.93 | 59be8a98 | +1.00 (1.27) | – |
+| Taxiway E | 1/8 | 9.00 | 9.00 | 9.0 | -9.00 | 0.93 | 59be8a98 | – | – |
+| Taxiway F1 | 2/4 | 9.00 | 9.08 | 9.1 | -0.10 | 1.00 | 2f0be03d, 59be8a98 | +1.75 (1.11) | – |
+| Taxiway R **>1 m** | 9/27 | 8.80 | 9.22 | 9.3 | +8.80 | 0.93 | 59be8a98 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway Z **>1 m** | 19/47 | 8.80 | 9.22 | 9.4 | +8.80 | 1.27 | 59be8a98, c9ff55e8 | +8.30 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C1 **>1 m** | 4/15 | 8.75 | 8.97 | 9.0 | +8.75 | 1.27 | c9ff55e8 | +5.55 (3.18) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway A/B/F **>1 m** | 5/5 | 8.70 | 9.20 | 9.4 | +8.70 | 0.93 | 59be8a98 | +1.20 (1.08) | – |
+| Taxiway H **>1 m** | 62/134 | 8.70 | 9.20 | 9.4 | +8.70 | 1.08 | 2f0be03d | +8.90 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Taxiway Z/Z2 **>1 m** | 15/44 | 8.60 | 8.96 | 9.0 | +8.60 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway B **>1 m** | 16/19 | 8.55 | 9.05 | 9.2 | -8.55 | 1.07 | 35809e3e | -7.35 (1.08) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Taxiway E | 1/23 | 8.40 | 8.40 | 8.4 | +8.40 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| Taxiway C/P **>1 m** | 3/41 | 8.20 | 8.44 | 8.5 | +8.20 | 1.61 | c1064033 | – | – |
+| Taxiway E **>1 m** | 3/37 | 8.20 | 8.36 | 8.4 | +8.20 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| Taxiway R/Z **>1 m** | 9/15 | 7.90 | 9.20 | 9.2 | +6.00 | 0.93 | 59be8a98 | +1.90 (1.27) | [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C **>1 m** | 24/24 | 7.85 | 9.57 | 9.6 | +7.85 | 0.57 | 1a26bbeb | – | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| Taxiway B **>1 m** | 15/16 | 7.80 | 8.26 | 8.6 | +7.80 | 0.58 | bc91df95 | +7.40 (0.93) | [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway L/C **>1 m** | 3/17 | 7.80 | 8.44 | 8.6 | +7.80 | 1.08 | 2f0be03d | +8.10 (1.61) | – |
+| Taxiway P **>1 m** | 4/13 | 7.70 | 8.20 | 8.2 | +7.70 | 1.61 | c1064033 | +7.70 (3.18) | – |
+| Taxiway Z/S2 | 2/6 | 7.60 | 7.76 | 7.8 | -7.60 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway V **>1 m** | 13/17 | 7.30 | 8.28 | 8.4 | +7.30 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| Taxiway C/N **>1 m** | 14/29 | 7.05 | 8.48 | 8.8 | -7.05 | 1.61 | c1064033 | – | – |
+| Taxiway C **>1 m** | 7/49 | 7.00 | 8.14 | 8.2 | -7.00 | 1.61 | c1064033 | – | – |
+| Taxiway F1 **>1 m** | 13/32 | 7.00 | 7.66 | 7.9 | -3.30 | 1.08 | 2f0be03d | -2.70 (1.15) | – |
+| Taxiway G **>1 m** | 7/26 | 7.00 | 8.80 | 8.8 | -0.00 | 1.08 | 2f0be03d | +1.00 (1.15) | [30-rwy-1L](30-rwy-1L.png) |
+| Taxiway D **>1 m** | 5/12 | 6.90 | 7.76 | 8.2 | -5.90 | 0.58 | bc91df95 | -2.70 (0.93) | – |
+| Taxiway P | 2/35 | 6.90 | 7.38 | 7.5 | +6.90 | 1.61 | c1064033 | – | – |
+| Taxiway F/F1/L **>1 m** | 10/20 | 6.60 | 8.81 | 8.9 | +2.15 | 1.08 | 2f0be03d | -0.10 (1.15) | – |
+| Taxiway B/E **>1 m** | 3/7 | 6.60 | 7.32 | 7.5 | +6.60 | 0.93 | 4637f855, 59be8a98 | +1.40 (1.08) | – |
+| Taxiway H **>1 m** | 4/9 | 6.55 | 8.16 | 8.4 | +6.55 | 1.08 | 2f0be03d | +7.85 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| Taxiway F **>1 m** | 11/28 | 6.50 | 8.30 | 8.9 | -6.40 | 1.08 | 2f0be03d | -6.20 (1.15) | – |
+| Taxiway K **>1 m** | 11/11 | 6.50 | 8.00 | 9.4 | +6.50 | 0.58 | bc91df95 | +5.95 (0.93) | – |
+| Taxiway S4/S | 1/11 | 6.20 | 6.20 | 6.2 | +6.20 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway B/D **>1 m** | 7/9 | 6.10 | 6.82 | 7.3 | +1.70 | 0.58 | bc91df95 | +4.30 (0.93) | – |
+| Taxiway R **>1 m** | 25/26 | 6.00 | 9.06 | 9.1 | +1.60 | 0.93 | 59be8a98 | +6.40 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway C **>1 m** | 3/118 | 5.90 | 6.78 | 7.0 | -5.90 | 1.61 | c1064033 | – | – |
+| Taxiway C/R **>1 m** | 10/11 | 5.75 | 6.36 | 7.8 | +1.55 | 0.93 | 59be8a98, c9ff55e8 | +5.90 (1.27) | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway S3 | 1/7 | 5.70 | 5.70 | 5.7 | +5.70 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| Taxiway F | 1/6 | 5.60 | 5.60 | 5.6 | +5.60 | 1.08 | 2f0be03d | – | – |
+| Taxiway INTERSECTION L/L2 **>1 m** | 8/17 | 5.55 | 8.00 | 8.7 | -0.00 | 1.08 | 2f0be03d | +0.85 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+
+### apron-edge (2 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| apron outline #0 **>1 m** | 8/10 | 7.15 | 8.09 | 8.3 | -4.70 | 1.07 | 151ec51d, 35809e3e | -3.50 (3.18) | – |
+| apron outline #1 **>1 m** | 43/54 | 6.40 | 9.16 | 9.6 | +1.20 | 0.50 | 0af09b78, 151ec51d, 2f0be03d, 39176bb8, b1d51b0f | -0.05 (0.81) | [30-rwy-1L](30-rwy-1L.png) |
+
+### extra-pavement (234 measured, worst first, top 40)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| extra pavement #10 **>1 m** | 9/12 | 8.90 | 9.00 | 9.0 | +8.90 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #72 **>1 m** | 12/93 | 8.75 | 8.90 | 8.9 | +8.75 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| extra pavement #255 **>1 m** | 5/6 | 8.60 | 8.76 | 8.8 | +8.60 | 1.08 | 2f0be03d | +9.15 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #217 | 1/9 | 8.40 | 8.40 | 8.4 | +8.40 | 1.08 | 2f0be03d | +3.95 (1.15) | [30-rwy-1L](30-rwy-1L.png) |
+| extra pavement #50 **>1 m** | 7/36 | 8.30 | 8.60 | 8.6 | +8.30 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png) |
+| extra pavement #6 | 1/21 | 8.20 | 8.20 | 8.2 | +8.20 | 3.18 | 8b334c52 | – | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #44 **>1 m** | 12/48 | 8.20 | 8.40 | 8.6 | +8.20 | 1.61 | c1064033 | – | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| extra pavement #254 **>1 m** | 13/13 | 8.10 | 8.88 | 9.2 | -0.90 | 1.08 | 2f0be03d | +6.40 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #103 **>1 m** | 3/8 | 8.00 | 8.16 | 8.2 | +1.70 | 0.93 | 59be8a98 | +1.55 (1.07) | [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #245 **>1 m** | 10/12 | 7.90 | 8.41 | 8.5 | +7.90 | 1.08 | 2f0be03d | +6.30 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #117 **>1 m** | 11/11 | 7.70 | 9.50 | 9.5 | -7.70 | 0.50 | e6f569c1 | -8.80 (0.93) | – |
+| extra pavement #48 **>1 m** | 16/50 | 7.60 | 8.25 | 8.5 | +7.30 | 0.93 | 59be8a98 | – | – |
+| extra pavement #49 **>1 m** | 12/23 | 7.50 | 9.07 | 9.2 | +5.10 | 0.93 | 59be8a98 | – | – |
+| extra pavement #4 | 2/20 | 7.20 | 7.68 | 7.8 | +7.20 | 3.18 | 8b334c52 | – | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #154 **>1 m** | 3/6 | 6.90 | 8.34 | 8.7 | +6.90 | 0.27 | 151ec51d, e6f569c1 | +9.20 (0.50) | – |
+| extra pavement #2 **>1 m** | 10/25 | 6.85 | 7.65 | 8.1 | +6.85 | 3.18 | 8b334c52 | – | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #252 **>1 m** | 3/5 | 6.80 | 8.32 | 8.7 | +6.80 | 1.08 | 2f0be03d | +3.55 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #104 **>1 m** | 3/9 | 6.70 | 8.06 | 8.4 | +3.40 | 0.93 | 59be8a98 | -1.45 (1.27) | [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #243 **>1 m** | 4/5 | 6.50 | 7.95 | 8.4 | -6.50 | 0.28 | 0af09b78, b1d51b0f | -3.35 (0.81) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #234 **>1 m** | 4/4 | 6.50 | 7.12 | 7.3 | +6.50 | 0.57 | 1a26bbeb | +8.30 (1.61) | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| extra pavement #28 **>1 m** | 16/31 | 6.45 | 7.90 | 8.5 | +6.45 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #81 **>1 m** | 21/51 | 6.40 | 9.00 | 9.4 | -5.70 | 0.93 | 59be8a98, c9ff55e8 | -6.20 (1.27) | [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #7 **>1 m** | 20/54 | 6.35 | 7.61 | 8.0 | -5.40 | 3.18 | 8b334c52 | – | [30-rwy-10L](30-rwy-10L.png) |
+| extra pavement #132 **>1 m** | 7/7 | 6.20 | 7.36 | 7.9 | -2.50 | 0.58 | bc91df95 | -2.50 (0.93) | – |
+| extra pavement #114 **>1 m** | 3/5 | 6.00 | 7.28 | 7.6 | +6.00 | 0.58 | bc91df95 | +6.75 (0.93) | – |
+| extra pavement #251 **>1 m** | 16/16 | 5.95 | 7.45 | 7.9 | +5.95 | 1.08 | 2f0be03d | +5.05 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #65 **>1 m** | 19/25 | 5.90 | 9.24 | 9.4 | +4.10 | 0.93 | 59be8a98 | +8.70 (1.27) | – |
+| extra pavement #106 **>1 m** | 3/6 | 5.70 | 6.82 | 7.1 | +5.70 | 1.61 | c1064033 | – | [30-rwy-19R](30-rwy-19R.png) |
+| extra pavement #144 **>1 m** | 4/7 | 5.60 | 8.82 | 9.6 | -1.65 | 0.27 | 39176bb8 | +1.40 (0.50) | – |
+| extra pavement #24 **>1 m** | 101/236 | 5.50 | 8.70 | 9.6 | +1.90 | 0.93 | 59be8a98, c9ff55e8 | – | – |
+| extra pavement #131 **>1 m** | 12/21 | 5.50 | 5.97 | 6.3 | +5.50 | 0.58 | 59be8a98, bc91df95 | +5.60 (0.93) | – |
+| extra pavement #256 **>1 m** | 6/15 | 5.45 | 6.90 | 7.3 | +3.45 | 1.08 | 2f0be03d | +4.45 (1.15) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| extra pavement #100 **>1 m** | 95/191 | 5.30 | 8.40 | 9.0 | +5.30 | 1.61 | c1064033 | -3.40 (3.18) | – |
+| extra pavement #135 **>1 m** | 11/12 | 5.20 | 7.30 | 9.5 | +0.30 | 0.58 | 4637f855, bc91df95 | -3.90 (0.93) | – |
+| extra pavement #56 **>1 m** | 28/32 | 5.15 | 5.73 | 6.3 | +5.15 | 1.61 | c1064033 | +0.40 (3.18) | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| extra pavement #224 **>1 m** | 21/21 | 5.10 | 9.40 | 9.6 | +3.10 | 0.57 | 1a26bbeb | +4.10 (1.61) | – |
+| extra pavement #97 **>1 m** | 4/12 | 4.95 | 6.43 | 7.0 | +3.55 | 0.93 | 59be8a98 | +1.30 (1.07) | [30-rwy-10R](30-rwy-10R.png) |
+| extra pavement #115 **>1 m** | 5/5 | 4.80 | 9.06 | 9.3 | +1.00 | 0.58 | bc91df95 | -0.30 (0.93) | – |
+| extra pavement #124 **>1 m** | 77/127 | 4.80 | 7.20 | 9.2 | +4.70 | 0.50 | 151ec51d, 35809e3e, e6f569c1 | +2.90 (0.93) | – |
+| extra pavement #5 **>1 m** | 96/310 | 4.75 | 8.30 | 9.5 | +3.15 | 1.27 | c9ff55e8 | – | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+
+### bridge-walkway (48 measured, worst first)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| G9 bridge G9 fixed walkway **>1 m** | 3/3 | 5.90 | 5.90 | 5.9 | -5.90 | 0.27 | 151ec51d | -4.00 (0.50) | – |
+| F11 bridge F11 fixed walkway **>1 m** | 7/7 | 5.40 | 5.90 | 5.9 | -4.80 | 0.27 | 39176bb8 | -5.00 (0.50) | – |
+| B11S bridge B11 fixed walkway **>1 m** | 4/4 | 5.25 | 5.54 | 5.6 | -5.25 | 0.28 | b1d51b0f | -2.95 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| G13 bridge G13 fixed walkway **>1 m** | 7/7 | 5.20 | 5.90 | 5.9 | +5.20 | 0.50 | 151ec51d, e6f569c1 | +1.30 (1.07) | – |
+| B23 bridge B23 fixed walkway **>1 m** | 6/7 | 4.75 | 5.85 | 5.9 | -1.75 | 0.28 | b1d51b0f | +0.50 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B18 bridge B18 fixed walkway | 2/2 | 4.50 | 5.38 | 5.6 | +4.50 | 0.42 | 0af09b78, b1d51b0f | +4.45 (0.81) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| D8 bridge D8 fixed walkway **>1 m** | 4/4 | 4.40 | 4.78 | 4.9 | -4.40 | 0.24 | bf5c7afc | -4.85 (0.42) | – |
+| A1 bridge A1 fixed walkway **>1 m** | 21/26 | 4.30 | 5.20 | 5.9 | -3.50 | 0.25 | d82848c4 | -2.60 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| A11 bridge A11 fixed walkway **>1 m** | 3/3 | 4.10 | 5.46 | 5.8 | -4.10 | 0.25 | d82848c4 | -0.30 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| A1 bridge A1 fixed walkway **>1 m** | 20/24 | 4.10 | 5.81 | 5.9 | -3.25 | 0.25 | 0af09b78, d82848c4 | -2.30 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| G10 bridge G10 fixed walkway **>1 m** | 5/5 | 3.90 | 5.10 | 5.7 | -3.10 | 0.50 | e6f569c1 | +1.25 (1.07) | – |
+| G10 bridge G10 fixed walkway **>1 m** | 8/8 | 3.85 | 5.07 | 5.7 | +1.90 | 0.50 | e6f569c1 | +0.30 (1.07) | – |
+| F11 bridge F11 fixed walkway | 2/2 | 3.80 | 4.68 | 4.9 | -3.80 | 0.27 | 39176bb8 | -2.80 (0.50) | – |
+| B19 bridge B19 fixed walkway **>1 m** | 12/12 | 3.75 | 5.90 | 5.9 | +2.20 | 0.28 | b1d51b0f | +1.90 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A6 bridge A6 fixed walkway **>1 m** | 11/11 | 3.60 | 5.80 | 5.9 | -3.60 | 0.25 | d82848c4 | -3.40 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B9 bridge B9 fixed walkway **>1 m** | 5/5 | 3.60 | 4.70 | 5.1 | +2.20 | 0.28 | b1d51b0f | +4.30 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A8 bridge A8 fixed walkway **>1 m** | 6/6 | 3.45 | 5.70 | 5.9 | +2.40 | 0.25 | d82848c4 | +0.85 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B20 bridge B20 fixed walkway **>1 m** | 11/11 | 3.30 | 4.80 | 5.2 | +3.30 | 0.28 | b1d51b0f | +4.30 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A2 bridge A2 fixed walkway **>1 m** | 4/4 | 3.20 | 3.44 | 3.5 | -3.20 | 0.25 | d82848c4 | -3.00 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| A2 bridge A2 fixed walkway **>1 m** | 8/8 | 3.20 | 5.02 | 5.3 | +3.20 | 0.25 | d82848c4 | +3.15 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B25 bridge B25 fixed walkway **>1 m** | 8/8 | 3.20 | 4.45 | 4.8 | +3.20 | 0.28 | b1d51b0f | +4.05 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B14 bridge B14 fixed walkway **>1 m** | 4/4 | 3.10 | 4.85 | 5.3 | +3.10 | 0.55 | 0af09b78 | +4.70 (1.07) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A10 bridge A10 fixed walkway **>1 m** | 5/5 | 2.90 | 3.54 | 3.7 | +2.90 | 0.25 | d82848c4 | +2.90 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| E4 bridge E4 fixed walkway **>1 m** | 6/6 | 2.85 | 4.90 | 5.9 | +2.85 | 0.24 | c235f3b8 | +3.65 (0.42) | – |
+| B27 bridge B27 fixed walkway **>1 m** | 22/22 | 2.80 | 5.20 | 5.9 | +2.35 | 0.28 | b1d51b0f | +3.10 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B26 bridge B26 fixed walkway **>1 m** | 21/21 | 2.60 | 5.00 | 5.9 | +2.20 | 0.28 | b1d51b0f | +3.10 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| G13 bridge G13 fixed walkway **>1 m** | 9/9 | 2.50 | 4.46 | 5.9 | -2.50 | 0.27 | 151ec51d, e6f569c1 | +3.00 (0.50) | – |
+| B11 bridge B11 fixed walkway **>1 m** | 12/12 | 2.45 | 3.99 | 4.1 | -2.45 | 0.28 | b1d51b0f | +0.45 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B12 bridge B12 fixed walkway **>1 m** | 3/4 | 2.40 | 3.28 | 3.5 | +2.40 | 0.28 | b1d51b0f | +3.35 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B2 bridge B2 fixed walkway **>1 m** | 3/3 | 2.20 | 2.28 | 2.3 | -1.50 | 0.55 | 0af09b78 | – | [30-rwy-1L](30-rwy-1L.png) |
+| A8 bridge A8 fixed walkway | 2/2 | 2.15 | 2.83 | 3.0 | +2.15 | 0.25 | d82848c4 | +2.10 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| D5 bridge D5 fixed walkway | 2/2 | 2.15 | 2.27 | 2.3 | +2.15 | 0.24 | bf5c7afc | +1.45 (0.42) | – |
+| F13 bridge F13 fixed walkway **>1 m** | 5/5 | 2.10 | 4.32 | 5.0 | -2.10 | 0.27 | 39176bb8 | -2.70 (0.50) | – |
+| A9 bridge A9 fixed walkway **>1 m** | 4/4 | 2.05 | 3.54 | 3.6 | +1.65 | 0.25 | d82848c4 | +1.30 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B24 bridge B24 fixed walkway **>1 m** | 10/10 | 2.00 | 5.72 | 5.9 | +1.25 | 0.28 | b1d51b0f | +2.90 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A4 bridge A4 fixed walkway **>1 m** | 5/5 | 2.00 | 2.30 | 2.3 | +2.00 | 0.25 | d82848c4 | +3.70 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| A6 bridge A6 fixed walkway **>1 m** | 6/6 | 2.00 | 4.10 | 5.5 | +0.95 | 0.25 | d82848c4 | +1.10 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B7 bridge B7 fixed walkway **>1 m** | 13/13 | 2.00 | 2.94 | 4.9 | +1.60 | 0.28 | b1d51b0f | -4.10 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B17 bridge B17 fixed walkway **>1 m** | 3/3 | 2.00 | 4.64 | 5.3 | +2.00 | 0.28 | b1d51b0f | +4.80 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| A13 bridge A13 fixed walkway **>1 m** | 5/5 | 1.90 | 4.78 | 5.1 | -1.90 | 0.25 | d82848c4 | -2.30 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| G11 bridge G11 fixed walkway **>1 m** | 3/3 | 1.90 | 5.10 | 5.9 | +1.90 | 0.27 | 151ec51d | +5.80 (0.50) | – |
+| E2 bridge E2 fixed walkway **>1 m** | 5/5 | 1.50 | 2.60 | 3.0 | -0.60 | 0.24 | c235f3b8 | -2.10 (0.50) | – |
+| G9 bridge G9 fixed walkway **>1 m** | 8/8 | 1.30 | 4.22 | 5.2 | -0.05 | 0.27 | 151ec51d | -1.85 (0.50) | – |
+| C1 bridge C1 fixed walkway **>1 m** | 3/3 | 1.20 | 4.96 | 5.9 | +1.20 | 0.42 | 4637f855 | +3.60 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B5 bridge B5 fixed walkway **>1 m** | 5/5 | 1.10 | 3.82 | 5.5 | +1.10 | 0.55 | 0af09b78 | +0.40 (1.07) | [30-rwy-1L](30-rwy-1L.png) |
+| B8 bridge B8 fixed walkway **>1 m** | 4/4 | 1.05 | 3.18 | 3.9 | -0.20 | 0.28 | b1d51b0f | -2.80 (0.55) | [30-rwy-1L](30-rwy-1L.png) |
+| B13 bridge B13 fixed walkway | 4/4 | 1.00 | 1.68 | 1.8 | +0.50 | 0.28 | b1d51b0f | +3.85 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| B16 bridge B16 fixed walkway | 8/8 | 0.50 | 1.53 | 2.3 | -0.40 | 0.28 | b1d51b0f | +2.25 (0.55) | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+
+### bridge-rotunda (77 measured, worst first, top 40)
+
+| feature | n | median | p90 | max | bias | gsd | image(s) | alt bias (gsd) | sheet |
+|---|---|---|---|---|---|---|---|---|---|
+| G10 bridge G10 rotunda | 1/1 | 4.98 | 4.98 | 5.0 | +4.98 | 0.27 | raster | – | – |
+| E6 bridge E6 rotunda | 1/1 | 4.97 | 4.97 | 5.0 | +4.97 | 0.24 | raster | – | – |
+| A6 bridge A6 rotunda | 1/1 | 4.88 | 4.88 | 4.9 | +4.88 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| G5 bridge G5 rotunda | 1/1 | 4.81 | 4.81 | 4.8 | +4.81 | 0.27 | raster | – | – |
+| E10 bridge E10 rotunda | 1/1 | 4.74 | 4.74 | 4.7 | +4.74 | 0.24 | raster | – | – |
+| A8 bridge A8 rotunda | 1/1 | 4.73 | 4.73 | 4.7 | +4.73 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| B18 bridge B18 rotunda | 1/1 | 4.70 | 4.70 | 4.7 | +4.70 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| C1 bridge C1 rotunda | 1/1 | 4.70 | 4.70 | 4.7 | +4.70 | 0.42 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| F13 bridge F13 rotunda | 1/1 | 4.61 | 4.61 | 4.6 | +4.61 | 0.27 | raster | – | – |
+| D15 bridge D15 rotunda | 1/1 | 4.61 | 4.61 | 4.6 | +4.61 | 0.24 | raster | – | – |
+| D3 bridge D3 rotunda | 1/1 | 4.55 | 4.55 | 4.6 | +4.55 | 0.24 | raster | – | – |
+| G13 bridge G13 rotunda | 1/1 | 4.44 | 4.44 | 4.4 | +4.44 | 0.27 | raster | – | – |
+| C9 bridge C9 rotunda | 1/1 | 4.39 | 4.39 | 4.4 | +4.39 | 0.16 | raster | – | – |
+| E9 bridge E9 rotunda | 1/1 | 4.34 | 4.34 | 4.3 | +4.34 | 0.24 | raster | – | – |
+| F11 bridge F11 rotunda | 1/1 | 4.34 | 4.34 | 4.3 | +4.34 | 0.27 | raster | – | – |
+| G7 bridge G7 rotunda | 1/1 | 4.34 | 4.34 | 4.3 | +4.34 | 0.27 | raster | – | – |
+| A13 bridge A13 rotunda | 1/1 | 4.30 | 4.30 | 4.3 | +4.30 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| D14 bridge D14 rotunda | 1/1 | 4.14 | 4.14 | 4.1 | +4.14 | 0.24 | raster | – | – |
+| A9 bridge A9 rotunda | 1/1 | 4.11 | 4.11 | 4.1 | +4.11 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| F19 bridge F19 rotunda | 1/1 | 4.10 | 4.10 | 4.1 | +4.10 | 0.27 | raster | – | – |
+| F8 bridge F8 rotunda | 1/1 | 4.00 | 4.00 | 4.0 | +4.00 | 0.27 | raster | – | – |
+| E7 bridge E7 rotunda | 1/1 | 3.98 | 3.98 | 4.0 | +3.98 | 0.24 | raster | – | – |
+| E13 bridge E13 rotunda | 1/1 | 3.98 | 3.98 | 4.0 | +3.98 | 0.24 | raster | – | – |
+| E8 bridge E8 rotunda | 1/1 | 3.96 | 3.96 | 4.0 | +3.96 | 0.24 | raster | – | – |
+| B11 bridge B11 rotunda | 1/1 | 3.90 | 3.90 | 3.9 | +3.90 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| G9 bridge G9 rotunda | 1/1 | 3.90 | 3.90 | 3.9 | +3.90 | 0.27 | raster | – | – |
+| G2 bridge G2 rotunda | 1/1 | 3.81 | 3.81 | 3.8 | +3.81 | 0.27 | raster | – | – |
+| C8 bridge C8 rotunda | 1/1 | 3.81 | 3.81 | 3.8 | +3.81 | 0.16 | raster | – | – |
+| C10 bridge C10 rotunda | 1/1 | 3.81 | 3.81 | 3.8 | +3.81 | 0.16 | raster | – | – |
+| B21 bridge B21 rotunda | 1/1 | 3.73 | 3.73 | 3.7 | +3.73 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| E12 bridge E12 rotunda | 1/1 | 3.57 | 3.57 | 3.6 | +3.57 | 0.42 | raster | – | – |
+| B24 bridge B24 rotunda | 1/1 | 3.55 | 3.55 | 3.5 | +3.55 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| G5 bridge G5 rotunda | 1/1 | 3.55 | 3.55 | 3.5 | +3.55 | 0.27 | raster | – | – |
+| F21 bridge F21 rotunda | 1/1 | 3.50 | 3.50 | 3.5 | +3.50 | 0.50 | raster | – | – |
+| B7 bridge B7 rotunda | 1/1 | 3.48 | 3.48 | 3.5 | +3.48 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| B8 bridge B8 rotunda | 1/1 | 3.42 | 3.42 | 3.4 | +3.42 | 0.28 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
+| D4 bridge D4 rotunda | 1/1 | 3.42 | 3.42 | 3.4 | +3.42 | 0.24 | raster | – | – |
+| F9 bridge F9 rotunda | 1/1 | 3.42 | 3.42 | 3.4 | +3.42 | 0.27 | raster | – | – |
+| F13 bridge F13 rotunda | 1/1 | 3.42 | 3.42 | 3.4 | +3.42 | 0.27 | raster | – | – |
+| A5 bridge A5 rotunda | 1/1 | 3.36 | 3.36 | 3.4 | +3.36 | 0.25 | raster | – | [30-rwy-1L](30-rwy-1L.png) |
 
 ## Physical conflicts (worst first)
 
-One row per pair of objects (worst part pair shown; `parts` lists all intersecting part pairs), merged over the scenarios in which it occurs. `depth` = short side of the overlap region (m), `vgap` = smallest vertical gap over the overlap (negative = interpenetration). Crops: `crops/conflict_NNNN.png` (vector, committed for the first 60 collisions) and `out/draw/crops/` (over the imagery, local only).
+One row per pair of objects (worst part pair shown; `parts` lists all intersecting part pairs), merged over scenarios; `scenarios` lists those at the row's severity, others with their own severity initial in brackets. `depth` = short side of the overlap region (m), `vgap` = smallest vertical gap over the overlap, evaluated point by point (negative = interpenetration). Crops: `crops/conflict_NNNN.png` (vector, committed for the first 60) and `out/draw/crops/` (over the imagery, local only).
 
-### COLLISION (114)
-
-| # | scenarios | kind | object A | object B | parts | depth / area | dist | vgap | note | x, z / s, t | sheet |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| [1](crops/conflict_0001.png) | LIVE | aircraft-building | UAL1116 B753 (parked) | Boarding Area E | aircraft x building | 3.80 / 18.9 | 0.00 | -6.52 |  | -768, -73 / -714, -294 | – |
-| [2](crops/conflict_0002.png) | LIVE | aircraft-building | UAL1116 B753 (parked) | Terminal complex ramp level | aircraft x building | 3.80 / 18.9 | 0.00 | -2.50 |  | -768, -73 / -714, -294 | – |
-| [3](crops/conflict_0003.png) | ENVELOPE | envelope-rest-bridge | G7 bridge G7 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | G7 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.55 / 4.3 | 0.00 | -0.15 |  | -1503, 110 / -1278, -799 | – |
-| [4](crops/conflict_0004.png) | ENVELOPE | envelope-rest-bridge | G3 bridge G3 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | G3 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 11.9 | 0.00 | -0.43 |  | -1378, 178 / -1135, -801 | – |
-| [5](crops/conflict_0005.png) | ENVELOPE | envelope-rest-bridge | A10 bridge A10 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | A10 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 11.9 | 0.00 | -0.73 |  | -1327, 746 / -825, -1279 | – |
-| [6](crops/conflict_0006.png) | ENVELOPE | envelope-rest-bridge | F19 bridge F19 (L2) (a20n, a21n, a319, a320, a321, b38m ...) | F19 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 11.9 | 0.00 | -1.28 |  | -1337, -226 / -1288, -424 | – |
-| [7](crops/conflict_0007.png) | ENVELOPE | envelope-rest-bridge | F12 bridge F12 (L2) (a20n, a21n, a319, a320, a321, b38m ...) | F12 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 10.7 | 0.00 | -0.59 |  | -1135, -115 / -1058, -428 | – |
-| [8](crops/conflict_0008.png) | ENVELOPE | envelope-rest-bridge | F14 bridge F14 (L2) (a20n, a21n, a319, a320, a321, b38m ...) | F14 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 10.5 | 0.00 | -0.59 |  | -1184, -140 / -1113, -429 | – |
-| [9](crops/conflict_0009.png) | ENVELOPE | envelope-rest-bridge | F16 bridge F16 (L2) (a20n, a21n, a319, a320, a321, b38m ...) | F16 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 10.4 | 0.00 | -0.06 |  | -1233, -166 / -1168, -429 | – |
-| [10](crops/conflict_0010.png) | ENVELOPE | envelope-rest-bridge | A6 bridge A7 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | A6 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-le | 3.30 / 10.2 | 0.00 | -0.59 |  | -1174, 652 / -733, -1125 | [30-rwy-1L](30-rwy-1L.png) |
-| [11](crops/conflict_0011.png) | ENVELOPE | envelope-rest-bridge | G2 bridge G2 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | G2 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 2.9 | 0.00 | -2.32 |  | -1319, 100 / -1119, -704 | – |
-| [12](crops/conflict_0012.png) | ENVELOPE | envelope-rest-bridge | G6 bridge G6 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | G6 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 2.7 | 0.00 | -2.32 |  | -1444, 34 / -1261, -704 | – |
-| [13](crops/conflict_0013.png) | ENVELOPE | envelope-rest-bridge | A5 bridge A5 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | A5 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.30 / 2.2 | 0.00 | -3.01 |  | -1262, 617 / -828, -1135 | [30-rwy-1L](30-rwy-1L.png) |
-| [14](crops/conflict_0014.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | G7 bridge G7 (L1) | G7 bridge G7 (L2) | beacon x rotunda; bellows x rotunda; cab x pedestal; cab x rotunda; cab x walkwa | 3.26 / 10.5 | 0.00 | -0.48 |  | -1502, 101 / -1281, -791 | – |
-| [15](crops/conflict_0015.png) | ENVELOPE | envelope-rest-bridge | G4 bridge G4 (L2) (a20n, a21n, a319, a320, a321, a332 ...) | G4 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 3.26 / 1.3 | 0.00 | -2.32 |  | -1442, 145 / -1207, -802 | – |
-| [16](crops/conflict_0016.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | G8 bridge G8 (L1) | G8 bridge G8 (L2) | beacon x pca-hose; bellows x tunnel1; bellows x tunnel2; cab x pca-unit; cab x t | 3.01 / 9.9 | 0.00 | -3.13 |  | -1612, 49 / -1403, -796 | – |
-| [17](crops/conflict_0017.png) | DOCK-MAX | bridge-aircraft | F19 b78x | F19 bridge F19 (L2) | aircraft x pedestal; aircraft x rotunda; aircraft x stair; aircraft x tunnel1; a | 2.94 / 6.7 | 0.00 | -2.88 |  | -1324, -230 / -1278, -414 | – |
-| [18](crops/conflict_0018.png) | DOCK-REF | bridge-aircraft | F19 b789 | F19 bridge F19 (L2) | aircraft x pedestal; aircraft x rotunda; aircraft x stair; aircraft x tunnel1; a | 2.94 / 6.7 | 0.00 | -2.87 |  | -1324, -230 / -1278, -414 | – |
-| [19](crops/conflict_0019.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | A10 bridge A10 (L1) | A10 bridge A10 (L2) | beacon x rotunda; beacon x tunnel1; bellows x tunnel1; cab x rotunda; cab x tunn | 2.84 / 8.2 | 0.00 | -2.72 |  | -1315, 752 / -811, -1279 | [30-rwy-1L](30-rwy-1L.png) |
-| [20](crops/conflict_0020.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | A6 bridge A7 (L1) | A6 bridge A7 (L2) | beacon x tunnel1; bellows x pca-unit; bellows x stair; bellows x tunnel2; cab x  | 2.80 / 11.9 | 0.00 | -2.86 |  | -1188, 646 / -749, -1125 | [30-rwy-1L](30-rwy-1L.png) |
-| [21](crops/conflict_0021.png) | LIVE | aircraft-building | UAL852 B772 (parked) | Boarding Area D | aircraft x building | 2.53 / 8.4 | 0.00 | -7.70 |  | -501, 210 / -345, -420 | – |
-| [22](crops/conflict_0022.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | G3 bridge G3 (L1) | G3 bridge G3 (L2) | beacon x pedestal; beacon x rotunda; cab x pedestal; cab x rotunda; cab x walkwa | 2.49 / 7.1 | 0.00 | -0.48 |  | -1375, 168 / -1138, -790 | – |
-| [23](crops/conflict_0023.png) | LIVE | aircraft-building | ASA528 B737 (parked) | Boarding Area B | aircraft x building | 2.44 / 6.3 | 0.00 | -5.31 |  | -818, 724 / -386, -1023 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [24](crops/conflict_0024.png) | ENVELOPE | envelope-rest-bridge | B25 bridge B24 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B25 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type; tunnel3 x e | 2.39 / 7.4 | 0.00 | -1.05 |  | -977, 948 / -421, -1294 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [25](crops/conflict_0025.png) | ENVELOPE | envelope-rest-bridge | B23 bridge B22 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B23 class envelope | bellows x envelope-type; cab x envelope-type | 2.39 / 6.8 | 0.00 | -1.37 |  | -932, 958 / -377, -1282 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [26](crops/conflict_0026.png) | LIVE | aircraft-building | ASA528 B737 (parked) | Terminal complex ramp level | aircraft x building | 2.36 / 5.9 | 0.00 | -3.26 |  | -819, 724 / -386, -1023 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [27](crops/conflict_0027.png) | LIVE | bridge-aircraft | UAL852 B772 (parked) | D7 bridge D7 (L1) | aircraft x cab; aircraft x cab-roof; aircraft x stair; aircraft x tunnel2; aircr | 2.10 / 4.7 | 0.00 | -1.99 |  | -467, 200 / -320, -394 | – |
-| [28](crops/conflict_0028.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | F19 bridge F19 (L1) | F19 bridge F19 (L2) | bellows x tunnel1; bellows x tunnel2; cab x rotunda; cab x tunnel1; cab-roof x r | 1.99 / 4.5 | 0.00 | -2.71 |  | -1324, -232 / -1279, -413 | – |
-| [29](crops/conflict_0029.png) | ENVELOPE | envelope-rest-bridge | F19 bridge F19 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | F19 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-be | 1.90 / 6.3 | 0.00 | -0.64 |  | -1326, -231 / -1281, -415 | – |
-| [30](crops/conflict_0030.png) | ENVELOPE | envelope-rest-bridge | E3 bridge E2 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | E3 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type; tunnel3 x e | 1.78 / 5.2 | 0.00 | -0.89 |  | -919, -2 / -814, -427 | – |
-| [31](crops/conflict_0031.png) | ENVELOPE | envelope-rest-bridge | F20 bridge F20 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | F20 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type; tunnel3 x e | 1.68 / 4.2 | 0.00 | -0.89 |  | -1323, -261 / -1292, -387 | – |
-| [32](crops/conflict_0032.png) | ENVELOPE | envelope-rest-bridge | B3 bridge B3 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B3 class envelope | bellows x envelope-type; cab x envelope-type | 1.63 / 3.4 | 0.00 | -1.01 |  | -768, 548 / -423, -844 | [30-rwy-1L](30-rwy-1L.png) |
-| [33](crops/conflict_0033.png) | ENVELOPE | envelope-rest-bridge | B2 bridge B2 (L1) (crj7, crj9, e170, e190, e75l) | B2 class envelope | bellows x envelope-type; cab x envelope-type | 1.63 / 3.0 | 0.00 | -0.06 |  | -978, 543 / -612, -937 | [30-rwy-1L](30-rwy-1L.png) |
-| [34](crops/conflict_0034.png) | ENVELOPE | envelope-rest-bridge | G8 bridge G8 (L2) (a20n, a21n, a319, a320, a321, b38m ...) | G8 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; drive-le | 1.61 / 5.1 | 0.00 | -0.64 |  | -1613, 52 / -1402, -799 | – |
-| [35](crops/conflict_0035.png) | ENVELOPE | envelope-rest-bridge | B1 bridge B1 (L1) (crj7, crj9, e170, e190, e75l) | B1 class envelope | bellows x envelope-type; cab x envelope-type | 1.61 / 2.8 | 0.00 | -0.06 |  | -1012, 530 / -648, -942 | [30-rwy-1L](30-rwy-1L.png) |
-| [36](crops/conflict_0036.png) | ENVELOPE | envelope-rest-bridge | A10 bridge A10 (L1) (a20n, a21n, a319, a320, a321, a332 ...) | A10 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; stair x  | 1.60 / 4.3 | 0.00 | -0.64 |  | -1318, 752 / -814, -1281 | [30-rwy-1L](30-rwy-1L.png) |
-| [37](crops/conflict_0037.png) | ENVELOPE | envelope-rest-bridge | A6 bridge A7 (L1) (a20n, a21n, a319, a320, a321, a332 ...) | A6 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; tunnel3  | 1.60 / 4.3 | 0.00 | -0.64 |  | -1181, 647 / -742, -1124 | [30-rwy-1L](30-rwy-1L.png) |
-| [38](crops/conflict_0038.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | F11 bridge F11 (L1) | F11 bridge F11 (L2) | drive-beam x tunnel2; drive-control x tunnel1; drive-control x tunnel2; drive-le | 1.57 / 4.3 | 0.00 | -3.34 |  | -1089, -189 / -1051, -341 | – |
-| [39](crops/conflict_0039.png) | ENVELOPE | envelope-rest-bridge | C4 bridge C4 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | C4 class envelope | bellows x envelope-type; cab x envelope-type | 1.56 / 2.4 | 0.00 | -0.94 |  | -686, 450 / -396, -718 | – |
-| [40](crops/conflict_0040.png) | DOCK-REF | bridge-aircraft | G1 b789 | G1 bridge G1 (L2) | aircraft x drive-control; aircraft x drive-leg; aircraft x stair; aircraft x tun | 1.55 / 3.3 | 0.00 | -0.50 |  | -1248, 137 / -1039, -704 | – |
-| [41](crops/conflict_0041.png) | DOCK-MAX | bridge-aircraft | G1 b78x | G1 bridge G1 (L2) | aircraft x drive-control; aircraft x drive-leg; aircraft x stair; aircraft x tun | 1.49 / 3.0 | 0.00 | -1.25 |  | -1248, 137 / -1040, -704 | – |
-| [42](crops/conflict_0042.png) | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | G12 bridge G12 (L1) | G12 bridge G12 (L2) | drive-beam x tunnel2; drive-control x tunnel1; drive-control x tunnel2; drive-le | 1.48 / 3.7 | 0.00 | -3.18 |  | -1606, 15 / -1413, -763 | – |
-| [43](crops/conflict_0043.png) | ENVELOPE | envelope-rest-bridge | G7 bridge G7 (L1) (a20n, a21n, a319, a320, a321, a332 ...) | G7 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 1.45 / 1.8 | 0.00 | -0.31 |  | -1498, 101 / -1278, -789 | – |
-| [44](crops/conflict_0044.png) | ENVELOPE | envelope-rest-bridge | B9 bridge B9 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B9 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.38 / 1.2 | 0.00 | -0.48 |  | -765, 680 / -359, -958 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [45](crops/conflict_0045.png) | ENVELOPE | envelope-rest-bridge | B12 bridge B12 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B12 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.38 / 1.2 | 0.00 | -0.48 |  | -784, 716 / -359, -999 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [46](crops/conflict_0046.png) | ENVELOPE | envelope-rest-bridge | B13 bridge B13 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B13 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.36 / 1.1 | 0.00 | -0.48 |  | -806, 756 / -359, -1045 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [47](crops/conflict_0047.png) | ENVELOPE | envelope-rest-bridge | B18 bridge B18 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B18 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.35 / 1.0 | 0.00 | -0.48 |  | -863, 865 / -360, -1168 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [48](crops/conflict_0048.png) | ENVELOPE | envelope-rest-bridge | B14 bridge B14 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B14 class envelope | bellows x envelope-type; cab x envelope-type | 1.35 / 1.0 | 0.00 | -0.48 |  | -825, 792 / -359, -1086 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [49](crops/conflict_0049.png) | ENVELOPE | envelope-rest-bridge | B21 bridge B21 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B21 class envelope | bellows x envelope-type; cab x envelope-type | 1.33 / 1.0 | 0.00 | -0.48 |  | -884, 904 / -359, -1212 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [50](crops/conflict_0050.png) | ENVELOPE | envelope-rest-bridge | G3 bridge G3 (L1) (a20n, a21n, a319, a320, a321, a332 ...) | G3 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 1.28 / 1.2 | 0.00 | -0.31 |  | -1371, 168 / -1134, -789 | – |
-| [51](crops/conflict_0051.png) | DOCK-REF | bridge-aircraft | B23 b38m | B23 bridge B22 (L1) | aircraft x tunnel2; aircraft x tunnel3 | 1.24 / 1.8 | 0.00 | -1.03 |  | -933, 958 / -378, -1283 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [52](crops/conflict_0052.png) | DOCK-MAX | bridge-aircraft | B23 b39m | B23 bridge B22 (L1) | aircraft x tunnel2; aircraft x tunnel3 | 1.22 / 1.8 | 0.00 | -1.03 |  | -933, 958 / -377, -1283 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [53](crops/conflict_0053.png) | ENVELOPE | envelope-rest-bridge | A3 bridge A4 (L2) (a20n, a21n, a319, a320, a321, b38m ...) | A3 class envelope | cab x envelope-type; drive-beam x envelope-type; drive-control x envelope-type;  | 1.20 / 1.7 | 0.00 | -0.12 |  | -1229, 549 / -830, -1059 | [30-rwy-1L](30-rwy-1L.png) |
-| [54](crops/conflict_0054.png) | ENVELOPE | envelope-rest-bridge | B17 bridge B17 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B17 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.18 / 0.8 | 0.00 | -0.48 |  | -845, 831 / -359, -1129 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| [55](crops/conflict_0055.png) | DOCK-REF | bridge-aircraft | G8 b789 | G8 bridge G8 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 4.2 | 0.00 | -3.29 |  | -1627, 44 / -1418, -799 | – |
-| [56](crops/conflict_0056.png) | DOCK-REF | bridge-aircraft | F22 b789 | F22 bridge F22 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 4.2 | 0.00 | -3.29 |  | -1277, -296 / -1268, -334 | – |
-| [57](crops/conflict_0057.png) | DOCK-REF | bridge-aircraft | F15 b789 | F15 bridge F15 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 4.2 | 0.00 | -3.29 |  | -1211, -269 / -1196, -328 | – |
-| [58](crops/conflict_0058.png) | DOCK-REF | bridge-aircraft | F11 b789 | F11 bridge F11 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 4.2 | 0.00 | -3.29 |  | -1077, -214 / -1053, -314 | – |
-| [59](crops/conflict_0059.png) | DOCK-MAX | bridge-aircraft | F22 b78x | F22 bridge F22 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 3.6 | 0.00 | -2.54 |  | -1278, -296 / -1268, -334 | – |
-| [60](crops/conflict_0060.png) | DOCK-MAX | bridge-aircraft | G8 b78x | G8 bridge G8 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 3.6 | 0.00 | -2.54 |  | -1627, 45 / -1418, -799 | – |
-| 61 | DOCK-MAX | bridge-aircraft | F15 b78x | F15 bridge F15 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 3.6 | 0.00 | -2.54 |  | -1211, -269 / -1197, -328 | – |
-| 62 | DOCK-MAX | bridge-aircraft | F11 b78x | F11 bridge F11 (L2) | aircraft x stair; aircraft x tunnel3 | 1.10 / 3.6 | 0.00 | -2.54 |  | -1078, -214 / -1053, -314 | – |
-| 63 | LIVE | bridge-aircraft | SKW5212 CRJ2 (parked) | F10 bridge F10 (L1) | aircraft x drive-beam; aircraft x drive-control; aircraft x drive-leg; aircraft  | 1.10 / 3.5 | 0.00 | -3.36 |  | -983, -224 / -973, -261 | – |
-| 64 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | F13 bridge F13 (L1) | F13 bridge F13 (L2) | drive-control x tunnel1; drive-control x tunnel2; rotunda x walkway; stair x pca | 1.10 / 1.4 | 0.00 | -1.30 |  | -1148, -229 / -1122, -334 | – |
-| 65 | ENVELOPE | envelope-rest-bridge | G5 bridge G5 (L2) (a20n, a319, a320, b737, b762, bcs1 ...) | G5 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.10 / 1.4 | 0.00 | -1.77 |  | -1376, 72 / -1183, -706 | – |
-| 66 | ENVELOPE | envelope-rest-bridge | G1 bridge G1 (L2) (a20n, a319, a320, b737, bcs1, e170 ...) | G1 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.10 / 1.1 | 0.00 | -1.30 |  | -1246, 139 / -1036, -705 | – |
-| 67 | DOCK-MAX,DOCK-REF | bridge-bridge | F15 bridge F15 (L1) | F15 bridge F15 (L2) | stair x pca-hose; stair x pca-unit; stair x tunnel2 | 1.02 / 0.8 | 0.00 | -0.02 |  | -1215, -257 / -1194, -340 | – |
-| 68 | ENVELOPE | envelope-rest-bridge | C10 bridge C10 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | C10 class envelope | bellows x envelope-type; cab x envelope-type | 0.99 / 0.6 | 0.00 | -0.48 |  | -583, 466 / -298, -684 | – |
-| 69 | ENVELOPE | envelope-rest-bridge | B27 bridge B27 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | B27 class envelope | bellows x envelope-type; cab x envelope-type | 0.91 / 0.4 | 0.00 | -0.27 |  | -1026, 908 / -484, -1282 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 70 | ENVELOPE | envelope-rest-bridge | F12 bridge F12 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | F12 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; stair x  | 0.87 / 0.6 | 0.00 | -3.13 |  | -1129, -123 / -1056, -418 | – |
-| 71 | DOCK-MAX,DOCK-REF | bridge-bridge | F12 bridge F12 (L1) | F12 bridge F12 (L2) | drive-beam x rotunda; drive-beam x tunnel1; drive-control x rotunda; drive-leg x | 0.83 / 2.1 | 0.00 | -2.83 |  | -1135, -128 / -1063, -416 | – |
-| 72 | ENVELOPE | envelope-rest-bridge | F14 bridge F14 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | F14 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.80 / 0.6 | 0.00 | -3.13 |  | -1178, -148 / -1111, -419 | – |
-| 73 | DOCK-REF | bridge-aircraft | B19 crj9 | B19 bridge B20 (L1) | aircraft x drive-leg; aircraft x tunnel3 | 0.76 / 0.9 | 0.00 | -1.44 |  | -984, 856 / -471, -1217 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 74 | ENVELOPE | envelope-rest-bridge | F16 bridge F16 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | F16 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; stair x  | 0.76 / 0.5 | 0.00 | -2.52 |  | -1227, -174 / -1166, -419 | – |
-| 75 | DOCK-MAX | bridge-aircraft | B19 e190 | B19 bridge B20 (L1) | aircraft x drive-leg; aircraft x tunnel3 | 0.75 / 1.2 | 0.00 | -0.57 |  | -984, 856 / -471, -1217 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 76 | ENVELOPE | envelope-rest-bridge | F17 bridge F17 (L1) (a20n, a21n, a319, a320, a321, b38m ...) | F17 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; stair x  | 0.74 / 0.5 | 0.00 | -2.52 |  | -1277, -200 / -1222, -420 | – |
-| 77 | LIVE | bridge-aircraft | UAL852 B772 (parked) | D5 bridge D5 (L1) | aircraft x rotunda; aircraft x walkway | 0.72 / 0.6 | 0.00 | -1.24 |  | -495, 220 / -335, -426 | – |
-| 78 | ENVELOPE | envelope-rest-bridge | G10 bridge G14 (L1) (a332, a333, a359, a35k, b762, b763 ...) | G10 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.71 / 0.3 | 0.00 | -3.13 |  | -1577, -22 / -1404, -717 | – |
-| 79 | DOCK-MAX,DOCK-REF | bridge-bridge | A5 bridge A5 (L1) | A5 bridge A5 (L2) | cab x rotunda; cab-roof x rotunda; drive-beam x rotunda; drive-control x rotunda | 0.70 / 0.7 | 0.00 | -4.97 |  | -1251, 616 / -819, -1129 | [30-rwy-1L](30-rwy-1L.png) |
-| 80 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | D1 bridge D1 (L1) | D1 VDGS / stand sign | tunnel1 x stand-sign-back; tunnel1 x vdgs-display; tunnel1 x vdgs-display-base;  | 0.65 / 0.3 | 0.00 | -2.18 |  | -632, 222 / -455, -492 | – |
-| 81 | DOCK-MAX,DOCK-REF | bridge-bridge | F22 bridge F21 (L1) | F22 bridge F22 (L2) | stair x pca-hose; stair x pca-unit; stair x tunnel2 | 0.63 / 0.3 | 0.00 | -0.02 |  | -1281, -284 / -1266, -347 | – |
-| 82 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | C5 bridge C5 (L1) | C5 VDGS / stand sign | drive-beam x stand-sign-back; drive-beam x vdgs-display; drive-beam x vdgs-displ | 0.60 / 0.9 | 0.00 | -2.64 |  | -656, 386 / -400, -647 | – |
-| 83 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | C6 bridge C6 (L1) | C6 VDGS / stand sign | tunnel1 x stand-sign-back; tunnel1 x vdgs-display; tunnel1 x vdgs-display-base;  | 0.60 / 0.9 | 0.00 | -2.86 |  | -641, 465 / -349, -710 | – |
-| 84 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | B26 bridge B26 (L1) | B27 VDGS / stand sign | tunnel1 x vdgs-display; tunnel1 x vdgs-display-base; tunnel2 x vdgs-display; tun | 0.60 / 0.9 | 0.00 | -0.77 |  | -1011, 914 / -467, -1280 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 85 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | D5 bridge D5 (L1) | D5 VDGS / stand sign | tunnel1 x stand-sign-back; tunnel1 x vdgs-display; tunnel1 x vdgs-display-base;  | 0.60 / 0.9 | 0.00 | -2.86 |  | -494, 231 / -329, -435 | – |
-| 86 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | D15 bridge D15 (L1) | D15 VDGS / stand sign | tunnel1 x stand-sign-back; tunnel1 x vdgs-display; tunnel1 x vdgs-display-base;  | 0.60 / 0.9 | 0.00 | -2.90 |  | -584, 86 / -476, -349 | – |
-| 87 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | E11 bridge E11 (L1) | E11 VDGS / stand sign | pca-hose x vdgs-post; pca-unit x vdgs-display-base; pca-unit x vdgs-post; tunnel | 0.60 / 0.9 | 0.00 | -2.77 |  | -736, -75 / -686, -277 | – |
-| 88 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | E13 bridge E12 (L1) | E13 VDGS / stand sign | drive-beam x vdgs-post; drive-leg x stand-sign-back; drive-leg x vdgs-display; d | 0.60 / 0.9 | 0.00 | -2.64 |  | -789, -106 / -747, -275 | – |
-| 89 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | F20 bridge F20 (L1) | F20 VDGS / stand sign | walkway x vdgs-display; walkway x vdgs-display-base | 0.60 / 0.9 | 0.00 | -1.26 |  | -1310, -253 / -1277, -388 | – |
-| 90 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | F8 bridge F8 (L1) | F8 VDGS / stand sign | tunnel1 x stand-sign-back; tunnel1 x vdgs-display; tunnel1 x vdgs-display-base;  | 0.60 / 0.9 | 0.00 | -2.80 |  | -999, -203 / -978, -287 | – |
-| 91 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | F19 bridge F19 (L1) | F19 VDGS / stand sign | walkway x vdgs-display; walkway x vdgs-display-base | 0.60 / 0.9 | 0.00 | -1.26 |  | -1313, -236 / -1271, -404 | – |
-| 92 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | E3 bridge E2 (L1) | E3 VDGS / stand sign | rotunda x stand-sign-back; rotunda x vdgs-display; rotunda x vdgs-display-base;  | 0.60 / 0.9 | 0.00 | -2.50 |  | -926, 10 / -814, -441 | – |
-| 93 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | B16 bridge B16 (L1) | B15 VDGS / stand sign | walkway x vdgs-display; walkway x vdgs-display-base | 0.60 / 0.8 | 0.00 | -1.26 |  | -931, 782 / -459, -1126 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 94 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | B3 bridge B3 (L1) | B3 VDGS / stand sign | rotunda x stand-sign-back; rotunda x vdgs-display; rotunda x vdgs-display-base;  | 0.60 / 0.7 | 0.00 | -2.50 |  | -782, 552 / -433, -853 | [30-rwy-1L](30-rwy-1L.png) |
-| 95 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | D16 bridge D16 (L1) | D16 VDGS / stand sign | drive-beam x vdgs-post; drive-leg x vdgs-post; tunnel2 x vdgs-post-base; tunnel3 | 0.60 / 0.6 | 0.00 | -2.64 |  | -634, 129 / -500, -410 | – |
-| 96 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | D14 bridge D14 (L1) | D14 VDGS / stand sign | drive-beam x vdgs-post; drive-leg x vdgs-post; stair x stand-sign-back; stair x  | 0.60 / 0.5 | 0.00 | -2.64 |  | -568, 58 / -476, -317 | – |
-| 97 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | A15 bridge A14 (L1) | A15 VDGS / stand sign | tunnel1 x stand-sign-back; tunnel1 x vdgs-display; tunnel1 x vdgs-display-base;  | 0.60 / 0.4 | 0.00 | -2.90 |  | -1296, 817 / -765, -1328 | [30-rwy-1L](30-rwy-1L.png) |
-| 98 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | B27 bridge B27 (L1) | B26 bridge B26 (L1) | rotunda x rotunda; walkway x walkway | 0.58 / 0.3 | 0.00 | -3.11 |  | -1007, 903 / -469, -1269 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 99 | LIVE,REST | bridge-vdgs | E4 bridge E4 (L1) | E4 VDGS / stand sign | drive-beam x vdgs-post; drive-leg x vdgs-post; stair x stand-sign-back; stair x  | 0.57 / 0.3 | 0.00 | -2.64 |  | -794, 76 / -667, -438 | – |
-| 100 | LIVE | aircraft-vdgs | UAL2177 B39M (parked) | D10 VDGS / stand sign | aircraft x vdgs-display; aircraft x vdgs-display-base | 0.49 / 0.2 | 0.00 | -0.18 |  | -485, 64 / -399, -283 | – |
-| 101 | ENVELOPE | envelope-rest-bridge | A5 bridge A5 (L1) (a332, a333, a359, a35k, b762, b763 ...) | A5 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; stair x  | 0.49 / 0.2 | 0.00 | -0.14 |  | -1251, 624 / -815, -1136 | [30-rwy-1L](30-rwy-1L.png) |
-| 102 | ENVELOPE | envelope-rest-bridge | G4 bridge G4 (L1) (a332, a333, a359, a35k, b762, b763 ...) | G4 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.45 / 0.1 | 0.00 | -0.14 |  | -1435, 134 / -1206, -789 | – |
-| 103 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-building | A3 bridge A3 (L1) | International Terminal walkway (elevated walkway) | rotunda x building | 0.42 / 0.8 | 0.00 | -2.70 |  | -1204, 552 / -807, -1050 | [30-rwy-1L](30-rwy-1L.png) |
-| 104 | LIVE,REST | bridge-vdgs | E6 bridge E6 (L1) | E6 VDGS / stand sign | tunnel1 x stand-sign-back; tunnel1 x vdgs-display; tunnel1 x vdgs-display-base;  | 0.41 / 0.2 | 0.00 | -0.37 |  | -843, 1 / -745, -394 | – |
-| 105 | ENVELOPE | envelope-rest-bridge | F22 bridge F21 (L1) (b752, b753, b762, b763, b764, b788 ...) | F22 class envelope | bellows x envelope-type; cab x envelope-type | 0.37 / 0.2 | 0.00 | -1.94 |  | -1293, -283 / -1276, -353 | – |
-| 106 | LIVE,REST | bridge-vdgs | F6 bridge F6 (L1) | F6 VDGS / stand sign | drive-beam x vdgs-post; drive-leg x vdgs-post-base; tunnel2 x vdgs-post-base; tu | 0.33 / 0.2 | 0.00 | -0.85 |  | -1016, -167 / -976, -326 | – |
-| 107 | DOCK-MAX,DOCK-REF | bridge-aircraft | A10 b77w | A10 bridge A10 (L2) | aircraft x rotunda | 0.31 / 0.5 | 0.00 | -1.55 |  | -1316, 754 / -812, -1281 | [30-rwy-1L](30-rwy-1L.png) |
-| 108 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-bridge | F14 bridge F14 (L1) | F14 bridge F14 (L2) | drive-control x tunnel1; stair x pca-unit; stair x tunnel1; stair x tunnel2; tun | 0.30 / 0.4 | 0.00 | -2.85 |  | -1184, -155 / -1120, -416 | – |
-| 109 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-vdgs | A6 bridge A7 (L1) | A6 VDGS / stand sign | rotunda x stand-sign-back; rotunda x vdgs-display; rotunda x vdgs-display-base | 0.14 / 0.0 | 0.00 | -1.20 |  | -1194, 639 / -758, -1123 | [30-rwy-1L](30-rwy-1L.png) |
-| 110 | DOCK-MAX,DOCK-REF | bridge-bridge | F16 bridge F16 (L1) | F16 bridge F16 (L2) | stair x pca-unit; stair x tunnel1; stair x tunnel2; tunnel1 x rotunda; tunnel2 x | 0.13 / 0.1 | 0.00 | -2.85 |  | -1233, -180 / -1175, -416 | – |
-| 111 | ENVELOPE | envelope-envelope | E3 class envelope | E6 class envelope | envelope x envelope | 0.12 / 0.0 | 0.00 | – | E6: b39m,b739 x E3: b39m,b739 | -892, -16 / -797, -402 | – |
-| 112 | DOCK-MAX,DOCK-REF | bridge-bridge | G4 bridge G4 (L1) | G4 bridge G4 (L2) | stair x tunnel1 | 0.05 / 0.1 | 0.00 | -0.56 |  | -1444, 134 / -1215, -793 | – |
-| 113 | DOCK-MAX,DOCK-REF | bridge-bridge | G6 bridge G6 (L1) | G6 bridge G6 (L2) | stair x pedestal; stair x rotunda | 0.05 / 0.1 | 0.00 | -0.62 |  | -1442, 45 / -1254, -713 | – |
-| 114 | OVERSIZE | oversize-not-blocked | A2:a388 | A1 class envelope | aircraft x envelope | – / – | 0.00 | – | a388 (79.8 m span) at A2 reaches A1 (nose distance 94.8 m >= block radius 59.0 m): A1 stays available | -1086, 567 / -696, -1009 | [30-rwy-1L](30-rwy-1L.png) |
-
-### OFF-PAVEMENT (4)
+### COLLISION (58)
 
 | # | scenarios | kind | object A | object B | parts | depth / area | dist | vgap | note | x, z / s, t | sheet |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 115 | LIVE | gear-off-pavement | UAL2467 B39M (parked) | app paved raster (ground.js physics, 1.0 m) | aircraft x pavement | – / – | – | – | unpaved under nose, main, main gear | -357, 471 / -96, -583 | – |
-| 116 | LIVE | gear-off-pavement | SKW3490 E75L (parked) | app paved raster (ground.js physics, 1.0 m) | aircraft x pavement | – / – | – | – | unpaved under nose, main, main gear | 508, 97 / 495, 152 | – |
-| 117 | LIVE | gear-off-pavement | UAL2649 A319 (parked) | app paved raster (ground.js physics, 1.0 m) | aircraft x pavement | – / – | – | – | unpaved under nose, main gear | 769, 643 / 980, -209 | – |
-| 118 | LIVE | gear-off-pavement | JBU578 A321 (parked) | app paved raster (ground.js physics, 1.0 m) | aircraft x pavement | – / – | – | – | unpaved under nose, main, main gear | 851, 737 / 1097, -255 | – |
+| 1 | ENVELOPE | envelope-envelope | B11 class envelope | B11S class envelope | envelope x envelope | 27.47 / 414.9 | 0.00 | – | B11: a19n,a20n,a21n,a319,a320,a321,b37m,b38m,b39m,b3xm,b736,b737,b738,b739,bcs1,bcs3,crj2,crj7,crj9,e170,e190, | -924, 711 / -486, -1060 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 2 | ENVELOPE | envelope-envelope | B10 class envelope | B11S class envelope | envelope x envelope | 20.31 / 218.6 | 0.00 | – | B10: a19n,a20n,a21n,a319,a320,a321,b37m,b38m,b39m,b3xm,b736,b737,b738,b739,bcs1,bcs3,crj2,crj7,crj9,e170,e190, | -918, 680 / -494, -1029 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 3 | DOCK-REF | aircraft-aircraft | B11 b38m | B11S b789 | aircraft x aircraft | 15.32 / 66.6 | 0.00 | -3.31 |  | -933, 716 / -492, -1068 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 4 | DOCK-MAX | aircraft-aircraft | B11 b3xm | B11S b772 | aircraft x aircraft | 13.11 / 73.8 | 0.00 | -3.48 |  | -928, 711 / -489, -1062 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 5 | ENVELOPE | envelope-rest-bridge | B11 bridge B11 (L1) (a19n, a20n, a21n, a319, a320, a321 ...) | B11S class envelope | beacon x envelope-type; bellows x envelope-type; cab x envelope-type; cab-roof x | 3.55 / 13.7 | 0.00 | -0.93 |  | -902, 711 / -467, -1050 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 6 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | B11 bridge B11 (L1) | B11S bridge B11 (L1) | pedestal x cab; rotunda x beacon; rotunda x bellows; rotunda x cab; rotunda x ca | 3.55 / 12.0 | 0.00 | -1.10 |  | -892, 701 / -462, -1036 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 7 | ENVELOPE | envelope-rest-bridge | F22 bridge F22 (L2) (a19n, a20n, a319, a320, b37m, b38m ...) | F22 class envelope | bellows x envelope-type; cab x envelope-type; drive-control x envelope-type; dri | 3.30 / 9.7 | 0.00 | -0.01 |  | -1280, -288 / -1267, -342 | – |
+| 8 | ENVELOPE | envelope-rest-bridge | G13 bridge G13 (L2) (a19n, a20n, a319, a320, b37m, b38m ...) | G13 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type; tunnel3 x e | 3.30 / 8.1 | 0.00 | -0.01 |  | -1616, -8 / -1433, -747 | – |
+| 9 | DOCK-MAX | bridge-aircraft | B11S b772 | B11 bridge B11 (L1) | aircraft x drive-control; aircraft x pca-hose; aircraft x pca-unit; aircraft x t | 2.94 / 9.3 | 0.00 | -4.56 |  | -906, 711 / -470, -1052 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 10 | DOCK-REF | bridge-aircraft | B11S b789 | B11 bridge B11 (L1) | aircraft x drive-control; aircraft x pca-hose; aircraft x pca-unit; aircraft x t | 2.94 / 8.5 | 0.00 | -3.99 |  | -906, 711 / -470, -1052 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 11 | ENVELOPE | envelope-rest-bridge | A6 bridge A6 (L2) (a19n, a20n, a319, a320, b37m, b736 ...) | A6 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type; tunnel3 x e | 2.84 / 5.5 | 0.00 | -0.01 |  | -1177, 664 / -731, -1136 | [30-rwy-1L](30-rwy-1L.png) |
+| 12 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | B2 bridge B2 (L1) | Harvey Milk Terminal 1 | walkway x building | 2.42 / 6.9 | 0.00 | -8.46 |  | -1001, 520 / -643, -927 | [30-rwy-1L](30-rwy-1L.png) |
+| 13 | ENVELOPE | envelope-rest-bridge | A1 bridge A1 (L2) (a19n, a20n, a319, a320, b37m, b736 ...) | A1 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 2.20 / 3.8 | 0.00 | -0.64 |  | -1068, 529 / -698, -966 | [30-rwy-1L](30-rwy-1L.png) |
+| 14 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | A15 bridge A15 (L1) | Boarding Area A | walkway x building | 1.96 / 7.8 | 0.00 | -8.46 |  | -1323, 793 / -800, -1319 | [30-rwy-1L](30-rwy-1L.png) |
+| 15 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | B15 bridge B15 (L1) | Boarding Area B walkway (elevated walkway) | walkway x building | 1.87 / 6.2 | 0.00 | -2.46 |  | -922, 763 / -459, -1105 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 16 | LIVE | bridge-aircraft | SKW5212 CRJ2 at F10 (gate) | F8 bridge F8 (L1) | aircraft x cab; aircraft x tunnel2; aircraft x tunnel3 | 1.59 / 3.9 | 0.00 | -1.91 |  | -987, -216 / -974, -269 | – |
+| 17 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G5 bridge G5 (L1) | G5 bridge G5 (L2) | pedestal x rotunda; rotunda x pedestal; rotunda x rotunda; rotunda x tunnel1; wa | 1.56 / 3.8 | 0.00 | -3.60 |  | -1373, 91 / -1172, -721 | – |
+| 18 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | B10 bridge B10 (L1) | Boarding Area B walkway (elevated walkway) | rotunda x building | 1.38 / 4.2 | 0.00 | -2.70 |  | -880, 674 / -464, -1007 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 19 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G6 bridge G6 (L1) | G6 bridge G6 (L2) | pedestal x rotunda; rotunda x pedestal; rotunda x rotunda; rotunda x tunnel1; wa | 1.36 / 3.1 | 0.00 | -3.60 |  | -1437, 58 / -1244, -721 | – |
+| 20 | ENVELOPE | envelope-rest-bridge | G3 bridge G3 (L2) (a19n, a319, b736, b737, e170) | G3 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.33 / 1.8 | 0.00 | -0.02 |  | -1374, 174 / -1134, -794 | – |
+| 21 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G10 bridge G10 (L1) | G10 bridge G10 (L2) | rotunda x rotunda; walkway x walkway | 1.32 / 4.4 | 0.00 | -3.05 |  | -1551, -1 / -1372, -722 | – |
+| 22 | ENVELOPE | envelope-rest-bridge | E7 bridge E7 (L1) (a19n, a20n, a21n, a319, a320, a321 ...) | E7 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 1.31 / 0.9 | 0.00 | -1.16 |  | -755, -11 / -673, -343 | – |
+| 23 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A10 bridge A10 (L1) | A10 bridge A10 (L2) | rotunda x rotunda; rotunda x walkway; tunnel1 x rotunda; walkway x walkway | 1.24 / 3.6 | 0.00 | -3.05 |  | -1299, 725 / -811, -1247 | [30-rwy-1L](30-rwy-1L.png) |
+| 24 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G3 bridge G3 (L1) | G3 bridge G3 (L2) | rotunda x rotunda; rotunda x walkway; walkway x walkway | 1.06 / 2.2 | 0.00 | -3.60 |  | -1380, 157 / -1147, -783 | – |
+| 25 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A9 bridge A9 (L1) | A9 bridge A9 (L2) | rotunda x rotunda; rotunda x walkway; tunnel1 x rotunda; walkway x walkway | 1.04 / 2.4 | 0.00 | -3.05 |  | -1265, 661 / -811, -1175 | [30-rwy-1L](30-rwy-1L.png) |
+| 26 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F9 bridge F9 (L1) | Boarding Area F | rotunda x building | 1.03 / 2.8 | 0.00 | -8.70 |  | -1026, -218 / -1010, -286 | – |
+| 27 | ENVELOPE | envelope-rest-bridge | F14 bridge F14 (L1) (a19n, a20n, a21n, a319, a320, a321 ...) | F14 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type; stair x  | 1.00 / 1.1 | 0.00 | -0.03 |  | -1176, -150 / -1110, -416 | – |
+| 28 | ENVELOPE | envelope-rest-bridge | F12 bridge F12 (L1) (a19n, a20n, a21n, a319, a320, a321 ...) | F12 class envelope | bellows x envelope-type; cab x envelope-type | 0.96 / 0.6 | 0.00 | -0.85 |  | -1127, -121 / -1053, -418 | – |
+| 29 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G2 bridge G2 (L1) | G2 bridge G2 (L2) | rotunda x rotunda; rotunda x tunnel1; walkway x rotunda | 0.92 / 1.8 | 0.00 | -3.60 |  | -1310, 125 / -1101, -722 | – |
+| 30 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A8 bridge A8 (L2) | A8 bridge A8 (L1) | stair x stair; walkway x walkway | 0.87 / 2.0 | 0.00 | -3.05 |  | -1242, 746 / -751, -1239 | [30-rwy-1L](30-rwy-1L.png) |
+| 31 | LIVE, REST | bridge-vdgs | E4 bridge E4 (L1) | E4 VDGS / stand sign | stair x vdgs-post; stair x vdgs-post-base; tunnel2 x stand-sign-back; tunnel2 x  | 0.84 / 0.8 | 0.00 | -0.17 |  | -794, 76 / -667, -438 | – |
+| 32 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A2 bridge A2 (L1) | A2 bridge A2 (L2) | walkway x walkway | 0.75 / 1.6 | 0.00 | -3.05 |  | -1168, 606 / -751, -1081 | [30-rwy-1L](30-rwy-1L.png) |
+| 33 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A6 bridge A6 (L1) | A6 bridge A6 (L2) | walkway x walkway | 0.73 / 1.2 | 0.00 | -3.05 |  | -1209, 683 / -751, -1168 | [30-rwy-1L](30-rwy-1L.png) |
+| 34 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A13 bridge A13 (L1) | A13 bridge A13 (L2) | cab-roof x stair; rotunda x walkway; tunnel1 x rotunda; tunnel2 x rotunda; walkw | 0.72 / 1.7 | 0.00 | -3.30 |  | -1282, 818 / -752, -1321 | [30-rwy-1L](30-rwy-1L.png) |
+| 35 | DOCK-REF | bridge-aircraft | F11 b789 | F11 bridge F11 (L2) | aircraft x stair | 0.70 / 2.1 | 0.00 | -1.13 |  | -1081, -207 / -1053, -321 | – |
+| 36 | DOCK-REF | bridge-aircraft | F15 b789 | F15 bridge F15 (L2) | aircraft x stair | 0.70 / 2.1 | 0.00 | -1.14 |  | -1215, -260 / -1196, -337 | – |
+| 37 | DOCK-REF | bridge-aircraft | F22 b789 | F22 bridge F22 (L2) | aircraft x stair | 0.70 / 2.1 | 0.00 | -1.13 |  | -1280, -292 / -1268, -338 | – |
+| 38 | DOCK-REF | bridge-aircraft | G1 b789 | G1 bridge G1 (L2) | aircraft x stair | 0.70 / 2.1 | 0.00 | -1.13 |  | -1246, 132 / -1041, -698 | – |
+| 39 | DOCK-REF | bridge-aircraft | G3 b789 | G3 bridge G3 (L2) | aircraft x stair | 0.70 / 2.1 | 0.00 | -1.06 |  | -1374, 180 / -1131, -800 | – |
+| 40 | DOCK-REF | bridge-aircraft | G4 b789 | G4 bridge G4 (L2) | aircraft x stair | 0.70 / 2.1 | 0.00 | -1.18 |  | -1448, 145 / -1213, -804 | – |
+| 41 | DOCK-REF | bridge-aircraft | G11 b789 | G11 bridge G11 (L2) | aircraft x stair | 0.70 / 2.1 | 0.00 | -1.13 |  | -1628, 46 / -1418, -800 | – |
+| 42 | ENVELOPE | envelope-rest-bridge | C10 bridge C10 (L1) (a19n, a20n, a21n, a319, a320, a321 ...) | C10 class envelope | bellows x envelope-type; cab x envelope-type; stair x envelope-type | 0.70 / 0.4 | 0.00 | -0.01 |  | -585, 471 / -298, -689 | – |
+| 43 | ENVELOPE | envelope-rest-bridge | G8 bridge G8 (L1) (a332, a333, a338, a339, a359, a35k ...) | G8 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.69 / 0.4 | 0.00 | -2.13 |  | -1563, 67 / -1352, -788 | – |
+| 44 | ENVELOPE | envelope-rest-bridge | A12 bridge A12 (L1) (a19n, a21n, a332, a333, b762, b763 ...) | A12 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.67 / 0.6 | 0.00 | -0.03 |  | -1336, 798 / -809, -1329 | – |
+| 45 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A5 bridge A5 (L1) | A5 bridge A5 (L2) | rotunda x rotunda; rotunda x tunnel1; walkway x rotunda | 0.61 / 0.5 | 0.00 | -3.35 |  | -1238, 610 / -810, -1117 | [30-rwy-1L](30-rwy-1L.png) |
+| 46 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G7 bridge G7 (L1) | G7 bridge G7 (L2) | rotunda x rotunda; rotunda x tunnel1; stair x stair; walkway x rotunda | 0.60 / 0.8 | 0.00 | -3.35 |  | -1508, 88 / -1293, -781 | – |
+| 47 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G4 bridge G4 (L1) | G4 bridge G4 (L2) | rotunda x rotunda; rotunda x tunnel1; walkway x rotunda | 0.58 / 0.6 | 0.00 | -3.35 |  | -1445, 121 / -1222, -781 | – |
+| 48 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | C8 bridge C8 (L1) | Boarding Area C | rotunda x building | 0.57 / 1.2 | 0.00 | -8.70 |  | -623, 464 / -335, -700 | – |
+| 49 | ENVELOPE | envelope-rest-bridge | G4 bridge G4 (L1) (a332, a333, b762, b763, b764, b772 ...) | G4 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.56 / 0.4 | 0.00 | -0.03 |  | -1435, 135 / -1206, -788 | – |
+| 50 | ENVELOPE | envelope-rest-bridge | F19 bridge F19 (L1) (a332, a333, a338, a339, a359, a35k ...) | F19 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.48 / 0.2 | 0.00 | -0.85 |  | -1318, -222 / -1269, -418 | – |
+| 51 | ENVELOPE | envelope-rest-bridge | F21 bridge F21 (L1) (a19n, a20n, a21n, a319, a320, a321 ...) | F21 class envelope | bellows x envelope-type; cab x envelope-type | 0.45 / 0.2 | 0.00 | -0.60 |  | -1317, -268 / -1290, -377 | – |
+| 52 | LIVE, REST | bridge-vdgs | B23 bridge B23 (L1) | B23 VDGS / stand sign | stair x vdgs-post; stair x vdgs-post-base; tunnel2 x stand-sign-back; tunnel3 x  | 0.43 / 0.4 | 0.00 | -0.11 |  | -931, 944 / -384, -1269 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 53 | ENVELOPE | envelope-rest-bridge | G7 bridge G7 (L1) (a332, a333, a338, a339, a359, a35k ...) | G7 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.43 / 0.2 | 0.00 | -0.85 |  | -1499, 101 / -1279, -788 | – |
+| 54 | ENVELOPE | envelope-rest-bridge | F5 bridge F5 (L1) (a19n, a20n, a21n, a319, a320, a321 ...) | F5 class envelope | bellows x envelope-type; cab x envelope-type | 0.41 / 0.2 | 0.00 | -0.60 |  | -1023, -135 / -968, -358 | – |
+| 55 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F19 bridge F19 (L1) | Boarding Area F | rotunda x building | 0.25 / 0.4 | 0.00 | -8.70 |  | -1313, -235 / -1271, -405 | – |
+| 56 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A11 bridge A11 (L1) | A11 bridge A11 (L2) | rotunda x walkway | 0.19 / 0.2 | 0.00 | -3.30 |  | -1272, 807 / -749, -1307 | [30-rwy-1L](30-rwy-1L.png) |
+| 57 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | G8 bridge G8 (L1) | G8 bridge G8 (L2) | rotunda x rotunda; rotunda x tunnel1; walkway x rotunda | 0.16 / 0.1 | 0.00 | -3.35 |  | -1572, 54 / -1365, -781 | – |
+| 58 | ENVELOPE | envelope-rest-bridge | A5 bridge A5 (L1) (a332, a333, a338, a339, a359, a35k ...) | A5 class envelope | bellows x envelope-type; cab x envelope-type; cab-roof x envelope-type | 0.14 / 0.1 | 0.00 | -0.85 |  | -1252, 623 / -817, -1135 | [30-rwy-1L](30-rwy-1L.png) |
 
-### CLEARANCE (50)
+### OBSTRUCTION (36)
 
 | # | scenarios | kind | object A | object B | parts | depth / area | dist | vgap | note | x, z / s, t | sheet |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 119 | OVERSIZE | oversize-not-blocked | A6:a388 | A2 class envelope | aircraft x envelope | – / – | 0.53 | – | a388 (79.8 m span) at A6 reaches A2 (nose distance 75.0 m >= block radius 73.5 m): A2 stays available | -1121, 632 / -696, -1082 | [30-rwy-1L](30-rwy-1L.png) |
-| 120 | OVERSIZE | oversize-not-blocked | A2:a388 | A6 class envelope | aircraft x envelope | – / – | 0.56 | – | a388 (79.8 m span) at A2 reaches A6 (nose distance 75.0 m >= block radius 73.5 m): A6 stays available | -1122, 637 / -695, -1087 | [30-rwy-1L](30-rwy-1L.png) |
-| 121 | DOCK-MAX | aircraft-aircraft | E3 b39m | E6 b39m | aircraft x aircraft | – / – | 1.27 | – | 1.3 m < ICAO 4.5 m | -892, -17 / -797, -401 | – |
-| 122 | ENVELOPE | envelope-envelope | G2 class envelope | G5 class envelope | envelope x envelope | – / – | 1.50 | – | 1.5 m < ICAO 7.5 m | -1343, 61 / -1159, -681 | – |
-| 123 | ENVELOPE | envelope-envelope | G10 class envelope | G9 class envelope | envelope x envelope | – / – | 1.60 | – | 1.6 m < ICAO 7.5 m | -1526, -47 / -1372, -671 | – |
-| 124 | ENVELOPE | envelope-envelope | G6 class envelope | G9 class envelope | envelope x envelope | – / – | 1.70 | – | 1.7 m < ICAO 7.5 m | -1466, -10 / -1301, -676 | – |
-| 125 | ENVELOPE | envelope-envelope | A1 class envelope | A2 class envelope | envelope x envelope | – / – | 2.04 | – | 2.0 m < ICAO 7.5 m | -1088, 569 / -696, -1011 | [30-rwy-1L](30-rwy-1L.png) |
-| 126 | ENVELOPE | envelope-envelope | G5 class envelope | G6 class envelope | envelope x envelope | – / – | 2.20 | – | 2.2 m < ICAO 7.5 m | -1401, 20 / -1230, -672 | – |
-| 127 | ENVELOPE | envelope-envelope | B17 class envelope | B18 class envelope | envelope x envelope | – / – | 2.39 | – | 2.4 m < ICAO 4.5 m | -838, 855 / -341, -1147 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 128 | OVERSIZE | oversize-not-blocked | A2:b748 | A1 class envelope | aircraft x envelope | – / – | 2.78 | – | b748 (68.4 m span) at A2 reaches A1 (nose distance 94.8 m >= block radius 59.0 m): A1 stays available | -1083, 572 / -691, -1011 | [30-rwy-1L](30-rwy-1L.png) |
-| 129 | ENVELOPE | envelope-envelope | B3 class envelope | C1 class envelope | envelope x envelope | – / – | 2.90 | – | 2.9 m < ICAO 4.5 m | -752, 522 / -421, -813 | [30-rwy-1L](30-rwy-1L.png) |
-| 130 | ENVELOPE | envelope-envelope | G4 class envelope | G7 class envelope | envelope x envelope | – / – | 3.00 | – | 3.0 m < ICAO 7.5 m | -1486, 160 / -1240, -835 | – |
-| 131 | ENVELOPE | envelope-envelope | A3 class envelope | A5 class envelope | envelope x envelope | – / – | 3.00 | – | 3.0 m < ICAO 7.5 m | -1272, 575 / -856, -1102 | [30-rwy-1L](30-rwy-1L.png) |
-| 132 | ENVELOPE | envelope-envelope | A5 class envelope | A9 class envelope | envelope x envelope | – / – | 3.00 | – | 3.0 m < ICAO 7.5 m | -1310, 637 / -861, -1175 | [30-rwy-1L](30-rwy-1L.png) |
-| 133 | ENVELOPE | envelope-envelope | A10 class envelope | A9 class envelope | envelope x envelope | – / – | 3.00 | – | 3.0 m < ICAO 7.5 m | -1335, 705 / -852, -1247 | – |
-| 134 | ENVELOPE | envelope-envelope | G3 class envelope | G4 class envelope | envelope x envelope | – / – | 3.01 | – | 3.0 m < ICAO 7.5 m | -1420, 190 / -1167, -831 | – |
-| 135 | DOCK-MAX | aircraft-aircraft | F14 md11 | F16 md11 | aircraft x aircraft | – / – | 3.09 | – | 3.1 m < ICAO 7.5 m | -1221, -122 / -1136, -462 | – |
-| 136 | ENVELOPE | envelope-envelope | F14 class envelope | F16 class envelope | envelope x envelope | – / – | 3.09 | – | 3.1 m < ICAO 7.5 m | -1218, -127 / -1136, -457 | – |
-| 137 | DOCK-MAX | aircraft-aircraft | F12 md11 | F14 md11 | aircraft x aircraft | – / – | 3.10 | – | 3.1 m < ICAO 7.5 m | -1171, -98 / -1081, -461 | – |
-| 138 | ENVELOPE | envelope-envelope | F12 class envelope | F14 class envelope | envelope x envelope | – / – | 3.10 | – | 3.1 m < ICAO 7.5 m | -1169, -102 / -1081, -455 | – |
-| 139 | DOCK-REF | aircraft-aircraft | B17 b38m | B18 b38m | aircraft x aircraft | – / – | 3.39 | – | 3.4 m < ICAO 4.5 m | -834, 857 / -337, -1147 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 140 | DOCK-MAX | aircraft-aircraft | B17 b39m | B18 b39m | aircraft x aircraft | – / – | 3.39 | – | 3.4 m < ICAO 4.5 m | -831, 859 / -334, -1147 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 141 | ENVELOPE | envelope-envelope | B26 class envelope | B27 class envelope | envelope x envelope | – / – | 3.46 | – | 3.5 m < ICAO 4.5 m | -1047, 923 / -495, -1305 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 142 | DOCK-REF | aircraft-aircraft | E3 b38m | E6 b38m | aircraft x aircraft | – / – | 3.78 | – | 3.8 m < ICAO 4.5 m | -892, -16 / -796, -403 | – |
-| 143 | DOCK-MAX | aircraft-aircraft | B3 b39m | C1 b39m | aircraft x aircraft | – / – | 3.80 | – | 3.8 m < ICAO 4.5 m | -751, 522 / -420, -813 | [30-rwy-1L](30-rwy-1L.png) |
-| 144 | OVERSIZE | oversize-not-blocked | A2:b744 | A1 class envelope | aircraft x envelope | – / – | 3.87 | – | b744 (68.4 m span) at A2 reaches A1 (nose distance 94.8 m >= block radius 59.0 m): A1 stays available | -1089, 570 / -697, -1012 | [30-rwy-1L](30-rwy-1L.png) |
-| 145 | ENVELOPE | envelope-envelope | B13 class envelope | B14 class envelope | envelope x envelope | – / – | 4.10 | – | 4.1 m < ICAO 4.5 m | -798, 781 / -341, -1064 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 146 | ENVELOPE | envelope-envelope | B12 class envelope | B9 class envelope | envelope x envelope | – / – | 4.20 | – | 4.2 m < ICAO 4.5 m | -758, 705 / -341, -977 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 147 | DOCK-MAX | aircraft-aircraft | F16 md11 | F17 md11 | aircraft x aircraft | – / – | 4.40 | – | 4.4 m < ICAO 7.5 m | -1270, -148 / -1192, -462 | – |
-| 148 | ENVELOPE | envelope-envelope | F16 class envelope | F17 class envelope | envelope x envelope | – / – | 4.40 | – | 4.4 m < ICAO 7.5 m | -1267, -153 / -1192, -456 | – |
-| 149 | OVERSIZE | oversize-not-blocked | G2:a388 | G1 class envelope | aircraft x envelope | – / – | 4.54 | – | a388 (79.8 m span) at G2 reaches G1 (nose distance 74.3 m >= block radius 71.2 m): G1 stays available | -1270, 88 / -1082, -671 | – |
-| 150 | OVERSIZE | oversize-not-blocked | F13:a388 | F15 class envelope | aircraft x envelope | – / – | 4.63 | – | a388 (79.8 m span) at F13 reaches F15 (nose distance 73.6 m >= block radius 71.2 m): F15 stays available | -1176, -287 / -1174, -296 | – |
-| 151 | OVERSIZE | oversize-not-blocked | A8:a388 | A6 class envelope | aircraft x envelope | – / – | 5.54 | – | a388 (79.8 m span) at A8 reaches A6 (nose distance 80.0 m >= block radius 73.5 m): A6 stays available | -1157, 700 / -696, -1159 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 152 | ENVELOPE | envelope-envelope | F11 class envelope | F13 class envelope | envelope x envelope | – / – | 5.57 | – | 5.6 m < ICAO 7.5 m | -1105, -254 / -1095, -291 | – |
-| 153 | OVERSIZE | oversize-not-blocked | A6:a388 | A8 class envelope | aircraft x envelope | – / – | 5.57 | – | a388 (79.8 m span) at A6 reaches A8 (nose distance 80.0 m >= block radius 73.5 m): A8 stays available | -1159, 705 / -695, -1165 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 154 | DOCK-MAX,DOCK-REF | aircraft-aircraft | G2 b77w | G5 b77w | aircraft x aircraft | – / – | 5.63 | – | 5.6 m < ICAO 7.5 m | -1340, 56 / -1159, -675 | – |
-| 155 | DOCK-MAX,DOCK-REF | aircraft-aircraft | G10 b77w | G9 b77w | aircraft x aircraft | – / – | 5.70 | – | 5.7 m < ICAO 7.5 m | -1528, -44 / -1372, -675 | – |
-| 156 | DOCK-MAX,DOCK-REF | aircraft-aircraft | G6 b77w | G9 b77w | aircraft x aircraft | – / – | 5.80 | – | 5.8 m < ICAO 7.5 m | -1466, -10 / -1301, -675 | – |
-| 157 | ENVELOPE | envelope-envelope | A2 class envelope | A6 class envelope | envelope x envelope | – / – | 6.00 | – | 6.0 m < ICAO 7.5 m | -1121, 634 / -695, -1084 | [30-rwy-1L](30-rwy-1L.png) |
-| 158 | OVERSIZE | oversize-not-blocked | A11:a388 | A8 class envelope | aircraft x envelope | – / – | 6.03 | – | a388 (79.8 m span) at A11 reaches A8 (nose distance 80.5 m >= block radius 73.5 m): A8 stays available | -1194, 771 / -696, -1239 | [30-rwy-1L](30-rwy-1L.png) |
-| 159 | OVERSIZE | oversize-not-blocked | A8:a388 | A11 class envelope | aircraft x envelope | – / – | 6.07 | – | a388 (79.8 m span) at A8 reaches A11 (nose distance 80.5 m >= block radius 73.5 m): A11 stays available | -1197, 776 / -696, -1245 | [30-rwy-1L](30-rwy-1L.png) |
-| 160 | DOCK-MAX,DOCK-REF | aircraft-aircraft | G5 b77w | G6 b77w | aircraft x aircraft | – / – | 6.31 | – | 6.3 m < ICAO 7.5 m | -1403, 23 / -1230, -675 | – |
-| 161 | DOCK-MAX | aircraft-aircraft | A1 b39m | A2 b77w | aircraft x aircraft | – / – | 6.81 | – | 6.8 m < ICAO 7.5 m | -1089, 568 / -698, -1011 | [30-rwy-1L](30-rwy-1L.png) |
-| 162 | OVERSIZE | oversize-not-blocked | A2:b748 | A6 class envelope | aircraft x envelope | – / – | 7.01 | – | b748 (68.4 m span) at A2 reaches A6 (nose distance 75.0 m >= block radius 73.5 m): A6 stays available | -1120, 635 / -694, -1084 | [30-rwy-1L](30-rwy-1L.png) |
-| 163 | OVERSIZE | oversize-not-blocked | A6:b748 | A2 class envelope | aircraft x envelope | – / – | 7.02 | – | b748 (68.4 m span) at A6 reaches A2 (nose distance 75.0 m >= block radius 73.5 m): A2 stays available | -1120, 635 / -694, -1085 | [30-rwy-1L](30-rwy-1L.png) |
-| 164 | DOCK-MAX,DOCK-REF | aircraft-aircraft | G4 b77w | G7 b77w | aircraft x aircraft | – / – | 7.10 | – | 7.1 m < ICAO 7.5 m | -1484, 156 / -1239, -831 | – |
-| 165 | DOCK-MAX,DOCK-REF | aircraft-aircraft | A5 b77w | A9 b77w | aircraft x aircraft | – / – | 7.10 | – | 7.1 m < ICAO 7.5 m | -1307, 638 / -858, -1175 | [30-rwy-1L](30-rwy-1L.png) |
-| 166 | DOCK-MAX,DOCK-REF | aircraft-aircraft | A10 b77w | A9 b77w | aircraft x aircraft | – / – | 7.10 | – | 7.1 m < ICAO 7.5 m | -1340, 702 / -857, -1247 | – |
-| 167 | DOCK-MAX,DOCK-REF | aircraft-aircraft | G3 b77w | G4 b77w | aircraft x aircraft | – / – | 7.11 | – | 7.1 m < ICAO 7.5 m | -1420, 190 / -1167, -831 | – |
-| 168 | DOCK-MAX,DOCK-REF | aircraft-aircraft | A3 b77w | A5 b77w | aircraft x aircraft | – / – | 7.38 | – | 7.4 m < ICAO 7.5 m | -1274, 574 / -858, -1103 | [30-rwy-1L](30-rwy-1L.png) |
+| 59 | STATIC | pier-on-movement-surface | RWY 19L MALSF approach-light post 61 m from the threshold | EMAS area 19L, EMAS bed 19L (3-D) | post x surface | 36.65 / 0.1 | – | – | RWY 19L MALSF approach-light post 61 m from the threshold (1.3 m high) stands 36.6 m inside EMAS area 19L, EMA | 762, -1001 / 207, 1241 | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| 60 | STATIC | pier-on-movement-surface | RWY 28R ALSF2 approach-light pier 152 m from the threshold | blast pad 28R | catwalk x surface | 30.48 / 27.5 | – | – | RWY 28R ALSF2 approach-light pier 152 m from the threshold (1.3 m high) stands 30.5 m inside blast pad 28R | 1668, 613 / 1761, 235 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 61 | STATIC | pier-on-movement-surface | RWY 28R ALSF2 approach-light post 30 m from the threshold | RWY 10L/28R | post x surface | 30.48 / 0.1 | – | – | RWY 28R ALSF2 approach-light post 30 m from the threshold (1.3 m high) stands 30.5 m inside RWY 10L/28R | 1560, 556 / 1639, 235 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 62 | STATIC | pier-on-movement-surface | RWY 28R ALSF2 approach-light post 61 m from the threshold | RWY 10L/28R | post x surface | 30.48 / 0.1 | – | – | RWY 28R ALSF2 approach-light post 61 m from the threshold (1.3 m high) stands 30.5 m inside RWY 10L/28R | 1587, 571 / 1670, 235 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 63 | STATIC | pier-on-movement-surface | RWY 28R ALSF2 approach-light post 122 m from the threshold | blast pad 28R | post x surface | 30.48 / 0.1 | – | – | RWY 28R ALSF2 approach-light post 122 m from the threshold (1.3 m high) stands 30.5 m inside blast pad 28R | 1640, 599 / 1731, 235 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 64 | STATIC | pier-on-movement-surface | RWY 28L MALSR approach-light post 61 m from the threshold | RWY 10R/28L | post x surface | 30.45 / 0.1 | – | – | RWY 28L MALSR approach-light post 61 m from the threshold (1.3 m high) stands 30.4 m inside RWY 10R/28L | 1480, 773 / 1670, 7 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 65 | STATIC | pier-on-movement-surface | RWY 28L MALSR approach-light post 122 m from the threshold | blast pad 28L | post x surface | 30.45 / 0.1 | – | – | RWY 28L MALSR approach-light post 122 m from the threshold (1.3 m high) stands 30.4 m inside blast pad 28L | 1534, 801 / 1731, 7 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 66 | STATIC | sign-on-movement-surface | distance-remaining sign 391 | taxiway Taxiway M | sign x surface | 17.41 / 0.3 | – | – | distance-remaining sign 391 (1.5 m high) stands 17.4 m inside taxiway Taxiway M | -356, 1235 / 262, -1258 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 67 | STATIC | sign-on-movement-surface | distance-remaining sign 374 | taxiway Taxiway D | sign x surface | 16.94 / 0.3 | – | – | distance-remaining sign 374 (1.5 m high) stands 16.9 m inside taxiway Taxiway D | -676, -302 / -738, -48 | – |
+| 68 | STATIC | sign-on-movement-surface | distance-remaining sign 363 | taxiway Taxiway D | sign x surface | 16.27 / 0.3 | – | – | distance-remaining sign 363 (1.5 m high) stands 16.3 m inside taxiway Taxiway D | -518, -601 / -738, 290 | – |
+| 69 | STATIC | pier-on-movement-surface | RWY 19L MALSF approach-light post 122 m from the threshold | EMAS area 19L, EMAS bed 19L (3-D) | post x surface | 15.85 / 0.1 | – | – | RWY 19L MALSF approach-light post 122 m from the threshold (1.3 m high) stands 15.8 m inside EMAS area 19L, EM | 790, -1055 / 207, 1302 | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| 70 | STATIC | sign-on-movement-surface | hold/location sign 22 | taxiway Taxiway R/U | sign x surface | 12.40 / 0.7 | – | – | hold/location sign 22 (1.2 m high) stands 12.4 m inside taxiway Taxiway R/U | -1312, -871 / -1566, 159 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 71 | STATIC | sign-on-movement-surface | hold/location sign 23 | taxiway Taxiway R/U | sign x surface | 11.25 / 0.2 | – | – | hold/location sign 23 (1.2 m high) stands 11.3 m inside taxiway Taxiway R/U | -1310, -870 / -1564, 159 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 72 | STATIC | sign-on-movement-surface | hold/location sign 42 | taxiway Taxiway D | sign x surface | 7.88 / 0.7 | – | – | hold/location sign 42 (1.2 m high) stands 7.9 m inside taxiway Taxiway D | -573, -482 / -732, 159 | – |
+| 73 | STATIC | pier-on-movement-surface | RWY 28R ALSF2 approach-light pier 183 m from the threshold | blast pad 28R | catwalk x surface | 6.56 / 27.5 | – | – | RWY 28R ALSF2 approach-light pier 183 m from the threshold (1.3 m high) stands 6.6 m inside blast pad 28R | 1694, 628 / 1792, 235 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 74 | STATIC | pier-on-movement-surface | RWY 28L MALSR approach-light pier 183 m from the threshold | blast pad 28L | catwalk x surface | 6.56 / 27.5 | – | – | RWY 28L MALSR approach-light pier 183 m from the threshold (1.3 m high) stands 6.6 m inside blast pad 28L | 1588, 830 / 1792, 7 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 75 | STATIC | sign-on-movement-surface | hold/location sign 43 | taxiway Taxiway D | sign x surface | 6.47 / 0.2 | – | – | hold/location sign 43 (1.2 m high) stands 6.5 m inside taxiway Taxiway D | -572, -481 / -730, 159 | – |
+| 76 | STATIC | sign-on-movement-surface | hold/location sign 323 | taxiway Taxiway F | sign x surface | 6.42 / 0.3 | – | – | hold/location sign 323 (1.2 m high) stands 6.4 m inside taxiway Taxiway F | 182, 264 / 284, -148 | – |
+| 77 | STATIC | sign-on-movement-surface | hold/location sign 322 | taxiway Taxiway F | sign x surface | 5.80 / 0.6 | – | – | hold/location sign 322 (1.2 m high) stands 5.8 m inside taxiway Taxiway F | 182, 266 / 285, -150 | – |
+| 78 | STATIC | sign-on-movement-surface | distance-remaining sign 376 | taxiway Taxiway Q | sign x surface | 5.27 / 0.4 | – | – | distance-remaining sign 376 (1.5 m high) stands 5.3 m inside taxiway Taxiway Q | -1215, -586 / -1348, -48 | [30-rwy-10R](30-rwy-10R.png) |
+| 79 | STATIC | sign-on-movement-surface | hold/location sign 15 | taxiway Taxiway C1 | sign x surface | 3.22 / 0.3 | – | – | hold/location sign 15 (1.2 m high) stands 3.2 m inside taxiway Taxiway C1 | -1569, -1190 / -1943, 321 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 80 | STATIC | sign-on-movement-surface | hold/location sign 68 | taxiway Taxiway P | sign x surface | 2.98 / 0.7 | – | – | hold/location sign 68 (1.2 m high) stands 3.0 m inside taxiway Taxiway P | 680, 179 / 685, 159 | – |
+| 81 | STATIC | sign-on-movement-surface | hold/location sign 14 | taxiway Taxiway C1 | sign x surface | 1.64 / 0.7 | – | – | hold/location sign 14 (1.2 m high) stands 1.6 m inside taxiway Taxiway C1 | -1567, -1189 / -1941, 321 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 82 | STATIC | sign-on-movement-surface | hold/location sign 69 | taxiway Taxiway P | sign x surface | 1.53 / 0.2 | – | – | hold/location sign 69 (1.2 m high) stands 1.5 m inside taxiway Taxiway P | 679, 178 / 684, 159 | – |
+| 83 | STATIC | sign-on-movement-surface | hold/location sign 324 | taxiway Taxiway F/F1/L | sign x surface | 1.00 / 0.6 | – | – | hold/location sign 324 (1.2 m high) stands 1.0 m inside taxiway Taxiway F/F1/L | 178, 288 / 292, -171 | – |
+| 84 | STATIC | sign-on-movement-surface | hold/location sign 325 | taxiway Taxiway F/F1/L | sign x surface | 0.46 / 0.2 | – | – | hold/location sign 325 (1.2 m high) stands 0.5 m inside taxiway Taxiway F/F1/L | 178, 289 / 292, -173 | – |
+| 85 | STATIC | sign-on-movement-surface | hold/location sign 126 | taxiway Taxiway T/K/A/B | sign x surface | 0.39 / 0.7 | – | – | hold/location sign 126 (1.2 m high) stands 0.4 m inside taxiway Taxiway T/K/A/B | -908, -400 / -990, -70 | – |
+| 86 | STATIC | sign-on-movement-surface | hold/location sign 127 | taxiway Taxiway T/K/A/B | sign x surface | 0.35 / 0.2 | – | – | hold/location sign 127 (1.2 m high) stands 0.3 m inside taxiway Taxiway T/K/A/B | -906, -399 / -988, -70 | – |
+| 87 | STATIC | sign-on-movement-surface | hold/location sign 36 | taxiway Taxiway K | sign x surface | 0.28 / 0.7 | – | – | hold/location sign 36 (1.2 m high) reaches 0.28 m onto taxiway Taxiway K | -708, -736 / -970, 321 | – |
+| 88 | STATIC | sign-on-movement-surface | distance-remaining sign 379 | RWY 10R/28L | sign x surface | 0.13 / 0.3 | – | – | distance-remaining sign 379 (1.5 m high) reaches 0.13 m onto RWY 10R/28L | -51, -69 / -77, 37 | – |
+| 89 | STATIC | pier-on-movement-surface | RWY 28R ALSF2 approach-light post 91 m from the threshold | RWY 10L/28R, blast pad 28R | post x surface | 0.12 / 0.1 | – | – | RWY 28R ALSF2 approach-light post 91 m from the threshold (1.3 m high) stands 0.1 m inside RWY 10L/28R, blast  | 1614, 585 / 1700, 235 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 90 | STATIC | sign-on-movement-surface | hold/location sign 134 | taxiway Taxiway B/D, taxiway Taxiway D | sign x surface | 0.11 / 0.7 | – | – | hold/location sign 134 (1.2 m high) stands 0.1 m inside taxiway Taxiway B/D, taxiway Taxiway D | -674, -276 / -725, -70 | – |
+| 91 | STATIC | sign-on-movement-surface | distance-remaining sign 386 | RWY 10L/28R | sign x surface | 0.11 / 0.3 | – | – | distance-remaining sign 386 (1.5 m high) reaches 0.11 m onto RWY 10L/28R | 355, -113 / 262, 266 | – |
+| 92 | STATIC | sign-on-movement-surface | hold/location sign 135 | taxiway Taxiway B/D, taxiway Taxiway D | sign x surface | 0.11 / 0.2 | – | – | hold/location sign 135 (1.2 m high) stands 0.1 m inside taxiway Taxiway B/D, taxiway Taxiway D | -672, -276 / -723, -70 | – |
+| 93 | STATIC | sign-on-movement-surface | distance-remaining sign 360 | RWY 1R/19L | sign x surface | 0.04 / 0.3 | – | – | distance-remaining sign 360 (1.5 m high) stands 0.0 m inside RWY 1R/19L | 291, -174 / 176, 290 | – |
+| 94 | STATIC | sign-on-movement-surface | distance-remaining sign 371 | RWY 1R/19L | sign x surface | 0.04 / 0.3 | – | – | distance-remaining sign 371 (1.5 m high) stands 0.0 m inside RWY 1R/19L | 133, 125 / 176, -48 | – |
 
-### WARNING (41)
+### CLEARANCE (41)
 
 | # | scenarios | kind | object A | object B | parts | depth / area | dist | vgap | note | x, z / s, t | sheet |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 169 | STATIC | building-building | West Field Road AirTrain Station (Outbound) | Westfield Road AirTrain Station (Outbound)g | building x building | 30.79 / 399.7 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 400 m2: coplanar faces z-fight - probably one station listed twi | -2115, -321 / -2020, -704 | – |
-| 170 | STATIC | building-building | Central Parking Garage | Terminal One AirTrain Station | building x building | 26.71 / 869.6 | 0.00 | – | walls interpenetrate: 76 % of Terminal One AirTrain Station lies inside Central Parking Garage (13.0 vs 22.0 m | -903, 400 / -612, -775 | – |
-| 171 | STATIC | building-building | Terminal complex ramp level | Air Traffic Control Tower | building x building | 25.96 / 1125.3 | 0.00 | – | walls interpenetrate: 92 % of Air Traffic Control Tower lies inside Terminal complex ramp level (14.0 vs 5.0 m | -742, 334 / -500, -642 | – |
-| 172 | STATIC | building-building | Terminal 2 | Air Traffic Control Tower | building x building | 25.68 / 1119.9 | 0.00 | – | walls interpenetrate: 92 % of Air Traffic Control Tower lies inside Terminal 2 (14.0 vs 19.6 m high) | -742, 335 / -500, -643 | – |
-| 173 | STATIC | building-building | Garage G AirTrain Station | Garage G | building x building | 24.95 / 1049.2 | 0.00 | – | walls interpenetrate: 31 % of Garage G AirTrain Station lies inside Garage G (13.0 vs 21.0 m high) | -1497, 306 / -1181, -969 | – |
-| 174 | STATIC | building-building | Central Parking Garage | Terminal Two AirTrain Station | building x building | 20.27 / 824.0 | 0.00 | – | walls interpenetrate: 64 % of Terminal Two AirTrain Station lies inside Central Parking Garage (13.0 vs 22.0 m | -806, 230 / -605, -580 | – |
-| 175 | STATIC | building-building | Central Parking Garage | Terminal Three AirTrain Station | building x building | 14.05 / 722.0 | 0.00 | – | walls interpenetrate: 62 % of Terminal Three AirTrain Station lies inside Central Parking Garage (13.0 vs 22.0 | -986, 141 / -806, -585 | – |
-| 176 | STATIC | building-building | Terminal 1 Air Train Station | Terminal One AirTrain Station | building x building | 13.14 / 684.4 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 684 m2: coplanar faces z-fight - probably one station listed twi | -902, 400 / -611, -775 | – |
-| 177 | STATIC | building-building | Terminal complex ramp level | International Terminal A Air Train Station | building x building | 13.09 / 895.1 | 0.00 | – | walls interpenetrate: 100 % of International Terminal A Air Train Station lies inside Terminal complex ramp le | -1172, 466 / -819, -959 | – |
-| 178 | STATIC | building-building | Terminal complex ramp level | International Terminal G Air Train Station | building x building | 13.09 / 895.1 | 0.00 | – | walls interpenetrate: 100 % of International Terminal G Air Train Station lies inside Terminal complex ramp le | -1240, 240 / -985, -791 | – |
-| 179 | STATIC | building-building | Terminal 2 Air Train Station | Terminal Two AirTrain Station | building x building | 12.46 / 702.9 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 703 m2: coplanar faces z-fight - probably one station listed twi | -808, 227 / -609, -578 | – |
-| 180 | STATIC | building-building | Terminal 3 Air Train Station | Terminal Three AirTrain Station | building x building | 11.02 / 688.1 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 688 m2: coplanar faces z-fight - probably one station listed twi | -984, 140 / -804, -583 | – |
-| 181 | STATIC | building-building | Terminal complex ramp level | Terminal Two AirTrain Station | building x building | 8.82 / 206.6 | 0.00 | – | walls interpenetrate: 16 % of Terminal Two AirTrain Station lies inside Terminal complex ramp level (13.0 vs 5 | -755, 212 / -569, -540 | – |
-| 182 | STATIC | building-building | Terminal 2 | Terminal Two AirTrain Station | building x building | 8.82 / 206.6 | 0.00 | – | walls interpenetrate: 16 % of Terminal Two AirTrain Station lies inside Terminal 2 (13.0 vs 19.6 m high) | -755, 212 / -569, -540 | – |
-| 183 | STATIC | building-building | Terminal complex ramp level | International Terminal (A) AirTrain Station | building x building | 8.79 / 1185.1 | 0.00 | – | walls interpenetrate: 100 % of International Terminal (A) AirTrain Station lies inside Terminal complex ramp l | -1252, 242 / -994, -798 | – |
-| 184 | STATIC | building-building | International Terminal (A) AirTrain Station | International Terminal G Air Train Station | building x building | 8.78 / 598.3 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 598 m2: coplanar faces z-fight - probably one station listed twi | -1241, 238 / -986, -790 | – |
-| 185 | STATIC | building-building | International Terminal | International Terminal (G) AirTrain Station | building x building | 8.72 / 1076.0 | 0.00 | – | walls interpenetrate: 90 % of International Terminal (G) AirTrain Station lies inside International Terminal ( | -1172, 466 / -819, -959 | – |
-| 186 | STATIC | building-building | Terminal complex ramp level | International Terminal (G) AirTrain Station | building x building | 8.72 / 1075.9 | 0.00 | – | walls interpenetrate: 90 % of International Terminal (G) AirTrain Station lies inside Terminal complex ramp le | -1172, 466 / -819, -959 | – |
-| 187 | STATIC | building-building | International Terminal (G) AirTrain Station | International Terminal A Air Train Station | building x building | 8.71 / 594.0 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 594 m2: coplanar faces z-fight - probably one station listed twi | -1172, 466 / -819, -959 | – |
-| 188 | STATIC | building-building | Terminal 3 | Terminal Three AirTrain Station | building x building | 8.19 / 136.8 | 0.00 | – | walls interpenetrate: 12 % of Terminal Three AirTrain Station lies inside Terminal 3 (13.0 vs 21.6 m high) | -1001, 97 / -840, -553 | – |
-| 189 | STATIC | building-building | Terminal complex ramp level | Terminal Three AirTrain Station | building x building | 8.19 / 134.2 | 0.00 | – | walls interpenetrate: 12 % of Terminal Three AirTrain Station lies inside Terminal complex ramp level (13.0 vs | -1001, 97 / -840, -553 | – |
-| 190 | STATIC | building-building | West Field Road AirTrain Station (Inbound) | Westfield Road AirTrain Station (Inbound) | building x building | 7.36 / 462.1 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 462 m2: coplanar faces z-fight - probably one station listed twi | -2130, -319 / -2032, -712 | – |
-| 191 | STATIC | building-building | Harvey Milk Terminal 1 | Terminal One AirTrain Station | building x building | 2.67 / 11.5 | 0.00 | – | walls interpenetrate: 1 % of Terminal One AirTrain Station lies inside Harvey Milk Terminal 1 (13.0 vs 20.6 m  | -891, 453 / -577, -817 | – |
-| 192 | LIVE | gse-check-mismatch | catering mesh | gates.js placeVehicles() check rectangle | catering x code | 2.43 / 1.2 | – | – | 1.2 m2 of the catering mesh lies outside the 8.2 x 2.4 m rectangle the collision check uses | -976, 961 / -414, -1306 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 193 | LIVE | gse-check-mismatch | fuel mesh | gates.js placeVehicles() check rectangle | fuel x code | 2.41 / 1.7 | – | – | 1.7 m2 of the fuel mesh lies outside the 8.2 x 2.5 m rectangle the collision check uses | -844, 859 / -345, -1154 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 194 | LIVE | gse-check-mismatch | fuel mesh | gates.js placeVehicles() check rectangle | fuel x code | 2.41 / 1.7 | – | – | 1.7 m2 of the fuel mesh lies outside the 8.2 x 2.5 m rectangle the collision check uses | -1023, 950 / -462, -1318 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 195 | STATIC | building-building | Terminal complex ramp level | Terminal One AirTrain Station | building x building | 2.33 / 8.0 | 0.00 | – | walls interpenetrate: 1 % of Terminal One AirTrain Station lies inside Terminal complex ramp level (13.0 vs 5. | -892, 454 / -577, -817 | – |
-| 196 | STATIC | building-building | Long Term Parking AirTrain Station | Long-Term Parking Garage 2 | building x building | 1.17 / 5.7 | 0.00 | – | walls interpenetrate: 0 % of Long Term Parking AirTrain Station lies inside Long-Term Parking Garage 2 (13.0 v | -2236, -1834 / -2833, 577 | – |
-| 197 | DOCK-MAX,DOCK-REF | bridge-bridge | G2 bridge G2 (L1) | G2 bridge G2 (L2) | stair x pedestal; stair x rotunda | 0.74 / 0.7 | 0.00 | 0.13 | passes 0.13 m above/below (plan overlap 0.7 m2) | -1317, 113 / -1112, -715 | – |
-| 198 | DOCK-MAX,DOCK-REF | bridge-bridge | F17 bridge F17 (L1) | F17 bridge F18 (L2) | stair x pca-unit; stair x tunnel1; stair x tunnel2 | 0.52 / 0.2 | 0.00 | 0.23 | passes 0.23 m above/below (plan overlap 0.2 m2) | -1287, -200 / -1231, -424 | – |
-| 199 | ENVELOPE | envelope-rest-bridge | A3 bridge A3 (L1) (a332, a333, a359, a35k, b772, b77w ...) | A3 class envelope | bellows x envelope-type | 0.09 / 0.1 | 0.00 | -2.23 | touching (9 cm) | -1220, 559 / -818, -1064 | [30-rwy-1L](30-rwy-1L.png) |
-| 200 | ENVELOPE | envelope-rest-bridge | G6 bridge G6 (L1) (a332, a333, a359, a35k, b772, b77w ...) | G6 class envelope | bellows x envelope-type | 0.09 / 0.1 | 0.00 | -2.23 | touching (9 cm) | -1452, 45 / -1263, -717 | – |
-| 201 | ENVELOPE | envelope-rest-bridge | G2 bridge G2 (L1) (a332, a333, a359, a35k, md11) | G2 class envelope | bellows x envelope-type | 0.09 / 0.0 | 0.00 | -2.23 | touching (9 cm) | -1327, 112 / -1121, -718 | – |
-| 202 | LIVE | bridge-aircraft | AAL2722 A21N at B25 (gate) | B25 bridge B24 (L1) | aircraft x tunnel2 | 0.07 / 0.0 | 0.00 | 0.16 | passes 0.16 m above/below (plan overlap 0.0 m2) | -976, 946 / -422, -1292 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 203 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-building | F17 bridge F17 (L1) | Boarding Area F | rotunda x building | 0.06 / 0.0 | 0.00 | -8.70 | touching (6 cm) | -1281, -217 / -1234, -407 | – |
-| 204 | DOCK-MAX,DOCK-REF | bridge-bridge | A3 bridge A3 (L1) | A3 bridge A4 (L2) | stair x tunnel1 | 0.05 / 0.0 | 0.00 | -0.56 | touching (5 cm) | -1219, 549 / -822, -1054 | [30-rwy-1L](30-rwy-1L.png) |
-| 205 | DOCK-MAX,DOCK-REF,LIVE,REST | bridge-building | F17 bridge F17 (L1) | Terminal complex ramp level | rotunda x building | 0.04 / 0.0 | 0.00 | 0.10 | passes 0.10 m above/below (plan overlap 0.0 m2) | -1281, -217 / -1234, -406 | – |
-| 206 | LIVE | marker-no-body | GroundPhysics | ACA758 type ? (gate) | physics x aircraft | – / – | – | – | drawn as a marker: no model/TYPES entry, so it is not a solid body (ground.js skips it) | -506, 30 / -434, -263 | – |
-| 375 | LIVE | gse-aircraft | AAL2722 A21N at B25 (gate) | catering (B25) | aircraft x catering | – / – | 0.22 | – | only 0.22 m apart | -980, 958 / -419, -1305 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
-| 376 | ENVELOPE | envelope-building | A3 class envelope (b762) | International Terminal | envelope-type x building | – / – | 2.92 | – | only 2.92 m apart | -1228, 531 / -838, -1043 | [30-rwy-1L](30-rwy-1L.png) |
-| 377 | ENVELOPE | envelope-building | Terminal complex ramp level (b762) | A3 class envelope | building x envelope-type | – / – | 2.93 | – | only 2.93 m apart | -1228, 531 / -838, -1043 | [30-rwy-1L](30-rwy-1L.png) |
+| 95 | ENVELOPE | envelope-envelope | F19 class envelope | F20 class envelope | envelope x envelope | – / – | 0.21 | – | 0.2 m < ICAO 7.5 m | -1361, -241 / -1316, -422 | – |
+| 96 | ENVELOPE | envelope-envelope | E10 class envelope | E12 class envelope | envelope x envelope | – / – | 0.35 | – | 0.4 m < ICAO 4.5 m | -820, -111 / -777, -285 | – |
+| 97 | OVERSIZE | oversize-not-blocked | A2:a388 | A6 class envelope | aircraft x envelope | – / – | 0.59 | – | a388 (79.8 m span) at A2 reaches A6 (nose distance 82.4 m >= block radius 80.8 m): A6 stays available | -1122, 632 / -697, -1082 | [30-rwy-1L](30-rwy-1L.png) |
+| 98 | ENVELOPE | envelope-envelope | C5 class envelope | C7 class envelope | envelope x envelope | – / – | 1.71 | – | 1.7 m < ICAO 7.5 m | -610, 365 / -370, -608 | – |
+| 99 | OVERSIZE | oversize-not-blocked | G7:a388 | G4 class envelope | aircraft x envelope | – / – | 2.32 | – | a388 (79.8 m span) at G7 reaches G4 (nose distance 72.5 m >= block radius 71.2 m): G4 stays available | -1482, 162 / -1235, -835 | – |
+| 100 | ENVELOPE | envelope-envelope | G7 class envelope | G8 class envelope | envelope x envelope | – / – | 2.33 | – | 2.3 m < ICAO 7.5 m | -1549, 125 / -1312, -834 | – |
+| 101 | OVERSIZE | oversize-not-blocked | G2:a388 | G1 class envelope | aircraft x envelope | – / – | 2.40 | – | a388 (79.8 m span) at G2 reaches G1 (nose distance 72.7 m >= block radius 71.2 m): G1 stays available | -1273, 91 / -1084, -674 | – |
+| 102 | OVERSIZE | oversize-not-blocked | A1:a388 | A2 class envelope | aircraft x envelope | – / – | 2.57 | – | a388 (79.8 m span) at A1 reaches A2 (nose distance 105.9 m >= block radius 73.5 m): A2 stays available | -1083, 568 / -693, -1007 | [30-rwy-1L](30-rwy-1L.png) |
+| 103 | ENVELOPE | envelope-envelope | A5 class envelope | A9 class envelope | envelope x envelope | – / – | 2.71 | – | 2.7 m < ICAO 7.5 m | -1308, 637 / -860, -1174 | [30-rwy-1L](30-rwy-1L.png) |
+| 104 | ENVELOPE | envelope-envelope | G2 class envelope | G5 class envelope | envelope x envelope | – / – | 2.85 | – | 2.9 m < ICAO 7.5 m | -1338, 52 / -1160, -670 | – |
+| 105 | OVERSIZE | oversize-not-blocked | A5:a388 | A4 class envelope | aircraft x envelope | – / – | 3.40 | – | a388 (79.8 m span) at A5 reaches A4 (nose distance 65.5 m >= block radius 59.0 m): A4 stays available | -1273, 568 / -861, -1096 | [30-rwy-1L](30-rwy-1L.png) |
+| 106 | ENVELOPE | envelope-envelope | G5 class envelope | G6 class envelope | envelope x envelope | – / – | 3.53 | – | 3.5 m < ICAO 7.5 m | -1402, 18 / -1232, -670 | – |
+| 107 | ENVELOPE | envelope-envelope | G6 class envelope | G9 class envelope | envelope x envelope | – / – | 3.54 | – | 3.5 m < ICAO 7.5 m | -1468, -12 / -1304, -674 | – |
+| 108 | DOCK-REF | aircraft-aircraft | E10 b38m | E12 b38m | aircraft x aircraft | – / – | 3.59 | – | 3.6 m < ICAO 4.5 m | -821, -113 / -779, -283 | – |
+| 109 | ENVELOPE | envelope-envelope | A10 class envelope | A9 class envelope | envelope x envelope | – / – | 3.66 | – | 3.7 m < ICAO 7.5 m | -1343, 701 / -861, -1246 | – |
+| 110 | ENVELOPE | envelope-envelope | G10 class envelope | G9 class envelope | envelope x envelope | – / – | 3.71 | – | 3.7 m < ICAO 7.5 m | -1533, -46 / -1377, -675 | – |
+| 111 | DOCK-MAX | aircraft-aircraft | C5 md11 | C7 b3xm | aircraft x aircraft | – / – | 3.89 | – | 3.9 m < ICAO 7.5 m | -608, 362 / -369, -604 | – |
+| 112 | ENVELOPE | envelope-envelope | A10 class envelope | A12 class envelope | envelope x envelope | – / – | 3.89 | – | 3.9 m < ICAO 7.5 m | -1372, 768 / -856, -1319 | – |
+| 113 | OVERSIZE | oversize-not-blocked | A2:a388 | A1 class envelope | aircraft x envelope | – / – | 3.93 | – | a388 (79.8 m span) at A2 reaches A1 (nose distance 105.9 m >= block radius 73.5 m): A1 stays available | -1079, 563 / -692, -1001 | [30-rwy-1L](30-rwy-1L.png) |
+| 114 | DOCK-REF | aircraft-aircraft | C5 b763 | C7 b38m | aircraft x aircraft | – / – | 4.16 | – | 4.2 m < ICAO 7.5 m | -612, 365 / -371, -609 | – |
+| 115 | ENVELOPE | envelope-envelope | F11 class envelope | F13 class envelope | envelope x envelope | – / – | 4.22 | – | 4.2 m < ICAO 7.5 m | -1109, -248 / -1096, -298 | – |
+| 116 | ENVELOPE | envelope-envelope | F20 class envelope | F21 class envelope | envelope x envelope | – / – | 4.31 | – | 4.3 m < ICAO 4.5 m | -1341, -274 / -1315, -383 | – |
+| 117 | ENVELOPE | envelope-envelope | F21 class envelope | F22 class envelope | envelope x envelope | – / – | 4.44 | – | 4.4 m < ICAO 7.5 m | -1307, -300 / -1296, -345 | – |
+| 118 | ENVELOPE | envelope-envelope | C10 class envelope | C8 class envelope | envelope x envelope | – / – | 4.68 | – | 4.7 m < ICAO 7.5 m | -583, 503 / -281, -717 | [30-rwy-1L](30-rwy-1L.png) |
+| 119 | ENVELOPE | envelope-envelope | A11 class envelope | A8 class envelope | envelope x envelope | – / – | 5.41 | – | 5.4 m < ICAO 7.5 m | -1195, 772 / -697, -1240 | [30-rwy-1L](30-rwy-1L.png) |
+| 120 | DOCK-REF | aircraft-aircraft | F19 b77w | F20 a21n | aircraft x aircraft | – / – | 5.79 | – | 5.8 m < ICAO 7.5 m | -1366, -241 / -1320, -424 | – |
+| 121 | ENVELOPE | envelope-envelope | A6 class envelope | A8 class envelope | envelope x envelope | – / – | 5.79 | – | 5.8 m < ICAO 7.5 m | -1163, 704 / -700, -1166 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 122 | OVERSIZE | oversize-not-blocked | A2:b748 | A1 class envelope | aircraft x envelope | – / – | 5.79 | – | b748 (68.4 m span) at A2 reaches A1 (nose distance 105.9 m >= block radius 73.5 m): A1 stays available | -1078, 569 / -688, -1006 | [30-rwy-1L](30-rwy-1L.png) |
+| 123 | ENVELOPE | envelope-envelope | G4 class envelope | G7 class envelope | envelope x envelope | – / – | 5.88 | – | 5.9 m < ICAO 7.5 m | -1482, 155 / -1239, -828 | – |
+| 124 | ENVELOPE | envelope-envelope | A2 class envelope | A6 class envelope | envelope x envelope | – / – | 6.03 | – | 6.0 m < ICAO 7.5 m | -1120, 630 / -697, -1080 | [30-rwy-1L](30-rwy-1L.png) |
+| 125 | ENVELOPE | envelope-envelope | C6 class envelope | C8 class envelope | envelope x envelope | – / – | 6.09 | – | 6.1 m < ICAO 7.5 m | -634, 512 / -322, -748 | [30-rwy-1L](30-rwy-1L.png) |
+| 126 | DOCK-MAX | aircraft-aircraft | F19 b779 | F20 b752 | aircraft x aircraft | – / – | 6.29 | – | 6.3 m < ICAO 7.5 m | -1367, -241 / -1322, -425 | – |
+| 127 | ENVELOPE | envelope-envelope | G1 class envelope | G2 class envelope | envelope x envelope | – / – | 6.42 | – | 6.4 m < ICAO 7.5 m | -1275, 90 / -1086, -674 | – |
+| 128 | DOCK-MAX | aircraft-aircraft | G7 b779 | G8 b779 | aircraft x aircraft | – / – | 6.53 | – | 6.5 m < ICAO 7.5 m | -1548, 123 / -1312, -831 | – |
+| 129 | DOCK-REF | aircraft-aircraft | G7 b77w | G8 b77w | aircraft x aircraft | – / – | 6.57 | – | 6.6 m < ICAO 7.5 m | -1548, 122 / -1312, -830 | – |
+| 130 | OVERSIZE | oversize-not-blocked | A2:b748 | A6 class envelope | aircraft x envelope | – / – | 6.94 | – | b748 (68.4 m span) at A2 reaches A6 (nose distance 82.4 m >= block radius 80.8 m): A6 stays available | -1119, 630 / -696, -1080 | [30-rwy-1L](30-rwy-1L.png) |
+| 131 | DOCK-MAX | aircraft-aircraft | G2 b779 | G5 b779 | aircraft x aircraft | – / – | 6.99 | – | 7.0 m < ICAO 7.5 m | -1339, 54 / -1160, -673 | – |
+| 132 | DOCK-REF | aircraft-aircraft | G2 b77w | G5 b77w | aircraft x aircraft | – / – | 7.01 | – | 7.0 m < ICAO 7.5 m | -1340, 55 / -1160, -674 | – |
+| 133 | DOCK-MAX | aircraft-aircraft | A5 b779 | A9 b779 | aircraft x aircraft | – / – | 7.32 | – | 7.3 m < ICAO 7.5 m | -1308, 638 / -859, -1174 | [30-rwy-1L](30-rwy-1L.png) |
+| 134 | DOCK-REF | aircraft-aircraft | A5 b77w | A9 b77w | aircraft x aircraft | – / – | 7.34 | – | 7.3 m < ICAO 7.5 m | -1306, 638 / -858, -1174 | [30-rwy-1L](30-rwy-1L.png) |
+| 135 | DOCK-MAX | aircraft-aircraft | A11 a388 | A8 b779 | aircraft x aircraft | – / – | 7.47 | – | 7.5 m < ICAO 7.5 m | -1196, 770 / -699, -1239 | [30-rwy-1L](30-rwy-1L.png) |
 
-### Bridge kinematics (168)
+### WARNING (122)
+
+| # | scenarios | kind | object A | object B | parts | depth / area | dist | vgap | note | x, z / s, t | sheet |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 136 | STATIC | building-building | West Field Road AirTrain Station (Outbound) | Westfield Road AirTrain Station (Outbound)g | building x building | 30.77 / 399.7 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 400 m2: coplanar faces z-fight - probably one station listed twi | -2117, -321 / -2022, -703 | – |
+| 137 | STATIC | building-building | Central Parking Garage | Terminal One AirTrain Station | building x building | 26.70 / 868.4 | 0.00 | – | walls interpenetrate: 76 % of Terminal One AirTrain Station lies inside Central Parking Garage (13.0 vs 22.0 m | -904, 399 / -613, -775 | – |
+| 138 | STATIC | building-building | Terminal complex ramp level | Air Traffic Control Tower | building x building | 25.80 / 1125.5 | 0.00 | – | walls interpenetrate: 92 % of Air Traffic Control Tower lies inside Terminal complex ramp level (14.0 vs 5.0 m | -743, 334 / -501, -642 | – |
+| 139 | STATIC | building-building | Terminal 2 | Air Traffic Control Tower | building x building | 25.63 / 1119.3 | 0.00 | – | walls interpenetrate: 92 % of Air Traffic Control Tower lies inside Terminal 2 (14.0 vs 19.6 m high) | -743, 334 / -502, -642 | – |
+| 140 | STATIC | building-building | Garage G AirTrain Station | Garage G | building x building | 25.07 / 1054.1 | 0.00 | – | walls interpenetrate: 31 % of Garage G AirTrain Station lies inside Garage G (13.0 vs 21.0 m high) | -1499, 305 / -1183, -969 | – |
+| 141 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | distance-remaining sign 369 | pavement x sign | 20.62 / – | – | – | 20.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 672, 409 / 786, -48 | – |
+| 142 | STATIC | building-building | Central Parking Garage | Terminal Two AirTrain Station | building x building | 20.33 / 826.3 | 0.00 | – | walls interpenetrate: 64 % of Terminal Two AirTrain Station lies inside Central Parking Garage (13.0 vs 22.0 m | -807, 230 / -606, -580 | – |
+| 143 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | distance-remaining sign 372 | pavement x sign | 17.20 / – | – | – | 17.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -136, -17 / -129, -48 | – |
+| 144 | STATIC | building-building | Central Parking Garage | Terminal Three AirTrain Station | building x building | 14.14 / 724.5 | 0.00 | – | walls interpenetrate: 62 % of Terminal Three AirTrain Station lies inside Central Parking Garage (13.0 vs 22.0 | -987, 141 / -807, -585 | – |
+| 145 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 21 | pavement x sign | 14.04 / – | – | – | 14.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1376, -904 / -1639, 158 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 146 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 115 | pavement x sign | 14.04 / – | – | – | 14.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1411, -838 / -1639, 83 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 147 | STATIC | building-building | Terminal 1 Air Train Station | Terminal One AirTrain Station | building x building | 13.14 / 686.9 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 687 m2: coplanar faces z-fight - probably one station listed twi | -903, 399 / -613, -775 | – |
+| 148 | STATIC | building-building | Terminal complex ramp level | International Terminal G Air Train Station | building x building | 13.09 / 895.9 | 0.00 | – | walls interpenetrate: 100 % of International Terminal G Air Train Station lies inside Terminal complex ramp le | -1242, 240 / -986, -791 | – |
+| 149 | STATIC | building-building | Terminal complex ramp level | International Terminal A Air Train Station | building x building | 13.09 / 894.8 | 0.00 | – | walls interpenetrate: 100 % of International Terminal A Air Train Station lies inside Terminal complex ramp le | -1173, 466 / -821, -959 | – |
+| 150 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 167 | pavement x sign | 13.04 / – | – | – | 13.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 633, 412 / 752, -70 | – |
+| 151 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 175 | pavement x sign | 12.81 / – | – | – | 12.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 815, 534 / 970, -92 | – |
+| 152 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 307 | pavement x sign | 12.81 / – | – | – | 12.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -49, 756 / 310, -692 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 153 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 309 | pavement x sign | 12.73 / – | – | – | 12.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -45, 755 / 313, -689 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 154 | STATIC | building-building | Terminal 2 Air Train Station | Terminal Two AirTrain Station | building x building | 12.48 / 704.4 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 704 m2: coplanar faces z-fight - probably one station listed twi | -809, 227 / -610, -578 | – |
+| 155 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 1 | pavement x sign | 12.21 / – | – | – | 12.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1900, -1162 / -2223, 141 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 156 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 20 | pavement x sign | 12.04 / – | – | – | 12.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1375, -904 / -1637, 158 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 157 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 114 | pavement x sign | 12.04 / – | – | – | 12.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1410, -837 / -1637, 83 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 158 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 215 | pavement x sign | 12.04 / – | – | – | 12.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -541, 1238 / 99, -1348 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 159 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 173 | pavement x sign | 12.00 / – | – | – | 12.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 796, 473 / 925, -47 | – |
+| 160 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 7 | pavement x sign | 11.66 / – | – | – | 11.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1758, -1340 / -2180, 365 | [30-rwy-10L](30-rwy-10L.png) |
+| 161 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 17 | pavement x sign | 11.66 / – | – | – | 11.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1569, -1006 / -1857, 158 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 162 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 0 | pavement x sign | 11.40 / – | – | – | 11.4 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1898, -1162 / -2221, 142 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 163 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 11 | pavement x sign | 11.40 / – | – | – | 11.4 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1569, -1006 / -1858, 158 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 164 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 308 | pavement x sign | 11.31 / – | – | – | 11.3 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -45, 754 / 312, -687 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 165 | STATIC | building-building | Terminal 3 Air Train Station | Terminal Three AirTrain Station | building x building | 11.08 / 689.3 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 689 m2: coplanar faces z-fight - probably one station listed twi | -985, 140 / -806, -583 | – |
+| 166 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 166 | pavement x sign | 11.05 / – | – | – | 11.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 631, 412 / 750, -70 | – |
+| 167 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 16 | pavement x sign | 10.77 / – | – | – | 10.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1567, -1005 / -1855, 158 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 168 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 174 | pavement x sign | 10.63 / – | – | – | 10.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 814, 532 / 968, -91 | – |
+| 169 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 199 | pavement x sign | 10.63 / – | – | – | 10.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -881, 1276 / -184, -1540 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 170 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 306 | pavement x sign | 10.63 / – | – | – | 10.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -50, 757 / 309, -693 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 171 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 10 | pavement x sign | 10.30 / – | – | – | 10.3 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1571, -1007 / -1860, 158 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 172 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 105 | pavement x sign | 10.30 / – | – | – | 10.3 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1478, -912 / -1733, 117 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 173 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 191 | pavement x sign | 10.05 / – | – | – | 10.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 1489, 864 / 1720, -70 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 174 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 172 | pavement x sign | 10.00 / – | – | – | 10.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 796, 475 / 926, -48 | – |
+| 175 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 214 | pavement x sign | 10.00 / – | – | – | 10.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -543, 1239 / 98, -1349 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 176 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 273 | pavement x sign | 10.00 / – | – | – | 10.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -537, 1297 / 130, -1397 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 177 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 110 | pavement x sign | 9.85 / – | – | – | 9.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1411, -666 / -1559, -69 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 178 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 198 | pavement x sign | 9.85 / – | – | – | 9.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -879, 1276 / -182, -1539 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 179 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 5 | pavement x sign | 9.43 / – | – | – | 9.4 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1754, -1273 / -2145, 308 | [30-rwy-10L](30-rwy-10L.png) |
+| 180 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 6 | pavement x sign | 9.43 / – | – | – | 9.4 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1758, -1338 / -2179, 364 | [30-rwy-10L](30-rwy-10L.png) |
+| 181 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 111 | pavement x sign | 8.94 / – | – | – | 8.9 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1410, -665 / -1557, -69 | [30-rwy-10R](30-rwy-10R.png) |
+| 182 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 281 | pavement x sign | 8.94 / – | – | – | 8.9 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -423, 1544 / 346, -1563 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 183 | STATIC | building-building | Terminal complex ramp level | Terminal Two AirTrain Station | building x building | 8.79 / 206.8 | 0.00 | – | walls interpenetrate: 16 % of Terminal Two AirTrain Station lies inside Terminal complex ramp level (13.0 vs 5 | -756, 212 / -570, -540 | – |
+| 184 | STATIC | building-building | Terminal 2 | Terminal Two AirTrain Station | building x building | 8.79 / 206.8 | 0.00 | – | walls interpenetrate: 16 % of Terminal Two AirTrain Station lies inside Terminal 2 (13.0 vs 19.6 m high) | -756, 212 / -570, -540 | – |
+| 185 | STATIC | building-building | Terminal complex ramp level | International Terminal (A) AirTrain Station | building x building | 8.76 / 1179.7 | 0.00 | – | walls interpenetrate: 100 % of International Terminal (A) AirTrain Station lies inside Terminal complex ramp l | -1253, 242 / -996, -798 | – |
+| 186 | STATIC | building-building | International Terminal | International Terminal (G) AirTrain Station | building x building | 8.73 / 1078.6 | 0.00 | – | walls interpenetrate: 90 % of International Terminal (G) AirTrain Station lies inside International Terminal ( | -1173, 466 / -821, -959 | – |
+| 187 | STATIC | building-building | Terminal complex ramp level | International Terminal (G) AirTrain Station | building x building | 8.73 / 1078.5 | 0.00 | – | walls interpenetrate: 90 % of International Terminal (G) AirTrain Station lies inside Terminal complex ramp le | -1173, 466 / -821, -959 | – |
+| 188 | STATIC | building-building | International Terminal (G) AirTrain Station | International Terminal A Air Train Station | building x building | 8.72 / 595.6 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 596 m2: coplanar faces z-fight - probably one station listed twi | -1173, 466 / -821, -959 | – |
+| 189 | STATIC | building-building | International Terminal (A) AirTrain Station | International Terminal G Air Train Station | building x building | 8.69 / 593.5 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 594 m2: coplanar faces z-fight - probably one station listed twi | -1242, 238 / -988, -790 | – |
+| 190 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 103 | pavement x sign | 8.60 / – | – | – | 8.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1545, -735 / -1709, -70 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 191 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 272 | pavement x sign | 8.49 / – | – | – | 8.5 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -538, 1298 / 130, -1399 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 192 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 107 | pavement x sign | 8.25 / – | – | – | 8.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1558, -903 / -1799, 72 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 193 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 353 | pavement x sign | 8.25 / – | – | – | 8.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 785, -861 / 292, 1127 | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| 194 | STATIC | building-building | Terminal 3 | Terminal Three AirTrain Station | building x building | 8.19 / 124.0 | 0.00 | – | walls interpenetrate: 11 % of Terminal Three AirTrain Station lies inside Terminal 3 (13.0 vs 21.6 m high) | -1003, 96 / -842, -553 | – |
+| 195 | STATIC | building-building | Terminal complex ramp level | Terminal Three AirTrain Station | building x building | 8.19 / 121.3 | 0.00 | – | walls interpenetrate: 10 % of Terminal Three AirTrain Station lies inside Terminal complex ramp level (13.0 vs | -1003, 96 / -842, -553 | – |
+| 196 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 104 | pavement x sign | 8.06 / – | – | – | 8.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1480, -911 / -1734, 116 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 197 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 187 | pavement x sign | 8.06 / – | – | – | 8.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 1420, 945 / 1697, -174 | [30-rwy-28L](30-rwy-28L.png) |
+| 198 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 190 | pavement x sign | 8.06 / – | – | – | 8.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 1487, 864 / 1718, -70 | [30-rwy-28L](30-rwy-28L.png), [30-rwy-28R](30-rwy-28R.png) |
+| 199 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 261 | pavement x sign | 8.00 / – | – | – | 8.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 366, -905 / -98, 972 | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| 200 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 213 | pavement x sign | 7.81 / – | – | – | 7.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -622, 1265 / 40, -1409 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 201 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 280 | pavement x sign | 7.62 / – | – | – | 7.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -424, 1542 / 345, -1562 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 202 | STATIC | building-building | West Field Road AirTrain Station (Inbound) | Westfield Road AirTrain Station (Inbound) | building x building | 7.38 / 459.5 | 0.00 | – | roofs at the same height (13.0 / 13.0 m) over 459 m2: coplanar faces z-fight - probably one station listed twi | -2132, -320 / -2035, -712 | – |
+| 203 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 4 | pavement x sign | 7.21 / – | – | – | 7.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1754, -1275 / -2146, 309 | [30-rwy-10L](30-rwy-10L.png) |
+| 204 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 186 | pavement x sign | 7.21 / – | – | – | 7.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 1419, 944 / 1696, -173 | [30-rwy-28L](30-rwy-28L.png) |
+| 205 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 3 | pavement x sign | 7.07 / – | – | – | 7.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1831, -1160 / -2161, 172 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 206 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 102 | pavement x sign | 7.07 / – | – | – | 7.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1546, -736 / -1711, -70 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 207 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 106 | pavement x sign | 7.07 / – | – | – | 7.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1556, -903 / -1797, 73 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 208 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 203 | pavement x sign | 7.07 / – | – | – | 7.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -744, 1199 / -99, -1408 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 209 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 197 | pavement x sign | 7.00 / – | – | – | 7.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -795, 1275 / -108, -1498 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 210 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 352 | pavement x sign | 6.32 / – | – | – | 6.3 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 785, -862 / 292, 1129 | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| 211 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 260 | pavement x sign | 6.00 / – | – | – | 6.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 365, -904 / -98, 970 | [30-rwy-19L](30-rwy-19L.png), [30-rwy-19R](30-rwy-19R.png) |
+| 212 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 196 | pavement x sign | 5.83 / – | – | – | 5.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -796, 1275 / -110, -1499 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 213 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 2 | pavement x sign | 5.66 / – | – | – | 5.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1833, -1160 / -2163, 172 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 214 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 50 | pavement x sign | 5.66 / – | – | – | 5.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -413, -353 / -530, 120 | – |
+| 215 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 202 | pavement x sign | 5.66 / – | – | – | 5.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -743, 1198 / -99, -1406 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 216 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 212 | pavement x sign | 5.66 / – | – | – | 5.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -620, 1264 / 41, -1407 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 217 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 289 | pavement x sign | 5.66 / – | – | – | 5.7 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -342, 1275 / 292, -1287 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 218 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 79 | pavement x sign | 5.00 / – | – | – | 5.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 961, 328 / 1003, 158 | – |
+| 219 | DOCK-REF | aircraft-aircraft | B10 b38m | B11S b789 | aircraft x aircraft | 4.69 / 30.5 | 0.00 | 0.05 | passes 0.05 m above/below (plan overlap 30.5 m2) | -917, 678 / -495, -1027 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 220 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 158 | pavement x sign | 4.47 / – | – | – | 4.5 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 308, 242 / 385, -71 | – |
+| 221 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 78 | pavement x sign | 4.24 / – | – | – | 4.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 959, 327 / 1001, 158 | – |
+| 222 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 156 | pavement x sign | 4.12 / – | – | – | 4.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 261, 219 / 333, -72 | – |
+| 223 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 288 | pavement x sign | 4.12 / – | – | – | 4.1 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -341, 1273 / 292, -1285 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 224 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 19 | pavement x sign | 4.00 / – | – | – | 4.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1493, -967 / -1772, 159 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 225 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 83 | pavement x sign | 4.00 / – | – | – | 4.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 966, 146 / 922, 321 | – |
+| 226 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 217 | pavement x sign | 4.00 / – | – | – | 4.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -554, 1168 / 55, -1292 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 227 | DOCK-MAX | aircraft-aircraft | B10 b3xm | B11S b772 | aircraft x aircraft | 3.91 / 20.3 | 0.00 | 0.21 | passes 0.21 m above/below (plan overlap 20.3 m2) | -917, 682 / -494, -1031 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 228 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 51 | pavement x sign | 3.61 / – | – | – | 3.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -412, -351 / -529, 118 | – |
+| 229 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 204 | pavement x sign | 3.61 / – | – | – | 3.6 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -667, 1052 / -99, -1242 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 230 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 157 | pavement x sign | 3.16 / – | – | – | 3.2 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 259, 218 / 331, -72 | – |
+| 231 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 205 | pavement x sign | 3.00 / – | – | – | 3.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -666, 1051 / -99, -1240 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 232 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 216 | pavement x sign | 3.00 / – | – | – | 3.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -553, 1167 / 55, -1290 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 233 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 159 | pavement x sign | 2.83 / – | – | – | 2.8 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 309, 243 / 387, -71 | – |
+| 234 | STATIC | building-building | Harvey Milk Terminal 1 | Terminal One AirTrain Station | building x building | 2.77 / 12.5 | 0.00 | – | walls interpenetrate: 1 % of Terminal One AirTrain Station lies inside Harvey Milk Terminal 1 (13.0 vs 20.6 m  | -893, 453 / -578, -817 | – |
+| 235 | STATIC | building-building | Terminal complex ramp level | Terminal One AirTrain Station | building x building | 2.44 / 8.9 | 0.00 | – | walls interpenetrate: 1 % of Terminal One AirTrain Station lies inside Terminal complex ramp level (13.0 vs 5. | -893, 453 / -578, -818 | – |
+| 236 | LIVE | gse-check-mismatch | fuel mesh | gates.js placeVehicles() check rectangle | fuel x code | 2.41 / 1.7 | – | – | 1.7 m2 of the fuel mesh lies outside the 8.2 x 2.5 m rectangle the collision check uses | -836, 859 / -339, -1150 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 237 | LIVE | gse-check-mismatch | fuel mesh | gates.js placeVehicles() check rectangle | fuel x code | 2.41 / 1.7 | – | – | 1.7 m2 of the fuel mesh lies outside the 8.2 x 2.5 m rectangle the collision check uses | -1024, 954 / -461, -1321 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 238 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 18 | pavement x sign | 2.00 / – | – | – | 2.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -1495, -968 / -1774, 159 | [30-rwy-10L](30-rwy-10L.png), [30-rwy-10R](30-rwy-10R.png) |
+| 239 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 44 | pavement x sign | 2.00 / – | – | – | 2.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | -499, -626 / -733, 321 | – |
+| 240 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 82 | pavement x sign | 2.00 / – | – | – | 2.0 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 968, 147 / 924, 321 | – |
+| 241 | ENVELOPE | envelope-rest-bridge | A11 bridge A11 (L2) (a19n, a319, b736, b737) | A11 class envelope | bellows x envelope-type; cab x envelope-type | 1.75 / 4.3 | 0.00 | 0.14 | passes 0.14 m above/below (plan overlap 4.3 m2) | -1252, 802 / -733, -1294 | [30-rwy-1L](30-rwy-1L.png) |
+| 242 | STATIC | sign-on-physics-pavement | paved raster (GroundPhysics-legal ground) | hold/location sign 252 | pavement x sign | 1.41 / – | – | – | 1.4 m inside the paved raster GroundPhysics treats as legal aircraft ground (no taxiway/runway polygon there) | 216, -291 / 55, 358 | – |
+| 243 | STATIC | building-building | Long Term Parking AirTrain Station | Long-Term Parking Garage 2 | building x building | 1.22 / 6.0 | 0.00 | – | walls interpenetrate: 0 % of Long Term Parking AirTrain Station lies inside Long-Term Parking Garage 2 (13.0 v | -2238, -1834 / -2835, 578 | – |
+| 244 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F9 bridge F9 (L1) | Terminal complex ramp level | rotunda x building | 0.92 / 2.4 | 0.00 | 0.10 | passes 0.10 m above/below (plan overlap 2.4 m2) | -1026, -218 / -1010, -286 | – |
+| 245 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F19 bridge F19 (L1) | Terminal complex ramp level | rotunda x building | 0.43 / 0.7 | 0.00 | 0.10 | passes 0.10 m above/below (plan overlap 0.7 m2) | -1313, -235 / -1271, -405 | – |
+| 246 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | C8 bridge C8 (L1) | Terminal complex ramp level | rotunda x building | 0.37 / 0.6 | 0.00 | 0.10 | passes 0.10 m above/below (plan overlap 0.6 m2) | -623, 463 / -335, -700 | – |
+| 247 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F21 bridge F21 (L1) | Terminal complex ramp level | rotunda x building | 0.20 / 0.2 | 0.00 | 0.10 | passes 0.10 m above/below (plan overlap 0.2 m2) | -1304, -264 / -1276, -375 | – |
+| 248 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F14 bridge F14 (L1) | Boarding Area F | rotunda x building | 0.08 / 0.1 | 0.00 | -8.70 | touching (8 cm) | -1181, -164 / -1121, -406 | – |
+| 249 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F14 bridge F14 (L1) | Terminal complex ramp level | rotunda x building | 0.08 / 0.1 | 0.00 | 0.10 | passes 0.10 m above/below (plan overlap 0.0 m2) | -1181, -164 / -1121, -406 | – |
+| 250 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-building | F21 bridge F21 (L1) | Boarding Area F | rotunda x building | 0.07 / 0.0 | 0.00 | -8.70 | touching (7 cm) | -1304, -264 / -1276, -375 | – |
+| 251 | LIVE | marker-no-body | GroundPhysics | ACA758 type ? (gate) | physics x aircraft | – / – | – | – | drawn as a marker: no model/TYPES entry, so it is not a solid body (ground.js skips it) | -513, 37 / -436, -272 | – |
+| 439 | DOCK-MAX | bridge-bridge | F11 bridge F11 (L1) | F11 bridge F11 (L2) | stair x pca-hose; stair x pca-unit; stair x tunnel3 | – / – | 0.01 | – | only 0.01 m apart | -1085, -195 / -1051, -333 | – |
+| 440 | DOCK-MAX, DOCK-REF | bridge-bridge | G11 bridge G11 (L1) | G11 bridge G11 (L2) | stair x pca-hose; stair x pca-unit; stair x tunnel2 | – / – | 0.02 | – | only 0.02 m apart | -1615, 43 / -1409, -791 | – |
+| 441 | DOCK-MAX, DOCK-REF | bridge-bridge | F13 bridge F13 (L1) | F13 bridge F13 (L2) | stair x pca-hose; stair x tunnel3 | – / – | 0.03 | – | only 0.03 m apart | -1150, -228 / -1124, -335 | – |
+| 442 | LIVE, REST | bridge-vdgs | B24 bridge B24 (L1) | B24 VDGS / stand sign | stair x vdgs-post-base | – / – | 0.06 | – | only 0.06 m apart | -953, 951 / -399, -1286 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+| 443 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | A1 bridge A1 (L1) | A1 bridge A1 (L2) | walkway x walkway | – / – | 0.13 | – | only 0.13 m apart | -1137, 545 / -752, -1012 | [30-rwy-1L](30-rwy-1L.png) |
+| 444 | DOCK-MAX, DOCK-REF, LIVE, REST | bridge-bridge | B26 bridge B26 (L1) | B27 bridge B27 (L1) | walkway x walkway | – / – | 0.24 | – | only 0.24 m apart | -965, 884 / -441, -1232 | [30-rwy-1L](30-rwy-1L.png), [30-rwy-1R](30-rwy-1R.png) |
+
+### Bridge kinematics (187)
 
 | # | kind | bridge | note |
 |---|---|---|---|
-| 207 | tunnel-stretch | G10 bridge G14 (L1) | tunnel sections 3.5/3.2/2.9 m parked -> 4.0/3.7/3.1 m docked to b77w: sections scale with the extension instead of telescoping |
-| 208 | tunnel-stretch | G10 bridge G10 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 9.2/8.3/7.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 209 | tunnel-stretch | G9 bridge G9 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.0/8.2/6.9 m docked to b77w: sections scale with the extension instead of telescoping |
-| 210 | tunnel-stretch | G9 bridge G9 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 9.1/8.2/6.9 m docked to b77w: sections scale with the extension instead of telescoping |
-| 211 | tunnel-stretch | G6 bridge G6 (L2) | tunnel sections 3.5/3.2/2.9 m parked -> 3.9/3.6/3.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 212 | tunnel-stretch | G5 bridge G5 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 5.9/5.4/4.6 m docked to b77w: sections scale with the extension instead of telescoping |
-| 213 | tunnel-stretch | G5 bridge G5 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 7.0/6.4/5.4 m docked to b77w: sections scale with the extension instead of telescoping |
-| 214 | tunnel-stretch | G1 bridge G1 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 7.3/6.6/5.6 m docked to b78x: sections scale with the extension instead of telescoping |
-| 215 | tunnel-stretch | G1 bridge G1 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 7.9/7.1/6.0 m docked to b78x: sections scale with the extension instead of telescoping |
-| 216 | tunnel-stretch | G7 bridge G7 (L2) | tunnel sections 2.7/2.8/2.9 m parked -> 3.9/3.6/3.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 217 | tunnel-stretch | G4 bridge G4 (L1) | tunnel sections 3.8/3.4/3.0 m parked -> 4.2/3.8/3.2 m docked to b77w: sections scale with the extension instead of telescoping |
-| 218 | tunnel-stretch | G4 bridge G4 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 5.7/5.1/4.3 m docked to b77w: sections scale with the extension instead of telescoping |
-| 219 | tunnel-stretch | G3 bridge G3 (L2) | tunnel sections 2.9/2.8/2.9 m parked -> 3.9/3.6/3.1 m docked to b77w: sections scale with the extension instead of telescoping |
-| 220 | tunnel-stretch | G12 bridge G12 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.0/9.0/7.6 m docked to b77w: sections scale with the extension instead of telescoping |
-| 221 | tunnel-stretch | G12 bridge G12 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 10.0/9.1/7.7 m docked to b77w: sections scale with the extension instead of telescoping |
-| 222 | tunnel-stretch | G8 bridge G8 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.6/9.6/8.1 m docked to b78x: sections scale with the extension instead of telescoping |
-| 223 | tunnel-stretch | G8 bridge G8 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 10.6/9.6/8.1 m docked to b78x: sections scale with the extension instead of telescoping |
-| 224 | tunnel-stretch | A3 bridge A4 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 5.9/5.3/4.5 m docked to b77w: sections scale with the extension instead of telescoping |
-| 225 | tunnel-stretch | A5 bridge A5 (L2) | tunnel sections 2.7/2.8/2.9 m parked -> 3.3/3.0/2.9 m docked to b77w: sections scale with the extension instead of telescoping |
-| 226 | tunnel-stretch | A9 bridge A9 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.0/8.2/6.9 m docked to b77w: sections scale with the extension instead of telescoping |
-| 227 | tunnel-stretch | A9 bridge A9 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 9.1/8.2/7.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 228 | tunnel-stretch | A10 bridge A10 (L1) | tunnel sections 3.6/3.3/2.9 m parked -> 5.2/4.7/4.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 229 | tunnel-stretch | A10 bridge A10 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 6.9/6.2/5.3 m docked to b77w: sections scale with the extension instead of telescoping |
-| 230 | tunnel-stretch | A1 bridge A1 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.4/8.6/7.3 m docked to b39m: sections scale with the extension instead of telescoping |
-| 231 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 25.3 m = 1:9.9 |
-| 232 | tunnel-stretch | A2 bridge A2 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.1/8.2/7.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 233 | tunnel-stretch | A2 bridge A2 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 9.2/8.3/7.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 234 | tunnel-stretch | A6 bridge A7 (L1) | tunnel sections 4.8/4.3/3.7 m parked -> 6.4/5.8/4.9 m docked to b77w: sections scale with the extension instead of telescoping |
-| 235 | tunnel-stretch | A6 bridge A7 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 8.1/7.3/6.2 m docked to b77w: sections scale with the extension instead of telescoping |
-| 236 | tunnel-stretch | A8 bridge A8 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.1/8.2/6.9 m docked to b77w: sections scale with the extension instead of telescoping |
-| 237 | tunnel-stretch | A8 bridge A8 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 9.1/8.3/7.0 m docked to b77w: sections scale with the extension instead of telescoping |
-| 238 | tunnel-stretch | A11 bridge A11 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 5.6/5.1/4.3 m docked to b77w: sections scale with the extension instead of telescoping |
-| 239 | tunnel-stretch | A11 bridge A13 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 9.4/8.5/7.2 m docked to b77w: sections scale with the extension instead of telescoping |
-| 240 | tunnel-stretch | A15 bridge A14 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 11.0/10.0/8.5 m docked to b39m: sections scale with the extension instead of telescoping |
-| 241 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 26.9 m = 1:10.5 |
-| 242 | tunnel-stretch | C3 bridge C3 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.1/9.2/7.8 m docked to b39m: sections scale with the extension instead of telescoping |
-| 243 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 26.1 m = 1:10.2 |
-| 244 | tunnel-stretch | C5 bridge C5 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.7/9.7/8.2 m docked to b752: sections scale with the extension instead of telescoping |
-| 245 | tunnel-stretch | C7 bridge C7 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.6/8.8/7.4 m docked to b752: sections scale with the extension instead of telescoping |
-| 246 | tunnel-stretch | C11 bridge C11 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.6/8.8/7.5 m docked to b39m: sections scale with the extension instead of telescoping |
-| 247 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 24.8 m = 1:9.7 |
-| 248 | tunnel-stretch | C4 bridge C4 (L1) | tunnel sections 4.6/4.2/3.6 m parked -> 6.4/5.9/5.1 m docked to b39m: sections scale with the extension instead of telescoping |
-| 249 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 16.2 m = 1:6.3 |
-| 250 | tunnel-stretch | C6 bridge C6 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.6/8.7/7.4 m docked to b39m: sections scale with the extension instead of telescoping |
-| 251 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 23.6 m = 1:9.2 |
-| 252 | tunnel-stretch | C8 bridge C8 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.6/9.7/8.2 m docked to b39m: sections scale with the extension instead of telescoping |
-| 253 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 26.8 m = 1:10.4 |
-| 254 | tunnel-stretch | C10 bridge C10 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 6.9/6.3/5.4 m docked to b39m: sections scale with the extension instead of telescoping |
-| 255 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 17.5 m = 1:6.8 |
-| 256 | tunnel-stretch | B9 bridge B9 (L1) | tunnel sections 3.0/2.8/2.9 m parked -> 4.5/4.2/3.7 m docked to b39m: sections scale with the extension instead of telescoping |
-| 257 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 11.4 m = 1:4.5 |
-| 258 | tunnel-stretch | B12 bridge B12 (L1) | tunnel sections 3.0/2.8/2.9 m parked -> 4.5/4.2/3.6 m docked to b39m: sections scale with the extension instead of telescoping |
-| 259 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 11.4 m = 1:4.4 |
-| 260 | tunnel-stretch | B13 bridge B13 (L1) | tunnel sections 3.0/2.8/2.9 m parked -> 4.5/4.2/3.7 m docked to b39m: sections scale with the extension instead of telescoping |
-| 261 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 11.5 m = 1:4.5 |
-| 262 | tunnel-stretch | B14 bridge B14 (L1) | tunnel sections 3.0/2.8/2.9 m parked -> 4.5/4.1/3.6 m docked to b39m: sections scale with the extension instead of telescoping |
-| 263 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 11.4 m = 1:4.5 |
-| 264 | tunnel-stretch | B17 bridge B17 (L1) | tunnel sections 3.2/2.9/2.9 m parked -> 4.6/4.2/3.7 m docked to b39m: sections scale with the extension instead of telescoping |
-| 265 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 11.8 m = 1:4.6 |
-| 266 | tunnel-stretch | B18 bridge B18 (L1) | tunnel sections 3.0/2.8/2.9 m parked -> 4.5/4.1/3.6 m docked to b39m: sections scale with the extension instead of telescoping |
-| 267 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 11.4 m = 1:4.4 |
-| 268 | tunnel-stretch | B21 bridge B21 (L1) | tunnel sections 3.0/2.8/2.9 m parked -> 4.4/4.1/3.6 m docked to b39m: sections scale with the extension instead of telescoping |
-| 269 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 11.4 m = 1:4.4 |
-| 270 | tunnel-stretch | B10 bridge B10 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.9/9.0/7.7 m docked to e190: sections scale with the extension instead of telescoping |
-| 271 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to e190: floor 5.4 m at the rotunda -> 2.5 m at the cab over 25.8 m = 1:8.9 |
-| 272 | tunnel-stretch | B11 bridge B11 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.3/8.5/7.2 m docked to e190: sections scale with the extension instead of telescoping |
-| 273 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to e190: floor 5.4 m at the rotunda -> 2.5 m at the cab over 25.0 m = 1:8.6 |
-| 274 | tunnel-stretch | B15 bridge B15 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 7.3/6.7/5.7 m docked to e190: sections scale with the extension instead of telescoping |
-| 275 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to e190: floor 5.4 m at the rotunda -> 2.5 m at the cab over 19.7 m = 1:6.8 |
-| 276 | tunnel-stretch | B16 bridge B16 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.4/8.5/7.3 m docked to e190: sections scale with the extension instead of telescoping |
-| 277 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to e190: floor 5.4 m at the rotunda -> 2.5 m at the cab over 25.1 m = 1:8.6 |
-| 278 | tunnel-stretch | B19 bridge B20 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 11.8/10.7/9.1 m docked to e190: sections scale with the extension instead of telescoping |
-| 279 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to e190: floor 5.4 m at the rotunda -> 2.5 m at the cab over 28.1 m = 1:9.7 |
-| 280 | tunnel-stretch | B27 bridge B27 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 6.0/5.5/4.7 m docked to b752: sections scale with the extension instead of telescoping |
-| 281 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b752: floor 5.4 m at the rotunda -> 3.7 m at the cab over 16.2 m = 1:9.5 |
-| 282 | tunnel-stretch | B26 bridge B26 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.3/8.5/7.2 m docked to b752: sections scale with the extension instead of telescoping |
-| 283 | tunnel-stretch | B23 bridge B22 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 8.5/7.7/6.6 m docked to b39m: sections scale with the extension instead of telescoping |
-| 284 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 20.0 m = 1:7.8 |
-| 285 | tunnel-stretch | B25 bridge B24 (L1) | tunnel sections 4.0/3.6/3.1 m parked -> 6.7/6.1/5.2 m docked to b39m: sections scale with the extension instead of telescoping |
-| 286 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b39m: floor 5.4 m at the rotunda -> 2.8 m at the cab over 15.7 m = 1:6.1 |
-| ... | | | 88 more in out/draw/audit.json |
+| 252 | tunnel-stretch | A1 bridge A1 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 8.9/8.1/6.8 m docked to b779: sections scale with the extension instead of telescoping |
+| 253 | tunnel-stretch | A1 bridge A1 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 9.6/8.7/7.3 m docked to b779: sections scale with the extension instead of telescoping |
+| 254 | tunnel-stretch | A2 bridge A2 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.0/8.2/6.9 m docked to b779: sections scale with the extension instead of telescoping |
+| 255 | tunnel-stretch | A2 bridge A2 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 10.7/9.7/8.1 m docked to b779: sections scale with the extension instead of telescoping |
+| 256 | tunnel-stretch | A4 bridge A4 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.7/8.8/7.5 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 257 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.6 m = 1:10.3 |
+| 258 | tunnel-stretch | A5 bridge A5 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 11.1/10.1/8.5 m docked to b779: sections scale with the extension instead of telescoping |
+| 259 | tunnel-stretch | A6 bridge A6 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 8.6/7.8/6.6 m docked to a388: sections scale with the extension instead of telescoping |
+| 260 | tunnel-stretch | A6 bridge A6 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 7.9/7.2/6.1 m docked to a388: sections scale with the extension instead of telescoping |
+| 261 | tunnel-stretch | A8 bridge A8 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.0/8.2/6.9 m docked to b779: sections scale with the extension instead of telescoping |
+| 262 | tunnel-stretch | A8 bridge A8 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 10.9/9.9/8.3 m docked to b779: sections scale with the extension instead of telescoping |
+| 263 | tunnel-stretch | A9 bridge A9 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.0/8.1/6.9 m docked to b779: sections scale with the extension instead of telescoping |
+| 264 | tunnel-stretch | A9 bridge A9 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 10.6/9.6/8.1 m docked to b779: sections scale with the extension instead of telescoping |
+| 265 | tunnel-stretch | A10 bridge A10 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.0/8.1/6.9 m docked to b779: sections scale with the extension instead of telescoping |
+| 266 | tunnel-stretch | A10 bridge A10 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 10.6/9.6/8.1 m docked to b779: sections scale with the extension instead of telescoping |
+| 267 | tunnel-stretch | A11 bridge A11 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 6.7/6.1/5.1 m docked to a388: sections scale with the extension instead of telescoping |
+| 268 | tunnel-stretch | A11 bridge A11 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 7.5/6.8/5.7 m docked to a388: sections scale with the extension instead of telescoping |
+| 269 | tunnel-stretch | A13 bridge A13 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.4/8.5/7.2 m docked to b779: sections scale with the extension instead of telescoping |
+| 270 | tunnel-stretch | A13 bridge A13 (L2) | tunnel sections 4.9/4.5/3.8 m parked -> 11.8/10.7/9.0 m docked to b779: sections scale with the extension instead of telescoping |
+| 271 | tunnel-stretch | A15 bridge A15 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.3/8.5/7.2 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 272 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.1 m = 1:10.1 |
+| 273 | tunnel-stretch | B2 bridge B2 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.2/8.4/7.1 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 274 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.0 m = 1:10.1 |
+| 275 | tunnel-stretch | B3 bridge B3 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 8.3/7.6/6.5 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 276 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 22.4 m = 1:9.0 |
+| 277 | tunnel-stretch | B4 bridge B4 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.8/8.9/7.6 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 278 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.7 m = 1:10.4 |
+| 279 | tunnel-stretch | B5 bridge B5 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.5/8.7/7.4 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 280 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.4 m = 1:10.2 |
+| 281 | tunnel-stretch | B6 bridge B6 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.2/9.2/7.8 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 282 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.2 m = 1:10.6 |
+| 283 | tunnel-stretch | B7 bridge B7 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.3/9.4/8.0 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 284 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.4 m = 1:10.6 |
+| 285 | tunnel-stretch | B8 bridge B8 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.1/9.2/7.8 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 286 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.1 m = 1:10.5 |
+| 287 | tunnel-stretch | B9 bridge B9 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.9/9.0/7.6 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 288 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.8 m = 1:10.4 |
+| 289 | tunnel-stretch | B10 bridge B10 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 7.9/7.2/6.2 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 290 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 21.0 m = 1:8.5 |
+| 291 | tunnel-stretch | B11 bridge B11 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.6/8.7/7.4 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 292 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.4 m = 1:10.3 |
+| 293 | tunnel-stretch | B11S bridge B11 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 8.9/8.0/6.8 m docked to b772: sections scale with the extension instead of telescoping |
+| 294 | tunnel-stretch | B12 bridge B12 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.9/9.0/7.7 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 295 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.9 m = 1:10.4 |
+| 296 | tunnel-stretch | B13 bridge B13 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.9/9.0/7.6 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 297 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.8 m = 1:10.4 |
+| 298 | tunnel-stretch | B14 bridge B14 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.9/9.0/7.7 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 299 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.9 m = 1:10.4 |
+| 300 | tunnel-stretch | B15 bridge B15 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.4/9.5/8.1 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 301 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.5 m = 1:10.7 |
+| 302 | tunnel-stretch | B16 bridge B16 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.6/8.8/7.5 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 303 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.5 m = 1:10.3 |
+| 304 | tunnel-stretch | B17 bridge B17 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.0/9.1/7.7 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 305 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.0 m = 1:10.5 |
+| 306 | tunnel-stretch | B18 bridge B18 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.8/8.9/7.6 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 307 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.8 m = 1:10.4 |
+| 308 | tunnel-stretch | B19 bridge B19 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.4/9.5/8.0 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 309 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.5 m = 1:10.7 |
+| 310 | tunnel-stretch | B20 bridge B20 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.8/8.9/7.6 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 311 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.8 m = 1:10.4 |
+| 312 | tunnel-stretch | B21 bridge B21 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.7/8.8/7.5 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 313 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.6 m = 1:10.3 |
+| 314 | tunnel-stretch | B22 bridge B22 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 8.2/7.4/6.4 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 315 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 20.9 m = 1:8.4 |
+| 316 | tunnel-stretch | B23 bridge B23 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.8/9.8/8.3 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 317 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.9 m = 1:10.9 |
+| 318 | tunnel-stretch | B24 bridge B24 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.7/9.7/8.3 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 319 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.9 m = 1:10.8 |
+| 320 | tunnel-stretch | B25 bridge B25 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.7/9.7/8.3 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 321 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.9 m = 1:10.8 |
+| 322 | tunnel-stretch | B26 bridge B26 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.4/9.5/8.1 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 323 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 26.5 m = 1:10.7 |
+| 324 | tunnel-stretch | B27 bridge B27 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.0/9.1/7.7 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 325 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.9 m = 1:10.5 |
+| 326 | tunnel-stretch | C1 bridge C1 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.5/8.6/7.4 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 327 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 25.4 m = 1:10.2 |
+| 328 | tunnel-stretch | C3 bridge C3 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 10.3/9.4/7.9 m docked to b752: sections scale with the extension instead of telescoping |
+| 329 | tunnel-stretch | C4 bridge C4 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.3/8.5/7.2 m docked to b3xm: sections scale with the extension instead of telescoping |
+| 330 | tunnel-slope | PBB slope limit 1:12 (ADA / ABA 410.1) | docked to b3xm: floor 5.4 m at the rotunda -> 2.9 m at the cab over 24.1 m = 1:9.7 |
+| 331 | tunnel-stretch | C5 bridge C5 (L1) | tunnel sections 4.9/4.5/3.8 m parked -> 9.2/8.3/7.0 m docked to md11: sections scale with the extension instead of telescoping |
+| ... | | | 107 more in out/draw/audit.json |
 
 ## Moving traffic (live mode, harness mock relay)
 
-`jobs/trace2d.mjs` ran the app in live mode for 215 s (40 samples) with the harness's mock relay (recorded snapshot, aircraft moved in straight lines along their track, taxiing aircraft at 0.35 x speed); `trace_audit.py` checked every sampled frame. The mock's straight-line motion takes taxiing aircraft off the pavement and through buildings by construction, so only the aircraft-aircraft rows test GroundPhysics.
+`jobs/trace2d.mjs` ran the app in live mode for 543 s (40 samples, git `None`, 2026-09-24T21:08Z) with the harness's mock relay (recorded snapshot, aircraft moved in straight lines along their track, taxiing aircraft at 0.35 x speed); `trace_audit.py` checked every sampled frame. The mock's straight-line motion takes taxiing aircraft off the pavement and through buildings by construction, so only the aircraft-aircraft rows test GroundPhysics.
 
-Pairs in conflict: **4 aircraft-building**, **3 gear-off-pavement**.
+Pairs in conflict: **7 gear-off-pavement**, **7 gear-off-physics-pavement**, **5 aircraft-building**.
 
 | kind | object A | object B | frames in conflict | first - last (s) | worst depth (m) | state |
 |---|---|---|---|---|---|---|
-| aircraft-building | UAL1116 B753 | Boarding Area E | 40 / 40 | 0 - 215 | 24.4 | parked (4.2 m/s) |
-| aircraft-building | UAL1116 B753 | Terminal complex ramp level | 40 / 40 | 0 - 215 | 24.1 | parked (4.2 m/s) |
-| aircraft-building | ASA528 B737 | Terminal complex ramp level | 40 / 40 | 0 - 215 | 4.2 | parked (3.5 m/s) |
-| aircraft-building | ASA528 B737 | Boarding Area B | 40 / 40 | 0 - 215 | 4.2 | parked (3.5 m/s) |
-| gear-off-pavement | SKW3490 E75L | paved raster | 40 / 40 | 0 - 215 | 0.0 | parked (9.5 m/s) |
-| gear-off-pavement | UAL2649 A319 | paved raster | 40 / 40 | 0 - 215 | 0.0 | parked (6.3 m/s) |
-| gear-off-pavement | JBU578 A321 | paved raster | 40 / 40 | 0 - 215 | 0.0 | parked (6.3 m/s) |
+| gear-off-pavement | SKW3490 E75L | rendered paved raster (visual) | 40 / 40 | 0 - 543 | 0.0 | taxi (3.0 m/s) |
+| gear-off-physics-pavement | SKW3490 E75L | raster OR taxi net (physics) | 40 / 40 | 0 - 543 | 0.0 | taxi (3.0 m/s) |
+| gear-off-pavement | UAL2649 A319 | rendered paved raster (visual) | 40 / 40 | 0 - 543 | 0.0 | taxi (1.1 m/s) |
+| gear-off-physics-pavement | UAL2649 A319 | raster OR taxi net (physics) | 40 / 40 | 0 - 543 | 0.0 | taxi (1.1 m/s) |
+| gear-off-pavement | JBU578 A321 | rendered paved raster (visual) | 40 / 40 | 0 - 543 | 0.0 | taxi (1.1 m/s) |
+| gear-off-physics-pavement | JBU578 A321 | raster OR taxi net (physics) | 40 / 40 | 0 - 543 | 0.0 | taxi (1.1 m/s) |
+| gear-off-pavement | UAL2467 B39M | rendered paved raster (visual) | 39 / 40 | 8 - 543 | 0.0 | taxi (5.1 m/s) |
+| gear-off-physics-pavement | UAL2467 B39M | raster OR taxi net (physics) | 39 / 40 | 8 - 543 | 0.0 | taxi (5.1 m/s) |
+| gear-off-pavement | UAL852 B772 | rendered paved raster (visual) | 34 / 40 | 16 - 543 | 0.0 | taxi (3.3 m/s) |
+| gear-off-physics-pavement | UAL852 B772 | raster OR taxi net (physics) | 34 / 40 | 16 - 543 | 0.0 | taxi (3.3 m/s) |
+| gear-off-pavement | ASA528 B737 | rendered paved raster (visual) | 33 / 40 | 53 - 543 | 0.0 | taxi (1.9 m/s) |
+| gear-off-physics-pavement | ASA528 B737 | raster OR taxi net (physics) | 31 / 40 | 288 - 543 | 0.0 | taxi (3.0 m/s) |
+| gear-off-pavement | UAL1116 B753 | rendered paved raster (visual) | 28 / 40 | 315 - 543 | 0.0 | taxi (4.4 m/s) |
+| gear-off-physics-pavement | UAL1116 B753 | raster OR taxi net (physics) | 28 / 40 | 315 - 543 | 0.0 | taxi (4.4 m/s) |
+| aircraft-building | UAL1116 B753 | Terminal complex ramp level | 12 / 40 | 0 - 303 | 33.9 | taxi (0.2 m/s) |
+| aircraft-building | UAL1116 B753 | International Terminal | 12 / 40 | 0 - 303 | 33.9 | taxi (0.2 m/s) |
+| aircraft-building | UAL1116 B753 | International Terminal A Air Train Station | 4 / 40 | 16 - 45 | 13.0 | taxi (3.8 m/s) |
+| aircraft-building | UAL1116 B753 | International Terminal (G) AirTrain Station | 4 / 40 | 16 - 45 | 8.7 | taxi (3.8 m/s) |
+| aircraft-building | UAL1116 B753 | AirTrain Rail | 2 / 40 | 34 - 45 | 19.5 | taxi (1.3 m/s) |
 
 ## Sheet index
 
-Vector sheets (no imagery) are in this folder; the same sheets over the imagery (`*_overlay-google.*`, and `*_overlay-naip.*` when NAIP is present) are written to `out/draw/sheets/` only (Google pixels must not be committed).
+Vector sheets (no imagery) are in this folder; the same sheets over the imagery (`*_overlay-naip.*`, `*_overlay-google.*`) are written to `out/draw/sheets/` only (Google pixels must not be committed). Deviation dots on the vector sheets are the NAIP measurements.
 
 | sheet | scale | paper | features (flagged) | conflicts on sheet |
 |---|---|---|---|---|
@@ -1033,9 +1225,9 @@ Vector sheets (no imagery) are in this folder; the same sheets over the imagery 
 
 ## Method, sources and limits
 
-- **Extraction** (`jobs/extract2d.mjs`): loads `live.html?mode=snapshot` in the harness, stops the page timers, lets traffic + GroundPhysics run until every track is displayable, freezes the render loop, then reads window.SFO and calls the app's own builders with a recording geometry sink (every jet-bridge box/cylinder/tube from `gates.js bridgeGeo()` in its current, parked and docked pose; VDGS from `standGeo()`; markings from `markings.js`; signs from `signs.js`; EMAS from `world.js buildEMAS()`; buildings from `buildLiveBuildings()`; pavement from `paintAirportMapReal()` - the raster the physics uses). Module-private values (REF_TYPE, CLASS_MAX, STRUCT_H, ...) are read by re-importing the module source with an extra export. Replicated by hand (listed in scene2d.json meta.replicated): the runway paint layout (GLSL), standFits(), and the GSE check rectangles.
-- **Aircraft**: live aircraft use the rendered model (.sfom, stretched and placed exactly as `aircraft.js` does) or the procedural TYPES body; per-cell min/max heights make the bridge/wing/engine checks 3-D. Class envelopes = union of every non-oversize type the stand accepts (both the procedural TYPES body and the rendered model). Gear contact points: TYPES nose/main gear (the gear the app draws).
-- **Deviation measurement** (`measure.py`): profiles along the edge normal (+-10 m; +-25 m along the runway axis for runway ends/thresholds), gradient peaks (steps) with feature-level polarity consensus against shadows, width-matched ridges for paint; nearest strong candidate to the model. Automatic picks can lock onto the wrong edge (shadow, shoulder, paint): always read a number together with its overlay sheet.
-- **Imagery**: the owner's Google Maps screenshots (19, 0.17-3.2 m/px, similarity registrations in tools/sat/work/reg.json). Building-edge numbers are not independent of the building data: the screenshots were registered by chamfer matching against the SFO Museum outlines. Runway ends were checked independently against FAA coordinates (tools/sat/faacheck.py). NAIP (independent georeference) is supported but was not available for this run.
-- **Heights**: SFO Museum footprints have no heights; building heights are the app's values (sfo_buildings parts, STRUCT_H tables), bridge heights come from the geometry.
-- **Not covered**: aircraft in the air; buildings in the imagery that the app does not build (cargo sheds, hangars other than the Super Bay) are not detected automatically - compare the overlay sheets; taxiway centrelines, lead-ins and most hold lines are not measurable on the available resolution.
+- **Extraction** (`jobs/extract2d.mjs`): loads `live.html?mode=snapshot` in the harness, stops the page timers, lets traffic + GroundPhysics run until every track is displayable, freezes the render loop, then reads window.SFO and calls the app's own builders with a recording geometry sink (every jet-bridge box/cylinder/tube from `gates.js bridgeGeo()` in its current, parked and docked pose; VDGS from `standGeo()`; floodlight masts from `items.js buildMasts()`; approach-light piers from `js/anim/lights.js buildPierGeometry()`; light sprites and PAPIs from `buildLiveLights()`; markings from `markings.js`; signs from `signs.js`; EMAS from `world.js buildEMAS()`; buildings from `buildLiveBuildings()`; pavement from `paintAirportMapReal()`; the OSM taxi net from `traffic.net`). Boxes and tubes are recorded as exact parallelepipeds, so heights are evaluated point by point. Module-private values are read by re-importing the module source with an extra export. Replicated by hand (listed in scene2d.json meta.replicated): the runway paint layout (GLSL; meta.paintCheck confirms each constant is still in the shader), standFits(), the GSE check rectangles, the TaxiNet test and the GroundPhysics gear points. The world frame id, git state and a hash of every loaded file are recorded; all tools refuse a scene in another frame, and this report refuses a stale one.
+- **Aircraft**: live aircraft use the rendered model (.sfom, with the `fit.js` plugs / span / fin fits applied exactly as `models.js` does) or the procedural TYPES body; per-cell min/max heights make the bridge/wing/engine checks 3-D. Class envelopes = union of every non-oversize type the stand accepts (both the procedural TYPES body and the rendered model). Gear on pavement is tested twice: rendered gear on the rendered raster (visual), GroundPhysics gear points on raster OR taxi net (physics).
+- **Deviation measurement** (`measure.py`, rules `2026-09-24c: stripe-start rule, building edge de-duplication, rotunda boundary = not found, approach-light piers`): profiles along the edge normal (+-10 m; +-25 m along the runway axis for runway ends/thresholds), gradient peaks (steps) with feature-level polarity consensus against shadows, width-matched ridges for paint and bars, the stripe-start rule for thresholds. Automatic picks can lock onto the wrong edge (shadow, shoulder, paint): read a number together with its overlay sheet.
+- **Imagery**: NAIP (USDA, public domain, independently georeferenced; primary) - the 2024 mosaic resampled into the world frame, plus the 2022 GeoTIFF mapped world -> NAD83(2011) lat/lon -> UTM 10N; the owner's Google Maps screenshots (reference only; frame-aware registrations, re-registered to NAIP per screenshot where `imreg.py` finds a reliable shift). Google building-edge numbers are not independent of the building data: the screenshots were first registered by chamfer matching against the SFO Museum outlines.
+- **Heights**: SFO Museum footprints have no heights; building heights are the app's values (sfo_buildings parts, STRUCT_H tables), bridge / mast / pier heights come from the recorded geometry.
+- **Not covered**: aircraft in the air; light fixtures other than the approach-light piers are sprites without bodies (runway / taxiway edge lights, PAPI boxes are drawn as points / boxes on the runway sheets but not audited as solids); buildings in the imagery that the app does not build are not detected automatically - compare the overlay sheets; taxiway centrelines and lead-ins need <= 0.35 m/px imagery.

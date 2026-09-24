@@ -1,7 +1,14 @@
-// Airline / aircraft-type naming and simplified airline colour schemes.
+// Airline / aircraft-type naming, the brand (livery) an aircraft wears, and the airline colour families.
 // Names: Virtual Radar Server standing data (github.com/vradarserver/standing-data), with a few type-name corrections.
-// Liveries are simplified colour families only (no logos, artwork or lettering).
+// Brand: the livery follows the airframe, not the callsign (SkyWest flies United Express, Alaska, Delta Connection and
+// American Eagle airframes under SKW): registration -> brand from data/brands.js (tools/liveries/build_brands_js.py; US DOT
+// BTS marketing-carrier data, observed), registration series and operator majority (inferred), else the callsign's airline.
+// The registration comes from the feed, or for US aircraft from the ICAO 24-bit address (nNumberFromHex).
+// Colour families: the runtime colours of the painted liveries (data/brands.js BRAND_INFO.colors, for the procedural
+// airframe and far LOD; the imported models wear the baked livery textures, js/aircraft/liveries.js), else simplified
+// families per airline (FAM below).
 import { AIRLINES, TYPE_NAMES } from '../../data/lookup.js';
+import { BRAND_INFO, CALLSIGN_BRAND, REGIONAL_OPS, REG_BRAND, REG_SERIES, OP_MAJORITY, REG_OVERRIDE } from '../../data/brands.js';
 
 // ICAO type designators whose standing-data model name is a military or licence variant; use the common civil name
 const TYPE_FIX = {
@@ -90,5 +97,87 @@ const FAM = {
   AUA: L(W, W, [0.82, 0.05, 0.1], W, W),
   SAS: L(W, W, [0.07, 0.12, 0.35], W, [0.07, 0.12, 0.35]),
 };
-const SAME = { QXE: 'ASA', GJS: 'UAL', ASH: 'UAL', ENY: 'AAL', PDT: 'AAL', JIA: 'AAL' };
-export function liveryForAirline(icao) { if (!icao) return NEUTRAL; return FAM[SAME[icao] || icao] || NEUTRAL; }
+const SAME = { QXE: 'ASA', GJS: 'UAL', ASH: 'UAL', ENY: 'AAL', PDT: 'AAL', JIA: 'AAL', JZA: 'ACA', TAI: 'AVA', LRC: 'AVA' };
+const famOf = (code) => { if (!code) return null; const b = code.split('-')[0]; return FAM[SAME[b] || b] || null; };
+
+// ------------------------------------------------------------------ registration from the ICAO 24-bit address (US)
+// The FAA assigns US Mode S codes A00001..ADF7C7 to N-numbers in a fixed order (N1, N1A, N1AA, ..., N10, ...): 1-5
+// characters after N, digits then up to two letters (no I or O). Verified: identical to the registration for 392,062
+// of 392,213 US entries of the tar1090-db aircraft database (d9459d7, 21 Sep 2026; the 151 others are database errors
+// such as 6-character N-numbers or stale records), see docs/research/liveries_impl.md.
+const NCH = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const NSUF = 1 + 24 * 25, NB4 = 1 + 24 + 10, NB3 = 10 * NB4 + NSUF, NB2 = 10 * NB3 + NSUF, NB1 = 10 * NB2 + NSUF;
+const nSuffix = (r) => { if (r === 0) return ''; r -= 1; const i = Math.floor(r / 25), j = r % 25; return NCH[i] + (j ? NCH[j - 1] : ''); };
+export function nNumberFromHex(hex) {
+  const v = parseInt(hex, 16); if (!(v >= 0xA00001 && v <= 0xADF7C7)) return null;
+  let r = v - 0xA00001; let out = 'N' + (Math.floor(r / NB1) + 1); r %= NB1;
+  if (r < NSUF) return out + nSuffix(r); r -= NSUF;
+  out += Math.floor(r / NB2); r %= NB2; if (r < NSUF) return out + nSuffix(r); r -= NSUF;
+  out += Math.floor(r / NB3); r %= NB3; if (r < NSUF) return out + nSuffix(r); r -= NSUF;
+  out += Math.floor(r / NB4); r %= NB4; if (r === 0) return out; return out + (r <= 24 ? NCH[r - 1] : String(r - 25));
+}
+
+// ------------------------------------------------------------------ brand
+const REG_MAP = new Map();
+for (const b in REG_BRAND) for (const r of REG_BRAND[b].split(' ')) if (r) REG_MAP.set(r, b);
+const ADSB_BTS = { E75L: 'E175', E75S: 'E175', E170: 'E170', CRJ2: 'CRJ2', CRJ7: 'CRJ7', CRJ9: 'CRJ9', E145: 'E145', E135: 'E145' };
+// -> { brand, src: 'obs' | 'inf', why, reg, special? } or null (no brand known: neutral livery)
+//   airline: ICAO designator of the callsign; reg: registration from the feed; hex: ICAO address; icaoType: ADS-B type
+export function brandFor({ airline = null, reg = null, hex = null, icaoType = null } = {}) {
+  let R = reg ? String(reg).toUpperCase().replace(/-/g, '') : null, regSrc = 'feed';
+  if (!R && hex) { R = nNumberFromHex(hex); regSrc = 'hex'; }
+  if (R && REG_OVERRIDE[R]) { const o = REG_OVERRIDE[R]; return { brand: o.brand, src: 'obs', why: 'registration ' + R + ': ' + o.special, reg: R, special: o }; }
+  if (R && REG_MAP.has(R)) return { brand: REG_MAP.get(R), src: 'obs', why: 'registration ' + R + ' (' + regSrc + ') in the US DOT BTS tail table', reg: R };
+  const op = airline && REGIONAL_OPS[airline];
+  if (op) {
+    const t = ADSB_BTS[icaoType] || null;
+    const m = R && /^N(\d+)([A-Z]*)$/.exec(R);
+    if (m && t) for (const [o, typ, nd, suf, lo, hi, b] of REG_SERIES) {
+      if (o === op && typ === t && m[1].length === nd && m[2] === suf && +m[1] >= lo && +m[1] <= hi) return { brand: b, src: 'inf', why: 'registration series ' + 'N' + lo + suf + '-N' + hi + suf, reg: R };
+    }
+    const M = OP_MAJORITY[op];
+    if (M) { const b = (t && M[t]) || M['*']; return { brand: b, src: 'inf', why: 'majority brand of ' + airline + (t ? ' ' + t : '') + ' flights', reg: R }; }
+  }
+  if (airline && CALLSIGN_BRAND[airline]) return { brand: CALLSIGN_BRAND[airline], src: 'obs', why: 'callsign ' + airline + ' (the airline\'s own flights)', reg: R };
+  return null;
+}
+export function brandName(code) { return (code && BRAND_INFO[code] && BRAND_INFO[code].name) || null; }
+
+// ------------------------------------------------------------------ liveries (colour family objects)
+const HEX = (h) => { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); };
+function familyOf(code) {
+  const I = code && BRAND_INFO[code];
+  if (I && I.colors) {
+    const c = I.colors; const s = c.stripe ? [...HEX(c.stripe), 1] : [0, 0, 0, 0];
+    // bellyLine in data/brands.js: belly boundary as a fraction of the fuselage half height (cabin eta, painter convention);
+    // the colour families use metres on a 1.98 m radius fuselage (scaled per type in js/aircraft/fleet.js / aircraft.js)
+    return L(HEX(c.top), HEX(c.belly), HEX(c.tail), HEX(c.tail2 || c.tail), HEX(c.eng), c.bellyLine != null ? c.bellyLine * 1.98 : -5, s);
+  }
+  return famOf(code);
+}
+const livCache = new Map();
+function livery(code, B, airline) {
+  const k = (code || '-') + '|' + (B ? B.src + '|' + B.why : '') + '|' + (airline || '');
+  let v = livCache.get(k);
+  if (!v) {
+    const fam = (code && familyOf(code)) || famOf(airline) || NEUTRAL;
+    v = Object.assign({}, fam, { brand: code || null, brandName: brandName(code), brandSrc: B ? B.src : null, brandWhy: B ? B.why : null,
+      reg: B ? B.reg || null : null, special: B && B.special ? B.special.special : null, airline: airline || null, resolved: !!(B && B.reg) });
+    livCache.set(k, v);
+  }
+  return v;
+}
+// callsign airline (+ registration / ICAO address / type when known) -> livery object: colour family + brand fields
+// (brand, brandName, brandSrc 'obs' | 'inf', brandWhy). Unknown operators: NEUTRAL (white, grey tail, no titles).
+export function liveryForAirline(icao, reg = null, hex = null, icaoType = null) {
+  const B = brandFor({ airline: icao || null, reg, hex, icaoType });
+  return livery(B ? B.brand : null, B, icao || null);
+}
+// the livery an aircraft wears, from the livery its track carries plus the aircraft's own ICAO address and type (used
+// by js/live/aircraft.js while js/live/traffic.js passes only the callsign airline)
+export function resolveLivery(L, hex, icaoType) {
+  if (!L || L.resolved || !hex) return L;
+  const B = brandFor({ airline: L.airline, reg: L.reg, hex, icaoType });
+  if (!B) return L;
+  return livery(B.brand, B, L.airline);
+}
