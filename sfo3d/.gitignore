@@ -1,0 +1,15 @@
+# renders, videos, caches
+out/
+node_modules/
+__pycache__/
+*.pyc
+# satellite screenshots (the user's Google Maps captures; reference only, shipped separately) and bulky intermediates
+tools/sat/screens/
+tools/sat/work/*.npy
+tools/sat/work/*.png
+tools/sat/work/*.jpg
+tools/sat/work/uniq.txt
+# Google-imagery crops (reference only, never redistributed) and the A220 models (no licence file upstream)
+docs/qa/ref/
+data/models/bcs1.sfom
+data/models/bcs3.sfom
