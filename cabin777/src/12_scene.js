@@ -11,37 +11,46 @@ const MOODS = {
   // QA r2: sideLed raised so the band under the outboard bins reads saturated blue now that the shader cuts the white
   // hemi / bounce / wash inside the band [V: tlfl_IMG_9217 #5d5eca at the lens, #867db2 at the window tops; sany_12
   // boarding #4c5edc]
-  // QA r3: AO weight on the hemisphere eased (0.85 -> 0.70) + bounce x1.15 + the sRGB display encode lift the
-  // shadowed faces; exposures trimmed to hold the photo's lit tops and tone thirds [V: c_27312 thirds 190/109/88, p5 17].
+  // QA r3: the sRGB display encode, AO_TUNE (unoccluded hemisphere share 0.15 -> 0.22, emitter cells under the bins)
+  // and the THE Suite lift raise the shadowed faces, so the exposures come down (boarding 1.40 -> 1.20, cruise 1.15 ->
+  // 1.0), set on the photo's material tones at HEAD: q06 charcoal shells #42454f (c_27312 #394049-#414755), aisle ash
+  // ends #bbb9b3 (#bdbaab-#cfcabd), window wall #d2d4d5 (#cacdd2); q15 window-block backs #566aa0 (y_47300 #415385-
+  // #4d5e8c); q03 console #594d45 (omaat_f11 #514537) [D renders, V photos].
   // Boarding keeps the white sidewall of ANA's official photos (c_27312, y_47300, py_37302, sans_14 at HND: no blue
   // band; from_integration / from_shell 1): a near-white lens with a light band cut. The saturated blue band that runs
-  // down past the windows is the in-service cruise look [V: tlfl_IMG_9217 #5c5dc6, belt #736a88; sany_12 #556df7,
-  // window line #5362e0; stwis_img_6082 #1961f9]
+  // down past the windows is the in-service cruise look: the lens alone lights the wall under the bins (bandCut 0.8),
+  // 0.2 of it at the belt [V: tlfl_IMG_9217 #5c5dc6, belt #736a88; sany_12 #556df7, window line #5362e0; stwis_img_6082
+  // #1961f9]; sideLed from the ACES inverse of #5467ef at the lens [D]. Boarding vs blue: questions_lighting.md 1
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.30, 0.31, 0.33], bandCut: 0.25, k: 1.05, exposure: 1.20 },
   cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.0, 0.03, 1.7], bandCut: 0.8, sideLow: 0.2, k: 0.95, exposure: 1.0 },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
   // QA r3: led / sideLed inverted through ACES for #ffa33c at the cove / lens gains (the r2 [1, 0.22, 0.02] put G at
-  // ~1.5 before ACES and clipped to lemon #fce04f) [D]; the vault wash is soft warm beige [V: ff_seat-with-door-closed
-  // ceiling #d9b77d]; lowTint neutralises the amber below 1.25 m, so seat-level ash stays grey [V: ff_door-gap ash
-  // #afafaf / #acb1ba, grey shell #6f7982]
+  // ~1.5 before ACES and clipped to lemon #fce04f) [D]; hemi softened (the ceiling and bins read #d9b77d / #b87130 at
+  // s 0.4-0.7, not saturated orange) and the dim vault wash takes its own warm-beige colour [V: ff_seat-with-door-closed
+  // ceiling #d9b77d, bins #7f6440; ff_door-gap bins #945a2a / #b87130]; lowTint neutralises the amber below 1.25 m
+  // (hemi x lowTint = [0.81, 0.78, 0.72]) so seat-level ash stays grey and brighter than the bins [V: ff_door-gap ash
+  // #afafaf / #acb1ba (s <= 0.08), grey shell #6f7982]; the lens light reaches the wall less red (sideWall) and not past
+  // the window tops (sideLow 0) [A: no amber-phase sidewall photo, questions_lighting.md 2]
   dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0, sideWall: [0.35, 1.2, 1.5], bandCut: 0.3, vault: [0.62, 0.31, 0.13], lowTint: [1.3, 2.6, 6.5], k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
   // used in r1 (roame_7672, sany_10) were boarding shots on the ground (daylight in the windows), so not the night scene
   // QA r3: cove / lens saturated amber (was warm white) [V: stwis_img_6223 cove #dc9340 / #b0671a (h25-32, s0.71-0.85),
-  // ucr PSU lamp #9f5e39]; hemi unchanged (image mean already matches ucr 39/35/33)
+  // ucr PSU lamp #9f5e39], the lens light kept to the upper wall (ucr sidewall #24211c); vault wash dim warm (mid-vault
+  // <= #2a2219); hemi unchanged (image mean already matches ucr 39/35/33)
   sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.070, 0.024, 0.004], sideLed: [0.035, 0.012, 0.002], sideLow: 0, vault: [0.045, 0.030, 0.018], k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
   wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0, sideWall: [0.35, 1.2, 1.2], bandCut: 0.3, vault: [0.62, 0.28, 0.19], lowTint: [1.3, 2.6, 4.5], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
 const SKIES = {
-  // QA r3: winExp 1.6 -> 3.0: day panes must be the brightest thing in a cabin view, near-white against the wall
-  // [V: c_27316 pane #ffffff vs wall #d1d1d1-#e2e2e2; y_47300 #fcfcfb; tlfl_IMG_9217 #fefefc]. Deeper day sky for the
-  // look-out view (winExp eases to 1 at the window) [V: F-GSQR_1/_2 zenith #114892-#2472ca, from_exterior 2].
+  // QA r3: winExp 1.6 -> 4.0: day panes must be the brightest thing in a cabin view, near-white against the wall
+  // [V: c_27316 pane #ffffff vs wall #d1d1d1-#e2e2e2; y_47300 #fcfcfb; tlfl_IMG_9217 #fefefc]; 3.0 (rater) still left the
+  // deep-blue sky reading #c4d8eb in the q03 pane [D]. Deeper day sky for the look-out view (winExp eases to 1 at the
+  // window) [V: F-GSQR_1/_2 zenith #114892-#2472ca, from_exterior 2].
   // Exterior w5 (user: deep-blue cruise sky): zenith / horizon fitted with skyK 12 to #8fb8e6 (1 deg) #5d8cc4 (3) #3a66a0
   // (8.5) #2a4f86 (15) #1f4274 (25), between F-GSQR_1 and _2 [V photos, D fit].
   // extBounce = the lit deck seen by the exterior's undersides (0.55 x cloudLit) and extSun the exterior's sun scale
@@ -341,11 +350,11 @@ class Scene {
   updateWindowLUT() {
     // QA r3: 4096 texels (1.4 cm, was 5.8 cm) and 0 between the windows: the skin is opaque, so the sun only enters
     // through a pane (was 0.92 everywhere, leaving the shadow map alone to stop it: hairline streaks on the seat backs,
-    // q15). rgb = shade transmittance over the glass +-0.127 m [V: 10 in] with a 3 cm soft edge; alpha = the reveal
+    // q15). rgb = shade transmittance over the glass +-0.127 m (CAB.win.w, 10 in [V]) with a 3 cm soft edge; alpha = the reveal
     // glow, full over +-0.22 m and cosine-feathered to 0 at +-0.30 m (was a hard 0.48 m block: pale rectangles round
     // each window, from_shell 2)
     const N = 4096, d = new Uint8Array(N * 2 * 4);
-    const z0 = this.ao ? this.ao.min[2] : 2.6, z1 = z0 + 59.2, dz = (z1 - z0) / N;
+    const z0 = this.ao ? this.ao.min[2] : 2.6, z1 = z0 + 59.2, dz = (z1 - z0) / N, hw = CAB.win.w / 2;
     let open = 0;
     this.layout.windows.forEach((w, i) => {
       const lv = this.winLevels[i];
@@ -355,7 +364,7 @@ class Scene {
       const a = Math.floor((w.z - 0.30 - z0) / dz), b = Math.ceil((w.z + 0.30 - z0) / dz);
       for (let x = Math.max(0, a); x <= Math.min(N - 1, b); x++) {
         const u = Math.abs(z0 + (x + 0.5) * dz - w.z), o = (r * N + x) * 4;
-        const e = clamp((0.157 - u) / 0.03, 0, 1), tr = e * e * (3 - 2 * e);
+        const e = clamp((hw + 0.03 - u) / 0.03, 0, 1), tr = e * e * (3 - 2 * e);
         const gw = u < 0.22 ? 1 : 0.5 + 0.5 * Math.cos(Math.PI * clamp((u - 0.22) / 0.08, 0, 1));
         for (let c = 0; c < 3; c++) d[o + c] = Math.max(d[o + c], Math.round(T[c] * tr * 255));
         d[o + 3] = Math.max(d[o + 3], Math.round(gw * 255));

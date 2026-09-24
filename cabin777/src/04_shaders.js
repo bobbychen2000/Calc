@@ -135,12 +135,13 @@ void main(){
     }
     rough = clamp(rough * (1.0 + (t.a - 0.5) * 2.0 * P.w), 0.04, 1.0);
   }
-  // small e (< 0.125; e is stored in 8 bits, so e 0.12 arrives as 31/255 = 0.1216 and CEILMAT.bezel e 0.12 took the
-  // lamp branch: glowing vault rings at night, QA r3 q20) is a fill lift for faces the hemisphere fill under-lights (08_bins doorC / bandC), not a lamp: it
+  // small e (< 0.2; QA r3: was < 0.12, but e is stored in 8 bits, so CEILMAT.bezel e 0.12 arrived as 31/255 = 0.1216
+  // and took the lamp branch (glowing vault rings at night, q20), and BINMAT.band e 0.16 lit the PSU band white at
+  // night; lamps use e >= 0.2) is a fill lift for faces the hemisphere fill under-lights (08_bins doorC / bandC), not a lamp: it
   // follows the cabin light colour and level (1 at boarding / cruise), so the dimmed moods do not leave the centre bins
   // glowing grey (QA r2 night: #a0a1a3 vs ucr_room-night-lighting bins #322a1f) [D]
   if (emis > 0.0 && (layer < 12 || layer > 15))
-    emissive += base * emis * 3.0 * (emis < 0.125 ? min(u_hemiTop / 0.8, vec3(1.0)) : vec3(u_emisGain));
+    emissive += base * emis * 3.0 * (emis < 0.2 ? min(u_hemiTop / 0.8, vec3(1.0)) : vec3(u_emisGain));
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
