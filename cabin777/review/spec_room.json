@@ -1,0 +1,10 @@
+{"w": 640, "h": 480, "shots": [
+ {"name": "r1_pair_front", "unit": "roomPair", "opts": {"az": 2.35, "el": 0.42, "dist": 1.45}},
+ {"name": "r2_pair_aisle", "unit": "roomPair", "opts": {"az": 1.2, "el": 0.35, "dist": 1.45}},
+ {"name": "r3_pair_top", "unit": "roomPair", "opts": {"az": 1.5708, "el": 1.35, "dist": 1.35}},
+ {"name": "r4_centre", "unit": "roomCentre", "opts": {"az": 0.6, "el": 0.45, "dist": 1.3}},
+ {"name": "r5_centre_aisle", "unit": "roomCentre", "opts": {"az": 1.5708, "el": 0.75, "dist": 1.2}},
+ {"name": "r6_bedO", "unit": "roomBedO", "opts": {"az": 2.0, "el": 0.6, "dist": 1.4}},
+ {"name": "r7_seatO_close", "unit": "roomO", "opts": {"eye": [0.45, 1.55, -0.2], "look": [-0.25, 0.55, -1.2], "fov": 55}},
+ {"name": "r8_seatE_close", "unit": "roomE", "opts": {"eye": [0.2, 1.6, 1.6], "look": [0.1, 0.6, 0.1], "fov": 60}}
+]}

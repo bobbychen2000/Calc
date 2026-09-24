@@ -1383,7 +1383,7 @@ void main(){
   vec3 V = normalize(u_camPos - v_wpos);
   vec3 emissive = vec3(0.0);
   float hl = step(0.25, fract(v_tint.a + 0.01));
-  if (layer >= 13) {
+  if (layer >= 13 && layer <= 15) {
     vec2 uv = v_uv;
     if (layer == 13) uv.y += floor(v_tint.a + 0.001) * u_screenStep;
     vec3 tc = toLin(texture(u_atlas, uv).rgb);
@@ -1407,7 +1407,7 @@ void main(){
     base *= 1.0 + (t.b - 0.5) * 2.0 * P.z;
     rough = clamp(rough * (1.0 + (t.a - 0.5) * 2.0 * P.w), 0.04, 1.0);
   }
-  if (emis > 0.0 && layer < 12) emissive += base * emis * u_emisGain * 3.0;
+  if (emis > 0.0 && (layer < 12 || layer > 15)) emissive += base * emis * u_emisGain * 3.0;
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
@@ -2767,22 +2767,25 @@ const SEATMAT = {
   pyArm: { c: '#2e3136', r: 0.45, l: LAYER.plastic },
   pyArmPad: { c: '#44474d', r: 0.55, l: LAYER.leather },
   pyTrim: { c: '#9aa0a7', r: 0.3, m: 0.75, l: LAYER.brushed },
-  // THE Room (Safran Fusio custom): light Japanese ash exterior, muted dark-grey shells, charcoal textiles,
-  // light-grey Ultraleather, rosewood table, deep-blue compartment accents, slate stone
-  ash: { c: '#cdbfa6', r: 0.5, l: LAYER.wood },
-  ashDark: { c: '#8a7560', r: 0.5, l: LAYER.wood },
-  rosewood: { c: '#5c3b2c', r: 0.38, l: LAYER.wood },
-  jShell: { c: '#55575b', r: 0.46, l: LAYER.plastic },
-  jShellIn: { c: '#6d6f73', r: 0.5, l: LAYER.plastic },
-  jFabric: { c: '#4b4e54', r: 0.9, l: LAYER.fabric },
-  jLeather: { c: '#a8a8a4', r: 0.52, l: LAYER.leather },
-  jHead: { c: '#8e8f8d', r: 0.55, l: LAYER.leather },
+  // THE Room (Safran Fusio custom). Colours sampled from ANA's official seat photos (ref/ana/c_273xx, see REFERENCE777.md):
+  // pale grey-beige ash with fine straight grain, charcoal shells with lighter cap rails, charcoal tweed seat,
+  // slate Ultraleather headrest flap, navy pillow, dark recessed seat base
+  ash: { c: '#c3bcad', r: 0.5, l: LAYER.ashGrain },
+  ashDark: { c: '#5d6166', r: 0.34, m: 0.35, l: LAYER.brushed },
+  rosewood: { c: '#4b403a', r: 0.36, l: LAYER.wood },
+  jShell: { c: '#606369', r: 0.46, l: LAYER.plastic },
+  jShellIn: { c: '#55585d', r: 0.5, l: LAYER.plastic },
+  jRail: { c: '#74787e', r: 0.32, m: 0.3, l: LAYER.brushed },
+  jBase: { c: '#2a2b2f', r: 0.6 },
+  jFabric: { c: '#55545b', r: 0.92, l: LAYER.tweed },
+  jLeather: { c: '#4b4d53', r: 0.5, l: LAYER.leather },
+  jHead: { c: '#6b7582', r: 0.45, l: LAYER.leather },
   blueAccent: { c: '#233f7a', r: 0.5 },
   slate: { c: '#3f4246', r: 0.55, l: LAYER.marble },
   mattress: { c: '#f0efea', r: 0.9, l: LAYER.fabric },
   duvet: { c: '#34558f', r: 0.95, l: LAYER.fabric },
   pillow: { c: '#eeede8', r: 0.9, l: LAYER.fabric },
-  pillowBlue: { c: '#3e5f97', r: 0.9, l: LAYER.fabric },
+  pillowBlue: { c: '#262c5a', r: 0.85, l: LAYER.fabric },
   lampGlow: { c: '#ffe2b0', r: 0.4, e: 0.35 },
   moodGlow: { c: '#ffd9a0', r: 0.5, e: 0.25 },
   hole: { c: '#0b0d10', r: 1.0 },
@@ -2988,26 +2991,36 @@ function pyUnitFar(n) {
 // E = even-row seat (forward-facing, aisle column, aft half). Each seat's footwell runs under the other
 // seat's side table; each seat's 24 in monitor stands on the neighbour's console (see REFERENCE777.md).
 const ROOM = { hx: 0.585, hz: 1.359, top: 0.66, wall: 1.12, bed: 0.43 };
-// seat itself (passenger faces -z, back at z = 0): upright or bed
+// seat itself (passenger faces -z, back at z = 0): upright or bed. Per c_27302/27315/27316: thin flat cushion and a flat
+// upholstered back (one horizontal seam) over a dark recessed base; headrest is a slate flap hanging from the back top
 function roomSeatCore(B, bed, lod) {
   const F = SEATMAT.jFabric;
-  B.add(gRBox(0.60, 0.33, 0.56, 0.02, 1), M4.trs(0, 0.165, -0.33), SEATMAT.jShell);
+  B.add(gRBox(0.54, 0.33, 0.50, 0.015, 1), M4.trs(0, 0.165, -0.36), SEATMAT.jBase);
   if (bed) {
-    B.add(gLoft(cushionSecs(0.62, 0.64, 0.10, -0.05, { edge: 0.035, r: 0.035, crown: 0.004 }), 4), M4.trs(0, 0.38, -0.34), F);
+    B.add(gLoft(cushionSecs(0.64, 0.66, 0.075, -0.035, { edge: 0.02, r: 0.02, crown: 0.003 }), 4), M4.trs(0, 0.39, -0.35), F);
     return;
   }
-  B.add(gLoft(cushionSecs(0.62, 0.58, 0.10, -0.05, { edge: 0.04, r: 0.04, crown: 0.012 }), lod ? 3 : 4), M4.trs(0, 0.38, -0.34, 0, 2 * DEG), F);
-  const BH = M4.trs(0, 0.43, -0.07, 0, 17 * DEG);
-  loftAt(B, [SEC(0.0, 0.58, 0.10, 0, 0.03), SEC(0.06, 0.60, 0.12, -0.01, 0.045), SEC(0.22, 0.60, 0.13, -0.02, 0.05), SEC(0.44, 0.60, 0.12, -0.012, 0.048), SEC(0.58, 0.58, 0.10, 0, 0.04), SEC(0.62, 0.54, 0.07, 0.004, 0.03)], BH, F, lod ? 3 : 4);
-  // Ultraleather headrest, reading lights at both top edges, wake-up light under the headrest
-  loftAt(B, [SEC(0.60, 0.46, 0.08, 0.004, 0.032), SEC(0.63, 0.50, 0.10, -0.004, 0.042), SEC(0.76, 0.50, 0.10, -0.004, 0.042), SEC(0.80, 0.46, 0.075, 0.002, 0.03), SEC(0.815, 0.42, 0.05, 0.006, 0.02)], BH, SEATMAT.jHead, lod ? 3 : 4);
+  B.add(gLoft(cushionSecs(0.64, 0.60, 0.075, -0.035, { edge: 0.022, r: 0.02, crown: 0.004 }), lod ? 3 : 4), M4.trs(0, 0.39, -0.34, 0, 2 * DEG), F);
+  const BH = M4.trs(0, 0.43, -0.17, 0, 12 * DEG);     // top of the back leans on the shell (shell face at z = -0.005)
+  loftAt(B, [SEC(0.0, 0.62, 0.06, 0, 0.02), SEC(0.025, 0.64, 0.075, 0, 0.026), SEC(0.60, 0.64, 0.075, 0, 0.026), SEC(0.625, 0.62, 0.06, 0.002, 0.02)], BH, F, lod ? 2 : 3);
+  B.add(gRBox(0.36, 0.19, 0.02, 0.008, 1), M4.mul(BH, M4.trs(0.05, 0.50, -0.052, 0, -8 * DEG)), SEATMAT.jHead);
   if (lod) return;
-  for (const s of [-1, 1]) B.add(gCyl(0.018, 0.018, 0.02, 12), M4.mul(BH, M4.trs(s * 0.27, 0.80, 0.02, 0, -Math.PI / 2)), SEATMAT.lampGlow);
-  B.add(gBox(0.30, 0.008, 0.02), M4.mul(BH, M4.trs(0, 0.59, 0.04)), SEATMAT.moodGlow);
+  B.add(gBox(0.60, 0.005, 0.004), M4.mul(BH, M4.trs(0, 0.29, -0.0385)), SEATMAT.jBase);            // stitched seam
+  B.add(gBox(0.60, 0.005, 0.004), M4.mul(M4.trs(0, 0.39, -0.34, 0, 2 * DEG), M4.trs(0, 0.041, -0.10, 0, Math.PI / 2)), SEATMAT.jBase);
+  B.add(gRBox(0.03, 0.05, 0.012, 0.004, 1), M4.mul(BH, M4.trs(0.05, 0.385, -0.06)), SEATMAT.jHead); // flap tab
   // leg rest hanging from the pan front
-  B.add(gLoft([SEC(0.0, 0.56, 0.05, 0, 0.02), SEC(0.30, 0.58, 0.055, 0, 0.022)], 3), M4.trs(0, 0.13, -0.64, 0, -18 * DEG), F);
-  // shoulder belt
-  B.add(gBox(0.045, 0.5, 0.004), M4.mul(BH, M4.trs(-0.2, 0.34, -0.07, 0, 0, 0.35)), SEATMAT.strap);
+  B.add(gLoft([SEC(0.0, 0.56, 0.045, 0, 0.015), SEC(0.30, 0.60, 0.05, 0, 0.018)], 3), M4.trs(0, 0.06, -0.64, 0, -14 * DEG), F);
+  // teal shoulder belt (c_27313 / 27316 show it lying on the cushion)
+  B.add(gBox(0.045, 0.004, 0.34), M4.trs(-0.12, 0.433, -0.30, 0.5), { c: '#2f5f66', r: 0.7 });
+  B.add(gRBox(0.05, 0.012, 0.035, 0.005, 1), M4.trs(-0.04, 0.436, -0.44), SEATMAT.buckle);
+}
+
+// shared bits of the shell: rounded cap rail on a wall top, door leading edge with a finger pull
+function capRail(B, w, d, x, y, z) { B.add(gRBox(w + 0.012, 0.03, d + 0.012, 0.012, 2), M4.trs(x, y + 0.012, z), SEATMAT.jRail); }
+function doorEdge(B, x, z, h) {
+  B.add(gRBox(0.05, h, 0.04, 0.014, 2), M4.trs(x, 0.14 + h / 2, z), SEATMAT.jShell);
+  B.add(gRBox(0.046, h - 0.06, 0.006, 0.004, 1), M4.trs(x, 0.14 + h / 2, z + 0.021), SEATMAT.ash);
+  B.add(gRBox(0.012, 0.16, 0.02, 0.005, 1), M4.trs(x - 0.02, 0.86, z + 0.025), SEATMAT.jBase);
 }
 
 function roomPart(part, opts = {}) {
@@ -3019,44 +3032,51 @@ function roomPart(part, opts = {}) {
     // --- the seat: back against the forward end, facing aft (+z)
     const S = M4.trs(-0.24, 0, -1.27, Math.PI);
     const tmp = new Builder(); roomSeatCore(tmp, bed, lod); B.addBuilt(tmp.build(), S);
-    // back shell (dark grey) with a light-ash cap toward the aisle
+    // back shell: charcoal wall, dark padded band above the seat back, cap rail, reading light in the corner
     B.add(gRBox(0.70, wall, 0.07, 0.03, 2), M4.trs(-0.235, wall / 2, -1.31), shell);
-    B.add(gRBox(0.64, 0.86, 0.012, 0.01, 1), M4.trs(-0.24, 0.62, -1.272), SEATMAT.jLeather);
-    // aisle-side armrest block at the back, with the pop-up privacy panel (retracted)
-    B.add(gRBox(0.12, top, 0.26, 0.02, 1), M4.trs(0.135, top / 2, -1.14), SEATMAT.jShellIn);
-    B.add(gRBox(0.12, 0.03, 0.26, 0.012, 1), M4.trs(0.135, top + 0.012, -1.14), SEATMAT.jLeather);
-    B.add(gRBox(0.36, wall, 0.25, 0.02, 1), M4.trs(0.405, wall / 2, -1.215), ash);
-    // side table block over E's footwell (aisle column), door pockets in its aisle wall
+    B.add(gRBox(0.64, 0.30, 0.02, 0.012, 1), M4.trs(-0.24, 0.93, -1.268), SEATMAT.jLeather);
+    capRail(B, 0.70, 0.07, -0.235, wall, -1.31);
+    B.add(gCyl(0.024, 0.024, 0.02, 14), M4.trs(-0.52, 1.03, -1.265, 0, -Math.PI / 2), SEATMAT.jRail);
+    B.add(gCyl(0.015, 0.015, 0.004, 12), M4.trs(-0.52, 1.03, -1.254, 0, -Math.PI / 2), SEATMAT.lampGlow);
+    // aisle corner: LOW armrest ledge (0.66) holding the retracted pop-up privacy panel (only its ash top edge shows)
+    B.add(gRBox(0.50, top, 0.28, 0.02, 1), M4.trs(0.335, top / 2, -1.20), shell);
+    B.add(gRBox(0.16, 0.035, 0.28, 0.014, 2), M4.trs(0.17, top + 0.012, -1.20), SEATMAT.jLeather);
+    B.add(gRBox(0.34, 0.03, 0.28, 0.012, 2), M4.trs(0.415, top + 0.01, -1.20), SEATMAT.jRail);
+    B.add(gBox(0.022, 0.006, 0.26), M4.trs(0.48, top + 0.027, -1.20), ash);
+    if (!lod) B.add(gRBox(0.08, 0.05, 0.004, 0.004, 1), M4.trs(0.42, 0.50, -1.0585), SEATMAT.black);   // stowage latch
+    // side table block over E's footwell (aisle column): ash top, ash monument end at the aisle with cap + kick
     B.add(gRBox(0.45, 0.035, 0.56, 0.01, 1), M4.trs(0.345, top - 0.018, -0.30), ash);
-    B.add(gRBox(0.43, 0.02, 0.54, 0.008, 1), M4.trs(0.345, top + 0.002, -0.30), SEATMAT.ashDark);
     B.add(gRBox(0.04, wall, 0.56, 0.012, 1), M4.trs(0.565, wall / 2, -0.30), ash);
+    B.add(gRBox(0.045, 0.10, 0.56, 0.01, 1), M4.trs(0.565, 0.05, -0.30), SEATMAT.jShell);
+    capRail(B, 0.04, 0.56, 0.565, wall, -0.30);
     B.add(gRBox(0.02, top - 0.02, 0.56, 0.008, 1), M4.trs(0.13, (top - 0.02) / 2, -0.30), shell); // inner face beside O's legs
     B.add(gRBox(0.40, 0.03, 0.56, 0.01, 1), M4.trs(0.345, 0.58, -0.30), SEATMAT.jShellIn);     // footwell ceiling
     // cabinet with swivel mirror + literature pocket at the aft end of the side table
     B.add(gRBox(0.28, 0.30, 0.16, 0.015, 1), M4.trs(0.28, top + 0.15, -0.12), ash);
+    capRail(B, 0.28, 0.16, 0.28, top + 0.30, -0.12);
     B.add(gRBox(0.24, 0.24, 0.01, 0.008, 1), M4.trs(0.28, top + 0.15, -0.203), SEATMAT.jShellIn);
     B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(0.22, top + 0.16, -0.21), SEATMAT.mirror);
     B.add(gRBox(0.04, 0.02, 0.012, 0.004, 1), M4.trs(0.38, top + 0.2, -0.21), SEATMAT.blueAccent);
-    // seat controls (knob, slider, presets) on the side table
+    // seat controls (knob, slider, presets) in a dark rounded pod on the side table (c_27308)
     if (!lod) {
-      B.add(gRBox(0.10, 0.012, 0.18, 0.004, 1), M4.trs(0.22, top + 0.01, -0.46), SEATMAT.black);
-      B.add(gCyl(0.022, 0.022, 0.02, 16), M4.trs(0.22, top + 0.02, -0.41), SEATMAT.frame);
-      for (let b = 0; b < 3; b++) B.add(gBox(0.016, 0.004, 0.016), M4.trs(0.20 + b * 0.02, top + 0.018, -0.50), { c: '#6d747d', r: 0.4 });
+      B.add(gRBox(0.12, 0.012, 0.20, 0.006, 1), M4.trs(0.22, top + 0.008, -0.46), SEATMAT.jShell);
+      B.add(gRBox(0.10, 0.004, 0.18, 0.004, 1), M4.trs(0.22, top + 0.016, -0.46), SEATMAT.black);
+      B.add(gCyl(0.022, 0.022, 0.02, 16), M4.trs(0.22, top + 0.024, -0.41), SEATMAT.frame);
+      for (let b = 0; b < 3; b++) B.add(gCyl(0.008, 0.008, 0.004, 10), M4.trs(0.20 + b * 0.02, top + 0.02, -0.50), { c: '#8ab4e6', r: 0.4, e: 0.25 });
       B.add(gBox(0.02, 0.012, 0.006), M4.trs(0.52, 0.6, -0.40), SEATMAT.port);
     }
-    // slate accent strip on the table edge
-    B.add(gBox(0.42, 0.012, 0.03), M4.trs(0.345, top + 0.004, -0.575), SEATMAT.slate);
-    // sliding door (retracted into the block) and its leading edge
-    B.add(gRBox(0.02, wall - 0.14, 0.03, 0.008, 1), M4.trs(0.572, 0.14 + (wall - 0.14) / 2, -0.585), SEATMAT.ashDark);
+    B.add(gBox(0.42, 0.012, 0.03), M4.trs(0.345, top + 0.004, -0.575), SEATMAT.slate);          // slate accent on the table edge
+    // sliding door parked in the monument; its leading edge (ash face, charcoal frame, finger pull) faces aft
+    doorEdge(B, 0.56, -0.60, wall - 0.14);
     // O's monitor on the forward face of a panel rising from E's console (outer column)
     B.add(gRBox(0.54, 0.60, 0.05, 0.02, 1), M4.trs(-0.31, top + 0.30, 0.53), shell);
+    capRail(B, 0.54, 0.05, -0.31, top + 0.60, 0.53);
     B.add(gRBox(0.56, 0.33, 0.016, 0.01, 1), M4.trs(-0.31, 0.93, 0.50), SEATMAT.bezel);
     B.add(gQuad(0.531, 0.299), M4.trs(-0.31, 0.93, 0.4915, Math.PI), SEATMAT.screen, atlasUV('screen'));
-    // rosewood table stowed under the monitor + mood light, ottoman in the footwell
+    // rosewood-grain table stowed under the monitor + mood light, ottoman in the footwell
     B.add(gRBox(0.46, 0.035, 0.05, 0.01, 1), M4.trs(-0.31, top - 0.05, 0.50), SEATMAT.rosewood);
     B.add(gBox(0.40, 0.01, 0.02), M4.trs(-0.33, 0.585, 0.49), SEATMAT.moodGlow);
     if (bed) {
-      B.add(gRBox(0.64, 0.05, 0.60, 0.02, 1), M4.trs(-0.24, ROOM.bed - 0.025, -0.33), SEATMAT.jFabric);
       B.add(gRBox(0.42, ROOM.bed, 0.52, 0.02, 1), M4.trs(-0.35, ROOM.bed / 2, 0.26), SEATMAT.jShellIn);
       B.add(gLoft(cushionSecs(0.62, 1.76, 0.05, -0.02, { edge: 0.02, r: 0.03, crown: 0.004 }), 3), M4.trs(-0.26, ROOM.bed + 0.02, -0.40), SEATMAT.mattress);
       B.add(gLoft(cushionSecs(0.56, 1.1, 0.06, -0.03, { edge: 0.03, r: 0.05 }), 3), M4.trs(-0.28, ROOM.bed + 0.07, -0.05), SEATMAT.duvet);
@@ -3064,44 +3084,50 @@ function roomPart(part, opts = {}) {
     } else {
       B.add(gRBox(0.40, 0.40, 0.40, 0.03, 1), M4.trs(-0.35, 0.20, 0.30), SEATMAT.jShellIn);
       B.add(gLoft(cushionSecs(0.40, 0.40, 0.05, -0.025, { edge: 0.02, r: 0.03 }), 3), M4.trs(-0.35, 0.42, 0.30), SEATMAT.jFabric);
-      B.add(gLoft(cushionSecs(0.42, 0.28, 0.1, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.mul(M4.trs(-0.24, 0.58, -1.16, Math.PI), M4.trs(0, 0, 0, 0, -70 * DEG)), SEATMAT.pillowBlue);
+      B.add(gLoft(cushionSecs(0.40, 0.28, 0.1, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.mul(M4.trs(-0.34, 0.575, -1.04, Math.PI), M4.trs(0, 0, 0, 0.25, -76 * DEG)), SEATMAT.pillowBlue);
     }
-    // outer skirt (forward half)
-    B.add(gRBox(0.025, 0.66, 1.39, 0.01, 1), M4.trs(-0.572, 0.33, -0.66), shell);
+    // outer side: low console (window) with cap
+    B.add(gRBox(0.025, top, 1.39, 0.01, 1), M4.trs(-0.572, top / 2, -0.66), shell);
+    capRail(B, 0.025, 1.39, -0.572, top, -0.66);
   } else {
     // --- E: back at the aft end, facing forward (-z), aisle column
     const S = M4.trs(0.20, 0, 1.27);
     const tmp = new Builder(); roomSeatCore(tmp, bed, lod); B.addBuilt(tmp.build(), S);
     B.add(gRBox(0.69, wall, 0.07, 0.03, 2), M4.trs(0.235, wall / 2, 1.31), shell);
-    B.add(gRBox(0.62, 0.86, 0.012, 0.01, 1), M4.trs(0.21, 0.62, 1.272), SEATMAT.jLeather);
-    // narrow aisle armrest + pop-up privacy panel
-    B.add(gRBox(0.09, top, 0.60, 0.02, 1), M4.trs(0.54, top / 2, 0.95), SEATMAT.jShellIn);
-    B.add(gRBox(0.09, 0.03, 0.60, 0.012, 1), M4.trs(0.54, top + 0.012, 0.95), SEATMAT.jLeather);
-    B.add(gRBox(0.03, 0.06, 0.58, 0.01, 1), M4.trs(0.57, top + 0.05, 0.95), SEATMAT.ash);
+    B.add(gRBox(0.62, 0.30, 0.02, 0.012, 1), M4.trs(0.21, 0.93, 1.268), SEATMAT.jLeather);
+    capRail(B, 0.69, 0.07, 0.235, wall, 1.31);
+    B.add(gCyl(0.024, 0.024, 0.02, 14), M4.trs(-0.07, 1.03, 1.265, 0, Math.PI / 2), SEATMAT.jRail);
+    B.add(gCyl(0.015, 0.015, 0.004, 12), M4.trs(-0.07, 1.03, 1.254, 0, Math.PI / 2), SEATMAT.lampGlow);
+    // narrow aisle armrest with the pop-up privacy panel retracted inside (ash edge flush in the cap)
+    B.add(gRBox(0.09, top, 0.60, 0.02, 1), M4.trs(0.54, top / 2, 0.95), shell);
+    B.add(gRBox(0.10, 0.03, 0.62, 0.012, 2), M4.trs(0.54, top + 0.01, 0.95), SEATMAT.jRail);
+    B.add(gBox(0.022, 0.006, 0.58), M4.trs(0.555, top + 0.027, 0.95), ash);
     // wide console by the outer column (window / centreline), hollow under its forward half (O's footwell)
     B.add(gRBox(0.45, 0.035, 1.28, 0.01, 1), M4.trs(-0.355, top - 0.018, 0.66), ash);
-    B.add(gRBox(0.43, 0.02, 0.70, 0.008, 1), M4.trs(-0.355, top + 0.002, 0.93), SEATMAT.ashDark);
     B.add(gRBox(0.44, top - 0.035, 0.66, 0.02, 1), M4.trs(-0.355, (top - 0.035) / 2, 0.95), SEATMAT.jShellIn);
     B.add(gRBox(0.02, top - 0.02, 1.28, 0.008, 1), M4.trs(-0.125, (top - 0.02) / 2, 0.66), shell);
+    if (!lod) B.add(gRBox(0.02, 0.05, 0.10, 0.004, 1), M4.trs(-0.114, 0.50, 1.0), { c: '#b3262a', r: 0.5 });   // life-vest tab (red, c_27302)
     // cabinet (mirror + pouches, deep-blue interior) just aft of O's monitor panel
     B.add(gRBox(0.34, 0.30, 0.18, 0.015, 1), M4.trs(-0.33, top + 0.15, 0.66), ash);
+    capRail(B, 0.34, 0.18, -0.33, top + 0.30, 0.66);
     B.add(gRBox(0.30, 0.24, 0.01, 0.008, 1), M4.trs(-0.33, top + 0.15, 0.752), SEATMAT.jShellIn);
     B.add(gRBox(0.10, 0.12, 0.006, 0.004, 1), M4.trs(-0.26, top + 0.16, 0.758), SEATMAT.mirror);
     if (!lod) {
-      B.add(gRBox(0.10, 0.012, 0.18, 0.004, 1), M4.trs(-0.30, top + 0.01, 1.02), SEATMAT.black);
-      B.add(gCyl(0.022, 0.022, 0.02, 16), M4.trs(-0.30, top + 0.02, 1.07), SEATMAT.frame);
-      for (let b = 0; b < 3; b++) B.add(gBox(0.016, 0.004, 0.016), M4.trs(-0.32 + b * 0.02, top + 0.018, 0.98), { c: '#6d747d', r: 0.4 });
+      B.add(gRBox(0.12, 0.012, 0.20, 0.006, 1), M4.trs(-0.30, top + 0.008, 1.02), SEATMAT.jShell);
+      B.add(gRBox(0.10, 0.004, 0.18, 0.004, 1), M4.trs(-0.30, top + 0.016, 1.02), SEATMAT.black);
+      B.add(gCyl(0.022, 0.022, 0.02, 16), M4.trs(-0.30, top + 0.024, 1.07), SEATMAT.frame);
+      for (let b = 0; b < 3; b++) B.add(gCyl(0.008, 0.008, 0.004, 10), M4.trs(-0.32 + b * 0.02, top + 0.02, 0.98), { c: '#8ab4e6', r: 0.4, e: 0.25 });
     }
     // E's monitor panel at the aft end of O's side table (aisle column), screen facing aft
     B.add(gRBox(0.64, 0.58, 0.05, 0.02, 1), M4.trs(0.265, top + 0.29, -0.01), shell);
+    capRail(B, 0.64, 0.05, 0.265, top + 0.58, -0.01);
     B.add(gRBox(0.56, 0.33, 0.016, 0.01, 1), M4.trs(0.24, 0.93, 0.022), SEATMAT.bezel);
     B.add(gQuad(0.531, 0.299), M4.trs(0.24, 0.93, 0.0305), SEATMAT.screen, atlasUV('screen'));
     B.add(gRBox(0.46, 0.035, 0.05, 0.01, 1), M4.trs(0.30, top - 0.05, 0.02), SEATMAT.rosewood);
     B.add(gBox(0.36, 0.01, 0.02), M4.trs(0.33, 0.585, 0.035), SEATMAT.moodGlow);
-    // E's sliding door leading edge (retracted into the monument)
-    B.add(gRBox(0.02, wall - 0.14, 0.03, 0.008, 1), M4.trs(0.572, 0.14 + (wall - 0.14) / 2, 0.035), SEATMAT.ashDark);
+    // E's sliding door parked in the monitor monument; leading edge faces aft toward E's entry
+    doorEdge(B, 0.56, 0.05, wall - 0.14);
     if (bed) {
-      B.add(gRBox(0.58, 0.05, 0.62, 0.02, 1), M4.trs(0.20, ROOM.bed - 0.025, 0.36), SEATMAT.jFabric);
       B.add(gRBox(0.40, ROOM.bed, 0.52, 0.02, 1), M4.trs(0.34, ROOM.bed / 2, -0.30), SEATMAT.jShellIn);
       B.add(gLoft(cushionSecs(0.58, 1.80, 0.05, -0.02, { edge: 0.02, r: 0.03, crown: 0.004 }), 3), M4.trs(0.24, ROOM.bed + 0.02, 0.38), SEATMAT.mattress);
       B.add(gLoft(cushionSecs(0.54, 1.1, 0.06, -0.03, { edge: 0.03, r: 0.05 }), 3), M4.trs(0.25, ROOM.bed + 0.07, 0.05), SEATMAT.duvet);
@@ -3109,9 +3135,10 @@ function roomPart(part, opts = {}) {
     } else {
       B.add(gRBox(0.38, 0.40, 0.40, 0.03, 1), M4.trs(0.34, 0.20, -0.30), SEATMAT.jShellIn);
       B.add(gLoft(cushionSecs(0.38, 0.40, 0.05, -0.025, { edge: 0.02, r: 0.03 }), 3), M4.trs(0.34, 0.42, -0.30), SEATMAT.jFabric);
-      B.add(gLoft(cushionSecs(0.42, 0.28, 0.1, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.mul(M4.trs(0.20, 0.58, 1.16), M4.trs(0, 0, 0, 0, -70 * DEG)), SEATMAT.pillow);
+      B.add(gLoft(cushionSecs(0.40, 0.28, 0.1, -0.05, { edge: 0.04, r: 0.045 }), 3), M4.mul(M4.trs(0.10, 0.575, 1.04), M4.trs(0, 0, 0, -0.25, -76 * DEG)), SEATMAT.pillowBlue);
     }
-    B.add(gRBox(0.025, 0.66, 1.33, 0.01, 1), M4.trs(-0.572, 0.33, 0.69), shell);
+    B.add(gRBox(0.025, top, 1.33, 0.01, 1), M4.trs(-0.572, top / 2, 0.69), shell);
+    capRail(B, 0.025, 1.33, -0.572, top, 0.69);
   }
   return B.build();
 }
@@ -3122,8 +3149,9 @@ function roomPartFar(part) {
     B.add(gBox(0.70, wall, 0.07), M4.trs(-0.235, wall / 2, -1.31), SEATMAT.jShell);
     B.add(gRBox(0.62, 0.45, 0.6, 0.03, 1), M4.trs(-0.24, 0.225, -0.95), SEATMAT.jFabric);
     B.add(gRBox(0.58, 0.6, 0.12, 0.04, 1), M4.mul(M4.trs(-0.24, 0.43, -1.2, Math.PI), M4.trs(0, 0.3, 0, 0, 17 * DEG)), SEATMAT.jFabric);
-    B.add(gBox(0.36, wall, 0.25), M4.trs(0.405, wall / 2, -1.215), SEATMAT.ash);
-    B.add(gBox(0.45, top, 0.56), M4.trs(0.345, top / 2, -0.30), SEATMAT.ash);
+    B.add(gBox(0.50, top, 0.28), M4.trs(0.335, top / 2, -1.20), SEATMAT.jShell);
+    B.add(gBox(0.04, wall, 0.56), M4.trs(0.565, wall / 2, -0.30), SEATMAT.ash);
+    B.add(gBox(0.41, top, 0.56), M4.trs(0.325, top / 2, -0.30), SEATMAT.jShellIn);
     B.add(gBox(0.54, 0.6, 0.05), M4.trs(-0.31, top + 0.30, 0.53), SEATMAT.jShell);
     B.add(gQuad(0.531, 0.299), M4.trs(-0.31, 0.93, 0.50, Math.PI), SEATMAT.screen, atlasUV('screen'));
   } else {
@@ -3138,11 +3166,18 @@ function roomPartFar(part) {
 }
 // centre dividers of a pair (between E/F rear-facing seats and between the D/G consoles)
 function roomDivider() {
+  // centreline wall between the E/F (D/G) seats: dark lower band with stowage + red life-vest tab, pale ash upper band,
+  // charcoal cap rail; the upper band on the aft half is the retractable privacy divider (c_27313 / c_27314)
   const B = new Builder();
-  B.add(gRBox(0.03, 0.40, 1.30, 0.012, 1), M4.trs(0, 0.86, -0.66), { c: '#c9c3b6', r: 0.4, l: LAYER.plastic });
-  B.add(gRBox(0.04, 0.72, 1.30, 0.012, 1), M4.trs(0, 0.36, -0.66), SEATMAT.jShell);
-  B.add(gRBox(0.03, 0.36, 1.26, 0.012, 1), M4.trs(0, 0.84, 0.68), { c: '#c9c3b6', r: 0.4, l: LAYER.plastic });
-  B.add(gBox(0.034, 0.012, 2.6), M4.trs(0, 1.065, 0.0), SEATMAT.ashDark);
+  B.add(gRBox(0.05, 0.66, 2.62, 0.012, 1), M4.trs(0, 0.33, 0.0), SEATMAT.jShell);
+  B.add(gRBox(0.036, 0.40, 1.30, 0.012, 1), M4.trs(0, 0.86, -0.66), SEATMAT.ash);
+  B.add(gRBox(0.036, 0.36, 1.26, 0.012, 1), M4.trs(0, 0.84, 0.68), SEATMAT.ash);
+  for (const z of [-0.66, 0.68]) B.add(gRBox(0.06, 0.035, 1.26, 0.012, 2), M4.trs(0, 0.675, z), SEATMAT.jRail);
+  B.add(gRBox(0.05, 0.03, 2.6, 0.012, 2), M4.trs(0, 1.07, 0.0), SEATMAT.jRail);
+  for (const [z, s] of [[-0.9, 1], [0.9, -1], [-0.9, -1], [0.9, 1]]) {
+    B.add(gRBox(0.004, 0.14, 0.34, 0.004, 1), M4.trs(s * 0.026, 0.45, z), SEATMAT.jShellIn);     // stowage door
+    B.add(gRBox(0.006, 0.05, 0.02, 0.003, 1), M4.trs(s * 0.028, 0.45, z + 0.22 * s), { c: '#b3262a', r: 0.5 });
+  }
   return B.build();
 }
 
@@ -3231,7 +3266,7 @@ function mirrorGeo(geo) {
   for (let k = 0; k < g.p.length; k += 3) { g.p[k] = -g.p[k]; g.n[k] = -g.n[k]; }
   const rects = Object.values(ATL.rects);
   for (let k = 0; k < g.u.length / 2; k++) {
-    if (geo.mat[k * 4 + 2] < 13) continue;
+    if (geo.mat[k * 4 + 2] < 13 || geo.mat[k * 4 + 2] > 15) continue;
     const u = g.u[k * 2], v = g.u[k * 2 + 1];
     const r = rects.find((q) => u >= q[0] - 1e-5 && u <= q[2] + 1e-5 && v >= q[1] - 1e-5 && v <= q[3] + 1e-5);
     if (r) g.u[k * 2] = r[0] + r[2] - u;
@@ -3353,7 +3388,7 @@ function buildSeats(gl, layout) {
   for (const s of layout.seats) {
     if (!ATL.rects['tag' + s.id]) continue;
     let p, face;
-    if (s.kind === 'room') { p = localToWorld(s, s.odd ? [0.588, 1.0, -1.215] : [0.588, 1.0, 0.95]); face = s.mir ? -1 : 1; if (s.odd) p = localToWorld(s, [0.588, 1.0, -1.215]); }
+    if (s.kind === 'room') { p = localToWorld(s, s.odd ? [0.588, 0.56, -1.20] : [0.588, 0.56, 0.95]); face = s.mir ? -1 : 1; }
     else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx + 0.003, 1.12, -0.35]); face = s.mir ? -1 : 1; }
     T.add(gQuad(0.07, 0.036), M4.trs(p[0], p[1], p[2], face > 0 ? Math.PI / 2 : -Math.PI / 2), MAT.decal, atlasUV('tag' + s.id));
   }

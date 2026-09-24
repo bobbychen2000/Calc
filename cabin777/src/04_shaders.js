@@ -82,7 +82,7 @@ void main(){
   vec3 V = normalize(u_camPos - v_wpos);
   vec3 emissive = vec3(0.0);
   float hl = step(0.25, fract(v_tint.a + 0.01));
-  if (layer >= 13) {
+  if (layer >= 13 && layer <= 15) {
     vec2 uv = v_uv;
     if (layer == 13) uv.y += floor(v_tint.a + 0.001) * u_screenStep;
     vec3 tc = toLin(texture(u_atlas, uv).rgb);
@@ -106,7 +106,7 @@ void main(){
     base *= 1.0 + (t.b - 0.5) * 2.0 * P.z;
     rough = clamp(rough * (1.0 + (t.a - 0.5) * 2.0 * P.w), 0.04, 1.0);
   }
-  if (emis > 0.0 && layer < 12) emissive += base * emis * u_emisGain * 3.0;
+  if (emis > 0.0 && (layer < 12 || layer > 15)) emissive += base * emis * u_emisGain * 3.0;
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
