@@ -8,14 +8,21 @@ const MOODS = {
   // belt [V: tlfl_IMG_9217 #5b5cc4 (cruise), sany_10 #5466e8 / sany_12 #4c5edc (boarding), roame_7672 #5e7fef].
   // hemiBot lowered and exposure raised with the fill/AO rework (u_fill 0.7 -> 0.45) so mean tones stay put while
   // undersides, footwells and the floor darken [V: tlfl_IMG_9217 PSU underside #615c5d, c_27312 footwell #2d2c30]
-  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.21, 0.28, 0.70], k: 1.05, exposure: 1.40 },
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.255, 0.34, 0.85], k: 0.95, exposure: 1.15 },
-  // dining / sunrise: no photo of ANA's warm scenes on the sidewall, the lens follows the cove colour [A]
-  dining: { label: 'Dining', hemiTop: [1.0, 0.80, 0.60], hemiBot: [0.34, 0.26, 0.19], wash: [0.50, 0.37, 0.26], led: [1.0, 0.64, 0.32], sideLed: [0.6, 0.38, 0.19], k: 0.9, exposure: 1.18 },
-  // night: the blue band under the bins is the brightest element, the ceiling dimmer, grey shells readable with a
-  // blue-violet cast [V: roame_7672 sidewall #5e7fef, tlfl_IMG_9377 shell #555c61, sany_10 hue ~232 deg]
-  sleep: { label: 'Night', hemiTop: [0.07, 0.08, 0.18], hemiBot: [0.035, 0.04, 0.08], wash: [0.03, 0.035, 0.08], led: [0.10, 0.12, 0.30], sideLed: [0.20, 0.29, 0.90], k: 1, exposure: 2.2, readingLights: true },
-  wake: { label: 'Sunrise', hemiTop: [0.95, 0.66, 0.56], hemiBot: [0.28, 0.20, 0.18], wash: [0.50, 0.33, 0.28], led: [1.0, 0.50, 0.36], sideLed: [0.6, 0.30, 0.22], k: 0.9, exposure: 1.18 },
+  // QA r2: sideLed raised so the band under the outboard bins reads saturated blue now that the shader cuts the white
+  // hemi / bounce / wash inside the band [V: tlfl_IMG_9217 #5d5eca at the lens, #867db2 at the window tops; sany_12
+  // boarding #4c5edc]
+  boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.0, 0.03, 0.62], k: 1.05, exposure: 1.40 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.06, 0.04, 0.46], k: 0.95, exposure: 1.15 },
+  // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
+  // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
+  // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
+  dining: { label: 'Dining', hemiTop: [0.62, 0.23, 0.055], hemiBot: [0.14, 0.052, 0.013], wash: [0.30, 0.11, 0.03], led: [1.0, 0.22, 0.02], sideLed: [0.90, 0.24, 0.03], k: 0.9, exposure: 1.3, strips: true },
+  // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
+  // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
+  // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
+  // used in r1 (roame_7672, sany_10) were boarding shots on the ground (daylight in the windows), so not the night scene
+  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.045, 0.038, 0.030], sideLed: [0.020, 0.020, 0.024], k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.26, 0.12], hemiBot: [0.14, 0.058, 0.027], wash: [0.30, 0.12, 0.06], led: [1.0, 0.22, 0.10], sideLed: [0.90, 0.22, 0.12], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -63,7 +70,7 @@ class Scene {
     this.opaque = [
       sm.shell, sm.upper, sm.revealR, sm.revealL, sm.shadeBtns,
       sm.shade_manual, sm.shade_sheer, sm.shade_blackout, sm.shadeRail_manual, sm.shadeRail_sheer, sm.shadeRail_blackout,
-      ...Object.values(this.bins), ...Object.values(this.seats), this.mono.mesh,
+      ...Object.values(this.bins), ...Object.values(this.seats), this.mono.mesh, this.stripMesh,
     ];
     this.computeAO();
     this.winTex = null;
@@ -188,8 +195,29 @@ class Scene {
       }
       rm.push(M4.trs(p[0], p[1], p[2], 0, 0, 0, 0.04, 0.04, 0.04)); rt.push([2.4, 2.0, 1.4, 0]);
       this.spots.push({ p, t });
+      // QA r2: amber PSU lens above each lit seat (~0.10 x 0.05 m lens, a 7 cm sprite peaking at #c07040)
+      // [V: ucr_room-night-lighting PSU lamps #9e5e38; size A]
+      const px = s.x * 0.92, py = Math.abs(s.x) < 1.1 ? 1.82 : binBottomY(px) - 0.03;
+      const pz = s.kind === 'econ' || s.kind === 'py' ? p[2] + 0.12 : s.z;
+      rm.push(M4.trs(px, py, pz, 0, 0, 0, 0.07, 0.07, 0.07)); rt.push([0.75, 0.44, 0.25, 0]);
     }
     gl.setInstances(this.readingMesh, rm, rt);
+    // THE Room seat mood strips: warm LED line under each monitor bezel (bottom edge 0.645 m) and along the ottoman
+    // toe line under the footwell mouth, SEATMAT.moodGlow [V: ucr_room-night-lighting strip under the screen #ffeb97;
+    // upperclassroom review: mood lighting under the TV and the ottoman; strip sizes D from the 0.64 m bezel / 0.43 m
+    // footwell mouth]. Their light on the console / footwell is the shader strip term (u_stripP, nearest 8)
+    const sb = new Builder();
+    this.strips = [];
+    for (const s of this.layout.seats) {
+      if (s.kind !== 'room') continue;
+      const [xm, zf, dir, xo, zm] = s.odd ? [-0.245, MON.zO, -1, -0.345, MON.zO] : [0.21, MON.zE, 1, 0.34, MON.zE];
+      for (const [x, y, z, w] of [[xm, 0.642, zf + dir * 0.02, 0.56], [xo, 0.03, zm - dir * 0.02, 0.40]]) {
+        sb.add(gBox(w, 0.006, 0.012), M4.mul(unitXF(s), M4.trs(s.mir ? -x : x, y, z)), SEATMAT.moodGlow);
+        const c = localToWorld(s, [x, y, z]), e = localToWorld(s, [x + w / 2, y, z]);
+        this.strips.push({ p: c, a: V3.sub(e, c) });
+      }
+    }
+    this.stripMesh = gl.mesh(sb.build(), { name: 'moodStrips', castShadow: false });
   }
 
   // shade geometry for one window (no upload when batch = true)
@@ -337,6 +365,14 @@ class Scene {
     }
     G.set('u_spotP', sp); G.set('u_spotT', st);
     G.set('u_spotCol', [1.0, 0.85, 0.65].map((v) => v * 0.5));   // warm lamp colour [V: tlfl_IMG_9377], gain [A]
+    // seat mood strips light the console top / footwell only in the dimmed moods (#ffd9a0 x 0.25 = SEATMAT.moodGlow)
+    const spp = new Float32Array(32), spa = new Float32Array(32);
+    if (mood.strips && !this.xray) {
+      const near = this.strips.map((q) => [V3.len(V3.sub(q.p, cam.pos)), q]).sort((a, b) => a[0] - b[0]).slice(0, 8);
+      near.forEach(([, q], i) => { spp.set([...q.p, 1], i * 4); spa.set([...q.a, 0], i * 4); });
+    }
+    G.set('u_stripP', spp); G.set('u_stripA', spa);
+    G.set('u_stripCol', [0.25, 0.173, 0.087]);
     G.set('u_winGlow', winGlow);
     G.tex('u_ao', 1, this.ao.tex, gl.TEXTURE_3D);
     G.set('u_aoMin', this.ao.min);
@@ -349,7 +385,7 @@ class Scene {
     G.tex('u_atlas', 3, this.tex.atlas);
     G.set('u_screenStep', ATL.screenStep);
     G.set('u_emisGain', this.mood === 'sleep' ? 0.55 : 1.0);
-    G.set('u_screenGain', this.mood === 'sleep' ? 0.35 : 0.8);
+    G.set('u_screenGain', mood.screenGain || 0.8);   // QA r2 night 0.35 -> 0.6: the screen stays the brightest element [V: ucr_room-night-lighting]
     G.tex('u_win', 4, this.winTex);
     G.set('u_winZ', this.winZ);
     G.set('u_R', CAB.R + 0.10);

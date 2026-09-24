@@ -29,6 +29,7 @@ uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_sideLed; uniform vec3 u_winGlow;
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
+uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
 uniform sampler3D u_ao; uniform vec3 u_aoMin; uniform vec3 u_aoSize;
 uniform sampler2DArray u_detail; uniform vec4 u_layer[25]; uniform sampler2DArray u_photo; uniform float u_photoOn;
 uniform sampler2D u_atlas; uniform float u_screenStep; uniform float u_emisGain; uniform float u_screenGain;
@@ -114,7 +115,11 @@ void main(){
     }
     rough = clamp(rough * (1.0 + (t.a - 0.5) * 2.0 * P.w), 0.04, 1.0);
   }
-  if (emis > 0.0 && (layer < 12 || layer > 15)) emissive += base * emis * u_emisGain * 3.0;
+  // small e (< 0.12) is a fill lift for faces the hemisphere fill under-lights (08_bins doorC / bandC), not a lamp: it
+  // follows the cabin light colour and level (1 at boarding / cruise), so the dimmed moods do not leave the centre bins
+  // glowing grey (QA r2 night: #a0a1a3 vs ucr_room-night-lighting bins #322a1f) [D]
+  if (emis > 0.0 && (layer < 12 || layer > 15))
+    emissive += base * emis * 3.0 * (emis < 0.12 ? min(u_hemiTop / 0.8, vec3(1.0)) : vec3(u_emisGain));
   // specular anti-aliasing: widen roughness where the normal varies across pixels
   vec3 dNdx = dFdx(N), dNdy = dFdy(N);
   float nvar = 0.25 * (dot(dNdx, dNdx) + dot(dNdy, dNdy));
@@ -140,17 +145,25 @@ void main(){
     // charcoal shells and navy fabric reading mid-tone, not black); scaled by AO so crevices stay dark. QA r1: weaker
     // on down-facing faces and towards the floor, so bin undersides / PSU band and footwells keep the shadow line and
     // falloff of the photos [V: tlfl_IMG_9217 PSU underside #615c5d, c_27312 footwell #2d2c30]
-    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * (0.35 + 0.65*ao)
-                * mix(0.45, 1.0, up) * mix(0.55, 1.0, smoothstep(0.0, 1.4, v_wpos.y));
+    // QA r2: (0.35 + 0.65 ao) / mix(0.55, 1, height) crushed vertical fabric in the dense Y seat block to navy-black
+    // (#141c47 vs y_47300 seat backs #2c3a63) and THE Room ash to #7a766d (c_27312 ash #bdb6a3): AO weight halved and the
+    // height falloff eased to 0.75 on faces that do not look down; undersides keep the r1 falloff [V: y_47300, c_27312]
+    float noDown = 1.0 - down;
+    vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * (0.5 + 0.5*ao)
+                * mix(0.45, 1.0, up) * mix(mix(0.55, 0.75, noDown), 1.0, smoothstep(0.0, 1.4, v_wpos.y));
     // reveal glow: faces within ~0.12 m of a pane pick up the window light (alpha of the window LUT = window span in z,
     // rgb = shade transmittance) [V: tlfl_IMG_9217 / 9518 glowing reveals]
     vec4 wl = texture(u_win, vec2((v_wpos.z - u_winZ.x)/(u_winZ.y - u_winZ.x), v_wpos.x < 0.0 ? 0.25 : 0.75));
     float reveal = wl.a * smoothstep(2.72, 2.84, abs(v_wpos.x)) * (1.0 - smoothstep(0.2, 0.34, abs(v_wpos.y - 1.13)));
-    float noDown = 1.0 - down;
-    amb = (hemi * (0.15 + 0.85*ao) + bounce) * binShade
-        + u_wash * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown
-        + u_sideLed * wallProx * facingIn * smoothstep(1.05, 1.62, v_wpos.y) * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown
-        + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5
+    // QA r2: the sidewall band between the window tops and the bin lens is lit by the lens only; with the full hemi,
+    // bounce and wash on top the blue/amber sideLed washed out to #b8c0d5. Those terms are cut inside the band and the
+    // lens ramp starts lower so the colour reaches the window tops (glass top ~1.32 m), fading to white at the belt
+    // [V: tlfl_IMG_9217 band #5d5eca / #5458dd, belt #867db2; sany_12 #4c5edc; ff_door-gap amber lens #ffa43d]
+    float band = wallProx * facingIn * smoothstep(1.0, 1.35, v_wpos.y) * (1.0 - smoothstep(1.95, 2.1, v_wpos.y));
+    amb = (hemi * (0.15 + 0.85*ao) + bounce) * binShade * (1.0 - 0.65*band)
+        + u_wash * wallProx * (0.35 + 0.65*facingIn) * smoothstep(0.3, 1.25, v_wpos.y) * (0.45 + 0.55*ao) * noDown * (1.0 - 0.8*band)
+        + u_sideLed * wallProx * facingIn * smoothstep(0.95, 1.55, v_wpos.y) * (1.0 - smoothstep(1.95, 2.1, v_wpos.y)) * noDown
+        + u_winGlow * wallProx * facingIn * smoothstep(0.7, 1.1, v_wpos.y) * (1.0 - smoothstep(1.5, 1.8, v_wpos.y)) * 0.5 * (1.0 - 0.65*band)
         + u_winGlow * wl.rgb * reveal * 1.4;
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
@@ -162,6 +175,15 @@ void main(){
       float cone = 1.0 - smoothstep(0.12, 0.35, r);
       vec3 Ld = -normalize(d);
       amb += u_spotCol * cone * max(dot(N, Ld), 0.0) * (la*la) / max(dot(d, d), 0.04);
+    }
+    // seat mood strips (THE Room: under the monitor + ottoman toe line): warm local glow, ~0.4 m falloff from the strip
+    // [V: ucr_room-night-lighting strip #ffeb97, console top lit warm under the screen; falloff A]
+    for (int i = 0; i < 8; i++) {
+      if (u_stripP[i].w < 0.5) continue;
+      vec3 d = v_wpos - u_stripP[i].xyz; vec3 ax = u_stripA[i].xyz;
+      d -= ax * clamp(dot(d, ax) / dot(ax, ax), -1.0, 1.0);          // nearest point on the strip segment
+      float r = length(d);
+      amb += u_stripCol * (1.0 - smoothstep(0.0, 0.4, r)) * (0.35 + 0.65*max(dot(N, -d / max(r, 1e-3)), 0.0));
     }
   }
   vec3 L = u_sunDir;
