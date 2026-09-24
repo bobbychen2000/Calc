@@ -55,10 +55,14 @@ const circX = (y) => Math.sqrt(Math.max(0, CAB.R * CAB.R - (y - CAB.yc) * (y - C
 // Sidewall profile: v (height) -> [x, y, nx, ny] for the RIGHT side (inward normal)
 // dado: one planar facet 0.05-0.33 m carrying the grilles, kicked out to the window-belt circle at 0.40 m
 const DADO = [[2.70, 0], [2.712, 0.05], [2.830, 0.33], [2.852, 0.37], [circX(0.40), 0.40]];
-function wallAt(v) {
+// THE Room zones: the window pods' outer walls stand at |x| 2.847 down to the floor (09c_room: ux 2.275 + 0.572), so
+// the kicked-in dado and its grilles poked 0.15 m into the footwells (room_r3 high issue). There the dado is set
+// flush behind the pod walls and carries no grille; c_27316 / omaat_room_14 show only the pod console below 0.6 m [V]
+const DADO_J = [[2.862, 0], [2.865, 0.05], [2.874, 0.33], [2.880, 0.37], [circX(0.40), 0.40]];
+function wallAt(v, prof = DADO) {
   if (v <= 0.40) {
-    for (let k = 0; k < DADO.length - 1; k++) {
-      const a = DADO[k], b = DADO[k + 1];
+    for (let k = 0; k < prof.length - 1; k++) {
+      const a = prof[k], b = prof[k + 1];
       if (v <= b[1] + 1e-9) {
         const t = (v - a[1]) / (b[1] - a[1]);
         const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy);
@@ -143,10 +147,17 @@ function wallGrid(g, side, zs, vs) {
     if (hi.length > 1) wallGrid({ p: g.p, n: g.n, u: g.u, i: g.i }, side, zs, hi);
     return;
   }
+  if (g.jz) {                                                   // step between dado profiles at J zone ends
+    const e = [];
+    for (const b of g.jb) for (const d of [-0.001, 0.001]) if (b + d > zs[0] + 1e-4 && b + d < zs[zs.length - 1] - 1e-4) e.push(b + d);
+    if (e.length) zs = [...zs, ...e].sort((a, b) => a - b);
+  }
   const b = g.p.length / 3;
   for (const v of vs) {
-    const [x, y, nx, ny] = wallAt(v);
-    for (const z of zs) { g.p.push(x * side, y, z); g.n.push(nx * side, ny, 0); g.u.push(z, v); }
+    for (const z of zs) {
+      const [x, y, nx, ny] = wallAt(v, g.jz && g.jz(z) ? DADO_J : DADO);
+      g.p.push(x * side, y, z); g.n.push(nx * side, ny, 0); g.u.push(z, v);
+    }
   }
   const nz = zs.length;
   for (let j = 0; j < vs.length - 1; j++) for (let i = 0; i < nz - 1; i++) {
@@ -261,12 +272,13 @@ function windowParts(side, pat) {
   const gr = (hw, hh, r) => rrectPts(hw * 2, hh * 2, r, 3).map(([a, b]) => [a, gc + b]), NG = gr(0.1, 0.1, 0.02).length;
   const gm = (a, b, d) => gmap(a, b, d);
   const ghint = [wallAt(gc)[2] * side, wallAt(gc)[3], 0];
-  parts.push([ringLoft([[gr(ghw + 0.012, ghh + 0.012, 0.036), 0.0004], [gr(ghw + 0.004, ghh + 0.004, 0.03), 0.0064], [gr(ghw - 0.001, ghh - 0.001, 0.027), 0.0012]], gm, ghint), WMAT.grilleFrame]);
+  const grille = [];
+  grille.push([ringLoft([[gr(ghw + 0.012, ghh + 0.012, 0.036), 0.0004], [gr(ghw + 0.004, ghh + 0.004, 0.03), 0.0064], [gr(ghw - 0.001, ghh - 0.001, 0.027), 0.0012]], gm, ghint), WMAT.grilleFrame]);
   const back = raw();
   back.p.push(...gm(0, gc, 0.0012)); back.n.push(0, 0, 0); back.u.push(0, 0);
   for (const [a, b] of gr(ghw - 0.001, ghh - 0.001, 0.027)) { back.p.push(...gm(a, b, 0.0012)); back.n.push(0, 0, 0); back.u.push(0, 0); }
   for (let i = 0; i < NG; i++) back.i.push(0, 1 + i, 1 + ((i + 1) % NG));
-  parts.push([faceTo(back, ghint), WMAT.grilleBack]);
+  grille.push([faceTo(back, ghint), WMAT.grilleBack]);
   const lv = raw();
   const quad = (p0, p1, p2, p3) => {
     const b = lv.p.length / 3; lv.p.push(...p0, ...p1, ...p2, ...p3); for (let k = 0; k < 4; k++) { lv.n.push(0, 0, 0); lv.u.push(0, 0); }
@@ -281,11 +293,11 @@ function windowParts(side, pat) {
     const z = lerp(-ghw + 0.02, ghw - 0.02, k / 8);
     quad(gm(z - 0.002, v0 - 0.004, 0.0058), gm(z + 0.002, v0 - 0.004, 0.0058), gm(z + 0.002, v1 + 0.004, 0.0058), gm(z - 0.002, v1 + 0.004, 0.0058));
   }
-  parts.push([faceTo(lv, ghint), MAT.grille]);
+  grille.push([faceTo(lv, ghint), MAT.grille]);
   const lb = raw(), lz = W.pitch / 2 - 0.006, lp = [[lz - 0.024, 0.205], [lz + 0.024, 0.205], [lz + 0.024, 0.219], [lz - 0.024, 0.219]].map(([a, b]) => gmap(a, b, 0.0012));
   lb.p.push(...lp.flat()); lb.u.push(0, 0, 0, 0, 0, 0, 0, 0); lb.n.push(...Array(12).fill(0));
   lb.i.push(0, 1, 2, 0, 2, 3);
-  parts.push([faceTo(lb, ghint), WMAT.label]);
+  grille.push([faceTo(lb, ghint), WMAT.label]);
   // glass (drawn by the glass program: multiplies the sky behind)
   const N = 40, gl_ = raw();
   const glass = []; for (let i = 0; i < N; i++) glass.push(rrectRay((i / N) * Math.PI * 2, W.w / 2, W.h / 2, 0.09));
@@ -293,7 +305,7 @@ function windowParts(side, pat) {
   for (const [a, b] of glass) { gl_.p.push(...map(a, b, 0.106)); gl_.n.push(cnx * side, cny, 0); gl_.u.push(0, 0); }
   for (let i = 0; i < N; i++) gl_.i.push(0, 1 + i, 1 + ((i + 1) % N));
   fixWinding(gl_);
-  return { parts, glass: gl_ };
+  return { parts, grille, glass: gl_ };
 }
 
 // Shade geometry in the window-local frame: unit panel spanning y in [-H/2, H/2]; scaled per instance by the
@@ -381,7 +393,7 @@ function windowStudioGeo() {
   const states = [['manual', 0], ['manual', 0.5], ['manual', 1], ['sheer', 0], ['sheer', 1], ['blackout', 1]];
   const sky = { c: '#bcd3ec', r: 1, e: 0.9 };
   zs.forEach((z, k) => {
-    for (const [pg, m] of wp.parts) B.add(pg, M4.trs(0, 0, z), m);
+    for (const [pg, m] of [...wp.parts, ...wp.grille]) B.add(pg, M4.trs(0, 0, z), m);
     B.add(wp.glass, M4.trs(0, 0, z), sky);
     const [kind, f] = states[k];
     const w = { z, side: -1, electric: kind !== 'manual' };
@@ -472,10 +484,12 @@ function buildShell(gl, layout) {
     const last = runs[runs.length - 1];
     if (last && Math.abs(last[1] - zn.z0) < 1e-6) last[1] = zn.z1; else runs.push([zn.z0, zn.z1]);
   }
+  const jr = floorZones.filter((zn) => zn.type === 'seat' && zn.cls === 'J').map((zn) => [zn.z0, zn.z1]);
+  const jz = (z) => jr.some(([a, b]) => z > a && z < b);
   for (const side of [-1, 1]) {
     const hz = layout.windows.filter((w) => w.side === side).map((w) => w.z);
     for (const [za, zb] of runs) {
-      const g = raw(); g.dado = raw();
+      const g = raw(); g.dado = raw(); g.dado.jz = jz; g.dado.jb = jr.flat();
       buildSidewallRun(g, side, za, zb, hz, pat, WALL.vTop);
       fixWinding(g); fixWinding(g.dado);
       shell.add(g, null, MAT.sidewall); shell.add(g.dado, null, MAT.dado);
@@ -563,6 +577,11 @@ function buildShell(gl, layout) {
   }
   for (const t of tracks.values()) shell.add(gRBox(0.045, 0.010, t.z1 - t.z0, 0.004, 1), M4.trs(t.x, 0.001, (t.z0 + t.z1) / 2), MAT.trackCover);
 
+  // dado grilles: baked into the shell (same triangles as instancing) for every window outside the THE Room pods
+  for (const side of [-1, 1]) {
+    const wg = windowParts(side, pat).grille;
+    for (const w of layout.windows) if (w.side === side && !jz(w.z)) for (const [pg, m] of wg) shell.add(pg, M4.trs(0, 0, w.z), m);
+  }
   const meshes = {
     shell: gl.mesh(shell.build(), { name: 'shell', layer: 'shell' }),
     upper: gl.mesh(upper.build(), { name: 'upper', layer: 'upper' }),
