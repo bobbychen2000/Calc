@@ -4,3 +4,4 @@
 2. **Centre PSU in economy:** b_sany_y22 shows one stadium-shaped well with 4 round fittings per seat group. The model uses two wells: 4 reading lights, then 4 gaspers. Is there a close photo showing whether the second row exists?
 3. **Door-area (cross-aisle) ceilings:** no photo of the new-config door-area ceilings was found. The model uses a raised dome with a flat centre panel and two fore-aft light strips (after up_F_Forward-Look). Do your photos show one?
 4. **Centre-bin width ratio:** channel/bin width reads about 0.27 in y_47300 and about 0.47 in b_sany_y22. The model uses 0.36 in plan. Is there a straight-up photo of a centre-bin underside?
+5. **THE Room centre gaspers:** b_frugal_c_vents shows gasper nozzles on THE Room seat shell, and thrifty_j_overhead-vent shows overhead gaspers on the J outboard band. The model keeps a light + gasper well per seat in the centre-bin channel over the D/G seats. Should the ceiling gaspers there go?
