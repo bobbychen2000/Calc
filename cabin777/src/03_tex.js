@@ -54,11 +54,11 @@ function photoBase(hex, name) {
 const LAYER_PARAMS = {
   1: [22, 0.26, 0.14, 0.18], 2: [9, 0.32, 0.14, 0.3], 3: [3.2, 0.7, 0.5, 0.2], 4: [9, 0.1, 0.04, 0.12],
   5: [3.0, 0.1, 0.06, 0.22], 6: [1.1, 0.05, 0.9, 0.2], 7: [2.0, 0.15, 0.45, 0.2], 8: [22, 0.8, 0.9, 0.2],
-  // 9 ANA yagasuri pillow jacquard: 4 x 4 feather columns per tile at 0.04 m repeat -> 6.25 tiles/m, two tones #32355d /
-  //   #3e457b (c_27302 / c_27303) = linear ratio ~1.6 -> albedo strength 0.23 [D]
+  // 9 ANA J pillow check jacquard: 8 x 8 checks of 0.028 m per tile -> 4.46 tiles/m, two tones #32355d / #45508a
+  //   (c_27303, omaat_room_13) -> albedo strength 0.3 [D]
   // 11 Y mosaic fabric (third Y variant, y_47302 left seat / y_47306 right seat): checker of dense / sparse short pale
   //   dashes, 0.2 m tile (6 x 6 checks of ~33 mm, measured against the 0.27 m flap) [D]
-  9: [6.25, 0.15, 0.23, 0.15], 10: [2.4, 0.12, 0.28, 0.25], 11: [5.0, 0.12, 1.0, 0.15],
+  9: [4.46, 0.15, 0.3, 0.15], 10: [2.4, 0.12, 0.28, 0.25], 11: [5.0, 0.12, 1.0, 0.15],
   // photo-derived fabrics (ANA seat pages, see REFERENCE777.md): Y blue tick jacquard, PY charcoal/white fleck, J/F tweed, J ash
   // Y normal strength 0.12 (was 0.3: read as a knit; the Y jacquard is a flat woven face, y_47306)
   16: [5.5, 0.12, 1.4, 0.15], 17: [7.5, 0.3, 0.8, 0.15], 18: [14, 0.5, 0.35, 0.2], 19: [1.6, 0.06, 0.22, 0.2],
@@ -175,15 +175,15 @@ function buildDetailLayers(S = 256) {
     const n = 16, fx = u * n - Math.floor(u * n) - 0.5, fy = v * n - Math.floor(v * n) - 0.5;
     return Math.hypot(fx, fy) < 0.3 ? 0.08 : 0.55;
   }, () => 0.5, 1.2);
-  // 9 yagasuri (arrow-feather) jacquard of ANA's navy pillows (c_27302 / c_27303, omaat_room_13): columns of stacked
-  //    chevrons, alternate columns offset half a feather with the two tones swapped
+  // 9 navy check jacquard of ANA's J pillows (room QA w1: small offset checks ~2.8 cm, not chevrons; c_27303,
+  //    omaat_room_13): 8 x 8 checks per tile, alternate rows offset half a check, each check with a soft woven sheen
   L[9] = makeLayer(S, (u, v) => {
-    const n = 4, i = Math.floor(u * n), fu = u * n - i, fv = v * n + (i & 1) * 0.5;
-    return (fv + Math.abs(fu - 0.5) * 0.9) % 1 < 0.5 ? 0.6 : 0.4;
+    const n = 8, j = Math.floor(v * n), fu = (u * n + (j & 1) * 0.5) % 1, fv = v * n - j;
+    return 0.5 + 0.25 * Math.sin(fu * Math.PI) * Math.sin(fv * Math.PI) * ((Math.floor(u * n + (j & 1) * 0.5) + j) & 1 ? 1 : -1);
   }, (u, v) => {
-    const n = 4, i = Math.floor(u * n), fu = u * n - i, fv = v * n + (i & 1) * 0.5;
-    const on = ((fv + Math.abs(fu - 0.5) * 0.9) % 1 < 0.5) !== ((i & 1) === 1);
-    return clamp((on ? 0.78 : 0.22) + 0.06 * (vnoise(u * 96, v * 96, 96, 71) - 0.5), 0, 1);
+    const n = 8, j = Math.floor(v * n), x = u * n + (j & 1) * 0.5, i = Math.floor(x), fu = x - i, fv = v * n - j;
+    const on = ((i + j) & 1) === 1, sh = Math.sin(fu * Math.PI) * Math.sin(fv * Math.PI);
+    return clamp((on ? 0.62 + 0.18 * sh : 0.3 + 0.1 * sh) + 0.06 * (vnoise(u * 128, v * 128, 128, 71) - 0.5), 0, 1);
   }, () => 0.5, 0.6);
   // 10 wood/laminate grain
   L[10] = makeLayer(S, (u, v) => 0.5, (u, v) => {
