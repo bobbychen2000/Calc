@@ -57,7 +57,7 @@ const MONMAT = {
   navyPanel: { c: '#2d2b29', r: 0.35, l: LAYER.plastic },          // [V] welcome end panel: warm charcoal (sp_09 #46433b dim; render's navy was a tint)
   // standard galley inserts (SANspotter PY snack-bar photo): aluminium ovens/trolleys, black beverage makers,
   // black work deck, red-copper turn-button latches
-  alu: { c: '#9c9fa3', r: 0.35, m: 0.7, l: LAYER.brushed },
+  alu: { c: '#a39f99', r: 0.35, m: 0.7, l: LAYER.brushed },     // w4: warm light grey inserts (sp_09, lalf_133)
   aluDark: { c: '#8f9194', r: 0.4, m: 0.7, l: LAYER.brushed },
   bevBlack: { c: '#17171a', r: 0.3 },
   copper: { c: '#8f3a2c', r: 0.3, m: 0.4 },   // [V] small red turn-buttons (sp_09); the orange blocks dominated m01/m12
@@ -70,7 +70,7 @@ const MONMAT = {
   // front_71 #5e5655, omaatF_2 #5b5650) [V]
   curtainF: { c: '#57504a', r: 0.95, l: LAYER.fabric },   // w3: F front read too light (0.55 of wall vs 0.36-0.39)   // + tpg_147 #4a453a at 0.34 of white, omaatF_2 #56504b
   curtainTie: { c: '#2e2b2d', r: 0.8, l: LAYER.fabric },
-  curtainY: { c: '#474956', r: 0.9, l: LAYER.fabric },   // w3: py_37302 #3e4051 (b - r 19)
+  curtainY: { c: '#585c70', r: 0.9, l: LAYER.fabric },   // w4: rendered #212330 vs py_37302 #545868 (b - r ~19)
   curtainRear: { c: '#8e8d8a', r: 0.9, l: LAYER.fabric },
   curtainC: { c: '#6b635d', r: 0.95, l: LAYER.fabric },   // w2: #5a524d still rendered #2a2523 in shade (m07)  // [V] J-cabin charcoal curtains (omaat_room_36 #302f35-#3d3c42, tpg_71 #5e5655)
   rail: { c: '#dcdbd6', r: 0.4 },
@@ -410,7 +410,8 @@ function buildGalley(B, m, premium) {
     const uW = (w - 0.1) / nU - 0.03, t = k % 3;
     if (t === 0) {        // oven: aluminium door, meal-label window, lever latch
       B.add(gRBox(uW, 0.32, 0.04, 0.01, 1), F(x, 1.47, o + 0.02), MONMAT.alu);
-      B.add(gRBox(uW * 0.55, 0.12, 0.01, 0.006, 1), F(x - uW * 0.12, 1.55, o + 0.042), { c: '#9c9a74', r: 0.2, e: 0.05 });
+      B.add(gRBox(uW * 0.55, 0.12, 0.01, 0.006, 1), F(x - uW * 0.12, 1.55, o + 0.042), { c: '#3a3a38', r: 0.1 });   // smoked window
+      B.add(gBox(0.04, 0.008, 0.004), F(x + uW * 0.3, 1.6, o + 0.043), MONMAT.blueLed);
       B.add(gRBox(uW * 0.5, 0.035, 0.03, 0.01, 1), F(x - uW * 0.12, 1.4, o + 0.05), MONMAT.aluDark);
       for (const s of [-1, 1]) B.add(gRBox(0.016, 0.03, 0.02, 0.006, 1), F(x + s * uW * 0.3, 1.3, o + 0.05), MONMAT.copper);
     } else if (t === 1) { // beverage maker (sans_38): black brew head with green-lit key over a recessed bay; the steel
@@ -461,12 +462,13 @@ function addCurtain(B, xa, xb, z, xg, mat, tied = false) {
   if (!_curtainGeo) {
     _curtainGeo = curtainLoft([[0.02, 1.0, 0.9], [0.8, 0.9, 0.8], [1.42, 0.5], [1.55, 0.5], [1.8, 1.05, 0.9], [CURTAIN_H - 0.03, 1.4, 0.8]]);
     _curtainTie = curtainLoft([[1.44, 0.56], [1.53, 0.56]], { amp: 0.1 });
-    _curtainPanel = curtainLoft([[0.02, 0.95], [1.0, 0.93], [CURTAIN_H - 0.03, 0.9, 0.8]], { hx: 0.095, hz: 0.035, amp: 0.35, lobes: 9 });
+    // w4: wider gathered drape (~0.4 m at the hem, ~0.3 m under the track; py_37302 / y_47300), fuller at the hem
+    _curtainPanel = curtainLoft([[0.02, 1.0, 1.1], [0.7, 0.9], [1.4, 0.82], [CURTAIN_H - 0.03, 0.72, 0.7]], { hx: 0.16, hz: 0.035, amp: 0.3, lobes: 11 });
   }
   B.add(gBox(Math.abs(xb - xa), 0.02, 0.05), M4.trs((xa + xb) / 2, CURTAIN_H + 0.01, z), MONMAT.rail);
   const base = B.p.length / 3;
   B.add(tied ? _curtainGeo : _curtainPanel, M4.trs(xg, 0, z), mat);
-  const lobes = tied ? 7 : 9;
+  const lobes = tied ? 7 : 11;
   for (let k = base; k < B.p.length / 3; k++) {          // darker creases between the folds
     const f = 0.62 + 0.38 * Math.max(0, Math.sin(B.u[k * 2] * Math.PI * 2 * lobes));
     for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(B.c[k * 4 + c] * f);
@@ -887,8 +889,8 @@ function monoLayoutQA(L) {
   M('galley', 1.62, 2.70, pz27 + 0.14, dz[3][0], { face: 1, carts: 2, rowMonitor: 2.2, jumpX: 2.32 });
   // dark slate PY curtains in both aisles right behind row 27 (py_37302), gathered against the centre galley
   const zc4 = pz27 + ML.pyRecline - 0.07;
-  M('curtain', -1.62, -1.05, zc4, zc4, { xg: -1.18, tone: 'Y', h: 0 });
-  M('curtain', 1.07, 1.62, zc4, zc4, { xg: 1.20, tone: 'Y', h: 0 });
+  M('curtain', -1.62, -1.05, zc4, zc4, { xg: -1.10, tone: 'Y', h: 0 });
+  M('curtain', 1.07, 1.62, zc4, zc4, { xg: 1.12, tone: 'Y', h: 0 });
 
   // ---- door 5: drop the outboard lavs ahead of it and the transverse aft galley; fore-aft galleys + outboard lavs
   del((m) => m.kind === 'lav' && near(m.z1, dz[4][0]) && Math.abs(m.x0 + m.x1) > 2);
@@ -898,8 +900,8 @@ function monoLayoutQA(L) {
   M('lav', -2.35, -1.55, dz[4][1], dz[4][1] + 1.2, { face: -1 });
   M('lav', 1.46, 2.31, dz[4][1], dz[4][1] + 1.2, { face: -1 });
   // light-grey curtains across both aisles at the end of economy (y_47300)
-  M('curtain', -1.70, -1.00, zb, zb, { xg: -1.13, tone: 'R', h: 0 });
-  M('curtain', 1.00, 1.62, zb, zb, { xg: 1.13, tone: 'R', h: 0 });
+  M('curtain', -1.70, -1.00, zb, zb, { xg: -1.05, tone: 'R', h: 0 });
+  M('curtain', 1.00, 1.62, zb, zb, { xg: 1.05, tone: 'R', h: 0 });
 
   // ---- jump seats: plain lav / closet walls and the door-5 galley end panels
   L.jumps = [[-2.2, dz[0][0], 1], [2.2, dz[0][1], -1], [-2.46, dz[1][1], -1], [2.42, dz[1][1], -1], [-2.45, dz[2][1], -1], [2.45, dz[2][1], -1],

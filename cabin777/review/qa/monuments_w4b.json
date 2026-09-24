@@ -1,0 +1,163 @@
+{
+ "area": "monuments",
+ "rater": "B",
+ "round": 4,
+ "score": 7.7,
+ "details": [
+  {
+   "detail": "Door-3 self-service bar (m05, m06, m17, q11) vs samchui_11. The proportions, black upper unit, monitor, bottle fridge, ash lower doors and steel nosing hold. The new guard rail is present along the back and ends of the counter (thin steel, about 0.06 m high), which closes the round-3 low issue. The unit's depth is still 1.05 m; that question is left for the user.",
+   "score": 8.5,
+   "refs": [
+    "ref/web/monuments/samchui_11.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m05_bar.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/q11_bar3.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m17_d3jump.png"
+   ]
+  },
+  {
+   "detail": "Door-2 welcome galley (m03, m16, m18) vs omaat_Room-32, lalf_134 and sp_09. The open ash bays, brewer, monitor, dark cross-aisle soffit with downlights and ash lav doors are unchanged and correct. There are no new artefacts.",
+   "score": 8.5,
+   "refs": [
+    "ref/web/monuments_b/omaat_ANA-Business-Class-The-Room-32.jpg",
+    "ref/web/monuments/lalf_134.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m03_d2fwd.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m16_d2passage.png"
+   ]
+  },
+  {
+   "detail": "Door-2 aft monuments (m04, m13, rb4/k7). The ash-bodied 7K galley, the 2R jump seat and the tied charcoal curtain are clean. There is no z-fighting at the ash/white join.",
+   "score": 8,
+   "refs": [
+    "ref/web/monuments/lalf_133.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m04_d2aft.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/k7.png"
+   ]
+  },
+  {
+   "detail": "Door 1, F front wall and flight-deck door (q01, m01, m02, rb4/d1aisle). The two F-front openings are now clear, with slim tied bundles at the opening edges instead of panels that close them, which fixes last round's high issue. The ebony wall, centre closet and ink-cloud walls read well. The ebony still renders flat (no streaked grain).",
+   "score": 7.5,
+   "refs": [
+    "ref/web/monuments/tpa_IMG_0220.jpg",
+    "ref/web/monuments/tpa_IMG_0260.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m02_Ffront.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/q01_door1.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d1aisle.png"
+   ]
+  },
+  {
+   "detail": "Lavatory exteriors (m03, m05, m09, m11, m17). The J ash doors have a white seam and grab, the Y/PY lavs are white with signs and there is a wheelchair lav at door 4. Heights and seams are consistent, and the geometry has no gaps.",
+   "score": 7.5,
+   "refs": [
+    "ref/web/monuments/ana_seatmap_73E.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m17_d3jump.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m11_rearL.png"
+   ]
+  },
+  {
+   "detail": "F/J bulkhead, J face, and the J backs of the door monuments (m07, m14, m15). The cream wall, blue-topped wall boxes, J monitors and tied charcoal curtain are unchanged and correct.",
+   "score": 8,
+   "refs": [
+    "ref/web/monuments/tpg_The-Room-small-cabin-front_71.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m07_FJ.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m15_row5aft.png"
+   ]
+  },
+  {
+   "detail": "J/PY bulkhead, PY face (m08). The curtain is now tied and in the J charcoal, as in alv_IMG_7209 (renders #595553). The charcoal-framed monitors (two outboard, four in the centre) and the open top to the bins match the in-service photos.",
+   "score": 7.5,
+   "refs": [
+    "ref/web/monuments/alv_IMG_7209-2.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m08_JPY.png"
+   ]
+  },
+  {
+   "detail": "Door-4 group (m09, m10, q13, rb4/d4L, d4R). The 4R jump seat is now at the forward galley end. The wheelchair lav and the centre and right galleys follow the map. The emissive mint block from round 3 no longer shows in d4L/d4R. 4L has no attendant seat (left for the user).",
+   "score": 7.5,
+   "refs": [
+    "ref/ana/py_37302-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m09_d4fwd.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m10_d4aft.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d4L.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d4R.png"
+   ]
+  },
+  {
+   "detail": "Rear, door 5 (m11, m12, q19, rb4/d5L, d5R). The fore-aft galleys, aft-wall stowage and counter are present. The jump seats are now two at the left galley and one at the right, matching the map. q19 still frames only the blank closet back, not the galley (a walk()-clamp integration issue).",
+   "score": 7.5,
+   "refs": [
+    "ref/web/monuments/ana_seatmap_73E.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m12_rearG.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/q19_rearGalley.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d5L.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d5R.png"
+   ]
+  },
+  {
+   "detail": "Standard galley inserts (m01, m09, m12, d4R). The inset upper doors, labels, red latches, carts with placards, black brewers and oven windows read as a plausible galley. The inserts are still cool grey rather than warm beige-grey, and the oven windows are identical flat beige quads.",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m01_d1fwd.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m12_rearG.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d4R.png"
+   ]
+  },
+  {
+   "detail": "Curtains overall. The tied bundles (F front, F/J, J, J/PY, door 2) now have deep 7-fold pleats, crease shading and a tie band, and the aisles are clear: this is a large improvement. The untied PY-aft and rear panels are now slim 0.19 m pleated columns tucked under the rail. However, py_37302 shows the PY-aft curtains as wide (about 0.6-0.7 m) gathered drapes, and the navy renders very dark: #212330 to #262937, against #545868 in the photo.",
+   "score": 7,
+   "refs": [
+    "ref/ana/py_37302-lang-multi.jpg",
+    "ref/web/monuments/alv_IMG_7209-2.jpg",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m02_Ffront.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/q01_door1.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m09_d4fwd.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m10_d4aft.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m11_rearL.png"
+   ]
+  },
+  {
+   "detail": "Jump seats and door-lining furniture. There are now 10 seats: 1L, 1R, 2L, 2R, 3L, 3R, 4R, two at 5L and 5R. All are folded grey pans with straps on the plain end panels. The door linings now have a full-width bustle, a girt bar with a red flag, a 0.5 m red arming arc with arrowhead and a horizontal lever. This fixes the round-3 arc-scale issue. 4L is still missing (left for the user).",
+   "score": 7.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m18_doorL2.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/r5/m17_d3jump.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d5L.png",
+    "/tmp/claude-0/-home-user-Calc/def7adec-914e-5e60-a393-36ec08abe9d9/scratchpad/rb4/shots/d4R.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "PY-aft untied curtains too narrow and too dark",
+   "problem": "_curtainPanel (hx 0.095, 9 lobes) is a 0.19 m wide column. The MONMAT.curtainY '#474956' renders #212330 to #262937 in m09/m10, which reads as near-black navy.",
+   "evidence": "In py_37302 the curtains either side of the PY-aft opening are wide gathered drapes (about 0.6-0.7 m, about 2x the width of the adjacent wall box) and measure #545868 / #5a5c6a against a #e8e8ec wall. The model wall is about #e0e0e0, so the relative luminance is about 0.25 against 0.37.",
+   "fix": "Widen the untied panel to hx of about 0.2 by pushing it outboard so its inner edge stays at the current position (keeping the aisle clear), and lift curtainY to about #585c70 or add a small fabric sheen."
+  },
+  {
+   "severity": "low",
+   "detail": "F ebony closet faces still flat",
+   "problem": "darkWood renders as an even dark plane with no horizontal streaked grain.",
+   "evidence": "m02/m01: the ebony wall is nearly uniform, whereas tpa_IMG_0260 shows strong horizontal reddish-purple streaks.",
+   "fix": "Use a streaked wood layer (LAYER.wood with horizontal scale) on darkWood, or bake stripes like the ink clouds."
+  },
+  {
+   "severity": "low",
+   "detail": "Galley inserts cool and uniform",
+   "problem": "The oven, chiller and cart faces are cool brushed grey, and every oven window is the same flat beige quad.",
+   "evidence": "m01 and m12 against sp_09 and lalf_133, where the inserts are warm light grey-beige with small blue LED displays.",
+   "fix": "Warm the insert grey by about 6-8 levels in R and vary the oven windows (smoked glass with a dark interior)."
+  },
+  {
+   "severity": "low",
+   "detail": "QA view q19 still does not show the rear galley",
+   "problem": "walk() clamps the camera into the econ area, so q19 frames the white back of the centre monument behind rows 41/42.",
+   "evidence": "r5/q19_rearGalley.png is unchanged from round 3, while m12 and rb4/d5L show that the galley itself is fine.",
+   "fix": "For integration: use setView([0,1.62,59.6],0,...) or a galley-walkable zone in q19."
+  }
+ ],
+ "questionsForUser": [
+  "Door-3 bar/lav depth: keep 1.05 m, or stretch toward the approximately 1.8 m the seat map suggests?",
+  "Should 4L get an attendant seat on the wheelchair-lav end, as at every other Type A door?",
+  "Do you have any in-service photos of the door-3 bar or the door-5 rear galley to confirm the final layout?"
+ ]
+}
