@@ -1,0 +1,141 @@
+{
+ "area": "exterior",
+ "rater": "B (geometry and proportion first)",
+ "score": 5.0,
+ "details": [
+  {
+   "detail": "The wing planform, sweep and raked-tip position hold up seat for seat against ANA photos. From 11A (lalf_NH212_136, the seat is confirmed by the IFE photo _127), the inlet lip ellipse has a minor/major ratio of about 0.2, which puts the inlet about 11.5 deg forward of the beam. The model geometry gives 11.6 deg (inlet at z 25.54, eye at z 24.1, 7.0 m lateral). From 26K on JA795A (alv_NH211_26K_7282, level cruise at twilight), the tip sits 168 px above the visible horizon at f of about 1200 px, i.e. 8.0 deg, or about 4.7 deg above true horizontal after 3.3 deg of dip. The model gives 5.0 deg (tip crest 4.08, 30.5 m away, 2.5 deg pitch). The 1.5 m cruise bending is therefore confirmed.",
+   "score": 7.5,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/lalf_ANA77W_NH212_127_seat11A_proof.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r1/d_11A.png", "/tmp/r1/d_26A.png"]
+  },
+  {
+   "detail": "Flap-track fairing (canoe) count and span positions. The model has four per side plus the pylon, which matches NASA CR-1998-196709 (777 outboard-flap supports at about 25 % from each end of the flap). The outboard-flap pair should sit at s 14.7 and 20.4 (flap 11.8 to 23.3); the model has 14.0 and 19.5, which is 0.7-0.9 m inboard. From 26K (_7331) the outermost canoe tail lands close to the aileron notch, which agrees with 20.4.",
+   "score": 6.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "/tmp/r1/st/a_plan.png"]
+  },
+  {
+   "detail": "Canoe shape. The r2 fix made the tails blunt, deep slabs (depth floor 75 %, width floor 80 %, 0.40 m dome). In ANA cruise photos from 26K (_7282, _7329, _7331) the flaps-up canoes taper to a narrow, rounded, pointed tail about 35-45 % of the maximum depth. The blunt pod in Boeing_777_(4139974954)_(2) is a ground view with the flaps partly extended, when the aft canoe section droops with the flap. From 26A/30A/33A the model canoes read as thick paddles with square ends.",
+   "score": 3.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7329.jpg", "ref/web/exterior/Boeing_777_(4139974356).jpg", "/tmp/r1/d_26A.png", "/tmp/r1/d_30A.png"]
+  },
+  {
+   "detail": "Canoe tone. In day renders the canoes are a single uniform dark slate: #3c4351 in d_26A/d_30A, with a bright hairline where the top of the loft meets the wing. The photos have lit upper flanks almost as bright as the wing (#d3d6d3 in _7331; the wing there is #c0ccd4) and only the belly in shade (#59636c / #646f78). At sunset it inverts: the model canoes glow cream #b6966a, brighter than the wing (#8b6d61). In the twilight photo (_7282) the canoes are #39455e-#677288, at or below the wing (#496896).",
+   "score": 2.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r1/d_26A.png", "/tmp/r1/s_26A.png"]
+  },
+  {
+   "detail": "Registration on the wing. ANA paints the registration (here 'JA795A') in large black letters on the UPPER surface of the RIGHT wing, and it is the most conspicuous marking in every right-side view from 26K. It sits outboard of the engine between the slat line and the spoilers, about 1.1-1.3 m tall, running from about s 13.5 to s 20. From the cabin it reads upside down: the 'J' is outboard and the glyph tops point aft toward the trailing edge. The model has no registration, so every K-seat (right-side) view is wrong. The left wing's upper surface is clean in ANA photos, so A-side views are unaffected.",
+   "score": 0,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7329.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7331.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7345.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_seatproof.jpg"]
+  },
+  {
+   "detail": "Black gear-alignment stripe at s 6.4. It is present and reads right from 17A/19A against F-GSQR_1/_2. From 26K (_7242) the stripe is about half a spoiler-panel chord wide, i.e. about 0.45-0.5 m, and it carries a thin dashed white outline on its forward end (walkway/no-step border). The model has 0.38 m and no outline.",
+   "score": 7,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7242.jpg", "ref/web/exterior/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg", "/tmp/r1/d_17A.png", "/tmp/r1/q12_wing.png"]
+  },
+  {
+   "detail": "Slat, spoiler, flap and aileron seams. The layout and darkness are right. The skin between them is flat and uniform (#9da3ab in d_17A), whereas the photos show fine rivet rows, a panel-to-panel tonal patchwork and flap-panel seams. There are no static dischargers: _7282 shows a comb of about 8 wicks on the raked-tip and aileron trailing edges, silhouetted against the sky from 26K.",
+   "score": 6,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7242.jpg", "ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r1/d_17A.png"]
+  },
+  {
+   "detail": "GE90-115B nacelle. Position against 11A is confirmed (see the first detail), and the white cowl, silver lip and split lines are right. The signature nacelle strake (chine) on the INBOARD side of the fan cowl is missing. It is visible from 11A on ANA (lalf_NH212_136 lower left, _137 centre) and in B-KQZ_074140, Leaving_Sri_Lanka, GE90-115B_(14825115484) and ORY-FDF_F-GSQS. It is a thin plate about 1.3 m long and 0.25 m tall, at about 2.4-3.7 m aft of the highlight, about 20-30 deg above the horizontal on the inboard side, with its leading end slightly higher. The round access panel on the upper cowl is also missing (lalf 136/137, B-KQZ). The model cowl is #b7c6d5; the photos range from #818c9e (ANA, overcast descent) to #a9c0ce (Cathay, overcast), which is plausible.",
+   "score": 5.5,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_136.jpg", "ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "ref/web/exterior/B-KQZ_right_engine_20251029-074140.jpg", "ref/web/exterior/Leaving_Sri_Lanka_(2476362502).jpg", "/tmp/r1/d_11A.png", "/tmp/r1/st/e_engine.png"]
+  },
+  {
+   "detail": "Pylon. From 13A and in the studio h_window13A it reads as a thin rounded rail about 0.3 m wide on the cowl crest, like a handle. From 11A on ANA (_137) and in B-KQZ_074140, the forward pylon fairing is a broad, smooth hump. At 187 px/m (cowl 4.18 m = 780 px) it is about 0.8-1.0 m wide and rises about 0.4 m above the cowl crest by mid-cowl, then about 0.8 m into a wide saddle under the leading edge. Its colour is right (wing grey, B-KQZ pylon #a8b2b4).",
+   "score": 3.5,
+   "refs": ["ref/web/exterior/lalf_ANA77W_NH212_137.jpg", "ref/web/exterior/B-KQZ_right_engine_20251029-074140.jpg", "/tmp/r1/d_13A.png", "/tmp/r1/st/h_window13A.png"]
+  },
+  {
+   "detail": "Day sky (owner: lighting). Pale #bdccdc at the top of the window and #c9d4dd at the horizon. ANA cruise photos: #527dc2 top (_7282, twilight) and the F-GSQR cruise shots #4d7098-#2f609b. The haze band is right, but the zenith needs to be about 2x more saturated and darker.",
+   "score": 4,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "ref/web/exterior/Cabin_wing_view_of_Air_France_777_F-GSQR_2.jpg", "/tmp/r1/d_26A.png"]
+  },
+  {
+   "detail": "Sunset wing (owner: lighting, plus exterior for the canoe bounce). The wing is warm brown (#8b6d61) and the canoes cream. In the twilight/sunset photos (_7282, Emirates_77W) the wing is cool blue-lavender (#496896) or a near-black silhouette against a bright horizon.",
+   "score": 3,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "ref/web/exterior/Emirates_77W_wing_view,_July_2015.jpg", "/tmp/r1/s_17A.png", "/tmp/r1/s_26A.png"]
+  },
+  {
+   "detail": "Night (n_17A). Stars, a dark wing and a red nav light. Plausible, but the wing is lifted too far off the sky by a blue ambient term: the stripe is legible, whereas at night it should be nearly invisible except where the nav/strobe light reaches it.",
+   "score": 6,
+   "refs": ["/tmp/r1/n_17A.png"]
+  },
+  {
+   "detail": "Nav light and strobe. They are present. In _7282 the tip light reads as a bright star point with a small glow even at dusk. The model's red lens is a dim 7 cm blob (j_tip, d_33A). The strobe was not seen in any render.",
+   "score": 5.5,
+   "refs": ["ref/web/exterior/alv_ANA77W_NH211_26K_7282.jpg", "/tmp/r1/st/j_tip.png", "/tmp/r1/d_33A.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "problem": "Right-wing registration 'JA795A' is missing from the upper surface",
+   "detail": "Every right-side (K) window view on ANA 777-300ERs shows the registration in large black letters on the right wing's upper surface. The model's right wing is blank.",
+   "evidence": "alv_ANA77W_NH211_26K_7282/_7329/_7331/_7345 (seat 26K confirmed by the IFE, NH211 HND-LHR 2026, JA795A). In _7331 the text runs outboard of the engine from about s 13.5 to 20, sits at about 35-45 % chord, and each glyph is about as long as a slat panel is deep.",
+   "fix": "In buildExterior, for side === 1 only, add const REG = 'JA795A' and a 5x7 stroke font object GLYPH = {J:[[...]], A:[...], '7':[...], '9':[...], '5':[...]} as polylines in unit glyph space (u across 0..0.7, v up 0..1). Place character k at sC = 19.6 - k * 1.15 ('J' outboard, reading inboard). Map glyph (u, v) to (s = sC - u * 0.9, xn = xc + (v - 0.5) * 1.25), where xc = pwl(WING.le, sC) + 0.40 * (te(sC) - pwl(WING.le, sC)). v runs toward the trailing edge, so glyph tops point aft and the text reads upside down from the cabin, as in the photos. Draw each stroke with wingLine(B, 1, path, {c:'#141619', r:0.85, m:0}, 0.17, 1, 0.016)."
+  },
+  {
+   "severity": "high",
+   "problem": "Canoes render as uniform dark slate; the sunset bounce makes them glow",
+   "detail": "The canoes use paintLow plus -25 % baked occlusion, and they get no sky or cloud fill in the exterior pass, so their flanks render #3c4351 against a #9da3ab wing. In the photos the upper flanks are nearly wing-bright and only the belly is dark. At sunset the lower-hemisphere term turns them cream (#b6966a).",
+   "evidence": "_7331: lit canoe flank #d3d6d3, belly #59636c, wing #c0ccd4. _7282 (twilight): canoes #39455e-#677288 against wing #496896. Model d_26A canoe #3c4351, s_26A #b6966a.",
+   "fix": "Build the canoes with paint (#636466), not paintLow. After the canoe loop, add the same flank fill as the pylon: for k in [vC, vN), f = 1 + 0.7 * smooth(0.2, 0.9, Math.abs(B.n[k*3])) * (B.n[k*3+1] > -0.4 ? 1 : 0). Change the canoe shadeVerts to 1 - 0.35 * Math.max(0, -n[1]) so only the belly darkens. Remove the bright seam line by starting topAt 0.02 m inside the lower skin (+0.03 instead of +0.05). (owner: lighting) In 12_scene.js SKIES.sunset, clamp the exterior ground/bounce colour to a cool, dark value (about #2d3240 x 0.4) so undersides cannot outshine the upper wing."
+  },
+  {
+   "severity": "high",
+   "problem": "The pylon is a thin rail, not the broad GE90 forward pylon fairing",
+   "detail": "From 11A-15A the pylon is the second-biggest object in the window after the cowl. The model section is w = lerp(0.6, 0.26, (k/14)^1.5) with a ridge only 0.10-0.45 m above the cowl, so it reads as a handle.",
+   "evidence": "lalf_ANA77W_NH212_137 (ANA, seat 11A): the hump runs over the aft half of the cowl into a wide saddle under the leading edge. B-KQZ_074140: about 0.9 m wide and 0.4 m above the crest at mid-cowl (187 px/m).",
+   "fix": "In the pylon loop of buildExterior: w = x < 6.35 ? lerp(0.95, 0.85, smooth(1.6, 6.35, x)) : lerp(0.85, 0.40, (x - 6.35) / 4.25). ridge = nacTop(x) + lerp(0.15, 0.80, smooth(1.6, leE - E.x0, x)). r = w * 0.48. Start the fairing at x = 2.0 (not 1.6), with a 0.4 m nose blend: w *= smooth(2.0, 2.6, x)."
+  },
+  {
+   "severity": "medium",
+   "problem": "Canoe tails are too blunt for flaps-up cruise",
+   "detail": "The r2 change used a flaps-extended ground photo. In cruise the canoes taper to a narrow rounded point.",
+   "evidence": "_7331 and _7329 (26K): tail depth about 35-45 % of the maximum, with a small rounded end. Model d_26A and d_30A show square-ended slabs.",
+   "fix": "In the canoe loop: RE = 0.22. Depth floor Math.max(0.40, Math.pow(c, 0.5)), width floor Math.max(0.50, Math.pow(c, 0.4)). Keep the four-section end cap but scale it to 0.5 * e (width) and 0.42 * e (depth). Move WING.canoes to [[8.4, 4.6], [11.1, 3.8], [14.7, 4.3], [20.4, 3.4]] (outboard-flap supports at 25 % from each flap end, NASA CR-1998-196709)."
+  },
+  {
+   "severity": "medium",
+   "problem": "The GE90 inboard nacelle strake (chine) and the upper access panel are missing",
+   "detail": "The strake is the most recognisable detail on a 777 GE90 cowl seen from rows 11-15, and it is present in every engine photo.",
+   "evidence": "lalf_ANA77W_NH212_136/_137 (ANA 11A), B-KQZ_074140, Leaving_Sri_Lanka_(2476362502), GE90-115B_(14825115484).",
+   "fix": "In buildExterior after the cowl: B.add(gRBox(0.03, 0.26, 1.3, 0.012, 1), M4.mul(rot, M4.trs(0, 3.05, 0) · rotation about the lathe axis to angle a = side < 0 ? (180 - 25) deg : 25 deg toward the fuselage · translate radially to r = 2.09 + 0.13 · pitch the plate 4 deg, nose up), cowl). In words: a 1.3 m x 0.26 m plate standing radially out of the cowl on the inboard side, 25 deg above the horizontal, centred 3.05 m aft of the highlight. Add a dark 1.5 cm seam strip where it meets the cowl. Also add the access panel: a gCyl(0.28, 0.28, 0.006, 24) disc in seam colour on the cowl at 2.6 m aft, 15 deg outboard of top dead centre."
+  },
+  {
+   "severity": "medium",
+   "problem": "Sunset wing is warm brown, not cool lavender or silhouette (owner: lighting)",
+   "detail": "s_17A/s_26A upper wing #8b6d61. Twilight photos show a sky-reflecting cool tone.",
+   "evidence": "_7282: wing #496896 under a #527dc2 zenith. Emirates_77W_wing_view: near-black silhouette.",
+   "fix": "(owner: lighting) In 12_scene.js SKIES.sunset, reduce the sun's contribution to the exterior at grazing incidence (sun elevation < 5 deg: scale by 0.35) and raise the zenith-sky diffuse weight on up-facing exterior normals, so the upper wing takes the #5a6fa0-ish sky colour."
+  },
+  {
+   "severity": "low",
+   "problem": "No static dischargers on the aileron and raked-tip trailing edges",
+   "detail": "They are visible against the sky from aft seats as a fine comb.",
+   "evidence": "_7282 tip region: about 8 wicks.",
+   "fix": "For s in [24, 25.5, 27, 28.5, 30.2, 31.2, 31.8, 32.3], add gCyl(0.008, 0.008, 0.28, 4) at wingAt(s, te(s) + 0.10, side), pitched aft (along +z), colour '#2a2d31'."
+  },
+  {
+   "severity": "low",
+   "problem": "The nav light reads as a dim blob, not a point source",
+   "detail": "At dusk the tip light is a bright star with a glow.",
+   "evidence": "_7282.",
+   "fix": "In buildExterior raise the nav-light e from 0.5 to 2.5 and the light entry s from 0.9 to 1.6. Keep the strobe."
+  },
+  {
+   "severity": "low",
+   "problem": "The gear stripe is slightly narrow and has no dashed white outline",
+   "detail": "The stripe measures about 0.45-0.5 m in the 26K photo, with a thin dashed white outline at its forward end.",
+   "evidence": "_7242.",
+   "fix": "Change the width 0.38 -> 0.46 in the wingLine call for the stripe."
+  }
+ ],
+ "questionsForUser": [
+  "Which airframe should the model represent? ANA paints the registration on the right wing's upper surface. JA795A is confirmed in the new 212-seat layout (The Alviator, NH211, 2026). Is it acceptable to use it for the K-side view, or do you prefer the airframe of a specific NH7/NH8 flight?",
+  "Should K-side (right) seats be QA-rendered from now on? All current exterior QA views are A-side, so the right-wing registration, the right engine's inboard strake (which faces the right windows) and the green nav light have never been rated."
+ ]
+}
