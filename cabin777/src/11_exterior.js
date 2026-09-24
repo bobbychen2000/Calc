@@ -17,7 +17,11 @@ const WING = {
   // yehudi kink at ~9-12 m then ~20 deg; raked tip from 31.1 m [D, ACAP 9.9.1]
   le: [[3.10, 26.89], [31.10, 45.93], [31.40, 46.42], [31.80, 47.22], [32.10, 47.90], [32.40, 48.50]],
   te: [[3.10, 39.96], [8.60, 39.96], [10.0, 40.17], [11.0, 40.36], [12.0, 40.69], [20.0, 43.40], [29.5, 47.05], [31.0, 47.98], [32.40, 49.05]],
-  crest: (s) => -0.02 + (s - 4) * 0.0915,  // upper-surface crest above the floor: ACAP front view, 5.2 deg on the ground [D]
+  // upper-surface crest above the floor: ACAP front view, 5.2 deg on the ground [D], plus 1g cruise bending that lifts the
+  // tip ~1.5 m (quadratic outboard of the root; the leading edge curves up to the tip in F-GSQR_1/_2 window views [V
+  // shape], magnitude [A] tuned on a 17A render vs F-GSQR_2). Inboard of the nacelle it adds < 0.06 m, so the engine
+  // and pylon keep the ground-static height.
+  crest: (s) => -0.02 + (s - 4) * 0.0915 + 1.5 * Math.pow(Math.max(0, s - 4) / 28.4, 2),
   th: [0.155, 0.115],              // NACA thickness param root -> tip (x0.81 with the flattened lower side): ~12.6 -> 9.3 % [A]
   eng: { s: 9.61, y: -2.19, x0: 25.76 },   // nacelle axis off CL [V], axis height [D ACAP side view], inlet highlight [V]
   slats: [11.7, 13.6, 16.6, 19.6, 22.6, 25.4, 28.1, 31.0],   // 7 outboard slats (ACAP break ticks) + 1 inboard 3.3-8.2 [D]
@@ -97,14 +101,14 @@ function shadeVerts(B, v0, v1, fn) {
   }
 }
 // thin strip lying on the wing surface along a polyline in (s, nose station) space
-function wingLine(B, side, path, mat, w = 0.035, sgn = 1) {
+function wingLine(B, side, path, mat, w = 0.035, sgn = 1, lift = 0.012) {
   const g = raw();
   for (let k = 0; k < path.length; k++) {
     const a = path[Math.max(0, k - 1)], b = path[Math.min(path.length - 1, k + 1)];
     const ts = b[0] - a[0], tx = b[1] - a[1], l = Math.hypot(ts, tx) || 1;
     const ps = (-tx / l) * w / 2, px = (ts / l) * w / 2;
     // lifted 12 mm off the skin: 6 mm z-fought (shimmer) at the 20-30 m window-view range [A]
-    g.p.push(...wingAt(path[k][0] + ps, path[k][1] + px, side, sgn, 0.012), ...wingAt(path[k][0] - ps, path[k][1] - px, side, sgn, 0.012));
+    g.p.push(...wingAt(path[k][0] + ps, path[k][1] + px, side, sgn, lift), ...wingAt(path[k][0] - ps, path[k][1] - px, side, sgn, lift));
     // skin normal (finite differences) so a strip is lit like the panel it lies on, not brighter
     const [s0, x0] = path[k], p0 = wingAt(s0, x0, side, sgn), dS = V3.sub(wingAt(s0 + 0.05, x0, side, sgn), p0), dX = V3.sub(wingAt(s0, x0 + 0.05, side, sgn), p0);
     let nn = V3.norm(V3.cross(dS, dX)); if (nn[1] * sgn < 0) nn = nn.map((v) => -v);
@@ -194,6 +198,13 @@ function buildExterior(gl) {
     wingLine(B, side, spanPath(11.8, 21.0, spF, 8), line);
     wingLine(B, side, spanPath(11.8, 23.3, (s) => (s < 21 ? spA(s) : spA(21) + (s - 21) * 0.34), 10), gap);
     for (let k = 0; k <= 5; k++) { const s = lerp(11.8, 21.0, k / 5); wingLine(B, side, chordPath(s, spF(s), spA(s)), line); }
+    // gear-alignment (taxi camera) stripe: matte black chordwise band on the upper skin at the outboard edge of the main
+    // gear, "aligned with the outboard edge of the main landing gear" [V aerospaceglobalnews / supercarblondie]; ~0.38 m
+    // wide at s = 6.4 m, from ~1 m ahead of the flap TE 5.6 m forward (overhead 777-300ER agn_Boeing-777-wing-stripes-1,
+    // band ~0.35 m in F-GSQR_1/_2) [D photo scale]. Lifted 18 mm, 6 mm clear of the spoiler seams it crosses [A]. ANA's
+    // yellow ice-detection spot on the stripe (airlinercafe forum) is left out: size and position not found [open].
+    wingLine(B, side, Array.from({ length: 9 }, (_, k) => [6.4, lerp(33.2, 38.8, k / 8)]),
+      { c: '#15171a', r: 0.9, m: 0 }, 0.38, 1, 0.018);
     // flaperon behind the engine (9.8-11.8) [A span], outboard flap to 23.3, aileron 23.3-29.3 [D ACAP]
     const te = (s) => pwl(WING.te, s);
     wingLine(B, side, spanPath(9.8, 11.8, (s) => te(s) - 1.15, 3), gap);
@@ -202,11 +213,11 @@ function buildExterior(gl) {
     wingLine(B, side, spanPath(23.3, 29.3, (s) => te(s) - lerp(0.62, 0.40, (s - 23.3) / 6), 8), gap);
     wingLine(B, side, chordPath(29.3, te(29.3) - 0.40, te(29.3) + 0.02), gap, 0.03);
     // flap-track fairings (canoes) under the trailing edge: ~60 % of each ahead of the TE [A from HL8007 photo]. Blunt,
-    // slab-sided tail ~0.8 m deep closing in a rounded end, not a spike [V Boeing_777_(4139974954)_(2) photo]; 0.46 m
-    // wide x 0.85 m deep, depth floor 35 % at the tail, width floor 55 % [D photo proportions]
+    // slab-sided tail closing in a blunt rounded end ~70 % of the max depth, not a spike [V Boeing_777_(4139974954)_(2)
+    // photo]; 0.46 m wide x 0.85 m deep, depth floor 75 % at the tail, width floor 80 %, 0.40 m dome [D photo proportions]
     const vW = B.vcount, vC = B.vcount;
     for (const [cs, len] of WING.canoes) {
-      const RE = 0.32, x1 = te(cs) + 0.4 * len - RE, x0 = x1 - len + RE, secs = [];
+      const RE = 0.40, x1 = te(cs) + 0.4 * len - RE, x0 = x1 - len + RE, secs = [];
       const topAt = (xn) => (xn < te(cs) ? wingAt(cs, xn, side, -1)[1] + 0.05 : wingAt(cs, te(cs), side, -1)[1] + 0.05 - (xn - te(cs)) * 0.03);
       const sec = (xn, rw, rd) => {
         const d = 0.85 * rd + 0.04, w = 0.46 * rw + 0.03;
@@ -215,10 +226,10 @@ function buildExterior(gl) {
       for (let k = 0; k <= 12; k++) {
         const t = k / 12, c = Math.cos(((t - 0.22) / 0.78) * Math.PI / 2);
         const rise = t < 0.22 ? Math.sin((t / 0.22) * Math.PI / 2) : 0;
-        secs.push(sec(lerp(x0, x1, t), t < 0.22 ? rise : Math.max(0.55, Math.pow(c, 0.4)), t < 0.22 ? rise : Math.max(0.35, Math.pow(c, 0.6))));
+        secs.push(sec(lerp(x0, x1, t), t < 0.22 ? rise : Math.max(0.8, Math.pow(c, 0.25)), t < 0.22 ? rise : Math.max(0.75, Math.pow(c, 0.3))));
       }
       // rounded end: quarter-ellipse over RE, closed by the loft cap
-      for (const u of [0.35, 0.62, 0.84, 0.97]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.55 * e, 0.35 * e)); }
+      for (const u of [0.35, 0.62, 0.84, 0.97]) { const e = Math.sqrt(1 - u * u); secs.push(sec(x1 + u * RE, 0.8 * e, 0.72 * e)); }
       B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paintLow);
     }
     // GE90-115B nacelle
@@ -234,18 +245,28 @@ function buildExterior(gl) {
     for (let k = 0; k <= 16; k++) { const t = k / 16, x = lerp(0.47, 1.4, t), r = pwl([[0.42, 0], [0.46, 0.1], [0.56, 0.22], [0.72, 0.34], [0.94, 0.44], [1.2, 0.51], [1.45, 0.53]], x) + 0.006, a = t * Math.PI * 1.6; sw.push([Math.cos(a) * r, x, Math.sin(a) * r]); }
     B.add(gTube(sw, 0.02, 5), rot, white);
     const vP = B.vcount;
-    // pylon: fairing over the fan cowl into the wing LE, strut under the wing with the aft fairing ending near the flap hinge [A]
+    // pylon: fairing over the fan cowl rising as a swept ridge (0.10 -> 0.45 m above the cowl) into the wing LE, strut
+    // under the wing with the aft fairing ending near the flap hinge [A; ridge seen in the p97zMaCMWRg GE90 view, painted
+    // wing grey like the strut in the JA797A EGLL crop, V colour]
     const leE = pwl(WING.le, E.s), nacTop = (x) => E.y + pwl([[0, 1.715], [0.6, 2.02], [1.7, 2.09], [2.4, 2.09], [3.8, 1.99], [5.0, 1.5], [5.6, 1.02], [6.35, 0.84]], x);
     const secs = [];
     for (let k = 0; k <= 14; k++) {
       const x = lerp(1.6, 10.6, k / 14), xn = E.x0 + x;
       const wl = wingAt(E.s, Math.max(xn, leE), side, -1)[1];
       const bot = x < 6.35 ? nacTop(x) - 0.12 : lerp(nacTop(6.35), wl - 0.05, (x - 6.35) / 4.25);
-      const top = xn >= leE ? wl + 0.12 : lerp(nacTop(x) + 0.04, Math.max(wl + 0.12, nacTop(x) + 0.04), smooth(leE - E.x0 - 1.2, leE - E.x0, x));
+      const ridge = nacTop(x) + lerp(0.10, 0.45, smooth(1.6, leE - E.x0, x));
+      const top = xn >= leE ? wl + 0.12 : lerp(ridge, Math.max(wl + 0.12, ridge), smooth(leE - E.x0 - 1.2, leE - E.x0, x));
       const w = lerp(0.6, 0.26, Math.pow(k / 14, 1.5));
       secs.push({ y: xn + WING.dz, x: E.s * side, z: -(top + bot) / 2, w, d: top - bot, r: w * 0.45 });
     }
-    B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paintLow);
+    B.add(gLoft(secs, 3), M4.trs(0, 0, 0, 0, Math.PI / 2), paint);
+    // pylon flanks: the exterior pass has no bounce light, so the side away from the sun rendered sky-blue (#46536a) where
+    // photos show it light grey like the wing (JA797A EGLL crop) [V]; bake the fill from the sunlit cowl + cloud deck
+    // as x1.6 albedo on the flanks [A]
+    for (let k = vP; k < B.vcount; k++) {
+      const f = 1 + 0.6 * smooth(0.3, 0.9, Math.abs(B.n[k * 3])) * (B.n[k * 3 + 1] > -0.3 ? 1 : 0);
+      for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.min(255, Math.round(B.c[k * 4 + c] * f));
+    }
     // baked occlusion (the exterior pass has no shadow map): canoe and pylon undersides -25 %, nacelle lower half
     // down to x0.7, lower wing skin in the canoe / pylon footprint -25 % [A; shading seen in Boeing_777_(4139974954)_(2)
     // and the p97zMaCMWRg GE90 wing view, nacelle half in shadow]
