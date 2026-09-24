@@ -11,6 +11,8 @@ Status legend: **[V]** verified in a written source · **[D]** derived by arithm
 - Fuselage outer diameter 6.20 m, circular (MHI, Jenkinson, Wikipedia). [V]
 - Cabin width 5.87 m / 231 in (Aircraft Interiors Intl, Wikipedia 777X); 5.86 m (aircraftinvestigation). [V]
 - Windows 15 × 10 in (380 × 250 mm), 15 in vertical (Kawasaki: 390 mm height). [V]
+- Window pane centre 1.02 m above the cabin floor (glass 0.82-1.23 m): Boeing D6-58329-2 (777-200LR/-300ER ACAPS) fig. 2.5.1 cross-section, measured on the vector drawing (scale checked against the 229 in cabin width and the 6.20 m skin); side view fig. 2.2.2 gives 0.97-0.98 m above the door sill. Outboard bin lip 1.58 m. [V]
+- Type A door lining: forward hinge; viewing window a tall slot (~0.14 x 0.32 m glass) at the window belt, 0.28 m aft of the door centre; handle housing with red arc across the upper middle; arming-indicator box in the upper forward corner; full-width slide bustle to ~0.75 m (ANA 777 lining photos, TPG ANA 777-300ER door 2L). [V]
 - Frame pitch 21 in / 533 mm: 777-300 plugs 5.3 m = 10 frames, 4.8 m = 9 frames (Flight); FAA AD STA 825+210 / 1434+189. [D]
 - One window per frame bay → window pitch 533 mm; ~89 windows per side (aircraftinvestigation) is consistent. [D]
 - Doors: 5 per side, translating Type A, 42 × 74 in (1.07 × 1.88 m) (Boeing ACAP text). [V]

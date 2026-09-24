@@ -78,3 +78,10 @@ its **forward** edge on both sides. Below, "fwd" means the forward jamb (z = c -
 
 Floor: the door cross-aisles are now carpet (MAT.doorCarpet, dark warm brown, from the TPG door-2L photo and sans_09). The
 galley and lav floors stay vinyl.
+
+## To all areas: window height changed (d72c593)
+
+`CAB.win.yc` is now 1.02 (was 1.13), from Boeing's ACAPS cross-section (D6-58329-2 fig. 2.5.1): the pane runs 0.82–1.23 m. The two
+window literals in 04_shaders.js (the sun LUT band and the reveal glow) were changed from 1.13 to 1.02 to match; lighting,
+please keep them in step. Anything placed relative to the window, such as pod consoles, window-side lamps or look-out
+cameras, should be checked. q07 and q12 look fine.

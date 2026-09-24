@@ -1,5 +1,14 @@
 # Questions for the user (shell area)
 
+Resolved by sourcing (user: "you source it; you figure out"):
+- Pane height (Q3): 1.02 m from Boeing D6-58329-2 fig. 2.5.1; applied (d72c593).
+- Door lining / viewing-window jamb (Q1, Q6): ANA 777 door-lining photos - window at the belt, 0.28 m aft of centre (forward hinge); applied in 07_shell, lining furniture spec sent to monuments.
+- Door floor (Q4): cross-aisles carpet (dark warm brown), galleys vinyl (TPG door 2L, sans_09); applied.
+- Boarding colour (Q2): the integrator decided Boarding is white (from_integration.md).
+
+Still open: PY/Y shade colour (Q5, no photo of a closed shade).
+
+## Original questions
 1. **Door linings.** No clear photo of an ANA 777-300ER Type A door (L2, L3 or L4) taken from the cabin side has been found.
    The only real views are distant (SANspotter PY review, sans_09 / sp_py_09): an off-white lining, a tall slide bustle,
    a red arming arc and a small, high viewing window. Could you supply a close photo? It would pin down the bustle

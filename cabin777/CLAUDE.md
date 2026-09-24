@@ -53,7 +53,7 @@ node test/blender/export.js <out> test/blender/spec_review.json && blender -b -P
 - **Axes:** metres. z is the distance aft of the nose (forward is −z). x is positive to the right and negative to the left. y is up, with the floor at 0.
 - **Doors 1–5:** z = 5.40, 16.80, 32.70, 44.30 and 58.70. They are Type A, 42 × 74 in.
 - **Fuselage section:** the interior trim circle has R = 2.935 m (5.87 m cabin), centred 0.92 m above the floor.
-- **Windows:** 10 × 15 in glass, centred at y = 1.13, one per 21 in frame bay.
+- **Windows:** 10 × 15 in glass, centred at y = 1.02 (Boeing D6-58329-2 fig. 2.5.1 cross-section), one per 21 in frame bay.
 
 ## Source files (`src/`, concatenated in name order by build.py)
 
