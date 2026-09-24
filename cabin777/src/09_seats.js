@@ -93,10 +93,10 @@ const SEATMAT = {
   // QA r2: veneer under neutral window light #403430 (up_Privacy-Wall crop, SD 10; the console there reads #74706a ~ fConsole)
   fWood: { c: '#3e332d', r: 0.38, l: LAYER.fWood },
   fDoor: { c: '#736c65', r: 0.45, l: LAYER.plastic },
-  fInner: { c: '#5d5752', r: 0.5, l: LAYER.plastic },
-  fFabric: { c: '#5e5857', r: 0.92, l: LAYER.fTweed },
+  fInner: { c: '#6a635d', r: 0.5, l: LAYER.plastic },       // QA r3: +15 %, ottoman base / aisle box read #474141 vs omaat_f11 #70635c
+  fFabric: { c: '#6a6362', r: 0.92, l: LAYER.fTweed },      // QA r3: +12 % (omaat_f13 seat #8c7f76 in cabin light)
   fLeather: { c: '#4f4b49', r: 0.48, l: LAYER.leather },
-  fFlap: { c: '#66706f', r: 0.45, l: LAYER.leather },       // cool slate-teal flap, omaat_f2 / f13
+  fFlap: { c: '#666864', r: 0.45, l: LAYER.leather },       // near-neutral warm grey flap, omaat_f13 #7b796f / f2 #5d5d59 (QA r3)
   fCap: { c: '#8a8272', r: 0.42, l: LAYER.plastic },
   fConsole: { c: '#7a736c', r: 0.45, l: LAYER.plastic },
   fCushionBlue: { c: '#7c72b6', r: 0.85, l: LAYER.fabric },
@@ -247,8 +247,8 @@ function buildSeats(gl, layout) {
     else { const hx = (s.pos === 'center' ? 1.10 : 1.24) / 2; p = localToWorld(s, [hx - 0.08, 1.30 + 0.0625, -0.80]); plate = '#2b2b2e'; }
     const face = s.mir ? -1 : 1;             // text top points away from the aisle
     const room = s.kind === 'room';
-    T.add(room ? gRBox(0.055, 0.004, 0.065, 0.012, 1) : gRBox(0.045, 0.004, 0.08, 0.01, 1), M4.trs(p[0], p[1] + 0.002, p[2]), { c: plate, r: 0.45 });
-    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.07, 0.036), M4.trs(p[0], p[1] + 0.0045, p[2], face * Math.PI / 2, -Math.PI / 2), tagGlow, atlasUV('tag' + s.id));
+    T.add(room ? gRBox(0.055, 0.004, 0.065, 0.012, 1) : gRBox(0.032, 0.004, 0.06, 0.008, 1), M4.trs(p[0], p[1] + 0.002, p[2]), { c: plate, r: 0.45 });
+    T.add(room ? gQuad(0.058, 0.03) : gQuad(0.055, 0.028), M4.trs(p[0], p[1] + 0.0045, p[2], face * Math.PI / 2, -Math.PI / 2), tagGlow, atlasUV('tag' + s.id));
   }
   meshes.seatTags = gl.mesh(T.build(), { name: 'seatTags', layer: 'seats', castShadow: false });
   return { meshes, groups };
