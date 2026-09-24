@@ -8,15 +8,15 @@
 // boxes once per window bay outboard (py_37302, y_47301 [V]), per-seat reading-light / gasper rows on the
 // centre channel, call button, signs, O2 door [A details]
 // ------------------------------------------------------------------
-const BIN = { side: 2 * CAB.win.pitch, center: 2 * CAB.win.pitch }, RAIL_Y = 2.163;
+const BIN = { side: 2 * CAB.win.pitch, center: 2 * CAB.win.pitch }, RAIL_Y = 2.105;   // w2a: the rail at 2.163 faced ~55 deg up and its placard drew edge-on from the aisle
 const binBottomY = (x) => { const ax = Math.abs(x); return lerp(1.60, 1.795, clamp((2.845 - ax) / (2.845 - 1.53), 0, 1)); };
 // outboard door face, lip -> ceiling crease: more upright than SIDEBIN so the latch and placard face the aisle
 // as in py_37302 / y_47301 (the whole door is seen up to the ceiling line) [A shape]
 const OBIN_DOOR = [[1.53, 1.795], [1.495, 1.83], [1.472, 1.93], [1.469, 2.03], [1.479, 2.115], [1.508, 2.178], [1.56, 2.214], [1.64, 2.228]];
 const OBIN = [SIDEBIN[0], ...OBIN_DOOR, ...SIDEBIN.slice(8)];
 // centre bin section used by the bins (07_shell's CBIN is only consumed here): the lower doors wrap broadly under
-// to a PSU channel |x| < 0.30 (channel / bin width 0.36 in plan: b_sany_y22 from 34E reads ~0.47, y_47300 ~0.27, the
-// old 0.51 filled the whole underside in q15 [D mean]) [A ordinates]; top points unchanged so the vault still meets
+// to a PSU channel |x| < 0.24: the 4-fitting well fills ~0.67-0.77 of it in b_sany_y22 / y_47300 [V ratio], a
+// 0.31 m well -> ~0.46 m (w2a; w1 0.60 m, r2 0.84 m) [A ordinates]; top points unchanged so the vault still meets
 // the bin at (0.725, 2.262); aisle-edge headroom unchanged (x 0.75 at y 1.935).
 // The door ordinates are resampled with a Catmull-Rom spline (3 steps a span) so the wrap shades smoothly as the
 // real doors do (y_47301, c_27312 [V]).
@@ -31,9 +31,9 @@ function crResample(P, m = 3) {
   }
   return out;
 }
-const CBIN_DOOR = crResample([[0.30, 1.835], [0.46, 1.843], [0.62, 1.874], [0.75, 1.935], [0.822, 2.03], [0.82, 2.12], [0.78, 2.2], [0.725, 2.262]]);
+const CBIN_DOOR = crResample([[0.24, 1.835], [0.42, 1.842], [0.60, 1.872], [0.75, 1.935], [0.822, 2.03], [0.82, 2.12], [0.78, 2.2], [0.725, 2.262]]);
 const CBIN_Q = [...CBIN_DOOR, [0.62, 2.30], [0, 2.315]];
-const CBIN_Y = 1.835, CBIN_BAND = 0.60;
+const CBIN_Y = 1.835, CBIN_BAND = 0.48;
 const TILT_O = Math.atan2(1.795 - 1.60, 2.845 - 1.53);
 // door skin slightly cool (photo samples of lit door faces ~#eeeeed, shaded ones #b4b8be..#bfc5cb) [V colour]
 // Centre-bin doors and PSU channel get a small self-lift (e 0.10): they face down/sideways into the dim middle of
@@ -41,8 +41,8 @@ const TILT_O = Math.atan2(1.795 - 1.60, 2.845 - 1.53);
 // c_27312 / y_47301, channel #bebec0..#cacaca in y_47300 [V samples]); the outboard doors already matched [D].
 const BINMAT = {
   door: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic },
-  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10 },
-  bandC: { c: '#e4e3df', r: 0.5, l: LAYER.plastic, e: 0.10 },
+  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.14 },   // w2a: q15 #abafb6 vs y_47300 #dddddb
+  bandC: { c: '#e4e3df', r: 0.5, l: LAYER.plastic, e: 0.12 },
   signPod: { c: '#2a2e34', r: 0.45 },
   seam: { c: '#a7abb0', r: 0.8 },   // thin mid-grey hairline, not a black arc (c_th1, b_sany_y22 [V])
   lipGap: { c: '#4a4f56', r: 0.8 },
@@ -51,9 +51,9 @@ const BINMAT = {
   recess: { c: '#3c4046', r: 0.6 },
   paddle: { c: '#c4c8cc', r: 0.4 },
   // outboard PSU band near-white in every photo (y_47300 #d9d9db..#dddddd, c_27312 #ebf0f4 [V]; was ~#a4a4a5)
-  band: { c: '#e4e3df', r: 0.5, l: LAYER.plastic, e: 0.11 },
+  band: { c: '#e4e3df', r: 0.5, l: LAYER.plastic, e: 0.16 },   // w2a: #c1c1c1 vs #d6d6d9
   well: { c: '#d6d7d7', r: 0.55, l: LAYER.plastic, e: 0.08 },   // recessed stadium well floor, a shade darker [A]
-  wellRim: { c: '#b8bcc0', r: 0.6 },                             // shadow line around the well [A]
+  wellRim: { c: '#c3c6c9', r: 0.6 },                             // shadow line around the well [A]
   smoke: { c: '#ffffff', r: 0.3, l: LAYER.atlasGlow, e: 0.55 },  // smoked sign window (dark ground in the atlas)
   rail: { c: '#e8e8e5', r: 0.36, l: LAYER.plastic },
   groove: { c: '#9aa0a6', r: 0.7 },
@@ -89,7 +89,7 @@ function paintBinDecals(A, layout) {
     if (!q) continue;
     const [x, y, w, h] = q, sx = (w / h) / (PLACARD[0] / PLACARD[1]);
     // ground = door colour after shadeUpper (x0.97) outboard; lighter on the self-lit centre door [D]
-    const bg = i === 1 ? '#f6f7f9' : '#e0e1df';
+    const bg = i === 1 ? '#e3e5e8' : '#e6e6e3';   // = doorC (drawn with the same lift) / rail after shading [D]
     g.fillStyle = bg; g.fillRect(x, y, w, h);
     const n = layout.seats.filter((s) => s.row === r && (i === 1 ? Math.abs(s.x) <= 1.1 : i === 0 ? s.x < -1.1 : s.x > 1.1)).length;
     g.save(); g.translate(x, y); g.scale(sx, 1);
@@ -196,13 +196,13 @@ function sideBinModule(side) {
   // bottom edge lip of the door + dark gap line to the PSU band
   B.add(gRBox(0.028, 0.016, L - 0.014, 0.007, 1), M4.trs(1.516 * side, 1.804, 0), BINMAT.lip);
   B.add(gBox(0.012, 0.002, L), M4.trs(1.548 * side, binBottomY(1.548) - 0.0015, 0, 0, 0, -TILT_O * side), BINMAT.lipGap);
-  // latch 1/3 down the door (py_37302), module centre: one per 2-frame module [V]
-  const [hx, hy, htx, hty] = faceAtY(OBIN_DOOR, 2.065);
+  // latch ~45 % down the door below the rail (py_37302 ~38 %), module centre: one per 2-frame module [V]
+  const [hx, hy, htx, hty] = faceAtY(OBIN_DOOR, 2.03);
   addLatch(B, faceM((hx - 0.006) * side, hy, htx * side, hty, 0, -side));
   // top rail carrying the row placard, divided from the face by a groove (c_th1 '13'/'14', b_sany_y22 '32' [V];
-  // ~5 cm deep, 3 mm proud [A])
+  // ~7 cm deep, 3 mm proud [A])
   const [gx, gy, gtx, gty] = faceAtY(OBIN_DOOR, RAIL_Y);
-  B.add(gExtrude(faceShell([[gx, gy], ...OBIN_DOOR.filter((p) => p[1] > RAIL_Y + 0.005 && p[1] < 2.22)], side, 1, 0.009, 0.001), L - 0.014, 45), null, BINMAT.rail);
+  B.add(gExtrude(faceShell([[gx, gy], ...OBIN_DOOR.filter((p) => p[1] > RAIL_Y + 0.005 && p[1] < 2.2)], side, 1, 0.009, 0.001), L - 0.014, 45), null, BINMAT.rail);
   B.add(gBox(L - 0.02, 0.003, 0.002), faceM(gx * side, gy - 0.002, gtx * side, gty, 0, -side, 0.0062), BINMAT.groove);
   // PSU band over the bin bottom, filler-panel joints ~0.27 m apart (py_37302, thrifty_j_overhead-vent [V pitch])
   const bw = 1.19, bx = 2.155, by = binBottomY(bx) - 0.003;
@@ -276,11 +276,8 @@ function psuModule(n, pitch = PSU_C_PITCH) {
     eyeball(B, x, -0.10);
     gasper(B, x, -0.03);
   }
-  signWindow(B, 0, 0.06, 0.13, 0.042);
-  B.add(gPlate(0.022, 0.014, 0.004, 0.003), padM(Math.max(w / 2, 0.1) + 0.01, -0.0015, 0.06), BINMAT.call);
-  const ow = Math.max(0.26, w);
-  B.add(gBox(ow + 0.006, 0.001, 0.106), M4.trs(0, -0.0005, 0.16), BINMAT.o2gap);
-  B.add(gBox(ow, 0.001, 0.1), M4.trs(0, -0.0012, 0.16), BINMAT.bandC);
+  signWindow(B, 0, 0.065, Math.max(0.16, w * 0.75), 0.045);   // long smoked pill (b_sany_y22 [V]); no O2 plate or
+  // call button drawn: neither reads in y_47300 / b_sany_y22 (w2a)
   return B.build();
 }
 // outboard sign pod: the same flush smoked window once per seat row on the band
@@ -310,7 +307,7 @@ const psuXF = (x, z) => Math.abs(x) < 1.1 ? M4.trs(x, CBIN_Y - 0.009, z) : M4.tr
 // row placard on the outboard door's top rail, above the latch (py_37302, c_th1, b_sany_y22 [V])
 function placardXF(group, z) {
   const out = [];
-  if (group !== 1) { const s = group === 0 ? -1 : 1, [x, y, tx, ty] = faceAtY(OBIN_DOOR, 2.19); out.push(faceM(x * s, y, tx * s, ty, z, -s, 0.0105)); }
+  if (group !== 1) { const s = group === 0 ? -1 : 1, [x, y, tx, ty] = faceAtY(OBIN_DOOR, 2.135); out.push(faceM(x * s, y, tx * s, ty, z, -s, 0.0105)); }
   else { const [x, y, tx, ty] = faceAtY(CBIN_DOOR, 2.19); for (const s of [-1, 1]) out.push(faceM((x + 0.006) * s, y, tx * s, ty, z, s, 0.0015)); }
   return out;
 }
@@ -369,15 +366,15 @@ function buildBins(gl, layout) {
     groups.forEach((gr, i) => {
       const name = `row${row}_${i}`;
       if (!gr.length || !ATL.rects[name]) return;
-      for (const m of placardXF(i, z)) D.add(gQuad(PLACARD[0], PLACARD[1]), m, MAT.decal, atlasUV(name));
+      for (const m of placardXF(i, z)) D.add(gQuad(PLACARD[0], PLACARD[1]), m, i === 1 ? { ...MAT.decal, e: BINMAT.doorC.e } : MAT.decal, atlasUV(name));
     });
   }
   meshes.placards = gl.mesh(D.build(), { name: 'placards', layer: 'upper', castShadow: false });
   return meshes;
 }
-// sign pods 0.2 m aisle-side of the per-bay PSU wells so the two never overlap; centre fittings 75 mm apart so a
-// 4-seat well is ~0.28 m, ~0.7 of the 0.40 m usable channel (b_sany_y22 [V ratio, A pitch])
-const PSU_BOX_X = 2.15, PSU_C_PITCH = 0.075, PLACARD = [0.15, 0.036], SIGN_POD_X = PSU_BOX_X - 0.2;
+// sign pods 0.2 m aisle-side of the per-bay PSU wells so the two never overlap; centre fittings 85 mm apart so a
+// 4-seat well is ~0.31 m, ~0.67 of the 0.46 m channel between the door edges (b_sany_y22 [V ratio, A pitch])
+const PSU_BOX_X = 2.15, PSU_C_PITCH = 0.085, PLACARD = [0.15, 0.036], SIGN_POD_X = PSU_BOX_X - 0.2;
 
 // studio slice: two outboard modules a side, four centre modules, aisle ceilings, Y-style PSUs and placards
 function ceilingSlice() {

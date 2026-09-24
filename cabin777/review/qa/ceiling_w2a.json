@@ -1,0 +1,174 @@
+{
+ "area": "ceiling",
+ "rater": "A",
+ "round": 2,
+ "score": 6.1,
+ "note": "The handed-over renders (scratchpad/r2, r2st, r2v) predate commit eedb9fa (seam colour #959aa0 -> #a7abb0, 20:59 vs renders 20:51-20:58). I rebuilt from HEAD into scratchpad/raterA2/build and re-rendered v1..v5 plus new views v6_y34Eup (the b_sany_y22 camera), v7_door4Fwd, v8_cbinSide and p1/p2 placard close-ups into scratchpad/raterA2/v/ (scripts raterA2/views.js, raterA2/pl.js). v9_obinPsu is unusable because a seatback blocks it. Round-1 correction: my 7:1 'slim strip' reading of the vault fitting was a perspective artefact. The near fitting in b_lalf_c119 (570..720, 0..80) is about 2.5-3.5:1, so the current 0.34 x 0.10 is acceptable.",
+ "round1Status": {
+  "fixed": [
+   "Grille and cove on the outboard bin top only (TROUGH.ts [0.10]; no LED on the centre bin)",
+   "Grille slot orientation: 5 fore-aft slots, 3 segments per 2-frame panel, 25 mm bridges",
+   "Outboard PSUs are now recessed transverse stadium wells with 2 fittings, alternating lights and gaspers",
+   "Latch is now a true stadium ring with a dark well and paddle (gPlate)",
+   "Sign windows are smoked with amber and red icons",
+   "EXIT signs are double-faced, so no dark backs from the door area",
+   "Door-area dome lifted: #c5c5c4 -> #dddddb at v3 (590,88)",
+   "Bin seams are now a mid-grey hairline (p2_placardC), not a black arc",
+   "Vault fades toward the centre-bin crease"
+  ],
+  "partlyFixed": [
+   "Outboard PSU band tone: q15 (150,130) was #a6a6a6, now #c1c1c1; photo y_47300 (150,118) #d6d6d9. Still about 22 levels dark.",
+   "Centre channel width: 0.84 -> 0.60 m, but still about 1.5x too wide (see issue 2)",
+   "Centre PSU: one-row stadium wells, but the O2 plate outline still reads as a rectangle, and the sign window is too small",
+   "Outboard door top rail: built, but the row placard on it is now INVISIBLE (issue 1)",
+   "Vault emergency light: still a dark frame round a light lens (inverted). The code is unchanged: CEILMAT.emergBase #2a2e34."
+  ],
+  "notFixed": [
+   "Row placards on the outboard bins cannot be read. Worse than round 1: they no longer render at all from the aisle.",
+   "The luminous cove band between the bin crest and the grille is far narrower than in the photos (new finding, issue 3)"
+  ]
+ },
+ "details": [
+  {
+   "detail": "Aisle vault panels and joints. The 2-frame arched joints are right. The vault by the cove is #fbfbfb (q15 215,50) against photo #f5f5f5, which is right. The new fade toward the centre bin works in night-lit photos (b_sany_y22), but it overshoots the official bright scene. In q15, the inboard vault and centre-bin door read #abafb6..#c1c2c5 at (250,60)/(300,20)/(620,40), while y_47300 reads #dddddb/#f4f4f4/#f5f5f5 at the same points.",
+   "score": 6.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/cmp_q15top.png", "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg"]
+  },
+  {
+   "detail": "Cove lighting. It is now on the outboard edge only, which is correct. But the lit band between the outboard-bin crest and the grille is about 2x the grille width in every real photo, and the model shows a sliver: in c119 the band is about 215 px against 90 px of grille; in sany_py_10 it is 75 px against 40 px. The model has about 0.04 m of band visible (p1: about 30 px against 45 px of grille; the mirrored v2 crop shows none). The LED at x=1.70 sits behind the door crest at x 1.64.",
+   "score": 5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/cmp_cove.png", "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg", "/home/user/Calc/cabin777/ref/web/ceiling/sany_py_10.jpg"]
+  },
+  {
+   "detail": "Slotted grille. Orientation, side, segmenting and bridges are now right. The slot look is wrong: the photos show thin, near-black slits in white bars (luma min 0-30, dark fraction 0.14-0.30 in c119/py10/y22). The model has wide mid-grey slots (#7f848a, 7 of 12 px; luma min 123-130, dark fraction 0.25-0.42). So it reads as a heavy grey hatched stripe at distance (q15), where y_47300 shows only faint lines. The grille also sits flush against the bin crest, not inboard of a lit band.",
+   "score": 6,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/cmp_cove.png", "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/cmp_q15top.png"]
+  },
+  {
+   "detail": "Outboard bins. Door shape, 2-frame modules, stadium latch and hairline seams are OK. The top rail exists, but the placard on it faces the ceiling (issue 1).",
+   "score": 6.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/v/p1_placardL.png", "/home/user/Calc/cabin777/ref/web/ceiling/thrifty_j_cabin-1.jpg"]
+  },
+  {
+   "detail": "Centre bins. The seams are now thin grey, and the centre placards are readable (p2: '34', '35'). The channel is still too wide, so the broad rolled lower door wraps seen in b_sany_y22 and c119 are compressed. The doors are too dark in the bright scene (see vault). The centre placard shows a visible light plate (#f6f7f9 ground against the door) where the photo placard is printed directly ('15 D', c119 at 785,210).",
+   "score": 5.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/c_y22_cbin.png", "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/v/v6_y34Eup.png", "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/v/p2_placardC.png"]
+  },
+  {
+   "detail": "Latches. Fixed: full stadium, light rim, dark well, paddle. The size and height match c119 and thrifty.",
+   "score": 8,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r2st/g_latch.png", "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"]
+  },
+  {
+   "detail": "Outboard PSUs. Recessed transverse stadium wells with 2 fittings: right. The recess reads as a crisp dark outline ring (BINMAT.wellRim), where thrifty_j_overhead-vent shows a deep dish with soft bevelled walls and no dark line. The band is one flat plate with hairline joints, while the photo shows separate stepped panels (the fitting panel stands proud) and ribbed filler strips at about 3 cm pitch.",
+   "score": 6.5,
+   "refs": ["/home/user/Calc/cabin777/ref/web/ceiling/thrifty_j_overhead-vent.jpg", "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r2v/v4_jPsuUp.png"]
+  },
+  {
+   "detail": "Outboard PSU band tone: #c1c1c1 at q15 (150,130) against #d6d6d9 in y_47300. Better than round 1 (#a6a6a6) but still about 22 levels dark.",
+   "score": 6,
+   "refs": ["/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg", "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/r2/q15_econFronts.png"]
+  },
+  {
+   "detail": "Centre PSU channel (Y). Two transverse rows per seat group are supported by y_47300. But well width over channel width is 0.43 in the model, against 0.77 in y_47300 and 0.67 in b_sany_y22. The O2 plate still reads as an outlined rectangle (v6 at 500..620, 220..240; z_q15_chan), and no photo shows one. There are 8 dark joint lines per module, a ruled 'ladder' look; y_47300 is nearly plain. An unverified blue call square sits beside the sign.",
+   "score": 5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/z_y300_chan.png", "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/z_q15_chan.png"]
+  },
+  {
+   "detail": "No-smoking and fasten-belt signs. The icons and smoked lens are right. On the centre channel the real window is a long dark stadium, about 0.8 of the channel width, with the icons centred (b_sany_y22 crop). The model's centre window is 0.13 x 0.042 m, about 0.22 of the channel, a small pill. The outboard sign pill matches thrifty.",
+   "score": 6,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/z_y22_sign.png", "/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/v/v6_y34Eup.png"]
+  },
+  {
+   "detail": "Row placards. Centre bins: readable (p2). Outboard bins: not visible in any view (p1 close-up, v2, v6, q15), while py_37302, thrifty_j_cabin-1 and b_sany_y22 all show readable numerals on the outboard top rail.",
+   "score": 3,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/v/p1_placardL.png", "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg"]
+  },
+  {
+   "detail": "Ceiling EXIT signs. The bilingual red-on-light face is right, and the signs are now double-faced (v3, v7).",
+   "score": 7.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/v/v7_door4Fwd.png", "/home/user/Calc/cabin777/ref/web/ceiling/thrifty_j_cabin-1.jpg"]
+  },
+  {
+   "detail": "Vault fittings. The speaker at 0.34 x 0.10 is acceptable (see note). It is a full stadium (r = d/2), where the photos show a rounded rectangle with squarer ends (c119 near fitting, z_th_fit). The emergency light is still inverted: model black frame with white lens (v2 at 608,200; v6 at 222,178), photo light frame with a shadowed grey slot (z_th_fit at 50..145, 95..130; c119 at 428,243).",
+   "score": 6,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA/z_th_fit.png", "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"]
+  },
+  {
+   "detail": "Door-area ceilings. The tone is now #dddddb..#e2e1e0 against a #f7 vault, which is acceptable. It is still unverified against any photo. At door 3 a flat bright panel carries a thick black frame (v3 at 0..600, 0..95), probably the unlit side faces of the CEILMAT.lightPanel gRBox, or of a monument panel.",
+   "score": 5.5,
+   "refs": ["/tmp/claude-0/-home-user-Calc/da3106c2-fecc-55a8-bdce-7af84e277443/scratchpad/raterA2/v/v3_door3Up.png"]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Outboard row placards are invisible",
+   "problem": "placardXF puts the outboard placard at faceAtY(OBIN_DOOR, 2.19). Above the door's most aisle-ward point (x 1.469, y 2.03), OBIN_DOOR curves outboard, so at y 2.19 the face normal points about 55 deg upward: tangent (0.052, 0.036), aisle normal (-0.57, +0.82). From any eye height of 1.2-1.75 m the view ray is at grazing incidence (dot = -0.005 from (0.5, 1.6); -0.06 from the p1 camera), so the quad renders as nothing. The same applies to the rail, which spans y 2.163-2.22.",
+   "evidence": "p1_placardL.png (0.9 m from the left bin at row 34, looking up at it): rail visible, no placard. p2_placardC.png (centre bin, same distance): '34'/'35' readable. py_37302 at (160,10), thrifty_j_cabin-1 ('13', '14' at 1400,260 and 1000,295) and b_sany_y22 ('32') all show readable outboard placards.",
+   "fix": "08_bins.js: put the rail and placard on the aisle-facing part of the door. Set RAIL_Y = 2.105 and build the rail from 2.105 to 2.155 (filter p[1] > RAIL_Y+0.005 && p[1] < 2.16). In placardXF use faceAtY(OBIN_DOOR, 2.13) with off 0.0105. Move the latch down to faceAtY(OBIN_DOOR, 2.0) so it stays about 44 % down the door (thrifty). Alternative: steepen the door top so it stays near-vertical to 2.2 — OBIN_DOOR ... [1.469,2.03],[1.472,2.12],[1.484,2.18],[1.52,2.215],[1.64,2.228] — and keep RAIL_Y. Check: dot(view, normal) < -0.3 from (0.5, 1.6)."
+  },
+  {
+   "severity": "high",
+   "detail": "Centre PSU channel still about 1.5x too wide",
+   "problem": "CBIN_BAND = 0.60 (door edges at |x| = 0.30). The 4-fitting well (about 0.28 m) fills only 0.43 of the channel. The real channel is about 0.38-0.42 m, since the well fills 0.67 (b_sany_y22) to 0.77 (y_47300). The broad rolled door wraps that flank a narrow channel in every photo are therefore squeezed.",
+   "evidence": "z_y300_chan.png: PSU strip 155..530 of channel 95..585 (0.77). c_y22_cbin.png: well 370..610 of channel 340..700 (0.67). z_q15_chan.png: well 245..480 of channel 90..640 (0.43). v6 (b_sany_y22 camera): channel 410 px of the 930 px frame, against 360 of 1200 px in the photo.",
+   "fix": "08_bins.js: CBIN_BAND = 0.40. CBIN_DOOR = crResample([[0.20,1.835],[0.36,1.842],[0.54,1.868],[0.70,1.925],[0.815,2.03],[0.82,2.12],[0.78,2.2],[0.725,2.262]]). Keep the lipGap at CBIN_DOOR[0][0]+0.005 (it follows). Joint strips: CBIN_BAND-0.03. buildBins F/J centre units: x = ±0.10 instead of ±0.15 (2-fitting wells at 0.06 pitch are about 0.12 wide). Update the header comment's 0.36 ratio to 0.24."
+  },
+  {
+   "severity": "high",
+   "detail": "Cove light band missing between the bin crest and the grille",
+   "problem": "In real photos, the outboard bin crest is followed by a brilliant lit band about 2x the grille width (about 0.15 m), then the grille, then the vault. In the model the grille (t 0.10, x 1.52-1.60) sits about 4 cm from the door crest (x 1.64). The LED (x 1.70, y 2.238) hides behind the crest, so from the aisle the grille reads as sitting directly on the bin.",
+   "evidence": "cmp_cove.png: top is c119 (band about 215 px, grille about 90 px); bottom is the mirrored model v2 (no band). sany_py_10: band 655..730 against grille 615..655. b_sany_y22 both aisles: the same. p1_placardL: model band about 30 px against grille about 45 px.",
+   "fix": "07b_ceiling.js: TROUGH.ts = [0.22] (grille centred at x of about 1.45). In eFn make the strip from the vault start to the grille a luminous band: if (ax > xg + TROUGH.w/2) return 0.95; else keep the decay 0.04 + 0.30*exp(-(xg-ax)/0.16) inboard of the grille. Alternatively add upper.add(vaultStrip(0.11, side, z0+0.03, z1-0.03, 0.15, 0.0008), null, {c:'#fffdf6', r:0.5, e:0.95}). Move the speaker fitting to t 0.80 and the emergency light to t 0.55 so they stay on the plain vault."
+  },
+  {
+   "severity": "medium",
+   "detail": "Grille slots too wide and too grey",
+   "problem": "The atlas 'grille' paints 5 slots #7f848a, 7 px of every 12 (58 % dark). Real grilles are thin near-black slits between wider white bars. At distance the model grille becomes a heavy grey hatched stripe, where y_47300 shows only faint lines.",
+   "evidence": "Luma: c119 grille min 2 / dark fraction 0.30; py10 min 30 / 0.27; y22 min 0 / 0.14. Model p1 min 130 / 0.42; v6 min 123 / 0.25. See cmp_q15top.png (dark hatch against the photo's faint lines).",
+   "fix": "07b_ceiling.js paintCeilingDecals: for i in 0..4, g.fillStyle = '#3a3e44'; g.fillRect(x, y + 13 + i*12, 48, 4) on the #f2f1ed ground. Optionally 6 slots at 10 px pitch. Set CEILMAT.trough c to '#5a5f66'."
+  },
+  {
+   "severity": "medium",
+   "detail": "Centre-bin doors and inboard vault too dark in the official bright scene",
+   "problem": "The new eFn floor of 0.04 inboard, plus doorC e 0.10 with shadeUpper at 0.95, leaves the centre-bin aisle faces and the inboard vault mid-grey.",
+   "evidence": "q15 against y_47300 at the same pixels: (250,60) #abafb6 vs #dddddb; (300,20) #b1b3b6 vs #f4f4f4; (620,40) #c1c2c5 vs #f5f5f5.",
+   "fix": "07b_ceiling.js eFn: floor 0.04 -> 0.12 (ax < 0.73 return 0.12; base 0.12 + ...). 08_bins.js: BINMAT.doorC e 0.10 -> 0.17. If the dim-cabin look of b_sany_y22 is wanted, tie the floor to the mood in 12_scene.js instead of baking it."
+  },
+  {
+   "severity": "medium",
+   "detail": "Centre sign window too small; O2 plate outline still visible",
+   "problem": "signWindow(B, 0, 0.06, 0.13, 0.042) is a small pill, where the real centre sign window is a long dark stadium about 0.8 of the channel width. The O2 plate (bandC plate 1.2 mm proud, with an o2gap rim) renders as a clear outlined rectangle. The blue call square is unverified.",
+   "evidence": "z_y22_sign.png: dark window 170..510 of channel about 130..560 (0.8), icons centred. v6: rectangle outline at (500..620, 220..240); z_q15_chan: rectangle at (255..465, 115..130). No photo shows the rectangle.",
+   "fix": "08_bins.js psuModule: signWindow(B, 0, 0.06, 0.30, 0.045), and change the psuSigns quad to w-0.20 wide centred (or paint the atlas with a wide dark ground and the icons in the middle 40 %). Delete both O2 gBox lines, or replace them with one gBox(ow, 0.0003, 0.002) hairline at z 0.21. Delete the BINMAT.call plate."
+  },
+  {
+   "severity": "medium",
+   "detail": "Outboard PSU band still dark and too flat",
+   "problem": "The band reads about 22 levels dark. It is one flat plate, where the photos show stepped panels with ribbed fillers. The wells have hard dark outline rings.",
+   "evidence": "q15 (150,130) #c1c1c1 vs y_47300 (150,118) #d6d6d9; q06 (200,130) #b9b9ba vs c_27312 (200,100) #e4e9ed. thrifty_j_overhead-vent: proud fitting panels with shadowed edges, a ribbed filler at 1250..1500, a soft dish well without a dark line.",
+   "fix": "08_bins.js: BINMAT.band e 0.11 -> 0.18. Well rim c '#b8bcc0' -> '#cdd0d2' and width +0.006 -> +0.012, so it reads as a soft bevel. Per window bay, add a proud fitting panel gBox(bw-0.04, 0.004, 0.22) at by-0.004 behind each psuBox, and 5 rib strips gBox(bw-0.06, 0.003, 0.006) at 0.03 pitch in the gap before the sign pod."
+  },
+  {
+   "severity": "low",
+   "detail": "Vault emergency light inverted; speaker ends too round",
+   "problem": "CEILMAT.emergBase #2a2e34 under a light lens gives a black frame with a white centre. The photo has a light frame round a shadowed slot. The speaker is a full stadium (r 0.05) where the photo shows a rounded rectangle.",
+   "evidence": "v2 at (608,200) and v6 at (222,178) against z_th_fit (50..145, 95..130) and c119 (428,243). The c119 near speaker at (570..720, 0..80) has corner radius about 0.25 of its depth.",
+   "fix": "07b_ceiling.js: emergBase c '#e6e5e1' (light frame), emerg c '#8d9197' e 0 (shadowed slot), size gRBox(0.05, 0.004, 0.016). vaultPanel radii: 0.05 -> 0.025, 0.046 -> 0.022, 0.03 -> 0.014."
+  },
+  {
+   "severity": "low",
+   "detail": "Centre channel ruled lines; black-framed door-area panel; placard plate",
+   "problem": "Eight dark transverse joints per centre module give a 'ladder'. The door-3 flat light panel has a thick black frame. The centre placard ground #f6f7f9 shows as a sticker plate.",
+   "evidence": "z_q15_chan.png against z_y300_chan.png (nearly plain). v3 at (0..600, 0..95). p2 placards at (140..200, 215) and (615..720, 150).",
+   "fix": "08_bins.js: joints 8 -> 3 per module with BINMAT.joint c '#e6e7e8'. The placard bg for i===1 should equal the rendered door (#eceef0), or draw no ground and use alpha. 07b_ceiling.js lightPanel: add an emissive e 0.45 rim, or make the gRBox height 0.004 so the side faces vanish."
+  }
+ ],
+ "questionsForUser": [
+  "Grille side (repeat): y_47301 still seems to show the grille beside the centre bin. The model follows the 6 real photos (outboard). Is there a right-aisle, rear-Y photo that settles it?",
+  "Is the bright band between the outboard-bin top and the grille a light diffuser, or just the lit curved ceiling panel? It is about 0.15 m wide in c119, sany_py_10 and b_sany_y22. The model will render it as a luminous strip either way. A close-up would fix its width.",
+  "The door-area (cross-aisle) ceilings of the new-config 777-300ER are still unverified. Do you have a photo?",
+  "The centre channel has a small blue square beside the sign (a call button?). ANA economy calls are made from the seat or IFE. Keep it or drop it?"
+ ]
+}

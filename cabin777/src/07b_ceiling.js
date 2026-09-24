@@ -44,7 +44,7 @@ function zoneModules(z0, z1, target = 2 * FRAME) {
 // buildAtlas, before the ceiling is built):
 //  - 'exitJ': ANA's bilingual ceiling EXIT sign '← 非常口 EXIT →', dark red on a light face, ~4:1
 //    (up_F_Forward-Look, sign over the door-1 cross-aisle [V text/colours]; 280x72 px, red #c21e1e [A shade])
-//  - 'grille': the slotted grille as a texture across the strip: 5 dark fore-aft slots #7f848a between white bars
+//  - 'grille': the slotted grille as a texture across the strip: 5 thin dark fore-aft slits #464a50 (5 of every 12 px, w2a) between white bars
 //    #efeeea (b_lalf_c119 close-up [V look]); constant along the run, so it cannot alias into a moire.
 function paintCeilingDecals(A) {
   const g = A.canvas.getContext('2d'), S = A.canvas.width;
@@ -64,8 +64,8 @@ function paintCeilingDecals(A) {
   // grille slots across a 64 px tall rect (u along the run is constant), with a white margin for the mips
   y = 816;
   g.fillStyle = '#efeeea'; g.fillRect(x, y, 48, 80);
-  g.fillStyle = '#7f848a';
-  for (let i = 0; i < 5; i++) g.fillRect(x, y + 11 + i * 12, 48, 7);
+  g.fillStyle = '#464a50';
+  for (let i = 0; i < 5; i++) g.fillRect(x, y + 12 + i * 12, 48, 5);
   put('grille', x + 16, y + 8, 16, 64);
 }
 { const base = buildAtlas; buildAtlas = function (layout) { const A = base(layout); paintCeilingDecals(A); return A; }; }
@@ -76,8 +76,9 @@ const CEILMAT = {
   trough: { c: '#7d8288', r: 0.7 },   // dark slots in a white frame (sany_10/11 [V])
   troughRim: { c: '#e9e8e4', r: 0.45, l: LAYER.plastic },
   slat: { c: '#ffffff', r: 0.5, l: LAYER.atlasLit },   // stripe texture carries the slat/slot colours
-  emerg: { c: '#fff7e8', r: 0.3, e: 0.2 },
-  emergBase: { c: '#2a2e34', r: 0.4 },
+  // emergency light: light frame round a grey lens slot (b_lalf_c119 [V], w2a)
+  emerg: { c: '#8e9297', r: 0.3, e: 0.05 },
+  emergBase: { c: '#eceae6', r: 0.5, l: LAYER.plastic, e: 0.06 },
   // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
   bezel: { c: '#f1f0ec', r: 0.7, l: LAYER.plastic, e: 0.12 },
   bezelIn: { c: '#d9d9d5', r: 0.7, l: LAYER.grille, e: 0.06 },   // recessed perforated slot [A tone]
@@ -149,13 +150,13 @@ function buildCeilings(upper, layout) {
       for (const side of [-1, 1]) {
         // curved aisle panel; the outboard cove LED washes it from that edge only, extra glow beside the grille;
         // the vault fades toward the plain centre-bin crease (b_sany_y22: #cfc8bb by the cove, much darker at the
-        // centre bin in the same exposure [V]; floor 0.04 [A] so the cabin fill still lights it)
+        // centre bin in the same exposure [V]; floor 0.08 [A]: w2a found 0.04 too dark vs y_47300)
         const xg = lerp(VAULT_A[0], VAULT_B[0], TROUGH.ts[0]);
         const eFn = (p) => {
           const ax = Math.abs(p[0]);
           if (ax > 1.66) return 0.85;
-          if (ax < 0.73) return 0.04;
-          return 0.04 + 0.30 * Math.exp(-Math.max(xg - ax, 0) / 0.16) + 0.30 * Math.exp(-Math.abs(ax - xg) / 0.08);
+          if (ax < 0.73) return 0.08;
+          return 0.08 + 0.26 * Math.exp(-Math.max(xg - ax, 0) / 0.16) + 0.30 * Math.exp(-Math.abs(ax - xg) / 0.08);
         };
         const prof = VAULT.map(([x, y]) => [x * side, y]);
         upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: mods.length - 1 }), null, { ...CEILMAT.vault, eFn });
