@@ -18,7 +18,7 @@ const MOODS = {
   // down past the windows is the in-service cruise look [V: tlfl_IMG_9217 #5c5dc6, belt #736a88; sany_12 #556df7,
   // window line #5362e0; stwis_img_6082 #1961f9]
   boarding: { label: 'Boarding', hemiTop: [0.97, 0.99, 1.03], hemiBot: [0.36, 0.37, 0.40], wash: [0.25, 0.26, 0.28], led: [1.0, 0.98, 0.92], sideLed: [0.30, 0.31, 0.33], bandCut: 0.25, k: 1.05, exposure: 1.28 },
-  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.08, 0.08, 0.70], k: 0.95, exposure: 1.06 },
+  cruise: { label: 'Cruise', hemiTop: [0.86, 0.88, 0.98], hemiBot: [0.24, 0.24, 0.28], wash: [0.25, 0.26, 0.30], led: [1.0, 0.98, 0.92], sideLed: [0.02, 0.05, 1.5], bandCut: 0.85, sideLow: 0.25, k: 0.95, exposure: 1.06 },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]
@@ -26,15 +26,15 @@ const MOODS = {
   // ~1.5 before ACES and clipped to lemon #fce04f) [D]; the vault wash is soft warm beige [V: ff_seat-with-door-closed
   // ceiling #d9b77d]; lowTint neutralises the amber below 1.25 m, so seat-level ash stays grey [V: ff_door-gap ash
   // #afafaf / #acb1ba, grey shell #6f7982]
-  dining: { label: 'Dining', hemiTop: [0.62, 0.23, 0.055], hemiBot: [0.14, 0.052, 0.013], wash: [0.30, 0.11, 0.03], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], vault: [1.35, 0.72, 0.34], lowTint: [0.52, 1.35, 5.3], k: 0.9, exposure: 1.3, strips: true },
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0, vault: [1.35, 0.72, 0.34], lowTint: [0.52, 1.07, 2.6], k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
   // used in r1 (roame_7672, sany_10) were boarding shots on the ground (daylight in the windows), so not the night scene
   // QA r3: cove / lens saturated amber (was warm white) [V: stwis_img_6223 cove #dc9340 / #b0671a (h25-32, s0.71-0.85),
   // ucr PSU lamp #9f5e39]; hemi unchanged (image mean already matches ucr 39/35/33)
-  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.070, 0.024, 0.004], sideLed: [0.050, 0.017, 0.003], vault: [0.045, 0.030, 0.018], k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
-  wake: { label: 'Sunrise', hemiTop: [0.62, 0.26, 0.12], hemiBot: [0.14, 0.058, 0.027], wash: [0.30, 0.12, 0.06], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], vault: [1.35, 0.66, 0.45], lowTint: [0.52, 1.2, 2.4], k: 0.9, exposure: 1.3 },
+  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.070, 0.024, 0.004], sideLed: [0.035, 0.012, 0.002], sideLow: 0, vault: [0.045, 0.030, 0.018], k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
+  wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0, vault: [1.35, 0.66, 0.45], lowTint: [0.52, 1.07, 1.95], k: 0.9, exposure: 1.3 },
 };
 // winExp: the view behind the glass at interior exposure; cabin photos show day windows near-white with a glowing
 // reveal (tlfl_IMG_9217 / 9518, pane ~#eef3f8) [V]; eases back to 1 when the eye is at the window (looking out)
@@ -48,7 +48,7 @@ const SKIES = {
   // QA r3: dim blue-grey deck under a narrow orange horizon band, blue upper sky [V: Air_France_777-300ER_Greenland_
   // Sunrise deck #50595d-#646a67, band #d2a46d, sky #9cabaa; Emirates_77W_wing_view / alv_7282 zenith #527dc2]; dark cool
   // deck bounce and a grazing sun at 0.35 on the exterior, so the wing takes the sky colour (from_exterior 3)
-  sunset: { label: 'Sunset', sunEl: 5, sunAz: 110, sun: [4.2, 2.2, 0.9], zenith: [0.08, 0.14, 0.42], horizon: [1.1, 0.55, 0.30], haze: [0.30, 0.24, 0.26], cloudLit: [0.22, 0.17, 0.18], cloudShade: [0.04, 0.045, 0.07], skyTop: [0.18, 0.24, 0.55], skyBot: [0.4, 0.26, 0.2], extBounce: [0.07, 0.08, 0.10], extSun: 0.35, winGlow: [0.22, 0.12, 0.08], sunVis: 1, night: 0, sheer: 0.7 },
+  sunset: { label: 'Sunset', sunEl: 5, sunAz: 110, sun: [4.2, 2.2, 0.9], zenith: [0.08, 0.14, 0.42], horizon: [1.1, 0.55, 0.30], haze: [0.12, 0.12, 0.13], cloudLit: [0.09, 0.095, 0.10], cloudShade: [0.02, 0.025, 0.035], skyTop: [0.18, 0.24, 0.55], skyBot: [0.4, 0.26, 0.2], extBounce: [0.07, 0.08, 0.10], extSun: 0.35, winGlow: [0.22, 0.12, 0.08], sunVis: 1, night: 0, sheer: 0.7 },
   night: { label: 'Night', sunEl: 38, sunAz: -40, sun: [0.07, 0.08, 0.12], zenith: [0.004, 0.006, 0.016], horizon: [0.02, 0.028, 0.05], haze: [0.018, 0.022, 0.036], cloudLit: [0.05, 0.055, 0.07], cloudShade: [0.012, 0.014, 0.02], skyTop: [0.02, 0.025, 0.04], skyBot: [0.01, 0.01, 0.015], extBounce: [0.028, 0.030, 0.038], extSun: 1, winGlow: [0.0, 0.0, 0.0], sunVis: 0, night: 1, sheer: 0.06 },
 };
 // Shade states per window: 0 open, 1 half (manual) / sheer (electric), 2 closed (manual) / blackout (electric)
@@ -109,12 +109,13 @@ class Scene {
     const min = [-3.0, 0, 2.6], size = [6.0, 2.8, 59.2];
     const cell = [size[0] / nx, size[1] / ny, size[2] / nz];
     const occ = new Float32Array(nx * ny * nz);
+    const solid = new Uint8Array(nx * ny * nz);   // bins, monuments and the space outside the wall (not seat voxels)
     const idx = (i, j, k) => (k * ny + j) * nx + i;
     const box = (x0, x1, y0, y1, z0, z1, d = 1) => {
       const i0 = Math.max(0, Math.floor((x0 - min[0]) / cell[0])), i1 = Math.min(nx - 1, Math.floor((x1 - min[0]) / cell[0]));
       const j0 = Math.max(0, Math.floor((y0 - min[1]) / cell[1])), j1 = Math.min(ny - 1, Math.floor((y1 - min[1]) / cell[1]));
       const k0 = Math.max(0, Math.floor((z0 - min[2]) / cell[2])), k1 = Math.min(nz - 1, Math.floor((z1 - min[2]) / cell[2]));
-      for (let k = k0; k <= k1; k++) for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const q = idx(i, j, k); occ[q] = Math.min(1, occ[q] + d); }
+      for (let k = k0; k <= k1; k++) for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const q = idx(i, j, k); occ[q] = Math.min(1, occ[q] + d); if (d >= 1) solid[q] = 1; }
     };
     // local box of a unit (room / suite) -> world
     const boxL = (s, x0, x1, y0, y1, z0, z1, d = 1) => {
@@ -159,11 +160,16 @@ class Scene {
     for (let j = 0; j < ny; j++) {
       const y = min[1] + (j + 0.5) * cell[1];
       const xw = wallAt(Math.min(y, 2.3))[0];
-      for (let i = 0; i < nx; i++) { const x = min[0] + (i + 0.5) * cell[0]; if (Math.abs(x) > xw) for (let k = 0; k < nz; k++) occ[idx(i, j, k)] = 1; }
+      for (let i = 0; i < nx; i++) { const x = min[0] + (i + 0.5) * cell[0]; if (Math.abs(x) > xw) for (let k = 0; k < nz; k++) { occ[idx(i, j, k)] = 1; solid[idx(i, j, k)] = 1; } }
     }
-    const kAtt = 1.35;
+    // QA r3: THE Suite geometry occludes less (kAtt 0.8 in the F zone): the 1.3 m shells are open-topped under the
+    // bright ceiling, and the ottoman / console / pier read near-black next to a white wall where the daylight photos
+    // show mid-tones [V: f_17300, omaat_f2 / f5 / f11 ottoman #9f8c85, console #514537; q03 #312f2d]
+    const kAtt = 1.35, kAttF = 0.8;
+    const fz = this.layout.zones.find((zn) => zn.cls === 'F');
+    const kf0 = fz ? Math.floor((fz.z0 - min[2]) / cell[2]) : -1, kf1 = fz ? Math.floor((fz.z1 - min[2]) / cell[2]) : -1;
     const att = new Float32Array(occ.length);
-    for (let q = 0; q < occ.length; q++) att[q] = Math.exp(-kAtt * occ[q]);
+    for (let q = 0; q < occ.length; q++) { const k = Math.floor(q / (nx * ny)); att[q] = Math.exp(-(k >= kf0 && k <= kf1 && !solid[q] ? kAttF : kAtt) * occ[q]); }
     // QA r3: emitter cells. The sweep only sees the ceiling, so everything under the outboard bins read 0 (window seats,
     // the inside of THE Suite) although the sidewall lens, the lit bin undersides and the windows light it. Air cells in
     // the lens band (y 1.30-1.60, |x| 1.55 to the wall) count as sky at 0.45 and the strip under the centre bins
@@ -179,7 +185,7 @@ class Scene {
         for (let i = 0; i < nx; i++) {
           const ax = Math.abs(min[0] + (i + 0.5) * cell[0]);
           const e = y > 1.30 && y < 1.60 && ax > 1.55 && ax < xw ? 0.45 : y > 1.74 && y < 1.84 && ax < 0.83 ? 0.35 : 0;
-          if (e) for (let k = k0; k <= k1; k++) { const q = idx(i, j, k); if (occ[q] < 0.99) emit[q] = e; }
+          if (e) for (let k = k0; k <= k1; k++) { const q = idx(i, j, k); if (!solid[q]) emit[q] = e; }
         }
       }
     }
@@ -204,17 +210,17 @@ class Scene {
       }
     }
     // QA r3: three separable [1/4, 1/2, 1/4] passes (i, j, k) smooth the 9-direction sweep's V-shaped wedges on flat
-    // walls (q19 closet faces vs py_37302 uniform bulkhead); solid cells (occ 1: walls, monuments) are not averaged in,
-    // so faces next to them do not darken [D]
+    // walls (q19 closet faces vs py_37302 uniform bulkhead); solid cells (walls, bins, monuments) are not averaged in,
+    // so the faces next to them do not darken [D]
     const tmp = new Float32Array(acc.length);
     for (const [di, n, stride] of [[0, nx, 1], [1, ny, nx], [2, nz, nx * ny]]) {
       tmp.set(acc);
       for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
         const q = idx(i, j, k);
-        if (occ[q] >= 0.99) continue;
+        if (solid[q]) continue;
         const c = di === 0 ? i : di === 1 ? j : k;
-        const a = c > 0 && occ[q - stride] < 0.99 ? tmp[q - stride] : tmp[q];
-        const b = c < n - 1 && occ[q + stride] < 0.99 ? tmp[q + stride] : tmp[q];
+        const a = c > 0 && !solid[q - stride] ? tmp[q - stride] : tmp[q];
+        const b = c < n - 1 && !solid[q + stride] ? tmp[q + stride] : tmp[q];
         acc[q] = 0.25 * a + 0.5 * tmp[q] + 0.25 * b;
       }
     }
@@ -262,12 +268,12 @@ class Scene {
       this.spots.push({ p, t });
       // amber PSU lamp above each lit seat. QA r3: a crisp emissive oval lens (0.10 x 0.045 m) flush under the PSU
       // plus a 3 cm core sprite, not a 7 cm halo floating in front of the bin [V: ucr_room-night-lighting sharp ~2:1
-      // oval lenses, core #ac6437, small halo; size A]
+      // oval lenses, core #ac6437, small halo; size A; e 0.25 gives the #ac6437 core at the night gains D]
       const px = s.x * 0.92, ctr = Math.abs(px) < 1.1;
       const py = ctr ? CBIN_Y - 0.011 : binBottomY(px) - 0.0085;
       const pz = s.kind === 'econ' || s.kind === 'py' ? p[2] + 0.12 : s.z;
       rm.push(M4.trs(px, py - 0.004, pz, 0, 0, 0, 0.03, 0.03, 0.03)); rt.push([1.1, 0.6, 0.3, 0]);
-      lens.add(oval, M4.trs(px, py, pz, 0, 0, ctr ? 0 : -TILT_O * Math.sign(px)), { c: '#c07040', r: 0.4, e: 0.6 });
+      lens.add(oval, M4.trs(px, py, pz, 0, 0, ctr ? 0 : -TILT_O * Math.sign(px)), { c: '#c07040', r: 0.4, e: 0.25 });
     }
     gl.setInstances(this.readingMesh, rm, rt);
     this.psuLensMesh = gl.mesh(lens.build(), { name: 'psuLens', castShadow: false });
@@ -454,7 +460,7 @@ class Scene {
     G.set('u_sideLed', mood.sideLed || mood.led);
     G.set('u_vault', mood.vault || mood.led);
     G.set('u_lowTint', mood.lowTint || [1, 1, 1]);
-    G.set('u_bandCut', mood.bandCut ?? 0.65);
+    G.set('u_bandCut', mood.bandCut ?? 0.65); G.set('u_sideLow', mood.sideLow ?? 0.4);
     G.set('u_extBounce', [0, 0, 0]);
     // reading-light pools: the 8 lit lamps nearest the eye [A: count, a phone-sized loop]
     const sp = new Float32Array(32), st = new Float32Array(32);
@@ -509,8 +515,17 @@ class Scene {
       // exterior: cloud-deck bounce and a lower sun (from_exterior 1 / 6: the sun side of the cowl saturated at 5.2)
       G.set('u_extBounce', sky.extBounce);
       G.set('u_sunCol', sky.sun.map((v) => v * sky.extSun));
+      // up to two exterior lights with a `light` gain light the airframe at night, blinking like their glow sprite
+      const pp = new Float32Array(8), pc = new Float32Array(6);
+      let np = 0;
+      for (const l of this.ext.lights) {
+        if (!l.light || !sky.night || np > 1) continue;
+        const on = l.blink > 1.5 ? ((time * 0.9 + l.blink) % 1 >= 0.92 ? 1 : 0) : 1;
+        pp.set([...l.p, 1], np * 4); pc.set(l.c.map((v) => v * l.light * on), np * 3); np++;
+      }
+      G.set('u_extPtP', pp); G.set('u_extPtC', pc);
       G.draw(this.ext.mesh);
-      G.set('u_extBounce', [0, 0, 0]);   // the studio (same program) keeps its plain fill
+      G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
