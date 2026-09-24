@@ -6,8 +6,12 @@ const MAT = {
   // QA r1: sidewall / reveal / lining / end walls carry no detail layer: the plastic bump layer read as stucco under
   // grazing window light; real panels and reveals are smooth satin [V: ref/web/windows tt_window, omaat_24, lalf_37, f_17313]
   sidewall: { c: '#e9e7e2', r: 0.52 },
-  dado: { c: '#464d5c', r: 0.6, l: LAYER.plastic },            // bluer slate dado [V: sampled #474e61 / #4a505c on py_37301]
-  grille: { c: '#3f4553', r: 0.55 },                            // louvres a shade darker than the dado frame (py_37301)
+  // bluer slate dado. QA r2: the floor-level AO / bounce falloff crushed #464d5c to #1e222d in the cabin (photo slate
+  // #374157 / #363f4c, dado:wall ~0.33 on py_37301 / py_37303), so the albedo is raised to land there in-cabin [V: tone]
+  dado: { c: '#6c7690', r: 0.6, l: LAYER.plastic },
+  // louvre slats about dado-toned over a dark plenum, so the grille averages #394156 like the photo (slats light,
+  // gaps dark; py_37301 grille #394156, dado beside it #30394e) [V]
+  grille: { c: '#707b96', r: 0.55 },
   ceiling: { c: '#f1f0ec', r: 0.75, l: LAYER.plastic },
   bin: { c: '#e6e4df', r: 0.42, l: LAYER.plastic },
   binDoor: { c: '#eeede9', r: 0.34, l: LAYER.plastic },
@@ -16,14 +20,17 @@ const MAT = {
   led: { c: '#ffffff', r: 0.5, l: 12, e: 1.0 },
   reveal: { c: '#e7e4dd', r: 0.45 },
   // Y/PY: dark navy with cyan flecks (photo swatch y_47304); F/J: dark warm charcoal-brown (c_27313, f_17300)
-  carpet: { c: '#2c3345', r: 0.95, l: LAYER.yCarpet },
-  // F/J: plain fine heather, no motif [V: c_27312 aisle sampled #403638, f_17313 footwell #312825]; the fine fabric
-  // layer stands in for the heather (no J carpet swatch is mapped) [A: grain]
-  carpetJ: { c: '#3a3033', r: 0.95, l: LAYER.fabric },
+  // QA r2: #2c3345 rendered #232a41 (Y) / #181c2a (PY) against photo #36445f (y_47301) / #282f41-#354156 (py_37302)
+  carpet: { c: '#3d4659', r: 0.95, l: LAYER.yCarpet },  // swatch layer adds the blue; kept greyer [V: tone]
+  // F/J: plain fine heather, no motif [V: c_27312 aisle sampled #403638 / #3e3537, #463d3b further aft, f_17313
+  // footwell #312825]; QA r2: #3a3033 rendered plum #1a1517 in the aisle between the tall shells, so warmer
+  // brown-grey, raised until the q06 aisle renders near the photo; the fine fabric layer
+  // stands in for the heather (no J carpet swatch is mapped) [A: grain]
+  carpetJ: { c: '#645554', r: 0.95, l: LAYER.fabric },
   vinyl: { c: '#8d9096', r: 0.55, l: LAYER.vinyl },
-  // floor path strips: carpet-toned, not visible as rails in any ANA photo (y_47301, py_37301, c_27312) [A: tone]
-  pathStrip: { c: '#3a4150', r: 0.8 },
-  pathStripJ: { c: '#3b3234', r: 0.8 },
+  // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
+  // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
+  trackCover: { c: '#2965bd', r: 0.35 },
   door: { c: '#dddbd5', r: 0.45, l: LAYER.plastic },
   doorGap: { c: '#2a2d31', r: 0.8 },
   handle: { c: '#b8bcc1', r: 0.3, m: 0.85 },
@@ -85,7 +92,9 @@ const REC = { hw: 0.195, top: 0.42, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 
 const WMAT = {
   lining: { c: '#c3bfb7', r: 0.5 },           // grey tunnel lining round the pane (c_27300, tt photo)
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
-  grilleBack: { c: '#1b1f25', r: 0.8 },
+  grilleBack: { c: '#1c212c', r: 0.8 },                         // plenum behind the louvres, keeps their depth [A]
+  // rounded frame round the grille, lighter than the dado panel (py_37301 frame #5c6a82-#5f6e8a vs panel #30394e) [V]
+  grilleFrame: { c: '#8894ae', r: 0.5 },
   label: { c: '#ecebe6', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
   halo: { c: '#4467ff', r: 0.3, e: 0.8 },                       // blue LED ring round the shade button (LALF/OMAAT photos)
   pin: { c: '#2a2c30', r: 0.6 },
@@ -252,7 +261,7 @@ function windowParts(side, pat) {
   const gr = (hw, hh, r) => rrectPts(hw * 2, hh * 2, r, 3).map(([a, b]) => [a, gc + b]), NG = gr(0.1, 0.1, 0.02).length;
   const gm = (a, b, d) => gmap(a, b, d);
   const ghint = [wallAt(gc)[2] * side, wallAt(gc)[3], 0];
-  parts.push([ringLoft([[gr(ghw + 0.012, ghh + 0.012, 0.036), 0.0004], [gr(ghw + 0.004, ghh + 0.004, 0.03), 0.0064], [gr(ghw - 0.001, ghh - 0.001, 0.027), 0.0012]], gm, ghint), MAT.dado]);
+  parts.push([ringLoft([[gr(ghw + 0.012, ghh + 0.012, 0.036), 0.0004], [gr(ghw + 0.004, ghh + 0.004, 0.03), 0.0064], [gr(ghw - 0.001, ghh - 0.001, 0.027), 0.0012]], gm, ghint), WMAT.grilleFrame]);
   const back = raw();
   back.p.push(...gm(0, gc, 0.0012)); back.n.push(0, 0, 0); back.u.push(0, 0);
   for (const [a, b] of gr(ghw - 0.001, ghh - 0.001, 0.027)) { back.p.push(...gm(a, b, 0.0012)); back.n.push(0, 0, 0); back.u.push(0, 0); }
@@ -332,7 +341,10 @@ function shadeMats(w, f, depthOff = 0) {
   const railY = man ? lerp(top - 0.020, -top + 0.017, f) : lerp(top + 0.012, -top + 0.009, f);
   const hgt = Math.max(top - railY, 0.0004);
   const s = hgt / SHADE.h;
-  const panel = M4.mul(Tz, M4.mul(F, M4.mul(M4.trs(0, top - hgt / 2, 0), M4.trs(0, 0, 0, 0, 0, 0, 1, s, 1))));
+  // stowed electric shade (f = 0): collapse the instance entirely. QA r2: the 0.4 mm sliver left at the top of the
+  // opening rasterised as a dotted line in the shadow map, printing a "chain" of dots through every sun patch [V: q07]
+  const panel = !man && f <= 0 ? M4.mul(Tz, M4.mul(F, M4.trs(0, top, 0, 0, 0, 0, 0, 0, 0)))
+    : M4.mul(Tz, M4.mul(F, M4.mul(M4.trs(0, top - hgt / 2, 0), M4.trs(0, 0, 0, 0, 0, 0, 1, s, 1))));
   const rail = M4.mul(Tz, M4.mul(F, M4.trs(0, railY, 0)));
   return { panel, rail };
 }
@@ -432,8 +444,6 @@ function ceilOutline(type, x) {
   return interp(SIDEBIN.slice(7, 11));
 }
 
-const AISLE_STRIPS = { F: [1.14, 1.58], J: [1.21, 1.65], PY: [1.18, 1.70], Y: [1.03, 1.38] };
-
 function buildShell(gl, layout) {
   const zones = layout.zones;
   const shell = new Builder();
@@ -532,14 +542,26 @@ function buildShell(gl, layout) {
     const full = [...pts, [0, 2.24], ...pts.slice().reverse().map(([x, y]) => [-x, y])];
     shell.add(gExtrude(full, 0.04, 5), M4.trs(0, 0, z + f * 0.02), MAT.wallEnd);
   }
-  // ---- floor path strips along aisles ----
-  for (const zn of floorZones) {
-    if (zn.type !== 'seat') continue;
-    const xs = AISLE_STRIPS[zn.cls] || AISLE_STRIPS.Y, fj = zn.cls === 'F' || zn.cls === 'J';
-    for (const side of [-1, 1]) for (const x of xs) {                // 12 mm wide, 1 mm proud, carpet-toned [A]
-      shell.add(gBox(0.012, 0.002, zn.z1 - zn.z0 - 0.1), M4.trs(x * side, 0.0, (zn.z0 + zn.z1) / 2), fj ? MAT.pathStripJ : MAT.pathStrip);
+  // ---- Y seat-track covers (QA r2: replace the aisle path strips no photo shows) ----
+  // one glossy royal-blue cover along each economy seat-leg line, 45 x 5 mm, running under its rows [V: y_47304 cover
+  // beside the track fitting, y_47301 blue bar under the ABC block]; leg lines follow econUnit (09_seats: legs at
+  // +-(W/2 - 0.24) of the block centre, +-0.24 for two-seat blocks), so the taper rows 39-42 get their own lines [D].
+  // PY is left bare: py_37301 / py_37302 show no covers on the darker carpet
+  const tracks = new Map();
+  const ySeats = layout.seats.filter((q) => q.kind === 'econ');
+  for (const r of new Set(ySeats.map((q) => q.row))) {
+    const rs = ySeats.filter((q) => q.row === r);
+    for (const b of [rs.filter((q) => q.x < -1.1), rs.filter((q) => Math.abs(q.x) <= 1.1), rs.filter((q) => q.x > 1.1)]) {
+      if (!b.length) continue;
+      const cx = b.reduce((a, q) => a + q.x, 0) / b.length, hw = b.length >= 3 ? (b.length * 19 * IN) / 2 - 0.24 : 0.24;
+      for (const lx of [cx - hw, cx + hw]) {
+        const k = lx.toFixed(2), t = tracks.get(k) || { x: lx, z0: 1e9, z1: -1e9 };
+        t.z0 = Math.min(t.z0, b[0].z - 0.60); t.z1 = Math.max(t.z1, b[0].z + 0.25);
+        tracks.set(k, t);
+      }
     }
   }
+  for (const t of tracks.values()) shell.add(gRBox(0.045, 0.010, t.z1 - t.z0, 0.004, 1), M4.trs(t.x, 0.001, (t.z0 + t.z1) / 2), MAT.trackCover);
 
   const meshes = {
     shell: gl.mesh(shell.build(), { name: 'shell', layer: 'shell' }),
