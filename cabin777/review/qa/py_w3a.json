@@ -1,0 +1,157 @@
+{
+ "area": "py",
+ "rater": "A",
+ "score": 6.0,
+ "details": [
+  {
+   "detail": "Round-2 fix claims checked in the code (src/09b_py.js at 0ba3e28) and the renders. Crease removed: yes. Console 0.12 with a two-cup tray at its nose: yes. Blue marks: they are gCyl(…,3) EQUILATERAL triangles, not right triangles, and the lower one sits bottom-right where alv_09 has it top-right. One fold-down footrest with two pads on an axle: yes. Floor-standing two-cup silver bin: yes. Gooseneck 9.5 mm with a 38x110 head: yes, but the lens is on the end cap, not the side. Hem stitch: yes. Tile redrawn: it is still horizontal dash rows (see the fabric item). Lighter wings and shells: yes, they now measure in range. Legs and coat hook: unchanged.",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/src/09b_py.js"
+   ]
+  },
+  {
+   "detail": "Overall massing: the tall bolstered back, the wing pillows either side of the flap, the wrap shell, console, shrouds, leg rest and roller all read right in st/p3 and p13a against py_37302 and san_01. The shell top is now an arch that ends at about headrest height (p15back). The corner radius is still only about 6-8 cm; alv_13 and san_01 show the grey rim running up and over in a broad arch of about 12-15 cm.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/st/p3_py4_front.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/p15back.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_13_seatback_screen.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_01_overview_rows26-27_aisle.jpg"
+   ]
+  },
+  {
+   "detail": "Back fabric: the tone is now right. Back/wall is 0.73-0.74 in the model (p13a 136/185, p14c 110/150) against 0.67-0.73 in san_01 and alv_02. Relative B/R is 1.07-1.08 against 1.07 in both. Contrast (p10/p90 about 94/176) is also similar to real (101/188). The pattern character is still wrong. tex_py_back is long HORIZONTAL white dashes in rows, and it renders as TV static or barcode streaks across every back (p13a, q14, st/p1, st/p5). The real centre back in the alv_02 close crop is short (15-30 mm) cream strokes that run UP the back, slanted about ±15-25 degrees in herringbone columns, over a warm lavender-grey ground. From a distance (san_01, py_37302) it reads as fine sparse white flecks with no direction. The dashes are also pure white; the real ones are cream.",
+   "score": 4,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/p13a.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/st/p1_py2_front.png",
+    "/home/user/Calc/cabin777/tex/tex_py_back.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_02_window_pair_rear_side.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_01_overview_rows26-27_aisle.jpg"
+   ]
+  },
+  {
+   "detail": "Headrest wings: this is fixed in luminance. Wing/back is 0.85 in p13a, 0.91 in p14c and 0.83 in q14, against 0.89 in alv_04, 0.93 in alv_02 and 0.99 in san_01. The wing p10/p90 of 74-79/150-158 matches alv_04's 78/166. What remains is hue and shape: the chips are pure white on a neutral-cool ground (B/R 1.05-1.07 relative), where the real ones are cream chips on a warm ground (0.88 raw, about 1.0 relative). The chips are also round blobs, where alv_04 and alv_17 show elongated 1-2 cm flecks. So the wings still look like a darker, colder material than the back at a glance (q14, p4).",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/st/p4_py_head.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/q14_seat26A.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_17_headrest_reading_light_fabric.jpg"
+   ]
+  },
+  {
+   "detail": "Navy flap: it is smooth now, with a hem stitch, and flap/back is 0.45-0.49 against 0.41 (alv_02), 0.45 (san_01) and 0.70 (alv_04, specular). Rendered B/R relative to the wall is 1.70 (p14c/q14 42,48,72). Real values are 1.20 (alv_04), 1.44 (alv_02) and 1.64 (san_01), so the model is at the blue end of the range, slightly too saturated. The flap is a flat board; the real one drapes over the headrest crown with a soft fold.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/p14c.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_02_window_pair_rear_side.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_01_overview_rows26-27_aisle.jpg"
+   ]
+  },
+  {
+   "detail": "Rear shell and screen housing: the upper shell/wall is now 0.50 in p15back (97/195), within the real 0.48-0.64. The lower shell below the screen is still 0.32-0.35 (62-69). The housing, bezel, placards and pocket read like alv_13 and san_05. The placards are still blank white (alv_13 has two lines of JP and EN text).",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/p15back.png",
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/st/p6_back_close.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_13_seatback_screen.jpg"
+   ]
+  },
+  {
+   "detail": "Reading light: it is now thick with a large brushed head, which reads close to alv_04 and alv_17. In p13a/q14 the heads hang almost vertical in parallel pairs at the console. In alv_04 and san_01 each hose arcs over and the head points forward and down at about 40-50 degrees. The lens is a disc on the bottom end cap; alv_17 has it on the side of the cylinder.",
+   "score": 6.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/p13a.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_17_headrest_reading_light_fabric.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/alv_04_window_seat_front.jpg"
+   ]
+  },
+  {
+   "detail": "Console: the width, dark lid with silver bead, light two-cup tray, sockets and red tab are right. The cubbies (st/p5) are compact proud boxes, about 0.09 wide. In alv_09 they are open U-pockets almost the full face width with a rolled top lip, and the upper one is about 1.5x taller than the lower. The blue marks are equilateral (3-segment cylinders). The real ones are right triangles, top-left on the upper pocket and TOP-right on the lower (the model puts the lower one bottom-right).",
+   "score": 6,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/st/p5_console.png",
+    "/home/user/Calc/cabin777/ref/web/py/alv_09_console_front_cubbies.jpg"
+   ]
+  },
+  {
+   "detail": "Footrest and bottle bin: one two-pad fold-down footrest on a hub with silver struts, and a floor-standing two-cup bin. Both match alv_05/06/07 and san_05/07 well enough.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/st/p6_back_close.png",
+    "/home/user/Calc/cabin777/ref/web/py/san_05_seatbacks_row26_aisle.jpg"
+   ]
+  },
+  {
+   "detail": "Legs: unchanged, a vertical box plus a -20 degree box in SEATMAT.frame. san_05 clearly shows a pale champagne/gold diagonal strut with a lightening slot, running from under the pan down and back to the track, prominent from the row behind. It is absent from p15back and st/p6.",
+   "score": 4.5,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/p15back.png",
+    "/home/user/Calc/cabin777/ref/web/py/san_05_seatbacks_row26_aisle.jpg"
+   ]
+  },
+  {
+   "detail": "Shrouds, arm caps and leg rest: these are right against py_37301 and san_01.",
+   "score": 7,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/4ebe82c6-8601-51aa-bbad-b13b9d44f66b/scratchpad/w3r/st/p7_side.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Back fabric stroke direction and shape",
+   "problem": "tex_py_back is rows of long horizontal white dashes, so every back reads as barcode or TV-static streaks. The real centre-back weave is short cream strokes running up the back, slanted in herringbone columns. From a distance it reads as fine undirected flecks.",
+   "evidence": "Tone and contrast now match (back/wall 0.73 against 0.67-0.73; p10/p90 94/176 against 101/188), so what is wrong is geometry. Compare the alv_02 close crop (x 980-1480, y 1150-1536: near-vertical strokes 15-30 mm x 3-5 mm, ±20° slant) with p13a and st/p1 (horizontal dashes 30-80 mm long in rows).",
+   "fix": "In test/make_swatches.py synth_py_back: draw strokes with their long axis along the tile's V (the seat's up direction; the current u maps to world x). Length 12-30 mm, width 3-5 mm, slant +20° / -20° alternating in about 25 mm columns (herringbone), jittered positions, no row grid, and about 30-35% coverage including small chips. As a quick check, np.transpose the current tile and verify the dashes turn vertical in st/p1. Tint strokes cream: in 09_seats.js SEATMAT.pyFabric.c = photoBase('#9a948f','py_back'), and lower PHOTO_ENC py_back from 4 to 3 in 03_tex.js (shared file, one line) so the flecks read cream-grey, not white."
+  },
+  {
+   "severity": "medium",
+   "detail": "Seat legs",
+   "problem": "The pale champagne diagonal struts that show from the row behind are missing.",
+   "evidence": "san_05 (gold strut under row 25/26, lower middle); p15back and st/p6 show none.",
+   "fix": "In pyUnit legs: replace the -20° gRBox(0.04,0.34,0.05) with gRBox(0.03,0.46,0.04,0.01,1) at about +35° (top under the pan at y 0.36, z -0.10; foot at the track, z +0.12), c '#bfae86', m 0.7, r 0.35, l LAYER.brushed, plus a SEATMAT.hole slot gBox(0.032,0.18,0.006) along its middle."
+  },
+  {
+   "severity": "medium",
+   "detail": "Wing chip hue and shape",
+   "problem": "Wing luminance is fixed, but the chips are round pure-white blobs on a cool ground, so the wings read as a different, colder material.",
+   "evidence": "Model wing relative B/R 1.05-1.07 against about 1.0 real (alv_04 0.88 raw against a 0.87 wall; san_01 0.88 against 0.88). Real chips are elongated cream flecks (alv_04 crop, alv_17).",
+   "fix": "In 09_seats.js SEATMAT.pyWing.c = photoBase('#a39d96','py_confetti'). In synth_py_confetti, stretch the chips into 8-18 mm x 3-6 mm ellipses at random angles and lower PHOTO_ENC py_confetti from 6 to 4."
+  },
+  {
+   "severity": "low",
+   "detail": "Flap saturation / drape",
+   "problem": "The flap is slightly too blue, and it is a flat board.",
+   "evidence": "Rendered relative B/R 1.70 against 1.20-1.64 real (alv_04, alv_02, san_01).",
+   "fix": "SEATMAT.pyCover.c '#4c536e' becomes '#4c5063'. In pySeat, give the top flap part a curve: replace the top gRBox(0.28,0.008,0.07) with a 3-section loftAt arc (y 0.895 to 0.915 to 0.90, z -0.07 to -0.03 to 0.0)."
+  },
+  {
+   "severity": "low",
+   "detail": "Console cubbies and blue marks",
+   "problem": "The cubbies are small proud boxes, where the real ones are near-full-width open pockets. The marks are equilateral, and the lower one is in the wrong corner.",
+   "evidence": "alv_09 against st/p5.",
+   "fix": "In pyUnit: cubby plate width w-0.012 becomes w-0.006, the upper h becomes 0.12 and the lower 0.08. Blue mark: replace gCyl(0.017,…,3) with a right triangle, a gCyl(0.024,0.024,0.002,4) (square) rotated 45° about its axis, pushed 1 mm behind the plate face, with half of it hidden by a plate-coloured gBox; or add a 3-vertex triangle to the Builder. Put it in the corner, top-left on the upper cubby. For the lower cubby use ty = y + h*0.24 - 0.018 (top) with tx on the right."
+  },
+  {
+   "severity": "low",
+   "detail": "Reading-light head angle and lens",
+   "problem": "The heads hang almost vertical, and the lens is on the end cap.",
+   "evidence": "alv_04, alv_17 and san_01 show the head pointing forward-down about 45°, with the lens on the side face.",
+   "fix": "hd rotation 26*DEG becomes 50*DEG, and move the last tube point to P(0.24,0.60,-0.19). Place the lens disc at M4.trs(0,-0.03,0.019) rotated PI/2 about x (side face) instead of on the end cap."
+  },
+  {
+   "severity": "low",
+   "detail": "Placards blank; coat hook small; lower shell dark",
+   "problem": "The placards have no text. The hook is still gCyl(0.012,0.016,0.07). The lower shell is 0.32-0.35 of the wall.",
+   "evidence": "alv_13 (text), san_13 (hook about 10 x 3.5 cm), p15back.",
+   "fix": "Add the placard text through an atlas entry. Hook: gCyl(0.016,0.018,0.10). Leave the lower-shell brightness to the lighting owner (AO floor)."
+  }
+ ],
+ "questionsForUser": [
+  "Fabric direction: in the alv_02 close-up the back strokes run up the back in herringbone columns, but at the lower back in alv_17 they look horizontal. Is there a photo of your own that shows the centre back square-on, so the stroke direction can be pinned down before the tile is redrawn a third time?"
+ ]
+}

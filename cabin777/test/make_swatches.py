@@ -69,40 +69,32 @@ def _blur_wrap(a, s):
 
 
 def synth_py_back(ratio, seed=7):
-    """PY QA w1/w2: the 140 px photo crop upsampled to 256 renders as soft blobs up close, so the weave is redrawn crisply
-    and only the photo's mottling (low-pass of the crop) is kept for the cloud zones. Real cabin close-ups (ref/web/py
-    alv_17 / alv_04, san_02) show irregular horizontal cream streaks, 1-4 mm thick and 5-40 mm long with ragged ends,
-    loosely rowed at ~8.7 mm (py_37305 y-autocorrelation 7.5 px at 860 px/m), ~35-40 % light coverage on a slate
-    ground, lighter and denser in cloud zones, plus scattered cream chips; cream ~4-5x the ground in linear light [D].
-    w2: replaces the w1 brick grid of equal dashes (rater A: 'digital', 15 % coverage)"""
+    """PY QA w1-w3: the 140 px photo crop upsampled to 256 renders as soft blobs up close, so the weave is redrawn crisply
+    and only the photo's mottling (low-pass of the crop) is kept, as stroke density (cloud zones). w3: real close-ups
+    (ref/web/py alv_02 seat top + wings, alv_17) show short cream strokes, ~10-25 mm x 3-4.5 mm, leaning ~+-25 deg from
+    the vertical in alternating ~27 mm columns (herringbone); from seat distance (san_01, py_37302) they read as fine
+    undirected flecks. ~30 % light coverage, cream ~4x the ground in linear light. The w2 horizontal streak rows read as
+    a barcode (rater A) and the ground mottling as dark blotches (rater B) [D]"""
     rng = np.random.default_rng(seed)
-    mot = _blur_wrap(ratio.mean(2), 9)
+    mot = _blur_wrap(ratio.mean(2), 12)
     mot = (mot - mot.mean()) / (mot.std() + 1e-6)
     y = np.arange(S)[:, None]; x = np.arange(S)[None, :]
     lite = np.zeros((S, S))
-    ph = S / 19                                    # 0.163 m / 19 = 8.6 mm row pitch
-    for r in range(19):
-        xs = rng.uniform(0, 20)
-        while xs < S:
-            m = mot[int((r + 0.5) * ph) % S, int(xs) % S]
-            p_on = np.clip(0.8 + 0.25 * m, 0.3, 1.0)             # denser streaks in the light cloud zones
-            ln = rng.uniform(6, 45) if rng.random() < 0.7 else rng.uniform(3, 8)
-            if rng.random() < p_on:
-                yc = (r + 0.5) * ph + rng.normal(0, 1.1)
-                th = rng.uniform(1.6, 3.6)                          # streak half-thickness (px): 2-4.5 mm total
-                sl = rng.normal(0, 0.03)                            # slight slant
-                u = (x - xs) % S
-                along = np.clip(np.minimum(u, ln - u) / 2.0, 0, 1) * (u < ln)
-                dy = ((y - yc - sl * u + S / 2) % S) - S / 2
-                rag = 1 + 0.4 * np.interp(u, np.arange(0, S + 5, 5), rng.uniform(-1, 1, len(range(0, S + 5, 5))))   # ragged edges
-                across = np.clip((th * rag - np.abs(dy)) / 0.9, 0, 1)
-                lite = np.maximum(lite, along * across * np.clip(rng.normal(1.0, 0.18), 0.5, 1.3))
-            xs += ln + rng.uniform(1.0, 4.5)
-    for cy, cx in rng.uniform(0, S, (60, 2)):     # cream chips, mostly in the light zones
-        if mot[int(cy), int(cx)] < -0.3: continue
-        rr = np.hypot(((x - cx + S / 2) % S - S / 2) * 0.7, ((y - cy + S / 2) % S - S / 2) / 0.7)
-        lite = np.maximum(lite, np.clip((rng.uniform(2.0, 5.0) - rr) / 1.0, 0, 1))
-    out = (1 + 3.4 * lite) * np.exp(0.18 * mot)
+    cols = 6; cw = S / cols                        # 0.163 m / 6 = 27 mm columns (tileable)
+    for c, lane in [(c, l) for c in range(cols) for l in (-0.3, 0.0, 0.3)]:        # three staggered lanes per column
+        ang = np.radians(25 if c % 2 else -25) + rng.normal(0, 0.06, 400)
+        vy = rng.uniform(0, 12); k = 0
+        while vy < S:
+            ln = rng.uniform(12, 28); th = rng.uniform(2.4, 3.6)
+            cx = (c + 0.5 + lane) * cw + rng.normal(0, cw * 0.06); cy = vy + ln / 2
+            m = mot[int(cy) % S, int(cx) % S]
+            if rng.random() < np.clip(0.72 + 0.25 * m, 0.3, 1.0):
+                dx = (x - cx + S / 2) % S - S / 2; dy = (y - cy + S / 2) % S - S / 2
+                a = ang[k]; along = dx * np.sin(a) + dy * np.cos(a); across = dx * np.cos(a) - dy * np.sin(a)
+                v = np.clip((ln / 2 - np.abs(along)) / 2.0, 0, 1) * np.clip((th * (1 - 0.35 * (2 * along / ln) ** 2) - np.abs(across)) / 0.9, 0, 1)
+                lite = np.maximum(lite, v * np.clip(rng.normal(1.0, 0.15), 0.6, 1.25))
+            vy += ln * rng.uniform(0.75, 1.1); k += 1
+    out = (1 + 3.0 * lite) * np.exp(0.05 * mot)
     return np.repeat(out[:, :, None], 3, 2)
 
 
@@ -111,22 +103,23 @@ def synth_py_confetti(ratio, seed=11):
     ~22 flakes, median 27 px^2 (~4-5 mm), 6-8 % area above 150, ground p10 72 / flakes 200+ sRGB (~12x linear) [D].
     In the cabin views the photo-sized chips read as 2-3 cm blotches against real in-cabin photos (san_01, alv_04: fine
     speckle) -> smaller chips. w2: real wings (alv_04 / alv_17, san_01) carry dense cream speckle, 20-40 % light
-    coverage (rater A: 5 % in w1) -> 46 chips + 160 specks [D]"""
+    coverage (rater A: 5 % in w1) -> 40 elongated chips (~1.6-2.4:1, w3) + 90 specks [D]"""
     rng = np.random.default_rng(seed)
     out = np.ones((S, S))
     yy, xx = np.mgrid[0:S, 0:S]
     pts = []
-    while len(pts) < 46:                           # blue-noise placement (flakes never touch in the photo)
+    while len(pts) < 40:                           # blue-noise placement (flakes never touch in the photo)
         p = rng.uniform(0, S, 2)
         if all(min(abs(p[0] - q[0]), S - abs(p[0] - q[0])) ** 2 + min(abs(p[1] - q[1]), S - abs(p[1] - q[1])) ** 2 > 24 ** 2 for q in pts): pts.append(p)
     for cy, cx in pts:
         dy = (yy - cy + S / 2) % S - S / 2; dx = (xx - cx + S / 2) % S - S / 2
-        a = rng.uniform(0, np.pi); r0 = rng.uniform(4.5, 8.0)
+        a = rng.uniform(0, np.pi); r0 = rng.uniform(4.0, 6.5)
         th = np.arctan2(dy, dx); rr = np.hypot(dx, dy)
+        e = rng.uniform(1.6, 2.4); rr = np.hypot((dx * np.cos(a) + dy * np.sin(a)) / e, dx * np.sin(a) - dy * np.cos(a)) * 1.3; th = np.arctan2(dy, dx)
         # irregular torn-paper chip: random low harmonics, elongated along a random axis
         lob = 1 + 0.3 * np.cos(2 * (th - a)) + sum(rng.uniform(0, 0.14) * np.cos(k * th + rng.uniform(0, 6)) for k in (3, 4, 5, 7))
         out += 7 * np.clip((r0 * lob - rr) / 1.0, 0, 1)
-    for cy, cx in rng.uniform(0, S, (160, 2)):     # small specks between the chips + fine ground grain
+    for cy, cx in rng.uniform(0, S, (90, 2)):      # small specks between the chips + fine ground grain
         rr = np.hypot((yy - cy + S / 2) % S - S / 2, (xx - cx + S / 2) % S - S / 2)
         out += 5 * np.clip((rng.uniform(1.5, 3.2) - rr) / 1.0, 0, 1)
     out *= np.exp(0.12 * _blur_wrap(rng.normal(0, 1, (S, S)), 1.2) / 0.2)
