@@ -10,7 +10,9 @@ Outputs data/sfo_details.json (+ debug PNGs in out/details/):
   edges          taxiway edge polylines where the taxiway borders unpaved ground
   masts          apron floodlight mast positions (typical spacing along the ramp boundary)
   roads          ramp service-road lines offset from the terminal face
-World frame (matches js/geo.js): x = east, z = south (m), origin = ARP.
+World frame (matches js/geo.js): x = east, z = south (m), origin = ARP; projection/datum from tools/geo_frame.py
+(exact GRS80 local tangent plane, NAD83(2011)). The ADS-B snapshot (WGS 84) goes through geo_frame.wgs84_to_world.
+Also writes data/sfo_details.js (the same JSON as an ES module).
 """
 import json, math, os, sys
 import numpy as np, cv2
@@ -18,6 +20,8 @@ from scipy import ndimage as ndi
 from skimage.morphology import skeletonize
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.join(HERE, '..')
+sys.path.insert(0, HERE)
+import geo_frame
 D = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
 X0, Z0, X1, Z1, RES = -2800.0, -2450.0, 2050.0, 1900.0, 1.0
 W, H = int((X1 - X0) / RES), int((Z1 - Z0) / RES)
@@ -171,12 +175,8 @@ for L in lines:
 print('centerlines', len(centerlines), 'total km', round(sum(sum(math.dist(l[i], l[i + 1]) for i in range(len(l) - 1)) for l in centerlines) / 1000, 1))
 
 # ---------------------------------------------------------------- runways (surveyed ends; same as js/geo.js)
-LAT0, LON0 = 37.6188056, -122.3754167
-MLAT, MLON = 110990.0, 111320.0 * math.cos(math.radians(LAT0))
-dms = lambda d, m: d + m / 60
-ENDS = {'10L': (dms(37, 37.724323), -dms(122, 23.603512)), '28R': (dms(37, 36.812017), -dms(122, 21.428467)), '10R': (dms(37, 37.577467), -dms(122, 23.586327)), '28L': (dms(37, 36.702717), -dms(122, 21.500950)),
-        '1L': (dms(37, 36.473872), -dms(122, 22.975710)), '19R': (dms(37, 37.588882), -dms(122, 22.236565)), '1R': (dms(37, 36.379793), -dms(122, 22.862445)), '19L': (dms(37, 37.640532), -dms(122, 22.026650))}
-def ll2w(lat, lon): return ((lon - LON0) * MLON, -(lat - LAT0) * MLAT)
+ENDS = {k: (v['lat'], v['lon']) for k, v in geo_frame.RWY_ENDS.items()}   # FAA NASR (NAD83) = js/geo.js RWY_ENDS
+ll2w = geo_frame.ll_to_world                  # NAD83(2011) lat/lon -> world (x, z)
 RWYS = []
 for a, b in (('10L', '28R'), ('10R', '28L'), ('1L', '19R'), ('1R', '19L')):
     pa, pb = np.array(ll2w(*ENDS[a])), np.array(ll2w(*ENDS[b])); L = np.linalg.norm(pb - pa); d = (pb - pa) / L
@@ -308,13 +308,14 @@ patches = []
 dP = dist_to(PAVED)
 for ac in snap['ac']:
     if ac.get('alt_baro') != 'ground' or (ac.get('gs') or 0) > 3: continue
-    x, z = ll2w(ac['lat'], ac['lon']); ix, iy = int((x - X0) / RES), int((z - Z0) / RES)
+    x, z = geo_frame.wgs84_to_world(ac['lat'], ac['lon']); ix, iy = int((x - X0) / RES), int((z - Z0) / RES)
     if dP[iy, ix] > 0:
         patches.append([round(x, 1), round(z, 1), 45.0])
 print('patches', len(patches))
 out = {'attribution': 'Derived from SFO Museum sfomuseum-data-architecture (CDLA-Permissive-1.0); apron outline, holding positions, masts and road lines are inferred (see tools/build_airfield_details.py)',
-       'holdDist': HOLD_DIST, 'apron': apron_polys, 'centerlines': centerlines, 'holds': holds, 'edges': edges, 'masts': masts, 'roads': roads, 'patches': patches}
+       'frame': geo_frame.FRAME_ID, 'holdDist': HOLD_DIST, 'apron': apron_polys, 'centerlines': centerlines, 'holds': holds, 'edges': edges, 'masts': masts, 'roads': roads, 'patches': patches}
 json.dump(out, open(os.path.join(ROOT, 'data', 'sfo_details.json'), 'w'), separators=(',', ':'))
+open(os.path.join(ROOT, 'data', 'sfo_details.js'), 'w').write('// Airfield details derived from SFO Museum geometry by tools/build_airfield_details.py\nexport const DETAILS = ' + json.dumps(out, separators=(',', ':')) + ';\n')
 print('wrote', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_details.json')) // 1024, 'KB')
 
 # ---------------------------------------------------------------- debug image

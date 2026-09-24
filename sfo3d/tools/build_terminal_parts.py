@@ -5,7 +5,8 @@ actually exposed (no coincident walls, no z-fighting).
 
 Parts: boarding areas (piers) A-G, terminal halls (terminal polygon minus its boarding areas), and connectors
 (rest of the complex). Heights are approximate except the International Terminal hall (up to 83 ft, published).
-Output: data/sfo_buildings.json
+Output: data/sfo_buildings.json and data/sfo_buildings.js (same JSON as an ES module). World frame = that of
+data/sfo_airport.json (tools/geo_frame.py; no projection is done here).
 """
 import json, math, os
 import numpy as np, cv2
@@ -117,7 +118,9 @@ for c in cs:
     if cv2.contourArea(c) * RES * RES < 60: continue
     a = cv2.approxPolyDP(c, 0.9 / RES, True)[:, 0, :].astype(np.float64)
     cxr.append([world((p[0] + 0.5, p[1] + 0.5)) for p in a])
-json.dump({'complex': cxr, 'parts': out, 'note': 'derived from SFO Museum footprints; heights approximate except ITB hall (83 ft)'}, open(os.path.join(ROOT, 'data', 'sfo_buildings.json'), 'w'), separators=(',', ':'))
+_doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 'note': 'derived from SFO Museum footprints; heights approximate except ITB hall (83 ft)'}
+json.dump(_doc, open(os.path.join(ROOT, 'data', 'sfo_buildings.json'), 'w'), separators=(',', ':'))
+open(os.path.join(ROOT, 'data', 'sfo_buildings.js'), 'w').write('// Terminal building parts derived from SFO Museum footprints by tools/build_terminal_parts.py\nexport const BUILDINGS = ' + json.dumps(_doc, separators=(',', ':')) + ';\n')
 print('bytes', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_buildings.json')))
 # debug image
 img = np.zeros((H, W, 3), np.uint8)

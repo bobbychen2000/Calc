@@ -19,7 +19,7 @@ could not be checked. Data versions: <!--STAMP-->OSM database 2026-09-24T09:07:4
   Our stands are right in 1 case of 10, and 1 more is marginal (3.7 m).
 - **Our observed stands are good. Our inferred stands have a systematic lateral error.** Compared with OSM, our 43
   `obs` stands have a median lateral offset of +0.3 m (median |offset| 1.5 m). Our 40 matched `inf` stands have a median of
-  **+5.7 m** (|offset| 6.3 m). In 25 of those 40 the real lead-in line is more than 3 m to the right of ours. Inferred cause: the
+  **+5.7 m** (|offset| 6.3 m). In 25 of those 40 the real lead-in line is more than 3 m to the right of ours. [corrected by verifier: 42 `inf` stands have an OSM best match. The "40" applies an undocumented filter, |cross| ≤ 20 m and |Δhdg| ≤ 25°. Without the filter the values are: median +5.6 m, median |offset| 6.45 m, 25 of 42 more than 3 m to the right. The conclusion is unchanged.] Inferred cause: the
   inference put the centreline too close to the jet bridge (the aircraft's left, L1-door side). ADS-B confirms this at
   B18 (+5.0 m) and B21 (+6.0 m).
 - **Stands to fix** (§5): 24 stands where OSM and X-Plane agree against us, or where ADS-B at the SFO-published stand
@@ -46,7 +46,7 @@ could not be checked. Data versions: <!--STAMP-->OSM database 2026-09-24T09:07:4
 - **Licences.**
   - X-Plane Gateway packs are **GPL v2 or later**. Observed in the pack README/COPYING and in the WorldEditor source that writes them.
   - OSM is **ODbL 1.0**. Copying OSM stand positions into `data/` makes that file a Derivative Database: it must be offered under ODbL, with
-    attribution. The OSMF "horizontal layers" guideline says mixing OSM and non-OSM features of the same type triggers
+    attribution. [corrected by verifier: only if the copy is Substantial. Under the OSMF guideline, a one-off copy of fewer than 100 Features is not Substantial. A copy of 100 or more Features, or repeated copies, is. See §7.] The OSMF "horizontal layers" guideline says mixing OSM and non-OSM features of the same type triggers
     share-alike for that type.
   - Our current stands are measured on Google imagery, so mixing them with OSM needs a decision by the owner (§7).
 
@@ -126,7 +126,7 @@ Undocumented codes (not verified):
 | X-Plane | d82848c4 | 9 | -1.3 / +1.5 | 3.8 → 3.3 |
 <!--END:registration-->
 
-- **Frame accuracy.** The app's equirectangular frame is 0.12 % short in the east–west scale (111 320·cos φ = 88 157 m/deg against 88 266 m/deg on WGS-84, pyproj). This shortens 10L/28R by 3.4 m against its geodesic length (§6). It is irrelevant for distances between neighbouring stands, at most about 0.1 m.
+- **Frame accuracy.** The app's equirectangular frame is 0.12 % short in the east–west scale (111 320·cos φ = 88 175 m/deg against 88 285 m/deg on WGS-84 at the ARP latitude 37.6188° [corrected by verifier: was "88 157 against 88 266". Both figures were about 19 m/deg low. The 0.12 % ratio (0.124 %) and the 3.4 m runway shortfall are unchanged.]). This shortens 10L/28R by 3.4 m against its geodesic length (§6). It is irrelevant for distances between neighbouring stands, at most about 0.1 m.
 
 ## 4. Results — stands
 
@@ -207,8 +207,8 @@ Their point − our nose tip, for matches with |cross| ≤ 6 m and |Δhdg| ≤ 1
 <!--END:along_stats-->
 
 - **X-Plane.** On our observed wide-body stands (class EL), X-Plane points are a median 9.6 m behind our nose tip. That fits the nose-wheel convention: WED draws the nose 8.2 m ahead for category E.
-- **OSM.** Its "stop" nodes are only 1.6–2.9 m behind our nose tips. *Inferred:* mappers end the lead-in line where the painted line ends, near the most forward stop mark, not at a given type's nose wheel. OSM along values are therefore not a precise stop position.
-- **Consistency of our observed noses.** On our observed stands (B23, B26, G5), the ADS-B antennas are 1.8–9.8 m behind our nose tips (§4.2), as expected for a nose tip.
+- **OSM.** Its "stop" nodes are only 1.6–2.9 m behind our nose tips. [corrected by verifier: the range is imprecise. Those two numbers are the all/obs median (−1.6) and the EL/obs median (−2.9). The per-class obs medians run from +1.4 m (ahead, D) to −2.9 m (behind, EL); C/obs is +0.3; single values run −6.7…+6.3 m. At the 8 ADS-B stands with a forward-drawn way, the OSM end is within 0.3–2.2 m of the aircraft's GNSS antenna.] *Inferred:* mappers end the lead-in line where the painted line ends, near the most forward stop mark, not at a given type's nose wheel. OSM along values are therefore not a precise stop position.
+- **Consistency of our observed noses.** On our observed stands (B23, B26, G5), the ADS-B antennas are 1.8–9.8 m behind our nose tips (§4.2), as expected for a nose tip. [corrected by verifier: this holds only for the sign. All three are 4.0–7.1 m shorter than the app's antenna offset `ANT`·L (A321: 8.9 m; B77W: 14.8 m). See S3.]
 - **Inferred stands** do not follow this pattern (OSM +2.2 m, range −6…+14). The D rotunda is the outlier (§5).
 
 ### 4.4 Every stand
@@ -330,7 +330,7 @@ Findings (observed in the tables above; interpretation marked):
 - **OSM refs agree with SFO's list and with ours.**
   - Exceptions:
     - our C11, which OSM calls C9, confirmed by ADS-B;
-    - our F10, which OSM and X-Plane both call F8;
+    - our F10, which OSM and X-Plane both call F8; [corrected by verifier: overstated. For both sources the nearest position to our F10 is named F8, but it is 12–14 m away with a 30–42° heading difference. OSM's own F10 is 20–23 m away. X-Plane's "Gate F8" lies 8.8 m from OSM's F10 stop point and 11.6 m from OSM's F8, so X-Plane does not independently confirm the name.]
     - our E13, B6, B19, G12 and F8, which sit where OSM has our aliases E12, B7, B20, G13 and F7;
     - our B15 (inf): its nearest OSM lead-in is a B16 one (+9.5 / +12.7), and OSM B15 is 20 m away (−18.4 / −9.2).
   - Of the contact gates SFO uses, OSM lacks only A4, B8, G12 and G14.
@@ -413,11 +413,11 @@ Two caveats apply to every item below:
 
 **S1.** Inferred stands sit about 6 m toward the bridge side (their centreline is left of the real one).
 - Evidence: OSM median cross +5.7 m on 40 `inf` stands against +0.3 m on `obs`; ADS-B at B18 and B21.
-- Recommendation: re-derive every `inf` stand from the painted lead-in line in the imagery rather than from bridge heads. Do the B-east face first (B9–B21). Until then, a stopgap is to shift each `inf` stand +5.7 m to its right, but only after checking its neighbour spacing.
+- Recommendation: re-derive every `inf` stand from the painted lead-in line in the imagery rather than from bridge heads. Do the B-east face first (B9–B21). Until then, a stopgap is to shift each `inf` stand +5.7 m to its right, but only after checking its neighbour spacing. [corrected by verifier: a blanket shift is a poor stopgap. Of the 42 matched `inf` stands it would make 16 worse against OSM: A8, C6, C10, B16, B25, B1, B4, B5, D12, E7, E8, E3, F16, F14, F10 and F5. Only 11 → 14 stands would come within 3 m. Shift only stands whose own OSM, X-Plane or ADS-B offset is to the right.]
 
 **S2.** L2 bridges on wide-body stands follow a rule. The references show one bridge at F12, F14, F16, F17, F19, F22, A3 and A10 (§4.7). Verify each on the imagery.
 
-**S3.** On our three observed stands with ADS-B evidence, the antennas are 1.8–9.8 m behind our nose tips (§4.3). This small sample gives no reason to change `ANT = 0.2·L`.
+**S3.** On our three observed stands with ADS-B evidence, the antennas are 1.8–9.8 m behind our nose tips (§4.3). This small sample gives no reason to change `ANT = 0.2·L`. [corrected by verifier: the sample points the other way. `js/live/traffic.js` puts the antenna `ANT`·L = 8.9 m (A321) and 14.8 m (B77W) behind the nose. The observed offsets are 4.9 m (B23, A321), 1.8 m (B26, A321) and 9.8 m (G5, B77W): all 4.0–7.1 m shorter. The ADS-B stands whose along value is measured against inferred stands (B18 −4.1, B5 −6.6, C10 −3.3; B16 and B21 are even ahead of our nose) point the same way. So either `ANT` = 0.2 is too large, or our along positions are several metres too far from the building. More samples are needed, but "no reason to change" is not supported.]
 
 ### 5.2 By area
 
@@ -475,7 +475,7 @@ Two caveats apply to every item below:
 
 **F (T3).**
 - **F19** (obs) and **F20** (inf) (P): both references put them 13–17 m to the right (F19 +11°). Re-measure the F-pier tip on the imagery.
-- **F10** (inf) (N, P): sits on OSM/X-Plane **F8**, with −13 m / −30° against it.
+- **F10** (inf) (N, P): sits on OSM/X-Plane **F8**, with −13 m / −30° against it. [corrected by verifier: it is nearest to OSM F8, at 13–14 m and −30°, not on it. X-Plane "Gate F8" sits closer to OSM F10 (8.8 m) than to OSM F8 (11.6 m). The rename F10 → F8 rests on OSM alone and on an inferred, misplaced stand, so re-measure on the imagery first. "Our F8 = OSM F7" is solid: 1.1 m apart.]
   - Rename our F8(F7) → F7 and our F10 → F8.
   - Add **F9** and **F10**. F9 had 185 operations in two weeks (gate_truth.md).
 - **F17/F18, F21/F22** (M): OSM has separate F18 and F21. Split.
@@ -577,7 +577,7 @@ Findings:
    - These are for the owner of `js/`. I changed nothing.
 6. **Frame scale.** The app's planar length is 3.4 m shorter than the geodesic length for 10/28, and 0.6–0.7 m shorter for 1/19. The cause is the east–west scale in `js/geo.js` (§3).
    - The frame is used consistently: the SFO Museum geometry, the imagery survey and `RWY_ENDS` all use the same formula. So nothing is misaligned; the whole scene is 0.12 % narrow east–west.
-   - Optional fix: use the WGS-84 metres-per-degree values at the ARP (lat 110 989 m, lon 88 266 m), and re-export every world-coordinate file through lat/lon in one step.
+   - Optional fix: use the WGS-84 metres-per-degree values at the ARP (lat 110 989 m, lon 88 285 m [corrected by verifier: was 88 266]), and re-export every world-coordinate file through lat/lon in one step.
 
 ## 7. Licences and what they mean for us
 
@@ -628,7 +628,7 @@ What this means (*inferred; not legal advice, the owner decides*):
 - **Checking only** (what this report and `tools/xcheck` do): the report quotes a few OSM refs and offsets. It is a
   Produced Work and should carry "© OpenStreetMap contributors, ODbL" (below). No data is copied into `data/`.
 - **Copying OSM stand positions or refs into `data/sfo_stands.json`.** All 89 or more stands of one systematic kind count as a Substantial extract,
-  so the file becomes a Derivative Database. Because the app shows it (a public Produced Work), the file must be offered under
+  so the file becomes a Derivative Database. [corrected by verifier: the guideline does not say this for fewer than 100 Features. It says "The OpenStreetMap community regards the following as being not Substantial … provided that the extraction is one-off and not repeated over time for the same or a similar project. Less than 100 Features." The "systematic" sentence qualifies only the ">100 Features" exception ("More that [sic] 100 Features only if the extraction is non-systematic …"). A one-off copy of 89 stand positions (89 Features) would therefore be *insubstantial* by the guideline. It becomes Substantial when the copy reaches 100 or more Features: for example the stands plus the 133 jet bridges, or the 118 referenced lead-ins, or the stands we lack added in. It also becomes Substantial when the copy is repeated or refreshed over time ("we regard repeated small extractions as one big extraction"). Source: https://osmfoundation.org/wiki/Licence/Community_Guidelines/Substantial_-_Guideline (endorsed 2014-06-06), re-fetched 24 Sep 2026. Not legal advice; the owner decides.] Because the app shows it (a public Produced Work), the file must be offered under
   ODbL, with attribution in the app.
   - Mixing in our stands measured on **Google** imagery would put content derived from that imagery into the same Derivative Database. Google's terms were not reviewed here; CLAUDE.md already treats the imagery as licensed and reference only, and those terms may not allow relicensing under ODbL. That would conflict with ODbL §4.4 d. The horizontal-layers guideline makes the mix count as one Feature Type.
   - So the clean options are:
@@ -670,7 +670,7 @@ Obvious next checks, not done here:
 3. **Remote, cargo and maintenance stands.** SFO names (2-x, 6-x, 9-x, 12-x, 41-xx) cannot be tied to positions without ADS-B at the published stand. OSM has only `50-6`, `50-7` and `50-8` named.
 4. **Two-bridge stands.** Only the imagery can settle this (§4.7).
 5. **The 10L/10R pavement.** It is in all three references, but HANDOFF says it is not visible in our imagery. Check which screenshots cover the 10L/10R ends.
-6. **ADS-B sample.** It is 10 stands overnight. Re-run later for daytime coverage. Each row is a single aircraft; the NACp was 9–10.
+6. **ADS-B sample.** It is 10 stands overnight. Re-run later for daytime coverage. Each row is a single aircraft; the NACp was 9–10. [corrected by verifier: the samples are mostly NACp 9–10, but not all. At B16, 4 of 201 reports have NACp 0, which explains the 34.9 m spread. At B5, the 13 reports include NACp 8 and reports without NACp. The medians are robust: B16 recomputed from NACp ≥ 8 reports only is still 1.83 m from OSM B16.]
 7. **X-Plane codes.** Line types 10, 12, 24, 30, 60, 62 and 63 and jetway sizes 10, 11 and 12 are undocumented.
 8. **The OSM-derived-data decision (§7).** For the owner: option (a), all OSM under ODbL, or (b), own measurements only.
 9. **Nose-to-nose-gear distances per type** were not extracted from the manufacturers' airport-planning documents. The WED values in §2 are X-Plane's schematic ones.
@@ -694,3 +694,85 @@ python3 tools/xcheck/make_report.py    # refresh the generated tables in this fi
 Parameters to adjust for a new NASR cycle:
 - the file name in `compare_runways.py` / `run_all.sh`;
 - `MATCH_R`, `MATCH_H`, `TOL_CROSS`, `TOL_HDG` at the top of `compare_stands.py`.
+
+## Verification (adversarial check)
+
+This check was done on 24 Sep 2026, 09:40–10:10 UTC, by an independent verifier agent. Every cited source was fetched again where possible and the scripts were re-run in a scratch copy, so nothing in `refs/cache/xcheck` was overwritten. Nothing in `data/`, `js/` or `tools/` was changed.
+
+**Results in brief.**
+- The core data claims hold. These are:
+  - OSM counts and refs;
+  - the ADS-B vs OSM distances;
+  - the X-Plane pack, its counts and its GPL notice;
+  - the WED nose-wheel convention;
+  - the NASR runway ends, lights and PAPIs;
+  - the licence quotes;
+  - every generated table (bit-identical on re-run).
+- 7 statements were corrected inline, marked [corrected by verifier], and one note was added (the 40 vs 42 `inf` count). The most important is a licence inference: 89 stands are below the OSMF 100-Feature threshold. The others:
+  - the m/deg numbers;
+  - the ANT = 0.2·L conclusion;
+  - F10 "sits on" F8;
+  - the blanket +5.7 m stopgap;
+  - the OSM along-offset range;
+  - the NACp range.
+
+**How the checks were done.**
+- Scripts were re-run in a scratch copy:
+  - `compare_stands.py`: all 10 result keys and the stands table are identical;
+  - `compare_runways.py`: the result is identical.
+- These were computed independently, without the agent's code:
+  - OSM ways from the main OSM API (api.openstreetmap.org/api/0.6/way/{id}/full, 25 ways);
+  - ADS-B medians from the raw recording (`tools/live/recio.py`);
+  - a fresh flysfo snapshot;
+  - the Gateway API;
+  - the NASR zip (sha256 identical to the cache);
+  - the FAA diagram (sha256 identical to the cache);
+  - AirNav;
+  - the OSM wiki API;
+  - the licence pages.
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 1 | Two Overpass responses: 289 `parking_position` (287 ways + 2 nodes), 118 with `ref`, 133 `jet_bridge` (83 with ref). Database 08:41:02Z and 09:07:42Z, "same results" | **Confirmed** | Both cached responses parsed: identical element sets, 4,594 elements each. The OSM API returns the same version and identical geometry for every way checked (B5, B16, B18, B21, B23, B24, B25, B26, C9, C10, C11, G5, the 8 stopways and the tower). A fresh Overpass run failed: maps.mail.ru and overpass-api.de returned 504, and kumi.systems is stale (2026-05-06, 295 positions, i.e. 6 deleted since). |
+| 2 | (Agent summary only) "4,565 airfield and building features" | **Refuted** (not in report body) | The saved responses hold 4,594 elements (357 nodes, 4,198 ways, 39 relations); `overpass_ksfo_latest.meta.json` says `"elements": 4594`. |
+| 3 | OSM provenance: last edits 2019-10-16…2026-04-08. Necessarycoot72 edited 166 of the 171 unreferenced lead-ins, on 2022-09-20. 8 duplicate refs. Only non-gate refs are 50-6/7/8, none in the AODB remote list | **Confirmed** | Recount of `ksfo_osm_parsed.json`. Remote list in `gates_report.json`: 2-x, 6-x, 9-x, 12-x, 41-xx, G104, G105. |
+| 4 | OSM wiki quote ("Put a node where the nose wheel stops." … "the last node of the way should be where the nose wheel is parked."), rev. 2785188, 2024-12-05 | **Confirmed** | https://wiki.openstreetmap.org/w/api.php (Tag:aeroway=parking_position). Current revision is 2785188, 2024-12-05T00:12:06Z (Maro21); quoted text is verbatim. |
+| 5 | Gateway recommended pack 112022: uploaded 2026-09-07 by "Julian", "XSG-17643 / Gates renamed.", WorldEditor 2.7.2-r1 | **Confirmed** | https://gateway.x-plane.com/apiv1/airport/KSFO returns `recommendedSceneryId` 112022. https://gateway.x-plane.com/apiv1/scenery/112022 returns dateUploaded 2026-09-07T03:41:40Z, userName Julian, and that comment. The zip sha256 is identical to the cache. `apt.dat` line 2: "1200 Generated by WorldEditor 2.7.2-r1". |
+| 6 | apt.dat content: 136 ramp starts (117 gate, 19 tie_down; A11 B15 C76 D14 E17 F3; all airline); 126 jetways, absent from the bare KSFO.dat; 534/437 taxi nodes/edges (383 E, 6 D, 48 runway); 408 active-zone rows; 46 pavements; 2,392 line features; 326 signs; 6 PAPIs; 8 windsocks; 15 frequencies; 52 truck spots; tower at 220 ft | **Confirmed** | Counted independently with my own parser on the freshly downloaded pack. Line-segment codes are 20→3,030, 60→1,390, 24→1,370, 53→732, 57→173, 54→50, plus 30/12/63/10/62. Jetway size codes 10/11/12 occur 1+25+1 = 27 times. |
+| 7 | apt.dat 12.00 spec says only "Latitude of location in decimal degrees" and "Heading (true) of airplane positioned at this location". Last updated 22 Dec 2023. Jetway sizes 0–3 only. Line types 10, 12, 24, 30, 60, 62, 63 not in the table | **Confirmed** | https://developer.x-plane.com/article/airport-data-apt-dat-12-00-file-format-specification/ was re-fetched: "Last updated December 22, 2023", with `dateModified` 2023-12-22. The line table lists 0–9, 51–59, 20–22 and 101–108. The jetway size code is "0 = tunnel length 11–23m … 3 = 20–47m". |
+| 8 | WED `WED_RampPosition::GetTips` reads the location into `nosewheel_loc`, with nose_offset A 1.0, B 2.7, C 4.7, D 9.5, E 8.2, F 8.8. For `misc` the offset is fuse_len/2. Lines 154–184 at a3725c8 | **Confirmed** | https://raw.githubusercontent.com/X-Plane/xptools/a3725c8f5ed6d9681573496ab0153e550d54cd09/src/WEDEntities/WED_RampPosition.cpp, lines 154–184 verbatim. |
+| 9 | Gateway packs are GPL v2 or later. The README text is written by `WED_GatewayExport.cpp` lines 570–574, and COPYING is GPL v2 | **Confirmed** | The pack README text matches the quote verbatim, and COPYING is "GNU GENERAL PUBLIC LICENSE Version 2, June 1991". Same commit, `src/WEDImportExport/WED_GatewayExport.cpp` lines 570–574. |
+| 10 | Gateway API "no metering … be considerate" quote. There is no Gateway ToS: /terms and /about return 404, and the About article has no licence text | **Confirmed** | https://gateway.x-plane.com/api quote is verbatim. It continues: "(For instance, if you start making frequent requests to get all 34,000 airports in the database, we'll have to cut you off!)". /terms and /about return 404. The sitemap has no terms link. https://developer.x-plane.com/article/airport-scenery-gateway/ and /register contain no GPL or licence text. The cached "x-plane-scenery-gateway-terms-of-service" page is a 404 too. |
+| 11 | NASR (APT CSV, effective 2026/09/03) end coordinates, elevations, displacements, "3RD PARTY SURVEY" 2014/10/22. `RWY_ENDS` = NASR to 0.0 m | **Confirmed** | Re-downloaded https://nfdc.faa.gov/webContent/28DaySub/extra/03_Sep_2026_APT_CSV.zip (sha256 d5e4c999…, identical). Geodesic geo.js − NASR is ≤ 0.001 m at all 8 ends. Elevations and `DISPLACED_THR_LEN` are identical, and TORA/TODA/ASDA/LDA match the threshold table. |
+| 12 | NASR lighting: approach lights only 28R ALSF2, 28L MALSR, 19L MALSF. PAPI-4L at 10L, 10R, 19L (3.00), 19R (3.15), 28R (3.00), 28L (2.85); none at 1L/1R. TDZ only at 28R and 19L | **Confirmed** | `APT_RWY_END.csv` fields APCH_LGT_SYSTEM_CODE, VGSI_CODE, VISUAL_GLIDE_PATH_ANGLE and TDZ_LGT_AVBL_FLAG. |
+| 13 | The app draws 8 approach-light systems (5 nonexistent), PAPIs only at 28L/28R with identical bands, and TDZ bars at both 28 ends | **Confirmed** | `js/geo.js` `APPROACH_LIGHTS` has 8 entries. `js/anim/lights.js` `buildAirfieldLights` loops over all of them and is used by the live app through `js/live/lights.js` → `app.js`. PAPI and TDZ are built only for `name.startsWith('28')`. |
+| 14 | FAA diagram AL-375, valid 03 SEP–01 OCT 2026: chevron pads beyond 10L/10R and short ones beyond 28L/28R; EMAS at the 1/19 ends; "TDZL/RCLS Rwys 19L and 28R"; frequency box | **Confirmed** | https://aeronav.faa.gov/d-tpp/2609/00375ad.pdf is byte-identical to the cache. Text: "AL-375 (FAA)", "SW-2, 03 SEP 2026 to 01 OCT 2026", "TDZL/RCLS Rwys 19L and 28R", "118.2 CLNC DEL 121.8 GND CON 120.5 269.1 SAN FRANCISCO TOWER 113.7 115.8 118.85 D-ATIS". Crops inspected. Pad lengths (≈260/240/90 m) were not re-measured. |
+| 15 | X-Plane runway ends 1–10 m off (10L −4.8, 19R −9.6, 19L −9.0, 1L +5.0, 1R +5.2 …). Disp 28L/28R 90 m, 1L 195 m, 1R 170 m. Blast pads 10L/10R 250 m, 28L/28R 100 m. Approach codes 2/8/9 at 28R/28L/19L. All PAPIs 3.00°; 10R named "VASI" with code 2 | **Confirmed** | Computed independently from the pack's row 100/21 with pyproj; all offsets match to 0.1 m. Spec: 2 = ALSF-II, 8 = MALSR, 9 = MALSF; row 21 code 2 = PAPI-4L. |
+| 16 | OSM stopway ways (ids, lengths 269.8/231.4/139.2/134.6/132.2/123.1/94.8/91.4 m, tags). Stale runway `length` tags 3231 and 2286 | **Confirmed** | OSM API geodesic lengths agree to ≤ 0.2 m. Runway ways 23365560 and 1333615088 carry `length=3231`; 586154078 and 1333615087 carry `length=2286`. |
+| 17 | `END_ZONES`: 108 m pads at 28L/28R, nothing at 10L/10R; HANDOFF says "nothing is visible in the imagery" | **Confirmed** | `js/live/airport.js` lines 183–187 (RWY order from `js/world/airfield.js`); `docs/HANDOFF.md` line 88. |
+| 18 | Frame: 111 320·cos φ = 88 157 against WGS-84 88 266 m/deg, 0.12 % short | **Refuted (numbers); ratio confirmed** — corrected in §3 and §6 | At φ = 37.6188056°, 111 320·cos φ = 88 175.4 m/deg and WGS-84 (π/180)·N·cos φ = 88 285.2 m/deg. The ratio is −0.124 %. The 3.4 m 10/28 shortfall (length table) is unaffected. |
+| 19 | ADS-B evidence on 10 SFO-published stands: OSM same-ref position 0.4–2.2 m from the aircraft at 8, and 5.0/6.0 m at C11/G5 (first node of backwards ways). Cross ≤ 1.9 m on the 7 rows with heading. X-Plane right only at G5. Ours: G5 OK, B26 3.7 m, the others off | **Confirmed** | Independent medians from the raw adsb.fi/adsb.lol files, gs < 1 kt, on ground, T−300…T. Geodesic distances to OSM-API geometry: B16 1.83, B18 1.76, B21 0.79, B23 2.23, B24 0.30, B26 1.76, B5 0.94, C10 1.20, C11 4.96 (first node), G5 6.01 (first node). In our stand frames: B16 −15.8 / +16.6°, B18 +5.0, B21 +6.0, B23 +5.1, B24→B25 +26.1, B26 +3.7, B5 −0.5 / −25.6°, C10 −5.6 / −22.8°, C11 −34.1 / −48.5°, G5 +2.2 / −0.3° (all within 0.1 m of the report). |
+| 20 | SFO stand windows: AAL177 B16, JBU515 B21, AAL2856 B23, AAL2506 B24, JBU413 B5, ACA738 C10, DAL2635 C11, UAL189 G5. B18 and B26 are "occupancy" rows | **Confirmed** (6 re-fetched, 2 from cache) | A fresh https://www.flysfo.com/flysfo/api/flight-status fetch (09:58Z) confirms the B16, B21, B5, C10, C11 and G5 windows covering each T. It also confirms the B18 (JBU277/JBU116) and B26 (AAL2522/AAL2116) allocations. AAL2856/B23 and AAL2506/B24 have aged out of the live feed and were confirmed only in the cached 07:32Z/08:53Z snapshots. Caveat: B18 and B26 rest on our own matcher's stand choice (the transponder sent no callsign), so they are weaker evidence. |
+| 21 | NACp 9–10 on all ADS-B rows | **Refuted (minor)** — corrected in §9 | B16: 4 of 201 reports have NACp 0 (hence the 34.9 m spread). B5 includes NACp 8 and missing values. The medians are unaffected (B16 with NACp ≥ 8 only: 1.83 m). |
+| 22 | Our 43 `obs` stands: median cross +0.3 m, median abs 1.5 m. 40 `inf`: +5.7, abs 6.3, 25 > 3 m right | **Confirmed with a note** — note added in §1 | `obs` values reproduce exactly. For `inf`, 42 stands have an OSM best match (median +5.6, abs 6.45, 25 > 3 m). The quoted 40 / +5.7 / 6.3 reproduce only with an undocumented filter, \|cross\| ≤ 20 and \|Δhdg\| ≤ 25°. |
+| 23 | S1 stopgap: shift each `inf` stand +5.7 m right | **Partly refuted** — caveat added | It would make 16 of the 42 matched `inf` stands worse. Within 3 m of OSM goes only from 11 to 14; median abs cross 6.45 → 4.35 m. |
+| 24 | S3: "no reason to change ANT = 0.2·L" | **Refuted** — corrected in §5.1 and §4.3 | The observed antenna offsets are 4.9 / 1.8 / 9.8 m (B23 A321, B26 A321, G5 B77W). `ANT`·L is 8.9 / 8.9 / 14.8 m (`js/live/traffic.js` line 19; `js/aircraft/types.js` L). All three are shorter by 4.0–7.1 m, so either ANT is too large or our along positions are off. |
+| 25 | OSM stop nodes "only 1.6–2.9 m behind our nose tips" | **Imprecise** — corrected in §4.3 | Per-class obs medians run +1.4 … −2.9 m; the range quoted is two medians (all/obs, EL/obs). |
+| 26 | Verdict counts (20 / 18 / 15 / 10 / 9 / 7 / 5 / 3 / 1 / 1). 79 of 89 stands have a same-name OSM lead-in in radius. Bridges: 37 all-agree, 20 OSM+XP-vs-us; XP jetway base median 9.4 m, 18 of 117 ≤ 5 m. 64 backwards ways | **Confirmed** | Re-run is identical. Recounted from `stands_result.json`: name verdict "same as OSM" = 79, and any in-radius candidate with our own name = 79. Backwards ways follow the script's heuristic; the C11 and G5 cases are consistent with the ADS-B positions. |
+| 27 | Stand classes: B5 and B16 are class B and refuse the A321 SFO parks there | **Confirmed** | `data/sfo_stands.json`: B5 and B16 are `cls: B`. `CLASS_MAX.B.span` is 28.5 m, against A321 ≈ 35.8 m. gatecheck: "class-rejected; geometry matches B5". |
+| 28 | C11 misnamed: our "C11" sits on OSM C9 (1.4 m); SFO's C11 is at the pier tip | **Confirmed** (the SFO C9 part is inferred) | ADS-B at SFO C11: 34.1 m across our C11 and 4.96 m from OSM C11's first node. OSM C9 is 1.4 m from our C11. That SFO calls that spot "C9" is inferred from OSM, which matched SFO on 10 of 10 checks; no aircraft at SFO C9 was observed. |
+| 29 | F10 "sits on OSM and X-Plane's F8" | **Overstated** — corrected in §4.5 and §5.2 | Distances were computed from the nose-wheel estimate. OSM F8 is 14.0 m from our F10 and OSM F10 is 22.8 m. X-Plane "Gate F8" is 8.8 m from OSM F10 and 11.6 m from OSM F8. Our F8 ↔ OSM F7 is 1.1 m (solid). |
+| 30 | X-Plane names shifted on whole faces (A-west, A-east, D rotunda, C, B-west) | **Confirmed**, independently of our stands | X-Plane names compared directly with the nearest OSM ref (≤ 15 m): 25 of 68 disagree. Examples: A9 A10→A5, A12→A9, A15→A10, A11→A8, A13 A14→A11; C3→C5, C5→C7, C7→C9, C9→C11, C11→C10; D11→D10 … D18→D16; B24→B25, B25→B26, B26 B27→B20; X-Plane "B19 B20" is nearest OSM B16 (16.6 m). Not in the report: E2→E3, E3→E6, E6→E8, and G11 G12→G8, G13 G14→G10. The G and E faces are shifted as well. |
+| 31 | X-Plane keeps F1, F2, F3, F3A, F4, E1 (not on SFO maps) and C2, D17, D18 (on the maps, no ops) | **Confirmed** | X-Plane has ramp starts named these. The SFO map list (A1–A15, B1–B27, C1–C11, D1–D12, D14–D18, E2–E13, F5–F22, G1–G14) and the per-area DataSF counts are from `refs/cache/gate_truth/gates_report.json`, already verified in gate_truth.md. |
+| 32 | Of the contact gates SFO uses, OSM lacks only A4, B8, G12, G14 | **Confirmed** | Set difference of DataSF ∪ AODB (suffix removed) against the OSM refs gives A4, B8, G12, G14, plus the remote G104/G105. |
+| 33 | "Gates renamed" pack names come from an older numbering | **Unverifiable** (inference) | Nothing in the pack or the API says so. The shift itself is confirmed (#30). |
+| 34 | D11–D15 fix "also explains/shortens the 54 m D10 bridge" | **Unverifiable** (inference) | HANDOFF §3 does flag D10 at 54 m. D10 has no OSM counterpart within 25 m, and X-Plane "D11" is +15.1 m along. Plausible, but not tested. |
+| 35 | OSM © page, ODbL §§ definitions, 4.3, 4.4 a/c/d and 4.6, Overpass notice | **Confirmed** | https://www.openstreetmap.org/copyright and https://opendatacommons.org/licenses/odbl/1-0/ re-fetched; all quoted sentences found verbatim (4.6 starts with capitals "The entire…"/"A file…"). The Overpass `osm3s.copyright` string is verbatim. |
+| 36 | OSMF Substantial guideline quotes; Horizontal Map Layers guideline quotes, endorsed 2014-06-06 | **Quotes confirmed** | https://osmfoundation.org/wiki/License/Community_Guidelines/Substantial_-_Guideline and https://osmfoundation.org/wiki/License/Community_Guidelines/Horizontal_Map_Layers_-_Guideline re-fetched; both say "Endorsed by the OSMF board 2014-06-06". |
+| 37 | Inference: "All 89 or more stands of one systematic kind count as a Substantial extract" → the file becomes a Derivative Database | **Refuted** — corrected in §1 and §7 | The guideline regards "Less than 100 Features" as not Substantial when extracted one-off. The "systematic" sentence applies only to the >100-Feature exception. 89 stands, copied once, fall under that threshold. Copying ≥ 100 Features (stands + bridges, all 118 refs, …) or refreshing repeatedly would be Substantial. |
+| 38 | DataSF is PDDL | **Confirmed** | https://data.sf.gov/api/views/chfu-j7tc.json gives `licenseId` PDDL ("Open Data Commons Public Domain Dedication and License"). |
+| 39 | Frequencies (X-Plane): CLNC 118.2, GND 121.8 and 128.65, TWR 120.5, ATIS 113.7/115.8/118.85. The diagram lists only 121.8 for ground | **Confirmed as stated; verifier note** | Verified in the pack and on the diagram. However, AirNav ("FAA information effective 03 September 2026", https://www.airnav.com/airport/KSFO) lists "SAN FRANCISCO GROUND: 121.8 124.25". X-Plane's 128.65 GND is corroborated by neither FAA-derived source, so do not use X-Plane frequencies for the ATC toggle. |
+| 40 | OSM tower `height=67.36`, `min_height=60` | **Confirmed** | OSM API way 554547693 v3. |
+| 41 | The overpass-api.de instance timed out; another instance was 2 months stale | **Unverifiable** (consistent) | It could not be reproduced at the agent's time. In this check overpass-api.de and maps.mail.ru gave 504/reset, private.coffee gave 504, and kumi.systems returned data dated 2026-05-06. |
+
+Verifier's scratch outputs are in the session scratchpad and are not part of the repo.

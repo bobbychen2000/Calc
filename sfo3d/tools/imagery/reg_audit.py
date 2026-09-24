@@ -43,7 +43,7 @@ def st_dirs():
 
 def faa_points(shift):
     P = {}
-    ends = {k: np.array(world_geojs(*v), float) for k, v in RWY_ENDS.items()}
+    ends = {k: np.array(world_new(*v), float) for k, v in RWY_ENDS.items()}
     other = {a: b for p in RWY_PAIRS for a, b in (p, p[::-1])}
     for k, w in ends.items():
         P[f'RWY {k} end'] = dict(faa=w.tolist(), kind='runway end (threshold bar / EMAS edge)')
@@ -246,7 +246,7 @@ def main():
                            max=float(mag.max()),
                            fit=dict(a=av.tolist(), scale_ppm=k * 1e6, rot_deg=math.degrees(t), n_inliers=int(inl.sum()),
                                     rms_after=float(np.sqrt((e[inl] ** 2).mean())), p90_after=float(np.percentile(e[inl], 90))))
-            corr[name] = dict(**corrected_sim(sim, av, k, t, wc), note=f'NAIP {a.year}-corrected (reg_audit.py): '
+            corr[name] = dict(**corrected_sim(sim.as_world_sim(wc), av, k, t, wc), frame=GF.FRAME_ID, note=f'NAIP {a.year}-corrected (reg_audit.py): '
                               f'translation {av.round(2).tolist()} m at view centre, scale {k * 1e6:+.0f} ppm, rotation {math.degrees(t):+.3f} deg')
             print(f"{name} {1 / sim.s:.2f} m/px: cps {res_img['n_cp_ok']}/{len(cp_rows)}, dense {len(dense)}; residual median "
                   f"({res_img['median'][0]:+.2f},{res_img['median'][1]:+.2f}) m, |r| median {res_img['median_abs']:.2f} p90 {res_img['p90']:.2f}; "

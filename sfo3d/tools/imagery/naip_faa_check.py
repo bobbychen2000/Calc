@@ -40,7 +40,7 @@ def peak(t, p, t0, win=3.0):
 
 
 def runway_frame(a, b):
-    A = np.array(world_geojs(*RWY_ENDS[a]), float); B = np.array(world_geojs(*RWY_ENDS[b]), float)
+    A = np.array(world_new(*RWY_ENDS[a]), float); B = np.array(world_new(*RWY_ENDS[b]), float)
     L = float(np.linalg.norm(B - A)); v = (B - A) / L; n = np.array([-v[1], v[0]])   # n = right of a->b
     return A, B, L, v, n
 

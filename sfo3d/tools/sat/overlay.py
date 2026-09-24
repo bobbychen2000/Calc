@@ -5,7 +5,7 @@ from PIL import Image
 U = open(SP + 'uniq.txt').read().split()
 def overlay(name, sim=None, out=None, scale=0.5, crop=None):
     reg = json.load(open(SP + 'reg.json'))
-    r = reg[name]; sim = sim or Sim(r['s'], r['th'], r['tx'], r['ty'])
+    sim = sim or sim_from_reg(reg[name])
     f = [u for u in U if name in u][0]
     bg = Image.open(f).convert('RGB')
     im = render(sim, bg.size[0], bg.size[1], bg=bg, labels=True, width=3)

@@ -1,9 +1,20 @@
-"""Shared helpers for georeferencing the user's satellite screenshots against the SFO Museum geometry."""
-import json, math, os
+"""Shared helpers for georeferencing the user's satellite screenshots against the SFO Museum geometry.
+
+Frames (tools/geo_frame.py): everything in world metres is in the current world frame ('ltp-nad83-2011', = js/geo.js)
+unless it says otherwise. The screenshot registrations in work/reg.json and the hand measurements in stand_defs.py and
+work/*.json were made in the LEGACY frame 'equirect-v1'; registrations carry no 'frame' key, so sim_from_reg()
+returns a Sim that converts world -> legacy before applying the similarity (exact), and stand_defs.py converts its
+stands on import. New registrations are written with frame = geo_frame.FRAME_ID.
+The screenshots are reference only: no committed coordinates may be derived from them any more (owner, 24 Sep 2026).
+"""
+import json, math, os, sys
 import numpy as np
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 D = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
 _HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(_HERE))
+import geo_frame as GF
+LEGACY_FRAME = 'equirect-v1'
 # the user's Google Maps satellite screenshots (1290x2796 iPhone PNGs; reference only - never used as textures)
 UP = os.environ.get('SFO_SCREENS', os.path.join(_HERE, 'screens')) + os.sep
 # working directory: registrations (reg.json), detections, debug renders
@@ -56,9 +67,12 @@ def sample_edges(rings, step=1.0):
     return np.array(pts)
 
 class Sim:
-    """world (x east, z south) -> image px: p = c + s * R(theta) * [x, z]  (theta = screen rotation)."""
-    def __init__(self, s, th_deg, tx, ty):
+    """world (x east, z south) -> image px: p = c + s * R(theta) * [x', z']  (theta = screen rotation), where
+    (x', z') = (x, z) for a registration made in the current world frame, and = geo_frame.world_to_legacy(x, z) for
+    one made in the legacy frame (frame=LEGACY_FRAME; all of reg.json as of 24 Sep 2026)."""
+    def __init__(self, s, th_deg, tx, ty, frame=None):
         self.s, self.th, self.tx, self.ty = s, th_deg, tx, ty
+        self.frame = frame or GF.FRAME_ID
     def M(self):
         t = math.radians(self.th); c, s = math.cos(t), math.sin(t)
         # north_cw = th: world north (0,-1) maps to screen direction (sin th, -cos th)
@@ -66,6 +80,18 @@ class Sim:
         A = self.s * np.array([[c, -s], [s, c]])
         return A, np.array([self.tx, self.ty])
     def fwd(self, P):
+        P = np.asarray(P, float)
+        if self.frame == LEGACY_FRAME:
+            X, Z = GF.world_to_legacy_np(P[..., 0], P[..., 1]); P = np.stack([X, Z], -1)
         A, t = self.M(); return P @ A.T + t
     def inv(self, Q):
-        A, t = self.M(); return (Q - t) @ np.linalg.inv(A).T
+        A, t = self.M(); P = (np.asarray(Q, float) - t) @ np.linalg.inv(A).T
+        if self.frame == LEGACY_FRAME:
+            X, Z = GF.legacy_to_world_np(P[..., 0], P[..., 1]); P = np.stack([X, Z], -1)
+        return P
+    def to_reg(self):
+        return {'s': self.s, 'th': self.th, 'tx': self.tx, 'ty': self.ty, 'frame': self.frame}
+
+def sim_from_reg(r):
+    """Sim for a reg.json entry; entries without 'frame' are legacy-frame registrations."""
+    return Sim(r['s'], r['th'], r['tx'], r['ty'], frame=r.get('frame', LEGACY_FRAME))

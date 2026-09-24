@@ -1,15 +1,59 @@
-// Geographic reference for KSFO.
-// World frame: x = east (m), y = up (m), z = south (m). Origin = airport reference point.
+// Geographic reference for KSFO. Python twin: tools/geo_frame.py (keep identical; tools/test_geo_frame.py checks
+// 50 points to 1 mm, both directions, plus the WGS 84 functions).
+//
+// World frame 'ltp-nad83-2011' (since 24 Sep 2026): x = east (m), y = up (m), z = south (m), origin = ARP.
+// - Datum NAD83(2011): the datum of the FAA NASR coordinates ("All US coordinate information provided currently
+//   references NAD 83", NASR CSV_README, cycle 2026-09-03), of USDA NAIP (EPSG:26910) and of the SFO Museum geometry.
+// - Projection: exact local tangent plane (ENU) on the GRS80 ellipsoid at the ARP, at ellipsoidal height 0
+//   (lat/lon -> ECEF -> east/north at the ARP). Flat world: y is height above the ground point, so the horizontal
+//   position never depends on h. Distances equal geodesic ones to < 0.1 mm within 5 km (0.5 m at 50 km).
+//   Replaces the spherical equirectangular formula (111320*cos(lat0) m/deg lon), which was 0.124 % short east-west
+//   (docs/research/imagery.md s.4). Data made in that legacy frame were migrated by tools/geo_frame.py legacy_to_world.
+// - ARP: FAA NASR APT_BASE (cycle 2026-09-03) 37-37-07.7000N 122-22-31.5000W, rounded to 1e-7 deg (< 0.5 mm).
+// - WGS 84 inputs (ADS-B, OSM, GNSS) go through wgs84ToWorld: NAD83(2011) -> WGS 84 (G2296)/ITRF2020 at SFO, epoch
+//   2026.73, moves a fixed ground point by dE -1.568 m, dN +0.159 m (pyproj 3.7.2 / PROJ 9.5.1, EPSG "ITRF2020 to
+//   NAD83(2011) (1)" time-dependent Helmert; rate -1.4 cm/yr E, -1.3 cm/yr N; < 1.1 cm spatial variation within
+//   50 km). Intraplate Bay Area motion since 2010.0 is not modelled [unverified, est. 0.2-0.4 m].
 export const ARP = { lat: 37.6188056, lon: -122.3754167 };
-const M_PER_DEG_LAT = 110990.0;
-const M_PER_DEG_LON = 111320.0 * Math.cos(ARP.lat * Math.PI / 180);
-
-export function llToEN(lat, lon) { return [(lon - ARP.lon) * M_PER_DEG_LON, (lat - ARP.lat) * M_PER_DEG_LAT]; }
-export function enToLL(e, n) { return [ARP.lat + n / M_PER_DEG_LAT, ARP.lon + e / M_PER_DEG_LON]; }
+export const FRAME_ID = 'ltp-nad83-2011';
+const GRS80_A = 6378137.0, GRS80_F = 1 / 298.257222101, E2 = GRS80_F * (2 - GRS80_F), D2R = Math.PI / 180;
+function ecef(lat, lon) {
+  const sl = Math.sin(lat * D2R), cl = Math.cos(lat * D2R);
+  const N = GRS80_A / Math.sqrt(1 - E2 * sl * sl);
+  return [N * cl * Math.cos(lon * D2R), N * cl * Math.sin(lon * D2R), N * (1 - E2) * sl];
+}
+const O = ecef(ARP.lat, ARP.lon);
+const S0 = Math.sin(ARP.lat * D2R), C0 = Math.cos(ARP.lat * D2R), SL = Math.sin(ARP.lon * D2R), CL = Math.cos(ARP.lon * D2R);
+const W0 = Math.sqrt(1 - E2 * S0 * S0);
+export const M_PER_DEG_LAT = GRS80_A * (1 - E2) / (W0 * W0 * W0) * D2R; // 110989.28 m (meridian radius at the ARP)
+export const M_PER_DEG_LON = GRS80_A / W0 * C0 * D2R;                    // 88285.15 m
+// NAD83(2011) lat/lon (deg) -> [east, north] m
+export function llToEN(lat, lon) {
+  const p = ecef(lat, lon), dx = p[0] - O[0], dy = p[1] - O[1], dz = p[2] - O[2];
+  return [-SL * dx + CL * dy, -S0 * CL * dx - S0 * SL * dy + C0 * dz];
+}
+// inverse (point on the ellipsoid): fixed-Jacobian Newton iteration, converges to < 1e-9 m
+export function enToLL(e, n) {
+  let lat = ARP.lat + n / M_PER_DEG_LAT, lon = ARP.lon + e / M_PER_DEG_LON;
+  for (let i = 0; i < 12; i++) {
+    const q = llToEN(lat, lon), de = e - q[0], dn = n - q[1];
+    lat += dn / M_PER_DEG_LAT; lon += de / M_PER_DEG_LON;
+    if (Math.abs(de) + Math.abs(dn) < 1e-10) break;
+  }
+  return [lat, lon];
+}
+// NAD83(2011) lat/lon (FAA, NAIP, SFO Museum) -> world [x, y=h, z]
 export function llToWorld(lat, lon, h = 0) { const [e, n] = llToEN(lat, lon); return [e, h, -n]; }
+export function worldToLL(x, z) { return enToLL(x, -z); }
+// WGS 84 lat/lon (ADS-B, OSM, GNSS; current realisation) <-> world. WGS84_MINUS_NAD83 = displacement of a fixed
+// ground point from its NAD83(2011) to its WGS 84 coordinates, in metres east/north, at epoch DATUM.epoch.
+export const DATUM = { world: 'NAD83(2011)', wgs84: 'WGS 84 (G2296) = ITRF2020', epoch: 2026.73, dE: -1.568, dN: 0.159, rateE: -0.0136, rateN: -0.0132 };
+export function wgs84ToWorld(lat, lon, h = 0) { const [e, n] = llToEN(lat, lon); return [e - DATUM.dE, h, -(n - DATUM.dN)]; }
+export function worldToWgs84(x, z) { return enToLL(x + DATUM.dE, -z + DATUM.dN); }
 const dms = (d, m) => d + m / 60;
 
-// FAA / AirNav surveyed runway ends (degrees-minutes), elevations in ft
+// FAA NASR (APT_RWY_END.csv, cycle 2026-09-03) = AirNav runway ends, degrees-decimal-minutes, NAD83; elevations ft;
+// displaced thresholds ft (DISPLACED_THR_LEN). Verified in docs/research/stands_xcheck.md s.6.
 export const RWY_ENDS = {
   '10L': { lat: dms(37, 37.724323), lon: -dms(122, 23.603512), elev: 5.5, disp: 0 },
   '28R': { lat: dms(37, 36.812017), lon: -dms(122, 21.428467), elev: 13.0, disp: 300 },

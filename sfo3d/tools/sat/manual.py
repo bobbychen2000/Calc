@@ -16,5 +16,5 @@ def fit_points(W, I):
     return Sim(s, th, ic[0] - q[0], ic[1] - q[1])
 def save(name, sim, cost=None, note=''):
     reg = json.load(open(SP + 'reg.json')) if os.path.exists(SP + 'reg.json') else {}
-    reg[name] = {'s': sim.s, 'th': sim.th, 'tx': sim.tx, 'ty': sim.ty, 'cost': cost, 'note': note}
+    reg[name] = dict(sim.to_reg(), cost=cost, note=note)
     json.dump(reg, open(SP + 'reg.json', 'w'), indent=1)

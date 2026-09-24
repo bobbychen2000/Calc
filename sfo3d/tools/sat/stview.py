@@ -3,26 +3,16 @@ import math, sys, json
 import numpy as np, cv2
 from common import *
 from rectify import sim_of, U as UP_LIST
-# airport grid frame (same as js/geo.js): V = unit (e,n) along hdg 10->28, U = V rotated -90deg
-H28 = None
-def _frame():
-    import math
-    FT = 0.3048
-    def dms(d, m): return d + m / 60
-    lat0, lon0 = 37.6188056, -122.3754167
-    mlat = 110990.0; mlon = 111320.0 * math.cos(math.radians(lat0))
-    def en(lat, lon): return ((lon - lon0) * mlon, (lat - lat0) * mlat)
-    a = en(dms(37, 37.724323), -dms(122, 23.603512)); b = en(dms(37, 36.812017), -dms(122, 21.428467))
-    h = math.atan2(b[0] - a[0], b[1] - a[1])
-    V = (math.sin(h), math.cos(h)); Uv = (math.sin(h - math.pi / 2), math.cos(h - math.pi / 2))
-    return V, Uv, math.degrees(h)
-V, UV, HDGV = _frame()
+# airport grid frame (same as js/geo.js, from tools/geo_frame.py): V = unit (e,n) along hdg 10L->28R, U = V rotated
+# -90 deg. Current world frame; the legacy (equirect-v1) grid is available as legacy_w2st / legacy_st2w.
+V, UV, HDGV = GF.V, GF.U, GF.HDG_S
 def w2st(x, z):
     e, n = x, -z
     return (e * V[0] + n * V[1], e * UV[0] + n * UV[1])
 def st2w(s, t):
     e = s * V[0] + t * UV[0]; n = s * V[1] + t * UV[1]
     return (e, -n)
+legacy_w2st, legacy_st2w = GF.legacy_world_to_legacy_st, GF.legacy_st_to_legacy_world
 def st_view(name, s0, t0, s1, t1, res=0.25, bottom=2200):
     img = cv2.imread([u for u in UP_LIST if name in u][0])
     W, H = int((s1 - s0) / res), int((t1 - t0) / res)

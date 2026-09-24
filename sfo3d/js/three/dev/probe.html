@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>three r186 probe</title>
+<style>html,body{margin:0;height:100%;background:#000}canvas{display:block;width:100%;height:100%}</style></head>
+<body>
+<script type="module">
+// Phase-0 probe (docs/research/engine.md §8.2): which backend does WebGPURenderer pick here, and do TSL materials,
+// CSMShadowNode, GTAO, TRAA and AgX run on it? Results go to window.__probe.
+const THREE = await import(new URLSearchParams(location.search).get('debug') ? '../../../vendor/three/three.debug.js' : '../../../vendor/three/three.module.js');
+const { Fn, vec3, float, positionWorld, sin, pass, mrt, output, velocity, normalView, packNormalToRGB, unpackRGBToNormal, sample, screenUV, builtinAOContext } = THREE.TSL;
+const out = { gpu: !!navigator.gpu };
+try { if (navigator.gpu) { const a = await navigator.gpu.requestAdapter(); out.adapter = a ? (a.info ? a.info.vendor + ' ' + a.info.architecture + ' ' + a.info.description : 'yes') : null; } } catch (e) { out.adapterErr = String(e); }
+const force = new URLSearchParams(location.search).get('webgl') === '1';
+const renderer = new THREE.WebGPURenderer({ antialias: false, forceWebGL: force });
+renderer.setSize(480, 270); renderer.setPixelRatio(1); document.body.appendChild(renderer.domElement);
+renderer.shadowMap.enabled = true; renderer.toneMapping = THREE.AgXToneMapping;
+await renderer.init();
+out.backend = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl2';
+if (!renderer.backend.isWebGPUBackend) { const gl = renderer.backend.gl; out.clipControl = !!gl.getExtension('EXT_clip_control'); out.renderer = gl.getParameter(gl.getExtension('WEBGL_debug_renderer_info') ? gl.getExtension('WEBGL_debug_renderer_info').UNMASKED_RENDERER_WEBGL : gl.RENDERER); }
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x8fb3d9);
+const cam = new THREE.PerspectiveCamera(50, 480 / 270, 0.5, 5000); cam.position.set(30, 18, 40); cam.lookAt(0, 0, 0);
+const sun = new THREE.DirectionalLight(0xffffff, 3); sun.position.set(40, 60, 20); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+const QS = new URLSearchParams(location.search); let csm = null; if (!QS.get('nocsm')) { csm = new THREE.CSMShadowNode(sun, { cascades: 3, maxFar: 400, mode: 'practical' }); sun.shadow.shadowNode = csm; } scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xbcd4ff, 0x554433, 1.0));
+const gm = new THREE.MeshStandardNodeMaterial({ roughness: 0.9 });
+if (!QS.get('nocol')) gm.colorNode = Fn(() => { const p = positionWorld; const c = sin(p.x.mul(0.5)).mul(sin(p.z.mul(0.5))).mul(0.5).add(0.5); return vec3(0.3, 0.32, 0.3).mul(c.mul(0.4).add(0.6)); })();
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), gm); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+for (let i = 0; i < 12; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(4, 3 + i, 4), new THREE.MeshPhysicalNodeMaterial({ color: 0xdddddd, roughness: 0.3, clearcoat: 1 })); b.position.set((i % 4) * 9 - 13, (3 + i) / 2, Math.floor(i / 4) * 9 - 9); b.castShadow = b.receiveShadow = true; scene.add(b); }
+
+const mode = new URLSearchParams(location.search).get('mode') || 'full'; out.mode = mode;
+const pipe = new THREE.RenderPipeline(renderer);
+if (mode === 'plain') { pipe.render = () => renderer.render(scene, cam); }
+else if (mode === 'pass') { pipe.outputNode = pass(scene, cam); }
+else if (mode === 'traa') { const sp = pass(scene, cam); sp.setMRT(mrt({ output, velocity })); pipe.outputNode = THREE.traa(sp.getTextureNode('output'), sp.getTextureNode('depth'), sp.getTextureNode('velocity'), cam); }
+else {
+  const pre = pass(scene, cam); pre.transparent = false; pre.setMRT(mrt({ output: packNormalToRGB(normalView), velocity }));
+  const preN = sample((uv) => unpackRGBToNormal(pre.getTextureNode().sample(uv)));
+  const preD = pre.getTextureNode('depth'), preV = pre.getTextureNode('velocity');
+  const aoN = THREE.ao(preD, preN, cam); aoN.resolutionScale = 0.5;
+  const sp = pass(scene, cam);
+  if (mode === 'aomul') { pipe.outputNode = sp.mul(aoN.getTextureNode().sample(screenUV).r); }
+  else { sp.contextNode = builtinAOContext(aoN.getTextureNode().sample(screenUV).r); const tr = THREE.traa(sp, preD, preV, cam); tr.useSubpixelCorrection = false; pipe.outputNode = mode === 'ao' ? sp : tr; }
+}
+const times = []; const NF = +(new URLSearchParams(location.search).get('frames') || 6);
+await new Promise((res) => { let f = 0, tp = performance.now(); renderer.setAnimationLoop(() => { pipe.render(); const t = performance.now(); times.push(Math.round(t - tp)); tp = t; if (++f >= NF) { renderer.setAnimationLoop(null); res(); } }); });
+out.frameMs = times; out.info = { calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
+window.__probe = out; console.log('PROBE ' + JSON.stringify(out));
+</script>
+</body></html>

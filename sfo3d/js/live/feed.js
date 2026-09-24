@@ -15,13 +15,14 @@ export function normalizeAircraft(a, nowMs) {
   if (!(a.lat != null) && a.lastPosition && num(a.lastPosition.seen_pos) > 60) return null; // stale position only
   const seenPos = num(pos.seen_pos) ?? num(a.seen) ?? 0;
   return {
-    hex: String(a.hex || '').toLowerCase().replace(/^~/, ''), flight: str(a.flight) ? String(a.flight).trim() || null : null,
+    hex: String(a.hex || '').toLowerCase(), flight: str(a.flight) ? String(a.flight).trim() || null : null,
     reg: str(a.r), icao: str(a.t), desc: str(a.desc), ownOp: str(a.ownOp), year: str(a.year), srcType: str(a.type),
     lat, lon, ground, altBaro: ground ? null : num(a.alt_baro), altGeom: ground ? null : num(a.alt_geom),
     gs: num(a.gs), track: num(a.track), trueHeading: num(a.true_heading), magHeading: num(a.mag_heading), trackRate: num(a.track_rate), roll: num(a.roll),
     baroRate: num(a.baro_rate), geomRate: num(a.geom_rate), squawk: str(a.squawk), category: str(a.category),
     emergency: a.emergency && a.emergency !== 'none' ? a.emergency : null, navAlt: num(a.nav_altitude_mcp), navQnh: num(a.nav_qnh),
     t: nowMs - seenPos * 1000, seen: num(a.seen) ?? 0,
+    veh: a._veh === 1, src: str(a._src), // relay: sticky ground-vehicle flag, provider of the position
   };
 }
 
@@ -63,27 +64,32 @@ export class Feed {
   }
 }
 
-// adsb.lol route lookup (origin/destination by callsign, from Virtual Radar Server standing data), batched
+// Route lookup (origin/destination by callsign, Virtual Radar Server standing data via adsb.lol), batched.
+// Only definite answers are cached: an error, an empty body (the adsb.lol routeset API answered HTTP 201 with no body
+// on 24 Sep 2026, traffic_audit F5) or bad JSON leaves the callsigns uncached and pauses lookups for 30 s.
 export class Routes {
-  constructor({ url = 'https://api.adsb.lol/api/0/routeset' } = {}) { this.url = url; this.cache = new Map(); this.pending = new Set(); this.busy = false; }
+  constructor({ url = 'https://api.adsb.lol/api/0/routeset' } = {}) { this.url = url; this.cache = new Map(); this.pending = new Set(); this.busy = false; this.retryAt = 0; }
   get(cs) { return this.cache.get(cs); }
   async request(list) { // list: [{callsign, lat, lng}]
-    if (this.busy) return; const todo = list.filter(p => p.callsign && !this.cache.has(p.callsign) && !this.pending.has(p.callsign)).slice(0, 100);
+    if (this.busy || Date.now() < this.retryAt) return; const todo = list.filter(p => p.callsign && !this.cache.has(p.callsign) && !this.pending.has(p.callsign)).slice(0, 100);
     if (!todo.length) return;
     this.busy = true; todo.forEach(p => this.pending.add(p.callsign));
     let ok = false;
     try {
       const r = await fetch(this.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planes: todo }) });
-      if (r.ok) {
-        ok = true;
-        const arr = await r.json();
+      const txt = r.ok ? await r.text() : '';
+      const arr = txt.trim() ? JSON.parse(txt) : null;
+      if (Array.isArray(arr)) {
         for (const x of arr) {
+          if (!x || !x.callsign) continue;
           const codes = (x._airport_codes_iata && x._airport_codes_iata !== 'unknown') ? x._airport_codes_iata.split('-') : null;
-          this.cache.set(x.callsign, codes ? { codes, airports: (x._airports || []).map(a => ({ iata: a.iata, icao: a.icao, name: a.name, city: a.location, country: a.countryiso2 })), plausible: !!x.plausible } : null);
+          this.cache.set(x.callsign, codes ? { codes, airports: (x._airports || []).map(a => ({ iata: a.iata, icao: a.icao, name: a.name, city: a.location, country: a.countryiso2 })), plausible: !!x.plausible, sfo: x._sfo || null, src: x._src || null } : null);
         }
+        ok = true;
       }
     } catch (e) { /* routes are optional */ }
     todo.forEach(p => { this.pending.delete(p.callsign); if (ok && !this.cache.has(p.callsign)) this.cache.set(p.callsign, null); });
+    if (!ok) this.retryAt = Date.now() + 30000;
     this.busy = false;
   }
 }

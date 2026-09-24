@@ -1,5 +1,6 @@
 // Test harness for the live app: static server + mock ADS-B relay (synthetic motion from the recorded snapshot),
 // headless Chromium, screenshots. Usage: node livetest.mjs <script.mjs>   (script exports default async ({page, shot, base}) => {})
+// RELAY=http://host:port: proxy /api/* to a running sfo_live_server.py (live or --replay) instead of the mock.
 import http from 'http'; import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url';
 // Playwright: `npm i -D playwright && npx playwright install chromium` (or point PLAYWRIGHT_MODULE at an install)
 let chromium;
@@ -32,8 +33,20 @@ function mockFeed() {
   }
   return { ac: out, now: Date.now(), msg: 'No error', total: out.length, _source: 'mock relay (test)' };
 }
+// RELAY=http://127.0.0.1:18731 proxies every /api/* request (including the SSE stream) to a running
+// sfo_live_server.py instead of the mock, e.g. `python3 sfo_live_server.py --port 18731 --replay refs/cache/rec
+// --from 2026-09-24T14:00Z` to test the app on real recorded traffic.
+const RELAY = process.env.RELAY ? new URL(process.env.RELAY) : null;
+function proxy(req, res) {
+  const p = http.request({ host: RELAY.hostname, port: RELAY.port, path: req.url, method: req.method,
+    headers: { ...req.headers, host: RELAY.host } }, (r) => { res.writeHead(r.statusCode, r.headers); r.pipe(res); });
+  p.on('error', (e) => { res.statusCode = 502; res.end(String(e)); });
+  req.pipe(p);
+  res.on('close', () => p.destroy());
+}
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
+  if (RELAY && url.pathname.startsWith('/api/')) return proxy(req, res);
   if (url.pathname === '/api/ping') { res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ sfolive: 1, mock: true })); }
   if (url.pathname === '/api/adsb') { res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify(mockFeed())); }
   if (url.pathname === '/api/metar') { res.setHeader('Content-Type', 'text/plain'); return res.end(process.env.METAR || 'METAR KSFO 231756Z 29012KT 10SM FEW008 18/13 A2996'); }

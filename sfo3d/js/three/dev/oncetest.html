@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0">
+<script type="module">
+import { THREE, TSL } from '../lib.js';
+const { Fn, vec3, vec4, float, If, positionWorld, sin, attribute } = TSL;
+const r = new THREE.WebGPURenderer({ antialias: false }); r.setSize(256, 128); document.body.appendChild(r.domElement); await r.init();
+const scene = new THREE.Scene(); const cam = new THREE.OrthographicCamera(-2, 2, 1, -1, 0.1, 10); cam.position.z = 5;
+scene.add(new THREE.AmbientLight(0xffffff, 3));
+let R = null;
+const core = () => { const c = vec3(0.1).toVar(); const rough = float(0.2).toVar(); const x = positionWorld.x;
+  If(x.greaterThan(0.0), () => { c.assign(vec3(0.9, 0.1, 0.1)); rough.assign(0.9); }).Else(() => { c.assign(vec3(0.1, 0.1, 0.9)); });
+  return { c, rough, em: c.mul(sin(x).abs()) }; };
+const A = Fn(() => { R = core(); return vec4(R.c, R.rough); }).once();
+const B = Fn(() => { A(); return vec4(R.em, 1.0); }).once();
+const m = new THREE.MeshStandardNodeMaterial(); m.colorNode = vec4(A().xyz, 1.0); m.roughnessNode = A().w; m.emissiveNode = B().xyz;
+scene.add(new THREE.Mesh(new THREE.PlaneGeometry(4, 2), m));
+r.render(scene, cam);
+const px = await r.readRenderTargetPixelsAsync ? null : null;
+window.__probe = { ok: true };
+</script></body></html>

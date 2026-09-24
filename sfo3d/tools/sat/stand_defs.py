@@ -1,6 +1,11 @@
 """Stand layout for SFO contact gates, measured from the user's satellite screenshots (georeferenced against the
 SFO Museum building outlines). Coordinates are in the airport grid frame (s along hdg 117.83 deg, t along 27.83 deg).
-obs = aircraft observed parked there in imagery; inf = inferred from pitch / bridge heads (stand empty in imagery)."""
+obs = aircraft observed parked there in imagery; inf = inferred from pitch / bridge heads (stand empty in imagery).
+
+FRAME: every number below was measured in the LEGACY frame 'equirect-v1' (tools/geo_frame.py; the pre-24-Sep-2026
+js/geo.js equirectangular projection and its grid) and is kept exactly as measured. At the end of this file the list
+is mapped exactly into the current world frame ('ltp-nad83-2011'): STANDS = current frame (grid s,t + true heading),
+LEGACY_STANDS = the records as measured. Displacement 1.0-2.0 m, heading change <= 0.03 deg."""
 H_S, H_T = 117.83, 27.83           # headings of +s and +t directions
 H_mS, H_mT = 297.83, 207.83        # headings of -s and -t
 def face(names, axis, face_c, along, nose_d, hdg, cls, src, img, alias=None):
@@ -186,3 +191,16 @@ for s_ in STANDS:
 # 35809e3e / bc91df95 and pooled SIFT); move its stands with it
 for s_ in STANDS:
     if s_.get('img') == 'c235f3b8': s_['nose'] = (round(s_['nose'][0] + 0.6, 2), round(s_['nose'][1] + 2.3, 2))
+# ---- frame migration (24 Sep 2026): legacy grid -> legacy world -> NAD83(2011) lat/lon -> LTP world -> current grid;
+# headings through the exact point mapping (tools/geo_frame.py). The records above stay untouched (provenance).
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..'))
+import geo_frame as _GF
+def _migrate(s_):
+    s2 = dict(s_); lx, lz = _GF.legacy_st_to_legacy_world(*s_['nose'])
+    s2['nose'] = _GF.world_to_st(*_GF.legacy_to_world(lx, lz))
+    s2['hdg'] = _GF.legacy_hdg_to_hdg(lx, lz, s_['hdg'])
+    s2['legacy'] = {'frame': 'equirect-v1', 'nose': s_['nose'], 'hdg': s_['hdg']}
+    return s2
+LEGACY_STANDS = STANDS
+STANDS = [_migrate(s_) for s_ in LEGACY_STANDS]

@@ -5,7 +5,10 @@ Source: a local checkout of the SFO Museum "sfomuseum-data-architecture"
 repository (CDLA-Permissive-1.0). Every *.geojson file is one Feature; only
 features with properties["mz:is_current"] == 1 are used.
 
-World frame (must match js/geo.js): x = east (m), z = SOUTH (m), origin = ARP.
+World frame (must match js/geo.js): x = east (m), z = SOUTH (m), origin = ARP; projection and datum from
+tools/geo_frame.py (exact GRS80 local tangent plane, NAD83(2011)). The SFO Museum lon/lat are taken as NAD83(2011)
+(the project's declared datum); their actual datum is not documented upstream - see the "datum" note in the report.
+Also writes data/sfo_airport.js (the same JSON as an ES module for the app).
 
 Only the Python standard library and numpy are used (no shapely): Douglas-Peucker,
 point-in-polygon, nearest-point-on-segment and the ring validity checks are
@@ -29,11 +32,10 @@ DEFAULT_SRC = os.environ.get('SFOM_DATA', os.path.join(os.path.dirname(os.path.a
 DEFAULT_JSON = os.path.join(HERE, '..', 'data', 'sfo_airport.json')
 DEFAULT_REPORT = os.path.join(HERE, '..', 'data', 'sfo_airport_report.md')
 
-# --- world frame (identical to js/geo.js) ---------------------------------------------
-LAT0 = 37.6188056
-LON0 = -122.3754167
-M_PER_DEG_LAT = 110990.0
-M_PER_DEG_LON = 111320.0 * math.cos(math.radians(LAT0))
+# --- world frame (identical to js/geo.js; shared module tools/geo_frame.py) ------------
+sys.path.insert(0, HERE)
+import geo_frame  # noqa: E402
+LAT0, LON0 = geo_frame.ARP_LAT, geo_frame.ARP_LON
 
 # --- build parameters ------------------------------------------------------------------
 TOL_BUILDING = 0.4        # m, terminal complex / terminals / boarding areas
@@ -59,23 +61,18 @@ RING_CONVENTION = ('Coordinates are [x, z] in metres: x = east, z = south, origi
                    'rings are counter-clockwise and holes clockwise (so in raw [x, z] the '
                    'shoelace sum of an outer ring is negative). Rings are open: the first '
                    'vertex is not repeated at the end.')
-FRAME = ('x = east (m), z = south (m), origin ARP lat 37.6188056 lon -122.3754167; '
-         'm/deg lat 110990, m/deg lon 111320*cos(lat0)')
+FRAME = ('x = east (m), z = south (m), origin ARP lat 37.6188056 lon -122.3754167; frame ' + geo_frame.FRAME_ID +
+         ': exact local tangent plane on GRS80 at the ARP, datum NAD83(2011) (tools/geo_frame.py = js/geo.js)')
 
 STRUCTURE_KINDS = ('atc', 'garage', 'building', 'hangar', 'hotel', 'airtrain', 'rail')
 TERMINAL_COMPLEX_NAME = 'SFO Terminal Complex'
 
 SURVEYED_RUNWAYS = (('10L', '28R'), ('10R', '28L'), ('1L', '19R'), ('1R', '19L'))
-SURVEYED_ENDS = {  # lat, lon (decimal degrees)
-    '28R': (37.6135336, -122.3571411), '10L': (37.6287387, -122.3933919),
-    '28L': (37.6117119, -122.3583492), '10R': (37.6262911, -122.3931055),
-    '1L': (37.6078979, -122.3829285), '19R': (37.6264814, -122.3706094),
-    '1R': (37.6063299, -122.3810408), '19L': (37.6273422, -122.3671108),
-}
+SURVEYED_ENDS = {k: (v['lat'], v['lon']) for k, v in geo_frame.RWY_ENDS.items()}  # FAA NASR = js/geo.js RWY_ENDS
 
 
 def project(lon, lat):
-    return (lon - LON0) * M_PER_DEG_LON, -((lat - LAT0) * M_PER_DEG_LAT)
+    return geo_frame.ll_to_world(lat, lon)
 
 
 # =======================================================================================
@@ -874,6 +871,10 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(args.out_json)), exist_ok=True)
     with open(args.out_json, 'w', encoding='utf-8') as fh:
         fh.write(blob)
+    out_js = os.path.splitext(args.out_json)[0] + '.js'
+    with open(out_js, 'w', encoding='utf-8') as fh:
+        fh.write('// SFO airport geometry built from SFO Museum sfomuseum-data-architecture (CDLA-Permissive-1.0)\n'
+                 'export const AIRPORT = ' + blob + ';\n')
 
     tc_entry = {'name': TERMINAL_COMPLEX_NAME, 'id': fid(tc_feat), 'polys': tc_polys,
                 '_feat': tc_feat, '_tol': TOL_BUILDING}
@@ -895,6 +896,7 @@ def assemble(tc_polys, terminals, bas, gates_out, taxiways, runways, structures)
         'attribution': ATTRIBUTION,
         'ringConvention': RING_CONVENTION,
         'frame': FRAME,
+        'frameId': geo_frame.FRAME_ID,
         'bounds': [num(v) for v in bbox_of(pts)],
         'terminalComplex': fmt_polys(tc_polys),
         'terminals': [{'name': t['name'], 'id': t['id'], 'polys': fmt_polys(t['polys'])}
@@ -941,8 +943,12 @@ def make_report(doc, size, args, n_files, feats, by_type, tc_entry, terminals, b
     w('')
     w('- Output: `%s`, **%.1f KB** (%d bytes, compact JSON).' % (
         os.path.normpath(args.out_json), size / 1024.0, size))
-    w('- World frame: x = east, z = south (m), origin ARP 37.6188056, -122.3754167; '
-      'coordinates rounded to 0.1 m. `bounds` = %s.' % doc['bounds'])
+    w('- World frame: x = east, z = south (m), origin ARP 37.6188056, -122.3754167; frame `%s` (exact GRS80 '
+      'local tangent plane at the ARP, datum NAD83(2011); `tools/geo_frame.py` = `js/geo.js`); '
+      'coordinates rounded to 0.1 m. `bounds` = %s.' % (geo_frame.FRAME_ID, doc['bounds']))
+    w('- Datum note: the SFO Museum lon/lat are used as NAD83(2011). The source records carry no datum '
+      '(GeoJSON/RFC 7946 nominally means WGS 84); the runway sanity check below measures the offset of the source '
+      'runway polygons from the FAA NASR (NAD83) centrelines.')
     esc = '' if (tw_tol, st_tol) == (TOL_AIRFIELD, TOL_STRUCTURE) else \
         ' (**raised** from %.1f m to stay under %.1f MB)' % (TOL_AIRFIELD, MAX_JSON_BYTES / 1e6)
     w('- Douglas-Peucker tolerances: terminal complex / terminals / boarding areas %.1f m, '

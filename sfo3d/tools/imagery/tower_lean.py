@@ -17,7 +17,7 @@ def main():
     tiles = []
     for yr in ('2022', '2024'):
         S = NaipSampler(yr)
-        lat, lon = ll_geojs(X, Z); E, N = S.T.transform(lon, lat); cc, rr = S.inv * (E, N)
+        lat, lon = ll_new(X, Z); E, N = S.T.transform(lon, lat); cc, rr = S.inv * (E, N)
         im = cv2.remap(S.img, (np.asarray(cc) - 0.5).astype(np.float32), (np.asarray(rr) - 0.5).astype(np.float32),
                        cv2.INTER_LINEAR)[..., ::-1].copy()
         for g in np.arange(-hw, hw + 1, 10):

@@ -8,7 +8,7 @@ removed) so the audit uses exactly the pixels the registration pipeline used.
 """
 import json, math, os
 import numpy as np
-from common import ROOT
+from common import ROOT, GF
 
 SAT = os.path.join(ROOT, 'tools', 'sat')
 SCREENS = os.environ.get('SFO_SCREENS', os.path.join(SAT, 'screens'))
@@ -16,19 +16,40 @@ REG = json.load(open(os.path.join(SAT, 'work', 'reg.json')))
 
 
 class Sim:
-    def __init__(self, s, th, tx, ty):
+    """frame = 'equirect-v1' (legacy; every reg.json entry without a 'frame' key) or the current frame id: a legacy
+    registration is applied to world_to_legacy(x, z) (exact, tools/geo_frame.py)."""
+    def __init__(self, s, th, tx, ty, frame=None):
         t = math.radians(th); c, sn = math.cos(t), math.sin(t)
-        self.s, self.th = s, th
+        self.s, self.th = s, th; self.frame = frame or GF.FRAME_ID
         self.A = s * np.array([[c, -sn], [sn, c]]); self.t = np.array([tx, ty], float)
         self.Ai = np.linalg.inv(self.A)
 
-    def fwd(self, P): return np.asarray(P, float) @ self.A.T + self.t
+    def fwd(self, P):
+        P = np.asarray(P, float)
+        if self.frame == 'equirect-v1':
+            X, Z = GF.world_to_legacy_np(P[..., 0], P[..., 1]); P = np.stack([X, Z], -1)
+        return P @ self.A.T + self.t
 
-    def inv(self, Q): return (np.asarray(Q, float) - self.t) @ self.Ai.T
+    def inv(self, Q):
+        P = (np.asarray(Q, float) - self.t) @ self.Ai.T
+        if self.frame == 'equirect-v1':
+            X, Z = GF.legacy_to_world_np(P[..., 0], P[..., 1]); P = np.stack([X, Z], -1)
+        return P
+
+    def as_world_sim(self, wc, half=800.0):
+        """least-squares similarity in the CURRENT frame equivalent to this one over +-half m around world point wc
+        (a legacy registration composed with the exact frame mapping is not a similarity; residual < 0.1 m)."""
+        if self.frame == GF.FRAME_ID: return self
+        g = np.linspace(-half, half, 9); W = np.array([(wc[0] + a, wc[1] + b) for a in g for b in g])
+        Q = self.fwd(W)
+        M = np.zeros((2 * len(W), 4)); M[0::2] = np.c_[W[:, 0], -W[:, 1], np.ones(len(W)), np.zeros(len(W))]
+        M[1::2] = np.c_[W[:, 1], W[:, 0], np.zeros(len(W)), np.ones(len(W))]
+        p, *_ = np.linalg.lstsq(M, Q.ravel(), rcond=None)            # q = [[a, -b], [b, a]] w + t
+        return Sim(math.hypot(p[0], p[1]), math.degrees(math.atan2(p[1], p[0])), p[2], p[3], GF.FRAME_ID)
 
 
 def sim_of(name):
-    r = REG[name]; return Sim(r['s'], r['th'], r['tx'], r['ty'])
+    r = REG[name]; return Sim(r['s'], r['th'], r['tx'], r['ty'], r.get('frame', 'equirect-v1'))
 
 
 def path_of(name):

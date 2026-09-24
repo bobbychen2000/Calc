@@ -53,6 +53,13 @@ def run():
         w(f'- **Imagery `{src}`** ({R["source"]}; {"public" if R["public"] else "reference only, not redistributable"}): '
           f'{len(fs)} features sampled, **{len(cls_ok)} measured** (+{len(meas) - len(cls_ok)} jet-bridge rotunda candidates), '
           f'**{sum(f["flag"] for f in fs)} with median offset > 1.0 m**; {sum(1 for f in cls_ok if f.get("p90", 0) > 1.0)} with p90 > 1.0 m.')
+    for src, R in D.items():
+        by = collections.defaultdict(list)
+        for f in R['features']:
+            if f.get('measured'): by[f['cls']].append(f)
+        rel = ['runway-edge-stripe', 'runway-end', 'runway-threshold', 'runway-displaced-threshold', 'emas-bed']
+        w(f'  - `{src}` by class (flagged / measured): ' + '; '.join(f'{c} {sum(f["flag"] for f in by[c])}/{len(by[c])}' for c in rel + ['taxiway-edge', 'extra-pavement', 'building', 'bridge-walkway', 'hold-line'] if by.get(c))
+          + '. The runway/EMAS classes are the dependable ones (self-test recovery >= 0.9 for ~1 m shifts, except pavement ends); building and pavement edges recover a known 1-2 m shift only 50-90 % of the time, so their flag counts mostly measure how often the picker chose a neighbouring edge - use the overlay sheets for those.')
     if 'naip' not in D: w('- **NAIP**: not present in `refs/cache/naip/` at run time - every measurement below used the Google screenshots only. Re-run `tools/drawing/run_all.sh` once the NAIP tiles and their world->pixel JSON are there; the NAIP columns/sheets are produced automatically.')
     cs = collections.Counter(c['severity'] for c in C)
     w(f'- **Physical audit**: {len(C)} distinct findings (one per pair of objects, merged across scenarios): '
@@ -157,9 +164,11 @@ def run():
         w('| class | features | measured | flagged (median > 1 m) | median of medians | median p90 | typical gsd | notes |'); w('|---|---|---|---|---|---|---|---|')
         notes = {'building': 'roof edge vs footprint: relief displacement (roofs lean away from nadir) + registration; see `shift`/`resid` columns',
                  'taxiway-centreline': '6 in paint: needs <= 0.35 m/px; the airfield screenshots are 0.5-1.6 m/px and JPEG chroma hides thin yellow lines',
-                 'stand-leadin': 'lead-in paint not visible (worn / under the parked aircraft on obs stands)', 'hold-line': 'needs <= 0.6 m/px; most holds are on 0.9-1.6 m/px shots',
-                 'bridge-rotunda': 'automatic disc search, low confidence - use the per-bridge crops', 'extra-pavement': 'derived from the same imagery (circular); checks the vectorisation',
-                 'runway-edge-stripe': '0.91 m stripe; 1L/19R, 1R/19L only on coarse shots', 'runway-threshold': 'stripe start; needs <= 0.8 m/px'}
+                 'stand-leadin': 'lead-in paint not visible (worn / under the parked aircraft on obs stands)',
+                 'bridge-rotunda': 'automatic disc search, low confidence - read with the sheets', 'extra-pavement': 'derived from the same imagery (circular); checks the vectorisation',
+                 'runway-edge-stripe': '0.91 m stripe; 1L/19R, 1R/19L only on coarse shots', 'runway-threshold': 'stripe start; needs <= 0.8 m/px. At 19L/19R (bar only ~2.8 m from the stripes) the pick is the bar\'s outer edge (~6 m); the NAIP along-axis profiles give stripe starts of 6.06 / 6.26 m there, i.e. the model (6.1 m) is right',
+                 'runway-displaced-threshold': 'NAIP: +3.1 / +3.3 m = the bar drawn on the approach side of the threshold (see above); the Google value locks onto the stripe block',
+                 'hold-line': 'needs <= 0.6 m/px; on NAIP many picks land on other yellow paint (not covered by the self-test)'}
         for c in sorted(by):
             m = [f for f in by[c] if f.get('measured')]
             w(f'| {c} | {len(by[c])} | {len(m)} | {sum(f["flag"] for f in by[c])} | {f1(np.median([f["median"] for f in m]) if m else None, 2)} | {f1(np.median([f["p90"] for f in m]) if m else None, 2)} | {f1(np.median([f["gsd"] for f in m]) if m else None, 2)} | {notes.get(c, "")} |')

@@ -1,6 +1,8 @@
 """Export the surveyed stand layout (stand_defs.py) to data/sfo_stands.json/.js in world coordinates (x east, z south).
 Each stand lists the jet bridges that serve it: one per hold-room gate (name + aliases) on the aircraft's left side,
-two for wide-body stands (L1 + L2)."""
+two for wide-body stands (L1 + L2).
+Frame: current world frame (tools/geo_frame.py = js/geo.js). stand_defs.STANDS is already migrated from the legacy
+survey frame; the red boxes (work/redboxes.json, legacy frame) are mapped here with geo_frame.legacy_to_world."""
 import json, math, os
 import numpy as np
 from common import *
@@ -82,10 +84,13 @@ for st in stand_defs.STANDS:
 remote = [g for g in D['gates'] if g['level'] == 0 and not g['variant'] and not g.get('dup')]
 boxes = []
 try:
-    for x, z, sz, ang in json.load(open(SP + 'redboxes.json')):
-        if 3.5 <= sz <= 7.5: boxes.append([x, z, sz])
+    rb = json.load(open(SP + 'redboxes.json'))
+    legacy = isinstance(rb, list)          # the committed file (23 Sep 2026) is a bare list in the legacy frame
+    for x, z, sz, ang in (rb if legacy else rb['boxes']):
+        if 3.5 <= sz <= 7.5:
+            X, Z = GF.legacy_to_world(x, z) if legacy else (x, z); boxes.append([round(X, 2), round(Z, 2), sz])
 except FileNotFoundError: pass
-res = {'redBoxes': boxes, 'note': 'Stand layout surveyed from georeferenced satellite screenshots (Google Maps, reference only) against the SFO Museum '
+res = {'frame': GF.FRAME_ID, 'redBoxes': boxes, 'note': 'Stand layout surveyed from georeferenced satellite screenshots (Google Maps, reference only) against the SFO Museum '
                'building outlines. src=obs: an aircraft was parked there in the imagery; src=inf: stand inferred from jet-bridge '
                'positions / stand pitch (empty in the imagery). Gate names follow the SFO Museum hold-room points; names at pier '
                'tips are the nearest hold room.', 'stands': out,

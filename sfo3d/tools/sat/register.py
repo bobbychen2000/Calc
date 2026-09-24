@@ -106,7 +106,7 @@ if __name__ == '__main__':
     sim, c = refine(name, Sim(b[2], b[1], b[3], b[4]), bottom)
     print('refined', sim.s, sim.th, sim.tx, sim.ty, 'cost', c)
     reg = json.load(open(SP + 'reg.json')) if os.path.exists(SP + 'reg.json') else {}
-    reg[name] = {'s': sim.s, 'th': sim.th, 'tx': sim.tx, 'ty': sim.ty, 'cost': c, 'coarse': b[0]}
+    reg[name] = dict(sim.to_reg(), cost=c, coarse=b[0])
     json.dump(reg, open(SP + 'reg.json', 'w'), indent=1)
 
 def refine2(name, sim0, bottom=2200, kinds=('complex', 'ba'), fix_th=True, truncs=(16, 8, 4), step=0.5, region=None):

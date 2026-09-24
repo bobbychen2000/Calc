@@ -5,7 +5,7 @@ import numpy as np, cv2
 U = open(SP + 'uniq.txt').read().split()
 REG = json.load(open(SP + 'reg.json'))
 def sim_of(name):
-    r = REG[name]; return Sim(r['s'], r['th'], r['tx'], r['ty'])
+    return sim_from_reg(REG[name])
 def rectify(name, x0, z0, x1, z1, res=0.25, bottom=2200):
     """returns image (H,W,3) BGR and a validity mask; pixel (i,j) <-> world (x0 + (j+.5)*res, z0 + (i+.5)*res)"""
     img = cv2.imread([u for u in U if name in u][0])
