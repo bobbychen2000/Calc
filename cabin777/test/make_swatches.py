@@ -16,37 +16,51 @@ S = 256
 # name: (photo, crop box in the 930x575 image, physical tile size in m (estimated from known seat widths in the same photo),
 #        optional rotation in degrees that straightens the grain before cropping)
 SW = {
-    'y_tick':      ('y_47306', (250, 362, 412, 556), 0.16),
-    'y_diamond':   ('y_47306', (48, 382, 162, 536), 0.13),
+    # QA r2: the flap of the middle seat (0.27 m) spans 165 px in y_47306 (611 px/m) -> a 162 px crop is 0.26 m [D];
+    # square crops (the old 162 x 194 / 114 x 154 boxes were stretched to 256 x 256); the left seat's flap is 125 px
+    # (463 px/m) -> 120 px diamond crop = 0.26 m, diamond period ~0.086 m as in y_47302 [D]
+    'y_tick':      ('y_47306', (250, 380, 412, 542), 0.26),
+    'y_diamond':   ('y_47306', (40, 380, 160, 500), 0.26),
     # clean, evenly lit dash weave of the seat back (the old crop held the seam shadow + a glint); flap in the same photo
     # gives ~860 px/m -> 140 px = 0.163 m [D]
     'py_back':     ('py_37305', (720, 430, 860, 570), 0.163),
-    'py_confetti': ('py_37305', (238, 134, 326, 256), 0.07),
-    'j_tweed':     ('c_27302', (112, 172, 238, 298), 0.24),
+    # white flakes on the charcoal wing of the left seat, square contiguous crop (the old 88 x 122 box was stretched);
+    # wing ~0.10 m = 130 px -> 90 px = 0.07 m [D]. Also the Y headrest wings' confetti (y_47306 middle seat, 45 px at
+    # 611 px/m = 0.074 m) [D] - both are MONO so the material colour sets charcoal / cobalt
+    'py_confetti': ('py_37305', (238, 140, 328, 230), 0.07),
+    # c_27302 seat back 0.64 m ~ 330 px -> 126 px = 0.24 m, but that is a rendering that coarsens the weave; the real
+    # in-cabin photos (c_27315, omaat_room_13) read as a fine uniform weave -> tile shrunk to 0.14 (2-3 mm dots) [A]
+    'j_tweed':     ('c_27302', (112, 172, 238, 298), 0.14),
     # real photo of the ottoman (OMAAT f11): uniform fine grey weave; ottoman 0.86 m ~ 680 px -> 120 px = 0.15 m [D]
     # (the old crop from render f_17309 carried a zig-zag moire that tiled into a plaid)
     'f_tweed':     ('web/suite/omaat_f11.jpg', (500, 600, 620, 720), 0.15),
-    # straight horizontal grain on the pale cabinet door of c_27316 (cabinet 0.34 m = 140 px -> 90 px = 0.22 m) [D]
-    'j_ash':       ('c_27316', (560, 25, 650, 115), 0.22),
+    # QA r2: strong straight horizontal streaks of the cabinet door in c_27305 (cabinet 0.34 m = 155 px -> 100 px =
+    # 0.22 m) [D], above the door split (the old c_27316 crop was nearly uniform)
+    'j_ash':       ('c_27305', (262, 88, 362, 188), 0.22),
     # near-black straight-grain veneer of the suite flank, real photo OMAAT f60 (doors 2 x 0.55 m ~ 1000 px -> 130 px =
     # 0.11 m for 100 px) [D]; the grain already runs along U (horizontal)
     'f_wood':      ('web/suite/omaat_f60.jpg', (0, 490, 100, 590), 0.11),
     'y_carpet':    ('y_47304', (24, 384, 226, 556), 0.26),
 }
-ENC = {'y_tick': 8, 'y_diamond': 8}       # default 2 (= ratio x 0.5)
+ENC = {'y_tick': 6, 'y_diamond': 6}       # default 2 (= ratio x 0.5); QA r2: 6 (was 8), see 03_tex.js PHOTO_ENC
 # grey-pattern materials: keep only the luminance pattern (the per-channel ratio of these phone photos is JPEG chroma
 # noise and lilac / green casts); the model's material colour sets the hue
-MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back'}   # py_back: neutral grey weave (QA r1, wall-balanced py_37305)
+MONO = {'f_wood', 'f_tweed', 'j_ash', 'py_back',   # py_back: neutral grey weave (QA r1, wall-balanced py_37305)
+        'j_tweed', 'py_confetti'}                  # QA r2: chroma of these was a green / purple JPEG cast
+# high-pass radius of the lighting / blotch removal (default 40 px on the 256 px tile); py_back: the swatch's low-frequency
+# dark blotches dominated the fine white dashes at seat distance (py_37301 / 37305 read as even dashes on charcoal)
+HP = {'py_back': 20}
 
 
 def tileable(a):
-    """offset-and-blend: cross-fade the tile with a half-period roll so every edge wraps seamlessly"""
+    """offset-and-blend, one axis at a time: cross-fade with a half-period roll along x (mask depends on x only), then the
+    result with its roll along y. QA r2: the old 2-D mask used the rolled copy near the corners, where its own seams lie
+    -> visible 2 x 2 quadrant seams at 128 px (tex_py_back / j_ash / j_tweed)"""
     h, w = a.shape[:2]
-    yy, xx = np.mgrid[0:h, 0:w]
-    m = np.minimum(np.minimum(xx, w - 1 - xx) / (w * 0.5), np.minimum(yy, h - 1 - yy) / (h * 0.5))
-    m = np.clip(m * 2.2, 0, 1)[..., None]
-    r = np.roll(np.roll(a, h // 2, 0), w // 2, 1)
-    return a * m + r * (1 - m)
+    mx = np.clip(np.minimum(np.arange(w), w - 1 - np.arange(w)) / (w * 0.5) * 2.2, 0, 1)[None, :, None]
+    a = a * mx + np.roll(a, w // 2, 1) * (1 - mx)
+    my = np.clip(np.minimum(np.arange(h), h - 1 - np.arange(h)) / (h * 0.5) * 2.2, 0, 1)[:, None, None]
+    return a * my + np.roll(a, h // 2, 0) * (1 - my)
 
 
 def make(name, photo, box, size, rot=0):
@@ -67,7 +81,7 @@ def make(name, photo, box, size, rot=0):
     a = np.asarray(im).astype(np.float32) / 255.0
     lin = a ** 2.2
     # remove the lighting gradient: divide by a heavy blur (per-channel), keep the local pattern
-    blur = np.asarray(Image.fromarray((a * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(40))).astype(np.float32) / 255.0
+    blur = np.asarray(Image.fromarray((a * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(HP.get(name, 40)))).astype(np.float32) / 255.0
     ratio = lin / np.maximum(blur ** 2.2, 1e-3)
     if name in MONO: ratio = np.repeat(ratio.mean(2, keepdims=True), 3, 2)
     ratio = tileable(ratio)
@@ -76,7 +90,7 @@ def make(name, photo, box, size, rot=0):
     enc = ENC.get(name, 2)
     lim = 1.5 if enc == 2 else enc * 0.95
     lum = ratio.mean(2, keepdims=True)
-    ratio = np.where(lum > lim, ratio * lim / lum, ratio)
+    ratio = np.where(lum > lim, ratio * lim / np.maximum(lum, 1e-6), ratio)
     ratio /= ratio.reshape(-1, 3).mean(0)
     out = np.clip(ratio / enc, 0, 1)
     Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'ref/swatch', f'tex_{name}.png'))

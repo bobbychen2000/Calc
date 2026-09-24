@@ -2,7 +2,7 @@
 // Procedural textures (generated at load; no external image assets)
 //  Detail layers are RGBA: RG = tangent normal (xy), B = albedo mod, A = roughness mod
 // ------------------------------------------------------------------
-const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, knit: 9, wood: 10, perf: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24 };
+const LAYER = { none: 0, fabric: 1, leather: 2, carpet: 3, plastic: 4, brushed: 5, marble: 6, vinyl: 7, grille: 8, yagasuri: 9, wood: 10, yMosaic: 11, atlasLit: 14, atlasGlow: 15, yJacq: 16, pyFleck: 17, tweed: 18, ashGrain: 19, fWood: 20, fTweed: 21, yCarpet: 22, pyConfetti: 23, yDiamond: 24 };
 const N_LAYERS = 25;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
 const PHOTO_LAYERS = { 16: 'y_tick', 17: 'py_back', 18: 'j_tweed', 19: 'j_ash', 20: 'f_wood', 21: 'f_tweed', 22: 'y_carpet', 23: 'py_confetti', 24: 'y_diamond' };
@@ -11,10 +11,14 @@ let PHOTO_PIX = null;
 //  17 PY dash weave 0.8 (clean re-cut, py_37305), 18 J tweed 0.35 (SD 0.17-0.23 on c_27315 / omaat_room_13 vs 0.42 rendered),
 //  19 J ash 0.3 (SD 0.025-0.05 on omaat_room_10 / c_27313), 21 F tweed 0.5 (reads as a uniform fine weave, omaat_f11 / f2),
 //  20 F wood 0.7 (near-black veneer with fine lighter streaks, omaat_f60)
-const PHOTO_GAIN = { 17: 0.8, 18: 0.35, 19: 0.3, 20: 0.7, 21: 0.5, 23: 0.8 };
+// QA r2: 17 PY dashes 1.0 (high-passed re-cut; the light dashes carry the brightness, py_37301 p10/p90 100/201),
+//  18 J tweed 0.5 (luminance-only re-cut, fine weave), 19 J ash 1.8 (c_27305 cabinet: high-pass SD 6.1 % in sRGB = ~13 %
+//  linear vs 7.3 % in the swatch -> x1.8) [D], 23 PY / Y confetti 1.0 (white flakes ~220 on a 55-65 ground, py_37305)
+const PHOTO_GAIN = { 17: 1.0, 18: 0.5, 19: 1.8, 20: 0.7, 21: 0.5, 23: 1.0 };
 // swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
 // in linear light and clipped away at 2x. photoBase() lifts the material colour by ENC/2 to compensate.
-const PHOTO_ENC = { y_tick: 8, y_diamond: 8 };
+// QA r2: 6 (was 8) so the brighter cobalt base (#3c4c8a, y_47301) lifted by ENC/2 stays below 1 in blue
+const PHOTO_ENC = { y_tick: 6, y_diamond: 6 };
 function photoBase(hex, name) {
   const k = (typeof PHOTO_TEX !== 'undefined' && PHOTO_TEX && PHOTO_TEX[name] && PHOTO_ENC[name]) ? PHOTO_ENC[name] / 2 : 1;
   if (k === 1) return hex;
@@ -26,7 +30,11 @@ function photoBase(hex, name) {
 const LAYER_PARAMS = {
   1: [22, 0.26, 0.14, 0.18], 2: [9, 0.32, 0.14, 0.3], 3: [3.2, 0.7, 0.5, 0.2], 4: [9, 0.1, 0.04, 0.12],
   5: [3.0, 0.1, 0.06, 0.22], 6: [1.1, 0.05, 0.9, 0.2], 7: [2.0, 0.15, 0.45, 0.2], 8: [22, 0.8, 0.9, 0.2],
-  9: [20, 0.4, 0.2, 0.2], 10: [2.4, 0.12, 0.28, 0.25], 11: [7, 0.45, 0.28, 0.3],
+  // 9 ANA yagasuri pillow jacquard: 4 x 4 feather columns per tile at 0.04 m repeat -> 6.25 tiles/m, two tones #32355d /
+  //   #3e457b (c_27302 / c_27303) = linear ratio ~1.6 -> albedo strength 0.23 [D]
+  // 11 Y mosaic fabric (third Y variant, y_47302 left seat / y_47306 right seat): checker of dense / sparse short pale
+  //   dashes, 0.2 m tile (6 x 6 checks of ~33 mm, measured against the 0.27 m flap) [D]
+  9: [6.25, 0.15, 0.23, 0.15], 10: [2.4, 0.12, 0.28, 0.25], 11: [5.0, 0.12, 1.0, 0.15],
   // photo-derived fabrics (ANA seat pages, see REFERENCE777.md): Y blue tick jacquard, PY charcoal/white fleck, J/F tweed, J ash
   // Y normal strength 0.12 (was 0.3: read as a knit; the Y jacquard is a flat woven face, y_47306)
   16: [5.5, 0.12, 1.4, 0.15], 17: [7.5, 0.3, 0.8, 0.15], 18: [14, 0.5, 0.35, 0.2], 19: [1.6, 0.06, 0.22, 0.2],
@@ -143,26 +151,31 @@ function buildDetailLayers(S = 256) {
     const n = 16, fx = u * n - Math.floor(u * n) - 0.5, fy = v * n - Math.floor(v * n) - 0.5;
     return Math.hypot(fx, fy) < 0.3 ? 0.08 : 0.55;
   }, () => 0.5, 1.2);
-  // 9 knit (headrest covers): rib pattern
+  // 9 yagasuri (arrow-feather) jacquard of ANA's navy pillows (c_27302 / c_27303, omaat_room_13): columns of stacked
+  //    chevrons, alternate columns offset half a feather with the two tones swapped
   L[9] = makeLayer(S, (u, v) => {
-    const r = Math.sin(u * Math.PI * 2 * 48) * 0.5 + 0.5;
-    return r * 0.7 + 0.3 * vnoise(u * 96, v * 24, 96, 71);
-  }, (u, v) => 0.5 + 0.12 * (vnoise(u * 16, v * 16, 16, 72) - 0.5), () => 0.5, 1.4);
+    const n = 4, i = Math.floor(u * n), fu = u * n - i, fv = v * n + (i & 1) * 0.5;
+    return (fv + Math.abs(fu - 0.5) * 0.9) % 1 < 0.5 ? 0.6 : 0.4;
+  }, (u, v) => {
+    const n = 4, i = Math.floor(u * n), fu = u * n - i, fv = v * n + (i & 1) * 0.5;
+    const on = ((fv + Math.abs(fu - 0.5) * 0.9) % 1 < 0.5) !== ((i & 1) === 1);
+    return clamp((on ? 0.78 : 0.22) + 0.06 * (vnoise(u * 96, v * 96, 96, 71) - 0.5), 0, 1);
+  }, () => 0.5, 0.6);
   // 10 wood/laminate grain
   L[10] = makeLayer(S, (u, v) => 0.5, (u, v) => {
     const g = Math.sin((v * 40 + fbm(u * 2, v * 3, 2, 4, 81) * 1.2) * Math.PI * 2) * 0.5 + 0.5;
     return clamp(0.45 + g * 0.2 + 0.1 * (fbm(u * 8, v * 30, 8, 2, 82) - 0.5), 0, 1);
   }, () => 0.5, 0.2);
-  // 11 perforated leather: fine grain + a regular grid of small perforations
-  L[11] = makeLayer(S, (u, v) => {
-    const n = 26, fx = u * n - Math.floor(u * n) - 0.5, fy = v * n - Math.floor(v * n) - 0.5;
-    const hole = Math.hypot(fx, fy) < 0.16 ? -0.55 : 0;
-    const [f1, f2] = worley(u * 22, v * 22, 22, 19);
-    return 0.55 + hole + clamp((f2 - f1) * 1.2, 0, 1) * 0.25;
-  }, (u, v) => {
-    const n = 26, fx = u * n - Math.floor(u * n) - 0.5, fy = v * n - Math.floor(v * n) - 0.5;
-    return Math.hypot(fx, fy) < 0.16 ? 0.22 : 0.5 + 0.1 * (fbm(u * 4, v * 4, 4, 3, 23) - 0.5);
-  }, () => 0.5, 1.1);
+  // 11 Y mosaic: 6 x 6 checks per tile, dense / sparse rows of short pale horizontal dashes on the cobalt ground
+  //    (y_47302 left seat, y_47306 right seat); ground ~0.6 x, dashes ~2 x the material colour (mean ~1)
+  L[11] = makeLayer(S, (u, v) => 0.5 + 0.3 * (vnoise(u * 180, v * 180, 180, 131) - 0.5), (u, v) => {
+    const nc = 6, ci = Math.floor(u * nc), cj = Math.floor(v * nc);
+    const dense = ((ci + cj) & 1) === 0;
+    const nv = 60, j = Math.floor(v * nv), fv = v * nv - j;
+    const nu = 42, i = Math.floor(u * nu + hash2(j, 3, 132) * 2), fu = u * nu + hash2(j, 3, 132) * 2 - i;
+    const on = hash2(i, j, 133) < (dense ? 0.55 : 0.12) && fv > 0.3 && fv < 0.75 && fu > 0.15 && fu < 0.9;
+    return clamp((on ? 0.95 + 0.05 * hash2(i, j, 134) : 0.3) + 0.05 * (vnoise(u * 90, v * 90, 90, 135) - 0.5), 0, 1);
+  }, () => 0.5, 0.6);
   // 16 ANA economy jacquard: royal blue ground, short light-blue ticks; ticks cluster into a diamond lattice
   //    (seat-to-seat pattern variation per ANA/reviews; lattice density from y_47306 close-up)
   L[16] = makeLayer(S, (u, v) => 0.5 + 0.3 * (vnoise(u * 180, v * 180, 180, 91) - 0.5), (u, v) => {

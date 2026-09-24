@@ -18,13 +18,32 @@ const OBIN = [SIDEBIN[0], ...OBIN_DOOR, ...SIDEBIN.slice(8)];
 // narrow PSU channel (|x| < 0.42, ~70 % of the channel between the door edges in y_47300 [V]; the door-edge lines
 // slope ~0.57 px/px toward the vanishing point there) [A ordinates]; top points unchanged so the vault still meets
 // the bin at (0.725, 2.262). Aisle-edge headroom rises (x 0.75 at y 1.93 instead of 0.795 at 1.845).
-const CBIN_Q = [[0.42, 1.835], [0.60, 1.86], [0.75, 1.93], [0.825, 2.03], [0.82, 2.12], [0.78, 2.2], [0.725, 2.262], [0.62, 2.30], [0, 2.315]];
-const CBIN_DOOR = CBIN_Q.slice(0, 7);
+// The 7 door ordinates are resampled with a Catmull-Rom spline (3 steps a span, 19 points) so the wrap shades
+// smoothly as the real doors do (y_47301, c_27312 [V]); end points (0.42, 1.835) and (0.725, 2.262) kept.
+function crResample(P, m = 3) {
+  const out = [P[0]];
+  for (let k = 0; k < P.length - 1; k++) {
+    const p0 = P[Math.max(0, k - 1)], p1 = P[k], p2 = P[k + 1], p3 = P[Math.min(P.length - 1, k + 2)];
+    for (let j = 1; j <= m; j++) {
+      const t = j / m, t2 = t * t, t3 = t2 * t;
+      out.push([0, 1].map((c) => 0.5 * (2 * p1[c] + (p2[c] - p0[c]) * t + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * t2 + (3 * p1[c] - p0[c] - 3 * p2[c] + p3[c]) * t3)));
+    }
+  }
+  return out;
+}
+const CBIN_DOOR = crResample([[0.42, 1.835], [0.60, 1.86], [0.75, 1.93], [0.825, 2.03], [0.82, 2.12], [0.78, 2.2], [0.725, 2.262]]);
+const CBIN_Q = [...CBIN_DOOR, [0.62, 2.30], [0, 2.315]];
 const CBIN_Y = 1.835, CBIN_BAND = 0.84;
 const TILT_O = Math.atan2(1.795 - 1.60, 2.845 - 1.53);
 // door skin slightly cool (photo samples of lit door faces ~#eeeeed, shaded ones #b4b8be..#bfc5cb) [V colour]
+// Centre-bin doors and PSU channel get a small self-lift (e 0.10): they face down/sideways into the dim middle of
+// the cabin where the hemisphere fill leaves them 40-90 levels darker than the photos (lower door #c3c7cb in
+// c_27312 / y_47301, channel #bebec0..#cacaca in y_47300 [V samples]); the outboard doors already matched [D].
 const BINMAT = {
   door: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic },
+  doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10 },
+  bandC: { c: '#e4e3df', r: 0.5, l: LAYER.plastic, e: 0.10 },
+  signPod: { c: '#2a2e34', r: 0.45 },
   seam: { c: '#3d4147', r: 0.8 },
   lipGap: { c: '#4a4f56', r: 0.8 },
   lip: { c: '#e2e2df', r: 0.36, l: LAYER.plastic },
@@ -40,6 +59,57 @@ const BINMAT = {
   o2gap: { c: '#b2b6ba', r: 0.7 },
   grille: { c: '#9ea3a8', r: 0.6, l: LAYER.grille },
 };
+
+// Bin decals painted over 06_atlas's versions of the same rects (these decals are only used here; the atlas is
+// uploaded right after buildAtlas, before the bins are built):
+//  - row placards: small dark-grey numerals and seat pictograms printed straight on the white door top edge, no plate
+//    (py_37302 '25 ..' above the latch, sany_11 / sany_12 '25' / '31' + seat icons on the lip [V]); ink #4a4f57,
+//    numeral 19 px bold [A]. The 76x30 px rect is stretched onto a PLACARD (0.115 x 0.032 m, 3.6:1) quad, so the
+//    content is drawn pre-squeezed in x. Centre-bin placards get a lighter ground to match the self-lit centre door.
+//  - psuSigns: dark ground, no-smoking icon red-orange #ff5a2a, fasten-belt icon amber #ffa634 (sany_15 [V colours])
+function paintBinDecals(A, layout) {
+  const g = A.canvas.getContext('2d'), S = A.canvas.width;
+  const rect = (name) => { const r = A.rects[name]; return r && [r[0] * S, r[1] * S, (r[2] - r[0]) * S, (r[3] - r[1]) * S]; };
+  const INK = '#4a4f57';
+  const seatIcon = (x, y, s) => {          // seat pictogram: backrest + cushion as rounded squares
+    g.beginPath(); g.roundRect(x, y - s * 0.5, s * 0.34, s, s * 0.12); g.fill();
+    g.beginPath(); g.roundRect(x + s * 0.2, y + s * 0.12, s * 0.7, s * 0.38, s * 0.12); g.fill();
+  };
+  const rows = [...new Set(layout.seats.map((s) => s.row))];
+  for (const r of rows) for (let i = 0; i < 3; i++) {
+    const q = rect(`row${r}_${i}`);
+    if (!q) continue;
+    const [x, y, w, h] = q, sx = (w / h) / (PLACARD[0] / PLACARD[1]);
+    g.fillStyle = i === 1 ? '#f6f7f9' : '#e3e5e8'; g.fillRect(x, y, w, h);
+    const n = layout.seats.filter((s) => s.row === r && (i === 1 ? Math.abs(s.x) <= 1.1 : i === 0 ? s.x < -1.1 : s.x > 1.1)).length;
+    g.save(); g.translate(x, y); g.scale(sx, 1);
+    const W = w / sx;                         // virtual width before the quad stretch
+    g.fillStyle = INK; g.textAlign = 'left'; g.textBaseline = 'middle'; g.font = '700 19px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    const tw = g.measureText(String(r)).width, ic = 11, gap = 3;
+    const total = tw + 6 + Math.min(n, 4) * (ic + gap);
+    let cx = (W - total) / 2;
+    g.fillText(String(r), cx, h / 2 + 1); cx += tw + 6;
+    for (let k = 0; k < Math.min(n, 4); k++) { seatIcon(cx, h / 2, ic); cx += ic + gap; }
+    g.restore();
+  }
+  const q = rect('psuSigns');
+  if (q) {
+    const [x, y, w, h] = q;
+    g.fillStyle = '#0c0f13'; g.fillRect(x, y, w, h);
+    g.lineCap = 'round';
+    // no smoking: cigarette with smoke, ringed and struck through
+    g.strokeStyle = g.fillStyle = '#ff5a2a'; g.lineWidth = 4;
+    g.beginPath(); g.arc(x + 34, y + 32, 22, 0, Math.PI * 2); g.stroke();
+    g.fillRect(x + 20, y + 30, 22, 6); g.fillRect(x + 44, y + 30, 4, 6);
+    g.beginPath(); g.moveTo(x + 18, y + 16); g.lineTo(x + 50, y + 48); g.stroke();
+    // fasten seat belt: buckle with two belt halves
+    g.strokeStyle = g.fillStyle = '#ffa634';
+    g.beginPath(); g.moveTo(x + 80, y + 32); g.lineTo(x + 97, y + 32); g.moveTo(x + 111, y + 32); g.lineTo(x + 128, y + 32); g.stroke();
+    g.beginPath(); g.roundRect(x + 94, y + 24, 20, 16, 4); g.fill();
+    g.fillStyle = '#0c0f13'; g.fillRect(x + 99, y + 29, 10, 6);
+  }
+}
+{ const base = buildAtlas; buildAtlas = function (layout) { const A = base(layout); paintBinDecals(A, layout); return A; }; }
 
 // point + unit tangent on a face polyline at height y (face runs bottom -> top)
 function faceAtY(face, y) {
@@ -77,18 +147,19 @@ function faceShell(face, xs, inward, out, inn) {
   return [...off(out), ...off(-inn).reverse()];
 }
 // door skin on a face polyline; the joint seam is a separate piece (doorSeam) so a run's ends stay clean
-function addDoor(B, face, L, xs, inward) {
-  B.add(gExtrude(faceShell(face, xs, inward, 0.006, 0.004), L - 0.012, 25), null, BINMAT.door);
+function addDoor(B, face, L, xs, inward, mat = BINMAT.door) {
+  B.add(gExtrude(faceShell(face, xs, inward, 0.006, 0.004), L - 0.012, 25), null, mat);
 }
 const doorSeam = (B, face, xs, inward, z = 0) => B.add(gExtrude(faceShell(face, xs, inward, 0.004, 0.002), 0.013, 25), M4.trs(0, 0, z), BINMAT.seam);
-// baked shading for the bins (the shader's hemisphere fill leaves them flat): down-facing surfaces x0.95..0.88,
-// aisle-facing door faces x0.93, calibrated on photo samples (y_47301 door #c7c6cb..#dcdcdc, bin bottom #c0c3c8,
-// py_37302 door #b2bcc6, vault #f0f1ef) [D factors]
+// baked shading for the bins (the shader's hemisphere fill leaves them flat): down-facing surfaces x0.99..0.95,
+// aisle-facing door faces x0.97, calibrated on photo samples (y_47301 door #c7c6cb..#dcdcdc, bin bottom #c0c3c8,
+// centre bin #c2c3c7; c_27312 centre bin #c3c7cb; py_37302 door #b2bcc6, vault #f0f1ef) [D factors; r2 raised
+// from 0.95..0.88 / 0.93, which rendered the centre bins 40-90 levels too dark]
 function shadeUpper(geo) {
   const { nrm, col } = geo;
   for (let k = 0; k < nrm.length / 3; k++) {
     const ny = nrm[k * 3 + 1];
-    const f = ny < -0.3 ? lerp(0.95, 0.88, clamp((-ny - 0.3) / 0.5, 0, 1)) : ny < 0.5 ? 0.93 : 1;
+    const f = ny < -0.3 ? lerp(0.99, 0.95, clamp((-ny - 0.3) / 0.5, 0, 1)) : ny < 0.5 ? 0.97 : 1;
     for (let c = 0; c < 3; c++) col[k * 4 + c] = Math.round(col[k * 4 + c] * f);
   }
   return geo;
@@ -121,13 +192,13 @@ function centerBinModule() {
   B.add(gExtrude(poly, L - 0.006, 20), null, MAT.bin);
   const [hx, hy, htx, hty] = faceAtY(CBIN_DOOR, 2.09);
   for (const s of [-1, 1]) {
-    addDoor(B, CBIN_DOOR, L, s, -1);
+    addDoor(B, CBIN_DOOR, L, s, -1, BINMAT.doorC);
     addLatch(B, faceM((hx + 0.006) * s, hy, htx * s, hty, 0, s));
     B.add(gBox(0.05, 0.01, L - 0.03), M4.trs(0.70 * s, 2.268, 0), MAT.led);
     // dark gap between the wrapped door edge and the PSU channel (the two converging lines in y_47300)
     B.add(gBox(0.012, 0.002, L), M4.trs(0.425 * s, CBIN_Y - 0.0065, 0), BINMAT.lipGap);
   }
-  B.add(gBox(CBIN_BAND, 0.004, L - 0.004), M4.trs(0, CBIN_Y - 0.0045, 0), BINMAT.band);
+  B.add(gBox(CBIN_BAND, 0.004, L - 0.004), M4.trs(0, CBIN_Y - 0.0045, 0), BINMAT.bandC);
   for (let k = 0; k < 8; k++) B.add(gBox(CBIN_BAND - 0.03, 0.002, 0.0015), M4.trs(0, CBIN_Y - 0.0075, -L / 2 + (k + 0.5) * L / 8), BINMAT.joint);
   return shadeUpper(B.build());
 }
@@ -139,31 +210,41 @@ function binSeams(which) {
   return B.build();
 }
 
-// PSU for one seat group (built flat, hanging from y=0): per seat a reading-light pod (oval housing, lens,
-// switch) and a gasper in a round bezel behind it (the two transverse rows in y_47300); call button,
-// signs, oxygen-mask door and a speaker grille on the panel. pitch = seat-to-seat spacing of the units.
+// PSU for one seat group (built flat, hanging from y=0): two slim near-flush transverse rows as in y_47300 [V]:
+// oval reading lights on a linked light rail, then small gaspers in round bezels; no raised base plate (none in
+// the photo). Nothing hangs more than 15 mm [A depths]. Call button, signs, oxygen-mask door and a speaker grille
+// flush on the channel. pitch = seat-to-seat spacing of the units.
 function psuModule(n, lights = true, pitch = 0.15) {
   const B = new Builder();
   const w = Math.max(0.26, (n - 1) * pitch + 0.16);
-  B.add(gRBox(w, 0.012, 0.36, 0.006, 1), M4.trs(0, -0.002, 0.02), BINMAT.band);
+  if (lights) B.add(gRBox(w, 0.006, 0.035, 0.003, 1), M4.trs(0, -0.003, -0.10), BINMAT.pod);
   for (let k = 0; k < n; k++) {
     const x = (k - (n - 1) / 2) * pitch;
     if (lights) {
-      B.add(gCyl(0.025, 0.025, 0.012, 12), M4.trs(x, -0.012, -0.10, 0, 0, 0, 2.2, 1, 1), BINMAT.pod);
-      B.add(gCyl(0.017, 0.017, 0.006, 8), M4.trs(x - 0.025, -0.017, -0.10), MAT.lens);
-      B.add(gBox(0.018, 0.004, 0.012), M4.trs(x + 0.03, -0.0175, -0.10), BINMAT.bezelDark);
+      B.add(gCyl(0.02, 0.02, 0.008, 12), M4.trs(x, -0.007, -0.10, 0, 0, 0, 2.4, 1, 1), BINMAT.pod);
+      B.add(gCyl(0.013, 0.013, 0.004, 10), M4.trs(x - 0.02, -0.0105, -0.10), MAT.lens);
+      B.add(gBox(0.014, 0.003, 0.010), M4.trs(x + 0.028, -0.0105, -0.10), BINMAT.bezelDark);
     }
-    B.add(gCyl(0.03, 0.03, 0.006, 10), M4.trs(x, -0.010, -0.02), BINMAT.pod);
-    B.add(gCyl(0.017, 0.021, 0.018, 8), M4.trs(x, -0.020, -0.02), MAT.nozzle);
-    B.add(gCyl(0.007, 0.007, 0.006, 6), M4.trs(x, -0.030, -0.02), MAT.darkPlastic);
+    B.add(gCyl(0.022, 0.022, 0.004, 12), M4.trs(x, -0.002, -0.02), BINMAT.pod);
+    B.add(gCyl(0.013, 0.016, 0.010, 10), M4.trs(x, -0.009, -0.02), MAT.nozzle);
+    B.add(gCyl(0.005, 0.005, 0.002, 6), M4.trs(x, -0.0142, -0.02), MAT.darkPlastic);
   }
-  B.add(gBox(0.028, 0.006, 0.02), M4.trs(w / 2 - 0.04, -0.009, 0.05), BINMAT.call);
-  B.add(gQuad(0.105, 0.048), M4.trs(0, -0.0085, 0.065, 0, Math.PI / 2), { ...MAT.exitGlow, e: 0.35 }, atlasUV('psuSigns'));
+  B.add(gBox(0.028, 0.004, 0.02), M4.trs(w / 2 - 0.04, -0.002, 0.05), BINMAT.call);
+  B.add(gQuad(0.105, 0.048), M4.trs(0, -0.0012, 0.065, 0, Math.PI / 2), { ...MAT.exitGlow, e: 0.6 }, atlasUV('psuSigns'));
   // oxygen-mask door: flush panel with a hairline gap
   const ow = Math.min(w - 0.04, 0.34);
-  B.add(gBox(ow + 0.006, 0.001, 0.106), M4.trs(0, -0.0085, 0.15), BINMAT.o2gap);
-  B.add(gBox(ow, 0.001, 0.1), M4.trs(0, -0.0092, 0.15), BINMAT.band);
-  if (w > 0.4) B.add(gCyl(0.028, 0.028, 0.003, 10), M4.trs(-w / 2 + 0.05, -0.009, 0.06), BINMAT.grille);
+  B.add(gBox(ow + 0.006, 0.001, 0.106), M4.trs(0, -0.0005, 0.15), BINMAT.o2gap);
+  B.add(gBox(ow, 0.001, 0.1), M4.trs(0, -0.0012, 0.15), BINMAT.band);
+  if (w > 0.4) B.add(gCyl(0.028, 0.028, 0.002, 10), M4.trs(-w / 2 + 0.05, -0.001, 0.06), BINMAT.grille);
+  return B.build();
+}
+// no-smoking / fasten-belt sign pod on the outboard PSU band once per seat row: dark housing with the lit icon pair
+// (sany_15 from 35B: dark oval housing, red-orange cigarette + amber belt icons over the outboard block [V];
+// 0.12 x 0.05 m [A])
+function signPodModule() {
+  const B = new Builder();
+  B.add(gRBox(0.12, 0.012, 0.05, 0.02, 2), M4.trs(0, -0.004, 0), BINMAT.signPod);
+  B.add(gQuad(0.10, 0.042), M4.trs(0, -0.0102, 0, 0, Math.PI / 2), { ...MAT.exitGlow, e: 0.6 }, atlasUV('psuSigns'));
   return B.build();
 }
 
@@ -231,6 +312,15 @@ function buildBins(gl, layout) {
   // centre-row unit pitch 0.20 m: 4 units span ~0.76 m, ~70 % of the channel width in y_47300 [V ratio, A pitch]
   for (const [key, inst] of Object.entries(psu)) meshes['psu' + key] = gl.mesh(psuModule(+key.slice(1), true, key[0] === 'c' ? PSU_C_PITCH : 0.15), { name: 'psu' + key, layer: 'upper', instances: inst, castShadow: false });
   meshes.psuBox = gl.mesh(psuBoxModule(), { name: 'psuBox', layer: 'upper', instances: box, castShadow: false });
+  // sign pods on the outboard bands, one per seat row with outboard seats, just aft of the row placard z
+  const pods = [];
+  for (const ss of Object.values(byRow)) for (const sd of [-1, 1]) {
+    const o = ss.filter((s) => s.x * sd > 1.1);
+    if (!o.length) continue;
+    const k0 = o[0].kind, z = (k0 === 'econ' ? o[0].z - 0.45 : k0 === 'py' ? o[0].z - 0.5 : o[0].z) + 0.12;
+    pods.push(psuXF(SIGN_POD_X * sd, z));
+  }
+  meshes.signPods = gl.mesh(signPodModule(), { name: 'signPods', layer: 'upper', instances: pods, castShadow: false });
 
   // ---- row placards (~0.8 of the latch width, py_37302 / c_27312 [V ratio]) ----
   const D = new Builder();
@@ -247,7 +337,8 @@ function buildBins(gl, layout) {
   meshes.placards = gl.mesh(D.build(), { name: 'placards', layer: 'upper', castShadow: false });
   return meshes;
 }
-const PSU_BOX_X = 2.15, PSU_C_PITCH = 0.2, PLACARD = [0.115, 0.032];
+// sign pods 0.2 m aisle-side of the per-bay PSU boxes so the two never overlap [A]
+const PSU_BOX_X = 2.15, PSU_C_PITCH = 0.2, PLACARD = [0.115, 0.032], SIGN_POD_X = PSU_BOX_X - 0.2;
 
 // studio slice: two outboard modules a side, four centre modules, aisle ceilings, Y-style PSUs and placards
 function ceilingSlice() {
@@ -259,7 +350,10 @@ function ceilingSlice() {
   for (const zc of [-1.5, -0.5, 0.5, 1.5]) for (const k of ['R', 'L', 'C']) B.addBuilt(side[k], M4.trs(0, 0, zc * BIN.center));
   for (const zc of [-1, 0, 1]) for (const k of ['R', 'L', 'C']) B.addBuilt(seam[k], M4.trs(0, 0, zc * BIN.center));
   for (let k = -3.5; k <= 3.5; k++) for (const x of [-PSU_BOX_X, PSU_BOX_X]) B.addBuilt(psuBoxModule(), psuXF(x, k * CAB.win.pitch));
-  for (const z of [-0.9, -0.036, 0.828]) B.addBuilt(psuModule(4, true, PSU_C_PITCH), psuXF(0, z));
+  for (const z of [-0.9, -0.036, 0.828]) {
+    B.addBuilt(psuModule(4, true, PSU_C_PITCH), psuXF(0, z));
+    for (const x of [-SIGN_POD_X, SIGN_POD_X]) B.addBuilt(signPodModule(), psuXF(x, z + 0.12));
+  }
   for (const [g, name] of [[0, 'row31_0'], [1, 'row31_1'], [2, 'row31_2']]) if (ATL.rects[name]) for (const m of placardXF(g, 0.1)) B.add(gQuad(PLACARD[0], PLACARD[1]), m, MAT.decal, atlasUV(name));
   return B.build();
 }
