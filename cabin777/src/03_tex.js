@@ -7,16 +7,30 @@ const N_LAYERS = 25;
 // layers >= 16 take their pattern from a photo swatch when PHOTO_TEX is embedded (build.py), else procedural
 const PHOTO_LAYERS = { 16: 'y_tick', 17: 'py_back', 18: 'j_tweed', 19: 'j_ash', 20: 'f_wood', 21: 'f_tweed', 22: 'y_carpet', 23: 'py_confetti', 24: 'y_diamond' };
 let PHOTO_PIX = null;
-// photo pattern strength per layer (1 = as photographed); PY fleck toned down: at seat distance the photo reads finer
-const PHOTO_GAIN = { 17: 0.5, 19: 0.7, 23: 0.8 };   // decoded swatches: { name: Uint8ClampedArray RGBA 256x256 }
+// photo pattern strength per layer (1 = as photographed). QA r1 (relative luminance SD measured on the photos):
+//  17 PY dash weave 0.8 (clean re-cut, py_37305), 18 J tweed 0.35 (SD 0.17-0.23 on c_27315 / omaat_room_13 vs 0.42 rendered),
+//  19 J ash 0.3 (SD 0.025-0.05 on omaat_room_10 / c_27313), 21 F tweed 0.5 (reads as a uniform fine weave, omaat_f11 / f2),
+//  20 F wood 0.7 (near-black veneer with fine lighter streaks, omaat_f60)
+const PHOTO_GAIN = { 17: 0.8, 18: 0.35, 19: 0.3, 20: 0.7, 21: 0.5, 23: 0.8 };
+// swatches stored as ratio / ENC instead of ratio / 2 (test/make_swatches.py ENC): the Y ticks are ~10x the navy ground
+// in linear light and clipped away at 2x. photoBase() lifts the material colour by ENC/2 to compensate.
+const PHOTO_ENC = { y_tick: 8, y_diamond: 8 };
+function photoBase(hex, name) {
+  const k = (typeof PHOTO_TEX !== 'undefined' && PHOTO_TEX && PHOTO_TEX[name] && PHOTO_ENC[name]) ? PHOTO_ENC[name] / 2 : 1;
+  if (k === 1) return hex;
+  // shader decode: lin = c^2 (0.31 c + 0.69) (04_shaders toLin); scale in linear light, re-encode by bisection
+  const enc = (l) => { let a = 0, b = 1; for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (m * m * (0.31 * m + 0.69) < l) a = m; else b = m; } return a; };
+  return '#' + hexRGB(hex).map((v) => { const c = v / 255; return Math.round(clamp(enc(c * c * (0.31 * c + 0.69) * k), 0, 1) * 255).toString(16).padStart(2, '0'); }).join('');
+}
 // per-layer params: [scale (tiles per meter), normal strength, albedo strength, roughness strength]
 const LAYER_PARAMS = {
   1: [22, 0.26, 0.14, 0.18], 2: [9, 0.32, 0.14, 0.3], 3: [3.2, 0.7, 0.5, 0.2], 4: [9, 0.1, 0.04, 0.12],
   5: [3.0, 0.1, 0.06, 0.22], 6: [1.1, 0.05, 0.9, 0.2], 7: [2.0, 0.15, 0.45, 0.2], 8: [22, 0.8, 0.9, 0.2],
   9: [20, 0.4, 0.2, 0.2], 10: [2.4, 0.12, 0.28, 0.25], 11: [7, 0.45, 0.28, 0.3],
   // photo-derived fabrics (ANA seat pages, see REFERENCE777.md): Y blue tick jacquard, PY charcoal/white fleck, J/F tweed, J ash
-  16: [5.5, 0.3, 1.4, 0.15], 17: [7.5, 0.3, 0.8, 0.15], 18: [14, 0.5, 0.35, 0.2], 19: [1.6, 0.06, 0.22, 0.2],
-  20: [2.4, 0.08, 0.28, 0.25], 21: [14, 0.5, 0.35, 0.2], 22: [3.2, 0.7, 0.5, 0.2], 23: [5.0, 0.3, 0.8, 0.15], 24: [5.5, 0.3, 1.4, 0.15],
+  // Y normal strength 0.12 (was 0.3: read as a knit; the Y jacquard is a flat woven face, y_47306)
+  16: [5.5, 0.12, 1.4, 0.15], 17: [7.5, 0.3, 0.8, 0.15], 18: [14, 0.5, 0.35, 0.2], 19: [1.6, 0.06, 0.22, 0.2],
+  20: [2.4, 0.08, 0.28, 0.25], 21: [14, 0.5, 0.35, 0.2], 22: [3.2, 0.7, 0.5, 0.2], 23: [5.0, 0.3, 0.8, 0.15], 24: [5.5, 0.12, 1.4, 0.15],
 };
 
 function hash2(ix, iy, seed) {
