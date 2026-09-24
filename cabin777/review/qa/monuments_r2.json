@@ -1,0 +1,198 @@
+{
+ "area": "monuments",
+ "score": 4.5,
+ "details": [
+  {
+   "detail": "Door-3 self-service bar, face on (m05/m06 vs ANA render tda_barcounter and OMAAT omaat_room_32). The seven ash doors with bronze posts and ring pulls are right: model #ae9f82 against #bbac94 and #ad9b81 in the reference. The black basalt counter, steel rail, black upper unit with the blind, monitor, cubby and bottle shelf, the fridge with its oval latch, and the soffit with three downlights and washi bands all match. The bar sits on the wrong side of door 3 (see issues).",
+   "score": 7,
+   "refs": [
+    "ref/web/mono/tda_barcounter.jpg",
+    "ref/web/mono/omaat_room_32.jpg",
+    "scratchpad/qa/mq/r/m05_bar.png",
+    "scratchpad/qa/mq/r/m06_barL.png"
+   ]
+  },
+  {
+   "detail": "J lavatories flanking the bar: ash bi-fold door, bronze trim, VACANT plate with square pull, lit sign. Colour and hardware match the render. The reference door has three vertical ash panels and a white curved edge profile; the model has one seam and a wide bronze frame.",
+   "score": 6.5,
+   "refs": [
+    "ref/web/mono/tda_barcounter.jpg",
+    "scratchpad/qa/mq/r2/n08_d3x.png"
+   ]
+  },
+  {
+   "detail": "Door-2 welcome galley: the black upper unit with landscape monitor, ovens, beverage maker and glass cabinet over ash lower doors, plus portrait monitors on dark end panels facing the aisles, follows omaat_room_32, tda_welcome3 and sans_09. The galley block aft of the cross-aisle is missing, so the work face is open to the J cabin (n01, n06, m03).",
+   "score": 5,
+   "refs": [
+    "ref/web/mono/sans_09.jpg",
+    "ref/web/mono/tda_welcome3.jpg",
+    "scratchpad/qa/mq/r2/n01_d2x.png",
+    "scratchpad/qa/mq/r/m03_d2fwd.png"
+   ]
+  },
+  {
+   "detail": "Door-1 area and the F-cabin front wall. The monuments facing row 1 are a low dark-brown closet and a dark-brown lav. Real photos show a full-height pale mottled washi-print wall across the centre and in front of 1A. The flight-deck door is light grey; in the photo it is dark ebony wood laminate.",
+   "score": 3,
+   "refs": [
+    "ref/web/monuments/omaatF_2.jpg",
+    "ref/web/monuments/tpa_IMG_0220.jpg",
+    "ref/web/monuments/tpa_IMG_0260.jpg",
+    "scratchpad/qa/mq/r2/n02_Ffront.png",
+    "scratchpad/qa/mq/r/m01_d1fwd.png"
+   ]
+  },
+  {
+   "detail": "Class curtains. PY curtains (#474b5e) match py_37302 (#424455), but they hang in the wrong place. The F/J curtains are lavender (#8f92ad rendered), while real photos from both sides show charcoal. There are no rear economy curtains.",
+   "score": 4,
+   "refs": [
+    "ref/web/mono/omaat_room_36.jpg",
+    "ref/web/monuments/omaatF_2.jpg",
+    "ref/ana/py_37302-lang-multi.jpg",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "scratchpad/qa/mq/r/m04_FJ.png"
+   ]
+  },
+  {
+   "detail": "F/J bulkhead, J face: cream laminate, full height, wall boxes on the outboard panels. The shape is right. It renders greyer (#8c877c to #969288) than the photo (#c7bda9). The inset panel line at about 1.45 m and the two small blue placards are missing.",
+   "score": 6,
+   "refs": [
+    "ref/web/mono/omaat_room_36.jpg",
+    "scratchpad/qa/mq/r/m04_FJ.png"
+   ]
+  },
+  {
+   "detail": "J/PY bulkhead, aft face: off-white wall, grey pockets, tilted light-grey monitors, bassinet mounts. The finish is right. The model has 1 monitor per outboard panel and 2 in the centre; the ANA map and py_37303 show 2 and 4. py_37302 shows a column of about 5 grey pockets on the outboard panel; the model has 2.",
+   "score": 5.5,
+   "refs": [
+    "ref/web/monuments/ana_b-777-300ER-n212map.png",
+    "ref/ana/py_37303-lang-multi.jpg",
+    "ref/ana/py_37302-lang-multi.jpg",
+    "scratchpad/qa/mq/r/m07_JPY.png"
+   ]
+  },
+  {
+   "detail": "Door-4 group: wheelchair lav with the white framed pockets matches y_47302. The right-side monument is a closet where the map shows a galley. The centre galley block forward of door 4 is missing, so PY sees galley inserts; py_37302 shows a plain white wall. The row-30 shared monitors are missing. The row-31 centre face has 2 monitors; the map shows 4.",
+   "score": 4,
+   "refs": [
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/ana/py_37302-lang-multi.jpg",
+    "ref/web/monuments/ana_b-777-300ER-n212map.png",
+    "scratchpad/qa/r2/q13_pyFront.png",
+    "scratchpad/qa/mq/r/m08_g4.png",
+    "scratchpad/qa/mq/r2/n05_d4R.png"
+   ]
+  },
+  {
+   "detail": "Rear (door 5): the centre closet, diaper lav and the closet behind 41H/K match the map. The two outboard lavs sit forward of door 5, where the map has none. The aft galley is one transverse 5 m block; the map shows two fore-aft galleys with the lavs outboard of them.",
+   "score": 3,
+   "refs": [
+    "ref/web/monuments/ana_b-777-300ER-n212map.png",
+    "scratchpad/qa/mq/r/m10_rearLav.png",
+    "scratchpad/qa/mq/r/m11_rearG.png",
+    "scratchpad/qa/mq/r2/n04_rearG.png"
+   ]
+  },
+  {
+   "detail": "Standard galley inserts: aluminium trolleys, copper turn-button latches, black deck, beverage makers with green keys. Plausible against sans_38 and the omaatF_33 background.",
+   "score": 6.5,
+   "refs": [
+    "ref/web/mono/sans_38.jpg",
+    "ref/web/monuments/omaatF_33.jpg",
+    "scratchpad/qa/mq/r2/n04_rearG.png"
+   ]
+  },
+  {
+   "detail": "Jump seats: at doors 1, 2 and 5 the folded jump seats are placed on galley work faces and cut through the counter, carts and rail (visible at door 2).",
+   "score": 2,
+   "refs": [
+    "scratchpad/qa/mq/r2/n07_jump2.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "The door-3 bar and its two flanking lavs are built forward of the door-3 cross-aisle. The official map puts them aft of it.",
+   "problem": "src/05_layout.js puts M('lav'), M('bar') and M('lav') at z16+0.03..dz[2][0] with face 1, which is between row 16 and door 3, facing aft. On ANA's map, row 16 sits directly against the door-3 cross-aisle. The two bidet/diaper lavs and the B/G bar come after the door and face forward, and row 17 sits right behind them. As built, rows 16 and 17 are separated by the monuments plus the cross-aisle, in the wrong order.",
+   "evidence": "ref/web/monuments/ana_b-777-300ER-n212map.png (crop saved as scratchpad/qa/mq/map2.png): row 16 ends at px y\u2248590; dashed line at y600; door arrows at y624; lavs at y645-737; bar at y660-705 with angled lines down to row 17 at y745. Model: scratchpad/qa/r2/q11_bar3.png and qa/mq/r2/n08_d3x.png show the lav forward of the door.",
+   "fix": "In buildLayout, move the three monuments to z0 = dz[2][1], z1 = dz[2][1] + 1.30 with face: -1 (front at z0, facing forward into the cross-aisle). Keep x as it is: lavs \u00b11.62..2.70, bar -1.10..1.10. Start rows 17-20 (pairStart[8..]) behind z1 and remove the gap between row 16 and dz[2][0]. Before you pick the final depth, check that the J/PY bulkhead and row 25 still fit ahead of door 4."
+  },
+  {
+   "severity": "high",
+   "detail": "Door 1 and the F cabin: the monuments facing row 1 are wrong in type, height and finish, and the F lav count and positions contradict the map and reviews.",
+   "problem": "The model has a second F lav aft of door 1 in front of 1A (M('lav', -2.70,-1.62, dz[0][1], 7.52)), a low 1.35 m closet in the centre with dark-wood tops, and dark-wood finishes. The ANA map shows both F lavs forward of door 1: a large bidet lav on the left and a bidet/diaper lav at the centre front. Aft of door 1 it shows only closets and a small galley unit in front of 1G. Reviews say there are 'two lavatories at the very front just behind the cockpit, left larger than right'. Photos from row 1 and row 2 show a full-height pale mottled washi-print wall in front of the centre and left suites, up to the ceiling.",
+   "evidence": "ref/web/monuments/omaatF_2.jpg: centre wall full height, washi print #bfbbb0. ref/web/monuments/tpa_IMG_0220.jpg (thepointsanalyst.com): left-front wall washi #80858f under blue mood light. Map crop scratchpad/qa/mq/map1.png: y462-522 white boxes plus G, lav only at y322-390. Roame and upgradedpoints F reviews via WebSearch. Model: scratchpad/qa/mq/r2/n02_Ffront.png, n03_d1L.png.",
+   "fix": "05_layout.js: delete the aft-left lav and replace it with M('partition'-like full-height closet, -2.70, -1.68, dz[0][1], dz[0][1]+0.45, {h: 2.10}). Raise the centre closet to h 2.10 (drop low:true) and span it over x -0.88..+0.28. Add a small galley unit at x +0.28..+0.82 (depth 0.7). In buildMon, give the aft (F-facing) faces of these door-1 monuments MONMAT.bulkF with washiUV, as in buildBulkhead. Add the second lav forward of door 1 on the centre-right beside the flight-deck corridor, about x -0.42..+0.60, 0.65 m deep, at the front."
+  },
+  {
+   "severity": "high",
+   "detail": "The door-2 centre galley is a single block forward of the cross-aisle. The map and photos show galley on both sides of the door-2 cross-aisle, plus monuments in front of 7A and 7K.",
+   "problem": "There is nothing aft of the door-2 cross-aisle, so the black work face of the welcome galley is exposed to the whole J cabin (m03, n06). The ANA map shows a second centre G at y1088-1143 in front of 7E/F, a closet in front of 7A and a G in front of 7K. sans_09 looks along the galley passage from the aisle: galley units line both sides and the welcome monitor is on the dark end panel.",
+   "evidence": "ref/web/mono/sans_09.jpg (galley units left and right of the passage). ref/web/mono/tda_welcome3.jpg. Map crop scratchpad/qa/mq/map1.png y1072-1143. Model: scratchpad/qa/mq/r2/n01_d2x.png (open to the J cabin at right) and n06_d2aft.png.",
+   "fix": "05_layout.js: add M('galley', -0.80, 0.82, dz[1][1], dz[1][1]+0.85, {face:-1, carts:3}) and M('galley', 1.80, 2.70, dz[1][1], dz[1][1]+0.70, {face:-1, carts:2}). Add M('closet', -2.70, -1.80, dz[1][1], dz[1][1]+0.70, {face:-1}). Give their aft faces (toward row 7) MONMAT.bulkJ cream with a wall box, as on the F/J J face. Add the portrait welcome monitor on the aisle-side end panel of the new centre block too (navyPanel #1c1c2c, three steel rub strips at 0.3/0.5/0.7 m as in sans_09)."
+  },
+  {
+   "severity": "high",
+   "detail": "The rear galley and rear lavs are laid out wrongly.",
+   "problem": "The model builds a single transverse galley M('galley', -2.50, 2.50, dz[4][1], zAft) and places the two outboard lavs forward of door 5 (-2.70..-1.25 and 1.25..2.70, zb..dz[4][0]). The ANA map shows no lav forward of door 5 on either side: there is only a dashed line on the left and closets behind 41H/K on the right. Aft of door 5 it shows two fore-aft galleys facing a 1.2 m centre work aisle, with an L lav outboard of each.",
+   "evidence": "Map crop scratchpad/qa/mq/map3.png: lavs at x222-274 and x470-525, y922-1000; galleys at x276-334 and x414-470, y920-1085; nothing on the left between row 42 and door 5. Model: scratchpad/qa/mq/r/m10_rearLav.png, m11_rearG.png, qa/r2/q19_rearGalley.png.",
+   "fix": "05_layout.js: delete the two outboard lav M()s forward of door 5. Add M('galley', -1.52, -0.63, dz[4][1], dz[4][1]+2.5, {face:'+x', carts:6}) and M('galley', 0.60, 1.46, dz[4][1], dz[4][1]+2.5, {face:'-x', carts:6}); the x-facing path in buildMonuments already exists. Add M('lav', -2.35, -1.55, dz[4][1], dz[4][1]+1.2, {face:-1}) and M('lav', 1.46, 2.31, dz[4][1], dz[4][1]+1.2, {face:-1}), clipped by monoSection."
+  },
+  {
+   "severity": "high",
+   "detail": "Door-4 group: the centre galley forward of door 4 is missing, the right-side monument is the wrong type, and the row-30 shared monitors are missing.",
+   "problem": "PY passengers look straight at the forward-facing work face of the door-4 galley (q13 shows black and tan inserts above the seats). The official PY photo shows a plain white wall behind row 27 with two small grey boxes at head height. The map has a thin white box at y42-57 and a centre G at y62-123 forward of door 4, a G on the right (the model has a closet), and shared monitors on the aft faces of the wheelchair lav and the right G for row 30.",
+   "evidence": "ref/ana/py_37302-lang-multi.jpg: aft wall #e0e4ea, grey boxes about 0.25\u00d70.15 m at about 1.7 m, x\u2248\u00b10.5. Map crop scratchpad/qa/mq/map3.png y30-134 (blue monitor bars at y128-134). Model: scratchpad/qa/r2/q13_pyFront.png, qa/mq/r2/n05_d4R.png.",
+   "fix": "Add M('galley', -1.0, 1.07, pyZ[27]+0.35, dz[3][0], {face:1, carts:3}). Give its forward face (toward PY) MONMAT.bulkPY #e3e3df and add two wallBox litPockets (0.26\u00d70.14) at y 1.72, x \u00b10.45. Change the right door-4 M('closet', 1.62, 2.70, ...) to M('galley', ..., {face:1, carts:2}). Add a tiltMonitor at 1.78 m on the aft faces of the wheelchair lav (x\u2248-2.2) and the right galley (x\u2248+2.2)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The F/J curtain colour contradicts real photos from both sides.",
+   "problem": "curtainF '#8f90a8' (lavender-grey, sampled from the f_17313 render) renders #8f92ad. Real photos show charcoal: omaatF_2 from the F side samples #5b5650 and #554f4d under warm light, and omaat_room_36 from the J side samples #35343a.",
+   "evidence": "ref/web/monuments/omaatF_2.jpg (x640-665, y80-180), ref/web/mono/omaat_room_36.jpg (x760-850), scratchpad/qa/mq/r/m04_FJ.png (curtain #8f92ad).",
+   "fix": "src/10_mono.js MONMAT.curtainF: set c to '#38373e' (the same as curtainC)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The PY/Y curtains are in the wrong place, and the rear economy curtains are missing.",
+   "problem": "The model hangs slate curtains beside the door-4 galley's aft face at row 31, citing y_47300. y_47300 looks aft (seat fronts face the camera), so its curtains are at the rear of economy and are light grey (#888785 to #9c9b99). py_37302 shows the dark PY curtains (#424455) immediately aft of row 27, in both aisles.",
+   "evidence": "ref/ana/y_47300-lang-multi.jpg (curtains at x393-415 and 515-540 at the far end), ref/ana/py_37302-lang-multi.jpg. Model: qa/r2/q13_pyFront.png shows no curtain at the PY aft end.",
+   "fix": "In buildMonuments: move the curtainY pair to the aisle gaps at z = pyZ[27]+0.30 (between the new centre galley and the lav or galley on each side). Add a new MONMAT.curtainRear {c:'#8e8d8a', r:0.9, l:LAYER.fabric} pair at the rear aisles, at z = zb (between the centre closet and the rear-left side / the 41H/K closet)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The folded jump seats intersect galley counters.",
+   "problem": "At doors 1, 2 and 5 the jump seats go on galley work faces: x=2.3 at dz[0][0], \u00b10.75 at dz[1][0], and \u00b10.6 at dz[4][1]. The seat box spans z_face+0.015..0.085 over y 0.53-1.42 m. That cuts through the 1.0-1.03 m work deck and alu rail, which reach face+0.03 to 0.045, and through the ash doors and carts. Door 2 shows two dark seats standing in front of and through the welcome-galley counter.",
+   "evidence": "scratchpad/qa/mq/r2/n07_jump2.png. sans_09.jpg and tda_welcome3.jpg show no jump seats on the door-2 galley work face.",
+   "fix": "In buildMonuments, remove jump seats whose x falls inside a galley or bar monument's x0..x1 at that z. Remount them on lav or closet side faces next to the door, e.g. x = \u00b12.25 on the outboard lav/closet faces, and never over a counter. See the questions for exact positions."
+  },
+  {
+   "severity": "medium",
+   "detail": "The flight-deck door and door-1 dark-wood finish are the wrong colour and material.",
+   "problem": "MONMAT.cockpitDoor '#cfccc5' is light grey. The photo shows the flight-deck door in dark ebony wood-grain laminate, with a white/aluminium frame, two white-framed bolt plates, and a 'CREW ONLY' placard. The corridor walls are the same ebony, #322f2f to #43393b with reddish streaks. MONMAT.darkWood '#4a3629' renders medium warm brown (n03).",
+   "evidence": "ref/web/monuments/tpa_IMG_0260.jpg (thepointsanalyst.com F review): samples #322f2f and #43393b. Model: scratchpad/qa/mq/r/m01_d1fwd.png, r2/n03_d1L.png.",
+   "fix": "cockpitDoor: {c:'#3a3332', r:0.4, l:LAYER.wood}. In the 'cockpit' branch, add a 0.03 m aluminium (#c9ccd0) frame and two 0.3\u00d70.3 m white frames at y 1.55 and 0.55. darkWood: c '#38302e'; lav door '#5a4536' becomes '#3f3533'."
+  },
+  {
+   "severity": "low",
+   "detail": "The J/PY bulkhead has too few monitors and pockets.",
+   "problem": "buildBulkhead places one tiltMonitor per outboard segment and two in the centre. The ANA map shows two outboard (one per seat A/C, H/K) and four in the centre (D/E/F/G), and py_37303 shows two housings on the outboard panel. py_37302 shows a column of about 5 grey pockets on the outboard panel; the model has a staggered pair.",
+   "evidence": "ref/web/monuments/ana_b-777-300ER-n212map.png (blue bars y1020-1030), ref/ana/py_37303-lang-multi.jpg, ref/ana/py_37302-lang-multi.jpg (lower left).",
+   "fix": "buildBulkhead: centre x = [-0.84, -0.28, 0.28, 0.84]; outboard x = cx \u00b1 0.26 at y 1.78. PY outboard pockets: 4 grey litPockets at y 0.25, 0.55, 0.85, 1.15, staggered by \u00b10.12 m. Do the same for the row-31 galley face: 4 monitors."
+  },
+  {
+   "severity": "low",
+   "detail": "The J face of the F/J bulkhead is missing its panel line and placards and renders greyer than the photo.",
+   "problem": "The photo shows an inset horizontal panel seam at about 1.45 m across the centre wall, two small blue placards at about 1.75 m, and warm cream #c7bda9. The render samples #8c877c to #969288.",
+   "evidence": "ref/web/mono/omaat_room_36.jpg; scratchpad/qa/mq/r/m04_FJ.png.",
+   "fix": "buildBulkhead, J face: add a 0.006 m dark (#b3aa98) seam box at y 1.45 over w-0.2. Add two 0.08\u00d70.05 m blue (#2f5fb8) quads at y 1.75, x cx\u00b10.35. Lift bulkJ to '#e6dccb'."
+  }
+ ],
+ "questionsForUser": [
+  "The ANA map puts the door-3 lavs and bar aft of door 3, facing forward. Moving them means re-spacing rows 17-20. Should I trust the map over the current row stations, or do you have a photo of the door-3 cross-aisle?",
+  "Exactly where do the flight-attendant jump seats sit at doors 1, 2, 4 and 5 on this aircraft (lav wall, closet wall or door-side panel)? No photo I found shows them.",
+  "What do the forward-centre F lav and the 1K-side monument look like from the F cabin (washi print, ebony or white)? I only found photos of the centre and left walls.",
+  "The door-2 aft centre block faces row 7. Is it cream J laminate or ebony/navy like the welcome panels?",
+  "No photo of the new-config rear galley or rear lavs was found (the SANspotter 2023 economy set is an older layout). Can you supply one to confirm the fore-aft galley arrangement shown on the map?"
+ ]
+}

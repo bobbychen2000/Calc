@@ -1,0 +1,181 @@
+{
+ "area": "ceiling",
+ "score": 6.3,
+ "details": [
+  {
+   "detail": "Aisle vault: curved panels between the bins, 2-frame panel joints, cove wash at both edges. Shape and joints match sany_10/11/12. Vault colour in the lit areas (#f0f1ef..#f8f8f7) matches y_47300 (#ededed).",
+   "score": 8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_12.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_11.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Cove lighting: the bright continuous line where the vault meets the bin tops is present and reads like the photos.",
+   "score": 8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_12.jpg"
+   ]
+  },
+  {
+   "detail": "Slatted grille against the bin tops: placement, transverse slats and segmented runs match sany_12 (crop c3). At distance the 22 mm geometric slats alias into a diagonal moire (q15_econFronts top left and right, q06_roomMain top centre).",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_12.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q15_econFronts.png"
+   ]
+  },
+  {
+   "detail": "Outboard bins: 2-frame modules, near-upright convex door, one dark seam per joint, pill latch about 38 % down the door. This matches py_37302 and y_47301 (latch at about 38 % there too). The lit door tone is right.",
+   "score": 8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Centre bins: the proportions and the wrapped lower door are right. The doors render far too dark: model #5e6167..#85898f against photo #c2c3c7..#c3c7cb. The lower wrap is also visibly faceted.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q06_roomMain.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q16_econAisle.png"
+   ]
+  },
+  {
+   "detail": "Latches: recessed pill with a light bezel and dark recess. Shape and position match pl1 (py_37302 zoom).",
+   "score": 8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Outboard PSU boxes: one raised rounded module per window bay with a gasper and a lens, as in y_47301 and py_37302. No sign module on the outboard band, although sany_15 shows one there.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_15.jpg"
+   ]
+  },
+  {
+   "detail": "Centre PSU channel: the photo shows two slim near-flush transverse rows (oval reading lights on a linked strip, then small gaspers). The model hangs a raised outlined plate with big protruding gaspers. The channel is also too dark: #919191..#a8a8a7 against photo #bebec0..#cacaca.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q15_econFronts.png"
+   ]
+  },
+  {
+   "detail": "No-smoking and fasten-seat-belt signs: drawn white on black. Real signs glow red-orange and amber in a dark oval housing.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_15.jpg",
+    "/home/user/Calc/cabin777/ref/web/monuments/up_F_Forward-Look.jpeg"
+   ]
+  },
+  {
+   "detail": "Row placards: position (top edge of the door, above the latch) is right, but the model draws a navy plate with white text. The real placards are small dark-grey characters printed straight on the white door or lip, with seat pictograms.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_11.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_12.jpg"
+   ]
+  },
+  {
+   "detail": "Ceiling EXIT signs: flush header signs are present, but the text is only 'EXIT'. ANA's signs read '\u2190 \u975e\u5e38\u53e3 EXIT \u2192', about 4:1, in dark red on a light face.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/monuments/up_F_Forward-Look.jpeg"
+   ]
+  },
+  {
+   "detail": "Speakers and emergency light on the vault: a rounded-rect fitting per panel plus a small dark-framed rectangle lens, as in sany_11/12. The rounded rect renders octagonal because it has too few corner segments.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_11.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_12.jpg"
+   ]
+  },
+  {
+   "detail": "Door-area ceilings: the model uses a transverse 1.2 x 0.5 m light panel. The photo at L1 shows a long narrow light strip running fore-aft along the edge of a flat ceiling panel.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/monuments/up_F_Forward-Look.jpeg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "The centre overhead bins, and the down-facing bin surfaces generally, render much darker than the real cabin, so the centre bins read as a heavy grey mass over the seats.",
+   "problem": "Colour and lighting of the centre-bin doors and PSU channel: sampled 40-90 levels darker than the photos.",
+   "evidence": "Pixel samples. y_47301 (left aisle, centre bin at right): (700,40) #c2c3c7. c_27312 centre bin (200,60): #c3c7cb. y_47300 centre channel (460,40..70): #bebec0..#cacaca. Model: q16_econAisle (400,20) #5e6167 and (650,40) #83868d; q06_roomMain (200,40) #85898f and (300,90) #73767c; q15_econFronts channel (460,40..80) #919191..#a8a8a7.",
+   "fix": "In 08_bins.js shadeUpper, raise the down-facing factors from lerp(0.95,0.88) to lerp(0.99,0.95) and the aisle-facing factor from 0.93 to 0.97. Give BINMAT.door and BINMAT.band a small self-lift (e: 0.10) so that centre-bin lower-door pixels land near #c3c7cb and the channel near #c4c6c8 in q06/q16/q15 (outboard doors already match, so apply it to the centre module only if the outboard ones get too bright, for example via a separate BINMAT.doorC = {c:'#e3e5e8', r:0.34, l:LAYER.plastic, e:0.10})."
+  },
+  {
+   "severity": "medium",
+   "detail": "The row placards are navy plates with white text. In reality they are small dark-grey numerals and seat pictograms printed straight on the white door top edge (and on the shelf lip, visible when the bin is open).",
+   "problem": "Wrong placard styling (background and colours).",
+   "evidence": "py_37302 zoom (crop at 140..320, 0..50): '25 \u2b1a\u2b1a' in dark grey on the white door, above the latch. sany_11 (820..1000, 255..300): '25 [seat icons]' in dark grey on the white lip. sany_12: '31' likewise. The model placards (06_atlas.js row placards) are #2a3140 fill with #eef2f7 text.",
+   "fix": "In 06_atlas.js row placards, fill the background with the door colour #e3e5e8, or make it transparent and alpha-blend with MAT.decal. Draw the row number in #4a4f57 at font(19,700) and replace the letters with small seat pictograms (rounded squares with backrests) in #4a4f57. Keep PLACARD = [0.115, 0.032] in 08_bins.js."
+  },
+  {
+   "severity": "medium",
+   "detail": "The no-smoking and fasten-seat-belt signs are drawn as white icons on black. Real ones are illuminated red-orange (no smoking) and amber (seat belt) icons in a dark oval housing. Photos also show the unit on the outboard PSU band, which the model lacks.",
+   "problem": "Wrong sign colour; signs missing from the outboard PSU band.",
+   "evidence": "sany_15 (crop 440..720, 40..130), taken from 35B: a dark oval housing with a red-orange cigarette icon and an amber belt icon on the overhead above the outboard block. up_F_Forward-Look: orange lit sign pair next to the ceiling light strip.",
+   "fix": "06_atlas.js psuSigns: keep the #0c0f13 ground and draw the no-smoking icon in #ff5a2a and the belt icon in #ffa634. Raise the psuModule sign quad emission (MAT.exitGlow e 0.35 -> 0.6). In 08_bins.js add a sign pod to the outboard band once per seat row (a gRBox(0.12, 0.012, 0.05, 0.02) housing in #2a2e34 with the psuSigns quad), placed with psuXF(PSU_BOX_X*side, rowZ + 0.12)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The ceiling EXIT signs read only 'EXIT'. ANA's read '\u2190 \u975e\u5e38\u53e3 EXIT \u2192', a wide bilingual sign with arrows.",
+   "problem": "Missing Japanese text and arrows; wrong aspect ratio.",
+   "evidence": "up_F_Forward-Look.jpeg crop (650..1250, 0..470): the sign over the door-1 cross-aisle reads '\u2190\u975e\u5e38\u53e3 EXIT\u2192' in dark red on a light face, about 4:1. A second sign on the monument side reads '\u53e3 EXIT'.",
+   "fix": "06_atlas.js 'exit': a 280x72 canvas on #f4f1ea, drawing '\u2190 \u975e\u5e38\u53e3 EXIT \u2192' in #c21e1e with font(34,800) (CJK falls back to a system font). In 07b_ceiling.js change the zone-end sign to gRBox(0.36, 0.09, 0.03) with a gQuad(0.33, 0.08), and the door fascia sign to gQuad(0.40, 0.10) inside a gRBox(0.44, 0.12, 0.03)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The centre PSU channel looks like a raised outlined plate with large pendant gaspers hanging about 3 cm down. The photo shows two slim, near-flush transverse rows: oval reading lights on a linked strip, then small gaspers, with no visible plate.",
+   "problem": "Centre PSU shape and depth.",
+   "evidence": "y_47300 crop (380..560, 0..110) against q15_econFronts crop (300..630, 0..160).",
+   "fix": "08_bins.js psuModule: drop the outlined base plate (the gRBox w x 0.36 band) or reduce it to a 0.001 m flush tint. Add a continuous light rail gRBox(w, 0.006, 0.035) at z -0.10 joining the reading pods. Cut the pod size to gCyl r 0.02 scaled 2.4 in x, 0.008 thick. Cut the gasper to gCyl(0.013, 0.016, 0.010) with its tip at y -0.014, so nothing hangs more than 15 mm."
+  },
+  {
+   "severity": "medium",
+   "detail": "The ceiling grilles alias into a diagonal zigzag moire at distance, which will flicker as the camera walks.",
+   "problem": "Artefact: geometric slats at 22 mm pitch are finer than a pixel at 3 m and beyond.",
+   "evidence": "q15_econFronts top left and right bins and q06_roomMain top centre show zigzag hatching. The real grille in sany_12 (crop c3) reads as a uniform fine stripe at distance.",
+   "fix": "In 07b_ceiling.js buildCeilings, replace the per-slat vaultStrip geometry with one strip per run carrying a mipmapped stripe texture (an atlas rect 'grille' with a 22 mm pitch at #efeeea / #7d8288, repeated along z). Alternatively, fade the slat colour toward a blended #b9bcc0 beyond 2.5 m in the shader."
+  },
+  {
+   "severity": "low",
+   "detail": "The lower wrap of the centre-bin door is visibly faceted, with hard creases. The real doors are smoothly curved.",
+   "problem": "Low-resolution CBIN_Q profile (7 door points).",
+   "evidence": "Studio shots f_cbin and d_up (build_ceiling/st) and x3_psuY/x4_psuC show 2-3 flat facets on the wrap. The y_47301 and c_27312 centre bins shade smoothly.",
+   "fix": "In 08_bins.js, resample CBIN_DOOR (and CBIN_Q) with a Catmull-Rom spline to about 20 points before gExtrude, faceShell and faceAtY. Keep the end points (0.42, 1.835) and (0.725, 2.262)."
+  },
+  {
+   "severity": "low",
+   "detail": "The door-area (cross-aisle) ceiling has a transverse 1.2 x 0.5 m glowing panel. The L1 photo shows a long, narrow light strip running fore-aft along the edge of a flat ceiling panel.",
+   "problem": "Door-area light fixture shape.",
+   "evidence": "up_F_Forward-Look.jpeg crop (650..1250, 0..470): a narrow warm strip running along the cabin, with the sign pair next to its aft end.",
+   "fix": "In 07b_ceiling.js (door zone), replace gRBox(1.2, 0.012, min(0.5,...)) with two strips gRBox(0.07, 0.012, (z1-z0)-0.25, 0.02) at x = \u00b10.55, y = 2.505, colour #fff4d6 with e 0.8."
+  },
+  {
+   "severity": "low",
+   "detail": "The raised rounded-rect fitting (speaker) on each vault panel renders as an octagon.",
+   "problem": "Too few corner segments in vaultPanel (n = 10 across the whole width).",
+   "evidence": "x3_psuY and x7_roomUp show angular corners. sany_11 (385,35) and sany_12 (230,215 in crop c3) show smoothly rounded corners.",
+   "fix": "07b_ceiling.js: call vaultPanel with n = 24 for the three bezel layers."
+  }
+ ],
+ "questionsForUser": [
+  "Does THE Suite zone (rows 1-2) have centre overhead bins? In q01_door1 their forward end cap fills the view, and none of the F photos I have show the ceiling above the centre suites.",
+  "The ref photos show row placards only on the outboard doors and lips. Are they also on the centre-bin doors, or only on the centre bins' PSU channel?",
+  "No photo shows the aisle-vault emergency light fitting up close. Is the small dark-framed rectangle in sany_11/12 the emergency light, or something else (for example a speaker or an attendant light)?"
+ ]
+}

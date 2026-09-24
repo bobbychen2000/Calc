@@ -1,0 +1,229 @@
+{
+ "area": "room",
+ "score": 5.5,
+ "details": [
+  {
+   "detail": "Nested-pair layout and shell massing (odd rows rear-facing outer, even rows forward-facing by the aisle, 1.12 m walls, monument mid-pair)",
+   "score": 7,
+   "refs": [
+    "ref/ana/c_27312-lang-multi.jpg",
+    "ref/ana/c_27313-lang-multi.jpg",
+    "room_r3/q06_roomMain.png",
+    "room_r3/q10_seat14D.png"
+   ]
+  },
+  {
+   "detail": "Shell and seat-textile tone as rendered: shells and seat backs come out near-black (q06 seatback #1c1e23, q10 back #2c2c33, shell face #292d34). ANA photos read mid-grey (c_27312 seatback #43484d; c_27315 back #6b6b79, shell #4c4e60-#535666)",
+   "score": 4,
+   "refs": [
+    "ref/ana/c_27312-lang-multi.jpg",
+    "ref/ana/c_27315-lang-multi.jpg",
+    "ref/web/room/omaat_room_13.jpg"
+   ]
+  },
+  {
+   "detail": "Ash panels (door leaves, aisle ends, cabinet, table tops, divider upper band): colour is close (render #97938a-#a8a49b vs tt_suite-door-1 #a9a8a2-#b6b4ae) and grain direction matches. The grain is too coarse and wavy, and the base is slightly warm (R/B 1.12 vs 1.02-1.05 in the photos)",
+   "score": 6,
+   "refs": [
+    "ref/web/room/tt_suite-door-1.jpg",
+    "ref/ana/c_27305-lang-multi.jpg",
+    "room_r3cu/c2_controls14D.png",
+    "room_r3cu/c5_cabinet14D.png"
+   ]
+  },
+  {
+   "detail": "Aisle armrest ledge / cap rails: the shape and the silver colour are plausible, but the model puts a pale ash strip in the pop-up-panel slot",
+   "score": 5,
+   "refs": [
+    "ref/web/room/omaat_room_13.jpg",
+    "ref/ana/c_27313-lang-multi.jpg",
+    "room_r3/q08_seat12H.png"
+   ]
+  },
+  {
+   "detail": "Doors / door leading edges and the shared aisle-end cap with the oval finger recess",
+   "score": 7,
+   "refs": [
+    "ref/ana/c_27313-lang-multi.jpg",
+    "ref/ana/c_27314-lang-multi.jpg",
+    "room_r3cu/c4_bed14D.png"
+   ]
+  },
+  {
+   "detail": "Seat cushion, back with one seam, slate headrest flap with tab, teal belt",
+   "score": 7,
+   "refs": [
+    "ref/ana/c_27313-lang-multi.jpg",
+    "ref/ana/c_27315-lang-multi.jpg",
+    "room_r3/q09_centrePair.png"
+   ]
+  },
+  {
+   "detail": "Blue pillow: wrong pattern (large zigzag chevrons, not small checks), too dark, wrong shape (rounded blob, not a flat piped rectangle)",
+   "score": 4,
+   "refs": [
+    "ref/web/room/omaat_room_13.jpg",
+    "ref/ana/c_27303-lang-multi.jpg",
+    "room_r3cu/c2_controls14D.png"
+   ]
+  },
+  {
+   "detail": "Monitor + bezel + literature slot + drawer with the green LED: all present. The bezel is a little thick and pure black",
+   "score": 7,
+   "refs": [
+    "ref/web/room/omaat_room_16.jpg",
+    "room_r3/q07_seat11A.png"
+   ]
+  },
+  {
+   "detail": "Tall charcoal column between the monitor and the window, carrying the reading lamp and air nozzle: missing",
+   "score": 3,
+   "refs": [
+    "ref/web/room/omaat_room_14.jpg",
+    "ref/ana/c_27316-lang-multi.jpg",
+    "room_r3cu/c7_side11A.png"
+   ]
+  },
+  {
+   "detail": "Side table (ash top, large-radius corner) and seat controls (handset + button pod): present, but the controls are about 25 % undersized",
+   "score": 6,
+   "refs": [
+    "ref/web/room/omaat_room_16.jpg",
+    "ref/web/room/tt_seat-controls.jpg",
+    "room_r3cu/c2_controls14D.png"
+   ]
+  },
+  {
+   "detail": "Cabinet door (0.34 x 0.38 ash with lower split band) beside the monitor",
+   "score": 7,
+   "refs": [
+    "ref/web/room/omaat_room_16.jpg",
+    "room_r3cu/c5_cabinet14D.png"
+   ]
+  },
+  {
+   "detail": "Footwell (wedge pad, dark cavity): correct shape. In window units the sidewall dado and air-return grille show inside the footwell",
+   "score": 4,
+   "refs": [
+    "ref/web/room/omaat_room_14.jpg",
+    "ref/web/room/omaat_room_17.jpg",
+    "room_r3cu/c7_side11A.png",
+    "room_r3cu/c3_footwell11A.png"
+   ]
+  },
+  {
+   "detail": "Centre divider (charcoal lower band, ash upper band, red life-vest tabs, cap)",
+   "score": 6,
+   "refs": [
+    "ref/ana/c_27313-lang-multi.jpg",
+    "ref/ana/c_27314-lang-multi.jpg",
+    "room_r3/q09_centrePair.png"
+   ]
+  },
+  {
+   "detail": "Seat-number plaques on the aisle caps",
+   "score": 7,
+   "refs": [
+    "ref/ana/c_27313-lang-multi.jpg",
+    "ref/ana/c_27315-lang-multi.jpg",
+    "room_r3cu/c1_plaque14D.png"
+   ]
+  },
+  {
+   "detail": "Reading lights in the shell corners",
+   "score": 6,
+   "refs": [
+    "ref/ana/c_27315-lang-multi.jpg",
+    "ref/web/room/omaat_room_13.jpg"
+   ]
+  },
+  {
+   "detail": "Bed mode: mattress pad and white pillow are fine. The duvet is a flat, saturated royal-blue slab",
+   "score": 4,
+   "refs": [
+    "ref/web/room/tt_bed-2.jpg",
+    "ref/web/room/tt_bed.jpg",
+    "room_r3cu/c4_bed14D.png"
+   ]
+  },
+  {
+   "detail": "Seat tweed swatch (j_tweed): scale and colour read correctly on the cushion",
+   "score": 7,
+   "refs": [
+    "ref/ana/c_27315-lang-multi.jpg",
+    "room_r3cu/c2_controls14D.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Window-unit footwells: the sidewall dado and air-return grille intrude into the seat",
+   "problem": "The 777 dado (07_shell.js DADO: x 2.70 at the floor to 2.83 at y 0.33) sits inboard of the THE Room outer wall (window unit ux \u00b12.275, outer wall at local x -0.572, so world |x| 2.847). The blue-grey dado panel and its louvred grille intrude up to 0.15 m into the unit and are clearly visible inside the footwell of 11A and next to the footwell mouth. This is an interpenetration artefact.",
+   "evidence": "room_r3cu/c7_side11A.png and c3_footwell11A.png: a grille with a blue frame beside the footwell pad. In ref/web/room/omaat_room_14.jpg and ref/ana/c_27316-lang-multi.jpg the window side of the footwell is closed by a charcoal console with a stowage lid and a red life-vest tab; no sidewall or dado is visible below 0.6 m.",
+   "fix": "In roomPart, for window units only (pass opts.window from the LOD builder, or always, since it does no harm in centre units): add an inner liner B.add(gRBox(0.02, 0.62, 2.70, 0.006, 1), M4.trs(-0.43, 0.31, 0), SEATMAT.jShellIn) and fill the space outboard of it at the seat with a solid console, gRBox(0.15, 0.60, 1.39, 0.01, 1) at (-0.505, 0.30, -0.66) for O and (-0.505, 0.30, 0.69) for E, in jShell with a jCap top. Narrow the O footwell to roomFootwell(B, -0.42, -0.13, ...). Alternatively, clip the dado to x >= 2.86 over the J zone in 07_shell.js."
+  },
+  {
+   "severity": "high",
+   "detail": "Shells, seat backs and headrest bands render near-black",
+   "problem": "In the assembled cabin the charcoal shells (jShell #45484d), the padded band (jLeather #4b4d53) and the seat fabric (jFabric #5c5b61) land at #1c1e23-#373b41. In the official photos under the same kind of cabin lighting they are mid-grey #43484d-#6b6b79. THE Room therefore reads as black boxes rather than the grey-and-ash cabin in c_27312. Ash renders about 0.8x the photo luminance, but the greys render about 0.5x, so the ash-to-shell contrast is roughly doubled.",
+   "evidence": "Sampled 12x12 px: q06 seatback #1c1e23 vs c_27312 #43484d; q10 seat back #2c2c33 vs c_27315 #6b6b79; q10 shell #292d34 vs c_27315 #4c4e60; q09 shell top #373b41 vs c_27314 #626c76. omaat_room_13 back #5f6067 / #606165.",
+   "fix": "09_seats.js SEATMAT: jShell #45484d -> #585c63, jShellIn #3a3d42 -> #4a4d53, jCap #505358 -> #62666c, jLeather #4b4d53 -> #5d6066, jFabric #5c5b61 -> #6e6d74 (keep the tweed layer). Alternatively, reduce AO / shadow darkening inside the J pods (the 1.12 m walls): scale the AO term by 0.6 for materials flagged room. Re-sample q06/q10 afterwards and target seat back about #555a60 and shell about #4c5058."
+  },
+  {
+   "severity": "medium",
+   "detail": "No monitor-side column with the reading lamp and air nozzle",
+   "problem": "On the real product the monitor is flanked on its outer (window / centreline) side by a tall charcoal column, about 0.09-0.12 m wide and running to the 1.12 m shell top. It carries a large black reading lamp above a smaller round fitting (air nozzle). In the model the 0.64 m monitor frame runs out to the outer wall, the monument top stops at 1.05 m, and the lamp sits only on the back shell behind the head.",
+   "evidence": "ref/web/room/omaat_room_14.jpg (15A: column between monitor and window, lamp + nozzle at its top); ref/ana/c_27316-lang-multi.jpg (same column to the left of the monitor, two round fittings); room_r3cu/c7_side11A.png and room_r3/q07_seat11A.png show only the monitor frame and then the window.",
+   "fix": "roomPart O: shift the monitor inboard with roomMonitor(B, -0.20, MON.zO, -1, 1) and shrink the frame to gRBox(0.60, 0.38, 0.03). Add a column B.add(gRBox(0.10, ROOM.wall - MON.bot, 0.26, 0.012, 1), M4.trs(-0.535, (ROOM.wall + MON.bot)/2, MON.zO - 0.10), SEATMAT.jShell) plus capRail. Place roomLamp(B, -0.535, MON.zO - 0.235, 1) at y 1.03 with the nozzle at 0.985, facing +z toward the O passenger. Mirror this for E (column at x -0.535 beside the cabinet on the zE face, facing -z). Keep the back-shell lamp: c_27315 shows fittings there too."
+  },
+  {
+   "severity": "medium",
+   "detail": "Pale ash strip in the aisle armrest's pop-up-panel slot",
+   "problem": "The model lays a 22 mm ash strip on top of the silver armrest ledge (O: gBox(0.022,0.006,0.26) at x 0.48; E: at x 0.555). In the photos the ledge has a dark lengthwise slot holding the grey-metal top edge of the retracted privacy panel. There is no wood there, and the beige stripe reads as an artefact in q08/q10 and c4/c6.",
+   "evidence": "ref/web/room/omaat_room_13.jpg (crop of the bottom-right ledge: stepped metallic ledge with a dark slot and a grey metal panel edge); ref/ana/c_27313-lang-multi.jpg (bottom corners: the slot shows a silver strip); room_r3/q08_seat12H.png and q10: beige dotted stripe.",
+   "fix": "Replace both ash strips with a groove, B.add(gBox(0.03, 0.008, L), ..., SEATMAT.jVoid) at the same position, plus the panel edge inside it, B.add(gBox(0.012, 0.004, L-0.02), M4.trs(x, top+0.024, z), SEATMAT.ashDark) with #5d6166 metallic. Add a 6 mm step along the aisle edge of the ledge (gRBox(w, 0.012, d) in jRail offset 0.01 lower), matching the stepped profile."
+  },
+  {
+   "severity": "medium",
+   "detail": "Blue pillow: wrong pattern, colour and shape",
+   "problem": "The yagasuri layer renders as large vertical zigzag chevrons with about 7 cm steps. The real ANA J pillow is a navy jacquard of small offset checks, about 2.5-3 cm, on a flat rectangular cushion with a grey-taupe reverse panel and piping. The model pillow is a thick rounded lump and renders darker and more saturated (#14183c) than the photos.",
+   "evidence": "ref/web/room/omaat_room_13.jpg pillow: fine checks, avg #343a5e, highlights #4c5285, grey back panel visible; ref/ana/c_27303-lang-multi.jpg pillow: check pattern, #26263e shaded; room_r3cu/c2_controls14D.png: chevrons.",
+   "fix": "03_tex.js layer 9: replace the chevron feathers with an offset checker (two tones #32355d / #45508a) at a 0.028 m check, about 18 tiles/m for a 2x2 tile, albedo strength 0.3. SEATMAT.pillowBlue c -> #3e4677. Geometry in roomPart: flatten the pillow to cushionSecs(0.44, 0.34, 0.07, -0.035, {edge: 0.015, r: 0.02}) and add a 0.004 m #6b665e back panel/piping on its rear face."
+  },
+  {
+   "severity": "medium",
+   "detail": "Bed-mode duvet is a flat saturated royal-blue slab",
+   "problem": "SEATMAT.duvet #34558f renders as #254992, a flat board with straight edges. The real ANA J duvet is a desaturated slate/grey-blue quilted comforter that drapes over the edges.",
+   "evidence": "ref/web/room/tt_bed-2.jpg duvet crop average RGB (102,104,107) under warm night light, so near-neutral grey-blue with visible quilting lines; room_r3cu/c4_bed14D.png #254992.",
+   "fix": "SEATMAT.duvet c -> #5a6478 with LAYER.fabric and a quilting stripe (a 0.12 m channel seam as a darker line). Give the loft a draped profile: cushionSecs(0.60, 1.1, 0.07, -0.05, {edge: 0.06, r: 0.06, crown: 0.02}) and let its width exceed the mattress by 0.02 each side so it hangs over."
+  },
+  {
+   "severity": "low",
+   "detail": "Ash grain too coarse and wavy; base slightly warm",
+   "problem": "The j_ash swatch is cut at 2.2 mm/px (100 px over 0.22 m from c_27305), so the rendered streaks are 4-8 mm thick with wavy blotches (PHOTO_GAIN 2.0). The real veneer shows long, straight, hairline (1-2 mm) streaks of moderate contrast. The base #c9c2b3 is warmer (R/B 1.12) than the photos (R/B 1.02-1.05).",
+   "evidence": "ref/web/room/tt_suite-door-1.jpg (close-up of door leaves: fine straight horizontal hairlines, #b6b4ae / #a9a8a2); ref/ana/c_27305 cabinet #a39d9d; room_r3cu/c2_controls14D.png table top shows wavy thick streaks.",
+   "fix": "test/make_swatches.py: re-cut j_ash from ref/web/room/tt_suite-door-1.jpg box (180,120,540,480) (about 0.9 mm/px), set size 0.30, and apply a vertical-only blur so the streaks stay straight. Drop PHOTO_GAIN[19] to 1.2. SEATMAT.ash c -> #c6c1b9."
+  },
+  {
+   "severity": "low",
+   "detail": "Seat-control pod undersized",
+   "problem": "roomControls builds a 0.12 x 0.05 button panel and a 0.10 x 0.07 handset. In the photos the handset (with colour screen and a side button column) is about 0.15 x 0.075 and the button pod about 0.11 x 0.075, with a blue ring button and a 2x4 icon grid.",
+   "evidence": "ref/web/room/omaat_room_16.jpg (handset vs 0.53 m screen width: about 0.28x), ref/web/room/tt_seat-controls.jpg; room_r3cu/c2_controls14D.png.",
+   "fix": "roomControls: handset gRBox(0.15, 0.075, 0.01, 0.02) with a gQuad(0.075, 0.045) screen. Button pod gRBox(0.11, 0.075, 0.008, 0.012) with 8 small gCyl(0.006) buttons in a 2x4 grid around a gCyl(0.011) blue-ring button."
+  },
+  {
+   "severity": "low",
+   "detail": "Monitor bezel thick and pure black",
+   "problem": "The frame is 0.64 x 0.40 around the 0.531 x 0.299 display, a 5.5 cm border. The photo frame is about 0.605 x 0.38 (about 3.5 cm sides, thicker bottom lip) in dark charcoal with a slight sheen, not black.",
+   "evidence": "ref/web/room/omaat_room_16.jpg: frame/screen width ratio 410/360 px = 1.14, height 260/205 = 1.27.",
+   "fix": "roomMonitor: gRBox(0.605, 0.38, 0.03, 0.015) centred 0.01 lower (y 0.835). Use bezel colour #2c2e32, roughness 0.35."
+  }
+ ],
+ "questionsForUser": [
+  "The official r3 renders in scratchpad/qa/r3 were not produced: the batch crashed with 'Target page closed' and left r3/pairs.json and the images missing. I re-rendered q06-q10 from dist_r3 into scratchpad/qa/room_r3/ and made close-ups in room_r3cu/. Is dist_r3 the build you intended for round 3?",
+  "Armrest ledge finish: ANA's studio photo c_27313 shows it bright silver, but OMAAT in-flight photos (omaat_room_13) show a dark bronze-grey gloss. Should the jRail ledge stay #b9bec4 silver, or go to a darker #6a6660 metallic?",
+  "Seat-number plaque text: c_27313 shows cyan/blue glowing numbers (17E/18D), while c_27315 shows white on grey. Do you want the lit-blue version?",
+  "Seated eye-to-monitor distance is 0.79 m in 11A (eye at local z -1.0, monitor at -0.21). No source gives this distance. Do you have an in-seat photo at a known lens so it can be calibrated?"
+ ]
+}

@@ -1,0 +1,188 @@
+{
+ "area": "py",
+ "score": 5.8,
+ "details": [
+  {
+   "detail": "Round-3 renders: the r3 folder was empty (the run in r3.log crashed), so I rebuilt to build_py and re-rendered q13_pyFront and q14_seat26A with a copy of qa.js that blocks Google Fonts (pyq3/qa.js). I also rendered studio close-ups (pyq3/st/*.png) and extra cabin views p3-p5 (pyq3/v/*.png). The q13_pyFront camera is inside the J/PY partition: a beige wall fills the right half and a curtain the left, so it cannot be compared with py_37302. My p1/p2 retries at x 1.55, z 39.2-39.55 also landed inside the bins.",
+   "score": 2,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r3/q13_pyFront.png",
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Overall seat massing is right: a tall straight rear shell rising above the headrest, sculpted back bolsters, pillow wings with a navy flap between them, a floor-standing centre console, big rounded aisle and window shrouds, and a leg rest panel under the cushion.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_13.jpg"
+   ]
+  },
+  {
+   "detail": "Seat fabric (py_back swatch): the row pitch is correct. Measured rows are about 8.7 mm (py_37305 at 860 px/m, py_37301 legrest and back 7-10 mm); the model gives 7.6 mm. Colour is near-neutral as in the white-balanced photos. Up close the swatch is soft (140 px source), so the horizontal dash structure turns into blotches (st/f_console.png).",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37305-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Headrest wings: the confetti pattern is right, but the colour renders much bluer than the back fabric. In q14 the wing has B/R 1.41 and the back 1.14; in py_37301 the wing is 1.26 and the back 1.24, about equal.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37305-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Navy flap: shape, size and position match. Its luminance ratio to the back is 0.42 in q14, the bottom of the photo range (0.42-0.66 across py_37305, 37302, 37301).",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Rear shells render too dark. The p5 shell rear face is 47 against a bulkhead wall of 158 (0.30), and the lower back is 24 (0.15). The photos give 0.41 (san_24 93/228, py_37303 75/184) to 0.56 (san_13 111/197).",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/py/san_24.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_13.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Seatback screen: the 15.6-in bezel in a projecting grey housing, the two white placards and the coat hook plus button are all present and placed as in san_24 / py_37304. The coat-hook bullet renders dark rather than bright silver.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/py/san_24.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37304-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Literature pocket: the model has a flat grey panel with a black slot. The photos show a protruding tray pocket with a hard grey upper lip and a curved black mesh basket.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/py/san_18.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_13.jpg"
+   ]
+  },
+  {
+   "detail": "Centre console: the body, silver top trim and red life-vest tab are present, and the bottle bin sits on the rear at the right height (san_16/17/18). The front-face cubbies are flat plates rather than open pockets, and the AC/USB ports sit near the top instead of just above the red tab. The top cap is a plain light pad rather than dark stitched leatherette with a silver-edged cup lid.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/py/alv_IMG_7192-2-1-800x600.jpeg",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_16.jpg"
+   ]
+  },
+  {
+   "detail": "Leg rest: the stowed fabric panel is correct. The prominent dark-grey hinge roller across its top is missing; the model shows a light-grey pan edge there.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Footrest and foot bar: the black padded bar with silver ends and the folding pedals match san_18 / san_20.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/py/san_18.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_20.jpg"
+   ]
+  },
+  {
+   "detail": "Reading light: a black gooseneck from the shell side with a brushed head at wing-bottom level matches py_37305.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37305-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Aisle and window shrouds: the rounded arm cap, silver strip and recessed rear panel are broadly right (py_37301, 37303, san_13).",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/py/san_13.jpg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "The q13_pyFront QA view is unusable. Its camera, __rel('25C',0.35,1.75,-1.2,...) = x\u2248-1.43, z\u224839.1, sits inside the J/PY partition and closet, so beige wall and curtain fill the frame and no PY seat front can be compared.",
+   "problem": "QA view camera inside a monument",
+   "evidence": "r3/q13_pyFront.png vs ref/ana/py_37302 (a high shot from the front of the right aisle looking aft, H/K pair and windows on the image left, centre block on the right)",
+   "fix": "Only test/qa.js VIEWS.q13_pyFront needs changing. Put the camera over the right aisle just aft of the partition: walk(1.45, 1.85, pyZ25-0.55 \u2248 39.75, 'Math.PI-0.3', -0.45), and check it is clear of the bins (my tries at z 39.2-39.55 were still inside monuments or bins, so move aft until the view is clear). Yaw \u03c0 looks aft; \u03c0-0.3 turns toward the centre block."
+  },
+  {
+   "severity": "medium",
+   "detail": "The layout places PY seats at pySp = 0.5525 m, but pyUnit builds its seats at PY.sp = 0.5715 m. Seat ids (used for picking, the eye point and the seat card) and the geometry disagree by 1.9 cm in 2-blocks and 2.9 cm at D/G in the 4-block, and the 4-block is 7.6 cm wider than the layout assumes.",
+   "problem": "Seat-spacing mismatch between layout and geometry",
+   "evidence": "src/05_layout.js:113 `const pySp = 0.5525` vs src/09_seats.js:242 `PY = { ..., sp: 0.5715 }`; the unit is placed at the block centroid (09_seats.js ~l.936), so seat x \u2260 geometry x",
+   "fix": "Use one constant: set PY.sp = 0.5525, or make 05_layout use PY.sp. The \u224819 in cushion with an 8.5 cm console fits 0.5525 better. Re-check that the console width w = 0.085 and cushion 0.48 still leave a gap (0.5525 - 0.48 = 0.0725 < 0.085, so reduce the cushion to 0.465 or the console to 0.07)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Rear seat shells are much too dark in the cabin, and the lower back is almost black.",
+   "problem": "Shell colour or lighting too dark",
+   "evidence": "v/p5.png: upper rear face 47, lower 24, against bulkhead wall 158 (ratio 0.30 / 0.15). Photos: san_24 rear face 93 vs wall 228 = 0.41, top 146 = 0.64; py_37303 75/184 = 0.41; san_13 111/197 = 0.56",
+   "fix": "Raise SEATMAT.pyShell from #5e6062 to about #74767a and pyArm to #6a6c70. Check the AO volume or occlusion on aft-facing seatbacks, since the lower half renders 2x darker than the upper; lift the floor-proximity AO for the py kind. Target a rendered shell/wall ratio of 0.45-0.55."
+  },
+  {
+   "severity": "medium",
+   "detail": "The headrest wing fabric renders visibly bluer and more lavender than the seat back. In the photos the wings and back have the same chroma; only the white flakes differ.",
+   "problem": "Wing colour too blue",
+   "evidence": "q14: wing #3c4054 (B/R 1.41) vs back #474951 (1.14). py_37301: wing #8893ab (1.26) vs back #8f9cb2 (1.24); san_13: wing #6c675d vs back side #615c53 (same hue)",
+   "fix": "In SEATMAT.pyWing change photoBase('#6e7182','py_confetti') to photoBase('#6f7178','py_confetti'), giving the same B/R as pyFabric #6e7076."
+  },
+  {
+   "severity": "medium",
+   "detail": "The literature pocket is a flat grey rectangle with a black slot. On the real seat it is a protruding tray: a hard grey upper frame with a curved lip, and a black mesh basket below it that bulges about 4-5 cm aft.",
+   "problem": "Pocket shape missing",
+   "evidence": "ref/web/py/san_18.jpg, san_13.jpg, san_26.jpg (tray pocket below the placards with black mesh)",
+   "fix": "In pySeat, replace the pyBay and grille boxes (on(0.38), on(0.32)) with: a grey U-frame gRBox(0.34,0.03,0.05) at on(0.47,0.03); side cheeks gRBox(0.015,0.18,0.05) at dx \u00b10.165; and a black mesh loft SEC(0.30..0.46) of depth 0.045 \u2192 0.02, colour #16181b with LAYER.grille, plus a curved lip. Keep the pocket top at about 0.47 on the back, just below the placards."
+  },
+  {
+   "severity": "medium",
+   "detail": "The console front face has flat plates for its cubbies and puts the ports near the top. The real ZIM console front has two open pocket cubbies (the upper one larger) with blue triangle tabs, and two universal AC outlets at the bottom just above the red life-vest tab.",
+   "problem": "Console front-face layout wrong",
+   "evidence": "ref/web/py/alv_IMG_7192-2-1-800x600.jpeg (The Alviator, 2026: ZIM console front); ref/ana/py_37301 (two dark outlets directly above the red tab); py_37306 (AC+USB panel)",
+   "fix": "In pyUnit (inner && !lod): replace the two 0.006 m plates at y 0.52/0.43 with open pockets, each a front lip gRBox(w-0.02, 0.09, 0.006) set 0.025 proud (z -0.568) plus side walls, at y 0.50 and 0.36 (lower one 0.07 tall). Add small blue triangles #2f47a8. Move SEATMAT.port from y 0.56 to two 0.03\u00d70.03 dark #1c1d20 panels at y 0.17, x \u00b10.02, above the red tab (keep the tab at y 0.12)."
+  },
+  {
+   "severity": "low",
+   "detail": "The leg rest lacks its dark-grey hinge roller. On the real seat a roughly 5 cm diameter bar runs across the full width at the top of the stowed leg rest, just under the cushion front, with a dark side link down to the foot.",
+   "problem": "Leg-rest hinge roller missing",
+   "evidence": "ref/ana/py_37301 (crop pyq3/c1.png: dark roller #70819e in a blue-cast photo, same tone as the console side)",
+   "fix": "In pySeat add gCyl(0.026,0.026,0.46,14) at M4.trs(x0, 0.345, -0.55, 0,0,Math.PI/2) with SEATMAT.pyArm, and side links gRBox(0.015,0.28,0.03) at x0\u00b10.235, y 0.21, z -0.55. Change the pan box (gRBox 0.49\u00d70.05 at y 0.335) to pyArm so no light-grey line shows."
+  },
+  {
+   "severity": "low",
+   "detail": "The console top cap is a light-grey plain pad. The real cap is dark stitched leatherette with a silver edge rail, and a grey moulded cup recess at its front end.",
+   "problem": "Console cap material",
+   "evidence": "ref/web/py/san_16.jpg (stitched dark cap, silver edge, cup recess, seat-letter plaque)",
+   "fix": "Set SEATMAT.pyArmPad to about #4a4c50 (r 0.5, LAYER.leather) and add a stitch line (gBox 0.004\u00d70.002 along the length, #6a6c70). Add a cup recess, a dark disc of radius 0.035 on a grey moulding at the console's front end (z \u2248 -0.50, y 0.668), and a seat-letter plaque (0.03\u00d70.03 #e0e0dc quad) on the aisle-facing side."
+  },
+  {
+   "severity": "low",
+   "detail": "The flap renders at the dark end of the photo range.",
+   "problem": "Flap slightly too dark",
+   "evidence": "q14 flap/back luminance 31/73 = 0.42; py_37302 0.56, py_37301 0.66",
+   "fix": "Change SEATMAT.pyCover from #343850 to #3b4260."
+  },
+  {
+   "severity": "low",
+   "detail": "The coat-hook bullet on the shell's rear face renders dark grey rather than bright satin silver.",
+   "problem": "Coat hook material",
+   "evidence": "ref/web/py/san_24.jpg (bright silver bullet, light-grey round button)",
+   "fix": "Use { c:'#c9ccd0', r:0.25, m:0.9, l:LAYER.brushed } for the coat-hook cylinder in pySeat instead of SEATMAT.frame."
+  }
+ ],
+ "questionsForUser": [
+  "The Alviator's 2026 ANA 777 PY photos (ref/web/py/alv_IMG_7186 / 7192) show a lighter, mottled leaf-like fabric, unlike the dark dash weave in ANA's official py_3730x photos. Is that a different 777-300ER PY configuration, or a reupholstered one? I used only its console-face photo (alv_7192).",
+  "Row 25 (bulkhead): in the real cabin, are the 15.6-in screens armrest-stowed or bulkhead-mounted? The layout note says 'shared monitor ahead'. I could not find a photo of row 25 in the new-212 cabin.",
+  "PY cushion and console widths: ANA gives seat pitch but I found no published armrest-to-armrest width. Which spacing should both files use: 0.5525 m (05_layout) or 0.5715 m (09_seats)?"
+ ]
+}

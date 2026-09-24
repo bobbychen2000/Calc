@@ -1,0 +1,211 @@
+{
+ "area": "econ",
+ "score": 5.5,
+ "details": [
+  {
+   "detail": "Renders: the r3 folder had no q15-q18 renders because the batch died (r3.log: 'Target page ... closed'). I rebuilt to build_econ and rendered them again into scratchpad/qa/econ_r3/ with qa_r3.js, plus studio close-ups of econ3 in scratchpad/qa/econ_r3cu/ (e1_front, e3_side, e4_frontq, e5_backq, e6_head, e7_screen, e8_under, e9_foot; spec in econ_r3_spec.json).",
+   "score": 0,
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/econ_r3/",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/econ_r3cu/"
+   ]
+  },
+  {
+   "detail": "Tick fabric (main pattern): the scale is right (short pale vertical ticks about 3-5 mm) and the contrast is right. Up close it reads a bit like knitted chevrons, and at cabin distance it is slightly too uniform.",
+   "score": 6.5,
+   "refs": [
+    "ref/ana/y_47306-lang-multi.jpg",
+    "econ_r3cu/e6_head.png"
+   ]
+  },
+  {
+   "detail": "Fabric colour: too saturated and too pure a blue in the cabin. q15 fabric renders #24326d (R/B 0.33, G/B 0.46) against the y_47300 photo at #2c3a64 (R/B 0.44, G/B 0.58). q16 renders #293a7a. The studio render gives #344990 against y_47306 #5066a9 (R/B 0.36 vs 0.47). Brightness is close; the chroma is off.",
+   "score": 5.5,
+   "refs": [
+    "ref/ana/y_47300-lang-multi.jpg",
+    "ref/ana/y_47301-lang-multi.jpg",
+    "ref/ana/y_47306-lang-multi.jpg",
+    "econ_r3/q15_econFronts.png"
+   ]
+  },
+  {
+   "detail": "Diamond-lattice variant: renders as blurry, cloudy pale blobs, like snowflakes. The photos show a crisp, low-relief diamond lattice with the fine ticks running through it. This is the most eye-catching fabric error: one seat in three in q15, q16 and e1/e4/e6.",
+   "score": 3,
+   "refs": [
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47302-lang-multi.jpg",
+    "econ_r3cu/e6_head.png"
+   ]
+  },
+  {
+   "detail": "Mosaic / dash variant: dense and sparse dash checks are plausible against the left seat in y_47302 and the right seat in y_47306.",
+   "score": 6.5,
+   "refs": [
+    "ref/ana/y_47302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Headrest cushion / wings (confetti): the colour is fine, but the flakes are about twice too large and too round. They render as 11-22 mm blobs; the photo shows about 5-8 x 2 mm white dashes.",
+   "score": 4,
+   "refs": [
+    "ref/ana/y_47306-lang-multi.jpg",
+    "econ_r3cu/e6_head.png"
+   ]
+  },
+  {
+   "detail": "Headrest cover: size (0.27 x 0.22) and position match y_47306. The colour renders #353c55 and #333b59; photos range from #272d48 (y_47300) to #475273 (y_47306). The small corner logo is present. The top fold, 0.07 deep, looks slab-like from above in q15/q16; photos show about 3-4 cm.",
+   "score": 7,
+   "refs": [
+    "ref/ana/y_47306-lang-multi.jpg",
+    "ref/ana/y_47300-lang-multi.jpg",
+    "econ_r3/q16_econAisle.png"
+   ]
+  },
+  {
+   "detail": "Pillows: navy pillow upright at the seat crease, as in y_47300. Shape and colour are acceptable.",
+   "score": 7,
+   "refs": [
+    "ref/ana/y_47300-lang-multi.jpg",
+    "econ_r3cu/e4_frontq.png"
+   ]
+  },
+  {
+   "detail": "Armrests: the length and the white 'paddle' fairings are right. The front end is a small drooping nose block; photos show a vertical front post with a round dark-grey pivot knuckle, meeting the paddle. They render near-white; photo arms are light grey #afb2bc (y_47303) and #9fa6ab (y_47302).",
+   "score": 6,
+   "refs": [
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Seat-back shell: a flat 0.446 m plank. The screen glass fills only 0.71 of the shell width (q18); photos show 0.85-0.89 (y_47305, sanspotter 26 and 27). The margin above the glass is 0.068 m against about 0.027 m in the photos. The upper shell should be a deep, sculpted screen hood (y_47303, sanspotter 18).",
+   "score": 5,
+   "refs": [
+    "ref/ana/y_47305-lang-multi.jpg",
+    "ref/ana/y_47303-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-27-768x576.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-18-768x576.jpg",
+    "econ_r3/q18_seat35C.png"
+   ]
+  },
+  {
+   "detail": "IFE screen: the glass bezel (0.316 x 0.205 around 0.294 x 0.166) matches y_47305 measurements. The raised off-white surround reads as a separate plate rather than part of the shell.",
+   "score": 6.5,
+   "refs": [
+    "ref/ana/y_47305-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Controller: the dock size (0.16 x 0.045) is right. The handset is simplified to one black disc and three dots. The photos show a D-pad ring, OK and +/- keys, and four colour keys in a diamond, all on a dark-navy handset.",
+   "score": 6,
+   "refs": [
+    "ref/ana/y_47305-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-19-768x576.jpg"
+   ]
+  },
+  {
+   "detail": "Tray / pocket / outlet: the tray and the AC/USB plate are present. The lower pocket is a dark full-width grille. Photos show a light-grey leatherette literature pocket in the middle with light silver-grey open mesh pockets either side, a pictogram placard and a round coat-hook recess.",
+   "score": 5,
+   "refs": [
+    "ref/ana/y_47303-lang-multi.jpg",
+    "ref/ana/y_47307-lang-multi.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-17-768x576.jpg",
+    "ref/web/econ/sans_ana-777-300er-economy-20-768x576.jpg"
+   ]
+  },
+  {
+   "detail": "Legs / structure: silver legs and track fittings are acceptable. There is no low baggage bar. The under-seat electronics box appears only under the last seat.",
+   "score": 6,
+   "refs": [
+    "ref/ana/y_47302-lang-multi.jpg",
+    "ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Belts: blue belt, silver tongue and grey buckle cover, as in y_47303.",
+   "score": 7,
+   "refs": [
+    "ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Life-vest tab: dark holder with a red tab under the pan. The photos show a dark saucer-shaped pouch with a longer red pull strap.",
+   "score": 6,
+   "refs": [
+    "ref/ana/y_47302-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Footrest: two off-white hangers with split pedals, as in y_47304. The pedals are plain grey slabs; the photo shows longitudinal ribs about 5 mm apart and dark end caps, and curved hangers.",
+   "score": 6,
+   "refs": [
+    "ref/ana/y_47304-lang-multi.jpg",
+    "econ_r3cu/e9_foot.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Diamond-lattice fabric (yFabricB, photo layer 24 'y_diamond') renders as blurry, cloudy pale snowflake blobs, not a crisp diamond lattice.",
+   "problem": "test/make_swatches.py cuts y_diamond from y_47306 (40,380,160,500): a 120 px patch of the far-left seat, seen at a steep angle and so squeezed horizontally. It is then upsampled to 256 px. The result is blurred and anisotropic.",
+   "evidence": "y_47306 (left seat) and y_47302 (middle seat) show sharp diamond outlines with the ticks through them. econ_r3cu/e6_head.png middle seat and q15 centre seats show soft blobs. The contrast is similar (photo p10/p90 88/161, model 67/123), so the problem is shape and sharpness, not strength.",
+   "fix": "Re-cut y_diamond at native resolution. Either correct the foreshortening, e.g. crop y_47306 (40,380,160,500) and resize to 1/cos(55\u00b0) \u2248 1.75x width before tiling, with nearest or Lanczos resampling and an unsharp mask (radius 1, 80 %). Or drop the photo layer and make layer 24 procedural. Diamonds about 0.06 m tall x 0.045 m wide in a continuous lattice. Lighter fill linear ratio about 1.4 over the ground (#3a4a86 ground / #5566a8 diamond). Keep the tick layer over it. Keep size 0.26 m per tile only if the tile holds a whole number of diamonds (e.g. 4 x 6)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The Y fabric reads too saturated and too pure a blue in the assembled cabin.",
+   "problem": "Base colour #5468a8 (SEATMAT.yFabric/yFabricB, 09_seats.js) through photoBase gives R/B about 0.33 and G/B about 0.46 on screen. The photos give about 0.44 and 0.58.",
+   "evidence": "Pixel means: q15 fabric #24326d vs y_47300 #2c3a64; q16 #293a7a vs y_47301 seats about #2b3053-#394877. Studio e6 #344990 vs y_47306 #5066a9.",
+   "fix": "Desaturate the base, keeping B about constant: try #6a79a8 (R +0x16, G +0x11) for yFabric/yFabricB and #6676a4 for yFabricC. Re-render q15 and check for mean R/B \u2265 0.42 and G/B \u2265 0.56 with luminance \u00b15 %."
+  },
+  {
+   "severity": "medium",
+   "detail": "Headrest wing confetti flakes are about twice too large and blob-shaped.",
+   "problem": "yHead reuses the PY confetti layer (23 'py_confetti', 0.07 m tile from py_37305). On the Y headrest that gives 11-22 mm round flakes. The Y wings in y_47306 have fine 5-8 mm x 2 mm white dashes.",
+   "evidence": "y_47306 right-seat wing (about 990 px/m from the 0.37 m headrest) shows 5-8 px dashes. econ_r3cu/e6_head.png shows 10-20 px blobs at about 900 px/m.",
+   "fix": "Give yHead its own photo layer (e.g. 25 'y_headpad'). Cut it from y_47306 wing region (raw_y_headpad.png already exists, 45x80 px) with tile size about 0.035-0.04 m. Or keep layer 23 and add a per-material UV scale \u00d72 for yHead. Target: flakes about 6 x 2 mm, sparse (about 15 % coverage)."
+  },
+  {
+   "severity": "medium",
+   "detail": "The rear shell is too wide around the IFE, and the screen sits too low in it.",
+   "problem": "The econSeat rear shell is a flat 0.446 m-wide loft up to y = 0.745, with the screen centred at 0.575. The glass fills 0.71 of the visible shell width, and 0.068 m of shell sits above the glass.",
+   "evidence": "Frontal photos: y_47305 glass 600 px of shell 705 px (0.85), and 55 px (0.03 m) margin above. sanspotter 27 gives 355/405 (0.88); sanspotter 26 gives 200/225 (0.89). Model q18_seat35C: 334/466 (0.72), top margin about 0.078 m. y_47303 and sanspotter 18 also show the upper shell as a deep hood, about 0.12 m, around the recessed screen, not a thin plank.",
+   "fix": "In econSeat: taper the rear shell loft so its flat rear face is about 0.37 m wide from y = 0.46 to 0.745 (SEC w 0.446\u21920.40 at 0.46\u21920.37 at 0.62-0.745, r 0.035), letting the blue back fabric show at the sides as in y_47303. Deepen ds at y 0.46-0.70 to 0.10-0.12 m. Raise the screen stack (surround, glass, quad, handset) by +0.04 m (screen centre 0.615, dock 0.471) so the glass top sits about 0.027 m below the shell top. Drop the separate 0.36 m surround plate, or merge it flush with the shell face."
+  },
+  {
+   "severity": "medium",
+   "detail": "The lower seat-back pocket is a dark full-width grille. The real seat has a light leatherette literature pocket flanked by light-grey open mesh pockets.",
+   "problem": "on(0.05) box 0.34 x 0.10, colour #4c5058 with LAYER.grille, reads as a black bag. The coat-hook recess and the pictogram placard are missing.",
+   "evidence": "y_47303 (crop econ_r3cu/c303b.png): silver-grey net pockets either side of a grey leatherette pocket holding the blue magazine. sanspotter 17 shows the tray with a pictogram placard and a round coat-hook recess, top right. sanspotter 20 shows the mesh pockets and the purple 'B777-300' safety card.",
+   "fix": "Replace the grille box with two mesh pockets, 0.09 x 0.11 m each at dx \u00b10.14, colour #9aa0a8, LAYER.grille, with a #3a3e45 top binding 0.008 m. Widen the leatherette flap to 0.22 x 0.12 in the centre (#c9ccd1). Add a round recess (gCyl r 0.028, depth 0.006, #b9bdc3) at dx +0.16 beside the handset, and a 0.05 x 0.02 white placard quad (#e8e8e8) at the top left of the tray."
+  },
+  {
+   "severity": "low",
+   "detail": "Armrest front end doesn't match: the model has a small drooping nose block; the real seat has a vertical front post with a dark round pivot knuckle.",
+   "problem": "econUnit arms: an angled 0.052 x 0.07 x 0.05 nose block at 18\u00b0, and the loft rendered near-white.",
+   "evidence": "y_47302 and y_47303: a light-grey vertical front post from the arm down to pan level, with a round dark-grey knuckle about 0.035 m in diameter, flowing into the white paddle. Arm colour about #afb2bc / #9fa6ab.",
+   "fix": "Replace the nose block with a vertical gRBox(0.045, 0.16, 0.05, 0.02) at z -0.39, y 0.56. Add a gCyl(0.018, 0.018, 0.05) knuckle (#6b7078, r 0.4) on its outer face at y 0.60. Darken SEATMAT.arm to #c4c8cd and armPad to #b6bac0."
+  },
+  {
+   "severity": "low",
+   "detail": "The IFE handset is over-simplified.",
+   "problem": "One black disc and three coloured dots.",
+   "evidence": "y_47305 and sanspotter 19/27: dark-navy handset with a D-pad ring and centre OK key, +/- rockers, and four colour keys in a diamond (blue top, green left, red right, yellow bottom).",
+   "fix": "On the 0.16 x 0.045 dock: a D-pad ring gCyl r 0.014 (#3a3f52) with a centre r 0.006 key at dx -0.035; two 0.006 x 0.014 rockers at dx 0.0 / 0.012; four r 0.0035 keys at dx 0.05 \u00b10.008 / dy \u00b10.008 in #3aa0ff, #40c070, #e04040, #e0c040."
+  },
+  {
+   "severity": "low",
+   "detail": "Footrest pedals are plain slabs.",
+   "problem": "The pedals in econSeat (gRBox 0.13 x 0.02 x 0.05, #9a9ea4) have no ribs or end caps, and the hangers are straight bars.",
+   "evidence": "y_47304: aluminium pedals with longitudinal grooves about 5 mm apart, dark-grey end caps, and curved off-white hangers.",
+   "fix": "Add 0.012 m dark end caps (#4a4e55) at each pedal end. Add a ribbed normal (LAYER.grille rotated, or 5 thin 0.002 m dark quads along the length). Bend each hanger with a 2-segment loft (upper segment -24\u00b0, lower -8\u00b0)."
+  }
+ ],
+ "questionsForUser": [
+  "Belt colour: in y_47303 the belts are clearly cerulean blue (#3a66ad), but in y_47302 they look dark slate-grey. Are the belts on this aircraft mixed, or is y_47302 just the lighting? The model currently uses blue on all seats.",
+  "Safety card: sanspotter's 2023 photos show a purple 'B777-300 \u5b89\u5168\u306e\u3057\u304a\u308a' card in the literature pocket, while the model uses a blue strip, which matches the blue magazine in y_47303. Which should it show?",
+  "Should the diamond fabric keep using a photo swatch at all? No frontal, high-resolution photo of it exists in ref/ana; a procedural lattice may be more faithful than any available crop.",
+  "Whether the headrest cushion should extend about 0.085 m above the rear shell (as now) or about 0.03-0.05 m: y_47303 shows only a narrow blue cap. This interacts with the suggested screen raise."
+ ]
+}

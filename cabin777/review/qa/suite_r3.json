@@ -1,0 +1,202 @@
+{
+ "area": "suite",
+ "score": 6.3,
+ "details": [
+  {
+   "detail": "Overall massing and wall height. The shells are 1.30 m plus a 0.085 cap, so the top sits at about 1.36 m. Upgradedpoints says the door is 53 in (1.35 m), so this checks out. The aft wall, screen wall and aisle-side wardrobe proportions match omaat_f2, f5 and f13.",
+   "score": 8,
+   "refs": [
+    "https://upgradedpoints.com/travel/airlines/ana-boeing-777-300er-the-suite-first-class-review-hnd-sfo/",
+    "ref/web/suite/omaat_f13.jpg",
+    "ref/web/suite/omaat_f2.jpg"
+   ]
+  },
+  {
+   "detail": "Shell and cap colour. The warm taupe cap reads #8b857a in q02; real photos give #8f8569 (omaat_f58). Real photos beat the dark ANA renderings f_17300/17301 here, and the model is right to follow them.",
+   "score": 7.5,
+   "refs": [
+    "ref/web/suite/omaat_f58.jpg",
+    "ref/web/suite/omaat_f7.jpg"
+   ]
+  },
+  {
+   "detail": "Fluted aisle exterior. Rib pitch is 0.022 with rounded ribs, a taupe frame and a floor line, which matches omaat_f60/f7 (about 20 ribs per leaf). The wood panels that show beside closed doors are never visible, because the doors are always parked open.",
+   "score": 7,
+   "refs": [
+    "ref/web/suite/omaat_f60.jpg",
+    "ref/web/suite/omaat_f7.jpg",
+    "ref/web/suite/omaat_f58.jpg"
+   ]
+  },
+  {
+   "detail": "Doors. The parked-open state is correct (omaat_f7/f33), but there is no closed state: two fluted leaves meeting at centre with double silver pulls (omaat_f60, up_Doors).",
+   "score": 5,
+   "refs": [
+    "ref/web/suite/omaat_f60.jpg",
+    "ref/web/suite/up_Doors.jpg"
+   ]
+  },
+  {
+   "detail": "Screen wall and 43 in screen in the window suite. There are wood wings on both sides, a mirror pier with a reading lamp, and a stowed table with a black lip. It matches omaat_f11 well. The table reads near-black, though (see the lighting item).",
+   "score": 7.5,
+   "refs": [
+    "ref/web/suite/omaat_f11.jpg",
+    "ref/web/suite/omaat_f23.jpg"
+   ]
+  },
+  {
+   "detail": "Screen wall in the centre suite. The mirror and pier fall outside the 1.10 m shell and float in the aisle as a black slab.",
+   "score": 2,
+   "refs": [
+    "ref/web/suite/omaat_f5.jpg",
+    "ref/web/suite/omaat_f33.jpg"
+   ]
+  },
+  {
+   "detail": "Window console. The order is correct (handset aft, keypad, then wood tray forward). The tray is a plain rectangle; in reality it is a tapered insert in a sculpted tray. The keypad is flat on the top face; in reality it sits on an inclined raised section.",
+   "score": 6.5,
+   "refs": [
+    "ref/web/suite/up_Privacy-Wall.jpg",
+    "ref/web/suite/omaat_f58.jpg",
+    "ref/web/suite/omaat_f14.jpg"
+   ]
+  },
+  {
+   "detail": "Centre privacy divider. The large dark straight-grain face is correct, but its top carries the thick taupe bullnose cap. In reality it has a thin taupe edge frame with a \u25b2\u25bc tab.",
+   "score": 5,
+   "refs": [
+    "ref/web/suite/up_Privacy-Wall.jpg",
+    "ref/web/suite/tpa_IMG_0220-1024x768.jpg",
+    "ref/ana/f_17314-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Seat. It has a thin cushion, a back that leans back, a slate flap about 75 % of the back's width, 2 seams, 2 black dome reading lamps, and a lavender pillow. It matches omaat_f13/f2 reasonably. The flap tint is slightly teal where the photos show neutral grey.",
+   "score": 7,
+   "refs": [
+    "ref/web/suite/omaat_f13.jpg",
+    "ref/web/suite/omaat_f2.jpg"
+   ]
+  },
+  {
+   "detail": "Ottoman and aisle box. Size and position match omaat_f11, but they render too dark in the cabin: #474141 against #70635c in the photo.",
+   "score": 6,
+   "refs": [
+    "ref/web/suite/omaat_f11.jpg"
+   ]
+  },
+  {
+   "detail": "Bed mode. The pad, duvet and pillows fill from the seat to the ottoman under the table, as in omaat_f58/f57. The duvet is a flat slab with no folds, and the sun patches on it are blocky (see the issues).",
+   "score": 5.5,
+   "refs": [
+    "ref/web/suite/omaat_f58.jpg",
+    "ref/web/suite/omaat_f57.jpg",
+    "ref/ana/f_17304-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Seat plaques. Dark tiles with light text on the forward end of the wardrobe cap are in the right place (omaat_f58/f7). They are about twice as long as the real 0.06 x 0.03 tile.",
+   "score": 6.5,
+   "refs": [
+    "ref/web/suite/omaat_f7.jpg",
+    "ref/web/suite/omaat_f58.jpg"
+   ]
+  },
+  {
+   "detail": "Wood photo swatch f_wood. Near-black straight grain, horizontal on the dividers and screen wall, matching up_Privacy-Wall and omaat_f23. Scale and orientation are OK.",
+   "score": 7.5,
+   "refs": [
+    "ref/web/suite/up_Privacy-Wall.jpg",
+    "ref/web/suite/omaat_f23.jpg"
+   ]
+  },
+  {
+   "detail": "F-zone carpet. It is mauve-grey (#433a3a rendered, base #645554). The real carpet is a warm brown heather: #5e4d32 in omaat_f33 and #5b4d3a in f2.",
+   "score": 4,
+   "refs": [
+    "ref/web/suite/omaat_f33.jpg",
+    "ref/web/suite/omaat_f2.jpg",
+    "ref/web/suite/omaat_f7.jpg"
+   ]
+  },
+  {
+   "detail": "Lighting inside the suite. Seen from the seat (q03), the interior is much darker than the photos. The walls near the windows read white while the table, wood and ottoman read near-black.",
+   "score": 5,
+   "refs": [
+    "ref/web/suite/omaat_f11.jpg",
+    "ref/web/suite/omaat_f5.jpg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "problem": "The mirror and wood pier of the centre suite float outside the shell, in the aisle",
+   "detail": "In suiteUnit({w:1.10, center:true}): xo = -0.52, scx = xo+0.10+0.476 = 0.056, pX0 = scx+0.488 = 0.544, while hx = 0.55. The pier is only 6 mm wide, and the mirror (centre mX = 0.602, 0.10 wide) sits entirely outside the shell's aisle face. It shows as a black slab standing proud of the shell in q02_suiteAisle (right side, about x 780-840 px) and in the studio shot suite_r3/c_top.png (right edge). A 43 in bezel (0.976) plus a 0.10 wing plus a 0.16 pier needs 1.236 m, but the centre suite has only 1.07 m between its inner faces.",
+   "evidence": "omaat_f5.jpg: 2D's mirror is inside the wood pier beside its screen. omaat_f33.jpg: the 1D/1G screens are separated only by a narrow wood strip. The real centre mirror therefore sits inside the shell, and the centre wing is much narrower than the window suite's.",
+   "fix": "src/09_seats.js suiteUnit: make the wing width depend on the unit, wing = center ? 0.02 : 0.10; scx = xo + wing + 0.488. Clamp the pier with pX0 = min(scx + 0.488, hx - 0.07). Size the mirror to the pier: mirror width = min(0.10, hx - pX0 - 0.015), and for the centre place it at mX = (pX0 + hx)/2 (0.06 x 0.34 glass). Build the wing box with width `wing` (currently 0.088 hard-coded) at xo + wing/2. Clamp the reading-lamp x likewise."
+  },
+  {
+   "severity": "medium",
+   "problem": "The centre privacy divider has the thick bullnose cap",
+   "detail": "In the centre branch, cap(0.03, L-0.14, -hx+0.015, H, -L/2) puts the 0.085 x 0.08 taupe bullnose on top of the divider. The real divider is a retractable panel with a thin taupe edge frame and a small raise/lower tab at top centre.",
+   "evidence": "up_Privacy-Wall.jpg: a thin (about 2 cm) taupe frame on top and sides with a \u25b2\u25bc tab. tpa_IMG_0220: a thin edge, no bullnose. f_17314: a thin frame and a round tab at top.",
+   "fix": "Replace that cap call with gRBox(0.035, 0.022, L-0.14, 0.006, 1) at (-hx+0.015, H+0.011, -L/2) in SEATMAT.fDoor. Add a tab, gRBox(0.012, 0.035, 0.07, 0.006, 1) at (-hx+0.035, H-0.01, -L/2), colour #8a8272, carrying two small light-grey triangles."
+  },
+  {
+   "severity": "medium",
+   "problem": "The F-cabin carpet is mauve-grey; the real one is warm brown",
+   "detail": "The F and J zones use MAT.carpetJ '#645554' with the fabric layer. B is about equal to G, so it renders mauve (#433a3a in q02).",
+   "evidence": "Pixel samples of real photos: omaat_f33 aisle #5e4d32, omaat_f2 #5b4d3a, omaat_f7 #4d3f31. All have B well below G (brown heather); the f_17300 rendering shows a brown speckle too.",
+   "fix": "src/07_shell.js: carpetJ c '#5c4b3a'. If THE Room photos disagree, add a separate carpetF '#5c4b3a' for zn.cls==='F'. Keep the fabric layer, but raise its albedo strength to about 0.25 to give the dark/light heather fleck seen in omaat_f7."
+  },
+  {
+   "severity": "medium",
+   "problem": "The suite interior renders far darker than the photos",
+   "detail": "Seen from the seat (q03), the rendered interior is much darker than the photos. The ottoman renders #474141 against #70635c in omaat_f11, and the aisle box #332f2d against #4d412c. The stowed table and console tray read almost black (#272321), while the sidewall beside them is blown white. The tall 1.3 m shells get heavy AO or shadow with no fill from the reading lamps or LED strips.",
+   "evidence": "omaat_f11.jpg, f5.jpg and f13.jpg, lit by ordinary cabin light: the table's ebony grain is clearly visible (omaat_f23) and the seat fabric reads #8c7f76 (f13).",
+   "fix": "In 12_scene.js, raise u_fill inside the F zone (for example, 0.45 to 0.65 for z in suiteZ), or lower the AO weight of suite geometry in computeAO. Alternatively, lighten the suite inner materials by about 25 %: fInner #746d66, fFabric #6e6664, fShelf #4a4038. Target about #6a605a on the ottoman in q03."
+  },
+  {
+   "severity": "low",
+   "problem": "No closed-door state for the sliding doors",
+   "detail": "The fluted leaves exist only in the parked-open position. The sliding doors are a signature feature and close to 53 in. The closed state, with two leaves meeting at the entrance, double silver pulls, and the dark-wood exterior panels exposed on either side, is missing.",
+   "evidence": "omaat_f60.jpg: closed doors with wood flanks and centre pulls. up_Doors.jpg: the closed doors seen from inside. Upgradedpoints: 'full closing sliding door that is 53 inches tall'.",
+   "fix": "In suiteUnit, add opts.doors==='closed': two rib leaves of 0.43 each, spanning z -L+0.38 to -0.96, at x = hx+0.002. The exterior panels they uncover (z -0.96 to -0.10 and -L+0.12 to -L+0.38) switch to SEATMAT.fWood with horizontal grain. Alternatively, instance the leaves as a separate mesh and animate them on a seat-card 'Close doors' toggle."
+  },
+  {
+   "severity": "low",
+   "problem": "Blocky sun patches on the bed",
+   "detail": "In q04_suite1Abed, the window sun patches on the duvet have stair-stepped edges and are fully clipped white.",
+   "evidence": "omaat_f58 and f57 show only soft, diffuse window light on the bedding.",
+   "fix": "Filter the sun/shadow lookup for the F zone with a PCF or 3x3 tap, or raise the shadow-map or sun-LUT resolution there. Clamp the sun term on the duvet material (c '#ebe8e2', lower its albedo to '#e2dfd8' so it stays below 1.0 after exposure)."
+  },
+  {
+   "severity": "low",
+   "problem": "Seat plaques are too large",
+   "detail": "The suite plaque is gRBox(0.045 x 0.08) with a 0.07 x 0.036 text quad. The real tile is about 0.06 x 0.03 when scaled against the 0.55 m door leaf.",
+   "evidence": "omaat_f7.jpg and f58.jpg: the '2K' tile is about 40 x 20 px, against a leaf of about 360-490 px.",
+   "fix": "src/09_seats.js seat tags: for the suite, use gRBox(0.032, 0.004, 0.06, 0.008, 1) and a gQuad(0.055, 0.028) text quad."
+  },
+  {
+   "severity": "low",
+   "problem": "The console tray is rectangular",
+   "detail": "The window-console tray is a 0.80 m rectangular dark-wood inset lying flat. In reality it is a tapered (trapezoidal) wood insert in a taupe tray with a sloped leading edge, and the keypad and handset sit on a slightly raised, inclined section.",
+   "evidence": "up_Privacy-Wall.jpg and omaat_f58.jpg / f7.jpg.",
+   "fix": "Replace the tray gRBox with a loft that tapers from 0.12 wide at the forward end to 0.06 at the keypad end, set in a 0.01 m recess. Raise the keypad and handset block by 0.02 and tilt it 12\u00b0 toward the seat."
+  },
+  {
+   "severity": "low",
+   "problem": "The headrest flap is tinted teal",
+   "detail": "fFlap '#66706f' has G and B about 10 levels above R.",
+   "evidence": "Samples: omaat_f13 flap #7b796f, omaat_f2 #5d5d59, both near-neutral warm grey.",
+   "fix": "SEATMAT.fFlap c '#666864'."
+  }
+ ],
+ "questionsForUser": [
+  "Should the centre-suite privacy divider be modelled raised (as now), lowered, or animated? Photos show both states (omaat_f13 part-lowered, up_Privacy-Wall raised).",
+  "Should THE Room share the new warm-brown carpet, or does J have its own carpet? The THE Room photos were outside this area's scope.",
+  "Real centre suites seem to be wider than the modelled 1.10 m: a 43 in screen, wood strip and mirror pier do not fit, per omaat_f5/f33. Is there a source for the 1D/1G width, so the layout can be widened instead of shrinking the pier?",
+  "The q02-q05 renders were missing from qa/r3 (the batch run crashed: 'Target page closed'). This review used fresh renders from dist_r3 in qa/r3s/ plus studio shots in qa/suite_r3/. Is that acceptable for round 3?"
+ ]
+}

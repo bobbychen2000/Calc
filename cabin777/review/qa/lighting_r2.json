@@ -1,0 +1,156 @@
+{
+ "area": "lighting",
+ "score": 4.5,
+ "details": [
+  {
+   "detail": "Day/boarding key light and exposure in THE Room (q06 vs c_27312). The ceiling, bins and sidewall read as high-key neutral white, which matches ANA's studio photo. The top third's mean luminance is 170 vs 190 in the photo. The bottom third is too dark (50 vs 86): aisle-facing ash and shell faces fall off too fast.",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q06_roomMain.png"
+   ]
+  },
+  {
+   "detail": "Blue sidewall mood band under the outboard bins (cruise/boarding). MOODS defines it, but hemi, bounce and wash swamp it. The strongest pixel in the cruise render is #b8c0d5; in real in-service photos it is #5b5cc4 to #4c5edc.",
+   "score": 2,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/lighting/tlfl_IMG_9217.jpg",
+    "/home/user/Calc/cabin777/ref/web/lighting/tlfl_IMG_9212.jpg",
+    "/home/user/Calc/cabin777/ref/web/ceiling/sany_12.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/light/cruise_room.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/light/boarding_econ_side.png"
+   ]
+  },
+  {
+   "detail": "Night mood (q20). The model is saturated blue-violet everywhere: the ceiling is #616dac, the sidewall #6377bb and the image mean is RGB 45/51/76. A real photo of THE Room at night is almost black and neutral-warm: ceiling #1e1915, sidewall #24211c, mean 39/34/33. The screen, a warm strip under the TV (#ffeb97) and amber PSU lamps (#9e5e38) are the only light sources.",
+   "score": 2,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/lighting/ucr_room-night-lighting.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q20_night.png"
+   ]
+  },
+  {
+   "detail": "Dining/sunset/sunrise warm moods (q21, dining_room, wake_room). The warm tint is pale beige (hue 34\u00b0, saturation about 0.2) and the cabin stays bright. The real ANA amber phase has a saturated amber line on the bin lens (#ffa43d, saturation 0.76) and bins washed #955b2d to #673e1e.",
+   "score": 3,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/lighting/ff_door-gap-1024x768.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q21_sunset.png",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/light/dining_room.png"
+   ]
+  },
+  {
+   "detail": "THE Room seat mood lighting (under the TV / ottoman) and THE Suite floor LED line. SEATMAT.moodGlow is defined but never used, so no THE Room seat has the under-screen or ottoman glow that reviews and night photos show. THE Suite does have fLed hem lines.",
+   "score": 2,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/lighting/ucr_room-night-lighting.jpg",
+    "/home/user/Calc/cabin777/ref/ana/f_17300-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Economy fabric exposure (q15 vs y_47300). Seat backs average #141c47 in the model vs #2c3a63 in the photo; the photo's cushions are #404d73. The middle and bottom thirds are 51/43 vs 81/71. The fabric reads navy-black rather than royal blue.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q15_econFronts.png"
+   ]
+  },
+  {
+   "detail": "THE Room ash panel response. On screen the model reads #7a766d (dull, warm) vs #bdb6a3 to #c5b9ab in the official photo and #a79c80 to #b4a385 in in-flight photos.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/lighting/ff_review-featured-image-1024x683.jpg"
+   ]
+  },
+  {
+   "detail": "Window pane glow and reveal glow in day. Panes are near white with lit reveals, consistent with the real photos (pane about #eef3f8).",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/lighting/tlfl_IMG_9217.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q03_suite1A.png"
+   ]
+  },
+  {
+   "detail": "PSU/bin-underside shadow line and footwell darkness. The model has #57575e for the PSU underside vs #615c5d real, and floor/footwell #32282c vs #322723 real. Plausible.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/lighting/tlfl_IMG_9217.jpg",
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "THE Suite seated view (q03 vs f_17306/f_17300). Screen brightness and the vertical light strip on the pier are fine. Sun patches on the ottoman are plausible. The sidewall is flat white with no blue top-down gradient, while the real in-flight suites (tlfl_9206/9212) show a lavender-blue wash from the bin lens to the windows.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/f_17306-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/lighting/tlfl_IMG_9206.jpg",
+    "/tmp/claude-0/-home-user-Calc/b1f1e8ce-ba52-5ff4-94e9-cb27b8198a85/scratchpad/qa/r2/q03_suite1A.png"
+   ]
+  },
+  {
+   "detail": "Material response. Shells and leatherette show almost no specular sheen. The ANA photo shows soft edge highlights on the charcoal shells and a satin sheen on the economy shell plastics. The effect is minor at these distances.",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47300-lang-multi.jpg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "The night ('sleep') mood is saturated blue-violet: ceiling #616dac, sidewall #6377bb, blue channel mean 76 vs 45 red. THE Room at night in service is near-black and neutral-warm. The only light comes from the IFE screen, a warm LED line under the screen, a small white reading lamp and amber PSU lamps. The blue refs cited in the MOODS comment (roame_7672, sany_10) were shot during boarding on the ground (daylight/apron visible in the windows), so they do not show the night scene.",
+   "problem": "The night mood's colour and level contradict the only real night photo of this cabin.",
+   "evidence": "ref/web/lighting/ucr_room-night-lighting.jpg (upperclassroom.com/ana-business-class-the-room/, captioned 'Inside The Room watching Harry Potter under mood lighting'). Samples: ceiling (300,80) #1e1915, sidewall (900,250) #24211c, bin face (620,50) #322a1f, PSU lamp (680,210) #9e5e38, under-screen strip (550,640) #ffeb97, image mean RGB 39/34/33. Model q20_night: ceiling (500,60) #616dac, sidewall (40,230) #6377bb, mean 45/51/76.",
+   "fix": "src/12_scene.js MOODS.sleep: hemiTop [0.030,0.027,0.024], hemiBot [0.010,0.009,0.008], wash [0.012,0.010,0.008], led [0.045,0.038,0.030], sideLed [0.020,0.020,0.024]. Keep exposure 2.2. Target: ceiling about #1e1915, sidewall about #24211c on screen. Also raise u_screenGain in sleep from 0.35 to 0.6, so the screen stays the brightest element as in the photo. Add an amber PSU lens glow (#c07040, e 0.5, 0.10 x 0.05 m) at each lit reading light."
+  },
+  {
+   "severity": "high",
+   "detail": "The blue LED band under the outboard bins is almost invisible in cruise and boarding. The brightest band pixel in the cruise render is #b8c0d5, and the window belt stays #dfe3ea. In-service photos (THE Suite, THE Room, economy boarding) show a saturated blue-violet wash from the bin lens down to the window tops, fading to lavender at the belt. The shader adds u_sideLed on top of the full hemi, bounce and wash terms, so white swamps it.",
+   "problem": "ANA's signature blue mood lighting is missing from the day cruise and boarding scenes.",
+   "evidence": "tlfl_IMG_9217 (turningleftforless.com THE Suite review): band under bins (300,75) #5d5eca, (560,80) #5458dd; window belt (250,200) #867db2. tlfl_IMG_9212: (300,60) #6460b7. sany_12 (SANspotter economy boarding): band #4c5edc. Model cruise_room column x=900: #a0a7c1 / #b8c0d5 / #c8cfe1. boarding_econ_side: #c5c8cc (no blue at all).",
+   "fix": "src/04_shaders.js mainFS. Define band = wallProx*facingIn*smoothstep(1.0,1.35,v_wpos.y)*(1.0-smoothstep(1.95,2.1,v_wpos.y)). Multiply (hemi*(0.15+0.85*ao)+bounce) by (1.0-0.65*band) and multiply the u_wash term by (1.0-0.8*band). Replace the u_sideLed ramp smoothstep(1.05,1.62,y) with smoothstep(0.95,1.55,y) so the colour reaches the window tops (glass centre y=1.13, top about 1.32). src/12_scene.js MOODS: cruise sideLed [0.20,0.24,1.10], boarding sideLed [0.18,0.22,0.95]. Targets: #5b5cc4 at y 1.55 m and #867db2 at y 1.35 m on the sidewall just under the bins; the window belt (y below 1.0) stays near white."
+  },
+  {
+   "severity": "high",
+   "detail": "The warm moods (dining, wake, and sunset as used by q21) are desaturated beige: hue 34\u00b0, saturation about 0.2, value up to 0.92 on the ceiling. The cabin stays high-key. ANA's amber phase has a saturated amber LED line on the bin lens, amber-washed bin faces and a much darker lower cabin.",
+   "problem": "The warm mood colour temperature, saturation and contrast are far off the real amber mood.",
+   "evidence": "ref/web/lighting/ff_door-gap-1024x768.jpg (frugalflyer.ca ANA THE Room review): bin lens line (100,20) #ffa43d (h32 s0.76 v1.0), bins (300,60) #955b2d, (500,90) #673e1e (s about 0.7). Model q21_sunset: ceiling (300,60) #eaddbe (s0.19), bins (700,100) #bbaa91 (s0.22). dining_room column x=900: #bbae9c at the top and a white sidewall #dee4e7.",
+   "fix": "src/12_scene.js MOODS.dining: hemiTop [0.55,0.38,0.22], hemiBot [0.13,0.09,0.06], wash [0.28,0.16,0.07], led [1.0,0.52,0.16], sideLed [1.1,0.56,0.16], k 0.9, exposure 1.3. MOODS.wake: the same, but led [1.0,0.45,0.25] and sideLed [1.0,0.46,0.26]. Together with the band attenuation above, targets are about #ffa43d on the lens and cove, #955b2d on bin faces and a hue of about 28\u00b0 with saturation of at least 0.6 on the upper cabin."
+  },
+  {
+   "severity": "medium",
+   "detail": "THE Room has no seat-level mood lighting. SEATMAT.moodGlow ('#ffd9a0', e 0.25) is defined in 09_seats.js but never used. The real night photo shows a warm LED line along the console top directly under the monitor. Reviewers say the mood lighting is hidden under the TV and ottoman and that the suite 'glows like the soft-lit alleys of Kyoto' with the cabin lights off.",
+   "problem": "A signature THE Room lighting feature is missing, and the night scene has no warm local glow.",
+   "evidence": "ucr_room-night-lighting.jpg: warm strip under the screen at (550,640) #ffeb97 and (700,640) #fedb87. upperclassroom.com/ana-business-class-the-room/ quote: 'When the cabin lights are off, the suite glows like the soft-lit alleys of Kyoto.' The search summary of the same review says the mood lighting is under the TV and ottoman. grep in src/09_seats.js: moodGlow appears only at line 67.",
+   "fix": "src/09_seats.js roomMonitor(). Add B.add(gBox(0.56,0.006,0.012), M4.trs(xm, 0.642, zo(0.02)), SEATMAT.moodGlow) under the 0.40 m-tall bezel, whose bottom edge is at 0.645. Add a matching 0.50 x 0.006 m strip under the ottoman front lip, about 0.03 m above the floor, set back 0.02 m. In the shader, add a warm local term (#ffd9a0 x 0.25, falloff 0.4 m) around these strips when mood is sleep or dining, so the console top and footwell pick up the glow."
+  },
+  {
+   "severity": "medium",
+   "detail": "Economy seats under boarding light read navy-black: seat-back averages are #141c47 and #161c3a, vs #2c3a63 and #27345a on the official photo's backs and #404d73 on its cushions. Luminance in the middle and bottom image thirds is 51/43 vs 81/71. The AO inside the dense seat block and the reduced low-height bounce (mix(0.55,1,smoothstep(0,1.4,y))) over-darken vertical fabric faces.",
+   "problem": "Economy seat fabric is under-exposed and reads the wrong colour (navy instead of ANA royal blue).",
+   "evidence": "ref/ana/y_47300-lang-multi.jpg crop (340,300)-(440,420) mean #2c3a63. Model q15_econFronts crop (300,420)-(420,500) #141c47. Similar deficits in cruise_econ.png.",
+   "fix": "src/04_shaders.js mainFS: for the bounce term, change (0.35+0.65*ao) to (0.5+0.5*ao) and the height falloff mix(0.55,1.0,...) to mix(0.75,1.0,...) for non-down-facing faces. If that is not enough, lift yFabric/yFabricB base from #2a3a70 to #31437c (src/09_seats.js lines 10-11). Target seat-back mean #2c3a63 at the q15 camera."
+  },
+  {
+   "severity": "medium",
+   "detail": "THE Room ash panels (aisle faces and privacy doors) render dull and warm, at #7a766d on screen. Real photos show pale grey-beige ash that stays among the brightest surfaces in the lower cabin. The bottom third of q06 is therefore far too dark (50 vs 86 luminance).",
+   "problem": "Ash response to the fill light is too low, possibly with an albedo that is too dark after the r1 darkening to #bfae90.",
+   "evidence": "c_27312: ash (40,230) #bdb6a3, (380,400) #c5b9ab, crop (700,400)-(800,480) #958f90. ff_review-featured-image: ash (400,60) #b4a385, (900,300) #a79c80. Model q06 crops (290,300)-(340,340) and (740,300)-(800,360) are both #7a766d.",
+   "fix": "Keep the j_ash photo layer but raise the jAsh base colour to about #cdc3b0, and apply the bounce change above. Target on-screen #b0a795 for aisle-facing ash at the q06 camera. Re-check the j_ash swatch gain (LAYER_PARAMS z) so the grain contrast stays at the fine straight-grain level of ff_door-gap (panel samples #c0c5c1 / #d5c7ad)."
+  },
+  {
+   "severity": "low",
+   "detail": "In THE Suite seated view (q03), the window-side wall is a flat #eaecee white from bin to armrest. In-flight suite photos show a blue-lavender wash falling from the bin lens across the upper sidewall and reveals.",
+   "problem": "The mood wash in the F cabin is missing; the same root cause as the sideLed swamp.",
+   "evidence": "tlfl_IMG_9206 / tlfl_IMG_9212: upper sidewall #6460b7 to #7f7695, fading at the window belt. q03_suite1A (60,200) #eaecee.",
+   "fix": "This is covered by the band attenuation and sideLed changes in the 04_shaders.js mainFS issue. Verify at q03 that the sidewall above the window tops reaches about #7f7695 in cruise."
+  }
+ ],
+ "questionsForUser": [
+  "ANA's official photos (y_47300, c_27312) are shot under neutral white light with no blue band, while every in-service photo during boarding and cruise (SANspotter, Turning Left For Less) shows the saturated blue sidewall band. Should 'Boarding' match the official white studio look or the real in-service blue band? A 'Photo/white' mood could hold the other look.",
+  "Which phase does ANA's amber mood belong to: dining, pre-landing/sunrise or boarding? The frugalflyer.ca photo doesn't say. Should both 'Dining' and 'Sunrise' use the amber look?",
+  "No real photo was found of this cabin at sunset with the shades open. Should q21 show hard orange sun shafts through the windows onto the aisle (the model currently shows none at sun elevation 5\u00b0), or is that out of scope?",
+  "THE Suite at night: no real night photo was found. Should it follow the dark neutral THE Room night look (upperclassroom) or keep a blue wash?"
+ ]
+}

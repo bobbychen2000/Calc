@@ -1,0 +1,165 @@
+{
+ "area": "sidewall",
+ "score": 6.6,
+ "details": [
+  {
+   "detail": "Sidewall panels: smooth satin off-white, seams mid-pier every 2nd window, wall/bin junction line. Matches the seam spacing and finish in tpg_48 and c_27312. Wall-to-reveal brightness is plausible.",
+   "score": 8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/windows/tpg_48.jpg",
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "scratchpad/qa/sw/s03_jWall.png"
+   ]
+  },
+  {
+   "detail": "Window reveals: tall rounded-rect recess with a soft roll-in, sill below the pane, and a necked tunnel to the glass. Recess-to-bezel height ratio is about 1.55 in the render against about 1.62 in tpg_48, and the shape matches omaat_13/tt_window.",
+   "score": 8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/windows/tpg_48.jpg",
+    "/home/user/Calc/cabin777/ref/web/windows/tt_window.jpg",
+    "scratchpad/qa/r2/q12_wing.png",
+    "scratchpad/qa/sw/s07_yClose.png"
+   ]
+  },
+  {
+   "detail": "F/J electric shades: blackout is light warm-grey with horizontal cellular pleats and sits a little darker than the wall (render shade/wall 0.82; omaat_24 0.74, tpg_48 about 1.0 when backlit). The sheer glows when backlit, as in gstp_23.",
+   "score": 8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/windows/omaat_24.jpg",
+    "/home/user/Calc/cabin777/ref/web/windows/lalf_37.jpg",
+    "/home/user/Calc/cabin777/ref/web/windows/gstp_23.jpg",
+    "scratchpad/qa/sw/s09_jShades.png"
+   ]
+  },
+  {
+   "detail": "Shade button: blue-LED pill under each F/J pane, placed on the reveal sill as in lalf_25/tpg_48. At normal viewing distance it reads as a small blue '0/3' glyph rather than a pill with a ring, but position and colour are right.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/windows/lalf_25.jpg",
+    "/home/user/Calc/cabin777/ref/web/windows/tpg_48.jpg",
+    "scratchpad/qa/r2/q12_wing.png"
+   ]
+  },
+  {
+   "detail": "PY/Y manual shade: stowed at the top with the grey grip lip showing, as in py_37301/py_37303. Colour is not verified.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "scratchpad/qa/sw/s07_yClose.png"
+   ]
+  },
+  {
+   "detail": "Dado geometry: sloped slate facet (0.05-0.33 m) with one rounded louvred grille (0.41 x 0.22 m, 30 slats + 9 ribs) per bay and a white placard. Shape matches py_37301/py_37303.",
+   "score": 7,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg",
+    "scratchpad/qa/sw/win_low.png"
+   ]
+  },
+  {
+   "detail": "Dado colour in the assembled cabin: renders near-black #1e222d (dado/wall 0.18). The photo is slate #374157 (frame #5f6e8a, grille #394256; dado/wall 0.33). The frame-to-louvre contrast is lost.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "scratchpad/qa/sw/s01_pyWall.png"
+   ]
+  },
+  {
+   "detail": "Y carpet: renders #232a41 against #36445f in the photo (y_47301), too dark and blotchy. The characteristic cyan flecks of y_47304 are not visible, and pale aisle path lines appear that no photo shows.",
+   "score": 4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47304-lang-multi.jpg",
+    "scratchpad/qa/r2/q16_econAisle.png"
+   ]
+  },
+  {
+   "detail": "PY carpet: navy, but renders #181c2a against #282f41 (py_37302) to #354156 (py_37301).",
+   "score": 5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37302-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "scratchpad/qa/r2/q13_pyFront.png"
+   ]
+  },
+  {
+   "detail": "J carpet: plain heather is right, but it renders #2d2328 (slightly magenta) against a warm brown-grey #3e3537 in the c_27312 aisle.",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/c_27312-lang-multi.jpg",
+    "scratchpad/qa/r2/q06_roomMain.png"
+   ]
+  },
+  {
+   "detail": "F carpet: dark warm charcoal, roughly right. It renders #32282c against #46352e in the f_17300 rendering; the photo up_Empty-Window-Seat is also dark charcoal.",
+   "score": 6,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/f_17300-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/sidewall/up_Empty-Window-Seat.jpeg",
+    "scratchpad/qa/r2/q03_suite1A.png"
+   ]
+  },
+  {
+   "detail": "Type A door linings (doors 2/3/4): flat light panel with a heavy black outline, a small round-ish window, a vertical handle, a red flag and a padded lower bustle. No ANA door photo is available to verify against; the black outline looks like a drawn line.",
+   "score": 5,
+   "refs": [
+    "scratchpad/qa/sw/s04_door2.png",
+    "scratchpad/qa/sw/s05_door3.png",
+    "scratchpad/qa/sw/s01_pyWall.png"
+   ]
+  },
+  {
+   "detail": "Sunlight through the windows lands as thin diagonal bands with a dotted 'chain' pattern across seats and walls, not as rounded-rect window-shaped patches.",
+   "score": 4,
+   "refs": [
+    "scratchpad/qa/r2/q07_seat11A.png",
+    "scratchpad/qa/r2/q14_seat26A.png",
+    "scratchpad/qa/sw/s02_yWall.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "The dado reads almost black in the assembled cabin, so the slate-blue panel and its lighter frame round the dark louvres (the most visible part of the PY/Y lower sidewall) are lost.",
+   "problem": "Assembled-cabin dado renders #1e222d (dado/wall luminance 0.18), where the photo shows slate #374157-#363f4c (ratio about 0.33). The frame (#5f6e8a) is visibly lighter than the louvres (#394256) in the photo but not in the render. The studio render (win_low) is fine, so AO or shadow at floor level is crushing it.",
+   "evidence": "py_37301: dado frame #5f6e8a / #374157, grille #394256, wall #bcc3d2. py_37303: dado #363f4c, wall #a9b2c4. Render scratchpad/qa/sw/s01_pyWall.png: dado #1e222d, wall #acaeaf.",
+   "fix": "src/07_shell.js MAT.dado c '#464d5c' -> '#5a647c'; MAT.grille '#3f4553' -> '#3c4456'; WMAT.grilleBack '#1b1f25' -> '#161a22' to keep louvre depth. Alternatively clamp the AO-volume factor on the shell dado rows (y<0.40) to at least 0.75 in 12_scene.js. Target in-cabin sample about #37415a with the frame lighter than the louvres."
+  },
+  {
+   "severity": "medium",
+   "detail": "Y and PY carpet is too dark, and the Y carpet shows large blotches instead of a fine navy heather with small cyan flecks.",
+   "problem": "Rendered Y carpet is #232a41 against #36445f in the photo; PY is #181c2a against #282f41-#354156. The y_carpet swatch (y_47304 crop 24,384,226,556) keeps photo lighting gradients (raw std about 40), which tile as big patches at 3.2 tiles/m. The cyan flecks, the signature of the ANA Y/PY carpet, disappear.",
+   "evidence": "y_47304 close-up: dark navy pile with sparse cyan flecks (#383e4e base). y_47301 left floor #36445f. py_37302 #282f41. Render q16_econAisle #232a41 (mottled); q13_pyFront #181c2a. Side-by-side: scratchpad/carpet_cmp.jpg, scratchpad/ycarp.jpg.",
+   "fix": "In test/make_swatches.py, high-pass the y_carpet crop (subtract a 25 px Gaussian blur, then re-add the mean) before tileable(), and use a flatter crop such as y_47304 (40,430,200,560), avoiding the footrest. In src/03_tex.js, give layer 22 its own params, e.g. [3.8, 0.5, 0.7, 0.2], so the flecks keep contrast. Raise MAT.carpet c '#2c3345' -> '#3a4560'."
+  },
+  {
+   "severity": "medium",
+   "detail": "The aisle 'path strips' render as pale light lines along the Y/J aisles, and the royal-blue seat-track covers the photos show are missing.",
+   "problem": "MAT.pathStrip boxes 12 mm x 2 mm catch specular and read light (#3a4150 rendered pale in q16). No ANA photo shows aisle strips; y_47301 and y_47304 instead show glossy royal-blue covers over the seat tracks under each seat-leg line.",
+   "evidence": "y_47304: blue track cover #2965bd running fore-aft under the seat legs. y_47301: blue bar under the ABC block. Render q16_econAisle: two pale lines along the aisle, no blue covers.",
+   "fix": "In src/07_shell.js 'floor path strips' loop, drop the aisle strips for Y/PY/J/F (or set r 0.95 and a colour equal to the carpet). For Y (and PY, unverified), add track covers: gRBox(0.045, 0.012, zoneLen, 0.005) at each seat-leg track x (econ leg x \u2248 seat-block centre \u00b10.40 m), MAT { c: '#2965bd', r: 0.35 }, y = 0.006."
+  },
+  {
+   "severity": "low",
+   "detail": "THE Room carpet is too dark and slightly magenta; the photo shows a warm brown-grey heather.",
+   "problem": "Render aisle #2d2328 against #3e3537 (c_27312). The hue leans plum, not brown.",
+   "evidence": "c_27312 aisle median #3e3537 (and #463d3b further aft). Render q06_roomMain aisle #2d2328.",
+   "fix": "src/07_shell.js MAT.carpetJ c '#3a3033' -> '#4a3f3d'; pathStripJ -> '#4a3f3d'."
+  },
+  {
+   "severity": "low",
+   "detail": "Sun patches through the windows are thin diagonal streaks with a dotted 'chain' pattern, not window-shaped light pools, and they cross the ash panels and seats in 11A and PY.",
+   "problem": "The window sun LUT / shadow-map projection produces narrow bands with periodic bright dots, probably from the pleat or rail instances casting shadows. A 10x15 in pane should cast a rounded-rect patch.",
+   "evidence": "Render q07_seat11A (white diagonal band plus dark dotted line across the ash panel and screen), q14_seat26A and s02_yWall (chains of bright dots on the seats). No ANA photo shows striped sun patches.",
+   "fix": "In src/07_shell.js set castShadow:false for shade rails (already) and for the stowed shade panels when f=0 (shadeMats scale ~0: skip the instance or move it out of the shadow pass). In 12_scene.js, raise the shadow-map depth bias or PCF radius for the window-sun light so the patch edge is a soft rounded rect."
+  }
+ ],
+ "questionsForUser": [
+  "No ANA 777-300ER door photo was found. Can you supply a photo of an ANA 777 door lining (L2/L3/L4)? The model draws a flat panel with a heavy black outline, small window, vertical handle, red flag and a padded lower bustle; the real Type A door has a large operating handle, an arming-mode panel and a lower girt-bar bustle, but none of that can be verified from ANA sources.",
+  "Door cross-aisle floors are modelled as grey vinyl (e.g. at door 4 by PY). Is the ANA door area carpeted or vinyl? No photo in ref/ shows it.",
+  "Are the PY/Y manual shades white or light grey, and do they have a finger scoop? Not visible closed in any ANA photo.",
+  "Should the navy/blue seat-track covers seen in Y (y_47304) also be added in PY? No PY photo shows the floor under the seat legs."
+ ]
+}

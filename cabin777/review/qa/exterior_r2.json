@@ -1,0 +1,166 @@
+{
+ "area": "exterior",
+ "score": 5.2,
+ "details": [
+  {
+   "detail": "Wing planform, sweep and raked tip seen from 13A-30A, and in studio plan and front views. It matches the ACAP digitisation, and the raked tip reads correctly in the plan view. Lit upper-wing tone in q12/f_19A is #9ba2ab, against #9ca1a5 in the F-GSQR_1 cabin photo.",
+   "score": 7,
+   "refs": [
+    "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg",
+    "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_2.jpg",
+    "scratchpad/qa/ext/st/a_plan.png"
+   ]
+  },
+  {
+   "detail": "In-flight wing shape. The model uses a straight linear-dihedral crest, so from 17A/19A the leading edge and far edge are straight lines. In both F-GSQR cruise photos the outer wing and raked tip curve visibly upward (1 g bending).",
+   "score": 4,
+   "refs": [
+    "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_2.jpg",
+    "scratchpad/qa/ext/f_17A.png"
+   ]
+  },
+  {
+   "detail": "Black main-gear alignment stripe (tail-camera reference, chordwise at the outer main-wheel line) is missing. The ANA yellow ice-detection spot on it is also missing. Both photos from this seat zone show the stripe as the most prominent marking on the wing.",
+   "score": 0,
+   "refs": [
+    "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg",
+    "ref/web/exterior/agn_Boeing-777-wing-stripes-1-1024x700.jpeg"
+   ]
+  },
+  {
+   "detail": "Slat, spoiler, flaperon, flap and aileron seams. Thin dark matte strips lifted 12 mm, with no shimmer seen in the renders. Their width and contrast are close to the F-GSQR seams.",
+   "score": 7,
+   "refs": [
+    "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg",
+    "scratchpad/qa/ext/f_26A.png"
+   ]
+  },
+  {
+   "detail": "Flap-track fairings (canoes). Their positions and the length they overhang the trailing edge are plausible. The aft half tapers to a thin spike with a small nub (35 % depth floor), where the real fairings stay deep and slab-sided with a blunt rounded end.",
+   "score": 4,
+   "refs": [
+    "ref/web/wing/Boeing_777_(4139974954)_(2).jpg",
+    "scratchpad/qa/ext/st/w_under.png",
+    "scratchpad/qa/ext/f_30A.png"
+   ]
+  },
+  {
+   "detail": "GE90-115B nacelle: white fan cowl with no titles, silver lip, dark fan face and cowl split lines. Proportions and colour match ANA JA796A/JA797A from 11A/13A.",
+   "score": 7,
+   "refs": [
+    "ref/web/wing/ANA_JA796A_777-300ER_HND_25-09-2024.jpg",
+    "ref/web/wing/(GBR-London)_All_Nippon_Airways_Boeing_777-300ER_JA797A_@_EGLL_2025-06-17.jpg",
+    "scratchpad/qa/ext/g_11A_aft.png",
+    "scratchpad/qa/ext/f_13A.png"
+   ]
+  },
+  {
+   "detail": "Pylon. From 13A it reads as a flat plank 16 cm tall along the cowl crest, rendered #3e4b62 (dark blue) next to the #c9d2dc cowl. On ANA the pylon and strut are light grey, the same tone as the wing (JA797A).",
+   "score": 5,
+   "refs": [
+    "ref/web/wing/(GBR-London)_All_Nippon_Airways_Boeing_777-300ER_JA797A_@_EGLL_2025-06-17.jpg",
+    "scratchpad/qa/ext/f_13A.png"
+   ]
+  },
+  {
+   "detail": "Day sky at the window (winExp 1). The top of the pane is #abc2d8 and the horizon #d3d9dd: pale grey-blue. Cruise photos at the same elevations show #4d7098-#6789ae (F-GSQR_1) and #20457a-#2f609b (F-GSQR_2).",
+   "score": 4,
+   "refs": [
+    "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg",
+    "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_2.jpg",
+    "ref/web/exterior/Air_France_Boeing_777-300ER_Greenland_2022.jpg",
+    "scratchpad/qa/ext/f_19A.png"
+   ]
+  },
+  {
+   "detail": "Sunset sky and cloud deck. The horizon band is desaturated (#d7c3a2 against #facc6c and #ffc9bd). The cloud deck below the horizon is light beige (#c4b2a6, and #d3b8a6 in q21). Real sunset photos show a dark violet or blue-grey deck (#8a68a5/#7b5d99, #2d3238).",
+   "score": 3,
+   "refs": [
+    "ref/web/wing/yt/p97zMaCMWRg.jpg",
+    "ref/web/exterior/Air_France_Boeing_777-300ER_Greenland_Sunrise_2022.jpg",
+    "scratchpad/qa/ext/s_15A.png",
+    "scratchpad/qa/ext/qa/q21_sunset.png"
+   ]
+  },
+  {
+   "detail": "Wing at sunset. The upper wing is warm brown (#816358-#896b61). The photos show it cool mauve-violet from sky reflection (#7e73b8), or as a dark neutral silhouette (#4f4a4e).",
+   "score": 4,
+   "refs": [
+    "ref/web/wing/yt/p97zMaCMWRg.jpg",
+    "ref/web/exterior/Air_France_Boeing_777-300ER_Greenland_Sunrise_2022.jpg",
+    "scratchpad/qa/ext/s_19A_fwd.png"
+   ]
+  },
+  {
+   "detail": "Night sky. Stars, a dark cloud deck and a faint wing silhouette. Plausible, but there is no in-flight reference for this cabin.",
+   "score": 6,
+   "refs": [
+    "scratchpad/qa/ext/n_15A.png"
+   ]
+  },
+  {
+   "detail": "Nav lights and strobe at the raked tip. Present, with the red on the left, and visible in the studio tip view.",
+   "score": 7,
+   "refs": [
+    "scratchpad/qa/ext/st/j_tip.png"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "The 777-300ER wing carries a wide black chordwise stripe on the upper surface at the outer main-wheel line. It is the tail-camera taxi reference, and ANA's 777s add a yellow ice-detection spot on it. It is the most conspicuous marking in any over-wing cabin view (19A/q12 at z 36.4 looks straight at it). The model has none.",
+   "problem": "Missing gear-alignment stripe and ANA yellow ice spot on the upper wing",
+   "evidence": "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg and _2.jpg (777-328ER cruise window views): a black band about 0.35 m wide runs fore-aft across the wing ahead of the spoilers. ref/web/exterior/agn_Boeing-777-wing-stripes-1-1024x700.jpeg (overhead 777-300ER): at 34.7 px/m from the 6.2 m fuselage, the stripe centre is about 6.4 m from the centreline, about 0.4 m wide, and runs from about 1 m ahead of the flap trailing edge about 5.6 m forward. Sources: aerospaceglobalnews.com/news/why-boeing-777-black-stripes-wings ('aligned with the outboard edge of the main landing gear'), supercarblondie.com/every-boeing-777-has-these-black-stripes-on-its-wings. airlinercafe.com/forums/topic/yellow-areas-on-ana-wing says 'ANA's 777s have a large stripe with a yellow spot'.",
+   "fix": "In buildExterior, after the spoiler lines, add wingLine(B, side, [[6.4, 33.2],[6.4, 36.0],[6.4, 38.8]], {c:'#15171a', r:0.9, m:0}, 0.38). A 0.38 m-wide strip along nose stations 33.2-38.8 at s = 6.4 m; lift it 0.014 m so it clears the seam strips it crosses. Add the ANA yellow ice spot as a second wingLine at [[6.4, 35.2],[6.4, 35.8]], width 0.30, colour '#e8c21e'. Its size and position are unknown (see questions), so leave it out until confirmed."
+  },
+  {
+   "severity": "medium",
+   "detail": "The flap-track fairing loft uses a depth floor of 0.35 and a width floor of 0.55 (depth 0.85 \u00d7 0.35 + 0.04 = 0.34 m at the tail), so each canoe tapers to a thin spike ending in a small nub. From the aft PY/Y windows (26A, 30A) they read as flat dark paddles.",
+   "problem": "Canoe tails too thin and pointed",
+   "evidence": "ref/web/wing/Boeing_777_(4139974954)_(2).jpg: the canoe aft of the flap stays deep and slab-sided, and its rounded end is roughly 70 % of the maximum depth. Compare scratchpad/qa/ext/st/w_under.png and ext/f_30A.png, where the tails are spikes.",
+   "fix": "In the canoe loop of buildExterior, change the tail law to Math.max(0.75, Math.pow(c, 0.3)) for depth and Math.max(0.8, Math.pow(c, 0.25)) for width. Scale the rounded-end quarter-ellipse to 0.8*e (width) and 0.72*e (depth) instead of 0.55*e / 0.35*e, and raise RE from 0.32 to 0.40 m so the end is a blunt dome about 0.65 m tall."
+  },
+  {
+   "severity": "medium",
+   "detail": "From the window, the sunset cloud deck and horizon read as a light beige wash. The photos show a narrow saturated orange band over a dark violet/blue-grey deck, with a blue-violet sky above.",
+   "problem": "Sunset deck far too bright and warm, horizon band desaturated",
+   "evidence": "ref/web/wing/yt/p97zMaCMWRg.jpg (777 GE90 window view at sunset): deck #8a68a5/#7b5d99, horizon #ffc9bd, sky +15\u00b0 #8e9dee. ref/web/exterior/Air_France_Boeing_777-300ER_Greenland_Sunrise_2022.jpg (777-300ER): deck #2d3238, horizon #facc6c, sky #718083. Model s_15A: deck #c4b2a6, horizon #d7c3a2, pane top #b69eac. q21 deck #d3b8a6.",
+   "fix": "src/12_scene.js SKIES.sunset: set cloudLit to [0.70, 0.46, 0.52] and cloudShade to [0.20, 0.17, 0.30] (deck target about #7a6090 at the window). Set horizon to [1.35, 0.62, 0.22] and haze to [0.55, 0.36, 0.42], and keep the horizon band within about 3\u00b0 so it renders about #f5c070. Set zenith to [0.14, 0.20, 0.62] so +15\u00b0 renders about #8a96d8."
+  },
+  {
+   "severity": "medium",
+   "detail": "At |x| = 2.6 (winExp = 1) the day sky in the pane is pale grey-blue from the top of the window down to the horizon. Cruise photos from 777 windows show a saturated blue gradient with a thin white haze only at the horizon.",
+   "problem": "Day sky too washed out at the window",
+   "evidence": "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg: #4d7098 at +20\u00b0 down to #9bb1c6 just above the horizon. F-GSQR_2: #20457a-#2f609b-#93c3f3. ref/web/exterior/Air_France_Boeing_777-300ER_Greenland_2022.jpg: #206cc4 zenith. Model f_19A/f_17A: #abc2d8 at the top of the pane, #bccbda at the horizon.",
+   "fix": "SKIES.day: set horizon to [0.42, 0.60, 0.90] and haze to [0.80, 0.86, 0.94], and confine the haze to the lowest ~4\u00b0 of elevation (steeper exponent in the sky shader's horizon blend). Target about #5578a8 at +15\u00b0 and #a8bfd6 at +3\u00b0 when rendered at winExp 1. Leave winExp at 1.6 for the away-from-window view."
+  },
+  {
+   "severity": "medium",
+   "detail": "The wing crest is linear (crest(s) = -0.02 + (s-4)*0.0915, the ground dihedral), so the outer wing looks ruler-straight from the cabin. In cruise the 777 wing bends up, and both window photos show the leading edge and far wing edge curving upward toward the raked tip.",
+   "problem": "No in-flight wing bending",
+   "evidence": "ref/web/wing/Cabin_wing_view_of_Air_France_777_F-GSQR_1.jpg and F-GSQR_2.jpg: the leading edge projects as a concave-up curve rising to the tip, which a straight 3-D edge cannot do. Compare scratchpad/qa/ext/f_17A.png and st/b_front.png, where both are straight.",
+   "fix": "In WING.crest add a quadratic flight-bending term: crest: (s) => -0.02 + (s - 4) * 0.0915 + 1.5 * Math.pow(Math.max(0, s - 4) / 28.4, 2). This gives about +1.5 m at the tip; the magnitude is [A], so tune it by overlaying a 17A render on F-GSQR_2. Move the nav and strobe lights with it; they already follow stations. Keep the nacelle and pylon at their current positions, since the inboard term is under 0.05 m at s = 9.6."
+  },
+  {
+   "severity": "low",
+   "detail": "From 13A the pylon shows as a flat 0.16 m slab along the cowl crest. It renders #3e4b62, darker and bluer than both the cowl (#c9d2dc) and the lit wing (#aeb4b9). The same pylon renders #a1a1a4 in the studio (st/w_eng.png), so in the cabin view the faces the viewer sees are lit by sky only, or their normals are inverted.",
+   "problem": "Pylon reads as a dark blue plank on top of the nacelle",
+   "evidence": "ref/web/wing/(GBR-London)_All_Nippon_Airways_Boeing_777-300ER_JA797A_@_EGLL_2025-06-17.jpg crop: the pylon and strut above the nacelle are light grey, the same as the wing. ref/web/wing/yt/p97zMaCMWRg.jpg: the pylon rises as a distinct swept ridge. Model: scratchpad/qa/ext/f_13A.png (500,296) = #3e4b62.",
+   "fix": "In the pylon loop of buildExterior, raise the forward part: top = nacTop(x) + lerp(0.10, 0.45, smooth(1.6, leE - E.x0, x)) instead of +0.04, so a sloping ridge meets the leading edge. Paint it paint (#636466) rather than paintLow. Check that gLoft under M4.trs(0,0,0,0,\u03c0/2) keeps outward normals; the canoe and pylon lofts should use the same fixWinding path as wingLine."
+  },
+  {
+   "severity": "low",
+   "detail": "At sunset the upper wing renders warm brown (#816358-#896b61). The photos show a low-sun wing surface dominated by sky reflection: cool mauve-violet, or a dark neutral silhouette.",
+   "problem": "Wing colour at sunset too orange-brown",
+   "evidence": "ref/web/wing/yt/p97zMaCMWRg.jpg: upper wing #7e73b8, underside #342c5f. ref/web/exterior/Air_France_Boeing_777-300ER_Greenland_Sunrise_2022.jpg: wing #4f4a4e-#6f4f50. Model: scratchpad/qa/ext/s_19A_fwd.png (100,300) = #896b61.",
+   "fix": "SKIES.sunset: lower the sun colour to [3.0, 1.5, 0.6] so grazing direct light weakens, and raise the exterior sky-reflection/ambient from skyTop [0.45,0.35,0.45] to [0.40,0.36,0.62]. Target an upper wing of about #6e6488 at 5\u00b0 sun elevation."
+  }
+ ],
+ "questionsForUser": [
+  "ANA's 777s reportedly have a yellow ice-detection spot on the black gear-alignment stripe (airlinercafe forum). Do you have an ANA 777-300ER over-wing photo showing its size and position? Without one I would add the black stripe only.",
+  "Does the ANA 777-300ER wing carry the dotted overwing escape-route/walkway outline next to the fuselage (visible on other 777s in overhead photos, e.g. agn_Boeing-777-wing-stripes)? Should it be modelled, given it may be hidden by the fuselage curvature from most windows?",
+  "Is there a GE90 logo on the ANA fan cowls? The JA797A photo shows a small mark on the lower aft cowl at low resolution, but the model notes say no titles.",
+  "How much in-flight wing bending do you want? About +1.5 m at the tip is my estimate from the F-GSQR photos; no published 777-300ER cruise deflection figure was found."
+ ]
+}
