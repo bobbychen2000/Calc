@@ -212,10 +212,27 @@ WINGLET_PIN = dict(s=0.30, c0=0.02, c1=1.00, half_width=0.008)
 # (hangar photo MSN-3008_130, upper blade against the ceiling: 17 / 11 / 12 px on a ~40 px = 0.13 m chord)
 PROP_BANDS = (("prop_tip", 0.000, 0.060), ("prop_blade", 0.060, 0.095), ("prop_band_red", 0.095, 0.135))
 
-# belly fairing planform (copied from model/details.belly_fairing, rev A; Stage 3: details should expose
-# these tables): (station, half-width), (station, bottom WL)
-BELLY_FAIRING_HW = [(4.92, 0.26), (5.35, 0.60), (6.2, 0.71), (7.2, 0.64), (7.9, 0.38), (8.30, 0.10)]
-BELLY_FAIRING_BOT = [(4.92, 0.805), (5.35, 0.752), (6.2, 0.735), (7.2, 0.748), (7.9, 0.79), (8.30, 0.805)]
+# PRO dark cockpit mask: its outline is built by model/cockpit_glazing.py from the glazing planes, but the AFT EDGE
+# is a livery item that differs between airframes (photos rectified onto the OML with the camera fits in
+# refs/cache/overlays/livery/cams.json; sheet-L2 review):
+#   MSN 3008  pro3008_stbd34 (stbd_ground camera) and pro3008_port34 (port_hangar_130): straight edge leaning
+#             22-27 deg (bottom forward) from the top-aft corner STA ~4550 / WL ~2510 to STA ~4350 at the lower edge;
+#             blue gap to the airstair door seam ~0.10 m at the top, ~0.27 m low
+#   MSN 3010  leans ~12-16 deg once corrected against the vertical door jamb
+#   MSN 3036  vertical edge, runs aft to within ~0.05 m of the door frame
+#   MSN 3066  curved edge following the glass "D" (not a straight-edge scheme)
+MASK_SCHEMES = {
+    "MSN 3008": dict(aft_x=4.560, lean_deg=22.5, r_low_aft=0.060, r_top_aft=0.040),
+    "MSN 3010": dict(aft_x=4.560, lean_deg=14.0, r_low_aft=0.060, r_top_aft=0.040),
+    "MSN 3036": dict(aft_x=4.575, lean_deg=0.0, r_low_aft=0.040, r_top_aft=0.040),
+}
+MASK_SCHEME = "MSN 3008"          # the airframe this model carries (sheets L2 and L5)
+MASK = MASK_SCHEMES[MASK_SCHEME]  # aft_x: aft edge at the mask's top line; lean_deg: bottom forward of the top
+
+# wing-to-body fairing tables: single source model/details.py (Stage 2 rev B, fitted to the drawing):
+# (station, footprint half-width), (station, bottom WL), side-view tail lobe, upper root-fillet plan outline
+from model.details import (BELLY_FAIRING_HW, BELLY_FAIRING_BOT, BELLY_FAIRING_TAIL,  # noqa: E402,F401
+                           BELLY_FAIRING_PLAN, BELLY_FAIRING_NOSE_EDGE)
 
 # =====================================================================================================
 # evaluation

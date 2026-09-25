@@ -44,6 +44,76 @@ NOSE_FORK = np.array([2.930 + GEAR_SHIFT, 0.0, 0.520])             # fork crown 
 NOSE_BRACE = ((3.470 + GEAR_SHIFT, 0.0, 1.070), (3.030 + GEAR_SHIFT, 0.0, 0.785))      # drag brace A, B0
 
 
+# Main-gear leg door (ONE per leg, POH), Stage 2 rev B.1.  The Pilatus drawing shows it in TWO views: edge-on in the
+# front view (a plate outboard of the tyre, leaning out from BL 2368 at WL 1052 to BL 2473 at its lowest point WL
+# 338) and face-on in the side view (port main gear: a closed outline in front of the tyre, whose arc behind it is
+# a hair line).  Its side-view face is fitted here (all stations less GEAR_SHIFT, like the rest of the unit):
+#   forward edge   STA 5,950 at the wing -> 5,969 at WL 460 (leans aft 19 mm), then a chamfer to
+#   pointed tip    (6,062, 318), 15 mm flat to the
+#   lower edge     concave circle arc, centre (6,358, 119), R 348 (fit within 0.2 mm), rising to
+#   aft-lower corn (6,404, 464): the narrow lower part's aft edge is vertical at STA 6,404 up to WL 758, then a
+#   step           diagonal to (6,615, 939) and the wide upper part's aft edge up to (6,603, 1,088);
+#   top edge       straight, WL 1,073 -> 1,088 (about the trunnion WL 1,070): 12-37 mm below the wing lower surface
+#                  at the door's BL (leg_door_wing_clearance()), the clearance the door needs to swing up with the leg.
+# Photos agree on the shape: ngx_dfbox_port (telephoto, near-broadside, port) shows the pointed tip ~0.4 m ahead of
+# the axle, the concave lower edge rising to above the hub, the narrow lower part and the diagonal step to the wide
+# upper part; PRO s/n 3036 (3/4 view) the same stepped aft edge.  In ngx_dfbox_port the door sits ~0.1 m lower
+# relative to the wheel than drawn, and on s/n 3036 its lower edge comes close to the hub (trailing link compressed
+# under load) -- the drawing's static pose is kept.  Details: refs/photo_notes.md (e).
+# The drawing's two views differ by 20 mm on the lowest point (side-view tip WL 318, front-view plate end WL 338);
+# the side-view face is kept.  Rev B.0 read the face from the oblique photos instead (straight aft edge at 6,520,
+# tip 0.14 m ahead of the axle, a hub cut-out R 150 about the axle): 116 mm off the drawn outline.
+# The door closes the wing bay when retracted (retracts with the leg, 90 deg inboard about MAIN_TRUNNION):
+# leg_door_footprint().  Stage 3: the 3-D door (leg_door_patch, still the bays.SLOT patch) and the wing-bay slot
+# follow this outline.
+LEG_DOOR = dict(x_fwd=5.950 - GEAR_SHIFT, x_fwd_low=5.969 - GEAR_SHIFT, z_fwd_low=0.460,   # forward edge
+                tip=(6.062 - GEAR_SHIFT, 0.318), arc_x0=6.0762 - GEAR_SHIFT,               # tip, arc start STA
+                arc_c=(6.3582 - GEAR_SHIFT, 0.1187), arc_r=0.3482,                         # concave lower edge
+                x_aft_low=6.404 - GEAR_SHIFT, z_step=(0.758, 0.939),                       # narrow part, step WLs
+                x_aft=6.615 - GEAR_SHIFT, x_aft_top=6.603 - GEAR_SHIFT,                    # wide part's aft edge
+                z_top=(1.073, 1.088),                                                      # top edge WL fwd / aft
+                bl=(2.358, 2.472))                                                         # door plane BL
+
+
+def _door_top_z(xs):
+    """WL of the door's (straight) top edge at stations xs."""
+    d = LEG_DOOR
+    t = (np.asarray(xs, float) - d["x_fwd"]) / (d["x_aft_top"] - d["x_fwd"])
+    return d["z_top"][0] + (d["z_top"][1] - d["z_top"][0]) * t
+
+
+def leg_door_wing_clearance():
+    """Smallest clearance (m) between the door's top edge and the wing lower surface at the door's top BL."""
+    d = LEG_DOOR
+    xs = np.linspace(d["x_fwd"], d["x_aft_top"], 30)
+    sec = W.section_at(d["bl"][0])
+    xc = np.clip((xs - sec.le[0]) / sec.chord, 0, 1)
+    return float(np.min(sec.lower(xc)[:, 2] - _door_top_z(xs)))
+
+
+def leg_door_outline(n_arc=24):
+    """Leg-door outline (N, 2) in side projection (x, z), gear down, closed: forward edge, chamfer to the pointed tip,
+    concave lower edge (circle arc), stepped aft edge (narrow lower part, diagonal, wide upper part), straight top
+    edge just below the wing."""
+    d = LEG_DOOR
+    (cx, cz), r = d["arc_c"], d["arc_r"]
+    xa = np.linspace(d["arc_x0"], d["x_aft_low"], n_arc)
+    arc = np.c_[xa, cz + np.sqrt(np.maximum(r * r - (xa - cx) ** 2, 0.0))]
+    xs = np.linspace(d["x_aft_top"], d["x_fwd"], 16)
+    top = np.c_[xs, _door_top_z(xs)]
+    return np.vstack([[[d["x_fwd_low"], d["z_fwd_low"]], list(d["tip"])], arc,
+                      [[d["x_aft_low"], d["z_step"][0]], [d["x_aft"], d["z_step"][1]]], top])
+
+
+def leg_door_footprint(side=1):
+    """Plan footprint (x, y) of the leg door when retracted (rotated 90 deg inboard about MAIN_TRUNNION with the
+    leg): the wing-bay opening it must close (Stage 3)."""
+    T = MAIN_TRUNNION
+    P = leg_door_outline()
+    y = T[1] - (T[2] - P[:, 1])
+    return np.c_[P[:, 0], side * y]
+
+
 def retracted_wheel(side=1):
     """Main-wheel centre after the 90 deg inward retraction about MAIN_TRUNNION (x-axis)."""
     T, A = MAIN_TRUNNION, MAIN_AXLE

@@ -50,11 +50,15 @@ def cos_pts(n, a=0.0, b=1.0):
 
 def skin(section_at, s_vals, x_lo_end=1.0, x_up_end=1.0, n=64, x_lo_start=0.0, x_up_start=0.0):
     """Wrapped skin from lower x_lo_end -> LE -> upper x_up_end.
+    x_lo_end / x_up_end may be callables of the span parameter s (e.g. a constant-chord control surface on a
+    tapered wing, whose cove ends move in chord fraction along the span).
     UV = (s, signed chord position: negative on the lower surface)."""
-    xl = cos_pts(n, x_lo_start, x_lo_end)[::-1]
-    xu = cos_pts(n, x_up_start, x_up_end)[1:]
     rows, uvs = [], []
     for s in s_vals:
+        xle = x_lo_end(s) if callable(x_lo_end) else x_lo_end
+        xue = x_up_end(s) if callable(x_up_end) else x_up_end
+        xl = cos_pts(n, x_lo_start, xle)[::-1]
+        xu = cos_pts(n, x_up_start, xue)[1:]
         sec = section_at(s)
         pts = np.vstack([sec.lower(xl), sec.upper(xu)])
         rows.append(pts)

@@ -6,7 +6,8 @@ Stage 2 (rev B): positions and planforms from the Pilatus NGX model drawing 190.
 plan, front view and the fin / tailplane sections VF1 WL 2609, VF2 WL 3919, HF1 BL 0, HF2 BL 2270):
   fin        straight LE 40.3 deg (through the VF1 / VF2 leading edges, meeting the crown at FR40),
              rudder TE 22.2 deg from the tail-cone closure (STA 13,568 WL 1,912) to the bullet; NACA 0018
-             (VF1 17.8 %, VF2 17.9 %); rudder nose at 63.7 % chord, hinge (nose-circle centre) 69.7 %
+             (VF1 17.8 %, VF2 17.9 %); rudder nose at 63.7 % chord, hinge (nose-circle centre) 69.7 %;
+             sloped rudder edges: bottom along the ventral edge, top 3,854 -> 3,772 (RUD_TOP_EDGE)
   dorsal     straight top edge from the crown at FR33 (STA 9,000 WL 2,770) rising 0.134 m/m, blended
              into the fin LE at WL ~3,400; max half-width 114 mm (FR38 / FR40 sections)
   tailplane  chord plane WL 4,099 (zero dihedral, zero incidence as drawn), LE x = 13.0696 + 0.1267 y,
@@ -33,13 +34,19 @@ from model import fuselage as F
 FIN_Z0, FIN_Z1 = 1.76, 4.05            # root (buried in the tail cone, ventral below it) / tip (in the bullet)
 FIN_LE = ((11.868, 2.609), (12.978, 3.919))     # straight LE through the VF1 / VF2 leading edges
 FIN_TE = ((13.568, 1.912), (14.386, 3.919))     # rudder trailing edge
-RUD_Z = (1.80, 3.82)                    # rudder bottom / top (drawn edges slope 1.76-1.91 / 3.86-3.78)
 # lower edge of the exposed ventral part of the fin and of the rudder below the tail cone (side view, from the
 # strake's aft end to the lower rudder TE corner); the fin root sections run down to FIN_Z0 and Stage 3 trims
 # them (and models the ventral fairing, FR40) to this line
 VENTRAL_EDGE = ((11.950, 1.645), (13.568, 1.912))
 RUD_XH = 0.697                          # hinge at 69.7 % local chord (rudder nose-circle centre)
+RUD_NOSE_XC = RUD_XH - 0.05             # visible rudder nose / gap line drawn on the sheets (chord fraction)
 RUD_TAB = (2.55, 3.60, 0.940)           # rudder trim tab: WL range and hinge chord fraction
+# Rudder top and bottom edges (side view of the drawing), both SLOPED: the bottom edge runs along VENTRAL_EDGE from
+# the rudder nose (drawn STA 12,654 WL 1,759) to the lower TE corner (13,568 / 1,912); the top edge falls from the
+# rudder nose (13,837 / 3,854) to WL 3,802 at STA 13,935 and on to the TE line at (14,326 / 3,772).  The fixed fin
+# tip between the top edge and the bullet runs aft to the TE line.  (Rev B.0 used horizontal edges at WL 1,800 /
+# 3,820: the lower aft rudder corner hung 104 mm below the tail-cone / ventral edge.)
+RUD_TOP_EDGE = ((13.837, 3.854), (13.935, 3.802), (14.326, 3.772))
 FIN_AF_ROOT, FIN_AF_TIP = naca00(0.18), naca00(0.18)
 
 
@@ -53,6 +60,51 @@ def fin_le(z):
 
 def fin_te(z):
     return _lin(*FIN_TE, z)
+
+
+def rudder_bottom_z(x):
+    """WL of the rudder's (sloped) bottom edge at station x = the ventral edge line."""
+    (x0, z0), (x1, z1) = VENTRAL_EDGE
+    return z0 + (z1 - z0) * (np.asarray(x, float) - x0) / (x1 - x0)
+
+
+def rudder_top_z(x):
+    """WL of the rudder's (sloped) top edge at station x (RUD_TOP_EDGE, extended linearly at both ends)."""
+    T = np.array(RUD_TOP_EDGE)
+    x = np.asarray(x, float)
+    z = np.interp(x, T[:, 0], T[:, 1])
+    z = np.where(x < T[0, 0], T[0, 1] + (T[1, 1] - T[0, 1]) / (T[1, 0] - T[0, 0]) * (x - T[0, 0]), z)
+    return np.where(x > T[-1, 0], T[-1, 1] + (T[-1, 1] - T[-2, 1]) / (T[-1, 0] - T[-2, 0]) * (x - T[-1, 0]), z)
+
+
+def fin_chord_x(xc, z):
+    """Station of chord fraction xc of the fin section at WL z."""
+    return fin_le(z) + xc * (fin_te(z) - fin_le(z))
+
+
+def rudder_edge_point(xc, edge):
+    """(x, z) where the chord-fraction line xc (e.g. RUD_XH = hinge, RUD_NOSE_XC = nose, 1.0 = TE) meets the rudder's
+    'bottom' or 'top' edge."""
+    f = rudder_bottom_z if edge == "bottom" else rudder_top_z
+    z = 1.8 if edge == "bottom" else 3.8
+    for _ in range(30):                     # fixed point: the edges are shallow, the chord lines steep
+        z = float(f(fin_chord_x(xc, z)))
+    return float(fin_chord_x(xc, z)), z
+
+
+def rudder_outline(n=24):
+    """Closed side-view outline (x, z) of the rudder: nose line (bottom -> top), sloped top edge, trailing edge,
+    sloped bottom edge (parameters above)."""
+    nb, nt = rudder_edge_point(RUD_NOSE_XC, "bottom"), rudder_edge_point(RUD_NOSE_XC, "top")
+    tb, tt = rudder_edge_point(1.0, "bottom"), rudder_edge_point(1.0, "top")
+    xt = np.linspace(nt[0], tt[0], n)
+    xb = np.linspace(tb[0], nb[0], n)
+    return np.vstack([[nb], np.c_[xt, rudder_top_z(xt)], np.c_[xb, rudder_bottom_z(xb)]])
+
+
+# derived (rev B.0 names kept for the 3-D build): the edge WLs where the hinge line meets the sloped edges.  Stage 3
+# trims the rudder / fin skins to rudder_bottom_z / rudder_top_z instead of these horizontal cuts.
+RUD_Z = (round(rudder_edge_point(RUD_XH, "bottom")[1], 4), round(rudder_edge_point(RUD_XH, "top")[1], 4))
 
 
 def fin_section(z):
@@ -74,7 +126,17 @@ STAB_TIP_Y = 2.60                      # 5.20 m span
 STAB_TIP_RIB = 2.27                    # fixed-stabiliser tip rib (HF2); horn balance outboard
 STAB_TAPER_C = STAB_ROOT_C + (STAB_TE_SLOPE - np.tan(STAB_SWEEP)) * STAB_TIP_RIB   # chord at the tip rib
 ELEV_Y = (0.120, 2.270)
-ELEV_HORN = (2.270, 2.600, 13.650)     # horn balance: BL range, its leading-edge station
+ELEV_HORN = (2.270, 2.600, 13.650)     # horn balance: BL range, its leading-edge (front-face) station
+# Tip planform (plan view of the drawing): two parallel raked edges, dx/dy = STAB_TIP_RAKE -- the fixed tip's LE from
+# the kink on the straight LE (BL ~2350) to the horn gap, and the horn balance's LE to the tip at (STA 14000,
+# BL 2600); the horn's front face (ELEV_HORN[2]) sits behind the fixed tip's aft edge (STAB_HORN_GAP) with a
+# rounded corner; the tip edge is raked from (14000, 2600) to the trailing-edge corner at BL 2575.
+STAB_TIP_RAKE = 2.078                  # dx/dy of both raked edges
+STAB_FIXED_TIP_LE = (13.470, 2.400)    # a point on the fixed tip's raked LE (STA, BL)
+STAB_HORN_LE = (13.740, 2.480)         # a point on the horn's raked LE (STA, BL)
+STAB_HORN_GAP = ((13.608, 2.270), (13.623, 2.474))   # fixed tip's aft edge (ahead of the horn), BL 2270 -> corner
+STAB_HORN_CORNER = (2.430, 0.020)      # horn front face runs to BL 2430, then a radius into the raked LE
+STAB_TIP_TE = (14.260, 2.575)          # trailing-edge corner of the raked tip edge
 ELEV_XH = 0.70                         # hinge (= constant STA 14,000 with these LE / TE lines)
 STAB_INC = np.radians(0.0)
 STAB_AF_ROOT, STAB_AF_TIP = naca00(0.12), naca00(0.09)
@@ -85,16 +147,86 @@ def _stab_le_lin(y):
     return STAB_ROOT_LE + abs(y) * np.tan(STAB_SWEEP)
 
 
+def _fixed_tip_le(y):
+    return STAB_FIXED_TIP_LE[0] + STAB_TIP_RAKE * (y - STAB_FIXED_TIP_LE[1])
+
+
+def _horn_le(y):
+    return STAB_HORN_LE[0] + STAB_TIP_RAKE * (y - STAB_HORN_LE[1])
+
+
+STAB_TIP_KINK_Y = float((STAB_FIXED_TIP_LE[0] - STAB_TIP_RAKE * STAB_FIXED_TIP_LE[1] - STAB_ROOT_LE)
+                        / (np.tan(STAB_SWEEP) - STAB_TIP_RAKE))         # straight LE meets the fixed-tip rake
+STAB_NOTCH_Y = STAB_HORN_GAP[1][1]                                    # fixed tip ends; the horn LE takes over
+
+
 def stab_le(y):
-    """Leading edge (outer envelope in plan): straight to BL 2.30, then raked back along the fixed tip and
-    the horn balance to the tip at STA ~14.0."""
-    y = abs(y)
-    k = np.clip((y - 2.30) / (STAB_TIP_Y - 2.30), 0, 1)
-    return _stab_le_lin(y) + (14.00 - _stab_le_lin(STAB_TIP_Y)) * k ** 2
+    """Leading edge = outer envelope in plan (parameters above): straight LE to the kink at BL STAB_TIP_KINK_Y,
+    the fixed tip's raked edge to the horn gap at BL STAB_NOTCH_Y, then the horn balance's raked LE to the tip
+    (STA ~14000 at BL 2600).  The notch at the horn gap is a 4 mm ramp (the loft samples it; stab_tip_outline()
+    gives the exact plan outline for the drawings)."""
+    y = abs(float(y)) if np.ndim(y) == 0 else np.abs(np.asarray(y, float))
+    lin = _stab_le_lin(y)
+    fixed = np.maximum(lin, _fixed_tip_le(y))
+    horn = np.maximum(lin, _horn_le(y))
+    w = np.clip((y - STAB_NOTCH_Y) / 0.004, 0, 1)
+    out = np.where(y <= STAB_TIP_KINK_Y, lin, fixed * (1 - w) + horn * w)
+    return float(out) if np.ndim(out) == 0 else out
 
 
 def stab_te(y):
-    return STAB_ROOT_LE + STAB_ROOT_C + abs(y) * STAB_TE_SLOPE
+    """Trailing edge (plan): straight, slightly forward-swept line; outboard of the TE corner (BL 2575) the raked
+    tip edge to (STA 14000, BL 2600)."""
+    y = abs(float(y)) if np.ndim(y) == 0 else np.abs(np.asarray(y, float))
+    te = STAB_ROOT_LE + STAB_ROOT_C + y * STAB_TE_SLOPE
+    x_tip_le = float(_horn_le(STAB_TIP_Y))
+    tip = STAB_TIP_TE[0] + (x_tip_le - STAB_TIP_TE[0]) * (y - STAB_TIP_TE[1]) / (STAB_TIP_Y - STAB_TIP_TE[1])
+    out = np.where(y <= STAB_TIP_TE[1], te, np.minimum(te, tip))
+    return float(out) if np.ndim(out) == 0 else out
+
+
+def stab_tip_outline():
+    """Plan-view outline pieces of the starboard tailplane tip (x, y) from the parameters above, for the drawings:
+    'outer' = the outer envelope from the LE kink round the tip to the TE corner (with the notch at the horn gap),
+    'gap_fixed' = the fixed tip's aft edge, 'horn_front' = the horn's front face with its rounded corner,
+    'horn_root' = the horn's inboard edge at BL ELEV_HORN[0] (front face -> elevator gap line)."""
+    yk, yn = STAB_TIP_KINK_Y, STAB_NOTCH_Y
+    xg1 = STAB_HORN_GAP[1][0]
+    yc, rc = STAB_HORN_CORNER
+    xh = ELEV_HORN[2]
+    # horn front face -> rounded corner -> raked LE
+    a = np.linspace(np.pi, np.pi / 2 + np.arctan(1 / STAB_TIP_RAKE), 8)
+    yhc = yc                                                # corner centre BL
+    xhc = xh + rc
+    corner = np.c_[xhc + rc * np.cos(a), yhc + rc * np.sin(a)]
+    y_join = float(corner[-1, 1])
+    horn_le = np.array([[float(_horn_le(y_join)), y_join], [float(_horn_le(STAB_TIP_Y)), STAB_TIP_Y]])
+    outer = np.vstack([[[float(_stab_le_lin(yk)), yk]], [[float(_fixed_tip_le(yn)), yn]], [[xg1, yn]]])
+    horn = np.vstack([[[xh, ELEV_HORN[0] + 0.006]], corner, horn_le[1:]])
+    tip = np.array([[float(_horn_le(STAB_TIP_Y)), STAB_TIP_Y], list(STAB_TIP_TE)])
+    return dict(outer=outer, horn_front=horn, tip=tip,
+                gap_fixed=np.array(STAB_HORN_GAP),
+                horn_root=np.array([[xh, ELEV_HORN[0] + 0.006], [float(stab_te(ELEV_HORN[0])), ELEV_HORN[0] + 0.006]]))
+
+
+def stab_plan_polygon(n_root=40):
+    """Closed plan outline (x, y) of the starboard tailplane incl. the horn balance, from BL 0 along the LE, round
+    the tip (fixed-tip rake, horn-gap notch, horn LE, raked tip edge) and back along the TE (parameters only)."""
+    t = stab_tip_outline()
+    yk = STAB_TIP_KINK_Y
+    ys = np.linspace(0.0, yk, n_root)
+    le = np.c_[_stab_le_lin(ys), ys]
+    o = t["outer"]                                  # kink -> fixed-tip corner -> gap corner
+    gap = np.asarray(STAB_HORN_GAP)
+    y_r = ELEV_HORN[0] + 0.006                      # the horn's inboard edge
+    g_lo = gap[1] + (gap[0] - gap[1]) * (gap[1][1] - y_r) / (gap[1][1] - gap[0][1])
+    horn = t["horn_front"]
+    notch = np.vstack([g_lo[None], horn])           # the horn gap slot: down the fixed tip's aft edge, across,
+    #                                                 up the horn's front face, round its corner, out along its LE
+    tip = t["tip"][1:]
+    yt = np.linspace(STAB_TIP_TE[1], 0.0, n_root)
+    te = np.c_[STAB_ROOT_LE + STAB_ROOT_C + yt * STAB_TE_SLOPE, yt]
+    return np.vstack([le, o[1:], notch, tip, te])
 
 
 def stab_section(y):

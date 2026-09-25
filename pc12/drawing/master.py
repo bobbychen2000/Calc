@@ -176,6 +176,17 @@ class DrawingSheet:
 
     # ---- frame and title block
     def frame_and_title(self, tb_width=None, fields=None):
+        """ISO frame + zones and the title block (drawing/sheet.py), with the ISO 5456-2 projection symbol drawn
+        by projection_symbol() below instead of sheet.projection_symbol (whose 'first' branch draws the mirrored
+        third-angle symbol; sheet.py is shared with the old GA and is not edited here)."""
+        saved = S.projection_symbol
+        S.projection_symbol = projection_symbol
+        try:
+            return self._frame_and_title(tb_width, fields)
+        finally:
+            S.projection_symbol = saved
+
+    def _frame_and_title(self, tb_width=None, fields=None):
         ncol, nrow = ZONES[self.size]
         S.draw_frame(self.sh, self.frame, ncol=ncol, nrow=nrow)
         FX0, FY0, FX1, FY1 = self.frame
@@ -268,6 +279,86 @@ class DrawingSheet:
                 print(f"  {f.relative_to(ROOT) if ROOT in f.parents else f}  {f.stat().st_size / 1e6:.2f} MB")
         return files
 
+    def text_bands(self, pad=0.0):
+        """Cap-height bands (x0, y0, x1, y1, text) of the unrotated texts on the clean canvas (baseline + glyph
+        height, shrunk by 0.1 x size at the ends; pad > 0 grows them).  Widths are the PDF font's (text_width
+        without its SVG-fallback safety factor)."""
+        from drawing.canvas import _SAFETY
+        out = []
+        for it in self.cv.items:
+            if it.kind != "text" or abs(it.data.get("rot", 0.0)) > 1e-6 or not str(it.data["s"]).strip():
+                continue
+            d = it.data
+            size = d["size"]
+            w = (text_width(d["s"], size, d["font"], d["weight"]) / _SAFETY[d["font"]]
+                 + d.get("spacing", 0.0) * max(len(d["s"]) - 1, 0))
+            x0 = d["x"] - {"start": 0.0, "middle": w / 2, "end": w}[d["anchor"]]
+            out.append((x0 + 0.1 * size - pad, d["y"] - 0.62 * size - pad, x0 + w - 0.1 * size + pad,
+                        d["y"] - 0.1 * size + pad, d["s"]))
+        return out
+
+    def line_length_in_box(self, box, ignore_colors=(GRID,)):
+        """Total length (mm) of the stroked lines drawn so far that lie inside the sheet box (x0, y0, x1, y1): for
+        placing a label on clear paper before drawing it."""
+        S_ = self._segments(ignore_colors)
+        if S_ is None:
+            return 0.0
+        x0, y0, x1, y1 = box
+        m = ((np.minimum(S_[:, 0], S_[:, 2]) <= x1) & (np.maximum(S_[:, 0], S_[:, 2]) >= x0)
+             & (np.minimum(S_[:, 1], S_[:, 3]) <= y1) & (np.maximum(S_[:, 1], S_[:, 3]) >= y0))
+        return float(sum(_clip_len(q[:2], q[2:], box) for q in S_[m]))
+
+    def _segments(self, ignore_colors=(GRID,), with_index=False):
+        """Stroked line segments (x0, y0, x1, y1[, item index]) of the clean canvas, in drawing order."""
+        segs = []
+        for idx, it in enumerate(self.cv.items):
+            d = it.data
+            if it.kind == "path":
+                if not d.get("stroke", True) or not d.get("w") or d.get("color") in ignore_colors:
+                    continue
+                P = np.asarray(d["pts"], float)
+                if d.get("closed"):
+                    P = np.vstack([P, P[:1]])
+            elif it.kind == "circle":
+                if not d.get("stroke", True) or not d.get("w"):
+                    continue
+                a = np.linspace(0, 2 * np.pi, 97)
+                P = np.c_[d["cx"] + d["r"] * np.cos(a), d["cy"] + d["r"] * np.sin(a)]
+            else:
+                continue
+            q = np.c_[P[:-1], P[1:]]
+            segs.append(np.c_[q, np.full(len(q), idx)] if with_index else q)
+        return np.vstack(segs) if segs else None
+
+    def _knockouts(self):
+        """Opaque filled shapes (sheet bbox, item index): lines drawn before them are hidden where they cover."""
+        out = []
+        for idx, it in enumerate(self.cv.items):
+            d = it.data
+            if it.kind == "path" and d.get("fill") and d.get("closed"):
+                P = np.asarray(d["pts"], float)
+                out.append((P[:, 0].min(), P[:, 1].min(), P[:, 0].max(), P[:, 1].max(), idx))
+        return out
+
+    def check_text_strikes(self, min_len=0.8, ignore_colors=(GRID,)):
+        """Texts crossed by drawn lines (paths and circles of the clean canvas; grid-colour lines and fill-only
+        shapes ignored): [(length mm of line inside the text's cap-height band, text, x, y)], longest first.
+        check_text_overlaps only tests text against text."""
+        Sg = self._segments(ignore_colors, with_index=True)
+        if Sg is None:
+            return []
+        K = self._knockouts()
+        out = []
+        for x0, y0, x1, y1, txt in self.text_bands():
+            # a filled label box (or other opaque shape) behind the text hides the lines drawn before it
+            hide = max([k[4] for k in K if k[0] <= x0 and k[1] <= y0 and k[2] >= x1 and k[3] >= y1], default=-1)
+            m = ((np.minimum(Sg[:, 0], Sg[:, 2]) <= x1) & (np.maximum(Sg[:, 0], Sg[:, 2]) >= x0)
+                 & (np.minimum(Sg[:, 1], Sg[:, 3]) <= y1) & (np.maximum(Sg[:, 1], Sg[:, 3]) >= y0) & (Sg[:, 4] > hide))
+            tot = sum(_clip_len(q[:2], q[2:4], (x0, y0, x1, y1)) for q in Sg[m])
+            if tot > min_len:
+                out.append((tot, txt, x0, y1))
+        return sorted(out, key=lambda r: -r[0])
+
     def check_text_overlaps(self, ignore=("zone",)):
         """Pairs of overlapping text boxes (sheet.Sheet.text records a box per text)."""
         B = [b for b in self.sh.boxes if b[4] not in ignore]
@@ -280,6 +371,99 @@ class DrawingSheet:
                 if ox > 0.3 and oy > 0.3:
                     out.append((a, b))
         return out
+
+
+def projection_symbol(sh, cx, cy, kind="first", scale=1.0):
+    """ISO 5456-2 projection symbol: frustum elevation + end view.  The end view shows two SOLID concentric circles,
+    i.e. the frustum seen from its SMALL end.  First angle places a view on the side opposite the viewer, so the
+    circles lie on the frustum's LARGE-end side; third angle places it on the viewer's side, so they lie on the
+    small-end side:
+      first angle  -> frustum left, small end LEFT, large end facing the circles on the RIGHT
+      third angle  -> circles left, frustum right with its small end facing them"""
+    cv = sh.cv
+    D, d, L, gapc = 9.0 * scale, 4.5 * scale, 9.0 * scale, 5.0 * scale
+    total = L + gapc + D
+    xl = cx - total / 2
+    if kind == "first":
+        xt0, xc = xl, xl + L + gapc + D / 2
+    else:
+        xc, xt0 = xl + D / 2, xl + D + gapc
+    # both kinds: small end at the frustum's left, large end at its right
+    trap = [(xt0, cy - d / 2), (xt0 + L, cy - D / 2), (xt0 + L, cy + D / 2), (xt0, cy + d / 2)]
+    cv.path(trap, W_OBJ, closed=True)
+    cv.circle(xc, cy, D / 2, w=W_OBJ)
+    cv.circle(xc, cy, d / 2, w=W_OBJ)
+    cv.line((xl - 1.5, cy), (xl + total + 1.5, cy), W_DIM, (3.0, 0.8, 0.6, 0.8))
+    cv.line((xc, cy - D / 2 - 1.5), (xc, cy + D / 2 + 1.5), W_DIM, (3.0, 0.8, 0.6, 0.8))
+
+
+def _clip_len(a, b, box):
+    """Length of the segment a-b inside the axis-aligned box (x0, y0, x1, y1) (Liang-Barsky)."""
+    x0, y0, x1, y1 = box
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    u0, u1 = 0.0, 1.0
+    for p_, q_ in ((-dx, a[0] - x0), (dx, x1 - a[0]), (-dy, a[1] - y0), (dy, y1 - a[1])):
+        if abs(p_) < 1e-12:
+            if q_ < 0:
+                return 0.0
+        else:
+            t = q_ / p_
+            if p_ < 0:
+                u0 = max(u0, t)
+            else:
+                u1 = min(u1, t)
+    return max(0.0, u1 - u0) * math.hypot(dx, dy)
+
+
+def polyline_minus_boxes(P, boxes, n_sub=8):
+    """Pieces of the polyline P (sheet mm) outside every box (x0, y0, x1, y1): background lines broken for text."""
+    P = np.asarray(P, float)
+    if not boxes or len(P) < 2:
+        return [P]
+    B = np.asarray([b[:4] for b in boxes], float)
+
+    def inside(q):
+        return bool(((q[0] > B[:, 0]) & (q[0] < B[:, 2]) & (q[1] > B[:, 1]) & (q[1] < B[:, 3])).any())
+
+    # resample every segment finely enough (0.2 mm) that the break points are accurate
+    pts = [P[0]]
+    for a, b in zip(P[:-1], P[1:]):
+        n = max(1, int(np.ceil(np.linalg.norm(b - a) / 0.2)))
+        pts += list(a + (b - a) * (np.arange(1, n + 1) / n)[:, None])
+    pieces, cur = [], []
+    for q in pts:
+        if inside(q):
+            if len(cur) >= 2:
+                pieces.append(np.array(cur))
+            cur = []
+        else:
+            cur.append(q)
+    if len(cur) >= 2:
+        pieces.append(np.array(cur))
+    return pieces
+
+
+def break_paths_at_text(ds, select, pad=0.5, texts=None):
+    """Break the clean canvas's stroked paths for which select(item.data) is true where they pass under text
+    (cap-height bands grown by pad; texts = optional predicate on the string): the standard drafting practice of
+    interrupting background lines (ghost outlines, centre marks) for lettering.  Call after all text is placed."""
+    boxes = [b for b in ds.text_bands(pad) if texts is None or texts(b[4])]
+    items = []
+    for it in ds.cv.items:
+        d = it.data
+        if it.kind == "path" and d.get("stroke", True) and not d.get("fill") and select(d):
+            P = np.asarray(d["pts"], float)
+            if d.get("closed"):
+                P = np.vstack([P, P[:1]])
+            pieces = polyline_minus_boxes(P, boxes)
+            if len(pieces) == 1 and len(pieces[0]) == len(P):
+                items.append(it)
+                continue
+            for Q in pieces:
+                items.append(type(it)("path", dict(d, pts=[tuple(map(float, q)) for q in Q], closed=False)))
+        else:
+            items.append(it)
+    ds.cv.items[:] = items
 
 
 def render_png(pdf, png, dpi=110):
@@ -422,6 +606,77 @@ def callout(ds, view: View, pt, text, offset=(12.0, -10.0), color=ACCENT, size=2
                 fill=color, weight=600 if i == 0 else 400, tag="callout")
 
 
+LEGEND_SAMPLE = 24.0          # mm: at least one full CHAIN / PHANTOM period plus the next dash (12+1.5+1.2+1.5+...)
+
+
+def legend_rows(ds, x0, y0, items, dy=4.2, size=2.2, sample=LEGEND_SAMPLE, gap=2.5, tag="legend"):
+    """Legend: one row per (label, style) with style = dict(w, dash, color) for a line sample or dict(fill, w) for a
+    swatch.  Line samples are `sample` mm long so dashed / chain / phantom patterns show at least one full period
+    (a short sample of a long-dash pattern renders as a plain solid line).  Returns the y of the last row."""
+    y = y0
+    for i, (lab, st) in enumerate(items):
+        y = y0 + dy * i
+        if "fill" in st:
+            ds.cv.rect(x0, y - 1.2, 8.0, 2.4, lw=st.get("w", 0.0), fill=st["fill"], stroke=st.get("w", 0.0) > 0)
+        else:
+            ds.cv.line((x0, y), (x0 + sample, y), st.get("w", W_FINE), st.get("dash"), color=st.get("color"))
+        ds.text(x0 + sample + gap, y, lab, size, "label", "start", vcenter=True, tag=tag)
+    return y
+
+
+# ---- view-reference markers on the parent views (ISO 128-3 / ISO 128-40 style)
+REF_SIZE = 4.2               # reference letter height (mm)
+
+
+def _big_arrow(ds, tip, d, length=9.0, w=W_FINE, head=(3.2, 1.6)):
+    """Reference arrow: shaft of `length` ending in a filled head at `tip`, pointing along unit sheet vector d."""
+    d = np.asarray(d, float) / np.linalg.norm(d)
+    n = np.array([-d[1], d[0]])
+    tip = np.asarray(tip, float)
+    base = tip - head[0] * d
+    ds.cv.line(tuple(tip - length * d), tuple(base), w)
+    ds.cv.polygon([tuple(tip), tuple(base + 0.5 * head[1] * n), tuple(base - 0.5 * head[1] * n)], fill=INK)
+    return tip - length * d
+
+
+def detail_circle(ds, view, a, b, r_m, letter, at=(1.0, -1.0), r_min=4.0):
+    """Detail reference on the parent view: thin circle round (a, b) (radius r_m model metres, at least r_min mm on
+    the sheet) and the detail letter just outside it in direction `at` (sheet)."""
+    X, Y = view.pt(a, b)
+    R = max(r_m * view.k, r_min)
+    ds.cv.circle(X, Y, R, w=W_THIN)
+    u = np.asarray(at, float) / np.linalg.norm(at)
+    tx, ty = X + (R + 2.6) * u[0], Y + (R + 2.6) * u[1]
+    ds.text(tx, ty, letter, REF_SIZE, "label", "middle" if abs(u[0]) < 0.3 else ("start" if u[0] > 0 else "end"),
+            weight=700, vcenter=True, tag="ref")
+
+
+def cutting_plane(ds, view, p0, p1, letter, look, ext=4.0, length=8.0):
+    """Cutting-plane line on the parent view between model points p0 and p1 (view coordinates): thin chain line,
+    thick 6 mm ends, reference arrows at both ends pointing in the viewing direction `look` (sheet unit vector,
+    normal to the plane line) and the section letter at the tail of each arrow."""
+    P0, P1 = np.array(view.pt(*p0)), np.array(view.pt(*p1))
+    t = (P1 - P0) / np.linalg.norm(P1 - P0)
+    look = np.asarray(look, float) / np.linalg.norm(look)
+    E0, E1 = P0 - ext * t, P1 + ext * t
+    ds.cv.line(tuple(E0), tuple(E1), W_THIN, CHAIN)
+    for E, sgn in ((E0, 1.0), (E1, -1.0)):
+        ds.cv.line(tuple(E), tuple(E + sgn * 6.0 * t), 0.5)
+        mid = E + sgn * 3.0 * t
+        tail = _big_arrow(ds, mid, look, length=length)
+        lp = tail - 3.0 * look
+        ds.text(float(lp[0]), float(lp[1]), letter, REF_SIZE, "label", "middle", weight=700, vcenter=True, tag="ref")
+
+
+def view_arrow(ds, tip, look, letter, length=10.0):
+    """Viewing-direction arrow for a view in a non-projected position ('VIEW B'): arrow with its head at `tip`
+    (sheet mm) pointing along `look` (sheet unit vector) and the view letter at its tail."""
+    look = np.asarray(look, float) / np.linalg.norm(look)
+    tail = _big_arrow(ds, tip, look, length=length)
+    lp = tail - 3.2 * look
+    ds.text(float(lp[0]), float(lp[1]), letter, REF_SIZE, "label", "middle", weight=700, vcenter=True, tag="ref")
+
+
 def view_title(ds, x, y, title, sub=None, size=4.2):
     ds.text(x, y, title, size, "label", "middle", weight=700, spacing=0.4, tag="title")
     w = text_width(title, size, "label", 700) + 0.4 * len(title)
@@ -540,6 +795,11 @@ def build_sheet(sid, mod_name, spec, clean_only=False, dpi=110, verbose=True):
             print(f"  CHECK: {len(ov)} overlapping text pairs, e.g.")
             for a, b in ov[:8]:
                 print(f"    {a[4]} @({a[0]:.0f},{a[1]:.0f}) x {b[4]} @({b[0]:.0f},{b[1]:.0f})")
+        st = ds.check_text_strikes()
+        if st:
+            print(f"  CHECK: {len(st)} texts crossed by lines, e.g.")
+            for L, t, x, y in st[:10]:
+                print(f"    {L:4.1f} mm  {t[:48]!r} @({x:.0f},{y:.0f})")
     files = ds.write(clean_only, dpi, verbose)
     return ds, files
 
@@ -557,12 +817,22 @@ def main(argv=None):
     ids = [a for a in argv if not a.startswith("--") and not a.isdigit()]
     clean_only = "--clean-only" in argv
     todo = ids or list(reg)
+    failed = []
     for sid in todo:
         if sid not in reg:
             print(f"unknown sheet id {sid!r}; registered: {', '.join(reg)}")
             continue
         mod, spec = reg[sid]
-        build_sheet(sid, mod, spec, clean_only, dpi)
+        try:                                   # one broken sheet must not block the rest of the set
+            build_sheet(sid, mod, spec, clean_only, dpi)
+        except Exception as e:                 # noqa: BLE001
+            import traceback
+            traceback.print_exc()
+            print(f"[{sid}] FAILED: {type(e).__name__}: {e}")
+            failed.append(sid)
+    if failed:
+        print(f"FAILED sheets: {', '.join(failed)}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

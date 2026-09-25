@@ -16,24 +16,78 @@ from model import fuselage as F
 from model import empennage as E
 
 
-def belly_fairing():
-    xs = np.linspace(4.92, 8.30, 40)
-    wk = [(4.92, 0.26), (5.35, 0.60), (6.2, 0.71), (7.2, 0.64), (7.9, 0.38), (8.30, 0.10)]
-    bk = [(4.92, 0.805), (5.35, 0.752), (6.2, 0.735), (7.2, 0.748), (7.9, 0.79), (8.30, 0.805)]
+# ---- wing-to-body fairing (Stage 2 rev B: from the Pilatus drawing 190.10.40.432; the single source of these
+# tables -- model/livery.py imports them).  The rev A fairing (bottom WL 735-805, STA 4920-8300) hung 136 mm too low.
+#   side view   lower silhouette BELLY_FAIRING_BOT from the fairing nose (STA 5153, WL 1052) down to its lowest
+#               point WL 871 at STA ~5850 and up again; drawn to STA 6465 (WL 897), hidden behind the main gear from
+#               there to STA 7450 (assumed: a smooth run back to the keel, WL 939 at STA 7450-7550);
+#               forward upper edge BELLY_FAIRING_NOSE_EDGE (nose -> the wing root upper surface);
+#               tail lobe on the fuselage side BELLY_FAIRING_TAIL: from the wing root (STA 6972, WL 1631) aft and down
+#               to a rounded end at STA 8585 (WL 1170), forward along its lower edge to the wing TE (STA 7535, WL 1004)
+#   front view  flat bottom WL 871.5 out to BL +/-830 (BELLY_FAIRING_FLAT), radius into the wing lower surface
+#   plan        the upper root fillet covers the wing to BL 1010 from STA 5366 to 7457 with fillets into the
+#               fuselage side at STA 5343 and 7641 (BELLY_FAIRING_PLAN, starboard)
+# The reconstructed centre-section airfoil is fuller aft than the drawn WR sections: its BL 0 lower surface lies
+# 3-13 mm below the drawn fairing bottom between STA 6000 and 6600 (Stage 3: retune the airfoil or let the fairing
+# enclose it).
+BELLY_FAIRING_BOT = [(5.153, 1.052), (5.165, 1.011), (5.200, 0.980), (5.267, 0.951), (5.334, 0.930),
+                     (5.461, 0.906), (5.573, 0.888), (5.690, 0.876), (5.850, 0.8715), (6.000, 0.873),
+                     (6.200, 0.880), (6.465, 0.897), (6.800, 0.912), (7.100, 0.925), (7.450, 0.939), (7.550, 0.941)]
+BELLY_FAIRING_BOT_HIDDEN = (6.465, 7.450)      # drawn behind the main gear: assumed there
+BELLY_FAIRING_FLAT = dict(z=0.8715, hw=0.830, r=0.070)   # front view: flat bottom WL, its half-width, corner radius
+# footprint half-width seen from below (flat bottom + corner radius; nose / aft closure assumed round)
+BELLY_FAIRING_HW = [(5.153, 0.060), (5.200, 0.420), (5.300, 0.690), (5.450, 0.860), (5.650, 0.900),
+                    (7.150, 0.900), (7.350, 0.860), (7.480, 0.700), (7.550, 0.420), (7.600, 0.060)]
+BELLY_FAIRING_NOSE_EDGE = [(5.153, 1.052), (5.159, 1.082), (5.175, 1.119), (5.205, 1.162), (5.251, 1.213),
+                           (5.323, 1.288), (5.406, 1.360), (5.470, 1.407), (5.509, 1.432)]
+BELLY_FAIRING_TAIL = [(6.972, 1.631), (7.325, 1.605), (7.610, 1.574), (7.844, 1.531), (8.048, 1.483),
+                      (8.251, 1.412), (8.436, 1.313), (8.567, 1.219), (8.581, 1.197), (8.585, 1.170),
+                      (8.574, 1.141), (8.555, 1.124), (8.541, 1.118), (8.395, 1.104), (8.111, 1.078),
+                      (7.852, 1.046), (7.682, 1.023), (7.613, 1.013), (7.535, 1.004), (7.499, 1.019)]
+BELLY_FAIRING_PLAN = [(5.343, 0.862), (5.357, 0.901), (5.362, 0.928), (5.366, 0.987), (5.397, 0.994),
+                      (5.459, 1.003), (5.552, 1.009), (5.699, 1.012), (6.038, 1.012), (6.360, 1.015),
+                      (6.841, 1.013), (7.216, 1.009), (7.336, 1.006), (7.457, 0.991), (7.479, 0.954),
+                      (7.515, 0.914), (7.566, 0.885), (7.641, 0.864)]
+BELLY_FAIRING_X = (BELLY_FAIRING_BOT[0][0], BELLY_FAIRING_TAIL[9][0])   # nose / tail end stations (5153 / 8585)
+
+
+def belly_fairing_bottom(x):
+    """Lower silhouette WL of the wing-to-body fairing at station(s) x (side view)."""
     from cad.mesh import pchip
-    wf, bf = pchip(*zip(*wk)), pchip(*zip(*bk))
-    ts = np.linspace(0, 1, 72, endpoint=False)
-    rows = []
-    for x in xs:
-        w, b = float(wf(x)), float(bf(x))
-        zc = 0.99
-        h = zc - b
-        a = 2 * np.pi * ts
-        n = 3.2
-        y = w * np.sign(np.sin(a)) * np.abs(np.sin(a)) ** (2 / n)
-        z = zc + h * np.sign(np.cos(a)) * np.abs(np.cos(a)) ** (2 / n)
-        rows.append(np.stack([np.full_like(y, x), y, z], 1))
-    P = np.array(rows)
+    return pchip(*zip(*BELLY_FAIRING_BOT))(np.asarray(x, float))
+
+
+def belly_fairing_halfwidth(x):
+    """Footprint half-width (seen from below) of the fairing at station(s) x."""
+    from cad.mesh import pchip
+    return np.maximum(pchip(*zip(*BELLY_FAIRING_HW))(np.asarray(x, float)), 0.0)
+
+
+def belly_fairing_section(x, n=72, z_top=1.20):
+    """Cross-section ring (n, 3) of the lower fairing at station x: flat bottom at belly_fairing_bottom(x), corner
+    radius BELLY_FAIRING_FLAT['r'], vertical sides up to z_top (buried in the fuselage / wing root)."""
+    zb = float(belly_fairing_bottom(x))
+    hw = max(float(belly_fairing_halfwidth(x)), 0.02)
+    r = min(BELLY_FAIRING_FLAT["r"], 0.9 * hw, 0.9 * max(z_top - zb, 0.01))
+    # perimeter: bottom centre -> starboard corner -> up the side -> over the top -> port side -> back
+    k = n // 4
+    a = np.linspace(-np.pi / 2, 0.0, k)
+    stbd = np.r_[np.c_[np.linspace(0.0, hw - r, k), np.full(k, zb)],
+                 np.c_[hw - r + r * np.cos(a), zb + r + r * np.sin(a)],
+                 np.c_[np.full(k, hw), np.linspace(zb + r, z_top, k)]]
+    half = np.r_[stbd, np.c_[np.linspace(hw, 0.0, k), np.full(k, z_top)]]
+    ring = np.r_[half, (half * [-1, 1])[::-1][1:-1]]
+    return np.c_[np.full(len(ring), x), ring]
+
+
+def belly_fairing():
+    """Lower wing-to-body fairing (mesh) lofted through belly_fairing_section() -- the side-view tail lobe and the
+    upper root fillet (BELLY_FAIRING_TAIL / _PLAN) are drawn on sheet L4 and follow in Stage 3."""
+    x0, x1 = BELLY_FAIRING_BOT[0][0], BELLY_FAIRING_HW[-1][0]
+    xs = np.linspace(x0 + 0.002, x1 - 0.002, 48)
+    rows = [belly_fairing_section(x) for x in xs]
+    m_ = min(len(r) for r in rows)
+    P = np.array([r[:m_] for r in rows])
     m = grid_surface(P, close_v=True)
     cen = P.mean(1)
     if np.mean(np.sum((P - cen[:, None]).reshape(-1, 3) * m.N, 1)) < 0:
