@@ -24,8 +24,10 @@ try {
   else { r = new THREE.WebGPURenderer({ antialias: true }); r.setPixelRatio(1); r.setSize(innerWidth, innerHeight); document.body.appendChild(r.domElement); await r.init(); scene = new THREE.Scene(); }
   r.toneMapping = THREE.AgXToneMapping; r.toneMappingExposure = 0.5; r.shadowMap.enabled = true;
   scene.background = new THREE.Color(0.5, 0.6, 0.75);
+  if (!E) {
   const sun = new THREE.DirectionalLight(0xffffff, 12); sun.position.set(40, 60, 30); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, far: 400 }); scene.add(sun);
-  scene.add(new THREE.HemisphereLight(0x9ab8e0, 0x5a5040, 3));
+  }
+  scene.add(new THREE.HemisphereLight(0x9ab8e0, 0x5a5040, E ? 0.5 : 3));
   const g = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardNodeMaterial({ color: 0x777777, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g);
   const types = (q.get('types') || 'b738,a320,b788').split(','); const livs = (q.get('livs') || 'UAL,DAL,ASA').split(',');
   for (const k of ['a319', 'a320', 'a321', 'a333', 'a359', 'a388', 'b738', 'b744', 'b748', 'b752', 'b763', 'b788', 'crj2', 'crj7', 'crj9', 'e170', 'e190', 'e75l', 'md11']) MODEL_SOURCES[k] = '../../../data/models/' + k + '.sfom';
@@ -42,16 +44,18 @@ try {
     const { Geo } = await import('../../geom.js'); const { objectMaterial } = await import('../objects.js');
     const g = new Geo(); g.box([-60, 0, -80], [-30, 12, -40], [0.8, 0.8, 0.78, 1], [0.9, 0, 5, 0]); g.box([-25, 0, -80], [-5, 20, -60], [0.8, 0.8, 0.78, 1], [0.9, 0, 2, 0]);
     const d = g.data(); const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(d.pos), 3)); bg.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(d.nrm), 3)); bg.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(d.uv), 2)); bg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(d.col), 4)); bg.setAttribute('extra', new THREE.BufferAttribute(new Float32Array(d.extra), 4)); bg.setIndex(Array.from(d.idx));
-    const om = objectMaterial({ noiseTex: noise, night: TSL.uniform(0), time: TSL.uniform(0) }); const bm = new THREE.Mesh(bg, om); bm.castShadow = bm.receiveShadow = true; scene.add(bm);
+    const om = objectMaterial({ noiseTex: noise, night: TSL.uniform(0), time: TSL.uniform(0) }); const bm = new THREE.Mesh(bg, om); bm.castShadow = q.get('cast') !== '0'; bm.receiveShadow = true; scene.add(bm);
+    const ctl = new THREE.Mesh(new THREE.BoxGeometry(15, 15, 15), new THREE.MeshStandardNodeMaterial({ color: 0xcccccc, roughness: 0.8 })); ctl.position.set(20, 7.5, -60); ctl.castShadow = q.get('cast') !== '0'; ctl.receiveShadow = true; scene.add(ctl);
     out.box = { n: d.pos.length / 3, ext0: Array.from(d.extra.slice(0, 4)), col0: Array.from(d.col.slice(0, 4)) };
   }
   const cam = E ? E.camera : new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.5, 2000);
-  if (E) { E.setSun([0.5, 0.7, 0.4], [12, 12, 12]); E.setCamera({ pos: [+(q.get('cx') || 70), +(q.get('cy') || 25), +(q.get('cz') || 75)], target: [0, 3, 0], fov: 35 * Math.PI / 180, near: 0.5, far: 5000, shadowSplits: [100, 300, 1000] }, innerWidth, innerHeight); }
+  const camRec = { pos: [+(q.get('cx') || 70), +(q.get('cy') || 25), +(q.get('cz') || 75)], target: [+(q.get('tx') || 0), 3, +(q.get('tz') || 0)], fov: 35 * Math.PI / 180, near: 0.5, far: 5000, shadowSplits: [84, 450, 2500] };
+  if (E) { E.setSun([0.5, 0.7, 0.4], [12, 12, 12]); E.setCamera({ pos: [+(q.get('cx') || 70), +(q.get('cy') || 25), +(q.get('cz') || 75)], target: [0, 3, 0], fov: 35 * Math.PI / 180, near: 0.5, far: 5000, shadowSplits: [84, 450, 2500] }, innerWidth, innerHeight); }
   else { cam.position.set(+(q.get('cx') || 70), +(q.get('cy') || 25), +(q.get('cz') || 75)); cam.lookAt(0, 3, 0); }
   AR.sync(list, [cam.position.x, cam.position.y, cam.position.z]);
   const e = AR.entries.get(list[0]); out.U = Object.fromEntries(Object.entries(e.U).filter(([k, v]) => v && v.toArray).map(([k, v]) => [k, v.toArray().map(x => +x.toFixed(3))]));
   out.real = !!e.real; out.mats = e.real ? e.real.material.length : 0;
-  for (let i = 0; i < 3; i++) { AR.sync(list, [cam.position.x, cam.position.y, cam.position.z]); if (E) E.render(); else r.render(scene, cam); await new Promise(res => setTimeout(res, 50)); }
+  for (let i = 0; i < +(q.get('frames') || 3); i++) { AR.sync(list, [cam.position.x, cam.position.y, cam.position.z]); if (E) { E.setCamera(camRec, innerWidth, innerHeight); E.render(); } else r.render(scene, cam); await new Promise(res => setTimeout(res, 50)); }
   out.ok = true;
 } catch (err) { out.err = String(err && err.stack || err); }
 window.__probe = out;

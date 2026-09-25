@@ -19,7 +19,9 @@ export function runwayStats(events, now = Date.now(), windowMs = 3600e3) {
     if (e.kind === 'exit' && e.rot != null && e.t >= t0) rot.push(e.rot);
     if (e.kind === 'exit') L.exit = e.t;
     if (e.kind === 'in-block' && L.exit && e.t - L.exit < 3600e3) { if (e.t >= t0) taxiIn.push((e.t - L.exit) / 60000); L.exit = null; }
-    if (e.kind === 'off-block') L.off = e.t;
+    if (e.kind === 'in-block') L.off = null;
+    // taxi-out from the FIRST off-block after in-block (a stop after the push-back is not a second off-block)
+    if (e.kind === 'off-block' && L.off == null) L.off = e.t;
     if (e.kind === 'takeoff-roll' && L.off && e.t - L.off < 3600e3) { if (e.t >= t0) taxiOut.push((e.t - L.off) / 60000); L.off = null; }
     if (e.t < t0) continue;
     if (e.kind === 'rejected-takeoff') rto.push(e);

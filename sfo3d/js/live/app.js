@@ -17,7 +17,7 @@ import { MODEL_SOURCES } from './models.js';
 import { buildLiveWorld, releaseAirportMap } from './world.js';
 import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, lightSpriteFn, buildPierGeometry } from './lights.js';
-import { Traffic, category, hdgVec, RWY, phaseLabel, ANT, DELAY_MS } from './traffic.js';
+import { Traffic, category, hdgVec, RWY, phaseLabel, antOf, DELAY_MS } from './traffic.js';
 import { GroundPhysics, buildingGrid } from './ground.js';
 import { Feed, StreamFeed, Routes, fetchMetar, fetchGates, parsePayload, SOURCES } from './feed.js';
 import { runwayStats, statsLine, statsHtml, runwayQueue } from './stats.js';
@@ -173,17 +173,25 @@ export async function startApp(cfg) {
   applyEnv(Date.now(), true);
   // ---------------------------------------------------------------- aircraft models & traffic
   Object.assign(MODEL_SOURCES, cfg.models || {});
-  let booted = false;
-  // parked aircraft pose for the jet bridge: nose position & heading in the airport (s,t) frame
-  const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const p = tr.parkPos || [tr.last.x, tr.last.z]; const h = hdgVec(tr.parkHdg ?? tr.last.hd); const k = ANT * T.L;
-    const n = worldToST(p[0] + h[0] * k, p[1] + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
+  // bridges of aircraft already parked when the page opens dock at once; after that every docking / retraction animates
+  let bootUntil = null; const booted = () => bootUntil != null && Date.now() > bootUntil;
+  const firstData = () => { if (bootUntil == null) bootUntil = Date.now() + 20000; };
+  // pose a jet bridge docks to: the DRAWN pose the aircraft came to rest in (traffic.js syncBridge: tr.dockPose), as nose
+  // position & heading in the airport (s,t) frame
+  const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const P = tr.dockPose || (tr.parkPos ? { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg } : { x: tr.last.x, z: tr.last.z, hdg: tr.last.hd });
+    const h = hdgVec(P.hdg); const k = antOf(T);
+    const n = worldToST(P.x + h[0] * k, P.z + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
   const traffic = new Traffic({ gates: world.gates, airport: cfg.airport, persist: cfg.mode === 'live', centerlines: cfg.details ? cfg.details.centerlines : null, taxigraph: cfg.taxigraph || null, stands: cfg.stands || null,
-    onGateChange: (g, tr) => gateChange(g, tr) });
-  // stand occupancy (jet bridges, VDGS) follows the scene: with an ATC audio delay the change is applied that much later
-  function applyGate(g, tr) { gateSys.setOccupant(g, tr ? (tr.model && TYPES[tr.model.t] ? tr.model.t : (g.wide ? 'b789' : 'a320')) : null, booted, Date.now(), tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
-  const gateQ = [];
-  function gateChange(g, tr) { const d = traffic && traffic.audioDelay || 0; if (d < 500) applyGate(g, tr); else gateQ.push({ due: Date.now() + d, g, tr }); }
-  function flushGates(now) { while (gateQ.length && gateQ[0].due <= now) { const q = gateQ.shift(); applyGate(q.g, q.tr && !q.tr.removed ? q.tr : null); } }
+    onGateChange: (g, tr) => applyGate(g, tr) });
+  // the physical bridges of a stand: its own, or -- for an alternative (MARS) position without bridges of its own, e.g.
+  // B5S / B16S / C9V (data/sfo_stands.json shares_bridges_of) -- those of its base stand, which dock to the aircraft there
+  const gateByName = new Map(world.gates.map(g => [g.name, g]));
+  const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
+  // jet-bridge docking follows the scene: traffic.js calls this at display time (docks once the drawn aircraft has come to
+  // rest; retracts when it is leaving, before it moves) and only for aircraft with a 3-D airframe
+  function applyGate(g, tr) { const G = bridgeGate(g); gateSys.setOccupant(G, tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, booted(), Date.now(), tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
+  // extension (0 retracted .. 1 docked) of a stand's bridges, for the engine's hold-until-clear
+  traffic.bridgeK = (g) => { const G = bridgeGate(g); const a = gateSys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
   const buildingAt = buildingGrid(cfg.airport); traffic.buildingAt = buildingAt;
   // ---------------------------------------------------------------- ATC (atc.js): tuned LiveATC feed + audio delay (per device)
   let atcTuned = store.get('atc.mount', null); if (atcTuned && !FEED_BY.has(atcTuned)) atcTuned = null;
@@ -215,7 +223,7 @@ export async function startApp(cfg) {
     const out = [];
     for (const tr of traffic.tracks.values()) {
       if (!tr.disp.valid || !tr.disp.ground) continue; const T = tr.model && TYPES[tr.model.t]; if (!T) continue;
-      const h = hdgVec(tr.disp.hdg); const k = ANT * T.L; out.push(footprint([tr.disp.x + h[0] * k, GROUND_Y, tr.disp.z + h[1] * k], [h[0], 0, h[1]], T, tr.gate || null));
+      const h = hdgVec(tr.disp.hdg); const k = antOf(T); out.push(footprint([tr.disp.x + h[0] * k, GROUND_Y, tr.disp.z + h[1] * k], [h[0], 0, h[1]], T, tr.gate || null));
     }
     return out;
   };
@@ -245,7 +253,8 @@ export async function startApp(cfg) {
       if (v === 'marker' && want && TYPES[want] && !tr.vehicle) v = null;
       if (!v) { v = makeView(tr); views.set(tr.hex, v); }
       if (v === 'marker') continue;
-      const D = tr.disp; const h = hdgVec(D.hdg); const back = v.T.xMain - ANT * v.T.L; // model origin = main gear; reported point = antenna
+      const D = tr.disp; v.visible = !(D.alpha < 0.5);   // re-placements fade out / in (traffic.js CUT_S)
+      const h = hdgVec(D.hdg); const back = v.T.xMain - antOf(v.T); // model origin = main gear; reported point = antenna
       v.pos = [D.x - h[0] * back, D.y, D.z - h[1] * back]; v.fwd = [h[0], 0, h[1]];
       v.pitch = D.pitch; v.roll = D.roll; v.gear = D.gear; v.flaps = D.flaps; v.spoilers = D.spoilers;
       if (v.liv !== tr.livery) { v.liv = tr.livery; v._pu = null; }
@@ -259,7 +268,7 @@ export async function startApp(cfg) {
   }
   function markerSprites() {
     const out = [];
-    for (const [hex, v] of views) { if (v !== 'marker') continue; const tr = traffic.tracks.get(hex); if (!tr || !tr.disp.valid) continue; const D = tr.disp;
+    for (const [hex, v] of views) { if (v !== 'marker') continue; const tr = traffic.tracks.get(hex); if (!tr || !tr.disp.valid || tr.disp.alpha < 0.5) continue; const D = tr.disp;
       const cat = category(tr); const c = { arr: [0.3, 0.8, 1], dep: [1, 0.7, 0.3], ground: [0.5, 0.9, 0.6], other: [0.85, 0.85, 0.9], vehicle: [1, 0.72, 0.1] }[cat] || [0.85, 0.85, 0.9];
       out.push(cat === 'vehicle' ? { p: [D.x, D.y + 1.6, D.z], c, i: 60, s: 0.7 } : { p: [D.x, D.y + 2, D.z], c, i: 120, s: 1.4 }); }
     return out;
@@ -310,14 +319,20 @@ export async function startApp(cfg) {
   let feedState = { state: 'wait', text: 'Connecting…' }; let gatesInfo = null;
   if (cfg.mode === 'snapshot') {
     const snap = cfg.snapshot;
-    const load = () => { traffic.tracks.clear(); for (const g of world.gates) { if (g.occupant) gateSys.setOccupant(g, null, false); g.occupant = null; } const p = parsePayload(snap); const off = Date.now() - p.now; p.now += off; for (const a of p.aircraft) a.t += off; traffic.offset = null; traffic.ingest(p, Date.now()); };
-    booted = false; load(); booted = true;
-    setInterval(() => { booted = false; load(); booted = true; }, 90000);
+    // the recorded snapshot is one instant: parked aircraft stay (kept alive, bridges stay docked); aircraft that were
+    // moving are re-created every 90 s so they never run far from where they were recorded
+    const load = () => {
+      firstData(); const p = parsePayload(snap); const off = Date.now() - p.now; p.now += off; for (const a of p.aircraft) a.t += off;
+      const keep = new Set();
+      for (const tr of [...traffic.tracks.values()]) { if (!tr.vehicle && tr.disp.ground && (tr.m.phase === 'still' || tr.gate)) { tr.lastRecv = Date.now(); keep.add(tr.hex); } else traffic.remove(tr); }
+      p.aircraft = p.aircraft.filter(a => !keep.has(a.hex)); traffic.offset = null; traffic.ingest(p, Date.now());
+    };
+    load(); setInterval(load, 90000);
     feedState = { state: 'snap', text: cfg.snapshotLabel || 'Recorded snapshot' };
   } else {
     const relay = !!cfg.relay;
     let lastSrc = null, fails = 0, fellBack = false;
-    const onData = (p, src) => { lastSrc = p.source || src.name; traffic.ingest(p, Date.now()); fails = 0; if (fellBack) { fellBack = false; } };
+    const onData = (p, src) => { firstData(); lastSrc = p.source || src.name; traffic.ingest(p, Date.now()); fails = 0; if (fellBack) { fellBack = false; } };
     const onStatus = (s) => {
       const nAc = () => [...traffic.tracks.values()].filter(t => !t.vehicle && !t.stale).length;
       if (s.ok) feedState = { state: 'live', text: 'Live', n: nAc(), src: s.source.name };
@@ -365,7 +380,7 @@ export async function startApp(cfg) {
     const tp = performance.now(); const wall = (tp - last) / 1000; let dt = Math.min(wall, 0.1); last = tp; simT += dt;
     const now = Date.now();
     try {
-      traffic.update(now, dt); flushGates(now); physics.resolve(traffic, dt); syncViews(now); rig.update(dt);
+      traffic.update(now, dt); physics.resolve(traffic, dt); syncViews(now); rig.update(dt);
       if ((tEnv += wall) > 30) { tEnv = 0; applyEnv(now, false); }
       const cam = rig.camera(); camPos = cam.pos;
       const fr = scene.frame(simT, cam.pos);
@@ -418,7 +433,6 @@ export async function startApp(cfg) {
     }
     ui.updateLabels(items, W, H);
   }
-  booted = true;
   ui.progress(1, 'Ready'); ui.ready(); status(Date.now());
   requestAnimationFrame(tick);
   // ---------------------------------------------------------------- QA camera helpers (used by the test harness)

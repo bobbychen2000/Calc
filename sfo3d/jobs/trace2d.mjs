@@ -14,7 +14,9 @@ export default async ({ page, base }) => {
   // the traffic engine + GroundPhysics, not the transport).
   await page.addInitScript(() => { try { delete window.EventSource; window.EventSource = undefined; } catch (e) { } });
   await page.goto(base + 'live.html?mode=live');
-  await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
+  // a module that 404s while another process rewrites the tree leaves the page waiting forever: name it, time out
+  page.on('response', r => { if (r.status() >= 400 && r.url().startsWith(base)) console.log('HTTP', r.status(), r.url()); });
+  await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: +(process.env.LOAD_TIMEOUT_MS || 1500000) });
   const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
   await page.evaluate(async () => { const t0 = performance.now(); while (!SFO.traffic.tracks.size && performance.now() - t0 < 60000) await new Promise(r => setTimeout(r, 500)); await Promise.all(SFO.scene.aircraft.map(a => a.ready)); });
   const frames = [];

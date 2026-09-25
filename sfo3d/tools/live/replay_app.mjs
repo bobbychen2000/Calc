@@ -44,7 +44,7 @@ const imp = (p) => import(path.join(ROOT, p));
 const { AIRPORT } = await imp('data/sfo_airport.js'); const { DETAILS } = await imp('data/sfo_details.js'); const { STANDS } = await imp('data/sfo_stands.js');
 const { PAINT } = await imp('data/sfo_paint.js'); const { PAVEMENT } = await imp('data/sfo_pavement.js');
 const { standGates, paintAirportMapReal, endZoneRects } = await imp('js/live/airport.js');
-const { Traffic, phaseLabel, category, ANT, RWY } = await imp('js/live/traffic.js');
+const { Traffic, phaseLabel, category, antOf, RWY } = await imp('js/live/traffic.js');
 const { GroundPhysics, buildingGrid } = await imp('js/live/ground.js');
 const { parsePayload } = await imp('js/live/feed.js');
 const { TYPES } = await imp('js/aircraft/types.js');
@@ -115,7 +115,7 @@ while (simNow < tEnd) {
       const T = tr.model && TYPES[tr.model.t];
       let offPave = null, inBld = null, body = null;
       if (T && D.ground) {
-        const f = hv(D.hdg); const nose = [D.x + f[0] * ANT * T.L, D.z + f[1] * ANT * T.L]; const S = samples(T, nose, D.hdg);
+        const f = hv(D.hdg); const nose = [D.x + f[0] * antOf(T), D.z + f[1] * antOf(T)]; const S = samples(T, nose, D.hdg);
         offPave = S.gear.filter(g => !apt.paved(g[0], g[1])).length; inBld = S.outline.filter(p => building(p[0], p[1])).length;
         body = { hex: tr.hex, T, nose, f: S.f, r: S.r, h: D.hdg, S }; ground.push(body);
       }

@@ -60,7 +60,17 @@ def main():
             if gates and (next_g is None or ft.t >= next_g):
                 next_g = ft.t + o.gates_every
                 P = gates.payload()
-                slim = {'byCallsign': {k: {'stand': v['stand']} for k, v in P.get('byCallsign', {}).items() if v.get('stand')},
+                F = P.get('flights', {})
+                # per callsign: the stand window and SFO's aircraft type (ICAO designator of the flight record: the
+                # engine's database-type plausibility check, js/live/traffic.js planType)
+                def _slim(v):
+                    fl = [F.get(v.get(k)) for k in ('dep', 'arr') if v.get(k)]
+                    ty = next((f.get('type') for f in fl if f and f.get('type')), None)
+                    out = {}
+                    if v.get('stand'): out['stand'] = v['stand']
+                    if ty: out['type'] = ty
+                    return out
+                slim = {'byCallsign': {k: s for k, s in ((k, _slim(v)) for k, v in P.get('byCallsign', {}).items()) if s},
                         'aliases': {k: {'to': v.get('to')} for k, v in P.get('aliases', {}).items() if v.get('to')}}
                 gout.write(json.dumps({'T': ft.t, 'gates': slim}, separators=(',', ':')) + '\n')
     if gout: gout.close()

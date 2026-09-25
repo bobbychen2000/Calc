@@ -82,7 +82,7 @@ def united(c):
 
 @livery('UAL-X', name='United Express', version='2019 livery with UNITED EXPRESS titles', since=2019,
         refs=UA_REFS + ['layout of the EXPRESS title: approx (no official side view of a regional jet found yet)'],
-        colors={k: (v, 'official (United livery graphic PDF)') for k, v in UA.items()},
+        colors={k: (v, 'official (United livery graphic PDF)' if k != 'white' else 'approx') for k, v in UA.items()},
         types=['E75L', 'E170', 'CRJ2', 'CRJ7'],
         runtime=dict(top='#F7F8F8', belly='#D3D4D0', tail='#0033A0', tail2='#6CB2E2', eng='#0033A0', stripe='#0B233E', bellyLine=-0.45),
         status='2019 design on regional jets (United release: applied to regional aircraft); EXPRESS title placement approx')

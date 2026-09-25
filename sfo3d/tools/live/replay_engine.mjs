@@ -33,7 +33,7 @@ const { AIRPORT } = await imp('data/sfo_airport.js'); const { DETAILS } = await 
 const { PAINT } = await imp('data/sfo_paint.js'); const { PAVEMENT } = await imp('data/sfo_pavement.js');
 let TAXIGRAPH = null; try { ({ TAXIGRAPH } = await imp('data/sfo_taxigraph.js')); } catch (e) { console.error('no taxi graph'); }
 const { standGates, paintAirportMapReal, endZoneRects } = await imp('js/live/airport.js');
-const { Traffic, phaseLabel, category } = await imp('js/live/traffic.js');
+const { Traffic, phaseLabel, category, antOf } = await imp('js/live/traffic.js');
 const { GroundPhysics, buildingGrid, bodyOf, overlaps, samples, pavedUnion } = await imp('js/live/ground.js');
 const { parsePayload } = await imp('js/live/feed.js');
 const { TYPES } = await imp('js/aircraft/types.js');
@@ -85,7 +85,7 @@ while (simNow < tEnd) {
     const s = K.get(tr.hex);
     // ground kinematics are measured at the main-gear centre (the point that cannot slip sideways; the antenna point
     // swings sideways in a turn), airborne ones at the reference point
-    const Tk = tr.model && TYPES[tr.model.t]; const bk = D.ground && Tk ? Math.max(1, (Tk.xMain ?? Tk.L * 0.47) - 0.2 * Tk.L) : 0;
+    const Tk = tr.model && TYPES[tr.model.t]; const bk = D.ground && Tk ? Math.max(1, (Tk.xMain ?? Tk.L * 0.47) - antOf(Tk)) : 0;
     const PX = D.x - Math.sin(D.hdg) * bk, PZ = D.z + Math.cos(D.hdg) * bk;
     const vx = s ? (PX - s.x) / DT : 0, vz = s ? (PZ - s.z) / DT : 0, vy = s ? (D.y - s.y) / DT : 0;
     if (s && s.n >= 2 && near && s.g === D.ground) {

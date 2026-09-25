@@ -16,7 +16,9 @@ export default async ({ page, base }) => {
   const OUTD = path.resolve(process.env.DRAW_OUT || 'out/draw');
   fs.mkdirSync(OUTD, { recursive: true });
   await page.goto(base + 'live.html?mode=snapshot');
-  await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
+  // a module that 404s while another process rewrites the tree leaves the page waiting forever: name it, time out
+  page.on('response', r => { if (r.status() >= 400 && r.url().startsWith(base)) console.log('HTTP', r.status(), r.url()); });
+  await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: +(process.env.LOAD_TIMEOUT_MS || 1500000) });
   const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
   const tLoad = Date.now();
   // every file the app loaded (performance resource entries), hashed on disk now and again at the end: the drawing

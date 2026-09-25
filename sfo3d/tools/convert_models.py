@@ -13,7 +13,7 @@ import json, struct, os, sys, io, gzip, math, re
 import numpy as np
 from PIL import Image, ImageFilter
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'models')
+OUT = os.environ.get('SFOM_OUT', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'models'))
 os.makedirs(OUT, exist_ok=True)
 
 # ---------------------------------------------------------------- glTF loading
@@ -353,6 +353,12 @@ def convert(key, prims, mats, images, textures, cfg):
         sel = np.where(tri_slot == si)[0]
         if len(sel) == 0: continue
         draws.append(dict(mat=si, first=int(sel[0] * 3), count=int(len(sel) * 3), zone=slot_list[si]['zone']))
+    # ---- UVs: bring every triangle's UVs next to [0, 1) by an integer shift (the texture wraps, so this changes nothing
+    # on screen) and give untextured vertices a neutral UV. Without this a few tiled or garbage UVs (e.g. +-1500 on the
+    # 747-400, 767 and A220-100 sources) stretch the u16 quantisation range until every other UV loses its precision.
+    tex_of_slot = np.array([mats_out[si]['tex'] for si in range(len(slot_list))])
+    tri_tex = tex_of_slot[tri_slot]
+    P, Nn, UV, Z, tri_idx = normalize_uvs(P, Nn, UV, Z, tri_idx, tri_tex, [mean_texel(t) for t in tex_out])
     # ---- quantize & pack
     plo, phi = P.min(0), P.max(0)
     pscale = (phi - plo) / 65535.0
@@ -386,6 +392,43 @@ def convert(key, prims, mats, images, textures, cfg):
     ntri = len(ib) // 3
     print(f'  -> {key}.sfom  verts {len(P)} tris {ntri} draws {len(draws)} textures {len(tex_out)} raw {len(raw)/1e6:.2f} MB gz {len(gz)/1e6:.2f} MB')
     return head
+
+
+def mean_texel(t):
+    """UV of the texel whose colour is closest to the texture's mean colour (what a triangle with garbage UVs, spanning
+    hundreds of texture repeats, shows through the smallest mip level)"""
+    im = np.asarray(Image.open(io.BytesIO(t['data'])).convert('RGB').resize((64, 64), Image.BOX), float)
+    d = np.abs(im - im.reshape(-1, 3).mean(0)).sum(-1); y, x = np.unravel_index(np.argmin(d), d.shape)
+    return ((x + 0.5) / 64, (y + 0.5) / 64)
+
+
+def normalize_uvs(P, N, UV, Z, tri, tri_tex, flat_uv, max_spread=4.0):
+    """per triangle: shift its UVs by the integer part of their centroid (duplicating vertices shared by triangles that
+    need different shifts); untextured triangles get UV 0.5; textured triangles whose UVs span more than `max_spread`
+    texture repeats (garbage UVs in the source: 747-400 misc / fin, 767 wing and fuselage strips, A220-100 chrome) get
+    the constant UV flat_uv[tex] (the mean colour they show on screen through the mip chain)"""
+    UV = UV.copy()
+    tu = UV[tri]
+    bad = (tri_tex >= 0) & ((tu.max(1) - tu.min(1)).max(1) > max_spread)
+    shift = np.where(tri_tex[:, None] >= 0, np.floor(tu.mean(1)), 0.0)            # (nt, 2)
+    shift[bad] = 0
+    notex = tri_tex < 0
+    newP, newN, newUV, newZ = [P], [N], [UV], [Z]
+    key = {}; tri = tri.copy(); nv = len(P)
+    for t in np.where((np.abs(shift).sum(1) > 0) | notex | bad)[0]:
+        for k in range(3):
+            v = tri[t, k]
+            if notex[t]: kk = (v, 'n'); uv = np.array([[0.5, 0.5]])
+            elif bad[t]: kk = (v, 'f', int(tri_tex[t])); uv = np.array([flat_uv[tri_tex[t]]])
+            else: kk = (v, shift[t, 0], shift[t, 1]); uv = UV[v:v + 1] - shift[t]
+            if kk not in key:
+                key[kk] = nv; nv += 1
+                newP.append(P[v:v + 1]); newN.append(N[v:v + 1]); newZ.append(Z[v:v + 1]); newUV.append(uv)
+            tri[t, k] = key[kk]
+    if bad.any(): print(f'  UVs: {int(bad.sum())} triangles with garbage UVs (> {max_spread:g} repeats) flattened to the mean texel')
+    P = np.concatenate(newP); N = np.concatenate(newN); UV = np.concatenate(newUV); Z = np.concatenate(newZ)
+    used = np.unique(tri); rm = -np.ones(len(P), np.int64); rm[used] = np.arange(len(used))
+    return P[used], N[used], UV[used], Z[used], rm[tri]
 
 
 def compute_normals(pos, idx):

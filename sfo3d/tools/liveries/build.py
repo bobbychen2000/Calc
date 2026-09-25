@@ -8,8 +8,8 @@ TYPE_MODEL). Types rendered on the same model with the same fuselage plugs share
 them); types without an imported model (777 family) use the procedural airframe and its runtime colours instead.
 
 Output: data/liveries/<BRAND>/<model>[@<type>]-{hi,mid,lo}.webp (2048 / 1024 / 512 px), data/liveries/manifest.json
-(read by js/three/aircraft.js LiveryLibrary: entries[].brand/model/file) and data/liveries/manifest.js (same data, ES
-module, js/aircraft/liveries.js). Models must be atlased first (tools/liveries/atlas.py).
+(read by js/three/aircraft.js LiveryLibrary: entries[].brand/model/file; `pxm` = atlas px per metre at 2048) and
+data/liveries/manifest.js (same data, ES module, js/aircraft/liveries.js). Models must be atlased first (tools/liveries/atlas.py).
 
 Usage: python3 tools/liveries/build.py [BRAND ...] [--models b738,a320] [--no-manifest-only] [--preview DIR]
 """
@@ -23,7 +23,7 @@ import liveries
 from paint import Canvas
 
 SIZES = dict(hi=2048, mid=1024, lo=512)
-QUALITY = dict(hi=88, mid=86, lo=84)
+QUALITY = dict(hi=88, mid=84, lo=80)
 
 
 def plug_sig(A, t):
@@ -50,9 +50,9 @@ def save_all(img, base):
     files = {}
     os.makedirs(os.path.dirname(base), exist_ok=True)
     for res, n in SIZES.items():
-        im = img if img.size[0] == n else img.resize((n, n), Image.LANCZOS)
+        im = img if img.size[0] == n else img.resize((n, n), Image.BOX)     # area average: no ringing, half the file size
         fn = f'{base}-{res}.webp'
-        im.save(fn, 'WEBP', quality=QUALITY[res], method=6, alpha_quality=90)
+        im.save(fn, 'WEBP', quality=QUALITY[res], method=6, alpha_quality=80)
         files[res] = os.path.relpath(fn, common.LIV).replace(os.sep, '/')
     return files
 
@@ -86,6 +86,16 @@ def bake_jobs(codes, only, preview_dir=None):
                 print(f'   {code:6s} -> {files["hi"]} ({os.path.getsize(os.path.join(common.LIV, files["hi"])) // 1024} KB hi) {time.time() - t1:.0f} s', flush=True)
 
 
+_pxm = {}
+def pxm(m):
+    """texel density of the model's livery atlas: px per metre at the hi size (2048)"""
+    if m not in _pxm:
+        import sfom
+        a = sfom.load(os.path.join(common.MD, m + '.sfom'), textures=False)['head']['atlas']
+        _pxm[m] = round(a['kpm'] * SIZES['hi'] / a['size'], 1)
+    return _pxm[m]
+
+
 def write_manifest():
     """entries from the job table and the files present on disk (so several bake processes can run in parallel)"""
     A = common.app()
@@ -101,7 +111,7 @@ def write_manifest():
                 gtypes = sorted({t for b, t in lst if b == code} | {rep})
                 rec = dict(types=gtypes, files=files, file=files['mid'], painted_as=rep,
                            bytes={r: os.path.getsize(os.path.join(common.LIV, f)) for r, f in files.items()})
-                e = ent.setdefault((code, m), dict(brand=code, model=m, variants=[]))
+                e = ent.setdefault((code, m), dict(brand=code, model=m, pxm=pxm(m), variants=[]))
                 if sig is None: e.update(rec)
                 else: e['variants'].append(rec)
     for e in ent.values():

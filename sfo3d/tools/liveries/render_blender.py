@@ -27,9 +27,12 @@ def build_scene(bpy, model_path, type_key, livery_path, tmp):
     V = np.stack([P[:, 0], -P[:, 2], P[:, 1]], -1)
     idx = m['idx']
     mesh = bpy.data.meshes.new('ac'); ob = bpy.data.objects.new('ac', mesh); bpy.context.collection.objects.link(ob)
-    mesh.from_pydata(V.tolist(), [], idx[:, ::-1].tolist())
+    # faces keep the source winding (outward, like the stored normals); the per-loop UVs follow the same order.
+    # RB_REWIND=1 / RB_NORMALS=none|neg are debugging switches (rewound faces with the source normals render black)
+    wind = (lambda a: a[:, ::-1]) if os.environ.get('RB_REWIND') else (lambda a: a)
+    mesh.from_pydata(V.tolist(), [], wind(idx).tolist())
     uvl = mesh.uv_layers.new(name='uv')
-    uv = m['uv'][idx[:, ::-1]].reshape(-1, 2).copy(); uv[:, 1] = 1 - uv[:, 1]
+    uv = m['uv'][wind(idx)].reshape(-1, 2).copy(); uv[:, 1] = 1 - uv[:, 1]
     uvl.data.foreach_set('uv', uv.reshape(-1))
     # images
     imgs = []
@@ -74,8 +77,10 @@ def build_scene(bpy, model_path, type_key, livery_path, tmp):
     mesh.polygons.foreach_set('use_smooth', np.ones(len(idx), bool))
     Nb = np.stack([m['nrm'][:, 0], -m['nrm'][:, 2], m['nrm'][:, 1]], -1)
     Nb /= np.maximum(np.linalg.norm(Nb, axis=1, keepdims=True), 1e-6)
-    try: mesh.normals_split_custom_set_from_vertices(Nb.tolist())
-    except Exception: pass
+    nm = os.environ.get('RB_NORMALS', 'src')
+    if nm != 'none':
+        try: mesh.normals_split_custom_set_from_vertices((Nb if nm == 'src' else -Nb).tolist())
+        except Exception: pass
     mesh.update()
     lo, hi = V.min(0), V.max(0)
     return ob, lo, hi, m
@@ -128,13 +133,16 @@ if __name__ == '__main__':
     os.makedirs(a.out, exist_ok=True)
     A = common.app()
     sizes = tuple(int(v) for v in a.size.split('x'))
-    # the model each brand is rendered on: its first listed SFO type that has a bake
+    # the model each brand is rendered on: its most frequent SFO type (DataSF landings Aug 2025 - Jul 2026,
+    # docs/research/liveries.md §1.1) where listed in PREF, else its first listed SFO type that has a bake
+    PREF = dict(UAL='B738', DAL='B739', AAL='A321', ASA='B739', SWA='B737', JBU='A321', FFT='A20N', ACA='B38M', AMX='B38M',
+                WJA='B738', HAL='A21N', AVA='A20N', CMP='B39M', SCX='B738', MXY='BCS3', DLH='B748', VIR='B789', JAL='B789')
     import liveries
     for code, L in liveries.LIVERIES.items():
         if a.brands and code not in a.brands: continue
         ent = {e['model']: e for e in man['entries'] if e['brand'] == code}
         pick = None
-        for icao in L.get('types', []):
+        for icao in ([PREF[code]] if code in PREF else []) + L.get('types', []):
             t = A['icao'].get(icao); mdl = A['typeModel'].get(t) if t else None
             if mdl in ent:
                 e = ent[mdl]; f = e

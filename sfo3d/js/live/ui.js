@@ -248,7 +248,8 @@ function runwayText(tr) {
   if (ph === 'goaround') return `<b class="mono">${esc(tr.m.rwy || '')}</b> <span class="dim">go-around</span>`;
   if ((ph === 'lineup' || ph === 'takeoff') && tr.m.rwy) return `<b class="mono">${esc(tr.m.rwy)}</b> <span class="dim">${ph === 'takeoff' ? 'take-off roll' : 'lined up'}</span>`;
   if (tr.depRunway && (ph === 'departure' || tr.dirSFO === 'dep')) return `<b class="mono">${esc(tr.depRunway)}</b> <span class="dim">departed${tr.liftoffAt ? ' ' + clock(tr.liftoffAt) : ''}</span>`;
-  if (tr.arrRunway && tr.landedAt) return `<b class="mono">${esc(tr.arrRunway)}</b> <span class="dim">landed ${clock(tr.landedAt)}</span>`;
+  // the arrival runway only while this is still the arrival (after a turn the departure is another flight: review round 1)
+  if (tr.arrRunway && tr.landedAt && tr.dirSFO !== 'dep' && !(tr.inBlockAt > tr.landedAt && !tr.gate)) return `<b class="mono">${esc(tr.arrRunway)}</b> <span class="dim">landed ${clock(tr.landedAt)}</span>`;
   return '';
 }
 const clock = (t) => new Date(t).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });

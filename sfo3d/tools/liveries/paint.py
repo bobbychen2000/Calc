@@ -85,8 +85,10 @@ class Canvas:
         self.eta = (self.y - self.yc) / self.hh
         self.H = self.env.mainTop - self.env.mainBot
         self.ycM = (self.env.mainTop + self.env.mainBot) / 2; self.hhM = self.H / 2
+        # side of the aircraft (+1 starboard, -1 port) by position: the source normals are not reliable (inverted
+        # triangles on the 767 would read their titles mirrored); on the thin fin, by the normal's sign
         nz = self.nrm[:, 2]
-        self.side = np.where(np.abs(nz) > 0.3, np.sign(nz), np.sign(self.z + 1e-9))   # +1 starboard, -1 port
+        self.side = np.where(np.abs(self.z) > 0.08, np.sign(self.z), np.where(np.abs(nz) > 0.2, np.sign(nz), 1.0))
         self._windows()
         self._fin()
         self.eng = A['eng']

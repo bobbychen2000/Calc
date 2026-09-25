@@ -161,10 +161,10 @@
    "belly": -3.0894784904959427,
    "hasGear": false
   },
-  "nv": 19804,
+  "nv": 19848,
   "ni": 53952,
   "file": "a333.sfom",
-  "size": 595582,
+  "size": 601398,
   "atlas": true
  },
  "a359": {
@@ -224,10 +224,10 @@
    "belly": -4.199375152587891,
    "hasGear": false
   },
-  "nv": 18221,
+  "nv": 18237,
   "ni": 47295,
   "file": "b744.sfom",
-  "size": 478485,
+  "size": 503665,
   "atlas": true
  },
  "b748": {
@@ -245,10 +245,10 @@
    "belly": -4.161313533782959,
    "hasGear": false
   },
-  "nv": 26193,
+  "nv": 26203,
   "ni": 78552,
   "file": "b748.sfom",
-  "size": 395893,
+  "size": 399640,
   "atlas": true
  },
  "b752": {
@@ -287,10 +287,10 @@
    "belly": -2.8635300174355507,
    "hasGear": false
   },
-  "nv": 13762,
+  "nv": 13722,
   "ni": 39492,
   "file": "b763.sfom",
-  "size": 441137,
+  "size": 464616,
   "atlas": true
  },
  "bcs1": {
@@ -311,7 +311,7 @@
   "nv": 26548,
   "ni": 76287,
   "file": "bcs1.sfom",
-  "size": 761330,
+  "size": 811079,
   "atlas": true
  },
  "crj2": {
@@ -392,10 +392,10 @@
    "belly": -1.9299420740455389,
    "hasGear": false
   },
-  "nv": 17745,
+  "nv": 17694,
   "ni": 58704,
   "file": "e170.sfom",
-  "size": 586924,
+  "size": 586672,
   "atlas": true
  },
  "e190": {
@@ -413,10 +413,10 @@
    "belly": -1.8524357625842096,
    "hasGear": false
   },
-  "nv": 17934,
+  "nv": 17892,
   "ni": 60228,
   "file": "e190.sfom",
-  "size": 751187,
+  "size": 750529,
   "atlas": true
  },
  "md11": {

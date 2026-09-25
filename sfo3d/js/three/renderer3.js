@@ -39,7 +39,7 @@ function tierOf(opts) {
 export class Renderer3 {
   constructor(W, H, opts = {}) {
     this.W = W; this.H = H; this.tier = tierOf(opts); this.Q = QUALITY3[this.tier];
-    this.canvas = glCanvas; this.fixedRes = new URLSearchParams(location.search).get('res') === '1';
+    this.canvas = glCanvas; this.dbgNoCast = new URLSearchParams(location.search).get('nocast') === '1'; this.fixedRes = new URLSearchParams(location.search).get('res') === '1';
     this.engine = new Engine(document.getElementById('app') || document.body, this.Q, { canvas: this.canvas });
     this.ready = false; this.failed = null; this.frames = 0; this.jobs = [];
     this.light = { sunDir: [0, 1, 0], sunColor: [1, 1, 1], skyUp: [0.3, 0.4, 0.6], skyHorizon: [0.5, 0.55, 0.6], ground: [0.1, 0.1, 0.1] };
@@ -101,6 +101,9 @@ export class Renderer3 {
     const E = this.engine, S = E.scene, W = this.world, Q = this.Q;
     const sky = this.sky;
     S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode();
+    // sun radiance x cloud shadow (the old shaders' getShadow() * cloudShadow(wp)); three multiplies the CSM term in
+    this.sunRad = uniform(new THREE.Vector3(1, 1, 1));
+    E.sun.colorNode = this.sunRad.mul(sky.cloudShadow(TSL.positionWorld));
     this.gMat = groundMaterial(W, this.bakes, sky, Q); this.wMat = waterMaterial(W, this.bakes, sky);
     const common = { noiseTex: this.noiseTex, night: this.night, time: this.time };
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
@@ -178,7 +181,7 @@ export class Renderer3 {
       this.sky.u.skyFloor.value.setRGB(...L.skyUp.map((v, k) => Math.max(0, v - bu[k])));
       this.sky.renderSky(R);
       this.sky.updateEnvironment(R, S);
-      E.setSun(L.sunDir, L.sunColor);
+      E.setSun(L.sunDir, L.sunColor); this.sunRad.value.set(L.sunColor[0], L.sunColor[1], L.sunColor[2]);
     }
     this.time.value = t; this.night.value = this.extraCommon.uNight || 0;
     const wu = this.world.waterU; if (this.wMat && wu) { const u = this.wMat.userData; if (wu.uWind) u.uWind.value.set(wu.uWind[0], wu.uWind[1]); if (wu.uWaveAmp != null) u.uAmp.value = wu.uWaveAmp; }
@@ -187,6 +190,7 @@ export class Renderer3 {
     // light sprites
     const sp = this.sprites; sp.begin(); for (const s of fr && fr.sprites || []) sp.put(s); sp.end(E.camera, this.H);
     R.toneMappingExposure = (post.exposure ?? 0.45) * this.exposureScale;
+    if (this.dbgNoCast) S.traverse(o => { if (o.isMesh) o.castShadow = false; });
     const tr0 = performance.now(); E.render(); this.frames++;
     if (this.frames <= 3 || this.frames % 50 === 0) console.log('[r3] frame ' + this.frames + ' ' + (performance.now() - tr0).toFixed(0) + ' ms (t=' + ((performance.now() - T0) / 1000).toFixed(1) + ' s)');
     return C;

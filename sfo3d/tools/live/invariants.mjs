@@ -77,7 +77,8 @@ const { AIRPORT } = await imp('data/sfo_airport.js'); const { DETAILS } = await 
 const { PAINT } = await imp('data/sfo_paint.js'); const { PAVEMENT } = await imp('data/sfo_pavement.js');
 let TAXIGRAPH = null; try { ({ TAXIGRAPH } = await imp('data/sfo_taxigraph.js')); } catch (e) { console.error('no taxi graph'); }
 const { standGates, paintAirportMapReal, endZoneRects } = await imp('js/live/airport.js');
-const { Traffic, RWY, ANT, hdgVec } = await imp('js/live/traffic.js');
+const TR = await imp('js/live/traffic.js'); const { Traffic, RWY, hdgVec } = TR;
+const antOf = TR.antOf || ((T) => TR.ANT * T.L);   // position reference behind the nose (per family, traffic.js)
 const { GroundPhysics, buildingGrid, pavedUnion } = await imp('js/live/ground.js');
 const { parsePayload } = await imp('js/live/feed.js');
 const { TYPES } = await imp('js/aircraft/types.js');
@@ -92,15 +93,20 @@ let simNow = 0, checkFrom = Infinity;
 const gsys = Object.create(LiveGateSystem.prototype); gsys.gates = gates; gsys.anims = new Map(); gsys.dirty = false;
 for (const g of gates) for (const b of g.bridges || []) gsys.prepBridge(g, b);
 let booted = false;
-const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const p = tr.parkPos || [tr.last.x, tr.last.z]; const h = hdgVec(tr.parkHdg ?? tr.last.hd); const k = ANT * T.L;
-  const n = worldToST(p[0] + h[0] * k, p[1] + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
-const occ = new Map(); // gate name -> occupant track (as the bridge system was told)
-function applyGate(g, tr) { occ.set(g.name, tr || null); gsys.setOccupant(g, tr ? (tr.model && TYPES[tr.model.t] ? tr.model.t : (g.wide ? 'b789' : 'a320')) : null, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
+// (as js/live/app.js: the bridge docks to the DRAWN pose the aircraft came to rest in, tr.dockPose; an alternative (MARS)
+// stand without bridges uses its base stand's bridges; only aircraft with a 3-D airframe are docked)
+const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const P = tr.dockPose || (tr.parkPos ? { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg } : { x: tr.last.x, z: tr.last.z, hdg: tr.last.hd }); const h = hdgVec(P.hdg); const k = antOf(T);
+  const n = worldToST(P.x + h[0] * k, P.z + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
+const gateByName = new Map(gates.map(g => [g.name, g]));
+const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
+const occ = new Map(); // physical gate name -> occupant track (as the bridge system was told)
+function applyGate(g, tr) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; occ.set(G.name, ty ? tr : null); gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
 function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.docks(g, b) ? a.k : 0; return g.acType && gsys.docks(g, b) ? 1 : 0; }
 function animStep(now) { for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
 
 const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr) => applyGate(g, tr) });
 traffic.buildingAt = building; if (TRACE) traffic.debug = TRACE;
+traffic.bridgeK = (g) => { const G = bridgeGate(g); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net });
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
 
@@ -149,7 +155,7 @@ function shapeOf(key) {
   S = { T, pieces, pts, gear, code, reach: Math.hypot(T.L, span) + 2 }; shapeCache.set(key, S); return S;
 }
 // body pose in world: displayed reference point (ADS-B antenna) -> nose
-function pose(tr) { const D = tr.disp; const key = tr.model && TYPES[tr.model.t] ? tr.model.t : null; if (!key) return null; const S = shapeOf(key); const f = hdgVec(D.hdg), r = [-f[1], f[0]]; const k = ANT * S.T.L; const nose = [D.x + f[0] * k, D.z + f[1] * k];
+function pose(tr) { const D = tr.disp; const key = tr.model && TYPES[tr.model.t] ? tr.model.t : null; if (!key) return null; const S = shapeOf(key); const f = hdgVec(D.hdg), r = [-f[1], f[0]]; const k = antOf(S.T); const nose = [D.x + f[0] * k, D.z + f[1] * k];
   const W = (x, y) => [nose[0] - f[0] * x + r[0] * y, nose[1] - f[1] * x + r[1] * y];
   const cx = S.T.L * 0.45; const c = W(cx, 0); return { tr, S, f, r, nose, W, c, polys: null }; }
 function worldPolys(B) { if (!B.polys) B.polys = B.S.pieces.map(pc => pc.poly.map(p => B.W(p[0], p[1]))); return B.polys; }
@@ -291,9 +297,11 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
   const gnd = [], low = [];
   for (const tr of traffic.tracks.values()) {
     const D = tr.disp; if (!D.valid) continue; const veh = tr.vehicle;
+    // faded out (a re-placement in progress, or not yet shown): not drawn -> not checked; its reappearance is a new start
+    if (D.alpha != null && D.alpha < 0.5) { K.delete(tr.hex); tr._reset = null; continue; }
     const s = K.get(tr.hex); const T = tr.model && TYPES[tr.model.t];
     const near = Math.hypot(D.x, D.z) < 40000; const light = tr.info.category === 'A1' || (T && T.L < 20); const rotor = tr.info.category === 'A7';
-    const bk = D.ground && T ? Math.max(1, (T.xMain ?? T.L * 0.47) - ANT * T.L) : 0;
+    const bk = D.ground && T ? Math.max(1, (T.xMain ?? T.L * 0.47) - antOf(T)) : 0;
     const PX = D.x - Math.sin(D.hdg) * bk, PZ = D.z + Math.cos(D.hdg) * bk;
     const agl = D.y - GROUND_Y;
     if (chk && !veh && near) {
@@ -312,7 +320,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
         const onR = runwaysAt(D.x, D.z).length > 0;
         if (ph === 'taxi' && onR && D.gs > 50 * KT) viol('phase.taxi_fast_on_runway', tr, D.gs / KT, { gs: +(D.gs / KT).toFixed(0) });
         if ((ph === 'landing' || ph === 'takeoff') && !runwaysAt(D.x, D.z, 45).length && D.gs > 30 * KT) viol('phase.rwyphase_off_runway', tr, nearRunwayCL(D.x, D.z), { gs: +(D.gs / KT).toFixed(0) });
-        if (ph === 'gate' && tr.gate) { const dd = Math.hypot(D.x - tr.gate.w.x, D.z - tr.gate.w.z); if (dd > 30 + (T ? ANT * T.L : 10)) viol('phase.gate_far_from_stand', tr, dd, { stand: tr.gate.name, d: Math.round(dd) }); }
+        if (ph === 'gate' && tr.gate) { const dd = Math.hypot(D.x - tr.gate.w.x, D.z - tr.gate.w.z); if (dd > 30 + (T ? antOf(T) : 10)) viol('phase.gate_far_from_stand', tr, dd, { stand: tr.gate.name, d: Math.round(dd) }); }
         if (ph === 'pushback' && s && D.gs > 1.5) { const fx = Math.sin(D.hdg), fz = -Math.cos(D.hdg); const va = ((D.x - s.rx) * fx + (D.z - s.rz) * fz) / DT; if (va > 1.5) viol('phase.pushback_forward', tr, va, { v: +va.toFixed(1) }); }
         if (!onR && D.gs > 35 * KT && nearRunwayCL(D.x, D.z) > 100) viol('gnd.speed.taxi', tr, D.gs / KT, { gs: +(D.gs / KT).toFixed(0), dRwyCL: Math.round(nearRunwayCL(D.x, D.z)) });
       }
@@ -440,7 +448,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
         else {
           const dW = doorW(Bo, b.door); const e = Math.hypot(dW[0] - tgt[0], dW[1] - tgt[1]);
           if (e > 1.5) {
-            const pp = Bo.tr.parkPos; let parkErr = null, dispPark = null; if (pp) { const Tq = Bo.S.T; const f = hdgVec(Bo.tr.parkHdg ?? Bo.tr.disp.hdg), r = [-f[1], f[0]], k0 = ANT * Tq.L; const nose = [pp[0] + f[0] * k0, pp[1] + f[1] * k0]; const Bp = { S: Bo.S, r, W: (x, y) => [nose[0] - f[0] * x + r[0] * y, nose[1] - f[1] * x + r[1] * y] }; const dP = doorW(Bp, b.door); parkErr = +Math.hypot(dP[0] - tgt[0], dP[1] - tgt[1]).toFixed(2); dispPark = +Math.hypot(pp[0] - Bo.tr.disp.x, pp[1] - Bo.tr.disp.z).toFixed(2); }
+            const pp = Bo.tr.parkPos; let parkErr = null, dispPark = null; if (pp) { const Tq = Bo.S.T; const f = hdgVec(Bo.tr.parkHdg ?? Bo.tr.disp.hdg), r = [-f[1], f[0]], k0 = antOf(Tq); const nose = [pp[0] + f[0] * k0, pp[1] + f[1] * k0]; const Bp = { S: Bo.S, r, W: (x, y) => [nose[0] - f[0] * x + r[0] * y, nose[1] - f[1] * x + r[1] * y] }; const dP = doorW(Bp, b.door); parkErr = +Math.hypot(dP[0] - tgt[0], dP[1] - tgt[1]).toFixed(2); dispPark = +Math.hypot(pp[0] - Bo.tr.disp.x, pp[1] - Bo.tr.disp.z).toFixed(2); }
             viol('bridge.misdock', Bo.tr, e, { stand: g.name, bridge: b.door, err: +e.toFixed(1), acType: g.acType, model: Bo.tr.model ? Bo.tr.model.t : null, parkMode: Bo.tr.parkMode || null, parkErr, dispPark, physOff: Bo.tr.physOff ? +Math.hypot(...Bo.tr.physOff).toFixed(2) : 0, towing: Bo.tr.ctl && Bo.tr.ctl.towing ? 1 : 0, v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase });
           }
           if (Bo.tr.disp.gs > 0.3) viol('bridge.attached.moving', Bo.tr, Bo.tr.disp.gs, { stand: g.name, bridge: b.door, k: +k.toFixed(2), v: +Bo.tr.disp.gs.toFixed(2), phase: Bo.tr.phase, mphase: Bo.tr.m.phase });

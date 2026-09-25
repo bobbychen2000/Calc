@@ -433,7 +433,7 @@ class Hub:
         self.wakes = []          # one Event per poller, set when a client shows up
         self.replay_pos = None
         self.counters = dict(merges=0, mlat_held=0, mlat_jump=0, ground_track_dropped=0, ground_mlat_fields_dropped=0,
-                             same_report_fills=0, pos_to_lastPosition=0)
+                             same_report_fills=0, pos_to_lastPosition=0, db_type_disagree=0)
         self.fresher = {}        # provider short -> count of merged aircraft whose position it supplied (last merge)
         self.ext = []            # extra consumers of provider results (e.g. RecordWriter)
         self.pollers = {}
@@ -606,6 +606,16 @@ class Hub:
             else:
                 pick = max(have, key=lambda c: c[4])
             out[k] = pick[2][k]
+            if k == 't':
+                # the other provider's database type when it differs: the app keeps the one that agrees with the
+                # transponder's own emitter category (js/live/traffic.js resolveType; review round 1: AAL1023 N959XV was
+                # 'PA27 Piper Aztec' at adsb.fi but A21N at adsb.lol, emitter category A3)
+                alt = next((c for c in have if c[0] != pick[0] and c[2].get('t') and c[2].get('t') != out['t']), None)
+                if alt:
+                    out['_dbalt'] = {'t': alt[2]['t'], 'desc': alt[2].get('desc'), 'p': alt[0]}
+                    C['db_type_disagree'] += 1
+                else:
+                    out.pop('_dbalt', None)
         seen_t = max(c[4] for c in recs)
         # 4. surface hygiene
         dropped = []

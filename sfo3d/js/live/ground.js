@@ -11,7 +11,7 @@
 // Pavement = the rendered airport mask (airport.js) UNION the OSM aprons and taxiway strips (data/sfo_taxigraph.js):
 // the mask lacks the cargo, GA and remote ramps where aircraft really park (audit F6, s.4.9).
 import { TYPES } from '../aircraft/types.js';
-import { ANT } from './traffic.js';
+import { antOf } from './traffic.js';
 
 const hv = (h) => [Math.sin(h), -Math.cos(h)];
 
@@ -71,7 +71,7 @@ export function inside(A, q, m) {
   if (T.hstab && x > T.hstab.x - m && x < T.L + m && Math.abs(y) < T.hstab.span / 2 + m) return true;
   return false;
 }
-export function bodyOf(T, x, z, h) { const f = hv(h); const k = ANT * T.L; return { T, nose: [x + f[0] * k, z + f[1] * k], h, f, r: [-f[1], f[0]] }; }
+export function bodyOf(T, x, z, h) { const f = hv(h); const k = antOf(T); return { T, nose: [x + f[0] * k, z + f[1] * k], h, f, r: [-f[1], f[0]] }; }
 export function overlaps(A, B, m = 0) {
   if (Math.hypot(A.nose[0] - B.nose[0], A.nose[1] - B.nose[1]) > (A.T.L + B.T.L) * 0.5 + 45) return false;
   const Sa = A.S || (A.S = samples(A.T, A.nose, A.h)), Sb = B.S || (B.S = samples(B.T, B.nose, B.h));
@@ -97,29 +97,43 @@ export class GroundPhysics {
   }
   // run after traffic.update(): sets tr.physOff (target offsets) for the next frame; checks data-pose stand parking
   resolve(traffic, dt) {
-    const fixed = [], free = [], moving = []; let conflicts = 0;
+    const fixed = [], free = [], moving = [], silent = []; let conflicts = 0;
     for (const tr of traffic.tracks.values()) {
       const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle) { tr.physOff = null; continue; }
       if (tr.gate && tr.gate.bridge && tr.parkPos && (tr.m.phase === 'still' || tr.stale)) {
-        const B = this.body(tr, { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg }); if (!B) continue;
-        if (tr.parkMode === 'data' && !tr._poseChecked) { tr._poseChecked = true; if (!this.valid(B, fixed, false)) { tr.forceStand = true; traffic.updatePark(tr); continue; } }
+        // the pose it is drawn in: its lock (where it came to rest, the pose its bridge docked to), else the parked pose
+        const S = traffic.shownPark ? traffic.shownPark(tr) : { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg };
+        const B = this.body(tr, { x: S.x, z: S.z, hdg: S.hdg }); if (!B) continue;
+        if (tr.parkMode === 'data' && !tr._poseChecked) { tr._poseChecked = true; const Bp = this.body(tr, { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg }); if (!this.valid(Bp, fixed, false)) { tr.forceStand = true; traffic.updatePark(tr); continue; } }
         // two aircraft at neighbouring stands must not touch: an own-pose (data) parking yields to the stand pose
         if (fixed.some(o => overlaps(o, B, 0.5))) { if (tr.parkMode === 'data') { tr.forceStand = true; traffic.updatePark(tr); } else conflicts++; }
-        fixed.push(B); tr.physOff = null;
-      } else { const B = this.body(tr); if (!B) continue; if ((D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) free.push(B); else moving.push(B); }
+        fixed.push(B); tr.physOff = null; if (tr.stale) silent.push(B);
+      } else { const B = this.body(tr); if (!B) continue; if ((D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) { free.push(B); if (tr.stale) silent.push(B); } else moving.push(B); }
     }
-    // stationary aircraft off the surveyed stands: nearest valid pose (once per pose), within the report scatter
+    // stationary aircraft off the surveyed stands: nearest valid pose (once per pose), within the report scatter (6 m),
+    // widened to 15 m when nothing nearer is clear of buildings / neighbours (review round 1: DAL1053 and UAL1881 were
+    // drawn inside a building when the 6 m search failed). A LOCKED body (at rest where it is drawn) keeps its pose while
+    // that pose is valid; if it becomes invalid it is unlocked and moved to the nearest valid pose.
     const placed = fixed.slice();
     free.sort((a, b) => (a.tr.firstSeen || 0) - (b.tr.firstSeen || 0));
     let moved = 0, unresolved = 0;
     for (const B of free) {
-      const tr = B.tr; const P0 = tr.parkPos || tr.stillPos || [tr.disp.x, tr.disp.z]; const h = tr.parkPos ? tr.parkHdg : tr.disp.hdg;
+      const tr = B.tr;
+      if (tr.lock) {
+        const L = tr.lock; const base = bodyOf(B.T, L.x, L.z, L.hdg); const key = 'L' + Math.round(L.x * 4) + ',' + Math.round(L.z * 4) + ',' + Math.round(L.hdg * 100);
+        // (buildings and neighbours only: a gear point a few decimetres outside the traced pavement is not worth moving a
+        // parked aircraft for; the pavement test applies when it is placed)
+        if (!tr.physL || tr.physL.key !== key || this.frame % 30 === 0) tr.physL = { key, ok: this.valid(base, placed, false) };
+        if (tr.physL.ok) { placed.push(base); continue; }
+        tr.lock = null; traffic.counters.physUnlocks = (traffic.counters.physUnlocks || 0) + 1; tr.phys = null;
+      }
+      const P0 = tr.parkPos || tr.stillPos || [tr.disp.x, tr.disp.z]; const h = tr.parkPos ? tr.parkHdg : (tr.stillHdg ?? tr.disp.hdg);
       const key = Math.round(P0[0]) + ',' + Math.round(P0[1]) + ',' + Math.round((h || 0) * 20);
       const base = bodyOf(B.T, P0[0], P0[1], h);
       if (!tr.phys || tr.phys.key !== key || (this.frame % 30 === 0 && !tr.phys.ok)) {
         let off = [0, 0], ok = this.valid(base, placed);
         if (!ok) {
-          search: for (let rad = 1; rad <= 6; rad += 1) {
+          search: for (let rad = 1; rad <= 15; rad += rad < 6 ? 1 : 1.5) {
             const n = Math.max(8, Math.round(rad * 3));
             for (let i = 0; i < n; i++) {
               const a = (i / n) * Math.PI * 2; const o = [Math.cos(a) * rad, Math.sin(a) * rad];
@@ -134,10 +148,14 @@ export class GroundPhysics {
       if (tr.physOff) moved++; if (!tr.phys.ok) unresolved++;
       placed.push({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] });
     }
-    // moving aircraft: a fading target offset away from any displayed overlap
+    // moving aircraft: a fading target offset away from any displayed overlap. A remembered (silent) aircraft that a live
+    // one drives into is not there any more: removed (review round 1: stale ghosts overlapped by passing traffic)
+    let ghosts = 0;
     for (const B of moving) {
       const tr = B.tr; const cur = tr.physOff ? tr.physOff.slice() : [0, 0]; let push = [0, 0];
+      for (const S of silent) { if (!S.tr.removed && overlaps(B, S, 0)) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true }); traffic.remove(S.tr); ghosts++; } }
       for (const o of placed) {
+        if (o.tr && o.tr.removed) continue;
         const d = Math.hypot(B.nose[0] - o.nose[0], B.nose[1] - o.nose[1]);
         if (d > (o.T.L + B.T.L) * 0.5 + 40) continue;
         const S = samples(B.T, B.nose, B.h); let hits = 0; for (const p of S.outline) if (inside(o, p, 1.5)) hits++;
@@ -151,6 +169,6 @@ export class GroundPhysics {
       placed.push(B);
     }
     this.frame++;
-    this.stats = { fixed: fixed.length, free: free.length, moving: moving.length, moved, unresolved, standConflicts: conflicts };
+    this.stats = { fixed: fixed.length, free: free.length, moving: moving.length, moved, unresolved, standConflicts: conflicts, ghostsRemoved: ghosts };
   }
 }

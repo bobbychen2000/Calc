@@ -11,6 +11,7 @@
   {
    "brand": "AAL",
    "model": "a319",
+   "pxm": 35.4,
    "variants": [],
    "types": [
     "a319"
@@ -24,13 +25,14 @@
    "painted_as": "a319",
    "bytes": {
     "hi": 69440,
-    "mid": 99196,
-    "lo": 51524
+    "mid": 36270,
+    "lo": 18950
    }
   },
   {
    "brand": "AAL",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a320"
@@ -44,13 +46,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 62130,
-    "mid": 89344,
-    "lo": 46836
+    "mid": 32602,
+    "lo": 17042
    }
   },
   {
    "brand": "AAL",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -65,13 +68,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 70132,
-    "mid": 93718,
-    "lo": 47016
+    "mid": 35690,
+    "lo": 18398
    }
   },
   {
    "brand": "AAL",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [],
    "types": [
     "b38m",
@@ -86,13 +90,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 71904,
-    "mid": 98822,
-    "lo": 49760
+    "mid": 36214,
+    "lo": 18874
    }
   },
   {
    "brand": "AAL",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [
     {
      "types": [
@@ -107,8 +112,8 @@
      "painted_as": "b789",
      "bytes": {
       "hi": 65658,
-      "mid": 97972,
-      "lo": 51226
+      "mid": 34030,
+      "lo": 18152
      }
     }
    ],
@@ -124,13 +129,14 @@
    "painted_as": "b788",
    "bytes": {
     "hi": 65750,
-    "mid": 98712,
-    "lo": 51280
+    "mid": 34252,
+    "lo": 18150
    }
   },
   {
    "brand": "AAL-E",
    "model": "e75l",
+   "pxm": 41.4,
    "variants": [],
    "types": [
     "e75l"
@@ -144,13 +150,14 @@
    "painted_as": "e75l",
    "bytes": {
     "hi": 68996,
-    "mid": 102762,
-    "lo": 54626
+    "mid": 36474,
+    "lo": 19272
    }
   },
   {
    "brand": "AAR",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -164,13 +171,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 61056,
-    "mid": 90768,
-    "lo": 45874
+    "mid": 32364,
+    "lo": 17584
    }
   },
   {
    "brand": "ACA",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a320"
@@ -184,13 +192,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 55764,
-    "mid": 71102,
-    "lo": 37232
+    "mid": 30690,
+    "lo": 17014
    }
   },
   {
    "brand": "ACA",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a321"
@@ -204,13 +213,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 55154,
-    "mid": 70982,
-    "lo": 36564
+    "mid": 30824,
+    "lo": 17040
    }
   },
   {
    "brand": "ACA",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [],
    "types": [
     "b38m",
@@ -225,13 +235,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 64612,
-    "mid": 77010,
-    "lo": 39884
+    "mid": 33900,
+    "lo": 18764
    }
   },
   {
    "brand": "ACA",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -245,13 +256,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 53470,
-    "mid": 73436,
-    "lo": 39700
+    "mid": 30144,
+    "lo": 17624
    }
   },
   {
    "brand": "ACA",
    "model": "bcs3",
+   "pxm": 39.1,
    "variants": [],
    "types": [
     "bcs3"
@@ -264,14 +276,15 @@
    "file": "ACA/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 73994,
-    "mid": 87954,
-    "lo": 46776
+    "hi": 73736,
+    "mid": 40530,
+    "lo": 22414
    }
   },
   {
    "brand": "ACA-X",
    "model": "crj9",
+   "pxm": 56.2,
    "variants": [],
    "types": [
     "crj9"
@@ -285,13 +298,14 @@
    "painted_as": "crj9",
    "bytes": {
     "hi": 55710,
-    "mid": 67708,
-    "lo": 36446
+    "mid": 31620,
+    "lo": 17142
    }
   },
   {
    "brand": "AFR",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -305,13 +319,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 47204,
-    "mid": 74440,
-    "lo": 38476
+    "mid": 26400,
+    "lo": 14550
    }
   },
   {
    "brand": "AMX",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [
     {
      "types": [
@@ -326,8 +341,8 @@
      "painted_as": "b39m",
      "bytes": {
       "hi": 79672,
-      "mid": 88420,
-      "lo": 44154
+      "mid": 39460,
+      "lo": 20176
      }
     }
    ],
@@ -344,13 +359,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 79214,
-    "mid": 88500,
-    "lo": 44464
+    "mid": 39552,
+    "lo": 20640
    }
   },
   {
    "brand": "AMX",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -364,13 +380,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 74764,
-    "mid": 87694,
-    "lo": 45154
+    "mid": 38022,
+    "lo": 20258
    }
   },
   {
    "brand": "ANA",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [
     {
      "types": [
@@ -385,8 +402,8 @@
      "painted_as": "b789",
      "bytes": {
       "hi": 78434,
-      "mid": 89666,
-      "lo": 45026
+      "mid": 39526,
+      "lo": 20608
      }
     }
    ],
@@ -402,13 +419,14 @@
    "painted_as": "b788",
    "bytes": {
     "hi": 78438,
-    "mid": 89294,
-    "lo": 44940
+    "mid": 39162,
+    "lo": 20546
    }
   },
   {
    "brand": "ANZ",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -422,13 +440,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 45340,
-    "mid": 70108,
-    "lo": 38054
+    "mid": 26472,
+    "lo": 16066
    }
   },
   {
    "brand": "APZ",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -442,13 +461,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 41252,
-    "mid": 68932,
-    "lo": 36378
+    "mid": 23776,
+    "lo": 13826
    }
   },
   {
    "brand": "ASA",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -463,13 +483,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 83892,
-    "mid": 88884,
-    "lo": 42566
+    "mid": 41064,
+    "lo": 20160
    }
   },
   {
    "brand": "ASA",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [
     {
      "types": [
@@ -485,8 +506,8 @@
      "painted_as": "b39m",
      "bytes": {
       "hi": 96700,
-      "mid": 96390,
-      "lo": 46464
+      "mid": 46160,
+      "lo": 23082
      }
     },
     {
@@ -502,8 +523,8 @@
      "painted_as": "b737",
      "bytes": {
       "hi": 102798,
-      "mid": 99280,
-      "lo": 48288
+      "mid": 49084,
+      "lo": 24398
      }
     }
    ],
@@ -520,13 +541,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 96188,
-    "mid": 96466,
-    "lo": 46734
+    "mid": 46040,
+    "lo": 23220
    }
   },
   {
    "brand": "ASA",
    "model": "e75l",
+   "pxm": 41.4,
    "variants": [],
    "types": [
     "e75l"
@@ -540,13 +562,14 @@
    "painted_as": "e75l",
    "bytes": {
     "hi": 90474,
-    "mid": 96732,
-    "lo": 48562
+    "mid": 44930,
+    "lo": 22090
    }
   },
   {
    "brand": "AVA",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a20n",
@@ -561,13 +584,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 63044,
-    "mid": 76556,
-    "lo": 38122
+    "mid": 33494,
+    "lo": 17232
    }
   },
   {
    "brand": "BAW",
    "model": "a388",
+   "pxm": 15.3,
    "variants": [],
    "types": [
     "a388"
@@ -581,13 +605,14 @@
    "painted_as": "a388",
    "bytes": {
     "hi": 87328,
-    "mid": 100000,
-    "lo": 50432
+    "mid": 43832,
+    "lo": 24044
    }
   },
   {
    "brand": "CAL",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -601,13 +626,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 46348,
-    "mid": 73434,
-    "lo": 37352
+    "mid": 25634,
+    "lo": 14112
    }
   },
   {
    "brand": "CFG",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [],
    "types": [
     "a333",
@@ -621,14 +647,15 @@
    "file": "CFG/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 135594,
-    "mid": 123674,
-    "lo": 61252
+    "hi": 134416,
+    "mid": 66630,
+    "lo": 33826
    }
   },
   {
    "brand": "CMP",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [],
    "types": [
     "b39m"
@@ -642,13 +669,14 @@
    "painted_as": "b39m",
    "bytes": {
     "hi": 69374,
-    "mid": 83512,
-    "lo": 41838
+    "mid": 35442,
+    "lo": 18616
    }
   },
   {
    "brand": "CPA",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -662,13 +690,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 64374,
-    "mid": 88142,
-    "lo": 46738
+    "mid": 32616,
+    "lo": 17496
    }
   },
   {
    "brand": "CSN",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -682,13 +711,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 64966,
-    "mid": 82722,
-    "lo": 42956
+    "mid": 34140,
+    "lo": 18508
    }
   },
   {
    "brand": "DAL",
    "model": "a319",
+   "pxm": 35.4,
    "variants": [],
    "types": [
     "a319"
@@ -702,13 +732,14 @@
    "painted_as": "a319",
    "bytes": {
     "hi": 71224,
-    "mid": 86064,
-    "lo": 45202
+    "mid": 38942,
+    "lo": 20368
    }
   },
   {
    "brand": "DAL",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a320"
@@ -722,13 +753,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 69200,
-    "mid": 81038,
-    "lo": 42466
+    "mid": 36768,
+    "lo": 19310
    }
   },
   {
    "brand": "DAL",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -743,13 +775,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 67330,
-    "mid": 80832,
-    "lo": 41058
+    "mid": 35986,
+    "lo": 18830
    }
   },
   {
    "brand": "DAL",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [
     {
      "types": [
@@ -763,9 +796,9 @@
      "file": "DAL/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 78590,
-      "mid": 94828,
-      "lo": 48930
+      "hi": 79044,
+      "mid": 40870,
+      "lo": 22468
      }
     }
    ],
@@ -781,14 +814,15 @@
    "file": "DAL/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 77426,
-    "mid": 94420,
-    "lo": 48790
+    "hi": 78040,
+    "mid": 40386,
+    "lo": 22584
    }
   },
   {
    "brand": "DAL",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [
     {
      "types": [
@@ -804,8 +838,8 @@
      "painted_as": "b39m",
      "bytes": {
       "hi": 82250,
-      "mid": 90266,
-      "lo": 45798
+      "mid": 41918,
+      "lo": 22034
      }
     }
    ],
@@ -821,13 +855,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 82158,
-    "mid": 90158,
-    "lo": 45854
+    "mid": 41852,
+    "lo": 22064
    }
   },
   {
    "brand": "DAL",
    "model": "b752",
+   "pxm": 30.6,
    "variants": [
     {
      "types": [
@@ -842,8 +877,8 @@
      "painted_as": "b753",
      "bytes": {
       "hi": 69780,
-      "mid": 79994,
-      "lo": 42160
+      "mid": 36552,
+      "lo": 19436
      }
     }
    ],
@@ -859,13 +894,14 @@
    "painted_as": "b752",
    "bytes": {
     "hi": 69024,
-    "mid": 79720,
-    "lo": 41974
+    "mid": 36288,
+    "lo": 19292
    }
   },
   {
    "brand": "DAL",
    "model": "b763",
+   "pxm": 26.3,
    "variants": [
     {
      "types": [
@@ -879,9 +915,9 @@
      "file": "DAL/b763@b764-mid.webp",
      "painted_as": "b764",
      "bytes": {
-      "hi": 35978,
-      "mid": 32230,
-      "lo": 17304
+      "hi": 65952,
+      "mid": 34138,
+      "lo": 17534
      }
     }
    ],
@@ -896,14 +932,15 @@
    "file": "DAL/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 35390,
-    "mid": 32582,
-    "lo": 17464
+    "hi": 65476,
+    "mid": 33950,
+    "lo": 17682
    }
   },
   {
    "brand": "DAL",
    "model": "bcs1",
+   "pxm": 39.0,
    "variants": [],
    "types": [
     "bcs1"
@@ -916,14 +953,15 @@
    "file": "DAL/bcs1-mid.webp",
    "painted_as": "bcs1",
    "bytes": {
-    "hi": 43716,
-    "mid": 42500,
-    "lo": 23182
+    "hi": 86540,
+    "mid": 45142,
+    "lo": 24352
    }
   },
   {
    "brand": "DAL",
    "model": "bcs3",
+   "pxm": 39.1,
    "variants": [],
    "types": [
     "bcs3"
@@ -936,14 +974,15 @@
    "file": "DAL/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 85712,
-    "mid": 95460,
-    "lo": 50234
+    "hi": 85696,
+    "mid": 44524,
+    "lo": 23884
    }
   },
   {
    "brand": "DAL-C",
    "model": "e75l",
+   "pxm": 41.4,
    "variants": [],
    "types": [
     "e75l"
@@ -957,13 +996,14 @@
    "painted_as": "e75l",
    "bytes": {
     "hi": 81000,
-    "mid": 92654,
-    "lo": 49828
+    "mid": 43440,
+    "lo": 22594
    }
   },
   {
    "brand": "DLH",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -977,13 +1017,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 70616,
-    "mid": 84908,
-    "lo": 44350
+    "mid": 37558,
+    "lo": 19878
    }
   },
   {
    "brand": "DLH",
    "model": "a388",
+   "pxm": 15.3,
    "variants": [],
    "types": [
     "a388"
@@ -997,13 +1038,14 @@
    "painted_as": "a388",
    "bytes": {
     "hi": 81900,
-    "mid": 94776,
-    "lo": 48072
+    "mid": 42502,
+    "lo": 23254
    }
   },
   {
    "brand": "DLH",
    "model": "b744",
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "b744"
@@ -1016,14 +1058,15 @@
    "file": "DLH/b744-mid.webp",
    "painted_as": "b744",
    "bytes": {
-    "hi": 62742,
-    "mid": 60762,
-    "lo": 32832
+    "hi": 75534,
+    "mid": 38784,
+    "lo": 19998
    }
   },
   {
    "brand": "DLH",
    "model": "b748",
+   "pxm": 14.0,
    "variants": [],
    "types": [
     "b748"
@@ -1036,14 +1079,15 @@
    "file": "DLH/b748-mid.webp",
    "painted_as": "b748",
    "bytes": {
-    "hi": 58670,
-    "mid": 64614,
-    "lo": 34166
+    "hi": 59326,
+    "mid": 29156,
+    "lo": 15756
    }
   },
   {
    "brand": "EIN",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [
     {
      "types": [
@@ -1057,9 +1101,9 @@
      "file": "EIN/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 56362,
-      "mid": 82312,
-      "lo": 41656
+      "hi": 57070,
+      "mid": 30542,
+      "lo": 17358
      }
     }
    ],
@@ -1074,14 +1118,15 @@
    "file": "EIN/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 56536,
-    "mid": 82200,
-    "lo": 41646
+    "hi": 56692,
+    "mid": 30130,
+    "lo": 17266
    }
   },
   {
    "brand": "EVA",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -1095,13 +1140,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 68174,
-    "mid": 87432,
-    "lo": 45400
+    "mid": 36044,
+    "lo": 19516
    }
   },
   {
    "brand": "FBU",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1115,13 +1161,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 81960,
-    "mid": 98254,
-    "lo": 50484
+    "mid": 42408,
+    "lo": 21998
    }
   },
   {
    "brand": "FDX",
    "model": "b752",
+   "pxm": 30.6,
    "variants": [],
    "types": [
     "b752"
@@ -1134,14 +1181,15 @@
    "file": "FDX/b752-mid.webp",
    "painted_as": "b752",
    "bytes": {
-    "hi": 57746,
-    "mid": 77228,
-    "lo": 41044
+    "hi": 57860,
+    "mid": 31506,
+    "lo": 17244
    }
   },
   {
    "brand": "FDX",
    "model": "b763",
+   "pxm": 26.3,
    "variants": [],
    "types": [
     "b763"
@@ -1154,14 +1202,15 @@
    "file": "FDX/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 27782,
-    "mid": 28700,
-    "lo": 15950
+    "hi": 52868,
+    "mid": 29066,
+    "lo": 15798
    }
   },
   {
    "brand": "FDX",
    "model": "md11",
+   "pxm": 17.2,
    "variants": [],
    "types": [
     "md11"
@@ -1174,14 +1223,15 @@
    "file": "FDX/md11-mid.webp",
    "painted_as": "md11",
    "bytes": {
-    "hi": 70448,
-    "mid": 90918,
-    "lo": 47804
+    "hi": 70404,
+    "mid": 36752,
+    "lo": 20096
    }
   },
   {
    "brand": "FFT",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a20n",
@@ -1196,13 +1246,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 58186,
-    "mid": 78480,
-    "lo": 39420
+    "mid": 31406,
+    "lo": 16614
    }
   },
   {
    "brand": "FFT",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -1217,13 +1268,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 55842,
-    "mid": 77596,
-    "lo": 38446
+    "mid": 30168,
+    "lo": 16008
    }
   },
   {
    "brand": "FJI",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [
     {
      "types": [
@@ -1237,9 +1289,9 @@
      "file": "FJI/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 55318,
-      "mid": 84038,
-      "lo": 41978
+      "hi": 55682,
+      "mid": 30284,
+      "lo": 17004
      }
     }
    ],
@@ -1254,14 +1306,15 @@
    "file": "FJI/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 55088,
-    "mid": 84044,
-    "lo": 41998
+    "hi": 55582,
+    "mid": 30088,
+    "lo": 16932
    }
   },
   {
    "brand": "FJI",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1275,13 +1328,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 52570,
-    "mid": 79082,
-    "lo": 40278
+    "mid": 28122,
+    "lo": 15282
    }
   },
   {
    "brand": "FLE",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [],
    "types": [
     "b38m",
@@ -1296,13 +1350,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 62574,
-    "mid": 82336,
-    "lo": 40972
+    "mid": 32614,
+    "lo": 17244
    }
   },
   {
    "brand": "HAL",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -1317,13 +1372,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 63670,
-    "mid": 76756,
-    "lo": 38428
+    "mid": 33592,
+    "lo": 17372
    }
   },
   {
    "brand": "HAL",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [],
    "types": [
     "a332"
@@ -1336,14 +1392,15 @@
    "file": "HAL/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 61708,
-    "mid": 83172,
-    "lo": 42014
+    "hi": 62222,
+    "mid": 33118,
+    "lo": 18432
    }
   },
   {
    "brand": "HVN",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1357,13 +1414,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 80296,
-    "mid": 95512,
-    "lo": 49284
+    "mid": 42264,
+    "lo": 21936
    }
   },
   {
    "brand": "IBE",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [],
    "types": [
     "a332"
@@ -1376,14 +1434,15 @@
    "file": "IBE/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 54152,
-    "mid": 81346,
-    "lo": 41100
+    "hi": 54530,
+    "mid": 29362,
+    "lo": 16836
    }
   },
   {
    "brand": "ITY",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [],
    "types": [
     "a333",
@@ -1397,14 +1456,15 @@
    "file": "ITY/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 83184,
-    "mid": 101628,
-    "lo": 52776
+    "hi": 83580,
+    "mid": 41932,
+    "lo": 21900
    }
   },
   {
    "brand": "ITY",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1418,13 +1478,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 82498,
-    "mid": 101146,
-    "lo": 51850
+    "mid": 42084,
+    "lo": 21160
    }
   },
   {
    "brand": "JAL",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [
     {
      "types": [
@@ -1439,8 +1500,8 @@
      "painted_as": "b789",
      "bytes": {
       "hi": 44454,
-      "mid": 71976,
-      "lo": 37128
+      "mid": 25228,
+      "lo": 14228
      }
     }
    ],
@@ -1456,13 +1517,14 @@
    "painted_as": "b788",
    "bytes": {
     "hi": 45106,
-    "mid": 71642,
-    "lo": 37388
+    "mid": 25696,
+    "lo": 14464
    }
   },
   {
    "brand": "JBU",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a320"
@@ -1476,13 +1538,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 100818,
-    "mid": 99244,
-    "lo": 50436
+    "mid": 49702,
+    "lo": 23908
    }
   },
   {
    "brand": "JBU",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -1497,13 +1560,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 105204,
-    "mid": 101786,
-    "lo": 50768
+    "mid": 50832,
+    "lo": 24466
    }
   },
   {
    "brand": "JBU",
    "model": "bcs3",
+   "pxm": 39.1,
    "variants": [],
    "types": [
     "bcs3"
@@ -1516,14 +1580,15 @@
    "file": "JBU/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 131876,
-    "mid": 125670,
-    "lo": 62040
+    "hi": 134484,
+    "mid": 64740,
+    "lo": 30926
    }
   },
   {
    "brand": "KAL",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [
     {
      "types": [
@@ -1538,8 +1603,8 @@
      "painted_as": "b78x",
      "bytes": {
       "hi": 74800,
-      "mid": 99390,
-      "lo": 50692
+      "mid": 38330,
+      "lo": 20548
      }
     }
    ],
@@ -1555,13 +1620,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 75312,
-    "mid": 99836,
-    "lo": 50922
+    "mid": 38596,
+    "lo": 20708
    }
   },
   {
    "brand": "KLM",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [
     {
      "types": [
@@ -1576,8 +1642,8 @@
      "painted_as": "b78x",
      "bytes": {
       "hi": 97126,
-      "mid": 102450,
-      "lo": 51996
+      "mid": 48134,
+      "lo": 24558
      }
     }
    ],
@@ -1593,13 +1659,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 97162,
-    "mid": 102764,
-    "lo": 52376
+    "mid": 48370,
+    "lo": 24752
    }
   },
   {
    "brand": "LOT",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [
     {
      "types": [
@@ -1614,8 +1681,8 @@
      "painted_as": "b789",
      "bytes": {
       "hi": 47652,
-      "mid": 73198,
-      "lo": 38520
+      "mid": 26688,
+      "lo": 15080
      }
     }
    ],
@@ -1631,13 +1698,14 @@
    "painted_as": "b788",
    "bytes": {
     "hi": 48062,
-    "mid": 73520,
-    "lo": 38760
+    "mid": 27102,
+    "lo": 15286
    }
   },
   {
    "brand": "MXY",
    "model": "bcs3",
+   "pxm": 39.1,
    "variants": [],
    "types": [
     "bcs3"
@@ -1650,14 +1718,15 @@
    "file": "MXY/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 96696,
-    "mid": 108766,
-    "lo": 55316
+    "hi": 97188,
+    "mid": 47682,
+    "lo": 23660
    }
   },
   {
    "brand": "PAL",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1671,13 +1740,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 51462,
-    "mid": 76920,
-    "lo": 39312
+    "mid": 28204,
+    "lo": 15278
    }
   },
   {
    "brand": "QFA",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -1691,13 +1761,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 55252,
-    "mid": 76114,
-    "lo": 39944
+    "mid": 30650,
+    "lo": 17110
    }
   },
   {
    "brand": "QTR",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1711,13 +1782,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 49096,
-    "mid": 95094,
-    "lo": 48624
+    "mid": 26436,
+    "lo": 14040
    }
   },
   {
    "brand": "SAS",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [],
    "types": [
     "a333"
@@ -1730,14 +1802,15 @@
    "file": "SAS/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 68576,
-    "mid": 98860,
-    "lo": 48970
+    "hi": 69072,
+    "mid": 35518,
+    "lo": 19510
    }
   },
   {
    "brand": "SAS",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1751,13 +1824,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 72128,
-    "mid": 99288,
-    "lo": 49280
+    "mid": 37314,
+    "lo": 18844
    }
   },
   {
    "brand": "SCX",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [],
    "types": [
     "b738"
@@ -1771,13 +1845,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 88384,
-    "mid": 91378,
-    "lo": 46452
+    "mid": 42122,
+    "lo": 20264
    }
   },
   {
    "brand": "SIA",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1791,13 +1866,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 88354,
-    "mid": 96324,
-    "lo": 48564
+    "mid": 44174,
+    "lo": 22338
    }
   },
   {
    "brand": "SJX",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1811,13 +1887,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 45012,
-    "mid": 73366,
-    "lo": 38824
+    "mid": 24982,
+    "lo": 13902
    }
   },
   {
    "brand": "SWA",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [
     {
      "types": [
@@ -1832,8 +1909,8 @@
      "painted_as": "b737",
      "bytes": {
       "hi": 108926,
-      "mid": 107652,
-      "lo": 51528
+      "mid": 51756,
+      "lo": 24776
      }
     }
    ],
@@ -1850,13 +1927,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 103610,
-    "mid": 106000,
-    "lo": 51244
+    "mid": 49988,
+    "lo": 24238
    }
   },
   {
    "brand": "TAP",
    "model": "a333",
+   "pxm": 20.0,
    "variants": [],
    "types": [
     "a333",
@@ -1870,14 +1948,15 @@
    "file": "TAP/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 54188,
-    "mid": 81852,
-    "lo": 41284
+    "hi": 54424,
+    "mid": 29528,
+    "lo": 16848
    }
   },
   {
    "brand": "THY",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a359"
@@ -1891,13 +1970,14 @@
    "painted_as": "a359",
    "bytes": {
     "hi": 66684,
-    "mid": 84950,
-    "lo": 42678
+    "mid": 34740,
+    "lo": 18172
    }
   },
   {
    "brand": "THY",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -1911,13 +1991,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 59030,
-    "mid": 80104,
-    "lo": 41556
+    "mid": 31942,
+    "lo": 17682
    }
   },
   {
    "brand": "TZP",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b788"
@@ -1931,13 +2012,14 @@
    "painted_as": "b788",
    "bytes": {
     "hi": 39762,
-    "mid": 70116,
-    "lo": 37330
+    "mid": 23516,
+    "lo": 13694
    }
   },
   {
    "brand": "UAE",
    "model": "a388",
+   "pxm": 15.3,
    "variants": [],
    "types": [
     "a388"
@@ -1951,13 +2033,14 @@
    "painted_as": "a388",
    "bytes": {
     "hi": 63078,
-    "mid": 84804,
-    "lo": 42142
+    "mid": 33058,
+    "lo": 17962
    }
   },
   {
    "brand": "UAL",
    "model": "a319",
+   "pxm": 35.4,
    "variants": [],
    "types": [
     "a319"
@@ -1971,13 +2054,14 @@
    "painted_as": "a319",
    "bytes": {
     "hi": 102152,
-    "mid": 105602,
-    "lo": 52400
+    "mid": 50238,
+    "lo": 24556
    }
   },
   {
    "brand": "UAL",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a320"
@@ -1991,13 +2075,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 97628,
-    "mid": 98304,
-    "lo": 48978
+    "mid": 47562,
+    "lo": 23012
    }
   },
   {
    "brand": "UAL",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -2012,13 +2097,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 91826,
-    "mid": 96780,
-    "lo": 47008
+    "mid": 44580,
+    "lo": 21394
    }
   },
   {
    "brand": "UAL",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [
     {
      "types": [
@@ -2034,8 +2120,8 @@
      "painted_as": "b39m",
      "bytes": {
       "hi": 114640,
-      "mid": 107970,
-      "lo": 52400
+      "mid": 53676,
+      "lo": 25522
      }
     }
    ],
@@ -2052,13 +2138,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 111666,
-    "mid": 107104,
-    "lo": 52146
+    "mid": 52398,
+    "lo": 25406
    }
   },
   {
    "brand": "UAL",
    "model": "b752",
+   "pxm": 30.6,
    "variants": [
     {
      "types": [
@@ -2073,8 +2160,8 @@
      "painted_as": "b753",
      "bytes": {
       "hi": 99278,
-      "mid": 97368,
-      "lo": 48608
+      "mid": 47732,
+      "lo": 23138
      }
     }
    ],
@@ -2090,13 +2177,14 @@
    "painted_as": "b752",
    "bytes": {
     "hi": 99532,
-    "mid": 97418,
-    "lo": 48724
+    "mid": 47958,
+    "lo": 23302
    }
   },
   {
    "brand": "UAL",
    "model": "b763",
+   "pxm": 26.3,
    "variants": [
     {
      "types": [
@@ -2110,9 +2198,9 @@
      "file": "UAL/b763@b764-mid.webp",
      "painted_as": "b764",
      "bytes": {
-      "hi": 48042,
-      "mid": 40436,
-      "lo": 21864
+      "hi": 99194,
+      "mid": 46306,
+      "lo": 21998
      }
     }
    ],
@@ -2127,14 +2215,15 @@
    "file": "UAL/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 47302,
-    "mid": 40348,
-    "lo": 22186
+    "hi": 98930,
+    "mid": 46736,
+    "lo": 22078
    }
   },
   {
    "brand": "UAL",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [
     {
      "types": [
@@ -2149,8 +2238,8 @@
      "painted_as": "b789",
      "bytes": {
       "hi": 100168,
-      "mid": 103444,
-      "lo": 52480
+      "mid": 49476,
+      "lo": 24874
      }
     },
     {
@@ -2166,8 +2255,8 @@
      "painted_as": "b78x",
      "bytes": {
       "hi": 97850,
-      "mid": 102296,
-      "lo": 51728
+      "mid": 48344,
+      "lo": 24218
      }
     }
    ],
@@ -2183,13 +2272,14 @@
    "painted_as": "b788",
    "bytes": {
     "hi": 100900,
-    "mid": 103852,
-    "lo": 52680
+    "mid": 49766,
+    "lo": 25164
    }
   },
   {
    "brand": "UAL-G",
    "model": "a319",
+   "pxm": 35.4,
    "variants": [],
    "types": [
     "a319"
@@ -2203,13 +2293,14 @@
    "painted_as": "a319",
    "bytes": {
     "hi": 96500,
-    "mid": 99686,
-    "lo": 48966
+    "mid": 44840,
+    "lo": 21276
    }
   },
   {
    "brand": "UAL-G",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a320"
@@ -2223,13 +2314,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 88356,
-    "mid": 92078,
-    "lo": 45370
+    "mid": 41044,
+    "lo": 19342
    }
   },
   {
    "brand": "UAL-G",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [
     {
      "types": [
@@ -2245,8 +2337,8 @@
      "painted_as": "b39m",
      "bytes": {
       "hi": 109534,
-      "mid": 106346,
-      "lo": 50744
+      "mid": 49056,
+      "lo": 22974
      }
     }
    ],
@@ -2262,13 +2354,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 106208,
-    "mid": 105156,
-    "lo": 50002
+    "mid": 47884,
+    "lo": 22750
    }
   },
   {
    "brand": "UAL-X",
    "model": "crj2",
+   "pxm": 54.1,
    "variants": [],
    "types": [
     "crj2"
@@ -2282,13 +2375,14 @@
    "painted_as": "crj2",
    "bytes": {
     "hi": 102424,
-    "mid": 98254,
-    "lo": 46762
+    "mid": 47834,
+    "lo": 22226
    }
   },
   {
    "brand": "UAL-X",
    "model": "crj7",
+   "pxm": 56.9,
    "variants": [],
    "types": [
     "crj7"
@@ -2302,13 +2396,14 @@
    "painted_as": "crj7",
    "bytes": {
     "hi": 105558,
-    "mid": 95578,
-    "lo": 47326
+    "mid": 49652,
+    "lo": 23526
    }
   },
   {
    "brand": "UAL-X",
    "model": "e170",
+   "pxm": 43.7,
    "variants": [],
    "types": [
     "e170"
@@ -2321,14 +2416,15 @@
    "file": "UAL-X/e170-mid.webp",
    "painted_as": "e170",
    "bytes": {
-    "hi": 114794,
-    "mid": 109918,
-    "lo": 55242
+    "hi": 113550,
+    "mid": 53688,
+    "lo": 25744
    }
   },
   {
    "brand": "UAL-X",
    "model": "e75l",
+   "pxm": 41.4,
    "variants": [],
    "types": [
     "e75l"
@@ -2342,13 +2438,14 @@
    "painted_as": "e75l",
    "bytes": {
     "hi": 108430,
-    "mid": 109570,
-    "lo": 55330
+    "mid": 52556,
+    "lo": 25636
    }
   },
   {
    "brand": "UPS",
    "model": "b744",
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "b744"
@@ -2361,14 +2458,15 @@
    "file": "UPS/b744-mid.webp",
    "painted_as": "b744",
    "bytes": {
-    "hi": 65374,
-    "mid": 67472,
-    "lo": 35568
+    "hi": 80668,
+    "mid": 40368,
+    "lo": 21098
    }
   },
   {
    "brand": "UPS",
    "model": "b748",
+   "pxm": 14.0,
    "variants": [],
    "types": [
     "b748"
@@ -2381,14 +2479,15 @@
    "file": "UPS/b748-mid.webp",
    "painted_as": "b748",
    "bytes": {
-    "hi": 83006,
-    "mid": 82486,
-    "lo": 41986
+    "hi": 83018,
+    "mid": 39326,
+    "lo": 19874
    }
   },
   {
    "brand": "UPS",
    "model": "b752",
+   "pxm": 30.6,
    "variants": [],
    "types": [
     "b752"
@@ -2402,13 +2501,14 @@
    "painted_as": "b752",
    "bytes": {
     "hi": 77088,
-    "mid": 88926,
-    "lo": 44404
+    "mid": 38846,
+    "lo": 19964
    }
   },
   {
    "brand": "UPS",
    "model": "b763",
+   "pxm": 26.3,
    "variants": [],
    "types": [
     "b763"
@@ -2421,14 +2521,15 @@
    "file": "UPS/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 37940,
-    "mid": 34798,
-    "lo": 18384
+    "hi": 72746,
+    "mid": 35706,
+    "lo": 18168
    }
   },
   {
    "brand": "UPS",
    "model": "md11",
+   "pxm": 17.2,
    "variants": [],
    "types": [
     "md11"
@@ -2442,13 +2543,14 @@
    "painted_as": "md11",
    "bytes": {
     "hi": 75952,
-    "mid": 92360,
-    "lo": 47030
+    "mid": 37942,
+    "lo": 20148
    }
   },
   {
    "brand": "VIR",
    "model": "a359",
+   "pxm": 19.6,
    "variants": [],
    "types": [
     "a35k"
@@ -2462,13 +2564,14 @@
    "painted_as": "a35k",
    "bytes": {
     "hi": 70718,
-    "mid": 97788,
-    "lo": 52418
+    "mid": 35472,
+    "lo": 18362
    }
   },
   {
    "brand": "VIR",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -2482,13 +2585,14 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 70156,
-    "mid": 91854,
-    "lo": 49428
+    "mid": 35348,
+    "lo": 18952
    }
   },
   {
    "brand": "VOI",
    "model": "a320",
+   "pxm": 35.3,
    "variants": [],
    "types": [
     "a20n",
@@ -2503,13 +2607,14 @@
    "painted_as": "a320",
    "bytes": {
     "hi": 58714,
-    "mid": 78198,
-    "lo": 39670
+    "mid": 31504,
+    "lo": 16294
    }
   },
   {
    "brand": "VOI",
    "model": "a321",
+   "pxm": 32.6,
    "variants": [],
    "types": [
     "a21n",
@@ -2524,13 +2629,14 @@
    "painted_as": "a321",
    "bytes": {
     "hi": 58874,
-    "mid": 77616,
-    "lo": 39628
+    "mid": 31564,
+    "lo": 16562
    }
   },
   {
    "brand": "WJA",
    "model": "b738",
+   "pxm": 36.0,
    "variants": [
     {
      "types": [
@@ -2545,8 +2651,8 @@
      "painted_as": "b737",
      "bytes": {
       "hi": 68470,
-      "mid": 83138,
-      "lo": 41664
+      "mid": 34730,
+      "lo": 18586
      }
     }
    ],
@@ -2563,13 +2669,14 @@
    "painted_as": "b738",
    "bytes": {
     "hi": 67808,
-    "mid": 82752,
-    "lo": 41566
+    "mid": 34470,
+    "lo": 18388
    }
   },
   {
    "brand": "WJA",
    "model": "b788",
+   "pxm": 24.2,
    "variants": [],
    "types": [
     "b789"
@@ -2583,8 +2690,8 @@
    "painted_as": "b789",
    "bytes": {
     "hi": 53532,
-    "mid": 75520,
-    "lo": 39210
+    "mid": 29274,
+    "lo": 16168
    }
   }
  ],
@@ -2665,7 +2772,7 @@
     ],
     "white": [
      "#F7F8F8",
-     "official (United livery graphic PDF)"
+     "approx"
     ]
    },
    "status": "2019 design on regional jets (United release: applied to regional aircraft); EXPRESS title placement approx",

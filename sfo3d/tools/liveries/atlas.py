@@ -124,6 +124,9 @@ def classify(m, env, feat, seeds=None):
     z0 = paint & (tz == 0)
     part[z0 & inbody] = PID['fus']
     rest = z0 & ~inbody
+    # nose: the measured envelope under-reads the first metres of some noses (767: a 4.5 m^2 ring 1.1-1.8 m aft of the
+    # tip fell outside and kept the source livery); nothing but fuselage is there
+    part[rest & (s < 0.1 * L)] = PID['fus']; rest &= ~(s < 0.1 * L)
     finlike = rest & (C[:, 1] > top + 0.1) & (az < 1.2) & (s > 0.55 * L)
     part[finlike] = PID['fin']
     rest &= ~finlike
@@ -141,7 +144,9 @@ def classify(m, env, feat, seeds=None):
     z2 = np.where(paint & ((tz == 2) | ((tz == 0) & etex & (part == 0))) & np.array([not FAN_TEX.search(t) for t in texn]))[0]
     ecl, eng = engine_clusters(C[z2])
     # real nacelles only: not the radome ('nose cone' names), not long thin strips, not APU / light bits
-    good = [j for j, e in enumerate(eng) if e['r'] >= 0.35 and e['x1'] < -0.06 * L and (e['x1'] - e['x0']) < 8 * e['r']]
+    # (a small cluster on the centre line is the APU exhaust of the tail cone, e.g. E170 / E190: not an engine)
+    good = [j for j, e in enumerate(eng) if e['r'] >= 0.35 and e['x1'] < -0.06 * L and (e['x1'] - e['x0']) < 8 * e['r']
+            and not (abs(e['zc']) < 0.5 and e['r'] < 0.6)]
     remap = {j: i for i, j in enumerate(good)}
     keepz2 = np.array([c in remap for c in ecl], bool) if len(ecl) else np.zeros(0, bool)
     z2 = z2[keepz2]; ecl = np.array([remap[c] for c in ecl[keepz2]], int); eng = [eng[j] for j in good]

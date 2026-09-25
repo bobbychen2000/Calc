@@ -25,6 +25,8 @@ export function normalizeAircraft(a, nowMs) {
     t: num(a._pt) != null && !(a.lat == null && a.lastPosition) ? num(a._pt) * 1000 : nowMs - seenPos * 1000, seen: num(a.seen) ?? 0,
     veh: a._veh === 1, src: str(a._src), prov: str(a._prov), // relay: sticky ground-vehicle flag, position provider, providers
     mlat: Array.isArray(a.mlat) ? a.mlat : null,
+    // relay: the other provider's aircraft-database type when the two disagree (traffic.js resolveType)
+    dbAlt: a._dbalt && a._dbalt.t ? { t: String(a._dbalt.t), desc: str(a._dbalt.desc), p: str(a._dbalt.p) } : null,
   };
 }
 
