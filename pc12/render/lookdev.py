@@ -5,10 +5,10 @@ render.lookdev -- photo-matched materials of PC-12 PRO MSN 3008 (N81DW) for the 
     lookdev.apply(scene_or_materials, overrides={"paint_blue": {"metallic": 0.5}, "_outline": {"width": 0.008}})
     python3 render/lookdev.py --json            # -> render/lookdev_materials.json (glTF / three.js values)
     python3 render/lookdev.py --verify hangar_port34,apron_stbd34 [--size 1200x800] [--samples 24]
-            [--glb out/pc12_snapshot.glb] [--out out/tmp/lookdev] [--set KEY=VALUE ...]
+            [--glb out/pc12_snapshot.glb] [--out out/tmp/lookdev] [--set KEY=VALUE ...] [--sheet-dir DIR]
         renders the beauty presets with these materials, then a flat material-ID pass of the same camera,
-        and writes refs/cache/overlays/lookdev/<preset>_lookdev.jpg (photo | render with the patches and
-        a swatch table) + out/tmp/lookdev/<preset>_patches.json (Lab dE2000 of every patch / region).
+        and writes refs/cache/overlays/lookdev/<preset>_lookdev.jpg (or DIR/..: photo | render with the patches
+        and a swatch table) + out/tmp/lookdev/<preset>_patches.json (Lab dE2000 of every patch / region).
         Presets with patches: hangar_port34, apron_stbd34, nose_port_closeup, air_below_left, wing_from_cabin.
 
 apply() rebuilds the node tree of every material whose NAME (a '.001' suffix is ignored) is in SPEC; other
@@ -22,7 +22,10 @@ bpy.data.materials / a Scene) it first
   * ENV: wraps beauty.build_env (render/hooks.py allows lookdev to patch render.beauty; beauty.py is not
     edited), keyed by preset: the hangar OSB ceiling colour, a neutral ceiling zone the camera never sees and
     thinner LED strips (hangar), cabin / cockpit lights, the air preset's terrain albedo, and studio flags (the
-    hero's key light-linked off the tyres, blades and seats).
+    hero's key light-linked off the tyres, blades and seats); for the OUTDOOR ground presets (apron_stbd34,
+    nose_port_closeup) render/airfield.py replaces beauty's race-track HDRI + shadow catcher with a photo-matched
+    airfield (sky HDRI with a capped sun + a sun lamp at the photo's measured sun direction, procedural apron with
+    markings, hangars / tower / trees / mountains; ENV['outdoor'], --set airfield=false for beauty's own).
 It returns {name: kind} of what it rebuilt plus '_reassigned' / '_outline' / '_env' summaries.
 
 Shading models (Principled BSDF, Cycles, multiscatter GGX):
@@ -189,6 +192,21 @@ r2 = round 2, r3 = this file (judge round 2 applied); nose with --set exposure=1
  coverage 0.14), the red-band patch (58 % coverage: the blade is clocked differently; a crop reads right), the
  hangar ceiling patch (its box holds an LED strip; the OSB medians match), wing_dark / silver on the ground shots
  (thin, misregistered), the wing_from_cabin paint_blue region (misfit: mostly sky / terrain in the photo).
+ Round 5 (ENVIRONMENT, render/airfield.py; materials unchanged).  Before = r4 as the judges ran it (race-track HDRI
+ zwartkops_straight_afternoon + shadow catcher; nose --set exposure=1.5, apron --set sun_az=-100); after = the
+ presets' own settings (no --set).  Same GLB / size / spp; the (env) patches are new in round 5:
+  apron_stbd34   paint_blue region 2.5 -> 0.5, blue nose side 5.3 -> 2.0, blue under cockpit 6.4 -> 1.6, mask below
+                 side window 9.1 -> 1.7, side window 5.9 -> 2.1, glass 13.6 -> 6.0, glass_cabin 8.2 -> 5.4, windshield
+                 11.6 -> 8.1, pinstripe 16.4 -> 8.3, paint_white 7.8 -> 4.0, chrome 3.1 -> 1.9, de-ice boot 7.3 -> 5.4,
+                 wing_dark 17.5 -> 13.2, light blue 4.2 -> 5.0; env: sky 17.5 -> 1.7, sunlit tarmac 8.6 -> 4.0, gravel
+                 5.0 -> 3.0, tarmac shade 1.8 -> 5.0, hangar door 5.6 -> 7.7 (before: the race-track sky filled the box)
+  nose_port_closeup  the photo's sun is AHEAD-PORT (the port side facing the camera is sunlit; beauty had it
+                 starboard / in shade): blue cowl side 13.4 -> 2.4, blue side 8.3 -> 3.8, light blue region 19.1 -> 11.8,
+                 pinstripe region 8.3 -> 5.9, mask below side window 11.5 -> 7.4, nose tyre patch (new) 7.1 -> 2.8, tyre
+                 region 31.5 -> 19.1, de-ice boot 33.7 -> 20.9, windshield 8.3 -> 7.9, exhaust 14.8 -> 14.2, paint_blue
+                 region 2.3 -> 2.9 (a little too saturated in direct sun); env: sunlit tarmac 61.6 -> 4.0, tarmac shade
+                 29.5 -> 4.0, sky 11.9 -> 4.6, mountains 7.6 -> 4.5.  The white-band patch (30) and the tyre / boot
+                 regions stay misfit-bound (camera nose_188, rms 36 px, coverage 0.12 on the band).
 """
 from __future__ import annotations
 
@@ -1079,7 +1097,9 @@ def _outline(cfg):
 #             the seats glowing white through the glazing were lit by the KEY, not by these lights (hero side-window
 #             region sRGB 129 with the lights at 0.15 AND at 0; with the key flagged off the seats (flags) 10 at 0.15
 #             -- a black hole -- and 37 at 0.5: dim grey seat shapes, a dark flight deck as in 188), so the studio
-#             keeps 0.5 behind the seat flag; apron_stbd34 keeps 0.25 only as a stop-gap: its side
+#             keeps 0.5 behind the seat flag; apron_stbd34 keeps 0.25 (round 5, airfield environment: side window
+#             38/54/74 against the photo's 41/58/75, the glass region still a little dark); before round 5 it was a
+#             stop-gap: its side
 #             window in 0517 is bright mostly by REFLECTION of the shaded hangar door / sky, which the race-track HDRI
 #             does not have (an environment fix, not a material one); hangar: warm LED cabin lights (0.3)
 #   flags     {preset or env: dict(materials, lights)}: light-link the named softboxes AWAY from the objects of
@@ -1096,6 +1116,11 @@ def _outline(cfg):
 #             the key, and the EXCLUDE entries merge into beauty's receiver collections
 #   materials {preset or env: {material: {key: value}}} per-preset material overrides, rebuilt after the env
 #             (none by default)
+#   outdoor   {preset: settings} = render/airfield.py SETTINGS: for these presets _env_pre hands beauty.build_env a
+#             sky-only preset copy (env 'airfield': the sky HDRI rotated to the measured sun azimuth, no shadow
+#             catcher) and _env_post builds the rest (capped HDRI sun + sun lamp, sky light / camera look, ground,
+#             markings, props, skyline).  pre['airfield'] (--set airfield.sun.el=38 ...) is deep-merged over the
+#             settings, --set airfield=false keeps beauty's environment.
 # ---------------------------------------------------------------------------------------------------------------
 ENV = dict(
     osb=((0.25, 0.150, 0.036), (0.44, 0.265, 0.062)),
@@ -1111,8 +1136,34 @@ ENV = dict(
     flags=dict(studio_cyc=dict(materials=("tire", "prop_blade", "leather", "leather_dark"),
                                lights=("overhead", "key", "rim_R", "rim_L"))),
     materials=dict(),
+    outdoor=None,                     # set below: render/airfield.py SETTINGS (keyed by preset)
 )
 _STATE = dict(spec=None)          # the spec apply() last built (for the per-preset material overrides)
+
+
+def _airfield():
+    """render/airfield.py (the outdoor environments), importable whichever way lookdev itself was imported."""
+    try:
+        from render import airfield as A
+    except ImportError:
+        import airfield as A
+    return A
+
+
+ENV["outdoor"] = _airfield().SETTINGS
+
+
+def _outdoor(pre, env, info):
+    """The airfield settings of this preset (ENV['outdoor'][preset] deep-merged with pre['airfield']) or None;
+    --set airfield=false keeps beauty's own environment."""
+    table = env.get("outdoor")
+    name = (info or {}).get("preset")
+    if not table or name not in table or pre.get("airfield") is False:
+        return None
+    cfg = table[name]
+    if isinstance(pre.get("airfield"), dict):
+        cfg = _airfield()._deep_merge(cfg, pre["airfield"])
+    return cfg
 
 
 def _beauty_modules():
@@ -1134,8 +1185,18 @@ def _keyed(table, pre, info):
     return table.get(pre.get("env"))
 
 
-def _env_pre(pre, env, info):
-    """Preset copy with the lookdev terrain albedo (the original dict is not changed)."""
+def _env_pre(pre, env, info, B=None):
+    """Preset copy with the lookdev terrain albedo, or for an outdoor preset the sky-only copy that
+    render/airfield.py completes in _env_post (the original dict is not changed)."""
+    oc = _outdoor(pre, env, info)
+    if oc is not None:
+        A = _airfield()
+        if B is not None:
+            A.register_skies(B)
+        if info is not None:
+            info.setdefault("lookdev_env", {})["outdoor"] = dict(was=dict(env=pre.get("env"), hdri=pre.get("hdri"),
+                                                                           sun_az=pre.get("sun_az")))
+        return A.build_env_preset(pre, oc)
     alb = _keyed(env.get("terrain"), pre, info)
     if alb is None or pre.get("ground_albedo") is None:
         return pre
@@ -1217,9 +1278,13 @@ def _flags(S, fl):
     return dict(lights=lights, objects=len(objs))
 
 
-def _env_post(S, pre, env, info=None):
+def _env_post(S, pre, env, info=None, cam=None, B=None):
     bpy = S.bpy
     done = {}
+    oc = _outdoor(pre, env, info)
+    if oc is not None and cam is not None and B is not None:
+        _airfield().build(S, pre, cam, info, oc, B)
+        done["outdoor_built"] = "render/airfield.py"
     m = bpy.data.materials.get("osb_ceiling")
     if m is not None and env.get("osb"):
         for n in m.node_tree.nodes:
@@ -1283,9 +1348,9 @@ def _patch_beauty(env):
         else:
             state = {"env": env}
 
-            def build_env(S, pre, cam, info, _orig=cur, _state=state):
-                r = _orig(S, _env_pre(pre, _state["env"], info), cam, info)
-                _env_post(S, pre, _state["env"], info)
+            def build_env(S, pre, cam, info, _orig=cur, _state=state, _B=B):
+                r = _orig(S, _env_pre(pre, _state["env"], info, _B), cam, info)
+                _env_post(S, pre, _state["env"], info, cam, _B)
                 return r
             build_env._lookdev = state
             build_env.__doc__ = cur.__doc__
@@ -1504,7 +1569,10 @@ VERIFY = {
                  ("mask below side win", "trim_black", (1005, 646, 1070, 652)),
                  ("side window", "glass", (1000, 620, 1040, 640)),
                  ("hangar door (env)", None, (700, 420, 900, 480)),
-                 ("tarmac sun (env)", None, (700, 1100, 1000, 1200))],
+                 ("tarmac sun (env)", None, (700, 1100, 1000, 1200)),
+                 ("tarmac shade (env)", None, (1450, 840, 1700, 860)),
+                 ("gravel (env)", None, (50, 1100, 250, 1250)),
+                 ("sky (env)", None, (50, 30, 300, 120))],
         regions=["paint_blue", "paint_blue_light", "paint_pinstripe", "paint_wing_dark", "trim_black", "glass",
                  "glass_cabin", "glass_windshield", "prop_blade", "chrome", "paint_white", "paint_silver",
                  "deice_boot"],
@@ -1515,7 +1583,12 @@ VERIFY = {
                  ("blue cowl side", "paint_blue", (320, 350, 420, 420)),
                  ("white band", "paint_pinstripe", (300, 690, 450, 705)),
                  ("mask below side win", "trim_black", (820, 387, 900, 398)),
-                 ("mask aft of side win", "trim_black", (925, 330, 940, 390))],
+                 ("mask aft of side win", "trim_black", (925, 330, 940, 390)),
+                 ("nose tyre", "tire", (270, 1080, 330, 1200)),
+                 ("tarmac sun (env)", None, (600, 1150, 900, 1280)),
+                 ("tarmac shade (env)", None, (500, 880, 800, 950)),
+                 ("sky (env)", None, (1000, 20, 1500, 120)),
+                 ("mountains (env)", None, (1380, 450, 1420, 480))],
         regions=["paint_blue", "paint_blue_light", "paint_pinstripe", "trim_black", "glass", "glass_windshield",
                  "paint_wing_dark", "tire", "deice_boot", "jamb", "exhaust_polished"],
         exclude=[(1150, 470, 1500, 1250), (940, 640, 1300, 1060), (810, 400, 960, 480), (560, 770, 740, 840),
@@ -1758,8 +1831,9 @@ def _have_bpy():
         return False
 
 
-def verify(names, glb, out_dir, size, samples, sets):
-    """Render the presets through render/beauty.py (materials by its lookdev hook), ID pass, analysis."""
+def verify(names, glb, out_dir, size, samples, sets, sheet_dir=None):
+    """Render the presets through render/beauty.py (materials by its lookdev hook), ID pass, analysis; sheets into
+    sheet_dir (default refs/cache/overlays/lookdev/)."""
     sys.path.insert(0, str(ROOT))
     from render import beauty
     beauty.VQA_DIR = LOOKDEV_DIR / "vqa"                   # never overwrite the lead's compare images
@@ -1770,8 +1844,10 @@ def verify(names, glb, out_dir, size, samples, sets):
         idp = out_dir / f"{name}_id.png"
         table = id_render(idp)
         if name in VERIFY:
+            sd = Path(sheet_dir) if sheet_dir else LOOKDEV_DIR
+            sd.mkdir(parents=True, exist_ok=True)
             results[name] = analyse(name, render_png, idp, table, out_json=out_dir / f"{name}_patches.json",
-                                    sheet=LOOKDEV_DIR / f"{name}_lookdev.jpg")
+                                    sheet=sd / f"{name}_lookdev.jpg")
             for r in results[name]["rows"]:
                 print(f"   {r['kind']:6s} {r['label']:24s} photo {r['photo']['srgb'] if r['photo'] else '-'} "
                       f"render {r['render']['srgb'] if r['render'] else '-'} dE2000 {r['dE2000']} "
@@ -1809,6 +1885,8 @@ def main(argv=None):
     ap.add_argument("--size", default="1200x800")
     ap.add_argument("--samples", type=int, default=None)
     ap.add_argument("--set", action="append", default=[], help="passed to render/beauty.py --set")
+    ap.add_argument("--sheet-dir", default=None, help="where the photo | render sheets go (default "
+                                                      "refs/cache/overlays/lookdev/; keep them in the git-ignored cache)")
     ap.add_argument("--analyse", nargs=3, metavar=("PRESET", "RENDER_PNG", "ID_PNG"),
                     help="re-run the analysis of an existing render + its ID pass (<ID_PNG>.json = id table)")
     a = ap.parse_args(argv)
@@ -1825,7 +1903,8 @@ def main(argv=None):
     if a.verify:
         if not _have_bpy():
             return subprocess.call([BLENDER_PY, str(Path(__file__).resolve())] + (argv or sys.argv[1:]), cwd=str(ROOT))
-        verify([n.strip() for n in a.verify.split(",") if n.strip()], a.glb, a.out, a.size, a.samples, a.set)
+        verify([n.strip() for n in a.verify.split(",") if n.strip()], a.glb, a.out, a.size, a.samples, a.set,
+               a.sheet_dir)
     return 0
 
 
