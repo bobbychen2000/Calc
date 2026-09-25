@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>shadow test</title>
+<!-- Dev check: which combination of reversed depth / CSMShadowNode / RenderPipeline casts shadows on this backend.
+     Renders a grid of small canvases; result in window.__probe. -->
+<style>body{margin:0;background:#000;display:flex;flex-wrap:wrap}canvas{width:320px;height:180px;display:block}</style></head>
+<body>
+<script type="module">
+import { THREE, TSL } from '../lib.js';
+import { Engine, QUALITY3 } from '../engine.js';
+const out = {};
+const variants = [
+  { rev: false, csm: false, pipe: false }, { rev: true, csm: false, pipe: false },
+  { rev: false, csm: true, pipe: false }, { rev: true, csm: true, pipe: false },
+  { rev: true, csm: true, pipe: true }, { rev: true, csm: false, pipe: true },
+];
+try {
+  for (const v of variants) {
+    const r = new THREE.WebGPURenderer({ antialias: false, reversedDepthBuffer: v.rev, forceWebGL: true });
+    r.setPixelRatio(1); r.setSize(320, 180); document.body.appendChild(r.domElement); await r.init();
+    r.shadowMap.enabled = true;
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0.5, 0.6, 0.75);
+    const cam = new THREE.PerspectiveCamera(40, 320 / 180, 0.5, 5000); cam.position.set(70, 40, 75); cam.lookAt(0, 3, 0);
+    const sun = new THREE.DirectionalLight(0xffffff, 3); sun.position.set(-500, 400, 100); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, near: 1, far: 2000 });
+    if (v.csm) { const csm = new THREE.CSMShadowNode(sun, { cascades: 3, maxFar: 500, mode: 'practical', lightMargin: 200 }); sun.shadow.shadowNode = csm; }
+    scene.add(sun, sun.target); scene.add(new THREE.HemisphereLight(0x9ab8e0, 0x5a5040, 1));
+    const g = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardNodeMaterial({ color: 0x999999, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(15, 25, 15), new THREE.MeshStandardNodeMaterial({ color: 0xdddddd })); b.position.set(0, 12.5, 0); b.castShadow = true; scene.add(b);
+    if (v.pipe) { const p = new THREE.RenderPipeline(r); p.outputNode = TSL.pass(scene, cam); p.render(); p.render(); }
+    else { r.render(scene, cam); r.render(scene, cam); }
+    out[JSON.stringify(v)] = r.backend.isWebGPUBackend ? 'webgpu' : 'webgl2';
+  }
+  const q = new URLSearchParams(location.search);
+  for (const tweak of (q.get('eng') || 'none').split(',')) {
+    const c = document.createElement('canvas'); c.width = 320; c.height = 180; document.body.appendChild(c);
+    const E = await new Engine(document.body, { ...QUALITY3.high, ao: tweak === 'noao' ? 'none' : 'prepass' }, { canvas: c, tweak }).init();
+    E.resize(320, 180, 1);
+    const scene = E.scene; scene.add(new THREE.HemisphereLight(0x9ab8e0, 0x5a5040, 1));
+    const g = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardNodeMaterial({ color: 0x999999, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(15, 25, 15), new THREE.MeshStandardNodeMaterial({ color: 0xdddddd })); b.position.set(0, 12.5, 0); b.castShadow = true; scene.add(b);
+    const d = [-500, 400, 100]; const l = Math.hypot(...d);
+    E.setSun(d.map(x => x / l), [3, 3, 3]);
+    const cr = { pos: [70, 40, 75], target: [0, 3, 0], fov: 40 * Math.PI / 180, near: 0.5, far: 5000, shadowSplits: [84, 450, 2500] };
+    for (let i = 0; i < 3; i++) { E.setCamera(cr, 320, 180); E.render(); }
+    out['eng_' + tweak] = E.backend;
+  }
+  out.ok = true;
+} catch (e) { out.err = String(e && e.stack || e); }
+window.__probe = out;
+</script></body></html>
