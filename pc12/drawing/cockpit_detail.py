@@ -205,13 +205,24 @@ def photo_rows():
         ("mask below sill", "0.06-0.08", f"{CG.MASK_LOW:.3f}", "photos only"),
         ("mask ramp angle", "21-27 deg", f"{CG.MASK_RAMP_DEG:.1f} deg", "photos only"),
         ("mask fwd point STA / WL", "3.17 / 2.21", f"{mp[0]:.3f} / {mp[1]:.3f}", "ramp meets crown"),
-        ("mask aft edge lean", "7-23 deg", f"{CG.MASK_AFT_LEAN_DEG:.1f} deg", "bottom forward"),
+        ("mask aft edge lean (f)", "3008: 22-27 deg", f"{CG.MASK_AFT_LEAN_DEG:.1f} deg", f"{CG.MASK_SCHEME}, bottom fwd"),
+        ("   other airframes (f)", "3010: 12-16; 3036: 0", "-", "3066: curved (glass D)"),
+        ("mask aft STA, WL 2.10 / 2.40", "3008: 4.385 / 4.515",
+         f"{_mask_aft_x(2.10):.3f} / {_mask_aft_x(2.40):.3f}", "stbd_ground cam"),
         ("mask aft margin low / top", "0.07 / 0.15-0.20",
          f"{mk['mask_low_aft'][0] - CG.SW_AFT:.3f} / {mk['mask_top_aft'][0] - CG.SW_AFT:.3f}", "from aft extreme"),
         ("mask top margin", "0.055-0.07 (e)", f"{CG.MASK_TOP_MARGIN:.3f}", "normal to top edge"),
-        ("mask aft edge to door seam", "<= ~0.05-0.10", f"{door - mk['mask_top_aft'][0]:.3f}",
-         f"seam STA {door * 1000:.0f}"),
+        ("mask aft to door seam, top / low", "3008: 0.10 / ~0.27",
+         f"{door - mk['mask_top_aft'][0]:.3f} / {door - mk['mask_low_aft'][0]:.3f}", f"seam STA {door * 1000:.0f}"),
+        ("   other airframes (f)", "3036: ~0.05, vertical", "-", "reaches the door"),
     ]
+
+
+def _mask_aft_x(z):
+    """Station of the mask's straight aft edge at water line z (side projection, before the corner radii)."""
+    K = CG.key_points()
+    (xa, za), (xl, zl) = K["mask_top_aft"], K["mask_low_aft"]
+    return float(xa + (xl - xa) * (za - z) / (za - zl))
 
 
 def mask_point():
@@ -307,6 +318,9 @@ def draw_clean(ds):
                "SEEN FROM AHEAD, STARBOARD LEFT - SCALE 1:10")
     view_title(ds, 0.5 * (vb.pt(x0, z0)[0] + vb.pt(x1, z0)[0]), vb.pt(0, z0)[1] + 13.0, "VIEW B (STARBOARD)",
                "SEEN FROM STARBOARD, NOSE RIGHT - SCALE 1:10")
+    # viewing-direction arrow for VIEW B on the plan (from starboard, i.e. towards -BL = down the sheet)
+    X, Y = vp.pt(4.12, float(PLAN_BOX[3]) - 0.02)
+    M.view_arrow(ds, (X, Y + 1.5), (0.0, 1.0), "B")
     draw_tables(ds)
     draw_notes(ds)
 
@@ -433,10 +447,24 @@ def _dims_side(ds, v):
              ("MASK AFT LOW", tuple(K["mask_low_aft"])), ("MASK AFT TOP", tuple(K["mask_top_aft"]))]
     ytop = v.pt(0, SIDE_BOX[3])[1]
     ytxt = ytop - 3.0
-    for lab, (x, z) in feats:
-        X, Y = v.pt(x, z)
-        ds.cv.line((X, Y - 0.8), (X, ytxt + 0.8), W_THIN, (1.2, 0.8), color=INK)
-        ds.text(X + 0.8, ytxt, f"{x * 1000:.0f}  {lab}", 2.0, "mono", "start", rot=-90, tag="ord")
+    feats.sort(key=lambda f: f[1][0])
+    Xs = [v.pt(x, z)[0] for _, (x, z) in feats]
+    Xt = list(Xs)
+    for _ in range(200):                       # spread the labels to >= 3.2 mm (ordinates closer than that jog)
+        moved = False
+        for i in range(1, len(Xt)):
+            if Xt[i] - Xt[i - 1] < 3.2:
+                d = 0.5 * (3.2 - (Xt[i] - Xt[i - 1]))
+                Xt[i - 1] -= d
+                Xt[i] += d
+                moved = True
+        if not moved:
+            break
+    for (lab, (x, z)), X, XT in zip(feats, Xs, Xt):
+        _, Y = v.pt(x, z)
+        yj = ytxt + 6.0
+        ds.cv.path([(X, Y - 0.8), (X, yj), (XT, yj - 2.5), (XT, ytxt + 0.8)], W_THIN, (1.2, 0.8), color=INK)
+        ds.text(XT + 0.8, ytxt, f"{x * 1000:.0f}  {lab}", 2.0, "mono", "start", rot=-90, tag="ord")
     X0 = v.pt(SIDE_BOX[0], 0)[0]
     ds.text(X0 - 2.0, ytxt - 2.0, "STA", 2.3, "label", "end", weight=600, tag="ord")
     # --- WL ordinates at the right of the view
@@ -468,7 +496,7 @@ def _dims_side(ds, v):
     ds.cv.line((X, Y), (X - 13.0, Y), W_THIN)
     ds.cv.line((X, Y), (X - 13.0 * math.cos(math.radians(c)), Y - 13.0 * math.sin(math.radians(c))), W_THIN,
                CHAIN, color=CONSTR)
-    sh.angle_dim((X, Y), 180.0, 180.0 + c, 11.0, f"{c:.0f}°", (X - 15.5, Y - 2.2), tag="dim")
+    sh.angle_dim((X, Y), 180.0, 180.0 + c, 11.0, f"{c:.0f}°", (X - 16.5, Y - 2.2), tag="dim")
     ds.text(X - 9.0, Y - 9.5, "MASK RAMP", 1.9, "label", "middle", fill=CONSTR, tag="lbl")
     callout(ds, v, tip, f"WS TIP {tip[0] * 1000:.0f} / {tip[1] * 1000:.0f}", offset=(-4.0, -15.0), color=INK,
             size=2.1)
@@ -481,9 +509,10 @@ def _dims_side(ds, v):
     callout(ds, v, (ta[0] - 0.032, ta[1] - 0.030), f"R {CG.SW_R['top_aft'] * 1000:.0f}", offset=(-2.0, 14.0),
             color=INK, size=2.2)
     ma, ml = K["mask_top_aft"], K["mask_low_aft"]
-    callout(ds, v, (0.5 * (ma[0] + ml[0]), 0.5 * (ma[1] + ml[1])), f"MASK AFT EDGE, LEAN {CG.MASK_AFT_LEAN_DEG:.0f}°",
+    callout(ds, v, (0.5 * (ma[0] + ml[0]), 0.5 * (ma[1] + ml[1])),
+            f"MASK AFT EDGE, LEAN {CG.MASK_AFT_LEAN_DEG:.1f}° ({CG.MASK_SCHEME} SCHEME)",
             offset=(9.0, 2.0), color=INK, size=2.2,
-            lines=[f"{door_seam()['x0'] - ma[0]:.2f} m AHEAD OF DOOR SEAM"])
+            lines=[f"{door_seam()['x0'] - ma[0]:.2f} (TOP) / {door_seam()['x0'] - ml[0]:.2f} (LOW) m AHEAD OF DOOR SEAM"])
     pz = 2.46
     callout(ds, v, (float(CG.x_pillar(pz)), pz), f"A-PILLAR {CG.PILLAR_WIDTH * 1000:.0f} NORMAL",
             offset=(-12.0, -13.0), color=INK, size=2.2, lines=[f"({2 * CG.PILLAR_HALF * 1000:.0f} HORIZONTAL)"])
@@ -663,6 +692,8 @@ def draw_tables(ds):
         "(c) the side-projection slope of the windshield's outboard roof corner, not the roof plane.",
         "(d) indicative only (oblique views).",
         "(e) ratio to the glass height on PRO s/n 3010 / 3036 and the long-lens NGX photo (photo_notes: 0-0.05).",
+        "(f) the mask's aft edge is a livery item and differs per airframe (model/livery.py MASK_SCHEMES): s/n 3008 "
+        "photos rectified on the OML (stbd_ground / port_hangar_130 cameras); this sheet and L5 carry s/n 3008.",
     ], size=1.6, line_h=2.3)
     # vision (design eye, estimated)
     vis = CG.vision()
@@ -700,7 +731,10 @@ def draw_notes(ds):
         "(Pilatus PRO release; photos of s/n 3001, 3010, 3036, 3066).",
         "Dark mask (filled): PRO livery item, one continuous area around all four panes - roof band, centre "
         "post, lower band with a ramp to the windshield's forward corner, straight leaning aft edge ahead of "
-        "the airstair door. Mask corner radii: low-aft 60, top-aft 40, ramp 100.",
+        f"the airstair door. Drawn for the {CG.MASK_SCHEME} scheme (aft edge {CG.MASK_AFT_LEAN_DEG:.1f}°; the "
+        "aft edge varies per airframe: model/livery.py MASK_SCHEMES). Mask corner radii: low-aft "
+        f"{CG.MASK_R['low_aft'] * 1000:.0f}, top-aft {CG.MASK_R['top_aft'] * 1000:.0f}, ramp "
+        f"{CG.MASK_R['ramp'] * 1000:.0f}.",
         "Windshield roof edge: its own plane (11.0°, 9 mm above the side-window top plane at STA 4000) - our "
         "crown section at STA 3900 is 5-12 mm fuller than the drawing's, so plan and front cannot both match "
         "a single plane better than ~11 / 7 mm.",
@@ -712,13 +746,8 @@ def draw_notes(ds):
              ("airstair door seam / max-breadth WL", dict(dash=PHANTOM, color=MUTED)),
              ("design eye, sight line", dict(dash=(3.0, 1.0), color=M.ACCENT))]
     ds.text(lx, ly, "LEGEND", 2.6, "label", "start", weight=600, tag="notes")
-    for i, (lab, st) in enumerate(items):
-        yy = ly + 4.0 + 3.4 * i
-        if "fill" in st:
-            ds.cv.rect(lx, yy - 1.2, 8.0, 2.4, lw=st["w"], fill=st["fill"], stroke=st["w"] > 0)
-        else:
-            ds.cv.line((lx, yy), (lx + 8.0, yy), W_FINE, st["dash"], color=st["color"])
-        ds.text(lx + 10.0, yy, lab, 1.9, "label", "start", vcenter=True, tag="notes")
+    M.legend_rows(ds, lx, ly + 4.0, [(lab, dict(st, w=st.get("w", W_FINE))) for lab, st in items], dy=3.4, size=1.9,
+                  tag="notes")
     scale_bar(ds, 322.0, ly + 6.0, 10, length_m=0.5, step_m=0.1)
 
 

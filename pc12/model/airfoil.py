@@ -1,17 +1,24 @@
 """
 Airfoil sections.
 
-* LS(1)-04xx family (NASA GA(W)) approximations used on the PC-12 wing:
-    root  LS(1)-0417MOD  (17 % thick, design Cl 0.4)
-    tip   LS(1)-0313     (13 % thick, design Cl 0.3)
-  Built from the NACA *modified four-digit* thickness form (max thickness at
-  40 % chord, enlarged leading-edge radius) plus an aft-loaded mean line and a
-  blunt trailing edge -- the defining traits of the GA(W) sections.  The
-  published coordinate tables were not reachable from the build sandbox, so
-  these are reconstructions, not the certified ordinates.
+* LS(1)-04xx family (NASA GA(W)) sections of the PC-12 wing (Jane's):
+    root  LS(1)-0417MOD  (nominally 17 % thick; as drawn 16.7 % at 30 % c)
+    tip   LS(1)-0313     (nominally 13 % thick; as drawn 12.8 % at 38 % c)
+  Stage 2 (rev B): both are CST (Kulfan class-shape) sections, order 5, fitted TOGETHER to the Pilatus NGX
+  drawing's wing sections WR1-WR4 (BL 900 / 5557 / 6658 / 7395), each normalised by its own leading and
+  trailing edge (drawing/airfoil_fit.py; the wing blends root -> tip linearly in span, wing.airfoil_at).  The
+  drawn sections are classic GA(W) shapes: blunt nose, strong forward camber, maximum thickness at ~30-38 % c,
+  a thin aft third with the lower-surface cusp (aft loading).  Fit: our outline within 3.9 mm of every drawn
+  section (rms <= 1.5 mm).  The published coordinate tables were not reachable from the build sandbox, so
+  these are reconstructions from the drawing, not the certified ordinates.
+  Rev A (the model before this refit) used the NACA modified four-digit thickness form with max thickness at
+  40 % c plus an aft-loaded mean line: the forward half matched, but aft of ~45 % c it was far too full
+  (t/c at 80 % c 9.5 % vs the drawn 5.4 % at the root) -- kept as ls0417mod_rev_a() / ls0313_rev_a().
 * NACA 4-digit symmetric sections (exact analytic form) for the empennage.
 """
 from __future__ import annotations
+from math import comb
+
 import numpy as np
 
 
@@ -95,14 +102,54 @@ class Airfoil:
         return pts
 
 
+def cst_surface(x, A, te=0.0, n1=0.5, n2=1.0):
+    """Kulfan CST surface  y = x^n1 (1-x)^n2 * sum_i A_i B_i,n(x) + x * te  (x clipped to [0, 1]); the default
+    class function (n1 0.5, n2 1.0) gives a round nose and a sharp-or-blunt (te) trailing edge."""
+    x = np.clip(np.asarray(x, float), 0.0, 1.0)
+    n = len(A) - 1
+    S = sum(a * comb(n, i) * x ** i * (1 - x) ** (n - i) for i, a in enumerate(A))
+    return x ** n1 * (1 - x) ** n2 * S + x * te
+
+
+def cst_airfoil(name, coef):
+    """Airfoil from CST coefficient sets dict(upper=(...), lower=(...), te=TE thickness / chord): the TE
+    midpoint lies on the chord line (LE (0, 0) -> TE (1, 0)), so thickness = (yu - yl) / 2 and
+    camber = (yu + yl) / 2 in the Airfoil convention (upper = camber + t, lower = camber - t)."""
+    Au, Al, te = coef["upper"], coef["lower"], coef["te"]
+
+    def yu(x):
+        return cst_surface(x, Au, 0.5 * te)
+
+    def yl(x):
+        return cst_surface(x, Al, -0.5 * te)
+
+    return Airfoil(name, lambda x: 0.5 * (yu(x) - yl(x)), lambda x: 0.5 * (yu(x) + yl(x)))
+
+
+# Stage 2 rev B: joint fit to the drawing's WR1-WR4 (python3 -m drawing.airfoil_fit fit 5)
+CST_LS0417MOD = dict(upper=(0.29595, 0.33900, 0.14823, 0.33503, 0.23125, 0.20159),
+                     lower=(-0.18092, -0.16858, -0.09328, -0.31660, -0.02741, 0.11090), te=0.00559)
+CST_LS0313 = dict(upper=(0.22137, 0.18626, 0.14993, 0.32496, 0.15082, 0.24125),
+                  lower=(-0.15515, -0.07067, -0.18309, -0.10311, -0.12938, 0.16839), te=0.00543)
+
+
 def ls0417mod():
-    return Airfoil("LS(1)-0417MOD",
+    return cst_airfoil("LS(1)-0417MOD", CST_LS0417MOD)
+
+
+def ls0313():
+    return cst_airfoil("LS(1)-0313", CST_LS0313)
+
+
+def ls0417mod_rev_a():
+    """Rev A reconstruction (modified four-digit thickness + aft-loaded camber): too full aft of ~45 % c."""
+    return Airfoil("LS(1)-0417MOD rev A",
                    lambda x: modified4_thickness(x, 0.17, 0.40, 8.0, 0.0028),
                    lambda x: aft_loaded_camber(x, 0.0240, 0.68))
 
 
-def ls0313():
-    return Airfoil("LS(1)-0313",
+def ls0313_rev_a():
+    return Airfoil("LS(1)-0313 rev A",
                    lambda x: modified4_thickness(x, 0.13, 0.40, 7.5, 0.0022),
                    lambda x: aft_loaded_camber(x, 0.0180, 0.68))
 

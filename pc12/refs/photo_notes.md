@@ -192,6 +192,12 @@ Every photo, on both sides and both variants, shows the same shape (see `evidenc
     It runs from about STA 4.48 at the top to STA 4.30 at the bottom.
   - **On the port side, the aft edge stops at the forward frame of the airstair door**, within about 0.05 m
     (`pro3010_rfds_port_pilatus`, `pro3001_port_close_aero25`, `pro3036_port34_pilatus`).
+  - **Correction (sheet-L2 review, 2026-09-24): the aft edge is a per-airframe livery item.** Rectified onto the
+    OML with the camera fits (refs/cache/overlays/livery/cams.json), s/n 3008 (`pro3008_stbd34_pilatus`,
+    `pro3008_port34_pilatus`) leans 22–27°: STA 4.385 at WL 2.10, 4.47 at 2.30, 4.515 at 2.40, ~4.55 at 2.50. On
+    port a blue gap separates it from the door seam (~0.10 m at the top, ~0.27 m low). s/n 3036 has a vertical
+    edge within ~0.05 m of the door frame; s/n 3010 leans ~12–16° (corrected against the door jamb); s/n 3066
+    curves round the glass D. The model carries s/n 3008 (`model/livery.py` `MASK_SCHEMES`).
   - **Lower edge:** horizontal, about **0.06–0.08 m below the glass sill** (WL ≈ 2.03 on `ngx_kenia_stbd_pilatus`).
     Forward of the side window (from about STA 3.6) it ramps **up at about 23°** to a point at the windshield's
     lower-forward corner, at about **STA 3.17, WL 2.21**.
@@ -231,6 +237,15 @@ Every photo, on both sides and both variants, shows the same shape (see `evidenc
   This holds on `ngx_kenia_stbd_pilatus` and `ngx2243_hbfxk_stbd`. It puts the first window near STA 5.3 and the
   exit window near STA 6.1–6.2. The model has 4.72 and 5.52, so the model row appears about 0.6 m too far forward.
   The Blender overlay shows the same offset.
+- **Main-gear leg door (outside glazing scope, used for sheet L4 / `model/gear.py` LEG_DOOR).**
+  - `ngx_dfbox_port` is a near-broadside telephoto of the port gear. The tyre (22 in) sets the scale.
+  - It shows the same face as the NGX drawing's side view: a forward edge ~0.5 m ahead of the axle and a pointed
+    tip ~0.4 m ahead of it. A concave lower edge rises from the tip to above the hub. The narrow lower part has
+    its aft edge near the axle station, then a diagonal step out to the wider upper part.
+  - `pro3036_port34_pilatus` (PRO, 3/4 view) shows the same stepped aft edge and concave lower edge.
+  - In `ngx_dfbox_port` the door sits ~0.1 m lower relative to the wheel than in the drawing, and on the PRO its
+    lower edge also comes close to the hub. This is consistent with the trailing link compressed under load
+    (taxiing). The model keeps the drawing's static pose.
 
 ## Blender check
 

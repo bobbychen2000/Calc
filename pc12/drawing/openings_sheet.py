@@ -8,7 +8,7 @@ DOOR_DETAILS) on the refitted OML of model/fuselage.py -- never from the mesh.
 Views: port elevation (seen from port, 1:20) with station ordinates to every opening; plan (1:20) with the
 openings projected through the OML (y = side_y(x, z); parts below the max-breadth WL hidden) -- the view the
 starboard windows were read from; starboard elevation (seen from starboard, nose right, 1:20); detail A cabin
-window (1:5), detail B emergency exit (1:10), section A-A with the door hinges and swings (1:30).  Tables:
+window (1:5), detail B emergency exit (1:10), section C-C with the door hinges and swings (1:30).  Tables:
 openings (our stations; doors as clear opening + panel seam, DOOR_PANELS), deviations vs the registered Pilatus
 drawing / the Pilatus tech-data side render (render_check(), measured at run time from the git-ignored cache
 image) / photos / rev A, Stage-3 hand-over.  The overlay variant adds the Pilatus drawing in red, photo-derived
@@ -18,6 +18,7 @@ openings drawn onto the render.
 from __future__ import annotations
 
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -25,6 +26,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from drawing import master as M  # noqa: E402
+from drawing.canvas import text_width  # noqa: E402
 from drawing.master import (INK, GRID, MUTED, ACCENT, BLUE, RED, W_OBJ, W_FINE, W_DIM, W_THIN, W_GRID,  # noqa: E402
                             CHAIN, PHANTOM, grid_lines, station_grid, table, view_title, scale_bar, side_view,
                             plan_view, aft_view, View)
@@ -41,6 +43,7 @@ GRID_FRAMES = ("FR10", "FR12", "FR14", "FR16", "FR19", "FR21", "FR23", "FR25", "
                "FR33", "FR36")
 LIGHT = "#34434B"
 GHOST = "#AEB8BF"                                  # rev A openings (before this refit)
+EXIT_DETAIL_R = 0.44                               # detail circle B about the exit hatch (m)
 
 # rev A (the model before this refit) for the change column
 REV_A = dict(win=(0.310, 0.430, 2.010, "rrect r60"), port=[5.52, 6.32, 7.12, 7.92], stbd=[4.72, 6.32, 7.12, 7.92, 8.72],
@@ -410,8 +413,13 @@ def draw_elevation(ds, v, side, R, row_y):
     cv.path(v.pts(np.c_[xs, F.z_mw(xs)]), W_THIN, CHAIN, color=LIGHT)
     for x in (X0, X1):
         break_line(ds, v, x, float(F.z_bot(x)) - 0.03, float(F.z_top(x)) + 0.03)
-    X, Y = v.pt(9.35, float(F.z_mw(9.35)))
-    ds.text(X, Y - 1.0, "MAX-BREADTH WL", 1.9, "label", "middle", fill=LIGHT, tag="lbl")
+    # label clear of its own (curved) chain line: baseline above the line's highest point under the label
+    lab = "MAX-BREADTH WL"
+    X, _ = v.pt(9.35, 0.0)
+    hw = 0.5 * text_width(lab, 1.9) / abs(v.A[0, 0])
+    xl = np.linspace(9.35 - hw - 0.05, 9.35 + hw + 0.05, 30)
+    Y = min(v.pt(x_, float(F.z_mw(x_)))[1] for x_ in xl)
+    ds.text(X, Y - 1.2, lab, 1.9, "label", "middle", fill=LIGHT, tag="lbl")
     # cabin floor / door sill line (reference)
     cv.line(v.pt(4.45, FP.DOOR_SILL_WL), v.pt(9.8, FP.DOOR_SILL_WL), W_THIN, (3.0, 1.2), color=MUTED)
     # cockpit side window (context)
@@ -432,7 +440,7 @@ def draw_elevation(ds, v, side, R, row_y):
         else:
             cv.path(v.pts(r["outline"]), W_OBJ, closed=True)
         if r["kind"] == "window":
-            centre_marks(ds, v, r["cx"], r["cz"], FP.WIN_HX, FP.WIN_HZ, 0.025)
+            centre_marks(ds, v, r["cx"], r["cz"], FP.WIN_HX, FP.WIN_HZ, 0.025)   # broken under the id (draw())
             X, Y = v.pt(r["cx"], r["z0"] + 0.06)
             ds.text(X, Y, r["id"], 2.3, "label", "middle", weight=600, tag="id")
         else:
@@ -489,7 +497,11 @@ def _door_text(ds, v, r):
     hinge = {"bottom": "HINGED AT SILL - OPENS DOWN", "top": "HINGED AT TOP - OPENS UP",
              None: "PLUG TYPE - REMOVED INWARD"}[o.get("hinge")]
     if r["kind"] == "door":
-        X, Y = v.pt(o["cx"], o["cz"] + 0.34) if r["id"] == "D1" else v.pt(o["cx"] + 0.33, o["cz"] - 0.05)
+        if r["id"] == "D1":
+            X, Y = v.pt(o["cx"], o["cz"] + 0.34)
+        else:                                   # D2: below the max-breadth chain line that crosses the panel
+            xn = o["cx"] + 0.33
+            X, Y = v.pt(xn, min(float(F.z_mw(x_)) for x_ in np.linspace(xn - 0.25, xn + 0.25, 11)) - 0.10)
         lines = [f"{r['id']}  {r['name']}", f"CLEAR {w * 1000:.0f} x {h * 1000:.0f}",
                  f"PANEL {r['pw'] * 1000:.0f} x {r['ph'] * 1000:.0f}", hinge.split(" - ")[0],
                  hinge.split(" - ")[1] + (f" {o['open_deg']:.0f} DEG" if o.get("open_deg") else "")]
@@ -497,13 +509,14 @@ def _door_text(ds, v, r):
             ds.text(X, Y + 3.0 * i, s, 2.1 if i else 2.3, "label" if i not in (1, 2) else "mono", "middle",
                     weight=600 if i == 0 else 400, tag="door")
         # hinge label
-        hl = FP.hinge_line(o)
+        hl = FP.hinge_line(o)                   # label outside the panel seam, next to the hinge line's end
         X, Y = v.pt(hl[0] + 0.03, hl[2])
-        ds.text(X + (1.0 if v.A[0, 0] > 0 else -1.0), Y + (2.6 if o["hinge"] == "bottom" else -0.9), "HINGE", 1.8,
+        _, Ys = v.pt(hl[0], r["pz1"] if o["hinge"] == "top" else r["pz0"])
+        ds.text(X + (1.0 if v.A[0, 0] > 0 else -1.0), Ys - 1.1 if o["hinge"] == "top" else Ys + 2.4, "HINGE", 1.8,
                 "label", "start" if v.A[0, 0] > 0 else "end", fill=ACCENT, tag="hinge")
-    else:
-        X, Y = v.pt(o["cx"], o["cz"] - o["hz"])
-        ds.text(X, Y + 3.2, f"{r['id']}  EMERGENCY EXIT  {w * 1000:.0f} x {h * 1000:.0f}", 2.1, "label", "middle",
+    else:                                       # below detail circle B (radius EXIT_DETAIL_R about the hatch)
+        X, Y = v.pt(o["cx"], o["cz"] - EXIT_DETAIL_R)
+        ds.text(X, Y + 3.4, f"{r['id']}  EMERGENCY EXIT  {w * 1000:.0f} x {h * 1000:.0f}", 2.1, "label", "middle",
                 weight=600, tag="door")
 
 
@@ -542,8 +555,8 @@ def draw_plan(ds, v, R):
     for r in R:
         yy = r["side"] * float(F.side_y(r["cx"], r["z1"]))
         X, Y = v.pt(r["cx"], yy)
-        if r["id"] == "E1":
-            ds.text(X + 7.0, Y + 1.0, r["id"], 2.0, "label", "start", weight=600, tag="id")
+        if r["id"] == "E1":                     # inside the hatch outline, aft of the handle
+            ds.text(X + 0.075 * K20, Y - 1.2, r["id"], 2.0, "label", "start", weight=600, tag="id")
             continue
         ds.text(X, Y + (-1.2 if r["side"] > 0 else 3.0), r["id"], 2.0, "label", "middle", weight=600, tag="id")
     X, Y = v.pt(0.5 * (X0 + X1), -0.30)
@@ -551,11 +564,11 @@ def draw_plan(ds, v, R):
             2.0, "label", "middle", fill=MUTED, tag="lbl")
 
 
-D1_COL, D2_COL = ACCENT, "#A0522D"                   # door colours in section A-A
+D1_COL, D2_COL = ACCENT, "#A0522D"                   # door colours in section C-C
 
 
 def draw_section(ds, v, R):
-    """Section A-A: constant cabin section (STA 4600-8200) through P2 / E1 (STA 6200) looking forward (seen from
+    """Section C-C: constant cabin section (STA 4600-8200) through P2 / E1 (STA 6200) looking forward (seen from
     aft, starboard right); door arcs taken at their own centre stations (D1 4970, D2 8240), drawn just outside
     the skin line; hinge lines and open positions / swings of the free edges (build_door angles)."""
     cv = ds.cv
@@ -679,24 +692,23 @@ def draw_detail_exit(ds, v):
            text_at=(e[0] - 8.6, 0.5 * (e[1] + f[1])))
     X, Y = v.pt(E["cx"] - E["hx"], E["cz"] + E["hz"])
     ds.text(X + 0.5, Y - 1.2, f"R{E['r'] * 1000:.0f}", 2.0, "mono", "start", tag="det")
-    X, Y = v.pt(hd["cx"], hd["cz"] + hd["hz"])
-    ds.text(X, Y - 1.0, "HANDLE", 1.8, "label", "middle", tag="det")
+    Xh = max(v.pt(hd["cx"] - hd["hx"], hd["cz"])[0], v.pt(hd["cx"] + hd["hx"], hd["cz"])[0])
+    _, Yh = v.pt(hd["cx"], hd["cz"])
+    ds.text(Xh + 1.5, Yh, "HANDLE", 1.8, "label", "start", vcenter=True, tag="det")      # clear of the centre line
 
 
 def legend(ds, x0, y0):
-    cv = ds.cv
     items = [("OML silhouette / opening outline / door-panel seam", W_OBJ, None, INK),
              ("door clear opening (published size, door frame)", W_FINE, (1.4, 0.8), MUTED),
              ("hidden (plan: below max-breadth WL)", W_OBJ, (1.4, 0.8), MUTED), ("hinge line / door open position", W_FINE, PHANTOM, ACCENT),
              ("max-breadth WL, centre lines", W_THIN, CHAIN, LIGHT), ("door sills / cabin floor reference", W_THIN,
-             (3.0, 1.2), MUTED), ("context: cockpit side window / PRO mask (dashed)", W_FINE, None, MUTED),
+             (3.0, 1.2), MUTED), ("context: cockpit side window", W_FINE, None, MUTED),
+             ("context: PRO dark mask outline", W_FINE, (1.2, 0.8), MUTED),
              ("frame station grid (fuselage.FRAMES)", W_GRID, None, GRID),
              ("rev A openings (the model before this refit)", W_THIN, (1.0, 0.8), GHOST)]
     ds.text(x0, y0, "LEGEND", 3.0, "label", "start", weight=600, tag="legend")
-    for i, (s, w, dash, col) in enumerate(items):
-        y = y0 + 5.5 + 4.2 * i
-        cv.line((x0, y), (x0 + 14.0, y), w, dash, color=col)
-        ds.text(x0 + 17.0, y, s, 2.3, "label", "start", vcenter=True, tag="legend")
+    M.legend_rows(ds, x0, y0 + 5.5, [(s, dict(w=w, dash=dash, color=col)) for s, w, dash, col in items], dy=4.2,
+                  size=2.3)
 
 
 # ============================================================================================ tables
@@ -833,7 +845,7 @@ def deviation_rows(R, ref, ph, rd=None):
     rows.append(("D2 / D1 seam width ratio", f"{PC['hx'] / PA['hx']:.3f}", "0", f"{PC['hx'] / PA['hx'] - rd['d2_over_d1']:+.3f}"
                  if rok else "n/a", "", f"photo (NGX broadside, door openings) {ph['d2_over_d1']:.2f}"))
     rows.append(("Open angle D1 / D2 (deg)", f"{A['open_deg']:.0f} / {C['open_deg']:.0f}", "", "",
-                 f"{A['open_deg'] - 128:+.0f} / {C['open_deg'] - 100:+.0f}", "D1: free edge ~5 cm off the ground (contact ~164, section A-A); D2: render, door open (~120)"))
+                 f"{A['open_deg'] - 128:+.0f} / {C['open_deg'] - 100:+.0f}", "D1: free edge ~5 cm off the ground (contact ~164, section C-C); D2: render, door open (~120)"))
     return rows
 
 
@@ -873,7 +885,7 @@ def stage3_items():
         "openings_field(), "
         "build_skin() door_edges, build_door() and build_doors() still use the clear openings only.",
         "Door kinematics: build_doors() passes open_angle 128 / 100 literally -- read AIRSTAIR['open_deg'] "
-        f"{FP.AIRSTAIR['open_deg']:.0f} (free edge ~5 cm off the ground, section A-A) and CARGO['open_deg'] "
+        f"{FP.AIRSTAIR['open_deg']:.0f} (free edge ~5 cm off the ground, section C-C) and CARGO['open_deg'] "
         f"{FP.CARGO['open_deg']:.0f}, the hinge WLs from hinge_line() "
         f"({FP.hinge_line(FP.AIRSTAIR)[2] * 1000:.0f} / {FP.hinge_line(FP.CARGO)[2] * 1000:.0f}, on the panel); "
         "airstair steps / handrails and the cargo-door struts move with the doors; the airstair door has NO window.",
@@ -890,8 +902,9 @@ def stage3_items():
         "(0.696 along the skin, FAR 23.807(b) 19 x 26 in); E1 moved from STA 5520 to 6205, over the wing: check the "
         "wing-root fairing and flap clearance.",
         "Livery (model/livery.py): the swoosh (WL 1.28-1.52) crosses both door panels -- paint the panel slabs, not "
-        "the clear openings; the PRO dark cockpit mask's aft edge meets the D1 forward seam (STA "
-        f"{(PA['cx'] - PA['hx']) * 1000:.0f}).",
+        "the clear openings; the PRO dark cockpit mask's aft edge (a per-airframe livery item, livery.MASK_SCHEMES) "
+        f"stays ahead of the D1 forward seam (STA {(PA['cx'] - PA['hx']) * 1000:.0f}): s/n 3008 leaves a blue gap of "
+        "~0.10 m at the top and ~0.27 m low, s/n 3036 runs to within ~0.05 m of it.",
         "Wing-root fairing (wing / details): hides the lower D2 seam in side view (drawn low seam WL "
         f"{(PC['cz'] - PC['hz']) * 1000:.0f}); the fairing must not cut into the D2 panel aft of STA "
         f"{(PC['cx'] - PC['hx']) * 1000:.0f}.",
@@ -949,7 +962,14 @@ def draw(ds):
     vS = ds.add_view(aft_view("secA", origin=(772.0, 145.0), scale=30, model_origin=(0.0, 0.0),
                               box=(-2.3, -0.05, 1.0, 3.7)))
     draw_section(ds, vS, R)
-    view_title(ds, 745.0, 153.0, "SECTION A-A - DOORS, HINGES", "STA 6205 LOOKING FWD - SCALE 1:30")
+    view_title(ds, 745.0, 153.0, "SECTION C-C - DOORS, HINGES", "STA 6205 LOOKING FWD - SCALE 1:30")
+    # view references on the parent views: cutting plane C-C (port elevation; the letters A / B are the details),
+    # detail circles A (P1) and B (E1)
+    xa = 6.205
+    M.cutting_plane(ds, vport, (xa, float(F.z_bot(xa)) - 0.06), (xa, float(F.z_top(xa)) + 0.06), "C",
+                    look=(-1.0, 0.0))
+    M.detail_circle(ds, vport, cxA, FP.WIN_CZ, 0.30, "A", at=(-0.7, -1.0))
+    M.detail_circle(ds, vst, E["cx"], E["cz"], EXIT_DETAIL_R, "B", at=(0.7, -1.0))
 
     # ---------------- tables
     cols = [("ID", 9, "l"), ("OPENING", 33, "l"), ("SIDE", 12, "c"), ("FWD", 14, "r"), ("CL STA", 15, "r"),
@@ -958,7 +978,7 @@ def draw(ds):
     y = table(ds, 455.0, 168.0, cols, openings_rows(R), title="OPENINGS (model/fuselage_parts.py) - STA / WL mm",
               zebra=lambda i: i % 2 == 1, size=2.6, row_h=4.2)
     ds.text(455.0, y + 3.6, "Windows: Lame curve n 4.2 (detail A), 9 in all. Doors: published clear openings "
-            "(W x H, projected) inside the drawn panel seams (rows D1s / D2s). Section A-A: hinges and open positions.",
+            "(W x H, projected) inside the drawn panel seams (rows D1s / D2s). Section C-C: hinges and open positions.",
             2.1, "label", "start", fill=MUTED, tag="tnote")
     dcols = [("ITEM", 39, "l"), ("OURS", 45, "l"), ("D DWG", 27, "l"), ("D RENDER", 23, "l"), ("D REV A", 44, "l"),
              ("EVIDENCE / NOTE", 193, "l")]
@@ -990,6 +1010,14 @@ def draw(ds):
     y5 = table(ds, 455.0, y4 + 2.0, pcols, photo_rows(ph, rd), title="PHOTO / RENDER EVIDENCE", size=2.3, row_h=3.9,
                font="label", zebra=lambda i: i % 2 == 1)
     ds.log.append(f"right column ends at y={y5:.0f} (title block starts at {ds.title_box[1]:.0f})")
+    # background lines broken for lettering: rev-A ghost outlines under the door notes, window centre marks under
+    # the window ids
+    M.break_paths_at_text(ds, lambda d: d.get("color") == GHOST, pad=0.4)
+    M.break_paths_at_text(ds, lambda d: d.get("dash") == CHAIN, pad=0.4,          # section C-C centre line
+                          texts=lambda t: t.startswith(("D2 HINGE", "DOOR SILLS")))
+    M.break_paths_at_text(ds, lambda d: d.get("w") in (W_GRID, W_THIN) and d.get("dash") == CHAIN
+                          and d.get("color") in (MUTED, None), pad=0.4,
+                          texts=lambda t: re.fullmatch(r"[PS]\d", t) is not None)
 
     draw_overlay(ds, vport, vplan, vst, vA, vB, R, ph, rd)
 

@@ -43,8 +43,9 @@ CROWN_ALLOW, SIDE_ALLOW = 0.040, 0.085
 
 
 def spinner_profile(n=60):
-    """Spinner (powerplant part, shown for reference): tip STA 390 on the prop axis, base radius SPINNER_R
-    at the cowl front, profile law F.SPINNER_SHAPE."""
+    """Spinner meridian (powerplant part, shown for reference): tip STA 390, base radius SPINNER_R at the cowl
+    front, profile law F.SPINNER_SHAPE (the views draw it about the tilted / yawed thrust line,
+    powerplant.spinner_silhouette)."""
     x0, x1, R = F.STA["spinner_tip"], F.STA["cowl_front"], F.SPINNER_R
     a, b = F.SPINNER_SHAPE
     t = np.linspace(0, 1, n)
@@ -90,13 +91,13 @@ def draw_profile(ds, v, xs):
     cv.path(v.pts(np.c_[xs, F.z_bot(xs)]), W_OBJ)
     for x in (x0, x1):
         cv.line(v.pt(x, float(F.z_bot(x))), v.pt(x, float(F.z_top(x))), W_OBJ)
-    # spinner (reference)
-    sx, sr = spinner_profile()
-    for s in (1, -1):
-        cv.path(v.pts(np.c_[sx, F.PROP_AXIS_Z + s * sr]), W_FINE, (2.0, 0.8), color=MUTED)
-    cv.line(v.pt(0.25, F.PROP_AXIS_Z), v.pt(1.5, F.PROP_AXIS_Z), W_GRID, CHAIN, color=MUTED)
-    X, Y = v.pt(0.30, F.PROP_AXIS_Z)
-    ds.text(X, Y - 1.2, "PROP AXIS WL 1655", 2.0, "label", "start", fill=MUTED, tag="lbl")
+    # spinner (reference) on the thrust line: 2 deg nose-down, WL 1655 at the disc (model/powerplant.py THRUST_*)
+    from model import powerplant as PP
+    cv.path(v.pts(PP.spinner_silhouette("side")), W_FINE, (2.0, 0.8), color=MUTED)
+    ax_ = PP.axis_point(np.array([0.25, 1.5]))
+    cv.line(v.pt(ax_[0, 0], ax_[0, 2]), v.pt(ax_[1, 0], ax_[1, 2]), W_GRID, CHAIN, color=MUTED)
+    X, Y = v.pt(0.36, float(ax_[0, 2]))                   # ahead of the spinner tip, clear of its outline
+    ds.text(X - 0.5, Y - 1.2, f"THRUST LINE {PP.THRUST_TILT_DEG:.0f}° DN", 2.0, "label", "end", fill=MUTED, tag="lbl")
     # cabin floor (Stage 3 proposal)
     c = cabin_numbers()
     cv.line(v.pt(4.40, c["floor"]), v.pt(9.85, c["floor"]), W_FINE, (3.0, 1.2), color=MUTED)
@@ -123,7 +124,7 @@ def draw_halfbreadth(ds, v, xs):
     X, Y = v.pt(0.25, 0.0)
     ds.text(X - 1.5, Y, "CL", 2.4, "label", "end", vcenter=True, weight=600, tag="cl")
     # waterlines
-    placed = []
+    placed, anchors = [], []
     for z in WATERLINES:
         inside = (F.z_top(xs) > z) & (F.z_bot(xs) < z)
         y = F.side_y(xs, np.full_like(xs, z))
@@ -134,30 +135,40 @@ def draw_halfbreadth(ds, v, xs):
         segs = _runs(inside)
         if segs:
             k = segs[-1][-1]
-            X, Y = v.pt(xs[k], y[k])
-            _place_label(ds, X + 0.8, Y - 0.8, f"WL {z * 1000:.0f}", 1.9, placed)
+            anchors.append((*v.pt(xs[k], y[k]), f"WL {z * 1000:.0f}"))
     cv.path(v.pts(np.c_[xs, F.half_w(xs)]), W_OBJ)
     x0, x1 = F.STA["cowl_front"], F.STA["tail_end"]
     for x in (x0, x1):
         cv.line(v.pt(x, 0.0), v.pt(x, float(F.half_w(x))), W_OBJ)
-    sx, sr = spinner_profile()
-    cv.path(v.pts(np.c_[sx, sr]), W_FINE, (2.0, 0.8), color=MUTED)
+    _, Ycl = v.pt(0.0, 0.0)
+    for X, Y, s_ in anchors:                            # after the lines: labels go on clear paper
+        _place_label(ds, X + 0.8, Y - 0.8, s_, 1.9, placed, below=Ycl + 2.8)
+    from model import powerplant as PP                  # spinner (reference) on the yawed thrust line
+    S_ = PP.spinner_silhouette("plan")
+    cv.path(v.pts(S_[: len(S_) // 2]), W_FINE, (2.0, 0.8), color=MUTED)
     X, Y = v.pt(12.2, 0.62)
     ds.text(X, Y, "WATERLINES WL 1000 - 2600 (LABELLED AT THEIR AFT ENDS)", 2.1, "label", "middle",
             fill=LINE_INK, tag="lbl")
 
 
-def _place_label(ds, x, y, s, size, placed, step=2.4):
-    """Small mono label; moved up in steps while it overlaps one placed before."""
+def _place_label(ds, x, y, s, size, placed, step=2.4, below=None):
+    """Small mono label; moved up in steps while it overlaps one placed before or a drawn line crosses it; if no
+    clear spot is found above (and `below` is given), stacked downward from sheet y `below` instead."""
     from drawing.canvas import text_width
     w, h = text_width(s, size, "mono"), 0.8 * size
-    for _ in range(12):
-        box = (x, y - h, x + w, y + 0.2 * size)
-        if not any(b[0] < box[2] and box[0] < b[2] and b[1] < box[3] and box[1] < b[3] for b in placed):
-            break
-        y -= step
-    placed.append((x, y - h, x + w, y + 0.2 * size))
-    ds.text(x, y, s, size, "mono", "start", fill=LINE_INK, tag="wl")
+
+    def free(yy, lines=True):
+        box = (x, yy - h, x + w, yy + 0.2 * size)
+        if any(b[0] < box[2] and box[0] < b[2] and b[1] < box[3] and box[1] < b[3] for b in placed):
+            return False
+        return not lines or ds.line_length_in_box((x + 0.1 * size, yy - 0.62 * size, x + w - 0.1 * size,
+                                                    yy - 0.1 * size)) < 0.3
+    cands = [y - k * step for k in range(4)] + ([below + k * step for k in range(8)] if below is not None else [])
+    y_ = next((c for c in cands if free(c)), None)
+    if y_ is None:                                      # fall back to the old rule (label overlaps only)
+        y_ = next((y - k * step for k in range(12) if free(y - k * step, lines=False)), y)
+    placed.append((x, y_ - h, x + w, y_ + 0.2 * size))
+    ds.text(x, y_, s, size, "mono", "start", fill=LINE_INK, tag="wl")
 
 
 def half_section(x, n=721):
@@ -380,10 +391,22 @@ def draw_clean(ds):
     yd = table(ds, 412.0, 250.0, dcols, drows,
                title="DEVIATIONS OF THE LOFT FROM THE PILATUS DRAWING (NORMAL DISTANCE, mm)", size=2.2,
                row_h=3.55, zebra=lambda i: i % 2 == 1, font="label")
-    ok = all(float(r[3]) <= 20.0 for r in drows if r[3] != "-") and \
-        all(float(r[2]) <= 8.0 for r in drows[:3])
+    def _num(v):                                # table cells are strings; '' / '-' = not evaluated
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    maxes = [_num(r[3]) for r in drows]
+    rmses = [_num(r[2]) for r in drows[:3]]
+    evaluated = [v for v in maxes if v is not None] and [v for v in rmses if v is not None]
+    if not evaluated:
+        verdict, ok = "- targets not evaluated (reference not available).", True
+    else:
+        ok = all(v <= 20.0 for v in maxes if v is not None) and all(v <= 8.0 for v in rmses if v is not None)
+        verdict = "- ALL MET." if ok else "- NOT MET (see remarks)."
     ds.text(412.0, yd + 3.8, "Targets: profile / half-breadth RMS <= 8, max <= 20; every frame section max <= 20 "
-            + ("- ALL MET." if ok else "- NOT MET (see remarks).") + "  REV A = the model before this refit.",
+            + verdict + "  REV A = the model before this refit.",
             2.3, "label", "start", weight=600,
             fill=M.ACCENT if not ok else INK, tag="tnote")
 
@@ -393,16 +416,12 @@ def draw_clean(ds):
 
 
 def legend(ds, x0, y0):
-    cv = ds.cv
     items = [("OML (crown, keel, max half-breadth, sections)", dict(w=W_OBJ)),
              ("buttock / water lines", dict(w=W_FINE, color=LINE_INK)),
              ("max-breadth WL", dict(w=W_FINE, dash=CHAIN, color=LINE_INK)),
              ("spinner / cabin (reference)", dict(w=W_FINE, dash=(2.0, 0.8), color=MUTED)),
              ("frame station grid", dict(w=W_GRID, color=GRID))]
-    for i, (lab, st) in enumerate(items):
-        y = y0 + 4.6 * i
-        cv.line((x0, y), (x0 + 10.0, y), st["w"], st.get("dash"), color=st.get("color"))
-        ds.text(x0 + 12.5, y, lab, 2.3, "label", "start", vcenter=True, tag="legend")
+    M.legend_rows(ds, x0, y0, items, dy=4.6, size=2.3)
 
 
 def section_law_box(ds, x0, y0, x1):
@@ -442,9 +461,10 @@ def notes_block(ds, x0, y0, x1, c):
         "Knot values fitted by least squares (drawing/lines_fit.py) to the registered Pilatus NGX model drawing "
         "190.10.40.432: side crown / visible keel, plan half-breadth, frame sections EF1-FR40 (sheet 1) and the "
         "sheet-2 phantom cabin section, with smoothness regularisation. Deviation = normal distance, + = ours outside.",
-        "Fixed: spinner tip STA 390 on WL 1655 (prop clearance 320 kept, the drawing shows 336), spinner base R 250 "
-        "at the cowl front STA 1044 (concentric), firewall STA 3000, tail-cone closure STA 13570 at the lower end of "
-        "the rudder trailing edge; 14,400 overall length is set by the tail bullet (Stage 3).",
+        "Fixed: spinner tip STA 390, prop axis WL 1655 at the disc (prop clearance 320 kept, the drawing shows 336); "
+        "thrust line 2 deg nose-down / 2 deg right (drawn), so the spinner tip is at WL 1636 and the spinner base "
+        "centre 4 mm above the cowl-front ring (R 250 at STA 1044; Stage 3); firewall STA 3000, tail-cone closure "
+        "STA 13570 at the lower end of the rudder trailing edge; 14,400 overall length is set by the tail bullet.",
         "Not part of this OML (Stage 3 parts): chin-inlet crescent, dorsal fin, ventral strakes, ventral fairing "
         "under the tail cone (FR40, lower silhouette aft of STA 11900), wing-root fairing. Aft of the rudder "
         "leading edge (STA 12650 at the keel) the tail cone lies inside the rudder / fin and is trimmed there.",

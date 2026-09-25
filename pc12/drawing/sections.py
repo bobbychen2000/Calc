@@ -98,8 +98,9 @@ def rot(P, H, deg):
 
 
 def flap_pose(loop, H, deg, max_deg=40.0):
+    from model import wing as W
     f = deg / max_deg
-    return rot(loop, H, deg) + np.array([0.20 * f, -0.035 * f])
+    return rot(loop, H, deg) + np.array([W.FLAP_TRAVEL[0] * f, W.FLAP_TRAVEL[1] * f])
 
 
 def draw_flap_detail(sh, x0, y0, scale, title_y, y_bl=3.0):
@@ -273,8 +274,8 @@ def draw_twist_table(sh, x0, y0, R, st):
 def draw_notes(sh, x0, y0, x1):
     notes = [
         "Dimensions in millimetres unless stated. Aerofoils drawn in their chord frame (chord line horizontal).",
-        "LS(1)-0417MOD / LS(1)-0313 sections are model reconstructions (NACA modified four-digit thickness, "
-        "aft-loaded mean line), not certified ordinates.",
+        "LS(1)-0417MOD / LS(1)-0313 sections are model reconstructions (CST fits to the sections of the Pilatus "
+        "NGX model drawing), not certified ordinates.",
         "Flap kinematics per model: rotation about the hinge at 0.73 c on the mean line, aft travel 0.20 c and "
         "drop 0.035 c, both proportional to deflection (full at 40°).",
         "Blade chord, angle β and t/c measured from the lofted blade at flight-fine pitch (geometric pitch 2.9 m).",

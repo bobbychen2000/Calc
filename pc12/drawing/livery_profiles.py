@@ -52,7 +52,7 @@ from model import powerplant as PP  # noqa: E402
 from model.lifting import cos_pts  # noqa: E402
 
 SHEET = dict(id="L5", title="LIVERY - MSN 3008 SCHEME", subtitle="LIVERY - MSN 3008 (N81DW) SCHEME", size="A1",
-             scale="1:30 / 1:50", rev="A", order=50)
+             scale="AS SHOWN", rev="A", order=50)
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = ROOT / "refs" / "cache"
@@ -229,20 +229,47 @@ def pod_side():
 
 
 def spinner_outline(axis=F.PROP_AXIS_Z):
-    a, b = F.SPINNER_SHAPE
-    t = np.linspace(0, 1, 80)
-    sx = F.STA["spinner_tip"] + (X0_SIDE - F.STA["spinner_tip"]) * t
-    sr = F.SPINNER_R * (1 - (1 - t) ** a) ** b
-    return np.c_[np.r_[sx, sx[::-1]], np.r_[axis + sr, (axis - sr)[::-1]]]
+    """Side-view spinner outline (x, z) on the tilted thrust axis (powerplant.spinner_silhouette); `axis` shifts
+    the WL of the disc centre (default: the fixed prop axis WL 1655)."""
+    return PP.spinner_silhouette("side", 80) + [0.0, axis - F.PROP_AXIS_Z]
+
+
+def tilt_about(P, c, deg):
+    """Rotate view points P (N, 2) about c by deg (counter-clockwise in the view's (a, b) axes)."""
+    a = np.radians(deg)
+    R = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
+    return (np.asarray(P, float) - c) @ R.T + c
 
 
 def exhaust_stack(sgn=1, n=24):
-    """Stack centre path in plan (x, y) and side (x, z) + half-sizes (model/powerplant.py stack table)."""
-    from scipy.interpolate import CubicSpline
-    pts = np.array([[1.42, sgn * 0.22, PP.AX_Z], [1.47, sgn * 0.38, PP.AX_Z - 0.005],
-                    [1.58, sgn * 0.52, PP.AX_Z - 0.02], [1.74, sgn * 0.60, PP.AX_Z - 0.03]])
-    cs = CubicSpline(np.linspace(0, 1, 4), pts, bc_type="natural")
-    return cs(np.linspace(0, 1, n)), 0.060, 0.098
+    """Stack centre path (n, 3) + plan / vertical half-sizes (model/powerplant.py STACK_PTS / STACK_AB)."""
+    return PP.exhaust_stack_path(sgn, n), PP.STACK_AB[0], PP.STACK_AB[1]
+
+
+def stack_collar_x(sgn=1):
+    """Station where the heat-blackened outlet collar (the last PP.STACK_COLLAR of the path) begins."""
+    path = PP.exhaust_stack_path(sgn, 200)
+    s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
+    return float(np.interp(s[-1] - PP.STACK_COLLAR, s, path[:, 0]))
+
+
+def stack_front_silhouette(sgn=1, nbin=70):
+    """Front-view (y, z) silhouette of the whole swept stack tube (all section rings projected), as a closed
+    polygon: upper and lower envelope per BL bin (the tube is BL-monotone)."""
+    rings, _ = PP.exhaust_stack_rings(sgn, 160, 72)
+    Q = rings.reshape(-1, 3)[:, 1:]
+    yb = np.linspace(Q[:, 0].min(), Q[:, 0].max(), nbin + 1)
+    k = np.clip(np.digitize(Q[:, 0], yb) - 1, 0, nbin - 1)
+    up, lo, yc = [], [], []
+    for i in range(nbin):
+        m = k == i
+        if m.any():
+            yc.append(0.5 * (yb[i] + yb[i + 1]))
+            up.append(Q[m, 1].max())
+            lo.append(Q[m, 1].min())
+    yc = np.array(yc)
+    yc[0], yc[-1] = Q[:, 0].min(), Q[:, 0].max()
+    return np.r_[np.c_[yc, up], np.c_[yc[::-1], np.array(lo)[::-1]]]
 
 
 # schematic propeller blade (Stage 3: powerplant.blade_geometry should expose its chord law)
@@ -385,11 +412,14 @@ def draw_side(ds, v, side):
     """Coloured profile seen from port (side=-1, nose left) or starboard (side=+1, nose right).  The near wing
     is drawn in outline where it lies over the fuselage (the livery under it stays visible)."""
     a, b, layers, glass, wing_low, env = side_layers()
-    # belly fairing (below the keel, behind the wing root)
-    xs = np.linspace(L.BELLY_FAIRING_HW[0][0], L.BELLY_FAIRING_HW[-1][0], 80)
-    bot = np.interp(xs, *zip(*L.BELLY_FAIRING_BOT))
-    bf = np.r_[np.c_[xs, F.z_bot(xs) + 0.02], np.c_[xs[::-1], bot[::-1]]]
-    poly(ds, v, bf, col(L.SURFACES["belly_fairing"]))
+    # wing-to-body fairing (details.py tables): the part below the keel is dark wing paint
+    xs = np.linspace(L.BELLY_FAIRING_BOT[0][0], L.BELLY_FAIRING_BOT[-1][0], 120)
+    bot = D.belly_fairing_bottom(xs)
+    below = bot < F.z_bot(xs) - 0.001
+    for seg in _runs(below):
+        xx = xs[seg]
+        bf = np.r_[np.c_[xx, F.z_bot(xx) + 0.02], np.c_[xx[::-1], bot[seg][::-1]]]
+        poly(ds, v, bf, col(L.SURFACES["belly_fairing"]))
     stack_below = []
     for name, cc, Fv in layers:
         contour_fill(ds, v, a, b, Fv, cc, keep=lambda R, Fv=Fv: hole_color(R, a, b, Fv, stack_below))
@@ -430,9 +460,10 @@ def draw_side(ds, v, side):
     vzs = ventral_edge(vxs)
     for seg in _runs(vzs < F.z_bot(np.clip(vxs, X0_SIDE, X1_SIDE)) - 0.002):
         outline(ds, v, np.c_[vxs[seg], vzs[seg]], W_FINE, closed=False)
-    hz = np.array(E.RUD_Z)
-    hx = E.fin_le(hz) + E.RUD_XH * (E.fin_te(hz) - E.fin_le(hz))
-    outline(ds, v, np.c_[hx, hz], W_GRID, "#0B1020", closed=False)
+    # rudder seams: nose / gap line and the sloped top edge (E.rudder_outline; its bottom edge is the ventral edge)
+    ro = E.rudder_outline()
+    k = len(ro) // 2                                    # nose-bottom, top edge (nose -> TE), bottom edge (TE -> nose)
+    outline(ds, v, ro[:k + 1], W_GRID, "#0B1020", closed=False)
     t0, t1, tx = E.RUD_TAB
     tab = [(E.fin_le(z) + tx * (E.fin_te(z) - E.fin_le(z)), z) for z in (t0, t1)]
     outline(ds, v, np.array([(E.fin_te(t0), t0), tab[0], tab[1], (E.fin_te(t1), t1)]), W_GRID, "#0B1020",
@@ -441,7 +472,11 @@ def draw_side(ds, v, side):
     (s0x, s0z), (s1x, s1z) = E.STRAKE_TIP
     outline(ds, v, np.array([(r0x, r0z), (s0x, s0z), (s1x, s1z), (r1x, r1z)]), W_THIN, closed=False)
     outline(ds, v, np.c_[[X0_SIDE, X0_SIDE], [F.z_bot(X0_SIDE), F.z_top(X0_SIDE)]], W_THIN, closed=False)
-    outline(ds, v, bf, W_THIN)
+    # wing-to-body fairing outline (details.py): lower silhouette, forward upper edge, tail lobe on the side
+    xb = np.linspace(L.BELLY_FAIRING_BOT[0][0], L.BELLY_FAIRING_BOT[-1][0], 120)
+    outline(ds, v, np.c_[xb, D.belly_fairing_bottom(xb)], W_THIN, closed=False)
+    outline(ds, v, np.array(L.BELLY_FAIRING_NOSE_EDGE), W_GRID, "#0B1020", closed=False)
+    outline(ds, v, np.array(L.BELLY_FAIRING_TAIL), W_GRID, "#0B1020", closed=False)
     # bullet fairing (white; the tailplane lies inside its side silhouette)
     Bt = np.array(E.BULLET)
     bul = np.r_[Bt[:, [0, 1]], Bt[::-1][:, [0, 2]]]
@@ -481,32 +516,35 @@ def wing_phantom():
 
 
 def draw_stack_side(ds, v, side):
+    """Stack seen from the side: polished tube (side projection of the swept tube, rounded ends) and the
+    heat-blackened outlet collar (the last PP.STACK_COLLAR of the path)."""
     path, ra, rb = exhaust_stack(side)
-    x0, x1 = path[0, 0], path[-1, 0]
+    x0, x1 = path[0, 0], path[-1, 0] + 0.01
     zc = float(path[:, 2].mean())
     P = FP.opening_outline(dict(cx=0.5 * (x0 + x1), cz=zc, hx=0.5 * (x1 - x0), hz=rb, r=0.07))
     poly(ds, v, P, col(L.SURFACES["exhaust"]))
-    hl = FP.opening_outline(dict(cx=0.5 * (x0 + x1) - 0.01, cz=zc + 0.45 * rb, hx=0.5 * (x1 - x0) - 0.05,
+    xc = stack_collar_x(side)
+    m = P[:, 0] >= xc
+    if m.sum() > 2:
+        C = np.r_[P[m], [[xc, float(P[m][:, 1].min())], [xc, float(P[m][:, 1].max())]]]
+        ang = np.arctan2(C[:, 1] - zc, C[:, 0] - 0.5 * (xc + x1))
+        poly(ds, v, C[np.argsort(ang)], "#1E1B18")
+    hl = FP.opening_outline(dict(cx=0.5 * (x0 + xc) - 0.01, cz=zc + 0.45 * rb, hx=0.5 * (xc - x0) - 0.05,
                                  hz=0.18 * rb, r=0.015))
     poly(ds, v, hl, "#E4DED3")
-    ang = np.linspace(0, 2 * np.pi, 40)
-    poly(ds, v, np.c_[x1 - 0.012 + 0.016 * np.cos(ang), path[-1, 2] + 0.85 * rb * np.sin(ang)], "#1E1B18")
     outline(ds, v, P, W_THIN)
+    ds.cv.line(v.pt(xc, zc - 0.97 * rb), v.pt(xc, zc + 0.97 * rb), W_GRID, color=MUTED)
 
 
 def draw_gear_side(ds, v):
     T = G.MAIN_TRUNNION
-    s = BY.SLOT
-    # leg door: the SLOT patch of the wing lower skin, rotated 90 deg down about the trunnion axis
-    y0, y1 = s["cy"] - s["hy"], s["cy"] + s["hy"]
-    z_hi, z_lo = T[2] + (y1 - T[1]), T[2] - (T[1] - y0)
-    door = FP.opening_outline(dict(cx=s["cx"], cz=0.5 * (z_hi + z_lo), hx=s["hx"], hz=0.5 * (z_hi - z_lo),
-                                   r=s["r"]))
+    # leg door (gear.leg_door_outline): outboard of the tyre, so it is drawn over it in both side views
+    door = G.leg_door_outline()
     Lp, A = G.MAIN_LINK_PIVOT, G.MAIN_AXLE
     ds.cv.path([v.pt(T[0], T[2]), v.pt(Lp[0], Lp[2]), v.pt(A[0], A[2])], 0.07 * v.k, color=col("gear_leg"))
+    tyre(ds, v, A, G.MAIN_TYRE)
     poly(ds, v, door, col(L.SURFACES["main_gear_door"]))
     outline(ds, v, door, W_THIN)
-    tyre(ds, v, A, G.MAIN_TYRE)
     Np, Nf, Na = G.NOSE_PIVOT, G.NOSE_FORK, G.NOSE_AXLE
     (ax, _, az), (bx, _, bz) = G.NOSE_BRACE
     ds.cv.line(v.pt(ax, az), v.pt(bx, bz), 0.03 * v.k, color="#C9CDD1")
@@ -544,8 +582,12 @@ def blade_shape(r, hw, axis, x, sg, mats=True):
 def draw_prop_side(ds, v):
     """Spinner (polished) and two of the five blades, vertical, edge-on (width = chord x sin(pitch))."""
     r, hw = blade_outline(width_scale=0.40)
+    hub = PP.prop_hub()
+    c = np.array([hub[0], hub[2]])
+    tilt = PP.THRUST_TILT_DEG                 # disc top forward (thrust line nose-down)
     for sg in (1, -1):
-        shapes = blade_shape(r, hw, F.PROP_AXIS_Z, PP.PROP_X, sg)
+        shapes = blade_shape(r, hw, hub[2], hub[0], sg)
+        shapes = [(tilt_about(P, c, tilt), mat) for P, mat in shapes]
         for P, mat in shapes:
             poly(ds, v, P, col(mat))
         outline(ds, v, shapes[0][0], W_THIN)
@@ -555,7 +597,8 @@ def draw_prop_side(ds, v):
     t = np.linspace(0.08, 1, 50)
     sx = F.STA["spinner_tip"] + (X0_SIDE - F.STA["spinner_tip"]) * t
     sr = F.SPINNER_R * (1 - (1 - t) ** a) ** b
-    hl = np.r_[np.c_[sx, F.PROP_AXIS_Z + 0.55 * sr], np.c_[sx[::-1], (F.PROP_AXIS_Z + 0.30 * sr)[::-1]]]
+    zc = PP.axis_point(sx)[:, 2]
+    hl = np.r_[np.c_[sx, zc + 0.55 * sr], np.c_[sx[::-1], (zc + 0.30 * sr)[::-1]]]
     poly(ds, v, hl, "#EEF1F4")
     outline(ds, v, sp, W_FINE)
 
@@ -630,16 +673,15 @@ def draw_plan(ds, v, upper=True):
             outline(ds, v, np.c_[xx, ww], W_THIN, closed=False)
 
     def stab():
-        ys = np.linspace(0.0, E.STAB_TIP_Y - 0.002, 120)
-        P = np.r_[np.c_[[E.stab_le(y) for y in ys], ys], np.c_[[E.stab_te(y) for y in ys[::-1]], ys[::-1]]]
+        P = E.stab_plan_polygon()
         poly(ds, v, P, col(L.SURFACES["stab_upper" if upper else "stab_lower"]))
         poly(ds, v, stab_boot_outline(1, L.STAB_BOOT[tag]), col(L.SURFACES["boot"]))
         outline(ds, v, P, W_FINE)
         hy = np.linspace(E.ELEV_Y[0], E.ELEV_Y[1], 20)
         hx = [E.stab_le(y) + E.ELEV_XH * (E.stab_te(y) - E.stab_le(y)) for y in hy]
         outline(ds, v, np.c_[hx, hy], W_GRID, closed=False)
-        y0, _, xh = E.ELEV_HORN
-        outline(ds, v, np.array([(E.stab_te(y0), y0), (xh, y0), (xh, y0 + 0.12)]), W_GRID, closed=False)
+        tip = E.stab_tip_outline()
+        outline(ds, v, tip["horn_root"], W_GRID, closed=False)
         Bt = np.array(E.BULLET)
         bp = half(Bt[:, [0, 3]], Bt[:, 0])
         poly(ds, v, bp, col(L.SURFACES["bullet"]))
@@ -651,16 +693,15 @@ def draw_plan(ds, v, upper=True):
         poly(ds, v, P, col(surf))
         poly(ds, v, boot_plan_outline(1, 0.10 if upper else 0.065), col(L.SURFACES["boot"]))
         ink = "#0B1020"
+        # flap: shroud lip seen from above, lower cove edge from below; aileron: gap line of that skin
         fy = np.linspace(max(W.Y_FLAP[0], yr), W.Y_FLAP[1], 40)
-        outline(ds, v, np.c_[W.x_le(fy) + W.FLAP_X_LO * W.chord(fy), fy], W_GRID, ink, closed=False)
+        outline(ds, v, np.c_[W.flap_lines(fy, upper), fy], W_GRID, ink, closed=False)
         y = W.Y_FLAP[1]
-        outline(ds, v, np.array([(W.x_le(y) + W.FLAP_X_LO * W.chord(y), y), (W.x_te(y), y)]), W_GRID, ink,
-                closed=False)
+        outline(ds, v, np.array([(float(W.flap_lines(y, upper)), y), (W.x_te(y), y)]), W_GRID, ink, closed=False)
         ay = np.linspace(*W.Y_AIL, 20)
-        outline(ds, v, np.c_[W.x_le(ay) + (W.AIL_XH - 0.04) * W.chord(ay), ay], W_GRID, ink, closed=False)
+        outline(ds, v, np.c_[[W.ail_gap_x(y_, upper) for y_ in ay], ay], W_GRID, ink, closed=False)
         for y in W.Y_AIL:
-            outline(ds, v, np.array([(W.x_le(y) + (W.AIL_XH - 0.04) * W.chord(y), y), (W.x_te(y), y)]), W_GRID, ink,
-                    closed=False)
+            outline(ds, v, np.array([(W.ail_gap_x(y, upper), y), (W.x_te(y), y)]), W_GRID, ink, closed=False)
         tb0, tb1 = W.Y_AIL[0] + 0.06, W.Y_AIL[0] + 0.72          # Flettner tab (as sheet L4)
         tp = [(float(W.x_te(tb0)), tb0), (float(W.x_le(tb0) + 0.945 * W.chord(tb0)), tb0),
               (float(W.x_le(tb1) + 0.945 * W.chord(tb1)), tb1), (float(W.x_te(tb1)), tb1)]
@@ -680,9 +721,8 @@ def draw_plan(ds, v, upper=True):
         outline(ds, v, body, W_FINE)
 
     def belly():
-        from cad.mesh import pchip
         xs = np.linspace(L.BELLY_FAIRING_HW[0][0], L.BELLY_FAIRING_HW[-1][0], 80)
-        w = pchip(*zip(*L.BELLY_FAIRING_HW))(xs)
+        w = D.belly_fairing_halfwidth(xs)
         P = half(np.c_[xs, w], xs)
         poly(ds, v, P, col(L.SURFACES["belly_fairing"]))
         outline(ds, v, np.c_[xs, w], W_THIN, closed=False)
@@ -699,12 +739,14 @@ def draw_plan(ds, v, upper=True):
     def gear():
         A = G.MAIN_AXLE
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
-        s = BY.SLOT
-        door = FP.opening_outline(dict(cx=s["cx"], cz=G.MAIN_TRUNNION[1] + 0.03, hx=s["hx"], hz=0.012, r=0.005))
-        poly(ds, v, door, col(L.SURFACES["main_gear_door"]))
+        d = G.LEG_DOOR                                  # leg door edge-on (outboard of the tyre)
         P = FP.opening_outline(dict(cx=A[0], cz=A[1], hx=R, hz=Wt / 2, r=0.04))
         poly(ds, v, P, col("tire"))
         outline(ds, v, P, W_THIN)
+        door = FP.opening_outline(dict(cx=0.5 * (d["x_fwd"] + d["x_aft"]), cz=float(np.mean(d["bl"])),
+                                       hx=0.5 * (d["x_aft"] - d["x_fwd"]), hz=0.012, r=0.005))
+        poly(ds, v, door, col(L.SURFACES["main_gear_door"]))
+        outline(ds, v, door, W_GRID)
         A = G.NOSE_AXLE
         R, Wt = G.NOSE_TYRE["R"], G.NOSE_TYRE["W"]
         nb = BY.NOSE_BAY
@@ -715,25 +757,29 @@ def draw_plan(ds, v, upper=True):
         outline(ds, v, P, W_THIN)
 
     def prop():
-        a_, b_ = F.SPINNER_SHAPE
-        t = np.linspace(0, 1, 60)
-        sx = F.STA["spinner_tip"] + (X0_SIDE - F.STA["spinner_tip"]) * t
-        sr = F.SPINNER_R * (1 - (1 - t) ** a_) ** b_
-        sp = half(np.c_[sx, sr], sx)
+        S_ = PP.spinner_silhouette("plan", 60)          # yawed thrust axis: tip at BL +23
+        st = S_[:60]                                     # starboard edge, tip -> base
+        sp = half(st, st[:, 0])
         poly(ds, v, sp, col(L.SURFACES["spinner"]))
-        outline(ds, v, np.c_[sx, sr], W_FINE, closed=False)
+        outline(ds, v, st, W_FINE, closed=False)
         r, hw = blade_outline(rmin=F.SPINNER_R * 0.8, width_scale=0.40)
-        shapes = blade_shape(r, hw, 0.0, PP.PROP_X, 1)
+        hub = PP.prop_hub()
+        shapes = blade_shape(r, hw, hub[1], hub[0], 1)
+        shapes = [(tilt_about(P, np.array([hub[0], hub[1]]), -PP.THRUST_YAW_DEG), mat) for P, mat in shapes]
         for P, mat in shapes:
             poly(ds, v, P, col(mat))
         outline(ds, v, shapes[0][0], W_THIN)
 
     def stacks():
-        path, ra, rb = exhaust_stack(1)
+        path, ra, rb = exhaust_stack(1, 60)
         d = np.gradient(path[:, :2], axis=0)
         nrm = np.c_[-d[:, 1], d[:, 0]] / np.linalg.norm(d, axis=1)[:, None]
         P = np.r_[path[:, :2] + ra * nrm, (path[:, :2] - ra * nrm)[::-1]]
         poly(ds, v, P, col(L.SURFACES["exhaust"]))
+        m = path[:, 0] >= stack_collar_x(1)                    # heat-blackened outlet collar
+        if m.sum() >= 2:
+            Q = np.r_[path[m, :2] + ra * nrm[m], (path[m, :2] - ra * nrm[m])[::-1]]
+            poly(ds, v, Q, "#1E1B18")
         outline(ds, v, P, W_THIN)
 
     if upper:
@@ -820,6 +866,12 @@ def draw_clean(ds):
     frame_ruler(ds, vs, STBD["origin"][1] + 2.5)
     view_title(ds, vp.pt(7.59, 0)[0], PORT["origin"][1] + 18.5, "PORT SIDE",
                "SEEN FROM PORT, NOSE LEFT - SCALE 1:30")
+    # view references on the port side: VIEW C (from ahead) and DETAIL A (upper blade tip bands)
+    X, Y = vp.pt(F.STA["spinner_tip"] - 0.18, F.PROP_AXIS_Z - 0.55)
+    M.view_arrow(ds, (X, Y), (1.0, 0.0), "C")
+    tip = PP.prop_hub()[[0, 2]] + (PP.PROP_R - 0.06) * np.array([-np.sin(np.radians(PP.THRUST_TILT_DEG)),
+                                                                  np.cos(np.radians(PP.THRUST_TILT_DEG))])
+    M.detail_circle(ds, vp, float(tip[0]), float(tip[1]), 0.13, "A", at=(1.0, 0.2))
     view_title(ds, vs.pt(7.59, 0)[0], STBD["origin"][1] + 18.5, "STARBOARD SIDE",
                "SEEN FROM STARBOARD, NOSE RIGHT - SCALE 1:30")
     # split plan
@@ -1136,6 +1188,10 @@ def draw_front(ds):
         P = FP.opening_outline(dict(cx=sg * A_[1], cz=A_[2], hx=Wt / 2, hz=R, r=0.05))
         poly(ds, v, P, col("tire"))
         outline(ds, v, P, W_THIN)
+        d_ = G.LEG_DOOR                                   # leg door edge-on, outboard of the tyre
+        dz = G.leg_door_outline()[:, 1]
+        ds.cv.line(v.pt(sg * d_["bl"][0], float(dz.max())), v.pt(sg * d_["bl"][1], float(dz.min())), 0.018 * v.k,
+                   color=col(L.SURFACES["main_gear_door"]))
     Np, Na = G.NOSE_PIVOT, G.NOSE_AXLE
     ds.cv.line(v.pt(0.0, Np[2]), v.pt(0.0, Na[2]), 0.06 * v.k, color=col("gear_leg"))
     P = FP.opening_outline(dict(cx=0.0, cz=Na[2], hx=G.NOSE_TYRE["W"] / 2, hz=G.NOSE_TYRE["R"], r=0.04))
@@ -1149,12 +1205,17 @@ def draw_front(ds):
     env = F.section(np.full_like(th, 4.6), th / (2 * np.pi))[:, 1:]          # max section outline
     outline(ds, v, env, W_FINE)
     for sg in (1, -1):
+        # the whole swept tube projected (a horizontal tube from the cowl side to the outlet), with the dark
+        # outlet collar seen end-on at its outboard end
+        S_ = stack_front_silhouette(sg)
+        poly(ds, v, S_, col(L.SURFACES["exhaust"]))
         path, ra, rb = exhaust_stack(sg)
         e = path[-1]
-        ring = np.c_[e[1] + 0.5 * ra * np.cos(th), e[2] + rb * np.sin(th)]
-        poly(ds, v, ring, col(L.SURFACES["exhaust"]))
-        poly(ds, v, np.c_[e[1] + 0.3 * ra * np.cos(th), e[2] + 0.75 * rb * np.sin(th)], "#1E1B18")
-        outline(ds, v, ring, W_THIN)
+        poly(ds, v, np.c_[e[1] + 0.55 * ra * np.cos(th), e[2] + 0.55 * rb * np.sin(th)], "#1E1B18")
+        yb = np.linspace(path[0, 1], e[1], 5)[1:-1]
+        hl = np.c_[np.r_[yb[0], yb[-1], yb[-1], yb[0]], e[2] + rb * np.array([0.55, 0.55, 0.30, 0.30])]
+        poly(ds, v, hl, "#E4DED3")
+        outline(ds, v, S_, W_THIN)
     sp = np.c_[F.SPINNER_R * np.cos(th), F.PROP_AXIS_Z + F.SPINNER_R * np.sin(th)]
     poly(ds, v, sp, col(L.SURFACES["spinner"]))
     poly(ds, v, np.c_[0.35 * F.SPINNER_R * np.cos(th) - 0.06, F.PROP_AXIS_Z + 0.06 + 0.35 * F.SPINNER_R * np.sin(th)],

@@ -38,7 +38,7 @@ from cad.mesh import pchip
 # ----------------------------------------------------------------------------
 STA = dict(
     spinner_tip=0.39,
-    prop_plane=0.80,
+    prop_plane=0.925,            # propeller disc on the thrust axis (powerplant.PROP_X; tilted / yawed 2 deg)
     cowl_front=1.044,            # spinner / cowling joint (spinner base)
     firewall=3.00,
     windshield_base=3.30,
@@ -51,9 +51,11 @@ STA = dict(
 )
 PROP_AXIS_Z = 1.655        # 0.32 m clearance + 1.335 m radius
 SPINNER_R = 0.250          # spinner base radius at the cowl front (drawing: 0.250)
-# spinner profile r(t) = SPINNER_R * (1 - (1 - t)^a)^b, t = 0 at the tip (STA 0.39) .. 1 at the cowl front;
-# fitted to the drawing (max 0.8 mm).  For model/powerplant.py (Stage 3; it still uses a = 2.1, b = 0.55).
-SPINNER_SHAPE = (1.48, 0.53)
+# spinner profile r(t) = SPINNER_R * (1 - (1 - t)^a)^b, t = 0 at the tip (STA 0.39) .. 1 at the cowl front, about
+# the tilted / yawed thrust axis (powerplant.THRUST_*); fitted to the drawn spinner (plan rms 1.4 / max 3.0 mm; side
+# rms 1.0 / max 2.4 mm once the drawing's 15 mm higher prop axis is allowed for -- WL 1655 / 320 clearance kept).
+# The rev B fit (1.48, 0.53) assumed an untilted axis.  For model/powerplant.py (Stage 3; it still uses 2.1, 0.55).
+SPINNER_SHAPE = (1.450, 0.641)
 
 # Frame stations (labelled frames of the reference drawing; used for station grids and the body plan).
 FRAMES = dict(EF1=1.200, EF2=2.075, FR10=3.080, FR12=3.580, FR14=4.080, FR16=4.590, FR19=5.340, FR21=5.890,

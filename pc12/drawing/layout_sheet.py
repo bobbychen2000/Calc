@@ -35,9 +35,10 @@ from model import gear as G  # noqa: E402
 from model import details as D  # noqa: E402
 from model import powerplant as PP  # noqa: E402
 from model.lifting import cos_pts  # noqa: E402
+from drawing import airfoil_fit as AFIT  # noqa: E402
 
 SHEET = dict(id="L4", title="GENERAL ARRANGEMENT - LAYOUT",
-             subtitle="GENERAL ARRANGEMENT - LAYOUT (WING, TAIL, GEAR)", size="A1", scale="1:50", rev="A", order=40)
+             subtitle="GENERAL ARRANGEMENT - LAYOUT (WING, TAIL, GEAR)", size="A1", scale="AS SHOWN", rev="A", order=40)
 
 K = 20.0                      # sheet mm per model metre at 1:50
 HID = (1.6, 0.9)              # hidden-line dash
@@ -58,6 +59,8 @@ REV_A = {
     "rud_hinge_2.609": 13.6059, "rud_hinge_3.919": 14.1092, "fin_t": 0.1022,
     "nose_axle": 2.9500, "main_axle": 6.4300, "track": 4.53, "prop_tilt": 0.0, "prop_clear": 0.32,
     "pod_x0": 4.8777, "pod_y": 3.90, "pod_z": 1.2164, "pod_r": 0.175,
+    "prop_x": 0.800, "prop_yaw": 0.0,
+    "fair_bot_front": 0.735, "fair_low_side": 0.735, "fair_bot_6.0": 0.7385, "fair_nose": 4.92, "fair_tail": 8.30,
 }
 
 
@@ -178,6 +181,10 @@ def reference():
         P = np.vstack([ln["pts"] for ln in d["sections"][n]["lines"] if ln["kind"] == "outline"])
         le, te = P[np.argmin(P[:, 0])], P[np.argmax(P[:, 0])]
         R[f"inc_{n}"] = math.degrees(math.atan2(le[1] - te[1], te[0] - le[0]))
+    # wing section shapes (airfoil_fit: each drawn WR section normalised by its own LE / TE; max / rms mm of our
+    # outline from the drawn one) for the current airfoils and rev A's
+    R["wr_shape"] = AFIT.deviations(d)
+    R["wr_shape_revA"] = AFIT.deviations(d, rev_a=True)
     # tailplane (plan, both halves) and front
     for y in (1.0, 2.27):
         R[f"stab_le_{y}"] = np.mean([min(cross("plan", 1, s * y, 12.9, 13.9)) for s in (1, -1)])
@@ -204,6 +211,11 @@ def reference():
         r = 0.5 * float(rud[:, 1].max() - rud[:, 1].min())
         R[f"rud_hinge_{z}"] = nose + r
         R[f"fin_t_{z}"] = float(allp[:, 1].max() - allp[:, 1].min()) / (R[f"fin_te_{z}"] - R[f"fin_le_sec_{z}"])
+    # rudder bottom / top edges (side view): WL of the drawn edge lines at stations along the rudder
+    for x in (13.0, 13.4):
+        R[f"rud_bot_{x}"] = min(cross("side", 0, x, 1.6, 2.1))
+    for x in (13.94, 14.2):
+        R[f"rud_top_{x}"] = min(cross("side", 0, x, 3.74, 3.87))
     # dorsal: FR38 / FR40 half-width and top
     for n in ("FR38", "FR40"):
         for ln in d["sections"][n]["lines"]:
@@ -239,7 +251,116 @@ def reference():
     R["pod_r"] = 0.5 * (max(zs) - min(zs))
     ys_ = cross("front", 1, 1.76, 7.46, 7.9)
     R["pod_y"] = 0.5 * (min(ys_) + max(ys_))
+    # flap shroud lip (visible chordwise line between the hidden flap LE and the TE), aileron gap line (plan)
+    for y in (2.0, 5.0):
+        c = float(W.chord(y))
+        R[f"flap_lip_{y}"] = np.mean([max(cross("plan", 1, s * y, float(W.x_le(y)) + 0.85 * c,
+                                                float(W.x_te(y)) - 0.03)) for s in (1, -1)])
+    for y in (5.75, 7.395):
+        R[f"ail_gap_{y}"] = min(cross("plan", 1, y, float(W.x_te(y)) - 0.6, float(W.x_te(y)) - 0.3))
+    # tailplane tip: fixed-tip raked LE, horn LE, raked tip edge (plan, both halves)
+    R["stab_le_2.4"] = np.mean([min(cross("plan", 1, s * 2.40, 13.3, 13.6)) for s in (1, -1)])
+    R["stab_horn_2.52"] = np.mean([min(cross("plan", 1, s * 2.52, 13.7, 13.95)) for s in (1, -1)])
+    R["stab_tip_te_2.58"] = np.mean([max(cross("plan", 1, s * 2.58, 14.1, 14.25)) for s in (1, -1)])
+    # propeller disc (edge-on line) and spinner (drawn outline vs our silhouette on the thrust axis)
+    for key, view in (("side", "side"), ("plan", "plan")):
+        disc = [it["pts"] for it in d[view] if it["kind"] == "outline" and np.ptp(it["pts"][:, 1]) > 2.0
+                and 0.8 < it["pts"][:, 0].mean() < 1.1]
+        P = disc[0]
+        R[f"prop_x_{key}"] = float(P[:, 0].mean())
+        ang = math.degrees(math.atan2(P[:, 0].max() - P[:, 0].min(), np.ptp(P[:, 1])))
+        R["prop_tilt_line" if key == "side" else "prop_yaw"] = ang
+    R["prop_x"] = R["prop_x_side"]
+    R["spinner"] = spinner_deviation(d)
+    R["spinner_revA"] = spinner_deviation(d, rev_a=True)
+    # wing-to-body fairing
+    R["fair_bot_front"] = min(cross("front", 0, -0.5, 0.8, 0.95))
+    R["fair_bot_6.0"] = min(cross("side", 0, 6.0, 0.85, 0.89))
+    low = [it["pts"] for it in d["side"] if it["kind"] == "outline" and (it["pts"][:, 1] < 0.93).any()
+           and 5.1 < it["pts"][:, 0].min() < 5.2]
+    R["fair_nose"] = float(min(P[:, 0].min() for P in low))
+    R["fair_low_side"] = float(min(P[:, 1].min() for P in low))
+    tail = [it["pts"] for it in d["side"] if it["kind"] == "outline" and 8.5 < it["pts"][:, 0].max() < 8.7
+            and (np.abs(it["pts"][:, 1] - 1.17) < 0.03).any()]
+    R["fair_tail"] = float(max(P[:, 0].max() for P in tail))
+    R["fair_plan_6.3"] = max(cross("plan", 0, 6.3, 0.9, 1.1))
+    # main-gear leg door face (side view: closed outline in front of the port tyre) -> outline distance of ours, in
+    # the gear unit's frame (our unit is shifted by -GEAR_SHIFT for the POH wheelbase) and direct
+    face = [np.asarray(it["pts"], float) for it in d["side"] if it["kind"] == "outline"
+            and 5.9 < it["pts"][:, 0].min() < 6.0 and 6.5 < it["pts"][:, 0].max() < 6.7
+            and it["pts"][:, 1].min() < 0.35 and np.ptp(it["pts"][:, 1]) > 0.6]
+    if face:
+        Pf = face[0]
+        R["door_side_tip"] = tuple(Pf[np.argmin(Pf[:, 1])])
+        for key, dx in (("door_side_unit", G.GEAR_SHIFT), ("door_side_direct", 0.0)):
+            R[key] = outline_distance(G.leg_door_outline() + [dx, 0.0], Pf)
+    # main-gear leg door, edge-on in the front view (outboard of the tyre)
+    c = cross("front", 1, 0.70, 2.38, 2.6)
+    R["door_bl_0.7"] = 0.5 * (min(c) + max(c))
+    door = [it["pts"] for it in d["front"] if it["kind"] == "outline" and 2.40 < it["pts"][:, 0].max() < 2.56
+            and np.ptp(it["pts"][:, 1]) > 0.5]
+    R["door_low"] = float(min(P[:, 1].min() for P in door))
     return R
+
+
+def outline_distance(A, B, step=0.002):
+    """(max, rms) mm of the symmetric distance between two closed outlines (N, 2)."""
+    def dens(P):
+        P = np.vstack([P, P[:1]])
+        out = [P[:1]]
+        for a_, b_ in zip(P[:-1], P[1:]):
+            n = max(1, int(np.ceil(np.linalg.norm(b_ - a_) / step)))
+            out.append(a_ + (b_ - a_) * (np.arange(1, n + 1) / n)[:, None])
+        return np.vstack(out)
+
+    def dist(P, Q):
+        A_, B_ = Q[:-1], Q[1:]
+        AB = B_ - A_
+        L2 = np.maximum((AB ** 2).sum(1), 1e-18)
+        t_ = np.clip(((P[:, None, :] - A_[None]) * AB[None]).sum(-1) / L2[None], 0, 1)
+        return np.sqrt(((P[:, None, :] - (A_[None] + t_[..., None] * AB[None])) ** 2).sum(-1)).min(1)
+    a, b = dens(np.asarray(A, float)), dens(np.asarray(B, float))
+    dd = np.r_[dist(a, b), dist(b, a)]
+    return 1000 * float(dd.max()), 1000 * float(np.sqrt(np.mean(dd ** 2)))
+
+
+def spinner_deviation(d, rev_a=False):
+    """(rms, max) mm of the drawn spinner outline (side upper + lower, plan both halves) from our spinner silhouette
+    on the tilted / yawed thrust axis (rev_a=True: the model before review round 1 -- untilted axis, profile
+    (1.48, 0.53))."""
+    out = {}
+    for view in ("side", "plan"):
+        if rev_a:
+            a, b = 1.48, 0.53
+            t = np.linspace(0, 1, 200)
+            sx = F.STA["spinner_tip"] + (F.STA["cowl_front"] - F.STA["spinner_tip"]) * t
+            sr = F.SPINNER_R * (1 - (1 - t) ** a) ** b
+            c0 = F.PROP_AXIS_Z if view == "side" else 0.0
+            ours = np.r_[np.c_[sx, c0 + sr], np.c_[sx[::-1], c0 - sr[::-1]]]
+        else:
+            ours = PP.spinner_silhouette(view, 200)
+        c0 = F.PROP_AXIS_Z if view == "side" else 0.0
+        pts = []
+        for it in d[view]:
+            if it["kind"] != "outline" or np.ptp(it["pts"][:, 1]) > 1.0:
+                continue
+            P = np.asarray(it["pts"], float)
+            q = [P[:1]]
+            for a_, b_ in zip(P[:-1], P[1:]):
+                n = max(1, int(np.ceil(np.linalg.norm(b_ - a_) / 0.002)))
+                q.append(a_ + (b_ - a_) * (np.arange(1, n + 1) / n)[:, None])
+            q = np.vstack(q)
+            m = (q[:, 0] >= 0.38) & (q[:, 0] <= 1.02) & (np.abs(q[:, 1] - c0) < 0.26)
+            if m.sum() > 5:
+                pts.append(q[m])
+        Q = np.vstack(pts)
+        A, B = ours[:-1], ours[1:]
+        AB = B - A
+        L2 = np.maximum((AB ** 2).sum(1), 1e-18)
+        t_ = np.clip(((Q[:, None, :] - A[None]) * AB[None]).sum(-1) / L2[None], 0, 1)
+        dist = np.sqrt(((Q[:, None, :] - (A[None] + t_[..., None] * AB[None])) ** 2).sum(-1)).min(1)
+        out[view] = (1000 * float(np.sqrt(np.mean(dist ** 2))), 1000 * float(dist.max()))
+    return out
 
 
 def ours():
@@ -250,7 +371,9 @@ def ours():
     for y in (4.0, 7.0):
         u, l_ = wing_front_silhouette([y])
         O[f"wing_up_{y}"], O[f"wing_lo_{y}"] = float(u[0]), float(l_[0])
-    O["dihedral"] = math.degrees(W.DIHEDRAL)
+    ys = np.linspace(1.3, 7.3, 13)                              # front-view mid-line, as measured on the drawing
+    u_, l_ = wing_front_silhouette(ys)
+    O["dihedral"] = math.degrees(math.atan(np.polyfit(ys, 0.5 * (u_ + l_), 1)[0]))
     wg = winglet_geom()
     O["winglet_top_z"] = float(max(wg["up"][:, 2].max(), wg["top"][:, 2].max()))
     O["winglet_y"] = float(max(wg["lo"][:, 1].max(), wg["top"][:, 1].max()))
@@ -272,6 +395,10 @@ def ours():
         O[f"fin_le_sec_{z}"] = float(E.fin_le(z))
         O[f"rud_hinge_{z}"] = float(E.fin_le(z) + E.RUD_XH * (E.fin_te(z) - E.fin_le(z)))
         O[f"fin_t_{z}"] = float(E.fin_section(z).airfoil.thickness(np.linspace(0, 1, 401)).max())
+    for x in (13.0, 13.4):
+        O[f"rud_bot_{x}"] = float(E.rudder_bottom_z(x))
+    for x in (13.94, 14.2):
+        O[f"rud_top_{x}"] = float(E.rudder_top_z(x))
     for n, x in (("FR38", F.FRAMES["FR38"]), ("FR40", F.FRAMES["FR40"])):
         zs = np.linspace(2.4, 3.4, 400)
         best_w, top = 0.0, 0.0
@@ -290,10 +417,29 @@ def ours():
         O[f"strake_tip_{n}"] = (float(t[1]), float(t[2]))
     O["nose_axle"], O["main_axle"] = float(G.NOSE_AXLE[0]), float(G.MAIN_AXLE[0])
     O["track"] = G.TRACK
-    O["prop_tilt"] = 0.0
-    O["prop_clear"] = F.PROP_AXIS_Z - PP.PROP_R
+    O["prop_tilt"] = PP.THRUST_TILT_DEG
+    O["prop_yaw"] = PP.THRUST_YAW_DEG
+    O["prop_x"] = PP.PROP_X
+    O["prop_clear"] = PP.prop_clearance()
     O["span"] = W.SPAN_TOTAL
     O["pod_x0"], O["pod_z"], O["pod_r"], O["pod_y"] = D.POD_X_TIP, D.POD_Z, D.POD_R, D.POD_Y
+    for y in (2.0, 5.0):
+        O[f"flap_lip_{y}"] = float(W.flap_lines(y, True))
+    for y in (5.75, 7.395):
+        O[f"ail_gap_{y}"] = W.ail_gap_x(y)
+    O["stab_le_2.4"], O["stab_horn_2.52"], O["stab_tip_te_2.58"] = E.stab_le(2.40), E.stab_le(2.52), E.stab_te(2.58)
+    O["fair_bot_front"] = float(min(b for _, b in D.BELLY_FAIRING_BOT))
+    O["fair_low_side"] = O["fair_bot_front"]
+    O["fair_bot_6.0"] = float(D.belly_fairing_bottom(6.0))
+    O["fair_nose"], O["fair_tail"] = D.BELLY_FAIRING_X
+    Pf = np.array(D.BELLY_FAIRING_PLAN)
+    O["fair_plan_6.3"] = float(np.interp(6.3, Pf[:, 0], Pf[:, 1]))
+    dz = G.leg_door_outline()[:, 1]
+    bl0, bl1 = G.LEG_DOOR["bl"]
+    O["door_bl_0.7"] = bl0 + (bl1 - bl0) * (dz.max() - 0.70) / (dz.max() - dz.min())
+    O["door_low"] = float(dz.min())
+    Pd = G.leg_door_outline()
+    O["door_side_tip"] = tuple(Pd[np.argmin(Pd[:, 1])])
     return O
 
 
@@ -372,6 +518,13 @@ def tyre_side(ds, v, c, tyre, dash=None):
     ds.cv.path(v.pts(np.c_[c[0] + r * np.cos(a), c[2] + r * np.sin(a)]), W_FINE, dash, closed=True)
 
 
+def leg_door_side(ds, v, w=W_OBJ):
+    """Port main-gear leg door (gear.leg_door_outline) seen from port: outboard of the tyre, so it hides the leg,
+    shock strut and tyre lines behind it (paper fill)."""
+    P = G.leg_door_outline()
+    ds.cv.path(v.pts(P), w, closed=True, fill=M.PAPER)
+
+
 def rect_pts(a0, b0, a1, b1):
     return np.array([(a0, b0), (a1, b0), (a1, b1), (a0, b1)])
 
@@ -385,18 +538,26 @@ def draw_side(ds, v):
     cv.line(v.pt(-0.1, 0.0), v.pt(15.1, 0.0), W_FINE)
     for xg in np.arange(-0.1, 15.1, 0.25):
         cv.line(v.pt(xg, 0.0), v.pt(xg - 0.12, -0.12), W_GRID, color=MUTED)
-    cv.line(v.pt(0.2, F.PROP_AXIS_Z), v.pt(3.2, F.PROP_AXIS_Z), W_GRID, CHAIN, color=MUTED)
+    ax_ = PP.axis_point(np.array([0.2, 3.2]))              # thrust line: 2 deg nose-down, through the disc centre
+    cv.line(v.pt(ax_[0, 0], ax_[0, 2]), v.pt(ax_[1, 0], ax_[1, 2]), W_GRID, CHAIN, color=MUTED)
     # fuselage
     cv.path(v.pts(np.c_[xs, F.z_top(xs)]), W_OBJ)
     cv.path(v.pts(np.c_[xs, F.z_bot(xs)]), W_OBJ)
     cv.line(v.pt(x0, float(F.z_bot(x0))), v.pt(x0, float(F.z_top(x0))), W_FINE)
-    a, b = F.SPINNER_SHAPE
-    t = np.linspace(0, 1, 60)
-    sx = F.STA["spinner_tip"] + (x0 - F.STA["spinner_tip"]) * t
-    sr = F.SPINNER_R * (1 - (1 - t) ** a) ** b
-    cv.path(v.pts(np.c_[np.r_[sx, sx[::-1]], np.r_[F.PROP_AXIS_Z + sr, (F.PROP_AXIS_Z - sr)[::-1]]]), W_OBJ)
-    # propeller disc (edge-on) at the pitch-change plane
-    cv.line(v.pt(PP.PROP_X, F.PROP_AXIS_Z - PP.PROP_R), v.pt(PP.PROP_X, F.PROP_AXIS_Z + PP.PROP_R), W_FINE, PHANTOM)
+    cv.path(v.pts(PP.spinner_silhouette("side")), W_OBJ)
+    # propeller disc (edge-on) at the pitch-change plane, normal to the tilted thrust axis
+    e = PP.prop_disc_edge("side")
+    cv.line(v.pt(*e[0]), v.pt(*e[1]), W_FINE, PHANTOM)
+    # wing-to-body fairing (details.py tables): lower silhouette, forward upper edge, tail lobe on the side
+    xb = np.linspace(D.BELLY_FAIRING_BOT[0][0], D.BELLY_FAIRING_BOT[-1][0], 160)
+    zb = D.belly_fairing_bottom(xb)
+    h0, h1 = D.BELLY_FAIRING_BOT_HIDDEN
+    for seg in _runs((xb <= h0) | (xb >= h1)):
+        cv.path(v.pts(np.c_[xb[seg], zb[seg]]), W_OBJ)
+    hid = (xb >= h0) & (xb <= h1)
+    cv.path(v.pts(np.c_[xb[hid], zb[hid]]), W_FINE, HID)
+    cv.path(v.pts(np.array(D.BELLY_FAIRING_NOSE_EDGE)), W_FINE)
+    cv.path(v.pts(np.array(D.BELLY_FAIRING_TAIL)), W_FINE)
     # wing (port, near side): root section at the fuselage side, tip rib section, LE / TE loci, winglet
     yr = wing_root_y()
     root = wing_section_pts(yr)
@@ -427,14 +588,13 @@ def draw_side(ds, v):
     vis = vzs < F.z_bot(vxs)
     for seg in _runs(vis):
         cv.path(v.pts(np.c_[vxs[seg], vzs[seg]]), W_OBJ)
-    for z in E.RUD_Z:                                       # rudder top / bottom edges (hinge line -> TE)
-        s = E.fin_section(z)
-        cv.line(v.pt(s.le[0] + (E.RUD_XH - 0.05) * s.chord, z), v.pt(s.le[0] + s.chord, z), W_FINE)
-    hz = np.array(E.RUD_Z)
-    hx = [E.fin_le(z) + E.RUD_XH * (E.fin_te(z) - E.fin_le(z)) for z in hz]
-    cv.line(v.pt(hx[0], hz[0] - 0.08), v.pt(hx[1], hz[1] + 0.08), W_THIN, CHAIN)
-    gx = [E.fin_le(z) + (E.RUD_XH - 0.05) * (E.fin_te(z) - E.fin_le(z)) for z in hz]
-    cv.line(v.pt(gx[0], hz[0]), v.pt(gx[1], hz[1]), W_FINE)
+    # rudder (E.rudder_outline): nose / gap line and the sloped top edge; its sloped bottom edge is the ventral edge
+    ro = E.rudder_outline()
+    k = len(ro) // 2
+    cv.path(v.pts(ro[:k + 1]), W_FINE)
+    hb, ht = (np.array(E.rudder_edge_point(E.RUD_XH, e)) for e in ("bottom", "top"))
+    u = (ht - hb) / np.linalg.norm(ht - hb)
+    cv.line(v.pt(*(hb - 0.08 * u)), v.pt(*(ht + 0.08 * u)), W_THIN, CHAIN)
     t0, t1, tx = E.RUD_TAB
     tab = [(E.fin_le(z) + tx * (E.fin_te(z) - E.fin_le(z)), z) for z in (t0, t1)]
     cv.path(v.pts([(E.fin_te(t0), t0), tab[0], tab[1], (E.fin_te(t1), t1)]), W_FINE)
@@ -463,6 +623,7 @@ def draw_side(ds, v):
     for p in (T, L, A, G.NOSE_PIVOT, G.NOSE_AXLE):
         X, Y = v.pt(p[0], p[2])
         cv.circle(X, Y, 0.6, w=W_FINE)
+    leg_door_side(ds, v)                                    # port leg door, outboard of the tyre
 
 
 def draw_plan(ds, v):
@@ -483,12 +644,11 @@ def draw_plan(ds, v):
             cv.path(v.pts(np.c_[xs[seg], sg * hw[seg]]), W_FINE, HID)
     cv.line(v.pt(x0, -F.SPINNER_R), v.pt(x0, F.SPINNER_R), W_FINE)
     cv.line(v.pt(x1, -float(F.half_w(x1))), v.pt(x1, float(F.half_w(x1))), W_FINE, HID)
-    a, b = F.SPINNER_SHAPE
-    t = np.linspace(0, 1, 60)
-    sx = F.STA["spinner_tip"] + (x0 - F.STA["spinner_tip"]) * t
-    sr = F.SPINNER_R * (1 - (1 - t) ** a) ** b
-    cv.path(v.pts(np.c_[np.r_[sx, sx[::-1]], np.r_[sr, -sr[::-1]]]), W_OBJ)
-    cv.line(v.pt(PP.PROP_X, -PP.PROP_R), v.pt(PP.PROP_X, PP.PROP_R), W_FINE, PHANTOM)
+    cv.path(v.pts(PP.spinner_silhouette("plan")), W_OBJ)            # on the yawed thrust axis (right thrust)
+    e = PP.prop_disc_edge("plan")
+    cv.line(v.pt(*e[0]), v.pt(*e[1]), W_FINE, PHANTOM)
+    ax_ = PP.axis_point(np.array([0.2, 2.2]))
+    cv.line(v.pt(ax_[0, 0], ax_[0, 1]), v.pt(ax_[1, 0], ax_[1, 1]), W_GRID, CHAIN, color=MUTED)
     # wing planform (both halves)
     yr = wing_root_y()
     ys = np.linspace(yr, W.SEMI, 120)
@@ -497,18 +657,22 @@ def draw_plan(ds, v):
         cv.path(v.pts(np.c_[W.x_le(ys), sg * ys]), W_OBJ)
         cv.path(v.pts(np.c_[W.x_te(ys), sg * ys]), W_OBJ)
         cv.line(v.pt(float(W.x_le(W.SEMI)), sg * W.SEMI), v.pt(float(W.x_te(W.SEMI)), sg * W.SEMI), W_FINE)
-        # flap (LE hidden under the shroud) / aileron / tab
+        # flap: LE hidden under the shroud, visible shroud lip (upper-surface TE of the shroud); flap ends
         fy = np.linspace(*W.Y_FLAP, 40)
-        fl = W.x_le(fy) + W.FLAP_X_LO * W.chord(fy)
-        cv.path(v.pts(np.c_[fl, sg * fy]), W_FINE, HID)
+        cv.path(v.pts(np.c_[W.flap_lines(fy, upper=False), sg * fy]), W_FINE, HID)
+        vis = fy >= yr
+        cv.path(v.pts(np.c_[W.flap_lines(fy[vis], upper=True), sg * fy[vis]]), W_FINE)
+        cv.path(v.pts(np.c_[W.flap_lines(fy[~vis], upper=True), sg * fy[~vis]]), W_FINE, HID)
         for y in W.Y_FLAP:
-            cv.line(v.pt(float(W.x_le(y) + W.FLAP_X_LO * W.chord(y)), sg * y), v.pt(float(W.x_te(y)), sg * y), W_FINE,
+            cv.line(v.pt(float(W.flap_lines(y, upper=False)), sg * y), v.pt(float(W.x_te(y)), sg * y), W_FINE,
                     HID if y < yr else None)
+        # aileron: upper-surface gap line (constant 439 ahead of the TE), straight hinge line (chain), ends
         ay = np.linspace(*W.Y_AIL, 20)
-        cv.path(v.pts(np.c_[W.x_le(ay) + (W.AIL_XH - 0.04) * W.chord(ay), sg * ay]), W_FINE)
+        cv.path(v.pts(np.c_[[W.ail_gap_x(y_) for y_ in ay], sg * ay]), W_FINE)
+        (hy0, hx0), (hy1, hx1) = W.AIL_HINGE
+        cv.line(v.pt(hx0, sg * hy0), v.pt(hx1, sg * hy1), W_THIN, CHAIN)
         for y in W.Y_AIL:
-            cv.line(v.pt(float(W.x_le(y) + (W.AIL_XH - 0.04) * W.chord(y)), sg * y), v.pt(float(W.x_te(y)), sg * y),
-                    W_FINE)
+            cv.line(v.pt(W.ail_gap_x(y), sg * y), v.pt(float(W.x_te(y)), sg * y), W_FINE)
         tb0, tb1 = W.Y_AIL[0] + 0.06, W.Y_AIL[0] + 0.72
         tp = [(float(W.x_te(y)), y) for y in (tb0,)] + [(float(W.x_le(y) + 0.945 * W.chord(y)), y) for y in (tb0, tb1)] \
             + [(float(W.x_te(tb1)), tb1)]
@@ -517,6 +681,10 @@ def draw_plan(ds, v):
         cv.path(v.pts(np.c_[wg["le"][:, 0], sg * wg["le"][:, 1]]), W_OBJ)
         cv.path(v.pts(np.c_[wg["te"][:, 0], sg * wg["te"][:, 1]]), W_OBJ)
         cv.line(v.pt(wg["le"][-1, 0], sg * wg["le"][-1, 1]), v.pt(wg["te"][-1, 0], sg * wg["te"][-1, 1]), W_OBJ)
+    # wing-to-body fairing: upper root fillet over the wing root (both sides)
+    Pf = np.array(D.BELLY_FAIRING_PLAN)
+    for sg in (1, -1):
+        cv.path(v.pts(np.c_[Pf[:, 0], sg * Pf[:, 1]]), W_OBJ)
     # radar pod (starboard)
     prof = np.array(D.radar_pod_profile())
     cv.path(v.pts(np.r_[np.c_[prof[:, 0], D.POD_Y + prof[:, 1]], np.c_[prof[::-1, 0], D.POD_Y - prof[::-1, 1]]]),
@@ -531,21 +699,21 @@ def draw_plan(ds, v):
     xq = lemac + 0.25 * m
     for sg in (1, -1):
         cv.line(v.pt(xq, sg * 0.9), v.pt(xq, sg * (W.SEMI + 0.2)), W_THIN, CHAIN, color=MUTED)
-    # tailplane (both halves), elevator hinge, horn, bullet
-    ys = np.linspace(0.0, E.STAB_TIP_Y - 0.002, 120)
+    # tailplane (both halves): outline from the parameters (stab_plan_polygon: raked fixed tip, horn slot, horn LE,
+    # raked tip edge), elevator hinge, horn root edge, bullet
     B = np.array(E.BULLET)
+    Ps = E.stab_plan_polygon(80)
+    bw = np.interp(Ps[:, 0], B[:, 0], B[:, 3])
+    out = Ps[:, 1] >= bw - 1e-3
+    tip = E.stab_tip_outline()
     for sg in (1, -1):
-        bw = np.interp(E.stab_le(ys), B[:, 0], B[:, 3])
-        out = ys >= bw - 1e-3
-        cv.path(v.pts(np.c_[[E.stab_le(y) for y in ys[out]], sg * ys[out]]), W_OBJ)
-        cv.path(v.pts(np.c_[[E.stab_te(y) for y in ys[out]], sg * ys[out]]), W_OBJ)
-        yt = E.STAB_TIP_Y - 0.002
-        cv.line(v.pt(E.stab_le(yt), sg * yt), v.pt(E.stab_te(yt), sg * yt), W_OBJ)
+        for seg in _runs(out):
+            cv.path(v.pts(np.c_[Ps[seg, 0], sg * Ps[seg, 1]]), W_OBJ)
         hy = np.linspace(E.ELEV_Y[0], E.ELEV_Y[1], 20)
         cv.path(v.pts(np.c_[[E.stab_le(y) + E.ELEV_XH * (E.stab_te(y) - E.stab_le(y)) for y in hy], sg * hy]),
                 W_THIN, CHAIN)
-        y0, y1, xh = E.ELEV_HORN
-        cv.path(v.pts([(E.stab_te(y0), sg * y0), (xh, sg * y0), (xh, sg * (y0 + 0.12))]), W_FINE)
+        hr = tip["horn_root"]
+        cv.path(v.pts(np.c_[hr[:, 0], sg * hr[:, 1]]), W_FINE)
     cv.path(v.pts(np.r_[B[:, [0, 3]], (B[::-1][:, [0, 3]] * [1, -1])]), W_OBJ, closed=True)
     # dorsal fin (plan envelope) and strake tips where they show beyond the fuselage
     xd = np.linspace(E.DORSAL_X0, 12.6, 120)
@@ -587,8 +755,17 @@ def draw_front(ds, v):
     P = F.section(np.full_like(t, 6.0), t)
     cv.path(v.pts(P[:, 1:]), W_OBJ, closed=True)
     a = np.linspace(0, 2 * np.pi, 145)
-    cv.path(v.pts(np.c_[F.SPINNER_R * np.cos(a), F.PROP_AXIS_Z + F.SPINNER_R * np.sin(a)]), W_OBJ, closed=True)
-    cv.path(v.pts(np.c_[PP.PROP_R * np.cos(a), F.PROP_AXIS_Z + PP.PROP_R * np.sin(a)]), W_FINE, PHANTOM, closed=True)
+    sb = PP.axis_point(F.STA["cowl_front"])                  # spinner base centre; disc centre = hub
+    hub = PP.prop_hub()
+    cv.path(v.pts(np.c_[sb[1] + F.SPINNER_R * np.cos(a), sb[2] + F.SPINNER_R * np.sin(a)]), W_OBJ, closed=True)
+    cv.path(v.pts(np.c_[hub[1] + PP.PROP_R * np.cos(a), hub[2] + PP.PROP_R * np.sin(a)]), W_FINE, PHANTOM,
+            closed=True)
+    # wing-to-body fairing: flat bottom and corner radii (section at its lowest station)
+    xf = min(D.BELLY_FAIRING_BOT, key=lambda k: k[1])[0]
+    ring = D.belly_fairing_section(xf, 160)
+    low = ring[ring[:, 2] < float(W.section_at(0.95).lower(np.array(0.3))[2]) - 0.005]
+    low = low[np.argsort(low[:, 1])]
+    cv.path(v.pts(low[:, 1:]), W_OBJ)
     # wing silhouettes, winglets, pod
     yr = wing_root_y()
     ys = np.linspace(yr, W.SEMI, 80)
@@ -628,6 +805,9 @@ def draw_front(ds, v):
         cv.line(v.pt(sg * T[1], T[2]), v.pt(sg * T[1], 2 * R), W_OBJ)
         (ax, ay, az), (bx, by, bz) = G.MAIN_BRACE
         cv.line(v.pt(sg * ay, az), v.pt(sg * by, bz), W_FINE)
+        dz = G.leg_door_outline()[:, 1]                     # leg door edge-on, outboard of the tyre
+        bl0, bl1 = G.LEG_DOOR["bl"]
+        cv.line(v.pt(sg * bl0, float(dz.max())), v.pt(sg * bl1, float(dz.min())), W_OBJ)
     A = G.NOSE_AXLE
     R, Wt = G.NOSE_TYRE["R"], G.NOSE_TYRE["W"]
     cv.path(v.pts(rect_pts(-Wt / 2, 0.0, Wt / 2, 2 * R)), W_OBJ, closed=True)
@@ -647,15 +827,15 @@ def dims_side(ds, v):
     # height
     X, Y = v.pt(E.BULLET[8][0], E.BULLET[8][1])
     sh.dim((X, Y), v.pt(E.BULLET[8][0], 0.0), v.pt(15.05, 0)[0], "4 260", "v", f1=(X, Y), f2=v.pt(E.BULLET_X[1], 0))
-    # prop clearance
-    Xp, Yp = v.pt(PP.PROP_X, F.PROP_AXIS_Z - PP.PROP_R)
-    sh.dim((Xp, Yp), v.pt(PP.PROP_X, 0.0), Xp - 6.0, f"{(F.PROP_AXIS_Z - PP.PROP_R) * 1000:.0f}", "v",
-           text_side="before")
+    # prop clearance (lowest blade tip of the tilted disc)
+    eb = PP.prop_disc_edge("side")[1]
+    Xp, Yp = v.pt(*eb)
+    sh.dim((Xp, Yp), v.pt(eb[0], 0.0), Xp - 6.0, f"{PP.prop_clearance() * 1000:.0f}", "v", text_side="before")
     # station ordinates (above)
     m, ym, lemac = mac_numbers()
     zc = fin_crown_z()
     items = [(F.STA["spinner_tip"], F.PROP_AXIS_Z, "390 SPINNER TIP"),
-             (PP.PROP_X, F.PROP_AXIS_Z + PP.PROP_R, f"{PP.PROP_X * 1000:.0f} PROP"),
+             (PP.PROP_X, F.PROP_AXIS_Z + 1.25, f"{PP.PROP_X * 1000:.0f} PROP DISC (HUB)"),
              (G.NOSE_AXLE[0], 2 * G.NOSE_TYRE["R"], f"{G.NOSE_AXLE[0] * 1000:.0f} NOSE AXLE"),
              (F.STA["firewall"], float(F.z_top(3.0)), "3000 FIREWALL"),
              (float(W.x_le(1.0)), 1.30, f"{W.x_le(1.0) * 1000:.0f} WING LE BL1000"),
@@ -675,7 +855,7 @@ def dims_side(ds, v):
     ordinates(ds, v, items, ytop - 3.0, up=True)
     # WL ordinates on the right edge
     wg = winglet_geom()
-    entries = [(F.PROP_AXIS_Z, "1655 PROP AXIS"), (E.STAB_Z, f"{E.STAB_Z * 1000:.0f} STAB CHORD PLANE"),
+    entries = [(F.PROP_AXIS_Z, "1655 PROP AXIS AT DISC"), (E.STAB_Z, f"{E.STAB_Z * 1000:.0f} STAB CHORD PLANE"),
                (4.26, "4260 TOP"), (float(wg["up"][:, 2].max()), f"{wg['up'][:, 2].max() * 1000:.0f} WINGLET TOP"),
                (W.Z_QC0, f"{W.Z_QC0 * 1000:.0f} WING QC BL0"), (E.FIN_TE[0][1], f"{E.FIN_TE[0][1] * 1000:.0f} RUDDER LOW")]
     wl_ticks(ds, v, entries, 15.15, side="right", gap=3.0)
@@ -695,7 +875,9 @@ def dims_plan(ds, v):
     sh.dim(v.pt(E.stab_le(yt), yt), v.pt(E.stab_le(yt), -yt), Xt, "5 200", "v")
     # call-outs: wing LE / TE at BL 1000 and tip rib, MAC, flap / aileron, pod
     m, ym, lemac = mac_numbers()
-    leader_label(ds, v, lemac + 0.5 * m, -ym, f"MAC {m * 1000:.0f} AT BL {ym * 1000:.0f}", off=(10.0, 7.0),
+    Xm, _ = v.pt(lemac + 0.5 * m, -ym)                  # call-out on clear paper aft of the trailing edge
+    Xt, _ = v.pt(float(W.x_te(ym + 0.35)), -ym)
+    leader_label(ds, v, lemac + 0.5 * m, -ym, f"MAC {m * 1000:.0f} AT BL {ym * 1000:.0f}", off=(Xt - Xm + 4.0, 7.0),
                  lines=[f"LEMAC STA {lemac * 1000:.0f}", f"25% MAC STA {(lemac + 0.25 * m) * 1000:.0f}"])
     leader_label(ds, v, float(W.x_te(W.SEMI)), -W.SEMI, f"TIP RIB BL {W.SEMI * 1000:.0f}", off=(12.0, 4.0),
                  lines=[f"LE {W.x_le(W.SEMI) * 1000:.0f} / TE {W.x_te(W.SEMI) * 1000:.0f}",
@@ -707,14 +889,18 @@ def dims_plan(ds, v):
                  lines=[f"BL {D.POD_Y * 1000:.0f} WL {D.POD_Z * 1000:.0f} R {D.POD_R * 1000:.0f}",
                         f"NOSE STA {D.POD_X_TIP * 1000:.0f}"])
     leader_label(ds, v, float(W.x_te(3.9)), 3.9, "FOWLER FLAP", off=(10.0, -6.0),
-                 lines=[f"BL {W.Y_FLAP[0] * 1000:.0f} - {W.Y_FLAP[1] * 1000:.0f}"])
+                 lines=[f"BL {W.Y_FLAP[0] * 1000:.0f} - {W.Y_FLAP[1] * 1000:.0f}",
+                        f"SHROUD LIP {W.FLAP_X_LIP * 100:.1f}% c, FLAP LE {W.FLAP_X_LO * 100:.1f}% c"])
     leader_label(ds, v, float(W.x_te(6.6)), 6.6, "AILERON + FLETTNER TAB", off=(10.0, -4.0),
-                 lines=[f"BL {W.Y_AIL[0] * 1000:.0f} - {W.Y_AIL[1] * 1000:.0f}, HINGE {W.AIL_XH * 100:.1f}% c"])
+                 lines=[f"BL {W.Y_AIL[0] * 1000:.0f} - {W.Y_AIL[1] * 1000:.0f}, GAP LINE {W.AIL_GAP_TE * 1000:.0f} "
+                        f"AHEAD OF TE", f"HINGE {float(W.ail_xh(W.Y_AIL[0])) * 100:.1f}-"
+                                      f"{float(W.ail_xh(W.Y_AIL[1])) * 100:.1f}% c (STRAIGHT)"])
     leader_label(ds, v, float(E.stab_le(1.0)), 1.0, f"STAB LE BL1000 {E.stab_le(1.0) * 1000:.0f}", off=(-12.0, -12.0),
                  lines=[f"TE {E.stab_te(1.0) * 1000:.0f}; SWEEP {math.degrees(E.STAB_SWEEP):.1f} DEG",
                         f"ELEVATOR HINGE STA {(E.stab_le(1.0) + E.ELEV_XH * (E.stab_te(1.0) - E.stab_le(1.0))) * 1000:.0f}"])
-    leader_label(ds, v, E.ELEV_HORN[2], -2.40, "HORN BALANCE", off=(-8.0, 8.0),
-                 lines=[f"BL {E.ELEV_HORN[0] * 1000:.0f} - {E.ELEV_HORN[1] * 1000:.0f}"])
+    leader_label(ds, v, E.ELEV_HORN[2] + 0.02, -2.40, "HORN BALANCE", off=(-8.0, 8.0),
+                 lines=[f"BL {E.ELEV_HORN[0] * 1000:.0f} - {E.ELEV_HORN[1] * 1000:.0f}, RAKED TIP EDGES "
+                        f"DX/DY {E.STAB_TIP_RAKE:.3f}"])
     xs = E.STRAKE_TIP[1][0]
     leader_label(ds, v, xs, -float(E.strake_frame(xs)[1][1]), "VENTRAL STRAKE TIP", off=(-6.0, 10.0),
                  lines=[f"CANT {math.degrees(E.STRAKE_CANT):.0f} DEG"])
@@ -743,13 +929,15 @@ def dims_front(ds, v):
     label(ds, v, -8.05, 2.35, f"WINGLET CANT {math.degrees(W.WL_CANT):.0f}° FROM VERTICAL", size=2.0, anchor="middle")
     # prop
     leader_label(ds, v, -PP.PROP_R * 0.7071, F.PROP_AXIS_Z + PP.PROP_R * 0.7071, f"PROP DISC Ø{2 * PP.PROP_R * 1000:.0f}",
-                 off=(12.0, -8.0), lines=[f"AXIS WL {F.PROP_AXIS_Z * 1000:.0f}, CLEARANCE {(F.PROP_AXIS_Z - PP.PROP_R) * 1000:.0f}"])
+                 off=(12.0, -8.0), lines=[f"AXIS WL {F.PROP_AXIS_Z * 1000:.0f} AT THE DISC, CLEARANCE "
+                                          f"{PP.prop_clearance() * 1000:.0f}",
+                                          f"THRUST LINE {PP.THRUST_TILT_DEG:.0f}° DOWN, {PP.THRUST_YAW_DEG:.0f}° RIGHT"])
 
 
 # ============================================================================================ details
 def draw_detail_tip(ds):
     """Detail A: starboard wing tip, winglet and radar pod seen from ahead, 1:10."""
-    v = ds.add_view(front_view("detail_tip", origin=(428.0, 431.0), scale=10, model_origin=(7.70, 1.90),
+    v = ds.add_view(front_view("detail_tip", origin=(428.0, 466.0), scale=10, model_origin=(7.70, 1.90),
                                box=(7.15, 1.50, 8.30, 2.32)))
     cv = ds.cv
     ys = np.linspace(7.18, W.SEMI, 30)
@@ -787,19 +975,19 @@ def draw_detail_tip(ds):
     X0, Y0 = v.pt(*arr[13, :2])
     cv.line((X0, Y0), (X0, Y0 - 30.0), W_DIM, (2.0, 1.0))
     sh.angle_dim((X0, Y0), -90.0, -90.0 - ang, 22.0, f"{ang:.0f}°", (X0 - 17.0, Y0 - 25.0))
-    leader_label(ds, v, float(arr[6, 0]), float(arr[6, 1]), f"BEND R {W.WL_BEND_R * 1000:.0f}", off=(-4.0, 14.0),
-                 size=2.0, lines=["(QUARTER-CHORD PATH)"])
+    leader_label(ds, v, float(arr[6, 0]), float(arr[6, 1]), f"BEND R {W.WL_BEND_R * 1000:.0f}", off=(22.0, -17.0),
+                 size=2.0, lines=["(QUARTER-CHORD PATH)"])          # above the wing, clear of the pod circle
     leader_label(ds, v, D.POD_Y - D.POD_R * 0.7, D.POD_Z - D.POD_R * 0.7, f"RADAR POD R {D.POD_R * 1000:.0f}",
                  off=(18.0, 10.0), size=2.0, lines=[f"AXIS BL {D.POD_Y * 1000:.0f} WL {D.POD_Z * 1000:.0f}"])
     leader_label(ds, v, 7.30, float(W.z_ref(7.30)), f"DIHEDRAL {math.degrees(W.DIHEDRAL):.2f}°", off=(6.0, 12.0),
                  size=2.0, lines=["QC REFERENCE LINE"])
-    M.view_title(ds, 428.0, 496.0, "DETAIL A - STARBOARD WING TIP", "WINGLET + RADAR POD, SEEN FROM AHEAD · 1:10",
+    M.view_title(ds, 428.0, 531.0, "DETAIL A - STARBOARD WING TIP", "WINGLET + RADAR POD, SEEN FROM AHEAD · 1:10",
                  size=3.4)
 
 
 def draw_detail_gear(ds):
     """Detail B: port main gear seen from port, 1:20 (gear down; retracted wheel phantom)."""
-    v = ds.add_view(side_view("detail_gear", origin=(530.0, 432.0), scale=20, model_origin=(6.20, 0.60),
+    v = ds.add_view(side_view("detail_gear", origin=(530.0, 467.0), scale=20, model_origin=(6.20, 0.60),
                               box=(5.70, -0.05, 6.85, 1.40)))
     cv = ds.cv
     cv.line(v.pt(5.70, 0.0), v.pt(6.85, 0.0), W_FINE)
@@ -820,15 +1008,23 @@ def draw_detail_gear(ds):
     c = G.retracted_wheel()
     R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
     cv.path(v.pts(rect_pts(c[0] - R, c[2] - Wt / 2, c[0] + R, c[2] + Wt / 2)), W_FINE, PHANTOM, closed=True)
-    for p_, t_, off in ((T, "TRUNNION", (-10.0, -8.0)), (L, "LINK PIVOT", (-10.0, 4.0)),
-                        (A, "AXLE", (12.0, 10.0)), ((s1x, 0, s1z), "SHOCK", (14.0, -4.0))):
+    for p_ in (T, L, A):
         X, Y = v.pt(p_[0], p_[2])
         cv.circle(X, Y, 0.8, w=W_FINE)
+    leg_door_side(ds, v)                                    # the leg door hides the leg / tyre behind it
+    dd = G.LEG_DOOR
+    Pd = G.leg_door_outline()
+    k = int(np.argmin(Pd[:, 1]))
+    leader_label(ds, v, dd["x_aft_low"], 0.60, "LEG DOOR (OUTBOARD)", off=(20.0, 11.0), size=1.9,
+                 lines=[f"STA {dd['x_fwd'] * 1000:.0f}-{dd['x_aft'] * 1000:.0f}, TIP {Pd[k, 0] * 1000:.0f} / WL "
+                        f"{Pd[k, 1] * 1000:.0f}", f"LOWER EDGE R {dd['arc_r'] * 1000:.0f}, STEPPED AFT EDGE"])
+    for p_, t_, off in ((T, "TRUNNION", (-10.0, -8.0)), (L, "LINK PIVOT (HIDDEN)", (-10.0, 4.0)),
+                        (A, "AXLE", (12.0, 10.0)), ((s1x, 0, s1z), "SHOCK (HIDDEN)", (20.0, -6.0))):
         leader_label(ds, v, p_[0], p_[2], t_, off=off, size=1.9,
                      lines=[f"{p_[0] * 1000:.0f} / WL {p_[2] * 1000:.0f}"])
     leader_label(ds, v, c[0] + 0.5 * R, c[2] + Wt / 2, "RETRACTED (PHANTOM)", off=(4.0, -10.0), size=1.9,
                  lines=[f"BL {c[1] * 1000:.0f}, PROTRUDES {retract_protrusion() * 1000:.0f}"])
-    M.view_title(ds, 530.0, 496.0, "DETAIL B - MAIN GEAR", "PORT UNIT, SEEN FROM PORT · 1:20", size=3.4)
+    M.view_title(ds, 530.0, 531.0, "DETAIL B - MAIN GEAR", "PORT UNIT, SEEN FROM PORT · 1:20", size=3.4)
 
 
 # ============================================================================================ tables
@@ -863,20 +1059,35 @@ def deviation_rows(O, R):
     add("Wing TE, BL 4000", "wing_te_4.0")
     add("Wing LE, BL 7400 (tip rib 7430)", "wing_le_7.4")
     add("Wing TE, BL 7400 (aileron)", "wing_te_7.4", "TE kink at BL 5680 (constant-chord aileron)")
-    add("Wing upper WL, BL 4000 (front)", "wing_up_4.0", "airfoil fuller aft than the drawn WR sections")
+    add("Flap shroud lip, BL 2000 (plan)", "flap_lip_2.0", "FLAP_X_LIP 93.15 % (was 74.5 %: -363)")
+    add("Flap shroud lip, BL 5000", "flap_lip_5.0", "flap LE (hidden) 69.5 % unchanged")
+    add("Aileron gap line, BL 5750 (plan)", "ail_gap_5.75", "AIL_GAP_TE 439 ahead of the TE (was 68.5 % c)")
+    add("Aileron gap line, BL 7395", "ail_gap_7.395", "straight hinge line; our TE is 7 fwd")
+    add("Wing upper WL, BL 4000 (front)", "wing_up_4.0", f"QC WL {W.Z_QC0 * 1000:.0f} + {math.degrees(W.DIHEDRAL):.2f} deg "
+        "dihedral refit (rev B airfoils)")
     add("Wing lower WL, BL 4000 (front)", "wing_lo_4.0")
     add("Wing upper WL, BL 7000 (front)", "wing_up_7.0")
     add("Wing lower WL, BL 7000 (front)", "wing_lo_7.0")
-    add("Dihedral (front, mean line) deg", "dihedral", "drawing's WR dimension line reads 5.0", deg=True)
+    add("Dihedral (front, mean line) deg", "dihedral", f"chord plane {math.degrees(W.DIHEDRAL):.2f}; WR dim line reads 5.0",
+        deg=True)
     for n in ("WR1", "WR2", "WR3", "WR4"):
         add(f"Incidence {n} deg", f"inc_{n}", "twist table (BL 0 / 5560 / tip)" if n == "WR1" else "", deg=True)
-    add("Winglet top WL (front)", "winglet_top_z", "straight part lengthened for the 16.28 m span")
-    add("Winglet outer BL (span / 2)", "winglet_y", "drawn span 16.137 (label 16.114); 16.28 kept")
+    ws, wa = (R or {}).get("wr_shape"), (R or {}).get("wr_shape_revA")
+    for n, y in (("WR1", 0.900), ("WR2", 5.557), ("WR3", 6.658), ("WR4", 7.395)):
+        rows.append((f"Section {n} outline, max / rms (shape)", f"t/c {float(W.airfoil_at(y).thickness(XC).max()) * 100:.1f} %",
+                     f"{ws[n][0]:.0f} / {ws[n][1]:.0f}" if ws else "-", f"{wa[n][0]:.0f} / {wa[n][1]:.0f}" if wa else "-",
+                     "CST airfoils fitted to WR1-4 (LE / TE normalised)" if n == "WR1" else
+                     ("rev A: modified 4-digit, too full aft of 45 % c" if n == "WR2" else "")))
+    add("Winglet top WL (front)", "winglet_top_z", "ACCEPTED, FIXED-FACT DRIVEN: 16.28 span (note 5, owner)")
+    add("Winglet outer BL (span / 2)", "winglet_y", "ACCEPTED, FIXED-FACT DRIVEN: drawn span 16.137")
     add("Winglet cant from vertical deg", "winglet_cant", "", deg=True)
     add("Stab LE, BL 1000 (plan)", "stab_le_1.0", "LE sweep 7.2 deg")
     add("Stab TE, BL 1000 (plan)", "stab_te_1.0")
     add("Stab LE, BL 2270 (tip rib)", "stab_le_2.27")
     add("Stab TE, BL 2270", "stab_te_2.27")
+    add("Stab fixed-tip LE, BL 2400", "stab_le_2.4", "raked edges dx/dy 2.078 (was quadratic: -30)")
+    add("Stab horn LE, BL 2520", "stab_horn_2.52", "horn slot at STA 13610-13650 (was -111)")
+    add("Stab tip edge, BL 2580", "stab_tip_te_2.58", "raked tip to the TE corner BL 2575 (was +54)")
     add("Elevator hinge STA (HF1)", "elev_hinge_1.0", "70 % chord = constant STA 14000")
     add("Stab chord plane WL (front)", "stab_z")
     add("Bullet nose STA", "bullet_x0")
@@ -887,6 +1098,13 @@ def deviation_rows(O, R):
     add("Rudder TE STA at WL 3919 (VF2)", "fin_te_3.919")
     add("Rudder hinge STA, WL 2609", "rud_hinge_2.609", "nose-circle centre of the drawn rudder")
     add("Rudder hinge STA, WL 3919", "rud_hinge_3.919")
+    for lab, k0, k1, note in (("Rudder bottom edge WL, STA 13000 / 13400", "rud_bot_13.0", "rud_bot_13.4",
+                               "sloped, on the ventral edge (rev B.0 flat 1800: -17 / -84)"),
+                              ("Rudder top edge WL, STA 13940 / 14200", "rud_top_13.94", "rud_top_14.2",
+                               "sloped RUD_TOP_EDGE (rev B.0 flat 3820: +18 / +38)")):
+        r0, r1 = (R or {}).get(k0), (R or {}).get(k1)
+        rows.append((lab, f"{f_mm(O[k0])} / {f_mm(O[k1])}", f"{dev(O[k0], r0)} / {dev(O[k1], r1)}" if R else "-", "-",
+                     note))
     add("Fin t/c at VF2 (%)", "fin_t_3.919", "NACA 0018", fmt=lambda v: f"{v * 100:.1f}")
     rows[-1] = (rows[-1][0], rows[-1][1], f"{(O['fin_t_3.919'] - R['fin_t_3.919']) * 100:+.1f}" if R else "-",
                 f"{(REV_A['fin_t'] - R['fin_t_3.919']) * 100:+.1f}" if R else "-", rows[-1][4])
@@ -904,8 +1122,32 @@ def deviation_rows(O, R):
     add("Radar pod axis BL (front)", "pod_y")
     add("Radar pod axis WL (front)", "pod_z")
     add("Radar pod radius", "pod_r", "PRO: enlarged for the 12-in GWX 8000")
-    add("Prop disc tilt deg (top fwd)", "prop_tilt", "not modelled: Stage 3 (thrust line 2 deg down)", deg=True)
-    add("Prop clearance (side)", "prop_clear", "Pilatus 320 kept")
+    add("Prop disc centre STA (side)", "prop_x", "PP.PROP_X on the thrust axis (hub)")
+    add("Prop disc tilt deg (top fwd)", "prop_tilt", "THRUST_TILT_DEG: thrust line 2 deg nose-down", deg=True)
+    add("Prop disc yaw deg (stbd end aft)", "prop_yaw", "THRUST_YAW_DEG: right thrust 2 deg", deg=True)
+    add("Prop clearance (side)", "prop_clear", "Pilatus 320 kept (+0.8 with the tilt)")
+    sp = (R or {}).get("spinner")
+    for view in ("side", "plan"):
+        r = f"{sp[view][0]:.1f} / {sp[view][1]:.1f}" if sp else "-"
+        ra = (R or {}).get("spinner_revA")
+        was = f"; untilted {ra[view][0]:.0f} / {ra[view][1]:.0f}" if ra else ""
+        rows.append((f"Spinner outline, {view} (rms / max)", "-", r, "-",
+                     ("drawn axis 15 higher (WL 1655 kept)" if view == "side" else "profile refit on the axis") + was))
+    add("Fairing flat bottom WL (front)", "fair_bot_front", "details.BELLY_FAIRING_* (single table)")
+    add("Fairing bottom WL, STA 6000 (side)", "fair_bot_6.0", "hidden 6465-7450 behind the gear")
+    add("Fairing nose STA (side)", "fair_nose")
+    add("Fairing tail end STA (side)", "fair_tail", "tail lobe on the fuselage side")
+    add("Fairing root fillet BL, STA 6300 (plan)", "fair_plan_6.3", "upper fillet over the wing root")
+    add("Leg door plane BL at WL 700 (front)", "door_bl_0.7", "outboard of the tyre, leans out")
+    add("Leg door lowest WL (front)", "door_low", "= side-view tip WL 318 (the drawn views differ by 20)")
+    o, r = O["door_side_tip"], (R or {}).get("door_side_tip")
+    rows.append(("Leg door tip (side) STA / WL", f"{f_mm(o[0])} / {f_mm(o[1])}",
+                 f"{dev(o[0], r[0])} / {dev(o[1], r[1])}" if r else "-", "-", "unit shifted -17.5 (wheelbase 3480)"))
+    for key, lab, note in (("door_side_unit", "Leg door face outline, unit frame", "gear.LEG_DOOR fitted to the drawn "
+                            "face (rev B.0: 116 / 58)"),
+                           ("door_side_direct", "Leg door face outline, direct", "incl. the -17.5 unit shift")):
+        r = (R or {}).get(key)
+        rows.append((f"{lab} (max / rms)", "-", f"{r[0]:.0f} / {r[1]:.0f}" if r else "-", "-", note))
     return rows
 
 
@@ -919,19 +1161,32 @@ def param_rows():
         ("      POH aft CG 6107 in % MAC", f"{100 * (W.AFT_CG - lemac) / m:.1f} % (rev A assumed 46 %)"),
         ("      dihedral / flat centre to BL", f"{math.degrees(W.DIHEDRAL):.2f} deg / {W.Y_DIH0 * 1000:.0f}"),
         ("      QC WL at BL 0 / incidence root / tip", f"{W.Z_QC0 * 1000:.0f} / {W.TWIST[0][1]:+.2f} / {W.TWIST[-1][1]:+.2f} deg"),
+        ("      sections root / tip (CST, WR1-4 fit)", f"{W.ROOT_AF.name} {W.ROOT_AF.thickness(XC).max() * 100:.1f} % / "
+                                                     f"{W.TIP_AF.name} {W.TIP_AF.thickness(XC).max() * 100:.1f} %"),
         ("      flap / aileron BL", f"{W.Y_FLAP[0] * 1000:.0f}-{W.Y_FLAP[1] * 1000:.0f} / {W.Y_AIL[0] * 1000:.0f}-{W.Y_AIL[1] * 1000:.0f}"),
+        ("      flap LE / shroud lip; aileron gap", f"{W.FLAP_X_LO * 100:.1f} / {W.FLAP_X_LIP * 100:.2f} % c; "
+                                                    f"{W.AIL_GAP_TE * 1000:.0f} ahead of TE"),
         ("      winglet cant / bend R / top chord", f"{math.degrees(W.WL_CANT):.0f} deg / {W.WL_BEND_R * 1000:.0f} / {W.WL_TIP_CHORD * 1000:.0f}"),
         ("FIN   LE / rudder TE sweep", f"{math.degrees(math.atan((E.FIN_LE[1][0] - E.FIN_LE[0][0]) / (E.FIN_LE[1][1] - E.FIN_LE[0][1]))):.1f} / "
                                      f"{math.degrees(math.atan((E.FIN_TE[1][0] - E.FIN_TE[0][0]) / (E.FIN_TE[1][1] - E.FIN_TE[0][1]))):.1f} deg"),
         ("      section / rudder hinge / tab", f"NACA 0018 / {E.RUD_XH * 100:.1f}% c / WL {E.RUD_TAB[0] * 1000:.0f}-{E.RUD_TAB[1] * 1000:.0f}"),
         ("STAB  LE / TE at BL 0, chord plane WL", f"{E.STAB_ROOT_LE * 1000:.0f} / {(E.STAB_ROOT_LE + E.STAB_ROOT_C) * 1000:.0f}, {E.STAB_Z * 1000:.0f}"),
         ("      tip rib / horn / elevator hinge", f"BL {E.STAB_TIP_RIB * 1000:.0f} / {E.ELEV_HORN[0] * 1000:.0f}-{E.ELEV_HORN[1] * 1000:.0f} / STA 14000"),
+        ("      tip rake dx/dy / TE corner BL", f"{E.STAB_TIP_RAKE:.3f} / {E.STAB_TIP_TE[1] * 1000:.0f}"),
         ("      bullet / aft-most", f"STA {E.BULLET_X[0] * 1000:.0f} - {E.BULLET_X[1] * 1000:.0f}"),
         ("GEAR  nose / main axle, wheelbase", f"{G.NOSE_AXLE[0] * 1000:.0f} / {G.MAIN_AXLE[0] * 1000:.0f}, 3 480"),
         ("      main trunnion / link pivot (STA, WL)", f"{G.MAIN_TRUNNION[0] * 1000:.0f},{G.MAIN_TRUNNION[2] * 1000:.0f} / "
                                                      f"{G.MAIN_LINK_PIVOT[0] * 1000:.0f},{G.MAIN_LINK_PIVOT[2] * 1000:.0f}"),
         ("      retracted wheel (BL) / tyre protrusion", f"{G.retracted_wheel()[1] * 1000:.0f} / {retract_protrusion() * 1000:.0f} (POH ~25)"),
+        ("      leg door STA / tip WL / plane BL", f"{G.LEG_DOOR['x_fwd'] * 1000:.0f}-{G.LEG_DOOR['x_aft'] * 1000:.0f} / "
+                                                   f"{G.leg_door_outline()[:, 1].min() * 1000:.0f} / "
+                                                   f"{G.LEG_DOOR['bl'][0] * 1000:.0f}-{G.LEG_DOOR['bl'][1] * 1000:.0f}"),
+        ("FAIR  wing-body fairing STA / bottom WL", f"{D.BELLY_FAIRING_X[0] * 1000:.0f}-{D.BELLY_FAIRING_X[1] * 1000:.0f}"
+                                                   f" / {D.BELLY_FAIRING_FLAT['z'] * 1000:.0f} (flat to BL "
+                                                   f"{D.BELLY_FAIRING_FLAT['hw'] * 1000:.0f})"),
         ("POD   radar pod axis BL / WL / R", f"{D.POD_Y * 1000:.0f} / {D.POD_Z * 1000:.0f} / {D.POD_R * 1000:.0f}"),
+        ("PROP  disc STA / thrust tilt / yaw", f"{PP.PROP_X * 1000:.0f} (hub BL {PP.PROP_Y * 1000:+.0f}) / "
+                                              f"{PP.THRUST_TILT_DEG:.1f} dn / {PP.THRUST_YAW_DEG:.1f} right"),
     ]
 
 
@@ -942,32 +1197,58 @@ def retract_protrusion():
     return float(s.lower(np.array(xc))[2]) - (c[2] - G.MAIN_TYRE["W"] / 2)
 
 
+def centre_section_fit():
+    """(wing upper-surface WL at BL 0, max depth (mm) by which the centre-section lower surface (BL 0) dips below
+    the drawn fairing bottom (details.belly_fairing_bottom), station range where it does)."""
+    x = cos_pts(401)
+    s = W.section_at(0.0)
+    up = float(s.upper(x)[:, 2].max())
+    L = s.lower(x)
+    m = (L[:, 0] > D.BELLY_FAIRING_X[0]) & (L[:, 0] < D.BELLY_FAIRING_X[1])
+    dz = L[m, 2] - D.belly_fairing_bottom(L[m, 0])
+    below = L[m][dz < 0, 0]
+    rng = (float(below.min()), float(below.max())) if len(below) else None
+    return up, float(-dz.min() * 1000) if len(below) else 0.0, rng
+
+
 def stage3_items():
+    up0, pierce, rng = centre_section_fit()
     return [
         "build.py verify(): 'Wing reference area' must use wing.planform_area() (total projected area incl. the "
         "aileron kink and the winglets' plan projection = 25.81); the trapezoid formula now reads 25.08.",
-        "Wing moved 130-160 mm aft and up (flat centre section WL 1036 at the QC, 6.15 deg dihedral from BL 700): "
-        "details.belly_fairing (drawn wing-root fairing STA ~5200-8550, bottom WL ~870) must enclose the centre "
-        "section (lower surface WL 869 at BL 0); interior.build_structure spar frames / carry-through and the "
-        "cabin floor (L1: WL 1259) vs the wing upper surface at BL 0 (WL 1251, 8 mm clearance) - check fit_check.",
-        "Flap inboard end now BL 450 (drawn dashed under the fuselage): the fuselage / belly fairing needs a flap "
-        "well, or keep the 3-D flap from BL 800. Drawn flap shroud lip at ~93 % chord, flap LE ~70 % "
-        "(FLAP_X_LIP 0.745 in the cove geometry); aileron chord is a constant 440 mm in the drawing (AIL_XH fixed "
-        "at 68.5 %, +/-30 mm).",
-        "Airfoil reconstructions (model/airfoil.py) are fuller aft than the drawn WR sections (max thickness at "
-        "~30-35 % c): retune; outboard sections read ~1-2 % too thick in the front view.",
+        f"Wing moved 130-160 mm aft and up (flat centre section WL {W.Z_QC0 * 1000:.0f} at the QC, "
+        f"{math.degrees(W.DIHEDRAL):.2f} deg dihedral from BL {W.Y_DIH0 * 1000:.0f}): interior.build_structure spar "
+        f"frames / carry-through and the cabin floor (L1: WL 1259) vs the wing upper surface at BL 0 (WL "
+        f"{up0 * 1000:.0f}, {1259 - up0 * 1000:.0f} mm clearance) - check fit_check.",
+        "Wing-to-body fairing refit (details.BELLY_FAIRING_*; livery imports them): loft the tail lobe on the "
+        "fuselage side (to STA 8585) and the upper root fillet (BL 1010) - details.belly_fairing() lofts only the "
+        "lower part" + (f"; the centre-section airfoil (BL 0) dips below the drawn fairing bottom by up to "
+                        f"{pierce:.0f} mm at STA {rng[0] * 1000:.0f}-{rng[1] * 1000:.0f}." if rng else "."),
+        "Flap: inboard end BL 450 (drawn dashed under the fuselage) needs a flap well in the fairing, or keep the 3-D "
+        "flap from BL 800. The flap now stows under a 93 % shroud (flap_cove / flap_loop, FLAP_TRAVEL 0.24 c): "
+        "re-check the flap-track canoes and the Fowler motion in the viewer.",
+        "Aileron: constant-chord (gap line 439 ahead of the TE, straight hinge W.AIL_HINGE); skins / coves / body "
+        "use ail_xh(y); check the Flettner tab cut-out (0.945 c) against the moving hinge fraction.",
+        "Airfoils refitted (model/airfoil.py rev B: CST sections fitted to the drawn WR1-4, max thickness at 30-38 % c, "
+        "thin aft third): rebuild the wing skins, flap / aileron / tab sections (cut from these airfoils), coves, "
+        "boots and canoes; the wing lies 13 mm lower at the root (QC WL / dihedral refit).",
         "Winglet: new sections (wing.winglet_sections); nav / strobe lights belong in the winglet tip (drawn light "
         "box at the winglet top), details.py still places them at the tip rib (inside the pod on starboard).",
-        "Gear: main trunnion WL 1070 keeps the ~1 in retracted tyre protrusion with the moved wing (well centre "
-        "bays.WELL at BL 1474); re-check retraction clearances to the spars, the leg door (drawn 690 x 760) and "
-        "brace kinematics (MAIN_BRACE / NOSE_BRACE); nose bay = drawn nose-door rectangle.",
+        "Gear: leg door = gear.leg_door_outline() (drawn side-view face: pointed tip, R 348 concave lower edge, "
+        "stepped aft edge; edge-on plane BL 2358-2472); the 3-D door (leg_door_patch, still the bays.SLOT patch) and "
+        f"the wing-bay slot must follow leg_door_footprint() (retracted: STA {G.LEG_DOOR['x_fwd'] * 1000:.0f}-"
+        f"{G.LEG_DOOR['x_aft'] * 1000:.0f}); re-check retraction clearances and brace kinematics.",
         "Empennage: fin NACA 0018 down to WL 1760 (the ventral part below the tail cone is the drawn ventral fin); "
-        "trim the fuselage tail cone at the fin / rudder, model the ventral fairing (FR40 bump) and the elevator "
-        "horn balance (E.ELEV_HORN, now part of the fixed tip in 3-D); bullet is table-driven (E.BULLET).",
-        "Propeller: the drawing's disc is tilted 2.0 deg top-forward (thrust line 2 deg nose-down) and drawn at STA "
-        "925 (PROP_X 800): not modelled - it needs the engine, mount, inlet and cowl joint re-aligned together.",
-        "CLAUDE.md: update the wing facts (planform from the drawing, LEMAC 5462 / MAC 1724, dihedral 6.15 deg, "
-        "radar pod at the starboard wing tip, gear axles 2930.5 / 6410.5).",
+        "trim the rudder, tab and fin skins to the SLOPED rudder edges (E.rudder_bottom_z / rudder_top_z / "
+        "rudder_outline; E.RUD_Z is now only the hinge-line WLs of those edges); "
+        "trim the fuselage tail cone at the fin / rudder, model the ventral fairing (FR40 bump); horn balance now a "
+        "separate plan piece (E.stab_tip_outline: slot STA 13608-13650) - split it off the fixed tip in 3-D.",
+        "Propeller: thrust line tilted 2 deg nose-down and yawed 2 deg right (powerplant.THRUST_*; disc STA 925 on "
+        "the axis, hub BL +4): re-align the engine, mount, inlet, spinner mesh and the cowl-front ring (the spinner "
+        "base centre sits 4 mm above the fuselage X0 ring centre); build.py disc construction line still at 0.80.",
+        f"CLAUDE.md: update the wing facts (planform from the drawing, LEMAC 5462 / MAC 1724, dihedral "
+        f"{math.degrees(W.DIHEDRAL):.2f} deg, airfoils = CST fits to the drawing, "
+        "radar pod at the starboard wing tip, gear axles 2930.5 / 6410.5, thrust line 2 deg down / 2 deg right).",
     ]
 
 
@@ -1012,6 +1293,9 @@ def draw_clean(ds):
     scale_bar(ds, 250.0, 478.0, 50, length_m=4.0, step_m=0.5)
     draw_detail_tip(ds)
     draw_detail_gear(ds)
+    # detail references on the parent views: A = starboard wing tip (front view), B = port main gear (side view)
+    M.detail_circle(ds, vf, 7.78, 1.90, 0.52, "A", at=(-0.4, -1.0))
+    M.detail_circle(ds, vs, 6.22, 0.62, 0.62, "B", at=(0.8, 0.8))
     legend(ds, 735.0, 26.0)
 
     O = ours()
@@ -1024,7 +1308,8 @@ def draw_clean(ds):
     cols = [("ITEM", 58.0, "l"), ("OURS", 22.0, "r"), ("D DWG", 15.0, "r"), ("REV A D DWG", 20.0, "r"),
             ("NOTE", 76.0, "l")]
     ytab = table(ds, 368.0, 212.0, cols, rows, title="DEVIATIONS FROM THE PILATUS DRAWING (mm / deg; D = ours - dwg)",
-                 size=2.05, row_h=3.05, head_h=4.6, zebra=lambda i: i % 2 == 1, font="label")
+                 size=1.95, row_h=2.7, head_h=4.4, zebra=lambda i: i % 2 == 1, font="label")
+    ds.log.append(f"deviation table: {len(rows)} rows, bottom y {ytab:.0f}")
     ds.text(368.0, ytab + 3.4, "D DWG vs the registered drawing 190.10.40.432 (sheet 1; x +/-21, z +/-2); REV A = "
             "the model before this refit.", 2.0, "label", "start", fill=MUTED, tag="tnote")
     prow = param_rows()
@@ -1032,7 +1317,7 @@ def draw_clean(ds):
                title="LAYOUT PARAMETERS (model/*.py)", size=2.05, row_h=3.05, head_h=4.6,
                zebra=lambda i: i % 2 == 1, font="label")
     notes(ds, 692.0, 212.0, 830.0, stage3_items(), title="STAGE 3 - WHAT MUST FOLLOW", size=2.0, line_h=2.75)
-    notes(ds, 566.0, yp + 4.0, 688.0, notes_items(), title="NOTES", size=2.0, line_h=2.75)
+    notes(ds, 566.0, yp + 4.0, 688.0, notes_items(O, R), title="NOTES", size=2.0, line_h=2.75)
     table(ds, 587.0, 385.0, [("PHOTO / RENDER (refs/photos.json)", 62.0, "l"), ("WHAT IT SHOWS FOR THE LAYOUT", 180.0, "l")],
           evidence_rows(), title="PHOTO / RENDER EVIDENCE", size=2.0, row_h=3.1, head_h=4.6,
           zebra=lambda i: i % 2 == 1, font="label")
@@ -1048,10 +1333,17 @@ def evidence_rows():
         ("pil_techdata_front_5000 (render)", "pod at the starboard tip; LE band slopes 5.7 / 6.6 deg (mean ~6.1 = drawn wing, not the 5.0 dim line)"),
         ("pil_techdata_front_5000 (render)", "winglet straight part ~39 deg above horizontal (cant ~51 deg), rise ~0.33 m above the tip"),
         ("ngx_kenia_stbd_pilatus crop", "large single leg door on the main leg, trailing link, three flap-track canoes per wing"),
+        ("ngx_dfbox_port (near-broadside)", "leg door face = drawn side view: pointed tip, concave lower edge, stepped aft edge "
+                                            "(sits ~0.1 m lower on the loaded, taxiing aircraft)"),
     ]
 
 
-def notes_items():
+def notes_items(O=None, R=None):
+    if O and R and R.get("winglet_top_z") is not None:
+        wt = f"+{(O['winglet_top_z'] - R['winglet_top_z']) * 1000:.0f}"
+        wy = f"+{(O['winglet_y'] - R['winglet_y']) * 1000:.0f}"
+    else:
+        wt, wy = "about +47", "about +65"
     return [
         "Drawn from the parameters of model/wing.py, empennage.py, gear.py, bays.py, details.py and fuselage.py "
         "(section functions and knot tables), never from the mesh. STA = mm aft of the datum (3000 ahead of the "
@@ -1062,18 +1354,21 @@ def notes_items():
         "prop clearance 0.32 (drawn 0.336), overall length 14.40 (drawn 14.421).",
         "Wing area 25.81 m2 = total projected plan area (both halves through the fuselage, incl. the aileron kink "
         "and the winglets' plan projection): the drawing's planform gives it within 0.1 %.",
+        "Winglet rows: ACCEPTED FIXED-FACT DEVIATION, pending the owner's decision. The official 16.28 m span "
+        "(drawn 16.137) is kept by lengthening the winglet's straight part (72 mm per side, canted 51 deg), so its "
+        f"top is {wt} mm and its outer BL {wy} mm vs the drawing. No split meets 20 mm on both: every 10 mm moved into "
+        "the panel semi-span lowers the top by only ~7 mm. Alternative: panel semi-span 7502 -> winglet top -4 mm, "
+        "but the tip rib / aileron end +72 mm and the root chord -15 mm (area held).",
     ]
 
 
 def legend(ds, x0, y0):
-    cv = ds.cv
-    items = [("visible outline (parameters)", dict(w=W_OBJ)), ("section / edge / hinge line", dict(w=W_FINE)),
-             ("hidden (gear under wing, pod)", dict(w=W_FINE, dash=HID)),
-             ("hinge / reference axis", dict(w=W_THIN, dash=CHAIN)), ("propeller disc", dict(w=W_FINE, dash=PHANTOM))]
-    for i, (lab, st) in enumerate(items):
-        y = y0 + 4.2 * i
-        cv.line((x0, y), (x0 + 10.0, y), st["w"], st.get("dash"), color=st.get("color"))
-        ds.text(x0 + 12.5, y, lab, 2.2, "label", "start", vcenter=True, tag="legend")
+    items = [("visible outline (parameters)", dict(w=W_OBJ)),
+             ("section / surface edge / gap line", dict(w=W_FINE)),
+             ("hidden (gear under wing, flap LE, pod)", dict(w=W_FINE, dash=HID)),
+             ("hinge line / thrust line / reference axis", dict(w=W_THIN, dash=CHAIN)),
+             ("propeller disc", dict(w=W_FINE, dash=PHANTOM))]
+    M.legend_rows(ds, x0, y0, items, dy=4.2, size=2.2)
 
 
 # ============================================================================================ overlay

@@ -34,8 +34,9 @@ view (28 mm) and the front view at the same time.
 The PRO dark mask is ONE side-projection region (photo_notes (d)): lower edge MASK_LOW below the
 sill, a ramp rising forward at MASK_RAMP_DEG to the point where it meets the nose crown just ahead of
 the windshield, a top edge MASK_TOP_MARGIN above the roof plane (so it becomes the narrow roof band
-over the windshield), and a straight aft edge leaning MASK_AFT_LEAN_DEG (bottom forward) that stops
-just ahead of the airstair door frame.  Because it is a set of planes normal to the plane of
+over the windshield), and a straight aft edge leaning MASK_AFT_LEAN_DEG (bottom forward) ahead of the airstair door frame -- the
+aft edge is a livery item that differs between airframes (model/livery.py MASK_SCHEMES; this model carries
+MSN 3008: 22.5 deg, blue gap to the door seam ~0.10 m at the top and ~0.27 m low).  Because it is a set of planes normal to the plane of
 symmetry, the same definition produces the lower band under the windshield, the dark centre post
 and the roof band -- one continuous area around all four panes.
 
@@ -77,9 +78,11 @@ MASK_RAMP_X = 3.600              # the ramp leaves the lower edge here (photos: 
 MASK_RAMP_DEG = 25.0             # ... and rises forward at this angle (photos 21-27 deg, notes ~23)
 MASK_TOP_MARGIN = 0.060          # top edge above ROOF_LINE, normal to it (PRO photos 3010 / 3036 and the kenia
                                  # overlay: 0.055-0.068; photo_notes "0-0.05" was read at the forward end)
-MASK_AFT_X = 4.560               # aft edge at the top line (airstair door fwd frame 4.650 - 0.09)
-MASK_AFT_LEAN_DEG = 12.0         # aft edge: bottom forward of the top (photos 7-23 deg)
-MASK_R = dict(low_aft=0.060, top_aft=0.040, ramp=0.100)
+# the aft edge is a LIVERY item (per airframe): model/livery.py MASK_SCHEMES / MASK_SCHEME (MSN 3008: 22.5 deg)
+from model.livery import MASK as _MASK, MASK_SCHEME  # noqa: E402
+MASK_AFT_X = _MASK["aft_x"]      # aft edge at the top line
+MASK_AFT_LEAN_DEG = _MASK["lean_deg"]   # aft edge: bottom forward of the top
+MASK_R = dict(low_aft=_MASK["r_low_aft"], top_aft=_MASK["r_top_aft"], ramp=0.100)
 MASK_CAP_X = 3.000               # forward closure of the region (above the nose crown -> not on the skin)
 
 # -- design eye point (pilot, port; mirror for the co-pilot).  Estimated: PRO photos show the seat

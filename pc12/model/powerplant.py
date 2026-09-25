@@ -19,10 +19,83 @@ from model.lifting import cos_pts
 from model.parts import Part
 from model import fuselage as F
 
-AX_Z = F.PROP_AXIS_Z
-PROP_X = 0.80           # blade pitch-change axes plane
+AX_Z = F.PROP_AXIS_Z   # WL of the thrust axis at the propeller disc (0.32 m clearance + 1.335 m radius)
 PROP_R = 1.335
 N_BLADES = 5
+
+# ---- thrust line (Stage 2, from the Pilatus drawing 190.10.40.432) -------------------------------------------------
+# The drawn propeller disc is an edge-on line tilted 2.00 deg top-forward in the side view and 2.00 deg with the
+# starboard end aft in the plan (disc centre STA 925); the drawn spinner centre lines slope +1.93 deg (side) and
+# -1.92 deg (plan, BL +22 at the tip, BL 0 at the cowl front).  So the thrust line is tilted 2 deg nose-down and
+# yawed 2 deg to starboard (right thrust).  Kept fixed: axis WL 1655 AT THE DISC and the 320 clearance (the tilt adds
+# 0.8 mm); the yaw pivots about the cowl front on the centre line (the drawn spinner base is on BL 0 there).
+THRUST_TILT_DEG = 2.0   # nose-down: the axis rises aft, the disc top leans forward
+THRUST_YAW_DEG = 2.0    # to starboard: the axis points forward-starboard, the spinner tip is on +BL
+PROP_X = 0.925          # propeller disc (blade pitch-change axes) on the thrust axis; drawn 925 (rev A 800)
+PROP_Y = float((F.STA["cowl_front"] - PROP_X) * np.tan(np.radians(THRUST_YAW_DEG)))   # disc centre BL (+4 mm)
+_TT, _TY = np.tan(np.radians(THRUST_TILT_DEG)), np.tan(np.radians(THRUST_YAW_DEG))
+
+
+def thrust_dir():
+    """Unit vector of the thrust (forward along the propeller axis)."""
+    d = np.array([-1.0, _TY, -_TT])
+    return d / np.linalg.norm(d)
+
+
+def axis_point(x):
+    """Point(s) (x, y, z) on the thrust axis at station(s) x."""
+    x = np.asarray(x, float)
+    return np.stack([x, PROP_Y - (x - PROP_X) * _TY, AX_Z + (x - PROP_X) * _TT], -1)
+
+
+def prop_hub():
+    """Disc centre (x, y, z) = hub centre / blade pitch-change axes on the thrust axis."""
+    return axis_point(PROP_X)
+
+
+def spinner_profile(n=80):
+    """Spinner meridian (t in 0..1 from the tip at STA spinner_tip to the base at the cowl front, radius r) from
+    fuselage.SPINNER_R / SPINNER_SHAPE."""
+    a, b = F.SPINNER_SHAPE
+    t = np.linspace(0, 1, n)
+    return t, F.SPINNER_R * (1 - (1 - t) ** a) ** b
+
+
+def spinner_silhouette(view="side", n=80):
+    """Closed spinner outline in a view's coordinates, on the tilted / yawed thrust axis: 'side' -> (x, z) seen
+    from port, 'plan' -> (x, y) seen from above.  The spinner is a body of revolution about the thrust axis from its
+    tip (STA spinner_tip) to its base plane at the cowl front."""
+    t, r = spinner_profile(n)
+    x0, x1 = F.STA["spinner_tip"], F.STA["cowl_front"]
+    c = axis_point(x0 + (x1 - x0) * t)
+    k = 2 if view == "side" else 1
+    ax = np.array([1.0, _TT if view == "side" else -_TY])
+    ax /= np.linalg.norm(ax)
+    nrm = np.array([-ax[1], ax[0]])                  # in-plane normal (up / starboard)
+    a = np.c_[c[:, 0], c[:, k]]
+    upper = a + r[:, None] * nrm
+    lower = a - r[:, None] * nrm
+    return np.vstack([upper, lower[::-1]])
+
+
+def prop_disc_edge(view="side"):
+    """End points of the edge-on propeller disc: 'side' -> (x, z) (top first), 'plan' -> (x, y) (starboard first)."""
+    h = prop_hub()
+    if view == "side":
+        ax = np.array([1.0, _TT])
+        c = np.array([h[0], h[2]])
+    else:
+        ax = np.array([1.0, -_TY])
+        c = np.array([h[0], h[1]])
+    ax /= np.linalg.norm(ax)
+    nrm = np.array([-ax[1], ax[0]])
+    return np.array([c + PROP_R * nrm, c - PROP_R * nrm])
+
+
+def prop_clearance():
+    """Ground clearance of the lowest blade tip with the tilted disc (m)."""
+    n = thrust_dir()
+    return float(AX_Z - PROP_R * np.sqrt(1.0 - n[2] ** 2))
 
 
 # EASA TCDS IM.E.008: PT6E-67XP overall length 1,870.9 mm, overall diameter 481.8 mm.
@@ -171,6 +244,41 @@ def ring_path(x, r, n):
 # ---------------------------------------------------------------------------
 # chin inlet and exhaust stacks (external)
 # ---------------------------------------------------------------------------
+# Exhaust stack centre line (starboard; mirrored for port): (STA, BL, WL - AX_Z).  It leaves the cowl side at
+# BL 220, sweeps outboard and aft in a short elbow and ends in a heat-blackened outlet collar.  Photos of s/n 3008
+# projected through the calibrated cameras (port_hangar_130, stbd_ground) put the collar end ~0.10 m aft of the rev
+# A path end (STA 1740) -> STA 1840; the Pilatus front render shows each stack as a horizontal tube BL ~250-700 at
+# about prop-axis height.
+STACK_PTS = ((1.42, 0.22, 0.0), (1.47, 0.38, -0.005), (1.58, 0.52, -0.020), (1.74, 0.60, -0.030),
+             (1.84, 0.615, -0.034))
+STACK_AB = (0.060, 0.098)        # section half-sizes: plan (horizontal) / side (vertical)
+STACK_COLLAR = 0.085             # heat-blackened outlet collar at the aft end (length along the path)
+
+
+def exhaust_stack_path(sgn=1, n=24):
+    """Stack centre line (n, 3) for side sgn (+1 starboard), from the cowl side to the outlet; natural cubic spline
+    through STACK_PTS."""
+    from scipy.interpolate import CubicSpline
+    pts = np.array([[x, sgn * y, AX_Z + dz] for x, y, dz in STACK_PTS])
+    cs = CubicSpline(np.linspace(0, 1, len(pts)), pts, bc_type="natural")
+    return cs(np.linspace(0, 1, n))
+
+
+def exhaust_stack_rings(sgn=1, n=40, m=28):
+    """Section rings (n, m, 3) of the stack tube (ellipse STACK_AB in the plane normal to the centre line; the
+    vertical semi-axis stays vertical).  Also returns the arc length along the path (n,)."""
+    path = exhaust_stack_path(sgn, n)
+    T = np.gradient(path, axis=0)
+    T /= np.linalg.norm(T, axis=1)[:, None]
+    th = np.linspace(0, 2 * np.pi, m, endpoint=False)
+    rings = []
+    for p, t in zip(path, T):
+        n1 = np.cross(t, [0.0, 0.0, 1.0])
+        n1 /= np.linalg.norm(n1)
+        n2 = np.cross(n1, t)
+        rings.append(p + np.outer(STACK_AB[0] * np.cos(th), n1) + np.outer(STACK_AB[1] * np.sin(th), n2))
+    s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
+    return np.array(rings), s
 
 def build_inlet_and_exhaust(parts):
     # chin scoop: lofted super-elliptic sections that fair into the lower cowling
@@ -209,13 +317,8 @@ def build_inlet_and_exhaust(parts):
     # exhaust stacks
     stacks, inner_s = [], []
     for sgn in (1, -1):
-        pts = np.array([[1.42, sgn * 0.22, AX_Z], [1.47, sgn * 0.38, AX_Z - 0.005],
-                        [1.58, sgn * 0.52, AX_Z - 0.02], [1.74, sgn * 0.60, AX_Z - 0.03]])
-        from scipy.interpolate import CubicSpline
-        t = np.linspace(0, 1, len(pts))
-        cs = CubicSpline(t, pts, bc_type="natural")
-        path = cs(np.linspace(0, 1, 20))
-        prof = ellipse(0.060, 0.098, 28)
+        path = exhaust_stack_path(sgn, 20)             # table STACK_PTS (Stage 3: black outlet collar STACK_COLLAR)
+        prof = ellipse(*STACK_AB, 28)
         o = sweep_profile(path, prof, True, cap=False)
         i = sweep_profile(path, prof * 0.84, True, cap=False).flipped()
         # rim at exit

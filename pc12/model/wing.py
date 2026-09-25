@@ -19,14 +19,22 @@ registered to model coordinates by refs/mbp.py), which is the primary geometric 
     (planform_area()).  The earlier rev A planform was solved from an assumed 46 % MAC aft-CG limit
     (LEMAC 5.323); against the drawing that put the wing 130-160 mm too far forward.  The POH aft CG
     limit STA 6,107 now lies at 37 % MAC.
-Heights (front view of the drawing + its wing sections WR1-WR4): the wing chord plane has 6.15 deg
-dihedral from BL 700 outboard, with a flat carry-through inside the fuselage (quarter chord at WL 1,036).
-The drawing's WR dimension line reads 5.0 deg, but the drawn upper / lower surfaces (fit rms 6 mm) and the
-Pilatus front render both give ~6 deg.  Incidence +1.45 deg at BL 0 -> -0.91 at BL 5.56 -> -2.64 at the tip
-(WR1 +1.05, WR2 -0.91, WR3 -1.88, WR4 -2.61 deg measured on the drawn sections).
+Heights (front view of the drawing + its wing sections WR1-WR4): the wing chord plane has 6.23 deg
+dihedral from BL 700 outboard, with a flat carry-through inside the fuselage (quarter chord at WL 1,023).
+The drawing's WR dimension line reads 5.0 deg, but the drawn upper / lower surfaces and the Pilatus front
+render both give ~6 deg: least-squares fit of the front-view upper / lower silhouettes BL 1300-7300 with the
+rev B airfoils, rms 1.7 mm, max 3.1 mm (with the rev A airfoils the fit had given 6.15 deg / WL 1,036).
+Incidence +1.45 deg at BL 0 -> -0.91 at BL 5.56 -> -2.64 at the tip (WR1 +1.05, WR2 -0.91, WR3 -1.88,
+WR4 -2.61 deg measured LE-TE on the drawn sections).
+Sections: LS(1)-0417MOD root -> LS(1)-0313 tip (model/airfoil.py, rev B: CST fits to the drawn WR1-WR4, each
+normalised by its own LE / TE; our outlines within 3.9 mm of every drawn section), blended linearly in span
+from BL 600 to the tip rib (airfoil_at).
 Winglet: cant, bend and plan shape as drawn (51 deg from vertical, 0.77 m bend radius); the drawing's
 span is 16.137 m (label 16.114 m) against the official 16.28 m -- the wing panel is kept as drawn and the
-straight part of the winglet is lengthened (72 mm per side laterally) so the outer skin reaches BL 8,140.
+straight part of the winglet is lengthened (72 mm per side laterally) so the outer skin reaches BL 8,140.  That
+also lifts the winglet top ~47 mm above the drawn WL 2,133: an ACCEPTED fixed-fact deviation pending the owner's
+decision (the alternative, a 7,502 panel semi-span, puts the top within 4 mm but the tip rib / aileron end 72 mm
+outboard; no split keeps both within 20 mm -- sheet L4, note 5).
 """
 from __future__ import annotations
 import numpy as np
@@ -65,16 +73,27 @@ WL_TIP_AF_T = 0.09               # winglet top section NACA 0009
 WL_LE_SWEEP = np.radians(63.0)   # nominal plan-view LE sweep of the straight part, for reporting
 
 # ---- heights / incidence (front view + WR sections of the drawing) --------------
-DIHEDRAL = np.radians(6.15)
+DIHEDRAL = np.radians(6.23)      # front-view silhouettes (rev A airfoils: 6.15)
 Y_DIH0 = 0.70                    # dihedral starts here: flat carry-through inside the fuselage (see z_ref)
-Z_QC0 = 1.036                    # WL of the chord line at the quarter chord on the flat centre section
+Z_QC0 = 1.0233                   # WL of the chord line at the quarter chord on the flat centre section (rev A: 1.036)
 TWIST = ((0.0, 1.45), (5.56, -0.91), (SEMI, -2.64))   # (BL, incidence deg), + = leading edge up
 INC_ROOT, INC_TIP = np.radians(TWIST[0][1]), np.radians(TWIST[-1][1])
 
 Y_FLAP = (0.450, 5.667)          # flap ends (inboard end under the wing-root fairing, dashed in the plan)
 Y_AIL = (5.690, 7.400)           # aileron ends (drawn 5,690 - 7,450; kept inside the tip rib)
-FLAP_X_LO, FLAP_X_LIP = 0.695, 0.745
-AIL_XH = 0.685                   # aileron hinge (chord fraction; drawing: constant 440 mm aileron chord)
+# Fowler flap (plan view of the drawing): the flap leading edge (hidden) lies at 69.2-69.9 % chord and the visible
+# upper-surface shroud trailing edge ("lip") at a constant 92.7-93.4 % chord from BL 1500 to 5600 (least-squares
+# 93.15 %, max 7 mm); section WR1 shows the upper skin unbroken to the lip.  The retracted flap stows under the long
+# shroud: flap_cove() / flap_loop() below.
+FLAP_X_LO, FLAP_X_LIP = 0.695, 0.9315
+FLAP_SHROUD_T = (0.016, 0.004)   # shroud depth below the upper surface (chord units): at the cove top / at the lip
+FLAP_COVE_TOP = 0.760            # chord station where the cove meets the shroud underside
+FLAP_GAP = 0.002                 # flap upper surface below the shroud underside (chord units)
+FLAP_TRAVEL = (0.24, -0.035)     # Fowler translation at full deflection (chord units: aft, down)
+# Aileron (plan view of the drawing): the visible upper-surface gap line runs parallel to the trailing edge, a
+# constant 439 mm ahead of it (BL 5750 - 7395, +/-0.1 mm) -> constant-chord aileron on the tapered wing, straight
+# hinge line; the hinge chord fraction therefore varies along the span (ail_xh(y)).
+AIL_GAP_TE = 0.439               # upper-surface gap line to trailing edge (m)
 BOOT_Y = (0.95, 7.43)
 GAP = 0.012   # spanwise gap between control surface and wing (m)
 
@@ -203,29 +222,97 @@ def mac():
 
 
 # ---------------------------------------------------------------------------
+# aileron hinge line (constant-chord aileron, straight hinge)
+# ---------------------------------------------------------------------------
+def _xh_for_gap(y):
+    """Hinge chord fraction at butt line y that puts the upper cove end (x_end_of_plain) AIL_GAP_TE ahead of the TE."""
+    sec = section_at(y)
+    target = 1.0 - AIL_GAP_TE / sec.chord
+    a, b = 0.45, 0.85
+    for _ in range(40):
+        m = 0.5 * (a + b)
+        if x_end_of_plain(sec, m)[1] < target:
+            a = m
+        else:
+            b = m
+    return 0.5 * (a + b)
+
+
+def _hinge_line():
+    ends = []
+    for y in Y_AIL:
+        ends.append((y, float(x_le(y) + _xh_for_gap(y) * chord(y))))
+    return tuple(ends)
+
+
+def ail_xh(y):
+    """Aileron hinge chord fraction at butt line |y|: straight hinge line AIL_HINGE (plan stations at the aileron
+    ends), i.e. a constant-chord aileron whose upper gap line is AIL_GAP_TE ahead of the trailing edge."""
+    (y0, x0), (y1, x1) = AIL_HINGE
+    y = np.abs(np.asarray(y, float))
+    xh = x0 + (x1 - x0) * (y - y0) / (y1 - y0)
+    return (xh - x_le(y)) / chord(y)
+
+
+def ail_gap_x(y, upper=True):
+    """Plan station of the aileron's gap line (the cove end of the upper skin, or of the lower skin with
+    upper=False) at butt line |y| (from the parameters)."""
+    y = float(abs(y))
+    return float(x_le(y) + x_end_of_plain(section_at(y), float(ail_xh(y)))[0 if not upper else 1] * chord(y))
+
+
+def flap_lines(y, upper=True):
+    """Plan stations of the flap bay's visible chordwise line at butt line |y|: the shroud lip FLAP_X_LIP seen from
+    above, the lower-skin cove edge FLAP_X_LO seen from below."""
+    y = np.abs(np.asarray(y, float))
+    return x_le(y) + (FLAP_X_LIP if upper else FLAP_X_LO) * chord(y)
+
+
+# ---------------------------------------------------------------------------
 # control-surface section geometry (chord units)
 # ---------------------------------------------------------------------------
 
+def shroud_underside(af, x):
+    """Chord-unit z of the flap shroud's lower surface at chord station(s) x (FLAP_COVE_TOP .. FLAP_X_LIP)."""
+    x = np.asarray(x, float)
+    u = np.clip((x - FLAP_COVE_TOP) / (FLAP_X_LIP - FLAP_COVE_TOP), 0, 1)
+    return af.upper(x) - (FLAP_SHROUD_T[0] + (FLAP_SHROUD_T[1] - FLAP_SHROUD_T[0]) * u)
+
+
 def flap_cove(sec, n=14):
+    """Flap cove (chord units): from the lower skin end FLAP_X_LO round the flap nose up to the shroud underside at
+    FLAP_COVE_TOP, aft along the shroud underside to the lip at FLAP_X_LIP, closed at the upper surface there."""
     af = sec.airfoil
     lo = np.array([FLAP_X_LO, float(af.lower(FLAP_X_LO))])
-    zu_lip = float(af.upper(FLAP_X_LIP))
-    lip_b = np.array([FLAP_X_LIP, zu_lip - 0.0055])
-    c = bezier(lo, lo + [-0.045, 0.004], [0.650, zu_lip - 0.028], lip_b, n=n)
-    return np.vstack([c, [[FLAP_X_LIP, zu_lip]]])
+    top = np.array([FLAP_COVE_TOP, float(shroud_underside(af, FLAP_COVE_TOP))])
+    c = bezier(lo, lo + [-0.045, 0.004], [0.650, top[1]], top, n=n)
+    xs = np.linspace(FLAP_COVE_TOP, FLAP_X_LIP, max(8, n))[1:]
+    under = np.stack([xs, shroud_underside(af, xs)], 1)
+    return np.vstack([c, under, [[FLAP_X_LIP, float(af.upper(FLAP_X_LIP))]]])
+
+
+def flap_upper(af, x):
+    """Chord-unit z of the retracted flap's upper surface: FLAP_GAP below the shroud underside up to the lip, then
+    converging on the wing contour at the trailing edge (the lip sits proud of the flap by its own thickness)."""
+    x = np.asarray(x, float)
+    d_lip = FLAP_SHROUD_T[1] + FLAP_GAP
+    under = af.upper(x) - shroud_underside(af, np.minimum(x, FLAP_X_LIP)) + FLAP_GAP
+    off = np.where(x <= FLAP_X_LIP, under, d_lip * (1.0 - x) / (1.0 - FLAP_X_LIP))
+    return af.upper(x) - off
 
 
 def flap_loop(sec, n=18):
+    """Retracted Fowler-flap section (chord units): nose inside the cove, upper surface stowed under the shroud
+    (flap_upper), lower surface flush with the wing lower contour from 0.708."""
     af = sec.airfoil
-    xu = cos_pts(n, 0.0, 1.0) * (1 - 0.736) + 0.736
-    zu = af.upper(xu)
-    blend = np.clip((0.758 - xu) / 0.022, 0, 1)
-    zu = zu - 0.0075 * blend
+    x_nt = FLAP_COVE_TOP + 0.004
+    xu = cos_pts(n, 0.0, 1.0) * (1 - x_nt) + x_nt
+    zu = flap_upper(af, xu)
     xl = (cos_pts(n, 0.0, 1.0) * (1 - 0.708) + 0.708)[::-1]
     zl = af.lower(xl)
     nose_top = np.array([xu[0], zu[0]])
     nose_bot = np.array([0.708, float(af.lower(0.708))])
-    nose = bezier(nose_bot, nose_bot + [-0.034, 0.006], [0.668, nose_top[1] - 0.030], nose_top, n=12)
+    nose = bezier(nose_bot, nose_bot + [-0.030, 0.008], [0.672, nose_top[1] - 0.004], nose_top, n=12)
     upper = np.stack([xu, zu], 1)
     lower = np.stack([xl, zl], 1)
     loop = np.vstack([upper[:-1], [[1.0, float(af.upper(1.0))]], [[1.0, float(af.lower(1.0))]], lower[1:-1], nose[:-1]])
@@ -301,11 +388,13 @@ def tab_loop(sec, x0, n=10):
 
 
 def segmented_surface(section_fn, s0, s1, xh, tab, step=0.15, gap=0.008):
-    """Control surface split around a tab cut-out.  Returns (body, tab_body, tab_hinge_pts)."""
+    """Control surface split around a tab cut-out (xh: hinge chord fraction, or a callable of the section).
+    Returns (body, tab_body, tab_hinge_pts)."""
     t0, t1, xt = tab
-    bodies = [closed_body(section_fn, span_stations(s0, t0, step), lambda s: plain_surface_loop(s, xh)),
-              closed_body(section_fn, span_stations(t0, t1, step), lambda s: plain_surface_loop(s, xh, x_end=xt)),
-              closed_body(section_fn, span_stations(t1, s1, step), lambda s: plain_surface_loop(s, xh))]
+    xh_of = xh if callable(xh) else (lambda s, _x=xh: _x)          # xh: chord fraction or callable(section)
+    bodies = [closed_body(section_fn, span_stations(s0, t0, step), lambda s: plain_surface_loop(s, xh_of(s))),
+              closed_body(section_fn, span_stations(t0, t1, step), lambda s: plain_surface_loop(s, xh_of(s), x_end=xt)),
+              closed_body(section_fn, span_stations(t1, s1, step), lambda s: plain_surface_loop(s, xh_of(s)))]
     tb = closed_body(section_fn, span_stations(t0 + gap, t1 - gap, step), lambda s: tab_loop(s, xt + 0.004))
     a, b = section_fn(t0), section_fn(t1)
     ha = a.point(np.array(xt + 0.004), np.array(float(a.airfoil.camber(xt))))
@@ -317,6 +406,10 @@ def x_end_of_plain(sec, xh, gap=0.010):
     _, (tu, tl, R) = plain_cove(sec, xh, gap)
     zh = float(sec.airfoil.camber(xh))
     return xh + R * np.cos(tu), xh + R * np.cos(tl)
+
+
+AIL_HINGE = _hinge_line()        # ((BL, STA), (BL, STA)) of the straight aileron hinge line at the aileron ends
+AIL_XH = float(ail_xh(0.5 * sum(Y_AIL)))   # compat: hinge chord fraction at mid-aileron (use ail_xh(y))
 
 
 # ---------------------------------------------------------------------------
@@ -376,11 +469,11 @@ def build_right(n=60):
     add_skin(skin(section_at, ys, n=n))
     out["skin"].append(strip(section_at, ys, 1.0, 1.0))
 
-    # panel D: aileron bay
+    # panel D: aileron bay (constant-chord aileron: the hinge fraction ail_xh(y) varies along the span)
     ys = span_stations(Y_AIL[0], Y_AIL[1], 0.2)
-    xl_end, xu_end = x_end_of_plain(section_at(0.5 * sum(Y_AIL)), AIL_XH)
-    add_skin(skin(section_at, ys, x_lo_end=xl_end, x_up_end=xu_end, n=n))
-    out["skin"].append(curve_patch(section_at, ys, lambda s: plain_cove(s, AIL_XH)[0],
+    add_skin(skin(section_at, ys, x_lo_end=lambda y: x_end_of_plain(section_at(y), float(ail_xh(y)))[0],
+                  x_up_end=lambda y: x_end_of_plain(section_at(y), float(ail_xh(y)))[1], n=n))
+    out["skin"].append(curve_patch(section_at, ys, lambda s: plain_cove(s, float(ail_xh(s.le[1])))[0],
                                    outward_hint=lambda s: s.e_c))
 
     # panel E: aileron end -> tip
@@ -395,8 +488,8 @@ def build_right(n=60):
         out["ribs"].append(planar_cap(pts, (0, sgn, 0)))
     for y, sgn in ((Y_AIL[0], +1), (Y_AIL[1], -1)):
         sec = section_at(y)
-        cove, _ = plain_cove(sec, AIL_XH)
-        xl_e, xu_e = x_end_of_plain(sec, AIL_XH)
+        cove, _ = plain_cove(sec, float(ail_xh(y)))
+        xl_e, xu_e = x_end_of_plain(sec, float(ail_xh(y)))
         pts = cut_rib(sec, cove[::-1], xl_e, xu_e)
         out["ribs"].append(planar_cap(pts, (0, sgn, 0)))
 
@@ -404,7 +497,7 @@ def build_right(n=60):
     ys = span_stations(Y_FLAP[0] + GAP, Y_FLAP[1] - GAP, 0.25)
     out["flap"] = closed_body(section_at, ys, flap_loop)
     # aileron body with the Flettner geared balance tab cut-out (inboard 40 %)
-    body, tabm, hinge = segmented_surface(section_at, Y_AIL[0] + GAP, Y_AIL[1] - GAP, AIL_XH,
+    body, tabm, hinge = segmented_surface(section_at, Y_AIL[0] + GAP, Y_AIL[1] - GAP, lambda s: float(ail_xh(s.le[1])),
                                           (Y_AIL[0] + 0.06, Y_AIL[0] + 0.72, 0.945), step=0.2)
     out["aileron"] = body
     out["ail_tab"] = (tabm, hinge)
@@ -508,15 +601,16 @@ def build(parts: dict):
         cm = 0.5 * (a.chord + b.chord)
         f = Part(f"flap_{side}", f"{'Right' if sgn > 0 else 'Left'} Fowler flap", "controls_wing",
                  pivot=dict(origin=ha.tolist(), axis=(axis * sgn).tolist(), kind="flap",
-                            travel=[0.20 * cm, 0.0, -0.035 * cm], max=40.0, settings=[0, 15, 30, 40]),
+                            travel=[FLAP_TRAVEL[0] * cm, 0.0, FLAP_TRAVEL[1] * cm], max=40.0, settings=[0, 15, 30, 40]),
                  explode=(0.9, 0, -0.3), group="Flight controls",
                  material_note="Single-piece Fowler flap, 3 support arms")
         f.add(mir(R["flap"]), "paint_white")
         parts[f.id] = f
         a = section_at(Y_AIL[0])
         b = section_at(Y_AIL[1])
-        ha = a.point(np.array(AIL_XH), np.array(float(a.airfoil.camber(AIL_XH))))
-        hb = b.point(np.array(AIL_XH), np.array(float(b.airfoil.camber(AIL_XH))))
+        xa, xb = float(ail_xh(Y_AIL[0])), float(ail_xh(Y_AIL[1]))
+        ha = a.point(np.array(xa), np.array(float(a.airfoil.camber(xa))))
+        hb = b.point(np.array(xb), np.array(float(b.airfoil.camber(xb))))
         if sgn < 0:
             ha, hb = ha * [1, -1, 1], hb * [1, -1, 1]
         axis = (hb - ha) / np.linalg.norm(hb - ha)
