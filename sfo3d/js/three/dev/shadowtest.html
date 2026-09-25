@@ -35,13 +35,13 @@ try {
     const c = document.createElement('canvas'); c.width = 320; c.height = 180; document.body.appendChild(c);
     const E = await new Engine(document.body, { ...QUALITY3.high, ao: tweak === 'noao' ? 'none' : 'prepass' }, { canvas: c, tweak }).init();
     E.resize(320, 180, 1);
-    const scene = E.scene; scene.add(new THREE.HemisphereLight(0x9ab8e0, 0x5a5040, 1));
+    const scene = E.scene; scene.background = new THREE.Color(0.5, 0.6, 0.75); scene.add(new THREE.HemisphereLight(0x9ab8e0, 0x5a5040, 1));
     const g = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardNodeMaterial({ color: 0x999999, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g);
     const b = new THREE.Mesh(new THREE.BoxGeometry(15, 25, 15), new THREE.MeshStandardNodeMaterial({ color: 0xdddddd })); b.position.set(0, 12.5, 0); b.castShadow = true; scene.add(b);
     const d = [-500, 400, 100]; const l = Math.hypot(...d);
     E.setSun(d.map(x => x / l), [3, 3, 3]);
     const cr = { pos: [70, 40, 75], target: [0, 3, 0], fov: 40 * Math.PI / 180, near: 0.5, far: 5000, shadowSplits: [84, 450, 2500] };
-    for (let i = 0; i < 3; i++) { E.setCamera(cr, 320, 180); E.render(); }
+    for (let i = 0; i < +(q.get('n') || 3); i++) { E.setCamera(cr, 320, 180); E.render(); await new Promise(r => setTimeout(r, 30)); }
     out['eng_' + tweak] = E.backend;
   }
   out.ok = true;

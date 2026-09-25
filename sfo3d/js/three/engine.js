@@ -32,12 +32,17 @@ export class Engine {
     // sun + cascaded shadows (CSMShadowNode; splits follow the camera distance like js/renderer.js computeCascades)
     const sun = new THREE.DirectionalLight(0xffffff, 1); sun.castShadow = true;
     sun.shadow.mapSize.set(Q.shadow, Q.shadow); sun.shadow.camera.near = 1; sun.shadow.camera.far = 40000;
-    sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.4; sun.shadow.radius = 2; // three flips the bias itself for a reversed depth buffer (ShadowNode.js coordZ.sub(bias))
+    // depth bias: none. A constant bias is scaled by each cascade camera's depth range (hundreds of metres with the
+    // light margin), so the old -0.0003 detached every shadow from its caster by metres, and on the airport scale made
+    // them vanish (observed in js/three/dev/shadowtest.html, 25 Sep 2026). A normal-offset bias alone keeps acne away.
+    sun.shadow.bias = 0; sun.shadow.normalBias = 0.2; sun.shadow.radius = 2;
+    const TW = this.opts.tweak || ''; // dev variants for js/three/dev/shadowtest.html
+    if (TW === 'oldbias') sun.shadow.bias = -0.0003;
     this.splits = [84, 300, 960];
-    this.csm = new THREE.CSMShadowNode(sun, { cascades: Q.cascades, maxFar: 3000, mode: 'custom', lightMargin: 600,
+    this.csm = new THREE.CSMShadowNode(sun, TW === 'practical' ? { cascades: Q.cascades, maxFar: 3000, mode: 'practical', lightMargin: 600 } : { cascades: Q.cascades, maxFar: 3000, mode: 'custom', lightMargin: 600,
       customSplitsCallback: (n, near, far, target) => { const s = this.splits; for (let i = 0; i < n - 1; i++) target.push(Math.min(0.99, s[i] / far)); target.push(1); } });
-    this.csm.fade = true;
-    sun.shadow.shadowNode = this.csm; scene.add(sun); scene.add(sun.target); this.sun = sun;
+    this.csm.fade = TW !== 'nofade';
+    if (TW !== 'plain') sun.shadow.shadowNode = this.csm; else Object.assign(sun.shadow.camera, { left: -200, right: 200, top: 200, bottom: -200, near: 1, far: 3000 }); scene.add(sun); scene.add(sun.target); this.sun = sun;
     this.aoAmount = uniform(1.0);
     this.buildPipeline();
     return this;
