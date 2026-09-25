@@ -244,29 +244,49 @@ def ring_path(x, r, n):
 # ---------------------------------------------------------------------------
 # chin inlet and exhaust stacks (external)
 # ---------------------------------------------------------------------------
-# Exhaust stack centre line (starboard; mirrored for port): (STA, BL, WL - AX_Z).  It leaves the cowl side at
-# BL 220, sweeps outboard and aft in a short elbow and ends in a heat-blackened outlet collar.  Photos of s/n 3008
-# projected through the calibrated cameras (port_hangar_130, stbd_ground) put the collar end ~0.10 m aft of the rev
-# A path end (STA 1740) -> STA 1840; the Pilatus front render shows each stack as a horizontal tube BL ~250-700 at
-# about prop-axis height.
-STACK_PTS = ((1.42, 0.22, 0.0), (1.47, 0.38, -0.005), (1.58, 0.52, -0.020), (1.74, 0.60, -0.030),
-             (1.84, 0.615, -0.034))
-STACK_AB = (0.060, 0.098)        # section half-sizes: plan (horizontal) / side (vertical)
-STACK_COLLAR = 0.085             # heat-blackened outlet collar at the aft end (length along the path)
+# Exhaust stack centre line (starboard; mirrored for port): (STA, BL, WL - AX_Z).  Stage 2 rev C (review round 3,
+# G3-4 / R3-4), re-seated on the Pilatus drawing 190.10.40.432 in all three views and checked on the s/n 3008 photos:
+#   * the tube leaves the cowl side at STA ~1.42-1.67 heading outboard, bends aft in a wide elbow (outer skin BL 747 at
+#     STA ~1.71 -- front view BL 317-747) and ends in a SCARFED outlet: the mouth is the vertical plane STACK_SCARF
+#     (plan line from the inner lip STA 1.736 / BL 0.477 to the outer lip STA 1.971 / BL 0.653), facing aft-inboard;
+#     the black heat-tinted collar in the photos is that scarfed end (outer lip ~STA 1.96, mouth centre ~STA 1.85 --
+#     the rev B photo value 1.84 was the mouth centre, the drawn 1.96 the outer lip: both agree);
+#   * section: ellipse STACK_AB, 0.19 wide in plan (drawn elbow 0.21-0.25) and 0.188 tall (front view WL 1601-1788);
+#   * centre WL: drawn 1.69-1.70 (side and front), i.e. 1.675-1.685 once the drawing's 15-18 mm higher nose / prop
+#     axis is allowed for (WL 1655 kept, as for the spinner); the photo projection (stbd_ground) had rev B ~30 mm low.
+# Fit to the drawn plan outline (outer skin + rear wall, both halves): rms 19 mm (the drawn elbow has a sharp outer
+# corner a swept ellipse cannot follow; outer extent BL 0.735 vs 0.747).  The last knot lies beyond the scarf plane.
+STACK_PTS = ((1.545, 0.300, 0.025), (1.530, 0.470, 0.025), (1.600, 0.582, 0.026), (1.725, 0.640, 0.028),
+             (1.885, 0.570, 0.030), (1.990, 0.515, 0.031))
+STACK_AB = (0.095, 0.094)        # section half-sizes: plan (horizontal) / side (vertical); bend radius >= 0.113
+STACK_SCARF = ((1.736, 0.477), (1.971, 0.653))    # outlet plane (vertical), plan (STA, BL): inner lip -> outer lip
+STACK_COLLAR = 0.085             # heat-blackened outlet collar: this far upstream of the scarf cut, along the tube
 
 
 def exhaust_stack_path(sgn=1, n=24):
-    """Stack centre line (n, 3) for side sgn (+1 starboard), from the cowl side to the outlet; natural cubic spline
-    through STACK_PTS."""
+    """Stack centre line (n, 3) for side sgn (+1 starboard), from the cowl side to beyond the outlet plane (the tube
+    is cut by STACK_SCARF); natural cubic spline through STACK_PTS."""
     from scipy.interpolate import CubicSpline
     pts = np.array([[x, sgn * y, AX_Z + dz] for x, y, dz in STACK_PTS])
     cs = CubicSpline(np.linspace(0, 1, len(pts)), pts, bc_type="natural")
     return cs(np.linspace(0, 1, n))
 
 
-def exhaust_stack_rings(sgn=1, n=40, m=28):
+def stack_scarf_plane(sgn=1):
+    """Outlet (scarf) plane of the stack on side sgn: (point, unit normal) in model axes; the normal points out of
+    the tube (aft-inboard).  Signed distance > 0 = cut away."""
+    (x0, y0), (x1, y1) = STACK_SCARF
+    p = np.array([x0, sgn * y0, AX_Z])
+    e = np.array([x1 - x0, sgn * (y1 - y0), 0.0])
+    nrm = np.cross(e, [0.0, 0.0, 1.0]) * sgn          # (e_y, -e_x) for starboard: aft-inboard
+    return p, nrm / np.linalg.norm(nrm)
+
+
+def exhaust_stack_rings(sgn=1, n=40, m=28, scarf=False):
     """Section rings (n, m, 3) of the stack tube (ellipse STACK_AB in the plane normal to the centre line; the
-    vertical semi-axis stays vertical).  Also returns the arc length along the path (n,)."""
+    vertical semi-axis stays vertical).  Also returns the arc length along the path (n,).  scarf=True cuts the tube
+    at the outlet plane STACK_SCARF: every generator line (fixed ring angle) is clipped where it crosses the plane,
+    so the rings beyond the cut collapse onto the mouth curve (for silhouettes / the Stage-3 builder)."""
     path = exhaust_stack_path(sgn, n)
     T = np.gradient(path, axis=0)
     T /= np.linalg.norm(T, axis=1)[:, None]
@@ -277,8 +297,139 @@ def exhaust_stack_rings(sgn=1, n=40, m=28):
         n1 /= np.linalg.norm(n1)
         n2 = np.cross(n1, t)
         rings.append(p + np.outer(STACK_AB[0] * np.cos(th), n1) + np.outer(STACK_AB[1] * np.sin(th), n2))
+    rings = np.array(rings)
     s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
-    return np.array(rings), s
+    if scarf:
+        rings = _clip_generators(rings, *stack_scarf_plane(sgn))
+    return rings, s
+
+
+def _clip_generators(rings, p0, nrm):
+    """Clip each generator line rings[:, j] at its LAST crossing of the plane (p0, nrm) (the outlet end; the plane,
+    extended inboard, also passes ahead of the tube root): the points beyond are replaced by the crossing."""
+    R = rings.copy()
+    for j in range(R.shape[1]):
+        g = R[:, j]
+        d = (g - p0) @ nrm
+        inside = np.flatnonzero(d <= 0)
+        if len(inside) == 0 or inside[-1] == len(d) - 1:
+            continue
+        i = inside[-1] + 1
+        c = g[i - 1] + (g[i] - g[i - 1]) * (d[i - 1] / (d[i - 1] - d[i]))
+        R[i:, j] = c
+    return R
+
+
+def exhaust_stack_mouth(sgn=1, m=72, n=200):
+    """Closed mouth curve (m + 1, 3) where the tube meets the scarf plane (the outlet opening)."""
+    R, _ = exhaust_stack_rings(sgn, n, m, scarf=True)
+    P = R[-1]
+    return np.vstack([P, P[:1]])
+
+
+def exhaust_stack_silhouette(sgn=1, view="front", nbin=90, n=160, m=72):
+    """Closed outline of the scarfed stack tube in a view: 'front' (BL, WL), 'side' (STA, WL) or 'plan' (STA, BL).
+    front / side: upper and lower envelope of all section rings per BL / STA bin; plan: the two horizontal walls
+    (ring angles 0 and pi, the ellipse's plan extremes) closed by the root chord and the scarf line."""
+    R, _ = exhaust_stack_rings(sgn, n, m, scarf=True)
+    if view == "plan":
+        a, b = R[:, 0, :2], R[:, m // 2, :2]
+        return np.vstack([a, b[::-1], a[:1]])
+    k = 1 if view == "front" else 0
+    Q = R.reshape(-1, 3)
+    u = Q[:, k]
+    ub = np.linspace(u.min(), u.max(), nbin + 1)
+    idx = np.clip(np.digitize(u, ub) - 1, 0, nbin - 1)
+    up, lo, uc = [], [], []
+    for i in range(nbin):
+        sel = idx == i
+        if sel.any():
+            uc.append(0.5 * (ub[i] + ub[i + 1]))
+            up.append(Q[sel, 2].max())
+            lo.append(Q[sel, 2].min())
+    uc = np.array(uc)
+    uc[0], uc[-1] = u.min(), u.max()
+    P = np.r_[np.c_[uc, up], np.c_[uc[::-1], np.array(lo)[::-1]]]
+    return np.vstack([P, P[:1]])
+
+
+def exhaust_stack_collar_points(sgn=1, m=72, n=200, k=8, facing=None):
+    """Surface points (N, 3) of the heat-blackened collar band: the last STACK_COLLAR of every generator line of the
+    scarfed tube (for silhouettes / hulls in the drawings).  facing = a view direction (towards the viewer, e.g.
+    (0, sgn, 0) from outboard, (0, 0, 1) from above) keeps only the generators whose outward normal faces it."""
+    R, _ = exhaust_stack_rings(sgn, n, m, scarf=True)
+    path = exhaust_stack_path(sgn, n)
+    th = np.linspace(0, 2 * np.pi, m, endpoint=False)
+    out = []
+    for j in range(m):
+        g = R[:, j]
+        sg = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(g, axis=0), axis=1))]
+        if facing is not None:
+            i = int(np.searchsorted(sg, sg[-1] - 0.5 * STACK_COLLAR))
+            i = min(max(i, 1), n - 1)
+            t = path[i] - path[i - 1]
+            t /= np.linalg.norm(t)
+            n1 = np.cross(t, [0.0, 0.0, 1.0])
+            n1 /= np.linalg.norm(n1)
+            n2 = np.cross(n1, t)
+            nrm = np.cos(th[j]) / STACK_AB[0] * n1 + np.sin(th[j]) / STACK_AB[1] * n2
+            if float(nrm @ np.asarray(facing, float)) <= 0.0:
+                continue
+        for s in np.linspace(sg[-1] - STACK_COLLAR, sg[-1], k):
+            out.append([np.interp(s, sg, g[:, i]) for i in range(3)])
+    return np.array(out)
+
+
+def exhaust_stack_collar(sgn=1, m=72, n=200):
+    """Forward edge (m + 1, 3) of the heat-blackened collar: STACK_COLLAR upstream of the cut along each generator."""
+    R, _ = exhaust_stack_rings(sgn, n, m, scarf=True)
+    out = []
+    for j in range(m):
+        g = R[:, j]
+        sg = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(g, axis=0), axis=1))]
+        out.append([np.interp(sg[-1] - STACK_COLLAR, sg, g[:, k]) for k in range(3)])
+    out = np.array(out)
+    return np.vstack([out, out[:1]])
+
+
+# Chin inlet (engine + oil-cooler air), Stage 2 rev C (review round 3, R3-3; decision D2: the fitted OML keel owns the
+# lip step STA 1.14 -> 1.20).  Front-view outlines fitted to the two loops of the Pilatus drawing's front view (and
+# its section EF1, STA 1.200), starboard half (y >= 0, mirrored), (BL, WL):
+#   mouth  the dark crescent under the spinner: lower (outer) edge from the bottom centre to the tip, upper edge from
+#          the tip back to the centre (WL 1278-1474, BL +/-274); in the side view the mouth lies in the forward-facing
+#          step of the keel between CHIN_INLET['x'] (1.14) and 1.20
+#   lip    outer edge of the polished lip ring round the mouth and the lower half of the spinner (WL 1222-1685,
+#          BL +/-340; its upper ends run into the exhaust-stack roots at WL ~1.6-1.7)
+#   side   the polished lip crescent in side projection (x, z): the drawn lip leading-edge line (STA 1118 WL 1510 ->
+#          1160 / 1340, onto the keel step) and an aft edge ~50 mm behind it (photo port_hangar_130, rectified)
+CHIN_INLET = dict(
+    x=1.140, x_step=1.200,
+    mouth_lower=((0.000, 1.278), (0.070, 1.284), (0.133, 1.305), (0.177, 1.326), (0.207, 1.347), (0.229, 1.364),
+                 (0.250, 1.383), (0.265, 1.401), (0.272, 1.414), (0.274, 1.428)),
+    mouth_upper=((0.274, 1.428), (0.272, 1.446), (0.264, 1.459), (0.250, 1.470), (0.230, 1.474), (0.210, 1.469),
+                 (0.190, 1.456), (0.160, 1.436), (0.130, 1.419), (0.100, 1.406), (0.060, 1.395), (0.000, 1.389)),
+    lip=((0.000, 1.223), (0.075, 1.230), (0.128, 1.243), (0.166, 1.258), (0.202, 1.274), (0.247, 1.300),
+         (0.281, 1.330), (0.310, 1.363), (0.330, 1.398), (0.339, 1.430), (0.340, 1.456), (0.336, 1.485),
+         (0.325, 1.513), (0.305, 1.540), (0.290, 1.565), (0.285, 1.595), (0.288, 1.630), (0.294, 1.685)),
+    side=((1.118, 1.545), (1.125, 1.495), (1.140, 1.430), (1.160, 1.345), (1.180, 1.275), (1.200, 1.233),
+          (1.250, 1.201), (1.228, 1.290), (1.206, 1.380), (1.188, 1.460), (1.172, 1.530), (1.150, 1.560)),
+)
+
+
+def chin_inlet_outline(part):
+    """Closed front-view outline (N, 2) (BL, WL) of the chin inlet 'mouth' or 'lip' (the lip ring's outer edge, closed
+    across its top ends), both halves; or the closed side-view crescent 'side' (x, z)."""
+    if part == "side":
+        P = np.array(CHIN_INLET["side"], float)
+        return np.vstack([P, P[:1]])
+    if part == "mouth":
+        H = np.vstack([CHIN_INLET["mouth_lower"], CHIN_INLET["mouth_upper"][1:]])
+    else:
+        H = np.array(CHIN_INLET["lip"], float)
+    H = np.asarray(H, float)
+    M = H[::-1] * [-1.0, 1.0]
+    P = np.vstack([H, M[1:]]) if part == "mouth" else np.vstack([M, H[1:]])
+    return np.vstack([P, P[:1]])
 
 def build_inlet_and_exhaust(parts):
     # chin scoop: lofted super-elliptic sections that fair into the lower cowling

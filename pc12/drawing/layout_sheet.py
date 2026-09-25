@@ -223,6 +223,21 @@ def reference():
             if ln["kind"] == "outline" and P[:, 1].max() > 2.6 and np.abs(P[:, 0]).max() < 0.2:
                 R[f"dorsal_hw_{n}"] = float(np.abs(P[:, 0]).max())
                 R[f"dorsal_top_{n}"] = float(P[:, 1].max())
+    # dorsal / fin root fillet: foot outline in plan (both halves), G3-2
+    for x in (10.0, 11.0, 12.2):
+        c = cross("plan", 0, x, -0.30, 0.30)
+        sides = [max([abs(v) for v in c if s_ * v > 0.05] or [np.nan]) for s_ in (1, -1)]
+        R[f"dorsal_fil_{x}"] = float(np.nanmean(sides))
+    # exhaust stacks (front: outer BL at WL 1700, centre WL at BL +/-550; plan: outer lip station) and chin inlet
+    R["stack_y_out"] = float(np.mean([max(abs(v) for v in cross("front", 1, 1.70, -0.8, 0.8) if s_ * v > 0.6)
+                                      for s_ in (1, -1)]))
+    R["stack_wl"] = float(np.mean([np.mean([min(c_), max(c_)]) for c_ in
+                                   (cross("front", 0, s_ * 0.55, 1.5, 1.9) for s_ in (1, -1))]))
+    R["stack_x_lip"] = float(np.mean([max(cross("plan", 1, s_ * 0.655, 1.9, 2.0)) for s_ in (1, -1)]))
+    c = cross("front", 0, 0.0, 1.25, 1.30)
+    R["inlet_bot"] = min(c)
+    R["inlet_tip"] = float(np.mean([max(abs(v) for v in cross("front", 1, 1.428, -0.3, 0.3) if s_ * v > 0.2)
+                                    for s_ in (1, -1)]))
     # strakes: FR38 / FR40 tip points (lowest outline point with |y| in 0.3..0.7)
     for n in ("FR38", "FR40"):
         best = None
@@ -415,6 +430,15 @@ def ours():
         O[f"dorsal_hw_{n}"], O[f"dorsal_top_{n}"] = best_w, top
         r, t = E.strake_frame(x)
         O[f"strake_tip_{n}"] = (float(t[1]), float(t[2]))
+    for x in (10.0, 11.0, 12.2):
+        O[f"dorsal_fil_{x}"] = float(E.dorsal_fillet_hw(x))
+    Sf = PP.exhaust_stack_silhouette(1, "front")
+    O["stack_y_out"] = float(Sf[:, 0].max())
+    near = Sf[np.abs(Sf[:, 0] - 0.55) < 0.012, 1]
+    O["stack_wl"] = float(0.5 * (near.min() + near.max()))
+    O["stack_x_lip"] = float(PP.exhaust_stack_silhouette(1, "plan")[:, 0].max())
+    O["inlet_bot"] = float(PP.CHIN_INLET["mouth_lower"][0][1])
+    O["inlet_tip"] = float(max(p[0] for p in PP.CHIN_INLET["mouth_lower"]))
     O["nose_axle"], O["main_axle"] = float(G.NOSE_AXLE[0]), float(G.MAIN_AXLE[0])
     O["track"] = G.TRACK
     O["prop_tilt"] = PP.THRUST_TILT_DEG
@@ -540,11 +564,17 @@ def draw_side(ds, v):
         cv.line(v.pt(xg, 0.0), v.pt(xg - 0.12, -0.12), W_GRID, color=MUTED)
     ax_ = PP.axis_point(np.array([0.2, 3.2]))              # thrust line: 2 deg nose-down, through the disc centre
     cv.line(v.pt(ax_[0, 0], ax_[0, 2]), v.pt(ax_[1, 0], ax_[1, 2]), W_GRID, CHAIN, color=MUTED)
-    # fuselage
-    cv.path(v.pts(np.c_[xs, F.z_top(xs)]), W_OBJ)
+    # fuselage: the crown is visible only to the nose of the dorsal root fillet; aft of it the crown lies inside the
+    # dorsal, the fillet and the fin root, and the visible edge is the fillet foot on the skin (G3-2 / G3-3)
+    xv = xs[xs <= E.DORSAL_FILLET[0][0]]
+    cv.path(v.pts(np.c_[xv, F.z_top(xv)]), W_OBJ)
     cv.path(v.pts(np.c_[xs, F.z_bot(xs)]), W_OBJ)
+    cv.path(v.pts(E.dorsal_root_line()), W_OBJ)
+    cv.path(v.pts(E.dorsal_seam()), W_FINE)
+    cv.path(v.pts(E.fin_fairing_edge()), W_FINE)
     cv.line(v.pt(x0, float(F.z_bot(x0))), v.pt(x0, float(F.z_top(x0))), W_FINE)
     cv.path(v.pts(PP.spinner_silhouette("side")), W_OBJ)
+    cv.path(v.pts(PP.exhaust_stack_silhouette(-1, "side")), W_FINE)          # port exhaust stack (near side)
     # propeller disc (edge-on) at the pitch-change plane, normal to the tilted thrust axis
     e = PP.prop_disc_edge("side")
     cv.line(v.pt(*e[0]), v.pt(*e[1]), W_FINE, PHANTOM)
@@ -578,9 +608,9 @@ def draw_side(ds, v):
     pod = np.r_[np.c_[prof[:, 0], D.POD_Z + prof[:, 1]], np.c_[prof[::-1, 0], D.POD_Z - prof[::-1, 1]]]
     cv.path(v.pts(pod), W_FINE, HID, closed=True)
     # empennage: fin + rudder + tab, dorsal, bullet, tailplane root section, strakes
-    zc = fin_crown_z()
     zt = E.BULLET[8][2]                                     # bullet bottom
-    cv.line(v.pt(E.fin_le(zc), zc), v.pt(E.fin_le(zt), zt), W_OBJ)
+    zj = float(E._dorsal_curve()[-1, 1])                    # fin LE visible above the dorsal blend only (G3-3)
+    cv.line(v.pt(E.fin_le(zj), zj), v.pt(E.fin_le(zt), zt), W_OBJ)
     cv.line(v.pt(*E.FIN_TE[0]), v.pt(E.fin_te(zt + 0.02), zt + 0.02), W_OBJ)
     (vx0, vz0), (vx1, vz1) = E.VENTRAL_EDGE
     vxs = np.linspace(vx0, vx1, 60)
@@ -645,6 +675,11 @@ def draw_plan(ds, v):
     cv.line(v.pt(x0, -F.SPINNER_R), v.pt(x0, F.SPINNER_R), W_FINE)
     cv.line(v.pt(x1, -float(F.half_w(x1))), v.pt(x1, float(F.half_w(x1))), W_FINE, HID)
     cv.path(v.pts(PP.spinner_silhouette("plan")), W_OBJ)            # on the yawed thrust axis (right thrust)
+    for sg in (1, -1):                                                # exhaust stacks: walls + scarfed outlet
+        Sp = PP.exhaust_stack_silhouette(sg, "plan")
+        keep = np.abs(Sp[:, 1]) >= F.half_w(Sp[:, 0]) - 1e-3
+        for seg in _runs(keep):
+            cv.path(v.pts(Sp[seg]), W_FINE)
     e = PP.prop_disc_edge("plan")
     cv.line(v.pt(*e[0]), v.pt(*e[1]), W_FINE, PHANTOM)
     ax_ = PP.axis_point(np.array([0.2, 2.2]))
@@ -715,11 +750,15 @@ def draw_plan(ds, v):
         hr = tip["horn_root"]
         cv.path(v.pts(np.c_[hr[:, 0], sg * hr[:, 1]]), W_FINE)
     cv.path(v.pts(np.r_[B[:, [0, 3]], (B[::-1][:, [0, 3]] * [1, -1])]), W_OBJ, closed=True)
-    # dorsal fin (plan envelope) and strake tips where they show beyond the fuselage
-    xd = np.linspace(E.DORSAL_X0, 12.6, 120)
-    wd = dorsal_plan_halfwidth(xd)
+    # dorsal / fin root fillet (foot on the skin, E.DORSAL_FILLET) with the dorsal / fin seam, and the strake tips
+    # where they show beyond the fuselage
+    xd = np.linspace(E.DORSAL_FILLET[0][0], E.DORSAL_FILLET[-1][0], 240)
+    wd = E.dorsal_fillet_hw(xd)
+    cv.path(v.pts(np.r_[np.c_[xd[::-1], wd[::-1]], np.c_[xd[1:], -wd[1:]]]), W_FINE)
+    sm = E.dorsal_seam()
+    ws = float(E.dorsal_fillet_hw(sm[0, 0]))
     for sg in (1, -1):
-        cv.path(v.pts(np.c_[xd, sg * wd]), W_FINE)
+        cv.line(v.pt(sm[0, 0], sg * ws), v.pt(sm[1, 0], 0.0), W_FINE)
     sx = np.linspace(E.STRAKE_ROOT[0][0] + 0.01, E.STRAKE_ROOT[1][0] - 0.01, 80)
     tips = np.array([E.strake_frame(x)[1] for x in sx])
     vis = tips[:, 1] > F.half_w(sx)
@@ -760,6 +799,22 @@ def draw_front(ds, v):
     cv.path(v.pts(np.c_[sb[1] + F.SPINNER_R * np.cos(a), sb[2] + F.SPINNER_R * np.sin(a)]), W_OBJ, closed=True)
     cv.path(v.pts(np.c_[hub[1] + PP.PROP_R * np.cos(a), hub[2] + PP.PROP_R * np.sin(a)]), W_FINE, PHANTOM,
             closed=True)
+    # chin inlet (PP.CHIN_INLET, fitted to the drawn front-view loops): dark crescent mouth and the lip ring's outer
+    # edge (open at its upper ends, where it runs into the exhaust-stack roots); exhaust stacks (scarfed tube
+    # silhouettes, outboard of the cowl side)
+    cv.path(v.pts(PP.chin_inlet_outline("mouth")), W_FINE)
+    L_ = PP.chin_inlet_outline("lip")[:-1]
+    cv.path(v.pts(L_), W_FINE)
+    for sg in (1, -1):
+        S_ = PP.exhaust_stack_silhouette(sg, "front")
+        root = PP.exhaust_stack_path(sg, 2)[0]
+        yr_ = float(F.side_y(PP.STACK_PTS[1][0], root[2]))              # the tube leaves the cowl side here
+        keep = np.abs(S_[:, 0]) >= yr_
+        for seg in _runs(keep):
+            cv.path(v.pts(S_[seg]), W_OBJ)
+        zs_ = S_[np.abs(np.abs(S_[:, 0]) - yr_) < 0.02, 1]
+        if len(zs_):
+            cv.line(v.pt(sg * yr_, float(zs_.min())), v.pt(sg * yr_, float(zs_.max())), W_FINE)
     # wing-to-body fairing: flat bottom and corner radii (section at its lowest station)
     xf = min(D.BELLY_FAIRING_BOT, key=lambda k: k[1])[0]
     ring = D.belly_fairing_section(xf, 160)
@@ -1053,6 +1108,17 @@ def deviation_rows(O, R):
         rows.append((item, s, dev(o, r, deg) if r is not None else "-",
                      dev(ra, r, deg) if (ra is not None and r is not None) else "-", note))
 
+    def add2(item, k0, k1, note="", deg=False):
+        """Two related values in one row: 'a / b'."""
+        o0, o1 = O.get(k0), O.get(k1)
+        r0, r1 = ((R.get(k0), R.get(k1)) if R else (None, None))
+        a0, a1 = REV_A.get(k0), REV_A.get(k1)
+        fm = (lambda v: f"{v:.2f}") if deg else f_mm
+        d_ = f"{dev(o0, r0, deg)} / {dev(o1, r1, deg)}" if (r0 is not None or r1 is not None) else "-"
+        ra_ = f"{dev(a0, r0, deg)} / {dev(a1, r1, deg)}" if ((a0 is not None and r0 is not None) or
+                                                            (a1 is not None and r1 is not None)) else "-"
+        rows.append((item, f"{fm(o0)} / {fm(o1)}", d_, ra_, note))
+
     add("Wing LE, BL 1000 (plan)", "wing_le_1.0", "straight LE x = 5.3302 + 0.040 y")
     add("Wing TE, BL 1000 (plan)", "wing_te_1.0", "root chord solved for 25.81 m2 total plan area")
     add("Wing LE, BL 4000", "wing_le_4.0")
@@ -1108,8 +1174,11 @@ def deviation_rows(O, R):
     add("Fin t/c at VF2 (%)", "fin_t_3.919", "NACA 0018", fmt=lambda v: f"{v * 100:.1f}")
     rows[-1] = (rows[-1][0], rows[-1][1], f"{(O['fin_t_3.919'] - R['fin_t_3.919']) * 100:+.1f}" if R else "-",
                 f"{(REV_A['fin_t'] - R['fin_t_3.919']) * 100:+.1f}" if R else "-", rows[-1][4])
-    for n in ("FR38", "FR40"):
-        add(f"Dorsal half-width {n}", f"dorsal_hw_{n}", "straight top edge from FR33, 0.134 m/m" if n == "FR38" else "")
+    add2("Dorsal slab half-width FR38 / FR40", "dorsal_hw_FR38", "dorsal_hw_FR40", "straight top edge from FR33, 0.134 m/m")
+    ks = [f"dorsal_fil_{x}" for x in (10.0, 11.0, 12.2)]
+    rows.append(("Dorsal root fillet hw (plan), STA 10000 / 11000 / 12200", " / ".join(f_mm(O[k]) for k in ks),
+                 " / ".join(dev(O[k], (R or {}).get(k)) for k in ks) if R else "-", "-",
+                 "E.DORSAL_FILLET foot (rev B: slab only 87 / 112 / 114)"))
     for n in ("FR38", "FR40"):
         o, r = O[f"strake_tip_{n}"], (R or {}).get(f"strake_tip_{n}")
         rows.append((f"Strake tip {n} (BL / WL)", f"{f_mm(o[0])} / {f_mm(o[1])}",
@@ -1119,12 +1188,18 @@ def deviation_rows(O, R):
     add("Main axle STA", "main_axle", "")
     add("Track (front)", "track", "Pilatus 4530")
     add("Radar pod nose STA (plan)", "pod_x0", "starboard wing tip; rev A at BL 3900")
-    add("Radar pod axis BL (front)", "pod_y")
-    add("Radar pod axis WL (front)", "pod_z")
+    add2("Radar pod axis BL / WL (front)", "pod_y", "pod_z")
     add("Radar pod radius", "pod_r", "PRO: enlarged for the 12-in GWX 8000")
+    rows.append(("Exhaust stack outer BL / centre WL (front)", f"{f_mm(O['stack_y_out'])} / {f_mm(O['stack_wl'])}",
+                 f"{dev(O['stack_y_out'], R.get('stack_y_out'))} / {dev(O['stack_wl'], R.get('stack_wl'))}" if R else "-",
+                 "-", "STACK_PTS rev C (rev B 675 / 1638); drawn nose / axis 15-18 high"))
+    add("Exhaust outlet, outer lip STA (plan)", "stack_x_lip", "scarfed outlet PP.STACK_SCARF (rev B plain end 1844)")
+    rows.append(("Chin inlet mouth BL tip / WL bottom (front)", f"{f_mm(O['inlet_tip'])} / {f_mm(O['inlet_bot'])}",
+                 f"{dev(O['inlet_tip'], R.get('inlet_tip'))} / {dev(O['inlet_bot'], R.get('inlet_bot'))}" if R else "-",
+                 "-", "PP.CHIN_INLET fitted (rev B mouth 225 / 1212)"))
     add("Prop disc centre STA (side)", "prop_x", "PP.PROP_X on the thrust axis (hub)")
-    add("Prop disc tilt deg (top fwd)", "prop_tilt", "THRUST_TILT_DEG: thrust line 2 deg nose-down", deg=True)
-    add("Prop disc yaw deg (stbd end aft)", "prop_yaw", "THRUST_YAW_DEG: right thrust 2 deg", deg=True)
+    add2("Prop disc tilt (top fwd) / yaw (stbd aft) deg", "prop_tilt", "prop_yaw",
+         "THRUST_TILT_DEG / _YAW_DEG: 2 deg nose-down, 2 deg right", deg=True)
     add("Prop clearance (side)", "prop_clear", "Pilatus 320 kept (+0.8 with the tilt)")
     sp = (R or {}).get("spinner")
     for view in ("side", "plan"):
@@ -1135,8 +1210,7 @@ def deviation_rows(O, R):
                      ("drawn axis 15 higher (WL 1655 kept)" if view == "side" else "profile refit on the axis") + was))
     add("Fairing flat bottom WL (front)", "fair_bot_front", "details.BELLY_FAIRING_* (single table)")
     add("Fairing bottom WL, STA 6000 (side)", "fair_bot_6.0", "hidden 6465-7450 behind the gear")
-    add("Fairing nose STA (side)", "fair_nose")
-    add("Fairing tail end STA (side)", "fair_tail", "tail lobe on the fuselage side")
+    add2("Fairing nose / tail end STA (side)", "fair_nose", "fair_tail", "tail lobe on the fuselage side")
     add("Fairing root fillet BL, STA 6300 (plan)", "fair_plan_6.3", "upper fillet over the wing root")
     add("Leg door plane BL at WL 700 (front)", "door_bl_0.7", "outboard of the tyre, leans out")
     add("Leg door lowest WL (front)", "door_low", "= side-view tip WL 318 (the drawn views differ by 20)")
@@ -1246,6 +1320,10 @@ def stage3_items():
         "Propeller: thrust line tilted 2 deg nose-down and yawed 2 deg right (powerplant.THRUST_*; disc STA 925 on "
         "the axis, hub BL +4): re-align the engine, mount, inlet, spinner mesh and the cowl-front ring (the spinner "
         "base centre sits 4 mm above the fuselage X0 ring centre); build.py disc construction line still at 0.80.",
+        "Dorsal: loft the root fillet into the tail cone (foot E.DORSAL_FILLET / dorsal_root_line, concave flank "
+        "E.dorsal_fillet_section, dorsal / fin seam E.dorsal_seam) and trim the crown under it. Exhaust stacks: tube "
+        "along PP.STACK_PTS / STACK_AB cut by the scarf plane PP.STACK_SCARF (exhaust_stack_rings(scarf=True)), black "
+        "collar STACK_COLLAR. Chin inlet: mouth + polished lip from PP.CHIN_INLET in the keel step (D2).",
         f"CLAUDE.md: update the wing facts (planform from the drawing, LEMAC 5462 / MAC 1724, dihedral "
         f"{math.degrees(W.DIHEDRAL):.2f} deg, airfoils = CST fits to the drawing, "
         "radar pod at the starboard wing tip, gear axles 2930.5 / 6410.5, thrust line 2 deg down / 2 deg right).",

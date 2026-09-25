@@ -253,23 +253,19 @@ def stack_collar_x(sgn=1):
     return float(np.interp(s[-1] - PP.STACK_COLLAR, s, path[:, 0]))
 
 
-def stack_front_silhouette(sgn=1, nbin=70):
-    """Front-view (y, z) silhouette of the whole swept stack tube (all section rings projected), as a closed
-    polygon: upper and lower envelope per BL bin (the tube is BL-monotone)."""
-    rings, _ = PP.exhaust_stack_rings(sgn, 160, 72)
-    Q = rings.reshape(-1, 3)[:, 1:]
-    yb = np.linspace(Q[:, 0].min(), Q[:, 0].max(), nbin + 1)
-    k = np.clip(np.digitize(Q[:, 0], yb) - 1, 0, nbin - 1)
-    up, lo, yc = [], [], []
-    for i in range(nbin):
-        m = k == i
-        if m.any():
-            yc.append(0.5 * (yb[i] + yb[i + 1]))
-            up.append(Q[m, 1].max())
-            lo.append(Q[m, 1].min())
-    yc = np.array(yc)
-    yc[0], yc[-1] = Q[:, 0].min(), Q[:, 0].max()
-    return np.r_[np.c_[yc, up], np.c_[yc[::-1], np.array(lo)[::-1]]]
+def stack_front_silhouette(sgn=1, nbin=90):
+    """Front-view (y, z) silhouette of the whole scarfed stack tube (powerplant.exhaust_stack_silhouette)."""
+    return PP.exhaust_stack_silhouette(sgn, "front", nbin=nbin)
+
+
+def stack_collar_hull(sgn, view):
+    """Outline of the heat-blackened collar band in a view ('side' (x, z) / 'plan' (x, y)): convex hull of its
+    surface points (powerplant.exhaust_stack_collar_points)."""
+    if view == "side":
+        Q = PP.exhaust_stack_collar_points(sgn, facing=(0.0, float(sgn), 0.0))       # seen from its own side
+        return _hull(Q[:, [0, 2]])
+    Q = PP.exhaust_stack_collar_points(sgn, facing=(0.0, 0.0, 1.0))                   # seen from above
+    return _hull(Q[:, [0, 1]])
 
 
 # schematic propeller blade (Stage 3: powerplant.blade_geometry should expose its chord law)
@@ -446,7 +442,10 @@ def draw_side(ds, v, side):
             ds.cv.line(v.pt(h[0] + 0.04, h[2]), v.pt(h[1] - 0.04, h[2]), W_GRID, color="#0B1020")
     # body outline, fin, rudder, tab, strake
     xs = np.linspace(X0_SIDE, X1_SIDE, 700)
-    outline(ds, v, np.c_[xs, F.z_top(xs)], W_FINE, closed=False)
+    xv = xs[xs <= E.DORSAL_FILLET[0][0]]                # crown: to the dorsal root-fillet nose; aft of it the edge
+    outline(ds, v, np.c_[xv, F.z_top(xv)], W_FINE, closed=False)       # is the fillet foot to the rudder nose
+    outline(ds, v, E.dorsal_root_line(), W_GRID, "#0B1020", closed=False)
+    outline(ds, v, E.dorsal_seam(), W_GRID, "#0B1020", closed=False)
     outline(ds, v, np.c_[xs, F.z_bot(xs)], W_FINE, closed=False)
     cur = E._dorsal_curve(64)
     xd = np.linspace(E.DORSAL_X0, float(cur[-1, 0]), 120)
@@ -493,6 +492,7 @@ def draw_side(ds, v, side):
         poly(ds, v, rad, col(L.SURFACES["pod_radome"]))
         outline(ds, v, body, W_FINE)
     draw_gear_side(ds, v)
+    draw_inlet_side(ds, v)
     draw_stack_side(ds, v, side)
     draw_prop_side(ds, v)
 
@@ -516,24 +516,25 @@ def wing_phantom():
 
 
 def draw_stack_side(ds, v, side):
-    """Stack seen from the side: polished tube (side projection of the swept tube, rounded ends) and the
-    heat-blackened outlet collar (the last PP.STACK_COLLAR of the path)."""
-    path, ra, rb = exhaust_stack(side)
-    x0, x1 = path[0, 0], path[-1, 0] + 0.01
-    zc = float(path[:, 2].mean())
-    P = FP.opening_outline(dict(cx=0.5 * (x0 + x1), cz=zc, hx=0.5 * (x1 - x0), hz=rb, r=0.07))
+    """Stack seen from the side: polished tube (side silhouette of the scarfed tube, powerplant.
+    exhaust_stack_silhouette) and the heat-blackened collar band at the scarfed outlet (STACK_COLLAR)."""
+    P = PP.exhaust_stack_silhouette(side, "side")
     poly(ds, v, P, col(L.SURFACES["exhaust"]))
-    xc = stack_collar_x(side)
-    m = P[:, 0] >= xc
-    if m.sum() > 2:
-        C = np.r_[P[m], [[xc, float(P[m][:, 1].min())], [xc, float(P[m][:, 1].max())]]]
-        ang = np.arctan2(C[:, 1] - zc, C[:, 0] - 0.5 * (xc + x1))
-        poly(ds, v, C[np.argsort(ang)], "#1E1B18")
-    hl = FP.opening_outline(dict(cx=0.5 * (x0 + xc) - 0.01, cz=zc + 0.45 * rb, hx=0.5 * (xc - x0) - 0.05,
+    poly(ds, v, stack_collar_hull(side, "side"), "#1E1B18")
+    zc = 0.5 * (P[:, 1].max() + P[:, 1].min())
+    rb = 0.5 * (P[:, 1].max() - P[:, 1].min())
+    x0, xc = float(P[:, 0].min()), float(PP.exhaust_stack_collar(side)[:, 0].min())
+    hl = FP.opening_outline(dict(cx=0.5 * (x0 + xc) + 0.01, cz=zc + 0.45 * rb, hx=0.5 * (xc - x0) - 0.06,
                                  hz=0.18 * rb, r=0.015))
     poly(ds, v, hl, "#E4DED3")
     outline(ds, v, P, W_THIN)
-    ds.cv.line(v.pt(xc, zc - 0.97 * rb), v.pt(xc, zc + 0.97 * rb), W_GRID, color=MUTED)
+
+
+def draw_inlet_side(ds, v):
+    """Polished chin-inlet lip crescent at the lower cowl front (powerplant.CHIN_INLET['side'])."""
+    P = PP.chin_inlet_outline("side")
+    poly(ds, v, P, col(L.SURFACES["inlet_lip"]))
+    outline(ds, v, P, W_GRID, "#0B1020")
 
 
 def draw_gear_side(ds, v):
@@ -665,8 +666,8 @@ def draw_plan(ds, v, upper=True):
     def fin():
         xs = np.linspace(E.fin_le(2.62), E.fin_te(3.9), 200)
         w = np.maximum(fin_plan_halfwidth(xs), 0.0)
-        xd = np.linspace(E.DORSAL_X0, E.fin_te(2.6), 160)
-        wd = dorsal_halfwidth(xd)
+        xd = np.linspace(E.DORSAL_X0, E.fin_te(2.6), 200)
+        wd = np.maximum(dorsal_halfwidth(xd), E.dorsal_fillet_hw(xd))     # root-fillet foot (E.DORSAL_FILLET)
         for xx, ww in ((xd, wd), (xs, w)):
             P = half(np.c_[xx, ww], xx)
             poly(ds, v, P, col(L.SURFACES["dorsal"]))
@@ -771,15 +772,9 @@ def draw_plan(ds, v, upper=True):
         outline(ds, v, shapes[0][0], W_THIN)
 
     def stacks():
-        path, ra, rb = exhaust_stack(1, 60)
-        d = np.gradient(path[:, :2], axis=0)
-        nrm = np.c_[-d[:, 1], d[:, 0]] / np.linalg.norm(d, axis=1)[:, None]
-        P = np.r_[path[:, :2] + ra * nrm, (path[:, :2] - ra * nrm)[::-1]]
+        P = PP.exhaust_stack_silhouette(1, "plan")
         poly(ds, v, P, col(L.SURFACES["exhaust"]))
-        m = path[:, 0] >= stack_collar_x(1)                    # heat-blackened outlet collar
-        if m.sum() >= 2:
-            Q = np.r_[path[m, :2] + ra * nrm[m], (path[m, :2] - ra * nrm[m])[::-1]]
-            poly(ds, v, Q, "#1E1B18")
+        poly(ds, v, stack_collar_hull(1, "plan"), "#1E1B18")        # heat-blackened collar at the scarfed outlet
         outline(ds, v, P, W_THIN)
 
     if upper:
@@ -1047,12 +1042,13 @@ SURFACE_ROWS = [
     ("wing_upper / wing_lower", "wing, flaps, ailerons, tabs: upper / lower face (normal split)"),
     ("winglet_inboard / _outboard", "winglet faces; WINGLET_PIN chordwise white line on the root blend"),
     ("stab_upper / stab_lower", "tailplane + elevators; STAB_BOOT LE band (8 / 6 % chord)"),
-    ("boot", "wing BOOT_Y 0.95-7.43 and tailplane leading edges"),
+    ("boot", "wing BOOT_Y 0.95-7.43 and tailplane leading edges (black rubber)"),
     ("bullet / dorsal / strakes", "bullet fairing white; dorsal + strakes base blue"),
     ("belly_fairing / flap_fairings", "dark wing paint"),
     ("pod_body / pod_radome", "radar pod blue; radome black ahead of POD_X_JOINT"),
     ("main / nose_gear_door", "leg doors blue; nose-gear doors light blue"),
     ("spinner / exhaust / blade_le", "polished chrome / polished stacks / erosion strip"),
+    ("inlet_lip / inlet_mouth", "chin inlet (powerplant.CHIN_INLET): polished lip ring, dark crescent mouth"),
 ]
 
 
@@ -1150,9 +1146,12 @@ def draw_front(ds):
     su = np.array([E.stab_section(y).upper(XC)[:, 2].max() for y in ys])
     sl = np.array([E.stab_section(y).lower(XC)[:, 2].min() for y in ys])
     stab = np.r_[np.c_[ys, su], np.c_[ys[::-1], sl[::-1]]]
+    boot = ys <= E.STAB_TIP_RIB                         # LE boot to the tip rib; raked tip + horn stay silver
+    stab_b = np.r_[np.c_[ys[boot], su[boot]], np.c_[ys[boot][::-1], sl[boot][::-1]]]
     for sg in (1, -1):
         P = stab * [sg, 1]
         poly(ds, v, P, col(L.SURFACES["stab_upper"]))
+        poly(ds, v, stab_b * [sg, 1], col(L.SURFACES["boot"]))
         outline(ds, v, P, W_FINE)
     zf = np.linspace(2.3, 4.05, 40)
     fw = np.array([0.5 * E.fin_section(z).chord * E.fin_section(z).airfoil.thickness(np.linspace(0, 1, 201)).max()
@@ -1204,16 +1203,23 @@ def draw_front(ds):
     th = np.linspace(0, 2 * np.pi, 145)
     env = F.section(np.full_like(th, 4.6), th / (2 * np.pi))[:, 1:]          # max section outline
     outline(ds, v, env, W_FINE)
+    # chin inlet (powerplant.CHIN_INLET): polished lip ring round the lower spinner, dark crescent mouth; it masks the
+    # side-projection stripes painted across the lower cowl
+    lip = PP.chin_inlet_outline("lip")
+    poly(ds, v, lip, col(L.SURFACES["inlet_lip"]))
+    poly(ds, v, np.c_[0.30 * np.cos(th) - 0.03, 1.36 + 0.07 * np.sin(th)], "#E9ECEF")        # lip highlight
+    mouth = PP.chin_inlet_outline("mouth")
+    poly(ds, v, mouth, col(L.SURFACES["inlet_mouth"]))
+    outline(ds, v, lip[:-1], W_THIN, closed=False)
+    outline(ds, v, mouth, W_THIN)
     for sg in (1, -1):
-        # the whole swept tube projected (a horizontal tube from the cowl side to the outlet), with the dark
-        # outlet collar seen end-on at its outboard end
+        # the scarfed tube projected (from the cowl side outboard round the elbow); its outlet faces aft-inboard,
+        # so the collar is hidden from ahead (rev B drew a forward-facing dark opening at the outboard end)
         S_ = stack_front_silhouette(sg)
         poly(ds, v, S_, col(L.SURFACES["exhaust"]))
-        path, ra, rb = exhaust_stack(sg)
-        e = path[-1]
-        poly(ds, v, np.c_[e[1] + 0.55 * ra * np.cos(th), e[2] + 0.55 * rb * np.sin(th)], "#1E1B18")
-        yb = np.linspace(path[0, 1], e[1], 5)[1:-1]
-        hl = np.c_[np.r_[yb[0], yb[-1], yb[-1], yb[0]], e[2] + rb * np.array([0.55, 0.55, 0.30, 0.30])]
+        zc_, rb = 0.5 * (S_[:, 1].max() + S_[:, 1].min()), 0.5 * np.ptp(S_[:, 1])
+        yb = np.linspace(float(PP.exhaust_stack_path(sg, 2)[0, 1]), sg * (float(np.abs(S_[:, 0]).max()) - rb), 5)[1:-1]
+        hl = np.c_[np.r_[yb[0], yb[-1], yb[-1], yb[0]], zc_ + rb * np.array([0.55, 0.55, 0.30, 0.30])]
         poly(ds, v, hl, "#E4DED3")
         outline(ds, v, S_, W_THIN)
     sp = np.c_[F.SPINNER_R * np.cos(th), F.PROP_AXIS_Z + F.SPINNER_R * np.sin(th)]
