@@ -17,15 +17,19 @@ http://localhost:8000/live3.html                        # live (relay auto-detec
   ?tier=high|medium|low   force a quality tier (default: the old app's choice: phones low, <=4 GB medium, else high)
   ?webgl=1                force the WebGL 2 backend       ?revz=0   no reversed depth buffer
   ?res=1                  render at canvas size x DPR (QA renders; the app's dynamic resolution is ignored)
-  ?sat= ?contrast= ?expo= grade overrides (defaults 1.2 / 1.5 / 1.0)
+  ?sat= ?contrast= ?lookSat= ?vignette= ?expo=   grade overrides (defaults 1.05 / 1.4 / 1.1 / app 0.18 / 1.0)
 ```
 
-QA harness (same mock relay and snapshot as `jobs/qa3.mjs`; renders both renderers in one browser session):
+QA harnesses (same mock relay and snapshot as `jobs/qa3.mjs`):
 
 ```
 SOFTGL=1 W=960 H=540 OUT=out/engine PAGES="live3.html,live.html" \
   VIEWS="view:overview;gate:B26,60,1,14;hold:12;tower;thr:28R" node livetest.mjs tools/build3/job_views.mjs
 # -> out/engine/new_<view>.png (three.js), out/engine/old_<view>.png (current renderer)
+SOFTGL=1 W=960 H=540 OUT=out/engine2 PAGE="live3.html?tier=high" HDR=1 node livetest.mjs tools/build3/job_review.mjs
+# -> review views (day, dusk, night) + per-frame metrics + HDR dumps; python3 tools/build3/grade_hdr.py grades dumps offline
+SOFTGL=1 PREV=out/three_prev.js node livetest.mjs tools/build3/job_ghost.mjs     # TRAA disocclusion A/B (§4.3)
+node tools/build3/wgpu_run.mjs tools/build3/job_dev.mjs                          # dev pages on WebGPU (SwiftShader)
 ```
 
 ## 2. How the app runs unchanged (import-map module swap)
@@ -51,17 +55,19 @@ without any port work, as long as `app.js` keeps its renderer calls (listed in `
 
 | File | Content | Ported from |
 |---|---|---|
-| `engine.js` | `WebGPURenderer` (reversed depth), camera, sun + `CSMShadowNode` (splits from the rig's `shadowSplits`), post: depth/normal/velocity pre-pass -> GTAO (into the ambient term via `builtinAOContext`) -> lit pass -> TRAA -> bloom (high) -> AgX -> grade (saturation 1.2, S-curve contrast 1.5 around 0.45) -> sRGB. Low tier: one MRT pass, half-res GTAO multiplied into colour, TRAA. | `js/renderer.js`, `js/shaders/post.js` |
-| `sky.js` | Rayleigh/Mie single-scattering sky (same constants/steps), sun disk, cirrus, METAR cloud layer, low overcast slab, ENV composition -> PMREM (GGX-prefiltered IBL), exponential height fog with Mie glow as `scene.fogNode`; ambient terms computed on the CPU so `setupSky` stays synchronous. | `common.js` SKY_PRECOMPUTE_FS, `env.js` SKY_FS / ENV_FS / CLOUD_FS, `renderer.js setupSky` |
-| `ground.js` | Airfield / aux / city bakes (QuadMesh into render targets), ground material with the SDF runway markings (thresholds, designations from the glyph atlas, TDZ, aiming point, displaced-threshold arrows, blast-pad chevrons, rubber), concrete joints, night floodlight pools and street lights; water with wave-slope normals, IOR 1.333 Fresnel, foam at the seawall. | `js/shaders/ground.js`, `env.js` WATER_FS |
-| `markings.js` | Taxiway/hold/edge/road ribbons and stand lead-ins/red boxes with the min-0.75 px width and area-correct alpha, anti-aliased dashes averaging to their duty ratio far away. | `js/live/markings.js` MARK_VS/FS |
-| `objects.js` | PBR object material (terminals, tower, ITB, garages, masts, EMAS, piers, bridges, stand equipment, GSE): the 14 procedural material ids (curtain wall, panels, garage, corrugated metal, roofs, windows, foliage, tunnel ribs, garage-roof cars, tower glass, hangar door, lamp lenses, service facade, tower LED ribbon), vehicle tint. | `js/shaders/objects.js` |
-| `signs.js` | Hold / location / painted / distance-remaining / gate / stand / VDGS faces rebuilt as panel + MSDF glyph quads (sharp at any distance); faces found by the UV rectangle the existing builders emit. | `js/live/signs.js` makeAtlas styles |
-| `bridges.js` | Converts `LiveGateSystem.items()` (batched static bridges + stand equipment, per-frame mesh of the moving bridges only, sign quads, GSE instances -> `InstancedMesh` per vehicle type). | uses `js/live/gates.js` as is |
+| `engine.js` | `WebGPURenderer` (reversed depth), camera, sun + `CSM3` (CSMShadowNode with a per-cascade slope-scaled bias; normal offset 1.25 texels per cascade), post: depth/normal/velocity pre-pass -> GTAO (4 m radius, into the ambient term via `builtinAOContext`) -> lit pass -> TRAA -> + light-sprite pass (after TRAA, un-jittered camera) -> exposure -> bloom (all tiers; threshold in exposed units, soft luminance clamp) -> AgX with a look (contrast 1.4 in log2 around 18 % grey, look saturation 1.1) -> saturation -> vignette -> sRGB -> dither/grain. Low tier: one MRT pass, half-res GTAO multiplied into colour, TRAA, same output chain. Registers the floodlight light node. | `js/renderer.js`, `js/shaders/post.js` |
+| `flood.js` | Apron floodlights as a light: CPU field of the 70 observed masts (vector irradiance + horizontal spread, RGBA16F over the masts' box, calibrated to the ICAO 20 lux stand average) and `FloodLightNode` (a three.js analytic light node sampling it per pixel). | new (review round 1) |
+| `sky.js` | Rayleigh/Mie single-scattering sky (same constants/steps), sun disk, cirrus, METAR cloud layer, low overcast slab, ENV composition -> PMREM (GGX-prefiltered IBL, ground below the horizon = the airfield bake's mean albedo x irradiance), `skyAlong(ro, rd)` (the visible sky from any point: background and water reflections), night floor with a warm horizon glow, exponential height fog with Mie glow as `scene.fogNode`; ambient terms computed on the CPU so `setupSky` stays synchronous. | `common.js` SKY_PRECOMPUTE_FS, `env.js` SKY_FS / ENV_FS / CLOUD_FS, `renderer.js setupSky` |
+| `ground.js` | Airfield / aux / city bakes (tiles of <= 1024² texels, a few per frame, NoBlending so the coverage alpha survives), ground material with the SDF runway markings (thresholds, designations from the glyph atlas, TDZ, aiming point, displaced-threshold arrows, blast-pad chevrons, rubber), concrete joints, city street lights at night (energy-conserving far away; the apron floodlights are `flood.js`); water with wind-driven wave slopes and roughness, IOR 1.333 Fresnel, its sky reflection = `skyAlong` from the water point, foam at the seawall. | `js/shaders/ground.js`, `env.js` WATER_FS |
+| `markings.js` | Taxiway/hold/edge/road ribbons and stand lead-ins/red boxes with a minimum 1.2 px width measured on the projected perpendicular (foreshortening-aware) and area-correct alpha, anti-aliased dashes averaging to their duty ratio far away. | `js/live/markings.js` MARK_VS/FS |
+| `objects.js` | PBR object material (MeshPhysical: IOR per material id) for terminals, tower, ITB, garages, masts, EMAS, piers, bridges, stand equipment, GSE: the 14 procedural material ids (curtain wall = coated glass IOR 2.0 over parallax rooms with per-pane roughness / normal variation, panels, garage, corrugated metal, roofs, windows, foliage, tunnel ribs, garage-roof cars, tower cab glass and LED ribbon = coated glass, hangar door, lamp lenses, service facade), vehicle tint. | `js/shaders/objects.js` |
+| `signs.js` | Hold / location / painted / distance-remaining / gate / stand / VDGS faces rebuilt as panel + MSDF glyph quads (sharp at any distance); faces found by the UV rectangle the existing builders emit. Fallback when the font fails: the builders' own quads with their canvas atlas (`atlasSignMaterial`). | `js/live/signs.js` makeAtlas styles |
+| `bridges.js` | Converts `LiveGateSystem.items()` (batched static bridges + stand equipment, per-frame mesh of the moving bridges only, sign quads, GSE instances -> `InstancedMesh` per vehicle type). Bridges and GSE do not wait for the sign font; sign faces follow when it arrives (or from the atlas fallback). | uses `js/live/gates.js` as is |
 | `aircraft.js` | Imported models: paint zones recoloured by livery, clear-coat paint, glass as a smooth clear-coat layer with warm cabin light at night, bare metal, lenses, gear collapse; procedural airframes (windows, doors, flight-deck panes, fin, engines); per-aircraft uniforms (`onObjectUpdate`) so each model is one program; brand x model livery textures as loaded by `LiveAircraft` (`ac.livTex`, js/aircraft/liveries.js) on the atlas draws, atlas alpha = painted cabin-window glass. | `js/shaders/aircraft_real.js`, `aircraft.js` |
-| `lights.js` | All light sprites in one instanced additive draw (directional lobes, 2.2 px minimum size with energy conservation). | `js/shaders/sprites.js` |
-| `convert.js`, `tsl/common.js` | Record -> BufferGeometry/Texture; hashes, value noise, fbm, `band()`, viewer-facing normals. | `common.js` noise chunk |
-| `assets/msdf_signs.*` | Offline MSDF atlas (Liberation Sans/Mono Bold, SIL OFL), `tools/build3/msdf_atlas.py`. | — |
+| `lights.js` | All light sprites in one instanced additive draw in their own pass after TRAA (directional lobes, 2.2 px minimum with energy conservation, 12 px maximum, halo capped in exposed units, x0.5 by day, markers fade out within 150 m; occlusion by the scene depth per fragment). | `js/shaders/sprites.js` |
+| `convert.js`, `tsl/common.js` | Record -> BufferGeometry/Texture (image textures from non-premultiplied ImageBitmap copies, uploaded at once and released: `compat/gl.js` snapshot / `imageHooks`); hashes, value noise, fbm, `band()`, viewer-facing normals. | `common.js` noise chunk |
+| `assets/msdf_signs.*` | Offline MSDF atlas (Liberation Sans/Mono Bold, SIL OFL), `tools/build3/msdf_atlas.py`; `build.mjs --app` copies it next to the bundle. | — |
+| `dev/*.html`, `dev/ghost.js` | Dev pages: `envtest` (`?night=1` floodlights, `?sprites=1` light pass), `shadowtest` (`?eng=nobias` etc.), `ghosttest` (TRAA A/B), `actest`, `marktest`, `probe`. | — |
 
 ## 4. Observed in this sandbox (headless Chromium 141, Mesa llvmpipe via `SOFTGL=1`, 4 vCPU shared)
 
