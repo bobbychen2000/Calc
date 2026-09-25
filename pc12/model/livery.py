@@ -62,6 +62,9 @@ PALETTE = {
     "paint_silver":      ("#AAB0B6", 0.70, 0.30, "silver-grey metallic (tailplane, elevators)"),
     "paint_black":       ("#16181B", 0.00, 0.25, "gloss black (radar-pod radome)"),
     "trim_black":        ("#242629", 0.00, 0.16, "PRO windshield mask (dark trim)"),
+    # de-ice boots (rubber, not paint): near-black -- photos IMG_0459 ~RGB (32-35, 43-51, 44-64), the Pilatus front
+    # render's wing front face (30-38, 36-44, 41-49); rev B drew them mid-grey (#656769)
+    "deice_boot":        ("#2A2F33", 0.00, 0.75, "wing / tailplane leading-edge de-ice boots (black rubber)"),
     "chrome":            ("#F6F7F8", 1.00, 0.08, "polished chrome (spinner)"),
     "exhaust_polished":  ("#CFC5B4", 1.00, 0.18, "polished exhaust stacks (heat tint)"),
     "prop_blade":        ("#3C3C3F", 0.00, 0.45, "propeller blade (black)"),
@@ -69,7 +72,7 @@ PALETTE = {
     "prop_band_red":     ("#C4261D", 0.00, 0.40, "propeller blade red band"),
 }
 # pre-existing materials of model/assemble.py that the livery uses unchanged
-EXISTING = ("paint_white", "trim_black", "chrome", "prop_blade", "prop_tip")
+EXISTING = ("paint_white", "trim_black", "chrome", "prop_blade", "prop_tip", "deice_boot")
 # flat colours for the drawings where the PBR base colour would mislead (polished metal renders from its
 # reflections; the blade base colour is lifted for PBR)
 DRAWING_COLOR = {"chrome": "#C5CBD1", "exhaust_polished": "#B3AA9B", "prop_blade": "#1F2023"}
@@ -133,27 +136,31 @@ STROKES = {
         (6.500, 1.725, 0.018), (7.000, 1.775, 0.019), (7.500, 1.825, 0.020), (8.000, 1.870, 0.021),
         (9.000, 1.935, 0.023), (10.00, 1.985, 0.025), (11.00, 2.015, 0.027), (12.00, 2.030, 0.028),
         (13.00, 2.035, 0.028), (13.60, 2.035, 0.026), (14.10, 2.035, 0.000)]),
-    # upper edge of the light band on the tail cone
+    # upper edge of the light band on the tail cone, descending aft from STA ~10.75 onto the rudder (review round 3,
+    # R3-2: white peaks of the rectified stbd_ground / stbd_air photos, mean of the two cameras; they differ by 4-10 cm)
     "H1": ("paint_pinstripe", [
-        (8.300, 2.390, 0.000), (8.800, 2.430, 0.016), (9.500, 2.448, 0.020), (10.50, 2.457, 0.022),
-        (11.50, 2.455, 0.022), (12.30, 2.440, 0.022), (12.90, 2.405, 0.020), (13.40, 2.360, 0.018),
-        (13.80, 2.320, 0.000)]),
+        (8.300, 2.390, 0.000), (8.800, 2.430, 0.016), (9.500, 2.448, 0.020), (10.50, 2.440, 0.022),
+        (11.00, 2.420, 0.022), (11.50, 2.390, 0.022), (12.00, 2.360, 0.022), (12.50, 2.310, 0.021),
+        (13.00, 2.220, 0.020), (13.50, 2.170, 0.019), (13.70, 2.145, 0.017), (13.90, 2.125, 0.012)]),
     # thin line above H1 rising aft to the crown
     "U1": ("paint_pinstripe", [
         (8.300, 2.400, 0.000), (8.800, 2.430, 0.010), (9.500, 2.490, 0.012), (10.00, 2.527, 0.013),
         (10.50, 2.635, 0.013), (10.80, 2.700, 0.012), (11.00, 2.760, 0.000)]),
-    # diagonal across the light band, rising aft to the fin root
+    # diagonal across the light band, rising aft to the fin root, flattening aft of its crossing with H1 (R3-2 photo
+    # peaks: STA 12.5 WL 2.42 / 2.41, 12.9 2.45 / 2.47 -- rev B rose to 2.54, 6-7 cm high)
     "X1": ("paint_pinstripe", [
-        (8.400, 1.840, 0.000), (9.000, 1.905, 0.016), (10.00, 2.065, 0.019), (11.00, 2.235, 0.020),
-        (12.00, 2.400, 0.020), (12.60, 2.490, 0.018), (12.95, 2.540, 0.000)]),
+        (8.400, 1.840, 0.000), (9.000, 1.905, 0.016), (10.00, 2.065, 0.019), (11.00, 2.225, 0.020),
+        (11.50, 2.300, 0.020), (12.00, 2.370, 0.020), (12.50, 2.420, 0.019), (12.90, 2.460, 0.012),
+        (13.05, 2.475, 0.000)]),
     # steeper diagonal from the fuselage side into the light band
     "X2": ("paint_pinstripe", [
         (8.500, 1.950, 0.000), (9.000, 2.110, 0.020), (9.500, 2.270, 0.022), (10.00, 2.420, 0.022),
         (10.40, 2.540, 0.018), (10.80, 2.640, 0.000)]),
-    # ... and its reflection off the crown: descending aft to the lower rudder
+    # ... and its reflection off the crown: a short, steeper stroke descending aft from the crown that fades out above
+    # H1 (R3-2: the photos show it only at STA 10.5-11.2, WL 2.62-2.54; no separate line above H1 further aft)
     "X3": ("paint_pinstripe", [
-        (10.60, 2.650, 0.000), (11.00, 2.615, 0.012), (11.50, 2.555, 0.015), (12.20, 2.470, 0.017),
-        (12.90, 2.370, 0.018), (13.50, 2.275, 0.017), (13.95, 2.215, 0.000)]),
+        (10.60, 2.705, 0.000), (10.80, 2.660, 0.009), (11.00, 2.605, 0.011), (11.20, 2.550, 0.009),
+        (11.40, 2.500, 0.000)]),
     # deep-blue counter-stroke splitting the light swoosh under P2 (from under the cockpit to the wing TE)
     "W1": ("paint_blue", [
         (3.800, 1.250, 0.000), (4.200, 1.285, 0.030), (4.500, 1.318, 0.060), (5.000, 1.350, 0.090),
@@ -169,15 +176,19 @@ REGIONS = {
     "light": ("paint_blue_light",
               [(1.000, 1.330), (1.500, 1.198), (2.000, 1.180), (2.500, 1.220), (3.000, 1.259), (3.500, 1.330),
                (4.000, 1.418), (4.500, 1.519), (5.000, 1.629), (5.500, 1.739), (6.000, 1.839), (6.500, 1.949),
-               (7.000, 2.048), (7.500, 2.150), (8.000, 2.330), (8.500, 2.410), (9.000, 2.435), (10.00, 2.448),
-               (11.00, 2.448), (12.00, 2.432), (12.80, 2.400), (13.30, 2.352), (13.60, 2.310), (14.40, 2.240)],
+               (7.000, 2.048), (7.500, 2.150), (8.000, 2.330), (8.500, 2.410), (9.000, 2.435), (10.00, 2.440),
+               (10.50, 2.432), (11.00, 2.412), (11.50, 2.382), (12.00, 2.352), (12.50, 2.303), (13.00, 2.213),
+               (13.50, 2.163), (13.70, 2.138), (14.40, 2.080)],
               [(1.000, 0.500), (4.200, 0.500), (4.650, 0.880), (5.000, 1.100), (5.500, 1.250), (6.000, 1.400),
                (6.500, 1.520), (7.000, 1.640), (7.300, 1.745), (7.600, 1.800), (8.000, 1.850), (9.000, 1.915),
                (10.00, 1.962), (11.00, 1.990), (12.00, 2.004), (13.00, 2.010), (14.40, 2.010)]),
 }
 
-# white fin cap: fin / rudder above this line (the bullet fairing is white all over)
-FIN_CAP = [(12.600, 3.520), (12.850, 3.640), (13.200, 3.820), (13.500, 3.950), (14.000, 4.150)]
+# white fin cap: fin / rudder above this line (the bullet fairing is white all over).  Review round 3 (R3-1): both
+# starboard photos rectified onto the fin plane show the white cap across the WHOLE fin chord below the bullet, its
+# lower boundary rising gently aft (ground / air: STA 12.9 WL 3.545 / 3.62, 13.3 3.63 / 3.68, 13.9 3.735, 14.3 3.76),
+# so the rudder top and the fixed fin tip are white too (rev B line rose steeply to WL 4.15 and left them blue)
+FIN_CAP = [(12.600, 3.470), (12.900, 3.560), (13.300, 3.650), (13.700, 3.710), (14.100, 3.750), (14.400, 3.760)]
 FIN_CAP_X0 = 12.0                     # the cap region starts on the fin (never on the dorsal / tail cone)
 
 # paint priority, top first (the painter trims in this order; the rest is the base colour).  'paint_blue'
@@ -202,6 +213,7 @@ SURFACES = dict(
     pod_body="paint_blue", pod_radome="paint_black",              # radome forward of details.POD_X_JOINT
     main_gear_door="paint_blue", nose_gear_door="paint_blue_light",
     spinner="chrome", exhaust="exhaust_polished",
+    inlet_lip="chrome", inlet_mouth="inlet_dark",                 # chin inlet (powerplant.CHIN_INLET): polished lip
     blade_le="erosion",                                           # blade leading-edge erosion strip (metal)
 )
 STAB_BOOT = dict(upper=0.08, lower=0.06)      # tailplane LE boot, chord fractions (photos: black LE band)

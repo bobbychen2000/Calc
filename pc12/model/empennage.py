@@ -274,6 +274,95 @@ def dorsal_edge_x(z):
     return float(np.interp(z, cur[:, 1], cur[:, 0]))
 
 
+# Dorsal / fin ROOT FILLET (Stage 2 rev C, review round 3, G3-2).  The Pilatus drawing's plan view draws the dorsal's
+# root as a closed outline on the tail cone, about twice as wide as the dorsal slab (half-width 72 mm at STA 9250,
+# 170 at 10000, 222 at 11000, 252 at 12200), and its side view draws the matching line exactly at z_at(x, that
+# half-width) -- an edge on the skin: the foot of a broad fillet that fairs the dorsal (and, aft of the dorsal / fin
+# seam, the fin root) into the tail cone.  The top-view photos (unk_top_front_pilatus, unk_top_corsica_pilatus) show
+# the same V-shaped, widening root.  The drawing's frame sections FR36-FR40 draw the slab only (114 mm half-width,
+# no fillet); the slab (DORSAL_HW) is kept and the fillet is the low concave flank from the slab side down to this
+# foot line.  Table: (STA, half-width of the foot on the OML); round nose at STA 9.023; from the seam (DORSAL_SEAM)
+# aft the foot follows the drawn side-view line (skin half-width side_y(x, z_drawn)) to the rudder nose at STA ~13.0.
+DORSAL_FILLET = ((9.023, 0.000), (9.030, 0.025), (9.050, 0.038), (9.100, 0.047), (9.200, 0.064), (9.400, 0.095),
+                 (9.600, 0.123), (9.800, 0.148), (10.000, 0.170), (10.200, 0.187), (10.500, 0.206), (10.800, 0.218),
+                 (11.200, 0.225), (11.600, 0.231), (12.000, 0.246), (12.200, 0.252), (12.373, 0.249), (12.500, 0.238),
+                 (12.600, 0.222), (12.700, 0.202), (12.800, 0.180), (12.900, 0.157), (13.000, 0.134))
+# the fillet flank meets the slab / fin side this far above the crown: aft of the seam the drawing shows that upper
+# edge of the fin-root fairing as a line from the seam (STA 12410 WL 2615) to the rudder nose (13080 / 2505), i.e.
+# 55-65 mm above our crown
+DORSAL_FILLET_RISE = 0.060
+DORSAL_SEAM_X0 = 12.373         # dorsal / fin panel seam: from the fillet foot here up to the dorsal-curve end
+
+
+def dorsal_fillet_hw(x):
+    """Half-width of the dorsal / fin root-fillet foot on the OML at station(s) x (0 outside the table)."""
+    from cad.mesh import pchip
+    T = np.array(DORSAL_FILLET)
+    x = np.asarray(x, float)
+    w = pchip(T[:, 0], T[:, 1])(np.clip(x, T[0, 0], T[-1, 0]))
+    return np.where((x >= T[0, 0]) & (x <= T[-1, 0]), np.maximum(w, 0.0), 0.0)
+
+
+def dorsal_root_line(n=200):
+    """Side-view line (x, z) of the fillet foot: z_at(x, dorsal_fillet_hw(x)) from the nose to the rudder nose."""
+    T = np.array(DORSAL_FILLET)
+    xs = np.linspace(T[0, 0], T[-1, 0], n)
+    return np.c_[xs, F.z_at(xs, dorsal_fillet_hw(xs))]
+
+
+def dorsal_seam():
+    """Dorsal / fin seam (2, 2) (x, z): from the fillet foot at DORSAL_SEAM_X0 to the end of the dorsal top curve."""
+    x0 = DORSAL_SEAM_X0
+    return np.array([[x0, float(F.z_at(x0, dorsal_fillet_hw(x0)))], list(_dorsal_curve()[-1])])
+
+
+def fin_fairing_edge(n=60):
+    """Side-view upper edge (x, z) of the fin-root fairing aft of the dorsal / fin seam: WL z_top(x) + RISE from the
+    seam to the rudder nose line (chord fraction RUD_NOSE_XC)."""
+    sm = dorsal_seam()
+    z_of = lambda x: F.z_top(x) + DORSAL_FILLET_RISE                                   # noqa: E731
+    x0 = sm[0, 0]
+    for _ in range(40):                                  # where the seam line reaches the edge WL
+        x0 = sm[0, 0] + (float(z_of(x0)) - sm[0, 1]) * (sm[1, 0] - sm[0, 0]) / (sm[1, 1] - sm[0, 1])
+    x1 = 13.0
+    for _ in range(40):                                  # where the rudder nose line reaches it
+        x1 = float(fin_chord_x(RUD_NOSE_XC, float(z_of(x1))))
+    xs = np.linspace(x0, x1, n)
+    return np.c_[xs, z_of(xs)]
+
+
+def dorsal_body_hw(x, z):
+    """Half-width of the dorsal slab or the fin (whichever is wider) at station x, WL z (0 outside both)."""
+    w = 0.0
+    if z <= _dorsal_curve()[-1, 1] + 0.05:
+        s = dorsal_section(z)
+        xc = (x - s.le[0]) / s.chord
+        if 0.0 <= xc <= 1.0:
+            w = max(w, float(s.chord * s.airfoil.upper(np.array(xc))))
+    s = fin_section(z)
+    xc = (x - s.le[0]) / s.chord
+    if 0.0 <= xc <= 1.0:
+        w = max(w, float(0.5 * s.chord * s.airfoil.thickness(np.array(xc))))
+    return w
+
+
+def dorsal_fillet_section(x, n=16):
+    """Starboard fillet flank (n, 2) (y, z) at station x, from the foot on the OML (tangent to the skin) up to the slab /
+    fin side at WL z_top(x) + DORSAL_FILLET_RISE (tangent to vertical): quadratic Bezier (Stage 3 lofts it)."""
+    yf = float(dorsal_fillet_hw(x))
+    if yf <= 0.0:
+        return np.zeros((0, 2))
+    zf = float(F.z_at(x, yf))
+    zt = float(F.z_top(x)) + DORSAL_FILLET_RISE
+    ys = min(dorsal_body_hw(x, zt), 0.95 * yf)
+    e = 1e-3
+    slope = (float(F.z_at(x, yf + e)) - float(F.z_at(x, yf - e))) / (2 * e)          # dz/dy of the skin at the foot
+    c = np.array([ys, zf + slope * (ys - yf)])                                         # skin tangent meets y = ys
+    c[1] = min(max(c[1], zf), zt)
+    t = np.linspace(0.0, 1.0, n)[:, None]
+    return (1 - t) ** 2 * np.array([yf, zf]) + 2 * t * (1 - t) * c + t ** 2 * np.array([ys, zt])
+
+
 def dorsal_section(z):
     x_start = dorsal_edge_x(z)
     x_end = fin_le(z) + 0.45

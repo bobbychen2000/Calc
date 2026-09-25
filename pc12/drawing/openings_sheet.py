@@ -202,17 +202,32 @@ def rev_a_outlines(side):
 def plan_projection(P, side):
     """Side-projection outline (x, z) on the OML -> plan (x, y) runs, flagged visible (above the max-breadth
     WL, facing up) or hidden."""
-    x, z = P[:, 0], P[:, 1]
-    y = side * F.side_y(x, z)
-    vis = z >= F.z_mw(x)
-    out = []
-    start = 0
-    for i in range(1, len(P) + 1):
-        if i == len(P) or vis[i] != vis[start]:
-            j0 = max(start - 1, 0)
-            out.append((np.c_[x[j0:i], y[j0:i]], bool(vis[start])))
-            start = i
-    return out
+    P = np.asarray(P, float)
+    # Densify to <= 5 mm first (G3-1): side_y() is strongly non-linear in z near the max breadth, so a long straight
+    # edge of the coarse round-cornered outline must not be mapped as one chord with one visibility flag.
+    seg = np.linalg.norm(np.diff(P, axis=0), axis=1)
+    sa = np.r_[0.0, np.cumsum(seg)]
+    su = np.unique(np.r_[sa, np.linspace(0.0, sa[-1], max(int(np.ceil(sa[-1] / 0.005)), 2) + 1)])
+    x, z = np.interp(su, sa, P[:, 0]), np.interp(su, sa, P[:, 1])
+    g = z - F.z_mw(x)
+    vis = g >= 0.0
+    # split the runs exactly at z = z_mw(x): the interpolated crossing point ends one run and starts the next
+    runs, cur = [], [(x[0], z[0])]
+    for i in range(1, len(x)):
+        if vis[i] != vis[i - 1]:
+            f = g[i - 1] / (g[i - 1] - g[i])
+            xc = x[i - 1] + f * (x[i] - x[i - 1])
+            pc = (xc, float(F.z_mw(xc)))
+            cur.append(pc)
+            runs.append((np.array(cur), bool(vis[i - 1])))
+            cur = [pc]
+        cur.append((x[i], z[i]))
+    runs.append((np.array(cur), bool(vis[-1])))
+    closed = np.allclose(P[0], P[-1])
+    if closed and len(runs) > 1 and runs[0][1] == runs[-1][1]:       # join across the start of a closed loop
+        runs[0] = (np.vstack([runs[-1][0], runs[0][0][1:]]), runs[0][1])
+        runs.pop()
+    return [(np.c_[Q[:, 0], side * F.side_y(Q[:, 0], Q[:, 1])], v) for Q, v in runs if len(Q) >= 2]
 
 
 def cockpit_window_outline():
