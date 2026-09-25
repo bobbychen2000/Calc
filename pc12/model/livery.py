@@ -199,6 +199,7 @@ BASE = "paint_blue"
 # over-wing exit marking: white ring centred on the hatch seam (fuselage_parts.EXIT), starboard only
 # (rectified ground photo: ring 5.975-6.475 x 1.88-2.545 outer, ~25 mm wide)
 EXIT_MARK = dict(offset=0.000, half_width=0.0125)
+EXIT_MARK_MAT = "paint_pinstripe"
 
 # =====================================================================================================
 # per-surface colours (wing, winglet, tailplane, pod, gear, powerplant)
@@ -367,22 +368,73 @@ def fields(V, UV=None, fin=False):
     return side_fields(V[:, 0], V[:, 2], V[:, 1], fin=fin)
 
 
+def region_fields(mat, cockpit=False, fin=False):
+    """The paint regions of one material as lists of SMOOTH half-space fields f(V) (negative inside); a region is
+    the intersection of its list, the material the union of its regions.  Strokes: x0 < x < x1 and
+    c(x) - h(x) < z < c(x) + h(x) as two one-sided fields (the |z - c| - h form is V-shaped at the centre line:
+    marching triangles lose strokes thinner than the skin grid there -- S3-11); regions: bot < z < top; the fin cap:
+    z > FIN_CAP(x); the PRO mask: cockpit_glazing.surround_sdf; the over-wing exit ring (starboard)."""
+    out = []
+
+    def clip(fn, x0, x1):
+        return lambda V: fn(np.clip(V[:, 0], x0, x1))
+
+    for st in _STROKES.values():
+        if st.mat != mat:
+            continue
+        c, h = clip(st.c, st.x0, st.x1), clip(st.h, st.x0, st.x1)
+        out.append([lambda V, a=st.x0: a - V[:, 0], lambda V, b=st.x1: V[:, 0] - b,
+                    lambda V, c=c, h=h: (c(V) - np.maximum(h(V), 0.0)) - V[:, 2],
+                    lambda V, c=c, h=h: V[:, 2] - (c(V) + np.maximum(h(V), 0.0))])
+    for rg in _REGIONS.values():
+        if rg.mat != mat:
+            continue
+        top, bot = clip(rg.top, rg.x0, rg.x1), clip(rg.bot, rg.x0, rg.x1)
+        out.append([lambda V, a=rg.x0: a - V[:, 0], lambda V, b=rg.x1: V[:, 0] - b,
+                    lambda V, bot=bot: bot(V) - V[:, 2], lambda V, top=top: V[:, 2] - top(V)])
+    if mat == "paint_white" and fin:
+        out.append([lambda V: FIN_CAP_X0 - V[:, 0], lambda V: fin_cap_line(V[:, 0]) - V[:, 2]])
+    if mat == "trim_black" and cockpit:
+        from model import cockpit_glazing as CG
+        out.append([lambda V: CG.surround_sdf(V[:, 0], V[:, 1], V[:, 2])])
+    if mat == EXIT_MARK_MAT:
+        from model.fuselage_parts import EXIT, rr
+        o, w = EXIT_MARK["offset"], EXIT_MARK["half_width"]
+        f = lambda V: rr((V[:, 0], V[:, 2]), EXIT)                                  # noqa: E731
+        out.append([lambda V: 0.2 - V[:, 1] * EXIT["side"], lambda V: (o - w) - f(V), lambda V: f(V) - (o + w)])
+    return out
+
+
+def _extract(m: Mesh, fields):
+    """Split m into (inside every field, the rest) with one sequential trim per field (fields re-evaluated on the
+    trimmed pieces, cut vertices shared along each cut)."""
+    piece, outs = m, []
+    for f in fields:
+        v = f(piece.V)
+        if not (v < 0).any():
+            return None, m
+        if (v >= 0).any():
+            outs.append(trim(piece, v, "positive"))
+            piece = trim(piece, v, "negative")
+        if piece.nf == 0:
+            return None, m
+    outs = [o for o in outs if o.nf]
+    rest = Mesh.merge(outs) if outs else Mesh(np.zeros((0, 3)), np.zeros((0, 3), int))
+    return piece, rest
+
+
 def paint_mesh(m: Mesh, order=PAINT_ORDER, cockpit=False, fin=False, base=BASE):
-    """Split one unpainted mesh into livery regions -> list of (mesh, material).  cockpit=False skips the
-    mask (it lies on the forward fuselage only)."""
+    """Split one unpainted mesh into livery regions -> list of (mesh, material), topmost paint first.
+    cockpit=False skips the PRO mask (it lies on the forward fuselage, the forward cabin skin and the upper cowl)."""
     out = []
     rest = m
-    order = tuple(o for o in order if cockpit or o != "trim_black")
     for mat in order:
-        if rest.nf == 0:
-            break
-        f = fields(rest.V, rest.UV, fin=fin)[mat]
-        if not (f < 0).any():
-            continue
-        inside = trim(rest, f, "negative")
-        rest = trim(rest, f, "positive")
-        if inside.nf:
-            out.append((inside, mat))
+        for fields in region_fields(mat, cockpit=cockpit, fin=fin):
+            if rest.nf == 0:
+                break
+            inside, rest = _extract(rest, fields)
+            if inside is not None and inside.nf:
+                out.append((inside, mat))
     if rest.nf:
         out.append((rest, base))
     return out
@@ -400,8 +452,11 @@ def _split(m: Mesh, f, mat_neg, mat_pos):
 
 PAINTED = ["cowl_upper", "cowl_lower", "fus_fwd", "fus_center", "fus_aft", "fin", "rudder", "rudder_tab",
            "door_airstair", "door_cargo", "exit_hatch", "dorsal_fin", "chin_inlet", "strakes", "gear_door_NR",
-           "gear_door_NL"]
+           "gear_door_NL", "belly_fairing"]      # belly_fairing: only its root fillet is unpainted (the belly is not)
 FIN_PARTS = ("fin", "rudder", "rudder_tab")
+# D3: the PRO mask (cockpit_glazing.surround_sdf) is painted on every skin it covers, so it runs on across the
+# forward / centre fuselage joint (fuselage_parts.SPLIT_FWD) instead of stopping there
+MASK_PARTS = ("fus_fwd", "fus_center", "cowl_upper")
 UNPAINTED = "paint_white"          # the builders' unpainted skin material
 
 
@@ -430,7 +485,7 @@ def apply(parts):
         new = []
         for m, mat in p.meshes:
             if mat == UNPAINTED and not getattr(m, "_no_paint", False):
-                new += paint_mesh(m, cockpit=pid in ("fus_fwd", "cowl_upper"), fin=pid in FIN_PARTS)
+                new += paint_mesh(m, cockpit=pid in MASK_PARTS, fin=pid in FIN_PARTS)
             else:
                 new.append((m, mat))
         p.meshes = new

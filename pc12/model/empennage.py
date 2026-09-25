@@ -237,6 +237,40 @@ def stab_section(y):
                    e_t=np.array([0, 0, 1.0]), twist=STAB_INC, airfoil=af)
 
 
+def horn_gap_x(y):
+    """STA of the fixed tip's aft edge (the drawn horn-gap line STAB_HORN_GAP, extended linearly) at BL |y|."""
+    (x0, y0), (x1, y1) = STAB_HORN_GAP
+    return x0 + (x1 - x0) * (np.abs(np.asarray(y, float)) - y0) / (y1 - y0)
+
+
+def horn_front_x(y):
+    """STA of the horn balance's front face at BL |y|: flat at ELEV_HORN[2], the rounded corner STAB_HORN_CORNER,
+    then the horn's raked leading edge."""
+    y = np.abs(np.asarray(y, float))
+    yc, rc = STAB_HORN_CORNER
+    xh = ELEV_HORN[2]
+    corner = xh + rc - np.sqrt(np.clip(rc * rc - (y - yc) ** 2, 0.0, None))
+    return np.where(y <= yc, xh, np.maximum(np.where(y <= yc + rc, corner, xh + rc), _horn_le(y)))
+
+
+def _cut_face_loop(sec, xc0, xc1=None, n=16):
+    """Chord-unit loop of the section between chord fractions xc0 and xc1 (default the TE): upper surface aft,
+    lower surface forward, closed by flat faces."""
+    af = sec.airfoil
+    xc1 = 1.0 if xc1 is None else xc1
+    xu = cos_pts(n, 0, 1) * (xc1 - xc0) + xc0
+    up = np.stack([xu, af.upper(xu)], 1)
+    lo = np.stack([xu[::-1], af.lower(xu[::-1])], 1)
+    return np.vstack([up, lo[1:-1]]) if xc1 >= 1.0 - 1e-9 else np.vstack([up, lo])
+
+
+def horn_loop(sec):
+    """Horn-balance section loop: the section aft of its front face (horn_front_x) with a flat front."""
+    y = abs(float(sec.le[1]))
+    xc0 = float(np.clip((float(horn_front_x(y)) - sec.le[0]) / sec.chord, 0.0, 0.98))
+    return _cut_face_loop(sec, xc0)
+
+
 # ---------------------------------------------------------------- dorsal fin
 DORSAL_X0, DORSAL_Z0 = 9.000, 2.770    # starts on the crown at FR33
 DORSAL_SLOPE = 0.1338                  # straight top edge dz/dx
@@ -425,38 +459,247 @@ def strake_frame(x):
     return np.array([x, yr, zr]), np.array([x, yr + depth * np.sin(STRAKE_CANT), zt])
 
 
+# ---------------------------------------------------------------- tail-cone closure, fin / rudder trims (Stage 3)
+# The tail cone (fuselage OML, drawn to STA 13.57) lies inside the rudder / fin aft of the rudder leading edge (sheet
+# L1 note): it is cut along a plane through the fin chord line TAIL_CUT_XC (normal to the plane of symmetry, parallel
+# to the hinge line) just ahead of the fixed cove, and closed there by a flat bulkhead fairing.  The single-piece rudder
+# runs from its sloped top edge down to the ventral edge behind that cut, so it clears the fixed structure at any
+# deflection.  Below the tail cone the fixed part is a thin ventral fairing (FR40) from the strake end to the cut.
+RUD_COVE_GAP = 0.010                     # fixed cove radius over the rudder nose (chord units, wing.plain_cove)
+TAIL_CUT_XC = round(RUD_XH - 0.5 * float(FIN_AF_ROOT.thickness(RUD_XH)) - RUD_COVE_GAP - 0.010, 4)   # 0.6216
+RUD_EDGE_GAP = 0.010                     # m: rudder top edge / fin tip gap, each side of the drawn line
+VENTRAL_T = 0.020                        # ventral fairing half-thickness (m)
+VENTRAL_X0 = 11.80                       # ventral fairing leading edge meets the keel (hidden behind the strake)
+
+
+def _cut_line():
+    """(a, b): the tail cut line x = a + b z (side view) = fin chord-fraction line TAIL_CUT_XC."""
+    z0, z1 = 1.5, 3.0
+    x0, x1 = fin_chord_x(TAIL_CUT_XC, z0), fin_chord_x(TAIL_CUT_XC, z1)
+    b = (x1 - x0) / (z1 - z0)
+    return x0 - b * z0, b
+
+
+def tail_cut_x(z):
+    a, b = _cut_line()
+    return a + b * np.asarray(z, float)
+
+
+def tail_cut_field(x, z):
+    """Signed distance (m) to the tail-cut plane: > 0 aft of it (the tail cone is removed there)."""
+    a, b = _cut_line()
+    return (np.asarray(x, float) - a - b * np.asarray(z, float)) / np.hypot(1.0, b)
+
+
+def tail_cut_normal():
+    a, b = _cut_line()
+    n = np.array([1.0, 0.0, -b])
+    return n / np.linalg.norm(n)
+
+
+def _cut_z_range():
+    """WLs where the cut plane meets the keel and the crown of the tail cone."""
+    zs = np.linspace(1.6, 2.8, 2401)
+    xs = np.clip(tail_cut_x(zs), F.STA["cowl_front"], F.STA["tail_end"])
+    zb = zs[np.argmin(np.abs(F.z_bot(xs) - zs))]
+    zt = zs[np.argmin(np.abs(F.z_top(xs) - zs))]
+    return float(zb), float(zt)
+
+
+def oml_field(V):
+    """Approximate signed distance (m, + outside) of points V to the fuselage OML; + beyond the loft range."""
+    x = V[:, 0]
+    xc = np.clip(x, F.STA["cowl_front"], F.STA["tail_end"])
+    d = F._OML.section_distance(xc, V[:, 1], V[:, 2])
+    return np.where((x < F.STA["cowl_front"]) | (x > F.STA["tail_end"]), 1.0, d)
+
+
+def tail_closure(step=0.004):
+    """Flat bulkhead fairing closing the tail cone in the cut plane (both halves, normal aft)."""
+    from cad.mesh import grid_surface as _gs, trim as _trim
+    zb, zt = _cut_z_range()
+    zs = np.linspace(zb - 0.01, zt + 0.01, int((zt - zb + 0.02) / step) + 2)
+    ys = np.linspace(0.0, 0.30, int(0.30 / step) + 2)
+    Z, Y = np.meshgrid(zs, ys, indexing="ij")
+    X = tail_cut_x(Z)
+    P = np.stack([X, Y, Z], -1)
+    out = []
+    for sgn in (1, -1):
+        m = _gs(P * [1, sgn, 1])
+        f = np.abs(m.V[:, 1]) - F.side_y(np.clip(m.V[:, 0], F.STA["cowl_front"], F.STA["tail_end"]), m.V[:, 2])
+        m = _trim(m, f, "negative")
+        if np.dot(m.face_normals().mean(0), tail_cut_normal()) < 0:
+            m = m.flipped()
+        m.N = np.tile(tail_cut_normal(), (len(m.V), 1))
+        out.append(m)
+    return Mesh.merge(out)
+
+
+def fin_halfwidth(x, z):
+    """Half-thickness of the fin section (NACA 0018) at station x, WL z (0 outside the chord)."""
+    x, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(z, float))
+    le, te = fin_le(z), fin_te(z)
+    xc = (x - le) / (te - le)
+    t = FIN_AF_ROOT.thickness(np.clip(xc, 0.0, 1.0))
+    return np.where((xc >= 0) & (xc <= 1), 0.5 * t * (te - le), 0.0)
+
+
+def rudder_split_z(x):
+    """Fixed-tip / rudder boundary (the drawn top edge), flat forward of the rudder nose."""
+    xn = rudder_edge_point(RUD_NOSE_XC, "top")[0]
+    return rudder_top_z(np.maximum(np.asarray(x, float), xn))
+
+
+def _fin_tip_cap():
+    """Lower face of the fixed fin tip over the rudder: along the sloped top edge (+gap) from the cove to the TE, closed
+    at the front by the cove arc at the flat part of the edge."""
+    from model.wing import plain_cove
+    z0 = float(rudder_split_z(0.0)) + RUD_EDGE_GAP
+    sec = fin_section(z0)
+    cove, _ = plain_cove(sec, RUD_XH, RUD_COVE_GAP)
+    arc = sec.point(cove[:, 0], cove[:, 1])                    # upper (+y) -> round the front -> lower (-y)
+    xs = np.linspace(float(arc[0, 0]), float(fin_te(3.77)), 40)
+    zz = np.array([float(rudder_split_z(x)) + RUD_EDGE_GAP for x in xs])
+    for _ in range(3):                                          # the TE moves with z: re-evaluate the chord end
+        xs = np.linspace(float(arc[0, 0]), float(fin_te(zz[-1])) - 0.002, 40)
+        zz = np.array([float(rudder_split_z(x)) + RUD_EDGE_GAP for x in xs])
+    hw = fin_halfwidth(xs, zz)
+    side_s = np.c_[xs, hw, zz]
+    side_p = np.c_[xs, -hw, zz][::-1]
+    loop = np.vstack([arc[::-1], side_s[1:], side_p[1:-1]])
+    return planar_cap(loop, (0, 0, -1))
+
+
+def _fin_keel_cap():
+    """Cap closing the fixed fin strip behind the tail-cone closure (cut plane -> cove) at the keel line."""
+    from model.wing import plain_cove
+    zb = _cut_z_range()[0]
+    sec = fin_section(zb)
+    cove, _ = plain_cove(sec, RUD_XH, RUD_COVE_GAP)
+    arc = sec.point(cove[:, 0], cove[:, 1])
+    xs = np.linspace(float(tail_cut_x(zb)), float(arc[0, 0]), 10)
+    hw = fin_halfwidth(xs, np.full_like(xs, zb))
+    side_s = np.c_[xs, hw, np.zeros_like(xs)]
+    side_p = np.c_[xs, -hw, np.zeros_like(xs)][::-1]
+    loop = np.vstack([side_s, arc[1:-1] * [1, 1, 0], side_p])
+    loop[:, 2] = F.z_bot(np.clip(loop[:, 0], F.STA["cowl_front"], F.STA["tail_end"])) + 0.003
+    return planar_cap(loop, (0, 0, -1))
+
+
+def ventral_fairing(n_ring=24):
+    """Thin ventral fairing under the tail cone (FR40): between the keel line and VENTRAL_EDGE, from its leading edge
+    (hidden behind the strakes) to the tail cut; rounded lower edge, capped in the cut plane."""
+    from cad.mesh import trim as _trim, boundary_loops as _bl
+    (vx0, vz0), _ = VENTRAL_EDGE
+    x_end = float(tail_cut_x(rudder_bottom_z(12.7))) + 0.05
+    xs = np.linspace(VENTRAL_X0 + 0.003, x_end, 48)
+    rows = []
+    for x in xs:
+        zk = float(F.z_bot(min(x, F.STA["tail_end"])))
+        zlow = float(rudder_bottom_z(x)) if x >= vx0 else zk + (vz0 - zk) * (x - VENTRAL_X0) / (vx0 - VENTRAL_X0)
+        ztop = zk + 0.035
+        h = max(ztop - zlow, 0.004)
+        t = min(VENTRAL_T, 0.45 * h)
+        a = np.linspace(-np.pi / 2, np.pi / 2, n_ring // 2)
+        low = np.c_[t * np.sin(a), zlow + t - t * np.cos(a)]          # rounded bottom, -y -> +y
+        ring = np.vstack([low, [[t, ztop]], [[-t, ztop]]])
+        rows.append(np.c_[np.full(len(ring), x), ring])
+    P = np.array(rows)
+    m = grid_surface(P, close_v=True)
+    cen = P.mean(1)
+    if np.mean(np.sum((P - cen[:, None]).reshape(-1, 3) * m.N, 1)) < 0:
+        m = m.flipped()
+    m = _trim(m, tail_cut_field(m.V[:, 0], m.V[:, 2]), "negative")
+    caps = [cap_ring(P[0], (-1, 0, 0))]
+    for lp in _bl(m):
+        caps.append(planar_cap(m.V[lp], tail_cut_normal()))
+    return Mesh.merge([m] + caps)
+
+
+def rudder_body():
+    """Rudder (with its trim-tab cut-out) between the sloped bottom edge (VENTRAL_EDGE) and top edge (- gap), capped on
+    both sloped faces.  Returns (body, tab, (tab hinge points))."""
+    from model.wing import segmented_surface
+    from cad.mesh import trim as _trim, boundary_loops as _bl
+    zb0 = float(rudder_edge_point(RUD_NOSE_XC, "bottom")[1]) - 0.03
+    zt1 = float(rudder_edge_point(RUD_NOSE_XC, "top")[1]) + 0.03
+    body, tab, hinge = segmented_surface(fin_section, zb0, zt1, RUD_XH, RUD_TAB, step=0.06)
+    body = _trim(body, body.V[:, 2] - rudder_bottom_z(body.V[:, 0]), "positive")
+    body = _trim(body, body.V[:, 2] - (rudder_split_z(body.V[:, 0]) - RUD_EDGE_GAP), "negative")
+    caps = []
+    for lp in _bl(body):
+        P = body.V[lp]
+        up = P[:, 2].mean() > 3.0
+        caps.append(planar_cap(P, (0, 0, 1) if up else (0, 0, -1)))
+    return Mesh.merge([body] + caps), tab, hinge
+
+
+def fin_mesh():
+    """Fixed fin: skins with the rudder cove, trimmed to the tail-cone OML (the root stands on the cone, nothing below
+    its maximum-breadth line: the ventral part is ventral_fairing()) and to the sloped rudder top edge."""
+    from model.wing import plain_cove, x_end_of_plain, cut_rib
+    from cad.mesh import trim as _trim
+    zT0 = float(rudder_split_z(0.0)) + RUD_EDGE_GAP
+    zB = span_stations(RUD_Z[0], zT0, 0.06)
+    xl_e, xu_e = x_end_of_plain(fin_section(float(np.mean(RUD_Z))), RUD_XH, RUD_COVE_GAP)
+    lower = [skin(fin_section, zB, x_lo_end=xl_e, x_up_end=xu_e, n=56),
+             curve_patch(fin_section, zB, lambda s: plain_cove(s, RUD_XH, RUD_COVE_GAP)[0], n=16,
+                         outward_hint=lambda s: s.e_c)]
+    zC = np.unique(np.r_[span_stations(float(np.min(rudder_top_z(np.array([14.4])))) - 0.02, 4.0, 0.03),
+                         span_stations(4.0, FIN_Z1, 0.05)])
+    upper = [skin(fin_section, zC, n=56), strip(fin_section, zC, 1.0, 1.0)]
+    out = []
+    X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
+
+    def keep(V):
+        """> 0 where the fixed fin is kept: above the tail cone (outside the OML, over its max-breadth line) or,
+        behind the tail-cone closure, the strip + cove round the rudder nose down to the keel line."""
+        xc = np.clip(V[:, 0], X0, X1)
+        above = np.minimum(oml_field(V), V[:, 2] - F.z_mw(xc))
+        behind = np.minimum(tail_cut_field(V[:, 0], V[:, 2]), V[:, 2] - F.z_bot(xc) - 0.003)
+        return np.maximum(above, behind)
+
+    for m in lower:
+        out.append(_trim(m, keep(m.V), "positive"))
+    for m in upper:
+        out.append(_trim(m, m.V[:, 2] - (rudder_split_z(m.V[:, 0]) + RUD_EDGE_GAP), "positive"))
+    out.append(_fin_tip_cap())
+    out.append(_fin_keel_cap())
+    return Mesh.merge(out)
+
+
+def dorsal_mesh():
+    """Dorsal slab (above the tail-cone crown only) and its root fillet into the tail cone (both flanks)."""
+    from cad.mesh import trim as _trim
+    zd = span_stations(2.40, float(_dorsal_curve()[-1, 1]) - 0.01, 0.03)
+    slab = skin(dorsal_section, zd, n=48)
+    slab = _trim(slab, oml_field(slab.V), "positive")
+    T = np.array(DORSAL_FILLET)
+    xs = np.unique(np.r_[np.linspace(T[0, 0] + 0.002, 9.25, 24), np.linspace(9.25, T[-1, 0], 90)])
+    rows = [dorsal_fillet_section(x, n=18) for x in xs]
+    P = np.array([np.c_[np.full(len(r), x), r] for x, r in zip(xs, rows)])
+    fil = []
+    for sgn in (1, -1):
+        m = grid_surface(P * [1, sgn, 1])
+        k = len(m.V) // 2
+        if m.N[k, 1] * sgn + m.N[k, 2] < 0:
+            m = m.flipped()
+        m = _trim(m, tail_cut_field(m.V[:, 0], m.V[:, 2]), "negative")
+        fil.append(m)
+    return Mesh.merge([slab] + fil)
+
+
 def build(parts: dict):
-    # ---------------- fin (fixed part) + rudder
-    zs_all = span_stations(FIN_Z0, FIN_Z1, 0.12)
-    meshes = []
-    zA = span_stations(FIN_Z0, RUD_Z[0], 0.1)
-    meshes.append(skin(fin_section, zA, n=48))
-    meshes.append(strip(fin_section, zA, 1.0, 1.0))
-    zB = span_stations(RUD_Z[0], RUD_Z[1], 0.12)
-    xl_e, xu_e = x_end_of_plain(fin_section(np.mean(RUD_Z)), RUD_XH)
-    meshes.append(skin(fin_section, zB, x_lo_end=xl_e, x_up_end=xu_e, n=48))
-    meshes.append(curve_patch(fin_section, zB, lambda s: plain_cove(s, RUD_XH)[0], outward_hint=lambda s: s.e_c))
-    zC = span_stations(RUD_Z[1], FIN_Z1, 0.05)
-    meshes.append(skin(fin_section, zC, n=48))
-    meshes.append(strip(fin_section, zC, 1.0, 1.0))
-    from model.wing import cut_rib
-    for z, sgn in ((RUD_Z[0], +1), (RUD_Z[1], -1)):
-        sec = fin_section(z)
-        cove, _ = plain_cove(sec, RUD_XH)
-        xl, xu = x_end_of_plain(sec, RUD_XH)
-        meshes.append(planar_cap(cut_rib(sec, cove[::-1], xl, xu), (0, 0, sgn)))
-    fin = Part("fin", "Vertical stabiliser (fin)", "empennage_v", explode=(0.9, 0, 0.9),
-               group="Empennage", material_note="Aluminium two-spar fin",
+    # ---------------- fin (fixed part, trimmed to the tail cone) + ventral fairing + rudder
+    fin = Part("fin", "Vertical stabiliser (fin) + ventral fairing", "empennage_v", explode=(0.9, 0, 0.9),
+               group="Empennage", material_note="Aluminium two-spar fin; glass-fibre ventral fairing",
                info={"LE sweep": "%.0f deg" % np.degrees(np.arctan2(FIN_LE[1][0] - FIN_LE[0][0], FIN_LE[1][1] - FIN_LE[0][1])),
                      "section": "NACA 0018 (drawing VF1 / VF2)"})
-    fm = Mesh.merge(meshes)
-    fin.add(fm, "paint_white")
+    fin.add(fin_mesh(), "paint_white").add(ventral_fairing(), "paint_white")
     parts[fin.id] = fin
 
     # rudder (single piece, two hinges) with an electric trim tab low on the trailing edge
-    from model.wing import segmented_surface
-    rud, rtab, (rta, rtb) = segmented_surface(fin_section, RUD_Z[0] + 0.01, RUD_Z[1] - 0.01, RUD_XH,
-                                              RUD_TAB, step=0.12)
+    rud, rtab, (rta, rtb) = rudder_body()
     a, b = fin_section(RUD_Z[0]), fin_section(RUD_Z[1])
     ha, hb = a.point(np.array(RUD_XH), np.array(0.0)), b.point(np.array(RUD_XH), np.array(0.0))
     ax = (hb - ha) / np.linalg.norm(hb - ha)
@@ -472,12 +715,10 @@ def build(parts: dict):
     tp.add(rtab, "paint_white")
     parts[tp.id] = tp
 
-    # dorsal fin
-    zd = span_stations(2.40, float(_dorsal_curve()[-1, 1]) - 0.01, 0.06)
-    dm = skin(dorsal_section, zd, n=40)            # closed trailing edge (buried in the fin)
-    dp = Part("dorsal_fin", "Dorsal fin fillet", "empennage_v", explode=(0.6, 0, 0.7), group="Empennage",
+    # dorsal fin + root fillet
+    dp = Part("dorsal_fin", "Dorsal fin + root fillet", "empennage_v", explode=(0.6, 0, 0.7), group="Empennage",
               material_note="Glass-fibre fairing")
-    dp.add(dm, "paint_white")
+    dp.add(dorsal_mesh(), "paint_white")
     parts[dp.id] = dp
 
     # ventral strakes
@@ -501,19 +742,34 @@ def build(parts: dict):
         xl_e, xu_e = x_end_of_plain(stab_section(1.2), ELEV_XH)
         ms.append(skin(sec_fn, ys1, x_lo_end=xl_e, x_up_end=xu_e, n=48))
         ms.append(curve_patch(sec_fn, ys1, lambda s: plain_cove(s, ELEV_XH)[0], outward_hint=lambda s: s.e_c))
-        ms.append(skin(sec_fn, ys2, n=48))
-        ms.append(strip(sec_fn, ys2, 1.0, 1.0))
+        # fixed tip outboard of the elevator (BL 2270): only ahead of the drawn horn gap (STAB_HORN_GAP); the horn
+        # balance aft of it (ELEV_HORN, stab_tip_outline) moves with the elevator (horn_body())
+        tipskin = skin(sec_fn, ys2, n=48)
+        ms.append(trim(tipskin, tipskin.V[:, 0] - horn_gap_x(tipskin.V[:, 1]), "negative"))
         from model.wing import cut_rib
-        for y, dsg in ((ELEV_Y[0], 1), (ELEV_Y[1], -1)):
-            sec = sec_fn(y)
-            cove, _ = plain_cove(sec, ELEV_XH)
-            xl, xu = x_end_of_plain(sec, ELEV_XH)
-            ms.append(planar_cap(cut_rib(sec, cove[::-1], xl, xu), (0, dsg * sgn, 0)))
-        # rounded tip cap
-        tip = sec_fn(STAB_TIP_Y - 0.004)
-        xx = cos_pts(40)
-        loop = np.vstack([tip.lower(xx[::-1]), tip.upper(xx[1:-1])])
-        ms.append(cap_ring(loop, (0, sgn, 0)))
+        sec = sec_fn(ELEV_Y[0])
+        cove, _ = plain_cove(sec, ELEV_XH)
+        xl, xu = x_end_of_plain(sec, ELEV_XH)
+        ms.append(planar_cap(cut_rib(sec, cove[::-1], xl, xu), (0, sgn, 0)))
+        # outboard face of the fixed part at BL 2270 between the horn gap and the elevator cove
+        sec = sec_fn(ELEV_Y[1])
+        cove, _ = plain_cove(sec, ELEV_XH)
+        xl, xu = x_end_of_plain(sec, ELEV_XH)
+        xg = float((horn_gap_x(ELEV_Y[1]) - sec.le[0]) / sec.chord)
+        af = sec.airfoil
+        xs_u = cos_pts(10, 0, 1) * (xu - xg) + xg
+        xs_l = (cos_pts(10, 0, 1) * (xl - xg) + xg)[::-1]
+        poly = np.vstack([np.stack([xs_u, af.upper(xs_u)], 1)[:-1], cove[:-1], np.stack([xs_l, af.lower(xs_l)], 1)])
+        ms.append(planar_cap(sec.point(poly[:, 0], poly[:, 1]), (0, sgn, 0)))
+        # aft face of the fixed tip along the horn gap (BL 2270 -> the point where the gap line leaves the LE)
+        yy = np.linspace(ELEV_Y[1], STAB_NOTCH_Y, 24)
+        up, lo = [], []
+        for y in yy:
+            sc = sec_fn(y)
+            xc = float(np.clip((float(horn_gap_x(y)) - sc.le[0]) / sc.chord, 0.0, 1.0))
+            up.append(sc.upper(np.array(xc)))
+            lo.append(sc.lower(np.array(xc)))
+        ms.append(planar_cap(np.vstack([np.array(up), np.array(lo)[::-1][:-1]]), (1, 0, 0)))
         m = Mesh.merge(ms)
         if sgn < 0:
             # skins built with mirrored sections have inverted orientation -> fix by normal test
@@ -529,9 +785,10 @@ def build(parts: dict):
     sp.add(Mesh.merge(stab_meshes), "paint_white")
     parts[sp.id] = sp
 
+    horn = horn_body()
     for side, sgn in (("R", 1), ("L", -1)):
-        ys = span_stations(ELEV_Y[0] + 0.012, ELEV_Y[1] - 0.012, 0.15)
-        em = closed_body(stab_section, ys, lambda s: plain_surface_loop(s, ELEV_XH))
+        ys = span_stations(ELEV_Y[0] + 0.012, ELEV_HORN[0] + 0.006, 0.15)
+        em = Mesh.merge([closed_body(stab_section, ys, lambda s: plain_surface_loop(s, ELEV_XH)), horn])
         a, b = stab_section(ELEV_Y[0]), stab_section(ELEV_Y[1])
         ha, hb = a.point(np.array(ELEV_XH), np.array(0.0)), b.point(np.array(ELEV_XH), np.array(0.0))
         if sgn < 0:
@@ -541,13 +798,26 @@ def build(parts: dict):
         ep = Part(f"elevator_{side}", f"{'Right' if sgn > 0 else 'Left'} elevator", "empennage_h",
                   parent="stabilizer",
                   pivot=dict(origin=ha.tolist(), axis=ax.tolist(), kind="elevator", range=[-20.0, 15.0]),
-                  explode=(0.5, sgn * 0.35, 0.0), group="Flight controls", material_note="Paired elevators")
+                  explode=(0.5, sgn * 0.35, 0.0), group="Flight controls",
+                  material_note="Paired elevators with horn-balanced tips")
         ep.add(em, "paint_white")
         parts[ep.id] = ep
 
     # bullet fairing
     parts["tail_bullet"] = build_bullet()
     return parts
+
+
+def horn_body():
+    """Starboard horn balance (moves with the elevator): the tailplane tip aft of its front face (horn_front_x) from
+    the elevator's outboard end (ELEV_HORN[0] + 6 mm) to the tip, with a rounded tip cap."""
+    ys = np.unique(np.r_[span_stations(ELEV_HORN[0] + 0.006, STAB_NOTCH_Y + 0.006, 0.012),
+                         span_stations(STAB_NOTCH_Y + 0.006, STAB_TIP_Y - 0.004, 0.02)])
+    body = closed_body(stab_section, ys, horn_loop)
+    tip = stab_section(STAB_TIP_Y - 0.004)
+    xx = cos_pts(40)
+    loop = np.vstack([tip.lower(xx[::-1]), tip.upper(xx[1:-1])])
+    return Mesh.merge([body, cap_ring(loop, (0, 1, 0))])
 
 
 def fix_orient(m: Mesh, zc):

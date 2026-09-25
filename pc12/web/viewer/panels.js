@@ -264,12 +264,15 @@ export function buildSpecs(meta) {
   for (const c of meta.checks || []) {
     const area = /m\^2|area/i.test(c.check);
     const unit = area ? ' m²' : ' m';
-    const d = Math.abs(c.delta_mm);
-    const cls = d <= 2 ? 'd-ok' : d <= 10 ? 'd-warn' : 'd-bad';
-    const dtxt = area ? '—' : (c.delta_mm > 0 ? '+' : c.delta_mm < 0 ? '−' : '') + Math.abs(c.delta_mm).toFixed(1);
+    const min = c.kind === 'min';                       // a lower bound (e.g. floor width >= 1.30 m)
+    const d = Math.abs(c.delta_mm ?? 0);
+    const cls = (c.ok ?? (d <= 2)) ? 'd-ok' : d <= 10 ? 'd-warn' : 'd-bad';
+    const sgn = (v) => (v > 0 ? '+' : v < 0 ? '−' : '');
+    const dtxt = area ? (c.delta == null ? '—' : sgn(c.delta) + Math.abs(c.delta).toFixed(3) + ' m²')
+      : sgn(c.delta_mm) + Math.abs(c.delta_mm).toFixed(1);
     body.append(el('tr', {},
       el('td', { text: c.check.replace(/\s*\(m\^2\)/, '') }),
-      el('td', { text: c.official.toFixed(area ? 2 : 3) + unit }),
+      el('td', { text: (min ? '≥ ' : '') + c.official.toFixed(area ? 2 : 3) + unit }),
       el('td', { text: c.model.toFixed(area ? 2 : 3) + unit }),
       el('td', { class: cls, text: dtxt })));
   }

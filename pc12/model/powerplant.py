@@ -98,6 +98,25 @@ def prop_clearance():
     return float(AX_Z - PROP_R * np.sqrt(1.0 - n[2] ** 2))
 
 
+def thrust_rotation():
+    """3x3 rotation taking the model +x axis onto the thrust axis pointing aft (-thrust_dir())."""
+    a = -thrust_dir()
+    x = np.array([1.0, 0.0, 0.0])
+    v = np.cross(x, a)
+    s_, c = np.linalg.norm(v), float(x @ a)
+    return rotation_matrix(v / s_, np.arctan2(s_, c)) if s_ > 1e-12 else np.eye(3)
+
+
+def thrust_matrix():
+    """4x4 transform of the engine / propeller (built about the untilted line (x, 0, AX_Z)) onto the thrust line:
+    rotation about the disc centre on the drafted line, translated onto prop_hub()."""
+    M = np.eye(4)
+    R = thrust_rotation()
+    M[:3, :3] = R
+    M[:3, 3] = prop_hub() - R @ np.array([PROP_X, 0.0, AX_Z])
+    return M
+
+
 # EASA TCDS IM.E.008: PT6E-67XP overall length 1,870.9 mm, overall diameter 481.8 mm.
 ENG_FLANGE_X = 0.885
 ENG_LENGTH = 1.8709
@@ -186,16 +205,19 @@ def build_engine(parts):
     mods.append(("eng_agb", "Accessory gearbox, starter-gen, FADEC", Mesh.merge([agb] + acc), "metal_dark",
                  (0.75, 0, 0), "Dual-channel EEC / FADEC"))
 
+    Mt = thrust_matrix()                     # the engine is installed on the thrust line (2 deg down, 2 deg right)
     for pid, name, mesh, mat, exp, note in mods:
-        p = Part(pid, name, "powerplant", explode=exp, group="Engine PT6E-67XP", material_note=note)
-        p.add(mesh, mat)
+        p = Part(pid, name, "powerplant", explode=exp, group="Engine PT6E-67XP", material_note=note,
+                 info={"axis": "on the thrust line: 2 deg nose-down, 2 deg right (drawing)"})
+        p.add(mesh.transformed(Mt), mat)
         parts[pid] = p
 
-    # engine mount truss (mount ring at the gas generator -> 4 firewall pick-ups)
+    # engine mount truss (mount ring at the gas generator, on the thrust line -> 4 firewall pick-ups)
     tubes = []
-    ring = ring_path(2.20, 0.30, 64)
+    xf = lambda P: (Mt[:3, :3] @ np.asarray(P, float).T).T + Mt[:3, 3]            # noqa: E731
+    ring = xf(ring_path(2.20, 0.30, 64))
     tubes.append(sweep_tube(ring, 0.016, n=10, cap=False))
-    pads = [np.array([2.20, 0, AX_Z]) + 0.30 * np.array([0, np.cos(a), np.sin(a)])
+    pads = [xf(np.array([2.20, 0, AX_Z]) + 0.30 * np.array([0, np.cos(a), np.sin(a)]))
             for a in np.radians([45, 135, 225, 315])]
     fw = [np.array([2.985, 0.33 * np.sign(np.cos(a)), AX_Z + 0.29 * np.sign(np.sin(a))])
           for a in np.radians([45, 135, 225, 315])]
@@ -209,26 +231,12 @@ def build_engine(parts):
     mount.add(Mesh.merge(tubes), "black")
     parts[mount.id] = mount
 
-    # firewall (titanium) = fuselage section at STA 3.000, inset
-    t = np.linspace(0, 1, 96, endpoint=False)
-    sec = F.section(np.full_like(t, 2.995), t)
-    ctr = np.array([2.995, 0, float(F.z_mw(2.995))])
-    sec = ctr + (sec - ctr) * 0.97
+    # firewall (titanium) = fuselage section at STA 3.000, inset, notched round the nose-gear trunnion / bay
+    from model.fuselage_parts import bulkhead, nose_trunnion_notch
     fwp = Part("firewall", "Firewall (titanium, frame 10)", "powerplant", explode=(0.0, 0, 0),
                group="Powerplant installation", material_note="Titanium + insulation, STA 3.000")
-    fwp.add(planar_cap(sec, (-1, 0, 0)), "titanium")
+    fwp.add(bulkhead(F.STA["firewall"] - 0.005, 0.97, notch=nose_trunnion_notch, normal=(-1, 0, 0)), "titanium")
     parts[fwp.id] = fwp
-
-    # inlet duct from chin scoop to the plenum
-    xs = np.linspace(1.00, 2.52, 24)
-    zc = np.interp(xs, [1.00, 1.60, 2.10, 2.52], [1.29, 1.255, 1.27, AX_Z - 0.20])
-    path = np.stack([xs, np.zeros_like(xs), zc], 1)
-    sc = np.interp(xs, [1.0, 1.8, 2.52], [1.0, 0.95, 1.15])
-    duct = sweep_profile(path, ellipse(0.205, 0.070, 32), True, scale=sc, cap=False)
-    dp = Part("inlet_duct", "Inlet duct + inertial separator", "powerplant", explode=(0, 0, -0.9),
-              group="Powerplant installation", material_note="Composite duct, ice-vane separator")
-    dp.add(duct, "composite")
-    parts[dp.id] = dp
 
 
 def ellipse(a, b, n=24):
@@ -431,69 +439,156 @@ def chin_inlet_outline(part):
     P = np.vstack([H, M[1:]]) if part == "mouth" else np.vstack([M, H[1:]])
     return np.vstack([P, P[:1]])
 
-def build_inlet_and_exhaust(parts):
-    # chin scoop: lofted super-elliptic sections that fair into the lower cowling
-    xs = np.linspace(0.985, 1.95, 26)
-    rows = []
-    zc = np.interp(xs, [0.985, 1.3, 1.95], [1.290, 1.275, 1.24])
-    hw = np.interp(xs, [0.985, 1.25, 1.95], [0.225, 0.245, 0.20])
-    hh = np.interp(xs, [0.985, 1.25, 1.6, 1.95], [0.078, 0.090, 0.075, 0.05])
-    ts = np.linspace(0, 1, 56, endpoint=False)
-    for x, z, w, h in zip(xs, zc, hw, hh):
-        a = 2 * np.pi * ts
-        n = 2.6
-        y = w * np.sign(np.sin(a)) * np.abs(np.sin(a)) ** (2 / n)
-        zz = z + h * np.sign(np.cos(a)) * np.abs(np.cos(a)) ** (2 / n)
-        rows.append(np.stack([np.full_like(y, x), y, zz], 1))
-    P = np.array(rows)
-    outer = grid_surface(P, close_v=True)
-    if np.mean(np.sum((outer.V - [0, 0, 1.28]) * outer.N * [0, 1, 1], 1)) < 0:
-        outer = outer.flipped()
-    # keep only the part below the cowling (upper part is buried anyway)
-    # lip: tube around the mouth
-    mouth = P[0]
-    lip_mesh = sweep_tube(np.vstack([mouth, mouth[:1]]) + [-0.004, 0, 0], 0.016, n=10, cap=False)
-    # duct interior (dark) and back wall
-    inner_rows = []
-    for k, x in enumerate(np.linspace(0.99, 1.35, 8)):
-        c = np.array([x, 0, np.interp(x, [0.985, 1.35], [1.29, 1.28])])
-        inner_rows.append(c + (mouth - [0.985, 0, 1.29]) * [0, 0.9, 0.85] + [0, 0, 0])
-    inner = grid_surface(np.array(inner_rows), close_v=True).flipped()
-    back = cap_ring(inner_rows[-1], (-1, 0, 0))
-    p = Part("chin_inlet", "Chin air inlet (engine + oil cooler)", "cowling", explode=(-0.4, 0, -0.75),
-             group="Powerplant installation", material_note="Composite lip, electrically de-iced")
-    p.add(outer, "paint_white").add(lip_mesh, "metal").add(Mesh.merge([inner, back]), "inlet_dark")
-    parts[p.id] = p
+CHIN_STEP_X_MAX = 1.215       # the mouth is the part of the keel step face (x <= this) inside the drawn mouth outline
+_CHIN = {}                    # mouth edge loop of the last cut (fuselage_parts.build -> build_inlet_and_exhaust)
 
-    # exhaust stacks
-    stacks, inner_s = [], []
+
+def chin_fields(V):
+    """(mouth, lip, side) signed distances (m, negative inside) of points V: front-view mouth / lip outlines (y, z)
+    and the side-view lip crescent (x, z) of CHIN_INLET."""
+    from cad import sdf2d
+
+    def poly(name):
+        P = chin_inlet_outline(name)[:-1]
+        keep = np.linalg.norm(P - np.roll(P, 1, 0), axis=1) > 1e-9       # drop repeated points (closing seam)
+        return P[keep]
+    fm = sdf2d.polygon(V[:, 1], V[:, 2], poly("mouth"))
+    fl = sdf2d.polygon(V[:, 1], V[:, 2], poly("lip"))
+    fs = sdf2d.polygon(V[:, 0], V[:, 2], poly("side"))
+    return fm, fl, fs
+
+
+def cut_chin_inlet(m):
+    """Cut the chin inlet into the lower cowling (decision D2: the OML keel owns the lip step STA 1.14 -> 1.20):
+    returns (cowl without mouth and lip, polished lip ring).  The mouth = the step face inside the drawn front-view
+    mouth outline; the lip = the skin inside both the front-view lip outline and the side-view lip crescent."""
+    from cad.mesh import boundary_loops
+    fm = lambda mm: np.maximum(chin_fields(mm.V)[0], mm.V[:, 0] - CHIN_STEP_X_MAX)     # noqa: E731
+    m1 = trim(m, fm(m), "positive")
+    best = None
+    for lp in boundary_loops(m1):
+        P = m1.V[lp]
+        if P[:, 0].mean() > 1.3:
+            continue
+        e = np.abs(chin_fields(P)[0]).mean()
+        if best is None or e < best[0]:
+            best = (e, P)
+    _CHIN["mouth"] = best[1] if best is not None else None
+    fl = lambda mm: np.maximum(chin_fields(mm.V)[1], chin_fields(mm.V)[2])              # noqa: E731
+    lip = trim(m1, fl(m1), "negative")
+    rest = trim(m1, fl(m1), "positive")
+    return rest, lip
+
+
+# duct stations aft of the mouth: (STA, centre WL, half-width, half-height); a flattened duct under the engine that
+# rises into the plenum round the rear inlet screen
+CHIN_DUCT = ((1.30, 1.335, 0.215, 0.085), (1.50, 1.305, 0.205, 0.075), (1.80, 1.295, 0.200, 0.072),
+             (2.10, 1.310, 0.200, 0.075), (2.35, 1.380, 0.200, 0.090), (2.52, 1.450, 0.200, 0.100))
+
+
+def _mouth_samples(mouth, ph):
+    """Points of the mouth edge loop at the duct angles ph (front view: -pi/2 = bottom centre, 0 = starboard tip,
+    pi/2 = top centre, pi = port tip).  The mouth is a crescent, not star-shaped about any point, so it is split at its
+    four key points (the two BL-0 crossings and the two tips) and each quarter is resampled by arc length."""
+    P = np.asarray(mouth, float)
+    if np.linalg.norm(P[0] - P[-1]) < 1e-9:
+        P = P[:-1]
+    y, z = P[:, 1], P[:, 2]
+    if 0.5 * np.sum(y * np.roll(z, -1) - np.roll(y, -1) * z) < 0:        # counter-clockwise seen from ahead (y right)
+        P = P[::-1]
+        y, z = P[:, 1], P[:, 2]
+    cross = np.nonzero(np.sign(y) != np.sign(np.roll(y, -1)))[0]
+    zc = np.array([z[i] for i in cross])
+    ib = int(cross[np.argmin(zc)])                                        # bottom centre
+    P = np.roll(P, -ib, axis=0)
+    y, z = P[:, 1], P[:, 2]
+    cross = np.nonzero(np.sign(y) != np.sign(np.roll(y, -1)))[0]
+    it = int(cross[np.argmax(z[cross])])                                   # top centre
+    ir = int(np.argmax(np.where(np.arange(len(P)) < it, y, -np.inf)))       # starboard tip (bottom -> top)
+    il = int(np.argmin(np.where(np.arange(len(P)) > it, y, np.inf)))        # port tip (top -> bottom)
+    Q = np.vstack([P, P[:1]])
+    keys = [0, ir, it, il, len(P)]
+    out = np.empty((len(ph), 3))
+    q = np.clip(np.floor((ph + np.pi / 2) / (np.pi / 2)).astype(int), 0, 3)
+    f = (ph + np.pi / 2) / (np.pi / 2) - q
+    for k in range(4):
+        seg = Q[keys[k]:keys[k + 1] + 1]
+        s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(seg, axis=0), axis=1))]
+        sel = q == k
+        for j in range(3):
+            out[sel, j] = np.interp(f[sel] * s[-1], s, seg[:, j])
+    return out
+
+
+def chin_duct(mouth, m=96):
+    """Rings (k, m, 3): the mouth edge loop (resampled quarter by quarter, _mouth_samples) blending into the
+    CHIN_DUCT ellipses (the first station half-way, the others fully)."""
+    ph = np.linspace(-np.pi / 2, 1.5 * np.pi, m, endpoint=False)
+    M = _mouth_samples(mouth, ph)
+    rings = [M]
+    for k, (x, zc, a, b) in enumerate(CHIN_DUCT):
+        w = 0.6 if k == 0 else 1.0
+        ey, ez = a * np.cos(ph), zc + b * np.sin(ph)
+        rings.append(np.c_[np.full(m, x), (1 - w) * M[:, 1] + w * ey, (1 - w) * M[:, 2] + w * ez])
+    return np.array(rings)
+
+
+def exhaust_stack_mesh(sgn, n=48, m=36, wall=0.006):
+    """Scarfed stack (outer skin, inner wall, lip at the scarf plane); returns (tube, collar, inner)."""
+    R, _ = exhaust_stack_rings(sgn, n, m, scarf=True)
+    path = exhaust_stack_path(sgn, n)
+    cen = path[:, None, :]
+    # arc length of every generator from its scarf end (the collar is the last STACK_COLLAR of it)
+    seg = np.linalg.norm(np.diff(R, axis=0), axis=2)
+    s = np.vstack([np.zeros((1, m)), np.cumsum(seg, 0)])
+    to_end = s[-1][None, :] - s
+    UV = np.stack([to_end, np.zeros_like(to_end)], -1)
+    outer = grid_surface(R, close_v=True, UV=UV)
+    if np.mean(np.sum((outer.V[:m] - path[0]) * outer.N[:m], 1)) < 0:
+        outer = outer.flipped()
+    Ri = cen + (R - cen) * (1 - wall / min(STACK_AB))
+    Ri = _clip_generators(Ri, *stack_scarf_plane(sgn))
+    inner = grid_surface(Ri, close_v=True)
+    if np.mean(np.sum((inner.V[:m] - path[0]) * inner.N[:m], 1)) > 0:
+        inner = inner.flipped()
+    V = np.vstack([R[-1], Ri[-1]])
+    k = np.arange(m)
+    lip = Mesh(V, np.vstack([np.stack([k, (k + 1) % m, (k + 1) % m + m], 1), np.stack([k, (k + 1) % m + m, k + m], 1)]))
+    if np.dot(lip.face_normals().mean(0), stack_scarf_plane(sgn)[1]) < 0:
+        lip = lip.flipped()
+    collar = trim(outer, outer.UV[:, 0] - STACK_COLLAR, "negative")
+    tube = trim(outer, outer.UV[:, 0] - STACK_COLLAR, "positive")
+    return tube, Mesh.merge([collar, lip]), inner
+
+
+def build_inlet_and_exhaust(parts):
+    # chin inlet (D2): the lip was cut from the lower cowling (cut_chin_inlet); the duct lofts from that mouth edge
+    mouth = _CHIN.get("mouth")
+    if mouth is None:
+        raise RuntimeError("chin inlet: the lower cowling was not cut (fuselage_parts.build must run first)")
+    rings = chin_duct(mouth)
+    entry = grid_surface(rings[:3], close_v=True)                    # mouth -> STA 1.50 (seen through the mouth)
+    duct = grid_surface(rings[2:], close_v=True)
+    back = cap_ring(rings[-1], (1, 0, 0))
+    p = parts.get("chin_inlet") or Part("chin_inlet", "Chin air inlet", "cowling", explode=(-0.4, 0, -0.75),
+                                        group="Powerplant installation")
+    p.add(entry, "inlet_dark")
+    parts[p.id] = p
+    dp = Part("inlet_duct", "Inlet duct + inertial separator (to the plenum)", "powerplant", explode=(0, 0, -0.9),
+              group="Powerplant installation", material_note="Composite duct, ice-vane separator")
+    dp.add(Mesh.merge([duct, back]), "composite")
+    parts[dp.id] = dp
+
+    # exhaust stacks: tube along STACK_PTS / STACK_AB, cut by the scarf plane STACK_SCARF, heat-blackened collar
+    tubes, collars, inners = [], [], []
     for sgn in (1, -1):
-        path = exhaust_stack_path(sgn, 20)             # table STACK_PTS (Stage 3: black outlet collar STACK_COLLAR)
-        prof = ellipse(*STACK_AB, 28)
-        o = sweep_profile(path, prof, True, cap=False)
-        i = sweep_profile(path, prof * 0.84, True, cap=False).flipped()
-        # rim at exit
-        rim_o = path[-1]
-        stacks.append(o)
-        inner_s.append(i)
-        # annulus at the exit
-        T = path[-1] - path[-2]
-        T /= np.linalg.norm(T)
-        from cad.mesh import parallel_transport_frames
-        Tt, Nn, B = parallel_transport_frames(path)
-        ring_o = path[-1] + prof[:, 0, None] * Nn[-1] + prof[:, 1, None] * B[-1]
-        ring_i = path[-1] + 0.84 * (prof[:, 0, None] * Nn[-1] + prof[:, 1, None] * B[-1])
-        n = len(prof)
-        V = np.vstack([ring_o, ring_i])
-        k = np.arange(n)
-        Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
-        an = Mesh(V, Fc)
-        if np.dot(an.face_normals().mean(0), T) < 0:
-            an = an.flipped()
-        stacks.append(an)
-    ep = Part("exhaust_stacks", "Exhaust stacks (L/R)", "cowling", explode=(-0.2, 0, 0.0), qty=2,
-              group="Powerplant installation", material_note="Inconel stacks")
-    ep.add(Mesh.merge(stacks), "exhaust").add(Mesh.merge(inner_s), "black")
+        t, c, i = exhaust_stack_mesh(sgn)
+        tubes.append(t)
+        collars.append(c)
+        inners.append(i)
+    ep = Part("exhaust_stacks", "Exhaust stacks (L/R), scarfed outlets", "cowling", explode=(-0.2, 0, 0.0), qty=2,
+              group="Powerplant installation", material_note="Inconel stacks, heat-tinted outlet collars")
+    ep.add(Mesh.merge(tubes), "exhaust").add(Mesh.merge(collars), "black").add(Mesh.merge(inners), "black")
     parts[ep.id] = ep
 
 
@@ -546,41 +641,68 @@ def blade_geometry(n_r=34, n_c=40):
     return Mesh.merge([m, tip, root]), rs, Pm
 
 
+BLADE_HOLE_R = 0.068          # blade-root openings in the spinner (pitch axis radius; clears the cuff at any pitch)
+# The spinner base plane is normal to the (2 deg tilted / yawed) thrust axis, the cowl-front ring is vertical: a
+# 25 mm cylindrical skirt (R SPINNER_R) behind the base plane tucks into the cowl so no gap opens at the top / port
+# side (the skirt stays inside the cowl skin, whose radius grows aft of the cowl front).
+SPINNER_SKIRT = 0.025
+
+
+def spinner_mesh(n_around=160, n_prof=90):
+    """Spinner: surface of revolution of spinner_profile() about the thrust axis, tip at STA spinner_tip, base plane
+    (normal to the axis) through the axis at the cowl front; blade-root openings; returns (shell, bulkhead)."""
+    t, r = spinner_profile(n_prof)
+    x0, x1 = F.STA["spinner_tip"], F.STA["cowl_front"]
+    a = -thrust_dir()
+    L = (x1 - x0) * np.linalg.norm([1.0, _TY, _TT])
+    prof = [(L * tt, rr) for tt, rr in zip(t, r)]
+    prof[0] = (0.0, 0.0)
+    prof += [(L + SPINNER_SKIRT * k / 4, float(r[-1])) for k in range(1, 5)]     # short skirt into the cowl front
+    shell = revolve(prof, n=n_around, axis_origin=axis_point(x0), axis_dir=a)
+    hub = prop_hub()
+    f = np.full(len(shell.V), 1.0)
+    for k in range(N_BLADES):
+        d = blade_axis(k)
+        w = shell.V - hub
+        f = np.minimum(f, np.linalg.norm(w - np.outer(w @ d, d), axis=1) - BLADE_HOLE_R)
+    shell = trim(shell, f, "positive")
+    bulk = disk(axis_point(x0) + (L + SPINNER_SKIRT - 0.002) * a, a, float(r[-1]) - 0.003, n=n_around)
+    return shell, bulk
+
+
+def blade_axis(k):
+    """Unit pitch-change axis of blade k (radial, in the tilted propeller disc)."""
+    return thrust_rotation() @ (rotation_matrix((1, 0, 0), 2 * np.pi * k / N_BLADES) @ np.array([0, 0, 1.0]))
+
+
 def build_propeller(parts):
     blade, rs, Pm = blade_geometry()
     # split tip band and leading-edge erosion shield by trimming on radius
     z = blade.V[:, 2]
     tipband = trim(blade, (PROP_R - 0.11) - z, "negative")
     body = trim(blade, (PROP_R - 0.11) - z, "positive")
-    hub_c = np.array([PROP_X, 0, AX_Z])
+    hub_c = prop_hub()
+    Rt = thrust_rotation()
     prop = Part("propeller", "Hartzell 5-blade composite propeller (2.67 m)", "propeller",
-                pivot=dict(origin=hub_c.tolist(), axis=[-1.0, 0, 0], kind="spin", rpm=1700),
+                pivot=dict(origin=hub_c.tolist(), axis=thrust_dir().tolist(), kind="spin", rpm=1700),
                 explode=(-1.8, 0, 0), group="Propeller",
                 material_note="Carbon composite blades, nickel erosion shields, full-feathering, reversible",
                 info={"diameter": "2,670 mm (105 in)", "blades": "5", "rpm": "1,700 (1,550 low-speed mode)",
-                      "ground clearance": "320 mm"})
-    # spinner + hub (spin with the propeller)
-    prof = []
-    L = 0.935 - 0.39
-    for t in np.linspace(0, 1, 44):
-        r = 0.291 * (1 - (1 - t) ** 2.1) ** 0.55
-        prof.append((L * t, r))
-    prof[0] = (0.0, 0.0)
-    prof.append((L + 0.001, 0.0))
-    spin = revolve(prof, n=64, axis_origin=(0.39, 0, AX_Z), axis_dir=(1, 0, 0))
+                      "ground clearance": "320 mm", "thrust line": "2 deg nose-down, 2 deg right"})
+    # spinner + hub (spin with the propeller) on the tilted / yawed thrust axis
+    spin, bulk = spinner_mesh()
     hub = revolve([(0, 0.0), (0.001, 0.13), (0.20, 0.13), (0.201, 0.0)], n=40,
-                  axis_origin=(0.70, 0, AX_Z), axis_dir=(1, 0, 0))
-    prop.add(spin, "paint_white").add(hub, "metal_dark")
+                  axis_origin=axis_point(PROP_X - 0.10), axis_dir=-thrust_dir())
+    prop.add(spin, "paint_white").add(Mesh.merge([hub, bulk]), "metal_dark")
     parts[prop.id] = prop
     for k in range(N_BLADES):
-        ang = 2 * np.pi * k / N_BLADES
-        R = rotation_matrix((1, 0, 0), ang)
+        R = Rt @ rotation_matrix((1, 0, 0), 2 * np.pi * k / N_BLADES)
         M = np.eye(4)
         M[:3, :3] = R
         M[:3, 3] = hub_c
         bb = body.transformed(M)
         bt = tipband.transformed(M)
-        radial = R @ np.array([0, 0, 1.0])
+        radial = blade_axis(k)
         bp = Part(f"blade_{k+1}", f"Blade {k+1}", "propeller", parent="propeller",
                   pivot=dict(origin=hub_c.tolist(), axis=radial.tolist(), kind="pitch", feather=62.0, reverse=-38.0),
                   explode=tuple((radial * 0.45).tolist()), group="Propeller", material_note="Composite blade")

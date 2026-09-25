@@ -100,14 +100,24 @@ class GLBBuilder:
             raise ValueError(f"non-finite vertices in {name}")
         F = mesh.F.astype(np.int64)
         nv = len(V)
-        self.stats["vertices"] += nv
-        self.stats["triangles"] += len(F)
-        attrs = {}
         if self.quantize:
             lo, hi = V.min(0), V.max(0)
             c = 0.5 * (lo + hi)
             h = np.maximum(0.5 * (hi - lo), 0.02)
             q = np.round((V - c) / h * 32767.0).clip(-32767, 32767).astype(np.int16)
+            Q = q[F].astype(np.int64)
+            e = np.cross(Q[:, 1] - Q[:, 0], Q[:, 2] - Q[:, 0])
+        else:
+            e = np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]]) * 1e6
+        # drop zero-area triangles (a trim through existing vertices leaves slivers of zero area; Blender's custom
+        # split normals go wrong on them -- specks in the renders); they cover no area, so nothing visible is lost
+        keep = np.any(e != 0, axis=1)
+        if keep.any():
+            F = F[keep]
+        self.stats["vertices"] += nv
+        self.stats["triangles"] += len(F)
+        attrs = {}
+        if self.quantize:
             buf = np.zeros((nv, 4), np.int16)
             buf[:, :3] = q
             pv = self._view(buf.tobytes(), ARRAY_BUFFER, stride=8)

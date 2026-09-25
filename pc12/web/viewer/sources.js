@@ -41,7 +41,7 @@ export const SOURCED = [
       'Fowler flaps over 67 % of the trailing edge; T-tail with bullet fairing',
       'Dorsal fin and ventral strakes',
       'Tyres 22 × 8.50-10 (main), 17.5 × 6.25-6 (nose); nose-wheel steering ±60°',
-      'Type III emergency exit, right side over the wing',
+      'Emergency exit on the right side over the wing (plug hatch, as drawn by Pilatus)',
     ],
   },
   {
@@ -64,14 +64,14 @@ export const SOURCED = [
 
 export const ESTIMATED = [
   'Fuselage contours between the anchor dimensions',
-  'Windshield and side-window outlines (checked only against an independent FlightGear PC-12 model, not yet against photos)',
-  'Winglet cant, sweep and height',
-  'Wing dihedral (4.5°), incidence and washout',
+  'Windshield and side-window outlines (fitted to the Pilatus NGX drawing and checked against PC-12 PRO photos)',
+  'Winglet cant (51° from vertical), sweep and height: drawn; the straight part lengthened to the official span',
+  'Wing dihedral (6.2° from the drawn surfaces), incidence and washout',
   'Airfoil ordinates (reconstructions of the named sections)',
   'Fin and tailplane planform details',
   'Engine module proportions inside the TCDS envelope',
   'Interior layout',
-  'Livery (an original scheme, not an operator’s)',
+  'Livery: the MSN 3008 (N81DW) scheme reconstructed from photographs, no lettering',
 ];
 
 // Values the viewer animates with.  They come from the model's pivot data and are

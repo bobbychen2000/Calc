@@ -96,6 +96,16 @@ FLAP_TRAVEL = (0.24, -0.035)     # Fowler translation at full deflection (chord 
 AIL_GAP_TE = 0.439               # upper-surface gap line to trailing edge (m)
 BOOT_Y = (0.95, 7.43)
 GAP = 0.012   # spanwise gap between control surface and wing (m)
+# The drawn flap runs inboard to BL 450 under the fuselage / wing-root fairing (dashed in the plan).  The 3-D flap
+# body starts just outboard of the belly fairing (half-width 0.90) so it can deploy; the cove inboard of it stays
+# under the fairing.
+FLAP_BODY_Y0 = 0.920
+# Hidden carry-through (Stage-3 decision D1): inside the fuselage (BL < Y_DIH0, the flat centre section) the wing's
+# upper surface is limited to the cabin floor WL - 15 mm, and its lower surface to >= the drawn belly-fairing bottom
+# + 4 mm, so the box stays under the floor and inside the fairing; the exterior wing and the root junction on the
+# fuselage side are unchanged (at BL 0.70 the upper surface is already below the limit).
+CS_FLOOR_CLEAR = 0.015
+CS_FAIRING_CLEAR = 0.004
 
 ROOT_AF, TIP_AF = ls0417mod(), ls0313()
 
@@ -202,6 +212,43 @@ def planform_area():
     """Total projected plan area (m^2): both halves, panel incl. the kink, plus the winglets' projection."""
     ys = np.linspace(0, SEMI, 2001)
     return float(2 * (np.trapezoid(chord(ys), ys) + _tip_area(C_TIP)))
+
+
+def centre_section_top():
+    from model import fuselage as F
+    return F.CABIN_FLOOR_WL - CS_FLOOR_CLEAR
+
+
+def centre_section_clamp(V, margin=0.0):
+    """Flatten the hidden carry-through (|y| < Y_DIH0): z <= cabin floor - 15 mm, z >= belly-fairing bottom + 4 mm
+    (margin shrinks the band further, e.g. for spars inside the skins).  Returns a new array."""
+    from model.details import belly_fairing_bottom, BELLY_FAIRING_BOT
+    V = np.array(V, float, copy=True)
+    inside = np.abs(V[:, 1]) < Y_DIH0
+    top = centre_section_top() - margin
+    V[:, 2] = np.where(inside & (V[:, 2] > top), top, V[:, 2])
+    x0, x1 = BELLY_FAIRING_BOT[0][0], BELLY_FAIRING_BOT[-1][0]
+    xin = (V[:, 0] > x0) & (V[:, 0] < x1)
+    bot = belly_fairing_bottom(np.clip(V[:, 0], x0, x1)) + CS_FAIRING_CLEAR + margin
+    V[:, 2] = np.where(inside & xin & (V[:, 2] < bot), bot, V[:, 2])
+    return V
+
+
+def _clamp_mesh(m):
+    """centre_section_clamp() on a skin mesh; normals of the moved vertices from the faces."""
+    V2 = centre_section_clamp(m.V)
+    moved = np.abs(V2[:, 2] - m.V[:, 2]) > 1e-9
+    if not moved.any():
+        return m
+    m = m.copy()
+    m.V = V2
+    fn = np.cross(m.V[m.F[:, 1]] - m.V[m.F[:, 0]], m.V[m.F[:, 2]] - m.V[m.F[:, 0]])
+    N = np.zeros_like(m.V)
+    for k in range(3):
+        np.add.at(N, m.F[:, k], fn)
+    N /= np.maximum(np.linalg.norm(N, axis=1, keepdims=True), 1e-12)
+    m.N = np.where(moved[:, None], N, m.N)
+    return m
 
 
 def airfoil_at(y):
@@ -449,20 +496,19 @@ def build_right(n=60):
         fw = np.where(rest.UV[:, 1] < 0, main_opening_sdf(rest.V[:, 0], rest.V[:, 1]), 1.0)
         if (fw < 0).any():
             rest = trim(rest, fw, "positive")
-        out["skin"].append(rest)
+        out["skin"].append(_clamp_mesh(rest))
         if boot.nf:
             out["boot"].append(boot.offset(0.0015))
 
     # panel A: root -> flap start (full section)
     ys = span_stations(0.0, Y_FLAP[0], 0.2)
     add_skin(skin(section_at, ys, n=n))
-    out["skin"].append(strip(section_at, ys, 1.0, 1.0))
+    out["skin"].append(_clamp_mesh(strip(section_at, ys, 1.0, 1.0)))
 
     # panel B: flap bay
     ys = span_stations(Y_FLAP[0], Y_FLAP[1], 0.25)
     add_skin(skin(section_at, ys, x_lo_end=FLAP_X_LO, x_up_end=FLAP_X_LIP, n=n))
-    out["skin"].append(curve_patch(section_at, ys, flap_cove,
-                                   outward_hint=lambda s: s.e_c))
+    out["skin"].append(_clamp_mesh(curve_patch(section_at, ys, flap_cove, outward_hint=lambda s: s.e_c)))
 
     # panel C: between flap and aileron
     ys = span_stations(Y_FLAP[1], Y_AIL[0], 0.1)
@@ -494,7 +540,7 @@ def build_right(n=60):
         out["ribs"].append(planar_cap(pts, (0, sgn, 0)))
 
     # flap body
-    ys = span_stations(Y_FLAP[0] + GAP, Y_FLAP[1] - GAP, 0.25)
+    ys = span_stations(FLAP_BODY_Y0, Y_FLAP[1] - GAP, 0.25)
     out["flap"] = closed_body(section_at, ys, flap_loop)
     # aileron body with the Flettner geared balance tab cut-out (inboard 40 %)
     body, tabm, hinge = segmented_surface(section_at, Y_AIL[0] + GAP, Y_AIL[1] - GAP, lambda s: float(ail_xh(s.le[1])),

@@ -1591,7 +1591,7 @@ def _model_oml():
         from model import fuselage as F
     except Exception:
         return None
-    x = np.arange(0.95, 14.36, 0.01)
+    x = np.arange(F.STA["cowl_front"], F.STA["tail_end"], 0.01)       # the loft range (fuselage.STRICT)
     return dict(x=x, top=np.asarray(F.z_top(x), float), bot=np.asarray(F.z_bot(x), float),
                 hw=np.asarray(F.half_w(x), float), STA=dict(F.STA), prop_axis_z=float(F.PROP_AXIS_Z))
 
@@ -2347,9 +2347,11 @@ def _model_compare(P, X, out):
         C.append(_chk("[vs model] port flight-deck glazing, highest WL", ms["glz_port_z"][1], float(A[:, 1].max())))
         if "sw_port" in G:
             sw = G["sw_port"]
-            C.append(_chk("[vs model] side window sill WL (sw_port bottom)", 1.985, float(sw[:, 1].min()),
-                          note="model SW_BOTTOM 1.985"))
-            C.append(_chk("[vs model] side window aft edge (sw_port)", 4.268, float(sw[:, 0].max()), note="model SW_REAR 4.268"))
+            from model import cockpit_glazing as CG
+            C.append(_chk("[vs model] side window sill WL (sw_port bottom)", CG.SW_SILL, float(sw[:, 1].min()),
+                          note=f"model CG.SW_SILL {CG.SW_SILL:.3f}"))
+            C.append(_chk("[vs model] side window aft edge (sw_port)", CG.SW_AFT, float(sw[:, 0].max()),
+                          note=f"model CG.SW_AFT {CG.SW_AFT:.3f}"))
     O = out["openings"].get("side", {})
     for n in ("door_airstair", "door_cargo"):
         if n in O and n + "_x" in ms:
@@ -2358,12 +2360,13 @@ def _model_compare(P, X, out):
             C.append(_chk(f"[vs model] {n} sill WL", ms[n + "_z"][0], float(O[n][:, 1].min())))
             C.append(_chk(f"[vs model] {n} top WL", ms[n + "_z"][1], float(O[n][:, 1].max())))
     wins = sorted([P_[:-1].mean(0)[0] for k, P_ in O.items() if k.startswith("cabin_win")])
-    mw = [5.52, 6.32, 7.12, 7.92]
+    from model import fuselage_parts as FP
+    mw = [r["cx"] for r in FP.openings_table() if r["side"] < 0 and r["kind"] == "window" and r["host"] is None]
     for k, (a, b) in enumerate(zip(mw, wins), 1):
         C.append(_chk(f"[vs model] port cabin window {k} centre station", a, float(b), note="model FIXED_WINDOWS[-1]"))
     if "door_cargo_win" in O:
-        C.append(_chk("[vs model] cargo-door window centre station", 8.72, float(O["door_cargo_win"][:-1].mean(0)[0]),
-                      note="model DOOR_WINDOWS['door_cargo']"))
+        C.append(_chk("[vs model] cargo-door window centre station", FP.DOOR_WINDOWS["door_cargo"],
+                      float(O["door_cargo_win"][:-1].mean(0)[0]), note="model DOOR_WINDOWS['door_cargo']"))
     return C
 
 
@@ -3054,7 +3057,7 @@ def debug_images(d, outdir=DEBUG_DIR, glb=True):
                 from model import fuselage as F
                 xs_ = [r["x"]] if r["x"] is not None else list(np.linspace(*r["x_range"], 3))
                 for x in xs_:
-                    if 0.95 <= x <= 14.36:
+                    if F.STA["cowl_front"] <= x <= F.STA["tail_end"]:
                         t = np.linspace(0, 1, 361)
                         S = F.section(np.full_like(t, x), t)
                         ax.plot(S[:, 1], S[:, 2], "r--", lw=0.8)
