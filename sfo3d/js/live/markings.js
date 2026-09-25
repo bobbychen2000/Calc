@@ -186,9 +186,14 @@ export function buildStandMarks(gates, boxes = [], gridDir = null) {
     for (const k in g.typeStops || {}) { const a = g.typeStops[k].along; if (a < -2) bars.push(-a + 4.7); }
     for (const d of bars) { const c = back(d); R.line([[c[0] - n[0] * 1.2, c[1] - n[1] * 1.2], [c[0] + n[0] * 1.2, c[1] + n[1] * 1.2]], 6 * IN, YEL, 1); }
   }
-  const u = gridDir || [0.884, 0.467], v = [-u[1], u[0]];
-  for (const [x, z, sz] of boxes) {
-    const h = sz / 2 - 0.15; const c = (a, b) => [x + u[0] * a + v[0] * b, z + u[1] * a + v[1] * b];
+  // red boxes (data/sfo_stands.json redBoxes [x, z, side, angle]): review round 3 - each box at its own measured angle
+  // (deg, x east / z south; many boxes are not grid-aligned: F pier, rotated stands) and side = the painted line's centre
+  // square (oriented-square template fit on NAIP 2024, tools/stands/redboxes_naip.py). Boxes without an angle fall back
+  // to the airport grid.
+  const ug = gridDir || [0.884, 0.467];
+  for (const [x, z, sz, ang] of boxes) {
+    const u = ang != null ? [Math.cos(ang * Math.PI / 180), Math.sin(ang * Math.PI / 180)] : ug, v = [-u[1], u[0]];
+    const h = sz / 2; const c = (a, b) => [x + u[0] * a + v[0] * b, z + u[1] * a + v[1] * b];
     R.line([c(-h, -h), c(h, -h), c(h, h), c(-h, h), c(-h, -h)], 6 * IN, RED, 0.85);
   }
   return R.mesh();

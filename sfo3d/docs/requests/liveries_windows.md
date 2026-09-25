@@ -24,6 +24,20 @@ What changed for everybody (reload `data/models/*.sfom` and `data/liveries/**` t
 - **Freighters**: brands flagged `cargo` in the manifest (`FDX`, `UPS`) get no painted windows; the kept artist glass of
   their models (MD-11, 757, 747-8) is shaded as painted-over window plugs (`js/shaders/aircraft_real.js` `uNoCabin`).
 
+**Update, 25 Sep 2026 (second pass, verification).** All 21 models were re-atlased and all liveries re-baked (reload
+`data/models/*.sfom` and `data/liveries/**` together; the atlas layouts of a319, a320, a321, a359, b738, b763, b788 and
+e75l changed): the A321 model now paints its rows (the A321neo row differs from the A321 row, and the artist glass is shared);
+the E175's aft flight-deck side window, removed by mistake in the first pass, is back; window removal no longer opens
+holes in the wing tips; faint outlines of the model's own windows no longer show on the other types of the model. No API
+or uniform changed. Details: `docs/research/liveries_impl.md` §8.1, §8.6.
+
+Request to `js/three/aircraft.js`: while the livery texture of an aircraft whose type differs from its model's own type
+is loading (`neutralTextureFor(modelKey, typeKey)` is not null), do not draw the model with its own atlas: that atlas
+carries the model's own window row, which the fuselage plugs squeeze or stretch (seen as doubled windows on a 737-700 in
+the legacy renderer before the texture arrived, up to 47 s on a software GPU). The legacy renderer now draws the
+procedural airframe until the texture is in (`js/live/aircraft.js liveryPending()`); if the load fails, the model's own
+atlas is used.
+
 | File (owner) | Request |
 |---|---|
 | `js/three/aircraft.js` | (1) After the brand lookup, fall back to `neutralTextureFor(modelKey, typeKey, res)` from `js/aircraft/liveries.js` and draw it like the model's own atlas (zone recolouring, no `liveryTex` branch), else the model's atlas; `liveryTextureFor()` now returns `null` when the brand has no bake for the type's airframe (it no longer hands out a bake painted for another fuselage length). (2) Freighters: `brandIsCargo(brand)` from the same module -> in `realMaterial`, glass (kind 1) aft of the flight deck (`LP.x < -uFusB.z`) is shaded as paint in the top colour (`uTop`), no cabin light (reference: `js/shaders/aircraft_real.js`, `uNoCabin`). (3) Nothing else: plugs come with `decodeModel`. |

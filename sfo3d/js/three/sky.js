@@ -148,17 +148,34 @@ export class Sky {
       return r;
     })();
   }
-  // sky seen along direction rd from the camera (background)
+  // sky seen along direction rd from the camera (background): the composition below + the sun disk
   backgroundNode() {
     const U = this.u;
     return Fn(() => {
       const rd = normalize(positionWorldDirection).toVar();
-      const col = this.baseTex.sample(dirToEquirect(rd)).rgb.toVar();
+      const col = this.skyAlong(cameraPosition, rd).toVar();
       const mu = dot(rd, U.sunDir); const sunR = 0.99998918;
       If(mu.greaterThan(sunR), () => { const r = sqrt(max(0.0, float(1.0).sub(float(1.0).sub(mu).div(1.0 - sunR)))); col.addAssign(U.sunColor.mul(900.0).mul(r.mul(0.6).add(0.4))); });
-      const ci = this.cirrus(cameraPosition, rd).mul(0.22).mul(float(1.0).sub(U.cloud.x.mul(0.6)));
+      return col;
+    })();
+  }
+  // sky radiance seen from ro along rd: precomputed sky, cirrus, the METAR cloud layer, the night floor (moon / city
+  // glow; a little stronger and warmer towards the horizon, where the Bay Area's light pollution sits: inferred) and,
+  // below the horizon, the horizon colour fading to the ground. Used for the background (ro = camera) and for the
+  // water's reflections (ro = the water point: the reflected clouds are the clouds of the visible sky).
+  skyAlong(ro, rdIn) {
+    const U = this.u;
+    return Fn(() => {
+      const rd = normalize(rdIn).toVar();
+      const ru = normalize(vec3(rd.x, max(rd.y, 0.0), rd.z));
+      const col = this.baseTex.sample(dirToEquirect(ru)).rgb.toVar();
+      const mu = dot(ru, U.sunDir);
+      const ci = this.cirrus(ro, ru).mul(0.22).mul(float(1.0).sub(U.cloud.x.mul(0.6)));
       col.assign(mix(col, U.sunColor.mul(0.25).mul(pow(max(mu, 0.0), 8.0).mul(2.0).add(1.0)).add(U.skyUp.mul(0.9)), ci));
-      If(U.skyClouds.greaterThan(0.5), () => { col.assign(this.cloudLayer(cameraPosition, rd, col)); });
+      If(U.skyClouds.greaterThan(0.5), () => { col.assign(this.cloudLayer(ro, ru, col)); });
+      const hz = pow(float(1.0).sub(ru.y), 6.0);
+      col.assign(max(col, U.skyFloor.mul(mix(vec3(1.0), vec3(2.2, 1.9, 1.5), hz))));
+      If(rd.y.lessThan(0.0), () => { col.assign(mix(col, U.ground.mul(0.9), smoothstep(0.0, -0.35, rd.y))); });
       return col;
     })();
   }

@@ -17,6 +17,7 @@
 //   offpave.mask / .union gear point (nose, both mains) off the rendered pavement mask / off mask UNION OSM net
 //   bridge.hit.fus|wing|tail  aircraft part inside a jet bridge (walkway, rotunda, tunnel, drive column, cab) in 3-D
 //                         (height bands from the type table vs gates.js bridge floor heights)
+//   bridge.hit_at_rest    subset of bridge.hit.*: the bridge is fully retracted (k < 0.05), i.e. at gates.js's rest pose
 //   bridge.misdock        a bridge docked (k > 0.5) whose door target is > 1.5 m from the displayed door of its occupant
 //   bridge.orphan         a bridge docked (k > 0.5) with no displayed aircraft within 10 m of its door target
 //   bridge.attached.moving  occupant moving (> 0.3 m/s) while its bridge is still > 50 % extended
@@ -100,12 +101,13 @@ const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; 
 const gateByName = new Map(gates.map(g => [g.name, g]));
 const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
 const occ = new Map(); // physical gate name -> occupant track (as the bridge system was told)
-function applyGate(g, tr) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; occ.set(G.name, ty ? tr : null); gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
+const undocking = new Map(); // physical gate name -> the occupant whose bridge is retracting (its cab leaves its door)
+function applyGate(g, tr) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; const prev = occ.get(G.name); if (!ty && prev) undocking.set(G.name, prev); else if (ty) undocking.delete(G.name); occ.set(G.name, ty ? tr : null); gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
 function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.docks(g, b) ? a.k : 0; return g.acType && gsys.docks(g, b) ? 1 : 0; }
 function animStep(now) { for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
 
 const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr) => applyGate(g, tr) });
-traffic.buildingAt = building; if (TRACE) traffic.debug = TRACE;
+traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (TRACE) { traffic.debug = TRACE; traffic.onEvent = (e) => { if (e.hex === TRACE) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); }; }
 traffic.bridgeK = (g) => { const G = bridgeGate(g); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net });
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
@@ -303,7 +305,9 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
     if (D.alpha != null && D.alpha < 0.5) { K.delete(tr.hex); tr._reset = null; continue; }
     const s = K.get(tr.hex); const T = tr.model && TYPES[tr.model.t];
     const near = Math.hypot(D.x, D.z) < 40000; const light = tr.info.category === 'A1' || (T && T.L < 20); const rotor = tr.info.category === 'A7';
-    const bk = D.ground && T ? Math.max(1, (T.xMain ?? T.L * 0.47) - antOf(T)) : 0;
+    // (the no-slip point of the engine's ground body, traffic.js ctlGround `back`: 8 m behind the reference for an aircraft
+    // without a 3-D type -- drawn as a marker -- 0 for vehicles)
+    const bk = !D.ground ? 0 : T ? Math.max(1, (T.xMain ?? T.L * 0.47) - antOf(T)) : veh ? 0 : 8;
     const PX = D.x - Math.sin(D.hdg) * bk, PZ = D.z + Math.cos(D.hdg) * bk;
     const agl = D.y - GROUND_Y;
     if (chk && !veh && near) {
@@ -389,7 +393,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
   for (const [hex] of K) if (!traffic.tracks.has(hex)) { K.delete(hex); surfCache.delete(hex); }
   if (frames % 600 === 0) pairCache.clear();
   if (TRACE && frames % 5 === 0) { const tr = traffic.tracks.get(TRACE); if (tr && tr.disp.valid) { const D = tr.disp, d = tr._dbg || {}; const f2 = (v) => v == null ? '-' : (+v).toFixed(1);
-    console.error(iso(simNow), tr.phase, tr.m.phase, 'disp', f2(D.x), f2(D.z), 'y', f2(D.y), 'hdg', f2(D.hdg / DEG), 'v', f2(tr.ctl && tr.ctl.v), 'g', D.ground ? 1 : 0, '| tgt', f2(d.ox), f2(d.oz), 'tv', f2(Math.hypot(d.ovx || 0, d.ovz || 0)), d.stop ? 'STOP' : '', 'ex', f2(d.ex), '| park', tr.parkPos ? f2(tr.parkPos[0]) + ',' + f2(tr.parkPos[1]) + '@' + f2((tr.parkHdg ?? 0) / DEG) : '-', tr.parkMode || '', tr.gate ? tr.gate.name : '-', tr.ctl && tr.ctl.towing ? 'TOW' : '', tr.stale ? 'STALE' : '', tr.gate && tr.gate.dock && tr.parkPos ? 'dockPoseVsPark ' + f2(Math.hypot(poseST(tr).nose[0] - tr.gate.dock.nose[0], poseST(tr).nose[1] - tr.gate.dock.nose[1])) + 'm' : '', 'last', tr.last ? f2((simNow - tr.last.t) / 1000) + 's gs' + f2(tr.last.gs) + (tr.last.push ? ' PUSH' : '') + (tr.last.ground ? ' G' : ' A') : ''); } }
+    console.error(iso(simNow), tr.phase, tr.m.phase, 'disp', f2(D.x), f2(D.z), 'y', f2(D.y), 'hdg', f2(D.hdg / DEG), 'v', f2(tr.ctl && tr.ctl.v), 'g', D.ground ? 1 : 0, '| tgt', f2(d.ox), f2(d.oz), 'tv', f2(Math.hypot(d.ovx || 0, d.ovz || 0)), d.stop ? 'STOP' : '', 'ex', f2(d.ex), '| park', tr.parkPos ? f2(tr.parkPos[0]) + ',' + f2(tr.parkPos[1]) + '@' + f2((tr.parkHdg ?? 0) / DEG) : '-', tr.parkMode || '', tr.gate ? tr.gate.name : '-', tr.ctl && tr.ctl.towing ? 'TOW' : '', tr.stale ? 'STALE' : '', tr.lock ? 'LOCK' : '', tr.bridgeOn ? 'BRIDGE' : '', tr.bridgeGate ? 'k' + (traffic.bridgeK(tr.bridgeGate)).toFixed(2) : '', tr.leaving ? 'LEAVING' : '', tr._stop ? 'stopErr ' + f2(Math.hypot(tr._stop.x - tr.ctl.x, tr._stop.z - tr.ctl.z)) + '/' + f2(tr._stop.hd != null ? Math.abs(wrapPi(tr._stop.hd - tr.ctl.psi)) / DEG : 0) : '', tr.gate && tr.gate.dock && tr.parkPos ? 'dockPoseVsPark ' + f2(Math.hypot(poseST(tr).nose[0] - tr.gate.dock.nose[0], poseST(tr).nose[1] - tr.gate.dock.nose[1])) + 'm' : '', 'last', tr.last ? f2((simNow - tr.last.t) / 1000) + 's gs' + f2(tr.last.gs) + (tr.last.push ? ' PUSH' : '') + (tr.last.ground ? ' G' : ' A') : ''); } }
   if (!chk || FAST) { simNow += DT * 1000; continue; }
   // ---------------- surface: pavement, buildings (cached per aircraft while its displayed pose is unchanged)
   for (const B of gnd) {
@@ -427,7 +431,8 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       // aircraft inside the bridge: SAT of each planform piece against each bridge box, then 3-D point test
       for (const A of gnd) {
         if (Math.hypot(A.c[0] - BB.cc[0], A.c[1] - BB.cc[1]) > A.S.reach / 2 + BB.r + 2) continue;
-        const own = ot && ot === A.tr && k > 0.05; const ck = A.key + '|' + bkey + '|' + (own ? 1 : 0);
+        // (own: the bridge's occupant, or the aircraft it is retracting from -- the cab starts at its door)
+        const own = ((ot && ot === A.tr) || (!ot && undocking.get(g.name) === A.tr)) && k > 0.05; const ck = A.key + '|' + bkey + '|' + (own ? 1 : 0);
         let H = b._hit && b._hit.get(A.tr.hex);
         if (!H || H.ck !== ck) {
           H = { ck, n: 0, hit: null }; const PA = worldPolys(A);
@@ -442,6 +447,8 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
           if (!b._hit) b._hit = new Map(); b._hit.set(A.tr.hex, H);
         }
         if (H.n) viol('bridge.hit.' + H.hit.kind, A.tr, H.n, { stand: g.name, bridge: b.door, part: H.hit.part, k: +k.toFixed(2), own: own ? 1 : 0, pts: H.n, phase: A.tr.phase, v: +A.tr.disp.gs.toFixed(1) });
+        // (subset, informational: the bridge is fully retracted, i.e. at gates.js's rest pose -- docs/requests/realtime_round1.md 1a)
+        if (H.n && k < 0.05) viol('bridge.hit_at_rest', A.tr, H.n, { stand: g.name, bridge: b.door, part: H.hit.part, kind: H.hit.kind, docked: A.tr.bridgeOn ? 1 : 0, phase: A.tr.phase, v: +A.tr.disp.gs.toFixed(1) });
       }
       if (k > 0.5) {
         // door target vs the displayed door of the occupant
@@ -477,7 +484,13 @@ for (const [k, list] of [['rwy.truth.landing_missed', truthCmp.landings.missed],
   V.set(k, { frames: list.length, eps: list.length, who: new Map(list.map((q, i) => [q.hex + i, { n: 1, max: 1, ex: q }])), worst: [] });
 
 const engineEvents = EV.filter(e => ['touchdown', 'liftoff', 'go-around', 'runway-change', 'rejected-takeoff'].includes(e.kind)).map(e => ({ ...e, t: iso(e.t) }));
-const report = { engineEvents, meta: { stream: STREAM, root: ROOT, from: new Date(checkFrom).toISOString(), until: new Date(simNow).toISOString(), warm: WARM, frames, checkedFrames, dt: DT, wallS: Math.round((Date.now() - wall0) / 1000), counters: traffic.counters, delay: Math.round(traffic.delay) }, truth: truthCmp, classes: {} };
+// stand events per aircraft (in-block / off-block / stand-left / stale-replaced within the window): a parking should give
+// one in-block (review round 1: 4-6 in-blocks per parking after silent minutes)
+const standEvents = {}; for (const e of EV) if (['in-block', 'off-block', 'stand-left', 'stale-replaced'].includes(e.kind)) { const k = (e.flight || e.hex) + ' ' + e.hex; (standEvents[k] = standEvents[k] || []).push(iso(e.t) + ' ' + e.kind + (e.stand ? ' ' + e.stand : '') + (e.forward ? ' fwd' : '')); }
+// re-placements (fade out / in) by reason, ground/air and distance from the ARP (LOCKLOG=1)
+const cuts = {}; for (const q of traffic.lockLog || []) { if (!String(q[2]).startsWith('cut') || !inWin(q[0])) continue; const tr = traffic.tracks.get(q[1]); const d = tr ? Math.hypot(tr.disp.x, tr.disp.z) : null; const k = q[2] + ' ' + (q[5] === 'a' ? 'air' : q[5] === 'g' ? 'gnd' : '') + ' ' + (d == null ? '?' : d < 3000 ? '<3km' : d < 15000 ? '<15km' : '>15km'); cuts[k] = (cuts[k] || 0) + 1; }
+const cutList = (traffic.lockLog || []).filter(q => String(q[2]).startsWith('cut') && inWin(q[0])).slice(0, 400).map(q => [iso(q[0]), ...q.slice(1)]);
+const report = { engineEvents, standEvents, cuts, cutList, meta: { stream: STREAM, root: ROOT, from: new Date(checkFrom).toISOString(), until: new Date(simNow).toISOString(), warm: WARM, frames, checkedFrames, dt: DT, wallS: Math.round((Date.now() - wall0) / 1000), counters: traffic.counters, delay: Math.round(traffic.delay) }, truth: truthCmp, classes: {} };
 for (const [cls, v] of [...V.entries()].sort()) {
   const who = [...v.who.values()].sort((a, b) => b.max - a.max);
   const aircraft = new Set([...v.who.keys()]).size;

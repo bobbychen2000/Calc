@@ -1,17 +1,25 @@
 // Terrain, airfield and water for the three.js renderer: TSL ports of js/shaders/ground.js and env.js WATER_FS.
-//   - bakes (one-time, rendered to textures with QuadMesh): BAKE_APT_FS (airfield albedo + coverage, green no-taxi
-//     paint), BAKE_AUX_FS (seawall distance, concrete mask), BAKE_CITY_FS / BAKE_CITYFAR_FS (procedural city)
+//   - bakes (rendered to textures in tiles of at most 1024 x 1024 texels, a few per frame, as js/world/world.js
+//     runBake did "to keep individual draws short": one full-target draw of the 16-sample far-city bake risks the GPU
+//     watchdog on phones / Windows TDR, review round 1): BAKE_APT_FS (airfield albedo + coverage, green no-taxi paint),
+//     BAKE_AUX_FS (seawall distance, concrete mask), BAKE_CITY_FS / BAKE_CITYFAR_FS (procedural city). The bake
+//     materials use NoBlending: three r186 forces alpha = 1 for opaque materials with normal blending
+//     (NodeMaterial.js 897-901), which erased the airfield coverage alpha (review round 1: airport grass drawn over the
+//     Burlingame shore inside APT_RECT)
 //   - per-pixel ground: GROUND_FS incl. groundfuncs runwayAt()/endMarkings()/glyph() — the SDF runway markings with
 //     analytic anti-aliasing (FAA AC 150/5340-1M dimensions as documented in ground.js), blast-pad chevrons, rubber,
-//     concrete joints, night floodlight pools; lit by three.js (sun + CSM shadows + PMREM IBL + GTAO)
-//   - water: WATER_FS wave-slope normals, Fresnel via IOR 1.333, foam at the seawall
+//     concrete joints; lit by three.js (sun + CSM shadows + PMREM IBL + GTAO + the apron floodlights, js/three/flood.js);
+//     at night the city has street-light pools and lamp points (energy-conserving far away)
+//   - water: WATER_FS wave-slope normals scaled with the wind, Fresnel via IOR 1.333, foam at the seawall; its sky
+//     reflection is the same sky/cloud composition as the visible sky, evaluated along the reflected ray FROM THE WATER
+//     POINT (review round 1: the IBL cube built at a fixed point showed clouds that were not in the visible sky)
 // Geometry (terrain chunks, water grid) comes unchanged from js/live/world.js buildLiveWorld.
 import { THREE, TSL } from './lib.js';
 import { hash12, hash13, hash22, vnoise, fbm2, band } from './tsl/common.js';
 import { geometryOf, textureOf } from './convert.js';
 import { CITY_RECT, CITYFAR_RECT } from '../world/world.js';
 import { APT_RECT } from '../world/airfield.js';
-const { Fn, uniform, uniformArray, vec2, vec3, vec4, float, uv, texture, dot, exp, pow, sqrt, max, min, mix, smoothstep, step, clamp, normalize, length, abs, floor, fract, mod, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, sin, cos, atan } = TSL;
+const { Fn, uniform, uniformArray, vec2, vec3, vec4, float, uv, texture, dot, exp, pow, sqrt, max, min, mix, smoothstep, step, clamp, normalize, length, abs, floor, fract, mod, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, sin, cos, atan, reflect } = TSL;
 
 const toView = (nW) => normalize(cameraViewMatrix.mul(vec4(nW, 0.0)).xyz);
 
@@ -146,7 +154,7 @@ export class GroundBakes {
   aptMaterial() {
     const aptTex = this.src.apt, paintTex = this.src.paint;
     const A = [APT_RECT.s0, APT_RECT.t0, APT_RECT.w, APT_RECT.h]; const poly = this.aptPoly(); const fw = float(this.res);
-    const m = new THREE.NodeMaterial(); m.depthTest = m.depthWrite = false;
+    const m = bakeMat();
     m.colorNode = Fn(() => {
       const vu = uv(); const st = vec2(float(A[0]).add(vu.x.mul(A[2])), float(A[1]).add(float(1.0).sub(vu.y).mul(A[3]))).toVar();
       const apt = texture(aptTex, vu).toVar();
@@ -155,7 +163,7 @@ export class GroundBakes {
       const n1 = fbm2(st.mul(0.013), 3).toVar(), n2 = vnoise(st.mul(0.6)).toVar();
       const asph = vec3(0.13, 0.13, 0.135).mul(n1.mul(0.3).add(0.85)).mul(n2.mul(0.14).add(0.93)).toVar();
       const pc = floor(st.div(vec2(37.0, 23.0))); asph.mulAssign(select(hash12(pc.add(3.1)).lessThan(0.12), float(1.2), float(1.0)));
-      const conc = vec3(0.42, 0.41, 0.38).mul(n1.mul(0.2).add(0.88)).toVar();
+      const conc = vec3(0.38, 0.37, 0.345).mul(n1.mul(0.2).add(0.88)).toVar(); // weathered PCC ~0.3-0.4 (was 0.42: sunlit apron sat within ~25 sRGB levels of white paint)
       const slab = floor(st.div(7.62)); conc.mulAssign(hash12(slab.add(5.3)).mul(0.06).add(0.965));
       conc.mulAssign(fbm2(st.mul(0.004).add(7.0), 4).mul(0.3).add(0.85)); conc.mulAssign(float(1.0).sub(smoothstep(0.55, 0.8, fbm2(st.mul(0.03), 3)).mul(0.12)));
       const jf = abs(fract(st.div(7.62).add(0.5)).sub(0.5)).mul(7.62);
@@ -184,7 +192,7 @@ export class GroundBakes {
   }
   auxMaterial() {
     const aptTex = this.src.apt; const A = [APT_RECT.s0, APT_RECT.t0, APT_RECT.w, APT_RECT.h]; const poly = this.aptPoly();
-    const m = new THREE.NodeMaterial(); m.depthTest = m.depthWrite = false;
+    const m = bakeMat();
     m.colorNode = Fn(() => {
       const vu = uv(); const st = vec2(float(A[0]).add(vu.x.mul(A[2])), float(A[1]).add(float(1.0).sub(vu.y).mul(A[3])));
       const sdf = polySDF(st, poly); const apt = texture(aptTex, vu);
@@ -195,7 +203,7 @@ export class GroundBakes {
   cityMaterial(rect, far) {
     const regionTex = textureOf(this.W.textures.regionTex); const RR = this.W.groundU.uRegionRect; const sun = this.sky.u.sunDir; const texel = rect[2] / this.Q.cityRes;
     const urban = this.urban;
-    const m = new THREE.NodeMaterial(); m.depthTest = m.depthWrite = false;
+    const m = bakeMat();
     m.colorNode = Fn(() => {
       const xz = vec2(rect[0], rect[1]).add(uv().mul(vec2(rect[2], rect[3]))).toVar();
       const reg = texture(regionTex, xz.sub(vec2(RR[0], RR[1])).div(vec2(RR[2], RR[3])));
@@ -230,15 +238,49 @@ export class GroundBakes {
     })();
     return m;
   }
-  run(renderer, { sunOnly = false } = {}) {
-    const quad = new THREE.QuadMesh(); const prev = renderer.getRenderTarget();
-    const draw = (rt, mat) => { quad.material = mat; renderer.setRenderTarget(rt); quad.render(renderer); mat.dispose(); };
-    if (!sunOnly) { draw(this.apt, this.aptMaterial()); draw(this.aux, this.auxMaterial()); }
-    draw(this.city, this.cityMaterial(CITY_RECT, false)); draw(this.cityFar, this.cityMaterial(CITYFAR_RECT, true));
-    renderer.setRenderTarget(prev);
-    if (!sunOnly && this.src) { for (const t of [this.src.apt, this.src.paint]) if (t) t.dispose(); this.src = null; } // airfield source maps: one-time
+  // queue the bakes as tiles (first bake: everything; sun-only rebake: the two city targets, replacing any city tiles
+  // still pending); step() renders a few tiles per frame
+  enqueue({ sunOnly = false } = {}) {
+    const Q = this.queue || (this.queue = []);
+    const drop = (k) => { for (let i = Q.length - 1; i >= 0; i--) if (Q[i].kind === k) { const j = Q.splice(i, 1)[0]; if (j.last && j.job.mat) { j.job.mat.dispose(); j.job.mat = null; } } };
+    if (!sunOnly) { this.tilesOf(this.apt, () => this.aptMaterial(), 'apt'); this.tilesOf(this.aux, () => this.auxMaterial(), 'aux'); }
+    drop('city'); drop('cityFar');
+    this.tilesOf(this.city, () => this.cityMaterial(CITY_RECT, false), 'city'); this.tilesOf(this.cityFar, () => this.cityMaterial(CITYFAR_RECT, true), 'cityFar');
+  }
+  tilesOf(rt, makeMat, kind, T = 1024) {
+    const W = rt.width, H = rt.height; const nx = Math.ceil(W / T), ny = Math.ceil(H / T); const job = { makeMat, mat: null, rt };
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      this.queue.push({ kind, job, first: i === 0 && j === 0, last: i === nx - 1 && j === ny - 1, u0: i * T / W, u1: Math.min(1, (i + 1) * T / W), v0: j * T / H, v1: Math.min(1, (j + 1) * T / H) });
+    }
+  }
+  get pending() { return this.queue ? this.queue.length : 0; }
+  // render up to `budget` tiles; returns true once the queue is empty. Each tile is its own draw and submit.
+  step(renderer, budget = 1) {
+    const Q = this.queue; if (!Q || !Q.length) return true;
+    if (!this.tileMesh) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(8), 2)); g.setIndex([0, 1, 2, 0, 2, 3]);
+      this.tileMesh = new THREE.Mesh(g); this.tileMesh.frustumCulled = false; this.tileCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); // as THREE.QuadMesh
+    }
+    const prev = renderer.getRenderTarget(), ac = renderer.autoClear; renderer.autoClear = false;
+    for (let n = 0; n < budget && Q.length; n++) {
+      const t = Q.shift(); const J = t.job; const rt = J.rt; const tex = rt.texture;
+      if (!J.mat) { J.mat = J.makeMat(); tex.generateMipmaps = true; renderer.initRenderTarget(rt); } // allocate with its mip chain
+      tex.generateMipmaps = t.last; // mip chain once, after the last tile of the target
+      // tile quad in NDC with the full-target uv (THREE.QuadMesh convention: v = 0 at the top, y = 1 - 2v)
+      const x0 = t.u0 * 2 - 1, x1 = t.u1 * 2 - 1, yT = 1 - t.v0 * 2, yB = 1 - t.v1 * 2;
+      const P = this.tileMesh.geometry.attributes.position, U = this.tileMesh.geometry.attributes.uv;
+      P.array.set([x0, yT, 0, x0, yB, 0, x1, yB, 0, x1, yT, 0]); U.array.set([t.u0, t.v0, t.u0, t.v1, t.u1, t.v1, t.u1, t.v0]); P.needsUpdate = U.needsUpdate = true;
+      this.tileMesh.material = J.mat; renderer.setRenderTarget(rt); renderer.render(this.tileMesh, this.tileCam);
+      if (t.last) { J.mat.dispose(); J.mat = null; tex.generateMipmaps = true; if (t.kind === 'apt') this.aptDone = true; }
+    }
+    renderer.autoClear = ac; renderer.setRenderTarget(prev);
+    // airfield source maps: one-time (released once the airfield and aux bakes are complete)
+    if (this.src && this.aptDone && !Q.some(t => t.kind === 'apt' || t.kind === 'aux')) { for (const t of [this.src.apt, this.src.paint]) if (t) t.dispose(); this.src = null; }
+    return Q.length === 0;
   }
 }
+// bake materials: no depth, NoBlending so the alpha written is kept (three forces alpha 1 for opaque NormalBlending)
+function bakeMat() { const m = new THREE.NodeMaterial(); m.depthTest = m.depthWrite = false; m.blending = THREE.NoBlending; m.transparent = false; return m; }
 
 // ---------------------------------------------------------------- runway markings (groundfuncs)
 function makeGlyph(glyphTex) {
@@ -335,21 +377,26 @@ function runwayAt(st, fw, G, glyph) {
   return { m, rub, flag, local };
 }
 
-// night lighting: street lights (city) and floodlight pools on the ramps (GROUND_FS nightLight)
-function nightLight(xz, st, fw, urb, ramp, pave, albedo) {
-  const nl = vec3(0).toVar();
-  { const S = 34.0; const g = xz.div(S); const c = floor(g); const f = fract(g).sub(0.5);
-    const h = hash12(c.mul(1.37).add(11.0)); const off = vec2(hash12(c.add(3.1)), hash12(c.add(7.7))).sub(0.5).mul(0.7);
-    const d = length(f.sub(off)).mul(S); const r = float(2.5).add(fw.mul(1.5));
-    const spot = exp(d.mul(d).negate().div(r.mul(r))).mul(step(0.3, h)); const avg = r.mul(r).mul(0.7 * 3.1416 / (S * S));
-    const k = smoothstep(3.0, 14.0, fw); const lum = mix(spot.mul(h.mul(0.8).add(0.6)), avg, k).add(0.08);
-    const lc = mix(vec3(1.0, 0.6, 0.3), vec3(0.95, 0.92, 0.88), step(0.72, h));
-    nl.addAssign(lc.mul(lum).mul(urb).mul(5.0)); nl.addAssign(albedo.mul(vec3(1.0, 0.8, 0.6)).mul(0.9).mul(urb)); }
-  { const S2 = 90.0; const g = st.div(S2); const c = floor(g.add(0.5)); const pool = float(0).toVar();
-    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const cc = c.add(vec2(i, j)); const o = vec2(hash12(cc.add(5.3)), hash12(cc.add(9.1))).sub(0.5).mul(0.5); const d = length(g.sub(cc).sub(o)).mul(S2); pool.addAssign(exp(d.mul(d).negate().div(38.0 * 38.0))); }
-    const E = ramp.mul(min(pool, 1.5).mul(0.9).add(0.45)).add(pave.mul(float(1.0).sub(ramp)).mul(0.05));
-    nl.addAssign(albedo.mul(vec3(1.0, 0.9, 0.78)).mul(E).mul(2.2)); }
-  return nl;
+// night lighting of the city (street lights). The apron floodlights are NOT here: they are a light
+// (js/three/flood.js) that lights the ground, paint, buildings and aircraft alike (review round 1).
+// Lamps on a jittered 34 m grid (72 % of the cells), sodium orange or LED white (inferred mix). Per lamp:
+//   - the pool of light it throws on the ground: ~15 lux at the centre (0.47 units; 20 lux = 0.62 units,
+//     js/three/flood.js E_STAND), Gaussian radius 12 m, over a general street level of ~4 lux (0.12 units);
+//   - the lamp itself seen from above: radius 0.8 m, peak radiance 20 units; far away the spot is widened to stay
+//     >= ~1.2 px with its peak scaled down so its energy is constant, and it becomes the cell average once the pixel
+//     footprint approaches the lamp spacing (review round 1: the old widening grew the average with the footprint^2,
+//     which made the far city a pure-white band on the horizon).
+// Far-field average: ~0.03-0.04 units of emission (a warm glow, not a white band).
+function cityNight(xz, fw, urb, albedo) {
+  const S = 34.0; const g = xz.div(S); const c = floor(g); const f = fract(g).sub(0.5);
+  const h = hash12(c.mul(1.37).add(11.0)); const off = vec2(hash12(c.add(3.1)), hash12(c.add(7.7))).sub(0.5).mul(0.7);
+  const d = length(f.sub(off)).mul(S); const on = step(0.28, h);
+  const lc = mix(vec3(1.0, 0.6, 0.3), vec3(0.95, 0.92, 0.88), step(0.72, h));
+  const poolE = mix(exp(d.mul(d).div(-144.0)).mul(0.47).mul(on), float(0.47 * Math.PI * 144.0 / (34.0 * 34.0) * 0.72), smoothstep(6.0, 18.0, fw)).add(0.12);
+  const r0 = 0.8; const r = max(float(r0), fw.mul(1.2)); const peak = float(20.0 * r0 * r0).div(r.mul(r));
+  const spot = exp(d.mul(d).negate().div(r.mul(r))).mul(peak).mul(on);
+  const lum = mix(spot, float(20.0 * Math.PI * r0 * r0 / (34.0 * 34.0) * 0.72), smoothstep(34.0 * 0.3, 34.0 * 0.8, fw));
+  return albedo.mul(lc).mul(poolE.mul(1.0 / Math.PI)).add(lc.mul(lum)).mul(urb);
 }
 
 // ---------------------------------------------------------------- ground material (GROUND_FS)
@@ -421,7 +468,7 @@ export function groundMaterial(world, bakes, sky, Q) {
     albedo.mulAssign(mix(float(1.0), dd.mul(0.3).add(0.85), float(1.0).sub(smoothstep(100.0, 400.0, dist))));
     return vec4(albedo, rough);
   }).once();
-  // night light (emissive): street lights in the city, floodlight pools on the ramps
+  // night light (emissive): street lights in the city (the apron floodlights are a light: js/three/flood.js)
   const emis = Fn(() => {
     const c = core(); const wp = positionWorld; const h = wp.y;
     const st = vec2(dot(wp.xz, vec2(Vw[0], Vw[1])), dot(wp.xz, vec2(Uw[0], Uw[1])));
@@ -431,9 +478,9 @@ export function groundMaterial(world, bakes, sky, Q) {
     const shore = float(1.0).sub(smoothstep(0.4, 2.2, h));
     const auv = vec2(st.x.sub(AR[0]).div(AR[2]), float(1.0).sub(st.y.sub(AR[1]).div(AR[3])));
     const inApt = step(0.0, auv.x).mul(step(auv.x, 1.0)).mul(step(0.0, auv.y)).mul(step(auv.y, 1.0));
-    const aptA = texture(aptAlb, auv).a.mul(inApt); const concMask = texture(aptAux, auv).b.mul(inApt);
+    const aptA = texture(aptAlb, auv).a.mul(inApt);
     const urbN = reg.g.mul(float(1.0).sub(smoothstep(110.0, 180.0, h.add(nzA.r.mul(60.0))))).mul(float(1.0).sub(shore)).mul(float(1.0).sub(aptA));
-    return nightLight(wp.xz, st, fw, urbN, concMask, aptA, c.xyz).mul(night);
+    return cityNight(wp.xz, fw, urbN, c.xyz).mul(night);
   }).once();
   mat.colorNode = vec4(core().xyz, 1.0);
   mat.roughnessNode = core().w;
@@ -449,8 +496,12 @@ export function waterMaterial(world, bakes, sky) {
   const uWind = uniform(new THREE.Vector2(3, -1)), uAmp = uniform(1.0);
   const mat = new THREE.MeshPhysicalNodeMaterial({ metalness: 0, ior: 1.333 });
   const slope = (p) => texture(waves, p).rg;
+  // wind: js/live/app.js sets uWaveAmp = 0.45 + knots / 22 (12 kt -> 1.0) and uWind (m/s, downwind). The slope gain and
+  // the roughness follow it (review round 1: 12 kt left a mirror-calm bay). Near roughness 0.03 (calm) .. 0.1 (12 kt);
+  // far (unresolved waves, Cox-Munk: slope variance 0.003 + 0.00512 U, U in m/s) 0.2 .. 0.36.
+  const windK = clamp(uAmp.sub(0.45).div(0.85), 0.0, 1.5);
   const wcore = Fn(() => {
-    const wp = positionWorld; const dist = length(cameraPosition.sub(wp)).toVar();
+    const wp = positionWorld;
     const ws = length(uWind); const wd = select(ws.greaterThan(0.01), uWind.div(max(ws, 1e-4)), vec2(1, 0));
     const t = U.time; const p = wp.xz;
     const r1 = (v) => vec2(v.x.mul(0.8).sub(v.y.mul(0.6)), v.x.mul(0.6).add(v.y.mul(0.8)));
@@ -460,10 +511,8 @@ export function waterMaterial(world, bakes, sky) {
     s.addAssign(slope(r2(p).div(9.1).sub(r2(wd).mul(t).mul(0.07))).mul(0.5));
     s.addAssign(slope(r1(r2(p)).div(3.7).sub(wd.mul(t).mul(0.11))).mul(0.35));
     const fw = length(fwidth(wp.xz));
-    s.mulAssign(uAmp.div(fw.mul(0.05).add(1.0)));
-    const N = normalize(vec3(s.x.negate(), 1.0, s.y.negate()));
-
-    return N;
+    s.mulAssign(uAmp.mul(1.5).div(fw.mul(0.05).add(1.0)));
+    return normalize(vec3(s.x.negate(), 1.0, s.y.negate()));
   }).once();
   // foam at the seawall (aux.r = distance into the water / 40 m) and distance roughening
   const wfoam = Fn(() => {
@@ -475,9 +524,24 @@ export function waterMaterial(world, bakes, sky) {
     const fn = texture(noiseTex, st.mul(0.02).add(vec2(t.mul(0.004), 0.0))), fn2 = texture(noiseTex, st.mul(0.09).sub(vec2(0.0, t.mul(0.01))));
     return float(1.0).sub(smoothstep(0.0, fn.r.mul(4.0).add(3.0), dA)).mul(smoothstep(0.35, 0.75, fn2.g)).mul(step(dA, 8.0));
   }).once();
+  const wrough = Fn(() => {
+    const dist = length(cameraPosition.sub(positionWorld));
+    const r = mix(windK.mul(0.07).add(0.03), windK.mul(0.16).add(0.2), smoothstep(30.0, 3000.0, dist));
+    return mix(r, float(0.9), wfoam().mul(0.6));
+  }).once();
   mat.normalNode = toView(wcore());
   mat.colorNode = vec4(mix(vec3(0.045, 0.075, 0.07), vec3(0.6, 0.62, 0.62), wfoam().mul(0.6)), 1.0);
-  mat.roughnessNode = mix(float(0.04).add(smoothstep(50.0, 6000.0, length(cameraPosition.sub(positionWorld))).mul(0.25)), float(0.9), wfoam().mul(0.6));
+  mat.roughnessNode = wrough();
+  // environment = the visible sky along the reflected ray from this water point (sharp; blurred towards the
+  // precomputed sky + average cloud colour as the roughness grows). Also used as the (tiny) diffuse IBL term.
+  mat.envNode = Fn(() => {
+    const wp = positionWorld; const V = normalize(wp.sub(cameraPosition));
+    const Rr = reflect(V, wcore()).toVar(); Rr.y.assign(abs(Rr.y).max(0.003));
+    const sharp = sky.skyAlong(wp, Rr);
+    const cl = U.sunColor.mul(0.2).add(U.skyUp.mul(0.55)).add(U.skyHorizon.mul(0.15));
+    const blur = mix(sky.skyEnvBlur(Rr), cl, U.cloud.x.mul(0.8));
+    return mix(sharp, blur, smoothstep(0.08, 0.45, wrough()));
+  })();
   mat.userData.uWind = uWind; mat.userData.uAmp = uAmp;
   return mat;
 }

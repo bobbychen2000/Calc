@@ -2,6 +2,10 @@
  "package": "three",
  "version": "0.186.0",
  "esbuild": "0.28.2",
- "built": "2026-09-24T10:06:31.996Z",
- "bytes": 1338342
+ "patches": [
+  "TAAUtils.samplePreviousDepth (reversed depth)",
+  "GPUTextureViewDescriptor.swizzle (undefined)"
+ ],
+ "built": "2026-09-25T18:53:09.412Z",
+ "bytes": 1338635
 }

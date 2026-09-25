@@ -56,7 +56,10 @@ function centroid(ring) { let x = 0, z = 0; ring.forEach(p => { x += p[0]; z += 
 // alt_of (alternative position of another stand, e.g. B5S of B5), span_max / len_max (per-stand limits where the class
 // envelope is too coarse, e.g. E10U/E12, F9/F10), a380 (only these stands may take an A380 / 747-8), leadin (the painted
 // lead-in polyline, OSM way, world x/z) and the bridge fields below.
-const CLASS_MAX = { B: { span: 28.5, len: 37 }, C: { span: 36.5, len: 45 }, CL: { span: 38.5, len: 48 }, D: { span: 52, len: 62 }, E: { span: 61, len: 68 }, EL: { span: 65.5, len: 77 }, F: { span: 80, len: 80 } };
+// Class limits (span, length m) = tools/stands/build_stands.py CLASS_MAX. Review round 3: CL is the 757 class with
+// blended winglets (Boeing airport FAQ "Wingspan Increases Due to the Addition of Winglets": 757-200/-300 41.1 m;
+// 757-300 length 54.43 m); it was 38.5 / 48 (the baseline 757-200).
+export const CLASS_MAX = { B: { span: 28.5, len: 37 }, C: { span: 36.5, len: 45 }, CL: { span: 41.1, len: 54.5 }, D: { span: 52, len: 62 }, E: { span: 61, len: 68 }, EL: { span: 65.5, len: 77 }, F: { span: 80, len: 80 } };
 export function standGates(stands) {
   const o = worldToST(0, 0);
   const dirST = (d) => { const p = worldToST(d[0], d[1]); const v = [p[0] - o[0], p[1] - o[1]]; const l = Math.hypot(v[0], v[1]); return [v[0] / l, v[1] / l]; };
@@ -68,10 +71,17 @@ export function standGates(stands) {
     // infeasible), walkW (fixed walkway polyline building -> rotunda), cabW + cabPose ('docked' / 'parked' as OSM mapped
     // it - do not use a docked cab as the rest pose), stowW (a rest pose for the tunnel end clear of every aircraft the
     // stand and its neighbours accept), rotundaMaxR (how large the rotunda may be drawn without touching another)
+    // Review round 3 (docs/requests/static_geometry_round3.md): tunnelEndW (OSM ways that end with a cab stub: the
+    // parked tunnel ends here, the cab stub follows), extRange [min, max] m rotunda centre -> cab pivot of the bridge's
+    // datasheet model (Oshkosh AeroTech sell sheet; one model per bridge, inferred), model, dockTypesOut (accepted types
+    // this bridge cannot reach: it stays at stowW), cabTurnDeg / cabOption (signed cab turn of the observed dockings,
+    // cab_convention in the data), stowLen (rest length >= the model's retraction), rotundaSrc (provenance)
     const bridges = s.bridges.map(b => ({ gate: b.gate, attach: worldToST(b.attach[0], b.attach[1]), attachW: b.attach, door: b.door,
       rotundaW: b.rotunda || null, cabW: b.cab || null, walkW: b.walk || null, cabPose: b.cab_pose || null, stowW: b.stow || null,
-      rotundaMaxR: b.rotunda_max_r ?? null, rotundaTwinOf: b.rotunda_twin_of ?? null }));
-    const cm = CLASS_MAX[s.cls] || CLASS_MAX.C; const wide = cm.span > 40;
+      rotundaMaxR: b.rotunda_max_r ?? null, rotundaTwinOf: b.rotunda_twin_of ?? null,
+      tunnelEndW: b.tunnel_end || null, extRange: b.ext_range || null, model: b.model || null, dockTypesOut: b.dock_types_out || [],
+      cabTurnDeg: b.cab_turn_deg || null, cabOption: b.cab_option || null, stowLen: b.stow_len ?? null, rotundaSrc: b.rotunda_src || null }));
+    const cm = CLASS_MAX[s.cls] || CLASS_MAX.C; const wide = cm.span > 41.2;   // D and larger (CL = 757 with winglets is narrow-body)
     const maxSpan = s.span_max ? Math.min(cm.span, s.span_max + 0.1) : cm.span;
     const maxLen = s.len_max ? Math.min(cm.len, s.len_max + 0.1) : cm.len;
     gates.push({
@@ -87,11 +97,16 @@ export function standGates(stands) {
       bridge: bridges.length > 0, remote: false, hdg: s.hdg, world: { x: s.nose[0], z: s.nose[1], hdg: s.hdg }, empty: true, acType: null, dynamic: false,
     });
   }
+  // Remote stands (SFO names, positioned from OSM + ADS-B). Review round 3: class = the largest type SFO / ADS-B put
+  // there (data `cls`, was a fixed 'E'); `paveW` = the stand's paved area (envelope of the class's types + 3 m, clipped
+  // to the OSM airside apron it stands on) - replaces the 40 m disc that crossed the perimeter wall at 2-2A.
   for (const r of stands.remote || []) {
     const nose = worldToST(r.x, r.z);
     const dir = r.hdg != null ? dirST([Math.sin(r.hdg * Math.PI / 180), -Math.cos(r.hdg * Math.PI / 180)]) : [0, 1];
-    gates.push({ id: r.name, name: r.name, alias: [], letter: r.name[0], pier: r.name[0], cls: 'E', maxSpan: 65.5, maxLen: 77, nose, dir, outN: [-dir[0], -dir[1]], attach: nose, bridges: [], gate: r.name, excl: [], hdg: r.hdg,
-      wide: true, len: 70, span: 64, bridge: false, remote: true, world: { x: r.x, z: r.z, hdg: r.hdg ?? undefined }, empty: true, acType: null, dynamic: false });
+    const cm = CLASS_MAX[r.cls] || CLASS_MAX.E;
+    gates.push({ id: r.name, name: r.name, alias: [], letter: r.name[0], pier: r.name[0], cls: r.cls || 'E', maxSpan: cm.span, maxLen: cm.len, nose, dir, outN: [-dir[0], -dir[1]], attach: nose, bridges: [], gate: r.name, excl: [], hdg: r.hdg,
+      wide: cm.span > 41.2, len: cm.len, span: cm.span, bridge: false, remote: true, world: { x: r.x, z: r.z, hdg: r.hdg ?? undefined }, paveW: r.pave || null,
+      obsTypes: r.obs_types || [], empty: true, acType: null, dynamic: false });
   }
   return gates;
 }
@@ -254,12 +269,14 @@ export function paintAirportMapReal(data, gates, res = APT_RECT.res, details = n
       // fallback: ramp around the terminal complex as a buffer of its outline
       for (const poly of data.terminalComplex) { pathRings([poly[0]]); cx.fill(); cx.lineWidth = 2 * 105 / res; cx.stroke(); }
     }
-    // remote stands
-    gates.filter(g => g.remote).forEach(g => { const q = Pw(g.world.x, g.world.z); cx.beginPath(); cx.arc(q[0], q[1], 40 / res, 0, 7); cx.fill(); });
-    // every surveyed stand is paved (the whole aircraft envelope plus clearance)
+    // remote stands: their paved area from the data (review round 3: no 40 m disc; the disc at 2-2A had paved the GSE
+    // lane and the road beyond the perimeter wall). A remote stand without `pave` adds no pavement.
+    gates.filter(g => g.remote && g.paveW && g.paveW.length >= 3).forEach(g => { pathRings([g.paveW]); cx.fill(); });
+    // every contact stand is paved (the aircraft envelope plus clearance). Review round 3 measured NAIP 2024 under every
+    // stand's envelope of accepted types: 0 % green / brown (unpaved) pixels, so this adds no false pavement.
     for (const g of gates) { if (!g.bridge) continue; polyST(standEnvelopeST(g, 6, 6, 14)); cx.fill(); }
-    // extra pavement patches where aircraft have been seen parked outside the mapped ramp
-    for (const pt of (details && details.patches) || []) { const q = Pw(pt[0], pt[1]); cx.beginPath(); cx.arc(q[0], q[1], pt[2] / res, 0, 7); cx.fill(); }
+    // (review round 3: the 'patches' - 45 m discs where an ADS-B aircraft had stood off the mapped ramp - are gone; the
+    // pavement there comes from the NAIP classification, data/sfo_pavement.js)
   };
   const farFromTerminal = (a) => { const c = a.pts.reduce((s, p) => [s[0] + p[0] / a.pts.length, s[1] + p[1] / a.pts.length], [0, 0]); return Math.hypot(c[0] + 900, c[1] + 850) > 750; };
   const pave = layer(() => {

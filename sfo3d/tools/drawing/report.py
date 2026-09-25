@@ -42,9 +42,13 @@ def load(name, default=None):
 
 def run():
     S = scene(); PV = provenance(S)
+    snap = PV.get('appSource') == 'git-archive'
     if PV['stale'] and os.environ.get('ALLOW_STALE') != '1':
-        raise SystemExit('report.py: out/draw/scene2d.json is STALE - these files the app loaded changed since the extraction: ' + ', '.join(PV['stale'][:12])
+        raise SystemExit('report.py: out/draw/scene2d.json is STALE - these files the app loaded changed since the extraction' + (f' (in the commit snapshot {(S["meta"].get("appSource") or {}).get("dir")})' if snap else '') + ': ' + ', '.join(PV['stale'][:12])
                          + (' ...' if len(PV['stale']) > 12 else '') + '. Re-run tools/drawing/run_all.sh (or ALLOW_STALE=1 to write a report marked stale).')
+    if PV['changedDuring'] and os.environ.get('ALLOW_STALE') != '1':
+        raise SystemExit('report.py: these files the app loaded changed WHILE the extraction ran, so the scene may mix two versions: ' + ', '.join(PV['changedDuring'][:12])
+                         + '. Re-run tools/drawing/run_all.sh (the default APP_REV=HEAD serves a commit snapshot that cannot change), or ALLOW_STALE=1.')
     D = load('deviations.json', {}); A = load('audit.json', {'conflicts': [], 'meta': {}}); SH = load('sheets.json', {})
     ST = load('selftest.json'); GN = load('google_vs_naip.json'); TA = load('trace_audit.json')
     for src, R in D.items():
@@ -60,9 +64,16 @@ def run():
     w('')
     if PV['stale']: w(f'> **STALE (ALLOW_STALE=1): {len(PV["stale"])} file(s) the app loaded changed after the extraction** ({", ".join(PV["stale"][:8])}). The numbers below describe the extracted state, not the working tree.'); w('')
     w(f'Generated {now}Z by `tools/drawing/run_all.sh` (report: `tools/drawing/report.py`).')
-    w(f'Scene extracted from the running app (`jobs/extract2d.mjs`, {S["meta"]["url"].split("/")[-1]}) at {PV["generated"][:19]}Z: **world frame `{PV["frame"]}`**, git `{PV["git"]}` (HEAD now `{git_head()}`), '
-      f'{PV["nInputs"]} input files hashed (inputs `{PV["inputsHash"]}`, TYPES `{PV["typesHash"]}`) - '
-      + ('**all unchanged in the working tree at report time**' if PV['stale'] == [] else 'staleness unknown' if PV['stale'] is None else '**stale**') + f', quality tier `{S["meta"]["quality"]["name"]}`.')
+    src_txt = (f'a clean `git archive` of commit **`{PV["git"]}`** (`{PV["appRev"]}`, served from `{(S["meta"].get("appSource") or {}).get("dir")}`, so edits made to the working tree during the run cannot enter the scene)' if snap
+               else f'the working tree, git `{PV["git"]}`')
+    w(f'Scene extracted from the running app (`jobs/extract2d.mjs`, {S["meta"]["url"].split("/")[-1]}) at {PV["generated"][:19]}Z, app served from {src_txt}; HEAD at report time `{git_head()}`. '
+      f'**World frame `{PV["frame"]}`**; {PV["nInputs"]} input files hashed (inputs `{PV["inputsHash"]}`, TYPES `{PV["typesHash"]}`) - '
+      + ('**all unchanged in the app source at report time**' if PV['stale'] == [] else 'staleness unknown' if PV['stale'] is None else '**stale**') + f'; quality tier `{S["meta"]["quality"]["name"]}`.')
+    wc = PV.get('worktreeChanged') or []
+    if snap and wc:
+        w(''); w(f'> **Not covered by this report: {len(wc)} of the {PV["nInputs"]} app files the scene loaded differ in the working tree now** (uncommitted work, or commits after `{PV["git"]}`): {", ".join(wc[:16])}' + (' ...' if len(wc) > 16 else '')
+                 + '. The drawings and numbers describe commit `' + PV['git'] + '`; re-run `tools/drawing/run_all.sh` once that work is committed.')
+    elif snap: w(f'The working tree has the same content as commit `{PV["git"]}` for every app file the scene loaded.')
     import re
     dirty = sorted({m.group(0) for d in S['meta'].get('gitDirty') or [] for m in [re.search(r'(js|data)/\S+|live\.html', d)] if m} & set(S['meta'].get('inputs') or {}))
     if dirty: w(f'Uncommitted files among those the app loaded at extraction (their content is what the hashes pin): {", ".join(dirty[:12])}' + (' ...' if len(dirty) > 12 else '') + '.')
@@ -82,7 +93,7 @@ def run():
         by = collections.defaultdict(list)
         for f in R['features']:
             if f.get('measured'): by[f['cls']].append(f)
-        rel = ['runway-edge-stripe', 'runway-end', 'runway-threshold', 'runway-threshold-bar', 'emas-bed', 'approach-light-pier', 'approach-light-catwalk']
+        rel = ['runway-edge-stripe', 'runway-end', 'runway-threshold', 'runway-threshold-bar', 'emas-bed', 'approach-light-station', 'approach-light-crossbar', 'approach-light-catwalk']
         w(f'  - `{src}` by class (flagged / measured): ' + '; '.join(f'{c} {sum(f["flag"] for f in by[c])}/{len(by[c])}' for c in rel + ['taxiway-edge', 'extra-pavement', 'apron-edge', 'building', 'bridge-walkway', 'hold-line'] if by.get(c)) + '.')
     w('  - How far each class can be trusted is in the self-test section; building and pavement-edge classes recover a known shift less reliably than runway markings, so read their numbers with the overlay sheets.')
     if 'naip' not in D: w('- **NAIP** was not present in `refs/cache/naip/` at run time: every measurement used the Google screenshots only.')
@@ -136,7 +147,8 @@ def run():
     kin = collections.Counter(c['kind'] for c in C if c['scenario'] == 'KINEMATICS')
     if kin: w(f'- **Bridge kinematics**: {kin.get("tunnel-stretch", 0)} bridges whose three tunnel sections change length between parked and docked (they scale instead of telescoping); {kin.get("tunnel-slope", 0)} docked tunnels steeper than 1:12.')
     bb = [c for c in C if c['kind'] == 'building-building']
-    if bb: w(f'- **{len(bb)} overlapping building footprints** that are both extruded (coplanar roofs that z-fight, or walls that cut through each other)' + ((', among them stations listed twice under two names: ' + '; '.join(f'{c["a"]["elabel"]} / {c["b"]["elabel"]}' for c in bb if 'twice' in c['note'])[:500]) if any('twice' in c['note'] for c in bb) else '') + '.')
+    tw = [f'{c["a"]["elabel"]} / {c["b"]["elabel"]}' for c in bb if 'twice' in c['note']]
+    if bb: w(f'- **{len(bb)} overlapping building footprints** that are both extruded (coplanar roofs that z-fight, or walls that cut through each other)' + (f', among them {len(tw)} stations listed twice under two names: ' + '; '.join(tw[:8]) + (f'; ... ({len(tw) - 8} more in the WARNING table)' if len(tw) > 8 else '') if tw else '') + '.')
     sw = [c for c in C if c['kind'] == 'sign-on-physics-pavement']; pw = [c for c in C if c['kind'] == 'pier-on-physics-pavement']
     if sw: w(f'- {len(sw)} signs stand more than 1 m inside the paved raster that GroundPhysics treats as legal aircraft ground (deepest {max(c["depth"] or 0 for c in sw):.1f} m) - GroundPhysics does not know about signs, so a relocated aircraft can end up on one (WARNING).')
     if pw: w(f'- {len(pw)} approach-light piers / posts inside the paved raster outside the runway / taxiway / end-zone polygons (WARNING).')
@@ -166,21 +178,29 @@ def run():
         w('')
         w('The EMAS "pavement end" at 1L/1R/19L/19R is not a visible edge (the 35 ft setback is paved); those ends are checked by the EMAS bed outline.')
         w('')
-        als = [f for f in D[prim]['features'] if f['cls'] == 'approach-light-pier']
+        als = [f for f in D[prim]['features'] if f['cls'] == 'approach-light-station']
         if als:
-            w('Approach-light piers over open water (`js/anim/lights.js`; piers the model marks as water but that stand on the paved raster are audited as obstructions instead): along-axis offset of the imaged pier - the strongest bar of either polarity within 0.55 x the pier spacing, i.e. the structure or its shadow on the bay (<= ~2.5 m apart); a system laid out from another reference shows as ~half a spacing - the catwalk\'s lateral offset between piers, and the imaged crossbar half-length against the widest part of the modelled pier.')
+            w('Approach-light structures over open water (`js/anim/lights.js`; at 28L/28R the structure is `js/geo.js` APPROACH_STRUCTURES, itself measured on NAIP 2024 by `tools/imagery/als_naip.py` - on NAIP these rows check the app\'s implementation of those measurements, on Google they are an independent image). `stations`: along-axis offset of each imaged station - the strongest bar of either polarity within 0.55 x the station spacing, i.e. the structure or its shadow on the bay (<= ~2.5 m apart); a station next to an equipment hut or platform can lock onto the hut (offsets of ~5-10 m there). `catwalk`: lateral offset of the imaged deck midway between stations from the modelled catwalk line. Crossbar ends are listed below the table.')
             w('')
-            w('| system | samples measured | along-axis offset median / bias (m) | imaged crossbar half-length (m) | model half-length (m) |'); w('|---|---|---|---|---|')
+            w('| system | stations measured | station along-axis offset median / bias (m) | catwalk lateral offset median / bias (spans measured) | crossbar ends: median abs offset (measured) |'); w('|---|---|---|---|---|')
             cw = {f['id'].split(':')[1]: f for f in D[prim]['features'] if f['cls'] == 'approach-light-catwalk'}
-            w('| system | piers measured | along-axis offset median / bias (m) | catwalk lateral offset (spans measured) | imaged crossbar half-length (m) | model half-length (m) |'); w('|---|---|---|---|---|---|')
+            xb = {f['id'].split(':')[1]: f for f in D[prim]['features'] if f['cls'] == 'approach-light-crossbar'}
             for f in als:
-                c = cw.get(f['id'].split(':')[1]) or {}
-                w(f'| {f["name"]} | {f.get("measured", 0)}/{f["n"]} | {f1(f.get("median"), 2)} / {f1(f.get("bias"), 2)} | {f1(c.get("bias"), 2)} ({c.get("measured", 0)}/{c.get("n", 0)}) | {f1(f.get("xbar_imaged"), 1)} | {f1(f.get("xbar_model"), 1)} |')
+                e = f['id'].split(':')[1]; c = cw.get(e) or {}; x = xb.get(e) or {}
+                w(f'| {f["name"]} | {f.get("measured", 0)}/{f["n"]} | {f1(f.get("median"), 2)} / {f1(f.get("bias"), 2)} | {f1(c.get("median"), 2)} / {f1(c.get("bias"), 2)} ({c.get("measured", 0)}/{c.get("n", 0)}) | {f1(x.get("median"), 2)} ({x.get("measured", 0)}/{x.get("n", 0)}) |')
             w('')
+            rows = [(e, q) for e, x in sorted(xb.items()) for q in x.get('ends') or []]
+            if rows:
+                w('Crossbar ends (m along the runway frame\'s right from the axis; offset + = the imaged bar reaches further out than the model):')
+                w('')
+                w('| end | crossbar | model end | imaged end | offset | note |'); w('|---|---|---|---|---|---|')
+                for e, q in rows: w(f'| {e} | {q["label"]} | {q["model"]:+.2f} | {f1(q.get("imaged"), 2)} | {f1(q.get("off"), 2)} | {q.get("why") or ""} |')
+                w('')
         prs = S.get('piers') or []
         if prs:
             land = [q for q in prs if not q['water']]; ob = [c for c in C if c['kind'] == 'pier-on-movement-surface']
-            w(f'The app builds {len(prs)} approach-light structures ({len(prs) - len(land)} piers over water, {len(land)} posts on land); {len(ob)} of them stand on a runway, displaced-threshold area, blast pad, EMAS bed or taxiway (OBSTRUCTION rows below).')
+            kinds = collections.Counter((q.get('kind') or ('pier' if q['water'] else 'post')) + (' (water)' if q['water'] else ' (land)') for q in prs)
+            w(f'The app builds {len(prs)} approach-light structures (' + ', '.join(f'{v} {k}' for k, v in sorted(kinds.items())) + f'); {len(ob)} of them stand on a runway, displaced-threshold area, blast pad, EMAS bed or taxiway (OBSTRUCTION rows below).')
             w('')
     # ------------------------------------------------------------------ data vs source (no imagery)
     w('## Data vs published source (no imagery)')
@@ -289,12 +309,13 @@ def run():
                  'bridge-rotunda': 'automatic disc search (6 m radius; picks at the boundary count as not found), low confidence - read with the sheets', 'extra-pavement': 'derived from the Google imagery (circular on `google`); checks the vectorisation',
                  'runway-edge-stripe': '0.91 m stripe', 'runway-threshold': 'start of the stripe block (stripe-start rule)',
                  'runway-threshold-bar': 'imaged 10 ft bar vs the model bar (see the runway table above)', 'hold-line': 'needs <= 0.6 m/px',
-                 'approach-light-pier': 'along-axis position of each imaged pier crossbar over water'}
+                 'approach-light-station': 'along-axis position of each imaged station over water', 'approach-light-crossbar': 'imaged crossbar end vs modelled end (+ = imaged longer)',
+                 'approach-light-catwalk': 'lateral position of the imaged catwalk deck vs the modelled catwalk line'}
         for c in sorted(by):
             m = [f for f in by[c] if f.get('measured')]
             w(f'| {c} | {len(by[c])} | {len(m)} | {sum(f["flag"] for f in by[c])} | {f1(np.median([f["median"] for f in m]) if m else None, 2)} | {f1(np.median([f["p90"] for f in m]) if m else None, 2)} | {f1(np.median([f["gsd"] for f in m]) if m else None, 2)} | {notes.get(c, "")} |')
         w('')
-        for c in ['runway-end', 'runway-threshold', 'runway-threshold-bar', 'runway-edge-stripe', 'emas-bed', 'approach-light-pier', 'approach-light-catwalk', 'building', 'taxiway-edge', 'apron-edge', 'extra-pavement', 'bridge-walkway', 'bridge-rotunda']:
+        for c in ['runway-end', 'runway-threshold', 'runway-threshold-bar', 'runway-edge-stripe', 'emas-bed', 'approach-light-station', 'approach-light-crossbar', 'approach-light-catwalk', 'building', 'taxiway-edge', 'apron-edge', 'extra-pavement', 'bridge-walkway', 'bridge-rotunda']:
             m = sorted([f for f in by.get(c, []) if f.get('measured')], key=lambda f: -f['median'])
             if not m: continue
             lim = 40 if c in ('building', 'taxiway-edge', 'extra-pavement', 'bridge-rotunda') else 999
@@ -369,12 +390,12 @@ def run():
     w('## Method, sources and limits')
     w('')
     for t in [
-        '**Extraction** (`jobs/extract2d.mjs`): loads `live.html?mode=snapshot` in the harness, stops the page timers, lets traffic + GroundPhysics run until every track is displayable, freezes the render loop, then reads window.SFO and calls the app\'s own builders with a recording geometry sink (every jet-bridge box/cylinder/tube from `gates.js bridgeGeo()` in its current, parked and docked pose; VDGS from `standGeo()`; floodlight masts from `items.js buildMasts()`; approach-light piers from `js/anim/lights.js buildPierGeometry()`; light sprites and PAPIs from `buildLiveLights()`; markings from `markings.js`; signs from `signs.js`; EMAS from `world.js buildEMAS()`; buildings from `buildLiveBuildings()`; pavement from `paintAirportMapReal()`; the OSM taxi net from `traffic.net`). Boxes and tubes are recorded as exact parallelepipeds, so heights are evaluated point by point. Module-private values are read by re-importing the module source with an extra export. Replicated by hand (listed in scene2d.json meta.replicated): the runway paint layout (GLSL; meta.paintCheck confirms each constant is still in the shader), standFits(), the GSE check rectangles, the TaxiNet test and the GroundPhysics gear points. The world frame id, git state and a hash of every loaded file are recorded; all tools refuse a scene in another frame, and this report refuses a stale one.',
+        '**Extraction** (`jobs/extract2d.mjs`): loads `live.html?mode=snapshot` in the harness, stops the page timers, lets traffic + GroundPhysics run until every track is displayable, freezes the render loop, then reads window.SFO and calls the app\'s own builders with a recording geometry sink (every jet-bridge box/cylinder/tube from `gates.js bridgeGeo()` in its current, parked and docked pose; VDGS from `standGeo()`; floodlight masts from `items.js buildMasts()`; approach-light structures (posts, stations, crossbars, catwalks, huts) from `js/anim/lights.js buildPierGeometry()`; light sprites and PAPIs from `buildLiveLights()`; markings from `markings.js`; signs from `signs.js`; EMAS from `world.js buildEMAS()`; buildings from `buildLiveBuildings()`; pavement from `paintAirportMapReal()`; the OSM taxi net from `traffic.net`). Boxes and tubes are recorded as exact parallelepipeds, so heights are evaluated point by point. Module-private values are read by re-importing the module source with an extra export. Replicated by hand (listed in scene2d.json meta.replicated): the runway paint layout (GLSL; meta.paintCheck confirms each constant is still in the shader), standFits(), the GSE check rectangles, the TaxiNet test and the GroundPhysics gear points. The world frame id, git state and a hash of every loaded file are recorded; all tools refuse a scene in another frame, and this report refuses a stale one.',
         '**Aircraft**: live aircraft use the rendered model (.sfom, with the `fit.js` plugs / span / fin fits applied exactly as `models.js` does) or the procedural TYPES body; per-cell min/max heights make the bridge/wing/engine checks 3-D. Class envelopes = union of every non-oversize type the stand accepts (both the procedural TYPES body and the rendered model). Gear on pavement is tested twice: rendered gear on the rendered raster (visual), GroundPhysics gear points on raster OR taxi net (physics).',
         '**Deviation measurement** (`measure.py`, rules `' + measure.RULES_VERSION + '`): profiles along the edge normal (+-10 m; +-25 m along the runway axis for runway ends/thresholds), gradient peaks (steps) with feature-level polarity consensus against shadows, width-matched ridges for paint and bars, the stripe-start rule for thresholds. Automatic picks can lock onto the wrong edge (shadow, shoulder, paint): read a number together with its overlay sheet.',
         '**Imagery**: NAIP (USDA, public domain, independently georeferenced; primary) - the 2024 mosaic resampled into the world frame, plus the 2022 GeoTIFF mapped world -> NAD83(2011) lat/lon -> UTM 10N; the owner\'s Google Maps screenshots (reference only; frame-aware registrations, re-registered to NAIP per screenshot where `imreg.py` finds a reliable shift). Google building-edge numbers are not independent of the building data: the screenshots were first registered by chamfer matching against the SFO Museum outlines.',
         '**Heights**: SFO Museum footprints have no heights; building heights are the app\'s values (sfo_buildings parts, STRUCT_H tables), bridge / mast / pier heights come from the recorded geometry.',
-        '**Not covered**: aircraft in the air; light fixtures other than the approach-light piers are sprites without bodies (runway / taxiway edge lights, PAPI boxes are drawn as points / boxes on the runway sheets but not audited as solids); buildings in the imagery that the app does not build are not detected automatically - compare the overlay sheets; taxiway centrelines and lead-ins need <= 0.35 m/px imagery.',
+        '**Not covered**: aircraft in the air; light fixtures other than the approach-light structures are sprites without bodies (runway / taxiway edge lights, PAPI boxes are drawn as points / boxes on the runway sheets but not audited as solids); buildings in the imagery that the app does not build are not detected automatically - compare the overlay sheets; taxiway centrelines and lead-ins need <= 0.35 m/px imagery.',
     ]:
         w('- ' + t)
     w('')

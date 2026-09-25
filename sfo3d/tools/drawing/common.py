@@ -8,7 +8,11 @@ Frame guard: scene2d.json records the app's world frame id (js/geo.js FRAME_ID).
 differs from tools/geo_frame.py (the Python twin every imagery transform goes through) or from js/geo.js now; a scene
 extracted before frame ids existed is treated as the legacy 'equirect-v1' frame and refused too (re-extract).
 Staleness: scene2d.json meta.inputs holds the hash of every file the app loaded; stale_inputs() lists those that differ
-in the working tree now (report.py refuses to publish a stale scene unless ALLOW_STALE=1).
+now in the directory the app was served from (report.py refuses to publish a stale scene unless ALLOW_STALE=1). That
+directory is meta.appSource: run_all.sh serves a clean `git archive` of a commit (out/draw/app_snapshot, the default),
+so the scene describes that commit exactly however the working tree changes during the run; worktree_changes() then
+lists the loaded app files whose working-tree content differs (uncommitted or later work the scene does not cover).
+The Python tools read app files (the .sfom models, js/geo.js) from the same directory (app_root()).
 """
 import gzip, hashlib, json, math, os, re, struct, sys, functools
 import numpy as np
@@ -20,7 +24,9 @@ from shapely.ops import unary_union
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 OUT = os.environ.get('DRAW_OUT', os.path.join(ROOT, 'out', 'draw'))
-DOCS = os.path.join(ROOT, 'docs', 'drawings')
+# committable outputs (vector sheets, vector conflict crops, report.md); DRAW_DOCS stages them elsewhere (e.g. while
+# another run owns docs/drawings)
+DOCS = os.environ.get('DRAW_DOCS', os.path.join(ROOT, 'docs', 'drawings'))
 os.makedirs(OUT, exist_ok=True)
 FT = 0.3048
 
@@ -30,9 +36,16 @@ import geo_frame as GF  # noqa: E402  (the Python twin of js/geo.js; tools/test_
 LEGACY_FRAME = 'equirect-v1'
 
 
-def js_frame_id():
-    """FRAME_ID declared in js/geo.js now (None if the file has none: the legacy frame)"""
-    m = re.search(r"FRAME_ID\s*=\s*'([^']+)'", open(os.path.join(ROOT, 'js', 'geo.js')).read())
+def app_root(S=None):
+    """directory the scene's app was served from: the commit snapshot (meta.appSource.dir, relative to the repository)
+    or the working tree (the repository itself)"""
+    S = S or scene(); a = S['meta'].get('appSource') or {}
+    return os.path.normpath(os.path.join(ROOT, a['dir'])) if a.get('kind') == 'git-archive' and a.get('dir') else ROOT
+
+
+def js_frame_id(S=None):
+    """FRAME_ID declared now in js/geo.js of the app the scene was extracted from (none: the legacy frame)"""
+    m = re.search(r"FRAME_ID\s*=\s*'([^']+)'", open(os.path.join(app_root(S) if S is not None else ROOT, 'js', 'geo.js')).read())
     return m.group(1) if m else LEGACY_FRAME
 
 
@@ -46,7 +59,7 @@ def check_frame(S):
     if os.environ.get('DRAW_FRAME_CHECK', '1') == '0': return fid
     bad = []
     if fid != GF.FRAME_ID: bad.append(f'tools/geo_frame.py FRAME_ID = {GF.FRAME_ID!r}')
-    if fid != js_frame_id(): bad.append(f'js/geo.js FRAME_ID = {js_frame_id()!r}')
+    if fid != js_frame_id(S): bad.append(f'js/geo.js FRAME_ID = {js_frame_id(S)!r} ({os.path.relpath(app_root(S), ROOT)})')
     # the frame id is not enough on its own: the extracted runway ends must equal the Python twin's (1 cm)
     pr = S['meta'].get('probe')
     if pr and not bad:
@@ -61,6 +74,13 @@ def check_frame(S):
 
 def _sha(path):
     try:
+        st = os.stat(path); return _sha_cached(os.path.abspath(path), st.st_mtime_ns, st.st_size)
+    except OSError: return None
+
+
+@functools.lru_cache(None)
+def _sha_cached(path, mtime_ns, size):
+    try:
         h = hashlib.sha256()
         with open(path, 'rb') as f:
             for b in iter(lambda: f.read(1 << 20), b''): h.update(b)
@@ -69,10 +89,24 @@ def _sha(path):
 
 
 def stale_inputs(S=None):
-    """files the app loaded at extraction whose content differs now ([] = the scene describes the working tree);
-    None when the scene predates input hashing"""
+    """files the app loaded at extraction whose content differs now in the directory it was served from ([] = the
+    scene describes that app - the commit snapshot or the working tree - exactly); None when the scene predates input
+    hashing. A commit snapshot must still be that commit (out/draw/app_snapshot/.rev)"""
     S = S or scene(); inp = S['meta'].get('inputs')
     if not inp: return None
+    a = S['meta'].get('appSource') or {}; root = app_root(S)
+    if a.get('kind') == 'git-archive':
+        try: rev = open(os.path.join(root, '.rev')).read().strip()
+        except OSError: rev = None
+        if rev != a.get('rev'): return sorted(inp)
+    return sorted(p for p, h in inp.items() if _sha(os.path.join(root, p)) != h)
+
+
+def worktree_changes(S=None):
+    """for a scene extracted from a commit snapshot: the loaded app files whose working-tree content differs from the
+    scene's (uncommitted edits or later commits the scene does not cover); [] for a working-tree scene"""
+    S = S or scene(); inp = S['meta'].get('inputs') or {}
+    if (S['meta'].get('appSource') or {}).get('kind') != 'git-archive': return []
     return sorted(p for p, h in inp.items() if _sha(os.path.join(ROOT, p)) != h)
 
 
@@ -85,9 +119,10 @@ def git_head():
 
 def provenance(S=None):
     """one-line provenance for title blocks and the report: frame, git, extraction time, staleness"""
-    S = S or scene(); m = S['meta']; st = stale_inputs(S)
+    S = S or scene(); m = S['meta']; st = stale_inputs(S); a = m.get('appSource') or {'kind': 'worktree'}
     return dict(frame=m.get('frameId') or LEGACY_FRAME, git=m.get('git'), gitHead=m.get('gitHead'), generated=m['generated'], inputsHash=m.get('inputsHash'),
-                nInputs=len(m.get('inputs') or {}), stale=st, typesHash=m.get('typesHash'), changedDuring=m.get('inputsChangedDuringExtraction') or [])
+                nInputs=len(m.get('inputs') or {}), stale=st, typesHash=m.get('typesHash'), changedDuring=m.get('inputsChangedDuringExtraction') or [],
+                appSource=a.get('kind'), appRev=a.get('rev'), headNow=git_head(), worktreeChanged=worktree_changes(S))
 
 
 # ------------------------------------------------------------------------------------------------ scene
@@ -202,7 +237,7 @@ def mask_to_polys(mask, res, x0, z0, simplify=None):
 
 # ------------------------------------------------------------------------------------------------ aircraft geometry
 def read_sfom(key):
-    raw = open(os.path.join(ROOT, 'data', 'models', key + '.sfom'), 'rb').read()
+    raw = open(os.path.join(app_root(), 'data', 'models', key + '.sfom'), 'rb').read()   # the app the scene came from
     if raw[:2] == b'\x1f\x8b': raw = gzip.decompress(raw)
     assert raw[:4] == b'SFOM'
     hl = struct.unpack('<I', raw[8:12])[0]; head = json.loads(raw[12:12 + hl]); B = 12 + hl
@@ -260,7 +295,8 @@ ZONE_NOFIN = {2, 3, 7}  # engine, gear, pylon (tools/convert_models.py ZONE; js/
 
 
 def _stretch(pos, st, zone=None, dims=None):
-    """js/live/models.js applyStretch(), same order: wing span fit, fin height fit, fuselage plugs; dims updated"""
+    """js/live/models.js applyStretch(), same order: wing span fit, fin height fit, fuselage plugs (fit.js plugShift,
+    including negative plugs with the aft blend bl2); dims updated"""
     if not st: return pos
     pos = pos.copy(); dims = dims if dims is not None else {}
     W = st.get('wing'); Fn = st.get('fin')
@@ -278,10 +314,20 @@ def _stretch(pos, st, zone=None, dims=None):
         pos[m, 1] = yF + (y[m] - yF) * k
         dims['H'] = float(pos[:, 1].max())
     if st.get('cut1') is not None:
-        x = pos[:, 0]
-        pos[:, 0] = np.where(x < st['cut2'], x - st['d1'] - st['d2'], np.where(x < st['cut1'], x - st['d1'], x))
+        x = pos[:, 0].copy()
+        pos[:, 0] = x + plug_shift(x, st['cut1'], st['d1']) + plug_shift(x, st['cut2'], st['d2'], st.get('bl2') or 0.0)
         if 'L' in dims: dims['L'] += st['d1'] + st['d2']
     return pos
+
+
+def plug_shift(x, c, d, bl=0.0):
+    """js/aircraft/fit.js plugShift (vectorised): x shift of model vertices at x by the fuselage plug at station c of
+    length d - a plug (d >= 0) moves everything aft of c (x < c) aft by d; a negative plug removes [c + d, c), the
+    section plus a blend bl compressed linearly onto bl, and everything aft of it moves forward by |d|"""
+    x = np.asarray(x, float)
+    if d >= 0: return np.where(x < c, -d, 0.0)
+    D = -d; t = (c - x) / (D + bl) if D + bl > 0 else np.zeros_like(x)
+    return np.where(x >= c, 0.0, np.where(x <= c - D - bl, D, (c - t * bl) - x))
 
 
 @functools.lru_cache(None)

@@ -4,6 +4,42 @@
 //   signs on the pavement before each hold line. Runway distance-remaining signs (white numerals on black) every 1,000 ft.
 import { gl, Mesh } from '../gl.js';
 import { GROUND_Y } from '../geo.js';
+import { AIRPORT } from '../../data/sfo_airport.js';
+
+// Movement surfaces = the SFO Museum taxiway and runway polygons (data/sfo_airport.js). Review round 3 (2-D audit of the
+// app: 25 signs stood 0.1-17 m inside taxiway / runway polygons, where wings and engines pass): every sign is placed
+// where its footprint plus 1 m is off these surfaces - the hold signs at their usual 11 m beyond the painted bar end or
+// the nearest clear distance (5-30 m), the distance-remaining signs at 55 m from the centreline or shifted along the
+// runway (<= 60 m) / to the other side; a sign with no clear spot is not drawn (logged). Sign positions are inferred
+// (FAA AC 150/5340-18 layout), not surveyed.
+const MOVE = [];
+for (const t of [...(AIRPORT.taxiways || []), ...(AIRPORT.runways || [])]) for (const poly of t.polys || []) {
+  let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+  for (const p of poly[0]) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
+  MOVE.push({ rings: poly, x0, z0, x1, z1 });
+}
+function onMovement(x, z) {
+  for (const P of MOVE) {
+    if (x < P.x0 || x > P.x1 || z < P.z0 || z > P.z1) continue;
+    let inside = false;
+    for (const r of P.rings) for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const a = r[i], b = r[j];
+      if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+    }
+    if (inside) return true;
+  }
+  return false;
+}
+// is a sign footprint clear of the movement surfaces? c = centre, v = unit vector along the panel, from..to = extent
+// along v (m), margin m all round
+function footprintClear(c, v, from, to, m = 1.0) {
+  const n = [-v[1], v[0]];
+  for (let a = from - m; a <= to + m + 1e-6; a += Math.max(0.5, (to - from + 2 * m) / 8)) for (const b of [-m, 0, m]) {
+    if (onMovement(c[0] + v[0] * a + n[0] * b, c[1] + v[1] * a + n[1] * b)) return false;
+  }
+  return true;
+}
+export const SIGN_STATS = { holdMoved: 0, holdSkipped: 0, drsMoved: 0, drsSkipped: 0 };
 
 const FT = 0.3048;
 export const SIGN_VS = `
@@ -118,9 +154,17 @@ export function buildSigns(details, runways) {
     const edgeL = dot(sub(h.a, h.p), left) > 0 ? h.a : h.b, edgeR = edgeL === h.a ? h.b : h.a;
     const mand = A.map['mand:' + h.text]; const locKey = locName(h.twy) ? 'loc:' + locName(h.twy) : null; const loc = locKey && A.map[locKey];
     for (const [edge, side] of [[edgeL, left], [edgeR, right]]) {
-      const base = [edge[0] + side[0] * 11 - u[0] * 1.2, edge[1] + side[1] * 11 - u[1] * 1.2];
+      const wm = faceH * mand.aspect, wl = loc ? faceH * loc.aspect : 0;
+      const at = (d) => [edge[0] + side[0] * d - u[0] * 1.2, edge[1] + side[1] * d - u[1] * 1.2];
+      let dd = null;
+      for (const d of [11, 12, 13, 14, 15, 16, 18, 20, 22, 25, 28, 30, 10, 9, 8, 7, 6, 5]) {
+        if (footprintClear(at(d), side, -wm / 2, wm / 2 + (loc ? 0.25 + wl : 0))) { dd = d; break; }
+      }
+      if (dd === null) { SIGN_STATS.holdSkipped++; continue; }
+      if (dd !== 11) SIGN_STATS.holdMoved++;
+      const base = at(dd);
       const w = panel(g, base, f, faceH, mand, null);
-      if (loc) { const wl = faceH * loc.aspect; const c2 = [base[0] + side[0] * (w / 2 + wl / 2 + 0.25), base[1] + side[1] * (w / 2 + wl / 2 + 0.25)]; panel(g, c2, f, faceH, loc, null); }
+      if (loc) { const c2 = [base[0] + side[0] * (w / 2 + wl / 2 + 0.25), base[1] + side[1] * (w / 2 + wl / 2 + 0.25)]; panel(g, c2, f, faceH, loc, null); }
     }
     // painted holding position signs on the pavement, on the holding side; text reads toward the runway
     const r = A.map['paint:' + h.text]; const Lr = 3.6; // 12 ft deep (along travel)
@@ -140,8 +184,17 @@ export function buildSigns(details, runways) {
     for (let k = 1; k <= n; k++) {
       const xa = Rw.len - k * 1000 * FT; if (xa < 150) continue; // remaining k*1000 ft for travel from end a
       const remB = Math.round(xa / FT / 1000); if (remB < 1 || remB > 12) continue;
-      const c = [Rw.pa[0] + Rw.dir[0] * xa + Rw.side[0] * 55, Rw.pa[1] + Rw.dir[1] * xa + Rw.side[1] * 55];
       const f = [-Rw.dir[0], -Rw.dir[1]]; // front faces aircraft coming from end a
+      const v = [-f[1], f[0]]; const hw = 0.5 * A.map['drs:' + k].aspect + 0.1;
+      let c = null;
+      for (const sh of [0, 15, -15, 30, -30, 45, -45, 60, -60]) {
+        for (const sd of [1, -1]) {
+          const q = [Rw.pa[0] + Rw.dir[0] * (xa + sh) + Rw.side[0] * 55 * sd, Rw.pa[1] + Rw.dir[1] * (xa + sh) + Rw.side[1] * 55 * sd];
+          if (footprintClear(q, v, -hw, hw)) { c = q; if (sh || sd < 0) SIGN_STATS.drsMoved++; break; }
+        }
+        if (c) break;
+      }
+      if (!c) { SIGN_STATS.drsSkipped++; continue; }
       panel(g, c, f, 1.0, A.map['drs:' + k], A.map['drs:' + remB], GROUND_Y + 0.5);
     }
   }

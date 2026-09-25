@@ -102,7 +102,8 @@ def _glass(P, idx, tz, L):
         tr = g[lab == c]; V = P[idx[tr]].reshape(-1, 3)
         lo, hi = V.min(0), V.max(0); w, hh = hi[0] - lo[0], hi[1] - lo[1]
         if 0.12 < w < 0.6 and 0.15 < hh < 0.8:
-            W.append(dict(s=float(-(lo[0] + hi[0]) / 2), y=float((lo[1] + hi[1]) / 2), w=float(w), h=float(hh), side=int(np.sign(V[:, 2].mean())), tris=tr))
+            W.append(dict(s=float(-(lo[0] + hi[0]) / 2), y=float((lo[1] + hi[1]) / 2), z=float(np.abs(V[:, 2]).mean()), w=float(w), h=float(hh),
+                          side=int(np.sign(V[:, 2].mean())), tris=tr))
         elif w > 3 and hh < 1.5: other.append(tr)          # a dark strip behind openings in the skin (737-800)
     return _rows(W), (np.concatenate(other) if other else np.zeros(0, int))
 
@@ -136,7 +137,8 @@ def _holes(P, idx, tz, L):
         V = Pu[loop]; lo, hi = V.min(0), V.max(0)
         w, hh = hi[0] - lo[0], hi[1] - lo[1]; st = -(lo[0] + hi[0]) / 2
         if ok and 0.12 < w < 0.5 and 0.15 < hh < 0.7 and 0.1 * L < st < 0.9 * L and abs(V[:, 2].mean()) > 0.4 and (hi[2] - lo[2]) < 0.25:
-            W.append(dict(s=float(st), y=float((lo[1] + hi[1]) / 2), w=float(w), h=float(hh), side=int(np.sign(V[:, 2].mean())), loop=[int(first[i]) for i in loop]))
+            W.append(dict(s=float(st), y=float((lo[1] + hi[1]) / 2), z=float(np.abs(V[:, 2]).mean()), w=float(w), h=float(hh), side=int(np.sign(V[:, 2].mean())),
+                          loop=[int(first[i]) for i in loop]))
     return _rows(W)
 
 
@@ -171,7 +173,7 @@ def _texture_windows(m, L):
                 if mk.sum() < 3: continue
                 Q = pos[sl][mk]; lo, hi = Q.min(0), Q.max(0); w, hh = hi[0] - lo[0], hi[1] - lo[1]; st = -(lo[0] + hi[0]) / 2
                 if 0.08 < w < 0.5 and 0.1 < hh < 0.7 and abs(Q[:, 2].mean()) > 0.4 and 0.1 * L < st < 0.9 * L and hh > 0.8 * w:
-                    W.append(dict(s=float(st), y=float((lo[1] + hi[1]) / 2), w=float(w), h=float(hh), side=side, tex=ti))
+                    W.append(dict(s=float(st), y=float((lo[1] + hi[1]) / 2), z=float(np.abs(Q[:, 2]).mean()), w=float(w), h=float(hh), side=side, tex=ti))
     W.sort(key=lambda x: (x['side'], x['s']))
     out = []
     for x in W:
@@ -218,25 +220,31 @@ def _door_filter(s, w, doors):
 def _plug_transform(s, pitch, plugs):
     """window stations (m, base type) -> stations of a type with fuselage plugs {at1, at2, d1, d2} (m): a positive plug
     shifts everything aft of its station and inserts windows at the local pitch in the gap; a negative plug removes
-    the windows of the removed section [at, at + |d|] and shifts the rest forward"""
+    the windows of the removed section [at, at + |d|] and shifts the rest forward. Either way the row stays regular at the
+    cut: a gap of 1.5 pitches or more gets windows at the pitch, and a window closer than 0.75 pitch to the window ahead
+    of the cut is dropped (the plug lengths are not multiples of the window pitch: without this the 737-700 on the
+    737-800 model had two windows 0.3 m apart at each cut)"""
     s = np.sort(np.asarray(s, float)); ins = []
     out = s.copy()
+    cuts = []
     for at, d in ((plugs['at1'], plugs['d1']), (plugs['at2'], plugs['d2'])):
         if abs(d) < 1e-6: continue
-        if d > 0:
-            aft = s > at; out = np.where(aft, out + d, out)
-            # windows around the plug (base stations) and the gap they leave
-            fwd = s[s <= at]; aftw = s[s > at]
-            if len(fwd) and len(aftw):
-                a = fwd.max(); b = aftw.min()
-                a2 = out[s == a][0]; b2 = out[s == b][0]
-                p = pitch
-                n = int(round((b2 - a2) / p)) - 1
-                if n > 0: ins += list(a2 + (b2 - a2) * np.arange(1, n + 1) / (n + 1))
+        if d > 0: out = np.where(s > at, out + d, out)
         else:
-            keep = ~((s > at) & (s < at - d))
             out = np.where(s >= at - d, out + d, out)
-            out[~keep] = np.nan
+            out[(s > at) & (s < at - d)] = np.nan
+        cuts.append((at, d))
+    for at, d in cuts:
+        fwd = np.where((s <= at) & ~np.isnan(out))[0]; aft = np.where((s > at) & ~np.isnan(out))[0]
+        if not len(fwd) or not len(aft): continue
+        a2 = out[fwd[-1]]; j = aft[0]; b2 = out[j]
+        if b2 - a2 < 0.75 * pitch:
+            out[j] = np.nan                                   # too close to the window ahead of the cut
+            nxt = np.where((s > at) & ~np.isnan(out))[0]
+            if not len(nxt): continue
+            b2 = out[nxt[0]]
+        n = int(round((b2 - a2) / pitch)) - 1
+        if n > 0: ins += list(a2 + (b2 - a2) * np.arange(1, n + 1) / (n + 1))
     res = np.sort(np.concatenate([out[~np.isnan(out)], ins])) if ins else np.sort(out[~np.isnan(out)])
     return res, np.array(sorted(ins))
 
@@ -289,8 +297,38 @@ def decision(key, A=None):
     frac = float(np.mean(dev < KEEP_DEV * p)); dn = len(S) - len(R)
     st = dict(n_artist=len(S), n_ref=len(R), matched=frac, pitch_artist=float(np.median(np.diff(S))), pitch_ref=p)
     if abs(dn) <= KEEP_COUNT and frac >= KEEP_FRAC:
+        # the glass is geometry shared by every type rendered with the model: it is kept only if no other type with its own
+        # drawing lacks one of the kept windows (A321neo: no windows at 25.6 / 26.1 m where the A321 has them)
+        keepS = S[np.abs(R[None, :] - S[:, None]).min(1) <= KEEP_DEV * p]          # the artist windows kept for the base type
+        for t2 in sorted(x for x in A['typeModel'] if A['typeModel'][x] == key and x != t and x in A['types']):
+            if not ((t2 in REF_OK and reference(t2)) or (t2 in REF_FROM and reference(REF_FROM[t2][0]))): continue
+            rows2 = type_rows(t2, A)
+            if not rows2: continue
+            R2 = np.asarray(rows2[0]['s']); p2 = rows2[0]['pitch']
+            f2 = A['types'][t2]['fit']; S2 = np.array([stretch_station(x / s0, f2) * f2['s'] for x in keepS]) if f2 else keepS
+            extra2 = S2[np.abs(R2[None, :] - S2[:, None]).min(1) > KEEP_DEV * p2]
+            if len(extra2):
+                return dict(mode='paint', why=f'artist glass matches the {t} drawing ({len(S)} vs {len(R)} windows, {frac:.0%}) but has '
+                            f'{len(extra2)} window(s) the {t2} drawing does not (at {", ".join(f"{v:.2f}" for v in extra2)} m); the glass is '
+                            f'shared by both types, so the drawings\' rows are painted', ref=t, stats=st)
         return dict(mode='keep', why=f'artist glass matches the drawing ({len(S)} vs {len(R)} windows, {frac:.0%} within {KEEP_DEV} pitch)', ref=t, stats=st)
     return dict(mode='paint', why=f'artist glass differs from the drawing ({len(S)} vs {len(R)} windows, {frac:.0%} within {KEEP_DEV} pitch, pitch {st["pitch_artist"]:.3f} vs {p:.3f} m)', ref=t, stats=st)
+
+
+def stretch_station(s, f):
+    """station s (model units, aft of the nose) of the unstretched model -> station on the model stretched for fit f
+    (js/live/models.js applyStretch / common.apply_stretch: positive plugs move everything aft of the cut; a negative plug
+    collapses its section onto the station)"""
+    st = (f or {}).get('stretch') or {}
+    if st.get('cut1') is None: return s
+    x = -s; dx = 0.0
+    for c, d, bl in ((st['cut1'], st['d1'], 0.0), (st['cut2'], st['d2'], st.get('bl2') or 0.0)):
+        if d >= 0: dx += -d if x < c else 0.0
+        else:
+            D = -d
+            if x <= c - D - bl: dx += D
+            elif x < c: t_ = (c - x) / (D + bl); dx += (c - t_ * bl) - x
+    return -(x + dx)
 
 
 def removals(key, A=None):
@@ -305,18 +343,10 @@ def removals(key, A=None):
     # keep: remove the artist windows the reference does not have (and their openings)
     r = reference(dec['ref']) if dec['ref'] else None
     if r is None:
-        # no reference: only an isolated artist window ahead of door 1 on a single-deck regional / narrow-body type is
-        # removed (E175 model: a glass object at 3.14 m, 3.7 m ahead of the row, in front of the door at 5.14 m; the E170
-        # model with the same nose has none)
-        T = A['types'][t]; extra = []
-        if T['cls'] in ('B', 'C', 'CL') and T['doors']:
-            for side in (-1, 1):
-                w = sorted([x for x in a['glass'] if x['side'] == side and x['row'] == 0], key=lambda x: x['s'])
-                if len(w) > 3:
-                    p = float(np.median(np.diff([x['s'] for x in w])))
-                    if w[0]['s'] * s0 < T['doors'][0] and w[1]['s'] - w[0]['s'] > 2.5 * p: extra.append(w[0])
-        hs = [x for x in a['holes'] if any(abs(x['s'] - g['s']) < 0.05 and x['side'] == g['side'] and abs(x['y'] - g['y']) < 0.1 for g in extra)]
-        return dict(glass=extra, holes=hs, strip=np.zeros(0, int), texture=False, mode='keep')
+        # no reference: the artist glass is kept as modelled. (An earlier rule removed an "isolated" glass window ahead of
+        # door 1 on the E175 model, 3.06 m aft of the nose: that glass is the pane of the aft cockpit side window, and
+        # removing it opened a hole in the flight deck glazing. Nothing is removed without a reference row.)
+        return dict(glass=[], holes=[], strip=np.zeros(0, int), texture=False, mode='keep')
     R = np.array(r['s']) / s0; p = r['pitch'] / s0
     extra = [x for x in a['glass'] if np.abs(R - x['s']).min() > KEEP_DEV * p]
     hs = [x for x in a['holes'] if any(abs(x['s'] - g['s']) < 0.05 and x['side'] == g['side'] and abs(x['y'] - g['y']) < 0.1 for g in extra)]

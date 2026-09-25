@@ -141,7 +141,7 @@ class Layers:
         for s in S['signs']:
             c = np.array(s['c']); u = np.array(s['u']); n = np.array([-u[1], u[0]]); hw, hd = s['w'] / 2, s['d'] / 2
             self.signs.append(P(Polygon([c - u * hw - n * hd, c + u * hw - n * hd, c + u * hw + n * hd, c - u * hw + n * hd])))
-        # approach-light piers / posts (recorded boxes), light sprites, PAPI units
+        # approach-light structures / posts (recorded boxes), light sprites, PAPI units
         self.piers = []
         for pr in S.get('piers') or []:
             ps = [P(hull_poly(p['hull'])) for p in pr['prims'] if len(p['hull']) >= 3]
@@ -378,9 +378,9 @@ def draw_layers(ax, L, box, sc, variant, detail, highlight=None):
                 parts = [P(hull_poly(p['hull'])) for p in Pz['parts'] if len(p['hull']) >= 3 and p['part'] not in ('column',)]
                 add_poly(ax, unary_union(parts), **sty)
             ax.text(b['rc'][0], -b['rc'][1], b['gate'], fontsize=3.4, ha='center', va='center', color='white', zorder=8)
-    # approach-light piers (water: legs, cap, catwalk, rails; land: post), light sprites, PAPI units
+    # approach-light structures (water: stations, crossbars, catwalk, huts; land: posts), light sprites, PAPI units
     for p in L.piers:
-        if not fr.contains(Point(p['pt'])): continue
+        if not fr.intersects(p['poly']): continue
         add_poly(ax, p['poly'], fc=C['pier'], ec=C['pier'], lw=0.25, z=5.5)
         if not p['pr']['water']: ax.plot(*p['pt'], marker='s', ms=1.8 if detail else 1.0, mfc='none', mec=C['pier'], mew=0.4, zorder=5.6)
     if detail and len(L.lights):
@@ -488,7 +488,7 @@ def legend(ax, x, y, over):
     ax.plot([x + 3], [yy], marker='x', ms=5, mew=1, color=C['conflict']); ax.text(x + 8, yy, 'conflict #n (see report.md)', fontsize=5.2, va='center'); yy -= 4.2
     ax.plot([x + 3], [yy], marker='^', ms=4, mfc='none', mew=0.8, color=C['obstr']); ax.text(x + 8, yy, 'obstruction: pier / sign on a movement surface', fontsize=5.2, va='center'); yy -= 4.2
     ax.plot([x + 3], [yy], marker='o', ms=3, mfc='none', color='#ff6d00'); ax.text(x + 8, yy, 'below ICAO stand clearance', fontsize=5.2, va='center'); yy -= 4.2
-    ax.add_patch(Rectangle((x, yy - 1.4), 6, 2.8, lw=0.4, fc=C['pier'], ec=C['pier'])); ax.text(x + 8, yy, 'approach-light pier (water) / post (land, square)', fontsize=5.2, va='center'); yy -= 4.2
+    ax.add_patch(Rectangle((x, yy - 1.4), 6, 2.8, lw=0.4, fc=C['pier'], ec=C['pier'])); ax.text(x + 8, yy, 'approach-light structure (water) / post (land, square)', fontsize=5.2, va='center'); yy -= 4.2
     ax.scatter([x + 1.5, x + 3, x + 4.5], [yy, yy, yy], s=3, c=['#9e9e9e', '#e53935', '#43a047']); ax.text(x + 8, yy, 'light sprite (runway / approach / taxi edge); PAPI box orange', fontsize=5.2, va='center'); yy -= 4.2
     ax.plot([x, x + 6], [yy, yy], color=C['gridST'], lw=0.6, ls=(0, (4, 3))); ax.text(x + 8, yy, 'airport grid s / t (100 m)', fontsize=5.2, va='center')
     return yy
@@ -542,7 +542,9 @@ def render_sheet(L, sd, variant, src=None, outdir=None, stats=None):
              (f'Features on sheet: {nf} measured, {nflag} with median > 1.0 m', 4.8, 'normal'),
              (f'Conflicts on sheet: ' + ', '.join(f'{k} {v}' for k, v in sorted(cc.items())) if cc else 'Conflicts on sheet: none', 4.8, 'normal'),
              (f'Scene: git {PV["git"]}, extracted {PV["generated"][:16]}Z, inputs {PV["inputsHash"]}', 4.2, 'normal'),
-             (f'World frame {PV["frame"]}  |  ' + ('matches the working tree' if PV['stale'] == [] else f'STALE: {len(PV["stale"])} input(s) changed since' if PV['stale'] else 'staleness unknown'), 4.2, 'bold' if PV['stale'] else 'normal'),
+             (f'World frame {PV["frame"]}  |  ' + (f'STALE: {len(PV["stale"])} input(s) changed since' if PV['stale'] else 'staleness unknown' if PV['stale'] is None
+                                                     else (f'app = commit {PV["git"]} (git archive)' + (f'; working tree differs in {len(PV["worktreeChanged"])} app file(s)' if PV.get('worktreeChanged') else ''))
+                                                     if PV.get('appSource') == 'git-archive' else 'matches the working tree'), 4.2, 'bold' if PV['stale'] or PV.get('worktreeChanged') else 'normal'),
              (('Imagery: ' + L.imgprov.get(variant, '')) [:110], 3.9, 'normal'),
              ('World grid: x east / z south (m from ARP)  |  s/t: airport grid (js/geo.js)', 4.2, 'normal'),
              ('Geometry: SFO Museum (CDLA-Permissive-1.0) + surveyed stands/paint/pavement', 4.2, 'normal'),
@@ -614,6 +616,14 @@ def run(only=None, crops_docs=60, crops_out=250):
             if 'google' in srcs: crop(L, c, 'overlay-google', srcs['google'], os.path.join(OUT, 'crops'))
         for c in imp[:crops_docs]: crop(L, c, 'vector', None, os.path.join(DOCS, 'crops'))
         print(f'  {min(len(imp), crops_out)} overlay + {min(len(imp), crops_docs)} vector conflict crops ({time.time() - t0:.0f} s)')
+    if not only:
+        # sheets of an earlier sheet set (renamed / dropped ids) must not linger next to the current ones
+        import re
+        ids = {d['id'] for d in defs}
+        for d, pat in ((DOCS, r'^(\d\d-[^_]+?)\.(svg|png)$'), (os.path.join(OUT, 'sheets'), r'^(\d\d-[^_]+?)_overlay-[a-z]+\.(svg|png)$')):
+            for fn in (os.listdir(d) if os.path.isdir(d) else []):
+                m = re.match(pat, fn)
+                if m and m.group(1) not in ids: os.remove(os.path.join(d, fn)); print('  removed stale sheet', os.path.relpath(os.path.join(d, fn), ROOT))
     json.dump(stats, open(os.path.join(OUT, 'sheets.json'), 'w'), indent=1)
     return stats
 

@@ -16,7 +16,9 @@ places where the port has to replicate code.
 | `Renderer` | `new Renderer(w, h, {msaa, shadowRes})`, `addProgram(name, vs, fs)`, `setupSky(env)` (synchronous; then `R.light.skyUp / skyHorizon / ground` are read and written), `extraCommon.uNight`, `progs.cloud`, `curCam`, `curRange`, `render(frame, cam, t, post)` returning `C` with `vpNear`, `pos`, `fov`, `present(w, h)`, `resize(w, h)` |
 | `Scene` | `new Scene(R, world)`, `add(ac)`, `aircraft[]` (spliced directly), `staticLights[]` (functions returning sprite records), `gateSys`, `frame(t, camPos)`, `commit()` |
 | `bakeGround(R, world, log, {aptRes, cityRes, sunOnly})` and `releaseAirportMap(world)` right after it | |
-| `initGL(canvas)`, `gl.getExtension`, `gl.getParameter` | |
+| `initGL(canvas)`, `gl.getExtension`, `gl.getParameter` | (25 Sep: the stand-in now answers `EXT_color_buffer_float` / anisotropy from a real probe, so the app's start-up check works again) |
+| `post` passed to `render()` | `exposure` (day value; live3 derives its own night exposure, see §5.4), `sat`, `bloom`, `vignette`, `grain` |
+| data read by the renderer directly | `world.details.masts` and `js/live/items.js MAST_H` (floodlight field, `js/three/flood.js`) |
 
 If the real-time work adds renderer calls to `app.js` (for example new post settings or a new item type pushed to
 `world.items`), please add them to this table or ping the engine workflow. Unknown `gl.*` calls are no-ops in the
@@ -57,3 +59,56 @@ The bridges are drawn from `LiveGateSystem.items()` output (merged static mesh, 
 only, sign quads, GSE instances), so the rotunda / walkway / stow-pose changes requested in
 `static_geometry_round1.md` appear in live3.html automatically. Keep `items()` returning
 `{mesh, prog: 'obj' | 'sign' | 'objI'}` and `gateSys.sprites`, `gateSys.atlas.map`.
+
+## 5. Review round 1 of the new renderer (25 Sep 2026): requests to other workflows
+
+Fixed in `js/three/**` where the renderer could fix it; these need the owners of the files named.
+
+### 5.1 `js/live/app.js` (real-time workflow): mark marker sprites; better, draw a generic airframe instead
+
+`markerSprites()` (app.js ~269) pushes `{p, c, i: 120, s: 1.4}` for every track without a known type, including ground
+aircraft 2 m above the apron. The reviewer found one 17 m from the camera drawn as a 110 px saturated disk in daylight.
+live3.html now clamps every sprite to at most 12 px radius, caps its halo and fades markers out between 150 m and 60 m
+from the camera. It recognises markers by `marker: true` or, until that flag exists, by "no `dir` and `s >= 0.6`"
+(only the markers match today). Please (a) add `marker: true` to the marker records, and (b) better: for ground tracks
+with an unknown or unsupported type, create a `LiveAircraft` with a generic procedural narrow-body airframe
+(js/aircraft/fleet.js already builds procedural airframes; the 'generic business-jet' path in `modelNote` shows the
+pattern) instead of `'marker'`, so an unknown aircraft on a stand is a solid body with shadows, not a light.
+
+### 5.2 `js/live/app.js`: a fatal-error hook, and a visible message after load
+
+`ui.fail(msg)` writes into the loading overlay, which `ui.ready()` removes, so after load the app's own
+`webglcontextlost` handler shows nothing (and `body.lost` has no rule in live.css). live3.html dispatches a synthetic
+`webglcontextlost` on WebGPU device loss (so the app stops its loop) and shows its own overlay (`#r3fatal`). Please add
+`R.onFatal = (html) => ui.fail(html)` (or an equivalent) and make `ui.fail` work after load; the renderer will call it
+for init failures and device loss instead of its own overlay.
+
+### 5.3 `js/live/app.js`: dynamic resolution
+
+Each change of the render scale reallocates every post-processing target and restarts TRAA's history. live3.html now
+quantises the requested size to 1 / 0.9 / 0.8 / 0.7 / 0.6 / 0.5 / 0.4 of the canvas and applies a new step at most
+every 8 s. The controller itself would do better with hysteresis and a GPU-time signal: its EMA measures the CPU time of
+`tick()` (engine.md §2 verifier note), so a GPU-bound phone may never trip it.
+
+### 5.4 `js/live/app.js`: night exposure
+
+live3.html no longer uses the fixed night term of `applyEnv` (2.4): it derives the night exposure from the apron
+floodlight level (lit stand concrete at the display key, `js/three/renderer3.js NIGHT_EXPOSURE`, about 2.0), blended
+with the app's day exposure over the same darkness curve (sun +2 deg to -10 deg). Nothing to change; please keep
+`post.exposure` = the app's exposure (it is read as the day value).
+
+### 5.5 Liveries workflow: United 737 MAX 9 title on the window line
+
+Reviewer (25 Sep, render of `data/liveries/UAL/b738@b39m-hi.webp`): the window cut-outs ran through the 'UNITED'
+letters. In the texture re-baked at 17:16 UTC the holes no longer cross the letters, but the title still sits on the
+window line with the forward cabin windows omitted under it. United's 2019 livery puts the larger title above the
+window belt; painted titles never cover passenger windows and windows never disappear under them. Please move the
+titles off the window belt (check against United's livery drawing / photos), and add a bake-time check that title
+pixels never overlap the window alpha mask and that the window row is complete.
+
+### 5.6 Stands / airfield data: floodlight masts
+
+The apron floodlight field (`js/three/flood.js`) uses the observed mast positions, but the mast height (27 m,
+`items.js MAST_H`) and the luminaire aiming are inferred, and the level is the ICAO design value (20 lux on stands). If
+SFO's apron lighting plan (mast heights, luminaire count / wattage / aiming) can be obtained, `details.mastMeta` would be
+the place for it; the field follows automatically.

@@ -183,10 +183,12 @@ def snapshot_files(res='lo'):
 import { SNAPSHOT } from './data/snapshot.js';
 import { liveryForAirline } from './js/live/lookup.js';
 import { typeForIcao } from './js/aircraft/fit.js';
-import { liveryTextureFor } from './js/aircraft/liveries.js';
+import { liveryTextureFor, neutralTextureFor } from './js/aircraft/liveries.js';
 const out = new Set();
+// as js/live/aircraft.js updateLiveryTexture: the brand's bake for the type, else the neutral skin of the type
 for (const a of SNAPSHOT.ac) { const al = (a.flight || '').trim().slice(0, 3); const L = liveryForAirline(/^[A-Z]{3}$/.test(al) ? al : null, a.r, a.hex, a.t);
-  const m = typeForIcao(a.t); if (!m || !m.m || !L.brand) continue; const f = liveryTextureFor(L.brand, m.m, m.t, '""" + res + r"""'); if (f) out.add(f.key); }
+  const m = typeForIcao(a.t); if (!m || !m.m) continue;
+  const f = (L.brand ? liveryTextureFor(L.brand, m.m, m.t, '""" + res + r"""') : null) || neutralTextureFor(m.m, m.t, '""" + res + r"""'); if (f) out.add(f.key); }
 console.log(JSON.stringify([...out]));"""
     r = subprocess.run(['node', '--no-warnings', '--input-type=module', '-e', js], cwd=common.ROOT, capture_output=True, text=True)
     if r.returncode: raise RuntimeError(r.stderr)

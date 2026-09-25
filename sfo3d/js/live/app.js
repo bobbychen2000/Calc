@@ -325,7 +325,9 @@ export async function startApp(cfg) {
       firstData(); const p = parsePayload(snap); const off = Date.now() - p.now; p.now += off; for (const a of p.aircraft) a.t += off;
       const keep = new Set();
       // (kept alive: the engine ages a track by its newest POSITION, lastFixT)
-      for (const tr of [...traffic.tracks.values()]) { if (!tr.vehicle && tr.disp.ground && (tr.m.phase === 'still' || tr.gate)) { tr.lastRecv = tr.lastFixT = Date.now(); keep.add(tr.hex); } else traffic.remove(tr); }
+      // (a moving one that is drawn is re-placed at its recorded position with a fade -- traffic.js 'gap' cut: its old
+      // reports are dropped, the recorded one is ingested below -- never a pop)
+      for (const tr of [...traffic.tracks.values()]) { if (!tr.vehicle && tr.disp.ground && (tr.m.phase === 'still' || tr.gate)) { tr.lastRecv = tr.lastFixT = Date.now(); keep.add(tr.hex); } else if (tr.disp.valid && tr.disp.alpha > 0.01 && !tr.fadeOut) { tr.reps = []; tr.cutting = 'gap'; } else traffic.remove(tr); }
       p.aircraft = p.aircraft.filter(a => !keep.has(a.hex)); traffic.offset = null; traffic.ingest(p, Date.now());
     };
     traffic.movingLostMs = 100000;   // (moving aircraft are re-created every 90 s from the one recorded instant: not 'lost')

@@ -9,6 +9,12 @@ mean side and angle (mod 90) are kept. Double boxes (two adjacent squares) split
 Search area: the terminal aprons (x -1760..-280, z -420..1060, world frame). Output refs/cache/stands/
 redboxes_naip.json ({'frame', 'boxes': [[x, z, size, ang]]}) - read by build_stands.py; an overlay for checking goes to
 refs/cache/stands/view/redboxes_naip.png. Measured positions only (no NAIP pixels in the output data).
+Review round 3: every box is then re-fitted with an oriented hollow-square template (refine(): centre +-1.6 m, angle
++-10 deg, side +-0.8 m; score = mean redness on the square outline minus the mean inside and in a ring outside, on a
+0.1 m bilinear resampling of the raster), because the component rectangle is pulled off-centre where a vehicle or a
+neighbouring box touches the paint (review: 18 of 247 boxes > 1.5 m from the red-pixel centroid). A re-fit that moves
+more than 1.6 m or scores lower than the component rectangle keeps the original. 'boxes' = refined, 'boxes_component' =
+before; refine_stats compares both with the red-pixel centroid inside box + 1.5 m (the review's test).
 Usage: python3 tools/stands/redboxes_naip.py
 """
 import json, math, os
@@ -58,6 +64,84 @@ def plausible(raw, lab, cx, cy, side_px, ang, X, Z, stands):
     return True, ''
 
 
+TEMPLATE_MIN = 8.0   # template score (redness on the outline band minus inside / outside) below which no painted square is there
+LINE_W = 0.3         # m, imaged paint line width (the component rectangle is the outer extent; the template the line centre)
+
+
+def redness(N, cx, cz, half, res=0.1):
+    """world-aligned redness patch (R - (G+B)/2, float) of +-half m around (cx, cz) at `res` m; returns (img, x0, z0)"""
+    n = int(round(2 * half / res))
+    xs = cx - half + (np.arange(n) + 0.5) * res; zs = cz - half + (np.arange(n) + 0.5) * res
+    X, Z = np.meshgrid(xs, zs)
+    c, r = N.px(X, Z)
+    c0, r0 = int(np.floor(c.min())) - 2, int(np.floor(r.min())) - 2
+    win = np.asarray(N.im[r0:int(np.ceil(r.max())) + 3, c0:int(np.ceil(c.max())) + 3]).astype(np.float32)
+    red = win[..., 2] - (win[..., 0] + win[..., 1]) / 2
+    img = cv2.remap(red, (c - c0).astype(np.float32), (r - r0).astype(np.float32), cv2.INTER_LINEAR)
+    return img, xs[0], zs[0]
+
+
+_T = np.linspace(-1, 1, 12)
+_OFFS = np.array([-0.2, 0.0, 0.2, -0.9, 0.9])      # outline band (3), inside, outside
+
+
+def _scores(img, x0, z0, res, C):
+    """template scores of many candidates C = [[cx, cz, ang, side], ...] (vectorised). Blurred hollow-square model:
+    mean redness in a 0.4 m band on the outline (offsets -0.2 / 0 / +0.2 m) minus the mean of the rings 0.9 m inside
+    and 0.9 m outside (NAIP 0.6 m GSD blurs the painted line to ~0.5 m)."""
+    C = np.asarray(C, float); th = np.radians(C[:, 2]); u = np.stack([np.cos(th), np.sin(th)], 1); v = np.stack([-u[:, 1], u[:, 0]], 1)
+    h = C[:, 3][:, None] / 2 + _OFFS[None, :]                                   # (n, 5)
+    # points: (n, 5 offsets, 4 sides, 20)
+    sides = []
+    for a_, b_ in ((u, v), (v, u)):
+        for s1 in (-1, 1):
+            p = (s1 * h[:, :, None, None] * a_[:, None, None, :] + (_T[None, None, :, None] * h[:, :, None, None]) * b_[:, None, None, :])
+            sides.append(p)
+    P = np.concatenate(sides, axis=2)                                          # (n, 5, 80, 2)
+    X = C[:, 0][:, None, None] + P[..., 0]; Z = C[:, 1][:, None, None] + P[..., 1]
+    cc = ((X - x0) / res).astype(np.float32).reshape(len(C), -1); rr = ((Z - z0) / res).astype(np.float32).reshape(len(C), -1)
+    val = np.concatenate([cv2.remap(img, cc[i:i + 20000], rr[i:i + 20000], cv2.INTER_LINEAR, borderValue=0.0)   # (remap: < 32767 rows)
+                          for i in range(0, len(C), 20000)]).reshape(X.shape).mean(axis=2)                          # (n, 5)
+    return val[:, :3].mean(1) - 0.5 * (val[:, 3] + val[:, 4])
+
+
+def _score(img, x0, z0, res, cx, cz, ang, side):
+    return float(_scores(img, x0, z0, res, [[cx, cz, ang, side]])[0])
+
+
+def refine(N, box):
+    """oriented hollow-square template fit around a detected box [x, z, side, ang] -> (box, score, score at the
+    detection's own geometry). The component rectangle's angle is unreliable for a blurred square (minAreaRect of a
+    near-circular blob can come out 45 deg off), so the angle is searched over the full 0-90 deg, the side 2.5-7.5 m (line
+    centre) and the centre within 1.5 m of the component centre; coarse (3 deg, 0.5 m, 0.5 m) then fine (0.5 deg,
+    0.1 m)."""
+    x, z, side, ang = box; res = 0.1
+    img, x0, z0 = redness(N, x, z, 7.0, res)
+    s0 = _score(img, x0, z0, res, x, z, ang, max(3.0, side - LINE_W))
+    g = np.stack(np.meshgrid(np.arange(-1.5, 1.51, 0.5), np.arange(-1.5, 1.51, 0.5), np.arange(0, 90, 3.0), np.arange(2.5, 7.51, 0.5), indexing='ij'), -1).reshape(-1, 4)
+    g[:, 0] += x; g[:, 1] += z
+    sc = _scores(img, x0, z0, res, g); k = int(np.argmax(sc)); bx, bz, ba, bs = g[k]
+    f = np.stack(np.meshgrid(np.arange(-0.3, 0.31, 0.1), np.arange(-0.3, 0.31, 0.1), np.arange(-2, 2.01, 0.5), np.arange(-0.3, 0.31, 0.1), indexing='ij'), -1).reshape(-1, 4)
+    f += np.array([bx, bz, ba, bs])
+    sf = _scores(img, x0, z0, res, f); k2 = int(np.argmax(sf)); bx, bz, ba, bs = f[k2]
+    return [round(float(bx), 2), round(float(bz), 2), round(float(bs), 2), round(float(ba) % 90, 1)], float(sf[k2]), s0
+
+
+def centroid_offset(N, box, m=1.5):
+    """the review's test: red-pixel (Lab a* > 145) centroid inside the box + m, distance to the box centre (m)"""
+    x, z, side, ang = box; half = side / 2 + m
+    img, (c0, r0) = N.crop(x - half - 1, z - half - 1, x + half + 1, z + half + 1)
+    a = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)[..., 1].astype(float)
+    rr, cc = np.nonzero(a > 145)
+    if len(rr) < 5: return None
+    X, Z = N.world(cc + c0, rr + r0)
+    th = math.radians(ang); u = (math.cos(th), math.sin(th)); v = (-u[1], u[0])
+    du = (X - x) * u[0] + (Z - z) * u[1]; dv = (X - x) * v[0] + (Z - z) * v[1]
+    k = (np.abs(du) <= half) & (np.abs(dv) <= half)
+    if k.sum() < 5: return None
+    return float(math.hypot(X[k].mean() - x, Z[k].mean() - z))
+
+
 def main():
     N = Naip(); x0, z0, x1, z1 = BOX
     im, (c0, r0) = N.crop(x0, z0, x1, z1); I = im.astype(np.int32)
@@ -95,7 +179,28 @@ def main():
             ok, why = plausible(raw, lab_im, px, py, sz / res, ang, float(X), float(Z), stands)
             rec = [round(float(X), 2), round(float(Z), 2), round(sz, 2), round(ang % 90, 1)]
             (out if ok else rejected).append(rec + ([] if ok else [why]))
-    json.dump({'frame': GF.FRAME_ID, 'source': 'NAIP 2024 (USDA, public domain), colour detection + plausibility filter', 'boxes': out, 'rejected': rejected},
+    comp = [list(b) for b in out]; ref = []; moved = 0; keep_comp = []
+    for b in comp:
+        nb, sn, so = refine(N, b)
+        if sn < TEMPLATE_MIN:
+            rejected.append(b + ['template: no painted hollow square (best score %.1f)' % sn]); continue
+        ref.append(nb); keep_comp.append(b); moved += math.dist(nb[:2], b[:2]) > 0.05
+    comp = keep_comp
+    # two detections of one double box can converge on the same square: keep the better fit
+    dup = set()
+    for i in range(len(ref)):
+        for j in range(i + 1, len(ref)):
+            if j not in dup and i not in dup and math.dist(ref[i][:2], ref[j][:2]) < 0.5 * min(ref[i][2], ref[j][2]): dup.add(j)
+    for j in sorted(dup, reverse=True):
+        rejected.append(comp[j] + ['duplicate of another box after the template fit']); del ref[j]; del comp[j]
+    def stats(bs):
+        v = [o for o in (centroid_offset(N, b) for b in bs) if o is not None]
+        return {'n': len(v), 'median': round(float(np.median(v)), 2), 'p90': round(float(np.percentile(v, 90)), 2), 'gt1.5': int(sum(o > 1.5 for o in v))}
+    rs = {'component': stats(comp), 'refined': stats(ref), 'refitted': moved}
+    print('red-pixel centroid vs box centre (box + 1.5 m):', rs)
+    out = ref
+    json.dump({'frame': GF.FRAME_ID, 'source': 'NAIP 2024 (USDA, public domain), colour detection + plausibility filter + oriented-square template re-fit',
+               'boxes': out, 'boxes_component': comp, 'refine_stats': rs, 'rejected': rejected},
               open(os.path.join(WORK, 'redboxes_naip.json'), 'w'))
     # overlay for checking
     ov = im.copy()

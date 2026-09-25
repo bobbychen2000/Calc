@@ -106,7 +106,16 @@ export class GroundPhysics {
         const B = this.body(tr, { x: S.x, z: S.z, hdg: S.hdg }); if (!B) continue;
         if (tr.parkMode === 'data' && !tr._poseChecked) { tr._poseChecked = true; const Bp = this.body(tr, { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg }); if (!this.valid(Bp, fixed, false)) { tr.forceStand = true; traffic.updatePark(tr); continue; } }
         // two aircraft at neighbouring stands must not touch: an own-pose (data) parking yields to the stand pose
-        if (fixed.some(o => overlaps(o, B, 0.5))) { if (tr.parkMode === 'data') { tr.forceStand = true; traffic.updatePark(tr); } else conflicts++; }
+        // ...and a stand pose SHORT of the stop point (the reports' median, up to 25 m short) yields to the stop point
+        // (this aircraft or the neighbour it touches: static_geometry_round2.md #4)
+        const hit = fixed.find(o => overlaps(o, B, 0.5));
+        if (hit) {
+          const short = (q) => q && q.gate && q.parkMode === 'stand' && !q.shortBlocked && q.parkAlong != null && q.parkAlong < (q.stopAlong ?? 0) - 1;
+          if (tr.parkMode === 'data') { tr.forceStand = true; traffic.updatePark(tr); }
+          else if (short(tr)) { tr.shortBlocked = true; traffic.updatePark(tr); traffic.counters.shortBlocked = (traffic.counters.shortBlocked || 0) + 1; }
+          else if (short(hit.tr)) { hit.tr.shortBlocked = true; traffic.updatePark(hit.tr); traffic.counters.shortBlocked = (traffic.counters.shortBlocked || 0) + 1; }
+          else conflicts++;
+        }
         fixed.push(B); tr.physOff = null; if (tr.stale) silent.push(B);
       } else { const B = this.body(tr); if (!B) continue; if ((D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) { free.push(B); if (tr.stale) silent.push(B); } else moving.push(B); }
     }

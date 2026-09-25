@@ -112,7 +112,11 @@ NAIP_OBS = {
     895097100: (5.0, 0.0, 'narrow', ''),            # C5
     895097099: (0.0, 0.0, 'narrow', ''),            # C7
     895097098: (1.0, 0.0, 'narrow', ''),            # C9
-    895097097: (-14.0, 0.0, 'narrow', 'u'),         # C11 (small regional jet stopped far out)
+    # C11: review round 3 re-read (the reviewer: nose at about -4 m). The aircraft has a grey forward fuselage and grey
+    # wings that merge with the concrete; the -14 m reading had taken the start of the white aft fuselage for the nose.
+    # Engines at ~-11 m, wing tips ~-19 m, tail end ~-37.5 m (oriented crop, 0.1 m px, contrast-stretched) put the nose
+    # of an A319 / A320 / 737-size body at about -3..0 m. The nose itself is not visible -> 'u' (not used).
+    895097097: (-3.0, 0.0, 'narrow', 'u'),          # C11 (narrow body, grey forward fuselage; nose estimated)
     895097104: (-0.5, 0.3, 'narrow', ''),           # D3
     895097105: (1.0, 0.0, 'narrow', ''),            # D4
     895097106: (-1.5, -0.5, 'narrow', ''),          # D5
@@ -138,6 +142,23 @@ NAIP_OBS = {
     895097157: (-0.7, -1.1, 'wide', ''),            # G10
     895097159: (7.8, -0.7, 'wide', ''),             # G11
     895097158: (5.8, -3.7, 'wide', ''),             # G13S
+}
+
+# What the NAIP 2024 image shows on the wide-body stands whose parked aircraft stopped more than 1.5 m from the model nose
+# (review round 3: "record which type is parked before accepting a type stop"). By-eye readings on oriented 0.25 m
+# crops (nose / tail end along the stand axis, +-3 m; span +-4 m: wing tips lean with the relief, see naip_relief.py),
+# engine count and livery where visible. Candidate types are inferred from these dimensions only (ACAP lengths: B772
+# 63.7, B789 62.8, B78X 68.3, A359 66.8, B77W 73.9, B744 70.7, B748 76.3 m). No registration is visible, so none of
+# them is identified; the along residual stays unexplained ('conflict_along').
+NAIP_IMAGED = {
+    735028758: 'twin, blue KLM-style fuselage, nose -6 / tail -73 m (~67 m), span ~61 m: B772 or B78X size',        # A10
+    491836046: 'twin, nose under the bridge (not visible), tail -63 m: length not measurable',                     # A12
+    895097137: 'twin, blue engine cowls, nose -7 / tail -71 m (~64 m), span ~60 m: B789 or B772 size',             # F13
+    895097161: 'twin, nose +3 / tail -65 m (~68 m): B78X / A359 size (span not readable at the tile edge)',        # G7
+    895097156: 'twin, nose +4 / tail -68 m (~72 m), span ~63 m: B77W size',                                         # G9
+    895097157: 'twin, dark (black) fuselage, nose -3 / tail -75 m (~72 m): B77W size',                              # G10
+    895097159: 'twin, nose +2 / tail -67 m (~69 m): B78X / B77W size',                                              # G12S
+    895097158: 'four engines, nose +2 / tail -72 m (~74 m): B744 / B748 (747)',                                     # G13S
 }
 
 # Positions taken from NAIP instead of OSM (pos_src 'naip'): the OSM line is contradicted by the imagery.

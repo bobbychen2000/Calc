@@ -23,7 +23,11 @@ export default async ({ page, base }) => {
   const tLoad = Date.now();
   // every file the app loaded (performance resource entries), hashed on disk now and again at the end: the drawing
   // tools compare these hashes with the working tree (tools/drawing/common.py stale_inputs) and refuse stale scenes
-  const ROOTD = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');   // repo root (this file is jobs/extract2d.mjs)
+  // the directory the harness serves the app from: livetest.mjs ROOT (tools/drawing/run_all.sh points it at a clean
+  // `git archive` of a commit, out/draw/app_snapshot, so that edits made to the working tree while the extraction runs
+  // cannot leak into the scene), else the repository (this file is jobs/extract2d.mjs)
+  const REPO = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+  const ROOTD = path.resolve(process.env.ROOT || REPO);
   const sha = (f) => { try { return crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex').slice(0, 16); } catch (e) { return null; } };
   const loaded = async () => (await page.evaluate(() => performance.getEntriesByType('resource').map(e => e.name).concat([location.href])))
     .filter(u => u.startsWith(base)).map(u => decodeURIComponent(new URL(u).pathname.slice(1)).split('?')[0]).filter(p => p && !p.startsWith('api/'));
@@ -45,7 +49,13 @@ export default async ({ page, base }) => {
     window.requestAnimationFrame = () => 0; await new Promise(r => setTimeout(r, 1500));
     console.log('frozen after', SFO.physics.frame, 'physics frames');
   });
-  let git = null, gitHead = null, gitDirty = null; try { gitHead = execSync('git rev-parse --short HEAD', { cwd: ROOTD }).toString().trim(); gitDirty = execSync('git status --porcelain js data live.html', { cwd: ROOTD }).toString().split('\n').filter(l => l.trim()).map(l => l.slice(3)); git = gitHead + (gitDirty.length ? '+dirty' : ''); } catch (e) { }
+  // provenance: a snapshot of commit APP_REV_SHA (run_all.sh) is that commit, clean by construction; the working tree
+  // is HEAD + whatever `git status` lists for the app files
+  let git = null, gitHead = null, gitDirty = null; const appSource = process.env.APP_REV_SHA ? { kind: 'git-archive', rev: process.env.APP_REV_SHA, dir: path.relative(REPO, ROOTD) } : { kind: 'worktree', dir: '.' };
+  try {
+    if (process.env.APP_REV_SHA) { gitHead = process.env.APP_REV_SHA.slice(0, 7); gitDirty = []; git = gitHead; }
+    else { gitHead = execSync('git rev-parse --short HEAD', { cwd: REPO }).toString().trim(); gitDirty = execSync('git status --porcelain js data live.html live.css', { cwd: REPO }).toString().split('\n').filter(l => l.trim()).map(l => l.slice(3)); git = gitHead + (gitDirty.length ? '+dirty' : ''); }
+  } catch (e) { }
 
   const res = await page.evaluate(async () => {
     const abs = (p) => new URL(p, location.href).href; const T00 = performance.now(); const say = (m) => console.log('[extract] ' + m + ' @' + ((performance.now() - T00) / 1000).toFixed(1) + 's');
@@ -250,14 +260,27 @@ export default async ({ page, base }) => {
     // approach-light piers: app.js buildPierGeometry(lsys.piers) -> world.items; each pier's boxes recorded separately
     const LS = lightsI.buildAirfieldLights(1.0, { taxiways: false });
     const alsEnds = geo.APPROACH_LIGHTS.map(A => ({ ...A, F: animTrafficM.runwayFrame(A.end) }));
+    // pier kinds (lights.js buildPierGeometry): 'post' (a single post on land), 'catwalk' (deck a -> b + two rails),
+    // 'station' (3 piles, light-bar beam, link to the catwalk), 'crossbar' (bar lo..hi along F.right on piles), 'hut';
+    // part names follow the box emission order there. A pier without a kind (older lights.js) is a 'pier' / 'post'.
+    const PART_NAMES = { post: ['post'], catwalk: ['deck', 'rail', 'rail'], station: ['pile', 'pile', 'pile', 'beam', 'link'], crossbar: ['crossbar'], hut: ['hut'],
+      pier: ['leg', 'leg', 'cap', 'catwalk', 'rail', 'rail'] };
+    const PART_REST = { crossbar: 'pile', hut: 'pile', pier: 'pier', station: 'pier', catwalk: 'rail', post: 'post' };
+    const sysOf = (p) => { let sys = null, best = 1e9;
+      for (const A of alsEnds) { const F = A.F; const dx = p[0] - F.thr[0], dz = p[2] - F.thr[2]; const along = -(dx * F.dir[0] + dz * F.dir[2]), lat = dx * F.right[0] + dz * F.right[2];
+        if (along > 0 && Math.abs(lat) < best) { best = Math.abs(lat); sys = { end: A.end, type: A.type, fromThr: +along.toFixed(2), lateral: +lat.toFixed(3) }; } }
+      return sys; };
     const piers = LS.piers.map((P, i) => {
       lightsI.buildPierGeometry([P]); const prims = globalThis.__lastGeo.prims.filter(p => p.v.length);
-      let sys = null, best = 1e9;
-      for (const A of alsEnds) { const F = A.F; const dx = P.base[0] - F.thr[0], dz = P.base[2] - F.thr[2]; const along = -(dx * F.dir[0] + dz * F.dir[2]), lat = dx * F.right[0] + dz * F.right[2];
-        if (along > 0 && Math.abs(lat) < best) { best = Math.abs(lat); sys = { end: A.end, type: A.type, fromThr: +along.toFixed(2), lateral: +lat.toFixed(3) }; } }
+      const kind = P.kind || (P.water ? 'pier' : 'post');
+      const ref = P.base || [(P.a[0] + P.b[0]) / 2, 0, (P.a[2] + P.b[2]) / 2];   // a catwalk has no base: its midpoint
+      const sys = sysOf(ref);
       const F = sys && alsEnds.find(A => A.end === sys.end).F;
-      return { i, ...sys, fromEnd: F ? +(sys.fromThr - Math.hypot(F.thr[0] - F.start[0], F.thr[2] - F.start[2])).toFixed(2) : null, base: W2(P.base), right: rnd([P.right[0], P.right[2]], 5), water: !!P.water, h: P.h,
-        prims: prims.map((p, k) => primOut(p, P.water ? ['leg', 'leg', 'cap', 'catwalk', 'rail', 'rail'][k] || 'pier' : 'post')) };
+      const out = { i, kind, src: P.src || null, ...sys, fromEnd: F ? +(sys.fromThr - Math.hypot(F.thr[0] - F.start[0], F.thr[2] - F.start[2])).toFixed(2) : null, base: W2(ref), right: rnd([P.right[0], P.right[2]], 5), water: !!P.water, h: P.h,
+        prims: prims.map((p, k) => primOut(p, (PART_NAMES[kind] || [])[k] || PART_REST[kind] || 'pier')) };
+      if (kind === 'catwalk') { out.a = W2(P.a); out.b = W2(P.b); const sa = sysOf(P.a), sb = sysOf(P.b); out.fromThrA = sa ? sa.fromThr : null; out.fromThrB = sb ? sb.fromThr : null; out.latA = sa ? sa.lateral : null; out.latB = sb ? sb.lateral : null; }
+      for (const k of ['lo', 'hi', 'cw', 'len']) if (P[k] != null) out[k] = +(+P[k]).toFixed(3);
+      return out;
     });
     replicated.push('approach-light pier system/end labels: nearest APPROACH_LIGHTS end on the extended centreline (piers carry no label in js/anim/lights.js)');
     // all light sprites as the app builds them (app.js: buildLiveLights(cfg.airport, world.paved) - world.paved is the
@@ -318,7 +341,7 @@ export default async ({ page, base }) => {
     for (const g of gatesW) {
       const n = geo.stToWorld(g.nose[0], g.nose[1], 0), fW = gatesI.stD(g.dir);
       const S = { name: g.name, alias: g.alias || [], letter: g.letter, cls: g.cls, src: g.src || null, remote: !!g.remote, bridge: !!g.bridge, nose: [+n[0].toFixed(3), +n[2].toFixed(3)], noseST: rnd(g.nose), dirST: rnd(g.dir, 6), dir: rnd([fW[0], fW[2]], 6), hdg: g.hdg ?? null,
-        maxSpan: g.maxSpan, maxLen: g.maxLen, wide: g.wide, acType: g.acType, dockType: g.dockType || null, dock: g.dock ? { nose: stWorld(g.dock.nose), dirST: rnd(g.dock.dir, 6) } : null, occupant: g.occupant || null, oversize: !!g.oversize,
+        maxSpan: g.maxSpan, maxLen: g.maxLen, wide: g.wide, excl: g.excl || [], altOf: g.altOf || null, acType: g.acType, dockType: g.dockType || null, dock: g.dock ? { nose: stWorld(g.dock.nose), dirST: rnd(g.dock.dir, 6) } : null, occupant: g.occupant || null, oversize: !!g.oversize,
         envelope: g.bridge ? stRing(airportM.standEnvelopeST(g, 0, 0, 0)) : null, classTypes: classTypes[g.cls] || null, bridges: [] };
       if (g.bridge) {
         // stand sign + VDGS (gates.js standGeo): recorded boxes
@@ -410,7 +433,7 @@ export default async ({ page, base }) => {
   });
   // write outputs
   for (const [k, r] of Object.entries(res.rasters)) { fs.writeFileSync(path.join(OUTD, k + '.png'), Buffer.from(r.png.split(',')[1], 'base64')); r.file = k + '.png'; delete r.png; }
-  res.json.rasters = res.rasters; res.json.meta.git = git; res.json.meta.gitHead = gitHead; res.json.meta.gitDirty = gitDirty; res.json.meta.secondsAfterLoad = (Date.now() - tLoad) / 1000; res.json.meshBin = 'meshes.bin';
+  res.json.rasters = res.rasters; res.json.meta.git = git; res.json.meta.gitHead = gitHead; res.json.meta.gitDirty = gitDirty; res.json.meta.appSource = appSource; res.json.meta.secondsAfterLoad = (Date.now() - tLoad) / 1000; res.json.meshBin = 'meshes.bin';
   res.json.meta.typesHash = crypto.createHash('sha256').update(JSON.stringify(res.json.types)).digest('hex').slice(0, 16);
   const inputs1 = hashInputs(await loaded());
   res.json.meta.inputs = inputs1; res.json.meta.inputsChangedDuringExtraction = Object.keys(inputs1).filter(k => k in inputs0 && inputs0[k] !== inputs1[k]);

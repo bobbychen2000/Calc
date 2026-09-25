@@ -9,22 +9,38 @@
 // What is drawn and where comes from the existing builders' output (world.items, LiveGateSystem, LiveAircraft);
 // how it is shaded is the TSL ports in js/three/*.js. WebGPURenderer uses WebGPU where available and falls back to
 // WebGL 2 automatically. GPU work that the app requests before the renderer finished its (async) init is queued.
+// Review round 1 changes made here: exposure (day gain, night exposure derived from the floodlight level), floodlight
+// field + lamp state, ground-bake tiles spread over frames, dynamic resolution quantised with hysteresis, bridges / GSE
+// independent of the sign font (canvas-atlas fallback when the MSDF font fails), IBL ground from the airfield bake's
+// mean colour, fatal-error UI (init failure, WebGPU device loss), per-frame draw-call / memory metrics.
 import { THREE, TSL } from './lib.js';
 import { Engine, QUALITY3 } from './engine.js';
 import { Sky } from './sky.js';
 import { GroundBakes, groundMaterial, waterMaterial } from './ground.js';
 import { objectMaterial } from './objects.js';
 import { markingMaterial } from './markings.js';
-import { loadSignFont, SignBuilder, signMaterials, signMeshes, faceIndex, worldSignAtlasMap } from './signs.js';
+import { loadSignFont, SignBuilder, signMaterials, signMeshes, faceIndex, worldSignAtlasMap, atlasSignMaterial } from './signs.js';
 import { Bridges3 } from './bridges.js';
 import { Sprites } from './lights.js';
 import { AircraftRenderer } from './aircraft.js';
-import { geometryOf, textureOf } from './convert.js';
-import { glCanvas } from './compat/gl.js';
+import { geometryOf, textureOf, retainedImageBytes } from './convert.js';
+import { glCanvas, setMaxTextureSize, imageHooks } from './compat/gl.js';
+import { floodField, E_STAND } from './flood.js';
 
 const { uniform } = TSL;
 const T0 = performance.now();
 const tlog = (m) => console.log('[r3] ' + m + ' at ' + ((performance.now() - T0) / 1000).toFixed(1) + ' s');
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+// Exposure. Day: the app's exposure (js/live/app.js applyEnv, 0.45 in sun) x DAY_GAIN (review round 1: sunlit white
+// paint rendered mid-grey). DAY_GAIN and the AgX look (engine.js grade: contrast 1.4 in log2 around 18 % grey, look
+// saturation 1.1) were chosen offline on HDR dumps of the named views (tools/build3/grade_hdr.py; docs/research/
+// engine_impl.md §4.4): p99.5 ~235-240 on the gate view, sunlit concrete ~195, shade ~75-95 before AO. Night: derived from the floodlight
+// level instead of the app's fixed 2.4: lit stand concrete (albedo RHO_CONC, the airfield bake's concrete) under the
+// ICAO stand average (E_STAND, js/three/flood.js) is placed at the display key KEY_NIGHT (exposed value that the AgX look
+// maps to ~18 % display grey). Between the two the app's darkness curve (sun elevation +2 deg .. -10 deg) blends.
+const DAY_GAIN = 1.2, KEY_NIGHT = 0.16, RHO_CONC = 0.37, APP_NIGHT_EXPO = 2.4;
+export const NIGHT_EXPOSURE = KEY_NIGHT * Math.PI / (RHO_CONC * E_STAND);
 
 // tier: ?tier=high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
 // (js/live/app.js QUALITY: high = 3072 shadow map, low = 2x MSAA)
@@ -38,27 +54,59 @@ function tierOf(opts) {
 
 export class Renderer3 {
   constructor(W, H, opts = {}) {
+    const qs = new URLSearchParams(location.search);
     this.W = W; this.H = H; this.tier = tierOf(opts); this.Q = QUALITY3[this.tier];
-    this.canvas = glCanvas; this.dbgNoCast = new URLSearchParams(location.search).get('nocast') === '1'; this.fixedRes = new URLSearchParams(location.search).get('res') === '1';
+    setMaxTextureSize(this.Q.maxTex); // image textures decoded after this point are capped (phones: 1024)
+    this.canvas = glCanvas; this.dbgNoCast = qs.get('nocast') === '1'; this.fixedRes = qs.get('res') === '1';
     this.engine = new Engine(document.getElementById('app') || document.body, this.Q, { canvas: this.canvas });
+    this.engine.onLost = (info) => this.lost(info);
     this.ready = false; this.failed = null; this.frames = 0; this.jobs = [];
     this.light = { sunDir: [0, 1, 0], sunColor: [1, 1, 1], skyUp: [0.3, 0.4, 0.6], skyHorizon: [0.5, 0.55, 0.6], ground: [0.1, 0.1, 0.1] };
     this.baseLight = null; this.extraCommon = {}; this.progs = {}; this.curCam = null; this.curRange = null;
     this.world = null; this.sceneShim = null; this.seen = new Set(); this.pendingSigns = []; this.clouds = new Map();
     this.pxScale = uniform(0.001); this.time = uniform(0); this.night = uniform(0);
-    this.exposureScale = +(new URLSearchParams(location.search).get('expo') || 1.0);
+    this.exposureScale = +(qs.get('expo') || 1.0);
     this.initP = this.engine.init().then(() => this._onReady()).catch((e) => {
       this.failed = e; console.error('three.js renderer failed to start', e);
-      window.__sfoError = 'renderer: ' + String(e && e.stack || e);
+      this.fatal('Sorry — this browser could not start the 3D renderer (WebGPU / WebGL 2).<br><small>' + String(e && e.message || e) + '</small>', 'renderer: ' + String(e && e.stack || e));
     });
-    this.fontP = loadSignFont().then(f => { this.font = f; }).catch(e => console.warn('MSDF sign font failed to load', e));
+    this.fontP = loadSignFont().then(f => { this.font = f; }).catch(e => { this.fontFailed = true; console.error('[r3] ERROR: MSDF sign font failed to load; signs use the canvas atlas', e); });
+  }
+  // ------------------------------------------------------------ failure paths
+  // fatal error: the app's loading overlay if it is still there, and an overlay of our own (the app has no hook yet:
+  // docs/requests/engine_exports.md); also window.__sfoError for the QA harness
+  fatal(html, detail) {
+    window.__sfoError = detail || html;
+    const L = document.getElementById('loading'); if (L) { const m = L.querySelector('.msg'); if (m) m.innerHTML = html; L.classList.add('err'); L.classList.remove('done'); }
+    let o = document.getElementById('r3fatal');
+    if (!o) { o = document.createElement('div'); o.id = 'r3fatal'; o.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:min(90vw,420px);padding:16px 20px;background:rgba(12,14,18,0.92);color:#eee;font:15px/1.4 system-ui,sans-serif;border-radius:10px;z-index:9999;text-align:center'; document.body.appendChild(o); }
+    o.innerHTML = html;
+  }
+  // WebGPU device loss (on WebGL 2 the canvas fires webglcontextlost itself, which js/live/app.js handles): send the
+  // app the same event so it stops its loop, and show the message
+  lost(info) {
+    tlog('device lost: ' + (info && info.message));
+    if (this.engine.backend === 'webgpu' && this.canvas) { try { this.canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true })); } catch (e) { } }
+    this.fatal('The graphics device was lost (the GPU ran out of memory or was reset). <a href="#" onclick="location.reload()">Reload</a>, or pick a lower quality in Settings.', 'device lost: ' + (info && info.message));
   }
   // ------------------------------------------------------------ old Renderer interface
   addProgram(name) { this.progs[name] = true; }
-  // ?res=1 pins the render size to the canvas size x devicePixelRatio (QA renders: the app's dynamic resolution
-  // otherwise drops to 0.4x on a software rasteriser)
+  // Render size. ?res=1 pins it to the canvas size x devicePixelRatio (QA renders). Otherwise the app's dynamic
+  // resolution (js/live/app.js: x0.88 / x1.08 every 2.5 s) is quantised to a few steps of the canvas size and applied at
+  // most every 8 s (a new size reallocates every post target and restarts TRAA's history: review round 1); a change of
+  // the canvas itself (rotation, window resize) applies at once.
   resize(w, h) {
-    if (this.fixedRes && this.canvas) { const d = Math.min(window.devicePixelRatio || 1, 2); w = Math.max(2, Math.round(this.canvas.clientWidth * d)); h = Math.max(2, Math.round(this.canvas.clientHeight * d)); }
+    const c = this.canvas;
+    if (this.fixedRes && c) { const d = Math.min(window.devicePixelRatio || 1, 2); w = Math.max(2, Math.round(c.clientWidth * d)); h = Math.max(2, Math.round(c.clientHeight * d)); }
+    else if (c && c.width > 0 && c.height > 0) {
+      const cw = c.width, ch = c.height; const ratio = Math.min(1, Math.max(w / cw, h / ch));
+      const steps = [1, 0.85, 0.72, 0.6, 0.5, 0.4]; let st = steps[steps.length - 1]; for (const s of steps) if (s <= ratio + 0.03) { st = s; break; }
+      const now = performance.now(); const canvasChanged = this._cw !== cw || this._ch !== ch;
+      if (!canvasChanged && this._step !== undefined && st !== this._step && now - (this._tStep || 0) < 8000) return; // hysteresis
+      if (!canvasChanged && st === this._step) return;
+      this._cw = cw; this._ch = ch; this._step = st; this._tStep = now;
+      w = Math.max(2, Math.round(cw * st)); h = Math.max(2, Math.round(ch * st));
+    }
     this.W = w; this.H = h; if (this.ready) this.engine.resize(w, h, 1);
   }
   present() { }
@@ -79,21 +127,51 @@ export class Renderer3 {
     this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes });
     this.sky.u.night = this.night; this.sky.u.time = this.time;
     if (this.env) this.sky.setEnv(this.env);
+    // apron floodlight field from the masts (before any material is compiled: the light node samples it)
+    const masts = (world.details && world.details.masts) || [];
+    const f = floodField(masts); if (f) { this.engine.flood.setField(f); tlog('flood field ' + f.w + 'x' + f.h + ' (' + JSON.stringify(f.stats) + ')'); }
   }
-  // js/world/world.js bakeGround(R, world, log, opts) (compat/world.js)
+  // js/world/world.js bakeGround(R, world, log, opts) (compat/world.js): queued as tiles, rendered in frameScene
   requestBake(world, opts = {}) {
     if (!this.bakes) this.bakes = new GroundBakes(this.engine, world, this.sky, this.Q); // takes the source maps now
     const sunOnly = !!opts.sunOnly && this.bakedOnce;
     this.bakedOnce = true;
-    this.run(() => { this.bakes.run(this.engine.renderer, { sunOnly }); tlog('bake' + (sunOnly ? ' (sun)' : '')); });
+    this.bakes.enqueue({ sunOnly }); this.bakeT0 = performance.now(); this.bakeKind = sunOnly ? 'sun' : 'full';
   }
   run(fn) { if (this.ready) fn(); else this.jobs.push(fn); }
   // ------------------------------------------------------------ init
   _onReady() {
     this.ready = true; this.resize(this.W, this.H); const E = this.engine;
-    const qs = new URLSearchParams(location.search); if (qs.get('sat')) E.grade.sat.value = +qs.get('sat'); if (qs.get('contrast')) E.grade.contrast.value = +qs.get('contrast');
+    const qs = new URLSearchParams(location.search);
+    for (const k of ['sat', 'contrast', 'lookSat', 'vignette']) if (qs.get(k) != null) { E.grade[k].value = +qs.get(k); (this.gradeLock = this.gradeLock || {})[k] = true; }
     for (const fn of this.jobs.splice(0)) fn();
+    // upload decoded images at once and drop their CPU copies (js/three/compat/gl.js imageHooks, convert.js releaseImage)
+    imageHooks.ready = (rec) => { if (rec.deleted) return; const t = textureOf(rec, { anisotropy: 8 }); if (t && t.image && !t.image.isReleased) { try { E.renderer.initTexture(t); } catch (e) { console.warn('[r3] texture upload', e); } } };
+    for (const r of imageHooks.queue.splice(0)) imageHooks.ready(r);
     console.log('three.js r' + THREE.REVISION + ' ' + E.backend + (E.reversed ? ' (reversed depth)' : '') + ', tier ' + this.tier);
+  }
+  // ground bakes: a few tiles per frame (all tiles of the first bake before the scene is built)
+  _stepBakes() {
+    const B = this.bakes; if (!B || !B.pending) return true;
+    // first bake: 6 tiles per frame (nothing is shown yet); rebakes: 1 tile (<= 1024² texels) per frame, so a sun-driven
+    // city rebake (32 tiles) is spread over ~1 s; QA renders (?res=1) do 8 per frame
+    const first = !this.built; const done = B.step(this.engine.renderer, first ? 6 : this.fixedRes ? 8 : 1);
+    if (done) { tlog('bake (' + this.bakeKind + ') done in ' + ((performance.now() - this.bakeT0) / 1000).toFixed(1) + ' s'); if (!this.groundAlb && !this._albP) this._groundAlbedo(); }
+    return done;
+  }
+  // mean colour of the airfield bake (coverage-weighted), read back once: the IBL ground below the horizon (review
+  // round 1: the grey sky-coloured ground made shade on the apron blue; sunlit concrete bounces warm light)
+  _groundAlbedo() {
+    const R = this.engine.renderer; const rt = new THREE.RenderTarget(16, 16, { depthBuffer: false, generateMipmaps: false });
+    const m = new THREE.NodeMaterial(); m.blending = THREE.NoBlending; m.depthTest = m.depthWrite = false;
+    m.colorNode = TSL.texture(this.bakes.apt.texture, TSL.uv()).level(8.0);
+    const q = new THREE.QuadMesh(m); const prev = R.getRenderTarget(); R.setRenderTarget(rt); q.render(R); R.setRenderTarget(prev);
+    this._albP = R.readRenderTargetPixelsAsync(rt, 0, 0, 16, 16).then((px) => {
+      let r = 0, g = 0, b = 0, w = 0; const s = px.BYTES_PER_ELEMENT === 1 ? 1 / 255 : 1;
+      for (let i = 0; i < px.length; i += 4) { const a = px[i + 3] * s; r += px[i] * s * a; g += px[i + 1] * s * a; b += px[i + 2] * s * a; w += a; }
+      const lin = (c) => c; // the bake target is linear (NoColorSpace, UnsignedByte)
+      if (w > 0) { this.groundAlb = [lin(r / w), lin(g / w), lin(b / w)]; this.envDirty = true; tlog('IBL ground albedo ' + this.groundAlb.map(v => v.toFixed(3)).join(',')); }
+    }).catch(e => console.warn('ground albedo readback', e)).finally(() => { rt.dispose(); m.dispose(); });
   }
   // scene objects, built once the world, the sky and the first bake exist
   _buildStatic() {
@@ -107,7 +185,7 @@ export class Renderer3 {
     const common = { noiseTex: this.noiseTex, night: this.night, time: this.time };
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
-    this.sprites = new Sprites(); S.add(this.sprites.mesh);
+    this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night }); E.fxScene.add(this.sprites.mesh);
     this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');
@@ -144,25 +222,41 @@ export class Renderer3 {
     }
     // cloud layers removed by the app (setClouds rebuilds them when the METAR changes)
     if (this.clouds.size) { const live = new Set(W.items); for (const [it, m] of this.clouds) if (!live.has(it)) { this.engine.scene.remove(m); m.material.dispose(); this.clouds.delete(it); } }
-    if (this.pendingSigns.length && this._signMats()) {
+    // airfield signs: MSDF text once the font is there; the canvas atlas (as live.html draws them) if it failed
+    if (this.pendingSigns.length && (this._signMats() || this.fontFailed)) {
       if (!this.worldLookup) this.worldLookup = faceIndex(worldSignAtlasMap(W.details || {}));
       for (const it of this.pendingSigns.splice(0)) {
-        const d = it.mesh.data; const sb = new SignBuilder(this.font);
-        sb.addSignArrays({ pos: d.pos, nrm: d.nrm, uv: d.uv, ext: d.extra }, this.worldLookup);
-        const g = signMeshes(sb, this.signMats, 'signs'); if (!it.castShadow) g.traverse(o => { o.castShadow = false; }); G.add(g);
+        let g;
+        if (this.signMats) { const d = it.mesh.data; const sb = new SignBuilder(this.font); sb.addSignArrays({ pos: d.pos, nrm: d.nrm, uv: d.uv, ext: d.extra }, this.worldLookup); g = signMeshes(sb, this.signMats, 'signs'); }
+        else g = this._atlasSign(it);
+        if (!g) continue; if (!it.castShadow) g.traverse(o => { o.castShadow = false; }); G.add(g);
       }
     }
+  }
+  // fallback sign mesh: the builder's own quads and canvas atlas (uniforms.uAtlas), js/live/signs.js SIGN_FS look
+  _atlasSign(it) {
+    const u = typeof it.uniforms === 'function' ? it.uniforms() : it.uniforms; const rec = u && (u.uAtlas || u.uTex);
+    const tex = rec ? textureOf(rec, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace }) : null; if (!tex) return null;
+    const m = new THREE.Mesh(geometryOf(it.mesh), atlasSignMaterial(tex, { night: this.night, reversed: this.engine.reversed })); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false;
+    return m;
   }
   // ------------------------------------------------------------ per frame (compat/scene.js Scene.frame)
   frameScene(sc, t, camPos) {
     if (!this.ready || !this.bakes || !this.sky) return;
+    if (!this._stepBakes() && !this.built) return; // the first bake completes before the scene is built
     if (!this.built) this._buildStatic();
     this._syncItems();
-    if (sc.gateSys && !this.bridges && this._signMats()) {
-      this.bridges = new Bridges3(sc.gateSys, { objMat: this.objMat, vehMat: this.vehMat, signFont: this.font, signMats: this.signMats });
+    // bridges, stand equipment and GSE do not wait for the sign font (review round 1: without the font the scene had
+    // no bridges at all); their sign faces are added when the font arrives, or from the canvas atlas if it failed
+    if (sc.gateSys && !this.bridges) {
+      this.bridges = new Bridges3(sc.gateSys, { objMat: this.objMat, vehMat: this.vehMat, signFont: null, signMats: null, night: this.night, reversed: this.engine.reversed });
       this.engine.scene.add(this.bridges.group);
     }
-    if (this.bridges) { this.bridges.update(Date.now()); sc.gateSys.sprites = this.bridges.sprites; }
+    if (this.bridges) {
+      if (!this.bridges.signMats && this._signMats()) this.bridges.setSignFont(this.font, this.signMats);
+      else if (!this.bridges.signMats && this.fontFailed && !this.bridges.atlasFallback) this.bridges.useAtlasFallback();
+      this.bridges.update(Date.now()); sc.gateSys.sprites = this.bridges.sprites;
+    }
     this.acr.sync(sc.aircraft, camPos);
   }
   // ------------------------------------------------------------ render (fr = compat Scene.frame result)
@@ -174,6 +268,7 @@ export class Renderer3 {
     // environment: GPU sky, sun, IBL (after the app's night-floor adjustment of R.light)
     if (this.envDirty) {
       this.envDirty = false;
+      if (this.groundAlb && !L._albScaled) { const a = this.groundAlb; L.ground = L.ground.map((g, k) => g / 0.16 * a[k]); L._albScaled = true; } // Sky.lightFor: ground = E x 0.16 / pi
       this.sky.applyLight(L);
       const bu = this.baseLight ? this.baseLight.skyUp : L.skyUp;
       this.sky.u.skyFloor.value.setRGB(...L.skyUp.map((v, k) => Math.max(0, v - bu[k])));
@@ -181,13 +276,23 @@ export class Renderer3 {
       this.sky.updateEnvironment(R, S);
       E.setSun(L.sunDir, L.sunColor); this.sunRad.value.set(L.sunColor[0], L.sunColor[1], L.sunColor[2]);
     }
-    this.time.value = t; this.night.value = this.extraCommon.uNight || 0;
+    const nightF = this.extraCommon.uNight || 0;
+    this.time.value = t; this.night.value = nightF;
+    E.flood.intensity = nightF; // floodlights switch on with the app's night factor (sun below ~6 deg .. -4 deg)
     const wu = this.world.waterU; if (this.wMat && wu) { const u = this.wMat.userData; if (wu.uWind) u.uWind.value.set(wu.uWind[0], wu.uWind[1]); if (wu.uWaveAmp != null) u.uAmp.value = wu.uWaveAmp; }
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
     // light sprites
     const sp = this.sprites; sp.begin(); for (const s of fr && fr.sprites || []) sp.put(s); sp.end(E.camera, this.H);
-    R.toneMappingExposure = (post.exposure ?? 0.45) * this.exposureScale;
+    // exposure and grade (the app's post settings: exposure, sat, bloom, vignette, grain)
+    const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
+    const pe = post.exposure ?? 0.45;
+    E.expo.value = pe * (DAY_GAIN * (1 - dark) + (NIGHT_EXPOSURE / APP_NIGHT_EXPO) * dark) * this.exposureScale;
+    const G = E.grade, lock = this.gradeLock || {};
+    if (!lock.sat) G.sat.value = 1 + ((post.sat ?? 1.1) - 1) * 0.5; // the old grade's 1.1 on top of ACES; AgX's look carries most of it
+    if (!lock.vignette) G.vignette.value = post.vignette ?? 0.18;
+    G.grain.value = post.grain ?? 0; G.time.value = t;
+    if (E.bloomNode) E.bloomNode.strength.value = 0.035 * ((post.bloom ?? 0.012) / 0.012);
     if (this.dbgNoCast) S.traverse(o => { if (o.isMesh) o.castShadow = false; });
     const tr0 = performance.now(); E.render(); this.frames++;
     if (this.frames <= 3 || this.frames % 50 === 0) console.log('[r3] frame ' + this.frames + ' ' + (performance.now() - tr0).toFixed(0) + ' ms (t=' + ((performance.now() - T0) / 1000).toFixed(1) + ' s)');
@@ -208,12 +313,17 @@ export class Renderer3 {
     this.curCam = { pos, dir: f, up: u, fov: cam.fov };
     return { vpNear: M, vp: M, pos, fov: cam.fov, dir: f, up: u };
   }
-  // for QA jobs: a summary of what is drawn
+  // for QA jobs: a summary of what is drawn. drawCalls / triangles are per frame (info.render resets every frame);
+  // info.render.calls counts render() calls since start-up and is NOT a per-frame figure (review round 1)
   debugInfo() {
-    const R = this.engine.renderer; let nObj = 0, nVis = 0; this.engine.scene.traverse(o => { if (o.isMesh) { nObj++; if (o.visible) nVis++; } }); const out = { meshes: nObj, visible: nVis, backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H, calls: R.info.render.calls, tris: R.info.render.triangles, frames: this.frames };
-    if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; const U = {}; for (const k of ['top', 'tail', 'belly']) if (e.U[k]) U[k] = e.U[k].toArray().map(v => +v.toFixed(3)); out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name, U }); } }
+    const R = this.engine.renderer; const I = R.info; let nObj = 0, nVis = 0; this.engine.scene.traverse(o => { if (o.isMesh) { nObj++; if (o.visible) nVis++; } });
+    const out = { meshes: nObj, visible: nVis, backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H,
+      drawCalls: I.render.drawCalls, frameCalls: I.render.frameCalls, tris: I.render.triangles, renderCallsTotal: I.render.calls, frames: this.frames,
+      texMB: +((I.memory.texturesSize || 0) / 1048576).toFixed(1), textures: I.memory.textures, renderTargets: I.memory.renderTargets, retainedImageMB: +(retainedImageBytes() / 1048576).toFixed(1),
+      expo: +this.engine.expo.value.toFixed(3), night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null };
+    if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name }); } }
     return out;
   }
-  // for QA jobs: everything drawable is on screen
-  isComplete() { return this.ready && this.built && !!this.bridges && !this.pendingSigns.length; }
+  // for QA jobs: everything drawable is on screen (sign text may come from the fallback atlas if the font failed)
+  isComplete() { return this.ready && this.built && !!this.compiled && !!this.bridges && !(this.bakes && this.bakes.pending) && !this.pendingSigns.length && (!!this.bridges.signMats || !!this.bridges.atlasFallback); }
 }

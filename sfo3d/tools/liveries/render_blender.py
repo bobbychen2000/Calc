@@ -17,9 +17,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common, sfom
 
 VIEW = dict(az=38.0, el=11.0)    # camera azimuth from the nose toward port, elevation (deg)
+# named views: '34' three-quarter front from port (default), 'stbd34' from starboard, 'port' / 'stbd' side views (low
+# elevation, orthographic: window rows, titles and cheatlines along the whole body), 'rear34' tail from port
+VIEWS = {'34': dict(az=38.0, el=11.0), 'stbd34': dict(az=-38.0, el=11.0), 'port': dict(az=90.0, el=2.0, ortho=True),
+         'stbd': dict(az=-90.0, el=2.0, ortho=True), 'rear34': dict(az=140.0, el=12.0)}
 
 
-def build_scene(bpy, model_path, type_key, livery_path, tmp):
+def build_scene(bpy, model_path, type_key, livery_path, tmp, cargo=False):
     m = sfom.load(model_path); h = m['head']
     A = common.app(); f = A['types'][type_key]['fit'] if type_key else None
     P = common.apply_stretch(m['pos'], m['zone'], f['stretch'] if f and f['stretch'] else None)
@@ -73,7 +77,16 @@ def build_scene(bpy, model_path, type_key, livery_path, tmp):
                 mul.inputs['A'].default_value = col; nt.links.new(tn.outputs['Color'], mul.inputs['B'])
                 nt.links.new(mul.outputs['Result'], bsdf.inputs['Base Color'])
         mats.append(mat); mesh.materials.append(mat)
-    mesh.polygons.foreach_set('material_index', m['tri_mat'].astype(np.int32))
+    mi_ = m['tri_mat'].astype(np.int32).copy()
+    if cargo:
+        # freighter: cabin-window glass aft of the flight deck is painted over (as js/shaders/aircraft_real.js uNoCabin)
+        pm = bpy.data.materials.new('plug'); pm.use_nodes = True
+        pb = pm.node_tree.nodes.get('Principled BSDF'); pb.inputs['Base Color'].default_value = (0.86, 0.86, 0.86, 1); pb.inputs['Roughness'].default_value = 0.35
+        mesh.materials.append(pm)
+        kinds = np.array([mm['kind'] for mm in h['mats']])
+        Lm = float(-P[:, 0].min()); cx = P[idx].mean(1)[:, 0]
+        mi_[(kinds[mi_] == 'glass') & (cx < -0.12 * Lm)] = len(mats)
+    mesh.polygons.foreach_set('material_index', mi_)
     mesh.polygons.foreach_set('use_smooth', np.ones(len(idx), bool))
     Nb = np.stack([m['nrm'][:, 0], -m['nrm'][:, 2], m['nrm'][:, 1]], -1)
     Nb /= np.maximum(np.linalg.norm(Nb, axis=1, keepdims=True), 1e-6)
@@ -86,12 +99,13 @@ def build_scene(bpy, model_path, type_key, livery_path, tmp):
     return ob, lo, hi, m
 
 
-def render(code, model_path, type_key, livery_path, out, size=(1280, 720), samples=24):
+def render(code, model_path, type_key, livery_path, out, size=(1280, 720), samples=24, view='34', zoom=None):
     import bpy
     bpy.ops.wm.read_factory_settings(use_empty=True)
     sc = bpy.context.scene
     tmp = tempfile.mkdtemp()
-    ob, lo, hi, m = build_scene(bpy, model_path, type_key, livery_path, tmp)
+    import liveries
+    ob, lo, hi, m = build_scene(bpy, model_path, type_key, livery_path, tmp, cargo=bool(liveries.LIVERIES.get(code, {}).get('cargo')))
     L = hi[0] - lo[0]; zmin = lo[2]
     # ground
     bpy.ops.mesh.primitive_plane_add(size=L * 8, location=((lo[0] + hi[0]) / 2, 0, zmin - 0.02))
@@ -106,10 +120,16 @@ def render(code, model_path, type_key, livery_path, out, size=(1280, 720), sampl
     w = bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True
     bg = w.node_tree.nodes['Background']; bg.inputs['Color'].default_value = (0.42, 0.55, 0.75, 1); bg.inputs['Strength'].default_value = 0.9
     # camera: three-quarter from the front on the port side
+    V_ = VIEWS.get(view, VIEW)
     cam = bpy.data.cameras.new('cam'); cam.lens = 45
     co = bpy.data.objects.new('cam', cam); bpy.context.collection.objects.link(co); sc.camera = co
     tgt = np.array([lo[0] + 0.5 * L, 0.0, zmin + 0.38 * (hi[2] - zmin)])
-    az, el = math.radians(VIEW['az']), math.radians(VIEW['el'])
+    if V_.get('ortho'):
+        cam.type = 'ORTHO'; cam.ortho_scale = 1.04 * L
+        tgt = np.array([lo[0] + 0.5 * L, 0.0, zmin + 0.5 * (hi[2] - zmin)])
+    if zoom:        # (fraction of the length from the nose, ortho scale as a fraction of the length)
+        tgt = np.array([hi[0] - zoom[0] * L, 0.0, tgt[2]]); cam.ortho_scale = zoom[1] * L
+    az, el = math.radians(V_['az']), math.radians(V_['el'])
     d = 1.3 * L
     pos = tgt + d * np.array([math.cos(el) * math.cos(az), math.cos(el) * math.sin(az), math.sin(el)])
     co.location = pos.tolist()
@@ -128,7 +148,12 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('brands', nargs='*'); ap.add_argument('--res', default='hi'); ap.add_argument('--samples', type=int, default=24)
     ap.add_argument('--size', default='1280x720'); ap.add_argument('--out', default=os.path.join(common.ROOT, 'out', 'liveries'))
+    ap.add_argument('--view', default='34', help='34 | stbd34 | port | stbd | rear34')
+    ap.add_argument('--type', help='render this TYPES key (its model and the brand\'s bake for it) instead of the brand\'s most frequent type')
+    ap.add_argument('--zoom', help='side views: "f,w" = centre at fraction f of the length from the nose, width w x length')
+    ap.add_argument('--suffix', default='')
     a = ap.parse_args()
+    zoom = tuple(float(v) for v in a.zoom.split(',')) if a.zoom else None
     man = json.load(open(os.path.join(common.LIV, 'manifest.json')))
     os.makedirs(a.out, exist_ok=True)
     A = common.app()
@@ -142,15 +167,17 @@ if __name__ == '__main__':
         if a.brands and code not in a.brands: continue
         ent = {e['model']: e for e in man['entries'] if e['brand'] == code}
         pick = None
-        for icao in ([PREF[code]] if code in PREF else []) + L.get('types', []):
-            t = A['icao'].get(icao); mdl = A['typeModel'].get(t) if t else None
+        cands = [a.type] if a.type else [A['icao'].get(icao) for icao in ([PREF[code]] if code in PREF else []) + L.get('types', [])]
+        for t in cands:
+            mdl = A['typeModel'].get(t) if t else None
             if mdl in ent:
-                e = ent[mdl]; f = e
-                for v in e.get('variants', []):
-                    if t in v['types']: f = v
-                pick = (mdl, f['painted_as'], f['files'][a.res]); break
+                e = ent[mdl]; f = None
+                for v in [e] + e.get('variants', []):
+                    if t in v.get('types', []): f = v
+                if f is None: continue
+                pick = (mdl, t, f['files'][a.res]); break
         if not pick: print(code, 'no bake (procedural airframe only)'); continue
         mdl, typ, file = pick
-        out = os.path.join(a.out, f'{code}.png')
-        render(code, os.path.join(common.MD, mdl + '.sfom'), typ, os.path.join(common.LIV, file), out, sizes, a.samples)
+        out = os.path.join(a.out, f'{code}{a.suffix}.png')
+        render(code, os.path.join(common.MD, mdl + '.sfom'), typ, os.path.join(common.LIV, file), out, sizes, a.samples, a.view, zoom)
         print(code, mdl, typ, '->', os.path.relpath(out, common.ROOT))

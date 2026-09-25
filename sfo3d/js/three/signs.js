@@ -137,6 +137,22 @@ export function signMaterials(font, { night, noiseTex, reversed }) {
   for (const m of [bg, glyph, dark]) m.normalNode = facingNormalView(); // signs.js SIGN_FS: N faces the viewer
   return { bg, glyph, dark };
 }
+// fallback when the MSDF font could not be loaded: the builders' own quads with their canvas atlas, shaded as
+// js/live/signs.js SIGN_FS (extra.x: 1 lit face, 2 painted on the pavement, 0 housing)
+export function atlasSignMaterial(tex, { night, reversed }) {
+  const off = reversed ? 1 : -1;
+  const m = new THREE.MeshStandardNodeMaterial({ side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: off * 1, polygonOffsetUnits: off * 3, metalness: 0 });
+  const core = Fn(() => {
+    const k = attribute('extra', 'vec4').x; const a = texture(tex, TSL.uv()).rgb;
+    const alb = select(k.greaterThan(0.5), a, vec3(0.05)); const rough = select(k.greaterThan(1.5), float(0.7), select(k.greaterThan(0.5), float(0.35), float(0.5)));
+    return vec4(alb, rough);
+  }).once();
+  m.colorNode = vec4(core().rgb, 1.0); m.roughnessNode = core().a;
+  const k = attribute('extra', 'vec4').x;
+  m.emissiveNode = core().rgb.mul(step(0.5, k).mul(step(k, 1.5))).mul(night || float(0)).mul(1.6);
+  m.normalNode = facingNormalView();
+  return m;
+}
 export function signMeshes(builder, mats, name = 'signs') {
   const G = builder.geometries(); const group = new THREE.Group(); group.name = name;
   if (G.dark) { const m = new THREE.Mesh(G.dark, mats.dark); m.castShadow = true; m.receiveShadow = true; group.add(m); }

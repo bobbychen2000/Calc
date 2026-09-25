@@ -130,7 +130,10 @@ class GoogleScreens(Source):
         cf = os.path.join(OUT, 'google_vs_naip.json')
         if want and os.path.exists(cf):
             C = json.load(open(cf))
+            naip_now = find_georef(); naip_sha = sorted(p.get('sha') for p in (naip_now.provenance()['parts'] if naip_now else []))
+            naip_then = sorted(p.get('sha') for p in (C.get('naip') or {}).get('parts', []))
             if C.get('reg_sha') != _sha(REGF) or C.get('frame') != GF.FRAME_ID: self.corr_note = 'not applied (google_vs_naip.json is for other registrations / another frame: re-run imreg.py)'
+            elif naip_sha != naip_then: self.corr_note = 'not applied (google_vs_naip.json was made against other NAIP files: re-run imreg.py)'
             else:
                 self.corr = {k: tuple(v['shift']) for k, v in C['images'].items() if v.get('use')}
                 self.corr_note = f'applied: per-screenshot translation to NAIP for {len(self.corr)} of {len(self.files)} screenshots (imreg.py)'

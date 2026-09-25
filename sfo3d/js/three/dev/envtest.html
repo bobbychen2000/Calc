@@ -2,7 +2,9 @@
 <html><head><meta charset="utf-8"><title>environment and material test</title>
 <!-- Dev check of the lighting chain without the airport: Engine (post, CSM) + Sky (background, fog, PMREM IBL) with a
      daytime env as js/live/app.js applyEnv builds it; spheres (matte, clear-coat paint, chrome, glass), an object-
-     material building, a procedural and an imported aircraft. ?el=sun elevation deg, ?tier=, ?n=frames. -->
+     material building, a procedural and an imported aircraft. ?el=sun elevation deg, ?tier=, ?n=frames.
+     ?night=1: sun at -15 deg, three floodlight masts (js/three/flood.js) around the scene, lamps on, night exposure;
+     ?sprites=1: a row of light sprites (post-TRAA light pass). -->
 <script type="importmap">
 { "imports": { "../../gl.js": "../compat/gl.js" } }
 </script>
@@ -19,6 +21,9 @@ import { MODEL_SOURCES } from '../../live/models.js';
 import { AIRLINE_LIVERY, LIVERIES } from '../../aircraft/fleet.js';
 import { makeNoiseTexture, makeCloudTexture, sunVector } from '../../world/textures.js';
 import { textureOf } from '../convert.js';
+import { floodField } from '../flood.js';
+import { Sprites } from '../lights.js';
+import { NIGHT_EXPOSURE } from '../renderer3.js';
 import { liveryForAirline } from '../../live/lookup.js';
 const q = new URLSearchParams(location.search); const out = {}; window.SFO_LIVERY_BASE = '../../../data/liveries/';
 try {
@@ -28,12 +33,16 @@ try {
   const noise = textureOf(makeNoiseTexture()); noise.wrapS = noise.wrapT = THREE.RepeatWrapping;
   const clouds = textureOf(makeCloudTexture()); clouds.wrapS = clouds.wrapT = THREE.RepeatWrapping;
   const sky = new Sky(E, { cloudTex: clouds, noiseTex: noise, baseRes: 512 });
-  const sunDir = sunVector(+(q.get('az') || 200), +(q.get('el') || 45));
+  const night = q.get('night') === '1';
+  if (night) { const f = floodField([[-40, -60], [70, 90], [-120, 60]]); E.flood.setField(f); E.flood.intensity = 1; out.flood = f.stats; }
+  const sunDir = sunVector(+(q.get('az') || 200), night ? -15 : +(q.get('el') || 45));
   const env = { sunDir, mie: 21e-6, sunI: 20, fog: [0.0001, 1 / 700, 1, 0.97], cloud: [0.14, 800 * 0.3048, 14000, 0.5], cloudWind: [1, 1], refPos: [0, 60, 0], slab: false };
   sky.setEnv(env); const L = Sky.lightFor(env); sky.applyLight(L);
   S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode();
   sky.renderSky(E.renderer); if (q.get('env') !== '0') sky.updateEnvironment(E.renderer, S); else S.environment = null;
-  E.setSun(L.sunDir, L.sunColor); E.renderer.toneMappingExposure = 0.45;
+  if (night) { L.skyUp = L.skyUp.map((v, i) => Math.max(v, [0.010, 0.012, 0.018][i])); L.ground = L.ground.map((v, i) => Math.max(v, 0.006)); sky.applyLight(L); if (q.get('env') !== '0') sky.updateEnvironment(E.renderer, S); }
+  E.setSun(L.sunDir, L.sunColor); E.expo.value = night ? NIGHT_EXPOSURE : 0.45 * 1.15;
+  if (q.get('sprites') === '1') { const sp = new Sprites(64, { debugDepth: !!q.get('dbgdepth'), depthNode: q.get('nodepth') ? null : E.depthNode, expo: E.expo, night: TSL.uniform(night ? 1 : 0) }); E.fxScene.add(sp.mesh); E._sp = sp; }
   out.L = { sun: L.sunColor.map(v => +v.toFixed(2)), up: L.skyUp.map(v => +v.toFixed(3)) };
   const g = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardNodeMaterial({ color: 0x8a8a88, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; S.add(g);
   const mk = (p, x) => { const m = new THREE.Mesh(new THREE.SphereGeometry(4, 48, 24), new THREE.MeshPhysicalNodeMaterial(p)); m.position.set(x, 4, 30); m.castShadow = m.receiveShadow = true; S.add(m); };
@@ -49,7 +58,13 @@ try {
   await Promise.all(list.map(a => a.ready));
   const cam = { pos: [+(q.get('cx') || -20), +(q.get('cy') || 18), +(q.get('cz') || 95)], target: [10, 5, 0], fov: 50 * Math.PI / 180, near: 0.5, far: 50000, shadowSplits: [80, 300, 1200] };
   for (let k = 0; k < 40 && !list[1].livTex; k++) { AR.sync(list, cam.pos); await new Promise(r => setTimeout(r, 100)); } out.liv = list.map(a => [a.type, a.liv && a.liv.brand, !!a.livTex, !!a._livNeutral]);
-  for (let i = 0; i < +(q.get('n') || 10); i++) { AR.sync(list, cam.pos); E.setCamera(cam, innerWidth, innerHeight); E.render(); await new Promise(r => setTimeout(r, 20)); }
+  for (let i = 0; i < +(q.get('n') || 10); i++) {
+    AR.sync(list, cam.pos); E.setCamera(cam, innerWidth, innerHeight);
+    if (E._sp) { const sp = E._sp; sp.begin(); for (let k = 0; k < 8; k++) sp.put({ p: [-60 + k * 15, 3, -75], c: k % 2 ? [1, 0.1, 0.05] : [0.1, 1, 0.3], i: 40, s: 0.25 }); sp.put({ p: [-5, 2, -95], c: [0.5, 0.9, 0.6], i: 120, s: 1.4 }); sp.end(E.camera, innerHeight); }
+    E.render(); await new Promise(r => setTimeout(r, 20));
+  }
+  out.info = { drawCalls: E.renderer.info.render.drawCalls, tris: E.renderer.info.render.triangles, backend: E.backend, reversed: E.reversed };
+  if (E._sp) { const rt = E.lightPass.renderTarget; const px = await E.renderer.readRenderTargetPixelsAsync(rt, 0, 0, rt.width, rt.height); let mx = 0, nz = 0; const smp = []; const h2f = TSL && THREE.DataUtils.fromHalfFloat; for (let i = 0; i < px.length; i += 4) { const v = px[i] + px[i + 1] + px[i + 2]; if (v > 0) { nz++; if (smp.length < 6 && nz % 5 === 1) smp.push([h2f(px[i]), h2f(px[i + 1]), h2f(px[i + 2])].map(x => +x.toFixed(4))); } if (v > mx) mx = v; } out.samples = smp; out.lightPass = { w: rt.width, h: rt.height, max: mx, nonzero: nz, type: px.constructor.name, n: E._sp.n, inst: E._sp.mesh.geometry.instanceCount }; }
   out.ok = true;
 } catch (e) { out.err = String(e && e.stack || e); }
 window.__probe = out;

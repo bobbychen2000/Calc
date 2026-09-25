@@ -12,7 +12,9 @@ RWY_ENDS; outward = away from the runway), 0.2 m pixels, 0..2550 ft from the thr
 Relief: NAIP leans elevated objects EAST by ~0.54 m per m of height (tools/stands/naip_relief.py); the outward heading
 here is 117.8 deg, so an east shift moves the image 0.47 x shift to the LEFT of the outward axis and 0.88 x shift
 outward. The deck is a few metres above the water (height not measured): positions are reported as imaged; geo.js
-applies a +0.75 m lateral / -1.3 m along correction for an assumed 3 m deck height (inferred, +-1 m).
+applies the +0.75 m lateral correction of an assumed 3 m deck height to the catwalk (inferred, +-1 m) and keeps the
+stations and crossbars at their imaged distances (the matching along shift for a 3 m deck, ~1.4 m = 4.6 ft outward,
+is NOT applied - known residual; 28L's imaged stations fall on the round 100 ft marks within 1 ft as imaged).
 Output: refs/cache/als/als_naip.json and a printed table (no NAIP pixels in the repository).
 Usage: python3 tools/imagery/als_naip.py
 """

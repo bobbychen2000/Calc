@@ -60,3 +60,34 @@ Done in `traffic.js`: `antOf(T)` = 0.06 L for the Airbus A318-A321 family (their
 behind the stand nose; 46 stays of AAL, JBU, FFT, UAL, DAL, ASA, ACA), 0.2 L for everything else (Boeing, Embraer,
 A220: 6-17 m). Every consumer (bodies, bridge poses, stand scoring, models) uses it. The larger along tolerance for
 narrow bodies on wide-body stands is not changed yet.
+
+
+## Status 25 Sep 2026 (~18:30 UTC), after the round-1 fixes on the engine side
+
+Measured with `tools/live/invariants.mjs` over 9.2 h of the relay-merge replay (24 Sep 07:37-10:28Z, 15:23-19:27Z,
+19:40-21:59Z), engine `traffic.js` md5 067f86c5; details in `docs/research/realtime_impl.md` Step 4.
+
+**§1a (gates.js rest pose) is still the largest open item and has no owner in practice.** `aircraft_docking_fields.md`
+(aircraft workflow) leaves "rest pose, rotunda, walkway, extension/turn limits" to "its owner", and
+`static_geometry_round2.md` asks the same of gates.js; nobody has changed `pose()`. Numbers now:
+- `bridge.hit.fus` 122,531 frames; of these 65,730 (54 %) with the bridge fully retracted (new class
+  `bridge.hit_at_rest`): the cab/tunnel at `rc + parkDir * min(15, reach - 2)` against the aircraft parked at the stand
+  (before docking and after undocking), or against the aircraft of the MARS alternate position. The rest are retraction
+  frames: `pose()` interpolates the cab straight from the door to the rest point, which sweeps the tunnel through the
+  aircraft it leaves (e.g. SJX011 A359 at B5S, 24 Sep 07:40Z, B5 tunnel). Examples at rest: UAL984 B77W at G8 (cab at rest against the fuselage, 27,600 frames, 20:27Z), UAL876 B772 on B11S (B11 tunnel, 25,221 frames, 16:03Z), ASA811 A332 on B11S (2,938), UAL862 B77W on B5S (B5 tunnel, 1,049), CPA870 B77W at A5, UAL892 B789 at G1, JAL58 B789 at A12, TZP26 B788 at A12 (cab, 375-463 frames each: the minute before docking).
+- Engine-side facts for the implementer: the engine calls `setOccupant(g, type, animate, now, pose)` only when the
+  drawn aircraft has been at rest 20 s (arrivals; at once for aircraft first seen parked), and `setOccupant(g, null)`
+  before it moves; it holds the aircraft until `anims.get(g.id).k` is 0. A rest pose at the data's `b.stowW` and a
+  retraction that first backs the cab away from the door along the door normal would remove both classes.
+- Please also expose `extension(g)` (§1b); the engine reads `anims` directly today.
+
+**Static workflow (stand spacing, pavement)**:
+- `clear.stand` 46,661 frames: both aircraft stationary at their stand poses closer than ICAO Annex 14 §3.13.6:
+  F6/F7 E75L + E75L 3.96-4.38 m (code C 4.5 m), G2/G5 B77W + B77W 7.08 m (code E 7.5 m); also FFT1159 A21N / JBU1034 A20N at B18 / B17, 0.93 m (20:22Z) -- please check B17/B18 against the A321neo envelope.
+- `offpave.union` 334,309 (36,283/h against 47,234/h in review round 1) frames: the unmapped north cargo apron (KAL214 B748, CSB805 B762, EVA629 at (-1248,-2169), (-1128,-2040), (-1027,-1870)) and the 1L/1R crossing between the terminal and runways 1L/1R (departures SKW5907, UAL1062, UAL583, UAL2498, DAL606 ... around (-150..-90, 375..411) world, i.e. 37.6153,-122.3769, replay of 24 Sep 15:25-16:45Z): still off the rendered mask ∪ OSM taxi net there, although `sfo_details.js` now carries the NAIP-traced crossing centreline (static_geometry_round2.md) -- please add its pavement.
+
+**Done on the engine side from the static requests** (`static_geometry_round1.md`, `round2.md`, `stands_rebuild.md`):
+`standFits` honours `a380` (A6/A11/G13 only) and `types_ok`; per-family `type_stops` in the stand score and the parked
+pose; a stop-short pose that touches an occupied neighbour moves to the stop; the SFO-plan path skips stands whose
+`excl` partner is occupied by a live aircraft (a silent one there is replaced); `conflict` stands tolerate their
+documented offset; persistence key `sfolive.parked.v4`.

@@ -370,3 +370,253 @@ The runway sheet showed "Landing 28R · 10R · 28L" and a rejected take-off for 
 - Day replay 15:25:30–16:44:58Z re-scored (`refs/cache/replay_day3/score_engine_ui.json`): arrivals 57/57 and departures
   45/45 runway-correct, go-around 1/1, stands vs SFO 95.8 %, phase agreement 0.955, teleports 8, overlap frames 196 —
   identical to step 2; touchdown events 59 → 58 (the false 10R one removed).
+
+---------------------------------------------------------------------------------------------------------------------
+
+# Step 4 — review round 1 fixes (24 Sep 22:00Z – 25 Sep 17:30Z)
+
+Scope: `js/live/traffic.js`, `ground.js`, `app.js`, `tools/live/invariants.mjs` (final `traffic.js` md5 c3981bd7; the full-run numbers are for 067f86c5, the verification subset for 4f779128). The review (21 findings, adversarial,
+on the relay-merge replay of `refs/cache/rec`, code `traffic.js` md5 b91c9f19) is answered below finding by finding.
+Most of the engine work was done by the previous run of this step (interrupted by a usage limit; its edits are in the
+WIP commits 64ffe00 and a8e0538); this run re-verified every item on the real traffic, fixed what was still wrong, and
+added the items of §2–§3.
+Method: every change was traced on the real aircraft the review named (`invariants.mjs --trace <hex>`, which now also
+prints lock / bridge / leaving state and the engine's events for that hex), then the whole recording was re-checked.
+The replay is deterministic: the same code and data give identical counts (checked: two runs of 4.2 h agreed in every
+class except `offpave.*`, which changed only because `data/sfo_pavement.js` changed between them).
+
+## 1. Findings
+
+| # | Finding (review round 1) | Status | What changed | Evidence (replay) |
+|---|---|---|---|---|
+| 1 | Bridge docks to the first pose estimate, never follows it (critical) | fixed | The engine docks only once the drawn body has come to rest at its parked pose (`syncBridge` lock), to exactly that drawn pose (`tr.dockPose` → `app.js poseST`); an estimate change > 6 m / 10° unlocks, retracts and re-docks after the body has settled; small changes keep the lock (the real aircraft did not move) | `bridge.misdock` 1,416,822 → 0 frames |
+| 2a | Push-back drags the fuselage through the docked bridge (critical) | fixed | Confirmed motion sets `leaving`: the bridge retracts first and the body is held (brakes ≤ 1.5 m/s²) until the extension is 0 (`holdBridge`, `traffic.bridgeK` from `app.js`) | `bridge.attached.moving` 4,948 → 0 |
+| 2b | Retracted cab/tunnel inside parked aircraft (critical) | open — gates.js (not owned) | Request `docs/requests/realtime_round1.md` §1a (use the data's `stowW`); new informational class `bridge.hit_at_rest` isolates it | `bridge.hit.fus` 122,531 frames (13,299/h against 22,622/h), of which 65,730 with the bridge fully retracted; the rest are retraction frames (the cab is interpolated straight from the door to the rest point) |
+| 2c | MARS alternates (B5S/B16S/C9V) ignore `shares_bridges_of` (critical) | fixed on the engine side | `app.js bridgeGate()`: an alternative position docks its base stand's bridges; the retracted base-stand bridge clearing the alternative's aircraft is gates.js (§1d) | SJX011 A359 at B5S: B5 bridge docked to it; its push-back still crosses the retracted B5 tunnel (rest pose) |
+| 3 | Silent aircraft kept as ghosts on taxiways (critical) | fixed | A track that goes silent while taxiing / pushing / lined up / holding on a taxiway or runway is faded out after 45 s (moving) or 75 s; only aircraft parked at a stand or on a ramp are kept; a remembered aircraft a live one drives into is removed (`GroundPhysics`, `stale-replaced`) | `overlap.gnd` 2,880 → 195; `clear.taxi` 313 → 44 |
+| 4 | Push-back latch clamps a taxiing aircraft to 1 m/s (critical) | fixed | Push without a heading ends when the chord agrees with the nose again or above 10 kt; the push speed clamp never goes below the target's own forward speed + 0.5 m/s; the ground reset is a fade | a6bbef 07:42Z: no teleport, no loop (`teleport` 1,347 → 0) |
+| 5 | First motion out of a nose-in stand driven forward into the terminal (critical) | fixed | At a contact stand the first motion is a push-back unless the chord is clearly along the nose (`report()`); building veto in `ctlGround` (the nose / tail never enters a building: it stops at the face) | `building` 14,858 → 37 |
+| 6 | Bizjet take-off rolls out-accelerate the body → 200 m teleport (critical) | fixed | Roll acceleration 5 m/s² for light/business jets (3.3 airliners), speed-change feed-forward, a runway roll is never hard-reset (error > 600 m → fade) | `gnd.acc.runway` 352 → 0; `teleport` 1,347 → 0 |
+| 7 | E175 first seen mid-rollout stays 'Takeoff roll' for 40 min (critical) | fixed | A cold-start 'takeoff' that decelerates or is below 40 kt within 90 s becomes a late landing; 'takeoff' times out after 20 s slow / 90 s; `M.rwy` cleared at in-block | SKW3007/SKW3463 a178ae 15:13:41Z: `touchdown 28L late` at 15:13:43.9, exit, in-block B7 (SFO) 15:17:36 |
+| 8 | Parked body stuck 6.5 m / 21° off; re-acquired parked aircraft driven across the stand (major) | fixed | One distance for hold/tow; a body stopped > 10 s off its stop target is re-placed with a fade; a parked aircraft heard again within 15 m keeps its parking (no drive) | `phase.gate_far_from_stand` 1,902 → 131 |
+| 9 | 'Airborne' flag at the gate lifts parked aircraft (major) | fixed | An 'airborne' report inside SFO below 30 kt (50 kt right after a ground report) at field altitude is a ground report (rotorcraft excluded) | `vert.float` 1,070 → 0; `phase.gndphase_in_air` 43 → 0 |
+| 10 | Unpaved 1L/1R crossing (major) | data — not owned | Request `realtime_round1.md` §3 (static workflow); `data/sfo_details.js` now has "1 NAIP-traced E-W crossing of 1L/1R that OSM lacks" (static_geometry_round2.md) | `offpave.union` 334,309 frames (per h 36,283; review 47,234/h) |
+| 11 | False go-arounds, final runway flips (major) | fixed | 'final' needs a jet/turboprop (or A2-A5), identified, at approach speed, descending ≥ 300 ft/min; go-around only from < 1,500 ft; the runway is shown as the pair until firm, a firm runway changes only at ≥ 0.99 for 20 s | go-arounds: 6 true go-arounds detected with the right runway (6), 0 missed, 0 extra; `rwy.change.final` 14 → 0 |
+| 12 | Pose snaps at first sight, 0.4 m/s instant stops (major) | fixed | A body first seen standing stays hidden until its parked pose has settled (≤ 10 s) and fades in; re-placements fade out/in (0.4 s); braking ramp | `hdg.flip` 429 → 1; `jump.gnd_1_20m` 301 → 0; `gnd.acc.taxi` 12,820 → 313 |
+| 13 | Unmatched parked aircraft inside buildings; stand pairs closer than ICAO (major) | fixed (engine); data for spacing | Nearest-valid-pose search widened to 15 m; database types contradicting the transponder category replaced (DAL1053 A333 → BCS3, SFO); stand spacing F6/F7, G1/G2, G2/G5 → static workflow | `building` 14,858 → 37; `clear.stand` 46,661 (F6/F7 E75L 3.96–4.38 m at the stand poses) |
+| 14 | Bridges dock to invisible aircraft (major) | fixed | Docks only for an aircraft with a 3-D airframe; category-conflicting database types resolved (PA27 → A21N) | `bridge.orphan` 56,897 → 684 (the rest: bridges retracting after their aircraft was removed) |
+| 15 | Teleports after data gaps (minor) | fixed | A gap > 30 s (ground) / 15 s (air) is a fade re-placement; the card says "no data N s" | `teleport` 1,347 → 0; `jump.air_5_20m` 594 → 0 |
+| 16 | Implausible air kinematics, GA floating at other fields (minor) | fixed | Altitude steps > 6,000 ft/min accepted only after 3 consistent reports; vertical speed capped; GA 'airborne' < 50 kt at low altitude = ground | `air.vs` 4,833 → 334; `vert.float.other_airfield` 74,235 → 2,608 |
+| 17 | Checker notes | extended | `invariants.mjs`: trace prints lock / bridge / leaving / stop error and the engine events of the traced aircraft; `bridge.hit_at_rest`; a retracting bridge's own aircraft counts as its own (cab at its door); no-slip point of type-less aircraft = the engine's (8 m) | — |
+| 18 | Push-back inferred on every restart without a heading (UAL888) (major) | fixed | Inferred only at a stand / parking position for the first movement after in-block; one off-block per turn | 0 `phase.pushback_forward` frames (review 639) |
+| 19 | Route/runway text kept after a callsign change at the gate (major) | fixed | A new flight number clears the route (re-requested), the direction and the arrival runway row | `setInfo` clears `tr.route` / direction on a new flight number (`counters.callsignChanges` 4 + 6 in the 16:45–18:05Z chunks, e.g. AAL76 → AAL16); `app.js` re-requests routes for tracks whose route is undefined; the Runway row shows the landing runway only while the flight is the arrival |
+| 20 | Gate lost on every silent minute; parked bodies jump (major) | fixed | Heard again within 15 m of its parking at < 3 kt = the same parking (gate, pose, bridge kept); motion out of a stop needs two consistent reports (parked multipath never moves the body) | 382 in-blocks for 371 aircraft in the full run; 11 aircraft with more than one, all at push-back time (a push that paused, or a 'forward' first motion before the push) plus DAL1053 / UAL869 re-matched to the same stand after 20 s — none from silent minutes (review: AAL177 ×4, JBU633 ×5, AAL179/166 ×6, ACA739/740 ×5). The paused-push case is fixed in the final code (§2). Parked GNSS wander no longer moves the pose (§2) |
+| 21 | Wrong database type drawn (DAL1053 A333 is a BCS3) (major) | fixed | `resolveType`: a database type whose wake class contradicts the emitter category is replaced by the other provider's type or SFO's (`typeSrc` shown on the card) | DAL1053 (A333 in both databases, category A3) drawn as BCS3 from SFO's record, in-block C11 16:52:15Z (SFO's stand). Without SFO's record (snapshot mode, `--no-sfo-gates`) the database type stays, flagged on the card |
+
+## 2. Also found while re-checking (this step)
+
+- **A bridge that never docked (UAL2 B789, G8, 24 Sep 15:20–16:41Z).** Arrivals close up to their stop mark at 0.3–0.6 m/s,
+  which reads as stationary: the aircraft locked, the bridge was called, then the confirmed 7 m creep counted as a
+  "forward off-block" and set `leaving`, which was cleared only by 20 s of stationary reports — the transponder went
+  silent 15 s later, so the bridge stayed retracted (against the fuselage) for the whole turn. Now `creepToStop()`:
+  forward along a contact stand's lead-in, < 3 kt, not past the stop point = not an off-block and not leaving; `leaving`
+  clears after 8 s stationary (5 min after a real off-block) or when the aircraft goes silent at its stand; an arrival's
+  bridge waits `DOCK_WAIT_MS` 20 s after the body came to rest (plus gates.js `DOCK_DELAY` 12 s), and never while a
+  confirmed moving report lies ahead of the display [inferred design value: engines off / beacon off before a bridge
+  approaches]. Trace after the fix: locked 15:20:44.8, crept 7 m, re-locked 15:21:07, bridge called 15:21:27, docked
+  (k = 1) by 15:22:30.
+- **A sparse track shown as fade re-placements (UAL718 A320 into B11, 17:55:49–17:56:09Z).** Reports 10–14 s apart: the
+  two moving candidates needed to confirm motion were reset after 12 s, so a real 21 m move was drawn as two
+  fade-out/fade-in re-placements. The candidate window is 25 s, and a stop report that follows a moving candidate counts.
+- **Reversing at 2.9 m/s without a push-back in the data (SKW3450 E75L, no true heading, 16:35Z).** The inferred-push
+  catch-up is limited to the target's speed + 0.7 m/s (≥ 1 m/s); a body moving backwards is labelled "Pushback".
+- **Labels follow the drawn body**: "Landed" becomes "Taxiing" once the body is > 40 m off the centreline, "Pushback"
+  becomes "Taxiing" when the body rolls forward (both were `phase.*` contradictions in the review).
+- **Air**: vertical speed ≤ 6,000 ft/min (or the reported rate × 1.1) with a vertical error > 200 m re-placed by a fade;
+  heading-vs-track crab changes ≤ 1.5°/s (4°/s below 15 m) and is kicked out below 10 m on final — the crab filter had
+  added up to 6.7°/s to the drawn turn rate of E175 departures (9–10°/s shown, `air.turn`).
+- **Other airfields**: "airborne" below 50 kt and below ~255 ft MSL (`alt_geom` < 150 ft HAE) is a ground report (GA
+  landing rolls at Palo Alto / San Carlos were drawn as 0 kt floats, `vert.float.other_airfield`).
+- **Parked pose frozen at the stand while the transponder says 0 kt.** 20 s after in-block, reports below 0.5 kt no longer
+  move the parked pose or the stand choice (position wander near the terminal is ±15–25 m at 0 kt); a report ≥ 0.5 kt
+  (a slow tow) or confirmed motion unfreezes it, and a stand is left only after the pose has misfit it for 20 s and not
+  within a minute of in-block. AAL177 (A321, SFO stand B16, 07:46Z): before, the 0.0 kt reports wandered 24 m toward
+  B15, the body was re-placed three times and the stand flipped B16 → B15 → B16; now one in-block, B16, for the night.
+  A parked aircraft heard again after silence is the same parking when it is within 15 m **or still inside its stand's
+  limits** (AAL179/AAL166 at B25, 19:17:31Z: the first fix after silence lay 16 m off, the gate was released, the bridge
+  retracted and re-docked; now one in-block for the turn).
+- **Stops without a reported heading**: the drawn body's own heading is kept (no inferred heading target), so an aircraft
+  like UAL888 (B772, no `true_heading`) no longer fades out and back in at each of its taxi stops because the heading
+  guessed from the last reports differed from the body by 20–52°.
+- **In-air re-acquisition** after a gap: an error within ~2 s of flight is flown out, not faded (SWA2980 / UAL2259 had
+  been faded for 30 m at 150 m/s); the re-acquisition flag is spent once the body is close. Leaving the slow-target
+  (point-follower) controller keeps the velocity direction and carries the heading difference in the crab term.
+- **Any slow non-push motion in the first 10 min after in-block at a contact stand is a creep** (UAL984 B77W at G8:
+  a 'forward off-block' 26 s after in-block kept its bridge retracted against the fuselage for 46 min).
+- **A push-back that pauses on the lead-in is not a new in-block** (UAL1111 at E7, 15:38:19–15:39:09Z: off-block,
+  in-block E7, off-block). The stand an aircraft pushed from is not matched again for 10 min, so its bridge cannot
+  come out again either.
+- **Snapshot mode (the artifact build)**: the 90 s reload of the recorded instant re-places moving aircraft with a fade
+  instead of removing them (a pop every 90 s). `jobs/snaptest.mjs` (SOFTGL=1, 100-150 s, before and after the last
+  engine changes): 48 tracks, 9 gates, no page errors. Live path: `jobs/relaytest.mjs` against
+  `sfo_live_server.py --replay refs/cache/rec --from 2026-09-24T17:40Z --routes off --no-sfo-gates`: SSE stream,
+  129 tracks, 21 stands matched (UAL888@G5, UAL35@G3, AAL76@B25, UAL2649@D16 ...), stats line
+  `28L ↓2 ↑0 · 28R ↓1 ↑0`, status `Live · 1.3 s`, no page errors (the 503s are the disabled routes / gates).
+
+## 3. Requests from the static workflow answered (static_geometry_round1/2.md, stands_rebuild.md)
+
+- `standFits`: the A380 / 747-8 / 777-9 clause only on stands with `a380` (A6, A11, G13), not on every EL stand;
+  `types_ok` (E10/E12, F19/F20) honoured for geometric matching (SFO's own allocation is still followed).
+- Per-family stop points (`type_stops`: B737, A320, EJET, A220 on 9 stands): the stand score expects the nose there, and
+  the parked pose uses it when the aircraft's own reports agree within 6 m; a pose short of the stop that touches an
+  occupied neighbour moves to the stop (`GroundPhysics` → `tr.shortBlocked`; counter `shortBlocked`).
+- SFO-plan path: skips a stand whose mutually exclusive stand (`excl`) is occupied by a live aircraft; a silent one
+  there is replaced (`stale-replaced`, `excl`).
+- `conflict` stands (D3, D4, D8, D9): the stand score tolerates the documented offset (lateral + |lat_med| + 2 m,
+  heading + |dhdg_med|) instead of matching such an aircraft to a neighbouring stand.
+- Persistence key `sfolive.parked.v4` (stand names changed back to gate numbers).
+
+## 4. Metrics (tools/live/invariants.mjs, 10 Hz, every drawn frame)
+
+Review round 1: code `traffic.js` b91c9f19, 6.9 h checked (the reviewer's own run). Final: code of this step, 9.2 h checked (24 Sep 07:37:30–10:28Z, 15:23:40–19:27Z, 19:40–21:59Z; each chunk after a 10 min warm-up). The windows differ, so the per-hour rates are the comparison. Frames at 10 Hz; episodes in brackets.
+
+| class | review round 1 | per h | final | per h |
+|---|---|---|---|---|
+| `air.acc` | 211 (48) | 31 | 562 (101) | 61 |
+| `air.lat` | 78 (11) | 11 | 70 (2) | 8 |
+| `air.turn` | 4,386 (197) | 636 | 408 (12) | 44 |
+| `air.vacc` | 852 (537) | 123 | 1,324 (843) | 144 |
+| `air.vs` | 4,833 (41) | 700 | 334 (24) | 36 |
+| `bridge.attached.moving` | 4,948 (98) | 717 | 0 (0) | 0 |
+| `bridge.hit.fus` | 156,108 (226) | 22,622 | 122,531 (50) | 13,299 |
+| `bridge.hit.tail` | 165 (7) | 24 | 0 (0) | 0 |
+| `bridge.hit.wing` | 28,318 (33) | 4,104 | 0 (0) | 0 |
+| `bridge.hit_at_rest` | 0 (0) | 0 | 65,730 (46) | 7,134 |
+| `bridge.misdock` | 1,416,822 (155) | 205,316 | 0 (0) | 0 |
+| `bridge.orphan` | 56,897 (173) | 8,245 | 684 (10) | 74 |
+| `building` | 14,858 (10) | 2,153 | 37 (1) | 4 |
+| `clear.stand` | 47,090 (13) | 6,824 | 46,661 (10) | 5,064 |
+| `clear.taxi` | 313 (52) | 45 | 44 (9) | 5 |
+| `gnd.acc.runway` | 352 (112) | 51 | 0 (0) | 0 |
+| `gnd.acc.taxi` | 12,820 (2610) | 1,858 | 313 (101) | 34 |
+| `gnd.jerk` | 5,192 (1437) | 752 | 46 (25) | 5 |
+| `gnd.lat` | 237 (80) | 34 | 1 (1) | 0 |
+| `gnd.reverse` | 1,896 (69) | 275 | 341 (25) | 37 |
+| `gnd.slide` | 59,771 (680) | 8,662 | 2,190 (109) | 238 |
+| `gnd.slip` | 5,577 (101) | 808 | 23 (1) | 2 |
+| `gnd.speed.taxi` | 0 (0) | 0 | 61 (1) | 7 |
+| `gnd.spin` | 464 (53) | 67 | 135 (43) | 15 |
+| `gnd.yaw` | 21 (20) | 3 | 0 (0) | 0 |
+| `hdg.flip` | 429 (422) | 62 | 1 (1) | 0 |
+| `jump.air_5_20m` | 594 (594) | 86 | 0 (0) | 0 |
+| `jump.gnd_1_20m` | 301 (261) | 44 | 0 (0) | 0 |
+| `offpave.mask` | 1,352,296 (957) | 195,965 | 594,606 (1714) | 64,534 |
+| `offpave.union` | 325,948 (734) | 47,234 | 334,309 (911) | 36,283 |
+| `overlap.gnd` | 2,880 (34) | 417 | 195 (5) | 21 |
+| `phase.final_on_ground_slow` | 49 (1) | 7 | 0 (0) | 0 |
+| `phase.flicker` | 181 (158) | 26 | 354 (332) | 38 |
+| `phase.gate_far_from_stand` | 1,902 (9) | 276 | 131 (5) | 14 |
+| `phase.gndphase_in_air` | 43 (3) | 6 | 0 (0) | 0 |
+| `phase.pushback_forward` | 639 (55) | 93 | 0 (0) | 0 |
+| `phase.rwyphase_off_runway` | 119 (16) | 17 | 0 (0) | 0 |
+| `rwy.change.final` | 14 (14) | 2 | 0 (0) | 0 |
+| `teleport` | 1,347 (681) | 195 | 0 (0) | 0 |
+| `vert.float` | 1,070 (20) | 155 | 0 (0) | 0 |
+| `vert.float.other_airfield` | 74,235 (301) | 10,758 | 2,608 (248) | 283 |
+| `vert.lowfly` | 110 (2) | 16 | 0 (0) | 0 |
+
+Classes that did not improve: `air.acc` (61/h against 31/h) is mostly the light / business jets' take-off acceleration
+(≤ 5 m/s², the cap finding 6 asked for) carried through liftoff for ~2 s (C56X, GLF5, C700 climb-outs, 18 frames each at
+4.7 m/s² against the checker's airborne 3 m/s²) and 3.5 m/s² braking in the last metre above the runway before the drawn
+touchdown (AAL1949, SKW4798); `air.vacc` (144/h against 123/h) is light aircraft landing at other fields; `phase.flicker`
+(38/h against 26/h, 332 single short episodes, e.g. `holding` ↔ `taxi` at queue stops) is label-only and not yet traced;
+`gnd.speed.taxi` is one CL35 at 37 kt 153 m from the 28R centreline (VJA310, 20:52Z, high-speed exit); `building` is one
+episode of 3.7 s (DAL1053 at C11, 17:11Z, released and re-matched to its stand within 20 s after a ≥ 0.5 kt report).
+`clear.stand` and `offpave.*` are data (§5).
+
+Runway events against the independent raw-data detector (final run):
+
+| | truth | matched | right runway | missed | engine-only |
+|---|---|---|---|---|---|
+| Landings | 229 | 229 | 229 | 0  | 9 |
+| Take-offs | 233 | 232 | 232 | 1 LXJ486 | 16 |
+| Go-arounds | 6 | 6 | 6 | 0  | 0 |
+
+Engine-only runway events are E175/CRJ/GLF movements the raw detector cannot see (§5). Review round 1 had 22 'true' go-arounds from its detector, which counted E175 take-offs (fixed in the checker since), and 6 engine-only go-arounds of VFR / helicopter / anonymous traffic.
+
+The last changes (stops without a reported heading, in-air re-acquisition threshold, no re-in-block after a paused push-back) came after that run; they were checked on 24 Sep 15:23:40–16:05Z and 18:05–18:47Z (1.4 h, same data), the code of the run above against the final code:
+
+| class | code of the full run | final code |
+|---|---|---|
+| `air.acc` | 99 | 99 |
+| `air.turn` | 20 | 20 |
+| `air.vacc` | 296 | 296 |
+| `air.vs` | 9 | 9 |
+| `bridge.hit.fus` | 31,083 | 31,083 |
+| `bridge.hit_at_rest` | 6,802 | 6,802 |
+| `bridge.orphan` | 254 | 234 |
+| `gnd.acc.taxi` | 41 | 41 |
+| `gnd.jerk` | 14 | 14 |
+| `gnd.lat` | 1 | 1 |
+| `gnd.reverse` | 79 | 79 |
+| `gnd.slide` | 403 | 403 |
+| `gnd.spin` | 30 | 30 |
+| `offpave.mask` | 153,116 | 152,998 |
+| `offpave.union` | 72,453 | 72,362 |
+| `phase.flicker` | 71 | 71 |
+| `phase.gate_far_from_stand` | 11 | 11 |
+| `vert.float.other_airfield` | 434 | 434 |
+| re-parks with a fade (`counters.cut_repark`) | 59 | 58 |
+| gap re-placements (`cut_gap`) | 485 | 376 |
+| error re-placements (`cut_err`) | 390 | 394 |
+| landings matched (truth) | 50 | 50 |
+| takeoffs matched (truth) | 45 | 45 |
+| goarounds matched (truth) | 1 | 1 |
+
+Three small changes followed that check and were verified on the aircraft that prompted them (same code otherwise): a
+'forward' off-block no longer blocks the stand (UAL755 at F17 20:09Z: a missed push start; the paused-push fix still
+holds for UAL1111, one off-block); a parked aircraft heard again inside its stand's limits keeps its parking (AAL166 at
+B25: one in-block instead of two; every invariant class in 18:50–19:20Z unchanged); and slow motion at a contact stand
+in the first 10 min after in-block that is not a push-back is a creep, not an off-block (UAL984 B77W at G8, 20:22:34Z:
+a 'forward off-block' 26 s after in-block had kept its bridge from docking for 46 min — 27,600 `bridge.hit_at_rest`
+frames against its own retracted cab; now one in-block and docked; 24 Sep 20:15–20:40Z: 894 `bridge.hit.fus` frames
+in the whole window).
+
+The step-2 replay metrics (`tools/live/replay_engine.mjs` + `replay_score.py`, 24 Sep 15:25:30–16:44:58Z, SFO plan as deployed; previous partial code vs this step's code before the last changes):
+
+| Metric | previous run (a8e0538) | this step |
+|---|---|---|
+| Phase agreement at display time | 0.953 | 0.952 |
+| Arrival / departure runway correct | 57/57 · 45/45 | 57/57 · 45/45 |
+| Go-arounds (truth 1, AAL2885 28R) | 1 | 1 |
+| Stands vs SFO's allocation | 0.959 | 0.959 |
+| Position error p50/p99 m: taxiing · parked · air < 10 NM · air far | 1.17/24.72 · 1.46/12.86 · 4.2/126.29 · 5.3/39.25 | 1.17/24.73 · 1.46/13.18 · 4.2/125.97 · 5.3/39.25 |
+| Behind real time p50 m: taxi · air < 10 NM | 15.73 · 287.38 | 15.73 · 287.38 |
+| Display delay p50 | 3.0 s | 3.0 s |
+| Teleports · overlap frames · in-building frames | 0 · 0 · 0 | 0 · 0 · 0 |
+| Exceedance frames: air turn > 7°/s | 465 | 84 |
+| Engine events: in-block · off-block | 85 · 60 | 83 · 59 |
+
+The display stays 3.0 s behind real time on the public feeds (median report age; the adaptive delay's maximum), so an arrival at 140 kt is drawn ~290 m behind where it is now; the step-2 fixed 1.5 s variant halved that at 7.7× the ground jerk exceedances. Lower latency needs a feeder account or own receiver (realtime_feeds.md §3).
+
+## 5. Not changed, with evidence
+
+- **Truth-side mismatches, not engine errors.** `rwy.truth.*_extra`: E175/CRJ landings and take-offs the raw detector
+  cannot see (their air/ground flag flips at ~50 kt, so there is no fast ground report; documented in the checker
+  header). `rwy.truth.takeoff_missed` LXJ486 (GLF4, 24 Sep 21:54Z): it *landed* on 28R — raw reports decelerate from
+  110 to 45 kt airborne-flagged, first 'ground' at 45.5 kt (21:54:06), then one 'airborne' report at 45.2 kt (21:54:08),
+  which the detector reads as a take-off; the engine logged `touchdown 28R decel a=316 m` at 21:53:50 and the exit
+  after 44 s. DAL495A (17:17Z, "missed" in the review): matched in the full run (engine `liftoff 28L` at 17:18:07.8); it
+  shows as missed only when a checked window ends less than 120 s after it (the checker drops the last 120 s).
+- **Bridges at rest inside parked aircraft** (`bridge.hit_at_rest`) and the retraction path through the fuselage: the
+  rest pose and the animation are `js/live/gates.js` (aircraft workflow), which still parks the cab at
+  `rc + parkDir * min(15, reach - 2)` and does not read the data's `stowW`. Request restated with numbers in
+  `docs/requests/realtime_round1.md` ("Status 25 Sep"). The engine side (dock to the drawn pose, hold until retracted,
+  MARS alternates) is done. The dock wait added here (20 s) keeps an arrival next to its retracted cab 20 s longer.
+- **Pavement / stand spacing** (`offpave.*`, `clear.stand`): data of the static workflow (1L/1R crossing, north cargo
+  apron; F6/F7 E75L pair 3.96–4.38 m at the stand poses against ICAO code C 4.5 m, G2/G5 B77W 7.08 m against 7.5 m).
+- **Slow repositioning (`gnd.slide`)**: a parked body up to 3 m / 10° from a refined parked pose is towed at ≤ 0.5 m/s
+  instead of being re-placed; kept by design (a fade for a 1 m correction would be more visible than the tow).
+- **Display delay** stays adaptive 1–3 s (settles at 3 s on the public feeds): step 2 measured the fixed 1.5 s variant
+  with 7.7× more ground jerk exceedances and worse position errors; lower latency needs a feeder account or own receiver
+  (realtime_feeds.md §3).

@@ -1,5 +1,10 @@
 import { BAY_WATER_KM, AIRPORT_LAND_ST, stToEN, enToST, GROUND_Y } from '../geo.js';
 import { fbm, ridged, vnoise, smooth, clamp } from '../math.js';
+// Shoreline measured on USDA NAIP 2024 near-infrared (tools/imagery/shore_naip.py, review round 3): decides land vs Bay
+// water inside the NAIP coverage around the airport. AIRPORT_LAND_ST (js/geo.js, 16 vertices) stays the airport AREA
+// mask of the shaders; as a coastline the old one was off by tens of metres (east edge 44 m out in the Bay at the 28
+// ends, the north basin as land), and the regional BAY_WATER_KM polygon is km-scale.
+import { SHORE } from '../../data/sfo_shore.js';
 
 export const REGION = { x0: -60000, z0: -60000, size: 120000, res: 2048 };
 
@@ -125,6 +130,33 @@ export class Terrain {
     }
     this.regionRGBA = rgba;
     this.urbanMask = urban; this.fwyMask = fwy;
+    this.buildShore();
+  }
+
+  // NAIP shoreline (data/sfo_shore.js) as a 2.5 m mask over its coverage: 255 land, 0 Bay water, 128 no data.
+  // shoreAt() -> land fraction 0..1 (bilinear), -1 outside the coverage or on no-data pixels
+  buildShore() {
+    this.shore = null;
+    if (!SHORE || !SHORE.rings || !SHORE.coverage) return;
+    const res = 2.5, [x0, z0, x1, z1] = SHORE.coverage; const W = Math.ceil((x1 - x0) / res), H = Math.ceil((z1 - z0) / res);
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d', { willReadFrequently: true });
+    const path = (rings) => { cx.beginPath(); for (const r of rings) r.forEach((p, i) => { const X = (p[0] - x0) / res, Y = (p[1] - z0) / res; i ? cx.lineTo(X, Y) : cx.moveTo(X, Y); }); cx.closePath(); };
+    cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H);
+    cx.fillStyle = '#fff'; for (const r of SHORE.rings) { path([r]); cx.fill(); }
+    cx.fillStyle = '#808080'; for (const r of SHORE.nodata || []) { path([r]); cx.fill(); }
+    const d = cx.getImageData(0, 0, W, H).data; const m = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) m[i] = d[i * 4];
+    cv.width = cv.height = 1;
+    this.shore = { m, W, H, ox: x0, oz: z0, res };
+  }
+  shoreAt(x, z) {
+    const S = this.shore; if (!S) return -1;
+    const fx = (x - S.ox) / S.res - 0.5, fz = (z - S.oz) / S.res - 0.5;
+    if (fx < 0 || fz < 0 || fx >= S.W - 1 || fz >= S.H - 1) return -1;
+    const ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz, m = S.m, W = S.W;
+    const a = m[iz * W + ix], b = m[iz * W + ix + 1], c = m[(iz + 1) * W + ix], dd = m[(iz + 1) * W + ix + 1];
+    if (a === 128 || b === 128 || c === 128 || dd === 128) return -1;
+    return (a + (b - a) * tx + (c - a) * tz + (a - b - c + dd) * tx * tz) / 255;
   }
 
   sampleSDF(x, z) {
@@ -184,6 +216,16 @@ export class Terrain {
       }
       // gentle shore slope for natural shores
       if (aptD < -250) h = Math.min(h, d * 0.09 + 0.3);
+    }
+    // review round 3: inside the NAIP coverage (~4.8 x 5 km around the airport) the measured shoreline decides land and
+    // water (the regional Bay polygon and the 16-vertex airport polygon are km- / 100 m-scale approximations): water
+    // drops to the Bay floor at the line (vertical seawalls), land rises to the airfield level near the airport
+    // (within 200 m of its polygon) and to at least 1.2 m elsewhere
+    const m = this.shoreAt(x, z);
+    if (m >= 0) {
+      if (m < 0.5) h = Math.min(h, -2.6 - 0.8 * fbm(e * 0.0011, n * 0.0011, 2));
+      else if (aptD > -200 && h < GROUND_Y) h = GROUND_Y;
+      else if (h < 1.2) h = 1.2;
     }
     return h;
   }

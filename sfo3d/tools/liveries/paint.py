@@ -94,6 +94,7 @@ class Canvas:
         nz = self.nrm[:, 2]
         self.side = np.where(np.abs(self.z) > 0.08, np.sign(self.z), np.where(np.abs(nz) > 0.2, np.sign(nz), 1.0))
         self._windows()
+        self._base_window_rims(alpha)
         self._fin()
         self.eng = A['eng']
         self.reset()
@@ -129,6 +130,23 @@ class Canvas:
         vy = P[idx[g]].reshape(-1, 3)[:, 1]
         self.winY = float(np.median(vy)); self.winH = float(np.percentile(vy, 95) - np.percentile(vy, 5))
         self.winH = min(max(self.winH, 0.25), 0.5)
+
+    def _base_window_rims(self, alpha):
+        """the neutral atlas carries the painted windows of the model's own type (alpha 0.1 inside, anti-aliased rims up to
+        1). Inside, the detail is reset above (alpha < 0.5); the rims (alpha 0.5-0.99) would stay as faint window outlines
+        or, near alpha 0.75, be taken for kept dark skin: a ghost second row on every type whose row differs (737-700 on
+        the 737-800 model, owner feedback Sep 2026). In the base row's band on the fuselage sides they are plain skin."""
+        import windows
+        app = common.app(); bt = app['base'][self.key]
+        if bt == self.type or self.type is None: pl = self.plan
+        else: pl = windows.plan(self.key, bt, self.env, app)
+        if not pl['win']: return
+        dirs = np.array([c['d'] for c in self.A['charts']] + [-1])[self.chart]
+        side = (self.part == 'fus') & np.isin(dirs, (4, 5))
+        rim = np.zeros(len(self.flat), bool)
+        for y, h in {(round(w['y'], 3), round(w['h'], 3)) for w in pl['win']}:
+            rim |= side & (np.abs(self.y - y) < h / 2 + 0.12) & (alpha < 0.995)
+        self.detail0[rim] = 1.0; self.keep[rim] = 0.0
 
     def _fin(self):
         f = self.part == 'fin'
@@ -300,17 +318,24 @@ class Canvas:
         self.paint((self.part == 'gdoor').astype(float), color)
 
     # ------------------------------------------------------------------ decals
-    def decal(self, img, s0, yc, height, mode='text', where=None, width=None, s_anchor='start'):
+    def decal(self, img, s0, yc, height, mode='text', where=None, width=None, s_anchor='start', block=None):
         """place an RGBA image (PIL, sRGB) on the side of the body, `height` metres tall, centred at y = yc (array or
         scalar), starting at station s0 (mode 'text': reads left-to-right on both sides; 'mirror': same station mapping on
-        both sides, so a symbol faces forward on both sides). s_anchor 'center' centres the image on s0."""
+        both sides, so a symbol faces forward on both sides). s_anchor 'center' centres the image on s0.
+        block = (b0, b1): the image is one element of a title lock-up spanning stations [b0, b1] on the port side; on the
+        starboard side the lock-up keeps its reading order (the element's stations are mirrored within the block, and
+        the element reads left to right), as airlines paint e.g. the Delta widget + DELTA + CONNECTION."""
         im = np.asarray(img.convert('RGBA')).astype(np.float32) / 255
         hpx, wpx = im.shape[:2]
         w = width if width is not None else height * wpx / hpx
         if s_anchor == 'center': s0 = s0 - w / 2
-        u = (self.s - s0) / w
         stb = self.side > 0
-        if mode == 'text': u = np.where(stb, 1 - u, u)
+        if block is not None:
+            s_eff = np.where(stb, block[0] + block[1] - self.s, self.s)
+            u = (s_eff - s0) / w
+        else:
+            u = (self.s - s0) / w
+            if mode == 'text': u = np.where(stb, 1 - u, u)
         v = (np.asarray(yc) + height / 2 - self.y) / height
         inb = (u > -0.01) & (u < 1.01) & (v > -0.01) & (v < 1.01)
         if where is not None: inb &= where

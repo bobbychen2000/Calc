@@ -18,10 +18,13 @@ averaged over 5 parallel lines 0.3 m apart) from ONE source image, and find the 
                1.6 m (the ~2-3 m gap before the stripes / the end of pavement); the outer edge of a 10 ft threshold bar
                (3 m bright, a gap, then the stripes) fails the uniform-inner test, so the pick can no longer flip
                between the bar and the stripes when the image moves by a metre or two
-  approach-light piers over water (js/anim/lights.js): along-axis position of the imaged pier (structure or its
-               shadow on the bay, <= ~2.5 m apart), 'bar' ridge of either polarity, 1.2 m, strongest within 0.55 x the
-               pier spacing, the profile averaged over 8 lines 1.5-6 m either side of the axis; then the crossbar
-               half-length (lateral colour run from the pier) and the catwalk's lateral position between piers
+  approach-light structures over water (js/anim/lights.js; 28L/28R from js/geo.js APPROACH_STRUCTURES):
+               stations - along-axis position of the imaged station (structure or its shadow on the bay, <= ~2.5 m
+               apart), 'bar' ridge of either polarity, 1.2 m, strongest within 0.55 x the station spacing, the profile
+               averaged over 6 lines 1-2.2 m either side of the axis (on the light-bar beam, clear of the catwalk);
+               crossbars - each imaged end against the modelled end (measure_xbar: lateral colour run from the structure
+               on the axis, at the along-axis offset with the longest run); catwalk - lateral position of the imaged
+               deck midway between stations against the modelled catwalk line
 Offsets are signed along the outward normal (+ = the imaged edge lies outside / right of the modelled one).
 Buildings: an outline edge belongs to ONE building - the terminal part (pier / hall / structure) wins over the
 ramp-level complex it sits on; complex samples within 1 m of a same-orientation part sample are dropped - and each
@@ -41,10 +44,10 @@ import cv2
 from shapely.geometry import Point, Polygon
 from shapely.prepared import prep
 from shapely.ops import unary_union
-from common import scene, OUT, poly_rings, w2st, st2w, G, hull_poly, buildings, provenance
+from common import scene, OUT, poly_rings, w2st, st2w, G, hull_poly, buildings, provenance, FT
 import background
 
-RULES_VERSION = '2026-09-24c: stripe-start rule, building edge de-duplication, rotunda boundary = not found, approach-light piers'
+RULES_VERSION = '2026-09-25a: stripe-start rule, building edge de-duplication, rotunda boundary = not found, approach-light stations / crossbar ends / catwalk'
 STEP = 0.1; R = 10.0; TAN = (-0.6, -0.3, 0.0, 0.3, 0.6)
 D = np.arange(-R, R + 1e-9, STEP)
 
@@ -288,36 +291,51 @@ def build_features(S):
         ring = b['hull']; sg = ring_orientation_outward(ring)
         p, n, t = sample_ring(ring, 3.0, trim=2.0, outward_sign=sg)
         if len(p): F.append(dict(id=f'emas:{b["end"]}', cls='emas-bed', name=f'EMAS bed beyond RWY {b["end"]}', mode='step', width=0, pts=p, nrm=n, tan=t, rings=[ring]))
-    # --- approach-light piers over water (js/anim/lights.js buildPierGeometry, pushed into world.items by app.js):
-    # along-axis position of each imaged pier crossbar, read along the extended centreline through the pier
+    # --- approach-light structures over water (js/anim/lights.js buildAirfieldLights -> buildPierGeometry, pushed into
+    # world.items by app.js). Where js/geo.js APPROACH_STRUCTURES exists (28L/28R) the structure is the one measured on
+    # NAIP 2024 by tools/imagery/als_naip.py: on NAIP these rows check the app's implementation of those measurements, on
+    # Google they are an independent image. Pier kinds (extract2d.mjs): station, crossbar, catwalk, hut, post (land);
+    # 'pier' = a station of an older lights.js.
     by_end = {}
     for pr in S.get('piers') or []:
         if pr.get('end'): by_end.setdefault(pr['end'], []).append(pr)
+    onwater = lambda q: q['water'] and not pave(np.array([q['base'][0]]), np.array([q['base'][1]]))[0]
     for end, prs in sorted(by_end.items()):
-        prs = sorted(prs, key=lambda q: q['fromThr'])
-        if len(prs) < 2: continue
-        b0, b1 = np.array(prs[0]['base']), np.array(prs[-1]['base']); u = (b1 - b0) / np.linalg.norm(b1 - b0)   # outward (away from the runway)
-        # piers over open water only: the model's `water` flag (lights.js: > 150 m from the threshold) also covers piers
-        # on the blast pad; those are audited as obstructions, not measured here
-        wat = [q for q in prs if q['water'] and not pave(np.array([q['base'][0]]), np.array([q['base'][1]]))[0]]
-        if len(wat) < 2: continue
-        # one along-axis profile per pier, averaged over 12 lines on the crossbar arms (2.5-10 m either side of the
-        # axis, clear of the catwalk): the 30 m crossbar adds up, the glitter of the bay averages out
-        lat = np.array([-u[1], u[0]]); P0 = np.array([q['base'] for q in wat])
-        p = P0; n = np.tile(u, (len(p), 1)); t = np.tile(lat, (len(p), 1))
-        # model crossbar half-length: widest lateral extent of the pier's recorded boxes
-        hl = [max(abs((np.array(h) - np.array(q['base'])) @ lat) for pr_ in q['prims'] for h in pr_['hull']) for q in wat]
-        # the strongest bar of either polarity within half the pier spacing (+10 %): the structure or, beside it, its
-        # shadow on the bay (<= ~2.5 m apart); a system laid out from another reference shows up as ~half a spacing
-        sp = float(np.median(np.diff([q['fromThr'] for q in wat])))
-        F.append(dict(range=round(0.55 * sp, 1), select='strongest', maxgsd=0.8, id=f'als-pier:{end}', cls='approach-light-pier', name=f'RWY {end} {wat[0]["type"]} approach-light piers over water ({len(wat)}, {wat[0]["fromThr"]:.0f}-{wat[-1]["fromThr"]:.0f} m from the threshold)',
-                      mode='bar', width=1.2, pts=p, nrm=n, tan=t, group=True, piers=[q['i'] for q in wat], centres=P0, model_halflen=float(np.median(hl)), spacing=sp,
-                      tanoff=[-6, -4.5, -3, -1.5, 1.5, 3, 4.5, 6]))
-        # the catwalk along the pier line: lateral position midway between piers (the model's catwalk is on the axis)
-        mid = (P0[:-1] + P0[1:]) / 2
-        if len(mid):
-            F.append(dict(range=8.0, select='strongest', maxgsd=0.8, id=f'als-catwalk:{end}', cls='approach-light-catwalk', name=f'RWY {end} approach-light catwalk over water ({len(mid)} spans), lateral position',
-                          mode='bar-bright', width=1.0, pts=mid, nrm=np.tile(lat, (len(mid), 1)), tan=np.tile(u, (len(mid), 1)), group=True, tanoff=list(np.arange(-10, 10.1, 1.0))))
+        st = sorted([q for q in prs if q.get('kind', 'pier') in ('station', 'pier') and onwater(q)], key=lambda q: q['fromThr'])
+        if len(st) < 2: continue
+        P0 = np.array([q['base'] for q in st], float); u = P0[-1] - P0[0]; u /= np.linalg.norm(u)   # outward (away from the runway)
+        lat = np.array([-u[1], u[0]]); R_ = np.array(st[0]['right'], float)                          # R_: the runway frame's right
+        sp = float(np.median(np.diff([q['fromThr'] for q in st])))
+        # stations: along-axis position of the imaged station (piles + the 5.2 m light-bar beam), the strongest bar of
+        # either polarity within 0.55 x the station spacing - the structure or, beside it, its shadow on the bay (<= ~2.5 m
+        # apart); lines 1-2.2 m either side of the axis, on the beam and clear of the catwalk (3.2 m off the axis)
+        F.append(dict(range=round(0.55 * sp, 1), select='strongest', maxgsd=0.8, id=f'als-station:{end}', cls='approach-light-station',
+                      name=f'RWY {end} {st[0]["type"]} approach-light stations over water ({len(st)}, {st[0]["fromThr"]:.0f}-{st[-1]["fromThr"]:.0f} m from the threshold)',
+                      mode='bar', width=1.2, pts=P0, nrm=np.tile(u, (len(P0), 1)), tan=np.tile(lat, (len(P0), 1)), group=True, piers=[q['i'] for q in st], spacing=sp,
+                      tanoff=[-2.2, -1.6, -1.0, 1.0, 1.6, 2.2]))
+        # crossbars: imaged ends against the modelled ends (lo / hi along the runway frame's right), one sample per end,
+        # offset + = the imaged bar reaches further out than the model
+        xb = sorted([q for q in prs if q.get('kind') == 'crossbar' and onwater(q) and q.get('lo') is not None], key=lambda q: q['fromThr'])
+        if xb:
+            pts, nrm, bases, side, model, labels = [], [], [], [], [], []
+            for q in xb:
+                bq = np.array(q['base'], float); rq = np.array(q['right'], float)
+                for sg, v in ((-1, q['lo']), (1, q['hi'])):
+                    pts.append(bq + rq * v); nrm.append(rq * sg); bases.append(bq); side.append(sg); model.append(v)
+                    labels.append(f'{q["fromThr"] / FT:.0f} ft {"+R" if sg > 0 else "-R"}' + (' (inferred)' if q.get('src') == 'inferred' else ''))
+            F.append(dict(id=f'als-crossbar:{end}', cls='approach-light-crossbar', name=f'RWY {end} approach-light crossbars over water ({len(xb)}), imaged ends vs modelled ends',
+                          mode='xbar', width=0.4, maxgsd=0.8, pts=np.array(pts), nrm=np.array(nrm), tan=np.tile(u, (len(pts), 1)), group=True, bases=np.array(bases), side=np.array(side),
+                          model_end=np.array(model), labels=labels, axis=u, right=R_, piers=[q['i'] for q in xb]))
+        # catwalk: lateral position of the imaged deck midway between stations, against the modelled catwalk line
+        cw = [q for q in prs if q.get('kind') == 'catwalk' and q.get('a')]
+        if cw:
+            q = cw[0]; A_ = np.array(q['a'], float); B_ = np.array(q['b'], float); uc = (B_ - A_) / np.linalg.norm(B_ - A_); nc = np.array([-uc[1], uc[0]])
+            f_mid = (np.array([s_['fromThr'] for s_ in st[:-1]]) + np.array([s_['fromThr'] for s_ in st[1:]])) / 2
+            f_mid = f_mid[(f_mid > (q.get('fromThrA') or 0) + 5) & (f_mid < (q.get('fromThrB') or 1e9) - 5)]
+            mid = A_[None] + np.outer(f_mid - (q.get('fromThrA') or 0), uc)
+            if len(mid):
+                F.append(dict(range=6.0, select='strongest', maxgsd=0.8, id=f'als-catwalk:{end}', cls='approach-light-catwalk', name=f'RWY {end} approach-light catwalk over water ({len(mid)} spans), lateral position vs the modelled catwalk',
+                              mode='bar-bright', width=1.2, pts=mid, nrm=np.tile(nc, (len(mid), 1)), tan=np.tile(uc, (len(mid), 1)), group=True, tanoff=list(np.arange(-10, 10.1, 1.0))))
     # --- painted lines (recorded ribbons): taxiway centrelines, stand lead-ins, hold bars (solid pair)
     tnames_polys = [(t['name'], poly_rings(p)) for t in tw for p in t['polys']]
     def twy_name(pt):
@@ -376,6 +394,7 @@ def measure_feature(f, src, only=None, exclude=None):
     pts, nrm, tan = f['pts'], f['nrm'], f['tan']
     res = dict(id=f['id'], n=len(pts), off=np.full(len(pts), np.nan), strength=np.zeros(len(pts)), amb=np.zeros(len(pts), int), img=[None] * len(pts), gsd=np.full(len(pts), np.nan), why=[''] * len(pts))
     if f['mode'] == 'disc': return measure_disc(f, src, res)
+    if f['mode'] == 'xbar': return measure_xbar(f, src, res, only=only, exclude=exclude)
     Rf = f.get('range', R); Dv = np.arange(-Rf, Rf + 1e-9, STEP)
     vals, ids, gsd = read_profiles(src, pts, nrm, tan, only=only, Dv=Dv, exclude=exclude, tanoff=f.get('tanoff'))
     res['gsd'] = gsd; res['img'] = list(ids)
@@ -407,44 +426,60 @@ def measure_feature(f, src, only=None, exclude=None):
         if best is None: res['why'][k] = 'no edge found'; continue
         res['off'][k] = best[0]; res['strength'][k] = best[1]; res['amb'][k] = amb
     res['polarity'] = pol
-    if f['cls'] == 'approach-light-pier': crossbar_halflen(f, src, res, only)
     return res
 
 
-def crossbar_halflen(f, src, res, only=None):
-    """imaged half-length of each approach-light pier crossbar: at the measured along-axis position of the structure, a
-    lateral profile (+-24 m) through the pier; open water = the median colour of the outer 3 m on both sides; the
-    crossbar = where the colour departs from it (Lab distance > 10, 0.3 m smoothing), contiguous (gaps < 1 m) from the
-    structure nearest the modelled axis; half-length = half the imaged crossbar length"""
-    res['xbar'] = np.full(len(f['pts']), np.nan)
-    if len(f.get('centres', [])) != len(f['pts']): return
-    ok = ~np.isnan(res['off'])
-    if not ok.any(): return
-    Dl = np.arange(-24, 24 + 1e-9, STEP)
-    C = f['centres'][ok] + f['nrm'][ok] * res['off'][ok][:, None]
-    vals, ids, gsd = read_profiles(src, C, f['tan'][ok], f['nrm'][ok], only=only, Dv=Dl)
-    out = np.full(ok.sum(), np.nan); n3 = int(3 / STEP); gap = int(1.0 / STEP)
-    for k in range(len(C)):
-        if ids[k] is None or np.isnan(vals[k]).any(): continue
-        Lb = lab(vals[k]); Ls = np.stack([gsmooth(Lb[:, c], 0.3 / STEP) for c in range(3)], 1)
-        water = np.median(np.concatenate([Ls[:n3], Ls[-n3:]]), 0)
-        st = np.linalg.norm(Ls - water, axis=1) > 10
-        c0 = len(Dl) // 2; near = np.where(st[c0 - int(4 / STEP):c0 + int(4 / STEP)])[0]
-        if not len(near): continue
-        c0 = c0 - int(4 / STEP) + near[np.argmin(np.abs(near - int(4 / STEP)))]
-        ends = []
-        for sgn in (1, -1):
-            i = c0; miss = 0; last = c0
-            while 0 <= i < len(Dl):
-                if st[i]: last = i; miss = 0
-                else:
-                    miss += 1
-                    if miss > gap: break
-                i += sgn
-            ends.append(Dl[last])
-        if min(abs(ends[0]), abs(ends[1])) < 20: out[k] = float(abs(ends[0] - ends[1]) / 2)
-    res['xbar'][ok] = out
-
+def measure_xbar(f, src, res, only=None, exclude=None):
+    """approach-light crossbar ends: for each crossbar, lateral profiles (+-26 m along the runway frame's right, 0.1 m
+    steps, 3 lines 0.15 m apart along the axis) at along-axis offsets -2.5..+2.5 m from the modelled bar; open water =
+    the median colour of the outer 3 m on both sides; structure = Lab distance > 10 from it (0.3 m smoothing); the bar =
+    the contiguous structure run (gaps < 1 m) through the structure nearest the axis; the along-axis offset with the
+    longest run is the bar (or the bar merged with its shadow). Per end: offset = imaged end - modelled end along the
+    outward normal (+ = the imaged bar is longer); a run that reaches the window edge, or an arm that ends within 5 m of
+    the axis (the station beam / catwalk only), is not measured"""
+    n = len(f['pts']); res['imaged'] = np.full(n, np.nan)
+    Dl = np.arange(-26, 26 + 1e-9, STEP); n3 = int(3 / STEP); gap = int(1.0 / STEP); A = np.arange(-2.5, 2.51, 0.25)
+    rt = np.asarray(f['right'], float); u = np.asarray(f['axis'], float)
+    done = {}
+    for k in range(n):
+        key = tuple(np.round(f['bases'][k], 2))
+        if key not in done:
+            b = np.asarray(f['bases'][k], float); C = b[None] + np.outer(A, u)
+            vals, ids, gsd = read_profiles(src, C, np.tile(rt, (len(A), 1)), np.tile(u, (len(A), 1)), only=only, Dv=Dl, exclude=None if exclude is None else [exclude[k]] * len(A), tanoff=[-0.15, 0.0, 0.15])
+            best = None
+            for j in range(len(A)):
+                if ids[j] is None or np.isnan(vals[j]).any() or gsd[j] > max_gsd(f): continue
+                Lb = lab(vals[j]); Ls = np.stack([gsmooth(Lb[:, c], 0.3 / STEP) for c in range(3)], 1)
+                water = np.median(np.concatenate([Ls[:n3], Ls[-n3:]]), 0)
+                stc = np.linalg.norm(Ls - water, axis=1) > 10
+                c0 = len(Dl) // 2; w4 = int(4 / STEP); near = np.where(stc[c0 - w4:c0 + w4])[0]
+                if not len(near): continue
+                c0 = c0 - w4 + near[np.argmin(np.abs(near - w4))]
+                ends = []
+                for sgn in (-1, 1):
+                    i = c0; miss = 0; last = c0
+                    while 0 <= i < len(Dl):
+                        if stc[i]: last = i; miss = 0
+                        else:
+                            miss += 1
+                            if miss > gap: break
+                        i += sgn
+                    ends.append(last)
+                lo, hi = Dl[ends[0]], Dl[ends[1]]
+                edge = ends[0] <= n3 or ends[1] >= len(Dl) - 1 - n3
+                cand = (hi - lo, -abs(A[j]), lo, hi, edge, ids[j], gsd[j])
+                if best is None or cand[:2] > best[:2]: best = cand
+            done[key] = best
+        best = done[key]
+        if best is None: res['why'][k] = 'no structure found (no imagery, too coarse, or no colour departure from the water)'; continue
+        _, _, lo, hi, edge, im, g = best; res['img'][k] = im; res['gsd'][k] = g
+        if edge: res['why'][k] = 'structure run reaches the +-23 m window edge'; continue
+        sg = f['side'][k]; img_end = hi if sg > 0 else lo
+        # the station's own beam (2.6 m) and the catwalk (<= 3.8 m) are no crossbar: an arm that ends within 5 m of the
+        # axis was not seen (washed out, too coarse, or glitter), not measured as short
+        if abs(img_end) < 5.0: res['why'][k] = f'no crossbar arm seen on this side (structure ends {img_end:+.1f} m from the axis)'; continue
+        res['imaged'][k] = img_end; res['off'][k] = (img_end - f['model_end'][k]) * sg; res['strength'][k] = hi - lo
+    return res
 
 
 DISC_R = 6.0
@@ -497,8 +532,9 @@ def summarize(f, r):
         out['imaged_centre'] = float(np.median(raw)); out['model_centre'] = f.get('model_off')
         if f.get('model_off') is None:   # the model draws no bar: the imaged bar is the deviation (missing marking)
             out.update(median=float(np.median(np.abs(raw))), bias=float(np.median(raw)), missing_in_model=True)
-    if f['cls'] == 'approach-light-pier' and 'xbar' in r and np.isfinite(r['xbar']).any():
-        out.update(xbar_imaged=float(np.nanmedian(r['xbar'])), xbar_model=f.get('model_halflen'))
+    if f['cls'] == 'approach-light-crossbar':
+        out['ends'] = [dict(label=f['labels'][k], model=round(float(f['model_end'][k]), 2), imaged=None if np.isnan(r['imaged'][k]) else round(float(r['imaged'][k]), 2),
+                            off=None if np.isnan(r['off'][k]) else round(float(r['off'][k]), 2), why=r['why'][k]) for k in range(len(f['pts']))]
     frac = out['measured'] / max(1, out['n'])
     # rotunda positions come from an automatic disc search (low confidence): reported, never flagged
     out['flag'] = bool(out.get('median') is not None and out['median'] > 1.0 and (out['measured'] >= 3 or f.get('group')) and f['cls'] != 'bridge-rotunda')

@@ -13,7 +13,7 @@ import { Geo } from '../geom.js';
 import { v3 } from '../math.js';
 import { RWY_W } from '../world/airfield.js';
 import { MARK_VS, MARK_FS, buildMarkings, buildStandMarks } from './markings.js';
-import { SIGN_VS, SIGN_FS, buildSigns } from './signs.js';
+import { SIGN_VS, SIGN_FS, buildSigns, SIGN_STATS } from './signs.js';
 import { buildMasts } from './items.js';
 
 // world pose of a stand (nose point, unit heading vector) from its airport-grid description
@@ -76,11 +76,18 @@ export function buildLiveWorld(R, airport, log = console.log, opts = {}) {
         uniforms: () => ({ uPxScale: 2 * Math.tan((R.curCam ? R.curCam.fov : 0.9) / 2) / R.H }) });
     }
     const S = buildSigns(details, opts.runways || []);
+    log('signs kept off taxiway / runway polygons: ' + JSON.stringify(SIGN_STATS));
     items.push({ mesh: S.mesh, prog: 'sign', bbox: [-3000, 0, -2600, 2200, 10, 2000], castShadow: true, shadowMaxCascade: 1, nearOnly: true, noCull: true, uniforms: { uAtlas: S.atlas } });
     items.push({ mesh: S.painted, prog: 'sign', bbox: [-3000, 0, -2600, 2200, 10, 2000], castShadow: false, polyOffset: [-2, -5], nearOnly: true, noCull: true, uniforms: { uAtlas: S.atlas } });
-    // floodlight masts (positions inferred, not surveyed): never inside a stand's aircraft envelope
-    const masts = (details.masts || []).filter(([x, z]) => !inStandEnvelope(gates, x, z, 4));
-    if (masts.length !== (details.masts || []).length) log('masts inside stand envelopes removed: ' + ((details.masts || []).length - masts.length));
+    // floodlight masts: OpenStreetMap man_made=mast + tower:type=lighting nodes (observed; data/sfo_details.json mastMeta,
+    // review round 3 - the earlier inferred positions stood in taxiway pavement). They are all drawn: an observed mast
+    // must not be dropped silently. tools/build_airfield_details.py keeps them >= 1.5 m off the building outline and
+    // lists any within 25 m of a taxiway centreline (none: >= 51 m); tools/stands/check_stands.py checks them against
+    // every stand's accepted-type envelope and every bridge (none closer than 4 m). The coarse class rectangle of
+    // inStandEnvelope contains some of them, which is only logged here.
+    const masts = details.masts || [];
+    const inRect = masts.filter(([x, z]) => inStandEnvelope(gates, x, z, 0)).length;
+    if (inRect) log('masts inside a stand class rectangle (kept, outside the accepted-type envelopes): ' + inRect);
     const M = buildMasts(masts);
     const I4m = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     items.push({ mesh: new Mesh(M.geo), prog: 'obj', model: I4m, bbox: M.geo.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });

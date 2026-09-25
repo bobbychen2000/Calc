@@ -330,6 +330,11 @@ def classify(r, ev):
     adsb = None
     for e in ev:
         oo = e['ours']; fr = oo['adsb_in_our_frame']
+        # review round 3: a stay far from the stand (> 12 m across or outside -35..+8 m along) is an aircraft SFO had
+        # planned here but that parked elsewhere (plan change, tow) - as in tools/stands/build_stands.py; it says nothing
+        # about our stand line and is listed, not voted (with 11 snapshots such stays had turned 15 stands 'OURS OFF')
+        if abs(fr['cross']) > 12.0 or not (-35.0 <= fr.get('along', 0.0) <= 8.0):
+            r.setdefault('adsb_elsewhere', []).append(e['stand']); continue
         good = abs(fr['cross']) <= 3.0 and (oo['dhdg'] is None or abs(oo['dhdg']) <= 10)
         adsb = f"ADS-B @ {e['stand']}: ours {'OK' if good else 'OFF'} (aircraft {fr['cross']:+.1f} m across our centreline" + \
                (f", Δhdg {oo['dhdg']:+.0f}°" if oo['dhdg'] is not None else ', no heading') + ')'

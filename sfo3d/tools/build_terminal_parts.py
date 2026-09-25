@@ -118,7 +118,17 @@ for c in cs:
     if cv2.contourArea(c) * RES * RES < 60: continue
     a = cv2.approxPolyDP(c, 0.9 / RES, True)[:, 0, :].astype(np.float64)
     cxr.append([world((p[0] + 0.5, p[1] + 0.5)) for p in a])
-_doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 'note': 'derived from SFO Museum footprints; heights approximate except ITB hall (83 ft)'}
+# Review round 3: footprint accuracy. NAIP 2024 cannot verify the SFO Museum outlines to better than ~5 m: roofs lean
+# east by ~0.54 m per m of height (tools/stands/naip_relief.py) and NAIP 2022 has the same lean (docs/research/imagery.md
+# s.6), so a second epoch gives no lean-free view. Measured misfits beyond the predicted lean (review round 3): Boarding
+# Area D's SSE face imaged 7.7 m outside (2.5 m predicted), BA A east +10.3 (7.2); the Harvey Milk T1 hall includes a
+# ~20 m bulge over the departures roadway / AirTrain guideway at x -1047..-980, z 412..443 (SFO Museum footprint; NAIP
+# shows roadway and guideway there - kept, not verifiable without a true ortho). All footprints: inferred, +-5 m.
+_doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 'note': 'derived from SFO Museum footprints; heights approximate except ITB hall (83 ft)',
+        'footprint_accuracy': {'src': 'inferred', 'tol_m': 5.0, 'why': 'SFO Museum outlines; NAIP 2022/2024 roofs lean east ~0.54 m/m (same lean in both epochs): no lean-free check',
+                               'known_misfits': ['Boarding Area D SSE face: imaged roof 7.7 m outside vs 2.5 m predicted lean',
+                                                 'Boarding Area A east face: +10.3 m vs 7.2 m predicted',
+                                                 'Harvey Milk Terminal 1 hall: bulge over the departures roadway / AirTrain guideway (x -1047..-980, z 412..443)']}}
 json.dump(_doc, open(os.path.join(ROOT, 'data', 'sfo_buildings.json'), 'w'), separators=(',', ':'))
 open(os.path.join(ROOT, 'data', 'sfo_buildings.js'), 'w').write('// Terminal building parts derived from SFO Museum footprints by tools/build_terminal_parts.py\nexport const BUILDINGS = ' + json.dumps(_doc, separators=(',', ':')) + ';\n')
 print('bytes', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_buildings.json')))

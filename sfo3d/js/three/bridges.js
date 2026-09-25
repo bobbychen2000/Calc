@@ -9,13 +9,17 @@
 //   'objI' GSE per vehicle type -> one InstancedMesh each (instance data: 3x4 matrix rows + tint, world/gates.js inst())
 // Using gates.js's own output (instead of re-deriving the bridge parts here) keeps the new renderer in step with the
 // bridge geometry work going on in gates.js (docs/requests/static_geometry_round1.md: rotundaW, walkW, stowW, ...).
+// The bridges, equipment and vehicles do not wait for the MSDF sign font (review round 1: a failed font load removed
+// every bridge); the sign faces are built once setSignFont() is called, or from gates.js's canvas atlas
+// (useAtlasFallback(), the live.html look) if the font failed.
 import { THREE } from './lib.js';
 import { geometryOf } from './convert.js';
-import { SignBuilder, faceIndex, signMeshes } from './signs.js';
+import { SignBuilder, faceIndex, signMeshes, atlasSignMaterial } from './signs.js';
+import { textureOf } from './convert.js';
 
 export class Bridges3 {
-  constructor(gateSys, { objMat, vehMat, signFont, signMats }) {
-    this.gs = gateSys; this.objMat = objMat; this.vehMat = vehMat; this.signFont = signFont; this.signMats = signMats;
+  constructor(gateSys, { objMat, vehMat, signFont = null, signMats = null, night = null, reversed = true }) {
+    this.gs = gateSys; this.objMat = objMat; this.vehMat = vehMat; this.signFont = signFont; this.signMats = signMats; this.night = night; this.reversed = reversed; this.atlasFallback = null;
     this.group = new THREE.Group(); this.group.name = 'gates';
     this.lookup = faceIndex(gateSys.atlas.map);
     this.objs = new Map(); // shim Mesh -> three object
@@ -28,9 +32,13 @@ export class Bridges3 {
       return o;
     }
     if (it.prog === 'sign') {
-      const d = m.data; const sb = new SignBuilder(this.signFont);
-      sb.addSignArrays({ pos: d.pos, nrm: d.nrm, uv: d.uv, ext: d.extra }, this.lookup);
-      return signMeshes(sb, this.signMats, 'gateSigns');
+      if (this.signMats) {
+        const d = m.data; const sb = new SignBuilder(this.signFont);
+        sb.addSignArrays({ pos: d.pos, nrm: d.nrm, uv: d.uv, ext: d.extra }, this.lookup);
+        return signMeshes(sb, this.signMats, 'gateSigns');
+      }
+      if (this.atlasFallback && this.atlasFallback !== true) { const o = new THREE.Mesh(geometryOf(m), this.atlasFallback); o.receiveShadow = true; o.matrixAutoUpdate = false; return o; }
+      return null; // waiting for the font (retried every update)
     }
     if (it.prog === 'objI') {
       const cap = Math.max(16, m.nInst);
@@ -45,6 +53,11 @@ export class Bridges3 {
     const n = Math.min(m.nInst || 0, o.userData.cap); const A = m.inst; const D = o.geometry.attributes.iData.array; const T = this._m;
     for (let i = 0; i < n; i++) { const q = i * 16; T.set(A[q], A[q + 1], A[q + 2], A[q + 3], A[q + 4], A[q + 5], A[q + 6], A[q + 7], A[q + 8], A[q + 9], A[q + 10], A[q + 11], 0, 0, 0, 1); o.setMatrixAt(i, T); D[i * 4] = A[q + 12]; D[i * 4 + 1] = A[q + 13]; D[i * 4 + 2] = A[q + 14]; D[i * 4 + 3] = A[q + 15]; }
     o.count = n; o.instanceMatrix.needsUpdate = true; o.geometry.attributes.iData.needsUpdate = true;
+  }
+  setSignFont(font, mats) { this.signFont = font; this.signMats = mats; }
+  useAtlasFallback() {
+    const tex = textureOf(this.gs.atlas && this.gs.atlas.tex, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace });
+    this.atlasFallback = tex ? atlasSignMaterial(tex, { night: this.night, reversed: this.reversed }) : true;
   }
   update(now) {
     const items = this.gs.items(now); const alive = new Set();

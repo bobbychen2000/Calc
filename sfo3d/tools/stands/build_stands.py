@@ -251,6 +251,7 @@ def main():
                 a, c = local(p, nose, h)
                 s['naip'] = {'nose_along': rd[0], 'lat': rd[1], 'group_seen': rd[2], 'flags': rd[3], 'resid_along': round(a, 1),
                              'resid_lat': round(c, 1) if rd[1] is not None else None, 'relief_corrected': True}
+                if w['osm_id'] in TB.NAIP_IMAGED: s['naip']['imaged'] = TB.NAIP_IMAGED[w['osm_id']]
                 # review round 2: only a numerically measured, relief-corrected fuselage centre verifies the line (within
                 # 1.5 m; the relief fit leaves 0.7 m rms), never the reading the position was taken from (F15).
                 # Review round 3: the stop point must agree too - an along residual beyond 1.5 m (the reading accuracy)
@@ -333,11 +334,14 @@ def main():
                                             'the stop point is not verified' if s['cls'] in ('B', 'C', 'CL') else
                                             'wide-body stand: the imaged aircraft stopped %+.1f m from the model nose; its type is not '
                                             'identified, so a type-dependent stop mark may explain it - not verified') % s['naip']['resid_along']}
+            if s['naip'].get('imaged'): s['conflict_along']['imaged'] = s['naip']['imaged']
         else: s.pop('conflict_along', None)
         s['verified_by'] = vb
         # src (legacy observed / inferred): 'obs' only when an aircraft was seen on the line (NAIP or ADS-B); the painted
-        # lead-in alone confirms the axis (lateral, heading), not the stop point -> 'inf' (review round 2)
-        s['src'] = 'obs' if ('naip' in vb or 'adsb' in vb) else 'inf'
+        # lead-in alone confirms the axis (lateral, heading), not the stop point -> 'inf' (review round 2). Review round 3:
+        # never 'obs' while the NAIP aircraft on the line stopped > 1.5 m from the model nose (the stop point is then
+        # contradicted, even if ADS-B confirms the axis laterally); a corroborated per-family stop can explain it (below).
+        s['src'] = 'obs' if ('naip' in vb or 'adsb' in vb) and not s.get('conflict_along') else 'inf'
         s['osm_resid'] = None if s['pos_src'] == 'osm' else dict(zip(('along', 'lat'), [round(v, 1) for v in local(stop, nose, h)]))
     # ---------------------------------------------------------------- per-family stop points (review round 2)
     # The app parks every type with its nose at the stand's one nose point, but real stop marks are per type: narrow
@@ -362,7 +366,19 @@ def main():
             d_ = float(np.median(v)) - fam_ref[fm]
             if (len(v) >= 2 and abs(d_) >= 5) or abs(d_) >= 10:
                 tsd[fm] = {'along': round(min(d_, 0.0), 1), 'n': len(v), 'src': 'adsb (median %.1f m vs family %.1f m)' % (float(np.median(v)), fam_ref[fm])}
+        # review round 3: a family stop of 3-5 m that the NAIP aircraft on the same line confirms (its relief-corrected
+        # nose within 1.5 m of the ADS-B stop, n >= 2 ADS-B aircraft; B22: three E-Jets 4.3-5.4 m short, NAIP -4.1 m)
+        rn = s.get('naip') or {}
+        if rn.get('along_conflict') and s['cls'] in ('B', 'C', 'CL'):
+            for fm, v in by.items():
+                d_ = float(np.median(v)) - fam_ref[fm]
+                if fm not in tsd and len(v) >= 2 and d_ <= -3.0 and abs(d_ - rn['resid_along']) <= 1.5 \
+                        and max(abs(a_ - fam_ref[fm] - d_) for a_ in v) <= 1.5:
+                    tsd[fm] = {'along': round(d_, 1), 'n': len(v), 'src': 'adsb (median %.1f m vs family %.1f m) + naip (%+.1f m)' % (float(np.median(v)), fam_ref[fm], rn['resid_along'])}
+                    s['conflict_along']['explained_by'] = fm
+                    s['conflict_along']['note'] += '; explained by the %s stop (ADS-B n=%d at %+.1f m agrees)' % (fm, len(v), d_)
         s['type_stops'] = {k: v for k, v in tsd.items() if v['along'] < 0} or None
+        if (s.get('conflict_along') or {}).get('explained_by') and ('adsb' in s['verified_by'] or 'naip' in s['verified_by']): s['src'] = 'obs'
     # Stands whose calibrated nose puts the aircraft against the building (review round 2: F16 0.05 m, F17 0.59 m from the
     # Boarding Area F facade; their OSM lead-ins end at the facade) are moved back to the stop ADS-B shows there, when
     # it does: the stand nose takes the family stop (pos_src 'osm+adsb'), the other families keep their offsets.
@@ -517,6 +533,9 @@ def main():
             jb['rotunda_src'] = 'inferred: the OSM way starts %.1f m off the building; rotunda there, fixed walkway from the nearest facade point' % jb['base_bdist']
         jb['rotunda'] = r0 if math.dist(r0, jb.get('tunnel_end') or P[-1]) >= 4 else None
         if jb['rotunda'] is None: jb['rotunda_src'] = 'none (tunnel shorter than 4 m)'
+        # review round 3: `walk` is the fixed corridor building -> rotunda and always ends AT the rotunda (the facade /
+        # off-building rules above had left a one-point walk, which a consumer drawing walk as the corridor lost)
+        elif math.dist(jb['walk'][-1], r0) > 0.05: jb['walk'] = list(jb['walk']) + [r0]
     stand_by_name = {s['name']: s for s in stands}
     used = set()
     def door_pt(s, k):
@@ -592,7 +611,8 @@ def main():
             if not b.get('rotunda'): continue
             doors = [GM.door(GM.nose_for(st, t), st['hdg'], t, GM.dock_door(t, b['door'])) for t in obs if GM.dock_door(t, b['door'])]
             if not doors: continue
-            path = [tuple(q) for q in b['walk']] + [tuple(b['rotunda'])]
+            path = [tuple(q) for q in b['walk']]
+            if math.dist(path[-1], b['rotunda']) > 0.05: path.append(tuple(b['rotunda']))
             def ok(pt, pre):
                 if min(math.dist(pt, dp) for dp in doors) - GM.PIVOT_TO_DOOR < GM.EXT_MIN: return False   # (pivot on the door normal: distance >= this)
                 g = unary_union([LineString(pre + [pt]).buffer(GM.WALK_W / 2, cap_style=2) if len(pre) else _P(pt).buffer(0.01), _P(pt).buffer(GM.ROT_R)])
@@ -611,7 +631,7 @@ def main():
             if found:
                 q, pre, dm = found
                 b['rotunda_osm'] = b['rotunda']; b['rotunda'] = [round(q[0], 2), round(q[1], 2)]
-                b['walk'] = [[round(v, 2) for v in p_] for p_ in pre]; b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; moved %.1f m back along the walkway (min. extension / wing clearance)' % dm
+                b['walk'] = [[round(v, 2) for v in p_] for p_ in list(pre) + [q]]; b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; moved %.1f m back along the walkway (min. extension / wing clearance)' % dm
             else:
                 b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; too close to the door or inside the wing sweep, and the walkway gives no feasible point'
                 problems.append((st['name'], 'rotunda of bridge %s infeasible' % b['osm_id']))

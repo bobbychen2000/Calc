@@ -109,3 +109,15 @@ stations, pitch, size, height) are in the repository. The drawings stay in the g
 Where the artist's window glass or openings did not match these drawings, they were removed from the converted models
 (the openings closed with skin triangles) and the measured row is painted instead; this is a modification of the GPL
 models of §1 and is covered by the same corresponding-source statement.
+
+## 5. Reference photographs for the livery QA (measurement and render check only; not shipped)
+
+From 25 Sep 2026 the liveries are also checked against, and partly measured on, recent photographs of the rendered
+types in the current liveries: `tools/liveries/ref_photos.py` downloads them from **Wikimedia Commons** (the airlines'
+own media hosts block this sandbox) into the gitignored `refs/cache/livref/`, with the file page, author and licence of
+each photo in `refs/cache/livref/index.json` (CC BY / CC BY-SA). They are used only to measure positions (titles,
+cheatlines, colour regions, tail art) and approximate colours, and to compare our renders with the real aircraft
+(`tools/liveries/compare.py`, output in the uncommitted `out/liveries/compare/`). No photograph or crop of one is in the
+repository or in any texture; emblems are re-drawn by hand as simplified vector shapes in `tools/liveries/liveries.py`
+(for some, e.g. the Aeroméxico eagle, the Cathay brushwing and the Kris bird, a few key points were read off a photo).
+The designs that used a photo cite the Commons file names in their `refs` (prefix "photo check").

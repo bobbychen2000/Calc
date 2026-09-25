@@ -247,6 +247,28 @@ def main(quiet=False, app=True):
                     issues.append((sa['name'] + '|' + sb['name'], 'bridge at rest overlaps the fixed walkway / rotunda of another'))
             if sa is not sb and sb['name'] not in sa.get('excl', []) and id(ba) in docked and id(bb) in docked:
                 if docked[id(ba)].intersection(docked[id(bb)]).area > 0.5: issues.append((sa['name'] + '|' + sb['name'], 'docked bridges overlap'))
+    # ---------------------------------------------------------------- floodlight masts (review round 3)
+    # data/sfo_details.json masts (OSM, observed; moved off the rendered building outline by build_airfield_details.py):
+    # the pole + foundation (r 0.9 m, js/live/items.js) must stay clear of every aircraft a stand accepts, every bridge
+    # (fixed parts, rest pose, docked to an accepted type) and the buildings
+    DT = json.load(open(os.path.join(ROOT, 'data', 'sfo_details.json')))
+    n_m = 0
+    for mx, mz in DT.get('masts', []):
+        pole = Point(mx, mz).buffer(0.9); n_m += 1; tag = 'mast (%.1f, %.1f)' % (mx, mz)
+        if pole.intersection(bld).area > 0.05: issues.append((tag, 'inside the building outline'))
+        for o in S:
+            if math.dist(o['nose'], (mx, mz)) > 150: continue
+            dd = ENV[o['name']].distance(pole)
+            if dd <= 0: issues.append((tag, 'inside the aircraft envelope of %s' % o['name']))
+            elif dd < 2.0: warns.append((tag, '%.1f m from the aircraft envelope of %s' % (dd, o['name'])))
+        for so, b in allb:
+            if math.dist(b.get('rotunda') or b['attach'], (mx, mz)) > 90: continue
+            if fixed[id(b)].intersects(pole): issues.append((tag, 'on the fixed walkway / rotunda of %s L%d' % (so['name'], b['door'])))
+            if id(b) in rest and rest[id(b)].intersects(pole): issues.append((tag, 'under the resting bridge %s L%d' % (so['name'], b['door'])))
+            for t, g in dock_fp.get(id(b), {}).items():
+                if g.intersects(pole):
+                    (issues if t in obs_set(so) else notes).append((tag, 'crossed by %s L%d docked to %s' % (so['name'], b['door'], t))); break
+    print('masts checked:', n_m)
     # ---------------------------------------------------------------- APP view (js/live/traffic.js as it is today)
     if app:
         EA = {s['name']: GM.stand_env(s, app_rule=True, per_type=False) for s in S}
@@ -276,7 +298,7 @@ def main(quiet=False, app=True):
         for w in warns: print('  WARN:', *w)
     print('WARNINGS:', len(warns))
     if app:
-        print('APP ISSUES (current js/live/traffic.js behaviour; need docs/requests/static_geometry_round2.md):', len(app_issues))
+        print('APP ISSUES (current js/live/traffic.js behaviour; need docs/requests/static_geometry_round2.md / round3.md):', len(app_issues))
         for x in app_issues: print('   ', *x)
     print('ISSUES:', len(issues))
     for x in issues: print('  ', *x)

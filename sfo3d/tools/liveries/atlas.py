@@ -41,7 +41,7 @@ that backup, so the tool is idempotent. tools/convert_models.py output must be r
 
 Usage: python3 tools/liveries/atlas.py [keys...] [--size 2048] [--preview DIR]
 """
-import argparse, gzip, io, json, math, os, re, shutil, struct, sys
+import argparse, collections, gzip, io, json, math, os, re, shutil, struct, sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
@@ -95,9 +95,16 @@ def edit_windows(m, key, A):
     # every triangle whose three vertices lie within a removed window's outline (+2 cm)
     Pv = m['pos'][idx]                                            # (n, 3, 3)
     sv, yv, zv = -Pv[..., 0], Pv[..., 1], Pv[..., 2]
+    # only near the window itself (|z| within 0.3 m of the window's): the rectangle alone also caught wing-tip and winglet
+    # triangles at the same station and height (A320, 737-800, A350, 767 wing tips were opened)
+    # Body-skin triangles (zone 0) are never dropped: the reveals of an opening lie behind the fan that closes it, and
+    # dropping skin triangles next to a window left small holes beside the A350's windows.
+    tz_all = m['zone'][idx[:, 0]]
     for w in list(rem['glass']) + list(rem['holes']):
-        inside = ((np.abs(sv - w['s']) <= w['w'] / 2 + 0.02) & (np.abs(yv - w['y']) <= w['h'] / 2 + 0.02) & (np.sign(zv) == w['side'])).all(1)
-        drop |= inside
+        inside = ((np.abs(sv - w['s']) <= w['w'] / 2 + 0.02) & (np.abs(yv - w['y']) <= w['h'] / 2 + 0.02) & (np.sign(zv) == w['side'])
+                  & (np.abs(np.abs(zv) - w['z']) < 0.3)).all(1)
+        drop |= inside & (tz_all != 0)
+    before = _skin_boundary(m['pos'], idx[tz_all == 0])
     newT, newM = [], []
     P, N, UV = m['pos'], m['nrm'], m['uv']
     if rem['holes']:
@@ -111,19 +118,94 @@ def edit_windows(m, key, A):
             loop = np.array(h['loop'])
             mats = [tm[t] for v in inv[loop] for t in tri_of.get(int(v), [])]
             mat = max(set(mats), key=mats.count) if mats else tm[np.where(tz == 0)[0][0]]
-            c = P[loop].mean(0); n = N[loop].mean(0); n /= max(np.linalg.norm(n), 1e-9)
-            ci = _append_vertices(m, c[None], n[None], UV[loop].mean(0)[None], np.array([0]))
+            T_ = _fan(m, loop); newT += T_; newM += [mat] * len(T_)
             P, N, UV = m['pos'], m['nrm'], m['uv']
-            for a, b in zip(loop, np.roll(loop, -1)):
-                tri = [int(a), int(b), ci]
-                fn = np.cross(P[tri[1]] - P[tri[0]], P[tri[2]] - P[tri[0]])
-                if np.dot(fn, n) < 0: tri = [tri[1], tri[0], tri[2]]
-                newT.append(tri); newM.append(mat)
     keep = ~drop
     m['idx'] = np.concatenate([idx[keep], np.array(newT, np.int64).reshape(-1, 3)])
     m['tri_mat'] = np.concatenate([tm[keep], np.array(newM, np.int32)])
+    # the skin must stay closed: skin edges that the removal left open (triangles of the skin inside a window's outline,
+    # e.g. the corners around the E175's stray window) are closed with a fan per loop; open chains are reported
+    tz_all = m['zone'][m['idx'][:, 0]]
+    after = _skin_boundary(m['pos'], m['idx'][tz_all == 0])
+    new_edges = [e for e in after if e not in before]
+    closed, open_chains = _close_loops(m, new_edges, after)
     return dict(mode=rem['mode'], glass=len(rem['glass']), holes=len(rem['holes']), strip=int(len(rem['strip'])), texture=rem['texture'],
-                dropped=int(drop.sum()))
+                dropped=int(drop.sum()), reclosed=closed, open=open_chains)
+
+
+def _fan(m, loop):
+    """triangles closing the opening bounded by `loop` (source vertex ids, in order): a fan to a centre vertex. The fan gets
+    its own vertices (loop positions and UVs) with the skin's outward normal: loop vertices of the source can carry the
+    normal of a reveal wall (A350: +-x normals at the window edges shaded the fan dark grey)"""
+    P, N, UV = m['pos'], m['nrm'], m['uv']
+    loop = np.asarray(loop)
+    n0 = N[loop].sum(0); n0 /= max(np.linalg.norm(n0), 1e-9)
+    good = (N[loop] @ n0) > 0.7
+    n = N[loop][good].mean(0) if good.any() else n0; n /= max(np.linalg.norm(n), 1e-9)
+    Nl = np.where(((N[loop] @ n) > 0.8)[:, None], N[loop], n[None])
+    c = P[loop].mean(0)
+    i0 = _append_vertices(m, np.concatenate([P[loop], c[None]]), np.concatenate([Nl, n[None]]),
+                          np.concatenate([UV[loop], UV[loop].mean(0)[None]]), np.zeros(len(loop) + 1, int))
+    k = len(loop); P = m['pos']; out = []
+    for j in range(k):
+        tri = [i0 + j, i0 + (j + 1) % k, i0 + k]
+        fn = np.cross(P[tri[1]] - P[tri[0]], P[tri[2]] - P[tri[0]])
+        if np.dot(fn, n) < 0: tri = [tri[1], tri[0], tri[2]]
+        out.append(tri)
+    return out
+
+
+def _skin_boundary(P, T):
+    """boundary edges of the triangle list T (edges used once), keyed by quantised vertex positions (1 mm): {key: (a, b)}
+    with a, b source vertex indices"""
+    q = np.round(P / 0.001).astype(np.int64)
+    K = [tuple(r) for r in q]
+    cnt, rep = {}, {}
+    for a, b, c in T:
+        for u, v in ((a, b), (b, c), (c, a)):
+            ku, kv = K[u], K[v]; k = (ku, kv) if ku < kv else (kv, ku)
+            cnt[k] = cnt.get(k, 0) + 1; rep.setdefault(k, (int(u), int(v)))
+    return {k: rep[k] for k, n in cnt.items() if n == 1}
+
+
+def _close_loops(m, keys, edges, max_extent=1.2):
+    """close the closed loops formed by the boundary edges `keys` (of `edges`: key -> (a, b)) with triangle fans (the
+    material and normal of the adjoining skin); loops longer than max_extent (m) and open chains are left alone.
+    Returns (loops closed, open chains)"""
+    if not keys: return 0, 0
+    P = m['pos']; q = np.round(P / 0.001).astype(np.int64)
+    adj = collections.defaultdict(list); vid = {}
+    for k in keys:
+        a, b = edges[k]; ka, kb = k
+        adj[ka].append(kb); adj[kb].append(ka); vid.setdefault(ka, a); vid.setdefault(kb, b)
+    # material per vertex key: the skin triangles around it
+    tz = m['zone'][m['idx'][:, 0]]; mat_of = collections.defaultdict(list)
+    for t in np.where(tz == 0)[0]:
+        for v in m['idx'][t]:
+            kv = tuple(q[v])
+            if kv in adj: mat_of[kv].append(int(m['tri_mat'][t]))
+    seen = set(); nT, nM = [], []; closed = opened = 0
+    for k0 in list(adj):
+        if k0 in seen: continue
+        loop = [k0]; seen.add(k0); prev, cur, ok = None, k0, True
+        while True:
+            if len(adj[cur]) != 2: ok = False
+            nb = [x for x in adj[cur] if x != prev]
+            if not nb: ok = False; break
+            nxt = nb[0]
+            if nxt == k0: break
+            if nxt in seen: ok = False; break
+            loop.append(nxt); seen.add(nxt); prev, cur = cur, nxt
+        V = np.array([vid[k] for k in loop]); ext = np.ptp(P[V], 0).max() if len(V) else 0
+        if not ok or len(V) < 3 or ext > max_extent: opened += 1; continue
+        mats = [x for k in loop for x in mat_of.get(k, [])]
+        mat = max(set(mats), key=mats.count) if mats else int(m['tri_mat'][0])
+        T_ = _fan(m, V); nT += T_; nM += [mat] * len(T_)
+        P = m['pos']
+        closed += 1
+    if nT:
+        m['idx'] = np.concatenate([m['idx'], np.array(nT, np.int64)]); m['tri_mat'] = np.concatenate([m['tri_mat'], np.array(nM, np.int32)])
+    return closed, opened
 
 
 def plug_bands(key, A):

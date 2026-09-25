@@ -15,6 +15,8 @@ Scenarios
   ENVELOPE  every stand's class envelope = union of the planforms (procedural TYPES body AND rendered model) of every
             non-oversize type the stand accepts; neighbours' envelopes, buildings, masts, VDGS, signs, other stands'
             parked bridges and the stand's own parked bridges (the arriving aircraft must clear them)
+  Mutually exclusive stands (SFO MARS alternates, gates' excl; traffic.js blocked()) are never paired in DOCK-REF,
+  DOCK-MAX, ENVELOPE and OVERSIZE (aircraft, docked bridges, envelopes); their parked bridges are still tested.
   OVERSIZE  EL/F stands also take bigger types (traffic.js: 747/A380 on maxSpan >= 64 m stands, neighbours then
             blocked when their noses are closer than 0.5 (spanA + spanB) + 8 m): every overlapped neighbour must be
             blocked, and the oversize aircraft must clear the neighbours' parked bridges and buildings
@@ -43,7 +45,7 @@ from shapely.geometry import Polygon, Point, MultiPolygon, box as sbox
 from shapely.strtree import STRtree
 from shapely.ops import unary_union
 from common import (scene, OUT, buildings, poly_rings, hull_poly, circle, AcGeom, ac_instance_geom, plan_world, model_geom, body_geom,
-                    stand_W, gear_points_world, m4, G, polys_of, w2st, NetPaved, provenance, phys_gear_points)
+                    stand_W, gear_points_world, m4, G, polys_of, w2st, NetPaved, provenance, phys_gear_points, app_root)
 from measure import PaveMask
 
 SCEN_SAME_STAND_SKIP = {'DOCK-REF', 'DOCK-MAX', 'ENVELOPE'}   # one aircraft per stand by construction there; never in LIVE
@@ -164,7 +166,9 @@ def static_objects():
         for j, p in enumerate(st.get('vdgs') or []):
             if len(p['hull']) >= 3: out.append(Obj('vdgs', f'{st["name"]}:{p["part"]}:{j}', hull_poly(p['hull']), p['y'][0], p['y'][1], stand=st['name'], part=p['part'], label=f'{st["name"]} {p["part"]}', pp=p.get('pp')))
     for pr in S.get('piers') or []:
-        el = f'RWY {pr.get("end") or "?"} {pr.get("type") or ""} approach-light {"pier" if pr["water"] else "post"} {pr.get("fromThr") or 0:.0f} m from the threshold'
+        kind = pr.get('kind') or ('pier' if pr['water'] else 'post')
+        where = (f'{pr.get("fromThrA") or 0:.0f}-{pr.get("fromThrB") or 0:.0f} m' if kind == 'catwalk' and pr.get('fromThrA') is not None else f'{pr.get("fromThr") or 0:.0f} m') + ' from the threshold'
+        el = f'RWY {pr.get("end") or "?"} {pr.get("type") or ""} approach-light {kind}{" (water)" if pr["water"] and kind == "post" else ""} {where}'
         for k, p in enumerate(pr['prims']):
             if len(p['hull']) >= 3: out.append(Obj('pier', f'pier{pr["i"]}:{p["part"]}:{k}', hull_poly(p['hull']), p['y'][0], p['y'][1], part=p['part'], label=f'{el} ({p["part"]})', pp=p.get('pp'),
                                                    extra=dict(elabel=el, water=pr['water'], end=pr.get('end'), fromThr=pr.get('fromThr'), fromEnd=pr.get('fromEnd'), base=pr['base'])))
@@ -292,6 +296,23 @@ def bridge_building_skip(a, b):
     return False
 
 
+def stand_exclusions(S):
+    """{stand: set of stands it excludes} - SFO MARS alternates (B11S takes the space of B10 + B11): traffic.js
+    blocked() never lets two mutually exclusive stands be occupied together, so the all-stands-occupied scenarios must not
+    pair them. From the scene (extract2d.mjs exports the runtime gates' excl); a scene extracted before that falls back
+    to the app's own stand data (data/sfo_stands.js in the app source, the file standGates() reads: excl = s.excl)"""
+    ex = {s['name']: set(s['excl']) for s in S['stands'] if s.get('excl')}
+    src = 'scene (runtime gates)'
+    if not any('excl' in s for s in S['stands']):
+        try:
+            t = open(os.path.join(app_root(S), 'data', 'sfo_stands.js')).read(); J = json.loads(t[t.index('{'):t.rindex('}') + 1])
+            ex = {s['name']: set(s['excl']) for s in J.get('stands', []) if s.get('excl')}; src = 'app data/sfo_stands.js (scene predates the excl export)'
+        except Exception as e: src = f'none ({e})'
+    for a, bs in list(ex.items()):
+        for b in bs: ex.setdefault(b, set()).add(a)
+    return ex, src
+
+
 def run():
     S = scene(); t0 = time.time(); au = Audit(); g = G()
     stands = {s['name']: s for s in S['stands']}
@@ -301,6 +322,9 @@ def run():
     buildings = [o for o in statics if o.cat == 'building']; masts = [o for o in statics if o.cat == 'mast']
     signs = [o for o in statics if o.cat == 'sign']; vdgs = [o for o in statics if o.cat == 'vdgs']; piers = [o for o in statics if o.cat == 'pier']
     attach = {bi: np.array(b['attach']) for bi, b in enumerate(S['bridges'])}
+    EXCL, excl_src = stand_exclusions(S)
+    excl = lambda p, q: p is not None and q is not None and q in EXCL.get(p, ())   # mutually exclusive stands (MARS)
+    DOCKED = {'DOCK-REF', 'DOCK-MAX'}
 
     def bridge_vs_static(scen, BR):
         # the fixed walkway starts inside the building at its attach point: only overlaps further than 3 m from the
@@ -317,14 +341,17 @@ def run():
         au.pairs(scen, 'bridge-sign', BR, signs, maxd=5)
 
     def bridge_vs_bridge(scen, BR):
-        au.pairs(scen, 'bridge-bridge', BR, BR, same=True, skip=lambda a, b: a.bridge == b.bridge, warn=lambda a, b: 0.5 if (a.part not in ('column',) and b.part not in ('column',)) else None, maxd=2)
+        # docked bridges of two mutually exclusive stands never exist together (parked ones do: REST / LIVE test them)
+        sk = (lambda a, b: a.bridge == b.bridge or excl(a.stand, b.stand)) if scen in DOCKED else (lambda a, b: a.bridge == b.bridge)
+        au.pairs(scen, 'bridge-bridge', BR, BR, same=True, skip=sk, warn=lambda a, b: 0.5 if (a.part not in ('column',) and b.part not in ('column',)) else None, maxd=2)
 
     def bridge_vs_ac(scen, BR, ACS):
         own_cab = []
         def skip(a, b):
             if a.stand == b.stand and a.part in CAB_GROUP:
                 own_cab.append((a, b)); return True
-            return False
+            # a bridge docked at stand X and an aircraft at a stand X excludes: never together
+            return scen in DOCKED and excl(a.stand, b.stand)
         au.pairs(scen, 'bridge-aircraft', BR, ACS, skip=skip, maxd=3)
         # docked cab against its own aircraft: the bellows touch the fuselage; flag penetration beyond 0.6 m
         for a, b in own_cab:
@@ -346,7 +373,7 @@ def run():
             ca, cb = stands[a.stand]['cls'], stands[b.stand]['cls']; return max(ICAO[ca], ICAO[cb])
         # the same-stand skip only where one aircraft per stand holds by construction; in LIVE two aircraft assigned
         # to one gate must be tested against each other
-        same = (lambda a, b: a.stand is not None and a.stand == b.stand) if scen in SCEN_SAME_STAND_SKIP else None
+        same = (lambda a, b: a.stand is not None and (a.stand == b.stand or excl(a.stand, b.stand))) if scen in SCEN_SAME_STAND_SKIP else None
         au.pairs(scen, 'aircraft-aircraft', ACS, ACS, same=True, skip=same, clear=clear, maxd=10)
         au.pairs(scen, 'aircraft-building', ACS, buildings, warn=lambda a, b: 3.0 if (a.stand and b.extra.get('kind') != 'walkway') else None, maxd=4)
         au.pairs(scen, 'aircraft-mast', ACS, masts, maxd=3)
@@ -503,7 +530,7 @@ def run():
     def env_note(a, b, R):
         wa = [x.type for x in envAc[a.stand] if x.plan.intersects(b.poly)]; wb = [x.type for x in envAc[b.stand] if x.plan.intersects(a.poly)]
         return f'{a.stand}: {",".join(sorted(set(wa)))} x {b.stand}: {",".join(sorted(set(wb)))}'
-    au.pairs(scen, 'envelope-envelope', envObjs, envObjs, same=True, clear=clear, vert=False, maxd=10, note_fn=env_note)
+    au.pairs(scen, 'envelope-envelope', envObjs, envObjs, same=True, skip=lambda a, b: excl(a.stand, b.stand), clear=clear, vert=False, maxd=10, note_fn=env_note)
     # per-type objects for vertical checks against static objects and parked bridges
     typeObjs = [ac_obj(A, oid=A.label) for n in envAc for A in envAc[n]]
     for o in typeObjs: o.cat = 'envelope-type'
@@ -529,7 +556,7 @@ def run():
                 need = max(ICAO[T_CODE(T)], ICAO[s2['cls']])
                 if d >= need: continue
                 dn = math.hypot(st['nose'][0] - s2['nose'][0], st['nose'][1] - s2['nose'][1])
-                blocked = dn < 0.5 * (st['maxSpan'] + s2['maxSpan']) + 8
+                blocked = dn < 0.5 * (st['maxSpan'] + s2['maxSpan']) + 8 or excl(st['name'], o2.stand)
                 p1, p2 = shapely.ops.nearest_points(o.poly, o2.poly); loc = ((p1.x + p2.x) / 2, (p1.y + p2.y) / 2)
                 if not blocked:
                     au.add(scen, 'oversize-not-blocked', 'COLLISION' if d <= 0 else 'CLEARANCE', o, o2, dist=d, loc=loc, note=f'{k} ({T["wing"]["span"]:.1f} m span) at {st["name"]} reaches {o2.stand} (nose distance {dn:.1f} m >= block radius {0.5 * (st["maxSpan"] + s2["maxSpan"]) + 8:.1f} m): {o2.stand} stays available')
@@ -572,6 +599,7 @@ def run():
     per_scen = collections.Counter(f'{x["scenario"]}|{x["severity"]}' for x in raw)
     au.meta = dict(seconds=time.time() - t0, tested={f'{k[0]}|{k[1]}': v for k, v in au.stats.items()}, per_scenario=dict(per_scen),
                    per_scenario_note='counts of the UNMERGED records: one per (scenario, kind, object pair) at that scenario\'s own severity', netcheck=netcheck,
+                   exclusions=dict(source=excl_src, pairs=sorted({tuple(sorted((a, b))) for a, bs in EXCL.items() for b in bs})),
                    provenance=provenance())
     items = merge_scenarios(raw)
     items.sort(key=lambda x: (SEV[x['severity']], -(x['depth'] or 0), -(x['area'] or 0), x['dist'] if x['dist'] is not None else 0))

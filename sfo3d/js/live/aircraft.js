@@ -48,10 +48,17 @@ export class LiveAircraft extends Aircraft {
     const f = (L && L.brand ? liveryTextureFor(L.brand, this.modelKey, this.type) : null) || neutralTextureFor(this.modelKey, this.type);
     const key = f ? f.url : null;
     if (key === this._livTexKey) return;
-    this._livTexKey = key; this.livTex = null; this._livNeutral = !!(f && f.neutral); this._items = null;
+    this._livTexKey = key; this.livTex = null; this._livNeutral = !!(f && f.neutral); this._items = null; this._livFailed = false;
+    // the model's own atlas carries the cabin windows of the model's own type: on a type with other fuselage plugs or
+    // another window row (737-700 / -900 / MAX on the 737-800 model, 787-9 / -10, A321neo, ...) it would show that row
+    // squeezed or stretched by the plugs, so such an aircraft is drawn as the procedural airframe until its texture is in
+    this._ownAtlasWrong = !!neutralTextureFor(this.modelKey, this.type);
     if (!f) return;
-    getLiveryTexture(f.url).then(t => { if (this._livTexKey === key) { this.livTex = t; this._items = null; } }).catch(() => {});
+    getLiveryTexture(f.url).then(t => { if (this._livTexKey === key) { this.livTex = t; this._items = null; } })
+      .catch(() => { if (this._livTexKey === key) { this._livFailed = true; this._items = null; } });
   }
+  // true while the brand / neutral texture of a type whose own atlas is wrong for it is still loading
+  liveryPending() { return !!(this._livTexKey && !this.livTex && !this._livFailed && this._ownAtlasWrong); }
   placement() {
     const T = this.T, d = this.model.dims; const s = T.L / d.L;   // d.L includes the fuselage plugs: s = T.fit.s
     const y = d.hasGear ? -d.low * s : T.Hc;
@@ -99,6 +106,8 @@ export class LiveAircraft extends Aircraft {
     const shadow = d < this.shadowDist;
     const M = this.model;
     this.nextPrev = {};
+    if (M && d <= this.lodDist) this.updateLiveryTexture();
+    if (M && d <= this.lodDist && this.liveryPending()) return super.items(); // full procedural airframe until the texture is in
     if (!M || d > this.lodDist) {
       if (!M && d < this.lodDist && !this.modelKey) return super.items(); // no imported model for this type: full procedural airframe
       const prevModel = this.prev.body || W; this.nextPrev.body = W; // distant: body only (one draw)
@@ -107,7 +116,6 @@ export class LiveAircraft extends Aircraft {
     }
     const model = m4.mul(W, this.placement());
     const prevModel = this.prev.real || model; this.nextPrev.real = model;
-    this.updateLiveryTexture();
     if (!this._items) {
       this._U = {};
       this._items = M.draws.map(dr => ({ mesh: dr.sub, prog: 'acr', noCull: true,

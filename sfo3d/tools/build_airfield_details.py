@@ -637,12 +637,51 @@ print('edges', EDGE_STATS)
 # ---------------------------------------------------------------- floodlight masts: OSM man_made=mast + tower:type=lighting
 # Review round 3: the earlier masts were inferred (every ~120 m along the inferred ramp outline) and several stood in
 # taxiway pavement or on landside roads. Now only mapped masts: OSM nodes man_made=mast, tower:type=lighting (ODbL;
-# parsed by tools/xcheck/parse_osm.py, 'lighting_masts'). Checked on NAIP 2024 (8 of 70 by eye, review round 3): each
-# node sits at the base of an imaged mast (thin leaning line with the round head ~15-30 m away, relief displacement).
-# mastMeta records the source; masts closer than 25 m to a data taxiway centreline would be listed (none are: >= 51 m).
-masts = [[round(m['w'][0], 2), round(m['w'][1], 2)] for m in OSM.get('lighting_masts', [])]
-dTW = dist_to(TW | RW)
-print('masts', len(masts))
+# parsed by tools/xcheck/parse_osm.py, 'lighting_masts'). Checked on NAIP 2024, all 70 on contact sheets (review round
+# 3): on the open airfield and landside each node sits at the base of an imaged mast (shadow line to the NW, the lamp
+# head leaning ~15-25 m east by relief displacement); the 45 at the terminal stand on the facade line, with the leaning
+# pole visible over the roof. Those at the facade can fall inside the SFO Museum footprint the app renders (outline
+# accuracy +-5 m: NAIP roof lean): a mast whose base is inside or within MAST_CLEAR of a rendered building is moved
+# out along the outline normal to MAST_CLEAR (inferred; mastMeta.moved lists them), so no pole is drawn inside a wall.
+# Masts closer than 25 m to a data taxiway centreline would be listed (mastMeta.near_taxiway; none are: >= 51 m).
+from shapely.geometry import Polygon as _SPoly, Point as _SPt, LineString as _SLS
+from shapely.ops import unary_union as _suu, nearest_points as _snp
+MAST_CLEAR = 1.5   # m, pole centre -> building outline (foundation radius 0.85 m, js/live/items.js)
+_BLD = _suu([_SPoly(p[0], p[1:]).buffer(0) for p in D['terminalComplex']] +   # courtyards (holes) are open ground
+            [_SPoly(p[0]).buffer(0) for s_ in D['structures'] if s_['kind'] in ('garage', 'building', 'hangar', 'hotel', 'atc') for p in s_['polys']])
+_CLS = [_SLS(c) for c in centerlines if len(c) >= 2]
+masts, mast_moved, mast_near_tw = [], [], []
+for m in OSM.get('lighting_masts', []):
+    x, z = m['w']; p = _SPt(x, z); inside = _BLD.contains(p); d = _BLD.boundary.distance(p)
+    if inside or d < MAST_CLEAR:
+        q = _snp(_BLD.boundary, p)[0]; v = np.array([x - q.x, z - q.y]); L = float(np.hypot(*v))
+        if L < 1e-6:   # on the outline: the normal of the nearest outline segment, pointing out of the building
+            e = np.array([q.x, q.y]); t = np.array([1.0, 0.0])
+            for g in getattr(_BLD, 'geoms', [_BLD]):
+                ring = np.array(g.exterior.coords)
+                k = int(np.argmin([_SLS(ring[i:i + 2]).distance(q) for i in range(len(ring) - 1)])); t = ring[k + 1] - ring[k]
+                if _SLS(ring[k:k + 2]).distance(q) < 1e-3: break
+            v = np.array([-t[1], t[0]]) / max(1e-9, float(np.hypot(*t)))
+            if _BLD.contains(_SPt(*(e + v * 0.1))): v = -v
+        else:
+            v = v / L * (-1 if inside else 1)
+        n = np.array([q.x, q.y]) + v * MAST_CLEAR
+        if _BLD.contains(_SPt(*n)) or _BLD.boundary.distance(_SPt(*n)) < MAST_CLEAR - 0.05:
+            # concave corner: the nearest point (0.25 m rings up to 8 m) that is outside and MAST_CLEAR from the outline
+            n = None
+            for r_ in np.arange(0.25, 8.01, 0.25):
+                cand = [np.array([x + r_ * math.cos(a_), z + r_ * math.sin(a_)]) for a_ in np.linspace(0, 2 * math.pi, max(12, int(r_ * 12)), endpoint=False)]
+                cand = [c_ for c_ in cand if not _BLD.contains(_SPt(*c_)) and _BLD.boundary.distance(_SPt(*c_)) >= MAST_CLEAR]
+                if cand: n = cand[0]; break
+            if n is None:
+                print('  mast %d: no clear position within 8 m of the building - dropped' % m['id']); mast_moved.append({'osm_id': m['id'], 'dropped': True}); continue
+        mast_moved.append({'osm_id': m['id'], 'from': [round(x, 2), round(z, 2)], 'moved_m': round(float(np.hypot(n[0] - x, n[1] - z)), 2), 'was_inside': bool(inside)})
+        x, z = float(n[0]), float(n[1])
+    dcl = min(c.distance(_SPt(x, z)) for c in _CLS)
+    if dcl < 25: mast_near_tw.append({'osm_id': m['id'], 'dist_centreline': round(dcl, 1)})
+    masts.append([round(x, 2), round(z, 2)])
+print('masts', len(masts), 'moved off buildings', len(mast_moved), 'near taxiway centrelines', len(mast_near_tw))
+dTW = dist_to(TW | RW)   # (used by the service-road lines below)
 
 # ---------------------------------------------------------------- service road lines along the terminal face
 roads = []
@@ -674,7 +713,9 @@ out = {'attribution': 'Taxiway centrelines: OpenStreetMap aeroway=taxiway ways (
        'frame': geo_frame.FRAME_ID, 'apron': apron_polys, 'centerlines': centerlines, 'centerlineMeta': cl_meta, 'centerlineStats': CL_STATS,
        'holds': holds, 'holdStats': HOLD_STATS, 'holdsDropped': hold_log, 'edges': edges, 'edgeMeta': edge_meta, 'edgeStats': EDGE_STATS,
        'masts': masts, 'mastMeta': {'src': 'osm man_made=mast + tower:type=lighting (base position)', 'n': len(masts),
-                                    'check': 'NAIP 2024: 8 of 70 checked by eye (base of an imaged mast), review round 3'},
+                                    'check': 'NAIP 2024: all 70 viewed on contact sheets (base of an imaged mast; at the terminal on the facade line), review round 3',
+                                    'height': 'not in OSM; js/live/items.js MAST_H is inferred',
+                                    'clear_of_buildings_m': MAST_CLEAR, 'moved': mast_moved, 'near_taxiway': mast_near_tw},
        'roads': roads}
 json.dump(out, open(os.path.join(ROOT, 'data', 'sfo_details.json'), 'w'), separators=(',', ':'))
 open(os.path.join(ROOT, 'data', 'sfo_details.js'), 'w').write('// generated by tools/build_airfield_details.py - ODbL 1.0: taxiway centrelines contain information from OpenStreetMap (c) OpenStreetMap contributors; holds measured on USDA NAIP 2024; apron/edges from SFO Museum (CDLA-Permissive-1.0) - docs/ATTRIBUTION.md\nexport const DETAILS = ' + json.dumps(out, separators=(',', ':')) + ';\n')

@@ -1,3 +1,5 @@
+/* three.js r186 (npm three@0.186.0), MIT licence: see LICENSE in this folder. WebGPURenderer + TSL + CSMShadowNode, GTAO, TRAA, Bloom, FXAA, SMAA. Patched: TAAUtils samplePreviousDepth (reversed depth), GPUTextureViewDescriptor swizzle (see tools/build3/build.mjs). Built by tools/build3/build.mjs */
+
 // node_modules/three/build/three.core.js
 var REVISION = "186";
 var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
@@ -806,10 +808,7 @@ var MathUtils = {
    */
   denormalize
 };
-var Vector2 = class _Vector2 {
-  static {
-    _Vector2.prototype.isVector2 = true;
-  }
+var _Vector2 = class _Vector2 {
   /**
    * Constructs a new 2D vector.
    *
@@ -1416,6 +1415,8 @@ var Vector2 = class _Vector2 {
     yield this.y;
   }
 };
+_Vector2.prototype.isVector2 = true;
+var Vector2 = _Vector2;
 var Quaternion = class {
   /**
    * Constructs a new quaternion.
@@ -2033,10 +2034,7 @@ var Quaternion = class {
     yield this._w;
   }
 };
-var Vector3 = class _Vector3 {
-  static {
-    _Vector3.prototype.isVector3 = true;
-  }
+var _Vector3 = class _Vector3 {
   /**
    * Constructs a new 3D vector.
    *
@@ -2939,12 +2937,11 @@ var Vector3 = class _Vector3 {
     yield this.z;
   }
 };
+_Vector3.prototype.isVector3 = true;
+var Vector3 = _Vector3;
 var _vector$c = /* @__PURE__ */ new Vector3();
 var _quaternion$5 = /* @__PURE__ */ new Quaternion();
-var Matrix3 = class _Matrix3 {
-  static {
-    _Matrix3.prototype.isMatrix3 = true;
-  }
+var _Matrix3 = class _Matrix3 {
   /**
    * Constructs a new 3x3 matrix. The arguments are supposed to be
    * in row-major order. If no arguments are provided, the constructor
@@ -3426,6 +3423,8 @@ var Matrix3 = class _Matrix3 {
     return new this.constructor().fromArray(this.elements);
   }
 };
+_Matrix3.prototype.isMatrix3 = true;
+var Matrix3 = _Matrix3;
 var _m3 = /* @__PURE__ */ new Matrix3();
 var LINEAR_REC709_TO_XYZ = /* @__PURE__ */ new Matrix3().set(
   0.4123908,
@@ -4072,10 +4071,7 @@ var Texture = class _Texture extends EventDispatcher {
 Texture.DEFAULT_IMAGE = null;
 Texture.DEFAULT_MAPPING = UVMapping;
 Texture.DEFAULT_ANISOTROPY = 1;
-var Vector4 = class _Vector4 {
-  static {
-    _Vector4.prototype.isVector4 = true;
-  }
+var _Vector4 = class _Vector4 {
   /**
    * Constructs a new 4D vector.
    *
@@ -4804,6 +4800,8 @@ var Vector4 = class _Vector4 {
     yield this.w;
   }
 };
+_Vector4.prototype.isVector4 = true;
+var Vector4 = _Vector4;
 var RenderTarget = class extends EventDispatcher {
   /**
    * Render target options.
@@ -5165,10 +5163,7 @@ var WebGL3DRenderTarget = class extends WebGLRenderTarget {
     this.texture.isRenderTargetTexture = true;
   }
 };
-var Matrix4 = class _Matrix4 {
-  static {
-    _Matrix4.prototype.isMatrix4 = true;
-  }
+var _Matrix4 = class _Matrix4 {
   /**
    * Constructs a new 4x4 matrix. The arguments are supposed to be
    * in row-major order. If no arguments are provided, the constructor
@@ -6296,6 +6291,8 @@ var Matrix4 = class _Matrix4 {
     return array3;
   }
 };
+_Matrix4.prototype.isMatrix4 = true;
+var Matrix4 = _Matrix4;
 var _v1$7 = /* @__PURE__ */ new Vector3();
 var _m1$2 = /* @__PURE__ */ new Matrix4();
 var _zero = /* @__PURE__ */ new Vector3(0, 0, 0);
@@ -29958,10 +29955,7 @@ var Cylindrical = class {
     return new this.constructor().copy(this);
   }
 };
-var Matrix2 = class _Matrix2 {
-  static {
-    _Matrix2.prototype.isMatrix2 = true;
-  }
+var _Matrix2 = class _Matrix2 {
   /**
    * Constructs a new 2x2 matrix. The arguments are supposed to be
    * in row-major order. If no arguments are provided, the constructor
@@ -30029,6 +30023,8 @@ var Matrix2 = class _Matrix2 {
     return this;
   }
 };
+_Matrix2.prototype.isMatrix2 = true;
+var Matrix2 = _Matrix2;
 var _vector$4 = /* @__PURE__ */ new Vector2();
 var Box2 = class {
   /**
@@ -72215,7 +72211,7 @@ var GPUTextureViewDescriptor = class {
     this.mipLevelCount = void 0;
     this.baseArrayLayer = 0;
     this.arrayLayerCount = void 0;
-    this.swizzle = "rgba";
+    this.swizzle = void 0;
   }
   /**
    * Resets the descriptor to its default state.
@@ -72230,7 +72226,7 @@ var GPUTextureViewDescriptor = class {
     this.mipLevelCount = void 0;
     this.baseArrayLayer = 0;
     this.arrayLayerCount = void 0;
-    this.swizzle = "rgba";
+    this.swizzle = void 0;
   }
 };
 var _bindGroupDescriptor$1 = new GPUBindGroupDescriptor();
@@ -83153,7 +83149,14 @@ var sampleCurrentDepth = Fn2(([depthNode, positionTexel, cameraNearFar], builder
 var samplePreviousDepth = Fn2(([previousDepthNode, uv3, previousCameraProjectionMatrixInverse, previousCameraWorldMatrix, cameraWorldMatrixInverse, cameraNearFar, camera], builder) => {
   let depth3 = previousDepthNode.sample(uv3).r;
   if (builder.renderer.logarithmicDepthBuffer) depth3 = logarithmicToPerspectiveDepth(depth3, cameraNearFar);
-  const positionView3 = getViewPosition2(uv3, depth3, previousCameraProjectionMatrixInverse);
+  let positionView3;
+  if (builder.renderer.reversedDepthBuffer === true && builder.renderer.logarithmicDepthBuffer !== true && camera.isOrthographicCamera !== true) {
+    const viewZ2 = perspectiveDepthToViewZ2(depth3, cameraNearFar.x, cameraNearFar.y);
+    const ray = getViewPosition2(uv3, float2(1), previousCameraProjectionMatrixInverse);
+    positionView3 = ray.mul(viewZ2.div(ray.z));
+  } else {
+    positionView3 = getViewPosition2(uv3, depth3, previousCameraProjectionMatrixInverse);
+  }
   const positionWorld3 = previousCameraWorldMatrix.mul(vec42(positionView3, 1)).xyz;
   const viewZ = cameraWorldMatrixInverse.mul(vec42(positionWorld3, 1)).z;
   return camera.isOrthographicCamera ? viewZToOrthographicDepth2(viewZ, cameraNearFar.x, cameraNearFar.y) : viewZToPerspectiveDepth2(viewZ, cameraNearFar.x, cameraNearFar.y);
@@ -84891,15 +84894,3 @@ export {
   warn,
   warnOnce
 };
-/*! Bundled license information:
-
-three/build/three.core.js:
-three/build/three.webgpu.js:
-three/build/three.module.js:
-three/build/three.tsl.js:
-  (**
-   * @license
-   * Copyright 2010-2026 Three.js Authors
-   * SPDX-License-Identifier: MIT
-   *)
-*/

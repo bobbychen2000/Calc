@@ -14,7 +14,8 @@ import background, measure
 
 REGIONS = [  # (name, x0, z0, x1, z1): terminal / boarding areas, west airfield, 28L/28R ends, runway 1L/1R area
     ('terminal-D-E', -900, -150, -550, 250), ('boarding-A-G', -1450, -150, -1100, 550),
-    ('rwy-28-ends', 1250, 450, 1650, 850), ('rwy-1-ends', -800, 1050, -450, 1400), ('west-field', -1700, -900, -1300, -500)]
+    ('rwy-28-ends', 1250, 450, 1650, 850), ('rwy-1-ends', -800, 1050, -450, 1400), ('west-field', -1700, -900, -1300, -500),
+    ('als-28-bay', 1700, 450, 2250, 1000)]   # the 28L/28R approach-light structures over the bay
 SHIFTS = [(0.8, -0.5), (2.0, -1.0)]
 
 
@@ -63,7 +64,8 @@ def run_source(S, F, g, tag):
             inside = (P[:, 0] > box[0] + 12) & (P[:, 0] < box[2] - 12) & (P[:, 1] > box[1] + 12) & (P[:, 1] < box[3] - 12)
             if inside.sum() < 2: continue
             sub = dict(f, pts=P[inside], nrm=f['nrm'][inside], tan=f['tan'][inside])
-            if 'centres' in f: sub['centres'] = np.asarray(f['centres'])[inside]
+            for k in ('centres', 'bases', 'side', 'model_end', 'labels'):   # per-sample arrays of some features
+                if k in f: sub[k] = [x for x, keep in zip(f[k], inside) if keep] if k == 'labels' else np.asarray(f[k])[inside]
             r = measure.measure_feature(sub, g); r0 = measure.measure_feature(sub, t0)
             c = stats[f['cls']]; c['samples'] += int(inside.sum())
             m0 = ~np.isnan(r['off']) & ~np.isnan(r0['off']); c['measured'] += int(m0.sum()); c['stable'] += int((np.abs(r0['off'][m0] - r['off'][m0]) < 0.5).sum())

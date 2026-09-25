@@ -144,10 +144,16 @@ export const BAY_WATER_KM = [
   [24.2, -7.8], [26, -12], [27, -16], [26, -22],
 ];
 
-// Airport landfill polygon in s,t (m). Mainland meets it on the west.
+// Airport landfill polygon in s,t (m). Mainland meets it on the west. Review round 3: the 16 vertices are fitted to the
+// NAIP 2024 shoreline (data/sfo_shore.js, tools/imagery/shore_naip.py; IoU 0.98 with the NAIP landfill; Bay-side shore
+// to polygon: median 11 m, p90 82 m, max 143 m where 16 vertices cannot follow the curved shores) - the hand-drawn
+// polygon it replaces (IoU 0.83) lay 44 m out in the Bay at the 28 ends and made the north basin land. It stays a
+// 16-vertex polygon because the shaders take it as a fixed uniform (js/shaders/ground.js uAptPoly[16]: airport area and
+// seawall-foam distance; request static_geometry_round3.md); js/world/terrain.js takes land / water from the
+// full-resolution shoreline. West of the NAIP coverage the fit keeps the old outline (vertices within ~80 m).
 export const AIRPORT_LAND_ST = [
-  [-2600, -1650], [-600, -1650], [-300, -1660], [420, -1640], [470, -1500], [420, -200], [1790, -210], [1850, -60],
-  [1850, 330], [1790, 460], [470, 460], [470, 1320], [300, 1400], [-900, 1400], [-1500, 1350], [-2600, 1200],
+  [-2595, -1635], [-1681, -1713], [499, -1704], [482, -250], [1811, -256], [1811, 463], [420, 506], [396, 1385],
+  [-378, 951], [-886, 1045], [-1338, 502], [-1668, 614], [-1829, 905], [-1733, 1134], [-1232, 1438], [-2677, 1257],
 ];
 
 // Runway-end lighting from FAA NASR APT_RWY_END.csv, cycle effective 2026-09-03 (APCH_LGT_SYSTEM_CODE,
@@ -177,7 +183,7 @@ export const APPROACH_STRUCTURES = {
   '28R': { seawallFt: 645, stationsFt: Array.from({ length: 19 }, (_, i) => 692 + 100 * i), catwalkLat: 3.2,
     crossbars: [{ ft: 692, l: -16.9, r: 16.9 }, { ft: 792, l: -19.7, r: 16.5 }, { ft: 892, l: -17.3, r: 16.1 }, { ft: 992, l: -18.9, r: 19.5 },
       { ft: 1092, l: -17.8, r: 17.4, inferred: true }, { ft: 1192, l: -16.5, r: 17.7 }, { ft: 1292, l: -19.3, r: 18.3 }],
-    huts: [{ ft0: 1125, ft1: 1165, l: -5.9, r: -1.9 }, { ft0: 1375, ft1: 1418, l: -0.5, r: 3.0 }] },
+    huts: [{ ft0: 1125, ft1: 1165, l: -5.9, r: -1.9 }, { ft0: 1375, ft1: 1418, l: -0.5, r: 3.0, platform: true }] },
 };
 // PAPI (NASR VGSI_CODE P4L = 4-box PAPI left of the runway) with the published glide path angle (deg) and threshold
 // crossing height (ft). NASR has no PAPI at 1L/1R. The PAPI distance from the threshold is not in NASR: `dist` (m) =
