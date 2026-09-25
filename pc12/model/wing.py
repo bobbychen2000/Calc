@@ -485,12 +485,18 @@ def build_right(n=60):
     out = {"skin": [], "boot": [], "flap": None, "aileron": None, "ribs": [], "winglet": None}
 
     def add_skin(m):
-        # split off the leading-edge de-ice boot band
-        uvx = m.UV[:, 1]
-        y = m.UV[:, 0]
-        f_boot = np.maximum(np.maximum(np.where(uvx >= 0, uvx - 0.10, -uvx - 0.065), BOOT_Y[0] - y), y - BOOT_Y[1])
-        boot = trim(m, f_boot, "negative")
-        rest = trim(m, f_boot, "positive")
+        # split off the leading-edge de-ice boot band: chordwise edges (10 % upper / 6.5 % lower) and the spanwise
+        # ends trimmed in separate passes, each field re-evaluated on the trimmed piece (one max() field chamfered the
+        # inboard corner across the 0.25 m span rows: CONS-06)
+        f_chord = lambda mm: np.where(mm.UV[:, 1] >= 0, mm.UV[:, 1] - 0.10, -mm.UV[:, 1] - 0.065)    # noqa: E731
+        f_span = lambda mm: np.maximum(BOOT_Y[0] - mm.UV[:, 0], mm.UV[:, 0] - BOOT_Y[1])           # noqa: E731
+        band_ = trim(m, f_chord(m), "negative")
+        rest = [trim(m, f_chord(m), "positive")]
+        v = f_span(band_)
+        boot = trim(band_, v, "negative")
+        if (v >= 0).any():
+            rest.append(trim(band_, v, "positive"))
+        rest = Mesh.merge([r for r in rest if r.nf])
         # main-gear wheel well + leg slot in the lower skin
         from model.bays import main_opening_sdf
         fw = np.where(rest.UV[:, 1] < 0, main_opening_sdf(rest.V[:, 0], rest.V[:, 1]), 1.0)
@@ -505,8 +511,11 @@ def build_right(n=60):
     add_skin(skin(section_at, ys, n=n))
     out["skin"].append(_clamp_mesh(strip(section_at, ys, 1.0, 1.0)))
 
-    # panel B: flap bay
-    ys = span_stations(Y_FLAP[0], Y_FLAP[1], 0.25)
+    # panel B: flap bay; span rows also at the boot's inboard end and every 30 mm across the main-gear bay (the wheel
+    # well / leg slot / brace slot are cut into its lower skin: bays.main_opening_sdf)
+    from model.bays import MAIN_BAY_Y
+    ys = np.unique(np.round(np.r_[span_stations(Y_FLAP[0], Y_FLAP[1], 0.25), BOOT_Y[0],
+                                  np.arange(MAIN_BAY_Y[0], MAIN_BAY_Y[1] + 1e-9, 0.03)], 6))
     add_skin(skin(section_at, ys, x_lo_end=FLAP_X_LO, x_up_end=FLAP_X_LIP, n=n))
     out["skin"].append(_clamp_mesh(curve_patch(section_at, ys, flap_cove, outward_hint=lambda s: s.e_c)))
 

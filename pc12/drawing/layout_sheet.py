@@ -1309,9 +1309,12 @@ def stage3_items():
         "Winglet: new sections (wing.winglet_sections); nav / strobe lights belong in the winglet tip (drawn light "
         "box at the winglet top), details.py still places them at the tip rib (inside the pod on starboard).",
         "Gear: leg door = gear.leg_door_outline() (drawn side-view face: pointed tip, R 348 concave lower edge, "
-        "stepped aft edge; edge-on plane BL 2358-2472); the 3-D door (leg_door_patch, still the bays.SLOT patch) and "
-        f"the wing-bay slot must follow leg_door_footprint() (retracted: STA {G.LEG_DOOR['x_fwd'] * 1000:.0f}-"
-        f"{G.LEG_DOOR['x_aft'] * 1000:.0f}); re-check retraction clearances and brace kinematics.",
+        "stepped aft edge; edge-on plane BL 2358-2472), built in 3-D in that plane, rigid on the leg "
+        "(gear.leg_door_mesh); the wing-bay slot is its footprint (bays.leg_slot_sdf, STA "
+        f"{G.LEG_DOOR['x_fwd'] * 1000:.0f}-{G.LEG_DOOR['x_aft'] * 1000:.0f}) + forward slot + brace pocket. OPEN: "
+        "retracted, the rigid door lies {0:.0f}-{1:.0f} mm below the wing lower skin (gear.leg_door_retracted_drop: "
+        "it is 93-207 mm outboard of the leg / wheel plane, the trunnion is at the lower skin and the tyre stows "
+        "1 in proud) - owner decision.".format(*(1000 * np.array(G.leg_door_retracted_drop()))),
         "Empennage: fin NACA 0018 down to WL 1760 (the ventral part below the tail cone is the drawn ventral fin); "
         "trim the rudder, tab and fin skins to the SLOPED rudder edges (E.rudder_bottom_z / rudder_top_z / "
         "rudder_outline; E.RUD_Z is now only the hinge-line WLs of those edges); "

@@ -17,7 +17,7 @@ from __future__ import annotations
 import numpy as np
 
 from cad.mesh import (Mesh, revolve, cylinder, box, sweep_tube, grid_surface, trim, solidify,
-                      rotation_about, superellipsoid)
+                      rotation_about, superellipsoid, planar_cap)
 from cad import sdf2d
 from model.parts import Part
 from model import wing as W
@@ -50,7 +50,10 @@ NOSE_BRACE = ((3.470 + GEAR_SHIFT, 0.0, 1.070), (3.030 + GEAR_SHIFT, 0.0, 0.785)
 # folds DOWN inside the wing box (rev B: equal links, main knee 177 mm above the upper skin when retracted).
 NOSE_RETRACT_DEG = -105.0
 MAIN_RETRACT_DEG = 90.0
-NOSE_TUNNEL = dict(x0=3.300, x1=4.100, hy=0.155, z_top=1.460, z_low=1.200)
+NOSE_DOOR_OPEN_DEG = 85.0           # nose clamshells: closed -> open (hanging beside the leg; open while the gear is down)
+# tunnel x0 3.20 (rev: 3.30): the drag brace's lower link (B at x 3.22-3.25, WL 1.12-1.16 when retracted, rising to the
+# knee under the pedestal) passes under the tunnel roof, not the low forward bay roof (M7)
+NOSE_TUNNEL = dict(x0=3.200, x1=4.100, hy=0.155, z_top=1.460, z_low=1.200)
 NOSE_BRACE_SPLIT = (0.40, (-0.72, 0.0, 0.695))        # (L1 fraction, bend reference)
 MAIN_BRACE_SPLIT = (0.15, (0.0, 0.30, -0.95))         # starboard; the bend reference is mirrored for port
 
@@ -75,8 +78,14 @@ MAIN_BRACE_SPLIT = (0.15, (0.0, 0.30, -0.95))         # starboard; the bend refe
 # the side-view face is kept.  Rev B.0 read the face from the oblique photos instead (straight aft edge at 6,520,
 # tip 0.14 m ahead of the axle, a hub cut-out R 150 about the axle): 116 mm off the drawn outline.
 # The door closes the wing bay when retracted (retracts with the leg, 90 deg inboard about MAIN_TRUNNION):
-# leg_door_footprint().  Stage 3: the 3-D door (leg_door_patch, still the bays.SLOT patch) and the wing-bay slot
-# follow this outline.
+# leg_door_footprint().  Stage 3: the 3-D door is this outline in the drawn plane (leg_door_mesh, rigid on the leg)
+# and the wing-bay leg slot is its footprint (bays.leg_slot_sdf).  OPEN (owner decision): the drawn plane lies 93-207 mm
+# outboard of the leg / wheel plane (BL 2265), so after the 90 deg inward retraction the rigid door lies that far BELOW
+# the stowed wheel's mid-plane (= the trunnion WL, which is at the wing lower skin and gives the POH 1 in tyre
+# protrusion): 105-142 mm below the wing lower skin (leg_door_retracted_drop()).  Raising the trunnion raises the
+# stowed wheel by the same amount (tyre recessed, into the upper skin), and a linkage cannot pull the door in past the
+# leg (23 mm room) or the tyre (the drawn face overlaps the static tyre by up to 93 mm in side view), so a flush door
+# needs a change to LEG_DOOR, the retraction geometry or the POH protrusion (fit_check reports it as '[open]').
 LEG_DOOR = dict(x_fwd=5.950 - GEAR_SHIFT, x_fwd_low=5.969 - GEAR_SHIFT, z_fwd_low=0.460,   # forward edge
                 tip=(6.062 - GEAR_SHIFT, 0.318), arc_x0=6.0762 - GEAR_SHIFT,               # tip, arc start STA
                 arc_c=(6.3582 - GEAR_SHIFT, 0.1187), arc_r=0.3482,                         # concave lower edge
@@ -131,7 +140,35 @@ def retracted_wheel(side=1):
     return np.array([A[0], side * (T[1] - (T[2] - A[2])), T[2] + (A[1] - T[1])])
 
 
-from model.bays import WELL, SLOT, NOSE_BAY, main_opening_sdf, nose_bay_sdf
+def leg_door_bl(z):
+    """Butt line of the leg door's outer face at WL z (starboard): the drawn edge-on line, BL 2,358 at the top edge
+    -> 2,472 at the lowest point."""
+    d = LEG_DOOR
+    P = leg_door_outline()
+    zmx, zmn = float(P[:, 1].max()), float(P[:, 1].min())
+    return d["bl"][0] + (d["bl"][1] - d["bl"][0]) * (zmx - np.asarray(z, float)) / (zmx - zmn)
+
+
+LEG_DOOR_T = 0.012                  # door plate thickness (inboard of the drawn outer face)
+LEG_DOOR_BRACKET_MAT = "metal_dark"  # the door's two standoff brackets from the leg (the door assembly)
+
+
+def leg_door_retracted_drop(side=1):
+    """(min, max) height (m) of the retracted door's outer face BELOW the wing lower skin over the door (rigid door
+    turned 90 deg inboard about MAIN_TRUNNION with the leg)."""
+    T = MAIN_TRUNNION
+    P = leg_door_outline()
+    drops = []
+    for x, z in P:
+        y_up = T[1] - (T[2] - z)                 # footprint (the z -> y map)
+        z_up = T[2] - (float(leg_door_bl(z)) - T[1])
+        s = W.section_at(y_up)
+        xc = np.clip((x - s.le[0]) / s.chord, 0, 1)
+        drops.append(float(s.lower(np.array(xc))[2]) - z_up)
+    return float(min(drops)), float(max(drops))
+
+
+from model.bays import WELL, NOSE_BAY, main_opening_sdf, main_bay_sdf, nose_bay_sdf
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +209,7 @@ def build_main(parts, side):
     yax = np.array([0, 1.0, 0])
     struct = []
     # trunnion + leg
-    struct.append(cylinder(T - [0.13, 0, 0], T + [0.13, 0, 0], 0.045, n=20))
+    struct.append(cylinder(T - [0.07, 0, 0], T + [0.07, 0, 0], 0.045, n=20))        # trunnion pin (in the fwd slot)
     struct.append(revolve([(0, 0.058), (0.60, 0.047), (0.62, 0.0)], n=24, axis_origin=T,
                           axis_dir=(L - T) / np.linalg.norm(L - T)))
     # yoke + trailing arm on the INBOARD side of the wheel only (it lies above the wheel when retracted inward;
@@ -192,23 +229,27 @@ def build_main(parts, side):
         R = np.stack([ex, ey, ez], 1)
         struct.append(box((a + b) / 2, (Ln, 0.035, 0.07), R=R))
     struct.append(cylinder(A - sgn * fy * yax, A + sgn * 0.05 * yax, 0.026, n=16))      # axle
-    # shock absorber (inboard side so it stows inside the wing)
-    s_in = -sgn * 0.19
+    # shock absorber on the inboard side, over the trailing arm (fy), so it stows inside the wing above the leg
+    s_in = -sgn * 0.15
     S1 = np.array([MAIN_SHOCK[0][0], T[1] + s_in, MAIN_SHOCK[0][1]])
     S2 = np.array([MAIN_SHOCK[1][0], T[1] + s_in * 0.95, MAIN_SHOCK[1][1]])
     mid = S1 + 0.55 * (S2 - S1)
-    shock_body = cylinder(S1, mid, 0.042, n=18)
+    shock_body = cylinder(S1, mid, 0.036, n=18)
     shock_rod = cylinder(mid - 0.05 * (S2 - S1), S2, 0.027, n=14)
     lugs = [cylinder(S1 - [0, 0.04 * sgn, 0], S1 + [0, 0.04 * sgn, 0], 0.03, n=12),
             box(S2 + [0.0, -s_in * 0.4, 0.0], (0.06, abs(s_in) * 0.9, 0.04)),
             box(np.array([MAIN_SHOCK[0][0], T[1] + s_in * 0.5, MAIN_SHOCK[0][1]]), (0.06, abs(s_in), 0.05))]
     wh = wheel(A, yax, MAIN_TYRE, n=44, brake_side=-sgn)
 
-    # leg door: wing lower-skin patch over the leg slot (retracted position) rotated down with the leg
+    # leg door (LEG_DOOR, sheet L4): the drawn face in the drawn plane, outboard of the tyre, on two standoff
+    # brackets from the leg; it retracts rigidly with the leg
     ang_retract = np.radians(MAIN_RETRACT_DEG) * (-sgn)          # about +x
-    door = leg_door_patch(sgn)
-    Rm = rotation_about((1, 0, 0), -ang_retract, T)
-    door_down = door.transformed(Rm)
+    door_down = leg_door_mesh(sgn)
+    brackets = []
+    for zb in (0.98, 0.62):
+        a = T + (L - T) * (T[2] - zb) / (T[2] - L[2])
+        b = np.array([a[0], sgn * (float(leg_door_bl(zb)) - LEG_DOOR_T), zb])
+        brackets.append(cylinder(a, b, 0.012, n=10))
 
     gp = Part(f"gear_main_{side}", f"{'Right' if sgn > 0 else 'Left'} main gear (trailing link)", "gear",
               pivot=dict(origin=T.tolist(), axis=[1.0, 0, 0], kind="gear", retract=float(np.degrees(ang_retract))),
@@ -219,7 +260,7 @@ def build_main(parts, side):
     gp.add(Mesh.merge(struct + lugs), "gear_leg").add(Mesh.merge([shock_body]), "gear_leg").add(shock_rod, "chrome")
     for m, mat in wh:
         gp.add(m, mat)
-    gp.add(door_down, "paint_white")
+    gp.add(door_down, "paint_white").add(Mesh.merge(brackets), LEG_DOOR_BRACKET_MAT)
     parts[gp.id] = gp
 
 
@@ -240,23 +281,30 @@ def wing_lower_patch(x0, x1, y0, y1, n=18):
     return m
 
 
-def leg_door_patch(sgn):
-    s = SLOT
-    m = wing_lower_patch(s["cx"] - s["hx"] - 0.02, s["cx"] + s["hx"] + 0.02, s["cy"] - s["hy"] - 0.02,
-                         s["cy"] + s["hy"] + 0.02, n=16)
-    f = lambda mm: sdf2d.rrect(mm.V[:, 0], mm.V[:, 1], s["cx"], s["cy"], s["hx"] - 0.004, s["hy"] - 0.004, s["r"])
-    m = trim(m, f(m), "negative")
-    m = solidify(m.offset(-0.001), 0.02)
-    return m if sgn > 0 else m.mirrored_y()
-
-
-def well_door_patch(sgn):
-    s = WELL
-    m = wing_lower_patch(s["cx"] - s["hx"] - 0.02, s["cx"] + s["hx"] + 0.02, s["cy"] - s["hy"] - 0.02,
-                         s["cy"] + s["hy"] + 0.02, n=18)
-    f = lambda mm: sdf2d.rrect(mm.V[:, 0], mm.V[:, 1], s["cx"], s["cy"], s["hx"] - 0.004, s["hy"] - 0.004, s["r"])
-    m = trim(m, f(m), "negative")
-    m = solidify(m.offset(-0.001), 0.02)
+def leg_door_mesh(sgn):
+    """Leg door plate, gear down: leg_door_outline() (side view) on the drawn edge-on plane (outer face at
+    leg_door_bl(z)), LEG_DOOR_T thick inboard; starboard for sgn = +1."""
+    P = leg_door_outline()
+    keep = np.r_[True, np.linalg.norm(np.diff(P, axis=0), axis=1) > 1e-6]
+    P = P[keep]
+    if np.linalg.norm(P[0] - P[-1]) < 1e-6:
+        P = P[:-1]
+    ys = np.asarray(leg_door_bl(P[:, 1]), float)
+    outer = np.c_[P[:, 0], ys, P[:, 1]]
+    inner = outer - [0.0, LEG_DOOR_T, 0.0]
+    k = (LEG_DOOR["bl"][1] - LEG_DOOR["bl"][0]) / (P[:, 1].max() - P[:, 1].min())
+    nrm = np.array([0.0, 1.0, k]) / np.hypot(1.0, k)
+    f_out = planar_cap(outer, nrm)
+    f_in = planar_cap(inner, -nrm)
+    n = len(P)
+    i = np.arange(n)
+    V = np.vstack([outer, inner])
+    Fc = np.vstack([np.stack([i, (i + 1) % n, (i + 1) % n + n], 1), np.stack([i, (i + 1) % n + n, i + n], 1)])
+    rim = Mesh(V, Fc)
+    c = outer.mean(0) - [0.0, 0.5 * LEG_DOOR_T, 0.0]
+    if np.mean(np.sum((rim.V[rim.F].mean(1) - c) * rim.face_normals(), 1)) < 0:
+        rim = rim.flipped()
+    m = Mesh.merge([f_out, f_in, rim])
     return m if sgn > 0 else m.mirrored_y()
 
 
@@ -321,8 +369,14 @@ def build_nose(parts):
         m = solidify(m.offset(-0.001), 0.018)
         hy = sgn * (b["hy"] - 0.004)
         hz = float(np.mean(m.V[np.abs(m.V[:, 1] - hy) < 0.02, 2])) if np.any(np.abs(m.V[:, 1] - hy) < 0.02) else 0.83
+        # built OPEN (the gear-down pose): the doors hang open beside the leg whenever the gear is down (photo s/n
+        # 3001, wm_c087: door hanging vertically with the tyre-pressure placard) and close only once the gear is locked
+        # up.  pivot: 'open' = closed -> open rotation (deg), 'rest' = door fraction the geometry is built at (1 = open)
+        o = np.array([b["cx"], hy, hz])
+        m = m.transformed(rotation_about((1.0, 0.0, 0.0), np.radians(NOSE_DOOR_OPEN_DEG * sgn), o))
         dp = Part(f"gear_door_N{side}", f"Nose gear door ({'right' if sgn > 0 else 'left'})", "gear",
-                  pivot=dict(origin=[b["cx"], hy, hz], axis=[1.0, 0, 0], kind="gear_door", open=float(85.0 * sgn)),
+                  pivot=dict(origin=o.tolist(), axis=[1.0, 0, 0], kind="gear_door", open=float(NOSE_DOOR_OPEN_DEG * sgn),
+                             rest=1.0),
                   explode=(0, sgn * 0.25, -0.35), group="Landing gear", material_note="Composite door")
         dp.add(m, "paint_white")
         parts[dp.id] = dp
@@ -337,29 +391,58 @@ def build(parts):
     return parts
 
 
+MAIN_BAY_ROOF_GAP = 0.006           # main-bay liner roof under the wing upper skin (m)
+
+
+def _wing_z(x, y, upper):
+    """Wing upper / lower surface WL at plan points (x, y) (arrays, |y| used)."""
+    x, y = np.broadcast_arrays(np.asarray(x, float), np.abs(np.asarray(y, float)))
+    out = np.empty(x.shape)
+    for yy in np.unique(np.round(y, 6)):
+        k = np.abs(y - yy) < 5e-7
+        s = W.section_at(float(yy))
+        xc = np.clip((x[k] - s.le[0]) / s.chord, 0, 1)
+        out[k] = (s.upper if upper else s.lower)(xc)[..., 2]
+    return out
+
+
+def main_bay_outline(res=0.004):
+    """Starboard plan outline (N, 2) of the main-gear bay liner: the zero contour of bays.main_bay_sdf."""
+    import contourpy
+    xs = np.arange(5.75, 6.85, res)
+    ys = np.arange(1.00, 2.50, res)
+    X, Y = np.meshgrid(xs, ys)
+    lines = contourpy.contour_generator(X, Y, main_bay_sdf(X, Y)).lines(0.0)
+    P = max(lines, key=len)
+    if np.linalg.norm(P[0] - P[-1]) < 1e-9:
+        P = P[:-1]
+    return P
+
+
 def bay_tubs(parts):
-    """Zinc-chromate wheel-well liners (visible with the doors open)."""
+    """Zinc-chromate wheel-well liners (visible with the doors open).  Main bays: walls round bays.main_bay_sdf (wheel
+    well + leg slot + brace slot / pocket) from the lower skin up to a roof MAIN_BAY_ROOF_GAP under the wing upper
+    skin, so the stowed tyre, leg, shock strut and folded side brace lie inside the liner (M1 / M4 / M6)."""
     from cad.mesh import planar_cap
     from cad.sdf2d import rrect_outline
     meshes = []
+    ol = main_bay_outline()
+    zlo = _wing_z(ol[:, 0], ol[:, 1], False) - 0.004
+    zhi = _wing_z(ol[:, 0], ol[:, 1], True) - MAIN_BAY_ROOF_GAP
+    n = len(ol)
+    k = np.arange(n)
+    Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
+    xs = np.linspace(ol[:, 0].min() - 0.01, ol[:, 0].max() + 0.01, 90)
+    ys = np.linspace(ol[:, 1].min() - 0.01, ol[:, 1].max() + 0.01, 120)
+    X, Y = np.meshgrid(xs, ys, indexing="ij")
+    roof = grid_surface(np.stack([X, Y, _wing_z(X, Y, True) - MAIN_BAY_ROOF_GAP], -1))
+    roof = trim(roof, main_bay_sdf(roof.V[:, 0], roof.V[:, 1]), "negative")
+    if roof.N[:, 2].mean() > 0:
+        roof = roof.flipped()
     for sgn in (1, -1):
-        for o in (WELL, SLOT):
-            ol = rrect_outline(o["cx"], o["cy"], o["hx"], o["hy"], o["r"], n_corner=8)
-            zs = []
-            for x, y in ol:
-                sec = W.section_at(y)
-                xc = np.clip((x - sec.le[0]) / sec.chord, 0, 1)
-                zs.append(float(sec.lower(np.array(xc))[2]))
-            zs = np.array(zs)
-            ztop = zs.min() + 0.20
-            lo = np.stack([ol[:, 0], ol[:, 1] * sgn, zs - 0.004], 1)
-            hi = np.stack([ol[:, 0], ol[:, 1] * sgn, np.full(len(zs), ztop)], 1)
-            n = len(ol)
-            V = np.vstack([lo, hi])
-            k = np.arange(n)
-            Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
-            meshes.append(Mesh(V, Fc))
-            meshes.append(planar_cap(hi, (0, 0, -1)))
+        wall = Mesh(np.vstack([np.c_[ol[:, 0], sgn * ol[:, 1], zlo], np.c_[ol[:, 0], sgn * ol[:, 1], zhi]]), Fc)
+        meshes.append(wall)
+        meshes.append(roof if sgn > 0 else roof.mirrored_y())
     b, tu = NOSE_BAY, NOSE_TUNNEL
     ol = rrect_outline(b["cx"], b["cy"], b["hx"], b["hy"], b["r"], n_corner=8)
     zs = np.array([float(F.z_bot(x)) + 0.01 for x, y in ol])

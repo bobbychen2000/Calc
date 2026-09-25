@@ -76,18 +76,37 @@ def fitted_plate(x0, x1, z, inset=0.06, n=16, thick=0.03, y_min=0.0):
     return Mesh.merge(out)
 
 
+def tunnel_hump(TU, wall=0.02, top_gap=0.025, n_corner=6):
+    """Nose-wheel tunnel hump under the centre pedestal: an OPEN shell (side walls from under the flight-deck floor up
+    to the top plate, no bottom face), so the stowed nose wheel and drag brace rise into it (M7; a closed box capped
+    the tunnel at WL 1.21)."""
+    from cad.sdf2d import rrect_outline
+    ol = rrect_outline(0.5 * (TU["x0"] + TU["x1"]), 0.0, 0.5 * (TU["x1"] - TU["x0"]) + wall, TU["hy"] + wall, 0.05,
+                       n_corner=n_corner)
+    z0, z1 = FD_FLOOR_Z - 0.03, TU["z_top"] + top_gap
+    n = len(ol)
+    k = np.arange(n)
+    V = np.vstack([np.c_[ol, np.full(n, z0)], np.c_[ol, np.full(n, z1)]])
+    Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
+    walls = Mesh(V, Fc)
+    c = np.array([0.5 * (TU["x0"] + TU["x1"]), 0.0, 0.5 * (z0 + z1)])
+    if np.mean(np.sum((walls.V[walls.F].mean(1) - c) * walls.face_normals(), 1)) < 0:
+        walls = walls.flipped()
+    return Mesh.merge([walls, planar_cap(np.c_[ol, np.full(n, z1)], (0, 0, 1))])
+
+
 def build_flightdeck(parts):
     m_leather, m_frame, m_panel, m_metal = [], [], [], []
     screens = {}
     # flight-deck floor (raised over the nose-wheel well), fitted to the section, with the nose-wheel tunnel hump
     # under the centre pedestal (gear.NOSE_TUNNEL: the retracted nose wheel stows there)
     from model.gear import NOSE_TUNNEL as TU
-    m_frame.append(fitted_plate(3.26, TU["x0"], FD_FLOOR_Z, inset=0.07, n=4))
-    m_frame.append(fitted_plate(TU["x0"], TU["x1"], FD_FLOOR_Z, inset=0.07, n=16, y_min=TU["hy"] + 0.012))
+    x_fd0 = 3.26                                       # forward end of the flight-deck floor
+    if TU["x0"] > x_fd0 + 1e-3:
+        m_frame.append(fitted_plate(x_fd0, TU["x0"], FD_FLOOR_Z, inset=0.07, n=4))
+    m_frame.append(fitted_plate(max(TU["x0"], x_fd0), TU["x1"], FD_FLOOR_Z, inset=0.07, n=16, y_min=TU["hy"] + 0.012))
     m_frame.append(fitted_plate(TU["x1"], 4.34, FD_FLOOR_Z, inset=0.07, n=6))
-    m_panel.append(rbox((0.5 * (TU["x0"] + TU["x1"]), 0.0, 0.5 * (FD_FLOOR_Z - 0.03 + TU["z_top"] + 0.025)),
-                        (TU["x1"] - TU["x0"] + 0.02, 2 * TU["hy"] + 0.04, TU["z_top"] + 0.025 - FD_FLOOR_Z + 0.03),
-                        e=0.18))
+    m_panel.append(tunnel_hump(TU))
     # instrument panel: a tilted plate whose outline follows the fuselage section
     tilt = np.radians(12)
     Rp = roty(-12)
@@ -119,8 +138,10 @@ def build_flightdeck(parts):
         m_metal.append(bezel)
         screens.setdefault(key, []).append(glass)
     # centre pedestal with two 7-in touchscreen SDUs + power lever + cursor control
-    ped_c = np.array([3.80, 0, FD_FLOOR_Z + 0.27])
-    m_panel.append(rbox(ped_c, (0.62, 0.22, 0.52), e=0.2))
+    # the pedestal stands on the tunnel hump (its bottom at the hump top, not inside the tunnel: M7)
+    ped_z0, ped_z1 = TU["z_top"] + 0.025, FD_FLOOR_Z + 0.53
+    ped_c = np.array([3.80, 0, 0.5 * (ped_z0 + ped_z1)])
+    m_panel.append(rbox(ped_c, (0.62, 0.22, ped_z1 - ped_z0), e=0.2))
     Rt = roty(-35)
     for kk, x in enumerate((3.60, 3.84)):
         c = np.array([x, 0, FD_FLOOR_Z + 0.55 - 0.08 * kk])
@@ -265,6 +286,44 @@ def frame_stations():
     return out
 
 
+RIB_BAY_CLEAR = 0.012          # ribs stop this far outside the main-gear bay liner (plan)
+REAR_SPAR = 0.66               # rear-spar chord fraction
+
+
+def rib_chord_end(y):
+    """Aft end (chord fraction) of the wing box at BL y: the rear spar inside the flap / aileron bays (10 mm ahead of
+    the cove where the cove reaches further forward), otherwise the trailing-edge rib end (97 %)."""
+    if W.Y_FLAP[0] <= y <= W.Y_FLAP[1]:
+        return min(REAR_SPAR, float(W.flap_cove(W.section_at(y))[:, 0].min()) - 0.01)
+    if W.Y_AIL[0] <= y <= W.Y_AIL[1]:
+        return min(REAR_SPAR, min(W.x_end_of_plain(W.section_at(y), float(W.ail_xh(y)))) - 0.01)
+    return 0.97
+
+
+def rib_chord_spans(y, x0=0.02, x1=0.97, min_len=0.02):
+    """Chord-fraction spans [(xa, xb)] of the wing rib at BL y (M5): 2-97 % chord, ending at the rear spar (66 %,
+    or just ahead of the cove) inside the flap and aileron bays, and cut round the main-gear bay liner
+    (bays.main_bay_sdf + RIB_BAY_CLEAR) so no rib crosses the wheel well, leg slot or brace pocket."""
+    from model.bays import main_bay_sdf
+    x1 = min(x1, rib_chord_end(y))
+    s = W.section_at(y)
+    xc = np.linspace(x0, x1, 400)
+    xs = s.lower(xc)[:, 0]
+    ok = main_bay_sdf(xs, np.full_like(xs, y)) > RIB_BAY_CLEAR
+    spans, i = [], 0
+    while i < len(xc):
+        if ok[i]:
+            j = i
+            while j + 1 < len(xc) and ok[j + 1]:
+                j += 1
+            if xc[j] - xc[i] >= min_len:
+                spans.append((float(xc[i]), float(xc[j])))
+            i = j + 1
+        else:
+            i += 1
+    return spans
+
+
 def build_structure(parts):
     from model import empennage as E
     from model.fuselage_parts import bulkhead, nose_trunnion_notch
@@ -302,8 +361,9 @@ def build_structure(parts):
         ys = np.linspace(-W.SEMI + 0.05, W.SEMI - 0.05, 60)
         for y in ys:
             s = W.section_at(abs(y))
-            lo = s.lower(np.array(frac)) * [1, np.sign(y) if y != 0 else 1, 1]
-            up = s.upper(np.array(frac)) * [1, np.sign(y) if y != 0 else 1, 1]
+            fr = frac if frac < 0.5 else min(frac, rib_chord_end(abs(y)))     # rear spar ahead of the aileron cove
+            lo = s.lower(np.array(fr)) * [1, np.sign(y) if y != 0 else 1, 1]
+            up = s.upper(np.array(fr)) * [1, np.sign(y) if y != 0 else 1, 1]
             lo = np.array([lo[0], y, lo[2] + 0.004])
             up = np.array([up[0], y, up[2] - 0.004])
             rows.append(np.linspace(lo, up, 4))
@@ -312,12 +372,12 @@ def build_structure(parts):
         sp.append(m)
     ribs = []
     for y in list(np.arange(0.9, W.SEMI - 0.2, 0.55)):
-        s = W.section_at(y)
-        xx = np.linspace(0.02, 0.97, 30)
-        loop = np.vstack([s.lower(xx[::-1]) + [0, 0, 0.004], s.upper(xx[1:]) - [0, 0, 0.004]])
-        for sg in (1, -1):
-            r = planar_cap(loop * [1, sg, 1], (0, sg, 0))
-            ribs.append(r)
+        for xa, xb in rib_chord_spans(y):
+            s = W.section_at(y)
+            xx = np.linspace(xa, xb, max(4, int(np.ceil((xb - xa) / 0.03)) + 1))
+            loop = np.vstack([s.lower(xx[::-1]) + [0, 0, 0.004], s.upper(xx[1:]) - [0, 0, 0.004]])
+            for sg in (1, -1):
+                ribs.append(planar_cap(loop * [1, sg, 1], (0, sg, 0)))
     p = Part("structure", "Primary structure: frames, stringers, spars, ribs", "structure", group="Structure",
              material_note="2024-T3 / 7075-T6, zinc-chromate primed",
              info={"frames": f"{len(frames)}: {frames[0][0]} (STA {frames[0][1] * 1000:.0f}) - {frames[-1][0]} "

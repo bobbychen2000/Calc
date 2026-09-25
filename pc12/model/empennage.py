@@ -550,6 +550,27 @@ def rudder_split_z(x):
     return rudder_top_z(np.maximum(np.asarray(x, float), xn))
 
 
+def _ruled_cap(plus, minus, z_of_x, up):
+    """Cap across a thin surface's edge: rows at constant station x from the -y chain to the +y chain (each (N, 2) of
+    (x, y), any order), all at WL z_of_x(x).  Unlike planar_cap on a loop whose edge line kinks in side view, no
+    triangle spans the kink, so the cap lies exactly on the (piecewise-linear) edge surface (M8: the rudder's top
+    cap domed 10-15 mm into the fin tip)."""
+    plus = np.asarray(plus, float)[np.argsort(np.asarray(plus)[:, 0], kind="stable")]
+    minus = np.asarray(minus, float)[np.argsort(np.asarray(minus)[:, 0], kind="stable")]
+    lo, hi = max(plus[0, 0], minus[0, 0]), min(plus[-1, 0], minus[-1, 0])
+    xs = np.unique(np.round(np.r_[plus[:, 0], minus[:, 0]], 7))
+    xs = xs[(xs >= lo - 1e-9) & (xs <= hi + 1e-9)]
+    yp = np.interp(xs, plus[:, 0], plus[:, 1])
+    ym = np.interp(xs, minus[:, 0], minus[:, 1])
+    z = np.asarray(z_of_x(xs), float)
+    P = np.stack([np.c_[xs, ym, z], np.c_[xs, yp, z]], 1)
+    m = grid_surface(P)
+    if (m.face_normals()[:, 2].mean() > 0) != bool(up):
+        m = m.flipped()
+    m.N = np.tile([0.0, 0.0, 1.0 if up else -1.0], (len(m.V), 1))
+    return m
+
+
 def _fin_tip_cap():
     """Lower face of the fixed fin tip over the rudder: along the sloped top edge (+gap) from the cove to the TE, closed
     at the front by the cove arc at the flat part of the edge."""
@@ -564,26 +585,50 @@ def _fin_tip_cap():
         xs = np.linspace(float(arc[0, 0]), float(fin_te(zz[-1])) - 0.002, 40)
         zz = np.array([float(rudder_split_z(x)) + RUD_EDGE_GAP for x in xs])
     hw = fin_halfwidth(xs, zz)
-    side_s = np.c_[xs, hw, zz]
-    side_p = np.c_[xs, -hw, zz][::-1]
-    loop = np.vstack([arc[::-1], side_s[1:], side_p[1:-1]])
-    return planar_cap(loop, (0, 0, -1))
+    plus = np.vstack([arc[arc[:, 1] >= 0][:, :2], np.c_[xs, hw]])
+    minus = np.vstack([arc[arc[:, 1] <= 0][:, :2], np.c_[xs, -hw]])
+    return _ruled_cap(plus, minus, lambda x: rudder_split_z(x) + RUD_EDGE_GAP, up=False)
+
+
+def _cut_bottom_z():
+    """WL where the tail-cut plane meets the rudder's bottom edge (VENTRAL_EDGE line)."""
+    z = 1.8
+    for _ in range(40):
+        z = float(rudder_bottom_z(tail_cut_x(z)))
+    return z
 
 
 def _fin_keel_cap():
-    """Cap closing the fixed fin strip behind the tail-cone closure (cut plane -> cove) at the keel line."""
+    """Caps closing the fixed fin strip + cove behind the tail-cone closure below the keel (CONS-05): the strip runs
+    down to the rudder's bottom edge (VENTRAL_EDGE line), so the ventral fairing continues into a fixed cove round the
+    rudder nose like the fin above the keel.  Bottom cap in the sloped bottom-edge plane (cut plane -> cove), front cap
+    in the cut plane between that edge and the keel."""
     from model.wing import plain_cove
-    zb = _cut_z_range()[0]
-    sec = fin_section(zb)
-    cove, _ = plain_cove(sec, RUD_XH, RUD_COVE_GAP)
-    arc = sec.point(cove[:, 0], cove[:, 1])
-    xs = np.linspace(float(tail_cut_x(zb)), float(arc[0, 0]), 10)
-    hw = fin_halfwidth(xs, np.full_like(xs, zb))
-    side_s = np.c_[xs, hw, np.zeros_like(xs)]
-    side_p = np.c_[xs, -hw, np.zeros_like(xs)][::-1]
-    loop = np.vstack([side_s, arc[1:-1] * [1, 1, 0], side_p])
-    loop[:, 2] = F.z_bot(np.clip(loop[:, 0], F.STA["cowl_front"], F.STA["tail_end"])) + 0.003
-    return planar_cap(loop, (0, 0, -1))
+    zb = _cut_bottom_z()
+    x_cut = float(tail_cut_x(zb))
+    x_arc = None
+    for _ in range(4):                                         # cove front on the bottom edge (z moves with x)
+        zc = float(rudder_bottom_z(x_arc if x_arc is not None else x_cut))
+        sec = fin_section(zc)
+        cove, _ = plain_cove(sec, RUD_XH, RUD_COVE_GAP)
+        arc = sec.point(cove[:, 0], cove[:, 1])
+        x_arc = float(arc[0, 0])
+    xs = np.linspace(x_cut, x_arc, 12)
+    zs = rudder_bottom_z(xs)
+    hw = fin_halfwidth(xs, zs)
+    side_s = np.c_[xs, hw, zs]
+    side_p = np.c_[xs, -hw, zs][::-1]
+    loop = np.vstack([side_s, arc[1:-1], side_p])
+    loop[:, 2] = rudder_bottom_z(loop[:, 0])
+    n_b = np.array([-(VENTRAL_EDGE[1][1] - VENTRAL_EDGE[0][1]) / (VENTRAL_EDGE[1][0] - VENTRAL_EDGE[0][0]), 0.0, 1.0])
+    bottom = planar_cap(loop, -n_b / np.linalg.norm(n_b))
+    # front face in the cut plane: bottom edge -> keel, between the fin surfaces
+    zk = _cut_z_range()[0]
+    zf = np.linspace(zb, zk + 0.004, 10)
+    xf = tail_cut_x(zf)
+    hf = fin_halfwidth(xf, zf)
+    front = planar_cap(np.vstack([np.c_[xf, hf, zf], np.c_[xf, -hf, zf][::-1]]), -tail_cut_normal())
+    return Mesh.merge([bottom, front])
 
 
 def ventral_fairing(n_ring=24):
@@ -627,20 +672,28 @@ def rudder_body():
     body = _trim(body, body.V[:, 2] - rudder_bottom_z(body.V[:, 0]), "positive")
     body = _trim(body, body.V[:, 2] - (rudder_split_z(body.V[:, 0]) - RUD_EDGE_GAP), "negative")
     caps = []
+    z_top = float(rudder_split_z(fin_te(3.8))) - RUD_EDGE_GAP
     for lp in _bl(body):
         P = body.V[lp]
         up = P[:, 2].mean() > 3.0
-        caps.append(planar_cap(P, (0, 0, 1) if up else (0, 0, -1)))
+        if P[:, 2].max() > z_top - 0.02 and np.ptp(P[:, 2]) > 0.001:
+            # rudder top: ruled across the thickness on the sloped (kinked) top-edge line
+            caps.append(_ruled_cap(P[P[:, 1] >= -1e-9][:, :2], P[P[:, 1] <= 1e-9][:, :2],
+                                   lambda x: rudder_split_z(x) - RUD_EDGE_GAP, up=True))
+        else:                                     # flat ends (tab-bay ends) and the straight ventral-edge bottom
+            caps.append(planar_cap(P, (0, 0, 1) if up else (0, 0, -1)))
     return Mesh.merge([body] + caps), tab, hinge
 
 
 def fin_mesh():
     """Fixed fin: skins with the rudder cove, trimmed to the tail-cone OML (the root stands on the cone, nothing below
-    its maximum-breadth line: the ventral part is ventral_fairing()) and to the sloped rudder top edge."""
+    its maximum-breadth line: the ventral part is ventral_fairing()) and to the sloped rudder top edge.  Behind the
+    tail-cone closure the strip + cove round the rudder nose run down to the rudder's bottom edge (below the keel too,
+    CONS-05)."""
     from model.wing import plain_cove, x_end_of_plain, cut_rib
     from cad.mesh import trim as _trim
     zT0 = float(rudder_split_z(0.0)) + RUD_EDGE_GAP
-    zB = span_stations(RUD_Z[0], zT0, 0.06)
+    zB = span_stations(_cut_bottom_z() - 0.03, zT0, 0.06)
     xl_e, xu_e = x_end_of_plain(fin_section(float(np.mean(RUD_Z))), RUD_XH, RUD_COVE_GAP)
     lower = [skin(fin_section, zB, x_lo_end=xl_e, x_up_end=xu_e, n=56),
              curve_patch(fin_section, zB, lambda s: plain_cove(s, RUD_XH, RUD_COVE_GAP)[0], n=16,
@@ -651,16 +704,26 @@ def fin_mesh():
     out = []
     X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
 
-    def keep(V):
-        """> 0 where the fixed fin is kept: above the tail cone (outside the OML, over its max-breadth line) or,
-        behind the tail-cone closure, the strip + cove round the rudder nose down to the keel line."""
-        xc = np.clip(V[:, 0], X0, X1)
-        above = np.minimum(oml_field(V), V[:, 2] - F.z_mw(xc))
-        behind = np.minimum(tail_cut_field(V[:, 0], V[:, 2]), V[:, 2] - F.z_bot(xc) - 0.003)
-        return np.maximum(above, behind)
+    def keep(m):
+        """The fixed fin part of a lower skin: ahead of the tail cut, above the tail cone (outside the OML, over its
+        max-breadth line); behind it, the strip + cove round the rudder nose down to the rudder's bottom edge.  Cut in
+        sequential single-field trims (split at the cut plane first), so the strip's bottom-front corner is exact."""
+        f = tail_cut_field(m.V[:, 0], m.V[:, 2])
+        ahead, aft = _trim(m, f, "negative"), _trim(m, f, "positive")
+        res = []
+        if ahead.nf:
+            xc = np.clip(ahead.V[:, 0], X0, X1)
+            a = _trim(ahead, np.minimum(oml_field(ahead.V), ahead.V[:, 2] - F.z_mw(xc)), "positive")
+            if a.nf:
+                res.append(a)
+        if aft.nf:
+            b = _trim(aft, aft.V[:, 2] - rudder_bottom_z(aft.V[:, 0]), "positive")
+            if b.nf:
+                res.append(b)
+        return res
 
     for m in lower:
-        out.append(_trim(m, keep(m.V), "positive"))
+        out += keep(m)
     for m in upper:
         out.append(_trim(m, m.V[:, 2] - (rudder_split_z(m.V[:, 0]) + RUD_EDGE_GAP), "positive"))
     out.append(_fin_tip_cap())

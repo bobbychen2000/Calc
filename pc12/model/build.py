@@ -69,7 +69,8 @@ def _steps():
          "from the fairing nose along the wing root, fading out ahead of the cargo door."),
         ("controls_wing", "Flaps & ailerons",
          "A single-piece Fowler flap covers 67 % of each trailing edge, stowed under a long shroud and running on "
-         "three track fairings (0/15/30/40°). The constant-chord ailerons have a straight hinge line; each "
+         "three track fairings per side (0/15/30/40°), each split at the cove lip: the aft part rides down and aft "
+         "with the flap. The constant-chord ailerons have a straight hinge line; each "
          "carries a Flettner geared balance tab that moves opposite to the aileron, the left one doubling as "
          "electric trim. Coves and noses share the wing's own sections, so the gaps are exact."),
         ("winglets", "Winglets",
@@ -101,7 +102,8 @@ def _steps():
          "Per the POH, electromechanical actuators drive the gear and over-centre two-piece folding struts "
          "lock it down. The trailing-link mains retract inward, with one door each attached to the leg; the "
          "tyres stay about 1 inch proud of the wells. The nose unit retracts aft into a tunnel under the centre "
-         f"pedestal and is fully enclosed by its doors. Track {G.TRACK * 1000:,.0f} mm, wheelbase "
+         "pedestal; its two doors hang open while the gear is down and enclose it once it is locked up. "
+         f"Track {G.TRACK * 1000:,.0f} mm, wheelbase "
          f"{G.WHEELBASE * 1000:,.0f} mm, prop clearance {PP.prop_clearance() * 1000:.0f} mm."),
         ("interior", "Flight deck & cabin",
          "The PC-12 PRO flight deck has Garmin G3000 PRIME: three 14-inch touchscreens and two touch "

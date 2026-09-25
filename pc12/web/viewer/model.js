@@ -14,7 +14,7 @@ export const XRAY_PARTS = new Set([
   ...[...CUT_PARTS].filter((id) => id !== 'structure'),
   'wing_R', 'wing_L', 'winglet_R', 'winglet_L', 'fin', 'rudder', 'rudder_tab', 'stabilizer',
   'elevator_R', 'elevator_L', 'tail_bullet', 'flap_R', 'flap_L', 'aileron_R', 'aileron_L', 'ail_tab_R',
-  'ail_tab_L', 'flap_fairings', 'strakes', 'radar_pod',
+  'ail_tab_L', 'flap_fairings', 'flap_canoes_R', 'flap_canoes_L', 'strakes', 'radar_pod',
 ]);
 // Parts that sit inside the skin (for the "use X-ray / cutaway" hint).
 export const INTERNAL_PARTS = new Set([

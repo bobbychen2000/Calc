@@ -3,7 +3,7 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (69 parts, ~690k tris, hinge pivots in node
+engineering-drawing generator. Output: `out/pc12.glb` (71 parts, ~750k tris, hinge pivots in node
 extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
 `out/drawings/L1..L5` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`),
 `out/pc12_ga.svg|pdf` (legacy A1 GA, hidden-line from the mesh) and `out/pc12_sections.svg|pdf` (A2 sections).
@@ -13,7 +13,11 @@ extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension c
 pip install numpy scipy matplotlib pillow reportlab playwright   # lxml optional
 python3 model/build.py          # build all parts -> out/pc12.glb + out/pc12_meta.json + prints 10 dimension checks
 python3 test/fit_check.py       # interference / kinematics checks (interior + engine in the skin, spinner at the cowl,
-                                #   carry-through under the floor, tail / rudder clearances, retracted gear, brace knees)
+                                #   carry-through under the floor, tail / rudder clearances, retracted gear, brace knees,
+                                #   exact triangle-crossing sweeps (test/isect.py): main gear + brace in the bay liner,
+                                #   nose gear vs doors / flight deck, flaps + canoes, rudder); '[open]' rows are known
+                                #   conflicts in the approved parameters that need an owner decision (they do not fail)
+python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L5
 python3 -m drawing.master       # the Stage-2 drawing set L1-L5 from the parameter modules (~2.5 min)
 python3 -m drawing.sheet        # hidden-line drawings (~30 s) -> out/pc12_ga.*, out/pc12_sections.*
 python3 -m drawing.verify       # measures the SVG itself against the dimensions
@@ -50,9 +54,13 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
 - Movable parts carry `extras.pivot = {origin, axis (gl), kind, ...}`: kinds `spin` (propeller),
   `pitch` (blades: feather/reverse deg), `flap` (Fowler: rotate + `travel`), `aileron`, `elevator`,
   `rudder`, `trim` (stabiliser), `tab` (`gearing` × parent deflection), `door` (`open` rad),
-  `gear` (`retract` deg), `gear_door` (`open` deg), `brace` (two-link over-centre strut: upper link
-  rotates about A, lower link about knee K0; solve the knee with `model/brace.py:solve_knee`, the
-  leg attach point B0 moves with the parent `gear` node). Geometry is built gear-down, doors closed.
+  `gear` (`retract` deg), `gear_door` (`open` deg = closed -> open, `rest` = the door fraction the geometry is
+  built at), `brace` (two-link over-centre strut: upper link rotates about A, lower link about knee K0; solve the knee
+  with `model/brace.py:solve_knee`, the leg attach point B0 moves with the parent `gear` node). Geometry is built
+  gear-down, cabin doors closed; the nose-gear clamshells are built OPEN (`rest` 1: they hang open beside the leg
+  whenever the gear is down or travelling and close only once it is locked up, photo s/n 3001), so a node's rotation
+  is `open * (door - rest)`. Parts without a pivot may be children of a moving part (the aft flap-track canoes
+  `flap_canoes_R/L` ride on the flaps).
 
 ## Layout
 - `cad/mesh.py` kernel: `grid_surface`, `trim` (marching-triangles implicit trimming), `band`,
@@ -74,9 +82,12 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   stacks), `gear.py` (+ `bays.py`, `brace.py`; nose retracts 105° into a tunnel under the pedestal, unequal-link
   braces), `interior.py` (flight deck, cabin on CABIN_FLOOR_WL, frames at the Pilatus frame stations),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
-  horizontal offset of the OML, so its side / plan outlines are the drawn ones; lights, antennas, pod),
+  horizontal offset of the OML, so its side / plan outlines are the drawn ones; flap-track canoes split at the cove lip
+  into a fixed forward part and an aft part carried by the flap; lights, antennas, pod),
   `livery.py` (PC-12 PRO MSN 3008 scheme; the 3-D painter trims with one-sided smooth fields so thin strokes stay
-  continuous; zero-area slivers from trims are dropped by `cad/glb.py`), `build.py` (steps + verification),
+  continuous; zero-area slivers from trims are dropped by `cad/glb.py`; per-surface bands -- wing / tailplane boots,
+  winglet pinstripe, blade tip bands about the thrust axis, blade LE erosion strip -- are cut with sequential
+  single-sided trims, never one V-shaped max() field), `build.py` (steps + verification),
   `drawing/` (Stage-2 sheets L1-L5 via `drawing.master`; legacy HLR GA via `drawing.sheet`).
 
 ## Sourced facts (keep these fixed)
@@ -107,9 +118,12 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
 - Stage 3 (3-D build from the approved parameters): `model/build.py` consumes the Stage-2 parameters end to end;
   `test/fit_check.py`, `test/viewer_test.py`, `drawing.sheet/verify` and `drawing.master` pass. Known open items
   (not modelled / needing an owner decision): the drawn fairing tail lobe aft of the cargo-door seam (STA 7540-8585,
-  it overlaps the D2 panel; the root fillet fades out ahead of the seam instead), the drawn leg-door face
-  (gear.LEG_DOOR: its front-view plane BL 2358-2472 would stow ~0.1 m below the wing; the 3-D door is still the
-  flush bays.SLOT patch), cargo-door gas struts; dihedral: decision D4 quotes 6.15 deg, the approved L4 / wing.py
-  value (rev B airfoils) is 6.23 deg, which the model uses.
+  it overlaps the D2 panel; the root fillet fades out ahead of the seam instead); the main-gear leg door: the 3-D door
+  is the drawn gear.LEG_DOOR face in its drawn plane (BL 2358-2472, outboard of the tyre), rigid on the leg, and the
+  wing slot is its footprint -- but retracted it lies 105-142 mm BELOW the wing lower skin
+  (`gear.leg_door_retracted_drop`; fit_check '[open]'): the plane is 93-207 mm outboard of the leg / wheel plane,
+  the drawn trunnion is at the lower skin and the tyre stows 1 in proud, so no rigid door in that plane can close
+  flush (in-flight photos show a flush underside) -- owner decision; cargo-door gas struts; dihedral: decision D4
+  quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
 - Stage 4: Blender (Cycles) beauty renders (`render/blender_ortho.py` for calibrated views) and the three.js
   viewer (`web/`, three.js r160 in `web/three_local`).

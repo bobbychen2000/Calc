@@ -1121,6 +1121,10 @@ def check_L4(ctx, rep, plots):
         ventral=np.c_[vx, vz0 + (vz1 - vz0) * (vx - vx0) / (vx1 - vx0)],
         bullet_top=Bt[:, [0, 1]], bullet_bot=Bt[:, [0, 2]], bullet_end=Bt[-1:, [0, 1, 0, 2]].reshape(2, 2),
         strake=np.array([E.STRAKE_ROOT[0], E.STRAKE_TIP[0], E.STRAKE_TIP[1], E.STRAKE_ROOT[1]]),
+        # the sloped rudder top edge (E.rudder_outline, drawn on L4): the rudder / fin-tip gap (RUD_EDGE_GAP each side
+        # of it) is a see-through slit in the side view
+        rudder_top=np.c_[np.linspace(E.rudder_edge_point(E.RUD_NOSE_XC, "top")[0], E.fin_te(3.77), 120),
+                         E.rudder_top_z(np.linspace(E.rudder_edge_point(E.RUD_NOSE_XC, "top")[0], E.fin_te(3.77), 120))],
     )
     cur = Curves(list(curves.values()), step=0.001)
     d, lab = cur.dist(sil)

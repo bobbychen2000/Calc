@@ -1087,6 +1087,12 @@ def draw_detail_blade(ds):
         hh = np.interp(rr, r, hw)
         Q = [pt(a, -b) for a, b in zip(rr, hh)] + [pt(a, b) for a, b in zip(rr[::-1], hh[::-1])]
         ds.cv.polygon(Q, fill=col(mat))
+    # leading-edge erosion shield (livery.BLADE_LE_STRIP, upper edge here = the leading edge), inboard of the bands
+    le = L.BLADE_LE_STRIP
+    rr = np.linspace(max(1.05, le["r0"]), PP.PROP_R - L.PROP_BANDS[-1][2], 12)
+    hh = np.interp(rr, r, hw)
+    Q = [pt(a, -b) for a, b in zip(rr, hh)] + [pt(a, -b + le["width"]) for a, b in zip(rr[::-1], hh[::-1])]
+    ds.cv.polygon(Q, fill=col(L.SURFACES["blade_le"]))
     ds.cv.path(P, W_FINE, closed=True, color=EDGE)
     yd = y0 + float(hw.max()) * k + 5.0
     edges = sorted({PP.PROP_R - a for _, a, _ in L.PROP_BANDS} | {PP.PROP_R - b for _, _, b in L.PROP_BANDS})
@@ -1097,8 +1103,9 @@ def draw_detail_blade(ds):
     for mat, a0, a1 in L.PROP_BANDS:
         Xa, Xb = pt(PP.PROP_R - a1, 0)[0], pt(PP.PROP_R - a0, 0)[0]
         ds.text(0.5 * (Xa + Xb), yd + 4.0, f"{(a1 - a0) * 1000:.0f}", 2.2, "mono", "middle", tag="dim")
-    ds.text(x0, yd + 9.0, "white tip / black / red band, measured inward from the tip (R 1335); blade leading edge: "
-            "metal erosion strip", 1.9, "label", "start", fill=MUTED, tag="lbl")
+    ds.text(x0, yd + 9.0, "white tip / black / red band, measured inward from the tip (R 1335); leading edge (upper "
+            f"edge here): metal erosion strip {L.BLADE_LE_STRIP['width'] * 1000:.0f} mm, R {L.BLADE_LE_STRIP['r0'] * 1000:.0f}"
+            " to the red band", 1.9, "label", "start", fill=MUTED, tag="lbl")
     view_title(ds, x0 + 0.5 * (PP.PROP_R - 1.05) * k, y0 - float(hw.max()) * k - 9.0, "DETAIL A - BLADE TIP",
                "livery.PROP_BANDS - SCALE 1:5", size=3.2)
 

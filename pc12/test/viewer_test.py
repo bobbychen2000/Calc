@@ -9,7 +9,7 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
   - flap trailing edge moves down and aft; Fowler travel matches the pivot data
   - ailerons / elevators / rudder / stabiliser / tabs move in the documented directions,
     tabs opposite to their surfaces
-  - nose doors are open whenever the nose gear is between the locks (instant poses and the
+  - nose doors are open whenever the nose gear is not locked up (gear down and in transit; instant poses and the
     real animated sequence); mains retract inward, nose gear aft; doors open outward
   - review round-1 regressions: gear readout when scrubbed, readouts never stale, shortcuts after a
     slider / button click, search Escape, wing structure hidden once the skins land, nothing below
@@ -353,14 +353,17 @@ async def numeric_checks(page):
       const wheel = (id) => { const b = T.box(id); return [b.center[0], b.min[1] + 0.22, b.center[2]]; };
       const P = {};
       for (const id of ['gear_main_R', 'gear_main_L', 'gear_nose']) { const p = wheel(id); P[id] = {w0: p, loc: T.attach(id, p)}; }
-      for (const id of ['gear_door_NR', 'gear_door_NL']) {
-        const b = T.box(id), p = [id.endsWith('R') ? b.min[0] + 0.01 : b.max[0] - 0.01, b.center[1], b.center[2]];   // free (inboard) edge
-        P[id] = {w0: p, loc: T.attach(id, p)};
-      }
+      out.downDoor = V.state.gear.door;
       V.setGear(1, {instant: true});
       for (const id of ['gear_main_R', 'gear_main_L', 'gear_nose']) out[id] = T.sub(T.world(id, P[id].loc), P[id].w0);
+      out.upDoor = V.state.gear.door;
+      // nose-door free (inboard) edges, taken with the gear locked up (doors closed)
+      for (const id of ['gear_door_NR', 'gear_door_NL']) {
+        const b = T.box(id), p = [id.endsWith('R') ? b.min[0] + 0.01 : b.max[0] - 0.01, b.center[1], b.center[2]];
+        P[id] = {w0: p, loc: T.attach(id, p)};
+      }
       const samples = [];
-      for (let k = 1; k <= 9; k++) {
+      for (let k = 0; k <= 9; k++) {
         V.setGear(k / 10, {instant: true});
         const s = V.state.gear;
         samples.push({f: k / 10, door: s.door, doorDeg: s.noseDoorDeg, noseDeg: s.noseDeg,
@@ -376,7 +379,7 @@ async def numeric_checks(page):
         for (let i = 0; i < 400; i++) {
           const g = V.advance(0.05).gear;
           rows.push([+(0.05 * (i + 1)).toFixed(2), g.pos, g.door, g.noseDeg, g.noseDoorDeg]);
-          if (g.pos === g.target && g.door === 0) break;
+          if (g.pos === g.target && g.door === (g.target >= 1 ? 0 : 1) && !g.moving) break;
         }
         return rows;
       };
@@ -390,16 +393,21 @@ async def numeric_checks(page):
     check("nose gear retracts aft (and up)", r["gear_nose"][2] > 0.3 and r["gear_nose"][1] > 0.3,
           f"wheel dZ {r['gear_nose'][2]:+.3f}, dY {r['gear_nose'][1]:+.3f} m")
     bad = [s for s in r["samples"] if s["door"] < 0.999 or s["dNR"] > -0.08 or s["dNL"] > -0.08]
-    check("nose doors open (85 deg, edges down) at gear 10..90 %", not bad,
-          f"door {min(s['doorDeg'] for s in r['samples']):.1f} deg, edge dY <= {max(max(s['dNR'], s['dNL']) for s in r['samples']):+.3f} m")
+    check("nose doors open (85 deg, edges down vs closed) with the gear down and at 10..90 %", not bad,
+          f"door {min(abs(s['doorDeg']) for s in r['samples']):.1f} deg, edge dY <= "
+          f"{max(max(s['dNR'], s['dNL']) for s in r['samples']):+.3f} m")
+    check("nose doors: open at rest (gear down), closed when locked up", r["downDoor"] == 1 and r["upDoor"] == 0,
+          f"door {r['downDoor']} down / {r['upDoor']} up")
     for name in ("seqUp", "seqDown"):
         rows = r[name]
         target = 1.0 if name == "seqUp" else 0.0
         between_closed = [row for row in rows if 1e-9 < row[1] < 1 - 1e-9 and row[2] < 0.999]
         first_move = next((row for row in rows if abs(row[1] - (1 - target)) > 1e-9), None)
         end = rows[-1]
-        ok = not between_closed and first_move is not None and first_move[2] >= 0.999 and end[1] == target and end[2] == 0
-        check(f"gear {'up' if target else 'down'} sequence: doors open -> gear -> doors close", ok,
+        ok = not between_closed and first_move is not None and first_move[2] >= 0.999 and end[1] == target and \
+            end[2] == (0 if target else 1)
+        check(f"gear {'up' if target else 'down'} sequence: doors open -> gear -> doors "
+              f"{'close' if target else 'stay open'}", ok,
               f"{end[0]:.2f} s total; gear starts at {first_move[0] if first_move else '?'} s with doors {first_move[2] if first_move else '?'}; "
               f"{len(between_closed)} samples with doors not fully open in transit")
 
@@ -632,16 +640,19 @@ async def regression_checks(page):
       T.neutral(); V.tab('animate');
       V.setGear(0.5, {instant: true}); V.advance(3); await V.frames(2);
       const mid = document.getElementById('rGear').textContent;
-      V.setGear(0, {instant: true}); V.setGear('up'); V.advance(0.3); await V.frames(2);
+      V.setGear(1, {instant: true}); V.setGear('down'); V.advance(0.3); await V.frames(2);    // locked up -> doors open first
       const opening = document.getElementById('rGear').textContent;
       V.advance(8); await V.frames(2);
+      const down = document.getElementById('rGear').textContent;                            // down: doors stay open
+      V.setGear('up'); V.advance(8); await V.frames(2);
       const up = document.getElementById('rGear').textContent;
       T.neutral(); await V.frames(2);
-      return {mid, opening, up, down: document.getElementById('rGear').textContent};
+      return {mid, opening, up, down, neutral: document.getElementById('rGear').textContent};
     """)
     check("[F5/UX-3] gear readout: scrubbed mid-travel = stopped, doors open", r["mid"].startswith("stopped") and "doors open" in r["mid"]
-          and r["opening"].startswith("doors opening") and r["up"].startswith("UP") and r["down"].startswith("DOWN"),
-          f"'{r['mid']}' / '{r['opening']}' / '{r['up']}' / '{r['down']}'")
+          and r["opening"].startswith("doors opening") and r["up"].startswith("UP") and r["down"].startswith("DOWN")
+          and r["neutral"].startswith("DOWN"),
+          f"'{r['mid']}' / '{r['opening']}' / '{r['down']}' / '{r['up']}' / '{r['neutral']}'")
     # [UX-4] readouts are refreshed once motion stops (and after deterministic advance())
     r = await js(page, V + r"""
       T.neutral(); V.setFlaps(40, {instant: true}); V.setFlaps(15); V.advance(5); await V.frames(3);
@@ -673,8 +684,10 @@ async def regression_checks(page):
     await page.focus("#partSearch")
     await page.keyboard.press("Escape")
     f2 = await js(page, "return [document.getElementById('pCount').textContent, [...document.querySelectorAll('#partTree li')].filter(l => !l.hidden).length, document.getElementById('partSearch').value];")
+    n_all, n_fc = await js(page, "const V = window.viewer, ids = V.parts(); return [ids.length, ids.filter(id => V.partExtras(id).group === V.partExtras('ail_tab_R').group).length];")
     check("[UX-2] search: Escape clears the query and the filter; counts show matches / total",
-          f1[0].startswith("2 of") and f1[1] == ["2 / 11"] and f2[0] == "69 parts" and f2[1] == 69 and f2[2] == "",
+          f1[0].startswith("2 of") and f1[1] == [f"2 / {n_fc}"] and f2[0] == f"{n_all} parts" and f2[1] == n_all
+          and f2[2] == "",
           f"filtered {f1}; after Escape {f2}")
     await js(page, "window.viewer.tab('build');")
     # [BV-2] nothing below the ground: explode (ground drops with the parts) and fly-in (clamped)
@@ -888,13 +901,21 @@ def pairs(a, b): return len(tree(a).overlap(tree(b)))
 NOSE = ["gear_nose", "brace_nose_up", "brace_nose_lo"]
 res = {}
 reset()
-for d in ("gear_door_NR", "gear_door_NL"): setrot(d, math.radians(PV[d]["open"]))
+def door_frac(d, v):   # nose door at opening fraction v (pivot 'open' = closed -> open, geometry built at 'rest')
+    setrot(d, math.radians(PV[d]["open"] * (v - PV[d].get("rest", 0.0))))
+for d in ("gear_door_NR", "gear_door_NL"): door_frac(d, 1.0)
 res["nose_doors_open_vs_nose_gear"] = []
 for f in (0.0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.0):
     pose_gear("gear_nose", f)
     res["nose_doors_open_vs_nose_gear"].append([f, pairs(["gear_door_NR"], NOSE), pairs(["gear_door_NL"], NOSE)])
 reset()
-res["gear_down_doors_closed"] = pairs(["gear_door_NR", "gear_door_NL"], NOSE)
+res["gear_down_rest_doors"] = pairs(["gear_door_NR", "gear_door_NL"], NOSE)
+pose_gear("gear_nose", 1.0)
+res["nose_up_doors_closing"] = []
+for v in (0.75, 0.5, 0.25, 0.0):
+    for d in ("gear_door_NR", "gear_door_NL"): door_frac(d, v)
+    res["nose_up_doors_closing"].append([v, pairs(["gear_door_NR", "gear_door_NL"], NOSE)])
+reset()
 for g in ("gear_main_R", "gear_main_L"): pose_gear(g, 1.0)
 res["mains_up_vs_flaps"] = pairs(["gear_main_R", "gear_main_L"], ["flap_R", "flap_L", "flap_fairings"])
 pose_gear("gear_nose", 1.0)
@@ -980,8 +1001,11 @@ async def blender_check(page):
         rows = it["nose_doors_open_vs_nose_gear"]
         check("[F1] blender: open nose doors clear the nose gear + brace over the whole travel", all(a == 0 and b == 0 for _, a, b in rows),
               "tri pairs NR/NL at gear " + ", ".join(f"{f:.1f}: {a}/{b}" for f, a, b in rows), known=True)
-        check("[F2] blender: gear down, doors closed: leg and lower brace clear the doors", it["gear_down_doors_closed"] == 0,
-              f"{it['gear_down_doors_closed']} tri pairs", known=True)
+        check("[F2] blender: rest pose (gear down, nose doors open): leg and brace clear the doors",
+              it["gear_down_rest_doors"] == 0, f"{it['gear_down_rest_doors']} tri pairs", known=True)
+        rows = it["nose_up_doors_closing"]
+        check("[F2b] blender: gear up, nose doors closing: the doors clear the stowed gear + brace",
+              all(n == 0 for _, n in rows), ", ".join(f"door {v:.2f}: {n}" for v, n in rows), known=True)
         check("[F3] blender: retracted mains clear the flaps / flap fairings (flaps 0)", it["mains_up_vs_flaps"] == 0,
               f"{it['mains_up_vs_flaps']} tri pairs", known=True)
         check("[F4] blender: retracted nose wheel clears the flight deck", it["nose_up_vs_flight_deck"] == 0,

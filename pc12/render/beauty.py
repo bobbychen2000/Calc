@@ -93,7 +93,8 @@ reflections); prop blades glossy black; tyres matte rubber; de-ice boots satin b
 
 Pose (from the node extras 'pivot', same conventions as web/viewer/kinematics.js): gear 0 = down ..
 1 = up (retract x pos about the gear axis; brace knees solved like model/brace.py:solve_knee,
-upper link about A, lower link about the knee), nose doors 0 = closed .. 1 = open, doors 0..1 of
+upper link about A, lower link about the knee), nose doors 0 = closed .. 1 = open (default: open unless the gear is
+locked up), doors 0..1 of
 their 'open' angle, blade pitch deg (feather 62 on the ground), propeller clocking deg, prop rpm +
 shutter for motion blur (air), flaps deg (+ Fowler travel).
 
@@ -709,15 +710,16 @@ class Scene:
         for pid, v in (("door_airstair", door_airstair), ("door_cargo", door_cargo)):
             if pid in P and v:
                 self._rot_local(pid, math.degrees(P[pid]["open"]) * v)
-        # gear + nose clamshells (closed when the gear is locked up or down, as in the viewer)
+        # gear + nose clamshells (open unless the gear is locked up, as in the viewer; the GLB builds them at
+        # pivot 'rest' = 1 = open)
         if nose_doors is None:
-            nose_doors = 1.0 if 1e-6 < gear < 1 - 1e-6 else 0.0
+            nose_doors = 0.0 if gear >= 1 - 1e-6 else 1.0
         for pid in ("gear_main_R", "gear_main_L", "gear_nose"):
             if pid in P:
                 self._rot_local(pid, P[pid]["retract"] * gear)
         for pid in ("gear_door_NR", "gear_door_NL"):
             if pid in P:
-                self._rot_local(pid, P[pid]["open"] * nose_doors)
+                self._rot_local(pid, P[pid]["open"] * (nose_doors - P[pid].get("rest", 0.0)))
         # braces: B follows the gear leg; knee from solve_knee; upper link about A, lower about the knee
         knees = {}
         for pid in ("brace_main_R_up", "brace_main_L_up", "brace_nose_up"):

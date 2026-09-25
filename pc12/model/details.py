@@ -297,21 +297,60 @@ def teardrop(x0, length, depth, half_w, n=28, m=24):
 
 
 FLAP_CANOE_Y = (1.00, 3.07, 4.885)     # drawing front / plan views (rev A 1.55, 3.30, 5.15)
+# Stage 3 (M9): each canoe is split at the flap-cove lower lip (wing.FLAP_X_LO): the forward part is fixed to the wing,
+# the aft part rides on the flap (added to the flap parts, so it follows the Fowler rotation + travel).  Both are
+# flattened against the surface they hang from (the hidden upper half no longer reaches into the cove / flap).
+CANOE_X = (0.55, 0.60)                 # start (chord fraction) and length (chords)
+CANOE_DEPTH, CANOE_HW = 0.115, 0.05
+CANOE_SPLIT_GAP = 0.005                # chord fraction between the fixed and the flap-carried part
+CANOE_SURF_GAP = 0.0015                # canoe top under the skin it hangs from (m)
+
+
+def _canoe_profile(t0, t1, L, depth, n=28):
+    """Teardrop meridian (x, r) over t in [t0, t1] of the canoe (max depth at 30 %), closed by flat ends."""
+    t = np.linspace(t0, t1, max(4, int(np.ceil(n * (t1 - t0))) + 1))
+    r = depth * (2.2 * np.sqrt(t) * (1 - t) ** 1.25)
+    prof = list(zip(t * L, r))
+    if r[0] > 1e-9:
+        prof = [(t[0] * L, 0.0)] + prof
+    if r[-1] > 1e-9:
+        prof = prof + [(t[-1] * L, 0.0)]
+    return prof
+
+
+def _lower_surface_z(sec, x):
+    xc = np.clip((x - sec.le[0]) / sec.chord, 0.0, 1.0)
+    return sec.lower(xc)[:, 2]
 
 
 def flap_canoes():
-    out = []
+    """(fixed forward parts, {side: flap-carried aft parts}) of the flap-track canoes, flaps retracted."""
+    fixed, aft = [], {"R": [], "L": []}
+    x_split = W.FLAP_X_LO
     for y in FLAP_CANOE_Y:
         sec = W.section_at(y)
-        x0 = sec.le[0] + 0.55 * sec.chord
-        L = 0.60 * sec.chord
-        c = teardrop(0.0, L, 0.115, 0.05)
-        # place: axis slightly below the local lower surface
+        x0 = sec.le[0] + CANOE_X[0] * sec.chord
+        L = CANOE_X[1] * sec.chord
         zl = float(sec.lower(np.array(0.75))[2])
-        c = c.translated((x0, y, zl - 0.005))
-        for s in (1, -1):
-            out.append(c if s > 0 else c.mirrored_y())
-    return Mesh.merge(out)
+        ts = (x_split - CANOE_X[0]) / CANOE_X[1]
+        ta = (x_split + CANOE_SPLIT_GAP - CANOE_X[0]) / CANOE_X[1]
+        te = sec.le[0] + sec.chord
+        for (t0, t1), dst in (((0.0, ts), "fixed"), ((ta, 1.0), "aft")):
+            c = revolve(_canoe_profile(t0, t1, L, CANOE_DEPTH), n=24, axis_origin=(0, 0, 0), axis_dir=(1, 0, 0))
+            c = c.scaled((1.0, CANOE_HW / CANOE_DEPTH, 1.0), origin=(0, 0, 0)).translated((x0, y, zl - 0.005))
+            # flatten against the wing (fixed part) / the retracted flap's lower surface (aft part, = the section's
+            # lower contour aft of the lip); aft of the trailing edge the tail stays round
+            zs = _lower_surface_z(sec, c.V[:, 0]) - CANOE_SURF_GAP
+            V = c.V.copy()
+            clamp = (V[:, 0] <= te) & (V[:, 2] > zs)
+            V[:, 2] = np.where(clamp, zs, V[:, 2])
+            c = Mesh(V, c.F)
+            if dst == "fixed":
+                fixed += [c, c.mirrored_y()]
+            else:
+                aft["R"].append(c)
+                aft["L"].append(c.mirrored_y())
+    return Mesh.merge(fixed), {k: Mesh.merge(v) for k, v in aft.items()}
 
 
 # weather-radar pod: at the STARBOARD WING TIP, on the leading edge just inboard of the winglet (Pilatus drawing
@@ -407,10 +446,19 @@ def build(parts):
     parts[bp.id] = bp
 
     # -------- flap track canoes
-    cp = Part("flap_fairings", "Flap-track fairings (3 per side)", "controls_wing", explode=(0.4, 0, -0.5),
+    fixed, aft = flap_canoes()
+    cp = Part("flap_fairings", "Flap-track fairings, fixed forward parts (3 per side; the aft parts ride on the flaps)",
+              "controls_wing", explode=(0.4, 0, -0.5),
               group="Flight controls", qty=6, material_note="Composite canoe fairings")
-    cp.add(flap_canoes(), "paint_white")
+    cp.add(fixed, "paint_white")
     parts[cp.id] = cp
+    for side in ("R", "L"):                       # aft canoe parts ride on the flap (child parts, no pivot of their own)
+        if f"flap_{side}" in parts:
+            ap = Part(f"flap_canoes_{side}", f"Flap-track fairings, aft parts on the {'right' if side == 'R' else 'left'}"
+                      " flap (3)", "controls_wing", parent=f"flap_{side}", explode=(0.3, 0, -0.3),
+                      group="Flight controls", qty=3, material_note="Composite canoe fairings, move with the flap")
+            ap.add(aft[side], "paint_belly")              # recoloured by the livery (SURFACES['flap_fairings'])
+            parts[ap.id] = ap
 
     # -------- weather radar pod (right wing)
     radome, body = radar_pod()

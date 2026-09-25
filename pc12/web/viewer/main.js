@@ -483,10 +483,10 @@ let surfCells = null;
 function updateReadouts() {
   const c = kin.c, g = kin.gear, D = kin.defl;
   $('rProp').textContent = `${Math.round(c.rpm).toLocaleString('en-US')} rpm · ${c.pitch.toFixed(0)}°`;
-  // doors only close at a lock; a gear stopped (scrubbed) between the locks keeps them open
-  const status = g.pos === 0 && g.door === 0 ? 'DOWN' : g.pos === 1 && g.door === 0 ? 'UP'
+  // nose doors close only once locked up; with the gear down (or stopped between the locks) they stay open
+  const status = g.pos === 0 && g.target === 0 && g.door === 1 ? 'DOWN' : g.pos === 1 && g.door === 0 ? 'UP'
     : g.pos !== g.target ? (g.door < 1 ? 'doors opening' : g.target > g.pos ? 'retracting' : 'extending')
-    : g.pos <= 0 || g.pos >= 1 ? 'doors closing' : 'stopped · doors open';
+    : g.pos >= 1 ? 'doors closing' : g.pos <= 0 ? 'doors opening' : 'stopped · doors open';
   $('rGear').textContent = `${status} · ${Math.round(g.pos * 100)} %`;
   $('sGear').value = g.pos; $('oGear').value = `${Math.round(g.pos * 100)} %`;
   $('rFlaps').textContent = `${c.flaps.toFixed(1)}°`;

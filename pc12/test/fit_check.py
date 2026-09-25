@@ -6,31 +6,49 @@
  4. dorsal fin, fin and rudder stay outside the fixed tail cone; the rudder at +/-25 deg clears the fin tip,
     the fixed cove and the tail-cone closure
  5. retracted gear: nose unit above the keel and inside the bay / pedestal tunnel, main tyres at most ~1 in proud
-    of the wing lower skin, nothing above the upper skin
+    of the wing lower skin, nothing but the leg door lower, nothing above the upper skin; the stowed leg / strut lie
+    above the closed leg door; the leg door's stowed height (approved gear.LEG_DOOR, rigid on the leg) is reported as
+    an OPEN owner decision (it does not fail the run)
  6. folding-strut knees over 0-100 % retraction: main knees between the wing skins, nose knee inside the bay
  7. cabin furniture clear of the airstair entry
  8. the tailplane horn balances (carried by the elevators) clear the fixed tips at full elevator travel
  9. the airstair and cargo doors clear the wing-root fairing (fillet / nose) from closed to fully open
+10. main gear + side brace over 0-100 %: every vertex inside the wing box lies in the bay liner (bays.main_bay_sdf),
+    no triangle crosses the wing skins, bay liner, ribs / spars, flaps or belly fairing; the leg door clears the leg
+    gear down; the stowed tyre is under the liner roof
+11. nose gear + drag brace vs the clamshell doors at every state the viewer sequence reaches (doors open with the gear
+    down and in transit, closing only once locked up) and vs the flight deck / bay liners
+12. flaps 0-40 deg (flap-carried aft canoes included) clear the wing, the fixed canoes, the structure and the fairing
+13. rudder / tab at -25 / 0 / +25 deg: no triangle crossing the fin (tip underside, cove, strip), tail cone or strakes
+Checks 10-13 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
 import sys
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+sys.path.insert(1, str(__import__("pathlib").Path(__file__).resolve().parent))
 import numpy as np
 from cad.mesh import rotation_about
 from model.build import build_parts
 from model import fuselage as F, empennage as E, gear as G, wing as W, powerplant as PP
 from model.brace import pose
 from model.fuselage_parts import openings_table
+from model.bays import main_bay_sdf
+from isect import crossings, merged
 
 X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
 MARGIN = 0.02
 parts = build_parts()
 fails = []
+opens = []
 
 
-def report(name, ok, detail=""):
-    print(f"  [{'ok' if ok else 'FAIL'}] {name}" + (f": {detail}" if detail else ""))
-    if not ok:
+def report(name, ok, detail="", open_item=False):
+    """open_item: a known conflict in the APPROVED parameters that needs an owner decision -- printed, not failed."""
+    tag = "open" if open_item else ("ok" if ok else "FAIL")
+    print(f"  [{tag}] {name}" + (f": {detail}" if detail else ""))
+    if open_item:
+        opens.append(name)
+    elif not ok:
         fails.append(name)
 
 
@@ -138,21 +156,57 @@ ceiling = np.where((V[:, 0] > TU["x0"]) & (V[:, 0] < TU["x1"]), TU["z_top"], TU[
 report("nose gear retracted: above the keel, inside the bay / tunnel",
        bool((V[:, 2] > keel + 0.003).all() and (V[:, 2] < ceiling).all()),
        f"lowest {1000 * (V[:, 2] - keel).min():+.0f} mm vs the keel, {int((V[:, 2] >= ceiling).sum())} verts above the roof")
+from model.livery import SURFACES as _SURF
+DOOR_MAT = ("paint_white", _SURF["main_gear_door"], G.LEG_DOOR_BRACKET_MAT)   # leg door plate + its standoff brackets
+
+
+def gear_meshes(pid, door=None):
+    """Meshes of a gear part: door=True only the leg door, False all but the door, None all."""
+    out = []
+    for m, mm in parts[pid].meshes:
+        d = mm in DOOR_MAT
+        if door is None or d == door:
+            out.append(m)
+    return out
+
+
 for side in ("R", "L"):
     gp = parts[f"gear_main_{side}"].pivot
     M = rotation_about(gp["axis"], np.radians(gp["retract"]), gp["origin"])
-    samp = posed(f"gear_main_{side}", M)[::3]
+    from cad import sdf2d
+    rest_, _ = merged(gear_meshes(f"gear_main_{side}", door=False), M)
+    fp = G.leg_door_footprint(1)
+    covered = sdf2d.polygon(rest_[:, 0], np.abs(rest_[:, 1]), fp) < 0.0      # over the (stowed) leg door
+    samp = rest_[~covered][::3]
     wc = G.retracted_wheel(1 if side == "R" else -1)
     z_skin = wing_z(wc[0], wc[1], False)                    # lower skin at the stowed wheel centre
     tyre = verts(f"gear_main_{side}", ("tire",)) @ M[:3, :3].T + M[:3, 3]
     proud = z_skin - tyre[:, 2].min()
     low = z_skin - samp[:, 2].min()
-    up = np.array([wing_z(p[0], p[1], True) for p in samp])
-    over = (samp[:, 2] - up).max()
-    report(f"main gear {side} retracted: tyre ~1 in proud, nothing lower, nothing above the upper skin",
-           proud < 0.035 and low <= proud + 0.002 and over < 0,
-           f"tyre {proud * 1000:.0f} mm below the skin at the wheel centre, lowest part {low * 1000:.0f} mm, "
+    upz = np.array([wing_z(p[0], p[1], True) for p in rest_[::3]])
+    over = (rest_[::3, 2] - upz).max()
+    report(f"main gear {side} retracted: tyre ~1 in proud, nothing lower outside the leg door, nothing above the upper "
+           f"skin", proud < 0.035 and low <= proud + 0.002 and over < 0,
+           f"tyre {proud * 1000:.0f} mm below the skin at the wheel centre, lowest other part {low * 1000:.0f} mm, "
            f"{over * 1000:+.0f} mm vs the upper skin")
+    # the stowed leg / strut / trunnion lie above the closed door (within its plan footprint), M3
+    Vd, Fd = merged([m for m, mm in parts[f"gear_main_{side}"].meshes if mm in DOOR_MAT[:2]], M)
+    c = Vd.mean(0)
+    nrm = np.linalg.svd(Vd - c)[2][2]
+    nrm = nrm if nrm[2] > 0 else -nrm
+    top = ((Vd - c) @ nrm).max()                            # the plate's upper (inner) face
+    below = covered & ((rest_ - c) @ nrm < top + 0.001)
+    report(f"main gear {side} retracted: leg, strut and trunnion above the closed leg door",
+           not below.any(), f"{int(below.sum())} verts below the plate's inner face in its footprint; closest "
+                            f"{1000 * (((rest_[covered] - c) @ nrm) - top).min():.0f} mm above it")
+    # leg door stowed height: the approved LEG_DOOR (drawn face in the drawn plane, rigid on the leg) cannot close
+    # flush -- an owner decision (see gear.leg_door_retracted_drop and the Stage-3 report)
+    dmin, dmax = G.leg_door_retracted_drop(1)
+    lo_d = np.array([wing_z(p[0], p[1], False) for p in Vd[::5]]) - Vd[::5, 2]
+    report(f"main gear {side} retracted: leg door stowed below the wing (approved LEG_DOOR plane BL "
+           f"{G.LEG_DOOR['bl'][0] * 1000:.0f}-{G.LEG_DOOR['bl'][1] * 1000:.0f}, rigid on the leg)", True,
+           f"door outer face {dmin * 1000:.0f}-{dmax * 1000:.0f} mm below the lower skin (parameters), mesh up to "
+           f"{lo_d.max() * 1000:.0f} mm: flush closure needs an owner decision", open_item=True)
 
 # 6 ------------------------------------------------------------------------------------------------ brace knees
 for pid, gear_id, A, B0, T, axis, (f1, ref), name in G.brace_specs():
@@ -213,5 +267,181 @@ for pid in ("door_airstair", "door_cargo"):
     report(f"{pid} clears the wing-root fairing over its whole opening", worst > -0.002,
            f"closest {worst * 1000:+.0f} mm outside the fairing surface" if worst < 1.0 else "never over the fairing")
 
-print("FIT OK" if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails))
+# 10 ----------------------------------------------------------------------------------------------- main gear sweep
+def brace_pose(pid, frac):
+    """Posed (upper, lower) link transforms of folding strut pid at gear fraction frac (model/brace.py, as the viewer:
+    upper link about A, lower link rigid from K0-B0 onto K-B)."""
+    from model.brace import solve_knee
+    pv = parts[pid + "_up"].pivot
+    g = parts[pv["gear"]].pivot
+    A, B0, K0 = (np.array(pv[k], float) for k in ("A", "B0", "K0"))
+    ax = np.array(pv["axis"], float)
+    ax /= np.linalg.norm(ax)
+    Mg = rotation_about(g["axis"], np.radians(g["retract"]) * frac, g["origin"])
+    B = Mg[:3, :3] @ B0 + Mg[:3, 3]
+    K = solve_knee(A, B, pv["L1"], pv["L2"], ax, np.array(pv["bend"], float))
+
+    def sang(u, v):
+        u = u - ax * u.dot(ax)
+        v = v - ax * v.dot(ax)
+        return np.arctan2(ax.dot(np.cross(u, v)), u.dot(v))
+    Mu = rotation_about(ax, sang(K0 - A, K - A), A)
+    Ml = rotation_about(ax, sang(B0 - K0, B - K), K0)
+    Ml[:3, 3] += K - K0
+    return Mu, Ml
+
+
+def posed_mesh(pid, M, mats=None):
+    return merged([m for m, mm in parts[pid].meshes if mats is None or mm in mats], M)
+
+
+def cat(*vf):
+    Vs, Fs, off = [], [], 0
+    for V, F_ in vf:
+        Vs.append(V)
+        Fs.append(F_ + off)
+        off += len(V)
+    return np.vstack(Vs), np.vstack(Fs)
+
+
+def _wing_grid(x0=5.20, x1=7.30, y0=0.80, y1=3.00, dx=0.004, dy=0.01):
+    """Lower / upper wing-surface WL tabulated over the main-gear region (plan grid), for fast point tests."""
+    from scipy.interpolate import RegularGridInterpolator
+    xs, ys = np.arange(x0, x1 + 1e-9, dx), np.arange(y0, y1 + 1e-9, dy)
+    lo = np.full((len(xs), len(ys)), np.nan)
+    up = np.full((len(xs), len(ys)), np.nan)
+    for j, y in enumerate(ys):
+        sct = W.section_at(y)
+        xc = (xs - sct.le[0]) / sct.chord
+        ok = (xc > 0) & (xc < 1)
+        lo[ok, j] = sct.lower(xc[ok])[:, 2]
+        up[ok, j] = sct.upper(xc[ok])[:, 2]
+    f = lambda T: RegularGridInterpolator((xs, ys), T, bounds_error=False, fill_value=np.nan)   # noqa: E731
+    return f(lo), f(up)
+
+
+_WLO, _WUP = _wing_grid()
+
+
+def wing_box_inside(V):
+    """Points inside the wing box (between the skins, outboard of the fuselage side) over the main-gear region."""
+    q = np.c_[V[:, 0], np.abs(V[:, 1])]
+    lo, up = _WLO(q), _WUP(q)
+    side = np.abs(V[:, 1]) > F.side_y(np.clip(V[:, 0], X0, X1), V[:, 2])
+    with np.errstate(invalid="ignore"):
+        return side & (V[:, 2] > lo + 0.002) & (V[:, 2] < up - 0.002)
+
+
+def crop(VF, lo, hi):
+    """Triangles of (V, F) whose boxes meet the box lo..hi."""
+    V, F_ = VF
+    T = V[F_]
+    return V, F_[((T.max(1) >= lo) & (T.min(1) <= hi)).all(1)]
+
+
+I4 = np.eye(4)
+for side in ("R", "L"):
+    gid, bid = f"gear_main_{side}", f"brace_main_{side}"
+    sg = 1 if side == "R" else -1
+    fixed = crop(cat(posed_mesh(f"wing_{side}", I4), posed_mesh("gear_bays", I4), posed_mesh("structure", I4),
+                     posed_mesh(f"flap_{side}", I4), posed_mesh("belly_fairing", I4)),
+                 np.array([5.6, min(sg * 0.8, sg * 2.8), 0.0]), np.array([7.0, max(sg * 0.8, sg * 2.8), 1.45]))
+    n_x, out_bay, worst = 0, 0, ""
+    for f in np.linspace(0.0, 1.0, 11):
+        g = parts[gid].pivot
+        Mg = rotation_about(g["axis"], np.radians(g["retract"]) * f, g["origin"])
+        Mu, Ml = brace_pose(bid, f)
+        mov = cat(posed_mesh(gid, Mg), posed_mesh(bid + "_up", Mu), posed_mesh(bid + "_lo", Ml))
+        P = crossings(*mov, *fixed)
+        if len(P):
+            n_x += len(P)
+            worst = worst or f"gear {f:.1f}: {len(P)} at x {P[:, 0].min():.3f}-{P[:, 0].max():.3f} |y| " \
+                              f"{np.abs(P[:, 1]).min():.3f}-{np.abs(P[:, 1]).max():.3f} z {P[:, 2].min():.3f}-{P[:, 2].max():.3f}"
+        Vs = mov[0][::2]
+        ins = wing_box_inside(Vs)
+        out_bay += int((ins & (main_bay_sdf(Vs[:, 0], Vs[:, 1]) > 0.002)).sum())
+    report(f"main gear {side} + side brace 0-100 %: no crossing of the wing skins, bay liner, structure, flap, fairing",
+           n_x == 0, f"{n_x} crossings" + (f" ({worst})" if worst else ""))
+    report(f"main gear {side} + side brace 0-100 %: everything inside the wing box lies in the bay liner",
+           out_bay == 0, f"{out_bay} verts in the wing box outside bays.main_bay_sdf")
+    ms = parts[gid].meshes
+    plate = merged([m for m, mm in ms if mm in DOOR_MAT[:2]])
+    brk = merged([m for m, mm in ms if mm == G.LEG_DOOR_BRACKET_MAT])
+    P = crossings(*plate, *merged([m for m, mm in ms if mm not in DOOR_MAT]))
+    Q = crossings(*brk, *merged([m for m, mm in ms if mm in ("tire", "wheel", "steel")]))
+    report(f"main gear {side} down: leg door plate clears the leg, trunnion, tyre and arm; its brackets the wheel",
+           len(P) + len(Q) == 0, f"{len(P)} / {len(Q)} crossings")
+    g = parts[gid].pivot
+    Mg = rotation_about(g["axis"], np.radians(g["retract"]), g["origin"])
+    ty = verts(gid, ("tire",)) @ Mg[:3, :3].T + Mg[:3, 3]
+    roof = np.array([wing_z(p[0], p[1], True) for p in ty[::4]]) - G.MAIN_BAY_ROOF_GAP
+    report(f"main gear {side} up: stowed tyre under the bay liner roof", bool((ty[::4, 2] < roof - 0.002).all()),
+           f"min clearance {1000 * (roof - ty[::4, 2]).min():.0f} mm")
+
+# 11 ----------------------------------------------------------------------------------------------- nose gear / doors
+def door_M(did, v):
+    pv = parts[did].pivot
+    return rotation_about(pv["axis"], np.radians(pv["open"] * (v - pv.get("rest", 0.0))), pv["origin"])
+
+
+g = parts["gear_nose"].pivot
+doors_n = {}
+for f, v in [(f, 1.0) for f in np.linspace(0, 1, 11)] + [(1.0, v) for v in (0.75, 0.5, 0.25, 0.0)]:
+    Mg = rotation_about(g["axis"], np.radians(g["retract"]) * f, g["origin"])
+    Mu, Ml = brace_pose("brace_nose", f)
+    mov = cat(posed_mesh("gear_nose", Mg), posed_mesh("brace_nose_up", Mu), posed_mesh("brace_nose_lo", Ml))
+    dr = cat(posed_mesh("gear_door_NR", door_M("gear_door_NR", v)), posed_mesh("gear_door_NL", door_M("gear_door_NL", v)))
+    n = len(crossings(*mov, *dr))
+    if n:
+        doors_n[(round(f, 2), v)] = n
+report("nose gear + drag brace vs the clamshell doors (open with the gear down / in transit, closing when up)",
+       not doors_n, "clear at every state" if not doors_n else "; ".join(f"gear {a:.1f} door {b:.2f}: {n}"
+                                                                        for (a, b), n in doors_n.items()))
+fixed = crop(cat(posed_mesh("flight_deck", I4), posed_mesh("gear_bays", I4), posed_mesh("fus_fwd", I4),
+                 posed_mesh("cowl_lower", I4)), np.array([2.6, -0.4, 0.0]), np.array([4.4, 0.4, 1.8]))
+n_fd = {}
+for f in np.linspace(0, 1, 11):
+    Mg = rotation_about(g["axis"], np.radians(g["retract"]) * f, g["origin"])
+    Mu, Ml = brace_pose("brace_nose", f)
+    mov = cat(posed_mesh("gear_nose", Mg), posed_mesh("brace_nose_up", Mu), posed_mesh("brace_nose_lo", Ml))
+    n = len(crossings(*mov, *fixed))
+    if n:
+        n_fd[round(f, 1)] = n
+report("nose gear + drag brace 0-100 % clear the flight deck (tunnel hump), bay liners and skins", not n_fd,
+       "clear" if not n_fd else ", ".join(f"gear {a:.1f}: {n}" for a, n in n_fd.items()))
+
+# 12 ----------------------------------------------------------------------------------------------- flaps + canoes
+for side in ("R", "L"):
+    fp = parts[f"flap_{side}"].pivot
+    sg = 1 if side == "R" else -1
+    fixed = crop(cat(posed_mesh(f"wing_{side}", I4), posed_mesh("flap_fairings", I4), posed_mesh("structure", I4),
+                     posed_mesh("belly_fairing", I4), posed_mesh("fus_center", I4)),
+                 np.array([5.5, min(0.0, sg * 6.0), 0.3]), np.array([8.2, max(0.0, sg * 6.0), 1.9]))
+    bad = {}
+    for deg in (0.0, 10.0, 15.0, 20.0, 30.0, 40.0):
+        M = rotation_about(fp["axis"], np.radians(deg), fp["origin"])
+        M[:3, 3] += np.asarray(fp["travel"], float) * deg / fp["max"]
+        mov = cat(posed_mesh(f"flap_{side}", M), posed_mesh(f"flap_canoes_{side}", M))
+        n = len(crossings(*mov, *fixed))
+        if n:
+            bad[deg] = n
+    report(f"flap_{side} + aft canoes 0-40 deg clear the wing, fixed canoes, structure and fairing", not bad,
+           "clear" if not bad else ", ".join(f"{a:.0f} deg: {n}" for a, n in bad.items()))
+
+# 13 ----------------------------------------------------------------------------------------------- rudder crossings
+rp = parts["rudder"].pivot
+fixed = crop(cat(posed_mesh("fin", I4), posed_mesh("fus_aft", I4), posed_mesh("strakes", I4), posed_mesh("dorsal_fin", I4)),
+             np.array([12.3, -0.6, 1.6]), np.array([14.9, 0.6, 4.2]))
+bad = {}
+for deg in (-25.0, 0.0, 25.0):
+    M = rotation_about(np.asarray(rp["axis"], float), np.radians(deg), rp["origin"])
+    mov = cat(posed_mesh("rudder", M), posed_mesh("rudder_tab", M))
+    n = len(crossings(*mov, *fixed))
+    if n:
+        bad[deg] = n
+report("rudder + tab at -25 / 0 / +25 deg: no triangle crossing the fin, tail cone, strakes or dorsal", not bad,
+       "clear" if not bad else ", ".join(f"{a:+.0f} deg: {n}" for a, n in bad.items()))
+
+tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
+print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)
 sys.exit(1 if fails else 0)

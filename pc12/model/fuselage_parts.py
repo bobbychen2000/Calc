@@ -230,7 +230,32 @@ def rim(loop_V, loop_N, depth):
 # ---------------------------------------------------------------------------
 
 def openings_field(m: Mesh):
-    """Union of every opening cut into the fuselage skin (negative = hole)."""
+    """Union of every opening cut into the fuselage skin (negative = hole): the union of openings_fields()."""
+    return np.minimum.reduce([f(m) for f in openings_fields()])
+
+
+def openings_fields():
+    """The fuselage-skin openings as separate fields (negative = hole), trimmed one after the other by
+    trim_openings(): windows / doors / nose bay (disjoint), then the cockpit side windows, then the windshield.  The
+    side-window and windshield holes lie only PILLAR_WIDTH (25 mm) apart across the A-pillar, less than the 30-35 mm
+    skin grid; one trim with their V-shaped min() field cut the pillar strip 8-21 mm wide (CONS-03), sequential trims
+    (each field re-evaluated on the already trimmed mesh) cut each edge exactly."""
+    return [_other_openings_field,
+            lambda m: CG.sidewindow_sdf(m.V[:, 0], m.V[:, 1], m.V[:, 2]),
+            lambda m: CG.windshield_sdf(m.V[:, 0], signed_s(m.V[:, 0], m.UV[:, 1]), m.V[:, 2], m.V[:, 1])]
+
+
+def trim_openings(m: Mesh):
+    """Cut every opening out of a skin mesh, one field at a time (see openings_fields)."""
+    for f in openings_fields():
+        v = f(m)
+        if (v < 0).any():
+            m = trim(m, v, "positive")
+    return m
+
+
+def _other_openings_field(m: Mesh):
+    """Cabin windows, door-panel seams, the exit and the nose-gear bay (negative = hole)."""
     x, z = xz_of(m)
     y = m.V[:, 1]
     d = np.full(len(x), BIG)
@@ -241,10 +266,6 @@ def openings_field(m: Mesh):
     for o in (AIRSTAIR, CARGO, EXIT):              # the skin is cut along the door-panel SEAM (DOOR_PANELS)
         on = (y * o["side"]) > 0.2
         d = np.where(on, np.minimum(d, rr((x, z), door_panel(o))), d)
-    # cockpit side windows + two-piece windshield (constraint-defined, see cockpit_glazing)
-    d = np.minimum(d, CG.sidewindow_sdf(x, y, z))
-    s = signed_s(x, m.UV[:, 1])
-    d = np.minimum(d, CG.windshield_sdf(x, s, z, y))
     # nose-gear bay in the belly
     from model.bays import nose_bay_sdf
     d = np.minimum(d, np.where(z < 1.1, nose_bay_sdf(x, y), BIG))
@@ -331,7 +352,7 @@ def build(parts_out: dict):
 
     # ---- forward fuselage (cockpit) ----
     fwd = sub(F.STA["firewall"], SPLIT_FWD)
-    fwd = trim(fwd, openings_field(fwd), "positive")
+    fwd = trim_openings(fwd)
     parts_out["fus_fwd"] = Part("fus_fwd", "Forward fuselage & flight deck shell", "fuselage_fwd",
                                 explode=(-0.9, 0, 0.25), group="Fuselage",
                                 material_note="2024-T3 skins, frames 10-16")
@@ -339,7 +360,7 @@ def build(parts_out: dict):
 
     # ---- centre fuselage (pressure cabin) ----
     cen = sub(SPLIT_FWD, SPLIT_AFT)
-    cen = trim(cen, openings_field(cen), "positive")
+    cen = trim_openings(cen)
     parts_out["fus_center"] = Part("fus_center", "Centre fuselage (pressure cabin)", "fuselage_center",
                                    explode=(0, 0, 0.35), group="Fuselage",
                                    material_note="2024-T3 skin, 5.8 psi max differential")

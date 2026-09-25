@@ -224,6 +224,9 @@ WINGLET_PIN = dict(s=0.30, c0=0.02, c1=1.00, half_width=0.008)
 # propeller blade tip bands, radial extent measured inward from the tip (m): white tip, black gap, red band
 # (hangar photo MSN-3008_130, upper blade against the ceiling: 17 / 11 / 12 px on a ~40 px = 0.13 m chord)
 PROP_BANDS = (("prop_tip", 0.000, 0.060), ("prop_blade", 0.060, 0.095), ("prop_band_red", 0.095, 0.135))
+# blade leading-edge erosion shield (SURFACES blade_le; nickel sheath on the composite blades): a band round the leading
+# edge, BLADE_LE_STRIP['width'] (m, measured from the LE line) on each face, from r0 out to the red band's inner edge
+BLADE_LE_STRIP = dict(r0=0.40, width=0.020)
 
 # PRO dark cockpit mask: its outline is built by model/cockpit_glazing.py from the glazing planes, but the AFT EDGE
 # is a livery item that differs between airframes (photos rectified onto the OML with the camera fits in
@@ -461,19 +464,128 @@ UNPAINTED = "paint_white"          # the builders' unpainted skin material
 
 
 def _radial_bands(mesh, r_of, bands, r_tip, default):
+    """Split a blade into the tip bands.  bands run inward from the tip without gaps ((mat, a, b): a..b m inside the
+    tip); each band edge is ONE single-sided trim at radius r_tip - b, re-evaluated on the piece left over (CONS-07: a
+    V-shaped max() band field on the 40 mm radial grid moved the edges up to 11 mm).  The tip band has no outer
+    limit.  Returns ([(mesh, mat)], rest): rest = the blade inside the last band (default material, not yet added)."""
     out, rest = [], mesh
+    prev = 0.0
     for mat, a, b in bands:
+        assert abs(a - prev) < 1e-12, "PROP_BANDS must be contiguous from the tip"
+        prev = b
         if rest.nf == 0:
             break
-        r = r_of(rest.V)
-        f = np.maximum((r_tip - b) - r, r - (r_tip - a))
-        inside = trim(rest, f, "negative")
+        f = (r_tip - b) - r_of(rest.V)             # < 0: outboard of this band's inner edge
+        outer = trim(rest, f, "negative")
         rest = trim(rest, f, "positive")
-        if inside.nf:
-            out.append((inside, mat))
-    if rest.nf:
-        out.append((rest, default))
+        if outer.nf:
+            out.append((outer, mat))
+    return out, rest
+
+
+def blade_le_distance(V, k):
+    """(radius along the pitch axis, distance from the leading-edge line) of points V on blade k (0-based), in the
+    blade's own frame (powerplant.blade_geometry about the hub, thrust_rotation, blade k's clock angle)."""
+    from model import powerplant as PP
+    from cad.mesh import rotation_matrix
+    _, rs, Pm = _blade_ref()
+    R = PP.thrust_rotation() @ rotation_matrix((1, 0, 0), 2 * np.pi * k / PP.N_BLADES)
+    q = (np.asarray(V, float) - PP.prop_hub()) @ R                  # R^T (V - hub)
+    i_le = Pm.shape[1] // 2                                         # lower TE -> LE (xc = 0) ends the first half
+    le = Pm[:, i_le, :]
+    lx = np.interp(q[:, 2], le[:, 2], le[:, 0])
+    ly = np.interp(q[:, 2], le[:, 2], le[:, 1])
+    return q[:, 2], np.hypot(q[:, 0] - lx, q[:, 1] - ly)
+
+
+_BLADE_REF = None
+
+
+def _blade_ref():
+    global _BLADE_REF
+    if _BLADE_REF is None:
+        from model import powerplant as PP
+        _BLADE_REF = PP.blade_geometry()
+    return _BLADE_REF
+
+
+def _blade_le_strip(rest, k, r_out):
+    """Split the erosion shield (BLADE_LE_STRIP, r0 .. r_out) off the plain blade piece (sequential trims)."""
+    p = BLADE_LE_STRIP
+    out = []
+    r, _ = blade_le_distance(rest.V, k)
+    inner = trim(rest, r - p["r0"], "negative")                    # root part: never shielded
+    cand = trim(rest, r - p["r0"], "positive")
+    if inner.nf:
+        out.append((inner, "prop_blade"))
+    if cand.nf:
+        _, d = blade_le_distance(cand.V, k)
+        le = trim(cand, d - p["width"], "negative")
+        body = trim(cand, d - p["width"], "positive")
+        if body.nf:
+            out.append((body, "prop_blade"))
+        if le.nf:
+            r, _ = blade_le_distance(le.V, k)
+            f = r - r_out                                           # the shield stops at the red band
+            a, b = trim(le, f, "negative"), trim(le, f, "positive")
+            if a.nf:
+                out.append((a, SURFACES["blade_le"]))
+            if b.nf:
+                out.append((b, "prop_blade"))
     return out
+
+
+def _winglet_pin(m, sgn):
+    """Split WINGLET_PIN (the white chordwise line on the winglet's inboard face) off an inboard-face piece m of the
+    winglet on side sgn: the band |d| <= half_width about the plane of the winglet section at path fraction s
+    (the section sheet L5 draws: winglet_sections(40, 30)), chord c0..c1; sequential single-sided trims."""
+    from model import wing as W
+    p = WINGLET_PIN
+    secs = W.winglet_sections(40, 30)
+    sec = secs[int(round(p["s"] * (len(secs) - 1)))]
+    le = sec.le * [1, sgn, 1]
+    e_c = sec.e_c * [1, sgn, 1]
+    e_t = np.asarray(sec.e_t, float) * [1, sgn, 1]
+    n = np.cross(e_c, e_t)
+    n /= np.linalg.norm(n)
+    d = lambda mm: (mm.V - le) @ n                                  # noqa: E731
+    xc = lambda mm: ((mm.V - le) @ e_c) / sec.chord                 # noqa: E731
+    pieces, band = [], m
+    for f in (lambda mm: d(mm) - p["half_width"], lambda mm: -d(mm) - p["half_width"],
+              lambda mm: p["c0"] - xc(mm), lambda mm: xc(mm) - p["c1"]):
+        v = f(band)
+        out = trim(band, v, "positive")
+        band = trim(band, v, "negative")
+        if out.nf:
+            pieces.append(out)
+        if band.nf == 0:
+            break
+    return band, pieces
+
+
+def _stab_boot(m):
+    """Split the tailplane LE boot (STAB_BOOT: 8 % upper / 6 % lower chord, BL 0 -> the fixed-tip rib STAB_TIP_RIB, as
+    sheet L5 draws stab_boot_outline) off a stabiliser skin piece; chordwise edge and span end trimmed in turn.
+    Returns (boot, [rest pieces])."""
+    from model import empennage as E
+    def xc_field(mm):
+        y = np.abs(mm.V[:, 1])
+        le, te = E.stab_le(y), E.stab_te(y)
+        xc = (mm.V[:, 0] - le) / np.maximum(te - le, 1e-3)
+        return xc - np.where(mm.V[:, 2] >= E.STAB_Z, STAB_BOOT["upper"], STAB_BOOT["lower"])
+    rest = []
+    v = xc_field(m)
+    boot = trim(m, v, "negative")
+    r = trim(m, v, "positive")
+    if r.nf:
+        rest.append(r)
+    if boot.nf:
+        v = np.abs(boot.V[:, 1]) - E.STAB_TIP_RIB
+        r = trim(boot, v, "positive")
+        boot = trim(boot, v, "negative")
+        if r.nf:
+            rest.append(r)
+    return boot, rest
 
 
 def apply(parts):
@@ -489,6 +601,17 @@ def apply(parts):
             else:
                 new.append((m, mat))
         p.meshes = new
+    if "stabilizer" in parts:                      # tailplane LE boot (STAB_BOOT) before the silver recolour
+        new = []
+        for m, mat in parts["stabilizer"].meshes:
+            if mat != UNPAINTED:
+                new.append((m, mat))
+                continue
+            boot, rest = _stab_boot(m)
+            new += [(r, mat) for r in rest]
+            if boot.nf:
+                new.append((boot, SURFACES["boot"]))
+        parts["stabilizer"].meshes = new
     recolor = {"tail_bullet": SURFACES["bullet"], "belly_fairing": SURFACES["belly_fairing"],
                "flap_fairings": SURFACES["flap_fairings"], "stabilizer": SURFACES["stab_upper"],
                "elevator_R": SURFACES["stab_upper"], "elevator_L": SURFACES["stab_upper"],
@@ -503,6 +626,9 @@ def apply(parts):
                   else (SURFACES["wing_upper"], SURFACES["wing_lower"]))
         new = []
         for m, mat in parts[pid].meshes:
+            if mat == "paint_belly" and pid.startswith("flap_canoes"):   # aft flap-track canoes (on the flaps)
+                new.append((m, SURFACES["flap_fairings"]))
+                continue
             if mat != UNPAINTED:
                 new.append((m, mat))
                 continue
@@ -511,7 +637,19 @@ def apply(parts):
                 f = -(m.N[:, 2] - side * m.N[:, 1])          # up / inboard-facing: negative
             else:
                 f = -m.N[:, 2]
-            new += _split(m, f, up, lo)
+            pieces = _split(m, f, up, lo)
+            if wl:                                       # WINGLET_PIN on the inboard face
+                out = []
+                for mm, mt in pieces:
+                    if mt != up:
+                        out.append((mm, mt))
+                        continue
+                    pin, rest = _winglet_pin(mm, int(side))
+                    out += [(r, up) for r in rest]
+                    if pin.nf:
+                        out.append((pin, "paint_pinstripe"))
+                pieces = out
+            new += pieces
         parts[pid].meshes = new
     if "radar_pod" in parts:                       # body blue, radome black forward of the joint
         from model import details as D
@@ -529,13 +667,23 @@ def apply(parts):
     if "exhaust_stacks" in parts:
         parts["exhaust_stacks"].meshes = [(m, SURFACES["exhaust"] if mm == "exhaust" else mm)
                                           for m, mm in parts["exhaust_stacks"].meshes]
-    from model import powerplant as PP             # blade tip bands, radius from the propeller axis
-    r_of = lambda V: np.hypot(V[:, 1], V[:, 2] - PP.AX_Z)      # noqa: E731
+    # blade tip bands: radius about the THRUST axis (powerplant.prop_hub / thrust_dir: 2 deg down, 2 deg right, hub
+    # off the centre line), not the untilted line (CONS-07); plus the LE erosion shield inboard of the bands
+    from model import powerplant as PP
+    hub, ax = PP.prop_hub(), PP.thrust_dir()
+
+    def r_of(V):
+        w = V - hub
+        return np.linalg.norm(w - np.outer(w @ ax, ax), axis=1)
+
     for pid in [k for k in parts if k.startswith("blade_")]:
         blade = [m for m, mm in parts[pid].meshes if mm in ("prop_blade", "prop_tip")]
         other = [(m, mm) for m, mm in parts[pid].meshes if mm not in ("prop_blade", "prop_tip")]
         if blade:
-            parts[pid].meshes = _radial_bands(Mesh.merge(blade), r_of, PROP_BANDS, PP.PROP_R, "prop_blade") + other
+            bands, rest = _radial_bands(Mesh.merge(blade), r_of, PROP_BANDS, PP.PROP_R, "prop_blade")
+            if rest.nf:
+                bands += _blade_le_strip(rest, int(pid.split("_")[1]) - 1, PP.PROP_R - PROP_BANDS[-1][2])
+            parts[pid].meshes = bands + other
     return parts
 
 
