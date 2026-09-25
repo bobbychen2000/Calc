@@ -538,10 +538,13 @@ def draw_inlet_side(ds, v):
 
 
 def draw_gear_side(ds, v):
-    T = G.MAIN_TRUNNION
-    # leg door (gear.leg_door_outline): outboard of the tyre, so it is drawn over it in both side views
-    door = G.leg_door_outline()
     Lp, A = G.MAIN_LINK_PIVOT, G.MAIN_AXLE
+    z0 = G.main_leg_skin_z() - 0.05                 # the leg from below the wing lower skin (its round cap must not
+    T = G.MAIN_TRUNNION + (Lp - G.MAIN_TRUNNION) * (G.MAIN_TRUNNION[2] - z0) / (   # show above the door, which hides it)
+        G.MAIN_TRUNNION[2] - Lp[2])
+    # leg door as built (gear.leg_door_face, visible part: scalloped round the tyre): outboard of the leg, so it is
+    # drawn over it in both side views
+    door = G.leg_door_face(visible=True)
     ds.cv.path([v.pt(T[0], T[2]), v.pt(Lp[0], Lp[2]), v.pt(A[0], A[2])], 0.07 * v.k, color=col("gear_leg"))
     tyre(ds, v, A, G.MAIN_TYRE)
     poly(ds, v, door, col(L.SURFACES["main_gear_door"]))
@@ -740,11 +743,11 @@ def draw_plan(ds, v, upper=True):
     def gear():
         A = G.MAIN_AXLE
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
-        d = G.LEG_DOOR                                  # leg door edge-on (outboard of the tyre)
+        d = G.LEG_DOOR                                  # leg door edge-on (as built: G.leg_door_front_line)
         P = FP.opening_outline(dict(cx=A[0], cz=A[1], hx=R, hz=Wt / 2, r=0.04))
         poly(ds, v, P, col("tire"))
         outline(ds, v, P, W_THIN)
-        door = FP.opening_outline(dict(cx=0.5 * (d["x_fwd"] + d["x_aft"]), cz=float(np.mean(d["bl"])),
+        door = FP.opening_outline(dict(cx=0.5 * (d["x_fwd"] + d["x_aft"]), cz=float(G.leg_door_front_line()[:, 0].mean()),
                                        hx=0.5 * (d["x_aft"] - d["x_fwd"]), hz=0.012, r=0.005))
         poly(ds, v, door, col(L.SURFACES["main_gear_door"]))
         outline(ds, v, door, W_GRID)
@@ -1190,14 +1193,12 @@ def draw_front(ds):
         A_ = G.MAIN_AXLE
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
         T = G.MAIN_TRUNNION
-        ds.cv.line(v.pt(sg * T[1], T[2]), v.pt(sg * A_[1], A_[2]), 0.07 * v.k, color=col("gear_leg"))
+        ds.cv.line(v.pt(sg * T[1], G.main_leg_skin_z()), v.pt(sg * A_[1], A_[2]), 0.07 * v.k, color=col("gear_leg"))
         P = FP.opening_outline(dict(cx=sg * A_[1], cz=A_[2], hx=Wt / 2, hz=R, r=0.05))
         poly(ds, v, P, col("tire"))
         outline(ds, v, P, W_THIN)
-        d_ = G.LEG_DOOR                                   # leg door edge-on, outboard of the tyre
-        dz = G.leg_door_outline()[:, 1]
-        ds.cv.line(v.pt(sg * d_["bl"][0], float(dz.max())), v.pt(sg * d_["bl"][1], float(dz.min())), 0.018 * v.k,
-                   color=col(L.SURFACES["main_gear_door"]))
+        fl = G.leg_door_front_line()                      # leg door edge-on as built (LD-1)
+        ds.cv.path(v.pts(np.c_[sg * fl[:, 0], fl[:, 1]]), 0.018 * v.k, color=col(L.SURFACES["main_gear_door"]))
     Np, Na = G.NOSE_PIVOT, G.NOSE_AXLE
     ds.cv.line(v.pt(0.0, Np[2]), v.pt(0.0, Na[2]), 0.06 * v.k, color=col("gear_leg"))
     P = FP.opening_outline(dict(cx=0.0, cz=Na[2], hx=G.NOSE_TYRE["W"] / 2, hz=G.NOSE_TYRE["R"], r=0.04))

@@ -309,6 +309,7 @@ def reference():
         R["door_side_tip"] = tuple(Pf[np.argmin(Pf[:, 1])])
         for key, dx in (("door_side_unit", G.GEAR_SHIFT), ("door_side_direct", 0.0)):
             R[key] = outline_distance(G.leg_door_outline() + [dx, 0.0], Pf)
+        R["door_side_model"] = outline_distance(G.leg_door_face(visible=True) + [G.GEAR_SHIFT, 0.0], Pf)
     # main-gear leg door, edge-on in the front view (outboard of the tyre)
     c = cross("front", 1, 0.70, 2.38, 2.6)
     R["door_bl_0.7"] = 0.5 * (min(c) + max(c))
@@ -458,10 +459,9 @@ def ours():
     O["fair_nose"], O["fair_tail"] = D.BELLY_FAIRING_X
     Pf = np.array(D.BELLY_FAIRING_PLAN)
     O["fair_plan_6.3"] = float(np.interp(6.3, Pf[:, 0], Pf[:, 1]))
-    dz = G.leg_door_outline()[:, 1]
-    bl0, bl1 = G.LEG_DOOR["bl"]
-    O["door_bl_0.7"] = bl0 + (bl1 - bl0) * (dz.max() - 0.70) / (dz.max() - dz.min())
-    O["door_low"] = float(dz.min())
+    fl = G.leg_door_front_line()                      # LD-1: the model door's edge-on line (flush stow)
+    O["door_bl_0.7"] = float(np.interp(0.70, fl[:, 1], fl[:, 0]))
+    O["door_low"] = float(G.leg_door_face()[:, 1].min())
     Pd = G.leg_door_outline()
     O["door_side_tip"] = tuple(Pd[np.argmin(Pd[:, 1])])
     return O
@@ -543,10 +543,18 @@ def tyre_side(ds, v, c, tyre, dash=None):
 
 
 def leg_door_side(ds, v, w=W_OBJ):
-    """Port main-gear leg door (gear.leg_door_outline) seen from port: outboard of the tyre, so it hides the leg,
-    shock strut and tyre lines behind it (paper fill)."""
-    P = G.leg_door_outline()
+    """Port main-gear leg door as built (gear.leg_door_face, visible part: the drawn face scalloped round the tyre,
+    forward tab up to the wing) seen from port: outboard of the leg, so it hides the leg and shock strut lines behind
+    it (paper fill)."""
+    P = G.leg_door_face(visible=True)
     ds.cv.path(v.pts(P), w, closed=True, fill=M.PAPER)
+
+
+def leg_skin_point():
+    """(x, y, z) where the main leg's axis passes the wing lower skin (gear down)."""
+    T, L = G.MAIN_TRUNNION, G.MAIN_LINK_PIVOT
+    z = G.main_leg_skin_z()
+    return T + (L - T) * (T[2] - z) / (T[2] - L[2])
 
 
 def rect_pts(a0, b0, a1, b1):
@@ -643,7 +651,9 @@ def draw_side(ds, v):
     tyre_side(ds, v, G.MAIN_AXLE, G.MAIN_TYRE)
     tyre_side(ds, v, G.NOSE_AXLE, G.NOSE_TYRE)
     T, L, A = G.MAIN_TRUNNION, G.MAIN_LINK_PIVOT, G.MAIN_AXLE
-    cv.path(v.pts([(T[0], T[2]), (L[0], L[2]), (A[0], A[2])]), W_OBJ)
+    K = leg_skin_point()
+    cv.path(v.pts([(T[0], T[2]), (K[0], K[2])]), W_FINE, HID)          # leg above the skin: inside the wing
+    cv.path(v.pts([(K[0], K[2]), (L[0], L[2]), (A[0], A[2])]), W_OBJ)
     (s1x, s1z), (s2x, s2z) = G.MAIN_SHOCK
     cv.path(v.pts([(s1x, s1z), (s2x, s2z)]), W_FINE)
     cv.path(v.pts([(G.NOSE_PIVOT[0], G.NOSE_PIVOT[2]), (G.NOSE_FORK[0], G.NOSE_FORK[2]),
@@ -857,12 +867,21 @@ def draw_front(ds, v):
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
         cv.path(v.pts(rect_pts(sg * A[1] - Wt / 2, 0.0, sg * A[1] + Wt / 2, 2 * R)), W_OBJ, closed=True)
         T = G.MAIN_TRUNNION
-        cv.line(v.pt(sg * T[1], T[2]), v.pt(sg * T[1], 2 * R), W_OBJ)
+        zk = G.main_leg_skin_z()
+        cv.line(v.pt(sg * T[1], zk), v.pt(sg * T[1], 2 * R), W_OBJ)
+        cv.line(v.pt(sg * T[1], T[2]), v.pt(sg * T[1], zk), W_FINE, HID)      # leg top / trunnion in the wing
         (ax, ay, az), (bx, by, bz) = G.MAIN_BRACE
         cv.line(v.pt(sg * ay, az), v.pt(sg * by, bz), W_FINE)
-        dz = G.leg_door_outline()[:, 1]                     # leg door edge-on, outboard of the tyre
+        fl = G.leg_door_front_line()                        # leg door edge-on as built (LD-1, flush stow)
+        cv.path(v.pts(np.c_[sg * fl[:, 0], fl[:, 1]]), W_OBJ)
+        dz = G.leg_door_outline()[:, 1]                     # the drawn door plane, for reference
         bl0, bl1 = G.LEG_DOOR["bl"]
-        cv.line(v.pt(sg * bl0, float(dz.max())), v.pt(sg * bl1, float(dz.min())), W_OBJ)
+        cv.line(v.pt(sg * bl0, float(dz.max())), v.pt(sg * bl1, float(dz.min())), W_FINE, PHANTOM)
+    fl = G.leg_door_front_line()                            # call-out at the port door (free space outboard)
+    leader_label(ds, v, -float(np.interp(0.55, fl[:, 1], fl[:, 0])), 0.55, "LEG DOOR: FLUSH STOW (LD-1)",
+                 off=(12.0, 0.0), size=1.7,
+                 lines=[f"BL {fl[:, 0].min() * 1000:.0f}-{fl[:, 0].max() * 1000:.0f} (DRAWN {G.LEG_DOOR['bl'][0] * 1000:.0f}"
+                        f"-{G.LEG_DOOR['bl'][1] * 1000:.0f}, PHANTOM):", "RETRACTED IT IS THE WING SKIN"])
     A = G.NOSE_AXLE
     R, Wt = G.NOSE_TYRE["R"], G.NOSE_TYRE["W"]
     cv.path(v.pts(rect_pts(-Wt / 2, 0.0, Wt / 2, 2 * R)), W_OBJ, closed=True)
@@ -1055,28 +1074,46 @@ def draw_detail_gear(ds):
         cv.path(v.pts(P[seg][:, [0, 2]]), W_FINE)
     tyre_side(ds, v, G.MAIN_AXLE, G.MAIN_TYRE)
     T, L, A = G.MAIN_TRUNNION, G.MAIN_LINK_PIVOT, G.MAIN_AXLE
-    cv.path(v.pts([(T[0], T[2]), (L[0], L[2]), (A[0], A[2])]), W_OBJ)
+    K = leg_skin_point()
+    cv.path(v.pts([(T[0], T[2]), (K[0], K[2])]), W_FINE, HID)          # leg top in the wing (LD-1: trunnion raised)
+    cv.path(v.pts([(K[0], K[2]), (L[0], L[2]), (A[0], A[2])]), W_OBJ)
     (s1x, s1z), (s2x, s2z) = G.MAIN_SHOCK
     cv.path(v.pts([(s1x, s1z), (s2x, s2z)]), W_FINE)
     (ax, ay, az), (bx, by, bz) = G.MAIN_BRACE
     cv.path(v.pts([(ax, az), (bx, bz)]), W_FINE, HID)
     c = G.retracted_wheel()
     R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
-    cv.path(v.pts(rect_pts(c[0] - R, c[2] - Wt / 2, c[0] + R, c[2] + Wt / 2)), W_FINE, PHANTOM, closed=True)
+    tilt = math.radians(90.0 - G.MAIN_RETRACT_DEG)          # the stowed wheel lies tilted along the skin
+    hz = 0.5 * Wt * math.cos(tilt) + R * math.sin(tilt)
+    cv.path(v.pts(rect_pts(c[0] - R, c[2] - hz, c[0] + R, c[2] + hz)), W_FINE, PHANTOM, closed=True)
     for p_ in (T, L, A):
         X, Y = v.pt(p_[0], p_[2])
         cv.circle(X, Y, 0.8, w=W_FINE)
+    Td = G.MAIN_TRUNNION_DRAWN                              # the drawn leg top, for reference (small cross)
+    X, Y = v.pt(Td[0], Td[2])
+    cv.line((X - 1.0, Y - 1.0), (X + 1.0, Y + 1.0), W_FINE)
+    cv.line((X - 1.0, Y + 1.0), (X + 1.0, Y - 1.0), W_FINE)
     leg_door_side(ds, v)                                    # the leg door hides the leg / tyre behind it
+    ds.cv.path(v.pts(G.leg_door_outline()), W_FINE, PHANTOM, closed=True)      # the drawn face (phantom)
     dd = G.LEG_DOOR
-    Pd = G.leg_door_outline()
+    Pd = G.leg_door_face()
     k = int(np.argmin(Pd[:, 1]))
-    leader_label(ds, v, dd["x_aft_low"], 0.60, "LEG DOOR (OUTBOARD)", off=(20.0, 11.0), size=1.9,
+    leader_label(ds, v, dd["x_aft_low"], 0.66, "LEG DOOR (OUTBOARD)", off=(20.0, 14.0), size=1.9,
                  lines=[f"STA {dd['x_fwd'] * 1000:.0f}-{dd['x_aft'] * 1000:.0f}, TIP {Pd[k, 0] * 1000:.0f} / WL "
                         f"{Pd[k, 1] * 1000:.0f}", f"LOWER EDGE R {dd['arc_r'] * 1000:.0f}, STEPPED AFT EDGE"])
-    for p_, t_, off in ((T, "TRUNNION", (-10.0, -8.0)), (L, "LINK PIVOT (HIDDEN)", (-10.0, 4.0)),
-                        (A, "AXLE", (12.0, 10.0)), ((s1x, 0, s1z), "SHOCK (HIDDEN)", (20.0, -6.0))):
+    a_ = math.radians(97.0)
+    leader_label(ds, v, G.MAIN_AXLE[0] + dd["scallop_r"] * math.cos(a_), G.MAIN_AXLE[2] + dd["scallop_r"] * math.sin(a_),
+                 f"TYRE SCALLOP R {dd['scallop_r'] * 1000:.0f} (LD-1)", off=(22.0, -5.0), size=1.7,
+                 lines=["DRAWN FACE (PHANTOM) OVERLAPS THE TYRE:", "STOWED IT WOULD LIE UNDER THE TYRE BULGE"])
+    xt, zt = dd["tab"]
+    leader_label(ds, v, 0.5 * (dd["x_fwd"] + xt), float(G._door_wing_line(np.array([xt]))[0]) - 0.006,
+                 "TAB INTO THE SLOT (LD-1)", off=(-26.0, 6.0), size=1.7,
+                 lines=[f"HIDDEN TO WL {zt * 1000:.0f}, CLOSES THE LEG HOLE"])
+    for p_, t_, off, extra in ((T, "TRUNNION (LD-1)", (-26.0, -6.0), f"DRAWN {Td[0] * 1000:.0f} / WL {Td[2] * 1000:.0f}"),
+                               (L, "LINK PIVOT (HIDDEN)", (-10.0, 4.0), None),
+                               (A, "AXLE", (12.0, 10.0), None), ((s1x, 0, s1z), "SHOCK (HIDDEN)", (20.0, -6.0), None)):
         leader_label(ds, v, p_[0], p_[2], t_, off=off, size=1.9,
-                     lines=[f"{p_[0] * 1000:.0f} / WL {p_[2] * 1000:.0f}"])
+                     lines=[f"{p_[0] * 1000:.0f} / WL {p_[2] * 1000:.0f}"] + ([extra] if extra else []))
     leader_label(ds, v, c[0] + 0.5 * R, c[2] + Wt / 2, "RETRACTED (PHANTOM)", off=(4.0, -10.0), size=1.9,
                  lines=[f"BL {c[1] * 1000:.0f}, PROTRUDES {retract_protrusion() * 1000:.0f}"])
     M.view_title(ds, 530.0, 531.0, "DETAIL B - MAIN GEAR", "PORT UNIT, SEEN FROM PORT · 1:20", size=3.4)
@@ -1212,14 +1249,15 @@ def deviation_rows(O, R):
     add("Fairing bottom WL, STA 6000 (side)", "fair_bot_6.0", "hidden 6465-7450 behind the gear")
     add2("Fairing nose / tail end STA (side)", "fair_nose", "fair_tail", "tail lobe on the fuselage side")
     add("Fairing root fillet BL, STA 6300 (plan)", "fair_plan_6.3", "upper fillet over the wing root")
-    add("Leg door plane BL at WL 700 (front)", "door_bl_0.7", "outboard of the tyre, leans out")
+    add("Leg door plane BL at WL 700 (front)", "door_bl_0.7", "LD-1 flush stow: door = wing skin retracted")
     add("Leg door lowest WL (front)", "door_low", "= side-view tip WL 318 (the drawn views differ by 20)")
     o, r = O["door_side_tip"], (R or {}).get("door_side_tip")
     rows.append(("Leg door tip (side) STA / WL", f"{f_mm(o[0])} / {f_mm(o[1])}",
                  f"{dev(o[0], r[0])} / {dev(o[1], r[1])}" if r else "-", "-", "unit shifted -17.5 (wheelbase 3480)"))
     for key, lab, note in (("door_side_unit", "Leg door face outline, unit frame", "gear.LEG_DOOR fitted to the drawn "
                             "face (rev B.0: 116 / 58)"),
-                           ("door_side_direct", "Leg door face outline, direct", "incl. the -17.5 unit shift")):
+                           ("door_side_direct", "Leg door face outline, direct", "incl. the -17.5 unit shift"),
+                           ("door_side_model", "Leg door as built (scallop, tab), unit", "LD-1 tyre scallop R 292 + tab")):
         r = (R or {}).get(key)
         rows.append((f"{lab} (max / rms)", "-", f"{r[0]:.0f} / {r[1]:.0f}" if r else "-", "-", note))
     return rows
@@ -1250,11 +1288,16 @@ def param_rows():
         ("      bullet / aft-most", f"STA {E.BULLET_X[0] * 1000:.0f} - {E.BULLET_X[1] * 1000:.0f}"),
         ("GEAR  nose / main axle, wheelbase", f"{G.NOSE_AXLE[0] * 1000:.0f} / {G.MAIN_AXLE[0] * 1000:.0f}, 3 480"),
         ("      main trunnion / link pivot (STA, WL)", f"{G.MAIN_TRUNNION[0] * 1000:.0f},{G.MAIN_TRUNNION[2] * 1000:.0f} / "
-                                                     f"{G.MAIN_LINK_PIVOT[0] * 1000:.0f},{G.MAIN_LINK_PIVOT[2] * 1000:.0f}"),
-        ("      retracted wheel (BL) / tyre protrusion", f"{G.retracted_wheel()[1] * 1000:.0f} / {retract_protrusion() * 1000:.0f} (POH ~25)"),
-        ("      leg door STA / tip WL / plane BL", f"{G.LEG_DOOR['x_fwd'] * 1000:.0f}-{G.LEG_DOOR['x_aft'] * 1000:.0f} / "
-                                                   f"{G.leg_door_outline()[:, 1].min() * 1000:.0f} / "
-                                                   f"{G.LEG_DOOR['bl'][0] * 1000:.0f}-{G.LEG_DOOR['bl'][1] * 1000:.0f}"),
+                                                     f"{G.MAIN_LINK_PIVOT[0] * 1000:.0f},{G.MAIN_LINK_PIVOT[2] * 1000:.0f}"
+                                                     f" (drawn top {G.MAIN_TRUNNION_DRAWN[0] * 1000:.0f},"
+                                                     f"{G.MAIN_TRUNNION_DRAWN[2] * 1000:.0f})"),
+        ("      retraction / retracted wheel BL / tyre", f"{G.MAIN_RETRACT_DEG:.0f} deg in / {G.retracted_wheel()[1] * 1000:.0f}"
+                                                        f" / {retract_protrusion() * 1000:.0f} proud (POH ~25)"),
+        ("      leg door STA / tip WL / BL (drawn)", f"{G.LEG_DOOR['x_fwd'] * 1000:.0f}-{G.LEG_DOOR['x_aft'] * 1000:.0f} / "
+                                                    f"{G.leg_door_face()[:, 1].min() * 1000:.0f} / "
+                                                    f"{G.leg_door_front_line()[:, 0].min() * 1000:.0f}-"
+                                                    f"{G.leg_door_front_line()[:, 0].max() * 1000:.0f} "
+                                                    f"({G.LEG_DOOR['bl'][0] * 1000:.0f}-{G.LEG_DOOR['bl'][1] * 1000:.0f})"),
         ("FAIR  wing-body fairing STA / bottom WL", f"{D.BELLY_FAIRING_X[0] * 1000:.0f}-{D.BELLY_FAIRING_X[1] * 1000:.0f}"
                                                    f" / {D.BELLY_FAIRING_FLAT['z'] * 1000:.0f} (flat to BL "
                                                    f"{D.BELLY_FAIRING_FLAT['hw'] * 1000:.0f})"),
@@ -1265,10 +1308,8 @@ def param_rows():
 
 
 def retract_protrusion():
-    c = G.retracted_wheel()
-    s = W.section_at(c[1])
-    xc = (c[0] - s.le[0]) / s.chord
-    return float(s.lower(np.array(xc))[2]) - (c[2] - G.MAIN_TYRE["W"] / 2)
+    """Retracted main tyre's depth below the local wing lower skin (gear.main_tyre_protrusion)."""
+    return G.main_tyre_protrusion()
 
 
 def centre_section_fit():
@@ -1308,13 +1349,16 @@ def stage3_items():
         "boots and canoes; the wing lies 13 mm lower at the root (QC WL / dihedral refit).",
         "Winglet: new sections (wing.winglet_sections); nav / strobe lights belong in the winglet tip (drawn light "
         "box at the winglet top), details.py still places them at the tip rib (inside the pod on starboard).",
-        "Gear: leg door = gear.leg_door_outline() (drawn side-view face: pointed tip, R 348 concave lower edge, "
-        "stepped aft edge; edge-on plane BL 2358-2472), built in 3-D in that plane, rigid on the leg "
-        "(gear.leg_door_mesh); the wing-bay slot is its footprint (bays.leg_slot_sdf, STA "
-        f"{G.LEG_DOOR['x_fwd'] * 1000:.0f}-{G.LEG_DOOR['x_aft'] * 1000:.0f}) + forward slot + brace pocket. OPEN: "
-        "retracted, the rigid door lies {0:.0f}-{1:.0f} mm below the wing lower skin (gear.leg_door_retracted_drop: "
-        "it is 93-207 mm outboard of the leg / wheel plane, the trunnion is at the lower skin and the tyre stows "
-        "1 in proud) - owner decision.".format(*(1000 * np.array(G.leg_door_retracted_drop()))),
+        "Gear, leg door (decision LD-1, resolved): the door is the wing lower skin carried down by the leg "
+        "(gear.leg_door_offset), so retracted it closes flush ({0:+.0f}..{1:+.0f} mm) and the tyre protrudes {2:.0f} mm "
+        "in its own well. Drawn side-view face kept, scalloped round the tyre (R {3:.0f}) with a hidden tab up the "
+        "slot over the leg's skin crossing; edge-on it stands at BL {4:.0f}-{5:.0f} (drawn plane 2358-2472, leaning "
+        "out: not possible with a flush door). Hidden changes: trunnion {6:.0f} / WL {7:.0f} (drawn 5932 / 1070), "
+        "retraction {8:.0f} deg, side-brace stations and split, no forward slot.".format(
+            -1000 * G.leg_door_retracted_drop()[1], -1000 * G.leg_door_retracted_drop()[0],
+            1000 * G.main_tyre_protrusion(), 1000 * G.LEG_DOOR["scallop_r"],
+            1000 * G.leg_door_front_line()[:, 0].min(), 1000 * G.leg_door_front_line()[:, 0].max(),
+            1000 * G.MAIN_TRUNNION[0], 1000 * G.MAIN_TRUNNION[2], G.MAIN_RETRACT_DEG),
         "Empennage: fin NACA 0018 down to WL 1760 (the ventral part below the tail cone is the drawn ventral fin); "
         "trim the rudder, tab and fin skins to the SLOPED rudder edges (E.rudder_bottom_z / rudder_top_z / "
         "rudder_outline; E.RUD_Z is now only the hinge-line WLs of those edges); "

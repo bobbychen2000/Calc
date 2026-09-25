@@ -513,10 +513,13 @@ def build_right(n=60):
 
     # panel B: flap bay; span rows also at the boot's inboard end and every 30 mm across the main-gear bay (the wheel
     # well / leg slot / brace slot are cut into its lower skin: bays.main_opening_sdf)
+    # (LD-1: the bay span is its own sub-panel, rows every 20 mm and twice the chordwise points on the lower surface,
+    # so the cut-out's corners -- which the closed leg door fills flush -- are cut within a few mm, not ~35 mm chamfers)
     from model.bays import MAIN_BAY_Y
-    ys = np.unique(np.round(np.r_[span_stations(Y_FLAP[0], Y_FLAP[1], 0.25), BOOT_Y[0],
-                                  np.arange(MAIN_BAY_Y[0], MAIN_BAY_Y[1] + 1e-9, 0.03)], 6))
-    add_skin(skin(section_at, ys, x_lo_end=FLAP_X_LO, x_up_end=FLAP_X_LIP, n=n))
+    ys_bay = np.round(np.linspace(MAIN_BAY_Y[0], MAIN_BAY_Y[1], int(round((MAIN_BAY_Y[1] - MAIN_BAY_Y[0]) / 0.02)) + 1), 6)
+    ys = np.unique(np.round(np.r_[span_stations(Y_FLAP[0], Y_FLAP[1], 0.25), BOOT_Y[0], ys_bay], 6))
+    for sub, nn in ((ys[ys <= ys_bay[0]], n), (ys_bay, 2 * n), (ys[ys >= ys_bay[-1]], n)):
+        add_skin(skin(section_at, sub, x_lo_end=FLAP_X_LO, x_up_end=FLAP_X_LIP, n=nn, n_up=n))
     out["skin"].append(_clamp_mesh(curve_patch(section_at, ys, flap_cove, outward_hint=lambda s: s.e_c)))
 
     # panel C: between flap and aileron

@@ -5,10 +5,10 @@
  3. the wing carry-through stays under the cabin floor (fuselage.CABIN_FLOOR_WL - 15 mm) inside the fuselage
  4. dorsal fin, fin and rudder stay outside the fixed tail cone; the rudder at +/-25 deg clears the fin tip,
     the fixed cove and the tail-cone closure
- 5. retracted gear: nose unit above the keel and inside the bay / pedestal tunnel, main tyres at most ~1 in proud
-    of the wing lower skin, nothing but the leg door lower, nothing above the upper skin; the stowed leg / strut lie
-    above the closed leg door; the leg door's stowed height (approved gear.LEG_DOOR, rigid on the leg) is reported as
-    an OPEN owner decision (it does not fail the run)
+ 5. retracted gear: nose unit above the keel and inside the bay / pedestal tunnel; main tyres 20-30 mm below the
+    LOCAL wing lower skin (POH ~1 in), nothing else below the skin, nothing above the upper skin; the stowed leg /
+    strut above the closed leg door; the leg door flush with the skin (within 5 mm, decision LD-1 in model/gear.py);
+    the skin cut-out closed by the door and the tyre (only the panel gap and the tyre's well ring open)
  6. folding-strut knees over 0-100 % retraction: main knees between the wing skins, nose knee inside the bay
  7. cabin furniture clear of the airstair entry
  8. the tailplane horn balances (carried by the elevators) clear the fixed tips at full elevator travel
@@ -170,43 +170,59 @@ def gear_meshes(pid, door=None):
     return out
 
 
+from model.bays import main_opening_sdf, DOOR_GAP, WELL_R, well_centre
+from cad import sdf2d
 for side in ("R", "L"):
+    sg = 1 if side == "R" else -1
     gp = parts[f"gear_main_{side}"].pivot
     M = rotation_about(gp["axis"], np.radians(gp["retract"]), gp["origin"])
-    from cad import sdf2d
     rest_, _ = merged(gear_meshes(f"gear_main_{side}", door=False), M)
+    V_ = rest_[::2]
+    zl_, zu_ = G.wing_z(V_[:, 0], V_[:, 1], False), G.wing_z(V_[:, 0], V_[:, 1], True)
     fp = G.leg_door_footprint(1)
-    covered = sdf2d.polygon(rest_[:, 0], np.abs(rest_[:, 1]), fp) < 0.0      # over the (stowed) leg door
-    samp = rest_[~covered][::3]
-    wc = G.retracted_wheel(1 if side == "R" else -1)
-    z_skin = wing_z(wc[0], wc[1], False)                    # lower skin at the stowed wheel centre
+    covered = sdf2d.polygon(V_[:, 0], np.abs(V_[:, 1]), fp) < 0.0             # over the (stowed) leg door
     tyre = verts(f"gear_main_{side}", ("tire",)) @ M[:3, :3].T + M[:3, 3]
-    proud = z_skin - tyre[:, 2].min()
-    low = z_skin - samp[:, 2].min()
-    upz = np.array([wing_z(p[0], p[1], True) for p in rest_[::3]])
-    over = (rest_[::3, 2] - upz).max()
-    report(f"main gear {side} retracted: tyre ~1 in proud, nothing lower outside the leg door, nothing above the upper "
-           f"skin", proud < 0.035 and low <= proud + 0.002 and over < 0,
-           f"tyre {proud * 1000:.0f} mm below the skin at the wheel centre, lowest other part {low * 1000:.0f} mm, "
-           f"{over * 1000:+.0f} mm vs the upper skin")
-    # the stowed leg / strut / trunnion lie above the closed door (within its plan footprint), M3
-    Vd, Fd = merged([m for m, mm in parts[f"gear_main_{side}"].meshes if mm in DOOR_MAT[:2]], M)
-    c = Vd.mean(0)
-    nrm = np.linalg.svd(Vd - c)[2][2]
-    nrm = nrm if nrm[2] > 0 else -nrm
-    top = ((Vd - c) @ nrm).max()                            # the plate's upper (inner) face
-    below = covered & ((rest_ - c) @ nrm < top + 0.001)
+    proud = float((G.wing_z(tyre[:, 0], tyre[:, 1], False) - tyre[:, 2]).max())   # depth below the LOCAL lower skin
+    mats = np.concatenate([np.full(len(m.V), mm, dtype=object) for m, mm in parts[f"gear_main_{side}"].meshes
+                           if mm not in DOOR_MAT])[::2]
+    whl = np.isin(mats, ("tire", "wheel"))
+    low_other = float((zl_ - V_[:, 2])[~whl].max())                           # > 0: something else below the skin
+    low_wheel = float((zl_ - V_[:, 2])[whl].max())
+    over = float((V_[:, 2] - zu_).max())
+    report(f"main gear {side} retracted: tyre protrudes 20-30 mm below the local lower skin (POH ~1 in)",
+           0.020 <= proud <= 0.030, f"{proud * 1000:.1f} mm")
+    report(f"main gear {side} retracted: nothing but the tyre below the skin, nothing above the upper skin",
+           low_other < 0 and low_wheel <= proud + 1e-6 and over < 0,
+           f"other parts lowest {-low_other * 1000:+.0f} mm vs the skin (rim / hub {-low_wheel * 1000:+.0f} mm, inside "
+           f"the tyre bulge), highest {over * 1000:+.0f} mm vs the upper skin")
+    # the stowed leg / strut / trunnion lie above the closed door's inner face (within its plan footprint), M3
+    above = V_[covered, 2] - (zl_[covered] + G.LEG_DOOR_T + G.LEG_DOOR_RECESS)
     report(f"main gear {side} retracted: leg, strut and trunnion above the closed leg door",
-           not below.any(), f"{int(below.sum())} verts below the plate's inner face in its footprint; closest "
-                            f"{1000 * (((rest_[covered] - c) @ nrm) - top).min():.0f} mm above it")
-    # leg door stowed height: the approved LEG_DOOR (drawn face in the drawn plane, rigid on the leg) cannot close
-    # flush -- an owner decision (see gear.leg_door_retracted_drop and the Stage-3 report)
-    dmin, dmax = G.leg_door_retracted_drop(1)
-    lo_d = np.array([wing_z(p[0], p[1], False) for p in Vd[::5]]) - Vd[::5, 2]
-    report(f"main gear {side} retracted: leg door stowed below the wing (approved LEG_DOOR plane BL "
-           f"{G.LEG_DOOR['bl'][0] * 1000:.0f}-{G.LEG_DOOR['bl'][1] * 1000:.0f}, rigid on the leg)", True,
-           f"door outer face {dmin * 1000:.0f}-{dmax * 1000:.0f} mm below the lower skin (parameters), mesh up to "
-           f"{lo_d.max() * 1000:.0f} mm: flush closure needs an owner decision", open_item=True)
+           bool((above > 0.001).all()), f"closest {above.min() * 1000:.0f} mm above the door's inner face "
+                                        f"({int(covered.sum())} verts over the door)")
+    # leg door flush with the wing lower skin (LD-1): the analytic face and the posed mesh
+    Vd, Fd = merged([m for m, mm in parts[f"gear_main_{side}"].meshes if mm in DOOR_MAT[:2]], M)
+    dd = Vd[:, 2] - G.wing_z(Vd[:, 0], Vd[:, 1], False)                      # height above the local lower skin
+    outer = dd < 0.5 * G.LEG_DOOR_T
+    dmin, dmax = G.leg_door_retracted_drop(sg)
+    report(f"main gear {side} retracted: leg door flush with the wing lower skin (within 5 mm), nothing below it",
+           abs(dmin) <= 0.005 and abs(dmax) <= 0.005 and np.abs(dd[outer]).max() <= 0.005 and dd.min() >= -0.0005,
+           f"outer face {dd[outer].min() * 1000:+.1f}..{dd[outer].max() * 1000:+.1f} mm above the skin (mesh), "
+           f"{-dmax * 1000:+.1f}..{-dmin * 1000:+.1f} mm (face), lowest door vertex {dd.min() * 1000:+.1f} mm")
+    # the underside is closed: every point of the skin cut-out is under the closed door or in the tyre's well; only
+    # the door's panel gap (DOOR_GAP) and the ring round the tyre (tread -> well edge) stay open
+    xs_, ys_ = np.meshgrid(np.arange(5.85, 6.75, 0.004), np.arange(1.0, 2.5, 0.004))
+    xs_, ys_ = xs_.ravel(), sg * ys_.ravel()
+    hole = main_opening_sdf(xs_, ys_) < 0
+    wc = well_centre()
+    ring = np.hypot(xs_ - wc[0], np.abs(ys_) - wc[1]) < WELL_R + 1e-6
+    fp_d = sdf2d.polygon(xs_, np.abs(ys_), fp)
+    open_ = hole & ~ring & (fp_d > 0)
+    report(f"main gear {side} retracted: the skin cut-out is closed by the door (panel gap {DOOR_GAP * 1000:.0f} mm) "
+           f"and the tyre in its well", bool((fp_d[open_] <= DOOR_GAP + 0.001).all()),
+           f"{int(open_.sum())} cut-out samples outside the door and the well, widest gap "
+           f"{(fp_d[open_].max() if open_.any() else 0) * 1000:.1f} mm; well R {WELL_R * 1000:.0f} about the stowed wheel "
+           f"({1000 * abs(G.retracted_wheel(sg)[1] - sg * wc[1]):.1f} mm off)")
 
 # 6 ------------------------------------------------------------------------------------------------ brace knees
 for pid, gear_id, A, B0, T, axis, (f1, ref), name in G.brace_specs():
