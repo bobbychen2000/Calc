@@ -151,7 +151,13 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
   padding: 8px 9px; color: var(--text-2); flex: 1 0 auto; min-height: 36px;
 }
 #tabs [role="tab"][aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
-#panelBody { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 20px; overscroll-behavior: contain; }
+#panelBody { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 20px; overscroll-behavior: contain;
+  display: flex; flex-direction: column; min-height: 0; }
+#panelBody > [role="tabpanel"] { flex: 0 0 auto; }
+/* Build tab fills the panel; the step list takes what is left (and scrolls itself), so the current
+   step row is always inside the panel however long the step text is */
+#panelBody > #pane-build { flex: 1 1 0; display: flex; flex-direction: column; min-height: 0; }
+#pane-build > * { flex: 0 0 auto; }
 #panelBody h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2);
   margin: 18px 0 6px; display: flex; justify-content: space-between; gap: 8px; }
 #panelBody h3:first-child { margin-top: 4px; }
@@ -169,8 +175,12 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 .step-now p { color: var(--text); }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .chips button { font: 11.5px var(--mono); padding: 2px 7px; min-height: 24px; border-radius: 999px; }
-.step-list { position: relative; list-style: none; margin: 0; padding: 0; max-height: 42vh; overflow-y: auto; overscroll-behavior: contain;
+.step-list { position: relative; list-style: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain;
   border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+/* the list gives way first (down to 3 rows); only then does the step text shrink and scroll itself
+   (short windows, info card open) */
+#pane-build > .step-list { flex: 0 1000 auto; min-height: 96px; }
+#pane-build > .step-now { flex: 0 1 auto; min-height: 64px; overflow-y: auto; margin: 10px 0; }
 .step-list li { margin: 0; }
 .step-list button {
   width: 100%; text-align: left; border: 0; border-radius: 6px; background: none; padding: 6px 8px;
@@ -216,6 +226,9 @@ table.readouts td:last-child { text-align: right; font-family: var(--mono); font
 #infoCard header { display: flex; gap: 8px; justify-content: space-between; align-items: flex-start; }
 #infoCard h2 { font-size: 15px; }
 #icMeta { font: 11.5px var(--mono); margin-top: 2px; }
+#icHint { margin: 6px 0 2px; padding: 4px 8px; border-radius: 6px; font-size: 12.5px;
+  background: var(--accent-soft); color: var(--text); flex: 0 0 auto; }
+#icMore { display: none; }
 #icInfo { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 6px 0; font-size: 12.5px; }
 #icInfo dt { color: var(--text-2); }
 #icInfo dd { margin: 0; overflow-wrap: anywhere; }
@@ -290,12 +303,18 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
   .panel-head { padding: 16px var(--gutter) 4px; }
   #tabs { padding: 0 calc(var(--gutter) - 6px); }
   #panelBody { padding: 12px var(--gutter) 24px; }
-  #infoCard { margin: 8px var(--gutter) 0; max-height: 22vh; }
+  /* compact card: name, hint and the action row; the details fold out */
+  #infoCard { margin: 8px var(--gutter) 0; max-height: none; padding: 8px 12px; }
+  #infoCard .ic-body { display: none; }
+  #infoCard.expanded .ic-body { display: block; max-height: 22vh; }
+  #infoCard .row { margin: 6px 0 0; }
+  #icMore { display: inline-block; margin-left: auto; }
   #stepCaption, #app.panel-open #stepCaption { left: 50%; bottom: calc(var(--sheet-h) + 8px); }
   #app:not(.panel-open) #stepCaption { bottom: 100px; }
   #drawingView, #app:not(.panel-open) #drawingView { right: 0; bottom: var(--sheet-h); top: 52px; }
   .slider { grid-template-columns: 6.5em 1fr auto; }
   .step-list { max-height: none; }
+  #pane-build > .step-now { min-height: 112px; }   /* keep a few lines of the step text in the small sheet */
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }

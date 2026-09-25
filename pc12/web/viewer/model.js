@@ -34,12 +34,13 @@ export function loadGLB(url, onProgress) {
   });
 }
 
-// Shader patch shared by the paint / cutaway variants.  Uniform objects are shared so one
+// Shader patch shared by the paint / cutaway / glass variants.  Uniform objects are shared so one
 // write updates every material.  paint: mix primer -> livery behind a sweep plane along Z
 // (the "spray" wipe, nose to tail).  lining: back faces (seen from inside a clipped skin)
-// take the cabin lining colour.
-function patchMaterial(mat, U, { paint = false, lining = false }) {
-  if (!paint && !lining) return mat;
+// take the cabin lining colour.  glass: the tinted panes are double-sided with outward winding
+// (checked), so back faces are the view from inside the cabin -- make them nearly clear.
+function patchMaterial(mat, U, { paint = false, lining = false, glass = false }) {
+  if (!paint && !lining && !glass) return mat;
   mat.onBeforeCompile = (sh) => {
     let vs = sh.vertexShader, fs = sh.fragmentShader;
     if (paint) {
@@ -61,10 +62,20 @@ function patchMaterial(mat, U, { paint = false, lining = false }) {
         `if (!gl_FrontFacing) { diffuseColor.rgb = uLining; roughnessFactor = 0.85; metalnessFactor = 0.0; }
 #include <normal_fragment_begin>`);
     }
+    if (glass) {
+      // transparent double-sided materials are drawn in two passes (BackSide, then FrontSide); the
+      // back pass has FLIP_SIDED defined (and gl_FrontFacing flipped), so test the defines
+      fs = fs.replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
+  #if defined( FLIP_SIDED )
+    diffuseColor.a *= 0.2;
+  #elif defined( DOUBLE_SIDED )
+    if (!gl_FrontFacing) diffuseColor.a *= 0.2;
+  #endif`);
+    }
     sh.vertexShader = vs;
     sh.fragmentShader = fs;
   };
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' : ''}`;
+  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' : ''}${glass ? 'G' : ''}`;
   mat.needsUpdate = true;
   return mat;
 }
@@ -94,6 +105,7 @@ function makeOverlay(color, opacity, { depthTest = true, clip = null } = {}) {
   return m;
 }
 const noRaycast = () => {};
+const _g = new THREE.Vector3();
 
 export class Model {
   constructor(gltf, meta) {
@@ -128,6 +140,7 @@ export class Model {
     this.overlays = { sel: [], hover: [] };
     this.selected = null;
     this.hovered = null;
+    this.groundY = 0;                 // ground drop needed so exploded parts stay above the grid
 
     const stepIndex = new Map(meta.steps.map((s, i) => [s.key, i]));
     const patched = new Set();
@@ -154,12 +167,22 @@ export class Model {
     for (const rec of this.list) {
       for (const ch of rec.node.children) {
         if (!ch.isMesh) continue;
-        const base = ch.material;
+        let base = ch.material;
         const name = base.name || '';
+        if (rec.id === 'structure') {
+          // frames / stringers / rib caps nearly coincide with the skins: push them back in depth
+          // (own clones, so gear_bays keeps the shared zinc_chromate) to stop the skins z-fighting
+          base = base.clone();
+          base.polygonOffset = true;
+          base.polygonOffsetFactor = 2;
+          base.polygonOffsetUnits = 8;
+          ch.material = base;
+        }
         const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name),
           // structure: clip the fuselage frames/stringers but keep the wing spars & ribs whole
           cut: rec.cut && !(rec.id === 'structure' && name === 'interior_green') };
         if (mr.paint && !patched.has(base)) { patchMaterial(base, this.U, { paint: true }); patched.add(base); }
+        if (mr.glass && !patched.has(base)) { patchMaterial(base, this.U, { glass: true }); patched.add(base); }
         ch.castShadow = rec.xray || SHADOW_CASTERS.test(rec.id);
         ch.receiveShadow = false;
         rec.meshes.push(mr);
@@ -170,6 +193,79 @@ export class Model {
     }
     this.root.updateMatrixWorld(true);
     this.box = new THREE.Box3().setFromObject(this.root);
+    this._restGeometry();
+  }
+
+  // Rest-pose data used by the build fly-in, the ground drop and the camera fit (all node rotations
+  // are identity at rest, so world offsets are plain sums of node positions).
+  _restGeometry() {
+    const tmp = new THREE.Box3(), wp = new THREE.Vector3();
+    this.restLowest = Infinity;
+    for (const p of this.list) {
+      p.restBox = new THREE.Box3();
+      for (const mr of p.meshes) {
+        const g = mr.mesh.geometry;
+        if (!g.boundingBox) g.computeBoundingBox();
+        p.restBox.union(tmp.copy(g.boundingBox).applyMatrix4(mr.mesh.matrixWorld));
+      }
+      p.restMinY = p.restBox.isEmpty() ? Infinity : p.restBox.min.y;
+      if (p.restMinY < this.restLowest) this.restLowest = p.restMinY;
+    }
+    for (const p of this.list) {
+      // children of the spinning propeller (blades): lowest point over a revolution, and their
+      // (radial) explode vector can point straight down at some phase
+      const par = p.parent;
+      p.spin = !!(par && par.ex.pivot && par.ex.pivot.kind === 'spin' && !p.restBox.isEmpty());
+      if (p.spin) {
+        const o = par.ex.pivot.origin, ax = new THREE.Vector3().fromArray(par.ex.pivot.axis).normalize();
+        let rmax = 0;
+        for (let i = 0; i < 8; i++) {
+          wp.set(i & 1 ? p.restBox.max.x : p.restBox.min.x, i & 2 ? p.restBox.max.y : p.restBox.min.y, i & 4 ? p.restBox.max.z : p.restBox.min.z);
+          wp.x -= o[0]; wp.y -= o[1]; wp.z -= o[2];
+          wp.addScaledVector(ax, -wp.dot(ax));
+          rmax = Math.max(rmax, wp.length());
+        }
+        p.spinMinY = o[1] - rmax;
+        p.explodeR = p.explode.length();
+      }
+      // Build fly-in.  A part with an explode vector flies in from 3 x explode (+ a lift for top-level
+      // parts), clamped so it never starts below the ground.  Parts without one (glazing, door frames,
+      // bays, braces, firewall, interior, small details) would otherwise just drop through what is
+      // already built, so they grow in place about their centre instead.
+      const sameStepParent = par && par.stepIndex === p.stepIndex;
+      p.grow = p.explode.lengthSq() < 1e-10 && !sameStepParent;
+      p.flyVec = new THREE.Vector3();
+      p.growC = new THREE.Vector3();
+      if (p.grow) {
+        const sub = new THREE.Box3();
+        for (const id of this.descendants(p.id)) { const q = this.parts.get(id); if (q.stepIndex === p.stepIndex) sub.union(q.restBox); }
+        p.node.getWorldPosition(wp);
+        if (!sub.isEmpty()) sub.getCenter(p.growC).sub(wp);     // centre in the node frame
+        p.startY = 0;
+      } else {
+        p.flyVec.copy(p.explode).multiplyScalar(3);
+        if (!par) p.flyVec.y += 0.9;
+        const baseY = sameStepParent && !par.grow ? par.startY : 0;
+        if (Number.isFinite(p.restMinY)) p.flyVec.y = Math.max(p.flyVec.y, -(p.restMinY + baseY));
+        p.startY = baseY + p.flyVec.y;
+      }
+    }
+  }
+
+  // ~4000 vertices sampled from every mesh (world, rest pose) for silhouette-tight camera fits
+  silhouettePoints(target = 4000) {
+    let total = 0;
+    for (const mr of this.meshRecs) total += mr.mesh.geometry.attributes.position.count;
+    const stride = Math.max(1, Math.floor(total / target));
+    const out = [], v = new THREE.Vector3();
+    for (const mr of this.meshRecs) {
+      const pos = mr.mesh.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i += stride) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(mr.mesh.matrixWorld);
+        out.push(v.x, v.y, v.z);
+      }
+    }
+    return new Float32Array(out);
   }
 
   part(id) { return this.parts.get(id); }
@@ -181,7 +277,7 @@ export class Model {
       m = mr.base.clone();
       m.clippingPlanes = this.clipPlanes;
       m.clipShadows = true;
-      patchMaterial(m, this.U, { paint: mr.paint, lining: !mr.glass });
+      patchMaterial(m, this.U, { paint: mr.paint, lining: !mr.glass, glass: mr.glass });
       this._cut.set(mr.base, m);
     }
     return m;
@@ -195,6 +291,7 @@ export class Model {
       m.opacity = 0.35;
       m.depthWrite = false;
       if (cut) m.clippingPlanes = this.clipPlanes;
+      patchMaterial(m, this.U, { glass: true });
       this._glassX.set(key, m);
     }
     return m;
@@ -274,14 +371,32 @@ export class Model {
 
   // ---------------------------------------------------------------- transforms
   // node = rest + animation offset (parent frame) + explode (hierarchical, parent frame)
-  // + build fly-in (exaggerated explode + a lift for top-level parts)
+  // + build fly-in (flyVec, see _restGeometry) or grow-in (scale about the part centre).
+  // Also works out how far the ground has to drop so no exploded part sits below it
+  // (rest-frame estimate, stable while things animate; blades use their spin envelope).
   applyTransforms(explodeF) {
+    let lowest = Infinity;
     for (const p of this.list) {
       const n = p.node;
-      n.position.copy(p.restPos).add(p.anim.pos).addScaledVector(p.explode, explodeF + 3 * p.fly);
-      if (p.fly > 0 && !p.parent) n.position.y += 0.9 * p.fly;
+      n.position.copy(p.restPos).add(p.anim.pos).addScaledVector(p.explode, explodeF);
       n.quaternion.copy(p.anim.quat);
+      let oy = (p.parent ? p.parent._oy : 0) + p.explode.y * explodeF;
+      if (p.fly > 0 && p.grow) {
+        const s = Math.max(1e-3, 1 - p.fly);
+        n.scale.setScalar(s);
+        _g.copy(p.growC).applyQuaternion(p.anim.quat).multiplyScalar(1 - s);
+        n.position.add(_g);
+      } else {
+        if (n.scale.x !== 1) n.scale.setScalar(1);
+        if (p.fly > 0) { n.position.addScaledVector(p.flyVec, p.fly); oy += p.flyVec.y * p.fly; }
+      }
+      p._oy = oy;
+      if (p.shown && p.meshes.length) {
+        const m = p.spin ? p.spinMinY + p.parent._oy - p.explodeR * explodeF : p.restMinY + oy;
+        if (m < lowest) lowest = m;
+      }
     }
+    this.groundY = Number.isFinite(lowest) ? Math.min(0, lowest - Math.min(0, this.restLowest)) : 0;
   }
 
   // ---------------------------------------------------------------- highlights

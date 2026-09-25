@@ -278,8 +278,8 @@ def check_sidecar(sidecar, pts, ws, gl=None, tol=1.5, parts=None):
             rows.append((name, "glazing_flightdeck part edge (ids)", uv, edge_delta(g, uv, d, search=8, across=3)))
     # windshield centre post (views that see the panes from above / ahead)
     look = np.asarray(sc["image_axes"].get("look", [0, 0, 0]), float)
-    if ids is not None and sc.get("projection") == "ortho" and (abs(look[2]) > 0.9 or abs(look[0]) > 0.9):
-        if abs(look[2]) > 0.9:                         # top: inner pane edges at the station of the pane middle
+    if ids is not None and sc.get("projection") == "ortho" and (look[2] < -0.9 or look[0] > 0.9):   # top / front
+        if look[2] < -0.9:                             # top: inner pane edges at the station of the pane middle
             xm = 3.40
             sel = ws[np.abs(ws[:, 0] - xm) < 0.02]
             probe = lambda y: np.array([xm, y, 0.0])

@@ -76,7 +76,7 @@ async function boot() {
 function init(gltf) {
   model = new Model(gltf, meta);
   stage.scene.add(model.root);
-  stage.setModelBox(model.box);
+  stage.setModelBox(model.box, model.silhouettePoints());
   kin = new Kinematics(model);
   build = new Build({ model, meta, scene: stage.scene, labelsEl: $('labels') });
   parts = new PartsPanel({ meta, onSelect: (id) => select(id) });
@@ -92,12 +92,13 @@ function init(gltf) {
   build.onChange(() => { refreshModes(); syncBuildUI(); });
   const qs = q.get('step');
   build.setStep(qs == null ? build.n - 1 : isNaN(+qs) ? qs : +qs, { instant: true });
-  const cam = q.get('cam');
-  stage.goTo(cam && PRESETS[cam] ? cam : 'three_quarter', { instant: true });
   if (q.get('tab')) setTab(q.get('tab'));
   poseNow();
   syncUI();
+  // panel / toolbar insets first, so the first camera fit uses the free part of the viewport
   layoutInsets();
+  const cam = q.get('cam');
+  stage.goTo(cam && PRESETS[cam] ? cam : 'three_quarter', { instant: true });
   requestAnimationFrame(frame);
   // hide the loading screen once the first frame (and its shader compiles) is on screen
   waitFrames(2).then(() => {
@@ -118,12 +119,13 @@ function refreshModes() {
   const i = build.index;
   const cut = effectiveCut();
   if (model.cutaway !== cut || model.xray !== S.xray) { model.cutaway = cut; model.xray = S.xray; model.applyMaterials(); }
-  // structure: visible in X-ray, and during the build until the wing skins close over it
-  model.structureOn = S.xray || (i >= build.indexOf('structure') && i <= build.indexOf('wing'));
+  // structure: visible in X-ray, and during the build until the wing skins have landed over it
+  // (the ribs run the full chord, so once the skins are on they would poke out of the open
+  // flap / aileron coves; tick() calls refreshModes() again when the fly-in ends)
+  const iWing = build.indexOf('wing');
+  model.structureOn = S.xray || (i >= build.indexOf('structure') && i < iWing) || (i === iWing && build.animating);
   model.updateVisibility();
-  kin.apply();
-  stage.shadowDirty = true;
-  stage.needsRender = true;
+  poseNow();          // also settles parts that were still flying when the step changed
   syncToolbar();
   if (S.selected) info.show(S.selected, { hint: hintFor(S.selected) });
 }
@@ -131,9 +133,15 @@ function refreshModes() {
 function poseNow() {
   kin.apply();
   model.applyTransforms(S.explode.cur);
+  afterTransforms();
   model.root.updateMatrixWorld(true);
   stage.shadowDirty = true;
   stage.needsRender = true;
+}
+// things that follow the explode / fly-in offsets: the ground drop and the prop blur disc
+function afterTransforms() {
+  stage.setGround(model.groundY);
+  kin.setExplodeView(S.explode.cur);
 }
 
 // ------------------------------------------------------------------ selection
@@ -383,9 +391,11 @@ const narrowMQ = window.matchMedia('(max-width: 760px)');
 const isNarrow = () => narrowMQ.matches;
 function layoutInsets() {
   const open = app.classList.contains('panel-open');
-  const p = $('panel');
-  if (isNarrow()) stage.setInsets(0, open ? p.offsetHeight : 92);
-  else stage.setInsets(open ? p.offsetWidth : 0, 0);
+  const p = $('panel'), tb = $('toolbar');
+  // the toolbar floats over the top of the canvas: keep fitted views below it
+  const top = tb.hidden ? 0 : Math.max(0, Math.round(tb.getBoundingClientRect().bottom - $('stage').getBoundingClientRect().top + 6));
+  if (isNarrow()) stage.setInsets(0, open ? p.offsetHeight : 92, top);
+  else stage.setInsets(open ? p.offsetWidth : 0, 0, top);
   $('panelOpen').hidden = open || isNarrow();
 }
 
@@ -410,6 +420,7 @@ function syncBuildUI() {
   $('bCounter').textContent = `Step ${i + 1} of ${build.n}`;
   $('bTitle').textContent = s.title;
   $('bText').textContent = s.text;
+  $('bText').parentElement.scrollTop = 0;
   const chips = $('bParts');
   chips.replaceChildren();
   for (const id of s.parts) {
@@ -472,7 +483,10 @@ let surfCells = null;
 function updateReadouts() {
   const c = kin.c, g = kin.gear, D = kin.defl;
   $('rProp').textContent = `${Math.round(c.rpm).toLocaleString('en-US')} rpm · ${c.pitch.toFixed(0)}°`;
-  const status = g.pos === 0 && g.door === 0 ? 'DOWN' : g.pos === 1 && g.door === 0 ? 'UP' : g.pos === g.target && g.door > 0 ? 'doors closing' : g.pos === g.target ? '—' : g.door < 1 ? 'doors opening' : 'in transit';
+  // doors only close at a lock; a gear stopped (scrubbed) between the locks keeps them open
+  const status = g.pos === 0 && g.door === 0 ? 'DOWN' : g.pos === 1 && g.door === 0 ? 'UP'
+    : g.pos !== g.target ? (g.door < 1 ? 'doors opening' : g.target > g.pos ? 'retracting' : 'extending')
+    : g.pos <= 0 || g.pos >= 1 ? 'doors closing' : 'stopped · doors open';
   $('rGear').textContent = `${status} · ${Math.round(g.pos * 100)} %`;
   $('sGear').value = g.pos; $('oGear').value = `${Math.round(g.pos * 100)} %`;
   $('rFlaps').textContent = `${c.flaps.toFixed(1)}°`;
@@ -571,6 +585,12 @@ function wireUI() {
   $('dOut').addEventListener('click', () => drawings.zoomCentre(1 / 1.4));
   // keyboard
   window.addEventListener('keydown', onKey);
+  // a mouse/touch click must not leave focus on the button (Space would re-activate it instead of
+  // playing the build); keyboard focus (Tab) is unaffected
+  document.addEventListener('pointerup', (e) => {
+    const b = e.target && e.target.closest && e.target.closest('button, summary');
+    if (b && document.activeElement === b) b.blur();
+  });
 }
 
 function toggleHelp(on = $('help').hidden) {
@@ -580,14 +600,18 @@ function toggleHelp(on = $('help').hidden) {
 
 const FLAP_CYCLE = [0, 15, 30, 40];
 const RPM_CYCLE = [0, 1000, 1550, 1700];
+const NON_TEXT_INPUT = /^(range|checkbox|radio|button|submit|reset|color)$/i;
 function onKey(e) {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const t = e.target, tag = t && t.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) {
+  // only text entry swallows the shortcuts
+  if ((tag === 'INPUT' && !NON_TEXT_INPUT.test(t.type)) || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) {
     if (e.key === 'Escape') t.blur();
     return;
   }
-  if (tag === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return;
+  // a focused slider keeps its own keys; letters and Space still reach the shortcuts
+  if (tag === 'INPUT' && t.type === 'range' && /^(Arrow|Home$|End$|Page)/.test(e.key)) return;
+  if ((tag === 'BUTTON' || tag === 'SUMMARY' || tag === 'A') && (e.key === ' ' || e.key === 'Enter')) return;
   if (!model) return;
   const k = e.key;
   let handled = true;
@@ -605,6 +629,7 @@ function onKey(e) {
     case 'r': case 'R': reset(); break;
     case '?': toggleHelp(); break;
     case 'Escape':
+      if (tag === 'INPUT') t.blur();
       if (!$('help').hidden) toggleHelp(false);
       else { clearSelection(); if (S.isolate) setIsolate(null); }
       break;
@@ -628,6 +653,7 @@ function syncUI() {
 
 // ------------------------------------------------------------------ render loop
 let last = performance.now(), frameCount = 0, forceFrames = 0, readoutT = 0, shadowSkip = 0;
+let readoutsDirty = false, kinMoving = false;
 const frameWaiters = [];
 function waitFrames(n = 1) {
   forceFrames = Math.max(forceFrames, n);
@@ -638,8 +664,10 @@ function waitFrames(n = 1) {
 function tick(adt) {
   animClock += adt;
   let posed = false;
-  if (kin.update(adt)) posed = true;
+  kinMoving = kin.update(adt);
+  if (kinMoving) { posed = true; readoutsDirty = true; }
   const wasBuilding = build.playing || build.animating;
+  const wasAnimating = build.animating;
   if (build.update(adt)) posed = true;
   const ex = S.explode;
   if (ex.cur !== ex.target && adt > 0) {
@@ -650,6 +678,7 @@ function tick(adt) {
   if (model.updatePaint(adt)) stage.needsRender = true;
   if (posed) {
     model.applyTransforms(ex.cur);
+    afterTransforms();
     // a spinning prop alone only needs an occasional shadow refresh
     if (!kin.onlySpin || build.animating || ex.cur !== ex.target || ++shadowSkip % 4 === 0) stage.shadowDirty = true;
     stage.needsRender = true;
@@ -660,6 +689,7 @@ function tick(adt) {
       if (animClock >= w.until || w.tk.cancelled) { waits.splice(i, 1); w.res(); }
     }
   }
+  if (wasAnimating && !build.animating) refreshModes();      // e.g. wing structure hides once the skins land
   if (wasBuilding && !build.playing && !build.animating) syncBuildUI();
   return posed;
 }
@@ -681,7 +711,9 @@ function frame(now) {
     if (frameWaiters.length) forceFrames = Math.max(forceFrames, 1);
   }
   updateHover(now);
-  if ((posed || kin.gearMoving) && now - readoutT > 100) { readoutT = now; updateReadouts(); }
+  // readouts: at most every 100 ms while things move, plus once when they stop (never stale)
+  const moving = kinMoving || kin.gearMoving;
+  if (readoutsDirty && (!moving || now - readoutT > 100)) { readoutT = now; readoutsDirty = false; updateReadouts(); }
 }
 
 // ------------------------------------------------------------------ test hooks
@@ -704,7 +736,8 @@ const hooks = {
       prop: { rpm: c.rpm, pitch: c.pitch, angle: c.propAngle },
       controls: { roll: c.roll, pitch: c.pitchCmd, yaw: c.yaw, stabTrim: c.stabTrim, ailTrim: c.ailTrim, rudTrim: c.rudTrim },
       deflections: { ...kin.defl }, camera: stage.cameraState(), paused: S.paused, frames: frameCount,
-      demo: !!S.demo, structureVisible: model.structureOn,
+      demo: !!S.demo, structureVisible: model.structureOn, groundY: stage.groundY, propDiscPush: kin.push,
+      cameraPreset: stage.preset,
       linesVisible: build.root.children.reduce((n, g) => n + (g.visible ? g.children.length : 0), 0),
       loading: !$('loading').hidden,
     };

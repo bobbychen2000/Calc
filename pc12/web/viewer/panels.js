@@ -40,10 +40,21 @@ export class PartsPanel {
       }
       const det = el('details', { open: '' }, el('summary', {}, el('span', { text: g }), el('span', { class: 'cnt', text: String(list.length) })), ul);
       det.dataset.group = g;
+      det.dataset.total = String(list.length);
       this.tree.append(det);
     }
     $('pCount').textContent = `${meta.bom.length} parts`;
-    this.search.addEventListener('input', () => this.filter(this.search.value));
+    // 'input' misses the native clear of type=search (Escape / the x button): listen to all three
+    const refilter = () => this.filter(this.search.value);
+    for (const ev of ['input', 'search', 'change']) this.search.addEventListener(ev, refilter);
+    // Escape: first clears the query (and the filter), a second Escape leaves the field
+    this.search.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !this.search.value) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.search.value = '';
+      this.filter('');
+    });
   }
 
   filter(q) {
@@ -55,9 +66,10 @@ export class PartsPanel {
       if (m) n++;
     }
     for (const det of this.tree.querySelectorAll('details')) {
-      const any = [...det.querySelectorAll('li')].some((li) => !li.hidden);
-      det.hidden = !any;
-      if (q && any) det.open = true;
+      const shown = [...det.querySelectorAll('li')].filter((li) => !li.hidden).length;
+      det.hidden = !shown;
+      if (q && shown) det.open = true;
+      det.querySelector('.cnt').textContent = q ? `${shown} / ${det.dataset.total}` : det.dataset.total;
     }
     $('pCount').textContent = q ? `${n} of ${this.meta.bom.length} parts` : `${this.meta.bom.length} parts`;
   }
@@ -82,6 +94,15 @@ export class InfoCard {
     this.bom = new Map(meta.bom.map((b) => [b.id, b]));
     this.steps = new Map(meta.steps.map((s, i) => [s.key, { ...s, i }]));
     this.root = $('infoCard');
+    // compact card on phones: name, hint and actions; the details fold out
+    this.more = $('icMore');
+    this.more.addEventListener('click', () => this.setExpanded(!this.root.classList.contains('expanded')));
+  }
+
+  setExpanded(on) {
+    this.root.classList.toggle('expanded', on);
+    this.more.setAttribute('aria-expanded', String(on));
+    this.more.textContent = on ? 'Less' : 'Details';
   }
 
   show(id, { hint = '' } = {}) {

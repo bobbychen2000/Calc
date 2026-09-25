@@ -89,12 +89,12 @@ Python API:
     P, W, H, info = bo.ortho_setup('top', bounds=(2.6, 4.8, -1, 1), px_per_m=900)   # no rendering
     uv = bo.project(P, pts)                                          # (N,3) -> (N,2) pixels
 
-Timings (4 CPUs, measured while other jobs kept the load average at 5-15, so expect ~2x faster on
-an idle machine): GLB import ~1 s; 2000 px wide: side full shaded 13-35 s, lines 4-19 s; front full
-shaded ~15-20 s, lines 4-10 s; top full (2000x2253) shaded 60-85 s, lines 5-23 s; cockpit crops
-(fully covered, 2.4-3.6 Mpx) shaded 45-105 s, lines 15-25 s.  Shaded time scales with pixels x
-samples (use samples=4 or a smaller width for quick looks); 'lines' is bound by the 1-spp ID render
-and the EXR hand-over (~40 bytes per supersampled pixel, temporary files in out/tmp/render/_work_*).
+Timings (4 CPUs, measured while other jobs kept the load average at 5-15, so an idle machine is
+faster): GLB import ~1 s; 2000 px wide, 8 spp + OIDN (fast): side full shaded 14 s / lines 4-19 s,
+front full 7 s / 4-10 s, top full (2000x2253) 31 s / 5-23 s, cockpit crops (2.4-3.6 Mpx, fully
+covered) 31-43 s / 15-25 s.  Shaded time scales with pixels x samples (denoise='high' roughly
+doubles it); 'lines' is bound by the 1-spp ID render and the EXR hand-over (~40 bytes per
+supersampled pixel, temporary files in out/tmp/render/_work_*, deleted afterwards).
 """
 from __future__ import annotations
 
@@ -1250,7 +1250,7 @@ def main(argv=None):
         views, styles = _split(a.view), _split(a.style)
         for v in views:
             for st in styles:
-                nm = a.name or view_name(v)
+                nm = (f"{a.name}_{view_name(v)}" if len(views) > 1 else a.name) if a.name else view_name(v)
                 out = a.out if (a.out and len(views) * len(styles) == 1) else \
                     str(Path(a.out_dir) / f"{nm}_{st.replace('+', '_')}.png")
                 jobs.append(dict(view=v, style=st, bounds=a.bounds, px_per_m=a.px_per_m, width=w, height=h,

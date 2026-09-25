@@ -43,6 +43,8 @@ export function signedAngle(u, v, n) {
 }
 
 const PROP_BLUR_RPM = 300;
+const DISC_R = 1.34;          // blur disc radius (m), just outside the 2.67 m prop tips
+const RING_R = 1.2725;        // mid radius of the light tip ring
 
 export class Kinematics {
   constructor(model) {
@@ -97,7 +99,9 @@ export class Kinematics {
 
   // translucent blurred disc for a fast-turning propeller (cheap motion blur): a dark disc whose
   // alpha comes from an opaque greyscale canvas (alphaMap, no premultiplied-alpha surprises) plus
-  // a light ring where the white blade tips sweep
+  // a light ring where the white blade tips sweep.  When the blades are pushed out radially (explode
+  // or build fly-in) the disc grows and its alpha is remapped radially (uPush) so the blurred band
+  // stays on the blades instead of on the empty hub gap.
   _makePropDisc() {
     const prop = this.surf.propeller;
     if (!prop) return;
@@ -119,13 +123,43 @@ export class Kinematics {
     const alpha = new THREE.CanvasTexture(cv);
     const common = { transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false };
     const disc = new THREE.Group();
-    disc.add(new THREE.Mesh(new THREE.CircleGeometry(1.34, 72), new THREE.MeshBasicMaterial({ ...common, color: 0x17181a, alphaMap: alpha })));
+    const discMat = new THREE.MeshBasicMaterial({ ...common, color: 0x17181a, alphaMap: alpha });
+    this.discU = { uPush: { value: 0 }, uR1: { value: DISC_R } };
+    discMat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, this.discU);
+      sh.fragmentShader = 'uniform float uPush;\nuniform float uR1;\n' + sh.fragmentShader.replace('#include <alphamap_fragment>', `{
+    vec2 dd = vAlphaMapUv - 0.5;
+    float rr = length(dd) * 2.0;                 // 0..1 across the (scaled) disc
+    float rho0 = rr * uR1 - uPush;               // radius (m) on the unexploded disc
+    vec2 uv0 = 0.5 + dd / max(rr, 1e-5) * (0.5 * rho0 / ${DISC_R.toFixed(3)});
+    diffuseColor.a *= rho0 < 0.0 ? 0.0 : texture2D(alphaMap, uv0).g;
+  }`);
+    };
+    discMat.customProgramCacheKey = () => 'pc12:propdisc';
+    disc.add(new THREE.Mesh(new THREE.CircleGeometry(DISC_R, 72), discMat));
     disc.add(new THREE.Mesh(new THREE.RingGeometry(1.225, 1.32, 72), new THREE.MeshBasicMaterial({ ...common, color: 0xe6e6e0 })));
     disc.position.set(0, 0, 0.02);   // blade pitch-axis plane, relative to the hub origin
     for (const m of disc.children) { m.renderOrder = 3; m.raycast = () => {}; }
     disc.visible = false;
     prop.rec.node.add(disc);
     this.disc = disc;
+    const b1 = this.model.part('blade_1');
+    this.bladeRec = b1;
+    this.bladePush = b1 ? b1.explode.length() : 0;    // radial explode of each blade (m at f = 1)
+    this.push = 0;
+  }
+
+  // radial offset of the blades (explode factor + build fly-in) -> disc size and alpha remap
+  setExplodeView(f) {
+    if (!this.disc) return;
+    const b = this.bladeRec;
+    const e = this.bladePush * (f + (b && b.fly > 0 && !b.grow ? 3 * b.fly : 0));
+    if (e === this.push) return;
+    this.push = e;
+    this.discU.uPush.value = e;
+    this.discU.uR1.value = DISC_R + e;
+    this.disc.children[0].scale.setScalar((DISC_R + e) / DISC_R);
+    this.disc.children[1].scale.setScalar((RING_R + e) / RING_R);
   }
 
   // ------------------------------------------------------------------ commands
