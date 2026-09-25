@@ -160,6 +160,25 @@ export const APPROACH_LIGHTS = [
   { end: '28L', len: 2400 * FT, type: 'MALSR' },
   { end: '19L', len: 1400 * FT, type: 'MALSF' },
 ];
+// Approach-light STRUCTURES over the Bay (review round 3), measured on USDA NAIP 2024 by tools/imagery/als_naip.py
+// (refs/cache/als/als_naip.json; distances in ft from the NASR threshold, lateral m right of the outward axis):
+//   28L: water from the perimeter road at 646 ft; stations every 100 ft from 700 to 2500 ft on a continuous catwalk;
+//        crossbars at 1000 ft (-12.7 .. +12.9 m) and 1300 ft (-16.1 .. +16.3 m).
+//   28R: water from 645 ft; stations every 100 ft from 692 to 2492 ft (8 ft short of the round numbers, measured on
+//        the crossbars and station platforms); crossbars at 692-1292 ft (-16.5 .. +19.7 m as measured; 1092 ft is hidden
+//        in the station detection by the equipment hut next to it and takes the neighbours' mean - inferred); an
+//        equipment hut at 1125-1165 ft (-5.9 .. -1.9 m) and a platform at 1375-1418 ft (-0.5 .. +3.0 m) on the catwalk.
+//   catwalk: imaged 2.5 m right of the axis; +0.75 m for NAIP relief at an assumed 3 m deck height (inferred) -> 3.2 m.
+// The LIGHTS on these structures follow the FAA standard layouts (below; NASR gives the type only): the structure is
+// observed, the light pattern inferred. Station positions over the water are the imaged ones.
+export const APPROACH_STRUCTURES = {
+  '28L': { seawallFt: 646, stationsFt: Array.from({ length: 19 }, (_, i) => 700 + 100 * i), catwalkLat: 3.2,
+    crossbars: [{ ft: 1000, l: -12.7, r: 12.9 }, { ft: 1300, l: -16.1, r: 16.3 }], huts: [] },
+  '28R': { seawallFt: 645, stationsFt: Array.from({ length: 19 }, (_, i) => 692 + 100 * i), catwalkLat: 3.2,
+    crossbars: [{ ft: 692, l: -16.9, r: 16.9 }, { ft: 792, l: -19.7, r: 16.5 }, { ft: 892, l: -17.3, r: 16.1 }, { ft: 992, l: -18.9, r: 19.5 },
+      { ft: 1092, l: -17.8, r: 17.4, inferred: true }, { ft: 1192, l: -16.5, r: 17.7 }, { ft: 1292, l: -19.3, r: 18.3 }],
+    huts: [{ ft0: 1125, ft1: 1165, l: -5.9, r: -1.9 }, { ft0: 1375, ft1: 1418, l: -0.5, r: 3.0 }] },
+};
 // PAPI (NASR VGSI_CODE P4L = 4-box PAPI left of the runway) with the published glide path angle (deg) and threshold
 // crossing height (ft). NASR has no PAPI at 1L/1R. The PAPI distance from the threshold is not in NASR: `dist` (m) =
 // TCH / tan(angle), the point where the glide path meets the runway (inferred; ignores eye-to-wheel height and

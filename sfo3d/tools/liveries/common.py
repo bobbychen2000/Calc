@@ -132,7 +132,9 @@ ZONE_NOFIN = (2, 3, 7)
 
 
 def apply_stretch(P, Z, st):
-    """Python port of js/live/models.js applyStretch (wing span fit, fin height fit, fuselage plugs), model units."""
+    """Python port of js/live/models.js applyStretch (wing span fit, fin height fit, fuselage plugs), model units. A negative
+    plug (shorter type) collapses the removed section onto the plug station instead of sliding the aft body over the
+    forward body (no doubled skin, no doubled windows)."""
     P = np.array(P, float, copy=True)
     if not st: return P
     W, F = st.get('wing'), st.get('fin')
@@ -144,9 +146,15 @@ def apply_stretch(P, Z, st):
         m = (P[:, 0] < F['xF']) & (P[:, 1] > F['yF']) & ~np.isin(Z, ZONE_NOFIN)
         P[m, 1] = F['yF'] + (P[m, 1] - F['yF']) * F['k']
     if st.get('cut1') is not None:
-        x = P[:, 0].copy()
-        P[x < st['cut2'], 0] -= st['d1'] + st['d2']
-        P[(x >= st['cut2']) & (x < st['cut1']), 0] -= st['d1']
+        x = P[:, 0].copy(); dx = np.zeros(len(x))
+        for c, d, bl in ((st['cut1'], st['d1'], 0.0), (st['cut2'], st['d2'], st.get('bl2') or 0.0)):
+            if d >= 0: dx[x < c] -= d                         # plug: everything aft of the station moves aft
+            else:                                             # negative plug: [c + d - bl, c) compressed onto [c - bl, c)
+                D = -d
+                dx[x <= c - D - bl] += D
+                q = (x > c - D - bl) & (x < c); t = (c - x[q]) / (D + bl)
+                dx[q] += (c - t * bl) - x[q]
+        P[:, 0] = x + dx
     return P
 
 

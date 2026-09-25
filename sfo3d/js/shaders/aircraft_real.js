@@ -3,6 +3,9 @@
 // uAtlas = 1: this draw uses the model's livery atlas (tools/liveries/atlas.py); its alpha < 0.5 marks cabin-window glass
 //   painted into the atlas (models without window geometry): dark glass by day, warm cabin light at night.
 // uLivTex = 1: the atlas is a baked brand livery (data/liveries/): its colours are the paint, no zone recolouring.
+// uNoCabin = 1: freighter (brand flagged `cargo` in data/liveries/manifest): the model's cabin-window glass (kind 1 aft of
+//   the flight deck) is shaded as painted-over window plugs in the top colour, no cabin light; the baked freighter
+//   liveries paint no windows.
 export const ACR_VS = `
 #include <common>
 #include <vout>
@@ -27,7 +30,7 @@ export const ACR_FS = `
 in vec3 vWP; in vec3 vN; in vec2 vUV; in vec3 vLP; flat in vec4 vMat; flat in vec4 vMat2;
 uniform sampler2D uAlbedo; uniform float uHasTex; uniform vec4 uFusB; // crown, belly, cockpit-glass x threshold, cabin light
 uniform vec3 uLivTop; uniform vec3 uLivBelly; uniform vec3 uLivTail; uniform vec3 uLivTail2; uniform vec3 uLivEngine; uniform vec4 uLivStripe;
-uniform float uBellyLine; uniform float uTailStyle; uniform float uDirt; uniform float uAtlas; uniform float uLivTex;
+uniform float uBellyLine; uniform float uTailStyle; uniform float uDirt; uniform float uAtlas; uniform float uLivTex; uniform float uNoCabin;
 uniform vec4 uFus;   // R, Rz, tailX, length (model units)
 uniform float uLights; // 1 = landing/taxi lights on (lens glow)
 uniform float uSel;    // selection highlight
@@ -50,6 +53,7 @@ void main(){
   vec3 mcol = vMat.rgb; float texWhite = vMat.a;
   vec3 albedo = mcol * tx.rgb; float rough = vMat2.z, metal = vMat2.w;
   vec3 emis = vec3(0.0);
+  if (kind == 1 && uNoCabin > 0.5 && vLP.x < -uFusB.z) { kind = 0; albedo = uLivTop; rough = 0.4; tx = vec4(1.0); }  // freighter window plug
   if (kind == 1) {
     albedo = vec3(0.012, 0.013, 0.015); rough = 0.4;
     // night: warm cabin light behind passenger windows, faint instrument glow in the cockpit
@@ -58,8 +62,11 @@ void main(){
     emis = cockpit ? vec3(0.02, 0.03, 0.05) : vec3(1.0, 0.78, 0.5) * (0.55 + 0.45 * h) * step(0.08, h);
     emis *= uFusB.w;
   }
-  float winA = (uAtlas > 0.5 && kind == 0) ? 1.0 - smoothstep(0.35, 0.6, tx.a) : 0.0;   // painted cabin window
-  if (kind == 0 && uLivTex > 0.5) {
+  bool plug = kind == 0 && vMat2.y > 0.5 && vMat2.y < 7.5;        // (a kind-1 glass vertex turned into a freighter plug)
+  float winA = (uAtlas > 0.5 && kind == 0 && !plug) ? 1.0 - smoothstep(0.35, 0.6, tx.a) : 0.0;   // painted cabin window
+  if (plug) {
+    albedo = uLivTop;
+  } else if (kind == 0 && uLivTex > 0.5) {
     albedo = tx.rgb;                                            // baked brand livery
     albedo *= 1.0 - uDirt * 0.18 * smoothstep(-0.3, -0.9, vLP.y / max(uFus.x, 0.5));
   } else if (kind == 0) {

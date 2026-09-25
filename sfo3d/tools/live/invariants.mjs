@@ -261,7 +261,9 @@ function rawTruth(a, t) {
 
 // ---------------------------------------------------------------- per-aircraft frame state
 const K = new Map();
-const EXC = { gAccRoll: 3.5, gAccTaxi: 2.0, gLat: 3.0, gJerk: 6.0, gYaw: 25, slip: 5, aAcc: 3.0, aLat: 6.0, aVacc: 3.0, aTurn: 7 };
+// gAccRollLight: business jets accelerate at ~4 m/s^2 on the take-off roll (PFT144 C750 on 28R, 24 Sep 17:03Z: 0.5 -> 123 kt
+// in 16 s); the engine allows 5 m/s^2 for them (traffic.js ctlGround)
+const EXC = { gAccRoll: 3.5, gAccRollLight: 5.5, gAccTaxi: 2.0, gLat: 3.0, gJerk: 6.0, gYaw: 25, slip: 5, aAcc: 3.0, aLat: 6.0, aVacc: 3.0, aTurn: 7 };
 const finalRwy = new Map(); // hex -> {rwy, t}
 const phaseHist = new Map(); // hex -> [times of display-phase changes]
 const surfCache = new Map(), pairCache = new Map(), offCells = new Map();
@@ -327,7 +329,8 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       // phase flicker
       const ph0 = s && s.ph; if (s && ph0 !== ph) { let H = phaseHist.get(tr.hex); if (!H) phaseHist.set(tr.hex, H = []); H.push(simNow); while (H.length && simNow - H[0] > 30000) H.shift(); if (H.length > 3) viol('phase.flicker', tr, H.length, { from: ph0, to: ph }); }
       // runway on final
-      if (ph === 'final' && tr.m.rwy) { const f = finalRwy.get(tr.hex); if (f && f.rwy !== tr.m.rwy && simNow - f.t < 600000) viol('rwy.change.final', tr, 1, { from: f.rwy, to: tr.m.rwy }); finalRwy.set(tr.hex, { rwy: tr.m.rwy, t: simNow }); }
+      // (while not firm the app shows the parallel pair, e.g. '28L/28R': not a displayed runway)
+      if (ph === 'final' && tr.m.rwy && tr.m.rwyFirm !== false) { const f = finalRwy.get(tr.hex); if (f && f.rwy !== tr.m.rwy && simNow - f.t < 600000) viol('rwy.change.final', tr, 1, { from: f.rwy, to: tr.m.rwy }); finalRwy.set(tr.hex, { rwy: tr.m.rwy, t: simNow }); }
     }
     if (s && near && !veh) {
       const dx = PX - s.x, dz = PZ - s.z; const disp = Math.hypot(dx, dz); const vx = dx / DT, vz = dz / DT, vy = (D.y - s.y) / DT;
@@ -356,12 +359,12 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
         const yaw = Math.abs(dh) / DT;
         if (D.ground && inAirport(D.x, D.z)) {
           const along = ax * hx + az * hz, lat = -ax * hz + az * hx; const onR = runwaysAt(D.x, D.z).length > 0;
-          if (Math.abs(along) > (onR ? EXC.gAccRoll : EXC.gAccTaxi)) viol(onR ? 'gnd.acc.runway' : 'gnd.acc.taxi', tr, Math.abs(along), { a: +along.toFixed(2), v: +sp.toFixed(1) });
+          const lightJet = (T && T.L < 30) || /^A[12]$/.test(tr.info.category || ''); if (Math.abs(along) > (onR ? (lightJet ? EXC.gAccRollLight : EXC.gAccRoll) : EXC.gAccTaxi)) viol(onR ? 'gnd.acc.runway' : 'gnd.acc.taxi', tr, Math.abs(along), { a: +along.toFixed(2), v: +sp.toFixed(1) });
           if (Math.abs(lat) > EXC.gLat) viol('gnd.lat', tr, Math.abs(lat), { a: +lat.toFixed(2), v: +sp.toFixed(1) });
           if (s.ax != null && sp > 0.5) { const j = Math.hypot(ax - s.ax, az - s.az) / DT; if (j > EXC.gJerk) viol('gnd.jerk', tr, j, { j: +j.toFixed(1), v: +sp.toFixed(1) }); }
           if (yaw > EXC.gYaw) viol('gnd.yaw', tr, yaw, { yaw: +yaw.toFixed(0), v: +sp.toFixed(1) });
           const vAlong = vx * hx + vz * hz;
-          if (sp > 1) { let sl = Math.abs(wrapD(Math.atan2(vx, -vz) / DEG - D.hdg / DEG)); const rev = sl > 90; sl = Math.min(sl, 180 - sl); if (sl > EXC.slip) viol('gnd.slip', tr, sl, { slip: +sl.toFixed(0), v: +sp.toFixed(1) }); if (rev && vAlong < -0.5 && tr.m.phase !== 'pushback' && tr.phase !== 'pushback') viol('gnd.reverse', tr, -vAlong, { v: +vAlong.toFixed(1), mph: tr.m.phase }); }
+          if (sp > 1) { let sl = Math.abs(wrapD(Math.atan2(vx, -vz) / DEG - D.hdg / DEG)); const rev = sl > 90; sl = Math.min(sl, 180 - sl); if (sl > EXC.slip && !rotor) viol('gnd.slip', tr, sl, { slip: +sl.toFixed(0), v: +sp.toFixed(1) }); if (rev && vAlong < -0.5 && tr.m.phase !== 'pushback' && tr.phase !== 'pushback') viol('gnd.reverse', tr, -vAlong, { v: +vAlong.toFixed(1), mph: tr.m.phase }); }
           if (sp < 0.2 && yaw > 2.5) viol('gnd.spin', tr, yaw, { yaw: +yaw.toFixed(1) });
           if (sp > 0.15 && Math.abs(D.gs) < 0.01) viol('gnd.slide', tr, sp, { v: +sp.toFixed(2), towing: tr.ctl && tr.ctl.towing ? 1 : 0, stand: tr.gate ? tr.gate.name : null, dist: tr.parkPos ? +Math.hypot(tr.parkPos[0] - D.x, tr.parkPos[1] - D.z).toFixed(1) : null });
         } else if (!D.ground && Math.hypot(D.x, D.z) < 40000 && !rotor) {

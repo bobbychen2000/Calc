@@ -47,6 +47,26 @@ export class Engine {
     this.buildPipeline();
     return this;
   }
+  // GTAO (three r186 GTAONode) assumes a standard depth buffer: getViewPosition() maps depth*2-1 on WebGL and it
+  // discards depth >= 1 as sky. With the reversed depth buffer that turns every pixel into "fully occluded" (back-lit
+  // walls and fuselages went black: js/three/dev/envtest.html, 25 Sep 2026). So GTAO gets (a) a proxy camera with the
+  // same frustum but a standard projection and (b) the depth re-encoded for that projection by one full-screen pass
+  // (float, nearest). Without the reversed depth buffer the pass is skipped.
+  aoInputs(depth) {
+    if (!this.reversed) return { depth, camera: this.camera };
+    const aoCam = new THREE.PerspectiveCamera(); aoCam.coordinateSystem = this.renderer.coordinateSystem; this.aoCam = aoCam;
+    this.aoNear = uniform(0.5); this.aoFar = uniform(180000);
+    const vz = TSL.perspectiveDepthToViewZ(depth, this.aoNear, this.aoFar); // handles the reversed encoding
+    const std = TSL.viewZToPerspectiveDepth(vz, this.aoNear, this.aoFar);
+    const r = TSL.rtt(vec4(std, 0, 0, 1), null, null, { type: THREE.FloatType, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: false, generateMipmaps: false });
+    return { depth: r, camera: aoCam };
+  }
+  syncAOCamera() {
+    const a = this.aoCam, c = this.camera; if (!a) return;
+    a.fov = c.fov; a.aspect = c.aspect; a.near = c.near; a.far = c.far; a.updateProjectionMatrix();
+    a.matrixWorld.copy(c.matrixWorld); a.matrixWorldInverse.copy(c.matrixWorldInverse);
+    this.aoNear.value = c.near; this.aoFar.value = c.far;
+  }
   buildPipeline() {
     const { renderer, scene, camera, Q } = this;
     const pipe = new THREE.RenderPipeline(renderer); this.pipe = pipe;
@@ -57,7 +77,8 @@ export class Engine {
       pre.getTexture('output').type = THREE.UnsignedByteType;
       const nrm = sample((u) => unpackRGBToNormal(pre.getTextureNode().sample(u)));
       depth = pre.getTextureNode('depth'); vel = pre.getTextureNode('velocity');
-      const aoN = THREE.ao(depth, nrm, camera); aoN.resolutionScale = Q.aoScale; aoN.radius.value = 2.2; aoN.distanceExponent.value = 1.3; aoN.thickness.value = 1.5; aoN.scale.value = 1.0;
+      const ai = this.aoInputs(depth);
+      const aoN = THREE.ao(ai.depth, nrm, ai.camera); aoN.resolutionScale = Q.aoScale; aoN.radius.value = 2.2; aoN.distanceExponent.value = 1.3; aoN.thickness.value = 1.5; aoN.scale.value = 1.0;
       this.aoNode = aoN;
       const sp = pass(scene, camera); sp.name = 'scene';
       sp.contextNode = builtinAOContext(mix(float(1.0), aoN.getTextureNode().sample(screenUV).r, this.aoAmount));
@@ -68,7 +89,8 @@ export class Engine {
       sp.getTexture('normal').type = THREE.UnsignedByteType;
       depth = sp.getTextureNode('depth'); vel = sp.getTextureNode('velocity');
       const nrm = sample((u) => unpackRGBToNormal(sp.getTextureNode('normal').sample(u)));
-      const aoN = THREE.ao(depth, nrm, camera); aoN.resolutionScale = Q.aoScale; aoN.radius.value = 2.2; aoN.distanceExponent.value = 1.3; aoN.thickness.value = 1.5;
+      const ai = this.aoInputs(depth);
+      const aoN = THREE.ao(ai.depth, nrm, ai.camera); aoN.resolutionScale = Q.aoScale; aoN.radius.value = 2.2; aoN.distanceExponent.value = 1.3; aoN.thickness.value = 1.5;
       this.aoNode = aoN;
       const c = sp.getTextureNode('output');
       color = vec4(c.rgb.mul(mix(float(1.0), aoN.getTextureNode().sample(screenUV).r.mul(0.6).add(0.4), this.aoAmount)), c.a); this.scenePass = sp;
@@ -81,8 +103,10 @@ export class Engine {
     pipe.outputColorTransform = false;
     // plus an S-curve contrast around a display-linear pivot (the "punchy" look often paired with AgX: AgX base keeps
     // the darks much higher than the old ACES fit, e.g. bay water 101 vs 58 sRGB in the overview; contrast 1.35 at
-    // pivot 0.45 brings it to ~80 and leaves the airfield mid-tones unchanged). ?contrast= / ?sat= override.
-    this.grade = { sat: uniform(1.1), contrast: uniform(1.35), pivot: uniform(0.45) };
+    // pivot 0.45 brings it to ~80 and leaves the airfield mid-tones unchanged). 25 Sep 2026: side by side with the old
+    // renderer the AgX image still read flat and milky at distance (overview, tower); saturation 1.2 / contrast 1.5
+    // chosen by re-grading the renders offline (the grade is exactly invertible). ?contrast= / ?sat= override.
+    this.grade = { sat: uniform(1.2), contrast: uniform(1.5), pivot: uniform(0.45) };
     const tm = renderOutput(outN, THREE.AgXToneMapping, THREE.NoColorSpace);
     const x = clamp(saturation(tm.rgb, this.grade.sat), 0.0, 1.0); const P = this.grade.pivot, G = this.grade.contrast;
     const lo = P.mul(pow(x.div(P), G)), hi = float(1.0).sub(float(1.0).sub(P).mul(pow(float(1.0).sub(x).div(float(1.0).sub(P)), G)));
@@ -98,7 +122,7 @@ export class Engine {
     const fovDeg = c.fov * 180 / Math.PI; const near = Math.max(0.2, c.near * (this.reversed ? 1 : 2)), far = c.far || 180000;
     const changed = Math.abs(cam.fov - fovDeg) > 1e-4 || Math.abs(cam.near - near) > 1e-3 || cam.far !== far || Math.abs(cam.aspect - W / H) > 1e-4;
     if (changed) { cam.fov = fovDeg; cam.near = near; cam.far = far; cam.aspect = W / H; cam.updateProjectionMatrix(); }
-    cam.updateMatrixWorld();
+    cam.updateMatrixWorld(); this.syncAOCamera();
     // cascades: [1.4d, 5d, 16d] clamped as js/live/controls.js camera().shadowSplits, capped by the tier's range
     const s = (c.shadowSplits || [300, 1500, 6000]).slice(0, this.Q.cascades);
     const maxFar = Math.max(200, s[s.length - 1]);

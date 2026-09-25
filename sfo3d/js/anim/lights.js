@@ -1,5 +1,5 @@
 // Airfield lighting: runway edge/centerline/threshold/TDZ, PAPI, approach light systems (with sequenced flashers), taxiway edge
-import { APPROACH_LIGHTS, PAPI, TDZ_LIGHTS, GROUND_Y, stToWorld } from '../geo.js';
+import { APPROACH_LIGHTS, APPROACH_STRUCTURES, PAPI, TDZ_LIGHTS, GROUND_Y, stToWorld } from '../geo.js';
 import { RWY, RWY_W, TAXIWAYS } from '../world/airfield.js';
 import { runwayFrame } from './traffic.js';
 import { v3, m4 } from '../math.js';
@@ -61,20 +61,43 @@ export function buildAirfieldLights(level = 1, opts = {}) {
   // approach light systems (over water for 28s)
   for (const A of APPROACH_LIGHTS) {
     const F = runwayFrame(A.end); const back = v3.mul(F.dir, -1);
+    // world point `dft` ft out from the threshold, `lat` m right of the OUTWARD axis (= left of the landing direction)
+    const at = (dft, lat = 0) => v3.add(v3.add(F.thr, v3.mul(back, dft * 0.3048)), v3.mul(F.right, -lat));
+    // Structures measured on NAIP 2024 where they exist (js/geo.js APPROACH_STRUCTURES, review round 3): a light station
+    // over the water sits on the nearest imaged station; the crossbar lights stay on the imaged crossbar.
+    const ST = APPROACH_STRUCTURES[A.end] || null;
+    const snap = (dft) => { if (!ST || dft <= ST.seawallFt) return dft; let b = dft, e = 51; for (const s of ST.stationsFt) if (Math.abs(s - dft) < e) { e = Math.abs(s - dft); b = s; } return b; };
+    const barAt = (dft) => ST ? ST.crossbars.find(c => Math.abs(c.ft - dft) < 30) : null;
     // FAA standard layouts (AIM Fig. 2-1-1): ALSF-2 bars every 100 ft to 2400 ft, red side rows in the inner 1000 ft,
     // 1000-ft crossbar, sequenced flashers from 1000 ft out; MALS(R/F) bars every 200 ft to 1400 ft with the 1000-ft
     // crossbar; MALSF flashers on the three outer bars (1000-1400 ft); MALSR RAIL = flashers only, 1600-2400 ft.
-    const step = (A.type === 'ALSF2' ? 100 : 200) * 0.3048, n = Math.floor(A.len / step + 1e-6);
+    const step = (A.type === 'ALSF2' ? 100 : 200), n = Math.floor(A.len / (step * 0.3048) + 1e-6);
+    const hLight = GROUND_Y + 0.8; // lights approx level with threshold
     for (let i = 1; i <= n; i++) {
-      const d = i * step; const dft = d / 0.3048; const base = v3.add(F.thr, v3.mul(back, d));
-      const hLight = GROUND_Y + 0.8; // lights approx level with threshold
-      const steady = A.type === 'ALSF2' || dft <= 1400.5;
+      const dNom = i * step; const dft = snap(dNom); const base = at(dft); const d = dft * 0.3048;
+      const steady = A.type === 'ALSF2' || dNom <= 1400.5;
       if (steady) for (let j = -2; j <= 2; j++) { const p = v3.add(base, v3.mul(F.right, j * 1.05)); p[1] = hLight + 0.6; L.push({ p, c: WHITE, i: 60 * level, s: 0.3, dir: back, k: 3 }); }
-      if (A.type === 'ALSF2' && dft < 1000) for (const sg of [-1, 1]) for (let j = 0; j < 3; j++) { const p = v3.add(base, v3.mul(F.right, sg * (11 + j * 1.5))); p[1] = hLight + 0.6; L.push({ p, c: RED, i: 40 * level, s: 0.28, dir: back, k: 3 }); }
-      if (Math.abs(dft - 1000) < 1) for (const sg of [-1, 1]) for (let j = 3; j <= 10; j++) { const p = v3.add(base, v3.mul(F.right, sg * j * 1.5)); p[1] = hLight + 0.6; L.push({ p, c: WHITE, i: 60 * level, s: 0.3, dir: back, k: 3 }); }
-      const flash = A.type === 'ALSF2' ? dft >= 999 : A.type === 'MALSR' ? dft >= 1599 : dft >= 999;
+      if (A.type === 'ALSF2' && dNom < 1000) for (const sg of [-1, 1]) for (let j = 0; j < 3; j++) { const p = v3.add(base, v3.mul(F.right, sg * (11 + j * 1.5))); p[1] = hLight + 0.6; L.push({ p, c: RED, i: 40 * level, s: 0.28, dir: back, k: 3 }); }
+      if (Math.abs(dNom - 1000) < 1) {
+        // 1000-ft crossbar: lights every 1.5 m from 4.5 m out, never beyond the imaged bar (28L: 12.7 / 12.9 m)
+        const cb = barAt(dft);
+        for (const sg of [-1, 1]) {
+          const lim = cb ? (sg > 0 ? -cb.l : cb.r) - 0.3 : 15.0;   // F.right side sg>0 = LEFT of the outward axis
+          for (let j = 3; j * 1.5 <= lim + 1e-6; j++) { const p = v3.add(base, v3.mul(F.right, sg * j * 1.5)); p[1] = hLight + 0.6; L.push({ p, c: WHITE, i: 60 * level, s: 0.3, dir: back, k: 3 }); }
+        }
+      }
+      const flash = A.type === 'ALSF2' ? dNom >= 999 : A.type === 'MALSR' ? dNom >= 1599 : dNom >= 999;
       if (flash) { const p = v3.add(base, [0, 1.6, 0]); p[1] = hLight + 1.6; flashers.push({ p, order: -d, dir: back, end: A.end }); }
-      piers.push({ base, right: F.right, water: d > 150 && A.end.startsWith('28'), h: hLight });
+      if (!ST) piers.push({ kind: 'post', base, right: F.right, water: false, h: hLight });
+    }
+    if (ST) {
+      // observed structure: one continuous catwalk from the seawall to the last station, a pier at every imaged
+      // station, the imaged crossbars and huts (buildPierGeometry)
+      const last = ST.stationsFt[ST.stationsFt.length - 1];
+      piers.push({ kind: 'catwalk', a: at(ST.seawallFt, ST.catwalkLat), b: at(last + 3, ST.catwalkLat), right: F.right, water: true, h: hLight, src: 'naip' });
+      for (const ft of ST.stationsFt) piers.push({ kind: 'station', base: at(ft), right: F.right, cw: -ST.catwalkLat, water: true, h: hLight, src: 'naip' });
+      for (const c of ST.crossbars) piers.push({ kind: 'crossbar', base: at(c.ft), right: F.right, lo: -c.r, hi: -c.l, water: true, h: hLight, src: c.inferred ? 'inferred' : 'naip' });
+      for (const u of ST.huts) piers.push({ kind: 'hut', base: at((u.ft0 + u.ft1) / 2), right: F.right, lo: -u.r, hi: -u.l, len: (u.ft1 - u.ft0) * 0.3048, water: true, h: hLight, src: 'naip' });
     }
   }
   // taxiway edge lights (blue), sparse
@@ -113,17 +136,33 @@ export function lightSpriteFn(sys) {
   };
 }
 
-// approach light pier structures (steel posts & crossbars) as instanced boxes
+// approach light pier structures as boxes. Pier kinds (review round 3): 'post' = a single post under a light station
+// on land (no imaged structure); 'catwalk' = the continuous deck a -> b; 'station' = piles under the light bar and the
+// catwalk with a cross-member; 'crossbar' = the imaged crossbar from lo to hi (m along `right`) on piles; 'hut' = an
+// equipment hut on the structure. Local frame: x along the runway axis, z = right (runway frame), y up.
 export function buildPierGeometry(piers) {
-  const g = new Geo(); const col = [0.35, 0.33, 0.3, 1], ext = [0.7, 0.4, 0, 0];
+  const g = new Geo(); const col = [0.35, 0.33, 0.3, 1], ext = [0.7, 0.4, 0, 0], deck = [0.3, 0.3, 0.3, 1], rail = [0.35, 0.35, 0.35, 1];
   for (const P of piers) {
     const top = P.h + 0.5; const f = v3.norm(v3.cross(P.right, [0, 1, 0]));
+    if (P.kind === 'catwalk') {
+      const d = v3.sub(P.b, P.a); const L = Math.hypot(d[0], d[2]); const u = v3.norm([d[0], 0, d[2]]);
+      const M = m4.basis(u, [0, 1, 0], [P.a[0], 0, P.a[2]]);
+      g.box([0, top - 0.9, -0.6], [L, top - 0.75, 0.6], deck, ext, M);
+      for (const sg of [-1, 1]) g.box([0, top - 0.75, sg * 0.6 - 0.03], [L, top - 0.1, sg * 0.6 + 0.03], rail, ext, M);
+      continue;
+    }
     const M = m4.basis(f, [0, 1, 0], [P.base[0], 0, P.base[2]]); // local x along runway axis, z = right
-    if (P.water) {
-      for (const sg of [-1, 1]) g.box([-0.18, -2.0, sg * 1.6 - 0.18], [0.18, top, sg * 1.6 + 0.18], col, ext, M);
-      g.box([-0.15, top - 0.25, -2.6], [0.15, top, 2.6], col, ext, M);
-      g.box([-15.2, top - 0.9, -0.4], [15.2, top - 0.75, 0.4], [0.3, 0.3, 0.3, 1], ext, M);
-      for (const sg of [-1, 1]) g.box([-15.2, top - 0.75, sg * 0.4 - 0.03], [15.2, top - 0.1, sg * 0.4 + 0.03], [0.35, 0.35, 0.35, 1], ext, M);
+    const y0 = P.water ? -2.0 : GROUND_Y;
+    if (P.kind === 'station') {
+      for (const z of [-0.9, 0.9, P.cw]) g.box([-0.18, y0, z - 0.18], [0.18, top - 0.25, z + 0.18], col, ext, M);
+      g.box([-0.15, top - 0.25, -2.6], [0.15, top, 2.6], col, ext, M);                                   // light-bar beam
+      g.box([-0.12, top - 0.95, Math.min(0, P.cw)], [0.12, top - 0.8, Math.max(0, P.cw)], col, ext, M);   // link to the catwalk
+    } else if (P.kind === 'crossbar') {
+      g.box([-0.2, top - 0.35, P.lo], [0.2, top - 0.05, P.hi], col, ext, M);
+      for (let z = P.lo; z <= P.hi + 1e-6; z += Math.max(4, (P.hi - P.lo) / Math.ceil((P.hi - P.lo) / 6))) g.box([-0.16, y0, z - 0.16], [0.16, top - 0.35, z + 0.16], col, ext, M);
+    } else if (P.kind === 'hut') {
+      g.box([-P.len / 2, top - 0.9, P.lo], [P.len / 2, top + 1.9, P.hi], [0.55, 0.55, 0.52, 1], ext, M);
+      for (const x of [-P.len / 2 + 0.3, P.len / 2 - 0.3]) for (const z of [P.lo + 0.3, P.hi - 0.3]) g.box([x - 0.16, y0, z - 0.16], [x + 0.16, top - 0.9, z + 0.16], col, ext, M);
     } else {
       g.box([-0.12, GROUND_Y, -0.12], [0.12, top, 0.12], col, ext, M);
     }

@@ -1006,3 +1006,8 @@ reg_std('UPS', 'UPS', 'brown tail and belly, gold shield, white upper fuselage',
         dict(belly=('#351C15', [(0, -1.2), (0.1, -0.35), (0.6, -0.3), (0.85, 0.2), (1, 0.8)]), cheat=[('#FFB500', [(0.1, -0.3), (0.6, -0.25), (0.85, 0.25)], 0.02)],
              title=('Worldwide Services', 'Montserrat', 600, '#351C15', 0.1, dict(k=0.5, dy=0.2)), tail='#351C15',
              fin_art=(svg_mark('<path d="M20 12 L80 12 L80 60 C80 80 50 92 50 92 C50 92 20 80 20 60 Z" fill="#FFB500"/><path d="M26 18 L74 18 L74 58 C74 74 50 84 50 84 C50 84 26 74 26 58 Z" fill="#351C15"/>'), 0.55, 0.5, 0.45)))
+
+# all-cargo operators: their SFO fleet (757-200 freighters, 767-300F, MD-11F, 747-400F / -8F) has no passenger cabin
+# windows; the painter paints none and the renderer hides the models' cabin glass (manifest brands.<code>.cargo). The
+# few crew-area windows of the freighters (747F upper deck) are not modelled.
+for _c in ('FDX', 'UPS'): LIVERIES[_c]['cargo'] = True

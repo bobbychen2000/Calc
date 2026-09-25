@@ -42,7 +42,7 @@ const gates = standGates(STANDS);
 const apt = paintAirportMapReal(AIRPORT, gates, undefined, DETAILS, { paint: PAINT, pavement: PAVEMENT, endZones: endZoneRects() });
 const building = buildingGrid(AIRPORT);
 const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS });
-traffic.buildingAt = building; traffic.towBy = new Map(); traffic.towLog = [];
+traffic.buildingAt = building; traffic.towBy = new Map(); traffic.towLog = []; if (process.env.LOCKLOG) traffic.lockLog = [];
 if (process.env.DELAY) { traffic.adaptDelay = false; traffic.delay = traffic.delayTarget = +process.env.DELAY; }
 const DEBUG = process.env.DEBUG || null; traffic.debug = DEBUG; const UNTIL = process.env.UNTIL ? +process.env.UNTIL : null;
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net });
@@ -64,7 +64,8 @@ const kin = { ground: { along: [], lat: [], jerk: [], yaw: [], slip: [] }, air: 
 const maxes = new Map();   // hex -> per-aircraft maxima
 // exceedance thresholds (m/s^2, m/s^3, deg/s, deg): ground braking/acceleration 0.36 g, lateral 0.3 g, yaw 25 deg/s,
 // sideslip 5 deg; air along-track 0.3 g, lateral 6 m/s^2 (= a 31.5 deg bank), vertical 0.3 g, turn 7 deg/s
-const EX = { gAcc: 3.5, gLat: 3.0, gJerk: 6.0, gYaw: 25, slip: 5, aAcc: 3.0, aLat: 6.0, aVacc: 3.0, aTurn: 7 };
+// gAccLight: business jets on the take-off roll ~4 m/s^2 (PFT144 C750 28R 24 Sep 17:03Z: 0.5 -> 123 kt in 16 s)
+const EX = { gAcc: 3.5, gAccLight: 5.5, gLat: 3.0, gJerk: 6.0, gYaw: 25, slip: 5, aAcc: 3.0, aLat: 6.0, aVacc: 3.0, aTurn: 7 };
 const exceed = Object.fromEntries(Object.keys(EX).map(k => [k, 0])); const exceedWho = Object.fromEntries(Object.keys(EX).map(k => [k, new Map()]));
 const slipLog = []; let teleports = 0, gapResets = 0; const teleWho = new Map(); let frames = 0;
 const overlapPairs = new Map(); let overlapFrames = 0;
@@ -81,6 +82,9 @@ while (simNow < tEnd) {
   const ground = [];
   for (const tr of traffic.tracks.values()) {
     const D = tr.disp; if (!D.valid || tr.vehicle) continue;
+    // faded out (a re-placement after a data gap / re-acquisition, or not yet shown): not drawn -> not measured; the
+    // re-placement is counted once (gap_reacquisitions) and the reappearance starts a new measurement
+    if (D.alpha != null && D.alpha < 0.5) { if (K.has(tr.hex)) { gapResets++; K.delete(tr.hex); } tr._reset = null; continue; }
     const near = Math.hypot(D.x, D.z) < (D.ground ? 6000 : 40000) && tr.info.category !== 'A7';
     const s = K.get(tr.hex);
     // ground kinematics are measured at the main-gear centre (the point that cannot slip sideways; the antenna point
@@ -99,7 +103,7 @@ while (simNow < tEnd) {
         const put = (key, v, arr) => { sample(arr, v); if (!(M[key] >= v)) M[key] = v; if (v > EX[key]) { exceed[key]++; bump(exceedWho[key], M.f); } };
         if (D.ground && s.g) {
           const along = Math.abs(ax * hx + az * hz), lat = Math.abs(-ax * hz + az * hx);
-          put('gAcc', along, kin.ground.along); put('gLat', lat, kin.ground.lat); put('gYaw', Math.abs(yaw), kin.ground.yaw);
+          put(T0 && T0.L < 30 || /^A[12]$/.test(tr.info.category || '') ? 'gAccLight' : 'gAcc', along, kin.ground.along); put('gLat', lat, kin.ground.lat); put('gYaw', Math.abs(yaw), kin.ground.yaw);
           if (s.ax != null && sp > 0.5) put('gJerk', Math.hypot(ax - s.ax, az - s.az) / DT, kin.ground.jerk);
           if (sp > 1) { let sl = Math.abs(wrapD((Math.atan2(vx, -vz) - D.hdg) * 180 / Math.PI)); sl = Math.min(sl, 180 - sl); put('slip', sl, kin.ground.slip); if (sl > 5 && process.env.SLIPLOG && slipLog.length < 60) slipLog.push([new Date(simNow).toISOString().slice(11, 22), M.f, tr.hex, sp.toFixed(1), sl.toFixed(0), tr.m.phase, tr.phase, (tr.ctl && tr.ctl.v || 0).toFixed(1)]); }
         } else if (!D.ground && !s.g) {
@@ -143,7 +147,7 @@ const summary = {
   frames, dt: DT, events: traffic.events, counters: traffic.counters,
   kin: { ground: Object.fromEntries(Object.entries(kin.ground).map(([k, v]) => [k, dist(v)])), air: Object.fromEntries(Object.entries(kin.air).map(([k, v]) => [k, dist(v)])) },
   thresholds: EX, exceed, exceedWho: Object.fromEntries(Object.entries(exceedWho).map(([k, m]) => [k, top(m)])),
-  teleports, gapResets, teleWho: top(teleWho, 20), towBy: top(traffic.towBy, 15).map(([k, v]) => [k, +v.toFixed(0)]), towLog: traffic.towLog, overlapFrames, overlapPairs: top(overlapPairs, 20).map(([k, v]) => [k, +v.toFixed(1)]),
+  teleports, gapResets, teleWho: top(teleWho, 20), towBy: top(traffic.towBy, 15).map(([k, v]) => [k, +v.toFixed(0)]), towLog: traffic.towLog, lockLog: traffic.lockLog ? traffic.lockLog.filter(q => String(q[2]).startsWith('cut')).slice(0, 3000) : undefined, overlapFrames, overlapPairs: top(overlapPairs, 20).map(([k, v]) => [k, +v.toFixed(1)]),
   offPave: { frames: offPave.frames, maskOnly: offPave.maskOnly, union: offPave.union, who: top(offPave.who, 15) }, inBld: { frames: inBld.frames, who: top(inBld.who) },
   worst: [...maxes.values()].sort((a, b) => (b.gAcc || 0) - (a.gAcc || 0)).slice(0, 5),
 };

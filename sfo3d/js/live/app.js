@@ -324,10 +324,14 @@ export async function startApp(cfg) {
     const load = () => {
       firstData(); const p = parsePayload(snap); const off = Date.now() - p.now; p.now += off; for (const a of p.aircraft) a.t += off;
       const keep = new Set();
-      for (const tr of [...traffic.tracks.values()]) { if (!tr.vehicle && tr.disp.ground && (tr.m.phase === 'still' || tr.gate)) { tr.lastRecv = Date.now(); keep.add(tr.hex); } else traffic.remove(tr); }
+      // (kept alive: the engine ages a track by its newest POSITION, lastFixT)
+      for (const tr of [...traffic.tracks.values()]) { if (!tr.vehicle && tr.disp.ground && (tr.m.phase === 'still' || tr.gate)) { tr.lastRecv = tr.lastFixT = Date.now(); keep.add(tr.hex); } else traffic.remove(tr); }
       p.aircraft = p.aircraft.filter(a => !keep.has(a.hex)); traffic.offset = null; traffic.ingest(p, Date.now());
     };
+    traffic.movingLostMs = 100000;   // (moving aircraft are re-created every 90 s from the one recorded instant: not 'lost')
     load(); setInterval(load, 90000);
+    // parked aircraft of the recording stay current (not 'last signal … ago') between the reloads
+    setInterval(() => { for (const tr of traffic.tracks.values()) if (!tr.vehicle && tr.disp.ground && (tr.m.phase === 'still' || tr.gate)) { tr.lastRecv = tr.lastFixT = Date.now(); tr.stale = false; } }, 20000);
     feedState = { state: 'snap', text: cfg.snapshotLabel || 'Recorded snapshot' };
   } else {
     const relay = !!cfg.relay;

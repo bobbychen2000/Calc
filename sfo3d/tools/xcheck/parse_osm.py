@@ -39,7 +39,7 @@ def main():
            'endpoint': meta['endpoint'], 'fetched_utc': meta['utc'], 'licence': 'ODbL 1.0, (c) OpenStreetMap contributors',
            'parking_positions': [], 'gates': [], 'jet_bridges': [], 'runways': [], 'stopways': [], 'blast_pads': [],
            'thresholds': [], 'holding_positions': [], 'taxiways': [], 'aprons': [], 'terminals': [], 'hangars': [],
-           'towers': [], 'navaids': [], 'windsocks': [], 'helipads': [], 'other_aeroway': Counter(), 'buildings': Counter()}
+           'towers': [], 'navaids': [], 'windsocks': [], 'helipads': [], 'lighting_masts': [], 'other_aeroway': Counter(), 'buildings': Counter()}
     for e in E:
         t = e.get('tags', {}); a = t.get('aeroway'); g = geom(e)
         if 'building' in t: out['buildings'][t['building']] += 1
@@ -49,6 +49,10 @@ def main():
                 out['towers'].append({**prov(e), 'tags': t, 'pts': g})
             elif mm == 'windsock':
                 out['windsocks'].append({**prov(e), 'tags': t, 'pts': g})
+            elif mm == 'mast' and t.get('tower:type') == 'lighting' and g:
+                # review round 3: apron floodlight masts (man_made=mast + tower:type=lighting), used by
+                # tools/build_airfield_details.py instead of inferred positions
+                out['lighting_masts'].append({**prov(e), 'tags': t, 'pt': g[0], 'w': [round(v, 2) for v in X.wgs84_to_world(*g[0])]})
             continue
         rec = {**prov(e), 'ref': t.get('ref'), 'name': t.get('name'), 'tags': t}
         if a == 'parking_position':

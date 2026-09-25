@@ -115,7 +115,7 @@ export function atcRoles(tr, T, now = Date.now()) {
       break;
     case 'lineup': case 'takeoff': case 'landing': case 'goaround': out.push({ role: 'twr', f: 120.5, key: 'twr', conf: 'high' }); break;
     case 'final': {
-      const d = tr.finalInfo ? -tr.finalInfo.a / NM : null; const rw = tr.finalInfo ? tr.finalInfo.R.name : null;
+      const d = tr.finalInfo ? -tr.finalInfo.a / NM : null; const rw = tr.finalInfo && tr.m.rwyFirm !== false ? tr.finalInfo.R.name : null;   // (a pair not yet told apart: no runway-specific final frequency)
       if (d != null && d <= 6) out.push({ role: 'twr', f: 120.5, key: 'twr', conf: 'med' });
       else out.push({ role: 'fin', f: rw === '28R' ? 133.175 : rw === '28L' ? 135.65 : null, key: rw === '28R' ? 'fin28R' : rw === '28L' ? 'fin28L' : 'fin', conf: 'low', rwy: rw });
       break;

@@ -3,6 +3,7 @@
 // Texture 0 of an atlased model (head.atlas, tools/liveries/atlas.py) is the livery atlas: its draw carries uAtlas = 1 and
 // can wear a brand livery texture (getLiveryTexture, js/aircraft/liveries.js); its alpha marks cabin-window glass.
 import { gl, Mesh } from '../gl.js';
+import { plugShift } from '../aircraft/fit.js';
 
 const cache = new Map();      // key -> Promise<Model>
 export const MODEL_SOURCES = {}; // key -> ArrayBuffer | url | () => ArrayBuffer (set by the app)
@@ -43,7 +44,9 @@ async function decodeImage(bytes, type) {
 }
 
 // stretch (js/aircraft/fit.js), all in model units of the unstretched model (x forward, nose = 0, aft negative; y up; z right):
-//   cut1, cut2, d1, d2  fuselage plugs: vertices aft of cut1 move back by d1, aft of cut2 by d1 + d2
+//   cut1, cut2, d1, d2, bl2  fuselage plugs at cut1 / cut2 of length d1 / d2 (negative: section removed, the aft one
+//                        blended over bl2), see js/aircraft/fit.js plugShift. The atlas (tools/liveries/atlas.py) splits the
+//                        mesh at the stations, so only a 2 cm band of triangles is stretched by a plug.
 //   wing {z0, z1, dz, xMin}  span fit: outboard of z0 the wing is stretched spanwise, linearly up to z1, and everything
 //                        outboard of z1 (the tip device) moves rigidly by dz (only vertices ahead of xMin: not the tailplane)
 //   fin {yF, xF, k}      fin height fit: vertices aft of xF and above the fuselage top yF (not engines, pylons, gear)
@@ -70,10 +73,9 @@ export function applyStretch(pos, zone, nv, st, dims) {
     dims.H = top;
   }
   if (st.cut1 != null) {
-    const { cut1, cut2, d1, d2 } = st;
+    const { cut1, cut2, d1, d2 } = st; const bl2 = st.bl2 || 0;
     for (let i = 0; i < nv; i++) {
-      const x = pos[i * 3];
-      if (x < cut2) pos[i * 3] = x - d1 - d2; else if (x < cut1) pos[i * 3] = x - d1;
+      const x = pos[i * 3]; pos[i * 3] = x + plugShift(x, cut1, d1) + plugShift(x, cut2, d2, bl2);
     }
     dims.L += d1 + d2; dims.tailX -= d1 + d2;
   }

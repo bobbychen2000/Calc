@@ -7,6 +7,10 @@ seen by our recorder) are mapped to TYPES keys (js/aircraft/types.js ICAO_TYPES)
 TYPE_MODEL). Types rendered on the same model with the same fuselage plugs share one bake (painted on the most common of
 them); types without an imported model (777 family) use the procedural airframe and its runtime colours instead.
 
+Types whose airframe differs from the model's own type (fuselage plugs, or a different cabin-window row on the
+manufacturer's drawing, tools/liveries/windows.py) get their own bake `<model>@<type>`; the pseudo-brand `_N` is the
+neutral skin of such a type (for aircraft without a brand bake). Freighter brands (`cargo`) get no cabin windows.
+
 Output: data/liveries/<BRAND>/<model>[@<type>]-{hi,mid,lo}.webp (2048 / 1024 / 512 px), data/liveries/manifest.json
 (read by js/three/aircraft.js LiveryLibrary: entries[].brand/model/file; `pxm` = atlas px per metre at 2048) and
 data/liveries/manifest.js (same data, ES module, js/aircraft/liveries.js). Models must be atlased first (tools/liveries/atlas.py).
@@ -26,15 +30,43 @@ SIZES = dict(hi=2048, mid=1024, lo=512)
 QUALITY = dict(hi=88, mid=84, lo=80)
 
 
+NEUTRAL = '_N'      # pseudo-brand: the neutral (white, titles-free) skin of a type whose windows differ from the model's own
+
+
 def plug_sig(A, t):
     f = A['types'][t]['fit']; p = f and f['plugs']
     return (round(p['d1'], 2), round(p['d2'], 2)) if p else None
 
 
+_wsig = {}
+def win_sig(A, t):
+    """the type's cabin-window rows (tools/liveries/windows.py): types rendered with the same model share a bake only when
+    their rows are the same (737-800 and 737 MAX 8 differ on the manufacturers' drawings, A321 and A321neo, ...)"""
+    if t not in _wsig:
+        import windows
+        rows = windows.type_rows(t, A)
+        _wsig[t] = tuple((r['deck'], round(r['eta'] or 0, 2), tuple(round(float(x), 2) for x in r['s'])) for r in rows) or None
+    return _wsig[t]
+
+
+def sig(A, t):
+    return (plug_sig(A, t), win_sig(A, t))
+
+
+def variant_name(A, m, s, rep):
+    return m if s == sig(A, A['base'][m]) else f'{m}@{rep}'
+
+
 def jobs(codes, only_models=None):
     A = common.app()
-    out = collections.defaultdict(lambda: collections.defaultdict(list))   # model -> (plug sig) -> [(brand, type)]
+    out = collections.defaultdict(lambda: collections.defaultdict(list))   # model -> (plug + window sig) -> [(brand, type)]
     for code in codes:
+        if code == NEUTRAL:
+            # every type whose airframe differs from its model's own type (fuselage plugs or window rows)
+            for t, m in A['typeModel'].items():
+                if not m or (only_models and m not in only_models) or t not in A['types']: continue
+                if sig(A, t) != sig(A, A['base'][m]): out[m][sig(A, t)].append((code, t))
+            continue
         L = liveries.LIVERIES[code]
         for icao in L.get('types', []):
             t = A['icao'].get(icao)
@@ -42,7 +74,7 @@ def jobs(codes, only_models=None):
             m = A['typeModel'].get(t)
             if not m: continue                        # procedural airframe (777 family)
             if only_models and m not in only_models: continue
-            out[m][plug_sig(A, t)].append((code, t))
+            out[m][sig(A, t)].append((code, t))
     return out
 
 
@@ -70,13 +102,16 @@ def bake_jobs(codes, only, preview_dir=None):
             rep = group_rep(A, m, lst)
             t0 = time.time()
             c = Canvas(path, rep, SIZES['hi'])
-            print(f'== {m} as {rep} (plugs {sig}): {len(set(b for b, _ in lst))} brands, canvas {time.time() - t0:.0f} s', flush=True)
+            print(f'== {m} as {rep} (plugs {sig[0]}, windows {c.plan["mode"]} {len(c.plan["win"])}): {len(set(b for b, _ in lst))} brands, canvas {time.time() - t0:.0f} s', flush=True)
             for code in sorted({b for b, _ in lst}):
                 t1 = time.time()
                 c.reset()
-                liveries.LIVERIES[code]['paint'](c)
+                if code == NEUTRAL: c.cargo = False                        # bare white skin with this type's windows
+                else:
+                    c.cargo = bool(liveries.LIVERIES[code].get('cargo'))   # freighters: no cabin windows
+                    liveries.LIVERIES[code]['paint'](c)
                 img = c.finish()
-                name = m if sig is None else f'{m}@{rep}'
+                name = variant_name(A, m, sig, rep)
                 files = save_all(img, os.path.join(common.LIV, code, name))
                 if preview_dir:
                     import preview
@@ -99,12 +134,12 @@ def pxm(m):
 def write_manifest():
     """entries from the job table and the files present on disk (so several bake processes can run in parallel)"""
     A = common.app()
-    J = jobs(list(liveries.LIVERIES))
+    J = jobs(list(liveries.LIVERIES) + [NEUTRAL])
     ent = {}
     for m, groups in J.items():
         for sig, lst in groups.items():
             rep = group_rep(A, m, lst)
-            name = m if sig is None else f'{m}@{rep}'
+            name = variant_name(A, m, sig, rep)
             for code in sorted({b for b, _ in lst}):
                 files = {r: f'{code}/{name}-{r}.webp' for r in SIZES}
                 if not all(os.path.exists(os.path.join(common.LIV, f)) for f in files.values()): continue
@@ -112,7 +147,7 @@ def write_manifest():
                 rec = dict(types=gtypes, files=files, file=files['mid'], painted_as=rep,
                            bytes={r: os.path.getsize(os.path.join(common.LIV, f)) for r, f in files.items()})
                 e = ent.setdefault((code, m), dict(brand=code, model=m, pxm=pxm(m), variants=[]))
-                if sig is None: e.update(rec)
+                if name == m: e.update(rec)
                 else: e['variants'].append(rec)
     for e in ent.values():
         if not e.get('files') and e.get('variants'):
@@ -121,7 +156,9 @@ def write_manifest():
     for code, L in liveries.LIVERIES.items():
         brands[code] = dict(name=L['name'], livery=L['version'], since=L.get('since'), refs=L['refs'],
                             colors={k: v for k, v in L.get('colors', {}).items()}, status=L.get('status', ''),
-                            types=L.get('types', []))
+                            types=L.get('types', []), cargo=bool(L.get('cargo')))
+    brands[NEUTRAL] = dict(name='(no brand)', livery='neutral skin: white, no titles; this type\'s cabin windows', since=None, refs=[],
+                           colors={}, status='generic fallback for unknown operators and for brands without a bake of this type', types=[], cargo=False)
     out = dict(version=1, generator='tools/liveries/build.py', sizes=SIZES,
                note='Airline names, logos and liveries are trademarks of their owners; re-drawn for a non-commercial depiction.',
                entries=sorted(ent.values(), key=lambda e: (e['brand'], e['model'])), brands=brands)
@@ -165,7 +202,7 @@ def main():
     if a.list_snapshot:
         fs = snapshot_files('lo'); tot = sum(os.path.getsize(os.path.join(common.LIV, f)) for f in fs)
         print('\n'.join('data/liveries/' + f for f in fs)); print(f'# {len(fs)} files, {tot / 1e6:.2f} MB'); return
-    codes = a.brands or [c for c in liveries.LIVERIES if liveries.LIVERIES[c].get('types')]
+    codes = a.brands or ([c for c in liveries.LIVERIES if liveries.LIVERIES[c].get('types')] + [NEUTRAL])
     only = set(a.models.split(',')) if a.models else None
     if not a.manifest_only: bake_jobs(codes, only, a.preview)
     if not a.no_manifest: write_manifest()

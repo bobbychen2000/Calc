@@ -8,8 +8,8 @@ What changed for everybody:
 - Every `data/models/*.sfom` now has a **livery atlas** as texture 0 (`head.atlas`, `tools/liveries/atlas.py`): fuselage,
   fin, tailplane, nacelle skins, pylons, wing tips and gear doors in one uniform layout (WebP, RGBA). Geometry and
   `MODEL_DIMS` / `MODEL_FEATURES` are unchanged; vertex counts changed (vertices are duplicated along chart seams).
-  Alpha of the atlas: 1 paint, 0.75 unchanged dark skin, **< 0.5 cabin-window glass** painted into the atlas (737-800,
-  747-400, A330-300, A380, CRJ200 have no window geometry).
+  Alpha of the atlas: 1 paint, 0.75 unchanged dark skin, **< 0.5 cabin-window glass** painted into the atlas (25 Sep:
+  the painted rows now replace the artist windows on 11 models; see `docs/requests/liveries_windows.md`).
 - 24 Sep, later: `b744`, `b748`, `b763`, `bcs1`, `a333` re-converted (`tools/convert_models.py normalize_uvs`: garbage source
   UVs of up to +-2,100 texture repeats had stretched the u16 UV quantisation to a 0.05 step; geometry and dims
   unchanged, verified) and, with `e170` / `e190` (APU exhaust no longer taken for an engine), re-atlased. Reload these

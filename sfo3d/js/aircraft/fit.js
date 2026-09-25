@@ -23,6 +23,19 @@
 // js/live/aircraft.js and the procedural airframe read.
 import { TYPES, SPEC, ICAO_TYPES } from './types.js';
 import { MODEL_DIMS, MODEL_FEATURES } from '../../data/models/manifest.js';
+// x shift of a vertex at model x (forward positive, aft negative) by the fuselage plug at station c (model x) of length
+// d: a plug (d > 0) moves everything aft of c aft by d; a negative plug (shorter type) removes the section [c + d, c):
+// with bl = 0 its vertices collapse onto c, with a blend bl > 0 the section plus bl is compressed linearly onto bl (no
+// step where the removed section reaches into a taper); everything aft of it moves forward by |d|. Used by
+// js/live/models.js applyStretch; Python port: tools/liveries/common.py apply_stretch.
+export function plugShift(x, c, d, bl = 0) {
+  if (d >= 0) return x < c ? -d : 0;
+  const D = -d;
+  if (x >= c) return 0;
+  if (x <= c - D - bl) return D;
+  const t = (c - x) / (D + bl);
+  return (c - t * bl) - x;
+}
 
 // TYPES key -> model key (null: procedural airframe; no artist model of the 777 family is available)
 export const TYPE_MODEL = {
@@ -42,15 +55,17 @@ export const MODEL_BASE = { b738: 'b738', a319: 'a319', a320: 'a320', a321: 'a32
 export const TYPE_MODELS = {};
 for (const icao in ICAO_TYPES) TYPE_MODELS[icao] = { t: ICAO_TYPES[icao], m: TYPE_MODEL[ICAO_TYPES[icao]] ?? null };
 
-// plug stations in the base airframe (m aft of the nose): [forward plug, aft plug]
+// plug stations in the base airframe (m aft of the nose): [forward plug, aft plug]. The livery atlas splits the mesh at
+// these stations (tools/liveries/atlas.py plug bands), so only a 2 cm band stretches; on models that keep their artist
+// glass windows the stations lie in a pier between two windows (a window is never stretched).
 export const PLUG_AT = {
   b738: [10.0, 26.0],   // between door 1 (5.03) and the wing root (~14.2) / between the wing TE (~21.6) and the aft door (31.88)
-  b752: [15.4, 31.0],   // aft of door 2 (13.99, unchanged on the 757-300) and ahead of the wing / behind the wing, ahead of door 4 (38.23)
+  b752: [15.24, 30.96], // aft of door 2 (13.99, unchanged on the 757-300) and ahead of the wing / behind the wing, ahead of door 4 (38.23); both in a window pier of the kept artist glass (tools/liveries/windows.py)
   b763: [10.8, 37.0],   // between door 1 (5.70) and the (optional) door 2 (15.96; the 767-400ER door 2 moves with the plug) / ahead of the aft door (42.55)
   b788: [10.8, 38.0],   // between door 1 (6.30) and door 2 (15.32) / between door 3 (32.39) and door 4 (43.56)
   a333: [11.8, 43.5],   // between door 1 (5.85) and door 2 (17.74) / between door 3 (35.96) and door 4 (50.96)
   a359: [12.8, 45.2],   // between door 1 (6.82) and door 2 (18.86) / between door 3 (37.93) and door 4 (52.55)
-  e190: [9.0, 23.5],    // between door 1 (5.14) and the wing / between the wing TE and the aft door
+  e190: [9.22, 23.54],  // between door 1 (5.14) and the wing / between the wing TE and the aft door; in window piers of the kept artist glass
 };
 const SPAN_TOL = 0.005, TIP = 0.8; // span fit threshold (fraction); rigidly translated wing-tip length (model m)
 
@@ -63,7 +78,13 @@ function plugsFor(t, base) {
     if (B.doors[j] > a1 && B.doors[j] < a2) { d1 = T.doors[j] - B.doors[j]; by = 'door ' + (j + 1); break; }
   }
   if (d1 === null) d1 = T.main[0] - B.main[0];
-  return { at1: a1, at2: a2, d1: +d1.toFixed(3), d2: +(dL - d1).toFixed(3), by };
+  const d2 = +(dL - d1).toFixed(3);
+  // a shorter aft fuselage: the removed section behind the wing reaches into the start of the tail taper on these
+  // models (737-800 model: keel 0.2 m higher at 28.8 m than at 26.0 m), so instead of a hard cut the section plus a blend
+  // of up to 3 m is compressed onto the blend length (no step in the skin); the blend ends 0.6 m ahead of the next door
+  let bl2 = 0;
+  if (d2 < 0) { const nd = B.doors.find(x => x > a2); bl2 = Math.max(0, Math.min(3.0, (nd != null ? nd - 0.6 : a2 + 10) - (a2 - d2))); }
+  return { at1: a1, at2: a2, d1: +d1.toFixed(3), d2, bl2: +bl2.toFixed(3), by };
 }
 // fuselage section of model features F near station xm (model units): the most complete planar cut within +-2 m
 // (a cut through a door opening, whose door is a separate object, misses skin triangles)
@@ -102,11 +123,13 @@ export function fitType(t, m) {
   const s0 = B.L / d.L;                                   // model units -> metres (published length of the model's own type)
   const pl = base !== t ? plugsFor(t, base) : null;
   const stretch = {};
-  if (pl) Object.assign(stretch, { cut1: -pl.at1 / s0, cut2: -pl.at2 / s0, d1: pl.d1 / s0, d2: pl.d2 / s0 });
+  if (pl) Object.assign(stretch, { cut1: -pl.at1 / s0, cut2: -pl.at2 / s0, d1: pl.d1 / s0, d2: pl.d2 / s0, bl2: pl.bl2 / s0 });
   const plugM = pl ? (pl.d1 + pl.d2) / s0 : 0;
   const s = T.L / (d.L + plugM);                          // = s0 when the plugs account for the whole length change
   // rendered station (m from the nose) of a model station xm (model units, positive aft)
-  const rx = (xm) => s * (xm + (pl && xm > pl.at1 / s0 ? pl.d1 / s0 : 0) + (pl && xm > pl.at2 / s0 ? pl.d2 / s0 : 0));
+  // (stations inside a removed section map onto the plug station or the blend, plugShift above)
+  const sh = (st, a, dd, bl = 0) => -plugShift(-st, -a, dd, bl);
+  const rx = (xm) => s * (xm + (pl ? sh(xm, pl.at1 / s0, pl.d1 / s0) + sh(xm, pl.at2 / s0, pl.d2 / s0, pl.bl2 / s0) : 0));
   // wing span fit
   const semi = F ? F.wing.semi : d.span / 2; const want = S.span / s / 2; let wing = null;
   if (Math.abs(want / semi - 1) > SPAN_TOL) {

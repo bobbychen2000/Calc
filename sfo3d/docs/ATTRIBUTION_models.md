@@ -93,3 +93,19 @@ Font License 1.1. Only rasterised letter shapes end up in the textures; the font
 
 The real airline wordmarks are proprietary typefaces or custom lettering; ours are look-alike substitutes, listed per
 brand in `docs/research/liveries_impl.md` §6.
+
+## 4. Cabin-window rows: manufacturer drawings used for measurement only (not shipped)
+
+The painted cabin windows (`tools/liveries/windows.py`) are placed from rows measured on the manufacturers' own
+drawings by `tools/liveries/windows_ref.py`; only the measured numbers (`tools/liveries/windows_ref.json`: window
+stations, pitch, size, height) are in the repository. The drawings stay in the gitignored `refs/cache/`:
+
+- Boeing, "CAD 3-View Drawings for Airport Planning Purposes", https://www.boeing.com/commercial/airports/3-view
+  (DXF / DWG zips, fetched 25 Sep 2026; DWG converted with GNU LibreDWG 0.13.3 `dwg2dxf`, GPL-3.0, used as a tool only).
+- Airbus, "Aircraft Characteristics - Airport and Maintenance Planning" (A319, A320, A321, A330, A350, A380 revisions
+  in `refs/cache/acap/`, see `docs/research/aircraft_models_check.md`).
+- Bombardier CRJ200 Airport Planning Manual rev. 8 (`refs/cache/acap/`).
+
+Where the artist's window glass or openings did not match these drawings, they were removed from the converted models
+(the openings closed with skin triangles) and the measured row is painted instead; this is a modification of the GPL
+models of §1 and is covered by the same corresponding-source statement.

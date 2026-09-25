@@ -70,7 +70,7 @@ export function runwayQueue(tracks, rwys = null) {
     if (tr.phase === 'lineup' || tr.phase === 'takeoff') lined.push(it);
     else if (tr.phase === 'holding' && tr.dirSFO !== 'arr' && !tr.landedAt) { const p = holdingShort(rwys, tr.disp.x, tr.disp.z); if (p) holding.push({ ...it, rwy: it.rwy || p }); }
     else if (tr.phase === 'taxi' && tr.dirSFO === 'dep') taxiOut.push(it);
-    else if (tr.phase === 'final' && tr.finalInfo) { const r = tr.finalInfo.R.name; (finals[r] = finals[r] || []).push({ ...it, rwy: r, nm: Math.max(0, -tr.finalInfo.a / NM) }); }
+    else if (tr.phase === 'final' && tr.finalInfo) { const r = tr.finalLabel || tr.finalInfo.R.name; (finals[r] = finals[r] || []).push({ ...it, rwy: r, nm: Math.max(0, -tr.finalInfo.a / NM) }); }
   }
   for (const k in finals) finals[k].sort((a, b) => a.nm - b.nm);
   return { lined, holding, taxiOut, finals };

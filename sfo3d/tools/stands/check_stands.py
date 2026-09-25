@@ -108,57 +108,81 @@ def main(quiet=False, app=True):
     for s, b in allb:
         if not b.get('stow'): issues.append((s['name'], 'bridge %s: no rest (stow) pose' % b['osm_id'])); continue
         rest[id(b)] = GM.bridge_parts(b, b['stow'])[2]
-    docked = {}
+    docked = {}; dock_fp = {}
+    CW = 1 if (d.get('cab_convention') or {}).get('cw_is', 'clockwise').startswith('clockwise') else -1
+    sharers = {}
+    for o in S:
+        if o.get('shares_bridges_of'): sharers.setdefault(o['shares_bridges_of'], []).append(o)
     for s, b in allb:
         if b['door'] == 3: continue            # A380 upper deck: not docked by the app model (bridges_upper)
         pv = b.get('rotunda') or b['attach']
-        obs = obs_set(s)
-        rt = GM.rv(s['hdg'])
+        e0, e1 = b.get('ext_range') or (GM.EXT_MIN, GM.EXT_MAX)
+        out_ = set(b.get('dock_types_out') or [])
         # walkway direction into the rotunda (for the swing check)
         wk = [tuple(q) for q in b.get('walk') or [] if math.dist(q, pv) > 1.0]
         wdir = None
         if b.get('rotunda') and wk:
             L_ = math.dist(wk[-1], pv); wdir = ((pv[0] - wk[-1][0]) / L_, (pv[1] - wk[-1][1]) / L_)
         own_walk = GM.bridge_parts(b, b['cab'])[0].difference(Point(pv).buffer(rot_r(b) + 0.5))
-        worst = None
-        for t in GM.accepted_types(s):
-            k = GM.dock_door(t, b['door'])
-            if k is None: continue
-            nz = GM.nose_for(s, t)
-            dp = GM.door(nz, s['hdg'], t, k)
-            # docked, the cab faces the door squarely: the cab pivot sits PIVOT_TO_DOOR out from the door along the
-            # fuselage normal (left side: -right), and the tunnel runs from the rotunda to that pivot
-            cabp = (dp[0] - rt[0] * GM.PIVOT_TO_DOOR, dp[1] - rt[1] * GM.PIVOT_TO_DOOR)
-            ext = math.dist(pv, cabp)
-            u = ((cabp[0] - pv[0]) / max(ext, 1e-6), (cabp[1] - pv[1]) / max(ext, 1e-6))
-            ang = abs(GM.angle(u, rt))
-            tag = 'bridge %s L%d / %s' % (b['gate'], b['door'], t)
-            bucket = issues if t in obs else notes
-            if b.get('rotunda') and not (GM.EXT_MIN <= ext <= GM.EXT_MAX):
-                over = GM.EXT_MIN - ext if ext < GM.EXT_MIN else ext - GM.EXT_MAX
-                # within 1.0 m of a limit = inside the stop-point / OSM rotunda uncertainty: WARN, not ISSUE
-                (bucket if over > 1.0 else (warns if t in obs else notes)).append((s['name'], '%s: extension %.1f m outside %.1f-%.1f m' % (tag, ext, GM.EXT_MIN, GM.EXT_MAX)))
-            if ang > GM.CAB_ROT_OPT: bucket.append((s['name'], '%s: cab turn %.0f deg > %.0f' % (tag, ang, GM.CAB_ROT_OPT)))
-            elif ang > GM.CAB_ROT_STD and t in obs: warns.append((s['name'], '%s: cab turn %.0f deg > standard %.1f (needs the optional cab)' % (tag, ang, GM.CAB_ROT_STD)))
-            if wdir:
-                # the rotunda's neutral axis is not known (it need not be the walkway direction: at the F pier the
-                # walkways run along the facade and the imaged tunnels point away from it); a swing beyond 87.5 deg from
-                # the walkway is a NOTE, the tunnel physically crossing its own fixed walkway an ISSUE (below)
-                sw = abs(GM.angle(wdir, u))
-                if sw > GM.ROT_SWING: notes.append((s['name'], '%s: tunnel %.0f deg from the walkway direction (> %.1f; rotunda neutral axis unknown)' % (tag, sw, GM.ROT_SWING)))
-            tw = LineString([pv, cabp]).buffer(GM.TUN_W / 2, cap_style=2).difference(Point(pv).buffer(rot_r(b) + 0.5)).intersection(own_walk).area
-            if tw > 0.5: bucket.append((s['name'], '%s: docked tunnel crosses its own fixed walkway %.1f m2' % (tag, tw)))
-            wl, rot, tc = GM.bridge_parts(b, cabp)
-            tun = LineString([pv, cabp]).buffer(GM.TUN_W / 2, cap_style=2).difference(Point(pv).buffer(rot_r(b)))
-            own = GM.planform(nz, s['hdg'], t, visual=True)
-            ov = tun.intersection(own).area
-            if ov > 0.5: bucket.append((s['name'], '%s: docked tunnel over its own aircraft %.1f m2' % (tag, ov)))
-            if worst is None or ext > worst[0]: worst = (ext, tc)
+        worst = None; dock_fp[id(b)] = {}
+        # the stand itself and the alternative positions that use its bridges (B5S -> B5 ...)
+        for so in [s] + sharers.get(s['name'], []):
+            obs = obs_set(so); rt = GM.rv(so['hdg'])
+            for t in GM.accepted_types(so):
+                k = GM.dock_door(t, b['door'])
+                if k is None: continue
+                nz = GM.nose_for(so, t)
+                dp = GM.door(nz, so['hdg'], t, k)
+                # docked, the cab faces the door squarely: the cab pivot sits PIVOT_TO_DOOR out from the door along the
+                # fuselage normal (left side: -right), and the tunnel runs from the rotunda to that pivot
+                cabp = (dp[0] - rt[0] * GM.PIVOT_TO_DOOR, dp[1] - rt[1] * GM.PIVOT_TO_DOOR)
+                ext = math.dist(pv, cabp)
+                u = ((cabp[0] - pv[0]) / max(ext, 1e-6), (cabp[1] - pv[1]) / max(ext, 1e-6))
+                tag = 'bridge %s L%d / %s%s' % (b['gate'], b['door'], t, '' if so is s else ' on ' + so['name'])
+                bucket = issues if t in obs else notes
+                # review round 3: the bridge's own model range (ext_range), not 9.846-41.381 m; also without a rotunda
+                if not (e0 - 1.0 <= ext <= e1 + 1.0):
+                    if t in obs: issues.append((s['name'], '%s: extension %.1f m outside the bridge model range %.1f-%.1f m (%s)' % (tag, ext, e0, e1, b.get('model') or 'no single model')))
+                    elif t not in out_: notes.append((s['name'], '%s: extension %.1f m outside %.1f-%.1f m but not in dock_types_out' % (tag, ext, e0, e1)))
+                    continue                    # it does not dock this type: the bridge stays at rest (checked below)
+                if not (e0 <= ext <= e1) and t in obs:
+                    warns.append((s['name'], '%s: extension %.1f m within 1.0 m outside %.1f-%.1f m (stop / rotunda uncertainty)' % (tag, ext, e0, e1)))
+                # cab turn, signed (review round 3): 92.5 cw / 32.5 ccw standard, +-92.5 with the optional cab
+                ang = CW * GM.angle(u, rt)
+                opt = 'optional' in (b.get('cab_option') or '')
+                if abs(ang) > GM.CAB_ROT_OPT: bucket.append((s['name'], '%s: cab turn %.0f deg > %.0f' % (tag, ang, GM.CAB_ROT_OPT)))
+                elif not (-GM.CAB_CCW <= ang <= GM.CAB_CW) and not (opt and abs(ang) <= GM.CAB_OPT_HALF):
+                    (warns if t in obs else notes).append((s['name'], '%s: cab turn %+.0f deg outside the standard %.1f cw / %.1f ccw (cab_option %s)' % (tag, ang, GM.CAB_CW, GM.CAB_CCW, b.get('cab_option'))))
+                if wdir:
+                    # the rotunda's neutral axis is not known (it need not be the walkway direction: at the F pier the
+                    # walkways run along the facade and the imaged tunnels point away from it); a swing beyond 87.5 deg from
+                    # the walkway is a NOTE, the tunnel physically crossing its own fixed walkway an ISSUE (below)
+                    sw = abs(GM.angle(wdir, u))
+                    if sw > GM.ROT_SWING: notes.append((s['name'], '%s: tunnel %.0f deg from the walkway direction (> %.1f; rotunda neutral axis unknown)' % (tag, sw, GM.ROT_SWING)))
+                tw = LineString([pv, cabp]).buffer(GM.TUN_W / 2, cap_style=2).difference(Point(pv).buffer(rot_r(b) + 0.5)).intersection(own_walk).area
+                if tw > 0.5: bucket.append((s['name'], '%s: docked tunnel crosses its own fixed walkway %.1f m2' % (tag, tw)))
+                wl, rot, tc = GM.bridge_parts(b, cabp)
+                tun = LineString([pv, cabp]).buffer(GM.TUN_W / 2, cap_style=2).difference(Point(pv).buffer(rot_r(b)))
+                own = GM.planform(nz, so['hdg'], t, visual=True)
+                ov = tun.intersection(own).area
+                if ov > 0.5: bucket.append((s['name'], '%s: docked tunnel over its own aircraft %.1f m2' % (tag, ov)))
+                # review round 3: docked tunnel + cab inside the building (B2, A10, B10 were 1.1-2.2 m2)
+                ob_g = tc.difference(Point(pv).buffer(rot_r(b) + 0.3)).intersection(bld); ob_ = ob_g.area
+                # the SFO Museum outline is good to ~+-5 m (NAIP lean, review round 3): a graze under 1.5 m2 within 4 m of the
+                # rotunda is a NOTE, anything larger or further out an ISSUE (observed types)
+                if ob_ > 0.5:
+                    near_rot = ob_ < 1.5 and ob_g.hausdorff_distance(Point(pv)) < rot_r(b) + 4.0
+                    (notes if near_rot else bucket).append((s['name'], '%s: docked tunnel / cab inside the building %.1f m2%s' % (tag, ob_, ' (graze next to the rotunda, within the outline accuracy)' if near_rot else '')))
+                dock_fp[id(b)].setdefault(t, []).append(tc)
+                if worst is None or ext > worst[0]: worst = (ext, tc)
+        dock_fp[id(b)] = {t: unary_union(v) for t, v in dock_fp[id(b)].items()}
         if worst: docked[id(b)] = worst[1]
         for o in S:
             if o is s or o['name'] in s.get('excl', []) or math.dist(o['nose'], s['nose']) > 150: continue
             if id(b) in docked and docked[id(b)].intersection(ENV[o['name']]).area > 0.5:
                 issues.append((s['name'], 'bridge %s L%d docked crosses the aircraft at %s' % (b['gate'], b['door'], o['name'])))
+    for s, b in allb:
+        pv = b.get('rotunda') or b['attach']
         for o in S:
             if math.dist(o['nose'], pv) > 150: continue
             eo = unary_union([GM.planform(GM.nose_for(o, t), o['hdg'], t) for t in (obs_set(o) & set(GM.APP))]) if obs_set(o) & set(GM.APP) else ENV[o['name']]
@@ -172,6 +196,29 @@ def main(quiet=False, app=True):
                 if math.dist(o['nose'], pv) > 150: continue
                 a_ = rb.intersection(ENV[o['name']]).area
                 if a_ > 0.05: issues.append((s['name'], 'bridge %s L%d at rest overlaps the aircraft envelope of %s (%.1f m2)' % (b['gate'], b['door'], o['name'], a_)))
+            # review round 3: the rest pose must be a length the bridge's model can retract to, and outside the building
+            e0 = (b.get('ext_range') or (GM.EXT_MIN, 0))[0]; Ls = math.dist(pv, b['stow'])
+            if Ls < e0 - 0.05: issues.append((s['name'], 'bridge %s L%d rest length %.1f m < the model\'s retraction %.1f m' % (b['gate'], b['door'], Ls, e0)))
+            ab = rb.intersection(bld).area
+            if ab > 0.3: issues.append((s['name'], 'bridge %s L%d at rest inside the building %.1f m2' % (b['gate'], b['door'], ab)))
+            # review round 3: another bridge DOCKED while this one rests - a sibling for the types this one does not dock,
+            # any bridge of another stand for every type it docks
+            for so, ob in allb:
+                if ob is b or id(ob) not in dock_fp or math.dist(ob.get('rotunda') or ob['attach'], pv) > 90: continue
+                for t, g in dock_fp[id(ob)].items():
+                    if so is s and b['door'] <= 2 and GM.dock_door(t, b['door']) is not None and t not in (b.get('dock_types_out') or []): continue
+                    a_ = g.intersection(rb).area
+                    if a_ > 0.5:
+                        (issues if t in obs_set(so) else notes).append((s['name'], 'bridge %s L%d at rest is crossed by %s L%d docked to %s (%.1f m2)' % (b['gate'], b['door'], so['name'], ob['door'], t, a_)))
+                        break
+    # review round 3: two bridges of one stand docked to the same type must not overlap
+    for s in S:
+        bs = [b for b in s['bridges'] if id(b) in dock_fp]
+        for i in range(len(bs)):
+            for j in range(i + 1, len(bs)):
+                for t in set(dock_fp[id(bs[i])]) & set(dock_fp[id(bs[j])]):
+                    a_ = dock_fp[id(bs[i])][t].intersection(dock_fp[id(bs[j])][t]).area
+                    if a_ > 0.5: (issues if t in obs_set(s) else notes).append((s['name'], 'L%d and L%d docked to %s overlap %.1f m2' % (bs[i]['door'], bs[j]['door'], t, a_)))
     for i in range(len(allb)):
         for j in range(i + 1, len(allb)):
             (sa, ba), (sb, bb) = allb[i], allb[j]
@@ -191,6 +238,9 @@ def main(quiet=False, app=True):
             if id(ba) in rest and id(bb) in rest:
                 ov = rest[id(ba)].intersection(rest[id(bb)]).area
                 if ov > 0.5: issues.append((sa['name'] + '|' + sb['name'], 'bridges at rest overlap %.1f m2' % ov))
+                elif not shared:
+                    dr = rest[id(ba)].difference(Point(pa).buffer(rot_r(ba) + 0.3)).distance(rest[id(bb)].difference(Point(pb).buffer(rot_r(bb) + 0.3)))
+                    if dr < 1.0: notes.append((sa['name'] + '|' + sb['name'], 'rest poses %.2f m apart (< 1.0 m)' % dr))
             for x, y in ((ba, bb), (bb, ba)):
                 if shared: break
                 if id(x) in rest and fixed[id(y)].intersection(rest[id(x)].difference(Point(x.get('rotunda') or x['attach']).buffer(rot_r(x) + 0.3))).area > 0.5:

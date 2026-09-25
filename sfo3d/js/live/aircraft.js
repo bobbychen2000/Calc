@@ -5,7 +5,7 @@ import { Aircraft, linearLivery } from '../aircraft/fleet.js';
 import { TYPES } from '../aircraft/types.js';
 import { getModel, getLiveryTexture } from './models.js';
 import { resolveLivery } from './lookup.js';
-import { liveryTextureFor } from '../aircraft/liveries.js';
+import { liveryTextureFor, neutralTextureFor, brandIsCargo } from '../aircraft/liveries.js';
 import { TYPE_MODELS, MODEL_BASE, TYPE_MODEL, stretchFor, seatType, typeForIcao, BIZ_LEN } from '../aircraft/fit.js';
 
 // The ICAO designator -> (airframe, model) mapping and the fit of each model to the published dimensions of its type
@@ -43,10 +43,12 @@ export class LiveAircraft extends Aircraft {
   // brand livery texture for the loaded model (fetched once per brand x model x type group, shared)
   updateLiveryTexture() {
     const M = this.model; if (!M || !M.draws.some(d => d.atlas)) return;
-    const L = this.liv; const f = L && L.brand ? liveryTextureFor(L.brand, this.modelKey, this.type) : null;
+    const L = this.liv;
+    // the brand's bake for this type, else the neutral skin of this type (its own cabin windows; brand colours by zone)
+    const f = (L && L.brand ? liveryTextureFor(L.brand, this.modelKey, this.type) : null) || neutralTextureFor(this.modelKey, this.type);
     const key = f ? f.url : null;
     if (key === this._livTexKey) return;
-    this._livTexKey = key; this.livTex = null; this._items = null;
+    this._livTexKey = key; this.livTex = null; this._livNeutral = !!(f && f.neutral); this._items = null;
     if (!f) return;
     getLiveryTexture(f.url).then(t => { if (this._livTexKey === key) { this.livTex = t; this._items = null; } }).catch(() => {});
   }
@@ -59,6 +61,7 @@ export class LiveAircraft extends Aircraft {
     const L = this.liv, T = this.T, d = this.model.dims; const s = T.L / d.L; const C = linearLivery(L);
     U.uLivTop = C.top; U.uLivBelly = C.belly; U.uLivTail = C.tail; U.uLivTail2 = C.tail2; U.uLivEngine = C.eng; U.uLivStripe = C.stripe;
     U.uBellyLine = (L.bellyLine * T.R / 1.98) / s; U.uTailStyle = L.tailStyle; U.uDirt = this.dirt;
+    U.uNoCabin = brandIsCargo(L.brand) ? 1 : 0;
     U.uFus = [d.R, d.Rz, d.tailX, d.L];
     const cockX = Math.max(2.5, (T.win && T.win[0] ? T.win[0].x0 - 0.45 : 0.12 * T.L)) / s;
     U.uFusB = [d.crown, d.belly, cockX, this.cabin];
@@ -108,7 +111,7 @@ export class LiveAircraft extends Aircraft {
     if (!this._items) {
       this._U = {};
       this._items = M.draws.map(dr => ({ mesh: dr.sub, prog: 'acr', noCull: true,
-        uniforms: Object.assign(Object.create(this._U), dr.U, dr.atlas && this.livTex ? { uAlbedo: this.livTex, uLivTex: 1 } : null) }));
+        uniforms: Object.assign(Object.create(this._U), dr.U, dr.atlas && this.livTex ? { uAlbedo: this.livTex, uLivTex: this._livNeutral ? 0 : 1 } : null) }));
     }
     this.realUniforms(this._U);
     const out = [];

@@ -5,7 +5,8 @@ titles and cheatlines land where they belong on the stretched airframe and are n
 
 Every atlas texel knows its point on the aircraft (model frame: x forward, nose tip 0; y up; z starboard; metres of the
 source model), its part (fuselage, fin, tailplane, engine nacelle, pylon, wing tip, gear door) and the surface detail of
-the neutral skin. A livery is a Python function (tools/liveries/liveries.py) that paints with the primitives of
+the neutral skin. Cabin windows: exactly one row per deck, the manufacturer's row of the rendered type
+(tools/liveries/windows.py; none on freighters, Canvas.cargo). A livery is a Python function (tools/liveries/liveries.py) that paints with the primitives of
 `Canvas` in side-view terms: regions below / between curves along the body, bands, titles and symbols (re-drawn vector
 art, tools/liveries/art.py) placed on the fuselage or the fin, part colours. The result is multiplied by the skin
 detail (panel lines, door outlines), dark areas of the source skin are kept, and cabin windows stay windows (alpha 0 =
@@ -74,7 +75,10 @@ class Canvas:
         lum = self.neutral @ np.array([0.299, 0.587, 0.114])
         self.detail0 = np.clip(srgb_to_lin(lum) / wl, 0, 1.25)
         self.keep = np.clip(1 - np.abs(alpha - 0.75) / 0.12, 0, 1) * (alpha > 0.55)
-        self.win = np.clip((0.55 - alpha) / 0.5, 0, 1)
+        # the neutral atlas' windows are those of the model's own type: not skin detail (no ghost row on a stretched
+        # type); this type's windows are painted from its own row below (tools/liveries/windows.py plan)
+        self.detail0[alpha < 0.5] = 1.0
+        self.cargo = False
         # geometry frames
         self.env = common.Envelope(P, m['idx'], m['zone'], float(-P[m['zone'] != 3][:, 0].min()))
         self.L = self.env.L
@@ -102,12 +106,25 @@ class Canvas:
 
     # ------------------------------------------------------------------ frames
     def _windows(self):
+        """cabin windows of this type (tools/liveries/windows.py): mask `win` (1 = glass) on the fuselage side charts, and
+        the main row's centre height / window height (winY / winH: the 'win' design frame of the liveries)"""
+        import windows
+        app = common.app()
+        t = self.type or app['base'][self.key]
+        self.plan = windows.plan(self.key, t, self.env, app)
+        dirs = np.array([c['d'] for c in self.A['charts']] + [-1])[self.chart]
+        side = (self.part == 'fus') & np.isin(dirs, (4, 5))
+        self.win = np.zeros(len(self.flat))
+        if self.plan['win']:
+            q = np.flatnonzero(side)
+            self.win[q] = windows.window_mask(self.s[q], self.y[q], self.plan['win'], self.tex[q])
+        main = [w for w in self.plan['win'] if w['deck'] == 0]
+        if self.plan['mode'] == 'paint' and main:
+            self.winY = float(np.median([w['y'] for w in main])); self.winH = float(np.median([w['h'] for w in main])); return
+        # kept artist glass: its row
         m = self.m; P = self.P; Z = m['zone']; idx = m['idx']
         C = P[idx].mean(1); s = -C[:, 0]; g = (Z[idx[:, 0]] == 5) & (s > 0.18 * self.L) & (s < 0.85 * self.L) & (np.abs(C[:, 2]) > 0.5)
-        if self.A.get('winPainted') or g.sum() < 20:
-            wy = self.y[self.win > 0.5]
-            if len(wy) > 20:
-                self.winY = float(np.median(wy)); self.winH = float(np.percentile(wy, 97) - np.percentile(wy, 3)); return
+        if g.sum() < 20:
             self.winY = self.env.mainBot + 0.6 * self.H; self.winH = 0.33; return
         vy = P[idx[g]].reshape(-1, 3)[:, 1]
         self.winY = float(np.median(vy)); self.winH = float(np.percentile(vy, 95) - np.percentile(vy, 5))
@@ -373,10 +390,11 @@ class Canvas:
         orig = srgb_to_lin(self.neutral)
         col = col * (1 - self.keep[:, None]) + orig * self.keep[:, None]
         glass = lin('#14181D')
-        col = col * (1 - self.win[:, None]) + glass * self.win[:, None]
+        win = np.zeros_like(self.win) if self.cargo else self.win        # freighters: no cabin windows
+        col = col * (1 - win[:, None]) + glass * win[:, None]
         S = self.S
         img = np.zeros((S * S, 4), np.float32)
-        img[self.flat, :3] = lin_to_srgb(col); img[self.flat, 3] = 1 - self.win
+        img[self.flat, :3] = lin_to_srgb(col); img[self.flat, 3] = 1 - 0.9 * win
         img = img.reshape(S, S, 4)
         img, _ = dilate_fill(img, self.ok, radius=max(8, S // 128))
         return Image.fromarray((np.clip(img, 0, 1) * 255 + 0.5).astype(np.uint8), 'RGBA')

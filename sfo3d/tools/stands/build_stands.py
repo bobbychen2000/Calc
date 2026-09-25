@@ -26,7 +26,7 @@ Outputs: data/sfo_stands.json + .js (committed, ODbL: contains OSM-derived posit
 stands_built.json (full provenance incl. residual tables, gitignored) and a summary on stdout.
 Usage: python3 tools/stands/build_stands.py
 """
-import json, math, os, re, sys
+import datetime as dt, json, math, os, re, sys
 from collections import Counter, defaultdict
 import numpy as np
 from shapely.geometry import Polygon, LineString, Point
@@ -48,12 +48,15 @@ REF = {t: {'L': r['L'], 'span': r['span'], 'doors': {i + 1: d for i, d in enumer
 for t, r in ACAP_REF.items(): REF.setdefault(t, r)
 
 # ------------------------------------------------------------------ aircraft classes (js/live/airport.js CLASS_MAX)
-CLASS_MAX = {'B': (28.5, 37), 'C': (36.5, 45), 'CL': (38.5, 48), 'D': (52, 62), 'E': (61, 68), 'EL': (65.5, 77), 'F': (80, 80)}
+# Review round 3: CL is the 757 class = 757-200/-300 WITH winglets (Boeing airport FAQ, geom.WINGLET_SPAN: 41.1 m span;
+# 757-300 length 54.43 m). It was (38.5, 48): the baseline 757-200 span, and too short for the 757-300 (C5 / F17 had
+# gone to class D for its length). Same table in js/live/airport.js CLASS_MAX.
+CLASS_MAX = {'B': (28.5, 37), 'C': (36.5, 45), 'CL': (41.1, 54.5), 'D': (52, 62), 'E': (61, 68), 'EL': (65.5, 77), 'F': (80, 80)}
 ORDER = ['B', 'C', 'CL', 'D', 'E', 'EL', 'F']
 # reference planform per class = the largest type of the class that SFO parks (REF dims: ACAP documents)
-CLS_REF = {'B': 'E75L', 'C': 'A321', 'CL': 'B752', 'D': 'B763', 'E': 'B772', 'EL': 'B77W', 'F': 'A388'}
-ALIAS_T = {'E175': 'E75L', 'B787': 'B789', 'B76W': 'B763', 'E295': 'E195'}   # ICAO designators without their own REF
-# (B76W: the 767-300ER winglet span, about 51 m, is not in REF; it stays inside class D's 52 m bound either way.
+CLS_REF = {'B': 'E75L', 'C': 'A321', 'CL': 'B753', 'D': 'B763', 'E': 'B772', 'EL': 'B77W', 'F': 'A388'}
+ALIAS_T = {'E175': 'E75L', 'B787': 'B789', 'B76W': 'B763', 'B75W': 'B752', 'E295': 'E195'}   # ICAO designators without their own REF
+# (B76W / B75W: SFO AODB codes of the 767-300 / 757-200 with winglets; geom.py gives B752 / B753 / B763 the winglet span.
 #  E295: E195-E2 dims not in REF; SFO parks it only at B2 next to B738/B39M, which set that stand's class anyway.)
 WIDE = {'D', 'E', 'EL', 'F'}
 # ICAO clearances between aircraft on stands (ICAO Doc 9157 Part 2, 4th ed. 2005, §3.4.4 = Annex 14 Vol I 3.13.6;
@@ -61,7 +64,9 @@ WIDE = {'D', 'E', 'EL', 'F'}
 # C 24-36 m, D 36-52 m, E 52-65 m, F 65-80 m). D-F may be reduced near the terminal/nose and where azimuth guidance
 # (VDGS) is provided.
 def icao_clear(span): return 3.0 if span < 24 else 4.5 if span < 36 else 7.5
+CAB_CONV = {}   # review round 3: cab-rotation sense (set in main, written to the output)
 PHYS = 3.0   # below this aircraft-to-aircraft distance two stands are treated as not usable at the same time
+ROT_FACADE = 3.0   # m, facade -> rotunda centre where the drum stands against the building (inferred: r 2.45 m + connector)
 
 
 def type_cls(t):
@@ -116,12 +121,23 @@ def main():
     # ---------------------------------------------------------------- SFO names and types
     info, lu, recs = G.load_flysfo_all()
     aodb_types = defaultdict(Counter); aodb_turns = defaultdict(set); ivs = defaultdict(list)
+    # Types per stand (review round 3): every VERSION of every flight in every cached snapshot counts - a type SFO once
+    # planned on a stand shows the stand can take it, even if the flight was later moved (with only the newest version
+    # a re-plan had removed G6's B77W and F19's A319 / B752 between runs). Intervals (simultaneous planning) keep the
+    # newest version only, so a re-planned turn is not counted twice.
+    import glob as _glob
+    seen_ = set()
+    for path_ in sorted(_glob.glob(os.path.join(G.CACHE, 'flysfo_api_flight-status_*.json*')), key=G.snapshot_time):
+        for r in G.load_flysfo(path_)[2]:
+            t = (r.get('aircraft_transport_type') or {}).get('icao_code'); turn = tuple(sorted([r['flight_id'], r.get('linked_flight_id') or '']))
+            for s in r.get('stands') or []:
+                n = s['stand']['stand_name']
+                if (n, turn, t) in seen_: continue
+                seen_.add((n, turn, t)); aodb_types[n][t] += 1; aodb_turns[n].add(turn)
     for r in recs:
         t = (r.get('aircraft_transport_type') or {}).get('icao_code'); turn = tuple(sorted([r['flight_id'], r.get('linked_flight_id') or '']))
         for s in r.get('stands') or []:
             n = s['stand']['stand_name']
-            if turn not in aodb_turns[n]: aodb_types[n][t] += 1
-            aodb_turns[n].add(turn)
             a, b = G.iso(s['start_time']), G.iso(s['end_time'])
             if a and b: ivs[n].append((a, b, turn, t))
     datasf = {g['gate'] for g in json.load(open(os.path.join(CACHE, 'gate_truth', 'datasf_gates_2026.json')))}
@@ -236,8 +252,14 @@ def main():
                 s['naip'] = {'nose_along': rd[0], 'lat': rd[1], 'group_seen': rd[2], 'flags': rd[3], 'resid_along': round(a, 1),
                              'resid_lat': round(c, 1) if rd[1] is not None else None, 'relief_corrected': True}
                 # review round 2: only a numerically measured, relief-corrected fuselage centre verifies the line (within
-                # 1.5 m; the relief fit leaves 0.7 m rms), never the reading the position was taken from (F15)
-                if rd[1] is not None and abs(c) <= 1.5 and 'u' not in rd[3] and not np_: vb.append('naip')
+                # 1.5 m; the relief fit leaves 0.7 m rms), never the reading the position was taken from (F15).
+                # Review round 3: the stop point must agree too - an along residual beyond 1.5 m (the reading accuracy)
+                # is a conflict (narrow-body stands: the model nose is where that aircraft should have stopped) or, on
+                # wide-body stands, unexplained (the imaged type is not identified, so a type-dependent stop is possible);
+                # neither verifies. 'u' readings (nose not visible) are not used for either.
+                if 'u' not in rd[3] and not np_:
+                    if abs(a) > 1.5: s['naip']['along_conflict'] = True
+                    elif rd[1] is not None and abs(c) <= 1.5: vb.append('naip')
             if s.get('paint') and s['paint']['n'] >= 7 and s['paint']['rms'] <= 0.3:
                 pa = s.get('paint_after') or s['paint']
                 if abs(pa['lat_nose']) <= 0.8 and abs(pa['dh']) <= 1.5: vb.append('paint')
@@ -256,6 +278,15 @@ def main():
                 adsb_types = new_types; continue
             break
         s['types_unknown'] = unknown
+        # review round 3: provenance of names and classes that rest on no AODB / type evidence (G11: SFO's AODB never
+        # names it; DataSF gates G11 / G12 do; its class had no type at all)
+        if not s['aodb']:
+            s['name_src'] = 'sfo (DataSF gate number only)'
+            s['name_note'] = ('SFO\'s AODB (flight-status stands[]) never names this position in the cached snapshots; the name is the '
+                              'DataSF chfu-j7tc gate number(s) %s, and pairing those gates with this OSM lead-in is inferred' % ', '.join([s['gate']] + s['alias']))
+        if s['cls_src'].startswith('default'):
+            rd_ = RD.get(w['osm_id'])
+            s['cls_src'] = 'inferred: no type seen (AODB / ADS-B); ' + ('NAIP 2024 shows a %s body on the line (type not identified)' % rd_[2] if rd_ else 'pier default')
         # lead-in polyline for the painted stand line (review round 1: curved lead-ins must not be painted as a straight
         # ray): the oriented OSM way; moved with the stand when the painted line corrected it; a straight 40 m line for
         # stands positioned on NAIP (F15, whose OSM way is a stub)
@@ -295,6 +326,14 @@ def main():
             if abs(c) <= 3 and (st['hex'] not in pbest or st['n_good'] > pbest[st['hex']][0]['n_good']): pbest[st['hex']] = (st, a, c)
         s['adsb_good'] = [(v[0].get('type') or v[0].get('sfo_type'), v[1]) for v in pbest.values()]
         if s.get('conflict'): s['verified_unconfirmed'] = vb; vb = []      # conflicting evidence: nothing counts as verified
+        if (s.get('naip') or {}).get('along_conflict'):
+            # review round 3: the parked NAIP aircraft stopped more than 1.5 m from the model nose (relief-corrected)
+            s['conflict_along'] = {'with': 'naip', 'resid_along': s['naip']['resid_along'],
+                                   'note': ('narrow-body stand: the imaged aircraft stopped %+.1f m from the model nose (+ = beyond); '
+                                            'the stop point is not verified' if s['cls'] in ('B', 'C', 'CL') else
+                                            'wide-body stand: the imaged aircraft stopped %+.1f m from the model nose; its type is not '
+                                            'identified, so a type-dependent stop mark may explain it - not verified') % s['naip']['resid_along']}
+        else: s.pop('conflict_along', None)
         s['verified_by'] = vb
         # src (legacy observed / inferred): 'obs' only when an aircraft was seen on the line (NAIP or ADS-B); the painted
         # lead-in alone confirms the axis (lateral, heading), not the stop point -> 'inf' (review round 2)
@@ -358,6 +397,17 @@ def main():
             for y in [q for n1 in b['aodb'] or [b['name']] for q in ivs.get(n1, [])]:
                 if x[2] != y[2] and min(x[1], y[1]) - max(x[0], y[0]) > 600: n_ += 1
         return n_
+    def expand_ok(s_, obs):
+        # review round 3: a whitelist of exact designators refused smaller aircraft SFO also parks there. types_ok = the
+        # observed types plus every type whose planform (engines included) at its per-family stop lies inside the
+        # envelope of the observed types (within 0.05 m): such a type cannot come closer to a neighbour than they do.
+        env = GM.envelope(s_['nose'], s_['hdg'], obs) if not s_.get('type_stops') else unary_union(
+            [GM.planform(GM.nose_for(s_, t), s_['hdg'], t) for t in obs])
+        envb = env.buffer(0.05); out = set(obs)
+        for t, r in GM.APP.items():
+            if t in out or not r['span']: continue
+            if GM.planform(GM.nose_for(s_, t), s_['hdg'], t).difference(envb).area < 0.01: out.add(t)
+        return sorted(out)
     def is_alt(a, b):
         return a.get('alt_of') == b['name'] or b.get('alt_of') == a['name'] or bool(a.get('alt_of') and a.get('alt_of') == b.get('alt_of'))
     near = [(a, b) for i, a in enumerate(stands) for b in stands[i + 1:] if math.dist(a['nose'], b['nose']) <= 170]
@@ -382,7 +432,7 @@ def main():
             # ADS-B actually put there ('types_ok', at their per-family stop points); the app needs the request
             # (js/live/traffic.js standFits: honour g.typesOk) for this to hold at runtime
             for s_ in (a, b):
-                if s_['obs_types']: s_['types_ok'] = sorted(set(ALIAS_T.get(t, t) for t in s_['obs_types']) & set(GM.APP))
+                if s_['obs_types']: s_['types_ok'] = expand_ok(s_, sorted(set(ALIAS_T.get(t, t) for t in s_['obs_types']) & set(GM.APP)))
             d3 = GM.stand_env(a).distance(GM.stand_env(b))
             if d3 >= PHYS:
                 how[(a['name'], b['name'])] = 'types_ok = the types SFO parks there (observed), per-family stops: clear %.1f m (SFO plans both at once %d times)' % (d3, sim)
@@ -430,17 +480,43 @@ def main():
                 walk.append(o['pts'][k]); acc += seg
             return o['pts'][0], walk + [jb['base']]
         return jb['base'], [jb['base']]
+    from shapely.ops import nearest_points
+    bld_all = unary_union([Polygon(r).buffer(0) for r in building_rings()])
     for jb in JB:
         att, walk = parent_attach(jb)
-        jb['attach'] = att; jb['walk'] = walk + list(jb['pts'][1:-1])
-        jb['cab'] = jb['pts'][-1]
-        # rotunda = start of the parked tunnel = first node of the final segment when the way has a fixed part before
-        # it (>= 3 nodes, final segment >= 4 m). The SFO Museum outline includes some fixed walkway fingers, so the
-        # building distance is not used here. A two-node way (facade -> cab) has no separate walkway -> None.
-        # Review round 1: a branch (base on another bridge's walkway) starts its tunnel at the branch point, and final
-        # segments of 4-8 m are fully retracted tunnels (B10), so the threshold is 4 m (was 8 m).
-        r0 = jb['pts'][-2] if len(jb['pts']) >= 3 else (jb['pts'][0] if jb['base_bdist'] >= 2.0 and len(walk) > 1 else None)
-        jb['rotunda'] = r0 if (r0 is not None and math.dist(r0, jb['cab']) >= 4) else None
+        P = [tuple(q) for q in jb['pts']]
+        jb['attach'] = att; jb['cab'] = P[-1]
+        # Rotunda = start of the parked tunnel. Review round 3 (the rule of rounds 1-2 left 20 bridges without one):
+        #  * cab stub: several OSM ways end with a short (< 7.5 m) segment after a long one (>= 8 m) - the cab, drawn
+        #    after the tunnel (C3-C11, D16, E4, E5, E7, E12, A4 ...; NAIP shows the tunnel along the long segment). No
+        #    apron-drive bridge is that short (the smallest retracts to 12.2 m from the rotunda centre to the end of the
+        #    cab spacer, Oshkosh sell sheet), so the tunnel is the long segment: rotunda = its first node, tunnel end
+        #    ('tunnel_end') = the stub's first node, cab = the way's end.
+        #  * otherwise the first node of the final segment when the way has a fixed part before it;
+        #  * a branch (base on another bridge's walkway): the branch point;
+        #  * a way that starts ON the facade with the tunnel (two-node ways at the D / E piers, B2, B10): NAIP shows the
+        #    tube starting at the facade with no fixed corridor, so the drum stands against the facade: rotunda =
+        #    facade end + ROT_FACADE along the way (inferred: drum radius 2.45 m + ~0.5 m connector);
+        #  * a way that starts off the building without a parent (F22 L1, 15 m out): rotunda = that start, fixed walkway
+        #    from the nearest facade point (inferred; NAIP shows a corridor to the building).
+        stub = len(P) >= 3 and math.dist(P[-2], P[-1]) < 7.5 and math.dist(P[-3], P[-2]) >= 8.0
+        ri = len(P) - (3 if stub else 2)
+        if stub: jb['tunnel_end'] = P[-2]
+        if ri >= 1:
+            r0 = P[ri]; jb['walk'] = walk + P[1:ri + 1]
+            jb['rotunda_src'] = 'OSM node: start of the tunnel' + (' before the cab stub (review round 3)' if stub else ' (first node of the final segment)')
+        elif len(walk) > 1:
+            r0 = P[0]; jb['walk'] = walk; jb['rotunda_src'] = 'OSM branch point on the parent walkway'
+        elif jb['base_bdist'] < 2.0:
+            L_ = math.dist(P[0], P[1]); r0 = (P[0][0] + (P[1][0] - P[0][0]) * ROT_FACADE / L_, P[0][1] + (P[1][1] - P[0][1]) * ROT_FACADE / L_)
+            jb['walk'] = [P[0]]
+            jb['rotunda_src'] = 'inferred: drum against the facade, %.1f m out along the OSM way (no fixed walkway mapped or imaged)' % ROT_FACADE
+        else:
+            q = nearest_points(bld_all.boundary, Point(P[0]))[0]; jb['attach'] = (q.x, q.y)
+            r0 = P[0]; jb['walk'] = [(q.x, q.y)]
+            jb['rotunda_src'] = 'inferred: the OSM way starts %.1f m off the building; rotunda there, fixed walkway from the nearest facade point' % jb['base_bdist']
+        jb['rotunda'] = r0 if math.dist(r0, jb.get('tunnel_end') or P[-1]) >= 4 else None
+        if jb['rotunda'] is None: jb['rotunda_src'] = 'none (tunnel shorter than 4 m)'
     stand_by_name = {s['name']: s for s in stands}
     used = set()
     def door_pt(s, k):
@@ -499,7 +575,8 @@ def main():
             door = min(k + 1, 3)
             out.append({'gate': jb['gate'] or s['gate'], 'attach': [round(v, 2) for v in jb['attach']], 'door': door,
                         'rotunda': [round(v, 2) for v in jb['rotunda']] if jb['rotunda'] else None, 'assoc': jb.get('assoc'), 'cab': [round(v, 2) for v in jb['cab']],
-                        'walk': [[round(v, 2) for v in p] for p in jb['walk']], 'osm_id': jb['osm_id']})
+                        'walk': [[round(v, 2) for v in p] for p in jb['walk']], 'osm_id': jb['osm_id'], 'rotunda_src': jb.get('rotunda_src'),
+                        'tunnel_end': [round(v, 2) for v in jb['tunnel_end']] if jb.get('tunnel_end') else None})
         # a third bridge (A380 upper deck, door 3) is kept apart: the app's bridge model docks main-deck doors only
         s['bridge_list'] = [b for b in out if b['door'] <= 2]; s['bridge_upper'] = [b for b in out if b['door'] == 3]
     # ---------------------------------------------------------------- rotunda feasibility (review round 1)
@@ -534,9 +611,9 @@ def main():
             if found:
                 q, pre, dm = found
                 b['rotunda_osm'] = b['rotunda']; b['rotunda'] = [round(q[0], 2), round(q[1], 2)]
-                b['walk'] = [[round(v, 2) for v in p_] for p_ in pre]; b['rotunda_src'] = 'moved %.1f m back along the OSM walkway (min. extension / wing clearance)' % dm
+                b['walk'] = [[round(v, 2) for v in p_] for p_ in pre]; b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; moved %.1f m back along the walkway (min. extension / wing clearance)' % dm
             else:
-                b['rotunda_src'] = 'OSM (too close to the door or inside the wing sweep; the walkway gives no feasible point)'
+                b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; too close to the door or inside the wing sweep, and the walkway gives no feasible point'
                 problems.append((st['name'], 'rotunda of bridge %s infeasible' % b['osm_id']))
     # ---------------------------------------------------------------- bridge poses (review round 1)
     # cab_pose: OSM maps some bridges docked (cab within 6 m of a door of a type the stand accepts), others parked.
@@ -570,31 +647,124 @@ def main():
             dm = min([math.dist(b['rotunda'], r) for i, r in rots if i != id(b)] or [99])
             dw = min([w.distance(Point(b['rotunda'])) for i, at, w in walks if i != id(b) and at != tuple(b['attach'])] or [99])
             b['rotunda_max_r'] = round(max(0.0, min(GM.ROT_R, dm / 2 - 0.05, dw - GM.WALK_W / 2 - 0.05)), 2)
+    # ---------------------------------------------------------------- bridge model per bridge (review round 3)
+    # One bridge is one datasheet model (geom.MODELS, Oshkosh AeroTech sell sheet): its operational range, not the
+    # 9.846-41.381 m span of the whole product line, limits both docking and resting. The model (inferred - SFO's
+    # bridge inventory is not published) = the smallest-retracting one that covers every docking of the types SFO /
+    # ADS-B put on the stand (and on alternative positions that share its bridges), each at its per-family stop.
+    # Where no single model covers them the bridge keeps the range of the model that reaches the longest docking and
+    # the stand is listed (review round 3: G7 A319 stop, E12 737 stop, A2 L2, E4 ...). ext_range = the range the app
+    # should dock within; dock_types_out = accepted types this bridge cannot dock (it stays at its stow pose).
+    sharers = defaultdict(list)
+    for o in stands:
+        if o.get('alt_of') and not o['bridge_list']: sharers[o['alt_of']].append(o)
+    def obs_of(st_):
+        return sorted(set(ALIAS_T.get(t, t) for t in st_['obs_types']) & set(GM.APP)) or [CLS_REF[st_['cls']]]
+    def dockings(st_, b, types):
+        pv = b.get('rotunda') or b['attach']; rt = GM.rv(st_['hdg']); out = []
+        for t in types:
+            k = GM.dock_door(t, b['door']) if b['door'] <= 2 else None
+            dp = GM.door(GM.nose_for(st_, t), st_['hdg'], t, k) if k else None
+            if not dp: continue
+            cp = (dp[0] - rt[0] * GM.PIVOT_TO_DOOR, dp[1] - rt[1] * GM.PIVOT_TO_DOOR)
+            out.append((t, math.dist(pv, cp), cp, st_['name']))
+        return out
+    for st, b in allb:
+        users = [st] + sharers.get(st['name'], [])
+        dk = [d_ for u_ in users for d_ in dockings(u_, b, obs_of(u_))]
+        acc = [d_ for u_ in users for d_ in dockings(u_, b, GM.accepted_types(u_))]
+        b['_acc_docks'] = acc; b['_obs_docks'] = dk
+        if b['door'] > 2 or not dk:
+            b['model'] = None; b['ext_range'] = [GM.EXT_MIN, GM.EXT_MAX]
+            b['model_src'] = 'not modelled (upper-deck bridge: the app docks main-deck doors only)' if b['door'] > 2 else 'no docking type'
+            b['dock_types_out'] = []; continue
+        lo, hi = min(d_[1] for d_ in dk), max(d_[1] for d_ in dk)
+        m = GM.choose_model(lo, hi); tol = ''
+        if not m: m = GM.choose_model(lo, hi, 1.0); tol = ' (within 1.0 m: stop-point / rotunda uncertainty)'
+        if m:
+            b['model'] = m[0]; b['ext_range'] = [m[1], m[2]]
+            b['model_src'] = 'inferred: the smallest-retracting datasheet model covering the observed dockings %.1f-%.1f m%s' % (lo, hi, tol)
+        else:
+            # no model covers every observed docking: the model covering most of them (the rest cannot dock this bridge;
+            # listed), then the shortest retraction. The stand is flagged (DATA problem, check_stands ISSUE).
+            ex = [d_[1] for d_ in dk]
+            mm = max(GM.MODELS, key=lambda mm: (sum(mm[1] - 1.0 <= e_ <= mm[2] + 1.0 for e_ in ex), -mm[1], -mm[2]))
+            b['model'] = None; b['ext_range'] = [mm[1], mm[2]]
+            short = sorted('%s %.1f' % (d_[0], d_[1]) for d_ in dk if d_[1] < mm[1] - 1.0)
+            long_ = sorted('%s %.1f' % (d_[0], d_[1]) for d_ in dk if d_[1] > mm[2] + 1.0)
+            b['model_src'] = ('NO single datasheet model covers the observed dockings %.1f-%.1f m; ext_range = %s, the model covering most '
+                              'of them (cannot dock: too close %s; too far %s)' % (lo, hi, mm[0], ', '.join(short) or '-', ', '.join(long_) or '-'))
+            problems.append((st['name'], 'bridge %s L%d: no single bridge model covers %.1f-%.1f m (%s)' % (b['osm_id'], b['door'], lo, hi, b['model_src'].split('(')[-1].rstrip(')'))))
+        e0, e1 = b['ext_range']
+        b['dock_types_out'] = sorted(set(d_[0] for d_ in acc if not (e0 - 1.0 <= d_[1] <= e1 + 1.0)))
+    # cab rotation (review round 3): the sell sheet gives 125 deg standard = 92.5 deg cw / 32.5 deg ccw, 185 deg optional.
+    # Docked, the cab faces the door (fuselage normal); its turn = signed angle tunnel -> cab axis. Which sense the sheet
+    # calls cw is not stated: the sense under which more observed dockings fit the standard cab is taken (inferred;
+    # CAB_CONV in the output). Per bridge: cab_turn_deg [min, max] (+ = the sheet's cw) and cab_option.
+    sg_all = []
+    for st, b in allb:
+        pv = b.get('rotunda') or b['attach']
+        b['_ang'] = []
+        for t, e_, cp, sn in b.get('_obs_docks', []):
+            if not (b['ext_range'][0] - 1.0 <= e_ <= b['ext_range'][1] + 1.0): continue
+            L_ = math.dist(pv, cp); u = ((cp[0] - pv[0]) / L_, (cp[1] - pv[1]) / L_)
+            b['_ang'].append((t, GM.angle(u, GM.rv(stand_by_name[sn]['hdg'])))); sg_all.append(b['_ang'][-1][1])
+    fitA = sum(-GM.CAB_CCW <= a <= GM.CAB_CW for a in sg_all); fitB = sum(-GM.CAB_CW <= a <= GM.CAB_CCW for a in sg_all)
+    CW = 1 if fitA >= fitB else -1
+    CAB_CONV.update({'cw_is': 'clockwise seen from above (x east, z south)' if CW == 1 else 'counter-clockwise seen from above',
+                     'fit_standard': max(fitA, fitB), 'fit_other_sense': min(fitA, fitB), 'n': len(sg_all),
+                     'note': 'inferred: the sense under which more observed dockings fit 92.5 cw / 32.5 ccw (Oshkosh sell sheet)'})
+    for st, b in allb:
+        A_ = [CW * a for t, a in b.pop('_ang', [])]
+        if not A_: continue
+        b['cab_turn_deg'] = [round(min(A_), 1), round(max(A_), 1)]
+        if all(-GM.CAB_CCW <= a <= GM.CAB_CW for a in A_): b['cab_option'] = 'standard (125 deg)'
+        elif all(abs(a) <= GM.CAB_OPT_HALF for a in A_): b['cab_option'] = 'optional 185 deg cab needed (inferred)'
+        else:
+            b['cab_option'] = 'beyond the optional cab'; problems.append((st['name'], 'bridge %s L%d: cab turn %.0f..%.0f deg' % (b['osm_id'], b['door'], min(A_), max(A_))))
+    # docked footprints (tunnel + cab) of every bridge for every accepted type it can dock (within its ext_range + 1 m)
+    dockfp = {}
+    for st, b in allb:
+        e0, e1 = b['ext_range']; dockfp[id(b)] = {}
+        for t, e_, cp, sn in b.get('_acc_docks', []):
+            if e0 - 1.0 <= e_ <= e1 + 1.0: dockfp[id(b)].setdefault(t, []).append(GM.bridge_parts(b, cp)[2])
+        dockfp[id(b)] = {t: unary_union(v) for t, v in dockfp[id(b)].items()}
     static = []
     for st, b in allb:
         wl, rot, _ = GM.bridge_parts(b, b['cab'])
         static.append((id(b), tuple(b['attach']), unary_union([wl, rot])))
     placed = []
+    from shapely.prepared import prep
     for st, b in sorted(allb, key=lambda x: gkey(x[0]['name'])):
         pv = b.get('rotunda') or b['attach']
         L0 = math.dist(pv, b['cab']); u0 = ((b['cab'][0] - pv[0]) / max(L0, 1e-6), (b['cab'][1] - pv[1]) / max(L0, 1e-6))
         obst = [envs[o['name']].buffer(1.0) for o in stands if math.dist(o['nose'], pv) < 150]
         obst += [g.buffer(0.5) for i, at, g in static if i != id(b) and at != tuple(b['attach']) and g.distance(Point(pv)) < 80]
-        obst += [g.buffer(0.5) for g in placed if g.distance(Point(pv)) < 80]
-        from shapely.prepared import prep
+        # review round 3: rest poses at least 1.0 m apart (F15 L1 / L2 had rested 0.59 m apart)
+        obst += [g.buffer(1.0) for g in placed if g.distance(Point(pv)) < 80]
+        # review round 3: other bridges DOCKED while this one rests - a sibling on the same stand for every type this
+        # bridge does not dock (F15 / G7 / G13: L1 docks a narrow body, L2 stays at rest), every bridge of another stand
+        # for every type it docks (that stand is occupied while this one is empty)
+        for so, ob in allb:
+            if ob is b or math.dist(ob.get('rotunda') or ob['attach'], pv) > 80: continue
+            for t, g in dockfp[id(ob)].items():
+                if so is st and b['door'] <= 2 and GM.dock_door(t, b['door']) is not None and t in dockfp[id(b)]: continue
+                obst.append(g.buffer(0.5))
         O = prep(unary_union(obst))
+        e0, e1 = b['ext_range']; Lmin = max(GM.EXT_MIN, e0); Lmax = max(Lmin, min(30.0, e1))
+        Lt = min(max(L0 if b['cab_pose'] == 'parked' else Lmin + 1.0, Lmin), Lmax)
         cands = []
         for dd in range(0, 181, 2):
             for sg in ((1, -1) if dd else (1,)):
                 a = math.radians(sg * dd); u = (u0[0] * math.cos(a) - u0[1] * math.sin(a), u0[0] * math.sin(a) + u0[1] * math.cos(a))
-                for L in np.arange(GM.EXT_MIN, 30.01, 1.0):
+                for L in np.arange(Lmin, Lmax + 0.01, 1.0):
                     cp = (pv[0] + u[0] * L, pv[1] + u[1] * L)
                     _, _, tc = GM.bridge_parts(b, cp)
                     tc2 = tc.difference(Point(pv).buffer(max(0.0, b.get('rotunda_max_r') or GM.ROT_R) + 0.3))
                     # the rotunda itself is a fixed part (checked separately by check_stands); the rest pose is judged
-                    # outside the rotunda disc
-                    if O.intersects(tc2) or tc2.intersection(bld_poly).area > 0.5: continue
-                    cost = dd / 10 + abs(L - (L0 if b['cab_pose'] == 'parked' else 12.0)) / 5
+                    # outside the rotunda disc (review round 3: building overlap <= 0.1 m2, was 0.5)
+                    if O.intersects(tc2) or tc2.intersection(bld_poly).area > 0.1: continue
+                    cost = dd / 10 + abs(L - Lt) / 5
                     cands.append((cost, cp, dd * sg, L, tc))
             if cands and dd > 20 and min(c[0] for c in cands) < dd / 10: break
         if cands:
@@ -602,7 +772,8 @@ def main():
             b['stow'] = [round(c[1][0], 2), round(c[1][1], 2)]; b['stow_turn_deg'] = c[2]; b['stow_len'] = round(float(c[3]), 1)
             placed.append(c[4])
         else:
-            b['stow'] = None; problems.append((st['name'], 'no stow pose for bridge %s' % b['osm_id']))
+            b['stow'] = None; problems.append((st['name'], 'no stow pose for bridge %s (length %.1f-%.1f m)' % (b['osm_id'], Lmin, Lmax)))
+    for st, b in allb: b.pop('_acc_docks', None); b.pop('_obs_docks', None)
     # ---------------------------------------------------------------- remote / cargo / maintenance positions
     contact_ids = {s['osm_way']['osm_id'] for s in stands}
     positions = []
@@ -641,18 +812,65 @@ def main():
             rec.update({'x': round(float(m[0]), 2), 'z': round(float(m[1]), 2), 'hdg': rec['adsb']['hdg'], 'pos_src': 'adsb',
                         'note': 'no OSM parking position within 25 m (nearest %.0f m)' % dd})
         rec['name_src'] = 'sfo'; rec['verified_by'] = ['adsb']
+        # review round 3: no 40 m paved disc any more (js/live/airport.js drew one, across the perimeter wall at 2-2A).
+        # The stand carries its class (largest type SFO / ADS-B put there) and 'pave': the envelope of the class's
+        # accepted types at the stop + 3 m, clipped to the OSM aeroway=apron polygon(s) it stands on (the airside
+        # apron; the GSE lane and the road beyond the wall are outside it). 'pave_outside_apron' = envelope area (m2)
+        # outside those aprons (0 = the whole aircraft is on mapped apron).
+        tt = [ALIAS_T.get(t, t) for t in list(rec['types']) + [st.get('type') for st in per.values()] if t]
+        tt = [t for t in tt if type_cls(t)]
+        rec['cls'] = max((type_cls(t) for t in tt), key=ORDER.index) if tt else 'C'
+        rec['obs_types'] = sorted(set(tt))
+        if rec.get('hdg') is not None:
+            pseudo = {'nose': (rec['x'], rec['z']), 'hdg': rec['hdg'], 'cls': rec['cls'], 'span_max': None, 'len_max': None, 'types_ok': None, 'type_stops': None}
+            env = GM.stand_env(pseudo)
+            aprons = [Polygon(a['w']).buffer(0) for a in osm['aprons'] if len(a['w']) >= 4]
+            on = unary_union([a for a in aprons if a.intersects(env)]) if aprons else None
+            pv_ = env.buffer(3.0).intersection(on) if on is not None and not on.is_empty else env.buffer(3.0)
+            pv_ = max(getattr(pv_, 'geoms', [pv_]), key=lambda g: g.area).simplify(0.2)
+            rec['pave'] = [[round(x, 2), round(z, 2)] for x, z in list(pv_.exterior.coords)[:-1]]
+            rec['pave_outside_apron'] = round(env.difference(on).area, 1) if on is not None and not on.is_empty else None
         remote.append(rec)
+    # review round 3: SFO stand names in the AODB snapshots without a position here, listed instead of dropped silently
+    # (G103-G105 were in the pre-rebuild data). ref_point = the SFO Museum gate point of that name (CDLA-Permissive-1.0;
+    # a point without heading or stop line - not enough to place an aircraft, so the stand is not modelled).
+    sfom = {g['name']: g for g in json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))['gates']}
+    placed_names = {r['name'] for r in remote} | {n for s in stands for n in [s['name']] + s['aodb']}
+    unplaced = []
+    for n in sorted(aodb_types, key=gkey):
+        if n in placed_names or not n: continue
+        contact = bool(re.match(r'^[A-G]\d{1,2}[A-Z]?$', n))
+        if contact and n not in TB.DROPPED: continue
+        w_ = sorted(ivs.get(n, []))
+        rec = {'name': n, 'kind': 'contact (alternative position)' if contact else 'remote',
+               'aodb_turns': len(aodb_turns[n]), 'types': dict(aodb_types[n]),
+               'first': dt.datetime.fromtimestamp(w_[0][0], dt.timezone.utc).strftime('%Y-%m-%dT%H:%MZ') if w_ else None,
+               'last': dt.datetime.fromtimestamp(w_[-1][1], dt.timezone.utc).strftime('%Y-%m-%dT%H:%MZ') if w_ else None,
+               'ref_point': [sfom[n]['x'], sfom[n]['z']] if n in sfom else None,
+               'ref_point_src': 'SFO Museum gate point (CDLA-Permissive-1.0); no heading / stop line' if n in sfom else None,
+               'reason': TB.DROPPED.get(n) or ('no ADS-B parked stay with this stand window in the recording, no lead-in '
+                                               'identified; ' + ('SFO Museum has a point of this name' if n in sfom else 'no licence-clean position'))}
+        unplaced.append(rec)
+    li_by = {r['osm_id']: r for r in LI}
+    for n, ex in TB.UNPLACED_EXTRA.items():
+        if n in placed_names: continue
+        li = li_by.get(ex['osm'])
+        unplaced.append({'name': n, 'kind': 'contact (SFO Museum name, no AODB allocation seen)', 'aodb_turns': 0, 'types': {},
+                         'ref_point': [sfom[n]['x'], sfom[n]['z']] if n in sfom else None,
+                         'ref_point_src': 'SFO Museum gate point (CDLA-Permissive-1.0)' if n in sfom else None,
+                         'osm_leadin': {'osm_id': ex['osm'], 'stop': [round(v, 2) for v in li['stop']], 'hdg': round(li['hdg'], 2)} if li else None,
+                         'reason': ex['why']})
     # ---------------------------------------------------------------- write
-    res = build_output(stands, remote, positions, naip_off, info, osm)
+    res = build_output(stands, remote, positions, naip_off, info, osm, unplaced)
     full = {'stands': [{k: v for k, v in s.items() if k not in ('osm_way', 'bridges', 'types')} | {
         'types': dict(s['types']), 'osm': {k: s['osm_way'][k] for k in ('osm_id', 'osm_version', 'osm_ts', 'ref', 'stop', 'hdg', 'orient', 'len')}} for s in stands],
         'pairs': pairs, 'problems': problems, 'orphan_bridges': [(jb['osm_id'], jb['ref'], jb.get('name'), [round(v, 1) for v in jb['cab']]) for jb in orphan_bridges],
-        'naip_offset': naip_off, 'remote': remote, 'positions': positions}
+        'naip_offset': naip_off, 'remote': remote, 'positions': positions, 'unplaced': unplaced}
     json.dump(full, open(os.path.join(WORK, 'stands_built.json'), 'w'), indent=1, default=lambda o: list(o) if isinstance(o, tuple) else str(o))
     summary(stands, remote, positions, pairs, problems, orphan_bridges, naip_off)
 
 
-def build_output(stands, remote, positions, naip_off, info, osm):
+def build_output(stands, remote, positions, naip_off, info, osm, unplaced=()):
     # Display names (review round 1): `name` keeps its old meaning = the gate number SFO signs show (A1, E10, G13 ...)
     # wherever that is unique; only the alternative positions (B5S, B11S, B16S, C9V - they share a gate with their base
     # stand) keep the AODB name. The AODB names are in `aodb`, the gate number in `gate`.
@@ -673,11 +891,12 @@ def build_output(stands, remote, positions, naip_off, info, osm):
                'bridges_upper': [br(b) for b in s['bridge_upper']], 'shares_bridges_of': disp[s['alt_of']] if s.get('alt_of') and not s['bridge_list'] else None,
                # --- added 24 Sep 2026 (docs/research/stands_rebuild.md)
                'gate': s['gate'], 'aodb': s['aodb'], 'excl': sorted((disp[n] for n in s['excl']), key=gkey), 'alt_of': disp[s['alt_of']] if s.get('alt_of') else None,
-               'pos_src': s['pos_src'], 'name_src': 'sfo', 'verified_by': s['verified_by'], 'cls_src': s['cls_src'],
+               'pos_src': s['pos_src'], 'name_src': s.get('name_src', 'sfo'), 'verified_by': s['verified_by'], 'cls_src': s['cls_src'],
                'largest_type': s['largest_type'], 'obs_types': s['obs_types'], 'span_max': s.get('span_max'), 'len_max': s.get('len_max'),
                'a380': s['cls'] == 'F', 'osm_id': s['osm_way']['osm_id'],
                'tight_with': sorted((disp[n] for n in s.get('tight', [])), key=gkey),
                'types_ok': s.get('types_ok'), 'conflict': s.get('conflict'), 'type_stops': s.get('type_stops'), 'verified_unconfirmed': s.get('verified_unconfirmed'),
+               'conflict_along': s.get('conflict_along'), 'name_note': s.get('name_note'),
                'resid': {'naip': {k: s['naip'][k] for k in ('resid_along', 'resid_lat')} if s.get('naip') else None,
                          'adsb': {k: s['adsb'][k] for k in ('n_aircraft', 'along_med', 'lat_med', 'dhdg_med')} if s.get('adsb') else None,
                          'paint': s.get('paint_after') or s.get('paint'),
@@ -697,9 +916,15 @@ def build_output(stands, remote, positions, naip_off, info, osm):
                    'painted lead-in axis agrees; the stop point is then OSM + calibration). conflict: evidence that disagrees. '
                    'excl: stands that cannot be occupied at the same time.' % (naip_off['narrow'], naip_off['wide']),
            'a380_stands': [r['name'] for r in out if r['a380']],
+           'cab_convention': CAB_CONV,
+           'bridge_models': {'source': 'Oshkosh AeroTech Jetway Glass & Steel Truss sell sheet 2025 (operational retraction / extension, rotunda centre -> cab pivot)',
+                             'models': [list(m) for m in GM.MODELS]},
            'stands': out,
            'remote': [{'name': r['name'], 'x': r['x'], 'z': r['z'], 'hdg': r.get('hdg'), 'pos_src': r['pos_src'], 'name_src': 'sfo',
-                       'verified_by': r['verified_by'], 'osm_id': r.get('osm_id')} for r in remote],
+                       'verified_by': r['verified_by'], 'osm_id': r.get('osm_id'), 'cls': r.get('cls'), 'obs_types': r.get('obs_types'),
+                       'pave': r.get('pave'), 'pave_outside_apron': r.get('pave_outside_apron')} for r in remote],
+           # review round 3: SFO stand names (AODB) without a position in this file - not modelled, with the evidence
+           'unplaced': list(unplaced),
            'positions': [{'x': round(p['stop'][0], 2), 'z': round(p['stop'][1], 2), 'hdg': round(p['hdg'], 2), 'zone': p['zone'],
                           'osm_id': p['osm_id'], 'ref': p['ref'], 'sfo': p.get('sfo_name')} for p in positions]}
     try:

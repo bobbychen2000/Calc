@@ -6,8 +6,10 @@
 //     stripe), glass (kind 1) as a smooth dark dielectric with a clear-coat reflection layer and warm cabin light at
 //     night, bare metal (kind 2), dark (3), light lenses (4); clear-coat on paint (the old shader's hand-made clear
 //     coat), gear collapse when retracted (zones 3, 4), selection rim
-//   - optional brand x model livery textures from data/liveries/ (manifest, when present): replace the neutralised
-//     texture and skip the zone recolouring for paint
+//   - brand x model livery textures (data/liveries/, chosen by js/aircraft/liveries.js and loaded by LiveAircraft
+//     itself: ac.livTex): replace the model's livery atlas (texture 0) and skip the zone recolouring; the atlas alpha
+//     (< 0.5) marks cabin windows painted into the atlas (uAtlas in ACR_FS), drawn as glass; neutral skins
+//     (ac._livNeutral) keep the zone recolouring; freighter brands (brandIsCargo) get painted-over window plugs
 //   - procedural airframes (types without an imported model, and every aircraft beyond the LOD distance): TSL port of
 //     js/shaders/aircraft.js AC_FS: livery, passenger windows (2 rows, shades), door outlines, flight-deck panes
 //     (sdPoly5 on the unwrapped surface), fin / engine / wing parts; gear, flaps and spoilers as in fleet.js items()
@@ -16,6 +18,7 @@
 import { THREE, TSL } from './lib.js';
 import { m4 } from '../math.js';
 import { linearLivery, rotAxisAbout } from '../aircraft/fleet.js';
+import { brandIsCargo } from '../aircraft/liveries.js';
 import { geometryOf, textureOf } from './convert.js';
 import { hash12, hash13, facingNormalView } from './tsl/common.js';
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, mod, select, If, Discard, fwidth, positionWorld, cameraPosition, normalWorld, pow, sign, sqrt, atan, Loop } = TSL;
@@ -25,10 +28,10 @@ const V3 = () => new THREE.Vector3(), V4 = () => new THREE.Vector4();
 const ou = (key, init) => uniform(init).onObjectUpdate(({ object }) => { const U = object.userData.acU; return U ? U[key] : init; });
 
 // ---------------------------------------------------------------- imported models (ACR_FS)
-function realMaterial(tex, liveryTex) {
+function realMaterial(tex, liveryTex, atlas = false) {
   const m = new THREE.MeshPhysicalNodeMaterial({ side: THREE.DoubleSide, clearcoat: 1 });
   const uTop = ou('top', V3()), uBelly = ou('belly', V3()), uTail = ou('tail', V3()), uEng = ou('eng', V3()), uStripe = ou('stripe', V4());
-  const uBellyLine = ou('bellyLine', 0), uDirt = ou('dirt', 0.3), uFus = ou('fus', V4()), uFusB = ou('fusB', V4()), uLights = ou('lights', 0), uGearUp = ou('gearUp', 0), uSel = ou('sel', 0);
+  const uBellyLine = ou('bellyLine', 0), uDirt = ou('dirt', 0.3), uFus = ou('fus', V4()), uFusB = ou('fusB', V4()), uLights = ou('lights', 0), uGearUp = ou('gearUp', 0), uSel = ou('sel', 0), uNoCabin = ou('noCabin', 0);
   const col = attribute('color', 'vec4'), ext = attribute('extra', 'vec4'), LP = attribute('position', 'vec3');
   const zone = floor(ext.x.add(0.5));
   // retracted gear and open gear doors collapse away (ACR_VS)
@@ -39,7 +42,10 @@ function realMaterial(tex, liveryTex) {
     const tx = tex ? texture(tex, TSL.uv()) : vec4(1); if (tex) If(alphaTest.and(tx.a.lessThan(0.5)), () => { Discard(); });
     const mcol = col.rgb, texWhite = col.a;
     const albedo = mcol.mul(tx.rgb).toVar(); const rough = ext.z.toVar(), metal = ext.w.toVar(); const emis = vec3(0).toVar(); const cc = float(0).toVar(); const ccr = float(0.09).toVar();
-    If(kind.equal(1), () => { // glass: dark, smooth reflective layer; warm cabin light behind passenger windows at night
+    // freighter (ACR_FS uNoCabin): cabin glass aft of the flight deck is a painted-over window plug in the top colour
+    const plug = kind.equal(1).and(uNoCabin.greaterThan(0.5)).and(LP.x.lessThan(uFusB.z.negate()));
+    If(plug, () => { albedo.assign(uTop); rough.assign(0.4); cc.assign(1.0); })
+    .ElseIf(kind.equal(1), () => { // glass: dark, smooth reflective layer; warm cabin light behind passenger windows at night
       albedo.assign(vec3(0.012, 0.013, 0.015)); rough.assign(0.4); cc.assign(1.0); ccr.assign(0.02);
       const cockpit = LP.x.greaterThan(uFusB.z.negate());
       const h = hash12(floor(vec2(LP.x.mul(2.0), sign(LP.z))).add(13.0));
@@ -68,6 +74,13 @@ function realMaterial(tex, liveryTex) {
     }).ElseIf(kind.equal(2), () => { rough.assign(0.28); metal.assign(0.9); albedo.assign(max(albedo, vec3(0.55))); })
       .ElseIf(kind.equal(3), () => { rough.assign(0.7); })
       .ElseIf(kind.equal(4), () => { emis.assign(albedo.mul(uFusB.w.mul(40.0).add(0.6)).mul(uLights)); });
+    // painted cabin windows of the livery atlas (ACR_FS winA): smooth glass over a dark cabin, warm light at night
+    if (atlas && tex) {
+      const winA = select(kind.equal(0), float(1.0).sub(smoothstep(0.35, 0.6, tx.a)), float(0.0));
+      const h = hash12(floor(vec2(LP.x.mul(2.0), sign(LP.z))).add(13.0));
+      albedo.assign(mix(albedo, vec3(0.012, 0.013, 0.015), winA)); rough.assign(mix(rough, 0.4, winA)); ccr.assign(mix(ccr, 0.02, winA));
+      emis.addAssign(vec3(1.0, 0.78, 0.5).mul(h.mul(0.45).add(0.55)).mul(step(0.08, h)).mul(uFusB.w).mul(winA));
+    }
     // selection rim (ACR_FS uSel)
     const V = normalize(cameraPosition.sub(positionWorld)); const N = normalize(normalWorld);
     emis.addAssign(vec3(1.0, 0.72, 0.2).mul(uSel).mul(0.35).mul(pow(float(1.0).sub(max(dot(N, V), 0.0)), 3.0)));
@@ -206,6 +219,7 @@ function realU(ac, U) {
   const cockX = Math.max(2.5, (T.win && T.win[0] ? T.win[0].x0 - 0.45 : 0.12 * T.L)) / s;
   (U.fusB = U.fusB || new THREE.Vector4()).set(d.crown, d.belly, cockX, ac.cabin || 0);
   U.lights = (ac.lightsOn.landing || ac.lightsOn.taxi) ? 1 : 0; U.gearUp = ac.gear <= 0.001 ? 1 : 0;
+  U.noCabin = L && brandIsCargo(L.brand) ? 1 : 0;
 }
 function procU(ac, U) {
   const P = ac.procUniforms(); liveryU(ac, U);
@@ -218,16 +232,25 @@ function procU(ac, U) {
 
 // ---------------------------------------------------------------- scene objects per aircraft
 export class AircraftRenderer {
-  constructor(scene, { noiseTex, liveries = null, track = null }) {
-    this.scene = scene; this.noiseTex = noiseTex; this.liveries = liveries; this.track = track || (() => null);
+  constructor(scene, { noiseTex }) {
+    this.scene = scene; this.noiseTex = noiseTex;
     this.group = new THREE.Group(); this.group.name = 'aircraft'; scene.add(this.group);
     this.entries = new Map(); this.realMats = new Map(); this.realGeo = new Map();
     this.procDetailed = procMaterial(noiseTex, true); this.procSimple = procMaterial(noiseTex, false);
   }
-  materialsFor(model, brandTex) {
-    const key = model.key + (brandTex ? ':' + brandTex.uuid : '');
+  // one material per draw of a model (x livery texture); the livery replaces texture 0 of atlas draws. A neutral skin
+  // (js/aircraft/liveries.js neutralTextureFor: the type's own window row, no titles) is drawn like the model's atlas,
+  // with the brand's colours by zone (ACR_FS uLivTex = 0); a brand bake is the paint itself (uLivTex = 1).
+  materialsFor(model, livRec, neutral = false) {
+    const livTex = livRec ? textureOf(livRec, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace }) : null;
+    if (livTex) livTex.wrapS = livTex.wrapT = THREE.RepeatWrapping;
+    const key = model.key + (livTex ? ':' + livTex.uuid + (neutral ? ':n' : '') : '');
     let mats = this.realMats.get(key); if (mats) return mats;
-    mats = model.draws.map(d => { const t = d.tex >= 0 && d.U.uAlbedo ? textureOf(d.U.uAlbedo, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace }) : null; if (t) { t.wrapS = t.wrapT = THREE.RepeatWrapping; } return realMaterial(brandTex && d.tex === 0 ? brandTex : t, !!(brandTex && d.tex === 0)); });
+    mats = model.draws.map(d => {
+      const t = d.tex >= 0 && d.U.uAlbedo ? textureOf(d.U.uAlbedo, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace }) : null; if (t) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+      const useLiv = !!(livTex && d.atlas);
+      return realMaterial(useLiv ? livTex : t, useLiv && !neutral, !!d.atlas);
+    });
     this.realMats.set(key, mats); return mats;
   }
   geometryFor(model) {
@@ -261,10 +284,11 @@ export class AircraftRenderer {
     const useReal = M && d <= ac.lodDist;
     const fullProc = !M && !ac.modelKey && d <= ac.lodDist; // no imported model for this type: full procedural airframe
     if (useReal) {
-      if (e.realModel !== M) {
+      if (ac.updateLiveryTexture) ac.updateLiveryTexture(); // brand livery (async; ac.livTex once loaded)
+      const liv = ac.livTex || null, neutral = !!ac._livNeutral; // js/live/aircraft.js updateLiveryTexture
+      if (e.realModel !== M || e.realLiv !== liv) {
         if (e.real) e.group.remove(e.real);
-        const brandTex = this.liveries ? this.liveries.textureFor(this.track(ac), M.key) : null;
-        e.real = new THREE.Mesh(this.geometryFor(M), this.materialsFor(M, brandTex)); e.real.matrixAutoUpdate = false; e.real.userData.acU = e.U; e.group.add(e.real); e.realModel = M;
+        e.real = new THREE.Mesh(this.geometryFor(M), this.materialsFor(M, liv, neutral)); e.real.matrixAutoUpdate = false; e.real.userData.acU = e.U; e.group.add(e.real); e.realModel = M; e.realLiv = liv;
       }
       e.real.matrix.fromArray(ac.placement()); e.real.visible = true; e.real.castShadow = shadow; e.real.receiveShadow = true;
       realU(ac, e.U);
@@ -279,29 +303,5 @@ export class AircraftRenderer {
       else if (kind === 'spoiler' && fullProc) { vis = true; const ax = [p.hinge2[0] - p.hinge[0], p.hinge2[1] - p.hinge[1], p.hinge2[2] - p.hinge[2]]; L = rotAxisAbout(ax, -p.side * 0.8 * ac.spoilers, p.hinge); }
       m.visible = vis; if (vis) { m.matrix.fromArray(L); m.castShadow = shadow; }
     }
-  }
-}
-
-// ---------------------------------------------------------------- optional brand x model livery textures
-// data/liveries/manifest.json (produced by the liveries workflow; format assumed until that workflow publishes it —
-// see docs/requests/engine_exports.md): { "entries": [ { "brand": "DAL", "model": "b738", "file": "DAL/b738.png" }, ... ] }
-// brand = ICAO airline code of the brand shown on the aircraft (js/live/lookup.js brand lookup when available).
-export class LiveryLibrary {
-  static async load(base = 'data/liveries/') {
-    try {
-      const r = await fetch(base + 'manifest.json', { cache: 'no-store' }); if (!r.ok) return null;
-      const j = await r.json(); const L = new LiveryLibrary(); L.base = base;
-      const list = Array.isArray(j) ? j : (j.entries || j.liveries || []);
-      for (const e of list) if (e && e.brand && e.model && (e.file || e.texture)) L.map.set(e.brand + ':' + e.model, e.file || e.texture);
-      return L.map.size ? L : null;
-    } catch (e) { return null; }
-  }
-  constructor() { this.map = new Map(); this.tex = new Map(); this.loader = new THREE.TextureLoader(); }
-  brandOf(tr) { return (tr && (tr.brand || (tr.livery && tr.livery.brand) || (tr.info && tr.info.brand) || (tr.cs && tr.cs.airline && tr.cs.airline.icao))) || null; }
-  textureFor(tr, modelKey) {
-    const b = this.brandOf(tr); if (!b) return null; const f = this.map.get(b + ':' + modelKey); if (!f) return null;
-    let t = this.tex.get(f);
-    if (!t) { t = this.loader.load(this.base + f); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; this.tex.set(f, t); }
-    return t;
   }
 }

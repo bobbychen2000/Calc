@@ -80,7 +80,11 @@ export const TYPES = {
     gear: { main: [{ x: 38.2, z: 5.5, wheels: 6 }], nose: { x: 7.0, r: 0.6 }, r: 0.66, w: 0.45 },
     hstab: { span: 21.5, rootC: 7.4, tipC: 2.5, sweep: 35, x: 60.0, y: 0.3, dihedral: 7 },
     fin: { rootC: 11.5, tipC: 4.0, h: 9.4, sweep: 42, x: 55.2 },
-    win: [{ x0: 10.0, x1: 64.0, sp: 0.51, w: 0.27, h: 0.4, y: 0.52 }], doors: [5.6, 17.8, 36.0, 51.0, 64.8],
+    // cabin windows: Boeing CAD 3-view 777-300 (boeing.com/commercial/airports/3-view, 7773.zip), measured by
+    // tools/liveries/windows_ref.py: first / last window 8.08 / 58.32 m, pitch 0.562 m, window 0.30 x 0.41 m, centre 0.43 m
+    // above the fuselage centre line (eta 0.138 of the 6.17 m section); the 777-200 drawing (7772.zip) ends at 48.19 m = this
+    // row with the 10.13 m shorter fuselage (derive() below)
+    win: [{ x0: 8.08, x1: 58.32, sp: 0.562, w: 0.30, h: 0.41, y: 0.43 }], doors: [5.6, 17.8, 36.0, 51.0, 64.8],
     cockpit: { style: 'boeing' } },
   b789: { name: 'Boeing 787-9', cls: 'E', L: 62.81, R: 2.9, top: 1.03, Hc: 5.55, Ln: 8.6, Lt: 16.5,
     wing: { span: 60.1, rootLE: 22.8, rootC: 12.4, kinkZ: 9.4, kinkC: 7.3, tipC: 1.7, sweep: 34, dihedral: 6.5, y: 0.6, tcRoot: 0.14, tcTip: 0.095, tip: 'raked', tipH: 3.5, flex: 1.6 },

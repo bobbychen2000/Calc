@@ -21,10 +21,20 @@ our own, and the livery is baked into that:
   4. Neutral bake. The default atlas texture is the white skin with the source model's surface detail: the neutralised
      source texture (tools/convert_models.py) sampled through the original UVs, high-pass filtered (panel lines, door
      outlines, small markings; large grey areas of the source livery flatten to white), dark areas (anti-glare panel,
-     walkways, exhaust stains) kept as they are. Models whose source has no cabin-window geometry (737-800, 747-400,
-     A330-300, A380, CRJ200) get painted cabin windows at the type's window row (js/aircraft/types.js `win`, doors
-     skipped). Alpha channel = class: 1 paint, 0.75 keep-original (dark), 0 window glass (night cabin glow).
-  5. head.atlas records the charts and the parts so tools/liveries/paint.py can paint liveries into the same layout.
+     walkways, exhaust stains) kept as they are. Alpha channel = class: 1 paint, 0.75 keep-original (dark), < 0.5
+     window glass (night cabin glow).
+  5. Cabin windows (tools/liveries/windows.py; owner feedback Sep 2026: two rows of windows on the livery renders).
+     Exactly one row per deck: models whose artist windows differ from the manufacturer's drawing, or are openings in
+     the skin / painted in the source texture / missing, get their artist windows removed before the atlas is built
+     (glass objects deleted, openings closed with skin triangles, texture windows dropped from the kept dark areas)
+     and the reference row painted (neutral atlas: the model's own type; every other type: tools/liveries/paint.py).
+     Models whose glass matches the drawing (or have no usable drawing) keep it; only the windows it lacks are painted.
+  6. Fuselage plugs (js/aircraft/fit.js PLUG_AT): every triangle crossing a plug station is split so that a 2 cm band
+     of triangles straddles the station; the band gets its own charts, laid out as long as the longest plug of any type
+     rendered with the model (dmax), so a stretched type (737-900 on the 737-800, 787-10 on the 787-8, ...) has texels
+     for the plug and its windows instead of one smeared texel column.
+  7. head.atlas records the charts, parts, plug bands and window mode so tools/liveries/paint.py paints into the same
+     layout.
 
 The first run backs the converted model up to refs/cache/models_orig/<key>.sfom (gitignored) and always rebuilds from
 that backup, so the tool is idempotent. tools/convert_models.py output must be re-atlased after a re-conversion.
@@ -37,7 +47,7 @@ from PIL import Image
 from scipy import ndimage
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import common, sfom
+import common, sfom, windows
 from raster import raster, dilate_fill, sample_bilinear, occlusion
 
 PARTS = ['keep', 'fus', 'fin', 'hstab', 'eng', 'pylon', 'tip', 'gdoor']
@@ -47,8 +57,7 @@ DIRS = ['+x', '-x', '+y', '-y', '+z', '-z']
 # textures that are never livery skin (cockpit / cabin interiors, gear, glazing, fan faces, chrome)
 NONSKIN_TEX = re.compile(r'interior|carpet|seat|landing|gear|windshield|inside|chrome|^lights?\.', re.I)
 FAN_TEX = re.compile(r'fan', re.I)
-# models whose source has no cabin-window geometry: windows are painted into the atlas (js/aircraft/types.js win rows)
-PAINT_WINDOWS = {'b738', 'b744', 'a333', 'a388', 'crj2'}
+BAND_EPS = 0.02          # width of the plug band in the unstretched model (model units)
 WHITE = 0.925            # sRGB level of the neutral skin in the default atlas
 PAD = 6                  # chart padding at 2048 px (1.5 px at 512)
 
@@ -63,6 +72,138 @@ def source_path(key):
     elif not os.path.exists(bak):
         raise RuntimeError(f'{key}: model already atlased and no source in {common.ORIG}; re-run tools/convert_models.py {key}')
     return bak
+
+
+# ---------------------------------------------------------------- mesh edits before the atlas
+def _append_vertices(m, P, N, UV, Z):
+    """append vertices to model m (arrays pos, nrm, uv, zone); returns the index of the first new vertex"""
+    i0 = len(m['pos'])
+    m['pos'] = np.concatenate([m['pos'], P]); m['nrm'] = np.concatenate([m['nrm'], N])
+    m['uv'] = np.concatenate([m['uv'], UV]); m['zone'] = np.concatenate([m['zone'], Z.astype(m['zone'].dtype)])
+    return i0
+
+
+def edit_windows(m, key, A):
+    """remove the artist windows windows.removals() lists: delete their glass triangles (and a glass strip behind
+    openings), close their openings in the skin with a fan of skin triangles (material of the surrounding skin)"""
+    rem = windows.removals(key, A)
+    idx, tm = m['idx'], m['tri_mat']
+    drop = np.zeros(len(idx), bool)
+    for w in rem['glass']: drop[w['tris']] = True
+    if len(rem['strip']): drop[rem['strip']] = True
+    # window reveals / frames modelled inside the openings (A350: 1,861 small textured triangles around the old row):
+    # every triangle whose three vertices lie within a removed window's outline (+2 cm)
+    Pv = m['pos'][idx]                                            # (n, 3, 3)
+    sv, yv, zv = -Pv[..., 0], Pv[..., 1], Pv[..., 2]
+    for w in list(rem['glass']) + list(rem['holes']):
+        inside = ((np.abs(sv - w['s']) <= w['w'] / 2 + 0.02) & (np.abs(yv - w['y']) <= w['h'] / 2 + 0.02) & (np.sign(zv) == w['side'])).all(1)
+        drop |= inside
+    newT, newM = [], []
+    P, N, UV = m['pos'], m['nrm'], m['uv']
+    if rem['holes']:
+        # skin material around each opening: the most common material of the triangles using the loop's vertices
+        q = np.round(P / 0.001).astype(np.int64); _, inv = np.unique(q, axis=0, return_inverse=True); inv = inv.reshape(-1)
+        tri_of = {}
+        tz = m['zone'][idx[:, 0]]
+        for t in np.where(tz == 0)[0]:
+            for v in inv[idx[t]]: tri_of.setdefault(int(v), []).append(t)
+        for h in rem['holes']:
+            loop = np.array(h['loop'])
+            mats = [tm[t] for v in inv[loop] for t in tri_of.get(int(v), [])]
+            mat = max(set(mats), key=mats.count) if mats else tm[np.where(tz == 0)[0][0]]
+            c = P[loop].mean(0); n = N[loop].mean(0); n /= max(np.linalg.norm(n), 1e-9)
+            ci = _append_vertices(m, c[None], n[None], UV[loop].mean(0)[None], np.array([0]))
+            P, N, UV = m['pos'], m['nrm'], m['uv']
+            for a, b in zip(loop, np.roll(loop, -1)):
+                tri = [int(a), int(b), ci]
+                fn = np.cross(P[tri[1]] - P[tri[0]], P[tri[2]] - P[tri[0]])
+                if np.dot(fn, n) < 0: tri = [tri[1], tri[0], tri[2]]
+                newT.append(tri); newM.append(mat)
+    keep = ~drop
+    m['idx'] = np.concatenate([idx[keep], np.array(newT, np.int64).reshape(-1, 3)])
+    m['tri_mat'] = np.concatenate([tm[keep], np.array(newM, np.int32)])
+    return dict(mode=rem['mode'], glass=len(rem['glass']), holes=len(rem['holes']), strip=int(len(rem['strip'])), texture=rem['texture'],
+                dropped=int(drop.sum()))
+
+
+def plug_bands(key, A):
+    """plug stations of model `key` (model units, positive aft of the nose) with the longest positive plug any type
+    rendered with the model inserts there (model units)"""
+    base = A['base'][key]; Tb = A['types'][base]; s0 = Tb['fit']['s0'] if Tb['fit'] else 1.0
+    bands = {}
+    for t, T in A['types'].items():
+        f = T.get('fit')
+        if not f or f['model'] != key or not f['plugs']: continue
+        for at, d in ((f['plugs']['at1'], f['plugs']['d1']), (f['plugs']['at2'], f['plugs']['d2'])):
+            k = round(at / s0, 4)
+            bands[k] = max(bands.get(k, 0.0), d / s0)
+    return [dict(s=k, dmax=round(v, 4)) for k, v in sorted(bands.items()) if v > 0.01]
+
+
+def split_plane(m, x0, tris_mask=None):
+    """split every triangle crossing the plane x = x0 (model frame) into triangles on either side; new vertices on the
+    crossed edges interpolate position, normal, UV and take the zone of the edge's first vertex"""
+    P, idx = m['pos'], m['idx']
+    X = P[idx][:, :, 0] - x0
+    cross = (X.min(1) < -1e-7) & (X.max(1) > 1e-7)
+    if tris_mask is not None: cross &= tris_mask
+    ci = np.where(cross)[0]
+    if not len(ci): return 0
+    cache = {}
+    newP, newN, newUV, newZ = [], [], [], []
+    base = len(P)
+    def mid(a, b):
+        k = (min(a, b), max(a, b))
+        if k in cache: return cache[k]
+        xa, xb = P[a, 0] - x0, P[b, 0] - x0; t = xa / (xa - xb)
+        newP.append(P[a] + t * (P[b] - P[a])); nn = m['nrm'][a] + t * (m['nrm'][b] - m['nrm'][a]); newN.append(nn / max(np.linalg.norm(nn), 1e-9))
+        newUV.append(m['uv'][a] + t * (m['uv'][b] - m['uv'][a])); newZ.append(m['zone'][a])
+        cache[k] = base + len(newP) - 1
+        return cache[k]
+    outT, outM = [], []
+    for t in ci:
+        a, b, c = idx[t]; xs = [P[a, 0] - x0, P[b, 0] - x0, P[c, 0] - x0]; vs = [a, b, c]
+        # rotate so that vertex 0 is alone on its side
+        sg = [1 if x > 0 else -1 for x in xs]
+        for r in range(3):
+            if sg[r] != sg[(r + 1) % 3] and sg[r] != sg[(r + 2) % 3]: break
+        v0, v1, v2 = vs[r], vs[(r + 1) % 3], vs[(r + 2) % 3]
+        if abs(P[v1, 0] - x0) < 1e-7 or abs(P[v2, 0] - x0) < 1e-7:
+            # one vertex on the plane: split into two
+            if abs(P[v1, 0] - x0) < 1e-7: e = mid(v0, v2); outT += [[v0, v1, e], [e, v1, v2]]
+            else: e = mid(v0, v1); outT += [[v0, e, v2], [e, v1, v2]]
+            outM += [m['tri_mat'][t]] * 2; continue
+        e1 = mid(v0, v1); e2 = mid(v0, v2)
+        outT += [[v0, e1, e2], [e1, v1, v2], [e1, v2, e2]]; outM += [m['tri_mat'][t]] * 3
+    keep = ~cross
+    if newP:
+        m['pos'] = np.concatenate([P, np.array(newP)]); m['nrm'] = np.concatenate([m['nrm'], np.array(newN)])
+        m['uv'] = np.concatenate([m['uv'], np.array(newUV)]); m['zone'] = np.concatenate([m['zone'], np.array(newZ, m['zone'].dtype)])
+    m['idx'] = np.concatenate([idx[keep], np.array(outT, np.int64)]); m['tri_mat'] = np.concatenate([m['tri_mat'][keep], np.array(outM, np.int32)])
+    return len(ci)
+
+
+def make_bands(m, bands):
+    """split the mesh at x = -(s -+ eps/2) for every plug station; returns per triangle the band index (-1 = none)"""
+    for b in bands:
+        split_plane(m, -b['s'] + BAND_EPS / 2)
+        split_plane(m, -b['s'] - BAND_EPS / 2)
+    C = m['pos'][m['idx']].mean(1)[:, 0]
+    band_of = np.full(len(m['idx']), -1, np.int16)
+    for i, b in enumerate(bands):
+        band_of[np.abs(C + b['s']) < BAND_EPS / 2] = i
+    return band_of
+
+
+def band_positions(P, idx, band_of, bands):
+    """positions for charting the band triangles: the aft side of each band is moved aft by the band's dmax, so its
+    charts are as long as the longest plug"""
+    Pb = P.copy()
+    for i, b in enumerate(bands):
+        vs = np.unique(idx[band_of == i])
+        aft = vs[P[vs, 0] < -b['s']]
+        Pb[aft, 0] -= b['dmax']
+    return Pb
 
 
 # ---------------------------------------------------------------- engines
@@ -219,8 +360,13 @@ def depth_of(P, d):
     return (-P[..., 0], P[..., 0], -P[..., 1], P[..., 1], -P[..., 2], P[..., 2])[d]
 
 
-def build_charts(m, part, eng_of, Nf, area):
+def cpos(c, P, Pb):
+    return Pb if (Pb is not None and c.get('band', -1) >= 0) else P
+
+
+def build_charts(m, part, eng_of, Nf, area, band_of=None, Pb=None):
     P, idx = m['pos'], m['idx']
+    if band_of is None: band_of = np.full(len(idx), -1, np.int16)
     tris = np.where(part > 0)[0]
     dom = np.argmax(np.abs(Nf[tris]), 1) * 2 + (np.take_along_axis(Nf[tris], np.argmax(np.abs(Nf[tris]), 1)[:, None], 1)[:, 0] < 0)
     # the fuselage sides take triangles up to 55 deg from the side (fewer, larger side charts; better for titles)
@@ -231,15 +377,16 @@ def build_charts(m, part, eng_of, Nf, area):
     groups = {}
     for t, d in zip(tris, dom):
         p = PARTS[part[t]]; sub = int(eng_of[t]) if p == 'eng' else (int(np.sign(P[idx[t]].mean(0)[2]) >= 0) if p in ('tip', 'hstab', 'gdoor', 'pylon') else 0)
-        groups.setdefault((p, sub, int(d)), []).append(t)
+        groups.setdefault((p, sub, int(d), int(band_of[t])), []).append(t)
     charts = []
-    for (p, sub, d), tl in groups.items():
+    for (p, sub, d, bnd), tl in groups.items():
         tl = np.array(tl)
         layer = 0
+        Pc = Pb if (bnd >= 0 and Pb is not None) else P
         while len(tl):
             # hidden-surface split: triangles mostly more than 12 cm behind another surface of the same chart (in its
             # projection direction) go to the next layer, so no two surfaces share texels
-            Q = proj(P[idx[tl]], d); D = depth_of(P[idx[tl]], d)
+            Q = proj(Pc[idx[tl]], d); D = depth_of(Pc[idx[tl]], d)
             lo = Q.reshape(-1, 2).min(0); g = 0.05
             ext = Q.reshape(-1, 2).max(0) - lo
             if ext[0] * ext[1] / (g * g) > 4e6: g = math.sqrt(ext[0] * ext[1] / 4e6)
@@ -247,19 +394,19 @@ def build_charts(m, part, eng_of, Nf, area):
             W = int(np.ceil(px[..., 0].max())) + 2; H = int(np.ceil(px[..., 1].max())) + 2
             frac, tot = occlusion(px, D.astype(np.float32), W, H, 0.12)
             hid = (tot >= 2) & (frac > 0.4)
-            charts.append(dict(part=p, sub=sub, dir=d, layer=layer, tris=tl[~hid]))
+            charts.append(dict(part=p, sub=sub, dir=d, layer=layer, tris=tl[~hid], band=bnd))
             tl = tl[hid]; layer += 1
             if layer > 4:
-                if len(tl): charts.append(dict(part=p, sub=sub, dir=d, layer=layer, tris=tl))
+                if len(tl): charts.append(dict(part=p, sub=sub, dir=d, layer=layer, tris=tl, band=bnd))
                 break
     return [c for c in charts if len(c['tris'])]
 
 
-def split_long(charts, P, idx, kpm, maxw):
+def split_long(charts, P, idx, kpm, maxw, Pb=None):
     """cut charts wider than maxw pixels (at kpm px per metre x part density) into pieces along a"""
     out = []
     for c in charts:
-        Q = proj(P[idx[c['tris']]], c['dir'])
+        Q = proj(cpos(c, P, Pb)[idx[c['tris']]], c['dir'])
         k = kpm * DENSITY[c['part']]
         w = (Q[..., 0].max() - Q[..., 0].min()) * k
         if w <= maxw: out.append(c); continue
@@ -272,9 +419,9 @@ def split_long(charts, P, idx, kpm, maxw):
     return out
 
 
-def chart_rects(charts, P, idx, kpm):
+def chart_rects(charts, P, idx, kpm, Pb=None):
     for c in charts:
-        Q = proj(P[idx[c['tris']]], c['dir']); k = kpm * DENSITY[c['part']]
+        Q = proj(cpos(c, P, Pb)[idx[c['tris']]], c['dir']); k = kpm * DENSITY[c['part']]
         lo = Q.reshape(-1, 2).min(0); hi = Q.reshape(-1, 2).max(0)
         c['lo'] = lo; c['k'] = k
         c['w'] = int(math.ceil((hi[0] - lo[0]) * k)) + 2 * PAD; c['h'] = int(math.ceil((hi[1] - lo[1]) * k)) + 2 * PAD
@@ -292,14 +439,14 @@ def shelf_pack(charts, S):
     return True
 
 
-def pack(charts, P, idx, S):
+def pack(charts, P, idx, S, Pb=None):
     area = 0
     for c in charts:
-        Q = proj(P[idx[c['tris']]], c['dir']); ext = Q.reshape(-1, 2).ptp(0); area += ext[0] * ext[1] * DENSITY[c['part']] ** 2
+        Q = proj(cpos(c, P, Pb)[idx[c['tris']]], c['dir']); ext = Q.reshape(-1, 2).ptp(0); area += ext[0] * ext[1] * DENSITY[c['part']] ** 2
     kpm = math.sqrt(S * S * 0.8 / max(area, 1e-6))
     for _ in range(40):
-        cs = split_long(charts, P, idx, kpm, S - 2 * PAD - 2)
-        chart_rects(cs, P, idx, kpm)
+        cs = split_long(charts, P, idx, kpm, S - 2 * PAD - 2, Pb)
+        chart_rects(cs, P, idx, kpm, Pb)
         if shelf_pack(cs, S): return cs, kpm
         kpm *= 0.96
     raise RuntimeError('atlas packing failed')
@@ -388,15 +535,23 @@ def process(key, S=2048, preview=None, outdir=None):
     src = source_path(key)
     m = sfom.load(src)
     h = m['head']; A = common.app(); F = common.features()[key]
+    # cabin windows: remove the artist windows the painted reference row replaces (tools/liveries/windows.py)
+    wedit = edit_windows(m, key, A)
+    dec = windows.decision(key, A)
+    # fuselage plug bands (js/aircraft/fit.js PLUG_AT)
+    bands = plug_bands(key, A)
+    band_of = make_bands(m, bands) if bands else None
     env = common.Envelope(m['pos'], m['idx'], m['zone'], h['dims']['L'])
     T = A['types'][A['base'][key]]; s0 = T['fit']['s0'] if T['fit'] else 1.0
     seeds = [(sg * e['z'] / s0, e['r'] / s0) for e in (T['eng'] or []) for sg in (-1, 1)]
     part, eng_of, eng, Nf, area = classify(m, env, F, seeds)
     P, idx, UV, Nv, Z = m['pos'], m['idx'], m['uv'], m['nrm'], m['zone']
-    charts = build_charts(m, part, eng_of, Nf, area)
-    charts, kpm = pack(charts, P, idx, S)
+    Pb = band_positions(P, idx, band_of, bands) if bands else None
+    charts = build_charts(m, part, eng_of, Nf, area, band_of, Pb)
+    charts, kpm = pack(charts, P, idx, S, Pb)
     print(f'  {key}: {sum(len(c["tris"]) for c in charts)} atlas tris in {len(charts)} charts, {kpm:.1f} px/m at {S} '
-          f'({100 / kpm:.2f} cm/px fuselage); engines {len(eng)}; kept {int((part == 0).sum())} tris')
+          f'({100 / kpm:.2f} cm/px fuselage); engines {len(eng)}; kept {int((part == 0).sum())} tris; windows {dec["mode"]} '
+          f'(removed glass {wedit["glass"]}, closed openings {wedit["holes"]}, strip tris {wedit["strip"]}); plug bands {bands}')
     # ---- new vertex arrays: kept triangles reuse their vertices; atlas triangles get one vertex per (chart, vertex)
     nv0 = len(P)
     newP = [P]; newN = [Nv]; newUV = [UV]; newZ = [Z]; srcUV = [UV]
@@ -404,7 +559,7 @@ def process(key, S=2048, preview=None, outdir=None):
     base = nv0
     for ci, c in enumerate(charts):
         T = c['tris']; vs = np.unique(idx[T]); remap = {v: base + i for i, v in enumerate(vs)}
-        Q = proj(P[vs], c['dir'])
+        Q = proj(cpos(c, P, Pb)[vs], c['dir'])
         u = (c['x'] + PAD + (Q[:, 0] - c['lo'][0]) * c['k']) / S
         v = (c['y'] + PAD + (Q[:, 1] - c['lo'][1]) * c['k']) / S
         newP.append(P[vs]); newN.append(Nv[vs]); newZ.append(Z[vs]); newUV.append(np.stack([u, v], -1)); srcUV.append(UV[vs])
@@ -443,9 +598,11 @@ def process(key, S=2048, preview=None, outdir=None):
     raw, B = m['raw'], m['B']
     for t in used_src:
         tt = dict(h['textures'][t]); tt['data'] = raw[B + tt['offset']:B + tt['offset'] + tt['length']]; tex_out.append(tt)
-    atlas_meta = dict(v=1, size=S, pad=PAD, kpm=round(kpm, 3), white=WHITE, parts=PARTS, dirs=DIRS, eng=eng, winPainted=info['win'],
+    atlas_meta = dict(v=2, size=S, pad=PAD, kpm=round(kpm, 3), white=WHITE, parts=PARTS, dirs=DIRS, eng=eng, winPainted=info['win'],
+                      windows=dict(mode=dec['mode'], why=dec['why'], ref=dec.get('ref'), removed=wedit, painted=info['nwin']),
+                      bands=[dict(b, eps=BAND_EPS) for b in bands],
                       charts=[dict(p=c['part'], s=int(c['sub']), d=int(c['dir']), l=int(c['layer']), x=int(c['x']), y=int(c['y']), w=int(c['w']), h=int(c['h']),
-                                   k=round(float(c['k']), 4), a0=round(float(c['lo'][0]), 4), b0=round(float(c['lo'][1]), 4)) for c in charts],
+                                   k=round(float(c['k']), 4), a0=round(float(c['lo'][0]), 4), b0=round(float(c['lo'][1]), 4), band=int(c.get('band', -1))) for c in charts],
                       source=os.path.relpath(src, common.ROOT))
     head = write_sfom(key, h, P2, N2, UV2, Z2, tri_sorted, new_mats, draws, tex_out, atlas_meta, outdir)
     if preview:
@@ -457,20 +614,6 @@ def process(key, S=2048, preview=None, outdir=None):
             dbg[c['y']:c['y'] + c['h'], c['x']:c['x'] + c['w']] = rng.uniform(0.2, 0.9, 3)
         Image.fromarray((dbg * 255).astype(np.uint8)).resize((512, 512)).save(os.path.join(preview, f'{key}_charts.png'))
     return head
-
-
-def window_rows(key, A, env):
-    """painted cabin windows in model units: list of (s0, s1, pitch, w, h, y, skip-list) from the base type's TYPES entry"""
-    base = A['base'][key]; T = A['types'][base]; s0 = T['fit']['s0'] if T['fit'] else 1.0
-    R = T['R']; topf = T['top']
-    rows = []
-    dw = 0.86 if T['cls'] in ('B', 'C', 'CL') else 1.07
-    doors = [d / s0 for d in (T['doors'] or [])]
-    for w in T['win']:
-        hf = (w['y'] + R) / (R * (1 + topf))        # height of the window centre as a fraction of the procedural section
-        y = env.mainBot + hf * (env.mainTop - env.mainBot)
-        rows.append(dict(s0=w['x0'] / s0, s1=w['x1'] / s0, sp=w['sp'] / s0, w=w['w'] / s0, h=w['h'] / s0, y=y, doors=doors, dw=dw / s0))
-    return rows
 
 
 def bake_neutral(m, key, S, charts, tri_new, tri_atlas, P2, SUV, UV2, env, A):
@@ -492,21 +635,48 @@ def bake_neutral(m, key, S, charts, tri_new, tri_atlas, P2, SUV, UV2, env, A):
         D[sel] = sample_bilinear(Dm[..., None], u, v)[:, 0]
         K[sel] = sample_bilinear(Km[..., None], u, v)[:, 0]
         orig[sel] = sample_bilinear(rgb, u, v)
-    col = np.repeat((WHITE * D)[..., None], 3, -1)
+    # cabin windows of the model's own type (tools/liveries/windows.py plan): painted as glass (alpha < 0.5); where the
+    # artist windows were removed, dark areas of the source skin in the window band (painted source windows) are dropped
+    base_t = A['base'][key]
+    pl = windows.plan(key, base_t, env, A)
+    side = part_is_fus_side(tid, T, charts, tri_atlas, S)
+    kfus = np.median([c['k'] for c in charts if c['part'] == 'fus'])
+    sp, yp = -pos[..., 0], pos[..., 1]
+    wm = np.zeros((S, S), np.float32)
+    # not in the plug bands: they are 2 cm wide on this type, and a stretched type gets its own bake (paint.py)
+    nb = side & ~band_texels(charts, tid, S)
+    if pl['win']:
+        wm[nb] = windows.window_mask(sp[nb], yp[nb], pl['win'], 1.0 / kfus)
+    # no dark source-skin areas in the window band of the fuselage sides: painted source windows (747-400, CRJ200) and
+    # the texture under removed or kept glass must not show as a second row
+    ref_rows = [(w['y'], w['h']) for w in pl['win']]
+    if pl['mode'] == 'keep':
+        ref_rows += [(g['y'], g['h']) for g in windows.artist(key)['glass']]
+    for yrow in sorted({round(y, 2) for y, _ in ref_rows}):
+        hmax = max(hh for y, hh in ref_rows if abs(y - yrow) < 0.01)
+        K[side & (np.abs(yp - yrow) < hmax / 2 + 0.3)] = 0
+        # where the artist windows were replaced: no skin detail in the row either (window frames drawn in the
+        # source texture, e.g. the A350's grey windows, would otherwise show as a second row)
+        if pl['mode'] == 'paint': D[side & (np.abs(yp - yrow) < hmax / 2 + 0.12)] = 1.0
     keep = K > 0.5
+    col = np.repeat((WHITE * D)[..., None], 3, -1)
     col[keep] = orig[keep]
     alpha = np.where(keep, 0.75, 1.0).astype(np.float32)
-    # painted cabin windows
-    win = key in PAINT_WINDOWS
-    if win:
-        rows = window_rows(key, A, env)
-        wm = window_mask(pos, rows, part_is_fus_side(tid, T, charts, tri_atlas, S))
-        col = col * (1 - wm[..., None]) + np.array([0.075, 0.085, 0.10], np.float32) * wm[..., None]
-        alpha = np.minimum(alpha, 1 - wm)
+    col = col * (1 - wm[..., None]) + np.array([0.075, 0.085, 0.10], np.float32) * wm[..., None]
+    alpha = np.minimum(alpha, 1 - 0.9 * wm)          # glass: alpha 0.1 (not 0, so no encoder or viewer drops its colour)
+    win = bool(pl['win'])
     col[~ok] = WHITE; alpha[~ok] = 1
     colA = np.concatenate([col, alpha[..., None]], -1)
     colA, _ = dilate_fill(colA, ok, radius=24)
-    return colA[..., :3], colA[..., 3], dict(win=win)
+    return colA[..., :3], colA[..., 3], dict(win=win, nwin=len(pl['win']))
+
+
+def band_texels(charts, tid, S):
+    """(S, S) bool: texel belongs to a plug-band chart"""
+    out = np.zeros((S, S), bool)
+    for c in charts:
+        if c.get('band', -1) >= 0: out[c['y']:c['y'] + c['h'], c['x']:c['x'] + c['w']] = True
+    return out & (tid >= 0)
 
 
 def part_is_fus_side(tid, T, charts, tri_atlas, S):
@@ -516,23 +686,6 @@ def part_is_fus_side(tid, T, charts, tri_atlas, S):
         if c['part'] == 'fus' and c['dir'] in (4, 5):
             out[c['y']:c['y'] + c['h'], c['x']:c['x'] + c['w']] = True
     return out & (tid >= 0)
-
-
-def window_mask(pos, rows, side):
-    """soft mask (0..1) of rounded-rectangle cabin windows at the model positions pos (S, S, 3)"""
-    s = -pos[..., 0]; y = pos[..., 1]
-    M = np.zeros(s.shape, np.float32)
-    px = 0.012
-    for r in rows:
-        k = np.round((s - r['s0']) / r['sp']); c = r['s0'] + k * r['sp']
-        inrow = (k >= 0) & (c <= r['s1'] + 1e-6)
-        for d in r['doors']:
-            inrow &= np.abs(c - d) > (r['dw'] / 2 + r['w'] / 2 + 0.1)
-        dx = np.abs(s - c) - (r['w'] / 2 - 0.35 * r['w']); dy = np.abs(y - r['y']) - (r['h'] / 2 - 0.35 * r['w'])
-        rr = 0.35 * r['w']
-        sd = np.hypot(np.maximum(dx, 0), np.maximum(dy, 0)) + np.minimum(np.maximum(dx, dy), 0) - rr
-        M = np.maximum(M, np.where(inrow & side, np.clip(0.5 - sd / px, 0, 1), 0))
-    return M
 
 
 def write_sfom(key, h, P, N, UV, Z, tri, mats, draws, tex_out, atlas_meta, outdir=None):

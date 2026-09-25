@@ -1,4 +1,4 @@
-# Brand liveries: implementation, verification and status (24 Sep 2026)
+# Brand liveries: implementation, verification and status (24 Sep 2026; cabin windows 25 Sep 2026, §8)
 
 Implements the owner's decisions on `docs/research/liveries.md` §7: real airline liveries, re-drawn as vector art for a
 non-commercial depiction (About notice: trademarks belong to their owners); FlightGear GPL textures only where the
@@ -11,6 +11,8 @@ Pipeline (all offline, Python + numpy; no reference image or font file is commit
 
 ```bash
 FAM_DIR=refs/cache/src/fam3d python3 tools/convert_models.py [keys]   # only when a model changes (keeps UVs sane, see §3.4)
+python3 tools/liveries/windows_ref.py [types] [--plot DIR]            # cabin-window rows off the manufacturers' drawings (§8)
+python3 tools/liveries/windows.py [keys]                             # artist rows vs references, keep / paint per model (§8)
 python3 tools/liveries/atlas.py [keys]                               # livery atlas per model -> data/models/*.sfom
 python3 tools/liveries/build.py [BRANDS] [--models k,..]             # bake -> data/liveries/**, manifest.json/.js
 python3 tools/liveries/build_brands_js.py                            # registration -> brand table -> data/brands.js
@@ -63,36 +65,42 @@ The source models' UV layouts are unusable for painting (overlapping, mirrored, 
 - **Detail layer**: the source texture's panel lines, door outlines and window frames (black top-hat, lines at least
   0.8 m long, masked where the source livery differed from its neutralised version so no ghost titles survive) are
   kept as a multiply layer; small dark areas (≤ 1.5 m²: walkway marks, vents) are kept as they are.
-- **Alpha**: 1 paint, 0.75 unchanged dark skin, **< 0.5 cabin-window glass**. The 737-800, 747-400, A330-300, A380 and
-  CRJ200 sources have no window geometry: their window rows are painted into the atlas from the type's window table
-  (`js/aircraft/types.js` `win`).
+- **Alpha**: 1 paint, 0.75 unchanged dark skin, **< 0.5 cabin-window glass** (0.1; not 0, so no WebP encoder or viewer
+  drops the glass colour).
+- **Cabin windows** (§8): exactly one row per deck. 11 models get their artist windows removed (glass objects deleted,
+  openings in the skin closed with skin triangles, window reveals inside the openings deleted, painted source windows
+  and window frames dropped from the kept skin detail in the window band) and the manufacturer's row painted; 10 keep
+  their artist glass.
+- **Plug bands** (§8.4): the mesh is split at the fuselage-plug stations of `js/aircraft/fit.js`; the 2 cm band gets its
+  own charts, as long as the longest plug of any type on the model, so stretched types have texels for the plug.
 
-| Model | px/m at 2048 | Fuselage cm/px (2048 / 1024) | Charts | Engines found | Windows painted |
-|---|---|---|---|---|---|
-| a319 (Airbus A319) | 35.4 | 2.8 / 5.7 | 100 | 2 | no (window geometry) |
-| a320 (Airbus A320) | 35.3 | 2.8 / 5.7 | 99 | 2 | no (window geometry) |
-| a321 (Airbus A321) | 32.6 | 3.1 / 6.1 | 97 | 2 | no (window geometry) |
-| a333 (Airbus A330-300) | 20.0 | 5.0 / 10.0 | 108 | 2 | yes |
-| a359 (Airbus A350-900) | 19.6 | 5.1 / 10.2 | 86 | 2 | no (window geometry) |
-| a388 (Airbus A380-800) | 15.3 | 6.5 / 13.1 | 102 | 4 | yes |
-| b738 (Boeing 737-800) | 36.0 | 2.8 / 5.6 | 76 | 2 | yes |
-| b744 (Boeing 747-400) | 20.1 | 5.0 / 10.0 | 104 | 4 | yes |
-| b748 (Boeing 747-8) | 14.0 | 7.2 / 14.3 | 89 | 4 | no (window geometry) |
-| b752 (Boeing 757-200) | 30.6 | 3.3 / 6.5 | 83 | 2 | no (window geometry) |
-| b763 (Boeing 767-300) | 26.3 | 3.8 / 7.6 | 65 | 2 | no (window geometry) |
-| b788 (Boeing 787-8) | 24.2 | 4.1 / 8.3 | 110 | 2 | no (window geometry) |
-| bcs1 (Airbus A220-100) | 39.0 | 2.6 / 5.1 | 83 | 2 | no (window geometry) |
-| bcs3 (Airbus A220-300) | 39.1 | 2.6 / 5.1 | 60 | 2 | no (window geometry) |
-| crj2 (Bombardier CRJ200) | 54.1 | 1.8 / 3.7 | 71 | 2 | yes |
-| crj7 (Bombardier CRJ700) | 56.9 | 1.8 / 3.5 | 66 | 2 | no (window geometry) |
-| crj9 (Bombardier CRJ900) | 56.2 | 1.8 / 3.6 | 66 | 2 | no (window geometry) |
-| e170 (Embraer E170) | 43.7 | 2.3 / 4.6 | 99 | 2 | no (window geometry) |
-| e190 (Embraer E190) | 38.2 | 2.6 / 5.2 | 98 | 2 | no (window geometry) |
-| e75l (Embraer E175) | 41.4 | 2.4 / 4.8 | 74 | 2 (components) | no (window geometry) |
-| md11 (McDonnell Douglas MD-11) | 17.2 | 5.8 / 11.6 | 97 | 2 (components) | no (window geometry) |
+| Model | px/m at 2048 | Fuselage cm/px (2048 / 1024) | Charts | Engines found | Cabin windows (§8) | Plug bands (m, model; longest plug) |
+|---|---|---|---|---|---|---|
+| a319 (Airbus A319) | 35.4 | 2.8 / 5.7 | 100 | 2 | painted (33 glass + openings removed) | - |
+| a320 (Airbus A320) | 35.3 | 2.8 / 5.7 | 99 | 2 | painted (40 glass + openings removed) | - |
+| a321 (Airbus A321) | 32.6 | 3.1 / 6.1 | 97 | 2 | artist glass (matches; 2 extra removed) | - |
+| a333 (Airbus A330-300) | 20.0 | 5.0 / 10.0 | 108 | 2 | painted (source has none) | - (only negative plugs) |
+| a359 (Airbus A350-900) | 19.2 | 5.2 / 10.4 | 110 | 2 | painted (56 glass + openings + reveals removed) | 12.84 (4.45), 45.35 (2.56) |
+| a388 (Airbus A380-800) | 15.3 | 6.5 / 13.1 | 102 | 4 | painted, two decks (source has none) | - |
+| b738 (Boeing 737-800) | 35.6 | 2.8 / 5.6 | 84 | 2 | painted (41 openings closed, dark strip removed) | 9.99 (2.74), 25.97 (1.58) |
+| b744 (Boeing 747-400) | 20.1 | 5.0 / 10.0 | 104 | 4 | painted, two decks (source windows in the texture dropped) | - |
+| b748 (Boeing 747-8) | 14.0 | 7.2 / 14.3 | 89 | 4 | artist glass (no usable drawing) | - |
+| b752 (Boeing 757-200) | 31.7 | 3.2 / 6.3 | 93 | 2 | artist glass (matches) + missing windows painted | 14.93 (3.98), 30.32 (2.99) |
+| b763 (Boeing 767-300) | 25.9 | 3.9 / 7.7 | 73 | 2 | painted (46 glass + openings removed) | 10.85 (3.47), 37.18 (2.99) |
+| b788 (Boeing 787-8) | 22.7 | 4.4 / 8.8 | 122 | 2 | painted (41 glass removed) | 10.79 (6.09), 37.98 (5.49) |
+| bcs1 (Airbus A220-100) | 39.0 | 2.6 / 5.1 | 83 | 2 | artist glass (no usable drawing) | - |
+| bcs3 (Airbus A220-300) | 39.1 | 2.6 / 5.1 | 60 | 2 | artist glass (no usable drawing) | - |
+| crj2 (Bombardier CRJ200) | 54.1 | 1.8 / 3.7 | 71 | 2 | painted (source windows and ghost titles in the texture dropped) | - |
+| crj7 (Bombardier CRJ700) | 56.9 | 1.8 / 3.5 | 66 | 2 | artist glass (no usable drawing) | - |
+| crj9 (Bombardier CRJ900) | 56.2 | 1.8 / 3.6 | 66 | 2 | artist glass (no usable drawing) | - |
+| e170 (Embraer E170) | 43.7 | 2.3 / 4.6 | 99 | 2 | artist glass (no usable drawing) | - |
+| e190 (Embraer E190) | 38.0 | 2.6 / 5.3 | 106 | 2 | artist glass (no usable drawing) | 9.11 (0.80), 23.27 (1.58) |
+| e75l (Embraer E175) | 41.4 | 2.4 / 4.8 | 74 | 2 (components) | artist glass (no usable drawing) | - |
+| md11 (McDonnell Douglas MD-11) | 17.2 | 5.8 / 11.6 | 97 | 2 (components) | artist glass (matches: 71 / 71) | - |
 
-Geometry, `MODEL_DIMS` and `MODEL_FEATURES` are unchanged (vertices are duplicated along chart seams). The unatlased
-conversions are kept in `refs/cache/models_orig/` (the atlas source).
+Outer shape, `MODEL_DIMS` and `MODEL_FEATURES` are unchanged (vertices are duplicated along chart seams and plug
+bands; the removed window glass and the closed openings change the triangle lists). The unatlased conversions are kept in
+`refs/cache/models_orig/` (the atlas source).
 
 ## 3. The painter (`tools/liveries/paint.py`, `liveries.py`, `art.py`)
 
@@ -244,3 +252,163 @@ guide on a third-party host: unverified), `approx` (from the reference descripti
 - Requests pending with other owners (`docs/requests/liveries_brand.md`): `traffic.js` should pass reg / hex / type
   so the track (UI, three.js) sees the resolved brand; `js/three/aircraft.js` LiveryLibrary to use the published
   manifest; About notice; UI brand display; artifact packaging of the `lo` set.
+
+## 8. Cabin windows: exactly one row (owner feedback, 25 Sep 2026)
+
+Owner: "I see two sets of windows on these livery planes" (`out/liveries/UAL.png`, `SWA.png`, 737-800 model).
+
+### 8.1 Diagnosis (verified on the models and renders)
+
+- `tools/liveries/atlas.py` painted a window row from the procedural type table (`js/aircraft/types.js` `win`, estimates)
+  on the five models it believed had no windows (`PAINT_WINDOWS`: 737-800, 747-400, A330-300, A380, CRJ200).
+- The 737-800 does have the artist's windows: 41 openings per side in the skin with a dark glass strip behind them (no
+  glass objects, so the check missed them). Painted row + openings = the two rows of the UAL / SWA / DAL / ASA renders.
+- The 747-400 (`BOE.png`) and the CRJ200 (`UAX.png`) have their windows painted in the source texture; the atlas kept
+  them as "small dark areas" (the CRJ200 also kept the source's black UNITED EXPRESS letters on every brand).
+- Found while fixing: the A350's artist windows are glass objects over openings plus window reveals (1,861 small
+  textured triangles) and frames drawn in its texture: removing the glass alone left a grey second row.
+- Negative fuselage plugs (737-700 on the 737-800 model, 767-200, A330-200 / -800) slid the aft body over the forward
+  body (`js/live/models.js` applyStretch): 3 m of doubled skin and doubled windows on the 737-700 (the SWA render).
+- The renderer adds no windows to the imported models (`js/shaders/aircraft_real.js` draws the kind-1 glass and the
+  atlas-alpha glass only); procedural windows exist only on the procedural airframe (777 family, and every aircraft
+  beyond the model LOD distance), one row from `TYPES.win`.
+
+### 8.2 The real rows: manufacturers' drawings (`tools/liveries/windows_ref.py` -> `tools/liveries/windows_ref.json`)
+
+No airport-planning document tabulates cabin windows, but the manufacturers' drawings draw them: Boeing's CAD 3-views
+for airport planning (DXF/DWG, "accurate to within 6 inches"; MD-11 "~ +/- 3 inches";
+https://www.boeing.com/commercial/airports/3-view), the Airbus AC side views (2-2-0, 2-7-0 door location), the
+Bombardier CRJ200 APM Figure 2. Every drawing is rendered to ink (DXF at 80 px/m; PDF pages at up to 2400 dpi), window
+outlines are the enclosed holes of window size along a straight line at a regular pitch, windows partly hidden behind
+the wing root are found by template matching of the upper outline, windows crossed by a wing or a dimension line are
+filled at the pitch, and windows entirely inside the wing's projection were filled by hand where the plot shows them
+(747-400 main deck 38.1-43.7 m, 767-300 32.0-34.8 m, A380 main deck 27.8-47.0 m). Scale and origin: the Boeing drawing
+unit (inch; MD-11 foot) and the nose tip; Airbus: the published door stations of `SPEC` matched to the door outlines
+(least squares, max residual 0.00-0.08 m; the fitted nose falls at -0.12 to +0.04 m); CRJ200: the overall length
+(door 1 at 4.53 m vs 4.74 m published). Heights: the window centre relative to the fuselage centre line of the barrel
+section (eta, -1 keel .. +1 crown). Checks on the results: fuselage heights of the drawings 4.01 m (737, 757), 5.41 m (767),
+6.18 m (777), 6.04 m (MD-11); window pitch 20 in (737 / 757 / MD-11: 0.506-0.512 m), 22 in (767, 777: 0.562 m), 24 in
+(787: 0.613 m), 21 in (A320 family, A330: 0.526-0.537 m), 25 in (A350, A380: 0.637-0.639 m); the 777-200 row ends at
+48.18 m, the 777-300 row with the published 10.13 m shorter fuselage predicts 48.19 m. Not usable (window rows not drawn
+or not at a verifiable scale): 737-600 / -700 / -900 (their CAD 3-views draw no cabin windows), 747-8 (the DWG converts
+to an incomplete DXF), E-Jets, CRJ700 / 900, A220 (door stations for a calibration not published in our documents).
+Plots of every measurement: `python3 tools/liveries/windows_ref.py --plot DIR` (red: windows found, orange: partly
+hidden, green: filled; magenta: nose / doors).
+
+Each type's row (`tools/liveries/windows.py type_rows`; stations in m aft of the nose tip; `inferred` = not on that type's
+own drawing):
+
+| Type | Model | Row source | Windows (main deck) | First / last (m) | Pitch (m) | Height (eta) | Further decks | Notes |
+|---|---|---|---|---|---|---|---|---|
+| a19n | a319 | Airbus AC A319 (15 Jul 2025) FIGURE-2-2-0-991-008-A01 sheet 1 (A319neo) (height: a20n drawing) | 31 | 6.03 / 23.96 | 0.527 | 0.327 |  |  |
+| a20n | a320 | Airbus AC A320 (1 Jun 2024) FIGURE-2-2-0-991-009-A01 sheet 1 (A320neo) | 39 | 6.16 / 27.57 | 0.536 | 0.327 |  |  |
+| a21n | a321 | Airbus AC A321 (15 Jul 2025) FIGURE-2-2-0-991-010-A01 sheet 1 (A321neo) | 46 | 6.17 / 34.64 | 0.534 | 0.288 |  |  |
+| a319 | a319 | Airbus AC A319 (15 Jul 2025) FIGURE-2-2-0-991-002-A01 sheet 1 (height: a320 drawing) | 32 | 6.03 / 23.45 | 0.526 | 0.326 |  |  |
+| a320 | a320 | Airbus AC A320 (1 Jun 2024) FIGURE-2-2-0-991-004-A01 sheet 1 | 40 | 6.16 / 27.57 | 0.531 | 0.326 |  |  |
+| a321 | a321 | Airbus AC A321 (15 Jul 2025) FIGURE-2-2-0-991-005-A01 sheet 1 | 48 | 6.17 / 34.65 | 0.534 | 0.287 |  |  |
+| a332 | a333 | Airbus AC A330 (1 Dec 2025) FIGURE-2-7-0-991-006-A01 Door Location sheet 2 (A330-200/-800) | 57 | 7.24 / 42.87 | 0.537 | 0.278 |  |  |
+| a333 | a333 | Airbus AC A330 (1 Dec 2025) FIGURE-2-7-0-991-006-B01 Door Location sheet 2 (A330-300/-900) | 69 | 8.33 / 48.73 | 0.529 | 0.29 |  |  |
+| a338 | a333 | Airbus AC A330 (1 Dec 2025) FIGURE-2-2-0-991-012-A01 sheet 1 (A330-800) | 56 | 7.30 / 42.62 | 0.536 | 0.303 |  |  |
+| a339 | a333 | Airbus AC A330 (1 Dec 2025) FIGURE-2-2-0-991-011-A01 sheet 1 (A330-900) | 67 | 8.80 / 48.63 | 0.530 | 0.305 |  |  |
+| a359 | a359 | Airbus AC A350 (15 Jul 2025) FIGURE-2-2-0-991-001-A01 sheet 1 (A350-900; raster drawing) | 60 | 8.37 / 50.98 | 0.638 | 0.218 |  |  |
+| a35k | a359 | Airbus AC A350 (15 Jul 2025) 2-2-0 page 4 (A350-1000; raster drawing) | 72 | 8.32 / 57.97 | 0.637 | 0.212 |  |  |
+| a388 | a388 | Airbus AC A380 (1 Dec 2025) FIGURE-2-7-0-991-002-A01 Door Location sheet 2 (scale: upper-deck doors U1-U3 at 20.94 / 40.30 / 49.19 m; main deck M1-M5 6.32 / 16.50 / 32.68 / 44.74 / 53.63 m) | 47 | 13.00 / 52.68 | 0.639 | 0.565 | deck 1: 62 |  |
+| b37m | b738 | Boeing CAD 3-view 737-7 (737_max7.zip, DWG -> DXF) | 35 | 6.11 / 26.23 | 0.522 | 0.243 |  |  |
+| b38m | b738 | Boeing CAD 3-view 737-8 (737_max8.zip, DWG -> DXF) | 42 | 6.11 / 29.89 | 0.512 | 0.245 |  |  |
+| b39m | b738 | Boeing CAD 3-view 737-9 (737_max9.zip, DWG -> DXF) | 45 | 6.11 / 32.52 | 0.512 | 0.234 |  |  |
+| b3xm | b738 | Boeing CAD 3-view 737-10 (737_max10.zip, DWG -> DXF) | 48 | 6.11 / 34.71 | 0.512 | 0.234 |  |  |
+| b736 | b738 | Boeing CAD 3-view 737-800 (7378.zip) | 31 | 5.64 / 22.18 | 0.512 | 0.231 |  | inferred: the b738 row with the b736 fuselage plugs of js/aircraft/fit.js |
+| b737 | b738 | Boeing CAD 3-view 737-800 (7378.zip) | 35 | 5.64 / 24.57 | 0.512 | 0.231 |  | inferred: the b738 row with the b737 fuselage plugs of js/aircraft/fit.js |
+| b738 | b738 | Boeing CAD 3-view 737-800 (7378.zip) | 45 | 5.64 / 30.41 | 0.512 | 0.231 |  |  |
+| b739 | b738 | Boeing CAD 3-view 737-9 (737_max9.zip, DWG -> DXF) | 45 | 6.11 / 32.52 | 0.512 | 0.234 |  | inferred: 737-900 CAD 3-view (2001) draws no cabin windows; 737-9 fuselage: same length (42.11 m) and plug stations |
+| b744 | b744 | Boeing CAD 3-view 747-400 (7474.zip) | 85 | 1.34 / 53.84 | 0.519 | -0.038 | deck 1: 21 |  |
+| b748 | b748 | artist glass (no usable drawing) | - | - | - | - | - |  |
+| b752 | b752 | Boeing CAD 3-view 757-200 (7572.zip) | 54 | 6.29 / 36.87 | 0.506 | 0.231 |  |  |
+| b753 | b752 | Boeing CAD 3-view 757-300 (7573.zip) | 64 | 6.29 / 43.98 | 0.506 | 0.231 |  |  |
+| b762 | b763 | Boeing CAD 3-view 767-200 (7672.zip) | 45 | 7.27 / 33.92 | 0.562 | 0.251 |  |  |
+| b763 | b763 | Boeing CAD 3-view 767-300 (7673.zip) | 53 | 7.27 / 40.34 | 0.562 | 0.252 |  |  |
+| b764 | b763 | Boeing CAD 3-view 767-400 (7674.zip) | 64 | 7.27 / 46.77 | 0.562 | 0.252 |  |  |
+| b788 | b788 | Boeing CAD 3-view 787-8 (7878.zip, DWG -> DXF) | 45 | 8.26 / 41.94 | 0.613 | 0.254 |  |  |
+| b789 | b788 | Boeing CAD 3-view 787-9 (7879.zip, DWG -> DXF) | 56 | 8.26 / 48.02 | 0.613 | 0.254 |  |  |
+| b78x | b788 | Boeing CAD 3-view 787-10 (78710.zip, DWG -> DXF) | 64 | 8.26 / 53.52 | 0.613 | 0.254 |  |  |
+| bcs1 | bcs1 | artist glass (no usable drawing) | - | - | - | - | - |  |
+| bcs3 | bcs3 | artist glass (no usable drawing) | - | - | - | - | - |  |
+| crj2 | crj2 | Bombardier CRJ200 APM rev. 8, 00-02-01 Figure 2 (raster drawing) | 12 | 6.31 / 14.13 | 0.744 | 0.227 |  |  |
+| crj7 | crj7 | artist glass (no usable drawing) | - | - | - | - | - |  |
+| crj9 | crj9 | artist glass (no usable drawing) | - | - | - | - | - |  |
+| e170 | e170 | artist glass (no usable drawing) | - | - | - | - | - |  |
+| e190 | e190 | artist glass (no usable drawing) | - | - | - | - | - |  |
+| e195 | e190 | artist glass (no usable drawing) | - | - | - | - | - | plug windows from the artist pitch (inf) |
+| e75l | e75l | artist glass (no usable drawing) | - | - | - | - | - |  |
+| e75s | e75l | artist glass (no usable drawing) | - | - | - | - | - |  |
+| md11 | md11 | Boeing CAD 3-view MD-11 (md11.zip) | 71 | 6.26 / 46.11 | 0.506 | 0.172 |  |  |
+
+### 8.3 Per model: keep the artist's glass or paint the reference row
+
+Keep when the artist glass matches the drawing (count within 2, 90 % of the reference windows within 0.35 pitch of an
+artist window) or there is no usable drawing; otherwise remove the artist windows and paint (`tools/liveries/windows.py
+decision`). Artist windows that the reference does not have are removed also on kept models (A321: 2); reference
+windows the kept glass lacks are painted at the glass row's height (757-200: 2).
+
+| Model | Artist windows | Decision | Reason |
+|---|---|---|---|
+| a319 | 33 glass objects per side over 33 openings | paint | artist glass differs from the drawing (33 vs 32 windows, 53% within 0.35 pitch, pitch 0.533 vs 0.526 m) |
+| a320 | 40 glass objects per side over 40 openings | paint | artist glass differs from the drawing (40 vs 40 windows, 57% within 0.35 pitch, pitch 0.524 vs 0.531 m) |
+| a321 | 48 glass objects per side over 48 openings | keep | artist glass matches the drawing (48 vs 48 windows, 98% within 0.35 pitch) |
+| a333 | none | paint | artist windows are none |
+| a359 | 56 glass objects per side over 56 openings | paint | artist glass differs from the drawing (56 vs 62 windows, 73% within 0.35 pitch, pitch 0.654 vs 0.638 m) |
+| a388 | none | paint | artist windows are none |
+| b738 | 41 openings in the skin + dark strip | paint | artist windows are holes |
+| b744 | none | paint | artist windows are none |
+| b748 | 109 glass objects per side | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| b752 | 52 glass objects per side over 42 openings | keep | artist glass matches the drawing (52 vs 54 windows, 96% within 0.35 pitch) |
+| b763 | 46 glass objects per side over 46 openings | paint | artist glass differs from the drawing (46 vs 55 windows, 44% within 0.35 pitch, pitch 0.550 vs 0.562 m) |
+| b788 | 41 glass objects per side | paint | artist glass differs from the drawing (41 vs 47 windows, 47% within 0.35 pitch, pitch 0.750 vs 0.613 m) |
+| bcs1 | 33 glass objects per side over 31 openings | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| bcs3 | 40 glass objects per side | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| crj2 | 12 painted in the source texture | paint | artist windows are texture |
+| crj7 | 20 glass objects per side over 20 openings | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| crj9 | 24 glass objects per side over 24 openings | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| e170 | 18 glass objects per side over 18 openings | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| e190 | 27 glass objects per side over 23 openings | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| e75l | 20 glass objects per side over 19 openings | keep | no usable manufacturer drawing: artist glass windows kept (unverified) |
+| md11 | 71 glass objects per side | keep | artist glass matches the drawing (71 vs 71 windows, 100% within 0.35 pitch) |
+
+### 8.4 Fuselage plugs
+
+- `tools/liveries/atlas.py` splits the mesh at each plug station (`js/aircraft/fit.js PLUG_AT`) so a 2 cm band straddles
+  it; the band has its own charts as long as the longest plug of any type on the model: a 737-900 / 787-10 plug gets
+  texels (and windows) instead of one stretched texel column. On models that keep their glass, the stations were moved
+  into a window pier (757: 15.40 -> 15.24 m, 31.00 -> 30.96 m; E190: 9.00 -> 9.22 m, 23.50 -> 23.54 m) so no window is
+  stretched; doors and the documented plug lengths are unchanged (`fit.js`).
+- A negative plug now removes its section (`js/live/models.js plugShift`, Python `common.apply_stretch`,
+  `fit.js rx`): vertices in the section collapse onto the station, the rest moves forward; no doubled skin.
+- Every type is baked with its own window row: `tools/liveries/build.py` groups the types of a model by fuselage plugs
+  AND window row (737-800 vs 737 MAX 8, A321 vs A321neo, A330-300 vs -900 differ on the drawings), and bakes the neutral
+  skin of every type that differs from its model's own type as pseudo-brand `_N` (`data/liveries/_N/<model>@<type>`),
+  worn by aircraft without a brand bake (`js/aircraft/liveries.js neutralTextureFor`, brand colours by zone).
+
+### 8.5 Freighters
+
+`FDX` and `UPS` are flagged `cargo` (`tools/liveries/liveries.py`, manifest `brands.<CODE>.cargo`): no painted windows,
+and the kept artist glass of their models (MD-11, 757-200, 747-8) is shaded as painted-over window plugs in the top
+colour (`js/shaders/aircraft_real.js uNoCabin`; the three.js owner is asked in `docs/requests/liveries_windows.md`).
+Their 747F upper-deck crew windows are not modelled.
+
+### 8.6 Verification
+
+{{WINDOW_RENDERS}}
+
+### 8.7 Open items
+
+- Artist glass kept unverified on the E-Jets, CRJ700 / 900, A220-100 / -300 and 747-8 (no usable drawing: their APM /
+  APP drawings lack published door stations for a calibration, the 747-8 DWG converts to an incomplete DXF). The E175
+  model's stray glass window at 3.1 m (3.7 m ahead of the row, in front of door 1 at 5.14 m; the E170 model with the
+  same nose has none) was removed.
+- 737-600 / -700 rows are the 737-800 row with the plugs of `fit.js` (inferred: the fitted forward plug is the published
+  wheelbase difference, 3.00 m; real 737 plugs are not documented here); 737-900 uses the 737-9 drawing (same fuselage).
+- The A319 heights are taken from the A320 drawings (the A319 sheets are drawn smaller; same fuselage section).
+- The 747-400 drawing (1998) draws main-deck windows from 1.34 m aft of the nose tip; kept as drawn.
+- Window sizes come from the drawings (outline at mid-stroke); the small-scale Airbus sheets (A330) draw the windows
+  as tall ovals (0.25 x 0.45 m).
+

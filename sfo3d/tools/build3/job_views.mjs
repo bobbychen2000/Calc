@@ -2,7 +2,7 @@
 // browser session, for side-by-side comparison.
 //   SOFTGL=1 W=960 H=540 OUT=out/engine PAGES="live3.html,live.html" VIEWS="view:overview;gate:B26,60,1,14;hold:12;tower" \
 //     node livetest.mjs tools/build3/job_views.mjs
-// PAGES: comma list (default live3.html); QS: extra query (default mode=snapshot); FRAMES: frames to accumulate per view
+// PAGES: comma list (default live3.html; a page may carry its own query, e.g. live3.html?tier=low -> prefix new_tier_low); QS: extra query (default mode=snapshot); FRAMES: frames to accumulate per view
 // on the three.js page (TRAA converges over several frames; default 8); SETTLE: ms per view on the old page.
 // Output: <OUT>/<prefix>_<view>.png with prefix 'new' for live3.html and 'old' for live.html (PREFIX_<page> overrides).
 export default async ({ page, shot, base }) => {
@@ -10,9 +10,10 @@ export default async ({ page, shot, base }) => {
   const views = (process.env.VIEWS || 'view:overview').split(';').filter(Boolean);
   for (const pg of pages) {
     const three = /live3/.test(pg);
-    const prefix = process.env['PREFIX_' + pg.replace(/\W/g, '_')] || (three ? 'new' : 'old');
+    const extra = pg.includes('?') ? '_' + pg.split('?')[1].replace(/\W+/g, '_') : ''; // e.g. live3.html?tier=low -> new_tier_low
+    const prefix = process.env['PREFIX_' + pg.replace(/\W/g, '_')] || (three ? 'new' : 'old') + extra;
     const t0 = Date.now();
-    await page.goto(base + pg + '?' + (process.env.QS || 'mode=snapshot&res=1'));
+    await page.goto(base + pg + (pg.includes('?') ? '&' : '?') + (process.env.QS || 'mode=snapshot&res=1'));
     await page.waitForFunction(() => window.__sfoReady || window.__sfoError, null, { timeout: 0 });
     const err = await page.evaluate(() => window.__sfoError); if (err) throw new Error(err);
     await page.evaluate(async () => { SFO.qa.hideUI(true); await Promise.all(SFO.scene.aircraft.map(a => a.ready)); });

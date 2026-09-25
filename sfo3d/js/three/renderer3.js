@@ -18,7 +18,7 @@ import { markingMaterial } from './markings.js';
 import { loadSignFont, SignBuilder, signMaterials, signMeshes, faceIndex, worldSignAtlasMap } from './signs.js';
 import { Bridges3 } from './bridges.js';
 import { Sprites } from './lights.js';
-import { AircraftRenderer, LiveryLibrary } from './aircraft.js';
+import { AircraftRenderer } from './aircraft.js';
 import { geometryOf, textureOf } from './convert.js';
 import { glCanvas } from './compat/gl.js';
 
@@ -52,7 +52,6 @@ export class Renderer3 {
       window.__sfoError = 'renderer: ' + String(e && e.stack || e);
     });
     this.fontP = loadSignFont().then(f => { this.font = f; }).catch(e => console.warn('MSDF sign font failed to load', e));
-    this.liveriesP = LiveryLibrary.load().then(L => { this.liveries = L; });
   }
   // ------------------------------------------------------------ old Renderer interface
   addProgram(name) { this.progs[name] = true; }
@@ -109,7 +108,7 @@ export class Renderer3 {
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
     this.sprites = new Sprites(); S.add(this.sprites.mesh);
-    this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, liveries: this.liveries || null, track: (ac) => window.SFO && window.SFO.traffic ? window.SFO.traffic.tracks.get(ac.id) : null });
+    this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');
     // compile the scene's programs off the frame loop where the backend can (KHR_parallel_shader_compile / WebGPU
@@ -164,7 +163,6 @@ export class Renderer3 {
       this.engine.scene.add(this.bridges.group);
     }
     if (this.bridges) { this.bridges.update(Date.now()); sc.gateSys.sprites = this.bridges.sprites; }
-    if (this.liveries && this.acr && !this.acr.liveries) this.acr.liveries = this.liveries;
     this.acr.sync(sc.aircraft, camPos);
   }
   // ------------------------------------------------------------ render (fr = compat Scene.frame result)

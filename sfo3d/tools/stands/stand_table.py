@@ -48,11 +48,34 @@ OVERRIDES = {
     'E11U': {'osm': [895097121], 'why': 'OSM E11 lead-in (hdg 261); the unreferenced 1096433104 (hdg 297) is not used'},
     'E13T': {'osm': [895097122], 'why': 'OSM E13 lead-in'},
     # G tip: two hold-room pairs (OSM gate nodes "G11-G12" and "G13-G14"). G13S = the A380/747-8 position with three
-    # bridges (OSM "G13 Jetway", "G14 Jetway" + one branch); G11 = the OSM G11 lead-in at the "G11 Jetway"/"G12 Jetway"
-    # bridges (NAIP wide-body on it). The AODB narrow-body alternative G13R has no identifiable lead-in: not modelled.
+    # bridges (OSM "G13 Jetway", "G14 Jetway" + one branch). The AODB narrow-body positions G13R / G14T have no
+    # identifiable lead-in: not modelled (UNPLACED_EXTRA / DROPPED).
     'G13S': {'osm': [895097158], 'why': 'OSM G13 lead-in at the three-bridge G13-G14 hold room (AODB G13S takes A388/B748/B77W)', 'alias': ['G14']},
-    'G11': {'osm': [895097159], 'why': 'OSM G11 lead-in at the G11-G12 hold room bridges (DataSF gates G11, G12)', 'alias': ['G12']},
+    # Review round 3: the wide-body stand at the G11-G12 hold room is SFO's G12S, not "G11". Evidence: (1) the AODB named
+    # it once - UA900 B789 planned on G12S 24 Sep 13:38-14:52 PDT (flysfo snapshot 10:19Z; the flight was later moved);
+    # (2) the SFO Museum architecture data (CDLA-Permissive-1.0) has a gate point "G12S" at (-1610.0, 53.1), ON the OSM
+    # "G11" lead-in 4.5 m behind its nose (and "G12V" 7.6 m behind it); OSM's ref G11 is a mapper's hold-room label.
+    # The narrow-body positions of that hold room, SFO Museum "G11R" (on the unreferenced OSM lead-in 1096433046) and
+    # "G12T" (on 1096433044), are listed in UNPLACED_EXTRA. The pairing name <-> line rests on the SFO Museum points
+    # (inferred where only they name it).
+    'G12S': {'osm': [895097159], 'why': 'AODB G12S (UA900 B789 plan, 24 Sep) = SFO Museum gate point G12S on the OSM "G11" lead-in (4.5 m behind the nose); '
+                                        'gates G11 / G12 (DataSF) share this hold room', 'alias': ['G11']},
 }
+
+# SFO position names without an AODB allocation in the cached snapshots and without a modelled stand (review round 3):
+# listed in data/sfo_stands.json `unplaced` with their evidence. SFO Museum gate points (CDLA-Permissive-1.0) and the
+# OSM lead-ins they sit on (ODbL). Narrow-body MARS positions: they share the hold room's two bridges with the wide-body
+# stand; the data model (one bridge set per stand, shares_bridges_of for ONE alternative) cannot yet express two
+# simultaneous narrow bodies on one bridge pair, so they are not modelled.
+UNPLACED_EXTRA = {
+    'G11R': {'osm': 1096433046, 'why': 'SFO Museum gate point G11R 1.6 m from the stop of the unreferenced OSM lead-in 1096433046 (hdg 37.9); '
+                                       'narrow-body position at the G11-G12 hold room (DataSF gate G11: UA1931 B39M 19/23/24 Aug at the same time as '
+                                       'UA1948 at G12); exclusive with G12S (inferred)'},
+    'G12T': {'osm': 1096433044, 'why': 'SFO Museum gate point G12T 1.8 m from the stop of the unreferenced OSM lead-in 1096433044 (hdg 87.8); '
+                                       'narrow-body position at the G11-G12 hold room (DataSF gate G12 simultaneous with G11); exclusive with G12S (inferred)'},
+    'G12V': {'osm': None, 'why': 'SFO Museum gate point G12V on the G12S lead-in 7.6 m behind its nose (meaning of the V variant unknown; cf. A1V, C9V)'},
+}
+
 
 # SFO stand names without operations or without a position we can defend (not modelled; listed in the report)
 DROPPED = {
@@ -60,11 +83,13 @@ DROPPED = {
     'C2': 'map label; no operations, no AODB stand', 'D17': 'map label; no operations', 'D18': 'map label; no operations',
     'A3': 'hold-room label; the lead-in is SFO stand A4T', 'A7': 'no operations, no AODB stand (OSM A7 lead-in exists)',
     'A14': 'no operations, no AODB stand (OSM A14 lead-in exists)',
-    'G13R': 'AODB narrow-body position at the G13 hold room (B738 UA1243/UA581 planned 24 Sep 16:56-18:42 PDT, at the same '
-            'time as G14T) - no lead-in identifiable in OSM/NAIP; with G14T it is a MARS split of the G13S wide-body stand',
-    'G14T': 'AODB narrow-body position at the G14 hold room (B39M UA1948/UA2332 planned 24 Sep 16:40-18:25 PDT, first seen in '
-            'the 16:10 UTC snapshot) - no lead-in identifiable in OSM/NAIP',
-    'G12': 'gate (hold room) of stand G11 (OSM gate node "G11-G12")', 'G14': 'gate (hold room) of stand G13S (OSM gate node "G13-G14")',
+    'G13R': 'AODB narrow-body position at the G13 hold room (B39M / B738: UA1931, UA1948, UA1243 ... planned 24 Sep 16:14-18:42 PDT '
+            'at the same time as G14T) - SFO Museum gate point G13R (-1629.3, 6.5), 11 m from the G13S nose, but no lead-in in OSM '
+            'and NAIP 2024 shows a 747 on G13S over it; with G14T a MARS split of G13S (inferred). Not modelled: heading / stop unknown',
+    'G14T': 'AODB narrow-body position at the G14 hold room (B39M / B738, planned 24 Sep 16:16-20:48 PDT at the same time as G13R) - '
+            'SFO Museum gate point G14T (-1622.3, -28.2) only, no lead-in in OSM / NAIP. Not modelled: heading / stop unknown',
+    'G11': 'DataSF gate G11 = the G11-G12 hold room; its wide-body stand is G12S (alias G11), its narrow-body position G11R (UNPLACED_EXTRA)',
+    'G14': 'gate (hold room) of stand G13S (OSM gate node "G13-G14")',
 }
 
 # NAIP 2024 readings: osm way id -> (nose_along m, lateral m, group, flags)

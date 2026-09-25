@@ -33,23 +33,23 @@ to get the atlas map, because `buildSigns` returns only `atlas: A.tex` and not `
 (signs.js line ~150, not exported). Please return `atlasMap: A.map` from `buildSigns` (one extra field), and export
 `locName`. Then the replica can go.
 
-## 3. Brand × model livery textures (`data/liveries/`)
+## 3. Brand × model livery textures (`data/liveries/`): resolved, nothing required
 
-`js/three/aircraft.js LiveryLibrary` loads `data/liveries/manifest.json` when it exists. Format assumed until the
-livery workflow publishes one:
+Update 25 Sep 2026: the liveries workflow published `data/liveries/manifest.js` + `js/aircraft/liveries.js`, and
+`LiveAircraft` (js/live/aircraft.js) now resolves the brand (js/live/lookup.js `resolveLivery`) and loads the texture
+itself (`updateLiveryTexture()` -> `ac.livTex`). `js/three/aircraft.js` uses `ac.livTex` for the atlas draws (texture 0)
+of the imported models, with the atlas alpha as painted cabin-window glass, exactly as `js/shaders/aircraft_real.js`
+(uAtlas / uLivTex). The renderer's own manifest loader was removed. Please keep `updateLiveryTexture()`, `livTex` and
+the draws' `atlas` flag (js/live/models.js) as they are, or tell us when they change.
 
-```json
-{ "entries": [ { "brand": "UAL", "model": "b738", "file": "UAL/b738.png" } ] }
-```
-
-- `brand`: ICAO airline code of the brand painted on the airframe (not the callsign's operator, docs/research/liveries.md §2);
-- `model`: the `.sfom` model key (`js/live/aircraft.js MODEL_BASE` keys);
-- `file`: texture laid out on that model's UV set 0 (the first texture of the `.sfom`), sRGB, v down (no flip).
-
-The brand is read from the track: `tr.brand`, `tr.livery.brand`, `tr.info.brand`, else `tr.cs.airline.icao`. When
-`js/live/lookup.js` gains the registration → brand lookup, please put its result on `tr.brand` (and `tr.brandSrc`
-'obs'/'inf'); the renderer picks it up without further changes. If the manifest uses another shape, tell us and we
-adapt `LiveryLibrary.load`.
+Done for `docs/requests/liveries_windows.md` (25 Sep 2026): (1) neutral skins: `ac.livTex` with `ac._livNeutral` is drawn
+like the model's atlas with the zone recolouring (`uLivTex = 0`); (2) freighters: `brandIsCargo(brand)` -> kind-1 glass
+aft of the flight deck is shaded as a window plug in the top colour, no cabin light (ACR_FS `uNoCabin`). Checked in
+`js/three/dev/envtest.html` (FDX 757). Observation for the liveries owner: with the FedEx livery the plugs come out as
+purple dots on the white cabin band, because the top colour is the purple crown; plugs painted in the colour of the
+surrounding skin (e.g. `uBelly` / the fuselage colour at the window line) would read closer to a real 757F. We will
+follow whatever ACR_FS does. Please make `_livNeutral` a public field (e.g. `livNeutral`) when convenient; the three.js
+path reads the underscore field today.
 
 ## 4. `js/live/gates.js`: nothing required
 

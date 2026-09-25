@@ -187,7 +187,7 @@ export class UI {
     C.innerHTML = `
 <div class="ch"><div class="al">${esc(title)}</div><button data-act="close" class="x" aria-label="Close">×</button></div>
 <div class="fl"><b>${esc(tr.cs && tr.cs.display || I.reg || tr.hex.toUpperCase())}</b>${I.flight && tr.cs && tr.cs.display !== I.flight ? `<span class="mono dim">${esc(I.flight)}</span>` : ''}${sf && sf.fn && !(sfo.cands || []).some(c => c.linked && c.fn === sf.fn) && sf.fn.replace(/\s+/g, '') !== String(tr.cs && tr.cs.display || '').replace(/\s+/g, '') ? `<span class="mono dim" title="Flight number SFO lists for this callsign">${esc(sf.fn)}</span>` : ''}</div>
-<div class="ty">${esc(tr.type ? tr.type.full : 'Type not reported')}${I.icao ? ` <span class="mono dim">${esc(I.icao)}</span>` : ''}</div>
+<div class="ty">${esc(tr.type ? tr.type.full : 'Type not reported')}${I.icao ? ` <span class="mono dim">${esc(I.icao)}</span>` : ''}${typeNote(tr)}</div>
 <div class="ph c-${cat}">${esc(phaseLabel(tr, now))}</div>
 <dl>
   <dt>Tail</dt><dd class="mono">${esc(I.reg || '—')}</dd>
@@ -241,10 +241,19 @@ export function routeText(tr) {
   if (tr.dirSFO === 'dep' || i === 0) { const d = c[Math.min(c.length - 1, (i >= 0 ? i : 0) + 1)]; return `to ${d} ${city(d)}`; }
   return c.join(' → ');
 }
+// where the type comes from when it is not simply the aircraft database's (traffic.js resolveType): the database entry
+// contradicted the transponder's own size category and another source was used -- or none agrees
+function typeNote(tr) {
+  const s = tr.typeSrc; const db = tr.info.dbIcao;
+  if (s === 'sfo') return ` <span class="dim">· per SFO${db && db !== tr.info.icao ? ` (database says ${esc(db)})` : ''}</span>`;
+  if (s === 'db2') return ` <span class="dim">· per the other ADS-B database (${esc(db || '?')} contradicts the transponder's size category)</span>`;
+  if (s === 'conflict') return ` <span class="dim">· database type contradicts the transponder's size category (${esc(tr.info.category || '?')})</span>`;
+  return '';
+}
 // runway: landed / departed / lined up / on final (from the engine's own detection, traffic.js)
 function runwayText(tr) {
   const ph = tr.phase;
-  if (ph === 'final' && tr.finalInfo) return `<b class="mono">${esc(tr.finalInfo.R.name)}</b> <span class="dim">on final</span>`;
+  if (ph === 'final' && tr.finalInfo) return `<b class="mono">${esc(tr.finalLabel || tr.finalInfo.R.name)}</b> <span class="dim">on final${tr.m.rwyFirm === false ? ' (runway not yet certain)' : ''}</span>`;
   if (ph === 'goaround') return `<b class="mono">${esc(tr.m.rwy || '')}</b> <span class="dim">go-around</span>`;
   if ((ph === 'lineup' || ph === 'takeoff') && tr.m.rwy) return `<b class="mono">${esc(tr.m.rwy)}</b> <span class="dim">${ph === 'takeoff' ? 'take-off roll' : 'lined up'}</span>`;
   if (tr.depRunway && (ph === 'departure' || tr.dirSFO === 'dep')) return `<b class="mono">${esc(tr.depRunway)}</b> <span class="dim">departed${tr.liftoffAt ? ' ' + clock(tr.liftoffAt) : ''}</span>`;

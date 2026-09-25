@@ -31,6 +31,8 @@ from shapely.ops import unary_union
 
 EXT_MIN, EXT_MAX = 9.846, 41.381           # m, rotunda centre -> cab pivot (see above)
 CAB_ROT_STD, CAB_ROT_OPT = 92.5, 150.0     # deg; beyond 150 no cab option reaches (185 deg total, asymmetric)
+CAB_CW, CAB_CCW = 92.5, 32.5               # review round 3: standard cab 125 deg = 92.5 cw / 32.5 ccw (signed test)
+CAB_OPT_HALF = 92.5                        # optional 185 deg cab: +-92.5 (its split is not given; inferred symmetric)
 ROT_SWING = 87.5                           # deg either side of the fixed walkway direction (175 deg total)
 WALK_W, ROT_R, TUN_W, CAB_L, CAB_W = 2.6, 2.45, 2.9, 3.3, 3.6
 PIVOT_TO_DOOR = 2.4                        # m, cab pivot -> door when docked (datasheet 12.224 - 9.846 = 2.378 m, see above)
@@ -39,10 +41,48 @@ import json, os, subprocess
 _HERE = os.path.dirname(os.path.abspath(__file__)); _ROOT = os.path.abspath(os.path.join(_HERE, '..', '..'))
 _APP_JSON = os.path.join(_ROOT, 'refs', 'cache', 'stands', 'app_types.json')
 _TYPES_JS = os.path.join(_ROOT, 'js', 'aircraft', 'types.js')
-if not os.path.exists(_APP_JSON) or os.path.getmtime(_APP_JSON) < os.path.getmtime(_TYPES_JS):
-    subprocess.run(['node', os.path.join(_HERE, 'dump_types.mjs')], check=True, capture_output=True)
+_DUMP = os.path.join(_HERE, 'dump_types.mjs')
+if not os.path.exists(_APP_JSON) or os.path.getmtime(_APP_JSON) < max(os.path.getmtime(_TYPES_JS), os.path.getmtime(_DUMP)):
+    subprocess.run(['node', _DUMP], check=True, capture_output=True)
 APP = json.load(open(_APP_JSON))
-ALIAS = {'E175': 'E75L', 'B787': 'B789', 'B76W': 'B763', 'E295': 'E195'}   # designators seen at SFO without an APP entry
+ALIAS = {'E175': 'E75L', 'B787': 'B789', 'B76W': 'B763', 'B75W': 'B752', 'E295': 'E195'}   # designators seen at SFO without an APP entry
+
+# Winglets (review round 3). Boeing Commercial Airplanes, Airport Compatibility, "Wingspan Increases Due to the Addition
+# of Winglets" (5/2/2014, Aviation Partners Boeing data; https://www.boeing.com/content/dam/boeing/v2/airports/faq/
+# wingletspans.pdf, cached refs/cache/boeing3v/wingletspans.pdf, read 25 Sep 2026): 757-200/-300 124'10" (38.0 m) ->
+# 134'9" (41.1 m); 767-300ER 156'1" (47.6 m) -> 167'0" (50.9 m) (retrofits). js/aircraft/types.js models the baseline
+# spans. The ADS-B / ICAO designators B752 / B753 / B763 do not say whether an airframe carries winglets (SFO's AODB
+# writes B75W / B76W for some operators only), so every planform, class and clearance here uses the winglet span: a
+# verified upper bound, the fit per airframe is NOT verified (inferred worst case). 'span_app' keeps the types.js span
+# for the APP view (what js/live/traffic.js standFits compares).
+WINGLET_SPAN = {'B752': 41.1, 'B753': 41.1, 'B763': 50.9}
+for _t, _sp in WINGLET_SPAN.items():
+    if _t in APP and APP[_t]['span'] and APP[_t]['span'] < _sp:
+        APP[_t]['span_app'] = APP[_t]['span']; APP[_t]['span'] = _sp; APP[_t]['winglet'] = True
+
+
+def span_app(t):
+    r = APP[t]; return r.get('span_app', r['span'])
+
+
+# Oshkosh AeroTech Jetway Glass & Steel Truss apron-drive models (sell sheet 2025, refs/cache/sun_night/
+# oshkosh_jetway_steelglass.pdf, re-read 25 Sep 2026 in review round 3): operational retraction / extension, measured
+# from the rotunda centre to the centre of the cab pivot. Review round 3: one bridge is ONE model, so its reach is that
+# model's range, not 9.846-41.381 m (the smallest model's retraction .. the largest model's extension).
+MODELS = [('AT2 41/55', 9.846, 12.264), ('AT2 46/65', 11.370, 15.312), ('AT2 51/75', 12.894, 18.360),
+          ('AT2 56/85', 14.418, 21.408), ('AT2 61/95', 15.942, 24.456), ('AT2 66/105', 17.466, 27.504),
+          ('AT2 72/116', 19.294, 30.857), ('AT2 77/126', 20.818, 33.905), ('AT2 82/136', 22.342, 36.953),
+          ('AT2 88/147', 24.171, 40.306),
+          ('AT3 42/70', 10.276, 16.997), ('AT3 47/85', 11.800, 21.569), ('AT3 52/100', 13.324, 26.141),
+          ('AT3 58/116', 15.152, 31.018), ('AT3 61/127', 16.219, 34.219), ('AT3 65/133', 17.286, 36.200),
+          ('AT3 68/144', 18.353, 39.400), ('AT3 72/150', 19.420, 41.381)]
+
+
+def choose_model(e_lo, e_hi, tol=0.0):
+    """the datasheet model whose operational range covers [e_lo, e_hi] (within tol m), preferring the shortest
+    retraction (the bridge can rest closest to the building), then the shortest extension. None if no model covers."""
+    ok = [m for m in MODELS if m[1] <= e_lo + tol and m[2] >= e_hi - tol]
+    return min(ok, key=lambda m: (m[1], m[2])) if ok else None
 
 
 def _bs():
@@ -77,7 +117,8 @@ def accepted_types(s, app_rule=False):
     if s.get('types_ok') and not app_rule: return [t for t in s['types_ok'] if t in APP]
     for t, r in APP.items():
         if r['span'] is None: continue
-        if (r['span'] <= sp + 0.6 and r['L'] <= L + 2) or (app_rule and sp >= 64 and r['span'] <= 80): out.append(t)
+        span = span_app(t) if app_rule else r['span']        # the app compares types.js spans (no winglets)
+        if (span <= sp + 0.6 and r['L'] <= L + 2) or (app_rule and sp >= 64 and span <= 80): out.append(t)
     return out
 
 
@@ -100,6 +141,18 @@ def planform(nose, hdg, t, visual=False):
             parts.append(Polygon([P(w['rootLE'], 0), P(w['rootLE'] + b * tn, s_ * b), P(w['rootLE'] + b * tn + w['tipC'], s_ * b), P(w['rootLE'] + w['rootC'], 0)]))
     h = r['hstab']
     if h: parts.append(Polygon([P(h['x'], -h['span'] / 2), P(L, -h['span'] / 2), P(L, h['span'] / 2), P(h['x'], h['span'] / 2)]))
+    # engine nacelles (review round 3; types.js eng / rear as js/aircraft/model.js places them): underwing front at the
+    # wing leading edge at the engine's z (LE swept from z0 = 0.88 R) minus fwd, nacelle + nozzle 1.12 len long, +-r
+    if w:
+        tn = math.tan(math.radians(w['sweep']))
+        for e in r.get('eng') or []:
+            x0 = w['rootLE'] + (e['z'] - 0.88 * R) * tn - e['fwd']
+            for s_ in (-1, 1): parts.append(Polygon([P(x0, s_ * e['z'] - e['r']), P(x0 + 1.12 * e['len'], s_ * e['z'] - e['r']),
+                                                     P(x0 + 1.12 * e['len'], s_ * e['z'] + e['r']), P(x0, s_ * e['z'] + e['r'])]))
+    e = r.get('rear')
+    if e:
+        for s_ in (-1, 1): parts.append(Polygon([P(e['x'], s_ * e['z'] - e['r']), P(e['x'] + 1.12 * e['len'], s_ * e['z'] - e['r']),
+                                                 P(e['x'] + 1.12 * e['len'], s_ * e['z'] + e['r']), P(e['x'], s_ * e['z'] + e['r'])]))
     return unary_union([p.buffer(0) for p in parts])
 
 

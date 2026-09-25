@@ -13,7 +13,8 @@ paint_pave_naip.py --stats prints them for sample areas):
   concrete      pavement component with median V >= 150 (asphalt darker)
 Kept only on the airfield: green paint within 30 m of SFO Museum taxiway / runway pavement and not on it (the paint
 is on the island pavement between taxiway fillets); extra pavement within 60 m of the SFO Museum paved areas + the
-inferred apron (data/sfo_details.json), outside them and outside buildings (SFO Museum structures, terminal
+inferred apron (data/sfo_details.json) - or inside OSM aprons / within 40 m of OSM taxi centrelines (review round 3) -,
+outside them and outside buildings (SFO Museum structures, terminal
 complex, boarding areas; OSM buildings are not used), components >= 300 m2 after a 1.5 m opening, holes (parked
 aircraft, vehicles, shadows) < 3000 m2 filled. Roofs of hangars that SFO Museum does not map can classify as
 pavement (grey); they are listed by area in the log for review.
@@ -87,7 +88,20 @@ def main(preview=False):
     for h in Dt.get('holds', []):
         a_, b_ = np.array(h['a']), np.array(h['b']); u_ = np.array(h['dir']) * 1.5
         fill(holdm, [[list(a_ - u_), list(b_ - u_), list(b_ + u_), list(a_ + u_)]])
-    p = (grey | g) & (pav == 0) & (bld == 0) & (dpav < 60)
+    # review round 3: the candidate region also covers OSM aeroway=apron polygons and the ground within 40 m of an OSM
+    # taxiway / taxilane centreline (ODbL). West-field taxilanes lie > 60 m from SFO Museum pavement and were missing -
+    # tools/build_airfield_details.py had paved them with 45 m discs wherever an ADS-B aircraft stood (removed); now the
+    # NAIP classification itself decides there.
+    osm = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'osm', 'ksfo_osm_parsed.json')))
+    oap = np.zeros((H, W), np.uint8); ocl = np.zeros((H, W), np.uint8)
+    for a in osm.get('aprons', []):
+        if len(a['pts']) >= 3: fill(oap, [[GF.wgs84_to_world(la, lo) for la, lo in a['pts']]])
+    for t in osm.get('taxiways', []):
+        q = np.round(P([GF.wgs84_to_world(la, lo) for la, lo in t['pts']]) * 4).astype(np.int32)
+        if len(q) >= 2: cv2.polylines(ocl, [q], False, 1, 1, shift=2)
+    dcl = ndi.distance_transform_edt(ocl == 0) * RES
+    cand = (dpav < 60) | (oap > 0) | (dcl < 40)
+    p = (grey | g) & (pav == 0) & (bld == 0) & cand
     p = ndi.binary_opening(p, iterations=3)
     lab, n = ndi.label(p); sz = ndi.sum(p, lab, range(1, n + 1))
     p = np.isin(lab, 1 + np.nonzero(sz * RES * RES >= 300)[0])

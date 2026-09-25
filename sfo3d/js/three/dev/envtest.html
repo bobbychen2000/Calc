@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>environment and material test</title>
+<!-- Dev check of the lighting chain without the airport: Engine (post, CSM) + Sky (background, fog, PMREM IBL) with a
+     daytime env as js/live/app.js applyEnv builds it; spheres (matte, clear-coat paint, chrome, glass), an object-
+     material building, a procedural and an imported aircraft. ?el=sun elevation deg, ?tier=, ?n=frames. -->
+<script type="importmap">
+{ "imports": { "../../gl.js": "../compat/gl.js" } }
+</script>
+<style>html,body{margin:0;height:100%;background:#000}canvas{display:block;width:100%;height:100%}</style></head>
+<body>
+<script type="module">
+import { THREE, TSL } from '../lib.js';
+import { Engine, QUALITY3 } from '../engine.js';
+import { Sky } from '../sky.js';
+import { objectMaterial } from '../objects.js';
+import { AircraftRenderer } from '../aircraft.js';
+import { LiveAircraft } from '../../live/aircraft.js';
+import { MODEL_SOURCES } from '../../live/models.js';
+import { AIRLINE_LIVERY, LIVERIES } from '../../aircraft/fleet.js';
+import { makeNoiseTexture, makeCloudTexture, sunVector } from '../../world/textures.js';
+import { textureOf } from '../convert.js';
+import { liveryForAirline } from '../../live/lookup.js';
+const q = new URLSearchParams(location.search); const out = {}; window.SFO_LIVERY_BASE = '../../../data/liveries/';
+try {
+  const c = document.createElement('canvas'); document.body.appendChild(c);
+  const E = await new Engine(document.body, QUALITY3[q.get('tier') || 'high'], { canvas: c }).init(); E.resize(innerWidth, innerHeight, 1);
+  const S = E.scene; if (q.get('ao')) E.aoAmount.value = +q.get('ao'); if (q.get('env') === '0') out.noenv = 1;
+  const noise = textureOf(makeNoiseTexture()); noise.wrapS = noise.wrapT = THREE.RepeatWrapping;
+  const clouds = textureOf(makeCloudTexture()); clouds.wrapS = clouds.wrapT = THREE.RepeatWrapping;
+  const sky = new Sky(E, { cloudTex: clouds, noiseTex: noise, baseRes: 512 });
+  const sunDir = sunVector(+(q.get('az') || 200), +(q.get('el') || 45));
+  const env = { sunDir, mie: 21e-6, sunI: 20, fog: [0.0001, 1 / 700, 1, 0.97], cloud: [0.14, 800 * 0.3048, 14000, 0.5], cloudWind: [1, 1], refPos: [0, 60, 0], slab: false };
+  sky.setEnv(env); const L = Sky.lightFor(env); sky.applyLight(L);
+  S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode();
+  sky.renderSky(E.renderer); if (q.get('env') !== '0') sky.updateEnvironment(E.renderer, S); else S.environment = null;
+  E.setSun(L.sunDir, L.sunColor); E.renderer.toneMappingExposure = 0.45;
+  out.L = { sun: L.sunColor.map(v => +v.toFixed(2)), up: L.skyUp.map(v => +v.toFixed(3)) };
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardNodeMaterial({ color: 0x8a8a88, roughness: 0.9 })); g.rotation.x = -Math.PI / 2; g.receiveShadow = true; S.add(g);
+  const mk = (p, x) => { const m = new THREE.Mesh(new THREE.SphereGeometry(4, 48, 24), new THREE.MeshPhysicalNodeMaterial(p)); m.position.set(x, 4, 30); m.castShadow = m.receiveShadow = true; S.add(m); };
+  mk({ color: 0xf0f0f0, roughness: 0.6 }, -30); mk({ color: 0xf0f0f0, roughness: 0.4, clearcoat: 1, clearcoatRoughness: 0.08 }, -20);
+  mk({ color: 0xcccccc, roughness: 0.15, metalness: 1 }, -10); mk({ color: 0x040405, roughness: 0.4, clearcoat: 1, clearcoatRoughness: 0.02 }, 0);
+  const { Geo } = await import('../../geom.js');
+  const gb = new Geo(); gb.box([20, 0, 10], [50, 14, 40], [0.8, 0.8, 0.78, 1], [0.9, 0, 1, 0]); gb.box([55, 0, 10], [70, 25, 30], [0.8, 0.8, 0.78, 1], [0.9, 0, 2, 0]);
+  const d = gb.data(); const bg = new THREE.BufferGeometry(); for (const [k, n, s] of [['position', 'pos', 3], ['normal', 'nrm', 3], ['uv', 'uv', 2], ['color', 'col', 4], ['extra', 'extra', 4]]) bg.setAttribute(k, new THREE.BufferAttribute(new Float32Array(d[n]), s)); bg.setIndex(Array.from(d.idx));
+  const bm = new THREE.Mesh(bg, objectMaterial({ noiseTex: noise, night: TSL.uniform(0), time: TSL.uniform(0) })); bm.castShadow = bm.receiveShadow = true; S.add(bm);
+  for (const k of ['b738', 'b752', 'a320']) MODEL_SOURCES[k] = '../../../data/models/' + k + '.sfom';
+  const AR = new AircraftRenderer(S, { noiseTex: noise });
+  const list = [['b772', 'UAL', [-10, 0, -20]], ['b738', 'UAL', [40, 0, -40]], ['b752', 'FDX', [-60, 0, 25]], ['a320', q.get('nb') || 'XXX', [-120, 0, -30]]].map(([t, l, p], i) => { let Lv = liveryForAirline(l, null, null, t.toUpperCase()); const ac = new LiveAircraft(t, MODEL_SOURCES[t] ? t : null, Lv || LIVERIES[0], { id: 'T' + i, lodDist: 5000 }); ac.pos = p; ac.fwd = [1, 0, 0]; return ac; });
+  await Promise.all(list.map(a => a.ready));
+  const cam = { pos: [+(q.get('cx') || -20), +(q.get('cy') || 18), +(q.get('cz') || 95)], target: [10, 5, 0], fov: 50 * Math.PI / 180, near: 0.5, far: 50000, shadowSplits: [80, 300, 1200] };
+  for (let k = 0; k < 40 && !list[1].livTex; k++) { AR.sync(list, cam.pos); await new Promise(r => setTimeout(r, 100)); } out.liv = list.map(a => [a.type, a.liv && a.liv.brand, !!a.livTex, !!a._livNeutral]);
+  for (let i = 0; i < +(q.get('n') || 10); i++) { AR.sync(list, cam.pos); E.setCamera(cam, innerWidth, innerHeight); E.render(); await new Promise(r => setTimeout(r, 20)); }
+  out.ok = true;
+} catch (e) { out.err = String(e && e.stack || e); }
+window.__probe = out;
+</script></body></html>

@@ -13,11 +13,12 @@ Outputs data/sfo_details.json (+ debug PNGs in out/details/):
                  aeroway=holding_position on the line (src 'osm'); then every OSM holding position (runway / ILS) with
                  no model hold within 15 m is used as a locator and its bar measured on the paint (locator 'osm',
                  kind 'runway' | 'ils'; review round 2); 'dist' = m from the runway centreline
-  edges          taxiway edge polylines where the taxiway borders unpaved ground
-  masts          apron floodlight mast positions (typical spacing along the ramp boundary)
+  edges          taxiway edge polylines where the taxiway borders unpaved ground: SFO Museum outline, snapped to the painted
+                 edge line on NAIP 2024 (edgeMeta / edgeStats; review round 3)
+  masts          floodlight masts mapped in OSM (man_made=mast, tower:type=lighting; review round 3 - were inferred)
   roads          ramp service-road lines offset from the terminal face
 World frame (matches js/geo.js): x = east, z = south (m), origin = ARP; projection/datum from tools/geo_frame.py
-(exact GRS80 local tangent plane, NAD83(2011)). The ADS-B snapshot (WGS 84) goes through geo_frame.wgs84_to_world.
+(exact GRS80 local tangent plane, NAD83(2011)). The ADS-B snapshot (WGS 84) is used only for the debug image (review round 3).
 Also writes data/sfo_details.js (the same JSON as an ES module).
 """
 import json, math, os, sys
@@ -188,18 +189,40 @@ for w in OSM['taxiways']:
             cm = np.array([np.median(corr[max(0, i - 1):i + 2]) for i in range(len(corr))])
             corr = np.array([cm[max(0, i - 2):i + 3].mean() for i in range(len(cm))])
             corr[np.abs(corr) < 0.05] = 0.0
+        good = ~np.isnan(offs)
+        # review round 3 (centrelines OSM 1096199967 / 155702566: the paint lies ~2 m off along a curve, the offset
+        # changes along it, so no 7-sample window has MAD < 0.25 m and nothing was corrected although the generator had
+        # measured 2.06 / 1.74 m): when the windowed rule left a line with median |offset| > 1.0 m uncorrected, fit a
+        # smooth offset (robust quadratic in arc length) and apply it if >= 60 % of the samples have paint and the fit
+        # residual is <= 0.35 m rms; otherwise the line is flagged 'naip_unverified' in centerlineMeta.
+        fit_note = None
+        if good.sum() >= 6 and float(np.median(np.abs(offs[good]))) > 1.0 and float(np.max(np.abs(corr))) < 0.05:
+            sg_, og_ = ss[good], offs[good]; keep_ = np.ones(len(sg_), bool)
+            for _ in range(4):
+                cf = np.polyfit(sg_[keep_], og_[keep_], min(2, int(keep_.sum()) - 1)); rr = og_ - np.polyval(cf, sg_)
+                nk = np.abs(rr) < max(0.5, 2.5 * np.median(np.abs(rr[keep_])))
+                if (nk == keep_).all(): break
+                keep_ = nk
+            rms_ = float(np.sqrt(np.mean(rr[keep_] ** 2)))
+            if good.mean() >= 0.6 and keep_.sum() >= 0.6 * good.sum() and rms_ <= 0.35:
+                corr = np.clip(np.polyval(cf, ss), -3.5, 3.5); fit_note = 'smooth fit (quadratic, %.2f m rms, %d/%d samples)' % (rms_, keep_.sum(), len(ss))
+            else:
+                fit_note = 'naip_unverified: paint %d/%d samples, fit %.2f m rms' % (good.sum(), len(ss), rms_)
+        elif good.any() and float(np.median(np.abs(offs[good]))) > 1.0 and float(np.max(np.abs(corr))) < 0.05:
+            fit_note = 'naip_unverified: paint in only %d/%d samples (weak paint), median offset %.2f m' % (good.sum(), len(ss), float(np.median(np.abs(offs[good]))))
         c_pts = np.interp(S, ss, corr) if len(ss) > 1 else np.full(len(S), corr[0])
         N = np.stack([-T[:, 1], T[:, 0]], 1)
         Q = P + N * c_pts[:, None]
         tot_len += S[-1]; corr_len += float(np.sum((np.abs(c_pts[1:]) > 0.01) * np.diff(S)))
-        good = ~np.isnan(offs)
         resid_before += list(np.abs(offs[good])); resid_after += list(np.abs(offs[good] - corr[good]))
         a = cv2.approxPolyDP(Q.astype(np.float32).reshape(-1, 1, 2), 0.12, False)[:, 0, :]
         centerlines.append([[round(float(x), 2), round(float(z), 2)] for x, z in a])
         cl_meta.append({'osm_id': w['id'], 'ref': w['tags'].get('ref'), 'src': 'osm+naip' if np.any(np.abs(c_pts) > 0.01) else 'osm',
                         'naip_samples': int(len(ss)), 'naip_peaks': int(good.sum()),
                         'naip_med_abs_off': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
-                        'max_corr': round(float(np.max(np.abs(c_pts))), 2)})
+                        'naip_resid_after': round(float(np.median(np.abs(offs[good] - corr[good]))), 2) if good.any() else None,
+                        'max_corr': round(float(np.max(np.abs(c_pts))), 2), **({'naip_fit': fit_note} if fit_note else {}),
+                        **({'naip_unverified': True} if fit_note and fit_note.startswith('naip_unverified') else {})})
 # ---- centrelines painted on NAIP 2024 that OSM does not map (review round 2). Each entry: two locator points (world
 # x, z) near the ends of the painted line, read on NAIP; the line itself is TRACED on the paint (Yellow.cross_peak every
 # 2 m, +-2.5 m search, heading from the last 10 m of accepted peaks) and is not the straight line between the locators.
@@ -563,24 +586,62 @@ for t in D['taxiways']:
 def simplify(pl, tol):
     c = np.array(pl, np.float32).reshape(-1, 1, 2); a = cv2.approxPolyDP(c, tol, False)[:, 0, :]; return [[round(float(p[0]), 2), round(float(p[1]), 2)] for p in a]
 edges = [simplify(e, 0.35) for e in edges if sum(math.dist(e[i], e[i + 1]) for i in range(len(e) - 1)) > 15]
-print('edge runs', len(edges))
+print('edge runs (SFO Museum outline)', len(edges))
+# Review round 3: the runs above are the SFO Museum taxiway outline moved 0.9 m inward (inferred) and sat 1-2 m inside
+# the painted double yellow edge line (review: median 0.95 m, 20.6 km of 83 km over 1.5 m). Each run is now snapped to
+# the paint on NAIP 2024 like the centrelines: the yellow ridge across the line (+-3.5 m, averaged over 3 m along)
+# every 2 m; where >= 4 of 7 neighbouring samples agree (MAD < 0.4 m) the run moves onto their median (any size up to
+# 3.5 m), smoothed; elsewhere the outline position is kept. edgeMeta per run: 'naip' (snapped), 'outline' (no
+# consistent paint: position inferred), with the paint fraction and residuals. Runs over 30 m with paint in < 15 % of
+# the samples are dropped (NAIP shows no edge line there; review: lines drawn on grey pavement).
+edge_meta, edges_out = [], []
+E_before, E_after = [], []
+for e in edges:
+    P = densify(e, 1.0); S = arclen(P); T = tangents(P)
+    if S[-1] < 4: continue
+    ss = np.arange(1.0, S[-1] - 0.5, 2.0) if S[-1] > 3 else np.array([S[-1] / 2])
+    offs = np.full(len(ss), np.nan)
+    for i, s_ in enumerate(ss):
+        p_ = np.array([np.interp(s_, S, P[:, 0]), np.interp(s_, S, P[:, 1])]); t_ = np.array([np.interp(s_, S, T[:, 0]), np.interp(s_, S, T[:, 1])])
+        t_ /= max(1e-9, np.hypot(*t_))
+        r = YEL.cross_peak(p_, t_, half=3.5, avg=3.0, step=0.1, min_contrast=10.0)
+        if r and r[2] < 0.7 * r[1]: offs[i] = r[0]
+    good = ~np.isnan(offs); frac = float(good.mean())
+    if S[-1] > 30 and frac < 0.15:
+        edge_meta.append(None); continue          # marker for the stats below (dropped run)
+    corr = np.zeros(len(ss))
+    for i in range(len(ss)):
+        v = offs[max(0, i - 3):i + 4]; v = v[~np.isnan(v)]
+        if len(v) >= 4:
+            m = float(np.median(v))
+            if np.median(np.abs(v - m)) < 0.4 and abs(m) > 0.2: corr[i] = float(np.clip(m, -3.5, 3.5))
+    if len(corr) >= 3:
+        cm = np.array([np.median(corr[max(0, i - 1):i + 2]) for i in range(len(corr))])
+        corr = np.array([cm[max(0, i - 2):i + 3].mean() for i in range(len(cm))])
+        corr[np.abs(corr) < 0.05] = 0.0
+    c_pts = np.interp(S, ss, corr) if len(ss) > 1 else np.full(len(S), corr[0])
+    Q = P + np.stack([-T[:, 1], T[:, 0]], 1) * c_pts[:, None]
+    E_before += list(np.abs(offs[good])); E_after += list(np.abs(offs[good] - corr[good]))
+    edges_out.append(simplify(Q.tolist(), 0.2))
+    edge_meta.append({'src': 'naip' if np.any(np.abs(c_pts) > 0.01) else 'outline', 'len': round(float(S[-1]), 1), 'paint_frac': round(frac, 2),
+                      'naip_med_abs_off_before': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
+                      'naip_med_abs_off_after': round(float(np.median(np.abs(offs[good] - corr[good]))), 2) if good.any() else None})
+EDGE_STATS = {'runs_outline': len(edges), 'runs_kept': len(edges_out), 'dropped_no_paint': sum(1 for m in edge_meta if m is None),
+              'km_kept': round(sum(m['len'] for m in edge_meta if m) / 1000, 2),
+              'snapped_runs': sum(1 for m in edge_meta if m and m['src'] == 'naip'),
+              'paint_offset_before': {'median': round(float(np.median(E_before)), 2), 'gt1.5': round(float((np.array(E_before) > 1.5).mean()), 3)} if E_before else None,
+              'paint_offset_after': {'median': round(float(np.median(E_after)), 2), 'gt1.5': round(float((np.array(E_after) > 1.5).mean()), 3)} if E_after else None}
+edges = edges_out; edge_meta = [m for m in edge_meta if m]
+print('edges', EDGE_STATS)
 
-# ---------------------------------------------------------------- floodlight masts (typical ~120 m spacing along the ramp)
-ramp = ((apron | REM) > 0).astype(np.uint8)
-inner = (dist_to(1 - ramp) >= 9).astype(np.uint8)
-cs, _ = cv2.findContours(inner, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-masts = []
+# ---------------------------------------------------------------- floodlight masts: OSM man_made=mast + tower:type=lighting
+# Review round 3: the earlier masts were inferred (every ~120 m along the inferred ramp outline) and several stood in
+# taxiway pavement or on landside roads. Now only mapped masts: OSM nodes man_made=mast, tower:type=lighting (ODbL;
+# parsed by tools/xcheck/parse_osm.py, 'lighting_masts'). Checked on NAIP 2024 (8 of 70 by eye, review round 3): each
+# node sits at the base of an imaged mast (thin leaning line with the round head ~15-30 m away, relief displacement).
+# mastMeta records the source; masts closer than 25 m to a data taxiway centreline would be listed (none are: >= 51 m).
+masts = [[round(m['w'][0], 2), round(m['w'][1], 2)] for m in OSM.get('lighting_masts', [])]
 dTW = dist_to(TW | RW)
-for c in cs:
-    c = c[:, 0, :]
-    if len(c) < 60: continue
-    acc = 0.0
-    for i in range(1, len(c)):
-        acc += math.dist(c[i], c[i - 1]) * RES
-        if acc >= 120:
-            x, y = c[i]
-            if dTW[y, x] > 25 and dT[y, x] > 25 and all(math.dist((X0 + x * RES, Z0 + y * RES), m) > 70 for m in masts):
-                masts.append([round(X0 + x * RES, 1), round(Z0 + y * RES, 1)]); acc = 0
 print('masts', len(masts))
 
 # ---------------------------------------------------------------- service road lines along the terminal face
@@ -600,24 +661,21 @@ for off in (7.0, 14.5):
         if len(run) > 25: roads.append({'off': off, 'pts': simplify(run, 0.5)})
 print('road lines', len(roads))
 
-# ---------------------------------------------------------------- pavement patches where aircraft were observed parked off the mapped ramp
-snap = json.loads(open(os.path.join(ROOT, 'data', 'snapshot.js')).read().split('SNAPSHOT = ')[1].split(';\nexport')[0])
-patches = []
-dP = dist_to(PAVED)
-for ac in snap['ac']:
-    if ac.get('alt_baro') != 'ground' or (ac.get('gs') or 0) > 3: continue
-    x, z = geo_frame.wgs84_to_world(ac['lat'], ac['lon']); ix, iy = int((x - X0) / RES), int((z - Z0) / RES)
-    if dP[iy, ix] > 0:
-        patches.append([round(x, 1), round(z, 1), 45.0])
-print('patches', len(patches))
+# Review round 3: the 45 m 'patches' paved wherever an ADS-B aircraft of data/snapshot.js (adsb.fi + adsb.lol, not a
+# listed source) stood off the mapped pavement - circular, and two of them paved grass between 1L/19R and 1R/19L. They
+# are gone; the real pavement at the other three is classified on NAIP by tools/imagery/paint_pave_naip.py.
 out = {'attribution': 'Taxiway centrelines: OpenStreetMap aeroway=taxiway ways ((c) OpenStreetMap contributors, ODbL 1.0), '
                       'checked and locally moved onto the paint measured on USDA NAIP 2024 (public domain). Holding positions: '
                       'painted markings measured on NAIP 2024 (src naip; locator osm = found via an OSM aeroway=holding_position) or OSM '
-                      'aeroway=holding_position (src osm). Centrelines with src naip: traced on the NAIP paint where OSM has no way. Apron outline, '
-                      'edges, masts and road lines: derived from SFO Museum sfomuseum-data-architecture (CDLA-Permissive-1.0), inferred. '
-                      'See tools/build_airfield_details.py and docs/ATTRIBUTION.md',
+                      'aeroway=holding_position (src osm). Centrelines with src naip: traced on the NAIP paint where OSM has no way. Taxiway edge lines: '
+                      'SFO Museum sfomuseum-data-architecture taxiway outlines (CDLA-Permissive-1.0) snapped to the paint measured on NAIP 2024 '
+                      '(edgeMeta). Floodlight masts: OpenStreetMap man_made=mast + tower:type=lighting (ODbL). Apron outline and road lines: '
+                      'derived from SFO Museum geometry, inferred. See tools/build_airfield_details.py and docs/ATTRIBUTION.md',
        'frame': geo_frame.FRAME_ID, 'apron': apron_polys, 'centerlines': centerlines, 'centerlineMeta': cl_meta, 'centerlineStats': CL_STATS,
-       'holds': holds, 'holdStats': HOLD_STATS, 'holdsDropped': hold_log, 'edges': edges, 'masts': masts, 'roads': roads, 'patches': patches}
+       'holds': holds, 'holdStats': HOLD_STATS, 'holdsDropped': hold_log, 'edges': edges, 'edgeMeta': edge_meta, 'edgeStats': EDGE_STATS,
+       'masts': masts, 'mastMeta': {'src': 'osm man_made=mast + tower:type=lighting (base position)', 'n': len(masts),
+                                    'check': 'NAIP 2024: 8 of 70 checked by eye (base of an imaged mast), review round 3'},
+       'roads': roads}
 json.dump(out, open(os.path.join(ROOT, 'data', 'sfo_details.json'), 'w'), separators=(',', ':'))
 open(os.path.join(ROOT, 'data', 'sfo_details.js'), 'w').write('// generated by tools/build_airfield_details.py - ODbL 1.0: taxiway centrelines contain information from OpenStreetMap (c) OpenStreetMap contributors; holds measured on USDA NAIP 2024; apron/edges from SFO Museum (CDLA-Permissive-1.0) - docs/ATTRIBUTION.md\nexport const DETAILS = ' + json.dumps(out, separators=(',', ':')) + ';\n')
 print('wrote', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_details.json')) // 1024, 'KB')
