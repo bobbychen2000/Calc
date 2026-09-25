@@ -447,31 +447,48 @@ def draw_front(sh: Sheet, view, N, ext):
 
 
 # ---------------------------------------------------------------------------- balloons / BOM
-ITEMS = [
-    # item, part ids, view, anchor (model xyz), balloon position (view u, v in metres)
-    (1, ["fus_fwd", "fus_center", "fus_aft"], "side", (7.40, -0.84, 2.42), (7.00, 3.35)),
-    (2, ["wing_R", "wing_L"], "plan", (5.80, 5.00, 1.40), (4.15, 5.55)),
-    (3, ["winglet_R", "winglet_L"], "plan", (5.95, 7.98, 1.60), (4.55, 7.70)),
-    (4, ["flap_R", "flap_L"], "plan", (6.85, 3.00, 1.20), (8.55, 3.30)),
-    (5, ["aileron_R", "aileron_L"], "plan", (6.55, 6.80, 1.45), (8.20, 6.95)),
-    (6, ["fin"], "side", (13.20, -0.06, 3.40), (12.10, 3.95)),
-    (7, ["rudder"], "side", (14.30, -0.04, 3.00), (15.35, 3.02)),
-    (8, ["dorsal_fin"], "side", (11.95, -0.03, 2.75), (10.90, 3.45)),
-    (9, ["stabilizer"], "plan", (14.05, 1.80, 4.17), (12.60, 2.90)),
-    (10, ["elevator_R", "elevator_L"], "plan", (14.50, 1.20, 4.15), (15.30, 1.90)),
-    (11, ["tail_bullet"], "side", (14.25, -0.13, 4.18), (15.35, 3.78)),
-    (12, ["strakes"], "side", (13.10, -0.21, 1.75), (13.30, 0.85)),
-    (13, ["propeller", "blade_1", "blade_2", "blade_3", "blade_4", "blade_5"], "side", (0.80, -0.30, 2.10), (0.95, 3.35)),
-    (14, ["cowl_upper", "cowl_lower"], "side", (2.20, -0.50, 1.95), (2.40, 3.35)),
-    (15, ["chin_inlet"], "side", (1.40, -0.10, 1.22), (1.40, 0.70)),
-    (16, ["exhaust_stacks"], "side", (1.62, -0.55, 1.64), (1.68, 3.35)),
-    (17, ["gear_main_R", "gear_main_L"], "side", (6.43, -2.38, 0.42), (7.45, 0.35)),
-    (18, ["gear_nose"], "side", (2.95, -0.08, 0.32), (2.05, 0.30)),
-    (19, ["door_airstair"], "side", (4.72, -0.80, 1.30), (4.20, 0.35)),
-    (20, ["door_cargo"], "side", (9.30, -0.80, 1.30), (9.90, 0.35)),
-    (21, ["exit_hatch"], "plan", (5.52, 0.76, 2.25), (3.70, 1.25)),
-    (22, ["radar_pod"], "plan", (5.10, 3.95, 1.20), (4.20, 4.60)),
-]
+def _items():
+    """Balloon items: (item, part ids, view, anchor (model xyz, from the parameters), balloon position (view u, v m)).
+    Anchors are taken from the parameter modules (S3-16) so they follow the Stage-2 geometry."""
+    from model import fuselage as F, wing as W, empennage as E, gear as G, powerplant as PP, details as D
+    from model import fuselage_parts as FP
+    port = lambda x, z: (x, -float(F.side_y(x, z)), z)                                  # noqa: E731
+    wing_pt = lambda y, xc: (float(W.x_le(y) + xc * W.chord(y)), y, float(W.z_ref(y)))  # noqa: E731
+    stab_pt = lambda y, xc: (float(E.stab_le(y) + xc * (E.stab_te(y) - E.stab_le(y))), y, E.STAB_Z)   # noqa: E731
+    wl = W.winglet_sections()[len(W.winglet_sections()) // 2]
+    fr = E.strake_frame(11.2)[1] * [1, -1, 1]
+    ex = PP.exhaust_stack_path(-1, 21)[10]
+    pa, pc = FP.door_panel(FP.AIRSTAIR), FP.door_panel(FP.CARGO)
+    blade = PP.prop_hub() + 0.55 * PP.blade_axis(0) * [1, -1, 1]
+    return [
+        (1, ["fus_fwd", "fus_center", "fus_aft"], "side", port(7.40, 2.42), (7.00, 3.35)),
+        (2, ["wing_R", "wing_L"], "plan", wing_pt(5.0, 0.40), (4.15, 5.55)),
+        (3, ["winglet_R", "winglet_L"], "plan", tuple(wl.le + [0.3 * wl.chord, 0, 0]), (4.55, 7.70)),
+        (4, ["flap_R", "flap_L"], "plan", wing_pt(3.0, 0.965), (8.55, 3.30)),   # aft of the shroud lip (0.93 c)
+        (5, ["aileron_R", "aileron_L"], "plan", wing_pt(6.8, 0.90), (8.20, 6.95)),
+        (6, ["fin"], "side", (float(E.fin_chord_x(0.40, 3.40)), -0.06, 3.40), (12.10, 3.95)),
+        (7, ["rudder"], "side", (float(E.fin_chord_x(0.85, 3.00)), -0.04, 3.00), (15.35, 3.02)),
+        (8, ["dorsal_fin"], "side", (float(E.dorsal_edge_x(2.95)) + 0.40, -0.03, 2.95), (10.90, 3.45)),
+        (9, ["stabilizer"], "plan", stab_pt(1.80, 0.35), (12.60, 2.90)),
+        (10, ["elevator_R", "elevator_L"], "plan", stab_pt(1.20, 0.85), (15.30, 1.90)),
+        (11, ["tail_bullet"], "side", (14.25, -0.08, float(np.interp(14.25, np.array(E.BULLET)[:, 0],
+                                                                       np.array(E.BULLET)[:, 1])) - 0.03), (15.35, 3.78)),
+        (12, ["strakes"], "side", tuple(fr), (13.30, 0.85)),
+        (13, ["propeller", "blade_1", "blade_2", "blade_3", "blade_4", "blade_5"], "side", tuple(blade), (0.95, 3.35)),
+        (14, ["cowl_upper", "cowl_lower"], "side", port(2.20, 1.95), (2.40, 3.35)),
+        (15, ["chin_inlet"], "side", (1.19, -0.12, float(F.z_bot(1.25)) + 0.06), (1.40, 0.70)),
+        (16, ["exhaust_stacks"], "side", tuple(ex), (1.68, 3.35)),
+        (17, ["gear_main_R", "gear_main_L"], "side", tuple(G.MAIN_AXLE * [1, -1, 1] + [0, -0.11, 0.14]), (7.45, 0.35)),
+        (18, ["gear_nose"], "side", tuple(G.NOSE_AXLE + [0, -0.08, 0.10]), (2.05, 0.30)),
+        (19, ["door_airstair"], "side", port(pa["cx"] - 0.20, pa["cz"] - pa["hz"] + 0.10), (4.20, 0.35)),
+        (20, ["door_cargo"], "side", port(pc["cx"] + 0.45, pc["cz"] - pc["hz"] + 0.20), (9.90, 0.35)),
+        (21, ["exit_hatch"], "plan", (FP.EXIT["cx"], float(F.side_y(FP.EXIT["cx"], FP.EXIT["cz"])) - 0.02,
+                                      FP.EXIT["cz"]), (3.70, 1.25)),
+        (22, ["radar_pod"], "plan", (D.POD_X_TIP + 0.25, D.POD_Y, D.POD_Z), (4.10, 6.75)),
+    ]
+
+
+ITEMS = _items()
 
 
 def bom_rows(parts):

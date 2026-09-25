@@ -42,6 +42,17 @@ MAIN_BRACE = ((5.950 - GEAR_SHIFT, 1.330, 1.220), (6.040 - GEAR_SHIFT, 2.250, 0.
 NOSE_PIVOT = np.array([2.970 + GEAR_SHIFT, 0.0, 1.040])
 NOSE_FORK = np.array([2.930 + GEAR_SHIFT, 0.0, 0.520])             # fork crown / piston bottom
 NOSE_BRACE = ((3.470 + GEAR_SHIFT, 0.0, 1.070), (3.030 + GEAR_SHIFT, 0.0, 0.785))      # drag brace A, B0
+# Retraction (Stage 3).  Nose: 105 deg aft about NOSE_PIVOT puts the axle at WL ~1.20 and the tyre 33 mm above the
+# keel (95 deg left it 108 mm below the keel); the wheel stows in a tunnel under the centre pedestal
+# (NOSE_TUNNEL: x-range, half-width, top WL).  Folding struts: two links of unequal length (L1 = upper link A-K as a
+# fraction of |A - B0|) and the bend side chosen so the knee stays inside the bay / between the wing skins over the
+# whole retraction (fit_check verifies): nose knee folds UP, clear of the stowed tyre and above the keel; main knee
+# folds DOWN inside the wing box (rev B: equal links, main knee 177 mm above the upper skin when retracted).
+NOSE_RETRACT_DEG = -105.0
+MAIN_RETRACT_DEG = 90.0
+NOSE_TUNNEL = dict(x0=3.300, x1=4.100, hy=0.155, z_top=1.460, z_low=1.200)
+NOSE_BRACE_SPLIT = (0.40, (-0.72, 0.0, 0.695))        # (L1 fraction, bend reference)
+MAIN_BRACE_SPLIT = (0.15, (0.0, 0.30, -0.95))         # starboard; the bend reference is mirrored for port
 
 
 # Main-gear leg door (ONE per leg, POH), Stage 2 rev B.1.  The Pilatus drawing shows it in TWO views: edge-on in the
@@ -143,7 +154,7 @@ def wheel(center, axis, tyre, n=40, brake_side=0):
     rim_m = revolve([(0.0, rim * 0.55), (0.012, rim), (Wd * 0.84, rim), (Wd * 0.84 + 0.012, rim * 0.55),
                      (Wd * 0.84 + 0.013, 0.0)], n=n, axis_origin=center - Wd * 0.42 * axis, axis_dir=axis)
     hub_m = revolve([(0.0, 0.0), (0.001, rim * 0.55), (0.03, rim * 0.40), (0.031, 0.0)], n=24,
-                    axis_origin=center + Wd * 0.43 * axis, axis_dir=axis)
+                    axis_origin=center + Wd * 0.30 * axis, axis_dir=axis)   # hub cap inside the tyre width
     parts = [(tyre_m, "tire"), (Mesh.merge([rim_m, hub_m]), "wheel")]
     if brake_side:
         d = revolve([(0, 0.05), (0.001, 0.115), (0.012, 0.115), (0.013, 0.05)], n=36,
@@ -164,10 +175,11 @@ def build_main(parts, side):
     struct.append(cylinder(T - [0.13, 0, 0], T + [0.13, 0, 0], 0.045, n=20))
     struct.append(revolve([(0, 0.058), (0.60, 0.047), (0.62, 0.0)], n=24, axis_origin=T,
                           axis_dir=(L - T) / np.linalg.norm(L - T)))
-    # yoke + fork arms (straddling the wheel)
+    # yoke + trailing arm on the INBOARD side of the wheel only (it lies above the wheel when retracted inward;
+    # an outboard arm would hang ~0.1 m below the wing), axle cantilevered from it
     fy = 0.14
-    struct.append(cylinder(L - sgn * fy * yax, L + sgn * fy * yax, 0.036, n=16))
-    for s in (-1, 1):
+    struct.append(cylinder(L - sgn * fy * yax, L - sgn * 0.03 * yax, 0.036, n=16))
+    for s in (-sgn,):
         a = L + s * fy * yax
         b = A + s * fy * yax
         d = b - a
@@ -179,7 +191,7 @@ def build_main(parts, side):
         ey = np.cross(ez, ex)
         R = np.stack([ex, ey, ez], 1)
         struct.append(box((a + b) / 2, (Ln, 0.035, 0.07), R=R))
-    struct.append(cylinder(A - fy * yax, A + fy * yax, 0.026, n=16))      # axle
+    struct.append(cylinder(A - sgn * fy * yax, A + sgn * 0.05 * yax, 0.026, n=16))      # axle
     # shock absorber (inboard side so it stows inside the wing)
     s_in = -sgn * 0.19
     S1 = np.array([MAIN_SHOCK[0][0], T[1] + s_in, MAIN_SHOCK[0][1]])
@@ -193,7 +205,7 @@ def build_main(parts, side):
     wh = wheel(A, yax, MAIN_TYRE, n=44, brake_side=-sgn)
 
     # leg door: wing lower-skin patch over the leg slot (retracted position) rotated down with the leg
-    ang_retract = np.radians(90.0) * (-sgn)          # about +x
+    ang_retract = np.radians(MAIN_RETRACT_DEG) * (-sgn)          # about +x
     door = leg_door_patch(sgn)
     Rm = rotation_about((1, 0, 0), -ang_retract, T)
     door_down = door.transformed(Rm)
@@ -281,7 +293,7 @@ def build_nose(parts):
     # taxi / landing light on the strut
     lamp = cylinder(P + 0.45 * (low - P) + [-0.06, 0, 0], P + 0.45 * (low - P) + [-0.11, 0, 0], 0.045, n=20)
     wh = wheel(A, yax, NOSE_TYRE, n=36)
-    ang = -95.0
+    ang = NOSE_RETRACT_DEG
     gp = Part("gear_nose", "Nose gear (steerable, retracts aft)", "gear",
               pivot=dict(origin=P.tolist(), axis=[0, 1.0, 0], kind="gear", retract=ang),
               explode=(-0.4, 0, -0.8), group="Landing gear",
@@ -348,16 +360,26 @@ def bay_tubs(parts):
             Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
             meshes.append(Mesh(V, Fc))
             meshes.append(planar_cap(hi, (0, 0, -1)))
-    b = NOSE_BAY
+    b, tu = NOSE_BAY, NOSE_TUNNEL
     ol = rrect_outline(b["cx"], b["cy"], b["hx"], b["hy"], b["r"], n_corner=8)
     zs = np.array([float(F.z_bot(x)) + 0.01 for x, y in ol])
     lo = np.stack([ol[:, 0], ol[:, 1], zs], 1)
-    hi = np.stack([ol[:, 0], ol[:, 1], np.full(len(zs), 1.30)], 1)
+    hi = np.stack([ol[:, 0], ol[:, 1], np.full(len(zs), tu["z_low"])], 1)
     n = len(ol)
     V = np.vstack([lo, hi])
     k = np.arange(n)
     Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
     meshes.append(Mesh(V, Fc))
+    # bay roof: low ahead of / behind the tunnel under the centre pedestal, where the stowed wheel sits
+    for xa, xb in ((b["cx"] - b["hx"], tu["x0"]), (tu["x1"], b["cx"] + b["hx"])):
+        meshes.append(box((0.5 * (xa + xb), 0.0, tu["z_low"]), (xb - xa, 2 * b["hy"], 0.004)))
+    tv = rrect_outline(0.5 * (tu["x0"] + tu["x1"]), 0.0, 0.5 * (tu["x1"] - tu["x0"]), tu["hy"], 0.04, n_corner=6)
+    lo = np.c_[tv, np.full(len(tv), tu["z_low"])]
+    hi = np.c_[tv, np.full(len(tv), tu["z_top"])]
+    n = len(tv)
+    k = np.arange(n)
+    Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
+    meshes.append(Mesh(np.vstack([lo, hi]), Fc))
     meshes.append(planar_cap(hi, (0, 0, -1)))
     p = Part("gear_bays", "Wheel wells (zinc-chromate liners)", "gear", group="Landing gear",
              material_note="Primed aluminium liners")
@@ -369,32 +391,41 @@ def bay_tubs(parts):
 # ---------------------------------------------------------------------------
 # over-centre folding struts (POH: "overcenter two piece drag link")
 # ---------------------------------------------------------------------------
+def brace_lengths(A, B0, f1):
+    D = float(np.linalg.norm(np.asarray(B0) - np.asarray(A))) * 1.0005     # straight (just over centre) gear-down
+    return f1 * D, (1.0 - f1) * D
+
+
+def brace_specs():
+    """(part id, gear id, A, B0, gear origin, knee axis, (L1 fraction, bend ref), name) of the three folding struts."""
+    out = []
+    for side, sgn in (("R", 1), ("L", -1)):
+        f1, ref = MAIN_BRACE_SPLIT
+        out.append((f"brace_main_{side}", f"gear_main_{side}", np.array(MAIN_BRACE[0]) * [1, sgn, 1],
+                    np.array(MAIN_BRACE[1]) * [1, sgn, 1], MAIN_TRUNNION * [1, sgn, 1], np.array([1.0, 0, 0]),
+                    (f1, np.array(ref) * [1, sgn, 1]), f"{'Right' if sgn > 0 else 'Left'} main-gear folding side brace"))
+    f1, ref = NOSE_BRACE_SPLIT
+    out.append(("brace_nose", "gear_nose", np.array(NOSE_BRACE[0]), np.array(NOSE_BRACE[1]), NOSE_PIVOT,
+                np.array([0, 1.0, 0]), (f1, np.array(ref)), "Nose-gear folding drag brace"))
+    return out
+
+
 def brace_parts(parts):
     from model.brace import solve_knee
-    specs = []
-    for side, sgn in (("R", 1), ("L", -1)):
-        T = MAIN_TRUNNION * [1, sgn, 1]
-        A = np.array(MAIN_BRACE[0]) * [1, sgn, 1]
-        B0 = np.array(MAIN_BRACE[1]) * [1, sgn, 1]
-        ref = np.array([0, -0.30 * sgn, 0.95])
-        specs.append((f"brace_main_{side}", f"gear_main_{side}", A, B0, T, np.array([1.0, 0, 0]), ref,
-                      f"{'Right' if sgn > 0 else 'Left'} main-gear folding side brace"))
-    specs.append(("brace_nose", "gear_nose", np.array(NOSE_BRACE[0]), np.array(NOSE_BRACE[1]), NOSE_PIVOT,
-                  np.array([0, 1.0, 0]), np.array([0.72, 0, -0.695]), "Nose-gear folding drag brace"))
-    for pid, gear_id, A, B0, T, axis, ref, name in specs:
-        L = np.linalg.norm(B0 - A) / 2 * 1.0005
-        K0 = solve_knee(A, B0, L, L, axis, ref)
+    for pid, gear_id, A, B0, T, axis, (f1, ref), name in brace_specs():
+        L1, L2 = brace_lengths(A, B0, f1)
+        K0 = solve_knee(A, B0, L1, L2, axis, ref)
         up = Part(pid + "_up", name + " (upper link)", "gear",
                   pivot=dict(origin=A.tolist(), axis=axis.tolist(), kind="brace", role="upper", gear=gear_id,
-                             A=A.tolist(), B0=B0.tolist(), K0=K0.tolist(), L1=float(L), L2=float(L),
+                             A=A.tolist(), B0=B0.tolist(), K0=K0.tolist(), L1=float(L1), L2=float(L2),
                              bend=ref.tolist()),
                   group="Landing gear", material_note="Over-centre lock, down-lock spring")
         up.add(Mesh.merge([cylinder(A, K0, 0.022, n=12), superellipsoid(A, (0.03, 0.03, 0.03), (1, 1), 8, 12),
-                           superellipsoid(K0, (0.028, 0.028, 0.028), (1, 1), 8, 12)]), "gear_leg")
+                           superellipsoid(K0, (0.02, 0.02, 0.02), (1, 1), 8, 12)]), "gear_leg")
         lo = Part(pid + "_lo", name + " (lower link)", "gear", parent=pid + "_up",
                   pivot=dict(origin=K0.tolist(), axis=axis.tolist(), kind="brace", role="lower", gear=gear_id),
                   group="Landing gear", material_note="Over-centre lock")
-        lo.add(Mesh.merge([cylinder(K0, B0, 0.02, n=12), superellipsoid(B0, (0.028, 0.028, 0.028), (1, 1), 8, 12)]),
+        lo.add(Mesh.merge([cylinder(K0, B0, 0.02, n=12), superellipsoid(B0, (0.024, 0.024, 0.024), (1, 1), 8, 12)]),
                "gear_leg")
         parts[up.id] = up
         parts[lo.id] = lo

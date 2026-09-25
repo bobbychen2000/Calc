@@ -6,7 +6,7 @@ panel, door and window lies exactly on the same surface.
 from __future__ import annotations
 import numpy as np
 
-from cad.mesh import Mesh, grid_surface, grid_normals, trim, band, boundary_loops, solidify, cap_ring
+from cad.mesh import Mesh, grid_surface, grid_normals, trim, band, boundary_loops, solidify, cap_ring, box
 from cad import sdf2d
 from model import fuselage as F
 from model.parts import Part
@@ -163,7 +163,8 @@ def openings_table():
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
-_perim_x = np.linspace(0.9, 14.4, 200)
+X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]          # the loft range: every x-range below is taken from these
+_perim_x = np.linspace(X0, X1, 200)
 _perim_v = np.array([F.perimeter(x) for x in _perim_x])
 
 
@@ -178,8 +179,8 @@ def signed_s(x, t):
 
 def skin_grid(xs, ts):
     X, T = np.meshgrid(xs, ts, indexing="ij")
-    P = F.section(X, T)
-    UV = np.stack([X, T], -1)
+    P = F.section(X, T % 1.0)
+    UV = np.stack([X, T], -1)                  # t unwrapped (a patch may run across the crown, t < 0)
     return P, UV
 
 
@@ -237,9 +238,9 @@ def openings_field(m: Mesh):
         on = (y * side) > 0.2
         for cx in stations:
             d = np.where(on, np.minimum(d, window_sdf(x, z, cx)), d)
-    for o in (AIRSTAIR, CARGO, EXIT):
+    for o in (AIRSTAIR, CARGO, EXIT):              # the skin is cut along the door-panel SEAM (DOOR_PANELS)
         on = (y * o["side"]) > 0.2
-        d = np.where(on, np.minimum(d, rr((x, z), o)), d)
+        d = np.where(on, np.minimum(d, rr((x, z), door_panel(o))), d)
     # cockpit side windows + two-piece windshield (constraint-defined, see cockpit_glazing)
     d = np.minimum(d, CG.sidewindow_sdf(x, y, z))
     s = signed_s(x, m.UV[:, 1])
@@ -255,8 +256,10 @@ def openings_field(m: Mesh):
 # ---------------------------------------------------------------------------
 
 def build_skin():
-    door_edges = [o["cx"] + s * o["hx"] for o in (AIRSTAIR, CARGO) for s in (-1, 1)]
-    xs = F.station_grid(0.030, 0.05, extra=[SPLIT_FWD, 3.215, 3.832, 4.268] + door_edges)
+    panels = [door_panel(o) for o in (AIRSTAIR, CARGO)]
+    door_edges = [o["cx"] + s * o["hx"] for o in panels for s in (-1, 1)]
+    chin = list(np.arange(1.100, 1.262, 0.006))                    # the chin-inlet step (keel 1.413 -> 1.233)
+    xs = F.station_grid(0.030, 0.05, extra=[SPLIT_FWD, *CG.KEY_STATIONS] + door_edges + chin)
     ts = np.linspace(0, 1, N_AROUND, endpoint=False)
     P, UV = skin_grid(xs, ts)
     N = grid_normals(P, close_u=False, close_v=True)
@@ -269,14 +272,50 @@ def build_skin():
     return xs, sub
 
 
+def bulkhead(x, scale=0.97, notch=None, normal=(1, 0, 0), n_rings=14):
+    """Flat bulkhead in the fuselage section at station x (the section scaled about its max-breadth centre),
+    optionally trimmed by notch(V) (negative = cut away)."""
+    t = np.linspace(0, 1, N_AROUND, endpoint=False)
+    sec = F.section(np.full_like(t, x), t)
+    ctr = np.array([x, 0.0, float(F.z_mw(x))])
+    u = np.linspace(0.0, 1.0, n_rings)
+    P = ctr + (sec[None, :, :] - ctr) * (scale * u)[:, None, None]
+    m = grid_surface(P, close_v=True)
+    if notch is not None:
+        f = notch(m.V)
+        if (f < 0).any():
+            m = trim(m, f, "positive")
+    if np.dot(m.face_normals().mean(0), normal) < 0:
+        m = m.flipped()
+    m.N = np.tile(np.asarray(normal, float), (len(m.V), 1))
+    return m
+
+
+def nose_trunnion_notch(V):
+    """Notch (negative inside) round the nose-gear trunnion and bay in the firewall / forward pressure bulkhead."""
+    from model import gear as G
+    zt = G.NOSE_PIVOT[2] + 0.075
+    return np.maximum(np.abs(V[:, 1]) - 0.165, V[:, 2] - zt)
+
+
+def nose_bay_field(m: Mesh):
+    """Nose-gear bay cut-out in the belly (negative = hole), shared by the lower cowling and the forward fuselage."""
+    from model.bays import nose_bay_sdf
+    return np.where(m.V[:, 2] < 1.1, nose_bay_sdf(m.V[:, 0], m.V[:, 1]), BIG)
+
+
 def build(parts_out: dict):
     xs, sub = build_skin()
+    from model import powerplant as PP
+    from model import empennage as E
 
-    # ---- cowling (upper / lower halves split on the prop axis water line) ----
-    cowl = sub(0.95, 3.00)
+    # ---- cowling (upper / lower halves split on the prop axis water line), cowl front -> firewall ----
+    cowl = sub(X0, F.STA["firewall"])
     split = cowl.V[:, 2] - (F.PROP_AXIS_Z + 0.02)
     up = trim(cowl, split, "positive")
     lo = trim(cowl, split, "negative")
+    lo = trim(lo, nose_bay_field(lo), "positive")                  # nose-gear bay runs forward of the firewall
+    lo, lip = PP.cut_chin_inlet(lo)                                # mouth hole + polished lip ring (chin_inlet part)
     parts_out["cowl_upper"] = Part("cowl_upper", "Upper engine cowling", "cowling",
                                    explode=(0, 0, 0.9), group="Powerplant installation",
                                    material_note="Carbon/Nomex honeycomb, Cu mesh")
@@ -285,13 +324,17 @@ def build(parts_out: dict):
                                    explode=(0, 0, -0.8), group="Powerplant installation",
                                    material_note="Carbon/Nomex honeycomb")
     parts_out["cowl_lower"].add(lo, "paint_white")
+    parts_out["chin_inlet"] = Part("chin_inlet", "Chin air inlet: polished lip, mouth & duct entry", "cowling",
+                                   explode=(-0.4, 0, -0.75), group="Powerplant installation",
+                                   material_note="Polished lip, electrically de-iced; composite duct")
+    parts_out["chin_inlet"].add(lip, "chrome")
 
     # ---- forward fuselage (cockpit) ----
-    fwd = sub(3.00, SPLIT_FWD)
+    fwd = sub(F.STA["firewall"], SPLIT_FWD)
     fwd = trim(fwd, openings_field(fwd), "positive")
     parts_out["fus_fwd"] = Part("fus_fwd", "Forward fuselage & flight deck shell", "fuselage_fwd",
                                 explode=(-0.9, 0, 0.25), group="Fuselage",
-                                material_note="2024-T3 skins, frames 10-14")
+                                material_note="2024-T3 skins, frames 10-16")
     parts_out["fus_fwd"].add(fwd, "paint_white")
 
     # ---- centre fuselage (pressure cabin) ----
@@ -302,18 +345,39 @@ def build(parts_out: dict):
                                    material_note="2024-T3 skin, 5.8 psi max differential")
     parts_out["fus_center"].add(cen, "paint_white")
 
-    # ---- aft fuselage / tail cone ----
-    aft = sub(SPLIT_AFT, 14.36)
-    end = F.section(np.full(N_AROUND, 14.36), np.linspace(0, 1, N_AROUND, endpoint=False))
-    tip = cap_ring(end, (1, 0, 0))
+    # ---- aft fuselage / tail cone: loft to the tail end, cut at the rudder leading edge, closed by a bulkhead ----
+    aft = sub(SPLIT_AFT, X1)
+    aft = trim(aft, E.tail_cut_field(aft.V[:, 0], aft.V[:, 2]), "negative")
     parts_out["fus_aft"] = Part("fus_aft", "Aft fuselage & tail cone", "fuselage_aft",
                                 explode=(1.1, 0, 0.3), group="Fuselage",
-                                material_note="Semi-monocoque, frames 29-38")
-    parts_out["fus_aft"].add(aft, "paint_white").add(tip, "paint_white")
+                                material_note="Semi-monocoque, frames 33-40; tail-cone closure at the rudder")
+    parts_out["fus_aft"].add(aft, "paint_white").add(E.tail_closure(), "paint_white")
 
     build_glazing(parts_out)
     build_doors(parts_out)
     return parts_out
+
+
+def _param_box(field, x0, x1, t0, t1, pad=0.0, dx=0.004):
+    """(x, t) bounding box of the region field < pad on the OML patch x0..x1, t0..t1 (t may run below 0)."""
+    xs = np.arange(x0, x1 + dx, dx)
+    ts = np.arange(t0, t1 + 1e-9, dx / 2.0 / float(perim(0.5 * (x0 + x1))) * 2.0)
+    X, T = np.meshgrid(xs, ts, indexing="ij")
+    Pp = F.section(X, T % 1.0)
+    S = np.where(T % 1.0 > 0.5, T % 1.0 - 1.0, T % 1.0) * perim(X)
+    f = field(Pp[..., 0], Pp[..., 1], Pp[..., 2], S)
+    ins = f < pad
+    if not ins.any():
+        raise ValueError("glazing field empty on the patch")
+    return float(X[ins].min()), float(X[ins].max()), float(T[ins].min()), float(T[ins].max())
+
+
+def _assert_covers(field, patch_box, box0, what):
+    """The glass patch (x, t) box must contain the whole hole (field < 0 on the search box box0)."""
+    hx0, hx1, ht0, ht1 = _param_box(field, *box0, pad=0.0)
+    px0, px1, pt0, pt1 = patch_box
+    if not (px0 <= hx0 and hx1 <= px1 and pt0 <= ht0 and ht1 <= pt1):
+        raise AssertionError(f"{what}: glass patch {patch_box} does not cover the hole {(hx0, hx1, ht0, ht1)}")
 
 
 def build_glazing(parts_out):
@@ -323,21 +387,28 @@ def build_glazing(parts_out):
     for side, stations in FIXED_WINDOWS.items():
         for cx in stations:
             o = dict(cx=cx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
-            p = side_patch(o, side, pad=0.03, d=0.013)
+            p = side_patch(o, side, pad=0.03, d=0.010)
             fn = lambda m, cx=cx: window_sdf(m.V[:, 0], m.V[:, 2], cx)
             glass_parts.append(trim(p, fn(p) - 0.010, "negative").offset(-0.006))
             seals.append(band(p, fn, -0.006, 0.010).offset(0.0015))
-    # cockpit side windows
+    # cockpit side windows: patch = the extent of sidewindow_sdf on the OML (+ 25 mm), checked to cover the hole
     sw_glass, sw_seal = [], []
+    sw_f = lambda x, y, z, s: CG.sidewindow_sdf(x, y, z)                           # noqa: E731
     for side in (-1, 1):
-        o = dict(cx=3.78, cz=2.235, hx=0.52, hz=0.28, r=0.0)
-        p = side_patch(o, side, pad=0.02, d=0.014)
-        fn = lambda m: CG.sidewindow_sdf(m.V[:, 0], m.V[:, 1], m.V[:, 2])
+        box0 = (3.30, 4.60) + ((0.02, 0.45) if side > 0 else (0.55, 0.98))
+        x0, x1, t0, t1 = _param_box(sw_f, *box0, pad=0.025)
+        _assert_covers(sw_f, (x0, x1, t0, t1), box0, f"side window {side:+d}")
+        p = skin_patch(x0, x1, t0, t1, d=0.012)
+        fn = lambda m: CG.sidewindow_sdf(m.V[:, 0], m.V[:, 1], m.V[:, 2])       # noqa: E731
         sw_glass.append(trim(p, fn(p) - 0.010, "negative").offset(-0.005))
         sw_seal.append(band(p, fn, -0.006, 0.012).offset(0.0015))
-    # windshield (two panes either side of the centre post)
-    p = skin_patch(3.17, 3.90, -0.22, 0.22, d=0.012)
-    fn = lambda m: CG.windshield_sdf(m.V[:, 0], signed_s(m.V[:, 0], m.UV[:, 1]), m.V[:, 2], m.V[:, 1])
+    # windshield (two panes either side of the centre post): the extent of windshield_sdf on the OML (+ 25 mm)
+    ws_f = lambda x, y, z, s: CG.windshield_sdf(x, s, z, y)                        # noqa: E731
+    box0 = (3.05, 4.30, -0.40, 0.40)
+    x0, x1, t0, t1 = _param_box(ws_f, *box0, pad=0.025)
+    _assert_covers(ws_f, (x0, x1, t0, t1), box0, "windshield")
+    p = skin_patch(x0, x1, t0, t1, d=0.012)
+    fn = lambda m: CG.windshield_sdf(m.V[:, 0], signed_s(m.V[:, 0], m.UV[:, 1]), m.V[:, 2], m.V[:, 1])  # noqa: E731
     ws_glass = trim(p, fn(p) - 0.012, "negative").offset(-0.004)
     ws_seal = band(p, fn, -0.006, 0.014).offset(0.0015)
 
@@ -355,69 +426,103 @@ def build_glazing(parts_out):
     parts_out[w.id] = w
 
 
-def build_door(o, pid, name, window_cx=None, hinge="bottom", open_angle=132.0, explode=(0, 0, 0),
-               note=""):
+DOOR_T = 0.045             # door slab thickness
+DOOR_GAP = 0.004           # door panel inside the skin cut-out (panel seam)
+DOOR_NAMES = {"door_airstair": "Airstair passenger door (0.61 x 1.35 m clear opening)",
+              "door_cargo": "Cargo door (1.35 x 1.32 m clear opening)",
+              "exit_hatch": "Over-wing emergency exit (plug hatch, right)"}
+DOOR_NOTES = {"door_airstair": "Downward-opening, integral steps",
+              "door_cargo": "Upward-opening, gas-strut assisted",
+              "exit_hatch": "Plug type, removed inward (0.48 x 0.64 m projected)"}
+DOOR_EXPLODE = {"door_airstair": (0, -0.9, 0), "door_cargo": (0, -1.0, 0.2), "exit_hatch": (0, 0.8, 0.1)}
+DOOR_HANDLE = {"door_airstair": "airstair_handle", "door_cargo": "cargo_handle", "exit_hatch": "exit_handle"}
+DOORS = (("door_airstair", AIRSTAIR), ("door_cargo", CARGO), ("exit_hatch", EXIT))
+
+
+def door_pivot(o):
+    """Hinge pivot (model axes) of a door dict: on the skin at hinge_line(), rotation about +x by open_deg outward
+    (bottom hinge: the top swings out and down; top hinge: the bottom swings out and up).  None for the plug exit."""
+    hl = hinge_line(o)
+    if hl is None:
+        return None
+    x0, x1, zh = hl
     side = o["side"]
-    p = side_patch(o, side, pad=0.03, d=0.022)
-    x, z = xz_of(p)
-    dd = rr((x, z), o)
-    skin = trim(p, dd + 0.004, "negative")
-    if window_cx is not None:
-        wd = window_sdf(skin.V[:, 0], skin.V[:, 2], window_cx)
-        skin = trim(skin, wd, "positive")
-    slab_out, slab_in = solidify(skin, 0.045, separate=True)
-    # hinge line along bottom (airstair) or top (cargo) edge, on the skin
-    zh = o["cz"] - o["hz"] + 0.01 if hinge == "bottom" else o["cz"] + o["hz"] - 0.01
-    yh = side * float(F.side_y(o["cx"], zh))
-    origin = (o["cx"], yh, zh)
-    ang = np.radians(open_angle) * (1 if hinge == "bottom" else -1) * (-side)
-    part = Part(pid, name, "doors", pivot=dict(origin=origin, axis=(1, 0, 0), kind="door",
-                                               open=float(ang)),
-                explode=explode, group="Doors", material_note=note)
+    xm = 0.5 * (x0 + x1)
+    origin = (xm, side * float(F.side_y(xm, zh)), zh)
+    ang = np.radians(o["open_deg"]) * (1 if o["hinge"] == "bottom" else -1) * (-side)
+    return dict(origin=origin, axis=(1, 0, 0), kind="door", open=float(ang), open_deg=float(o["open_deg"]))
+
+
+def _loop_near(ring, fn):
+    """Boundary loop of `ring` whose points lie closest to the zero set of fn(x, z)."""
+    best = None
+    for loop in boundary_loops(ring):
+        lv = ring.V[loop]
+        sd = np.abs(fn(lv[:, 0], lv[:, 2])).mean()
+        if best is None or sd < best[0]:
+            best = (sd, loop)
+    return None if best is None else best[1]
+
+
+def build_door(pid, o):
+    """Door slab cut along the panel seam (DOOR_PANELS), window, handle, steps; pivot from hinge_line / open_deg."""
+    side = o["side"]
+    pan = door_panel(o)
+    p = side_patch(pan, side, pad=0.03, d=0.020)
+    skin = trim(p, rr(xz_of(p), pan) + DOOR_GAP, "negative")
+    wcx = DOOR_WINDOWS.get(pid)
+    if wcx is not None:
+        skin = trim(skin, window_sdf(skin.V[:, 0], skin.V[:, 2], wcx), "positive")
+    slab_out, slab_in = solidify(skin, DOOR_T, separate=True)
+    part = Part(pid, DOOR_NAMES[pid], "doors", pivot=door_pivot(o), explode=DOOR_EXPLODE[pid], group="Doors",
+                material_note=DOOR_NOTES[pid],
+                info={"clear opening": f"{2 * o['hx']:.2f} x {2 * o['hz']:.2f} m",
+                      "panel (seam)": f"{2 * pan['hx']:.2f} x {2 * pan['hz']:.2f} m",
+                      "opens": f"{o['open_deg']:.0f} deg" if o.get("open_deg") else "plug, removed inward"})
     part.add(slab_out, "paint_white").add(slab_in, "lining")
-    extra = []
-    if window_cx is not None:
-        wo = dict(cx=window_cx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
-        wp = side_patch(wo, side, pad=0.03, d=0.013)
-        fn = lambda m: window_sdf(m.V[:, 0], m.V[:, 2], window_cx)
+    if wcx is not None:
+        wo = dict(cx=wcx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
+        wp = side_patch(wo, side, pad=0.03, d=0.010)
+        fn = lambda m: window_sdf(m.V[:, 0], m.V[:, 2], wcx)                         # noqa: E731
         part.add(trim(wp, fn(wp) - 0.010, "negative").offset(-0.006), "glass")
         part.add(band(wp, fn, -0.006, 0.010).offset(0.0015), "seal")
+    h = DOOR_DETAILS[DOOR_HANDLE[pid]]
+    hp = side_patch(h, side, pad=0.01, d=0.004)
+    part.add(trim(hp, rr(xz_of(hp), h), "negative").offset(0.0012), "metal_dark")
+    if pid == "door_airstair":                      # integral steps on the inner face (horizontal when open)
+        steps = []
+        zh = hinge_line(o)[2]
+        for f in (0.26, 0.50, 0.74):
+            z = zh + f * (pan["cz"] + pan["hz"] - zh)
+            yi = float(F.side_y(pan["cx"], z)) - DOOR_T - 0.075
+            steps.append(box((pan["cx"], side * yi, z), (2 * pan["hx"] - 0.14, 0.15, 0.022)))
+        part.add(Mesh.merge(steps), "metal_dark")
     return part
 
 
 def build_doors(parts_out):
-    d1 = build_door(AIRSTAIR, "door_airstair", "Airstair passenger door (0.61 x 1.35 m)",
-                    window_cx=DOOR_WINDOWS["door_airstair"], hinge="bottom", open_angle=128,
-                    explode=(0, -0.9, 0), note="Downward-opening, integral steps")
-    d2 = build_door(CARGO, "door_cargo", "Cargo door (1.35 x 1.32 m)",
-                    window_cx=DOOR_WINDOWS["door_cargo"], hinge="top", open_angle=100,
-                    explode=(0, -1.0, 0.2), note="Upward-opening, gas-strut assisted")
-    d3 = build_door(EXIT, "exit_hatch", "Type III overwing emergency exit",
-                    window_cx=DOOR_WINDOWS["exit_hatch"], hinge="bottom", open_angle=0,
-                    explode=(0, 0.8, 0.1), note="Plug-type, removable inward")
-    d3.pivot = None
-    for d in (d1, d2, d3):
-        parts_out[d.id] = d
-    # seams + jambs (fixed to the fuselage)
-    seams, jambs = [], []
-    for o in (AIRSTAIR, CARGO, EXIT):
-        p = side_patch(o, o["side"], pad=0.03, d=0.012)
-        fn = lambda m, o=o: rr((m.V[:, 0], m.V[:, 2]), o)
-        seams.append(band(p, fn, 0.0, 0.007).offset(0.0008))
-        ring = band(p, fn, 0.0, 0.03)
-        loops = boundary_loops(ring)
-        # pick the loop whose points lie closest to the opening outline
-        best = None
-        for loop in loops:
-            lv = ring.V[loop]
-            sd = np.abs(rr((lv[:, 0], lv[:, 2]), o)).mean()
-            if best is None or sd < best[0]:
-                best = (sd, loop)
-        if best is not None:
-            loop = best[1]
-            jm = rim(ring.V[loop], ring.N[loop], 0.055)
-            jambs.append(jm)
-    s = Part("door_frames", "Door surrounds, seals & jambs", "doors", group="Doors",
+    for pid, o in DOORS:
+        parts_out[pid] = build_door(pid, o)
+    # seams, skin-edge jambs, door stops (flange between the panel seam and the clear opening) and opening jambs
+    seams, jambs, stops = [], [], []
+    for pid, o in DOORS:
+        pan = door_panel(o)
+        p = side_patch(pan, o["side"], pad=0.03, d=0.010)
+        fs = lambda m, q=pan: rr((m.V[:, 0], m.V[:, 2]), q)                         # noqa: E731
+        seams.append(band(p, fs, 0.0, 0.007).offset(0.0008))
+        ring = band(p, fs, 0.0, 0.03)
+        loop = _loop_near(ring, lambda x, z, q=pan: rr((x, z), q))
+        if loop is not None:
+            jambs.append(rim(ring.V[loop], ring.N[loop], DOOR_T + 0.004))
+        if pan is not o:                             # door with a clear opening inside the panel seam
+            fo = lambda m, q=o: rr((m.V[:, 0], m.V[:, 2]), q)                        # noqa: E731
+            st = trim(trim(p, fs(p) + 0.002, "negative"), fo(trim(p, fs(p) + 0.002, "negative")), "positive")
+            st = st.offset(-(DOOR_T + 0.004))
+            stops.append(st)
+            loop = _loop_near(st, lambda x, z, q=o: rr((x, z), q))
+            if loop is not None:
+                jambs.append(rim(st.V[loop], st.N[loop], 0.060))
+    s = Part("door_frames", "Door surrounds, seals, stops & jambs", "doors", group="Doors",
              material_note="Machined door frames")
-    s.add(Mesh.merge(seams), "seam").add(Mesh.merge(jambs), "jamb")
+    s.add(Mesh.merge(seams), "seam").add(Mesh.merge(jambs), "jamb").add(Mesh.merge(stops), "jamb")
     parts_out[s.id] = s

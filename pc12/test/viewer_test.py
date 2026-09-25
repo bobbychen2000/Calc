@@ -444,7 +444,9 @@ async def numeric_checks(page):
     r = await js(page, r"""
       const V = window.viewer; T.neutral(); V.setStep('paint', {instant: true});
       V.setCamera('side', {instant: true});
-      const p = V.project([-0.3, 1.75, 6.6]);
+      // probe on the port cabin skin at STA 7.30, WL 1.60: clear of the canted port winglet (side view x 5.63-7.11,
+      // WL 1.69-2.18), aft of window P3, ahead of the cargo-door seam; the cutaway ray then hits the side ledge
+      const p = V.project([-0.3, 1.60, 7.3]);
       const out = {normal: V.pick(p[0], p[1])};
       V.setCutaway(true); out.cut = V.pick(p[0], p[1]);
       V.setCutaway(false); V.setXray(true); out.xray = V.pick(p[0], p[1]); out.structure = V.state.structureVisible;
@@ -760,11 +762,17 @@ async def run(args):
         async with async_playwright() as pw:
             browser = await launch(pw)
             page = await browser.new_page(viewport=VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
-            errors, failed = [], []
+            errors, failed, aborted, ok_urls = [], [], [], set()
             page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
             page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
-            page.on("requestfailed", lambda r: failed.append(f"{r.url} ({r.failure})"))
-            page.on("response", lambda r: failed.append(f"{r.url} HTTP {r.status}") if r.status >= 400 else None)
+            # net::ERR_ABORTED after a 200 response is not a failure: three.js' FileLoader streams the ~10 MB GLB
+            # through its own ReadableStream for the progress bar, and headless Chromium can report the original request as
+            # aborted although the model loads (checked above: 'viewer loads'); flaky in the baseline, S3-17.  An
+            # aborted request that never got a response still fails the check.
+            page.on("requestfailed", lambda r: (aborted if "ERR_ABORTED" in str(r.failure) else failed).append(
+                (r.url, f"{r.url} ({r.failure})")))
+            page.on("response", lambda r: failed.append((r.url, f"{r.url} HTTP {r.status}")) if r.status >= 400
+                    else ok_urls.add(r.url))
             await page.goto(base)
             await page.wait_for_function("window.__ready === true", timeout=180000)
             err = await page.evaluate("window.__error || ''")
@@ -780,7 +788,9 @@ async def run(args):
             if args.blender:
                 await blender_check(page)
             check("no console errors / page errors", not errors, "; ".join(errors[:4]))
-            check("no failed requests", not failed, "; ".join(failed[:4]))
+            bad = [t for _, t in failed] + [t for u, t in aborted if u not in ok_urls]
+            check("no failed requests", not bad,
+                  "; ".join(bad[:4]) or (f"{len(aborted)} aborted after a 200 response (stream)" if aborted else ""))
             await page.close()
             await phone_checks(browser, base, shots=not args.no_shots)
             await dark_and_data(browser, base, shots=not args.no_shots)

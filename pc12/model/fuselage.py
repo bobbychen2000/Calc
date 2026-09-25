@@ -50,11 +50,22 @@ STA = dict(
     tail_end=13.57,              # tail-cone closure (lower end of the rudder trailing edge)
 )
 PROP_AXIS_Z = 1.655        # 0.32 m clearance + 1.335 m radius
+# Cabin floor (Stage-3 decision D1): single source for the interior floor, seats, ledges and partitions and for the
+# floor-width check: crown 2.769 - 0.040 lining - 1.470 official cabin height.  The OML is 1.30 m + 2 x lining wide
+# there (cabin_numbers()); the wing carry-through below it is flattened to CABIN_FLOOR_WL - 0.015 (model/wing.py).
+CABIN_LINING = 0.040
+CABIN_HEIGHT = 1.470
+CABIN_FLOOR_WL = 1.259
+# The loft is only defined between the cowl front and the tail end: every consumer takes its x-range from STA /
+# OML.x0 / OML.x1.  STRICT = True makes an evaluation more than RANGE_TOL outside [x0, x1] raise (pchip would
+# extrapolate the end cubics: the rev-A range 14.36 gave negative half-widths); inside the tolerance x is clamped.
+STRICT = True
+RANGE_TOL = 1e-6
 SPINNER_R = 0.250          # spinner base radius at the cowl front (drawing: 0.250)
 # spinner profile r(t) = SPINNER_R * (1 - (1 - t)^a)^b, t = 0 at the tip (STA 0.39) .. 1 at the cowl front, about
 # the tilted / yawed thrust axis (powerplant.THRUST_*); fitted to the drawn spinner (plan rms 1.4 / max 3.0 mm; side
 # rms 1.0 / max 2.4 mm once the drawing's 15 mm higher prop axis is allowed for -- WL 1655 / 320 clearance kept).
-# The rev B fit (1.48, 0.53) assumed an untilted axis.  For model/powerplant.py (Stage 3; it still uses 2.1, 0.55).
+# The rev B fit (1.48, 0.53) assumed an untilted axis.  model/powerplant.spinner_profile() builds the 3-D spinner from it.
 SPINNER_SHAPE = (1.450, 0.641)
 
 # Frame stations (labelled frames of the reference drawing; used for station grids and the body plan).
@@ -110,6 +121,22 @@ def _polar_radius(s, c, n, m, iters=48):
 # ----------------------------------------------------------------------------
 # the loft
 # ----------------------------------------------------------------------------
+class _Line:
+    """One control line (pchip through its knots), evaluated only on [x0, x1] (see STRICT)."""
+
+    def __init__(self, name, f, x0, x1):
+        self.name, self.f, self.x0, self.x1 = name, f, x0, x1
+
+    def __call__(self, x):
+        xa = np.asarray(x, float)
+        if xa.size and STRICT:
+            lo, hi = float(np.nanmin(xa)), float(np.nanmax(xa))
+            if lo < self.x0 - RANGE_TOL or hi > self.x1 + RANGE_TOL:
+                raise ValueError(f"fuselage OML '{self.name}' evaluated at STA {lo:.4f}..{hi:.4f}, outside the loft "
+                                 f"{self.x0:.3f}..{self.x1:.3f} (clip the range to STA cowl_front / tail_end)")
+        return self.f(np.clip(xa, self.x0, self.x1))
+
+
 class OML:
     """Outer mould line from eight knot tables (see the module docstring).  The module-level
     functions below evaluate the default instance built from the tables above; the lines-plan fit
@@ -118,11 +145,11 @@ class OML:
 
     def __init__(self, tables):
         self.tables = {k: [(float(a), float(b)) for a, b in tables[k]] for k in self.LINES}
-        f = {k: pchip(*zip(*self.tables[k])) for k in self.LINES}
+        self.x0 = max(t[0][0] for t in self.tables.values())
+        self.x1 = min(t[-1][0] for t in self.tables.values())
+        f = {k: _Line(k, pchip(*zip(*self.tables[k])), self.x0, self.x1) for k in self.LINES}
         self.z_top, self.z_bot, self.half_w, self.z_mw = f["crown"], f["keel"], f["half_breadth"], f["max_breadth_wl"]
         self.n_top, self.m_top, self.n_bot, self.m_bot = f["n_top"], f["m_top"], f["n_bot"], f["m_bot"]
-        self.x0 = min(t[0][0] for t in self.tables.values())
-        self.x1 = max(t[-1][0] for t in self.tables.values())
 
     def _half(self, x, upper):
         zm = self.z_mw(x)
@@ -225,7 +252,27 @@ def station_grid(max_step_fwd=0.035, max_step_aft=0.05, extra=()):
     return np.unique(np.concatenate([fwd, aft]))
 
 
-def cabin_numbers(x=6.0, floor_width=1.30, lining=0.045):
+def clip_x(x):
+    """Stations clipped into the loft range [cowl_front, tail_end]."""
+    return np.clip(np.asarray(x, float), _OML.x0, _OML.x1)
+
+
+def inside(x, y, z, margin=0.0):
+    """True where (x, y, z) lies inside the OML (by more than `margin`); False outside the loft range."""
+    x, y, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(y, float), np.asarray(z, float))
+    ok = (x >= _OML.x0) & (x <= _OML.x1)
+    xc = clip_x(x)
+    d = _OML.section_distance(xc, y, z)
+    return ok & (d < -margin)
+
+
+def cabin_floor_width(x=6.0, z=None, lining=CABIN_LINING):
+    """Width of the cabin floor at station x: OML breadth at the floor WL minus the lining on both sides."""
+    z = CABIN_FLOOR_WL if z is None else z
+    return 2 * (float(side_y(x, z)) - lining)
+
+
+def cabin_numbers(x=6.0, floor_width=1.30, lining=CABIN_LINING):
     """Cabin cross-section numbers at station x: crown / keel / max-breadth WL, and the WL at which
     the OML minus a lining allowance is `floor_width` wide (the floor line of the cabin)."""
     zs = np.linspace(float(z_bot(x)), float(z_mw(x)), 4001)

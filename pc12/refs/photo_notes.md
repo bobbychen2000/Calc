@@ -142,7 +142,7 @@ Every photo, on both sides and both variants, shows the same shape (see `evidenc
   Only a thin sliver shows ahead of the pillar:
   - Its lower edge is almost horizontal at WL ≈ 2.13–2.21.
   - Its roof edge falls forward at about 25°, from about (STA 3.93, WL 2.57) at the pillar top to the forward tip
-    at about **STA 3.2, WL 2.2**. The model's `WS_PLAN` sill is at x = 3.215, which matches.
+    at about **STA 3.2, WL 2.2**. The model's windshield sill (`cockpit_glazing.SILL_LINE`, tip at the crown STA ~3.27) matches.
   - The roof edge meets the pillar about 0.1–0.17 m further aft than the model's roof line at x = 3.832. This is
     only an estimate from a side projection.
 - **Centre post.** On dark-surround aircraft the post looks like a dark riveted band (`pro3001_stbd34_close_aero25`).
@@ -265,7 +265,7 @@ What the overlay shows:
 
 ## Not established by these photos
 
-- The exact plan-view windshield outline (`WS_PLAN`). No true overhead orthographic shot was found; the two top
+- The exact plan-view windshield outline (now the sill / roof / pillar planes of `cockpit_glazing`). No true overhead orthographic shot was found; the two top
   views are oblique, and their variant is unknown.
 - Absolute WL values better than ±0.1 m.
 - The centre-post width beyond "wider than 0.07 m".
