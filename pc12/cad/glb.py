@@ -33,6 +33,7 @@ class GLBBuilder:
         self.bufferViews, self.accessors = [], []
         self.meshes, self.materials, self.nodes = [], [], []
         self.mat_index = {}
+        self.ext_used = set()
         self.quantize = quantize
         self.stats = {"vertices": 0, "triangles": 0}
 
@@ -64,8 +65,16 @@ class GLBBuilder:
         return len(self.accessors) - 1
 
     # ------------------------------------------------------------ materials
+    # optional PBR extensions a material may carry: key -> (glTF extension, {key: property})
+    MATERIAL_EXT = {"clearcoat": ("KHR_materials_clearcoat", "clearcoatFactor"),
+                    "clearcoat_rough": ("KHR_materials_clearcoat", "clearcoatRoughnessFactor"),
+                    "specular": ("KHR_materials_specular", "specularFactor"),
+                    "ior": ("KHR_materials_ior", "ior")}
+
     def material(self, name, color, metallic=0.0, roughness=0.5, emissive=None,
-                 double_sided=False, alpha=None, extras=None):
+                 double_sided=False, alpha=None, extras=None, ext=None):
+        """ext: {clearcoat, clearcoat_rough, specular, ior} -> KHR_materials_clearcoat / _specular / _ior (listed in
+        extensionsUsed, not required: a loader without them falls back to the core metallic-roughness values)."""
         if name in self.mat_index:
             return self.mat_index[name]
         c = list(color) + ([1.0] if len(color) == 3 else [])
@@ -79,6 +88,10 @@ class GLBBuilder:
             m["doubleSided"] = True
         if alpha is not None or c[3] < 1.0:
             m["alphaMode"] = "BLEND"
+        for key, val in (ext or {}).items():
+            e, prop = self.MATERIAL_EXT[key]
+            m.setdefault("extensions", {}).setdefault(e, {})[prop] = float(val)
+            self.ext_used.add(e)
         if extras:
             m["extras"] = extras
         self.materials.append(m)
@@ -183,8 +196,10 @@ class GLBBuilder:
             "bufferViews": self.bufferViews,
             "buffers": [{"byteLength": len(self.bin)}],
         }
+        used = (["KHR_mesh_quantization"] if self.quantize else []) + sorted(self.ext_used)
+        if used:
+            gltf["extensionsUsed"] = used
         if self.quantize:
-            gltf["extensionsUsed"] = ["KHR_mesh_quantization"]
             gltf["extensionsRequired"] = ["KHR_mesh_quantization"]
         if asset_extras:
             gltf["asset"]["extras"] = asset_extras

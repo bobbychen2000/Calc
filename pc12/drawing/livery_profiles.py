@@ -435,6 +435,9 @@ def draw_side(ds, v, side):
             m = L.EXIT_MARK
             ring = FP.opening_outline(dict(o, hx=o["hx"] + m["offset"], hz=o["hz"] + m["offset"],
                                            r=o["r"] + m["offset"]))
+            if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"]:          # champagne rim under the white ring
+                ds.cv.path(v.pts(ring), 2 * (m["half_width"] + L.OUTLINE["width"]) * v.k, None, closed=True,
+                           color=col(L.OUTLINE["material"]))
             ds.cv.path(v.pts(ring), 2 * m["half_width"] * v.k, None, closed=True, color=col("paint_pinstripe"))
     for o in (FP.AIRSTAIR, FP.CARGO):
         h = FP.hinge_line(o) if o["side"] == side else None
@@ -459,7 +462,7 @@ def draw_side(ds, v, side):
     vzs = ventral_edge(vxs)
     for seg in _runs(vzs < F.z_bot(np.clip(vxs, X0_SIDE, X1_SIDE)) - 0.002):
         outline(ds, v, np.c_[vxs[seg], vzs[seg]], W_FINE, closed=False)
-    # rudder seams: nose / gap line and the sloped top edge (E.rudder_outline; its bottom edge is the ventral edge)
+    # rudder seams: gap line (cove lip) and the sloped top edge (E.rudder_outline; its bottom edge is the ventral edge)
     ro = E.rudder_outline()
     k = len(ro) // 2                                    # nose-bottom, top edge (nose -> TE), bottom edge (TE -> nose)
     outline(ds, v, ro[:k + 1], W_GRID, "#0B1020", closed=False)
@@ -538,10 +541,13 @@ def draw_inlet_side(ds, v):
 
 
 def draw_gear_side(ds, v):
-    T = G.MAIN_TRUNNION
-    # leg door (gear.leg_door_outline): outboard of the tyre, so it is drawn over it in both side views
-    door = G.leg_door_outline()
     Lp, A = G.MAIN_LINK_PIVOT, G.MAIN_AXLE
+    z0 = G.main_leg_skin_z() - 0.05                 # the leg from below the wing lower skin (its round cap must not
+    T = G.MAIN_TRUNNION + (Lp - G.MAIN_TRUNNION) * (G.MAIN_TRUNNION[2] - z0) / (   # show above the door, which hides it)
+        G.MAIN_TRUNNION[2] - Lp[2])
+    # leg door as built (gear.leg_door_face, visible part: scalloped round the tyre): outboard of the leg, so it is
+    # drawn over it in both side views
+    door = G.leg_door_face(visible=True)
     ds.cv.path([v.pt(T[0], T[2]), v.pt(Lp[0], Lp[2]), v.pt(A[0], A[2])], 0.07 * v.k, color=col("gear_leg"))
     tyre(ds, v, A, G.MAIN_TYRE)
     poly(ds, v, door, col(L.SURFACES["main_gear_door"]))
@@ -740,11 +746,11 @@ def draw_plan(ds, v, upper=True):
     def gear():
         A = G.MAIN_AXLE
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
-        d = G.LEG_DOOR                                  # leg door edge-on (outboard of the tyre)
+        d = G.LEG_DOOR                                  # leg door edge-on (as built: G.leg_door_front_line)
         P = FP.opening_outline(dict(cx=A[0], cz=A[1], hx=R, hz=Wt / 2, r=0.04))
         poly(ds, v, P, col("tire"))
         outline(ds, v, P, W_THIN)
-        door = FP.opening_outline(dict(cx=0.5 * (d["x_fwd"] + d["x_aft"]), cz=float(np.mean(d["bl"])),
+        door = FP.opening_outline(dict(cx=0.5 * (d["x_fwd"] + d["x_aft"]), cz=float(G.leg_door_front_line()[:, 0].mean()),
                                        hx=0.5 * (d["x_aft"] - d["x_fwd"]), hz=0.012, r=0.005))
         poly(ds, v, door, col(L.SURFACES["main_gear_door"]))
         outline(ds, v, door, W_GRID)
@@ -899,12 +905,12 @@ LEGEND_ROWS = [
     ("paint_blue", "base: fuselage, dorsal, fin, rudder, wing upper faces, winglet inboard faces, pod, leg doors"),
     ("paint_blue_light", "lower cowling / lower nose, swoosh band to the lower rudder, nose-gear doors"),
     ("paint_pinstripe", "pinstripes and swooshes (B1 P1 P2 H1 U1 X1-X3 D1), exit marking, winglet line"),
-    ("paint_navy", "navy pinstripe N1 (cowl front to the over-wing exit)"),
+    ("paint_champagne", "silver-champagne outline, 8 mm, of every white stroke and the exit ring (OUTLINE)"),
     ("paint_white", "fin cap (above FIN_CAP), bullet fairing"),
     ("paint_silver", "tailplane and elevators, both faces"),
     ("paint_wing_dark", "wing lower faces, winglet outboard faces, belly fairing, flap-track fairings"),
     ("paint_black", "radar-pod radome (forward of the pod joint)"),
-    ("trim_black", "PRO windshield mask (outline: cockpit_glazing.surround_sdf)"),
+    ("trim_black", "PRO windshield mask (cockpit_glazing.surround_sdf) + flight-deck glazing frames"),
     ("deice_boot", "wing / tailplane leading-edge de-ice boots (rubber, not paint)"),
     ("chrome", "spinner, polished (the drawing grey stands for chrome)"),
     ("exhaust_polished", "exhaust stacks, polished and heat-tinted"),
@@ -938,8 +944,7 @@ def draw_legend(ds):
 
 CURVE_NOTE = {
     "B1": "thick white band: cowl front, under the exhaust, rising aft; crosses the crown aft of the cabin",
-    "N1": "navy line above B1, cowl front to under the exit",
-    "P1": "thin white line above N1; crosses the crown between the last two cabin windows",
+    "P1": "thin white line above B1; crosses the crown between the last two cabin windows",
     "P2": "thin white line: lower edge of the light band, under the cockpit to the lower rudder",
     "H1": "upper edge of the light band on the tail cone",
     "U1": "thin line above H1 rising aft to the crown",
@@ -979,6 +984,11 @@ def curve_rows():
     rows.append(("FIN_CAP", "white", f"{L.FIN_CAP[0][0]:.2f} - {L.FIN_CAP[-1][0]:.2f}",
                  f"{L.FIN_CAP[0][1]:.3f} > {L.FIN_CAP[-1][1]:.3f}", "-", str(len(L.FIN_CAP)), "-",
                  CURVE_NOTE["FIN_CAP"]))
+    if L.outlines():
+        o = L.OUTLINE
+        rows.append(("OUTLINE", o["material"].replace("paint_", ""), "all white", "stroke + rim", f"{o['width'] * 1000:.0f}",
+                     "-", "-", f"rim {o['width'] * 1000:.0f} mm round every white stroke and the exit ring, tapering "
+                     f"with the calligraphic ends (h < {o['taper_h'] * 1000:.0f} mm)"))
     return rows
 
 
@@ -1004,8 +1014,8 @@ PHOTO_ROWS = [
     ("port 3/4, hangar", "pro3008_port34 (= cand _130), cand _81, _82", "camera-matched _130 (7 points, 8 px rms) and _81 "
                                                                         "(7 points, 11 px): nose band group, light lower "
                                                                         "nose, blade bands, polished spinner / stacks"),
-    ("port nose, outdoors", "cand ..._MSN-3008_188", "B1 / N1 / P1 run parallel from the cowl front; the aft port "
-                                                     "strokes mirror the starboard ones"),
+    ("port nose, outdoors", "cand ..._MSN-3008_188", "B1 / P1 run parallel from the cowl front (base blue between "
+                                                     "them, no navy line: 82 / 130 too); champagne stroke edges"),
     ("starboard wing, flight", "cand ..._IMG_0459", "blue wing upper face, black LE boot, blue winglet with a white "
                                                     "line, blue pod with a black radome"),
 ]
@@ -1190,14 +1200,12 @@ def draw_front(ds):
         A_ = G.MAIN_AXLE
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
         T = G.MAIN_TRUNNION
-        ds.cv.line(v.pt(sg * T[1], T[2]), v.pt(sg * A_[1], A_[2]), 0.07 * v.k, color=col("gear_leg"))
+        ds.cv.line(v.pt(sg * T[1], G.main_leg_skin_z()), v.pt(sg * A_[1], A_[2]), 0.07 * v.k, color=col("gear_leg"))
         P = FP.opening_outline(dict(cx=sg * A_[1], cz=A_[2], hx=Wt / 2, hz=R, r=0.05))
         poly(ds, v, P, col("tire"))
         outline(ds, v, P, W_THIN)
-        d_ = G.LEG_DOOR                                   # leg door edge-on, outboard of the tyre
-        dz = G.leg_door_outline()[:, 1]
-        ds.cv.line(v.pt(sg * d_["bl"][0], float(dz.max())), v.pt(sg * d_["bl"][1], float(dz.min())), 0.018 * v.k,
-                   color=col(L.SURFACES["main_gear_door"]))
+        fl = G.leg_door_front_line()                      # leg door edge-on as built (LD-1)
+        ds.cv.path(v.pts(np.c_[sg * fl[:, 0], fl[:, 1]]), 0.018 * v.k, color=col(L.SURFACES["main_gear_door"]))
     Np, Na = G.NOSE_PIVOT, G.NOSE_AXLE
     ds.cv.line(v.pt(0.0, Np[2]), v.pt(0.0, Na[2]), 0.06 * v.k, color=col("gear_leg"))
     P = FP.opening_outline(dict(cx=0.0, cz=Na[2], hx=G.NOSE_TYRE["W"] / 2, hz=G.NOSE_TYRE["R"], r=0.04))
@@ -1213,7 +1221,9 @@ def draw_front(ds):
     # chin inlet (powerplant.CHIN_INLET): polished lip ring round the lower spinner, dark crescent mouth; it masks the
     # side-projection stripes painted across the lower cowl
     lip = PP.chin_inlet_outline("lip")
-    poly(ds, v, lip, col(L.SURFACES["inlet_lip"]))
+    za, zb = PP.chin_lip_polished_top()                  # polished arms end at the side crescent's top (painted cheek above)
+    lipc = lip[lip[:, 1] <= 0.5 * (za + zb)]
+    poly(ds, v, lipc, col(L.SURFACES["inlet_lip"]))
     poly(ds, v, np.c_[0.30 * np.cos(th) - 0.03, 1.36 + 0.07 * np.sin(th)], "#E9ECEF")        # lip highlight
     mouth = PP.chin_inlet_outline("mouth")
     poly(ds, v, mouth, col(L.SURFACES["inlet_mouth"]))

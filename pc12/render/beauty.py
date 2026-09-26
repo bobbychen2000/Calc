@@ -455,8 +455,8 @@ PRESETS = {
                (30, 270, 0, 400, 150), (130, 370, 150, 560, 150), (360, 335, 380, 470, 120),
                (700, 275, 700, 420, 130), (1250, 360, 1250, 620, 200), (130, 615, 130, 700, 180),
                (800, 650, 800, 790, 220), (1450, 300, 1500, 480, 200)),
-        camera_invisible=("fus_", "cowl_", "glazing_", "flight_deck", "cabin_interior", "door_", "exit_hatch",
-                          "dorsal_fin", "antennas", "lights", "belly_fairing", "propeller", "blade_"),
+        camera_invisible=("fus_", "cowl_", "glazing_", "flight_deck", "cabin_interior", "interior_lining", "door_",
+                          "exit_hatch", "dorsal_fin", "antennas", "lights", "belly_fairing", "propeller", "blade_"),
         pose=dict(gear=1.0, pitch=24.0, prop_clock=0.0),
     ),
     "top": dict(
@@ -509,7 +509,7 @@ DEFAULT_BOUNCES = (6, 3, 4, 4, 12)          # max, diffuse, glossy, transmission
 # metallic paints: (metallic, roughness) of the flake base under the clear coat (see Scene.materials)
 PAINT_FLAKE = {"paint_blue": (0.7, 0.42), "paint_blue_light": (0.65, 0.4), "paint_navy": (0.6, 0.42),
                "paint_wing_dark": (0.55, 0.45), "paint_silver": (0.85, 0.35), "paint_stripe": (0.6, 0.35)}
-GLASS_TINT = {"glass_windshield": (0.16, 0.175, 0.17), "glass": (0.12, 0.13, 0.13)}
+GLASS_TINT = {"glass_windshield": (0.16, 0.175, 0.17), "glass": (0.12, 0.13, 0.13), "glass_cabin": (0.12, 0.13, 0.13)}
 
 
 def auto_frame(cam: Cam, pts, fill=0.9, align=(0.5, 0.5), iters=3):
@@ -831,7 +831,7 @@ class Scene:
             elif n == "deice_boot":
                 inp["Base Color"].default_value = (0.018, 0.02, 0.022, 1)
                 inp["Metallic"].default_value, inp["Roughness"].default_value = 0.0, 0.42
-            elif n in ("glass", "glass_windshield"):
+            elif n in GLASS_TINT:
                 # neutral grey-green tint (windshield laminate lighter than the cabin acrylic)
                 self._thin_glass(m, tint=GLASS_TINT[n])
             elif n == "prop_blade":                      # glossy black composite blades
@@ -1812,6 +1812,17 @@ def configure_render(S: Scene, pre, samples, out_png):
         pass
 
 
+def lookdev_overrides(ov):
+    """render/lookdev.py overrides for this GLB: a model that paints the champagne stroke outlines itself
+    (model/livery.OUTLINE -> 'paint_champagne' primitives) must not get lookdev's render-time ribbons on top."""
+    import bpy
+    if ov is False or bpy.data.materials.get("paint_champagne") is None:
+        return ov
+    ov = dict(ov or {})
+    ov.setdefault("_outline", {"enabled": False})
+    return ov
+
+
 def render_preset(name, glb, out_dir, box, samples, compare, quiet=True):
     import bpy
     pre = PRESETS[name]
@@ -1824,6 +1835,9 @@ def render_preset(name, glb, out_dir, box, samples, compare, quiet=True):
     if pre.get("camera_invisible"):
         S.camera_invisible(pre["camera_invisible"])
     S.materials(pre.get("paint"))
+    sys.path.insert(0, str(HERE))                   # photo-matched MSN 3008 materials (render/lookdev.py)
+    import lookdev
+    info["lookdev"] = lookdev.apply(bpy.data.materials, lookdev_overrides(pre.get("lookdev")))
     info["pose"] = dict(pre.get("pose", {}))
     info["pose_result"] = S.pose(**pre.get("pose", {}))
     fr = pre["camera"].get("frame")

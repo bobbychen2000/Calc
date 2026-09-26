@@ -5,7 +5,7 @@ where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is p
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
 engineering-drawing generator. Output: `out/pc12.glb` (71 parts, ~750k tris, hinge pivots in node
 extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
-`out/drawings/L1..L5` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`),
+`out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`),
 `out/pc12_ga.svg|pdf` (legacy A1 GA, hidden-line from the mesh) and `out/pc12_sections.svg|pdf` (A2 sections).
 
 ## Commands
@@ -18,7 +18,8 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   nose gear vs doors / flight deck, flaps + canoes, rudder); '[open]' rows are known
                                 #   conflicts in the approved parameters that need an owner decision (they do not fail)
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L5
-python3 -m drawing.master       # the Stage-2 drawing set L1-L5 from the parameter modules (~2.5 min)
+python3 -m drawing.master       # the Stage-2 drawing set L1-L6B from the parameter modules (~2.5 min;
+                                #   `python3 -m drawing.master L6 L6B` for the interior sheets only)
 python3 -m drawing.sheet        # hidden-line drawings (~30 s) -> out/pc12_ga.*, out/pc12_sections.*
 python3 -m drawing.verify       # measures the SVG itself against the dimensions
 # dev viewer (three.js r160 expected at web/three_local -> a checkout of mrdoob/three.js tag r160):
@@ -80,15 +81,22 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   tailplane horn balances split off the fixed tips along the drawn horn gap and carried by the elevators),
   `powerplant.py` (PT6E-67XP modules + Hartzell 5-blade prop, chin inlet cut into the OML keel step, scarfed
   stacks), `gear.py` (+ `bays.py`, `brace.py`; nose retracts 105° into a tunnel under the pedestal, unequal-link
-  braces), `interior.py` (flight deck, cabin on CABIN_FLOOR_WL, frames at the Pilatus frame stations),
+  braces), `interior.py` (flight deck, cabin on CABIN_FLOOR_WL, frames at the Pilatus frame stations; side-wall /
+  headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
+  `interior.lining_offset` -- with window reveals and lined door wells, so the glazing never shows the single-sided
+  skins' back faces; the Stage-2 interior tables and sheets L6 / L6B, `drawing/interior_sheet.py` /
+  `interior_checks.py`, are approved and the 3-D seats / flight deck / cabin are being rebuilt from them),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones; flap-track canoes split at the cove lip
   into a fixed forward part and an aft part carried by the flap; lights, antennas, pod),
   `livery.py` (PC-12 PRO MSN 3008 scheme; the 3-D painter trims with one-sided smooth fields so thin strokes stay
   continuous; zero-area slivers from trims are dropped by `cad/glb.py`; per-surface bands -- wing / tailplane boots,
   winglet pinstripe, blade tip bands about the thrust axis, blade LE erosion strip -- are cut with sequential
-  single-sided trims, never one V-shaped max() field), `build.py` (steps + verification),
-  `drawing/` (Stage-2 sheets L1-L5 via `drawing.master`; legacy HLR GA via `drawing.sheet`).
+  single-sided trims, never one V-shaped max() field; every white stroke is edged by the 8 mm champagne OUTLINE and
+  there is no navy line -- photos 82 / 130 / 188), `assemble.py` (MATERIALS = the photo-fitted MSN 3008 glTF values
+  of `render/lookdev_materials.json`, clear coat / specular as KHR extensions; `check_lookdev()` and
+  `livery.check_materials()` are printed by the build), `build.py` (steps + verification),
+  `drawing/` (Stage-2 sheets L1-L6B via `drawing.master`; legacy HLR GA via `drawing.sheet`).
 
 ## Sourced facts (keep these fixed)
 Pilatus PC-12 PRO/NGX facts: span 16.28, length 14.40, height 4.26, wing area 25.81 m², tail span 5.20,
@@ -114,16 +122,24 @@ incidence/washout, airfoil ordinates, engine module proportions inside the TCDS 
 nose-gear stowage tunnel and brace link split, livery details (camera-matched photos).
 
 ## Status / next steps
-- Stage 1-2 done: reference drawings registered, drawing set L1-L5 approved (3 review rounds).
+- Stage 1-2 done: reference drawings registered, drawing set L1-L5 approved (3 review rounds); interior sheets
+  L6 (arrangement) / L6B (checks) approved, drawn from the source-tagged tables in `model/interior.py`.
 - Stage 3 (3-D build from the approved parameters): `model/build.py` consumes the Stage-2 parameters end to end;
   `test/fit_check.py`, `test/viewer_test.py`, `drawing.sheet/verify` and `drawing.master` pass. Known open items
   (not modelled / needing an owner decision): the drawn fairing tail lobe aft of the cargo-door seam (STA 7540-8585,
-  it overlaps the D2 panel; the root fillet fades out ahead of the seam instead); the main-gear leg door: the 3-D door
-  is the drawn gear.LEG_DOOR face in its drawn plane (BL 2358-2472, outboard of the tyre), rigid on the leg, and the
-  wing slot is its footprint -- but retracted it lies 105-142 mm BELOW the wing lower skin
-  (`gear.leg_door_retracted_drop`; fit_check '[open]'): the plane is 93-207 mm outboard of the leg / wheel plane,
-  the drawn trunnion is at the lower skin and the tyre stows 1 in proud, so no rigid door in that plane can close
-  flush (in-flight photos show a flush underside) -- owner decision; cargo-door gas struts; dihedral: decision D4
-  quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
-- Stage 4: Blender (Cycles) beauty renders (`render/blender_ortho.py` for calibrated views) and the three.js
-  viewer (`web/`, three.js r160 in `web/three_local`).
+  it overlaps the D2 panel; the root fillet fades out ahead of the seam instead); cargo-door gas struts; dihedral:
+  decision D4 quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
+- Main-gear leg door, decision LD-1 (owner-delegated, resolved; model/gear.py comment block): the door is the wing
+  lower skin carried down by the leg (`gear.leg_door_offset`), so retracted it closes flush (1 mm recess, 3 mm panel
+  gap, `bays.DOOR_GAP`) and the tyre protrudes 26 mm in its own round well (`bays.well_sdf`); drawn side-view face
+  kept, scalloped round the tyre (R 292) plus a tab hidden in the slot over the leg's skin crossing
+  (`gear.leg_door_face`); edge-on it stands at BL 2334-2383 instead of the drawn 2358-2472 lean (call-out on L4).
+  Hidden changes: trunnion STA 5978 / WL 1155 (drawn leg top 5932 / 1070), retraction 86 deg (stowed wheel along
+  the ~7 deg skin), side-brace stations 6040 / 6038, L1 split 0.19, B0 on a lug 80 mm inboard of the leg (`gear.MAIN_BRACE_LUG`) and the links offset along the knee pin (`MAIN_BRACE_CLEVIS`) so they clear the stowed leg, no forward slot; liner-only pockets
+  (`bays.TRUNNION_POCKET`, `BRACE_POCKET`), a black seal band on the lowest 60 mm of the main-bay liner, and a finer
+  wing lower skin over the bay (wing.py sub-panel) so the cut-out corners are cut within a few mm. fit_check 5 / 10
+  test flushness, protrusion (20-30 mm), the closed cut-out and every pose of the swing.
+- Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
+  the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
+  `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`).
+  The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
