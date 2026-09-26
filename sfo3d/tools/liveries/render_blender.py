@@ -50,7 +50,9 @@ def build_scene(bpy, model_path, type_key, livery_path, tmp, cargo=False):
     keep = np.zeros(len(idx), bool); keep[order[first]] = True
     # only ahead of 0.2 L (the nose, where the opposite-normal twins shade as blotches in Cycles): elsewhere a twin can sit on an
     # unpainted chart layer and dropping the other copy exposes it (grey panels on the 747-8 body in a trial)
-    if os.environ.get('RB_NODEDUP'): keep[:] = True
+    # default off: on the FAM 747-8 the retained twin of some body panels rendered grey in Cycles (trial 26 Sep 2026), while
+    # the nose twins shade as blotches without it; the app draws both twins facing the camera (neither artefact). RB_DEDUP=1
+    if not os.environ.get('RB_DEDUP'): keep[:] = True
     idx = idx[keep]; m['tri_mat'] = m['tri_mat'][keep]
     # the app's shader faces every normal toward the camera, so source triangles wound against their normals (FAM 747-400
     # nose) are harmless there; Cycles shades them dark (review round 1: blotches on the DLH 747 nose). Normals are repaired
