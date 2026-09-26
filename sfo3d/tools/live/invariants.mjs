@@ -99,6 +99,9 @@ let simNow = 0, checkFrom = Infinity;
 // ---- jet bridges: gates.js code on an instance without the WebGL constructor
 const gsys = Object.create(LiveGateSystem.prototype); gsys.gates = gates; gsys.anims = new Map(); gsys.dirty = false;
 for (const g of gates) for (const b of g.bridges || []) gsys.prepBridge(g, b);
+// (as the LiveGateSystem constructor does: stair sides etc. are settled once every bridge is placed -- without it the
+// docking plans, hence the dock / undock durations the engine waits for, differ from the app's in --fast mode)
+if (gsys.finishPrep) gsys.finishPrep();
 let booted = false;
 // (as js/live/app.js: the bridge docks to the DRAWN pose the aircraft came to rest in, tr.dockPose; an alternative (MARS)
 // stand without bridges uses its base stand's bridges; only aircraft with a 3-D airframe are docked)

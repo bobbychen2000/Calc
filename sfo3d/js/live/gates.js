@@ -279,6 +279,17 @@ export class LiveGateSystem {
     // the data's model; a bridge the data found no single model for carries the range of the model covering most of its
     // dockings (ext_range) - that model is used
     let spec = PBB[b.model]; if (!spec && b.extRange) { const hit = Object.entries(PBB).find(([, m]) => Math.abs(m[4] - b.extRange[0]) < 0.01 && Math.abs(m[3] - b.extRange[1]) < 0.01); if (hit && !b.upper) { spec = hit[1]; b.modelUsed = hit[0]; } }
+    // Which model each bridge is, is the data's inference: "the smallest-retracting model covering the observed dockings".
+    // The engine parks aircraft where their ADS-B reports put them, 2-18 m short of the stop points the models were
+    // fitted to (replay 24 Sep 15:25-16:45Z: 33 of 85 dockings out of range), and a real bridge does reach the aircraft
+    // at its real stop. Here a main-deck bridge is the datasheet model with the LONGEST reach whose operational
+    // retraction still fits its rest length (stow_len: the tunnel is at least that short, sheet footnote) - the same
+    // rest footprint, the reach the rest pose allows (inferred; data model kept when it already reaches farther).
+    const stowL0 = b.stowW ? Math.hypot(b.stowW[0] - rot[0], b.stowW[1] - rot[2]) : null;
+    if (!b.upper && stowL0 != null) {
+      const cands = Object.entries(PBB).filter(([, m]) => m[4] <= stowL0 + 0.01 && m[1] - (m[2] - m[4]) >= stowL0).sort((a, c) => c[1][3] - a[1][3] || a[1][4] - c[1][4]);
+      if (cands.length && (!spec || cands[0][1][3] > spec[3] + 0.01)) { spec = cands[0][1]; b.modelUsed = cands[0][0]; b.modelWidened = true; }
+    }
     let nT, opR, opE, mechE, spacer;
     if (spec) { [nT, , , opE, opR] = spec; spacer = spec[2] - spec[4]; mechE = spec[1] - spacer; }
     else { nT = 3; [opR, opE] = b.extRange || [10.276, 41.381]; spacer = 2.225; mechE = opE + 2.3; }
@@ -410,7 +421,7 @@ export class LiveGateSystem {
   // sheet limits for a joint state: operational range (+-1 m, the data's tolerance), cab turn, rotunda swing
   jointOk(b, q, icao) {
     const m = b.m; const turn = CW * q.t / DEG; const opt = b.cabOption && /^optional/.test(b.cabOption);
-    if (icao && b.dockTypesOut && b.dockTypesOut.includes(icao)) return { ok: false, why: 'dock_types_out' };
+    if (icao && !b.modelWidened && b.dockTypesOut && b.dockTypesOut.includes(icao)) return { ok: false, why: 'dock_types_out' }; // (the data's model's reach)
     if (q.e < m.opR - 1.0 || q.e > m.opE + 1.0) return { ok: false, why: `extension ${q.e.toFixed(1)} m outside ${m.opR}-${m.opE}` };
     if (opt ? Math.abs(turn) > CAB_OPT_HALF : (turn > CAB_CW || turn < -CAB_CCW)) return { ok: false, why: `cab turn ${turn.toFixed(0)} deg` };
     if (!b.swingFree && Math.abs(wrap(q.a - b.ac)) > ROT_SWING * DEG + 1e-6) return { ok: false, why: `rotunda swing ${(wrap(q.a - b.ac) / DEG).toFixed(0)} deg` };

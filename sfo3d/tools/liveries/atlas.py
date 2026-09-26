@@ -627,7 +627,11 @@ def process(key, S=2048, preview=None, outdir=None):
     # that is occluded by its twin went to another chart layer and stayed unpainted, so the renderer showed a grey band
     # where it drew that copy first (review round 1, DLH 747-8); one copy is kept (the renderer draws both faces)
     kq = np.round(m['pos'][m['idx']] * 1000).astype(np.int64); kq.sort(axis=1)
-    _, first = np.unique(kq.reshape(len(m['idx']), -1), axis=0, return_index=True)
+    # of each duplicate set keep a 'paint' copy (the other copy can carry a glass / dark / untextured material: keeping it
+    # left grey unpainted panels on the 747-8 body)
+    paint = np.array([m['head']['mats'][i]['kind'] == 'paint' and m['head']['mats'][i]['tex'] >= 0 for i in m['tri_mat']])
+    order = np.lexsort((np.arange(len(paint)), ~paint))
+    _, fo = np.unique(kq.reshape(len(m['idx']), -1)[order], axis=0, return_index=True); first = order[fo]
     if len(first) < len(m['idx']):
         keep = np.zeros(len(m['idx']), bool); keep[first] = True
         print(f'  {key}: {len(m["idx"]) - len(first)} duplicate triangles dropped')
