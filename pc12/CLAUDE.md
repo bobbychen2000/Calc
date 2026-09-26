@@ -25,6 +25,8 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, slow on a loaded machine)
+python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLB, vendored three.js, verify step
 ```
 
 ## Method (owner's directive: drawings first, then 3D, then rendering)
@@ -137,5 +139,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   test flushness, protrusion (20-30 mm), the closed cut-out and every pose of the swing.
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
   the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
-  `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`).
+  `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`;
+  `web/viewer/materials.json` must stay a copy of `render/lookdev_materials.json`: `viewer/materials.js` turns it into
+  MeshPhysicalMaterial by name, replacing the GLB's KHR clear-coat materials, and keeps the GLB values for the rest).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).

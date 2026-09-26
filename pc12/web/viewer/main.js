@@ -1,7 +1,8 @@
 // PC-12 PRO viewer: bootstrap, UI wiring, keyboard shortcuts, picking, render loop, test hooks.
 import * as THREE from 'three';
-import { Stage, PRESETS } from './scene.js';
-import { loadGLB, Model, INTERNAL_PARTS } from './model.js';
+import { Stage, PRESETS, QUALITY, LOOK } from './scene.js';
+import { loadGLB, parseGLB, Model, INTERNAL_PARTS } from './model.js';
+import { loadMaterialSpec, setLights } from './materials.js';
 import { Kinematics } from './kinematics.js';
 import { Build } from './build.js';
 import { PartsPanel, InfoCard, DrawingViewer, buildSpecs } from './panels.js';
@@ -11,71 +12,124 @@ const app = $('app');
 const q = new URLSearchParams(location.search);
 
 // ------------------------------------------------------------------ data URLs
-// ?data=<base> re-hosts everything next to the page; ?glb= / ?meta= / ?svg=ga,sections override single files
-const dataBase = q.get('data') ? q.get('data').replace(/\/?$/, '/') : '../out/';
-const URLS = {
-  glb: q.get('glb') || dataBase + 'pc12.glb',
-  meta: q.get('meta') || dataBase + 'pc12_meta.json',
-};
-const svgList = (q.get('svg') || '').split(',').map((s) => s.trim()).filter(Boolean);
-URLS.ga = svgList[0] || dataBase + 'pc12_ga.svg';
-URLS.sections = svgList[1] || dataBase + 'pc12_sections.svg';
+// ?data=<base> re-hosts everything next to the page; ?glb= / ?meta= / ?svg=ga,sections override single files.
+// Default: window.PC12_CONFIG.data (index.html: '../out/' in the repo, './data/' in the packaged bundle).
+// index.html's boot script resolves them (window.PC12_URLS), fetches the metadata and the GLB itself (PC12_META /
+// PC12_GLB promises, with the loading bar) and preloads the HDRI and the materials, so the requests below are served
+// by those preloads.
+const CONFIG = window.PC12_CONFIG || {};
+const URLS = window.PC12_URLS || (() => {
+  const base = (q.get('data') || CONFIG.data || '../out/').replace(/\/?$/, '/');
+  const svg = (q.get('svg') || '').split(',').map((s) => s.trim()).filter(Boolean);
+  return { glb: q.get('glb') || base + 'pc12.glb', meta: q.get('meta') || base + 'pc12_meta.json',
+    ga: svg[0] || base + 'pc12_ga.svg', sections: svg[1] || base + 'pc12_sections.svg' };
+})();
+const BOOT = window.PC12_BOOT || { progress() {}, fail: null, unsupported: '' };
 
 // ------------------------------------------------------------------ loading screen
 let readyResolve, readyReject;
 const ready = new Promise((res, rej) => { readyResolve = res; readyReject = rej; });
 ready.catch(() => {});
+// every progress report also feeds index.html's stall watchdog ("Still loading…" after 20 s without one)
 const setProgress = (frac, text) => {
   $('loadBar').style.width = `${Math.round(Math.max(0, Math.min(1, frac)) * 100)}%`;
   if (text != null) $('loadBytes').textContent = text;
+  BOOT.progress();
 };
+const setStage = (text) => { $('loadMsg').textContent = text; BOOT.progress(); };
+// load / first-frame timings (ms since navigation start), reported by viewer.perf()
+const PERF = { t: {}, mark(k) { this.t[k] = Math.round(performance.now()); } };
+PERF.mark('script');
+const yieldFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 function fail(err, what) {
-  const load = $('loading');
-  load.classList.add('error');
-  load.classList.remove('done');
   let msg = `Could not load ${what}.\n${err && err.message ? err.message : err}`;
   if (location.protocol === 'file:') msg += '\n\nOpen the page over HTTP, e.g.\n  python3 -m http.server 8765 --directory pc12\nthen http://localhost:8765/web/';
-  $('loadMsg').textContent = msg;
-  window.__error = msg;
-  window.__ready = true;   // lets headless tests stop waiting
+  if (BOOT.fail) BOOT.fail(msg);          // the loading card's error state + Retry (index.html)
+  else {
+    const load = $('loading');
+    load.classList.add('error');
+    load.classList.remove('done');
+    $('loadMsg').textContent = msg;
+    window.__error = msg;
+    window.__ready = true;   // lets headless tests stop waiting
+  }
   readyReject(err);
 }
 
-const stage = new Stage($('stage'));
-stage.goTo('three_quarter', { instant: true });
-
-let model, kin, build, parts, info, drawings, meta;
+let stage, model, kin, build, parts, info, drawings, meta;
 const S = {
   explode: { target: 0, cur: 0 },
   cutUser: false, xray: false, lines: false,
   tab: 'build', selected: null, hidden: new Set(), isolate: null,
-  paused: false, demo: null,
+  paused: false, demo: null, lights: false,
 };
 
 async function boot() {
-  let metaJson;
+  if (BOOT.unsupported) { fail(new Error(BOOT.unsupported), 'the 3-D view'); return; }
+  // the WebGL renderer first: without a context (WebGL off, a blocklisted or lost GPU) nothing is downloaded
   try {
-    const r = await fetch(URLS.meta);
-    if (!r.ok) throw new Error(`HTTP ${r.status} for ${URLS.meta}`);
-    metaJson = await r.json();
-  } catch (e) { fail(e, 'the model metadata (' + URLS.meta + ')'); return; }
-  let gltf;
-  try {
-    gltf = await loadGLB(URLS.glb, (e) => {
-      const tot = e.total || (metaJson.stats && metaJson.stats.glb_bytes) || 0;
-      if (tot) setProgress(e.loaded / tot, `${(e.loaded / 1048576).toFixed(1)} / ${(tot / 1048576).toFixed(1)} MB`);
+    stage = new Stage($('stage'));
+  } catch (e) {
+    fail(new Error(`${e && e.message ? e.message : e}\nThis viewer needs WebGL 2: it may be switched off (e.g. iOS Lockdown Mode, a browser setting) or blocked for this graphics driver.`), 'the 3-D view');
+    return;
+  }
+  stage.goTo('three_quarter', { instant: true });
+  stage.onContextChange = onContextChange;
+  $('glReload').addEventListener('click', () => location.reload());
+  // everything is requested at once: metadata, materials, the studio environment and the model.  The boot script
+  // (index.html) has already started the metadata and the GLB and drives the loading bar while they download.
+  const metaP = window.PC12_META || fetch(URLS.meta).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status} for ${URLS.meta}`); return r.json(); });
+  metaP.catch(() => {});
+  const matP = loadMaterialSpec().catch((e) => { console.warn('materials.json unavailable, GLB materials kept:', e.message || e); return null; });
+  const envP = stage.loadEnvironment().then(() => PERF.mark('env'));
+  setStage('Downloading model…');
+  let glbP;
+  if (window.PC12_GLB) {
+    glbP = window.PC12_GLB.then((buf) => { PERF.mark('glbBytes'); return parseGLB(buf, URLS.glb); });
+  } else {
+    // no boot script (a page embedding main.js on its own): three's loader, with a monotonic bar
+    let total = 0, frac = 0;
+    glbP = loadGLB(URLS.glb, (e) => {
+      if (!total) total = (!q.get('glb') && meta && meta.stats && meta.stats.glb_bytes) || e.total || 0;
+      if (e.loaded > total) total = e.loaded;
+      frac = Math.max(frac, total ? 0.92 * e.loaded / total : 0);
+      setProgress(frac, total ? `${(e.loaded / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(1)} MB` : `${(e.loaded / 1048576).toFixed(1)} MB`);
     });
-  } catch (e) { fail(e, 'the 3-D model (' + URLS.glb + ')'); return; }
-  $('loadMsg').textContent = 'Preparing…';
-  setProgress(1);
-  meta = metaJson;
-  init(gltf);
+  }
+  glbP.catch(() => {});
+  try { meta = await metaP; PERF.mark('meta'); } catch (e) { fail(e, 'the model metadata (' + URLS.meta + ')'); return; }
+  let gltf;
+  try { gltf = await glbP; PERF.mark('glb'); } catch (e) { fail(e, 'the 3-D model (' + URLS.glb + ')'); return; }
+  setStage('Preparing materials…');
+  setProgress(0.94);
+  const matSpec = await matP;
+  await envP;
+  await yieldFrame();
+  await init(gltf, matSpec);
+}
+
+// WebGL context lost (a backgrounded phone tab, GPU memory pressure): rendering pauses and a note shows until the
+// browser restores the context; Stage rebuilds the environment and shadows, then one frame is drawn.  If no restore
+// comes within 8 s the note offers a reload.
+let glNoteTimer = 0;
+function onContextChange(lost) {
+  const note = $('glNote');
+  clearTimeout(glNoteTimer);
+  if (lost) {
+    note.hidden = false;
+    note.classList.remove('stuck');
+    glNoteTimer = setTimeout(() => note.classList.add('stuck'), 8000);
+  } else {
+    note.hidden = true;
+    if (stage) { stage.needsRender = true; forceFrames = Math.max(forceFrames, 2); }
+  }
 }
 
 // ------------------------------------------------------------------ init
-function init(gltf) {
-  model = new Model(gltf, meta);
+async function init(gltf, matSpec) {
+  model = new Model(gltf, meta, { materials: matSpec });
   stage.scene.add(model.root);
+  stage.addToContactLayer(model.root);
   stage.setModelBox(model.box, model.silhouettePoints());
   kin = new Kinematics(model);
   build = new Build({ model, meta, scene: stage.scene, labelsEl: $('labels') });
@@ -99,12 +153,31 @@ function init(gltf) {
   layoutInsets();
   const cam = q.get('cam');
   stage.goTo(cam && PRESETS[cam] ? cam : 'three_quarter', { instant: true });
+  PERF.mark('init');
+  // compile the visible materials' shaders before the first frame (parallel where the driver allows),
+  // so the page does not freeze on a long first render
+  setStage('Compiling shaders…');
+  setProgress(0.97);
+  await yieldFrame();
+  try {
+    const R = stage.renderer;
+    if (R.extensions.has('KHR_parallel_shader_compile')) await R.compileAsync(stage.scene, stage.camera);
+    else R.compile(stage.scene, stage.camera);
+  } catch (e) { /* compiled on first render instead */ }
+  PERF.mark('compiled');
+  setStage('Rendering…');
+  setProgress(1);
   requestAnimationFrame(frame);
   // hide the loading screen once the first frame (and its shader compiles) is on screen
-  waitFrames(2).then(() => {
+  waitFrames(1).then(() => {
+    PERF.mark('firstFrame');
+    PERF.firstRenderMs = Math.round(stage.stats.lastRenderMs);
+    return waitFrames(1);
+  }).then(() => {
     $('loading').classList.add('done');
     setTimeout(() => {
       $('loading').hidden = true;
+      PERF.mark('ready');
       window.__ready = true;
       readyResolve(hooks);
     }, 450);
@@ -290,6 +363,7 @@ function setFlaps(d, { instant = false } = {}) { kin.setFlaps(d, instant); if (i
 function setDoor(id, v, { instant = false } = {}) { kin.setDoor(id, v, instant); if (instant) poseNow(); syncAnimUI(); }
 function setProp(o, { instant = false } = {}) { kin.setProp(o, instant); if (instant) poseNow(); syncAnimUI(); }
 function setControls(o, { instant = false } = {}) { kin.setControls(o, instant); if (instant) poseNow(); syncAnimUI(); }
+function setNavLights(on) { S.lights = !!on; setLights(S.lights); $('aLights').setAttribute('aria-pressed', String(S.lights)); stage.needsRender = true; }
 
 function neutral({ instant = false } = {}) {
   setControls({ roll: 0, pitch: 0, yaw: 0, stabTrim: 0, ailTrim: 0, rudTrim: 0 }, { instant });
@@ -304,6 +378,7 @@ function reset() {
   clearSelection();
   neutral();
   kin.setGear(0); kin.setFlaps(0); kin.setDoor('door_airstair', 0); kin.setDoor('door_cargo', 0); kin.setProp({ rpm: 0, pitch: 0 });
+  setNavLights(false);
   build.playing = false;
   if (build.index !== build.n - 1) build.setStep(build.n - 1, { instant: true });
   model.setPaint(true, false);
@@ -387,15 +462,19 @@ function setPanel(open) {
   requestAnimationFrame(layoutInsets);
   setTimeout(layoutInsets, 300);
 }
-const narrowMQ = window.matchMedia('(max-width: 760px)');
+// bottom sheet: narrow portrait screens (viewer.css uses the same query; short landscape screens keep a side panel)
+const narrowMQ = window.matchMedia('(max-width: 760px) and (min-height: 501px)');
 const isNarrow = () => narrowMQ.matches;
 function layoutInsets() {
   const open = app.classList.contains('panel-open');
   const p = $('panel'), tb = $('toolbar');
   // the toolbar floats over the top of the canvas: keep fitted views below it
   const top = tb.hidden ? 0 : Math.max(0, Math.round(tb.getBoundingClientRect().bottom - $('stage').getBoundingClientRect().top + 6));
-  if (isNarrow()) stage.setInsets(0, open ? p.offsetHeight : 92, top);
-  else stage.setInsets(open ? p.offsetWidth : 0, 0, top);
+  // safe-area insets (notch, home indicator; viewer.css #safeProbe): the collapsed sheet keeps its 92 px header above
+  // the home-indicator band, and fitted views stay clear of a landscape notch
+  const sp = getComputedStyle($('safeProbe')), px = (k) => parseFloat(sp[k]) || 0;
+  if (isNarrow()) stage.setInsets(0, open ? p.offsetHeight : 92 + px('paddingBottom'), top, px('paddingLeft'));
+  else stage.setInsets(open ? p.offsetWidth : px('paddingRight'), px('paddingBottom'), top, px('paddingLeft'));
   $('panelOpen').hidden = open || isNarrow();
 }
 
@@ -524,6 +603,7 @@ function wireUI() {
   $('panelToggle').addEventListener('click', () => setPanel(false));
   $('panelOpen').addEventListener('click', () => setPanel(true));
   $('sheetHandle').addEventListener('click', () => setPanel(!app.classList.contains('panel-open')));
+  wireSheetHeader();
   narrowMQ.addEventListener('change', () => { setPanel(app.classList.contains('panel-open')); });
   new ResizeObserver(() => { stage.resize(); layoutInsets(); }).observe($('stage'));
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => stage.setTheme(e.matches));
@@ -564,6 +644,7 @@ function wireUI() {
   for (const b of document.querySelectorAll('[data-flap]')) b.addEventListener('click', () => { manual(); setFlaps(+b.dataset.flap); });
   $('aAirstair').addEventListener('click', () => { manual(); setDoor('door_airstair', kin.t.door_airstair > 0.5 ? 0 : 1); });
   $('aCargo').addEventListener('click', () => { manual(); setDoor('door_cargo', kin.t.door_cargo > 0.5 ? 0 : 1); });
+  $('aLights').addEventListener('click', () => setNavLights(!S.lights));
   const ctl = (id, key) => $(id).addEventListener('input', (e) => { manual(); setControls({ [key]: +e.target.value }); });
   ctl('sRoll', 'roll'); ctl('sPitchCtl', 'pitch'); ctl('sYaw', 'yaw');
   ctl('sStab', 'stabTrim'); ctl('sAilTrim', 'ailTrim'); ctl('sRudTrim', 'rudTrim');
@@ -591,6 +672,32 @@ function wireUI() {
     const b = e.target && e.target.closest && e.target.closest('button, summary');
     if (b && document.activeElement === b) b.blur();
   });
+}
+
+// Bottom sheet (narrow screens): a tap on the header outside its buttons toggles the sheet like the grab bar, and a
+// vertical swipe on the header opens (up) or closes (down) it.
+function wireSheetHeader() {
+  const head = document.querySelector('#panel .panel-head');
+  let sw = null, swiped = false;
+  head.addEventListener('pointerdown', (e) => { sw = isNarrow() ? { x: e.clientX, y: e.clientY } : null; });
+  head.addEventListener('pointercancel', () => { sw = null; });
+  head.addEventListener('pointerup', (e) => {
+    if (!sw) return;
+    const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+    sw = null;
+    if (Math.abs(dy) > 24 && Math.abs(dy) > 1.5 * Math.abs(dx)) {
+      swiped = true;                         // the click that may follow must not toggle it back
+      setTimeout(() => { swiped = false; }, 400);
+      setPanel(dy < 0);
+    }
+  });
+  // capture: runs before the grab bar's own click listener
+  head.addEventListener('click', (e) => {
+    if (!isNarrow()) return;
+    if (swiped) { swiped = false; e.stopPropagation(); e.preventDefault(); return; }
+    if (e.target.closest('button, a, input')) return;
+    setPanel(!app.classList.contains('panel-open'));
+  }, true);
 }
 
 function toggleHelp(on = $('help').hidden) {
@@ -679,8 +786,9 @@ function tick(adt) {
   if (posed) {
     model.applyTransforms(ex.cur);
     afterTransforms();
-    // a spinning prop alone only needs an occasional shadow refresh
-    if (!kin.onlySpin || build.animating || ex.cur !== ex.target || ++shadowSkip % 4 === 0) stage.shadowDirty = true;
+    // a spinning prop alone only needs an occasional key-shadow refresh (and no contact-shadow render)
+    if (!kin.onlySpin || build.animating || ex.cur !== ex.target) stage.shadowDirty = true;
+    else if (++shadowSkip % 4 === 0) stage.keyShadowOnly();
     stage.needsRender = true;
   }
   if (waits.length) {
@@ -700,7 +808,17 @@ function frame(now) {
   last = now;
   const posed = tick(S.paused ? 0 : dt);
   if (stage.update(dt)) stage.needsRender = true;
+  stage.applyQuality();
   if (forceFrames > 0) { forceFrames--; stage.needsRender = true; }
+  stage.busy = posed;
+  // shadows skipped while animating on the low tier (Stage.render): one more frame once the motion stops
+  if (!posed && (stage.shadowDirty || stage.contactDirty)) stage.needsRender = true;
+  // interior light by viewpoint (and how far a cabin door is open)
+  if (stage.needsRender) {
+    const wasInside = model.camInside;
+    model.updateCabin(stage.camera.position, S.explode.cur, Math.max(kin.c.door_airstair, kin.c.door_cargo));
+    if (model.camInside !== wasInside) stage.shadowDirty = true;      // parts hidden inside the cabin (antennas)
+  }
   if (stage.needsRender) {
     stage.render();
     frameCount++;
@@ -736,7 +854,7 @@ const hooks = {
       prop: { rpm: c.rpm, pitch: c.pitch, angle: c.propAngle },
       controls: { roll: c.roll, pitch: c.pitchCmd, yaw: c.yaw, stabTrim: c.stabTrim, ailTrim: c.ailTrim, rudTrim: c.rudTrim },
       deflections: { ...kin.defl }, camera: stage.cameraState(), paused: S.paused, frames: frameCount,
-      demo: !!S.demo, structureVisible: model.structureOn, groundY: stage.groundY, propDiscPush: kin.push,
+      demo: !!S.demo, lights: S.lights, contextLost: stage.contextLost, camInside: model.camInside, structureVisible: model.structureOn, groundY: stage.groundY, propDiscPush: kin.push,
       cameraPreset: stage.preset,
       linesVisible: build.root.children.reduce((n, g) => n + (g.visible ? g.children.length : 0), 0),
       loading: !$('loading').hidden,
@@ -754,6 +872,7 @@ const hooks = {
   setDoor: (id, v, o = {}) => setDoor(id, v, o),
   setProp: (p, o = {}) => setProp(p, o),
   setControls: (p, o = {}) => setControls(p, o),
+  setLights: (on) => setNavLights(on),
   select: (id, o = {}) => select(id, { frame: true, ...o }),
   isolate: (id) => setIsolate(id || null),
   hide: (id) => hidePart(id),
@@ -779,6 +898,29 @@ const hooks = {
     return hooks.state;
   },
   pick: (x, y) => pick(x, y),
+  // load timings (ms since navigation start) + render statistics
+  perf: () => ({
+    marks: { ...PERF.t }, firstRenderMs: PERF.firstRenderMs,
+    quality: { ...stage.quality, dpr: stage.dpr }, env: stage.envSource, look: { ...LOOK, hdr: undefined },
+    renders: { ...stage.stats }, frames: frameCount,
+    info: model ? { calls: stage.renderer.info.render.calls, triangles: stage.renderer.info.render.triangles,
+      programs: stage.renderer.info.programs ? stage.renderer.info.programs.length : null,
+      geometries: stage.renderer.info.memory.geometries, textures: stage.renderer.info.memory.textures } : null,
+    materials: model ? model.materialInfo : null,
+  }),
+  // render n frames back to back and return the mean / max ms per frame (a 1-pixel readPixels after
+  // each render waits for the GPU; gl.finish() does not block in Chromium)
+  bench: (n = 5, { contact = false } = {}) => {
+    const gl = stage.renderer.getContext(), ms = [], px = new Uint8Array(4);
+    for (let i = 0; i < n; i++) {
+      if (contact) stage.shadowDirty = true;
+      const t0 = performance.now();
+      stage.render();
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      ms.push(performance.now() - t0);
+    }
+    return { mean: ms.reduce((a, b) => a + b, 0) / n, max: Math.max(...ms), min: Math.min(...ms), n };
+  },
   // world point (glTF axes) -> CSS pixel position in the page
   project: (p) => {
     poseNow();

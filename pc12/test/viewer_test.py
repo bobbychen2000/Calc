@@ -16,6 +16,14 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
     the ground when exploded / flying in, zero-explode parts grow in place, current build step always
     inside the panel, first camera fit uses the free viewport (and follows panel toggles), windshield
     see-through from the cockpit, prop blur disc follows exploded blades, compact info card on phones
+  - review round-2 (viewer): AgX + Punchy look and per-theme exposure, one GLB request (preloaded), the
+    meshopt-compressed GLB (web/package.py) decodes to the same triangles, loading errors without WebGL 2 or when a
+    module fails to load, phone pixel ratio (taps keep it, drags and their coast drop it), 40 px touch targets,
+    sheet header tap, landscape phone layout
+  - merged with the stage-4 model: every GLB material has a viewer material, materials.json = the lookdev table,
+    KHR_materials_clearcoat applied once, the interior lining lit as the cabin
+  - review round-3 (viewer): WebGL context loss and restore (a note while lost, redraws by itself, same image), the
+    Specs table fits the landscape panel, safe-area insets (landscape notch, portrait home indicator)
 Optional --blender: re-imports out/pc12.glb in Blender (bpy, /opt/venv-blender) and checks
 that Blender's scene graph gives the same part boxes and posed points as the viewer, and runs a
 BVH interference sweep of the gear against doors / flaps / flight deck.  Interferences that are
@@ -48,6 +56,9 @@ sys.path.insert(0, str(ROOT))
 VIEW = {"width": 960, "height": 600}
 PHONE = {"width": 390, "height": 844}
 LAUNCH_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
+# SwiftShader rasterises the MeshPhysicalMaterial scene on the CPU (~5-10 s a frame at 960x600); a screenshot
+# waits for the frames already queued, so Playwright's 30 s default is too tight
+SHOT_TIMEOUT = 240000
 
 results: list[tuple[str, bool, str, bool]] = []
 CTX: dict = {}   # extra browser-context options (see --three cdn)
@@ -99,13 +110,21 @@ def start_server():
     return srv
 
 
-async def launch(pw):
+def proxy_opts() -> dict:
+    """Chromium ignores HTTPS_PROXY: pass it explicitly (local test server bypassed) so the CDN is reachable
+    from sandboxes that only have an outbound proxy."""
+    p = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    return {"proxy": {"server": p, "bypass": "127.0.0.1,localhost"}} if p else {}
+
+
+async def launch(pw, args=None):
     """Launch Chromium; fall back to any installed Playwright build if the pinned one is missing."""
+    LAUNCH_ARGS = args if args is not None else globals()["LAUNCH_ARGS"]
     exe = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE")
     if exe:
-        return await pw.chromium.launch(executable_path=exe, args=LAUNCH_ARGS)
+        return await pw.chromium.launch(executable_path=exe, args=LAUNCH_ARGS, **proxy_opts())
     try:
-        return await pw.chromium.launch(args=LAUNCH_ARGS)
+        return await pw.chromium.launch(args=LAUNCH_ARGS, **proxy_opts())
     except Exception as first:
         base = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/opt/pw-browsers")
         # newest first; the headless shell (Playwright's default headless binary) before full Chromium
@@ -113,7 +132,7 @@ async def launch(pw):
         cands += sorted(glob.glob(f"{base}/chromium-*/chrome-linux*/chrome"), reverse=True)
         for c in cands:
             try:
-                return await pw.chromium.launch(executable_path=c, args=LAUNCH_ARGS)
+                return await pw.chromium.launch(executable_path=c, args=LAUNCH_ARGS, **proxy_opts())
             except Exception:
                 continue
         raise first
@@ -144,6 +163,29 @@ window.T = {
     for (const id of V.visibleParts()) { if (I.model.part(id).parent) continue; const y = V.partWorldBox(id).min[1]; if (y < m) { m = y; who = id; } }
     return [m, who];
   },
+  // per part: world bounds of the vertices its triangles use + the triangle count (rest pose; compares two GLB
+  // encodings of the same model: unreferenced vertices, which gltf-transform drops, are ignored)
+  geo: () => {
+    const V = window.viewer, I = V._internals, v = new I.THREE.Vector3(), out = {};
+    I.model.root.updateMatrixWorld(true);
+    for (const id of V.parts()) {
+      const b = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity, 0];
+      for (const mr of I.model.part(id).meshes) {
+        const m = mr.mesh, g = m.geometry, P = g.attributes.position, idx = g.index;
+        if (!P) continue;
+        const n = idx ? idx.count : P.count;
+        for (let k = 0; k < n; k++) {
+          const i = idx ? idx.getX(k) : k;
+          v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld);
+          if (v.x < b[0]) b[0] = v.x; if (v.y < b[1]) b[1] = v.y; if (v.z < b[2]) b[2] = v.z;
+          if (v.x > b[3]) b[3] = v.x; if (v.y > b[4]) b[4] = v.y; if (v.z > b[5]) b[5] = v.z;
+        }
+        b[6] += Math.floor(n / 3);
+      }
+      out[id] = b;
+    }
+    return out;
+  },
   // projected silhouette of the aircraft vs the free part of the viewport (not under the panel /
   // bottom sheet / toolbar), in CSS px
   fit: () => {
@@ -151,7 +193,7 @@ window.T = {
     cam.updateMatrixWorld();
     const cv = I.stage.renderer.domElement.getBoundingClientRect();
     const panel = document.getElementById('panel').getBoundingClientRect(), tb = document.getElementById('toolbar').getBoundingClientRect();
-    const narrow = matchMedia('(max-width: 760px)').matches, open = document.getElementById('app').classList.contains('panel-open');
+    const narrow = matchMedia('(max-width: 760px) and (min-height: 501px)').matches, open = document.getElementById('app').classList.contains('panel-open');
     const free = {x0: 0, x1: narrow || !open ? innerWidth : panel.left, y0: tb.bottom, y1: narrow ? panel.top : innerHeight};
     const v = new I.THREE.Vector3(); let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (let i = 0; i < pts.length; i += 3) {
@@ -177,7 +219,7 @@ async def shot(page, name, setup, wait_frames=2, note=""):
         await js(page, setup)
     await js(page, f"await window.viewer.frames({wait_frames});")
     path = OUT / f"{name}.png"
-    await page.screenshot(path=str(path))
+    await page.screenshot(path=str(path), timeout=SHOT_TIMEOUT)
     print(f"  shot {path.relative_to(ROOT)} {note}")
     return path
 
@@ -354,6 +396,7 @@ async def numeric_checks(page):
       const P = {};
       for (const id of ['gear_main_R', 'gear_main_L', 'gear_nose']) { const p = wheel(id); P[id] = {w0: p, loc: T.attach(id, p)}; }
       out.downDoor = V.state.gear.door;
+      out.doorDown = (V.partExtras('gear_door_NR').pivot.rest || 0);   // the pose the GLB builds the doors in
       V.setGear(1, {instant: true});
       for (const id of ['gear_main_R', 'gear_main_L', 'gear_nose']) out[id] = T.sub(T.world(id, P[id].loc), P[id].w0);
       out.upDoor = V.state.gear.door;
@@ -393,21 +436,23 @@ async def numeric_checks(page):
     check("nose gear retracts aft (and up)", r["gear_nose"][2] > 0.3 and r["gear_nose"][1] > 0.3,
           f"wheel dZ {r['gear_nose'][2]:+.3f}, dY {r['gear_nose'][1]:+.3f} m")
     bad = [s for s in r["samples"] if s["door"] < 0.999 or s["dNR"] > -0.08 or s["dNL"] > -0.08]
-    check("nose doors open (85 deg, edges down vs closed) with the gear down and at 10..90 %", not bad,
+    check("nose doors open (85 deg, edges below closed) with the gear down and at 10..90 %", not bad,
           f"door {min(abs(s['doorDeg']) for s in r['samples']):.1f} deg, edge dY <= "
           f"{max(max(s['dNR'], s['dNL']) for s in r['samples']):+.3f} m")
-    check("nose doors: open at rest (gear down), closed when locked up", r["downDoor"] == 1 and r["upDoor"] == 0,
-          f"door {r['downDoor']} down / {r['upDoor']} up")
+    check("nose doors: open at rest (gear down, built open: pivot.rest 1), closed when locked up",
+          r["downDoor"] == 1 and r["upDoor"] == 0 and r["doorDown"] == 1,
+          f"door {r['downDoor']} down / {r['upDoor']} up, pivot.rest {r['doorDown']}")
     for name in ("seqUp", "seqDown"):
         rows = r[name]
         target = 1.0 if name == "seqUp" else 0.0
+        door_end = 0.0 if target else 1.0      # nose doors close only once locked up; open with the gear down
         between_closed = [row for row in rows if 1e-9 < row[1] < 1 - 1e-9 and row[2] < 0.999]
         first_move = next((row for row in rows if abs(row[1] - (1 - target)) > 1e-9), None)
         end = rows[-1]
         ok = not between_closed and first_move is not None and first_move[2] >= 0.999 and end[1] == target and \
-            end[2] == (0 if target else 1)
+            end[2] == door_end
         check(f"gear {'up' if target else 'down'} sequence: doors open -> gear -> doors "
-              f"{'close' if target else 'stay open'}", ok,
+              f"{'close' if target else 'stay open'} ({door_end:g})", ok,
               f"{end[0]:.2f} s total; gear starts at {first_move[0] if first_move else '?'} s with doors {first_move[2] if first_move else '?'}; "
               f"{len(between_closed)} samples with doors not fully open in transit")
 
@@ -608,6 +653,64 @@ async def numeric_checks(page):
 
 
 # ----------------------------------------------------------------------------- review round-1 regressions
+async def material_checks(page):
+    """Viewer materials vs the stage-4 model: every GLB material gets a viewer material (the lookdev table in
+    web/viewer/materials.json, a copy of render/lookdev_materials.json, or its GLB values), a GLB clear coat
+    (KHR_materials_clearcoat, written by cad/glb.py) is applied once -- three.js clearcoat = the table's, not layered on
+    the loader's -- and the interior lining parts take the cabin light."""
+    import struct
+    raw = (ROOT / "out" / "pc12.glb").read_bytes()
+    gltf = json.loads(raw[20:20 + struct.unpack("<I", raw[12:16])[0]])
+    glb_mats = {m["name"]: m for m in gltf["materials"]}
+    table = json.loads((ROOT / "web" / "viewer" / "materials.json").read_text())
+    lookdev = json.loads((ROOT / "render" / "lookdev_materials.json").read_text())
+    check("materials: web/viewer/materials.json is render/lookdev_materials.json", table == lookdev,
+          f"{len(table['materials'])} vs {len(lookdev['materials'])} entries")
+    T = table["materials"]
+    r = await js(page, r"""
+      // the GLB's meshes (not the viewer's own, e.g. the prop blur disc) with their base (unhighlighted) material
+      const I = window.viewer._internals, out = {};
+      for (const mr of I.model.meshRecs) {
+        const m = mr.base, f = m.userData.pc12 || {};
+        const e = out[m.name] || (out[m.name] = {cc: [], ccr: [], physical: [], interior: [], parts: []});
+        const add = (k, v) => { if (!e[k].includes(v)) e[k].push(v); };
+        add('cc', +(m.clearcoat || 0).toFixed(4)); add('ccr', +(m.clearcoatRoughness || 0).toFixed(4));
+        add('physical', !!m.isMeshPhysicalMaterial); add('interior', !!f.interior); add('parts', mr.part.id);
+      }
+      return {mats: out, info: window.viewer.perf().materials};
+    """)
+    mats, info = r["mats"], r["info"]
+    used = set(mats)
+    covered = set(info["upgraded"]) | set(info["kept"])
+    ext_kept = sorted(n for n in info["kept"] if glb_mats.get(n, {}).get("extensions"))
+    stage4 = ["seal", "seal_cabin", "glass_cabin", "paint_champagne", "exhaust_soot", "gear_bay"]
+    check("materials: every GLB material has a viewer material; the stage-4 names and every KHR-extended one from the table",
+          used <= covered and not ext_kept and all(n in info["upgraded"] for n in stage4) and used <= set(glb_mats),
+          f"{len(info['upgraded'])} from the table, kept (GLB values): {', '.join(info['kept'])}"
+          + (f"; uncovered {sorted(used - covered)}" if used - covered else "") + (f"; KHR-extended but kept {ext_kept}" if ext_kept else ""))
+    bad = []
+    for n, e in mats.items():
+        g = glb_mats.get(n, {}).get("extensions", {}).get("KHR_materials_clearcoat", {})
+        if n in T:
+            want = T[n].get("clearcoatFactor") or 0.0
+            want_r = max(0.1, T[n].get("clearcoatRoughnessFactor") or 0.0) if want else 0.0
+            if abs((g.get("clearcoatFactor") or 0.0) - want) > 1e-6:
+                bad.append(f"{n}: GLB clearcoat {g.get('clearcoatFactor')} vs table {want}")
+        else:
+            want = g.get("clearcoatFactor") or 0.0
+            want_r = max(0.1, g.get("clearcoatRoughnessFactor") or 0.0) if want else 0.0
+        if any(abs(c - want) > 1e-3 for c in e["cc"]) or any(abs(c - want_r) > 1e-3 for c in e["ccr"]) \
+                or (want and not all(e["physical"])):
+            bad.append(f"{n}: clearcoat {e['cc']} / rough {e['ccr']} (want {want} / {want_r:g})")
+    ncc = sum(1 for n in mats if (T.get(n, {}).get("clearcoatFactor") or 0) > 0)
+    check("materials: KHR_materials_clearcoat applied once (three.js clearcoat = table / GLB, roughness floored at 0.1)",
+          not bad, "; ".join(bad[:4]) or f"{ncc} clear-coated materials, e.g. paint_blue {mats.get('paint_blue', {}).get('cc')}")
+    lin = {n: mats.get(n, {}).get("interior") for n in ("lining", "lining_flightdeck")}
+    check("materials: interior_lining (lining / lining_flightdeck) takes the cabin light (interior patch)",
+          all(v == [True] for v in lin.values()) and "interior_lining" in (mats.get("lining_flightdeck") or {}).get("parts", []),
+          str(lin))
+
+
 async def fit_check(page, label, refit_panel=False):
     """[UX-1/BV-4] the fitted preset on load uses the free viewport and hugs the silhouette."""
     f = await js(page, "return T.fit();")
@@ -644,15 +747,17 @@ async def regression_checks(page):
       const opening = document.getElementById('rGear').textContent;
       V.advance(8); await V.frames(2);
       const down = document.getElementById('rGear').textContent;                            // down: doors stay open
-      V.setGear('up'); V.advance(8); await V.frames(2);
+      V.setGear('up'); V.advance(0.3); await V.frames(2);                                    // doors already open:
+      const retracting = document.getElementById('rGear').textContent;                      // straight to retracting
+      V.advance(8); await V.frames(2);
       const up = document.getElementById('rGear').textContent;
       T.neutral(); await V.frames(2);
-      return {mid, opening, up, down, neutral: document.getElementById('rGear').textContent};
+      return {mid, opening, up, down, retracting, neutral: document.getElementById('rGear').textContent};
     """)
     check("[F5/UX-3] gear readout: scrubbed mid-travel = stopped, doors open", r["mid"].startswith("stopped") and "doors open" in r["mid"]
-          and r["opening"].startswith("doors opening") and r["up"].startswith("UP") and r["down"].startswith("DOWN")
-          and r["neutral"].startswith("DOWN"),
-          f"'{r['mid']}' / '{r['opening']}' / '{r['down']}' / '{r['up']}' / '{r['neutral']}'")
+          and r["opening"].startswith("doors opening") and r["down"].startswith("DOWN")
+          and r["retracting"].startswith("retracting") and r["up"].startswith("UP") and r["neutral"].startswith("DOWN"),
+          f"'{r['mid']}' / '{r['opening']}' / '{r['down']}' / '{r['retracting']}' / '{r['up']}' / '{r['neutral']}'")
     # [UX-4] readouts are refreshed once motion stops (and after deterministic advance())
     r = await js(page, V + r"""
       T.neutral(); V.setFlaps(40, {instant: true}); V.setFlaps(15); V.advance(5); await V.frames(3);
@@ -679,6 +784,7 @@ async def regression_checks(page):
     await js(page, V + "V.play(false); V.setConstruction(false); V.setExplode(0, {instant: true}); V.setStep('paint', {instant: true}); document.activeElement && document.activeElement.blur();")
     # [UX-2] Escape in the parts search clears the filter too; group counts follow the filter
     await js(page, "window.viewer.tab('parts');")
+    n_li = await js(page, "return document.querySelectorAll('#partTree li').length;")
     await page.fill("#partSearch", "flettner")
     f1 = await js(page, "return [document.getElementById('pCount').textContent, [...document.querySelectorAll('#partTree details:not([hidden]) .cnt')].map(e => e.textContent)];")
     await page.focus("#partSearch")
@@ -686,8 +792,8 @@ async def regression_checks(page):
     f2 = await js(page, "return [document.getElementById('pCount').textContent, [...document.querySelectorAll('#partTree li')].filter(l => !l.hidden).length, document.getElementById('partSearch').value];")
     n_all, n_fc = await js(page, "const V = window.viewer, ids = V.parts(); return [ids.length, ids.filter(id => V.partExtras(id).group === V.partExtras('ail_tab_R').group).length];")
     check("[UX-2] search: Escape clears the query and the filter; counts show matches / total",
-          f1[0].startswith("2 of") and f1[1] == [f"2 / {n_fc}"] and f2[0] == f"{n_all} parts" and f2[1] == n_all
-          and f2[2] == "",
+          f1[0] == f"2 of {n_all} parts" and f1[1] == [f"2 / {n_fc}"] and f2[0] == f"{n_all} parts" and f2[1] == n_all
+          and f2[2] == "" and n_li == n_all,
           f"filtered {f1}; after Escape {f2}")
     await js(page, "window.viewer.tab('build');")
     # [BV-2] nothing below the ground: explode (ground drops with the parts) and fly-in (clamped)
@@ -753,7 +859,7 @@ async def regression_checks(page):
     # [BV-5] cockpit: the windshield is see-through from inside
     await js(page, V + "T.neutral(); V.setStep('paint', {instant: true}); V.panel(false); await new Promise(r => setTimeout(r, 400)); V.setCamera('cockpit', {instant: true}); await V.frames(3);")
     shot_path = OUT / "32_cockpit_windshield.png"
-    await page.screenshot(path=str(shot_path))
+    await page.screenshot(path=str(shot_path), timeout=SHOT_TIMEOUT)
     try:
         from PIL import Image
         import numpy as np
@@ -1040,8 +1146,216 @@ async def phone_checks(browser, base, shots=True):
     await phone_card_check(page)
     if shots:
         await shot(page, "30b_phone_selected_card", "")
+    await touch_checks(page, ctx)
     check("phone: no console errors", not errs, "; ".join(errs[:3]))
     await ctx.close()
+
+
+async def touch_checks(page, ctx):
+    """[M3] pixel ratio: a tap keeps it, a drag and its damped coast drop it, back after two still frames (one buffer
+    resize per switch); [m4] 40 px touch targets; the sheet header toggles the sheet (tap, swipe)."""
+    await js(page, "window.viewer.select(null); window.viewer.tab('build'); window.viewer.panel(true);")
+    r = await js(page, r"""
+      const st = window.viewer._internals.stage, R = st.renderer, q0 = st.quality, dpr0 = st.dpr, ss = R.setSize;
+      let sizes = 0;
+      R.setSize = function (...a) { sizes++; return ss.apply(this, a); };
+      st.quality = {...q0, dprMax: 1.5, dprMove: 1};
+      st.dpr = 1.5; st.tween = null; st.camMoving = false; st._still = 5;
+      const seq = [], step = (k) => { st.applyQuality(); seq.push([k, st.dpr]); };
+      st.interacting = true; st.dragged = false; step('tap down');
+      st.interacting = false; step('tap up');
+      st.interacting = true; st.dragged = true; step('drag');
+      st.interacting = false; st.camMoving = true; step('coast'); step('coast');
+      st.camMoving = false; step('still 1'); step('still 2');
+      R.setSize = ss; st.quality = q0; st.dpr = dpr0; R.setPixelRatio(dpr0); st.needsRender = true;
+      return {seq, sizes};
+    """)
+    want = [["tap down", 1.5], ["tap up", 1.5], ["drag", 1], ["coast", 1], ["coast", 1], ["still 1", 1], ["still 2", 1.5]]
+    check("[M3] phone pixel ratio: tap keeps it; drag + coast at dprMove; back after 2 still frames, 1 resize per switch",
+          r["seq"] == want and r["sizes"] == 2, f"{r['seq']}, setSize calls {r['sizes']}")
+    # the controls' own events: a tap does not count as a drag, a moving finger does
+    cdp = await ctx.new_cdp_session(page)
+    x, y = 60, 330
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
+    await page.wait_for_timeout(60)
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    await page.wait_for_timeout(150)
+    tap = await js(page, "return window.viewer._internals.stage.dragged;")
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
+    for i in range(1, 6):
+        await cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x + 12 * i, "y": y}]})
+        await page.wait_for_timeout(30)
+    await page.wait_for_timeout(100)
+    drag = await js(page, "const st = window.viewer._internals.stage; return [st.dragged, st.interacting];")
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    check("[M3] OrbitControls: a tap is not a drag, a moving finger is", tap is False and drag == [True, True], f"tap dragged={tap}, drag {drag}")
+    await js(page, "window.viewer.setCamera('three_quarter', {instant: true});")
+    # touch targets in the Build and Animate tabs + toolbar
+    small = []
+    for tab in ("build", "animate", "drawings"):
+        small += await js(page, r"""
+          window.viewer.tab(arg); await window.viewer.frames(1);
+          const els = [...document.querySelectorAll('#panel button, #toolbar button, #panel input[type=range], #panel a')]
+            .filter((e) => e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden');
+          return els.map((e) => { const r = e.getBoundingClientRect(), chip = !!e.closest('.chips') || e.id === 'sheetHandle' || e.type === 'range';
+            return [arg + ':' + (e.id || e.textContent.trim().slice(0, 14)), Math.round(r.width), Math.round(r.height), chip]; })
+            .filter(([, w, h, chip]) => h < (chip ? 32 : 40) || w < 24);
+        """, tab)
+    check("[m4] phone touch targets: buttons >= 40 px, chips / sliders / sheet handle >= 32 px", not small, str(small[:6]))
+    # the sheet header: tap toggles, swipe down closes, swipe up opens
+    await js(page, "window.viewer.tab('build');")
+    is_open = "return document.getElementById('app').classList.contains('panel-open');"
+    await page.click("#panel .brand h1")
+    t1 = await js(page, is_open)
+    await page.click("#panel .brand h1")
+    t2 = await js(page, is_open)
+    hy = await js(page, "const r = document.querySelector('#panel .brand h1').getBoundingClientRect(); return [r.left + 10, r.top + r.height / 2];")
+
+    async def swipe(dy):
+        await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": hy[0], "y": hy[1]}]})
+        for i in range(1, 5):
+            await cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": hy[0], "y": hy[1] + dy * i / 4}]})
+        await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        await page.wait_for_timeout(450)
+        return await js(page, is_open)
+    s_down = await swipe(60)
+    hy = await js(page, "const r = document.querySelector('#panel .brand h1').getBoundingClientRect(); return [r.left + 10, r.top + r.height / 2];")
+    s_up = await swipe(-60)
+    check("[m4] sheet header: tap toggles, swipe down closes, swipe up opens", (t1, t2, s_down, s_up) == (False, True, False, True),
+          f"tap {t1}/{t2}, swipe down {s_down}, swipe up {s_up}")
+    await js(page, "window.viewer.panel(true); await new Promise(r => setTimeout(r, 350));")
+
+
+async def landscape_check(browser, base, shots=True):
+    """[m3] phones in landscape: a 300 px side panel and a one-row toolbar leave the aircraft most of the screen."""
+    ctx = await browser.new_context(viewport={"width": 844, "height": 390}, device_scale_factor=1, is_mobile=True, has_touch=True,
+                                    reduced_motion="reduce", **CTX)
+    page = await ctx.new_page()
+    await page.goto(base)
+    await page.wait_for_function("window.__ready === true", timeout=180000)
+    await page.evaluate(JS_HELPERS)
+    r = await js(page, r"""
+      const p = document.getElementById('panel').getBoundingClientRect(), t = document.getElementById('toolbar').getBoundingClientRect();
+      return {panelW: p.width, panelLeft: p.left, tbBottom: t.bottom, sheet: matchMedia('(max-width: 760px) and (min-height: 501px)').matches};
+    """)
+    free = (r["panelLeft"]) * (390 - r["tbBottom"]) / (844 * 390)
+    check("[m3] landscape phone 844x390: side panel <= 300 px, one-row toolbar, free view >= 50 %",
+          not r["sheet"] and r["panelW"] <= 300 and r["tbBottom"] <= 80 and free >= 0.5,
+          f"panel {r['panelW']:.0f} px, toolbar bottom {r['tbBottom']:.0f} px, free {free:.0%} of the screen")
+    await fit_check(page, "landscape phone 844x390 3/4")
+    if shots:
+        await shot(page, "30c_phone_landscape", "")
+    # [m5] the Specs dimension table fits the ~275 px column (no sideways scroll)
+    t = await js(page, r"""
+      window.viewer.tab('specs'); await window.viewer.frames(1);
+      const w = document.querySelector('#pane-specs .table-wrap');
+      const r = [w.scrollWidth, w.clientWidth];
+      window.viewer.tab('build');
+      return r;
+    """)
+    check("[m5] landscape phone: the Specs dimension table fits its column", t[0] <= t[1], f"table {t[0]} px in {t[1]} px")
+    # [m4] safe areas (viewport-fit=cover): iPhone landscape insets L47 R47 B21 keep the controls clear of the notch
+    cdp = await ctx.new_cdp_session(page)
+    try:
+        await cdp.send("Emulation.setSafeAreaInsetsOverride", {"insets": {"left": 47, "right": 47, "bottom": 21}})
+    except Exception as e:  # noqa: BLE001  (older Chromium)
+        print(f"  skip safe-area check: {e}")
+        await ctx.close()
+        return
+    r = await js(page, r"""
+      await new Promise((r) => setTimeout(r, 400));
+      const box = (e) => e.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+      const tb = [...document.querySelectorAll('#toolbar button, #toolbar input')].map(box);
+      // the tab row scrolls sideways: its box (not the tabs scrolled out of it) must clear the inset
+      const pb = [...document.querySelectorAll('#panel .panel-head button, #tabs, #pane-build .build-controls button, #stepList')]
+        .filter((e) => e.offsetParent !== null).map(box);
+      const open = {tbLeft: Math.min(...tb.map((b) => b.left)), panelRight: Math.max(...pb.map((b) => b.right))};
+      window.viewer.panel(false); await new Promise((r) => setTimeout(r, 450));
+      const po = box(document.getElementById('panelOpen'));
+      window.viewer.panel(true); await new Promise((r) => setTimeout(r, 450));
+      window.viewer.setCamera('three_quarter', {instant: true}); await window.viewer.frames(1);
+      const f = T.fit();
+      return {...open, openRight: po.right, W, H, fitLeft: f.box[0], fitRight: f.box[1], free: f.free.x1};
+    """)
+    ok = r["tbLeft"] >= 47 and r["panelRight"] <= r["W"] - 47 and r["openRight"] <= r["W"] - 47 and r["fitLeft"] >= 47 - 2
+    check("[m4] safe areas, landscape insets 47/47/21: toolbar, panel, 'Panel' button and the fitted aircraft clear of the notch", ok,
+          f"toolbar left {r['tbLeft']:.0f}, panel controls right {r['panelRight']:.0f}, Panel button right {r['openRight']:.0f} "
+          f"(limit {r['W'] - 47}), 3/4 view x {r['fitLeft']:.0f}..{r['fitRight']:.0f} (panel at {r['free']:.0f})")
+    await ctx.close()
+
+
+async def safe_area_portrait(browser, base):
+    """[m4] portrait phone with a 34 px home-indicator inset: the collapsed sheet's tab row stays above it."""
+    ctx = await browser.new_context(viewport=PHONE, device_scale_factor=1, is_mobile=True, has_touch=True, reduced_motion="reduce", **CTX)
+    page = await ctx.new_page()
+    await page.goto(base)
+    await page.wait_for_function("window.__ready === true", timeout=180000)
+    cdp = await ctx.new_cdp_session(page)
+    try:
+        await cdp.send("Emulation.setSafeAreaInsetsOverride", {"insets": {"top": 47, "bottom": 34}})
+    except Exception as e:  # noqa: BLE001
+        print(f"  skip safe-area check: {e}")
+        await ctx.close()
+        return
+    r = await js(page, r"""
+      window.viewer.panel(false); await new Promise((r) => setTimeout(r, 500));
+      const tabs = document.getElementById('tabs').getBoundingClientRect(), tb = document.getElementById('toolbar');
+      const first = tb.querySelector('button').getBoundingClientRect();
+      window.viewer.panel(true); await new Promise((r) => setTimeout(r, 450));
+      return {tabsBottom: tabs.bottom, tbTop: first.top, H: innerHeight};
+    """)
+    check("[m4] safe areas, portrait insets top 47 / bottom 34: toolbar below the notch, collapsed sheet's tabs above the home indicator",
+          r["tabsBottom"] <= r["H"] - 34 and r["tbTop"] >= 47, f"tabs bottom {r['tabsBottom']:.0f} (limit {r['H'] - 34}), toolbar top {r['tbTop']:.0f}")
+    await ctx.close()
+
+
+def blue_median(png: bytes):
+    """Median RGB of the livery-blue pixels of a screenshot (None without PIL)."""
+    try:
+        from PIL import Image
+        import io
+    except ImportError:
+        return None
+    im = Image.open(io.BytesIO(png)).convert("RGB")
+    px = [p for p in im.getdata() if p[2] > p[0] + 40 and p[2] > p[1] + 15]
+    if len(px) < 200:
+        return None
+    return [sorted(c)[len(c) // 2] for c in zip(*px)], len(px)
+
+
+async def context_loss_check(page):
+    """[M1] WebGL context lost (phones: backgrounded tab, GPU memory pressure) and restored: a note while it is lost,
+    the viewer redraws on its own after the restore, with the environment and shadows rebuilt (same image)."""
+    await js(page, "window.viewer.reset(); window.viewer.panel(false); await new Promise((r) => setTimeout(r, 350)); "
+                   "window.viewer.setCamera('three_quarter', {instant: true}); await window.viewer.frames(3);")
+    before = await page.screenshot(timeout=SHOT_TIMEOUT)
+    r = await js(page, r"""
+      const st = window.viewer._internals.stage, gl = st.renderer.getContext(), ext = gl.getExtension('WEBGL_lose_context');
+      if (!ext) return {skip: true};
+      ext.loseContext();
+      await new Promise((r) => setTimeout(r, 500));
+      const lost = [gl.isContextLost(), window.viewer.state.contextLost, !document.getElementById('glNote').hidden];
+      const n0 = st.stats.renders;
+      ext.restoreContext();
+      // no input from here on: the viewer has to redraw by itself
+      const t0 = performance.now();
+      while (st.stats.renders === n0 && performance.now() - t0 < 60000) await new Promise((r) => setTimeout(r, 100));
+      return {lost, redrawn: st.stats.renders > n0, ms: Math.round(performance.now() - t0), noteHidden: document.getElementById('glNote').hidden,
+        env: st.envSource, restored: !gl.isContextLost()};
+    """)
+    if r.get("skip"):
+        print("  skip context-loss check: no WEBGL_lose_context")
+        return
+    await js(page, "await window.viewer.frames(2);")
+    after = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "33_after_context_restore.png").write_bytes(after)
+    await js(page, "window.viewer.panel(true); await new Promise((r) => setTimeout(r, 350));")
+    b0, b1 = blue_median(before), blue_median(after)
+    same = b0 is not None and b1 is not None and max(abs(x - y) for x, y in zip(b0[0], b1[0])) <= 4
+    check("[M1] WebGL context loss: note while lost, redraws itself after the restore, same image (blue median)",
+          all(r["lost"]) and r["redrawn"] and r["noteHidden"] and r["restored"] and (same or b0 is None),
+          f"lost {r['lost']}, redrawn after {r['ms']} ms, env {r['env']}, blue median {b0 and b0[0]} -> {b1 and b1[0]}"
+          + (f" ({b0[1]} / {b1[1]} px)" if b0 and b1 else ""))
 
 
 async def loading_shot(browser, base):
@@ -1058,7 +1372,7 @@ async def loading_shot(browser, base):
     await page.goto(base)
     await page.wait_for_selector("#loading", state="visible")
     await page.wait_for_timeout(300)
-    await page.screenshot(path=str(OUT / "00_loading.png"))
+    await page.screenshot(path=str(OUT / "00_loading.png"), timeout=SHOT_TIMEOUT)
     print("  shot out/tmp/viewer/00_loading.png")
     await page.close()
 
@@ -1092,6 +1406,77 @@ async def error_path(browser, base):
     await page.close()
 
 
+async def boot_failures(pw, browser, base):
+    """[M1] no endless 'Loading model…': a three.js module that fails to load, and a browser without WebGL."""
+    page = await browser.new_page(viewport=VIEW, **CTX)
+
+    async def abort(route):
+        await route.abort()
+    await page.route("**/build/three.module.min.js", abort)
+    await page.goto(base)
+    await page.wait_for_function("window.__ready === true", timeout=60000)
+    r = await page.evaluate("[window.__error || '', getComputedStyle(document.getElementById('loadRetry')).display]")
+    check("[M1] a three.js module that fails to load: error card with Retry", bool(r[0]) and ("viewer scripts" in r[0] or "CDN" in r[0])
+          and r[1] != "none", r[0].splitlines()[0] if r[0] else "no error shown")
+    await page.close()
+    try:
+        nogl = await launch(pw, ["--disable-webgl", "--disable-3d-apis"])
+    except Exception as e:  # noqa: BLE001
+        check("[M1] no WebGL 2: clear message, nothing downloaded", False, f"could not launch Chromium without WebGL: {e!r}")
+        return
+    page = await nogl.new_page(viewport=VIEW, **CTX)
+    reqs = []
+    page.on("request", lambda q: reqs.append(q.url))
+    await page.goto(base)
+    await page.wait_for_function("window.__ready === true", timeout=30000)
+    msg = await page.evaluate("window.__error || ''")
+    glb = [u for u in reqs if u.endswith(".glb") or u.endswith(".hdr")]
+    check("[M1] no WebGL 2: clear message, nothing downloaded", "WebGL 2" in msg and not glb, (msg.splitlines() or [""])[0] + f"; {len(reqs)} requests")
+    await nogl.close()
+
+
+async def meshopt_check(browser, base, ref):
+    """[M2] the packaged GLB (web/package.py: dequantize + gltf-transform meshopt) decodes to the same triangles."""
+    sys.path.insert(0, str(ROOT / "web"))
+    import package  # noqa: E402
+    dst = OUT / "pc12_meshopt.glb"
+    try:
+        info = package.meshopt(ROOT / "out" / "pc12.glb", dst)
+    except RuntimeError as e:
+        if "not found" in str(e):
+            print(f"  skip meshopt check: {e}")
+            return
+        check("[M2] meshopt GLB (web/package.py)", False, str(e)[:300])
+        return
+    page = await browser.new_page(viewport=VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
+    errs = []
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    await page.goto(base + "&glb=../out/tmp/viewer/pc12_meshopt.glb")
+    await page.wait_for_function("window.__ready === true", timeout=180000)
+    err = await page.evaluate("window.__error || ''")
+    if err:
+        check("[M2] meshopt GLB loads (MeshoptDecoder)", False, err)
+        await page.close()
+        return
+    await page.evaluate(JS_HELPERS)
+    geo = await js(page, "return T.geo();")
+    worst, who = 0.0, ""
+    for k, a in ref.items():
+        b = geo.get(k)
+        if b is None or b[6] != a[6]:
+            worst, who = float("inf"), f"{k}: tris {a[6]} vs {b[6] if b else None}"
+            break
+        d = max(abs(x - y) for x, y in zip(a[:6], b[:6])) if a[6] else 0.0
+        if d > worst:
+            worst, who = d, k
+    tris = sum(v[6] for v in geo.values())
+    check("[M2] meshopt GLB: same parts and triangles, geometry within 0.05 mm",
+          set(geo) == set(ref) and worst < 5e-5 and not errs,
+          f"{info['bytes_in'] / 1048576:.1f} -> {info['bytes_out'] / 1048576:.1f} MB, {len(geo)} parts, {tris} tris, "
+          f"worst {worst * 1000:.4f} mm ({who})" + (f"; {errs[:2]}" if errs else ""))
+    await page.close()
+
+
 # ----------------------------------------------------------------------------- main
 async def run(args):
     from playwright.async_api import async_playwright
@@ -1119,6 +1504,8 @@ async def run(args):
                 (r.url, f"{r.url} ({r.failure})")))
             page.on("response", lambda r: failed.append((r.url, f"{r.url} HTTP {r.status}")) if r.status >= 400
                     else ok_urls.add(r.url))
+            requests = []
+            page.on("request", lambda r: requests.append(r.url))
             await page.goto(base)
             await page.wait_for_function("window.__ready === true", timeout=180000)
             err = await page.evaluate("window.__error || ''")
@@ -1128,6 +1515,18 @@ async def run(args):
             await page.evaluate(JS_HELPERS)
             st = await js(page, "return window.viewer.state;")
             check("starts on the finished aircraft", st["stepKey"] == "paint" and st["paint"] and not st["loading"], st["stepKey"])
+            # [m2] the boot script's preloads are the requests the viewer makes: one download each
+            glb_req = [u for u in requests if u.split("?")[0].endswith((".glb", ".hdr", "pc12_meta.json", "materials.json"))]
+            check("[m2] model / HDRI / meta / materials preloaded and downloaded once each", len(glb_req) == 4 and len(set(glb_req)) == 4,
+                  f"{len(glb_req)} requests: " + ", ".join(sorted(u.rsplit('/', 1)[-1] for u in glb_req)))
+            # [R1/R2/R4] Blender's AgX + Punchy look; the light theme's lifted studio and exposure
+            pf = await js(page, "return window.viewer.perf();")
+            lk = pf["look"]
+            check("[R2] tone mapping: AgX with Blender's Punchy look (fitted curve, no extra saturation)",
+                  lk["look"] == "punchy" and "pcLookCurve" in await js(page, "return window.viewer._internals.THREE.ShaderChunk.tonemapping_pars_fragment;"),
+                  f"look {lk['look']}, light {lk['theme']['light']}, dark {lk['theme']['dark']}")
+            await material_checks(page)
+            ref_geo = await js(page, "return T.geo();")
             await fit_check(page, "960x600 3/4", refit_panel=True)
             if not args.no_shots:
                 await screenshots(page)
@@ -1135,14 +1534,19 @@ async def run(args):
             await regression_checks(page)
             if args.blender:
                 await blender_check(page)
+            await context_loss_check(page)
             check("no console errors / page errors", not errors, "; ".join(errors[:4]))
             bad = [t for _, t in failed] + [t for u, t in aborted if u not in ok_urls]
             check("no failed requests", not bad,
                   "; ".join(bad[:4]) or (f"{len(aborted)} aborted after a 200 response (stream)" if aborted else ""))
             await page.close()
             await phone_checks(browser, base, shots=not args.no_shots)
+            await landscape_check(browser, base, shots=not args.no_shots)
+            await safe_area_portrait(browser, base)
             await dark_and_data(browser, base, shots=not args.no_shots)
             await error_path(browser, base)
+            await boot_failures(pw, browser, base)
+            await meshopt_check(browser, base, ref_geo)
             if not args.no_shots:
                 await loading_shot(browser, base)
             await browser.close()

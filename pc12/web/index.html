@@ -8,44 +8,208 @@
 <meta name="description" content="Interactive viewer for a from-scratch parametric Pilatus PC-12 PRO model: step-by-step build, explode, cutaway, X-ray, animated controls, landing gear and propeller, parts list, drawings and dimension checks.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3l2 10 11 3v3l-11-1-1 7 4 3v2l-5-1-5 1v-2l4-3-1-7-11 1v-3l11-3z%22 fill=%22%231d5fbf%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="viewer/viewer.css">
+<!-- data: where pc12.glb / pc12_meta.json / the drawing SVGs live (overridden by ?data=, ?glb=, ?meta=).
+     three: 'auto' = the jsDelivr CDN, or ./three_local/ (a checkout of three.js r160) with ?three=local;
+     a path = a vendored copy (web/package.py writes the bundle's line: {data: './data/', three: './three/'}). -->
+<script>window.PC12_CONFIG = { data: '../out/', three: 'auto' };</script>
 <script>
-  // Inject the three.js import map before any module script is parsed.
-  // Default: jsDelivr CDN.  ?three=local uses ./three_local/ (a checkout of three.js r160, for offline tests).
+  // Boot, before any module script: feature checks, the three.js import map, the data requests (the model and its
+  // metadata are fetched here, with a progress bar, while the module graph loads; the rest is preloaded), and the
+  // loading card's error / stall handling for failures main.js cannot report itself (no WebGL 2, no import maps, a
+  // module that fails to fetch, resolve or evaluate).
   (function () {
-    var q = new URLSearchParams(location.search);
-    var base = q.get('three') === 'local' ? './three_local/' : 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
-    var s = document.createElement('script');
-    s.type = 'importmap';
-    s.textContent = JSON.stringify({ imports: {
-      'three': base + 'build/three.module.js',
-      'three/addons/': base + 'examples/jsm/'
-    } });
-    document.currentScript.after(s);
+    var C = window.PC12_CONFIG || {}, q = new URLSearchParams(location.search);
+    var CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
+    var t = C.three || 'auto';
+    var base = t !== 'auto' && t !== 'cdn' ? t.replace(/\/?$/, '/') : t === 'auto' && q.get('three') === 'local' ? './three_local/' : CDN;
     window.__threeBase = base;
+    // data URLs: main.js uses these, so the preloads below are exactly the requests it makes
+    var data = (q.get('data') || C.data || '../out/').replace(/\/?$/, '/');
+    var svg = (q.get('svg') || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    // render quality tier, the same test as scene.js QUALITY (phones: 'low', which also loads the 512 px studio HDRI)
+    var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+    var quality = q.get('quality') || (coarse || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ? 'low' : 'high');
+    var U = window.PC12_URLS = {
+      glb: q.get('glb') || data + 'pc12.glb', meta: q.get('meta') || data + 'pc12_meta.json',
+      ga: svg[0] || data + 'pc12_ga.svg', sections: svg[1] || data + 'pc12_sections.svg',
+      hdr: q.get('hdr') || (quality === 'low' ? 'assets/studio_small_09_512.hdr' : 'assets/studio_small_09_1k.hdr'),
+      materials: 'viewer/materials.json', quality: quality,
+    };
+
+    // ---- loading card: error (with Retry) and "still loading" after 20 s without progress
+    var B = window.PC12_BOOT = { last: Date.now(), failed: false, unsupported: '' };
+    function withCard(cb) {
+      if (document.getElementById('loading')) cb();
+      else document.addEventListener('DOMContentLoaded', cb);
+    }
+    B.fail = function (msg, retry) {
+      if (B.failed || window.__ready) return;
+      B.failed = true;
+      window.__error = msg;
+      window.__ready = true;          // lets headless tests stop waiting
+      withCard(function () {
+        var l = document.getElementById('loading');
+        l.hidden = false;
+        l.classList.add('error');
+        l.classList.remove('done', 'stalled');
+        document.getElementById('loadMsg').textContent = msg;
+        document.getElementById('loadRetry').hidden = retry === false;
+      });
+    };
+    B.progress = function () {
+      B.last = Date.now();
+      if (B.stalled) { B.stalled = false; withCard(function () { document.getElementById('loading').classList.remove('stalled'); }); }
+    };
+    // any finished download (module scripts, HDRI, ...) counts as progress for the watchdog too
+    try { new PerformanceObserver(function () { B.progress(); }).observe({ type: 'resource' }); } catch (e) { /* old browser */ }
+    var dog = setInterval(function () {
+      if (window.__ready || B.failed) { clearInterval(dog); return; }
+      if (!B.stalled && Date.now() - B.last > 20000) {
+        B.stalled = true;
+        withCard(function () { document.getElementById('loading').classList.add('stalled'); });
+      }
+    }, 1000);
+    withCard(function () { document.getElementById('loadRetry').addEventListener('click', function () { location.reload(); }); });
+    var viaCdn = base === CDN;
+    function scriptFail() {
+      B.fail(viaCdn
+        ? 'Could not reach the three.js CDN (cdn.jsdelivr.net).\nCheck the network connection and retry.'
+          + (t === 'auto' ? '\n\n(Offline: put three.js r160 in web/three_local/ and add ?three=local to the URL.)' : '')
+        : 'Could not load the viewer scripts (' + base + ').\nCheck the network connection and retry.');
+    }
+    // capture: a module graph that fails to fetch fires a (non-bubbling) 'error' on its <script>; failed <link>
+    // preloads are ignored here (main.js reports the data files itself); a script that fails to resolve or
+    // evaluate reaches window as an ErrorEvent
+    window.addEventListener('error', function (e) {
+      if (window.__ready || B.failed) return;
+      var el = e.target;
+      if (el && el !== window) { if (el.tagName === 'SCRIPT') scriptFail(); return; }
+      var m = String(e.message || (e.error && e.error.message) || '');
+      if (/ResizeObserver loop/.test(m)) return;                               // benign layout notice
+      if (e.filename && !/^https?:/.test(e.filename)) return;                   // browser extensions
+      B.fail('The viewer stopped with an error:\n' + m);
+    }, true);
+    window.addEventListener('unhandledrejection', function (e) {
+      if (window.__ready || B.failed) return;
+      var r = e.reason;
+      B.fail('The viewer stopped with an error:\n' + (r && r.message ? r.message : String(r)));
+    });
+
+    // ---- feature checks: WebGL 2 (off in iOS Lockdown Mode, blocklisted or lost GPUs) and import maps
+    var missing = [];
+    if (!(window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports('importmap'))) missing.push('import maps');
+    var gl2 = false;
+    try {
+      var gl = document.createElement('canvas').getContext('webgl2');
+      gl2 = !!gl;
+      var lose = gl && gl.getExtension('WEBGL_lose_context');
+      if (lose) lose.loseContext();
+    } catch (e) { gl2 = false; }
+    if (!gl2) missing.push('WebGL 2');
+    if (missing.length) {
+      B.unsupported = 'This viewer needs a browser with ' + missing.join(' and ') + '.\n'
+        + (gl2 ? 'Please use a current Chrome, Edge, Firefox or Safari (16.4 or later).'
+          : 'WebGL may be switched off (e.g. iOS Lockdown Mode, a browser setting) or blocked for this graphics driver.');
+      B.fail(B.unsupported, false);
+      return;                          // no import map: the module script below cannot start
+    }
+
+    // ---- import map, then preloads.  A <link rel=modulepreload> before the import map makes Chromium reject the map,
+    // so everything is inserted after it.
+    var at = document.currentScript;
+    function add(el) { at.after(el); at = el; }
+    var map = document.createElement('script');
+    map.type = 'importmap';
+    map.textContent = JSON.stringify({ imports: { 'three': base + 'build/three.module.min.js', 'three/addons/': base + 'examples/jsm/' } });
+    add(map);
+
+    // ---- the model and its metadata, fetched now, before the preloads below (on an HTTP/1.1 host their six connections
+    // would queue them behind the scripts): the loading bar moves from the first chunk on (main.js only starts once the
+    // module graph is in).  Total: the Content-Length when the transfer is not compressed; otherwise (gzip /
+    // brotli hosts count decoded bytes against the compressed length) stats.glb_bytes from the metadata, when the
+    // GLB is the one the metadata describes (no ?glb= override); until then only the bytes.  The bar never runs back.
+    var D = B.download = { loaded: 0, total: 0, metaBytes: 0, frac: 0, done: false };
+    window.PC12_META = fetch(U.meta).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + U.meta);
+      return r.json();
+    });
+    window.PC12_META.then(function (m) {
+      var n = m && m.stats && m.stats.glb_bytes;
+      if (n && !q.get('glb')) { D.metaBytes = n; show(); }
+    }, function () {});
+    var shownAt = 0;
+    function show(force) {
+      var now = Date.now();
+      if (!force && now - shownAt < 60) return;
+      shownAt = now;
+      var bar = document.getElementById('loadBar'), txt = document.getElementById('loadBytes');
+      if (!bar || window.__ready || B.failed) return;
+      if (!D.shown) { D.shown = true; document.getElementById('loadMsg').textContent = 'Downloading model…'; }
+      var mb = function (x) { return (x / 1048576).toFixed(1); };
+      // a compressed transfer whose Content-Encoding is hidden (cross-origin) overruns its Content-Length
+      if (!D.total || D.loaded > D.total) D.total = D.metaBytes > D.loaded ? D.metaBytes : D.done ? D.loaded : 0;
+      if (D.total) {
+        D.frac = Math.max(D.frac, 0.92 * D.loaded / D.total);
+        bar.style.width = Math.round(D.frac * 100) + '%';
+        txt.textContent = mb(D.loaded) + ' / ' + mb(D.total) + ' MB';
+      } else txt.textContent = mb(D.loaded) + ' MB';
+    }
+    window.PC12_GLB = fetch(U.glb).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + U.glb);
+      var enc = (r.headers.get('content-encoding') || 'identity').toLowerCase();
+      var len = +r.headers.get('content-length') || 0;
+      if (len && enc === 'identity') D.total = len;
+      if (!r.body || !r.body.getReader) return r.arrayBuffer();
+      var reader = r.body.getReader(), chunks = [];
+      function pump() {
+        return reader.read().then(function (x) {
+          if (x.done) return;
+          chunks.push(x.value);
+          D.loaded += x.value.length;
+          B.progress();
+          show();
+          return pump();
+        });
+      }
+      return pump().then(function () {
+        var buf = new Uint8Array(D.loaded), o = 0;
+        chunks.forEach(function (c) { buf.set(c, o); o += c.length; });
+        D.done = true;
+        if (!D.total) D.total = D.loaded;
+        show(true);
+        return buf.buffer;
+      });
+    });
+    window.PC12_META.catch(function () {});
+    window.PC12_GLB.catch(function () {});
+
+    function link(rel, href, as, prio) {
+      var l = document.createElement('link');
+      l.rel = rel; l.href = href;
+      if (as) l.as = as;
+      if (prio) l.setAttribute('fetchpriority', prio);
+      if (rel === 'preload') l.crossOrigin = 'anonymous';    // matches fetch() / three's FileLoader (cors, same-origin credentials)
+      add(l);
+    }
+    // the HDRI yields to the scripts and the model (it is only needed at the end, like the materials)
+    link('preload', U.hdr, 'fetch', 'low');
+    link('preload', U.materials, 'fetch');
+    // the module graph (web/package.py checks this list against the imports)
+    ['viewer/main.js', 'viewer/scene.js', 'viewer/studio.js', 'viewer/model.js', 'viewer/materials.js', 'viewer/kinematics.js',
+      'viewer/build.js', 'viewer/panels.js', 'viewer/sources.js'].forEach(function (u) { link('modulepreload', u); });
+    ['build/three.module.min.js', 'examples/jsm/controls/OrbitControls.js', 'examples/jsm/environments/RoomEnvironment.js',
+      'examples/jsm/loaders/GLTFLoader.js', 'examples/jsm/utils/BufferGeometryUtils.js', 'examples/jsm/libs/meshopt_decoder.module.js',
+      'examples/jsm/loaders/RGBELoader.js', 'examples/jsm/shaders/HorizontalBlurShader.js', 'examples/jsm/shaders/VerticalBlurShader.js'
+    ].forEach(function (u) { link('modulepreload', base + u); });
   })();
 </script>
 <script type="module" src="viewer/main.js"></script>
-<script>
-  // A module graph that fails to fetch (e.g. the CDN is unreachable) fires 'error' on its script element.
-  (function () {
-    var s = document.currentScript.previousElementSibling;
-    function show() {
-      var l = document.getElementById('loading'), m = document.getElementById('loadMsg');
-      if (!l) { document.addEventListener('DOMContentLoaded', show); return; }
-      l.classList.add('error');
-      m.textContent = 'Could not load the viewer scripts (three.js from ' + window.__threeBase + ').\n' +
-        'Check the network connection, or put three.js r160 in web/three_local/ and add ?three=local to the URL.';
-      window.__error = m.textContent;
-      window.__ready = true;
-    }
-    s.addEventListener('error', show);
-  })();
-</script>
 </head>
 <body>
 <div id="app" class="panel-open">
   <div id="stage" role="region" aria-label="3-D view of the PC-12 PRO model. Drag to orbit, scroll to zoom, right-drag to pan, click a part to select it."></div>
   <div id="labels" aria-hidden="true"></div>
+  <div id="safeProbe" aria-hidden="true"></div>
 
   <!-- toolbar over the canvas -->
   <div id="toolbar" role="toolbar" aria-label="View tools">
@@ -74,6 +238,11 @@
   </div>
 
   <div id="stepCaption" hidden></div>
+  <!-- WebGL context lost (main.js onContextChange) -->
+  <div id="glNote" role="status" hidden>
+    <span class="gl-wait">Restoring graphics…</span>
+    <span class="gl-stuck">The browser has not restored the 3-D view. <button type="button" id="glReload">Reload</button></span>
+  </div>
 
   <!-- drawing viewer (shown while the Drawings tab is active) -->
   <div id="drawingView" hidden>
@@ -186,6 +355,11 @@
           <button type="button" class="toggle" id="aCargo" aria-pressed="false">Cargo door</button>
         </div>
 
+        <h3>Lights</h3>
+        <div class="row">
+          <button type="button" class="toggle" id="aLights" aria-pressed="false" title="Position and strobe lights (off in the reference photos)">Position lights</button>
+        </div>
+
         <h3>Flight controls</h3>
         <label class="slider"><span>Roll</span>
           <input id="sRoll" type="range" min="-1" max="1" step="0.01" value="0" aria-label="Roll command, positive = right roll">
@@ -285,6 +459,9 @@
       <div class="muted" id="loadMsg">Loading model…</div>
       <div class="bar"><span id="loadBar"></span></div>
       <div class="muted small" id="loadBytes"></div>
+      <p class="muted small load-stall">Still loading… this is taking longer than usual.</p>
+      <button type="button" id="loadRetry" class="load-retry">Retry</button>
+      <noscript><p>This viewer needs JavaScript.</p></noscript>
     </div>
   </div>
 </div>

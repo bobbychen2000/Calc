@@ -1,7 +1,10 @@
 // GLB loading, part registry, visibility and material variants
 // (primer/paint sweep, cutaway clipping with lining-coloured back faces, x-ray, highlights).
+// The materials themselves (lookdev PBR values and the shader patches) live in materials.js.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { U as MU, CABIN, INTERIOR_PARTS as LIT_INTERIOR, upgradeMaterials, clonePatched } from './materials.js';
 
 // Skin parts clipped by the cutaway plane (model y = 0, glTF X = 0; the port half X < 0 is removed).
 export const CUT_PARTS = new Set([
@@ -22,62 +25,30 @@ export const INTERNAL_PARTS = new Set([
   'eng_agb', 'engine_mount', 'firewall', 'inlet_duct', 'flight_deck', 'cabin_interior', 'interior_lining', 'gear_bays',
 ]);
 const SHADOW_CASTERS = /^(gear_|blade_|propeller|brace_|exhaust_stacks|antennas|pitot|lights)/;
+// Exterior parts whose bases reach through the skin into the cabin (the dorsal antenna bases hang ~5 cm below the
+// crown skin): hidden while the camera is inside the cabin, where they would show as glossy blue blobs on the
+// ceiling.  A stopgap until model/details.py trims them at the OML.
+const CABIN_HIDDEN = new Set(['antennas']);
 
 const PAINT_RE = /^(paint_|trim_black$)/;
-const GLASS_RE = /^glass/;
-export const PRIMER_HEX = 0x9fae8c;   // light grey-green zinc-chromate-ish primer
-const LINING_HEX = 0xdcd6cb;          // cabin lining (matches the 'lining' material)
+const GLASS_RE = /^(glass|lens$)/;
+export const PRIMER_HEX = MU.primer.value.getHex();
 
+// The packaged GLB is EXT_meshopt_compression (web/package.py: ~3x smaller); out/pc12.glb (KHR_mesh_quantization
+// only) loads through the same loader.
+const asError = (err) => (err instanceof Error ? err : new Error(String(err && err.message || err)));
 export function loadGLB(url, onProgress) {
   return new Promise((resolve, reject) => {
-    new GLTFLoader().load(url, resolve, (e) => onProgress && onProgress(e), (err) => reject(err instanceof Error ? err : new Error(String(err && err.message || err))));
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
+      .load(url, resolve, (e) => onProgress && onProgress(e), (err) => reject(asError(err)));
   });
 }
-
-// Shader patch shared by the paint / cutaway / glass variants.  Uniform objects are shared so one
-// write updates every material.  paint: mix primer -> livery behind a sweep plane along Z
-// (the "spray" wipe, nose to tail).  lining: back faces (seen from inside a clipped skin)
-// take the cabin lining colour.  glass: the tinted panes are double-sided with outward winding
-// (checked), so back faces are the view from inside the cabin -- make them nearly clear.
-function patchMaterial(mat, U, { paint = false, lining = false, glass = false }) {
-  if (!paint && !lining && !glass) return mat;
-  mat.onBeforeCompile = (sh) => {
-    let vs = sh.vertexShader, fs = sh.fragmentShader;
-    if (paint) {
-      sh.uniforms.uPaintSweep = U.paintSweep;
-      sh.uniforms.uPrimer = U.primer;
-      vs = 'varying float vPaintZ;\n' + vs.replace('#include <project_vertex>',
-        '#include <project_vertex>\n  vPaintZ = (modelMatrix * vec4(transformed, 1.0)).z;');
-      fs = 'uniform float uPaintSweep;\nuniform vec3 uPrimer;\nvarying float vPaintZ;\n' + fs
-        .replace('#include <color_fragment>', `#include <color_fragment>
-  float paintK = smoothstep(-1.2, 1.2, uPaintSweep - vPaintZ);
-  diffuseColor.rgb = mix(uPrimer, diffuseColor.rgb, paintK);`)
-        .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
-  roughnessFactor = mix(0.66, roughnessFactor, paintK);
-  metalnessFactor = mix(0.0, metalnessFactor, paintK);`);
-    }
-    if (lining) {
-      sh.uniforms.uLining = U.lining;
-      fs = 'uniform vec3 uLining;\n' + fs.replace('#include <normal_fragment_begin>',
-        `if (!gl_FrontFacing) { diffuseColor.rgb = uLining; roughnessFactor = 0.85; metalnessFactor = 0.0; }
-#include <normal_fragment_begin>`);
-    }
-    if (glass) {
-      // transparent double-sided materials are drawn in two passes (BackSide, then FrontSide); the
-      // back pass has FLIP_SIDED defined (and gl_FrontFacing flipped), so test the defines
-      fs = fs.replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
-  #if defined( FLIP_SIDED )
-    diffuseColor.a *= 0.2;
-  #elif defined( DOUBLE_SIDED )
-    if (!gl_FrontFacing) diffuseColor.a *= 0.2;
-  #endif`);
-    }
-    sh.vertexShader = vs;
-    sh.fragmentShader = fs;
-  };
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' : ''}${glass ? 'G' : ''}`;
-  mat.needsUpdate = true;
-  return mat;
+// a GLB the page downloaded itself (index.html's boot script streams it for the loading bar)
+export function parseGLB(buffer, url) {
+  const base = new URL('.', new URL(url, location.href)).href;
+  return new Promise((resolve, reject) => {
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parse(buffer, base, resolve, (err) => reject(asError(err)));
+  });
 }
 
 // Translucent "ghost" material: fresnel-weighted alpha, no depth write.
@@ -108,19 +79,17 @@ const noRaycast = () => {};
 const _g = new THREE.Vector3();
 
 export class Model {
-  constructor(gltf, meta) {
+  constructor(gltf, meta, { materials = null } = {}) {
     this.root = gltf.scene;
     this.meta = meta;
+    // lookdev materials (MeshPhysicalMaterial by name) before anything references the GLB ones
+    this.materialInfo = upgradeMaterials(this.root, materials);
     this.parts = new Map();           // id -> part record
     this.list = [];                   // part records, parents before children
     this.meshRecs = [];
     this.meshToPart = new Map();
     this.pickables = [];
-    this.U = {
-      paintSweep: { value: 100 },
-      primer: { value: new THREE.Color(PRIMER_HEX) },
-      lining: { value: new THREE.Color(LINING_HEX) },
-    };
+    this.U = MU;                      // shared shader uniforms (paint sweep, primer, lining)
     this.clipPlanes = [new THREE.Plane(new THREE.Vector3(1, 0, 0), 0)];
     this.cutaway = false;
     this.xray = false;
@@ -141,9 +110,9 @@ export class Model {
     this.selected = null;
     this.hovered = null;
     this.groundY = 0;                 // ground drop needed so exploded parts stay above the grid
+    this.camInside = false;           // camera inside the closed cabin (updateCabin)
 
     const stepIndex = new Map(meta.steps.map((s, i) => [s.key, i]));
-    const patched = new Set();
     // register parts in traversal order (parents first)
     this.root.traverse((o) => {
       const ex = o.userData;
@@ -172,17 +141,15 @@ export class Model {
         if (rec.id === 'structure') {
           // frames / stringers / rib caps nearly coincide with the skins: push them back in depth
           // (own clones, so gear_bays keeps the shared zinc_chromate) to stop the skins z-fighting
-          base = base.clone();
+          base = clonePatched(base);
           base.polygonOffset = true;
           base.polygonOffsetFactor = 2;
           base.polygonOffsetUnits = 8;
           ch.material = base;
         }
-        const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name),
+        const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name) && base.transparent,
           // structure: clip the fuselage frames/stringers but keep the wing spars & ribs whole
           cut: rec.cut && !(rec.id === 'structure' && name === 'interior_green') };
-        if (mr.paint && !patched.has(base)) { patchMaterial(base, this.U, { paint: true }); patched.add(base); }
-        if (mr.glass && !patched.has(base)) { patchMaterial(base, this.U, { glass: true }); patched.add(base); }
         ch.castShadow = rec.xray || SHADOW_CASTERS.test(rec.id);
         ch.receiveShadow = false;
         rec.meshes.push(mr);
@@ -194,6 +161,9 @@ export class Model {
     this.root.updateMatrixWorld(true);
     this.box = new THREE.Box3().setFromObject(this.root);
     this._restGeometry();
+    // the space inside the skin where the camera counts as "in the cabin" (rest pose): flight deck + cabin
+    this.interiorBox = new THREE.Box3();
+    for (const id of LIT_INTERIOR) { const p = this.parts.get(id); if (p && !p.restBox.isEmpty()) this.interiorBox.union(p.restBox); }
   }
 
   // Rest-pose data used by the build fly-in, the ground drop and the camera fit (all node rotations
@@ -274,10 +244,10 @@ export class Model {
   cutVariant(mr) {
     let m = this._cut.get(mr.base);
     if (!m) {
-      m = mr.base.clone();
+      // the cut edge exposes the inside of every skin: all non-glass cut materials get the lining
+      m = clonePatched(mr.base, mr.glass ? {} : { lining: true });
       m.clippingPlanes = this.clipPlanes;
       m.clipShadows = true;
-      patchMaterial(m, this.U, { paint: mr.paint, lining: !mr.glass, glass: mr.glass });
       this._cut.set(mr.base, m);
     }
     return m;
@@ -287,14 +257,31 @@ export class Model {
     const key = mr.base.uuid + (cut ? 'c' : '');
     let m = this._glassX.get(key);
     if (!m) {
-      m = mr.base.clone();
-      m.opacity = 0.35;
+      m = clonePatched(mr.base);
+      m.opacity = Math.min(m.opacity, 0.25);
       m.depthWrite = false;
       if (cut) m.clippingPlanes = this.clipPlanes;
-      patchMaterial(m, this.U, { glass: true });
       this._glassX.set(key, m);
     }
     return m;
+  }
+
+  // Interior light by viewpoint: the image-based light has no occlusion, so the cabin is dimmed while the
+  // camera is outside a closed skin (and far-side panes darken, see materials.js U.cabinClosed); from
+  // inside (cockpit view) the eye adapts; opened up (cutaway / X-ray / explode) it is lit like the outside.
+  // Returns true when a uniform or the visibility changed (the caller re-renders and refreshes the shadows).
+  updateCabin(camPos, explodeF = 0, doorOpen = 0) {
+    const open = this.cutaway || this.xray || explodeF > 0.02;
+    const inside = !open && !this.interiorBox.isEmpty() && this.interiorBox.containsPoint(camPos);
+    const ao = open ? CABIN.open : inside ? CABIN.inside
+      : CABIN.outside + (CABIN.door - CABIN.outside) * Math.min(1, Math.max(0, doorOpen));
+    const closed = open || inside ? 0 : 1;
+    let changed = false;
+    if (inside !== this.camInside) { this.camInside = inside; this.updateVisibility(); changed = true; }
+    if (MU.cabinAO.value === ao && MU.cabinClosed.value === closed) return changed;
+    MU.cabinAO.value = ao;
+    MU.cabinClosed.value = closed;
+    return true;
   }
 
   applyMaterials() {
@@ -351,6 +338,7 @@ export class Model {
       let shown = p.buildVisible && !p.userHidden;
       if (shown && this.isolate) shown = this.isolate.has(p.id);
       if (shown && p.id === 'structure') shown = this.structureOn;
+      if (shown && this.camInside && CABIN_HIDDEN.has(p.id)) shown = false;
       p.shown = shown;
       for (const mr of p.meshes) mr.mesh.visible = shown;
     }
