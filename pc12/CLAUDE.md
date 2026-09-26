@@ -86,8 +86,11 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   headliner lining `interior_lining` 40 mm inside the OML with window reveals, so the glazing never shows the
   single-sided skins' back faces),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
-  horizontal offset of the OML, so its side / plan outlines are the drawn ones; flap-track canoes split at the cove lip
-  into a fixed forward part and an aft part carried by the flap; lights, antennas, pod),
+  horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
+  fillet with a round-over crest (`ROOT_FILLET_ROUND`) running into the wing LE, the fillet law starts from the visible
+  foot on the wing (`_visible_foot`), fit_check 16 guards its creases; flap-track canoes split at the cove lip
+  into a fixed forward part and an aft part carried by the flap; cowl panel lines / latches / vent / oil-cooler exit
+  (`COWL_SEAMS`, photo 188); lights, antennas, pod with its straight tapering tail under the winglet),
   `livery.py` (PC-12 PRO MSN 3008 scheme; the 3-D painter trims with one-sided smooth fields so thin strokes stay
   continuous; zero-area slivers from trims are dropped by `cad/glb.py`; per-surface bands -- wing / tailplane boots,
   winglet pinstripe (+ POD_PIN along the pod / winglet junction), blade tip bands about the thrust axis, blade LE

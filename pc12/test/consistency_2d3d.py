@@ -450,6 +450,20 @@ def paint_mats():
     return SIDE_PAINT | {"paint_white"}
 
 
+def outer_faces(V, Fm, lim=0.5):
+    """Faces of a door slab's painted meshes that face along the OML normal (|n . n_oml| >= lim): drops the slab's
+    painted edge (VQA r3 LIV3-05: the cargo door's rim carries the livery, DOOR_T deep into the opening)."""
+    if not len(Fm):
+        return Fm
+    C = V[Fm].mean(1)
+    n = np.cross(V[Fm[:, 1]] - V[Fm[:, 0]], V[Fm[:, 2]] - V[Fm[:, 0]])
+    n /= np.maximum(np.linalg.norm(n, axis=1), 1e-15)[:, None]
+    h = 1e-3
+    g = np.stack([(oml_dist(C + h * e) - oml_dist(C - h * e)) / (2 * h) for e in np.eye(3)], 1)
+    g /= np.maximum(np.linalg.norm(g, axis=1), 1e-15)[:, None]
+    return Fm[np.abs(np.sum(n * g, 1)) >= lim]
+
+
 def skin_mesh(ctx, with_doors=True, with_lip=True):
     """The fuselage OML skin as built: skins (tail-cone closure removed), door slabs (outer), chin-inlet lip."""
     V, Fm = ctx.mesh(SKIN_PARTS, mats=paint_mats())
@@ -458,7 +472,8 @@ def skin_mesh(ctx, with_doors=True, with_lip=True):
     Fm = Fm[~closure]
     parts = [(V, Fm)]
     if with_doors:
-        parts.append(ctx.mesh(DOOR_PARTS, mats=paint_mats()))
+        Vd, Fd = ctx.mesh(DOOR_PARTS, mats=paint_mats())
+        parts.append((Vd, outer_faces(Vd, Fd)))
     if with_lip:
         parts.append(ctx.mesh(("chin_inlet",), mats=("chrome",)))
     Vs, Fs, off = [], [], 0
@@ -793,7 +808,7 @@ def check_L3(ctx, rep, plots):
     for pid, o in FP.DOORS:
         pan = FP.door_panel(o)
         V, Fm = ctx.mesh((pid,), mats=paint_mats(), weld_parts=True)
-        comps = boundary_components(V, Fm)
+        comps = boundary_components(V, outer_faces(V, Fm))
         wcx = FP.DOOR_WINDOWS.get(pid)
         for c in comps:
             P = c["P"]
@@ -1296,29 +1311,15 @@ def check_L4(ctx, rep, plots):
             f"STA {B[1, 0]:.3f}-{B[-2, 0]:.3f}; aft end {Vb[:, 0].max():.3f} vs {E.BULLET_X[1]:.3f}")
 
     # ---------------------------------------------------------------- radar pod
-    # body of revolution (tip -> POD_CYL_END) against radar_pod_profile; the swan neck (VQA r2 SHP2-02) against its
-    # spine / radius law (pod_neck_spine: distance from the spine station whose normal plane holds the vertex); the
-    # end cap inside the winglet (within r_end of the spine end) is skipped
+    # body of revolution (tip -> cylinder -> the straight tapering tail, VQA r3 SHP2-02) against radar_pod_profile
     Vp = ctx.verts("radar_pod")
-    prof = np.array(D.radar_pod_profile(400))
-    body = Vp[:, 0] <= D.POD_CYL_END + 1e-6
-    r_mesh = np.hypot(Vp[body, 1] - D.POD_Y, Vp[body, 2] - D.POD_Z)
-    r_par = np.interp(Vp[body, 0], prof[:, 0], prof[:, 1])
-    Sp, Tp, rp = D.pod_neck_spine(3000)
-    Vn = Vp[~body]
-    Vn = Vn[np.linalg.norm(Vn - Sp[-1], axis=1) > D.POD_NECK["r_end"] + 1e-4]
-    dn = []
-    for v in Vn:
-        w_ = v - Sp
-        a_ = np.abs(np.sum(w_ * Tp, 1))
-        cand = np.argsort(a_)[:6]
-        dd = np.abs(np.linalg.norm(w_[cand] - np.sum(w_[cand] * Tp[cand], 1)[:, None] * Tp[cand], axis=1) - rp[cand])
-        dn.append(dd.min())
-    dev = np.r_[r_mesh - r_par, np.array(dn), [Vp[:, 0].min() - D.POD_X_TIP]]
-    rep.add("L4", "radar pod: body radius vs radar_pod_profile, swan neck vs pod_neck_spine, tip", dev, tolp,
-            f"x {Vp[:, 0].min():.3f}-{Vp[:, 0].max():.3f} (neck end {D.POD_X_END:.3f}, in the winglet), body max r "
-            f"{r_mesh.max():.4f} (POD_R {D.POD_R}), {len(Vn)} neck verts",
-            worst_list(dev[:-1], np.r_[Vp[body], Vn]))
+    prof = np.array(D.radar_pod_profile(2000))
+    r_mesh = np.hypot(Vp[:, 1] - D.POD_Y, Vp[:, 2] - D.POD_Z)
+    r_par = np.interp(Vp[:, 0], prof[:, 0], prof[:, 1])
+    dev = np.r_[r_mesh - r_par, [Vp[:, 0].min() - D.POD_X_TIP, Vp[:, 0].max() - D.POD_X_END]]
+    rep.add("L4", "radar pod: body radius vs radar_pod_profile (nose, cylinder, tail), tip / tail end", dev, tolp,
+            f"x {Vp[:, 0].min():.3f}-{Vp[:, 0].max():.3f} (tail end {D.POD_X_END:.3f}, under the winglet), body max r "
+            f"{r_mesh.max():.4f} (POD_R {D.POD_R})", worst_list(dev[:-2], Vp))
 
     # ---------------------------------------------------------------- axles / tyres
     dev, lab = [], []
@@ -1969,7 +1970,7 @@ def livery_curves(side, cockpit, fin, n=6000):
     if side * FP.EXIT["side"] > 0:
         o, w = L.EXIT_MARK["offset"], L.EXIT_MARK["half_width"]
         ex = FP.EXIT
-        wo = w + (L.OUTLINE["width"] if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"] else 0.0)
+        wo = w + (L.exit_mark_rim() if L.outlines() else 0.0)
         for dlt in sorted({o - w, o + w, o - wo, o + wo}):
             P = sdf2d.rrect_outline(ex["cx"], ex["cz"], ex["hx"] + dlt, ex["hz"] + dlt, max(ex["r"] + dlt, 1e-4), 64)
             polys.append(np.vstack([P, P[:1]]))
@@ -2013,10 +2014,10 @@ def livery_coverage(ctx, rep, tol, step=0.004, delta=0.003):
         polys += [(f"{rg.id} top", np.c_[xs, rg.top(xs)]), (f"{rg.id} bottom", np.c_[xs, rg.bot(xs)])]
     O = CG.side_outline("mask")
     polys.append(("PRO mask", np.vstack([O, O[:1]])))
-    ex, w = FP.EXIT, L.EXIT_MARK["half_width"]
-    wo = w + (L.OUTLINE["width"] if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"] else 0.0)
+    ex, w, o = FP.EXIT, L.EXIT_MARK["half_width"], L.EXIT_MARK["offset"]
+    wo = w + (L.exit_mark_rim() if L.outlines() else 0.0)
     for dl in sorted({-w, w, -wo, wo}):
-        R_ = sdf2d.rrect_outline(ex["cx"], ex["cz"], ex["hx"] + dl, ex["hz"] + dl, max(ex["r"] + dl, 1e-4), 64)
+        R_ = sdf2d.rrect_outline(ex["cx"], ex["cz"], ex["hx"] + o + dl, ex["hz"] + o + dl, max(ex["r"] + o + dl, 1e-4), 64)
         polys.append((f"exit ring {'in' if dl < 0 else 'out'}{'' if abs(dl) == w else ' rim'}", np.vstack([R_, R_[:1]])))
     pts, nrm, lab = [], [], []
     for name, P in polys:
@@ -2314,6 +2315,17 @@ def _l5_bands(ctx, rep):
             f"r {q['r0']}-{r_out:.3f}, {1000 * q['width']:.0f} mm from the LE line, 5 blades", worst_list(d, np.vstack(P_)))
     # ---- exhaust-stack collar: polished / black boundary vs powerplant.exhaust_stack_collar
     soot = {"black", "exhaust_soot"}                   # the heat-blackened collar ('exhaust_soot'; 'black' before)
+    if PP.STACK_COLLAR <= 0.0:
+        # VQA r3: no outer band -- the outer skin must be polished right to the scarf lip (soot only inside the mouth)
+        outer = np.vstack([PP.exhaust_stack_rings(sg, 500, 240, scarf=True)[0].reshape(-1, 3) for sg in (1, -1)])
+        mouth = np.vstack([densify_poly(PP.exhaust_stack_mouth(sg), 0.002) for sg in (1, -1)])
+        Vs = ctx.verts("exhaust_stacks", mats=soot)
+        on_outer = Vs[cKDTree(outer).query(Vs)[0] < 0.0015] if len(Vs) else Vs
+        d = cKDTree(mouth).query(on_outer)[0] if len(on_outer) else np.zeros(1)
+        rep.add("L5", "exhaust stacks polished to the scarf lip (STACK_COLLAR 0): soot on the outer skin", d, 8.0,
+                f"distance of the {len(on_outer)} outer-skin soot vertices from the mouth curve (only the lip ring "
+                f"may be dark)")
+        return
     cb = colour_boundaries(ctx, "exhaust_stacks", mats={L.SURFACES["exhaust"]} | soot)
     B = np.vstack([P for P, ma, mb in cb if ma in soot | {L.SURFACES["exhaust"]} and mb in soot | {L.SURFACES["exhaust"]}
                    and len({ma, mb} & soot) == 1]) if cb else np.zeros((0, 3))

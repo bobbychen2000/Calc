@@ -434,9 +434,13 @@ PRESETS = {
                     fallback=dict(pos=(25.4, 25.5, -12.4), target=(7.0, 0.0, 2.0), hfov=29.0), W=1924, H=1300),
         # sun on the starboard side (the photo's sunlit flank faces the camera, belly and wing undersides in
         # shade); terrain radiance below the horizon instead of the puresky HDRI's flat, sky-bright lower half
-        env="air", hdri="kloofendal_43d_clear_puresky", sun_az=80.0, strength=1.0, exposure=0.3,
-        ground_albedo=(0.13, 0.11, 0.08), camera_grade=dict(sat=1.15, val=0.95, hue=0.52),
+        # VQA r3 LIV3-03: the camera-ray sky read darker and more saturated than the photo's hazy cirrus sky (upper
+        # left 33/75/129 against 59/85/138, below the aircraft 62/99/154 against 86/117/172): grade sat 1.15 -> 1.0,
+        # val 0.95 -> 1.05 (-> 57/91/144, 90/116/160), and the paint mirrors that same sky (glossy_sky)
+        env="air", hdri="kloofendal_43d_clear_puresky", sun_az=80.0, strength=1.0, exposure=0.3, glossy_sky=True,
+        ground_albedo=(0.13, 0.11, 0.08), camera_grade=dict(sat=1.0, val=1.05, hue=0.52),
         grade=dict(white=0.97, sat=1.08, hi=(0.55, 0.85)),       # VQA r2 LIV2-03: window-band whites 209-223 vs 239-255
+        samples=96, clamp_direct=12.0,
         pose=dict(gear=1.0, pitch=24.0, prop_clock=10.0, rpm=1700, shutter_s=1 / 160),
     ),
     "wing_from_cabin": dict(
@@ -446,7 +450,12 @@ PRESETS = {
                     fallback=dict(pos=(3.9, 0.7, 2.15), target=(5.6, 7.5, 1.7), hfov=41.4), W=2311, H=1300),
         # low sun ahead (the domes are side-lit from the image left = forward, shadows fall aft / right;
         # the winglet's inboard face and the pod crown catch it)
-        env="air_ground", hdri="qwantani_sunset_puresky", sun_az=180.0, strength=0.35, exposure=0.1,
+        # VQA r3 RQ3-03: the winglet rendered black-navy (sRGB 0/7/42 against the photo's 73/126/170), the wing and pod
+        # without the photo's pale sky sheen: glossy rays saw only the dim HDRI (strength 0.35; camera_sky is for camera
+        # rays) -> 'glossy_sky' (the paint mirrors the photo's hazy sky), and the sun from dead ahead (az 180) grazed the
+        # winglet's inboard face -> az 210, ahead and a little to port (the domes' camera-facing sides are lit in the
+        # photo): winglet 8/42/88, wing top 110/117/126 (photo 136/150/157), scene median unchanged (106/75/55 : 99/74/57)
+        env="air_ground", hdri="qwantani_sunset_puresky", sun_az=210.0, strength=0.35, exposure=0.1, glossy_sky=True,
         sun_lamp=dict(strength=7.0, colour=(1.0, 0.74, 0.48), el=9.0, angle=0.6),
         # the photo's hazy golden-hour sky: warm pale horizon, pale cyan above (camera rays only)
         camera_sky=((0.0, (0.80, 0.72, 0.58)), (0.03, (0.86, 0.80, 0.64)), (0.12, (0.72, 0.74, 0.70)),
@@ -502,10 +511,15 @@ PRESETS = {
         # N81DW's deep metallic blue (0517 sunlit side 2-12/45-50/96-113, hangar 130 cowl side 46/75/144): -0.3 EV,
         # saturation 1.05 -> 0.85 (AgX Punchy already saturates) and a firmer mid-tone, with the highlight shoulder
         # ('hi') keeping the white strokes bright -> 8/55/110 median, p90 17/75/141, stroke whites 208-237
+        # owner note (VQA round 2 fix): still electric -- the cowl side measured hue 212 / saturation 0.92 / value 0.52
+        # (sRGB 11/68/133) against N81DW's sunlit side 50/84/139 (hue 217, sat 0.64, value 0.55) and hangar 130's
+        # 85/119/199 (sat 0.52): the value was right, the SATURATION was not -- AgX 'Punchy' (its extra saturation)
+        # -> 'Base Contrast', firmer mid-tones (gamma 1.2) and saturation 0.65 -> 43/83/140 (hue 215, sat 0.69,
+        # value 0.55), the white strokes kept bright by the highlight shoulder
         env="studio_cyc", hdri="studio_small_09", sun_az=None, hdri_rot=200.0, strength=0.12, exposure=-0.7,
-        world_glossy=False,
+        world_glossy=False, look="AgX - Base Contrast",
         cyc=dict(back=13.0, radius=7.0, colour=(0.007, 0.0075, 0.009), floor_rough=0.16, glow=5000.0),
-        grade=dict(white=0.97, gamma=1.1, sat=0.85, hi=(0.55, 0.85)), samples=32, noise_threshold=0.04,
+        grade=dict(white=0.97, gamma=1.2, sat=0.65, hi=(0.55, 0.85)), samples=32, noise_threshold=0.04,
         pose=dict(gear=0.0, pitch=18.0, prop_clock=16.0),
     ),
 }
@@ -551,6 +565,19 @@ def auto_frame(cam: Cam, pts, fill=0.9, align=(0.5, 0.5), iters=3):
     cx = align[0] * cam.W - f * 0.5 * (x.min() + x.max())
     cy = align[1] * cam.H - f * 0.5 * (y.min() + y.max())
     return Cam(R, C, f, cam.W, cam.H, cx, cy)
+
+
+def zoom_cam(cam: Cam, win, W0, box):
+    """The window win = (u0, v0, u1, v1) (pixels of the preset's camera frame, width W0) of a perspective camera,
+    rendered at the render box size: same pose, focal length and principal point scaled (a digital zoom that keeps
+    the photo match -- for inspecting a detail against the photo crop).  Ortho cameras are returned unchanged."""
+    if cam.ortho_width:
+        return cam
+    s = cam.W / float(W0)
+    u0, v0, u1, v1 = (float(v) * s for v in win)
+    k = min(box[0] / (u1 - u0), box[1] / (v1 - v0))
+    return Cam(cam.R, cam.C, cam.f * k, int(round((u1 - u0) * k)), int(round((v1 - v0) * k)),
+               (cam.cx - u0) * k, (cam.cy - v0) * k)
 
 
 def preset_camera(name, box_W, box_H):
@@ -725,7 +752,7 @@ class Scene:
         o.rotation_quaternion = Quaternion(gl2b(pv["axis"]), math.radians(deg))
 
     def pose(self, gear=0.0, nose_doors=None, door_airstair=0.0, door_cargo=0.0, pitch=0.0, prop_clock=0.0,
-             flaps=0.0, rpm=0.0, shutter_s=0.0, **_):
+             flaps=0.0, rpm=0.0, shutter_s=0.0, view_from=None, **_):
         P = self.pivot
         # doors (open angle in radians)
         for pid, v in (("door_airstair", door_airstair), ("door_cargo", door_cargo)):
@@ -805,11 +832,11 @@ class Scene:
         self.bpy.context.view_layer.update()
         disc = None
         if rpm and shutter_s and prop is not None and pv is not None:
-            disc = self.prop_disc(rpm, shutter_s, gl2m(pv["origin"]), gl2m(pv["axis"]))
+            disc = self.prop_disc(rpm, shutter_s, gl2m(pv["origin"]), gl2m(pv["axis"]), view_from=view_from)
         return dict(knees=knees, prop_disc=disc)
 
     # ------------------------------------------------------------------ spinning propeller
-    def prop_disc(self, rpm, shutter_s, hub, fwd, n_r=40, n_th=360, r0=0.245):
+    def prop_disc(self, rpm, shutter_s, hub, fwd, n_r=40, n_th=360, r0=0.245, view_from=None, soften=0.05):
         """Replace the spinning blades by a baked motion-blur disc (VQA r1 R1-01: Cycles' transform motion blur of five
         thin blades under-samples into speckle / fireflies at any affordable sample count).  The blades are measured
         in their posed state (pitch, clocking): per radius bin, each blade's angular extent about the thrust axis and
@@ -820,7 +847,13 @@ class Scene:
         blade pitch), short fans at 1/500 s.  The annulus is a Transparent / Principled mix by that coverage, front
         or back colour by the face side seen (Backfacing).  The blades are hidden from the render.  The annulus is
         coarse on purpose (1 deg x ~27 mm cells): a 0.25 deg x 17 mm grid rendered with light concentric / radial
-        seams at air-to-air distances.  PC12_DISC_DUMP=<file.npz> saves the coverage table for inspection."""
+        seams at air-to-air distances.  PC12_DISC_DUMP=<file.npz> saves the coverage table for inspection.
+        VQA r3 RQ3-06 (N81DW: a darker translucent disc with ghost blades; the render: an almost invisible disc with a
+        pale tip ring): view_from = the camera position -- each blade is measured by its SILHOUETTE as the camera sees
+        it (vertices projected onto the disc plane along the camera rays), not by its projection along the thrust
+        axis: seen obliquely a pitched blade covers far more of the disc than its plan-form (mid-radius coverage
+        ~0.13 -> ~0.25); and the colours are smeared radially over 'soften' (m, Gaussian sigma) so the white / red
+        tip bands blur into the disc edge instead of drawing a crisp pale ring."""
         bpy = self.bpy
         fwd = np.asarray(fwd, float) / np.linalg.norm(fwd)
         hub = np.asarray(hub, float)
@@ -864,7 +897,12 @@ class Scene:
                 Fa.append(a * abs(np.linalg.det(M[:3, :3])) ** (2 / 3))
                 mats = [col_of(sl.material.name if sl.material else "") for sl in o.material_slots] or [col_of("")]
                 cols.append(np.array(mats)[np.clip(mi, 0, len(mats) - 1)])
-            data.append((np.vstack(Vs) - hub, np.vstack(Fc) - hub, np.vstack(Fn), np.concatenate(Fa), np.vstack(cols)))
+            Vw = np.vstack(Vs)
+            if view_from is not None:                    # silhouette seen from the camera: along the view rays
+                d_ = Vw - np.asarray(view_from, float)
+                k_ = ((Vw - hub) @ fwd) / np.where(np.abs(d_ @ fwd) > 1e-9, d_ @ fwd, 1e-9)
+                Vw = Vw - k_[:, None] * d_
+            data.append((Vw - hub, np.vstack(Fc) - hub, np.vstack(Fn), np.concatenate(Fa), np.vstack(cols)))
         rad = lambda X: np.linalg.norm(X - np.outer(X @ fwd, fwd), axis=1)
         R = float(max(rad(d[0]).max() for d in data))
         edges = np.linspace(r0, R + 0.002, n_r + 1)
@@ -920,6 +958,10 @@ class Scene:
         cov = np.clip(cov, 0.0, 1.0)
         if os.environ.get("PC12_DISC_DUMP"):
             np.savez(os.environ["PC12_DISC_DUMP"], cov=cov, edges=edges, ext=np.array([np.r_[tm, lo, hi] for tm, lo, hi in ext]))
+        if soften and soften > 0:                        # radial Gaussian smear of the colours (tip bands)
+            G_ = np.exp(-0.5 * ((rc[:, None] - rc[None, :]) / soften) ** 2)
+            G_ /= G_.sum(1, keepdims=True)
+            cf, cb = G_ @ cf, G_ @ cb
         cfe = np.vstack([np.interp(edges, rc, cf[:, j]) for j in range(3)]).T
         cbe = np.vstack([np.interp(edges, rc, cb[:, j]) for j in range(3)]).T
         # annulus mesh (rings x angles), per-vertex front / back colour + coverage alpha
@@ -954,9 +996,9 @@ class Scene:
         bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
         nt.links.new(mix_c.outputs[2], bsdf.inputs["Base Color"])
         bsdf.inputs["Roughness"].default_value = 0.5
-        for key in ("Specular IOR Level", "Specular"):
-            if key in bsdf.inputs:
-                bsdf.inputs[key].default_value = 0.25
+        for key in ("Specular IOR Level", "Specular"):   # a haze, not a surface: no sun glints on it (RQ3-06:
+            if key in bsdf.inputs:                       # white speckle over the disc)
+                bsdf.inputs[key].default_value = 0.0
                 break
         tr = nt.nodes.new("ShaderNodeBsdfTransparent")
         mix = nt.nodes.new("ShaderNodeMixShader")
@@ -1148,7 +1190,7 @@ class Scene:
 
     # ------------------------------------------------------------------ world
     def world(self, hdri_path, strength=1.0, rot_z_deg=0.0, env_R=None, camera_bg=None, ground_rgb=None,
-              camera_grade=None, camera_sky=None, ground_gain=None):
+              camera_grade=None, camera_sky=None, ground_gain=None, glossy_sky=False):
         """HDRI world.  env_R: 3x3 rotation MODEL -> HDRI frame (tilted environments); rot_z_deg: extra
         azimuth rotation of the lookup.  camera_bg: RGB seen by camera rays instead of the HDRI (studio).
         ground_rgb: radiance that REPLACES the HDRI below its horizon (the 'puresky' HDRIs carry a flat,
@@ -1157,7 +1199,9 @@ class Scene:
         deeper blue sky without changing the lighting).  camera_sky: [(sin elevation, (r, g, b)), ...] a
         gradient in the (tilted) HDRI frame seen by CAMERA rays instead of the HDRI (hazy horizon skies).
         ground_gain: multiplies the HDRI below its horizon (a lighter apron than the HDRI's asphalt; the
-        shadow catcher then darkens that brighter ground, so shadows keep the sky fill)."""
+        shadow catcher then darkens that brighter ground, so shadows keep the sky fill).  glossy_sky: GLOSSY rays
+        see the camera_sky / camera_grade sky too (the sky the paint mirrors is the one the photo shows; the HDRI
+        at a low strength only lights diffusely)."""
         bpy = self.bpy
         w = bpy.data.worlds.new("beauty")
         self.sc.world = w
@@ -1269,7 +1313,14 @@ class Scene:
                 bg2.inputs["Color"].default_value = (*camera_bg, 1)
             bg2.inputs["Strength"].default_value = (1.0 if camera_sky else strength) if hasattr(camera_bg, "links") else 1.0
             ms = nt.nodes.new("ShaderNodeMixShader")
-            nt.links.new(lp.outputs["Is Camera Ray"], ms.inputs[0])
+            if glossy_sky:
+                mx = nt.nodes.new("ShaderNodeMath")
+                mx.operation = "MAXIMUM"
+                nt.links.new(lp.outputs["Is Camera Ray"], mx.inputs[0])
+                nt.links.new(lp.outputs["Is Glossy Ray"], mx.inputs[1])
+                nt.links.new(mx.outputs[0], ms.inputs[0])
+            else:
+                nt.links.new(lp.outputs["Is Camera Ray"], ms.inputs[0])
             nt.links.new(bg.outputs[0], ms.inputs[1])
             nt.links.new(bg2.outputs[0], ms.inputs[2])
             final = ms.outputs[0]
@@ -1543,7 +1594,7 @@ def build_env(S: Scene, pre, cam: Cam, info):
     S.world(hdri, strength=strength, rot_z_deg=rot, env_R=env_R,
             camera_bg={"studio_white": (1.0, 1.0, 1.0)}.get(env),
             ground_rgb=ground_rgb, camera_grade=pre.get("camera_grade"), camera_sky=pre.get("camera_sky"),
-            ground_gain=pre.get("ground_gain"))
+            ground_gain=pre.get("ground_gain"), glossy_sky=bool(pre.get("glossy_sky")))
     info["hdri"]["rot_z_deg"] = round(rot, 2)
     if pre.get("world_glossy") is False:           # the HDRI lights, but glossy rays see only the studio (softboxes)
         try:
@@ -1970,6 +2021,8 @@ def configure_render(S: Scene, pre, samples, out_png):
     c.transmission_bounces, c.transparent_max_bounces = bo[3], bo[4]
     c.caustics_reflective = c.caustics_refractive = False
     c.sample_clamp_indirect = 8.0
+    if pre.get("clamp_direct"):                     # (air: the chrome spinner's sun glint seen through the
+        c.sample_clamp_direct = float(pre["clamp_direct"])   # stochastic prop disc left firefly speckle, RQ3-06)
     c.blur_glossy = 0.5
     c.pixel_filter_type = "BLACKMAN_HARRIS"
     c.filter_width = 1.5
@@ -2037,16 +2090,19 @@ def render_preset(name, glb, out_dir, box, samples, compare, quiet=True):
     import lookdev
     info["lookdev"] = lookdev.apply(bpy.data.materials, lookdev_overrides(pre.get("lookdev")))
     info["pose"] = dict(pre.get("pose", {}))
-    info["pose_result"] = S.pose(**pre.get("pose", {}))
+    info["pose_result"] = S.pose(**pre.get("pose", {}), view_from=None if cam.ortho_width else cam.C)
     fr = pre["camera"].get("frame")
     if fr and not cam.ortho_width and cam_src == "fallback":
         cam = auto_frame(cam, S.visible_points(), fr.get("fill", 0.9), fr.get("align", (0.5, 0.5)))
         info["camera_source"] = cam_src = "fallback + auto_frame"
     build_env(S, pre, cam, info)
+    if pre.get("zoom"):                             # inspection crop of the SAME camera (after the environment,
+        cam = zoom_cam(cam, pre["zoom"], pre["camera"]["W"], box)   # which is placed from the full frame)
+        info["zoom"] = list(pre["zoom"])
     S.camera(cam)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_png = out_dir / f"{name}.png"
+    out_png = out_dir / f"{name}{'_zoom' if pre.get('zoom') else ''}.png"
     configure_render(S, pre, samples, out_png)
     t1 = time.time()
     import resource
@@ -2139,6 +2195,10 @@ def write_compare(name, render_png, info):
     ren = Image.open(render_png).convert("RGB")
     ph = Image.open(PHOTO_DIR / pre["photo"]).convert("RGB")
     W, H = ren.size
+    zoom = info.get("zoom")
+    if zoom:                                        # the same window of the photo (camera frame -> photo pixels)
+        s = ph.width / float(pre["camera"]["W"])
+        ph = ph.crop(tuple(int(round(v * s)) for v in zoom))
     # the camera is fitted to the full photo: resize (aspect preserved up to rounding); a reference whose
     # aspect differs by > 1 % is letterboxed rather than stretched
     if abs(ph.width / ph.height - W / H) > 0.01 * W / H:
@@ -2158,9 +2218,10 @@ def write_compare(name, render_png, info):
     d.text((2 * pad + W, 10), f"MODEL  {name}  ({Path(info['glb']).name} "
            f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(info['glb_mtime']))}"
            f", camera {info['camera_source'].split('/')[-1]})", fill=(235, 235, 235), font=f)
-    out = VQA_DIR / f"{name}_compare.jpg"
+    tag = f"{name}_zoom" if zoom else name
+    out = VQA_DIR / f"{tag}_compare.jpg"
     sheet.save(out, quality=90)
-    Image.blend(ph, ren, 0.5).save(VQA_DIR / f"{name}_blend.jpg", quality=88)
+    Image.blend(ph, ren, 0.5).save(VQA_DIR / f"{tag}_blend.jpg", quality=88)
     return out
 
 

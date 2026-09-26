@@ -155,6 +155,7 @@ LEG_DOOR = dict(x_fwd=5.950 - GEAR_SHIFT, x_fwd_low=5.969 - GEAR_SHIFT, z_fwd_lo
                 tab=(6.070, MAIN_TRUNNION[2] + 0.090))   # LD-1: forward top tab: aft STA, top WL (hidden, in the slot)
 LEG_DOOR_T = 0.012                  # door plate thickness (inboard of the outer face)
 LEG_DOOR_RECESS = 0.001             # retracted, the door's outer face lies this far inside the wing lower surface
+LEG_DOOR_OUTER_MAT = "paint_belly"   # builder tag of the leg door's outer face (recoloured by livery.SURFACES)
 LEG_DOOR_CORNER_R = 0.020           # radius of the door's aft top corner (leg_door_face)
 LEG_DOOR_BRACKET_MAT = "metal_dark"  # the door's two standoff brackets from the leg (the door assembly)
 
@@ -464,7 +465,7 @@ def build_main(parts, side):
     # leg door (LEG_DOOR / leg_door_face, sheet L4, LD-1): a piece of the wing lower skin carried by the leg (flush
     # when retracted), scalloped round the tyre, on two standoff brackets from the leg; it retracts rigidly with the leg
     ang_retract = np.radians(MAIN_RETRACT_DEG) * (-sgn)          # about +x
-    door_down = leg_door_mesh(sgn)
+    door_out, door_in = leg_door_mesh(sgn, split=True)     # outer face / inner face + rim
     brackets = []
     for zb in (0.98, 0.62):
         a = T + (L - T) * (T[2] - zb) / (T[2] - L[2])
@@ -484,7 +485,9 @@ def build_main(parts, side):
     gp.add(Mesh.merge(struct + lugs), "gear_leg").add(Mesh.merge([shock_body]), "gear_leg").add(shock_rod, "chrome")
     for m, mat in wh:
         gp.add(m, mat)
-    gp.add(door_down, "paint_white").add(Mesh.merge(brackets), LEG_DOOR_BRACKET_MAT)
+    # the outer face carries the wing's lower-surface paint (LD-1: it IS the lower skin, flush when retracted), the
+    # inner face and the rim the leg door's own paint (livery.SURFACES main_gear_door / main_gear_door_inner)
+    gp.add(door_out, LEG_DOOR_OUTER_MAT).add(door_in, "paint_white").add(Mesh.merge(brackets), LEG_DOOR_BRACKET_MAT)
     for m, mat in lamp_face:
         gp.add(m, mat)
     parts[gp.id] = gp
@@ -550,7 +553,7 @@ def wing_lower_patch(x0, x1, y0, y1, n=18):
     return m
 
 
-def leg_door_mesh(sgn, step=0.015):
+def leg_door_mesh(sgn, step=0.015, split=False):
     """Leg door, gear down (LD-1): the model face leg_door_face() (side view) with its outer face on the flush surface
     leg_door_bl(x, z) (the wing lower skin carried down by the inverse retraction), LEG_DOOR_T thick inboard (towards
     the leg; up into the wing when retracted); starboard for sgn = +1.  The face is triangulated with its exact outline
@@ -606,6 +609,9 @@ def leg_door_mesh(sgn, step=0.015):
     for k in range(3):
         np.add.at(N, rim.F[:, k], fn)
     rim.N = N / np.maximum(np.linalg.norm(N, axis=1, keepdims=True), 1e-12)
+    if split:                   # (outer face, inner face + rim): VQA r3 RQ3-07, the outer face is the wing lower skin
+        pieces = (outer, Mesh.merge([inner, rim]))
+        return tuple(m if sgn > 0 else m.mirrored_y() for m in pieces)
     door = Mesh.merge([outer, inner, rim])
     return door if sgn > 0 else door.mirrored_y()
 
@@ -648,13 +654,22 @@ def swept_arm(pts, a, b, n_path=28, n_sec=16, fore=(1.0, 0.0, 0.0)):
 # nose-gear fork (VQA r1 SHP-06: photos 130 / 188 show a smooth cast yoke arching over the tyre from the piston-bottom
 # casting to the axle bosses, not a box crown and flat plates): per side a Catmull-Rom arm through NOSE_FORK_ARM
 # (offsets from the crown: (dx, y, dz); the last point is the axle end), elliptic section a x b tapering crown -> axle
-NOSE_FORK_ARM = ((0.0, 0.0, 0.0), (0.0, 0.058, -0.004), (-0.004, 0.094, -0.030), (-0.008, 0.105, -0.085))
+# VQA r3 SHP3-03: one continuous arc over the tyre shoulder (rev r2: 58 mm straight outboard, then a 0.21 m straight
+# drop -- an L-shaped crank that read as a bent bracket against the cast arch of photos 130 / 188 / s/n 3001)
+NOSE_FORK_ARM = ((0.0, 0.0, 0.0), (0.0, 0.070, -0.012), (-0.004, 0.100, -0.050), (-0.008, 0.112, -0.120))
 NOSE_FORK_SEC = dict(a=(0.034, 0.024), b=(0.021, 0.015), boss_r=0.031)
 # VQA r2 SHP2-05: photos 188 / 130 show ONE flat plate arm (port side), ~80 mm wide fore-aft and ~20 mm thick, arching
 # from the crown casting down to the axle; the starboard axle end carries only a nut
-NOSE_FORK_SIDES = (-1,)
-NOSE_FORK_PLATE = dict(a=(0.046, 0.034), b=(0.011, 0.009))
-NOSE_LAMP = dict(frac=0.45, fwd=(0.060, 0.098), r=0.045)     # on the strut: fraction P -> fork, housing x offsets, radius
+# VQA r3 (SHP2-05 re-check): the fork is TWO-sided -- PRO s/n 3001 front and starboard close-ups (aero25) show a
+# yoke of two broad flat plate arms arching from the crown casting over the tyre down to both axle ends; in 188 / 130
+# the starboard arm is hidden behind the tyre (the r2 reading 'single-sided' came from those views).  Plates ~70-90 mm
+# fore-aft and ~25-30 mm thick (3001 front view).
+NOSE_FORK_SIDES = (-1, 1)
+# plate section half-axes crown -> axle boss (s/n 3001 starboard close-up, scaled by the 62 mm boss: ~95 mm fore-aft
+# at the crown tapering to ~65 mm at the boss; front view ~30 mm thick)
+NOSE_FORK_PLATE = dict(a=(0.048, 0.033), b=(0.015, 0.013))
+# VQA r3: the lamp is ~0.11 m across in 188 / 130 (60 px on the 250 px tyre of 188): r 0.045 -> 0.055
+NOSE_LAMP = dict(frac=0.45, fwd=(0.060, 0.098), r=0.055)     # on the strut: fraction P -> fork, housing x offsets, radius
 
 
 def build_nose(parts):

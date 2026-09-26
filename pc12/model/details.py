@@ -45,8 +45,13 @@ BELLY_FAIRING_HW = [(5.153, 0.060), (5.200, 0.420), (5.300, 0.690), (5.450, 0.86
 # under WL ~1.185 to the door edge + ROOT_FILLET_DOOR_CLEAR (the wedge limit meets the fuselage side at WL ~1.19
 # there) and rejoins the drawn line at STA 5406 -- up to 73 mm under the Pilatus line over STA 5.22-5.40
 # (rev: (5.205, 1.162), (5.251, 1.213), (5.323, 1.288)).
+# VQA r3 (SHP3-01): the redrawn edge climbed 128 mm in 61 mm of STA ((5.345, 1.232) -> (5.406, 1.360), ~64 deg) from a
+# knee at the door limit -- the fairing nose's upper part stood up as a steep face with a crease on that climb.  It now
+# leaves the door limit gradually (max ~59 deg, no knee) and rejoins the drawn line at STA 5509; up to 30 mm under the
+# CONS2-05 line over STA 5.37-5.44 (rev CONS2-05: (5.300, 1.180), (5.345, 1.232), (5.406, 1.360), (5.470, 1.407)).
 BELLY_FAIRING_NOSE_EDGE = [(5.153, 1.052), (5.159, 1.082), (5.175, 1.119), (5.205, 1.148), (5.251, 1.168),
-                           (5.300, 1.180), (5.345, 1.232), (5.406, 1.360), (5.470, 1.407), (5.509, 1.432)]
+                           (5.300, 1.182), (5.335, 1.215), (5.370, 1.270), (5.406, 1.330), (5.440, 1.375),
+                           (5.470, 1.402), (5.509, 1.432)]
 BELLY_FAIRING_TAIL = [(6.972, 1.631), (7.325, 1.605), (7.610, 1.574), (7.844, 1.531), (8.048, 1.483),
                       (8.251, 1.412), (8.436, 1.313), (8.567, 1.219), (8.581, 1.197), (8.585, 1.170),
                       (8.574, 1.141), (8.555, 1.124), (8.541, 1.118), (8.395, 1.104), (8.111, 1.078),
@@ -89,6 +94,23 @@ def belly_fairing_section(x, n=72, z_top=1.20):
     half = np.r_[stbd, np.c_[np.linspace(hw, 0.0, k), np.full(k, z_top)]]
     ring = np.r_[half, (half * [-1, 1])[::-1][1:-1]]
     return np.c_[np.full(len(ring), x), ring]
+
+
+def _belly_box_sdf(V, grow_down=0.0):
+    """Signed distance-like field of the lower belly fairing's box (positive outside): flat bottom
+    belly_fairing_bottom(x), footprint half-width belly_fairing_halfwidth(x) with the BELLY_FAIRING_FLAT corner radius;
+    unbounded above (the walls end in the fuselage / fillet); outside BELLY_FAIRING_X it is positive.  grow_down: the
+    bottom taken this much lower (so surfaces lying ON the flat bottom count as inside)."""
+    V = np.asarray(V, float)
+    x = V[:, 0]
+    zb = belly_fairing_bottom(np.clip(x, BELLY_FAIRING_X[0], BELLY_FAIRING_HW[-1][0])) - grow_down
+    hw = belly_fairing_halfwidth(np.clip(x, BELLY_FAIRING_X[0], BELLY_FAIRING_HW[-1][0]))
+    r = np.minimum(BELLY_FAIRING_FLAT["r"], 0.9 * np.maximum(hw, 1e-3))
+    qy = np.abs(V[:, 1]) - (hw - r)
+    qz = (zb + r) - V[:, 2]
+    d = np.hypot(np.maximum(qy, 0.0), np.maximum(qz, 0.0)) + np.minimum(np.maximum(qy, qz), 0.0) - r
+    out = (x < BELLY_FAIRING_X[0]) | (x > BELLY_FAIRING_HW[-1][0])
+    return np.where(out, 1.0, d)
 
 
 def wing_lower_z(x, y, behind_te=False):
@@ -159,9 +181,19 @@ ROOT_FILLET_TAPER = 7.400          # STA where the aft fade-out starts (over ~0.
 #                                    the drawn plan edge from STA 7.20, 0.26 m ahead of its knee at 7.457 (CONS2-04)
 ROOT_FILLET_GAP = 0.012            # m ahead of the D2 panel seam where the standoff has reached zero
 ROOT_FILLET_MIN_D = 0.0015         # standoffs below this are left to the fuselage skin (no z-fighting)
-ROOT_FILLET_BLEND = (0.000, 0.300) # m ahead of / behind the wing LE over which the nose bump turns into the fillet
-#                                    (VQA r2 SHP2-06 / RQ2-02: over 0.08 m the convex bump -> concave fillet change stood
-#                                    up as a sharp triangular ridge from the LE to the upper edge; now gradual, on the wing)
+# Nose half (ahead of the mid-chord), VQA r3 SHP3-01 / RQ3-01: above the foot the section is the concave elliptic fillet
+# with a round-over at the foot, P_up(u) = 1 - sqrt(u (2 - u)) s(u / e) (s = C2 smoothstep): e is the round-over's
+# share of the foot -> upper-edge height, from e_nose near the nose tip down to e_le at the wing LE (there the wing's
+# own LE radius takes over) and to 0 within 'behind' aft of the LE, where the fillet sits on the wing.  So the nose is
+# one round crest (vertical tangent at the foot, meeting the round lower half G1) that runs into the wing leading edge,
+# with a smooth concave run-out into the fuselage side above it -- photo 0517: 'a smooth, slightly concave fillet'
+# between the max-standoff line and the upper edge.  (rev r2 / r3: a convex bump (1 - u)^k (1 + k u) ahead of the LE,
+# blended into the fillet over 0.08 / 0.2 m behind it: the bump either stood up as a ridge or left a dome on the wing,
+# and its blend with the fillet (infinite slope at the foot) creased the foot line -- the knotted highlight of the
+# hero / apron renders.)
+ROOT_FILLET_ROUND = dict(e_nose=0.90, e_le=0.25, run=0.20, behind=0.10)   # run: m ahead of the LE over which e falls
+ROOT_FILLET_TAIL_K = 3.0           # tail bump law (1 - u)^k (1 + k u) behind the wing TE (ROOT_FILLET_TE_BLEND; rev r2 k 2:
+#                                    a sharper fold where the fillet turns back into the bump)
 ROOT_FILLET_TIP_RUNIN = 0.030     # m behind the nose tip over which the standoff runs in from zero (smoothstep)
 ROOT_FILLET_TE_BLEND = (0.050, 0.030)   # m ahead of / behind the wing TE over which the fillet turns back into the bump
 ROOT_FILLET_DOOR_CLEAR = 0.015     # m between the fairing nose and the open airstair door (door slab included)
@@ -269,7 +301,7 @@ def _foot(x, y_out):
 
 def _fillet_frame(x):
     """Per-station frame of the fillet at x: (z_j foot WL on the wing at the plan edge, S standoff there, z_up upper
-    edge, z_lo lower edge, a = weight of the fillet law vs the nose bump)."""
+    edge, z_lo lower edge, a = weight of the fillet law vs the tail bump behind the TE; 1 over the nose half)."""
     z_up, z_lo, y_out, (x0, x1) = root_fillet_lines()
     x = np.asarray(x, float)
     Pp = np.array(BELLY_FAIRING_PLAN)
@@ -285,15 +317,14 @@ def _fillet_frame(x):
     S = S * _smooth((x - x0) / ROOT_FILLET_TIP_RUNIN)
     # (the fade-out ahead of the D2 seam, ROOT_FILLET_TAPER -> x1, is applied in _foot)
     zu, zl = z_up(x), np.minimum(z_lo(x), zj - 1e-3)
-    a = 1.0 - _smooth((le_o - x + ROOT_FILLET_BLEND[1]) / (ROOT_FILLET_BLEND[0] + ROOT_FILLET_BLEND[1]))
-    # aft half: the fillet law, turning back into the round bump over ROOT_FILLET_TE_BLEND behind the wing's trailing
-    # edge at the (faded) foot -- with no wing left to be tangent to, the fillet met its closure below the foot in a
-    # 90 deg crease along the TE (MQ2-01)
+    # nose half: ROOT_FILLET_ROUND (in root_fillet_standoff), a = 1; aft half: the fillet law, turning back into the
+    # round bump over ROOT_FILLET_TE_BLEND behind the wing's trailing edge at the (faded) foot -- with no wing left to
+    # be tangent to, the fillet met its closure below the foot in a 90 deg crease along the TE (MQ2-01)
     yf = F.side_y(np.clip(x, F.STA["cowl_front"], F.STA["tail_end"]), zj) + S
     te_f = np.interp(yf, ys, le + ch)
     b0, b1 = ROOT_FILLET_TE_BLEND
     a_te = 1.0 - _smooth((x - te_f + b0) / (b0 + b1))
-    a = np.where(x > 0.5 * (xp0 + Pp[-1, 0]), a_te, a)
+    a = np.where(x > 0.5 * (xp0 + Pp[-1, 0]), a_te, 1.0)
     return zj, S, zu, zl, a
 
 
@@ -301,8 +332,9 @@ def _fillet_frame(x):
 # aft: the drawn plan edge turns out along the LE while the foot is still at the low LE WL, where the fuselage is
 # narrow) -- above the foot that peak stood out as a dome over the LE with a groove behind it (zebra test).  Above the
 # foot the law uses S_up = S's monotone envelope from aft (running minimum, smoothed) plus the excess S - S_up decaying
-# as (1 - u)^ROOT_FILLET_PEAK_DECAY, so the foot (plan edge on the wing) is unchanged and the dome fades out upward.
-ROOT_FILLET_PEAK_DECAY = 6.0
+# as (1 - u)^k (1 + k u), k = ROOT_FILLET_PEAK_DECAY, so the foot (plan edge on the wing) is unchanged and the dome
+# fades out upward with no slope kink at the foot (VQA r3; rev (1 - u)^6).
+ROOT_FILLET_PEAK_DECAY = 12.0
 ROOT_FILLET_PEAK_SMOOTH = 0.05     # m, Gaussian width of the envelope's smoothing
 ROOT_FILLET_PEAK_END = 6.0         # STA: the envelope covers the leading-edge region ahead of this (S's plateau there)
 _SUP = {}
@@ -327,27 +359,51 @@ def _standoff_envelope(x):
     return np.interp(x, _SUP["xs"], _SUP["env"])
 
 
+def _visible_foot(x, zj):
+    """The VISIBLE foot WL z0 at stations x: inside the chord, where the smoothed foot zj lies under the wing's upper
+    surface at the plan edge (just aft of the LE nose, up to 10 mm at STA 5.40), that surface (soft max, 2 mm); zj
+    elsewhere.  The fillet law runs from z0, so the fillet meets the wing tangentially ON the drawn plan edge (VQA r3:
+    measured from the buried foot the concave law had already fallen ~30 mm inboard where it came out of the wing)."""
+    Pp = np.array(BELLY_FAIRING_PLAN)
+    yo = root_fillet_lines()[2](np.clip(x, Pp[0, 0], Pp[-1, 0]))
+    zt, fch = wing_top(x, yo)
+    kz = 0.002
+    w = 1.0 - _smooth((np.asarray(x, float) - 5.8) / 0.4)      # the LE region only (aft the two agree to ~1 mm)
+    return np.where(fch <= 0.0, zj + w * kz * np.logaddexp(0.0, (zt - zj) / kz), zj)
+
+
 def root_fillet_standoff(x, z):
     """Horizontal standoff d(x, z) >= 0 of the fillet / fairing nose from the fuselage side (starboard)."""
     x0, x1 = root_fillet_lines()[3]
     x, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(z, float))
     zj, S, zu, zl, a = _fillet_frame(x)
-    u = np.clip((z - zj) / np.maximum(zu - zj, 1e-6), 0.0, 1.0)
+    Pp = np.array(BELLY_FAIRING_PLAN)
+    yo = root_fillet_lines()[2](np.clip(x, Pp[0, 0], Pp[-1, 0]))
+    z0 = _visible_foot(x, zj)
+    u = np.clip((z - z0) / np.maximum(zu - z0, 1e-6), 0.0, 1.0)
     v = np.clip((zj - z) / np.maximum(zj - zl, 1e-6), 0.0, 1.0)
-    fil = 1.0 - np.sqrt(np.clip(u * (2.0 - u), 0.0, 1.0))  # concave elliptic fillet (tangent to wing and side)
-    bump = (1.0 - u) ** 2 * (1.0 + 2.0 * u)                 # smooth bump (nose)
+    root = np.sqrt(np.clip(u * (2.0 - u), 0.0, 1.0))
+    fil = 1.0 - root                                        # concave elliptic fillet (tangent to wing and side)
+    k_ = ROOT_FILLET_TAIL_K                                 # aft of the TE: a round bump (zero slope at the foot and
+    bump = (1.0 - u) ** k_ * (1.0 + k_ * u)                 # at the upper edge)
+    # nose half: the fillet with a round-over at the foot (ROOT_FILLET_ROUND)
+    q = ROOT_FILLET_ROUND
+    ys_, le_, _, _ = _wing_top_table()
+    le_o = np.interp(yo, ys_, le_)
+    e = np.where(x <= le_o, q["e_le"] + (q["e_nose"] - q["e_le"]) * _smooth((le_o - x) / q["run"]),
+                 q["e_le"] * (1.0 - _smooth((x - le_o) / q["behind"])))
+    t_ = np.clip(u / np.maximum(e, 1e-9), 0.0, 1.0)
+    s_ = np.where(e > 1e-9, t_ ** 3 * (10.0 - 15.0 * t_ + 6.0 * t_ * t_), 1.0)
+    P_up = np.where(x <= 0.5 * (Pp[0, 0] + Pp[-1, 0]), 1.0 - root * s_, a * fil + (1.0 - a) * bump)
     # below the foot (kept only outside the chord): the bump's round lower half (nose; tail behind the TE)
-    P = np.where(z >= zj, a * fil + (1.0 - a) * bump, np.sqrt(np.clip(1.0 - v * v, 0.0, 1.0)))
+    P = np.where(z >= zj, P_up, np.sqrt(np.clip(1.0 - v * v, 0.0, 1.0)))
     if ROOT_FILLET_PEAK_DECAY:
-        # decay measured from the VISIBLE foot: where the smoothed foot lies under the wing's upper surface (just aft
-        # of the LE nose) from that surface at the plan edge, so the plan edge on the wing keeps the full standoff
-        Pp = np.array(BELLY_FAIRING_PLAN)
-        yo = root_fillet_lines()[2](np.clip(x, Pp[0, 0], Pp[-1, 0]))
-        zt, fch = wing_top(x, yo)
-        z0 = np.where(fch <= 0.0, np.maximum(zj, zt), zj)
-        ue = np.clip((z - z0) / np.maximum(zu - z0, 1e-6), 0.0, 1.0)
+        # decay measured from the VISIBLE foot z0 (above), so the plan edge on the wing keeps the full standoff
+        ue = u
         Su = _standoff_envelope(x)
-        S = np.where(z >= zj, Su + (S - Su) * (1.0 - ue) ** ROOT_FILLET_PEAK_DECAY, S)
+        kd = ROOT_FILLET_PEAK_DECAY                  # (1 - u)^k (1 + k u): zero slope at the foot (VQA r3: the
+        g = (1.0 - ue) ** kd * (1.0 + kd * ue)       # rev (1 - u)^6 dropped linearly -- a crease along the foot line)
+        S = np.where(z >= zj, Su + (S - Su) * g, S)
     inside = (x >= x0) & (x <= x1) & (z <= zu) & (z >= zl)
     d = np.where(inside, S * P, 0.0)
     # the fairing nose overlaps the airstair door panel in x (door to STA 5290, nose from 5153): below the hinge
@@ -386,10 +442,11 @@ def root_fillet(step=0.006, n_up=44, n_lo=22):
     x0, x1 = root_fillet_lines()[3]
     xs = np.linspace(x0, x1, int((x1 - x0) / step) + 2)
     zj, _, zu, zl, _ = _fillet_frame(xs)
+    z0 = _visible_foot(xs, zj)                                 # the upper rows start at the visible foot
     tu = np.linspace(0.0, 1.0, n_up) ** 2                      # u rows, clustered at the foot
     tv = 1.0 - (1.0 - np.linspace(0.0, 1.0, n_lo)) ** 2        # v rows, clustered at the lower edge
     out = []
-    for rows, zfun in ((tu, lambda t: zj[:, None] + (zu - zj)[:, None] * t[None, :]),
+    for rows, zfun in ((tu, lambda t: z0[:, None] + (zu - z0)[:, None] * t[None, :]),
                        (tv, lambda t: zj[:, None] - (zj - zl)[:, None] * t[None, :])):
         Z = zfun(rows)
         X = np.broadcast_to(xs[:, None], Z.shape)
@@ -403,6 +460,10 @@ def root_fillet(step=0.006, n_up=44, n_lo=22):
             m = trim(m, np.maximum(fch, m.V[:, 2] - zt + 0.004), "positive")
         else:                 # below the foot: kept only ahead of / behind the chord
             m = trim(m, fch, "positive")
+            # ... and outside the lower belly fairing: under the nose the lobe hugs the fuselage bottom 1-3 mm inside
+            # the fairing's flat bottom (hidden, but its keel corner folded 60-80 deg in the mesh, VQA r3 RQ3-01)
+            if m.nf:
+                m = trim(m, _belly_box_sdf(m.V, grow_down=0.004) + 0.0015, "positive")
         if m.nf:
             if np.mean(m.N[:, 1]) < 0:
                 m = m.flipped()
@@ -537,21 +598,28 @@ POD_Y, POD_Z = 7.635, 1.760            # pod axis (butt line, water line)
 POD_X_TIP, POD_X_JOINT = 5.150, 5.575
 POD_R = 0.165
 POD_NOSE_L = 0.305                     # elliptic nose length (tip -> full radius)
-# VQA r2 (SHP2-02): the body does not end in a dome.  Photos IMG_0459 (from the cabin), N81DW (from below) and 048
-# (from above) show the full-radius body running ~0.2 m aft of the radome joint and then tapering into a long 'swan
-# neck' whose crown sweeps up into the winglet leading edge while its underside runs into the wing; the Pilatus plan
-# view shows the pod's outboard side running aft to STA ~5.83 and curving into the winglet LE at STA ~6.0 / BL 7.75.
-# The neck is a sweep along a spine (cubic Bezier) from the pod axis at POD_CYL_END (tangent +x) to a point inside
-# the winglet's leading edge (section POD_NECK['sec'] of wing.winglet_sections(), on its chord line at 'frac' of the
-# chord, tangent to the LE line), with circular sections normal to the spine whose radius falls from POD_R to
-# 'r_end' (cosine law; the tangent lengths 't0' / 't1' shape the spine), so it ends hidden inside the winglet.
 POD_CYL_END = 5.790                    # end of the cylindrical part (rev B 5.72, then an elliptic dome to 6.00)
-POD_NECK = dict(sec=16, frac=0.07, r_end=0.010, t0=0.30, t1=0.24, q=1.3)
+# VQA r2 (SHP2-02) found the rev B elliptic dome too short (photos IMG_0459 from the cabin, N81DW from below, 048 from
+# above: the full-radius body runs on aft of the radome joint and fairs into the winglet / wing); rev r2 answered with a
+# 'swan neck' bent up into the winglet leading edge, which from below read as a short capsule with an up-turned elbow
+# and from the cabin as a waisted neck.  VQA r3: the photos show the body running on STRAIGHT aft under the winglet
+# root as a long tapering tail (N81DW: ~1.5 radome lengths behind the joint, its underside fading into the winglet
+# lower skin; 0459: the crown line straight from the radome to where the winglet leading edge rises out of it; the
+# Pilatus plan view: the outboard side running aft to STA ~5.83 and meeting the winglet LE at ~6.0 / BL 7.75).
+# The tail: r = POD_R (1 - u^p)^q, u = 0 at POD_CYL_END .. 1 at x_end (pod_tail_r); the winglet rises out of it.
+POD_TAIL = dict(x_end=6.60, p=2.2, q=0.7)
 
 
-def radar_pod_profile(n=36):
-    """(x, r) meridian of the pod's body of revolution (tip -> POD_CYL_END, x = station); the neck aft of it is
-    pod_neck_rings()."""
+def pod_tail_r(x):
+    """Radius of the straight tail (POD_TAIL) at stations x (POD_R ahead of POD_CYL_END, 0 aft of x_end)."""
+    q = POD_TAIL
+    u = np.clip((np.asarray(x, float) - POD_CYL_END) / (q["x_end"] - POD_CYL_END), 0.0, 1.0)
+    return POD_R * (1.0 - u ** q["p"]) ** q["q"]
+
+
+def radar_pod_profile(n=36, tail=True):
+    """(x, r) meridian of the pod's body of revolution (tip -> POD_CYL_END, x = station; tail=True: on through the
+    straight tail (pod_tail_r) to its point at POD_TAIL['x_end'])."""
     prof = []
     for x in np.linspace(POD_X_TIP, POD_CYL_END, n):
         if x < POD_X_TIP + POD_NOSE_L:
@@ -559,62 +627,22 @@ def radar_pod_profile(n=36):
         else:
             r = POD_R
         prof.append((float(x), float(r)))
+    if tail:
+        xs = POD_CYL_END + (POD_TAIL["x_end"] - POD_CYL_END) * np.sin(np.linspace(0, np.pi / 2, n))[1:]
+        prof += [(float(x), float(pod_tail_r(x))) for x in xs]
     return prof
 
 
-def pod_neck_spine(n=60):
-    """Spine (n, 3) of the neck, its unit tangents (n, 3) and the section radius (n,) along it."""
-    secs = W.winglet_sections()
-    k = POD_NECK["sec"]
-    sec = secs[k]
-    B = sec.point(np.array(POD_NECK["frac"]), np.array(0.0))
-    dle = secs[k + 1].le - secs[k - 1].le
-    dle /= np.linalg.norm(dle)
-    P0 = np.array([POD_CYL_END, POD_Y, POD_Z])
-    P1 = P0 + [POD_NECK["t0"], 0.0, 0.0]
-    P2 = B - POD_NECK["t1"] * dle
-    u = np.linspace(0.0, 1.0, 400)[:, None]
-    C = (1 - u) ** 3 * P0 + 3 * (1 - u) ** 2 * u * P1 + 3 * (1 - u) * u ** 2 * P2 + u ** 3 * B
-    sl = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(C, axis=0), axis=1))]
-    t = np.linspace(0.0, 1.0, n)
-    S = np.stack([np.interp(t * sl[-1], sl, C[:, i]) for i in range(3)], 1)
-    T = np.gradient(S, axis=0)
-    T /= np.linalg.norm(T, axis=1)[:, None]
-    re = POD_NECK["r_end"]
-    r = re + (POD_R - re) * 0.5 * (1.0 + np.cos(np.pi * t ** POD_NECK["q"]))
-    return S, T, r
-
-
-def pod_neck_rings(n=60, m=48):
-    """Section rings (n, m, 3) of the neck: circles of pod_neck_spine()'s radius normal to the spine, in a
-    rotation-minimising frame that starts as the pod's (y, z) frame (so the first ring is the pod circle)."""
-    S, T, r = pod_neck_spine(n)
-    th = np.linspace(0, 2 * np.pi, m, endpoint=False)
-    e1, e2 = np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0])
-    rings = []
-    for i in range(n):
-        if i:
-            b = np.cross(T[i - 1], T[i])
-            sb = np.linalg.norm(b)
-            if sb > 1e-12:
-                from cad.mesh import rotation_matrix
-                R_ = rotation_matrix(b / sb, float(np.arctan2(sb, T[i - 1] @ T[i])))
-                e1, e2 = R_ @ e1, R_ @ e2
-        rings.append(S[i] + r[i] * (np.outer(np.cos(th), e1) + np.outer(np.sin(th), e2)))
-    return np.array(rings)
-
-
 def pod_outline(view="plan", nbin=120):
-    """Closed silhouette of the whole pod (nose, cylinder and neck) in a view: 'plan' (x, y), 'side' (x, z) or
-    'front' (y, z; the pod circle -- the neck lies behind it)."""
+    """Closed silhouette of the whole pod (nose, cylinder and tapering tail) in a view: 'plan' (x, y), 'side' (x, z) or
+    'front' (y, z; the pod circle -- the tail lies behind it)."""
     if view == "front":
         a = np.linspace(0, 2 * np.pi, 97)
         return np.c_[POD_Y + POD_R * np.cos(a), POD_Z + POD_R * np.sin(a)]
     k = 1 if view == "plan" else 2
     c = POD_Y if view == "plan" else POD_Z
-    prof = np.array(radar_pod_profile(80))
-    Q = np.r_[np.c_[prof[:, 0], c + prof[:, 1]], np.c_[prof[:, 0], c - prof[:, 1]],
-              pod_neck_rings(80, 72).reshape(-1, 3)[:, [0, k]]]
+    prof = np.array(radar_pod_profile(80, tail=True))
+    Q = np.r_[np.c_[prof[:, 0], c + prof[:, 1]], np.c_[prof[:, 0], c - prof[:, 1]]]
     u = Q[:, 0]
     ub = np.linspace(u.min(), u.max(), nbin + 1)
     idx = np.clip(np.digitize(u, ub) - 1, 0, nbin - 1)
@@ -631,22 +659,17 @@ def pod_outline(view="plan", nbin=120):
     return np.vstack([P, P[:1]])
 
 
-POD_X_END = float(pod_neck_spine(2)[0][-1, 0])      # aft end of the neck (inside the winglet)
+POD_X_END = POD_TAIL["x_end"]                         # aft end of the tail (under the winglet)
 
 
-def radar_pod(n_around=96):
-    """(radome, body) meshes: body of revolution (radar_pod_profile) + the swan neck (pod_neck_rings), capped inside
-    the winglet; fine enough (~11 mm) for the pod pinstripe (livery.POD_PIN)."""
-    prof = [(x - POD_X_TIP, r) for x, r in radar_pod_profile(72)]
+def radar_pod(n_around=192):
+    """(radome, body) meshes: body of revolution (radar_pod_profile: nose, cylinder, straight tapering tail) that runs
+    on under the winglet root; fine enough (~5 mm round, ~6 mm along) for the 10 mm pod pinstripe (livery.POD_PIN;
+    VQA r3: the rev ~11 mm grid would break a 10 mm band into dashes)."""
+    prof = [(x - POD_X_TIP, r) for x, r in radar_pod_profile(120, tail=True)]
     prof[0] = (0.0, 0.0)
+    prof[-1] = (prof[-1][0], 0.0)
     body = revolve(prof, n=n_around, axis_origin=(POD_X_TIP, POD_Y, POD_Z), axis_dir=(1, 0, 0))
-    R = pod_neck_rings(90, n_around)
-    # the revolve's last ring and the neck's first are the same circle
-    neck = grid_surface(R, close_v=True)
-    if np.mean(np.sum((neck.V[:n_around] - R[0].mean(0)) * neck.N[:n_around], 1)) < 0:
-        neck = neck.flipped()
-    cap = cap_ring(R[-1], R[-1].mean(0) - R[-2].mean(0))
-    body = Mesh.merge([body, neck, cap])
     radome = trim_x(body, POD_X_JOINT, keep_less=True)
     rest = trim_x(body, POD_X_JOINT, keep_less=False)
     return radome, rest
@@ -699,7 +722,131 @@ def winglet_light_caps(sgn, split=0.45, lift=0.0008):
     return out
 
 
+# ---- cowling panel lines, latches, oil-cooler exit and vent (VQA r3 RQ3-09; photo 188, MSN 3008 port nose close-up
+# through the fitted camera nose_188: the cowl and forward fuselage are not one seamless skin).  Measured on 188:
+#   * ring joints (constant STA, over the sides and the top; the nose-bay opening under STA 3.0 is left clear): the
+#     cowling's aft edge at the firewall (STA 3.0) and the forward cowl ring's joint just aft of the exhaust stacks
+#     (STA ~2.0);
+#   * the upper / lower cowling split with its latches at WL ~1.60 between them (latch outlines ~26 x 88 mm at STA
+#     ~2.21 / 2.72);
+#   * the lower oil-cooler exit on the port lower cowl (a dark recess under a straight lip, STA 2.12-2.40, 35 mm tall
+#     at its forward end, 92 mm at the aft end, lip WL 1.487) and a round louvred vent (~75 mm, STA ~2.80, WL ~1.48)
+#     -- port side only (seen in 188; no starboard close-up).
+# Painted-on dark 'seam' lines COWL_SEAMS['width'] wide, 'lift' proud of the skin (the engraved joints at the photo's
+# scale); the louvre is its dark opening on the skin under a small raised lip.
+COWL_SEAMS = dict(rings=(2.00, 3.00), split_wl=1.600, split_x=(2.00, 3.00), width=0.0025, lift=0.0004,
+                  bottom_gap=(0.44, 0.56), latches=((2.21, 1.620), (2.72, 1.625)), latch=(0.026, 0.088, 0.006))
+OIL_COOLER_EXIT = dict(x=(2.12, 2.40), top=1.487, h_fwd=0.035, h_aft=0.092, lip=(0.006, 0.003), side=-1)
+COWL_VENT = dict(x=2.80, wl=1.480, r=0.037, slats=4, side=-1)
+
+
+def _oml_frame(x, z, side):
+    """(point, outward normal, e_x-ish tangent, e_z-ish tangent) on the fuselage side at (x, z), side +-1."""
+    x, z = np.asarray(x, float), np.asarray(z, float)
+    h = 1e-4
+    y = F.side_y(x, z)
+    dyx = (F.side_y(x + h, z) - F.side_y(x - h, z)) / (2 * h)
+    dyz = (F.side_y(x, z + h) - F.side_y(x, z - h)) / (2 * h)
+    P = np.stack([x, side * y, z], -1)
+    tx = np.stack([np.ones_like(x), side * dyx, np.zeros_like(x)], -1)
+    tz = np.stack([np.zeros_like(x), side * dyz, np.ones_like(x)], -1)
+    n = np.cross(tz, tx) * side
+    n /= np.linalg.norm(n, axis=-1, keepdims=True)
+    tx /= np.linalg.norm(tx, axis=-1, keepdims=True)
+    tz /= np.linalg.norm(tz, axis=-1, keepdims=True)
+    return P, n, tx, tz
+
+
+def _surface_ribbon(P, N, w, lift):
+    """Ribbon (Mesh) of width w along the polyline P (n, 3) lying on the surface with normals N, lifted by lift."""
+    T = np.gradient(P, axis=0)
+    T /= np.maximum(np.linalg.norm(T, axis=1), 1e-12)[:, None]
+    B = np.cross(N, T)
+    B /= np.maximum(np.linalg.norm(B, axis=1), 1e-12)[:, None]
+    Q = P + lift * N
+    m = grid_surface(np.stack([Q - 0.5 * w * B, Q + 0.5 * w * B], 1))
+    if np.mean(m.face_normals() @ N.mean(0)) < 0:
+        m = m.flipped()
+    return m
+
+
+def cowl_seams():
+    """(upper, lower) seam-line meshes of the cowling (COWL_SEAMS, split at the model's cowl split WL)."""
+    q = COWL_SEAMS
+    out = []
+    h = 1e-4
+    for xr in q["rings"]:                                   # ring joints: the OML section at xr
+        for t0, t1 in ((q["bottom_gap"][1] - 1.0, q["bottom_gap"][0]),):
+            t = np.linspace(t0, t1, 400) % 1.0
+            P = F.section(np.full(len(t), xr), t)
+            Pt = F.section(np.full(len(t), xr), (t + h) % 1.0)
+            Px = F.section(np.full(len(t), xr + h), t)
+            N = np.cross(Pt - P, Px - P)
+            N /= np.linalg.norm(N, axis=1)[:, None]
+            c = np.array([xr, 0.0, float(np.mean(P[:, 2]))])
+            if np.mean(np.sum((P - c) * N * [0, 1, 1], 1)) < 0:
+                N = -N
+            out.append(_surface_ribbon(P, N, q["width"], q["lift"]))
+    for side in (1, -1):                                    # the upper / lower split with the latch outlines
+        xs = np.linspace(q["split_x"][0], q["split_x"][1], 120)
+        P, N, _, _ = _oml_frame(xs, np.full(len(xs), q["split_wl"]), side)
+        out.append(_surface_ribbon(P, N, q["width"], q["lift"]))
+        lw, lh, lr = q["latch"]
+        for xc, zc in q["latches"]:
+            a = np.linspace(0, 2 * np.pi, 80)
+            u = np.clip(np.cos(a) * 1.4, -1, 1) * (0.5 * lw)          # a rounded rectangle outline
+            v = np.clip(np.sin(a) * 1.15, -1, 1) * (0.5 * lh)
+            P, N, _, _ = _oml_frame(xc + u, zc + v, side)
+            P = np.vstack([P, P[:1]])
+            N = np.vstack([N, N[:1]])
+            out.append(_surface_ribbon(P, N, 0.6 * q["width"], q["lift"]))
+    # round louvred vent (port): ring + slats
+    v = COWL_VENT
+    a = np.linspace(0, 2 * np.pi, 72)
+    P, N, _, _ = _oml_frame(v["x"] + v["r"] * np.cos(a), v["wl"] + v["r"] * np.sin(a), v["side"])
+    out.append(_surface_ribbon(P, N, q["width"], q["lift"]))
+    for k in range(v["slats"]):
+        zz = v["wl"] + v["r"] * (-0.75 + 1.5 * k / max(v["slats"] - 1, 1))
+        hw = np.sqrt(max(v["r"] ** 2 - (zz - v["wl"]) ** 2, 0.0)) - 0.004
+        xs = np.linspace(v["x"] - hw, v["x"] + hw, 12)
+        P, N, _, _ = _oml_frame(xs, np.full(len(xs), zz), v["side"])
+        out.append(_surface_ribbon(P, N, 1.8 * q["width"], q["lift"]))
+    m = Mesh.merge(out)
+    zc = F.PROP_AXIS_Z + 0.02                               # the parts' split (fuselage_parts.build)
+    return trim(m, m.V[:, 2] - zc, "positive"), trim(m, m.V[:, 2] - zc, "negative")
+
+
+def oil_cooler_exit(n=24):
+    """(lip, dark opening) of the oil-cooler exit louvre (OIL_COOLER_EXIT): the opening is the dark recess seen in 188
+    -- a quadrilateral, narrow at its forward end and 'h_aft' tall at the aft end x1 below the straight upper lip at
+    WL 'top' -- lying on the skin; the lip is a small raised strip along its upper edge."""
+    q = OIL_COOLER_EXIT
+    x0, x1 = q["x"]
+    xs = np.linspace(x0, x1, n)
+    t = (xs - x0) / (x1 - x0)
+    zt = np.full(n, q["top"])
+    zb = q["top"] - (q["h_fwd"] + (q["h_aft"] - q["h_fwd"]) * t ** 0.8)
+    rows = []
+    for f in np.linspace(0.0, 1.0, 6):
+        rows.append(_oml_frame(xs, zt + f * (zb - zt), q["side"]))
+    P = np.stack([r[0] + 0.0005 * r[1] for r in rows], 1)
+    hole = grid_surface(P)
+    if np.mean(hole.face_normals() @ rows[0][1].mean(0)) < 0:
+        hole = hole.flipped()
+    Pl, Nl, _, Tz = _oml_frame(xs, zt + 0.5 * q["lip"][0], q["side"])
+    lip = _surface_ribbon(Pl, Nl, q["lip"][0], q["lip"][1])
+    return lip, hole
+
+
 def build(parts):
+    # -------- cowling panel lines, latches, vent, oil-cooler exit (VQA r3 RQ3-09)
+    if "cowl_upper" in parts and "cowl_lower" in parts:
+        up, lo = cowl_seams()
+        parts["cowl_upper"].add(up, "seam")
+        parts["cowl_lower"].add(lo, "seam")
+        lip, hole = oil_cooler_exit()
+        parts["cowl_lower"].add(lip, "paint_white").add(hole, "inlet_dark")
+
     # -------- belly fairing (goes with the wing)
     bp = Part("belly_fairing", "Wing-to-body fairing: belly fairing + upper root fillet", "wing", explode=(0, 0, -0.9),
               group="Wing", material_note="Composite fairing over the wing carry-through and the root junction")

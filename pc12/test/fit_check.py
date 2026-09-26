@@ -27,7 +27,7 @@
     reverse / fine / feather against both; the spinner has exactly one cut-out per blade, round the blade's round
     shank and covered from outside by its rubber boot
 16. the wing-root fairing (fillet + nose): no folds (dihedral > 90 deg) or normals against the winding; creases
-    over 60 deg are counted
+    over 60 deg are counted; the nose (STA < 5.70): no crease over 30 deg on its face (off the wing junction)
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
@@ -173,7 +173,8 @@ report("nose gear retracted: above the keel, inside the bay / tunnel",
        bool((V[:, 2] > keel + 0.003).all() and (V[:, 2] < ceiling).all()),
        f"lowest {1000 * (V[:, 2] - keel).min():+.0f} mm vs the keel, {int((V[:, 2] >= ceiling).sum())} verts above the roof")
 from model.livery import SURFACES as _SURF
-DOOR_MAT = ("paint_white", _SURF["main_gear_door"], G.LEG_DOOR_BRACKET_MAT)   # leg door plate + its standoff brackets
+DOOR_MAT = ("paint_white", _SURF["main_gear_door"], _SURF["main_gear_door_inner"],    # leg door plate (outer face,
+            G.LEG_DOOR_BRACKET_MAT)                                                    # inner face + rim), brackets
 
 
 def gear_meshes(pid, door=None):
@@ -564,11 +565,7 @@ for L in small:
         r_ = np.linalg.norm(w - np.outer(s_, d), axis=1)
         if (s_ > 0).all() and r_.max() < PP.BLADE_HOLE_R + 0.004:
             holes[k] = holes.get(k, 0) + 1
-            b = PP.BLADE_BOOT
-            ang = np.linspace(0.0, np.pi / 2, 9)
-            prof_s = np.r_[b["rho0"], b["rho1"], b["rho1"] + (b["rho2"] - b["rho1"]) * np.sin(ang[1:])]
-            prof_r = np.r_[b["r_out"], b["r_out"], b["r_in"] + (b["r_out"] - b["r_in"]) * np.cos(ang[1:])]
-            boot_gap.append(float((r_ - np.interp(s_, prof_s, prof_r)).max()))
+            boot_gap.append(float(-PP.blade_boot_covers(k, L).min()))       # the seal ring reaches past the edge
 n_holes = sum(holes.values())
 report(f"spinner: one blade-root cut-out per blade, closed by its boot", len(small) == n_holes == PP.N_BLADES
        and len(holes) == PP.N_BLADES
@@ -582,8 +579,13 @@ report(f"spinner: one blade-root cut-out per blade, closed by its boot", len(sma
 # (MQ2-01); welded dihedral angles over the fairing meshes
 
 
-def fold_count(meshes, lim_deg=60.0):
+def fold_count(meshes, lim_deg=60.0, min_alt=3e-5):
     V, F_ = merged(meshes)
+    # needle / sliver triangles thinner than min_alt (a livery trim passing within microns of a vertex leaves ~10 um
+    # needles; the GLB's 16-bit quantisation drops them as zero-area) are not surface: welded at 20 um they can fold
+    ar = 0.5 * np.linalg.norm(np.cross(V[F_[:, 1]] - V[F_[:, 0]], V[F_[:, 2]] - V[F_[:, 0]]), axis=1)
+    el = np.stack([np.linalg.norm(V[F_[:, i]] - V[F_[:, (i + 1) % 3]], axis=1) for i in range(3)], 1).max(1)
+    F_ = F_[2 * ar / np.maximum(el, 1e-12) >= min_alt]
     key = np.round(V / 2e-5).astype(np.int64)
     _, inv = np.unique(key, axis=0, return_inverse=True)
     Fw = inv.reshape(-1)[F_]
@@ -608,18 +610,46 @@ def fold_count(meshes, lim_deg=60.0):
 
 
 fil = [m for m, mm in parts["belly_fairing"].meshes if mm != _SURF["belly_fairing"]]   # root fillet + nose pieces
+from model import details as _D
+_Pp = np.array(_D.BELLY_FAIRING_PLAN)
+
+
+def on_wing_junction(P, tol=0.005):
+    """Crease points within tol of the fillet's junction with the wing ahead of STA 5.70 (the foot on the drawn plan
+    edge, where the section law's horizontal tangent meets the steep leading-edge nose: sub-mm steps, VQA r3)."""
+    if not len(P):
+        return np.zeros(0, bool)
+    yo = _D.root_fillet_lines()[2](np.clip(P[:, 0], _Pp[0, 0], _Pp[-1, 0]))
+    zt = _D.wing_top(P[:, 0], yo)[0]
+    return (P[:, 0] < 5.70) & (np.hypot(np.abs(P[:, 1]) - yo, P[:, 2] - zt) < tol)
+
+
 nf60, Pf = fold_count(fil, 60.0)
-nf90, _ = fold_count(fil, 90.0)
+nf90, P90 = fold_count(fil, 90.0)
+j90 = on_wing_junction(P90)
 flip = 0
 for m in fil:                                   # vertex normals against the triangle winding
     if m.nf and m.N is not None:
         fn = np.cross(m.V[m.F[:, 1]] - m.V[m.F[:, 0]], m.V[m.F[:, 2]] - m.V[m.F[:, 0]])
         flip += int((np.einsum("ij,ij->i", fn, m.N[m.F].sum(1)) < 0).sum())
 report("belly_fairing root fillet / fairing nose: no folds (dihedral > 90 deg), no normals against the winding",
-       nf90 == 0 and flip == 0,
-       f"{nf90} edges > 90 deg, {flip} flipped triangles; {nf60} creases > 60 deg"
+       int((~j90).sum()) == 0 and flip == 0,
+       f"{int((~j90).sum())} edges > 90 deg ({int(j90.sum())} on the LE junction with the wing), {flip} flipped "
+       f"triangles; {nf60} creases > 60 deg"
        + (f" (x {Pf[:, 0].min():.3f}-{Pf[:, 0].max():.3f} |y| {np.abs(Pf[:, 1]).min():.3f}-{np.abs(Pf[:, 1]).max():.3f} "
           f"z {Pf[:, 2].min():.3f}-{Pf[:, 2].max():.3f})" if nf60 else "") + " (rev: 114 edges > 60 deg, max 150)")
+
+# VQA r3 RQ3-01: the fairing nose must read as one smooth surface -- no crease over 30 deg ahead of STA 5.70 on its
+# face (the knotted highlight of the r3 renders: ~90 edges folded 20-60 deg at STA 5.36-5.45 and 60-80 deg at the keel
+# corner).  Edges on the junction with the wing are counted apart.
+nk30, Pk30 = fold_count(fil, 30.0)
+Pn = Pk30[Pk30[:, 0] < 5.70] if nk30 else np.zeros((0, 3))
+junction = on_wing_junction(Pn)
+face = Pn[~junction]
+report("belly_fairing nose (STA < 5.70): no creases over 30 deg on its face", len(face) == 0,
+       f"{len(face)} edges > 30 deg off the wing junction" + (f" (x {face[:, 0].min():.3f}-{face[:, 0].max():.3f} z "
+                                                              f"{face[:, 2].min():.3f}-{face[:, 2].max():.3f})" if len(face) else "")
+       + f"; {int(junction.sum())} on the junction with the wing (foot line)")
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

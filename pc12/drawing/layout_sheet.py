@@ -613,7 +613,7 @@ def draw_side(ds, v):
     cv.path(v.pts(wg["te"][:, [0, 2]]), W_OBJ)
     cv.path(v.pts(wg["top"][:, [0, 2]]), W_OBJ, closed=True)
     # radar pod (starboard tip, behind the fuselage -> hidden)
-    cv.path(v.pts(D.pod_outline("side")), W_FINE, HID, closed=True)     # incl. the swan neck into the winglet LE
+    cv.path(v.pts(D.pod_outline("side")), W_FINE, HID, closed=True)     # incl. the tapering tail under the winglet
     # empennage: fin + rudder + tab, dorsal, bullet, tailplane root section, strakes
     zt = E.BULLET[8][2]                                     # bullet bottom
     zj = float(E._dorsal_curve()[-1, 1])                    # fin LE visible above the dorsal blend only (G3-3)
@@ -733,7 +733,7 @@ def draw_plan(ds, v):
         cv.path(v.pts(np.c_[Pf[:, 0], sg * Pf[:, 1]]), W_OBJ)
     # radar pod (starboard)
     prof = np.array(D.radar_pod_profile())
-    cv.path(v.pts(D.pod_outline("plan")), W_OBJ, closed=True)          # body + swan neck into the winglet LE
+    cv.path(v.pts(D.pod_outline("plan")), W_OBJ, closed=True)          # body + tapering tail under the winglet
     rj = float(np.interp(D.POD_X_JOINT, prof[:, 0], prof[:, 1]))
     cv.line(v.pt(D.POD_X_JOINT, D.POD_Y - rj), v.pt(D.POD_X_JOINT, D.POD_Y + rj), W_FINE)
     # MAC

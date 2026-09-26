@@ -129,6 +129,13 @@ STROKES = {
     # (rev B had a navy line 'N1' between B1 and P1: photos 130 / 82 / 188 show the base blue there -- the dark band
     # seen under P1 in photo 82 moves against the stripes along the fuselage in 130, a reflection horizon, not paint
     # (render/lookdev.py measurements, material review round 1 F3); the white strokes are edged by OUTLINE instead)
+    # VQA r3 LIV3-04 re-check (profiles across B1 / gap / P1 at STA 3.0-4.4 through the fitted cameras of cams.json):
+    # N81DW gap 0-17/99-119/176-184 against the base blue just above P1 0-11/135-160/229-248 (x0.75), 0517 x~0.55,
+    # hangar 130 / 81 x0.6-1.0 (130 at STA 3.0 / 4.4 the gap is as light as the blue above), and the 188 close-up --
+    # where the gap is 25-40 px wide, not 4-5 px -- shows the gap in the same blue as the paint above P1 at the same
+    # stations (26-64/46-70/94-101 against 23-40/44-54/80-118).  A navy paint (~1/4 of the base blue) would read far
+    # darker than x0.55-0.75; the darkening in the small-scale photos is the undershoot of their sharpening between two
+    # bright strokes 4-5 px apart plus the ~4 deg lower normal of the gap.  So still no N1: the gap is base blue.
     # thin white line above B1, curving up over the crown between the last two cabin windows.  VQA r1 LIV-01: it
     # starts as a hairline tip just above B1's upper edge at STA ~2.3 (photos 130 / 81 port, 0517 starboard: the cowl
     # carries ONE white band, B1) and thickens slowly toward the door (photo 82: P1 / B1 0.24 at its forward end)
@@ -220,10 +227,25 @@ BASE = "paint_blue"
 # read grey: rim = min(width, 0.2 h) (taper_h 0.030), so X1 / X2 / H1 / U1 / D1 / P2 keep a mostly white core
 OUTLINE = dict(material="paint_champagne", of="paint_pinstripe", width=0.006, taper_h=0.030, min_h=0.003)
 
-# over-wing exit marking: white ring centred on the hatch seam (fuselage_parts.EXIT), starboard only
+# over-wing exit marking: white ring round the hatch seam (fuselage_parts.EXIT), starboard only
 # (rectified ground photo: ring 5.975-6.475 x 1.88-2.545 outer, ~25 mm wide)
-EXIT_MARK = dict(offset=0.000, half_width=0.0125)
+# VQA r3 LIV3-01: the ring lies on the fuselage skin OUTSIDE the seam -- photo 0517: one solid white band ~25 mm wide
+# (peak sRGB 156/186/235, the same white as P1 beside it) with the seam as a thin dark keyline along its INNER edge and
+# white running straight onto blue outside (no silver rim); rev r2 centred it on the seam (12.5 mm on the plug hatch, the
+# dark seam gap between, 6 mm rims both sides), which blurred to a grey double line.  offset = the ring centre's
+# distance outside the seam: the ring runs from the seam to seam + 40 mm (the door_frames seam band covers the first
+# 7 mm, so ~32 mm of white show, about P1's width beside it as in 0517 -- the photo's ring measures 3-3.5 px at ~11 mm /
+# px; the rev 25 mm band centred on the seam rendered as a 2 px grey double line, 30 mm still read thinner than P1);
+# its inner field edge lies 4 mm inside the skin cut, so no trim runs along the cut (at 1 mm the trims left a
+# zero-area crack at the B1 crossing)
+EXIT_MARK = dict(offset=0.018, half_width=0.022, rim=False)
 EXIT_MARK_MAT = "paint_pinstripe"
+
+
+def exit_mark_rim():
+    """Width of the OUTLINE rim round the exit ring (0 when EXIT_MARK['rim'] is off or the ring is not a white stroke)."""
+    return (OUTLINE["width"] if EXIT_MARK.get("rim", True) and OUTLINE.get("width", 0) > 0
+            and EXIT_MARK_MAT == OUTLINE["of"] else 0.0)
 
 # =====================================================================================================
 # per-surface colours (wing, winglet, tailplane, pod, gear, powerplant)
@@ -237,7 +259,11 @@ SURFACES = dict(
     # flap-track canoes: metallic base blue (VQA r1 LIV-05: N81DW air-to-air, saturated blue pods against the navy wing)
     belly_fairing="paint_wing_dark", flap_fairings=BASE,
     pod_body="paint_blue", pod_radome="paint_black",              # radome forward of details.POD_X_JOINT
-    main_gear_door="paint_blue", nose_gear_door="paint_blue_light",
+    # main-gear leg door: the outer face is the wing lower skin carried down by the leg (LD-1), so it wears the wing's
+    # lower-surface paint (VQA r3 RQ3-07: a bright blue scalloped patch on the navy underside with the gear up, N81DW
+    # shows one dark underside round the wheel; 0517 gear down: door 0/45/86 against the fuselage blue 10/53/112);
+    # the inner face and the rim keep the rev r2 base blue
+    main_gear_door="paint_wing_dark", main_gear_door_inner="paint_blue", nose_gear_door="paint_blue_light",
     spinner="chrome", exhaust="exhaust_polished",
     inlet_lip="chrome", inlet_mouth="inlet_dark",                 # chin inlet (powerplant.CHIN_INLET): polished lip
     blade_le="erosion",                                           # blade leading-edge erosion strip (metal)
@@ -255,7 +281,12 @@ WINGLET_PIN = dict(s=0.08, c0=0.02, c1=1.00, half_width=0.011)
 # the band of the pod surface whose distance from the wing / winglet skin (their parameter sections) is gap..gap +
 # width, on the pod's inboard upper side, from x0 aft of the radome joint (rev r2: a WINGLET_PIN plane section,
 # which crossed the pod's flank as a straight bar ~40 mm above the junction)
-POD_PIN = dict(x0=0.010, gap=0.004, width=0.020)
+# VQA r3: gap 0.004 -> 0.008 (at 4 mm the wing's leading-edge boot showed through the band as dark dashes) and the band
+# may wrap down round the leading-edge junction to 'z_min' below the pod axis (0459: the line starts low on the pod's
+# inboard side just aft of the radome joint, where the wing leading edge runs into the pod; rev r2 stopped 30 mm below)
+# VQA r3 LIV3-02: IMG_0459 shows a crisp ~10 mm hairline on the pod (the render's 20 mm band read as a broad grey
+# stripe): width 0.020 -> 0.010
+POD_PIN = dict(x0=0.010, gap=0.008, width=0.010, z_min=0.080)
 # propeller blade tip bands, radial extent measured inward from the tip (m): white tip, black gap, red band
 # (hangar photo MSN-3008_130, upper blade against the ceiling: 17 / 11 / 12 px on a ~40 px = 0.13 m chord)
 # (front face only: blade_face_field)
@@ -480,9 +511,9 @@ def region_fields(mat, cockpit=False, fin=False):
     if mat == "trim_black" and cockpit:
         from model import cockpit_glazing as CG
         out.append([lambda V: CG.surround_sdf(V[:, 0], V[:, 1], V[:, 2])])
-    if mat == EXIT_MARK_MAT or (mat == OUTLINE["material"] and EXIT_MARK_MAT == OUTLINE["of"] and _OUTLINES):
+    if mat == EXIT_MARK_MAT or (mat == OUTLINE["material"] and exit_mark_rim() > 0 and _OUTLINES):
         from model.fuselage_parts import EXIT, rr
-        o, w = EXIT_MARK["offset"], EXIT_MARK["half_width"] + (OUTLINE["width"] if mat != EXIT_MARK_MAT else 0.0)
+        o, w = EXIT_MARK["offset"], EXIT_MARK["half_width"] + (exit_mark_rim() if mat != EXIT_MARK_MAT else 0.0)
         f = lambda V: rr((V[:, 0], V[:, 2]), EXIT)                                  # noqa: E731
         out.append([lambda V: 0.2 - V[:, 1] * EXIT["side"], lambda V: (o - w) - f(V), lambda V: f(V) - (o + w)])
     return out
@@ -676,7 +707,7 @@ def _pod_pin_fields():
     from model import details as D
     q = POD_PIN
     return (lambda V: q["gap"] - tip_skin_distance(V), lambda V: tip_skin_distance(V) - q["gap"] - q["width"],
-            lambda V: V[:, 1] - D.POD_Y, lambda V: D.POD_Z - 0.03 - V[:, 2],
+            lambda V: V[:, 1] - D.POD_Y, lambda V: D.POD_Z - q["z_min"] - V[:, 2],
             lambda V: D.POD_X_JOINT + q["x0"] - V[:, 0])
 
 
@@ -701,13 +732,13 @@ def pod_pin_trace(n=80):
     neck the point on its inboard upper side at the band's mid distance from the wing / winglet skin (sheet L5)."""
     from model import details as D
     q = POD_PIN
-    rings = D.pod_neck_rings(n, 360)
     th = np.linspace(0, 2 * np.pi, 361)[:-1]
-    xs = np.linspace(D.POD_X_JOINT + q["x0"], D.POD_CYL_END, 24)
-    body = [np.c_[np.full(360, x), D.POD_Y + D.POD_R * np.cos(th), D.POD_Z + D.POD_R * np.sin(th)] for x in xs]
+    xs = np.linspace(D.POD_X_JOINT + q["x0"], D.POD_X_END - 0.01, n)
+    body = [np.c_[np.full(360, x), D.POD_Y + D.pod_tail_r(x) * np.cos(th), D.POD_Z + D.pod_tail_r(x) * np.sin(th)]
+            for x in xs]
     fs = _pod_pin_fields()
     out = []
-    for R in list(body) + list(rings[1:]):
+    for R in body:
         ok = (fs[2](R) <= 0) & (fs[3](R) <= 0) & (fs[4](R) <= 0)
         d = tip_skin_distance(R) - q["gap"] - 0.5 * q["width"]
         k = np.where(ok & np.roll(ok, -1) & (np.sign(d) != np.sign(np.roll(d, -1))))[0]
@@ -766,8 +797,48 @@ def _stab_boot(m):
     return boot, rest
 
 
+# VQA r3 LIV3-05: the open cargo door's edge (the slab's rim, DOOR_T deep) is painted like the skin -- photo 130: a
+# dark-blue painted rim round the whole panel; the builder gives the rim to the inner 'lining' (a white slab edge in the
+# renders).  Rim faces = the lining faces that face neither in nor out (|n_y| < DOOR_EDGE['ny']) within DOOR_EDGE['d']
+# of the panel seam (so the door window's reveal stays lining).  (The airstair door's edge band is the interior
+# rebuild's model/airstair.py.)
+DOOR_EDGE = dict(parts=("door_cargo",), ny=0.6, d=0.012)
+
+
+def _door_edge(parts):
+    from model.fuselage_parts import door_panel, rr, DOORS
+    panels = {pid: door_panel(o) for pid, o in DOORS}
+    for pid in DOOR_EDGE["parts"]:
+        if pid not in parts:
+            continue
+        new = []
+        for m, mat in parts[pid].meshes:
+            if mat != "lining" or not m.nf:
+                new.append((m, mat))
+                continue
+            fn = m.face_normals()
+            c = m.V[m.F].mean(1)
+            edge = (np.abs(fn[:, 1]) < DOOR_EDGE["ny"]) & (rr((c[:, 0], c[:, 2]), panels[pid]) > -DOOR_EDGE["d"])
+            if not edge.any():
+                new.append((m, mat))
+                continue
+            pan = panels[pid]
+            for sel, mt in ((edge, UNPAINTED), (~edge, mat)):
+                if sel.any():
+                    sub = Mesh(m.V, m.F[sel], N=m.N)
+                    sub = sub.compact() if hasattr(sub, "compact") else sub
+                    if mt == UNPAINTED:              # solidify winds the rim into the slab: face it outward (the
+                        cf = sub.V[sub.F].mean(1)    # renders shade the back faces of a paint as the lining)
+                        out_ = np.c_[cf[:, 0] - pan["cx"], np.zeros(len(cf)), cf[:, 2] - pan["cz"]]
+                        if np.mean(np.sum(sub.face_normals() * out_, 1)) < 0:
+                            sub = sub.flipped()
+                    new.append((sub, mt))
+        parts[pid].meshes = new
+
+
 def apply(parts):
     """Paint the built parts in place (meshes still carrying the unpainted skin material)."""
+    _door_edge(parts)
     for pid in PAINTED:
         if pid not in parts:
             continue
@@ -847,7 +918,8 @@ def apply(parts):
         parts["radar_pod"].meshes = new
     for pid in ("gear_main_R", "gear_main_L"):     # leg-mounted doors
         if pid in parts:
-            parts[pid].meshes = [(m, SURFACES["main_gear_door"] if mm == UNPAINTED else mm)
+            parts[pid].meshes = [(m, {UNPAINTED: SURFACES["main_gear_door_inner"],
+                                      "paint_belly": SURFACES["main_gear_door"]}.get(mm, mm))
                                  for m, mm in parts[pid].meshes]
     if "exhaust_stacks" in parts:
         parts["exhaust_stacks"].meshes = [(m, SURFACES["exhaust"] if mm == "exhaust" else mm)

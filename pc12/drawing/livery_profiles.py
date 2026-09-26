@@ -214,7 +214,7 @@ def stab_boot_outline(sg=1, frac=0.08):
 
 def pod_plan(y_sign=1):
     prof = np.array(D.radar_pod_profile(60))
-    body = D.pod_outline("plan")                        # body of revolution + the swan neck into the winglet LE
+    body = D.pod_outline("plan")                        # body of revolution + the tapering tail under the winglet
     m = prof[:, 0] <= D.POD_X_JOINT
     rad = np.r_[np.c_[prof[m, 0], D.POD_Y + prof[m, 1]], np.c_[prof[m][::-1, 0], D.POD_Y - prof[m][::-1, 1]]]
     return body * [1, y_sign], rad * [1, y_sign]
@@ -260,7 +260,10 @@ def stack_front_silhouette(sgn=1, nbin=90):
 
 def stack_collar_hull(sgn, view):
     """Outline of the heat-blackened collar band in a view ('side' (x, z) / 'plan' (x, y)): convex hull of its
-    surface points (powerplant.exhaust_stack_collar_points)."""
+    surface points (powerplant.exhaust_stack_collar_points); None when there is no outer band (STACK_COLLAR 0, VQA r3:
+    the tube is polished to the lip, the black is the sooted inside of the mouth)."""
+    if PP.STACK_COLLAR <= 0.0:
+        return None
     if view == "side":
         Q = PP.exhaust_stack_collar_points(sgn, facing=(0.0, float(sgn), 0.0))       # seen from its own side
         return _hull(Q[:, [0, 2]])
@@ -435,8 +438,8 @@ def draw_side(ds, v, side):
             m = L.EXIT_MARK
             ring = FP.opening_outline(dict(o, hx=o["hx"] + m["offset"], hz=o["hz"] + m["offset"],
                                            r=o["r"] + m["offset"]))
-            if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"]:          # silver rim under the white ring
-                ds.cv.path(v.pts(ring), 2 * (m["half_width"] + L.OUTLINE["width"]) * v.k, None, closed=True,
+            if L.outlines() and L.exit_mark_rim() > 0:                       # silver rim under the white ring
+                ds.cv.path(v.pts(ring), 2 * (m["half_width"] + L.exit_mark_rim()) * v.k, None, closed=True,
                            color=col(L.OUTLINE["material"]))
             ds.cv.path(v.pts(ring), 2 * m["half_width"] * v.k, None, closed=True, color=col("paint_pinstripe"))
     for o in (FP.AIRSTAIR, FP.CARGO):
@@ -520,11 +523,13 @@ def wing_phantom():
 
 def draw_stack_side(ds, v, side):
     """Stack seen from the side: polished tube (side silhouette of the scarfed tube, powerplant.
-    exhaust_stack_silhouette), the heat-blackened collar band at the scarfed outlet (STACK_COLLAR) and the dark
-    opening (the outlet faces aft-outboard, so the side view looks into it: powerplant.exhaust_stack_mouth)."""
+    exhaust_stack_silhouette), the heat-blackened collar band at the scarfed outlet (STACK_COLLAR, none since VQA r3)
+    and the dark opening (the outlet faces aft-outboard, so the side view looks into it: powerplant.exhaust_stack_mouth)."""
     P = PP.exhaust_stack_silhouette(side, "side")
     poly(ds, v, P, col(L.SURFACES["exhaust"]))
-    poly(ds, v, stack_collar_hull(side, "side"), "#1E1B18")
+    hull = stack_collar_hull(side, "side")
+    if hull is not None:
+        poly(ds, v, hull, "#1E1B18")
     poly(ds, v, PP.exhaust_stack_mouth(side)[:, [0, 2]], "#0B0A09")
     zc = 0.5 * (P[:, 1].max() + P[:, 1].min())
     rb = 0.5 * (P[:, 1].max() - P[:, 1].min())
@@ -781,7 +786,9 @@ def draw_plan(ds, v, upper=True):
     def stacks():
         P = PP.exhaust_stack_silhouette(1, "plan")
         poly(ds, v, P, col(L.SURFACES["exhaust"]))
-        poly(ds, v, stack_collar_hull(1, "plan"), "#1E1B18")        # heat-blackened collar at the scarfed outlet
+        hull = stack_collar_hull(1, "plan")
+        if hull is not None:
+            poly(ds, v, hull, "#1E1B18")                            # heat-blackened collar at the scarfed outlet
         outline(ds, v, P, W_THIN)
 
     if upper:
@@ -1435,7 +1442,7 @@ def render_livery(d, scale=0.5):
             gl = np.minimum(gl, np.where(on_side & (np.abs(Pm[..., 1]) > 0.3), FP.window_sdf(Pm[..., 0], Pm[..., 2], o["cx"]), 1.0))
     cols[gl < 0] = glass
     ex = FP.EXIT
-    ring = np.abs(FP.rr((Pm[..., 0], Pm[..., 2]), ex)) - L.EXIT_MARK["half_width"]
+    ring = np.abs(FP.rr((Pm[..., 0], Pm[..., 2]), ex) - L.EXIT_MARK["offset"]) - L.EXIT_MARK["half_width"]
     cols[(ring < 0) & (Pm[..., 1] > 0.3)] = _rgb("paint_pinstripe")
     Nrm = np.cross(G[1:, :-1] - G[:-1, :-1], G[:-1, 1:] - G[:-1, :-1])
     Nrm *= np.sign(np.sum(Nrm * (G[:-1, :-1] - np.stack([X[:-1, :-1], 0 * X[:-1, :-1], F.z_mw(X[:-1, :-1])], -1)),
@@ -1484,9 +1491,6 @@ def render_livery(d, scale=0.5):
     pc = [[_rgb(L.SURFACES["pod_radome"] if prof[i, 0] < D.POD_X_JOINT else L.SURFACES["pod_body"])] * 36
           for i in range(len(prof) - 1)]
     quads += _surf_quads(Gs, pc, cam)
-    Rn = D.pod_neck_rings(24, 36)                                                    # the swan neck
-    Gn = np.concatenate([Rn, Rn[:, :1]], 1)
-    quads += _surf_quads(Gn, [[_rgb(L.SURFACES["pod_body"])] * 36] * 23, cam)
     img = Image.new("RGB", (int(cam.W * scale), int(cam.H * scale)), (236, 238, 240))
     dr = ImageDraw.Draw(img)
     for zz, q, c_ in sorted(quads, key=lambda r: -r[0]):

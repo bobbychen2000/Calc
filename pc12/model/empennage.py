@@ -842,7 +842,13 @@ def build(parts: dict):
             return s
         ys0 = span_stations(0.0, ELEV_Y[0], 0.05)
         ys1 = span_stations(ELEV_Y[0], ELEV_Y[1], 0.15)
-        ys2 = np.concatenate([span_stations(ELEV_Y[1], 2.30, 0.05), span_stations(2.30, STAB_TIP_Y - 0.004, 0.02)[1:]])
+        # VQA r3 (RQ2-05, the crinkled tip from below): the fixed tip ends at the horn-gap notch (STAB_NOTCH_Y, where its
+        # raked LE meets the gap line); rev r2 lofted it on to the tip at 20 mm pitch, so the row pair straddling the
+        # notch (BL 2.458 / 2.478) spanned the 0.10 m LE jump and the trim at the gap left skewed slivers there.  Rows
+        # now stop at the notch, with the LE kink (STAB_TIP_KINK_Y) as a station and 10 mm pitch along the rake
+        ys2 = np.unique(np.concatenate([span_stations(ELEV_Y[1], 2.30, 0.05),
+                                        span_stations(2.30, STAB_TIP_KINK_Y, 0.02),
+                                        span_stations(STAB_TIP_KINK_Y, STAB_NOTCH_Y, 0.010)]))
         ms = []
         ms.append(skin(sec_fn, ys0, n=48))
         ms.append(strip(sec_fn, ys0, 1.0, 1.0))
