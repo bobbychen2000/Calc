@@ -415,8 +415,10 @@ SPEC.update({
                                note="crew-seat cream leather (PRO s/n 3001)"),
     "leather_crew_shell": dict(kind="dielectric", base=(0.042, 0.044, 0.048), rough=0.50, spec=0.4,
                                note="crew-seat anthracite back shell / headrest back"),
-    "sheepskin":          dict(kind="dielectric", base=(0.31, 0.30, 0.31), rough=1.00, spec=0.15, sheen=1.0,
-                               sheen_rough=0.45, note="grey sheepskin covers (fleece: sheen lobe)"),
+    "sheepskin":          dict(kind="dielectric", base=(0.36, 0.33, 0.35), rough=1.00, spec=0.15, sheen=1.0,
+                               sheen_rough=0.45, fleece=dict(scale=140.0, strength=0.9, dist=0.006, mottle=0.18),
+                               note="grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm "
+                                    "mauve-grey: AOPA / P1046408-10, review r1 F3)"),
     "seat_base_black":    dict(kind="dielectric", base=(0.022, 0.022, 0.025), metallic=0.3, rough=0.45,
                                note="black-anodised seat base, pan, life-vest box"),
     "harness":            dict(kind="dielectric", base=(0.069, 0.072, 0.080), rough=0.80, spec=0.25,
@@ -424,11 +426,15 @@ SPEC.update({
     "seat_shell_dark":    dict(kind="dielectric", base=(0.060, 0.063, 0.070), rough=0.55, spec=0.35,
                                note="executive-seat base shroud, armrest, rear inserts"),
     "seat_tab_red":       dict(kind="dielectric", base=(0.45, 0.02, 0.02), rough=0.40, note="red pull tab"),
+    "seat_back_shell":    dict(kind="dielectric", base=(0.15, 0.155, 0.165), rough=0.55, spec=0.35,
+                               note="executive-seat back rear shell, mid grey (cab_pro_aero25_0405, review r1 F10)"),
     # flight deck
     "panel_dark":         dict(kind="dielectric", base=(0.040, 0.041, 0.044), metallic=0.25, rough=0.48, spec=0.25,
                                note="graphite instrument-panel face"),
     "panel_grey":         dict(kind="dielectric", base=(0.21, 0.205, 0.198), metallic=0.45, rough=0.38,
                                note="brushed titanium-grey sub-panels, eyebrow, centre stack"),
+    "panel_silver":       dict(kind="dielectric", base=(0.46, 0.46, 0.45), metallic=0.55, rough=0.32,
+                               note="light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)"),
     "leather_glareshield": dict(kind="dielectric", base=(0.055, 0.055, 0.058), rough=0.62, spec=0.25,
                                 note="stitched glareshield leather"),
     "carpet_flightdeck":  dict(kind="dielectric", base=(0.045, 0.045, 0.050), rough=0.95, note="cockpit carpet"),
@@ -454,8 +460,9 @@ SPEC.update({
     "veneer_walnut":      dict(kind="dielectric", base=(0.060, 0.047, 0.040), rough=0.35, **_ICC,
                                grain=dict(scale=(70.0, 70.0, 2.5), amp=0.30, detail=4.0),
                                note="dark grey-brown walnut veneer, vertical grain, gloss lacquer (P1046406)"),
-    "curtain":            dict(kind="dielectric", base=(0.60, 0.28, 0.05), rough=0.92, spec=0.15, sheen=0.4,
-                               sheen_rough=0.5, note="divider / FR34 curtain (s/n 3001 orange)"),
+    "curtain":            dict(kind="dielectric", base=(0.44, 0.19, 0.036), rough=0.92, spec=0.15, sheen=0.4,
+                               sheen_rough=0.5, note="divider / FR34 curtain (s/n 3001 orange, the amber of "
+                                                     "P1046406 / 02 in the cabin light: review r1 F2)"),
     "paint_red":          dict(kind="dielectric", base=(0.50, 0.015, 0.012), rough=0.30, **_ICC,
                                note="FUEL / ACS T-handles, extinguisher"),
     # cabin
@@ -669,7 +676,50 @@ def build_dielectric(m, p):
         _tyre_grooves(nt, b, q)
     if q.get("grain"):
         _veneer_grain(nt, b, q)
+    if q.get("fleece"):
+        _fleece(nt, b, q)
     _finish(nt, out, b.outputs[0], q)
+
+
+def _fleece(nt, b, q):
+    """Sheepskin pile: a fine world-space noise (fleece scale per metre, ~4 mm curls) as a bump on the normal, and a
+    coarser noise mottling the base colour by +- mottle (tufts catching the light differently)."""
+    f = q["fleece"]
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    nz = nt.nodes.new("ShaderNodeTexNoise")
+    nz.inputs["Scale"].default_value = float(f.get("scale", 240.0))
+    nz.inputs["Detail"].default_value = 6.0
+    nz.inputs["Roughness"].default_value = 0.65
+    try:
+        nz.inputs["Distortion"].default_value = 0.8
+    except Exception:
+        pass
+    nt.links.new(geo.outputs["Position"], nz.inputs["Vector"])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = float(f.get("strength", 0.6))
+    bump.inputs["Distance"].default_value = float(f.get("dist", 0.004))
+    nt.links.new(nz.outputs["Factor"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], b.inputs["Normal"])
+    nz2 = nt.nodes.new("ShaderNodeTexNoise")
+    nz2.inputs["Scale"].default_value = float(f.get("scale", 240.0)) / 8.0
+    nz2.inputs["Detail"].default_value = 3.0
+    nt.links.new(geo.outputs["Position"], nz2.inputs["Vector"])
+    a = float(f.get("mottle", 0.12))
+    mr = nt.nodes.new("ShaderNodeMapRange")
+    mr.clamp = True
+    mr.inputs["From Min"].default_value, mr.inputs["From Max"].default_value = 0.3, 0.7
+    mr.inputs["To Min"].default_value, mr.inputs["To Max"].default_value = 1.0 - a, 1.0 + a
+    nt.links.new(nz2.outputs["Factor"], mr.inputs["Value"])
+    mul = nt.nodes.new("ShaderNodeMix")
+    mul.data_type = "RGBA"
+    mul.blend_type = "MULTIPLY"
+    mul.inputs["Factor"].default_value = 1.0
+    mul.inputs["A"].default_value = (*q["base"], 1.0)
+    cv = nt.nodes.new("ShaderNodeCombineColor")
+    for ch in ("Red", "Green", "Blue"):
+        nt.links.new(mr.outputs["Result"], cv.inputs[ch])
+    nt.links.new(cv.outputs["Color"], mul.inputs["B"])
+    nt.links.new(mul.outputs["Result"], b.inputs["Base Color"])
 
 
 def _veneer_grain(nt, b, q):
@@ -950,17 +1000,35 @@ def build_glass(m, p):
     gl.distribution = "GGX"
     gl.inputs["Color"].default_value = (1.0, 1.0, 1.0, 1.0)
     gl.inputs["Roughness"].default_value = float(p.get("rough", 0.004))
-    fr = nt.nodes.new("ShaderNodeFresnel")
-    fr.inputs["IOR"].default_value = float(p.get("ior", 1.5))
+    # single-surface Fresnel by Schlick on |cos| of the view angle: the same seen from either side.  The Fresnel
+    # node treats a back face as glass -> air and goes totally reflecting past 42 deg, so from the cabin every
+    # window seen obliquely was a mirror of the cabin (review r1 F9: 'the void behind the lining', the runner's
+    # stripes); a thin pane refracts back out and never reflects totally
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    dot = nt.nodes.new("ShaderNodeVectorMath")
+    dot.operation = "DOT_PRODUCT"
+    nt.links.new(geo.outputs["Normal"], dot.inputs[0])
+    nt.links.new(geo.outputs["Incoming"], dot.inputs[1])
+    ab = _math(nt, "ABSOLUTE", dot.outputs["Value"])
+    om = _math(nt, "SUBTRACT", 1.0, ab, clamp=True)
+    p5 = _math(nt, "POWER", om, 5.0)
+    ior = float(p.get("ior", 1.5))
+    f0 = ((ior - 1.0) / (ior + 1.0)) ** 2
+    fr_ = nt.nodes.new("ShaderNodeMath")
+    fr_.operation = "MULTIPLY_ADD"                  # F0 + (1 - F0) (1 - |cos|)^5
+    nt.links.new(p5, fr_.inputs[0])
+    fr_.inputs[1].default_value = 1.0 - f0
+    fr_.inputs[2].default_value = f0
+    frv = fr_.outputs[0]
     num = nt.nodes.new("ShaderNodeMath")
     num.operation = "MULTIPLY"
     num.inputs[1].default_value = n_s
-    nt.links.new(fr.outputs[0], num.inputs[0])
+    nt.links.new(frv, num.inputs[0])
     den = nt.nodes.new("ShaderNodeMath")
     den.operation = "MULTIPLY_ADD"                  # (N - 1) F + 1
     den.inputs[1].default_value = n_s - 1.0
     den.inputs[2].default_value = 1.0
-    nt.links.new(fr.outputs[0], den.inputs[0])
+    nt.links.new(frv, den.inputs[0])
     div = nt.nodes.new("ShaderNodeMath")
     div.operation = "DIVIDE"
     div.use_clamp = True
@@ -1576,6 +1644,8 @@ def gltf_table(overrides=None):
             d["render_sheen"] = dict(weight=float(p["sheen"]), roughness=float(p.get("sheen_rough", 0.5)))
         if p.get("grain"):
             d["render_grain"] = {k: (list(v) if isinstance(v, tuple) else v) for k, v in p["grain"].items()}
+        if p.get("fleece"):
+            d["render_fleece"] = dict(p["fleece"])
         d["kind"] = kind
         d["note"] = p.get("note", "")
         d["srgb_hex"] = _hex(d["baseColorFactor"][:3])

@@ -825,7 +825,7 @@ def check_L3(ctx, rep, plots):
         v, f = weld(stops.V, stops.F, stops.key)
         depth = -oml_dist(v)
         comps = boundary_components(v, f)
-        devs, Ps, labs = [], [], []
+        devs, Ps, labs, found = [], [], [], set()
         for c in comps:
             P = c["P"]
             Pb = _to_oml(P)
@@ -834,15 +834,21 @@ def check_L3(ctx, rep, plots):
                     continue
                 on = P[:, 1].mean() * o["side"] > 0
                 rr_o = FP.rr((Pb[:, 0], Pb[:, 2]), o)
-                rr_p = FP.rr((Pb[:, 0], Pb[:, 2]), FP.door_panel(o)) + 0.002       # outer loop: 2 mm inside the seam
-                if on and np.abs(rr_o).mean() < min(0.03, np.abs(rr_p).mean()):
-                    devs.append(rr_o)
-                    Ps.append(Pb)
-                    labs += [pid] * len(P)
+                rr_p = FP.rr((Pb[:, 0], Pb[:, 2]), FP.door_panel(o)) + 0.002       # outer edge: 2 mm inside the seam
+                # the stop's boundary: its inner edge on the clear opening (all but the hinge edge, where the stop is
+                # left out: the door's inner skin swings through that band), the outer edge on the seam, the trims
+                inner = (np.abs(rr_o) < np.minimum(0.01, np.abs(rr_p))) & \
+                    (FP._hinge_band(o, margin=0.012)(Pb[:, 2]) > 0)               # off the trim at the hinge band
+                if on and inner.sum() > 40:
+                    devs.append(rr_o[inner])
+                    Ps.append(Pb[inner])
+                    labs += [pid] * int(inner.sum())
+                    found.add(pid)
         d = np.concatenate(devs) if devs else None
         rep.add("L3", "clear openings (door stops, back on the OML) vs AIRSTAIR / CARGO", d, TOL["opening"],
-                f"stop depth {1000 * np.median(depth):.0f} mm inside the OML; {len(devs)} loops",
-                worst_list(d, np.vstack(Ps), labs) if devs else [], status=None if len(devs) == 2 else "FAIL")
+                f"stop depth {1000 * np.median(depth):.0f} mm inside the OML; inner edge of {len(found)} doors (no stop "
+                "along the hinge edge)", worst_list(d, np.vstack(Ps), labs) if devs else [],
+                status=None if len(found) == 2 else "FAIL")
 
     # ---- cabin-window glass covers the holes (edge 10 mm beyond the Lame outline, glass 6 mm inward)
     Vg, Fg = ctx.mesh(("glazing_cabin",), mats=("glass", "glass_cabin"))
@@ -2531,6 +2537,148 @@ def check_L6(ctx, rep, plots):
                 lab.append("cargo-door ledge segment not on door_cargo")
     rep.add("L6", "side ledges: top, fascia inner face, runs, cargo-door segment (LEDGES)", np.array(dev), tol,
             "anthracite ledges", _wl(dev, lab))
+    _l6_details(ctx, rep, tol, fl)
+
+
+def _l6_details(ctx, rep, tol, fl):
+    """L6 rows for the flight-deck and furniture details drawn on the sheet (review r1: the extents rows alone would
+    miss a regression): yoke hub slab + grips (YOKE), pedal pads (PEDALS), glareshield lip (GLARESHIELD), pedestal
+    quadrant (PEDESTAL), side consoles + CB panels (SIDE_CONSOLE), overhead panel (OVERHEAD), stowed club tables
+    (TABLES), FR34 header (BAGGAGE)."""
+    from model import interior as I
+    Y = I.YOKE
+    dev, lab = [], []
+    Vy = ctx.verts("flight_deck", mats=("yoke_white", "panel_silver"))
+    Vg = ctx.verts("flight_deck", mats=("grip_black",))
+    for side in (-1, 1):
+        hub = I.yoke_hub(side)
+        nm = "L" if side < 0 else "R"
+        q = Vy[np.abs(Vy[:, 1] - hub[1]) < 0.10]
+        g = Vg[(np.abs(Vg[:, 1] - hub[1]) < 0.20) & (np.abs(Vg[:, 1] - hub[1]) > 0.09)]      # the grips (body out)
+        if not len(q) or not len(g):
+            dev.append(1.0)
+            lab.append(f"yoke {nm}: not found")
+            continue
+        hd = float(Y["hub_whd"][2])
+        _ext_dev(dev, lab, f"yoke {nm} hub fwd face", float(Vg[np.abs(Vg[:, 1] - hub[1]) < 0.05, 0].min()),
+                 float(hub[0]))
+        _ext_dev(dev, lab, f"yoke {nm} hub aft face (max)", max(float(q[:, 0].max()), float(hub[0] + hd)),
+                 float(hub[0] + hd))
+        _ext_dev(dev, lab, f"yoke {nm} white hub centre BL", float(0.5 * (q[:, 1].min() + q[:, 1].max())), float(hub[1]))
+        _ext_dev(dev, lab, f"yoke {nm} hub top", float(q[:, 2].max()), float(hub[2] + 0.5 * float(Y["hub_whd"][1])
+                                                                                   + 0.005))
+        ends = [I.yoke_grip_axis(d) for d in (-1, 1)]
+        gtop = max(float(p1[1]) for _, p1 in ends) + float(Y["grip"][1])
+        _ext_dev(dev, lab, f"yoke {nm} grip tops", float(g[:, 2].max()), float(hub[2]) + gtop)
+        _ext_dev(dev, lab, f"yoke {nm} grip bottoms", float(g[:, 2].min()), float(hub[2] + Y["grip_dz"]))
+        _ext_dev(dev, lab, f"yoke {nm} grip span", float(g[:, 1].max() - g[:, 1].min()), float(Y["span"]))
+    rep.add("L6", "yokes: hub slab (hub_dx .. + hub depth), white hub, grip tops / bottoms / span (YOKE)",
+            np.array(dev), tol, "PC-24-style yokes", _wl(dev, lab))
+    # pedal pads: centres at seat CL +/- dy
+    PD = I.PEDALS
+    dev, lab = [], []
+    Vp = ctx.verts("flight_deck", mats=("black",))
+    Vp = Vp[(Vp[:, 0] > 3.15) & (Vp[:, 0] < 3.55) & (Vp[:, 2] < fl + 0.35) & (Vp[:, 2] > fl + 0.02)]
+    for side in (-1, 1):
+        for dd in (-1, 1):
+            yc = side * float(I.CREW_SEAT["bl"]) + dd * float(PD["dy"])
+            q = Vp[np.abs(Vp[:, 1] - yc) < 0.5 * float(PD["pad_wh"][0]) + 0.01]
+            nm = f"pedal BL {yc:+.3f}"
+            if not len(q):
+                dev.append(1.0)
+                lab.append(f"{nm}: not found")
+                continue
+            _ext_dev(dev, lab, f"{nm} centre", float(0.5 * (q[:, 1].min() + q[:, 1].max())), yc)
+            _ext_dev(dev, lab, f"{nm} width", float(q[:, 1].max() - q[:, 1].min()), float(PD["pad_wh"][0]))
+    rep.add("L6", "rudder pedal pads: centres at seat CL +/- dy, pad width (PEDALS)", np.array(dev), tol,
+            "4 pads", _wl(dev, lab))
+    # glareshield lip, pedestal quadrant, side consoles
+    dev, lab = [], []
+    Vl = ctx.verts("flight_deck", mats=("leather_glareshield",))
+    if len(Vl):
+        _ext_dev(dev, lab, "glareshield lip aft edge x", float(Vl[:, 0].max()), float(I.GLARESHIELD["lip_x"]))
+        c = Vl[np.abs(Vl[:, 1]) < 0.05]
+        _ext_dev(dev, lab, "glareshield lip top at BL 0", float(c[c[:, 0] > float(I.GLARESHIELD["lip_x"]) - 0.03, 2]
+                                                                .max()), float(I.glareshield_lip(0.0)[1]))
+    PE = I.PEDESTAL
+    Vq = ctx.verts("flight_deck", mats=("panel_grey", "panel_dark", "bezel_black"))
+    zt = fl + float(PE["top_h"])
+    q = Vq[(np.abs(Vq[:, 2] - zt) < 0.003) & (np.abs(Vq[:, 1]) < float(PE["hw"]) + 0.02) & (Vq[:, 0] > 3.6)]
+    if len(q):
+        _ext_dev(dev, lab, "pedestal quadrant top fwd x", float(q[:, 0].min()), float(PE["x"][0]))
+        _ext_dev(dev, lab, "pedestal quadrant top aft x", float(q[:, 0].max()), float(PE["x"][1]))
+        _ext_dev(dev, lab, "pedestal half-width", float(np.abs(q[:, 1]).max()), float(PE["hw"]))
+    else:
+        dev.append(1.0)
+        lab.append("pedestal quadrant top not found")
+    SC = I.SIDE_CONSOLE
+    Vc = ctx.verts("flight_deck", mats=("panel_dark",))
+    for side in (-1, 1):
+        q = Vc[(Vc[:, 1] * side > float(SC["inner_bl"]) - 0.01) & (Vc[:, 2] < fl + float(SC["top_h"]) + 0.03) &
+               (Vc[:, 0] > float(SC["x"][0]) + 0.02)]                        # aft of the panel cheeks
+        qi = q[q[:, 2] < fl + float(SC["top_h"]) - 0.06]                     # the face below the cup-holder pod
+        nm = "LH" if side < 0 else "RH"
+        if not len(q):
+            dev.append(1.0)
+            lab.append(f"{nm} console not found")
+            continue
+        _ext_dev(dev, lab, f"{nm} console top", float(q[:, 2].max()), fl + float(SC["top_h"]))
+        _ext_dev(dev, lab, f"{nm} console inner face", float(np.abs(qi[:, 1]).min()), float(SC["inner_bl"]))
+        _ext_dev(dev, lab, f"{nm} console aft end", float(q[:, 0].max()), float(SC["x"][1]))
+    Vb = ctx.verts("interior_lining", mats=("bezel_black",))
+    x0, x1, h0, h1 = (float(v) for v in SC["cb_panel"])
+    for side in (-1, 1):
+        q = Vb[(Vb[:, 1] * side > 0.5) & (Vb[:, 0] < 4.2)]
+        nm = "LH" if side < 0 else "RH"
+        if not len(q):
+            dev.append(1.0)
+            lab.append(f"{nm} CB panel not found")
+            continue
+        _ext_dev(dev, lab, f"{nm} CB panel x0", float(q[:, 0].min()), x0)
+        _ext_dev(dev, lab, f"{nm} CB panel x1", float(q[:, 0].max()), x1)
+        _ext_dev(dev, lab, f"{nm} CB panel bottom", float(q[:, 2].min()), fl + h0)
+        _ext_dev(dev, lab, f"{nm} CB panel top", float(q[:, 2].max()), fl + h1)
+    OV = I.OVERHEAD
+    Vo = ctx.verts("interior_lining", mats=("panel_grey", "panel_silver"))
+    q = Vo[(Vo[:, 0] > float(OV["x"][0]) - 0.03) & (Vo[:, 0] < float(OV["x"][1]) + 0.015) & (Vo[:, 2] > 2.2)]
+    if len(q):
+        _ext_dev(dev, lab, "overhead panel fwd x", float(q[:, 0].min()), float(OV["x"][0]))
+        _ext_dev(dev, lab, "overhead panel aft x", float(q[:, 0].max()), float(OV["x"][1]))
+        _ext_dev(dev, lab, "overhead panel width", float(q[:, 1].max() - q[:, 1].min()), float(OV["w"]))
+    else:
+        dev.append(1.0)
+        lab.append("overhead panel not found")
+    rep.add("L6", "glareshield lip, pedestal quadrant, side consoles + CB panels, overhead panel", np.array(dev), tol,
+            "flight-deck furniture", _wl(dev, lab))
+    # stowed club tables (edge band in the fascia) and the FR34 header
+    dev, lab = [], []
+    Vt = ctx.verts("cabin_interior", mats=("veneer_walnut",))
+    for key, t in I.TABLES.items():
+        if t.get("optional"):
+            continue
+        sg = int(t["side"])
+        x0, x1 = (float(v) for v in t["x"])
+        q = Vt[(Vt[:, 1] * sg > float(I.LEDGES["inner_bl"]) - 0.01) & (Vt[:, 1] * sg < float(I.LEDGES["inner_bl"]) +
+                                                                          0.005) & (Vt[:, 0] > x0 - 0.02) &
+               (Vt[:, 0] < x1 + 0.02) & (Vt[:, 2] > fl + 0.4) & (Vt[:, 2] < fl + 0.62)]
+        if not len(q):
+            dev.append(1.0)
+            lab.append(f"table {key}: edge band not found")
+            continue
+        _ext_dev(dev, lab, f"table {key} x0", float(q[:, 0].min()), x0)
+        _ext_dev(dev, lab, f"table {key} x1", float(q[:, 0].max()), x1)
+        _ext_dev(dev, lab, f"table {key} top", float(q[:, 2].max()), fl + float(t["top_h"]))
+    BG = I.BAGGAGE
+    q = Vt[(np.abs(Vt[:, 0] - float(BG["partition_x"])) < 0.05) & (Vt[:, 2] > fl + 0.9)]
+    if len(q):
+        _ext_dev(dev, lab, "FR34 header station", float(0.5 * (q[:, 0].min() + q[:, 0].max())),
+                 float(BG["partition_x"]))
+        _ext_dev(dev, lab, "FR34 header lower edge", float(q[:, 2].min()), fl + float(BG["bar_h"]))
+    else:
+        dev.append(1.0)
+        lab.append("FR34 header not found")
+    rep.add("L6", "stowed club tables (TABLES), FR34 veneer header (BAGGAGE)", np.array(dev), tol,
+            "cabin furniture", _wl(dev, lab))
 
 
 # =====================================================================================================================

@@ -59,14 +59,19 @@ MATERIALS = {
     # crew seats, PRO s/n 3001: cream leather, anthracite back shell / headrest back, grey sheepskin, black base
     "leather_crew":       ((0.60, 0.55, 0.47), 0.0, 0.50, dict(specular=0.8)),
     "leather_crew_shell": ((0.042, 0.044, 0.048), 0.0, 0.50, dict(specular=0.8)),
-    "sheepskin":          ((0.31, 0.30, 0.31), 0.0, 1.00, dict(specular=0.3)),
+    # sheepskin: warm mauve-grey fleece (AOPA / P1046408-10 [M], review r1 F3), a sheen lobe for the pile
+    "sheepskin":          ((0.36, 0.33, 0.35), 0.0, 1.00, dict(specular=0.3, sheen_color=(0.62, 0.58, 0.62),
+                                                              sheen_rough=0.45)),
     "seat_base_black":    ((0.022, 0.022, 0.025), 0.3, 0.45),
     "harness":            ((0.069, 0.072, 0.080), 0.0, 0.80, dict(specular=0.5)),       # dark grey webbing
     "seat_shell_dark":    ((0.060, 0.063, 0.070), 0.0, 0.55, dict(specular=0.7)),       # executive shroud, armrest
     "seat_tab_red":       ((0.45, 0.02, 0.02), 0.0, 0.40),                              # base-shroud pull tab
+    "seat_back_shell":    ((0.15, 0.155, 0.165), 0.0, 0.55, dict(specular=0.7)),   # mid-grey exec back rear shell
     # flight deck: graphite panel face, brushed titanium-grey sub-panels / stack, grey leather hood, dark carpet
     "panel_dark":          ((0.040, 0.041, 0.044), 0.25, 0.48, dict(specular=0.5)),
     "panel_grey":          ((0.21, 0.205, 0.198), 0.45, 0.38),
+    # light brushed silver: overhead panel face, yoke-hub centre insert (P1046406 / AOPA overhead, P1046408 yoke)
+    "panel_silver":        ((0.46, 0.46, 0.45), 0.55, 0.32),
     "leather_glareshield": ((0.055, 0.055, 0.058), 0.0, 0.62, dict(specular=0.5)),
     "carpet_flightdeck":   ((0.045, 0.045, 0.050), 0.0, 0.95),
     "bezel_black":         ((0.010, 0.010, 0.012), 0.10, 0.32),
@@ -87,7 +92,8 @@ MATERIALS = {
     # divider / lavatory / cabinets / FR34 header: dark grey-brown (smoked) walnut veneer under a gloss lacquer
     # (P1046406 [M]: sRGB ~90/80/77 in the cabin light)
     "veneer_walnut":       ((0.060, 0.047, 0.040), 0.0, 0.35, dict(clearcoat=1.0, clearcoat_rough=0.06)),
-    "curtain":             ((0.60, 0.28, 0.05), 0.0, 0.92, dict(specular=0.3)),   # s/n 3001 orange divider curtain
+    # s/n 3001 orange curtains (divider, FR34): the amber read of P1046406 / 02 in the cabin light (review r1 F2)
+    "curtain":             ((0.44, 0.19, 0.036), 0.0, 0.92, dict(specular=0.3)),
     "paint_red":           ((0.50, 0.015, 0.012), 0.0, 0.30, dict(clearcoat=1.0, clearcoat_rough=0.06)),  # T-handles
     # cabin floor: anthracite / navy ribbed carpet with the AI Orange aisle runner (P1046406 [M])
     "carpet":          ((0.022, 0.024, 0.032), 0.0, 0.95),

@@ -104,12 +104,14 @@ DIVIDER = dict(
     x_aft=P(4.571, "[S] POH seat charts 'divider aft surface' 179.95 in (render 4.571-4.583; FR16 4.590)"),
     t=P(0.025, "[E] veneer partition wall"),
     open_bl=PT((-0.24, 0.26), "[M] 0.50 m open aisle, no door (PRO 3001 P1046406, plan render)"),
-    curtain=PT((-1, 0.060, 0.060, 0.900), "[S] 'cockpit/cabin bulkhead divider with curtain' (Pilatus tech data), "
-                                          "on a track across the opening at the headliner, on the divider's fwd face. "
-                                          "PRO 3001: stowed at the LH edge, orange (P1046406) [M]; NGX 2281: RH edge, "
-                                          "grey [M]. Stow side, bundle width across / depth along x [E], flared bundle "
-                                          "top above the floor [M: P1046406]; above it the gathered curtain runs flat "
-                                          "to the track"),
+    curtain=PT((-1, 0.060, 0.060, 0.850, 0.025, 0.018, 0.006),
+               "[S] 'cockpit/cabin bulkhead divider with curtain' (Pilatus tech data), on a track across the "
+               "opening at the headliner, on the divider's fwd face. PRO 3001: stowed at the LH edge, orange "
+               "(P1046406) [M]; NGX 2281: RH edge, grey [M]. Stow side, bundle width across / depth along x [E], "
+               "flared bundle top above the floor [M: P1046406 camera-matched, orange to 0.83-0.87], tuck: the "
+               "bundle's width behind the walnut edge (the photo shows 0.03-0.045 of it past the edge) [M], gathered "
+               "band width across above the bundle, up the fwd face to the track, and the part of it showing past "
+               "the edge [M: a thin sliver above the flare] (review r1 F2: rev C 0.060 wide in full view to 0.90)"),
     extinguisher=PT((4.500, 0.550, 0.300, 0.080, 0.300), "[S] fire extinguisher on the fwd face of the RH divider, "
                                                          "behind the co-pilot (POH 7-28); x (bottle against the face), "
                                                          "BL, centre height, bottle dia, length [E]: between the seat's "
@@ -336,7 +338,12 @@ LEDGES = dict(
     inner_bl=P(0.655, "[M] plan / section render inboard face"),
     fascia=P(0.060, "[E] top fascia depth; kick panel below curves to the floor edge"),
     runs=PT(((-1, 5.450, 9.250), (+1, 5.384, 9.250)), "[M] render: cabinets to the FR34 partition (side, x0, x1)"),
-    door_segment=PT((-1, 7.540, 8.940), "[M] port segment carried by the cargo-door lining (render joints 7.62/8.99)"),
+    door_segment=PT((-1, 7.575, 8.905), "[M] port segment carried by the cargo-door lining (render joints 7.62/8.99): "
+                                        "inside the clear opening (fuselage_parts.CARGO 7.565-8.915) by 10 mm each end "
+                                        "so it swings out through it (review r1 M2: rev C 7.540-8.940 ran 25 mm past "
+                                        "the opening, through the jambs and the skin)"),
+    door_foot=P(0.075, "[E] the door segment's kick-panel foot above the carpet: clear of the sill jamb (its inboard "
+                       "edge 0.04 above the floor) over the whole door swing (fit_check 21; rev C 0.004)"),
     cupholder_dx=P(0.20, "[E] cup-holder pair ahead of each seat back"),
 )
 TABLES = {
@@ -1221,11 +1228,19 @@ def crew_checks(side=-1):
 def curtain_bundle():
     """Stowed divider curtain: (x0, x1, y0, y1, flare top WL, track x) -- the bundle against the divider's forward face
     at the opening edge on the stow side, and the track across the opening at the headliner."""
-    side, w, d, h = DIVIDER["curtain"]
+    side, w, d, h, tuck, _, _ = DIVIDER["curtain"]
     xf = DIVIDER["x_aft"] - DIVIDER["t"]
     ob0, ob1 = DIVIDER["open_bl"]
-    y0, y1 = (ob0, ob0 + w) if side < 0 else (ob1 - w, ob1)
+    y0, y1 = (ob0 - tuck, ob0 - tuck + w) if side < 0 else (ob1 + tuck - w, ob1 + tuck)
     return xf - d, xf, y0, y1, FLOOR["fd_wl"] + h, xf - 0.015
+
+
+def curtain_band():
+    """The gathered curtain above the stowed bundle: (y0, y1) across, the band against the divider's forward face at
+    the stow-side edge, all but its visible part behind the walnut edge (DIVIDER curtain band width, visible)."""
+    side, _, _, _, _, bw, vis = DIVIDER["curtain"]
+    ob0, ob1 = DIVIDER["open_bl"]
+    return (ob0 + vis - bw, ob0 + vis) if side < 0 else (ob1 - vis, ob1 - vis + bw)
 
 
 def divider_items_clearance():
@@ -1628,6 +1643,33 @@ def _lining_proxy(m):
     return Mesh(F.section(m.UV[:, 0], m.UV[:, 1] % 1.0), m.F, N=m.N, UV=m.UV)
 
 
+def _oml_normal(P):
+    """Outward unit normals of OML points P (n, 3) in their section plane (the gradient of the section law's signed
+    distance; the cabin section is prismatic, so the x part is dropped)."""
+    x, y, z = P[:, 0], P[:, 1], P[:, 2]
+    e = 1e-4
+    gy = (F._OML.section_distance(x, y + e, z) - F._OML.section_distance(x, y - e, z)) / (2 * e)
+    gz = (F._OML.section_distance(x, y, z + e) - F._OML.section_distance(x, y, z - e)) / (2 * e)
+    n = np.c_[np.zeros(len(P)), gy, gz]
+    return n / np.maximum(np.linalg.norm(n, axis=1, keepdims=True), 1e-12)
+
+
+def _to_seam(P, pan, depth):
+    """OML points P near a door-panel seam (side projection just outside it) moved onto the seam (rr = 0) and depth
+    inside the skin."""
+    from model import fuselage_parts as FP
+    x, z = P[:, 0].copy(), P[:, 2].copy()
+    for _ in range(3):
+        f = FP.rr((x, z), pan)
+        e = 1e-4
+        gx = (FP.rr((x + e, z), pan) - FP.rr((x - e, z), pan)) / (2 * e)
+        gz = (FP.rr((x, z + e), pan) - FP.rr((x, z - e), pan)) / (2 * e)
+        g2 = np.maximum(gx * gx + gz * gz, 1e-12)
+        x, z = x - f * gx / g2, z - f * gz / g2
+    Q = np.c_[x, np.sign(P[:, 1]) * F.side_y(x, z), z]
+    return Q - depth * _oml_normal(Q)
+
+
 def build_lining(parts):
     """Side-wall and headliner lining inside the OML by the L6 LINING law (lining_offset: 40 mm at the crown, D1's
     1.47 m cabin height, blending to 85 mm at the sides, the published 1.52 m width -- the section lining_section()
@@ -1654,9 +1696,14 @@ def build_lining(parts):
     m = grid_surface(P - lining_offset(N[..., 1])[..., None] * N, close_v=True, UV=np.stack([X, T], -1))
     side_of = lambda q: np.sign(q.V[:, 1])                                           # noqa: E731
 
+    exit_cx = FP.DOOR_WINDOWS["exit_hatch"]
+    stations_of = {sd: list(st) + ([exit_cx] if sd == FP.EXIT["side"] else []) for sd, st in FP.FIXED_WINDOWS.items()}
+
     def cabin_windows(q):
+        """The fixed cabin windows and the over-wing exit's window: the lining runs on flush over the plug hatch,
+        whose window gets the standard reveal (P1046406 / 02: review r1 F7)."""
         d = np.full(q.nv, 10.0)
-        for side, stations in FP.FIXED_WINDOWS.items():
+        for side, stations in stations_of.items():
             on = side_of(q) * side > 0
             for cx in stations:
                 d = np.where(on, np.minimum(d, FP.window_sdf(q.V[:, 0], q.V[:, 2], cx)), d)
@@ -1668,21 +1715,31 @@ def build_lining(parts):
         v = f(_lining_proxy(m))
         if (v < 0).any():
             m = trim(m, v, "positive")
-    # door-panel seams (+ margin)
-    for o in (FP.AIRSTAIR, FP.CARGO, FP.EXIT):
+    # door-panel seams (+ margin) of the two hinged doors (the exit hatch is covered: see cabin_windows)
+    for o in (FP.AIRSTAIR, FP.CARGO):
         pan = FP.door_panel(o)
         q = _lining_proxy(m)
         v = np.where(side_of(q) * o["side"] > 0, FP.rr((q.V[:, 0], q.V[:, 2]), pan) - LINING_DOOR_MARGIN, 10.0)
         if (v < 0).any():
             m = trim(m, v, "positive")
     # reveals: every hole loop (windows and doors; the tube's end rings excluded) joined to the same loop on the OML
-    # (the door reveals line the door wells: the side lining is deeper than the 60 mm door jambs)
+    # -- the exit window's to the hatch's inner face (DOOR_T: the hatch's own window rim runs on from there), the door
+    # wells' to the door-panel seam at the door-stop depth (DOOR_T + 4 mm), so no skin edge, painted lip or skin back
+    # face shows from the cabin round a closed door (review r1 C1 / F8)
     reveals = []
     for loop in boundary_loops(m):
         Lv = m.V[loop]
         if Lv[:, 0].min() < x0 + 1e-3 or Lv[:, 0].max() > x1 - 1e-3:
             continue
         Ov = F.section(m.UV[loop, 0], m.UV[loop, 1] % 1.0)
+        c = Lv.mean(0)
+        door = next((FP.door_panel(o) for o in (FP.AIRSTAIR, FP.CARGO)
+                     if c[1] * o["side"] > 0 and FP.rr((np.array([c[0]]), np.array([c[2]])), FP.door_panel(o))[0] < 0),
+                    None)
+        if door is not None:
+            Ov = _to_seam(Ov, door, FP.DOOR_T + 0.004)
+        elif c[1] * FP.EXIT["side"] > 0 and abs(c[0] - exit_cx) < 0.2:
+            Ov = Ov - FP.DOOR_T * _oml_normal(Ov)
         n = len(loop)
         i = np.arange(n)
         j = (i + 1) % n

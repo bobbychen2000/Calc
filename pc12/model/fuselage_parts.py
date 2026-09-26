@@ -469,6 +469,12 @@ def build_glazing(parts_out):
 
 DOOR_T = 0.045             # door slab thickness
 DOOR_GAP = 0.004           # door panel inside the skin cut-out (panel seam)
+JAMB_D = 0.060             # [E] opening jamb depth from the door stop (49 -> 109 mm inside the skin)
+JAMB_TAN = 0.026           # [E] its outer, tan band (photos 130 / 188, door open) to 75 mm = the doors' inner-lining
+#                            faces; the inner band and the stop's cabin side are lining (the cabin view with the doors
+#                            closed shows white lining round them: P1046402, review r1 F8)
+INNER_BODY = dict(t=0.030, inset=0.008)   # [E] cargo-door inner lining panel (45 -> 75 mm, as the airstair's
+#                                           airstair.LINING_D), inside the clear opening: hides the tan jamb band
 DOOR_NAMES = {"door_airstair": "Airstair passenger door (0.61 x 1.35 m clear opening)",
               "door_cargo": "Cargo door (1.35 x 1.32 m clear opening)",
               "exit_hatch": "Over-wing emergency exit (plug hatch, right)"}
@@ -526,6 +532,13 @@ def build_door(pid, o):
         airstair.build(part, o, skin)
     else:
         part.add(slab_in, "lining")
+    if pid == "door_cargo":                         # inner lining panel inside the clear opening (window reveal on)
+        ip = side_patch(o, side, pad=0.03, d=0.020)
+        ip = trim(ip, rr(xz_of(ip), o) + INNER_BODY["inset"], "negative")
+        if wcx is not None:
+            ip = trim(ip, window_sdf(ip.V[:, 0], ip.V[:, 2], wcx), "positive")
+        ip = ip.offset(-DOOR_T)
+        part.add(solidify(ip, INNER_BODY["t"]), "lining")
     if wcx is not None:
         wo = dict(cx=wcx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
         wp = side_patch(wo, side, pad=0.03, d=0.010)
@@ -545,6 +558,50 @@ def _into_opening(m, o):
     return m.flipped() if np.mean(np.sum((c - m.V[m.F].mean(1)) * m.face_normals(), 1)) < 0 else m
 
 
+def _hinge_band(o, margin=0.004):
+    """f(z) > 0 away from the hinge edge of the clear opening o (side projection): top-hinged doors lose the band
+    above the straight top edge's start (cz + hz - r - margin), bottom-hinged ones the band below cz - hz + r + margin."""
+    h = o.get("hinge")
+    if h == "top":
+        z0 = o["cz"] + o["hz"] - o["r"] - margin
+        return lambda z: z0 - np.asarray(z, float)
+    if h == "bottom":
+        z0 = o["cz"] - o["hz"] + o["r"] + margin
+        return lambda z: np.asarray(z, float) - z0
+    return lambda z: np.ones_like(np.asarray(z, float))
+
+
+def _runs(keep):
+    """Index arrays of the maximal runs of True in a CLOSED boolean loop (wrapping round the end)."""
+    keep = np.asarray(keep, bool)
+    n = len(keep)
+    if keep.all():
+        return [np.r_[np.arange(n), 0]]
+    if not keep.any():
+        return []
+    start = int(np.argmin(keep))                  # a False position: the runs do not wrap past it
+    idx = (np.arange(n) + start) % n
+    out, cur = [], []
+    for i in idx:
+        if keep[i]:
+            cur.append(i)
+        elif cur:
+            out.append(np.array(cur))
+            cur = []
+    if cur:
+        out.append(np.array(cur))
+    return [r for r in out if len(r) > 1]
+
+
+def _rim_open(V, N, d0, d1):
+    """Strip along an open polyline V (normals N) from depth d0 to d1 inward (a jamb band)."""
+    a, b = V - d0 * N, V - d1 * N
+    n = len(V)
+    i = np.arange(n - 1)
+    Fc = np.vstack([np.stack([i, i + 1, n + i + 1], 1), np.stack([i, n + i + 1, n + i], 1)])
+    return Mesh(np.vstack([a, b]), Fc)
+
+
 def build_doors(parts_out):
     for pid, o in DOORS:
         parts_out[pid] = build_door(pid, o)
@@ -555,7 +612,7 @@ def build_doors(parts_out):
     # seams, skin-edge lips, door stops (flange between the panel seam and the clear opening) and opening jambs.  The
     # lip (the frame edge round the panel seam, DOOR_T + 4 mm deep) carries the livery like the skin beside it (photos
     # 130 / 188: a dark blue lip, then the seal, then the tan / khaki jamb lining; material review F9)
-    seams, jambs, stops, lips = [], [], [], []
+    seams, jambs, stops, lips, jambs_in, stops_in = [], [], [], [], [], []
     for pid, o in DOORS:
         pan = door_panel(o)
         p = side_patch(pan, o["side"], pad=0.03, d=0.010)
@@ -564,17 +621,39 @@ def build_doors(parts_out):
         ring = band(p, fs, 0.0, 0.03)
         loop = _loop_near(ring, lambda x, z, q=pan: rr((x, z), q))
         if loop is not None:
-            lips.append(_into_opening(rim(ring.V[loop], ring.N[loop], DOOR_T + 0.004), pan))
+            # along the hinge edge the lip is the dark hinge gap, not painted skin: seen from the cabin over the sill /
+            # under the cargo door's top it read as a blue paint line (review r1 C1)
+            Lv, Ln = ring.V[loop], ring.N[loop]
+            hb = _hinge_band(o, margin=-0.02)(Lv[:, 2]) > 0 if o.get("hinge") else np.ones(len(Lv), bool)
+            if hb.all():
+                lips.append(_into_opening(rim(Lv, Ln, DOOR_T + 0.004), pan))
+            else:
+                for a in _runs(hb):
+                    lips.append(_into_opening(_rim_open(Lv[a], Ln[a], 0.0, DOOR_T + 0.004), pan))
+                for a in _runs(~hb):
+                    seams.append(_into_opening(_rim_open(Lv[a], Ln[a], 0.0, DOOR_T + 0.004), pan))
         if pan is not o:                             # door with a clear opening inside the panel seam
             fo = lambda m, q=o: rr((m.V[:, 0], m.V[:, 2]), q)                        # noqa: E731
             st = trim(trim(p, fs(p) + 0.002, "negative"), fo(trim(p, fs(p) + 0.002, "negative")), "positive")
+            # no stop / jamb along the HINGE edge (the hinge is there; the door's inner skin and lining swing through
+            # that band: review r1 M2 / M4 sweeps)
+            hband = _hinge_band(o)
+            st = trim(st, hband(st.V[:, 2]), "positive")
             st = st.offset(-(DOOR_T + 0.004))
             stops.append(st)
+            stops_in.append(st.offset(-0.0015))                   # its cabin side: lining
             loop = _loop_near(st, lambda x, z, q=o: rr((x, z), q))
             if loop is not None:
-                jambs.append(_into_opening(rim(st.V[loop], st.N[loop], 0.060), o))
+                Lv, Ln = st.V[loop], st.N[loop]
+                sx, sz = Lv[:, 0] + (DOOR_T + 0.004) * Ln[:, 0], Lv[:, 2] + (DOOR_T + 0.004) * Ln[:, 2]
+                keep = (np.abs(rr((sx, sz), o)) < 0.003) & (hband(sz) > 0)     # on the clear opening, off the hinge
+                for a in _runs(keep):
+                    Lr, Nr = Lv[a], Ln[a]
+                    jambs.append(_into_opening(_rim_open(Lr, Nr, 0.0, JAMB_TAN), o))
+                    jambs_in.append(_into_opening(_rim_open(Lr, Nr, JAMB_TAN, JAMB_D), o))
     s = Part("door_frames", "Door surrounds, seals, stops & jambs", "doors", group="Doors",
              material_note="Machined door frames")
     s.add(Mesh.merge(seams), "seam").add(Mesh.merge(jambs), "jamb").add(Mesh.merge(stops), "jamb")
+    s.add(Mesh.merge(jambs_in + stops_in), "lining")
     s.add(Mesh.merge(lips), "paint_white")          # unpainted skin material: model/livery.py paints it
     parts_out[s.id] = s

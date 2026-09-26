@@ -817,9 +817,9 @@
   },
   "sheepskin": {
    "baseColorFactor": [
-    0.31,
-    0.3,
-    0.31,
+    0.36,
+    0.33,
+    0.35,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -832,9 +832,15 @@
     "weight": 1.0,
     "roughness": 0.45
    },
+   "render_fleece": {
+    "scale": 140.0,
+    "strength": 0.9,
+    "dist": 0.006,
+    "mottle": 0.18
+   },
    "kind": "dielectric",
-   "note": "grey sheepskin covers (fleece: sheen lobe)",
-   "srgb_hex": "#979597"
+   "note": "grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm mauve-grey: AOPA / P1046408-10, review r1 F3)",
+   "srgb_hex": "#A29BA0"
   },
   "seat_base_black": {
    "baseColorFactor": [
@@ -904,6 +910,23 @@
    "note": "red pull tab",
    "srgb_hex": "#B32727"
   },
+  "seat_back_shell": {
+   "baseColorFactor": [
+    0.15,
+    0.155,
+    0.165,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.7,
+   "kind": "dielectric",
+   "note": "executive-seat back rear shell, mid grey (cab_pro_aero25_0405, review r1 F10)",
+   "srgb_hex": "#6C6E71"
+  },
   "panel_dark": {
    "baseColorFactor": [
     0.04,
@@ -937,6 +960,23 @@
    "kind": "dielectric",
    "note": "brushed titanium-grey sub-panels, eyebrow, centre stack",
    "srgb_hex": "#7E7D7B"
+  },
+  "panel_silver": {
+   "baseColorFactor": [
+    0.46,
+    0.46,
+    0.45,
+    1.0
+   ],
+   "metallicFactor": 0.55,
+   "roughnessFactor": 0.32,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)",
+   "srgb_hex": "#B5B5B3"
   },
   "leather_glareshield": {
    "baseColorFactor": [
@@ -1281,9 +1321,9 @@
   },
   "curtain": {
    "baseColorFactor": [
-    0.6,
-    0.28,
-    0.05,
+    0.44,
+    0.19,
+    0.036,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1297,8 +1337,8 @@
     "roughness": 0.5
    },
    "kind": "dielectric",
-   "note": "divider / FR34 curtain (s/n 3001 orange)",
-   "srgb_hex": "#CB903F"
+   "note": "divider / FR34 curtain (s/n 3001 orange, the amber of P1046406 / 02 in the cabin light: review r1 F2)",
+   "srgb_hex": "#B17935"
   },
   "paint_red": {
    "baseColorFactor": [

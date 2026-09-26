@@ -95,7 +95,6 @@ DETAIL = dict(
     grille=(0.26, 0.06),              # [M] return-air grille ahead of the FR34 header: across, along x
     net=(0.10, 0.0035),               # [E] optional baggage net: mesh, cord radius
     runner=(0.20, 12),                # [E] aisle runner half-width, pattern seed (procedural)
-    door_gap=0.004,                   # [E] cargo-door ledge segment: kick panel foot above the carpet (door swing)
 )
 
 FL = float(I.FLOOR["wl"])
@@ -152,6 +151,29 @@ class _Lining:
         """Unit normal of the side wall at (x, z) on `side`, pointing into the cabin."""
         dy = float(self.hw(x, z + h) - self.hw(x, z - h)) / (2 * h)
         return _unit([0.0, -side, dy])
+
+
+def _conform(m, fr, side):
+    """Bend a small flat wall fitting built in frame fr (w = the wall normal into the cabin, c = 0 on the wall at the
+    frame origin) onto the curved side-wall lining: every vertex keeps its offset c along w, measured from the lining
+    instead of from the tangent plane (a 0.1 m panel on the ~0.8 m wall radius is ~1.5 mm off its tangent plane at the
+    edges: review r1 C2 z-fighting).  m: a Mesh or a slab() list [(Mesh, material)] (returned in kind)."""
+    if isinstance(m, list):
+        return [(_conform(mm, fr, side), mat) for mm, mat in m]
+    L = lining()
+    V = m.V.copy()
+    c = (V - fr.o) @ fr.w
+    q = V - c[:, None] * fr.w
+    t = np.zeros(len(V))
+    for _ in range(4):                                  # Newton on g(t) = |y| - hw(x, z) along w
+        P = q + t[:, None] * fr.w
+        g = np.abs(P[:, 1]) - L.hw(P[:, 0], P[:, 2])
+        e = 1e-4
+        P2 = P + e * fr.w
+        g2 = np.abs(P2[:, 1]) - L.hw(P2[:, 0], P2[:, 2])
+        t = t - g * e / np.where(np.abs(g2 - g) > 1e-12, g2 - g, -1e-12)
+    out = Mesh(q + (t + c)[:, None] * fr.w, m.F)
+    return out
 
 
 _LIN = None
@@ -465,7 +487,7 @@ def _cups_for(side, layout, x0, x1):
 def _ledge_section(x, yo_top, yo_bot, z_bot=None):
     """Ledge section at station x (outboard-positive y, z): segments [(points, material)] fascia (+ rounded nose),
     lip under the fascia, kick panel to the floor edge, back against the lining; closed outline for the end caps.
-    z_bot: the kick panel / back foot (default the floor FL; the cargo-door segment stands DETAIL door_gap above it)."""
+    z_bot: the kick panel / back foot (default the floor FL; the cargo-door segment stands LEDGES door_foot above it)."""
     zb = FL if z_bot is None else float(z_bot)
     rn = DETAIL["nose_r"]
     fz = float(LG["fascia"])
@@ -484,7 +506,8 @@ def _ledge_body(acc, side, xa, xb, yo_fn, dx=0.10):
     """Loft of the ledge section along x (the top face is built by _ledge_top)."""
     xs = _floor_stations(xa, xb, dx)
     secs = [_ledge_section(x, *yo_fn(x)) for x in xs]
-    mats = dict(fascia=("gloss_black", (0, -side, 0.3)), lip=("ledge_panel", (0, 0, -1.0)),
+    mats = dict(fascia=("gloss_black", (0, -side, 0.3)), lip=("ledge_panel", (0, 0, 1.0)),    # the kick panel
+    #                                                        stands 3 mm proud of the fascia: its top faces up
                 kick=("ledge_panel", (0, -side, 0)), back=("ledge_panel", (0, side, 0)))
     for key, (mat, d) in mats.items():
         P = np.array([[(x, side * p[0], p[1]) for p in s[0][key]] for x, s in zip(xs, secs)])
@@ -541,8 +564,8 @@ def _ledge_top(acc, side, xa, xb, yo_fn, cups):
             if np.hypot(Lv[:, 0] - xc, Lv[:, 1] - yc).max() > 0.5 * cdx + cr + 0.012:
                 continue                                             # the piece's outer boundary
             Bv = Lv - [0, 0, cdep]
-            wall = _oriented(_strip(Lv, Bv, closed=True), lambda C: np.c_[xc - C[:, 0], yc - C[:, 1],
-                                                                          np.zeros(len(C))])
+            wall = _oriented(_strip(Lv - [0, 0, 0.004], Bv, closed=True),   # below the brushed lip (no overlap)
+                             lambda C: np.c_[xc - C[:, 0], yc - C[:, 1], np.zeros(len(C))])
             acc.add(wall, "black")
             acc.add(_oriented(planar_cap(Bv, [0, 0, 1.0]), [0, 0, 1.0]), "black")
             # brushed rim lip down the recess wall
@@ -573,9 +596,13 @@ def _ledge_fittings(acc, side, cups, yo_fn, wall_fn):
         dy = (wall_fn(xw, zw + 0.004) - wall_fn(xw, zw - 0.004)) / 0.008
         n = _unit([0.0, -side, dy])
         fw = Fr([xw, side * yw, zw] + 0.0005 * n, [1.0, 0, 0], np.cross(n, [1.0, 0, 0]), n)
+        g0 = acc.group
+        if wall_fn is _wall_fixed:                   # on the side-wall lining: goes with it (viewer cutaway, M3)
+            acc.group = "wall_fittings"
         acc.add(slab(fw, rrect2(-0.5 * sw, -0.5 * sh, 0.5 * sw, 0.5 * sh, 0.004), 0.0, 0.004, 0.0015, "psu_panel",
                      bottom=False))
         acc.add(fw.poly(rrect2(-0.006, -0.004, 0.006, 0.004, 0.001), 0.0042), "black")
+        acc.group = g0
 
 
 def _ledge_run(acc, side, xa, xb, layout, tables, yo_fn, wall_fn):
@@ -622,17 +649,22 @@ def _wall_fixed(x, z):
     return float(lining().hw(x, z))
 
 
+def _door_face_depth():
+    """Depth of the cargo door's cabin face inside the skin: the slab (fuselage_parts DOOR_T) + its inner lining panel
+    (INNER_BODY)."""
+    from model.fuselage_parts import DOOR_T, INNER_BODY
+    return DOOR_T + INNER_BODY["t"]
+
+
 def _wall_door(x, z):
-    from model.fuselage_parts import DOOR_T
-    return float(F.side_y(x, z)) - DOOR_T - 0.001
+    return float(F.side_y(x, z)) - _door_face_depth() - 0.001
 
 
 def _yo_door(x):
-    """Cargo-door ledge: the outboard face on the door slab's inner face (fuselage_parts DOOR_T inside the skin); its
-    foot DETAIL door_gap above the carpet, so the door lifts it off the floor as it opens (fit_check 21)."""
-    from model.fuselage_parts import DOOR_T
-    g = DOOR_T + 0.002
-    zb = FL + DETAIL["door_gap"]
+    """Cargo-door ledge: the outboard face on the door's inner lining panel; its kick-panel foot LEDGES door_foot above
+    the carpet, clear of the sill jamb as the door swings open (fit_check 21)."""
+    g = _door_face_depth() + 0.002
+    zb = FL + float(LG["door_foot"])
     return float(F.side_y(x, ZT)) - g, float(F.side_y(x, zb)) - g, zb
 
 
@@ -641,8 +673,10 @@ def _ledges(acc, layout, tables, door_ledge):
     for side, xa, xb in LG["runs"]:
         xa, xb = float(xa), float(xb)
         if side == ds:
-            gap = 0.001
-            spans = [(xa, float(da) - gap), (float(db) + gap, xb)]
+            # the fixed runs stop at the cargo door's clear opening (the door segment swings out through it, 10 mm
+            # inside each edge: LEDGES door_segment)
+            from model.fuselage_parts import CARGO
+            spans = [(xa, CARGO["cx"] - CARGO["hx"] - 0.002), (CARGO["cx"] + CARGO["hx"] + 0.002, xb)]
             for a, b in spans:
                 if b - a > 0.02:
                     _ledge_run(acc, side, a, b, layout, tables, _yo_fixed, _wall_fixed)
@@ -787,22 +821,29 @@ def _lavatory(acc, doors="closed"):
     xs_top = np.linspace(x1, x0, 14)
     ztop = ceiling(xs_top, yi) - 0.001
     out = np.vstack([[(x0, FL), (d0, FL), (d0, zd), (d1, zd), (d1, FL), (x1, FL)], np.c_[xs_top, ztop]])
-    for y, nrm, mat in ((yi, -1.0, "veneer_walnut"), (yi + tw, 1.0, "lav_white")):
-        acc.add(_oriented(planar_cap(np.c_[out[:, 0], np.full(len(out), y), out[:, 1]], [0, nrm, 0]), [0, nrm, 0]),
+    # the white inside face stops at the aft wall's inner face (x1 - tw): no white edge on the veneer corner (review
+    # r1 C4)
+    xs_w = np.linspace(x1 - tw, x0, 14)
+    out_w = np.vstack([[(x0, FL), (d0, FL), (d0, zd), (d1, zd), (d1, FL), (x1 - tw, FL)],
+                       np.c_[xs_w, ceiling(xs_w, yi + tw) - 0.001]])
+    for y, nrm, mat, ol in ((yi, -1.0, "veneer_walnut", out), (yi + tw, 1.0, "lav_white", out_w)):
+        acc.add(_oriented(planar_cap(np.c_[ol[:, 0], np.full(len(ol), y), ol[:, 1]], [0, nrm, 0]), [0, nrm, 0]),
                 mat)
     n = len(out)
     for i in range(n):                          # edges: out is counter-clockwise in (x, z): outward = (dz, -dx)
         a, b = out[i], out[(i + 1) % n]
         if abs(a[1] - FL) < 1e-6 and abs(b[1] - FL) < 1e-6:
             continue                                                    # on the floor
+        if abs(a[0] - x1) < 1e-6 and abs(b[0] - x1) < 1e-6:
+            continue                                                    # under the aft wall's veneer face
         A = np.array([[a[0], yi, a[1]], [b[0], yi, b[1]]])
         acc.add(_oriented(_strip(A, A + [0, tw, 0]), [b[1] - a[1], 0.0, -(b[0] - a[0])]), "veneer_walnut")
     # ---- aft wall (x1 - tw .. x1, BL yi .. lining): white inside, veneer outside; white lav lining on the divider
     W = _wall_yz_outline(x1, yi)
-    for x, nx, mat in ((x1 - tw, -1.0, "lav_white"), (x1, 1.0, "veneer_walnut")):
-        acc.add(_oriented(planar_cap(np.c_[np.full(len(W), x), W[:, 0], W[:, 1]], [nx, 0, 0]), [nx, 0, 0]), mat)
-    E0 = np.array([[x1 - tw, yi, FL], [x1 - tw, yi, W[-1, 1]]])
-    acc.add(_oriented(_strip(E0, E0 + [tw, 0, 0]), [0, -1.0, 0]), "veneer_walnut")
+    Ww = _wall_yz_outline(x1 - tw, yi + tw)                          # white inside face from the inboard wall's
+    for x, nx, mat, ol in ((x1 - tw, -1.0, "lav_white", Ww), (x1, 1.0, "veneer_walnut", W)):   # inner face out
+        acc.add(_oriented(planar_cap(np.c_[np.full(len(ol), x), ol[:, 0], ol[:, 1]], [nx, 0, 0]), [nx, 0, 0]), mat)
+    # (its inboard edge lies in the inboard wall's veneer face, which runs on to x1: no separate edge strip)
     Wd = _wall_yz_outline(x0 + 0.001, yi + tw)
     acc.add(_oriented(planar_cap(np.c_[np.full(len(Wd), x0 + 0.001), Wd[:, 0], Wd[:, 1]], [1.0, 0, 0]),
                       [1.0, 0, 0]), "lav_white")
@@ -942,7 +983,7 @@ def _lavatory(acc, doors="closed"):
     xl, yl = 0.5 * (x0 + x1), 0.45
     zl = float(L.crown(xl, yl))
     nl = L.head_normal(xl, yl)
-    fdl = Fr([xl, yl, zl] + 0.0005 * nl, [1.0, 0, 0], np.cross(nl, [1.0, 0, 0]), nl)
+    fdl = Fr([xl, yl, zl] + 0.0012 * nl, [1.0, 0, 0], np.cross(nl, [1.0, 0, 0]), nl)    # clear of the curved liner
     acc.add(fdl.disk(0.0, 0.0, 0.028, 0.0, 24, r_inner=0.020), "chrome_trim")
     acc.add(fdl.disk(0.0, 0.0, 0.020, 0.0003, 20), "light_reading")
 
@@ -1011,18 +1052,20 @@ def _headliner(acc, layout, o2=True):
         acc.add(fr.se(a_read, 0.0, top, (0.017, 0.017, 0.004), (0.6, 0.6), (6, 16)), "light_reading")
         acc.add(fr.disk(-a_read, 0.0, 0.022, top + 0.0004, 24, r_inner=0.017), "chrome_trim")
         acc.add(fr.se(-a_read, 0.0, top + 0.002, (0.014, 0.014, 0.010), (0.8, 0.8), (6, 16)), "metal_dark")
-        acc.add(fr.disk(-a_read, 0.0, 0.005, top + 0.0165, 12), "black")
+        acc.add(fr.disk(-a_read, 0.0, 0.005, top + 0.0121, 12), "black")          # gasper nozzle, on the ball
         # oxygen-mask flap on the upper sidewall above the seat (optional system [S: AFMS]); not over an opening
         if o2 and not _over_opening(x, o2z, s, 0.5 * o2l + 0.05):
             yw = float(L.hw(x, o2z))
             nw = L.wall_normal(x, o2z, s)
-            fw = Fr([x, s * yw, o2z] - 0.0005 * nw, [1.0, 0, 0], np.cross(nw, [1.0, 0, 0]), nw)
+            fw = Fr([x, s * yw, o2z], [1.0, 0, 0], np.cross(nw, [1.0, 0, 0]), nw)
             Q = rrect2(-0.5 * o2l, -0.5 * o2w, 0.5 * o2l, 0.5 * o2w, 0.012, 4)
-            acc.add(slab(fw, rrect2(-0.5 * o2l - 0.003, -0.5 * o2w - 0.003, 0.5 * o2l + 0.003, 0.5 * o2w + 0.003,
-                                    0.015, 4), 0.0, 0.0012, 0.0004, "psu_panel", bottom=False))
-            acc.add(slab(fw, Q, 0.0005, 0.0035, 0.0012, "lining", bottom=False))
-            acc.add(fw.poly(rrect2(-0.015, -0.5 * o2w + 0.004, 0.015, -0.5 * o2w + 0.012, 0.003), 0.0037),
-                    "psu_panel")
+            # dark gap frame 1.5 mm proud of the lining, the lining-coloured flap on it, both bent onto the wall
+            acc.add(_conform(slab(fw, rrect2(-0.5 * o2l - 0.003, -0.5 * o2w - 0.003, 0.5 * o2l + 0.003,
+                                             0.5 * o2w + 0.003, 0.015, 4), -0.001, 0.0015, 0.0004, "psu_panel",
+                                  bottom=False), fw, s))
+            acc.add(_conform(slab(fw, Q, 0.0020, 0.0050, 0.0012, "lining", bottom=False), fw, s))
+            acc.add(_conform(fw.poly(rrect2(-0.015, -0.5 * o2w + 0.004, 0.015, -0.5 * o2w + 0.012, 0.003), 0.0053),
+                             fw, s), "psu_panel")
     # exit-release PULL cover above the over-wing exit (starboard) with its red label
     from model.fuselage_parts import EXIT
     wl_, hl_, dz_ = DETAIL["pull"]
@@ -1031,13 +1074,13 @@ def _headliner(acc, layout, o2=True):
     zp = float(EXIT["cz"] + EXIT["hz"]) + dz_
     yw = float(L.hw(xe_, zp))
     nw = L.wall_normal(xe_, zp, s)
-    fw = Fr([xe_, s * yw, zp] - 0.0005 * nw, [1.0, 0, 0], np.cross(nw, [1.0, 0, 0]), nw)
-    acc.add(slab(fw, rrect2(-0.5 * wl_ - 0.003, -0.5 * hl_ - 0.003, 0.5 * wl_ + 0.003, 0.5 * hl_ + 0.003, 0.016),
-                 0.0, 0.0012, 0.0004, "psu_panel", bottom=False))
-    acc.add(slab(fw, rrect2(-0.5 * wl_, -0.5 * hl_, 0.5 * wl_, 0.5 * hl_, 0.014), 0.0005, 0.0040, 0.0012, "lining",
-                 bottom=False))
-    acc.add(fw.poly(rrect2(-0.5 * wl_ + 0.015, 0.5 * hl_ - 0.040, -0.5 * wl_ + 0.055, 0.5 * hl_ - 0.020, 0.003),
-                    0.0042), "placard_red")
+    fw = Fr([xe_, s * yw, zp], [1.0, 0, 0], np.cross(nw, [1.0, 0, 0]), nw)
+    acc.add(_conform(slab(fw, rrect2(-0.5 * wl_ - 0.003, -0.5 * hl_ - 0.003, 0.5 * wl_ + 0.003, 0.5 * hl_ + 0.003,
+                                     0.016), -0.001, 0.0015, 0.0004, "psu_panel", bottom=False), fw, s))
+    acc.add(_conform(slab(fw, rrect2(-0.5 * wl_, -0.5 * hl_, 0.5 * wl_, 0.5 * hl_, 0.014), 0.0020, 0.0055, 0.0012,
+                          "lining", bottom=False), fw, s))
+    acc.add(_conform(fw.poly(rrect2(-0.5 * wl_ + 0.015, 0.5 * hl_ - 0.040, -0.5 * wl_ + 0.055, 0.5 * hl_ - 0.020,
+                                    0.003), 0.0058), fw, s), "placard_red")
 
 
 def _over_opening(x, z, side, margin):
@@ -1243,7 +1286,8 @@ def build(parts, layout=None, ceiling=None, **kw):
     """Part 'cabin_interior' (drop-in for the rev-A interior.build_cabin: the seats are separate parts, model/seats.py);
     the cargo-door ledge segment is added to parts['door_cargo'] when that part exists.  ceiling: a list that takes the
     'headliner' group [(Mesh, material)] instead of the part (interior.build hangs it on the interior_lining part, so
-    the viewer's cutaway clips the headliner fittings with the lining they are fixed to)."""
+    the viewer's cutaway clips the headliner fittings with the lining they are fixed to), and the 'wall_fittings'
+    group (the side-wall USB sockets) likewise."""
     from model.parts import Part
     layout = layout or I.DEFAULT_LAYOUT
     p = Part("cabin_interior", "Cabin: ledges, club tables, lavatory, cabinets, headliner PSUs, FR34 partition, carpet",
@@ -1256,7 +1300,7 @@ def build(parts, layout=None, ceiling=None, **kw):
     by_mat = defaultdict(list)
     for grp, ms in build_cabin_fittings(layout, groups=True, **kw).items():
         for m, mat in ms:
-            if ceiling is not None and grp == "headliner":
+            if ceiling is not None and grp in ("headliner", "wall_fittings"):
                 ceiling.append((m, mat))
             else:
                 by_mat[mat].append(m)

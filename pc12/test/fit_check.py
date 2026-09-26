@@ -746,18 +746,27 @@ report(f"over-wing exit clear zone (BL > {I.CLEAR_ZONES['exit_bl']:.2f} abeam th
 
 # 21 ----------------------------------------------------------------------------------------------- door swings
 # the airstair door (with its folding handrails at their unfold fraction) and the cargo door (with its ledge segment)
-# from closed to fully open: no triangle crossing the cabin furniture, the seats, the flight deck or the lining
+# from closed to fully open: no triangle crossing the cabin furniture, the seats, the flight deck, the lining, the door
+# frames (jambs, stops, lips), the fuselage skins or the belly fairing.  Door travel sampled every 0.02 and every
+# 0.005 inside each handrail's unfold window (review r1 M1: 11 samples missed the rail sweeping through the skin);
+# at full travel the handrail fittings bear on the jambs by design (door_frames excluded there).
 from model import airstair as AS
-fixed_all = cat(*[posed_mesh(k, I4) for k in ["cabin_interior", "flight_deck", "interior_lining"] + SEAT_IDS])
+swing_targets = ["cabin_interior", "flight_deck", "interior_lining", "door_frames", "fus_center", "fus_fwd",
+                 "belly_fairing"] + SEAT_IDS
+fixed_all = {k: posed_mesh(k, I4) for k in swing_targets if k in parts}
 for pid in ("door_airstair", "door_cargo"):
     dp = parts[pid].pivot
     kids = [k for k, q in parts.items() if q.parent == pid]
     o = [o for k_, o in FP.DOORS if k_ == pid][0]
-    lo = np.array([o["cx"] - o["hx"] - 0.35, -1.0 if o["side"] < 0 else 0.0, FL - 0.1])
-    hi = np.array([o["cx"] + o["hx"] + 0.35, 0.0 if o["side"] < 0 else 1.0, 2.9])
-    fixed = crop(fixed_all, lo, hi)
+    lo = np.array([o["cx"] - o["hx"] - 0.40, -2.6 if o["side"] < 0 else 0.0, -0.2])
+    hi = np.array([o["cx"] + o["hx"] + 0.40, 0.0 if o["side"] < 0 else 2.6, 2.9])
+    fixed = {k: crop(v, lo, hi) for k, v in fixed_all.items()}
+    fracs = set(np.round(np.linspace(0.0, 1.0, 51), 4))
+    for k in kids:
+        w0, w1 = parts[k].pivot.get("window", (0.0, 1.0))
+        fracs |= set(np.round(np.arange(w0, w1 + 1e-9, 0.005), 4))
     bad = {}
-    for f in np.linspace(0.0, 1.0, 11):
+    for f in sorted(fracs):
         M = rotation_about(np.asarray(dp["axis"], float), dp["open"] * f, dp["origin"])
         mv = [posed_mesh(pid, M)]
         for k in kids:
@@ -765,11 +774,163 @@ for pid in ("door_airstair", "door_cargo"):
             Mk = M @ rotation_about(cp["axis"], cp["open"] * AS.fold_fraction(cp, f), cp["origin"]) \
                 if cp and cp.get("kind") == "fold" else M
             mv.append(posed_mesh(k, Mk))
-        n = len(crossings(*cat(*mv), *fixed))
-        if n:
-            bad[round(float(f), 1)] = n
-    report(f"{pid}{' + handrails' if kids else ''} closed -> open clear of the cabin furniture, seats, flight deck and "
-           "lining", not bad, "clear" if not bad else ", ".join(f"open {a:.1f}: {n}" for a, n in bad.items()))
+        mvc = cat(*mv)
+        for k, fm in fixed.items():
+            if k == "door_frames" and f > 0.999:
+                continue
+            if not len(fm[1]):
+                continue
+            n = len(crossings(*mvc, *fm))
+            if n:
+                bad.setdefault(k, []).append((round(float(f), 3), n))
+    detail = "; ".join(f"{k}: " + ", ".join(f"{a:.3f} ({n})" for a, n in v[:6]) + (" .." if len(v) > 6 else "")
+                       for k, v in bad.items())
+    report(f"{pid}{' + handrails' if kids else ''} closed -> open ({len(fracs)} poses) clear of the cabin furniture, "
+           "seats, flight deck, lining, door frames, skins and belly fairing", not bad,
+           "clear" if not bad else detail)
+
+# 22 ---------------------------------------------------------------------------------- interior fittings seated
+# every connected piece of the interior (flight deck, cabin, lining, seats) touches something: its nearest other
+# surface (interior, skins, glazing) within 3 mm, or it crosses / is embedded in one (review r1 C5: knobs, placards,
+# boxes floated 10-17 mm clear).  Broad phase: box overlap (3 mm pad); narrow: exact point-triangle distance both ways
+# (vertices, edge midpoints, centroids), then triangle crossings for the pieces still apart.
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
+from isect import _pairs
+
+
+def _components(V, F_, tol=2e-5):
+    key = np.round(V / tol).astype(np.int64)
+    _, wi = np.unique(key, axis=0, return_inverse=True)
+    wi = wi.ravel()
+    Fw = wi[F_]
+    E = np.vstack([Fw[:, [0, 1]], Fw[:, [1, 2]], Fw[:, [2, 0]]])
+    nv = int(wi.max()) + 1
+    _, lab = connected_components(coo_matrix((np.ones(len(E)), (E[:, 0], E[:, 1])), shape=(nv, nv)), directed=False)
+    return lab[Fw[:, 0]]
+
+
+def _pt_tri(P, T):
+    """Distance of each point P (n, 3) to the nearest triangle of T (m, 3, 3)."""
+    out = np.full(len(P), np.inf)
+    a, b, c = T[:, 0], T[:, 1], T[:, 2]
+    ab, ac = b - a, c - a
+    n = np.cross(ab, ac)
+    nn = (n * n).sum(-1) + 1e-30
+    d00, d01, d11 = (ab * ab).sum(-1), (ab * ac).sum(-1), (ac * ac).sum(-1)
+    den = d00 * d11 - d01 * d01 + 1e-30
+
+    def seg(p, s0, s1):
+        d = s1 - s0
+        t = np.clip(((p - s0) * d).sum(-1) / ((d * d).sum(-1) + 1e-30), 0, 1)
+        return np.linalg.norm(p - (s0 + t[..., None] * d), axis=-1)
+    for i0 in range(0, len(P), 32):
+        p = P[i0:i0 + 32, None, :]
+        t = ((p - a) * n).sum(-1) / nn
+        q = p - t[..., None] * n
+        v2 = q - a
+        d20, d21 = (v2 * ab).sum(-1), (v2 * ac).sum(-1)
+        v = (d11 * d20 - d01 * d21) / den
+        w = (d00 * d21 - d01 * d20) / den
+        inside = (v >= 0) & (w >= 0) & (v + w <= 1)
+        de = np.minimum(np.minimum(seg(p, a, b), seg(p, b, c)), seg(p, c, a))
+        out[i0:i0 + 32] = np.where(inside, np.abs(t) * np.sqrt(nn), de).min(1)
+    return out
+
+
+INT_IDS = ["flight_deck", "cabin_interior", "interior_lining"] + SEAT_IDS
+others = ["fus_fwd", "fus_center", "glazing_cabin", "glazing_flightdeck", "door_cargo", "door_frames", "exit_hatch"]
+pieces, allT, allC = [], [], []
+for pid in INT_IDS + [k for k in others if k in parts]:
+    for m, mat in parts[pid].meshes:
+        if not len(m.F):
+            continue
+        T = m.V[m.F]
+        if pid not in INT_IDS:
+            ok = ((T.max(1) > [2.9, -1.0, 1.1]) & (T.min(1) < [10.0, 1.0, 2.9])).all(1)
+            T = T[ok]
+            if len(T):
+                allT.append(T)
+                allC.append(np.full(len(T), -1))
+            continue
+        lab = _components(m.V, m.F)
+        for c in np.unique(lab):
+            Tc = T[lab == c]
+            k = len(pieces)
+            pieces.append((pid, mat, Tc))
+            allT.append(Tc)
+            allC.append(np.full(len(Tc), k))
+allT, allC = np.vstack(allT), np.concatenate(allC)
+tlo, thi = allT.min(1), allT.max(1)
+plo = np.array([t.reshape(-1, 3).min(0) for _, _, t in pieces]) - 0.003
+phi = np.array([t.reshape(-1, 3).max(0) for _, _, t in pieces]) + 0.003
+pi_, ti_ = _pairs(plo, phi, tlo, thi, 0.05)
+keep = allC[ti_] != pi_
+pi_, ti_ = pi_[keep], ti_[keep]
+order = np.argsort(pi_, kind="stable")
+pi_, ti_ = pi_[order], ti_[order]
+starts = np.searchsorted(pi_, np.arange(len(pieces)))
+ends = np.searchsorted(pi_, np.arange(len(pieces)), "right")
+floating = []
+for k, (pid, mat, T) in enumerate(pieces):
+    O = allT[ti_[starts[k]:ends[k]]]
+    if not len(O):
+        floating.append((np.inf, pid, mat, T))
+        continue
+    S = np.vstack([T.reshape(-1, 3), T.mean(1), 0.5 * (T + np.roll(T, 1, 1)).reshape(-1, 3)])
+    S = np.unique(np.round(S, 7), axis=0)
+    if len(S) > 300:
+        S = S[np.random.default_rng(0).choice(len(S), 300, replace=False)]
+    d = _pt_tri(S, O).min()
+    if d > 0.003:
+        SO = np.unique(np.round(O.reshape(-1, 3), 7), axis=0)
+        SO = SO[((SO >= plo[k]) & (SO <= phi[k])).all(1)]
+        if len(SO):
+            d = min(d, _pt_tri(SO[:600], T).min())
+    if d > 0.003:
+        VT, VO = T.reshape(-1, 3), O.reshape(-1, 3)
+        if len(crossings(VT, np.arange(len(VT)).reshape(-1, 3), VO, np.arange(len(VO)).reshape(-1, 3))):
+            continue
+        floating.append((d, pid, mat, T))
+floating.sort(key=lambda r: -r[0])
+report(f"interior fittings seated: every piece ({len(pieces)}) within 3 mm of another surface or crossing it", not floating,
+       "all seated" if not floating else "; ".join(
+           f"{p_}/{m_} {'> 30' if not np.isfinite(d_) else f'{d_ * 1000:.1f}'} mm at STA {T_[..., 0].mean():.3f} BL "
+           f"{T_[..., 1].mean():+.3f} WL {T_[..., 2].mean():.3f}" for d_, p_, m_, T_ in floating[:8]))
+
+# 23 ----------------------------------------------------------------------------------------- shell orientation
+# closed interior shells wound outward (positive signed volume) and consistently (no directed edge used twice); the
+# viewer / renders show both sides, but a single-sided view or a normal map must see the outside (review r1 C6)
+inward, incons = [], []
+for pid in INT_IDS:
+    for m, mat in parts[pid].meshes:
+        if not len(m.F):
+            continue
+        key = np.round(m.V / 2e-5).astype(np.int64)
+        _, wi = np.unique(key, axis=0, return_inverse=True)
+        wi = wi.ravel()
+        T0 = m.V[m.F]
+        okf = (np.linalg.norm(np.cross(T0[:, 1] - T0[:, 0], T0[:, 2] - T0[:, 0]), axis=1) > 1e-12)
+        Fw = wi[m.F]
+        okf &= (Fw[:, 0] != Fw[:, 1]) & (Fw[:, 1] != Fw[:, 2]) & (Fw[:, 0] != Fw[:, 2])   # poles, collapsed rims
+        Fw, F_ok = Fw[okf], m.F[okf]
+        lab = _components(m.V, F_ok)
+        E = np.vstack([Fw[:, [0, 1]], Fw[:, [1, 2]], Fw[:, [2, 0]]])
+        El = np.tile(lab, 3)
+        _, cd = np.unique(np.c_[E, El], axis=0, return_counts=True)
+        if (cd > 1).sum():
+            incons.append(f"{pid}/{mat}: {int((cd > 1).sum())}")
+        Es = np.sort(E, 1)
+        u, cnt = np.unique(np.c_[Es, El], axis=0, return_counts=True)
+        open_c = set(u[cnt == 1][:, 2])
+        T = m.V[F_ok]
+        vol = np.bincount(lab, weights=np.einsum("ij,ij->i", T[:, 0], np.cross(T[:, 1], T[:, 2])) / 6.0)
+        for c in range(len(vol)):
+            if c not in open_c and vol[c] < -1e-10:
+                inward.append(f"{pid}/{mat} at STA {T[lab == c][..., 0].mean():.3f}")
+report("interior closed shells wound outward, directed edges consistent", not inward and not incons,
+       "ok" if not inward and not incons else
+       f"{len(inward)} inward closed shells ({'; '.join(inward[:5])}); inconsistent: {'; '.join(incons[:6])}")
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

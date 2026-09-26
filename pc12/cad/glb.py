@@ -69,11 +69,14 @@ class GLBBuilder:
     MATERIAL_EXT = {"clearcoat": ("KHR_materials_clearcoat", "clearcoatFactor"),
                     "clearcoat_rough": ("KHR_materials_clearcoat", "clearcoatRoughnessFactor"),
                     "specular": ("KHR_materials_specular", "specularFactor"),
-                    "ior": ("KHR_materials_ior", "ior")}
+                    "ior": ("KHR_materials_ior", "ior"),
+                    "sheen_color": ("KHR_materials_sheen", "sheenColorFactor"),
+                    "sheen_rough": ("KHR_materials_sheen", "sheenRoughnessFactor")}
 
     def material(self, name, color, metallic=0.0, roughness=0.5, emissive=None,
                  double_sided=False, alpha=None, extras=None, ext=None):
-        """ext: {clearcoat, clearcoat_rough, specular, ior} -> KHR_materials_clearcoat / _specular / _ior (listed in
+        """ext: {clearcoat, clearcoat_rough, specular, ior, sheen_color, sheen_rough} -> KHR_materials_clearcoat /
+        _specular / _ior / _sheen (listed in
         extensionsUsed, not required: a loader without them falls back to the core metallic-roughness values)."""
         if name in self.mat_index:
             return self.mat_index[name]
@@ -90,7 +93,8 @@ class GLBBuilder:
             m["alphaMode"] = "BLEND"
         for key, val in (ext or {}).items():
             e, prop = self.MATERIAL_EXT[key]
-            m.setdefault("extensions", {}).setdefault(e, {})[prop] = float(val)
+            v = [float(x) for x in val] if isinstance(val, (tuple, list)) else float(val)
+            m.setdefault("extensions", {}).setdefault(e, {})[prop] = v
             self.ext_used.add(e)
         if extras:
             m["extras"] = extras

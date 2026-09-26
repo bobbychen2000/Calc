@@ -353,14 +353,18 @@ def _fasteners(skin, door_t):
         s = np.r_[0.0, np.cumsum(seg)]
         closed = np.vstack([a, a[:1]])
         ncl = np.vstack([n, n[:1]])
+        tan = np.roll(a, -1, 0) - np.roll(a, 1, 0)             # side-view normal of the seam loop (as _slab_back)
+        sv = np.stack([tan[:, 2], np.zeros(len(a)), -tan[:, 0]], 1)
+        sv /= np.maximum(np.linalg.norm(sv, axis=1, keepdims=True), 1e-12)
+        sv *= np.sign(np.sum(sv * (a - c) * [1, 0, 1], 1).mean())
+        svc = np.vstack([sv, sv[:1]])
         for t in np.arange(0.5 * FASTENERS["pitch"], s[-1], FASTENERS["pitch"]):
             p = np.array([np.interp(t, s, closed[:, k]) for k in range(3)])
             nn = np.array([np.interp(t, s, ncl[:, k]) for k in range(3)])
             nn /= np.linalg.norm(nn)
             q = p - 0.5 * door_t * nn
-            out = q - c
-            out[1] = 0.0                                      # side-view outward (the rim faces the jamb)
-            out -= nn * np.dot(out, nn)
+            out = np.array([np.interp(t, s, svc[:, k]) for k in range(3)])     # normal to the edge band (it used
+            out -= nn * np.dot(out, nn)                        # to point from the door centre: heads cut the lips)
             out /= np.linalg.norm(out)
             heads.append(cylinder(q - 0.0005 * out, q + FASTENERS["h"] * out, FASTENERS["r"], n=8))
     return Mesh.merge(heads)
@@ -659,6 +663,9 @@ def rail_layout(door):
     Kf, beta = _fold_lower(door, Bd, Kd)
     lo = dict(pivot=_yz(door, Bd), open=beta, seg=(Bd, Kf), deployed=(Bd, Kd))
     up = _stow(door, Kd, Ad, 0.92 * RAIL["r"], RAIL["r"] + 0.004, prefer=Bd)
+    # unfold the long way round (|open| > 180 deg): the short way swept the rod ends through the lower fuselage, the
+    # belly fairing, the sill and the cabin floor edge (review r1 M1); this way the arc stays outboard of the skin
+    up["open"] = float(up["open"] - 2.0 * np.pi * np.sign(up["open"]))
     up["deployed"] = (Kd, Ad)
     cab = _stow(door, Cjd, Csd, CABLE["r"], CABLE["r"] + 0.004, prefer=Csd)
     cab["deployed"] = (Cjd, Csd)
@@ -708,7 +715,8 @@ def rail_meshes(door):
         posts += _stanchion(door, x, zsB)
         B, K = lo["seg"]
         low.append((cylinder(door.to3(x, *B), door.to3(x, *K), r, n=16), MAT["rod"]))
-        low.append((_eye(door, x, B, r + 0.002, 0.030), MAT["fitting"]))
+        low.append((_eye(door, x, B, r + 0.002, 0.022), MAT["fitting"]))    # inside the clear opening (was 0.030:
+        #                                                         2 mm past it, through the side jamb as the door opens)
         low.append((_eye(door, x, K, RAIL["knee_r"], 0.5 * RAIL["knee_l"]), MAT["fitting"]))
         Ks, As = up["seg"]
         upp.append((cylinder(door.to3(x, *Ks), door.to3(x, *As), 0.92 * r, n=16), MAT["rod"]))

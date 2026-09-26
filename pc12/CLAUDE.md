@@ -3,7 +3,7 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (83 parts, ~1.1M tris of which the interior ~215k, hinge pivots
+engineering-drawing generator. Output: `out/pc12.glb` (83 parts, ~1.15M tris of which the interior ~223k, hinge pivots
 in node extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`),
 `out/pc12_ga.svg|pdf` (legacy A1 GA, hidden-line from the mesh) and `out/pc12_sections.svg|pdf` (A2 sections).
@@ -17,7 +17,10 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   exact triangle-crossing sweeps (test/isect.py): main gear + brace in the bay liner,
                                 #   nose gear vs doors / flight deck, flaps + canoes, rudder; interior 17-21: seats
                                 #   inside the lining / on the floor / on their tracks, 95th-pct knees vs the yokes,
-                                #   furniture clear of windows / door + exit openings, door swings vs the interior);
+                                #   furniture clear of windows / door + exit openings, door swings vs the interior,
+                                #   the frames, skins and belly fairing (door travel every 0.02 and every 0.005
+                                #   inside each handrail's unfold window); 22 every interior piece seated (within
+                                #   3 mm of, or crossing, another surface); 23 closed interior shells wound outward);
                                 #   '[open]' rows are known conflicts in the approved parameters that need an owner
                                 #   decision (they do not fail)
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
@@ -155,9 +158,19 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   'pro3001', default) or the MSN 3008 grey ('light'), owner's choice; `interior.exec_seat` record 'rear' is 40 mm aft
   of the drawn back profile (checks built on it are conservative); at full forward + down travel the crew back shell's
   lower inboard corner comes within 14 mm of the nose-tunnel plinth (the L6B 15 mm criterion covers cushion / pan
-  only); P1046408 shows no crew seat backs from the divider while the L6 backs frame the fitted camera ~25 deg off
-  axis (backs narrower at shoulder height than CREW_SEAT back_w?); the cabin tracks run under the RH lavatory and the
+  only); the cabin tracks run under the RH lavatory and the
   cabinets as L6 draws them; armrests / recline / headrest / travel are baked into the seat meshes (no viewer pivot).
+- Interior review r1 (fidelity / craft / mechanics): tables changed and L6 / L6B regenerated -- DIVIDER curtain (flare
+  top 0.85 [M: P1046406], 25 mm of the bundle tucked behind the walnut edge, an 18 mm gathered band above it) and
+  LEDGES door_segment 7.575-8.905 (inside the cargo clear opening) + door_foot 0.075 (clear of the sill jamb); the door
+  frames have no stop / jamb along the hinge edges (the doors' inner skins swing through there), a tan outer jamb band
+  (49-75 mm) and lining inboard of it, the cargo door an inner lining panel (75 mm, like the airstair), the door-well
+  reveals end on the seam at the stop depth; the lining runs flush over the exit hatch (standard window reveal); the
+  upper handrail unfolds the long way round (outboard of the skin); sculpted PC-24 yoke (domed white shield, recessed
+  silver insert), thick wrapped sheepskin (fleece bump in Blender, KHR_materials_sheen in the GLB), V-seamed exec seat
+  backs; panel_faceon uses the refitted camera 'panel_408b' (between the seat backs, as the photo); interior renders
+  gain the world only for primary rays through the (transparent) glazing, and lookdev's thin glass uses a two-sided
+  Schlick Fresnel (the Fresnel node made every obliquely seen cabin window a totally reflecting mirror).
 - Main-gear leg door, decision LD-1 (owner-delegated, resolved; model/gear.py comment block): the door is the wing
   lower skin carried down by the leg (`gear.leg_door_offset`), so retracted it closes flush (1 mm recess, 3 mm panel
   gap, `bays.DOOR_GAP`) and the tyre protrudes 26 mm in its own round well (`bays.well_sdf`); drawn side-view face
@@ -171,8 +184,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
   the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
   `render/blender_ortho.py` for calibrated views; interior presets `cockpit_fwd` / `panel_faceon` (photo-fitted to
-  PRO s/n 3001 P1046406 / P1046408), `cabin_aft_fwd`, `cabin_club`: env 'interior' = overcast daylight through the
-  glazing + INTERIOR_LIGHTS + the emissive displays / LED coves; every interior material is in assemble.MATERIALS
+  PRO s/n 3001 P1046406 / P1046408), `cabin_aft_fwd`, `cabin_club`: env 'interior' = daylight through the glazing
+  (INTERIOR_DAYLIGHT; the view through the glass gained by INTERIOR_WINDOW_VIEW for primary rays only) +
+  INTERIOR_LIGHTS + the emissive displays / LED coves; every interior material is in assemble.MATERIALS
   (+ EMISSIVE) and render/lookdev.py SPEC, `python3 render/lookdev.py --json` regenerates lookdev_materials.json) and
   the three.js viewer (`web/`, three.js r160 in `web/three_local`).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
