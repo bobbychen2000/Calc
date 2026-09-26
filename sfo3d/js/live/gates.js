@@ -253,7 +253,8 @@ export class LiveGateSystem {
   // ------------------------------------------------------------ static bridge geometry (per bridge, once)
   prepBridge(g, b) {
     const cz = (p) => [p[0], G, p[1]];
-    const att = b.attachW ? cz(b.attachW) : stW(b.attach, G);
+    if (b._attachData === undefined) b._attachData = b.attachW || null; // the data's [x, z]; b.attachW becomes the 3-D point (tools read it)
+    const att = b._attachData ? cz(b._attachData.length === 3 ? [b._attachData[0], b._attachData[2]] : b._attachData) : stW(b.attach, G);
     let rot = b.rotundaW ? cz(b.rotundaW) : null;
     const nose = stW(g.nose, G), f = stD(g.dir);
     if (!rot) { const o = stD(g.outN || [-g.dir[0], -g.dir[1]]); rot = v3.add(att, v3.mul(o, -4)); } // no data rotunda: 4 m out
@@ -326,7 +327,7 @@ export class LiveGateSystem {
     const sills = tg.map(t => t.sill); b.h0 = sills.length ? (Math.min(...sills) + Math.max(...sills)) / 2 : Hr; b.hRest = b.h0;
     b.stairSide = 1; b._tg = tg; // (side chosen in finishPrep, once every bridge is placed)
     // legacy fields read by tools (jobs/extract2d.mjs, tools/live/invariants.mjs)
-    b.attachW3 = att; const lu = [rot[0] - walk[Math.max(0, n - 2)][0], 0, rot[2] - walk[Math.max(0, n - 2)][2]]; b.u = Math.hypot(lu[0], lu[2]) > 0.05 ? v3.norm(lu) : dirOf(b.ac);
+    b.attachW = att; b.attachW3 = att; const lu = [rot[0] - walk[Math.max(0, n - 2)][0], 0, rot[2] - walk[Math.max(0, n - 2)][2]]; b.u = Math.hypot(lu[0], lu[2]) > 0.05 ? v3.norm(lu) : dirOf(b.ac);
     b.fixedLen = wl; b.rc = [rot[0], G, rot[2]]; b.parkDir = dirOf(b.a0); b.reach = b.e0;
     b._plans = new Map();
   }

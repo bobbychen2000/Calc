@@ -1,0 +1,91 @@
+<title>SFO Live 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%;background:#0b0f14;color:#e7edf3;color-scheme:dark}
+/*LIVE_CSS*/
+
+#ptest{position:fixed;z-index:60;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));
+ background:rgba(12,16,22,.86);color:#e7edf3;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 12px;
+ font:500 12px/1.45 'IBM Plex Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;max-width:min(330px,calc(100vw - 24px));
+ -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#ptest b{color:#ffb547;font-weight:600}
+#ptest .row{display:flex;justify-content:space-between;gap:12px}
+#ptest .k{color:#9fb0c0}
+#ptest .btns{display:flex;gap:8px;margin-top:8px}
+#ptest button{font:600 12px/1 'Barlow Semi Condensed',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;
+ background:#ffb547;color:#141414;border:0;border-radius:6px;padding:8px 10px;cursor:pointer}
+#ptest button.ghost{background:transparent;color:#e7edf3;border:1px solid rgba(255,255,255,.25)}
+#ptest button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+#ptest pre{white-space:pre-wrap;word-break:break-word;margin:8px 0 0;font:inherit;color:#cfd9e2;user-select:all}
+#ptest.min .body{display:none}
+
+</style>
+<div id="app"></div>
+<div id="ptest" role="status" aria-live="polite">
+  <div class="row"><b>Phone test</b><span id="pt-state" class="k">loading…</span></div>
+  <div class="body">
+    <div class="row"><span class="k">Backend</span><span id="pt-backend">–</span></div>
+    <div class="row"><span class="k">Quality tier</span><span id="pt-tier">–</span></div>
+    <div class="row"><span class="k">Frame rate</span><span id="pt-fps">–</span></div>
+    <div class="row"><span class="k">Frame time p50 / p95</span><span id="pt-ft">–</span></div>
+    <div class="row"><span class="k">Load time</span><span id="pt-load">–</span></div>
+    <div class="row"><span class="k">Canvas</span><span id="pt-canvas">–</span></div>
+    <div class="row"><span class="k">GPU</span><span id="pt-gpu">–</span></div>
+    <div class="btns"><button id="pt-copy" type="button">Copy results</button><button id="pt-hide" type="button" class="ghost">Hide</button></div>
+    <pre id="pt-out" hidden></pre>
+  </div>
+</div>
+<script>
+// Phone-test build of SFO Live 3D: recorded snapshot (artifacts cannot fetch live data), three.js r186 renderer,
+// low-resolution livery set. The card measures what the phone does; nothing is sent anywhere.
+window.SFO_MODE = 'snapshot';
+window.SFO_LIVERY_RES = 'lo';
+window.SFO_MODEL_EXT = '.wasm'; // the model files are .sfom renamed: artifacts serve only standard web types, fetch() reads the bytes
+(function () {
+  var t0 = performance.now(), info = { backend: null, tier: null, load: null, err: null };
+  var $ = function (id) { return document.getElementById(id); };
+  var log = console.log.bind(console);
+  console.log = function () {
+    try { var s = Array.prototype.join.call(arguments, ' '); var m = /three\.js r(\d+) (\w+)(.*?), tier (\w+)/.exec(s);
+      if (m) { info.backend = (m[2] === 'webgpu' ? 'WebGPU' : 'WebGL 2') + m[3]; info.tier = m[4]; } } catch (e) {}
+    return log.apply(console, arguments);
+  };
+  try { var c = document.createElement('canvas'), g = c.getContext('webgl2') || c.getContext('webgl');
+    var d = g && g.getExtension('WEBGL_debug_renderer_info'); info.gpu = g ? (d ? g.getParameter(d.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER)) : 'no WebGL';
+    info.webgpu = !!navigator.gpu; } catch (e) { info.gpu = 'unknown'; }
+  var times = [], last = 0;
+  function frame(t) { if (last) times.push(t - last); last = t; if (times.length > 600) times.shift(); requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+  function pct(a, p) { if (!a.length) return 0; var s = a.slice().sort(function (x, y) { return x - y; }); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; }
+  function text() {
+    var cv = document.querySelector('#app canvas');
+    return ['SFO Live 3D phone test', 'backend: ' + (info.backend || '?') + (info.webgpu ? '' : ' (no navigator.gpu)'), 'tier: ' + (info.tier || '?'),
+      'fps (last 10 s): ' + $('pt-fps').textContent, 'frame p50/p95: ' + $('pt-ft').textContent, 'load: ' + $('pt-load').textContent,
+      'canvas: ' + (cv ? cv.width + 'x' + cv.height : '?') + ' dpr ' + (window.devicePixelRatio || 1), 'gpu: ' + info.gpu,
+      'ua: ' + navigator.userAgent, info.err ? 'error: ' + info.err : ''].filter(Boolean).join('\n');
+  }
+  setInterval(function () {
+    if (window.__sfoError && !info.err) { info.err = String(window.__sfoError).slice(0, 300); $('pt-state').textContent = 'error'; }
+    if (window.__sfoReady && info.load == null) { info.load = (performance.now() - t0) / 1000; $('pt-state').textContent = 'running'; }
+    $('pt-backend').textContent = info.backend || '–'; $('pt-tier').textContent = info.tier || '–'; $('pt-gpu').textContent = info.gpu || '–';
+    $('pt-load').textContent = info.load == null ? '–' : info.load.toFixed(1) + ' s';
+    var recent = times.slice(-Math.min(times.length, 600)), sum = 0, n = 0;
+    for (var i = recent.length - 1; i >= 0 && sum < 10000; i--) { sum += recent[i]; n++; }
+    $('pt-fps').textContent = n && sum ? (1000 * n / sum).toFixed(1) : '–';
+    $('pt-ft').textContent = recent.length ? pct(recent, 0.5).toFixed(0) + ' / ' + pct(recent, 0.95).toFixed(0) + ' ms' : '–';
+    var cv = document.querySelector('#app canvas'); $('pt-canvas').textContent = cv ? cv.width + 'x' + cv.height + ' @' + (window.devicePixelRatio || 1) : '–';
+  }, 500);
+  document.addEventListener('click', function (e) {
+    if (e.target.id === 'pt-hide') { var p = $('ptest'); p.classList.toggle('min'); e.target.textContent = p.classList.contains('min') ? 'Show' : 'Hide'; }
+    if (e.target.id === 'pt-copy') { var t = text(), out = $('pt-out'); out.textContent = t; out.hidden = false;
+      if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { e.target.textContent = 'Copied'; }, function () { e.target.textContent = 'Select text below'; });
+      else e.target.textContent = 'Select text below'; }
+  });
+  // keep the Show/Hide button reachable when the card is minimised
+  var st = document.createElement('style'); st.textContent = '#ptest.min .body{display:block}#ptest.min .body>*:not(.btns){display:none}#ptest.min #pt-copy{display:none}'; document.head.appendChild(st);
+})();
+</script>
+<script type="module">
+/*APP_BUNDLE*/
+</script>
