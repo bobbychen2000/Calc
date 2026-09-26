@@ -1,0 +1,804 @@
+{
+ "_about": "render/lookdev.py SPEC as glTF 2.0 PBR values (linear baseColorFactor; clearcoat = KHR_materials_clearcoat, transmissionFactor = KHR_materials_transmission, ior = KHR_materials_ior). three.js MeshPhysicalMaterial: color = baseColorFactor[:3] (linear), metalness, roughness, clearcoat, clearcoatRoughness, ior, transmission (+ opacity = baseColorFactor[3] for BLEND). Metallic paints: glTF has no F82 tint, so metallicFactor is lower than Blender's (blender_metallic) to keep grazing reflections from going chrome; the clear coat carries the gloss. specularFactor = KHR_materials_specular (F0 scale; low for the base layer under a clear coat and the anti-glare mask). Not representable in glTF: the paint flake normals, and the interior lining that lookdev.apply() puts on the BACK faces of the paint materials (three.js: side=DoubleSide + an onBeforeCompile gl_FrontFacing switch, or a lining mesh in the model).",
+ "_model": {
+  "note": "render-time changes in lookdev.apply() that belong in the model (model/assemble.py, model/livery.py); the viewer can mirror them",
+  "reassign": [
+   {
+    "parts": [
+     "glazing_cabin",
+     "door_cargo",
+     "exit_hatch"
+    ],
+    "from_material": "glass",
+    "to_material": "glass_cabin"
+   },
+   {
+    "parts": [
+     "glazing_cabin",
+     "door_cargo",
+     "exit_hatch"
+    ],
+    "from_material": "seal",
+    "to_material": "seal_cabin"
+   },
+   {
+    "parts": [
+     "gear_bays"
+    ],
+    "from_material": "zinc_chromate",
+    "to_material": "gear_bay"
+   },
+   {
+    "parts": [
+     "exhaust_stacks"
+    ],
+    "from_material": "black",
+    "to_material": "exhaust_soot"
+   }
+  ],
+  "outline": {
+   "material": "paint_champagne",
+   "width_m": 0.008,
+   "rule": "a ~8 mm paint_champagne stroke along every colour boundary of the white pinstripes / swooshes (livery strokes), photos 82 / 130 / 188"
+  },
+  "paint_navy": "livery stroke N1 is the base blue on MSN 3008 (no navy line): paint_navy == paint_blue",
+  "back_faces": "paint_* and trim_black / seal back faces render as the interior lining (LINING base [0.55, 0.55, 0.54], roughness 0.6; flight deck, model station x < 5.0 m: base [0.3, 0.3, 0.295]); exhaust_polished back faces: render_back_faces (soot)",
+  "exhaust": "the GLB 'black' primitives of exhaust_stacks (outlet band, inner wall, rim) render as exhaust_soot; exhaust_polished: render_collar (station-dependent heat tint and black outlet collar), render_polish (noise roughness / tint + bump)",
+  "tyre_grooves": "tire: render_grooves = 4 circumferential tread grooves (6 mm) at +-0.1 / +-0.3 of the tread width (tread = 0.62 x tyre width) on the crown; a bump in the renders (lookdev _tyre_grooves); the model could cut them or the viewer use a normal map"
+ },
+ "materials": {
+  "paint_blue": {
+   "baseColorFactor": [
+    0.0066,
+    0.034,
+    0.205,
+    1.0
+   ],
+   "metallicFactor": 0.3,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.4,
+   "blender_roughness": 0.5,
+   "kind": "metal_paint",
+   "note": "deep metallic blue: fuselage, fin, cowl, wing upper surfaces, pod body",
+   "srgb_hex": "#13347D"
+  },
+  "paint_blue_light": {
+   "baseColorFactor": [
+    0.215,
+    0.305,
+    0.55,
+    1.0
+   ],
+   "metallicFactor": 0.5,
+   "roughnessFactor": 0.38,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.7,
+   "blender_roughness": 0.37,
+   "kind": "metal_paint",
+   "note": "light metallic blue (silver-blue): lower nose / cowl, swoosh band, nose-gear doors",
+   "srgb_hex": "#8096C4"
+  },
+  "paint_wing_dark": {
+   "baseColorFactor": [
+    0.009,
+    0.018,
+    0.07,
+    1.0
+   ],
+   "metallicFactor": 0.35,
+   "roughnessFactor": 0.42,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.45,
+   "blender_roughness": 0.4,
+   "kind": "metal_paint",
+   "note": "dark navy metallic: wing / winglet lower surfaces, belly fairing (air-to-air N81DW: navy, C/L ~1.2 in shade; 188: neutral where it mirrors the asphalt)",
+   "srgb_hex": "#18244B"
+  },
+  "paint_silver": {
+   "baseColorFactor": [
+    0.42,
+    0.42,
+    0.43,
+    1.0
+   ],
+   "metallicFactor": 0.55,
+   "roughnessFactor": 0.36,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.6,
+   "blender_roughness": 0.34,
+   "kind": "metal_paint",
+   "note": "silver-grey metallic: tailplane",
+   "srgb_hex": "#ADADAF"
+  },
+  "paint_champagne": {
+   "baseColorFactor": [
+    0.49,
+    0.41,
+    0.3,
+    1.0
+   ],
+   "metallicFactor": 0.4,
+   "roughnessFactor": 0.38,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.45,
+   "blender_roughness": 0.36,
+   "kind": "metal_paint",
+   "note": "(render-only) ~8 mm champagne outline of every white pinstripe / swoosh (photo 82: sRGB 189/184/182 and 176/176/172 beside the white's 222-227; 188: 172/165/156 beside 240)",
+   "srgb_hex": "#BAAC95"
+  },
+  "paint_stripe": {
+   "baseColorFactor": [
+    0.6,
+    0.5,
+    0.16,
+    1.0
+   ],
+   "metallicFactor": 0.5,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.5,
+   "blender_roughness": 0.35,
+   "kind": "metal_paint",
+   "note": "(unused by the MSN 3008 livery)",
+   "srgb_hex": "#CBBC6F"
+  },
+  "paint_white": {
+   "baseColorFactor": [
+    0.9,
+    0.905,
+    0.91,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "kind": "solid_paint",
+   "note": "gloss white",
+   "srgb_hex": "#F3F4F5"
+  },
+  "paint_pinstripe": {
+   "baseColorFactor": [
+    0.9,
+    0.905,
+    0.91,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "kind": "solid_paint",
+   "note": "white pinstripes and swooshes",
+   "srgb_hex": "#F3F4F5"
+  },
+  "paint_belly": {
+   "baseColorFactor": [
+    0.62,
+    0.65,
+    0.67,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.32,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "kind": "solid_paint",
+   "note": "(unused)",
+   "srgb_hex": "#CED3D6"
+  },
+  "paint_accent": {
+   "baseColorFactor": [
+    0.08,
+    0.14,
+    0.24,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "kind": "solid_paint",
+   "note": "(unused)",
+   "srgb_hex": "#506986"
+  },
+  "paint_black": {
+   "baseColorFactor": [
+    0.012,
+    0.013,
+    0.015,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.0,
+   "kind": "solid_paint",
+   "note": "gloss black radar-pod radome",
+   "srgb_hex": "#1D1E21"
+  },
+  "trim_black": {
+   "baseColorFactor": [
+    0.01,
+    0.01,
+    0.012,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.16,
+   "kind": "dielectric",
+   "note": "PRO cockpit mask: anti-glare black round the glazing (photo 82: no crisp LED-strip reflections on it while the blue paint beside it mirrors them); back faces = cockpit lining (the mask skin is what the crew sees round the panes)",
+   "srgb_hex": "#19191D"
+  },
+  "seal": {
+   "baseColorFactor": [
+    0.01,
+    0.01,
+    0.012,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.16,
+   "kind": "dielectric",
+   "note": "flight-deck glazing frame strips / windshield centre post (black like the mask, photos 130 / 82)",
+   "srgb_hex": "#19191D"
+  },
+  "seal_cabin": {
+   "baseColorFactor": [
+    0.05,
+    0.055,
+    0.06,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.12,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "(render-only) cabin-window / cargo-door / exit-hatch window rings: NGX panes are flush with only a thin, barely darker edge (photos 130, 0517) -- a glossy dark grey that mirrors the room like the pane instead of a black ring",
+   "srgb_hex": "#3F4245"
+  },
+  "glass_windshield": {
+   "baseColorFactor": [
+    0.02,
+    0.02,
+    0.02,
+    0.3
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.02,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "alphaMode": "BLEND",
+   "doubleSided": true,
+   "transmission_variant": {
+    "baseColorFactor": [
+     0.87,
+     0.87,
+     0.86,
+     1.0
+    ],
+    "transmissionFactor": 1.0,
+    "roughnessFactor": 0.004,
+    "metallicFactor": 0.0,
+    "ior": 1.5,
+    "thin": true
+   },
+   "surfaces": 2,
+   "kind": "glass",
+   "note": "heated laminated windshield (neutral grey)",
+   "srgb_hex": "#272727"
+  },
+  "glass": {
+   "baseColorFactor": [
+    0.02,
+    0.02,
+    0.02,
+    0.35
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.02,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "alphaMode": "BLEND",
+   "doubleSided": true,
+   "transmission_variant": {
+    "baseColorFactor": [
+     0.82,
+     0.82,
+     0.82,
+     1.0
+    ],
+    "transmissionFactor": 1.0,
+    "roughnessFactor": 0.004,
+    "metallicFactor": 0.0,
+    "ior": 1.5,
+    "thin": true
+   },
+   "surfaces": 2,
+   "kind": "glass",
+   "note": "flight-deck side windows (stretched acrylic, light grey tint)",
+   "srgb_hex": "#272727"
+  },
+  "glass_cabin": {
+   "baseColorFactor": [
+    0.03,
+    0.035,
+    0.04,
+    0.45
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.02,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "alphaMode": "BLEND",
+   "doubleSided": true,
+   "transmission_variant": {
+    "baseColorFactor": [
+     0.82,
+     0.82,
+     0.82,
+     1.0
+    ],
+    "transmissionFactor": 1.0,
+    "roughnessFactor": 0.004,
+    "metallicFactor": 0.0,
+    "ior": 1.5,
+    "thin": true
+   },
+   "surfaces": 4,
+   "kind": "glass",
+   "note": "(render-only) cabin / cargo-door / exit windows: two-ply stretched acrylic, 4 surfaces -> 14 % at normal incidence (the bright silver panes of photo 130)",
+   "srgb_hex": "#303538"
+  },
+  "lens": {
+   "baseColorFactor": [
+    0.85,
+    0.87,
+    0.9,
+    0.15
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.02,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "alphaMode": "BLEND",
+   "doubleSided": true,
+   "transmission_variant": {
+    "baseColorFactor": [
+     0.88,
+     0.89,
+     0.9,
+     1.0
+    ],
+    "transmissionFactor": 1.0,
+    "roughnessFactor": 0.01,
+    "metallicFactor": 0.0,
+    "ior": 1.5,
+    "thin": true
+   },
+   "surfaces": 2,
+   "kind": "glass",
+   "note": "clear polycarbonate light lens",
+   "srgb_hex": "#EDF0F3"
+  },
+  "prop_blade": {
+   "baseColorFactor": [
+    0.015,
+    0.015,
+    0.017,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.45,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "satin black composite blade",
+   "srgb_hex": "#212123"
+  },
+  "prop_tip": {
+   "baseColorFactor": [
+    0.8,
+    0.8,
+    0.78,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.36,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "white blade tip",
+   "srgb_hex": "#E7E7E5"
+  },
+  "prop_band_red": {
+   "baseColorFactor": [
+    0.27,
+    0.026,
+    0.004,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.4,
+   "kind": "dielectric",
+   "note": "red blade band (hangar photo 189/73/46: a deep signal red, no pink sheen)",
+   "srgb_hex": "#8E2D0D"
+  },
+  "erosion": {
+   "baseColorFactor": [
+    0.66,
+    0.64,
+    0.6,
+    1.0
+   ],
+   "metallicFactor": 1.0,
+   "roughnessFactor": 0.22,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "kind": "metal",
+   "note": "nickel erosion sheath",
+   "srgb_hex": "#D4D1CB"
+  },
+  "tire": {
+   "baseColorFactor": [
+    0.028,
+    0.028,
+    0.029,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.45,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "render_grooves": {
+    "n": 4,
+    "width": 0.006,
+    "tread": 0.62,
+    "depth": 0.0025,
+    "floor_w": 0.002,
+    "shoulder": 0.003,
+    "floor": 0.25,
+    "floor_rough": 0.7
+   },
+   "kind": "dielectric",
+   "note": "tyre rubber: black, satin sheen, 4 circumferential tread grooves",
+   "srgb_hex": "#2F2F30"
+  },
+  "deice_boot": {
+   "baseColorFactor": [
+    0.012,
+    0.012,
+    0.014,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.25,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "pneumatic de-ice boots: near-black glossy neoprene with one crisp highlight (photo 188 sRGB 32/36/44 in shade; 130: bright room reflections)",
+   "srgb_hex": "#1D1D1F"
+  },
+  "black": {
+   "baseColorFactor": [
+    0.028,
+    0.028,
+    0.032,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "satin black parts",
+   "srgb_hex": "#2F2F32"
+  },
+  "inlet_dark": {
+   "baseColorFactor": [
+    0.018,
+    0.018,
+    0.022,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.85,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "engine inlet / duct interior",
+   "srgb_hex": "#242429"
+  },
+  "chrome": {
+   "baseColorFactor": [
+    0.9,
+    0.91,
+    0.92,
+    1.0
+   ],
+   "metallicFactor": 1.0,
+   "roughnessFactor": 0.035,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "kind": "metal",
+   "note": "polished spinner, oleo chrome, pitot",
+   "srgb_hex": "#F3F5F6"
+  },
+  "exhaust_polished": {
+   "baseColorFactor": [
+    0.5,
+    0.42,
+    0.3,
+    1.0
+   ],
+   "metallicFactor": 1.0,
+   "roughnessFactor": 0.06,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "render_collar": {
+    "x0": 1.765,
+    "blend": 0.006,
+    "tint_x0": 1.45,
+    "tint": [
+     0.52,
+     0.36,
+     0.2
+    ],
+    "base": [
+     0.004,
+     0.004,
+     0.004
+    ],
+    "rough": 0.85,
+    "metallic": 0.0,
+    "spec": 0.08
+   },
+   "render_back_faces": {
+    "base": [
+     0.006,
+     0.006,
+     0.006
+    ],
+    "rough": 0.85,
+    "spec": 0.08
+   },
+   "render_polish": {
+    "scale": 28.0,
+    "stretch": [
+     0.3,
+     1.0,
+     1.0
+    ],
+    "detail": 3.0,
+    "rough": [
+     0.06,
+     0.16
+    ],
+    "tint_mix": 0.3,
+    "bump": 0.35,
+    "bump_distance": 0.01
+   },
+   "kind": "metal",
+   "note": "polished exhaust stacks (heat tint) with a heat-blackened outlet collar",
+   "srgb_hex": "#BCAD95"
+  },
+  "exhaust_soot": {
+   "baseColorFactor": [
+    0.006,
+    0.006,
+    0.006,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.16,
+   "kind": "dielectric",
+   "note": "(render-only) heat-blackened outlet band, inner wall and rim of the exhaust stacks (photo 130: a jet-black band with a crisp edge; 188: the dark inside of the scarfed opening); the GLB draws them in the shared satin 'black' (0.028), a dark-grey cap",
+   "srgb_hex": "#121212"
+  },
+  "wheel": {
+   "baseColorFactor": [
+    0.62,
+    0.63,
+    0.64,
+    1.0
+   ],
+   "metallicFactor": 0.25,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.6,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "kind": "solid_paint",
+   "note": "painted wheel hubs",
+   "srgb_hex": "#CED0D1"
+  },
+  "gear_leg": {
+   "baseColorFactor": [
+    0.72,
+    0.73,
+    0.74,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.32,
+   "clearcoatFactor": 0.6,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "kind": "solid_paint",
+   "note": "gloss white-grey painted gear legs / links",
+   "srgb_hex": "#DDDEDF"
+  },
+  "seam": {
+   "baseColorFactor": [
+    0.018,
+    0.018,
+    0.02,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "door / hatch gap band (door_frames): a dark shadowed seam as in photos 130 / 0517 (the GLB's 0.16 grey drew light outlines round the doors)",
+   "srgb_hex": "#242427"
+  },
+  "gear_bay": {
+   "baseColorFactor": [
+    0.3,
+    0.31,
+    0.32,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.8,
+   "kind": "dielectric",
+   "note": "(render-only) wheel-well liners, grey (the GLB's zinc_chromate yellow-green showed under the wing root; no MSN 3008 photo shows primer there)",
+   "srgb_hex": "#959799"
+  },
+  "leather": {
+   "baseColorFactor": [
+    0.45,
+    0.445,
+    0.435,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.8,
+   "kind": "dielectric",
+   "note": "light grey leather cabin seats (through-glass read of photos 130 / 82)",
+   "srgb_hex": "#B3B2B0"
+  },
+  "leather_dark": {
+   "baseColorFactor": [
+    0.3,
+    0.295,
+    0.29,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.8,
+   "kind": "dielectric",
+   "note": "crew seats: mid-light grey (photo 0517: the pilot's seat back reads light grey through the side window)",
+   "srgb_hex": "#959493"
+  },
+  "jamb": {
+   "baseColorFactor": [
+    0.22,
+    0.165,
+    0.085,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.7,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "door jambs (tan / khaki: photo 188 sRGB 182/154/103 in sun, 82 84/78/60 inside the doorway)",
+   "srgb_hex": "#817152"
+  },
+  "paint_navy": {
+   "baseColorFactor": [
+    0.0066,
+    0.034,
+    0.205,
+    1.0
+   ],
+   "metallicFactor": 0.3,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.03,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.4,
+   "blender_roughness": 0.5,
+   "kind": "metal_paint",
+   "note": "livery N1 line: rendered as the base blue (no navy line on MSN 3008)",
+   "srgb_hex": "#13347D"
+  }
+ }
+}
