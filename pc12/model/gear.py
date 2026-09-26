@@ -5,7 +5,7 @@ Landing gear: electromechanically actuated tricycle (PC-12 NG MSN 1451+ / NGX / 
   Nose: hydraulic shock strut, retracts REARWARD, fully enclosed by spring-closed doors.
   All legs locked down by an over-centre two-piece folding strut.
   * Main: trailing-link units on the wing spars, retract INWARD into the wing.
-          Tyres 22 x 8.50-10 (model/wheels.py MAIN_TYRE_CHOICE; the 8.50-10 Type III is the proposed alternative).
+          Tyres 8.50-10 Type III (owner decision 2026-09-26; model/wheels.py MAIN_TYRE_CHOICE; Jane's 22 x 8.50-10 superseded).
   * Nose: steerable oleo strut, retracts REARWARD under the flight deck.
           Tyre 17.5 x 6.25-6, steering +/-60 deg.
 Geometry is built in the gear-DOWN position; each unit stores its retraction

@@ -107,13 +107,16 @@ mains retract inward with ONE leg-mounted door each, tyres protrude ~1 in when r
 aft, enclosed by doors; over-centre two-piece folding struts; ailerons with Flettner geared balance
 tabs (opposite motion), elevator in two halves, rudder single piece, stabiliser trim (LE down = nose up).
 Jane's: airfoils LS(1)-0417MOD root / LS(1)-0313 tip, Fowler flaps 67 % of TE, T-tail, bullet fairing,
-dorsal fin + ventral strakes, tyres 22×8.50-10 / 17.5×6.25-6, NWS ±60°, exit right over wing (Jane's says
+dorsal fin + ventral strakes, tyres 22×8.50-10 (main: superseded, see below) / 17.5×6.25-6, NWS ±60°, exit right over wing (Jane's says
 Type III; the Pilatus drawing shows a 0.48 × 0.64 m plug hatch, which the model follows).
 EASA TCDS IM.E.008: PT6E-67XP length 1,870.9 mm, diameter 481.8 mm, 2-stage RGB, 2-stage PT, 1-stage
 CT, 4 axial + 1 centrifugal compressor. PC-12 PRO: pilot's direct-vision window deleted; Garmin
 G3000 PRIME (3×14-in + 2×7-in touch displays); PC-24-style yokes; radome enlarged for 12-in GWX 8000.
 NGX: cabin windows rectangular (PC-24 style), 10 % larger; dark windshield surround trim.
 POPA variant guide: "PC-21 style winglets" from Series 10A (MSN 684+). Weather-radar pod on right wing.
+Main tyres: 8.50-10 Type III, 10 PR tubeless (Goodyear 850T06-3 / Michelin 025-350-0 per tyre makers and parts
+listings; OD ~0.64 m, confirmed by four photo measurements and the main/nose OD ratio) — owner decision 2026-09-26,
+superseding Jane's 22×8.50-10 (`model/wheels.py MAIN_TYRE_CHOICE`; sheet L4W).
 
 ## Estimated / reconstructed (open to correction)
 Fuselage contours between anchors (fitted to the Pilatus drawing, RMS 1-2 mm), windshield & side-window

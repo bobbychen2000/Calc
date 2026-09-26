@@ -104,9 +104,9 @@ MAIN_TYRE_22 = PTable(
 )
 
 MAIN_TYRE_OPTIONS = {"22x8.50-10": MAIN_TYRE_22, "8.50-10": MAIN_TYRE_850}
-# the modelled main tyre: Jane's / the Pilatus drawing (pc12/CLAUDE.md sourced facts, sheets L1-L5) until the owner
-# decides; '8.50-10' is the proposed real size (research 2026-09-26: tyre makers, parts lists, photos)
-MAIN_TYRE_CHOICE = os.environ.get("PC12_MAIN_TYRE", "22x8.50-10")
+# the modelled main tyre: the 8.50-10 Type III (OWNER DECISION 2026-09-26: tyre makers, parts lists, four photo methods
+# and the main/nose OD ratio agree; Jane's / the Pilatus drawing 22x8.50-10 is kept as the superseded alternative)
+MAIN_TYRE_CHOICE = os.environ.get("PC12_MAIN_TYRE", "8.50-10")
 if MAIN_TYRE_CHOICE not in MAIN_TYRE_OPTIONS:
     raise ValueError(f"PC12_MAIN_TYRE must be one of {sorted(MAIN_TYRE_OPTIONS)}")
 MAIN_TYRE_ENV = MAIN_TYRE_OPTIONS[MAIN_TYRE_CHOICE]
