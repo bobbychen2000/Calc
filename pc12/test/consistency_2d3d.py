@@ -429,6 +429,8 @@ class Ctx:
         self.by_part = {}
         for r in recs:
             self.by_part.setdefault(r.part, []).append(r)
+            if str(r.part).startswith(("yoke_", "pedal_")):          # flight-deck controls: own parts (review r2 M4)
+                self.by_part.setdefault("flight_deck", []).append(r)
 
     def get(self, part, mats=None, exclude=()):
         return [r for r in self.by_part.get(part, []) if (mats is None or r.mat in mats) and r.mat not in exclude]
@@ -2392,6 +2394,46 @@ def check_L6(ctx, rep, plots):
                 f"{n} seats: fwd / aft end, headrest top, floor", _wl(dev_s, lab_s))
         rep.add("L6", f"{what}: plan extents (both sides) vs L6 outlines", np.array(dev_p), tol,
                 f"{n} seats", _wl(dev_p, lab_p))
+    # ---- crew seat surfaces (review r2 M1: the extents rows passed while the sheepskin stood 14 mm above the drawn
+    #      cushion top and 32 mm ahead of the drawn back front): the highest fleece point in bins along the pan at the
+    #      two thigh-pad centres (seat CL +/- 0.12) against the drawn cushion top (0.025 above the SRP line), and the
+    #      foremost fleece point in bins up the back (s 0.10-0.60, seat CL +/- 0.10) against the drawn front face
+    #      (0.02 + the lumbar bulge ahead of the back line); interior.crew_seat_profile, CREW_SEAT sheepskin_t
+    c = I.CREW_SEAT
+    pr_ = math.radians(float(c["pan_deg"]))
+    br_ = math.radians(float(c["back_deg"]))
+    dev, lab = [], []
+    prof0, _ = I.crew_seat_profile()
+    ftop = prof0["cushion"][:2]                                            # drawn top line (u, v), SRP frame
+    fb = prof0["back"]
+    for side in (-1, 1):
+        pid = "seat_pilot" if side < 0 else "seat_copilot"
+        srp = I.crew_srp(side)
+        Vf = ctx.verts(pid, mats=("sheepskin", "leather_crew"))
+        if not len(Vf):
+            dev.append(1.0)
+            lab.append(f"{pid}: no cushion / back cover")
+            continue
+        u, v, y = srp[0] - Vf[:, 0], Vf[:, 2] - srp[2], Vf[:, 1] - srp[1]
+        a_p = u * math.cos(pr_) + v * math.sin(pr_)
+        n_p = -u * math.sin(pr_) + v * math.cos(pr_)
+        want_p = float(-ftop[0, 0] * math.sin(pr_) + ftop[0, 1] * math.cos(pr_))      # 0.025
+        for yc in (-0.12, 0.12):
+            for a0 in np.arange(0.05, 0.40, 0.05):
+                q = (np.abs(y - yc) < 0.03) & (a_p > a0) & (a_p < a0 + 0.05) & (n_p > -0.05)
+                if q.any():
+                    _ext_dev(dev, lab, f"{pid} cushion top at CL{yc:+.2f}, a {a0:.2f}", float(n_p[q].max()), want_p)
+        s_b = -u * math.sin(br_) + v * math.cos(br_)
+        n_b = u * math.cos(br_) + v * math.sin(br_)
+        fs = fb[1:13]                                                          # the front samples (s, n)
+        fs_s, fs_n = fs @ np.array([-math.sin(br_), math.cos(br_)]), fs @ np.array([math.cos(br_), math.sin(br_)])
+        for s0 in np.arange(0.10, 0.60, 0.05):
+            q = (np.abs(y) < 0.10) & (s_b > s0) & (s_b < s0 + 0.05) & (n_b > -0.03) & (n_b < 0.10)
+            if q.any():
+                _ext_dev(dev, lab, f"{pid} back front at s {s0:.2f}", float(n_b[q].max()),
+                         float(np.interp(s0 + 0.025, fs_s, fs_n)))
+    rep.add("L6", "crew seats: cushion top / back front (sheepskin crown) on the drawn outline (crew_seat_profile)",
+            np.array(dev), tol, "2 seats: pan top at the thigh pads, back front up the back", _wl(dev, lab))
     # ---- seat tracks: the crew tracks (in the crew seat parts: CREW_SEAT rail_dy about the SRP, the x run of the drawn
     #      crew_base_profile rail, SEAT_TRACKS crew_h) and the four cabin tracks (cabin_interior: SEAT_TRACKS bl, x0-x1, h)
     st = I.SEAT_TRACKS

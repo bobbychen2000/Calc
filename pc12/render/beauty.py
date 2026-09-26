@@ -410,7 +410,8 @@ PRESETS = {
         env="hangar", hdri="white_studio_06", sun_az=None, hdri_rot=90.0, strength=1.5, exposure=1.0,
         room=dict(strip_strength=70.0, door=0.3), bounces=(5, 2, 3, 2, 8), samples=24, noise_threshold=0.04,
         white_balance=(5800.0, 0.0), grade=dict(white=0.86, gamma=1.18, sat=1.05),
-        pose=dict(gear=0.0, door_airstair=1.0, pitch=62.0, prop_clock=0.0),
+        # photo 130: the cargo door stands open too (gull-wing up, its white inner face and the cabin showing: r2 F8)
+        pose=dict(gear=0.0, door_airstair=1.0, door_cargo=1.0, pitch=62.0, prop_clock=0.0),
     ),
     "apron_stbd34": dict(
         photo="pro3008_stbd34_pilatus.webp",

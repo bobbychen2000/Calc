@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="C", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-09-26")
+             size="A1", scale="-", rev="D", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-09-26")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -185,10 +185,11 @@ def crew_general(ds, x0, y0, x1, ctx):
          f"cushion with the armrest up (stowed along the back, top {mm(ig['arm_up_top'])} above the floor); divider "
          f"opening {mm(ig['opening'])}"),
         ("room behind the seat back", f"{mm(ig['behind_neutral'])} / {mm(ig['behind_fwd'])}", "neutral / fwd notch"),
-        ("curtain bundle / extinguisher to the seat", f"{sgn(kc['curtain_clear'])} / {sgn(kc['ext_clear'])}",
+        ("curtain to seat / track; extinguisher", f"{sgn(kc['curtain_clear'])} / {sgn(kc['curtain_track'])} / "
+         f"{sgn(kc['ext_clear'])}",
          f"aft notch: the stowed curtain ({'LH' if I.DIVIDER['curtain'][0] < 0 else 'RH'}, "
-         f"{mm(I.DIVIDER['curtain'][2])} deep [E]) to the seat back below its flare top; the bottle to the co-pilot "
-         "seat's back / plate"),
+         f"{mm(I.DIVIDER['curtain'][2])} deep [E]) to the seat back below its flare top and to the crew track's aft "
+         "end; the bottle to the co-pilot seat's back / plate"),
     ]
     return wtable(ds, x0, y0, [("CREW STATION", 52.0, "l"), ("VALUE", 46.0, "r"), ("NOTE", x1 - x0 - 98.0, "l")],
                   rows, title="CREW STATION - GENERAL (mm)")
@@ -566,7 +567,8 @@ def _height(fn, width, ctx):
 
 REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
              ("B", "2026-09-24", "Stage-2 parameter tables, checks; review r1"),
-             ("C", "2026-09-26", "review r2 + r3 (list on sheet 1): sensitivity, CG cross-check, 5th-female point"))
+             ("C", "2026-09-26", "review r2 + r3 (list on sheet 1): sensitivity, CG cross-check, 5th-female point"),
+             ("D", "2026-09-26", "Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

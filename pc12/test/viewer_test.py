@@ -349,6 +349,53 @@ async def numeric_checks(page):
     check("left aileron tab trim +5: tab TE down, right tab unaffected", t["tL"][1] < -0.002 and abs(t["tR"][1]) < 1e-6,
           f"L {t['tL'][1]*1000:+.1f} mm, R {t['tR'][1]*1000:+.2f} mm")
 
+    # --- crew controls (review r2 M4): the yokes roll with the roll command about their columns and slide with pitch,
+    #     the rudder pedals swing with yaw (right rudder: right-foot pedals forward = -Z)
+    r = await js(page, r"""
+      const V = window.viewer, out = {};
+      T.neutral();
+      if (!V._internals.model.part('yoke_L')) return {missing: true};
+      const hub = V.nodeWorldPoint('yoke_L', [0, 0, 0]);
+      const g0 = [hub[0] + 0.12, hub[1] + 0.08, hub[2]];               // a point up the right grip (gl: +X = stbd)
+      const loc = T.attach('yoke_L', g0);
+      const pads = {};
+      for (const id of ['pedal_LL', 'pedal_LR']) { const b = T.box(id); const p = [b.center[0], b.max[1] - 0.02, b.center[2]]; pads[id] = {p0: p, loc: T.attach(id, p)}; }
+      V.setControls({roll: 1}, {instant: true});
+      out.rollR = T.sub(T.world('yoke_L', loc), g0);
+      V.setControls({roll: 0, pitch: 1}, {instant: true});
+      out.pull = T.sub(V.nodeWorldPoint('yoke_L', [0, 0, 0]), hub);
+      V.setControls({pitch: 0, yaw: 1}, {instant: true});
+      out.yawR = {L: T.sub(T.world('pedal_LL', pads.pedal_LL.loc), pads.pedal_LL.p0), R: T.sub(T.world('pedal_LR', pads.pedal_LR.loc), pads.pedal_LR.p0)};
+      T.neutral();
+      return out;
+    """)
+    if r.get("missing"):
+        check("crew controls are viewer parts (yoke_L / pedals)", False, "yoke_L not in the GLB")
+    else:
+        check("right roll: the pilot's yoke turns clockwise (right grip goes down)", r["rollR"][1] < -0.03,
+              f"grip point dY {r['rollR'][1]:+.3f} m")
+        check("pull: the yoke comes aft (+Z) by the pitch travel", abs(r["pull"][2] - 0.09) < 0.005,
+              f"hub dZ {r['pull'][2]:+.3f} m")
+        check("right rudder: right-foot pedal forward, left-foot pedal aft", r["yawR"]["R"][2] < -0.03 and
+              r["yawR"]["L"][2] > 0.03, f"pad dZ R {r['yawR']['R'][2]:+.3f}, L {r['yawR']['L'][2]:+.3f} m")
+    # --- the cutaway clips the cabin furniture / divider port half, not the seats or the controls (review r2 M3)
+    r = await js(page, r"""
+      const V = window.viewer, I = V._internals, out = {};
+      V.setCutaway(true);
+      const clipped = (id, mat) => I.model.part(id).meshes.filter((mr) => !mat || mr.base.name === mat)
+                                   .map((mr) => (mr.mesh.material.clippingPlanes || []).length > 0);
+      out.divider = clipped('flight_deck', 'veneer_walnut');
+      out.ledge = clipped('cabin_interior', 'ledge_top');
+      out.panel = clipped('flight_deck', 'panel_grey');
+      out.seat = clipped('seat_pax1');
+      out.yoke = clipped('yoke_L');
+      V.setCutaway(false);
+      return out;
+    """)
+    check("cutaway clips the divider and the cabin ledges (their port halves), not the panel, seats or yokes",
+          all(r["divider"]) and all(r["ledge"]) and not any(r["panel"]) and not any(r["seat"]) and not any(r["yoke"]),
+          json.dumps(r))
+
     # --- gear: mains inward, nose aft, nose doors open between the locks
     r = await js(page, r"""
       const V = window.viewer, out = {};
@@ -922,7 +969,8 @@ reset()
 for g in ("gear_main_R", "gear_main_L"): pose_gear(g, 1.0)
 res["mains_up_vs_flaps"] = pairs(["gear_main_R", "gear_main_L"], ["flap_R", "flap_L", "flap_fairings"])
 pose_gear("gear_nose", 1.0)
-res["nose_up_vs_flight_deck"] = pairs(["gear_nose"], ["flight_deck"])
+res["nose_up_vs_flight_deck"] = pairs(["gear_nose"], ["flight_deck"] + [k for k in parts if k.startswith(("yoke_",
+                                                                                                      "pedal_"))])
 reset()
 out["interference"] = res
 json.dump(out, open(args["out"], "w"))

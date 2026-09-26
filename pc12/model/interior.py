@@ -152,6 +152,10 @@ CREW_SEAT = dict(
     pan_deg=P(7.0, "[E] seat pan, front up"),
     pan_depth=P(0.48, "[M] SRP to cushion front (render 3.72)"),
     cushion_t=P(0.090, "[E] cushion + sheepskin; top 0.025 above the SRP line (undeflected)"),
+    sheepskin_t=P(0.034, "[M] grey sheepskin covers (PRO s/n 3001: P1046408 / 10, AOPA), INSIDE the drawn outline: the "
+                         "cushion top and the back front (0.02 + lumbar ahead of the back line) are the fleece's "
+                         "undeflected crown, the leather cushion / back front lie this far inside them (review r2 M1: "
+                         "the 3-D cover sat on top of the drawn cushion, +14 mm / +32 mm)"),
     cushion_w=P(0.46, "[M] face-on photo: two thigh-pad lobes (outboard half 0.23)"),
     cushion_in=P(0.185, "[E] inboard half-width of pan + cushion: trimmed from 0.23 so the seat clears the "
                         "nose-tunnel plinth (gear, hard) by 15 over the whole x / z travel; photos: symmetric"),
@@ -213,10 +217,12 @@ YOKE = dict(
     hub_bot_w=P(0.045, "[M] the Y hub narrows to a stem this wide at its bottom (JTF cockpit key item 15)"),
     span=P(0.285, "[M] grips overall, outer edge to outer edge at their bottoms (JTF cockpit key, P1046408 with the "
                   "0.14 hub for scale); PC-24-style yoke [S]"),
-    grip=PT((0.125, 0.020, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
-                                  "key: tops +/-0.10, bottoms +/-0.125 from the hub CL; P1046408 ~8 deg)"),
+    grip=PT((0.140, 0.0155, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
+                                   "key: tops +/-0.10, bottoms +/-0.125 from the hub CL; P1046408 ~8 deg); review r2 F2 "
+                                   "(P1046408 pair: slim paddles 55 px against the render's 70 px, rising well above "
+                                   "the hub): radius 0.020 -> 0.0155, length 0.125 -> 0.140 (the tops 15 mm higher)"),
     grip_dz=P(-0.040, "[M] grip bottoms 0.04 below the hub centre, near the hub bottom (JTF key: grips WL 1.80-1.93 "
-                      "on hub 1.79-1.90; P1046408 -0.05..+0.09); tops about level with the hub top (AOPA photo)"),
+                      "on hub 1.79-1.90; P1046408 -0.05..+0.09); tops ~0.04 above the hub top (P1046408)"),
     column_r=P(0.022, "[E] horizontal column into the lower panel"),
     travel=PT((-0.090, 0.090), "[E] pitch travel fwd / aft of neutral"),
     roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it"),
@@ -627,6 +633,18 @@ def _capsule(a, b, r, n=16):
     return _hull(np.vstack([np.asarray(a, float) + c, np.asarray(b, float) + c]))
 
 
+def _offset_line(P, d):
+    """Open 2-D polyline P moved by d along its left-hand normals (d < 0: to the right), mitred at the vertices."""
+    P = np.asarray(P, float)
+    T = np.diff(P, axis=0)
+    T /= np.linalg.norm(T, axis=1, keepdims=True)
+    Ns = np.c_[-T[:, 1], T[:, 0]]                                       # left normal per segment
+    Nv = np.vstack([Ns[:1], Ns[:-1] + Ns[1:], Ns[-1:]])
+    Nv /= np.linalg.norm(Nv, axis=1, keepdims=True)
+    cosh = np.r_[1.0, np.einsum("ij,ij->i", Nv[1:-1], Ns[1:]), 1.0]
+    return P + d * Nv / np.maximum(cosh, 0.3)[:, None]
+
+
 def _rot(P, c, deg):
     """Rotate the points P counter-clockwise by deg about c (2-D)."""
     a = math.radians(deg)
@@ -667,6 +685,12 @@ def crew_seat_profile(head_c=None, recline=0.0, arm_up=False):
     top = np.array([ctop + r_top * (math.cos(math.radians(a)) * nb + math.sin(math.radians(a)) * db)
                     for a in np.linspace(0.0, 180.0, 9)])
     out["back"] = np.vstack([[0.0 * db + 0.02 * nb], front, top, rear[::-1], [0.0 * db - (tl - 0.02) * nb]])
+    # sheepskin covers inside the outline (sheepskin_t): the band under the cushion top + front slope and behind the
+    # back's front face; the leather cushion / back front are the bands' inner edges (review r2 M1)
+    sk = c["sheepskin_t"]
+    seat_top = out["cushion"][:3]
+    out["fleece_seat"] = np.vstack([seat_top, _offset_line(seat_top, -sk)[::-1]])
+    out["fleece_back"] = np.vstack([front, _offset_line(front, sk)[::-1]])
     # headrest on two stalks
     hh, hw, ht = c["head_hwt"]
     s0, s1 = hc - 0.5 * hh, hc + 0.5 * hh
@@ -719,10 +743,12 @@ def crew_base_profile(vf):
     vest = np.array([(u1 - lv[0], vf + 0.035), (u1, vf + 0.035), (u1, vf + 0.035 + lv[2]),
                      (u1 - lv[0], vf + 0.035 + lv[2])])
     th = SEAT_TRACKS["crew_h"]
-    # the tracks are fixed (drawn at the neutral notch): they run 10 mm past the front foot tip and 40 mm past the rear
+    # the tracks are fixed (drawn at the neutral notch): they run 10 mm past the front foot tip and 15 mm past the rear
     # one with the seat at either end of its travel_x (rev C: +0.05 / -0.11 at neutral, the front feet overhung the
-    # track end by 20 mm at full forward travel -- Stage 3 fit_check 18)
-    r0, r1 = ur - c["travel_x"] - 0.04, uf + c["travel_x"] + 0.01
+    # track end by 20 mm at full forward travel -- Stage 3 fit_check 18; review r2 M2: 40 mm past the rear foot put the
+    # track end 14-17 mm into the foot of the stowed divider curtain; 15 mm leaves it 11 mm clear, crew_checks
+    # 'curtain_track')
+    r0, r1 = ur - c["travel_x"] - 0.015, uf + c["travel_x"] + 0.01
     rail = np.array([(r0, vf), (r1, vf), (r1, vf + th), (r0, vf + th)])
     return dict(plate=plate, vest=vest, rail=rail)
 
@@ -1246,7 +1272,8 @@ def curtain_band():
 def divider_items_clearance():
     """Clearances (m) at the aft notch: the stowed curtain bundle to the seat back / headrest on its side (below the
     bundle's flare top), and the extinguisher bottle to the co-pilot seat (back, armrest, side plates within the bottle's
-    height); both headrest locks tested (the worse kept)."""
+    height); both headrest locks tested (the worse kept); 'curtain_track': the fixed crew tracks' aft ends to the
+    bundle's forward face (tracks under the bundle only; inf when none)."""
     c = CREW_SEAT
     fl = FLOOR["fd_wl"]
     x0, x1, y0, y1, zt, _ = curtain_bundle()
@@ -1270,6 +1297,18 @@ def divider_items_clearance():
                 if m.any():
                     worst = min(worst, float(xa - X[m].max()))
         out[key] = worst
+    # the fixed crew tracks (drawn at the neutral notch) vs the foot of the stowed curtain bundle: the aft track end to
+    # the bundle's forward face, for every track under the bundle (review r2 M2)
+    gap = np.inf
+    for side in (-1, 1):
+        srp = crew_srp(side)
+        rl = crew_base_profile(fl - srp[2])["rail"]
+        for sg in (-1, 1):
+            yt = srp[1] + sg * c["rail_dy"]
+            if yt + 0.5 * SEAT_TRACKS["w"] < y0 or yt - 0.5 * SEAT_TRACKS["w"] > y1:
+                continue
+            gap = min(gap, float(x0 - (srp[0] - rl[:, 0].min())))
+    out["curtain_track"] = gap
     return out
 
 

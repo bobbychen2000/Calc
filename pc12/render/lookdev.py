@@ -416,9 +416,10 @@ SPEC.update({
     "leather_crew_shell": dict(kind="dielectric", base=(0.042, 0.044, 0.048), rough=0.50, spec=0.4,
                                note="crew-seat anthracite back shell / headrest back"),
     "sheepskin":          dict(kind="dielectric", base=(0.36, 0.33, 0.35), rough=1.00, spec=0.15, sheen=1.0,
-                               sheen_rough=0.45, fleece=dict(scale=140.0, strength=0.9, dist=0.006, mottle=0.18),
+                               sheen_rough=0.45, fleece=dict(scale=70.0, strength=1.0, dist=0.011, mottle=0.28),
                                note="grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm "
-                                    "mauve-grey: AOPA / P1046408-10, review r1 F3)"),
+                                    "mauve-grey: AOPA / P1046408-10, review r1 F3; bump / mottle coarsened to read "
+                                    "at the panel camera's distance, review r2 F4)"),
     "seat_base_black":    dict(kind="dielectric", base=(0.022, 0.022, 0.025), metallic=0.3, rough=0.45,
                                note="black-anodised seat base, pan, life-vest box"),
     "harness":            dict(kind="dielectric", base=(0.069, 0.072, 0.080), rough=0.80, spec=0.25,
@@ -431,8 +432,10 @@ SPEC.update({
     # flight deck
     "panel_dark":         dict(kind="dielectric", base=(0.040, 0.041, 0.044), metallic=0.25, rough=0.48, spec=0.25,
                                note="graphite instrument-panel face"),
-    "panel_grey":         dict(kind="dielectric", base=(0.21, 0.205, 0.198), metallic=0.45, rough=0.38,
-                               note="brushed titanium-grey sub-panels, eyebrow, centre stack"),
+    "panel_grey":         dict(kind="dielectric", base=(0.33, 0.305, 0.325), metallic=0.18, rough=0.45,
+                               note="warm titanium-grey panel: the PDU face and cheeks, sub-panels, eyebrow, centre "
+                                    "stack (P1046408 pair: one warm metallic surface, knee panel 127/116/125, review "
+                                    "r2 F3; was 0.21 grey with a graphite face)"),
     "panel_silver":       dict(kind="dielectric", base=(0.46, 0.46, 0.45), metallic=0.55, rough=0.32,
                                note="light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)"),
     "leather_glareshield": dict(kind="dielectric", base=(0.055, 0.055, 0.058), rough=0.62, spec=0.25,

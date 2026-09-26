@@ -593,6 +593,25 @@ def _runs(keep):
     return [r for r in out if len(r) > 1]
 
 
+def _back_face(m, d=0.0008):
+    """The back of a single-sided band: a copy d behind it (against its face normals), wound the other way -- the tan
+    jamb band faces into the opening, and from the cabin the well showed its back side in the same tan (review r2 F7)."""
+    q = m.copy().compute_normals()
+    return Mesh(q.V - d * q.N, q.F[:, ::-1].copy()).compute_normals()
+
+
+def _open_runs(flag):
+    """[(indices, value)] of the maximal runs of equal values in an OPEN boolean sequence, each run extended by one
+    index into the next so consecutive runs share their boundary point (no gap between the strips)."""
+    flag = np.asarray(flag, bool)
+    out, i0 = [], 0
+    for i in range(1, len(flag) + 1):
+        if i == len(flag) or flag[i] != flag[i0]:
+            out.append((np.arange(i0, min(i + 1, len(flag))), bool(flag[i0])))
+            i0 = i
+    return out
+
+
 def _rim_open(V, N, d0, d1):
     """Strip along an open polyline V (normals N) from depth d0 to d1 inward (a jamb band)."""
     a, b = V - d0 * N, V - d1 * N
@@ -647,10 +666,25 @@ def build_doors(parts_out):
                 Lv, Ln = st.V[loop], st.N[loop]
                 sx, sz = Lv[:, 0] + (DOOR_T + 0.004) * Ln[:, 0], Lv[:, 2] + (DOOR_T + 0.004) * Ln[:, 2]
                 keep = (np.abs(rr((sx, sz), o)) < 0.003) & (hband(sz) > 0)     # on the clear opening, off the hinge
+                # the airstair's top (free-edge) and forward jambs are lining over their whole depth: they face the
+                # cabin, and through the closed door's 8 mm inner-body gap their tan outer band showed as an arc from
+                # the club (review r2 F7, fd_ngx2281 entry photos: white frame); the aft jamb, which faces forward to
+                # the photos 130 / 188 cameras with the door open, keeps the tan band
+                bottom_hinged = o.get("hinge") == "bottom"
+                ztop = o["cz"] + o["hz"] - o["r"] - 0.02
                 for a in _runs(keep):
                     Lr, Nr = Lv[a], Ln[a]
-                    jambs.append(_into_opening(_rim_open(Lr, Nr, 0.0, JAMB_TAN), o))
-                    jambs_in.append(_into_opening(_rim_open(Lr, Nr, JAMB_TAN, JAMB_D), o))
+                    up = ((Lr[:, 2] + (DOOR_T + 0.004) * Nr[:, 2] > ztop) | (Lr[:, 0] < o["cx"])) & bottom_hinged
+                    for seg, in_top in _open_runs(up):
+                        if len(seg) < 2:
+                            continue
+                        if in_top:
+                            jambs_in.append(_into_opening(_rim_open(Lr[seg], Nr[seg], 0.0, JAMB_D), o))
+                        else:
+                            tan = _into_opening(_rim_open(Lr[seg], Nr[seg], 0.0, JAMB_TAN), o)
+                            jambs.append(tan)
+                            jambs_in.append(_back_face(tan))          # its back, seen from the cabin in the well
+                            jambs_in.append(_into_opening(_rim_open(Lr[seg], Nr[seg], JAMB_TAN, JAMB_D), o))
     s = Part("door_frames", "Door surrounds, seals, stops & jambs", "doors", group="Doors",
              material_note="Machined door frames")
     s.add(Mesh.merge(seams), "seam").add(Mesh.merge(jambs), "jamb").add(Mesh.merge(stops), "jamb")

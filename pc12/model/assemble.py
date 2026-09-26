@@ -69,7 +69,7 @@ MATERIALS = {
     "seat_back_shell":    ((0.15, 0.155, 0.165), 0.0, 0.55, dict(specular=0.7)),   # mid-grey exec back rear shell
     # flight deck: graphite panel face, brushed titanium-grey sub-panels / stack, grey leather hood, dark carpet
     "panel_dark":          ((0.040, 0.041, 0.044), 0.25, 0.48, dict(specular=0.5)),
-    "panel_grey":          ((0.21, 0.205, 0.198), 0.45, 0.38),
+    "panel_grey":          ((0.33, 0.305, 0.325), 0.18, 0.45),
     # light brushed silver: overhead panel face, yoke-hub centre insert (P1046406 / AOPA overhead, P1046408 yoke)
     "panel_silver":        ((0.46, 0.46, 0.45), 0.55, 0.32),
     "leather_glareshield": ((0.055, 0.055, 0.058), 0.0, 0.62, dict(specular=0.5)),

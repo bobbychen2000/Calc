@@ -375,10 +375,12 @@ def _panel_face(acc):
     inside = (np.abs(C[:, 1]) < ry - 1e-6) & (C[:, 2] > rz0 + 1e-6) & (C[:, 2] < rz1 - 1e-6)
     m.F = m.F[~inside]
     m.compact()
-    acc.add(_oriented(m, N_AFT), "panel_dark")
+    # the face round the PDUs: the same warm titanium grey as the sub-panels (P1046408: one metallic surface, black
+    # only on the bezels and switch blocks: review r2 F3)
+    acc.add(_oriented(m, N_AFT), "panel_grey")
     # lower edge return (the face is a moulding, not a sheet): 40 mm forward under the bottom edge
     bot = P[:, 0]
-    acc.add(_oriented(_strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_dark")
+    acc.add(_oriented(_strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_grey")
     # recess (black box behind the PDU row)
     fr = Fr([I.panel_x(ZM), 0.0, ZM], [0, 1.0, 0], V_UP)
     d = DETAIL["recess_depth"]
@@ -557,7 +559,9 @@ def _glareshield(acc):
     for G, mat, hint in ((hood, "leather_glareshield", [0.1, 0, 1.0]), (lip, "leather_glareshield", [1.0, 0, 0.3]),
                          (fas, "panel_grey", [1.0, 0, 0.1]), (sof, "panel_dark", [0, 0, -1.0])):
         P = _clamp_lining(np.array(G), 0.004, cheek)
-        acc.add(_oriented(grid_surface(P), hint), mat)
+        # normals from the final faces (the grid's own one-sided differences at the windshield row pointed against the
+        # winding on 1.6 % of the hood: review r2 N1 check)
+        acc.add(_oriented(grid_surface(P).compute_normals(), hint), mat)
     # contrast stitching along the hood, 8 mm ahead of the lip (brochure p.10)
     H = np.array(hood)
     st = H[:, -1] + (H[:, -2] - H[:, -1]) * (0.008 / np.linalg.norm(H[0, -2] - H[0, -1]))
@@ -907,17 +911,25 @@ def _yokes(acc):
 
     def lean(a, b, c):
         return -lean_k * np.clip(b + 0.055, 0.0, None) * np.clip(c / hd, 0.0, 1.0)
-    # black body: the drawn hub outline, c 0.004 .. hd - 0.012 (+ dome)
-    body_ol = S.fillet(raw, 0.014, max_len=0.012)
+    # black body: the drawn hub outline (c 0.004 .. hd - 0.012, + dome) with its top edge lowered 10 mm between the
+    # grips, under the white shield's top (review r2 F2: it showed as a black crossbar above the shield)
+    body_ol = raw.copy()
+    top = body_ol[:, 1] > 0.5 * hh
+    body_ol[top, 1] -= 0.010
+    body_ol = S.fillet(body_ol, 0.014, max_len=0.012)
     cb0, cbt = 0.004, hd - 0.016
     body = S.pillow(body_ol, cbt, 0.010, 0.005, h=0.012, crown=S.dome(0.003, 0.012), n_round=2)
     body = body.map(lambda V: V + [0.0, 0.0, cb0])
-    # white V-shield: top edge +/-0.074 at the hub top, sides down to the rounded stem [M: P1046408]
-    half = [(0.012, -0.052), (0.022, -0.047), (0.030, -0.036), (0.040, -0.020), (0.052, 0.002), (0.063, 0.026),
-            (0.074, 0.058)]
-    shield = S.fillet(np.r_[[(u, v) for u, v in half], [(-u, v) for u, v in half[::-1]]], 0.010, max_len=0.005)
+    # white shield: from the rounded stem its shoulders sweep up and out INTO THE GRIP ROOTS and its top edge runs
+    # from grip to grip at the hub top [M: P1046408 pair, review r2 F2], ending on each grip's inner edge
+    gi = lambda z: I.yoke_grip_y(z, 1) - 0.94 * gr                     # noqa: E731 -- grip inner edge at z
+    half = [(0.012, -0.052), (0.022, -0.047), (0.032, -0.037), (0.046, -0.024), (0.064, -0.010), (gi(0.004), 0.004),
+            (gi(0.056), 0.056)]
+    shield = S.fillet(np.r_[[(u, v) for u, v in half], [(-u, v) for u, v in half[::-1]]],
+                      [0.010, 0.010, 0.010, 0.010, 0.010, 0.0095, 0.0095, 0.0095, 0.0095, 0.010, 0.010, 0.010, 0.010,
+                       0.010], max_len=0.005)
     # recessed silver insert: badge panel narrowing to a rounded tongue [M: P1046408 / 09]
-    insert = np.array([(0.011, -0.030), (0.020, -0.004), (0.029, 0.026), (0.031, 0.047), (-0.031, 0.047),
+    insert = np.array([(0.011, -0.030), (0.020, -0.004), (0.029, 0.026), (0.031, 0.0435), (-0.031, 0.0435),
                        (-0.029, 0.026), (-0.020, -0.004), (-0.011, -0.030)])
     insert = S.fillet(insert, 0.008, max_len=0.003)
     rec = 0.0028
@@ -938,6 +950,7 @@ def _yokes(acc):
                                           4: "yoke_white"})
     body.mats = {0: "grip_black", 1: "grip_black", 2: "grip_black"}
     for sg in (-1, 1):
+        acc.group = "yoke_" + SIDE[sg]                                  # own part + pivot (review r2 M4)
         hub = I.yoke_hub(sg)
         xf = float(I.panel_x(hub[2]))
         fr = Fr([hub[0], hub[1], hub[2]], [0, 1.0, 0], [0, 0, 1.0])          # w = aft, c = 0 at the hub face
@@ -949,13 +962,13 @@ def _yokes(acc):
             c = _top_height(g, a, b)
             return c + float(lean(np.array(a), np.array(b), np.array(c)))
         # badge on the insert floor, TCS on the white inboard shoulder, AFCS DISC on the black shoulder
-        cbg = on(white, 0.0, 0.036)
-        acc.add(fr.se(0.0, 0.036, cbg + 0.0004, (0.016, 0.0032, 0.0012), (0.3, 0.3), (6, 12)), "metal")
-        ib = -sg
-        c_t = on(white, ib * 0.055, 0.040)
-        acc.add(fr.knob(ib * 0.055, 0.040, 0.0068, 0.0055, 16, c_t - 0.0015), "black")
-        c_r = on(body, ib * 0.072, 0.026)
-        acc.add(fr.knob(ib * 0.072, 0.026, 0.0046, 0.0045, 12, c_r - 0.0015), "light_red")
+        cbg = on(white, 0.0, 0.034)
+        acc.add(fr.se(0.0, 0.034, cbg + 0.0004, (0.016, 0.0032, 0.0012), (0.3, 0.3), (6, 12)), "metal")
+        ob = sg                                                        # both on the outboard white shoulder
+        c_t = on(white, ob * 0.070, 0.041)                             # (P1046408 pair: black TCS above the red
+        acc.add(fr.knob(ob * 0.070, 0.041, 0.0068, 0.0055, 16, c_t - 0.0015), "black")      # AFCS DISC)
+        c_r = on(white, ob * 0.082, 0.016)
+        acc.add(fr.knob(ob * 0.082, 0.016, 0.0046, 0.0045, 12, c_r - 0.0015), "light_red")
         # grips on the canted axes (interior.yoke_grip_axis, radius YOKE grip), centred in the hub slab
         for d in (-1, 1):
             p0, p1 = I.yoke_grip_axis(d)
@@ -985,6 +998,41 @@ def _yokes(acc):
                          float(YK["column_r"]), n=16), "steel")
 
 
+SIDE = {-1: "L", 1: "R"}
+
+
+def control_pivots():
+    """{group / part id: pivot} of the crew controls built as their own parts (review r2 M4), model axes:
+    yoke_L / yoke_R: kind 'yoke' -- origin the hub centre, axis along the column pointing FORWARD (a + rotation is a
+    right roll, clockwise as the pilot sees it), roll_deg = YOKE roll, travel = the column's pitch travel along +x (aft)
+    at full pull / full push (YOKE travel);
+    pedal_<seat><foot> (LL, LR, RL, RR): kind 'pedal' -- origin the floor hinge (PEDALS pivot), axis +y, travel_deg =
+    the rotation that moves the pad PEDALS travel, gearing +1 for the right-foot pedals (forward with right rudder), -1
+    for the left: angle = -gearing x yaw x travel_deg (+ yaw = right rudder; a - rotation about +y swings the pad
+    forward)."""
+    out = {}
+    t0, t1 = (float(v) for v in YK["travel"])
+    for sg in (-1, 1):
+        hub = I.yoke_hub(sg)
+        out["yoke_" + SIDE[sg]] = dict(origin=tuple(float(v) for v in hub), axis=(-1.0, 0.0, 0.0), kind="yoke",
+                                       roll_deg=float(YK["roll"]), travel_pull=(t1, 0.0, 0.0),
+                                       travel_push=(t0, 0.0, 0.0), note="interior.YOKE roll / travel")
+    pp = I.pedal_points(0.0)
+    d = np.array([pp["dir"][0], pp["dir"][1]])
+    pl = float(PD["pad_wh"][1])
+    hx, hz = (float(v) for v in PD["pivot"])
+    pad = pp["heel"] + (0.06 + 0.5 * pl) * d
+    arm = float(np.hypot(pad[0] - hx, pad[1] - (FL + hz)))
+    tdeg = math.degrees(float(PD["travel"]) / arm)
+    for sg in (-1, 1):
+        for dd in (-1, 1):
+            yc = sg * float(I.CREW_SEAT["bl"]) + dd * float(PD["dy"])
+            out["pedal_" + SIDE[sg] + SIDE[dd]] = dict(origin=(hx, yc, FL + hz), axis=(0.0, 1.0, 0.0), kind="pedal",
+                                                     travel_deg=tdeg, gearing=float(dd),
+                                                     note="interior.PEDALS travel at the pad")
+    return out
+
+
 def _pedals(acc):
     """Rudder pedals at neutral crank (interior.pedal_points): pads at seat CL +/- PEDALS dy on the drawn face line,
     floor-hinged arms (PEDALS pivot), toe-brake master cylinders, the adjustment crank between each pair."""
@@ -996,6 +1044,7 @@ def _pedals(acc):
     hx, hz = (float(v) for v in PD["pivot"])
     for sg in (-1, 1):
         for dd in (-1, 1):
+            acc.group = "pedal_" + SIDE[sg] + SIDE[dd]                  # own part + pivot (review r2 M4)
             yc = sg * float(I.CREW_SEAT["bl"]) + dd * float(PD["dy"])
             s_c = 0.06 + 0.5 * pl
             f = Fr(heel + s_c * d + [0.0, yc, 0.0], [0, 1.0, 0], d)
@@ -1010,6 +1059,7 @@ def _pedals(acc):
                 acc.add(cylinder(piv + off, top + off, 0.006, n=8), "metal_dark")
             acc.add(cylinder(piv + [0.02, 0, 0.004], low, 0.007, n=8), "metal_dark")
             acc.add(cylinder(piv + [0.01, 0, 0.018], f.p(0.0, 0.0, -0.012), 0.011, n=10), "steel")   # brake cyl.
+            acc.group = "pedals"
             acc.add(box([hx, yc, FL + 0.5 * (hz + 0.010)], (0.040, 0.075, hz + 0.010)), "metal_dark")  # hinge
             #                                                       bracket up to the pivot (review r1 C5)
         # adjustment crank between each pair (POH 7-3-4)
@@ -1088,9 +1138,12 @@ def _consoles(acc):
                 y = sg * (float(L.hw(x, z)) - 0.006)
                 acc.add(cylinder([x, y, z], [x, y - sg * 0.011, z], kr, n=8), "metal_dark")
             zl = z - 0.019
-            yl = sg * (float(L.hw(0.5 * (cx0 + cx1), zl)) - 0.0065)
-            acc.add(box([0.5 * (cx0 + cx1), yl, zl], (cx1 - cx0 - 0.05, 0.001, 0.003)),
-                    "screen_cyan" if sg < 0 else "screen_green")
+            # lit legend strip following the curved panel face 0.5 mm in front of it (a straight box was buried at
+            # one end: fit_check 22b)
+            xs_ = np.linspace(cx0 + 0.025, cx1 - 0.025, 8)
+            G_ = np.stack([np.stack([xs_, sg * (L.hw(xs_, np.full(8, zz)) - 0.0065), np.full(8, zz)], -1)
+                           for zz in (zl - 0.0015, zl + 0.0015)], 1)
+            acc.add(_oriented(grid_surface(G_), [0, -sg, 0]), "screen_cyan" if sg < 0 else "screen_green")
 
 
 # =====================================================================================================================
@@ -1144,13 +1197,25 @@ def _overhead(acc):
     # SAFETY AUTOLAND cup + two eyeball outlets aft of the panel
     ax_, ay_, asz = (float(v) for v in OV["autoland"])
     zc_ = float(L.crown(ax_, ay_))
-    fa = Fr([ax_, ay_, zc_ - 0.002], [1.0, 0, 0], [0, -1.0, 0])
+    # a proud square bezel on the headliner with the cup inside it (the lining is not cut: the old cup went 8 mm INTO
+    # the headliner, so only a 2 mm ring of it showed -- found by fit_check 22b, review r2 C2 check); w = down
+    e_ = 0.004
+    dzx = float(L.crown(ax_ + e_, ay_) - L.crown(ax_ - e_, ay_)) / (2 * e_)
+    dzy = float(L.crown(ax_, ay_ + e_) - L.crown(ax_, ay_ - e_)) / (2 * e_)
+    nd = _unit([dzx, dzy, -1.0])                                      # headliner normal into the cabin
+    ux = _unit([1.0, 0.0, dzx])
+    fa = Fr(np.array([ax_, ay_, zc_]) + 0.002 * nd, ux, np.cross(nd, ux))   # w = nd: on the local tangent plane
     O2 = rrect_loop(0.5 * asz, 0.5 * asz, 0.012, 4)
     In2 = rrect_loop(0.5 * asz - 0.010, 0.5 * asz - 0.010, 0.006, 4)
-    acc.add(_oriented(_strip(fa.p(O2[:, 0], O2[:, 1]), fa.p(In2[:, 0], In2[:, 1], -0.010)), fa.w), "panel_grey")
-    acc.add(fa.poly(In2, -0.010), "panel_dark")
-    acc.add(fa.knob(0, 0, 0.016, 0.008, 20, -0.010), "paint_red")
-    acc.add(fa.disk(0, 0, 0.019, -0.0095, 24, r_inner=0.016), "light_red")
+    acc.add(_oriented(_strip(fa.p(O2[:, 0], O2[:, 1], -0.004), fa.p(O2[:, 0], O2[:, 1], 0.012)),
+                      lambda C: C - fa.o), "panel_grey")
+    acc.add(_oriented(_strip(fa.p(O2[:, 0], O2[:, 1], 0.012), fa.p(In2[:, 0], In2[:, 1], 0.012), closed=True),
+                      fa.w), "panel_grey")
+    acc.add(_oriented(_strip(fa.p(In2[:, 0], In2[:, 1], 0.012), fa.p(In2[:, 0], In2[:, 1], 0.004)),
+                      lambda C: fa.o - C), "panel_grey")
+    acc.add(_oriented(fa.poly(In2, 0.004), fa.w), "panel_dark")
+    acc.add(fa.knob(0, 0, 0.016, 0.006, 20, 0.004), "paint_red")
+    acc.add(fa.disk(0, 0, 0.019, 0.0045, 24, r_inner=0.016), "light_red")
     for by in (-0.070, 0.070):
         x = xb + 0.065
         fe = Fr([x, by, float(L.crown(x, by)) - 0.002], [1.0, 0, 0], [0, -1.0, 0])
@@ -1214,6 +1279,7 @@ def _divider(acc):
         else:
             acc.add(box([xa + 0.0015, edge + 0.10, FL + 1.20], (0.002, 0.07, 0.035)), "bezel_black")
     # curtain track across the opening at the headliner (fwd face) and the stowed bundle at the stow-side edge
+    from model import seats as S_
     x0, x1, y0, y1, zt, xt = I.curtain_bundle()
     ys = np.linspace(ob0 - 0.02, ob1 + 0.02, 30)
     path = np.c_[np.full(30, xt), ys, L.crown(xt, ys) - 0.008]
@@ -1248,7 +1314,9 @@ def _divider(acc):
         e = 0.35
         rx = np.sign(cx_) * np.abs(cx_) ** e
         ry = np.sign(cy_) * np.abs(cy_) ** e
-        pleat = 1.0 + amp * np.sin(7 * phi + 0.9 * math.sin(9.0 * z))       # vertical folds
+        # vertical folds, fading out on the side against the divider face, which clips the bundle flat there (a fold
+        # clipped flat folded the ring over itself: review r2 N1)
+        pleat = 1.0 + amp * np.sin(7 * phi + 0.9 * math.sin(9.0 * z)) * (1.0 - S_.smoothstep(0.2, 0.7, cx_))
         X = np.clip(xc_ + hx * rx * pleat, None, x1 - 0.0005)
         Y = yc_ + hy * ry * pleat
         rings.append(np.c_[X, Y, np.full(na, z)])
@@ -1325,13 +1393,33 @@ def build(parts, ceiling=None):
                    "design eye": f"STA {e[0] * 1000:,.0f} / BL +/-{abs(e[1]) * 1000:.0f} / WL {e[2] * 1000:,.0f} "
                                  f"(L6 design_eye)"})
     by_mat = defaultdict(list)
+    pivots = control_pivots()
+    kids = defaultdict(list)
     for grp, ms in build_flightdeck(groups=True).items():
         for m, mat in ms:
             if ceiling is not None and grp in ("overhead", "cb_panels"):
                 ceiling.append((m, mat))
+            elif grp in pivots:
+                kids[grp].append((m, mat))
             else:
                 by_mat[mat].append(m)
     for mat, ms in by_mat.items():
         p.add(Mesh.merge(ms), mat)
     parts[p.id] = p
+    # the yokes and rudder pedals: child parts with pivots, so the viewer's roll / pitch / yaw commands move them
+    for pid, ms in kids.items():
+        pv = pivots[pid]
+        yoke = pid.startswith("yoke")
+        side = "pilot" if pid[len("yoke_" if yoke else "pedal_")] == "L" else "co-pilot"
+        name = (f"Control yoke, {side} (PC-24 style)" if yoke else
+                f"Rudder pedal, {side}, {'left' if pid.endswith('L') else 'right'} foot (toe brake)")
+        c = Part(pid, name, "interior", parent="flight_deck", pivot=pv, group="Interior",
+                 material_note="white hub, leather-grained grips" if yoke else "anti-slip pad on a floor-hinged arm",
+                 info={"moves": (f"roll +/-{pv['roll_deg']:.0f} deg about the column, pitch "
+                                 f"{pv['travel_push'][0] * 1000:+.0f} / {pv['travel_pull'][0] * 1000:+.0f} mm") if yoke
+                       else f"+/-{pv['travel_deg']:.1f} deg about the floor hinge ({I.PEDALS['travel'] * 1000:.0f} mm "
+                            f"at the pad)"})
+        for m, mat in ms:
+            c.add(m, mat)
+        parts[pid] = c
     return p

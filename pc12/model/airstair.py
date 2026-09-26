@@ -54,13 +54,16 @@ FRAME = dict(w=0.040,        # [M] side stringers ~40 mm wide (photo 188: white 
 N_RISERS = 5           # [D] sill (cabin floor WL) -> ground in equal risers: 3 treads + the bottom step at the free
 #                        edge (photo 188: three grey trays, then the foot area; 1254 / 5 = 251 mm risers)
 TREAD = dict(depth=0.160,    # [M] tray depth (horizontal, open)
-             t=0.020,        # [E] top plate + frame
-             lip=0.045,      # [M] front lip (photo 188: tall grey tray fronts)
-             nose_r=0.008,   # [E] rounded nosing
+             t=0.012,        # [M] thin grey metal plate (photos 188 / 130: grating plates on open brackets, the white
+             #                 inner face showing between them; review r2 F6: 20 mm trays on 45 mm white risers read as a
+             #                 solid moulded stair)
+             lip=0.012,      # [M] front edge = the plate (no riser)
+             nose_r=0.004,   # [E] rounded nosing
+             bracket=(0.006, 0.090),   # [E] open side brackets under each plate: thickness, drop along the wall
              embed=0.012,    # [E] into the lining panel
              gap=0.002,      # [E] to the stringer walls
              pad=(0.022, 0.022, 0.020, 0.0022))   # [E] anti-slip pad inset back / front / sides, thickness
-FOOT = dict(depth=0.215, lip=0.030)   # [M] bottom step at the free edge (foot, photo 188: the step he stands on)
+FOOT = dict(depth=0.215, lip=0.012)   # [M] bottom step at the free edge (foot, photo 188: the step he stands on)
 RAIL = dict(r=0.0125,        # [M] polished rods ~25 mm (photos 130 / 188, against the 22x8.50 tyre scale)
             post_wl=0.56,    # [M] stanchion foot on the stringer at open WL 0.56, between treads 2 and 3 (photo 188)
             post=0.130,      # [M] stanchion height over the stringer top: its head (the lower rod's pivot) at BL
@@ -81,8 +84,8 @@ HANDLE = dict(zs=2.31,       # [M] inner door handle between tread 3 and the bot
               x=(4.80, 5.06),  # [E] lever span (station), hub at the aft end
               w=0.034, t=0.018, off=0.024, tilt=12.0, hub_r=0.024)   # [E] section, off the panel, twist (deg)
 FASTENERS = dict(pitch=0.065, r=0.0042, h=0.0015)   # [M] fastener row on the grey edge band (photos 130 / 188)
-MAT = dict(edge="metal", flange="lining", body="lining", frame="lining", tread="metal", bracket="lining",
-           antislip="black", rod="chrome", fitting="steel", cable="steel", handle="prop_band_red",
+MAT = dict(edge="metal", flange="metal", body="lining", frame="lining", tread="metal", bracket="metal",
+           antislip="metal_dark", rod="chrome", fitting="steel", cable="steel", handle="prop_band_red",
            fastener="metal_dark")
 
 
@@ -470,12 +473,12 @@ def tread_profiles(door):
             bf, lip = bw + TREAD["depth"], TREAD["lip"]
         rn = TREAD["nose_r"]
         top = [(bw - em, zk), (bf - rn, zk)]
-        a = np.linspace(0.5 * np.pi, 0.0, 6)[1:]
+        a = np.linspace(0.5 * np.pi, 0.0, 4)[1:]
         nose = [(bf - rn + rn * np.cos(t), zk - rn + rn * np.sin(t)) for t in a]
         lipb = (bf, zk - lip)
-        # underside: 45 deg back to the wall, then along the (embedded) wall up to the top
-        q = _hit_wall(np.array(lipb), np.array([-1.0, -1.0]) / np.sqrt(2.0), wb, wz, em)
-        zw = np.linspace(q[1], zk, 12)[1:-1]
+        # underside: a plain plate, flat back to the (embedded) wall (review r2 F6: no riser / wedge under it)
+        q = _hit_wall(np.array([bf - 0.002, zk - TREAD["t"]]), np.array([-1.0, 0.0]), wb, wz, em)
+        zw = np.linspace(q[1], zk, 4)[1:-1]
         wall = [(float(np.interp(z, wz, wb)) - em, z) for z in zw]
         poly = top + nose + [lipb, (float(q[0]), float(q[1]))] + wall
         out.append(dict(poly=np.array(poly), i_top=1, i_front=len(top) + len(nose), z=zk, b_back=bw, b_front=bf,
@@ -498,6 +501,16 @@ def treads(door):
                 (tp["i_front"], tp["i_front"] + 1, False, MAT["bracket"]),
                 (tp["i_front"] + 1, n, True, MAT["bracket"])]
         out += _extrude(P2, xa, xb, door, segs, MAT["bracket"])
+        # open brackets: a thin gusset under each end of the plate, down the inner face (photos 188 / 130)
+        bt, bd = TREAD["bracket"]
+        zk, bw_, bf_ = tp["z"], tp["b_back"], tp["b_front"]
+        wb_, wz_ = door.wall()
+        zlo = zk - TREAD["t"] - bd
+        G = np.array([(bw_ - TREAD["embed"], zk - TREAD["t"] + 0.001), (bw_ + 0.6 * (bf_ - bw_), zk - TREAD["t"] + 0.001),
+                      (float(np.interp(zlo, wz_, wb_)) - TREAD["embed"], zlo)])
+        gb, gz = door.closed_bz(G[:, 0], G[:, 1])
+        for x0g in (xa + 0.002, xb - 0.002 - bt):
+            out += _extrude(np.c_[gb, gz], x0g, x0g + bt, door, [(0, 3, False, MAT["bracket"])], MAT["bracket"])
         # anti-slip pad (open pose: a thin plate on the top)
         zk = tp["z"]
         Q = np.array([(tp["b_back"] + pb, zk - 0.001), (tp["b_front"] - pf, zk - 0.001),

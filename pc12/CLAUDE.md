@@ -3,7 +3,7 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (83 parts, ~1.15M tris of which the interior ~223k, hinge pivots
+engineering-drawing generator. Output: `out/pc12.glb` (89 parts, ~1.15M tris of which the interior ~223k, hinge pivots
 in node extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`),
 `out/pc12_ga.svg|pdf` (legacy A1 GA, hidden-line from the mesh) and `out/pc12_sections.svg|pdf` (A2 sections).
@@ -20,7 +20,9 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   furniture clear of windows / door + exit openings, door swings vs the interior,
                                 #   the frames, skins and belly fairing (door travel every 0.02 and every 0.005
                                 #   inside each handrail's unfold window); 22 every interior piece seated (within
-                                #   3 mm of, or crossing, another surface); 23 closed interior shells wound outward);
+                                #   3 mm of, or crossing, another surface), 22b lining fittings >= 0.5 mm proud of
+                                #   the lining, 22c curtain vs crew tracks; 23 closed interior shells wound outward,
+                                #   vertex normals with the face winding);
                                 #   '[open]' rows are known conflicts in the approved parameters that need an owner
                                 #   decision (they do not fail)
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
@@ -68,6 +70,9 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   `gear` (`retract` deg), `gear_door` (`open` deg = closed -> open, `rest` = the door fraction the geometry is
   built at), `fold` (door children -- the airstair handrails `door_airstair_rail*` / `_cable`: rotate by
   `open` x clamp((door fraction - window[0]) / (window[1] - window[0])) about their own axis, `follows` the door),
+  `yoke` (`yoke_L` / `yoke_R`, children of `flight_deck`: roll = roll command x `roll_deg` about the forward-pointing
+  column axis, + `travel_pull` / `travel_push` (MODEL axes) x |pitch command|), `pedal` (`pedal_LL/LR/RL/RR`: about the
+  floor hinge by -`gearing` x yaw command x `travel_deg`; `flightdeck.control_pivots`),
   `brace` (two-link over-centre strut: upper link rotates about A, lower link about knee K0; solve the knee
   with `model/brace.py:solve_knee`, the leg attach point B0 moves with the parent `gear` node). Geometry is built
   gear-down, cabin doors closed; the nose-gear clamshells are built OPEN (`rest` 1: they hang open beside the leg
@@ -159,7 +164,8 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   of the drawn back profile (checks built on it are conservative); at full forward + down travel the crew back shell's
   lower inboard corner comes within 14 mm of the nose-tunnel plinth (the L6B 15 mm criterion covers cushion / pan
   only); the cabin tracks run under the RH lavatory and the
-  cabinets as L6 draws them; armrests / recline / headrest / travel are baked into the seat meshes (no viewer pivot).
+  cabinets as L6 draws them; armrests / recline / headrest / travel are baked into the seat meshes (no viewer pivot;
+  the yokes and rudder pedals do have pivots).
 - Interior review r1 (fidelity / craft / mechanics): tables changed and L6 / L6B regenerated -- DIVIDER curtain (flare
   top 0.85 [M: P1046406], 25 mm of the bundle tucked behind the walnut edge, an 18 mm gathered band above it) and
   LEDGES door_segment 7.575-8.905 (inside the cargo clear opening) + door_foot 0.075 (clear of the sill jamb); the door
@@ -171,6 +177,16 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   backs; panel_faceon uses the refitted camera 'panel_408b' (between the seat backs, as the photo); interior renders
   gain the world only for primary rays through the (transparent) glazing, and lookdev's thin glass uses a two-sided
   Schlick Fresnel (the Fresnel node made every obliquely seen cabin window a totally reflecting mirror).
+- Interior review r2: tables changed, L6 / L6B regenerated (rev D) -- CREW_SEAT sheepskin_t 34 [M] (the fleece's
+  crowned outer face IS the drawn cushion top / back front; the leather and shell lie inside it: the cover had stood
+  +14 / +32 mm proud of the outline the manikin checks sit on), YOKE grip r 15.5 x 140 (slim paddles, P1046408), the
+  crew tracks end 15 mm past the rear foot (11 mm clear of the stowed curtain, L6B 'curtain_track').  Builders: two
+  puffy thigh sleeves + tuft waves, full 4-point harness (lap halves, crotch strap), exec back V seams to the shoulders
+  over a flush lumbar trapezoid, lap belt across the cushion; white yoke shield out to the grip roots (no black bar);
+  warm titanium `panel_grey` on the PDU face; silver PSU pods, flush O2 doors / PULL cover with a proud dark gap all
+  round, downlight bezels on the soffit normal, soffit step 18 mm; thin grey airstair treads on open brackets, grey
+  inner flange; airstair top / fwd jambs lining; yokes / pedals are viewer parts with pivots; the cutaway clips the
+  cabin furniture and the divider / consoles (`web/viewer/model.js` CUT_MATERIALS); hangar_port34 opens the cargo door.
 - Main-gear leg door, decision LD-1 (owner-delegated, resolved; model/gear.py comment block): the door is the wing
   lower skin carried down by the leg (`gear.leg_door_offset`), so retracted it closes flush (1 mm recess, 3 mm panel
   gap, `bays.DOOR_GAP`) and the tyre protrudes 26 mm in its own round well (`bays.well_sdf`); drawn side-view face

@@ -83,10 +83,13 @@ DETAIL = dict(
     pad_t=0.050,                      # [E] padded shelf cushion
     niche_rim=(0.015, 0.030),         # [E] lit niche surround: width, depth proud of the lining
     tp=(0.055, 0.090),                # [M] toilet roll radius (L6 profile), length [E]
-    soffit=(0.200, 0.262, 0.300, 0.012),  # [M] headliner soffit: inner BL (flat panel edge), bottom to, fairs out
-                                          # at, drop below the lining (step = LED cove)
+    soffit=(0.200, 0.262, 0.300, 0.018),  # [M] headliner soffit: inner BL (flat panel edge), bottom to, fairs out
+                                          # at, drop below the lining (step = LED cove; P1046402 / 06 show the raised
+                                          # centre channel stepped 15-20 mm above the side panels: review r2 F5)
     flat_drop=0.012,                  # [M] flat centre panel below the crown lining (L6 section)
     psu=(0.200, 0.070, 0.012, 0.30),  # [M] PSU housing along x, across, proud; over the lap: head x - 0.30 x facing
+    fit_proud=(0.0012, 0.002),        # [E] flush lining fittings (O2 doors, PULL cover, downlights): dark gap ring /
+                                      # bezel face this far proud of the lining, walls this far into it (r2 C2 / C7)
     downlight=(0.60, 0.016),          # [E] soffit downlights: pitch, bezel radius
     o2=(0.100, 0.090, 2.58),          # [M] oxygen-mask flap (optional system): along x, along the wall, WL
     pull=(0.20, 0.13, 0.090),         # [M] exit-release PULL cover above the exit: size, above the hatch top
@@ -983,9 +986,7 @@ def _lavatory(acc, doors="closed"):
     xl, yl = 0.5 * (x0 + x1), 0.45
     zl = float(L.crown(xl, yl))
     nl = L.head_normal(xl, yl)
-    fdl = Fr([xl, yl, zl] + 0.0012 * nl, [1.0, 0, 0], np.cross(nl, [1.0, 0, 0]), nl)    # clear of the curved liner
-    acc.add(fdl.disk(0.0, 0.0, 0.028, 0.0, 24, r_inner=0.020), "chrome_trim")
-    acc.add(fdl.disk(0.0, 0.0, 0.020, 0.0003, 20), "light_reading")
+    _downlight(acc, np.array([xl, yl, zl]), nl, 0.026, *DETAIL["fit_proud"])
 
 
 # =====================================================================================================================
@@ -1024,14 +1025,14 @@ def _headliner(acc, layout, o2=True):
             ring = np.vstack([cove[i], bottom[i][1:], fair[i][1:]])
             ring = np.vstack([ring, [[ring[0, 0], ring[-1, 1], ring[0, 2]]]])
             acc.add(_oriented(planar_cap(ring, [nx, 0, 0]), [nx, 0, 0]), "lining")
-        # downlights along the soffit bottom
+        # downlights along the soffit bottom: a short chrome bezel set into the soffit along its local normal (the
+        # soffit follows the curved headliner; flat discs at one WL were half buried: review r2 C7) and the lens
         pitch, rdl = DETAIL["downlight"]
         yd = 0.5 * (y0s + y1s)
+        pr, sk = DETAIL["fit_proud"]
         for x in np.arange(XA + 0.30, xe - 0.10, pitch):
-            z = float(L.crown(x, yd)) - dd
-            f = Fr([x, sg * yd, z - 0.0004], [1.0, 0, 0], [0, 1.0, 0], [0, 0, -1.0])
-            acc.add(f.disk(0.0, 0.0, rdl, 0.0, 20, r_inner=0.75 * rdl), "chrome_trim")
-            acc.add(f.disk(0.0, 0.0, 0.75 * rdl, 0.0003, 16), "light_reading")
+            _downlight(acc, np.array([x, sg * yd, float(L.crown(x, yd)) - dd]), L.head_normal(x, sg * yd), rdl,
+                       pr, sk)
     # PSU per seat (reading light + gasper in a dark housing on the curved side panel at psu_bl, over the lap)
     pl, pw, ph, pdx = DETAIL["psu"]
     ybl = float(I.LINING["psu_bl"])
@@ -1044,8 +1045,9 @@ def _headliner(acc, layout, o2=True):
         z = float(L.crown(x, y))
         n = L.head_normal(x, y)
         fr = Fr([x, y, z] - 0.003 * n, [1.0, 0, 0], np.cross(n, [1.0, 0, 0]), n)
+        # brushed-silver pod (P1046402 / 06: silver reading-light pods, not black boxes: review r2 F5)
         acc.add(slab(fr, rrect2(-0.5 * pl, -0.5 * pw, 0.5 * pl, 0.5 * pw, 0.022, 5), 0.0, ph + 0.003, 0.004,
-                     "psu_panel"))
+                     "panel_silver"))
         top = ph + 0.003
         a_read = -f_ * 0.05                                              # reading light toward the seat front
         acc.add(fr.disk(a_read, 0.0, 0.022, top + 0.0004, 24, r_inner=0.017), "chrome_trim")
@@ -1058,14 +1060,7 @@ def _headliner(acc, layout, o2=True):
             yw = float(L.hw(x, o2z))
             nw = L.wall_normal(x, o2z, s)
             fw = Fr([x, s * yw, o2z], [1.0, 0, 0], np.cross(nw, [1.0, 0, 0]), nw)
-            Q = rrect2(-0.5 * o2l, -0.5 * o2w, 0.5 * o2l, 0.5 * o2w, 0.012, 4)
-            # dark gap frame 1.5 mm proud of the lining, the lining-coloured flap on it, both bent onto the wall
-            acc.add(_conform(slab(fw, rrect2(-0.5 * o2l - 0.003, -0.5 * o2w - 0.003, 0.5 * o2l + 0.003,
-                                             0.5 * o2w + 0.003, 0.015, 4), -0.001, 0.0015, 0.0004, "psu_panel",
-                                  bottom=False), fw, s))
-            acc.add(_conform(slab(fw, Q, 0.0020, 0.0050, 0.0012, "lining", bottom=False), fw, s))
-            acc.add(_conform(fw.poly(rrect2(-0.015, -0.5 * o2w + 0.004, 0.015, -0.5 * o2w + 0.012, 0.003), 0.0053),
-                             fw, s), "psu_panel")
+            _flush_door(acc, fw, s, o2l, o2w, 0.012, notch=True)
     # exit-release PULL cover above the over-wing exit (starboard) with its red label
     from model.fuselage_parts import EXIT
     wl_, hl_, dz_ = DETAIL["pull"]
@@ -1075,12 +1070,45 @@ def _headliner(acc, layout, o2=True):
     yw = float(L.hw(xe_, zp))
     nw = L.wall_normal(xe_, zp, s)
     fw = Fr([xe_, s * yw, zp], [1.0, 0, 0], np.cross(nw, [1.0, 0, 0]), nw)
-    acc.add(_conform(slab(fw, rrect2(-0.5 * wl_ - 0.003, -0.5 * hl_ - 0.003, 0.5 * wl_ + 0.003, 0.5 * hl_ + 0.003,
-                                     0.016), -0.001, 0.0015, 0.0004, "psu_panel", bottom=False), fw, s))
-    acc.add(_conform(slab(fw, rrect2(-0.5 * wl_, -0.5 * hl_, 0.5 * wl_, 0.5 * hl_, 0.014), 0.0020, 0.0055, 0.0012,
-                          "lining", bottom=False), fw, s))
+    top = _flush_door(acc, fw, s, wl_, hl_, 0.014, lift=0.0035)
     acc.add(_conform(fw.poly(rrect2(-0.5 * wl_ + 0.015, 0.5 * hl_ - 0.040, -0.5 * wl_ + 0.055, 0.5 * hl_ - 0.020,
-                                    0.003), 0.0058), fw, s), "placard_red")
+                                    0.003), top + 0.0004), fw, s), "placard_red")
+
+
+def _flush_door(acc, fw, s, lx, ly, r, lift=0.0006, notch=False):
+    """A closed lining door (oxygen-mask door, exit-release cover) on the side-wall lining in frame fw (w = the wall
+    normal): a dark gap RING (psu_panel, GAP wide) standing DETAIL fit_proud in front of the lining with walls down into
+    it, and inside it the lining-coloured door, its face `inset` below the ring's top (a shallow-inset square: from any
+    angle the ring's near edge is not hidden by the door, so the dark outline shows on all four sides) -- or, with
+    lift > 0 and no inset, a raised cover lift above the ring; (notch) its finger notch; everything bent onto the curved
+    wall (_conform).  Review r2 C2 / F5: the old frame sat 1.5 mm proud UNDER a door 2-5 mm proud, so only its far edge
+    showed.  Returns the door's face height (c)."""
+    gap, inset = 0.0025, 0.0004
+    pr, sk = DETAIL["fit_proud"]
+    top = pr + 0.0002
+    Qo = _ccw(rrect2(-0.5 * lx - gap, -0.5 * ly - gap, 0.5 * lx + gap, 0.5 * ly + gap, r + gap, 4))
+    Qi = _ccw(rrect2(-0.5 * lx, -0.5 * ly, 0.5 * lx, 0.5 * ly, r, 4))
+    ring = [(ring_face(fw, Qo, Qi, top), "psu_panel"),
+            (_oriented(_strip(fw.p(Qo[:, 0], Qo[:, 1], -sk), fw.p(Qo[:, 0], Qo[:, 1], top), closed=True),
+                       lambda C: C - fw.o), "psu_panel"),
+            (_oriented(_strip(fw.p(Qi[:, 0], Qi[:, 1], top), fw.p(Qi[:, 0], Qi[:, 1], -sk), closed=True),
+                       lambda C: fw.o - C), "psu_panel")]
+    acc.add(_conform(ring, fw, s))
+    face = top - inset if lift <= 0.001 else top + lift
+    Qd = rrect2(-0.5 * lx + 0.0003, -0.5 * ly + 0.0003, 0.5 * lx - 0.0003, 0.5 * ly - 0.0003, r - 0.0003, 4)
+    acc.add(_conform(slab(fw, Qd, -sk, face, min(0.0003, 0.3 * (face + sk)), "lining", bottom=False), fw, s))
+    if notch:
+        acc.add(_conform(fw.poly(rrect2(-0.015, -0.5 * ly + 0.004, 0.015, -0.5 * ly + 0.012, 0.003), face + 0.0003),
+                         fw, s), "psu_panel")
+    return face
+
+
+def _downlight(acc, p, n, r, pr, sk):
+    """Round downlight at the lining / soffit point p with the into-cabin normal n: a chrome bezel cylinder from sk
+    inside the surface to pr in front of it, its lens 0.2 mm proud of the bezel face."""
+    n = np.asarray(n, float) / np.linalg.norm(n)
+    acc.add(cylinder(p - sk * n, p + pr * n, r, n=20), "chrome_trim")
+    acc.add(disk(p + (pr + 0.0002) * n, n, 0.75 * r, n=16), "light_reading")
 
 
 def _over_opening(x, z, side, margin):

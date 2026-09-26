@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="C", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-09-26")
+             size="A1", scale="AS SHOWN", rev="D", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-09-26")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -50,6 +50,9 @@ REVISIONS = (
                         "autoland drawn, lav cabinet 350 [M], pedals +/-125 [M] with the crew knees on the hip-pedal "
                         "line, knee / yoke sensitivity and POH-arm CG cross-check (L6B), 5th-female open point, "
                         "section phantoms, seat tracks from parameters"),
+    ("D", "2026-09-26", "Stage-3 review r2: crew sheepskin 34 [M] drawn inside the cushion / back outline (the "
+                        "3-D cover had stood proud of it), yoke grips r 15.5 x 140 [M] (P1046408), crew tracks end "
+                        "15 mm past the rear foot (clear of the stowed curtain, L6B)"),
 )
 
 # ---- fills (clean sheet)
@@ -66,6 +69,7 @@ LEDGE_FILL = "#D3D6D8"
 GLASS_FILL = "#E4EEF3"
 FLOOR_FILL = "#B9BEC1"
 VEST_FILL = "#E7C8B8"
+FLEECE_FILL = "#D8D2D6"         # grey sheepskin covers (crew seats), inside the cushion / back outline
 FAR = "#7C8A92"                # far-side / beyond lines
 CUT = W_OBJ + 0.1              # section cut lines (OML, floor)
 TXT = 2.1                      # minimum text size on the sheet (mm); L3 / L4 use ~1.95-2.3 (review r2: was 1.8)
@@ -292,6 +296,8 @@ def crew_seat_side(srp, fl, head_c=None, recline=0.0, arm_up=False):
     out = [("vest", local(o, fx, base["vest"]), VEST_FILL), ("plate", local(o, fx, base["plate"]), SHELL_FILL),
            ("rail", local(o, fx, base["rail"]), INK), ("pan", local(o, fx, pcs["pan"]), SHELL_FILL),
            ("cushion", local(o, fx, pcs["cushion"]), SEAT_FILL), ("back", local(o, fx, pcs["back"]), SEAT_FILL),
+           ("fleece_seat", local(o, fx, pcs["fleece_seat"]), FLEECE_FILL),
+           ("fleece_back", local(o, fx, pcs["fleece_back"]), FLEECE_FILL),
            ("head", local(o, fx, pcs["head"]), SHELL_FILL), ("arm", local(o, fx, pcs["arm"]), SHELL_FILL)]
     return out, [local(o, fx, s) for s in stalks], local(o, fx, pcs["arm_pivot"][None, :])[0]
 
@@ -1723,6 +1729,9 @@ def draw_seat_details(ds, v1, v2, ctx):
     ds.text(X + 1.0, Y, f"{c['back_deg']:.0f}°", TXT, "mono", "start", fill=INK, tag="lbl")
     leader_to(ds, v1, tuple(piv), (4.33, 1.465), "ARMREST HINGE (IN THE BACK)", "start", color=MUTED,
               lines=["UP: ALONG THE BACK, PHANTOM"])
+    fb = local(s0[[0, 2]], -1.0, prof["fleece_back"])
+    leader_to(ds, v1, tuple(fb[len(fb) // 4 + 2]), (4.05, 2.335), f"SHEEPSKIN {mm(c['sheepskin_t'])} [M]", "end",
+              color=MUTED, lines=["INSIDE THE CUSHION / BACK", "OUTLINE (LEATHER BEHIND)"])
     X, Y = v1.pt(E1_BOX[0], E1_BOX[1])
     ds.text(X, Y + 7.4, f"CREW (IPECO 3A318 TYPE), WIDTH {mm(c['width'])}, CUSHION {mm(c['cushion_w'])} "
             f"(INBOARD {mm(c['cushion_in'])} + {mm(0.5 * c['cushion_w'])})", TXT, "label", "start", fill=MUTED,

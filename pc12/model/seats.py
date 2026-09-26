@@ -9,16 +9,20 @@ drawing's resolution: edge radii, crowning, panel seams, strap paths and small h
   crew_seat(side)       IPECO 3A318-type transport crew seat (CREW_SEAT) at interior.crew_srp(): two floor tracks,
                         two side plates with curved feet, a life-vest box, a black pan, a cushion with split thigh pads
                         and a front U-notch, a contoured back (anthracite shell), a winged headrest on two stalks, two
-                        flip-up armrests hinged on the back, a 4-point harness with a rotary buckle, and optional grey
-                        sheepskin covers (default on, as on PRO s/n 3001).  Travel (dx, dz), recline, headrest lock,
+                        flip-up armrests hinged on the back, a 4-point harness (shoulder straps, two lap-belt halves, a
+                        crotch strap through the notch, rotary buckle on the lap), and optional grey sheepskin covers
+                        (default on, as on PRO s/n 3001: one sleeve per thigh pad and a back cover, their crowned faces
+                        ON the drawn outline, CREW_SEAT sheepskin_t inside it).  Travel (dx, dz), recline, headrest lock,
                         arms up and the finish (CREW_FINISHES: 'pro3001' anthracite shell, 'light' grey) are
                         parameters; crew_hinges() gives the recline / armrest hinge axes of a pose.
   cabin_seat(seat_id)   PRO executive seat (EXEC_SEAT) at the seat_map() station of a SEAT_LAYOUTS seat: an anthracite
                         base shroud on the tracks, an anthracite skirt under a light-grey leather cushion (side
                         panels; the skirt is dark on s/n 3001, P1046406 [M]), a back shell
-                        with the V-stitched front (V panel, side bolsters, lumbar panel) and a dark rear insert with a
-                        map pocket, a sliding headrest on two posts, ONE aisle-side armrest with a brushed control,
-                        a lap belt and a shoulder-belt guide.  Recline and headrest slide are parameters.
+                        with the V-stitched front (a flush lumbar trapezoid, two seams running from its top corners
+                        straight up and out to the bolster edges at 80 % of the height, the side bolsters tapering to
+                        the shoulders; the top corners drawn in) and a dark rear insert with a map pocket, a sliding
+                        headrest on two posts, ONE aisle-side armrest with a brushed control, a lap belt across the
+                        cushion and a shoulder-belt guide.  Recline and headrest slide are parameters.
   cabin_tracks()        the four surface-mounted cabin seat tracks (SEAT_TRACKS).  cabin_seat() does not include them.
   all_seats(layout), build(parts, layout)   convenience: every seat of a layout / one Part per seat.
 
@@ -62,11 +66,18 @@ M_CAB_SHELL = "seat_back_shell"         # mid-grey rear shell of the executive b
 M_METAL, M_RAIL, M_WHITE, M_BLACK = "metal", "metal_dark", "paint_white", "seat_base_black"
 
 # sheepskin pads [E, review r1 F3: the fleece is the PRO crew seat's signature, thick and rolled over the edges]:
-# total thickness, depth sunk into the leather below (back / seat cushion), edge roll radii top / bottom, lumpiness
-# amplitude, run-on wrapped round the cushion front and over the back top
-SK_T, SK_SINK, SK_SEAT = 0.036, 0.014, 0.004    # SK_SEAT: the cushion pad's sink into the leather
-SK_ROLL, SK_ROLL_B, SK_FLUFF = 0.017, 0.012, 0.0022
-SK_WRAP_SEAT, SK_WRAP_BACK = 0.012, 0.055     # run-on past the cushion front / the back top: ~100 deg of wrap
+# pad thickness at its edge, crown on top of it (seat pad: the two thigh domes; back), edge roll radii top / bottom,
+# lumpiness (tufts: a coarse geometric wave + the fine fleece bump of the render material, review r2 F4), run-on wrapped
+# round the cushion front and over the back top.  The crowned outer face is the DRAWN outline (CREW_SEAT sheepskin_t
+# inside cushion_t and the back's front offset, review r2 M1): the leather cushion / back front lie sheepskin_t inside
+# it, the pad's bottom sinks into the leather by whatever the pad's loft exceeds sheepskin_t.
+SK_T, SK_CROWN_SEAT, SK_CROWN_BACK = 0.034, 0.016, 0.012
+SK_ROLL, SK_ROLL_B, SK_FLUFF, SK_LUMP = 0.017, 0.012, 0.0022, 0.0030
+SK_LUMP_K = (48.0, 71.0, 105.0, 150.0)          # tuft waves (rad/m): 4-13 cm lumps, visible at the panel camera
+SK_WRAP_SEAT, SK_WRAP_BACK = 0.012, 0.050     # run-on past the cushion front / the back top: ~100 deg of wrap
+SK_SPLIT = 0.010                               # gap between the two thigh-pad sleeves along the seat CL
+SK_FRONT = 0.022                               # the leather cushion's front sits this far behind the drawn front
+SK_TOP = 0.020                                 # the back shell's top sits this far below the drawn top (fleece over it)
 
 
 # =====================================================================================================================
@@ -122,8 +133,8 @@ def fillet(P, r, seg_deg=22.5, max_len=None):
         k = max(2, int(math.ceil(math.degrees(turn) / seg_deg)) + 1)
         ang = a0 + sg * turn * np.linspace(0.0, 1.0, k)
         out.extend(np.c_[C[0] + rad * np.cos(ang), C[1] + rad * np.sin(ang)])
-    Q = _dedup(np.array(out))
-    return _subdivide(Q, max_len) if max_len else Q
+    Q = _dedup(np.array(out), 2e-5)          # adjacent arcs clipped to the same edge midpoint: one point (a pair
+    return _subdivide(Q, max_len) if max_len else Q      # 1e-6 apart merged in the quantised GLB: non-manifold rims)
 
 
 def rrect(u0, v0, u1, v1, r, max_len=None):
@@ -414,8 +425,8 @@ def plate(poly_uv, s0, s1, mat, smooth_deg=35.0):
 def rbox(c, size, r, mat, R=None):
     """Rounded box (pillow of a rounded rectangle), centre c (u, s, v), size (du, ds, dv), optional 3x3 rotation."""
     du, ds, dv = size
-    g = pillow(rrect(-0.5 * du, -0.5 * dv, 0.5 * du, 0.5 * dv, min(r, 0.49 * min(du, dv))), ds,
-               min(r, 0.49 * min(du, dv, ds)), n_round=2)
+    g = pillow(fillet([(-0.5 * du, -0.5 * dv), (0.5 * du, -0.5 * dv), (0.5 * du, 0.5 * dv), (-0.5 * du, 0.5 * dv)],
+                      min(r, 0.49 * min(du, dv)), seg_deg=30.0), ds, min(r, 0.49 * min(du, dv, ds)), n_round=2)
     g = g.map(lambda V: np.c_[V[:, 0], V[:, 2] - 0.5 * ds, V[:, 1]])
     if R is not None:
         g = g.map(lambda V: V @ np.asarray(R).T)
@@ -433,6 +444,11 @@ def tube(p0, p1, r, mat, n=10):
     m = cylinder(p0, p1, r, n=n)
     m.F = m.F.copy()
     return Geo(m.V, m.F, np.zeros(len(m.F)), {0: mat})
+
+
+def _unit3(v):
+    v = np.asarray(v, float)
+    return v / np.linalg.norm(v)
 
 
 def _catmull(P, n=24):
@@ -460,6 +476,15 @@ def ribbon(ctrl, up, width, mat, th=0.0035, n=20):
     U = _catmull(up, n)
     T = np.gradient(P, axis=0)
     T /= np.linalg.norm(T, axis=1, keepdims=True)
+    # the up hint made normal to the path, its sign kept continuous along it (review r2 N1: where a hint ran nearly
+    # along the path the frame flipped by 180 deg and the strap folded, its normals against the winding)
+    U = U - T * np.einsum("ij,ij->i", U, T)[:, None]
+    for i in range(n):
+        if np.linalg.norm(U[i]) < 1e-6:
+            U[i] = U[i - 1] if i else np.cross(T[i], [0.0, 1.0, 0.0])
+        U[i] /= np.linalg.norm(U[i])
+        if i and np.dot(U[i], U[i - 1]) < 0.0:
+            U[i] = -U[i]
     W = np.cross(T, U)
     W /= np.maximum(np.linalg.norm(W, axis=1, keepdims=True), 1e-12)
     U = np.cross(W, T)
@@ -590,25 +615,46 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             return h * smoothstep(0.0, R, d) - 0.9 * h * np.exp(-(b / 0.035) ** 2) * smoothstep(0.06, 0.26, a)
         return f
 
-    # the drawn outline is cushion + sheepskin (CREW_SEAT cushion_t): with the cover the leather is 8 mm inside it and
-    # its top SK_T - SK_SEAT below the drawn top (the pad's top); the fleece pad rolls over the leather's front edge and
-    # hangs down its front face
-    sk_in = SK_T - SK_SEAT                                           # leather top below the drawn cushion top
-    tl_c = ct - (sk_in if sk else 0.0)
+    # the drawn outline is cushion + sheepskin (CREW_SEAT cushion_t, sheepskin_t): with the cover the leather is 8 mm
+    # inside it at the sides, SK_FRONT behind the drawn front and its top sheepskin_t below the drawn top; the fleece pad
+    # (crowned thigh domes + tufts, the crown's top ON the drawn cushion top) rolls over the leather's front edge and
+    # hangs down its front face, its outer face ending on the drawn front (review r2 M1)
+    sk_t = float(c["sheepskin_t"])
+    sk_in = sk_t if sk else 0.0                                      # leather top below the drawn cushion top
+    tl_c = ct - sk_in
     rl = 0.020                                                       # leather front-top roll radius
-    g = pillow(offset_outline(plan, -0.008) if sk else plan, tl_c, rl if sk else 0.028, 0.012,
-               h=None if sk else 0.024,
-               crown=None if sk else thighs(0.012, 0.07))
-    geos.append(_mats(g.map(lambda V: pan_map(t0 - (sk_in if sk else 0.0))(V, tl_c)), M_CREW))
+    lp = plan
     if sk:
-        # pad plan: the thigh-pad fronts run on SK_WRAP_SEAT past the cushion front and are wrapped round the leather's
-        # front roll (radius rl, 2 mm clear)
-        pp = plan.copy()
-        pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
-        g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=0.019, crown=thighs(0.014, 0.05),
-                   fluff=fleece(SK_FLUFF, 1, k=(30.0, 55.0, 95.0, 120.0)))
-        g = g.map(lambda V: _wrap(V, 0, D - 0.008 - rl, rl + 0.002, SK_SEAT + 0.002))
-        geos.append(_mats(g.map(lambda V: pan_map(t0)(V, SK_T)), M_SHEEP))
+        lp = offset_outline(plan, -0.008)
+        lp[:, 0] -= (SK_FRONT - 0.008) * smoothstep(D - 0.10, D - 0.03, lp[:, 0])
+    g = pillow(lp, tl_c, rl if sk else 0.028, 0.012, h=None if sk else 0.024,
+               crown=None if sk else thighs(0.012, 0.07), n_round=2 if sk else 3)
+    geos.append(_mats(g.map(lambda V: pan_map(t0 - sk_in)(V, tl_c)), M_CREW))
+    if sk:
+        # pad plan: the thigh-pad fronts run on SK_WRAP_SEAT past the leather front and are wrapped round its front
+        # roll (radius rl, 2 mm clear); the pad's flat top SK_CROWN_SEAT + SK_LUMP below the drawn top, so the crowned,
+        # lumpy face stays on it; the pad bottom sinks `sink` into the leather
+        # two sleeves, one over each thigh pad, split along the seat CL and at the U-notch (P1046408 / 10: two puffy
+        # lumps per seat, the fleece wrapped round each pad's front)
+        top_c = t0 - SK_CROWN_SEAT - SK_LUMP
+        sink = SK_T - (top_c - (t0 - sk_t))
+        g2 = 0.5 * SK_SPLIT
+        ai = np.linspace(-0.045 + 0.04, D - 0.035, 14)                   # the inner edge: the split, then the notch
+        bi = g2 + (0.5 * nw - 0.01 - g2) * smoothstep(D - nd - 0.07, D - nd, ai) + 0.01 * smoothstep(D - nd, D, ai)
+        lump, fine = fleece(SK_LUMP, 11, k=SK_LUMP_K), fleece(SK_FLUFF, 1, k=(95.0, 120.0, 170.0))
+        sleeves = []
+        for sg_, edge in ((-1, lo), (1, hi)):
+            P_ = np.vstack([[(-0.045, sg_ * g2)], np.c_[ai, sg_ * bi], [(D, sg_ * 0.5 * nw), (D, edge - sg_ * 0.03),
+                                                                         (D - 0.03, edge), (-0.045, edge)]])
+            rr_ = np.r_[0.03, np.zeros(len(ai)), 0.03, 0.035, 0.035, 0.035]
+            pp = fillet(P_, rr_, max_len=0.05)
+            pp[:, 0] -= SK_FRONT * smoothstep(D - 0.10, D - 0.03, pp[:, 0])
+            pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
+            sleeves.append(_ccw(pp))
+            g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=0.016, crown=dome(SK_CROWN_SEAT, 0.075),
+                       fluff=lambda a, b: lump(a, b) + fine(a, b))
+            g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
+            geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
 
     # ---- pan shell under the cushion (black), side plates, life-vest box, cross tubes, tracks, fittings
     pcs0, _ = I.crew_seat_profile(hc, 0.0)
@@ -662,24 +708,35 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
     bb = bp @ db
     keep = np.ones(len(bp), bool)
     keep[1:-1] = (bb[1:-1] > 0.075) & (bb[1:-1] < L - 0.075)
-    fr = np.array([L * db + 0.02 * nb, L * db - (tt - 0.02) * nb])
+    # with the cover the shell's front lies sheepskin_t behind the drawn front and its top SK_TOP below the drawn top
+    # (the fleece wraps over it onto the drawn top: review r2 M1); the top then a half-round (r 0.018)
+    sk_b, L_s = (sk_t, L - SK_TOP) if sk else (0.0, L)
+    fr = np.array([L_s * db + (0.02 - sk_b) * nb, L_s * db - (tt - 0.02) * nb])
     kp = bp[keep]
     split = int(np.argmax(kp @ nb < -0.03))                   # first point of the rear face: insert the top there
-    bprof = fillet(np.vstack([kp[:split], fr, kp[split:]]), 0.032)
+    kp[:split] -= sk_b * nb                                   # the front face (the first point and the front samples)
+    rads = np.full(len(kp) + 2, 0.032)
+    if sk:
+        rads[split] = rads[split + 1] = 0.016                   # the 36 mm top: nearly a half-round
+    bprof = fillet(np.vstack([kp[:split], fr, kp[split:]]), rads)
     bw1 = 0.5 * float(c["back_w"][1])
-    back.append(slab(bprof, -bw1, bw1, 0.028, M_SHELL, max_len=0.05, h=0.045,
+    back.append(slab(bprof, -bw1, bw1, 0.012 if sk else 0.028, M_SHELL, max_len=0.05, h=0.045,
                      width=lambda u, v: _crew_back_hw(u * db[0] + v * db[1]) / bw1, post=rear_round(nb, 0.030)))
     bmap = _back_map(db, nb, front=_crew_front)
     if sk:
         # back cover: down the whole front and wrapped over the top edge toward the rear (AOPA, P1046408 / 10), the
-        # top fillet (r 0.032) as the roll
-        ol = _outline_from_hw(0.035, L - 0.03 + SK_WRAP_BACK,
-                              lambda b: _crew_back_hw(np.minimum(b, L - 0.004), 0.004), 0.03)
-        Rb = 0.032 + 0.002
-        g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=0.024, crown=dome(0.010, 0.05),
-                   fluff=fleece(SK_FLUFF, 2, k=(30.0, 55.0, 95.0, 120.0)))
-        g = g.map(lambda V: _wrap(V, 1, L - 0.032, Rb, SK_SINK + 0.002))
-        back.append(_mats(g.map(lambda V: bmap(V - [0, 0, SK_SINK])), M_SHEEP))
+        # shell's front-top roll (r 0.018) as the roll; the crowned, lumpy face on the drawn front (review r2 M1)
+        apex = SK_T + SK_CROWN_BACK + SK_LUMP
+        sink_b = apex - sk_t                                  # the pad bottom into the shell front
+        Rb = 0.018 + 0.002
+        ol = _outline_from_hw(0.035, L_s - 0.018 + 1.9 * Rb,
+                              lambda b: _crew_back_hw(np.minimum(b, L_s - 0.004), 0.004), 0.03)
+        lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
+        fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0))
+        g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=0.021, crown=dome(SK_CROWN_BACK, 0.06),
+                   fluff=lambda a, b: lump(a, b) + fine(a, b))
+        g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))
+        back.append(_mats(g.map(lambda V: bmap(V - [0, 0, apex])), M_SHEEP))
     else:
         # cream leather front: centre panel between two raised side bolsters (IPECO line art)
         ci_hw = lambda b: _crew_back_hw(b) - 0.075             # noqa: E731
@@ -706,20 +763,46 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         p1 = (hc - 0.5 * hh + 0.03) * db - 0.035 * nb
         back.append(tube((p0[0], a, p0[1]), (p1[0], a, p1[1]), 0.0085, M_METAL, n=10))
 
-    # harness: shoulder straps over the back top (inertia reel in the back) down the front to the rotary buckle
-    pad_top = (SK_T - SK_SINK + 0.010 + 0.006) if sk else 0.018          # strap centre above front(b) [E]
-    v_top = lambda u: u * math.tan(p) + t0 / math.cos(p) + (0.012 if sk else 0.0)   # noqa: E731 -- cushion top
-    buckle = np.array([0.075, 0.0, v_top(0.075) + (0.012 if sk else 0.006) + 0.010])
+    # harness (4-point, IPECO line art; review r2 F9): shoulder straps from the inertia reel over the back top down the
+    # front to the rotary buckle on the lap, the two lap-belt halves from the anchors at the pan's rear corners over the
+    # sleeves to the buckle, the crotch strap from the pan front up through the U-notch along the split between the
+    # thigh sleeves.  Straps are laid on the fleece's modelled top (fleece_pt) so they neither float nor sink into it.
+    pad_top = 0.0045 if sk else 0.018          # strap centre above front(b): on the fleece's crown / the leather [E]
+
+    def fleece_pt(a, b, lift=0.0035):
+        """Seat-local (u, s, v) of the seat's top (fleece or leather) at pan position a, lateral b, + lift along the
+        pan normal (a strap's half-thickness and a hair)."""
+        if sk:
+            ol_ = sleeves[1] if b > 0 else sleeves[0]
+            d = -float(sdf2d.polygon(np.array([a]), np.array([b]), ol_)[0])
+            if d > 0:
+                cc = top_c + SK_T + float(dome(SK_CROWN_SEAT, 0.075)(a, b, d)) + float(lump(a, b) + fine(a, b))
+                cc -= SK_ROLL - math.sqrt(max(SK_ROLL ** 2 - max(SK_ROLL - d, 0.0) ** 2, 0.0))
+            else:
+                cc = t0 - sk_t
+            cc -= SK_T
+        else:
+            cc = t0
+        cc += lift
+        return np.array([a * dp[0] + cc * npn[0], b, a * dp[1] + cc * npn[1]])
+    ub = 0.115                                                     # buckle on the lap, 115 mm ahead of the SRP
+    bq = 0.5 * (fleece_pt(ub, -0.035) + fleece_pt(ub, 0.035))
+    buckle = bq + [0.0, 0.0, 0.012]
     straps = []
     if harness:
         for sg in (-1, 1):
-            bs = np.array([L - 0.035, L + 0.002, L - 0.06, L - 0.16, 0.50, 0.33, 0.19])
-            aa = sg * np.array([0.060, 0.060, 0.060, 0.058, 0.052, 0.046, 0.040])
-            cc = _crew_front(bs) + pad_top
-            cc[0], cc[1] = -0.5 * (tt - 0.02), -0.004                    # in the slot, over the top edge
+            n_s = 0.02 - (sk_t if sk else 0.0) - 0.5 * (tt - 0.02 - (sk_t if sk else 0.0))   # the reel slot [E]
+            n_f = float(_crew_front(L - 0.06)) + pad_top
+            rh, nh = 0.5 * (n_f - n_s), 0.5 * (n_f + n_s)                    # over the top: a half-round
+            ta = np.radians([-180.0, -135.0, -90.0, -45.0, 0.0])
+            b_dn = np.array([L - 0.10, 0.46, 0.33, 0.19])                       # down the front, evenly spaced
+            bs = np.r_[L - 0.050, L + 0.004 - rh + rh * np.sin(-ta), b_dn]
+            cc = np.r_[n_s, nh - rh * np.cos(ta + np.pi), _crew_front(b_dn) + pad_top]
+            aa = sg * np.array([0.060, 0.060, 0.060, 0.060, 0.060, 0.060, 0.059, 0.053, 0.046, 0.040])
             pts = np.array([[(b_ * db + c_ * nb)[0], a_, (b_ * db + c_ * nb)[1]] for b_, c_, a_ in zip(bs, cc, aa)])
-            ups = np.array([[db[0], 0, db[1]], [0.6 * db[0] + 0.8 * nb[0], 0, 0.6 * db[1] + 0.8 * nb[1]]]
-                           + [[nb[0], 0.0, nb[1]]] * 5)
+            ups = np.array([[-nb[0], 0, -nb[1]]] + [[math.sin(t_) * db[0] - math.cos(t_) * nb[0], 0,
+                                                     math.sin(t_) * db[1] - math.cos(t_) * nb[1]] for t_ in ta + np.pi]
+                           + [[nb[0], 0.0, nb[1]]] * 4)
             straps.append((pts, ups))
             q = 0.47 * db + (_crew_front(0.47) + pad_top + 0.0065) * nb        # adjuster clear of the strap
             back.append(rbox((q[0], sg * 0.049, q[1]), (0.012, 0.056, 0.030), 0.004, M_METAL,
@@ -732,23 +815,30 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         Rr = np.array([[math.cos(rr_), 0, -math.sin(rr_)], [0, 1, 0], [math.sin(rr_), 0, math.cos(rr_)]])
         for pts, ups in straps:
             pts, ups = pts @ Rr.T, ups @ Rr.T
-            end = buckle + [-0.012, np.sign(pts[0, 1]) * 0.016, 0.010]
-            mid = 0.5 * (pts[-1] + end) + [0.004, 0.0, 0.006]
-            geos.append(ribbon(np.vstack([pts, mid, end]), np.vstack([ups, [[0.5, 0, 0.85]] * 2]), 0.046, M_HARN))
-        # lap belt halves from the anchors behind the pan sides over the cushion to the buckle
-        lift = 0.008 if sk else 0.005
+            end = buckle + [-0.022, np.sign(pts[0, 1]) * 0.018, 0.004]
+            mid = 0.55 * pts[-1] + 0.45 * end + [0.010, 0.0, 0.004]
+            geos.append(ribbon(np.vstack([pts, mid, end]), np.vstack([ups, [[0.6, 0, 0.8]] * 2]), 0.046, M_HARN,
+                               n=30))
+        # lap-belt halves: anchor below the pan's rear corner, over the sleeve's side, across it to the buckle
         for s_side in (lo, hi):
-            sg = np.sign(s_side)
-            ctrl = np.array([[-0.075, s_side + sg * 0.012, -0.045],
-                             [-0.035, s_side + sg * 0.010, v_top(-0.035) - 0.004],
-                             [0.005, s_side - sg * 0.035, v_top(0.005) + lift + 0.004],
-                             [0.045, sg * 0.10, v_top(0.045) + 2 * lift + 0.004],
-                             buckle + [-0.004, sg * 0.032, -0.006]])
-            ups = np.array([[-0.8, sg * 0.6, 0.2], [-0.3, sg * 0.4, 0.9], [0.0, 0.0, 1.0], [0.1, 0, 1], [0.4, 0, 0.9]])
+            sg = float(np.sign(s_side))
+            e_ = s_side - sg * 0.02
+            ctrl = np.array([[-0.06, s_side + sg * 0.010, -0.050], [-0.03, s_side + sg * 0.012, -0.010],
+                             fleece_pt(0.005, s_side - sg * 0.001, 0.004), fleece_pt(0.035, e_ - sg * 0.03),
+                             fleece_pt(0.075, sg * 0.095), buckle + [-0.004, sg * 0.036, -0.008]])
+            ups = np.array([[-0.8, sg * 0.6, 0.2], [-0.4, sg * 0.8, 0.4], [-0.1, sg * 0.6, 0.8], [0, sg * 0.1, 1],
+                            [0, 0, 1], [0.2, 0, 1]])
             geos.append(ribbon(ctrl, ups, 0.046, M_HARN))
-        nrm = np.array([0.45, 0.0, 0.89])
-        geos.append(tube(buckle - 0.006 * nrm, buckle + 0.010 * nrm, 0.036, M_METAL, n=20))
-        geos.append(tube(buckle + 0.009 * nrm, buckle + 0.014 * nrm, 0.020, M_BLACK, n=16))
+        # crotch strap: from the pan front under the notch, up through it and back along the split to the buckle
+        a_n = D - nd
+        z_split = lambda a: 0.5 * (fleece_pt(a, -0.021, 0.0) + fleece_pt(a, 0.021, 0.0))   # noqa: E731
+        ctrl = np.array([[a_n + 0.02, 0.0, (t0 - ct) * 1.0 + 0.012], [a_n + 0.012, 0.0, t0 - sk_t + 0.002],
+                         z_split(a_n - 0.02), z_split(0.30), z_split(0.21), buckle + [0.030, 0.0, -0.006]])
+        ups = np.array([[1, 0, 0], [0.7, 0, 0.7], [0, 0, 1], [0, 0, 1], [0, 0, 1], [-0.2, 0, 1]])
+        geos.append(ribbon(ctrl, ups, 0.040, M_HARN))
+        nrm = _unit3([0.25, 0.0, 0.97])
+        geos.append(tube(buckle - 0.008 * nrm, buckle + 0.008 * nrm, 0.036, M_METAL, n=20))
+        geos.append(tube(buckle + 0.007 * nrm, buckle + 0.012 * nrm, 0.020, M_BLACK, n=16))
 
     # ---- armrests: hinged on the back sides at arm_pivot; level (down) or flipped up along the back
     ah = float(c["arm_h"])
@@ -798,15 +888,20 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
 REAR_ROUND = 0.025       # [E] executive back: rear face rounded across, sides this far forward of the centreline
 
 
+EXEC_TOP = (0.85, 0.018, 0.085)   # [M] P1046406: the sides draw in over the top 15 % by 18 mm, corners r 0.085 (r2 F1)
+
+
 def _exec_hw(b, s_top, extra=0.0):
     """Half-width of the executive back at along-back position b: lumbar back_w[1] up to mid-height, the shoulder
-    width back_w[0] toward the top, top corners rounded r 0.07 [E: photos]."""
+    width back_w[0] at 85 % of the height, drawing in by EXEC_TOP toward the top, top corners rounded [E/M: photos]
+    (inside the L6 front view's chamfered top corners)."""
     e = I.EXEC_SEAT
     bw0, bw1 = 0.5 * e["back_w"][0], 0.5 * e["back_w"][1]
-    rr = 0.07
+    f85, taper, rr = EXEC_TOP
     b = np.asarray(b, float)
-    hw = np.interp(b, [0.0, 0.22, s_top - rr], [bw1, bw1, bw0])
-    corner = (bw0 - rr) + np.sqrt(np.maximum(rr * rr - (b - (s_top - rr)) ** 2, 0.0))
+    hw = np.interp(b, [0.0, 0.22, f85 * s_top, s_top], [bw1, bw1, bw0, bw0 - taper])
+    h0 = float(np.interp(s_top - rr, [0.0, 0.22, f85 * s_top, s_top], [bw1, bw1, bw0, bw0 - taper]))
+    corner = (h0 - rr) + np.sqrt(np.maximum(rr * rr - (b - (s_top - rr)) ** 2, 0.0))
     return np.where(b > s_top - rr, corner, hw) + extra
 
 
@@ -897,38 +992,47 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
                  post=lambda u, v, e: rear_round(nb, REAR_ROUND)(u - o[0], v - o[1], e))]
     fmap = _back_map(db, nb, o=o, front=lambda b: 0.02 + 0.0 * b)
     hwf = lambda b, x=0.0: _exec_hw(b, s_top, x)                # noqa: E731
-    b_lum, b_v = 0.175, s_top - 0.045
-    b0_ = 0.05
-    lum_hw = 0.125                                              # lumbar panel between the bolsters [M: P1046403]
-    vin0, vin1, vtop = 0.058, 0.142, 0.150                       # V seams: foot at the lumbar panel, knee, top [E]
-    b_knee = 0.40
+    # V-stitched front (P1046406 / 02 / 03, review r2 F1): a flush lumbar trapezoid low on the back, two seams leaving
+    # its top corners and running straight up and out to the bolster edge at ~80 % of the height (a clear V), the
+    # side bolsters tapering to nothing at the shoulders, the centre panel spanning the back above them
+    b0_, b_lum = 0.05, 0.185                                      # lumbar panel foot / top along the back [M]
+    lum_bot, lum_top = 0.064, 0.078                               # its half-widths (a trapezoid) [M]
+    b80 = 0.80 * s_top
+    v80 = float(hwf(b80)) - 0.020
+    b_v = s_top - 0.040
 
     def vin(b):
-        """Half-width of the centre panel: the V seams leave the lumbar panel's top corners almost level and sweep
-        up and out, then run on nearly straight to the shoulders (P1046402 / 03, brochure p.17: review r1 F10)."""
+        """Half-width of the centre panel (the V seams): lum_top at the lumbar top, linear to hw - 0.02 at 80 %."""
         b = np.asarray(b, float)
-        t = np.clip((b - b_lum) / (b_knee - b_lum), 0.0, 1.0)
-        lo = vin0 + (vin1 - vin0) * np.sin(0.5 * np.pi * t) ** 0.8
-        return np.where(b > b_knee, vin1 + (vtop - vin1) * (b - b_knee) / max(b_v - b_knee, 1e-6), lo)
-    # lumbar panel (between the bolsters, rounded bottom corners)
-    g = pillow(fillet([(-lum_hw, b0_ + 0.004), (lum_hw, b0_ + 0.004), (lum_hw, b_lum - 0.004),
-                       (-lum_hw, b_lum - 0.004)], [0.03, 0.03, 0.016, 0.016], max_len=0.04), 0.026, 0.012, 0.006,
-               h=0.045, crown=dome(0.006, 0.04), n_round=2)
+        t = np.clip((b - b_lum) / (b80 - b_lum), 0.0, 1.0)
+        return np.minimum(lum_top + (v80 - lum_top) * t, hwf(b) - 0.020)
+    # lumbar panel: flush, no crown (the seam round it is the joint)
+    g = pillow(fillet([(-lum_bot, b0_ + 0.004), (lum_bot, b0_ + 0.004), (lum_top, b_lum - 0.004),
+                       (-lum_top, b_lum - 0.004)], [0.03, 0.03, 0.014, 0.014], max_len=0.04), 0.024, 0.010, 0.006,
+               h=0.045, crown=dome(0.0015, 0.04), n_round=2)
     back.append(_mats(g.map(lambda V: fmap(V - [0, 0, 0.018])), M_CAB))
-    # centre panel: the V converging on the lumbar panel
-    bs = np.r_[np.linspace(b_lum + 0.004, b_knee, 9), np.linspace(b_knee + 0.04, b_v, 4)]
+    # centre panel: the V from the lumbar top, then the full width over the shoulders
+    bs = np.r_[np.linspace(b_lum + 0.004, b80, 9), np.linspace(b80 + 0.03, b_v, 4)]
     P = np.vstack([np.c_[vin(bs), bs], np.c_[-vin(bs[::-1]), bs[::-1]]])
-    g = pillow(fillet(P, 0.016, max_len=0.05), 0.026, 0.012, 0.006, h=0.045, crown=dome(0.004, 0.05), n_round=2)
+    g = pillow(fillet(P, np.r_[0.014, np.zeros(len(bs) - 2), 0.04, 0.04, np.zeros(len(bs) - 2), 0.014], max_len=0.05),
+               0.026, 0.012, 0.006, h=0.045, crown=dome(0.004, 0.05), n_round=2)
     back.append(_mats(g.map(lambda V: fmap(V - [0, 0, 0.018])), M_CAB))
-    # side bolsters, raised, the full height beside the lumbar and centre panels
+    # side bolsters: raised, from beside the lumbar panel up along the V seam, tapering to a rounded tip at the shoulder
     for sg in (-1, 1):
-        # (no V sample within 55 mm of its foot: the wedge between the lumbar top and the V is rounded r 0.016)
-        bs = np.r_[np.linspace(b0_ + 0.004, b_lum - 0.004, 3), b_lum + 0.004, np.linspace(b_lum + 0.06, b_knee, 6),
-                   np.linspace(b_knee + 0.04, b_v, 4)]
-        inner = np.where(bs < b_lum, lum_hw + 0.006, vin(bs) + 0.006)
-        outer = hwf(bs, -0.010)
-        Pb = np.vstack([np.c_[sg * inner, bs], np.c_[sg * outer[::-1], bs[::-1]]])
-        g = pillow(fillet(Pb, 0.016), 0.032, 0.012, 0.006, h=0.045, crown=dome(0.008, 0.03), n_round=2)
+        bb_ = np.linspace(b0_ + 0.004, b80, 40)
+        inner = np.where(bb_ < b_lum, np.interp(bb_, [b0_, b_lum], [lum_bot, lum_top]) + 0.006, vin(bb_) + 0.006)
+        outer = hwf(bb_, -0.010)
+        ok = outer - inner > 0.030
+        bb_, inner, outer = bb_[ok], inner[ok], outer[ok]
+        bs = np.r_[bb_[0], bb_[4:-1][::3]]
+        bs = np.r_[bs[bs < bb_[-1] - 0.025], bb_[-1]]                  # no two samples closer than 25 mm at the tip
+        inner, outer = np.interp(bs, bb_, inner), np.interp(bs, bb_, outer)
+        rt = 0.5 * (outer[-1] - inner[-1])                            # a round tip (>= 15 mm) at the shoulder
+        ang = np.radians(np.linspace(170.0, 10.0, 7))
+        tip = np.c_[sg * (inner[-1] + rt + rt * np.cos(ang)), bs[-1] + 1.3 * rt * np.sin(ang)]
+        Pb = np.vstack([np.c_[sg * inner[:-1], bs[:-1]], tip, np.c_[sg * outer[-2::-1], bs[-2::-1]]])
+        rb_ = np.r_[0.016, np.full(len(bs) - 2, 0.014), np.zeros(len(tip)), np.full(len(bs) - 2, 0.014), 0.016]
+        g = pillow(fillet(Pb, rb_), 0.032, 0.012, 0.006, h=0.045, crown=dome(0.008, 0.03), n_round=2)
         back.append(_mats(g.map(lambda V: fmap(V - [0, 0, 0.018])), M_CAB))
     # rear: dark insert with an arched top over the lower two thirds and a map pocket, following the rounded rear
     # face (photos: seat backs seen from behind)
@@ -982,17 +1086,22 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     sa, sb = sorted((si * W_ - si * 0.004, si * W_ + si * 0.007))
     geos.append(slab(rrect(a1 - cl - 0.008, at - 0.025 - ch, a1 - 0.008, at - 0.025, 0.010), sa, sb, 0.003, M_METAL))
 
-    # ---- lap belt: halves from the anchors at the cushion's rear corners across the seat to the buckle
+    # ---- lap belt: halves from the anchors at the cushion's rear corners, over the side panels and ACROSS the cushion
+    #      (a third of its depth from the back, on its crown) to the buckle (P1046406 / 03: review r2 F9)
     if belts:
-        z_at = lambda u: (sh + 0.025) + slope * (u - u_r) + 0.004   # noqa: E731
-        buck = np.array([0.045, si * 0.03, z_at(0.045) + 0.010])
+        z_at = lambda u, y: ((sh + 0.025) + slope * (u - u_r) + 0.008 * smoothstep(0.0, 0.08, cw - np.abs(y))  # noqa
+                             + (0.010 * smoothstep(0.0, 0.03, cw - np.abs(y)) if abs(y) > 0.125 else 0.0))
+        ub = 0.125
+        buck = np.array([ub, si * 0.03, z_at(ub, 0.0) + 0.006])
         for sg in (-1, 1):
-            ctrl = np.array([[-0.045, sg * (cw + 0.008), pt + 0.03], [-0.02, sg * (cw - 0.005), z_at(-0.02) + 0.004],
-                             [0.02, sg * 0.14, z_at(0.02) + 0.008], [0.04, sg * 0.07 + si * 0.03, z_at(0.04) + 0.010],
-                             buck + [0, sg * 0.03, -0.001]])
-            ups = np.array([[-0.2, sg * 0.9, 0.3], [-0.1, sg * 0.3, 0.95], [0, 0, 1], [0, 0, 1], [0, 0, 1]])
+            ctrl = np.array([[-0.045, sg * (cw + 0.008), pt + 0.03], [0.00, sg * (cw + 0.006), z_at(0.0, cw) - 0.012],
+                             [0.05, sg * (cw - 0.012), z_at(0.05, cw - 0.012) + 0.0025],
+                             [0.10, sg * 0.15, z_at(0.10, 0.15) + 0.0025],
+                             [ub - 0.004, sg * 0.07 + si * 0.02, z_at(ub, 0.07) + 0.0025], buck + [0, sg * 0.03, -0.003]])
+            ups = np.array([[-0.2, sg * 0.9, 0.3], [-0.1, sg * 0.8, 0.6], [0, sg * 0.2, 1], [0, 0, 1], [0, 0, 1],
+                            [0, 0, 1]])
             geos.append(ribbon(ctrl, ups, 0.046, M_HARN))
-        geos.append(rbox(buck + [0, 0, 0.003], (0.050, 0.068, 0.010), 0.004, M_METAL))
+        geos.append(rbox(buck + [0, 0, 0.001], (0.050, 0.068, 0.010), 0.004, M_METAL))
 
     # ---- place: seat-local (u fwd, s = y offset, v above the floor) -> model
     srp = rec["srp"]

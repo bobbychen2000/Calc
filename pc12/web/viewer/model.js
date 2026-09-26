@@ -11,6 +11,14 @@ export const CUT_PARTS = new Set([
   // the airstair's folding handrails (children of door_airstair) are cut with the door
   'door_airstair_rail', 'door_airstair_rail_up', 'door_airstair_cable',
 ]);
+// Fixed interior parts cut with the lining (review r2 M3): the port half of the cabin furniture (ledges -- their
+// cargo-door segment rides on the clipped door_cargo --, cabinets, carpet) and of the flight deck's divider, curtain,
+// consoles and floor.  null = every material of the part.  The panel, glareshield and pedestal stay whole, and so do
+// the seats and the crew controls (their own parts).
+export const CUT_MATERIALS = {
+  cabin_interior: null,
+  flight_deck: new Set(['veneer_walnut', 'curtain', 'panel_dark', 'carpet_flightdeck']),
+};
 // Exterior shells that turn translucent in X-ray.
 export const XRAY_PARTS = new Set([
   ...[...CUT_PARTS].filter((id) => id !== 'structure'),
@@ -182,9 +190,12 @@ export class Model {
           base.polygonOffsetUnits = 8;
           ch.material = base;
         }
+        const cm = CUT_MATERIALS[rec.id];
         const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name),
           // structure: clip the fuselage frames/stringers but keep the wing spars & ribs whole
-          cut: rec.cut && !(rec.id === 'structure' && name === 'interior_green') };
+          cut: (rec.cut && !(rec.id === 'structure' && name === 'interior_green')) ||
+            (cm !== undefined && (cm === null || cm.has(name))),
+          interiorCut: cm !== undefined };
         if (mr.paint && !patched.has(base)) { patchMaterial(base, this.U, { paint: true }); patched.add(base); }
         if (mr.glass && !patched.has(base)) { patchMaterial(base, this.U, { glass: true }); patched.add(base); }
         ch.castShadow = rec.xray || SHADOW_CASTERS.test(rec.id);
@@ -276,13 +287,15 @@ export class Model {
 
   // ---------------------------------------------------------------- materials
   cutVariant(mr) {
-    let m = this._cut.get(mr.base);
+    const key = mr.interiorCut ? mr.base.uuid + ':i' : mr.base;
+    let m = this._cut.get(key);
     if (!m) {
       m = mr.base.clone();
       m.clippingPlanes = this.clipPlanes;
       m.clipShadows = true;
-      patchMaterial(m, this.U, { paint: mr.paint, lining: !mr.glass, glass: mr.glass });
-      this._cut.set(mr.base, m);
+      // furniture keeps its own colour on the cut back faces (the lining tint is for the skins)
+      patchMaterial(m, this.U, { paint: mr.paint, lining: !mr.glass && !mr.interiorCut, glass: mr.glass });
+      this._cut.set(key, m);
     }
     return m;
   }

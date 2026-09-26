@@ -833,13 +833,13 @@
     "roughness": 0.45
    },
    "render_fleece": {
-    "scale": 140.0,
-    "strength": 0.9,
-    "dist": 0.006,
-    "mottle": 0.18
+    "scale": 70.0,
+    "strength": 1.0,
+    "dist": 0.011,
+    "mottle": 0.28
    },
    "kind": "dielectric",
-   "note": "grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm mauve-grey: AOPA / P1046408-10, review r1 F3)",
+   "note": "grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm mauve-grey: AOPA / P1046408-10, review r1 F3; bump / mottle coarsened to read at the panel camera's distance, review r2 F4)",
    "srgb_hex": "#A29BA0"
   },
   "seat_base_black": {
@@ -946,20 +946,20 @@
   },
   "panel_grey": {
    "baseColorFactor": [
-    0.21,
-    0.205,
-    0.198,
+    0.33,
+    0.305,
+    0.325,
     1.0
    ],
-   "metallicFactor": 0.45,
-   "roughnessFactor": 0.38,
+   "metallicFactor": 0.18,
+   "roughnessFactor": 0.45,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "brushed titanium-grey sub-panels, eyebrow, centre stack",
-   "srgb_hex": "#7E7D7B"
+   "note": "warm titanium-grey panel: the PDU face and cheeks, sub-panels, eyebrow, centre stack (P1046408 pair: one warm metallic surface, knee panel 127/116/125, review r2 F3; was 0.21 grey with a graphite face)",
+   "srgb_hex": "#9B969A"
   },
   "panel_silver": {
    "baseColorFactor": [

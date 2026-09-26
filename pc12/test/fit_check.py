@@ -33,6 +33,11 @@
 19. the 95th-pct male's legs vs the built yokes over pitch travel and roll (report, next to the L6B 2-D value)
 20. cabin furniture and seats clear of the windows, the door / exit clear openings and the exit clear zone
 21. airstair door (+ folding handrails) and cargo door (+ ledge segment) closed -> open clear of the interior
+22. every interior piece seated (within 3 mm of, or crossing, another surface); 22b every lining fitting (O2 doors,
+    PULL cover, PSU pods, downlights, sockets, CB panels, overhead) shows >= 95 % of its cabin-facing area > 0.5 mm in
+    front of the lining; 22c the stowed divider curtain clear of the crew seat tracks
+23. closed interior shells wound outward, directed edges consistent; vertex normals against the face winding on
+    <= 1 % of each interior primitive's area
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
@@ -51,6 +56,7 @@ from isect import crossings, merged
 X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
 MARGIN = 0.02
 parts = build_parts()
+FD_KIDS = [k for k, q in parts.items() if q.parent == "flight_deck"]    # yokes, rudder pedals (review r2 M4)
 fails = []
 opens = []
 
@@ -267,7 +273,7 @@ for pid, gear_id, A, B0, T, axis, (f1, ref), name in G.brace_specs():
 from model import interior as I
 from model import fuselage_parts as FPm
 SEAT_IDS = [k for k in parts if k.startswith("seat_")]
-V = np.vstack([verts(k) for k in ["cabin_interior", "flight_deck"] + SEAT_IDS])
+V = np.vstack([verts(k) for k in ["cabin_interior", "flight_deck"] + FD_KIDS + SEAT_IDS])
 for r in openings_table():
     if r["id"] != "door_airstair":
         continue
@@ -442,8 +448,9 @@ for f, v in [(f, 1.0) for f in np.linspace(0, 1, 11)] + [(1.0, v) for v in (0.75
 report("nose gear + drag brace vs the clamshell doors (open with the gear down / in transit, closing when up)",
        not doors_n, "clear at every state" if not doors_n else "; ".join(f"gear {a:.1f} door {b:.2f}: {n}"
                                                                         for (a, b), n in doors_n.items()))
-fixed = crop(cat(posed_mesh("flight_deck", I4), posed_mesh("gear_bays", I4), posed_mesh("fus_fwd", I4),
-                 posed_mesh("cowl_lower", I4)), np.array([2.6, -0.4, 0.0]), np.array([4.4, 0.4, 1.8]))
+fixed = crop(cat(posed_mesh("flight_deck", I4), *[posed_mesh(k, I4) for k in FD_KIDS], posed_mesh("gear_bays", I4),
+                 posed_mesh("fus_fwd", I4), posed_mesh("cowl_lower", I4)), np.array([2.6, -0.4, 0.0]),
+             np.array([4.4, 0.4, 1.8]))
 n_fd = {}
 for f in np.linspace(0, 1, 11):
     Mg = rotation_about(g["axis"], np.radians(g["retract"]) * f, g["origin"])
@@ -679,8 +686,8 @@ for pid in [k for k in SEAT_IDS if k.startswith("seat_pax")]:
 Y = I.YOKE
 for side in (-1, 1):
     hub = I.yoke_hub(side)
-    Vy = np.vstack([m.V for m, mm in parts["flight_deck"].meshes if mm in ("yoke_white", "grip_black", "black",
-                                                                                 "light_red", "panel_grey")])
+    Vy = np.vstack([m.V for k in ["flight_deck"] + FD_KIDS for m, mm in parts[k].meshes
+                    if mm in ("yoke_white", "grip_black", "black", "light_red", "panel_grey")])
     Vy = Vy[(np.abs(Vy[:, 1] - hub[1]) < 0.20) & (Vy[:, 0] > hub[0] - 0.05) & (Vy[:, 0] < hub[0] + 0.12) &
             (np.abs(Vy[:, 2] - hub[2]) < 0.15)]
     p95 = I.crew_setting(1.0, side)
@@ -752,7 +759,7 @@ report(f"over-wing exit clear zone (BL > {I.CLEAR_ZONES['exit_bl']:.2f} abeam th
 # at full travel the handrail fittings bear on the jambs by design (door_frames excluded there).
 from model import airstair as AS
 swing_targets = ["cabin_interior", "flight_deck", "interior_lining", "door_frames", "fus_center", "fus_fwd",
-                 "belly_fairing"] + SEAT_IDS
+                 "belly_fairing"] + FD_KIDS + SEAT_IDS
 fixed_all = {k: posed_mesh(k, I4) for k in swing_targets if k in parts}
 for pid in ("door_airstair", "door_cargo"):
     dp = parts[pid].pivot
@@ -838,7 +845,7 @@ def _pt_tri(P, T):
     return out
 
 
-INT_IDS = ["flight_deck", "cabin_interior", "interior_lining"] + SEAT_IDS
+INT_IDS = ["flight_deck", "cabin_interior", "interior_lining"] + FD_KIDS + SEAT_IDS
 others = ["fus_fwd", "fus_center", "glazing_cabin", "glazing_flightdeck", "door_cargo", "door_frames", "exit_hatch"]
 pieces, allT, allC = [], [], []
 for pid in INT_IDS + [k for k in others if k in parts]:
@@ -898,6 +905,109 @@ report(f"interior fittings seated: every piece ({len(pieces)}) within 3 mm of an
            f"{p_}/{m_} {'> 30' if not np.isfinite(d_) else f'{d_ * 1000:.1f}'} mm at STA {T_[..., 0].mean():.3f} BL "
            f"{T_[..., 1].mean():+.3f} WL {T_[..., 2].mean():.3f}" for d_, p_, m_, T_ in floating[:8]))
 
+# 22b -------------------------------------------------------------------------- lining fittings stand proud
+# every small fitting on the lining / headliner (oxygen-mask doors and their dark gap plates, the exit PULL cover, the
+# PSU pods, reading lights, downlights, sockets, CB panels, overhead panel: interior_lining pieces other than the lining
+# shell itself) shows >= 95 % of its cabin-facing area more than 0.5 mm in front of the surface it sits on (review r2
+# C2 / C7: the O2 gap plates were 92-100 % within 0.3 mm of the lining or behind it, the flat downlights half buried).
+# Parent surface: the large lining-coloured pieces of interior_lining (side walls, headliner panels, soffits), faces
+# wound toward the cabin; distances exact (point-triangle) over the 12 nearest parent triangles.
+LIN_MATS = ("lining", "lining_flightdeck")
+par_T, fit_pc = [], []
+for m, mat in parts["interior_lining"].meshes:
+    T = m.V[m.F]
+    lab = _components(m.V, m.F)
+    for c in np.unique(lab):
+        Tc = T[lab == c]
+        A = 0.5 * np.linalg.norm(np.cross(Tc[:, 1] - Tc[:, 0], Tc[:, 2] - Tc[:, 0]), axis=1).sum()
+        if mat in LIN_MATS and A > 0.05:
+            if not getattr(m, "_reveal", False):          # window / door reveals face into their openings
+                par_T.append(Tc)
+        else:
+            fit_pc.append((mat, Tc))
+par_T = np.vstack(par_T)
+par_N = np.cross(par_T[:, 1] - par_T[:, 0], par_T[:, 2] - par_T[:, 0])
+par_N /= np.maximum(np.linalg.norm(par_N, axis=1, keepdims=True), 1e-15)
+par_tree = cKDTree(par_T.mean(1))
+
+
+def _signed_to_parent(P, k=12):
+    """Signed distance of the points P to the parent lining surface (+ = on the cabin side), exact over k candidates."""
+    _, idx = par_tree.query(P, k=k)
+    best = np.full(len(P), np.inf)
+    sgn = np.ones(len(P))
+    for j in range(k):
+        T = par_T[idx[:, j]]
+        a, b, c = T[:, 0], T[:, 1], T[:, 2]
+        n = np.cross(b - a, c - a)
+        nn = (n * n).sum(1) + 1e-30
+        t = ((P - a) * n).sum(1) / nn
+        q = P - t[:, None] * n
+        d00, d01, d11 = ((b - a) ** 2).sum(1), ((b - a) * (c - a)).sum(1), ((c - a) ** 2).sum(1)
+        d20, d21 = ((q - a) * (b - a)).sum(1), ((q - a) * (c - a)).sum(1)
+        den = d00 * d11 - d01 * d01 + 1e-30
+        v = (d11 * d20 - d01 * d21) / den
+        w = (d00 * d21 - d01 * d20) / den
+        inside = (v >= 0) & (w >= 0) & (v + w <= 1)
+        dist = np.where(inside, np.abs(t) * np.sqrt(nn), np.inf)
+        for e0, e1 in ((a, b), (b, c), (c, a)):
+            dd = e1 - e0
+            tt = np.clip(((P - e0) * dd).sum(1) / ((dd * dd).sum(1) + 1e-30), 0, 1)
+            dist = np.minimum(dist, np.linalg.norm(P - (e0 + tt[:, None] * dd), axis=1))
+        s_ = np.sign(((P - a) * par_N[idx[:, j]]).sum(1))
+        better = dist < best
+        best = np.where(better, dist, best)
+        sgn = np.where(better, s_, sgn)
+    return sgn * best
+
+
+sunk = []
+n_fit = 0
+for mat, T in fit_pc:
+    C = T.mean(1)
+    fn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])
+    A = 0.5 * np.linalg.norm(fn, axis=1)
+    _, idx = par_tree.query(C)
+    near = np.linalg.norm(C - par_T[idx].mean(1), axis=1) < 0.06
+    if not near.any():
+        continue
+    face = ((fn / np.maximum(2 * A, 1e-18)[:, None]) * par_N[idx]).sum(1) > 0.3        # cabin-facing faces
+    face &= near
+    if A[face].sum() < 1e-6:
+        continue
+    n_fit += 1
+    d = _signed_to_parent(C[face])
+    frac = float(A[face][d > 0.0005].sum() / A[face].sum())
+    if frac < 0.95:
+        sunk.append((frac, mat, C.mean(0), float(np.median(d))))
+sunk.sort(key=lambda r: r[0])
+report(f"lining fittings stand proud: >= 95 % of each piece's cabin-facing area > 0.5 mm in front of the lining "
+       f"({n_fit} pieces)", not sunk,
+       "all proud" if not sunk else "; ".join(f"{m_} {100 * f_:.0f} % at STA {c_[0]:.3f} BL {c_[1]:+.3f} WL {c_[2]:.3f} "
+                                               f"(median {1000 * d_:+.1f} mm)" for f_, m_, c_, d_ in sunk[:8]))
+
+# 22c ------------------------------------------------------------------ divider curtain vs the crew tracks
+# the stowed curtain bundle (flight_deck 'curtain', down to the carpet) against the crew seat tracks (review r2 M2: the
+# pilot's inboard track end ran 14-17 mm into its foot): no crossing, and the gap along x to every track under it
+Vc = np.vstack([m.V for m, mm in parts["flight_deck"].meshes if mm == "curtain"])
+Vc = Vc[Vc[:, 2] < FL + 0.10]
+gap_ct, x_cr = np.inf, 0
+for pid in ("seat_pilot", "seat_copilot"):
+    for m, mm in parts[pid].meshes:
+        if mm != "metal_dark":
+            continue
+        for cV in components(m):
+            if np.ptp(cV[:, 0]) < 0.4:
+                continue                                                # fittings: the tracks are the long pieces
+            under = (Vc[:, 1] > cV[:, 1].min() - 0.002) & (Vc[:, 1] < cV[:, 1].max() + 0.002)
+            if under.any():
+                gap_ct = min(gap_ct, float(Vc[under, 0].min() - cV[:, 0].max()))
+cm_ = [m for m, mm in parts["flight_deck"].meshes if mm == "curtain"]
+tm_ = [m for pid in ("seat_pilot", "seat_copilot") for m, mm in parts[pid].meshes if mm in ("metal_dark", "seat_base_black")]
+x_cr = len(crossings(*cat(*[(m.V, m.F) for m in cm_]), *cat(*[(m.V, m.F) for m in tm_])))
+report("divider curtain bundle clear of the crew seat tracks (L6B curtain_track)", x_cr == 0 and gap_ct > 0.0,
+       f"{x_cr} crossings, gap {gap_ct * 1000:.0f} mm (L6B {I.divider_items_clearance()['curtain_track'] * 1000:.0f})")
+
 # 23 ----------------------------------------------------------------------------------------- shell orientation
 # closed interior shells wound outward (positive signed volume) and consistently (no directed edge used twice); the
 # viewer / renders show both sides, but a single-sided view or a normal map must see the outside (review r1 C6)
@@ -931,6 +1041,24 @@ for pid in INT_IDS:
 report("interior closed shells wound outward, directed edges consistent", not inward and not incons,
        "ok" if not inward and not incons else
        f"{len(inward)} inward closed shells ({'; '.join(inward[:5])}); inconsistent: {'; '.join(incons[:6])}")
+# per primitive: vertex normals against the face winding (review r2 N1: strap ends and curtain folds had cos = -1
+# normals, dark in a single-sided renderer): flag a part / material with > 1 % of its area where a corner normal points
+# against its face's normal
+bad_n = []
+for pid in INT_IDS:
+    for m, mat in parts[pid].meshes:
+        if not len(m.F) or m.N is None or len(m.N) != len(m.V):
+            continue
+        T = m.V[m.F]
+        fn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])
+        A = 0.5 * np.linalg.norm(fn, axis=1)
+        ok_ = A > 1e-12
+        cosv = np.einsum("fij,fj->fi", m.N[m.F], fn / np.maximum(2 * A, 1e-18)[:, None])
+        frac = float(A[ok_ & (cosv < 0).any(1)].sum() / max(A.sum(), 1e-18))
+        if frac > 0.01:
+            bad_n.append(f"{pid}/{mat} {100 * frac:.1f} %")
+report("interior vertex normals agree with the face winding (<= 1 % of each primitive's area against it)", not bad_n,
+       "ok" if not bad_n else "; ".join(bad_n[:8]))
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

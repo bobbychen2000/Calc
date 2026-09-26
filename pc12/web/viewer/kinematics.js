@@ -96,6 +96,16 @@ export class Kinematics {
         w: pv.window || [0, 1], angle: 0 });
     }
 
+    // crew controls (model/flightdeck.py control_pivots, review r2 M4): the yokes roll about their columns and slide
+    // fore / aft with the pitch command, the rudder pedals swing about their floor hinges with the yaw command
+    this.controls = [];
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || (pv.kind !== 'yoke' && pv.kind !== 'pedal')) continue;
+      this.controls.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(),
+        pull: pv.travel_pull ? modelToGl(pv.travel_pull) : null, push: pv.travel_push ? modelToGl(pv.travel_push) : null });
+    }
+
     // commanded targets and current (smoothed) values
     this.t = { flaps: 0, rpm: 0, pitch: 0, roll: 0, pitchCmd: 0, yaw: 0, stabTrim: 0, ailTrim: 0, rudTrim: 0,
       door_airstair: 0, door_cargo: 0 };
@@ -347,6 +357,16 @@ export class Kinematics {
         const td = (S.rudder_tab.pv.gearing || 0) * d + c.rudTrim;
         this._rot('rudder_tab', td);
         D.rudder_tab = td;
+      }
+    }
+    // yokes (right roll = clockwise as the pilot sees it = + about the forward-pointing column axis; pull = aft) and
+    // rudder pedals (right rudder: the right-foot pedals forward = - about +BL, gearing -1 for the left-foot ones)
+    for (const k of this.controls) {
+      if (k.pv.kind === 'yoke') {
+        k.rec.anim.quat.setFromAxisAngle(k.axis, c.roll * k.pv.roll_deg * DEG);
+        if (k.pull) k.rec.anim.pos.copy(c.pitchCmd >= 0 ? k.pull : k.push).multiplyScalar(Math.abs(c.pitchCmd));
+      } else {
+        k.rec.anim.quat.setFromAxisAngle(k.axis, -(k.pv.gearing || 0) * c.yaw * k.pv.travel_deg * DEG);
       }
     }
     // doors (open angle in radians), eased
