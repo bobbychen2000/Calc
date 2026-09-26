@@ -347,13 +347,11 @@ SPEC = {
     # charcoal tyre with a clear satin sheen (region 83/86/89), the render's was dead black (43/45/45)
     # round 4: darker and a little glossier (0.05 / 0.60 -> 0.028 / 0.45): the round-3 fit to the photo REGION mean
     # (83/86/89) chased rib-top highlights and hub / floor pixels pulled in by the camera misfit; photo 130's nose tyre
-    # sidewall measures sRGB 56-60, tread ribs 67-81 (render r3 body p50 71).  grooves: 4 circumferential tread
-    # grooves on the crown (photo 130: 5 satin ribs on the nose tyre) as a bump, in the tyre's own frame (apply()
-    # stores it on every tyre object: _tyre_frames); 'tread' = the tread width as a fraction of the tyre width.
+    # sidewall measures sRGB 56-60, tread ribs 67-81 (render r3 body p50 71).  Tread grooves: the model cuts them
+    # (model/wheels.py tyre_profile_3d: main two pairs at +-0.14 / +-0.26 W, nose even at +-0.09 / +-0.28 W, rounded
+    # rib edges), so the render-time groove bump (_tyre_grooves, 'grooves' key: n / width / tread / depth ...) is off.
     "tire":             dict(kind="dielectric", base=(0.028, 0.028, 0.029), rough=0.45, spec=0.5,
-                             grooves=dict(n=4, width=0.006, tread=0.62, depth=0.0025, floor_w=0.002, shoulder=0.003,
-                                          floor=0.25, floor_rough=0.7),
-                             note="tyre rubber: black, satin sheen, 4 circumferential tread grooves"),
+                             note="tyre rubber: black, satin sheen (the tread grooves are geometry)"),
     "deice_boot":       dict(kind="dielectric", base=(0.012, 0.012, 0.014), rough=0.25, spec=0.5,
                              note="pneumatic de-ice boots: near-black glossy neoprene with one crisp highlight "
                                   "(photo 188 sRGB 32/36/44 in shade; 130: bright room reflections)"),
@@ -1496,9 +1494,8 @@ def write_json(path=JSON_OUT):
             exhaust="the GLB 'black' primitives of exhaust_stacks (outlet band, inner wall, rim) render as "
                     "exhaust_soot; exhaust_polished: render_collar (station-dependent heat tint and black outlet "
                     "collar), render_polish (noise roughness / tint + bump)",
-            tyre_grooves="tire: render_grooves = 4 circumferential tread grooves (6 mm) at +-0.1 / +-0.3 of the tread "
-                         "width (tread = 0.62 x tyre width) on the crown; a bump in the renders (lookdev "
-                         "_tyre_grooves); the model could cut them or the viewer use a normal map"),
+            tyre_grooves="tire: the tread grooves are geometry in the GLB (model/wheels.py); no render_grooves "
+                         "(the render-time bump / viewer emulation would double them)"),
         materials=gltf_table())
     Path(path).write_text(json.dumps(doc, indent=1))
     return path

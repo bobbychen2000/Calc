@@ -12,8 +12,11 @@ First-angle projection, each assembly as a three-view at 1:3 on a common ground 
   NOSE              SIDE view from port, FRONT view with half section B-B to its right, TOP view below.
 Details at 1:2: H (main hub, brake and hub fairing in section), D / F (tyre sections with the groove pattern and the
 TRA growth envelope).  Tables: key dimensions with source tags, the photo check (deviation call-outs), materials.
-Main tyre: the 8.50-10 Type III (owner decision 2026-09-26); the superseded 22 in tyre of Jane's / the Pilatus
-drawing (still built by model/gear.py until the Stage-3 wheel step) is drawn as a deviation outline.  The overlay
+Main tyre: the MODELLED envelope wheels.MAIN_TYRE_ENV (MAIN_TYRE_CHOICE: the 22x8.50-10 of Jane's / the Pilatus
+drawing, pc12/CLAUDE.md's sourced size, until the owner decides) is drawn in full; the other candidate
+(wheels.MAIN_TYRE_ALT: the proposed 8.50-10 Type III of the tyre makers / parts lists / photos) as a deviation outline in
+the accent colour, its TRA growth envelope in detail D.  The 3-D wheels (model/wheels.py main_wheel / nose_wheel) are
+built from these tables.  The overlay
 variant (refs/cache/overlays/L4W_overlay.*, git-ignored) adds the registered Pilatus drawing's wheel circles in red
 and the photo-measured tyre / fairing sizes and groove positions in blue.
 """
@@ -36,6 +39,14 @@ from model import gear as G  # noqa: E402
 
 SHEET = dict(id="L4W", title="WHEELS & TYRES", subtitle="WHEELS & TYRES - MAIN AND NOSE WHEEL ASSEMBLIES",
              size="A0", scale="1:3 / 1:2", rev="A", order=45)
+
+MOD, ALT = WH.MAIN_TYRE_ENV, WH.MAIN_TYRE_ALT          # modelled main tyre / the other candidate
+LOADED_MAIN = WH.loaded_blend("main")[3] is not None     # the modelled main tyre is drawn flattened at the ground
+
+
+def tyre_name(e):
+    return "8.50-10 TYPE III" if e is WH.MAIN_TYRE_850 else str(e["size"]).upper()
+
 
 HID = (1.6, 0.9)
 SUP = (3.0, 1.0)               # superseded 22 in tyre (accent colour)
@@ -307,9 +318,10 @@ def draw_main_side(ds):
               band(L, L + u_leg * 0.13, G.MAIN_LEG_R[1])[[1, 0, 3, 2]]):
         for seg in outside_circle(P, (0.0, 0.0), R + 0.001):
             ds.cv.path(v.pts(seg + c), W_FINE, PHANTOM)
-    # superseded 22 in tyre (accent) and the free tyre below the ground (static deflection, phantom)
-    wheel_circle(ds, v, c, WH.SUPERSEDED_MAIN["R"], W_FINE, SUP, color=ACCENT)
-    ds.cv.path(v.pts(WH.free_below_ground("main") + c), W_FINE, PHANTOM)
+    # the other candidate main tyre (accent) and the free tyre below the ground (static deflection, phantom)
+    wheel_circle(ds, v, c, ALT["R"], W_FINE, SUP, color=ACCENT)
+    if LOADED_MAIN:
+        ds.cv.path(v.pts(WH.free_below_ground("main") + c), W_FINE, PHANTOM)
     ds.cv.path(v.pts(WH.loaded_side_outline("main") + c), W_OBJ, closed=True)
     # hub fairing: lip (= rim flange tip, where the tyre leaves the flange), lip ring, raised face, screws, hole
     wheel_circle(ds, v, c, fa["r_lip"])
@@ -338,13 +350,18 @@ def draw_main_side(ds):
               f1=(C[0] + 2.0, C[1] - R * k), f2=(Xg + 11.0, Yg))
     ds.text(Xg + 14.0, C[1] - 1.8, "AXLE WL = LOADED RADIUS", 2.1, "label", "start", fill=MUTED, tag="dim")
     _, _, a, rb = WH.loaded_blend("main")
-    yp = Yg + 17.0
-    ds.sh.dim(v.pt(ax - a, 0.0), v.pt(ax + a, 0.0), yp, f"{fmt(2 * a)}", "h", f1=v.pt(ax - a, 0.0),
-              f2=v.pt(ax + a, 0.0))
-    ds.text(C[0] + a * k + 5.0, yp + 0.9, "CONTACT PATCH [E]", 2.1, "label", "start", fill=MUTED, tag="dim")
     ab = math.radians(-100.0)
-    leader(ds, v.pt(ax + R * math.cos(ab), az + R * math.sin(ab)), f"STATIC DEFLECTION {fmt(R - h)}", (-46.0, 16.0),
-           lines=["FREE TYRE BELOW GROUND (PHANTOM)", f"BLEND R {fmt(rb)} TO THE FLAT [E]"], size=2.3, weight=500)
+    if LOADED_MAIN:
+        yp = Yg + 17.0
+        ds.sh.dim(v.pt(ax - a, 0.0), v.pt(ax + a, 0.0), yp, f"{fmt(2 * a)}", "h", f1=v.pt(ax - a, 0.0),
+                  f2=v.pt(ax + a, 0.0))
+        ds.text(C[0] + a * k + 5.0, yp + 0.9, "CONTACT PATCH [E]", 2.1, "label", "start", fill=MUTED, tag="dim")
+        leader(ds, v.pt(ax + R * math.cos(ab), az + R * math.sin(ab)), f"STATIC DEFLECTION {fmt(R - h)}",
+               (-46.0, 16.0), lines=["FREE TYRE BELOW GROUND (PHANTOM)", f"BLEND R {fmt(rb)} TO THE FLAT [E]"],
+               size=2.3, weight=500)
+    else:
+        leader(ds, v.pt(ax + R * math.cos(ab), az + R * math.sin(ab)), f"STATIC DEFLECTION {fmt(R - h, 1)}",
+               (-46.0, 16.0), lines=["FREE CIRCLE CUT BY THE GROUND"], size=2.3, weight=500)
     # ---- call-outs: fairing and screws above the tyre, the rest outside it on the left / right
     dia_leader(ds, C, R * k, 158.0, f"Ø{fmt(2 * R)} FREE", L=14.0, lines=None)
     Ytop = C[1] - R * k
@@ -359,13 +376,15 @@ def draw_main_side(ds):
     leader_to(ds, v.pt(*(c + hc + [-0.02, 0.012])), (C[0] - R * k - 10.0, C[1] + 22.0),
               f"VALVE-ACCESS HOLE Ø{fmt(fa['hole_d'])} [M]", lines=[f"ON R {fmt(fa['hole_r'])}, VALVE BEHIND"])
     a22 = math.radians(232.0)
-    R22 = WH.SUPERSEDED_MAIN["R"]
-    leader_to(ds, v.pt(ax + R22 * math.cos(a22), az + R22 * math.sin(a22)), (C[0] - R * k - 10.0, C[1] + 58.0),
-              f"22x8.50-10 Ø{fmt(2 * R22)} SUPERSEDED", lines=["JANE'S / PILATUS DWG", "3-D MODEL UNTIL STAGE 3"],
-              color=ACCENT)
+    Ra = ALT["R"]
+    alt_src = ("TYRE MAKERS / PARTS LISTS / PHOTOS" if ALT is WH.MAIN_TYRE_850 else "JANE'S / PILATUS DWG")
+    leader_to(ds, v.pt(ax + Ra * math.cos(a22), az + Ra * math.sin(a22)), (C[0] - R * k - 10.0, C[1] + 58.0),
+              f"{tyre_name(ALT)} Ø{fmt(2 * Ra)}", lines=[WH.ALT_STATUS, alt_src], color=ACCENT)
     a_t = math.radians(-24.0)
     leader_to(ds, v.pt(ax + R * math.cos(a_t), az + R * math.sin(a_t)), (Xg + 26.0, C[1] + 50.0),
-              "TYRE 8.50-10 TYPE III", lines=["10 PR TL, OWNER DECISION", "2026-09-26"], color=ACCENT)
+              f"TYRE {tyre_name(MOD)} (MODELLED)",
+              lines=(["JANE'S / PILATUS DWG 190.10.40.432", "APPROVED SIZE, SHEETS L1-L5"] if MOD is WH.MAIN_TYRE_22
+                     else ["10 PR TL, TYRE MAKERS / PHOTOS", "wheels.MAIN_TYRE_CHOICE"]))
     P_leg = v.pt(*(c + L + u_leg * 0.09 + np.array([-u_leg[1], u_leg[0]]) * -G.MAIN_LEG_R[1]))
     leader_to(ds, P_leg, (P_leg[0] + 22.0, Ytop - 20.0), "TRAILING ARM + LEG (INBOARD, ADJACENT)", size=2.3,
               dot=False, weight=500)
@@ -508,16 +527,20 @@ def draw_main_front(ds):
               f2=v.pt(hw, fr["rw"] + 0.006))
     t1 = float(fr["T1"][0])
     yb = v.pt(0.0, -az)[1] + 9.0
-    ds.sh.dim(v.pt(-t1, -h), v.pt(t1, -h), yb, fmt(2 * t1), "h")
-    ds.text(v.pt(t1, 0)[0] + 5.0, yb + 0.9, "CONTACT WIDTH (TREAD) [E]", 2.1, "label", "start", fill=MUTED, tag="dim")
+    if LOADED_MAIN:
+        ds.sh.dim(v.pt(-t1, -h), v.pt(t1, -h), yb, fmt(2 * t1), "h")
+        ds.text(v.pt(t1, 0)[0] + 5.0, yb + 0.9, "CONTACT WIDTH (TREAD) [E]", 2.1, "label", "start", fill=MUTED,
+                tag="dim")
+    p_t, p_f = retracted_depths()
     leader(ds, v.pt(s1, -fa["r_face"] * 0.6), f"HUB FAIRING FACE {fmt(WH.fairing_beyond_tyre())} OUTBOARD OF W",
-           (12.0, 34.0), lines=["RETRACTED: THE LOWEST POINT"], size=2.3)
-    Hh = WH.loaded_headon_half(asm)
-    ib = int(np.argmax(Hh[:, 0]))
-    leader(ds, v.pt(-Hh[ib, 0], -Hh[ib, 1]), f"LOADED SIDEWALL BULGE {fmt(WH.MAIN_TYRE_ENV['bulge'])} [E]",
-           (-16.0, 6.0), size=2.3, weight=500)
+           (12.0, 34.0), lines=[f"RETRACTED: {fmt(p_f, 1)} BELOW THE SKIN (TYRE {fmt(p_t, 1)})"], size=2.3)
+    if WH.MAIN_TYRE_ENV["bulge"] > 0:
+        Hh = WH.loaded_headon_half(asm)
+        ib = int(np.argmax(Hh[:, 0]))
+        leader(ds, v.pt(-Hh[ib, 0], -Hh[ib, 1]), f"LOADED SIDEWALL BULGE {fmt(WH.MAIN_TYRE_ENV['bulge'])} [E]",
+               (-16.0, 6.0), size=2.3, weight=500)
     leader(ds, v.pt(0.07, R - 0.004), "SPLIT HUB, 2 HALVES, TUBELESS [S]", (40.0, -16.0),
-           lines=["TYRE 8.50-10 TYPE III, 10 PR, 60 psi"], size=2.2)
+           lines=[f"TYRE {tyre_name(MOD)}, 10 PR, 60 psi"], size=2.2)
     leader(ds, v.pt(axl["boss_s"][0], -axl["boss_r"] * 0.6), "TRAILING-ARM BOSS", (-14.0, 14.0),
            lines=["(ADJACENT, INBOARD)"], size=2.3, dot=False, weight=500)
     view_title(ds, MAIN_X["front"], GY_M + 32.0, "SECTION A-A (HALF)",
@@ -687,9 +710,10 @@ def draw_main_top(ds):
     g = max(t["grooves"])
     Pg = v.pt(ax + 0.20, ay - g)
     leader_to(ds, Pg, (v.pt(ax + R, 0)[0] + 30.0, Pg[1] + 4.0), "4 GROOVES IN 2 PAIRS [M]", lines=["CENTRES +-30, +-56"])
-    leader_to(ds, v.pt(ax + 0.10, ay + hw + WH.MAIN_TYRE_ENV["bulge"] * 0.55), (v.pt(ax + R, 0)[0] + 30.0,
-              v.pt(0, ay + hw)[1] - 26.0), "LOADED SIDEWALL BULGE [E]", lines=["(UNDER THE FAIRING OUTBOARD)"],
-              weight=500)
+    if WH.MAIN_TYRE_ENV["bulge"] > 0:
+        leader_to(ds, v.pt(ax + 0.10, ay + hw + WH.MAIN_TYRE_ENV["bulge"] * 0.55), (v.pt(ax + R, 0)[0] + 30.0,
+                  v.pt(0, ay + hw)[1] - 26.0), "LOADED SIDEWALL BULGE [E]", lines=["(UNDER THE FAIRING OUTBOARD)"],
+                  weight=500)
     leader_to(ds, v.pt(ax + rr * 0.8, ay - hs0), (v.pt(ax + R, 0)[0] + 30.0, v.pt(0, ay + hw)[1] - 10.0),
               "BRAKE HOUSING, RIM FLANGES (HIDDEN)", weight=500)
     leader(ds, v.pt(ax + L[0] * 0.5, ay - ARM["s"] + ARM["t"]), "TRAILING ARM, YOKE, LEG (ADJACENT)", (-6.0, -12.0),
@@ -979,11 +1003,29 @@ def draw_nose_top(ds):
 
 
 # ============================================================================================ tyre details 1:2
+def tra_table(which):
+    """The TRA data drawn in the tyre detail: the modelled envelope when it is a TRA size, else the proposed main
+    tyre's (8.50-10 Type III)."""
+    e = WH.TYRE_ENV[which]
+    return e if e["shoulder_d"] is not None else WH.MAIN_TRA
+
+
+_DEPTHS = {}
+
+
+def retracted_depths():
+    """(tyre, hub fairing) depth (m) below the local wing lower skin with the gear retracted (gear.py kinematics, the
+    wheel built from these tables)."""
+    if not _DEPTHS:
+        _DEPTHS["v"] = (G.main_tyre_protrusion(1), G.main_tyre_protrusion(1, ("paint_white",)))
+    return _DEPTHS["v"]
+
+
 def draw_tra_envelope(ds, v, which):
     """TRA growth / clearance envelope (phantom): the max OD across the crown, chamfered to the max shoulder points
     (marked x) and down the max section width."""
-    e = WH.TYRE_ENV[which]
-    fr = WH.tyre_frame(WH.MAIN if which == "main" else WH.NOSE)
+    e = tra_table(which)
+    fr = WH.tyre_frame(WH.MAIN if which == "main" else WH.NOSE, None if e is WH.TYRE_ENV[which] else e["R"])
     ro, rs, ss, sw = e["od_max"] / 2, e["shoulder_d"] / 2, e["shoulder_w"] / 2, e["W_max"] / 2
     a = math.degrees(math.asin(0.6 * ss / ro))
     top = circle_pts((0.0, 0.0), ro, 21, 90.0 + a, 90.0 - a)             # left -> right
@@ -1034,7 +1076,8 @@ def draw_tyre_detail(ds, asm, x0, letter):
 
     gs = sorted(t["grooves"])
     ac = 90.0 - math.degrees(math.asin(min(0.5 * (gs[0] + gs[1]) / fr["Rc"], 1.0)))
-    rad("Cc", "Rc", 180.0 - ac, f"CROWN R {fmt(fr['Rc'])}", (-16.0, -6.0))
+    rad("Cc", "Rc", 180.0 - ac, f"CROWN R {fmt(fr['Rc'])}", (-16.0, -6.0) if tra_table(which) is WH.TYRE_ENV[which]
+        else (-44.0, 8.0))
     aQ = math.degrees(math.atan2(*(fr["T1"] - fr["Q"])[::-1])) - 20.0
     rad("Q", "Rs", aQ, f"SHOULDER R {fmt(fr['Rs'])}", (22.0, -6.0), right=True)
     rad("Cu", "Ru", 14.0, f"R {fmt(fr['Ru'])} (SOLVED)", (18.0, -1.0), right=True)
@@ -1042,7 +1085,7 @@ def draw_tyre_detail(ds, asm, x0, letter):
     # dimensions: section width at the max-width line, groove centres, rib widths, section height
     ds.sh.dim(v.pt(-hw, fr["rw"]), v.pt(hw, fr["rw"]), v.pt(0, r_clip)[1] + 9.0, f"W {fmt(W)}", "h",
               f1=v.pt(-hw, fr["rw"]), f2=v.pt(hw, fr["rw"]))
-    ytop = v.pt(0.0, WH.TYRE_ENV[which]["od_max"] / 2)[1] - 9.0
+    ytop = v.pt(0.0, max(tra_table(which)["od_max"] / 2, R))[1] - 9.0
     ds.sh.dim(v.pt(-gs[0], R), v.pt(gs[0], R), ytop, fmt(2 * gs[0]), "h", f1=v.pt(-gs[0], R - 0.004),
               f2=v.pt(gs[0], R - 0.004))
     ds.sh.dim(v.pt(-gs[1], R), v.pt(gs[1], R), ytop - 8.0, fmt(2 * gs[1]), "h", f1=v.pt(-gs[1], R - 0.004),
@@ -1077,12 +1120,19 @@ def draw_tyre_detail(ds, asm, x0, letter):
     leader(ds, v.pt(-rim["flange_s"] - rim["flange_t"], fl - 0.006), f"FLANGE Ø{fmt(2 * fl)} [S]", (-14.0, 14.0),
            lines=[f"SEAT Ø{fmt(2 * rim['bead_r'])}, {fmt(2 * rim['flange_s'])} BETWEEN"], size=2.2, weight=500)
     chk = WH.tra_envelope_check(which)
-    e = WH.TYRE_ENV[which]
+    e = tra_table(which)
     ss = e["shoulder_w"] / 2
-    leader(ds, v.pt(-ss, e["shoulder_d"] / 2), "TRA MAX ENVELOPE (PHANTOM)", (-16.0, -20.0),
+    if chk["tra"]:
+        l2 = f"MODEL AT {fmt(2 * ss)}: Ø{fmt(2 * chk['r_model'], 1)} (INSIDE)"
+        l0 = "TRA MAX ENVELOPE (PHANTOM)"
+    else:
+        l2 = "PROPOSED MAIN TYRE: OWNER DECISION PENDING"
+        l0 = f"{tyre_name(e)} TRA MAX ENVELOPE (PHANTOM)"
+    leader(ds, v.pt(-ss, e["shoulder_d"] / 2), l0, (-16.0, -20.0),
            lines=[f"OD {fmt(e['od_max'])}, W {fmt(e['W_max'], 1)}, SHOULDER Ø{fmt(e['shoulder_d'], 1)} AT {fmt(2 * ss)}",
-                  f"MODEL AT {fmt(2 * ss)}: Ø{fmt(2 * chk['r_model'], 1)} (INSIDE)"], size=2.2, color=ACCENT)
-    sub = ("MAIN TYRE 8.50-10, SCALE 1:2" if which == "main" else "NOSE TYRE 17.5x6.25-6, SCALE 1:2")
+                  l2], size=2.2, color=ACCENT)
+    sub = (f"MAIN TYRE {tyre_name(MOD)} (MODELLED), SCALE 1:2" if which == "main"
+           else "NOSE TYRE 17.5x6.25-6, SCALE 1:2")
     view_title(ds, x0, v.pt(0, r_clip)[1] + 24.0, f"DETAIL {letter} - TYRE SECTION", sub, size=4.0)
     return v
 
@@ -1096,15 +1146,20 @@ def draw_tables(ds, x0, y0):
     frm, frn = WH.tyre_frame(WH.MAIN), WH.tyre_frame(WH.NOSE)
     stk = WH.brake_stack(WH.MAIN)
     _, _, am, rbm = WH.loaded_blend("main")
+    tra_m = MOD is WH.MAIN_TYRE_850
     rows = [
-        ("Tyre", "8.50-10 Type III", "17.5x6.25-6", "O owner decision 2026-09-26 (main); S parts lists"),
-        ("Part numbers", "850T06-3 / 025-350-0", "175K88B1 / 021-327-0", "S Goodyear / Michelin (parts listings)"),
+        ("Tyre (modelled)", str(Me["size"]), "17.5x6.25-6",
+         ("P proposed 8.50-10 (MAIN_TYRE_CHOICE); S parts lists" if tra_m else
+          "S Jane's / Pilatus dwg (approved); P 8.50-10 proposed")),
+        ("Part numbers", "850T06-3 / 025-350-0" if tra_m else "- (not a TRA size)", "175K88B1 / 021-327-0",
+         "S Goodyear / Michelin (parts listings)"),
         ("Ply / type / pressure", "10 PR TL, 60 psi", "8 PR TL, 60 psi", "S data book; POH placard, GSG 02527"),
         ("Free OD / section W", f"{fmt(2 * Me['R'])} / {fmt(Me['W'])}", f"{fmt(2 * Ne['R'])} / {fmt(Ne['W'])}",
-         "S TRA 627-652 / 208-221; M photos 620-650"),
-        ("Axle WL = loaded R / defl.", f"{fmt(Me['R_loaded'])} / {fmt(Me['R'] - Me['R_loaded'])}",
+         "S TRA 627-652 / 208-221; M photos 620-650" if tra_m else "S 22 in / 8.50 in (TRA 8.50-10: 627-652)"),
+        ("Axle WL = loaded R / defl.", f"{fmt(Me['R_loaded'])} / {fmt(Me['R'] - Me['R_loaded'], 0 if rbm else 1)}",
          f"{fmt(Ne['R_loaded'])} / {fmt(Ne['R'] - Ne['R_loaded'], 1)}", "G axles kept; M main 270-280"),
-        ("Contact patch / blend R", f"{fmt(2 * am)} / {fmt(rbm)}", "-", "E (free chord 313)"),
+        ("Contact patch / blend R", f"{fmt(2 * am)} / {fmt(rbm)}" if rbm is not None else f"{fmt(2 * am)} (chord)",
+         "-", "E (free chord 313)" if rbm is not None else "D free circle cut by the ground"),
         ("Section H / aspect", f"{fmt(km['H'], 1)} / {km['aspect']:.2f}", f"{fmt(kn['H'], 1)} / {kn['aspect']:.2f}",
          "D (TRA 0.90 / 0.92)"),
         ("Bead seat / flange dia", f"{fmt(2 * Mr['bead_r'])} / {fmt(2 * km['r_flange'], 1)}",
@@ -1141,38 +1196,44 @@ def draw_tables(ds, x0, y0):
     cols = [("ITEM (mm)", 58.0, "l"), ("MAIN", 56.0, "l"), ("NOSE", 50.0, "l"), ("SOURCE", 110.0, "l")]
     y = table(ds, x0, y0, cols, rows, title="KEY DIMENSIONS - model/wheels.py TABLES", size=2.5, row_h=4.1,
               zebra=lambda i: i % 2 == 1)
-    ds.text(x0, y + 3.6, "O owner decision · S sourced · M photo-measured · E estimated · D derived · G gear.py. "
+    ds.text(x0, y + 3.6, "O owner decision · P proposed · S sourced · M photo-measured · E estimated · D derived · "
+            "G gear.py. "
             "s < 0 = main inboard (brake) side.", 2.1, "label", "start", fill=MUTED, tag="table")
     return y + 5.0
 
 
 def draw_check_tables(ds, x0, y0):
-    P = WH.PHOTO
     fbt = WH.fairing_beyond_tyre()
     em, en = WH.envelope("main"), WH.envelope("nose")
     gm = WH.gear_envelope("main")
     km, kn = WH.key_numbers(WH.MAIN), WH.key_numbers(WH.NOSE)
     Mf = WH.MAIN_FAIRING
+    d_od = 2 * em["R"] - 0.62 if em["R"] < 0.31 else 0.0
+    p_t, _ = retracted_depths()
     rows2 = [
-        ("Main tyre OD", "620-650", fmt(2 * em["R"]), "0", "8.50-10 (owner)"),
-        ("  22 in (Jane's / dwg)", "-", fmt(2 * WH.SUPERSEDED_MAIN["R"]), f"{fmt(2 * WH.SUPERSEDED_MAIN['R'] - 0.62)}",
-         "superseded"),
-        ("  3-D gear.MAIN_TYRE", "-", fmt(2 * gm["R"]), f"{fmt(2 * gm['R'] - 2 * em['R'])}", "Stage 3"),
+        ("Main tyre OD (modelled)", "620-650", fmt(2 * em["R"]), fmt(d_od) if d_od else "0",
+         "owner decision pending" if d_od else "-"),
+        (f"  {ALT['size']} ({'proposed' if ALT is WH.MAIN_TYRE_850 else 'superseded'})", "-", fmt(2 * ALT["R"]),
+         fmt(2 * ALT["R"] - 0.62) if ALT["R"] < 0.31 else "0", "MAIN_TYRE_CHOICE"),
+        ("  3-D gear.MAIN_TYRE", "-", fmt(2 * gm["R"]), f"{fmt(2 * gm['R'] - 2 * em['R'])}", "from wheels.py"),
         ("Main section width", "214-224", fmt(em["W"]), "0", "-"),
-        ("Main loaded radius", "270-280", f"axle {fmt(G.MAIN_AXLE[2])}", "0", "41 flat drawn"),
-        ("Tyre R / fairing lip R", "2.15-2.21", f"{em['R'] / Mf['r_lip']:.2f}", "0", "-"),
+        ("Main loaded radius", "270-280", f"axle {fmt(G.MAIN_AXLE[2])}", "0",
+         "41 flat drawn" if LOADED_MAIN else "free circle"),
+        ("Tyre R / fairing lip R", "2.15-2.21", f"{em['R'] / Mf['r_lip']:.2f}",
+         f"{em['R'] / Mf['r_lip'] - 2.15:+.2f}" if em["R"] / Mf["r_lip"] < 2.15 else "0", "-"),
+        ("Retracted tyre depth", "~25 (POH 1 in)", fmt(p_t, 1), f"{fmt(p_t - 0.0254, 1)}",
+         "20-30 (fit_check 5)"),
         ("Main grooves / W", "0.14, 0.26", f"{km['groove_frac'][0]:.2f}, {km['groove_frac'][1]:.2f}", "0",
-         "Stage 3: geometry"),
-        ("Render groove shader / W", "-", f"{P['render_grooves'][0][0]:.3f}, {P['render_grooves'][0][1]:.3f}",
-         "-0.08", "replace"),
+         "3-D geometry"),
+        ("Render groove shader", "-", "off (geometry)", "-", "done"),
         ("Nose tyre OD", "17.5 in", fmt(2 * en["R"]), "0", "-"),
         ("Nose loaded radius", "200-210", f"axle {fmt(G.NOSE_AXLE[2])}", "+12..22", "axle kept"),
         ("Nose grooves / W", "0.09, 0.28", f"{kn['groove_frac'][0]:.2f}, {kn['groove_frac'][1]:.2f}", "0", "-"),
         ("Nose fork arms", "2", f"gear.py {len(G.NOSE_FORK_SIDES)}", "-1", "Stage 3"),
         ("Hub fairing dia / proud", "290-300 / 25-30", f"{fmt(2 * Mf['r_lip'])} / {fmt(Mf['proud'])}", "0",
          f"face {fmt(fbt)} > W/2"),
-        ("Main pressure", "60 psi placard", "gear.py info 55", "-5", "Stage 3"),
-        ("Main brake", "6-lobe, in wheel", "gear.py flat disc", "-", "Stage 3"),
+        ("Main pressure", "60 psi placard", f"gear.py info {WH.MAIN_TYRE_SEC['pressure']:.0f}", "0", "-"),
+        ("Main brake", "6-lobe, in wheel", "3-D: wheels.py", "0", "-"),
     ]
     cols2 = [("ITEM", 64.0, "l"), ("PHOTOS [M]", 48.0, "l"), ("TABLE / MODEL", 54.0, "l"), ("Δ", 24.0, "r"),
              ("ACTION", 84.0, "l")]
@@ -1183,7 +1244,8 @@ def draw_check_tables(ds, x0, y0):
         ("Wheel halves", "wheel", "wheel", "gloss light grey / white"),
         ("Hub fairing", "main_gear_door", "-", "leg-door colour (3008 blue)"),
         ("Brake housing / discs", "metal / metal_dark", "-", "dull alu / dark steel"),
-        ("Bolts, screws, valve", "metal", "metal", "cadmium; brass valve"),
+        ("Bolts, valve stem", "cadmium", "cadmium", "yellow-chromate cadmium / brass"),
+        ("Fairing screws, valve cap", "metal / black", "- / black", "rubber-sealed cap"),
         ("Axle nut, hub cap", "steel", "steel", "lock plate (nose)"),
         ("Arm / fork", "gear_leg", "gear_leg", "adjacent"),
     ]
@@ -1204,26 +1266,35 @@ def draw_notes(ds, x0, y0, x1):
         "First-angle projection. Each assembly: SIDE view from port (principal), FRONT view from ahead to its right "
         "(upper half in section through the axle), TOP view from above below it; for the main wheel also view C from "
         "starboard (inboard / brake face) at the far right. Each group's side / front views stand on one ground line.",
-        "OWNER DECISION 2026-09-26 - main tyre 8.50-10 Type III (tyre makers, parts lists, four photo methods; TRA OD "
-        f"627-652, drawn free OD {fmt(2 * WH.MAIN_TYRE_ENV['R'])}). Jane's / Pilatus drawing 22x8.50-10 (OD 559, not a "
-        "listed tyre size) superseded, shown in the accent colour. Axles and static stance kept: axle WL 279 = the "
-        "loaded radius, the tyre flat on the ground over a 250 mm patch (41 mm deflection) with a 6 mm sidewall bulge.",
-        f"3-D model: gear.MAIN_TYRE still R {fmt(gm['R'], 1)} (22 in). The Stage-3 wheel step takes the tyre from "
-        "wheels.py and re-derives the LD-1 leg-door scallop (R 292 -> about R 333) and the round well (bays), the "
-        "retracted protrusion (POH ~1 in) and every fit_check row; sheet L4 then gets its tyre circles and the "
-        "8.50-10 call-out.",
+        (f"MAIN TYRE - modelled {MOD['size']} (Jane's / Pilatus drawing 190.10.40.432: the size of pc12/CLAUDE.md's "
+         f"sourced facts and the approved sheets L1-L5, OD {fmt(2 * MOD['R'])}). PROPOSED, OWNER DECISION PENDING: the "
+         "8.50-10 Type III of the tyre makers, parts lists and four photo methods (TRA OD 627-652, drawn free OD "
+         f"{fmt(2 * WH.MAIN_TRA['R'])}; 22x8.50-10 is not a listed tyre size), shown in the accent colour. One line "
+         "switches it (wheels.MAIN_TYRE_CHOICE; PC12_MAIN_TYRE=8.50-10 for a trial build): axles and static stance "
+         "kept (axle WL 279 = its loaded radius, flat on the ground over a 250 mm patch, 41 mm deflection)."
+         if MOD is WH.MAIN_TYRE_22 else
+         f"MAIN TYRE - modelled 8.50-10 Type III (tyre makers, parts lists, four photo methods; TRA OD 627-652, drawn "
+         f"free OD {fmt(2 * MOD['R'])}); Jane's / Pilatus drawing 22x8.50-10 (OD 559) shown in the accent colour. "
+         "Axles and static stance kept: axle WL 279 = the loaded radius, the tyre flat on the ground over a 250 mm "
+         "patch (41 mm deflection) with a 6 mm sidewall bulge."),
+        f"3-D model: gear.MAIN_TYRE = this envelope (R {fmt(gm['R'], 1)}); the LD-1 leg-door scallop (R + 12.5 = "
+        f"{fmt(G.LEG_DOOR['scallop_r'], 1)}) and the round well (bays.WELL_R) follow it. model/wheels.py main_wheel / "
+        "nose_wheel revolve / extrude the profiles of this sheet (tyre with the grooves, wheel halves, hub fairing, "
+        "brake, valve, tie bolts); test/consistency_2d3d.py (L4W) compares the mesh with them.",
         "Tyre section: tangent arcs - crown R to the tread half-width, shoulder round, upper sidewall (radius solved: "
         "tangent to the shoulder, max width W/2 at 0.50 H), lower sidewall to where the tyre leaves the rim-flange tip "
-        f"round. At the TRA max shoulder width the modelled section is Ø{fmt(2 * chk['r_model'], 1)}, inside the TRA "
-        f"max Ø{fmt(2 * chk['r_tra_max'], 1)}.",
+        + (f"round. At the TRA max shoulder width the modelled section is Ø{fmt(2 * chk['r_model'], 1)}, inside the TRA "
+           f"max Ø{fmt(2 * chk['r_tra_max'], 1)}." if chk["tra"] else
+           "round. The 22 in size has no TRA entry; detail D shows the proposed 8.50-10's TRA growth envelope."),
         f"Main hub fairing (POH: fairings on the outer hubs), painted in the leg-door colour; its face stands "
-        f"{fbt * 1000:.0f} mm outboard of the tyre's max width, so retracted it is the lowest point of the stowed wheel "
-        "(the Stage-3 protrusion check must include it).",
+        f"{fbt * 1000:.0f} mm outboard of the tyre's max width; retracted (wheel tilted with the skin) it lies "
+        f"{retracted_depths()[1] * 1000:.1f} mm below the skin, inside the tyre's {retracted_depths()[0] * 1000:.1f} mm "
+        "(POH ~1 in; fit_check 5).",
         "Main brake: six pistons, three retractors, steel friction surfaces, bolted to the axle (POH 7-4-10); 3 rotors "
         "/ 2 stators inferred from the overhaul kit (24 pads, 2 stators, 48 rivets). Housing, stack and torque tube "
         "sized inside the inboard wheel half [E]; one piston lobe is shown in section.",
         "No markings (owner decision): no sidewall lettering, brand names or placards on wheels or tyres. The tread "
-        "grooves become geometry in Stage 3 (replacing render/lookdev.py render_grooves). Screw, valve and tie-bolt "
+        "grooves are geometry (the render-time groove shader is off). Screw, valve and tie-bolt "
         "clocking is the drawn pose (the wheels turn); starboard units are mirror images. The main leg door (LD-1) "
         "is not shown.",
     ]
@@ -1238,7 +1309,8 @@ def draw_legend(ds, x0, y0):
              ("adjacent parts, free tyre, TRA env.", dict(w=W_FINE, dash=PHANTOM)),
              ("hidden", dict(w=W_FINE, dash=HID)),
              ("centre line, pitch circle", dict(w=W_THIN, dash=CHAIN)),
-             ("superseded 22 in tyre (deviation)", dict(w=W_FINE, dash=SUP, color=ACCENT))]
+             (f"{ALT['size']} tyre ({'proposed' if ALT is WH.MAIN_TYRE_850 else 'superseded'})",
+              dict(w=W_FINE, dash=SUP, color=ACCENT))]
     y = legend_rows(ds, x0, y0 + 7.0, items, dy=4.6, size=2.3)
     yh = y0 + 7.0 + 4.6
     hatch(ds, np.array([[x0, yh - 1.2], [x0 + 8.0, yh - 1.2], [x0 + 8.0, yh + 1.2], [x0, yh + 1.2]]), 45.0, 1.0)

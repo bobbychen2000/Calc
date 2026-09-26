@@ -1,24 +1,26 @@
 """
 Wheels, tyres, main-wheel hub fairings and brakes of the PC-12 PRO landing gear: source-tagged PARAMETER TABLES and
-the 2-D profiles drawn from them.  Stage 2 (drawings first): sheet L4W (drawing/wheel_sheet.py) is drawn from these
-tables; the 3-D builder (model/gear.py wheel()) still builds its Stage-3 wheel and will revolve / extrude the same
-profiles once the sheet is approved.
+the 2-D profiles drawn from them (Stage 2: sheet L4W, drawing/wheel_sheet.py), and the Stage-3 3-D builders
+main_wheel() / nose_wheel() that revolve / extrude the same profiles (used by model/gear.py).
 
 Tyre envelopes (MAIN_TYRE_ENV / NOSE_TYRE_ENV): free radius R, section width W, bead-seat radius rim and the static
-loaded radius.  OWNER DECISION 2026-09-26: the main tyre is the 8.50-10 Type III that the tyre makers and the parts
-lists give for the PC-12 (TRA envelope OD 627-652 mm); the 22x8.50-10 of Jane's / the Pilatus drawing (OD 559, not a
-listed tyre size) is superseded (SUPERSEDED_MAIN).  The axles and the static stance are kept: the axle WL is the
-loaded radius, so the main tyre is drawn flattened at the ground (41 mm static deflection).  The nose tyre stays the
-17.5x6.25-6.  model/gear.py (MAIN_TYRE, the bays, the LD-1 door scallop, fit_check) still carries the 22 in tyre
-until the Stage-3 wheel step takes MAIN_TYRE from here (gear_envelope() reads the 3-D value for the comparison).
+loaded radius.  The MAIN tyre has two candidate envelopes, selected by MAIN_TYRE_CHOICE (one line; the environment
+variable PC12_MAIN_TYRE overrides it for a trial build):
+  '22x8.50-10'  Jane's and the Pilatus drawing circle (OD 559) -- the size of pc12/CLAUDE.md's sourced facts and of
+                the approved sheets L1-L5, so it is the MODELLED tyre until the owner decides otherwise;
+  '8.50-10'     the Type III 8.50-10 that the tyre makers, the parts lists and four photo measurements give for the
+                PC-12 (TRA OD 627-652; 22x8.50-10 is not a listed tyre size): PROPOSED (research 2026-09-26), pending
+                the owner's decision.  The axles and the static stance are kept either way: the axle WL is the loaded
+                radius, so this tyre is flattened at the ground (41 mm static deflection).
+gear.MAIN_TYRE, the LD-1 leg-door scallop (gear.LEG_DOOR) and the round wheel well (bays.WELL_R) follow the choice.
+The other envelope is MAIN_TYRE_ALT (drawn as a deviation outline on sheet L4W).  The nose tyre is the 17.5x6.25-6.
 The section tables refine the shape INSIDE the envelopes: tyre cross-section (bead, sidewall, shoulder, crown,
 grooves), the split-hub wheel halves, the main-wheel outboard hub fairing, the six-piston main brake, axle and paint.
-
 Source tags: [S] sourced (NGX POH 02406 7-4, Ground Servicing Guide 02527, Goodyear aviation data book 2018 = TRA
 tyre / rim data, parts listings), [M] measured on photographs (PRO s/n 3001, 3005, 3008, 3010, 3036, 3066 and the NGX
 broadside; the photos and the measurements' working stay in the git-ignored refs/cache), [E] estimated /
-reconstructed (hidden or not resolved in photos), [D] derived from other entries, [G] the current gear.py value,
-[O] owner decision.
+reconstructed (hidden or not resolved in photos), [D] derived from other entries, [G] the gear.py value,
+[O] owner decision, [P] proposed (pending the owner's decision).
 
 Local wheel coordinates (m): s along the axle from the tyre mid-plane, positive towards the face seen in the side
 view from PORT (main gear: the port unit's OUTBOARD face = the hub-fairing side, the brake on s < 0; nose gear: the
@@ -30,8 +32,11 @@ y = axle y - s, z = axle z + dz.
 from __future__ import annotations
 
 import math
+import os
 
 import numpy as np
+
+from cad.mesh import Mesh, revolve, cylinder, cap_ring
 
 IN = 0.0254
 
@@ -56,9 +61,9 @@ class PTable(dict):
 
 
 # ================================================================================================ tyre envelopes
-MAIN_TYRE_ENV = PTable(
-    "Main tyre envelope: 8.50-10 Type III (owner decision 2026-09-26)",
-    size=("8.50-10 Type III", "O", "tyre makers / parts lists; supersedes Jane's 22x8.50-10 (not a listed size)"),
+MAIN_TYRE_850 = PTable(
+    "Main tyre envelope: 8.50-10 Type III (tyre makers / parts lists / photos; proposed)",
+    size=("8.50-10 Type III", "P", "tyre makers / parts lists; Jane's 22x8.50-10 is not a listed size"),
     part=("Goodyear 850T06-3 / Michelin 025-350-0", "S", "10 PR tubeless (parts listings, Goodyear data book)"),
     R=(0.320, "M", "free radius (OD 640): inside the TRA OD 627-652; four photo methods give OD 620-650"),
     W=(0.216, "S", "section width: TRA 8.2-8.7 in (208-221); photos 214-224"),
@@ -76,6 +81,41 @@ MAIN_TYRE_ENV = PTable(
     slr=(10.19 * IN, "S", "static loaded radius at the rated 5500 lb / 70 psi (850T06-3)"),
     flat_r=(6.90 * IN, "S", "flat-tyre radius (850T06-3)"),
 )
+
+MAIN_TYRE_22 = PTable(
+    "Main tyre envelope: 22x8.50-10 (Jane's; Pilatus drawing circle)",
+    size=("22x8.50-10", "S", "Jane's; Pilatus drawing 190.10.40.432 circle 558.8 (refs/mbp.py); CLAUDE.md facts"),
+    part=("- (not a TRA size)", "S", "no 22 in tyre on a 10 in rim with an 8.5 in section in the Goodyear data book"),
+    R=(0.2795, "S", "free radius: 22 in OD (558.8; gear.py rounds to 0.2795)"),
+    W=(0.216, "S", "section width 8.50 in"),
+    rim=(5.0 * IN, "S", "bead-seat radius (10 in rim)"),
+    R_loaded=(0.279, "G", "axle WL (gear.MAIN_AXLE): 0.5 mm static deflection"),
+    patch_l=(0.0, "D", "no blend: the free circle cut by the ground"),
+    bulge=(0.0, "E", "no bulge at 0.5 mm deflection"),
+    bulge_l=(0.0, "E", "-"),
+    od_max=(22.0 * IN, "S", "nominal 22 in (no TRA entry)"),
+    od_min=(22.0 * IN, "S", "nominal 22 in (no TRA entry)"),
+    W_max=(8.5 * IN, "S", "nominal 8.50 in"),
+    W_min=(8.5 * IN, "S", "nominal 8.50 in"),
+    shoulder_d=(None, "S", "no TRA growth envelope for this size"),
+    shoulder_w=(None, "S", "-"),
+    slr=(None, "S", "-"),
+    flat_r=(None, "S", "-"),
+)
+
+MAIN_TYRE_OPTIONS = {"22x8.50-10": MAIN_TYRE_22, "8.50-10": MAIN_TYRE_850}
+# the modelled main tyre: Jane's / the Pilatus drawing (pc12/CLAUDE.md sourced facts, sheets L1-L5) until the owner
+# decides; '8.50-10' is the proposed real size (research 2026-09-26: tyre makers, parts lists, photos)
+MAIN_TYRE_CHOICE = os.environ.get("PC12_MAIN_TYRE", "22x8.50-10")
+if MAIN_TYRE_CHOICE not in MAIN_TYRE_OPTIONS:
+    raise ValueError(f"PC12_MAIN_TYRE must be one of {sorted(MAIN_TYRE_OPTIONS)}")
+MAIN_TYRE_ENV = MAIN_TYRE_OPTIONS[MAIN_TYRE_CHOICE]
+MAIN_TYRE_ALT = MAIN_TYRE_OPTIONS["8.50-10" if MAIN_TYRE_CHOICE == "22x8.50-10" else "22x8.50-10"]
+MAIN_TRA = MAIN_TYRE_850                 # the TRA data (growth envelope, loaded radii) of the listed PC-12 main tyre
+MAIN_IS_TRA = MAIN_TYRE_ENV is MAIN_TYRE_850
+ALT_STATUS = "SUPERSEDED" if MAIN_IS_TRA else "PROPOSED - OWNER DECISION PENDING"
+# the scallop the LD-1 leg door leaves round the (static, free) main tyre: tyre R + this (gear.LEG_DOOR, bays.WELL_R)
+SCALLOP_CLEAR = 0.0125
 
 NOSE_TYRE_ENV = PTable(
     "Nose tyre envelope: 17.5x6.25-6",
@@ -98,11 +138,7 @@ NOSE_TYRE_ENV = PTable(
     flat_r=(4.80 * IN, "S", "flat-tyre radius"),
 )
 
-SUPERSEDED_MAIN = PTable(
-    "Superseded main tyre: 22x8.50-10 (Jane's; Pilatus drawing circle)",
-    R=(0.2794, "S", "Jane's 22x8.50-10; Pilatus drawing 190.10.40.432 circle 558.8 (refs/mbp.py)"),
-    status=("superseded", "O", "owner decision 2026-09-26; gear.MAIN_TYRE keeps R 0.2795 until the Stage-3 wheel step"),
-)
+SUPERSEDED_MAIN = MAIN_TYRE_ALT          # (name kept for sheet L4W: the envelope NOT modelled)
 
 TYRE_ENV = dict(main=MAIN_TYRE_ENV, nose=NOSE_TYRE_ENV)
 
@@ -114,8 +150,8 @@ def envelope(which):
 
 
 def gear_envelope(which):
-    """The tyre model/gear.py builds in 3-D today (gear.MAIN_TYRE / NOSE_TYRE; imported lazily so that gear.py can
-    import this module in Stage 3)."""
+    """The tyre model/gear.py builds in 3-D (gear.MAIN_TYRE / NOSE_TYRE, taken from these envelopes; imported lazily
+    because gear.py imports this module)."""
     from model import gear as G
     t = G.MAIN_TYRE if which == "main" else G.NOSE_TYRE
     return dict(R=float(t["R"]), W=float(t["W"]), rim=float(t["rim"]))
@@ -123,8 +159,8 @@ def gear_envelope(which):
 
 # ================================================================================================ main wheel
 MAIN_TYRE_SEC = PTable(
-    "Main tyre section (inside MAIN_TYRE_ENV, 8.50-10 Type III)",
-    size=("8.50-10 Type III", "O", "owner decision 2026-09-26 (MAIN_TYRE_ENV)"),
+    "Main tyre section (inside MAIN_TYRE_ENV)",
+    size=(MAIN_TYRE_ENV["size"], MAIN_TYRE_ENV.tag("size"), "the modelled envelope (MAIN_TYRE_CHOICE)"),
     ply=("10 PR TL", "S", "Goodyear data book PC-12 main: 8.50-10, 10 ply, tubeless"),
     pressure=(60.0, "S", "psi (4.1 bar), NGX / PRO MTOW 4,500 kg: POH placard, GSG 02527 p. 2-1-2"),
     wmax_h=(0.50, "E", "height of the max section width above the bead seat, fraction of the section height"),
@@ -220,7 +256,8 @@ MAIN_AXLE = PTable(
     r=(0.026, "G", "axle radius (gear.build_main); cantilevered outboard from the arm boss"),
     bore_r=(0.0225, "M", "open axle bore, facing inboard (~45 mm)"),
     boss_r=(0.058, "M", "trailing-arm axle boss radius (dia 0.11-0.12)"),
-    boss_s=((-0.165, -0.110), "E", "boss faces (arm at s = -0.14, gear.build_main)"),
+    boss_s=((-0.158, -0.110), "E", "boss faces: inboard face flush with the arm's (s = -0.14 -/+ 0.0175, "
+                                   "gear.build_main; stowed, 12 mm under the wing upper skin)"),
     thread_r=(0.020, "E", "threaded axle end outboard of the outboard bearing"),
     nut_af=(0.046, "E", "axle nut across flats (under the fairing)"),
     nut_s=((0.076, 0.090), "E", "axle nut s range"),
@@ -617,15 +654,19 @@ def tra_envelope_check(which="main"):
     growth / clearance envelope)."""
     asm = MAIN if which == "main" else NOSE
     e, env = TYRE_ENV[which], envelope(which)
+    tol = 0.001                                           # gear.NOSE_TYRE rounds 444.5 / 158.75 to 445 / 159
+    out = dict(od=2 * env["R"], od_ok=e["od_min"] - tol <= 2 * env["R"] <= e["od_max"] + tol, W=env["W"],
+               W_ok=e["W_min"] - tol <= env["W"] <= e["W_max"] + tol, s=None, r_model=None, r_tra_max=None,
+               shoulder_ok=None, tra=e["shoulder_d"] is not None)
+    if e["shoulder_d"] is None:                           # 22x8.50-10: not a TRA size, no growth envelope
+        return out
     fr = tyre_frame(asm)
     P = tyre_outer_half(asm, grooves=False, n=40)
     P = P[P[:, 1] >= fr["rw"]]                             # crown -> max width: s increases monotonically
     s = e["shoulder_w"] / 2
     r_model = float(np.interp(s, P[:, 0], P[:, 1]))
-    tol = 0.001                                           # gear.NOSE_TYRE rounds 444.5 / 158.75 to 445 / 159
-    return dict(od=2 * env["R"], od_ok=e["od_min"] - tol <= 2 * env["R"] <= e["od_max"] + tol, W=env["W"],
-                W_ok=e["W_min"] - tol <= env["W"] <= e["W_max"] + tol, s=s, r_model=r_model,
-                r_tra_max=e["shoulder_d"] / 2, shoulder_ok=r_model <= e["shoulder_d"] / 2)
+    out.update(s=s, r_model=r_model, r_tra_max=e["shoulder_d"] / 2, shoulder_ok=r_model <= e["shoulder_d"] / 2)
+    return out
 
 
 def fairing_beyond_tyre(asm=None):
@@ -741,6 +782,480 @@ def fairing_plan(asm):
     Q = P[1:-1] + [t, t]                                            # skin outer surface (approx.)
     Q = np.vstack([[[s0, fa["r_lip"]]], Q, [[s1 + t, 0.0]]])
     return Q[Q[:, 0] >= s0 - 1e-12]
+
+
+# ================================================================================================ 3-D builders
+# Stage 3: the wheels as meshes, revolved / extruded from the SAME profiles the sheet draws (tyre_outer_half's
+# construction, rim_half, fairing_section, brake_lobe_outline, brake_stack, clock_points).  Local frame of one wheel:
+# X = dx (aft, clock 0), Y = s (the tables' s: main = the outboard / hub-fairing face, nose = the port face),
+# Z = dz (up); _frame() maps it into the model (the port main unit and the nose wheel's +s = -y are mirror frames).
+# Segments round the axle: tyre silhouette chord sag 0.11 (main) / 0.17 mm (nose), rims <= 0.2 mm (4K close-ups).
+SEGS = dict(main_tyre=112, nose_tyre=80, rim=64, nose_rim=48, rim_hidden=40, fairing=96, brake=40, small=12)
+TRI_BUDGET = dict(main=30000, nose=18000)          # triangles per wheel assembly
+GROOVE_EDGE = 0.0008                               # rib-edge round at the tread grooves (catches the satin highlight)
+WHEEL_MATS = ("tire", "wheel", "paint_white", "metal", "metal_dark", "steel", "cadmium", "black")
+
+
+def _unit(v):
+    v = np.asarray(v, float)
+    return v / np.linalg.norm(v)
+
+
+def _frame(center, e_s, aft=(1.0, 0.0, 0.0), up=(0.0, 0.0, 1.0)):
+    """4x4 matrix local (X = dx aft, Y = s, Z = dz up) -> model; a mirror frame when e_s points to port."""
+    e_s = _unit(e_s)
+    ex = _unit(np.asarray(aft, float) - e_s * (e_s @ aft))
+    ez = np.asarray(up, float) - e_s * (e_s @ up)
+    ez = _unit(ez - ex * (ex @ ez))
+    M = np.eye(4)
+    M[:3, 0], M[:3, 1], M[:3, 2], M[:3, 3] = ex, e_s, ez, np.asarray(center, float)
+    return M
+
+
+def _split_creases(P, closed=False, deg=35.0):
+    """Split a (s, r) polyline at the vertices where it turns by more than deg: [segment (N_i, 2)], consecutive
+    segments sharing their end point (duplicated vertices -> crisp normals there).  closed: P is a loop."""
+    P = np.asarray(P, float)
+    keep = np.r_[True, np.linalg.norm(np.diff(P, axis=0), axis=1) > 1e-9]
+    P = P[keep]
+    if closed and np.linalg.norm(P[0] - P[-1]) < 1e-9:
+        P = P[:-1]
+    n = len(P)
+    idx = range(n) if closed else range(1, n - 1)
+    cos_lim = math.cos(math.radians(deg))
+    crease = []
+    for i in idx:
+        a = P[i] - P[i - 1]
+        b = P[(i + 1) % n] - P[i]
+        if (a @ b) / (np.linalg.norm(a) * np.linalg.norm(b)) < cos_lim:
+            crease.append(i)
+    if closed:
+        if not crease:
+            return [np.vstack([P, P[:1]])]
+        P = np.roll(P, -crease[0], axis=0)
+        crease = [(c - crease[0]) % n for c in crease] + [n]
+        P = np.vstack([P, P[:1]])
+        return [P[a:b + 1] for a, b in zip(crease[:-1], crease[1:])]
+    cuts = [0] + crease + [n - 1]
+    return [P[a:b + 1] for a, b in zip(cuts[:-1], cuts[1:])]
+
+
+def _rev(segs, n, th0=0.0):
+    """Revolve smooth (s, r) segments about the local Y axis (n segments, first at clock th0 deg): smooth normals
+    along each segment (chord tangents), crisp between segments.  Normals point to the left of the direction of
+    travel in (s, r) (outward, away from the axis, for a profile running +s)."""
+    th = math.radians(th0) + np.linspace(0.0, 2 * np.pi, n, endpoint=False)
+    c, sn = np.cos(th), np.sin(th)
+    out = []
+    for P in segs:
+        P = np.asarray(P, float)
+        m = len(P)
+        if m < 2:
+            continue
+        T = np.empty_like(P)
+        T[1:-1] = P[2:] - P[:-2]
+        T[0], T[-1] = P[1] - P[0], P[-1] - P[-2]
+        T /= np.maximum(np.linalg.norm(T, axis=1), 1e-15)[:, None]
+        ns, nr = -T[:, 1], T[:, 0]
+        V = np.stack([P[:, 1, None] * c, np.repeat(P[:, 0, None], n, 1), P[:, 1, None] * sn], -1)
+        N = np.stack([nr[:, None] * c, np.repeat(ns[:, None], n, 1), nr[:, None] * sn], -1)
+        i, j = np.meshgrid(np.arange(m - 1), np.arange(n), indexing="ij")
+        a, b = i * n + j, (i + 1) * n + j
+        cc, d = (i + 1) * n + (j + 1) % n, i * n + (j + 1) % n
+        F = np.vstack([np.stack([a, b, cc], -1).reshape(-1, 3), np.stack([a, cc, d], -1).reshape(-1, 3)])
+        mesh = Mesh(V.reshape(-1, 3), F, N.reshape(-1, 3))
+        mesh.remove_degenerate()
+        out.append(mesh)
+    return Mesh.merge(out)
+
+
+def _rev_closed(P, n, side=1, th0=0.0, deg=35.0):
+    """Revolve a closed section (s, r) (e.g. rim_half), mirrored to s < 0 for side -1 (order reversed so that the
+    normals still point out of the material)."""
+    P = np.asarray(P, float)
+    return _rev(_split_creases(P if side > 0 else P[::-1], closed=True, deg=deg), n, th0)
+
+
+def _prism(poly_xz, s0, s1, cap0=True, cap1=True):
+    """Straight prism along local Y from s0 to s1 over the (convex / star-shaped) polygon poly_xz (N, 2) in (X, Z):
+    flat-shaded sides, fan caps."""
+    Q = np.asarray(poly_xz, float)
+    k = len(Q)
+    j = np.arange(k)
+    j1 = (j + 1) % k
+    A0 = np.c_[Q[:, 0], np.full(k, s0), Q[:, 1]]
+    A1 = np.c_[Q[:, 0], np.full(k, s1), Q[:, 1]]
+    quads = np.stack([A0[j], A0[j1], A1[j1], A1[j]], 1)                    # (k, 4, 3)
+    nrm = np.cross(quads[:, 1] - quads[:, 0], quads[:, 3] - quads[:, 0])
+    ctr = np.r_[Q.mean(0)[0], 0.0, Q.mean(0)[1]]
+    out_dir = quads.mean(1) - ctr
+    out_dir[:, 1] = 0.0
+    flip = np.sum(nrm * out_dir, 1) < 0
+    nrm = nrm / np.maximum(np.linalg.norm(nrm, axis=1), 1e-15)[:, None]
+    nrm[flip] *= -1
+    F = np.array([[0, 1, 2], [0, 2, 3]])
+    FF = (F[None] + 4 * j[:, None, None]).reshape(-1, 3)
+    FF = np.where(np.repeat(flip, 2)[:, None], FF[:, ::-1], FF)
+    parts = [Mesh(quads.reshape(-1, 3), FF, np.repeat(nrm, 4, 0))]
+    sg = 1.0 if s1 > s0 else -1.0
+    for A, on, d in ((A0, cap0, -sg), (A1, cap1, sg)):
+        if on:
+            parts.append(cap_ring(A, (0.0, d, 0.0)))
+    return Mesh.merge(parts)
+
+
+def _stud(c_xz, s0, s1, r, n=10, cap=True):
+    """Round boss / stem along local Y at (X, Z) = c_xz from s0 to s1."""
+    return cylinder(np.array([c_xz[0], s0, c_xz[1]]), np.array([c_xz[0], s1, c_xz[1]]), r, n=n, cap=cap)
+
+
+def _dome(c_xz, s0, r, h, n=10):
+    """Low domed head (countersunk screw, rivet) on the plane s0, rising h towards +s (h < 0: towards -s)."""
+    sg = 1.0 if h > 0 else -1.0
+    prof = [(0.0, r), (0.55 * abs(h), 0.78 * r), (abs(h), 0.0)]
+    return revolve(prof, n=n, axis_origin=(c_xz[0], s0, c_xz[1]), axis_dir=(0.0, sg, 0.0))
+
+
+def tyre_profile_3d(asm, R=None, edge=GROOVE_EDGE):
+    """Full outer tyre section for the 3-D revolve, (N, 2) (s, r) from the -s bead to the +s bead: the tangent-arc
+    construction of tyre_frame() (crown, shoulder round, upper / lower sidewall to the rim-flange contact B), the
+    tread grooves as drawn (tapered walls, the round floor as 3 points, rib edges rounded by `edge`), and a
+    short tuck from B into the rim flange (hidden) so that the tyre meets the rim without a gap."""
+    fr = tyre_frame(asm, R)
+    t, rim = asm["tyre"], asm["rim"]
+    w, d, fw = t["groove_w"], t["groove_d"], t["groove_floor"]
+    cr = lambda x: float(crown_r(fr, x))                                  # noqa: E731
+    pts = [(0.0, cr(0.0))]
+    last = 0.0
+    for g in sorted(t["grooves"]):
+        a, b = g - w / 2, g + w / 2
+        fl = cr(g) - d
+        if a - edge - last > 0.012:                                       # long rib: an intermediate point
+            m = 0.5 * (last + a - edge)
+            pts.append((m, cr(m)))
+        fc = fl + fw / 2                                                  # floor round centre (tyre_outer_half)
+        pts += [(a - edge, cr(a - edge)), (a + 0.25 * edge, cr(a) - edge), (g - fw / 2, fc), (g, fl),
+                (g + fw / 2, fc), (b - 0.25 * edge, cr(b) - edge), (b + edge, cr(b + edge))]
+        last = b + edge
+    T1 = fr["T1"]
+    m = 0.5 * (last + T1[0])
+    pts += [(m, cr(m))]
+    Q, Cu, Cl = fr["Q"], fr["Cu"], fr["Cl"]
+    pts += [tuple(p) for p in _arc(Q, fr["Rs"], _ang(T1 - Q), _ang(fr["T2"] - Q), 7)]
+    pts += [tuple(p) for p in _arc(Cu, fr["Ru"], _ang(fr["T2"] - Cu), 0.0, 6)[1:]]
+    pts += [tuple(p) for p in _arc(Cl, fr["Rl"], 0.0, _ang(fr["B"] - Cl), 6)[1:]]
+    pts.append((rim["flange_s"] - 0.0015, fr["Cf"][1] - 0.004))            # tuck (inside the flange tip)
+    half = np.array(pts)
+    keep = np.r_[True, np.linalg.norm(np.diff(half, axis=0), axis=1) > 1e-7]
+    half = half[keep]
+    return np.vstack([half[:0:-1] * [-1, 1], half])
+
+
+def _loaded_tyre(V, which):
+    """Statically loaded tyre (only where R_loaded is > 2 mm below R, loaded_blend): in the wheel plane each point's
+    height above the rim flange is scaled so that the free circle becomes loaded_side_outline() (flat contact patch,
+    blend arcs); the sidewalls bulge by up to `bulge` at the ground.  V: local vertices (X, s, Z)."""
+    R, h, a, rb = loaded_blend(which)
+    if rb is None:
+        return V, False
+    e = TYRE_ENV[which]
+    asm = MAIN if which == "main" else NOSE
+    r0 = asm["rim"]["bead_r"] + asm["rim"]["flange_h"]
+    O = loaded_side_outline(which, n=720)
+    phi_o = np.arctan2(O[:, 1], O[:, 0])
+    rho_o = np.hypot(O[:, 0], O[:, 1])
+    k = np.argsort(phi_o)
+    phi = np.arctan2(V[:, 2], V[:, 0])
+    rho = np.interp(phi, phi_o[k], rho_o[k], period=2 * np.pi)
+    r = np.hypot(V[:, 0], V[:, 2])
+    f = np.clip((rho - r0) / (R - r0), 0.0, 1.0)
+    rn = np.where(r > r0, r0 + (r - r0) * f, r)
+    c = np.clip((1.0 - f) / max(1.0 - (h - r0) / (R - r0), 1e-9), 0.0, 1.0)     # 1 at the contact centre
+    W = e["W"]
+    out = V.copy()
+    sc = np.where(r > r0, rn / np.maximum(r, 1e-12), 1.0)
+    out[:, 0] *= sc
+    out[:, 2] *= sc
+    out[:, 1] *= 1.0 + np.where(r > r0, 2.0 * float(e["bulge"]) / W * c, 0.0)
+    return out, True
+
+
+def tyre_mesh(asm, n=None, R=None):
+    """The tyre (local frame): tyre_profile_3d() revolved, loaded at the ground where the envelope says so."""
+    which = asm["which"]
+    n = n or SEGS[f"{which}_tyre"]
+    m = _rev([tyre_profile_3d(asm, R)], n, th0=0.0)
+    if R is None:
+        V, changed = _loaded_tyre(m.V, which)
+        if changed:
+            m.V = V
+            m.compute_normals()
+    return m
+
+
+def _fairing_meshes(asm):
+    """Main hub fairing (local frame): the lip ring on the outboard rim-flange face, conical wall and face round
+    revolved from fairing_section() (sheet thickness t: outer skin), the flat face with the off-axis valve-access
+    hole (Delaunay, exact outline) and the hole's wall; 5 countersunk screw heads on the lip.
+    [(mesh, material)]; the paint is the builders' unpainted 'paint_white' (livery: the leg-door colour)."""
+    from scipy.spatial import Delaunay
+    fa = asm["fairing"]
+    n = SEGS["fairing"]
+    P, s0, s1 = fairing_section(asm)
+    t = fa["t"]
+    C = P[1:-1]                                              # centre line: lip inner edge -> wall -> face round
+    T = np.gradient(C, axis=0)
+    T /= np.linalg.norm(T, axis=1)[:, None]
+    Nn = np.c_[-T[:, 1], T[:, 0]]                            # left of travel = away from the axis / towards +s
+    Nn[0] = (1.0, 0.0)                                       # lip ring: +s
+    O = C + 0.5 * t * Nn
+    O[0] = (s0 + t, C[0][1])
+    r_face = float(O[-1][1])
+    s_face = float(O[-1][0])
+    lip = np.array([[s0, fa["r_lip"]], [s0 + t, fa["r_lip"]], [s0 + t, C[0][1]]])
+    prof = np.vstack([lip, O[1:]])
+    shell = _rev(_split_creases(prof), n)
+    # flat face with the valve-access hole
+    th = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
+    outer = np.c_[r_face * np.cos(th), r_face * np.sin(th)]
+    hc = clock_points(1, fa["hole_r"], fa["hole_th"])[0]
+    hr = fa["hole_d"] / 2
+    nh = 40
+    ah = np.linspace(0.0, 2 * np.pi, nh, endpoint=False)
+    hole = np.c_[hc[0] + hr * np.cos(ah), hc[1] + hr * np.sin(ah)]
+    g = np.arange(-r_face, r_face + 1e-9, 0.009)
+    GX, GZ = np.meshgrid(g, g)
+    G = np.c_[GX.ravel(), GZ.ravel()]
+    G = G[(np.hypot(G[:, 0], G[:, 1]) < r_face - 0.005) & (np.hypot(G[:, 0] - hc[0], G[:, 1] - hc[1]) > hr + 0.004)]
+    pts = np.vstack([outer, hole, G])
+    tri = Delaunay(pts).simplices
+    cen = pts[tri].mean(1)
+    ok = (np.hypot(cen[:, 0], cen[:, 1]) < r_face) & (np.hypot(cen[:, 0] - hc[0], cen[:, 1] - hc[1]) > hr)
+    tri = tri[ok]
+    V = np.c_[pts[:, 0], np.full(len(pts), s_face), pts[:, 1]]
+    face = Mesh(V, tri, np.tile((0.0, 1.0, 0.0), (len(V), 1)))
+    if face.face_normals()[:, 1].mean() < 0:
+        face.F = face.F[:, ::-1].copy()
+    face.remove_degenerate()
+    wall = cylinder(np.array([hc[0], s_face - t, hc[1]]), np.array([hc[0], s_face, hc[1]]), hr, n=nh,
+                    cap=False).flipped()
+    screws = Mesh.merge([_dome(c, s0 + t, fa["screw_d"] / 2, 0.0008, n=10)
+                         for c in clock_points(int(fa["screws"]), fa["screw_r"], fa["screw_th"])])
+    return [(Mesh.merge([shell, face, wall]), "paint_white"), (screws, "metal")]
+
+
+def _tie_bolts(asm, th0):
+    """Tie bolts through both webs on the bolt circle: hex heads on the -s web, nuts + bolt ends on the +s web."""
+    rim = asm["rim"]
+    b = tie_bolt_section(asm)
+    af, h, web = b["af"], b["h"], b["web"]
+    out = []
+    for c in clock_points(int(rim["tie_n"]), rim["tie_r"], th0):
+        rot = math.degrees(math.atan2(c[1], c[0]))
+        out.append(_prism(hexagon(c, af, rot), -web, -web - h))
+        out.append(_prism(hexagon(c, af, rot + 15.0), web, web + h))
+        out.append(_stud(c, web + h, b["s1"], b["d"] / 2, n=8))
+    return Mesh.merge(out)
+
+
+def _valve(c_xz, s0, s1, sign=1.0):
+    """Tyre valve: brass stem from the web (s0) to the cap, black rubber-sealed cap on the last 9 mm (to s1)."""
+    sc = s1 - sign * 0.009
+    return [(Mesh.merge([_stud(c_xz, s0, sc, 0.0032, n=10), _stud(c_xz, s0, s0 + sign * 0.004, 0.0055, n=10)]),
+             "cadmium"), (_stud(c_xz, sc, s1, 0.0043, n=10), "black")]
+
+
+def _brake_meshes(asm):
+    """Main brake inside the inboard (s < 0) wheel half, local frame: six-lobed housing (outer face, lobe walls),
+    a piston cap and a bolt on every lobe, the inlet fitting on the top lobe and the bleeder opposite, the disc stack
+    (brake_stack: rotor / stator / plate edges) and the torque plate."""
+    b = asm["brake"]
+    so, si = b["housing_s"]                                  # outer (inboard-most) / inner face
+    out = []
+    ol = brake_lobe_outline(asm, n=144)
+    k = len(ol)
+    th = np.arctan2(ol[:, 1], ol[:, 0])
+    r_in = b["torque_tube_r"][1]
+    inner = np.c_[r_in * np.cos(th), r_in * np.sin(th)]
+    # outer face: annulus between the bore and the lobed outline (normal -s), small bevel ring on the edge
+    bev = 0.002
+    rr = np.hypot(ol[:, 0], ol[:, 1])
+    ol_in = ol * ((rr - bev) / rr)[:, None]
+    rings = [np.c_[inner[:, 0], np.full(k, so), inner[:, 1]], np.c_[ol_in[:, 0], np.full(k, so), ol_in[:, 1]],
+             np.c_[ol[:, 0], np.full(k, so + bev), ol[:, 1]]]
+    j = np.arange(k)
+    j1 = (j + 1) % k
+    face = []
+    for q in range(2):
+        A, B = rings[q], rings[q + 1]
+        V = np.vstack([A, B])
+        F = np.vstack([np.stack([j, j1, j1 + k], 1), np.stack([j, j1 + k, j + k], 1)])
+        mm = Mesh(V, F)
+        if mm.face_normals()[:, 1].mean() > 0:
+            mm = mm.flipped()
+        face.append(mm)
+    # lobe side wall (smooth, outward)
+    T = np.roll(ol, -1, 0) - np.roll(ol, 1, 0)
+    T /= np.linalg.norm(T, axis=1)[:, None]
+    nw = np.c_[T[:, 1], -T[:, 0]]
+    if np.mean(np.sum(nw * ol, 1)) < 0:
+        nw = -nw
+    A0 = np.c_[ol[:, 0], np.full(k, so + bev), ol[:, 1]]
+    A1 = np.c_[ol[:, 0], np.full(k, si), ol[:, 1]]
+    Nw = np.c_[nw[:, 0], np.zeros(k), nw[:, 1]]
+    side = Mesh(np.vstack([A0, A1]), np.vstack([np.stack([j, j1, j1 + k], 1), np.stack([j, j1 + k, j + k], 1)]),
+                np.vstack([Nw, Nw]))
+    if np.mean(np.sum(side.face_normals() * np.c_[side.V[side.F].mean(1)[:, 0], np.zeros(len(side.F)),
+                                                     side.V[side.F].mean(1)[:, 2]], 1)) < 0:
+        side.F = side.F[:, ::-1].copy()
+    out.append((Mesh.merge(face + [side]), "metal"))
+    # piston caps + bolts on the lobes; inlet fitting (top lobe) and bleeder (opposite)
+    caps, bolts = [], []
+    lobes = clock_points(int(b["lobes"]), b["lobe_c"], b["lobe_th"])
+    for i, c in enumerate(lobes):
+        caps.append(_stud(c, so, so - 0.004, 0.7 * b["lobe_R"], n=14))
+        rot = math.degrees(math.atan2(c[1], c[0]))
+        bolts.append(_prism(hexagon(c, 0.011, rot), so - 0.004, so - 0.0095))
+    fit = [_radial_stud(b["lobe_th"], r0, r1, FITTING_S, rr, n) for r0, r1, rr, n in _fitting_parts(b)]
+    bleed = [_radial_stud(b["lobe_th"] + 180.0, r0, r1, FITTING_S, 0.7 * rr, n) for r0, r1, rr, n in _fitting_parts(b)]
+    out += [(Mesh.merge(caps + fit + bleed), "metal"), (Mesh.merge(bolts), "steel")]
+    # disc stack: outer edges stepping rotor (keyed to the wheel) / stator / plates; bore along the torque tube
+    st = brake_stack(asm)
+    prof = [(st[0][1], r_in)]
+    for kind, a, c2, r0_, r1_ in st:
+        prof += [(a, r1_), (c2, r1_)]
+    prof.append((st[-1][2], r_in))
+    prof = np.array(prof)
+    keep = np.r_[True, np.linalg.norm(np.diff(prof, axis=0), axis=1) > 1e-9]
+    prof = prof[keep]
+    # drop the collinear middle points (equal radii of consecutive items)
+    Pm = [prof[0]]
+    for q in range(1, len(prof) - 1):
+        if not (abs(prof[q - 1][1] - prof[q][1]) < 1e-9 and abs(prof[q][1] - prof[q + 1][1]) < 1e-9):
+            Pm.append(prof[q])
+    Pm.append(prof[-1])
+    Pm = np.array(Pm)
+    stack = _rev(_split_creases(np.vstack([Pm, [Pm[0]]]), closed=True, deg=30.0), SEGS["brake"])
+    # the section runs -> +s along the outer edge: outward already; torque plate on the axle flange
+    tp = b["torque_plate"]
+    plate = _rev_closed(np.array([[tp[0], tp[2]], [tp[1], tp[2]], [tp[1], tp[3]], [tp[0], tp[3]]])[::-1],
+                        SEGS["brake"])
+    out.append((Mesh.merge([stack, plate]), "metal_dark"))
+    return out
+
+
+FITTING_S = -0.093          # s of the brake inlet fitting / bleeder axis (in the housing, clear of the rim flange face)
+
+
+def _fitting_parts(b):
+    """Radial inlet fitting on the top lobe's tip (sheet L4W view C / detail H): (r0, r1, radius, segments) of the
+    boss, the hex (6 segments) and the hose nipple."""
+    top = b["lobe_c"] + b["lobe_R"]
+    return ((top - 0.003, top + 0.003, b["fitting_d"] / 2, 12), (top + 0.003, top + 0.008, 0.0075, 6),
+            (top + 0.008, top + 0.012, 0.0035, 10))
+
+
+def _radial_stud(th_deg, r0, r1, s, rr, n):
+    th = math.radians(th_deg)
+    u = np.array([math.cos(th), 0.0, math.sin(th)])
+    return cylinder(u * r0 + [0.0, s, 0.0], u * r1 + [0.0, s, 0.0], rr, n=n)
+
+
+def brake_fitting_local(asm=None):
+    """Local (X, s, Z) of the brake inlet fitting's nipple end (the brake line starts here) and its direction."""
+    asm = asm or MAIN
+    b = asm["brake"]
+    th = math.radians(b["lobe_th"])
+    u = np.array([math.cos(th), 0.0, math.sin(th)])
+    return u * _fitting_parts(b)[-1][1] + [0.0, FITTING_S, 0.0], u
+
+
+def _main_local():
+    """Main wheel assembly in the local frame: [(mesh, material)]."""
+    asm = MAIN
+    rim = asm["rim"]
+    out = [(tyre_mesh(asm), "tire")]
+    # wheel halves: the inboard (brake) half in full, the outboard half under the fairing coarser
+    out.append((Mesh.merge([_rev_closed(rim_half(asm, -1), SEGS["rim"], -1),
+                            _rev_closed(rim_half(asm, 1), SEGS["rim_hidden"], 1)]), "wheel"))
+    out += _fairing_meshes(asm)
+    out.append((_tie_bolts(asm, 180.0 / rim["tie_n"]), "cadmium"))
+    out += _valve(clock_points(1, rim["valve_r"], rim["valve_th"])[0], rim["web_t"], rim["valve_s"], 1.0)
+    out += _brake_meshes(asm)
+    return out
+
+
+def _nose_local():
+    """Nose wheel assembly in the local frame (+s = the port face): [(mesh, material)]."""
+    asm = NOSE
+    rim = asm["rim"]
+    out = [(tyre_mesh(asm), "tire")]
+    out.append((Mesh.merge([_rev_closed(rim_half(asm, -1), SEGS["nose_rim"], -1),
+                            _rev_closed(rim_half(asm, 1), SEGS["nose_rim"], 1)]), "wheel"))
+    out.append((_tie_bolts(asm, rim["tie_th"]), "cadmium"))
+    out += _valve(clock_points(1, rim["valve_r"], rim["valve_th"])[0], rim["web_t"], rim["valve_s"], 1.0)
+    # bearing seals at the hub ends (steel rings between the axle and the bore)
+    ax = asm["axle"]
+    rings = []
+    for e in rim["hub_s"]:
+        sg = 1.0 if e > 0 else -1.0
+        s_ = e - sg * 0.002
+        prof = np.array([[s_, ax["r"] + 0.0005], [s_, rim["hub_bore"]]])
+        rings.append(_rev([prof[::-1] if sg > 0 else prof], SEGS["small"] * 3))
+    out.append((Mesh.merge(rings), "steel"))
+    return out
+
+
+def _merge_by_material(items):
+    acc = {}
+    for m, mat in items:
+        acc.setdefault(mat, []).append(m)
+    return [(Mesh.merge(v), k) for k, v in acc.items()]
+
+
+_LOCAL = {}
+
+
+def _local(which):
+    """Cached local assembly (the tables are module constants)."""
+    if which not in _LOCAL:
+        _LOCAL[which] = _merge_by_material(_main_local() if which == "main" else _nose_local())
+    return _LOCAL[which]
+
+
+def main_wheel(center, axis=(0.0, 1.0, 0.0), side=1, parts=None):
+    """Main wheel assembly at the axle point `center` (tyre mid-plane) about `axis` (unit, +y gear down) for the
+    starboard (side +1) or port (-1) unit: tyre (geometric grooves), both wheel halves, the outboard hub fairing (5
+    screws, valve-access hole), valve, tie bolts, the six-piston brake with its disc stack and torque plate inside the
+    inboard half.  The outboard face (+s) is side * axis.  [(mesh, material)]; parts: a subset of materials."""
+    M = _frame(center, np.asarray(axis, float) * side)
+    return [(m.transformed(M), mat) for m, mat in _local("main") if parts is None or mat in parts]
+
+
+def nose_wheel(center, axis=(0.0, 1.0, 0.0), parts=None):
+    """Nose wheel assembly at `center` about `axis`: tyre, both white wheel halves, tie bolts (heads starboard, nuts
+    port), valve on the port face, bearing seals.  Local +s (the port face) is -axis.  [(mesh, material)]."""
+    M = _frame(center, -np.asarray(axis, float))
+    return [(m.transformed(M), mat) for m, mat in _local("nose") if parts is None or mat in parts]
+
+
+def main_axle_boss(center, axis=(0.0, 1.0, 0.0), side=1):
+    """Trailing-arm axle boss (gear context, MAIN_AXLE): a round boss round the axle root on the inboard side
+    (boss_s), its open bore (bore_r, 30 mm deep) facing inboard -- the axle is cantilevered outboard from it; edges
+    rounded.  Model coordinates (mesh)."""
+    ax = MAIN_AXLE
+    s0, s1 = ax["boss_s"]
+    R, rb, q = ax["boss_r"], ax["bore_r"], 0.004
+    P = np.vstack([[[s0 + 0.030, 0.0], [s0 + 0.030, rb], [s0, rb]],
+                   _arc((s0 + q, R - q), q, 180.0, 90.0, 4),
+                   _arc((s1 - q, R - q), q, 90.0, 0.0, 4),
+                   [[s1, ax["r"]]]])
+    m = _rev(_split_creases(P, deg=35.0), 40)
+    return m.transformed(_frame(center, np.asarray(axis, float) * side))
+
+
+def tri_count(which):
+    return sum(m.nf for m, _ in _local(which))
 
 
 if __name__ == "__main__":

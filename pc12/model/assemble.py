@@ -34,6 +34,8 @@ MATERIALS = {
     "metal":         ((0.62, 0.64, 0.66), 0.85, 0.35),
     "metal_dark":    ((0.25, 0.26, 0.27), 0.8, 0.45),
     "steel":         ((0.72, 0.73, 0.74), 0.9, 0.25),
+    # yellow-chromate cadmium plating / brass: wheel tie-bolt heads and nuts, tyre valve stems (L4W; photo 3036 nose hub)
+    "cadmium":       ((0.50, 0.40, 0.18), 0.85, 0.40),
     "hot_section":   ((0.55, 0.42, 0.28), 0.85, 0.40),
     "exhaust":       ((0.36, 0.33, 0.31), 0.8, 0.55),
     "exhaust_soot":  ((0.006, 0.006, 0.006), 0.0, 0.60, dict(specular=0.16)),  # heat-blackened stack collar / inside

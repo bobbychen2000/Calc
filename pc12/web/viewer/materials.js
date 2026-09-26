@@ -173,7 +173,8 @@ function polishOf(name, e) {
   return q;
 }
 
-// Tyre tread grooves (lookdev render_grooves): n circumferential grooves `width` wide at +-0.1 / +-0.3 of the tread
+// Tyre tread grooves (lookdev render_grooves; dormant since the GLB carries geometric grooves, model/wheels.py, and the
+// lookdev table no longer sets render_grooves): n circumferential grooves `width` wide at +-0.1 / +-0.3 of the tread
 // (tread = `tread` x the tyre width) on the crown, darkened to `floor` x the rubber and roughened to floor_rough.  The
 // wheel axis and centre come from the tyre mesh itself (a surface of revolution: the principal axis of its vertices
 // with the distinct variance), in the rest pose (world metres; the GLB's quantised mesh frames are scaled per axis);

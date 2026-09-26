@@ -473,7 +473,7 @@
 <text x="558.38" y="447.64" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">6316 / WL 930</text>
 <path stroke-width="0.13" stroke="#1B2429" d="M547.51 436.91l4-10M551.51 426.91l2 0"/>
 <text x="554.11" y="427.57" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429" font-weight="600">RETRACTED (PHANTOM)</text>
-<text x="554.11" y="430.04" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">BL 1391, PROTRUDES 26</text>
+<text x="554.11" y="430.04" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">BL 1391, PROTRUDES 19</text>
 <text x="530" y="531" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="700" letter-spacing="0.4">DETAIL B - MAIN GEAR</text>
 <path stroke-width="0.3" d="M504.63 532.3l50.74 0"/>
 <text x="530" y="536" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.6" stroke="none" fill="#5D6B73" text-anchor="middle">PORT UNIT, SEEN FROM PORT · 1:20</text>
@@ -963,7 +963,7 @@
 <text x="627.3" y="279.74" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.05" stroke="none" fill="#1B2429">5978,1155 / 6100,517 (drawn top 5932,1070)</text>
 <path stroke="none" fill="#EEF1F2" d="M566 280.55l120 0 0 3.05-120 0z"/>
 <text x="567.3" y="282.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.05" stroke="none" fill="#1B2429">      retraction / retracted wheel BL / tyre</text>
-<text x="627.3" y="282.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.05" stroke="none" fill="#1B2429">86 deg in / 1391 / 26 proud (POH ~25)</text>
+<text x="627.3" y="282.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.05" stroke="none" fill="#1B2429">86 deg in / 1391 / 19 proud (POH ~25)</text>
 <text x="567.3" y="285.84" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.05" stroke="none" fill="#1B2429">      leg door STA / tip WL / BL (drawn)</text>
 <text x="627.3" y="285.84" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.05" stroke="none" fill="#1B2429">5932-6598 / 318 / 2339-2383 (2358-2472)</text>
 <path stroke="none" fill="#EEF1F2" d="M566 286.65l120 0 0 3.05-120 0z"/>
@@ -1004,7 +1004,7 @@
 <text x="697.5" y="274.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">details.py still places them at the tip rib (inside the pod on starboard).</text>
 <text x="692" y="278.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">8.</text>
 <text x="697.5" y="278.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">Gear, leg door (decision LD-1, resolved): the door is the wing lower skin carried down by the leg (gear.leg_door_offset), so retracted</text>
-<text x="697.5" y="281.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">it closes flush (+1..+1 mm) and the tyre protrudes 26 mm in its own well. Drawn side-view face kept, scalloped round the tyre (R</text>
+<text x="697.5" y="281.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">it closes flush (+1..+1 mm) and the tyre protrudes 19 mm in its own well. Drawn side-view face kept, scalloped round the tyre (R</text>
 <text x="697.5" y="284.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">292) with a hidden tab up the slot over the leg's skin crossing; edge-on it stands at BL 2339-2383 (drawn plane 2358-2472, leaning</text>
 <text x="697.5" y="287.15" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">out: not possible with a flush door). Hidden changes: trunnion 5978 / WL 1155 (drawn 5932 / 1070), retraction 86 deg, side-brace</text>
 <text x="697.5" y="289.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2" stroke="none" fill="#1B2429">stations and split, brace B0 on a lug 80 inboard of the drawn BL 2250 (the folded lower link clears the stowed leg), no forward slot.</text>

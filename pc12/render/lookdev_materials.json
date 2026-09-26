@@ -44,7 +44,7 @@
   "paint_navy": "livery stroke N1 is the base blue on MSN 3008 (no navy line): paint_navy == paint_blue",
   "back_faces": "paint_* and trim_black / seal back faces render as the interior lining (LINING base [0.55, 0.55, 0.54], roughness 0.6; flight deck, model station x < 5.0 m: base [0.3, 0.3, 0.295]); exhaust_polished back faces: render_back_faces (soot)",
   "exhaust": "the GLB 'black' primitives of exhaust_stacks (outlet band, inner wall, rim) render as exhaust_soot; exhaust_polished: render_collar (station-dependent heat tint and black outlet collar), render_polish (noise roughness / tint + bump)",
-  "tyre_grooves": "tire: render_grooves = 4 circumferential tread grooves (6 mm) at +-0.1 / +-0.3 of the tread width (tread = 0.62 x tyre width) on the crown; a bump in the renders (lookdev _tyre_grooves); the model could cut them or the viewer use a normal map"
+  "tyre_grooves": "tire: the tread grooves are geometry in the GLB (model/wheels.py); no render_grooves (the render-time bump / viewer emulation would double them)"
  },
  "materials": {
   "paint_blue": {
@@ -521,18 +521,8 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
-   "render_grooves": {
-    "n": 4,
-    "width": 0.006,
-    "tread": 0.62,
-    "depth": 0.0025,
-    "floor_w": 0.002,
-    "shoulder": 0.003,
-    "floor": 0.25,
-    "floor_rough": 0.7
-   },
    "kind": "dielectric",
-   "note": "tyre rubber: black, satin sheen, 4 circumferential tread grooves",
+   "note": "tyre rubber: black, satin sheen (the tread grooves are geometry)",
    "srgb_hex": "#2F2F30"
   },
   "deice_boot": {

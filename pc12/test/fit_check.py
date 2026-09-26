@@ -7,7 +7,10 @@
  4. dorsal fin, fin and rudder stay outside the fixed tail cone; the rudder at +/-25 deg clears the fin tip,
     the fixed cove and the tail-cone closure
  5. retracted gear: nose unit above the keel and inside the bay / pedestal tunnel; main tyres 20-30 mm below the
-    LOCAL wing lower skin (POH ~1 in), nothing else below the skin, nothing above the upper skin; the stowed leg /
+    LOCAL wing lower skin (POH ~1 in; '[open]' for the 22 in tyre's ~19 mm: the tyre-size decision, wheels.py
+    MAIN_TYRE_CHOICE), nothing but the wheel below the skin (the hub fairing and rim inside the tyre's depth; the
+    fairing, painted in the door colour, is told from the door by lying within the tyre radius of the axle),
+    nothing above the upper skin; the stowed leg /
     strut above the closed leg door; the leg door flush with the skin (within 5 mm, decision LD-1 in model/gear.py);
     the skin cut-out closed by the door and the tyre (only the panel gap and the tyre's well ring open)
  6. folding-strut knees over 0-100 % retraction: main knees between the wing skins, nose knee inside the bay
@@ -173,14 +176,29 @@ report("nose gear retracted: above the keel, inside the bay / tunnel",
        bool((V[:, 2] > keel + 0.003).all() and (V[:, 2] < ceiling).all()),
        f"lowest {1000 * (V[:, 2] - keel).min():+.0f} mm vs the keel, {int((V[:, 2] >= ceiling).sum())} verts above the roof")
 from model.livery import SURFACES as _SURF
+from model import wheels as WH
 DOOR_MAT = ("paint_white", _SURF["main_gear_door"], G.LEG_DOOR_BRACKET_MAT)   # leg door plate + its standoff brackets
+
+
+def wheel_mesh(pid, m):
+    """A main-wheel part (the hub fairing is painted in the leg-door colour, the brake discs share the door brackets'
+    metal_dark): every vertex within the tyre radius of the axle in side view -- the leg door, scalloped round the
+    tyre, and its brackets never are."""
+    if not pid.startswith("gear_main_"):
+        return False
+    A = G.MAIN_AXLE
+    return float(np.hypot(m.V[:, 0] - A[0], m.V[:, 2] - A[2]).max()) <= G.MAIN_TYRE["R"] + 0.005
+
+
+def is_door(pid, m, mm):
+    return mm in DOOR_MAT and not wheel_mesh(pid, m)
 
 
 def gear_meshes(pid, door=None):
     """Meshes of a gear part: door=True only the leg door, False all but the door, None all."""
     out = []
     for m, mm in parts[pid].meshes:
-        d = mm in DOOR_MAT
+        d = is_door(pid, m, mm)
         if door is None or d == door:
             out.append(m)
     return out
@@ -199,25 +217,33 @@ for side in ("R", "L"):
     covered = sdf2d.polygon(V_[:, 0], np.abs(V_[:, 1]), fp) < 0.0             # over the (stowed) leg door
     tyre = verts(f"gear_main_{side}", ("tire",)) @ M[:3, :3].T + M[:3, 3]
     proud = float((G.wing_z(tyre[:, 0], tyre[:, 1], False) - tyre[:, 2]).max())   # depth below the LOCAL lower skin
-    mats = np.concatenate([np.full(len(m.V), mm, dtype=object) for m, mm in parts[f"gear_main_{side}"].meshes
-                           if mm not in DOOR_MAT])[::2]
-    whl = np.isin(mats, ("tire", "wheel"))
-    low_other = float((zl_ - V_[:, 2])[~whl].max())                           # > 0: something else below the skin
-    low_wheel = float((zl_ - V_[:, 2])[whl].max())
+    kind = np.concatenate([np.full(len(m.V), 2 if mm == "tire" else (1 if wheel_mesh(f"gear_main_{side}", m) else 0))
+                           for m, mm in parts[f"gear_main_{side}"].meshes
+                           if not is_door(f"gear_main_{side}", m, mm)])[::2]
+    low_other = float((zl_ - V_[:, 2])[kind == 0].max())                      # > 0: something else below the skin
+    low_wheel = float((zl_ - V_[:, 2])[kind == 1].max())                      # wheel halves, hub fairing, brake
     over = float((V_[:, 2] - zu_).max())
+    ok_p = 0.020 <= proud <= 0.030
+    # the approved 22x8.50-10 with its drawn section (wheels.py) lies ~19 mm deep: a known conflict with the POH ~1 in
+    # that goes with the tyre-size decision (wheels.MAIN_TYRE_CHOICE; the proposed 8.50-10 Type III lies ~24 mm deep)
+    open_p = (not ok_p) and (not WH.MAIN_IS_TRA) and 0.015 <= proud < 0.020
     report(f"main gear {side} retracted: tyre protrudes 20-30 mm below the local lower skin (POH ~1 in)",
-           0.020 <= proud <= 0.030, f"{proud * 1000:.1f} mm")
-    report(f"main gear {side} retracted: nothing but the tyre below the skin, nothing above the upper skin",
+           ok_p, f"{proud * 1000:.1f} mm ({WH.MAIN_TYRE_ENV['size']})" +
+           ("; the 22 in tyre's drawn section, the proposed 8.50-10 Type III reaches the POH ~1 in: owner decision "
+            "(wheels.MAIN_TYRE_CHOICE)" if open_p else ""), open_item=open_p)
+    report(f"main gear {side} retracted: nothing but the wheel below the skin (hub fairing, rim inside the tyre's "
+           "depth), nothing above the upper skin",
            low_other < 0 and low_wheel <= proud + 1e-6 and over < 0,
-           f"other parts lowest {-low_other * 1000:+.0f} mm vs the skin (rim / hub {-low_wheel * 1000:+.0f} mm, inside "
-           f"the tyre bulge), highest {over * 1000:+.0f} mm vs the upper skin")
+           f"other parts lowest {-low_other * 1000:+.0f} mm vs the skin (hub fairing / rim / brake "
+           f"{-low_wheel * 1000:+.0f} mm, inside the tyre), highest {over * 1000:+.0f} mm vs the upper skin")
     # the stowed leg / strut / trunnion lie above the closed door's inner face (within its plan footprint), M3
     above = V_[covered, 2] - (zl_[covered] + G.LEG_DOOR_T + G.LEG_DOOR_RECESS)
     report(f"main gear {side} retracted: leg, strut and trunnion above the closed leg door",
            bool((above > 0.001).all()), f"closest {above.min() * 1000:.0f} mm above the door's inner face "
                                         f"({int(covered.sum())} verts over the door)")
     # leg door flush with the wing lower skin (LD-1): the analytic face and the posed mesh
-    Vd, Fd = merged([m for m, mm in parts[f"gear_main_{side}"].meshes if mm in DOOR_MAT[:2]], M)
+    Vd, Fd = merged([m for m, mm in parts[f"gear_main_{side}"].meshes
+                     if mm in DOOR_MAT[:2] and is_door(f"gear_main_{side}", m, mm)], M)
     dd = Vd[:, 2] - G.wing_z(Vd[:, 0], Vd[:, 1], False)                      # height above the local lower skin
     outer = dd < 0.5 * G.LEG_DOOR_T
     dmin, dmax = G.leg_door_retracted_drop(sg)
@@ -399,12 +425,12 @@ for side in ("R", "L"):
     report(f"main gear {side} + side brace 0-100 %: everything inside the wing box lies in the bay liner",
            out_bay == 0, f"{out_bay} verts in the wing box outside bays.main_bay_sdf")
     ms = parts[gid].meshes
-    plate = merged([m for m, mm in ms if mm in DOOR_MAT[:2]])
-    brk = merged([m for m, mm in ms if mm == G.LEG_DOOR_BRACKET_MAT])
-    P = crossings(*plate, *merged([m for m, mm in ms if mm not in DOOR_MAT]))
-    Q = crossings(*brk, *merged([m for m, mm in ms if mm in ("tire", "wheel", "steel")]))
-    report(f"main gear {side} down: leg door plate clears the leg, trunnion, tyre and arm; its brackets the wheel",
-           len(P) + len(Q) == 0, f"{len(P)} / {len(Q)} crossings")
+    plate = merged([m for m, mm in ms if mm in DOOR_MAT[:2] and is_door(gid, m, mm)])
+    brk = merged([m for m, mm in ms if mm == G.LEG_DOOR_BRACKET_MAT and is_door(gid, m, mm)])
+    P = crossings(*plate, *merged([m for m, mm in ms if not is_door(gid, m, mm)]))
+    Q = crossings(*brk, *merged([m for m, mm in ms if wheel_mesh(gid, m)]))
+    report(f"main gear {side} down: leg door plate clears the leg, trunnion, wheel (tyre, hub fairing) and arm; its "
+           "brackets the wheel", len(P) + len(Q) == 0, f"{len(P)} / {len(Q)} crossings")
     g = parts[gid].pivot
     Mg = rotation_about(g["axis"], np.radians(g["retract"]), g["origin"])
     ty = verts(gid, ("tire",)) @ Mg[:3, :3].T + Mg[:3, 3]

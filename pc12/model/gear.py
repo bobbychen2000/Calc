@@ -5,7 +5,7 @@ Landing gear: electromechanically actuated tricycle (PC-12 NG MSN 1451+ / NGX / 
   Nose: hydraulic shock strut, retracts REARWARD, fully enclosed by spring-closed doors.
   All legs locked down by an over-centre two-piece folding strut.
   * Main: trailing-link units on the wing spars, retract INWARD into the wing.
-          Tyres 22 x 8.50-10.
+          Tyres 22 x 8.50-10 (model/wheels.py MAIN_TYRE_CHOICE; the 8.50-10 Type III is the proposed alternative).
   * Nose: steerable oleo strut, retracts REARWARD under the flight deck.
           Tyre 17.5 x 6.25-6, steering +/-60 deg.
 Geometry is built in the gear-DOWN position; each unit stores its retraction
@@ -22,6 +22,7 @@ from cad import sdf2d
 from model.parts import Part
 from model import wing as W
 from model import fuselage as F
+from model import wheels as WH
 
 TRACK = 4.53
 WHEELBASE = 3.48
@@ -29,8 +30,10 @@ WHEELBASE = 3.48
 # 3.515 m apart; the POH 3.48 m is kept and the pair is centred on the drawn axles (each unit moved rigidly by
 # GEAR_SHIFT, forward for the main gear, aft for the nose gear).
 GEAR_SHIFT = 0.0175
-MAIN_TYRE = dict(R=0.2795, W=0.216, rim=0.127)      # 22 x 8.50-10
-NOSE_TYRE = dict(R=0.2225, W=0.159, rim=0.076)      # 17.5 x 6.25-6
+# tyre envelopes from the wheel tables (model/wheels.py): main 22 x 8.50-10 (R 0.2795; the proposed 8.50-10 Type III
+# is one line away there, MAIN_TYRE_CHOICE), nose 17.5 x 6.25-6.  The wheels themselves: wheels.main_wheel / nose_wheel
+MAIN_TYRE = {k: float(WH.MAIN_TYRE_ENV[k]) for k in ("R", "W", "rim")}
+NOSE_TYRE = {k: float(WH.NOSE_TYRE_ENV[k]) for k in ("R", "W", "rim")}
 MAIN_AXLE = np.array([6.428 - GEAR_SHIFT, TRACK / 2, 0.279])        # static, tyre on the ground line
 NOSE_AXLE = np.array([MAIN_AXLE[0] - WHEELBASE, 0.0, 0.222])
 # Main retraction pivot (axis along x).  Stage 3 leg-door decision (LD-1, owner-delegated): the drawn leg top
@@ -151,7 +154,7 @@ LEG_DOOR = dict(x_fwd=5.950 - GEAR_SHIFT, x_fwd_low=5.969 - GEAR_SHIFT, z_fwd_lo
                 x_aft=6.615 - GEAR_SHIFT, x_aft_top=6.603 - GEAR_SHIFT,                    # wide part's aft edge
                 z_top=(1.073, 1.088),                                                      # top edge WL fwd / aft
                 bl=(2.358, 2.472),                                                         # DRAWN front-view plane
-                scallop_r=0.292,                    # LD-1: tyre scallop about MAIN_AXLE (tyre R 279.5 + 12.5)
+                scallop_r=MAIN_TYRE["R"] + WH.SCALLOP_CLEAR,   # LD-1: tyre scallop about MAIN_AXLE (R + 12.5)
                 tab=(6.070, MAIN_TRUNNION[2] + 0.090))   # LD-1: forward top tab: aft STA, top WL (hidden, in the slot)
 LEG_DOOR_T = 0.012                  # door plate thickness (inboard of the outer face)
 LEG_DOOR_RECESS = 0.001             # retracted, the door's outer face lies this far inside the wing lower surface
@@ -379,11 +382,12 @@ def leg_door_retracted_drop(side=1):
     return float(dz.min()), float(dz.max())
 
 
-def main_tyre_protrusion(side=1):
-    """Largest depth (m) of the retracted main tyre below the local wing lower surface (POH: ~1 in)."""
+def main_tyre_protrusion(side=1, mats=("tire",)):
+    """Largest depth (m) of the retracted main tyre (mats: or other wheel parts, e.g. the hub fairing
+    'paint_white') below the local wing lower surface (POH: ~1 in)."""
     M = main_retract_matrix(side)
-    tyre = [m for m, mat in wheel(MAIN_AXLE * [1, side, 1], np.array([0, 1.0, 0]), MAIN_TYRE, n=44) if mat == "tire"][0]
-    V = tyre.V @ M[:3, :3].T + M[:3, 3]
+    V = np.vstack([m.V for m, mat in WH.main_wheel(MAIN_AXLE * [1, side, 1], (0.0, 1.0, 0.0), side, parts=mats)])
+    V = V @ M[:3, :3].T + M[:3, 3]
     return float((wing_z(V[:, 0], V[:, 1], False) - V[:, 2]).max())
 
 
@@ -391,32 +395,43 @@ from model.bays import NOSE_BAY, main_opening_sdf, main_bay_sdf, nose_bay_sdf
 
 
 # ---------------------------------------------------------------------------
-def wheel(center, axis, tyre, n=40, brake_side=0):
-    """Tyre + rim + hub (+ brake disc) about `axis` (unit) through `center`."""
-    R, Wd, rim = tyre["R"], tyre["W"], tyre["rim"]
-    h = Wd / 2
-    # tyre cross-section (bulged) as revolve profile in (s along axis, r)
-    th = np.linspace(-np.pi / 2, np.pi / 2, 21)
-    prof = [(-h * 0.80, rim + 0.005)]
-    bead_r = rim + 0.012
-    for t in th:
-        s = h * np.sin(t)
-        r = bead_r + (R - bead_r) * (0.5 + 0.5 * np.cos(t)) ** 0.35 * 1.0
-        prof.append((s * 1.0, r))
-    prof.append((h * 0.80, rim + 0.005))
-    prof = [(s, r) for s, r in prof]
-    # re-sort monotone in s for a clean revolve (profile runs -s -> +s over the crown)
-    tyre_m = revolve([(s + h, r) for s, r in prof], n=n, axis_origin=center - h * axis, axis_dir=axis)
-    rim_m = revolve([(0.0, rim * 0.55), (0.012, rim), (Wd * 0.84, rim), (Wd * 0.84 + 0.012, rim * 0.55),
-                     (Wd * 0.84 + 0.013, 0.0)], n=n, axis_origin=center - Wd * 0.42 * axis, axis_dir=axis)
-    hub_m = revolve([(0.0, 0.0), (0.001, rim * 0.55), (0.03, rim * 0.40), (0.031, 0.0)], n=24,
-                    axis_origin=center + Wd * 0.30 * axis, axis_dir=axis)   # hub cap inside the tyre width
-    parts = [(tyre_m, "tire"), (Mesh.merge([rim_m, hub_m]), "wheel")]
-    if brake_side:
-        d = revolve([(0, 0.05), (0.001, 0.115), (0.012, 0.115), (0.013, 0.05)], n=36,
-                    axis_origin=center + brake_side * (h + 0.012) * axis, axis_dir=axis)
-        parts.append((d, "steel"))
-    return parts
+def wheel(center, axis, tyre, n=None, brake_side=0):
+    """Wheel assembly about `axis` through `center` (kept for older callers): the model/wheels.py builders -- the main
+    wheel (tyre MAIN_TYRE; brake_side = the inboard side, -1 for the starboard unit, +1 for port) or the nose wheel."""
+    if tyre is MAIN_TYRE or float(tyre["R"]) == MAIN_TYRE["R"]:
+        return WH.main_wheel(center, axis, -brake_side if brake_side else (1 if center[1] >= 0 else -1))
+    return WH.nose_wheel(center, axis)
+
+
+def _catmull(P, n_seg=6):
+    """Catmull-Rom curve through the points P (m, 3), n_seg samples per span."""
+    P = np.asarray(P, float)
+    Q = np.vstack([2 * P[0] - P[1], P, 2 * P[-1] - P[-2]])
+    out = []
+    for i in range(1, len(Q) - 2):
+        p0, p1, p2, p3 = Q[i - 1], Q[i], Q[i + 1], Q[i + 2]
+        for t in np.linspace(0.0, 1.0, n_seg, endpoint=False):
+            t2, t3 = t * t, t * t * t
+            out.append(0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
+                              + (-p0 + 3 * p1 - 3 * p2 + p3) * t3))
+    out.append(P[-1])
+    return np.array(out)
+
+
+def main_brake_line(sgn, arm_a, arm_b, arm_ez, fy_s):
+    """Brake line (flexible hose, wheels.MAIN_BRAKE line_d) from the radial inlet fitting on the brake's top lobe:
+    out of the fitting, inboard clear of the rim flange, then up along the trailing arm's upper edge to the yoke;
+    arm_a / arm_b: the arm's link-pivot / axle end on its mid-plane (s = fy_s), arm_ez its upper-edge direction."""
+    A = MAIN_AXLE * [1, sgn, 1]
+    Mf = WH._frame(A, np.array([0.0, sgn, 0.0]))
+    p0, u = WH.brake_fitting_local()
+    loc = [p0, p0 + u * 0.004 + [0.0, -0.008, 0.0], p0 + u * 0.006 + [0.0, -0.022, 0.0]]
+    pts = [Mf[:3, :3] @ q + Mf[:3, 3] for q in loc]
+    for t in (0.30, 0.58, 0.88):
+        q = arm_b + t * (arm_a - arm_b) + arm_ez * 0.041
+        q[1] = A[1] + sgn * fy_s
+        pts.append(q)
+    return sweep_tube(_catmull(pts, 7), WH.MAIN_BRAKE["line_d"] / 2, n=8)
 
 
 def build_main(parts, side):
@@ -448,7 +463,9 @@ def build_main(parts, side):
         ey = np.cross(ez, ex)
         R = np.stack([ex, ey, ez], 1)
         struct.append(box((a + b) / 2, (Ln, 0.035, 0.07), R=R))
+        brake_line = main_brake_line(sgn, a, b, ez, -fy)
     struct.append(cylinder(A - sgn * fy * yax, A + sgn * 0.05 * yax, 0.026, n=16))      # axle
+    struct.append(WH.main_axle_boss(A, yax, sgn))              # the arm's axle boss, open bore inboard (L4W)
     # shock absorber on the inboard side, over the trailing arm (fy), so it stows inside the wing above the leg
     s_in = -sgn * 0.15
     S1 = np.array([MAIN_SHOCK[0][0], T[1] + s_in, MAIN_SHOCK[0][1]])
@@ -456,10 +473,15 @@ def build_main(parts, side):
     mid = S1 + 0.55 * (S2 - S1)
     shock_body = cylinder(S1, mid, 0.036, n=18)
     shock_rod = cylinder(mid - 0.05 * (S2 - S1), S2, 0.027, n=14)
+    # the shock's lower eye sits on the trailing arm just above the axle boss (photos 3036 / 3008 inboard): a lug from
+    # the rod end down onto the arm, within the arm's thickness (the rev-A bracket ran 0.135 m outboard into the wheel)
+    Ax_, Lp_ = MAIN_AXLE, MAIN_LINK_PIVOT
+    z_arm = Ax_[2] + (S2[0] - Ax_[0]) * (Lp_[2] - Ax_[2]) / (Lp_[0] - Ax_[0])      # arm centre line under S2
     lugs = [cylinder(S1 - [0, 0.03 * sgn, 0], S1 + [0, 0.03 * sgn, 0], 0.03, n=12),
-            box(S2 + [0.0, -s_in * 0.4, 0.0], (0.06, abs(s_in) * 0.9, 0.04)),
+            box(np.array([S2[0], S2[1], 0.5 * (S2[2] + 0.012 + z_arm)]), (0.05, 0.034, S2[2] + 0.012 - z_arm)),
+            cylinder(S2 - [0, 0.019, 0], S2 + [0, 0.019, 0], 0.021, n=14),
             box(np.array([MAIN_SHOCK[0][0], T[1] + s_in * 0.5, MAIN_SHOCK[0][1]]), (0.06, abs(s_in), 0.05))]
-    wh = wheel(A, yax, MAIN_TYRE, n=44, brake_side=-sgn)
+    wh = WH.main_wheel(A, yax, sgn)          # tyre, wheel halves, hub fairing, brake (model/wheels.py, sheet L4W)
 
     # leg door (LEG_DOOR / leg_door_face, sheet L4, LD-1): a piece of the wing lower skin carried by the leg (flush
     # when retracted), scalloped round the tyre, on two standoff brackets from the leg; it retracts rigidly with the leg
@@ -475,7 +497,8 @@ def build_main(parts, side):
               pivot=dict(origin=T.tolist(), axis=[1.0, 0, 0], kind="gear", retract=float(np.degrees(ang_retract))),
               explode=(0, sgn * 0.6, -0.7), group="Landing gear",
               material_note="Trailing link, hydraulic shock strut, electromechanical actuator",
-              info={"tyre": "22 x 8.50-10, 55 psi", "track": "4,530 mm",
+              info={"tyre": f"{WH.MAIN_TYRE_ENV['size'].replace('x', ' x ')}, "
+                            f"{WH.MAIN_TYRE_SEC['pressure']:.0f} psi", "track": "4,530 mm",
                     "retraction": f"{MAIN_RETRACT_DEG:.0f} deg inward; tyre protrudes ~1 in (POH)",
                     "door": "single leg-mounted door, flush with the wing skin when retracted"})
     lugs.append(main_brace_lug(sgn))                                             # side-brace lug B0 (MV2-02)
@@ -484,6 +507,7 @@ def build_main(parts, side):
     gp.add(Mesh.merge(struct + lugs), "gear_leg").add(Mesh.merge([shock_body]), "gear_leg").add(shock_rod, "chrome")
     for m, mat in wh:
         gp.add(m, mat)
+    gp.add(brake_line, "black")
     gp.add(door_down, "paint_white").add(Mesh.merge(brackets), LEG_DOOR_BRACKET_MAT)
     for m, mat in lamp_face:
         gp.add(m, mat)
@@ -690,7 +714,7 @@ def build_nose(parts):
     lc = P + q["frac"] * (low - P)
     lamp_house = cylinder(lc - [q["fwd"][0], 0, 0], lc - [q["fwd"][1], 0, 0], q["r"], n=24)
     lamp_face = led_lamp_face(lc - [q["fwd"][1], 0, 0], (-1.0, 0.0, 0.0), q["r"])
-    wh = wheel(A, yax, NOSE_TYRE, n=36)
+    wh = WH.nose_wheel(A, yax)               # tyre, white split-hub wheel, tie bolts, valve (model/wheels.py)
     ang = NOSE_RETRACT_DEG
     gp = Part("gear_nose", "Nose gear (steerable, retracts aft)", "gear",
               pivot=dict(origin=P.tolist(), axis=[0, 1.0, 0], kind="gear", retract=ang),
