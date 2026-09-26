@@ -487,9 +487,9 @@ def bay_tubs(parts):
     Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
     meshes.append(Mesh(np.vstack([lo, hi]), Fc))
     meshes.append(planar_cap(hi, (0, 0, -1)))
-    p = Part("gear_bays", "Wheel wells (zinc-chromate liners)", "gear", group="Landing gear",
-             material_note="Primed aluminium liners")
-    p.add(Mesh.merge(meshes), "zinc_chromate")
+    p = Part("gear_bays", "Wheel wells (grey liners)", "gear", group="Landing gear",
+             material_note="Painted aluminium liners")
+    p.add(Mesh.merge(meshes), "gear_bay")     # grey (no MSN 3008 photo shows primer in the wells: review F12)
     parts[p.id] = p
 
 

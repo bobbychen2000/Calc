@@ -51,8 +51,8 @@ def _steps():
          "deletes the pilot's direct-vision window. The dark PRO windshield mask wraps the flight-deck glazing. "
          f"{n_fixed} fixed cabin windows ({len(FP.FIXED_WINDOWS[-1])} left, {len(FP.FIXED_WINDOWS[1])} right) plus "
          "the windows in the cargo door and the emergency exit are rectangular, PC-24-style and 10 % larger than "
-         "before. Every pane is trimmed from the lofted skin by signed-distance constraints and recessed 6 mm "
-         "behind a black seal."),
+         "before. Every pane is trimmed from the lofted skin by signed-distance constraints; the cabin panes sit "
+         "flush-looking behind a thin 8 mm dark edge, the flight-deck frames and centre post are the PRO black."),
         ("doors", "Doors & emergency exit",
          f"The forward airstair door ({2 * FP.AIRSTAIR['hx']:.2f} x {2 * FP.AIRSTAIR['hz']:.2f} m clear opening) "
          f"opens {FP.AIRSTAIR['open_deg']:.0f}° downward on integral steps. The aft cargo door "
@@ -107,17 +107,20 @@ def _steps():
          f"{G.WHEELBASE * 1000:,.0f} mm, prop clearance {PP.prop_clearance() * 1000:.0f} mm."),
         ("interior", "Flight deck & cabin",
          "The PC-12 PRO flight deck has Garmin G3000 PRIME: three 14-inch touchscreens and two touch "
-         "controllers. The cabin shown is the six-seat executive layout, clear of the airstair door, with "
-         "baggage behind a net at the cargo door."),
+         "controllers. The cabin shown is the six-seat executive layout in light grey leather, clear of the "
+         "airstair door, with baggage behind a net at the cargo door. Side-wall and headliner linings "
+         f"({F.CABIN_LINING * 1000:.0f} mm inside the skin, the 1.52 m cabin width) close the flight deck and the "
+         "cabin, with reveals round every window."),
         ("details", "Systems & details",
          "The weather-radar pod at the right wing tip is standard; on the PRO its radome is enlarged for the "
          "12-inch GWX 8000 antenna. Also added: nav and strobe lights in the winglets, red beacons on the tail "
          "bullet and the belly, VHF/GPS/XPDR/DME antennas, heated pitot-static probes and static dischargers."),
         ("paint", "Paint & roll-out",
          f"The livery is that of PC-12 PRO {__import__('model.livery', fromlist=['x']).MASK_SCHEME} (N81DW), the "
-         "first PRO delivered, without lettering: deep metallic blue, a light-blue swoosh, white and navy "
-         "calligraphic pinstripes, a white fin cap and bullet, silver tailplane, dark wing undersides and the PRO "
-         "windshield mask, all trimmed into the skins as exact geometry."),
+         "first PRO delivered, without lettering: deep metallic blue, a light silver-blue swoosh, white "
+         "calligraphic pinstripes edged by thin silver-champagne outlines, a white fin cap and bullet, silver "
+         "tailplane, dark navy wing undersides and the PRO windshield mask, all trimmed into the skins as exact "
+         "geometry. Colours, metallic flop and clear coat are fitted to photographs of the aircraft."),
     ]
 
 
@@ -279,6 +282,7 @@ def build_parts():
     gear.build(parts)
     interior.build_flightdeck(parts)
     interior.build_cabin(parts)
+    interior.build_lining(parts)
     details.build(parts)
     livery.apply(parts)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}
@@ -316,6 +320,13 @@ def main():
         rel = ">=" if c["kind"] == "min" else "  "
         print(f"  {c['check']:52s} official {rel}{c['official']:7.3f}  model {c['model']:7.3f}  delta {dl}  "
               f"{'OK' if c['ok'] else 'FAIL'}")
+    # materials: livery palette <-> glTF table <-> the photo-fitted render/lookdev_materials.json
+    from model.assemble import check_lookdev
+    for what, bad in (("livery.PALETTE vs assemble.MATERIALS", livery.check_materials()),
+                      ("assemble.MATERIALS vs render/lookdev_materials.json", check_lookdev())):
+        print(f"  materials: {what}: {'OK' if not bad else f'{len(bad)} differ'}")
+        for b in bad[:8]:
+            print(f"    {b}")
     return parts
 
 

@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 export const CUT_PARTS = new Set([
   'fus_center', 'fus_fwd', 'fus_aft', 'glazing_cabin', 'glazing_flightdeck', 'door_airstair', 'door_cargo',
   'exit_hatch', 'door_frames', 'belly_fairing', 'cowl_upper', 'cowl_lower', 'chin_inlet',
-  'gear_door_NR', 'gear_door_NL', 'dorsal_fin', 'structure',
+  'gear_door_NR', 'gear_door_NL', 'dorsal_fin', 'structure', 'interior_lining',
 ]);
 // Exterior shells that turn translucent in X-ray.
 export const XRAY_PARTS = new Set([
@@ -19,7 +19,7 @@ export const XRAY_PARTS = new Set([
 // Parts that sit inside the skin (for the "use X-ray / cutaway" hint).
 export const INTERNAL_PARTS = new Set([
   'structure', 'eng_rgb', 'eng_exhaust', 'eng_pt', 'eng_combustor', 'eng_compressor', 'eng_inlet_screen',
-  'eng_agb', 'engine_mount', 'firewall', 'inlet_duct', 'flight_deck', 'cabin_interior', 'gear_bays',
+  'eng_agb', 'engine_mount', 'firewall', 'inlet_duct', 'flight_deck', 'cabin_interior', 'interior_lining', 'gear_bays',
 ]);
 const SHADOW_CASTERS = /^(gear_|blade_|propeller|brace_|exhaust_stacks|antennas|pitot|lights)/;
 

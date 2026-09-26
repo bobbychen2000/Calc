@@ -435,6 +435,9 @@ def draw_side(ds, v, side):
             m = L.EXIT_MARK
             ring = FP.opening_outline(dict(o, hx=o["hx"] + m["offset"], hz=o["hz"] + m["offset"],
                                            r=o["r"] + m["offset"]))
+            if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"]:          # champagne rim under the white ring
+                ds.cv.path(v.pts(ring), 2 * (m["half_width"] + L.OUTLINE["width"]) * v.k, None, closed=True,
+                           color=col(L.OUTLINE["material"]))
             ds.cv.path(v.pts(ring), 2 * m["half_width"] * v.k, None, closed=True, color=col("paint_pinstripe"))
     for o in (FP.AIRSTAIR, FP.CARGO):
         h = FP.hinge_line(o) if o["side"] == side else None
@@ -899,12 +902,12 @@ LEGEND_ROWS = [
     ("paint_blue", "base: fuselage, dorsal, fin, rudder, wing upper faces, winglet inboard faces, pod, leg doors"),
     ("paint_blue_light", "lower cowling / lower nose, swoosh band to the lower rudder, nose-gear doors"),
     ("paint_pinstripe", "pinstripes and swooshes (B1 P1 P2 H1 U1 X1-X3 D1), exit marking, winglet line"),
-    ("paint_navy", "navy pinstripe N1 (cowl front to the over-wing exit)"),
+    ("paint_champagne", "silver-champagne outline, 8 mm, of every white stroke and the exit ring (OUTLINE)"),
     ("paint_white", "fin cap (above FIN_CAP), bullet fairing"),
     ("paint_silver", "tailplane and elevators, both faces"),
     ("paint_wing_dark", "wing lower faces, winglet outboard faces, belly fairing, flap-track fairings"),
     ("paint_black", "radar-pod radome (forward of the pod joint)"),
-    ("trim_black", "PRO windshield mask (outline: cockpit_glazing.surround_sdf)"),
+    ("trim_black", "PRO windshield mask (cockpit_glazing.surround_sdf) + flight-deck glazing frames"),
     ("deice_boot", "wing / tailplane leading-edge de-ice boots (rubber, not paint)"),
     ("chrome", "spinner, polished (the drawing grey stands for chrome)"),
     ("exhaust_polished", "exhaust stacks, polished and heat-tinted"),
@@ -938,8 +941,7 @@ def draw_legend(ds):
 
 CURVE_NOTE = {
     "B1": "thick white band: cowl front, under the exhaust, rising aft; crosses the crown aft of the cabin",
-    "N1": "navy line above B1, cowl front to under the exit",
-    "P1": "thin white line above N1; crosses the crown between the last two cabin windows",
+    "P1": "thin white line above B1; crosses the crown between the last two cabin windows",
     "P2": "thin white line: lower edge of the light band, under the cockpit to the lower rudder",
     "H1": "upper edge of the light band on the tail cone",
     "U1": "thin line above H1 rising aft to the crown",
@@ -979,6 +981,11 @@ def curve_rows():
     rows.append(("FIN_CAP", "white", f"{L.FIN_CAP[0][0]:.2f} - {L.FIN_CAP[-1][0]:.2f}",
                  f"{L.FIN_CAP[0][1]:.3f} > {L.FIN_CAP[-1][1]:.3f}", "-", str(len(L.FIN_CAP)), "-",
                  CURVE_NOTE["FIN_CAP"]))
+    if L.outlines():
+        o = L.OUTLINE
+        rows.append(("OUTLINE", o["material"].replace("paint_", ""), "all white", "stroke + rim", f"{o['width'] * 1000:.0f}",
+                     "-", "-", f"rim {o['width'] * 1000:.0f} mm round every white stroke and the exit ring, tapering "
+                     f"with the calligraphic ends (h < {o['taper_h'] * 1000:.0f} mm)"))
     return rows
 
 
@@ -1004,8 +1011,8 @@ PHOTO_ROWS = [
     ("port 3/4, hangar", "pro3008_port34 (= cand _130), cand _81, _82", "camera-matched _130 (7 points, 8 px rms) and _81 "
                                                                         "(7 points, 11 px): nose band group, light lower "
                                                                         "nose, blade bands, polished spinner / stacks"),
-    ("port nose, outdoors", "cand ..._MSN-3008_188", "B1 / N1 / P1 run parallel from the cowl front; the aft port "
-                                                     "strokes mirror the starboard ones"),
+    ("port nose, outdoors", "cand ..._MSN-3008_188", "B1 / P1 run parallel from the cowl front (base blue between "
+                                                     "them, no navy line: 82 / 130 too); champagne stroke edges"),
     ("starboard wing, flight", "cand ..._IMG_0459", "blue wing upper face, black LE boot, blue winglet with a white "
                                                     "line, blue pod with a black radome"),
 ]

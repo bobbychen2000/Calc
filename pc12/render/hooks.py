@@ -136,6 +136,10 @@ def apply_lookdev(mod, **ctx):
         ctx["materials"] = ctx["bpy"].data.materials
     if "overrides" not in ctx and isinstance(ctx.get("pre"), dict):
         ctx["overrides"] = ctx["pre"].get("lookdev")
+    if "bpy" in ctx:                     # the model paints the stroke outlines itself: no render-time ribbons on top
+        B = import_beauty()
+        if hasattr(B, "lookdev_overrides"):
+            ctx["overrides"] = B.lookdev_overrides(ctx.get("overrides"))
     args, kwargs, used = [], {}, set()
     params = list(inspect.signature(fn).parameters.values())
     var_kw = any(p.kind is p.VAR_KEYWORD for p in params)

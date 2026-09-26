@@ -1,6 +1,7 @@
 """Interference / fit checks of the built parts (model axes, metres).  Every x-range comes from fuselage.STA.
 
- 1. interior, engine and inlet duct lie inside the fuselage OML (minus a margin)
+ 1. interior, engine and inlet duct lie inside the fuselage OML (minus a margin; the lining's window reveals, which
+    end on the skin openings, only must not cross it)
  2. the spinner meets the cowl front (base ring on the cowl-front ring, no gap / step) and encloses the gearbox
  3. the wing carry-through stays under the cabin floor (fuselage.CABIN_FLOOR_WL - 15 mm) inside the fuselage
  4. dorsal fin, fin and rudder stay outside the fixed tail cone; the rudder at +/-25 deg clears the fin tip,
@@ -79,7 +80,15 @@ def outside_oml(V, margin):
 for pid, p in parts.items():
     if p.step not in ("interior",) and not pid.startswith("eng_") and pid not in ("engine_mount", "inlet_duct"):
         continue
-    V = verts(pid)
+    # window reveals of the lining (interior.build_lining) run out to the skin openings by design: they must not
+    # cross the OML (checked with a -1 mm margin); everything else keeps MARGIN
+    rev = [m.V for m, _ in p.meshes if getattr(m, "_reveal", False)]
+    if rev:
+        Vr = np.vstack(rev)
+        br = outside_oml(Vr, -0.001)
+        report(f"{pid} window reveals end on the skin openings (never outside the OML)", not br.any(),
+               f"{int(br.sum())}/{len(Vr)} verts outside")
+    V = np.vstack([m.V for m, _ in p.meshes if not getattr(m, "_reveal", False)])
     bad = outside_oml(V, MARGIN)
     n = int(bad.sum())
     det = f"{n}/{len(V)} verts outside" + (f"; x {V[bad, 0].min():.2f}-{V[bad, 0].max():.2f}, z {V[bad, 2].min():.2f}-"

@@ -57,7 +57,7 @@ EXCLUDE_STEPS = {"interior", "structure"}
 EXCLUDE_IDS = {"firewall", "engine_mount", "inlet_duct", "gear_bays"}
 # decal-thin surfaces (window seals 1.5 mm proud, door seams 0.8 mm, jamb liners): they only
 # double the opening outlines and, seen obliquely, half-hide them -> left out of the HLR
-EXCLUDE_MATERIALS = {"seal", "seam", "jamb"}
+EXCLUDE_MATERIALS = {"seal", "seal_cabin", "seam", "jamb"}
 # parts that only occlude: the glazing panes are recessed behind the skin and run 10 mm past
 # the openings, so their own boundaries are never visible; the openings in the skin draw
 # the window outlines

@@ -242,6 +242,97 @@ def build_cabin(parts):
 
 
 # ---------------------------------------------------------------------------
+# side-wall / headliner lining (flight deck + cabin)
+# ---------------------------------------------------------------------------
+LINING_X = (3.05, F.STA["aft_pressure_bulkhead"] - 0.01)   # just aft of the firewall -> aft pressure bulkhead
+LINING_Z0 = FD_FLOOR_Z - 0.010      # lower edge: at the (flight-deck / cabin) floor, closing the floor-edge slit
+LINING_DOOR_MARGIN = 0.008          # hole round the door-panel seams: clear of the 45 mm door slabs (jambs fill it)
+LINING_DX = 0.030
+
+
+def _lining_proxy(m):
+    """The OML points under the lining vertices (same loft parameters x, t: UV): the opening fields are evaluated
+    there, so every hole lines up with its skin opening."""
+    return Mesh(F.section(m.UV[:, 0], m.UV[:, 1] % 1.0), m.F, N=m.N, UV=m.UV)
+
+
+def build_lining(parts):
+    """Side-wall and headliner lining, F.CABIN_LINING (40 mm: the 1.52 m cabin width) inside the OML from the firewall
+    to the aft pressure bulkhead, down to the floors: the skins are single-sided and wound outward, so without it the
+    glazing showed the back faces of the paint (blue / white) -- through the windshield, the side and cabin windows and
+    the open doors (lookdev round 1).  Holes: the windshield, cockpit side windows and cabin windows (the skin's own
+    fields, evaluated on the OML under each lining vertex) with a reveal back to the skin opening, and the door-panel
+    seams (+ LINING_DOOR_MARGIN; the door jambs close the gap).  Flight deck (x < STA cockpit_aft) mid grey
+    'lining_flightdeck', the cabin 'lining'."""
+    from cad.mesh import grid_normals, boundary_loops
+    from model import fuselage_parts as FP
+    from model import cockpit_glazing as CG
+    x0, x1 = LINING_X
+    extra = [F.STA["cockpit_aft"]] + [cx + s * FP.WIN_HX for xs in FP.FIXED_WINDOWS.values() for cx in xs
+                                      for s in (-1, 1)]
+    xs = np.unique(np.r_[np.arange(x0, x1, LINING_DX), x1, [e for e in extra if x0 < e < x1]])
+    xs = xs[np.r_[True, np.diff(xs) > 2e-3]]
+    ts = np.linspace(0.5, 1.5, FP.N_AROUND, endpoint=False)       # seam at the keel (t unwrapped across the crown)
+    X, T = np.meshgrid(xs, ts, indexing="ij")
+    P = F.section(X, T % 1.0)
+    N = grid_normals(P, close_v=True)
+    N /= np.maximum(np.linalg.norm(N, axis=-1, keepdims=True), 1e-12)
+    m = grid_surface(P - F.CABIN_LINING * N, close_v=True, UV=np.stack([X, T], -1))
+    side_of = lambda q: np.sign(q.V[:, 1])                                           # noqa: E731
+
+    def cabin_windows(q):
+        d = np.full(q.nv, 10.0)
+        for side, stations in FP.FIXED_WINDOWS.items():
+            on = side_of(q) * side > 0
+            for cx in stations:
+                d = np.where(on, np.minimum(d, FP.window_sdf(q.V[:, 0], q.V[:, 2], cx)), d)
+        return d
+    # glazing holes (sequential single-sided trims, fields re-evaluated on the OML under the trimmed lining)
+    glazing = [cabin_windows, lambda q: CG.sidewindow_sdf(q.V[:, 0], q.V[:, 1], q.V[:, 2]),
+               lambda q: CG.windshield_sdf(q.V[:, 0], FP.signed_s(q.V[:, 0], q.UV[:, 1]), q.V[:, 2], q.V[:, 1])]
+    for f in glazing:
+        v = f(_lining_proxy(m))
+        if (v < 0).any():
+            m = trim(m, v, "positive")
+    # reveals: every hole loop (the tube's end rings excluded) joined to the same loop on the OML
+    reveals = []
+    for loop in boundary_loops(m):
+        Lv = m.V[loop]
+        if Lv[:, 0].min() < x0 + 1e-3 or Lv[:, 0].max() > x1 - 1e-3:
+            continue
+        Ov = F.section(m.UV[loop, 0], m.UV[loop, 1] % 1.0)
+        n = len(loop)
+        i = np.arange(n)
+        j = (i + 1) % n
+        r = Mesh(np.vstack([Lv, Ov]), np.vstack([np.stack([i, j, n + j], 1), np.stack([i, n + j, n + i], 1)]))
+        c = Ov.mean(0)
+        if np.mean(np.sum((r.V[r.F].mean(1) - c) * r.face_normals(), 1)) > 0:
+            r = r.flipped()                                                           # facing into the opening
+        reveals.append(r)
+    # door-panel seams (+ margin) and the floors
+    for o in (FP.AIRSTAIR, FP.CARGO, FP.EXIT):
+        pan = FP.door_panel(o)
+        q = _lining_proxy(m)
+        v = np.where(side_of(q) * o["side"] > 0, FP.rr((q.V[:, 0], q.V[:, 2]), pan) - LINING_DOOR_MARGIN, 10.0)
+        if (v < 0).any():
+            m = trim(m, v, "positive")
+    m = trim(m, m.V[:, 2] - LINING_Z0, "positive")
+    m = m.flipped()                                                                   # front faces toward the cabin
+    xa = F.STA["cockpit_aft"]
+    p = Part("interior_lining", "Side-wall & headliner lining (flight deck, cabin), window reveals", "interior",
+             group="Interior", material_note="Moulded composite lining panels",
+             info={"lining": f"{F.CABIN_LINING * 1000:.0f} mm inside the OML (cabin 1.52 m wide)",
+                   "extent": f"STA {x0 * 1000:,.0f} - {x1 * 1000:,.0f}, flight deck to STA {xa * 1000:,.0f}"})
+    rv = Mesh.merge(reveals)
+    for piece, keep, mat in ((m, "negative", "lining_flightdeck"), (rv, "negative", "lining_flightdeck"),
+                             (m, "positive", "lining"), (rv, "positive", "lining")):
+        q = trim(piece, piece.V[:, 0] - xa, keep).compact()
+        q._reveal = piece is rv          # reveals end ON the skin openings (test/fit_check.py checks them apart)
+        p.add(q, mat)
+    parts[p.id] = p
+
+
+# ---------------------------------------------------------------------------
 # structure
 # ---------------------------------------------------------------------------
 
@@ -391,5 +482,6 @@ def build_structure(parts):
 def build(parts):
     build_flightdeck(parts)
     build_cabin(parts)
+    build_lining(parts)
     build_structure(parts)
     return parts

@@ -838,7 +838,7 @@ def check_L3(ctx, rep, plots):
                 worst_list(d, np.vstack(Ps), labs) if devs else [], status=None if len(devs) == 2 else "FAIL")
 
     # ---- cabin-window glass covers the holes (edge 10 mm beyond the Lame outline, glass 6 mm inward)
-    Vg, Fg = ctx.mesh(("glazing_cabin",), mats=("glass",))
+    Vg, Fg = ctx.mesh(("glazing_cabin",), mats=("glass", "glass_cabin"))
     comps = boundary_components(Vg, Fg, min_area=1e-4)
     f_all, P_all = [], []
     for c in comps:
@@ -1891,7 +1891,7 @@ def _l4_gear(ctx, rep):
 def livery_curves(side, cockpit, fin, n=6000):
     """Side-projection (x, z) boundary curves of the scheme that can bound paint on a part."""
     polys = []
-    for st in L.strokes().values():
+    for st in list(L.strokes().values()) + list(L.outlines().values()):      # + the champagne outline rims
         xs = np.linspace(st.x0, st.x1, n)
         c, h = st.c(xs), np.maximum(st.h(xs), 0.0)
         polys += [np.c_[xs, c + h], np.c_[xs, c - h]]
@@ -1913,7 +1913,8 @@ def livery_curves(side, cockpit, fin, n=6000):
     if side * FP.EXIT["side"] > 0:
         o, w = L.EXIT_MARK["offset"], L.EXIT_MARK["half_width"]
         ex = FP.EXIT
-        for dlt in (o - w, o + w):
+        wo = w + (L.OUTLINE["width"] if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"] else 0.0)
+        for dlt in sorted({o - w, o + w, o - wo, o + wo}):
             P = sdf2d.rrect_outline(ex["cx"], ex["cz"], ex["hx"] + dlt, ex["hz"] + dlt, max(ex["r"] + dlt, 1e-4), 64)
             polys.append(np.vstack([P, P[:1]]))
     return Curves(polys, step=5e-4)
@@ -1947,7 +1948,7 @@ LIVERY_GROUPS = {
 
 def livery_coverage(ctx, rep, tol, step=0.004, delta=0.003):
     polys = []
-    for st in L.strokes().values():
+    for st in list(L.strokes().values()) + list(L.outlines().values()):      # + the champagne outline rims
         xs = np.arange(st.x0, st.x1 + 1e-9, step / 4)
         c, h = st.c(xs), np.maximum(st.h(xs), 0.0)
         polys += [(f"{st.id} upper", np.c_[xs, c + h]), (f"{st.id} lower", np.c_[xs, c - h])]
@@ -1957,9 +1958,10 @@ def livery_coverage(ctx, rep, tol, step=0.004, delta=0.003):
     O = CG.side_outline("mask")
     polys.append(("PRO mask", np.vstack([O, O[:1]])))
     ex, w = FP.EXIT, L.EXIT_MARK["half_width"]
-    for dl in (-w, w):
-        R_ = sdf2d.rrect_outline(ex["cx"], ex["cz"], ex["hx"] + dl, ex["hz"] + dl, ex["r"] + dl, 64)
-        polys.append((f"exit ring {'in' if dl < 0 else 'out'}", np.vstack([R_, R_[:1]])))
+    wo = w + (L.OUTLINE["width"] if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"] else 0.0)
+    for dl in sorted({-w, w, -wo, wo}):
+        R_ = sdf2d.rrect_outline(ex["cx"], ex["cz"], ex["hx"] + dl, ex["hz"] + dl, max(ex["r"] + dl, 1e-4), 64)
+        polys.append((f"exit ring {'in' if dl < 0 else 'out'}{'' if abs(dl) == w else ' rim'}", np.vstack([R_, R_[:1]])))
     pts, nrm, lab = [], [], []
     for name, P in polys:
         Q = densify_poly(P, step)[::max(1, int(round(step / 0.001)))] if len(P) > 2 and \
@@ -2249,8 +2251,10 @@ def _l5_bands(ctx, rep):
     rep.add("L5", "blade erosion-strip edges (BLADE_LE_STRIP)", d, tol,
             f"r {q['r0']}-{r_out:.3f}, {1000 * q['width']:.0f} mm from the LE line, 5 blades", worst_list(d, np.vstack(P_)))
     # ---- exhaust-stack collar: polished / black boundary vs powerplant.exhaust_stack_collar
-    cb = colour_boundaries(ctx, "exhaust_stacks", mats={L.SURFACES["exhaust"], "black"})
-    B = np.vstack([P for P, ma, mb in cb if {ma, mb} == {L.SURFACES["exhaust"], "black"}]) if cb else np.zeros((0, 3))
+    soot = {"black", "exhaust_soot"}                   # the heat-blackened collar ('exhaust_soot'; 'black' before)
+    cb = colour_boundaries(ctx, "exhaust_stacks", mats={L.SURFACES["exhaust"]} | soot)
+    B = np.vstack([P for P, ma, mb in cb if ma in soot | {L.SURFACES["exhaust"]} and mb in soot | {L.SURFACES["exhaust"]}
+                   and len({ma, mb} & soot) == 1]) if cb else np.zeros((0, 3))
     if len(B):
         C = [PP.exhaust_stack_collar(sg) for sg in (1, -1)]
         d1 = Curves(C, step=5e-4).dist(B)[0]

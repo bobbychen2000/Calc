@@ -827,7 +827,7 @@ def build_inlet_and_exhaust(parts):
         inners.append(i)
     ep = Part("exhaust_stacks", "Exhaust stacks (L/R), scarfed outlets", "cowling", explode=(-0.2, 0, 0.0), qty=2,
               group="Powerplant installation", material_note="Inconel stacks, heat-tinted outlet collars")
-    ep.add(Mesh.merge(tubes), "exhaust").add(Mesh.merge(collars), "black").add(Mesh.merge(inners), "black")
+    ep.add(Mesh.merge(tubes), "exhaust").add(Mesh.merge(collars), "exhaust_soot").add(Mesh.merge(inners), "exhaust_soot")
     parts[ep.id] = ep
 
 

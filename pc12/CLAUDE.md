@@ -80,14 +80,19 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   tailplane horn balances split off the fixed tips along the drawn horn gap and carried by the elevators),
   `powerplant.py` (PT6E-67XP modules + Hartzell 5-blade prop, chin inlet cut into the OML keel step, scarfed
   stacks), `gear.py` (+ `bays.py`, `brace.py`; nose retracts 105° into a tunnel under the pedestal, unequal-link
-  braces), `interior.py` (flight deck, cabin on CABIN_FLOOR_WL, frames at the Pilatus frame stations),
+  braces), `interior.py` (flight deck, cabin on CABIN_FLOOR_WL, frames at the Pilatus frame stations; side-wall /
+  headliner lining `interior_lining` 40 mm inside the OML with window reveals, so the glazing never shows the
+  single-sided skins' back faces),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones; flap-track canoes split at the cove lip
   into a fixed forward part and an aft part carried by the flap; lights, antennas, pod),
   `livery.py` (PC-12 PRO MSN 3008 scheme; the 3-D painter trims with one-sided smooth fields so thin strokes stay
   continuous; zero-area slivers from trims are dropped by `cad/glb.py`; per-surface bands -- wing / tailplane boots,
   winglet pinstripe, blade tip bands about the thrust axis, blade LE erosion strip -- are cut with sequential
-  single-sided trims, never one V-shaped max() field), `build.py` (steps + verification),
+  single-sided trims, never one V-shaped max() field; every white stroke is edged by the 8 mm champagne OUTLINE and
+  there is no navy line -- photos 82 / 130 / 188), `assemble.py` (MATERIALS = the photo-fitted MSN 3008 glTF values
+  of `render/lookdev_materials.json`, clear coat / specular as KHR extensions; `check_lookdev()` and
+  `livery.check_materials()` are printed by the build), `build.py` (steps + verification),
   `drawing/` (Stage-2 sheets L1-L5 via `drawing.master`; legacy HLR GA via `drawing.sheet`).
 
 ## Sourced facts (keep these fixed)
@@ -125,5 +130,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   the drawn trunnion is at the lower skin and the tyre stows 1 in proud, so no rigid door in that plane can close
   flush (in-flight photos show a flush underside) -- owner decision; cargo-door gas struts; dihedral: decision D4
   quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
-- Stage 4: Blender (Cycles) beauty renders (`render/blender_ortho.py` for calibrated views) and the three.js
-  viewer (`web/`, three.js r160 in `web/three_local`).
+- Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
+  the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
+  `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`).
+  The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).

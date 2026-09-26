@@ -11,9 +11,10 @@ Scheme (sheet L5, drawing/livery_profiles.py, draws it from THESE parameters):
     fuselage into a wide band through the cabin-window line that runs to the tail and across the lower
     rudder (region 'light');
   * white calligraphic pinstripes and swooshes: a thick white band from low on the cowling that rises
-    aft and crosses the crown just aft of the cabin, a thin white line and a navy line running parallel
-    above it from the cowling, a thin white line along the lower edge of the light band to the rudder,
-    and several strokes on the tail cone (STROKES);
+    aft and crosses the crown just aft of the cabin, a thin white line running parallel above it from
+    the cowling, a thin white line along the lower edge of the light band to the rudder, and several
+    strokes on the tail cone (STROKES); every white stroke is edged by a thin silver-champagne metallic
+    outline (OUTLINE; photos 82 / 130 / 188);
   * white fin cap and bullet fairing, silver-grey metallic tailplane and elevators;
   * dark navy-charcoal wing (and winglet outboard-face) lower surfaces, belly fairing, flap-track fairings;
   * the PRO dark windshield mask ('trim_black', outline owned by model/cockpit_glazing.py);
@@ -28,6 +29,9 @@ Representation -- the same curves drive the 2-D sheet and the 3-D painter:
     h(x) (pchip through the knots' h; h = 0 at a tapered end) -- the calligraphic width law; its field
     is |z - c(x)| - h(x) (negative inside);
   * a REGION is the band between two pchip curves bot(x) < z < top(x);
+  * an OUTLINE is a white stroke grown by OUTLINE['width'] (the same centre line, half-height
+    h + w s(h), s tapering the outline with the stroke's calligraphic ends): painted below the white
+    strokes, only its rim shows;
   * the fin cap is the part of the fin / rudder above the pchip line FIN_CAP;
   * wing, winglet, tailplane, pod, gear and powerplant colours are per surface (SURFACES, STAB_BOOT,
     WINGLET_PIN, PROP_BANDS).
@@ -35,7 +39,9 @@ Representation -- the same curves drive the 2-D sheet and the 3-D painter:
 Paint priority (top first; the painter trims in this order, the rest takes BASE): PAINT_ORDER.  The viewer
 primes every 'paint_*' material and 'trim_black' until its paint step; polished metal and the propeller
 colours are not primed.  Colours: PALETTE holds the design colour (sRGB) of every livery material;
-model/assemble.MATERIALS holds the same colours as linear PBR base colours (check_materials() compares).
+model/assemble.MATERIALS holds the same colours as linear PBR base colours (check_materials() compares).  The
+colours, metallic / roughness and clear coats are the MSN 3008 photo fits of render/lookdev.py (its glTF table
+render/lookdev_materials.json; assemble.check_lookdev() compares).
 
 Coordinates: x station (m aft of datum), y butt line (+ starboard), z water line (m).  The knots were
 measured by camera-matching two starboard photographs of MSN 3008 (ground 3/4 and air-to-air) and
@@ -53,29 +59,31 @@ from cad.mesh import Mesh, trim, pchip
 # =====================================================================================================
 PALETTE = {
     # name                sRGB      metallic roughness  description
-    "paint_blue":        ("#1B4191", 0.60, 0.30, "deep metallic blue (base colour)"),
-    "paint_blue_light":  ("#7E9FCB", 0.60, 0.30, "light metallic blue (lower nose, swoosh band)"),
-    "paint_pinstripe":   ("#F2F3EF", 0.05, 0.25, "white pinstripes and swooshes"),
-    "paint_navy":        ("#101D3D", 0.40, 0.30, "navy pinstripe"),
-    "paint_white":       ("#F6F7F6", 0.00, 0.30, "white (fin cap, bullet fairing)"),
-    "paint_wing_dark":   ("#1D2533", 0.50, 0.35, "dark navy-charcoal metallic (wing lower surfaces)"),
-    "paint_silver":      ("#AAB0B6", 0.70, 0.30, "silver-grey metallic (tailplane, elevators)"),
-    "paint_black":       ("#16181B", 0.00, 0.25, "gloss black (radar-pod radome)"),
-    "trim_black":        ("#242629", 0.00, 0.16, "PRO windshield mask (dark trim)"),
-    # de-ice boots (rubber, not paint): near-black -- photos IMG_0459 ~RGB (32-35, 43-51, 44-64), the Pilatus front
-    # render's wing front face (30-38, 36-44, 41-49); rev B drew them mid-grey (#656769)
-    "deice_boot":        ("#2A2F33", 0.00, 0.75, "wing / tailplane leading-edge de-ice boots (black rubber)"),
-    "chrome":            ("#F6F7F8", 1.00, 0.08, "polished chrome (spinner)"),
-    "exhaust_polished":  ("#CFC5B4", 1.00, 0.18, "polished exhaust stacks (heat tint)"),
-    "prop_blade":        ("#3C3C3F", 0.00, 0.45, "propeller blade (black)"),
-    "prop_tip":          ("#F6F6F3", 0.00, 0.40, "propeller blade tip (white)"),
-    "prop_band_red":     ("#C4261D", 0.00, 0.40, "propeller blade red band"),
+    # (photo-fitted to MSN 3008 in render/lookdev.py -- hangar photo 130 pins the albedo, the outdoor photos 188 /
+    # 0517 / N81DW the metallic flop; glTF metallic / roughness as in render/lookdev_materials.json)
+    "paint_blue":        ("#13347D", 0.30, 0.50, "deep metallic blue (base colour)"),
+    "paint_blue_light":  ("#8096C4", 0.50, 0.38, "light metallic (silver-)blue (lower nose, swoosh band)"),
+    "paint_pinstripe":   ("#F3F4F5", 0.00, 0.30, "white pinstripes and swooshes"),
+    "paint_champagne":   ("#BAAC95", 0.40, 0.38, "silver-champagne metallic outline of every white stroke"),
+    "paint_white":       ("#F3F4F5", 0.00, 0.30, "white (fin cap, bullet fairing)"),
+    "paint_wing_dark":   ("#18244B", 0.35, 0.42, "dark navy metallic (wing lower surfaces, belly fairing)"),
+    "paint_silver":      ("#ADADAF", 0.55, 0.36, "silver-grey metallic (tailplane, elevators)"),
+    "paint_black":       ("#1D1E21", 0.00, 0.30, "gloss black (radar-pod radome)"),
+    "trim_black":        ("#19191D", 0.00, 0.50, "PRO windshield mask + glazing frames (anti-glare black)"),
+    # de-ice boots (rubber, not paint): near-black glossy neoprene -- photos 188 sRGB 32/36/44 in shade, IMG_0459
+    # ~(32-35, 43-51, 44-64); the Pilatus front render's wing front face (30-38, 36-44, 41-49)
+    "deice_boot":        ("#1D1D1F", 0.00, 0.25, "wing / tailplane leading-edge de-ice boots (black rubber)"),
+    "chrome":            ("#F3F5F6", 1.00, 0.035, "polished chrome (spinner)"),
+    "exhaust_polished":  ("#BCAD95", 1.00, 0.06, "polished exhaust stacks (heat tint)"),
+    "prop_blade":        ("#212123", 0.00, 0.45, "propeller blade (satin black composite)"),
+    "prop_tip":          ("#E7E7E5", 0.00, 0.36, "propeller blade tip (white)"),
+    "prop_band_red":     ("#8E2D0D", 0.00, 0.40, "propeller blade red band"),
 }
 # pre-existing materials of model/assemble.py that the livery uses unchanged
 EXISTING = ("paint_white", "trim_black", "chrome", "prop_blade", "prop_tip", "deice_boot")
 # flat colours for the drawings where the PBR base colour would mislead (polished metal renders from its
-# reflections; the blade base colour is lifted for PBR)
-DRAWING_COLOR = {"chrome": "#C5CBD1", "exhaust_polished": "#B3AA9B", "prop_blade": "#1F2023"}
+# reflections)
+DRAWING_COLOR = {"chrome": "#C5CBD1", "exhaust_polished": "#B3AA9B"}
 
 
 def srgb_to_linear(hexcol):
@@ -118,12 +126,10 @@ STROKES = {
         (4.000, 1.427, 0.038), (4.500, 1.560, 0.036), (5.000, 1.671, 0.036), (5.500, 1.792, 0.036),
         (6.000, 1.875, 0.036), (6.500, 1.985, 0.036), (7.000, 2.085, 0.037), (7.500, 2.190, 0.040),
         (8.000, 2.380, 0.048), (8.500, 2.597, 0.046), (8.850, 2.743, 0.042), (9.050, 2.847, 0.042)]),
-    # navy pinstripe just above B1, from the cowl front to under the over-wing exit
-    "N1": ("paint_navy", [
-        (1.100, 1.390, 0.000), (1.300, 1.345, 0.015), (2.000, 1.300, 0.016), (2.500, 1.312, 0.016),
-        (3.000, 1.364, 0.018), (3.500, 1.437, 0.019), (4.000, 1.512, 0.020), (4.500, 1.618, 0.020),
-        (5.000, 1.730, 0.020), (5.500, 1.860, 0.018), (6.000, 1.985, 0.014), (6.400, 2.090, 0.000)]),
-    # thin white line above N1, curving up over the crown between the last two cabin windows
+    # (rev B had a navy line 'N1' between B1 and P1: photos 130 / 82 / 188 show the base blue there -- the dark band
+    # seen under P1 in photo 82 moves against the stripes along the fuselage in 130, a reflection horizon, not paint
+    # (render/lookdev.py measurements, material review round 1 F3); the white strokes are edged by OUTLINE instead)
+    # thin white line above B1, curving up over the crown between the last two cabin windows
     "P1": ("paint_pinstripe", [
         (1.120, 1.420, 0.000), (1.300, 1.385, 0.013), (2.000, 1.340, 0.016), (2.500, 1.334, 0.017),
         (3.000, 1.396, 0.020), (3.500, 1.452, 0.021), (4.000, 1.557, 0.022), (4.500, 1.680, 0.022),
@@ -193,8 +199,16 @@ FIN_CAP_X0 = 12.0                     # the cap region starts on the fin (never 
 
 # paint priority, top first (the painter trims in this order; the rest is the base colour).  'paint_blue'
 # in the order is the base colour painted as a counter-stroke over the light band (W1).
-PAINT_ORDER = ("trim_black", "paint_white", "paint_pinstripe", "paint_navy", "paint_blue", "paint_blue_light")
+PAINT_ORDER = ("trim_black", "paint_white", "paint_pinstripe", "paint_champagne", "paint_blue", "paint_blue_light")
 BASE = "paint_blue"
+
+# silver-champagne outline of the white strokes (photo 82 edge profiles: 6-9 px ~ 8 mm on both edges of every white
+# stroke, sRGB 189/184/182 beside the white's 222-227; 188: 172/165/156 beside 240; render/lookdev.py measurements).
+# Each paint_pinstripe stroke grown by 'width' (side-projection z, like the strokes' half-heights) and painted just
+# below the white: h_outline = h + width * min(1, h / taper_h), so the outline tapers out with a calligraphic end (and
+# stops where the stroke is thinner than min_h); a blunt end (h > 0) gets a 'width' cap.  The exit ring (EXIT_MARK) is
+# edged the same way.
+OUTLINE = dict(material="paint_champagne", of="paint_pinstripe", width=0.008, taper_h=0.010, min_h=0.003)
 
 # over-wing exit marking: white ring centred on the hatch seam (fuselage_parts.EXIT), starboard only
 # (rectified ground photo: ring 5.975-6.475 x 1.88-2.545 outer, ~25 mm wide)
@@ -295,10 +309,45 @@ class Region:
         return np.where((x >= self.x0) & (x <= self.x1), f, _BIG)
 
 
+class Outline:
+    """OUTLINE rim of a white stroke st: the same centre line, half-height h + w min(1, h / taper_h) (the rim tapers out
+    with a calligraphic end), extended by w beyond a blunt end (h > 0 there).  Painted below the white strokes, so
+    only the w-wide rim shows.  Where the stroke is thinner than min_h (its last few cm to a tapered tip, where it is a
+    hairline anyway) the rim stops: a rim round a vanishing tip only left zero-area slivers (dropped by the glTF
+    writer -> pin holes, e.g. P1's tip on the chin-inlet lip)."""
+
+    def __init__(self, st, mat, width, taper_h, min_h=0.003):
+        self.id, self.mat, self.stroke, self.w, self.th = f"{st.id}~", mat, st, float(width), float(taper_h)
+        xs = np.linspace(st.x0, st.x1, 4001)
+        on = xs[np.asarray(st.h(xs)) >= min_h]
+        a, b = (float(on[0]), float(on[-1])) if len(on) else (st.x0, st.x0)
+        self.x0 = a - (self.w if a <= st.x0 else 0.0)
+        self.x1 = b + (self.w if b >= st.x1 else 0.0)
+
+    def c(self, x):
+        return self.stroke.c(np.clip(x, self.stroke.x0, self.stroke.x1))
+
+    def h(self, x):
+        hs = np.maximum(self.stroke.h(np.clip(x, self.stroke.x0, self.stroke.x1)), 0.0)
+        return hs + self.w * np.minimum(1.0, hs / self.th)
+
+    def field(self, x, z):
+        x, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(z, float))
+        f = np.abs(z - self.c(x)) - self.h(x)
+        return np.where((x >= self.x0) & (x <= self.x1), f, _BIG)
+
+    def outline(self, n=240):
+        xs = np.linspace(self.x0, self.x1, n)
+        c, h = self.c(xs), self.h(xs)
+        return np.r_[np.c_[xs, c + h], np.c_[xs[::-1], (c - h)[::-1]]]
+
+
 def _build():
-    global _STROKES, _REGIONS, _CAP, L_, U_, B_, LIVERY_LINES
+    global _STROKES, _REGIONS, _OUTLINES, _CAP, L_, U_, B_, LIVERY_LINES
     _STROKES = {k: Stroke(k, m, v) for k, (m, v) in STROKES.items()}
     _REGIONS = {k: Region(k, m, t, b) for k, (m, t, b) in REGIONS.items()}
+    _OUTLINES = {k: Outline(s, OUTLINE["material"], OUTLINE["width"], OUTLINE["taper_h"], OUTLINE["min_h"])
+                 for k, s in _STROKES.items() if s.mat == OUTLINE["of"]} if OUTLINE.get("width", 0) > 0 else {}
     _CAP = pchip(*zip(*FIN_CAP))
     # legacy names (the first model's scheme exported its three curves)
     LIVERY_LINES = dict(strokes={k: v[1] for k, v in STROKES.items()},
@@ -307,7 +356,7 @@ def _build():
     B_ = _STROKES["B1"].c                                      # main white band centre line
 
 
-_STROKES = _REGIONS = _CAP = L_ = U_ = B_ = LIVERY_LINES = None
+_STROKES = _REGIONS = _OUTLINES = _CAP = L_ = U_ = B_ = LIVERY_LINES = None
 _build()
 PIN = (-0.02, 0.02)                    # legacy name (the old scheme's pinstripe offsets); unused
 
@@ -323,6 +372,11 @@ def strokes():
 
 def regions():
     return dict(_REGIONS)
+
+
+def outlines():
+    """{stroke id: Outline} of the white strokes (OUTLINE)."""
+    return dict(_OUTLINES)
 
 
 def fin_cap_line(x):
@@ -346,6 +400,8 @@ def side_fields(x, z, y=None, fin=False):
         out[s.mat] = np.minimum(out[s.mat], s.field(x, z))
     for r in _REGIONS.values():
         out[r.mat] = np.minimum(out[r.mat], r.field(x, z))
+    for o in _OUTLINES.values():
+        out[o.mat] = np.minimum(out[o.mat], o.field(x, z))
     if fin:
         out["paint_white"] = np.minimum(out["paint_white"], fin_cap_field(x, z))
     out["trim_black"] = CG.surround_sdf(x, np.zeros_like(x) if y is None else y, z)
@@ -382,7 +438,7 @@ def region_fields(mat, cockpit=False, fin=False):
     def clip(fn, x0, x1):
         return lambda V: fn(np.clip(V[:, 0], x0, x1))
 
-    for st in _STROKES.values():
+    for st in list(_STROKES.values()) + list(_OUTLINES.values()):
         if st.mat != mat:
             continue
         c, h = clip(st.c, st.x0, st.x1), clip(st.h, st.x0, st.x1)
@@ -400,9 +456,9 @@ def region_fields(mat, cockpit=False, fin=False):
     if mat == "trim_black" and cockpit:
         from model import cockpit_glazing as CG
         out.append([lambda V: CG.surround_sdf(V[:, 0], V[:, 1], V[:, 2])])
-    if mat == EXIT_MARK_MAT:
+    if mat == EXIT_MARK_MAT or (mat == OUTLINE["material"] and EXIT_MARK_MAT == OUTLINE["of"] and _OUTLINES):
         from model.fuselage_parts import EXIT, rr
-        o, w = EXIT_MARK["offset"], EXIT_MARK["half_width"]
+        o, w = EXIT_MARK["offset"], EXIT_MARK["half_width"] + (OUTLINE["width"] if mat != EXIT_MARK_MAT else 0.0)
         f = lambda V: rr((V[:, 0], V[:, 2]), EXIT)                                  # noqa: E731
         out.append([lambda V: 0.2 - V[:, 1] * EXIT["side"], lambda V: (o - w) - f(V), lambda V: f(V) - (o + w)])
     return out
@@ -453,9 +509,10 @@ def _split(m: Mesh, f, mat_neg, mat_pos):
     return out
 
 
+# belly_fairing: only its root fillet is unpainted (the belly is not); door_frames: only the door-panel lips are
 PAINTED = ["cowl_upper", "cowl_lower", "fus_fwd", "fus_center", "fus_aft", "fin", "rudder", "rudder_tab",
            "door_airstair", "door_cargo", "exit_hatch", "dorsal_fin", "chin_inlet", "strakes", "gear_door_NR",
-           "gear_door_NL", "belly_fairing"]      # belly_fairing: only its root fillet is unpainted (the belly is not)
+           "gear_door_NL", "belly_fairing", "door_frames"]
 FIN_PARTS = ("fin", "rudder", "rudder_tab")
 # D3: the PRO mask (cockpit_glazing.surround_sdf) is painted on every skin it covers, so it runs on across the
 # forward / centre fuselage joint (fuselage_parts.SPLIT_FWD) instead of stopping there

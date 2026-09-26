@@ -414,6 +414,13 @@ def _assert_covers(field, patch_box, box0, what):
         raise AssertionError(f"{what}: glass patch {patch_box} does not cover the hole {(hx0, hx1, ht0, ht1)}")
 
 
+# cabin-window edge ring (glazing_cabin, door and exit windows): the NGX panes are flush with only a thin, barely
+# darker edge (photos 130 / 0517; material review F5): an 8 mm ring (4 mm over the hole, 4 mm on the skin) in the
+# glossy dark-grey 'seal_cabin', panes in the two-ply 'glass_cabin'.  The flight-deck frames are the PRO black
+# ('seal' = the anti-glare black of the mask, trim_black).
+CABIN_RING = (-0.004, 0.004)
+
+
 def build_glazing(parts_out):
     glass_parts = []
     seals = []
@@ -424,7 +431,7 @@ def build_glazing(parts_out):
             p = side_patch(o, side, pad=0.03, d=0.010)
             fn = lambda m, cx=cx: window_sdf(m.V[:, 0], m.V[:, 2], cx)
             glass_parts.append(trim(p, fn(p) - 0.010, "negative").offset(-0.006))
-            seals.append(band(p, fn, -0.006, 0.010).offset(0.0015))
+            seals.append(band(p, fn, *CABIN_RING).offset(0.0015))
     # cockpit side windows: patch = the extent of sidewindow_sdf on the OML (+ 25 mm), checked to cover the hole
     sw_glass, sw_seal = [], []
     sw_f = lambda x, y, z, s: CG.sidewindow_sdf(x, y, z)                           # noqa: E731
@@ -450,7 +457,7 @@ def build_glazing(parts_out):
     g = Part("glazing_cabin", f"Cabin windows ({n_fixed} fixed, stretched acrylic)", "glazing",
              explode=(0, 0, 0), group="Glazing", qty=n_fixed,
              material_note="Two-ply laminated stretched acrylic")
-    g.add(Mesh.merge(glass_parts), "glass").add(Mesh.merge(seals), "seal")
+    g.add(Mesh.merge(glass_parts), "glass_cabin").add(Mesh.merge(seals), "seal_cabin")
     parts_out[g.id] = g
     w = Part("glazing_flightdeck", "Windshield (2 heated panes) & side windows (no DV window, PRO)", "glazing",
              explode=(-0.3, 0, 0.35), group="Glazing", qty=4,
@@ -518,8 +525,8 @@ def build_door(pid, o):
         wo = dict(cx=wcx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
         wp = side_patch(wo, side, pad=0.03, d=0.010)
         fn = lambda m: window_sdf(m.V[:, 0], m.V[:, 2], wcx)                         # noqa: E731
-        part.add(trim(wp, fn(wp) - 0.010, "negative").offset(-0.006), "glass")
-        part.add(band(wp, fn, -0.006, 0.010).offset(0.0015), "seal")
+        part.add(trim(wp, fn(wp) - 0.010, "negative").offset(-0.006), "glass_cabin")
+        part.add(band(wp, fn, *CABIN_RING).offset(0.0015), "seal_cabin")
     h = DOOR_DETAILS[DOOR_HANDLE[pid]]
     hp = side_patch(h, side, pad=0.01, d=0.004)
     part.add(trim(hp, rr(xz_of(hp), h), "negative").offset(0.0012), "metal_dark")
@@ -534,11 +541,20 @@ def build_door(pid, o):
     return part
 
 
+def _into_opening(m, o):
+    """Rim m wound so its front faces look into the opening o (the renders shade the back faces of a paint as the
+    cabin lining, the viewer's cutaway too)."""
+    c = np.array([o["cx"], o["side"] * float(F.side_y(o["cx"], o["cz"])), o["cz"]])
+    return m.flipped() if np.mean(np.sum((c - m.V[m.F].mean(1)) * m.face_normals(), 1)) < 0 else m
+
+
 def build_doors(parts_out):
     for pid, o in DOORS:
         parts_out[pid] = build_door(pid, o)
-    # seams, skin-edge jambs, door stops (flange between the panel seam and the clear opening) and opening jambs
-    seams, jambs, stops = [], [], []
+    # seams, skin-edge lips, door stops (flange between the panel seam and the clear opening) and opening jambs.  The
+    # lip (the frame edge round the panel seam, DOOR_T + 4 mm deep) carries the livery like the skin beside it (photos
+    # 130 / 188: a dark blue lip, then the seal, then the tan / khaki jamb lining; material review F9)
+    seams, jambs, stops, lips = [], [], [], []
     for pid, o in DOORS:
         pan = door_panel(o)
         p = side_patch(pan, o["side"], pad=0.03, d=0.010)
@@ -547,7 +563,7 @@ def build_doors(parts_out):
         ring = band(p, fs, 0.0, 0.03)
         loop = _loop_near(ring, lambda x, z, q=pan: rr((x, z), q))
         if loop is not None:
-            jambs.append(rim(ring.V[loop], ring.N[loop], DOOR_T + 0.004))
+            lips.append(_into_opening(rim(ring.V[loop], ring.N[loop], DOOR_T + 0.004), pan))
         if pan is not o:                             # door with a clear opening inside the panel seam
             fo = lambda m, q=o: rr((m.V[:, 0], m.V[:, 2]), q)                        # noqa: E731
             st = trim(trim(p, fs(p) + 0.002, "negative"), fo(trim(p, fs(p) + 0.002, "negative")), "positive")
@@ -555,8 +571,9 @@ def build_doors(parts_out):
             stops.append(st)
             loop = _loop_near(st, lambda x, z, q=o: rr((x, z), q))
             if loop is not None:
-                jambs.append(rim(st.V[loop], st.N[loop], 0.060))
+                jambs.append(_into_opening(rim(st.V[loop], st.N[loop], 0.060), o))
     s = Part("door_frames", "Door surrounds, seals, stops & jambs", "doors", group="Doors",
              material_note="Machined door frames")
     s.add(Mesh.merge(seams), "seam").add(Mesh.merge(jambs), "jamb").add(Mesh.merge(stops), "jamb")
+    s.add(Mesh.merge(lips), "paint_white")          # unpainted skin material: model/livery.py paints it
     parts_out[s.id] = s

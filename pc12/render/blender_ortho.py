@@ -587,7 +587,7 @@ def _quiet(enabled=True):
         os.close(saved[1])
 
 
-GLASS_NAMES = ("glass", "glass_windshield")
+GLASS_NAMES = ("glass", "glass_windshield", "glass_cabin")
 PAINT_NAMES = ("paint_white", "paint_belly", "paint_accent", "paint_stripe")
 GLASS_TINT = (0.075, 0.12, 0.17)          # linear; reads as a blue-grey against trim_black (0.018)
 GLASS_FILL = np.array([0.80, 0.87, 0.93], np.float32)   # sRGB tint for glazing in line drawings (--fill glass)
