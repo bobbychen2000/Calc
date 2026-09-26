@@ -1269,15 +1269,12 @@ export class Traffic {
     // not a 'forward off-block' -- SKW3305 at C1, 25 Sep 18:42:55Z)
     this.occupy(tr, g, null); tr.inBlockAt = t; tr.pushOk = false; tr.silentInBlock = { stand: g.name, how }; if (tr.parkPos) { tr.stillPos = tr.parkPos.slice(); tr.parkRep = tr.stillPos; }
     this.counters.silentDocks = (this.counters.silentDocks || 0) + 1; this.event(tr, t, 'silent-dock', { stand: g.name, how });
-    // the path the target follows (the data is silent): from where the body is, to the lead-in 0.8 L (>= 25 m) out on the
-    // stand axis, then along it to the stop point, at the last taxi speed (2-5 m/s); then the stop target
-    const c = tr.ctl, T2 = typeOf(tr), L2 = T2 ? T2.L : 38; const S = tr.parkPos;
-    if (c && c.ground && S) { const e = Math.max(25, 0.8 * L2); const E = [S[0] - g.w.dx * e, S[1] - g.w.dz * e];
-      // (already on the lead-in -- within 10 m of its line, between the entry point and the stop: straight to the stop, never
-      // back out to the entry point; WJA1500 creeping into C4 was sent 25 m backward, 25 Sep 20:01Z)
-      const bx = c.x - S[0], bz = c.z - S[1], bOut = -(bx * g.w.dx + bz * g.w.dz), bLat = Math.abs(-bx * g.w.dz + bz * g.w.dx);
-      const pts = bOut >= -3 && bOut <= e + 5 && bLat < 10 ? [[c.x, c.z], S] : [[c.x, c.z], E, S]; const seg = []; let tot = 0; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(l); tot += l; }
-      tr.silentPath = { pts, seg, tot, t0: tDisp, v: clamp(Math.abs(c.v) || lf.gs || 3, 2, 5) }; }
+    // speed along the path: the body's own speed (1.5-5 m/s), slowing at 0.3 m/s^2 to 2 m/s, the lead-in taxi speed; the
+    // stop target then brakes the body onto the stop mark. (JBU413 above: the real aircraft covered 55 m in the 18 s of
+    // silence, turning in from 7 m/s; this profile covers 51 m, the constant 5 m/s of the first version 90 m)
+    if (path) { if (tr.parkPos) path[path.length - 1] = tr.parkPos.slice();
+      const seg = []; let tot = 0; for (let i = 1; i < path.length; i++) { const l = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]); seg.push(l); tot += l; }
+      tr.silentPath = { pts: path, seg, tot, t0: tDisp, v0: clamp(Math.abs(c0.v) || lf.gs || 3, 1.5, 5), vIn: 2, a: 0.3 }; }
     return true;
   }
   // docking: a slow taxiing aircraft close to a free stand's lead-in line and heading along it follows that line
