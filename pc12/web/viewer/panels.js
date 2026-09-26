@@ -294,7 +294,7 @@ export function buildSpecs(meta) {
     ['Parts', fmt(s.parts ?? meta.bom.length)],
     ['Triangles', fmt(s.triangles ?? 0)],
     ['Vertices', fmt(s.vertices ?? 0)],
-    ['GLB size', s.glb_bytes ? (s.glb_bytes / 1048576).toFixed(1) + ' MB (KHR_mesh_quantization)' : '—'],
+    ['GLB size', s.glb_bytes ? (s.glb_bytes / 1048576).toFixed(1) + ' MB (' + (s.glb_encoding || 'KHR_mesh_quantization') + ')' : '—'],
     ['Build steps', String(meta.steps.length)],
   ]);
   const src = $('sourcesList');

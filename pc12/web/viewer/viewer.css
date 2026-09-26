@@ -22,6 +22,8 @@
   --sheet-h: 46vh;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* studio backdrop behind the (transparent) WebGL canvas: a soft cyclorama falloff */
+  --studio: radial-gradient(130% 95% at 50% 36%, #fbfcfd 0%, #eef1f4 42%, #d9dee3 100%);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -42,6 +44,7 @@
     --warn: #e0b050;
     --bad: #ff8a80;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+    --studio: radial-gradient(130% 95% at 50% 36%, #41474e 0%, #292d32 44%, #131517 100%);
     color-scheme: dark;
   }
 }
@@ -57,7 +60,7 @@ p { margin: 0.4em 0; }
 [hidden] { display: none !important; }
 
 #app { position: fixed; inset: 0; }
-#stage { position: absolute; inset: 0; touch-action: none; }
+#stage { position: absolute; inset: 0; touch-action: none; background: var(--studio); }
 #stage canvas { display: block; width: 100%; height: 100%; outline: none; }
 
 /* ---------- buttons ---------- */
@@ -94,8 +97,9 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 .seg button[aria-pressed="true"] { position: relative; z-index: 1; }
 
 /* ---------- toolbar ---------- */
+/* safe areas (the page sets viewport-fit=cover): notch / rounded corners / home indicator insets, 0 elsewhere */
 #toolbar {
-  position: absolute; top: var(--gutter); left: var(--gutter);
+  position: absolute; top: max(var(--gutter), env(safe-area-inset-top)); left: max(var(--gutter), env(safe-area-inset-left));
   right: calc(var(--panel-w) + var(--gutter));
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center; pointer-events: none; z-index: 5;
 }
@@ -122,6 +126,21 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 }
 #app.panel-open #stepCaption { left: calc((100% - var(--panel-w)) / 2); }
 
+/* WebGL context lost: rendering pauses until the browser restores it (main.js onContextChange) */
+#glNote {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 7;
+  background: var(--surface-glass); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow);
+  padding: 8px 14px; font-size: 13px; max-width: calc(100% - 2 * var(--gutter)); text-align: center;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+#glNote .gl-stuck { display: none; }
+#glNote.stuck .gl-wait { display: none; }
+#glNote.stuck .gl-stuck { display: inline; }
+#glNote button { margin-left: 6px; }
+/* reads the safe-area insets in px for main.js (layoutInsets) */
+#safeProbe { position: fixed; left: 0; top: 0; width: 0; height: 0; visibility: hidden; pointer-events: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+
 /* ---------- construction labels ---------- */
 #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
 #labels .cl {
@@ -139,7 +158,8 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
   transition: transform 0.25s ease;
 }
 #app:not(.panel-open) #panel { transform: translateX(100%); visibility: hidden; transition: transform 0.25s ease, visibility 0s 0.25s; }
-#panelOpen { position: absolute; right: var(--gutter); top: var(--gutter); z-index: 6; box-shadow: var(--shadow); }
+#panelOpen { position: absolute; right: max(var(--gutter), env(safe-area-inset-right)); top: max(var(--gutter), env(safe-area-inset-top));
+  z-index: 6; box-shadow: var(--shadow); }
 .panel-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px 8px; }
 .panel-head .brand { flex: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .panel-head h1 { font-size: 17px; }
@@ -252,8 +272,9 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
 .src li, #estList li, #animList li { margin: 1px 0; font-size: 12.5px; }
 
 /* drawings */
-#drawingView { position: absolute; inset: 0; right: var(--panel-w); z-index: 4; background: var(--bg); }
-#app:not(.panel-open) #drawingView { right: 0; }
+#drawingView { position: absolute; inset: 0; right: var(--panel-w); z-index: 4; background: var(--bg);
+  left: env(safe-area-inset-left); }
+#app:not(.panel-open) #drawingView { right: env(safe-area-inset-right); }
 #drawingPane { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; background:
   repeating-linear-gradient(0deg, transparent 0 23px, rgba(128,128,128,0.08) 23px 24px),
   repeating-linear-gradient(90deg, transparent 0 23px, rgba(128,128,128,0.08) 23px 24px); }
@@ -277,12 +298,18 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
 .bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.15s; }
 #loading.error .bar span { background: var(--bad); }
 #loading.error #loadMsg { color: var(--bad); white-space: pre-wrap; text-align: left; font-size: 13px; }
+/* stall (no progress for 20 s) and error states offer a reload; see the boot script in index.html */
+.load-stall, .load-retry { display: none; }
+#loading.stalled:not(.error) .load-stall { display: block; margin: 10px 0 6px; }
+#loading.error .load-retry, #loading.stalled .load-retry { display: inline-block; margin-top: 10px; min-width: 96px; }
 
-/* ---------- narrow screens: bottom sheet ---------- */
-@media (max-width: 760px) {
+/* ---------- narrow screens: bottom sheet (portrait phones; main.js narrowMQ is the same query) ---------- */
+@media (max-width: 760px) and (min-height: 501px) {
   :root { --gutter: 16px; --panel-w: 0px; }
   #toolbar { left: 0; right: 0; top: 0; padding: 10px var(--gutter); flex-wrap: nowrap; overflow-x: auto;
-    scrollbar-width: none; pointer-events: auto; }
+    scrollbar-width: none; pointer-events: auto;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); }
   #toolbar::-webkit-scrollbar { display: none; }
   /* hint that the toolbar scrolls sideways */
   #toolbar { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
@@ -293,29 +320,75 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
     border-top: 1px solid var(--border); border-radius: 14px 14px 0 0;
     padding-bottom: env(safe-area-inset-bottom);
   }
-  #app:not(.panel-open) #panel { transform: translateY(calc(100% - 92px)); visibility: visible; }
+  /* collapsed: the header + tab row (92 px) stay above the home-indicator band */
+  #app:not(.panel-open) #panel { transform: translateY(calc(100% - 92px - env(safe-area-inset-bottom))); visibility: visible; }
   #app:not(.panel-open) #panelBody { visibility: hidden; }
   #panelToggle { display: none; }
   #panelOpen { display: none !important; }
-  .sheet-handle { display: block; position: absolute; left: 50%; top: 0; transform: translateX(-50%);
-    border: 0; background: none; width: 64px; min-height: 18px; padding: 6px 0; }
+  /* the grab bar spans the full width of the sheet's top edge: a 32 px target from 12 px above the sheet to 20 px into
+     it, clear of the title; a tap anywhere on the header outside its buttons or a vertical swipe on it also toggles
+     the sheet (main.js) */
+  .sheet-handle { display: block; position: absolute; left: 0; right: 0; top: -12px; width: auto; height: 32px; min-height: 32px;
+    border: 0; border-radius: 0; background: none; padding: 19px 0 0; z-index: 1; }
+  .sheet-handle:hover { background: none; }
   .sheet-handle span { display: block; width: 40px; height: 4px; margin: 0 auto; border-radius: 2px; background: var(--border-strong); }
-  .panel-head { padding: 16px var(--gutter) 4px; }
+  .panel-head { padding: 20px var(--gutter) 0; cursor: pointer; touch-action: none; }
   #tabs { padding: 0 calc(var(--gutter) - 6px); }
   #panelBody { padding: 12px var(--gutter) 24px; }
   /* compact card: name, hint and the action row; the details fold out */
-  #infoCard { margin: 8px var(--gutter) 0; max-height: none; padding: 8px 12px; }
+  #infoCard { margin: 6px var(--gutter) 0; max-height: none; padding: 8px 12px; }
   #infoCard .ic-body { display: none; }
   #infoCard.expanded .ic-body { display: block; max-height: 22vh; }
-  #infoCard .row { margin: 6px 0 0; }
+  #infoCard .row { margin: 4px 0 0; }
   #icMore { display: inline-block; margin-left: auto; }
   #stepCaption, #app.panel-open #stepCaption { left: 50%; bottom: calc(var(--sheet-h) + 8px); }
-  #app:not(.panel-open) #stepCaption { bottom: 100px; }
-  #drawingView, #app:not(.panel-open) #drawingView { right: 0; bottom: var(--sheet-h); top: 52px; }
+  #app:not(.panel-open) #stepCaption { bottom: calc(100px + env(safe-area-inset-bottom)); }
+  #drawingView, #app:not(.panel-open) #drawingView { right: env(safe-area-inset-right); bottom: var(--sheet-h); top: 52px; }
   .slider { grid-template-columns: 6.5em 1fr auto; }
   .step-list { max-height: none; }
   #pane-build > .step-now { min-height: 112px; }   /* keep a few lines of the step text in the small sheet */
 }
+/* ---------- short screens (phones in landscape): side panel, narrower; the toolbar one scrolling row ---------- */
+@media (max-height: 500px) {
+  :root { --panel-w: min(300px, 44vw); --gutter: 10px; }
+  #toolbar { left: 0; top: 0; padding: 6px var(--gutter); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+    pointer-events: auto; gap: 6px; padding-left: max(var(--gutter), env(safe-area-inset-left));
+    -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  #toolbar::-webkit-scrollbar { display: none; }
+  #app:not(.panel-open) #toolbar { right: calc(104px + env(safe-area-inset-right)); }   /* clear of the "Panel" button */
+  #panel { padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
+  #panelOpen { right: calc(var(--gutter) + env(safe-area-inset-right)); }
+  .tb-group { flex: 0 0 auto; }
+  .tb-slider input { width: 80px; }
+  #panelOpen { top: max(6px, env(safe-area-inset-top)); }
+  .panel-head { padding: 8px 12px 4px; }
+  .panel-head .brand .muted { display: none; }
+  #tabs { padding: 0 6px; }
+  #tabs [role="tab"] { padding: 6px 8px; min-height: 36px; }
+  #panelBody { padding: 8px 12px 14px; }
+  #infoCard { margin: 6px 12px 0; max-height: 55vh; }
+  #pane-build > .step-now { min-height: 48px; }
+  #pane-build > .step-list { min-height: 72px; }
+  #panelBody h3 { margin-top: 12px; }
+  /* the Specs dimension table fits the ~275 px column without a sideways scroll */
+  table.data { font-size: 12px; }
+  table.data th, table.data td { padding: 4px 3px; }
+}
+
+/* ---------- touch: 40 px targets (WCAG 2.5.8 asks for 24) ---------- */
+@media (pointer: coarse) {
+  button { min-height: 40px; }
+  button.icon { min-width: 40px; }
+  .build-controls #bPrev, .build-controls #bNext { min-width: 48px; }
+  .step-list button, #partTree li button { min-height: 40px; align-items: center; }
+  #partTree summary { min-height: 40px; align-items: center; }
+  .chips button { min-height: 32px; }
+  input[type="range"] { height: 32px; }
+  input[type="search"] { min-height: 40px; }
+  #dOpen { display: inline-block; padding: 10px 4px; }
+  #tabs [role="tab"] { min-height: 40px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }

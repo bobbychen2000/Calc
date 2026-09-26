@@ -90,8 +90,11 @@ export class Kinematics {
     this.t = { flaps: 0, rpm: 0, pitch: 0, roll: 0, pitchCmd: 0, yaw: 0, stabTrim: 0, ailTrim: 0, rudTrim: 0,
       door_airstair: 0, door_cargo: 0 };
     this.c = { ...this.t, propAngle: 0 };
-    // gear: pos 0 = down .. 1 = up; door 0 = closed .. 1 = open (nose clamshells)
-    this.gear = { pos: 0, door: 0, target: 0, run: null };
+    // gear: pos 0 = down .. 1 = up; door 0 = closed .. 1 = open (nose clamshells).  pivot.rest is the door
+    // fraction the geometry is built at, i.e. at the gear-down lock (model/gear.py: 1 = the doors hang open
+    // while the gear is down and close only once it is locked up; 0 / absent = closed at both locks).
+    this.doorDown = Math.max(0, ...['gear_door_NR', 'gear_door_NL'].map((id) => (this.surf[id] && +this.surf[id].pv.rest) || 0));
+    this.gear = { pos: 0, door: this.doorDown, target: 0, run: null };
     this.defl = {};   // current surface deflections in degrees (for readouts / tests)
     this._makePropDisc();
     this.apply();
@@ -194,6 +197,9 @@ export class Kinematics {
     }
   }
 
+  // nose-door fraction at a lock (down: doorDown, up: closed); null between the locks (doors open)
+  doorLock(pos) { return pos <= 0 ? this.doorDown : pos >= 1 ? 0 : null; }
+
   // v: 0 = down .. 1 = up, or 'up' / 'down'.  Instant poses put the nose doors open whenever the
   // gear is between the locks (the sequence never has them closed in transit).
   setGear(v, instant) {
@@ -202,14 +208,15 @@ export class Kinematics {
     g.target = x;
     if (instant) {
       g.pos = x;
-      g.door = x > 1e-6 && x < 1 - 1e-6 ? 1 : 0;
+      const dl = this.doorLock(x);
+      g.door = dl == null ? 1 : dl;
       g.run = null;
     }
   }
 
   get gearMoving() {
-    const g = this.gear;
-    return g.pos !== g.target || (g.door > 0 && (g.pos <= 0 || g.pos >= 1));
+    const g = this.gear, dl = this.doorLock(g.pos);
+    return g.pos !== g.target || (dl != null && g.door !== dl);
   }
 
   // ------------------------------------------------------------------ update
@@ -257,12 +264,15 @@ export class Kinematics {
         if (r.s >= 1) { g.pos = r.to; g.run = null; }
       }
       moved = true;
-    } else if (g.door > 0 && (g.pos <= 0 || g.pos >= 1)) {
-      // doors close only once the gear is locked up or down (a gear stopped mid-travel keeps them open)
-      g.door = Math.max(0, g.door - dt / 0.8);
+    } else if (this.doorLock(g.pos) != null && g.door !== this.doorLock(g.pos)) {
+      // doors go to their lock position only once the gear is locked up or down (a gear stopped
+      // mid-travel keeps them open)
+      const dl = this.doorLock(g.pos), step = dt / 0.8;
+      g.door = Math.abs(dl - g.door) <= step ? dl : g.door + Math.sign(dl - g.door) * step;
       moved = true;
     }
-    this.onlySpin = moved && !movedBeforeSpin && g.pos === g.target && !(g.door > 0 && (g.pos <= 0 || g.pos >= 1));
+    const dl = this.doorLock(g.pos);
+    this.onlySpin = moved && !movedBeforeSpin && g.pos === g.target && !(dl != null && g.door !== dl);
     if (moved) this.apply();
     return moved;
   }
@@ -340,7 +350,13 @@ export class Kinematics {
     // gear (retract in degrees) and nose clamshell doors (open in degrees)
     const g = this.gear;
     for (const id of ['gear_main_R', 'gear_main_L', 'gear_nose']) if (S[id]) this._rot(id, S[id].pv.retract * g.pos);
-    for (const id of ['gear_door_NR', 'gear_door_NL']) if (S[id]) this._rot(id, S[id].pv.open * smooth(g.door));
+    for (const id of ['gear_door_NR', 'gear_door_NL']) {
+      if (!S[id]) continue;
+      // rotation relative to the built pose (pivot.rest); the reported angle is the opening from closed
+      const open = S[id].pv.open * smooth(g.door);
+      this._rot(id, open - S[id].pv.open * smooth(+S[id].pv.rest || 0));
+      S[id].angle = open;
+    }
     // braces: B follows the gear leg; solve the knee; upper link about A, lower link about the knee
     for (const b of this.braces) {
       const th = b.gear.angle * DEG;
