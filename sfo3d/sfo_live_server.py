@@ -91,6 +91,98 @@ VOLATILE = ('seen', 'seen_pos', 'messages', 'rssi')       # ignored when decidin
 VEH_CAT = re.compile(r'^C[1-7]$')                          # DO-260B emitter category set C: surface vehicles/obstacles
 
 
+# ------------------------------------------------------------------------------------------------ FAA registry
+# The FAA Aircraft Registry's Releasable Aircraft Database (registry.faa.gov; U.S. government data, public domain) when a
+# copy is present in refs/cache/faa (MASTER.txt + ACFTREF.txt): ICAO 24-bit address -> the ICAO type designator of the
+# REGISTERED model, for transport types only. Review round 2: the ADS-B databases and SFO's flight record can disagree
+# (N670QX: adsb.fi 'E195 EMBRAER ERJ-190-200', SFO E175; the FAA registry: serial 17001032, 'ERJ 170-200 LR' = E175);
+# the app uses `_faa` to settle such conflicts (js/live/traffic.js resolveType). Model -> designator per ICAO Doc 8643;
+# checked against the adsb.fi types of 530 N-registered aircraft of the 24/25 Sep recording (tools/live/test_relay.py).
+FAA_DIR = os.path.join(CACHE_DIR, 'faa')
+
+
+def faa_icao(mfr, model):
+    """ICAO designator of an FAA registry model string (ACFTREF MODEL) of a transport type, else None."""
+    m = (model or '').strip().upper()
+    mf = (mfr or '').upper()
+    def rx(p):
+        return re.match(p, m)
+    if 'BOEING' in mf or rx(r'^7[0-9]7-'):
+        for pat, t in ((r'^737-7$', 'B37M'), (r'^737-8$', 'B38M'), (r'^737-9$', 'B39M'), (r'^737-10$', 'B3XM'), (r'^737-6..', 'B736'),
+                       (r'^737-7..', 'B737'), (r'^737-8..', 'B738'), (r'^737-9..', 'B739'), (r'^757-2', 'B752'), (r'^757-3', 'B753'),
+                       (r'^767-2', 'B762'), (r'^767-3', 'B763'), (r'^767-4', 'B764'), (r'^777-3..ER$', 'B77W'), (r'^777-2..LR$', 'B77L'),
+                       (r'^777F$|^777-F', 'B77L'), (r'^777-2', 'B772'), (r'^777-3', 'B773'), (r'^777-9$', 'B779'), (r'^787-8$', 'B788'),
+                       (r'^787-9$', 'B789'), (r'^787-10$', 'B78X'), (r'^747-4', 'B744'), (r'^747-8', 'B748')):
+            if rx(pat):
+                return t
+        return None
+    if 'AIRBUS' in mf and not rx(r'^BD-'):
+        for pat, t in ((r'^A318', 'A318'), (r'^A319-1..N', 'A19N'), (r'^A319', 'A319'), (r'^A320-2..N', 'A20N'), (r'^A320', 'A320'),
+                       (r'^A321-2..N', 'A21N'), (r'^A321', 'A321'), (r'^A330-2', 'A332'), (r'^A330-3', 'A333'), (r'^A330-8', 'A338'),
+                       (r'^A330-9', 'A339'), (r'^A350-9', 'A359'), (r'^A350-10', 'A35K'), (r'^A380', 'A388')):
+            if rx(pat):
+                return t
+        return None
+    if rx(r'^BD-500-1A10'):
+        return 'BCS1'
+    if rx(r'^BD-500-1A11'):
+        return 'BCS3'
+    if 'EMBRAER' in mf or 'YABORA' in mf:
+        for pat, t in ((r'^ERJ 170-100', 'E170'), (r'^ERJ 170-200', 'E75L'), (r'^ERJ 190-100', 'E190'), (r'^ERJ 190-200', 'E195'),
+                       (r'^ERJ 190-300', 'E290'), (r'^ERJ 190-400', 'E295'), (r'^EMB-135', 'E135'), (r'^EMB-145', 'E145')):
+            if rx(pat):
+                return t
+        return None
+    if rx(r'^CL-600-2B19'):
+        return 'CRJ2'
+    if rx(r'^CL-600-2C10'):
+        return 'CRJ7'
+    if rx(r'^CL-600-2D24'):
+        return 'CRJ9'
+    if rx(r'^CL-600-2E25'):
+        return 'CRJX'
+    if rx(r'^MD-11'):
+        return 'MD11'
+    return None
+
+
+class FaaRegistry:
+    """ICAO address (hex) -> ICAO type of the registered model, loaded in the background (~10 s) when the files exist."""
+    def __init__(self, d=FAA_DIR, enabled=True):
+        self.map, self.ready, self.n, self.err = {}, False, 0, None
+        self.src = os.path.join(d, 'MASTER.txt')
+        if enabled and os.path.exists(self.src) and os.path.exists(os.path.join(d, 'ACFTREF.txt')):
+            threading.Thread(target=self._load, args=(d,), daemon=True).start()
+
+    def _load(self, d):
+        import csv
+        try:
+            ref = {}
+            with open(os.path.join(d, 'ACFTREF.txt'), encoding='utf-8-sig', errors='replace') as f:
+                for row in csv.reader(f):
+                    if len(row) > 2 and row[0] != 'CODE':
+                        t = faa_icao(row[1], row[2])
+                        if t:
+                            ref[row[0].strip()] = t
+            out = {}
+            with open(self.src, encoding='utf-8-sig', errors='replace') as f:
+                for row in csv.reader(f):
+                    if len(row) > 33:
+                        t = ref.get(row[2].strip())
+                        hx = row[33].strip().lower()
+                        if t and hx:
+                            out[hx] = t
+            self.map, self.n, self.ready = out, len(out), True
+        except Exception as e:   # noqa: BLE001 (optional data: the relay works without it)
+            self.err = repr(e)
+
+    def get(self, hx):
+        return self.map.get(hx)
+
+
+FAA = None   # set in main(); the Hub adds `_faa` to aircraft whose address the registry lists
+
+
 def adsb_like(src_type):
     """ADS-B / ADS-R positions (GNSS-derived, broadcast by the aircraft) versus MLAT / TIS-B / Mode S / other."""
     return bool(src_type) and (src_type.startswith('adsb') or src_type.startswith('adsr'))
@@ -650,6 +742,11 @@ class Hub:
         out['seen'] = round(max(0.0, wall - seen_t), 1)
         out['_src'] = short
         out['_prov'] = '+'.join(sorted({c[0] for c in recs}))
+        ft = FAA.get(key) if FAA is not None and FAA.ready else None
+        if ft:
+            out['_faa'] = ft
+        else:
+            out.pop('_faa', None)
         out['_pt'] = round(pt, 3)
         return out
 
@@ -892,6 +989,23 @@ CS_RE = re.compile(r'^([A-Z]{3})0*(\d+)([A-Z]*)$')
 # American Eagle (SkyWest) E-175s as 'E175' (observed 24 Sep 15:24Z, SKW6274 = AAL6274), while ADS-B says 'E75L';
 # Doc 8643 designates the Embraer 175 as E75L (long wing) / E75S (short wing).
 TYPE_EQUIV = {'E175': {'E75L', 'E75S'}}
+
+
+# airliner families (the stop-point families of js/live/traffic.js FAMILY): a database type of the same family as SFO's
+# type is a plausible mis-entry (N670QX: E195 in the adsb.fi database, an E175 per the FAA registry and SFO); a
+# different family (a CRJ2 for a B752 flight) is not the same flight
+_FAM = {}
+for _f, _ts in {'B737': 'B736 B737 B738 B739 B37M B38M B39M B3XM', 'A320': 'A318 A319 A19N A320 A20N A321 A21N', 'B757': 'B752 B753',
+                'B767': 'B762 B763 B764', 'EJET': 'E170 E75L E75S E175 E190 E195 E290 E295', 'A220': 'BCS1 BCS3', 'CRJ': 'CRJ2 CRJ7 CRJ9 CRJX',
+                'B777': 'B772 B77L B773 B77W B779', 'B787': 'B788 B789 B78X', 'A330': 'A332 A333 A338 A339', 'A350': 'A359 A35K',
+                'B747': 'B744 B748', 'ERJ': 'E135 E145'}.items():
+    for _t in _ts.split():
+        _FAM[_t] = _f
+
+
+def same_family(adsb_t, types):
+    f = _FAM.get(adsb_t)
+    return bool(f) and any(_FAM.get(t) == f for t in types)
 
 
 def type_match(adsb_t, types):
@@ -1181,7 +1295,7 @@ class Gates:
                                                          and not CS_RE.match(c).group(3) and CS_RE.match(c).group(1) not in REGIONAL)]
             if not cands:
                 continue
-            adsb_t = (live.get(cs) or {}).get('t')
+            adsb_t = (live.get(cs) or {}).get('_faa') or (live.get(cs) or {}).get('t')   # (the FAA registry's type first)
             vrs = self.routes.cached(cs) if self.routes else None
             vrs_codes = set((vrs or {}).get('airport_codes', 'unknown').split('-')) - {'unknown', ''}
             scored = []
@@ -1193,10 +1307,11 @@ class Gates:
                 chk, score = {}, 0
                 if adsb_t and types:
                     tm = type_match(adsb_t, types)
-                    chk['type'] = 'agree' if tm else 'differ'
+                    fam = not tm and same_family(adsb_t, types)
+                    chk['type'] = 'agree' if tm else 'family' if fam else 'differ'
                     if not tm:
                         chk['types'] = {'adsb': adsb_t, 'sfo': sorted(types)}
-                    score += 2 if tm else 0
+                    score += 2 if tm else 0 if fam else -1
                 if vrs_codes and others:
                     ok = 'KSFO' in vrs_codes and bool(vrs_codes & others)
                     chk['route'] = 'agree' if ok else 'differ'
@@ -1206,8 +1321,12 @@ class Gates:
             top = scored[0]
             unique = len(scored) == 1 or top[0] > scored[1][0]
             ok = unique and top[0] >= 0
+            # (a suffixed regional callsign -- SKW750R -- is a different operation unless the type agrees: 25 Sep 19:38Z it
+            # scored 0 against DAL750 with a CRJ2 for SFO's B752)
+            if m.group(3) and top[0] < 2:
+                ok = False
             how = 'regional flight number'
-            if not ok and len(scored) == 1:
+            if not ok and len(scored) == 1 and not m.group(3) and top[2].get('type') != 'differ':
                 e = by_callsign.get(top[1]) or {}
                 st = e.get('stand')
                 if st and st.get('from') is not None and st.get('to') is not None:
@@ -1222,7 +1341,7 @@ class Gates:
         # the resolution or 30 min after its stand window, whichever is later
         for cs, (rec, until) in list(self.alias_mem.items()):
             if until < T:
-                del self.alias_mem[cs]
+                self.alias_mem.pop(cs, None)
             elif cs not in aliases and rec.get('to') in by_callsign:
                 aliases[cs] = dict(rec, held=True)
         for e in by_callsign.values():
@@ -1587,7 +1706,8 @@ def app_status(app):
                       'replay_position_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(hub.replay_pos)) if getattr(hub, 'replay_pos', None) else None,
                       'record_dir': app.get('record_dir')},
             'providers': {p.p['name']: p.status() for p in hub.pollers.values()},
-            'merge': hub.status(), 'gates': app['gates'].status(), 'routes': app['routes'].status()}
+            'merge': hub.status(), 'gates': app['gates'].status(), 'routes': app['routes'].status(),
+            'faa_registry': {'ready': bool(FAA and FAA.ready), 'aircraft': FAA.n if FAA else 0, 'error': FAA.err if FAA else None}}
 
 
 def parse_time(s):
@@ -1618,8 +1738,11 @@ def main():
     ap.add_argument('--until', dest='t_until', help='replay end (UTC ISO time or epoch s)')
     ap.add_argument('--loop', action='store_true', help='restart the replay at its end')
     ap.add_argument('--quiet', action='store_true', help='no request log')
+    ap.add_argument('--no-faa', action='store_true', help='do not use the FAA registry copy in refs/cache/faa (type conflicts)')
     a = ap.parse_args()
 
+    global FAA
+    FAA = FaaRegistry(enabled=not a.no_faa)
     hub = Hub('replay' if a.replay else 'live')
     replay_clock = Clock() if a.replay else None
     if a.replay:

@@ -57,7 +57,7 @@ def main():
     for group in (A['taxiways'], A['runways']):
         for t in group:
             for poly in t['polys']: air.append(Polygon(poly[0], poly[1:]).buffer(0))
-    for poly in A['terminalComplex']: air.append(Polygon(poly[0]).buffer(0))
+    for poly in A['terminalComplex']: air.append(Polygon(poly[0], poly[1:]).buffer(0))      # with its holes: the central landside (garage, loop roads) is a hole
     # the ramp outline of data/sfo_details.json (apron between the terminals; airside service lanes there are paint on
     # concrete, not roads)
     for poly in json.load(open(os.path.join(ROOT, 'data', 'sfo_details.json')))['apron']: air.append(Polygon(poly[0], poly[1:]).buffer(0))

@@ -160,14 +160,16 @@ export class GroundPhysics {
       placed.push({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] });
     }
     // moving aircraft: a fading target offset away from any displayed overlap. A silent aircraft that a live one drives
-    // into is not there any more (the live one's positions are real): it fades out BEFORE the contact -- the live body
-    // 3 s ahead along its motion already touches it (off a stand; at a surveyed stand, whose layout is collision-free, only
-    // an actual overlap). Review round 1: stale ghosts overlapped by passing traffic; review round 2: removed with a pop, and
+    // into is not there any more (the live one's positions are real): it fades out BEFORE the contact -- the live one's
+    // newest report already lies on it (off a stand; at a surveyed stand, whose layout is collision-free, only an actual
+    // overlap). Review round 1: stale ghosts overlapped by passing traffic; review round 2: removed with a pop, and
     // only after the overlap had been drawn (SWA3085 on a taxilane driven through by two aircraft)
     let ghosts = 0;
     for (const B of moving) {
       const tr = B.tr; const cur = tr.physOff ? tr.physOff.slice() : [0, 0]; let push = [0, 0];
-      const v = tr.disp.gs || 0; const ahead = v > 0.5 ? (() => { const s = (tr.ctl && tr.ctl.v < 0 ? -1 : 1) * Math.min(40, v * 3); return { ...B, nose: [B.nose[0] + B.f[0] * s, B.nose[1] + B.f[1] * s], S: null }; })() : null;
+      // (the evidence: the live aircraft's NEWEST report -- ~ where its drawn body will be a few seconds later -- already lies
+      // on the silent one's planform. Not an extrapolation: in a queue the aircraft behind decelerates and stops short)
+      const L = tr.last; const ahead = L && L.ground && (tr.disp.gs || 0) > 0.5 && L.hd != null ? (() => { const A = bodyOf(B.T, L.px ?? L.x, L.pz ?? L.z, L.hd); return A; })() : null;
       for (const S of silent) {
         if (S.tr.removed || S.tr.dropping) continue;
         const hit = overlaps(B, S, 0) || (!S.tr.gate && ahead && overlaps(ahead, S, 0.5));

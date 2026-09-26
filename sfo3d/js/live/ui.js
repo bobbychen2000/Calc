@@ -3,7 +3,6 @@
 // list, the stats and the ATC panels are bottom sheets.
 import { phaseLabel, category, gateLabel } from './traffic.js';
 import { atcHtml, roleChip } from './atc.js';
-import { parseCallsign } from './lookup.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -273,7 +272,7 @@ function legOf(tr, sfo) {
   const r = tr.route && tr.route.codes && tr.route.plausible ? tr.route : null; let leg = null;
   if (r) { const c = r.codes, i = c.indexOf('SFO'); const dir = sfoLeg ? (sfoLeg[1] === 'SFO' ? 'arr' : 'dep') : tr.dirSFO;
     if (i < 0) leg = c.slice(); else if (dir === 'arr' && i > 0) leg = [c[i - 1], 'SFO']; else if (dir === 'dep' && i < c.length - 1) leg = ['SFO', c[i + 1]];
-    else if (c.length === 2) leg = c.slice(); else leg = null; }
+    else leg = c.slice(); }   // (direction unknown: the whole route)
   const conflict = !!(sfoLeg && r && (!leg || leg.join('-') !== sfoLeg.join('-')));
   return { sfoLeg, leg: conflict ? sfoLeg : (leg || sfoLeg), per: conflict || (!leg && !!sfoLeg) ? 'sfo' : leg ? 'vrs' : null, conflict, r };
 }
@@ -285,7 +284,6 @@ function routeRow(tr, sfo) {
   let h = L.leg.map(ap).join(' <span class="arrow">→</span> ');
   if (L.per === 'sfo') h += ' <span class="dim">· per SFO</span>';
   if (L.conflict) h += `<br><span class="warn">Route data (VRS) says</span> <span class="dim">${esc(r.codes.join(' → '))} — not today's flight per SFO</span>`;
-  else if (r && r.codes.length > 2 && L.per === 'vrs') h += `<br><span class="dim">rotation ${esc(r.codes.join(' → '))}</span>`;
   return h;
 }
 // where the type comes from when it is not simply the aircraft database's (traffic.js resolveType): the database entry
@@ -298,6 +296,7 @@ function typeNote(tr, sfo) {
   const eqv = (a, b) => a === b || (a && b && a.replace(/^E75[LS]$/, 'E175') === b.replace(/^E75[LS]$/, 'E175'));
   if (s === 'db' && sfoT && tr.info.icao && !eqv(sfoT, tr.info.icao)) return ` <span class="dim">· SFO lists ${esc(sfoT)} for this flight</span>`;
   if (s === 'sfo') return ` <span class="dim">· per SFO${db && db !== tr.info.icao ? ` (database says ${esc(db)})` : ''}</span>`;
+  if (s === 'faa') return ` <span class="dim">· per the FAA registry${db && db !== tr.info.icao ? ` (ADS-B database says ${esc(db)})` : ''}</span>`;
   if (s === 'db2') return ` <span class="dim">· per the other ADS-B database (${esc(db || '?')} contradicts the transponder's size category)</span>`;
   if (s === 'conflict') return ` <span class="dim">· database type contradicts the transponder's size category (${esc(tr.info.category || '?')})</span>`;
   return '';
@@ -327,15 +326,17 @@ function gateRows(tr, sfo) {
   const g = tr.gate; const kind = g && g.bridge ? 'Gate' : 'Stand';
   // a turn's arrival and departure usually carry the same stand window: show it once ("arrival/departure")
   const all = []; for (const c of (sfo && sfo.cands) || []) { const d = all.find(q => q.stand === c.stand && q.gate === c.gate && q.from === c.from && q.to === c.to); if (d) { if (d.kind !== c.kind) d.kind = 'both'; } else all.push({ ...c }); }
+  // (stand windows that ended more than an hour ago are not shown: review round 2, UAL3932 repositioned to maintenance kept
+  // 'F13 (gate F19) arrival 11:35-11:45 AM' hours later)
   const near = all.filter(c => c.now || c.from == null);
-  const cands = near.length ? near : all;
+  const cands = near.length ? near : all.filter(c => c.to == null || c.to > Date.now() - 3600e3);
   if (g) {
     const names = new Set([...(g.names || []), g.name, g.gateName].filter(Boolean).map(x => String(x).toUpperCase()));
     const hit = cands.find(c => (c.stand && names.has(c.stand)) || (!c.stand && c.gate && names.has(c.gate))) || (tr.gateSrc === 'sfo' ? { kind: null } : null);
     if (hit) return `<dt>${kind}</dt><dd><b class="mono">${esc(gateLabel(g))}</b> · per SFO <span class="ok" title="SFO's flight status lists this stand for this flight">✓</span>${hit.kind ? ` <span class="dim">(${KIND[hit.kind]}${hit.linked && hit.fn ? ' ' + esc(hit.fn) : ''}${hit.stand ? ' stand' : ' gate'})</span>` : ''}</dd>`;
     return `<dt>${kind}</dt><dd><b class="mono">${esc(gateLabel(g))}</b> <span class="dim">· from position</span>${cands.length ? `<br><span class="warn">SFO says</span> ${cands.map(sfoCandText).join(' · ')}` : ''}</dd>`;
   }
-  if (cands.length && tr.disp && tr.disp.ground) return `<dt>SFO</dt><dd>${cands.map(sfoCandText).join(' · ')} <span class="dim">· not parked at a known stand yet</span></dd>`;
+  if (cands.length && tr.disp && tr.disp.ground) return `<dt>SFO</dt><dd>${cands.map(sfoCandText).join(' · ')} <span class="dim">· ${tr.pushed || tr.offBlock ? 'left the stand' + (tr.pushbackFrom ? ' ' + esc(tr.pushbackFrom) : '') : 'not parked at a known stand yet'}</span></dd>`;
   if (cands.length) return `<dt>SFO</dt><dd>${cands.map(sfoCandText).join(' · ')}</dd>`;
   return '';
 }

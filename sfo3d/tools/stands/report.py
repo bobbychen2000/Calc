@@ -71,14 +71,19 @@ def tables():
         R.append('| %s | (%.1f, %.1f) hdg %s | %s | %s | %s |' % (r['name'], r['x'], r['z'], r.get('hdg'), r['pos_src'], '; '.join(r['adsb']['aircraft']),
                                                             '%.1f m' % r['osm_resid_m'] if r.get('osm_resid_m') is not None else r.get('note', '-')))
     out['remote'] = '\n'.join(R)
-    P = ['| pair | clearance m: SFO path (class limits, per-family stops) / with types_ok | ICAO | SFO plans both at once (overlaps) | handled |', '|---|---|---|---|---|']
+    P = ['| pair | clearance m: SFO path (class limits, per-family stops) / with types_ok | ICAO | SFO plans both at once (overlaps) | handled | evidence that SFO operates them together (static fix-up) |', '|---|---|---|---|---|---|']
     dn = {s['name']: s['disp'] for s in S}
     for p in sorted(B['pairs'], key=lambda p: p[2]):
         a, b, d, need, sim, alt = p[:6]
         if d >= need: continue
         how = p[6] if len(p) > 6 and p[6] else ('kept (below ICAO, above 3 m)' if d >= 3 else 'excl')
         dd = '%.1f / %.1f' % (p[8], p[7]) if len(p) > 8 else '%.1f' % d
-        P.append('| %s / %s | %s | %.1f | %d | %s |' % (dn.get(a, a), dn.get(b, b), dd, need, sim, how))
+        ev = p[9] if len(p) > 9 else None
+        evs = '-'
+        if ev:
+            cw = ev.get('adsb_confirmed_windows') or []
+            evs = ev['verdict'] + ('; confirmed: ' + ', '.join('%s %s/%s %d min (%s m)' % (c['flights'], c['types'][0], c['types'][1], c['overlap_min'], c['clear_m_at_stops']) for c in cw[:3]) if cw else '')
+        P.append('| %s / %s | %s | %.1f | %d | %s | %s |' % (dn.get(a, a), dn.get(b, b), dd, need, sim, how, evs.replace('|', '/')))
     out['pairs'] = '\n'.join(P)
     return out
 

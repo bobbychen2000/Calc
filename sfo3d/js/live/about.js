@@ -34,6 +34,7 @@ ${live && !relay ? `<h4>If the live feed says "unavailable"</h4><p>Some browsers
 <li>Stand names: San Francisco International Airport (DataSF dataset chfu-j7tc, PDDL; flysfo.com).</li>
 ${relay ? `<li>Gates and stands: San Francisco International Airport <a href="https://www.flysfo.com/flight-info/flight-status" target="_blank" rel="noopener">flight status</a>. Unofficial use of SFO's public flight-status data; no terms of use are published. The relay reads it at most every 10 minutes (switch it off with <code>--no-sfo-gates</code>).</li>` : ''}
 <li>ATC audio: <a href="https://www.liveatc.net" target="_blank" rel="noopener">LiveATC.net</a> (linked, not embedded; personal, non-commercial use per LiveATC's terms).</li>
+${relay ? `<li>Aircraft types of U.S.-registered airliners: <a href="https://registry.faa.gov/aircraftinquiry/" target="_blank" rel="noopener">FAA Aircraft Registry</a> (Releasable Aircraft Database, U.S. government public data), when the relay has a local copy; it settles conflicts between the ADS-B databases and SFO's flight record (the card says "per the FAA registry").</li>` : ''}
 <li>Weather: NOAA/NWS Aviation Weather Center METAR.</li>
 <li>Aircraft models: <a href="https://github.com/Ysurac/FlightAirMap-3dmodels" target="_blank" rel="noopener">FlightAirMap 3D models</a> and the <a href="https://github.com/FGMEMBERS/737-800" target="_blank" rel="noopener">FlightGear 737-800</a> (GNU GPL v2 per each model's licence file; the A220 models carry no licence file in that repository).</li>
 </ul>

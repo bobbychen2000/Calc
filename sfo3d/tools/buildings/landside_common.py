@@ -89,10 +89,12 @@ def ring_perimeter(r):
 
 def dof():
     """FAA DOF (DAILY_DOF_CSV extract within 4.5 km of the ARP, refs/cache/lighting/dof_sfo_4500m.json) with world x, z
-    recomputed in the current frame (the extract's own x/z columns may be in the legacy frame)."""
+    recomputed in the current frame (the extract's own x/z columns may be in the legacy frame). The DOF horizontal datum
+    is WGS 84 (DOF_README: "WGS 84 is used as the horizontal datum for all DOF data"), hence wgs84_to_world.
+    Accuracy codes (DOF_README): 1A = +-20 ft horizontal, +-3 ft vertical; 4D = +-250 ft, +-50 ft."""
     rows = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'lighting', 'dof_sfo_4500m.json')))
     for o in rows:
-        o['x'], o['z'] = G.ll_to_world(float(o['LATDEC']), float(o['LONDEC']))
+        o['x'], o['z'] = G.wgs84_to_world(float(o['LATDEC']), float(o['LONDEC']))
     return rows
 
 
@@ -113,3 +115,31 @@ def min_rect(pts):
 
 def st(x, z):
     return G.world_to_st(x, z)
+
+
+def sample(X, Z):
+    """Bilinear NAIP sample (BGR float) at world arrays X, Z (same shape)."""
+    import cv2
+    A = naip()
+    col = ((np.asarray(X) - X0) / RES - 0.5).astype(np.float32)
+    row = ((np.asarray(Z) - Z0) / RES - 0.5).astype(np.float32)
+    r0, c0 = int(np.floor(row.min())) - 2, int(np.floor(col.min())) - 2
+    r1, c1 = int(np.ceil(row.max())) + 3, int(np.ceil(col.max())) + 3
+    sub = np.ascontiguousarray(A[r0:r1, c0:c1]).astype(np.float32)
+    return cv2.remap(sub, col - c0, row - r0, cv2.INTER_LINEAR)
+
+
+def edge_profile(p0, p1, out_dir, d0=-15.0, d1=25.0, step=0.25, n_along=60, trim=0.1):
+    """Mean luminance profile across the straight edge p0->p1 (world x, z).
+    out_dir = +1: the profile coordinate d grows along the edge normal rotated +90 deg from p0->p1 in (x, z)
+    (i.e. n = (-dz, dx)/L), -1 the opposite. Returns (d array, mean luminance, 25th pct, 75th pct).
+    Luminance = 0.114 B + 0.587 G + 0.299 R (Rec. 601) of the NAIP RGB bands."""
+    p0 = np.asarray(p0, float); p1 = np.asarray(p1, float)
+    t = p1 - p0; L = np.hypot(*t); t /= L
+    n = np.array([-t[1], t[0]]) * out_dir
+    s = np.linspace(trim * L, (1 - trim) * L, n_along)
+    d = np.arange(d0, d1 + 1e-9, step)
+    P = p0[None, None, :] + s[:, None, None] * t[None, None, :] + d[None, :, None] * n[None, None, :]
+    bgr = sample(P[..., 0], P[..., 1])
+    lum = 0.114 * bgr[..., 0] + 0.587 * bgr[..., 1] + 0.299 * bgr[..., 2]
+    return d, lum.mean(0), np.percentile(lum, 25, axis=0), np.percentile(lum, 75, axis=0), n

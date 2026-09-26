@@ -27,6 +27,8 @@ export function normalizeAircraft(a, nowMs) {
     mlat: Array.isArray(a.mlat) ? a.mlat : null,
     // relay: the other provider's aircraft-database type when the two disagree (traffic.js resolveType)
     dbAlt: a._dbalt && a._dbalt.t ? { t: String(a._dbalt.t), desc: str(a._dbalt.desc), p: str(a._dbalt.p) } : null,
+    // relay: the ICAO type of the model the FAA registry lists for this address (transport types; sfo_live_server.py FaaRegistry)
+    faa: str(a._faa),
   };
 }
 

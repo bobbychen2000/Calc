@@ -10,44 +10,112 @@
 // a grey-blue sky reflection by day, about (119,128,129) sRGB in a public photo of the International Terminal facade):
 //   - coated architectural glass: MeshPhysicalNodeMaterial with IOR 2.0 on the glass ids (F0 = 0.11 instead of 0.04,
 //     the reflectance of low-e / reflective-coated glazing is 10-20 %, inferred range) and a faint blue specular tint;
-//   - the interior behind a curtain-wall pane is a parallax room (interior mapping: the view ray is intersected with a
-//     5.4 m x 3.9 m x 7 m box behind the facade; ceiling, floor, side and back walls shaded, some rooms with blinds),
-//     seen through a tinted pane; at night the rooms are lit (ceiling brightest);
+//   - the interior behind a curtain-wall pane is interior-mapped (the view ray is intersected with the hall behind the
+//     facade: concourse() below), seen through a tinted pane; at night the hall is lit (ceiling brightest);
 //   - per-pane variation of roughness and a small normal tilt, so the sky reflection breaks up pane by pane as real
 //     glazing does (pane deflection), instead of one mirror.
+// Review round 2 (26 Sep 2026):
+//   - the curtain walls (id 1: only the terminal piers, halls, ITB, sky bridges and AirTrain stations use it) show a
+//     CONCOURSE: one continuous hall behind the glass, 18-30 m deep, ceiling 9 m (tall halls 20 m) above the concourse
+//     floor, all lit at night with a +-15 % variation per bay. The 5.4 m office rooms with blinds and 25 % dark rooms
+//     read as office blocks, a black-and-white checkerboard at night; SFO's concourses are uniformly lit halls, open 24 h;
+//   - flat roofs (id 5): a mid-grey membrane (x 0.8 of the vertex colour) with roll seams, panel tone variation, skylight
+//     bands, rooftop units with a shadow side and a few solar arrays, aligned with the airport grid (the terminals are);
+//     the satellite reference (docs/qa/ref/mosaic_stands_small.jpg) shows all of these, the old roof was flat white;
+//   - garage roofs (id 11): the deck and stall lines only; the cars are instanced boxes that cast shadows (garageCars).
 import { THREE, TSL } from './lib.js';
 import { hash12, lampK } from './tsl/common.js';
+import { Geo } from '../geom.js';
+import { GROUND_Y, DIR_S, DIR_T } from '../geo.js';
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, sin, atan, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, modelWorldMatrixInverse, exp } = TSL;
 
 const gridLine = (x, period, w) => { const f = abs(fract(x.div(period).add(0.5)).sub(0.5)).mul(period); const fw = fwidth(x).mul(0.8); return float(1.0).sub(smoothstep(w, fw.add(w), f)); };
 
-// Parallax room behind a curtain-wall pane (interior mapping, in the object's local frame): rooms 5.4 m wide (3 panes),
-// 3.9 m high (the pane / floor grid), 7 m deep. Returns { day: interior albedo seen through the pane (lit by the
-// exterior light model, i.e. interior daylight follows the facade's irradiance), night: interior emission (lit rooms,
-// ceiling brightest) }. Dimensions and shades inferred.
-function interiorRoom(u, v, LP, LN, wt, night, noiseTex) {
-  const RW = 5.4, RH = 3.9, RD = 7.0;
+// Concourse hall behind a terminal curtain-wall pane (interior mapping in the object's local frame = world for the
+// terminals): floor at the concourse level (GROUND_Y + 5 m: the piers' apron level is 0-5 m, js/live/terminals.js; panes
+// that start lower look into a hall from the ground), ceiling 9 m higher (20 m for panes above that: the tall halls),
+// back wall 18-30 m deep per 20 m bay; no side walls (one continuous hall). Returns { day: albedo seen through the pane,
+// night: emission (lamp units x nightE by the caller) }. Dimensions inferred from the glazing heights.
+function concourse(u, v, LP, LN, wt) {
+  const G = GROUND_Y;
   const camL = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1.0)).xyz;
   const rd = normalize(LP.sub(camL));
   const T = vec3(wt.x, 0.0, wt.y);
-  const ax = dot(rd, T), ay = rd.y, az = max(dot(rd, LN).negate(), 0.02); // along the wall, up, into the building
-  const rx = fract(u.div(RW)).mul(RW), ry = fract(v.div(RH)).mul(RH);
-  const tx = select(ax.greaterThan(0.0), float(RW).sub(rx).div(max(ax, 1e-4)), rx.div(max(ax.negate(), 1e-4)));
-  const ty = select(ay.greaterThan(0.0), float(RH).sub(ry).div(max(ay, 1e-4)), ry.div(max(ay.negate(), 1e-4)));
-  const tz = float(RD).div(az);
-  const t = min(tx, min(ty, tz));
-  const room = vec2(floor(u.div(RW)), floor(v.div(RH)));
-  const h1 = hash12(room.add(vec2(3.1, 7.7))), h2 = hash12(room.add(vec2(11.3, 1.9)));
-  const isBack = step(tz, min(tx, ty)), isCeil = step(ty, min(tx, tz)).mul(step(0.0, ay)), isFloor = step(ty, min(tx, tz)).mul(step(ay, 0.0));
-  const wallC = mix(vec3(0.34, 0.33, 0.31), vec3(0.42, 0.40, 0.36), h2);
-  const c = mix(mix(mix(wallC.mul(0.85), wallC, isBack), vec3(0.6, 0.6, 0.58), isCeil), vec3(0.13, 0.12, 0.12), isFloor).toVar();
-  // blinds on some rooms: the upper part of the pane shows a light fabric instead of the room
-  const blind = step(0.7, h1).mul(step(float(0.35).add(h2.mul(0.4)), fract(v.div(RH))));
-  const depthFade = exp(t.mul(-0.09)).mul(0.6).add(0.4);
-  const day = mix(c.mul(depthFade).mul(h1.mul(0.5).add(0.75)), vec3(0.55, 0.54, 0.5), blind);
-  const lit = step(0.25, h1); // most rooms lit at night
-  const nightE = vec3(1.0, 0.86, 0.68).mul(mix(mix(float(0.3), float(1.1), isCeil).mul(depthFade), float(0.5), blind)).mul(lit).mul(0.9);
+  const ax = dot(rd, T), ay = rd.y, az = max(dot(rd, LN).negate(), 0.02);
+  const bay = floor(u.div(20.0)); const hb = hash12(vec2(bay, 7.0)), hb2 = hash12(vec2(bay, 19.0));
+  const depth = hb.mul(12.0).add(18.0);
+  const floorY = select(v.lessThan(G + 5.0), float(G), float(G + 5.0));
+  const ceilY = select(v.greaterThan(floorY.add(9.0)), floorY.add(20.0), floorY.add(9.0));
+  const ty = select(ay.greaterThan(0.0), ceilY.sub(v).div(max(ay, 1e-4)), v.sub(floorY).div(max(ay.negate(), 1e-4)));
+  const tz = depth.div(az);
+  const t = min(ty, tz);
+  const isBack = step(tz, ty), isCeil = float(1.0).sub(isBack).mul(step(0.0, ay)), isFloor = float(1.0).sub(isBack).mul(step(ay, 0.0));
+  const hu = u.add(ax.mul(t)), hz = min(t.mul(az), depth); // hit point: along the facade, into the hall
+  const hy = v.add(ay.mul(t)).sub(floorY);
+  // ceiling: light fixtures on a 3 m x 3 m grid; back wall: shop / gate-lounge fronts (bright band) over seating (dark);
+  // floor: terrazzo, brighter with distance (the glossy floor mirrors the lit hall)
+  const lamp = step(0.72, fract(hu.div(3.0))).mul(step(0.72, fract(hz.div(3.0))));
+  const shop = step(2.6, hy).mul(step(hy, 5.5)).mul(step(0.25, fract(hu.div(12.0).add(hb))));
+  const seats = step(hy, 1.1).mul(step(0.3, fract(hu.div(1.2))));
+  const wallC = mix(vec3(0.46, 0.44, 0.40), vec3(0.62, 0.58, 0.50), shop).mul(float(1.0).sub(seats.mul(0.55)));
+  const ceilC = mix(vec3(0.72, 0.72, 0.70), vec3(0.95), lamp), floorC = vec3(0.42, 0.40, 0.37);
+  const c = mix(mix(wallC, ceilC, isCeil), floorC, isFloor);
+  const depthFade = exp(t.mul(-0.03)).mul(0.5).add(0.5);
+  const day = c.mul(depthFade).mul(hb2.mul(0.2).add(0.9));
+  const var15 = hb2.mul(0.3).add(0.85); // +-15 % per bay
+  const nightE = vec3(1.0, 0.9, 0.76).mul(mix(mix(mix(float(0.55), float(0.9), shop), mix(float(0.7), float(2.2), lamp), isCeil), float(0.45), isFloor)).mul(depthFade).mul(var15).mul(0.8);
   return { day, night: nightE };
+}
+// Cars on the garage roofs (material id 11, js/world/buildings.js parkRoof) as instanced boxes on the stall grid that
+// the roof shader draws its lines on (local x / 2.7 m, z / 5.5 m, every third row an aisle), about 60 % of the stalls
+// taken; body + cabin, tinted per instance with the old shader's car colour mix (white, black, grey, silver, red, blue,
+// brown). Returns an InstancedMesh (vehicle material) or null. Only stalls whose whole footprint lies on the roof.
+const CAR_COLS = [[0.25, [0.72, 0.72, 0.72]], [0.47, [0.025, 0.025, 0.025]], [0.65, [0.14, 0.14, 0.14]], [0.75, [0.42, 0.43, 0.45]], [0.85, [0.33, 0.025, 0.02]], [0.94, [0.02, 0.05, 0.19]], [1.01, [0.28, 0.22, 0.14]]];
+let carGeoCache = null;
+export function garageCars(data, model, vehMat, tier) {
+  if (!data || !data.extra || !data.pos) return null;
+  const P = data.pos, N = data.nrm, X = data.extra, I = data.idx; const tris = [];
+  const nt = I ? I.length / 3 : P.length / 9;
+  for (let t = 0; t < nt; t++) {
+    const a = I ? I[t * 3] : t * 3, b = I ? I[t * 3 + 1] : t * 3 + 1, c = I ? I[t * 3 + 2] : t * 3 + 2;
+    if (Math.abs(X[a * 4 + 2] - 11) > 0.5 || !(N && N[a * 3 + 1] > 0.9)) continue;
+    tris.push([P[a * 3], P[a * 3 + 2], P[b * 3], P[b * 3 + 2], P[c * 3], P[c * 3 + 2], (P[a * 3 + 1] + P[b * 3 + 1] + P[c * 3 + 1]) / 3]);
+  }
+  if (!tris.length) return null;
+  const inTri = (x, z, T) => { const d1 = (x - T[2]) * (T[1] - T[3]) - (T[0] - T[2]) * (z - T[3]), d2 = (x - T[4]) * (T[3] - T[5]) - (T[2] - T[4]) * (z - T[5]), d3 = (x - T[0]) * (T[5] - T[1]) - (T[4] - T[0]) * (z - T[1]); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };
+  const onRoof = (x, z) => { for (const T of tris) if (inTri(x, z, T)) return T[6]; return null; };
+  const hash = (i, j, k) => { const s = Math.sin(i * 127.1 + j * 311.7 + k * 74.7) * 43758.5453; return s - Math.floor(s); };
+  const seen = new Set(); const cars = [];
+  for (const T of tris) {
+    const i0 = Math.floor(Math.min(T[0], T[2], T[4]) / 2.7), i1 = Math.floor(Math.max(T[0], T[2], T[4]) / 2.7);
+    const j0 = Math.floor(Math.min(T[1], T[3], T[5]) / 5.5), j1 = Math.floor(Math.max(T[1], T[3], T[5]) / 5.5);
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const key = i + ',' + j; if (seen.has(key)) continue; seen.add(key);
+      if (((j % 3) + 3) % 3 === 0) continue; // aisle
+      if (hash(i, j, 1) > 0.62) continue;     // empty stall
+      const cx = (i + 0.5) * 2.7, cz = (j + 0.5) * 5.5; const y = onRoof(cx, cz); if (y == null) continue;
+      if (onRoof(cx - 1.1, cz - 2.5) == null || onRoof(cx + 1.1, cz + 2.5) == null || onRoof(cx - 1.1, cz + 2.5) == null || onRoof(cx + 1.1, cz - 2.5) == null) continue;
+      const h = hash(i, j, 2); const col = CAR_COLS.find(e => h < e[0])[1];
+      cars.push([cx + (hash(i, j, 3) - 0.5) * 0.3, y, cz + (hash(i, j, 4) - 0.5) * 0.6, (hash(i, j, 5) < 0.5 ? 0 : Math.PI) + (hash(i, j, 6) - 0.5) * 0.08, col]);
+    }
+  }
+  if (!cars.length) return null;
+  if (!carGeoCache) {
+    const g = new Geo(); const E_PAINT = [0.35, 0, 20, 0], E_GLASS = [0.1, 0, 0, 0], E_TYRE = [0.9, 0, 0, 0];
+    g.box([-0.9, 0.3, -2.25], [0.9, 0.95, 2.25], [0.8, 0.8, 0.8, 1], E_PAINT);        // body (tinted: material id 20)
+    g.box([-0.8, 0.95, -1.15], [0.8, 1.45, 1.05], [0.06, 0.07, 0.08, 1], E_GLASS);      // cabin glass
+    g.box([-0.78, 1.45, -1.05], [0.78, 1.5, 0.95], [0.8, 0.8, 0.8, 1], E_PAINT);        // roof panel
+    g.box([-0.92, 0.0, -1.7], [0.92, 0.32, -1.1], [0.03, 0.03, 0.03, 1], E_TYRE); g.box([-0.92, 0.0, 1.1], [0.92, 0.32, 1.7], [0.03, 0.03, 0.03, 1], E_TYRE);
+    const d = g.data(); const bg = new THREE.BufferGeometry();
+    for (const [k, n, sz] of [['position', 'pos', 3], ['normal', 'nrm', 3], ['uv', 'uv', 2], ['color', 'col', 4], ['extra', 'extra', 4]]) bg.setAttribute(k, new THREE.BufferAttribute(new Float32Array(d[n]), sz));
+    bg.setIndex(Array.from(d.idx)); carGeoCache = bg;
+  }
+  const g = carGeoCache.clone(); const n = cars.length; const iData = new Float32Array(n * 4);
+  const o = new THREE.InstancedMesh(g, vehMat, n); const M = new THREE.Matrix4(), W = model ? new THREE.Matrix4().fromArray(model) : null; const Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), S1 = new THREE.Vector3(1, 1, 1), Pp = new THREE.Vector3();
+  cars.forEach(([x, y, z, yaw, col], k) => { Pp.set(x, y, z); M.compose(Pp, Q.setFromAxisAngle(Y, yaw), S1); if (W) M.premultiply(W); o.setMatrixAt(k, M); iData.set([col[0], col[1], col[2], 1], k * 4); });
+  g.setAttribute('iData', new THREE.InstancedBufferAttribute(iData, 4));
+  o.castShadow = tier !== 'low'; o.receiveShadow = true; o.instanceMatrix.needsUpdate = true; o.computeBoundingSphere(); o.name = 'garageCars';
+  return o;
 }
 // opts: { instanced: bool (per-instance iData: x = tunnel length, rgb/w = vehicle tint), instColor: bool (colour and
 // extra per instance in iCol / iExt: unit boxes and cylinders of the bridges), noiseTex, night (uniform), time (uniform) }
@@ -66,11 +134,10 @@ export function objectMaterial(opts) {
     const ao = float(1.0).toVar(); const extraEmis = vec3(0).toVar(); const nPert = vec3(0).toVar(); const ior = float(1.5).toVar(); const spec = vec3(1.0).toVar();
     const isWall = float(1.0).sub(abs(LN.y));
     // noise samples used by several ids (sampled once, outside the branches)
-    const nRoom = texture(noiseTex, vec2(floor(u.div(1.8)).mul(0.13), floor(v.div(3.9)).mul(0.37))).r;
     const nConc = texture(noiseTex, vec2(u, v).mul(0.05)).b, nGrime = texture(noiseTex, vec2(u.mul(0.1), 0.5)).g;
     const nCar = texture(noiseTex, vec2(floor(u.div(2.7)).mul(0.11), floor(v.div(3.3)).mul(0.23))).r, nCar2 = texture(noiseTex, vec2(floor(u.div(2.7)).mul(0.3), 0.1)).g;
     const nCorr = texture(noiseTex, vec2(u.mul(0.02), v.mul(0.1))).b;
-    const nRoof = texture(noiseTex, wp.xz.mul(0.01)).b, nHvac = texture(noiseTex, floor(wp.xz.div(6.0)).mul(0.173)).r;
+    const nRoof = texture(noiseTex, wp.xz.mul(0.01)).b;
     const nWin = texture(noiseTex, vec2(floor(u.div(3.2)).mul(0.173), floor(v.div(3.5)).mul(0.311))).g;
     const nLeaf = texture(noiseTex, LP.xz.mul(0.4).add(LP.y.mul(0.3)).add(idata.xy)).g, nLeafN = texture(noiseTex, LP.xz.mul(0.9).add(LP.y)).rgb;
     If(matId.equal(1), () => { // glass curtain wall: coated pane over a parallax room, mullions, spandrels
@@ -79,7 +146,7 @@ export function objectMaterial(opts) {
       const frame = max(mull, spandrel.mul(0.5)).mul(isWall);
       const pane = vec2(floor(u.div(1.8)), floor(v.div(3.9)));
       const hP = hash12(pane.add(vec2(17.0, 3.0))), hQ = hash12(pane.add(vec2(5.0, 41.0))), hR = hash12(pane.add(vec2(29.0, 7.0)));
-      const room = interiorRoom(u, v, LP, LN, wt, night, noiseTex);
+      const room = concourse(u, v, LP, LN, wt);
       albedo.assign(mix(room.day.mul(vec3(0.24, 0.27, 0.29)), vec3(0.28, 0.29, 0.3), frame)); // through blue-green tinted glazing (first render: the rooms read warm tan)
       rough.assign(mix(hP.mul(0.05).add(0.03), 0.4, mull)); metal.assign(mix(0.0, 0.8, mull));
       ior.assign(mix(2.0, 1.5, frame)); spec.assign(mix(vec3(0.9, 0.96, 1.0), vec3(1.0), frame));
@@ -100,8 +167,22 @@ export function objectMaterial(opts) {
       const rib = sin(u.mul(6.2831 / 0.25));
       nPert.assign(vec3(wt.x, 0.0, wt.y).mul(rib).mul(0.12).mul(isWall).mul(float(1.0).sub(smoothstep(20.0, 120.0, dist))));
       albedo.mulAssign(nCorr.mul(0.1).add(0.95)); albedo.mulAssign(float(1.0).sub(smoothstep(1.5, 0.0, v).mul(0.3)));
-    }).ElseIf(matId.equal(5), () => { // flat roof
-      albedo.mulAssign(nRoof.mul(0.35).add(0.8)); albedo.assign(mix(albedo, vec3(0.62, 0.62, 0.6), step(0.82, nHvac).mul(0.6)));
+    }).ElseIf(matId.equal(5), () => { // flat roof: membrane, seams, panels, skylights, rooftop units, solar arrays
+      const st = vec2(dot(wp.xz, vec2(DIR_S[0], DIR_S[2])), dot(wp.xz, vec2(DIR_T[0], DIR_T[2])));
+      const far = smoothstep(150.0, 900.0, dist);
+      albedo.mulAssign(nRoof.mul(0.3).add(0.72)); // mid-grey membrane (x ~0.8 of the vertex colour)
+      const pc = floor(st.div(vec2(23.0, 31.0))); const hp = hash12(pc.add(3.7));
+      albedo.mulAssign(hp.mul(0.16).add(0.92));                                              // panel tone variation
+      albedo.mulAssign(float(1.0).sub(gridLine(st.x, 3.05, 0.04).mul(0.12).mul(float(1.0).sub(far)))); // membrane roll seams
+      const sky = step(fract(st.y.div(48.0)), 0.065).mul(step(0.35, fract(st.x.div(9.0))));  // skylight bands (glass)
+      albedo.assign(mix(albedo, vec3(0.1, 0.12, 0.14), sky.mul(0.85))); rough.assign(mix(rough, 0.15, sky));
+      const hc = floor(st.div(9.0)); const hh = hash12(hc.add(11.0)); const hf = fract(st.div(9.0));
+      const unit = step(hh, 0.14).mul(step(0.2, hf.x)).mul(step(hf.x, 0.75)).mul(step(0.25, hf.y)).mul(step(hf.y, 0.7));
+      const unitSh = step(hh, 0.14).mul(step(0.75, hf.x)).mul(step(hf.x, 0.9)).mul(step(0.25, hf.y)).mul(step(hf.y, 0.7));
+      albedo.assign(mix(albedo, vec3(0.62, 0.63, 0.62), unit)); albedo.mulAssign(float(1.0).sub(unitSh.mul(0.35)));
+      const sc = floor(st.div(vec2(60.0, 40.0))); const hs = hash12(sc.add(29.0)); const sf = fract(st.div(vec2(60.0, 40.0)));
+      const solar = step(hs, 0.12).mul(step(0.1, sf.x)).mul(step(sf.x, 0.9)).mul(step(0.15, sf.y)).mul(step(sf.y, 0.85)).mul(step(0.12, fract(st.y.div(2.2))));
+      albedo.assign(mix(albedo, vec3(0.035, 0.05, 0.09), solar)); rough.assign(mix(rough, 0.25, solar));
     }).ElseIf(matId.equal(6), () => { // punched windows
       const cx = fract(u.div(3.2)), cy = fract(v.div(3.5));
       const win = step(0.18, cx).mul(step(cx, 0.82)).mul(step(0.3, cy)).mul(step(cy, 0.85)).mul(isWall).mul(float(1.0).sub(smoothstep(300.0, 1200.0, dist).mul(0.6)));
@@ -117,15 +198,13 @@ export function objectMaterial(opts) {
       albedo.assign(mix(albedo, vec3(0.03, 0.04, 0.05), strip)); rough.assign(mix(rough, 0.08, strip));
       extraEmis.addAssign(vec3(1.0, 0.88, 0.7).mul(night).mul(strip).mul(0.7));
       albedo.mulAssign(float(1.0).sub(float(1.0).sub(smoothstep(0.0, 0.15, vUV.y)).mul(isSide).mul(0.25)));
-    }).ElseIf(matId.equal(11), () => { // garage roof with parked cars
+    }).ElseIf(matId.equal(11), () => { // garage roof deck: stall lines and oil stains (the cars are instances: garageCars)
       const g = vec2(LP.x.div(2.7), LP.z.div(5.5)); const cf = fract(g); const cc = floor(g);
       const row = step(1.0, cc.y.sub(floor(cc.y.div(3.0)).mul(3.0)));
-      const car = step(hash12(cc.add(5.3)), 0.62).mul(row).mul(step(0.15, cf.x)).mul(step(cf.x, 0.85)).mul(step(0.12, cf.y)).mul(step(cf.y, 0.88));
-      albedo.assign(mix(albedo, vec3(0.8), row.mul(step(0.95, cf.x)).mul(0.6)));
-      const h1 = hash12(cc.add(17.1));
-      const carCol = select(h1.lessThan(0.25), vec3(0.72), select(h1.lessThan(0.47), vec3(0.025), select(h1.lessThan(0.65), vec3(0.14), select(h1.lessThan(0.75), vec3(0.42, 0.43, 0.45), select(h1.lessThan(0.85), vec3(0.33, 0.025, 0.02), select(h1.lessThan(0.94), vec3(0.02, 0.05, 0.19), vec3(0.28, 0.22, 0.14)))))));
       const fade = smoothstep(90.0, 450.0, dist);
-      albedo.assign(mix(albedo, carCol, car.mul(float(1.0).sub(fade)))); albedo.assign(mix(albedo, albedo.mul(0.85).add(0.06), fade.mul(0.5))); rough.assign(mix(rough, 0.3, car));
+      albedo.assign(mix(albedo, vec3(0.8), row.mul(gridLine(LP.x, 2.7, 0.06)).mul(0.6).mul(float(1.0).sub(fade))));
+      const stain = row.mul(step(0.3, cf.x)).mul(step(cf.x, 0.7)).mul(step(0.35, cf.y)).mul(step(cf.y, 0.65)).mul(step(hash12(cc.add(5.3)), 0.8));
+      albedo.mulAssign(float(1.0).sub(stain.mul(0.12)));
     }).ElseIf(matId.equal(12), () => { // tower cab glass (coated, lighter cab interior behind it)
       const mull = gridLine(atan(LP.z, LP.x).mul(10.0), 1.0, 0.03);
       albedo.assign(mix(vec3(0.05, 0.06, 0.065), vec3(0.3), mull)); rough.assign(mix(0.04, 0.5, mull)); metal.assign(0.0);

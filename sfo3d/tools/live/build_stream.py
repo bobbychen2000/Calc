@@ -36,8 +36,14 @@ def main():
     ap.add_argument('--rec', default=os.path.join(ROOT, 'refs/cache/rec'))
     ap.add_argument('--out', default=os.path.join(ROOT, 'refs/cache/replay_day/stream.jsonl.gz'))
     ap.add_argument('--gates-every', type=float, default=60.0, help='also dump the relay /api/gates plan every N s (0 = off)')
+    ap.add_argument('--gates-full', action='store_true', help='also write the full /api/gates payloads (gates_full.jsonl.gz: what the '
+                    'browser gets, for tools/live/card_replay.mjs)')
     o = ap.parse_args()
     t0, t1 = parse_t(o.t0), parse_t(o.t1)
+    # (the FAA registry copy, as the relay loads it at start: `_faa` types on the records; loaded before the clock is faked)
+    S.FAA = S.FaaRegistry()
+    while S.FAA.err is None and not S.FAA.ready and os.path.exists(S.FAA.src):
+        _time.sleep(0.5)
     ft = FakeTime(); S.time = ft
     hub = S.Hub(mode='replay')
     os.makedirs(os.path.dirname(o.out), exist_ok=True)
@@ -46,6 +52,7 @@ def main():
     # clock). Slimmed to what the app uses (byCallsign stand windows, regional aliases) -> gates.jsonl.gz
     gates = S.Gates(enabled=True, hub=hub, replay_clock=S.Clock()) if o.gates_every > 0 else None
     gout = gzip.open(os.path.join(os.path.dirname(o.out), 'gates.jsonl.gz'), 'wt') if gates else None
+    gfull = gzip.open(os.path.join(os.path.dirname(o.out), 'gates_full.jsonl.gz'), 'wt') if gates and o.gates_full else None
     next_g = None
     with gzip.open(o.out, 'wt') as f:
         for t, pid, r in S.replay_records(o.rec, t0, t1):
@@ -73,7 +80,9 @@ def main():
                 slim = {'byCallsign': {k: s for k, s in ((k, _slim(v)) for k, v in P.get('byCallsign', {}).items()) if s},
                         'aliases': {k: {'to': v.get('to')} for k, v in P.get('aliases', {}).items() if v.get('to')}}
                 gout.write(json.dumps({'T': ft.t, 'gates': slim}, separators=(',', ':')) + '\n')
+                if gfull: gfull.write(json.dumps({'T': ft.t, 'gates': P}, separators=(',', ':')) + '\n')
     if gout: gout.close()
+    if gfull: gfull.close()
     print(f'{o.out}: {n} provider responses -> {pub} published events, {S.time.strftime("%H:%M:%S", _time.gmtime(first or 0))}'
           f'-{_time.strftime("%H:%M:%S", _time.gmtime(last or 0))} UTC; counters {hub.counters}')
 

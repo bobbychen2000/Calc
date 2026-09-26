@@ -9,8 +9,9 @@ Sources and their roles (details and licences: docs/research/stands_rebuild.md, 
                          OSM refs only as the link between the two (stand_table.OVERRIDES lists every exception).
   jet bridges            OSM aeroway=jet_bridge ways (ODbL): building attach point, fixed walkway, rotunda (start
                          of the last segment = parked tunnel), parked cab; assigned by ref / name, else geometrically.
-  classes                the largest aircraft type SFO allocates to the stand (flysfo AODB stands[] types, all cached
-                         snapshots) + types seen parked there in ADS-B; dimensions, planforms and doors are the app's
+  classes                the largest aircraft type SFO allocates to the stand (flysfo AODB stands[] types, the NEWEST
+                         version of each flight in the cached snapshots - static fix-up 26 Sep 2026; superseded plans
+                         -> superseded_types) + types seen parked there in ADS-B; dimensions, planforms and doors are the app's
                          (js/aircraft/types.js via geom.APP; review round 2), whose SPEC values are the manufacturers'
                          airport-planning numbers (tools/models/check_dims.py).
   per-type stops         type_stops: ADS-B (adsb.lol) families stopping short of the stand nose; types_ok: whitelist
@@ -19,7 +20,12 @@ Sources and their roles (details and licences: docs/research/stands_rebuild.md, 
                          for relief displacement (naip_relief.py), and ADS-B parked stays (adsb.lol only) with SFO stand
                          windows (adsb_parked.py): residuals per stand; disagreeing ADS-B -> 'conflict'.
   mutual exclusion       stands whose reference aircraft would overlap / come within the physical minimum (3 m) of
-                         each other are mutually exclusive ('excl'); pairs SFO plans simultaneously are reported.
+                         each other are mutually exclusive ('excl'); pairs SFO plans simultaneously are reported, with
+                         the evidence per pair below the ICAO clearance ('below_icao', static fix-up).
+  static fix-up (26 Sep 2026, docs/research/stands_rebuild.md s.15): ADS-B stand axes (axis_adsb: D3 / D4 / D9), NAIP
+                         2022 as a second epoch of the axis fit (G12), family ADS-B references as medians over stands,
+                         single short stays set no stop (stops_rejected), imaged short bridges (stand_table.BRIDGE_SHORT)
+                         and decided non-dockings (DOCK_OUT_DECIDED), bridges_shared on alternative positions.
 Google screenshots are NOT used for anything here.
 
 Outputs: data/sfo_stands.json + .js (committed, ODbL: contains OSM-derived positions), refs/cache/stands/
@@ -392,7 +398,8 @@ def main():
                             else:
                                 s['conflict_axis'] = {'with': 'naip', 'lat_nose': ax['lat_nose'], 'lat_30': ax['lat_30'], 'dh': ax['dh'],
                                                       'note': 'the parked NAIP aircraft (one image) lies %+.1f m / %+.1f m (nose / 30 m aft) and %+.1f deg off the '
-                                                              'model axis; no painted line or ADS-B heading confirms either - not resolved' % (ax['lat_nose'], ax['lat_30'], ax['dh'])}
+                                                              'model axis; no painted line or ADS-B heading confirms either, and NAIP 2022 %s - not resolved' % (ax['lat_nose'], ax['lat_30'], ax['dh'],
+                                                              'shows no measurable parked aircraft there' if not ax22 else 'disagrees (%+.1f m / %+.1f deg)' % (ax22['lat_nose'], ax22['dh']))}
             s['nose'] = nose; s['hdg'] = h
             # NAIP residual of the parked aircraft (reading - model nose), in the stand frame
             vb = []
@@ -655,13 +662,17 @@ def main():
         for fm, v in by.items():
             d_ = float(np.median(v)) - fam_ref[fm]
             if (len(v) >= 2 and abs(d_) >= 5) or abs(d_) >= 10:
-                # static fix-up (review round 4, G7 L1 reach): a stop from ONE stay needs that stay to be a parked turn, not a
-                # hold short of the stand. G7's only A319 (N854UA UAL822) stood 29 m short for 234 s, starting 3 min before
-                # SFO's stand window: the aircraft waiting for the stand / marshaller. Single stays under 10 min set no stop
-                # (listed in `stops_rejected`).
-                if len(v) == 1 and dur_by[fm][0] < 600 and d_ < 0:
+                # static fix-up (review round 4, G7 L1 reach): a stop far short of the stand from ONE airframe, seen only in
+                # short pieces, is not taken as a parked docking position. G7's only A319 (N854UA UAL822, two stays of 215 /
+                # 234 s) stood 29 m short: its L1 door would need the G7 L1 bridge at 36.5 m while the wide bodies at the
+                # stand nose need 10.3 m - no datasheet unit spans both (Oshkosh sell sheet), so that stay was a hold / tow,
+                # or the aircraft boarded otherwise. Rule: n = 1, the stay < 10 min and > 20 m short -> no stop
+                # (`stops_rejected`). Short stays per se are normal here (the recorder sees parked aircraft in 3-20 min
+                # pieces): F17's single 737 at -13.5 m is kept.
+                if len(v) == 1 and dur_by[fm][0] < 600 and d_ < -20.0:
                     s.setdefault('stops_rejected', {})[fm] = {'along': round(d_, 1), 'n': 1, 'dur_s': dur_by[fm][0],
-                                                              'why': 'one ADS-B stay of %d s (< 10 min): a hold short of the stand, not a parked turn' % dur_by[fm][0]}
+                                                              'why': 'one airframe, one ADS-B stay of %d s, %.1f m short: its L1 docking and the dockings at the '
+                                                                     'stand nose need a range no single datasheet bridge has - taken as a hold / tow, not a parked turn' % (dur_by[fm][0], -d_)}
                     continue
                 tsd[fm] = {'along': round(min(d_, 0.0), 1), 'n': len(v), 'src': 'adsb (median %.1f m vs family %.1f m)' % (float(np.median(v)), fam_ref[fm])}
         # review round 3: a family stop of 3-5 m that the NAIP aircraft on the same line confirms (its relief-corrected
@@ -844,8 +855,9 @@ def main():
             if not doors: continue
             path = [tuple(q) for q in b['walk']]
             if math.dist(path[-1], b['rotunda']) > 0.05: path.append(tuple(b['rotunda']))
+            emin_ = 0.0 if b['osm_id'] in TB.BRIDGE_SHORT else GM.EXT_MIN     # static fix-up: an imaged short unit (F5) is not held to the datasheet minimum
             def ok(pt, pre):
-                if min(math.dist(pt, dp) for dp in doors) - GM.PIVOT_TO_DOOR < GM.EXT_MIN: return False   # (pivot on the door normal: distance >= this)
+                if min(math.dist(pt, dp) for dp in doors) - GM.PIVOT_TO_DOOR < emin_: return False   # (pivot on the door normal: distance >= this)
                 g = unary_union([LineString(pre + [pt]).buffer(GM.WALK_W / 2, cap_style=2) if len(pre) else _P(pt).buffer(0.01), _P(pt).buffer(GM.ROT_R)])
                 return g.intersection(eo).area <= 0.3
             if ok(path[-1], path[:-1]): continue
@@ -1037,39 +1049,75 @@ def main():
         a['excl'].append(b['name']); b['excl'].append(a['name'])
         how[(a['name'], b['name'])] = 'excl (SFO plans both at once %d times, but even its largest types overlap)' % sim
     # Static fix-up (26 Sep 2026; review round 4: "state the evidence that SFO really operates them that way (ADS-B
-    # simultaneous occupancy) or restrict"): for every pair, the ADS-B stays (adsb.lol, SFO stand window, on the line
-    # within 3 m) of DIFFERENT airframes on the two stands that overlap in time by > 5 min; per airframe pair the types,
-    # the overlap and the clearance of the two planforms at their OBSERVED positions (antenna + family offset along the
-    # reported heading; ADS-B positions are good to ~1-2 m, so this is a check of the order of magnitude, not a survey).
-    def obs_pose(st, s_):
-        t_ = ALIAS_T.get(eff_type(st), eff_type(st)); fm = GM.FAMILY.get(t_); h_ = st['hdg'] if st.get('hdg') is not None else s_['hdg']
-        if t_ not in GM.APP or not GM.APP[t_]['span'] or fm not in fam_ref: return t_, None
-        f_ = hdg_vec(h_); return t_, GM.planform((st['x'] - f_[0] * fam_ref[fm], st['z'] - f_[1] * fam_ref[fm]), h_, t_)
+    # simultaneous occupancy) or restrict"). Three tiers of evidence per pair below the ICAO clearance:
+    #  * adsb_stays: ADS-B stays (adsb.lol, on the line within 3 m) of different airframes on the two stands overlapping
+    #    by > 5 min. The recorder sees aircraft at the gates only in short pieces (stays of 3-20 min; the terminals
+    #    shadow the ground-level signal), so this tier is empty for every pair in the two-day recording;
+    #  * adsb_confirmed_windows: both flights were SEEN parked on their stands (ADS-B, SFO stand window) and SFO's
+    #    windows of the two flights overlap by > 10 min;
+    #  * plan_types: the type pairs SFO's AODB plans at the same time (newest plan versions), with the clearance of the
+    #    two planforms at their per-family stops - whether SFO's own simultaneous combinations clear ICAO.
+    import datetime as _dt
+    def _iso(v): return _dt.datetime.fromisoformat(v).timestamp()
+    def confirmed(s_):
+        out = {}
+        for x, ax_, cx_ in s_.get('_good', []):
+            if abs(cx_) > 3 or not x.get('win'): continue
+            out[(x['hex'], tuple(x['win']))] = (_iso(x['win'][0]), _iso(x['win'][1]), x.get('callsign'), eff_type(x))
+        return out
     def adsb_sim(a_, b_):
-        best = {}
+        st_ov = set()
         for x, ax_, cx_ in a_.get('_good', []):
-            if abs(cx_) > 3: continue
             for y, ay_, cy_ in b_.get('_good', []):
-                if abs(cy_) > 3 or x['hex'] == y['hex']: continue
-                ov = min(x['t1'], y['t1']) - max(x['t0'], y['t0'])
-                if ov <= 300: continue
-                k_ = (x['hex'], y['hex'])
-                if k_ in best and best[k_][2] >= ov // 60: continue
-                (ta, pa_), (tb, pb_) = obs_pose(x, a_), obs_pose(y, b_)
-                best[k_] = (ta, tb, int(ov // 60), round(pa_.distance(pb_), 1) if pa_ is not None and pb_ is not None else None,
-                            '%s/%s' % (x.get('callsign'), y.get('callsign')))
-        return sorted(best.values(), key=lambda r: (r[3] if r[3] is not None else 99))
+                if abs(cx_) <= 3 and abs(cy_) <= 3 and x['hex'] != y['hex'] and min(x['t1'], y['t1']) - max(x['t0'], y['t0']) > 300: st_ov.add((x.get('callsign'), y.get('callsign')))
+        A_, B_ = confirmed(a_), confirmed(b_); cw = []
+        for kx, x in A_.items():
+            for ky, y in B_.items():
+                ov = min(x[1], y[1]) - max(x[0], y[0])
+                if kx[0] != ky[0] and ov > 600:
+                    ta, tb = ALIAS_T.get(x[3], x[3]), ALIAS_T.get(y[3], y[3]); d_ = None
+                    if ta in GM.APP and tb in GM.APP and GM.APP[ta]['span'] and GM.APP[tb]['span']:
+                        d_ = round(GM.planform(GM.nose_for(a_, ta), a_['hdg'], ta).distance(GM.planform(GM.nose_for(b_, tb), b_['hdg'], tb)), 1)
+                    cw.append({'flights': '%s/%s' % (x[2], y[2]), 'types': [ta, tb], 'overlap_min': int(ov // 60), 'clear_m_at_stops': d_})
+        return sorted(st_ov), cw
+    def plan_types(a_, b_):
+        cnt = Counter()
+        for x in [q for n0 in a_['aodb'] or [a_['name']] for q in ivs.get(n0, [])]:
+            for y in [q for n1 in b_['aodb'] or [b_['name']] for q in ivs.get(n1, [])]:
+                if x[2] != y[2] and min(x[1], y[1]) - max(x[0], y[0]) > 600 and x[3] and y[3]: cnt[(ALIAS_T.get(x[3], x[3]), ALIAS_T.get(y[3], y[3]))] += 1
+        out = []
+        for (ta, tb), n_ in cnt.most_common():
+            d_ = None
+            if ta in GM.APP and tb in GM.APP and GM.APP[ta]['span'] and GM.APP[tb]['span']:
+                d_ = round(GM.planform(GM.nose_for(a_, ta), a_['hdg'], ta).distance(GM.planform(GM.nose_for(b_, tb), b_['hdg'], tb)), 1)
+            out.append({'types': [ta, tb], 'n': n_, 'clear_m_at_stops': d_, 'icao_m': max(icao_clear(GM.APP[t]['span']) for t in (ta, tb) if t in GM.APP and GM.APP[t]['span']) if (ta in GM.APP or tb in GM.APP) else None})
+        return out
     pairs = []
     for a, b in near:
         d_data = GM.stand_env(a).distance(GM.stand_env(b)); d_sfo = env_sfo(a).distance(env_sfo(b)); d = min(d_data, d_sfo)
         need = max(icao_clear(max(REF[t]['span'] for t in GM.accepted_types(dict(x, types_ok=None)))) for x in (a, b))
-        asim = adsb_sim(a, b) if d < need and not is_alt(a, b) else []
-        pairs.append((a['name'], b['name'], round(d, 1), need, sim_count(a, b), is_alt(a, b), how.get((a['name'], b['name'])), round(d_data, 1), round(d_sfo, 1), asim))
-        if d < need and not is_alt(a, b) and not (a['name'] in b['excl']):
+        ev_ = None
+        if d < need and not is_alt(a, b) and a['name'] not in b['excl']:
+            so_, cw_ = adsb_sim(a, b); pt_ = plan_types(a, b)
+            worst = min((r for r in pt_ if r['clear_m_at_stops'] is not None), key=lambda r: r['clear_m_at_stops'] - (r['icao_m'] or 0), default=None)
+            n_sim = sim_count(a, b)
+            if not n_sim: verdict = 'no simultaneous plan'
+            else:
+                verdict = 'SFO plans these stands at the same time (%d overlaps)' % n_sim
+                verdict += (', and ADS-B saw both flights parked on them in overlapping SFO windows %d time(s)' % len(cw_)) if cw_ else \
+                           ' (plan only: ADS-B saw no simultaneous pair in the two-day recording)'
+                if worst is None: verdict += '; no type pair known'
+                elif worst['clear_m_at_stops'] >= worst['icao_m']:
+                    verdict += ('; the type pairs SFO actually plans together clear ICAO at their stops (tightest %s / %s %.1f m >= %.1f m): '
+                                'the below-ICAO case is a type combination SFO does not plan together' % (worst['types'][0], worst['types'][1], worst['clear_m_at_stops'], worst['icao_m']))
+                else:
+                    verdict += ('; SFO\'s own simultaneous plan includes %s / %s at %.1f m (< ICAO %.1f m): operated below the ICAO table (D-F: reducible '
+                                'with VDGS azimuth guidance, not verified; code C: no relief)' % (worst['types'][0], worst['types'][1], worst['clear_m_at_stops'], worst['icao_m']))
+            ev_ = {'pair': [a['name'], b['name']], 'clear_m': round(d, 1), 'icao_m': need, 'sfo_plan_overlaps': n_sim, 'adsb_stays': so_,
+                   'adsb_confirmed_windows': cw_, 'plan_types': pt_[:12], 'plan_worst': worst, 'verdict': verdict}
             for x_, y_ in ((a, b), (b, a)):
-                x_.setdefault('below_icao', {})[y_['name']] = {'clear_m': round(d, 1), 'icao_m': need, 'sfo_plan_overlaps': sim_count(a, b),
-                                                               'adsb_simultaneous': [{'types': [r[0], r[1]] if x_ is a else [r[1], r[0]], 'overlap_min': r[2],
-                                                                                      'clear_observed_m': r[3], 'flights': r[4]} for r in asim]}
+                x_.setdefault('below_icao', {})[y_['name']] = ev_
+        pairs.append((a['name'], b['name'], round(d, 1), need, sim_count(a, b), is_alt(a, b), how.get((a['name'], b['name'])), round(d_data, 1), round(d_sfo, 1), ev_))
         if d < 60: a['clear'][b['name']] = round(d, 1); b['clear'][a['name']] = round(d, 1)
     # ---------------------------------------------------------------- bridge poses (review round 1)
     # cab_pose: OSM maps some bridges docked (cab within 6 m of a door of a type the stand accepts), others parked.
@@ -1134,12 +1182,16 @@ def main():
             b['model'] = None; b['ext_range'] = [GM.EXT_MIN, GM.EXT_MAX]
             b['model_src'] = 'not modelled (upper-deck bridge: the app docks main-deck doors only)' if b['door'] > 2 else 'no docking type'
             b['dock_types_out'] = []; continue
+        dec_ = TB.DOCK_OUT_DECIDED.get((st['gate'], b['door'])) if not st.get('alt_of') else None
+        if dec_:
+            dk = [d_ for d_ in dk if d_[0] not in dec_] or dk     # decided non-dockings (A1 / A2 L2 787-10) do not size the model
         lo, hi = min(d_[1] for d_ in dk), max(d_[1] for d_ in dk)
         if b['osm_id'] in TB.BRIDGE_SHORT:
             # static fix-up: an imaged bridge shorter than every datasheet unit (stand_table.BRIDGE_SHORT, F5)
             pv_ = b.get('rotunda') or b['attach']; e_rest = math.dist(pv_, b['cab']) - GM.PIVOT_TO_DOOR
-            b['model'] = None; b['short_unit'] = True; b['ext_range'] = [round(min(e_rest, lo), 3), round(max(e_rest, hi), 3)]
-            b['model_src'] = 'INFERRED short non-datasheet unit: %s; ext_range = imaged rest %.1f m .. observed dockings %.1f-%.1f m' % (TB.BRIDGE_SHORT[b['osm_id']]['why'], e_rest, lo, hi)
+            b['model'] = None; b['short_unit'] = True; b['ext_range'] = [round(min(e_rest, lo), 3), round(max(e_rest, hi) + 0.5, 3)]
+            b['model_src'] = ('INFERRED short non-datasheet unit: %s; ext_range = imaged rest %.1f m .. the longest observed docking %.1f m + 0.5 m '
+                              '(stop uncertainty); its real maximum is not known' % (TB.BRIDGE_SHORT[b['osm_id']]['why'], e_rest, hi))
             e0, e1 = b['ext_range']
             b['dock_types_out'] = sorted(set(d_[0] for d_ in acc if not (e0 - 1.0 <= d_[1] <= e1 + 1.0)))
             continue
@@ -1462,7 +1514,7 @@ def build_output(stands, remote, positions, naip_off, info, osm, unplaced=()):
                # rejected single-stay stops; lead-in provenance where it is not the OSM way
                'superseded_types': s.get('superseded_types') or None, 'axis_adsb': s.get('axis_adsb'),
                'bridges_shared': [dict(x, of=disp[x['of']]) for x in s['bridges_shared']] if s.get('bridges_shared') else None,
-               'below_icao': {disp[k]: v for k, v in s['below_icao'].items()} if s.get('below_icao') else None,
+               'below_icao': {disp[k]: dict(v, pair=[disp[q] for q in v['pair']]) for k, v in s['below_icao'].items()} if s.get('below_icao') else None,
                'conflict_superseded': s.get('conflict_superseded'), 'stops_rejected': s.get('stops_rejected'),
                'leadin_src': s.get('leadin_src'),
                'resid': {'naip': {k: s['naip'][k] for k in ('resid_along', 'resid_lat', 'superseded') if k in s['naip']} if s.get('naip') else None,

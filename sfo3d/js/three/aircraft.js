@@ -15,11 +15,19 @@
 //     (sdPoly5 on the unwrapped surface), fin / engine / wing parts; gear, flaps and spoilers as in fleet.js items()
 // Per-aircraft values (livery, dims, windows, panes) are per-object uniforms (onObjectUpdate) so every aircraft of a
 // model shares one material and one GPU program.
+// Review round 2 (26 Sep 2026): the per-aircraft values of imported models come from LiveAircraft.realUniforms() itself
+// (they were a hand copy that missed what the aircraft/livery workflows added: freighter / business-jet window plugs
+// uNoCabin from freighter() || T.uniform, the registration); the registration is painted on the aft fuselage from a shared
+// atlas (RegAtlas, bounded GPU memory); the procedural wing-tip devices (A320neo sharklets, 737 MAX split tips) that
+// LiveAircraft.items() adds to the span-reduced models are drawn; while a type's livery texture is pending the
+// procedural airframe is drawn (LiveAircraft.liveryPending, as live.html); brand livery textures are evicted
+// least-recently-used beyond the tier's budget and re-fetched when needed again (LiveryCache).
 import { THREE, TSL } from './lib.js';
 import { m4 } from '../math.js';
 import { linearLivery, rotAxisAbout } from '../aircraft/fleet.js';
-import { brandIsCargo } from '../aircraft/liveries.js';
-import { geometryOf, textureOf } from './convert.js';
+import { brandIsCargo, LIVERY_BRANDS, liveryFrame } from '../aircraft/liveries.js';
+import { tipDeviceData } from '../aircraft/model.js';
+import { geometryOf, geometryFromData, textureOf } from './convert.js';
 import { hash12, hash13, facingNormalView, lampK } from './tsl/common.js';
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, mod, select, If, Discard, fwidth, positionWorld, cameraPosition, normalWorld, pow, sign, sqrt, atan, Loop } = TSL;
 
@@ -32,7 +40,8 @@ function realMaterial(tex, liveryTex, atlas = false) {
   const m = new THREE.MeshPhysicalNodeMaterial({ side: THREE.DoubleSide, clearcoat: 1 });
   const uTop = ou('top', V3()), uBelly = ou('belly', V3()), uTail = ou('tail', V3()), uEng = ou('eng', V3()), uStripe = ou('stripe', V4());
   const uBellyLine = ou('bellyLine', 0), uDirt = ou('dirt', 0.3), uFus = ou('fus', V4()), uFusB = ou('fusB', V4()), uLights = ou('lights', 0), uGearUp = ou('gearUp', 0), uSel = ou('sel', 0), uNoCabin = ou('noCabin', 0);
-  const col = attribute('color', 'vec4'), ext = attribute('extra', 'vec4'), LP = attribute('position', 'vec3');
+  const uRegOn = ou('regOn', 0), uReg = ou('reg', V4()), uRegRect = ou('regRect', V4());
+  const col = attribute('color', 'vec4'), ext = attribute('extra', 'vec4'), LP = attribute('position', 'vec3'), LN = attribute('normal', 'vec3');
   const zone = floor(ext.x.add(0.5));
   // retracted gear and open gear doors collapse away (ACR_VS)
   m.positionNode = select(uGearUp.greaterThan(0.5).and(zone.equal(3).or(zone.equal(4))), vec3(0), LP);
@@ -74,12 +83,32 @@ function realMaterial(tex, liveryTex, atlas = false) {
     }).ElseIf(kind.equal(2), () => { rough.assign(0.28); metal.assign(0.9); albedo.assign(max(albedo, vec3(0.55))); })
       .ElseIf(kind.equal(3), () => { rough.assign(0.7); })
       .ElseIf(kind.equal(4), () => { emis.assign(albedo.mul(uFusB.w.mul(40.0).add(0.6)).mul(uLights)); });
-    // painted cabin windows of the livery atlas (ACR_FS winA): smooth glass over a dark cabin, warm light at night
+    // painted cabin windows of the livery atlas (ACR_FS winA): smooth glass over a dark cabin, warm light at night;
+    // freighters and business jets on an airliner model (uNoCabin): the window texels are painted over in the top colour
+    let winA = float(0.0);
     if (atlas && tex) {
-      const winA = select(kind.equal(0), float(1.0).sub(smoothstep(0.35, 0.6, tx.a)), float(0.0));
+      const winA0 = select(kind.equal(0), float(1.0).sub(smoothstep(0.35, 0.6, tx.a)), float(0.0));
+      winA = winA0.mul(float(1.0).sub(uNoCabin));
+      albedo.assign(mix(albedo, uTop, winA0.mul(uNoCabin)));
       const h = hash12(floor(vec2(LP.x.mul(2.0), sign(LP.z))).add(13.0));
       albedo.assign(mix(albedo, vec3(0.012, 0.013, 0.015), winA)); rough.assign(mix(rough, 0.4, winA)); ccr.assign(mix(ccr, 0.02, winA));
       emis.addAssign(vec3(1.0, 0.78, 0.5).mul(h.mul(0.45).add(0.55)).mul(step(0.08, h)).mul(uFusB.w).mul(winA));
+    }
+    // registration (ACR_FS uReg*): uReg = (station from the nose, width, centre height, row height) in model units; the
+    // atlas slot uRegRect = (u0, v0, du, dv) holds the port-side row over the starboard row. Black texels are the letters,
+    // inked dark or white by the paint under them; coloured texels are the flag. Only on the fuselage sides (|LN.z| >
+    // 0.45) of paint (kind 0, zone 0), not on window glass.
+    {
+      const stb = LP.z.greaterThan(0.0);
+      const u0 = LP.x.negate().sub(uReg.x).div(max(uReg.y, 1e-4)); const u = select(stb, float(1.0).sub(u0), u0);
+      const v = uReg.z.add(uReg.w.mul(0.5)).sub(LP.y).div(max(uReg.w, 1e-4));
+      const inR = step(0.0, u).mul(step(u, 1.0)).mul(step(0.0, v)).mul(step(v, 1.0));
+      const ruv = vec2(uRegRect.x.add(clamp(u, 0.0, 1.0).mul(uRegRect.z)), uRegRect.y.add(clamp(v, 0.0, 1.0).add(select(stb, float(1.0), float(0.0))).mul(0.5).mul(uRegRect.w)));
+      const r = texture(regAtlas.tex, ruv);
+      const on = inR.mul(uRegOn).mul(select(kind.equal(0).and(zone.equal(0)), float(1.0), float(0.0))).mul(step(winA, 0.5)).mul(step(0.45, abs(LN.z))).mul(step(0.004, r.a));
+      const ink = step(max(r.r, max(r.g, r.b)), 0.03);
+      const inkC = select(dot(albedo, vec3(0.2126, 0.7152, 0.0722)).greaterThan(0.22), vec3(0.025, 0.027, 0.032), vec3(0.86, 0.87, 0.88));
+      albedo.assign(mix(albedo, mix(r.rgb, inkC, ink), r.a.mul(on)));
     }
     // selection rim (ACR_FS uSel)
     const V = normalize(cameraPosition.sub(positionWorld)); const N = normalize(normalWorld);
@@ -211,7 +240,18 @@ function liveryU(ac, U) {
   set('top', C.top); set('belly', C.belly); set('tail', C.tail); set('tail2', C.tail2); set('eng', C.eng); set('stripe', C.stripe);
   U.tailStyle = ac.liv.tailStyle; U.dirt = ac.dirt; U.sel = ac.selected || 0;
 }
-function realU(ac, U) {
+// imported models: LiveAircraft.realUniforms(LU) (the old renderer's per-frame call, js/live/aircraft.js) mapped onto the
+// per-object uniforms; its registration texture is not used (ac.uNoReg: the decal comes from RegAtlas, see there)
+function realU(ac, U, LU) {
+  if (typeof ac.realUniforms !== 'function') return realUFallback(ac, U);
+  ac.uNoReg = true; ac.realUniforms(LU);
+  const v3 = (k, a) => { (U[k] = U[k] || new THREE.Vector3()).set(a[0], a[1], a[2]); }, v4 = (k, a) => { (U[k] = U[k] || new THREE.Vector4()).set(a[0], a[1], a[2], a[3] ?? 0); };
+  v3('top', LU.uLivTop); v3('belly', LU.uLivBelly); v3('tail', LU.uLivTail); v3('tail2', LU.uLivTail2); v3('eng', LU.uLivEngine); v4('stripe', LU.uLivStripe);
+  U.bellyLine = LU.uBellyLine; U.tailStyle = LU.uTailStyle; U.dirt = LU.uDirt; U.noCabin = LU.uNoCabin ? 1 : 0;
+  v4('fus', LU.uFus); v4('fusB', LU.uFusB); U.lights = LU.uLights; U.gearUp = LU.uGearUp; U.sel = LU.uSel || 0;
+}
+// (an older LiveAircraft without realUniforms: the round-1 copy)
+function realUFallback(ac, U) {
   liveryU(ac, U);
   const L = ac.liv, T = ac.T, d = ac.model.dims; const s = T.L / d.L;
   U.bellyLine = (L.bellyLine * T.R / 1.98) / s;
@@ -219,7 +259,87 @@ function realU(ac, U) {
   const cockX = Math.max(2.5, (T.win && T.win[0] ? T.win[0].x0 - 0.45 : 0.12 * T.L)) / s;
   (U.fusB = U.fusB || new THREE.Vector4()).set(d.crown, d.belly, cockX, ac.cabin || 0);
   U.lights = (ac.lightsOn.landing || ac.lightsOn.taxi) ? 1 : 0; U.gearUp = ac.gear <= 0.001 ? 1 : 0;
-  U.noCabin = L && brandIsCargo(L.brand) ? 1 : 0;
+  U.noCabin = (L && brandIsCargo(L.brand)) || (ac.freighter && ac.freighter()) || (ac.T && ac.T.uniform) ? 1 : 0;
+}
+
+// ---------------------------------------------------------------- registration atlas
+// The registration decal of js/shaders/aircraft_real.js (uReg*), drawn into one shared canvas atlas instead of a texture
+// per aircraft (js/live/models.js registrationTexture keeps every registration ever drawn for the session: GPU memory that
+// grows with the traffic, review round 2 memory finding). Slots are given least-recently-used to the aircraft closest to
+// the camera (REG_DIST: beyond ~350 m a registration is under 2 px tall at 960 px across). Layout and placement replicate
+// js/live/models.js registrationTexture (lines ~281-325 on 26 Sep 2026: ROW, CAP, drawFlag, port row over starboard row,
+// flag aft of the text unless flag_first) and js/live/aircraft.js regUniforms (lines ~102-113: CAP_FRAC, h = P.h x F.H /
+// CAP_FRAC, station P.sn x F.L, height F.winY + P.dy x F.H); requested as exports in docs/requests/engine_exports.md §7.
+const REG_ROW = 64, REG_CAP = 0.74, REG_W = 512, REG_H = 2 * REG_ROW, REG_DIST = 350;
+function drawFlag(ctx, kind, x, y, h, mirror) { // js/live/models.js drawFlag (replica)
+  const w = h * (kind === 'MX' ? 7 / 4 : 19 / 10);
+  ctx.save(); ctx.translate(x + (mirror ? w : 0), y); ctx.scale(mirror ? -1 : 1, 1);
+  if (kind === 'US') {
+    for (let i = 0; i < 13; i++) { ctx.fillStyle = i % 2 ? '#FFFFFF' : '#B22234'; ctx.fillRect(0, i * h / 13, w, h / 13 + 0.5); }
+    ctx.fillStyle = '#3C3B6E'; ctx.fillRect(0, 0, w * 0.4, h * 7 / 13);
+    ctx.fillStyle = '#FFFFFF'; for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) { ctx.beginPath(); ctx.arc(w * 0.4 * (c + 0.5) / 6, h * 7 / 13 * (r + 0.5) / 5, h * 0.022, 0, 7); ctx.fill(); }
+  } else if (kind === 'MX') {
+    const cs = ['#006847', '#FFFFFF', '#CE1126']; cs.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(i * w / 3, 0, w / 3 + 0.5, h); });
+    ctx.fillStyle = '#8C5A2B'; ctx.beginPath(); ctx.arc(w / 2, h / 2, h * 0.14, 0, 7); ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(120,120,120,0.8)'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  ctx.restore(); return w;
+}
+class RegAtlas {
+  constructor(cols = 4, rows = 8) {
+    this.cols = cols; this.rows = rows; this.slots = []; this.byKey = new Map();
+    const W = cols * REG_W, H = rows * REG_H;
+    const cv = typeof document !== 'undefined' ? Object.assign(document.createElement('canvas'), { width: W, height: H }) : null; this.cv = cv; this.ctx = cv && cv.getContext('2d');
+    this.tex = cv ? new THREE.CanvasTexture(cv) : new THREE.DataTexture(new Uint8Array(4), 1, 1);
+    Object.assign(this.tex, { flipY: false, colorSpace: THREE.SRGBColorSpace, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, anisotropy: 8, premultiplyAlpha: false });
+    for (let i = 0; i < cols * rows; i++) this.slots.push({ i, key: null, last: 0, aspect: 1 });
+    this.dirty = false; this.tUp = 0;
+  }
+  // -> { rect: [u0, v0, du, dv], aspect } or null
+  get(reg, flag, flagFirst, now) {
+    if (!this.ctx || !reg) return null;
+    const key = reg + '|' + (flag || '') + '|' + (flagFirst ? 1 : 0);
+    let s = this.byKey.get(key);
+    if (!s) {
+      s = this.slots.reduce((a, b) => (a.last <= b.last ? a : b)); if (now - s.last < 0.5 && s.key) return null; // all slots in use this frame
+      if (s.key) this.byKey.delete(s.key);
+      s.key = key; this.byKey.set(key, s); s.aspect = this.draw(s, reg, flag, flagFirst); this.dirty = true;
+    }
+    s.last = now;
+    const c = s.i % this.cols, r = Math.floor(s.i / this.cols); const W = this.cols * REG_W, H = this.rows * REG_H;
+    return { rect: [(c * REG_W) / W, (r * REG_H) / H, s.w / W, REG_H / H], aspect: s.aspect };
+  }
+  draw(s, reg, flag, flagFirst) {
+    const ctx = this.ctx; const c = s.i % this.cols, r = Math.floor(s.i / this.cols); const x0 = c * REG_W, y0 = r * REG_H;
+    ctx.clearRect(x0, y0, REG_W, REG_H);
+    let px = Math.round(REG_ROW * REG_CAP / 0.72); ctx.font = `bold ${px}px Helvetica, Arial, "Liberation Sans", sans-serif`;
+    let tw = Math.ceil(ctx.measureText(reg).width); let fh = REG_ROW * REG_CAP, fw = flag ? fh * 1.9 : 0, gap = flag ? REG_ROW * 0.35 : 0;
+    let W = Math.ceil(tw + fw + gap + 8);
+    if (W > REG_W - 4) { const k = (REG_W - 4) / W; px = Math.floor(px * k); fh *= k; fw *= k; gap *= k; ctx.font = `bold ${px}px Helvetica, Arial, "Liberation Sans", sans-serif`; tw = Math.ceil(ctx.measureText(reg).width); W = Math.ceil(tw + fw + gap + 8); }
+    ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, REG_W, REG_H); ctx.clip(); ctx.textBaseline = 'alphabetic';
+    const row = (yy, flagLeft, mirror) => {
+      let x = x0 + 4; const base = yy + REG_ROW * (0.5 + REG_CAP / 2);
+      if (flag && flagLeft) { x += drawFlag(ctx, flag, x, base - fh, fh, mirror) + gap; }
+      ctx.fillStyle = '#000000'; ctx.fillText(reg, x, base); x += tw + gap;
+      if (flag && !flagLeft) drawFlag(ctx, flag, x, base - fh, fh, mirror);
+    };
+    row(y0, flagFirst, false); row(y0 + REG_ROW, !flagFirst, true);
+    ctx.restore(); s.w = W; return W / REG_ROW;
+  }
+  // upload at most twice a second (a full atlas upload; new registrations are rare)
+  flush(now) { if (this.dirty && now - this.tUp > 0.5) { this.tex.needsUpdate = true; this.dirty = false; this.tUp = now; } }
+}
+const regAtlas = new RegAtlas();
+// registration decal values for one aircraft (js/live/aircraft.js regUniforms, replicated: see RegAtlas)
+function regU(ac, U, near, now) {
+  U.regOn = 0; if (!near) return;
+  const reg = ac.registration ? ac.registration() : null; if (!reg) return;
+  const L = ac.liv; const B = (L && L.brand && LIVERY_BRANDS[L.brand]) || LIVERY_BRANDS._N || {}; const P = B.reg;
+  const F = ac._frame !== undefined ? ac._frame : liveryFrame(null, ac.modelKey); if (!P || !F) return;
+  const a = regAtlas.get(reg, P.flag || null, !!P.flag_first, now); if (!a) return;
+  const h = P.h * F.H / REG_CAP;
+  (U.reg = U.reg || new THREE.Vector4()).set(P.sn * F.L, h * a.aspect, F.winY + P.dy * F.H, h);
+  (U.regRect = U.regRect || new THREE.Vector4()).set(...a.rect); U.regOn = 1;
 }
 function procU(ac, U) {
   const P = ac.procUniforms(); liveryU(ac, U);
@@ -230,20 +350,71 @@ function procU(ac, U) {
   for (let i = 0; i < 9; i++) v4('q' + i, P.uPaneQ.slice(i * 4, i * 4 + 4));
 }
 
+// ---------------------------------------------------------------- livery textures: LRU on the GPU
+// Brand x model livery textures are fetched by LiveAircraft (js/live/models.js getLiveryTexture keeps every record for the
+// session; this renderer uploads each at once and drops its CPU copy). Review round 2: at daytime traffic the phone tier
+// grew past 600 MB of textures and kept growing. Now a texture that no aircraft within its LOD distance has used for
+// IDLE_S seconds is disposed (GPU memory freed) once the total is over the tier's budget (QUALITY3 livMB), and fetched
+// again from its URL (browser cache) when an aircraft needs it; meanwhile that aircraft is drawn as the procedural
+// airframe, as while a livery first loads.
+const IDLE_S = 20;
+class LiveryCache {
+  constructor(budgetMB, maxTex, onEvict) { this.budget = (budgetMB || 256) * 1048576; this.maxTex = maxTex || 0; this.map = new Map(); this.onEvict = onEvict; this.tCheck = 0; }
+  bytes() { let b = 0; for (const e of this.map.values()) if (e.state === 'ok') b += e.bytes; return b / 1048576; }
+  // THREE.Texture for the aircraft's livery record, or null while it is (re)loading
+  acquire(ac, now) {
+    const rec = ac.livTex; if (!rec) return null;
+    let e = this.map.get(rec);
+    if (!e) {
+      const tex = textureOf(rec, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace }); if (!tex) return null; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      const w = (rec.sw || rec.w || 1024), h = (rec.sh || rec.h || 1024);
+      e = { rec, tex, url: ac._livTexKey, bytes: w * h * 4 * 1.34, last: now, state: 'ok' }; this.map.set(rec, e);
+    }
+    e.last = now;
+    if (e.state === 'evicted') this.reload(e);
+    return e.state === 'ok' ? e.tex : null;
+  }
+  reload(e) {
+    if (!e.url || typeof fetch !== 'function' || typeof createImageBitmap !== 'function') return;
+    e.state = 'loading';
+    fetch(e.url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); }).then(b => {
+      const o = { premultiplyAlpha: 'none', colorSpaceConversion: 'none' };
+      return createImageBitmap(b, o).then(bmp => { const big = Math.max(bmp.width, bmp.height); if (!this.maxTex || big <= this.maxTex) return bmp; const k = this.maxTex / big; bmp.close(); return createImageBitmap(b, { ...o, resizeWidth: Math.round(bmp.width * k) || 1, resizeHeight: Math.round(bmp.height * k) || 1, resizeQuality: 'high' }); });
+    }).then(bmp => {
+      const t = e.tex; t.image = bmp; t.needsUpdate = true;
+      t.onUpdate = () => { const img = t.image; if (img && img.close) { const w = img.width, h = img.height; setTimeout(() => img.close(), 1500); t.image = { width: w, height: h, isReleased: true }; } };
+      e.state = 'ok';
+    }).catch(err => { console.warn('[r3] livery re-fetch failed', e.url, err); e.state = 'evicted'; e.url = null; });
+  }
+  // once a second: over budget -> dispose the least recently used textures idle for more than IDLE_S
+  evict(now) {
+    if (now - this.tCheck < 1) return; this.tCheck = now;
+    let total = 0; const ok = []; for (const e of this.map.values()) if (e.state === 'ok') { total += e.bytes; ok.push(e); }
+    if (total <= this.budget) return;
+    ok.sort((a, b) => a.last - b.last);
+    for (const e of ok) {
+      if (total <= this.budget || now - e.last < IDLE_S) break;
+      if (!e.url) continue; // cannot be fetched again: keep
+      if (this.onEvict) this.onEvict(e.tex);
+      e.tex.dispose(); e.state = 'evicted'; total -= e.bytes;
+    }
+  }
+}
+
 // ---------------------------------------------------------------- scene objects per aircraft
 export class AircraftRenderer {
-  constructor(scene, { noiseTex }) {
-    this.scene = scene; this.noiseTex = noiseTex;
+  constructor(scene, { noiseTex, Q = null, renderer = null }) {
+    this.scene = scene; this.noiseTex = noiseTex; this.Q = Q || {};
     this.group = new THREE.Group(); this.group.name = 'aircraft'; scene.add(this.group);
-    this.entries = new Map(); this.realMats = new Map(); this.realGeo = new Map();
+    this.entries = new Map(); this.realMats = new Map(); this.realGeo = new Map(); this.tipGeo = new Map();
     this.procDetailed = procMaterial(noiseTex, true); this.procSimple = procMaterial(noiseTex, false);
+    this.livCache = new LiveryCache(this.Q.livMB, this.Q.maxTex, (tex) => this.dropMaterials(tex));
+    this.t0 = performance.now();
   }
   // one material per draw of a model (x livery texture); the livery replaces texture 0 of atlas draws. A neutral skin
   // (js/aircraft/liveries.js neutralTextureFor: the type's own window row, no titles) is drawn like the model's atlas,
   // with the brand's colours by zone (ACR_FS uLivTex = 0); a brand bake is the paint itself (uLivTex = 1).
-  materialsFor(model, livRec, neutral = false) {
-    const livTex = livRec ? textureOf(livRec, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace }) : null;
-    if (livTex) livTex.wrapS = livTex.wrapT = THREE.RepeatWrapping;
+  materialsFor(model, livTex, neutral = false) {
     const key = model.key + (livTex ? ':' + livTex.uuid + (neutral ? ':n' : '') : '');
     let mats = this.realMats.get(key); if (mats) return mats;
     mats = model.draws.map(d => {
@@ -251,16 +422,28 @@ export class AircraftRenderer {
       const useLiv = !!(livTex && d.atlas);
       return realMaterial(useLiv ? livTex : t, useLiv && !neutral, !!d.atlas);
     });
-    this.realMats.set(key, mats); return mats;
+    mats.livTex = livTex; this.realMats.set(key, mats); return mats;
+  }
+  // a livery texture was evicted: its materials go (rebuilt from the program cache when the texture is back)
+  dropMaterials(tex) {
+    for (const [k, mats] of this.realMats) if (mats.livTex === tex) { this.realMats.delete(k); for (const m of mats) m.dispose(); }
+    for (const e of this.entries.values()) if (e.real && e.realLiv === tex) { e.group.remove(e.real); e.real = null; e.realModel = null; e.realLiv = null; }
   }
   geometryFor(model) {
     let g = this.realGeo.get(model); if (g) return g;
     g = geometryOf(model.mesh).clone(); g.clearGroups(); model.draws.forEach((d, i) => g.addGroup(d.first, d.count, i));
     g.computeBoundingSphere(); this.realGeo.set(model, g); return g;
   }
+  // procedural wing-tip device at the model's own wing tip (js/live/aircraft.js items(): tipDeviceData, cached per model)
+  tipFor(ac, M) {
+    const tk = ac.T.fit && ac.T.fit.tipAdd; if (!tk || !M.tip) return null;
+    const h = ac.T.wing && ac.T.wing.tipH || 2.4, u = 1 / (ac.T.L / M.dims.L); const key = M.key + ':' + tk + ':' + h.toFixed(2) + ':' + u.toFixed(4);
+    let g = this.tipGeo.get(key); if (!g) { g = geometryFromData(tipDeviceData(tk, M.tip, h, u)); this.tipGeo.set(key, g); }
+    return g;
+  }
   entry(ac) {
     let e = this.entries.get(ac); if (e) return e;
-    e = { group: new THREE.Group(), real: null, realModel: null, proc: null, parts: [], U: {} };
+    e = { group: new THREE.Group(), real: null, realModel: null, proc: null, tip: null, parts: [], U: {}, LU: {} };
     e.group.matrixAutoUpdate = false; this.group.add(e.group);
     const body = new THREE.Mesh(geometryOf(ac.M.body), this.procSimple); body.matrixAutoUpdate = false; body.userData.acU = e.U; body.castShadow = body.receiveShadow = true; e.group.add(body); e.proc = body;
     const add = (list, kind) => list.forEach((p, i) => { const m = new THREE.Mesh(geometryOf(p.mesh), this.procSimple); m.matrixAutoUpdate = false; m.userData.acU = e.U; m.castShadow = m.receiveShadow = true; m.userData.part = { kind, i, p }; e.group.add(m); e.parts.push(m); });
@@ -269,30 +452,42 @@ export class AircraftRenderer {
   }
   remove(ac) { const e = this.entries.get(ac); if (!e) return; this.group.remove(e.group); this.entries.delete(ac); }
   sync(list, camPos) {
+    const now = (performance.now() - this.t0) / 1000; this.now = now;
     const alive = new Set(list);
     for (const ac of [...this.entries.keys()]) if (!alive.has(ac)) this.remove(ac);
     for (const ac of list) this.update(ac, camPos);
+    this.livCache.evict(now); regAtlas.flush(now);
   }
-  // LiveAircraft.items() LOD rules: real model within lodDist, procedural body beyond, nothing past farDist
+  // LiveAircraft.items() LOD rules: real model within lodDist (procedural airframe while a livery the model's own atlas
+  // is wrong for is loading), procedural body beyond, nothing past farDist
   update(ac, camPos) {
     const e = this.entry(ac);
     const d = Math.hypot(camPos[0] - ac.pos[0], camPos[1] - ac.pos[1], camPos[2] - ac.pos[2]);
     e.group.visible = ac.visible !== false && d <= ac.farDist; if (!e.group.visible) return;
     const W = ac.matrix(); e.group.matrix.fromArray(W); e.group.matrixWorldNeedsUpdate = true;
     const shadow = d < ac.shadowDist;
-    const M = ac.model;
-    const useReal = M && d <= ac.lodDist;
-    const fullProc = !M && !ac.modelKey && d <= ac.lodDist; // no imported model for this type: full procedural airframe
+    const M = ac.model; const near = !!M && d <= ac.lodDist;
+    if (near && ac.updateLiveryTexture) ac.updateLiveryTexture(); // brand livery (async; ac.livTex once loaded)
+    let liv = null, pending = near && !!(ac.liveryPending && ac.liveryPending());
+    if (near && ac.livTex && !pending) { liv = this.livCache.acquire(ac, this.now); if (!liv && ac._ownAtlasWrong) pending = true; }
+    const useReal = near && !pending;
+    const fullProc = (!M && !ac.modelKey && d <= ac.lodDist) || (near && pending); // no imported model / livery pending
     if (useReal) {
-      if (ac.updateLiveryTexture) ac.updateLiveryTexture(); // brand livery (async; ac.livTex once loaded)
-      const liv = ac.livTex || null, neutral = !!ac._livNeutral; // js/live/aircraft.js updateLiveryTexture
-      if (e.realModel !== M || e.realLiv !== liv) {
+      const neutral = !!ac._livNeutral; // js/live/aircraft.js updateLiveryTexture
+      if (!e.real || e.realModel !== M) {
         if (e.real) e.group.remove(e.real);
-        e.real = new THREE.Mesh(this.geometryFor(M), this.materialsFor(M, liv, neutral)); e.real.matrixAutoUpdate = false; e.real.userData.acU = e.U; e.group.add(e.real); e.realModel = M; e.realLiv = liv;
+        e.real = new THREE.Mesh(this.geometryFor(M), this.materialsFor(M, liv, neutral)); e.real.matrixAutoUpdate = false; e.real.userData.acU = e.U; e.group.add(e.real); e.realModel = M;
       }
+      e.real.material = this.materialsFor(M, liv, neutral); e.realLiv = liv; // cached: a map lookup per frame
       e.real.matrix.fromArray(ac.placement()); e.real.visible = true; e.real.castShadow = shadow; e.real.receiveShadow = true;
-      realU(ac, e.U);
-    } else if (e.real) e.real.visible = false;
+      realU(ac, e.U, e.LU); regU(ac, e.U, d < REG_DIST, this.now);
+      // wing-tip device (procedural material, the livery's tail colour; placed with the model)
+      const tg = this.tipFor(ac, M);
+      if (tg) {
+        if (!e.tip || e.tip.geometry !== tg) { if (e.tip) e.group.remove(e.tip); e.tip = new THREE.Mesh(tg, this.procSimple); e.tip.matrixAutoUpdate = false; e.tip.userData.acU = e.U; e.group.add(e.tip); }
+        e.tip.matrix.fromArray(ac.placement()); e.tip.visible = true; e.tip.castShadow = shadow; e.tip.receiveShadow = true;
+      } else if (e.tip) e.tip.visible = false;
+    } else { if (e.real) e.real.visible = false; if (e.tip) e.tip.visible = false; }
     e.proc.visible = !useReal; e.proc.castShadow = shadow;
     if (!useReal) { procU(ac, e.U); e.proc.material = fullProc ? this.procDetailed : this.procSimple; }
     // procedural gear under gear-less imported models, and all moving parts of full procedural airframes

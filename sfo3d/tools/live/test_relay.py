@@ -168,12 +168,38 @@ class Gates(unittest.TestCase):
         a = g.payload()['aliases'].get('QXE2139')
         self.assertIsNotNone(a)
         self.assertEqual(a['to'], 'ASA2139')
-        self.assertEqual(a['checks'].get('type'), 'differ')
+        self.assertEqual(a['checks'].get('type'), 'family')   # E195 vs E75L: same family, a plausible database mis-entry
+        # a different family is not the same flight (SKW750R CRJ2 vs DAL750 B752, 25 Sep 19:38Z), nor a suffixed callsign
+        self.assertFalse(S.same_family('CRJ2', {'B752'}))
+        self.assertTrue(S.same_family('E195', {'E175'}) or S.same_family('E195', {'E75L'}))
         hub.live = {}
         a2 = g.payload()['aliases'].get('QXE2139')
         self.assertIsNotNone(a2)
         self.assertTrue(a2.get('held'))
         self.assertEqual(a2['to'], 'ASA2139')
+
+
+class Faa(unittest.TestCase):
+    def test_model_strings(self):
+        # FAA registry ACFTREF model strings seen on N-registered aircraft of the 24/25 Sep recording -> ICAO Doc 8643
+        for mfr, model, t in (('BOEING', '737-8', 'B38M'), ('BOEING', '737-9', 'B39M'), ('BOEING', '737-824', 'B738'), ('BOEING', '737-800', 'B738'),
+                              ('BOEING', '737-7H4', 'B737'), ('BOEING', '737-900ER', 'B739'), ('BOEING', '737-990ER', 'B739'), ('BOEING', '757-224', 'B752'),
+                              ('BOEING', '757-33N', 'B753'), ('BOEING', '767-300F', 'B763'), ('BOEING', '767-332', 'B763'), ('BOEING', '777-222', 'B772'),
+                              ('BOEING', '777-300ER', 'B77W'), ('BOEING', '777F', 'B77L'), ('BOEING', '787-9', 'B789'), ('BOEING', '787-10', 'B78X'),
+                              ('AIRBUS', 'A320-232', 'A320'), ('AIRBUS', 'A320-251N', 'A20N'), ('AIRBUS S A S', 'A321-271NX', 'A21N'), ('AIRBUS', 'A321-231', 'A321'),
+                              ('AIRBUS', 'A319-131', 'A319'), ('AIRBUS', 'A330-243', 'A332'), ('AIRBUS', 'A350-941', 'A359'), ('AIRBUS CANADA LP', 'BD-500-1A11', 'BCS3'),
+                              ('C SERIES AIRCRAFT LTD', 'BD-500-1A10', 'BCS1'), ('EMBRAER S A', 'ERJ 170-200 LR', 'E75L'), ('YABORA INDUSTRIA AERON', 'ERJ 170-200 LL', 'E75L'),
+                              ('EMBRAER', 'EMB-145LR', 'E145'), ('BOMBARDIER INC', 'CL-600-2B19', 'CRJ2'), ('MCDONNELL DOUGLAS', 'MD-11F', 'MD11'),
+                              ('TEXTRON AVIATION INC', 'B300', None), ('AGUSTA SPA', 'A109S', None)):
+            self.assertEqual(S.faa_icao(mfr, model), t, (mfr, model))
+
+    def test_registry_n670qx(self):
+        if not os.path.exists(os.path.join(S.FAA_DIR, 'MASTER.txt')):
+            self.skipTest('no FAA registry copy in refs/cache/faa')
+        R = S.FaaRegistry()
+        while not R.ready and R.err is None:
+            time.sleep(0.5)
+        self.assertEqual(R.get('a8dd2c'), 'E75L')   # N670QX (adsb.fi database: E195)
 
 
 class Routes(unittest.TestCase):

@@ -27,6 +27,45 @@ def fill(mask, rings, holes=True, val=1):
 def m(): return np.zeros((H, W), np.uint8)
 
 CX = m(); fill(CX, D['terminalComplex'][0])
+# Static fix-up (26 Sep 2026; review round 4: "T1, T3 ... footprints > 3 m off where roof lean cannot explain it (T1 / T3
+# over the curbside roadways)"). Evidence: the OpenStreetMap carriageways "Departures" (elevated, layer 1) and
+# "Arrivals" (ODbL; refs/cache/osm/overpass_landside_*.json, 26 Sep 2026) run INSIDE the SFO Museum complex along the
+# T1 north face and the T3 landside face, and NAIP 2024 shows vehicles on those lanes inside the modelled footprint
+# (refs/cache/stands/view/t3l.png, t1e.png). Within the two windows below, the complex is cut back by those carriageways
+# (centreline +- lanes x 3.6 m / 2; 2 lanes where OSM has no lanes tag - inferred). The sidewalk / canopy strip between
+# the carriageway and the facade stays building (the canopy overhangs it). N / S-facing faces: the east roof lean does
+# not move them, so the imaged vehicles are a valid check. Elsewhere (BA D SSE corner, BA A east face) no such ground
+# evidence exists and the misfits stay listed.
+TRIM_WINDOWS = {'Harvey Milk Terminal 1 north face (curbside roadways)': (-1050.0, 380.0, -790.0, 470.0),
+                'Terminal 3 landside face (curbside roadways)': (-975.0, 75.0, -865.0, 125.0)}
+TRIMMED = {}
+try:
+    import glob as _glob, sys as _sys
+    _sys.path.insert(0, HERE); import geo_frame as _GF
+    _meta = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'osm', 'overpass_landside_latest.meta.json')))
+    _osm = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'osm', _meta['file'])))
+    from shapely.geometry import LineString as _LS, box as _box
+    from shapely.ops import unary_union as _uu
+    _roads = []
+    for _e in _osm['elements']:
+        _t = _e.get('tags', {})
+        if _e['type'] != 'way' or 'geometry' not in _e or _t.get('highway') not in ('primary', 'secondary', 'tertiary', 'primary_link', 'secondary_link', 'tertiary_link'): continue
+        if _t.get('tunnel', 'no') != 'no' or _t.get('covered') == 'yes': continue
+        _w = float(_t['lanes']) * 3.6 if _t.get('lanes', '').replace('.', '').isdigit() else 7.2
+        _roads.append((_e['id'], _t.get('name'), _LS([_GF.wgs84_to_world(g['lat'], g['lon']) for g in _e['geometry']]).buffer(_w / 2, cap_style=2)))
+    for _name, (_x0, _z0, _x1, _z1) in TRIM_WINDOWS.items():
+        _win = _box(_x0, _z0, _x1, _z1); _cut = _uu([g.intersection(_win) for i_, n_, g in _roads if g.intersects(_win)])
+        if _cut.is_empty: continue
+        _mk = m()
+        for _g in getattr(_cut, 'geoms', [_cut]):
+            if _g.geom_type == 'Polygon' and not _g.is_empty: fill(_mk, [list(_g.exterior.coords)], holes=False)
+        _rm = (CX > 0) & (_mk > 0)
+        TRIMMED[_name] = {'removed_m2': round(float(_rm.sum()) * RES * RES), 'window': [_x0, _z0, _x1, _z1],
+                          'osm_ways': sorted({'%d %s' % (i_, n_) for i_, n_, g in _roads if g.intersects(_win)})}
+        CX[_rm] = 0
+    print('trimmed by OSM carriageways:', TRIMMED)
+except FileNotFoundError as _e:
+    print('OSM landside cache missing - footprints NOT trimmed:', _e)
 BA = {b['letter'] if b.get('letter') else b['name'][-1]: fill(m(), b['polys'][0]) & CX for b in D['boardingAreas']}
 TM = {t['name']: fill(m(), t['polys'][0]) & CX for t in D['terminals']}
 HALL_H = {'Harvey Milk Terminal 1': 20.0, 'Terminal 2': 19.0, 'Terminal 3': 21.0, 'International Terminal': 25.3}
@@ -130,13 +169,14 @@ _doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 
                                                  'Boarding Area A east face: +10.3 m vs 7.2 m predicted',
                                                  'Harvey Milk Terminal 1 hall: bulge over the departures roadway / AirTrain guideway (x -1047..-980, z 412..443)',
                                                  # review round 4 (lean-invariant N/S faces; the review measured the imaged glass facade / roof edge):
-                                                 'Harvey Milk Terminal 1 north face x -1000..-840: model 1.8 m (x -998) growing to ~12 m (x -866..-842) north of the imaged facade, over the curbside lanes',
-                                                 'Terminal 3 landside (S/SE-facing curve) x -960..-880: model 4.4-10 m beyond the imaged roof / canopy edge, over the curb lane',
+                                                 'Harvey Milk Terminal 1 north face x -1000..-840: model 1.8 m (x -998) growing to ~12 m (x -866..-842) north of the imaged facade, over the curbside lanes - TRIMMED by the OSM carriageways (see trimmed); the sidewalk / canopy strip stays',
+                                                 'Terminal 3 landside (S/SE-facing curve) x -960..-880: model 4.4-10 m beyond the imaged roof / canopy edge, over the curb lane - TRIMMED by the OSM carriageways (see trimmed)',
                                                  'Boarding Area D SSE corner near (-616, 208): model cuts ~10-15 m off the imaged roof corner',
                                                  'unconfirmed N/S-facing medians (review round 4 drawing audit): International Terminal N -3.0 / S +3.2 m, T3 S +6.2 m, BA E N +7.0 m'],
-                               'not_trimmed_why': 'review round 4: trimming needs a traced facade line; an automated NAIP facade detector (glass-band colour) was tried and is not reliable next to the AirTrain guideway and teal roofs, and the review\'s by-eye offsets are not a source - left as listed misfits (footprints are SFO Museum, CDLA; tolerance stated above)'}}
+                               'trimmed': {k: dict(v, how='complex cut back by the OSM carriageways (lanes x 3.6 m) inside the window; NAIP 2024 shows vehicles on them inside the SFO Museum footprint (static fix-up 26 Sep 2026)') for k, v in TRIMMED.items()},
+                               'not_trimmed_why': 'BA D SSE corner, BA A east face and the unconfirmed medians: no ground-contact evidence (the imaged roof corner of BA D is not separable from the concrete apron at NAIP contrast; the D3 bridge attaches there) and no OSM outline; the review\'s by-eye offsets are not a source - listed misfits (footprints are SFO Museum, CDLA; tolerance stated above)'}}
 json.dump(_doc, open(os.path.join(ROOT, 'data', 'sfo_buildings.json'), 'w'), separators=(',', ':'))
-open(os.path.join(ROOT, 'data', 'sfo_buildings.js'), 'w').write('// Terminal building parts derived from SFO Museum footprints by tools/build_terminal_parts.py\nexport const BUILDINGS = ' + json.dumps(_doc, separators=(',', ':')) + ';\n')
+open(os.path.join(ROOT, 'data', 'sfo_buildings.js'), 'w').write('// Terminal building parts derived from SFO Museum footprints (CDLA-Permissive-1.0), trimmed at T1 / T3 by OpenStreetMap carriageways (ODbL 1.0, (c) OpenStreetMap contributors) - tools/build_terminal_parts.py\nexport const BUILDINGS = ' + json.dumps(_doc, separators=(',', ':')) + ';\n')
 print('bytes', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_buildings.json')))
 # debug image
 img = np.zeros((H, W, 3), np.uint8)

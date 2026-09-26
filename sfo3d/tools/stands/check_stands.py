@@ -168,6 +168,9 @@ def main(quiet=False, app=True):
                 bucket = issues if t in obs else notes
                 # review round 3: the bridge's own model range (ext_range), not 9.846-41.381 m; also without a rotunda
                 if not (e0 - 1.0 <= ext <= e1 + 1.0):
+                    # static fix-up: a documented decision that this bridge does not dock the type (stand_table.DOCK_OUT_DECIDED)
+                    if t in (b.get('dock_out_why') or {}):
+                        notes.append((s['name'], '%s: extension %.1f m - not docked by decision (%s)' % (tag, ext, b['dock_out_why'][t]))); continue
                     if t in obs and GM.EXT_MAX + 1.0 < ext <= TK_MAX:
                         warns.append((s['name'], '%s: extension %.1f m beyond every Oshkosh unit (41.4 m) - manufacturer-dependent (TK Elevator apron drives '
                                                  'reach 50 m, reference points not stated; SFO\'s bridge makers are not published)' % (tag, ext)))

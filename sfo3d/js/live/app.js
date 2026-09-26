@@ -232,7 +232,8 @@ export async function startApp(cfg) {
     else if (a === 'delay') { atcDelayS = clamp(Math.round(v), 0, 30); store.set('atc.delay', atcDelayS); traffic.setAudioDelay(atcDelayS * 1000); status(Date.now()); }
     atcUpdate(Date.now()); ui.renderList(true, [...traffic.tracks.values()]);
   }
-  function statsSheet(now) { if (!ui.statsOpen()) return; const tD = traffic.displayTime(now); ui.setStatsSheet(statsHtml(runwayStats(traffic.events, tD), runwayQueue(traffic.tracks.values(), RWY))); }
+  function statsSheet(now) { if (!ui.statsOpen()) return; const tD = traffic.displayTime(now); const ages = (traffic.ages || []).filter(q => q[2]).map(q => q[1]).sort((a, b) => a - b);
+    ui.setStatsSheet(statsHtml(runwayStats(traffic.events, tD), runwayQueue(traffic.tracks.values(), RWY), { delayS: traffic.delay / 1000, audioS: (traffic.audioDelay || 0) / 1000, ageS: ages.length ? ages[ages.length >> 1] : null })); }
   const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net });
   // footprints of aircraft on the ground (vehicles around a stand must not hit them)
   gateSys.aircraftFootprints = () => {
@@ -275,7 +276,7 @@ export async function startApp(cfg) {
       v.pitch = D.pitch; v.roll = D.roll; v.gear = D.gear; v.flaps = D.flaps; v.spoilers = D.spoilers;
       if (v.liv !== tr.livery) { v.liv = tr.livery; v._pu = null; }
       const moving = !D.ground || D.gs > 0.5, air = !D.ground, ph = tr.phase;
-      v.lightsOn.nav = !tr.stale || nightF < 0.5; v.lightsOn.beacon = !tr.stale && (moving || ph === 'pushback' || ph === 'holding' || ph === 'lineup');
+      v.lightsOn.nav = !tr.stale || nightF < 0.5; v.lightsOn.beacon = !tr.stale && (moving || ph === 'pushback' || ph === 'pushed' || ph === 'holding' || ph === 'lineup');
       v.lightsOn.strobe = air || ph === 'takeoff' || ph === 'landing' || ph === 'lineup';  // strobes on entering the runway
       v.lightsOn.landing = (air && D.y - GROUND_Y < 3000) || ph === 'takeoff' || (ph === 'landing' && D.gs > 30);
       v.lightsOn.taxi = D.ground && (ph === 'taxi' || ph === 'holding' || ph === 'lineup') && !tr.stale;
@@ -335,6 +336,8 @@ export async function startApp(cfg) {
   let feedState = { state: 'wait', text: 'Connecting…' }; let gatesInfo = null;
   if (cfg.mode === 'snapshot') {
     const snap = cfg.snapshot;
+    // (one recorded instant: nothing goes silent in reality, so no silent docking of arrivals -- traffic.js silentDock)
+    traffic.noSilentDock = true;
     // the recorded snapshot is one instant: parked aircraft stay (kept alive, bridges stay docked); aircraft that were
     // moving are re-created every 90 s so they never run far from where they were recorded
     const load = () => {

@@ -13,6 +13,11 @@
 // field + lamp state, ground-bake tiles spread over frames, dynamic resolution quantised with hysteresis, bridges / GSE
 // independent of the sign font (canvas-atlas fallback when the MSDF font fails), IBL ground from the airfield bake's
 // mean colour, fatal-error UI (init failure, WebGPU device loss), per-frame draw-call / memory metrics.
+// Review round 2 changes made here: this class owns the canvas size (the app's size writes are recorded, not applied:
+// dynamic resolution used to leave three drawing into a corner of a full-size canvas), the day grade retuned for the
+// luminance-only AgX look, floodlight spots for the masts nearest the view + the ground-bounce albedo, masts on their
+// own layer, unused canvas sign atlases released once the MSDF font is in, sharpening strength from the render scale,
+// a progress overlay until the first frame, instanced cars on the garage roofs.
 import { THREE, TSL } from './lib.js';
 import { Engine, QUALITY3 } from './engine.js';
 import { Sky } from './sky.js';
@@ -25,7 +30,10 @@ import { Sprites } from './lights.js';
 import { AircraftRenderer } from './aircraft.js';
 import { geometryOf, textureOf, retainedImageBytes } from './convert.js';
 import { glCanvas, setMaxTextureSize, imageHooks } from './compat/gl.js';
-import { floodField, E_STAND } from './flood.js';
+import { disposeRecord } from './convert.js';
+import { floodField, E_STAND, mastE, mastAim, MAST_LAYER } from './flood.js';
+import { garageCars } from './objects.js';
+import { GROUND_Y } from '../geo.js';
 import { lampK } from './tsl/common.js';
 
 const { uniform } = TSL;
@@ -36,12 +44,14 @@ const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a)
 // Exposure. Day: the app's exposure (js/live/app.js applyEnv, 0.45 in sun) x DAY_GAIN (review round 1: sunlit white
 // paint rendered mid-grey, and the image was flat). DAY_GAIN and the AgX look (engine.js grade: contrast 1.8 in log2
 // around 18 % grey, look saturation 1.0, saturation 1.0) were chosen offline on HDR dumps of the named views
-// (tools/build3/grade_hdr.py; docs/research/engine_impl.md §4.4): gate view p1 62 / p50 212 / p99.5 246, close-up p1 40.
-// (Round-1 grade 1.2 / 1.4 / 1.1 / 1.05: p1 85, p99.5 238.) Night: derived from the floodlight
+// (tools/build3/grade_hdr.py; docs/research/engine_impl.md §4.4). Round 2 (luminance-only contrast 1.6, look saturation
+// 1.0 -> 1.8 on the shoulder): DAY_GAIN 0.80, gate view p1 39 / p50 189 / p99.5 233, open shade display B/R ~2.3 (was
+// 4.6 with the per-channel contrast), sunlit concrete ~190. (Round-1 grade 1.2 / 1.4 / 1.1 / 1.05: p1 85, p99.5 238;
+// round-1 final 1.02 / 1.8 per channel: p1 45, p99.5 243, navy shade, pastel paint.) Night: derived from the floodlight
 // level instead of the app's fixed 2.4: lit stand concrete (albedo RHO_CONC, the airfield bake's concrete) under the
 // ICAO stand average (E_STAND, js/three/flood.js) is placed at the display key KEY_NIGHT (exposed value that the AgX look
 // maps to ~18 % display grey). Between the two the app's darkness curve (sun elevation +2 deg .. -10 deg) blends.
-const DAY_GAIN = 1.02, KEY_NIGHT = 0.16, RHO_CONC = 0.37, APP_NIGHT_EXPO = 2.4;
+const DAY_GAIN = 0.80, KEY_NIGHT = 0.16, RHO_CONC = 0.37, APP_NIGHT_EXPO = 2.4;
 // Lamps vs sky (review round 1: "re-check dusk"). The lamps (floods, windows, signs, city lights, sprites) are authored in
 // lamp units (E_STAND = 0.62 = 20 lux) and the sun and sky in the sky model's units, where the sun outside the
 // atmosphere is env.sunI = 20 (js/live/app.js) = the luminous solar constant, ~133 klx (Darula, Kittler & Gueymard
@@ -72,6 +82,7 @@ export class Renderer3 {
     setMaxTextureSize(this.Q.maxTex); // image textures decoded after this point are capped (phones: 1024)
     this.canvas = glCanvas; this.dbgNoCast = qs.get('nocast') === '1'; this.fixedRes = qs.get('res') === '1';
     this.engine = new Engine(document.getElementById('app') || document.body, this.Q, { canvas: this.canvas });
+    this._ownCanvas();
     this.engine.onLost = (info) => this.lost(info);
     this.ready = false; this.failed = null; this.frames = 0; this.jobs = [];
     this.light = { sunDir: [0, 1, 0], sunColor: [1, 1, 1], skyUp: [0.3, 0.4, 0.6], skyHorizon: [0.5, 0.55, 0.6], ground: [0.1, 0.1, 0.1] };
@@ -102,6 +113,22 @@ export class Renderer3 {
     if (this.engine.backend === 'webgpu' && this.canvas) { try { this.canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true })); } catch (e) { } }
     this.fatal('The graphics device was lost (the GPU ran out of memory or was reset). <a href="#" onclick="location.reload()">Reload</a>, or pick a lower quality in Settings.', 'device lost: ' + (info && info.message));
   }
+  // The canvas size belongs to this class (review round 2, critical). js/live/app.js sets canvas.width/height to the
+  // full display size and asks for a smaller render size (dynamic resolution); three's setSize then sets the canvas to
+  // the render size; on the app's next resize check (every 2.5 s under load) it saw canvas.width != its size and reset
+  // the canvas to full size, while three kept drawing a render-size viewport into its lower-left corner (black
+  // elsewhere on WebGL 2; a colour/depth size mismatch on WebGPU). Now the app's writes to canvas.width/height are
+  // recorded as the intended display size (and reads return the real size three set), only the engine's own resize
+  // writes the canvas, and the browser scales the canvas to its CSS size as before.
+  _ownCanvas() {
+    const c = this.canvas; if (!c || c._r3owned) return;
+    const d = (k) => Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, k);
+    const W = d('width'), H = d('height'); if (!W || !W.set || !H || !H.set) return;
+    this._appCW = c.width; this._appCH = c.height; const E = this.engine;
+    Object.defineProperty(c, 'width', { configurable: true, get() { return W.get.call(this); }, set: (v) => { if (E._sizing) W.set.call(c, v); else this._appCW = v | 0; } });
+    Object.defineProperty(c, 'height', { configurable: true, get() { return H.get.call(this); }, set: (v) => { if (E._sizing) H.set.call(c, v); else this._appCH = v | 0; } });
+    c._r3owned = true;
+  }
   // ------------------------------------------------------------ old Renderer interface
   addProgram(name) { this.progs[name] = true; }
   // Render size. ?res=1 pins it to the canvas size x devicePixelRatio (QA renders). Otherwise the app's dynamic
@@ -110,17 +137,27 @@ export class Renderer3 {
   // the canvas itself (rotation, window resize) applies at once.
   resize(w, h) {
     const c = this.canvas;
-    if (this.fixedRes && c) { const d = Math.min(window.devicePixelRatio || 1, 2); w = Math.max(2, Math.round(c.clientWidth * d)); h = Math.max(2, Math.round(c.clientHeight * d)); }
-    else if (c && c.width > 0 && c.height > 0) {
-      const cw = c.width, ch = c.height; const ratio = Math.min(1, Math.max(w / cw, h / ch));
+    if (this.fixedRes && c) { const d = Math.min(window.devicePixelRatio || 1, 2); w = Math.max(2, Math.round(c.clientWidth * d)); h = Math.max(2, Math.round(c.clientHeight * d)); this._step = 1; }
+    else if (c) {
+      // intended display size: the app's last canvas size (recorded by _ownCanvas), else CSS size x the tier's DPR cap
+      const dpr = Math.min(window.devicePixelRatio || 1, this.Q.dprMax || 2);
+      const cw = this._appCW > 0 ? this._appCW : Math.max(1, Math.round(c.clientWidth * dpr)), ch = this._appCH > 0 ? this._appCH : Math.max(1, Math.round(c.clientHeight * dpr));
+      const ratio = Math.min(1, Math.max(w / cw, h / ch));
       const steps = [1, 0.85, 0.72, 0.6, 0.5, 0.4]; let st = steps[steps.length - 1]; for (const s of steps) if (s <= ratio + 0.03) { st = s; break; }
       const now = performance.now(); const canvasChanged = this._cw !== cw || this._ch !== ch;
-      if (!canvasChanged && this._step !== undefined && st !== this._step && now - (this._tStep || 0) < 8000) return; // hysteresis
-      if (!canvasChanged && st === this._step) return;
-      this._cw = cw; this._ch = ch; this._step = st; this._tStep = now;
+      // hysteresis: a step change at most every 8 s (a new size reallocates every post target and restarts TRAA)
+      if (!canvasChanged && this._step !== undefined && st !== this._step && now - (this._tStep || 0) < 8000) st = this._step;
+      if (canvasChanged || st !== this._step) { this._tStep = now; }
+      this._cw = cw; this._ch = ch; this._step = st;
       w = Math.max(2, Math.round(cw * st)); h = Math.max(2, Math.round(ch * st));
     }
-    this.W = w; this.H = h; if (this.ready) this.engine.resize(w, h, 1);
+    this.W = w; this.H = h;
+    // re-apply whenever the drawing buffer differs from the wanted size (also after someone else resized the canvas)
+    if (this.ready) {
+      const E = this.engine, v = E.renderer.getDrawingBufferSize(new THREE.Vector2());
+      if (v.x !== w || v.y !== h || (c && (c.width !== w || c.height !== h))) E.resize(w, h, 1);
+      E.casAmount.value = Math.min(0.8, 0.35 + (1 - (this._step || 1)) * 0.6); // sharpen more when fewer pixels are rendered
+    }
   }
   present() { }
   // sky model + ambient terms (synchronous, as js/renderer.js setupSky); GPU sky textures and the PMREM IBL follow at
@@ -142,7 +179,9 @@ export class Renderer3 {
     if (this.env) this.sky.setEnv(this.env);
     // apron floodlight field from the masts (before any material is compiled: the light node samples it)
     const masts = (world.details && world.details.masts) || [];
-    const f = floodField(masts); if (f) { this.engine.flood.setField(f); tlog('flood field ' + f.w + 'x' + f.h + ' (' + JSON.stringify(f.stats) + ')'); }
+    const t0 = performance.now(); const f = floodField(masts, { res: this.tier === 'low' ? 5 : 3 });
+    if (f) { this.engine.flood.setField(f); this.floodScale = f.scale; tlog('flood field ' + f.w + 'x' + f.h + 'x' + f.d + ' in ' + (performance.now() - t0).toFixed(0) + ' ms (' + JSON.stringify(f.stats) + ')'); }
+    this.masts = masts.map(([x, z]) => { const [ax, az] = mastAim(x, z); return { x, z, ax, az }; }); this.spotSel = [];
   }
   // js/world/world.js bakeGround(R, world, log, opts) (compat/world.js): queued as tiles, rendered in frameScene
   requestBake(world, opts = {}) {
@@ -156,7 +195,8 @@ export class Renderer3 {
   _onReady() {
     this.ready = true; this.resize(this.W, this.H); const E = this.engine;
     const qs = new URLSearchParams(location.search);
-    for (const k of ['sat', 'contrast', 'lookSat', 'vignette']) if (qs.get(k) != null) { E.grade[k].value = +qs.get(k); (this.gradeLock = this.gradeLock || {})[k] = true; }
+    for (const k of ['sat', 'contrast', 'lookSat', 'lookSatLo', 'vignette']) if (qs.get(k) != null) { E.grade[k].value = +qs.get(k); (this.gradeLock = this.gradeLock || {})[k] = true; }
+    if (qs.get('cas') != null) this.casLock = +qs.get('cas');
     for (const fn of this.jobs.splice(0)) fn();
     // upload decoded images at once and drop their CPU copies (js/three/compat/gl.js imageHooks, convert.js releaseImage)
     imageHooks.ready = (rec) => { if (rec.deleted) return; const t = textureOf(rec, { anisotropy: 8 }); if (t && t.image && !t.image.isReleased) { try { E.renderer.initTexture(t); } catch (e) { console.warn('[r3] texture upload', e); } } };
@@ -183,7 +223,7 @@ export class Renderer3 {
       let r = 0, g = 0, b = 0, w = 0; const s = px.BYTES_PER_ELEMENT === 1 ? 1 / 255 : 1;
       for (let i = 0; i < px.length; i += 4) { const a = px[i + 3] * s; r += px[i] * s * a; g += px[i + 1] * s * a; b += px[i + 2] * s * a; w += a; }
       const lin = (c) => c; // the bake target is linear (NoColorSpace, UnsignedByte)
-      if (w > 0) { this.groundAlb = [lin(r / w), lin(g / w), lin(b / w)]; this.envDirty = true; tlog('IBL ground albedo ' + this.groundAlb.map(v => v.toFixed(3)).join(',')); }
+      if (w > 0) { this.groundAlb = [lin(r / w), lin(g / w), lin(b / w)]; this.envDirty = true; this.engine.flood.bounce.set(...this.groundAlb); tlog('IBL ground albedo ' + this.groundAlb.map(v => v.toFixed(3)).join(',')); }
     }).catch(e => console.warn('ground albedo readback', e)).finally(() => { rt.dispose(); m.dispose(); });
   }
   // scene objects, built once the world, the sky and the first bake exist
@@ -199,7 +239,7 @@ export class Renderer3 {
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
     this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night }); E.fxScene.add(this.sprites.mesh);
-    this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex });
+    this.acr = new AircraftRenderer(S, { noiseTex: this.noiseTex, Q: this.Q, renderer: E.renderer });
     this.staticGroup = new THREE.Group(); this.staticGroup.name = 'world'; S.add(this.staticGroup);
     this.built = true; tlog('static scene built');
     // compile the scene's programs off the frame loop where the backend can (KHR_parallel_shader_compile / WebGPU
@@ -222,6 +262,12 @@ export class Renderer3 {
       } else if (p === 'obj') {
         const m = new THREE.Mesh(geometryOf(it.mesh), this.objMat); m.castShadow = !!it.castShadow; m.receiveShadow = true;
         m.matrixAutoUpdate = false; if (it.model) { m.matrix.fromArray(it.model); } G.add(m);
+        // the floodlight masts (js/live/items.js buildMasts: its first vertex is the first mast's base) on their own layer:
+        // the floodlight spot lights sit inside the mast heads and must not see them (js/three/flood.js MastSpot)
+        const P = it.mesh.data && it.mesh.data.pos, m0 = this.masts && this.masts[0];
+        if (P && m0 && Math.hypot(P[0] - m0.x, P[2] - m0.z) < 1.5 && Math.abs(P[1] - GROUND_Y) < 1.0) m.layers.set(MAST_LAYER);
+        // cars on the garage roofs as instanced boxes (review round 2: a mosaic of flat squares read as confetti)
+        const cars = garageCars(it.mesh.data, it.model, this.vehMat, this.tier); if (cars) G.add(cars);
       } else if (p === 'mark') {
         const m = new THREE.Mesh(geometryOf(it.mesh), this.markMat); m.frustumCulled = false; m.receiveShadow = true; m.renderOrder = 1; m.matrixAutoUpdate = false; G.add(m);
       } else if (p === 'sign') this.pendingSigns.push(it);
@@ -238,6 +284,7 @@ export class Renderer3 {
     // airfield signs: MSDF text once the font is there; the canvas atlas (as live.html draws them) if it failed
     if (this.pendingSigns.length && (this._signMats() || this.fontFailed)) {
       if (!this.worldLookup) this.worldLookup = faceIndex(worldSignAtlasMap(W.details || {}));
+      if (this.signMats) this._releaseAtlases(this.pendingSigns);
       for (const it of this.pendingSigns.splice(0)) {
         let g;
         if (this.signMats) { const d = it.mesh.data; const sb = new SignBuilder(this.font); sb.addSignArrays({ pos: d.pos, nrm: d.nrm, uv: d.uv, ext: d.extra }, this.worldLookup); g = signMeshes(sb, this.signMats, 'signs'); }
@@ -245,6 +292,14 @@ export class Renderer3 {
         if (!g) continue; if (!it.castShadow) g.traverse(o => { o.castShadow = false; }); G.add(g);
       }
     }
+  }
+  // the canvas sign atlases are only the fallback when the MSDF font fails (review round 2: three 2048-wide atlases were
+  // uploaded and kept although nothing sampled them): released as soon as the MSDF materials exist
+  _releaseAtlases(items) {
+    this._relAt = this._relAt || new Set();
+    const rel = (r) => { if (r && !this._relAt.has(r)) { this._relAt.add(r); disposeRecord(r); } };
+    for (const it of items || []) { const u = typeof it.uniforms === 'function' ? null : it.uniforms; if (u) rel(u.uAtlas || u.uTex); }
+    const gs = this.sceneShim && this.sceneShim.gateSys; if (gs && gs.atlas && this.bridges && this.bridges.signMats) rel(gs.atlas.tex);
   }
   // fallback sign mesh: the builder's own quads and canvas atlas (uniforms.uAtlas), js/live/signs.js SIGN_FS look
   _atlasSign(it) {
@@ -266,7 +321,7 @@ export class Renderer3 {
       this.engine.scene.add(this.bridges.group);
     }
     if (this.bridges) {
-      if (!this.bridges.signMats && this._signMats()) this.bridges.setSignFont(this.font, this.signMats);
+      if (!this.bridges.signMats && this._signMats()) { this.bridges.setSignFont(this.font, this.signMats); this._releaseAtlases(null); }
       else if (!this.bridges.signMats && this.fontFailed && !this.bridges.atlasFallback) this.bridges.useAtlasFallback();
       this.bridges.update(Date.now()); sc.gateSys.sprites = this.bridges.sprites;
     }
@@ -276,7 +331,7 @@ export class Renderer3 {
   render(fr, cam, t, post = {}) {
     const E = this.engine;
     const C = this._camInfo(cam);
-    if (!this.ready || !this.built || !this.compiled) return C;
+    if (!this.ready || !this.built || !this.compiled) { this._progress(); return C; }
     const R = E.renderer, S = E.scene, L = this.light;
     // environment: GPU sky, sun, IBL (after the app's night-floor adjustment of R.light)
     if (this.envDirty) {
@@ -296,6 +351,7 @@ export class Renderer3 {
     const nightF = this.extraCommon.uNight || 0;
     this.time.value = t; this.night.value = nightF; this.nightE.value = nightF * LAMP_M; lampK.value = Math.pow(LAMP_M, nightF);
     E.flood.intensity = nightF * LAMP_M; // floodlights switch on with the app's night factor (sun below ~6 deg .. -4 deg)
+    this._floodSpots(cam, nightF * LAMP_M);
     const wu = this.world.waterU; if (this.wMat && wu) { const u = this.wMat.userData; if (wu.uWind) u.uWind.value.set(wu.uWind[0], wu.uWind[1]); if (wu.uWaveAmp != null) u.uAmp.value = wu.uWaveAmp; }
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
@@ -317,9 +373,36 @@ export class Renderer3 {
     G.grain.value = post.grain ?? 0; G.time.value = t;
     if (E.bloomNode) E.bloomNode.strength.value = 0.035 * ((post.bloom ?? 0.012) / 0.012);
     if (this.dbgNoCast) S.traverse(o => { if (o.isMesh) o.castShadow = false; });
-    const tr0 = performance.now(); E.render(); this.frames++;
+    const tr0 = performance.now(); E.render(); this.frames++; if (this.frames === 1) this._progress(true);
     if (this.frames <= 3 || this.frames % 50 === 0) console.log('[r3] frame ' + this.frames + ' ' + (performance.now() - tr0).toFixed(0) + ' ms (t=' + ((performance.now() - T0) / 1000).toFixed(1) + ' s)');
     return C;
+  }
+  // floodlight spots: the masts that light the point the camera looks at most (horizontal irradiance there, the same
+  // intensity distribution as the field), with hysteresis so the choice does not flip every frame
+  _floodSpots(cam, on) {
+    const E = this.engine, n = E.spots.length; if (!n || !this.masts || !this.masts.length) return;
+    if (!(on > 0)) { E.setFloodSpots(this.spotSel, 0, this.floodScale || 1); return; }
+    const p = cam.pos; const dir = cam.dir || [cam.target[0] - p[0], cam.target[1] - p[1], cam.target[2] - p[2]];
+    let f = cam.target ? cam.target : null;
+    if (!f) { const l = Math.hypot(...dir) || 1; const tg = dir[1] < -1e-3 ? Math.min(600, (p[1] - GROUND_Y) / (-dir[1] / l)) : 300; f = [p[0] + dir[0] / l * tg, GROUND_Y, p[2] + dir[2] / l * tg]; }
+    const score = (m) => mastE(f[0], GROUND_Y + 2, f[2], m.x, m.z, m.ax, m.az)[1];
+    const ranked = this.masts.map(m => [score(m), m]).filter(a => a[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, n).map(a => a[1]);
+    const sum = (L) => L.reduce((s, m) => s + (m ? score(m) : 0), 0);
+    if (!this.spotSel.length || sum(ranked) > 1.3 * sum(this.spotSel)) this.spotSel = ranked;
+    E.setFloodSpots(this.spotSel, on, this.floodScale || 1);
+  }
+  // progress overlay until the first frame is drawn (review round 2: the app removes its loading overlay when its own
+  // start-up is done, while the first bake, the scene build and the program compile still take seconds on a phone and
+  // minutes on a software rasteriser, and the canvas stayed black). Same look as the app's (#loading in live.css).
+  _progress(done = false) {
+    let o = this._pov;
+    if (done) { if (o) { o.classList.add('done'); setTimeout(() => o.remove(), 700); this._pov = null; } this._povDone = true; return; }
+    if (this._povDone || this.failed || document.getElementById('loading') && !this._pov) return; // the app's overlay is still up
+    if (!o) { o = document.createElement('div'); o.id = 'loading'; o.innerHTML = '<div class="lbox"><div class="brand big"><b>SFO</b> Live 3D</div><div class="bar"><i></i></div><div class="msg"></div></div>'; (document.getElementById('app') || document.body).appendChild(o); this._pov = o; }
+    const B = this.bakes; const tot = B ? (this._bakeTot = Math.max(this._bakeTot || 0, B.pending)) : 0;
+    const fr = !this.built ? 0.1 + 0.6 * (tot ? 1 - B.pending / tot : 0) : !this.compiled ? 0.8 : 0.95;
+    const msg = !this.built ? 'Baking the airfield textures…' : !this.compiled ? 'Compiling shaders…' : 'Drawing the first frame…';
+    o.querySelector('.bar i').style.width = Math.round(fr * 100) + '%'; const m = o.querySelector('.msg'); if (m.textContent !== msg) m.textContent = msg;
   }
   // camera record for the app (labels / picking use C.vpNear = projection x rotation-only view, C.pos, C.fov)
   _camInfo(cam) {
@@ -343,7 +426,9 @@ export class Renderer3 {
     const out = { meshes: nObj, visible: nVis, backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H,
       drawCalls: I.render.drawCalls, frameCalls: I.render.frameCalls, tris: I.render.triangles, renderCallsTotal: I.render.calls, frames: this.frames,
       texMB: +((I.memory.texturesSize || 0) / 1048576).toFixed(1), textures: I.memory.textures, renderTargets: I.memory.renderTargets, retainedImageMB: +(retainedImageBytes() / 1048576).toFixed(1),
-      expo: +this.engine.expo.value.toFixed(3), eKeyLux: this.eKey != null ? Math.round(this.eKey * LUX_PER_UNIT * 10) / 10 : null, night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null };
+      expo: +this.engine.expo.value.toFixed(3), eKeyLux: this.eKey != null ? Math.round(this.eKey * LUX_PER_UNIT * 10) / 10 : null, night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null,
+      canvas: this.canvas ? [this.canvas.width, this.canvas.height] : null, appCanvas: [this._appCW, this._appCH], step: this._step, spots: this.engine.spots.map(s => s.intensity > 0 ? [Math.round(s.position.x), Math.round(s.position.z), s.castShadow] : null),
+      livMB: this.acr && this.acr.livCache ? +this.acr.livCache.bytes().toFixed(1) : null };
     if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name }); } }
     return out;
   }

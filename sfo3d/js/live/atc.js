@@ -108,7 +108,7 @@ export function atcRoles(tr, T, now = Date.now()) {
       if (tr.cs && tr.cs.airline && depExpected) out.push({ role: 'clr', f: 118.2, key: 'clr', conf: 'low' });
       break;
     }
-    case 'pushback': out.push({ role: 'ramp', f: null, key: 'ramp', conf: 'low' }); break;
+    case 'pushback': case 'pushed': out.push({ role: 'ramp', f: null, key: 'ramp', conf: 'low' }); break;
     case 'taxi': case 'holding':
       if (apron()) out.push({ role: 'ramp', f: null, key: 'ramp', conf: 'low' });
       else out.push({ role: 'gnd', f: 121.8, key: 'gnd', conf: 'med' });

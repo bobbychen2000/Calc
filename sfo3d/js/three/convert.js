@@ -85,3 +85,13 @@ function releaseImage(t, rec) {
 export function retainedImageBytes() { let b = 0; for (const r of retained) { const s = r.source; if (s && s.width) b += s.width * s.height * 4; else if (r.pending) b += (r.w || 0) * (r.h || 0) * 4; } return b; }
 // release pixel memory held by the record once three.js owns the texture (it keeps its own copy only until upload)
 export function releaseRecord(recOrWrap) { const rec = recOrWrap && recOrWrap.isTexRecord ? recOrWrap : recOrWrap && recOrWrap.tex; if (rec) { rec.data = null; } }
+// free a texture record that nothing will sample (review round 2: the canvas sign atlases were uploaded and kept on the
+// GPU although the MSDF signs never sample them): the three.js texture is disposed (GPU memory), the record marked
+// deleted so a pending image copy is closed on arrival (js/three/compat/gl.js snapshot) and not uploaded
+export function disposeRecord(recOrWrap) {
+  let rec = recOrWrap; for (let i = 0; i < 3 && rec && !rec.isTexRecord; i++) rec = rec.tex;
+  if (!rec || !rec.isTexRecord) return false;
+  const t = texCache.get(rec); if (t) { t.dispose(); texCache.delete(rec); }
+  rec.deleted = true; rec.data = null; const s = rec.source; if (s && s.close) s.close(); rec.source = null; retained.delete(rec);
+  return true;
+}

@@ -353,16 +353,17 @@ export class LiveGateSystem {
     for (const g of this.gates) if (g.bridges && g.bridges.length > 1) this.shareWalks(g);
     const restOf = new Map(all.map(({ b }) => [b, this.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true)]));
     for (const { g, b } of all) {
-      const others = all.filter(o => o.b !== b && Math.hypot(o.b.rot[0] - b.rot[0], o.b.rot[2] - b.rot[2]) < 70).map(o => restOf.get(o.b));
+      const others = all.filter(o => o.b !== b && Math.hypot(o.b.rot[0] - b.rot[0], o.b.rot[2] - b.rot[2]) < 70).map(o => restOf.get(o.b)).flat()
+        .map(o => ({ o, r: Math.hypot(o.hl, o.hw) }));
       const acs = this.standAircraft(g); const tg = b._tg || [];
       const q0 = { a: b.a0, e: b.e0, t: 0, h: b.h0 };
       const poses = [{ q: q0, ac: acs }].concat(tg.map(t => ({ q: { a: t.a, e: t.e, t: 0, h: t.sill }, ac: [{ T: TYPES[t.key], nose: [t.nose[0], t.nose[2]], f: [t.f[0], t.f[2]] }] })),
-        this.sweepQ(g, b, false).map(q => ({ q, ac: [] }))); // (every candidate docking path, sampled)
+        this.sweepQ(g, b, false).filter((q, i) => i % 3 === 0).map(q => ({ q, ac: [] }))); // (every candidate docking path, sampled)
       const bad = {};
       for (const sd of [1, -1]) { b.stairSide = sd; let n = 0;
         for (const P of poses) { const S = this.stairBoxes(b, P.q);
           if (S.some(bx => P.ac.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 0.5)))) n += 2;
-          if (S.some(bx => others.some(O => O.some(o => o.hi > bx.lo && o.lo < bx.hi && solidOverlap(bx, o, 0.3))))) n += 1;
+          if (S.some(bx => { const rb = Math.hypot(bx.hl, bx.hw) + 0.3; return others.some(({ o, r }) => Math.abs(o.c[0] - bx.c[0]) < r + rb && Math.abs(o.c[1] - bx.c[1]) < r + rb && o.hi > bx.lo && o.lo < bx.hi && solidOverlap(bx, o, 0.3)); })) n += 1;
           if (S.some(bx => { const v = [-bx.u[1], bx.u[0]]; return [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 0]].some(([i, j]) => inBuilding(bx.c[0] + bx.u[0] * bx.hl * i + v[0] * bx.hw * j, bx.c[1] + bx.u[1] * bx.hl * i + v[1] * bx.hw * j)); })) n += 2; }
         bad[sd] = n; }
       b.stairSide = bad[-1] < bad[1] ? -1 : 1;
@@ -424,11 +425,13 @@ export class LiveGateSystem {
     const c = yawOf(-left[0], -left[2]);
     return { a, e, t: wrap(c - a), h: door[1] - G, door, left, pivot: p };
   }
-  // sheet limits for a joint state: operational range (+-1 m, the data's tolerance), cab turn, rotunda swing
+  // sheet limits for a joint state: operational range (-1 m / up to the mechanical stop, below), cab turn, rotunda swing
   jointOk(b, q, icao) {
     const m = b.m; const turn = CW * q.t / DEG; const opt = b.cabOption && /^optional/.test(b.cabOption);
     if (icao && b.dockTypesOut && b.dockTypesOut.includes(icao)) return { ok: false, why: 'dock_types_out' };
-    if (q.e < m.opR - 1.0 || q.e > m.opE + 1.0) return { ok: false, why: `extension ${q.e.toFixed(1)} m outside ${m.opR}-${m.opE}` };
+    // (reach: the sheet's operational range; up to 0.3 m short of the mechanical stop - fully extended minus the cab
+    // spacer - where a parked aircraft stands beyond it: the tunnels can travel there, the data's model is an inference)
+    if (q.e < m.opR - 1.0 || q.e > Math.max(m.opE + 1.0, m.mechE - 0.3)) return { ok: false, why: `extension ${q.e.toFixed(1)} m outside ${m.opR}-${m.opE} (mechanical ${m.mechE.toFixed(1)})` };
     if (opt ? Math.abs(turn) > CAB_OPT_HALF : (turn > CAB_CW || turn < -CAB_CCW)) return { ok: false, why: `cab turn ${turn.toFixed(0)} deg` };
     if (!b.swingFree && Math.abs(wrap(q.a - b.ac)) > ROT_SWING * DEG + 1e-6) return { ok: false, why: `rotunda swing ${(wrap(q.a - b.ac) / DEG).toFixed(0)} deg` };
     return { ok: true };

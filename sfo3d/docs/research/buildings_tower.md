@@ -483,3 +483,155 @@ python3 tools/buildings/tower_photo_profile.py    # photo ratios (needs refs/cac
 
 Credit NAIP as: "USDA NAIP (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain". The photos
 are reference only; their authors and licences are listed in the spec.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Verification
+
+Adversarial fact-check, 26 Sep 2026 (section 12 of this note). I re-fetched every cited source I could reach and tried to
+refute each key height, dimension, date and licence. Where I could, I used a *different* method from the one above.
+- Tool: `tools/buildings/tower_verify.py` writes `out/buildings/tower/verify/verify.json` and runs offline from the caches.
+- Re-fetched sources are in `refs/cache/buildings/tower/src/verify_*`:
+  - OE/AAA cases 285, 286 and 287;
+  - NAIP FGDC metadata for 2016, 2018 and 2022;
+  - the FAA release, KQED, AviationPros 2015, CTBUH, Front and CoreBrace.
+- Commons EXIF and licences: `commons_exif_verify.json`.
+- `js/` and `data/` are untouched. Refuted or disputed values are corrected in `tools/buildings/spec_tower.json`. Each one
+  carries a `verification` record, and a `corrected` record holds the previous value.
+
+**Verdicts.** CONFIRMED: an independent check agrees. PLAUSIBLE: consistent, but not pinned tighter. DISPUTED: an
+independent check conflicts with it. CORRECTED or REFUTED: shown wrong.
+
+### 12.1 Claim by claim
+
+| # | Claim | Verdict | Evidence |
+|---|---|---|---|
+| 1 | DOF 245 ft AGL / 258 AMSL is the 2008 proposal envelope (case 2008-AWP-286-NRA, site 13) | **CONFIRMED** | Re-fetching the live OE/AAA API returns an identical case: 245 AGL, 13 ft site, created 2008-05-06, determined 2008-08-20. The letter was re-read. The DOF row 06-323169 is identical, with accuracy 4D = ±250 ft / ±50 ft (DOF_README). |
+| 2 | Quote "We will not build above 245'" | **CORRECTED (wording)** | The full text reads "245' **AMSL**". This is a template slip: sibling cases 285 (site 13A, "241' AMSL" for 241 AGL) and 287 (site 6B, "290' AMSL" for 290 AGL) repeat the AGL figure. So 245 ft AGL stands. |
+| 3 | DOF JDATE 2025-084 is "a later record update" | **CORRECTED** | ACTION = **A (Add)**. The DOF_README defines Action A/C as Add/Change and the Julian date as the date of action. The obstacle was *added* in March 2025 with the 2008 proposal values. The accuracy is still 4D. |
+| 4 | Filed "four years before the design" | **IMPRECISE** | Filed May 2008; construction began June 2012 (FAA, AIC). No date for the design is published. |
+| 5 | Published height 221 ft | **CONFIRMED** | Re-read in the FAA release (AviationPros copy, 11 Oct 2016), KQED, HNTB, ENR, MCN, AIC and Patch. Also in Front (facade consultant) and CoreBrace. CTBUH/CVU lists 67.4 m / 221 ft as "architectural height … not including antennae". That is a database classification of the same number, not a survey. |
+| 6 | Alternatives 220 / 228 / 231 ft | **CONFIRMED as published**, with a caveat | 220 ft: STRUCTURE, Fentress. 228 ft: Archinect. 231 ft: AviationPros 28 Dec 2015. **The same AviationPros article also says "The 221-foot flared tower"**, so 231 is probably a typo. The idea that 231 ft is the antenna-tip height loses its support. |
+| 7 | 221 ft = grade to the top of the cab roof (rim 67.36 m) | **DISPUTED** | See 12.3. A photo span plus the NAIP ratio gives a rim at 63–66 m for a cab diameter of 14.3–15.0 m. 67.36 m needs D ≥ 15.1 m. "221 ft to the mast tips" (rim + about 3.2 m) fits D ≈ 14.5 m equally well. |
+| 8 | Base-building roof 14.2 ± 1.5 m | **DISPUTED** | NAIP ratio re-derived from the §4.2 SE-edge offsets: 0.209, 0.195, 0.226 and 0.175 (mean 0.20), agreeing with the NCC ratio of 0.21. But the photos put the airside parapet at 17.5 m if the rim is 67.36 and D is 14.3 (16.3 m if D is 14.75). The spec now gives a range of 12.7–16.5 and the ratio 0.20–0.21 × h_roof_top. |
+| 9 | "The measurements hang together" (147-ft ribbon from the base roof ends at the flare) | **NOT DISCRIMINATING** | The ribbon's start and end levels are unpublished. The check is also met by D ≈ 14.75 with the ribbon running from parapet to flare top (3.01 D = 44.4 m = 146 ft), and by other combinations. |
+| 10 | Cab-roof diameter 14.3 ± 1.0 m, with three measurements agreeing | **PLAUSIBLE**; the derivation is flawed | (a) The 11-ft-panel scale uses cos 20.4°. Seen from 13° below, the near-side glass projects as cos(20.4° − 13.1°) ≈ 0.99, and the limbs are about 2.5 % farther away. The same pixels then give about 15.5 m if the whole 11-ft panel is visible. (b) Google is reference only. (c) OSM is traced from lean-affected imagery. **Independent check** (EXIF focal length + GPS, two Famartin iPhone photos from opposite sides): 14.27 m and 15.21 m at x −739. Their mean, 14.73–14.76 m, is the same for any cab x from −744 to −734, giving **14.75 ± 0.5 m**. The NAIP edge is ambiguous (50 % crossings at r 6.0–7.75 m). |
+| 11 | Flare 22.6 ± 1.5 m | **PLAUSIBLE** | Flare-to-rim ratio re-measured as 1.560 (Famartin, 749/480 px, automatic), and 1.58 for the A380 photo (the earlier 650 px over the re-measured 411-px rim), against 1.605 used. That gives 22.3–23.3 m. |
+| 12 | Cab glass leans out 20 ± 4° | **PLAUSIBLE** | With the upward view taken into account the lean is about 22°. |
+| 13 | A380 photo: cab roof = 405 px | **MINOR** | Automatic re-measurement gives 411 px, so `shaft_profile_ratio_A380` is about 1.5 % high. Not rewritten, as it is inside the tolerance. |
+| 14 | Photo stations (seams, flare, glass, floor, masts) | **RATIOS CONFIRMED**; absolute heights inherit item 7 | Re-measured independently on Famartin 11:57 (EXIF scale, pinhole perspective): with the rim anchored at 67.36, the seams come out at 44.0–44.5 and 29.8–30.7 m (A380: 44.3 and 29.5). All of them move with h_roof_top, possibly about 4 m lower. |
+| 15 | Cab-roof centre z = 323.5 ± 2 | **CONFIRMED** | Disc fits re-inspected on 1-m-grid crops; they are centred to about 0.5 m. **Stronger reason than the one given:** NAIP 2016 and 2018 were flown with a Leica ADS100 pushbroom at a nadir look angle (FGDC), so there is no north–south lean by design; z = 323.35 and 323.20. 2022 is a frame sensor (ContentMapper), which allows along-track lean; z = 325.3 is the outlier. OE/AAA site 13A is at z 324.9 and OSM at 322.6. |
+| 16 | NAIP quote "flight lines … north/south orientation" | **INCOMPLETE** | The 2018 and 2022 metadata continue "…**or east/west where required for efficiency**". The E–W lean seen in all four epochs shows these particular strips were N–S. |
+| 17 | Cab x = −739 ± 5 from the SE wall line and the lean ratio ("−747…−734") | **Value PLAUSIBLE; derivation REFUTED** | With the §4.2 offsets and ratio 0.20–0.21, the wall-line method gives **x = −750 … −758** if the SFO Museum outline is exact (x = x_cab − offset / (0.886 ρ); each metre of outline error moves x by 5.4 m). "−747…−734" does not reproduce. **New hard bound:** NAIP 2022's ContentMapper has a 67.1° across-track field of view at 4470 m, so the lean is at most 0.673 m per m of height. That gives x ≥ −698.75 − 0.673·H = **−744.1** (H 67.36) or −741.3 (H 63.3), and about −739.6 if the mosaic seam lies mid-overlap. A solve that equates the diameters from the two opposite cameras gives −751 ± 10. It is weak and falls outside the bound. |
+| 18 | The current 3-D shaft is at the footprint centroid (−740.9, 331.7), about 7 m too far south | **CONFIRMED** | `buildTower` uses the vertex mean of the 4-vertex atc ring, which equals the area centroid (−740.93, 331.71). 331.7 − 324.5 = 7.2 m. |
+| 19 | Footprint 45.0 × 27.2 m, 1,221 m², 27.7° | **CONFIRMED** | 44.95 × 27.2 m, 1,219.9 m² in `data/sfo_airport.json`, long axis 27.7°. |
+| 20 | Dates: construction from June 2012, structure done Aug 2015, dedicated 11 Oct 2016, in use from 15 Oct 2016 | **CONFIRMED** | FAA release (dated Oct. 11, 2016: "today dedicating", "began in June 2012", "will start using … October 15"). WPM award: "completed in August 2015". Hensel Phelps: January 2016, 43 months. Patch: "Tuesday" (11 Oct 2016 was a Tuesday). CTBUH: completed 2015, 12 floors (Hensel Phelps: "13-story"). |
+| 21 | 650 sq ft; 235° / 270° / 220°; 24 panels of 6 ft × 11 ft; 44k / 42k / 50k / 55k / 60k sq ft; 147 ft; 1,500 panels; 10,000 sq ft of ACM; 2,000 sq ft roof garden; 35-ft glass ceiling; 4 BRBs; 26 PT cables; piles 125 ft / 140 ft | **CONFIRMED as published** | Each was re-read in its cited source. CoreBrace adds "4 welded BRBs". Front adds that the panels are flat and cold-curved in one direction. |
+| 22 | The 2008 letter requires red obstruction lights; no fixture seen in photos | **First part CONFIRMED; second part REFUTED** | Letter: "Tower pentrates [sic] a part 77 surface. Requires red obstruction lights." Varnum 0463 (2018-04-29 20:00 PDT, dusk) shows **a lit red fixture on the cab-roof rim** on the SW side. Whether it is steady (L-810) or flashing (L-864) cannot be told. For the owner of `tools/env/lighting_spec.json`: one fixture observed on the rim, not on a mast. |
+| 23 | Photo licences and authors | **CONFIRMED** | All 10 photos in `photos.items` were re-checked against the Commons API (licence, author, date). **Corrected:** the A380 photo has **no EXIF GPS**. Its camera point comes from the Commons {{Location}} template, set by hand. Its 403-mm EXIF implies 1,545 m (not 1,751 m) for a 14.3-m cab, which is harmless for ratios. **8 cached "photos" are Wikimedia error pages**, not images; none of them feeds a number. |
+| 24 | Architect Magazine details (core walls, 13 positions, roof column) | **STILL UNVERIFIED** | HTTP 403 again; Wayback returned 429. |
+
+### 12.2 New facts found
+
+| Fact | Value | Source |
+|---|---|---|
+| OE/AAA sibling site 13A (case 2008-AWP-285-NRA) | world (−737.0, 324.9), NAD83; 241 ft AGL | OE/AAA API |
+| OE/AAA sibling site 6B (case 2008-AWP-287-NRA) | world (−996.5, 474.4); 290 ft AGL | OE/AAA API |
+| Offset of site 13A from the adopted cab centre | 2 m | computed |
+| Offset of site 13 (the one the DOF copies) from the adopted cab centre | 12 m south | computed |
+
+Which proposal the as-built tower follows is not documented.
+
+**NAIP sensors** (FGDC metadata):
+
+| Year | Sensor | Look / field of view | Flying height | Lateral overlap |
+|---|---|---|---|---|
+| 2016 | Leica ADS100 pushbroom (SH100 or SH120) | nadir look | 4,400 m or 8,400 m | 30 % |
+| 2018 | Leica ADS100 pushbroom (SH100 or SH120) | nadir look | 4,400 m or 8,400 m | 30 % |
+| 2022 | Leica ContentMapper frame | 67.1° across-track | 4,470 m | 20 % |
+
+The 2020 FGDC file returns 404.
+
+### 12.3 Consistency test of the heights and the cab diameter
+
+Two quantities do not depend on the scale:
+
+**(i) Photo span.** The span from the cab-roof rim to the airside parapet of the base building (IBF), in units of the
+cab-roof diameter D:
+
+| Photo | How measured | Span |
+|---|---|---|
+| Famartin 11:57 | full pinhole model: EXIF pixel angle, GPS camera at 263 m, the parapet on the SFO Museum SE edge at 247 m | 3.49 D |
+| Soufi A380 | near-orthographic; the occluder is a foreground roof, not certainly the IBF parapet | 3.44 D |
+
+The Famartin parapet was read where it hides the shaft, at row 2007; the rim near side at row 290.
+
+**(ii) NAIP ratio.** h_IBF / h_rim = 0.20–0.21.
+
+With the parapet about 0.7 m above the roof, **H_rim = (3.46·D + 0.7) / (1 − ρ)**:
+
+| D (m) | H_rim at ρ = 0.20 | H_rim at ρ = 0.21 | H_rim at ρ = 0.25 |
+|---|---|---|---|
+| 14.3 | 63.3 m (208 ft) | 64.1 m (210 ft) | 67.5 m |
+| 14.7 | 65.0 m (213 ft) | 65.8 m (216 ft) | 69.4 m |
+| 15.0 | 66.3 m (218 ft) | 67.2 m (220 ft) | 70.7 m |
+| 15.3 | 67.6 m (222 ft) | 68.5 m (225 ft) | 72.1 m |
+
+**Result.** The spec's set {rim 67.36 m, D 14.3 m, IBF roof 14.2 m} fails this test by about 3 m. Two families are each
+self-consistent:
+
+| Family | D | Rim | 221 ft is measured to | Base-building roof |
+|---|---|---|---|---|
+| **(1)** | about 15.1–15.3 m | at 221 ft | the rim | about 14 m |
+| **(2)** | about 14.3–14.75 m | 63–65 m | the mast tips (rim + about 3.2 m) | about 13 m |
+
+The best independent D, 14.75 ± 0.5 m from the EXIF check, lies between the two, at H_rim = 65 ± 2 m. The available data
+cannot decide between them. The spec now carries:
+- h_roof_top with confidence low and range 63.0–67.6 m;
+- h_ibf_roof with range 12.7–16.5 m;
+- a note on every photo station that it inherits this range.
+
+**This must be settled before the 2-D sheet:** either draw both families, or get one of the items in 12.5.
+
+### 12.4 Changes made to `spec_tower.json`
+
+- `h_top_published`:
+  - note corrected (231 ft is probably a typo);
+  - sources Front, CoreBrace and CTBUH added.
+- `h_dof_envelope`: note corrected (ACTION A = added on 2025-084; the AMSL slip explained).
+- `h_roof_top`:
+  - confidence medium → **low**;
+  - `range` [63.0, 67.6] added.
+- `h_ibf_roof`:
+  - `tolerance_m` 1.5 → **`range` [12.7, 16.5]**;
+  - `ratio_to_h_roof_top` [0.20, 0.21] and `photo_constraint` added;
+  - confidence → low.
+- `position_cab_roof_centre`:
+  - note on the x derivation corrected;
+  - `x_bounds` added: hard minimum −744.1, likely −739.6;
+  - value unchanged.
+- `photos`:
+  - camera source of the A380 photo corrected;
+  - the error-page files listed;
+  - the red light in Varnum 0463 recorded.
+- `obstruction_lighting`: note corrected (one fixture observed).
+- `position_faa`: sibling sites added.
+- Additions:
+  - `verification` records on every checked value;
+  - two `conflicts`;
+  - one `open_questions` entry;
+  - a note on `model_proposal_provisional`.
+- New sources: `ctbuh`, `front`, `corebrace`, `naip_fgdc`.
+
+### 12.5 What would settle the open points
+
+1. **D and the height reference** (family 1 or 2). Any one of these would do:
+   - one ground photo from a surveyed point, with EXIF, showing both the rim and grade;
+   - the NAIP shadow length with the acquisition time (the FGDC gives only dates);
+   - an SFO or FAA elevation drawing.
+2. **x.** Now bounded at −744 or more by the sensor geometry. An SFO/FAA site plan or the county 15 cm ortho would close it.
+
+Reproduce:
+```bash
+python3 tools/buildings/tower_verify.py
+```

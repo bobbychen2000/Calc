@@ -1,7 +1,7 @@
 {
  "id": "sfo_atct_2016",
  "title": "SFO Airport Traffic Control Tower (2016) and Integrated Facilities / base building - research spec",
- "status": "RESEARCH DRAFT for owner review (2026-09-26). Not approved; no 2-D sheet or 3-D model built from it yet.",
+ "status": "RESEARCH DRAFT for owner review (2026-09-26). Not approved; no 2-D sheet or 3-D model built from it yet. Adversarial fact-check appended 2026-09-26 (doc s.12): values marked verification.verdict; corrected fields carry a \"corrected\" record with the previous value.",
  "doc": "docs/research/buildings_tower.md",
  "frame": "ltp-nad83-2011 (tools/geo_frame.py = js/geo.js): x east, z south, metres from the ARP; heights in m above local grade unless noted",
  "tags": {
@@ -16,7 +16,7 @@
    "url": "https://oeaaa.faa.gov/oeaaa/asn-display/asn-case-display-page.html?asn=2008-AWP-286-NRA",
    "api": "POST https://oeaaa.faa.gov/oeaaa/oe3a/external/portal-api/caseFiling/dynamicCaseDataByAsn.do {asnYear:2008,asnRegion:'AWP',asnSequence:'286',asnCaseType:'NRA'}; letter: .../letterDataByLetterId.do {letterId:103217287}",
    "type": "primary (FAA)",
-   "cache": "refs/cache/buildings/tower/src/oe_case_2008AWP286NRA.json, oe_letter_2008AWP286NRA.pdf"
+   "cache": "refs/cache/buildings/tower/src/oe_case_2008AWP286NRA.json, oe_letter_2008AWP286NRA.pdf; siblings 2008-AWP-285-NRA (site 13A) and -287-NRA (site 6B) re-fetched 2026-09-26: verify_oe_case_2008AWP{285,286,287}NRA.json"
   },
   "faa_dof": {
    "title": "FAA Digital Obstacle File DAILY_DOF_CSV (DOF.CSV dated 2026-09-18), obstacle 06-323169 CTRL TWR",
@@ -97,7 +97,7 @@
    "cache": "refs/cache/buildings/tower/src/aic.txt"
   },
   "aviationpros_2015": {
-   "title": "Airport Business / AviationPros 'SFO's Towering Achievement', 28 Dec 2015",
+   "title": "Airport Business / AviationPros 'SFO's Towering Achievement', 28 Dec 2015 - NB the same article gives BOTH 'The 231-foot air traffic control tower' (lead) and 'The 221-foot flared tower' (body) [verification]",
    "url": "https://www.aviationpros.com/airport-business/airport-infrastructure-operations/airports-municipalities/article/12146472/sfos-air-traffic-control-tower",
    "type": "trade press quoting owner/designers",
    "cache": "refs/cache/buildings/tower/src/aviationpros.txt"
@@ -149,10 +149,34 @@
    "url": null,
    "type": "reference-only imagery",
    "cache": "refs/cache/buildings/tower/google/ (local, never shipped)"
+  },
+  "ctbuh": {
+   "title": "CTBUH / Council on Vertical Urbanism Skyscraper Center 'San Francisco International Airport Traffic Control Tower' (id 17879): architectural height 67.4 m / 221 ft ('to the architectural top ... not including antennae'), 12 floors, completed 2015",
+   "url": "https://www.skyscrapercenter.com/building/san-francisco-international-airport-traffic-control-tower/17879",
+   "type": "height database (compiles published figures)",
+   "cache": "refs/cache/buildings/tower/src/verify_ctbuh.{html,txt}"
+  },
+  "front": {
+   "title": "Front Inc. (facade consultant) 'SFO Control Tower & Terminal Connector Lobby': '221-foot-tall'; panels flat, cold-curved in one direction",
+   "url": "https://front.global/project/sfo-control-tower/",
+   "type": "consultant page",
+   "cache": "refs/cache/buildings/tower/src/verify_front.{html,txt}"
+  },
+  "corebrace": {
+   "title": "CoreBrace 'SFO Air Traffic Control Tower': 221 feet, 270-degree views, 4 welded BRBs",
+   "url": "https://corebrace.com/project/sfo-air-traffic-control-tower/",
+   "type": "supplier page",
+   "cache": "refs/cache/buildings/tower/src/verify_corebrace.{html,txt}"
+  },
+  "naip_fgdc": {
+   "title": "NAIP DOQQ m_3712229_ne FGDC metadata 2016 / 2018 / 2022 (sensor, look angles, field of view, flying height, overlap)",
+   "url": "https://naipeuwest.blob.core.windows.net/naip/v002/ca/<year>/ca_fgdc_<year>/37122/",
+   "type": "primary (USDA NAIP metadata)",
+   "cache": "refs/cache/buildings/tower/src/verify_naip_fgdc_{2016,2018,2022}.txt"
   }
  },
  "photos": {
-  "note": "Wikimedia Commons photos used as REFERENCE ONLY (measurements of ratios); pixels stay in refs/cache/buildings/tower/photos/ (gitignored). GPS = camera EXIF, world = tools/geo_frame.wgs84_to_world; bearing = from the cab towards the camera.",
+  "note": "Wikimedia Commons photos used as REFERENCE ONLY (measurements of ratios); pixels stay in refs/cache/buildings/tower/photos/ (gitignored). GPS = camera EXIF, world = tools/geo_frame.wgs84_to_world; bearing = from the cab towards the camera. [verification] 8 of the cached files in photos/ are Wikimedia HTTP error pages, not images (KSFO9, KSFO9 (cropped), Aero Mexico 737, SFO Control Tower under construction Sept 2013, SFO Control tower night, SFO Terminal 2 from AirTrain, flySFO control tower is so lovely, Tower 14471147716, Sarah Stierch 02); none of them feeds a number here. Licences, authors and dates of the 10 photos listed below were re-checked against the Commons API (2026-09-26): all correct.",
   "items": [
    {
     "file": "File:SFO - New Control Tower & A380.jpg",
@@ -163,7 +187,14 @@
     "camera_world": [329.8, 1710.0],
     "dist_m": 1751,
     "bearing_deg": 142,
-    "use": "near-orthographic side profile (telephoto from 1.75 km): vertical stations, width ratios"
+    "use": "near-orthographic side profile (telephoto from 1.75 km): vertical stations, width ratios",
+    "camera_source": "Commons {{Location}} template (37.6034, -122.3717; 4 decimals, set by hand) - NOT EXIF: the EXIF (Canon EOS 6D, 403 mm) carries no GPS [verification]",
+    "verification": "EXIF pixel angle x the 411-px rim implies a camera distance of 1545 m for d_cab_roof 14.3 m (or d_cab_roof 16.0 m at 1751 m); the photo stays usable for ratios (near-orthographic either way), not for an absolute scale.",
+    "corrected": {
+     "field": "camera_world source",
+     "previous": "implied EXIF GPS (photos.note)",
+     "reason": "EXIF has no GPS"
+    }
    },
    {
     "file": "File:2025-08-12 11 57 15 The control tower at San Francisco International Airport in San Mateo County, California.jpg",
@@ -218,7 +249,8 @@
     "camera_world": [-884.5, 468.8],
     "dist_m": 206,
     "bearing_deg": 225,
-    "use": "LED ribbon lit, fin, antenna array, cladding joints"
+    "use": "LED ribbon lit, fin, antenna array, cladding joints",
+    "verification": "a lit red fixture sits on the cab-roof rim (SW side) at dusk (20:00 PDT): the first observed obstruction light. EXIF GPS (camera-app geotag) is inconsistent with the rim's angular size by ~20 % -> not used for scale."
    },
    {
     "file": "File:San Francisco International Airport - April 2018 (0465).jpg",
@@ -305,7 +337,11 @@
    "value": "siting study / FAA airspace case 2008 (site 13); construction start June 2012; structure complete Aug 2015 (WPM) / Jan 2016 (Hensel Phelps); dedication 11 Oct 2016; FAA operations from 15 Oct 2016",
    "tag": "pub",
    "confidence": "high",
-   "src": ["faa_oeaaa_2008", "faa_pr_2016", "wpm_award", "henselphelps", "sfomuseum"]
+   "src": ["faa_oeaaa_2008", "faa_pr_2016", "wpm_award", "henselphelps", "sfomuseum"],
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "OE/AAA case created 2008-05-06, determined 2008-08-20; 'Construction on the new tower began in June 2012' (FAA PR, AIC); 'completed in August 2015' (WPM award); Hensel Phelps completion January 2016 (43 months); dedication Tuesday 11 Oct 2016 (FAA PR dated Oct. 11, 2016; Patch 'Tuesday'); FAA use from 15 Oct 2016 (FAA PR, future tense; SFO Museum inception 2016-10-15). CTBUH: completion 2015, 12 floors (Hensel Phelps: '13-story')."
+   }
   },
   {
    "id": "h_top_published",
@@ -315,8 +351,12 @@
    "value_m": 67.36,
    "tag": "pub",
    "confidence": "high (number) / low (definition)",
-   "src": ["faa_pr_2016", "kqed_2016", "hntb", "enr_2016", "aic_2017", "mcn_2017"],
-   "note": "'the new tower is 221 feet tall'. Reference points NOT stated: assumed top of cab roof above local grade, excluding antennas (consistent with the photo stations below). Alternatives: 220 ft (Fentress, STRUCTURE 2017), 228 ft (early design, Archinect), 231 ft (AviationPros Dec 2015 - matches our antenna-tip estimate). OSM uses 67.36 m (=221 ft)."
+   "src": ["faa_pr_2016", "kqed_2016", "hntb", "enr_2016", "aic_2017", "mcn_2017", "front", "corebrace", "ctbuh"],
+   "note": "'the new tower is 221 feet tall'. Reference points NOT stated: assumed top of cab roof above local grade, excluding antennas (consistent with the photo stations below). Alternatives: 220 ft (Fentress, STRUCTURE 2017), 228 ft (early design, Archinect), 231 ft (AviationPros Dec 2015 lead; the same article's body says '221-foot', so 231 is probably a typo, not an antenna-tip height [corrected by verification]). OSM uses 67.36 m (=221 ft).",
+   "verification": {
+    "verdict": "NUMBER CONFIRMED; DEFINITION NOT CONFIRMED",
+    "evidence": "221 ft re-read in the FAA release (AviationPros copy, 11 Oct 2016), KQED, HNTB, ENR (27 Sep 2016), MCN, AIC, Patch, plus Front and CoreBrace; 220 ft in STRUCTURE and Fentress; 228 ft in Archinect. CTBUH/CVU lists 67.4 m / 221 ft as 'architectural height ... not including antennae' - a database classification of the same published number, not a survey. An independent photogrammetric test (s.12.3) puts the cab-roof rim at 63-67 m, so 'grade to roof rim' and 'grade to mast tips (rim + ~3.2 m)' both remain possible."
+   }
   },
   {
    "id": "h_dof_envelope",
@@ -328,7 +368,11 @@
    "tag": "pub",
    "confidence": "high (as an envelope) / NOT an as-built height",
    "src": ["faa_oeaaa_2008", "faa_dof"],
-   "note": "DOF 06-323169 (verified 'O', accuracy 4D = +-250 ft horizontal, +-50 ft vertical, lighting R, marking N, study 2008AWP00286NR, record date 2025-084) carries the 2008 NRA airspace-study values: 'proposed ATCT location ... site 13 ... We will not build above 245' AMSL' (sic; the case itself is 245 AGL / 258 AMSL, site elevation 13 ft). It is the approved maximum, filed 4 years before design; use it as an upper bound only."
+   "note": "DOF 06-323169 (verified 'O', accuracy 4D = +-250 ft horizontal, +-50 ft vertical, lighting R, marking N, study 2008AWP00286NR, ACTION A = added, dated 2025-084 (DOF README: Action A/C = Add/Change, Julian Date = Date of Action) [corrected by verification: not an update]) carries the 2008 NRA airspace-study values: 'proposed ATCT location ... site 13 ... We will not build above 245' AMSL' (sic; the case itself is 245 AGL / 258 AMSL, site elevation 13 ft). It is the approved maximum, filed 4 years before design; use it as an upper bound only.",
+   "verification": {
+    "verdict": "CONFIRMED",
+    "evidence": "Live OE/AAA API re-fetch of 2008-AWP-286-NRA returns the identical case (245 AGL, 13 ft site, 258 AMSL, 37.61578056 -122.38382778, created 2008-05-06, determined 2008-08-20); letter text re-read; DOF.CSV row 06-323169 identical incl. accuracy 4D (+-250 ft H, +-50 ft V per DOF_README). The description's \"245' AMSL\" is a template slip: sibling cases 285 (241 AGL/254 AMSL, \"241' AMSL\") and 287 (290 AGL/306 AMSL, \"290' AMSL\") repeat the AGL figure with 'AMSL', so 245 ft AGL stands."
+   }
   },
   {
    "id": "site_elevation",
@@ -350,7 +394,11 @@
    "tag": "inf",
    "confidence": "low",
    "src": ["photos", "h_top_published"],
-   "note": "Mast tips 3.0-3.35 m above the roof rim in the 2015 (A380) and 2025 (Famartin 11:57) photos, scaled by the cab-roof diameter; ~232 ft, cf. 231 ft in AviationPros. Mast count/heights change over time (2015: ~8 masts; 2025: ~12 masts + camera poles)."
+   "note": "Mast tips 3.0-3.35 m above the roof rim in the 2015 (A380) and 2025 (Famartin 11:57) photos, scaled by the cab-roof diameter; ~232 ft, cf. 231 ft in AviationPros. Mast count/heights change over time (2015: ~8 masts; 2025: ~12 masts + camera poles).",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_roof_top",
@@ -358,9 +406,22 @@
    "value": 67.36,
    "unit": "m",
    "tag": "inf",
-   "confidence": "medium",
+   "confidence": "low",
    "src": ["h_top_published"],
-   "note": "anchor = 221 ft (definition assumed)."
+   "note": "anchor = 221 ft (definition assumed).",
+   "corrected": {
+    "field": "confidence, range",
+    "previous": {
+     "confidence": "medium",
+     "range": null
+    },
+    "reason": "photogrammetric consistency test (doc s.12.3)"
+   },
+   "range": [63.0, 67.6],
+   "verification": {
+    "verdict": "DISPUTED (not refuted)",
+    "evidence": "Test: photos give rim -> base-building airside parapet = 3.46 +- 0.05 x d_cab_roof (Famartin 11:57 with full perspective 3.49; A380 3.44); NAIP gives h_IBF / h_roof ~ 0.20-0.21. Together H_rim = (3.46 D + 0.7) / (1 - rho): 63.3-64.1 m for D 14.3, 65.0-65.8 for D 14.7, 67.6-68.5 for D 15.3. 67.36 m therefore needs D >= ~15.1 m; with the opposite-camera EXIF estimate D = 14.75 +- 0.5 it is 65 +- 2 m (213 ft)."
+   }
   },
   {
    "id": "h_cab_glass_top",
@@ -371,7 +432,11 @@
    "tag": "inf",
    "confidence": "medium",
    "src": ["photos"],
-   "note": "A380 photo: 75 px below the roof rim at 0.0353 m/px (scale: cab roof dia 14.3 m = 405 px)."
+   "note": "A380 photo: 75 px below the roof rim at 0.0353 m/px (scale: cab roof dia 14.3 m = 405 px).",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_cab_glass_bottom",
@@ -381,7 +446,11 @@
    "tolerance_m": 0.6,
    "tag": "inf",
    "confidence": "medium",
-   "src": ["photos"]
+   "src": ["photos"],
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_cab_floor",
@@ -392,7 +461,11 @@
    "tag": "inf",
    "confidence": "low",
    "src": ["photos", "archmag_snippet"],
-   "note": "bottom of the light sill band under the glass (A380 photo 180 px below rim). Consistent with a '200-foot high concrete core' (60.96 m; snippet only). OSM min_height 60 m. The FAA cab floor elevation is not published in anything found."
+   "note": "bottom of the light sill band under the glass (A380 photo 180 px below rim). Consistent with a '200-foot high concrete core' (60.96 m; snippet only). OSM min_height 60 m. The FAA cab floor elevation is not published in anything found.",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_flare_max",
@@ -403,7 +476,11 @@
    "tag": "inf",
    "confidence": "medium",
    "src": ["photos"],
-   "note": "widest silhouette of the flared shaft top (A380 photo, 225 px below rim). The flare's flat top (cab base deck) is ~1.5 m higher."
+   "note": "widest silhouette of the flared shaft top (A380 photo, 225 px below rim). The flare's flat top (cab base deck) is ~1.5 m higher.",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_upper_slots",
@@ -413,7 +490,11 @@
    "tag": "inf",
    "confidence": "medium",
    "src": ["photos"],
-   "note": "band of dark inclined slots (louvres?) on the flare, all round the airside half."
+   "note": "band of dark inclined slots (louvres?) on the flare, all round the airside half.",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_seams",
@@ -423,7 +504,11 @@
    "tag": "inf",
    "confidence": "medium",
    "src": ["photos"],
-   "note": "two light circumferential joint lines visible on all photos (A380 and Famartin agree to 1 %)."
+   "note": "two light circumferential joint lines visible on all photos (A380 and Famartin agree to 1 %).",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_narrowest",
@@ -434,7 +519,11 @@
    "tag": "inf",
    "confidence": "medium",
    "src": ["photos"],
-   "note": "waist of the hyperboloid-like shaft."
+   "note": "waist of the hyperboloid-like shaft.",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_lower_slot",
@@ -444,18 +533,35 @@
    "tag": "inf",
    "confidence": "low",
    "src": ["photos"],
-   "note": "single long inclined dark slot on the airside (SE) face."
+   "note": "single long inclined dark slot on the airside (SE) face.",
+   "verification": {
+    "verdict": "RATIOS CONFIRMED; ABSOLUTE INHERITS h_roof_top",
+    "evidence": "Every photo station is h_roof_top - k x d_cab_roof. Re-measured independently on the Famartin 11:57 photo with EXIF scale + GPS and pinhole perspective: seams at 44.0-44.5 and 29.8-30.7 m when anchored at 67.36 (A380: 44.3 / 29.5). The stated tolerance ignores the h_roof_top range (63.0-67.6): all stations may sit up to ~4 m lower."
+   }
   },
   {
    "id": "h_ibf_roof",
    "group": "vertical_stations",
    "value": 14.2,
    "unit": "m",
-   "tolerance_m": 1.5,
    "tag": "inf",
-   "confidence": "medium",
+   "confidence": "low",
    "src": ["naip", "h_top_published"],
-   "note": "NAIP inter-epoch relief-displacement ratio: base-building main roof moves 0.206-0.219 x the cab-roof shift (4 epoch pairs, NCC 0.70-0.85, ground control red boxes move < 1.2 m) -> 0.21 x 67.36 m. Photo cross-check (Famartin 11:57 seam/IBF ratio) suggests up to ~16.5 m. The current 3-D model uses 14 m."
+   "note": "NAIP inter-epoch relief-displacement ratio: base-building main roof moves 0.206-0.219 x the cab-roof shift (4 epoch pairs, NCC 0.70-0.85, ground control red boxes move < 1.2 m) -> 0.21 x 67.36 m. Photo cross-check (Famartin 11:57 seam/IBF ratio) suggests up to ~16.5 m. The current 3-D model uses 14 m.",
+   "corrected": {
+    "field": "tolerance_m -> range",
+    "previous": {
+     "tolerance_m": 1.5
+    },
+    "reason": "NAIP ratio and photo span disagree at the spec values (doc s.12.3)"
+   },
+   "range": [12.7, 16.5],
+   "ratio_to_h_roof_top": [0.2, 0.21],
+   "photo_constraint": "airside parapet top = h_roof_top - (3.46 +- 0.05) x d_cab_roof; roof ~0.7 m below the parapet (assumed)",
+   "verification": {
+    "verdict": "DISPUTED",
+    "evidence": "NAIP ratio re-derived from the SE-edge offsets quoted in s.4.2: 0.175-0.226 (mean 0.20), agreeing with the NCC patch ratio 0.201-0.213 -> 13.5-14.2 m at H 67.36. But the photo span puts the airside parapet at 17.5 m for {H 67.36, D 14.3} (16.3 m for D 14.75). The spec's own trio {h_roof_top 67.36, d_cab_roof 14.3, h_ibf_roof 14.2} fails this check by ~3 m; the 147-ft ribbon 'ends at the flare' argument does not discriminate (it fits several combinations)."
+   }
   },
   {
    "id": "h_roof_garden",
@@ -488,7 +594,12 @@
    "tag": "obs",
    "confidence": "medium",
    "src": ["photos", "enr_2016", "google_ref", "naip", "osm"],
-   "note": "Outer edge of the cab-roof cap (widest, at the top). (a) Famartin 11:57 photo: 480 px at 0.0299 m/px, the scale coming from the published 11-ft cab glass panel seen at its measured 20 deg outward slope (105 px = 3.14 m) -> 14.35 m; (b) Google 03dcd4ae top view circle fit r 7.1-7.7 m (reference only); (c) NAIP circle fits r 6.0-7.6 m (0.6 m GSD, low contrast); (d) OSM cab polygon r 7.7-8.1 m."
+   "note": "Outer edge of the cab-roof cap (widest, at the top). (a) Famartin 11:57 photo: 480 px at 0.0299 m/px, the scale coming from the published 11-ft cab glass panel seen at its measured 20 deg outward slope (105 px = 3.14 m) -> 14.35 m; (b) Google 03dcd4ae top view circle fit r 7.1-7.7 m (reference only); (c) NAIP circle fits r 6.0-7.6 m (0.6 m GSD, low contrast); (d) OSM cab polygon r 7.7-8.1 m.",
+   "verification": {
+    "verdict": "PLAUSIBLE (within tolerance); stated derivation flawed",
+    "evidence": "(a) The 11-ft-panel scale projects the near-side glass as 11 ft x cos(20.4 deg); seen from 13 deg below, the near-side projection is 11 ft x cos(20.4 - 13.1 deg) = 0.99 x 11 ft, and the limb widths are ~2.5 % farther than the near-side glass -> the same pixels give ~15.5 m if the whole 11-ft panel is visible (less if the frame hides part of it). (b) Google is reference-only; (c) OSM is traced from lean-affected imagery. Independent: EXIF focal length + GPS on two Famartin iPhone photos from opposite sides: 14.27 (11:57) and 15.21 m (09:12:13) at x -739, mean 14.74-14.76 m for any cab x in -744..-734 -> 14.75 +- 0.5 m. NAIP bright-disc edge is ambiguous (50 % crossings r 6.0-7.75; a faint ring at r 6.5-7.0).",
+    "independent_estimate": [14.75, 0.5]
+   }
   },
   {
    "id": "d_cab_glass_top",
@@ -520,7 +631,11 @@
    "tag": "obs",
    "confidence": "medium",
    "src": ["photos"],
-   "note": "(413-335)/2 px radial over 105 px vertical in Famartin 11:57."
+   "note": "(413-335)/2 px radial over 105 px vertical in Famartin 11:57.",
+   "verification": {
+    "verdict": "PLAUSIBLE",
+    "evidence": "With the 13 deg upward view accounted for (near-side vertical 104 px vs limb radial difference 39 px), the slope is ~22 deg - inside 20 +- 4."
+   }
   },
   {
    "id": "cab_roof_fascia_height",
@@ -542,7 +657,11 @@
    "tag": "obs",
    "confidence": "medium",
    "src": ["photos", "google_ref"],
-   "note": "silhouette width from the SE (A380 650 px, Famartin 748 px). Both views look NW, so the landside fin/prow is hidden behind the round body. Google top view shows a ring at r ~11.5 m."
+   "note": "silhouette width from the SE (A380 650 px, Famartin 748 px). Both views look NW, so the landside fin/prow is hidden behind the round body. Google top view shows a ring at r ~11.5 m.",
+   "verification": {
+    "verdict": "PLAUSIBLE",
+    "evidence": "Flare / rim silhouette ratio re-measured: 1.560 (Famartin 11:57, 749/480 px), 1.58 (A380, 650/411 px) vs 1.605 used; x d_cab_roof 14.3-14.75 -> 22.3-23.3 m."
+   }
   },
   {
    "id": "d_shaft_waist",
@@ -574,7 +693,11 @@
    "tag": "obs",
    "confidence": "medium",
    "src": ["photos"],
-   "note": "auto edge detection per image row (Sobel-x maxima, left/right halves) in the full-resolution A380 photo; roof rim at row 125, cab-roof width 405 px; rows below 45.7 m are cluttered by foreground roofs/light poles. Multiply by d_cab_roof for metres. Round airside body only (fin hidden behind)."
+   "note": "auto edge detection per image row (Sobel-x maxima, left/right halves) in the full-resolution A380 photo; roof rim at row 125, cab-roof width 405 px; rows below 45.7 m are cluttered by foreground roofs/light poles. Multiply by d_cab_roof for metres. Round airside body only (fin hidden behind).",
+   "verification": {
+    "verdict": "MINOR CORRECTION PENDING",
+    "evidence": "Automatic re-measurement of the A380 rim gives 411 px (rows 348-352), not 405 px: all ratios are ~1.5 % high. Not rewritten here (inside the tolerance)."
+   }
   },
   {
    "id": "shaft_plan_shape",
@@ -594,7 +717,11 @@
    "tag": "pub",
    "confidence": "high",
    "src": ["faa_pr_2016", "mcn_2017", "aviationpros_2015", "kqed_2016"],
-   "note": "'147 foot-tall ribbon of glass'; AIC: 'nearly 150 vertical feet of glass'. With IBF roof 14.2 m it ends at ~59 m, i.e. at the flare top (consistent)."
+   "note": "'147 foot-tall ribbon of glass'; AIC: 'nearly 150 vertical feet of glass'. With IBF roof 14.2 m it ends at ~59 m, i.e. at the flare top (consistent).",
+   "verification": {
+    "verdict": "CONFIRMED (number)",
+    "evidence": "147 ft re-read in the FAA release, KQED, MCN ('west facade') and AviationPros 2015; AIC 'nearly 150 feet'. Its start and end levels are not published; with D = 14.75 m the photo span parapet -> flare top is 3.01 D = 44.4 m = 146 ft."
+   }
   },
   {
    "id": "ribbon_width",
@@ -621,7 +748,11 @@
    "tag": "pub",
    "confidence": "high",
    "src": ["mcn_2017", "aviationpros_2015"],
-   "note": "STRUCTURE 2017 calls it 'brushed aluminum cladding'. Our photo-derived envelope (IBF roof to flare top) is ~1,900 m2 = ~20,000 sq ft, twice the published ACM area -> open question (partial figure, or smaller tower)."
+   "note": "STRUCTURE 2017 calls it 'brushed aluminum cladding'. Our photo-derived envelope (IBF roof to flare top) is ~1,900 m2 = ~20,000 sq ft, twice the published ACM area -> open question (partial figure, or smaller tower).",
+   "verification": {
+    "verdict": "CONFIRMED as published",
+    "evidence": "MCN: ~1,500 panels (Keith Panel Systems), 10,000 sq ft of Alucobond (Pacific Erectors). Front Inc.: flat panels cold-curved in one direction, faceting in the other."
+   }
   },
   {
    "id": "cab_area",
@@ -647,7 +778,11 @@
    "tag": "pub",
    "confidence": "low (conflicting)",
    "src": ["wpm_project", "enr_2016", "structure_2017", "faa_pr_2016"],
-   "note": "Different quantities are probably being described (glazed arc vs mullion-free arc vs usable view). Needs a plan drawing."
+   "note": "Different quantities are probably being described (glazed arc vs mullion-free arc vs usable view). Needs a plan drawing.",
+   "verification": {
+    "verdict": "CONFIRMED as published",
+    "evidence": "FAA/KQED/AIC 235; WPM, ENR, MCN, AviationPros 2015, CoreBrace 270; STRUCTURE 220 (column-free)."
+   }
   },
   {
    "id": "cab_glass_panels",
@@ -656,7 +791,11 @@
    "tag": "pub",
    "confidence": "medium",
    "src": ["enr_2016"],
-   "note": "24 x 6 ft = 43.9 m: only fits our glass-head circumference (38.6 m) if the glass runs all round (~360 deg) with ~5.3 ft panels, and would need a 18.7 m cab if confined to 270 deg (contradicted by photos and imagery). Treat the count/width as unverified."
+   "note": "24 x 6 ft = 43.9 m: only fits our glass-head circumference (38.6 m) if the glass runs all round (~360 deg) with ~5.3 ft panels, and would need a 18.7 m cab if confined to 270 deg (contradicted by photos and imagery). Treat the count/width as unverified.",
+   "verification": {
+    "verdict": "CONFIRMED as published",
+    "evidence": "ENR (27 Sep 2016): 'The cab glass enclosure consists of 24 6-ft by 11-ft panels'. The inconsistency with the photo geometry stands for any D in 14.3-15.2."
+   }
   },
   {
    "id": "cab_glass_type",
@@ -709,7 +848,11 @@
    "tag": "pub",
    "confidence": "high",
    "src": ["structure_2017", "enr_2016", "wpm_project", "aviationpros_2015"],
-   "note": "Snippet-only extras (archmag_snippet, low): core 30 in thick at base, 18 in at top; 19 cables x 7 strands per bundle; '200-foot high concrete core'. TMD mass: 2 x ~37,000 lb (AviationPros) vs '35,000-pound weights on all four sides' (AIC) vs 75,000 lb total (SF Chronicle via STRUCTURE)."
+   "note": "Snippet-only extras (archmag_snippet, low): core 30 in thick at base, 18 in at top; 19 cables x 7 strands per bundle; '200-foot high concrete core'. TMD mass: 2 x ~37,000 lb (AviationPros) vs '35,000-pound weights on all four sides' (AIC) vs 75,000 lb total (SF Chronicle via STRUCTURE).",
+   "verification": {
+    "verdict": "CONFIRMED as published (primary items)",
+    "evidence": "STRUCTURE: vertically post-tensioned, slip-formed core; flare and cab steel; four horizontal buckling-restrained braces as a backstay (CoreBrace: 4 welded BRBs); TMDs near the cab. ENR: 26 vertical PT cables, >1,100 cu yd. Architect Magazine still HTTP 403 (and Wayback 429) - snippet items remain unverified."
+   }
   },
   {
    "id": "foundation",
@@ -744,7 +887,11 @@
    "tag": "pub",
    "confidence": "medium",
    "src": ["faa_pr_2016"],
-   "note": "SFO Museum footprint 1,221 m2 x 3 storeys = 3,663 m2 = 39,400 sq ft: consistent with 42-44k if the connectors / a partial 4th level are included."
+   "note": "SFO Museum footprint 1,221 m2 x 3 storeys = 3,663 m2 = 39,400 sq ft: consistent with 42-44k if the connectors / a partial 4th level are included.",
+   "verification": {
+    "verdict": "CONFIRMED as published",
+    "evidence": "42,000 ENR; 44,000 FAA/AIC/AviationPros/Patch; 50,000 STRUCTURE; 55,000 WPM; 60,000 Hensel Phelps (total)."
+   }
   },
   {
    "id": "ibf_footprint",
@@ -757,7 +904,11 @@
    "tag": "obs",
    "confidence": "medium",
    "src": ["sfomuseum"],
-   "note": "SFO Museum 'atc' polygon (20-vertex original, src:geom flysfo) = a rectangle aligned with the runway 1/19 grid. Its accuracy vs a lean-free survey is unknown (+-1.5-5 m, docs/research/imagery.md s.6). NAIP roof edges on the airside (SE) face: -0.5 m (2016), +1.5 (2018), +1.3 (2020), +10.5 (2022), +9.0 m (2024) along the outward normal - consistent with the per-epoch lean, not with an outline error."
+   "note": "SFO Museum 'atc' polygon (20-vertex original, src:geom flysfo) = a rectangle aligned with the runway 1/19 grid. Its accuracy vs a lean-free survey is unknown (+-1.5-5 m, docs/research/imagery.md s.6). NAIP roof edges on the airside (SE) face: -0.5 m (2016), +1.5 (2018), +1.3 (2020), +10.5 (2022), +9.0 m (2024) along the outward normal - consistent with the per-epoch lean, not with an outline error.",
+   "verification": {
+    "verdict": "CONFIRMED (geometry)",
+    "evidence": "data/sfo_airport.json atc ring: 4 vertices, area 1219.9 m2, area centroid (-740.93, 331.71) = the vertex mean used by js/live/terminals.js buildTower; sides 44.95 x 27.2 m, long axis 27.7 deg."
+   }
   },
   {
    "id": "ibf_connectors",
@@ -786,7 +937,11 @@
    "tag": "pub",
    "confidence": "medium",
    "src": ["meadhunt", "fentress"],
-   "note": "'2,000-square-foot roof garden on the third level'; NAIP shows the planted strip along the SW edge of the footprint (x -762..-735, z 338..358)."
+   "note": "'2,000-square-foot roof garden on the third level'; NAIP shows the planted strip along the SW edge of the footprint (x -762..-735, z 338..358).",
+   "verification": {
+    "verdict": "CONFIRMED as published",
+    "evidence": "Mead & Hunt: 'a 2,000-square-foot roof garden on the third level'; AviationPros 2015: rooftop terrace with garden for FAA controllers."
+   }
   },
   {
    "id": "obstruction_lighting",
@@ -795,7 +950,16 @@
    "tag": "pub",
    "confidence": "high",
    "src": ["faa_oeaaa_2008", "faa_dof"],
-   "note": "Fixture type/position not observed in any photo found; tools/env/lighting_spec.json infers L-864 + L-810(F) from AC 70/7460-1N for 245 ft - if the as-built is 221-232 ft (> 150 ft) the same rule applies [inf]."
+   "note": "One lit red fixture is visible on the cab-roof rim (SW side) in Varnum 0463 (2018-04-29 20:00 PDT, dusk) [corrected by verification: previously 'not observed']; type (steady L-810 vs flashing L-864) not determinable; tools/env/lighting_spec.json infers L-864 + L-810(F) from AC 70/7460-1N for 245 ft - if the as-built is 221-232 ft (> 150 ft) the same rule applies [inf].",
+   "corrected": {
+    "field": "note",
+    "previous": "Fixture type/position not observed in any photo found",
+    "reason": "red light observed in Varnum 0463"
+   },
+   "verification": {
+    "verdict": "CONFIRMED + new observation",
+    "evidence": "Letter: 'Tower pentrates a part 77 surface. Requires red obstruction lights.' DOF lighting R, marking N. Red fixture on the rim in a 2018 dusk photo."
+   }
   },
   {
    "id": "roof_equipment",
@@ -814,7 +978,22 @@
    "tag": "inf",
    "confidence": "low (x) / medium (z)",
    "src": ["naip", "sfomuseum", "osm", "google_ref", "faa_oeaaa_2008"],
-   "note": "NAIP cab-roof disc centres: 2016 (-752.75, 323.35), 2018 (-749.70, 323.20), 2022 (-698.75, 325.30), 2024 (-700.85, 322.40): four independent flights on N-S lines agree in z to +-1.2 m while x swings 54 m with the across-track lean -> z = 323.5 +- 2. x needs an absolute lean reference: using the SFO Museum SE wall line with the measured h_ibf/H ratio gives -747..-734; OSM cab centre -739.0 (322.6); Google screenshot fit -737.2 (314.3, reference only, registration low-confidence); OE/AAA point -742.6 (335.7, +-76 m). Adopted -739 +- 5 until a lean-free source is found."
+   "note": "NAIP cab-roof disc centres: 2016 (-752.75, 323.35), 2018 (-749.70, 323.20), 2022 (-698.75, 325.30), 2024 (-700.85, 322.40): four flights agree in z to +-1.2 m; 2016/2018 are Leica ADS100 pushbroom with a nadir look angle (no along-track lean by design: z 323.35 / 323.20), 2022 a ContentMapper frame sensor (along-track lean possible; z 325.3). NB the NAIP metadata says N-S lines \"or east/west where required for efficiency\" [verification] while x swings 54 m with the across-track lean -> z = 323.5 +- 2. x needs an absolute lean reference: the SFO Museum SE wall line with the h_ibf/H ratio gives -750..-758 if the outline is taken as exact (verification; the earlier -747..-734 does not reproduce - that method only works with an assumed ~1.5-2 m outline offset, factor 5.4); hard lower bound from the 2022 sensor field of view (67.1 deg across-track): x >= -744.1 for H 67.36 (-741.3 for H 63.3), about -739.6 if the mosaic seam sits mid-overlap; OSM cab centre -739.0 (322.6); Google screenshot fit -737.2 (314.3, reference only, registration low-confidence); OE/AAA point -742.6 (335.7, +-76 m). Adopted -739 +- 5 until a lean-free source is found.",
+   "x_bounds": {
+    "hard_min_2022_fov": -744.1,
+    "likely_min_seam_mid_overlap": -739.6,
+    "soft_max": -734,
+    "note": "bounds for h_roof_top 67.36; for 63.3 m: -741.3 / -737.1"
+   },
+   "corrected": {
+    "field": "note (derivation of the x range)",
+    "previous": "SFO Museum SE wall line + ratio gives -747..-734",
+    "reason": "not reproducible from the s.4.2 offsets; replaced by the sensor field-of-view bound"
+   },
+   "verification": {
+    "verdict": "z CONFIRMED; x PLAUSIBLE (derivation corrected)",
+    "evidence": "z: disc fits re-inspected on 1-m-grid crops (centred within ~0.5 m); OE/AAA site 13A (case 285) lies at (-737.0, 324.9) and OSM at (-739.0, 322.6). x: -739 +- 5 is compatible with every hard constraint found; OSM/Google (-739/-737) come from lean-affected imagery and are not independent; an equal-diameter solve of two opposite iPhone cameras gives -751 +- 10 (weak, outside the FOV bound)."
+   }
   },
   {
    "id": "position_shaft_axis",
@@ -825,7 +1004,11 @@
    "tag": "inf",
    "confidence": "low",
    "src": ["position_cab_roof_centre", "cab_offset"],
-   "note": "cab centre minus an assumed 1-3 m offset towards the airfield. The current 3-D model puts the shaft at the footprint centroid (-740.9, 331.7) - 7 m further south."
+   "note": "cab centre minus an assumed 1-3 m offset towards the airfield. The current 3-D model puts the shaft at the footprint centroid (-740.9, 331.7) - 7 m further south.",
+   "verification": {
+    "verdict": "PLAUSIBLE (inherits position_cab_roof_centre)",
+    "evidence": "Current 3-D model position (-740.9, 331.7) confirmed in js/live/terminals.js buildTower (vertex mean of the 4-vertex atc ring)."
+   }
   },
   {
    "id": "position_faa",
@@ -838,28 +1021,19 @@
    "tag": "pub",
    "confidence": "low (+-250 ft, proposal site)",
    "src": ["faa_oeaaa_2008", "faa_dof"],
-   "note": "The 2008 letter states NAD83; DOF re-labels the same numbers WGS 84 (world (-741.0, 335.9) if taken as WGS 84)."
+   "note": "The 2008 letter states NAD83; DOF re-labels the same numbers WGS 84 (world (-741.0, 335.9) if taken as WGS 84).",
+   "siblings": {
+    "2008-AWP-285-NRA (site 13A, 241 ft AGL)": [-736.96, 324.92],
+    "2008-AWP-287-NRA (site 6B, 290 ft AGL)": [-996.45, 474.42]
+   },
+   "verification": {
+    "verdict": "CONFIRMED (as a proposal point)",
+    "evidence": "Site 13 (the DOF entry) is 12 m S of the NAIP cab z; the alternative site 13A of the same 2008 study lies 2 m from the adopted cab centre - which proposal the as-built follows is not documented."
+   }
   }
  ],
- "conflicts": [
-  "Height: 220 / 221 / 228 / 231 ft published; DOF 245 ft is the 2008 envelope. Adopted 221 ft = roof top (definition unverified).",
-  "Cab view: 220 deg column-free (engineers) / 235 deg unobstructed (FAA) / 270 deg column-free (WPM, ENR, MCN).",
-  "Cab glass: '24 6-ft by 11-ft panels' (ENR) does not fit a 270-deg arc on the ~12 m cab seen in photos and imagery.",
-  "Base-building floor area: 42,000 / 44,000 / 50,000 / 55,000 sq ft (and 60,000 sq ft total project).",
-  "Pile depth 125 ft (STRUCTURE) vs 140 ft (ENR); TMD masses differ between articles.",
-  "Published ACM cladding area 10,000 sq ft vs ~20,000 sq ft photo-derived envelope."
- ],
- "open_questions": [
-  "Lean-free position of the tower axis and cab (x uncertain by +-5 m): needs SFO/FAA site plan or survey, the San Mateo County 15 cm ortho (licence request, docs/research/imagery.md), or a stereo/photogrammetric solve with surveyed camera stations.",
-  "What exactly the 221 ft measures (grade to roof top? to parapet? to cab floor + something?) and the FAA cab floor elevation - ask SFO Design & Construction / FAA Western Service Area, or the Civic Design Review / SF Arts Commission submittals (Phase 1-3, 2011-2012) which were not found online.",
-  "Plan geometry of the landside fins/prow and the exact facing bearing of the glass ribbon (photos only give ~300-320 deg).",
-  "Cab glazing: number of panes, glazed arc (220/235/270/360 deg), mullion positions and the solid sector towards the core.",
-  "Cab offset magnitude and direction relative to the core axis.",
-  "Obstruction-light fixtures (type, count, position on the roof/masts).",
-  "Number and layout of the flare slots (6 visible from each side view) and whether they are louvres.",
-  "Base-building roof outline, parapet heights, rooftop equipment, and the connector roofs (35-ft glass ceiling).",
-  "Items marked archmag_snippet (core wall thickness, 13 positions, cab roof column) need the Architect Magazine page (403 here) or another copy."
- ],
+ "conflicts": ["Height: 220 / 221 / 228 / 231 ft published; DOF 245 ft is the 2008 envelope. Adopted 221 ft = roof top (definition unverified).", "Cab view: 220 deg column-free (engineers) / 235 deg unobstructed (FAA) / 270 deg column-free (WPM, ENR, MCN).", "Cab glass: '24 6-ft by 11-ft panels' (ENR) does not fit a 270-deg arc on the ~12 m cab seen in photos and imagery.", "Base-building floor area: 42,000 / 44,000 / 50,000 / 55,000 sq ft (and 60,000 sq ft total project).", "Pile depth 125 ft (STRUCTURE) vs 140 ft (ENR); TMD masses differ between articles.", "Published ACM cladding area 10,000 sq ft vs ~20,000 sq ft photo-derived envelope.", "[verification 2026-09-26] Photo span rim -> IBF airside parapet (3.46 x d_cab_roof, two photos) + NAIP ratio h_IBF/H (0.20-0.21) are inconsistent with {h_roof_top 67.36, d_cab_roof 14.3, h_ibf_roof 14.2} by ~3 m. Consistent families: (1) D ~15.1-15.3 m with the rim at 221 ft; (2) D ~14.3-14.75 m with the rim at 63-65 m and 221 ft to the mast tips (rim + ~3.2 m).", "[verification] AviationPros 28 Dec 2015 contains both '231-foot' and '221-foot'."],
+ "open_questions": ["[verification] Decide between the two consistent (d_cab_roof, h_roof_top) families: a surveyed ground photo (known camera point + EXIF), the NAIP shadow length with the flight time, or an SFO/FAA elevation drawing would settle it.", "Lean-free position of the tower axis and cab (x uncertain by +-5 m): needs SFO/FAA site plan or survey, the San Mateo County 15 cm ortho (licence request, docs/research/imagery.md), or a stereo/photogrammetric solve with surveyed camera stations.", "What exactly the 221 ft measures (grade to roof top? to parapet? to cab floor + something?) and the FAA cab floor elevation - ask SFO Design & Construction / FAA Western Service Area, or the Civic Design Review / SF Arts Commission submittals (Phase 1-3, 2011-2012) which were not found online.", "Plan geometry of the landside fins/prow and the exact facing bearing of the glass ribbon (photos only give ~300-320 deg).", "Cab glazing: number of panes, glazed arc (220/235/270/360 deg), mullion positions and the solid sector towards the core.", "Cab offset magnitude and direction relative to the core axis.", "Obstruction-light fixtures (type, count, position on the roof/masts).", "Number and layout of the flare slots (6 visible from each side view) and whether they are louvres.", "Base-building roof outline, parapet heights, rooftop equipment, and the connector roofs (35-ft glass ceiling).", "Items marked archmag_snippet (core wall thickness, 13 positions, cab roof column) need the Architect Magazine page (403 here) or another copy."],
  "model_proposal_provisional": {
   "status": "inf - for the later 2-D sheet only; do not build 3-D until the owner has reviewed",
   "axis_world": [-740.5, 324.5],
@@ -877,6 +1051,7 @@
    "footprint": "ibf_footprint",
    "roof_m": 14.2,
    "garden_m": 12.5
-  }
+  },
+  "verification": "Heights here assume the rim at 67.36 m and D 14.3 m - disputed (doc s.12.3). Before any 2-D sheet, draw both families or resolve them. axis_world x stays inside the FOV bound (>= -744.1)."
  }
 }

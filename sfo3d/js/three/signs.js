@@ -10,6 +10,7 @@
 import { THREE, TSL } from './lib.js';
 import { makeAtlas } from '../live/signs.js';
 import { facingNormalView } from './tsl/common.js';
+import { disposeRecord } from './convert.js';
 const { Fn, attribute, vec2, vec3, vec4, float, texture, max, min, mix, smoothstep, clamp, fwidth, abs, length, select, step, uniform } = TSL;
 
 const hex = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; }; // THREE.Color(hex) converts sRGB -> linear
@@ -43,7 +44,8 @@ export function worldSignAtlasMap(details) {
   const faces = new Map(); const add = (kind, text) => { const key = kind + ':' + text; if (!faces.has(key)) faces.set(key, { key, kind, text }); };
   for (const h of details.holds || []) { add('mand', h.text); add('paint', h.text); const loc = locName(h.twy); if (loc) add('loc', loc); }
   for (let k = 1; k <= 12; k++) add('drs', String(k));
-  return makeAtlas([...faces.values()]).map;
+  const A = makeAtlas([...faces.values()]); disposeRecord(A.tex); // only the map is needed: the canvas atlas is dropped (review round 2)
+  return A.map;
 }
 
 // Accumulates panel backgrounds (opaque) and glyphs (transparent) from sign quads

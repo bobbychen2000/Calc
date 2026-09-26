@@ -1,0 +1,315 @@
+{
+ "generated_by": "tools/buildings/dom_heights.py",
+ "s20": {
+  "az_shadow": 87.4,
+  "abs": 1.19,
+  "sd": 0.03
+ },
+ "s24": {
+  "az_shadow": 6.6,
+  "abs": 0.3153
+ },
+ "equation": "h = (band20 + band24 - p) / ((s20 - s24) . n)",
+ "roofs": [
+  {
+   "id": "ba_a_body",
+   "name": "Boarding Area A (ITB) main body - CONTROL",
+   "x": -1230,
+   "e20": {
+    "pos": 2.09,
+    "contrast": -110.5,
+    "grad": -12.32
+   },
+   "f20": {
+    "pos": 21.95,
+    "contrast": 73.9,
+    "grad": 8.83
+   },
+   "e24m": {
+    "pos": -7.05,
+    "contrast": -62.5,
+    "grad": -6.37
+   },
+   "f24m": {
+    "pos": 2.01,
+    "contrast": 87.0,
+    "grad": 9.03
+   },
+   "n_hdg": 117.8,
+   "band20": 19.86,
+   "band24": 9.06,
+   "p": 7.55,
+   "den": 1.14,
+   "h_m": 18.74,
+   "h_sd_m": 0.75,
+   "h_ft": 61.5,
+   "k24_n": 0.369,
+   "k20_n": -0.033,
+   "k24_x_if_east": 0.418,
+   "p_check": 7.55,
+   "true_edges": {
+    "n_line": [
+     [
+      -1247.32,
+      741.84
+     ],
+     [
+      -1218.4,
+      686.99
+     ]
+    ],
+    "n_offset_from_line": 2.71,
+    "m_line": [
+     [
+      -1256.06,
+      667.14
+     ],
+     [
+      -1284.98,
+      721.98
+     ]
+    ],
+    "m_offset_from_line": -0.13
+   }
+  },
+  {
+   "id": "ba_b_south",
+   "name": "Boarding Area B, south half (gates B19-B27 side), outer roof edge",
+   "x": -905,
+   "e20": {
+    "pos": 4.49,
+    "contrast": -99.2,
+    "grad": -12.47
+   },
+   "f20": {
+    "pos": 16.52,
+    "contrast": 79.4,
+    "grad": 8.89
+   },
+   "e24m": {
+    "pos": 0.55,
+    "contrast": -111.0,
+    "grad": -10.94
+   },
+   "f24m": {
+    "pos": 6.55,
+    "contrast": 81.7,
+    "grad": 7.04
+   },
+   "n_hdg": 117.8,
+   "band20": 12.03,
+   "band24": 6.0,
+   "p": 3.35,
+   "den": 1.14,
+   "h_m": 12.87,
+   "h_sd_m": 0.68,
+   "h_ft": 42.2,
+   "k24_n": 0.352,
+   "k20_n": 0.092,
+   "k24_x_if_east": 0.398,
+   "p_check": 3.35,
+   "true_edges": {
+    "n_line": [
+     [
+      -915.98,
+      916.57
+     ],
+     [
+      -887.06,
+      861.72
+     ]
+    ],
+    "n_offset_from_line": 3.31,
+    "m_line": [
+     [
+      -936.04,
+      835.89
+     ],
+     [
+      -964.96,
+      890.73
+     ]
+    ],
+    "m_offset_from_line": 5.08
+   }
+  },
+  {
+   "id": "ba_e_north",
+   "name": "Boarding Area E, north part (gates E1-E6 side)",
+   "x": -800,
+   "method_note": "s-profiles t -350..-310: fascia edge 2020 -686.2, shadow end -674.9; 2024 WNW band -733.0 .. -726.5; roof texture shift 2.5 m (r 0.70), fascia edge shift 2.2 m",
+   "band20": 11.3,
+   "band24": 6.5,
+   "p": 2.4,
+   "den": 1.14,
+   "h_m": 13.51,
+   "h_sd_m": 0.69,
+   "h_ft": 44.3,
+   "k24_n": 0.367,
+   "k20_n": 0.189,
+   "k24_x_if_east": 0.415,
+   "p_check": 2.4
+  },
+  {
+   "id": "ba_f_ne_arm",
+   "name": "Boarding Area F north-east arm (F1-F3 side) - CONTROL vs FAA DOF 06-035331",
+   "x": -1030,
+   "e24n": {
+    "pos": 4.86,
+    "contrast": -29.2,
+    "grad": -3.3
+   },
+   "e20": {
+    "pos": 2.88,
+    "contrast": -98.8,
+    "grad": -10.63
+   },
+   "f20": {
+    "pos": 13.17,
+    "contrast": 85.5,
+    "grad": 9.53
+   },
+   "e24m": {
+    "pos": -4.34,
+    "contrast": -95.4,
+    "grad": -8.67
+   },
+   "f24m": {
+    "pos": -0.06,
+    "contrast": 91.4,
+    "grad": 9.18
+   },
+   "n_hdg": 117.6,
+   "band20": 10.29,
+   "band24": 4.28,
+   "p": 1.98,
+   "den": 1.141,
+   "h_m": 11.03,
+   "h_sd_m": 0.66,
+   "h_ft": 36.2,
+   "k24_n": 0.275,
+   "k20_n": 0.095,
+   "k24_x_if_east": 0.31,
+   "p_check": 1.98,
+   "true_edges": {
+    "n_line": [
+     [
+      -1038.58,
+      -151.65
+     ],
+     [
+      -1014.28,
+      -198.05
+     ]
+    ],
+    "n_offset_from_line": 1.83,
+    "m_line": [
+     [
+      -1036.05,
+      -214.49
+     ],
+     [
+      -1062.55,
+      -164.49
+     ]
+    ],
+    "m_offset_from_line": -1.31
+   }
+  },
+  {
+   "id": "ba_d_head",
+   "name": "Boarding Area D head (gates D10-D16 end) - faces 90 m apart, LOW confidence",
+   "x": -520,
+   "e24n": {
+    "pos": 6.69,
+    "contrast": -41.0,
+    "grad": -5.9
+   },
+   "e20": {
+    "pos": -0.36,
+    "contrast": -114.6,
+    "grad": -13.59
+   },
+   "f20": {
+    "pos": 11.54,
+    "contrast": 77.0,
+    "grad": 8.63
+   },
+   "e24m": {
+    "pos": -5.65,
+    "contrast": -78.5,
+    "grad": -8.74
+   },
+   "f24m": {
+    "pos": -0.33,
+    "contrast": 69.8,
+    "grad": 8.11
+   },
+   "n_hdg": 118.0,
+   "band20": 11.9,
+   "band24": 5.32,
+   "p": 7.05,
+   "den": 1.14,
+   "h_m": 8.92,
+   "h_sd_m": 0.65,
+   "h_ft": 29.3,
+   "k24_n": 0.481,
+   "k20_n": -0.309,
+   "k24_x_if_east": 0.545,
+   "p_check": 7.05,
+   "true_edges": {
+    "n_line": [
+     [
+      -491.48,
+      223.52
+     ],
+     [
+      -473.48,
+      189.62
+     ]
+    ],
+    "n_offset_from_line": 2.4,
+    "m_line": [
+     [
+      -561.9,
+      103.04
+     ],
+     [
+      -578.9,
+      135.14
+     ]
+    ],
+    "m_offset_from_line": -1.36
+   }
+  },
+  {
+   "id": "ba_c_east",
+   "name": "Boarding Area C, east half, NNE face (single face, assumed k24) - LOW confidence",
+   "x": -640,
+   "method": "single face: h = (band20 - p) / ((s20 - k24).n), k24 assumed",
+   "e20": {
+    "pos": -1.0,
+    "contrast": -92.5,
+    "grad": -10.26
+   },
+   "f20": {
+    "pos": 6.26,
+    "contrast": 77.7,
+    "grad": 8.68
+   },
+   "e24": {
+    "pos": 3.14,
+    "contrast": -13.7,
+    "grad": -4.71
+   },
+   "n_hdg": 27.7,
+   "band20": 7.26,
+   "p": 4.14,
+   "den": 0.414,
+   "h_m": 7.54,
+   "h_sd_m": 1.64,
+   "h_ft": 24.7,
+   "k24_assumed": 0.4
+  }
+ ]
+}

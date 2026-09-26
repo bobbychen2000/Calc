@@ -389,16 +389,32 @@ function runwayAt(st, fw, G, glyph) {
 //     footprint approaches the lamp spacing (review round 1: the old widening grew the average with the footprint^2,
 //     which made the far city a pure-white band on the horizon).
 // Far-field average: ~0.03-0.04 units of emission (a warm glow, not a white band).
+// Review round 2: far away the city read as a continuous orange-brown wash (a sunset-lit desert, not a lit city): the
+// lamp spots became their cell average and the ground pools a uniform glow. Now a second, sparse layer of brighter
+// light clusters (arterial intersections, lots, shop fronts: a 140 m jittered grid, 45 % of the cells, 2.5 x a street
+// lamp) stays point-like out to where the pixel footprint reaches ~40 % of its spacing (several km), with constant
+// energy per cluster (radius >= 1 px, peak scaled down); the street-lamp glow far away is 0.6 x its average, so the
+// total far emission stays about the same. Sodium share lowered to 40 % (most Peninsula street lights are now LED
+// warm white: inferred, not verified per city).
 function cityNight(xz, fw, urb, albedo) {
   const S = 34.0; const g = xz.div(S); const c = floor(g); const f = fract(g).sub(0.5);
   const h = hash12(c.mul(1.37).add(11.0)); const off = vec2(hash12(c.add(3.1)), hash12(c.add(7.7))).sub(0.5).mul(0.7);
   const d = length(f.sub(off)).mul(S); const on = step(0.28, h);
-  const lc = mix(vec3(1.0, 0.6, 0.3), vec3(0.95, 0.92, 0.88), step(0.72, h));
-  const poolE = mix(exp(d.mul(d).div(-144.0)).mul(0.47).mul(on), float(0.47 * Math.PI * 144.0 / (34.0 * 34.0) * 0.72), smoothstep(6.0, 18.0, fw)).add(0.12);
+  const lc = mix(vec3(1.0, 0.6, 0.3), vec3(1.0, 0.86, 0.7), step(0.4 * 0.72 + 0.28, h));
+  const farK = smoothstep(6.0, 18.0, fw);
+  const poolE = mix(exp(d.mul(d).div(-144.0)).mul(0.47).mul(on), float(0.47 * Math.PI * 144.0 / (34.0 * 34.0) * 0.72 * 0.6), farK).add(float(0.12).mul(float(1.0).sub(farK.mul(0.4))));
   const r0 = 0.8; const r = max(float(r0), fw.mul(1.2)); const peak = float(20.0 * r0 * r0).div(r.mul(r));
   const spot = exp(d.mul(d).negate().div(r.mul(r))).mul(peak).mul(on);
-  const lum = mix(spot, float(20.0 * Math.PI * r0 * r0 / (34.0 * 34.0) * 0.72), smoothstep(34.0 * 0.3, 34.0 * 0.8, fw));
-  return albedo.mul(lc).mul(poolE.mul(1.0 / Math.PI)).add(lc.mul(lum)).mul(urb);
+  const lum = mix(spot, float(20.0 * Math.PI * r0 * r0 / (34.0 * 34.0) * 0.72 * 0.6), smoothstep(34.0 * 0.3, 34.0 * 0.8, fw));
+  // sparse clusters
+  const S2 = 140.0; const g2 = xz.div(S2); const c2 = floor(g2); const f2 = fract(g2).sub(0.5);
+  const h2 = hash12(c2.mul(1.91).add(5.0)); const off2 = vec2(hash12(c2.add(1.3)), hash12(c2.add(8.1))).sub(0.5).mul(0.6);
+  const d2 = length(f2.sub(off2)).mul(S2); const on2 = step(0.55, h2);
+  const e2 = 20.0 * 2.5 * Math.PI * 1.2 * 1.2; const r2 = max(float(1.2), fw.mul(1.0));
+  const spot2 = exp(d2.mul(d2).negate().div(r2.mul(r2))).mul(float(e2 / Math.PI).div(r2.mul(r2))).mul(on2);
+  const lum2 = mix(spot2, float(e2 * 0.45 / (S2 * S2)), smoothstep(S2 * 0.25, S2 * 0.45, fw));
+  const lc2 = mix(vec3(1.0, 0.72, 0.45), vec3(1.0, 0.92, 0.8), step(0.8, h2));
+  return albedo.mul(lc).mul(poolE.mul(1.0 / Math.PI)).add(lc.mul(lum)).add(lc2.mul(lum2)).mul(urb);
 }
 
 // ---------------------------------------------------------------- ground material (GROUND_FS)
@@ -532,10 +548,24 @@ export function waterMaterial(world, bakes, sky) {
     return mix(r, float(0.9), wfoam().mul(0.6));
   }).once();
   mat.normalNode = toView(wcore());
-  mat.colorNode = vec4(mix(vec3(0.045, 0.075, 0.07), vec3(0.6, 0.62, 0.62), wfoam().mul(0.6)), 1.0);
+  // body colour (review round 2): three.js uses envNode for the diffuse irradiance too (x PI), and this envNode returns
+  // the sky along the REFLECTED ray (near-horizon haze), so the body colour was lit ~2.2x too bright (milky bay). The
+  // body is now emission with the old WATER_FS light: body x (skyUp x 0.9 + sun x max(sunDir.y, 0) x 0.35 x shade)
+  // x (1 - F), foam x 0.55 x (skyUp + sun) (js/shaders/env.js WATER_FS); no diffuse albedo, so neither the IBL nor the
+  // lights add to it. The specular reflection (envNode below, sun glint) is unchanged.
+  mat.colorNode = vec4(0.0, 0.0, 0.0, 1.0);
+  mat.emissiveNode = Fn(() => {
+    const wp = positionWorld; const N = wcore(); const V = normalize(cameraPosition.sub(wp));
+    const F = pow(float(1.0).sub(max(dot(N, V), 0.001)), 5.0).mul(0.98).add(0.02);
+    const sh = mix(float(0.4), float(1.0), sky.cloudShadow(wp));
+    const sunIn = U.sunColor.mul(max(U.sunDir.y, 0.0));
+    const lightIn = U.skyUp.mul(0.9).add(sunIn.mul(0.35).mul(sh));
+    const body = vec3(0.045, 0.075, 0.07).mul(lightIn).mul(float(1.0).sub(F));
+    return mix(body, U.skyUp.add(sunIn).mul(0.55), wfoam().mul(0.6));
+  })();
   mat.roughnessNode = wrough();
   // environment = the visible sky along the reflected ray from this water point (sharp; blurred towards the
-  // precomputed sky + average cloud colour as the roughness grows). Also used as the (tiny) diffuse IBL term.
+  // precomputed sky + average cloud colour as the roughness grows): the specular reflection.
   mat.envNode = Fn(() => {
     const wp = positionWorld; const V = normalize(wp.sub(cameraPosition));
     const Rr = reflect(V, wcore()).toVar(); Rr.y.assign(abs(Rr.y).max(0.003));

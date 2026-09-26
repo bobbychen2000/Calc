@@ -12,7 +12,7 @@ bridges the app now draws.
 - **Docking path**: a joint path (rotunda swing, telescoping extension, cab turn, height) from the rest pose to a
   stand-off point 1.5 m out on the door normal, then a creep to the door. The path is checked against the parked
   aircraft (its drawn pose); if the direct path would cross it, a retract-swing-extend path is used; if none is clear, or
-  the Oshkosh AeroTech datasheet limits (operational extension of the bridge's model +-1 m, cab 92.5 cw / 32.5 ccw or
+  the Oshkosh AeroTech datasheet limits (operational range of the bridge's model, up to 0.3 m short of its mechanical stop, cab 92.5 cw / 32.5 ccw or
   the optional 185 deg cab, rotunda swing 175 deg) or a tunnel slope over 1:4 (FAA AC 150/5220-21C §3.4.b(6)) forbid
   the docking, the bridge stays at rest (`docks(g, b)` is then false). Undocking is the same path backwards (backs off
   the door first), without vertical travel.
@@ -32,7 +32,8 @@ bridges the app now draws.
 
 In the replay of 24 Sep 15:25-16:45Z (`refs/cache/replay_day3`), 11 of 43 L1 dockings between 15:25 and 15:50Z could
 not be made because the drawn aircraft stands farther from the terminal than the bridge's datasheet model reaches
-(operational extension + 1 m). Every one is `parkMode 'stand'` parked SHORT of the stand nose by more than the data's
+(up to 0.3 m short of the mechanical stop, fully extended minus the cab spacer; counts from the run before that
+allowance: with it B26's A321 at -1.3 m docks, the rest need 2-8 m more). Every one is `parkMode 'stand'` parked SHORT of the stand nose by more than the data's
 family stop (`type_stops`), laterally on the axis: B22 E75L -17.6 m (data EJET stop -4.3 m), F11 B752 -11.1, D16 A319
 -6.9, D7 A319 -6.3, E13 B38M -5.7, F9 E75L -5.6, D9 B38M -5.5 (lateral -6.4, `data` mode), E7 B38M -4.1, C6 A319 -3.4,
 F7 E75L -2.6, B23 A21N -2.5 m (along the stand axis from the stand nose). A real bridge reaches the real aircraft, so the

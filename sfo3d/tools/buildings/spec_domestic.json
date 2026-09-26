@@ -1,0 +1,2143 @@
+{
+ "schema": "sfo3d building spec v1",
+ "building": "Domestic terminals: Harvey Milk Terminal 1 (Boarding Areas B, C), Terminal 2 (Boarding Area D), Terminal 3 (Boarding Areas E, F)",
+ "generated": "2026-09-26",
+ "generator": "tools/buildings/build_spec_domestic.py",
+ "doc": "docs/research/buildings_domestic.md",
+ "frame": {
+  "id": "ltp-nad83-2011",
+  "axes": "world x east, z south, metres from the ARP; airport grid s (117.83 deg) / t (27.83 deg) as in tools/geo_frame.py"
+ },
+ "status": "RESEARCH DRAFT for owner review. No 2-D sheet or 3-D geometry has been built from it.",
+ "tags": {
+  "pub": "published by an original source (SFO, SF Arts Commission CDR submittals, architect/engineer/builder, FAA) - see sources[].read",
+  "obs": "measured by us on public imagery/data (NAIP 2020/2024, FAA DOF, SFO Museum footprints) with the stated method",
+  "inf": "derived by stated arithmetic from pub/obs values"
+ },
+ "confidence_scale": "high = primary source read in full or a direct measurement checked against a control; medium = one source or a measurement +-1 m; low = single-face/assumed-lean measurement, conflicting or snippet sources",
+ "status_values": {
+  "verified": "read first-hand / measured",
+  "conflict": "sources disagree - all values listed",
+  "snippet-only": "only search-engine extracts could be read",
+  "secondary-only": "only via Wikipedia",
+  "unverified": "no value could be verified - do not build on it without the owner"
+ },
+ "sources": {
+  "cdr_t3w_cd_2023": {
+   "title": "Terminal 3 West Modernization Project - Civic Design Review, Construction Documents Phase 3 (Oct 2023), incl. 95% CD sheets 5A-A5.01.01/.02 \"Exterior Elevations\" and wall sections",
+   "publisher": "San Francisco International Airport / Turner / Gensler / TEF, submitted to the SF Arts Commission Civic Design Review Committee",
+   "url": "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/231004_CDRC_CD_FINAL.pdf (+ .txt)",
+   "accessed": "2026-09-26",
+   "note": "drawing sheets carry \"(c) City and County of San Francisco ... reproduction prohibited\": numbers are quoted as facts, no pixels are reused"
+  },
+  "cdr_t3w_sd_2024": {
+   "title": "Terminal 3 West Modernization - Civic Design Review, Exterior Facades, Schematic Design Phase 1 (Mar 2024)",
+   "publisher": "SFO / Turner / Gensler / TEF",
+   "url": "https://media.api.sf.gov/documents/240308_CDRC_SD_PHASE_1.pdf",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/240308_CDRC_SD_PHASE_1.pdf",
+   "accessed": "2026-09-26"
+  },
+  "cdr_t3w_dd_2024": {
+   "title": "SFO T3 West Modernization - Civic Design Review Phase 2, Design Development, Exterior Facades (Oct 2024)",
+   "publisher": "SFO / Turner / Gensler / TEF",
+   "url": "https://www.sf.gov/sites/default/files/2024-10/241021_CDRC_DD_PHASE%202.pdf",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/241021_CDRC_DD_PHASE_2.pdf",
+   "accessed": "2026-09-26"
+  },
+  "cdr_t3w_update_2026": {
+   "title": "SFO T3 West Modernization - Civic Design Review, Exterior Facades, Post Phase 3 Update (18 May 2026)",
+   "publisher": "SFO / Turner / Gensler / TEF",
+   "url": "https://media.api.sf.gov/documents/260518_SFO_T3W_CDRC_UPDATE.pdf",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/260518_SFO_T3W_CDRC_UPDATE.pdf",
+   "accessed": "2026-09-26"
+  },
+  "cdr_t3w_c4c_2024": {
+   "title": "Terminal 3 West Modernization Civic Design Review - Courtyard 4 Connector [C4C] Concept Phase (Mar 2024)",
+   "publisher": "SFO / Turner / Gensler / TEF",
+   "url": "https://media.api.sf.gov/documents/240318_CDRC_Terminal_3_West_Modernization_-_C4C_update.pdf",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/240318_CDRC_Terminal_3_West_Modernization_-_C4C_update.pdf",
+   "accessed": "2026-09-26"
+  },
+  "cdr_minutes_2016_08": {
+   "title": "SF Arts Commission, Civic Design Review Committee - August 15, 2016 - Minutes (SFO Terminal 1 Center Renovation Project and New Boarding Area B Reconstruction Project, Phase 2)",
+   "publisher": "San Francisco Arts Commission",
+   "url": "https://www.sfgov.org/arts/meeting/civic-design-review-committee-august-15-2016-minutes",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/cdr_civic-design-review-committee-august-15-2016-minutes.html",
+   "accessed": "2026-09-26",
+   "note": "the presentations themselves (2016-2017) are not posted online; only the minutes"
+  },
+  "cdr_minutes_2016_03": {
+   "title": "SF Arts Commission, Civic Design Review Committee - March 21, 2016 - Minutes (T1 Center and Boarding Area B, informational/conceptual)",
+   "publisher": "San Francisco Arts Commission",
+   "url": "https://www.sfgov.org/arts/meeting/civic-design-review-committee-march-21-2016-minutes",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/cdr_civic-design-review-committee-march-21-2016-minutes.html",
+   "accessed": "2026-09-26"
+  },
+  "sfo_pr_t1_final": {
+   "title": "SFO press release \"SFO Opens Final Phase of Harvey Milk Terminal 1\", 17 Jun 2024",
+   "publisher": "San Francisco International Airport",
+   "url": "https://www.flysfo.com/about/media/press-releases/sfo-opens-final-phase-harvey-milk-terminal-1",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/flysfo_t1_final.html",
+   "accessed": "2026-09-26"
+  },
+  "sfo_pr_t3w": {
+   "title": "SFO press release \"SFO's Terminal 3 West Modernization Project is Underway\", 20 Aug 2024",
+   "publisher": "San Francisco International Airport",
+   "url": "https://www.flysfo.com/about/media/press-releases/sfos-terminal-3-west-modernization-project-underway",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/flysfo_t3w.html",
+   "accessed": "2026-09-26"
+  },
+  "sfom_reflectors": {
+   "title": "SFO Museum, public art collection: James Carpenter, \"Four Sculptural Light Reflectors\" (Harvey Milk Terminal 1, Main Hall - Level 3 - Pre-Security)",
+   "publisher": "SFO Museum",
+   "url": "https://www.sfomuseum.org/public-art/public-collection/four-sculptural-light-reflectors",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/sfom_reflectors.html",
+   "accessed": "2026-09-26"
+  },
+  "sfom_data": {
+   "title": "SFO Museum architecture data (sfomuseum-data-architecture): terminal and boarding-area polygons, records 1947304259 (T1), 1947304591 (T2), 1947304447 (T3), 1947304261 (BA B), 1947304663 (BA C), 1947304595 (BA D), 1947304511 (BA E), 1947304451 (BA F); \"sfo:level\" 2 (boarding areas), inception 2024-11-05",
+   "publisher": "SFO Museum (CDLA-Permissive-1.0)",
+   "url": "https://github.com/sfomuseum-data/sfomuseum-data-architecture",
+   "read": "full",
+   "cache": "refs/sfom-arch/ ; data/sfo_airport.json",
+   "accessed": "2026-09-26"
+  },
+  "arup_t1": {
+   "title": "Arup project page \"San Francisco International Airport Terminal 1 - The Harvey Milk Terminal\"",
+   "publisher": "Arup (MEP / aviation planning engineer, BA-B)",
+   "url": "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/arup_t1.html",
+   "accessed": "2026-09-26"
+  },
+  "woodsbagot_bab": {
+   "title": "Woods Bagot project page \"Harvey Milk Terminal 1, Boarding Area B\"",
+   "publisher": "Woods Bagot (design JV HKS / Woods Bagot / ED2 / KYA)",
+   "url": "https://www.woodsbagot.com/projects/san-francisco-international-airports-harvey-milk-terminal-1-boarding-area-b/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/woodsbagot_bab.html",
+   "accessed": "2026-09-26"
+  },
+  "hks_bab": {
+   "title": "HKS project page \"San Francisco International Airport's Harvey Milk Terminal 1, Boarding Area B\"",
+   "publisher": "HKS",
+   "url": "https://www.hksinc.com/what-we-do/projects/san-francisco-airports-terminal-1-redevelopment/",
+   "read": "snippet",
+   "cache": null,
+   "accessed": "2026-09-26",
+   "note": "HTTP 403 to curl and WebFetch; search-engine extract only (\"1 MW rooftop solar array\")"
+  },
+  "dbia_bab": {
+   "title": "DBIA project page \"San Francisco International Airport Harvey Milk Terminal 1 Boarding Area B\"",
+   "publisher": "Design-Build Institute of America (award entry)",
+   "url": "https://dbia.org/project/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/dbia_bab.html",
+   "accessed": "2026-09-26"
+  },
+  "rdh_bab": {
+   "title": "RDH Building Science case study \"San Francisco International Airport - Harvey Milk Terminal 1, Boarding Area B\"",
+   "publisher": "RDH (building-enclosure consultant)",
+   "url": "https://www.rdh.com/our-case-studies/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/rdh_bab.html",
+   "accessed": "2026-09-26"
+  },
+  "cei_bab": {
+   "title": "Cupertino Electric project page \"San Francisco International Airport (SFO) Harvey Milk Terminal 1 Boarding Area B\"",
+   "publisher": "Cupertino Electric (electrical / solar contractor)",
+   "url": "https://www.cei.com/our-work/san-francisco-international-airport-sfo-harvey-milk-terminal-1-boarding-area-b",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/cei_bab.html",
+   "accessed": "2026-09-26"
+  },
+  "webcor_bab": {
+   "title": "Webcor project page \"SFO Harvey Milk Terminal 1 Boarding Area B\"",
+   "publisher": "Webcor (design-build JV with Austin Commercial)",
+   "url": "https://www.webcor.com/projects/sfo-harvey-milk-terminal-1",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/webcor_bab.html",
+   "accessed": "2026-09-26"
+  },
+  "southland_bab": {
+   "title": "Southland Industries project page \"San Francisco International Airport Terminal 1 Boarding Area B\"",
+   "publisher": "Southland Industries (mechanical)",
+   "url": "https://southlandind.com/project/san-francisco-international-airport-terminal-1-boarding-area-b",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/southland_bab.html",
+   "accessed": "2026-09-26"
+  },
+  "aip_t1": {
+   "title": "Airport Improvement magazine, \"San Francisco Int'l Rebuilds Terminal 1 for $2.4 Billion\" (2020)",
+   "publisher": "Airport Improvement (trade press quoting SFO, Woods Bagot, Gensler)",
+   "url": "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/aip_t1.html",
+   "accessed": "2026-09-26"
+  },
+  "kuthranieri_t1c": {
+   "title": "Kuth Ranieri project page \"San Francisco International Airport - Harvey Milk Terminal 1\"",
+   "publisher": "Kuth Ranieri (JV architect with Gensler, T1 Center)",
+   "url": "https://kuthranieri.com/san-francisco-international-airport-terminal-1c/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/kuthranieri_t1c.html",
+   "accessed": "2026-09-26"
+  },
+  "henselphelps_t1c": {
+   "title": "Hensel Phelps project page \"San Francisco International Airport (SFO) Harvey Milk Terminal 1\"",
+   "publisher": "Hensel Phelps (design-builder, T1 Center)",
+   "url": "https://www.henselphelps.com/project/san-francisco-international-airport-sfo-harvey-milk-terminal-1/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/henselphelps_t1c.html",
+   "accessed": "2026-09-26"
+  },
+  "aiasf_t1": {
+   "title": "AIA San Francisco 2023 Design Awards honoree \"SFO Harvey B. Milk Terminal\"",
+   "publisher": "AIA San Francisco",
+   "url": "https://archive.aiasf.org/architecture/design-awards/2023-design-award-honorees/sfo-harvey-b-milk-international-terminal/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/aiasf_t1.html",
+   "accessed": "2026-09-26"
+  },
+  "gensler_t2": {
+   "title": "Gensler project page \"San Francisco International Airport, Terminal 2\"",
+   "publisher": "Gensler",
+   "url": "https://www.gensler.com/projects/san-francisco-international-airport-terminal-2",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/gensler_t2.html",
+   "accessed": "2026-09-26"
+  },
+  "aip_t2": {
+   "title": "Airport Improvement magazine, \"SFO Finds Deeper Shade of Green for Terminal 2\" (2011)",
+   "publisher": "Airport Improvement (quoting Turner and Gensler)",
+   "url": "https://airportimprovement.com/article/sfo-finds-deeper-shade-green-terminal-2/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/aip_t2.html",
+   "accessed": "2026-09-26"
+  },
+  "gbd_t2": {
+   "title": "gb&d magazine \"Case Study: SFO Terminal 2\" (interview with Gensler)",
+   "publisher": "gb&d",
+   "url": "https://gbdmagazine.com/gensler-terminal-2/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/gbd_t2.html",
+   "accessed": "2026-09-26"
+  },
+  "inhabitat_t2": {
+   "title": "Inhabitat \"Gensler's Green SFO Terminal Renovation to be Completed this April\" (2011)",
+   "publisher": "Inhabitat",
+   "url": "https://inhabitat.com/genslers-green-sfo-terminal-renovation-to-be-completed-this-april/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/inhabitat_t2.html",
+   "accessed": "2026-09-26"
+  },
+  "ida_bae": {
+   "title": "International Design Awards, winner entry \"San Francisco International Airport, Terminal 3, Boarding Area E\" by Jeff Henry, Gensler",
+   "publisher": "IDA (entry text by Gensler)",
+   "url": "https://www.idesignawards.com/winners/zoom.php?eid=9-9249-15",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/idesign_bae.html",
+   "accessed": "2026-09-26"
+  },
+  "gensler_bae": {
+   "title": "Gensler project page \"San Francisco International Airport, Terminal 3, Boarding Area E\"",
+   "publisher": "Gensler",
+   "url": "https://www.gensler.com/projects/san-francisco-international-airport-terminal-3-boarding-area",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/gensler_bae.html",
+   "accessed": "2026-09-26"
+  },
+  "hp_bae": {
+   "title": "Hensel Phelps news \"SFO Unveils Hensel Phelps Terminal 3, Boarding Area E Design-Build Renovation\" and project page \"SFO Terminal 3, Boarding Area E\"",
+   "publisher": "Hensel Phelps",
+   "url": "https://www.henselphelps.com/sfo-unveils-hensel-phelps-terminal-3-boarding-area-e-design-build-renovation/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/hp_bae_news.html, hp_bae.html",
+   "accessed": "2026-09-26"
+  },
+  "bdc_bae": {
+   "title": "Building Design + Construction, \"First look: Gensler ups the ante on airport design with new SFO boarding area\" (by Gensler), 6 Feb 2014",
+   "publisher": "BD+C (text supplied by Gensler)",
+   "url": "https://www.bdcnetwork.com/building-sector-reports/airports/news/55158299/first-look-gensler-ups-the-ante-on-airport-design-with-new-sfo-boarding-area",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/bdc_bae.html",
+   "accessed": "2026-09-26"
+  },
+  "mka_t3e": {
+   "title": "Magnusson Klemencic Associates \"San Francisco (SFO) Terminal 3 East Retrofit and Expansion\"",
+   "publisher": "MKA (structural engineer)",
+   "url": "https://www.mka.com/projects/san-francisco-international-airport-sfo-terminal-3-east-retrofit-and-expansion/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/mka_t3e.html",
+   "accessed": "2026-09-26"
+  },
+  "mka_t3w": {
+   "title": "Magnusson Klemencic Associates \"San Francisco International Airport (SFO) Terminal 3 West and Modernization\"",
+   "publisher": "MKA (structural engineer)",
+   "url": "https://www.mka.com/projects/san-francisco-international-airport-sfo-terminal-3-west-and-modernization/",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/mka_t3w.html",
+   "accessed": "2026-09-26"
+  },
+  "studio151_t3e": {
+   "title": "Studio 151 \"Project - SFO Terminal 3 East Concourse\"",
+   "publisher": "Studio 151 (special-systems consultant)",
+   "url": "https://www.studio151corp.com/project-sf-terminal-3",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/studio151_t3e.html",
+   "accessed": "2026-09-26"
+  },
+  "turner_t3w": {
+   "title": "Turner Construction \"San Francisco International Airport Terminal 3 West Modernization\"",
+   "publisher": "Turner Construction",
+   "url": "https://www.turnerconstruction.com/projects/sfo-terminal-3-west-modernization",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/turner_t3w.html",
+   "accessed": "2026-09-26"
+  },
+  "wiki_sfo": {
+   "title": "Wikipedia \"San Francisco International Airport\" (terminal history section)",
+   "publisher": "Wikipedia (secondary)",
+   "url": "https://en.wikipedia.org/wiki/San_Francisco_International_Airport",
+   "read": "secondary",
+   "cache": "refs/cache/buildings/domestic/src/wiki_sfo.html",
+   "accessed": "2026-09-26",
+   "note": "used only for dates/architects of the original buildings, where no primary source was reachable"
+  },
+  "faa_dof": {
+   "title": "FAA Digital Obstacle File DAILY_DOF_CSV (DOF.CSV dated 2026-09-18): obstacles 06-035320/321/322/323/330/331/332/351 (BLDG, survey JDATE 2013289, accuracy 1A = +-20 ft horizontal, +-3 ft vertical)",
+   "publisher": "FAA Aeronautical Information Services",
+   "url": "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP",
+   "read": "full",
+   "cache": "refs/cache/lighting/DAILY_DOF_CSV.ZIP (+ DOF_README.txt)",
+   "accessed": "2026-09-26"
+  },
+  "faa_oe_2012_7455": {
+   "title": "FAA OE/AAA case 2012-AWP-7455-OE (existing antenna, \"Short Perm Parking Garage\", 130 ft AGL) = DOF 06-039216",
+   "publisher": "FAA Obstruction Evaluation / Airport Airspace Analysis",
+   "url": "https://oeaaa.faa.gov/oeaaa/asn-display/asn-case-display-page.html?asn=2012-AWP-7455-OE",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/src/oe_case_2012AWP7455OE.json",
+   "accessed": "2026-09-26"
+  },
+  "naip": {
+   "title": "USDA NAIP orthoimagery 2020 (DOQQ m_3712229_ne, flown 2020-05-24, Planetary Computer COG) and 2024 (flown 2024-05-20, USDA image service), 0.6 m GSD; world-grid rasters by tools/buildings/dom_naip_epochs.py",
+   "publisher": "USDA FPAC-BC Geospatial Enterprise Operations (public domain)",
+   "url": "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+   "read": "full",
+   "cache": "refs/cache/buildings/domestic/naip/",
+   "accessed": "2026-09-26",
+   "note": "2024 raster: refs/cache/naip/naip_2024_sfo_utm10n.tif (tools/imagery/naip_fetch.py); roofs lean by metres (relief displacement), handled in dom_heights.py"
+  },
+  "itb_research": {
+   "title": "ITB research spec (parallel workflow): FAA DOF pole lean calibration on NAIP 2024 and the 2024 sun vector (pole 06-034826 shadow)",
+   "publisher": "this project",
+   "url": "tools/buildings/itb_naip_measurements.json",
+   "read": "full",
+   "cache": "tools/buildings/itb_naip_measurements.json",
+   "accessed": "2026-09-26"
+  },
+  "google_ref": {
+   "title": "Owner's Google Maps screenshots (tools/sat/screens/, e.g. b1d51b0f = Boarding Area B), licensed imagery - reference only, never shipped",
+   "publisher": "Google (licensed)",
+   "url": "tools/sat/screens/b1d51b0f-image.jpg",
+   "read": "full",
+   "cache": "tools/sat/screens/",
+   "accessed": "2026-09-26"
+  }
+ },
+ "items": [
+  {
+   "id": "frame",
+   "group": "frame",
+   "name": "Coordinate frame of all positions",
+   "value": "ltp-nad83-2011 (tools/geo_frame.py): x east, z south, metres from the FAA ARP; heights in metres above the local apron unless stated",
+   "unit": null,
+   "tag": "inf",
+   "sources": [
+    "sfom_data"
+   ],
+   "source_urls": [
+    "https://github.com/sfomuseum-data/sfomuseum-data-architecture"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "outline.level",
+   "group": "frame",
+   "name": "What the SFO Museum boarding-area polygons are",
+   "value": "departure-level (sfo:level 2) floor outlines, not roof outlines; roof edges measured on NAIP lie 0-5 m outside them on the ESE (airfield) faces and 0-2 m inside on the WNW faces (see *.roof_edges)",
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "sfom_data",
+    "naip"
+   ],
+   "source_urls": [
+    "https://github.com/sfomuseum-data/sfomuseum-data-architecture",
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "medium",
+   "status": "verified"
+  },
+  {
+   "id": "sun.2020",
+   "group": "method",
+   "name": "Sun / shadow vector on NAIP 2020 over the domestic terminals",
+   "value": {
+    "shadow_azimuth_deg": 87.4,
+    "shadow_len_per_m": 1.19,
+    "shadow_len_sd": 0.03,
+    "sun_elevation_deg": 40.0
+   },
+   "unit": "deg, m/m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "faa_dof",
+    "itb_research"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP",
+    "tools/buildings/itb_naip_measurements.json"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "method": "ATCT shadow azimuth on NAIP 2020 (87.4 +- 1.5 deg), elevation fixed on the 2020-05-24 sun path (NOAA algorithm, dom_sun.py) and scaled so that FAA DOF 06-035331 (BA F arm roof, 34 ft) and Boarding Area A (k from DOF poles) are reproduced; implied time ~16:45 PDT"
+  },
+  {
+   "id": "sun.2024",
+   "group": "method",
+   "name": "Sun / shadow vector on NAIP 2024",
+   "value": {
+    "shadow_azimuth_deg": 6.6,
+    "shadow_len_per_m": 0.315,
+    "sun_elevation_deg": 72.5
+   },
+   "unit": "deg, m/m",
+   "tag": "obs",
+   "sources": [
+    "itb_research",
+    "naip"
+   ],
+   "source_urls": [
+    "tools/buildings/itb_naip_measurements.json",
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "method": "FAA DOF pole 06-034826 (108 ft) shadow (ITB research); on the 2024-05-20 sun path at 13:14 PDT (dom_sun.py)"
+  },
+  {
+   "id": "control.ba_a",
+   "group": "method",
+   "name": "Control 1: Boarding Area A main-body roof (ITB pier) by the two-epoch method",
+   "value": 18.74,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "itb_research"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/buildings/itb_naip_measurements.json"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "sd_m": 0.75,
+   "note": "lean solved k24.x = 0.418 vs 0.413 from the FAA DOF poles (ITB research, extrapolated 116 m): agreement 1 %; the ITB research gives 17.0 m (low confidence) with its own single-epoch band"
+  },
+  {
+   "id": "control.ba_f_dof",
+   "group": "method",
+   "name": "Control 2: Boarding Area F north-east arm roof vs FAA DOF 06-035331",
+   "value": {
+    "measured_m": 11.03,
+    "dof_m": 10.36,
+    "dof_sd_m": 0.91
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "DOF 34 ft AGL / 44 ft AMSL, 1A, surveyed 2013 (JDATE 2013289) at world (-1027.2, -211.2): roof of the arm, west edge. Difference +0.67 m = 1.0 sigma of the measurement + DOF vertical tolerance"
+  },
+  {
+   "id": "t1.name",
+   "group": "harvey_milk_t1",
+   "name": "Name / composition",
+   "value": "Harvey Milk Terminal 1 (formerly South Terminal, 1963): Boarding Area B (gates B2-B27), Terminal 1 Center (check-in, security, baggage claim) and Boarding Area C (C1-C11)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "sfo_pr_t1_final",
+    "wiki_sfo"
+   ],
+   "source_urls": [
+    "https://www.flysfo.com/about/media/press-releases/sfo-opens-final-phase-harvey-milk-terminal-1",
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t1.phases",
+   "group": "harvey_milk_t1",
+   "name": "Opening phases of the redevelopment",
+   "value": "BA-B first 9 gates + checkpoint + part of T1 Center: July 2019 (23 Jul 2019); 9 more gates + south check-in lobby: May 2020; BA-B complete 2021; final phase (north check-in lobby, mezzanine checkpoint, gates B3 and C1, connector linking all terminals post-security): 17 Jun 2024",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "aip_t1",
+    "arup_t1",
+    "sfo_pr_t1_final"
+   ],
+   "source_urls": [
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/",
+    "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/",
+    "https://www.flysfo.com/about/media/press-releases/sfo-opens-final-phase-harvey-milk-terminal-1"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t1.team",
+   "group": "harvey_milk_t1",
+   "name": "Design / build teams",
+   "value": "BA-B: design-builder Austin Commercial + Webcor Builders JV, architects HKS / Woods Bagot / ED2 International / KYA JV (+ Tsao Design Group), engineer Arup; T1 Center: design-builder Hensel Phelps, architects Gensler / Kuth Ranieri JV; construction manager AECOM / Cooper Pugeda JV (T1C), WSP / Parsons Brinckerhoff / AGS (BA-B)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "aip_t1",
+    "arup_t1",
+    "dbia_bab",
+    "webcor_bab",
+    "kuthranieri_t1c",
+    "henselphelps_t1c",
+    "aiasf_t1"
+   ],
+   "source_urls": [
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/",
+    "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/",
+    "https://dbia.org/project/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/",
+    "https://www.webcor.com/projects/sfo-harvey-milk-terminal-1",
+    "https://kuthranieri.com/san-francisco-international-airport-terminal-1c/",
+    "https://www.henselphelps.com/project/san-francisco-international-airport-sfo-harvey-milk-terminal-1/",
+    "https://archive.aiasf.org/architecture/design-awards/2023-design-award-honorees/sfo-harvey-b-milk-international-terminal/"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t1.area",
+   "group": "harvey_milk_t1",
+   "name": "Floor areas (published, differing definitions)",
+   "value": {
+    "ba_b_sf": [
+     619150,
+     617700,
+     500000
+    ],
+    "t1_center_sf": [
+     1100000,
+     900000
+    ]
+   },
+   "unit": "sq ft",
+   "tag": "pub",
+   "sources": [
+    "dbia_bab",
+    "aip_t1",
+    "woodsbagot_bab",
+    "kuthranieri_t1c",
+    "henselphelps_t1c"
+   ],
+   "source_urls": [
+    "https://dbia.org/project/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/",
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/",
+    "https://www.woodsbagot.com/projects/san-francisco-international-airports-harvey-milk-terminal-1-boarding-area-b/",
+    "https://kuthranieri.com/san-francisco-international-airport-terminal-1c/",
+    "https://www.henselphelps.com/project/san-francisco-international-airport-sfo-harvey-milk-terminal-1/"
+   ],
+   "confidence": "medium",
+   "status": "conflict",
+   "note": "BA-B: 619,150 sf (DBIA, Southland, RDH ~619,000), 617,700 sf \"on 3 levels\" (Airport Improvement 2020), 46,000 m2 / 500,000 sf (Woods Bagot); T1 Center: 1.1 million sf (Kuth Ranieri), 900,000 SF (Hensel Phelps)"
+  },
+  {
+   "id": "bab.gates",
+   "group": "boarding_area_b",
+   "name": "Aircraft gates",
+   "value": 25,
+   "unit": "gates",
+   "tag": "pub",
+   "sources": [
+    "arup_t1",
+    "dbia_bab",
+    "woodsbagot_bab"
+   ],
+   "source_urls": [
+    "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/",
+    "https://dbia.org/project/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/",
+    "https://www.woodsbagot.com/projects/san-francisco-international-airports-harvey-milk-terminal-1-boarding-area-b/"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "incl. 4 international swing gates (Airport Improvement); Webcor: \"24 new gates\"; Wikipedia counts 26 (B2-B27) after B3 opened in 2024"
+  },
+  {
+   "id": "bab.levels",
+   "group": "boarding_area_b",
+   "name": "Levels",
+   "value": "apron level + concourse (departure) level + mezzanine (airline clubs, international corridor): \"two levels and a mezzanine\" (Arup) = \"three-story\" (RDH) = \"3 levels\" (Airport Improvement)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "arup_t1",
+    "rdh_bab",
+    "aip_t1",
+    "dbia_bab"
+   ],
+   "source_urls": [
+    "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/",
+    "https://www.rdh.com/our-case-studies/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/",
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/",
+    "https://dbia.org/project/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "bab.structure",
+   "group": "boarding_area_b",
+   "name": "Structure",
+   "value": "Type I cast-in-place concrete frame on a pile foundation; piles 100 ft deep (seismic)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "rdh_bab",
+    "webcor_bab",
+    "aip_t1"
+   ],
+   "source_urls": [
+    "https://www.rdh.com/our-case-studies/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/",
+    "https://www.webcor.com/projects/sfo-harvey-milk-terminal-1",
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "bab.glazing",
+   "group": "boarding_area_b",
+   "name": "Facade glazing",
+   "value": "electrochromic (View Dynamic Glass) glazing throughout the concourse level, 112,000 sq ft; Low-E high-performance glazing at the clerestory level; floor-to-ceiling windows at the gates",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "arup_t1",
+    "aip_t1",
+    "woodsbagot_bab"
+   ],
+   "source_urls": [
+    "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/",
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/",
+    "https://www.woodsbagot.com/projects/san-francisco-international-airports-harvey-milk-terminal-1-boarding-area-b/"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "bab.clerestory",
+   "group": "boarding_area_b",
+   "name": "Roof section: raised concourse with clerestory",
+   "value": "central concourse ceiling rises to a clerestory band glazed on both sides (interior photos 2019-2024 and Arup \"clerestory level\"); gate holdrooms along the airfield faces",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "arup_t1"
+   ],
+   "source_urls": [
+    "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "geometry (clerestory height and width) not published; visible in Commons photo p02 (Elbeaux 2024) and the Woods Bagot interior photos (reference only)"
+  },
+  {
+   "id": "bab.pv",
+   "group": "boarding_area_b",
+   "name": "Rooftop photovoltaic array",
+   "value": {
+    "power_MW": 1.0,
+    "power_MWdc": 1.2,
+    "panels": 3000
+   },
+   "unit": "MW / panels",
+   "tag": "pub",
+   "sources": [
+    "arup_t1",
+    "cei_bab",
+    "hks_bab",
+    "rdh_bab"
+   ],
+   "source_urls": [
+    "https://www.arup.com/en-us/projects/san-francisco-international-airport-terminal-1/",
+    "https://www.cei.com/our-work/san-francisco-international-airport-sfo-harvey-milk-terminal-1-boarding-area-b",
+    "https://www.hksinc.com/what-we-do/projects/san-francisco-airports-terminal-1-redevelopment/",
+    "https://www.rdh.com/our-case-studies/san-francisco-international-airport-harvey-milk-terminal-1-boarding-area-b/"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "\"1 MW solar array located on the building's roof\" (Arup, RDH, HKS extract); \"1.2-MWDC rooftop array consisting of nearly 3,000 photovoltaic (PV) panels\" (Cupertino Electric)"
+  },
+  {
+   "id": "bab.pv_layout",
+   "group": "boarding_area_b",
+   "name": "PV layout on the roof (imaged)",
+   "value": "rows parallel to the pier axis, each ~5.5 m wide at ~9 m pitch, covering the concourse roof between the airfield edge and the central clerestory/skylight strip; a narrow row along the ESE (airfield) roof edge",
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "google_ref"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/sat/screens/b1d51b0f-image.jpg"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "method": "NAIP 2020/2024 cross-profiles (dom_profile.py) and the Google screenshot b1d51b0f (reference only)"
+  },
+  {
+   "id": "bab.roof_wells",
+   "group": "boarding_area_b",
+   "name": "Roof wells / courtyards on the landside (WNW) part",
+   "value": "the Civic Design Review Committee asked the team to investigate \"the use of roof wells as intake zones\" (Aug 2016); imagery shows long sunken roof courtyards with planting on the WNW side of the pier (north half) crossed by two bridges",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_minutes_2016_08",
+    "naip",
+    "google_ref"
+   ],
+   "source_urls": [
+    "https://www.sfgov.org/arts/meeting/civic-design-review-committee-august-15-2016-minutes",
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/sat/screens/b1d51b0f-image.jpg"
+   ],
+   "confidence": "medium",
+   "status": "verified"
+  },
+  {
+   "id": "bab.h_roof",
+   "group": "boarding_area_b",
+   "name": "Outer roof edge height above apron, south half (t -1238..-1176)",
+   "value": 12.87,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "itb_research",
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/buildings/itb_naip_measurements.json",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "value_ft": 42.2,
+   "sd_m": 0.68,
+   "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
+   "measurement": {
+    "band20": 12.03,
+    "band24": 6.0,
+    "p": 3.35,
+    "den": 1.14,
+    "k24_n": 0.352,
+    "k20_n": 0.092
+   },
+   "note": "the dark ESE perimeter strip (6 m) and the PV field shift alike between epochs (3.3 / 3.4 m), i.e. same height within +-1.5 m; the central clerestory rises above this (not measured)"
+  },
+  {
+   "id": "bab.roof_edges",
+   "group": "boarding_area_b",
+   "name": "Lean-free roof edges, south half (world lines)",
+   "value": {
+    "n_line": [
+     [
+      -915.98,
+      916.57
+     ],
+     [
+      -887.06,
+      861.72
+     ]
+    ],
+    "n_offset_from_line": 3.31,
+    "m_line": [
+     [
+      -936.04,
+      835.89
+     ],
+     [
+      -964.96,
+      890.73
+     ]
+    ],
+    "m_offset_from_line": 5.08
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "ESE roof edge 3.3 m outside the SFO Museum level-2 outline (roof overhang), WNW edge 1.6 m inside it; roof width 55.4 m vs outline 53.7 m (+-1 m)"
+  },
+  {
+   "id": "bab.materials",
+   "group": "boarding_area_b",
+   "name": "Exterior metal / glass palette",
+   "value": "glass and painted metal panels (airside); the team proposed metal spandrel panels instead of continuous louvres for exhaust/intake (CDR Phase 2, Aug 2016)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_minutes_2016_08"
+   ],
+   "source_urls": [
+    "https://www.sfgov.org/arts/meeting/civic-design-review-committee-august-15-2016-minutes"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "colours not published; T3W CDR cites \"electrochromic glass (Terminal 1)\" as a campus cue"
+  },
+  {
+   "id": "t1c.skylight_truss_h",
+   "group": "terminal_1_center",
+   "name": "Height of the skylight trusses above the Main Hall (Level 3) floor",
+   "value": 70,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "sfom_reflectors"
+   ],
+   "source_urls": [
+    "https://www.sfomuseum.org/public-art/public-collection/four-sculptural-light-reflectors"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": 21.34,
+   "note": "\"inserted within the truss structure of the skylights, 70 feet above the floor\" - floor = Main Hall, Level 3, pre-security; the floor elevation above the apron is not published"
+  },
+  {
+   "id": "t1c.skylight_reflectors",
+   "group": "terminal_1_center",
+   "name": "Skylight light reflectors (art, James Carpenter)",
+   "value": {
+    "count": 4,
+    "length_ft": 180,
+    "width_ft": 30
+   },
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "sfom_reflectors"
+   ],
+   "source_urls": [
+    "https://www.sfomuseum.org/public-art/public-collection/four-sculptural-light-reflectors"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": {
+    "length": 54.86,
+    "width": 9.14
+   },
+   "note": "each reflector sits in a skylight -> at least four skylights >= 55 m x 9 m; AIP 2020 (phase 1) mentions \"three large skylights\""
+  },
+  {
+   "id": "t1c.skylights_count",
+   "group": "terminal_1_center",
+   "name": "Number of main-hall skylights",
+   "value": {
+    "sfo_museum": 4,
+    "airport_improvement_2020": 3
+   },
+   "unit": "skylights",
+   "tag": "pub",
+   "sources": [
+    "sfom_reflectors",
+    "aip_t1"
+   ],
+   "source_urls": [
+    "https://www.sfomuseum.org/public-art/public-collection/four-sculptural-light-reflectors",
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/"
+   ],
+   "confidence": "medium",
+   "status": "conflict",
+   "note": "3 in the 2020 article (only half the hall existed then); 4 reflectors in the finished hall. Not identified on NAIP 2024 (roof is saturated white with PV)"
+  },
+  {
+   "id": "t1c.landside_facade",
+   "group": "terminal_1_center",
+   "name": "Landside (curb) facade",
+   "value": "two-tier fritted-glass curtain wall with vertical mullions (pattern \"reminiscent of Redwood trees\") above a continuous glass canopy over the departures curb; clear glass below the canopy; warm (wood) entries",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "aip_t1",
+    "cdr_minutes_2016_08",
+    "cdr_t3w_dd_2024"
+   ],
+   "source_urls": [
+    "https://airportimprovement.com/article/san-francisco-int-l-rebuilds-terminal-1-24-billion/",
+    "https://www.sfgov.org/arts/meeting/civic-design-review-committee-august-15-2016-minutes",
+    "https://www.sf.gov/sites/default/files/2024-10/241021_CDRC_DD_PHASE%202.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "CDR Aug 2016: \"fritted glass ... the top half material of the landside of the terminal, while the glass below the canopy would remain clear\"; laminated-wood vestibules; photos: Commons p00 (Famartin 2025-08-12), RDH facade photos (reference only)"
+  },
+  {
+   "id": "t1c.roof_pv",
+   "group": "terminal_1_center",
+   "name": "Main-hall roof",
+   "value": "roof almost entirely covered by PV rows laid out radially (fan) following the curved hall; three ~9 x 11 m light-blue glazed openings visible at world (-826, 460), (-815, 508), (-884, 530)",
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "method": "visual reading of NAIP 2024 at 0.2 m/px (t1hall_2024_z.jpg); positions +-3 m, lean-affected"
+  },
+  {
+   "id": "t1c.h_roof",
+   "group": "terminal_1_center",
+   "name": "Main-hall roof height above apron",
+   "value": null,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "sfom_reflectors"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "https://www.sfomuseum.org/public-art/public-collection/four-sculptural-light-reflectors"
+   ],
+   "confidence": "low",
+   "status": "unverified",
+   "note": "not measured: curved faces, the landside faces are over roadways/garage and the airfield face has a strip whose shadow is ambiguous; lower bound ~ Level 3 floor + 70 ft (21.3 m)"
+  },
+  {
+   "id": "t1.dof_2013",
+   "group": "harvey_milk_t1",
+   "name": "FAA DOF building points on the old (pre-2019) Terminal 1",
+   "value": {
+    "obst_06_035351_ft": 50,
+    "obst_06_035323_ft": 17,
+    "obst_06_035322_ft": 24
+   },
+   "unit": "ft AGL",
+   "tag": "pub",
+   "sources": [
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "note": "surveyed 2013 (JDATE 2013289): 06-035351 50 ft at (-881.4, 518.1) was on the old T1 center (demolished 2019-2023); 06-035323 17 ft at (-696.7, 628.7) and 06-035322 24 ft at (-620.2, 493.1) are on the apron today (old structures or jet bridges). Superseded - do not use for the new T1"
+  },
+  {
+   "id": "bac.gates",
+   "group": "boarding_area_c",
+   "name": "Gates",
+   "value": 11,
+   "unit": "gates (C1-C11)",
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo",
+    "sfo_pr_t1_final"
+   ],
+   "source_urls": [
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport",
+    "https://www.flysfo.com/about/media/press-releases/sfo-opens-final-phase-harvey-milk-terminal-1"
+   ],
+   "confidence": "medium",
+   "status": "secondary-only",
+   "note": "gate C1 opened 17 Jun 2024 (SFO); total from Wikipedia"
+  },
+  {
+   "id": "bac.history",
+   "group": "boarding_area_c",
+   "name": "History",
+   "value": "pier of the 1963 South Terminal (Welton Becket and Associates), renovated 1988 and \"refreshed\" with the T1 Center project (2024); between Jun 2020 and Oct 2024 counted as part of Terminal 2",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo",
+    "henselphelps_t1c"
+   ],
+   "source_urls": [
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport",
+    "https://www.henselphelps.com/project/san-francisco-international-airport-sfo-harvey-milk-terminal-1/"
+   ],
+   "confidence": "low",
+   "status": "secondary-only"
+  },
+  {
+   "id": "bac.h_roof",
+   "group": "boarding_area_c",
+   "name": "Roof edge height above apron, east half, NNE face (single-face estimate)",
+   "value": 7.54,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "itb_research",
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/buildings/itb_naip_measurements.json",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "value_ft": 24.7,
+   "sd_m": 1.64,
+   "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
+   "measurement": {
+    "band20": 7.26,
+    "p": 4.14,
+    "den": 0.414
+   },
+   "note": "single-face method with an assumed lean k24.x = 0.40 +- 0.06 (from the two-epoch sites); the west half gives an inconsistent band (neighbouring T1 structures in the 2020 shadow)"
+  },
+  {
+   "id": "bac.roof",
+   "group": "boarding_area_c",
+   "name": "Roof features (imaged)",
+   "value": "two long dark bands along the pier on both sides of a lighter central spine (glazed roof monitors or dark roofing - unresolved), a light-blue glazed patch near world (-675, 415) on NAIP 2024, rounded ESE end",
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "low",
+   "status": "verified"
+  },
+  {
+   "id": "t2.history",
+   "group": "terminal_2",
+   "name": "History",
+   "value": "opened 27 Aug 1954 as the Central Terminal; rebuilt as the International Terminal (Gensler, 1983); closed 2000; renovated and reopened 14 Apr 2011 (Gensler with Turner, design-build, $383 M) with 14 gates",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "gbd_t2",
+    "aip_t2",
+    "gensler_t2",
+    "wiki_sfo"
+   ],
+   "source_urls": [
+    "https://gbdmagazine.com/gensler-terminal-2/",
+    "https://airportimprovement.com/article/sfo-finds-deeper-shade-green-terminal-2/",
+    "https://www.gensler.com/projects/san-francisco-international-airport-terminal-2",
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t2.area_levels",
+   "group": "terminal_2",
+   "name": "Area / levels",
+   "value": "640,000 sq ft, two-level structure",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "aip_t2"
+   ],
+   "source_urls": [
+    "https://airportimprovement.com/article/sfo-finds-deeper-shade-green-terminal-2/"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t2.daylight",
+   "group": "terminal_2",
+   "name": "Daylighting",
+   "value": "custom clerestory windows and skylights over the ticketing lobby and recompose areas; transparent (west-facing) facade; interior \"floating angular planes\" (clouds) below the roof",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "gbd_t2",
+    "aip_t2",
+    "inhabitat_t2"
+   ],
+   "source_urls": [
+    "https://gbdmagazine.com/gensler-terminal-2/",
+    "https://airportimprovement.com/article/sfo-finds-deeper-shade-green-terminal-2/",
+    "https://inhabitat.com/genslers-green-sfo-terminal-renovation-to-be-completed-this-april/"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "positions/sizes of the clerestories and skylights are not published"
+  },
+  {
+   "id": "t2.pv",
+   "group": "terminal_2",
+   "name": "Photovoltaics",
+   "value": "456-kW PV system on an adjacent SFO building (not on T2) providing ~20 % of T2 power",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "gbd_t2"
+   ],
+   "source_urls": [
+    "https://gbdmagazine.com/gensler-terminal-2/"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t2.old_tower",
+   "group": "terminal_2",
+   "name": "Former ATCT on Terminal 2",
+   "value": "the pre-2016 control tower stood on top of T2 (photos 2009, 2013); replaced by the 2016 ATCT; its removal date is covered by the tower research",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo"
+   ],
+   "source_urls": [
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport"
+   ],
+   "confidence": "medium",
+   "status": "secondary-only"
+  },
+  {
+   "id": "t2.landside",
+   "group": "terminal_2",
+   "name": "Landside facade",
+   "value": "light metal-panel box with the \"Terminal 2\" sign and a glass entry wall (\"neutral exterior, warm interior\"; \"massing hierarchy\") - T3W CDR campus study",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_dd_2024"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2024-10/241021_CDRC_DD_PHASE%202.pdf"
+   ],
+   "confidence": "medium",
+   "status": "verified"
+  },
+  {
+   "id": "bad.gates",
+   "group": "boarding_area_d",
+   "name": "Gates",
+   "value": 14,
+   "unit": "gates (D1-D12, D14-D16)",
+   "tag": "pub",
+   "sources": [
+    "gensler_t2",
+    "wiki_sfo"
+   ],
+   "source_urls": [
+    "https://www.gensler.com/projects/san-francisco-international-airport-terminal-2",
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "bad.h_roof",
+   "group": "boarding_area_d",
+   "name": "Roof height above apron, D head (ESE face) paired with the south WNW face 90 m away",
+   "value": 8.92,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "itb_research",
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/buildings/itb_naip_measurements.json",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "value_ft": 29.3,
+   "sd_m": 0.65,
+   "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
+   "measurement": {
+    "band20": 11.9,
+    "band24": 5.32,
+    "p": 7.05,
+    "den": 1.14,
+    "k24_n": 0.481,
+    "k20_n": -0.309
+   },
+   "note": "two-epoch method, but the two faces may belong to different roof levels; FAA DOF (2013) gives 25 ft (7.6 m) at (-486.9, 71.9) and 24 ft (7.3 m) at (-482.1, 257.8) near the head corners (+-6 m horizontal)"
+  },
+  {
+   "id": "bad.dof",
+   "group": "boarding_area_d",
+   "name": "FAA DOF building points at the D head",
+   "value": {
+    "obst_06_035330_ft": 25,
+    "obst_06_035321_ft": 24,
+    "obst_06_035320_ft": 25
+   },
+   "unit": "ft AGL",
+   "tag": "pub",
+   "sources": [
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "06-035330 (-486.9, 71.9), 06-035321 (-482.1, 257.8), 06-035320 (-444.3, 194.0; 30 m east of the head, probably a jet bridge / apron structure). 2013 survey, T2 unchanged since 2011"
+  },
+  {
+   "id": "bad.roof_edges",
+   "group": "boarding_area_d",
+   "name": "Lean-free roof edges used (world lines)",
+   "value": {
+    "n_line": [
+     [
+      -491.48,
+      223.52
+     ],
+     [
+      -473.48,
+      189.62
+     ]
+    ],
+    "n_offset_from_line": 2.4,
+    "m_line": [
+     [
+      -561.9,
+      103.04
+     ],
+     [
+      -578.9,
+      135.14
+     ]
+    ],
+    "m_offset_from_line": -1.36
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "low",
+   "status": "verified"
+  },
+  {
+   "id": "bad.roof",
+   "group": "boarding_area_d",
+   "name": "Roof features (imaged)",
+   "value": "large trapezoidal head with two semicircular (horseshoe) roof features at its NW and SE ends and linear skylights; pier from T2 heading ESE",
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "low",
+   "status": "verified"
+  },
+  {
+   "id": "t3.history",
+   "group": "terminal_3",
+   "name": "History",
+   "value": "North Terminal by San Francisco Airport Architects (John Carl Warnecke and Associates, Dreyfuss + Blackford, minority architects): groundbreaking 22 Apr 1971, BA F opened 1979, BA E 1981; BA-E renovated 2014 and T3 East rebuilt (Hensel Phelps / Gensler; Wikipedia: 2015); T3 West modernisation under construction since Aug 2024 (completion expected 2029)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo",
+    "sfo_pr_t3w",
+    "mka_t3e",
+    "studio151_t3e"
+   ],
+   "source_urls": [
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport",
+    "https://www.flysfo.com/about/media/press-releases/sfos-terminal-3-west-modernization-project-underway",
+    "https://www.mka.com/projects/san-francisco-international-airport-sfo-terminal-3-east-retrofit-and-expansion/",
+    "https://www.studio151corp.com/project-sf-terminal-3"
+   ],
+   "confidence": "medium",
+   "status": "secondary-only",
+   "note": "original architects and dates only via Wikipedia"
+  },
+  {
+   "id": "t3.levels_datum",
+   "group": "terminal_3",
+   "name": "Project floor elevations (95% CD, Oct 2023)",
+   "value": {
+    "T3_L1_arrivals_TOC": "11'-0\"",
+    "T3W_L1_arrivals_TOC": "10'-3\"",
+    "T3_L2_departures_TOC": "27'-0\"",
+    "T3_L2M_mezzanine_TOC": "42'-6\"",
+    "T3_L3_FIS_corridor_TOC": "45'-0\"",
+    "T3_R2_top_of_roof_high_pt": "58'-6\"",
+    "T3W_top_of_parapet": "66'-0\"",
+    "T3_R3_top_of_roof_high_pt": "81'-0\""
+   },
+   "unit": "ft (project datum)",
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "sheet 5A-A5.01.01/.02 level markers; datum not stated on the sheets (see t3.heights_above_L1)"
+  },
+  {
+   "id": "t3.heights_above_L1",
+   "group": "terminal_3",
+   "name": "Heights above the T3 arrivals floor (L1)",
+   "value": {
+    "L2 departures": {
+     "ft": 16.0,
+     "m": 4.88
+    },
+    "L2M mezzanine": {
+     "ft": 31.5,
+     "m": 9.6
+    },
+    "L3 FIS corridor": {
+     "ft": 34.0,
+     "m": 10.36
+    },
+    "R2 roof high point": {
+     "ft": 47.5,
+     "m": 14.48
+    },
+    "R3 roof high point": {
+     "ft": 70.0,
+     "m": 21.34
+    },
+    "T3W parapet (new)": {
+     "ft": 55.75,
+     "m": 16.99
+    }
+   },
+   "unit": "ft / m",
+   "tag": "inf",
+   "sources": [
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "method": "elevation minus L1 TOC (11'-0\" T3, 10'-3\" T3W)",
+   "note": "apron vs L1: DOF ground near T3 is 9-10 ft AMSL (06-035331: 44-34; 06-035332: 25-16); if the project datum is ~AMSL, L1 is 1-2 ft above the apron [inf, unverified]"
+  },
+  {
+   "id": "t3w.wall_field",
+   "group": "terminal_3_west",
+   "name": "Airside \"field\" facade wall section (new, under construction)",
+   "value": {
+    "arrivals_to_departures": "16'-0\"",
+    "departures_to_international": "18'-0\"",
+    "international_to_parapet": "22'-0\"",
+    "arrivals_to_parapet": "56'-0\"",
+    "parapet_above_roof": "3'-6\" (0'-42\")",
+    "window_heights": "10'-0\" x2 with a 2'-0\" horizontal mullion band"
+   },
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "CDR p.18; materials: ACM panel, aluminium window wall with vertical fins, accent frame / deluge concealment, single-ply roofing"
+  },
+  {
+   "id": "t3w.wall_gatehouse",
+   "group": "terminal_3_west",
+   "name": "Airside \"gatehouse\" facade wall section (new F1-F4 gatehouses)",
+   "value": {
+    "arrivals_to_departures": "16'-9\"",
+    "departures_to_international": "18'-0\"",
+    "arrivals_to_parapet": "59'-7\"",
+    "parapet_above_roof": "8'-0\" (mechanical penthouse screen)"
+   },
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "CDR p.20; roof = mechanical penthouse; escalator/stair behind glazing"
+  },
+  {
+   "id": "t3w.materials",
+   "group": "terminal_3_west",
+   "name": "New T3W exterior material legend (95% CD)",
+   "value": "ACM rainscreen panels \"Duranar XL Whetstone Gray Metallic\" (MP-50), \"Duranar Sunstorm Norfolk Gray Mica\" dark gray (MP-51), \"Focus Black\" (MP-52); perforated metal panel to match the existing T3E penthouse; electrochromic glazing (GL-50); insulated glass with frit (GL-51); laminated insulated skylight glazing (GL-60); aluminium window wall and vertical mullion fins (dark gray metallic)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t3w.update_2026",
+   "group": "terminal_3_west",
+   "name": "Post-Phase-3 change (May 2026)",
+   "value": "SFO and United agreed to enlarge the lounge: one additional storey on the airside / east side; Level 2M/3 club 22,950 SF, Level 4 club 22,450 SF, Level 5 mechanical penthouse 15,300 SF",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_update_2026"
+   ],
+   "source_urls": [
+    "https://media.api.sf.gov/documents/260518_SFO_T3W_CDRC_UPDATE.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "the as-built T3W massing is therefore not final; model the 2024 (pre-construction) state or the approved design only after the owner decides"
+  },
+  {
+   "id": "t3w.scope",
+   "group": "terminal_3_west",
+   "name": "T3W project scope",
+   "value": "renovate the existing 650,000 sq ft western half of T3 (seismic retrofit, security, check-in), +200,000 sq ft new; new six-storey Courtyard 4 (C4C) building; FIS sterile connector to the ITB; complete replacement of the T3 facade; $2.6 B",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "sfo_pr_t3w",
+    "mka_t3w",
+    "cdr_t3w_c4c_2024",
+    "turner_t3w"
+   ],
+   "source_urls": [
+    "https://www.flysfo.com/about/media/press-releases/sfos-terminal-3-west-modernization-project-underway",
+    "https://www.mka.com/projects/san-francisco-international-airport-sfo-terminal-3-west-and-modernization/",
+    "https://media.api.sf.gov/documents/240318_CDRC_Terminal_3_West_Modernization_-_C4C_update.pdf",
+    "https://www.turnerconstruction.com/projects/sfo-terminal-3-west-modernization"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "t3e.facade",
+   "group": "terminal_3_east",
+   "name": "T3 East exterior (existing, reference for T3W)",
+   "value": "clear perimeter glass with grey frit, metal panel (platinum), metal panel (dark gray metallic), aluminium vertical mullion fins, metal brow surround; rooftop mechanical penthouse clad in perforated/corrugated light-gray metal with wide-profile corrugated accent stripes",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "CDR p.8 and p.16 photos (reference only)"
+  },
+  {
+   "id": "t3e.size",
+   "group": "terminal_3_east",
+   "name": "T3 East size",
+   "value": {
+    "renovation_sf": 400000,
+    "expansion_sf": 53000,
+    "new_gates": 3,
+    "mka_sf": 320000,
+    "stories": 3
+   },
+   "unit": "sq ft",
+   "tag": "pub",
+   "sources": [
+    "studio151_t3e",
+    "mka_t3e"
+   ],
+   "source_urls": [
+    "https://www.studio151corp.com/project-sf-terminal-3",
+    "https://www.mka.com/projects/san-francisco-international-airport-sfo-terminal-3-east-retrofit-and-expansion/"
+   ],
+   "confidence": "medium",
+   "status": "conflict",
+   "note": "Studio 151: 400,000 SF renovation + 53,000 SF expansion adding 3 gates; MKA: 320,000 ft2, three-story"
+  },
+  {
+   "id": "t3.penthouses",
+   "group": "terminal_3",
+   "name": "Existing rooftop mechanical penthouses",
+   "value": "one large penthouse on T3 East and a row of smaller penthouses on T3 West (CDR \"Existing Massing\"); new T3W penthouses added by the project",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_cd_2023",
+    "cdr_t3w_dd_2024"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf",
+    "https://www.sf.gov/sites/default/files/2024-10/241021_CDRC_DD_PHASE%202.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "plan sizes and heights not dimensioned in the CDR set"
+  },
+  {
+   "id": "bae.renovation",
+   "group": "boarding_area_e",
+   "name": "BA-E renovation",
+   "value": "design-build Hensel Phelps with Gensler and the KPA Group; unveiled 25 Jan 2014; $138 M; 10 United gates; complete demolition from the concourse level up and a 30,000 SF concourse expansion; LEED Gold; part of the T3 East capital program (68,800 sf BA-E + 150,000 sf eastern concourse)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "hp_bae",
+    "bdc_bae",
+    "gensler_bae",
+    "ida_bae"
+   ],
+   "source_urls": [
+    "https://www.henselphelps.com/sfo-unveils-hensel-phelps-terminal-3-boarding-area-e-design-build-renovation/",
+    "https://www.bdcnetwork.com/building-sector-reports/airports/news/55158299/first-look-gensler-ups-the-ante-on-airport-design-with-new-sfo-boarding-area",
+    "https://www.gensler.com/projects/san-francisco-international-airport-terminal-3-boarding-area",
+    "https://www.idesignawards.com/winners/zoom.php?eid=9-9249-15"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "bae.area",
+   "group": "boarding_area_e",
+   "name": "BA-E area",
+   "value": {
+    "gensler_sf": 65000,
+    "hensel_phelps_sf": 68800
+   },
+   "unit": "sq ft",
+   "tag": "pub",
+   "sources": [
+    "gensler_bae",
+    "hp_bae"
+   ],
+   "source_urls": [
+    "https://www.gensler.com/projects/san-francisco-international-airport-terminal-3-boarding-area",
+    "https://www.henselphelps.com/sfo-unveils-hensel-phelps-terminal-3-boarding-area-e-design-build-renovation/"
+   ],
+   "confidence": "medium",
+   "status": "conflict"
+  },
+  {
+   "id": "bae.roof",
+   "group": "boarding_area_e",
+   "name": "BA-E roof",
+   "value": "\"With tapered edges overhanging clerestory glazing, the roof is structured with lightweight, long-span trusses concealed within a finished architectural ceiling\" (middle two column rows removed)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "ida_bae"
+   ],
+   "source_urls": [
+    "https://www.idesignawards.com/winners/zoom.php?eid=9-9249-15"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "bae.facade",
+   "group": "boarding_area_e",
+   "name": "BA-E facade",
+   "value": "clear perimeter glass (with grey frit where fritted), light-gray metal panel and dark-gray metallic metal panel bands above/below the glazing, aluminium vertical mullion fins (CDR photo keys 1-4)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "CDR p.9 photos (reference only)"
+  },
+  {
+   "id": "bae.h_roof",
+   "group": "boarding_area_e",
+   "name": "Roof (tapered fascia) edge height above apron, north part (t -350..-310)",
+   "value": 13.51,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "itb_research",
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/buildings/itb_naip_measurements.json",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "value_ft": 44.3,
+   "sd_m": 0.69,
+   "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
+   "measurement": {
+    "band20": 11.3,
+    "band24": 6.5,
+    "p": 2.4,
+    "den": 1.14,
+    "k24_n": 0.367,
+    "k20_n": 0.189
+   },
+   "note": "fascia edge and roof texture shift alike (2.2 / 2.5 m) -> one roof level at the edge; values from the s-profiles recorded in dom_heights.py"
+  },
+  {
+   "id": "baf.gates",
+   "group": "boarding_area_f",
+   "name": "Gates",
+   "value": 18,
+   "unit": "gates (F5-F22 today; F1-F4 being rebuilt by T3W)",
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo",
+    "cdr_t3w_cd_2023"
+   ],
+   "source_urls": [
+    "https://en.wikipedia.org/wiki/San_Francisco_International_Airport",
+    "https://www.sf.gov/sites/default/files/2023-10/231004_CDRC_CD_FINAL.pdf"
+   ],
+   "confidence": "medium",
+   "status": "secondary-only"
+  },
+  {
+   "id": "baf.hub",
+   "group": "boarding_area_f",
+   "name": "BA-F rotunda",
+   "value": "octagonal rotunda hub where the arms meet (CDR massing, NAIP)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "cdr_t3w_dd_2024",
+    "naip"
+   ],
+   "source_urls": [
+    "https://www.sf.gov/sites/default/files/2024-10/241021_CDRC_DD_PHASE%202.pdf",
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "baf.h_roof_ne_arm",
+   "group": "boarding_area_f",
+   "name": "Roof height above apron, north-east arm",
+   "value": 11.03,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "itb_research",
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif",
+    "tools/buildings/itb_naip_measurements.json",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "value_ft": 36.2,
+   "sd_m": 0.66,
+   "method": "h = (band20 + band24 - p) / ((s20 - s24) . n) (dom_heights.py; |s20| calibrated 1.19 +- 0.03)",
+   "measurement": {
+    "band20": 10.29,
+    "band24": 4.28,
+    "p": 1.98,
+    "den": 1.141,
+    "k24_n": 0.275,
+    "k20_n": 0.095
+   },
+   "note": "control against FAA DOF 06-035331 (34 ft)"
+  },
+  {
+   "id": "baf.dof",
+   "group": "boarding_area_f",
+   "name": "FAA DOF building points on BA-F",
+   "value": {
+    "obst_06_035331_ft": 34,
+    "obst_06_035332_ft": 16
+   },
+   "unit": "ft AGL",
+   "tag": "pub",
+   "sources": [
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "06-035331 (-1027.2, -211.2) roof of the NE arm; 06-035332 (-1022.1, -243.8) 16 ft at the arm tip (lower end structure or bridge rotunda)"
+  },
+  {
+   "id": "baf.roof_edges",
+   "group": "boarding_area_f",
+   "name": "Lean-free roof edges of the NE arm (world lines)",
+   "value": {
+    "n_line": [
+     [
+      -1038.58,
+      -151.65
+     ],
+     [
+      -1014.28,
+      -198.05
+     ]
+    ],
+    "n_offset_from_line": 1.83,
+    "m_line": [
+     [
+      -1036.05,
+      -214.49
+     ],
+     [
+      -1062.55,
+      -164.49
+     ]
+    ],
+    "m_offset_from_line": -1.31
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "source_urls": [
+    "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2020/ca_060cm_2020/37122/m_3712229_ne_10_060_20200524.tif"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "ESE edge 1.8 m outside the level-2 outline, WNW edge 1.3 m inside"
+  },
+  {
+   "id": "garage_antenna",
+   "group": "context",
+   "name": "DOF 06-039216 \"BLDG 130 ft\" near T2/T3 is not a terminal",
+   "value": "130 ft AGL antenna on the Short-Term (central) Parking Garage, FAA study 2012-AWP-7455-OE",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "faa_oe_2012_7455",
+    "faa_dof"
+   ],
+   "source_urls": [
+    "https://oeaaa.faa.gov/oeaaa/asn-display/asn-case-display-page.html?asn=2012-AWP-7455-OE",
+    "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  }
+ ],
+ "photos": [
+  {
+   "file": "refs/cache/buildings/domestic/photos/p00.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:2025-08-12_09_08_29_The_front_of_Harvey_Milk_Terminal_1_viewed_from_AirTrain_SFO_at_San_Francisco_International_Airport_in_San_Mateo_County%2C_California.jpg",
+   "title": "File:2025-08-12 09 08 29 The front of Harvey Milk Terminal 1 viewed from AirTrain SFO at San Francisco International Airport in San Mateo County, California.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Famartin",
+   "date": "12 August 2025, 09:08:29",
+   "camera": [
+    37.615028,
+    -122.385881
+   ],
+   "use": "T1 landside facade (fritted glass, canopy) from the AirTrain, 2025"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p01.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:San_Francisco_International_Airport_2025.jpg",
+   "title": "File:San Francisco International Airport 2025.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Antony-22",
+   "date": "22 January 2025, 19:20:25",
+   "camera": [
+    37.614933,
+    -122.38495
+   ],
+   "use": "T1 (category Harvey Milk Terminal 1)"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p02.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SFO_-_San_Francisco_International_Airport_2024.jpg",
+   "title": "File:SFO - San Francisco International Airport 2024.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Elbeaux",
+   "date": "Taken on 21 November 2024, 16:18:09",
+   "camera": [
+    37.613144,
+    -122.384361
+   ],
+   "use": "BA-B concourse interior with the clerestory band, 2024"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p03.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:San_Francisco_International_Airport_1_2019-12-18.jpg",
+   "title": "File:San Francisco International Airport 1 2019-12-18.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "F ASTILY",
+   "date": "18 December 2019, 00:08:06",
+   "camera": [
+    37.612147,
+    -122.385086
+   ],
+   "use": "T1 (category Harvey Milk Terminal 1)"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p04.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Harvey_Milk_Terminal_1-9221.jpg",
+   "title": "File:Harvey Milk Terminal 1-9221.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Frank Schulenburg",
+   "date": "7 November 2019, 12:45:32",
+   "camera": null,
+   "use": "T1"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p05.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Harvey_Milk_Terminal_1-9226.jpg",
+   "title": "File:Harvey Milk Terminal 1-9226.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Frank Schulenburg",
+   "date": "7 November 2019, 12:47:29",
+   "camera": null,
+   "use": "T1"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p06.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SFO_Terminal_2_from_AirTrain.jpg",
+   "title": "File:SFO Terminal 2 from AirTrain.jpg",
+   "licence": "CC BY-SA 3.0",
+   "author": "User:Grendelkhan",
+   "date": "21 September 2013 (according to Exif dat",
+   "camera": [
+    37.616795,
+    -122.384529
+   ],
+   "use": "T2 with the old tower on top, from the AirTrain, 2013"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p07.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:2009-0722-SFO-Terminal2.jpg",
+   "title": "File:2009-0722-SFO-Terminal2.jpg",
+   "licence": "CC BY 3.0",
+   "author": "Bobak Ha'Eri",
+   "date": "22 July 2009",
+   "camera": null,
+   "use": "T2 2009 (old tower)"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p08.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:KSFO2.jpg",
+   "title": "File:KSFO2.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Vmzp85",
+   "date": "6 July 2014, 13:51:24",
+   "camera": [
+    37.610047,
+    -122.389617
+   ],
+   "use": "T2"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p09.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:KSFO3.jpg",
+   "title": "File:KSFO3.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Vmzp85",
+   "date": "6 July 2014, 11:33:55",
+   "camera": [
+    37.612431,
+    -122.389328
+   ],
+   "use": "T2"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p10.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:KSFO4.jpg",
+   "title": "File:KSFO4.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Vmzp85",
+   "date": "6 July 2014, 11:23:37",
+   "camera": [
+    37.613472,
+    -122.388756
+   ],
+   "use": "T2"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p11.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:KSFO9.jpg",
+   "title": "File:KSFO9.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Vmzp85",
+   "date": "3 July 2014, 16:43:32",
+   "camera": [
+    37.616528,
+    -122.392844
+   ],
+   "use": "T2"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p12.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SFO_2024-07-29_1.jpg",
+   "title": "File:SFO 2024-07-29 1.jpg",
+   "licence": "CC BY-SA 4.0",
+   "author": "Yelderberry ( talk )",
+   "date": "29 July 2024, 11:33:11",
+   "camera": null,
+   "use": "T2"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p13.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SFO_-_June_2025_-_Sarah_Stierch.jpg",
+   "title": "File:SFO - June 2025 - Sarah Stierch.jpg",
+   "licence": "CC0",
+   "author": "Missvain",
+   "date": "Taken on 2 June 2025",
+   "camera": [
+    37.616714,
+    -122.384103
+   ],
+   "use": "T2 landside sign/facade 2025"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p14.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:San_Francisco_Airport_%2812411820134%29.jpg",
+   "title": "File:San Francisco Airport (12411820134).jpg",
+   "licence": "CC BY-SA 2.0",
+   "author": "Kohsuke Kawaguchi from San Jose, USA",
+   "date": "27 January 2014, 05:42",
+   "camera": null,
+   "use": "T3"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p15.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Airside_Connector_IT-T3_%2836416581855%29.jpg",
+   "title": "File:Airside Connector IT-T3 (36416581855).jpg",
+   "licence": "CC BY-SA 2.0",
+   "author": "mliu92 from San Mateo",
+   "date": "6 August 2017, 07:59",
+   "camera": [
+    37.61758,
+    -122.388606
+   ],
+   "use": "T3 connector"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p16.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SFO_AirTrain_Terminal_3_intl_faceNorthWest_AP9083765.jpg",
+   "title": "File:SFO AirTrain Terminal 3 intl faceNorthWest AP9083765.jpg",
+   "licence": "CC BY 4.0",
+   "author": "wbaiv",
+   "date": "8 September 2018, 13:09:28",
+   "camera": null,
+   "use": "T3/BA-G apron view 2018"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p17.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_1.jpg",
+   "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 1.jpg",
+   "licence": "CC0",
+   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "date": "21 July 2022, 11:30:59",
+   "camera": [
+    37.701622,
+    -122.441231
+   ],
+   "use": "aerial 2022"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p18.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_2.jpg",
+   "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 2.jpg",
+   "licence": "CC0",
+   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "date": "21 July 2022, 11:31:06",
+   "camera": [
+    37.633869,
+    -122.515253
+   ],
+   "use": "aerial 2022"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p19.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_3.jpg",
+   "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 3.jpg",
+   "licence": "CC0",
+   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "date": "21 July 2022, 11:31:18",
+   "camera": [
+    37.618486,
+    -122.516503
+   ],
+   "use": "aerial 2022"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p20.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Aerial_photographs_of_San_Francisco_International_Airport_%28July_2022%29_-_4.jpg",
+   "title": "File:Aerial photographs of San Francisco International Airport (July 2022) - 4.jpg",
+   "licence": "CC0",
+   "author": ".mw-parser-output .commons-creator-table{background-color:#f0f0ff;box-sizing:bor",
+   "date": "21 July 2022, 11:32:48",
+   "camera": [
+    37.489447,
+    -122.457558
+   ],
+   "use": "aerial 2022"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p21.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_SFO%2C_September_2022.JPG",
+   "title": "File:Aerial view of SFO, September 2022.JPG",
+   "licence": "CC BY-SA 4.0, GFDL",
+   "author": "Pi.1415926535",
+   "date": "Taken on 30 September 2022",
+   "camera": null,
+   "use": "aerial overview 2022"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p22.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_SFO_from_departing_flight%2C_September_2025.JPG",
+   "title": "File:Aerial view of SFO from departing flight, September 2025.JPG",
+   "licence": "CC BY-SA 4.0, GFDL",
+   "author": "Pi.1415926535",
+   "date": "Taken on 9 September 2025",
+   "camera": [
+    37.623444,
+    -122.380764
+   ],
+   "use": "oblique aerial of T2/BA-D, ATCT, T3, BA-E, BA-F from the NE, Sep 2025 (best exterior reference)"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p23.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_San_Francisco_International_Airport_station%2C_September_2025.JPG",
+   "title": "File:Aerial view of San Francisco International Airport station, September 2025.JPG",
+   "licence": "CC BY-SA 4.0, GFDL",
+   "author": "Pi.1415926535",
+   "date": "Taken on 9 September 2025",
+   "camera": null,
+   "use": "oblique aerial 2025 (ITB AirTrain station, BA-G)"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p24.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SFO-aerial-view-2585.jpg",
+   "title": "File:SFO-aerial-view-2585.jpg",
+   "licence": "CC BY-SA 2.5, CC BY-SA 3.0, GFDL",
+   "author": "Vladimir Menkov",
+   "date": "24 December 2006",
+   "camera": null,
+   "use": "aerial"
+  },
+  {
+   "file": "refs/cache/buildings/domestic/photos/p25.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File:SFO-aerial-view-2586.jpg",
+   "title": "File:SFO-aerial-view-2586.jpg",
+   "licence": "CC BY-SA 2.5, CC BY-SA 3.0, GFDL",
+   "author": "Vladimir Menkov",
+   "date": "24 December 2006",
+   "camera": null,
+   "use": "aerial"
+  }
+ ],
+ "current_model_deviations": [
+  "tools/build_terminal_parts.py: every pier PIER_H = 14.6 m. Measured: BA-B 12.9 +- 0.7, BA-E 13.5 +- 0.7, BA-F NE arm 11.0 +- 0.7 (DOF 10.4), BA-D ~8.9 (low), BA-C ~7.5 (low)",
+  "tools/build_terminal_parts.py: HALL_H T1 20.0 / T2 19.0 / T3 21.0 m \"approximate\". Published T3: roof high points 47.5 ft (14.5 m, R2) and 70 ft (21.3 m, R3) above L1; T1 main hall skylight trusses 70 ft above the Level 3 floor; T2 not measured",
+  "js/live/terminals.js: piers with glass curtain walls to 13.4 m, light roof with a skylight spine - BA-B has a PV-covered roof with a central clerestory and landside roof wells; BA-E has a tapered overhanging fascia over clerestory glazing; T3E/T3W have large mechanical penthouses",
+  "SFO Museum polygons are level-2 floor outlines: measured roof edges overhang them by up to ~3-5 m on the airfield (ESE) faces"
+ ],
+ "unverified": [
+  "HKS Boarding Area B page (403): only a search extract",
+  "Architect Magazine and Architizer BA-E / T2 pages (403); Wayback Machine refused",
+  "flysfo.com \"Harvey Milk Terminal 1 Redevelopment\" page (403)",
+  "Civic Design Review presentations for T1 Center / BA-B (2016-2017) are not online - only minutes",
+  "Original architects/dates of the 1954 / 1963 / 1971-81 terminals: Wikipedia only"
+ ],
+ "open_questions": [
+  "Datum of the T3W CDR elevations (L1 = 11'-0\"): SFO project datum vs NAVD88 - ask SFO Design & Construction; needed to turn 58'-6\" / 81'-0\" into heights above the apron (currently taken relative to L1).",
+  "T1 Center and T2 main-hall roof heights, clerestory/skylight geometry: not published; NAIP faces are curved or over roadways. A licensed photo with a scale reference or the Level-3 floor elevation would close it.",
+  "BA-B clerestory: height/width of the raised central roof above the 12.9 m outer roof; BA-B north half and the landside roof wells not measured.",
+  "BA-C and BA-D heights are low-confidence (single face / faces far apart); DOF 2013 points at D (24-25 ft) are 1.3-1.6 m below our 8.9 m.",
+  "Which structures the DOF points 06-035320/322/323/332 represent (apron objects? rotundas?).",
+  "T3W is under construction (2024-2029) with a 2026 design change (+1 storey airside): which state should the model show?",
+  "Relief leans on NAIP 2020 vary irregularly across the site (frame/strip seams); a true orthophoto or lidar (none public) would remove the ambiguity.",
+  "Cross-workflow: the ATCT shadow on NAIP 2020 with the calibrated |s20| = 1.19 implies the tower axis at x = -733.5 +- 3, about 7 m east of the tower research value (-740.5); worth re-checking there."
+ ]
+}

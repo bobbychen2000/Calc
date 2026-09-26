@@ -91,7 +91,9 @@ const hhmm = (t) => new Date(t).toLocaleTimeString('en-US', { timeZone: 'America
 const fmtMin = (m) => m == null ? '—' : m < 10 ? m.toFixed(1) + ' min' : Math.round(m) + ' min';
 const who = (e) => esc((e.flight || '').trim() || e.reg || e.hex.toUpperCase());
 // the full stats sheet (ui.js shows it in a popover / bottom sheet); rows with data-hex select that aircraft
-export function statsHtml(S, Q) {
+// L (optional): {delayS, audioS, ageS} -- how far the scene runs behind real time (review round 2: report the live delay;
+// with the public feeds' cadence it settles at the 3 s maximum, traffic.js DELAY_MAX)
+export function statsHtml(S, Q, L = null) {
   const mins = Math.round(Math.min(S.windowMs, S.now - (S.since || S.now)) / 60000);
   const names = Object.keys(S.runways).sort((a, b) => (S.runways[b].arr + S.runways[b].dep + S.runways[b].ga) - (S.runways[a].arr + S.runways[a].dep + S.runways[a].ga) || a.localeCompare(b));
   const tot = names.reduce((m, n) => (m.arr += S.runways[n].arr, m.dep += S.runways[n].dep, m), { arr: 0, dep: 0 });
@@ -105,7 +107,7 @@ export function statsHtml(S, Q) {
   const queue = q(Q.lined, 'On runway') + q(Q.holding, 'Holding short') + q(Q.taxiOut, 'Taxiing out') + fin;
   const recent = S.recent.length ? `<ul class="evl">${S.recent.map(e => `<li data-hex="${esc(e.hex)}"><span class="mono">${hhmm(e.t)}</span> <span class="k-${e.kind === 'touchdown' ? 'arr' : e.kind === 'liftoff' ? 'dep' : 'ga'}">${e.kind === 'touchdown' ? '↓ landed' : e.kind === 'liftoff' ? '↑ departed' : '⟲ go-around'}</span> <b>${who(e)}</b> ${esc(e.icao || '')} <span class="dim">${esc(e.rwy || '')}</span></li>`).join('')}</ul>` : '';
   return `<h3>Runways</h3>
-<p class="dim small">Detected from each aircraft's own motion (touchdown = braking, lift-off = climbing), last ${mins || 0} min${S.since ? ` · watching since ${hhmm(S.since)}` : ''}. This page only knows what it has seen since it opened.</p>
+<p class="dim small">Detected from each aircraft's own motion (touchdown = braking, lift-off = climbing), last ${mins || 0} min${S.since ? ` · watching since ${hhmm(S.since)}` : ''}. This page only knows what it has seen since it opened.${L && L.delayS != null ? ` The scene runs <b class="mono">${(L.delayS + (L.audioS || 0)).toFixed(1)} s</b> behind real time (interpolation ${L.delayS.toFixed(1)} s${L.ageS != null ? ` for positions ${L.ageS.toFixed(1)} s old when the next arrives (median)` : ''}${L.audioS ? `, + ${L.audioS.toFixed(0)} s ATC audio delay` : ''}).` : ''}</p>
 <h4>Configuration</h4><p>${cfg}${C.n ? ` <span class="dim small">(inferred from the last ${C.spanMin} min)</span>` : ''}</p>
 <h4>Movements</h4>${tbl}
 <p class="small">Last 10 min: <b class="mono">${S.arr10}</b> arrivals, <b class="mono">${S.dep10}</b> departures${S.rejected.length ? ` · rejected take-offs: ${S.rejected.map(who).join(', ')}` : ''}</p>

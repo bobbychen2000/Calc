@@ -51,7 +51,11 @@ DOCS = {
     'b3xm': dict(dxf=B3V + '737_max10/737-10_3VIEW.dxf', unit=IN, note='Boeing CAD 3-view 737-10 (737_max10.zip, DWG -> DXF)'),
     'b744': dict(dxf=B3V + '7474/747-400.dxf', unit=IN, note='Boeing CAD 3-view 747-400 (7474.zip)',
                  fill=[dict(deck=0, a=38.09, b=43.69, why='main-deck windows hidden by the wing in the side view')]),
-    'b748': dict(dxf=B3V + '7478p/7478p3vue.dxf', unit=IN, note='Boeing CAD 3-view 747-8 (7478p.zip, DWG -> DXF)'),
+    # 747-8: dwg2dxf writes an incomplete DXF (no model space); the entities are recovered from LibreDWG's JSON dump
+    # (tools/liveries/dwg_json2dxf.py). The drawing is at a print scale: unit = 76.25 m / side-view length 4.2393 units
+    # (nose 0.2584 .. tail 4.4977), refined by the door outlines against the ACAP door centres (D6-58326-3 §2.7.1 p.2-14)
+    'b748': dict(dxf=B3V + '7478p/7478p3vue_recovered.dxf', unit=76.25 / 4.2393, pxm=80, cal=[9.5, 22.9, 34.7, 46.3, 60.8],
+                 note='Boeing CAD 3-view 747-8 (7478p.zip, DWG -> JSON -> DXF)'),
     'b752': dict(dxf=B3V + '7572/757-200.dxf', unit=IN, note='Boeing CAD 3-view 757-200 (7572.zip)'),
     'b753': dict(dxf=B3V + '7573/757-300.dxf', unit=IN, note='Boeing CAD 3-view 757-300 (7573.zip)'),
     'b762': dict(dxf=B3V + '7672/767-200.dxf', unit=IN, note='Boeing CAD 3-view 767-200 (7672.zip)'),

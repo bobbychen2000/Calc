@@ -3,7 +3,8 @@
 From: owner of `js/live/gates.js` bridge geometry. gates.js now draws the DATA bridges (static_geometry_round1-3 §1 are
 done): fixed walkway along `walkW`, rotunda at `rotundaW` (drum radius `min(2.45, rotundaMaxR)`, also kept 0.2 m off the
 terminal outline, never below 1.5 m), rest pose at `stowW`, telescoping sections of the bridge's `model` (`ext_range`),
-docking only inside the model's operational range +-1 m, the standard / optional cab turn (`cabOption`, sense from
+docking only inside the model's operational range (up to 0.3 m short of its mechanical stop where a parked aircraft
+stands beyond the operational extension), the standard / optional cab turn (`cabOption`, sense from
 `cab_convention`), `dockTypesOut`, and upper-deck bridges (A380 U1L). Checked with a numeric clearance check of every
 bridge at rest, along every docking path and docked, for every accepted type at every stand (incl. alternatives and
 neighbours), against aircraft, other bridges, the terminal outline (sfo_buildings) and the 70 masts: the remaining
