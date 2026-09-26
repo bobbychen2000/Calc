@@ -624,15 +624,18 @@ def process(key, S=2048, preview=None, outdir=None):
     src = source_path(key)
     m = sfom.load(src)
     # exact duplicate triangles of the source (double-sided copies: 1,897 on the FAM 747-8, 19,374 on the A380): the copy
-    # that is occluded by its twin went to another chart layer and stayed unpainted, so the renderer showed a grey band
-    # where it drew that copy first (review round 1, DLH 747-8); one copy is kept (the renderer draws both faces)
-    kq = np.round(m['pos'][m['idx']] * 1000).astype(np.int64); kq.sort(axis=1)
-    # of each duplicate set keep a 'paint' copy (the other copy can carry a glass / dark / untextured material: keeping it
-    # left grey unpainted panels on the 747-8 body)
-    paint = np.array([m['head']['mats'][i]['kind'] == 'paint' and m['head']['mats'][i]['tex'] >= 0 for i in m['tri_mat']])
-    order = np.lexsort((np.arange(len(paint)), ~paint))
-    _, fo = np.unique(kq.reshape(len(m['idx']), -1)[order], axis=0, return_index=True); first = order[fo]
-    if len(first) < len(m['idx']):
+    # that is occluded by its twin went to another chart layer or stayed a kept (unpainted) triangle, so the renderer showed
+    # grey panels / blotches where it drew that copy first (review round 1, DLH 747-8). One copy is kept, preferring the one
+    # the part classification puts into the atlas (a first classification pass on the full mesh decides)
+    kq = np.round(m['pos'][m['idx']] * 1000).astype(np.int64); kq.sort(axis=1); kk = kq.reshape(len(m['idx']), -1)
+    _, inv, cnt = np.unique(kk, axis=0, return_inverse=True, return_counts=True)
+    if (cnt > 1).any():
+        A0 = common.app(); F0 = common.features()[key]; T0 = A0['types'][A0['base'][key]]; s00 = T0['fit']['s0'] if T0['fit'] else 1.0
+        env0 = common.Envelope(m['pos'], m['idx'], m['zone'], m['head']['dims']['L'])
+        seeds0 = [(sg * e['z'] / s00, e['r'] / s00) for e in (T0['eng'] or []) for sg in (-1, 1)]
+        part0 = classify(m, env0, F0, seeds0)[0]
+        order = np.lexsort((np.arange(len(inv)), part0 == 0))           # atlas copies first, then source order
+        _, fo = np.unique(inv[order], return_index=True); first = order[fo]
         keep = np.zeros(len(m['idx']), bool); keep[first] = True
         print(f'  {key}: {len(m["idx"]) - len(first)} duplicate triangles dropped')
         m['idx'] = m['idx'][keep]; m['tri_mat'] = m['tri_mat'][keep]
