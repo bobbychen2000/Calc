@@ -6,7 +6,7 @@ panel, door and window lies exactly on the same surface.
 from __future__ import annotations
 import numpy as np
 
-from cad.mesh import Mesh, grid_surface, grid_normals, trim, band, boundary_loops, solidify, cap_ring, box
+from cad.mesh import Mesh, grid_surface, grid_normals, trim, band, boundary_loops, solidify, cap_ring
 from cad import sdf2d
 from model import fuselage as F
 from model.parts import Part
@@ -520,7 +520,12 @@ def build_door(pid, o):
                 info={"clear opening": f"{2 * o['hx']:.2f} x {2 * o['hz']:.2f} m",
                       "panel (seam)": f"{2 * pan['hx']:.2f} x {2 * pan['hz']:.2f} m",
                       "opens": f"{o['open_deg']:.0f} deg" if o.get("open_deg") else "plug, removed inward"})
-    part.add(slab_out, "paint_white").add(slab_in, "lining")
+    part.add(slab_out, "paint_white")
+    if pid == "door_airstair":                      # edge band, inner body, integral steps, stanchions (model/airstair)
+        from model import airstair
+        airstair.build(part, o, skin)
+    else:
+        part.add(slab_in, "lining")
     if wcx is not None:
         wo = dict(cx=wcx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
         wp = side_patch(wo, side, pad=0.03, d=0.010)
@@ -530,14 +535,6 @@ def build_door(pid, o):
     h = DOOR_DETAILS[DOOR_HANDLE[pid]]
     hp = side_patch(h, side, pad=0.01, d=0.004)
     part.add(trim(hp, rr(xz_of(hp), h), "negative").offset(0.0012), "metal_dark")
-    if pid == "door_airstair":                      # integral steps on the inner face (horizontal when open)
-        steps = []
-        zh = hinge_line(o)[2]
-        for f in (0.26, 0.50, 0.74):
-            z = zh + f * (pan["cz"] + pan["hz"] - zh)
-            yi = float(F.side_y(pan["cx"], z)) - DOOR_T - 0.075
-            steps.append(box((pan["cx"], side * yi, z), (2 * pan["hx"] - 0.14, 0.15, 0.022)))
-        part.add(Mesh.merge(steps), "metal_dark")
     return part
 
 
@@ -551,6 +548,10 @@ def _into_opening(m, o):
 def build_doors(parts_out):
     for pid, o in DOORS:
         parts_out[pid] = build_door(pid, o)
+        if pid == "door_airstair":                  # folding handrails (children, pivot kind 'fold')
+            from model import airstair
+            for c in airstair.child_parts(o, parent=pid):
+                parts_out[c.id] = c
     # seams, skin-edge lips, door stops (flange between the panel seam and the clear opening) and opening jambs.  The
     # lip (the frame edge round the panel seam, DOOR_T + 4 mm deep) carries the livery like the skin beside it (photos
     # 130 / 188: a dark blue lip, then the seal, then the tan / khaki jamb lining; material review F9)

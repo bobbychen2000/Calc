@@ -562,10 +562,9 @@
 <path stroke="none" fill="#EEF1F2" d="M296 129.5l260 0 0 10.3-260 0z"/>
 <text x="297.2" y="133.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">recline reached PAX 1 / 2 / 3 / 4 / 5 /</text>
 <text x="297.2" y="138.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">6</text>
-<text x="412.8" y="133.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">43 / 39 / 33 / 45 / 45 /</text>
+<text x="412.8" y="133.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">45 / 42 / 33 / 45 / 45 /</text>
 <text x="412.8" y="138.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">38</text>
-<text x="415.2" y="133.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">deg from vertical, of 45 [E]; limits: 1: cabinet LH, 2: lavatory, 3: PAX 5, 6: FR34</text>
-<text x="415.2" y="138.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">partition</text>
+<text x="415.2" y="133.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">deg from vertical, of 45 [E]; limits: 2: lavatory, 3: PAX 5, 6: FR34 partition</text>
 <text x="297.2" y="143.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 6 back to FR34 / PAX 1 to</text>
 <text x="297.2" y="148.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet</text>
 <text x="412.8" y="143.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">295 / 87</text>
@@ -578,7 +577,7 @@
 <text x="297.2" y="164.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lavatory: 95th knees past the door</text>
 <text x="297.2" y="168.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">line</text>
 <text x="412.8" y="164.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">226</text>
-<text x="415.2" y="164.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">facing inboard on the toilet (back at the lid hinge); lav 657 x 492: doors cannot</text>
+<text x="415.2" y="164.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">facing inboard on the toilet (back at the lid hinge); lav 624 x 492: doors cannot</text>
 <text x="415.2" y="168.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">close</text>
 <path stroke="none" fill="#EEF1F2" d="M296 170.7l260 0 0 5.8-260 0z"/>
 <text x="297.2" y="174.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lav: floor in front of the cabinet</text>
@@ -629,7 +628,7 @@
 <text x="347.2" y="300.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">outboard armrest; rev B drew two arms</text>
 <path stroke="none" fill="#EEF1F2" d="M296 302l260 0 0 10.3-260 0z"/>
 <text x="297.2" y="306.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lavatory (r2)</text>
-<text x="347.2" y="306.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet wall to wall 4600-5198, bowl at the POH arm 4831, shelf + drawer aft of 5040, lit niche, TP holder (P1046411);</text>
+<text x="347.2" y="306.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet wall to wall 4600-5165, bowl at the POH arm 4831, shelf + drawer aft of 5040, lit niche, TP holder (P1046411);</text>
 <text x="347.2" y="310.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">depth 365 [E]; rev B 400 x 450 box</text>
 <text x="297.2" y="316.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">DECISION: club table</text>
 <text x="347.2" y="316.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">keep the measured table (top 590, outboard leaf + unfolding inboard leaf); up to the 50th fits (feet fwd 28°); the 95th does</text>
@@ -837,11 +836,11 @@
 <text x="657.2" y="261.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] the outboard leaf slides out of the ledge first (P1046404 / 05 show it alone); the inboard leaf</text>
 <text x="657.2" y="266.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">unfolds over the aisle (brochure p.18)</text>
 <text x="567.2" y="271.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lav cabinet x0 x1 d h</text>
-<text x="654.8" y="271.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4600 / 5198 / 365 /</text>
+<text x="654.8" y="271.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4600 / 5165 / 365 /</text>
 <text x="654.8" y="276.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">350</text>
-<text x="657.2" y="271.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] gloss-veneer cabinet wall to wall (P1046411): x0, x1 [M]; depth [E] 0.35-0.38 (carpet between</text>
-<text x="657.2" y="276.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">its foot and the door jambs); height [M] 0.32-0.36, the 0.33 seat ring as scale (P1046411, lav</text>
-<text x="657.2" y="280.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">teaser; r2 0.45)</text>
+<text x="657.2" y="271.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] gloss-veneer cabinet wall to wall (P1046411): x0, x1 [M] (x1 = aft wall - 0.030); depth [E]</text>
+<text x="657.2" y="276.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">0.35-0.38 (carpet between its foot and the door jambs); height [M] 0.32-0.36, the 0.33 seat ring as</text>
+<text x="657.2" y="280.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">scale (P1046411, lav teaser; r2 0.45)</text>
 <path stroke="none" fill="#EEF1F2" d="M566 282.7l260 0 0 5.8-260 0z"/>
 <text x="567.2" y="286.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">FR34 partition</text>
 <text x="654.8" y="286.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">9250</text>

@@ -51,6 +51,9 @@ LAUNCH_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--igno
 
 results: list[tuple[str, bool, str, bool]] = []
 CTX: dict = {}   # extra browser-context options (see --three cdn)
+# page.screenshot timeout: SwiftShader re-renders the whole scene for a capture; after the paint sweep (shot 09) that
+# took 27-31 s on the shared 4-core sandbox with the Stage-2 GLB too (Playwright default 30 s)
+SHOT_TIMEOUT_MS = 120_000
 
 
 def check(name: str, ok: bool, detail: str = "", known: bool = False) -> bool:
@@ -177,7 +180,7 @@ async def shot(page, name, setup, wait_frames=2, note=""):
         await js(page, setup)
     await js(page, f"await window.viewer.frames({wait_frames});")
     path = OUT / f"{name}.png"
-    await page.screenshot(path=str(path))
+    await page.screenshot(path=str(path), timeout=SHOT_TIMEOUT_MS)
     print(f"  shot {path.relative_to(ROOT)} {note}")
     return path
 
@@ -753,7 +756,7 @@ async def regression_checks(page):
     # [BV-5] cockpit: the windshield is see-through from inside
     await js(page, V + "T.neutral(); V.setStep('paint', {instant: true}); V.panel(false); await new Promise(r => setTimeout(r, 400)); V.setCamera('cockpit', {instant: true}); await V.frames(3);")
     shot_path = OUT / "32_cockpit_windshield.png"
-    await page.screenshot(path=str(shot_path))
+    await page.screenshot(path=str(shot_path), timeout=SHOT_TIMEOUT_MS)
     try:
         from PIL import Image
         import numpy as np
@@ -1058,7 +1061,7 @@ async def loading_shot(browser, base):
     await page.goto(base)
     await page.wait_for_selector("#loading", state="visible")
     await page.wait_for_timeout(300)
-    await page.screenshot(path=str(OUT / "00_loading.png"))
+    await page.screenshot(path=str(OUT / "00_loading.png"), timeout=SHOT_TIMEOUT_MS)
     print("  shot out/tmp/viewer/00_loading.png")
     await page.close()
 

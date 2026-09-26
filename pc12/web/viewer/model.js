@@ -8,6 +8,8 @@ export const CUT_PARTS = new Set([
   'fus_center', 'fus_fwd', 'fus_aft', 'glazing_cabin', 'glazing_flightdeck', 'door_airstair', 'door_cargo',
   'exit_hatch', 'door_frames', 'belly_fairing', 'cowl_upper', 'cowl_lower', 'chin_inlet',
   'gear_door_NR', 'gear_door_NL', 'dorsal_fin', 'structure', 'interior_lining',
+  // the airstair's folding handrails (children of door_airstair) are cut with the door
+  'door_airstair_rail', 'door_airstair_rail_up', 'door_airstair_cable',
 ]);
 // Exterior shells that turn translucent in X-ray.
 export const XRAY_PARTS = new Set([
@@ -16,7 +18,8 @@ export const XRAY_PARTS = new Set([
   'elevator_R', 'elevator_L', 'tail_bullet', 'flap_R', 'flap_L', 'aileron_R', 'aileron_L', 'ail_tab_R',
   'ail_tab_L', 'flap_fairings', 'flap_canoes_R', 'flap_canoes_L', 'strakes', 'radar_pod',
 ]);
-// Parts that sit inside the skin (for the "use X-ray / cutaway" hint).
+// Parts that sit inside the skin (for the "use X-ray / cutaway" hint).  Every part of the GLB group 'Interior' (the
+// seats seat_pilot, seat_copilot, seat_pax1 .. of model/seats.py) is added when the model loads.
 export const INTERNAL_PARTS = new Set([
   'structure', 'eng_rgb', 'eng_exhaust', 'eng_pt', 'eng_combustor', 'eng_compressor', 'eng_inlet_screen',
   'eng_agb', 'engine_mount', 'firewall', 'inlet_duct', 'flight_deck', 'cabin_interior', 'interior_lining', 'gear_bays',
@@ -161,6 +164,7 @@ export class Model {
         cut: CUT_PARTS.has(ex.part), xray: XRAY_PARTS.has(ex.part),
       };
       if (prec) prec.children.push(rec);
+      if (ex.group === 'Interior') INTERNAL_PARTS.add(ex.part);
       this.parts.set(rec.id, rec);
       this.list.push(rec);
     });

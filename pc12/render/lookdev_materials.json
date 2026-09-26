@@ -781,6 +781,876 @@
    "note": "door jambs (tan / khaki: photo 188 sRGB 182/154/103 in sun, 82 84/78/60 inside the doorway)",
    "srgb_hex": "#817152"
   },
+  "leather_crew": {
+   "baseColorFactor": [
+    0.6,
+    0.55,
+    0.47,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.8,
+   "kind": "dielectric",
+   "note": "crew-seat cream leather (PRO s/n 3001)",
+   "srgb_hex": "#CBC4B6"
+  },
+  "leather_crew_shell": {
+   "baseColorFactor": [
+    0.042,
+    0.044,
+    0.048,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.8,
+   "kind": "dielectric",
+   "note": "crew-seat anthracite back shell / headrest back",
+   "srgb_hex": "#3A3B3E"
+  },
+  "sheepskin": {
+   "baseColorFactor": [
+    0.31,
+    0.3,
+    0.31,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 1.0,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.3,
+   "render_sheen": {
+    "weight": 1.0,
+    "roughness": 0.45
+   },
+   "kind": "dielectric",
+   "note": "grey sheepskin covers (fleece: sheen lobe)",
+   "srgb_hex": "#979597"
+  },
+  "seat_base_black": {
+   "baseColorFactor": [
+    0.022,
+    0.022,
+    0.025,
+    1.0
+   ],
+   "metallicFactor": 0.3,
+   "roughnessFactor": 0.45,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "black-anodised seat base, pan, life-vest box",
+   "srgb_hex": "#29292C"
+  },
+  "harness": {
+   "baseColorFactor": [
+    0.069,
+    0.072,
+    0.08,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.8,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "dark grey harness webbing",
+   "srgb_hex": "#4A4C50"
+  },
+  "seat_shell_dark": {
+   "baseColorFactor": [
+    0.06,
+    0.063,
+    0.07,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.7,
+   "kind": "dielectric",
+   "note": "executive-seat base shroud, armrest, rear inserts",
+   "srgb_hex": "#45474B"
+  },
+  "seat_tab_red": {
+   "baseColorFactor": [
+    0.45,
+    0.02,
+    0.02,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "red pull tab",
+   "srgb_hex": "#B32727"
+  },
+  "panel_dark": {
+   "baseColorFactor": [
+    0.04,
+    0.041,
+    0.044,
+    1.0
+   ],
+   "metallicFactor": 0.25,
+   "roughnessFactor": 0.48,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "graphite instrument-panel face",
+   "srgb_hex": "#38393B"
+  },
+  "panel_grey": {
+   "baseColorFactor": [
+    0.21,
+    0.205,
+    0.198,
+    1.0
+   ],
+   "metallicFactor": 0.45,
+   "roughnessFactor": 0.38,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "brushed titanium-grey sub-panels, eyebrow, centre stack",
+   "srgb_hex": "#7E7D7B"
+  },
+  "leather_glareshield": {
+   "baseColorFactor": [
+    0.055,
+    0.055,
+    0.058,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.62,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "stitched glareshield leather",
+   "srgb_hex": "#424244"
+  },
+  "carpet_flightdeck": {
+   "baseColorFactor": [
+    0.045,
+    0.045,
+    0.05,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.95,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "cockpit carpet",
+   "srgb_hex": "#3C3C3F"
+  },
+  "bezel_black": {
+   "baseColorFactor": [
+    0.01,
+    0.01,
+    0.012,
+    1.0
+   ],
+   "metallicFactor": 0.1,
+   "roughnessFactor": 0.32,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "display bezels",
+   "srgb_hex": "#19191D"
+  },
+  "screen": {
+   "baseColorFactor": [
+    0.004,
+    0.005,
+    0.007,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.05,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.004,
+    0.006,
+    0.012
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "display glass (dark)",
+   "srgb_hex": "#0D1014"
+  },
+  "screen_sky": {
+   "baseColorFactor": [
+    0.005,
+    0.02,
+    0.08,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.02,
+    0.13,
+    0.7
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "PFD sky",
+   "srgb_hex": "#102750"
+  },
+  "screen_ground": {
+   "baseColorFactor": [
+    0.05,
+    0.025,
+    0.01,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.2,
+    0.13,
+    0.05
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "PFD ground",
+   "srgb_hex": "#3F2C19"
+  },
+  "screen_map": {
+   "baseColorFactor": [
+    0.05,
+    0.042,
+    0.025,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.34,
+    0.29,
+    0.16
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "MFD map",
+   "srgb_hex": "#3F3A2C"
+  },
+  "screen_ui": {
+   "baseColorFactor": [
+    0.008,
+    0.01,
+    0.016,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.018,
+    0.024,
+    0.038
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "display page background",
+   "srgb_hex": "#161922"
+  },
+  "screen_ui_hi": {
+   "baseColorFactor": [
+    0.03,
+    0.034,
+    0.042,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.075,
+    0.085,
+    0.105
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "display buttons / tiles",
+   "srgb_hex": "#30343A"
+  },
+  "screen_green": {
+   "baseColorFactor": [
+    0.01,
+    0.06,
+    0.02,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.1,
+    0.65,
+    0.22
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "green legends",
+   "srgb_hex": "#194527"
+  },
+  "screen_cyan": {
+   "baseColorFactor": [
+    0.008,
+    0.045,
+    0.07,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.05,
+    0.48,
+    0.8
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "cyan legends",
+   "srgb_hex": "#163C4B"
+  },
+  "screen_white": {
+   "baseColorFactor": [
+    0.08,
+    0.08,
+    0.08,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.8,
+    0.8,
+    0.8
+   ],
+   "blender_emission_strength": 1.6,
+   "kind": "dielectric",
+   "note": "white legends",
+   "srgb_hex": "#505050"
+  },
+  "light_amber": {
+   "baseColorFactor": [
+    0.9,
+    0.5,
+    0.05,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.2,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    1.0,
+    0.55,
+    0.05
+   ],
+   "blender_emission_strength": 1.0,
+   "kind": "dielectric",
+   "note": "lit annunciators / legends",
+   "srgb_hex": "#F3BC3F"
+  },
+  "yoke_white": {
+   "baseColorFactor": [
+    0.78,
+    0.78,
+    0.77,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.22,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.06,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "PC-24-style yoke hub, gloss white",
+   "srgb_hex": "#E5E5E3"
+  },
+  "grip_black": {
+   "baseColorFactor": [
+    0.018,
+    0.018,
+    0.02,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.62,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke grips",
+   "srgb_hex": "#242427"
+  },
+  "veneer_walnut": {
+   "baseColorFactor": [
+    0.06,
+    0.047,
+    0.04,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.06,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "render_grain": {
+    "scale": [
+     70.0,
+     70.0,
+     2.5
+    ],
+    "amp": 0.3,
+    "detail": 4.0
+   },
+   "kind": "dielectric",
+   "note": "dark grey-brown walnut veneer, vertical grain, gloss lacquer (P1046406)",
+   "srgb_hex": "#453D38"
+  },
+  "curtain": {
+   "baseColorFactor": [
+    0.6,
+    0.28,
+    0.05,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.92,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.3,
+   "render_sheen": {
+    "weight": 0.4,
+    "roughness": 0.5
+   },
+   "kind": "dielectric",
+   "note": "divider / FR34 curtain (s/n 3001 orange)",
+   "srgb_hex": "#CB903F"
+  },
+  "paint_red": {
+   "baseColorFactor": [
+    0.5,
+    0.015,
+    0.012,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.06,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "FUEL / ACS T-handles, extinguisher",
+   "srgb_hex": "#BC211D"
+  },
+  "carpet": {
+   "baseColorFactor": [
+    0.022,
+    0.024,
+    0.032,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.95,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "anthracite carpet",
+   "srgb_hex": "#292B32"
+  },
+  "carpet_orange": {
+   "baseColorFactor": [
+    0.69,
+    0.25,
+    0.019,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.95,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "AI Orange runner",
+   "srgb_hex": "#D88926"
+  },
+  "carpet_light": {
+   "baseColorFactor": [
+    0.62,
+    0.62,
+    0.6,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.95,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "runner, light",
+   "srgb_hex": "#CECECB"
+  },
+  "carpet_grey": {
+   "baseColorFactor": [
+    0.26,
+    0.28,
+    0.3,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.95,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "runner, grey",
+   "srgb_hex": "#8B9095"
+  },
+  "floor_panel": {
+   "baseColorFactor": [
+    0.2,
+    0.21,
+    0.22,
+    1.0
+   ],
+   "metallicFactor": 0.1,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "floor panel edges",
+   "srgb_hex": "#7C7E81"
+  },
+  "ledge_top": {
+   "baseColorFactor": [
+    0.024,
+    0.026,
+    0.03,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "anthracite ledge tops",
+   "srgb_hex": "#2B2D30"
+  },
+  "ledge_panel": {
+   "baseColorFactor": [
+    0.06,
+    0.066,
+    0.078,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "anthracite ledge kick panels",
+   "srgb_hex": "#45494F"
+  },
+  "gloss_black": {
+   "baseColorFactor": [
+    0.008,
+    0.008,
+    0.01,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.06,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "gloss-black fascia band, table inlay",
+   "srgb_hex": "#161619"
+  },
+  "chrome_trim": {
+   "baseColorFactor": [
+    0.62,
+    0.62,
+    0.61,
+    1.0
+   ],
+   "metallicFactor": 1.0,
+   "roughnessFactor": 0.22,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "kind": "metal",
+   "note": "brushed rims, rods, handles",
+   "srgb_hex": "#CECECD"
+  },
+  "psu_panel": {
+   "baseColorFactor": [
+    0.03,
+    0.031,
+    0.035,
+    1.0
+   ],
+   "metallicFactor": 0.1,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "PSU housings, wall sockets",
+   "srgb_hex": "#303135"
+  },
+  "light_cove": {
+   "baseColorFactor": [
+    0.9,
+    0.9,
+    0.88,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    1.0,
+    0.95,
+    0.85
+   ],
+   "blender_emission_strength": 1.0,
+   "kind": "dielectric",
+   "note": "LED cove strips (a soft glow: P1046402 / 06 show no bright line)",
+   "srgb_hex": "#F3F3F1"
+  },
+  "light_reading": {
+   "baseColorFactor": [
+    0.9,
+    0.88,
+    0.8,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.2,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    1.0,
+    0.9,
+    0.72
+   ],
+   "blender_emission_strength": 2.0,
+   "kind": "dielectric",
+   "note": "reading lights / downlights",
+   "srgb_hex": "#F3F1E7"
+  },
+  "placard_red": {
+   "baseColorFactor": [
+    0.55,
+    0.02,
+    0.015,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "red placards",
+   "srgb_hex": "#C42721"
+  },
+  "lav_white": {
+   "baseColorFactor": [
+    0.84,
+    0.84,
+    0.82,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "lavatory inside",
+   "srgb_hex": "#ECECEA"
+  },
+  "toilet_white": {
+   "baseColorFactor": [
+    0.88,
+    0.88,
+    0.88,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.12,
+   "clearcoatFactor": 1.0,
+   "clearcoatRoughnessFactor": 0.06,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "toilet seat ring / lid",
+   "srgb_hex": "#F1F1F1"
+  },
+  "toilet_bowl": {
+   "baseColorFactor": [
+    0.3,
+    0.31,
+    0.32,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.2,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "bowl",
+   "srgb_hex": "#959799"
+  },
+  "lav_grey": {
+   "baseColorFactor": [
+    0.069,
+    0.072,
+    0.08,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.45,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "lav trim",
+   "srgb_hex": "#4A4C50"
+  },
+  "upholstery_grey": {
+   "baseColorFactor": [
+    0.092,
+    0.097,
+    0.105,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "lav padded shelf",
+   "srgb_hex": "#56585B"
+  },
+  "net": {
+   "baseColorFactor": [
+    0.02,
+    0.02,
+    0.022,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.85,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "optional baggage net",
+   "srgb_hex": "#272729"
+  },
   "paint_navy": {
    "baseColorFactor": [
     0.0066,

@@ -15,6 +15,13 @@ the approved Stage-2 drawing set is drawn from (sheets L1-L5, drawing/*.py -- th
   L5  livery             painted sub-mesh colour boundaries vs the livery curves (side projection) both ways,
                          paint regions (sampled per triangle against livery.region_fields), wing boot band, pod
                          radome joint, blade bands, per-surface colours (SURFACES, STAB_BOOT, WINGLET_PIN)
+  L6  interior           (Stage 3) every seat's outline extents in profile (cushion front, back / headrest rear,
+                         headrest top, floor) and plan (both sides) vs the outlines sheet L6 draws (drawing/
+                         interior_sheet crew_seat_side / seat_plan_crew / exec_seat_side / seat_plan_exec: the SRPs of
+                         CREW_SEAT and seat_map()); crew and cabin seat tracks (SEAT_TRACKS); PDU / SDU centres and
+                         the PDU plane (PANEL), divider aft face and opening (DIVIDER), lavatory walls and toilet
+                         cabinet (LAVATORY), cabinets (CABINETS), side ledges (LEDGES: top, inner face, runs incl. the
+                         cargo-door segment)
   verify round 2 adds    L3 door / exit handles (DOOR_DETAILS), hinge lines vs the door pivots;
                          L4 wing-to-body fairing (lower silhouette, front sections, root-fillet plan edge, fillet on its
                          law, upper edge), chin inlet (mouth + lip ring front view, lip crescent side view), exhaust
@@ -28,10 +35,10 @@ the approved Stage-2 drawing set is drawn from (sheets L1-L5, drawing/*.py -- th
     options: --glb PATH (default out/pc12.glb), --json PATH (default out/tmp/stage3_consistency/report.json),
              --plots (diagnostic PNGs next to the JSON), -v (worst locations of every row)
 
-Tolerances (mm): 5 OML / openings / glazing, 10 livery, 15 planform features (L4 outlines).  Prints one PASS / FAIL /
-INFO / OPEN row per check (max and rms deviation, samples, tolerance) and 'CONSISTENCY OK' / 'CONSISTENCY FAIL'; OPEN =
-a known deviation waiting for an owner decision (CLAUDE.md open items; listed, not failing); exit code 1 on a FAIL, 2
-when the GLB is missing.  The GLB must be newer than model/*.py and cad/*.py (first row) -- rebuild with
+Tolerances (mm): 5 OML / openings / glazing, 10 livery and interior (L6), 15 planform features (L4 outlines).  Prints
+one PASS / FAIL / INFO / OPEN row per check (max and rms deviation, samples, tolerance) and 'CONSISTENCY OK' /
+'CONSISTENCY FAIL'; OPEN = a known deviation waiting for an owner decision (CLAUDE.md open items; listed, not failing);
+exit code 1 on a FAIL, 2 when the GLB is missing.  The GLB must be newer than model/*.py and cad/*.py (first row) -- rebuild with
 python3 model/build.py.  Model axes throughout: x station aft, y butt line (+ starboard), z water line (m).
 """
 from __future__ import annotations
@@ -65,7 +72,7 @@ from model import livery as L  # noqa: E402
 from model import bays as BY  # noqa: E402
 from model.lifting import cos_pts  # noqa: E402
 
-TOL = dict(oml=5.0, opening=5.0, glazing=5.0, livery=10.0, planform=15.0)     # mm
+TOL = dict(oml=5.0, opening=5.0, glazing=5.0, livery=10.0, planform=15.0, interior=10.0)     # mm
 X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
 SKIN_PARTS = ("cowl_upper", "cowl_lower", "fus_fwd", "fus_center", "fus_aft")
 DOOR_PARTS = ("door_airstair", "door_cargo", "exit_hatch")
@@ -2318,6 +2325,215 @@ def _l5_details(ctx, rep):
 
 
 # =====================================================================================================================
+# L6  interior arrangement (Stage 3)
+# =====================================================================================================================
+def _ext_dev(dev, lab, name, got, want):
+    dev.append(float(got - want))
+    lab.append(f"{name}: mesh {got:.4f} vs L6 {want:.4f} ({1000 * (got - want):+.1f} mm)")
+
+
+def _wl(dev, lab, k=5):
+    """The k largest |dev| rows as their labels (the labels carry mesh / L6 values)."""
+    return [lab[i] for i in np.argsort(-np.abs(np.asarray(dev, float)))[:k]]
+
+
+def _box_centre(V):
+    return 0.5 * (V.min(0) + V.max(0))
+
+
+def check_L6(ctx, rep, plots):
+    from model import interior as I
+    from drawing import interior_sheet as S
+    tol = TOL["interior"]
+    fl = float(I.FLOOR["wl"])
+    lay = I.seat_map()
+    # ---- seats: outline extents in profile and plan (the drawn pieces are the L6 seat outlines at each SRP)
+    for crew in (True, False):
+        dev_s, lab_s, dev_p, lab_p, n = [], [], [], [], 0
+        for rec in lay:
+            if bool(rec.get("crew")) != crew or rec.get("kind") == "commuter":
+                continue
+            pid = "seat_" + rec["id"].lower().replace(" ", "").replace("-", "")
+            V = ctx.verts(pid)
+            if not len(V):
+                dev_s.append(1.0)
+                lab_s.append(f"{pid}: not in the GLB")
+                continue
+            n += 1
+            if crew:
+                side = int(np.sign(rec["bl"]))
+                srp = I.crew_srp(side)
+                side_pcs, _, _ = S.crew_seat_side(srp[[0, 2]], fl)
+                plan_pcs = S.seat_plan_crew(side)
+            else:
+                side_pcs, _ = S.exec_seat_side(rec, fl)
+                plan_pcs = S.seat_plan_exec(rec)
+                # the drawn rail is the cabin track under the seat (cabin_interior), not part of the seat
+                side_pcs = [q for q in side_pcs if q[0] != "rail"]
+                # the L6 plan draws the back / headrest footprint with the headrest raised; the profile (upright,
+                # headrest down) sets the fore / aft extents, the plan only the sides
+            Ps = np.vstack([P for _, P, _ in side_pcs])
+            Pp = np.vstack([P for _, P, _ in plan_pcs])
+            tag = rec["id"]
+            _ext_dev(dev_s, lab_s, f"{tag} x min (fwd end)", float(V[:, 0].min()), float(Ps[:, 0].min()))
+            _ext_dev(dev_s, lab_s, f"{tag} x max (aft end)", float(V[:, 0].max()), float(Ps[:, 0].max()))
+            _ext_dev(dev_s, lab_s, f"{tag} top (headrest)", float(V[:, 2].max()), float(Ps[:, 1].max()))
+            _ext_dev(dev_s, lab_s, f"{tag} bottom (floor)", float(V[:, 2].min()), fl)
+            _ext_dev(dev_p, lab_p, f"{tag} y min", float(V[:, 1].min()), float(Pp[:, 1].min()))
+            _ext_dev(dev_p, lab_p, f"{tag} y max", float(V[:, 1].max()), float(Pp[:, 1].max()))
+        what = "crew seats (CREW_SEAT at crew_srp)" if crew else "executive seats (EXEC_SEAT at seat_map)"
+        rep.add("L6", f"{what}: profile extents vs L6 outlines", np.array(dev_s), tol,
+                f"{n} seats: fwd / aft end, headrest top, floor", _wl(dev_s, lab_s))
+        rep.add("L6", f"{what}: plan extents (both sides) vs L6 outlines", np.array(dev_p), tol,
+                f"{n} seats", _wl(dev_p, lab_p))
+    # ---- seat tracks: the crew tracks (in the crew seat parts: CREW_SEAT rail_dy about the SRP, the x run of the drawn
+    #      crew_base_profile rail, SEAT_TRACKS crew_h) and the four cabin tracks (cabin_interior: SEAT_TRACKS bl, x0-x1, h)
+    st = I.SEAT_TRACKS
+    dev, lab = [], []
+    for side in (-1, 1):
+        pid = "seat_pilot" if side < 0 else "seat_copilot"
+        srp = I.crew_srp(side)
+        rail = I.crew_base_profile(fl - float(srp[2]))["rail"]
+        Vt = ctx.verts(pid, mats=("metal_dark",))
+        for sg in (-1, 1):
+            y0 = float(srp[1]) + sg * float(I.CREW_SEAT["rail_dy"])
+            q = Vt[(np.abs(Vt[:, 1] - y0) < 0.03) & (Vt[:, 2] <= fl + float(st["crew_h"]) + 1e-4)]
+            nm = f"{pid} track BL {y0:+.3f}"
+            if not len(q):
+                dev.append(1.0)
+                lab.append(f"{nm}: not found")
+                continue
+            _ext_dev(dev, lab, f"{nm} fwd end", float(q[:, 0].min()), float(srp[0] - rail[:, 0].max()))
+            _ext_dev(dev, lab, f"{nm} aft end", float(q[:, 0].max()), float(srp[0] - rail[:, 0].min()))
+            _ext_dev(dev, lab, f"{nm} centre line", float(0.5 * (q[:, 1].min() + q[:, 1].max())), y0)
+            _ext_dev(dev, lab, f"{nm} top", float(q[:, 2].max()), fl + float(st["crew_h"]))
+    Vc = ctx.verts("cabin_interior", mats=("metal_dark",))
+    for b in st["bl"]:
+        for sg in (-1, 1):
+            y0 = sg * float(b)
+            q = Vc[(np.abs(Vc[:, 1] - y0) < 0.5 * float(st["w"]) + 0.002) & (Vc[:, 2] <= fl + float(st["h"]) + 1e-4)]
+            nm = f"cabin track BL {y0:+.2f}"
+            if not len(q):
+                dev.append(1.0)
+                lab.append(f"{nm}: not found")
+                continue
+            _ext_dev(dev, lab, f"{nm} fwd end", float(q[:, 0].min()), float(st["x0"]))
+            _ext_dev(dev, lab, f"{nm} aft end", float(q[:, 0].max()), float(st["x1"]))
+            _ext_dev(dev, lab, f"{nm} centre line", float(0.5 * (q[:, 1].min() + q[:, 1].max())), y0)
+            _ext_dev(dev, lab, f"{nm} top", float(q[:, 2].max()), fl + float(st["h"]))
+    rep.add("L6", "seat tracks: crew (CREW_SEAT rail_dy, drawn rail run, crew_h), cabin (SEAT_TRACKS bl, x0-x1, h)",
+            np.array(dev), tol, "4 crew + 4 cabin tracks", _wl(dev, lab))
+    # ---- displays: PDU / SDU centres, PDU plane
+    Vs = np.vstack([r.V for r in ctx.get("flight_deck", mats=("screen",))]) if ctx.get("flight_deck", ("screen",)) \
+        else np.zeros((0, 3))
+    zm = float(I.PANEL["mfd_z"])
+    dev, lab = [], []
+    pdu = Vs[(Vs[:, 2] > zm - 0.14) & (Vs[:, 2] < zm + 0.14) & (Vs[:, 0] < 3.58) & (np.abs(Vs[:, 1]) < 0.56)]
+    for name, sel, want in (("PFD L", pdu[:, 1] < -0.17, I.pdu_centre(-1)), ("MFD", np.abs(pdu[:, 1]) <= 0.17,
+                                                                               I.mfd_centre()),
+                            ("PFD R", pdu[:, 1] > 0.17, I.pdu_centre(1))):
+        if not sel.any():
+            dev.append(1.0)
+            lab.append(f"{name}: no glass")
+            continue
+        c = _box_centre(pdu[sel])
+        for k, ax in enumerate("xyz"):
+            _ext_dev(dev, lab, f"{name} centre {ax}", float(c[k]), float(want[k]))
+    sdu = Vs[(Vs[:, 2] < zm - 0.14) & (Vs[:, 2] > zm - 0.40) & (np.abs(Vs[:, 1]) < 0.14) & (Vs[:, 0] < 3.75)]
+    for name, sel, want in (("SDU L", sdu[:, 1] < 0, I.sdu_centre(-1)), ("SDU R", sdu[:, 1] > 0, I.sdu_centre(1))):
+        if not sel.any():
+            dev.append(1.0)
+            lab.append(f"{name}: no glass")
+            continue
+        c = _box_centre(sdu[sel])
+        for k, ax in enumerate("xyz"):
+            _ext_dev(dev, lab, f"{name} centre {ax}", float(c[k]), float(want[k]))
+    rep.add("L6", "PDU / SDU glass centres vs PANEL (glass_x, pdu_bl, mfd_z) / sdu_centre", np.array(dev), tol,
+            "3 x 14-in PDUs, 2 x 7-in SDUs (G3000 PRIME)", _wl(dev, lab))
+    mfd = pdu[np.abs(pdu[:, 1]) <= 0.17]
+    d = (mfd[:, 0] - I.panel_x(mfd[:, 2])) * math.cos(math.radians(I.PANEL["tilt_deg"])) if len(mfd) else None
+    rep.add("L6", "MFD glass on the PDU plane (panel_x: glass_x at mfd_z, tilt)", d, tol,
+            f"tilt {I.PANEL['tilt_deg']:.0f} deg", worst_list(d if d is not None else [], mfd))
+    # ---- divider: aft face and the open aisle between its walls
+    Vd = ctx.verts("flight_deck", mats=("veneer_walnut",))
+    dev, lab = [], []
+    if len(Vd):
+        _ext_dev(dev, lab, "divider aft face x", float(Vd[:, 0].max()), float(I.DIVIDER["x_aft"]))
+        low = Vd[(Vd[:, 2] > fl + 0.10) & (Vd[:, 2] < fl + 1.20)]
+        ob0, ob1 = I.DIVIDER["open_bl"]
+        _ext_dev(dev, lab, "opening LH edge", float(low[low[:, 1] < 0, 1].max()), float(ob0))
+        _ext_dev(dev, lab, "opening RH edge", float(low[low[:, 1] > 0, 1].min()), float(ob1))
+    rep.add("L6", "divider aft face and open aisle (DIVIDER x_aft, open_bl)", np.array(dev) if dev else None, tol,
+            "walnut partition", _wl(dev, lab))
+    # ---- lavatory walls, toilet cabinet; the drawer cabinets
+    lz = I.LAVATORY
+    dev, lab = [], []
+    Vl = np.vstack([r.V for r in ctx.get("cabin_interior", mats=("veneer_walnut", "lav_white"))])
+    lv = Vl[(Vl[:, 1] > 0.2) & (Vl[:, 0] < float(lz["x"][1]) + 0.01) & (Vl[:, 2] > fl + 1.0)]
+    if len(lv):
+        _ext_dev(dev, lab, "lav fwd wall x", float(lv[:, 0].min()), float(lz["x"][0]))
+        _ext_dev(dev, lab, "lav aft wall x", float(lv[:, 0].max()), float(lz["x"][1]))
+        _ext_dev(dev, lab, "lav inboard wall BL", float(lv[:, 1].min()), float(lz["inboard_bl"]))
+    cx0, cx1, cdep, cht = (float(v) for v in lz["cabinet"])
+    Vw = ctx.verts("cabin_interior", mats=("lav_white",))
+    top = Vw[(np.abs(Vw[:, 2] - (fl + cht)) < 0.002) & (Vw[:, 1] > 0.2) & (Vw[:, 0] < float(lz["x"][1]))]
+    if len(top):
+        _ext_dev(dev, lab, "toilet cabinet top", float(top[:, 2].mean()), fl + cht)
+        _ext_dev(dev, lab, "toilet cabinet x0", float(top[:, 0].min()), cx0)
+        _ext_dev(dev, lab, "toilet cabinet x1", float(top[:, 0].max()), cx1)
+    else:
+        dev.append(1.0)
+        lab.append("toilet cabinet top not found")
+    Vc = ctx.verts("cabin_interior", mats=("veneer_walnut",))
+    for key, cb in I.CABINETS.items():
+        sg = int(cb["side"])
+        x0, x1 = (float(v) for v in cb["x"])
+        q = Vc[(Vc[:, 1] * sg > float(cb["bl_in"]) - 0.005) & (Vc[:, 0] > x0 - 0.01) & (Vc[:, 0] < x1 + 0.01) &
+               (Vc[:, 2] < fl + float(cb["h"]) + 0.01)]
+        if not len(q):
+            dev.append(1.0)
+            lab.append(f"cabinet {key}: not found")
+            continue
+        _ext_dev(dev, lab, f"cabinet {key.upper()} x0", float(q[:, 0].min()), x0)
+        _ext_dev(dev, lab, f"cabinet {key.upper()} x1", float(q[:, 0].max()), x1)
+        _ext_dev(dev, lab, f"cabinet {key.upper()} inboard face", float(np.abs(q[:, 1]).min()), float(cb["bl_in"]))
+        _ext_dev(dev, lab, f"cabinet {key.upper()} top", float(q[:, 2].max()), fl + float(cb["h"]))
+    rep.add("L6", "lavatory walls / toilet cabinet (LAVATORY), drawer cabinets (CABINETS)", np.array(dev), tol,
+            "veneer outside, white inside", _wl(dev, lab))
+    # ---- side ledges: top, inner face, runs (port: split at the cargo door; its segment rides on door_cargo)
+    LG = I.LEDGES
+    dev, lab = [], []
+    Vt = ctx.verts("cabin_interior", mats=("ledge_top",))
+    Vf = ctx.verts("cabin_interior", mats=("gloss_black",))
+    Vdoor = ctx.verts("door_cargo", mats=("ledge_top",))
+    _ext_dev(dev, lab, "ledge top WL", float(np.median(Vt[:, 2])), fl + float(LG["top_h"]))
+    ds, da, db = LG["door_segment"]
+    for side, xa, xb in LG["runs"]:
+        sg = int(side)
+        q = Vt[Vt[:, 1] * sg > 0]
+        f = Vf[(Vf[:, 1] * sg > 0) & (Vf[:, 2] > fl + float(LG["top_h"]) - float(LG["fascia"]) - 0.002)]
+        nm = "LH" if sg < 0 else "RH"
+        _ext_dev(dev, lab, f"{nm} ledge fwd end", float(q[:, 0].min()), float(xa))
+        _ext_dev(dev, lab, f"{nm} ledge aft end", float(q[:, 0].max()), float(xb))
+        if len(f):
+            _ext_dev(dev, lab, f"{nm} fascia inner face", float(np.abs(f[:, 1]).min()), float(LG["inner_bl"]))
+        if sg == int(ds):
+            gap = q[(q[:, 0] > float(da) - 0.01) & (q[:, 0] < float(db) + 0.01)]
+            fixed_in = gap[(gap[:, 0] > float(da) + 0.003) & (gap[:, 0] < float(db) - 0.003)]
+            dev.append(0.0 if not len(fixed_in) else 1.0)
+            lab.append(f"{nm} fixed ledge interrupted over the cargo-door segment: {len(fixed_in)} verts inside")
+            if len(Vdoor):
+                _ext_dev(dev, lab, "cargo-door ledge segment x0", float(Vdoor[:, 0].min()), float(da))
+                _ext_dev(dev, lab, "cargo-door ledge segment x1", float(Vdoor[:, 0].max()), float(db))
+                _ext_dev(dev, lab, "cargo-door ledge segment top", float(Vdoor[:, 2].max()), fl + float(LG["top_h"]))
+            else:
+                dev.append(1.0)
+                lab.append("cargo-door ledge segment not on door_cargo")
+    rep.add("L6", "side ledges: top, fascia inner face, runs, cargo-door segment (LEDGES)", np.array(dev), tol,
+            "anthracite ledges", _wl(dev, lab))
+
+
+# =====================================================================================================================
 # plots (diagnostics, --plots)
 # =====================================================================================================================
 def _plot_side(path, outlines, points, box):
@@ -2394,7 +2610,7 @@ def stale_sources(glb):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--glb", default=str(ROOT / "out" / "pc12.glb"))
-    ap.add_argument("--only", default="L1,L2,L3,L4,L5")
+    ap.add_argument("--only", default="L1,L2,L3,L4,L5,L6")
     ap.add_argument("--json", default=str(DEFAULT_JSON))
     ap.add_argument("--plots", action="store_true")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -2418,7 +2634,8 @@ def main(argv=None):
     if a.plots:
         plots = Path(a.json).parent
         plots.mkdir(parents=True, exist_ok=True)
-    for sheet, fn in (("L1", check_L1), ("L2", check_L2), ("L3", check_L3), ("L4", check_L4), ("L5", check_L5)):
+    for sheet, fn in (("L1", check_L1), ("L2", check_L2), ("L3", check_L3), ("L4", check_L4), ("L5", check_L5),
+                      ("L6", check_L6)):
         if sheet in a.only.split(","):
             try:
                 fn(ctx, rep, plots)

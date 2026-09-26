@@ -25,9 +25,11 @@ Every value carries a one-line source note (P / PT .src): [S] sourced text (Pila
 ergonomic, [H] hard constraint owned by another module.  The POH datum (3.000 m ahead of the firewall) is the model
 datum, so POH arms are STA directly.
 
-The 3-D builder further down (build_flightdeck / build_cabin, constants FD_FLOOR_Z, SEAT_ROWS ...) is still the
-rev-A interior and does NOT use these tables yet; build_lining (part interior_lining: side-wall / headliner lining with
-window reveals and door wells, materials lining / lining_flightdeck) already follows the LINING law (lining_offset).
+STAGE 3: the 3-D interior is built from exactly these tables -- build_flightdeck() (model/flightdeck.py, part
+flight_deck, + the crew seats of model/seats.py: seat_pilot / seat_copilot), build_cabin() (model/cabin.py, part
+cabin_interior, + one executive seat part per layout seat: seat_pax1 ..) and build_lining() (part interior_lining:
+side-wall / headliner lining by the LINING law (lining_offset) with window reveals and door wells, materials lining /
+lining_flightdeck).
 Structure: fuselage frames at the Pilatus frame stations (fuselage.FRAMES, numbered frames interpolated between them)
 interrupted at the openings, stringers, wing spars and ribs (representative, not the certified structural drawing).
 """
@@ -35,8 +37,7 @@ from __future__ import annotations
 import math
 import numpy as np
 
-from cad.mesh import (Mesh, superellipsoid, box, cylinder, sweep_tube, rotation_matrix, grid_surface,
-                      planar_cap, revolve, trim)
+from cad.mesh import Mesh, sweep_tube, grid_surface, planar_cap, trim
 from model.parts import Part
 from model import fuselage as F
 from model import wing as W
@@ -352,10 +353,13 @@ TABLES = {
                   bl_in=P(0.080, "[E]"), top_h=P(0.590, "[M] as club_p"), t=P(0.025, "[E]"), optional=True),
 }
 LAVATORY = dict(
-    x=PT((4.571, 5.228), "[S] fwd wall = the RH divider (POH 7-28); aft wall [M] plan render"),
+    x=PT((4.571, 5.195), "[S] fwd wall = the RH divider (POH 7-28); aft wall [M] plan render 5.228, moved 33 mm fwd "
+                         "(Stage 3): 14 mm clear of the forward edge of RH cabin window 1 (STA 5.359 - 0.150), which "
+                         "the render wall crossed by 19 mm (fit_check 20)"),
     inboard_bl=P(0.260, "[M] plan render +0.25-0.28: in line with the divider opening"),
     bowl_x=P(4.831, "[S] toilet CG arm (POH): bowl centre"),
-    cabinet=PT((4.600, 5.198, 0.365, 0.350), "[M] gloss-veneer cabinet wall to wall (P1046411): x0, x1 [M]; depth "
+    cabinet=PT((4.600, 5.165, 0.365, 0.350), "[M] gloss-veneer cabinet wall to wall (P1046411): x0, x1 [M] (x1 = aft "
+                                             "wall - 0.030); depth "
                                              "[E] 0.35-0.38 (carpet between its foot and the door jambs); height [M] "
                                              "0.32-0.36, the 0.33 seat ring as scale (P1046411, lav teaser; r2 0.45)"),
     seat_ring=PT((0.330, 0.280), "[M] toilet seat ring under the hinged lid: along x, across (P1046411)"),
@@ -369,11 +373,14 @@ LAVATORY = dict(
     finish="veneer outside, white inside, lowered lit ceiling [M: PRO photos]",
 )
 CABINETS = {
-    "rh": dict(side=+1, x=PT((5.228, 5.384), "[M] plan render (POH arm 5.366 [S])"),
-               bl_in=P(0.300, "[M]"), h=P(0.750, "[E] upper + lower drawer [S placard]")),
+    "rh": dict(side=+1, x=PT((5.195, 5.384), "[M] plan render (POH arm 5.366 [S]); fwd face against the lav aft wall "
+                                              "[S: POH 'fits against the toilet compartment rear wall']"),
+               bl_in=P(0.300, "[M]"), h=P(0.720, "[E] upper + lower drawer [S placard]; top 16 mm under the "
+                                                 "cabin-window sill (0.736 above the floor: the RH cabinet stands "
+                                                 "under window 5.359; rev C 0.75 crossed it, fit_check 20)")),
     "lh": dict(side=-1, x=PT((5.300, 5.450), "[M] render 5.244-5.389 moved aft to clear the airstair opening "
                                               "(5.275) + jamb; centre 5.375 = POH arm 5.387 [S]"),
-               bl_in=P(0.240, "[M]"), h=P(0.750, "[E] upper + lower drawer [S placard]")),
+               bl_in=P(0.240, "[M]"), h=P(0.720, "[E] upper + lower drawer [S placard]; as RH (a matched pair)")),
 }
 BAGGAGE = dict(
     partition_x=P(9.250, "[S] FR34: POH floor length 4.68 from the divider; render 9.244"),
@@ -705,7 +712,11 @@ def crew_base_profile(vf):
     vest = np.array([(u1 - lv[0], vf + 0.035), (u1, vf + 0.035), (u1, vf + 0.035 + lv[2]),
                      (u1 - lv[0], vf + 0.035 + lv[2])])
     th = SEAT_TRACKS["crew_h"]
-    rail = np.array([(ur - 0.11, vf), (uf + 0.05, vf), (uf + 0.05, vf + th), (ur - 0.11, vf + th)])
+    # the tracks are fixed (drawn at the neutral notch): they run 10 mm past the front foot tip and 40 mm past the rear
+    # one with the seat at either end of its travel_x (rev C: +0.05 / -0.11 at neutral, the front feet overhung the
+    # track end by 20 mm at full forward travel -- Stage 3 fit_check 18)
+    r0, r1 = ur - c["travel_x"] - 0.04, uf + c["travel_x"] + 0.01
+    rail = np.array([(r0, vf), (r1, vf), (r1, vf + th), (r0, vf + th)])
     return dict(plate=plate, vest=vest, rail=rail)
 
 
@@ -1547,233 +1558,66 @@ def FP_WIN():
 
 
 # =====================================================================================================================
-# LEGACY 3-D BUILDER (rev A) -- unchanged; replaced in Stage 3 by a builder that consumes the tables above
+# STAGE-3 3-D BUILD (the tables above -> meshes): model/flightdeck.py (panel, glareshield, yokes, pedals, pedestal on
+# the tunnel plinth, consoles, overhead, divider), model/seats.py (IPECO-type crew seats, PRO executive seats),
+# model/cabin.py (floor, tracks, ledges, tables, lavatory, cabinets, headliner, FR34 partition); the lining below
 # =====================================================================================================================
-FLOOR_Z = F.CABIN_FLOOR_WL        # 1.259: crown 2.769 - lining 0.040 - cabin height 1.470 (decision D1)
+def build_flightdeck(parts, seats=True, ceiling=None):
+    """Part 'flight_deck' (model/flightdeck.py) and, with seats, the two crew seats seat_pilot / seat_copilot
+    (model/seats.py, IPECO 3A318 type at crew_srp(), neutral travel); ceiling: see build()."""
+    from model import flightdeck, seats as S
+    flightdeck.build(parts, ceiling=ceiling)
+    if seats:
+        _seat_parts(parts, S, crew=True)
+    return parts
 
 
-def rbox(center, size, e=0.28, R=None, n=14):
-    return superellipsoid(center, np.asarray(size) / 2, (e, e), nu=n, nv=n + 6, R=R)
+def build_cabin(parts, layout=None, seats=True, ceiling=None):
+    """Part 'cabin_interior' (model/cabin.py: floor, tracks, ledges, stowed club tables, lavatory, cabinets,
+    headliner, FR34 partition; the port ledge segment goes onto door_cargo) and, with seats, one part per cabin seat
+    of the layout (seat_pax1 ..; model/seats.py executive seats at seat_map(), TTL); ceiling: see build()."""
+    from model import cabin, seats as S
+    cabin.build(parts, layout, ceiling=ceiling)
+    if seats:
+        _seat_parts(parts, S, crew=False, layout=layout)
+    return parts
 
 
-def roty(a):
-    return rotation_matrix((0, 1, 0), np.radians(a))
-
-
-def seat(x, y, facing=+1, floor=FLOOR_Z, width=0.52, crew=False, back_h=0.74, head_w=0.55):
-    """facing=+1 forward-facing (back toward +x), -1 aft-facing."""
-    f = facing
-    parts_leather, parts_frame = [], []
-    cz = floor + 0.40
-    parts_leather.append(rbox((x, y, cz), (0.50, width, 0.14), e=0.35))
-    back_c = np.array([x + f * 0.24, y, floor + 0.41 + back_h / 2])
-    parts_leather.append(rbox(back_c, (0.14, width, back_h), e=0.35, R=roty(-f * 12)))
-    parts_leather.append(rbox(back_c + [f * 0.07, 0, back_h / 2 + 0.07], (0.12, width * head_w, 0.15), e=0.45,
-                              R=roty(-f * 12)))
-    for s in (-1, 1):
-        parts_leather.append(rbox((x + f * 0.02, y + s * (width / 2 + 0.03), floor + 0.58), (0.42, 0.07, 0.07), e=0.5))
-    parts_frame.append(box((x, y, floor + 0.17), (0.34, width * 0.7, 0.30)))
-    if crew:
-        # 5-point harness shoulder straps
-        for sg in (-1, 1):
-            parts_frame.append(box(back_c + [-f * 0.08, sg * 0.10, 0.06], (0.01, 0.045, back_h * 0.7)))
-    return Mesh.merge(parts_leather), Mesh.merge(parts_frame)
-
-
-FD_FLOOR_Z = 1.24
-EYE_Y = 0.335
-
-
-def section_limit(x, z, inset):
-    """Half-width available inside the lining at station x, water line z."""
-    return max(0.0, float(F.side_y(x, z)) - inset)
-
-
-def fitted_plate(x0, x1, z, inset=0.06, n=16, thick=0.03, y_min=0.0):
-    """Horizontal plate following the fuselage section (floors); y_min > 0 leaves a centre slot |y| < y_min."""
-    xs = np.linspace(x0, x1, n)
-    hw = np.array([min(section_limit(x, z, inset), section_limit(x, z - thick, inset)) for x in xs])
-    if y_min <= 0:
-        tops = [np.vstack([np.stack([xs, hw, np.full(n, z)], 1), np.stack([xs[::-1], -hw[::-1], np.full(n, z)], 1)])]
-    else:
-        tops = [np.vstack([np.stack([xs, s * hw, np.full(n, z)], 1), np.stack([xs[::-1], np.full(n, s * y_min), np.full(n, z)], 1)])
-                for s in (1, -1)]
-    out = []
-    for top in tops:
-        out += [planar_cap(top, (0, 0, 1)), planar_cap(top - [0, 0, thick], (0, 0, -1))]
-    return Mesh.merge(out)
-
-
-def tunnel_hump(TU, wall=0.02, top_gap=0.025, n_corner=6):
-    """Nose-wheel tunnel hump under the centre pedestal: an OPEN shell (side walls from under the flight-deck floor up
-    to the top plate, no bottom face), so the stowed nose wheel and drag brace rise into it (M7; a closed box capped
-    the tunnel at WL 1.21)."""
-    from cad.sdf2d import rrect_outline
-    ol = rrect_outline(0.5 * (TU["x0"] + TU["x1"]), 0.0, 0.5 * (TU["x1"] - TU["x0"]) + wall, TU["hy"] + wall, 0.05,
-                       n_corner=n_corner)
-    z0, z1 = FD_FLOOR_Z - 0.03, TU["z_top"] + top_gap
-    n = len(ol)
-    k = np.arange(n)
-    V = np.vstack([np.c_[ol, np.full(n, z0)], np.c_[ol, np.full(n, z1)]])
-    Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
-    walls = Mesh(V, Fc)
-    c = np.array([0.5 * (TU["x0"] + TU["x1"]), 0.0, 0.5 * (z0 + z1)])
-    if np.mean(np.sum((walls.V[walls.F].mean(1) - c) * walls.face_normals(), 1)) < 0:
-        walls = walls.flipped()
-    return Mesh.merge([walls, planar_cap(np.c_[ol, np.full(n, z1)], (0, 0, 1))])
-
-
-def build_flightdeck(parts):
-    m_leather, m_frame, m_panel, m_metal = [], [], [], []
-    screens = {}
-    # flight-deck floor (raised over the nose-wheel well), fitted to the section, with the nose-wheel tunnel hump
-    # under the centre pedestal (gear.NOSE_TUNNEL: the retracted nose wheel stows there)
-    from model.gear import NOSE_TUNNEL as TU
-    x_fd0 = 3.26                                       # forward end of the flight-deck floor
-    if TU["x0"] > x_fd0 + 1e-3:
-        m_frame.append(fitted_plate(x_fd0, TU["x0"], FD_FLOOR_Z, inset=0.07, n=4))
-    m_frame.append(fitted_plate(max(TU["x0"], x_fd0), TU["x1"], FD_FLOOR_Z, inset=0.07, n=16, y_min=TU["hy"] + 0.012))
-    m_frame.append(fitted_plate(TU["x1"], 4.34, FD_FLOOR_Z, inset=0.07, n=6))
-    m_panel.append(tunnel_hump(TU))
-    # instrument panel: a tilted plate whose outline follows the fuselage section
-    tilt = np.radians(12)
-    Rp = roty(-12)
-    pc = np.array([3.47, 0, 1.84])
-    n_p = Rp @ np.array([1.0, 0, 0])
-    up_p = Rp @ np.array([0, 0, 1.0])
-    rows = []
-    for v in np.linspace(-0.22, 0.20, 9):
-        p = pc + v * up_p
-        rows.append((v, section_limit(p[0], p[2], 0.085)))
-    outline = [pc + v * up_p + w * np.array([0, 1.0, 0]) for v, w in rows] + \
-              [pc + v * up_p - w * np.array([0, 1.0, 0]) for v, w in rows[::-1]]
-    outline = np.array(outline)
-    front = planar_cap(outline + n_p * 0.02, n_p)
-    back = planar_cap(outline - n_p * 0.03, -n_p)
-    k = len(outline)
-    Vs = np.vstack([outline + n_p * 0.02, outline - n_p * 0.03])
-    ii = np.arange(k)
-    Fs = np.vstack([np.stack([ii, (ii + 1) % k, (ii + 1) % k + k], 1), np.stack([ii, (ii + 1) % k + k, ii + k], 1)])
-    m_panel += [front, back, Mesh(Vs, Fs)]
-    # glareshield: shelf under the windshield base, fitted to the section
-    gz = 2.075
-    m_panel.append(fitted_plate(3.40, 3.63, gz, inset=0.10, n=10, thick=0.035))
-    # three 14-in touchscreen PDUs (G3000 PRIME)
-    for key, y in (("screen_pfd", -0.368), ("screen_mfd", 0.0), ("screen_pfd", 0.368)):
-        c = pc + n_p * 0.028 + np.array([0, y, -0.01])
-        bezel = box(c, (0.012, 0.35, 0.225), R=Rp)
-        glass = box(c + n_p * 0.007, (0.004, 0.312, 0.192), R=Rp)
-        m_metal.append(bezel)
-        screens.setdefault(key, []).append(glass)
-    # centre pedestal with two 7-in touchscreen SDUs + power lever + cursor control
-    # the pedestal stands on the tunnel hump (its bottom at the hump top, not inside the tunnel: M7)
-    ped_z0, ped_z1 = TU["z_top"] + 0.025, FD_FLOOR_Z + 0.53
-    ped_c = np.array([3.80, 0, 0.5 * (ped_z0 + ped_z1)])
-    m_panel.append(rbox(ped_c, (0.62, 0.22, ped_z1 - ped_z0), e=0.2))
-    Rt = roty(-35)
-    for kk, x in enumerate((3.60, 3.84)):
-        c = np.array([x, 0, FD_FLOOR_Z + 0.55 - 0.08 * kk])
-        m_metal.append(box(c, (0.19, 0.17, 0.03), R=Rt))
-        screens.setdefault("screen_sdu", []).append(box(c + Rt @ np.array([0, 0, 0.017]), (0.145, 0.125, 0.004), R=Rt))
-    m_metal.append(cylinder((4.00, 0.0, FD_FLOOR_Z + 0.54), (3.96, 0.0, FD_FLOOR_Z + 0.68), 0.012, n=8))
-    m_panel.append(rbox((3.96, 0.0, FD_FLOOR_Z + 0.70), (0.05, 0.09, 0.05), e=0.5))
-    m_panel.append(rbox((4.02, 0.07, FD_FLOOR_Z + 0.53), (0.07, 0.05, 0.03), e=0.5))     # cursor control device
-    # PC-24-style yokes
-    for y in (-EYE_Y, EYE_Y):
-        m_metal.append(cylinder((3.47, y, 1.66), (3.66, y, 1.70), 0.022, n=12))
-        m_panel.append(rbox((3.68, y, 1.73), (0.05, 0.10, 0.11), e=0.4))
-        for sg in (-1, 1):
-            m_panel.append(cylinder((3.69, y, 1.72), (3.70, y + sg * 0.13, 1.78), 0.018, n=10))
-            m_panel.append(cylinder((3.70, y + sg * 0.13, 1.78), (3.68, y + sg * 0.14, 1.86), 0.02, n=10))
-        for sg in (-1, 1):   # rudder pedals
-            m_frame.append(box((3.38, y + sg * 0.085, FD_FLOOR_Z + 0.10), (0.03, 0.075, 0.17), R=roty(-25)))
-    # crew seats: eye point ~ WL 2.36, headrest clear of the roof curvature
-    for y in (-EYE_Y, EYE_Y):
-        a, b = seat(4.02, y, +1, floor=FD_FLOOR_Z, width=0.44, crew=True, back_h=0.64, head_w=0.50)
-        m_leather.append(a)
-        m_frame.append(b)
-    p = Part("flight_deck", "Flight deck: Garmin G3000 PRIME, PC-24-style yokes, crew seats", "interior",
-             explode=(0, 0, 0.0), group="Interior",
-             material_note="3 x 14-in touchscreen PDUs, 2 x 7-in touchscreen SDUs",
-             info={"avionics": "Garmin G3000 PRIME (PC-12 PRO)", "displays": "3 x 14 in + 2 x 7 in",
-                   "design eye": "STA 3,980 / BL +/-335 / WL 2,360 (est.)"})
-    p.add(Mesh.merge(m_leather), "leather_dark").add(Mesh.merge(m_frame), "metal_dark")
-    p.add(Mesh.merge(m_panel), "panel_black").add(Mesh.merge(m_metal), "metal_dark")
-    for key, lst in screens.items():
-        for g in lst:
-            p.add(g, key)
-    parts[p.id] = p
-
-
-CABIN_X = (4.40, 9.52)                 # cabin floor (cockpit divider -> aft baggage bay)
-SEAT_ROWS = ((5.72, -1), (6.98, +1), (7.98, +1))   # (seat centre STA, facing): club pair, club pair, aft pair
-SEAT_Y = 0.40
-TABLE_X = 6.35
-BAGGAGE_NET_X = 8.60
-
-
-def ledge_spans():
-    """Side-ledge x-spans per side, clear of the door panels (and 0.10 m of margin)."""
-    from model.fuselage_parts import openings_table
-    out = {}
-    for side in (-1, 1):
-        spans = [(5.10, 8.25)]
-        for r in openings_table():
-            if r["side"] != side or r["kind"] not in ("door",) or r.get("panel") is None:
-                continue
-            a, b = r["panel"]["x0"] - 0.10, r["panel"]["x1"] + 0.10
-            new = []
-            for x0, x1 in spans:
-                if b <= x0 or a >= x1:
-                    new.append((x0, x1))
-                    continue
-                if a > x0:
-                    new.append((x0, a))
-                if b < x1:
-                    new.append((b, x1))
-            spans = [sp for sp in new if sp[1] - sp[0] > 0.3]
-        out[side] = spans
-    return out
-
-
-def build_cabin(parts):
-    leather, frame, carpet, wood, lin = [], [], [], [], []
-    # floor panels (flat floor at CABIN_FLOOR_WL)
-    carpet.append(fitted_plate(*CABIN_X, FLOOR_Z, inset=0.055, n=28))
-    # side ledges / cabinets with wood caps, interrupted at the doors
-    for s_, spans in ledge_spans().items():
-        for x0, x1 in spans:
-            xm, L = 0.5 * (x0 + x1), x1 - x0
-            lin.append(rbox((xm, s_ * 0.615, FLOOR_Z + 0.21), (L, 0.08, 0.42), e=0.3))
-            wood.append(box((xm, s_ * 0.60, FLOOR_Z + 0.425), (L, 0.12, 0.02)))
-    # executive seating: 4-seat club (the forward pair faces aft) + 2 forward-facing
-    for x, f in SEAT_ROWS:
-        for y in (-SEAT_Y, SEAT_Y):
-            a, b = seat(x, y, f)
-            leather.append(a)
-            frame.append(b)
-    # club tables
-    for y in (-SEAT_Y, SEAT_Y):
-        wood.append(rbox((TABLE_X, y * 1.2, FLOOR_Z + 0.68), (0.46, 0.34, 0.03), e=0.4))
-    # aft baggage net frame
-    for sg in (-1, 1):
-        frame.append(cylinder((BAGGAGE_NET_X, sg * 0.55, FLOOR_Z), (BAGGAGE_NET_X, sg * 0.55, FLOOR_Z + 1.15),
-                              0.012, n=8))
-    frame.append(cylinder((BAGGAGE_NET_X, -0.55, FLOOR_Z + 1.15), (BAGGAGE_NET_X, 0.55, FLOOR_Z + 1.15), 0.012, n=8))
-    p = Part("cabin_interior", "Cabin: executive 6-seat interior", "interior", group="Interior",
-             material_note="Leather seats, wood veneer ledges",
-             info={"cabin": "5.16 x 1.52 x 1.47 m", "floor": f"WL {FLOOR_Z * 1000:.0f}, "
-                   f"{F.cabin_floor_width(6.0):.2f} m wide inside the lining", "seats": "6 executive (up to 9)"})
-    p.add(Mesh.merge(leather), "leather").add(Mesh.merge(frame), "metal_dark")
-    p.add(Mesh.merge(carpet), "carpet").add(Mesh.merge(wood), "wood").add(Mesh.merge(lin), "lining")
-    parts[p.id] = p
+def _seat_parts(parts, S, crew, layout=None):
+    layout = layout or DEFAULT_LAYOUT
+    for rec in seat_map(layout):
+        if bool(rec.get("crew")) != crew or rec.get("kind") == "commuter":
+            continue
+        sid = rec["id"]
+        if crew:
+            ms = S.crew_seat(-1 if sid == "PILOT" else 1)
+            tab = CREW_SEAT
+            name = f"Crew seat, {'pilot (LH)' if sid == 'PILOT' else 'co-pilot (RH)'}"
+            note = "IPECO 3A318-type crew seat: 8-way, reclining, flip-up armrests, 4-point harness, sheepskin covers"
+            srp = crew_srp(-1 if sid == "PILOT" else 1)
+            info = {"seat": f"{tab['type'].split(' [')[0]}", "SRP": f"STA {srp[0] * 1000:,.0f} / BL "
+                    f"{srp[1] * 1000:+,.0f} / WL {srp[2] * 1000:,.0f} (neutral notch, +/-{tab['travel_x'] * 1000:.0f} "
+                    f"fore/aft, +/-{tab['travel_z'] * 1000:.0f} height)"}
+        else:
+            ms = S.cabin_seat(sid, layout)
+            name = f"Executive seat {sid} ({'aft' if rec['facing'] < 0 else 'forward'}-facing, " \
+                   f"{'LH' if rec['side'] < 0 else 'RH'})"
+            note = "PRO executive seat: leather, swivel base on the tracks, one aisle armrest, sliding headrest"
+            info = {"seat": f"{sid}, layout {layout}", "SRP": f"STA {rec['srp'][0] * 1000:,.0f} / BL "
+                    f"{rec['bl'] * 1000:+,.0f} / WL {rec['srp'][2] * 1000:,.0f}",
+                    "POH occupant arm": f"STA {rec['occ'] * 1000:,.0f}"}
+        p = Part(S.part_id(sid), name, "interior", group="Interior", material_note=note, info=info)
+        for m, mat in ms:
+            p.add(m, mat)
+        parts[p.id] = p
+    return parts
 
 
 # ---------------------------------------------------------------------------
 # side-wall / headliner lining (flight deck + cabin)
 # ---------------------------------------------------------------------------
 LINING_X = (3.05, F.STA["aft_pressure_bulkhead"] - 0.01)   # just aft of the firewall -> aft pressure bulkhead
-LINING_Z0 = FD_FLOOR_Z - 0.010      # lower edge: at the (flight-deck / cabin) floor, closing the floor-edge slit
+LINING_Z0 = FLOOR["wl"] - FLOOR["t"]  # lower edge: the floor-panel underside (flight deck and cabin floors are flush)
 LINING_DOOR_MARGIN = 0.008          # hole round the door-panel seams: clear of the 45 mm door slabs (jambs fill it)
 LINING_DX = 0.030
 
@@ -2014,8 +1858,24 @@ def build_structure(parts):
 
 
 def build(parts):
-    build_flightdeck(parts)
-    build_cabin(parts)
-    build_lining(parts)
+    build_interior(parts)
     build_structure(parts)
+    return parts
+
+
+def build_interior(parts):
+    """Flight deck + crew seats, cabin + executive seats, lining.  The fittings fixed to the headliner -- the cabin
+    headliner group (flat centre panel, soffits, LED coves, PSUs / reading lights, downlights, placards) and the
+    flight-deck overhead panel -- go onto the interior_lining part rather than cabin_interior / flight_deck: the
+    viewer's cutaway (web/viewer CUT_PARTS) clips the lining and they would float over the open cabin otherwise."""
+    ceiling = []
+    build_flightdeck(parts, ceiling=ceiling)
+    build_cabin(parts, ceiling=ceiling)
+    build_lining(parts)
+    by_mat = {}
+    for m, mat in ceiling:
+        by_mat.setdefault(mat, []).append(m)
+    for mat, ms in by_mat.items():
+        parts["interior_lining"].add(Mesh.merge(ms), mat)
+    parts["interior_lining"].name += "; headliner fittings (PSUs, LED coves), flight-deck overhead panel"
     return parts

@@ -86,6 +86,16 @@ export class Kinematics {
       });
     }
 
+    // folding children of a door (pivot kind 'fold', e.g. the airstair handrails of model/airstair.py): they follow
+    // pivot.follows and unfold by pivot.open (rad) about their own axis over the door-travel window [w0, w1]
+    this.folds = [];
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || pv.kind !== 'fold' || !this.surf[pv.follows]) continue;
+      this.folds.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(), door: pv.follows,
+        w: pv.window || [0, 1], angle: 0 });
+    }
+
     // commanded targets and current (smoothed) values
     this.t = { flaps: 0, rpm: 0, pitch: 0, roll: 0, pitchCmd: 0, yaw: 0, stabTrim: 0, ailTrim: 0, rudTrim: 0,
       door_airstair: 0, door_cargo: 0 };
@@ -346,6 +356,14 @@ export class Kinematics {
       const a = s.pv.open * smooth(c[id]);
       s.angle = a / DEG;
       s.rec.anim.quat.setFromAxisAngle(s.axis, a);
+    }
+    // folding door children (airstair handrails): angle = open x clamp((door fraction - w0) / (w1 - w0)), the door
+    // fraction being the eased door angle / its open angle (model/airstair.py fold_fraction / posed)
+    for (const f of this.folds) {
+      const df = smooth(c[f.door] || 0);
+      const k = clamp((df - f.w[0]) / Math.max(f.w[1] - f.w[0], 1e-9), 0, 1);
+      f.angle = f.pv.open * k;
+      f.rec.anim.quat.setFromAxisAngle(f.axis, f.angle);
     }
     // gear (retract in degrees) and nose clamshell doors (open in degrees)
     const g = this.gear;

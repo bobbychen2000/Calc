@@ -74,6 +74,11 @@ async function boot() {
 
 // ------------------------------------------------------------------ init
 function init(gltf) {
+  // cockpit camera at the design eye of the interior tables (model/build.py cockpit_camera, glTF axes)
+  if (meta.cockpit && meta.cockpit.design_eye && meta.cockpit.target) {
+    PRESETS.cockpit.pos = meta.cockpit.design_eye.slice();
+    PRESETS.cockpit.target = meta.cockpit.target.slice();
+  }
   model = new Model(gltf, meta);
   stage.scene.add(model.root);
   stage.setModelBox(model.box, model.silhouettePoints());

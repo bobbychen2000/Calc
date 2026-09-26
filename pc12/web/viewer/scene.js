@@ -22,8 +22,10 @@ export const PRESETS = {
   front: { label: 'Front', dir: [0, 0.07, -1], fov: 30, margin: 1.08 },
   side: { label: 'Side', dir: [-1, 0.04, 0], fov: 30, margin: 1.06 },         // port side: airstair + cargo doors
   top: { label: 'Top', dir: [0, 1, 0.0015], fov: 30, margin: 1.08 },
-  // cockpit: flight_deck extras 'design eye' STA 3,980 / BL -335 / WL 2,360 (left seat)
-  cockpit: { label: 'Cockpit', pos: [-0.335, 2.34, 3.98], target: [-0.29, 1.99, 3.1], fov: 74 },
+  // cockpit: the L6 design eye of the left seat (interior.design_eye: STA 4,120 / BL -375 / WL 2,338), looking midway
+  // between the glareshield lip and the PFD; main.js replaces pos / target with pc12_meta.json 'cockpit' (model/build.py
+  // cockpit_camera) so the camera follows the tables
+  cockpit: { label: 'Cockpit', pos: [-0.375, 2.338, 4.1197], target: [-0.375, 1.9722, 3.189], fov: 74 },
   gear_bay: { label: 'Gear bay', pos: [4.3, 0.42, 3.55], target: [2.05, 0.78, 6.15], fov: 48 },
 };
 

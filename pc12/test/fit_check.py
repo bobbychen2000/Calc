@@ -11,7 +11,7 @@
     strut above the closed leg door; the leg door flush with the skin (within 5 mm, decision LD-1 in model/gear.py);
     the skin cut-out closed by the door and the tyre (only the panel gap and the tyre's well ring open)
  6. folding-strut knees over 0-100 % retraction: main knees between the wing skins, nose knee inside the bay
- 7. cabin furniture clear of the airstair entry
+ 7. cabin furniture and seats clear of the airstair entry zone (L6 CLEAR_ZONES entry_bl)
  8. the tailplane horn balances (carried by the elevators) clear the fixed tips at full elevator travel
  9. the airstair and cargo doors clear the wing-root fairing (fillet / nose) from closed to fully open
 10. main gear + side brace over 0-100 %: every vertex inside the wing box lies in the bay liner (bays.main_bay_sdf),
@@ -27,6 +27,12 @@
     reverse / fine / feather against both
 16. the wing-root fairing (fillet + nose): no folds (dihedral > 90 deg) or normals against the winding; creases
     over 60 deg are counted
+17. every seat inside the side-wall lining and under the headliner (L6 LINING law), standing on the floor
+18. crew seats on their two floor tracks (rail_dy, crew_h; fittings on the rails over the fore / aft travel); cabin
+    seat base fittings on the cabin tracks (SEAT_TRACKS bl, x0-x1)
+19. the 95th-pct male's legs vs the built yokes over pitch travel and roll (report, next to the L6B 2-D value)
+20. cabin furniture and seats clear of the windows, the door / exit clear openings and the exit clear zone
+21. airstair door (+ folding handrails) and cargo door (+ ledge segment) closed -> open clear of the interior
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
@@ -256,14 +262,22 @@ for pid, gear_id, A, B0, T, axis, (f1, ref), name in G.brace_specs():
            min(worst) >= 0.02, f"min clearance {1000 * min(worst):.0f} mm")
 
 # 7 ------------------------------------------------------------------------------------------------ airstair entry
-V = verts("cabin_interior")
+# L6 CLEAR_ZONES entry_bl: no furniture outboard of |BL| entry_bl abeam the airstair door (its panel seam plus the lining's
+# door-well margin), from the tops of the surface-mounted tracks (SEAT_TRACKS h) up to the top of the door opening
+from model import interior as I
+from model import fuselage_parts as FPm
+SEAT_IDS = [k for k in parts if k.startswith("seat_")]
+V = np.vstack([verts(k) for k in ["cabin_interior", "flight_deck"] + SEAT_IDS])
 for r in openings_table():
     if r["id"] != "door_airstair":
         continue
-    pan = r["panel"]
-    hit = (V[:, 1] * r["side"] > 0.30) & (V[:, 0] > pan["x0"] - 0.02) & (V[:, 0] < pan["x1"] + 0.02) & \
-          (V[:, 2] > F.CABIN_FLOOR_WL + 0.005)
-    report("cabin furniture clear of the airstair entry", not hit.any(), f"{int(hit.sum())} verts in the entry")
+    pan, m_ = r["panel"], I.LINING_DOOR_MARGIN
+    z0 = I.FLOOR["wl"] + I.SEAT_TRACKS["h"] + 0.002
+    hit = (V[:, 1] * r["side"] > I.CLEAR_ZONES["entry_bl"]) & (V[:, 0] > pan["x0"] - m_) & (V[:, 0] < pan["x1"] + m_) & \
+          (V[:, 2] > z0) & (V[:, 2] < FPm.AIRSTAIR["cz"] + FPm.AIRSTAIR["hz"])
+    report("cabin furniture and seats clear of the airstair entry zone (L6 CLEAR_ZONES entry_bl)", not hit.any(),
+           f"{int(hit.sum())} verts in the zone |BL| > {I.CLEAR_ZONES['entry_bl']:.2f}, STA {pan['x0'] - m_:.3f}-"
+           f"{pan['x1'] + m_:.3f}")
 
 # 8 ------------------------------------------------------------------------------------------------ horn balances
 for side in ("R", "L"):
@@ -582,6 +596,180 @@ report("belly_fairing root fillet / fairing nose: no folds (dihedral > 90 deg), 
        f"{nf90} edges > 90 deg, {flip} flipped triangles; {nf60} creases > 60 deg"
        + (f" (x {Pf[:, 0].min():.3f}-{Pf[:, 0].max():.3f} |y| {np.abs(Pf[:, 1]).min():.3f}-{np.abs(Pf[:, 1]).max():.3f} "
           f"z {Pf[:, 2].min():.3f}-{Pf[:, 2].max():.3f})" if nf60 else "") + " (rev: 114 edges > 60 deg, max 150)")
+
+# 17 ----------------------------------------------------------------------------------------------- seats: lining, floor
+# every seat (Stage 3, model/seats.py) inside the side-wall lining and under the headliner (the L6 LINING law,
+# interior.lining_section, tabulated) and standing on the floor (lowest point on the floor WL, nothing below it)
+from scipy.spatial import cKDTree
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
+from model import cabin as CB
+LIN = CB._Lining(x0=3.06, x1=9.74, dx=0.02)
+FL = float(I.FLOOR["wl"])
+for pid in SEAT_IDS:
+    V = verts(pid)
+    side_cl = float((LIN.hw(V[:, 0], V[:, 2]) - np.abs(V[:, 1])).min())
+    head_cl = float((LIN.crown(V[:, 0], V[:, 1]) - V[:, 2]).min())
+    low = float(V[:, 2].min() - FL)
+    report(f"{pid} inside the lining (side wall, headliner) and standing on the floor",
+           side_cl > 0.0 and head_cl > 0.0 and -0.0005 <= low <= 0.0005,
+           f"side wall {side_cl * 1000:.0f} mm, headliner {head_cl * 1000:.0f} mm, lowest point {low * 1000:+.1f} mm vs "
+           f"the floor WL {FL * 1000:.0f}")
+
+
+# 18 ----------------------------------------------------------------------------------------------- seats on the tracks
+def components(m, tol=1e-6):
+    """Connected pieces of a mesh, vertices welded by position (crisp boxes have split corners): [vertex arrays]."""
+    _, inv = np.unique(np.round(m.V / tol).astype(np.int64), axis=0, return_inverse=True)
+    inv = inv.reshape(-1)
+    n = int(inv.max()) + 1
+    Fw = inv[m.F]
+    E = np.vstack([Fw[:, [0, 1]], Fw[:, [1, 2]]])
+    A = coo_matrix((np.ones(len(E)), (E[:, 0], E[:, 1])), shape=(n, n))
+    _, lab = connected_components(A, directed=False)
+    lv = lab[inv]
+    used = np.zeros(len(m.V), bool)
+    used[m.F.ravel()] = True
+    return [m.V[(lv == i) & used] for i in np.unique(lv[used])]
+
+
+CS, ST_ = I.CREW_SEAT, I.SEAT_TRACKS
+for pid, side in (("seat_pilot", -1), ("seat_copilot", 1)):
+    rail = [m for m, mm in parts[pid].meshes if mm == "metal_dark"]
+    pcs = [c for m in rail for c in components(m)]
+    tracks = [c for c in pcs if np.ptp(c[:, 0]) > 0.4 and c[:, 2].min() < FL + 1e-4]
+    fits = [c for c in pcs if np.ptp(c[:, 0]) < 0.08 and c[:, 2].min() < FL + 1e-4]
+    srp = I.crew_srp(side)
+    ok = len(tracks) == 2 and len(fits) == 4
+    det = f"{len(tracks)} tracks, {len(fits)} fittings"
+    if ok:
+        ty = sorted(float(0.5 * (c[:, 1].min() + c[:, 1].max())) for c in tracks)
+        dy = max(abs(ty[0] - (srp[1] - CS["rail_dy"])), abs(ty[1] - (srp[1] + CS["rail_dy"])))
+        th = max(abs(float(c[:, 2].max() - (FL + ST_["crew_h"]))) for c in tracks)
+        tx0, tx1 = max(float(c[:, 0].min()) for c in tracks), min(float(c[:, 0].max()) for c in tracks)
+        over = -np.inf
+        on_rail = True
+        for c in fits:
+            yc = float(0.5 * (c[:, 1].min() + c[:, 1].max()))
+            tr = min(tracks, key=lambda t: abs(float(t[:, 1].mean()) - yc))
+            on_rail &= bool(c[:, 1].min() < tr[:, 1].max() and c[:, 1].max() > tr[:, 1].min())
+            for d in (-CS["travel_x"], CS["travel_x"]):
+                over = max(over, tx0 - float(c[:, 0].min() + d), float(c[:, 0].max() + d) - tx1)
+        ok = dy < 0.002 and th < 0.001 and on_rail and over <= 0.0
+        det += (f": track CLs {ty[0]:+.3f} / {ty[1]:+.3f} (seat BL {srp[1]:+.3f} +/- rail_dy {CS['rail_dy']:.3f}, "
+                f"{dy * 1000:.1f} mm), tops {th * 1000:.1f} mm off floor + crew_h, fittings on the rails "
+                f"{'yes' if on_rail else 'NO'}, over the +/-{CS['travel_x'] * 1000:.0f} mm travel the fittings stay "
+                f"{-over * 1000:.0f} mm inside the track ends (STA {tx0:.3f}-{tx1:.3f})")
+    report(f"{pid} on its two floor tracks (CREW_SEAT rail_dy, SEAT_TRACKS crew_h) over the fore / aft travel", ok, det)
+cab_rails = [(sg * b) for b in ST_["bl"] for sg in (-1, 1)]
+for pid in [k for k in SEAT_IDS if k.startswith("seat_pax")]:
+    fits = [c for m, mm in parts[pid].meshes if mm == "metal_dark" for c in components(m) if c[:, 2].min() < FL + 1e-4]
+    worst = 0.0
+    for c in fits:
+        yc = float(0.5 * (c[:, 1].min() + c[:, 1].max()))
+        rl = min(cab_rails, key=lambda y: abs(y - yc))
+        worst = max(worst, abs(yc - rl), float(ST_["x0"] - c[:, 0].min()), float(c[:, 0].max() - ST_["x1"]))
+    report(f"{pid} base fittings on the cabin tracks (SEAT_TRACKS bl, x0-x1)", len(fits) >= 2 and worst < 0.003,
+           f"{len(fits)} fittings, worst {worst * 1000:.1f} mm off a track centre line / outside the track run")
+
+# 19 ----------------------------------------------------------------------------------------------- knees vs yokes
+# the 95th-pct male at his seat setting (interior.crew_setting: L6B) -- leg spheres (thighs, knees, shanks) against the
+# BUILT yoke (hub + grips of flight_deck) swept over the pitch travel and rolled +/- YOKE roll about the column axis;
+# reported next to the L6B 2-D value (front-view outline x pitch slab), not failed: the criterion is L6B's
+Y = I.YOKE
+for side in (-1, 1):
+    hub = I.yoke_hub(side)
+    Vy = np.vstack([m.V for m, mm in parts["flight_deck"].meshes if mm in ("yoke_white", "grip_black", "black",
+                                                                                 "light_red", "panel_grey")])
+    Vy = Vy[(np.abs(Vy[:, 1] - hub[1]) < 0.20) & (Vy[:, 0] > hub[0] - 0.05) & (Vy[:, 0] < hub[0] + 0.12) &
+            (np.abs(Vy[:, 2] - hub[2]) < 0.15)]
+    p95 = I.crew_setting(1.0, side)
+    sph = np.array(I.leg_spheres(p95, side * CS["bl"]))
+    tab = I.yoke_roll_clearances(p95, side)
+    l6b_lvl = I.yoke_clearance(p95, side, 0.0, table=tab)[0]
+    l6b_rol = I.yoke_clearance(p95, side, table=tab)[0]
+    res = {}
+    for roll in np.arange(-Y["roll"], Y["roll"] + 1e-9, 10.0):
+        a = np.radians(roll)
+        R = np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+        Vr = (Vy - hub) @ R.T + hub
+        best = np.inf
+        for t in np.linspace(Y["travel"][0], Y["travel"][1], 9):
+            d, _ = cKDTree(Vr + [t, 0, 0]).query(sph[:, :3])
+            best = min(best, float((d - sph[:, 3]).min()))
+        res[round(float(roll))] = best
+    lvl = res[0]
+    rol = min(res.values())
+    report(f"95th-pct knees / legs vs the {'pilot' if side < 0 else 'co-pilot'} yoke (3-D mesh, pitch travel "
+           f"{Y['travel'][0] * 1000:+.0f}/{Y['travel'][1] * 1000:+.0f} mm, roll +/-{Y['roll']:.0f} deg)",
+           True, f"wings level {lvl * 1000:.0f} mm (L6B {l6b_lvl * 1000:.0f}), full roll sweep {rol * 1000:.0f} mm (L6B "
+                 f"{l6b_rol * 1000:.0f}); criterion {I.CRITERIA['knee_clear'] * 1000:.0f} mm (report)")
+
+# 20 ----------------------------------------------------------------------------------------------- furniture vs openings
+# the fixed cabin furniture (cabinets, ledges, lavatory, headliner fittings) (a) never in front of a cabin / door window
+# (inside the window outline, within 0.12 m of the side-wall lining), (b) never in a door's clear opening near the wall
+# above the floor (the cargo-door ledge segment belongs to door_cargo and swings with it; seats stand in front of the
+# windows and the cargo door by the POH layout), (c) furniture AND seats never in the over-wing exit's clear zone (L6
+# CLEAR_ZONES exit_bl .. the starboard lining, abeam the hatch, from its sill to its top)
+from model import fuselage_parts as FP
+fur = {"cabin_interior": verts("cabin_interior")}
+wins = [(side, cx) for side, xs in FP.FIXED_WINDOWS.items() for cx in xs] + \
+       [(o["side"], FP.DOOR_WINDOWS[pid]) for pid, o in FP.DOORS if FP.DOOR_WINDOWS.get(pid) is not None]
+nw = {}
+for k, V in fur.items():
+    near = LIN.hw(V[:, 0], V[:, 2]) - np.abs(V[:, 1]) < 0.12
+    for side, cx in wins:
+        h = near & (V[:, 1] * side > 0) & (FP.window_sdf(V[:, 0], V[:, 2], cx) < -0.005)
+        if h.any():
+            nw[f"{k} @ {'RH' if side > 0 else 'LH'} window STA {cx:.3f}"] = int(h.sum())
+report("cabin furniture clear of every cabin / door window (inside the outline, within 0.12 m of the lining)",
+       not nw, "clear" if not nw else "; ".join(f"{a}: {n}" for a, n in nw.items()))
+nd = {}
+for pid, o in FP.DOORS:
+    for k, V in fur.items():
+        near = LIN.hw(V[:, 0], V[:, 2]) - np.abs(V[:, 1]) < 0.15
+        h = near & (V[:, 1] * o["side"] > 0) & (FP.rr((V[:, 0], V[:, 2]), o) < 0.0)
+        h &= V[:, 2] > FL + ST_["h"] + 0.002                # floor, carpet and tracks: the sills are below the floor
+        if h.any():
+            nd[f"{k} in {pid}"] = int(h.sum())
+report("cabin furniture clear of the airstair / cargo door and exit clear openings (near the wall)", not nd,
+       "clear" if not nd else "; ".join(f"{a}: {n}" for a, n in nd.items()))
+EXo = FP.EXIT
+ne = {}
+for k, V in dict(fur, **{k: verts(k) for k in SEAT_IDS}).items():
+    h = (V[:, 1] > I.CLEAR_ZONES["exit_bl"]) & (np.abs(V[:, 0] - EXo["cx"]) < EXo["hx"]) & \
+        (V[:, 2] > EXo["cz"] - EXo["hz"]) & (V[:, 2] < EXo["cz"] + EXo["hz"])
+    if h.any():
+        ne[k] = int(h.sum())
+report(f"over-wing exit clear zone (BL > {I.CLEAR_ZONES['exit_bl']:.2f} abeam the hatch, sill to top) free of "
+       "furniture and seats", not ne, "clear" if not ne else "; ".join(f"{a}: {n}" for a, n in ne.items()))
+
+# 21 ----------------------------------------------------------------------------------------------- door swings
+# the airstair door (with its folding handrails at their unfold fraction) and the cargo door (with its ledge segment)
+# from closed to fully open: no triangle crossing the cabin furniture, the seats, the flight deck or the lining
+from model import airstair as AS
+fixed_all = cat(*[posed_mesh(k, I4) for k in ["cabin_interior", "flight_deck", "interior_lining"] + SEAT_IDS])
+for pid in ("door_airstair", "door_cargo"):
+    dp = parts[pid].pivot
+    kids = [k for k, q in parts.items() if q.parent == pid]
+    o = [o for k_, o in FP.DOORS if k_ == pid][0]
+    lo = np.array([o["cx"] - o["hx"] - 0.35, -1.0 if o["side"] < 0 else 0.0, FL - 0.1])
+    hi = np.array([o["cx"] + o["hx"] + 0.35, 0.0 if o["side"] < 0 else 1.0, 2.9])
+    fixed = crop(fixed_all, lo, hi)
+    bad = {}
+    for f in np.linspace(0.0, 1.0, 11):
+        M = rotation_about(np.asarray(dp["axis"], float), dp["open"] * f, dp["origin"])
+        mv = [posed_mesh(pid, M)]
+        for k in kids:
+            cp = parts[k].pivot
+            Mk = M @ rotation_about(cp["axis"], cp["open"] * AS.fold_fraction(cp, f), cp["origin"]) \
+                if cp and cp.get("kind") == "fold" else M
+            mv.append(posed_mesh(k, Mk))
+        n = len(crossings(*cat(*mv), *fixed))
+        if n:
+            bad[round(float(f), 1)] = n
+    report(f"{pid}{' + handrails' if kids else ''} closed -> open clear of the cabin furniture, seats, flight deck and "
+           "lining", not bad, "clear" if not bad else ", ".join(f"open {a:.1f}: {n}" for a, n in bad.items()))
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)
