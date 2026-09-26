@@ -123,13 +123,18 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
 - Stage 3 (3-D build from the approved parameters): `model/build.py` consumes the Stage-2 parameters end to end;
   `test/fit_check.py`, `test/viewer_test.py`, `drawing.sheet/verify` and `drawing.master` pass. Known open items
   (not modelled / needing an owner decision): the drawn fairing tail lobe aft of the cargo-door seam (STA 7540-8585,
-  it overlaps the D2 panel; the root fillet fades out ahead of the seam instead); the main-gear leg door: the 3-D door
-  is the drawn gear.LEG_DOOR face in its drawn plane (BL 2358-2472, outboard of the tyre), rigid on the leg, and the
-  wing slot is its footprint -- but retracted it lies 105-142 mm BELOW the wing lower skin
-  (`gear.leg_door_retracted_drop`; fit_check '[open]'): the plane is 93-207 mm outboard of the leg / wheel plane,
-  the drawn trunnion is at the lower skin and the tyre stows 1 in proud, so no rigid door in that plane can close
-  flush (in-flight photos show a flush underside) -- owner decision; cargo-door gas struts; dihedral: decision D4
-  quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
+  it overlaps the D2 panel; the root fillet fades out ahead of the seam instead); cargo-door gas struts; dihedral:
+  decision D4 quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
+- Main-gear leg door, decision LD-1 (owner-delegated, resolved; model/gear.py comment block): the door is the wing
+  lower skin carried down by the leg (`gear.leg_door_offset`), so retracted it closes flush (1 mm recess, 3 mm panel
+  gap, `bays.DOOR_GAP`) and the tyre protrudes 26 mm in its own round well (`bays.well_sdf`); drawn side-view face
+  kept, scalloped round the tyre (R 292) plus a tab hidden in the slot over the leg's skin crossing
+  (`gear.leg_door_face`); edge-on it stands at BL 2334-2383 instead of the drawn 2358-2472 lean (call-out on L4).
+  Hidden changes: trunnion STA 5978 / WL 1155 (drawn leg top 5932 / 1070), retraction 86 deg (stowed wheel along
+  the ~7 deg skin), side-brace stations 6040 / 6038, L1 split 0.19, B0 on a lug 80 mm inboard of the leg (`gear.MAIN_BRACE_LUG`) and the links offset along the knee pin (`MAIN_BRACE_CLEVIS`) so they clear the stowed leg, no forward slot; liner-only pockets
+  (`bays.TRUNNION_POCKET`, `BRACE_POCKET`), a black seal band on the lowest 60 mm of the main-bay liner, and a finer
+  wing lower skin over the bay (wing.py sub-panel) so the cut-out corners are cut within a few mm. fit_check 5 / 10
+  test flushness, protrusion (20-30 mm), the closed cut-out and every pose of the swing.
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
   the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
   `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`).

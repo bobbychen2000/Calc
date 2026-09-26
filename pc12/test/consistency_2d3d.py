@@ -1227,28 +1227,44 @@ def check_L4(ctx, rep, plots):
             worst_list(d, np.c_[P_[:, 0], np.zeros(len(P_)), P_[:, 1]], lab2))
 
     # ---------------------------------------------------------------- main-gear leg door (L4 side / front / detail)
-    Pd = G.leg_door_outline()
+    # LD-1: the built door is gear.leg_door_face() (the drawn face scalloped round the tyre, plus the tab hidden in
+    # the wing slot) with its outer face on gear.leg_door_bl(x, z) (the wing skin carried down by the leg); L4 draws
+    # its visible part and the edge-on line gear.leg_door_front_line()
+    Pd = G.leg_door_face()
     zmx, zmn = Pd[:, 1].max(), Pd[:, 1].min()
-    bl0, bl1 = G.LEG_DOOR["bl"]
     for side, sg in (("L", -1), ("R", 1)):
         Vd, Fd = ctx.mesh((f"gear_main_{side}",), mats=(L.SURFACES["main_gear_door"],))
         if not len(Fd):
-            rep.add("L4", f"main-gear leg door {side}: face vs gear.leg_door_outline()", status="FAIL",
+            rep.add("L4", f"main-gear leg door {side}: face vs gear.leg_door_face()", status="FAIL",
                     detail="no leg-door mesh")
             continue
         silh = plan_silhouette(Vd, Fd, (5.7, 0.1, 6.8, 1.3), res=0.002, close_r=0.004, axes=(0, 2))
         d1 = Curves([Pd], closed=True).dist(silh)[0]
         d2 = cKDTree(silh).query(densify_poly(Pd, 0.004, closed=True))[0]
-        bl_exp = bl0 + (bl1 - bl0) * (zmx - Vd[:, 2]) / (zmx - zmn)
-        dbl = np.abs(np.abs(Vd[:, 1]) - bl_exp)
-        rep.add("L4", f"main-gear leg door {side}: side-view face <-> gear.leg_door_outline()", np.r_[d1, d2], tolp,
+        bl_out = G.leg_door_bl(Vd[:, 0], Vd[:, 2])
+        dbl = np.abs(Vd[:, 1]) - bl_out                     # 0 on the outer face, -LEG_DOOR_T on the inner face
+        rep.add("L4", f"main-gear leg door {side}: side-view face <-> gear.leg_door_face() (LD-1)", np.r_[d1, d2], tolp,
                 f"mesh face STA {Vd[:, 0].min():.3f}-{Vd[:, 0].max():.3f} WL {Vd[:, 2].min():.3f}-{Vd[:, 2].max():.3f} "
-                f"vs drawn STA {Pd[:, 0].min():.3f}-{Pd[:, 0].max():.3f} WL {zmn:.3f}-{zmx:.3f}; plate BL "
-                f"{np.abs(Vd[:, 1]).min():.3f}-{np.abs(Vd[:, 1]).max():.3f} vs drawn {bl0:.3f}-{bl1:.3f} "
-                f"(max {1000 * dbl.max():.0f} mm off)",
+                f"vs parameters STA {Pd[:, 0].min():.3f}-{Pd[:, 0].max():.3f} WL {zmn:.3f}-{zmx:.3f}; outer face BL "
+                f"{np.abs(Vd[:, 1]).min():.3f}-{np.abs(Vd[:, 1]).max():.3f} vs gear.leg_door_bl (max "
+                f"{1000 * dbl.max():+.1f} / min {1000 * dbl.min():+.1f} mm; drawn plane {G.LEG_DOOR['bl'][0]:.3f}-"
+                f"{G.LEG_DOOR['bl'][1]:.3f})",
                 worst_list(np.r_[d1, d2], np.r_[np.c_[silh[:, 0], np.zeros(len(silh)), silh[:, 1]],
                                                np.c_[densify_poly(Pd, 0.004, closed=True)[:, 0], np.zeros(len(d2)),
                                                      densify_poly(Pd, 0.004, closed=True)[:, 1]]]))
+        # front view (L4 edge-on line): the mesh's outboard-most BL per WL band vs gear.leg_door_front_line()
+        fl = G.leg_door_front_line(visible=False)
+        zb = np.linspace(fl[:, 1].min(), fl[:, 1].max(), 30)
+        dfr = []
+        for za, zc in zip(zb[:-1], zb[1:]):
+            k = (Vd[:, 2] >= za) & (Vd[:, 2] < zc)
+            if k.any():
+                m_ = (fl[:, 1] >= za) & (fl[:, 1] <= zc)
+                ref = fl[m_, 0].max() if m_.any() else float(np.interp(0.5 * (za + zc), fl[:, 1], fl[:, 0]))
+                dfr.append(np.abs(Vd[k, 1]).max() - ref)
+        rep.add("L4", f"main-gear leg door {side}: edge-on BL <-> gear.leg_door_front_line() (LD-1)", np.array(dfr),
+                TOL["opening"], f"outer face on gear.leg_door_bl within {1000 * np.abs(dbl).min():.1f} mm (outboard-most "
+                                f"vertex {1000 * dbl.max():+.1f} mm); edge-on BL {fl[:, 0].min():.3f}-{fl[:, 0].max():.3f}")
 
     # ---------------------------------------------------------------- bullet
     Vb, Fb = ctx.mesh(("tail_bullet",))
