@@ -90,7 +90,7 @@ const { GroundPhysics, buildingGrid, pavedUnion } = await imp('js/live/ground.js
 const { parsePayload } = await imp('js/live/feed.js');
 const { TYPES } = await imp('js/aircraft/types.js');
 const GEO = await imp('js/geo.js'); const { GROUND_Y, worldToST } = GEO; const toLL = GEO.worldToWgs84 || GEO.worldToLL; const toW = GEO.wgs84ToWorld || GEO.llToWorld;
-const { LiveGateSystem } = await imp('js/live/gates.js');
+const GATESJS = await imp('js/live/gates.js'); const { LiveGateSystem } = GATESJS; const doorOfG = GATESJS.doorOf || null;
 
 const gates = standGates(STANDS);
 const apt = paintAirportMapReal(AIRPORT, gates, undefined, DETAILS, { paint: PAINT, pavement: PAVEMENT, endZones: endZoneRects() });
@@ -113,7 +113,8 @@ const occ = new Map(); // physical gate name -> occupant track (as the bridge sy
 const undocking = new Map(); // physical gate name -> the occupant whose bridge is retracting (its cab leaves its door)
 function applyGate(g, tr) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; const prev = occ.get(G.name); if (!ty && prev) undocking.set(G.name, prev); else if (ty) undocking.delete(G.name); occ.set(G.name, ty ? tr : null); gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
 function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.docks(g, b) ? a.k : 0; return g.acType && gsys.docks(g, b) ? 1 : 0; }
-function animStep(now) { for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
+// (gates.js step(): the app's own animation step -- it also records the height a retracted bridge rests at)
+function animStep(now) { if (gsys.step) { gsys.step(now); return; } for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
 
 const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr) => applyGate(g, tr) });
 traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (TRACE) { traffic.debug = TRACE; traffic.onEvent = (e) => { if (e.hex === TRACE) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); }; }
@@ -187,6 +188,9 @@ function clearance(A, B) { // < 0 = overlap (value = - overlapping sample count,
 // ---------------------------------------------------------------- bridges in world coordinates (2-D boxes + height)
 // returns boxes {c:[x,z], u:[ux,uz], hl (half length), hw (half width), lo, hi (m AGL), part}
 function bridgeBoxes(g, b, k) {
+  // the drawn bridge's own collision solids when gates.js provides them (oriented boxes with world heights; walkways follow
+  // the mapped polylines, sections telescope, stair and drive column included -- docs/requests/bridges_realtime.md #3)
+  if (gsys.solids) { const P = gsys.pose(g, b, k); const boxes = gsys.solids(g, b, k).map(bx => ({ ...bx, lo: bx.lo - GROUND_Y, hi: bx.hi - GROUND_Y, part: /^tunnel/.test(bx.part) ? 'tunnel' : bx.part })); return { boxes, door: P.door, P }; }
   const P = gsys.pose(g, b, k); const G = GROUND_Y; const out = [];
   const seg = (A, B, w, lo0, lo1, h, part) => { const dx = B[0] - A[0], dz = B[2] - A[2]; const L = Math.hypot(dx, dz); if (L < 0.2) return; const n = Math.max(1, Math.ceil(L / 4)); for (let i = 0; i < n; i++) { const u0 = i / n, u1 = (i + 1) / n, um = (u0 + u1) / 2; const lo = lo0 + (lo1 - lo0) * um; out.push({ c: [A[0] + dx * um, A[2] + dz * um], u: [dx / L, dz / L], hl: L / n / 2, hw: w / 2, lo: lo - 0.1, hi: lo + h, part }); } };
   const rcTop = [P.rc[0], P.floorY, P.rc[2]];
@@ -209,7 +213,7 @@ function bridgeBoxes(g, b, k) {
 function boxPoly(bx) { if (bx.poly) return bx.poly; const P = []; if (bx.round) { for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; P.push([bx.c[0] + Math.cos(a) * bx.round * 1.083, bx.c[1] + Math.sin(a) * bx.round * 1.083]); } } else { const u = bx.u, v = [-u[1], u[0]]; for (const [sa, sc] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) P.push([bx.c[0] + u[0] * bx.hl * sa + v[0] * bx.hw * sc, bx.c[1] + u[1] * bx.hl * sa + v[1] * bx.hw * sc]); } return bx.poly = P; }
 function inBox(bx, x, z) { const dx = x - bx.c[0], dz = z - bx.c[1]; if (bx.round) return Math.hypot(dx, dz) < bx.round; const a = dx * bx.u[0] + dz * bx.u[1], c = -dx * bx.u[1] + dz * bx.u[0]; return Math.abs(a) < bx.hl && Math.abs(c) < bx.hw; }
 // displayed door (L1/L2) of an aircraft, same formula as gates.js doorOf
-function doorW(B, which) { const T = B.S.T; const x = T.doors[Math.min(which - 1, T.doors.length - 1)]; const left = [-B.r[0], -B.r[1]]; const p = B.W(x + 0.5, 0); return [p[0] + left[0] * (T.R + 0.15), p[1] + left[1] * (T.R + 0.15)]; }
+function doorW(B, which) { if (doorOfG) { const d = doorOfG([B.nose[0], GROUND_Y, B.nose[1]], [B.f[0], 0, B.f[1]], B.S.T, which).door; return [d[0], d[2]]; } const T = B.S.T; const x = T.doors[Math.min(which - 1, T.doors.length - 1)]; const left = [-B.r[0], -B.r[1]]; const p = B.W(x + 0.5, 0); return [p[0] + left[0] * (T.R + 0.15), p[1] + left[1] * (T.R + 0.15)]; }
 
 // ---------------------------------------------------------------- violation bookkeeping
 const V = new Map(); // class -> {frames, eps, who: Map(hex -> {n, first, last, worst}), worst: [...]}
