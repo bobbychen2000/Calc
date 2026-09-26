@@ -54,11 +54,26 @@ export function agxLook(color, look) {
 // low tier and dark seams at roof-part junctions: review round 1). The bias is 0.5 texel x tan(angle to the sun), at
 // most 4 texels, in the cascade camera's depth units (orthographic: linear over near..far). three negates nothing: a
 // negative bias moves the receiver towards the light for both depth conventions (ShadowNode.setupShadowCoord).
+// PCF with a per-frame rotation of the sampling pattern (three r186 PCFShadowFilter rotates its 5-tap Vogel disk by
+// interleaved gradient noise of the pixel position only: a fixed per-pixel pattern that TRAA cannot average, seen as a
+// mottle wherever the shadow test is partial, e.g. fuselage sides at grazing sun and wing shadows; round-2 renders).
+// Same taps, the noise offset by 5.588238 px per frame (Jimenez 2014, the temporal IGN offset), frame index mod 64.
+const shadowFrame = uniform(0);
+const pcfTemporal = Fn(({ depthTexture, shadowCoord, shadow, depthLayer }) => {
+  const cmp = (uv) => { let d = TSL.texture(depthTexture, uv); if (depthTexture.isArrayTexture) d = d.depth(depthLayer); return d.compare(shadowCoord.z); };
+  const mapSize = TSL.reference('mapSize', 'vec2', shadow).setGroup(TSL.renderGroup);
+  const radius = TSL.reference('radius', 'float', shadow).setGroup(TSL.renderGroup);
+  const rs = radius.div(mapSize.x);
+  const phi = TSL.interleavedGradientNoise(screenCoordinate.xy.add(shadowFrame.mul(5.588238))).mul(6.28318530718);
+  let acc = null; for (let i = 0; i < 5; i++) { const c = cmp(shadowCoord.xy.add(TSL.vogelDiskSample(i, 5, phi).mul(rs))); acc = acc ? acc.add(c) : c; }
+  return acc.mul(1 / 5);
+});
 class CSM3 extends THREE.CSMShadowNode {
   _init(builder) {
     super._init(builder);
     this.biasU = [];
     for (const lw of this.lights) {
+      if (Engine.temporalShadows) lw.shadow.filterNode = pcfTemporal;
       const texel = uniform(1.0), range = uniform(40000.0); this.biasU.push({ texel, range });
       lw.shadow.biasNode = Fn(() => {
         const ndl = clamp(dot(normalWorldGeometry, this.sunDirU), 0.05, 1.0);
@@ -70,6 +85,7 @@ class CSM3 extends THREE.CSMShadowNode {
 }
 
 export class Engine {
+  static temporalShadows = true; // pcfTemporal (TRAA on every tier)
   constructor(parent, Q, opts = {}) { this.parent = parent; this.Q = Q; this.opts = opts; this.onLost = null; }
   async init() {
     const Q = this.Q; const q = new URLSearchParams(location.search);
@@ -148,6 +164,7 @@ export class Engine {
       depth = pre.getTextureNode('depth'); vel = pre.getTextureNode('velocity');
       const ai = this.aoInputs(depth);
       const aoN = THREE.ao(ai.depth, nrm, ai.camera); aoN.resolutionScale = Q.aoScale; aoN.radius.value = AO_RADIUS; aoN.distanceExponent.value = 1.3; aoN.thickness.value = 2.5; aoN.scale.value = 1.15;
+      aoN.useTemporalFiltering = !!Q.traa; // rotate GTAO's noise per frame so TRAA averages it (a static pattern left a mottle on fuselages and under wings)
       this.aoNode = aoN;
       const sp = pass(scene, camera); sp.name = 'scene';
       sp.contextNode = builtinAOContext(mix(float(1.0), aoN.getTextureNode().sample(screenUV).r, this.aoAmount));
@@ -160,6 +177,7 @@ export class Engine {
       const nrm = sample((u) => unpackRGBToNormal(sp.getTextureNode('normal').sample(u)));
       const ai = this.aoInputs(depth);
       const aoN = THREE.ao(ai.depth, nrm, ai.camera); aoN.resolutionScale = Q.aoScale; aoN.radius.value = AO_RADIUS; aoN.distanceExponent.value = 1.3; aoN.thickness.value = 2.5; aoN.scale.value = 1.15;
+      aoN.useTemporalFiltering = !!Q.traa;
       this.aoNode = aoN;
       const c = sp.getTextureNode('output');
       color = vec4(c.rgb.mul(mix(float(1.0), aoN.getTextureNode().sample(screenUV).r.mul(0.6).add(0.4), this.aoAmount)), c.a); this.scenePass = sp;
@@ -175,7 +193,8 @@ export class Engine {
     this.expo = uniform(0.45);
     const exposed = hdr.mul(this.expo);
     let final = exposed;
-    this.grade = { sat: uniform(1.0), contrast: uniform(1.4), lookSat: uniform(1.1), vignette: uniform(0.18), grain: uniform(0.0), time: uniform(0) };
+    this.grade = { sat: uniform(1.0), contrast: uniform(1.8), lookSat: uniform(1.0), // tools/build3/grade_hdr.py, engine_impl.md §4.4
+      vignette: uniform(0.18), grain: uniform(0.0), time: uniform(0) };
     if (Q.bloom) {
       // bloom in exposed (display-referred) units, so the threshold means the same by day and by night (review round
       // 1: at night exposure 2.4 multiplied a scene-referred threshold, and everything above it bloomed into a veil).
@@ -241,5 +260,5 @@ export class Engine {
   }
   resize(cssW, cssH, pixelRatio) { this.renderer.setPixelRatio(pixelRatio); this.renderer.setSize(cssW, cssH, false); }
   // per-frame counters (info.render.drawCalls / triangles): three resets them from its own rAF loop, which we do not use
-  render() { const I = this.renderer.info; I.autoReset = false; I.reset(); this.pipe.render(); }
+  render() { const I = this.renderer.info; I.autoReset = false; I.reset(); shadowFrame.value = (shadowFrame.value + 1) % 64; this.pipe.render(); }
 }

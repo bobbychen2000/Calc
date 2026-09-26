@@ -145,9 +145,9 @@
      "file": "AAL/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 74274,
-      "mid": 38154,
-      "lo": 20036
+      "hi": 73466,
+      "mid": 37526,
+      "lo": 19956
      }
     }
    ],
@@ -162,9 +162,9 @@
    "file": "AAL/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 71630,
-    "mid": 36548,
-    "lo": 19548
+    "hi": 71548,
+    "mid": 36750,
+    "lo": 19436
    }
   },
   {
@@ -274,6 +274,45 @@
   },
   {
    "brand": "ACA",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [
+    {
+     "types": [
+      "b77l"
+     ],
+     "files": {
+      "hi": "ACA/b77w@b77l-hi.webp",
+      "mid": "ACA/b77w@b77l-mid.webp",
+      "lo": "ACA/b77w@b77l-lo.webp"
+     },
+     "file": "ACA/b77w@b77l-mid.webp",
+     "painted_as": "b77l",
+     "bytes": {
+      "hi": 67096,
+      "mid": 35040,
+      "lo": 20116
+     }
+    }
+   ],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "ACA/b77w-hi.webp",
+    "mid": "ACA/b77w-mid.webp",
+    "lo": "ACA/b77w-lo.webp"
+   },
+   "file": "ACA/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 66272,
+    "mid": 34428,
+    "lo": 19348
+   }
+  },
+  {
+   "brand": "ACA",
    "model": "b788",
    "pxm": 22.7,
    "variants": [],
@@ -288,9 +327,9 @@
    "file": "ACA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 64584,
-    "mid": 36068,
-    "lo": 20486
+    "hi": 64360,
+    "mid": 35738,
+    "lo": 20560
    }
   },
   {
@@ -309,9 +348,9 @@
    "file": "ACA/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 73028,
-    "mid": 40218,
-    "lo": 22326
+    "hi": 73732,
+    "mid": 40084,
+    "lo": 22404
    }
   },
   {
@@ -330,9 +369,9 @@
    "file": "ACA-X/crj9-mid.webp",
    "painted_as": "crj9",
    "bytes": {
-    "hi": 52880,
-    "mid": 29632,
-    "lo": 16354
+    "hi": 52832,
+    "mid": 29646,
+    "lo": 16312
    }
   },
   {
@@ -351,9 +390,72 @@
    "file": "AFR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 69722,
-    "mid": 37248,
-    "lo": 19196
+    "hi": 86134,
+    "mid": 44238,
+    "lo": 21422
+   }
+  },
+  {
+   "brand": "AFR",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "AFR/b77w-hi.webp",
+    "mid": "AFR/b77w-mid.webp",
+    "lo": "AFR/b77w-lo.webp"
+   },
+   "file": "AFR/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 73834,
+    "mid": 35822,
+    "lo": 18884
+   }
+  },
+  {
+   "brand": "AIC",
+   "model": "b772",
+   "pxm": 20.0,
+   "variants": [],
+   "types": [
+    "b772"
+   ],
+   "files": {
+    "hi": "AIC/b772-hi.webp",
+    "mid": "AIC/b772-mid.webp",
+    "lo": "AIC/b772-lo.webp"
+   },
+   "file": "AIC/b772-mid.webp",
+   "painted_as": "b772",
+   "bytes": {
+    "hi": 54840,
+    "mid": 29456,
+    "lo": 16204
+   }
+  },
+  {
+   "brand": "AIC",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "AIC/b77w-hi.webp",
+    "mid": "AIC/b77w-mid.webp",
+    "lo": "AIC/b77w-lo.webp"
+   },
+   "file": "AIC/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 59534,
+    "mid": 30592,
+    "lo": 17176
    }
   },
   {
@@ -428,9 +530,30 @@
    "file": "AMX/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 82714,
-    "mid": 41486,
-    "lo": 21928
+    "hi": 82792,
+    "mid": 41272,
+    "lo": 22010
+   }
+  },
+  {
+   "brand": "ANA",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "ANA/b77w-hi.webp",
+    "mid": "ANA/b77w-mid.webp",
+    "lo": "ANA/b77w-lo.webp"
+   },
+   "file": "ANA/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 92204,
+    "mid": 44734,
+    "lo": 23534
    }
   },
   {
@@ -450,9 +573,9 @@
      "file": "ANA/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 88944,
-      "mid": 45228,
-      "lo": 23300
+      "hi": 89804,
+      "mid": 45262,
+      "lo": 23742
      }
     }
    ],
@@ -467,9 +590,9 @@
    "file": "ANA/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 85662,
-    "mid": 43048,
-    "lo": 22778
+    "hi": 85638,
+    "mid": 42990,
+    "lo": 22718
    }
   },
   {
@@ -488,9 +611,9 @@
    "file": "ANZ/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 55834,
-    "mid": 32192,
-    "lo": 18632
+    "hi": 55180,
+    "mid": 31902,
+    "lo": 18860
    }
   },
   {
@@ -509,9 +632,9 @@
    "file": "APZ/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 53612,
-    "mid": 29758,
-    "lo": 16644
+    "hi": 52704,
+    "mid": 29562,
+    "lo": 16746
    }
   },
   {
@@ -552,9 +675,9 @@
      "file": "ASA/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 97596,
-      "mid": 46926,
-      "lo": 23462
+      "hi": 97788,
+      "mid": 46994,
+      "lo": 23508
      }
     },
     {
@@ -570,9 +693,9 @@
      "file": "ASA/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 98484,
-      "mid": 47032,
-      "lo": 23692
+      "hi": 98686,
+      "mid": 47142,
+      "lo": 23696
      }
     },
     {
@@ -587,9 +710,9 @@
      "file": "ASA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 99996,
-      "mid": 47666,
-      "lo": 24166
+      "hi": 100008,
+      "mid": 47670,
+      "lo": 24162
      }
     }
    ],
@@ -647,9 +770,9 @@
      "file": "AVA/a320@a20n-mid.webp",
      "painted_as": "a20n",
      "bytes": {
-      "hi": 78876,
-      "mid": 40266,
-      "lo": 20998
+      "hi": 78036,
+      "mid": 40022,
+      "lo": 20742
      }
     }
    ],
@@ -664,9 +787,9 @@
    "file": "AVA/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 78976,
-    "mid": 40300,
-    "lo": 20938
+    "hi": 78172,
+    "mid": 40000,
+    "lo": 20736
    }
   },
   {
@@ -691,6 +814,27 @@
    }
   },
   {
+   "brand": "BAW",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "BAW/b77w-hi.webp",
+    "mid": "BAW/b77w-mid.webp",
+    "lo": "BAW/b77w-lo.webp"
+   },
+   "file": "BAW/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 81958,
+    "mid": 41232,
+    "lo": 21800
+   }
+  },
+  {
    "brand": "CAL",
    "model": "a359",
    "pxm": 19.2,
@@ -706,9 +850,51 @@
    "file": "CAL/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 94566,
-    "mid": 48966,
-    "lo": 24016
+    "hi": 94646,
+    "mid": 48540,
+    "lo": 23762
+   }
+  },
+  {
+   "brand": "CCA",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "CCA/b77w-hi.webp",
+    "mid": "CCA/b77w-mid.webp",
+    "lo": "CCA/b77w-lo.webp"
+   },
+   "file": "CCA/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 44288,
+    "mid": 23438,
+    "lo": 14014
+   }
+  },
+  {
+   "brand": "CES",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "CES/b77w-hi.webp",
+    "mid": "CES/b77w-mid.webp",
+    "lo": "CES/b77w-lo.webp"
+   },
+   "file": "CES/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 44288,
+    "mid": 23438,
+    "lo": 14014
    }
   },
   {
@@ -727,9 +913,9 @@
    "file": "CFG/a333@a339-mid.webp",
    "painted_as": "a339",
    "bytes": {
-    "hi": 133634,
-    "mid": 67222,
-    "lo": 33486
+    "hi": 136502,
+    "mid": 66656,
+    "lo": 33596
    }
   },
   {
@@ -775,6 +961,27 @@
    }
   },
   {
+   "brand": "CPA",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "CPA/b77w-hi.webp",
+    "mid": "CPA/b77w-mid.webp",
+    "lo": "CPA/b77w-lo.webp"
+   },
+   "file": "CPA/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 73132,
+    "mid": 34328,
+    "lo": 18736
+   }
+  },
+  {
    "brand": "CSN",
    "model": "b788",
    "pxm": 22.7,
@@ -790,9 +997,9 @@
    "file": "CSN/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 77842,
-    "mid": 40228,
-    "lo": 21156
+    "hi": 80424,
+    "mid": 41044,
+    "lo": 21334
    }
   },
   {
@@ -893,9 +1100,9 @@
      "file": "DAL/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 82580,
-      "mid": 41788,
-      "lo": 22852
+      "hi": 83084,
+      "mid": 43676,
+      "lo": 22888
      }
     },
     {
@@ -910,9 +1117,9 @@
      "file": "DAL/a333@a339-mid.webp",
      "painted_as": "a339",
      "bytes": {
-      "hi": 81896,
-      "mid": 42818,
-      "lo": 22998
+      "hi": 82748,
+      "mid": 43398,
+      "lo": 22726
      }
     }
    ],
@@ -927,9 +1134,9 @@
    "file": "DAL/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 82492,
-    "mid": 42314,
-    "lo": 22858
+    "hi": 82874,
+    "mid": 43610,
+    "lo": 22810
    }
   },
   {
@@ -950,9 +1157,9 @@
      "file": "DAL/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 85246,
-      "mid": 43248,
-      "lo": 23162
+      "hi": 85254,
+      "mid": 43262,
+      "lo": 23190
      }
     }
    ],
@@ -1087,9 +1294,9 @@
    "file": "DAL/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 85094,
-    "mid": 44612,
-    "lo": 23828
+    "hi": 85686,
+    "mid": 45160,
+    "lo": 24086
    }
   },
   {
@@ -1179,7 +1386,7 @@
   {
    "brand": "DLH",
    "model": "b748",
-   "pxm": 14.0,
+   "pxm": 17.6,
    "variants": [],
    "types": [
     "b748"
@@ -1192,9 +1399,9 @@
    "file": "DLH/b748-mid.webp",
    "painted_as": "b748",
    "bytes": {
-    "hi": 59326,
-    "mid": 29156,
-    "lo": 15756
+    "hi": 62118,
+    "mid": 32384,
+    "lo": 17268
    }
   },
   {
@@ -1214,9 +1421,9 @@
      "file": "EIN/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 60318,
-      "mid": 31648,
-      "lo": 17744
+      "hi": 61274,
+      "mid": 32830,
+      "lo": 17646
      }
     }
    ],
@@ -1231,9 +1438,30 @@
    "file": "EIN/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 60602,
-    "mid": 32182,
-    "lo": 17732
+    "hi": 60582,
+    "mid": 32808,
+    "lo": 17562
+   }
+  },
+  {
+   "brand": "EVA",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "EVA/b77w-hi.webp",
+    "mid": "EVA/b77w-mid.webp",
+    "lo": "EVA/b77w-lo.webp"
+   },
+   "file": "EVA/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 86146,
+    "mid": 41704,
+    "lo": 22274
    }
   },
   {
@@ -1252,9 +1480,9 @@
    "file": "EVA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 85440,
-    "mid": 44064,
-    "lo": 23242
+    "hi": 82802,
+    "mid": 42444,
+    "lo": 22594
    }
   },
   {
@@ -1436,9 +1664,9 @@
      "file": "FJI/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 59432,
-      "mid": 31518,
-      "lo": 17626
+      "hi": 69472,
+      "mid": 36332,
+      "lo": 19240
      }
     }
    ],
@@ -1453,9 +1681,9 @@
    "file": "FJI/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 60144,
-    "mid": 32134,
-    "lo": 17468
+    "hi": 69638,
+    "mid": 36384,
+    "lo": 19184
    }
   },
   {
@@ -1474,9 +1702,9 @@
    "file": "FJI/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 74156,
-    "mid": 39504,
-    "lo": 19820
+    "hi": 82882,
+    "mid": 43494,
+    "lo": 22042
    }
   },
   {
@@ -1537,9 +1765,9 @@
    "file": "HAL/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 66562,
-    "mid": 34632,
-    "lo": 18980
+    "hi": 67926,
+    "mid": 35960,
+    "lo": 19108
    }
   },
   {
@@ -1579,9 +1807,9 @@
    "file": "IBE/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 58076,
-    "mid": 30634,
-    "lo": 17344
+    "hi": 58376,
+    "mid": 31870,
+    "lo": 17280
    }
   },
   {
@@ -1600,9 +1828,9 @@
    "file": "ITY/a333@a339-mid.webp",
    "painted_as": "a339",
    "bytes": {
-    "hi": 93456,
-    "mid": 46124,
-    "lo": 23812
+    "hi": 93958,
+    "mid": 46390,
+    "lo": 23712
    }
   },
   {
@@ -1628,6 +1856,27 @@
   },
   {
    "brand": "JAL",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "JAL/b77w-hi.webp",
+    "mid": "JAL/b77w-mid.webp",
+    "lo": "JAL/b77w-lo.webp"
+   },
+   "file": "JAL/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 61160,
+    "mid": 30592,
+    "lo": 16670
+   }
+  },
+  {
+   "brand": "JAL",
    "model": "b788",
    "pxm": 22.7,
    "variants": [
@@ -1643,9 +1892,9 @@
      "file": "JAL/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 56392,
-      "mid": 31256,
-      "lo": 17030
+      "hi": 59400,
+      "mid": 31574,
+      "lo": 17106
      }
     }
    ],
@@ -1660,9 +1909,9 @@
    "file": "JAL/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 54386,
-    "mid": 29770,
-    "lo": 16556
+    "hi": 57708,
+    "mid": 30600,
+    "lo": 16610
    }
   },
   {
@@ -1741,9 +1990,30 @@
    "file": "JBU/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 121874,
-    "mid": 60652,
-    "lo": 29752
+    "hi": 124738,
+    "mid": 60748,
+    "lo": 29880
+   }
+  },
+  {
+   "brand": "KAL",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "KAL/b77w-hi.webp",
+    "mid": "KAL/b77w-mid.webp",
+    "lo": "KAL/b77w-lo.webp"
+   },
+   "file": "KAL/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 89316,
+    "mid": 43492,
+    "lo": 22680
    }
   },
   {
@@ -1763,9 +2033,9 @@
      "file": "KAL/b788@b78x-mid.webp",
      "painted_as": "b78x",
      "bytes": {
-      "hi": 88978,
-      "mid": 45168,
-      "lo": 23190
+      "hi": 89040,
+      "mid": 45206,
+      "lo": 23046
      }
     }
    ],
@@ -1780,9 +2050,9 @@
    "file": "KAL/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 88192,
-    "mid": 45090,
-    "lo": 23024
+    "hi": 88318,
+    "mid": 44452,
+    "lo": 23150
    }
   },
   {
@@ -1802,9 +2072,9 @@
      "file": "KLM/b788@b78x-mid.webp",
      "painted_as": "b78x",
      "bytes": {
-      "hi": 79934,
-      "mid": 41204,
-      "lo": 21336
+      "hi": 79686,
+      "mid": 40806,
+      "lo": 21302
      }
     }
    ],
@@ -1819,9 +2089,9 @@
    "file": "KLM/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 78962,
-    "mid": 41268,
-    "lo": 21260
+    "hi": 77860,
+    "mid": 40524,
+    "lo": 21284
    }
   },
   {
@@ -1841,9 +2111,9 @@
      "file": "LOT/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 58546,
-      "mid": 32150,
-      "lo": 17586
+      "hi": 58236,
+      "mid": 31868,
+      "lo": 17636
      }
     }
    ],
@@ -1858,9 +2128,9 @@
    "file": "LOT/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 56752,
-    "mid": 31098,
-    "lo": 17280
+    "hi": 56730,
+    "mid": 31164,
+    "lo": 17346
    }
   },
   {
@@ -1879,9 +2149,9 @@
    "file": "MXY/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 99184,
-    "mid": 48676,
-    "lo": 23830
+    "hi": 98720,
+    "mid": 49036,
+    "lo": 23936
    }
   },
   {
@@ -1906,6 +2176,27 @@
    }
   },
   {
+   "brand": "PAL",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "PAL/b77w-hi.webp",
+    "mid": "PAL/b77w-mid.webp",
+    "lo": "PAL/b77w-lo.webp"
+   },
+   "file": "PAL/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 60552,
+    "mid": 30852,
+    "lo": 17298
+   }
+  },
+  {
    "brand": "QFA",
    "model": "b788",
    "pxm": 22.7,
@@ -1921,9 +2212,9 @@
    "file": "QFA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 68422,
-    "mid": 37324,
-    "lo": 20058
+    "hi": 68152,
+    "mid": 37092,
+    "lo": 20154
    }
   },
   {
@@ -1942,9 +2233,9 @@
    "file": "QTR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 74220,
-    "mid": 38852,
-    "lo": 19488
+    "hi": 80136,
+    "mid": 41180,
+    "lo": 20256
    }
   },
   {
@@ -1963,9 +2254,9 @@
    "file": "SAS/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 71910,
-    "mid": 36732,
-    "lo": 19616
+    "hi": 71490,
+    "mid": 37516,
+    "lo": 19518
    }
   },
   {
@@ -2086,8 +2377,8 @@
      "file": "SWA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 101058,
-      "mid": 48456,
+      "hi": 101064,
+      "mid": 48454,
       "lo": 23926
      }
     }
@@ -2109,6 +2400,27 @@
    }
   },
   {
+   "brand": "SWR",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "SWR/b77w-hi.webp",
+    "mid": "SWR/b77w-mid.webp",
+    "lo": "SWR/b77w-lo.webp"
+   },
+   "file": "SWR/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 62818,
+    "mid": 32354,
+    "lo": 18246
+   }
+  },
+  {
    "brand": "TAP",
    "model": "a333",
    "pxm": 20.0,
@@ -2124,9 +2436,9 @@
    "file": "TAP/a333@a339-mid.webp",
    "painted_as": "a339",
    "bytes": {
-    "hi": 58316,
-    "mid": 31664,
-    "lo": 17370
+    "hi": 58570,
+    "mid": 31686,
+    "lo": 17232
    }
   },
   {
@@ -2166,9 +2478,9 @@
    "file": "THY/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 73048,
-    "mid": 38628,
-    "lo": 20446
+    "hi": 72884,
+    "mid": 38390,
+    "lo": 20396
    }
   },
   {
@@ -2188,7 +2500,7 @@
    "painted_as": "b788",
    "bytes": {
     "hi": 65362,
-    "mid": 34518,
+    "mid": 34536,
     "lo": 18692
    }
   },
@@ -2208,9 +2520,9 @@
    "file": "UAE/a388-mid.webp",
    "painted_as": "a388",
    "bytes": {
-    "hi": 70750,
-    "mid": 37468,
-    "lo": 19794
+    "hi": 72448,
+    "mid": 37996,
+    "lo": 19952
    }
   },
   {
@@ -2413,6 +2725,48 @@
   },
   {
    "brand": "UAL",
+   "model": "b772",
+   "pxm": 20.0,
+   "variants": [],
+   "types": [
+    "b772"
+   ],
+   "files": {
+    "hi": "UAL/b772-hi.webp",
+    "mid": "UAL/b772-mid.webp",
+    "lo": "UAL/b772-lo.webp"
+   },
+   "file": "UAL/b772-mid.webp",
+   "painted_as": "b772",
+   "bytes": {
+    "hi": 96522,
+    "mid": 47768,
+    "lo": 24104
+   }
+  },
+  {
+   "brand": "UAL",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [],
+   "types": [
+    "b77w"
+   ],
+   "files": {
+    "hi": "UAL/b77w-hi.webp",
+    "mid": "UAL/b77w-mid.webp",
+    "lo": "UAL/b77w-lo.webp"
+   },
+   "file": "UAL/b77w-mid.webp",
+   "painted_as": "b77w",
+   "bytes": {
+    "hi": 103506,
+    "mid": 49616,
+    "lo": 25154
+   }
+  },
+  {
+   "brand": "UAL",
    "model": "b788",
    "pxm": 22.7,
    "variants": [
@@ -2428,9 +2782,9 @@
      "file": "UAL/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 109214,
-      "mid": 54396,
-      "lo": 27108
+      "hi": 109632,
+      "mid": 54238,
+      "lo": 27306
      }
     },
     {
@@ -2445,9 +2799,9 @@
      "file": "UAL/b788@b78x-mid.webp",
      "painted_as": "b78x",
      "bytes": {
-      "hi": 108822,
-      "mid": 53994,
-      "lo": 26890
+      "hi": 108626,
+      "mid": 54010,
+      "lo": 26884
      }
     }
    ],
@@ -2462,9 +2816,9 @@
    "file": "UAL/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 107204,
-    "mid": 52778,
-    "lo": 26638
+    "hi": 107160,
+    "mid": 52722,
+    "lo": 26610
    }
   },
   {
@@ -2565,9 +2919,9 @@
    "file": "UAL-X/crj2-mid.webp",
    "painted_as": "crj2",
    "bytes": {
-    "hi": 101002,
-    "mid": 47162,
-    "lo": 22886
+    "hi": 99896,
+    "mid": 46464,
+    "lo": 22586
    }
   },
   {
@@ -2586,9 +2940,9 @@
    "file": "UAL-X/crj7-mid.webp",
    "painted_as": "crj7",
    "bytes": {
-    "hi": 106024,
-    "mid": 49978,
-    "lo": 23798
+    "hi": 108110,
+    "mid": 51994,
+    "lo": 24900
    }
   },
   {
@@ -2607,9 +2961,9 @@
    "file": "UAL-X/e170-mid.webp",
    "painted_as": "e170",
    "bytes": {
-    "hi": 116462,
-    "mid": 55868,
-    "lo": 27010
+    "hi": 112636,
+    "mid": 53674,
+    "lo": 25858
    }
   },
   {
@@ -2628,9 +2982,9 @@
    "file": "UAL-X/e75l-mid.webp",
    "painted_as": "e75l",
    "bytes": {
-    "hi": 112762,
-    "mid": 54302,
-    "lo": 26376
+    "hi": 109100,
+    "mid": 53028,
+    "lo": 26044
    }
   },
   {
@@ -2649,15 +3003,15 @@
    "file": "UPS/b744-mid.webp",
    "painted_as": "b744",
    "bytes": {
-    "hi": 78238,
-    "mid": 39170,
-    "lo": 19910
+    "hi": 78208,
+    "mid": 37772,
+    "lo": 18862
    }
   },
   {
    "brand": "UPS",
    "model": "b748",
-   "pxm": 14.0,
+   "pxm": 17.6,
    "variants": [],
    "types": [
     "b748"
@@ -2670,9 +3024,9 @@
    "file": "UPS/b748-mid.webp",
    "painted_as": "b748",
    "bytes": {
-    "hi": 83018,
-    "mid": 39326,
-    "lo": 19874
+    "hi": 67996,
+    "mid": 34498,
+    "lo": 17648
    }
   },
   {
@@ -2691,9 +3045,9 @@
    "file": "UPS/b752-mid.webp",
    "painted_as": "b752",
    "bytes": {
-    "hi": 80212,
-    "mid": 41046,
-    "lo": 20700
+    "hi": 64640,
+    "mid": 32434,
+    "lo": 16780
    }
   },
   {
@@ -2712,9 +3066,9 @@
    "file": "UPS/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 74480,
-    "mid": 36738,
-    "lo": 19094
+    "hi": 63978,
+    "mid": 31076,
+    "lo": 16250
    }
   },
   {
@@ -2733,9 +3087,9 @@
    "file": "UPS/md11-mid.webp",
    "painted_as": "md11",
    "bytes": {
-    "hi": 75952,
-    "mid": 37942,
-    "lo": 20148
+    "hi": 63356,
+    "mid": 32690,
+    "lo": 17532
    }
   },
   {
@@ -2754,9 +3108,9 @@
    "file": "VIR/a359@a35k-mid.webp",
    "painted_as": "a35k",
    "bytes": {
-    "hi": 102310,
-    "mid": 51532,
-    "lo": 25768
+    "hi": 106332,
+    "mid": 52214,
+    "lo": 26342
    }
   },
   {
@@ -2775,9 +3129,9 @@
    "file": "VIR/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 84596,
-    "mid": 43402,
-    "lo": 22452
+    "hi": 88568,
+    "mid": 45420,
+    "lo": 23082
    }
   },
   {
@@ -2797,9 +3151,9 @@
      "file": "VOI/a320@a20n-mid.webp",
      "painted_as": "a20n",
      "bytes": {
-      "hi": 58736,
-      "mid": 31884,
-      "lo": 17764
+      "hi": 64476,
+      "mid": 34212,
+      "lo": 18806
      }
     }
    ],
@@ -2814,9 +3168,9 @@
    "file": "VOI/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 58892,
-    "mid": 31806,
-    "lo": 17750
+    "hi": 64640,
+    "mid": 34260,
+    "lo": 18804
    }
   },
   {
@@ -2835,9 +3189,9 @@
    "file": "VOI/a321@a21n-mid.webp",
    "painted_as": "a21n",
    "bytes": {
-    "hi": 57482,
-    "mid": 30944,
-    "lo": 16628
+    "hi": 64878,
+    "mid": 33732,
+    "lo": 17574
    }
   },
   {
@@ -2874,7 +3228,7 @@
      "file": "WJA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 73816,
+      "hi": 73828,
       "mid": 37360,
       "lo": 20012
      }
@@ -2912,9 +3266,9 @@
    "file": "WJA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 72856,
-    "mid": 39176,
-    "lo": 20796
+    "hi": 72460,
+    "mid": 38772,
+    "lo": 20882
    }
   },
   {
@@ -2997,9 +3351,9 @@
      "file": "_N/a333@a339-mid.webp",
      "painted_as": "a339",
      "bytes": {
-      "hi": 39546,
-      "mid": 23128,
-      "lo": 13470
+      "hi": 40432,
+      "mid": 23286,
+      "lo": 13356
      }
     },
     {
@@ -3014,9 +3368,9 @@
      "file": "_N/a333@a338-mid.webp",
      "painted_as": "a338",
      "bytes": {
-      "hi": 38914,
-      "mid": 22808,
-      "lo": 13640
+      "hi": 40090,
+      "mid": 23184,
+      "lo": 13444
      }
     }
    ],
@@ -3031,9 +3385,9 @@
    "file": "_N/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 39804,
-    "mid": 21932,
-    "lo": 13550
+    "hi": 40138,
+    "mid": 23282,
+    "lo": 13462
    }
   },
   {
@@ -3092,9 +3446,9 @@
      "file": "_N/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 35870,
-      "mid": 19946,
-      "lo": 11800
+      "hi": 35878,
+      "mid": 19942,
+      "lo": 11804
      }
     },
     {
@@ -3109,9 +3463,9 @@
      "file": "_N/b738@b736-mid.webp",
      "painted_as": "b736",
      "bytes": {
-      "hi": 34778,
-      "mid": 19260,
-      "lo": 11548
+      "hi": 34748,
+      "mid": 19256,
+      "lo": 11542
      }
     },
     {
@@ -3227,6 +3581,66 @@
   },
   {
    "brand": "_N",
+   "model": "b772",
+   "pxm": 20.0,
+   "variants": [],
+   "types": [
+    "b773"
+   ],
+   "files": {
+    "hi": "_N/b772@b773-hi.webp",
+    "mid": "_N/b772@b773-mid.webp",
+    "lo": "_N/b772@b773-lo.webp"
+   },
+   "file": "_N/b772@b773-mid.webp",
+   "painted_as": "b773",
+   "bytes": {
+    "hi": 39054,
+    "mid": 22254,
+    "lo": 12820
+   }
+  },
+  {
+   "brand": "_N",
+   "model": "b77w",
+   "pxm": 21.8,
+   "variants": [
+    {
+     "types": [
+      "b779"
+     ],
+     "files": {
+      "hi": "_N/b77w@b779-hi.webp",
+      "mid": "_N/b77w@b779-mid.webp",
+      "lo": "_N/b77w@b779-lo.webp"
+     },
+     "file": "_N/b77w@b779-mid.webp",
+     "painted_as": "b779",
+     "bytes": {
+      "hi": 38796,
+      "mid": 21620,
+      "lo": 13164
+     }
+    }
+   ],
+   "types": [
+    "b77l"
+   ],
+   "files": {
+    "hi": "_N/b77w@b77l-hi.webp",
+    "mid": "_N/b77w@b77l-mid.webp",
+    "lo": "_N/b77w@b77l-lo.webp"
+   },
+   "file": "_N/b77w@b77l-mid.webp",
+   "painted_as": "b77l",
+   "bytes": {
+    "hi": 40522,
+    "mid": 21694,
+    "lo": 13656
+   }
+  },
+  {
+   "brand": "_N",
    "model": "b788",
    "pxm": 22.7,
    "variants": [
@@ -3259,9 +3673,9 @@
    "file": "_N/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 38850,
-    "mid": 22914,
-    "lo": 13560
+    "hi": 38652,
+    "mid": 22616,
+    "lo": 13628
    }
   },
   {
@@ -3332,9 +3746,19 @@
     "B764",
     "B788",
     "B789",
-    "B78X"
+    "B78X",
+    "B772",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.73,
+    "dy": 0.2,
+    "h": 0.12,
+    "flag": "US",
+    "flag_first": false,
+    "src": "photo UAL_2 (737-8 N37440, starboard): N-number then the US flag aft of it, above the windows"
+   }
   },
   "UAL-X": {
    "name": "United Express",
@@ -3378,7 +3802,15 @@
     "CRJ2",
     "CRJ7"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.65,
+    "dy": 0.13,
+    "h": 0.11,
+    "flag": "US",
+    "flag_first": false,
+    "src": "photo UAL-X_2 (E175 N86371, port): above the windows aft of the wing, flag aft"
+   }
   },
   "UAL-G": {
    "name": "United Airlines (2010-2019 \"Globe\" livery)",
@@ -3409,7 +3841,15 @@
     "A319",
     "A320"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.73,
+    "dy": 0.2,
+    "h": 0.12,
+    "flag": "US",
+    "flag_first": false,
+    "src": "as UAL (inf)"
+   }
   },
   "DAL": {
    "name": "Delta Air Lines",
@@ -3462,7 +3902,15 @@
     "A333",
     "A339"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.72,
+    "dy": 0.2,
+    "h": 0.1,
+    "flag": "US",
+    "flag_first": true,
+    "src": "photo DAL_1 (737-900 N884DN, port): flag then N-number above the windows aft"
+   }
   },
   "DAL-C": {
    "name": "Delta Connection",
@@ -3502,7 +3950,15 @@
    "types": [
     "E75L"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.72,
+    "dy": 0.2,
+    "h": 0.1,
+    "flag": "US",
+    "flag_first": true,
+    "src": "as DAL (inf)"
+   }
   },
   "AAL": {
    "name": "American Airlines",
@@ -3546,7 +4002,15 @@
     "B788",
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.745,
+    "dy": -0.17,
+    "h": 0.1,
+    "flag": "US",
+    "flag_first": true,
+    "src": "photo AAL_2 (A321 N913US, port): below the windows aft, flag ahead of it"
+   }
   },
   "AAL-E": {
    "name": "American Eagle",
@@ -3568,7 +4032,15 @@
    "types": [
     "E75L"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.745,
+    "dy": -0.17,
+    "h": 0.1,
+    "flag": "US",
+    "flag_first": true,
+    "src": "as AAL (inf)"
+   }
   },
   "ASA": {
    "name": "Alaska Airlines",
@@ -3611,7 +4083,15 @@
     "A21N",
     "E75L"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "SWA": {
    "name": "Southwest Airlines",
@@ -3646,7 +4126,15 @@
     "B738",
     "B38M"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.63,
+    "dy": 0.2,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "photo SWA_1 (737-700 N273WN, port): above the windows at the start of the tail stripes"
+   }
   },
   "JBU": {
    "name": "JetBlue",
@@ -3685,7 +4173,15 @@
     "A21N",
     "BCS3"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "FFT": {
    "name": "Frontier Airlines",
@@ -3720,7 +4216,15 @@
     "A321",
     "A21N"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "ACA": {
    "name": "Air Canada",
@@ -3751,9 +4255,19 @@
     "A321",
     "B38M",
     "BCS3",
-    "B789"
+    "B789",
+    "B77W",
+    "B77L"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "ACA-X": {
    "name": "Air Canada Express",
@@ -3779,7 +4293,15 @@
    "types": [
     "CRJ9"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "WJA": {
    "name": "WestJet",
@@ -3827,7 +4349,15 @@
     "B38M",
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "AMX": {
    "name": "Aeroméxico",
@@ -3867,7 +4397,15 @@
     "B39M",
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "HAL": {
    "name": "Hawaiian Airlines",
@@ -3908,7 +4446,15 @@
     "A21N",
     "A332"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "SCX": {
    "name": "Sun Country Airlines",
@@ -3936,7 +4482,15 @@
    "types": [
     "B738"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "MXY": {
    "name": "Breeze Airways",
@@ -3969,7 +4523,15 @@
    "types": [
     "BCS3"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "CPA": {
    "name": "Cathay Pacific",
@@ -3996,9 +4558,18 @@
    },
    "status": "layout measured on photos of A350-900s; brushwing re-drawn from a photo; colours approx",
    "types": [
-    "A359"
+    "A359",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "EVA": {
    "name": "EVA Air",
@@ -4012,6 +4583,10 @@
      "#00674F",
      "approx (no official value found; from the reference image)"
     ],
+    "title": [
+     "#249243",
+     "measured on the photo B-17887 (refs/cache/livref EVA_1)"
+    ],
     "orange": [
      "#F29400",
      "approx (no official value found; from the reference image)"
@@ -4019,16 +4594,26 @@
    },
    "status": "from the description; globe simplified",
    "types": [
-    "B789"
+    "B789",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "CAL": {
    "name": "China Airlines",
    "livery": "plum-blossom tail (1995 identity), white fuselage",
    "since": 1995,
    "refs": [
-    "https://www.china-airlines.com/ (brand; not fetched)"
+    "https://www.china-airlines.com/ (brand; not fetched)",
+    "photo check (reference only, Wikimedia Commons files): \"(GBR-London) China Airlines Airbus A350-941 B-18906 @ EGLL 2025-06-17.jpg\"; \"B-18919 - Airbus A350-941 - China Airlines SIN 220325.jpg\" (A350-900s B-18906 / B-18918 (port side): CHINA AIRLINES sn 0.305-0.46 aft of door 2 above the windows, no Chinese title on this side, plum blossom on the fin)"
    ],
    "colors": {
     "pink": [
@@ -4044,11 +4629,19 @@
      "approx (no official value found; from the reference image)"
     ]
    },
-   "status": "from knowledge only: approx",
+   "status": "title position measured on photos; blossom simplified; colours approx",
    "types": [
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "SIA": {
    "name": "Singapore Airlines",
@@ -4088,7 +4681,15 @@
    "types": [
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "KAL": {
    "name": "Korean Air",
@@ -4111,9 +4712,18 @@
    "status": "fleet mid-transition from the 1984 livery (new livery rendered: inf)",
    "types": [
     "B78X",
-    "B789"
+    "B789",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "ANA": {
    "name": "ANA",
@@ -4136,9 +4746,18 @@
    "status": "at SFO ANA flies the 777-300ER (procedural airframe; runtime colours)",
    "types": [
     "B788",
-    "B789"
+    "B789",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "JAL": {
    "name": "Japan Airlines",
@@ -4146,7 +4765,8 @@
    "since": 2011,
    "refs": [
     "https://www.japantimes.co.jp/news/2011/03/01/business/jal-revives-crane-logo-in-return-to-basics/",
-    "https://www.norebbo.com/japan-airlines-livery/ (profile drawing; layout reference only)"
+    "https://www.norebbo.com/japan-airlines-livery/ (profile drawing; layout reference only)",
+    "photo check (reference only, Wikimedia Commons files): \"(AUS-Victoria) Japan Airlines Boeing 787-9 JA864J @ YMML 2025-12-06.jpg\"; \"Japan Airlines Boeing 787-9 JA867J after departing Runway 33L Boston Feb 2025 1.jpg\" (title sn 0.16-0.43 with the Japanese flag after it, Tsurumaru crane circle on a white fin)"
    ],
    "colors": {
     "red": [
@@ -4154,12 +4774,21 @@
      "approx (no official value found; from the reference image)"
     ]
    },
-   "status": "crane circle simplified",
+   "status": "layout measured on a photo of a 787-9; crane circle re-drawn (vector) from the photo",
    "types": [
     "B788",
-    "B789"
+    "B789",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.81,
+    "dy": 0.15,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "photo JAL_1 (787-9 JA864J, port): above the windows ahead of the aft door"
+   }
   },
   "QFA": {
    "name": "Qantas",
@@ -4178,7 +4807,15 @@
    "types": [
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "PAL": {
    "name": "Philippine Airlines",
@@ -4203,32 +4840,59 @@
    },
    "status": "approx; at SFO mostly the 777-300ER (procedural)",
    "types": [
-    "A359"
+    "A359",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "AFR": {
    "name": "Air France",
    "livery": "Eurowhite livery with the tricolour tail stripes",
    "since": 2009,
    "refs": [
-    "https://corporate.airfrance.com/ (brand; not fetched)"
+    "https://corporate.airfrance.com/ (brand; not fetched)",
+    "photo check (reference only, Wikimedia Commons files): \"Air France, F-HTYS, Airbus A350-941 (54008313536).jpg\"; \"Air France, F-HUVE, Airbus A350-941 (54008539633).jpg\" (fin stripes parallel to the leading edge: one broad and three thin navy, one red on the lower aft fin; AIRFRANCE with the red slash)"
    ],
    "colors": {
     "navy": [
-     "#002157",
-     "approx (no official value found; from the reference image)"
+     "#1B2A5A",
+     "approx (no official value found; from the reference image); measured on the photo"
     ],
     "red": [
-     "#E6192B",
-     "approx (no official value found; from the reference image)"
+     "#D2232A",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "white": [
+     "#F7F8F8",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "gold": [
+     "#C9A24B",
+     "approx (no official value found; from the reference image); measured on the photo"
     ]
    },
-   "status": "approx",
+   "status": "layout measured on a photo of an A350-900 (port side); colours approx",
    "types": [
-    "A359"
+    "A359",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.77,
+    "dy": 0.08,
+    "h": 0.07,
+    "flag": null,
+    "flag_first": false,
+    "src": "photo AFR_2 (A350-900 F-HUVE, port): small, at the window line aft"
+   }
   },
   "BAW": {
    "name": "British Airways",
@@ -4260,9 +4924,18 @@
    },
    "status": "layout measured on a photo of the A380 (port side); tail ribbons and speedwing simplified; colours approx",
    "types": [
-    "A388"
+    "A388",
+    "B77W"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "DLH": {
    "name": "Lufthansa",
@@ -4285,7 +4958,15 @@
     "A388",
     "B744"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "UAE": {
    "name": "Emirates",
@@ -4317,11 +4998,19 @@
      "approx (no official value found; from the reference image)"
     ]
    },
-   "status": "layout measured on a 2025 photo of the A380 (starboard); Arabic title not drawn; flag simplified",
+   "status": "layout measured on a 2025 photo of the A380 (starboard); Arabic title in an OFL calligraphic look-alike; flag simplified",
    "types": [
     "A388"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "THY": {
    "name": "Turkish Airlines",
@@ -4341,15 +5030,23 @@
     "A359",
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "VIR": {
    "name": "Virgin Atlantic",
-   "livery": "2019 \"Flying Icons\" livery (light silver fuselage, red tail with the Virgin signature, purple-grey titles)",
+   "livery": "2019 \"Flying Icons\" livery (light silver fuselage, red tail with the Virgin signature, purple titles)",
    "since": 2019,
    "refs": [
     "https://www.virgin.com/about-virgin/latest/hello-virgin-atlantics-new-flying-icons",
-    "photo check (reference only, Wikimedia Commons files): \"Better Virgin Atlantic Boeing 787-9 Dreamliner G-VOWS arriving SFO ref L1180157.jpg\"; \"G-VZIG B787 VIRGIN ATLANTIC (54770862678).jpg\" (layout: light silver body, large thin lowercase title across the windows sn 0.15-0.47, red tail with the white Virgin signature, red continuing onto the lower tail cone, red nacelles)"
+    "photo check (reference only, Wikimedia Commons files): \"Better Virgin Atlantic Boeing 787-9 Dreamliner G-VOWS arriving SFO ref L1180157.jpg\"; \"G-VZIG B787 VIRGIN ATLANTIC (54770862678).jpg\" (layout: light silver body, large thin lowercase title across the windows sn 0.15-0.47 in dark purple (measured #2C344B on the anti-aliased strokes), red tail with the large white Virgin signature over the middle of the fin, red continuing onto the lower tail cone, red nacelles; the flying icon (a figure with the Union flag) and the type name on the nose)"
    ],
    "colors": {
     "body": [
@@ -4361,20 +5058,36 @@
      "approx (no official value found; from the reference image)"
     ],
     "title": [
-     "#4B3F5C",
+     "#2E2A48",
      "approx (no official value found; from the reference image)"
     ],
     "white": [
      "#FFFFFF",
      "approx (no official value found; from the reference image)"
+    ],
+    "flagblue": [
+     "#012169",
+     "approx (no official value found; from the reference image)"
+    ],
+    "flagred": [
+     "#C8102E",
+     "approx (no official value found; from the reference image)"
     ]
    },
-   "status": "layout from photos of 787-9s (one at SFO); flying-icon figures and the flag are not drawn; signature in a script look-alike",
+   "status": "layout from photos of 787-9s (one at SFO); flying icon strongly simplified (one figure for every aircraft; each aircraft has its own); signature in a script look-alike",
    "types": [
     "B789",
     "A35K"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.76,
+    "dy": -0.4,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "photo VIR_1 (787-9 G-VOWS, port): low on the aft fuselage"
+   }
   },
   "AIC": {
    "name": "Air India",
@@ -4398,8 +5111,19 @@
     ]
    },
    "status": "SFO fleet is 777 only (procedural airframe: runtime colours); fleet mid-transition",
-   "types": [],
-   "cargo": false
+   "types": [
+    "B77W",
+    "B772"
+   ],
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "ANZ": {
    "name": "Air New Zealand",
@@ -4418,7 +5142,15 @@
    "types": [
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "AVA": {
    "name": "Avianca",
@@ -4439,7 +5171,7 @@
      "approx (no official value found; from the reference image)"
     ],
     "orange": [
-     "#F47B20",
+     "#FD653C",
      "approx (no official value found; from the reference image)"
     ],
     "white": [
@@ -4452,53 +5184,93 @@
     "A20N",
     "A320"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "VOI": {
    "name": "Volaris",
-   "livery": "white fuselage, black lowercase title, black tail with the pixel cross, magenta nacelles",
+   "livery": "white fuselage, navy lowercase title, navy tail with the pixel cross, magenta nacelles",
    "since": 2018,
    "refs": [
     "https://www.volaris.com/ (brand; not fetched)",
-    "photo check (reference only, Wikimedia Commons files): \"N531VL Volaris Airbus A320-271N s-n 7626 (38892933654).jpg\" (layout: black lowercase title from door 1, black fin with the pixel cross, magenta nacelles)"
+    "photo check (reference only, Wikimedia Commons files): \"N531VL Volaris Airbus A320-271N s-n 7626 (38892933654).jpg\" (layout measured on N531VL (port side): navy lowercase title sn 0.187-0.462 across the windows, 0.45 H, starting aft of door 1; volaris.com above the windows sn 0.645-0.775; near-black navy fin with the pixel cross large and low (cells 0.135 of the fin height, centre fu 0.42 fv 0.38); magenta nacelles; N531VL with the Mexican flag below the windows aft of the wing)"
    ],
    "colors": {
-    "black": [
-     "#1A1A1A",
-     "approx (no official value found; from the reference image)"
+    "navy": [
+     "#1A1438",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "fin": [
+     "#0B1024",
+     "approx (no official value found; from the reference image); measured on the photo"
     ],
     "magenta": [
      "#C4219E",
-     "approx (no official value found; from the reference image)"
+     "approx (no official value found; from the reference image); measured on the photo"
     ],
     "pink": [
-     "#E84BB8",
-     "approx (no official value found; from the reference image)"
+     "#E07BE6",
+     "approx (no official value found; from the reference image); measured on the photo"
     ],
-    "purple": [
-     "#7A2E8E",
-     "approx (no official value found; from the reference image)"
+    "violet": [
+     "#D34BD8",
+     "approx (no official value found; from the reference image); measured on the photo"
     ],
-    "green": [
-     "#7ED321",
-     "approx (no official value found; from the reference image)"
-    ],
-    "cyan": [
-     "#3FC5E8",
-     "approx (no official value found; from the reference image)"
+    "lilac": [
+     "#E6A0F0",
+     "approx (no official value found; from the reference image); measured on the photo"
     ],
     "white": [
      "#F7F8F8",
-     "approx (no official value found; from the reference image)"
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "cyan": [
+     "#3FC5E8",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "sky": [
+     "#A6D8F0",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "blue": [
+     "#4FB8EE",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "lime": [
+     "#C8E650",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "green": [
+     "#3DDD3D",
+     "approx (no official value found; from the reference image); measured on the photo"
+    ],
+    "green2": [
+     "#6FE040",
+     "approx (no official value found; from the reference image); measured on the photo"
     ]
    },
-   "status": "layout from a photo of an A320neo; pixel cross simplified; colours approx",
+   "status": "layout measured on a photo of an A320neo; colours measured on the photo (approx)",
    "types": [
     "A20N",
     "A21N",
     "A320"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.71,
+    "dy": -0.17,
+    "h": 0.1,
+    "flag": "MX",
+    "flag_first": true,
+    "src": "photo VOI_1 (A320neo N531VL, port): Mexican flag then the registration below the windows"
+   }
   },
   "CMP": {
    "name": "Copa Airlines",
@@ -4522,7 +5294,15 @@
    "types": [
     "B39M"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "KLM": {
    "name": "KLM",
@@ -4551,7 +5331,15 @@
     "B78X",
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "SWR": {
    "name": "Swiss",
@@ -4567,8 +5355,18 @@
     ]
    },
    "status": "777-300ER only at SFO (procedural)",
-   "types": [],
-   "cargo": false
+   "types": [
+    "B77W"
+   ],
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "AAR": {
    "name": "Asiana Airlines",
@@ -4616,7 +5414,15 @@
    "types": [
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "SJX": {
    "name": "Starlux Airlines",
@@ -4648,7 +5454,15 @@
    "types": [
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "TZP": {
    "name": "ZIPAIR",
@@ -4680,7 +5494,15 @@
    "types": [
     "B788"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "EIN": {
    "name": "Aer Lingus",
@@ -4704,31 +5526,51 @@
     "A333",
     "A332"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "QTR": {
    "name": "Qatar Airways",
-   "livery": "grey fuselage, burgundy tail with the grey oryx",
+   "livery": "grey fuselage and fin with the burgundy oryx, QATAR and Arabic titles",
    "since": 2006,
    "refs": [
     "https://www.norebbo.com/qatar-airways-livery/ (profile drawing; layout reference only) (A350 profile; chart #BDC2C2 fuselage, #5C0631 oryx: third party)",
-    "photo check (reference only, Wikimedia Commons files): \"(SGP-Singapore) Qatar Airways Airbus A350-941 A7-AMI @ WSSS 2025-12-05.jpg\"; \"Qatar Airways, A7-AMG, Airbus A350-941 (53212715944).jpg\" (the fin is burgundy with the oryx in the body grey)"
+    "photo check (reference only, Wikimedia Commons files): \"(SGP-Singapore) Qatar Airways Airbus A350-941 A7-AMI @ WSSS 2025-12-05.jpg\"; \"Qatar Airways, A7-AMG, Airbus A350-941 (53212715944).jpg\" (grey fin with the burgundy oryx, QATAR across the windows sn 0.12-0.33, Arabic title sn 0.38-0.47 above the windows, oryx on the nacelle)"
    ],
    "colors": {
     "grey": [
-     "#BDC2C2",
+     "#C4C9CA",
      "third-party chart: unverified"
     ],
     "burgundy": [
      "#5C0631",
      "third-party chart: unverified"
+    ],
+    "arabic": [
+     "#4A5157",
+     "approx (no official value found; from the reference image)"
     ]
    },
-   "status": "burgundy fin with the grey oryx (photo check); oryx simplified; Arabic script not drawn",
+   "status": "layout measured on a photo of an A350-900 (starboard); oryx re-drawn as polygons; Arabic title in an OFL look-alike face; its station on the port side assumed the same (inf)",
    "types": [
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.76,
+    "dy": -0.15,
+    "h": 0.09,
+    "flag": null,
+    "flag_first": false,
+    "src": "photo QTR_1 (A350-900 A7-AMI, starboard): below the windows aft"
+   }
   },
   "FBU": {
    "name": "French bee",
@@ -4747,7 +5589,15 @@
    "types": [
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "SAS": {
    "name": "SAS",
@@ -4772,7 +5622,15 @@
     "A333",
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "TAP": {
    "name": "TAP Air Portugal",
@@ -4795,7 +5653,15 @@
    "types": [
     "A339"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "APZ": {
    "name": "Air Premia",
@@ -4814,7 +5680,15 @@
    "types": [
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "FLE": {
    "name": "Flair Airlines",
@@ -4842,7 +5716,15 @@
    "types": [
     "B38M"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "ITY": {
    "name": "ITA Airways",
@@ -4863,14 +5745,23 @@
     "A339",
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "CSN": {
    "name": "China Southern",
    "livery": "blue tail with the red kapok flower",
    "since": 1991,
    "refs": [
-    "https://www.csair.com/ (brand; not fetched)"
+    "https://www.csair.com/ (brand; not fetched)",
+    "photo check (reference only, Wikimedia Commons files): \"(SGP-Singapore) China Southern Airlines Boeing 787-9 B-20C6 @ WSSS 2025-11-26.jpg\"; \"B-1128 China Southern Boeing 787-9 Dreamliner YMML.jpg\" (Chinese title forward of CHINA SOUTHERN, both above the windows)"
    ],
    "colors": {
     "blue": [
@@ -4880,13 +5771,25 @@
     "red": [
      "#E1261C",
      "approx (no official value found; from the reference image)"
+    ],
+    "title": [
+     "#2F8FCB",
+     "measured on the photo (approx)"
     ]
    },
-   "status": "approx",
+   "status": "titles measured on photos (starboard); kapok flower simplified; colours approx",
    "types": [
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "CES": {
    "name": "China Eastern",
@@ -4902,8 +5805,18 @@
     ]
    },
    "status": "777 only at SFO (procedural)",
-   "types": [],
-   "cargo": false
+   "types": [
+    "B77W"
+   ],
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "CCA": {
    "name": "Air China",
@@ -4919,8 +5832,18 @@
     ]
    },
    "status": "777 only at SFO (procedural)",
-   "types": [],
-   "cargo": false
+   "types": [
+    "B77W"
+   ],
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "HVN": {
    "name": "Vietnam Airlines",
@@ -4943,32 +5866,57 @@
    "types": [
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "FJI": {
    "name": "Fiji Airways",
-   "livery": "masi (tapa) pattern tail",
+   "livery": "2013 livery (large FIJI title, masi-pattern tail with the medallion)",
    "since": 2013,
    "refs": [
-    "https://www.fijiairways.com/ (brand; not fetched)"
+    "https://www.fijiairways.com/ (brand; not fetched)",
+    "photo check (reference only, Wikimedia Commons files): \"Fiji Airways (DQ-FAI) Airbus A350-941 taxiing at SYD, Jan 2026 01.jpg\"; \"20230811 Airbus A350-941 of Fiji Airways (DQ-FAJ) at SYD 01.jpg\" (FIJI outline title 0.6 H across the windows from door 1, AIRWAYS below; brown fin with the masi medallion, black masi bands at the tip and the forward root)"
    ],
    "colors": {
-    "brown": [
-     "#4A2E20",
+    "black": [
+     "#1C1A1A",
      "approx (no official value found; from the reference image)"
     ],
-    "sand": [
-     "#C7A27A",
+    "brown": [
+     "#6E3222",
+     "approx (no official value found; from the reference image)"
+    ],
+    "white": [
+     "#F7F8F8",
+     "approx (no official value found; from the reference image)"
+    ],
+    "ivory": [
+     "#EFE9DE",
      "approx (no official value found; from the reference image)"
     ]
    },
-   "status": "pattern simplified",
+   "status": "layout measured on a photo of an A350-900 (starboard); masi patterns simplified; colours approx",
    "types": [
     "A332",
     "A333",
     "A359"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "CFG": {
    "name": "Condor",
@@ -4987,7 +5935,15 @@
    "types": [
     "A339"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "IBE": {
    "name": "Iberia",
@@ -5010,7 +5966,15 @@
    "types": [
     "A332"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "LOT": {
    "name": "LOT Polish Airlines",
@@ -5030,7 +5994,15 @@
     "B788",
     "B789"
    ],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "FDX": {
    "name": "FedEx",
@@ -5064,14 +6036,23 @@
     "MD11",
     "B752"
    ],
-   "cargo": true
+   "cargo": true,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
   },
   "UPS": {
    "name": "UPS",
-   "livery": "brown tail and belly, gold shield, white upper fuselage",
+   "livery": "2003 livery (white forward body, brown aft body behind a gold sweep, brown tail with the gold shield)",
    "since": 2003,
    "refs": [
-    "https://www.norebbo.com/ups-livery/ (profile drawing; layout reference only)"
+    "https://www.norebbo.com/ups-livery/ (profile drawing; layout reference only)",
+    "photo check (reference only, Wikimedia Commons files): \"UPS, N618UP, Boeing 747-8F (52016277689).jpg\"; \"UPS N627UP run 5X61(Hong Kong International Airport to Taiwan Taipei Taoyuan International Airport) 11-02-2025.jpg\" (layout measured on the port side of the 747-8F N627UP: white forward and lower body, brown aft body behind a gold sweep from the crown at sn 0.48 down to the keel at sn 0.78, Worldwide Services title sn 0.11-0.30 above the windows, shield with gold border and gold ups on the brown fin)"
    ],
    "colors": {
     "brown": [
@@ -5081,9 +6062,17 @@
     "gold": [
      "#FFB500",
      "approx (no official value found; from the reference image)"
+    ],
+    "white": [
+     "#F4F4F2",
+     "approx (no official value found; from the reference image)"
+    ],
+    "grey": [
+     "#D9DADB",
+     "approx (no official value found; from the reference image)"
     ]
    },
-   "status": "approx",
+   "status": "layout measured on a photo of a 747-8F (port side); shield re-drawn: the photo shows the shield face brown with a gold border and gold letters (not a gold-filled shield); colours approx",
    "types": [
     "B763",
     "B752",
@@ -5091,7 +6080,15 @@
     "B744",
     "MD11"
    ],
-   "cargo": true
+   "cargo": true,
+   "reg": {
+    "sn": 0.72,
+    "dy": 0.1,
+    "h": 0.08,
+    "flag": null,
+    "flag_first": false,
+    "src": "photo UPS_2 (747-8F N627UP, port): on the brown aft body"
+   }
   },
   "_N": {
    "name": "(no brand)",
@@ -5101,7 +6098,325 @@
    "colors": {},
    "status": "generic fallback for unknown operators and for brands without a bake of this type",
    "types": [],
-   "cargo": false
+   "cargo": false,
+   "reg": {
+    "sn": 0.74,
+    "dy": 0.18,
+    "h": 0.1,
+    "flag": null,
+    "flag_first": false,
+    "src": "inf (default: aft fuselage above the windows)"
+   }
+  }
+ },
+ "frames": {
+  "a319": {
+   "H": 4.163,
+   "L": 33.89,
+   "winH": 0.33,
+   "winY": 0.675,
+   "ycM": -0.011
+  },
+  "a319@a19n": {
+   "H": 4.163,
+   "L": 33.89,
+   "winH": 0.33,
+   "winY": 0.677,
+   "ycM": -0.011
+  },
+  "a320": {
+   "H": 4.141,
+   "L": 38.271,
+   "winH": 0.346,
+   "winY": 0.675,
+   "ycM": 0.0
+  },
+  "a320@a20n": {
+   "H": 4.141,
+   "L": 38.271,
+   "winH": 0.341,
+   "winY": 0.677,
+   "ycM": 0.0
+  },
+  "a321": {
+   "H": 4.141,
+   "L": 44.517,
+   "winH": 0.322,
+   "winY": 0.594,
+   "ycM": -0.0
+  },
+  "a321@a21n": {
+   "H": 4.141,
+   "L": 44.517,
+   "winH": 0.318,
+   "winY": 0.596,
+   "ycM": -0.0
+  },
+  "a333": {
+   "H": 5.619,
+   "L": 63.05,
+   "winH": 0.446,
+   "winY": 1.143,
+   "ycM": 0.28
+  },
+  "a333@a332": {
+   "H": 5.562,
+   "L": 58.247,
+   "winH": 0.46,
+   "winY": 1.111,
+   "ycM": 0.309
+  },
+  "a333@a338": {
+   "H": 5.614,
+   "L": 58.247,
+   "winH": 0.454,
+   "winY": 1.162,
+   "ycM": 0.283
+  },
+  "a333@a339": {
+   "H": 5.71,
+   "L": 63.05,
+   "winH": 0.448,
+   "winY": 1.155,
+   "ycM": 0.235
+  },
+  "a359": {
+   "H": 6.506,
+   "L": 67.022,
+   "winH": 0.529,
+   "winY": 0.628,
+   "ycM": -0.246
+  },
+  "a359@a35k": {
+   "H": 6.549,
+   "L": 74.035,
+   "winH": 0.465,
+   "winY": 0.61,
+   "ycM": -0.267
+  },
+  "a388": {
+   "H": 8.854,
+   "L": 72.676,
+   "winH": 0.324,
+   "winY": 2.375,
+   "ycM": -0.18
+  },
+  "b738": {
+   "H": 3.955,
+   "L": 39.421,
+   "winH": 0.35,
+   "winY": 0.457,
+   "ycM": 0.0
+  },
+  "b738@b37m": {
+   "H": 3.955,
+   "L": 35.516,
+   "winH": 0.35,
+   "winY": 0.481,
+   "ycM": 0.0
+  },
+  "b738@b38m": {
+   "H": 3.955,
+   "L": 39.421,
+   "winH": 0.362,
+   "winY": 0.485,
+   "ycM": 0.0
+  },
+  "b738@b39m": {
+   "H": 3.955,
+   "L": 42.057,
+   "winH": 0.362,
+   "winY": 0.463,
+   "ycM": 0.0
+  },
+  "b738@b3xm": {
+   "H": 3.955,
+   "L": 43.735,
+   "winH": 0.362,
+   "winY": 0.463,
+   "ycM": 0.0
+  },
+  "b738@b736": {
+   "H": 3.955,
+   "L": 31.201,
+   "winH": 0.35,
+   "winY": 0.457,
+   "ycM": 0.0
+  },
+  "b738@b737": {
+   "H": 3.955,
+   "L": 33.588,
+   "winH": 0.35,
+   "winY": 0.457,
+   "ycM": 0.0
+  },
+  "b744": {
+   "H": 6.938,
+   "L": 70.943,
+   "winH": 0.376,
+   "winY": -0.319,
+   "ycM": -0.488
+  },
+  "b748": {
+   "H": 6.558,
+   "L": 76.553,
+   "winH": 0.5,
+   "winY": -0.412,
+   "ycM": -0.26
+  },
+  "b752": {
+   "H": 4.242,
+   "L": 46.345,
+   "winH": 0.362,
+   "winY": 0.109,
+   "ycM": -0.392
+  },
+  "b752@b753": {
+   "H": 4.242,
+   "L": 53.308,
+   "winH": 0.362,
+   "winY": 0.109,
+   "ycM": -0.391
+  },
+  "b763": {
+   "H": 5.403,
+   "L": 55.205,
+   "winH": 0.364,
+   "winY": 0.519,
+   "ycM": -0.162
+  },
+  "b763@b762": {
+   "H": 5.403,
+   "L": 48.744,
+   "winH": 0.364,
+   "winY": 0.516,
+   "ycM": -0.162
+  },
+  "b763@b764": {
+   "H": 5.403,
+   "L": 61.665,
+   "winH": 0.389,
+   "winY": 0.519,
+   "ycM": -0.162
+  },
+  "b772": {
+   "H": 6.47,
+   "L": 64.43,
+   "winH": 0.404,
+   "winY": 0.473,
+   "ycM": -0.086
+  },
+  "b772@b773": {
+   "H": 6.533,
+   "L": 74.672,
+   "winH": 0.417,
+   "winY": 0.473,
+   "ycM": -0.117
+  },
+  "b77w": {
+   "H": 6.417,
+   "L": 74.369,
+   "winH": 0.415,
+   "winY": 0.434,
+   "ycM": -0.099
+  },
+  "b77w@b779": {
+   "H": 6.467,
+   "L": 77.258,
+   "winH": 0.364,
+   "winY": 0.465,
+   "ycM": -0.124
+  },
+  "b77w@b77l": {
+   "H": 6.501,
+   "L": 64.169,
+   "winH": 0.403,
+   "winY": 0.434,
+   "ycM": -0.141
+  },
+  "b788": {
+   "H": 6.013,
+   "L": 56.685,
+   "winH": 0.462,
+   "winY": 0.675,
+   "ycM": -0.122
+  },
+  "b788@b789": {
+   "H": 5.817,
+   "L": 62.771,
+   "winH": 0.475,
+   "winY": 0.72,
+   "ycM": -0.024
+  },
+  "b788@b78x": {
+   "H": 5.934,
+   "L": 68.257,
+   "winH": 0.487,
+   "winY": 0.675,
+   "ycM": -0.082
+  },
+  "bcs1": {
+   "H": 3.676,
+   "L": 35.024,
+   "winH": 0.5,
+   "winY": 0.702,
+   "ycM": -0.0
+  },
+  "bcs3": {
+   "H": 3.606,
+   "L": 38.173,
+   "winH": 0.417,
+   "winY": 0.677,
+   "ycM": 0.041
+  },
+  "crj2": {
+   "H": 2.779,
+   "L": 26.77,
+   "winH": 0.345,
+   "winY": 0.306,
+   "ycM": -0.03
+  },
+  "crj7": {
+   "H": 2.995,
+   "L": 32.457,
+   "winH": 0.5,
+   "winY": 0.348,
+   "ycM": -0.153
+  },
+  "crj9": {
+   "H": 2.956,
+   "L": 36.357,
+   "winH": 0.346,
+   "winY": 0.348,
+   "ycM": -0.134
+  },
+  "e170": {
+   "H": 3.654,
+   "L": 29.803,
+   "winH": 0.391,
+   "winY": 0.629,
+   "ycM": -0.115
+  },
+  "e190@e195": {
+   "H": 3.323,
+   "L": 38.208,
+   "winH": 0.412,
+   "winY": 0.745,
+   "ycM": 0.184
+  },
+  "e75l": {
+   "H": 3.545,
+   "L": 30.817,
+   "winH": 0.436,
+   "winY": 0.585,
+   "ycM": -0.056
+  },
+  "md11": {
+   "H": 5.978,
+   "L": 61.606,
+   "winH": 0.5,
+   "winY": 0.472,
+   "ycM": -0.057
   }
  }
 }

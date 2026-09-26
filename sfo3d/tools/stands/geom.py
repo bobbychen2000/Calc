@@ -6,8 +6,8 @@ Aircraft (review round 2: the app's own geometry, not a class shape)
       rootC, tipC, sweep), tailplane, left main-deck doors, dock2.
   accepted_types(s, app_rule): every APP designator the app lets park on the stand - js/live/traffic.js standFits:
       span <= maxSpan + 0.6 and L <= maxLen + 2 (maxSpan / maxLen = js/live/airport.js CLASS_MAX limited by span_max /
-      len_max); with app_rule=True also its oversize clause 'maxSpan >= 64 and span <= 80' (A380 / 747-8 / 777-9 on
-      every stand whose maxSpan reaches 64 m - a traffic.js defect, docs/requests/static_geometry_round2.md).
+      len_max); app_rule=True: traffic.js's path for SFO's own allocation (no types_ok; A380 / 747-8 only on `a380`
+      stands - review round 4 updated this to the current standFits).
   planform(nose, hdg, t): the ground-physics collision shape of js/live/ground.js inside(): fuselage rectangle
       (0..L, +-R), wing trapezoid (LE = rootLE + |y| tan(sweep), chord rootC -> tipC at the tip), tailplane rectangle
       (hstab.x .. L, +-span/2). envelope(): union over the accepted types, all with the nose at the stand's nose point.
@@ -111,14 +111,17 @@ def app(t):
 
 def accepted_types(s, app_rule=False):
     """types the stand accepts. app_rule=False: the data's rule (class limits, span_max / len_max, and the whitelist
-    types_ok where the builder set one); app_rule=True: what js/live/traffic.js standFits does today (no types_ok,
-    plus the >= 64 m oversize clause)"""
+    types_ok where the builder set one); app_rule=True: what js/live/traffic.js standFits(g, T, icao, strict=false)
+    does for SFO's own allocation (review round 4: the working tree of 25 Sep - no types_ok on that path, types.js spans
+    without winglets, span <= maxSpan + 0.6 and L <= maxLen + 2, and the A380 / 747-8 clause only on the stands the data
+    marks `a380`; the old 'maxSpan >= 64' clause is gone)"""
     sp, L = limits(s); out = []
     if s.get('types_ok') and not app_rule: return [t for t in s['types_ok'] if t in APP]
+    a380 = s.get('a380', s.get('cls') == 'F')
     for t, r in APP.items():
         if r['span'] is None: continue
         span = span_app(t) if app_rule else r['span']        # the app compares types.js spans (no winglets)
-        if (span <= sp + 0.6 and r['L'] <= L + 2) or (app_rule and sp >= 64 and span <= 80): out.append(t)
+        if (span <= sp + 0.6 and r['L'] <= L + 2) or (app_rule and a380 and span <= 80): out.append(t)
     return out
 
 
@@ -154,6 +157,37 @@ def planform(nose, hdg, t, visual=False):
         for s_ in (-1, 1): parts.append(Polygon([P(e['x'], s_ * e['z'] - e['r']), P(e['x'] + 1.12 * e['len'], s_ * e['z'] - e['r']),
                                                  P(e['x'] + 1.12 * e['len'], s_ * e['z'] + e['r']), P(e['x'], s_ * e['z'] + e['r'])]))
     return unary_union([p.buffer(0) for p in parts])
+
+
+def fuselage(nose, hdg, t):
+    """the fuselage rectangle of planform() (0..L, +-R)"""
+    r = app(t); f, rt = hv(hdg), rv(hdg)
+    def P(x, y): return (nose[0] - f[0] * x + rt[0] * y, nose[1] - f[1] * x + rt[1] * y)
+    return Polygon([P(0, -r['R']), P(r['L'], -r['R']), P(r['L'], r['R']), P(0, r['R'])])
+
+
+def wings(nose, hdg, t):
+    """planform() without the fuselage: wings, engines, tailplane (review round 4: what must clear fixed objects by the
+    ICAO stand clearance; the fuselage nose meets the bridge by design)"""
+    return planform(nose, hdg, t).difference(fuselage(nose, hdg, t).buffer(0.05))
+
+
+def icao_clear(span):
+    """ICAO Annex 14 3.13.6 / Doc 9157 Part 2 s.3.4.4 stand clearance by code letter (span): A/B (< 24 m) 3.0 m,
+    C (< 36 m) 4.5 m, D-F 7.5 m; reducible for D-F only (a) between the terminal incl. a fixed passenger bridge and the
+    NOSE, (b) over a portion of the stand with VDGS azimuth guidance - no relief for code C"""
+    return 3.0 if span < 24 else 4.5 if span < 36 else 7.5
+
+
+def fixed_clear(span):
+    """wing-to-fixed-object clearance used to infer stop points (review round 4): ICAO for code A-C (3.0 / 4.5 m; no relief
+    exists for code C), 3.0 m (physical) for D-F, whose 7.5 m ICAO 3.4.4(b) allows to reduce over the part of a stand
+    with VDGS azimuth guidance - SFO's VDGS coverage is not verified"""
+    return icao_clear(span) if span < 36 else 3.0
+
+
+def shift(p, hdg, along):
+    f = hv(hdg); return (p[0] + f[0] * along, p[1] + f[1] * along)
 
 
 _ENV = {}

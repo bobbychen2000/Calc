@@ -181,3 +181,23 @@ export function resolveLivery(L, hex, icaoType) {
   if (!B) return L;
   return livery(B.brand, B, L.airline);
 }
+
+// ------------------------------------------------------------------ freighters
+// An aircraft is drawn as a freighter (no cabin windows: js/shaders/aircraft_real.js uNoCabin) when (review round 1: only
+// the FedEx / UPS brands dropped their windows; 777Fs, 747-400Fs, 767Fs of other operators were drawn with cabin rows)
+//  1. its operator is an all-cargo airline (ICAO designators of the callsign; observed at SFO in the recorder and the
+//     census, docs/research/liveries.md §1: FedEx, UPS, Kalitta, Atlas, Cargolux, Lufthansa Cargo, ABX, ATI, China
+//     Southern Cargo (CSG, B-223G 777F), Air Incheon, AirBridgeCargo, Amerijet, Nippon Cargo, Air China Cargo, China Cargo,
+//     SF Airlines, Polar, Martinair Cargo, Western Global), or
+//  2. its operator flies that type at SFO only as a freighter (China Airlines 747-400 / 777: the passenger fleet at SFO is
+//     A350 / 777-300ER; EVA B77L = 777F; Asiana 747-400; Cathay 747 = 747-8F / -400F; Korean 777F), or
+//  3. the aircraft database's own description says so (tar1090-db desc "...F", "FREIGHTER").
+export const CARGO_OPS = new Set(['FDX', 'UPS', 'CKS', 'GTI', 'CLX', 'GEC', 'ABX', 'ATN', 'CSG', 'AIH', 'ABW', 'AJT', 'NCA', 'CAO', 'CKK', 'CSS', 'PAC', 'MPH', 'WGN']);
+const CARGO_TYPE = { CAL: ['B744', 'B77L'], EVA: ['B77L'], AAR: ['B744'], CPA: ['B744', 'B748'], KAL: ['B77L'] };
+export function isFreighter({ airline = null, icaoType = null, desc = null, brandCargo = false } = {}) {
+  if (brandCargo) return true;
+  if (airline && CARGO_OPS.has(airline)) return true;
+  if (airline && icaoType && CARGO_TYPE[airline] && CARGO_TYPE[airline].includes(icaoType)) return true;
+  if (desc && /(FREIGHT|CARGO|\b\d{3}-?\d*F\b|-F$)/i.test(desc)) return true;
+  return false;
+}

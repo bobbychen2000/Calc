@@ -53,10 +53,15 @@ float band(float x, float a, float b, float fw){ return smoothstep(a - fw, a + f
 float endMarkings(float x, float y, float disp, float codes, float fw, float lenTotal){
   float ay = abs(y); float m = 0.0;
   float xt = x - disp;
-  // displaced threshold (layout measured on the SFO 28L/28R imagery): 10 ft threshold bar; a row of four arrowheads
-  // at 25 ft and 75 ft either side of the centreline, tips ~2 m before the bar; centreline arrows further out
+  // runway threshold bar (AC 150/5340-1M Chg 1, 2.9.1.2-2.9.1.5): required where a displaced threshold, blast pad,
+  // stopway or EMAS precedes the threshold - at SFO all eight ends (28L/28R/1L/1R displaced, 10L/10R blast pads,
+  // 19L/19R EMAS); white, 10 ft (3.05 m) wide, "on the landing portion of the runway" with its outboard edge on the
+  // (displaced) threshold, "between the runway edge markings" (inner edge of the 3 ft edge stripe, 29.27 m). NAIP 2024
+  // bar centres +0.9..+1.9 m on the landing side at all eight ends (docs/drawings/report.md; 10 ft bar centre = +1.52 m).
+  m = max(m, band(xt, 0.0, 3.05, fw) * band(ay, -1.0, 29.27, fw));
+  // displaced threshold (layout measured on the SFO 28L/28R imagery): a row of four arrowheads at 25 ft and 75 ft
+  // either side of the centreline, tips ~5 m before the threshold; centreline arrows further out
   if (disp > 1.0 && xt < 0.0) {
-    m = max(m, band(xt, -3.05, 0.0, fw) * step(ay, 30.0));
     float xa = -xt - 5.0; // distance behind the arrowhead tips
     if (xa > 0.0 && xa < 12.0) {
       float hw = 2.3 * xa / 12.0; float yy = min(abs(ay - 7.62), abs(ay - 22.86));
@@ -113,7 +118,10 @@ vec3 runwayAt(vec2 st, float fw, out vec2 local){
       bool atA = u <= r.z; float xb = atA ? r.z - u : u - r.w; float typ = atA ? ez.x : ez.z;
       float m = 0.0;
       if (typ < 1.5) {
-        float q = xb - abs(dv) - 15.0; float k = floor(q / 29.7 + 0.5); float f = q - k * 29.7;
+        // chevron apexes on the axis every 100 ft (30.48 m), the first 17.0 m beyond the runway end: NAIP 2024 yellow
+        // peaks 10L 17.1, 10R 16.6, 28R 17.3, 28L 17.1 m, pitch 30.4-30.6 m (docs/requests/static_geometry_round2.md;
+        // AC 150/5340-1M Fig. A-9: 100 ft spacing)
+        float q = xb - abs(dv) - 17.0; float k = floor(q / 30.48 + 0.5); float f = q - k * 30.48;
         if (k >= 0.0) m = max(m, 1.0 - smoothstep(0.64 - fw, 0.64 + fw, abs(f)));
         m = max(m, band(xb, 0.0, 0.91, fw));
         m *= band(abs(dv), -1.0, 29.9, fw);

@@ -26,6 +26,7 @@ import { AircraftRenderer } from './aircraft.js';
 import { geometryOf, textureOf, retainedImageBytes } from './convert.js';
 import { glCanvas, setMaxTextureSize, imageHooks } from './compat/gl.js';
 import { floodField, E_STAND } from './flood.js';
+import { lampK } from './tsl/common.js';
 
 const { uniform } = TSL;
 const T0 = performance.now();
@@ -33,14 +34,26 @@ const tlog = (m) => console.log('[r3] ' + m + ' at ' + ((performance.now() - T0)
 const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // Exposure. Day: the app's exposure (js/live/app.js applyEnv, 0.45 in sun) x DAY_GAIN (review round 1: sunlit white
-// paint rendered mid-grey). DAY_GAIN and the AgX look (engine.js grade: contrast 1.4 in log2 around 18 % grey, look
-// saturation 1.1) were chosen offline on HDR dumps of the named views (tools/build3/grade_hdr.py; docs/research/
-// engine_impl.md §4.4): p99.5 ~235-240 on the gate view, sunlit concrete ~195, shade ~75-95 before AO. Night: derived from the floodlight
+// paint rendered mid-grey, and the image was flat). DAY_GAIN and the AgX look (engine.js grade: contrast 1.8 in log2
+// around 18 % grey, look saturation 1.0, saturation 1.0) were chosen offline on HDR dumps of the named views
+// (tools/build3/grade_hdr.py; docs/research/engine_impl.md §4.4): gate view p1 62 / p50 212 / p99.5 246, close-up p1 40.
+// (Round-1 grade 1.2 / 1.4 / 1.1 / 1.05: p1 85, p99.5 238.) Night: derived from the floodlight
 // level instead of the app's fixed 2.4: lit stand concrete (albedo RHO_CONC, the airfield bake's concrete) under the
 // ICAO stand average (E_STAND, js/three/flood.js) is placed at the display key KEY_NIGHT (exposed value that the AgX look
 // maps to ~18 % display grey). Between the two the app's darkness curve (sun elevation +2 deg .. -10 deg) blends.
-const DAY_GAIN = 1.2, KEY_NIGHT = 0.16, RHO_CONC = 0.37, APP_NIGHT_EXPO = 2.4;
-export const NIGHT_EXPOSURE = KEY_NIGHT * Math.PI / (RHO_CONC * E_STAND);
+const DAY_GAIN = 1.02, KEY_NIGHT = 0.16, RHO_CONC = 0.37, APP_NIGHT_EXPO = 2.4;
+// Lamps vs sky (review round 1: "re-check dusk"). The lamps (floods, windows, signs, city lights, sprites) are authored in
+// lamp units (E_STAND = 0.62 = 20 lux) and the sun and sky in the sky model's units, where the sun outside the
+// atmosphere is env.sunI = 20 (js/live/app.js) = the luminous solar constant, ~133 klx (Darula, Kittler & Gueymard
+// 2005, 133.3 klx; recalled, not re-checked here), so 1 unit ~ 6,670 lux. The two used to be mixed 1:1, which made the
+// floods ~200x too strong against the twilight sky: at the 'dusk' preset (sun -4.5 deg) the sky model gives ~0.006
+// units (~40 lux) of sky irradiance, the floods 20 lux, yet the apron rendered 5x brighter than the sky and the dusk
+// view looked like night. LAMP_M converts lamp units to sky units; it is applied once the lamps are on (tsl/common.js
+// lampK = LAMP_M ^ nightF, nightE = nightF x LAMP_M), and the exposure is keyed on the total horizontal illuminance.
+const LUX_PER_UNIT = 133300 / 20;
+export const LAMP_M = (20 / LUX_PER_UNIT) / E_STAND;
+export const NIGHT_EXPOSURE = KEY_NIGHT * Math.PI / (RHO_CONC * E_STAND * LAMP_M); // in sky units (lamps x LAMP_M)
+const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
 // tier: ?tier=high|medium|low overrides; otherwise the old app's choice, recognised from the options it passes
 // (js/live/app.js QUALITY: high = 3072 shadow map, low = 2x MSAA)
@@ -64,7 +77,7 @@ export class Renderer3 {
     this.light = { sunDir: [0, 1, 0], sunColor: [1, 1, 1], skyUp: [0.3, 0.4, 0.6], skyHorizon: [0.5, 0.55, 0.6], ground: [0.1, 0.1, 0.1] };
     this.baseLight = null; this.extraCommon = {}; this.progs = {}; this.curCam = null; this.curRange = null;
     this.world = null; this.sceneShim = null; this.seen = new Set(); this.pendingSigns = []; this.clouds = new Map();
-    this.pxScale = uniform(0.001); this.time = uniform(0); this.night = uniform(0);
+    this.pxScale = uniform(0.001); this.time = uniform(0); this.night = uniform(0); this.nightE = uniform(0); // nightE: night-only lamp emission scale (nightF x LAMP_M)
     this.exposureScale = +(qs.get('expo') || 1.0);
     this.initP = this.engine.init().then(() => this._onReady()).catch((e) => {
       this.failed = e; console.error('three.js renderer failed to start', e);
@@ -125,7 +138,7 @@ export class Renderer3 {
     this.noiseTex = textureOf(T.noise, { anisotropy: this.Q.aniso }); this.noiseTex.wrapS = this.noiseTex.wrapT = THREE.RepeatWrapping;
     const cloudTex = textureOf(T.clouds); cloudTex.wrapS = cloudTex.wrapT = THREE.RepeatWrapping;
     this.sky = new Sky(this.engine, { cloudTex, noiseTex: this.noiseTex, baseRes: this.Q.skyRes });
-    this.sky.u.night = this.night; this.sky.u.time = this.time;
+    this.sky.u.night = this.nightE; this.sky.u.time = this.time; // ground.js city lights: nightE
     if (this.env) this.sky.setEnv(this.env);
     // apron floodlight field from the masts (before any material is compiled: the light node samples it)
     const masts = (world.details && world.details.masts) || [];
@@ -182,7 +195,7 @@ export class Renderer3 {
     this.sunRad = uniform(new THREE.Vector3(1, 1, 1));
     E.sun.colorNode = this.sunRad.mul(sky.cloudShadow(TSL.positionWorld));
     this.gMat = groundMaterial(W, this.bakes, sky, Q); this.wMat = waterMaterial(W, this.bakes, sky);
-    const common = { noiseTex: this.noiseTex, night: this.night, time: this.time };
+    const common = { noiseTex: this.noiseTex, night: this.nightE, time: this.time }; // objects.js night emissions: nightE
     this.objMat = objectMaterial(common); this.vehMat = objectMaterial({ ...common, instanced: true });
     this.markMat = markingMaterial({ noiseTex: this.noiseTex, pxScale: this.pxScale, reversed: E.reversed });
     this.sprites = new Sprites(24000, { depthNode: E.depthNode, expo: E.expo, night: this.night }); E.fxScene.add(this.sprites.mesh);
@@ -195,7 +208,7 @@ export class Renderer3 {
     this.compiling = Promise.race([E.renderer.compileAsync(S, E.camera), new Promise(r => setTimeout(r, 30000))])
       .then(() => { this.compiled = true; tlog('programs compiled'); }, (e) => { this.compiled = true; console.warn('compileAsync', e); });
   }
-  _signMats() { if (!this.signMats && this.font) this.signMats = signMaterials(this.font, { night: this.night, noiseTex: this.noiseTex, reversed: this.engine.reversed }); return this.signMats; }
+  _signMats() { if (!this.signMats && this.font) this.signMats = signMaterials(this.font, { night: this.nightE, noiseTex: this.noiseTex, reversed: this.engine.reversed }); return this.signMats; }
   // world.items -> three objects (items appended later, e.g. the approach-light piers, are picked up too)
   _syncItems() {
     const W = this.world; const G = this.staticGroup;
@@ -237,7 +250,7 @@ export class Renderer3 {
   _atlasSign(it) {
     const u = typeof it.uniforms === 'function' ? it.uniforms() : it.uniforms; const rec = u && (u.uAtlas || u.uTex);
     const tex = rec ? textureOf(rec, { anisotropy: 8, colorSpace: THREE.SRGBColorSpace }) : null; if (!tex) return null;
-    const m = new THREE.Mesh(geometryOf(it.mesh), atlasSignMaterial(tex, { night: this.night, reversed: this.engine.reversed })); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false;
+    const m = new THREE.Mesh(geometryOf(it.mesh), atlasSignMaterial(tex, { night: this.nightE, reversed: this.engine.reversed })); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false;
     return m;
   }
   // ------------------------------------------------------------ per frame (compat/scene.js Scene.frame)
@@ -249,7 +262,7 @@ export class Renderer3 {
     // bridges, stand equipment and GSE do not wait for the sign font (review round 1: without the font the scene had
     // no bridges at all); their sign faces are added when the font arrives, or from the canvas atlas if it failed
     if (sc.gateSys && !this.bridges) {
-      this.bridges = new Bridges3(sc.gateSys, { objMat: this.objMat, vehMat: this.vehMat, signFont: null, signMats: null, night: this.night, reversed: this.engine.reversed });
+      this.bridges = new Bridges3(sc.gateSys, { objMat: this.objMat, vehMat: this.vehMat, signFont: null, signMats: null, night: this.nightE, reversed: this.engine.reversed });
       this.engine.scene.add(this.bridges.group);
     }
     if (this.bridges) {
@@ -268,6 +281,10 @@ export class Renderer3 {
     // environment: GPU sky, sun, IBL (after the app's night-floor adjustment of R.light)
     if (this.envDirty) {
       this.envDirty = false;
+      // the app's night floor (moon / city glow, js/live/app.js applyEnv: max(sky, floor)) is in lamp units: keep the
+      // physical sky and add LAMP_M x the part the floor raised
+      const B0 = this.baseLight;
+      if (B0 && !L._lampScaled) { for (const k of ['skyUp', 'skyHorizon', 'ground']) L[k] = L[k].map((v, i) => B0[k][i] + LAMP_M * Math.max(0, v - B0[k][i])); L._lampScaled = true; }
       if (this.groundAlb && !L._albScaled) { const a = this.groundAlb; L.ground = L.ground.map((g, k) => g / 0.16 * a[k]); L._albScaled = true; } // Sky.lightFor: ground = E x 0.16 / pi
       this.sky.applyLight(L);
       const bu = this.baseLight ? this.baseLight.skyUp : L.skyUp;
@@ -277,8 +294,8 @@ export class Renderer3 {
       E.setSun(L.sunDir, L.sunColor); this.sunRad.value.set(L.sunColor[0], L.sunColor[1], L.sunColor[2]);
     }
     const nightF = this.extraCommon.uNight || 0;
-    this.time.value = t; this.night.value = nightF;
-    E.flood.intensity = nightF; // floodlights switch on with the app's night factor (sun below ~6 deg .. -4 deg)
+    this.time.value = t; this.night.value = nightF; this.nightE.value = nightF * LAMP_M; lampK.value = Math.pow(LAMP_M, nightF);
+    E.flood.intensity = nightF * LAMP_M; // floodlights switch on with the app's night factor (sun below ~6 deg .. -4 deg)
     const wu = this.world.waterU; if (this.wMat && wu) { const u = this.wMat.userData; if (wu.uWind) u.uWind.value.set(wu.uWind[0], wu.uWind[1]); if (wu.uWaveAmp != null) u.uAmp.value = wu.uWaveAmp; }
     E.setCamera(cam, this.W, this.H);
     this.pxScale.value = 2 * Math.tan(cam.fov / 2) / Math.max(1, this.H);
@@ -286,10 +303,16 @@ export class Renderer3 {
     const sp = this.sprites; sp.begin(); for (const s of fr && fr.sprites || []) sp.put(s); sp.end(E.camera, this.H);
     // exposure and grade (the app's post settings: exposure, sat, bloom, vignette, grain)
     const el = Math.asin(Math.max(-1, Math.min(1, L.sunDir[1]))) * 180 / Math.PI; const dark = sstep(2, -10, el);
-    const pe = post.exposure ?? 0.45;
-    E.expo.value = pe * (DAY_GAIN * (1 - dark) + (NIGHT_EXPOSURE / APP_NIGHT_EXPO) * dark) * this.exposureScale;
+    // day: the app's exposure without its night term, x DAY_GAIN; lamps on / low sun: lit concrete at the key KEY_NIGHT
+    // under the total horizontal illuminance (sun + sky from the sky model, + floods); the larger of the two
+    const pe = post.exposure ?? 0.45; const B = this.baseLight || L;
+    const eAmb = lum(B.sunColor) * Math.max(0, B.sunDir[1]) + Math.PI * lum(B.skyUp);
+    const eKey = eAmb + E_STAND * LAMP_M * nightF;
+    const expoKey = KEY_NIGHT * Math.PI / (RHO_CONC * Math.max(eKey, 1e-7));
+    const expoDay = dark < 0.999 ? Math.max(0, (pe - APP_NIGHT_EXPO * dark) / (1 - dark)) * DAY_GAIN : 0;
+    E.expo.value = Math.max(expoDay, expoKey) * this.exposureScale; this.eKey = eKey;
     const G = E.grade, lock = this.gradeLock || {};
-    if (!lock.sat) G.sat.value = 1 + ((post.sat ?? 1.1) - 1) * 0.5; // the old grade's 1.1 on top of ACES; AgX's look carries most of it
+    if (!lock.sat) G.sat.value = (post.sat ?? 1.1) / 1.1; // the app's 1.1 was tuned on top of ACES: 1.0 here; user changes stay relative
     if (!lock.vignette) G.vignette.value = post.vignette ?? 0.18;
     G.grain.value = post.grain ?? 0; G.time.value = t;
     if (E.bloomNode) E.bloomNode.strength.value = 0.035 * ((post.bloom ?? 0.012) / 0.012);
@@ -320,7 +343,7 @@ export class Renderer3 {
     const out = { meshes: nObj, visible: nVis, backend: this.engine.backend, tier: this.tier, W: this.W, H: this.H,
       drawCalls: I.render.drawCalls, frameCalls: I.render.frameCalls, tris: I.render.triangles, renderCallsTotal: I.render.calls, frames: this.frames,
       texMB: +((I.memory.texturesSize || 0) / 1048576).toFixed(1), textures: I.memory.textures, renderTargets: I.memory.renderTargets, retainedImageMB: +(retainedImageBytes() / 1048576).toFixed(1),
-      expo: +this.engine.expo.value.toFixed(3), night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null };
+      expo: +this.engine.expo.value.toFixed(3), eKeyLux: this.eKey != null ? Math.round(this.eKey * LUX_PER_UNIT * 10) / 10 : null, night: this.night.value, flood: this.engine.flood.stats || null, bakesPending: this.bakes ? this.bakes.pending : null, groundAlb: this.groundAlb || null };
     if (this.acr) { out.aircraft = []; for (const [ac, e] of this.acr.entries) { if (out.aircraft.length >= 3) break; out.aircraft.push({ id: ac.id, type: ac.type, real: !!(e.real && e.real.visible), liv: ac.liv && ac.liv.name }); } }
     return out;
   }

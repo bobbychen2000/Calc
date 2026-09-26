@@ -46,7 +46,7 @@ function snapshot(src, rec) {
         p.then((bmp) => {
           if (rec.pending !== p) { bmp.close(); return; } rec.pending = null;
           if (rec.deleted) { bmp.close(); retained.delete(rec); return; }
-          rec.source = bmp; rec.sw = bmp.width; rec.sh = bmp.height; if (rec.onSource) rec.onSource(bmp); else imageReady(rec);
+          rec.source = bmp; rec.sw = bmp.width; rec.sh = bmp.height; if (rec.onSource) rec.onSource(bmp); imageReady(rec); // upload now in both cases (a texture made before the bitmap arrived used to wait for its first draw, and aircraft beyond the LOD distance kept their bitmaps)
         }, (e) => { rec.pending = null; retained.delete(rec); console.warn('[r3] image copy failed', e); });
       }
       return null;

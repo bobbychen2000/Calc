@@ -29,7 +29,19 @@ def build_scene(bpy, model_path, type_key, livery_path, tmp, cargo=False):
     P = common.apply_stretch(m['pos'], m['zone'], f['stretch'] if f and f['stretch'] else None)
     # model frame (x fwd, y up, z stbd) -> Blender (x fwd, y port, z up)
     V = np.stack([P[:, 0], -P[:, 2], P[:, 1]], -1)
-    idx = m['idx']
+    idx = m['idx'].reshape(-1, 3).copy()
+    # exact duplicate triangles z-fight (as js/live/models.js decodeModel, only the first copy is kept)
+    kq = np.round(P[idx] * 1000).astype(np.int64); kq.sort(axis=1)
+    _, first = np.unique(kq.reshape(len(idx), -1), axis=0, return_index=True); keep = np.zeros(len(idx), bool); keep[first] = True
+    idx = idx[keep]; m['tri_mat'] = m['tri_mat'][keep]
+    # the app's shader faces every normal toward the camera, so source triangles wound against their normals (FAM 747-400
+    # nose) are harmless there; Cycles shades them dark (review round 1: blotches on the DLH 747 nose). Normals are repaired
+    # as in the app (common.repair_normals) and such triangles rewound to agree with them.
+    nrm_fix, _ = common.repair_normals(P, m['nrm'][:, :3], idx)
+    m['nrm'] = nrm_fix
+    fn_ = np.cross(P[idx[:, 1]] - P[idx[:, 0]], P[idx[:, 2]] - P[idx[:, 0]])
+    flip = (fn_ * nrm_fix[idx].sum(1)).sum(1) < 0
+    idx[flip] = idx[flip][:, ::-1]
     mesh = bpy.data.meshes.new('ac'); ob = bpy.data.objects.new('ac', mesh); bpy.context.collection.objects.link(ob)
     # faces keep the source winding (outward, like the stored normals); the per-loop UVs follow the same order.
     # RB_REWIND=1 / RB_NORMALS=none|neg are debugging switches (rewound faces with the source normals render black)

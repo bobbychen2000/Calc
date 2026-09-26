@@ -107,7 +107,11 @@ export class Sky {
         t.addAssign(seg);
       });
       const col = sumR.mul(bR).mul(pR).add(sumM.mul(bM).mul(pM)).mul(U.sunI).toVar();
-      const sunUp = clamp(U.sunDir.y.mul(1.2).add(0.08), 0.0, 1.0);
+      // multiple-scattering stand-in: as SKY_PRECOMPUTE_FS by day; below the horizon it decays with the sun's depression
+      // (0.08 x exp(0.8 x elevation in deg)) instead of stopping at -3.8 deg (review round 1, dusk re-check: single
+      // scattering alone left the twilight zenith grey and 20x darker than the sunward horizon, so the IBL lit the whole
+      // scene orange; the added term is ~40 % of the single-scattered sky irradiance at -4.5 deg, Rayleigh-blue)
+      const sunUp = select(U.sunDir.y.greaterThanEqual(0.0), clamp(U.sunDir.y.mul(1.2).add(0.08), 0.0, 1.0), exp(U.sunDir.y.mul(45.8)).mul(0.08));
       col.addAssign(msR.mul(bR).add(msM.mul(bM).mul(0.9)).mul(U.sunI).mul(0.055).mul(sunUp));
       return vec4(col, 1.0);
     })();
@@ -323,7 +327,7 @@ export function skyAmbientCPU(sunDir, mie, sunI, camH = 30) {
       }
       t += seg;
     }
-    const sunUp = Math.min(1, Math.max(0, sunDir[1] * 1.2 + 0.08));
+    const sunUp = sunDir[1] >= 0 ? Math.min(1, Math.max(0, sunDir[1] * 1.2 + 0.08)) : 0.08 * Math.exp(sunDir[1] * 45.8); // as precomputeNode
     const col = [0, 1, 2].map(k => (sumR[k] * bRc[k] * pR + sumM[k] * mie * pM) * sunI + (msR[k] * bRc[k] + msM[k] * mie * 0.9) * sunI * 0.055 * sunUp);
     const sa = Math.sin(th); const w = d[1] * sa;
     for (let k = 0; k < 3; k++) up[k] += col[k] * w; wu += w;

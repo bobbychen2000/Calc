@@ -18,6 +18,7 @@ Per model:
          Only some source models have door objects; for the others the doors exist only in the texture.
   gearDoors  landing-gear door objects of the source model (station of the centre), for cross-checking gear positions
   wing   semi-span (outermost wing vertex), outer edge of the engines/pylons (|z|), for the wing-tip span fit
+  under  lowest skin height over a (station, |z|) grid: where the procedural struts of gear-less models meet the skin
   nose   id of another model whose nose section (x < 8 m) is vertex-identical (median distance < 2 cm), so a door
          measured on that model also holds for this one (E175 = E170 nose, CRJ900 = CRJ700 nose)
 
@@ -32,7 +33,7 @@ ROOT = os.path.normpath(os.path.join(HERE, '..', '..'))
 MD = os.path.join(ROOT, 'data', 'models')
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 
-DOOR_PAX = re.compile(r'^(Door[LR]\d|door\.[lr]\d$|door[FR][LR]$|LeftDoor$|RightDoor$)', re.I)
+DOOR_PAX = re.compile(r'^(Door[LR]\d|door\.[lr]\d$|door[FR][LR]$|LeftDoor$|RightDoor$|door[LR][FR]$)', re.I)   # (last: FlightGear 737-800 doorLF / doorLR; the 777's LFdoor objects are nose-gear doors)
 DOOR_GEAR_NOSE = re.compile(r'GearN|nlg|NoseGearDoor|nosegrdoor|lhnosedoor|rhnosedoor|lhfnosedoor|rhfnosedoor|^nosedoor|geardoor\.f|lgdoor\.(left|right)\.front|NLG_', re.I)
 DOOR_GEAR_MAIN = re.compile(r'GearLDoor|GearRDoor|LeftGearDoor|RightGearDoor|wlg_|lhgearibdoor|rhgearibdoor|lhibdoor|rhibdoor|lhfdoor|rhfdoor|gear[LR]door|lgeardoor|rgeardoor|'
                             r'geardoor\.b|(left|right)\.main\.door|^door\dB', re.I)
@@ -88,21 +89,63 @@ def sections(pos, zone, idx, L, dx):
     return dict(dx=dx, top=top, bot=bot, hw=hw)
 
 
-def wing(pos, zone, L):
+def wing(pos, zone, L, hw=2.0):
     az = np.abs(pos[:, 2])
     w = (zone == 0) & (pos[:, 0] > -0.8 * L)
     eng = (zone == 2) | (zone == 7)
-    return dict(semi=round(float(az[w].max()), 3), engOut=round(float(az[eng].max()), 3) if eng.sum() > 20 else None)
+    # lowest point of the engines: the nacelle zone when the converter found one, else (nacelles merged into the wing mesh:
+    # A220-300, E175, MD-11) the lowest skin point outboard of the fuselage (1.4 fuselage half widths) ahead of 0.75 L
+    ow = np.isin(zone, (0, 2, 7)) & (az > 1.4 * hw) & (pos[:, 0] > -0.75 * L)
+    engLow = float(pos[eng, 1].min()) if eng.sum() > 20 else (float(pos[ow, 1].min()) if ow.any() else None)
+    semi = float(az[w].max())
+    # wing-tip and tailplane-tip heights (mean y of the outermost 2 %), tailplane semi-span (js/aircraft/fit.js dihedral fit)
+    tipY = float(pos[w & (az > 0.98 * semi), 1].mean())
+    ht = (pos[:, 0] < -0.8 * L) & (zone != 1); htSemi = float(az[ht].max()) if ht.any() else None
+    htY = float(pos[ht & (az > 0.97 * htSemi), 1].mean()) if htSemi else None
+    return dict(tipY=round(tipY, 3), htY=round(htY, 3) if htY is not None else None, htSemi=round(htSemi, 3) if htSemi else None,
+                semi=round(semi, 3), engOut=round(float(az[eng].max()), 3) if eng.sum() > 20 else None,
+                engLow=round(engLow, 3) if engLow is not None else None)
+
+
+def underside(pos, zone, idx, L, cell=0.5):
+    """height of the lowest skin surface (body / wing, zone 0-1) over a grid of stations s (0.25-0.75 L) and |z| (0 to
+    the model's half width + 6 m): the first skin a vertical ray from the ground hits. js/aircraft/fit.js reads it at the
+    type's main-gear position so the procedural struts of gear-less models reach into the wing / fairing (review round 1:
+    struts ended 0.1-0.4 m below the skin). Triangles are sampled every <= 0.2 m."""
+    tri = idx[np.isin(zone[idx], (0, 1)).all(1)]
+    A, B, C = pos[tri[:, 0]], pos[tri[:, 1]], pos[tri[:, 2]]
+    e = np.maximum(np.linalg.norm(B - A, axis=1), np.maximum(np.linalg.norm(C - B, axis=1), np.linalg.norm(A - C, axis=1)))
+    n = np.clip(np.ceil(e / 0.2).astype(int), 1, 60)
+    s0, s1 = 0.25 * L, 0.75 * L; zmax = 12.0
+    ns, nz = int((s1 - s0) / cell) + 1, int(zmax / cell) + 1
+    grid = np.full((ns, nz), np.inf)
+    for k in np.unique(n):
+        q = np.flatnonzero(n == k)
+        u, v = np.meshgrid(np.arange(k + 1), np.arange(k + 1)); m = (u + v) <= k
+        u = u[m] / k; v = v[m] / k
+        P = A[q, None, :] * (1 - u - v)[None, :, None] + B[q, None, :] * u[None, :, None] + C[q, None, :] * v[None, :, None]
+        P = P.reshape(-1, 3); st = -P[:, 0]; az = np.abs(P[:, 2])
+        ok = (st >= s0) & (st < s1) & (az < zmax)
+        i = ((st[ok] - s0) / cell).astype(int); j = (az[ok] / cell).astype(int)
+        np.minimum.at(grid, (i, j), P[ok, 1])
+    y = [[None if not np.isfinite(v) else round(float(v), 2) for v in row] for row in grid]
+    return dict(s0=round(s0, 2), ds=cell, dz=cell, y=y)
 
 
 def source_objects(key, fam):
     """door / gear-door objects of the source .glb, in the normalised frame of convert() (same transform as check_dims)"""
     import convert_models as cm
-    if key not in cm.MODELS: return None
-    src, cfg = cm.MODELS[key]
-    src = os.path.join(fam, os.path.relpath(src, cm.FAM))
-    if not os.path.exists(src): return None
-    prims, _m, _i, _t = cm.glb_primitives(src)
+    if key in cm.AC_MODELS:                     # FlightGear AC3D sources (737-800, 777): object names from the .ac files
+        src, cfg = cm.AC_MODELS[key]
+        if not all(os.path.exists(f if isinstance(f, str) else f[0]) for f in src): return None
+        prims, _m, _i, _t = cm.ac_model(src, skip=cfg.get('skip'))
+        for p in prims: p['node'] = p.get('node') or p.get('name', '')
+    elif key in cm.MODELS:
+        src, cfg = cm.MODELS[key]
+        src = os.path.join(fam, os.path.relpath(src, cm.FAM))
+        if not os.path.exists(src): return None
+        prims, _m, _i, _t = cm.glb_primitives(src)
+    else: return None
     allp = np.concatenate([p['pos'] for p in prims]); lo, hi = allp.min(0), allp.max(0)
     top = allp[np.argmax(allp[:, 1])]
     fx = (top[0] - lo[0]) / max(hi[0] - lo[0], 1e-6); fz = (top[2] - lo[2]) / max(hi[2] - lo[2], 1e-6)
@@ -175,7 +218,9 @@ def main():
     feats = {}
     for k, m in models.items():
         L = m['head']['dims']['L']
-        f = dict(sec=sections(m['pos'], m['zone'], m['idx'], L, a.dx), wing=wing(m['pos'], m['zone'], L))
+        sec = sections(m['pos'], m['zone'], m['idx'], L, a.dx)
+        hwm = float(np.median([h for h in sec['hw'][int(0.3 * L / a.dx):int(0.5 * L / a.dx)] if h is not None] or [2.0]))
+        f = dict(sec=sec, wing=wing(m['pos'], m['zone'], L, hwm), under=underside(m['pos'], m['zone'], m['idx'], L))
         so = source_objects(k, a.fam) if os.path.isdir(a.fam) else None
         if so: f.update(so)
         if k in noses: f['sameNose'] = sorted(noses[k])

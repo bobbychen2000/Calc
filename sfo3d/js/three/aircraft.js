@@ -20,7 +20,7 @@ import { m4 } from '../math.js';
 import { linearLivery, rotAxisAbout } from '../aircraft/fleet.js';
 import { brandIsCargo } from '../aircraft/liveries.js';
 import { geometryOf, textureOf } from './convert.js';
-import { hash12, hash13, facingNormalView } from './tsl/common.js';
+import { hash12, hash13, facingNormalView, lampK } from './tsl/common.js';
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, mod, select, If, Discard, fwidth, positionWorld, cameraPosition, normalWorld, pow, sign, sqrt, atan, Loop } = TSL;
 
 const V3 = () => new THREE.Vector3(), V4 = () => new THREE.Vector4();
@@ -90,7 +90,7 @@ function realMaterial(tex, liveryTex, atlas = false) {
   const A = Fn(() => { R = core(); return vec4(R.albedo, R.rough); }).once();
   const B = Fn(() => { A(); return vec4(R.emis, R.metal); }).once();
   const C = Fn(() => { A(); return vec4(R.cc, R.ccr, R.ao, 0); }).once();
-  m.colorNode = vec4(A().xyz, 1.0); m.roughnessNode = A().w; m.metalnessNode = B().w; m.emissiveNode = B().xyz;
+  m.colorNode = vec4(A().xyz, 1.0); m.roughnessNode = A().w; m.metalnessNode = B().w; m.emissiveNode = B().xyz.mul(lampK); // lamp units (tsl/common.js lampK)
   m.clearcoatNode = C().x; m.clearcoatRoughnessNode = C().y; m.aoNode = C().z;
   m.normalNode = facingNormalView(); m.clearcoatNormalNode = facingNormalView();
   return m;

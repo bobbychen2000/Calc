@@ -471,6 +471,13 @@ def ac_model(files, skip=None):
 REFS = os.environ.get('SFO_REFS', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'refs'))
 FAM = os.environ.get('FAM_DIR', os.path.join(REFS, 'fam3d'))            # github.com/Ysurac/FlightAirMap-3dmodels @0906d9b
 FG738 = os.environ.get('FG738_DIR', os.path.join(REFS, 'fg_737-800', 'Models'))  # github.com/FGMEMBERS/737-800 @9126249
+# github.com/FGMEMBERS/777 @371a354 (FlightGear 777 series; GPL-2.0: LICENSE in the FGAddon original,
+# svn trunk/Aircraft/777/LICENSE r19240, https://sourceforge.net/p/flightgear/fgaddon/HEAD/tree/trunk/Aircraft/777/LICENSE).
+# The clone is blob-less; the model files are exported with `git show HEAD:Models/<file>` into <dir>/Models.
+FG777 = os.environ.get('FG777_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'refs', 'cache', 'src', 'fg', '777_export', 'Models'))
+# FG 777 objects that are not airframe: volumetric light cones / flares, cabin light, ILS antennas, wipers
+FG777_SKIP = r'^(LandingLights|.*\.spot$|.*\.flare$|cabinlighting|.*flash$|whiteflash|redlight|taxiL-o|Llight0|[LR]ils$|[LR]wiper$|hinge\d)'
+FG777_GEAR = r'^(Frt|[LR]gear|[LR]strut|[LR]axle|[LR]brake|[LR]H?wheel|RHwheel|LHwheel|[LR]lbrace|[LR]lockbrace|[LR][UB](support|damper)|F[UL]damper|[LR]gear\.tubing|Wheaters)'
 
 MODELS = {
     # key: (source file, config)
@@ -499,6 +506,15 @@ MODELS = {
 AC_MODELS = {
     'b738': ([f'{FG738}/737-800.ac', f'{FG738}/LWing.ac', f'{FG738}/RWing.ac', f'{FG738}/HorzStab.ac', f'{FG738}/VertStab.ac', f'{FG738}/winglet.ac', f'{FG738}/nosegear.ac'],
              dict(name='Boeing 737-800', length=39.47, hasGear=True, skip=r'^a-light|^Circle\\.006$', gearRe=r'^(mg|ng[rtw]|mglh|mgrh|collar|.*steercyl|nlink|nlower|nouter|noseaxle|.*dragstrut|sidestrut|mgouter)', source='FGMEMBERS/737-800 (FlightGear)')),
+    # Boeing 777-300ER and 777-200ER (FlightGear 777 series, see FG777 above): full airframe incl. gear
+    # (the default paint1 textures carry an old JAL (-300) / British Airways (-200) livery: its titles, tail art, blue belly
+    # and nacelles are erased before neutralising, boxes as fractions of the texture measured on the 2048 px images)
+    'b77w': ([f'{FG777}/777-300ER.ac'], dict(name='Boeing 777-300ER', length=73.86, hasGear=True, skip=FG777_SKIP, gearRe=FG777_GEAR, source='FGMEMBERS/777 @371a354 (FlightGear, GPL-2.0) 777-300ER.ac', license='GPL-2.0',
+             erase={'paint1.png': [(0.125, 0.16, 0.215, 0.222), (0.26, 0.165, 0.43, 0.2), (0.58, 0.41, 0.76, 0.44), (0.80, 0.41, 0.90, 0.462),
+                                   (0.87, 0.03, 1.0, 0.17), (0.0, 0.265, 0.135, 0.415)]})),
+    'b772': ([f'{FG777}/777-200ER.ac'], dict(name='Boeing 777-200ER', length=63.73, hasGear=True, skip=FG777_SKIP, gearRe=FG777_GEAR, source='FGMEMBERS/777 @371a354 (FlightGear, GPL-2.0) 777-200ER.ac', license='GPL-2.0',
+             erase={'paint1.png': [(0.08, 0.175, 0.2, 0.21), (0.14, 0.2, 0.34, 0.226), (0.0, 0.224, 0.87, 0.266), (0.32, 0.255, 0.64, 0.34), (0.25, 0.0, 0.66, 0.14),
+                                   (0.83, 0.02, 1.0, 0.21), (0.67, 0.445, 0.88, 0.476), (0.82, 0.42, 0.95, 0.456), (0.15, 0.47, 1.0, 0.525), (0.0, 0.26, 0.18, 0.46)]})),
 }
 
 if __name__ == '__main__':

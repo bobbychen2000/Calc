@@ -283,7 +283,10 @@ export function buildAircraft(typeName, lod = 1) {
   for (const unit of T.gear.main) for (const sg of [1, -1]) {
     const g = new Geo(); const zg = sg * unit.z; const xg = X(unit.x);
     const isBody = unit.z < R * 0.9;
-    const pivotY = isBody ? Hc - R * 0.75 : Math.min(wingY(unit.z) - 0.2, Hc - R * 0.2);
+    let pivotY = isBody ? Hc - R * 0.75 : Math.min(wingY(unit.z) - 0.2, Hc - R * 0.2);
+    // under an imported model: the strut reaches 0.15 m into the model's own skin above the gear (js/aircraft/fit.js
+    // gearTop; the procedural wing height left gaps of 0.1-0.4 m under the A320 / A330 / MD-11 / 787 models)
+    if (!isBody && T.fit && T.fit.gearTop != null && T.fit.gearTop + 0.15 > pivotY && T.fit.gearTop < Hc) pivotY = T.fit.gearTop + 0.15;
     const heavy = unit.wheels > 2;
     strut(g, xg, rw, pivotY, zg, heavy ? 0.26 : 0.14);
     if (unit.wheels === 2) { wheel(g, xg, rw, zg + 0.46, rw, ww); wheel(g, xg, rw, zg - 0.46, rw, ww); }
@@ -304,12 +307,34 @@ export function buildAircraft(typeName, lod = 1) {
   // lights (local positions)
   const tipY = wingY(semi) + (W.tipH || 0) * (W.tip === 'raked' ? 0.05 : 0.08);
   const tipZ = semi + (W.tip === 'raked' ? W.tipH * 0.9 : 0.4);
+  // raked tip: its leading edge sweeps aft of the straight wing LE line (tip loft above at t = 1: x = LE(semi) - 1.05 tipH),
+  // so the navigation light sits at the loft's tip, not on the extended LE line (1.5 m ahead of the tip, review round 1)
+  const navX = W.tip === 'raked' ? leX(semi) - W.tipH * 1.05 - 0.1 : leX(tipZ) - 0.3;
   const lights = {
-    navL: [leX(tipZ) - 0.3, tipY, -tipZ - 0.2], navR: [leX(tipZ) - 0.3, tipY, tipZ + 0.2],
+    navL: [navX, tipY, -tipZ - 0.2], navR: [navX, tipY, tipZ + 0.2],
     strobeL: [leX(semi) - chordAt(semi) * 0.8, tipY, -tipZ - 0.1], strobeR: [leX(semi) - chordAt(semi) * 0.8, tipY, tipZ + 0.1],
     tail: [X(L) + 0.2, Hc + 0.6 * R, 0], beaconTop: [X(L * 0.45), Hc + fuselageSection(T, L * 0.45).yt + 0.1, 0], beaconBot: [X(L * 0.5), Hc - R * 1.1, 0],
     landL: [leX(R * 1.5) - 0.5, wingY(R * 1.5) - 0.2, -R * 1.5], landR: [leX(R * 1.5) - 0.5, wingY(R * 1.5) - 0.2, R * 1.5],
     taxi: [X(T.gear.nose.x), T.gear.nose.r + 1.4, 0],
   };
   return { type: typeName, T, body: body.data(), flaps: parts.flaps.map(f => ({ ...f, data: f.g.data() })), spoilers: parts.spoilers.map(s => ({ ...s, data: s.g.data() })), gear: parts.gear.map(gg => ({ ...gg, data: gg.g.data() })), engines, lights, dims: { L, R, Hc, xMain, span: W.span } };
+}
+
+// Procedural wing-tip device for an imported model that lacks it (js/aircraft/fit.js TIP_ADD): built in the model's own
+// units (x forward, y up, z starboard) at its wing tip (js/live/models.js wingTip), both sides. The shapes are the
+// procedural airframe's (A320neo sharklet: height = TYPES wing.tipH, 2.4 m; 737 MAX AT split tip: upper element tipH, lower
+// ventral element 0.9 m); u = model units per metre. Coloured as the fin (the tail colour of the livery).
+export function tipDeviceData(kind, tip, h, u, hi = true) {
+  const g = new Geo(); const nAf = hi ? 14 : 8;
+  const col = [0.9, 0.9, 0.92, 1], ext = E(PART.fin, 0.3, 0);
+  for (const sg of [1, -1]) {
+    const lo = (fn, n, tc) => { const ws = []; for (let i = 0; i <= n; i++) { const t = i / n; const q = fn(t); ws.push({ x: q.x, y: q.y, z: q.z * sg, c: -q.c, tc }); } loftSurface(g, ws, nAf, col, ext, { flip: sg < 0 }); };
+    const c = tip.c, x = tip.x, y = tip.y, z = tip.z - 0.05 * u;
+    if (kind === 'sharklet') lo(t => { const a = Math.min(1, t * 1.6); return { x: x - (t * t * 1.2 + 0.25 * c / u * a) * u, y: y + (h * Math.pow(t, 0.9) + 0.25 * a) * u, z: z + 0.55 * u * Math.sin(a * 1.57), c: c * (1 - 0.6 * t) }; }, 7, 0.09);
+    else if (kind === 'split') {
+      lo(t => ({ x: x - (t * 1.3 + 0.2 * c / u) * u, y: y + h * Math.pow(t, 1.1) * u, z: z + 0.5 * u * Math.min(1, t * 2), c: c * (1 - 0.6 * t) }), 6, 0.09);
+      lo(t => ({ x: x - (0.25 * c / u + t * 0.9) * u, y: y - 0.9 * t * u, z: z + 0.35 * t * u, c: c * 0.7 * (1 - 0.6 * t) }), 3, 0.09);
+    }
+  }
+  return g.data();
 }

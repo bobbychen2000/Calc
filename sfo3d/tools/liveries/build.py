@@ -93,7 +93,22 @@ def group_rep(A, m, lst):
     types = sorted({t for _, t in lst}); return A['base'][m] if A['base'][m] in types else types[0]
 
 
-def bake_jobs(codes, only, preview_dir=None):
+FRAMES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'out', 'frames.json')
+
+
+def save_frame(name, c):
+    """design frame of a baked airframe (model units of the stretched model, nose at x = 0): fuselage length, cabin height,
+    window centre line and window height; js/live/aircraft.js places the per-aircraft registration with it"""
+    import fcntl
+    os.makedirs(os.path.dirname(FRAMES), exist_ok=True)
+    with open(FRAMES + '.lock', 'w') as lk:                      # parallel bake processes
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        fr = json.load(open(FRAMES)) if os.path.exists(FRAMES) else {}
+        fr[name] = dict(L=round(float(c.L), 3), H=round(float(c.H), 3), winY=round(float(c.winY), 3), winH=round(float(c.winH), 3), ycM=round(float(c.ycM), 3))
+        tmp = FRAMES + f'.{os.getpid()}'; json.dump(fr, open(tmp, 'w'), indent=0, sort_keys=True); os.replace(tmp, FRAMES)
+
+
+def bake_jobs(codes, only, preview_dir=None, frames_only=False):
     A = common.app()
     J = jobs(codes, only)
     for m, groups in J.items():
@@ -102,6 +117,8 @@ def bake_jobs(codes, only, preview_dir=None):
             rep = group_rep(A, m, lst)
             t0 = time.time()
             c = Canvas(path, rep, SIZES['hi'])
+            save_frame(variant_name(A, m, sig, rep), c)
+            if frames_only: continue
             print(f'== {m} as {rep} (plugs {sig[0]}, windows {c.plan["mode"]} {len(c.plan["win"])}): {len(set(b for b, _ in lst))} brands, canvas {time.time() - t0:.0f} s', flush=True)
             for code in sorted({b for b, _ in lst}):
                 t1 = time.time()
@@ -156,12 +173,14 @@ def write_manifest():
     for code, L in liveries.LIVERIES.items():
         brands[code] = dict(name=L['name'], livery=L['version'], since=L.get('since'), refs=L['refs'],
                             colors={k: v for k, v in L.get('colors', {}).items()}, status=L.get('status', ''),
-                            types=L.get('types', []), cargo=bool(L.get('cargo')))
+                            types=L.get('types', []), cargo=bool(L.get('cargo')), reg=L.get('reg'))
     brands[NEUTRAL] = dict(name='(no brand)', livery='neutral skin: white, no titles; this type\'s cabin windows', since=None, refs=[],
-                           colors={}, status='generic fallback for unknown operators and for brands without a bake of this type', types=[], cargo=False)
+                           colors={}, status='generic fallback for unknown operators and for brands without a bake of this type', types=[], cargo=False,
+                           reg=liveries.REG_DEFAULT)
     out = dict(version=1, generator='tools/liveries/build.py', sizes=SIZES,
                note='Airline names, logos and liveries are trademarks of their owners; re-drawn for a non-commercial depiction.',
-               entries=sorted(ent.values(), key=lambda e: (e['brand'], e['model'])), brands=brands)
+               entries=sorted(ent.values(), key=lambda e: (e['brand'], e['model'])), brands=brands,
+               frames=json.load(open(FRAMES)) if os.path.exists(FRAMES) else {})
     os.makedirs(common.LIV, exist_ok=True)
     json.dump(out, open(os.path.join(common.LIV, 'manifest.json'), 'w'), indent=1, ensure_ascii=False)
     with open(os.path.join(common.LIV, 'manifest.js'), 'w') as f:
@@ -199,14 +218,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('brands', nargs='*'); ap.add_argument('--models'); ap.add_argument('--preview')
     ap.add_argument('--manifest-only', action='store_true'); ap.add_argument('--no-manifest', action='store_true')
-    ap.add_argument('--list-snapshot', action='store_true')
+    ap.add_argument('--list-snapshot', action='store_true'); ap.add_argument('--frames', action='store_true', help='only record the design frames of every airframe')
     a = ap.parse_args()
     if a.list_snapshot:
         fs = snapshot_files('lo'); tot = sum(os.path.getsize(os.path.join(common.LIV, f)) for f in fs)
         print('\n'.join('data/liveries/' + f for f in fs)); print(f'# {len(fs)} files, {tot / 1e6:.2f} MB'); return
     codes = a.brands or ([c for c in liveries.LIVERIES if liveries.LIVERIES[c].get('types')] + [NEUTRAL])
     only = set(a.models.split(',')) if a.models else None
-    if not a.manifest_only: bake_jobs(codes, only, a.preview)
+    if a.frames: codes = list(liveries.LIVERIES) + [NEUTRAL]
+    if not a.manifest_only: bake_jobs(codes, only, a.preview, frames_only=a.frames)
     if not a.no_manifest: write_manifest()
 
 

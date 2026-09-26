@@ -10,12 +10,14 @@
 // depth (a halo over a nearer surface is hidden, over a farther one it shows, as with a hardware depth test).
 // Vertex: optional directional lobe pow(max(dir.toCam, 0), k); on-screen radius between 2.2 px (intensity scaled down
 // to conserve energy) and 12 px (review round 1: a 1.4 m marker 17 m from the camera was a 110 px glare disk);
-// a 1.6x glow; pulled towards the camera by min(2 m, 5 % of the distance). By day (night factor 0) intensities x 0.5.
+// a 1.6x glow; pulled towards the camera by min(2 m, 5 % of the distance). By day (night factor 0) intensities x 0.5;
+// all intensities x lampK (lamp units -> the sky model's units once the lamps are on; js/three/tsl/common.js).
 // Markers (records with marker: true; until js/live/app.js sets the flag, records without a direction and with s >= 0.6,
 // which only the markers have) fade out between 150 m and 60 m from the camera.
 // Fragment: core exp(-22 r^2) + halo 0.08 exp(-6 r^2); the halo is capped at 0.5 in exposed units, so a light never
 // spreads into a saturated disk whatever the exposure.
 import { THREE, TSL } from './lib.js';
+import { lampK } from './tsl/common.js';
 const { Fn, attribute, vec2, vec3, vec4, float, max, min, pow, length, normalize, dot, exp, uniform, cameraPosition, cameraViewMatrix, cameraNear, cameraFar, Discard, If, varying, select, mix, smoothstep, screenUV, perspectiveDepthToViewZ } = TSL;
 
 export class Sprites {
@@ -36,7 +38,7 @@ export class Sprites {
     const vI = varying(float(0), 'vSprI'), vZ = varying(float(0), 'vSprZ'), vTol = varying(float(0), 'vSprTol');
     m.positionNode = Fn(() => {
       const p = iP.xyz, size = iP.w; const toC = cameraPosition.sub(p); const d = length(toC); const tc = toC.div(max(d, 1e-3));
-      const I = iC.w.mul(mix(float(0.5), float(1.0), night)).toVar();
+      const I = iC.w.mul(mix(float(0.5), float(1.0), night)).mul(lampK).toVar(); // lamp units (tsl/common.js)
       If(iD.w.greaterThan(0.0), () => { const c = max(dot(normalize(iD.xyz), tc), 0.0); I.mulAssign(pow(c, iD.w).mul(0.97).add(c.mul(0.03))); });
       If(iD.w.lessThan(-0.5), () => { I.mulAssign(smoothstep(60.0, 150.0, d)); }); // marker
       const pxSize = size.div(d.mul(this.fovScale)); const s = size.toVar();

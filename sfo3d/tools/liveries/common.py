@@ -138,6 +138,16 @@ def apply_stretch(P, Z, st):
     P = np.array(P, float, copy=True)
     if not st: return P
     W, F = st.get('wing'), st.get('fin')
+    if st.get('tipCut'):                                      # the model's own winglet folded away (js/live/models.js)
+        c = st['tipCut']; m = (np.abs(P[:, 2]) > c['z0']) & (P[:, 1] > c['y0'])
+        P[m, 1] = c['yTo']; P[m, 2] = np.sign(P[m, 2]) * np.minimum(np.abs(P[m, 2]), c['zTo'])
+    if st.get('engScale'):                                    # nacelles scaled radially (737 MAX)
+        k = st['engScale']['k']
+        for sg in (-1, 1):
+            m = (np.asarray(Z) == 2) & (np.sign(P[:, 2]) == sg)
+            if not m.any(): continue
+            y0, y1 = P[m, 1].min(), P[m, 1].max(); yc = (y0 + y1) / 2; zc = P[m, 2].mean()
+            P[m, 1] = yc + (P[m, 1] - yc) * k + (k - 1) * (yc - y0); P[m, 2] = zc + (P[m, 2] - zc) * k
     if W:
         az = np.abs(P[:, 2]); m = (P[:, 0] >= W['xMin']) & (az > W['z0'])
         add = np.where(az >= W['z1'], W['dz'], (az - W['z0']) * W['dz'] / (W['z1'] - W['z0']))
@@ -145,6 +155,16 @@ def apply_stretch(P, Z, st):
     if F:
         m = (P[:, 0] < F['xF']) & (P[:, 1] > F['yF']) & ~np.isin(Z, ZONE_NOFIN)
         P[m, 1] = F['yF'] + (P[m, 1] - F['yF']) * F['k']
+    if st.get('wingLift'):                                    # wing dihedral fit (js/live/models.js)
+        q = st['wingLift']; az = np.abs(P[:, 2]); m = (az > q['z0']) & (P[:, 0] >= q['xMin']) & ~np.isin(Z, (1, 3))
+        P[m, 1] += q['t'] * (az[m] - q['z0'])
+    if st.get('htLift'):                                      # tailplane dihedral fit
+        q = st['htLift']; az = np.abs(P[:, 2]); m = (az > q['z0']) & (P[:, 0] < q['xMax']) & ~np.isin(Z, (1,))
+        P[m, 1] += q['t'] * (az[m] - q['z0'])
+    if st.get('squash'):                                      # vertical compression below the centre line (engine clearance)
+        q = st['squash']; m = P[:, 1] < q['y0']; P[m, 1] = q['y0'] + (P[m, 1] - q['y0']) * q['k']
+    if st.get('gearUp'):                                      # oleo compression of the model's own gear (zone 3)
+        P[np.asarray(Z) == 3, 1] += st['gearUp']
     if st.get('cut1') is not None:
         x = P[:, 0].copy(); dx = np.zeros(len(x))
         for c, d, bl in ((st['cut1'], st['d1'], 0.0), (st['cut2'], st['d2'], st.get('bl2') or 0.0)):
@@ -170,3 +190,47 @@ def lin_to_srgb(c):
 
 def hex_rgb(h):
     h = h.lstrip('#'); return np.array([int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)])
+
+
+def repair_normals(pos, nrm, idx):
+    """Python port of js/live/models.js repairNormals: replace degenerate / contradictory vertex normals by the area-weighted
+    normal of the vertex's faces (faces oriented to agree with the stored normal, or with the outward radial direction
+    where the stored normal is degenerate). Returns the repaired copy and the number of vertices changed."""
+    pos = np.asarray(pos, float); nrm = np.array(nrm, float, copy=True); T = np.asarray(idx).reshape(-1, 3)
+    f = np.cross(pos[T[:, 1]] - pos[T[:, 0]], pos[T[:, 2]] - pos[T[:, 0]])
+    acc = np.zeros_like(nrm)
+    for k in range(3):
+        v = T[:, k]; ref = nrm[v].copy()
+        deg = (ref ** 2).sum(1) < 0.09; ref[deg] = np.stack([np.zeros(deg.sum()), pos[v[deg], 1], pos[v[deg], 2]], 1)
+        sg = np.where((f * ref).sum(1) < 0, -1.0, 1.0)
+        np.add.at(acc, v, f * sg[:, None])
+    al = np.linalg.norm(acc, axis=1); nl = np.linalg.norm(nrm, axis=1)
+    cos = np.where((al > 1e-12) & (nl > 1e-6), (acc * nrm).sum(1) / np.maximum(al * nl, 1e-12), 0)
+    bad = (al > 1e-12) & ((nl < 0.6) | (cos < 0.5))
+    nrm[bad] = acc[bad] / al[bad, None]
+    return nrm, int(bad.sum())
+
+
+# models whose forward-fuselage skin is faceted / lumpy in the source mesh (review round 1: dark blotches on the FAM 747-8
+# nose in the renders, with a clean texture): the vertex normals of the fuselage skin ahead of the given fraction of the
+# length are smoothed (tools/liveries/atlas.py applies it when it writes the model; smooth_normals.py patches a model)
+NORMAL_SMOOTH = {'b748': 0.30, 'b744': 0.30}
+
+
+def smooth_normals(P, N, Z, frac, radius=0.9):
+    """Gaussian average (sigma = radius / 2) of the normals of the skin vertices (zone 0) within `radius` metres, for
+    vertices ahead of `frac` x length and inside the fuselage (|z| < 4 m, |y| < 5 m: not wings or engines). Normals of
+    neighbours facing away (dot < 0.3, i.e. across a hard edge such as the windshield frame) are not averaged."""
+    from scipy.spatial import cKDTree
+    P = np.asarray(P, float); N = np.array(N, float, copy=True)
+    L = -P[:, 0].min()
+    sel = np.flatnonzero((np.asarray(Z) == 0) & (-P[:, 0] < frac * L) & (np.abs(P[:, 2]) < 4.0) & (np.abs(P[:, 1]) < 5.0))
+    if not len(sel): return N, 0
+    tree = cKDTree(P[sel]); out = N.copy()
+    for a, i in enumerate(sel):
+        nb = tree.query_ball_point(P[i], radius)
+        J = sel[nb]; d = np.linalg.norm(P[J] - P[i], axis=1); w = np.exp(-(d / (radius / 2)) ** 2)
+        ok = (N[J] @ N[i]) > 0.3
+        v = (N[J][ok] * w[ok, None]).sum(0); l = np.linalg.norm(v)
+        if l > 1e-6: out[i] = v / l
+    return out, len(sel)

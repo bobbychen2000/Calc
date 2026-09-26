@@ -45,6 +45,12 @@
 //                         >= 400 fpm at > 90 kt below 1200 ft within 6 nm, aligned with a runway, then climbed >= 400 ft
 //                         without a ground report; runway = nearest centreline at the lowest point). Limitation: E175
 //                         landings flagged airborne down to ~50 kt can be missed by the landing detector.
+//   rwy.lineup_hdg        (round 2) lined up (stationary, on the assigned runway) with the body > 15 deg off the runway heading
+//   rwy.roll_hdg          (round 2) take-off / landing roll > 20 m/s with the body > 8 deg off the runway heading
+//   lag.gnd_30m / lag.roll_100m / lag.air_150m  (round 2) drawn body vs the engine's own target at display time (where the
+//                         data says the aircraft is): > 30 m taxiing / parked (.other_airfield: off SFO), > 100 m on a runway roll, > 150 m airborne within 15 km
+//   pop.remove            (round 2) a track removed from the scene while drawn (alpha >= 0.5): an instant disappearance, no fade
+//                         (.other_airfield: off SFO)
 //   phase.*               displayed phase contradicts displayed geometry (air phase on the ground, ground phase in
 //                         the air, 'taxi' > 50 kt on a runway, 'gate' > 30 m from its stand, 'landing'/'takeoff' off a
 //                         runway, push-back moving forward, flicker = > 3 phase changes within 30 s)
@@ -330,6 +336,23 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
         if (ph === 'pushback' && s && D.gs > 1.5) { const fx = Math.sin(D.hdg), fz = -Math.cos(D.hdg); const va = ((D.x - s.rx) * fx + (D.z - s.rz) * fz) / DT; if (va > 1.5) viol('phase.pushback_forward', tr, va, { v: +va.toFixed(1) }); }
         if (!onR && D.gs > 35 * KT && nearRunwayCL(D.x, D.z) > 100) viol('gnd.speed.taxi', tr, D.gs / KT, { gs: +(D.gs / KT).toFixed(0), dRwyCL: Math.round(nearRunwayCL(D.x, D.z)) });
       }
+      // (round 2) runway alignment of the drawn body: lined up (stationary) more than 15 deg off the runway heading, or
+      // rolling (> 20 m/s, take-off / landing roll on the runway) more than 8 deg off it
+      if (D.ground && tr.m.rwy && (ph === 'lineup' || ph === 'takeoff' || ph === 'landing')) {
+        const R = RW.find(q => q.name === tr.m.rwy);
+        if (R) { const dA = Math.abs(wrapD((D.hdg - R.hdg) / DEG));
+          if (ph === 'lineup' && D.gs < 0.5 && runwaysAt(D.x, D.z).includes(R) && dA > 15) viol('rwy.lineup_hdg', tr, dA, { rwy: R.name, dHdg: Math.round(dA) });
+          if (ph !== 'lineup' && D.gs > 20 && dA > 8) viol('rwy.roll_hdg', tr, dA, { rwy: R.name, dHdg: Math.round(dA), gs: Math.round(D.gs / KT), c: Math.round(rwyPhys(R, D.x, D.z)[1]) }); }
+      }
+      // (round 2) real-time lag: the drawn body vs the engine's own target at display time (reports + phase logic): the
+      // body is what the user sees, the target is where the data says the aircraft is (display delay excluded)
+      if (!(D.alpha != null && D.alpha < 1) && tr.reps && tr.reps.length) {
+        const o = traffic.target(tr, traffic.displayTime(simNow), {}); const lag = Math.hypot(o.x - D.x, o.z - D.z);
+        const roll = ph === 'takeoff' || ph === 'landing';
+        if (D.ground && o.ground && !roll && lag > 30) viol(inAirport(D.x, D.z) ? 'lag.gnd_30m' : 'lag.gnd_30m.other_airfield', tr, lag, { lag: Math.round(lag), tgtV: +o.gs.toFixed(1), v: +D.gs.toFixed(1), bridge: tr.bridgeOn || (tr.bridgeGate && traffic.bridgeK(tr.bridgeGate) > 0.01) ? 1 : 0, leaving: tr.leaving ? 1 : 0 });
+        if (D.ground && roll && lag > 100) viol('lag.roll_100m', tr, lag, { lag: Math.round(lag), tgtV: +o.gs.toFixed(1), v: +D.gs.toFixed(1) });
+        if (!D.ground && !o.ground && lag > 150 && Math.hypot(D.x, D.z) < 15000) viol('lag.air_150m', tr, lag, { lag: Math.round(lag), tgtV: +o.gs.toFixed(1), v: +D.gs.toFixed(1), cat: tr.info.category || null });
+      }
       // phase flicker
       const ph0 = s && s.ph; if (s && ph0 !== ph) { let H = phaseHist.get(tr.hex); if (!H) phaseHist.set(tr.hex, H = []); H.push(simNow); while (H.length && simNow - H[0] > 30000) H.shift(); if (H.length > 3) viol('phase.flicker', tr, H.length, { from: ph0, to: ph }); }
       // runway on final
@@ -384,13 +407,15 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
       K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, rvx: rdx / DT, rvz: rdz / DT, n0: (s.n0 || 0) + 1, y: D.y, vx, vz, vy, hdg: D.hdg, g: D.ground, n: s.g === D.ground ? s.n + 1 : 1, ax: s.g === D.ground && s.n >= 2 ? (vx - s.vx) / DT : null, az: s.g === D.ground && s.n >= 2 ? (vz - s.vz) / DT : null, ph: tr.phase, agl });
     } else K.set(tr.hex, { x: PX, z: PZ, rx: D.x, rz: D.z, rvx: 0, rvz: 0, n0: 0, y: D.y, vx: 0, vz: 0, vy: 0, hdg: D.hdg, g: D.ground, n: 1, ax: null, az: null, ph: tr.phase, agl });
     tr._reset = null;
+    if (!veh) { const q = K.get(tr.hex); if (q) { q.vis = 1; q.fl = tr.info.flight; q.ty = tr.info.icao; q.st = tr.stale; } }
     // bodies for the surface checks
     if (!veh && T && Math.abs(D.x) < 3200 && Math.abs(D.z) < 3200) {
       const B = pose(tr); if (!B) continue;
       if (D.ground) gnd.push(B); else if (agl < 15) low.push(B);
     }
   }
-  for (const [hex] of K) if (!traffic.tracks.has(hex)) { K.delete(hex); surfCache.delete(hex); }
+  // (round 2) a track removed while it was drawn (alpha >= 0.5 in the previous frame): an instant pop, not a fade
+  for (const [hex, s] of K) if (!traffic.tracks.has(hex)) { if (checking() && s && s.vis) { const g = s.g; const pc = inAirport(s.rx, s.rz) ? 'pop.remove' : 'pop.remove.other_airfield'; let v = V.get(pc); if (!v) V.set(pc, v = { frames: 0, eps: 0, who: new Map(), worst: [] }); v.frames++; v.eps++; const ll = toLL(s.rx, s.rz); v.who.set(hex + '@' + simNow, { n: 1, max: 1, ex: { t: iso(simNow), hex, flight: s.fl || null, type: s.ty || null, phase: s.ph, x: +s.rx.toFixed(1), z: +s.rz.toFixed(1), lat: +ll[0].toFixed(6), lon: +ll[1].toFixed(6), ground: g ? 1 : 0, stale: s.st ? 1 : 0 } }); } K.delete(hex); surfCache.delete(hex); }
   if (frames % 600 === 0) pairCache.clear();
   if (TRACE && frames % 5 === 0) { const tr = traffic.tracks.get(TRACE); if (tr && tr.disp.valid) { const D = tr.disp, d = tr._dbg || {}; const f2 = (v) => v == null ? '-' : (+v).toFixed(1);
     console.error(iso(simNow), tr.phase, tr.m.phase, 'disp', f2(D.x), f2(D.z), 'y', f2(D.y), 'hdg', f2(D.hdg / DEG), 'v', f2(tr.ctl && tr.ctl.v), 'g', D.ground ? 1 : 0, '| tgt', f2(d.ox), f2(d.oz), 'tv', f2(Math.hypot(d.ovx || 0, d.ovz || 0)), d.stop ? 'STOP' : '', 'ex', f2(d.ex), '| park', tr.parkPos ? f2(tr.parkPos[0]) + ',' + f2(tr.parkPos[1]) + '@' + f2((tr.parkHdg ?? 0) / DEG) : '-', tr.parkMode || '', tr.gate ? tr.gate.name : '-', tr.ctl && tr.ctl.towing ? 'TOW' : '', tr.stale ? 'STALE' : '', tr.lock ? 'LOCK' : '', tr.bridgeOn ? 'BRIDGE' : '', tr.bridgeGate ? 'k' + (traffic.bridgeK(tr.bridgeGate)).toFixed(2) : '', tr.leaving ? 'LEAVING' : '', tr._stop ? 'stopErr ' + f2(Math.hypot(tr._stop.x - tr.ctl.x, tr._stop.z - tr.ctl.z)) + '/' + f2(tr._stop.hd != null ? Math.abs(wrapPi(tr._stop.hd - tr.ctl.psi)) / DEG : 0) : '', tr.gate && tr.gate.dock && tr.parkPos ? 'dockPoseVsPark ' + f2(Math.hypot(poseST(tr).nose[0] - tr.gate.dock.nose[0], poseST(tr).nose[1] - tr.gate.dock.nose[1])) + 'm' : '', 'last', tr.last ? f2((simNow - tr.last.t) / 1000) + 's gs' + f2(tr.last.gs) + (tr.last.push ? ' PUSH' : '') + (tr.last.ground ? ' G' : ' A') : ''); } }

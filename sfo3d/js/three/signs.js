@@ -143,7 +143,10 @@ export function atlasSignMaterial(tex, { night, reversed }) {
   const off = reversed ? 1 : -1;
   const m = new THREE.MeshStandardNodeMaterial({ side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: off * 1, polygonOffsetUnits: off * 3, metalness: 0 });
   const core = Fn(() => {
-    const k = attribute('extra', 'vec4').x; const a = texture(tex, TSL.uv()).rgb;
+    const k = attribute('extra', 'vec4').x; const t = texture(tex, TSL.uv()).rgb;
+    // the atlas may have been uploaded (and its CPU copy released) as linear data before this material asked for sRGB
+    // (compat/gl.js uploads decoded images at once): decode in the shader then
+    const a = tex.colorSpace === THREE.SRGBColorSpace ? t : TSL.sRGBTransferEOTF(t);
     const alb = select(k.greaterThan(0.5), a, vec3(0.05)); const rough = select(k.greaterThan(1.5), float(0.7), select(k.greaterThan(0.5), float(0.35), float(0.5)));
     return vec4(alb, rough);
   }).once();

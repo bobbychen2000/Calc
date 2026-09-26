@@ -19,7 +19,10 @@ export function markingMaterial({ noiseTex, pxScale, reversed }) {
   const aPos = attribute('position', 'vec3'), aNrm = attribute('normal', 'vec3'), aExt = attribute('extra', 'vec4');
   // aNrm.xz = unit perpendicular, aNrm.y = dash duty ratio; aExt = (half width, side -1/+1, distance along, dash period)
   const toC = cameraPosition.sub(aPos); const dist = length(toC); const v = toC.div(max(dist, 1e-3));
-  const n = vec3(aNrm.x, 0.0, aNrm.z); const nv = dot(n, v);
+  // n carries the miter length at polyline joints (js/live/markings.js Ribbons.line: up to 2x): the foreshortening is
+  // taken on the unit direction (with the miter-scaled n, 1 - (n.v)^2 went negative at the corners of the red boxes and
+  // the 20x cap turned each corner into a translucent triangle, found in the round-2 renders)
+  const n = vec3(aNrm.x, 0.0, aNrm.z); const nv = dot(normalize(n), v);
   const fore = max(sqrt(max(float(1.0).sub(nv.mul(nv)), 0.0)), 0.05);
   const hw = max(aExt.x, dist.mul(pxScale).mul(0.6).div(fore));
   mat.positionNode = aPos.add(n.mul(aExt.y).mul(hw));

@@ -69,6 +69,16 @@ PHYS = 3.0   # below this aircraft-to-aircraft distance two stands are treated a
 ROT_FACADE = 3.0   # m, facade -> rotunda centre where the drum stands against the building (inferred: r 2.45 m + connector)
 
 
+def eff_type(st):
+    """type of an ADS-B stay (review round 4): the feed's 't' where it is an aircraft type the app knows, else the type
+    SFO's AODB planned for that flight (the feed's database has wrong entries: Air Canada A220-300s C-FHEI / C-FHFN /
+    C-FHNB are 'AS50' / 'GLID' / 'AS55' there, so their three D11 stays had no family)"""
+    t = st.get('type')
+    if t and type_cls(t): return t
+    sf = st.get('sfo_type')
+    return sf if sf and type_cls(sf) else t
+
+
 def type_cls(t):
     t = ALIAS_T.get(t, t); r = REF.get(t)
     if not r: return None
@@ -81,6 +91,43 @@ def type_cls(t):
 def planform(nose, hdg, cls, t=None):
     """collision planform of type t (else the class reference type) as the app draws it (geom.planform)"""
     return GM.planform(nose, hdg, ALIAS_T.get(t, t) if t else CLS_REF[cls])
+
+
+def snap_leadin(Y, pts, nose, hdg, step=2.0):
+    """review round 4 (B5: the OSM lead-in has a coarse corner ~3 m off the painted curve 22-30 m behind the nose): the
+    lead-in polyline, densified every 2 m, is moved onto the painted yellow line on NAIP 2024 where the paint is
+    consistent (Yellow.cross_peak +-3 m, 3 m averaging; >= 4 of the 7 neighbouring samples with paint, MAD < 0.4 m,
+    shift > 0.5 m; smoothed). The last 6 m before the nose are not moved (the correction tapers to 0 at 6 m: the stand
+    axis at the nose stays the model's, which the paint fit above already checks). Returns (points, stats)."""
+    P = np.asarray(pts, float)
+    if len(P) < 2: return [tuple(q) for q in pts], None
+    D_ = [P[0]]
+    for a, b in zip(P[:-1], P[1:]):
+        n_ = max(1, int(math.ceil(np.hypot(*(b - a)) / step)))
+        D_ += [a + (b - a) * k / n_ for k in range(1, n_ + 1)]
+    D_ = np.array(D_); T_ = np.gradient(D_, axis=0); T_ /= np.maximum(1e-9, np.hypot(T_[:, 0], T_[:, 1]))[:, None]
+    dnose = np.hypot(D_[:, 0] - nose[0], D_[:, 1] - nose[1])
+    offs = np.full(len(D_), np.nan)
+    for i, (q, t) in enumerate(zip(D_, T_)):
+        if dnose[i] < 3.0: continue
+        r = Y.cross_peak(q, t, half=3.0, avg=3.0, step=0.1, min_contrast=10.0)
+        if r and r[2] < 0.6 * r[1]: offs[i] = r[0]
+    corr = np.zeros(len(D_))
+    for i in range(len(D_)):
+        v = offs[max(0, i - 3):i + 4]; v = v[~np.isnan(v)]
+        if len(v) >= 4:
+            m_ = float(np.median(v))
+            if np.median(np.abs(v - m_)) < 0.4 and abs(m_) > 0.5: corr[i] = m_
+    if len(corr) >= 3:
+        cm = np.array([np.median(corr[max(0, i - 1):i + 2]) for i in range(len(corr))])
+        corr = np.array([cm[max(0, i - 2):i + 3].mean() for i in range(len(cm))])
+    corr *= np.clip((dnose - 3.0) / 3.0, 0.0, 1.0)
+    if not np.any(np.abs(corr) > 0.05):
+        return [tuple(q) for q in pts], {'moved': 0.0, 'paint': int((~np.isnan(offs)).sum()), 'n': len(D_)}
+    Q = D_ + np.stack([-T_[:, 1], T_[:, 0]], 1) * corr[:, None]
+    import cv2 as _cv2
+    a_ = _cv2.approxPolyDP(Q.astype(np.float32).reshape(-1, 1, 2), 0.1, False)[:, 0, :]
+    return [(float(x), float(z)) for x, z in a_], {'moved': round(float(np.max(np.abs(corr))), 2), 'paint': int((~np.isnan(offs)).sum()), 'n': len(D_)}
 
 
 def paint_fit(Y, nose, hdg, a0=3.0, a1=22.0, step=1.5):
@@ -188,6 +235,9 @@ def main():
     for st in stays['stays']:
         if st.get('stand'): stays_by[st['stand']].append(st)
     YEL = Yellow(index='mean')
+    import naip_axis as NA
+    from common import Naip as _Naip
+    NAIPR = _Naip()
     for s in stands:
         w = s['osm_way']; stop, h_osm = w['stop'], w['hdg']
         unknown = sorted(t for t in s['types'] if t and not type_cls(t))
@@ -239,6 +289,48 @@ def main():
                 s['pos_src'] = 'osm+paint'; pf['applied'] = True
                 s['nose_rule'] += '; moved onto the painted lead-in (NAIP): %+.2f m lateral, %+.2f deg' % (pf['lat_nose'], pf['dh'])
                 s['paint_after'] = paint_fit(YEL, nose, h)
+            # Review round 4: fuselage-AXIS fit of the parked NAIP aircraft (naip_axis.py: band centre per row 4-45 m
+            # behind the nose, line fit, relief-corrected) - a lateral offset that grows along the fuselage is a heading
+            # error the single-number relief reading cannot see (G1: -4.1 m at the nose, -0.1 m 30 m aft, -7.6 deg).
+            # Applied only when ADS-B agrees (>= 2 aircraft with SFO's stand window reporting true heading, median heading
+            # offset within 2.5 deg of the NAIP one, same sense, > 2 deg): heading = mean of the two, nose moved laterally
+            # onto the fitted axis. One image alone is not enough: at G5 the NAIP aircraft stands 7.8 deg off the painted
+            # line that ADS-B confirms (parked askew / under tow), so a lone NAIP axis is recorded as a conflict instead.
+            s.pop('naip_axis', None); s.pop('conflict_axis', None); s.pop('_axis_tf', None)
+            if rd0 and 'u' not in rd0[3] and not np_:
+                ax = NA.axis_fit(NAIPR, nose, h, s['grp'], a1=45.0 if s['grp'] == 'wide' else 30.0, k=kR)
+                if ax and ax['rms'] <= 0.35 and ax['n'] >= 40:
+                    per_ = {}
+                    for st in ev:
+                        if st.get('hdg') is None: continue
+                        a_, c_ = local((st['x'], st['z']), nose, h)
+                        if abs(c_) < 12 and -35 < a_ < 8 and (st['hex'] not in per_ or st['n_good'] > per_[st['hex']]['n_good']): per_[st['hex']] = st
+                    hs_ = [hdiff(st['hdg'], h) for st in per_.values()]
+                    adh = float(np.median(hs_)) if len(hs_) >= 2 else None
+                    off = abs(ax['dh']) > 2.0 or abs(ax['lat_nose']) > 1.5 or abs(ax['lat_30']) > 1.5
+                    if off and adh is not None and abs(adh) > 2.0 and abs(adh - ax['dh']) <= 2.5 and adh * ax['dh'] > 0:
+                        dh_ = (ax['dh'] + adh) / 2; nose0_, h0_ = nose, h
+                        nose = (nose[0] + rt[0] * ax['lat_nose'], nose[1] + rt[1] * ax['lat_nose']); h = (h + dh_) % 360
+                        f = hdg_vec(h); rt = (math.cos(math.radians(h)), math.sin(math.radians(h)))
+                        s['pos_src'] += '+naip_axis+adsb'
+                        s['nose_rule'] += ('; axis corrected (review round 4): NAIP fuselage axis %+.2f m at the nose, %+.1f deg (rms %.2f m, %d rows) '
+                                           'and ADS-B %d aircraft %+.1f deg agree -> %+.2f m lateral, %+.1f deg' % (ax['lat_nose'], ax['dh'], ax['rms'], ax['n'], len(hs_), adh, ax['lat_nose'], dh_))
+                        ax_after = NA.axis_fit(NAIPR, nose, h, s['grp'], a1=45.0 if s['grp'] == 'wide' else 30.0, k=kR)
+                        s['naip_axis'] = dict(ax_after or {}, before=ax, adsb_dh=round(adh, 1), applied=True)
+                        s['_axis_tf'] = (nose0_, h0_, nose, h)
+                    else:
+                        s['naip_axis'] = dict(ax, adsb_dh=None if adh is None else round(adh, 1))
+                        if off:
+                            ok_other = (pf and pf.get('applied') is not True and pf['n'] >= 7 and pf['rms'] <= 0.3 and abs(pf['lat_nose']) <= 0.8 and abs(pf['dh']) <= 1.5) \
+                                or (pf and pf.get('applied') and s.get('paint_after') and abs(s['paint_after']['lat_nose']) <= 0.8) \
+                                or (adh is not None and abs(adh) <= 2.0)
+                            if ok_other:
+                                s['naip_axis']['note'] = ('the NAIP aircraft stands off the model axis, but the %s confirms the axis: that aircraft was '
+                                                          'parked askew or under tow in the image (not used)' % ('painted lead-in' if pf and pf['n'] >= 7 else 'ADS-B heading'))
+                            else:
+                                s['conflict_axis'] = {'with': 'naip', 'lat_nose': ax['lat_nose'], 'lat_30': ax['lat_30'], 'dh': ax['dh'],
+                                                      'note': 'the parked NAIP aircraft (one image) lies %+.1f m / %+.1f m (nose / 30 m aft) and %+.1f deg off the '
+                                                              'model axis; no painted line or ADS-B heading confirms either - not resolved' % (ax['lat_nose'], ax['lat_30'], ax['dh'])}
             s['nose'] = nose; s['hdg'] = h
             # NAIP residual of the parked aircraft (reading - model nose), in the stand frame
             vb = []
@@ -271,7 +363,7 @@ def main():
                 else: rej.append((st['hex'], st.get('callsign'), st.get('type'), round(a, 1), round(c, 1)))
             new_types = []
             for st, a, c in good:
-                t = st.get('type')
+                t = eff_type(st)
                 if t and type_cls(t) and (not st.get('sfo_type') or not type_cls(st['sfo_type']) or type_cls(st['sfo_type']) == type_cls(t)):
                     new_types.append(t)
             if it == 0 and new_types and max((type_cls(t) for t in new_types), key=ORDER.index) != cls \
@@ -301,6 +393,14 @@ def main():
                 return (stop[0] + vx * math.cos(th) - vz * math.sin(th) + ro[0] * s['paint']['lat_nose'],
                         stop[1] + vx * math.sin(th) + vz * math.cos(th) + ro[1] * s['paint']['lat_nose'])
             pts = [tr(q) for q in pts]
+        if s.get('_axis_tf') and 'naip_axis' in s['pos_src']:
+            # review round 4: the lead-in moves rigidly with the axis correction (old nose / heading -> new)
+            n0_, h0_, n1_, h1_ = s['_axis_tf']; f1_ = hdg_vec(h1_); r1_ = (math.cos(math.radians(h1_)), math.sin(math.radians(h1_)))
+            pts = [(n1_[0] + f1_[0] * al_ + r1_[0] * la_, n1_[1] + f1_[1] * al_ + r1_[1] * la_) for al_, la_ in (local(q, n0_, h0_) for q in pts)]
+        # review round 4: an automatic snap of the lead-in polylines onto the paint (snap_leadin) was tried and NOT applied:
+        # it pulled G10's end onto the parked aircraft's fuselage edge and B26's start onto the taxiway edge / hold paint,
+        # and B5's corner (the review's case) lies on faint paint on white concrete (contrast < 10) that it cannot follow.
+        # Lead-ins stay the OSM ways (paint fit / axis checks above apply); B5 is listed in stands_rebuild.md.
         s['leadin_pts'] = pts
         s['obs_types'] = sorted(set(sfo_types + adsb_types))
         if good:
@@ -311,7 +411,7 @@ def main():
             D = [hdiff(v[0]['hdg'], h) for v in per.values() if v[0].get('hdg') is not None]
             s['adsb'] = {'n_aircraft': len(per), 'along_med': round(float(np.median(A)), 1), 'lat_med': round(float(np.median(C)), 1),
                          'lat_absmax': round(float(np.max(np.abs(C))), 1), 'dhdg_med': round(float(np.median(D)), 1) if D else None,
-                         'aircraft': sorted('%s %s %s' % (v[0].get('reg'), v[0].get('type'), v[0].get('callsign')) for v in per.values())}
+                         'aircraft': sorted('%s %s %s' % (v[0].get('reg'), eff_type(v[0]), v[0].get('callsign')) for v in per.values())}
             # review round 2: 1.5 m (was 3 m; G5 had passed at 1.8 m)
             if abs(np.median(C)) <= 1.5 and (not D or abs(np.median(D)) <= 10): vb.append('adsb')
             elif abs(np.median(C)) > 3.0 or (D and abs(np.median(D)) > 10):
@@ -325,8 +425,8 @@ def main():
         pbest = {}
         for st, a, c in good:
             if abs(c) <= 3 and (st['hex'] not in pbest or st['n_good'] > pbest[st['hex']][0]['n_good']): pbest[st['hex']] = (st, a, c)
-        s['adsb_good'] = [(v[0].get('type') or v[0].get('sfo_type'), v[1]) for v in pbest.values()]
-        if s.get('conflict'): s['verified_unconfirmed'] = vb; vb = []      # conflicting evidence: nothing counts as verified
+        s['adsb_good'] = [(eff_type(v[0]), v[1]) for v in pbest.values()]
+        if s.get('conflict') or s.get('conflict_axis'): s['verified_unconfirmed'] = vb; vb = []      # conflicting evidence: nothing counts as verified
         if (s.get('naip') or {}).get('along_conflict'):
             # review round 3: the parked NAIP aircraft stopped more than 1.5 m from the model nose (relief-corrected)
             s['conflict_along'] = {'with': 'naip', 'resid_along': s['naip']['resid_along'],
@@ -356,6 +456,36 @@ def main():
             fm = GM.FAMILY.get(ALIAS_T.get(t, t))
             if fm and type_cls(t) and (type_cls(t) in WIDE) == (s['grp'] == 'wide'): fam_al[fm].append(a)
     fam_ref = {fm: float(np.median(v)) for fm, v in fam_al.items() if len(v) >= 3}
+    # Review round 4: the stand stop point itself is moved where the parked NAIP aircraft (relief-corrected by-eye nose,
+    # good to ~+-2 m: two readers differed by up to 2.7 m) and ADS-B (>= 2 aircraft of the stand's group, each at its
+    # family's typical antenna offset, within 1.5 m of their median) agree within 2.0 m that aircraft stop off the model
+    # nose. New stop = median of all those readings. (G10: NAIP -2.8 m, B789 x2 -1.6 / -3.0 m -> -2.8 m.) Stands where
+    # only one source exists (A10, F13: NAIP only) or the sources disagree (D11: NAIP -6.7, A220 x3 -9.2; C5, D5) keep
+    # their `conflict_along`.
+    for s in stands:
+        rn = s.get('naip') or {}
+        if not rn.get('along_conflict') or s['pos_src'] == 'naip': continue
+        vals = []
+        for t, a in s.get('adsb_good', []):
+            fm = GM.FAMILY.get(ALIAS_T.get(t, t))
+            if fm in fam_ref and type_cls(t) and (type_cls(t) in WIDE) == (s['grp'] == 'wide'): vals.append(a - fam_ref[fm])
+        if len(vals) < 2: continue
+        md = float(np.median(vals))
+        if max(abs(v - md) for v in vals) > 1.5 or abs(md - rn['resid_along']) > 2.0: continue
+        mv = float(np.median(vals + [rn['resid_along']]))
+        f = hdg_vec(s['hdg']); s['nose'] = (s['nose'][0] + f[0] * mv, s['nose'][1] + f[1] * mv)
+        s['pos_src'] += '+naip+adsb'
+        s['nose_rule'] += ('; stop moved %+.1f m along the axis (review round 4): NAIP aircraft %+.1f m (relief-corrected) and ADS-B %d aircraft '
+                           '%s m (family-corrected) agree' % (mv, rn['resid_along'], len(vals), '/'.join('%+.1f' % v for v in sorted(vals))))
+        s['stop_move'] = {'along': round(mv, 1), 'naip': rn['resid_along'], 'adsb': [round(v, 1) for v in sorted(vals)]}
+        rn['resid_along'] = round(rn['resid_along'] - mv, 1); rn['along_conflict'] = abs(rn['resid_along']) > 1.5
+        s['adsb_good'] = [(t, a - mv) for t, a in s['adsb_good']]
+        if s.get('adsb'): s['adsb']['along_med'] = round(s['adsb']['along_med'] - mv, 1)
+        s['leadin_pts'] = [p for p in s['leadin_pts'] if local(p, s['nose'], s['hdg'])[0] < -0.5] + [tuple(s['nose'])]
+        if not rn['along_conflict']:
+            s.pop('conflict_along', None)
+            if s['verified_by'] and not s.get('conflict') and not s.get('conflict_axis'): s['src'] = 'obs'
+        print('  stop moved (NAIP + ADS-B):', s['name'], round(mv, 1), 'm')
     for s in stands:
         by = defaultdict(list)
         for t, a in s.get('adsb_good', []):
@@ -399,75 +529,6 @@ def main():
         print('  moved back from the building:', s['name'], round(a0, 1), 'm')
     print('family ADS-B reference offsets', {k: round(v, 1) for k, v in fam_ref.items()})
     print('type_stops', {s['name']: s['type_stops'] for s in stands if s['type_stops']})
-    # ---------------------------------------------------------------- mutual exclusion / clearances
-    # Review round 1: clearances are computed with the union of EVERY type the app accepts on each stand (geom.py
-    # accepted_types / envelope: shorter aircraft of a class carry their wings further forward), not one reference
-    # type per class. A pair closer than PHYS (3 m) is made mutually exclusive, unless SFO plans both at the same time;
-    # then each stand is limited to the largest span / length SFO (or accepted ADS-B) actually put there
-    # ('span_max' / 'len_max'), and only if that still does not clear 3 m the pair becomes exclusive.
-    pass  # geom imported at module level
-    for s in stands: s['excl'] = []; s['clear'] = {}; s['span_max'] = None; s['len_max'] = None; s['types_ok'] = None
-    def sim_count(a, b):
-        n_ = 0
-        for x in [q for n0 in a['aodb'] or [a['name']] for q in ivs.get(n0, [])]:
-            for y in [q for n1 in b['aodb'] or [b['name']] for q in ivs.get(n1, [])]:
-                if x[2] != y[2] and min(x[1], y[1]) - max(x[0], y[0]) > 600: n_ += 1
-        return n_
-    def expand_ok(s_, obs):
-        # review round 3: a whitelist of exact designators refused smaller aircraft SFO also parks there. types_ok = the
-        # observed types plus every type whose planform (engines included) at its per-family stop lies inside the
-        # envelope of the observed types (within 0.05 m): such a type cannot come closer to a neighbour than they do.
-        env = GM.envelope(s_['nose'], s_['hdg'], obs) if not s_.get('type_stops') else unary_union(
-            [GM.planform(GM.nose_for(s_, t), s_['hdg'], t) for t in obs])
-        envb = env.buffer(0.05); out = set(obs)
-        for t, r in GM.APP.items():
-            if t in out or not r['span']: continue
-            if GM.planform(GM.nose_for(s_, t), s_['hdg'], t).difference(envb).area < 0.01: out.add(t)
-        return sorted(out)
-    def is_alt(a, b):
-        return a.get('alt_of') == b['name'] or b.get('alt_of') == a['name'] or bool(a.get('alt_of') and a.get('alt_of') == b.get('alt_of'))
-    near = [(a, b) for i, a in enumerate(stands) for b in stands[i + 1:] if math.dist(a['nose'], b['nose']) <= 170]
-    how = {}
-    for a, b in near:
-        if is_alt(a, b):
-            a['excl'].append(b['name']); b['excl'].append(a['name']); how[(a['name'], b['name'])] = 'alternative positions (excl)'; continue
-        d = GM.stand_env(a).distance(GM.stand_env(b))
-        if d >= PHYS: continue
-        sim = sim_count(a, b)
-        if sim:
-            for s_ in (a, b):
-                ts = [ALIAS_T.get(t, t) for t in s_['obs_types']]
-                if not ts: continue
-                sp = max(REF[t]['span'] for t in ts); L = max(REF[t]['L'] for t in ts)
-                if sp < CLASS_MAX[s_['cls']][0] - 0.6: s_['span_max'] = min(s_['span_max'] or 99, sp)
-                if L < CLASS_MAX[s_['cls']][1] - 2: s_['len_max'] = min(s_['len_max'] or 999, L)
-            d2 = GM.stand_env(a).distance(GM.stand_env(b))
-            if d2 >= PHYS:
-                how[(a['name'], b['name'])] = 'span_max / len_max = largest types SFO parks there (clear %.1f m)' % d2; continue
-            # review round 2: still < 3 m with every type inside the limits -> both stands accept only the types SFO /
-            # ADS-B actually put there ('types_ok', at their per-family stop points); the app needs the request
-            # (js/live/traffic.js standFits: honour g.typesOk) for this to hold at runtime
-            for s_ in (a, b):
-                if s_['obs_types']: s_['types_ok'] = expand_ok(s_, sorted(set(ALIAS_T.get(t, t) for t in s_['obs_types']) & set(GM.APP)))
-            d3 = GM.stand_env(a).distance(GM.stand_env(b))
-            if d3 >= PHYS:
-                how[(a['name'], b['name'])] = 'types_ok = the types SFO parks there (observed), per-family stops: clear %.1f m (SFO plans both at once %d times)' % (d3, sim)
-                continue
-            d2 = d3
-            if d2 > 0.0:
-                # SFO really parks both at once, and with the limits the envelopes no longer overlap: making them
-                # exclusive would push real, simultaneously parked aircraft off their stands. Kept, reported as a
-                # tight pair (our stop points are one per stand, real stop marks are per type).
-                how[(a['name'], b['name'])] = 'kept: SFO plans both at once %d times; span/len limits; model clearance %.1f m < 3 m (tight, no overlap)' % (sim, d2)
-                a.setdefault('tight', []).append(b['name']); b.setdefault('tight', []).append(a['name']); continue
-        a['excl'].append(b['name']); b['excl'].append(a['name'])
-        how[(a['name'], b['name'])] = 'excl' + (' (SFO plans both at once %d times, but even its largest types overlap)' % sim if sim else '')
-    pairs = []
-    for a, b in near:
-        d = GM.stand_env(a).distance(GM.stand_env(b))
-        need = max(icao_clear(max(REF[t]['span'] for t in GM.accepted_types(a))), icao_clear(max(REF[t]['span'] for t in GM.accepted_types(b))))
-        pairs.append((a['name'], b['name'], round(d, 1), need, sim_count(a, b), is_alt(a, b), how.get((a['name'], b['name']))))
-        if d < 60: a['clear'][b['name']] = round(d, 1); b['clear'][a['name']] = round(d, 1)
     # ---------------------------------------------------------------- jet bridges
     by_gate = defaultdict(list)
     bmap = {}
@@ -635,6 +696,182 @@ def main():
             else:
                 b['rotunda_src'] = (b.get('rotunda_src') or 'OSM') + '; too close to the door or inside the wing sweep, and the walkway gives no feasible point'
                 problems.append((st['name'], 'rotunda of bridge %s infeasible' % b['osm_id']))
+    # ---------------------------------------------------------------- wings vs fixed bridge parts (review round 4)
+    # A short aircraft at the stand nose carries its wing far forward: at F17 / F19 / F21 the A319 / A19N / E175 wing
+    # passed over the L1 rotunda (1.1 m from its centre), whose position NAIP confirms (the drum at the end of the
+    # ~20 m fixed walkway along the facade). The aircraft SFO parks there are longer (A21N, 737-8/-9, 757) or stop
+    # well short (737s -13..-15 m, ADS-B), so the stop mark of the short types must be further back. For every family the
+    # stand accepts with the class limits (the app's SFO path ignores types_ok) whose wings / engines / tailplane come
+    # closer than geom.fixed_clear (ICAO code A-C 3.0 / 4.5 m - no relief exists for code C; D-F 3.0 m physical, because
+    # ICAO 3.4.4(b) lets D-F reduce the 7.5 m where a VDGS gives azimuth guidance, and SFO's VDGS coverage is not
+    # verified - check_stands reports D-F below 7.5 m as a WARN) to any fixed
+    # walkway / rotunda within 90 m, the family gets an INFERRED stop: the smallest shift short of its current stop
+    # (0.5 m steps, at most 25 m) that clears. A family whose ADS-B stop (observed) does not clear is an evidence
+    # conflict (listed). Upper-deck bridges count as fixed parts too.
+    fixed_g = []
+    for st_ in stands:
+        for b in st_['bridge_list'] + st_['bridge_upper']:
+            wl_, rot_, _ = GM.bridge_parts(b, b['cab']); fixed_g.append((st_['name'], b['door'], unary_union([wl_, rot_])))
+    def fam_of(t): return GM.FAMILY.get(ALIAS_T.get(t, t))
+    for st in stands:
+        FG = [g for n_, d_, g in fixed_g if g.distance(Point(st['nose'])) < 90]
+        if not FG: continue
+        FG = unary_union(FG)
+        types = GM.accepted_types(dict(st, types_ok=None, span_max=None, len_max=None))
+        fams = defaultdict(list)
+        for t in types: fams[fam_of(t)].append(t)
+        ts = dict(st.get('type_stops') or {})
+        for fm, tt in sorted(fams.items(), key=lambda kv: str(kv[0])):
+            def gap(a):
+                return min(GM.wings(GM.shift(st['nose'], st['hdg'], a), st['hdg'], t).distance(FG) - GM.fixed_clear(GM.APP[t]['span']) for t in tt)
+            cur = (ts.get(fm) or {}).get('along', 0.0)
+            if gap(cur) >= -1e-6: continue
+            if fm is None:
+                problems.append((st['name'], 'wings of %s (no stop family) within the ICAO clearance of a fixed bridge part' % ','.join(tt))); continue
+            if fm in ts and ts[fm]['src'].startswith('adsb'):
+                problems.append((st['name'], 'ADS-B %s stop %+.1f m leaves the wings %.1f m inside the ICAO clearance of a fixed bridge part (evidence conflict)' % (fm, cur, -gap(cur))))
+                st.setdefault('fixed_clear_conflict', []).append({'family': fm, 'along': cur, 'short_of_icao_m': round(-gap(cur), 2)}); continue
+            # an inferred stop never contradicts ADS-B of the same family on this stand (single stays too): it may lie at
+            # most 2 m short of the shortest such stay (review round 4: F17's one B753 stopped -2.2 m vs the family norm)
+            ad = [round(v, 1) for t_, v in st.get('adsb_good', []) if fam_of(t_) == fm and fm in fam_ref for v in [v - fam_ref[fm]]]
+            amin = max(-25.0, min(ad) - 2.0) if ad else -25.0
+            a = cur
+            while a > amin and gap(a) < -1e-6: a -= 0.5
+            if gap(a) < -1e-6:
+                if ad:
+                    problems.append((st['name'], 'ADS-B %s stay(s) %s m: at that stop the wings are %.1f m inside the clearance of a fixed bridge part (evidence conflict)' % (fm, ad, -gap(min(ad)))))
+                    st.setdefault('fixed_clear_conflict', []).append({'family': fm, 'adsb': ad, 'short_of_clearance_m': round(-gap(min(0.0, min(ad))), 2)})
+                else: problems.append((st['name'], '%s: no stop within 25 m clears the fixed bridge parts' % fm))
+                continue
+            ts[fm] = {'along': round(a, 1), 'n': 0, 'src': 'inferred: clearance - wings / engines / tailplane of %s clear the fixed bridge parts by %.1f m '
+                      'only this far short (at %+.1f m they came %.1f m inside it)%s' % (','.join(sorted(tt)), GM.fixed_clear(max(GM.APP[t]['span'] for t in tt)), cur, -gap(cur),
+                      '; ADS-B of this family here (single stays, not enough for a stop): %s m' % ', '.join('%+.1f' % v for v in ad) if ad else '; no ADS-B stay of this family here')}
+            print('  inferred stop (fixed-part clearance):', st['name'], fm, ts[fm]['along'])
+        st['type_stops'] = ts or None
+    # ---------------------------------------------------------------- mutual exclusion / clearances
+    # Review round 1: clearances are computed with the union of EVERY type the app accepts on each stand (geom.py
+    # accepted_types / envelope: shorter aircraft of a class carry their wings further forward), not one reference
+    # type per class. A pair closer than PHYS (3 m) is made mutually exclusive, unless SFO plans both at the same time;
+    # then each stand is limited to the largest span / length SFO (or accepted ADS-B) actually put there
+    # ('span_max' / 'len_max'), and only if that still does not clear 3 m the pair becomes exclusive.
+    pass  # geom imported at module level
+    for s in stands: s['excl'] = []; s['clear'] = {}; s['span_max'] = None; s['len_max'] = None; s['types_ok'] = None
+    def sim_count(a, b):
+        n_ = 0
+        for x in [q for n0 in a['aodb'] or [a['name']] for q in ivs.get(n0, [])]:
+            for y in [q for n1 in b['aodb'] or [b['name']] for q in ivs.get(n1, [])]:
+                if x[2] != y[2] and min(x[1], y[1]) - max(x[0], y[0]) > 600: n_ += 1
+        return n_
+    def expand_ok(s_, obs):
+        # review round 3: a whitelist of exact designators refused smaller aircraft SFO also parks there. types_ok = the
+        # observed types plus every type whose planform (engines included) at its per-family stop lies inside the
+        # envelope of the observed types (within 0.05 m): such a type cannot come closer to a neighbour than they do.
+        env = GM.envelope(s_['nose'], s_['hdg'], obs) if not s_.get('type_stops') else unary_union(
+            [GM.planform(GM.nose_for(s_, t), s_['hdg'], t) for t in obs])
+        envb = env.buffer(0.05); out = set(obs)
+        for t, r in GM.APP.items():
+            if t in out or not r['span']: continue
+            if GM.planform(GM.nose_for(s_, t), s_['hdg'], t).difference(envb).area < 0.01: out.add(t)
+        return sorted(out)
+    def is_alt(a, b):
+        return a.get('alt_of') == b['name'] or b.get('alt_of') == a['name'] or bool(a.get('alt_of') and a.get('alt_of') == b.get('alt_of'))
+    near = [(a, b) for i, a in enumerate(stands) for b in stands[i + 1:] if math.dist(a['nose'], b['nose']) <= 170]
+    how = {}
+    # Review round 4: js/live/traffic.js follows SFO's own allocation with the class limits only (standFits strict=false
+    # ignores types_ok), so a pair is judged on the "SFO path" too: every type within the class / span_max / len_max at
+    # its per-family stop. The target is the ICAO stand clearance (geom.icao_clear), not only the 3 m physical minimum:
+    #  1. no simultaneous use in SFO's plan and < 3 m -> excl (as before);
+    #  2. SFO plans both at once and < ICAO: span_max / len_max = the largest types SFO parks there (kept only if it
+    #     helps); then, for the limiting type pair, a family without its own stop on a stand that has an ADS-B-measured
+    #     stop of the same group gets that stop (INFERRED analog, e.g. E12: the A319 SFO also plans there stops where
+    #     four ADS-B 737s stop, 17.5 m short); repeated while the limiting pair changes; then types_ok (strict path);
+    #  3. whatever stays below ICAO is listed (pairs table), below 3 m on the SFO path as tight.
+    def env_sfo(s_): return GM.stand_env(dict(s_, types_ok=None))
+    def lim_pair(a_, b_):
+        best = None
+        for ta in GM.accepted_types(dict(a_, types_ok=None)):
+            pa = GM.planform(GM.nose_for(a_, ta), a_['hdg'], ta)
+            if best and pa.distance(env_sfo(b_)) >= best[0]: continue
+            for tb in GM.accepted_types(dict(b_, types_ok=None)):
+                d_ = pa.distance(GM.planform(GM.nose_for(b_, tb), b_['hdg'], tb))
+                if best is None or d_ < best[0]: best = (d_, ta, tb)
+        return best
+    def fam_code(fm):
+        sp_ = max(GM.APP[x]['span'] for x in GM.APP if GM.FAMILY.get(x) == fm and GM.APP[x]['span'])
+        return 'B' if sp_ < 24 else 'C' if sp_ < 36 else 'D+'
+    def analog(s_, t):
+        # the ADS-B-measured stop (n >= 2) of a family of the same ICAO code letter band (B / C / D-F) on this stand
+        fm0 = GM.FAMILY.get(ALIAS_T.get(t, t))
+        if not fm0: return None
+        ms = [(v['n'], fm, v) for fm, v in (s_.get('type_stops') or {}).items() if v['src'].startswith('adsb') and v['n'] >= 2 and fam_code(fm) == fam_code(fm0)]
+        return max(ms, key=lambda m: m[0]) if ms else None
+    for a, b in near:
+        if is_alt(a, b):
+            a['excl'].append(b['name']); b['excl'].append(a['name']); how[(a['name'], b['name'])] = 'alternative positions (excl)'; continue
+        need = max(icao_clear(max(REF[t]['span'] for t in GM.accepted_types(dict(x, types_ok=None)))) for x in (a, b))
+        d = min(GM.stand_env(a).distance(GM.stand_env(b)), env_sfo(a).distance(env_sfo(b)))
+        if d >= need: continue
+        sim = sim_count(a, b)
+        if not sim:
+            if d >= PHYS: continue
+            a['excl'].append(b['name']); b['excl'].append(a['name']); how[(a['name'], b['name'])] = 'excl'; continue
+        steps = []
+        keep = {id(s_): (s_['span_max'], s_['len_max']) for s_ in (a, b)}
+        for s_ in (a, b):
+            ts = [ALIAS_T.get(t, t) for t in s_['obs_types']]
+            if not ts: continue
+            sp = max(REF[t]['span'] for t in ts); L = max(REF[t]['L'] for t in ts)
+            if sp < CLASS_MAX[s_['cls']][0] - 0.6: s_['span_max'] = min(s_['span_max'] or 99, sp)
+            if L < CLASS_MAX[s_['cls']][1] - 2: s_['len_max'] = min(s_['len_max'] or 999, L)
+        d2 = env_sfo(a).distance(env_sfo(b))
+        if d2 > d + 0.05: steps.append('span_max / len_max = largest types SFO parks there'); d = d2
+        else:
+            for s_ in (a, b): s_['span_max'], s_['len_max'] = keep[id(s_)]
+        for _ in range(8):
+            if d >= need: break
+            lp = lim_pair(a, b)
+            if not lp: break
+            done = False
+            for s_, t, o_ in ((a, lp[1], b), (b, lp[2], a)):
+                fm = GM.FAMILY.get(ALIAS_T.get(t, t))
+                if not fm or fm in (s_.get('type_stops') or {}): continue
+                an = analog(s_, t)
+                if not an: continue
+                s_['type_stops'] = dict(s_.get('type_stops') or {})
+                s_['type_stops'][fm] = {'along': an[2]['along'], 'n': 0,
+                                        'src': 'inferred: analog - the %s family\'s ADS-B stop at this stand (n=%d) applied to the %s family (no %s stay here); '
+                                               'needed for the ICAO %.1f m clearance to %s, which SFO plans at the same time %d times' % (an[1], an[2]['n'], fm, fm, need, o_['name'], sim)}
+                steps.append('inferred %s stop at %s (analog of %s)' % (fm, s_['name'], an[1])); done = True
+                print('  inferred stop (pair clearance):', s_['name'], fm, an[2]['along'], 'for', o_['name'])
+                break
+            if not done: break
+            d = env_sfo(a).distance(env_sfo(b))
+        d_sfo = d
+        if d_sfo >= need:
+            how[(a['name'], b['name'])] = '%s: clear %.1f m (SFO plans both at once %d times)' % ('; '.join(steps), d_sfo, sim); continue
+        # strict path (ADS-B matching without SFO's allocation): the types SFO / ADS-B actually put there
+        if d_sfo < PHYS:
+            for s_ in (a, b):
+                if s_['obs_types']: s_['types_ok'] = expand_ok(s_, sorted(set(ALIAS_T.get(t, t) for t in s_['obs_types']) & set(GM.APP)))
+            steps.append('types_ok (strict path)')
+        d3 = GM.stand_env(a).distance(GM.stand_env(b))
+        if d_sfo > 0.0 or d3 >= PHYS:
+            how[(a['name'], b['name'])] = 'kept: SFO plans both at once %d times; %s; clearance %.1f m on SFO\'s path (class limits), %.1f m with types_ok%s' % (
+                sim, '; '.join(steps) or 'no limit helps', d_sfo, d3, ' - TIGHT (< 3 m)' if d_sfo < PHYS else ' (below ICAO)')
+            if d_sfo < PHYS:
+                a.setdefault('tight', []).append(b['name']); b.setdefault('tight', []).append(a['name'])
+                # review round 4: on SFO's path the class limits alone let these two come < 3 m apart; types_ok must hold on
+                # every path here (request static_geometry_round4.md: traffic.js standFits should honour it when set)
+                a['types_ok_all_paths'] = b['types_ok_all_paths'] = True
+            continue
+        a['excl'].append(b['name']); b['excl'].append(a['name'])
+        how[(a['name'], b['name'])] = 'excl (SFO plans both at once %d times, but even its largest types overlap)' % sim
+    pairs = []
+    for a, b in near:
+        d_data = GM.stand_env(a).distance(GM.stand_env(b)); d_sfo = env_sfo(a).distance(env_sfo(b)); d = min(d_data, d_sfo)
+        need = max(icao_clear(max(REF[t]['span'] for t in GM.accepted_types(dict(x, types_ok=None)))) for x in (a, b))
+        pairs.append((a['name'], b['name'], round(d, 1), need, sim_count(a, b), is_alt(a, b), how.get((a['name'], b['name'])), round(d_data, 1), round(d_sfo, 1)))
+        if d < 60: a['clear'][b['name']] = round(d, 1); b['clear'][a['name']] = round(d, 1)
     # ---------------------------------------------------------------- bridge poses (review round 1)
     # cab_pose: OSM maps some bridges docked (cab within 6 m of a door of a type the stand accepts), others parked.
     # stow: a rest (parked) pose for the tunnel end, clear of the envelope (+1 m) of every stand within 150 m -
@@ -755,11 +992,51 @@ def main():
         static.append((id(b), tuple(b['attach']), unary_union([wl, rot])))
     placed = []
     from shapely.prepared import prep
+    # Review round 4 (critical: F17 L1 had rested folded back 163 deg onto its own fixed walkway; major: rest poses 1.0-2.5 m
+    # from the wings of types SFO parks there; swing beyond the datasheet):
+    #  * the bridge's OWN fixed walkway (outside the rotunda disc + 0.5 m) is an obstacle;
+    #  * rotunda swing: Oshkosh sell sheet 'Rotunda swing 175 deg (87.5 cw / 87.5 ccw of centerline)'. The rotunda's
+    #    centreline (neutral axis) is set at installation and is not published for any SFO bridge, so the test is
+    #    neutral-axis-free: every direction the tunnel must take - the rest pose and the docked pose for every type the
+    #    bridge docks - must fit into ONE 175 deg arc, and that arc must not contain the direction back along the bridge's
+    #    own fixed walkway (+-25 deg; the tunnel cannot swing through the walkway);
+    #  * wings / engines / tailplane of the OBSERVED types of every stand within 150 m (at their stops) are kept clear by
+    #    the ICAO stand clearance of the type (C 4.5 m, D-F 7.5 m; geom.icao_clear); only if no such pose exists the
+    #    clearance is relaxed to 3.0 m, then 1.0 m, and the bridge is listed (`stow_clear_m` < ICAO: evidence conflict);
+    #    the envelope of every accepted type stays an obstacle (+1 m) as before;
+    #  * among the feasible poses the one nearest the OSM direction (the parked cab as mapped / imaged) is kept.
+    def dirs_of(b, pv):
+        e0, e1 = b['ext_range']; out = []
+        for t, e_, cp, sn in b.get('_acc_docks', []):
+            if e0 - 1.0 <= e_ <= e1 + 1.0 and t not in (b.get('dock_types_out') or []):
+                L_ = math.dist(pv, cp); out.append(math.degrees(math.atan2(cp[1] - pv[1], cp[0] - pv[0])))
+        return out
+    def arc_ok(angs, back):
+        # minimal arc (deg) covering all angles, and whether `back` (+-25) lies inside it
+        if not angs: return True, 0.0
+        A_ = sorted(a_ % 360 for a_ in angs); gaps = [(A_[(i + 1) % len(A_)] - A_[i]) % 360 for i in range(len(A_))]
+        if len(A_) == 1: gaps = [360.0]
+        i = int(np.argmax(gaps)); start = A_[(i + 1) % len(A_)]; width = 360.0 - gaps[i]
+        if width > 2 * GM.ROT_SWING + 1e-6: return False, width
+        if back is not None:
+            rel = (back - start) % 360
+            if rel <= width + 25 or rel >= 360 - 25: return False, width
+        return True, width
+    wing_obs = {}
+    for o in stands:
+        ot = sorted(set(ALIAS_T.get(t, t) for t in o['obs_types']) & set(GM.APP))
+        wing_obs[o['name']] = [(GM.wings(GM.nose_for(o, t), o['hdg'], t), GM.icao_clear(GM.APP[t]['span'])) for t in ot]
     for st, b in sorted(allb, key=lambda x: gkey(x[0]['name'])):
         pv = b.get('rotunda') or b['attach']
         L0 = math.dist(pv, b['cab']); u0 = ((b['cab'][0] - pv[0]) / max(L0, 1e-6), (b['cab'][1] - pv[1]) / max(L0, 1e-6))
         obst = [envs[o['name']].buffer(1.0) for o in stands if math.dist(o['nose'], pv) < 150]
         obst += [g.buffer(0.5) for i, at, g in static if i != id(b) and at != tuple(b['attach']) and g.distance(Point(pv)) < 80]
+        rr_ = max(0.0, b.get('rotunda_max_r') or GM.ROT_R)
+        # (the drum and the first 1.5 m beyond its 2.45 m radius are excluded: there the walkway and the tunnel both meet
+        # the drum; the swing-arc rule below keeps the tunnel off the walkway direction; this catches a tunnel lying ALONG
+        # the walkway - F17 L1 had rested on it with 6.4 m2 of overlap)
+        own_wl = GM.bridge_parts(b, b['cab'])[0].difference(Point(pv).buffer(max(rr_, GM.ROT_R) + 1.5))
+        if not own_wl.is_empty: obst.append(own_wl)
         # review round 3: rest poses at least 1.0 m apart (F15 L1 / L2 had rested 0.59 m apart)
         obst += [g.buffer(1.0) for g in placed if g.distance(Point(pv)) < 80]
         # review round 3: other bridges DOCKED while this one rests - a sibling on the same stand for every type this
@@ -769,30 +1046,59 @@ def main():
             if ob is b or math.dist(ob.get('rotunda') or ob['attach'], pv) > 80: continue
             for t, g in dockfp[id(ob)].items():
                 if so is st and b['door'] <= 2 and GM.dock_door(t, b['door']) is not None and t in dockfp[id(b)]: continue
-                obst.append(g.buffer(0.5))
+                obst.append(g.buffer(1.0))      # review round 4: 1.0 m like the rest-rest spacing (F15 L1 docked was 0.40 m from L2 at rest)
         O = prep(unary_union(obst))
+        WO = [(w_, c_) for o in stands if math.dist(o['nose'], pv) < 150 for w_, c_ in wing_obs[o['name']]]
+        wk = [tuple(q) for q in b.get('walk') or [] if math.dist(q, pv) > 1.0]
+        back = math.degrees(math.atan2(wk[-1][1] - pv[1], wk[-1][0] - pv[0])) if (b.get('rotunda') and wk) else None
+        ddirs = dirs_of(b, pv) if b.get('rotunda') else []
         e0, e1 = b['ext_range']; Lmin = max(GM.EXT_MIN, e0); Lmax = max(Lmin, min(30.0, e1))
         Lt = min(max(L0 if b['cab_pose'] == 'parked' else Lmin + 1.0, Lmin), Lmax)
-        cands = []
-        for dd in range(0, 181, 2):
-            for sg in ((1, -1) if dd else (1,)):
-                a = math.radians(sg * dd); u = (u0[0] * math.cos(a) - u0[1] * math.sin(a), u0[0] * math.sin(a) + u0[1] * math.cos(a))
-                for L in np.arange(Lmin, Lmax + 0.01, 1.0):
-                    cp = (pv[0] + u[0] * L, pv[1] + u[1] * L)
-                    _, _, tc = GM.bridge_parts(b, cp)
-                    tc2 = tc.difference(Point(pv).buffer(max(0.0, b.get('rotunda_max_r') or GM.ROT_R) + 0.3))
-                    # the rotunda itself is a fixed part (checked separately by check_stands); the rest pose is judged
-                    # outside the rotunda disc (review round 3: building overlap <= 0.1 m2, was 0.5)
-                    if O.intersects(tc2) or tc2.intersection(bld_poly).area > 0.1: continue
-                    cost = dd / 10 + abs(L - Lt) / 5
-                    cands.append((cost, cp, dd * sg, L, tc))
-            if cands and dd > 20 and min(c[0] for c in cands) < dd / 10: break
-        if cands:
-            c = min(cands, key=lambda c: c[0])
+        found = None
+        for level in ('icao', 3.0, 1.0):
+            OW = prep(unary_union([w_.buffer(c_ if level == 'icao' else level) for w_, c_ in WO])) if WO else None
+            cands = []
+            for dd in range(0, 181, 2):
+                for sg in ((1, -1) if dd else (1,)):
+                    a = math.radians(sg * dd); u = (u0[0] * math.cos(a) - u0[1] * math.sin(a), u0[0] * math.sin(a) + u0[1] * math.cos(a))
+                    if b.get('rotunda') and not arc_ok(ddirs + [math.degrees(math.atan2(u[1], u[0]))], back)[0]: continue
+                    for L in np.arange(Lmin, Lmax + 0.01, 1.0):
+                        cp = (pv[0] + u[0] * L, pv[1] + u[1] * L)
+                        _, _, tc = GM.bridge_parts(b, cp)
+                        tc2 = tc.difference(Point(pv).buffer(rr_ + 0.3))
+                        # the rotunda itself is a fixed part (checked separately by check_stands); the rest pose is judged
+                        # outside the rotunda disc (review round 3: building overlap <= 0.1 m2, was 0.5)
+                        if O.intersects(tc2) or tc2.intersection(bld_poly).area > 0.1: continue
+                        if OW is not None and OW.intersects(tc2): continue
+                        cost = dd / 10 + abs(L - Lt) / 5
+                        cands.append((cost, cp, dd * sg, L, tc))
+                if cands and dd > 20 and min(c[0] for c in cands) < dd / 10: break
+            if cands: found = (level, min(cands, key=lambda c: c[0])); break
+        if found:
+            level, c = found
             b['stow'] = [round(c[1][0], 2), round(c[1][1], 2)]; b['stow_turn_deg'] = c[2]; b['stow_len'] = round(float(c[3]), 1)
+            ang = math.degrees(math.atan2(c[1][1] - pv[1], c[1][0] - pv[0]))
+            b['swing_arc_deg'] = round(arc_ok(ddirs + [ang], None)[1], 1) if b.get('rotunda') else None
+            if back is not None:
+                b['stow_from_walkway_deg'] = round(180 - abs((ang - back + 180) % 360 - 180), 1)   # 0 = straight on along the walkway
+            if WO:
+                b['stow_clear_m'] = round(min(w_.distance(c[4].difference(Point(pv).buffer(rr_ + 0.3))) for w_, c_ in WO), 2)
+                if level != 'icao':
+                    b['stow_note'] = ('no rest pose clears the wings of the observed types by the ICAO clearance within the swing limit; relaxed to %.1f m '
+                                      '(evidence conflict: stop point, rotunda or rest direction)' % level)
+                    problems.append((st['name'], 'bridge %s L%d: rest pose only %.1f m from observed wings (below ICAO)' % (b['osm_id'], b['door'], b['stow_clear_m'])))
             placed.append(c[4])
         else:
-            b['stow'] = None; problems.append((st['name'], 'no stow pose for bridge %s (length %.1f-%.1f m)' % (b['osm_id'], Lmin, Lmax)))
+            # diagnostics: what blocks the OSM direction at the preferred length
+            cp = (pv[0] + u0[0] * Lt, pv[1] + u0[1] * Lt); tc2 = GM.bridge_parts(b, cp)[2].difference(Point(pv).buffer(rr_ + 0.3))
+            why = []
+            if b.get('rotunda') and not arc_ok(ddirs + [math.degrees(math.atan2(u0[1], u0[0]))], back)[0]: why.append('swing arc %.0f deg' % arc_ok(ddirs + [math.degrees(math.atan2(u0[1], u0[0]))], None)[1])
+            if any(envs[o['name']].buffer(1.0).intersects(tc2) for o in stands if math.dist(o['nose'], pv) < 150): why.append('aircraft envelope')
+            if not own_wl.is_empty and own_wl.intersects(tc2): why.append('own walkway')
+            if any(g.buffer(0.5).intersects(tc2) for i, at, g in static if i != id(b) and at != tuple(b['attach'])): why.append('other fixed parts')
+            if any(g.buffer(1.0).intersects(tc2) for g in placed): why.append('other rest poses')
+            if tc2.intersection(bld_poly).area > 0.1: why.append('building')
+            b['stow'] = None; problems.append((st['name'], 'no stow pose for bridge %s (length %.1f-%.1f m; OSM direction blocked by: %s)' % (b['osm_id'], Lmin, Lmax, ', '.join(why) or 'docked bridges')))
     for st, b in allb: b.pop('_acc_docks', None); b.pop('_obs_docks', None)
     # ---------------------------------------------------------------- remote / cargo / maintenance positions
     contact_ids = {s['osm_way']['osm_id'] for s in stands}
@@ -837,7 +1143,7 @@ def main():
         # accepted types at the stop + 3 m, clipped to the OSM aeroway=apron polygon(s) it stands on (the airside
         # apron; the GSE lane and the road beyond the wall are outside it). 'pave_outside_apron' = envelope area (m2)
         # outside those aprons (0 = the whole aircraft is on mapped apron).
-        tt = [ALIAS_T.get(t, t) for t in list(rec['types']) + [st.get('type') for st in per.values()] if t]
+        tt = [ALIAS_T.get(t, t) for t in list(rec['types']) + [eff_type(st) for st in per.values()] if t]
         tt = [t for t in tt if type_cls(t)]
         rec['cls'] = max((type_cls(t) for t in tt), key=ORDER.index) if tt else 'C'
         rec['obs_types'] = sorted(set(tt))
@@ -903,7 +1209,8 @@ def build_output(stands, remote, positions, naip_off, info, osm, unplaced=()):
             b = dict(b); b['gate'] = s['gate']      # bridge sign = the stand's gate number (not the OSM ref / AODB name)
             # review round 2: bridge geometry is OSM-traced and NOT verified on NAIP (the imaged roofs lean east ~0.54 m
             # per m of height, ~3-4 m for a bridge; the parked cab pose changes between images)
-            b['geom_src'] = 'osm (traced; not NAIP-verified)'
+            # review round 4: OSM mappers trace the ROOFS as imaged, lean included (see bridge_geom_note)
+            b['geom_src'] = 'osm (traced roofs as imaged, relief lean included - likely ~1.3-2.1 m east of the true structure; not NAIP-verified; see bridge_geom_note)'
             return b
         rec = {'name': disp[s['name']], 'alias': s['alias'], 'letter': s['name'][0], 'nose': [round(v, 2) for v in s['nose']],
                'hdg': round(s['hdg'] % 360, 2), 'cls': s['cls'], 'src': s['src'],
@@ -917,6 +1224,10 @@ def build_output(stands, remote, positions, naip_off, info, osm, unplaced=()):
                'tight_with': sorted((disp[n] for n in s.get('tight', [])), key=gkey),
                'types_ok': s.get('types_ok'), 'conflict': s.get('conflict'), 'type_stops': s.get('type_stops'), 'verified_unconfirmed': s.get('verified_unconfirmed'),
                'conflict_along': s.get('conflict_along'), 'name_note': s.get('name_note'),
+               # review round 4: NAIP fuselage-axis fit, axis conflicts, stop moves (NAIP + ADS-B), ADS-B stops that leave the
+               # wings inside the ICAO clearance of a fixed bridge part
+               'naip_axis': s.get('naip_axis'), 'conflict_axis': s.get('conflict_axis'), 'stop_move': s.get('stop_move'),
+               'fixed_clear_conflict': s.get('fixed_clear_conflict'), 'types_ok_all_paths': bool(s.get('types_ok_all_paths')),
                'resid': {'naip': {k: s['naip'][k] for k in ('resid_along', 'resid_lat')} if s.get('naip') else None,
                          'adsb': {k: s['adsb'][k] for k in ('n_aircraft', 'along_med', 'lat_med', 'dhdg_med')} if s.get('adsb') else None,
                          'paint': s.get('paint_after') or s.get('paint'),
@@ -938,7 +1249,17 @@ def build_output(stands, remote, positions, naip_off, info, osm, unplaced=()):
            'a380_stands': [r['name'] for r in out if r['a380']],
            'cab_convention': CAB_CONV,
            'bridge_models': {'source': 'Oshkosh AeroTech Jetway Glass & Steel Truss sell sheet 2025 (operational retraction / extension, rotunda centre -> cab pivot)',
-                             'models': [list(m) for m in GM.MODELS]},
+                             'models': [list(m) for m in GM.MODELS],
+                             # review round 4
+                             'note': 'INFERRED: every per-bridge `model` / `ext_range` assumes an Oshkosh AeroTech (Jetway) apron-drive unit. SFO\'s bridge '
+                                     'inventory and manufacturers are not published; other makers (e.g. TK Elevator apron drives, "range of 14 to 50 '
+                                     'meters", reference points not stated) have other ranges, so a docking beyond the Oshkosh range (A1 / A2 L2) is '
+                                     'manufacturer-dependent, not proven infeasible.'},
+           'bridge_geom_note': ('Review round 4: a bar detector on the imaged walkway roofs (59 bridges, NAIP 2024) finds the roofs a median +2.5 m '
+                                'EAST of these OSM lines (IQR +1.6..+3.2 m), while the relief model used for the aircraft (k 0.54 m/m, roof 7-8.5 m) '
+                                'predicts 3.8-4.6 m for a roof at its true position: OSM traced the leaning roofs of its own imagery, so the true '
+                                'structures are likely ~1.3-2.1 m WEST of these lines. Not corrected (the mapper\'s imagery and its lean are '
+                                'unknown); NAIP cannot resolve bridges to 1.5 m.'),
            'stands': out,
            'remote': [{'name': r['name'], 'x': r['x'], 'z': r['z'], 'hdg': r.get('hdg'), 'pos_src': r['pos_src'], 'name_src': 'sfo',
                        'verified_by': r['verified_by'], 'osm_id': r.get('osm_id'), 'cls': r.get('cls'), 'obs_types': r.get('obs_types'),

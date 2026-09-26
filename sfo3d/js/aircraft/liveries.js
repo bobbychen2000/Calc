@@ -61,3 +61,12 @@ export function neutralTextureFor(modelKey, typeKey, res = liveryRes()) {
 export const LIVERY_BRANDS = LIVERY_MANIFEST.brands || {};
 // freighter brands: no cabin windows (js/shaders/aircraft_real.js uNoCabin)
 export function brandIsCargo(brand) { return !!(brand && LIVERY_BRANDS[brand] && LIVERY_BRANDS[brand].cargo); }
+
+// design frame of the airframe a texture was baked for (tools/liveries/build.py save_frame: fuselage length L, cabin height
+// H, window centre line winY and window height winH, in model units of the stretched model) from the texture key
+// ('UAL/b738@b38m-mid.webp' -> 'b738@b38m'), else the model's own airframe
+const FRAMES = LIVERY_MANIFEST.frames || {};
+export function liveryFrame(key, modelKey) {
+  const name = key ? key.split('/').pop().replace(/-(hi|mid|lo)\.webp$/, '') : modelKey;
+  const F = FRAMES[name] || FRAMES[modelKey]; return F ? { ...F, name: FRAMES[name] ? name : modelKey } : null;
+}

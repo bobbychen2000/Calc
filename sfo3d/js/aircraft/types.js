@@ -23,6 +23,13 @@
 //         is the mean. crown = top of the fuselage at the forward fuselage (747: top of the upper deck = ACAP "A"; A380:
 //         upper deck), sill = door 1 (1L) sill; sill2 = door 2 sill where the table gives it.
 //       - dock2: number of the door the second jet bridge of a wide-body stand docks to (null: only the L1 bridge docks).
+//       - engClr: [min, max] lowest-nacelle ground clearance of the table (review round 1, read in the PDFs in
+//         refs/cache/acap): A330-300 N1 0.69-0.79 (AC A330 Dec 01/25 FIGURE-2-3-0-991-001-A01, p.73, the two weight cases);
+//         787-8 F 0.71-1.07 (D6-58333 Rev Q §2.3.1 p.2-8, GE / RR); 787-9 F 0.61-0.79 (§2.3.2 p.2-9); 747-8 P 0.73-0.96
+//         (D6-58326-3 Rev E §2.3.2 p.2-7; P identified as the inboard nacelle by magnitude: plausible, not certain);
+//         A220-300 G 0.5-0.6 (APP BD500-3AB48-32000-00 Figure 2 p.10; G = engine by magnitude). Used by js/aircraft/fit.js
+//         (compression below the centre line when the model's engines hang lower). bellyClr / tipClr / htClr: BF1 / W1 / HT
+//         of the same A330-300 table (checked by tools/models/check_dims.py; not used for the fit).
 // The runtime fit of the imported models to these numbers (scale, fuselage plugs, wing-tip span fit, seating on the door
 // sill or fuselage top, the rendered door the bridge docks to) is in js/aircraft/fit.js. Checked by tools/models/check_dims.py.
 export const TYPES = {
@@ -85,7 +92,10 @@ export const TYPES = {
     // above the fuselage centre line (eta 0.138 of the 6.17 m section); the 777-200 drawing (7772.zip) ends at 48.19 m = this
     // row with the 10.13 m shorter fuselage (derive() below)
     win: [{ x0: 8.08, x1: 58.32, sp: 0.562, w: 0.30, h: 0.41, y: 0.43 }], doors: [5.6, 17.8, 36.0, 51.0, 64.8],
-    cockpit: { style: 'boeing' } },
+    // uk 0.78: the 'boeing' pane stations compressed so the aft side window ends 5.4 m from the nose, 0.8 m ahead of the
+    // door-1 forward edge (6.15 m on the ACAP side view D6-58329-2 §2.2.2 p.2-4; review round 1: at Ln 9.5 the unscaled
+    // spec put the aft pane over the door). Pane shapes inferred, not measured on a 777 drawing.
+    cockpit: { style: 'boeing', uk: 0.78 } },
   b789: { name: 'Boeing 787-9', cls: 'E', L: 62.81, R: 2.9, top: 1.03, Hc: 5.55, Ln: 8.6, Lt: 16.5,
     wing: { span: 60.1, rootLE: 22.8, rootC: 12.4, kinkZ: 9.4, kinkC: 7.3, tipC: 1.7, sweep: 34, dihedral: 6.5, y: 0.6, tcRoot: 0.14, tcTip: 0.095, tip: 'raked', tipH: 3.5, flex: 1.6 },
     eng: [{ z: 8.9, len: 6.5, r: 1.62, y: 1.85, fwd: 3.2, chevron: true }],
@@ -181,9 +191,9 @@ export const SPEC = {
   b3xm: { doc: 'MAX', L: 43.79, span: 35.92, H: [11.91, 12.45], crown: [5.08, 5.54], sill: [2.77, 3.07], nose: 4.09, main: [22.43], track: 5.72, doors: [5.03, 36.20],
     src: '§2.2.4 p.2-12 (preliminary), §2.3.4 p.2-16, §2.7.1 p.2-26' },
   // ---- Boeing 757 (§2.3: A fuselage top, C door 1 sill; letters identified on the figure)
-  b752: { doc: 'B757', L: 47.32, span: 38.05, H: [13.49, 13.74], crown: [6.25, 6.45], sill: [3.79, 4.01], nose: 5.89, main: [24.18], track: 7.32, doors: [5.05, 13.99, 38.23],
+  b752: { doc: 'B757', spanNoTip: true, L: 47.32, span: 38.05, H: [13.49, 13.74], crown: [6.25, 6.45], sill: [3.79, 4.01], nose: 5.89, main: [24.18], track: 7.32, doors: [5.05, 13.99, 38.23],
     src: '§2.2.1 p.2-10, §2.3.1 p.2-12, §2.7.1 p.2-21 ("nose to center of door")', unv: ['span with blended winglets (STC) not in the ACAP: per airframe'] },
-  b753: { doc: 'B757', L: 54.43, span: 38.06, H: [13.56, 13.64], crown: [6.27, 6.50], sill: [3.79, 4.01], nose: 5.89, main: [28.24], track: 7.32, doors: [5.05, 13.99, 35.99, 45.34],
+  b753: { doc: 'B757', spanNoTip: true, L: 54.43, span: 38.06, H: [13.56, 13.64], crown: [6.27, 6.50], sill: [3.79, 4.01], nose: 5.89, main: [28.24], track: 7.32, doors: [5.05, 13.99, 35.99, 45.34],
     src: '§2.2.2 p.2-11, §2.3.2 p.2-13, §2.7.1 p.2-21' },
   // ---- Boeing 767 (§2.3: A fuselage top, C door 1 sill; §2.7.1 p.2-30: door 2 "OPTION ON -300, -300ER, STANDARD ON -400ER")
   b762: { doc: 'B767', L: 48.51, span: 47.57, H: [15.60, 16.13], crown: [7.16, 7.47], sill: [4.09, 4.47], nose: 4.55, main: [24.24], track: 9.30, doors: [5.70, 36.12],
@@ -205,9 +215,9 @@ export const SPEC = {
     doors: [6.76, 23.47, 42.72, 61.80], doorsOpt: [50.06], dock2: 2,
     src: 'Fig 2-1 p.2-3 (L 251 ft 9 in; nose gear 19 ft 4 in; wheelbase 106 ft 1 in; track 35 ft 6 in; ground span = folded 212 ft 9 in, extended 235 ft 5 in), Table 2-2 p.2-4 (A, B, E, Q), Table 2-3 p.2-10' },
   // ---- Boeing 787 (§2.3: A fuselage top, B door 1 sill, E door 2 sill, N vertical tail)
-  b788: { doc: 'B787', L: 56.72, span: 60.12, H: [16.59, 17.09], crown: [7.67, 8.03], sill: [4.24, 4.72], sill2: [4.39, 4.70], nose: 5.41, main: [28.19], track: 9.80, doors: [6.30, 15.32, 32.39, 43.56], dock2: 2,
+  b788: { doc: 'B787', engClr: [0.71, 1.07],  L: 56.72, span: 60.12, H: [16.59, 17.09], crown: [7.67, 8.03], sill: [4.24, 4.72], sill2: [4.39, 4.70], nose: 5.41, main: [28.19], track: 9.80, doors: [6.30, 15.32, 32.39, 43.56], dock2: 2,
     src: '§2.2.1 p.2-5, §2.3.1 p.2-8, §2.7.1 p.2-16' },
-  b789: { doc: 'B787', L: 62.81, span: 60.12, H: [16.81, 17.09], crown: [7.42, 7.82], sill: [4.24, 4.80], sill2: [4.42, 4.80], nose: 5.41, main: [31.24], track: 9.80, doors: [6.30, 18.36, 35.43, 49.66], dock2: 2,
+  b789: { doc: 'B787', engClr: [0.61, 0.79],  L: 62.81, span: 60.12, H: [16.81, 17.09], crown: [7.42, 7.82], sill: [4.24, 4.80], sill2: [4.42, 4.80], nose: 5.41, main: [31.24], track: 9.80, doors: [6.30, 18.36, 35.43, 49.66], dock2: 2,
     src: '§2.2.2 p.2-6, §2.3.2 p.2-9, §2.7.1 p.2-16' },
   b78x: { doc: 'B787', L: 68.30, span: 60.12, H: [16.89, 17.02], crown: [7.92, 8.15], sill: [4.27, 4.70], sill2: [4.47, 4.75], nose: 5.41, main: [34.29], track: 9.80, doors: [6.30, 21.41, 38.48, 55.14], dock2: 2,
     src: '§2.2.3 p.2-7, §2.3.3 p.2-10, §2.7.1 p.2-16' },
@@ -215,7 +225,7 @@ export const SPEC = {
   b744: { doc: 'B744', L: 70.67, span: 64.44, spanRange: [64.44, 64.92], H: [18.80, 19.51], crown: [9.80, 10.23], crownMain: [7.53, 7.91], sill: [4.74, 5.18], sill2: [4.80, 5.15],
     nose: 7.75, main: [33.35, 36.42], track: 11.00, trackB: 3.83, doors: [9.50, 18.80, 30.61, 40.74, 55.14], dock2: 2,
     src: '§2.2.1 p.2-14 (span 64.44 jig / 64.92 at MGW; wheelbase to wing gear), §2.3.1 p.2-17, §2.7.1 p.2-35', inf: ['trackB = 747-8 body-gear track (same body gear)'] },
-  b748: { doc: 'B748', L: 76.25, span: 68.40, H: [18.97, 19.51], crown: [9.44, 9.84], crownMain: [7.56, 7.90], sill: [4.78, 5.16], sill2: [4.87, 5.14],
+  b748: { doc: 'B748', engClr: [0.73, 0.96],  L: 76.25, span: 68.40, H: [18.97, 19.51], crown: [9.44, 9.84], crownMain: [7.56, 7.90], sill: [4.78, 5.16], sill2: [4.87, 5.14],
     nose: 7.74, main: [37.40, 40.47], track: 10.99, trackB: 3.83, doors: [9.5, 22.9, 34.7, 46.3, 60.8], dock2: 2,
     src: '§2.2.2 p.2-5 (wheelbase 97 ft 4 in to the wing gear, body gear +10 ft 1 in, body-gear track 12 ft 7 in), §2.3.2 p.2-7, §2.7.1 p.2-14' },
   // ---- Airbus A320 family (AC 2-2-0 general dims, 2-7-0 door location; ground clearances 2-3-0)
@@ -235,7 +245,7 @@ export const SPEC = {
   // ---- Airbus A330 (2-3-0 tables: D1/D2 door sills, F3 fuselage top forward; VT vertical tail)
   a332: { doc: 'AC330', L: 58.82, span: 60.30, H: [17.21, 17.73], crown: [7.56, 7.75], sill: [4.44, 4.63], sill2: [4.66, 4.86], nose: 6.67, main: [28.85], track: 10.68, doors: [5.85, 14.56, 32.77, 45.63], dock2: 2,
     src: 'FIG-2-2-0-991-002 sh.2 (post-mod 48979), FIG-2-3-0-991-001-B01 (VT1 = shorter fin), FIG-2-7-0-991-006 sh.2' },
-  a333: { doc: 'AC330', L: 63.67, span: 60.30, H: [16.72, 17.18], crown: [7.58, 7.74], sill: [4.41, 4.55], sill2: [4.67, 4.83], nose: 6.67, main: [32.05], track: 10.68, doors: [5.85, 17.74, 35.96, 50.96], dock2: 2,
+  a333: { doc: 'AC330', engClr: [0.69, 0.79], bellyClr: [1.85, 1.86], tipClr: [7.61, 7.70], htClr: [7.88, 8.09],  L: 63.67, span: 60.30, H: [16.72, 17.18], crown: [7.58, 7.74], sill: [4.41, 4.55], sill2: [4.67, 4.83], nose: 6.67, main: [32.05], track: 10.68, doors: [5.85, 17.74, 35.96, 50.96], dock2: 2,
     src: 'FIG-2-2-0-991-001 sh.1-2, FIG-2-3-0-991-001-A01, FIG-2-7-0-991-006-B01' },
   a338: { doc: 'AC330', L: 58.82, span: 64.00, H: [17.79, 18.29], crown: [7.63, 7.84], sill: [4.49, 4.71], sill2: [4.68, 4.88], nose: 6.67, main: [28.85], track: 10.68, doors: [5.85, 14.56, 32.77, 45.63], dock2: 2,
     src: 'FIG-2-2-0-991-012 p.9, FIG-2-3-0-991-036', inf: ['doors = A330-200 table'] },
@@ -252,7 +262,7 @@ export const SPEC = {
   bcs1: { doc: 'A221', L: 34.90, span: 35.10, H: [11.5, 11.5], crown: [5.31, 5.44], sill: [2.97, 3.10], nose: 3.39, main: [16.20], track: 6.70, doors: [4.94, 26.24],
     src: '§2.1 Fig 1 p.4-5 (L, span, track legible, labels lost), §3.1 Fig 2 (same clearance values as the A220-300 table)',
     inf: ['doors, main: source model door / main-gear-door objects (doorFL, doorRL, gearLdoor)', 'nose = A220-300 (same forward fuselage)', 'crown/sill = A220-300 Fig 2 A, D'], unv: ['H'] },
-  bcs3: { doc: 'A223', L: 38.69, span: 34.98, H: [11.73, 11.73], crown: [5.31, 5.44], sill: [2.97, 3.10], nose: 3.39, main: [18.70], track: 6.73, doors: [4.94],
+  bcs3: { doc: 'A223', engClr: [0.5, 0.6],  L: 38.69, span: 34.98, H: [11.73, 11.73], crown: [5.31, 5.44], sill: [2.97, 3.10], nose: 3.39, main: [18.70], track: 6.73, doors: [4.94],
     src: '§2.1 Table 5 + Fig 1, §3.1 Fig 2 p.10 (A fuselage top, D forward door sill)', inf: ['doors[0] = A220-100 model door object (same forward fuselage)'] },
   // ---- Embraer (APM §2.2 general dims, §2.3 ground clearances: (C) forward passenger door; Fig 2.2 door 0.85 m wide, 1L forward edge 4.71 m)
   e170: { doc: 'NONE', L: 29.90, span: 26.00, H: [9.67, 9.67], sill: [2.54, 2.64], nose: 4.13, main: [14.63], track: 5.20, doors: [5.14],
@@ -300,7 +310,9 @@ derive('a21n', 'a321', 'Airbus A321', { eng: [{ z: 5.75, len: 4.4, r: 1.0, y: 1.
 derive('b752', 'b753', 'Boeing 757-300');
 derive('b763', 'b762', 'Boeing 767-200'); derive('b763', 'b764', 'Boeing 767-400ER');
 derive('b77w', 'b772', 'Boeing 777-200ER', { eng: [{ z: 9.3, len: 6.6, r: 1.72, y: 2.0, fwd: 3.2 }] }); derive('b77w', 'b77l', 'Boeing 777-200LR');
-derive('b77w', 'b773', 'Boeing 777-300', { eng: [{ z: 9.3, len: 6.6, r: 1.72, y: 2.0, fwd: 3.2 }] }); derive('b77w', 'b779', 'Boeing 777-9', { eng: [{ z: 10.64, len: 7.6, r: 2.1, y: 2.2, fwd: 3.6 }] });
+derive('b77w', 'b773', 'Boeing 777-300', { eng: [{ z: 9.3, len: 6.6, r: 1.72, y: 2.0, fwd: 3.2 }] });
+// the 777-200 / -200ER / -300 wing has a plain tip (span 60.93 m, D6-58329 §2.2); only the -200LR / -300ER / 777F have raked tips
+for (const k of ['b772', 'b773']) { TYPES[k].wing = { ...TYPES[k].wing, tip: 'plain', tipH: 0 }; } derive('b77w', 'b779', 'Boeing 777-9', { eng: [{ z: 10.64, len: 7.6, r: 2.1, y: 2.2, fwd: 3.6 }] });
 derive('b789', 'b788', 'Boeing 787-8'); derive('b789', 'b78x', 'Boeing 787-10');
 derive('b748', 'b744', 'Boeing 747-400');
 derive('a359', 'a333', 'Airbus A330-300', { R: 2.82 }); derive('a333', 'a332', 'Airbus A330-200'); derive('a333', 'a339', 'Airbus A330-900neo'); derive('a332', 'a338', 'Airbus A330-800neo');

@@ -95,6 +95,7 @@ class Canvas:
         self.side = np.where(np.abs(self.z) > 0.08, np.sign(self.z), np.where(np.abs(nz) > 0.2, np.sign(nz), 1.0))
         self._windows()
         self._base_window_rims(alpha)
+        self._one_overwing_exit()
         self._fin()
         self.eng = A['eng']
         self.reset()
@@ -147,6 +148,22 @@ class Canvas:
         for y, h in {(round(w['y'], 3), round(w['h'], 3)) for w in pl['win']}:
             rim |= side & (np.abs(self.y - y) < h / 2 + 0.12) & (alpha < 0.995)
         self.detail0[rim] = 1.0; self.keep[rim] = 0.0
+
+    def _one_overwing_exit(self):
+        """737-600 / -700 on the 737-800 model: one overwing exit per side (D6-58325-7 Rev C §2.4.1-2.4.2, interior
+        arrangements p.2-21 / 2-22: one exit break per side; the -800, §2.4.4, two). The 737-800 skin detail keeps both
+        hatch outlines next to each other in the window-row gap left by the fuselage plugs (review round 1): the aft
+        outline is removed (skin detail reset in the aft half of the widest window gap over the wing)"""
+        if self.type not in ('b736', 'b737') or not self.plan['win']: return
+        ss = np.sort([w['s'] for w in self.plan['win'] if w['deck'] == 0]); L = self.L
+        if len(ss) < 5: return
+        gaps = np.diff(ss); mid = (ss[:-1] + ss[1:]) / 2
+        cand = (mid > 0.3 * L) & (mid < 0.55 * L)
+        if not cand.any(): return
+        i = np.flatnonzero(cand)[np.argmax(gaps[cand])]
+        a, b = mid[i], ss[i + 1] + 0.3
+        q = (self.part == 'fus') & (self.s > a) & (self.s < b) & (np.abs(self.y - self.winY) < 0.55 * self.H)
+        self.detail0[q] = np.maximum(self.detail0[q], 1.0); self.keep[q] = 0.0
 
     def _fin(self):
         f = self.part == 'fin'
@@ -374,6 +391,38 @@ class Canvas:
         a = smp[:, 3]; col = smp[:, :3] / np.maximum(a[:, None], 1e-6)
         self.col[inb] = self.col[inb] * (1 - a[:, None]) + col * a[:, None]
 
+    def nacelle_decal(self, img, fx=0.5, fy=0.5, height=0.45, sides='out', mode='mirror'):
+        """place an image on the side of each engine nacelle: centre fx nacelle diameters aft of the inlet lip (the
+        engine part can include the core cowl and exhaust, so the station is taken from the front) and fy of its height (0 = top), `height` as a fraction of the nacelle diameter; sides 'out'
+        (outboard face), 'in' or 'both'. mode 'mirror': the symbol faces forward on both faces."""
+        im = np.asarray(img.convert('RGBA')).astype(np.float32) / 255
+        hpx, wpx = im.shape[:2]
+        prem = im.copy(); prem[..., :3] = srgb_to_lin(prem[..., :3]) * prem[..., 3:4]
+        for j, E in enumerate(self.eng):
+            q = (self.part == 'eng') & (self.sub == j)
+            if q.sum() < 20: continue
+            s0, s1 = np.percentile(self.s[q], 1), np.percentile(self.s[q], 99)
+            y0, y1 = np.percentile(self.y[q], 1), np.percentile(self.y[q], 99)
+            hm = height * (y1 - y0); wm = hm * wpx / hpx
+            sc = s0 + fx * 2 * E['r']; yc = y1 - fy * (y1 - y0)
+            out = np.sign(E['zc']) if abs(E['zc']) > 0.5 else 1.0
+            face = np.sign(self.z - E['zc']) * out            # +1 outboard face, -1 inboard face
+            if sides == 'out': q &= face > 0
+            elif sides == 'in': q &= face < 0
+            u = (self.s - sc) / wm + 0.5
+            if mode == 'text': u = np.where(self.side > 0, 1 - u, u)
+            v = 0.5 - (self.y - yc) / hm
+            inb = q & (u > -0.01) & (u < 1.01) & (v > -0.01) & (v < 1.01)
+            if not inb.any(): continue
+            smp = sample_bilinear(prem, np.clip(u[inb], 0, 1), np.clip(v[inb], 0, 1), wrap=False)
+            a = smp[:, 3]; col = smp[:, :3] / np.maximum(a[:, None], 1e-6)
+            self.col[inb] = self.col[inb] * (1 - a[:, None]) + col * a[:, None]
+
+    def per_side(self, fn_port, fn_stbd):
+        """paint differently on the two sides (e.g. a CJK title whose character order runs from the nose on both sides):
+        fn(where) gets the side mask"""
+        fn_port(self.side <= 0); fn_stbd(self.side > 0)
+
     # ------------------------------------------------------------------ GPL source liveries
     def source_uv(self):
         """per texel: the UV of the same surface point in the ORIGINAL (pre-atlas) model, i.e. in the UV layout of the
@@ -443,6 +492,22 @@ def text_image(text, font_path, px=400, color='#000000', spacing=0.0, stretch=1.
         im = im.transform(im.size, Image.AFFINE, (1, italic_shear, -italic_shear * Hh * 0.5, 0, 1, 0), Image.BICUBIC)
     bb = im.getbbox()
     if bb: im = im.crop((max(bb[0] - 4, 0), max(bb[1] - 4, 0), min(bb[2] + 4, im.size[0]), min(bb[3] + 4, im.size[1])))
+    if stretch != 1.0: im = im.resize((max(1, int(im.size[0] * stretch)), im.size[1]), Image.LANCZOS)
+    rgb = Image.new('RGBA', im.size, tuple(int(c * 255) for c in hex_rgb(color)) + (0,))
+    rgb.putalpha(im)
+    return rgb
+
+
+def text_shaped(text, font_path, px=400, color='#000000', direction=None, pad=0.06, stretch=1.0, features=None):
+    """render a title as one shaped run (libraqm: Arabic joining and right-to-left order, CJK) as an RGBA image cropped to
+    the ink; direction 'rtl' for Arabic, None = automatic"""
+    f = ImageFont.truetype(font_path, px, layout_engine=ImageFont.Layout.RAQM)
+    bb = f.getbbox(text, direction=direction, features=features)
+    W = int(bb[2] - bb[0] + 2 * pad * px) + 8; Hh = int(bb[3] - bb[1] + 2 * pad * px) + 8
+    im = Image.new('L', (W, Hh), 0); d = ImageDraw.Draw(im)
+    d.text((pad * px - bb[0] + 4, pad * px - bb[1] + 4), text, font=f, fill=255, direction=direction, features=features)
+    b2 = im.getbbox()
+    if b2: im = im.crop((max(b2[0] - 4, 0), max(b2[1] - 4, 0), min(b2[2] + 4, im.size[0]), min(b2[3] + 4, im.size[1])))
     if stretch != 1.0: im = im.resize((max(1, int(im.size[0] * stretch)), im.size[1]), Image.LANCZOS)
     rgb = Image.new('RGBA', im.size, tuple(int(c * 255) for c in hex_rgb(color)) + (0,))
     rgb.putalpha(im)

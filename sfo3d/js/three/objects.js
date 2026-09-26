@@ -16,7 +16,7 @@
 //   - per-pane variation of roughness and a small normal tilt, so the sky reflection breaks up pane by pane as real
 //     glazing does (pane deflection), instead of one mirror.
 import { THREE, TSL } from './lib.js';
-import { hash12 } from './tsl/common.js';
+import { hash12, lampK } from './tsl/common.js';
 const { Fn, uniform, attribute, vec2, vec3, vec4, float, texture, dot, abs, max, min, mix, smoothstep, step, clamp, normalize, length, floor, fract, sin, atan, select, If, fwidth, positionWorld, cameraPosition, normalWorld, cameraViewMatrix, modelWorldMatrixInverse, exp } = TSL;
 
 const gridLine = (x, period, w) => { const f = abs(fract(x.div(period).add(0.5)).sub(0.5)).mul(period); const fw = fwidth(x).mul(0.8); return float(1.0).sub(smoothstep(w, fw.add(w), f)); };
@@ -153,7 +153,8 @@ export function objectMaterial(opts) {
     });
     // mild ground-contact AO (the old shader used 0.55; GTAO now supplies most of the contact darkening)
     ao.mulAssign(select(matId.equal(7), float(1.0), mix(float(0.78), float(1.0), smoothstep(0.0, 4.0, wp.y.sub(3.0)))));
-    const emissive = albedo.mul(emis).add(extraEmis);
+    // per-vertex emission (lamp heads etc.) in lamp units x lampK; the night terms above already carry nightE (opts.night)
+    const emissive = albedo.mul(emis).mul(lampK).add(extraEmis);
     return { albedo, rough, metal, ao, emissive, nPert, ior, spec };
   };
   // one evaluation shared by several material slots: A runs core() once per shader build (Fn.once) and keeps its

@@ -86,16 +86,18 @@ for init failures and device loss instead of its own overlay.
 ### 5.3 `js/live/app.js`: dynamic resolution
 
 Each change of the render scale reallocates every post-processing target and restarts TRAA's history. live3.html now
-quantises the requested size to 1 / 0.9 / 0.8 / 0.7 / 0.6 / 0.5 / 0.4 of the canvas and applies a new step at most
+quantises the requested size to 1 / 0.85 / 0.72 / 0.6 / 0.5 / 0.4 of the canvas and applies a new step at most
 every 8 s. The controller itself would do better with hysteresis and a GPU-time signal: its EMA measures the CPU time of
 `tick()` (engine.md §2 verifier note), so a GPU-bound phone may never trip it.
 
 ### 5.4 `js/live/app.js`: night exposure
 
-live3.html no longer uses the fixed night term of `applyEnv` (2.4): it derives the night exposure from the apron
-floodlight level (lit stand concrete at the display key, `js/three/renderer3.js NIGHT_EXPOSURE`, about 2.0), blended
-with the app's day exposure over the same darkness curve (sun +2 deg to -10 deg). Nothing to change; please keep
-`post.exposure` = the app's exposure (it is read as the day value).
+live3.html no longer uses the fixed night term of `applyEnv` (2.4). It keys the exposure on the total horizontal
+illuminance (sun + sky from the sky model, + the apron floods converted to the sky model's units, `renderer3.js
+LAMP_M`): lit concrete is placed at the display key whenever that gives more exposure than the app's day value (the
+app's `post.exposure` with its night term removed, x 1.2). The app's night floor (`R.light` floors in `applyEnv`) is
+read as lamp units and scaled the same way. Nothing to change; please keep `post.exposure` = the app's exposure and
+the floor as `max(sky, floor)` on `R.light`, or tell us when they change.
 
 ### 5.5 Liveries workflow: United 737 MAX 9 title on the window line
 

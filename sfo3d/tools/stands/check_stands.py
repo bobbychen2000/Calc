@@ -6,11 +6,14 @@ table and dock2 - and iterates over every ICAO designator the app knows. Two vie
 
   DATA   what the data specifies: every type the stand accepts (class limits, span_max / len_max, types_ok whitelist),
          each at its per-family stop point (type_stops, ADS-B evidence) - ISSUES here are defects of the data.
-  APP    what js/live/traffic.js does with it today (its standFits incl. the 'maxSpan >= 64 -> span <= 80' clause, no
-         types_ok, one nose point for every type, parking up to 25 m short of the stop, traffic.js:693-698). APP
-         findings are listed separately; they go away only with the changes requested in
-         docs/requests/static_geometry_round2.md. Bridges as rendered by js/live/gates.js (derived rotundas / rest poses)
-         are NOT modelled here (the request asks gates.js to use the data geometry checked below).
+  APP    what js/live/traffic.js does with it (review round 4: the working tree of 25 Sep 2026). For SFO's own allocation
+         standFits(g, T, icao, strict=false) ignores types_ok, so every type within the class limits / span_max / len_max
+         (types.js spans, no winglets) can be put there; the A380 / 747-8 clause applies only on `a380` stands; aircraft
+         are placed at their per-family stop (stopAlong: type_stops). A pose short of the stop that would touch an occupied
+         neighbour is sent to the stop at runtime (updatePark: tr.shortBlocked, set by GroundPhysics), so the old
+         'stop-short' combinations are no longer checked. Bridges as rendered by js/live/gates.js (derived rotundas / rest
+         poses) are NOT modelled here (docs/requests/static_geometry_round3.md / round4.md: gates.js must use the data
+         geometry checked below).
 
 DATA checks
   1. aircraft vs building (SFO Museum outlines): ISSUE when an envelope overlaps (> 0.5 m2) or comes within 2.0 m of
@@ -27,14 +30,27 @@ DATA checks
         tunnel runs rotunda -> pivot: extension outside 9.846-41.381 m -> ISSUE for observed types (obs_types) when
         more than 1.0 m outside (WARN within 1.0 m: stop-point / rotunda uncertainty), NOTE for the other accepted.
      b. cab turn beyond 150 deg -> ISSUE (observed) / NOTE; beyond 92.5 deg -> WARN.
-     c. rotunda swing (review round 2): the docked tunnel physically crossing its own fixed walkway -> ISSUE (observed
-        types) / NOTE; a tunnel more than 87.5 deg from the walkway direction -> NOTE only, because the rotunda's
-        neutral axis is not known (at the F pier the fixed walkways run along the facade and NAIP shows the parked
-        tunnels pointing away from it, i.e. the neutral axis is not the walkway direction there).
+     c. rotunda swing (review round 4; sell sheet 'Rotunda swing 175 deg (87.5 cw / 87.5 ccw of centerline)'): the
+        rotunda's centreline is set at installation and not published, so the test is neutral-axis-free - the rest pose
+        and the docked pose of every type the bridge docks must fit into ONE 175 deg arc (else ISSUE), and that arc must
+        not contain the direction back along the bridge's own fixed walkway +-25 deg (the tunnel would have to swing
+        through the walkway: ISSUE). A docked or rest tunnel more than 87.5 deg from the walkway direction is reported
+        once per bridge as a NOTE: at the F pier the walkways run along the facade and both the OSM / NAIP parked tunnels
+        (79-95 deg) and the dockings SFO operates (123-138 deg) lie beyond 87.5 deg, so the walkway is not the centreline
+        there. The docked tunnel physically crossing its own fixed walkway -> ISSUE (observed types) / NOTE.
      d. docked tunnel over the docking type's own planform, docked tunnel + cab over another non-exclusive stand's
         envelope: ISSUE.
      e. rest (stow) pose vs the envelope of every stand within 150 m (own, alternative and exclusive included) -> ISSUE;
-        no stow pose -> ISSUE; fixed walkway + rotunda inside an aircraft: ISSUE for observed types, NOTE otherwise.
+        no stow pose -> ISSUE; rest pose over its own fixed walkway (outside the drum + 1 m) -> ISSUE (review round 4);
+        rest pose closer than the ICAO clearance to the wings / engines / tailplane of an OBSERVED type -> WARN (listed
+        evidence conflict); fixed walkway + rotunda inside an aircraft: ISSUE for observed types, NOTE otherwise.
+     g. fixed walkway + rotunda vs the wings / engines / tailplane of every type the stand accepts on SFO's path (class
+        limits), at its stop (review round 4): code A-C closer than the ICAO clearance (3.0 / 4.5 m; no relief for C)
+        -> ISSUE; D-F closer than 3.0 m -> ISSUE, closer than 7.5 m -> WARN (ICAO 3.4.4(b): reducible over the part of
+        the stand with VDGS azimuth guidance; SFO's VDGS coverage is not verified).
+     h. extension (review round 4): beyond the longest Oshkosh unit (41.381 m) but within TK Elevator's published apron-
+        drive range (14-50 m, reference points not stated) -> WARN 'manufacturer-dependent' (the per-bridge models are
+        an Oshkosh-only inference); below 9.846 m (shorter than any published unit) stays an ISSUE.
      f. bridge vs bridge (fixed parts, rest poses, docked bridges of non-exclusive stands) -> ISSUE; rotundas closer
         than 4.9 m -> NOTE with the data's rotunda_max_r.
 Exit status 1 if there are DATA ISSUES.  Usage: python3 tools/stands/check_stands.py [-q] [--no-app]
@@ -42,12 +58,22 @@ Exit status 1 if there are DATA ISSUES.  Usage: python3 tools/stands/check_stand
 import json, math, os, sys
 from shapely.geometry import Polygon, LineString, Point
 from shapely.ops import unary_union
-from shapely.affinity import translate
 from common import ROOT, load_airport
 import build_stands as BS
 import geom as GM
 
-SHIFTS = (0.0, -5.0, -10.0, -15.0, -20.0, -25.0)     # traffic.js updatePark noseAlong clamp -25..0 m
+TK_MAX = 50.0   # m, TK Elevator apron-drive bridges: "range of 14 to 50 meters" (product page; reference points not stated)
+
+
+def swing_arc(angs, back, margin=25.0):
+    """(width of the smallest arc covering all directions (deg), whether `back` +-margin lies inside that arc)"""
+    if not angs: return 0.0, False
+    A = sorted(a % 360 for a in angs)
+    gaps = [(A[(i + 1) % len(A)] - A[i]) % 360 for i in range(len(A))] if len(A) > 1 else [360.0]
+    i = max(range(len(gaps)), key=lambda k: gaps[k]); start = A[(i + 1) % len(A)]; width = 360.0 - gaps[i]
+    if back is None: return width, False
+    rel = (back - start) % 360
+    return width, (rel <= width + margin or rel >= 360 - margin)
 
 
 def obs_set(s):
@@ -124,7 +150,7 @@ def main(quiet=False, app=True):
         if b.get('rotunda') and wk:
             L_ = math.dist(wk[-1], pv); wdir = ((pv[0] - wk[-1][0]) / L_, (pv[1] - wk[-1][1]) / L_)
         own_walk = GM.bridge_parts(b, b['cab'])[0].difference(Point(pv).buffer(rot_r(b) + 0.5))
-        worst = None; dock_fp[id(b)] = {}
+        worst = None; dock_fp[id(b)] = {}; dirs = []; swmax = 0.0
         # the stand itself and the alternative positions that use its bridges (B5S -> B5 ...)
         for so in [s] + sharers.get(s['name'], []):
             obs = obs_set(so); rt = GM.rv(so['hdg'])
@@ -142,7 +168,10 @@ def main(quiet=False, app=True):
                 bucket = issues if t in obs else notes
                 # review round 3: the bridge's own model range (ext_range), not 9.846-41.381 m; also without a rotunda
                 if not (e0 - 1.0 <= ext <= e1 + 1.0):
-                    if t in obs: issues.append((s['name'], '%s: extension %.1f m outside the bridge model range %.1f-%.1f m (%s)' % (tag, ext, e0, e1, b.get('model') or 'no single model')))
+                    if t in obs and GM.EXT_MAX + 1.0 < ext <= TK_MAX:
+                        warns.append((s['name'], '%s: extension %.1f m beyond every Oshkosh unit (41.4 m) - manufacturer-dependent (TK Elevator apron drives '
+                                                 'reach 50 m, reference points not stated; SFO\'s bridge makers are not published)' % (tag, ext)))
+                    elif t in obs: issues.append((s['name'], '%s: extension %.1f m outside the bridge model range %.1f-%.1f m (%s)' % (tag, ext, e0, e1, b.get('model') or 'no single model')))
                     elif t not in out_: notes.append((s['name'], '%s: extension %.1f m outside %.1f-%.1f m but not in dock_types_out' % (tag, ext, e0, e1)))
                     continue                    # it does not dock this type: the bridge stays at rest (checked below)
                 if not (e0 <= ext <= e1) and t in obs:
@@ -153,12 +182,9 @@ def main(quiet=False, app=True):
                 if abs(ang) > GM.CAB_ROT_OPT: bucket.append((s['name'], '%s: cab turn %.0f deg > %.0f' % (tag, ang, GM.CAB_ROT_OPT)))
                 elif not (-GM.CAB_CCW <= ang <= GM.CAB_CW) and not (opt and abs(ang) <= GM.CAB_OPT_HALF):
                     (warns if t in obs else notes).append((s['name'], '%s: cab turn %+.0f deg outside the standard %.1f cw / %.1f ccw (cab_option %s)' % (tag, ang, GM.CAB_CW, GM.CAB_CCW, b.get('cab_option'))))
-                if wdir:
-                    # the rotunda's neutral axis is not known (it need not be the walkway direction: at the F pier the
-                    # walkways run along the facade and the imaged tunnels point away from it); a swing beyond 87.5 deg from
-                    # the walkway is a NOTE, the tunnel physically crossing its own fixed walkway an ISSUE (below)
-                    sw = abs(GM.angle(wdir, u))
-                    if sw > GM.ROT_SWING: notes.append((s['name'], '%s: tunnel %.0f deg from the walkway direction (> %.1f; rotunda neutral axis unknown)' % (tag, sw, GM.ROT_SWING)))
+                if b.get('rotunda'):
+                    dirs.append(math.degrees(math.atan2(u[1], u[0])))
+                    if wdir: swmax = max(swmax, abs(GM.angle(wdir, u)))
                 tw = LineString([pv, cabp]).buffer(GM.TUN_W / 2, cap_style=2).difference(Point(pv).buffer(rot_r(b) + 0.5)).intersection(own_walk).area
                 if tw > 0.5: bucket.append((s['name'], '%s: docked tunnel crosses its own fixed walkway %.1f m2' % (tag, tw)))
                 wl, rot, tc = GM.bridge_parts(b, cabp)
@@ -177,6 +203,18 @@ def main(quiet=False, app=True):
                 if worst is None or ext > worst[0]: worst = (ext, tc)
         dock_fp[id(b)] = {t: unary_union(v) for t, v in dock_fp[id(b)].items()}
         if worst: docked[id(b)] = worst[1]
+        # review round 4: neutral-axis-free rotunda swing test (rest + every docking within ONE 175 deg arc, not through the
+        # walkway); the 87.5 deg-from-walkway figure is reported once per bridge as a NOTE
+        if b.get('rotunda'):
+            if b.get('stow'):
+                dirs.append(math.degrees(math.atan2(b['stow'][1] - pv[1], b['stow'][0] - pv[0])))
+                if wdir:
+                    us = ((b['stow'][0] - pv[0]), (b['stow'][1] - pv[1])); swmax = max(swmax, abs(GM.angle(wdir, us)))
+            back = math.degrees(math.atan2(-wdir[1], -wdir[0])) if wdir else None
+            width, inside = swing_arc(dirs, back)
+            if width > 2 * GM.ROT_SWING + 0.05: issues.append((s['name'], 'bridge %s L%d: rest + docked tunnel directions span %.0f deg > the 175 deg rotunda swing' % (b['gate'], b['door'], width)))
+            elif inside: issues.append((s['name'], 'bridge %s L%d: the tunnel would swing through its own fixed walkway between rest and docked' % (b['gate'], b['door'])))
+            if swmax > GM.ROT_SWING: notes.append((s['name'], 'bridge %s L%d: tunnel up to %.0f deg from the walkway direction (arc of all poses %.0f deg; the walkway is not the rotunda centreline here)' % (b['gate'], b['door'], swmax, width)))
         for o in S:
             if o is s or o['name'] in s.get('excl', []) or math.dist(o['nose'], s['nose']) > 150: continue
             if id(b) in docked and docked[id(b)].intersection(ENV[o['name']]).area > 0.5:
@@ -190,8 +228,29 @@ def main(quiet=False, app=True):
             if a_ > 0.3: issues.append((s['name'], 'bridge %s L%d fixed walkway / rotunda inside the aircraft of %s (observed types, %.1f m2)' % (b['gate'], b['door'], o['name'], a_)))
             elif fixed[id(b)].intersection(ENV[o['name']]).area > 0.3:
                 notes.append((s['name'], 'bridge %s L%d fixed walkway / rotunda inside the accepted-type envelope of %s' % (b['gate'], b['door'], o['name'])))
+        # review round 4 (g): fixed walkway + rotunda vs the wings / engines / tailplane of every type on SFO's path
+        for o in S:
+            if math.dist(o['nose'], pv) > 120: continue
+            worst_ = None
+            for t in GM.accepted_types(dict(o, types_ok=None)):
+                d_ = GM.wings(GM.nose_for(o, t), o['hdg'], t).distance(fixed[id(b)])
+                need_ = GM.icao_clear(GM.APP[t]['span'])
+                if d_ < need_ and (worst_ is None or d_ - need_ < worst_[0] - worst_[1]): worst_ = (d_, need_, t)
+            if worst_:
+                d_, need_, t = worst_
+                bad = d_ < (need_ if need_ < 7.5 else 3.0)
+                (issues if bad else warns).append((s['name'], 'bridge %s L%d fixed walkway / rotunda %.1f m from the wing / engine / tailplane of %s at %s (ICAO %.1f m%s)' % (
+                    b['gate'], b['door'], d_, t, o['name'], need_, '' if bad else '; D-F: reducible with VDGS azimuth guidance, not verified')))
         if id(b) in rest:
             rb = rest[id(b)].difference(Point(pv).buffer(rot_r(b) + 0.3))
+            ow = GM.bridge_parts(b, b['cab'])[0].difference(Point(pv).buffer(max(rot_r(b), GM.ROT_R) + 1.0)).intersection(rb).area
+            if ow > 0.5: issues.append((s['name'], 'bridge %s L%d at rest lies on its own fixed walkway (%.1f m2)' % (b['gate'], b['door'], ow)))
+            wo = [(GM.wings(GM.nose_for(o, t), o['hdg'], t).distance(rb), GM.icao_clear(GM.APP[t]['span']), t, o['name'])
+                  for o in S if math.dist(o['nose'], pv) < 150 for t in obs_set(o) & set(GM.APP)]
+            wo = [x for x in wo if x[0] < x[1]]
+            if wo:
+                x = min(wo, key=lambda x: x[0] - x[1])
+                warns.append((s['name'], 'bridge %s L%d at rest %.1f m from the wing / engine / tailplane of %s (observed) at %s (ICAO %.1f m; evidence conflict)' % (b['gate'], b['door'], x[0], x[2], x[3], x[1])))
             for o in S:
                 if math.dist(o['nose'], pv) > 150: continue
                 a_ = rb.intersection(ENV[o['name']]).area
@@ -271,26 +330,14 @@ def main(quiet=False, app=True):
     print('masts checked:', n_m)
     # ---------------------------------------------------------------- APP view (js/live/traffic.js as it is today)
     if app:
-        EA = {s['name']: GM.stand_env(s, app_rule=True, per_type=False) for s in S}
+        # SFO's allocation path (standFits strict=false): class limits / span_max / len_max, no types_ok, per-family stops
+        EA = {s['name']: GM.stand_env(s, app_rule=True, per_type=True) for s in S}
         for a, b in near:
             if b['name'] in a.get('excl', []): continue
             dd = EA[a['name']].distance(EA[b['name']])
             if dd < 3.0:
-                big = [t for t in GM.accepted_types(a, True) + GM.accepted_types(b, True) if GM.APP[t]['span'] > 65.5]
-                why = 'oversize clause (A380 / 747-8 / 777-9)' if big and GM.stand_env(a, per_type=False).distance(GM.stand_env(b, per_type=False)) >= 3.0 else 'one nose point for every type / no types_ok'
-                app_issues.append((a['name'] + '|' + b['name'], 'app parks: clearance %.1f m < 3 m (%s)' % (dd, why)))
-                continue
-            # stop-short (traffic.js parks up to 25 m short of the stop): every combination of along offsets
-            ea, eb = GM.stand_env(a, app_rule=False, per_type=False), GM.stand_env(b, app_rule=False, per_type=False)
-            fa, fb = GM.hv(a['hdg']), GM.hv(b['hdg']); worst = None
-            for sa_ in SHIFTS:
-                A_ = translate(ea, fa[0] * sa_, fa[1] * sa_)
-                for sb_ in SHIFTS:
-                    if sa_ == 0 and sb_ == 0: continue
-                    d_ = A_.distance(translate(eb, fb[0] * sb_, fb[1] * sb_))
-                    if worst is None or d_ < worst[0]: worst = (d_, sa_, sb_)
-            if worst and worst[0] < 3.0:
-                app_issues.append((a['name'] + '|' + b['name'], 'app stop-short: clearance %.1f m with %s at %+.0f m, %s at %+.0f m' % (worst[0], a['name'], worst[1], b['name'], worst[2])))
+                tt = 'types_ok bypassed on SFO\'s path' if (a.get('types_ok') or b.get('types_ok')) and ENV[a['name']].distance(ENV[b['name']]) >= 3.0 else 'class limits'
+                app_issues.append((a['name'] + '|' + b['name'], 'app (SFO allocation path) can park aircraft %.1f m apart (< 3 m; %s)' % (dd, tt)))
     print('%d stands, %d bridges (%d upper deck), %d aircraft pairs checked (excl pairs skipped); aircraft geometry: js/aircraft/types.js (%d types)' % (
         len(S), sum(len(s['bridges']) for s in S), sum(len(s.get('bridges_upper', [])) for s in S), n_pairs, len(GM.APP)))
     if not quiet:
@@ -298,7 +345,7 @@ def main(quiet=False, app=True):
         for w in warns: print('  WARN:', *w)
     print('WARNINGS:', len(warns))
     if app:
-        print('APP ISSUES (current js/live/traffic.js behaviour; need docs/requests/static_geometry_round2.md / round3.md):', len(app_issues))
+        print('APP ISSUES (current js/live/traffic.js behaviour; see docs/requests/static_geometry_round4.md):', len(app_issues))
         for x in app_issues: print('   ', *x)
     print('ISSUES:', len(issues))
     for x in issues: print('  ', *x)

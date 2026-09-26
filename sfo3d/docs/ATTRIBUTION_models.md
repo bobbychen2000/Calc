@@ -11,9 +11,11 @@ Companion of `docs/ATTRIBUTION.md` (airport data). Facts below were read on 24 S
 > non-commercial depiction of real traffic; no endorsement is implied.
 >
 > Aircraft models: FlightGear aircraft (FGMEMBERS, GPL-2.0 or later) via FlightAirMap-3dmodels (Ysurac); Boeing
-> 737-800 from FGMEMBERS/737-800 (GPL-2.0). Livery textures baked by tools/liveries from our own vector drawings on
+> 737-800 from FGMEMBERS/737-800 (GPL-2.0); Boeing 777-200ER / 777-300ER from the FlightGear 777 series (FGMEMBERS/777,
+> GPL-2.0). Livery textures baked by tools/liveries from our own vector drawings on
 > these models' textures (GPL-2.0); the Alaska Airlines 737-800 tail uses the FlightGear livery "N563AS" (GPL-2.0).
-> Fonts: Montserrat, Kanit, Nunito, Libre Baskerville, Kalam (SIL Open Font License 1.1).
+> Fonts: Montserrat, Kanit, Nunito, Libre Baskerville, Kalam, Noto Sans SC, Noto Kufi Arabic, Aref Ruqaa (SIL Open Font
+> License 1.1).
 
 The same text is requested for `js/live/about.js` in `docs/requests/liveries_brand.md` (not this workflow's file).
 
@@ -39,6 +41,7 @@ Converted by `tools/convert_models.py`, then given a livery atlas by `tools/live
 | e170, e75l, e190 | FAM `e190/glTF2/E170/E75L/E190.glb` | FGMEMBERS/E-jet-family @9a9b6d06 | License.txt (GPL-2.0) |
 | md11 | FAM `md11/glTF2/MD11.glb` | FGMEMBERS/MD-11 @c88139fc | LICENSE ("GPL v2 or later") |
 | b738 | `737-800.ac` + wing / stabiliser / winglet / nose-gear `.ac` files | FGMEMBERS/737-800 @9126249 | LICENSE (GPL-2.0) |
+| b772, b77w | `Models/777-200ER.ac`, `Models/777-300ER.ac` (+ `Liveries-200/paint1.png`, `Liveries-300/paint1.png`, `light_spot.png`, `transparent.png`) | FGMEMBERS/777 @371a354 (merge of the FGAddon original) | the GitHub mirror has no licence file; the FGAddon original, svn://svn.code.sf.net/p/flightgear/fgaddon trunk/Aircraft/777, carries `LICENSE` = GNU GPL v2 (r19240; fetched 26 Sep 2026 from https://sourceforge.net/p/flightgear/fgaddon/HEAD/tree/trunk/Aircraft/777/LICENSE); authors in `AUTHORS` (Syd Adams: 3-D models) |
 
 FAM = https://github.com/Ysurac/FlightAirMap-3dmodels @0906d9b. FlightGear repositories: https://github.com/FGMEMBERS/<name>.
 
@@ -90,6 +93,9 @@ Font License 1.1. Only rasterised letter shapes end up in the textures; the font
 | Nunito (900) | rounded lower-case titles (JetBlue, Breeze, French bee, Flair) | OFL 1.1 |
 | Libre Baskerville (700) | serif titles (Cathay Pacific, British Airways, Lufthansa, Emirates, Starlux, Qatar) | OFL 1.1 |
 | Kalam (700) | handwritten 'virgin' tail script | OFL 1.1 |
+| Noto Sans SC (700) | China Southern Chinese title | OFL 1.1 |
+| Noto Kufi Arabic (600) | Qatar Airways Arabic title | OFL 1.1 |
+| Aref Ruqaa (700) | Emirates Arabic title (calligraphic look-alike) | OFL 1.1 |
 
 The real airline wordmarks are proprietary typefaces or custom lettering; ours are look-alike substitutes, listed per
 brand in `docs/research/liveries_impl.md` §6.

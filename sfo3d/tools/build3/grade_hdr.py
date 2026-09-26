@@ -7,7 +7,8 @@ look saturation -> saturation -> vignette -> sRGB) for a set of parameters and p
 (p1, p50, p99, p99.5, p99.9) and optional previews, so the grade can be chosen against targets (review round 1: p1
 about 15-30, p99.5 about 245, sunlit white paint 235-245) without re-rendering on the CPU rasteriser.
 
-  python3 tools/build3/grade_hdr.py out/engine2/rv_real_gate_B26_60_1_14 [...] --gain 1.1 --contrast 1.2 --looksat 1.08 --sat 1.05 [--png out.png]
+  python3 tools/build3/grade_hdr.py out/engine2/rv_real_gate_B26_60_1_14 [...] --gain 0.85 --contrast 1.8 --looksat 1.0 --sat 1.0 [--png out.png] [--flip]
+(--gain multiplies the exposure stored with the dump; the dumps are bottom-up: --flip)
 """
 import argparse, json, sys
 import numpy as np
@@ -61,8 +62,8 @@ def stats(o8):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('stems', nargs='+'); ap.add_argument('--gain', type=float, default=1.0); ap.add_argument('--contrast', type=float, default=1.2)
-    ap.add_argument('--looksat', type=float, default=1.08); ap.add_argument('--sat', type=float, default=1.05); ap.add_argument('--png'); ap.add_argument('--flip', action='store_true')
+    ap.add_argument('stems', nargs='+'); ap.add_argument('--gain', type=float, default=1.0); ap.add_argument('--contrast', type=float, default=1.8)
+    ap.add_argument('--looksat', type=float, default=1.0); ap.add_argument('--sat', type=float, default=1.0); ap.add_argument('--png'); ap.add_argument('--flip', action='store_true')
     a = ap.parse_args()
     outs = []
     for st in a.stems:

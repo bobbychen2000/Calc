@@ -61,10 +61,10 @@ export function cockpitPanes(T) {
   if (T._panes) return T._panes;
   const C = T.cockpit; const S0 = SPECS[C.style] || SPECS.boeing;
   const Ln = T.Ln, R = T.R; const post = (C.post ?? S0.post) * Math.min(1.3, R / 1.9);
-  const du = C.du ?? 0, dv = C.dv ?? 0, dAdd = C.dAdd ?? 0;
+  const du = C.du ?? 0, dv = C.dv ?? 0, dAdd = C.dAdd ?? 0, uk = C.uk ?? 1;   // uk: stations of the spec scaled (777)
   const surf = (xn, th) => { const S = fuselageSection(T, xn); return [T.xMain - xn, T.Hc + S.y0 + (S.yt - S.y0) * Math.cos(th), S.w * Math.sin(th)]; };
   const corner = (c) => {
-    const xn = (c.u + du) * Ln; const S = fuselageSection(T, xn); let th;
+    const xn = (c.u * uk + du) * Ln; const S = fuselageSection(T, xn); let th;
     if (c.post) th = Math.asin(Math.min(1, post / S.w));
     else { const y = c.d != null ? S.yt - (c.d + dAdd) * R : (c.v + dv) * R; th = Math.acos(Math.max(-1, Math.min(1, (y - S.y0) / (S.yt - S.y0)))); }
     return { xn, th };

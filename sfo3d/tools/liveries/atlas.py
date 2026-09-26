@@ -602,6 +602,13 @@ def source_images(key):
         for im in images:
             try: out[im['name']] = Image.open(io.BytesIO(im['data']))
             except Exception: pass
+    elif key in ('b772', 'b77w') and key in cm.AC_MODELS:     # FlightGear 777: textures exported next to the .ac files
+        for f in cm.AC_MODELS[key][0]:
+            d = os.path.dirname(f)
+            for line in open(f, 'r', errors='replace'):
+                if line.startswith('texture '):
+                    n = line.split('"')[1]; tp = os.path.join(d, n)
+                    if os.path.basename(n) not in out and os.path.exists(tp): out[os.path.basename(n)] = Image.open(tp)
     elif key == 'b738':
         import subprocess
         repo = os.path.join(common.ROOT, 'refs', 'cache', 'src', 'fg', '737-800')
@@ -616,6 +623,15 @@ def source_images(key):
 def process(key, S=2048, preview=None, outdir=None):
     src = source_path(key)
     m = sfom.load(src)
+    # exact duplicate triangles of the source (double-sided copies: 1,897 on the FAM 747-8, 19,374 on the A380): the copy
+    # that is occluded by its twin went to another chart layer and stayed unpainted, so the renderer showed a grey band
+    # where it drew that copy first (review round 1, DLH 747-8); one copy is kept (the renderer draws both faces)
+    kq = np.round(m['pos'][m['idx']] * 1000).astype(np.int64); kq.sort(axis=1)
+    _, first = np.unique(kq.reshape(len(m['idx']), -1), axis=0, return_index=True)
+    if len(first) < len(m['idx']):
+        keep = np.zeros(len(m['idx']), bool); keep[first] = True
+        print(f'  {key}: {len(m["idx"]) - len(first)} duplicate triangles dropped')
+        m['idx'] = m['idx'][keep]; m['tri_mat'] = m['tri_mat'][keep]
     h = m['head']; A = common.app(); F = common.features()[key]
     # cabin windows: remove the artist windows the painted reference row replaces (tools/liveries/windows.py)
     wedit = edit_windows(m, key, A)
@@ -686,6 +702,7 @@ def process(key, S=2048, preview=None, outdir=None):
                       charts=[dict(p=c['part'], s=int(c['sub']), d=int(c['dir']), l=int(c['layer']), x=int(c['x']), y=int(c['y']), w=int(c['w']), h=int(c['h']),
                                    k=round(float(c['k']), 4), a0=round(float(c['lo'][0]), 4), b0=round(float(c['lo'][1]), 4), band=int(c.get('band', -1))) for c in charts],
                       source=os.path.relpath(src, common.ROOT))
+    if key in common.NORMAL_SMOOTH: N2, _ = common.smooth_normals(P2, N2, Z2, common.NORMAL_SMOOTH[key])   # lumpy nose skin
     head = write_sfom(key, h, P2, N2, UV2, Z2, tri_sorted, new_mats, draws, tex_out, atlas_meta, outdir)
     if preview:
         os.makedirs(preview, exist_ok=True)

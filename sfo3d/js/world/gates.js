@@ -59,8 +59,8 @@ export class GateSystem {
     const floorY = G + 5.4;
     const nose = stW(g.nose, G);
     const doorX = T.doors[0];
-    const sill = G + T.Hc - 0.3 * T.R;
-    const door = v3.add(v3.sub(nose, v3.mul(f, doorX + 0.5)), v3.mul(left, T.R + 0.2));
+    const sill = G + (T.dockSill ?? T.Hc - 0.3 * T.R); // published door-1 sill (js/aircraft/fit.js; docs/requests/aircraft_docking_fields.md)
+    const door = v3.add(v3.sub(nose, v3.mul(f, T.dockX1 ?? doorX)), v3.mul(left, (T.dockHW ?? T.R) + 0.15)); // door CENTRE station
     door[1] = sill;
     // docked cab center (cab depth 3.4 m, away from fuselage along left)
     const cabDock = v3.add(door, v3.mul(left, 1.9));

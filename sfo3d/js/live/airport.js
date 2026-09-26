@@ -93,9 +93,26 @@ export function standGates(stands) {
       // stop offsets along the axis ({B737: {along: -18, ...}}, m, - = short of the nose; ADS-B evidence); conflict =
       // evidence that disagrees with the stand axis (D3, D4, D8, D9)
       typesOk: s.types_ok || null, typeStops: s.type_stops || null, conflict: s.conflict || null,
+      // review round 4: types_ok must hold on SFO's allocation path too (F19 / F20: class limits alone < 3 m apart);
+      // stop points inferred from clearance / analogy carry src 'inferred: ...' in typeStops
+      typesOkAllPaths: !!s.types_ok_all_paths, conflictAxis: s.conflict_axis || null,
       nose, dir, outN: [-dir[0], -dir[1]], attach: bridges.length ? bridges[0].attach : nose, bridges, wide, len: cm.len, span: cm.span,
       bridge: bridges.length > 0, remote: false, hdg: s.hdg, world: { x: s.nose[0], z: s.nose[1], hdg: s.hdg }, empty: true, acType: null, dynamic: false,
     });
+  }
+  // Review round 4: an alternative position (B5S, B16S, C9V: data shares_bridges_of) has no bridge of its own - it
+  // boards through its base stand's bridges, which the data docks there (B5 -> B5S 24.1-24.4 m, B16 -> B16S 25.2-25.6 m,
+  // C9 -> C9V 20.6 m) and whose rest poses (stowW) clear the alternative position's aircraft. The SAME bridge objects are
+  // handed over as `sharedBridges` (never copied into `bridges`, so one bridge is still drawn once, by its base gate), and
+  // the base gate lists its alternatives in `altGates`: gates.js should dock a shared bridge to whichever of the base /
+  // alternative stand is occupied (docs/requests/static_geometry_round4.md). B11S has its own bridge; B11's bridges must
+  // still stay clear of an aircraft at B11S (the data stow does).
+  const byName = new Map(gates.map(g => [g.name, g]));
+  for (const g of gates) {
+    const base = g.sharesBridgesOf ? byName.get(g.sharesBridgesOf) : null;
+    if (!base) continue;
+    g.sharedBridges = base.bridges; g.sharedFrom = base.id;
+    (base.altGates = base.altGates || []).push(g.id);
   }
   // Remote stands (SFO names, positioned from OSM + ADS-B). Review round 3: class = the largest type SFO / ADS-B put
   // there (data `cls`, was a fixed 'E'); `paveW` = the stand's paved area (envelope of the class's types + 3 m, clipped

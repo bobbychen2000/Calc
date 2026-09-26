@@ -71,13 +71,14 @@ def tables():
         R.append('| %s | (%.1f, %.1f) hdg %s | %s | %s | %s |' % (r['name'], r['x'], r['z'], r.get('hdg'), r['pos_src'], '; '.join(r['adsb']['aircraft']),
                                                             '%.1f m' % r['osm_resid_m'] if r.get('osm_resid_m') is not None else r.get('note', '-')))
     out['remote'] = '\n'.join(R)
-    P = ['| pair | clearance m (envelope of all accepted types, final limits) | ICAO | SFO plans both at once (overlaps) | handled |', '|---|---|---|---|---|']
+    P = ['| pair | clearance m: SFO path (class limits, per-family stops) / with types_ok | ICAO | SFO plans both at once (overlaps) | handled |', '|---|---|---|---|---|']
     dn = {s['name']: s['disp'] for s in S}
     for p in sorted(B['pairs'], key=lambda p: p[2]):
         a, b, d, need, sim, alt = p[:6]
         if d >= need: continue
         how = p[6] if len(p) > 6 and p[6] else ('kept (below ICAO, above 3 m)' if d >= 3 else 'excl')
-        P.append('| %s / %s | %.1f | %.1f | %d | %s |' % (dn.get(a, a), dn.get(b, b), d, need, sim, how))
+        dd = '%.1f / %.1f' % (p[8], p[7]) if len(p) > 8 else '%.1f' % d
+        P.append('| %s / %s | %s | %.1f | %d | %s |' % (dn.get(a, a), dn.get(b, b), dd, need, sim, how))
     out['pairs'] = '\n'.join(P)
     return out
 

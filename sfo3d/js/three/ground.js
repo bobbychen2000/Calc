@@ -296,9 +296,11 @@ function makeGlyph(glyphTex) {
 // endMarkings(x, y, disp, codes, fw): x = distance from the pavement end inward, y lateral (pilot's right)
 function endMarkings(x, y, disp, codes, fw, glyph) {
   const ay = abs(y).toVar(); const m = float(0).toVar(); const xt = x.sub(disp).toVar();
-  // displaced threshold: bar, arrowhead row at +-25 / +-75 ft, centreline arrows every 55 m (HANDOFF §4, imagery-measured)
+  // threshold bar at every end (AC 150/5340-1M Chg 1, 2.9.1.2-2.9.1.5; js/shaders/ground.js): 10 ft on the landing side
+  // of the (displaced) threshold, between the edge markings - NAIP 2024 shows it at all eight SFO ends
+  m.assign(max(m, band(xt, 0.0, 3.05, fw).mul(band(ay, -1.0, 29.27, fw))));
+  // displaced threshold: arrowhead row at +-25 / +-75 ft, centreline arrows every 55 m (HANDOFF §4, imagery-measured)
   If(disp.greaterThan(1.0).and(xt.lessThan(0.0)), () => {
-    m.assign(max(m, band(xt, -3.05, 0.0, fw).mul(step(ay, 30.0))));
     const xa = xt.negate().sub(5.0);
     const hwa = xa.mul(2.3 / 12.0); const yy = min(abs(ay.sub(7.62)), abs(ay.sub(22.86)));
     m.assign(max(m, float(1.0).sub(smoothstep(hwa.sub(fw), hwa.add(fw), yy)).mul(step(0.0, xa)).mul(step(xa, 12.0))));

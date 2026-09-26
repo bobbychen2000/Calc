@@ -123,8 +123,11 @@ function centerlineBack(cls, p, dir, len, skip) {
 export function buildMarkings(details) {
   const R = new Ribbons();
   const cl = details.centerlines || [];
-  // taxiway centerlines
-  for (const p of cl) R.line(p, 3 * IN, YEL, 1);
+  // taxiway centerlines. Review round 4: lines the generator found (almost) no paint on in NAIP 2024 (paint in < 25 % of
+  // the samples, or naip_unverified: data centerlineMeta[i].drawn === false) are not painted - they stay in the data for
+  // routing (traffic.js) and for the hold / enhanced-centreline search below
+  const meta = details.centerlineMeta || [];
+  for (let i = 0; i < cl.length; i++) if (!meta[i] || meta[i].drawn !== false) R.line(cl[i], 3 * IN, YEL, 1);
   // runway holding positions + enhanced centerline + painted holding position signs
   for (const h of details.holds || []) {
     const u = h.dir, n = [-u[1], u[0]]; // u points toward the runway
@@ -163,8 +166,8 @@ export function buildMarkings(details) {
   for (const r of roadPairs) if (r.off > 10) R.line(r.pts, 3 * IN, WHT, 0.85, -3.7, [30 * FT, 10 * FT]);
   return R.mesh();
 }
-// stand markings for the surveyed contact stands: lead-in line along the mapped (possibly curved) lead-in (6 in yellow), nose-gear stop
-// bars for the stand's range of types, and the red equipment-staging boxes found in the satellite imagery
+// stand markings for the surveyed contact stands: lead-in line along the mapped (possibly curved) lead-in (6 in yellow; no stop bars -
+// none visible in NAIP 2024, review round 4) and the red equipment-staging boxes found in the satellite imagery
 export function buildStandMarks(gates, boxes = [], gridDir = null) {
   const R = new Ribbons();
   for (const g of gates) {
@@ -179,12 +182,9 @@ export function buildStandMarks(gates, boxes = [], gridDir = null) {
       const last = L[L.length - 1]; const ahead = (last[0] - nose[0]) * f[0] + (last[1] - nose[1]) * f[1];
       R.line(ahead < 1.5 ? [...L, back(-1.5)] : L, 3 * IN, YEL, 1);
     } else R.line([back(-1.5), back(g.maxLen + 28)], 3 * IN, YEL, 1);
-    // stop bars for the nose gear of small / large types on this stand (3 ft wide bars, 1 ft deep)
-    const bars = g.wide ? [5.2, 6.4] : [3.6, 5.0];
-    // extra nose-gear stop bars where ADS-B shows a family stopping short of the stand nose (data type_stops, e.g. 737s
-    // at E12 / F21; nose gear ~4.7 m behind the nose of a 737 / A320)
-    for (const k in g.typeStops || {}) { const a = g.typeStops[k].along; if (a < -2) bars.push(-a + 4.7); }
-    for (const d of bars) { const c = back(d); R.line([[c[0] - n[0] * 1.2, c[1] - n[1] * 1.2], [c[0] + n[0] * 1.2, c[1] + n[1] * 1.2]], 6 * IN, YEL, 1); }
+    // (review round 4: the nose-gear stop bars that were drawn here - two per stand plus one per type_stops family - had
+    // no source, and NAIP 2024 shows none at the empty stands checked (A2, A5, A6, A8, A13, B6, B12, C1, C4, C10, E2,
+    // E11-E13, F11, F22: lead-in paint only; SFO docks with VDGS). They are no longer drawn.)
   }
   // red boxes (data/sfo_stands.json redBoxes [x, z, side, angle]): review round 3 - each box at its own measured angle
   // (deg, x east / z south; many boxes are not grid-aligned: F pier, rotated stands) and side = the painted line's centre

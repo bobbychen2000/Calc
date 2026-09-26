@@ -10,7 +10,14 @@ What it does
      and measures the model's OWN door / landing-gear-door meshes, i.e. where the artist put the doors.
   3. Loads TYPES from js/aircraft/types.js with node, parses TYPE_MODELS / HEIGHT / MODEL_BASE from js/live/aircraft.js,
      and reproduces the runtime rules: uniform scale s = T.L / (model L + plugs), plug stretching (stretchFor), seating
-     of gear-less models from the HEIGHT table (seatType), door docking point (gates.js doorOf: door x + 0.5 m).
+     of gear-less models (js/aircraft/fit.js: sill / crown / fin, engine-clearance compression, oleo compression), the
+     bridge docking point (gates.js doorOf: door CENTRE station T.dockX1, cab floor T.dockSill, the model's own door where it
+     has one).
+  5. Rendered clearances (review round 1): lowest engine point, belly at 0.5 L, wing-tip and tailplane-tip heights, the
+     rendered door-1 sill of models with a door object against the bridge cab floor, the procedural gear-strut top against
+     the skin above the main gear (gear-less models), each against the ground-clearance tables where SPEC carries them
+     (engClr, bellyClr, tipClr, htClr). Types without an independent REF are checked against SPEC itself: those rows are
+     marked 'self' (they only prove the runtime uses SPEC, not that SPEC is right).
   4. Compares what the app renders / uses against REF (below), transcribed by hand from the manufacturer documents.
      Every value carries its document, page and figure. Values marked 'inf' are inferred (e.g. a door centre derived
      from a dimensioned door edge + door width, or scaled off a drawing) and are not treated as hard references.
@@ -272,7 +279,8 @@ for (const k in TYPES) { const T = TYPES[k]; if (k !== T.key) continue; const f 
   o.types[k] = { name: T.name, L: T.L, R: T.R, Hc: T.Hc, cls: T.cls, span: T.wing.span, main: T.gear.main.map(g => g.x), track: T.track,
     nose: T.gear.nose.x, xMain: T.xMain, doors: T.doors, dock2: T.dock2, dockX1: T.dockX1, dockX2: T.dockX2, dockSill: T.dockSill,
     dockSill2: T.dockSill2, dockHW: T.dockHW, spec: SPEC[k] || null,
-    fit: f && { model: f.model, base: f.base, s: f.s, plugs: f.plugs, stretch: f.stretch, seat: f.seat, door: f.door, renderedSpan: f.renderedSpan, renderedH: f.renderedH } };
+    fit: f && { model: f.model, base: f.base, s: f.s, plugs: f.plugs, stretch: f.stretch, seat: f.seat, door: f.door, renderedSpan: f.renderedSpan, renderedH: f.renderedH,
+      engClear: f.engClear, gearTop: f.gearTop, tipAdd: f.tipAdd } };
 }
 console.log(JSON.stringify(o));
 """
@@ -288,32 +296,19 @@ ZONE_NOFIN = (2, 3, 7)   # engine, gear, pylon (tools/convert_models.py ZONE)
 
 
 def apply_stretch(P, Z, st):
-    """Python port of js/live/models.js applyStretch (wing span fit, fin height fit, fuselage plugs), model units."""
-    P = P.copy()
-    if not st: return P
-    W, F = st.get('wing'), st.get('fin')
-    if W:
-        az = np.abs(P[:, 2]); m = (P[:, 0] >= W['xMin']) & (az > W['z0'])
-        add = np.where(az >= W['z1'], W['dz'], (az - W['z0']) * W['dz'] / (W['z1'] - W['z0']))
-        P[m, 2] += np.sign(P[m, 2]) * add[m]
-    if F:
-        m = (P[:, 0] < F['xF']) & (P[:, 1] > F['yF']) & ~np.isin(Z, ZONE_NOFIN)
-        P[m, 1] = F['yF'] + (P[m, 1] - F['yF']) * F['k']
-    if st.get('cut1') is not None:
-        x = P[:, 0].copy()
-        P[x < st['cut2'], 0] -= st['d1'] + st['d2']
-        P[(x >= st['cut2']) & (x < st['cut1']), 0] -= st['d1']
-    return P
+    """the renderer's stretch (js/live/models.js applyStretch): tools/liveries/common.py apply_stretch, which ports every
+    operation (tip fold, nacelle scale, wing span fit, fin fit, engine-clearance compression, oleo compression, fuselage
+    plugs with the aft blend); review round 1: the old local copy cut the plugs hard and ignored the blend"""
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'liveries'))
+    import common
+    return common.apply_stretch(P, Z, st)
 
 
 def xr_of(st, s):
     """model station (m aft of the nose, model units, unstretched) -> rendered metres aft of the nose"""
     def f(xa):
-        x = -xa
-        if st and st.get('cut1') is not None:
-            if x < st['cut2']: x -= st['d1'] + st['d2']
-            elif x < st['cut1']: x -= st['d1']
-        return -x * s
+        q = apply_stretch(np.array([[-xa, 0.0, 0.0]]), np.zeros(1, np.uint8), st)
+        return -float(q[0, 0]) * s
     return f
 
 
@@ -326,6 +321,17 @@ def rendered(P, Z, head, fitd, T):
     body = (Z == 0) & (np.abs(Q[:, 2]) < 0.3) & (Q[:, 0] < -0.1 * L) & (Q[:, 0] > -0.5 * L)
     out = dict(L=L * s, span=float(Q[:, 2].max() - Q[:, 2].min()) * s, H=Hc + float(Q[:, 1].max()) * s, Hc=Hc,
                crown=Hc + float(Q[body, 1].max()) * s if body.any() else None)
+    # clearances: lowest engine point (nacelle zone, else the lowest skin outboard of 1.4 fuselage half widths ahead of
+    # 0.75 L), belly at 0.5 L (lowest body point within 1 m), wing tip and tailplane tip (mean height of the outermost 2 %)
+    R0 = float(np.percentile(np.abs(Q[(Z == 0) & (np.abs(Q[:, 1]) < 0.5) & (Q[:, 0] < -0.3 * L) & (Q[:, 0] > -0.5 * L), 2]), 20)) if ((Z == 0) & (np.abs(Q[:, 1]) < 0.5)).any() else 2.0
+    eng = Q[Z == 2] if (Z == 2).sum() > 20 else Q[np.isin(Z, (0, 7)) & (np.abs(Q[:, 2]) > 1.4 * R0) & (Q[:, 0] > -0.75 * L)]
+    out['engClear'] = Hc + float(eng[:, 1].min()) * s if len(eng) else None
+    mid = (Z == 0) & (np.abs(Q[:, 0] + 0.5 * L) < 1.0) & (np.abs(Q[:, 2]) < 1.5 * R0)
+    out['belly'] = Hc + float(Q[mid, 1].min()) * s if mid.any() else None
+    wg = (Z == 0) & (Q[:, 0] > -0.75 * L); zmax = np.abs(Q[wg, 2]).max()
+    out['tipY'] = Hc + float(Q[wg & (np.abs(Q[:, 2]) > 0.98 * zmax), 1].mean()) * s
+    ht = (Q[:, 0] < -0.8 * L) & ~np.isin(Z, (1,)); hz = np.abs(Q[ht, 2]).max() if ht.any() else 0
+    out['htY'] = Hc + float(Q[ht & (np.abs(Q[:, 2]) > 0.97 * hz), 1].mean()) * s if hz else None
     if hasGear:
         g = Q[Z == 3]; bottom = g[g[:, 1] < g[:, 1].min() + 0.35]
         mains = bottom[bottom[:, 0] < -0.3 * L]; noses = bottom[bottom[:, 0] > -0.3 * L]
@@ -344,8 +350,13 @@ _E175_DOOR = ('source model: the FAM E175 has no door object; its door is the E1
               'The bridge docks at the painted door; the 3.1 m bellows covers both')
 _B738_GEAR = ('source model: the FlightGear 737-800 model\'s own main gear is 0.43 m aft of the ACAP station (nose gear +0.23 m); '
               'TYPES, ground physics and gear contact use the ACAP station, the rendered wheels are the artist\'s')
-EXPLAINED = {('E75L', 'door'): _E175_DOOR, ('E75L', 'dock'): _E175_DOOR, ('E75S', 'door'): _E175_DOOR, ('E75S', 'dock'): _E175_DOOR}
-for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR
+_B757_SPAN = ('the model carries blended winglets (most SFO 757s have them); the ACAP span 38.05 m is the plain wing, fitted up '
+              'to the winglet root (js/aircraft/fit.js WROOT); the winglets add their own extent (no primary winglet span)')
+_B738_SILL = ('the FG 737-800 artist drew door 1L 0.38-0.53 m above the published sill; the bridge meets the drawn door '
+              '(js/aircraft/fit.js dockSill of gear-seated models with a door object)')
+EXPLAINED = {('B752', 'span'): _B757_SPAN, ('B753', 'span'): _B757_SPAN,
+             ('E75L', 'door'): _E175_DOOR, ('E75L', 'dock'): _E175_DOOR, ('E75S', 'door'): _E175_DOOR, ('E75S', 'dock'): _E175_DOOR}
+for _k in ('B736', 'B737', 'B738', 'B739', 'B37M', 'B38M', 'B39M', 'B3XM'): EXPLAINED[(_k, 'mgear')] = _B738_GEAR; EXPLAINED[(_k, 'sill')] = _B738_SILL; EXPLAINED[(_k, 'doorsill')] = _B738_SILL
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -384,9 +395,16 @@ def main():
             head, P, Z = models[mk]; f = T['fit']
             rd = rendered(P, Z, head, f, T); r['render'] = rd; r['fit'] = f
             add('length (rendered)', rd['L'], R['L'])
-            add('wingspan (rendered, after span fit)', rd['span'], R['span'], key='span')
+            # + the procedural tip device (js/aircraft/fit.js TIP_ADD / TIP_LAT: sharklet 0.55 m, 737 MAX split tip 0.5 m a side)
+            add('wingspan (rendered, after span fit' + (', + ' + f['tipAdd'] if f.get('tipAdd') else '') + ')', rd['span'] + (2 * {'sharklet': 0.55, 'split': 0.5}[f['tipAdd']] if f.get('tipAdd') else 0), R['span'], key='span')
             add('height (rendered fin top)', rd['H'], R.get('H'), key='H')
             add('fuselage top above ground (rendered)', rd['crown'], R.get('crown'), pos=True, key='crown')
+            add('lowest engine point above ground (rendered)', rd['engClear'], S.get('engClr'), pos=True, key='engclr')
+            add('belly at 0.5 L above ground (rendered)', rd['belly'], S.get('bellyClr'), pos=True, key='belly')
+            add('wing tip height (rendered)', rd['tipY'], S.get('tipClr'), pos=True, key='tipy')
+            add('tailplane tip height (rendered)', rd['htY'], S.get('htClr'), pos=True, key='hty')
+            r['clear'] = dict(eng=rd['engClear'] and round(rd['engClear'], 2), belly=rd['belly'] and round(rd['belly'], 2), tip=round(rd['tipY'], 2), ht=rd['htY'] and round(rd['htY'], 2),
+                              gearTop=f.get('gearTop'))
             if rd.get('gear'):
                 add('model main gear x (rendered) vs TYPES.xMain', rd['gear']['main'], T['xMain'], pos=True, key='mgear')
                 add('model main gear x (rendered)', rd['gear']['main'], R.get('main'), pos=True, key='mgear')
@@ -403,6 +421,7 @@ def main():
                 add(f"model's own L1 door object {dm['name']} (rendered centre)", r['modelDoor']['x'], R.get('doors', {}).get(1), pos=True, key='door', inf=src_inf)
                 add(f"model's own L1 door sill (rendered)", r['modelDoor']['sill'], R.get('sill1'), pos=True, key='doorsill')
                 add('bridge dock x = rendered door object', T['dockX1'], r['modelDoor']['x'], pos=True, key='dockmesh')
+                add('bridge cab floor = rendered door-1 sill', T['dockSill'], r['modelDoor']['sill'], pos=True, key='dockfloor')
         else:
             r['procedural'] = True
             add('wingspan (procedural TYPES)', T['span'], R['span'], key='span')
@@ -417,7 +436,10 @@ def main():
         if T['dock2']:
             add(f"bridge 2 dock x, door {T['dock2']}L centre", T['dockX2'], dr.get(T['dock2']), pos=True, key='dock2')
         if T['cls'] in ('E', 'F') and not T['dock2']: r['note'] = 'wide-body without a documented second-bridge door: one bridge'
-        add('bridge cab floor vs door 1L sill', T['dockSill'], R.get('sill1'), pos=True, key='sill')
+        add('bridge cab floor vs published door-1L sill', T['dockSill'], R.get('sill1'), pos=True, key='sill')
+        if refsrc == 'SPEC':
+            for c in r['cmp']: c['self'] = True
+            r['note'] = (r.get('note') + '; ' if r.get('note') else '') + 'no independent REF: rows checked against SPEC itself (self)'
         for c in r['cmp']:
             if c['flag']: flags.append((icao, c))
         rows.append(r)
@@ -432,7 +454,7 @@ def main():
         for c in r['cmp']:
             mark = '!!' if c['flag'] and not c.get('why') else ('~~' if c['flag'] else '  ')
             print(f"      {mark} {c['what']:58s} {c['got']:8.2f} vs {c['ref']:8.2f}  d={c['delta']:+6.2f}" + (f"  {c['pct']:+5.1f}%" if c['pct'] is not None else '')
-                  + (' (ref inf)' if c.get('inf') else '') + (f"   <- {c['why']}" if c.get('why') else ''))
+                  + (' (ref inf)' if c.get('inf') else '') + (' (self)' if c.get('self') else '') + (f"   <- {c['why']}" if c.get('why') else ''))
     unexpl = [x for x in flags if not x[1].get('why')]
     print(f'\n{len(flags)} flagged items, {len(flags) - len(unexpl)} explained (~~), {len(unexpl)} unexplained (!!)')
     if a.json: json.dump(dict(rows=rows), open(a.json, 'w'), indent=1, default=float)

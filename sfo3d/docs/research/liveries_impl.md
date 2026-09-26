@@ -53,7 +53,7 @@ registration.
 Snapshot check (`data/snapshot.js`, 48 aircraft; node, the app's own modules): every airline resolves; the five SkyWest
 E175s of `docs/research/liveries.md` §1.2 get their observed brands (N510SY American Eagle, N171SY and N408SY Alaska,
 N125SY and N148SY United Express; all `obs`); one aircraft of an unknown operator gets `NEUTRAL`; the 777s (6 United,
-1 Air Canada, 1 Delta, 1 Cathay) use the procedural airframe with the brand's runtime colours.
+1 Air Canada, 1 Delta, 1 Cathay) now wear their brand bakes on the 777 artist models (§9.4).
 
 ## 2. The livery atlas (`tools/liveries/atlas.py`)
 
@@ -325,7 +325,7 @@ coloured light: unverified).
 - **Fleet transitions rendered as the new livery** (`inf`): United 2019 vs Globe (no per-tail list; `UAL-G` exists
   for overrides only), Korean 2025, Lufthansa 2018, Avianca 2023, Air India 2023 (777 only at SFO), Aeroméxico 2024
   eagle, JetBlue 2023.
-- **No model**: 777 family (procedural airframe, runtime colours), Porter E195-E2. **MD-11 tail engine** is painted with the fin (the type table has no centre engine).
+- **No model**: Porter E195-E2 (the 777 family has artist models since 26 Sep, §9.4). **MD-11 tail engine** is painted with the fin (the type table has no centre engine).
 - **Texel density** of the large models is 5–7 cm/px at 2048 (A330, A350, A380, 747-8): titles are sharp enough at
   gate distance, not in extreme close-ups.
 - **A380 textures**: licence caveat (CC-BY-NC 3.0 possible), `docs/ATTRIBUTION_models.md` §1.
@@ -532,3 +532,77 @@ Their 747F upper-deck crew windows are not modelled.
 - Window sizes come from the drawings (outline at mid-stroke); the small-scale Airbus sheets (A330) draw the windows
   as tall ovals (0.25 x 0.45 m).
 
+
+## 9. Review round 1 (26 Sep 2026): findings, fixes, rejections
+
+Adversarial reviewers checked the bakes, the renders and the fitted models (30 findings). What changed:
+
+### 9.1 Cabin windows (the owner's double-row feedback)
+
+Re-verified after the fixes of §8: one row per deck on every bake (the reviewer found no duplicate row on 12 variants and
+the 747). Blender renders of `UAL` (737-800) and `SWA` (737-700) after the full re-bake: one row (`out/liveries/UAL.png`,
+`SWA.png`). The renderer adds no procedural windows to imported models (§8.1). Two remaining items:
+- **737-600 / -700 exits**: D6-58325-7 Rev C §2.4.2 (interior arrangements, p.2-22) draws one overwing exit per side on
+  the 737-700 (§2.4.4: two on the -800). The 737-800 skin detail kept both hatch outlines in the plug-shortened gap; the
+  aft one is now removed on the b736 / b737 bakes (`paint.py _one_overwing_exit`).
+- **E195** row: still the E190 artist glass stretched (no calibrated drawing: the APMs in `refs/cache/acap` lack door
+  stations for a scale; open).
+
+### 9.2 Liveries re-drawn (positions measured on the reference photos, `refs/cache/livref`, stations as fractions of L)
+
+| Brand | Finding | Change |
+|---|---|---|
+| United Express | title too big, centred on the windows | lock-up 0.21-0.55 L, cap 0.25 H, feet on the window tops (photo N86371) |
+| Japan Airlines | tail symbol not the Tsurumaru; "stray red dot" | Tsurumaru re-drawn as vector (red disc, crane ring with feather slits, head and beak, white JAL); the "dot" is the Hinomaru flag after the title on the photo (JA864J), now drawn as a flag with its keyline — **finding partly rejected** |
+| Qatar | tail inverted, no Arabic title, no nacelle oryx | grey fin with the burgundy oryx (polygons measured on A7-AMI's fin), القطرية in Noto Kufi Arabic (shaped with libraqm) sn 0.38-0.47 above the windows, oryx on the nacelles; QATAR sn 0.12-0.33, 0.40 H |
+| UPS | empty shield, wrong body | white forward/lower body, brown aft body behind a gold sweep (crown sn 0.48 → keel sn 0.78), shield with gold border, gold bow and gold "ups" on the brown fin. The reviewer's "filled gold shield" is **not** what the photo (N627UP) shows: the shield face is brown |
+| Air France | tail stripes missing | stripes parallel to the leading edge over the whole fin (navy 0.12-0.40, 0.47-0.55, 0.60-0.64, 0.67-0.69, red 0.76-0.97 to 0.72 height), red slash after AIRFRANCE in reading order, title sn 0.135-0.385 |
+| Fiji | wrong title and tail | outline FIJI 0.6 H across the windows from door 1 with AIRWAYS below; brown fin, masi medallion, black masi bands at the tip and forward root |
+| Virgin | signature small, titles grey, no nose icon | signature 0.25 fin height rising aft with its underline; titles #2E2A48 (dark purple, measured); flying icon (figure + Union flag, strongly simplified) and type name on the nose |
+| Volaris | title on the door, black, small cross | title from the door-1 aft edge + 0.55 m to 0.462 L in navy #1A1438; volaris.com sn 0.645; the pixel cross 5 × 5 cells of 0.135 fin height low and forward (13 cells, colours sampled on the photo) |
+| China Southern, Emirates, Qatar | non-Latin titles missing | 中国南方航空 (Noto Sans SC) forward of CHINA SOUTHERN, reading from the nose on both sides as photographed (right-to-left on the starboard side); الإمارات (Aref Ruqaa) aft of Emirates; Qatar above. **China Airlines: rejected** — both photos (B-18906, B-18918, port side) show only CHINA AIRLINES; its title was moved to sn 0.305-0.46 as photographed, with the small red mark |
+| Lufthansa 747 | blotches on the nose | not texture (the atlas texels there are uniform): 1,897 exact duplicate triangles of the FAM 747-8 (double-sided copies) with opposite normals; the occluded copy sat on an unpainted chart. `atlas.py` drops exact duplicates (b748 re-atlased: 17.6 px/m instead of 14.0), `js/live/models.js` drops them at load for every model and repairs degenerate normals, the nose normals of b744 / b748 are smoothed (`common.NORMAL_SMOOTH`); Blender render clean |
+| Avianca | orange stripe | removed; the photo's coral-orange is a small wedge at the fin root (#FD653C, sampled) |
+| EVA | title too dark, green tips | title #249243 (sampled), 787 raked tips unpainted |
+
+### 9.3 Registration on every aircraft
+
+The registration is painted per aircraft at run time (`js/live/models.js registrationTexture` → `js/shaders/aircraft_real.js
+uReg*`, placed by `js/live/aircraft.js regUniforms`): two layouts in one texture (the flag stays at its end of the aircraft
+on both sides, mirrored so its canton leads), letters inked dark or white by the paint under them. Placement per brand
+(`tools/liveries/liveries.py REG`, manifest `brands.<code>.reg`) measured on the photos for United (US flag aft), United
+Express, American (flag ahead, below the windows), Delta, Southwest, Volaris (Mexican flag), JAL, Qatar, Virgin, Air France
+and UPS; every other brand (and unknown operators) uses the default (inf): 0.74 L, 0.18 H above the window line. The design
+frame of each bake (length, cabin height, window line in model units) is recorded by `build.py` (`manifest.frames`).
+Registration source: the feed's `r`, else the US N-number decoded from the ICAO address; non-US aircraft need
+`js/live/traffic.js` to pass `tr.info.reg` (`docs/requests/aircraft_models_777.md`; read through the debug hook meanwhile).
+
+### 9.4 777 family: artist models
+
+FlightGear 777-200ER and 777-300ER (FGMEMBERS/777 @371a354; GPL-2.0 per the FGAddon `LICENSE`, `docs/ATTRIBUTION_models.md`)
+converted as `b772` / `b77w` (the old JAL / BA paint of their default textures erased before neutralising), atlased
+(windows painted from the Boeing 3-view rows), oleos compressed to the published fuselage top. B772 / B773 on `b772`
+(plain tip; the TYPES table wrongly gave the -200 a raked tip: fixed), B77L / B77W / B779 on `b77w`; 777-300 / -200LR plugs
+from the main-gear change (5.34 m ahead of the wing). Bakes: United (B772, B77W), Cathay, EVA, JAL, ANA, BA, Air India,
+Air France, Korean, Air Canada, Swiss (cross added), China Eastern, Air China, Philippine. Limitation: the -200LR / 777F on
+the -300ER model keep the -300's overwing door outline in the skin detail.
+
+### 9.5 Geometry and docking (js/aircraft/fit.js, tools/models/check_dims.py)
+
+- A330 family: engines 0.12 m → 0.74 m (N1 0.69-0.79), belly 1.68 (BF1 1.85), wing tip 7.65 (W1 7.61-7.70), tailplane
+  7.98 (HT 7.88-8.09; AC A330 FIGURE-2-3-0-991-001-A01, read in the PDF): vertical compression below the centre line and a
+  wing / tailplane dihedral shear. Same mechanism for 787-9 (0.44 → 0.70), 747-8 (0.31 → 0.84), A220-300 (engine 0.55 after
+  the crown fix: the 5 m median filter ignores the dorsal hump).
+- Procedural struts of gear-less models reach 0.15 m into the model's skin (`features.under`).
+- 737: the FG model's door objects are read (doorLF 5.25 m); the bridge meets the drawn door (cab floor 3.12 m; the artist
+  drew the sill 0.38 m above the published 2.59-2.74 m: recorded, not hidden).
+- 757: plain wing fitted to the ACAP span up to the winglet root; the winglets add their own extent (39.17 m overall).
+- A320neo family: procedural sharklets (2.4 m) at the model's tip; 737 MAX: the NG winglet folded away, AT split tip,
+  nacelles scaled to the LEAP-1B fan (69.4 / 61 in). MAX tail cone and nacelle chevrons are not modelled (open).
+- Freighters by operator / type / database description (`lookup.js isFreighter`): no cabin windows; one bridge only
+  (`gates.js` `opts.freighter`, request filed). 747-400F short upper deck: not modelled (open).
+- Business jets: HondaJet unmapped (over-wing engines); generic airframe without a cabin row. E295: still a marker (no
+  primary dimensions).
+- 777 procedural glazing compressed to end 0.8 m ahead of door 1; raked-tip nav lights on the tip loft.
+- `check_dims`: engine / belly / wing-tip / tailplane clearances, rendered door sill vs cab floor, self-check marking,
+  the renderer's stretch (common.apply_stretch). Result: 24 flagged, all explained, 0 unexplained.

@@ -3,21 +3,25 @@
 // uAtlas = 1: this draw uses the model's livery atlas (tools/liveries/atlas.py); its alpha < 0.5 marks cabin-window glass
 //   painted into the atlas (models without window geometry): dark glass by day, warm cabin light at night.
 // uLivTex = 1: the atlas is a baked brand livery (data/liveries/): its colours are the paint, no zone recolouring.
-// uNoCabin = 1: freighter (brand flagged `cargo` in data/liveries/manifest): the model's cabin-window glass (kind 1 aft of
-//   the flight deck) is shaded as painted-over window plugs in the top colour, no cabin light; the baked freighter
-//   liveries paint no windows.
+// uNoCabin = 1: freighter (brand flagged `cargo`, or a freighter by operator / type / database description:
+//   js/live/aircraft.js isFreighter): the model's cabin-window glass (kind 1 aft of the flight deck) and the painted atlas
+//   windows are shaded as painted-over plugs in the top colour, no cabin light; the baked freighter liveries paint none.
+// uRegOn = 1: the aircraft's registration (js/live/models.js registrationTexture, placed by js/live/aircraft.js) is painted
+//   on the fuselage sides: uReg = (station s0 from the nose, width, centre height, row height) in model units; row 0 of
+//   uRegTex is the port-side layout, row 1 the starboard one (text reads left to right on both sides). Black texels are
+//   the letters, inked dark or white by the paint under them; coloured texels are the flag.
 export const ACR_VS = `
 #include <common>
 #include <vout>
 layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNrm; layout(location=2) in vec2 aUV; layout(location=3) in vec4 aCol; layout(location=4) in vec4 aExtra;
 uniform mat4 uModel; uniform mat4 uPrevModel; uniform float uGearUp;
-out vec3 vWP; out vec3 vN; out vec2 vUV; out vec3 vLP; flat out vec4 vMat; flat out vec4 vMat2;
+out vec3 vWP; out vec3 vN; out vec2 vUV; out vec3 vLP; out vec3 vLN; flat out vec4 vMat; flat out vec4 vMat2;
 void main(){
   int zone = int(aExtra.x + 0.5);
   vec3 p = aPos;
   if (uGearUp > 0.5 && (zone == 3 || zone == 4)) p = vec3(0.0); // retracted gear & open gear doors collapse away
   vec4 wp = uModel * vec4(p, 1.0);
-  vWP = wp.xyz; vN = normalize(mat3(uModel) * aNrm); vUV = aUV; vLP = aPos;
+  vWP = wp.xyz; vN = normalize(mat3(uModel) * aNrm); vUV = aUV; vLP = aPos; vLN = aNrm;
   vMat = aCol; vMat2 = aExtra;
   vec4 pwp = uPrevModel * vec4(p, 1.0);
   emitClip(wp.xyz, pwp.xyz);
@@ -27,13 +31,14 @@ export const ACR_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
-in vec3 vWP; in vec3 vN; in vec2 vUV; in vec3 vLP; flat in vec4 vMat; flat in vec4 vMat2;
+in vec3 vWP; in vec3 vN; in vec2 vUV; in vec3 vLP; in vec3 vLN; flat in vec4 vMat; flat in vec4 vMat2;
 uniform sampler2D uAlbedo; uniform float uHasTex; uniform vec4 uFusB; // crown, belly, cockpit-glass x threshold, cabin light
 uniform vec3 uLivTop; uniform vec3 uLivBelly; uniform vec3 uLivTail; uniform vec3 uLivTail2; uniform vec3 uLivEngine; uniform vec4 uLivStripe;
 uniform float uBellyLine; uniform float uTailStyle; uniform float uDirt; uniform float uAtlas; uniform float uLivTex; uniform float uNoCabin;
 uniform vec4 uFus;   // R, Rz, tailX, length (model units)
 uniform float uLights; // 1 = landing/taxi lights on (lens glow)
 uniform float uSel;    // selection highlight
+uniform sampler2D uRegTex; uniform vec4 uReg; uniform float uRegOn; // registration decal (see header)
 vec3 glassRefl(vec3 Ng, vec3 V, float sh, float F0, out float F){
   float NoV = clamp(dot(Ng, V), 1e-3, 1.0);
   F = F0 + (1.0 - F0) * pow(1.0 - NoV, 5.0);
@@ -63,7 +68,8 @@ void main(){
     emis *= uFusB.w;
   }
   bool plug = kind == 0 && vMat2.y > 0.5 && vMat2.y < 7.5;        // (a kind-1 glass vertex turned into a freighter plug)
-  float winA = (uAtlas > 0.5 && kind == 0 && !plug) ? 1.0 - smoothstep(0.35, 0.6, tx.a) : 0.0;   // painted cabin window
+  float winA0 = (uAtlas > 0.5 && kind == 0 && !plug) ? 1.0 - smoothstep(0.35, 0.6, tx.a) : 0.0;   // painted cabin window
+  float winA = uNoCabin > 0.5 ? 0.0 : winA0;                    // freighter: no cabin windows (painted over below)
   if (plug) {
     albedo = uLivTop;
   } else if (kind == 0 && uLivTex > 0.5) {
@@ -97,6 +103,21 @@ void main(){
     }
     albedo *= 1.0 - uDirt * 0.18 * smoothstep(-0.3, -0.9, vLP.y / max(uFus.x, 0.5));
   } else if (kind == 2) { rough = 0.28; metal = 0.9; albedo = max(albedo, vec3(0.55)); }
+  if (uNoCabin > 0.5 && winA0 > 0.01) albedo = mix(albedo, uLivTop, winA0);   // freighter: window texels in the body colour
+  if (uRegOn > 0.5 && kind == 0 && zone == 0 && !plug && winA < 0.5 && abs(vLN.z) > 0.45) {
+    float st = -vLP.x; bool stb = vLP.z > 0.0;
+    float u = (st - uReg.x) / uReg.y; if (stb) u = 1.0 - u;
+    float v = (uReg.z + 0.5 * uReg.w - vLP.y) / uReg.w;
+    if (u > 0.0 && u < 1.0 && v > 0.0 && v < 1.0) {
+      vec4 r = texture(uRegTex, vec2(u, (v + (stb ? 1.0 : 0.0)) * 0.5));
+      if (r.a > 0.004) {
+        vec3 c = r.rgb;                                    // straight (not premultiplied) alpha
+        bool ink = max(c.r, max(c.g, c.b)) < 0.03;
+        vec3 inkC = dot(albedo, vec3(0.2126, 0.7152, 0.0722)) > 0.22 ? vec3(0.025, 0.027, 0.032) : vec3(0.86, 0.87, 0.88);
+        albedo = mix(albedo, ink ? inkC : c, r.a);
+      }
+    }
+  }
   else if (kind == 3) { rough = 0.7; }
   float sh = getShadow(wp, N, dist) * cloudShadow(wp);
   float ao = mix(0.72, 1.0, smoothstep(-0.7, 0.3, N.y));

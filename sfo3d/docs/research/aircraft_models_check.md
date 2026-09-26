@@ -51,7 +51,7 @@ object also its rendered centre and sill, and dock x = rendered door. The E-Jet 
 
 Still open (unchanged from §10): E2 and A318/CRJ1000/777-8 documents; A220 door stations (ACP not obtainable, the A220
 doors are the A220-100 model's door objects, inf); per-airframe A321neo door layout (4-door vs ACF) and 757/767 winglet
-STCs; A380 texture licence; the 777 family has no artist model (procedural airframe). Headless check (snapshot mode,
+STCs; A380 texture licence; the 777 family has no artist model (procedural airframe) [26 Sep 2026: superseded — FlightGear 777-200ER / -300ER models, docs/research/liveries_impl.md §9.4]. Headless check (snapshot mode,
 SOFTGL, 24 Sep 2026): the app loads with no page errors, all 39 model-backed aircraft of the snapshot decode with their
 stretches (plugs/wing/fin), and every docked bridge's door point coincides with the door computed from the drawn aircraft's
 world matrix.

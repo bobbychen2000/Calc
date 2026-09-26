@@ -153,11 +153,104 @@ def on_runway(p, margin=0.0):
         if -3 < al < R['len'] + 3 and abs(cr) < RWY_HW + margin: return True
     return False
 
+from shapely.geometry import Point as _SPt0, LineString as _SLS0
+from shapely.prepared import prep as _prep0
+from shapely.ops import unary_union as _suu0
+
+
+def window_corr(ss, offs, min_shift=0.5, mad_max=0.4, clip=None, strict_big=True):
+    """per-sample lateral correction from the measured paint offsets (review round 4). For each sample, the samples
+    within +-3 (7-sample window) that found paint: at least 4 needed; a LOCAL LINE offset(s) is fitted (a curve whose
+    offset changes along it - the paint curving away from the OSM way - has a large spread about its median but a small
+    one about the line; round 4: centreline D 23718492 stayed 1.4-2.3 m off over 46 m, edge runs 1.5-2.8 m off). The
+    correction is the line's value at the sample when the residual MAD < mad_max, the slope < 0.15 (8.5 deg) and
+    |value| > min_shift. A correction above 1.5 m needs the full window with paint and MAD < 0.25 (review round 2: a
+    zig-zag where the paint ends)."""
+    masked = np.isinf(offs); offs = np.where(masked, np.nan, offs)
+    corr = np.zeros(len(ss))
+    for i in range(len(ss)):
+        sl = slice(max(0, i - 3), i + 4); v = offs[sl]; sv = ss[sl]; ok = ~np.isnan(v); v, sv = v[ok], sv[ok]
+        if len(v) < 4: continue
+        m_ = float(np.median(v)); mad0 = float(np.median(np.abs(v - m_)))
+        val, mad = m_, mad0
+        if len(v) >= 5 and mad0 >= 0.1:
+            b_, a_ = np.polyfit(sv - ss[i], v, 1); r_ = v - (a_ + b_ * (sv - ss[i])); mad1 = float(np.median(np.abs(r_)))
+            if mad1 < mad0 and abs(b_) < 0.15: val, mad = float(a_), mad1
+        if mad < mad_max and abs(val) > min_shift: corr[i] = val if clip is None else float(np.clip(val, -clip, clip))
+        if strict_big and abs(corr[i]) > 1.5 and (len(v) < 7 or mad >= 0.25): corr[i] = 0.0
+    if len(corr) >= 3:
+        # smooth: running median over 3, then a 5-sample moving average (no step between corrected and kept parts)
+        cm = np.array([np.median(corr[max(0, i - 1):i + 2]) for i in range(len(corr))])
+        corr = np.array([cm[max(0, i - 2):i + 3].mean() for i in range(len(cm))])
+        corr[np.abs(corr) < 0.05] = 0.0
+    # masked samples (hold-bar zones) take the correction interpolated between their unmasked neighbours
+    if masked.any() and (~masked).sum() >= 2:
+        corr[masked] = np.interp(ss[masked], ss[~masked], corr[~masked])
+    return corr
+
+
+def measure(P, S, T, ss, half=3.5, avg=4.0, thr=0.6, skip=None):
+    """paint offset per sample; `skip` (prepared shapely geometry): samples inside it are not measured (review round 4:
+    the taxiway edge runs were pulled 2-3 m onto the runway holding-position ladders and their sign boxes)"""
+    offs = np.full(len(ss), np.nan)
+    for i, s_ in enumerate(ss):
+        p = np.array([np.interp(s_, S, P[:, 0]), np.interp(s_, S, P[:, 1])]); t = np.array([np.interp(s_, S, T[:, 0]), np.interp(s_, S, T[:, 1])])
+        t /= max(1e-9, np.hypot(*t))
+        if skip is not None and skip.contains(_SPt0(float(p[0]), float(p[1]))): offs[i] = np.inf; continue   # masked (inf)
+        r = YEL.cross_peak(p, t, half=half, avg=avg, step=0.1, min_contrast=10.0)
+        if r and r[2] < thr * r[1]: offs[i] = r[0]
+    return offs
+
+
+def trace_paint(a, b, step=2.0):
+    a, b = np.asarray(a, float), np.asarray(b, float); t = (b - a) / np.linalg.norm(b - a)
+    p = a.copy(); pts = [p.copy()]; acc = []; n_ok = 0; n_all = 0; L0 = np.linalg.norm(b - a)
+    for _ in range(int(1.4 * L0 / step)):
+        q = p + t * step
+        if np.linalg.norm(q - b) < step * 1.2: pts.append(b.copy()); break
+        if not on_runway(q, 3.0):
+            n_all += 1
+            r = YEL.cross_peak(q, t, half=2.5, avg=3.0, step=0.1, min_contrast=10.0)
+            if r and r[2] < 0.6 * r[1]:
+                q = q + np.array([-t[1], t[0]]) * r[0]; acc.append(q.copy()); n_ok += 1
+                if len(acc) >= 5:
+                    A = np.array(acc[-5:]); d = A[-1] - A[0]
+                    if np.linalg.norm(d) > 4: t = d / np.linalg.norm(d)
+        # never wander: keep heading within 25 deg of the locator direction (the painted lines here are near straight)
+        g = (b - q) / np.linalg.norm(b - q)
+        if t @ g < math.cos(math.radians(25)): t = g
+        p = q; pts.append(p.copy())
+    return np.array(pts), n_ok, n_all
+
+# Review round 4: OSM ways whose END leaves the painted route (centreline T, OSM 23718429: from x ~ -480 it cuts
+# diagonally across the taxiway edge marking and the striped non-movement shoulder to the runway edge, while the paint
+# runs straight on at z -387..-383 to the runway edge at x ~ -655, measured with Yellow.cross_peak every 15 m: -384.8
+# (x -460), -387.8 (-520), -385.7 (-580), -383.7 (-625), -382.2 (-655)). The way is cut at `cut` (the vertex nearest to
+# it; the part beyond is dropped) and continued by a trace on the paint (trace_paint, as PAINT_TRACES) to `to`.
+PAINT_REROUTES = {
+    23718429: {'cut': (-470.0, -384.9), 'to': (-664.0, -381.9), 'why': 'OSM way end cuts across the striped shoulder; the painted centreline runs straight to the runway (review round 4, crop cl16_wide)'},
+}
+
 centerlines, cl_meta = [], []
 n_samp = n_peak = 0; corr_len = tot_len = 0.0; resid_before, resid_after = [], []
 for w in OSM['taxiways']:
     if w['tags'].get('construction') == 'yes' or len(w['pts']) < 2: continue
     Pw = densify([geo_frame.wgs84_to_world(la, lo) for la, lo in w['pts']], 2.0)
+    rr_note = None
+    if w['id'] in PAINT_REROUTES:
+        R_ = PAINT_REROUTES[w['id']]; k_ = int(np.argmin(np.hypot(*(Pw - np.array(R_['cut'])).T)))
+        # keep the part on the far side of the cut from `to`
+        head, tail = Pw[:k_ + 1], Pw[k_:]
+        rev = np.hypot(*(head[0] - np.array(R_['to']))) <= np.hypot(*(tail[-1] - np.array(R_['to'])))
+        keep_part, rest = (tail[::-1], head[::-1]) if rev else (head, tail)
+        tr_, n_ok_, n_all_ = trace_paint(keep_part[-1], R_['to'])
+        # the way beyond the runway it crosses is kept: from its first point on runway pavement on (that part is cut
+        # out below; the runway-crossing lead-on is not a taxiway centreline) - it carries the far side's hold
+        onr = [i for i, q in enumerate(rest) if on_runway(q)]
+        far = rest[onr[0]:] if onr else rest[:0]
+        assert on_runway(np.array(R_['to'])), 'reroute target must lie on the runway it joins'
+        Pw = np.vstack([densify(np.vstack([keep_part, tr_[1:]]), 2.0)] + ([densify(far, 2.0)] if len(far) >= 2 else []))
+        rr_note = 'rerouted: %s; traced part paint %d/%d samples' % (R_['why'], n_ok_, n_all_)
     keep = np.array([not on_runway(p) for p in Pw])
     runs, cur = [], []
     for p, k in zip(Pw, keep):
@@ -169,26 +262,10 @@ for w in OSM['taxiways']:
         if len(P) < 3 or arclen(P)[-1] < 6: continue
         S = arclen(P); T = tangents(P)
         ss = np.arange(2.0, S[-1] - 1.0, 4.0) if S[-1] > 4 else np.array([S[-1] / 2])
-        offs = np.full(len(ss), np.nan)
-        for i, s_ in enumerate(ss):
-            p = np.array([np.interp(s_, S, P[:, 0]), np.interp(s_, S, P[:, 1])]); t = np.array([np.interp(s_, S, T[:, 0]), np.interp(s_, S, T[:, 1])])
-            r = YEL.cross_peak(p, t, half=3.5, avg=4.0, step=0.1, min_contrast=10.0); n_samp += 1
-            if r and r[2] < 0.6 * r[1]: offs[i] = r[0]; n_peak += 1
-        corr = np.zeros(len(ss))
-        for i in range(len(ss)):
-            v = offs[max(0, i - 3):i + 4]; v = v[~np.isnan(v)]
-            if len(v) >= 4:
-                m = float(np.median(v))
-                if np.median(np.abs(v - m)) < 0.4 and abs(m) > 0.5: corr[i] = m
-                # review round 2 (centreline 24, OSM 23718492: a 3 m zig-zag where the paint curves away from the OSM
-                # way and then ends): a correction above 1.5 m needs the full 7-sample window (24 m) with paint and a
-                # tight spread (MAD < 0.25 m); otherwise the OSM geometry is kept at that sample
-                if abs(corr[i]) > 1.5 and (len(v) < 7 or np.median(np.abs(v - m)) >= 0.25): corr[i] = 0.0
-        if len(corr) >= 3:
-            # smooth: running median over 3, then a 5-sample moving average (no step between corrected and kept parts)
-            cm = np.array([np.median(corr[max(0, i - 1):i + 2]) for i in range(len(corr))])
-            corr = np.array([cm[max(0, i - 2):i + 3].mean() for i in range(len(cm))])
-            corr[np.abs(corr) < 0.05] = 0.0
+        offs = measure(P, S, T, ss); n_samp += len(ss); n_peak += int((~np.isnan(offs)).sum())
+        # (review round 2, centreline 24 / OSM 23718492: a correction above 1.5 m needs the full 7-sample window (24 m)
+        # with paint and MAD < 0.25 m - inside window_corr)
+        corr = window_corr(ss, offs, 0.5)
         good = ~np.isnan(offs)
         # review round 3 (centrelines OSM 1096199967 / 155702566: the paint lies ~2 m off along a curve, the offset
         # changes along it, so no 7-sample window has MAD < 0.25 m and nothing was corrected although the generator had
@@ -213,14 +290,28 @@ for w in OSM['taxiways']:
         c_pts = np.interp(S, ss, corr) if len(ss) > 1 else np.full(len(S), corr[0])
         N = np.stack([-T[:, 1], T[:, 0]], 1)
         Q = P + N * c_pts[:, None]
+        # review round 4: second pass on the corrected line (the +-3.5 m search is now centred on it): residual offsets
+        # the first pass could not reach (a curve drifting > 3.5 m, windows split by a gap) are corrected the same way
+        if np.any(np.abs(c_pts) > 0.01):
+            S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss); c2 = window_corr(ss, o2, 0.5)
+            if np.any(np.abs(c2) > 0.01):
+                c2p = np.interp(S2, ss, c2) if len(ss) > 1 else np.full(len(S2), c2[0])
+                Q = Q + np.stack([-T2[:, 1], T2[:, 0]], 1) * c2p[:, None]; c_pts = c_pts + c2p; corr = corr + c2
         tot_len += S[-1]; corr_len += float(np.sum((np.abs(c_pts[1:]) > 0.01) * np.diff(S)))
-        resid_before += list(np.abs(offs[good])); resid_after += list(np.abs(offs[good] - corr[good]))
+        o3 = measure(Q, arclen(Q), tangents(Q), ss) if np.any(np.abs(c_pts) > 0.01) else offs      # review round 4: residual on the final line
+        g3 = ~np.isnan(o3)
+        resid_before += list(np.abs(offs[good])); resid_after += list(np.abs(o3[g3]))
         a = cv2.approxPolyDP(Q.astype(np.float32).reshape(-1, 1, 2), 0.12, False)[:, 0, :]
         centerlines.append([[round(float(x), 2), round(float(z), 2)] for x, z in a])
-        cl_meta.append({'osm_id': w['id'], 'ref': w['tags'].get('ref'), 'src': 'osm+naip' if np.any(np.abs(c_pts) > 0.01) else 'osm',
+        # review round 4: a line with paint in < 25 % of its samples (or naip_unverified) is kept for routing but not
+        # drawn: NAIP shows no (or no consistent) centreline paint there (round 4: ~2 km of yellow on bare pavement)
+        drawn = not ((len(ss) and good.sum() < 0.25 * len(ss)) or (fit_note and fit_note.startswith('naip_unverified')))
+        cl_meta.append({'osm_id': w['id'], 'ref': w['tags'].get('ref'), 'src': ('osm+naip' if np.any(np.abs(c_pts) > 0.01) else 'osm') + ('+naip_trace' if rr_note else ''),
+                        'drawn': bool(drawn), **({'reroute': rr_note} if rr_note else {}),
                         'naip_samples': int(len(ss)), 'naip_peaks': int(good.sum()),
                         'naip_med_abs_off': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
-                        'naip_resid_after': round(float(np.median(np.abs(offs[good] - corr[good]))), 2) if good.any() else None,
+                        'naip_resid_after': round(float(np.median(np.abs(o3[g3]))), 2) if g3.any() else None,
+                        'naip_gt1.5_after': int((np.abs(o3[g3]) > 1.5).sum()),
                         'max_corr': round(float(np.max(np.abs(c_pts))), 2), **({'naip_fit': fit_note} if fit_note else {}),
                         **({'naip_unverified': True} if fit_note and fit_note.startswith('naip_unverified') else {})})
 # ---- centrelines painted on NAIP 2024 that OSM does not map (review round 2). Each entry: two locator points (world
@@ -235,26 +326,6 @@ PAINT_TRACES = [
     # joins the unnamed OSM ways 155570033/155570035 at about (215.1, 291.9) (review round 2 finding, crop h68w.jpg)
     {'from': (-291.7, 227.5), 'to': (215.1, 291.9), 'why': 'painted E-W taxiway crossing 1L/19R and 1R/19L, no OSM way'},
 ]
-
-def trace_paint(a, b, step=2.0):
-    a, b = np.asarray(a, float), np.asarray(b, float); t = (b - a) / np.linalg.norm(b - a)
-    p = a.copy(); pts = [p.copy()]; acc = []; n_ok = 0; n_all = 0; L0 = np.linalg.norm(b - a)
-    for _ in range(int(1.4 * L0 / step)):
-        q = p + t * step
-        if np.linalg.norm(q - b) < step * 1.2: pts.append(b.copy()); break
-        if not on_runway(q, 3.0):
-            n_all += 1
-            r = YEL.cross_peak(q, t, half=2.5, avg=3.0, step=0.1, min_contrast=10.0)
-            if r and r[2] < 0.6 * r[1]:
-                q = q + np.array([-t[1], t[0]]) * r[0]; acc.append(q.copy()); n_ok += 1
-                if len(acc) >= 5:
-                    A = np.array(acc[-5:]); d = A[-1] - A[0]
-                    if np.linalg.norm(d) > 4: t = d / np.linalg.norm(d)
-        # never wander: keep heading within 25 deg of the locator direction (the painted lines here are near straight)
-        g = (b - q) / np.linalg.norm(b - q)
-        if t @ g < math.cos(math.radians(25)): t = g
-        p = q; pts.append(p.copy())
-    return np.array(pts), n_ok, n_all
 
 for tr in PAINT_TRACES:
     P0, n_ok, n_all = trace_paint(tr['from'], tr['to'])
@@ -278,7 +349,7 @@ for tr in PAINT_TRACES:
                 if cv2.pointPolygonTest(px(poly[0]).astype(np.float32).reshape(-1, 1, 2), ((mid_[0] - X0) / RES, (mid_[1] - Z0) / RES), False) >= 0:
                     sfm = t['name'].replace('Taxiway ', ''); break
             if sfm: break
-        cl_meta.append({'osm_id': None, 'ref': sfm, 'ref_src': 'SFO Museum taxiway polygon' if sfm else None, 'src': 'naip', 'note': tr['why'] + ' (traced on NAIP 2024; OSM gap)',
+        cl_meta.append({'osm_id': None, 'ref': sfm, 'ref_src': 'SFO Museum taxiway polygon' if sfm else None, 'src': 'naip', 'drawn': True, 'note': tr['why'] + ' (traced on NAIP 2024; OSM gap)',
                         'naip_samples': n_all, 'naip_peaks': n_ok, 'naip_med_abs_off': None, 'max_corr': None})
     print('traced', tr['why'], 'peaks %d / %d samples' % (n_ok, n_all))
 rb, ra = np.array(resid_before), np.array(resid_after)
@@ -596,37 +667,64 @@ print('edge runs (SFO Museum outline)', len(edges))
 # the samples are dropped (NAIP shows no edge line there; review: lines drawn on grey pavement).
 edge_meta, edges_out = [], []
 E_before, E_after = [], []
+# review round 4: no paint measurement within 7 m of a runway holding-position bar (the 4-line ladder and the sign boxes
+# next to it pulled the edge runs 143 / 242 / 302 ... 2-3 m inwards over 10-20 m); the run keeps its neighbours' offset
+HOLD_ZONE = _prep0(_suu0([_SLS0([tuple(h['a']), tuple(h['b'])]).buffer(7.0) for h in holds]))
 for e in edges:
     P = densify(e, 1.0); S = arclen(P); T = tangents(P)
     if S[-1] < 4: continue
     ss = np.arange(1.0, S[-1] - 0.5, 2.0) if S[-1] > 3 else np.array([S[-1] / 2])
-    offs = np.full(len(ss), np.nan)
-    for i, s_ in enumerate(ss):
-        p_ = np.array([np.interp(s_, S, P[:, 0]), np.interp(s_, S, P[:, 1])]); t_ = np.array([np.interp(s_, S, T[:, 0]), np.interp(s_, S, T[:, 1])])
-        t_ /= max(1e-9, np.hypot(*t_))
-        r = YEL.cross_peak(p_, t_, half=3.5, avg=3.0, step=0.1, min_contrast=10.0)
-        if r and r[2] < 0.7 * r[1]: offs[i] = r[0]
-    good = ~np.isnan(offs); frac = float(good.mean())
+    offs = measure(P, S, T, ss, avg=3.0, thr=0.7, skip=HOLD_ZONE)
+    good = np.isfinite(offs); frac = float(good.sum() / max(1, (~np.isinf(offs)).sum()))
     if S[-1] > 30 and frac < 0.15:
         edge_meta.append(None); continue          # marker for the stats below (dropped run)
-    corr = np.zeros(len(ss))
-    for i in range(len(ss)):
-        v = offs[max(0, i - 3):i + 4]; v = v[~np.isnan(v)]
-        if len(v) >= 4:
-            m = float(np.median(v))
-            if np.median(np.abs(v - m)) < 0.4 and abs(m) > 0.2: corr[i] = float(np.clip(m, -3.5, 3.5))
-    if len(corr) >= 3:
-        cm = np.array([np.median(corr[max(0, i - 1):i + 2]) for i in range(len(corr))])
-        corr = np.array([cm[max(0, i - 2):i + 3].mean() for i in range(len(cm))])
-        corr[np.abs(corr) < 0.05] = 0.0
+    corr = window_corr(ss, offs, 0.2, clip=3.5, strict_big=False)
     c_pts = np.interp(S, ss, corr) if len(ss) > 1 else np.full(len(S), corr[0])
     Q = P + np.stack([-T[:, 1], T[:, 0]], 1) * c_pts[:, None]
-    E_before += list(np.abs(offs[good])); E_after += list(np.abs(offs[good] - corr[good]))
+    # review round 4: further passes on the snapped run (17 edges had 6-40 m stretches 1.5-2.8 m off the paint: the
+    # SFO Museum outline underneath is wavy on a ~10 m scale that the smoothed first pass could not follow). Pass 2 as
+    # pass 1 on the corrected line; passes 3-4 looser: a sample more than 0.8 m off moves by the median of its 5-sample
+    # window when >= 3 of those found paint on the same side (no MAD gate; the +-3.5 m search is centred on the line
+    # by now, hold-bar zones stay masked)
+    for pass_ in (2, 3, 4):
+        S2 = arclen(Q); T2 = tangents(Q); o2 = measure(Q, S2, T2, ss, avg=3.0, thr=0.7, skip=HOLD_ZONE)
+        if pass_ == 2: c2 = window_corr(ss, o2, 0.2, clip=3.5, strict_big=False)
+        else:
+            c2 = np.zeros(len(ss)); of = np.where(np.isinf(o2), np.nan, o2)
+            for i in range(len(ss)):
+                v = of[max(0, i - 2):i + 3]; v = v[~np.isnan(v)]
+                if len(v) >= 3 and not np.isnan(of[i]) and abs(of[i]) > 0.8 and (np.sign(v) == np.sign(of[i])).sum() >= 3: c2[i] = float(np.median(v))
+            if len(c2) >= 3: c2 = np.array([c2[max(0, i - 1):i + 2].mean() for i in range(len(c2))])
+        if not np.any(np.abs(c2) > 0.01): continue
+        c2p = np.interp(S2, ss, c2) if len(ss) > 1 else np.full(len(S2), c2[0])
+        Q = Q + np.stack([-T2[:, 1], T2[:, 0]], 1) * c2p[:, None]; c_pts = c_pts + c2p; corr = corr + c2
+    # across a masked hold-bar zone the run is drawn straight between the snapped points either side of it (the outline
+    # underneath bulges round the hold-sign pads; interpolating only the correction kept that bulge - edge 143)
+    msk = np.isinf(offs)
+    if msk.any():
+        S_ = arclen(Q); i = 0
+        while i < len(ss):
+            if not msk[i]: i += 1; continue
+            j = i
+            while j + 1 < len(ss) and msk[j + 1]: j += 1
+            if i > 0 and j < len(ss) - 1:
+                sa, sb = ss[i - 1], ss[j + 1]
+                qa = np.array([np.interp(sa, S_, Q[:, 0]), np.interp(sa, S_, Q[:, 1])]); qb = np.array([np.interp(sb, S_, Q[:, 0]), np.interp(sb, S_, Q[:, 1])])
+                sel = (S_ > sa) & (S_ < sb)
+                Q[sel] = qa + np.outer((S_[sel] - sa) / (sb - sa), qb - qa)
+            i = j + 1
+    o3 = measure(Q, arclen(Q), tangents(Q), ss, avg=3.0, thr=0.7, skip=HOLD_ZONE) if np.any(np.abs(c_pts) > 0.01) else offs     # review round 4: residual on the final line
+    # review round 4: a run whose paint support is weak (< 30 % of its samples) AND whose final line still sits > 1 m off
+    # the paint found (median) is dropped: the paint does not support it (edges 145 / 146 / 246 / 299 / 341 ...)
+    f3 = o3[np.isfinite(o3)]
+    if len(f3) < 0.3 * max(1, (~np.isinf(o3)).sum()) and (len(f3) == 0 or float(np.median(np.abs(f3))) > 1.0):
+        edge_meta.append(None); continue
+    E_before += list(np.abs(offs[good])); E_after += list(np.abs(o3[np.isfinite(o3)]))
     edges_out.append(simplify(Q.tolist(), 0.2))
     edge_meta.append({'src': 'naip' if np.any(np.abs(c_pts) > 0.01) else 'outline', 'len': round(float(S[-1]), 1), 'paint_frac': round(frac, 2),
                       'naip_med_abs_off_before': round(float(np.median(np.abs(offs[good]))), 2) if good.any() else None,
-                      'naip_med_abs_off_after': round(float(np.median(np.abs(offs[good] - corr[good]))), 2) if good.any() else None})
-EDGE_STATS = {'runs_outline': len(edges), 'runs_kept': len(edges_out), 'dropped_no_paint': sum(1 for m in edge_meta if m is None),
+                      'naip_med_abs_off_after': round(float(np.median(np.abs(o3[np.isfinite(o3)]))), 2) if np.isfinite(o3).any() else None})
+EDGE_STATS = {'runs_outline': len(edges), 'runs_kept': len(edges_out), 'dropped_no_paint': sum(1 for m in edge_meta if m is None),   # (incl. round 4: weak paint and > 1 m off)
               'km_kept': round(sum(m['len'] for m in edge_meta if m) / 1000, 2),
               'snapped_runs': sum(1 for m in edge_meta if m and m['src'] == 'naip'),
               'paint_offset_before': {'median': round(float(np.median(E_before)), 2), 'gt1.5': round(float((np.array(E_before) > 1.5).mean()), 3)} if E_before else None,

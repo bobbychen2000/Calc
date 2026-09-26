@@ -23,7 +23,8 @@ import { makeNoiseTexture, makeCloudTexture, sunVector } from '../../world/textu
 import { textureOf } from '../convert.js';
 import { floodField } from '../flood.js';
 import { Sprites } from '../lights.js';
-import { NIGHT_EXPOSURE } from '../renderer3.js';
+import { NIGHT_EXPOSURE, LAMP_M } from '../renderer3.js';
+import { lampK } from '../tsl/common.js';
 import { liveryForAirline } from '../../live/lookup.js';
 const q = new URLSearchParams(location.search); const out = {}; window.SFO_LIVERY_BASE = '../../../data/liveries/';
 try {
@@ -34,13 +35,13 @@ try {
   const clouds = textureOf(makeCloudTexture()); clouds.wrapS = clouds.wrapT = THREE.RepeatWrapping;
   const sky = new Sky(E, { cloudTex: clouds, noiseTex: noise, baseRes: 512 });
   const night = q.get('night') === '1';
-  if (night) { const f = floodField([[-40, -60], [70, 90], [-120, 60]]); E.flood.setField(f); E.flood.intensity = 1; out.flood = f.stats; }
+  if (night) { const f = floodField([[-40, -60], [70, 90], [-120, 60]]); E.flood.setField(f); E.flood.intensity = LAMP_M; lampK.value = LAMP_M; out.flood = f.stats; } // lamp units -> sky units (renderer3 LAMP_M)
   const sunDir = sunVector(+(q.get('az') || 200), night ? -15 : +(q.get('el') || 45));
   const env = { sunDir, mie: 21e-6, sunI: 20, fog: [0.0001, 1 / 700, 1, 0.97], cloud: [0.14, 800 * 0.3048, 14000, 0.5], cloudWind: [1, 1], refPos: [0, 60, 0], slab: false };
   sky.setEnv(env); const L = Sky.lightFor(env); sky.applyLight(L);
   S.backgroundNode = sky.backgroundNode(); S.fogNode = sky.fogNode();
   sky.renderSky(E.renderer); if (q.get('env') !== '0') sky.updateEnvironment(E.renderer, S); else S.environment = null;
-  if (night) { L.skyUp = L.skyUp.map((v, i) => Math.max(v, [0.010, 0.012, 0.018][i])); L.ground = L.ground.map((v, i) => Math.max(v, 0.006)); sky.applyLight(L); if (q.get('env') !== '0') sky.updateEnvironment(E.renderer, S); }
+  if (night) { L.skyUp = L.skyUp.map((v, i) => v + LAMP_M * Math.max(0, [0.010, 0.012, 0.018][i] - v)); L.ground = L.ground.map((v, i) => v + LAMP_M * Math.max(0, 0.006 - v)); sky.applyLight(L); if (q.get('env') !== '0') sky.updateEnvironment(E.renderer, S); }
   E.setSun(L.sunDir, L.sunColor); E.expo.value = night ? NIGHT_EXPOSURE : 0.45 * 1.15;
   if (q.get('sprites') === '1') { const sp = new Sprites(64, { debugDepth: !!q.get('dbgdepth'), depthNode: q.get('nodepth') ? null : E.depthNode, expo: E.expo, night: TSL.uniform(night ? 1 : 0) }); E.fxScene.add(sp.mesh); E._sp = sp; }
   out.L = { sun: L.sunColor.map(v => +v.toFixed(2)), up: L.skyUp.map(v => +v.toFixed(3)) };

@@ -128,7 +128,13 @@ _doc = {'frame': D.get('frameId', 'equirect-v1'), 'complex': cxr, 'parts': out, 
         'footprint_accuracy': {'src': 'inferred', 'tol_m': 5.0, 'why': 'SFO Museum outlines; NAIP 2022/2024 roofs lean east ~0.54 m/m (same lean in both epochs): no lean-free check',
                                'known_misfits': ['Boarding Area D SSE face: imaged roof 7.7 m outside vs 2.5 m predicted lean',
                                                  'Boarding Area A east face: +10.3 m vs 7.2 m predicted',
-                                                 'Harvey Milk Terminal 1 hall: bulge over the departures roadway / AirTrain guideway (x -1047..-980, z 412..443)']}}
+                                                 'Harvey Milk Terminal 1 hall: bulge over the departures roadway / AirTrain guideway (x -1047..-980, z 412..443)',
+                                                 # review round 4 (lean-invariant N/S faces; the review measured the imaged glass facade / roof edge):
+                                                 'Harvey Milk Terminal 1 north face x -1000..-840: model 1.8 m (x -998) growing to ~12 m (x -866..-842) north of the imaged facade, over the curbside lanes',
+                                                 'Terminal 3 landside (S/SE-facing curve) x -960..-880: model 4.4-10 m beyond the imaged roof / canopy edge, over the curb lane',
+                                                 'Boarding Area D SSE corner near (-616, 208): model cuts ~10-15 m off the imaged roof corner',
+                                                 'unconfirmed N/S-facing medians (review round 4 drawing audit): International Terminal N -3.0 / S +3.2 m, T3 S +6.2 m, BA E N +7.0 m'],
+                               'not_trimmed_why': 'review round 4: trimming needs a traced facade line; an automated NAIP facade detector (glass-band colour) was tried and is not reliable next to the AirTrain guideway and teal roofs, and the review\'s by-eye offsets are not a source - left as listed misfits (footprints are SFO Museum, CDLA; tolerance stated above)'}}
 json.dump(_doc, open(os.path.join(ROOT, 'data', 'sfo_buildings.json'), 'w'), separators=(',', ':'))
 open(os.path.join(ROOT, 'data', 'sfo_buildings.js'), 'w').write('// Terminal building parts derived from SFO Museum footprints by tools/build_terminal_parts.py\nexport const BUILDINGS = ' + json.dumps(_doc, separators=(',', ':')) + ';\n')
 print('bytes', os.path.getsize(os.path.join(ROOT, 'data', 'sfo_buildings.json')))

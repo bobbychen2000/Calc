@@ -4,7 +4,15 @@
 // it drives are random placement, so exact bit-for-bit parity is not needed and float hashes compile identically on
 // the WebGPU (WGSL) and WebGL 2 (GLSL) backends.
 import { TSL } from '../lib.js';
-const { Fn, vec2, vec3, float, fract, dot, floor, mix, smoothstep, abs } = TSL;
+const { Fn, vec2, vec3, float, fract, dot, floor, mix, smoothstep, abs, uniform } = TSL;
+
+// Lamp-unit scale (review round 1, dusk re-check). Everything that is a lamp (apron floods, lit windows, signs, city
+// lights, light sprites, aircraft lenses and cabin light) is authored in "lamp units" (js/three/flood.js: E_STAND = 0.62
+// = the ICAO 20 lux stand average), while the sun and sky are in the sky model's units (1 unit ~ 6,700 lux, see
+// js/three/renderer3.js LAMP_M). renderer3 sets lampK = LAMP_M ^ nightF every frame: 1 by day (lamp brightness as
+// tuned against the day exposure: sprites, lens glints), LAMP_M (~1/200) once the lamps are on, i.e. lamps and the
+// twilight sky in their physical ratio. Night-only emissions use renderer3's nightE (= nightF x LAMP_M) instead.
+export const lampK = uniform(1.0);
 
 export const hash12 = Fn(([p]) => {
   const p3 = fract(vec3(p.x, p.y, p.x).mul(0.1031)).toVar();

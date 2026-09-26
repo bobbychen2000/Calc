@@ -40,7 +40,13 @@ const halfOf = (f32) => { const h = new Uint16Array(f32.length); for (let i = 0;
 export function textureOf(recOrWrap, opts = {}) {
   let rec = recOrWrap; for (let i = 0; i < 3 && rec && !rec.isTexRecord; i++) rec = rec.tex; // {tex: rec} / {tex: {tex: rec}} wrappers
   if (!rec || !rec.isTexRecord) return null;
-  let t = texCache.get(rec); if (t && t.userData.version === rec.version) return t;
+  let t = texCache.get(rec);
+  if (t && t.userData.version === rec.version) {
+    // a texture first made by the eager upload (renderer3 imageHooks, no colour space asked) and later asked for as sRGB:
+    // switch it while the image is still here; once released it stays linear (callers decode in the shader, signs.js)
+    if (opts.colorSpace && t.colorSpace !== opts.colorSpace && !(t.image && t.image.isReleased)) { t.colorSpace = opts.colorSpace; t.needsUpdate = true; }
+    return t;
+  }
   if (t) t.dispose();
   const srgb = rec.internal === K.SRGB8_ALPHA8;
   if (rec.source || rec.pending) {

@@ -14,7 +14,7 @@ centres (TYPES doors of the rendered type), c.fin (fu 0 LE .. 1 TE, fv 0 root ..
 import numpy as np
 import art
 from fonts import font
-from paint import text_image
+from paint import text_image, text_shaped
 
 LIVERIES = {}
 
@@ -78,13 +78,18 @@ def _united(c, express=False):
     k = c.H / 3.9
     f = font('Montserrat', 800)
     if express:
-        # UNITED in United Blue and EXPRESS in grey, same cap height and baseline, one lock-up from 1 m aft of door 1, the
-        # letters' feet at the bottom of the windows (photo of the SkyWest E175 N86371 landing at SFO, Jan 2026,
-        # Wikimedia Commons, refs/cache/livref UAL-X_2)
+        # UNITED in United Blue and EXPRESS in grey, same cap height and baseline, one lock-up ABOVE the window row (photo of
+        # the SkyWest E175 N86371 landing at SFO, Jan 2026, Wikimedia Commons, refs/cache/livref UAL-X_2, port side,
+        # measured on the aircraft: lock-up from sn 0.21 to 0.55 of the fuselage length, cap height 0.25-0.28 of the
+        # fuselage height, the letters' feet at the tops of the windows). Review round 1: the earlier lock-up was centred
+        # on the windows and 0.55 L long.
         img = text_image('UNITED', f, 400, UA['united'], spacing=0.16, stretch=1.08)
         img2 = text_image('EXPRESS', f, 400, UA['express'], spacing=0.16, stretch=1.08)
-        h = 0.30 * c.H; yc = c.winY + 0.10 * c.H
-        lockup(c, [(img, h, yc, 0.0, 0.0), (img2, h * img2.size[1] / img.size[1], yc, None, 0.33 * k)], c.doors[0] + 1.3 * k)
+        gap = 0.33 * k
+        asp = (img.size[0] + img2.size[0]) / img.size[1]
+        h = min(0.25 * c.H, (0.34 * c.L - gap) / asp)
+        yc = c.winY + c.winH / 2 + 0.03 * c.H + h / 2
+        lockup(c, [(img, h, yc, 0.0, 0.0), (img2, h * img2.size[1] / img.size[1], yc, None, gap)], 0.21 * c.L)
     else:
         img = text_image('UNITED', f, 400, UA['united'], spacing=0.16, stretch=1.08)
         title_box(c, img, 0.335 * c.H, c.doors[0] + 1.7 * k, c.winY + 0.2 * k)
@@ -808,6 +813,44 @@ def svg_mark(body, vb='0 0 100 100'):
     return lambda n=1024: art.svg(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}">{body}</svg>', n)
 
 
+def photo_fin(pts, le, te, root, tip):
+    """points measured on a reference photo's fin crop (x, y in % of the crop, x from the leading edge side, y down) ->
+    fin design coordinates (fu 0 LE .. 1 TE along the local chord, fv 0 root .. 1 tip): le / te = ((x, y), (x, y)) two
+    points on the leading / trailing edge lines, root / tip = y of the fin root and tip in the crop"""
+    (lx0, ly0), (lx1, ly1) = le; (tx0, ty0), (tx1, ty1) = te
+    out = []
+    for x, y in pts:
+        xl = lx0 + (y - ly0) * (lx1 - lx0) / (ly1 - ly0); xt = tx0 + (y - ty0) * (tx1 - tx0) / (ty1 - ty0)
+        out.append(((x - xl) / (xt - xl), (root - y) / (root - tip)))
+    return out
+
+
+def flag_image(kind, n=256):
+    """small national flags as painted next to titles / registrations (public symbols; simplified construction)"""
+    from PIL import Image, ImageDraw
+    if kind == 'JP':      # Japan: white field (thin grey keyline on a white body), red disc of 3/5 the height
+        W, H = int(1.5 * n), n; im = Image.new('RGBA', (W * 4, H * 4), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+        d.rectangle([0, 0, W * 4 - 1, H * 4 - 1], fill='#FFFFFF', outline='#9A9EA3', width=max(4, n // 16))
+        r = 0.3 * H * 4; d.ellipse([W * 2 - r, H * 2 - r, W * 2 + r, H * 2 + r], fill='#BC002D')
+        return im.resize((W, H), Image.LANCZOS)
+    raise ValueError(kind)
+
+
+def outline_title(text, fam, weight, color, px=420, ring=0.42, stretch=1.0, spacing=0.05):
+    """letters drawn as a thick outline with an open (white) core, as Fiji Airways' FIJI (photo): ink where the distance to
+    the letter edge is < ring x the half stroke width"""
+    from PIL import Image
+    from scipy.ndimage import distance_transform_edt
+    t = text_image(text, font(fam, weight), px, '#000000', spacing=spacing, stretch=stretch)
+    a = np.asarray(t)[..., 3].astype(np.float32) / 255
+    d = distance_transform_edt(a > 0.5)
+    half = np.percentile(d[d > 0], 97)
+    ink = np.clip((ring * half - d + 1.0), 0, 1) * a
+    from common import hex_rgb
+    out = np.zeros(a.shape + (4,), np.uint8); out[..., :3] = (np.array(hex_rgb(color)) * 255).astype(np.uint8); out[..., 3] = (ink * 255).astype(np.uint8)
+    return Image.fromarray(out, 'RGBA')
+
+
 APPROX = 'approx (no official value found; from the reference image)'
 NOR = 'https://www.norebbo.com/{}-livery/ (profile drawing; layout reference only)'
 
@@ -853,19 +896,20 @@ LIVERIES['CPA'] = dict(code='CPA', name='Cathay Pacific', version='2015 livery (
 # ---- EVA Air
 reg_std('EVA', 'EVA Air', '2015 update (green tail with the orange globe, darker green belly)', 2015,
         ['https://www.airlinereporter.com/2015/11/eva-air-shows-off-new-livery-vision-future/ (darker green belly, orange removed from the rudder)'],
-        dict(green=('#00674F', APPROX), orange=('#F29400', APPROX)), ['B789'],
+        dict(green=('#00674F', APPROX), title=('#249243', 'measured on the photo B-17887 (refs/cache/livref EVA_1)'), orange=('#F29400', APPROX)), ['B789'],
         dict(top='#F7F8F8', belly='#2E5D4B', tail='#00674F', tail2='#F29400', eng='#F2F3F4', bellyLine=-0.55), 'from the description; globe simplified',
         dict(belly=('#2E5D4B', [(0, -1.2), (0.05, -0.8), (0.2, -0.55), (0.8, -0.55), (0.92, -0.3), (1, 0.2)]),
              cheat=[('#F29400', [(0.05, -0.72), (0.2, -0.47), (0.8, -0.47), (0.92, -0.22)], 0.02)],
-             extra=lambda c: title_span(c, 'EVA AIR', 'Montserrat', 800, '#00674F', 0.2, 0.14 * c.L, 0.30 * c.L, 0.2, spacing=0.02, italic=True), tail='#00674F',
+             extra=lambda c: title_span(c, 'EVA AIR', 'Montserrat', 800, '#249243', 0.2, 0.14 * c.L, 0.30 * c.L, 0.2, spacing=0.02, italic=True), tail='#00674F', tips='#F2F3F4',
              fin_art=(svg_mark('<circle cx="50" cy="50" r="46" fill="#FFFFFF"/><circle cx="50" cy="50" r="40" fill="none" stroke="#F29400" stroke-width="5"/>'
                                '<circle cx="50" cy="50" r="30" fill="#00674F"/><path d="M50 22 L55 45 L78 50 L55 55 L50 78 L45 55 L22 50 L45 45 Z" fill="#FFFFFF"/>'), 0.5, 0.55, 0.42)))
 
 # ---- China Airlines
 reg_std('CAL', 'China Airlines', 'plum-blossom tail (1995 identity), white fuselage', 1995,
-        ['https://www.china-airlines.com/ (brand; not fetched)'], dict(pink=('#D8567E', APPROX), violet=('#6B3E8E', APPROX), blue=('#1D3A7A', APPROX)), ['A359'],
-        dict(top='#F7F8F8', belly='#F7F8F8', tail='#F7F8F8', tail2='#D8567E', eng='#F2F3F4'), 'from knowledge only: approx',
-        dict(extra=lambda c: title_span(c, 'CHINA AIRLINES', 'Libre Baskerville', 700, '#1D3A7A', 0.12, 0.13 * c.L, 0.34 * c.L, 0.18, spacing=0.02),
+        ['https://www.china-airlines.com/ (brand; not fetched)', photo_ref('CAL', 'A350-900s B-18906 / B-18918 (port side): CHINA AIRLINES sn 0.305-0.46 aft of door 2 above the windows, no Chinese title on this side, plum blossom on the fin')], dict(pink=('#D8567E', APPROX), violet=('#6B3E8E', APPROX), blue=('#1D3A7A', APPROX)), ['A359'],
+        dict(top='#F7F8F8', belly='#F7F8F8', tail='#F7F8F8', tail2='#D8567E', eng='#F2F3F4'), 'title position measured on photos; blossom simplified; colours approx',
+        dict(extra=lambda c: (title_span(c, 'CHINA AIRLINES', 'Libre Baskerville', 700, '#1D3A7A', 0.15, 0.305 * c.L, 0.46 * c.L, 0.20, spacing=0.02),
+                              c.decal(art.circle(128, color='#D0202E'), 0.466 * c.L, c.winY + 0.20 * c.H, 0.07 * c.H, mode='mirror', where=c.fuselage())),
              cheat=[('#7F8FC6', [(0.02, -0.55), (0.1, -0.45), (0.3, -0.55), (0.5, -0.7)], 0.10)],
              fin_art=(svg_mark(''.join(f'<ellipse cx="{50 + 26 * np.cos(a):.1f}" cy="{50 + 26 * np.sin(a):.1f}" rx="20" ry="13" transform="rotate({np.degrees(a):.0f} {50 + 26 * np.cos(a):.1f} {50 + 26 * np.sin(a):.1f})" fill="#D8567E"/>' for a in np.linspace(0, 2 * np.pi, 5, endpoint=False) - np.pi / 2) + '<circle cx="50" cy="50" r="10" fill="#6B3E8E"/>'), 0.5, 0.52, 0.62)))
 
@@ -931,13 +975,58 @@ reg_std('ANA', 'ANA', '"Triton Blue" livery (1982)', 1982,
              extra=lambda c: c.fin_decal(text_image('ANA', font('Montserrat', 800, True), 420, '#FFFFFF'), 0.5, 0.52, 0.2, rotate=-55, mode='text')))
 
 # ---- Japan Airlines
-reg_std('JAL', 'Japan Airlines', '2011 "Tsurumaru" crane livery', 2011,
-        ['https://www.japantimes.co.jp/news/2011/03/01/business/jal-revives-crane-logo-in-return-to-basics/', NOR.format('japan-airlines')],
-        dict(red=('#CC0000', APPROX)), ['B788', 'B789'],
-        dict(top='#F7F8F8', belly='#F7F8F8', tail='#F7F8F8', tail2='#CC0000', eng='#F2F3F4'), 'crane circle simplified',
-        dict(extra=lambda c: (title_span(c, 'JAPAN AIRLINES', 'Montserrat', 800, '#1A1A1A', 0.157, 0.156 * c.L, 0.423 * c.L, 0.168, spacing=0.06, italic=True),
-                              c.decal(art.circle(128, color='#CC0000'), 0.438 * c.L, c.winY + 0.17 * c.H, 0.05 * c.H, mode='mirror', where=c.fuselage())),
-             fin_art=(svg_mark('<circle cx="50" cy="50" r="44" fill="#CC0000"/><path d="M50 14 C30 20 20 40 30 60 L42 50 L40 76 L50 62 L60 76 L58 50 L70 60 C80 40 70 20 50 14 Z" fill="#FFFFFF"/><circle cx="50" cy="30" r="6" fill="#CC0000"/>'), 0.55, 0.52, 0.5)))
+JL_RED = '#CC0000'
+
+
+def tsurumaru(n=1024, red=JL_RED):
+    """JAL's Tsurumaru (crane circle), re-drawn from the photo of JA864J (refs/cache/livref JAL_1, fin crop): a red disc
+    whose white centre is framed by the crane's two wings (the ring, with three white feather slits on each side); the
+    head with its long beak points forward inside the top of the ring, the neck curves down in an S to the tail feathers
+    at the bottom; white italic JAL in the lower red part. Drawn facing left (forward on the port side)."""
+    from PIL import Image
+    slit = lambda k, sgn: (f'<path d="M{50 + sgn * (40 - 5 * k)} {42 - 4 * k} C{50 + sgn * (40 - 4 * k)} {58 - 2 * k} {50 + sgn * (34 - 5 * k)} {68 - 2 * k} '
+                           f'{50 + sgn * (24 - 5 * k)} {73 - k}" stroke="#FFFFFF" stroke-width="1.9" fill="none" stroke-linecap="round"/>')
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<circle cx="50" cy="50" r="48" fill="{red}"/>
+<path d="M50 7 C71 7 82 24 82 42 C82 58 71 69 58 72 L50 73 L42 72 C29 69 18 58 18 42 C18 24 29 7 50 7 Z" fill="#FFFFFF"/>
+<path d="M61 21 C70 27 67 39 57 47 C49 54 45 62 49 72" stroke="{red}" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+<ellipse cx="60" cy="20.5" rx="7" ry="4.6" fill="{red}"/>
+<path d="M55 18.5 L28 19.5 L55 23.5 Z" fill="{red}"/>
+{''.join(slit(k, s) for k in range(3) for s in (-1, 1))}
+</svg>"""
+    img = art.svg(svg, n)
+    t = text_image('JAL', font('Montserrat', 800, True), 420, '#FFFFFF', spacing=0.02)
+    w = int(0.46 * n); h = int(w * t.size[1] / t.size[0])
+    img.alpha_composite(t.resize((w, h), Image.LANCZOS), (int(0.5 * n - w / 2), int(0.83 * n - h / 2)))
+    return img
+
+
+def japan_airlines(c):
+    base(c, '#F7F8F8')
+    fus = c.fuselage()
+    # title and the small flag after it (photo JA864J: title sn 0.16-0.43, the Hinomaru flag right after the S; the earlier
+    # plain red dot is now the flag with its keyline)
+    # (title + flag as one image: the flag follows the title in reading order on both sides; starboard order inf)
+    from PIL import Image
+    t = text_image('JAPAN AIRLINES', font('Montserrat', 800, True), 420, '#1A1A1A', spacing=0.06)
+    fl = flag_image('JP'); fh = int(0.5 * t.size[1]); fl = fl.resize((int(fh * fl.size[0] / fl.size[1]), fh), Image.LANCZOS)
+    gap = int(0.3 * t.size[1]); im = Image.new('RGBA', (t.size[0] + gap + fl.size[0], t.size[1]), (0, 0, 0, 0))
+    im.alpha_composite(t); im.alpha_composite(fl, (t.size[0] + gap, int(0.12 * t.size[1])))
+    h = 0.157 * c.H; w = 0.267 * c.L * im.size[0] / t.size[0]; im = im.resize((max(1, int(im.size[1] * w / h)), im.size[1]))
+    c.decal(im, 0.156 * c.L, c.winY + 0.168 * c.H, h, mode='text', where=fus)
+    fin_all(c, '#F7F8F8')
+    if c.fin is not None:
+        # crane circle: centre fu 0.52, fv 0.50, diameter 0.50 of the fin height (photo)
+        c.fin_decal(tsurumaru(), 0.52, 0.50, 0.50, where=c.fin_proper())
+    c.engines('#F2F3F4'); c.tips('#F2F3F4'); c.hstab('#DADCDE'); c.pylons('#E4E6E8')
+
+
+LIVERIES['JAL'] = dict(code='JAL', name='Japan Airlines', version='2011 "Tsurumaru" crane livery', since=2011,
+                       refs=['https://www.japantimes.co.jp/news/2011/03/01/business/jal-revives-crane-logo-in-return-to-basics/', NOR.format('japan-airlines'),
+                             photo_ref('JAL', 'title sn 0.16-0.43 with the Japanese flag after it, Tsurumaru crane circle on a white fin')],
+                       colors=dict(red=(JL_RED, APPROX)), types=['B788', 'B789'],
+                       runtime=dict(top='#F7F8F8', belly='#F7F8F8', tail='#F7F8F8', tail2='#CC0000', eng='#F2F3F4'),
+                       status='layout measured on a photo of a 787-9; crane circle re-drawn (vector) from the photo', paint=japan_airlines)
 
 # ---- Qantas (2016 Flying Kangaroo)
 reg_std('QFA', 'Qantas', '2016 livery (red tail with the streamlined kangaroo, red wrapping onto the aft body)', 2016,
@@ -955,12 +1044,44 @@ reg_std('PAL', 'Philippine Airlines', 'flag-motif tail (blue and red triangles, 
              fin_art=(lambda n=1024: art.circle(n, color='#FCD116'), 0.15, 0.52, 0.18)))
 
 # ---- Air France
-reg_std('AFR', 'Air France', 'Eurowhite livery with the tricolour tail stripes', 2009,
-        ['https://corporate.airfrance.com/ (brand; not fetched)'], dict(navy=('#002157', APPROX), red=('#E6192B', APPROX)), ['A359'],
-        dict(top='#F7F8F8', belly='#F7F8F8', tail='#F7F8F8', tail2='#002157', eng='#F2F3F4'), 'approx',
-        dict(title=('AIRFRANCE', 'Montserrat', 800, '#002157', 0.14, dict(k=0.5, dy=0.2, sp=0.08)),
-             fin_polys=[('#002157', [(0.55, -0.3), (0.75, -0.3), (1.1, 0.6), (0.9, 0.6)]), ('#E6192B', [(0.8, -0.3), (0.95, -0.3), (1.2, 0.4), (1.05, 0.4)])],
-             eng='#F2F3F4'))
+AF = dict(navy='#1B2A5A', red='#D2232A', white='#F7F8F8', gold='#C9A24B')
+
+
+def air_france(c):
+    base(c, AF['white'])
+    fus = c.fuselage()
+    # photo F-HUVE (refs/cache/livref AFR_2, port side): AIRFRANCE sn 0.135-0.385, letters' feet on the window tops; the
+    # red slash right after the title
+    # title + slash as one image, so the slash follows the title in reading order on both sides (photo: the slash is about
+    # one letter wide, 0.35 of the cap height, on the baseline, right after the E)
+    from PIL import Image, ImageDraw
+    t = text_image('AIRFRANCE', font('Montserrat', 800), 420, AF['navy'], spacing=0.08)
+    ch = t.size[1]; sw = int(0.95 * ch); gap = int(0.22 * ch); sh = int(0.36 * ch)
+    im = Image.new('RGBA', (t.size[0] + gap + sw, ch), (0, 0, 0, 0)); im.alpha_composite(t)
+    x0 = t.size[0] + gap; yb = ch - int(0.06 * ch)
+    ImageDraw.Draw(im).polygon([(x0, yb), (x0 + int(0.7 * sw), yb), (x0 + sw, yb - sh), (x0 + int(0.3 * sw), yb - sh)], fill=AF['red'])
+    h = 0.17 * c.H; w = 0.25 * c.L * im.size[0] / t.size[0]
+    im = im.resize((max(1, int(im.size[1] * w / h)), im.size[1]))
+    c.decal(im, 0.135 * c.L, c.winY + 0.20 * c.H, h, mode='text', where=fus)
+    fin_all(c, AF['white'])
+    if c.fin is not None:
+        fin = c.fin_proper()
+        # stripes parallel to the leading edge over the whole fin height (photo, chordwise fractions at mid height): navy
+        # 0.12-0.40, navy 0.47-0.55, 0.60-0.64, 0.67-0.69; red 0.76-0.97 up to 0.72 of the fin height
+        for a, b in ((0.12, 0.40), (0.47, 0.55), (0.60, 0.64), (0.67, 0.69)):
+            c.poly([(a, -0.05), (b, -0.05), (b, 1.2), (a, 1.2)], AF['navy'], 'fin', where=fin)
+        c.poly([(0.76, -0.05), (0.97, -0.05), (0.97, 0.66), (0.93, 0.72), (0.76, 0.72)], AF['red'], 'fin', where=fin)
+        c.fin_decal(art.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' + ''.join(
+            f'<circle cx="{50 + 38 * np.cos(a):.1f}" cy="{50 + 38 * np.sin(a):.1f}" r="7" fill="{AF["gold"]}"/>' for a in np.linspace(0, 2 * np.pi, 12, endpoint=False)) + '</svg>', 256),
+            0.30, 0.78, 0.09, where=fin)
+    c.engines('#F2F3F4'); c.tips(AF['navy']); c.hstab('#DADCDE'); c.pylons('#E4E6E8')
+
+
+LIVERIES['AFR'] = dict(code='AFR', name='Air France', version='Eurowhite livery with the tricolour tail stripes', since=2009,
+                       refs=['https://corporate.airfrance.com/ (brand; not fetched)', photo_ref('AFR', 'fin stripes parallel to the leading edge: one broad and three thin navy, one red on the lower aft fin; AIRFRANCE with the red slash')],
+                       colors={k: (v, APPROX + '; measured on the photo') for k, v in AF.items()}, types=['A359'],
+                       runtime=dict(top='#F7F8F8', belly='#F7F8F8', tail='#F7F8F8', tail2='#1B2A5A', eng='#F2F3F4'),
+                       status='layout measured on a photo of an A350-900 (port side); colours approx', paint=air_france)
 
 # ---- British Airways (Chatham Dockyard)
 BA = dict(blue='#01213F', red='#E4002B', flagblue='#23408E', white='#F7F8F8')
@@ -1020,6 +1141,11 @@ def emirates(c):
     base(c, EK['white'])
     fus = c.fuselage()
     title_span(c, 'Emirates', 'Libre Baskerville', 700, EK['gold'], 0.30, 0.164 * c.L, 0.354 * c.L, eta=0.29, spacing=0.0)
+    # Arabic title aft of the English one on the same line (photo A6-EUH, starboard: sn 0.375-0.45, about 0.6 of the English
+    # height); Aref Ruqaa (OFL) as a look-alike of the calligraphy. Port side: same stations (inf)
+    ar = text_shaped('الإمارات', font('Aref Ruqaa', 700), 300, EK['gold'], 'rtl')
+    h = 0.20 * c.H; w = 0.075 * c.L; ar = ar.resize((max(1, int(ar.size[1] * w / h)), ar.size[1]))
+    c.decal(ar, 0.375 * c.L, c.ycM + 0.29 * c.hhM, h, mode='text', where=fus)
     fin = c.fin_proper()
     fin_all(c, EK['white'], dorsal=False)
     if c.fin is not None:
@@ -1038,7 +1164,7 @@ LIVERIES['UAE'] = dict(code='UAE', name='Emirates', version='livery with the UAE
                        since=1999, refs=[NOR.format('emirates') + ' (A380 2023 profile; colour chart #E4AB2C titles, #018557 green: third party)', EK_PHOTOS],
                        colors={k: (v, APPROX) for k, v in EK.items()}, types=['A388'],
                        runtime=dict(top='#F7F8F8', belly='#F7F8F8', tail='#D71A21', tail2='#00843D', eng='#F2F3F4'),
-                       status='layout measured on a 2025 photo of the A380 (starboard); Arabic title not drawn; flag simplified', paint=emirates)
+                       status='layout measured on a 2025 photo of the A380 (starboard); Arabic title in an OFL calligraphic look-alike; flag simplified', paint=emirates)
 
 # ---- Turkish Airlines
 reg_std('THY', 'Turkish Airlines', 'red tail with the goose in a white circle, grey tulip stripe', 2010,
@@ -1050,29 +1176,62 @@ reg_std('THY', 'Turkish Airlines', 'red tail with the goose in a white circle, g
              fin_art=(svg_mark('<circle cx="50" cy="50" r="42" fill="#FFFFFF"/><path d="M24 58 C36 46 50 40 70 36 L80 28 L78 40 C70 50 56 56 40 58 L30 70 Z" fill="#C70A0C"/>'), 0.52, 0.52, 0.6)))
 
 # ---- Virgin Atlantic (2019)
-VS = dict(body='#EDEDEF', red='#DA0530', title='#4B3F5C', white='#FFFFFF')
-VS_PHOTOS = photo_ref('VIR', 'layout: light silver body, large thin lowercase title across the windows sn 0.15-0.47, red tail with the white Virgin signature, red continuing onto the lower tail cone, red nacelles')
+VS = dict(body='#EDEDEF', red='#DA0530', title='#2E2A48', white='#FFFFFF', flagblue='#012169', flagred='#C8102E')
+VS_PHOTOS = photo_ref('VIR', 'layout: light silver body, large thin lowercase title across the windows sn 0.15-0.47 in dark purple (measured #2C344B '
+                      'on the anti-aliased strokes), red tail with the large white Virgin signature over the middle of the fin, red continuing onto '
+                      'the lower tail cone, red nacelles; the flying icon (a figure with the Union flag) and the type name on the nose')
+TYPE_NAMES = dict(b789='BOEING 787-9', b788='BOEING 787-8', b78x='BOEING 787-10', a35k='AIRBUS A350-1000', a359='AIRBUS A350-900', a339='AIRBUS A330-900')
+
+
+def union_flag(n=256):
+    """Union flag (public symbol), simplified construction (St George cross over the saltires)"""
+    W, H = 2 * n, n
+    return art.svg(f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30"><rect width="60" height="30" fill="{VS['flagblue']}"/>
+<path d="M0 0 L60 30 M60 0 L0 30" stroke="#FFFFFF" stroke-width="6"/><path d="M0 0 L60 30 M60 0 L0 30" stroke="{VS['flagred']}" stroke-width="2"/>
+<path d="M30 0 V30 M0 15 H60" stroke="#FFFFFF" stroke-width="10"/><path d="M30 0 V30 M0 15 H60" stroke="{VS['flagred']}" stroke-width="6"/></svg>""", H)
+
+
+def flying_icon(n=512):
+    """the nose 'flying icon' (a figure holding the Union flag), strongly simplified: a red outline figure leaning forward
+    with the flag streaming behind (re-drawn from the photo of G-VOWS)"""
+    from PIL import Image
+    fig = art.svg(f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60"><g fill="none" stroke="{VS['red']}" stroke-width="2.4" stroke-linecap="round">
+<circle cx="12" cy="14" r="5"/><path d="M16 18 C28 26 40 30 52 30 M22 22 L10 36 M40 29 C44 40 40 50 30 54 M48 30 C54 40 58 46 70 50"/></g></svg>""", n)
+    fl = union_flag(n // 3).rotate(-12, expand=True, resample=Image.BICUBIC)
+    out = Image.new('RGBA', fig.size, (0, 0, 0, 0)); out.alpha_composite(fig)
+    out.alpha_composite(fl.resize((int(fig.size[0] * 0.42), int(fig.size[0] * 0.42 * fl.size[1] / fl.size[0]))), (int(fig.size[0] * 0.52), 0))
+    return out
 
 
 def virgin(c):
     base(c, VS['body'])
     fus = c.fuselage()
     title_span(c, 'virgin atlantic', 'Montserrat', 500, VS['title'], 0.36, 0.15 * c.L, 0.47 * c.L, 0.02, spacing=0.0)
+    # flying icon between the flight deck and door 1, just below the window line; the type name below door 1 (photo)
+    lockup(c, [(flying_icon(), 0.30 * c.H, c.winY - 0.12 * c.H, 0.0, 0.0)], c.doors[0] - 0.55 * c.H)
+    if c.type in TYPE_NAMES:
+        lockup(c, [(text_image(TYPE_NAMES[c.type], font('Montserrat', 600), 420, '#6E6A78', spacing=0.1), 0.045 * c.H, c.winY - 0.42 * c.H, 0.0, 0.0)], c.doors[0] + 0.4 * c.H)
     fin_all(c, VS['red'])
     if c.fin is not None:
         sle0 = np.polyval(c.fin['le'], c.fin['yR'])
         # red wrapping from the fin root down onto the lower tail cone
         c.poly([(sle0 / c.L - 0.02, 1.4), (sle0 / c.L + 0.03, -0.2), (0.93, -1.3), (1.2, -1.3), (1.2, 1.4)], VS['red'], 'cabin', where=fus)
+        # the signature: large, white, rising toward the trailing edge over the middle of the fin (photo: about half the fin
+        # height including the underline, centre fu 0.55, fv 0.45)
         img = text_image('Virgin', font('Kalam', 700), 420, VS['white'])
-        c.fin_decal(img, 0.52, 0.52, 0.17, rotate=-38.0, mode='text', where=c.fin_proper())
+        from PIL import Image
+        sw = art.svg(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M4 16 C30 8 60 4 96 3" stroke="#FFFFFF" stroke-width="3.2" fill="none" stroke-linecap="round"/></svg>', img.size[0] // 5)
+        sig = Image.new('RGBA', (img.size[0], int(img.size[1] * 1.35)), (0, 0, 0, 0)); sig.alpha_composite(img)
+        sig.alpha_composite(sw.resize((img.size[0], int(img.size[0] * sw.size[1] / sw.size[0]))), (0, int(img.size[1] * 0.95)))
+        c.fin_decal(sig, 0.60, 0.46, 0.25, rotate=16.0, mode='text', where=c.fin_proper())
     c.engines(VS['red']); c.tips(VS['red']); c.hstab('#DADCDE'); c.pylons('#E4E6E8')
 
 
-LIVERIES['VIR'] = dict(code='VIR', name='Virgin Atlantic', version='2019 "Flying Icons" livery (light silver fuselage, red tail with the Virgin signature, purple-grey titles)', since=2019,
+LIVERIES['VIR'] = dict(code='VIR', name='Virgin Atlantic', version='2019 "Flying Icons" livery (light silver fuselage, red tail with the Virgin signature, purple titles)', since=2019,
                        refs=['https://www.virgin.com/about-virgin/latest/hello-virgin-atlantics-new-flying-icons', VS_PHOTOS],
                        colors={k: (v, APPROX) for k, v in VS.items()}, types=['B789', 'A35K'],
-                       runtime=dict(top='#EDEDEF', belly='#EDEDEF', tail='#DA0530', tail2='#4B3F5C', eng='#DA0530'),
-                       status='layout from photos of 787-9s (one at SFO); flying-icon figures and the flag are not drawn; signature in a script look-alike', paint=virgin)
+                       runtime=dict(top='#EDEDEF', belly='#EDEDEF', tail='#DA0530', tail2='#2E2A48', eng='#DA0530'),
+                       status='layout from photos of 787-9s (one at SFO); flying icon strongly simplified (one figure for every aircraft; each aircraft has its own); signature in a script look-alike', paint=virgin)
 
 # ---- Air India (2023)
 reg_std('AIC', 'Air India', '2023 livery (deep red, aubergine and gold; window-frame motif)', 2023,
@@ -1091,7 +1250,7 @@ reg_std('ANZ', 'Air New Zealand', 'black tail with the white koru, black fern on
              fin_art=(svg_mark('<path d="M50 10 C74 10 88 30 84 52 C80 72 60 80 46 70 C34 62 38 44 50 42 C58 40 62 50 56 56" fill="none" stroke="#FFFFFF" stroke-width="8"/>'), 0.55, 0.55, 0.6), eng='#111111'))
 
 # ---- Avianca (TACA flies Avianca colours)
-AV = dict(red='#E30613', dark='#B0101C', orange='#F47B20', white='#F7F8F8')
+AV = dict(red='#E30613', dark='#B0101C', orange='#FD653C', white='#F7F8F8')  # orange: the coral-orange of the fin-root wedge, measured on the photo
 AV_PHOTOS = photo_ref('AVA', 'layout: red aft body sweeping from the belly under the wing trailing edge up to the fin, red nacelles, lowercase title')
 
 
@@ -1101,11 +1260,15 @@ def avianca(c):
     title_span(c, 'avianca', 'Montserrat', 700, AV['red'], 0.30, 0.15 * c.L, 0.40 * c.L, 0.05, spacing=0.0)
     # red aft body: below a line from the keel at sn 0.62 up to the crown at the fin leading edge (photos of N962AV, HK-5366)
     c.poly([(0.62, -1.4), (0.80, 1.4), (1.2, 1.4), (1.2, -1.4)], AV['red'], 'cabin', where=fus)
-    c.poly([(0.80, 1.4), (0.815, 1.4), (0.64, -1.4), (0.62, -1.4)], AV['orange'], 'cabin', where=fus)
     fin = c.finzone()
     fin_all(c, AV['red'])
     if c.fin is not None:
         c.poly([(0.35, -0.3), (1.3, -0.3), (1.3, 0.55)], AV['dark'], 'fin', where=fin)
+        # photo N962AV (review round 1: no orange stripe along the body boundary): a white wedge along the lower leading
+        # edge and a small coral-orange wedge below it where the fin meets the crown; white tip triangle at the leading edge
+        c.poly([(-0.9, 0.02), (-0.05, 0.10), (0.06, 0.26), (-0.9, 0.10)], '#FFFFFF', 'fin', where=fin)
+        c.poly([(-0.9, -0.08), (-0.25, -0.08), (-0.05, 0.10), (-0.9, 0.02)], AV['orange'], 'fin', where=fin)
+        c.poly([(-0.2, 0.80), (0.12, 0.80), (0.10, 1.2), (-0.2, 1.2)], '#FFFFFF', 'fin', where=fin)
     c.engines(AV['red']); c.tips(AV['red']); c.hstab('#DADCDE'); c.pylons('#E4E6E8')
 
 
@@ -1116,28 +1279,41 @@ LIVERIES['AVA'] = dict(code='AVA', name='Avianca', version='2023 brand (lowercas
                        status='layout from 2025 photos of A320neos; the tail symbol is not drawn; fleet mid-transition (2023 brand rendered: inf)', paint=avianca)
 
 # ---- Volaris
-VO = dict(black='#1A1A1A', magenta='#C4219E', pink='#E84BB8', purple='#7A2E8E', green='#7ED321', cyan='#3FC5E8', white='#F7F8F8')
-VO_PHOTOS = photo_ref('VOI', 'layout: black lowercase title from door 1, black fin with the pixel cross, magenta nacelles')
+VO = dict(navy='#1A1438', fin='#0B1024', magenta='#C4219E', pink='#E07BE6', violet='#D34BD8', lilac='#E6A0F0', white='#F7F8F8',
+          cyan='#3FC5E8', sky='#A6D8F0', blue='#4FB8EE', lime='#C8E650', green='#3DDD3D', green2='#6FE040')
+VO_PHOTOS = photo_ref('VOI', 'layout measured on N531VL (port side): navy lowercase title sn 0.187-0.462 across the windows, 0.45 H, starting aft of '
+                      'door 1; volaris.com above the windows sn 0.645-0.775; near-black navy fin with the pixel cross large and low (cells 0.135 of the '
+                      'fin height, centre fu 0.42 fv 0.38); magenta nacelles; N531VL with the Mexican flag below the windows aft of the wing')
+# pixel cross cells (column, row from the top-left of a 7 x 6 grid, measured on the photo's fin crop) and colours
+VO_CELLS = [(2, 0, 'cyan'), (1, 1, 'cyan'), (2, 1, 'sky'), (3, 1, 'blue'), (0, 2, 'violet'), (1, 2, 'pink'), (2, 2, 'white'), (3, 2, 'lime'),
+            (4, 2, 'green2'), (1, 3, 'magenta'), (2, 3, 'lilac'), (3, 3, 'green'), (2, 4, 'violet')]
+
+
+def volaris_cross(n=768):
+    cells = [([((i) / 5, (j) / 5), ((i + 1) / 5, (j) / 5), ((i + 1) / 5, (j + 1) / 5), ((i) / 5, (j + 1) / 5)], VO[k] if k != 'white' else '#FFFFFF')
+             for i, j, k in VO_CELLS]
+    return art.poly_image(cells, n)
 
 
 def volaris(c):
     base(c, VO['white'])
-    title_span(c, 'volaris', 'Nunito', 900, VO['black'], 0.42, 0.12 * c.L, 0.45 * c.L, 0.05, spacing=0.0)
-    fin = c.finzone()
-    fin_all(c, VO['black'])
+    fus = c.fuselage()
+    s0 = max(0.187 * c.L, c.doors[0] + 0.55)                    # aft of door 1 (review round 1: the v sat on the door)
+    title_span(c, 'volaris', 'Nunito', 900, VO['navy'], 0.45, s0, 0.462 * c.L, 0.0, spacing=0.0)
+    img = text_image('volaris.com', font('Nunito', 800), 420, VO['navy'])
+    lockup(c, [(img, 0.13 * c.H, c.winY + 0.22 * c.H, 0.0, 0.0)], 0.645 * c.L)
+    fin_all(c, VO['fin'])
     if c.fin is not None:
-        # the pixel cross high on the fin: 3 x 3 squares in pink, purple, green, cyan (simplified)
-        cells = [(1, 0, VO['cyan']), (0, 1, VO['pink']), (1, 1, '#FFFFFF'), (2, 1, VO['green']), (1, 2, VO['purple']), (0, 2, VO['magenta']), (2, 0, VO['cyan'])]
-        for i, j, col in cells:
-            u0, v0 = 0.30 + 0.14 * i, 0.82 - 0.12 * j
-            c.poly([(u0, v0), (u0 + 0.14, v0), (u0 + 0.14, v0 - 0.12), (u0, v0 - 0.12)], col, 'fin', where=c.fin_proper())
-    c.engines(VO['magenta']); c.tips(VO['black']); c.hstab('#DADCDE'); c.pylons('#E4E6E8')
+        # 5 x 5 grid of cells 0.135 fin heights each: grid centre at fu 0.40, fv 0.38 (photo)
+        c.fin_decal(volaris_cross(), 0.40, 0.38, 0.675, where=c.fin_proper())
+    c.engines(VO['magenta']); c.tips(VO['fin']); c.hstab('#DADCDE'); c.pylons('#E4E6E8')
 
 
-LIVERIES['VOI'] = dict(code='VOI', name='Volaris', version='white fuselage, black lowercase title, black tail with the pixel cross, magenta nacelles', since=2018,
-                       refs=['https://www.volaris.com/ (brand; not fetched)', VO_PHOTOS], colors={k: (v, APPROX) for k, v in VO.items()}, types=['A20N', 'A21N', 'A320'],
-                       runtime=dict(top='#F7F8F8', belly='#F7F8F8', tail='#1A1A1A', tail2='#C4219E', eng='#C4219E'),
-                       status='layout from a photo of an A320neo; pixel cross simplified; colours approx', paint=volaris)
+LIVERIES['VOI'] = dict(code='VOI', name='Volaris', version='white fuselage, navy lowercase title, navy tail with the pixel cross, magenta nacelles', since=2018,
+                       refs=['https://www.volaris.com/ (brand; not fetched)', VO_PHOTOS], colors={k: (v, APPROX + '; measured on the photo') for k, v in VO.items()},
+                       types=['A20N', 'A21N', 'A320'],
+                       runtime=dict(top='#F7F8F8', belly='#F7F8F8', tail='#0B1024', tail2='#C4219E', eng='#C4219E'),
+                       status='layout measured on a photo of an A320neo; colours measured on the photo (approx)', paint=volaris)
 
 # ---- Copa
 CM = dict(navy='#0E2D6E', white='#F7F8F8')
@@ -1200,7 +1376,8 @@ LIVERIES['KLM'] = dict(code='KLM', name='KLM', version='blue upper fuselage, whi
 # ---- Swiss (777 at SFO: runtime colours only)
 reg_std('SWR', 'Swiss', 'red tail with the white Swiss cross', 2011, ['https://www.swiss.com/ (brand; not fetched)'], dict(red=('#E3000F', APPROX)), [],
         dict(top='#F7F8F8', belly='#F7F8F8', tail='#E3000F', tail2='#FFFFFF', eng='#F2F3F4'), '777-300ER only at SFO (procedural)',
-        dict(title=('SWISS', 'Montserrat', 800, '#E3000F', 0.18), tail='#E3000F'))
+        dict(title=('SWISS', 'Montserrat', 800, '#E3000F', 0.18), tail='#E3000F',
+             fin_art=(svg_mark('<path d="M38 14 H62 V38 H86 V62 H62 V86 H38 V62 H14 V38 H38 Z" fill="#FFFFFF"/>'), 0.5, 0.5, 0.42)))
 
 # ---- Asiana
 AA2 = dict(body='#ECE8E2', navy='#2B3A67', tan='#C9A36A', yellow='#F4B324', orange='#EE7B22', red='#D8262E', maroon='#8C2332', blue='#2F56A6')
@@ -1284,12 +1461,50 @@ reg_std('EIN', 'Aer Lingus', '2019 livery (teal tail with the white shamrock)', 
              fin_art=(svg_mark('<circle cx="50" cy="32" r="16" fill="#FFFFFF"/><circle cx="33" cy="54" r="16" fill="#FFFFFF"/><circle cx="67" cy="54" r="16" fill="#FFFFFF"/><path d="M50 58 L56 92 L48 92 Z" fill="#FFFFFF"/>'), 0.5, 0.5, 0.55)))
 
 # ---- Qatar Airways
-reg_std('QTR', 'Qatar Airways', 'grey fuselage, burgundy tail with the grey oryx', 2006,
-        [NOR.format('qatar-airways') + ' (A350 profile; chart #BDC2C2 fuselage, #5C0631 oryx: third party)', photo_ref('QTR', 'the fin is burgundy with the oryx in the body grey')],
-        dict(grey=('#BDC2C2', 'third-party chart: unverified'), burgundy=('#5C0631', 'third-party chart: unverified')), ['A359'],
-        dict(top='#BDC2C2', belly='#BDC2C2', tail='#5C0631', tail2='#C4C9CA', eng='#BDC2C2'), 'burgundy fin with the grey oryx (photo check); oryx simplified; Arabic script not drawn',
-        dict(body='#C4C9CA', title=('QATAR', 'Libre Baskerville', 700, '#5C0631', 0.34, dict(k=0.4, dy=0.05)), tail='#5C0631',
-             fin_art=(svg_mark('<path d="M20 90 C30 60 50 44 70 40 L60 10 L78 36 L90 20 L84 44 C76 56 60 62 50 90 Z" fill="#C4C9CA"/>'), 0.55, 0.5, 0.8), eng='#C4C9CA'))
+QR = dict(grey='#C4C9CA', burgundy='#5C0631', arabic='#4A5157')
+# the oryx, measured on the fin of A7-AMI (refs/cache/livref QTR_1, starboard side, crop mirrored to the port side: x from
+# the leading-edge side, % of the crop; LE (7, 88)-(70, 5), TE (62, 97)-(98, 2), root y 93, tip y 3); re-drawn as polygons
+QR_FIN = dict(le=((7, 88), (70, 5)), te=((62, 97), (98, 2)), root=93, tip=3)
+QR_ORYX = [
+    [(96, 8), (60, 37.5), (56, 42), (93, 11.5)],                                   # upper horn
+    [(90, 21.5), (56, 42.5), (54, 46), (88, 25)],                                   # lower horn
+    [(58, 41), (62, 44), (76, 47), (67, 52), (75, 61), (72, 63), (69, 72), (72, 74), (68, 82), (71, 84), (64, 97), (52, 97),
+     (44, 87), (38, 87), (32, 90), (27, 89), (26, 84), (21, 82), (25, 72), (31, 62), (40, 52), (48, 44)],   # head, neck and mane
+]
+QR_FACE = [(45, 53), (48, 57), (50, 55), (51, 58), (49, 66), (46, 73), (43, 79), (40, 82), (43, 84), (48, 79), (53, 71), (55, 62), (53, 53), (49, 50)]
+
+
+def oryx_image(n=512, fg=QR['burgundy'], bg=QR['grey']):
+    """the same oryx for the nacelles (upright, in a unit box)"""
+    polys = [([(x / 100, y / 100) for x, y in P], fg) for P in QR_ORYX] + [([(x / 100, y / 100) for x, y in QR_FACE], bg)]
+    img = art.poly_image(polys, n)
+    return img.crop(img.getbbox())
+
+
+def qatar(c):
+    base(c, QR['grey'])
+    fus = c.fuselage()
+    # titles (photo A7-AMI, starboard): QATAR burgundy across the windows sn 0.12-0.33, 0.40 H; the Arabic title in dark grey
+    # above the windows aft of it, sn 0.38-0.47, 0.17 H (Noto Kufi Arabic, OFL, as a look-alike of the lettering)
+    title_span(c, 'QATAR', 'Libre Baskerville', 700, QR['burgundy'], 0.40, 0.12 * c.L, 0.33 * c.L, 0.02, spacing=0.12)
+    ar = text_shaped('القطرية', font('Noto Kufi Arabic', 600), 300, QR['arabic'], 'rtl')
+    lockup(c, [(ar, 0.17 * c.H, c.winY + 0.21 * c.H, 0.0, 0.0)], 0.38 * c.L)
+    fin_all(c, QR['grey'])
+    if c.fin is not None:
+        fin = c.fin_proper()
+        for P in QR_ORYX: c.poly(photo_fin(P, **QR_FIN), QR['burgundy'], 'fin', where=fin)
+        c.poly(photo_fin(QR_FACE, **QR_FIN), QR['grey'], 'fin', where=fin)
+    c.engines(QR['grey'])
+    c.nacelle_decal(oryx_image(), fx=0.75, fy=0.5, height=0.45, sides='out')
+    c.tips(QR['burgundy']); c.hstab('#C4C9CA'); c.pylons('#C4C9CA')
+
+
+LIVERIES['QTR'] = dict(code='QTR', name='Qatar Airways', version='grey fuselage and fin with the burgundy oryx, QATAR and Arabic titles', since=2006,
+                       refs=[NOR.format('qatar-airways') + ' (A350 profile; chart #BDC2C2 fuselage, #5C0631 oryx: third party)',
+                             photo_ref('QTR', 'grey fin with the burgundy oryx, QATAR across the windows sn 0.12-0.33, Arabic title sn 0.38-0.47 above the windows, oryx on the nacelle')],
+                       colors=dict(grey=(QR['grey'], 'third-party chart: unverified'), burgundy=(QR['burgundy'], 'third-party chart: unverified'), arabic=(QR['arabic'], APPROX)), types=['A359'],
+                       runtime=dict(top='#C4C9CA', belly='#C4C9CA', tail='#C4C9CA', tail2='#5C0631', eng='#C4C9CA'),
+                       status='layout measured on a photo of an A350-900 (starboard); oryx re-drawn as polygons; Arabic title in an OFL look-alike face; its station on the port side assumed the same (inf)', paint=qatar)
 
 # ---- French bee
 reg_std('FBU', 'French bee', 'white / blue gradient fuselage, blue tail', 2016, ['https://www.frenchbee.com/ (brand; not fetched)'],
@@ -1344,9 +1559,28 @@ reg_std('ITY', 'ITA Airways', '2021 livery (blue Savoia fuselage, white titles, 
              fin_polys=[('#009246', [(0.62, -0.3), (0.72, -0.3), (1.02, 1.1), (0.92, 1.1)]), ('#FFFFFF', [(0.72, -0.3), (0.82, -0.3), (1.12, 1.1), (1.02, 1.1)]), ('#CE2B37', [(0.82, -0.3), (0.92, -0.3), (1.22, 1.1), (1.12, 1.1)])], eng='#1766C4'))
 
 # ---- China Southern
-reg_std('CSN', 'China Southern', 'blue tail with the red kapok flower', 1991, ['https://www.csair.com/ (brand; not fetched)'],
-        dict(blue=('#0079C2', APPROX), red=('#E1261C', APPROX)), ['B789'], dict(top='#F7F8F8', belly='#F7F8F8', tail='#0079C2', tail2='#E1261C', eng='#F2F3F4'), 'approx',
-        dict(title=('CHINA SOUTHERN', 'Montserrat', 700, '#0079C2', 0.12, dict(k=0.55, dy=0.22, sp=0.04)), tail='#0079C2',
+CZ = dict(blue='#0079C2', red='#E1261C', title='#2F8FCB')
+
+
+def cz_titles(c):
+    """Chinese title forward (sn 0.15-0.26), CHINA SOUTHERN aft of it (sn 0.29-0.42), both above the windows (photos
+    B-2728-class 787s, refs/cache/livref CSN_1 / CSN_2, starboard side: the characters run from the nose aft, i.e. they read
+    right to left on the starboard side; on the port side they read left to right from the nose (inf: no port photo)).
+    Chinese face: Noto Sans SC (OFL) as a look-alike."""
+    zh = '中国南方航空'; fp = font('Noto Sans SC', 700)
+    h = 0.15 * c.H; yc = c.winY + 0.22 * c.H
+    def put(txt, where):
+        img = text_shaped(txt, fp, 300, CZ['title'])
+        w = 0.11 * c.L; img = img.resize((max(1, int(img.size[1] * w / h)), img.size[1]))
+        c.decal(img, 0.15 * c.L, yc, h, mode='text', where=c.fuselage() & where)
+    c.per_side(lambda w: put(zh, w), lambda w: put(zh[::-1], w))
+    title_span(c, 'CHINA SOUTHERN', 'Libre Baskerville', 700, CZ['title'], 0.12, 0.29 * c.L, 0.42 * c.L, 0.22, spacing=0.03)
+
+
+reg_std('CSN', 'China Southern', 'blue tail with the red kapok flower', 1991, ['https://www.csair.com/ (brand; not fetched)', photo_ref('CSN', 'Chinese title forward of CHINA SOUTHERN, both above the windows')],
+        dict(blue=(CZ['blue'], APPROX), red=(CZ['red'], APPROX), title=(CZ['title'], 'measured on the photo (approx)')), ['B789'],
+        dict(top='#F7F8F8', belly='#F7F8F8', tail='#0079C2', tail2='#E1261C', eng='#F2F3F4'), 'titles measured on photos (starboard); kapok flower simplified; colours approx',
+        dict(extra=cz_titles, tail='#0079C2',
              cheat=[('#0079C2', [(0.06, -0.45), (0.2, -0.4), (0.85, -0.4), (0.95, -0.2)], 0.03)],
              fin_art=(svg_mark(''.join(f'<ellipse cx="{50 + 22 * np.cos(a):.1f}" cy="{50 + 22 * np.sin(a):.1f}" rx="18" ry="10" transform="rotate({np.degrees(a):.0f} {50 + 22 * np.cos(a):.1f} {50 + 22 * np.sin(a):.1f})" fill="#E1261C"/>' for a in np.linspace(0, 2 * np.pi, 6, endpoint=False))), 0.5, 0.52, 0.5)))
 
@@ -1363,11 +1597,73 @@ reg_std('HVN', 'Vietnam Airlines', 'teal tail with the golden lotus', 2015, ['ht
              title=('VIETNAM AIRLINES', 'Montserrat', 700, '#00677F', 0.12, dict(k=0.55, dy=0.22, sp=0.03)), tail='#00677F',
              fin_art=(svg_mark('<path d="M50 20 C62 36 62 56 50 76 C38 56 38 36 50 20 Z M50 76 C36 70 24 56 20 40 C34 44 44 56 50 76 Z M50 76 C64 70 76 56 80 40 C66 44 56 56 50 76 Z" fill="#D6A23D"/>'), 0.5, 0.52, 0.55)))
 
-# ---- Fiji Airways
-reg_std('FJI', 'Fiji Airways', 'masi (tapa) pattern tail', 2013, ['https://www.fijiairways.com/ (brand; not fetched)'],
-        dict(brown=('#4A2E20', APPROX), sand=('#C7A27A', APPROX)), ['A332', 'A333', 'A359'], dict(top='#F7F8F8', belly='#F7F8F8', tail='#4A2E20', tail2='#C7A27A', eng='#F2F3F4'), 'pattern simplified',
-        dict(title=('FIJI AIRWAYS', 'Montserrat', 700, '#4A2E20', 0.13, dict(k=0.55, dy=0.2, sp=0.05)), tail='#C7A27A',
-             fin_polys=[('#4A2E20', [(-0.3, 0.1 + 0.2 * k), (1.2, 0.1 + 0.2 * k), (1.2, 0.17 + 0.2 * k), (-0.3, 0.17 + 0.2 * k)]) for k in range(5)]))
+# ---- Fiji Airways (2013 masi livery)
+FJ = dict(black='#1C1A1A', brown='#6E3222', white='#F7F8F8', ivory='#EFE9DE')
+FJ_FIN = dict(le=((27, 95), (72, 3)), te=((72, 95), (97, 3)), root=95, tip=3)
+
+
+def masi_medallion(n=1024, brown=FJ['brown'], ink=FJ['black'], light=FJ['ivory']):
+    """the masi medallion of the Fiji Airways tail (photo DQ-FAI, refs/cache/livref FJI_1): a light ring patterned with
+    black triangles and bars around a brown centre, a small light sunburst in the middle (re-drawn, simplified)"""
+    parts = [f'<circle cx="50" cy="50" r="48" fill="{light}"/>', f'<circle cx="50" cy="50" r="31" fill="{brown}"/>']
+    for k in range(16):
+        a0 = 2 * np.pi * k / 16; a1 = 2 * np.pi * (k + 1) / 16; am = (a0 + a1) / 2
+        if k % 2 == 0:   # triangle pointing inward
+            P = [(50 + 46 * np.cos(a0), 50 + 46 * np.sin(a0)), (50 + 46 * np.cos(a1), 50 + 46 * np.sin(a1)), (50 + 34 * np.cos(am), 50 + 34 * np.sin(am))]
+            parts.append('<path d="M' + ' L'.join(f'{x:.1f} {y:.1f}' for x, y in P) + f' Z" fill="{ink}"/>')
+        else:            # three bars
+            for d in (-0.09, 0, 0.09):
+                a = am + d
+                parts.append(f'<line x1="{50 + 34 * np.cos(a):.1f}" y1="{50 + 34 * np.sin(a):.1f}" x2="{50 + 45 * np.cos(a):.1f}" y2="{50 + 45 * np.sin(a):.1f}" stroke="{ink}" stroke-width="2.2"/>')
+    for k in range(12):
+        a = 2 * np.pi * k / 12
+        parts.append(f'<line x1="{50 + 6 * np.cos(a):.1f}" y1="{50 + 6 * np.sin(a):.1f}" x2="{50 + 15 * np.cos(a):.1f}" y2="{50 + 15 * np.sin(a):.1f}" stroke="{light}" stroke-width="2.6" stroke-linecap="round"/>')
+    parts.append(f'<circle cx="50" cy="50" r="4" fill="{light}"/>')
+    return art.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' + ''.join(parts) + '</svg>', n)
+
+
+def masi_band(c, where, v0, v1, space='fin'):
+    """a black masi band with light bars and triangles between fin heights v0..v1 (fin coords)"""
+    c.poly([(-0.6, v0), (1.3, v0), (1.3, v1), (-0.6, v1)], FJ['black'], space, where=where)
+    h = v1 - v0
+    for k in range(14):
+        u = -0.5 + 0.12 * k
+        if k % 3 == 0:
+            c.poly([(u, v0 + 0.15 * h), (u + 0.08, v0 + 0.15 * h), (u + 0.04, v1 - 0.2 * h)], FJ['ivory'], space, where=where)
+        else:
+            c.poly([(u, v0 + 0.1 * h), (u + 0.015, v0 + 0.1 * h), (u + 0.015, v1 - 0.1 * h), (u, v1 - 0.1 * h)], FJ['ivory'], space, where=where)
+
+
+def fiji(c):
+    base(c, FJ['white'])
+    fus = c.fuselage()
+    # FIJI: tall outline letters across the window row just aft of door 1 (photo: sn 0.16-0.285, 0.6 of the fuselage
+    # height, centred on the windows); AIRWAYS below it, 0.13 H, spanning the middle of FIJI
+    s0 = max(0.16 * c.L, c.doors[0] + 0.9)
+    img = outline_title('FIJI', 'Montserrat', 700, FJ['black'], ring=0.68, stretch=0.62, spacing=0.12)
+    h = 0.60 * c.H; w = min(0.125 * c.L, h * img.size[0] / img.size[1])
+    img = img.resize((max(1, int(img.size[1] * w / h)), img.size[1]))
+    lockup(c, [(img, h, c.winY, 0.0, 0.0)], s0)
+    aw = text_image('AIRWAYS', font('Montserrat', 600), 420, FJ['black'], spacing=0.12)
+    ha = 0.12 * c.H; wa = min(0.75 * w, ha * aw.size[0] / aw.size[1]); aw = aw.resize((max(1, int(aw.size[1] * wa / ha)), aw.size[1]))
+    lockup(c, [(aw, ha, c.winY - h / 2 - 0.02 * c.H - ha / 2, 0.0, 0.0)], s0 + 0.18 * w)
+    fin_all(c, FJ['brown'])
+    if c.fin is not None:
+        fin = c.finzone()
+        masi_band(c, fin, 0.74, 1.3)                                     # tip band
+        c.poly([(-0.6, -0.3), (0.12, -0.3), (0.0, 0.40), (-0.6, 0.40)], FJ['black'], 'fin', where=fin)   # forward root band
+        for k in range(5):
+            v = 0.02 + 0.075 * k
+            c.poly([(-0.6, v), (0.1 - 0.0 * k, v), (0.1, v + 0.018), (-0.6, v + 0.018)], FJ['ivory'], 'fin', where=fin)
+        c.fin_decal(masi_medallion(), 0.60, 0.37, 0.46, where=c.fin_proper())
+    c.engines('#F2F3F4'); c.tips(FJ['black']); c.hstab('#DADCDE'); c.pylons('#E4E6E8')
+
+
+LIVERIES['FJI'] = dict(code='FJI', name='Fiji Airways', version='2013 livery (large FIJI title, masi-pattern tail with the medallion)', since=2013,
+                       refs=['https://www.fijiairways.com/ (brand; not fetched)', photo_ref('FJI', 'FIJI outline title 0.6 H across the windows from door 1, AIRWAYS below; brown fin with the masi medallion, black masi bands at the tip and the forward root')],
+                       colors={k: (v, APPROX) for k, v in FJ.items()}, types=['A332', 'A333', 'A359'],
+                       runtime=dict(top='#F7F8F8', belly='#F7F8F8', tail='#6E3222', tail2='#1C1A1A', eng='#F2F3F4'),
+                       status='layout measured on a photo of an A350-900 (starboard); masi patterns simplified; colours approx', paint=fiji)
 
 # ---- Condor (2022 stripes)
 reg_std('CFG', 'Condor', '2022 striped livery (each aircraft one colour; red "Passion" rendered)', 2022, ['https://www.condor.com/ (brand; not fetched)'],
@@ -1418,14 +1714,95 @@ LIVERIES['FDX'] = dict(code='FDX', name='FedEx', version='FedEx Express livery (
                        refs=['https://newsroom.fedex.com/ (brand; not fetched)', FX_PHOTOS], colors={k: (v, APPROX) for k, v in FX.items()}, types=['B763', 'MD11', 'B752'],
                        runtime=dict(top='#F2F3F5', belly='#F2F3F5', tail='#4D148C', tail2='#FF6600', eng='#F2F3F5'),
                        status='layout measured on a photo of the MD-11F (port side); the earlier design showed the purple crown of the 1994 scheme, which the photo does not', paint=fedex)
-reg_std('UPS', 'UPS', 'brown tail and belly, gold shield, white upper fuselage', 2003, [NOR.format('ups')],
-        dict(brown=('#351C15', APPROX), gold=('#FFB500', APPROX)), ['B763', 'B752', 'B748', 'B744', 'MD11'],
-        dict(top='#F7F8F8', belly='#351C15', tail='#351C15', tail2='#FFB500', eng='#F2F3F4', bellyLine=-0.3), 'approx',
-        dict(belly=('#351C15', [(0, -1.2), (0.1, -0.35), (0.6, -0.3), (0.85, 0.2), (1, 0.8)]), cheat=[('#FFB500', [(0.1, -0.3), (0.6, -0.25), (0.85, 0.25)], 0.02)],
-             title=('Worldwide Services', 'Montserrat', 600, '#351C15', 0.1, dict(k=0.5, dy=0.2)), tail='#351C15',
-             fin_art=(svg_mark('<path d="M20 12 L80 12 L80 60 C80 80 50 92 50 92 C50 92 20 80 20 60 Z" fill="#FFB500"/><path d="M26 18 L74 18 L74 58 C74 74 50 84 50 84 C50 84 26 74 26 58 Z" fill="#351C15"/>'), 0.55, 0.5, 0.45)))
+UP = dict(brown='#351C15', gold='#FFB500', white='#F4F4F2', grey='#D9DADB')
+UP_PHOTOS = photo_ref('UPS', 'layout measured on the port side of the 747-8F N627UP: white forward and lower body, brown aft body behind a gold '
+                      'sweep from the crown at sn 0.48 down to the keel at sn 0.78, Worldwide Services title sn 0.11-0.30 above the windows, '
+                      'shield with gold border and gold ups on the brown fin')
 
+
+def ups_shield(n=1024, brown=UP['brown'], gold=UP['gold']):
+    """the UPS shield as painted on the fin (photo N627UP): brown shield face with a gold border, the gold bow across its
+    top, gold lowercase ups (re-drawn; Montserrat as a look-alike of the lettering)"""
+    from PIL import Image
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 116">
+<path d="M6 10 C30 2 70 2 94 10 L94 64 C94 88 72 104 50 113 C28 104 6 88 6 64 Z" fill="{gold}"/>
+<path d="M12 22 C36 12 64 12 88 18 L88 63 C88 84 70 97 50 105 C30 97 12 84 12 63 Z" fill="{brown}"/>
+<path d="M12 22 C36 12 64 12 88 18 L88 24 C64 18 36 18 12 30 Z" fill="{gold}"/></svg>"""
+    img = art.svg(svg, n)
+    t = text_image('ups', font('Montserrat', 800), 420, gold, spacing=-0.02)
+    w = int(0.62 * img.size[0]); h = int(w * t.size[1] / t.size[0])
+    img.alpha_composite(t.resize((w, h), Image.LANCZOS), (int(0.5 * img.size[0] - w / 2), int(0.52 * img.size[1] - h / 2)))
+    return img
+
+
+def ups(c):
+    base(c, UP['white'])
+    fus = c.fuselage()
+    # the gold sweep: centre line from the crown at sn 0.48 curving down to the keel at sn 0.78; brown above / behind it
+    sweep = [(0.46, 1.6), (0.48, 1.0), (0.58, 0.45), (0.68, -0.25), (0.78, -1.0), (0.80, -1.6)]
+    P = np.array(sweep)
+    from scipy.interpolate import PchipInterpolator
+    f = PchipInterpolator(P[::-1, 1], P[::-1, 0])          # station of the sweep at a cabin eta
+    eta = (c.y - c.ycM) / c.hhM
+    s_b = f(np.clip(eta, -1.6, 1.6)) * c.L
+    # band about 0.11 H wide across its direction; the sweep falls ~3 stations per unit of height, so ~0.35 H along the body
+    w = 0.35 * c.H
+    c.paint(c.aa(s_b + w / 2 - c.s) * fus, UP['brown'])                            # brown aft of the band
+    c.paint(np.clip(c.aa(np.abs(c.s - s_b) - w / 2), 0, 1) * fus, UP['gold'])
+    title_span(c, 'Worldwide Services', 'Montserrat', 600, UP['brown'], 0.16, 0.11 * c.L, 0.30 * c.L, 0.22, spacing=0.0, italic=True)
+    fin_all(c, UP['brown'])
+    if c.fin is not None:
+        c.fin_decal(ups_shield(), 0.55, 0.60, 0.46, mode='text', where=c.fin_proper())
+    c.engines(UP['grey']); c.tips(UP['brown']); c.hstab(UP['brown']); c.pylons(UP['grey'])
+
+
+LIVERIES['UPS'] = dict(code='UPS', name='UPS', version='2003 livery (white forward body, brown aft body behind a gold sweep, brown tail with the gold shield)', since=2003,
+                       refs=[NOR.format('ups'), UP_PHOTOS], colors={k: (v, APPROX) for k, v in UP.items()}, types=['B763', 'B752', 'B748', 'B744', 'MD11'],
+                       runtime=dict(top='#F4F4F2', belly='#F4F4F2', tail='#351C15', tail2='#FFB500', eng='#D9DADB'),
+                       status='layout measured on a photo of a 747-8F (port side); shield re-drawn: the photo shows the shield face brown with a gold '
+                              'border and gold letters (not a gold-filled shield); colours approx', paint=ups)
 # all-cargo operators: their SFO fleet (757-200 freighters, 767-300F, MD-11F, 747-400F / -8F) has no passenger cabin
 # windows; the painter paints none and the renderer hides the models' cabin glass (manifest brands.<code>.cargo). The
 # few crew-area windows of the freighters (747F upper deck) are not modelled.
 for _c in ('FDX', 'UPS'): LIVERIES[_c]['cargo'] = True
+
+
+# ================================================================================================ 777 family
+# The 777s now have artist models (FlightGear 777-200ER / -300ER, tools/convert_models.py): the brands whose SFO fleet
+# includes them (docs/research/liveries.md §1: DataSF landings by airline and model, "B773" = 777-300 / -300ER = ADS-B
+# B77W; the recorder's airframes) get bakes on them. Designs are the brands' own (layout in fractions of the length and
+# cabin height, so they carry over; checked on the renders, not on 777 photos unless stated).
+FLEET_777 = {'UAL': ['B772', 'B77W'], 'EVA': ['B77W'], 'CPA': ['B77W'], 'JAL': ['B77W'], 'ANA': ['B77W'], 'BAW': ['B77W'],
+             'AIC': ['B77W', 'B772'], 'AFR': ['B77W'], 'KAL': ['B77W'], 'ACA': ['B77W', 'B77L'], 'SWR': ['B77W'], 'CES': ['B77W'],
+             'CCA': ['B77W'], 'PAL': ['B77W']}
+for _c, _t in FLEET_777.items():
+    LIVERIES[_c]['types'] = list(LIVERIES[_c].get('types', [])) + [t for t in _t if t not in LIVERIES[_c].get('types', [])]
+
+
+# ================================================================================================ registrations
+# Where each airline paints the registration (painted per aircraft at run time from its own tail number,
+# js/live/aircraft.js + js/shaders/aircraft_real.js): sn = forward end of the registration + flag block as a fraction of
+# the fuselage length from the nose (port side), dy = centre height above the window centre line in fuselage heights H
+# (negative: below the windows), h = letter height / H, flag = national flag painted with it ('US', 'MX'), flag_first =
+# the flag ahead of the letters on the port side. Measured on the reference photographs (refs/cache/livref, Wikimedia
+# Commons, reference only; stations measured along the fuselage in the side views): src 'photo <file>'. Brands without a
+# measurement use REG_DEFAULT (src 'inf': aft fuselage above the windows, where most of the photographed airlines paint it).
+REG_DEFAULT = dict(sn=0.74, dy=0.18, h=0.10, flag=None, flag_first=False, src='inf (default: aft fuselage above the windows)')
+REG = {
+    'UAL': dict(sn=0.73, dy=0.20, h=0.12, flag='US', src='photo UAL_2 (737-8 N37440, starboard): N-number then the US flag aft of it, above the windows'),
+    'UAL-X': dict(sn=0.65, dy=0.13, h=0.11, flag='US', src='photo UAL-X_2 (E175 N86371, port): above the windows aft of the wing, flag aft'),
+    'UAL-G': dict(sn=0.73, dy=0.20, h=0.12, flag='US', src='as UAL (inf)'),
+    'AAL': dict(sn=0.745, dy=-0.17, h=0.10, flag='US', flag_first=True, src='photo AAL_2 (A321 N913US, port): below the windows aft, flag ahead of it'),
+    'AAL-E': dict(sn=0.745, dy=-0.17, h=0.10, flag='US', flag_first=True, src='as AAL (inf)'),
+    'DAL': dict(sn=0.72, dy=0.20, h=0.10, flag='US', flag_first=True, src='photo DAL_1 (737-900 N884DN, port): flag then N-number above the windows aft'),
+    'DAL-C': dict(sn=0.72, dy=0.20, h=0.10, flag='US', flag_first=True, src='as DAL (inf)'),
+    'SWA': dict(sn=0.63, dy=0.20, h=0.10, src='photo SWA_1 (737-700 N273WN, port): above the windows at the start of the tail stripes'),
+    'VOI': dict(sn=0.71, dy=-0.17, h=0.10, flag='MX', flag_first=True, src='photo VOI_1 (A320neo N531VL, port): Mexican flag then the registration below the windows'),
+    'JAL': dict(sn=0.81, dy=0.15, h=0.10, src='photo JAL_1 (787-9 JA864J, port): above the windows ahead of the aft door'),
+    'QTR': dict(sn=0.76, dy=-0.15, h=0.09, src='photo QTR_1 (A350-900 A7-AMI, starboard): below the windows aft'),
+    'VIR': dict(sn=0.76, dy=-0.40, h=0.10, src='photo VIR_1 (787-9 G-VOWS, port): low on the aft fuselage'),
+    'AFR': dict(sn=0.77, dy=0.08, h=0.07, src='photo AFR_2 (A350-900 F-HUVE, port): small, at the window line aft'),
+    'UPS': dict(sn=0.72, dy=0.10, h=0.08, src='photo UPS_2 (747-8F N627UP, port): on the brown aft body'),
+}
+for _c, _L in LIVERIES.items():
+    _L['reg'] = {**REG_DEFAULT, **REG.get(_c, {})}
