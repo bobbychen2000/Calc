@@ -1,0 +1,282 @@
+{
+ "sheet": "L4W",
+ "size": "A0",
+ "sheet_mm": [
+  1189.0,
+  841.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "main_side": {
+   "name": "main_side",
+   "axes": "xz",
+   "A": [
+    [
+     333.3333333333333,
+     0.0
+    ],
+    [
+     0.0,
+     -333.3333333333333
+    ]
+   ],
+   "t": [
+    -1954.833333333333,
+    250.0
+   ],
+   "scale": 3.0,
+   "box": [
+    6.0405,
+    -0.06,
+    6.7805,
+    0.649
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "main_front": {
+   "name": "main_front",
+   "axes": "yz",
+   "A": [
+    [
+     333.3333333333333,
+     0.0
+    ],
+    [
+     0.0,
+     -333.3333333333333
+    ]
+   ],
+   "t": [
+    470.0,
+    157.0
+   ],
+   "scale": 3.0,
+   "box": [
+    -0.2,
+    -0.3,
+    0.16,
+    0.37
+   ],
+   "note": "local (s, r) about the axle, seen from ahead: s + to port (right), model y = axle y - s, z = axle z + r",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "main_rear": {
+   "name": "main_rear",
+   "axes": "xz",
+   "A": [
+    [
+     -333.3333333333333,
+     0.0
+    ],
+    [
+     0.0,
+     -333.3333333333333
+    ]
+   ],
+   "t": [
+    2858.833333333333,
+    250.0
+   ],
+   "scale": 3.0,
+   "box": [
+    6.0405,
+    -0.06,
+    6.7805,
+    0.649
+   ],
+   "note": "seen from starboard, nose right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "main_top": {
+   "name": "main_top",
+   "axes": "xy",
+   "A": [
+    [
+     333.3333333333333,
+     0.0
+    ],
+    [
+     0.0,
+     -333.3333333333333
+    ]
+   ],
+   "t": [
+    -1954.833333333333,
+    -393.0
+   ],
+   "scale": 3.0,
+   "box": [
+    6.0405,
+    -2.4250000000000003,
+    6.7805,
+    -2.065
+   ],
+   "note": "seen from above, starboard up",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "main_hub_detail": {
+   "name": "main_hub_detail",
+   "axes": "yz",
+   "A": [
+    [
+     500.0,
+     0.0
+    ],
+    [
+     0.0,
+     -500.0
+    ]
+   ],
+   "t": [
+    650.0,
+    415.0
+   ],
+   "scale": 2.0,
+   "box": [
+    -0.18,
+    0.0,
+    0.135,
+    0.165
+   ],
+   "note": "local (s, r) about the axle, seen from ahead: s + to port (right), model y = axle y - s, z = axle z + r",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "nose_side": {
+   "name": "nose_side",
+   "axes": "xz",
+   "A": [
+    [
+     333.3333333333333,
+     0.0
+    ],
+    [
+     0.0,
+     -333.3333333333333
+    ]
+   ],
+   "t": [
+    -794.8333333333333,
+    650.0
+   ],
+   "scale": 3.0,
+   "box": [
+    2.6305,
+    -0.03,
+    3.2304999999999997,
+    0.622
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "nose_front": {
+   "name": "nose_front",
+   "axes": "yz",
+   "A": [
+    [
+     333.3333333333333,
+     0.0
+    ],
+    [
+     0.0,
+     -333.3333333333333
+    ]
+   ],
+   "t": [
+    425.0,
+    576.0
+   ],
+   "scale": 3.0,
+   "box": [
+    -0.16,
+    -0.24,
+    0.16,
+    0.4
+   ],
+   "note": "local (s, r) about the axle, seen from ahead: s + to port (right), model y = axle y - s, z = axle z + r",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "nose_top": {
+   "name": "nose_top",
+   "axes": "xy",
+   "A": [
+    [
+     333.3333333333333,
+     0.0
+    ],
+    [
+     0.0,
+     -333.3333333333333
+    ]
+   ],
+   "t": [
+    -794.8333333333333,
+    742.0
+   ],
+   "scale": 3.0,
+   "box": [
+    2.6305,
+    -0.15,
+    3.2304999999999997,
+    0.15
+   ],
+   "note": "seen from above, starboard up",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "detail_main": {
+   "name": "detail_main",
+   "axes": "yz",
+   "A": [
+    [
+     500.0,
+     0.0
+    ],
+    [
+     0.0,
+     -500.0
+    ]
+   ],
+   "t": [
+    745.0,
+    644.0
+   ],
+   "scale": 2.0,
+   "box": [
+    -0.14,
+    0.05,
+    0.14,
+    0.34
+   ],
+   "note": "local (s, r) about the axle, seen from ahead: s + to port (right), model y = axle y - s, z = axle z + r",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "detail_nose": {
+   "name": "detail_nose",
+   "axes": "yz",
+   "A": [
+    [
+     500.0,
+     0.0
+    ],
+    [
+     0.0,
+     -500.0
+    ]
+   ],
+   "t": [
+    745.0,
+    773.25
+   ],
+   "scale": 2.0,
+   "box": [
+    -0.14,
+    0.05,
+    0.14,
+    0.34
+   ],
+   "note": "local (s, r) about the axle, seen from ahead: s + to port (right), model y = axle y - s, z = axle z + r",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  }
+ }
+}
