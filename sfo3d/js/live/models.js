@@ -155,14 +155,10 @@ export async function decodeModel(buf, stretch = null) {
     const key = m.tex >= 0 ? m.tex : -1;
     if (!groups.has(key)) groups.set(key, []); groups.get(key).push(d);
   }
-  // exact duplicate triangles (same three vertex positions; e.g. 592 on the FAM 747-8 nose, double-sided copies) z-fight
-  // with opposite normals and shade as dark blotches (review round 1): only the first copy is drawn
-  const seenTri = new Set(); const pk = (v) => pq[v * 3] + ',' + pq[v * 3 + 1] + ',' + pq[v * 3 + 2];
-  const dupTri = (i) => { const k = [pk(idxIn[i]), pk(idxIn[i + 1]), pk(idxIn[i + 2])].sort().join('|'); if (seenTri.has(k)) return true; seenTri.add(k); return false; };
   const idx = new Uint32Array(head.ni); let w = 0; const draws = [];
   for (const [tex, list] of groups) {
     const first = w;
-    for (const d of list) for (let i = d.first; i < d.first + d.count; i += 3) { if (dupTri(i)) continue; idx[w++] = idxIn[i]; idx[w++] = idxIn[i + 1]; idx[w++] = idxIn[i + 2]; }
+    for (const d of list) for (let i = d.first; i < d.first + d.count; i++) idx[w++] = idxIn[i];
     draws.push({ tex, first, count: w - first });
   }
   const nIdx = w;

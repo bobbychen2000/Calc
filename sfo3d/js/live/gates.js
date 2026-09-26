@@ -59,11 +59,13 @@ import { BUILDINGS } from '../../data/sfo_buildings.js';
 const BLD = [];
 for (const r of (BUILDINGS && BUILDINGS.complex) || []) BLD.push(r);
 for (const p of (BUILDINGS && BUILDINGS.parts) || []) if (p.kind !== 'walkway') for (const r of p.rings) BLD.push(r);
+const NBLD = BLD.length; // + the elevated sky bridges (only for the rotunda drum, which reaches their height)
+for (const p of (BUILDINGS && BUILDINGS.parts) || []) if (p.kind === 'walkway') for (const r of p.rings) BLD.push(r);
 const BLD_BB = BLD.map(r => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const p of r) { a = Math.min(a, p[0]); c = Math.max(c, p[0]); b = Math.min(b, p[1]); d = Math.max(d, p[1]); } return [a, b, c, d]; });
 function inRing(x, z, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if (((a[1] > z) !== (b[1] > z)) && (x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0])) c = !c; } return c; }
-function inBuilding(x, z) { for (let i = 0; i < BLD.length; i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRing(x, z, BLD[i])) return true; } return false; }
-function distBuilding(x, z) { // distance to the nearest outline edge (0 inside)
-  if (inBuilding(x, z)) return 0; let d = 1e9;
+function inBuilding(x, z, all = false) { for (let i = 0; i < (all ? BLD.length : NBLD); i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRing(x, z, BLD[i])) return true; } return false; }
+function distBuilding(x, z) { // distance to the nearest outline edge incl. the sky bridges (0 inside)
+  if (inBuilding(x, z, true)) return 0; let d = 1e9;
   for (let i = 0; i < BLD.length; i++) { const bb = BLD_BB[i]; if (x < bb[0] - d || x > bb[2] + d || z < bb[1] - d || z > bb[3] + d) continue; const r = BLD[i];
     for (let k = 0, j = r.length - 1; k < r.length; j = k++) { const a = r[j], b = r[k]; const ex = b[0] - a[0], ez = b[1] - a[1]; const L2 = ex * ex + ez * ez || 1; const t = clampN(((x - a[0]) * ex + (z - a[1]) * ez) / L2, 0, 1); d = Math.min(d, Math.hypot(a[0] + ex * t - x, a[1] + ez * t - z)); } }
   return d;
@@ -279,17 +281,9 @@ export class LiveGateSystem {
     // the data's model; a bridge the data found no single model for carries the range of the model covering most of its
     // dockings (ext_range) - that model is used
     let spec = PBB[b.model]; if (!spec && b.extRange) { const hit = Object.entries(PBB).find(([, m]) => Math.abs(m[4] - b.extRange[0]) < 0.01 && Math.abs(m[3] - b.extRange[1]) < 0.01); if (hit && !b.upper) { spec = hit[1]; b.modelUsed = hit[0]; } }
-    // Which model each bridge is, is the data's inference: "the smallest-retracting model covering the observed dockings".
-    // The engine parks aircraft where their ADS-B reports put them, 2-18 m short of the stop points the models were
-    // fitted to (replay 24 Sep 15:25-16:45Z: 33 of 85 dockings out of range), and a real bridge does reach the aircraft
-    // at its real stop. Here a main-deck bridge is the datasheet model with the LONGEST reach whose operational
-    // retraction still fits its rest length (stow_len: the tunnel is at least that short, sheet footnote) - the same
-    // rest footprint, the reach the rest pose allows (inferred; data model kept when it already reaches farther).
-    const stowL0 = b.stowW ? Math.hypot(b.stowW[0] - rot[0], b.stowW[1] - rot[2]) : null;
-    if (!b.upper && stowL0 != null) {
-      const cands = Object.entries(PBB).filter(([, m]) => m[4] <= stowL0 + 0.01 && m[1] - (m[2] - m[4]) >= stowL0).sort((a, c) => c[1][3] - a[1][3] || a[1][4] - c[1][4]);
-      if (cands.length && (!spec || cands[0][1][3] > spec[3] + 0.01)) { spec = cands[0][1]; b.modelUsed = cands[0][0]; b.modelWidened = true; }
-    }
+    // (which model each bridge is, is the data's inference - "the smallest-retracting model covering the observed
+    // dockings" - so its reach decides which parked aircraft the bridge can dock; an aircraft beyond it keeps the bridge
+    // at rest)
     let nT, opR, opE, mechE, spacer;
     if (spec) { [nT, , , opE, opR] = spec; spacer = spec[2] - spec[4]; mechE = spec[1] - spacer; }
     else { nT = 3; [opR, opE] = b.extRange || [10.276, 41.381]; spacer = 2.225; mechE = opE + 2.3; }
@@ -299,8 +293,8 @@ export class LiveGateSystem {
       // (the smallest datasheet model whose range holds the data's rest length and the U1L docking, +-1 m; else the one
       // that reaches the docking - the bridge then rests at that model's shortest length)
       const fit = (m, tol) => m[4] <= (stowL ?? m[4]) + tol && (stowL == null || m[1] - (m[2] - m[4]) >= stowL) && (eD == null || (m[4] <= eD + 1 && m[3] >= eD - 1));
-      let cands = Object.entries(PBB).filter(([, m]) => fit(m, 0.01)); if (!cands.length) cands = Object.entries(PBB).filter(([, m]) => fit(m, 1.0));
-      if (!cands.length && eD != null) cands = Object.entries(PBB).filter(([, m]) => m[4] <= eD + 1 && m[3] >= eD - 1);
+      // (the rest pose must stay the data's: a model that cannot retract to stow_len is not used)
+      let cands = Object.entries(PBB).filter(([, m]) => fit(m, 0.01));
       if (cands.length) cands.sort((a, c) => a[1][4] - c[1][4] || a[1][3] - c[1][3]);
       else if (stowL != null) cands = Object.entries(PBB).filter(([, m]) => m[4] <= stowL && m[1] - (m[2] - m[4]) >= stowL).sort((a, c) => c[1][3] - a[1][3]); // cannot reach U1L: longest model holding the rest pose
       if (cands.length) { const m = cands[0][1]; b.modelUsed = cands[0][0]; [nT, , , opE, opR] = m; spacer = m[2] - m[4]; mechE = m[1] - spacer; }
@@ -335,7 +329,9 @@ export class LiveGateSystem {
     if (tg.length && best > 1e8) { b.drumOverWing = true; for (let H = Hb - dh; H <= Hb + dh + 1e-6; H += 0.02) { let w = 0; for (const t of tg) w = Math.max(w, Math.abs(H - t.sill) / Math.max(1, t.e - b.m.F)); if (w < best) { best = w; Hr = H; } } }
     else if (!tg.length && Hmin != null) Hr = Math.max(Hb, Hmin);
     b.Hb = Hb; b.Hr = +Hr.toFixed(3); b.slopeMax = tg.length ? best : 0;
-    const sills = tg.map(t => t.sill); b.h0 = sills.length ? (Math.min(...sills) + Math.max(...sills)) / 2 : Hr; b.hRest = b.h0;
+    const sills = tg.map(t => t.sill); b.h0 = sills.length ? (Math.min(...sills) + Math.max(...sills)) / 2 : Hr;
+    { const lim = Math.max(0, b.e0 - b.m.F) / 12; b.h0 = clampN(b.h0, Hr - lim, Hr + lim); } // at rest the tunnel slopes <= 1:12 (the height is pre-positioned when docking)
+    b.hRest = b.h0;
     b.stairSide = 1; b._tg = tg; // (side chosen in finishPrep, once every bridge is placed)
     // legacy fields read by tools (jobs/extract2d.mjs, tools/live/invariants.mjs)
     b.attachW = att; b.attachW3 = att; const lu = [rot[0] - walk[Math.max(0, n - 2)][0], 0, rot[2] - walk[Math.max(0, n - 2)][2]]; b.u = Math.hypot(lu[0], lu[2]) > 0.05 ? v3.norm(lu) : dirOf(b.ac);
@@ -348,6 +344,7 @@ export class LiveGateSystem {
   finishPrep() {
     if (this._fin) return; this._fin = true;
     const all = []; for (const g of this.gates) for (const b of this.bridgesOf(g)) { if (!b.m) this.prepBridge(g, b); all.push({ g, b }); }
+    for (const g of this.gates) if (g.bridges && g.bridges.length > 1) this.shareWalks(g);
     const restOf = new Map(all.map(({ b }) => [b, this.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true)]));
     for (const { g, b } of all) {
       const others = all.filter(o => o.b !== b && Math.hypot(o.b.rot[0] - b.rot[0], o.b.rot[2] - b.rot[2]) < 70).map(o => restOf.get(o.b));
@@ -421,7 +418,7 @@ export class LiveGateSystem {
   // sheet limits for a joint state: operational range (+-1 m, the data's tolerance), cab turn, rotunda swing
   jointOk(b, q, icao) {
     const m = b.m; const turn = CW * q.t / DEG; const opt = b.cabOption && /^optional/.test(b.cabOption);
-    if (icao && !b.modelWidened && b.dockTypesOut && b.dockTypesOut.includes(icao)) return { ok: false, why: 'dock_types_out' }; // (the data's model's reach)
+    if (icao && b.dockTypesOut && b.dockTypesOut.includes(icao)) return { ok: false, why: 'dock_types_out' };
     if (q.e < m.opR - 1.0 || q.e > m.opE + 1.0) return { ok: false, why: `extension ${q.e.toFixed(1)} m outside ${m.opR}-${m.opE}` };
     if (opt ? Math.abs(turn) > CAB_OPT_HALF : (turn > CAB_CW || turn < -CAB_CCW)) return { ok: false, why: `cab turn ${turn.toFixed(0)} deg` };
     if (!b.swingFree && Math.abs(wrap(q.a - b.ac)) > ROT_SWING * DEG + 1e-6) return { ok: false, why: `rotunda swing ${(wrap(q.a - b.ac) / DEG).toFixed(0)} deg` };
@@ -529,7 +526,7 @@ export class LiveGateSystem {
     const fl = (s) => G + this.floorAt(b, q, s);  // tunnel floor height at distance s from the rotunda centre
     const seg = (s0, s1, w, h, part, lo0 = null) => { const cx = rot[0] + u[0] * (s0 + s1) / 2, cz = rot[2] + u[2] * (s0 + s1) / 2; const a = Math.min(fl(s0), fl(s1)), c = Math.max(fl(s0), fl(s1)); out.push({ c: [cx, cz], u: [u[0], u[2]], hl: (s1 - s0) / 2, hw: w / 2, lo: (lo0 ?? a) - 0.15, hi: c + h, part }); };
     if (fixed) {
-      for (let i = 1; i < b.walk.length; i++) { const A = b.walk[i - 1], B = b.walk[i]; const d = [B[0] - A[0], B[2] - A[2]]; const L = Math.hypot(d[0], d[1]); if (L < 0.05) continue; const ya = G + this.walkY(b, i - 1), yb = G + this.walkY(b, i); out.push({ c: [(A[0] + B[0]) / 2, (A[2] + B[2]) / 2], u: [d[0] / L, d[1] / L], hl: L / 2, hw: WALK_W / 2, lo: Math.min(ya, yb) - 0.3, hi: Math.max(ya, yb) + WALK_H, part: 'walkway', seg: i }); }
+      for (const S of this.ownWalk(b)) { const A = S.A, B = S.B; const d = [B[0] - A[0], B[2] - A[2]]; const L = Math.hypot(d[0], d[1]); if (L < 0.05) continue; out.push({ c: [(A[0] + B[0]) / 2, (A[2] + B[2]) / 2], u: [d[0] / L, d[1] / L], hl: L / 2, hw: WALK_W / 2, lo: Math.min(A[1], B[1]) - 0.3, hi: Math.max(A[1], B[1]) + WALK_H, part: 'walkway', seg: S.i }); }
       out.push({ c: [rot[0], rot[2]], u: [1, 0], hl: b.rotR, hw: b.rotR, lo: G + b.Hr - 0.3, hi: G + b.Hr + 3.3, part: 'rotunda', round: b.rotR });
       out.push({ c: [rot[0], rot[2]], u: [1, 0], hl: 0.6, hw: 0.6, lo: G, hi: G + b.Hr - 0.3, part: 'pedestal', round: 0.6 });
     }
@@ -550,6 +547,40 @@ export class LiveGateSystem {
   // (to tunnel A's hinge at F), then a straight slope to the cab floor at the pivot
   floorAt(b, q, s) { const F = b.m.F; return b.Hr + (q.h - b.Hr) * clampN((s - F) / Math.max(q.e - F, 0.1), 0, 1); }
   slopeOf(b, e, h) { return Math.abs(b.Hr - h) / Math.max(1, e - b.m.F); }
+  // the fixed-walkway segments this bridge draws (world, floor heights): from the building (or, where its polyline
+  // shares its first vertices with a sibling bridge's - one walkway branching - from where it leaves the sibling's
+  // walkway / rotunda) to the edge of its own drum
+  ownWalk(b) {
+    if (b._own) return b._own; const out = []; const W = b.walk; const i0 = b.walkFrom || 0;
+    for (let i = i0 + 1; i < W.length; i++) {
+      let A = [W[i - 1][0], G + this.walkY(b, i - 1), W[i - 1][2]]; let B = [W[i][0], G + this.walkY(b, i), W[i][2]];
+      const L = Math.hypot(B[0] - A[0], B[2] - A[2]); if (L < 0.05) continue; const d = [(B[0] - A[0]) / L, 0, (B[2] - A[2]) / L];
+      let a0 = i === i0 + 1 ? (b.walkOff || 0) : 0, a1 = L - (i === W.length - 1 ? Math.min(b.rotR * 0.8, 0.9 * L) : 0);
+      if (a1 - a0 < 0.1) { if (out.length || i < W.length - 1) continue; a0 = Math.max(0, a1 - 0.1); } // (nothing own left: a 0.1 m stub inside the own drum)
+      const P = (t) => [A[0] + d[0] * t, A[1] + (B[1] - A[1]) * t / L, A[2] + d[2] * t];
+      out.push({ A: P(a0), B: P(a1), d, i, first: i === 1 && !a0, last: i === W.length - 1 });
+    }
+    return (b._own = out);
+  }
+  // shared walkway prefixes between the bridges of one stand, twin rotundas (one junction for two tunnels)
+  shareWalks(g) {
+    const Bs = (g.bridges || []);
+    for (let j = 1; j < Bs.length; j++) for (let k = 0; k < j; k++) {
+      const b = Bs[j], o = Bs[k]; let n = 0; while (n < b.walk.length && n < o.walk.length && Math.hypot(b.walk[n][0] - o.walk[n][0], b.walk[n][2] - o.walk[n][2]) < 0.3) n++;
+      // (o's rotunda as a vertex of b's walkway: a twin head)
+      let twin = false; if (n === o.walk.length && n < b.walk.length) twin = true;
+      if (n < 2 || (b.walkFrom || 0) >= n - 1) continue;
+      b.walkFrom = n - 1; const V = b.walk[n - 1], N = b.walk[n];
+      const du = [N[0] - V[0], N[2] - V[2]]; const Lu = Math.hypot(du[0], du[1]) || 1;
+      if (twin) { const D = Math.hypot(b.rot[0] - o.rot[0], b.rot[2] - o.rot[2]); const r = Math.min(b.rotR, o.rotR, Math.max(1.3, (D - 0.3) / 2)); b.rotR = o.rotR = r; b.walkOff = r + 0.02; }
+      else { // start clear of the sibling's walkway (its segment through V, both sides)
+        // (each sibling segment at V as a ray from V: the start face's corners must be half a width off its axis)
+        let off = WALK_W / 2 + 0.05; for (const [P0, P1] of [[o.walk[n - 1], o.walk[n - 2]], [o.walk[n - 1], o.walk[n]]]) { if (!P0 || !P1) continue; const dv = [P1[0] - P0[0], P1[2] - P0[2]]; const Lv = Math.hypot(dv[0], dv[1]) || 1;
+          const c = (du[0] * dv[0] + du[1] * dv[1]) / (Lu * Lv); if (c <= 0) continue; const sn = Math.sqrt(Math.max(0.01, 1 - c * c)); off = Math.max(off, Math.min(Lv, (WALK_W / 2) * (1 + c) / sn + 0.05)); }
+        b.walkOff = off; }
+      b._own = null; o._own = null;
+    }
+  }
   walkY(b, i) { // floor height (above the apron) at walkway vertex i: departure level at the building, rotunda floor at the end
     let L = 0; for (let j = 1; j <= i; j++) L += Math.hypot(b.walk[j][0] - b.walk[j - 1][0], b.walk[j][2] - b.walk[j - 1][2]);
     return b.Hb + (b.Hr - b.Hb) * (b.walkLen > 0 ? L / b.walkLen : 1);
@@ -580,17 +611,12 @@ export class LiveGateSystem {
     const fl = (s) => G + this.floorAt(b, q, s);
     // fixed walkway along the mapped polyline, sloping from the terminal level to the rotunda floor; first segment as a
     // tube (it enters the building at the attach point), the others as slabs; columns every ~14 m outside the building
-    for (let i = 1; i < b.walk.length; i++) {
-      const A = [b.walk[i - 1][0], G + this.walkY(b, i - 1), b.walk[i - 1][2]], B = [b.walk[i][0], G + this.walkY(b, i), b.walk[i][2]];
-      const last = i === b.walk.length - 1; const d = v3.norm([B[0] - A[0], 0, B[2] - A[2]]);
-      const Bx = last ? v3.sub(B, v3.mul(d, Math.min(b.rotR * 0.8, 0.9 * Math.hypot(B[0] - A[0], B[2] - A[2])))) : B; // stops at the drum
-      if (i === 1) tube(geo, v3.add(A, v3.mul(d, -0.3)), Bx, WALK_W, WALK_H, C.walk, C.panelE);
-      else { slab(geo, A, Bx, WALK_W, WALK_H, C.walk, C.panelE); }
-    }
+    const segs = this.ownWalk(b);
+    segs.forEach((S, n) => { if (n === 0) tube(geo, S.first ? v3.add(S.A, v3.mul(S.d, -0.3)) : S.A, S.B, WALK_W, WALK_H, C.walk, C.panelE); else slab(geo, S.A, S.B, WALK_W, WALK_H, C.walk, C.panelE); });
     let run = 0;
-    for (let i = 1; i < b.walk.length; i++) {
-      const A = b.walk[i - 1], B = b.walk[i]; const L = Math.hypot(B[0] - A[0], B[2] - A[2]);
-      for (let d = 7 - (run % 14); d < L; d += 14) { const s = run + d; if (s < 4 || b.walkLen - s < b.rotR + 2) continue; const t = d / L; const p = [A[0] + (B[0] - A[0]) * t, 0, A[2] + (B[2] - A[2]) * t]; const y = this.walkY(b, i - 1) + (this.walkY(b, i) - this.walkY(b, i - 1)) * t; cyl(geo, [p[0], G, p[2]], 0.35, y - 0.3, C.steel, C.steelE, 10); }
+    for (const S of segs) {
+      const L = Math.hypot(S.B[0] - S.A[0], S.B[2] - S.A[2]);
+      for (let d = 7 - (run % 14); d < L; d += 14) { const t = d / L; const p = v3.lerp(S.A, S.B, t); if (d < 1.5 || L - d < b.rotR + 1.5 && S.last || inBuilding(p[0], p[2]) || distBuilding(p[0], p[2]) < 0.6) continue; cyl(geo, [p[0], G, p[2]], 0.35, p[1] - G - 0.3, C.steel, C.steelE, 10); }
       run += L;
     }
     // rotunda on its pedestal (drum radius limited by the neighbouring rotundas, data rotundaMaxR)
@@ -679,8 +705,8 @@ export class LiveGateSystem {
     for (const exact of [false, true]) { if (pick) break; const sweep = this.sweptSolids(g, exact, tries.map(c => { const p = v3.add(nose, v3.mul(f, c.t)); return [p[0], p[2]]; }));
     for (const c of tries) {
       const p = v3.add(nose, v3.mul(f, c.t)); const H0 = c.H0;
-      const boxes = c.post ? [{ c: [p[0], p[2]], u: [f[0], f[2]], hl: 0.5, hw: 0.5, lo: G, hi: G + H0 + 4.6 }, { c: [p[0] - f[0] * 0.35, p[2] - f[2] * 0.35], u: [f[0], f[2]], hl: 0.35, hw: 0.85, lo: G + H0 - 0.4, hi: G + H0 + 4.6 }]
-        : [{ c: [p[0] - f[0] * 0.35, p[2] - f[2] * 0.35], u: [f[0], f[2]], hl: 0.35, hw: 0.9, lo: G + H0 - 0.4, hi: G + H0 + 4.2 }];
+      const boxes = c.post ? [{ c: [p[0], p[2]], u: [f[0], f[2]], hl: 0.5, hw: 0.5, lo: G, hi: G + H0 + 4.6 }, { c: [p[0] - f[0] * 0.35, p[2] - f[2] * 0.35], u: [f[0], f[2]], hl: 0.35, hw: 1.3, lo: G + H0 - 0.4, hi: G + H0 + 4.6 }]
+        : [{ c: [p[0] - f[0] * 0.35, p[2] - f[2] * 0.35], u: [f[0], f[2]], hl: 0.35, hw: 1.3, lo: G + H0 - 0.4, hi: G + H0 + 4.2 }];
       let hit = false;
       for (const a of boxes) { for (const s of sweep) if (s.hi > a.lo - 0.5 && s.lo < a.hi + 0.5 && solidOverlap(a, s, 0.5)) { hit = true; break; } if (hit) break; }
       if (!hit) { pick = c; break; }

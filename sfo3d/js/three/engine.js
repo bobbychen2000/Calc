@@ -156,7 +156,12 @@ export class Engine {
     const { renderer, scene, camera, Q } = this;
     const pipe = new THREE.RenderPipeline(renderer); this.pipe = pipe;
     let color, depth, vel;
-    if (Q.ao === 'prepass') {
+    if (Q.ao === 'none' || Q.ao === false) { // AO off (js/three/perf.js flags, js/three/perf_phone.js phone tier): one scene pass without GTAO (a velocity target only for TRAA)
+      const sp = pass(scene, camera); sp.name = 'scene';
+      if (Q.traa) sp.setMRT(mrt({ output, velocity }));
+      depth = sp.getTextureNode('depth'); vel = Q.traa ? sp.getTextureNode('velocity') : null;
+      color = sp; this.scenePass = sp;
+    } else if (Q.ao === 'prepass') {
       const pre = pass(scene, camera); pre.name = 'prepass'; pre.transparent = false;
       pre.setMRT(mrt({ output: packNormalToRGB(normalView), velocity }));
       pre.getTexture('output').type = THREE.UnsignedByteType;
@@ -220,6 +225,7 @@ export class Engine {
     const px = screenCoordinate.xy;
     const dith = h(px.mul(1.37)).sub(0.5).div(255.0).add(h(px.add(fract(G.time.mul(17.13)).mul(1000.0))).sub(0.5).mul(G.grain));
     pipe.outputNode = vec4(enc.add(dith), 1.0);
+    if (Q.aa === 'fxaa' && !Q.traa) pipe.outputNode = THREE.fxaa(pipe.outputNode); // js/three/perf.js phone tier: FXAA (display-referred input) instead of TRAA
   }
   // rig camera {pos, target|dir, fov, near, far, shadowSplits} -> three camera + cascade splits
   setCamera(c, W, H) {
@@ -235,7 +241,7 @@ export class Engine {
     // to take the first two (the shadow range collapsed to 5 x the orbit distance, e.g. 300 m at a gate: review round
     // 1); it now keeps the first split and ends at the tier's shadow distance (or the rig's middle split, if larger).
     const r = c.shadowSplits || [300, 1500, 6000]; const Q = this.Q;
-    const s = Q.cascades >= r.length ? r.slice() : Q.cascades === 2 ? [r[0], Math.max(r[0] * 2, Math.min(r[r.length - 1], Math.max(Q.shadowDist, r[1] || 0)))] : r.slice(0, Q.cascades);
+    const s = Q.splits ? Q.splits(r, Q) : Q.cascades >= r.length ? r.slice() : Q.cascades === 2 ? [r[0], Math.max(r[0] * 2, Math.min(r[r.length - 1], Math.max(Q.shadowDist, r[1] || 0)))] : r.slice(0, Q.cascades);
     const maxFar = Math.max(200, s[s.length - 1]);
     const key = s.map(v => Math.round(v)).join(',') + ':' + Math.round(near * 100);
     if (key !== this._splitKey && this.csm.mainFrustum) { this._splitKey = key; this.splits = s; this.csm.maxFar = maxFar; this.csm.updateFrustums(); }

@@ -30,9 +30,27 @@ def build_scene(bpy, model_path, type_key, livery_path, tmp, cargo=False):
     # model frame (x fwd, y up, z stbd) -> Blender (x fwd, y port, z up)
     V = np.stack([P[:, 0], -P[:, 2], P[:, 1]], -1)
     idx = m['idx'].reshape(-1, 3).copy()
-    # exact duplicate triangles z-fight (as js/live/models.js decodeModel, only the first copy is kept)
+    # exact duplicate triangles (double-sided copies) with opposite normals shade dark in Cycles: one copy is kept, the
+    # livery-atlas one where the twins differ (the app draws the atlas draw first, so its copy wins the depth test)
     kq = np.round(P[idx] * 1000).astype(np.int64); kq.sort(axis=1)
-    _, first = np.unique(kq.reshape(len(idx), -1), axis=0, return_index=True); keep = np.zeros(len(idx), bool); keep[first] = True
+    atl = np.array([bool(h['mats'][i].get('atlas')) for i in m['tri_mat']])
+    _, inv = np.unique(kq.reshape(len(idx), -1), axis=0, return_inverse=True); inv = inv.reshape(-1)
+    # among atlas twins prefer the painted one: the copy whose livery texel differs most from the neutral atlas texel at its UV
+    # (the twin on an unpainted chart layer shows the neutral skin)
+    score = np.zeros(len(idx))
+    if livery_path:
+        from PIL import Image as _I
+        lv = np.asarray(_I.open(livery_path).convert('RGB')).astype(float); nt = np.asarray(m['textures'][0].convert('RGB').resize(lv.shape[1::-1])).astype(float)
+        uvc = m['uv'][idx].mean(1); Hh, Ww = lv.shape[:2]
+        yy = np.clip((uvc[:, 1] * Hh).astype(int), 0, Hh - 1); xx = np.clip((uvc[:, 0] * Ww).astype(int), 0, Ww - 1)
+        score = np.where(atl, np.abs(lv[yy, xx] - nt[yy, xx]).sum(1), -1)
+    # per duplicate set: keep the first livery-atlas copy (the app draws the atlas draw first, so that copy wins the depth
+    # test); a set without an atlas copy keeps its first copy
+    order = np.lexsort((np.arange(len(idx)), -score, ~atl, inv)); first = np.ones(len(order), bool); first[1:] = inv[order][1:] != inv[order][:-1]
+    keep = np.zeros(len(idx), bool); keep[order[first]] = True
+    # only ahead of 0.2 L (the nose, where the opposite-normal twins shade as blotches in Cycles): elsewhere a twin can sit on an
+    # unpainted chart layer and dropping the other copy exposes it (grey panels on the 747-8 body in a trial)
+    if os.environ.get('RB_NODEDUP'): keep[:] = True
     idx = idx[keep]; m['tri_mat'] = m['tri_mat'][keep]
     # the app's shader faces every normal toward the camera, so source triangles wound against their normals (FAM 747-400
     # nose) are harmless there; Cycles shades them dark (review round 1: blotches on the DLH 747 nose). Normals are repaired

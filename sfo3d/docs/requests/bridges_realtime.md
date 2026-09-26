@@ -28,11 +28,22 @@ bridges the app now draws.
   their datasheet limits and a clear path allow it (B5S / B16S / C9V); their rest poses are clear of it by construction.
 - **e.** unchanged: a new pose while docked snaps.
 
-## 1. `js/live/app.js`
+## 1. Parked poses beyond the bridges' reach (new, from the replay)
+
+In the replay of 24 Sep 15:25-16:45Z (`refs/cache/replay_day3`), 11 of 43 L1 dockings between 15:25 and 15:50Z could
+not be made because the drawn aircraft stands farther from the terminal than the bridge's datasheet model reaches
+(operational extension + 1 m). Every one is `parkMode 'stand'` parked SHORT of the stand nose by more than the data's
+family stop (`type_stops`), laterally on the axis: B22 E75L -17.6 m (data EJET stop -4.3 m), F11 B752 -11.1, D16 A319
+-6.9, D7 A319 -6.3, E13 B38M -5.7, F9 E75L -5.6, D9 B38M -5.5 (lateral -6.4, `data` mode), E7 B38M -4.1, C6 A319 -3.4,
+F7 E75L -2.6, B23 A21N -2.5 m (along the stand axis from the stand nose). A real bridge reaches the real aircraft, so the
+drawn stop is the likelier error: please park at the family stop (static_geometry_round2.md #3/#4) unless the reports
+put the aircraft clearly elsewhere. gates.js keeps such a bridge at rest (it does not stretch).
+
+## 2. `js/live/app.js`
 
 `traffic.bridgeK = (g) => gateSys.extension(bridgeGate(g))`.
 
-## 2. `tools/live/invariants.mjs`
+## 3. `tools/live/invariants.mjs`
 
 - `bridgeBoxes()` re-derives the old bridge (straight walkway attach -> rc, drum r 2.45, tunnel from rc + 2.2 m, cab
   -1.8..+2.35 m). Please use `gsys.solids(g, b, k)` (oriented boxes `{c:[x,z], u, hl, hw, lo, hi}` with WORLD heights
