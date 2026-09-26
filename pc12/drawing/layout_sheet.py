@@ -583,6 +583,7 @@ def draw_side(ds, v):
     cv.line(v.pt(x0, float(F.z_bot(x0))), v.pt(x0, float(F.z_top(x0))), W_FINE)
     cv.path(v.pts(PP.spinner_silhouette("side")), W_OBJ)
     cv.path(v.pts(PP.exhaust_stack_silhouette(-1, "side")), W_FINE)          # port exhaust stack (near side)
+    cv.path(v.pts(PP.exhaust_stack_mouth(-1)[:, [0, 2]]), W_FINE)            # its outlet faces aft-outboard
     # propeller disc (edge-on) at the pitch-change plane, normal to the tilted thrust axis
     e = PP.prop_disc_edge("side")
     cv.line(v.pt(*e[0]), v.pt(*e[1]), W_FINE, PHANTOM)
@@ -612,9 +613,7 @@ def draw_side(ds, v):
     cv.path(v.pts(wg["te"][:, [0, 2]]), W_OBJ)
     cv.path(v.pts(wg["top"][:, [0, 2]]), W_OBJ, closed=True)
     # radar pod (starboard tip, behind the fuselage -> hidden)
-    prof = np.array(D.radar_pod_profile())
-    pod = np.r_[np.c_[prof[:, 0], D.POD_Z + prof[:, 1]], np.c_[prof[::-1, 0], D.POD_Z - prof[::-1, 1]]]
-    cv.path(v.pts(pod), W_FINE, HID, closed=True)
+    cv.path(v.pts(D.pod_outline("side")), W_FINE, HID, closed=True)     # incl. the swan neck into the winglet LE
     # empennage: fin + rudder + tab, dorsal, bullet, tailplane root section, strakes
     zt = E.BULLET[8][2]                                     # bullet bottom
     zj = float(E._dorsal_curve()[-1, 1])                    # fin LE visible above the dorsal blend only (G3-3)
@@ -734,8 +733,7 @@ def draw_plan(ds, v):
         cv.path(v.pts(np.c_[Pf[:, 0], sg * Pf[:, 1]]), W_OBJ)
     # radar pod (starboard)
     prof = np.array(D.radar_pod_profile())
-    cv.path(v.pts(np.r_[np.c_[prof[:, 0], D.POD_Y + prof[:, 1]], np.c_[prof[::-1, 0], D.POD_Y - prof[::-1, 1]]]),
-            W_OBJ, closed=True)
+    cv.path(v.pts(D.pod_outline("plan")), W_OBJ, closed=True)          # body + swan neck into the winglet LE
     rj = float(np.interp(D.POD_X_JOINT, prof[:, 0], prof[:, 1]))
     cv.line(v.pt(D.POD_X_JOINT, D.POD_Y - rj), v.pt(D.POD_X_JOINT, D.POD_Y + rj), W_FINE)
     # MAC
@@ -1232,8 +1230,8 @@ def deviation_rows(O, R):
     add("Radar pod radius", "pod_r", "PRO: enlarged for the 12-in GWX 8000")
     rows.append(("Exhaust stack outer BL / centre WL (front)", f"{f_mm(O['stack_y_out'])} / {f_mm(O['stack_wl'])}",
                  f"{dev(O['stack_y_out'], R.get('stack_y_out'))} / {dev(O['stack_wl'], R.get('stack_wl'))}" if R else "-",
-                 "-", "STACK_PTS rev C (rev B 675 / 1638); drawn nose / axis 15-18 high"))
-    add("Exhaust outlet, outer lip STA (plan)", "stack_x_lip", "scarfed outlet PP.STACK_SCARF (rev B plain end 1844)")
+                 "-", "STACK_ROOT / STACK_BEND (VQA r2); drawn nose / axis 15-18 high"))
+    add("Exhaust outlet, aft (inner) lip STA (plan)", "stack_x_lip", "outlet faces aft-outboard, PP.STACK_SCARF (rev B plain end 1844)")
     rows.append(("Chin inlet mouth BL tip / WL bottom (front)", f"{f_mm(O['inlet_tip'])} / {f_mm(O['inlet_bot'])}",
                  f"{dev(O['inlet_tip'], R.get('inlet_tip'))} / {dev(O['inlet_bot'], R.get('inlet_bot'))}" if R else "-",
                  "-", "PP.CHIN_INLET fitted (rev B mouth 225 / 1212)"))

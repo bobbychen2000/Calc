@@ -255,7 +255,12 @@ SPEC = {
     # nose render 113/135/170 C 21 against a neutral silver 103/109/102 mirroring the concrete; region L +4 hangar,
     # +7 apron, +6 air).  Base -8 % and a narrower silver-blue metallic lobe (0.55 / 0.45 -> 0.70 / 0.37): the hangar
     # furnace pins the albedo whatever the metallic, outdoors the paint mirrors its surroundings nearly neutrally.
-    "paint_blue_light": dict(kind="metal_paint", base=(0.215, 0.305, 0.55), metallic=0.70, rough=0.37,
+    # VQA r2 (LIV2-02): in sun the band read a saturated mid-blue (apron window band 82/129/184 against the photo's
+    # 82/120/159; air 75th pct 125/149/183 against 214/213/229, a silvery ice-blue): the metallic lobe mirrored the
+    # sky through a strongly blue F0.  Base desaturated at about the same luminance (#8096C4 -> #8C9CBE; the hangar pair
+    # was already a little less saturated in the photo, 185/202/221 against 173/191/213) and the flake's F82 edge tint
+    # half-way to white (spec_tint 0.4), so sky and sun reflections go silver toward grazing.
+    "paint_blue_light": dict(kind="metal_paint", base=(0.262, 0.332, 0.515), metallic=0.70, rough=0.37, spec_tint=0.4,
                              gltf=dict(metallic=0.50, rough=0.38),
                              note="light metallic blue (silver-blue): lower nose / cowl, swoosh band, nose-gear doors"),
     # paint_navy: set equal to paint_blue below (the livery's N1 'navy line' is not on the aircraft)
@@ -276,11 +281,13 @@ SPEC = {
     # ratio ~.41, R/B ~1.7: a gold line darker and yellower than either photo.)  Width 6 -> 8 mm (82: 7-9 px at
     # ~1 px / mm, B1 = 84 px for its 88 mm).  Checked on the 188 render: .50/.43/.34 gave an outline core of sRGB
     # 172/170/163 (R/B 1.13) against the photo plateau 172/165/156 (R/B 1.24) -> a little warmer, .49/.41/.30.
-    "paint_champagne":  dict(kind="metal_paint", base=(0.49, 0.41, 0.30), metallic=0.45, rough=0.36,
+    # VQA r1 (LIV-02): NEUTRAL silver.  Photo 82's rim plateaus re-measured beside the white (sRGB 183/182/178,
+    # 190/188/189, 191/192/187, 172/172/174: R/B 1.00-1.04) and the 81 P2 hairline (149-159 / 151-167 / 150-162); the
+    # warm .49/.41/.30 read as tan / gold edging under the hangar lights and turned the thin tail-cone strokes beige.
+    "paint_champagne":  dict(kind="metal_paint", base=(0.48, 0.47, 0.45), metallic=0.45, rough=0.36,
                              flake_strength=0.03, gltf=dict(metallic=0.40, rough=0.38),
-                             note="(render-only) ~8 mm champagne outline of every white pinstripe / swoosh "
-                                  "(photo 82: sRGB 189/184/182 and 176/176/172 beside the white's 222-227; "
-                                  "188: 172/165/156 beside 240)"),
+                             note="(render-only) ~6 mm neutral-silver metallic outline of every white pinstripe / swoosh (photo 82: sRGB "
+                                  "183/182/178 and 190/188/189 beside the white's 222-227)"),
     "paint_stripe":     dict(kind="metal_paint", base=(0.60, 0.50, 0.16), metallic=0.5, rough=0.35,
                              note="(unused by the MSN 3008 livery)"),
     # ---- solid gloss paints
@@ -298,6 +305,11 @@ SPEC = {
     "seal":             dict(kind="dielectric", base=(0.010, 0.010, 0.012), rough=0.50, spec=0.08, lining=True,
                              note="flight-deck glazing frame strips / windshield centre post (black like the mask, "
                                   "photos 130 / 82)"),
+    # VQA r2 LIV2-05: the flight-deck panes' retainers (the 18-20 mm band round each pane, fuselage_parts
+    # build_glazing): satin-polished metal -- photo 0517 a bright silver edge in sun, 82 / 130 a light-grey line with
+    # dark fastener heads inside the black mask (the mask alone read as a heavy black goggle)
+    "glazing_retainer": dict(kind="metal", base=(0.50, 0.51, 0.52), rough=0.22,
+                             note="polished windshield / side-window retainer strips inside the PRO mask"),
     "seal_cabin":       dict(kind="dielectric", base=(0.05, 0.055, 0.06), rough=0.12, spec=0.5,
                              note="(render-only) cabin-window / cargo-door / exit-hatch window rings: NGX panes are "
                                   "flush with only a thin, barely darker edge (photos 130, 0517) -- a glossy dark "
@@ -328,7 +340,8 @@ SPEC = {
     # 203/91/68 (pink, L +5, C -7.6) against photo 189/73/46
     "prop_band_red":    dict(kind="dielectric", base=(0.27, 0.026, 0.004), rough=0.40, spec=0.2,
                              note="red blade band (hangar photo 189/73/46: a deep signal red, no pink sheen)"),
-    "erosion":          dict(kind="metal", base=(0.66, 0.64, 0.60), rough=0.22, note="nickel erosion sheath"),
+    # VQA r1 (LIV-04): a satin nickel (photos 81 / 130: a thin dull-grey line, not a chrome outline)
+    "erosion":          dict(kind="metal", base=(0.45, 0.45, 0.44), rough=0.40, note="satin nickel erosion sheath"),
     # ---- rubber
     # round 3: rubber is an ordinary dielectric (F0 ~4 %, Specular 0.5; 0.25 gave ~2 %): hangar photo 130 shows a
     # charcoal tyre with a clear satin sheen (region 83/86/89), the render's was dead black (43/45/45)
@@ -369,10 +382,15 @@ SPEC = {
     # hand-polished waviness of photos 130 / 81 (the judge's 0.1 / 20 /m left the stack a smooth mirror at 1200 px;
     # 0.35 gives the streaky, wavy reflections without changing the colour: hangar body 192/179/161, photo 188/175/156).
     "exhaust_polished": dict(kind="metal", base=(0.50, 0.42, 0.30), rough=0.06,
-                             collar=dict(x0=1.765, blend=0.006, tint_x0=1.45, tint=(0.52, 0.36, 0.20),
+                             # VQA r2 (SHP2-01): the outlet is scarfed to face aft-OUTBOARD; its heat-blackened band
+                             # is the GLB's own exhaust_soot collar (STACK_COLLAR along the generators), so the
+                             # station collar moves aft of the inner lip (STA 1.97): x0 only ends the heat-tint ramp
+                             collar=dict(x0=1.995, blend=0.006, tint_x0=1.45, tint=(0.52, 0.36, 0.20),
                                          base=(0.004, 0.004, 0.004), rough=0.85, metallic=0.0, spec=0.08),
-                             polish=dict(scale=28.0, stretch=(0.30, 1.0, 1.0), detail=3.0, rough=(0.06, 0.16),
-                                         tint_mix=0.30, bump=0.35, bump_distance=0.01),
+                             # VQA r1 R1-07: bump 0.35 -> 0.08, roughness floor 0.06 -> 0.09 (with the analytic stack
+                             # normals): the hangar render read as crumpled foil; photo 130 shows a smooth bronze tube
+                             polish=dict(scale=28.0, stretch=(0.30, 1.0, 1.0), detail=3.0, rough=(0.09, 0.16),
+                                         tint_mix=0.30, bump=0.08, bump_distance=0.01),
                              back=dict(base=(0.006, 0.006, 0.006), rough=0.85, spec=0.08),
                              note="polished exhaust stacks (heat tint) with a heat-blackened outlet collar"),
     "exhaust_soot":     dict(kind="dielectric", base=(0.006, 0.006, 0.006), rough=0.60, spec=0.08,

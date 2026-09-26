@@ -90,9 +90,10 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   into a fixed forward part and an aft part carried by the flap; lights, antennas, pod),
   `livery.py` (PC-12 PRO MSN 3008 scheme; the 3-D painter trims with one-sided smooth fields so thin strokes stay
   continuous; zero-area slivers from trims are dropped by `cad/glb.py`; per-surface bands -- wing / tailplane boots,
-  winglet pinstripe, blade tip bands about the thrust axis, blade LE erosion strip -- are cut with sequential
-  single-sided trims, never one V-shaped max() field; every white stroke is edged by the 8 mm champagne OUTLINE and
-  there is no navy line -- photos 82 / 130 / 188), `assemble.py` (MATERIALS = the photo-fitted MSN 3008 glTF values
+  winglet pinstripe (+ POD_PIN along the pod / winglet junction), blade tip bands about the thrust axis, blade LE
+  erosion strip -- are cut with sequential single-sided trims, never one V-shaped max() field; every white stroke is
+  edged by the <= 6 mm neutral-silver OUTLINE (material name 'paint_champagne' kept) and there is no navy line --
+  photos 82 / 130 / 188), `assemble.py` (MATERIALS = the photo-fitted MSN 3008 glTF values
   of `render/lookdev_materials.json`, clear coat / specular as KHR extensions; `check_lookdev()` and
   `livery.check_materials()` are printed by the build), `build.py` (steps + verification),
   `drawing/` (Stage-2 sheets L1-L5 via `drawing.master`; legacy HLR GA via `drawing.sheet`).

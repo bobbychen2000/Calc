@@ -17,7 +17,7 @@ from __future__ import annotations
 import numpy as np
 
 from cad.mesh import (Mesh, revolve, cylinder, box, sweep_tube, grid_surface, trim, solidify,
-                      rotation_about, superellipsoid)
+                      rotation_about, superellipsoid, cap_ring)
 from cad import sdf2d
 from model.parts import Part
 from model import wing as W
@@ -100,7 +100,12 @@ MAIN_BRACE_SPLIT = (0.19, (0.0, 0.30, -0.95))         # starboard; the bend refe
 # when stowed): the lower link runs AHEAD of the plane (clears the yoke by 31 mm), the upper link behind it; both stay
 # inside the brace pocket (bays.BRACE_POCKET, x 5.970-6.110)
 MAIN_BRACE_CLEVIS = (0.016, -0.024)  # upper link at A.x + 0.016, lower link at A.x - 0.024 (6 mm between the tubes)
-MAIN_BRACE_R = (0.016, 0.018)        # upper / lower link tube radius
+MAIN_BRACE_R = (0.016, 0.018)        # upper / lower link half-thickness along the knee pin (x)
+# VQA r1 SHP-07: the photo links are heavy forged links (~60 mm deep in the brace plane), not 32 mm rods: elliptic
+# sections MAIN_BRACE_R thick along the pin (the clevis spacing is unchanged) and MAIN_BRACE_W half-deep in the brace
+# plane (at A / B0 end, tapering to the knee), with a knee lug MAIN_BRACE_KNEE (half-sizes x, in-plane)
+MAIN_BRACE_W = ((0.030, 0.024), (0.022, 0.030))   # (upper: at A, at K), (lower: at K, at B0)
+MAIN_BRACE_KNEE = (0.036, 0.034)     # (unused x half-size, in-plane half-size of the knee lug)
 
 
 # Main-gear leg door (ONE per leg, POH), Stage 2 rev B.1.  The Pilatus drawing shows it in TWO views: edge-on in the
@@ -474,11 +479,58 @@ def build_main(parts, side):
                     "retraction": f"{MAIN_RETRACT_DEG:.0f} deg inward; tyre protrudes ~1 in (POH)",
                     "door": "single leg-mounted door, flush with the wing skin when retracted"})
     lugs.append(main_brace_lug(sgn))                                             # side-brace lug B0 (MV2-02)
+    lamp_body, lamp_face = main_leg_lamp(sgn)
+    lugs.append(lamp_body)
     gp.add(Mesh.merge(struct + lugs), "gear_leg").add(Mesh.merge([shock_body]), "gear_leg").add(shock_rod, "chrome")
     for m, mat in wh:
         gp.add(m, mat)
     gp.add(door_down, "paint_white").add(Mesh.merge(brackets), LEG_DOOR_BRACKET_MAT)
+    for m, mat in lamp_face:
+        gp.add(m, mat)
     parts[gp.id] = gp
+
+
+# landing / taxi lamp on each main leg (VQA r1 SHP-07: photos 130 / 188, a round ~0.12 m LED lamp on the forward face of
+# the port main leg at about the brace-lug height; the starboard leg carries its twin): a short housing on a bracket
+# ahead of the leg axis at WL MAIN_LAMP['z'], lens facing forward; it is part of the gear node, so it retracts with it
+MAIN_LAMP = dict(z=0.80, r=0.055, depth=0.024, standoff=0.004)   # (a deeper housing crosses the bay front edge stowing)
+
+
+def led_lamp_face(front, d, r, n_ring=6):
+    """Front of a round LED lamp at `front` facing unit direction d, outer radius r (VQA r2 SHP2-05: photos 130 / 188
+    show a bright bezel round a dark face with a ring of LED reflectors, not a plain lens): returns
+    [(mesh, material)] -- polished bezel ring, black face, LED reflector domes (a centre one + n_ring round it), a thin
+    clear lens in front."""
+    d = np.asarray(d, float) / np.linalg.norm(d)
+    e1 = np.cross(d, [0.0, 0.0, 1.0])
+    if np.linalg.norm(e1) < 1e-6:
+        e1 = np.cross(d, [0.0, 1.0, 0.0])
+    e1 /= np.linalg.norm(e1)
+    e2 = np.cross(d, e1)
+    rb = 0.16 * r                                           # bezel width
+    bezel = revolve([(0.0, r), (0.004, r), (0.006, r - 0.35 * rb), (0.004, r - rb), (0.0, r - rb)], n=36,
+                    axis_origin=front, axis_dir=d)
+    face = revolve([(0.0015, 0.0), (0.0015, r - rb + 0.001)], n=36, axis_origin=front, axis_dir=d)
+    rl = 0.20 * r
+    cen = [np.zeros(2)] + [0.52 * (r - rb) * np.array([np.cos(a), np.sin(a)])
+                           for a in np.linspace(0, 2 * np.pi, n_ring, endpoint=False)]
+    leds = Mesh.merge([superellipsoid(front + d * 0.002 + c[0] * e1 + c[1] * e2, (0.004, rl, rl), (1, 1), 6, 14,
+                                      R=np.stack([d, e1, e2], 1)) for c in cen])
+    lens = revolve([(0.0065, 0.0), (0.0065, r - rb)], n=36, axis_origin=front, axis_dir=d)
+    return [(bezel, "chrome"), (face, "black"), (leds, "chrome"), (lens, "lens")]
+
+
+def main_leg_lamp(sgn):
+    """(housing + bracket mesh, [(face mesh, material)]) of the leg lamp on main gear side sgn (gear down)."""
+    T, Lp = MAIN_TRUNNION * [1, sgn, 1], MAIN_LINK_PIVOT * [1, sgn, 1]
+    q = MAIN_LAMP
+    c = T + (Lp - T) * (T[2] - q["z"]) / (T[2] - Lp[2])                 # leg axis at the lamp height
+    rl = MAIN_LEG_R[0] + (MAIN_LEG_R[1] - MAIN_LEG_R[0]) * (T[2] - q["z"]) / (T[2] - Lp[2])
+    back = c - [rl + q["standoff"], 0.0, 0.0]
+    front = back - [q["depth"] - 0.008, 0.0, 0.0]
+    body = Mesh.merge([cylinder(back, front, q["r"], n=28),
+                       cylinder(c - [rl - 0.005, 0, 0], back, 0.016, n=10)])       # housing + bracket
+    return body, led_lamp_face(front, (-1.0, 0.0, 0.0), q["r"])
 
 
 
@@ -558,6 +610,53 @@ def leg_door_mesh(sgn, step=0.015):
     return door if sgn > 0 else door.mirrored_y()
 
 
+def swept_arm(pts, a, b, n_path=28, n_sec=16, fore=(1.0, 0.0, 0.0)):
+    """Smooth tapered arm: a Catmull-Rom curve through pts with an elliptic section, half-axis a(t) along the fore-aft
+    direction `fore` (projected normal to the curve) and b(t) across it (a, b: (start, end), linear in t); capped."""
+    P = np.asarray(pts, float)
+    Q = np.vstack([2 * P[0] - P[1], P, 2 * P[-1] - P[-2]])
+    seg = []
+    for i in range(1, len(Q) - 2):
+        p0, p1, p2, p3 = Q[i - 1], Q[i], Q[i + 1], Q[i + 2]
+        for t in np.linspace(0.0, 1.0, max(3, n_path // (len(P) - 1)), endpoint=False):
+            t2, t3 = t * t, t * t * t
+            seg.append(0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
+                              + (-p0 + 3 * p1 - 3 * p2 + p3) * t3))
+    seg.append(P[-1])
+    C = np.array(seg)
+    T = np.gradient(C, axis=0)
+    T /= np.linalg.norm(T, axis=1)[:, None]
+    u = np.linspace(0.0, 1.0, len(C))
+    aa = a[0] + (a[1] - a[0]) * u
+    bb = b[0] + (b[1] - b[0]) * u
+    ph = np.linspace(0, 2 * np.pi, n_sec, endpoint=False)
+    rows = []
+    f = np.asarray(fore, float)
+    for c, t, ai, bi in zip(C, T, aa, bb):
+        ea = f - t * (f @ t)
+        ea /= np.linalg.norm(ea)
+        eb = np.cross(t, ea)
+        rows.append(c + ai * np.cos(ph)[:, None] * ea + bi * np.sin(ph)[:, None] * eb)
+    R = np.array(rows)
+    m = grid_surface(R, close_v=True)
+    cen = R.mean(1)
+    if np.mean(np.sum((m.V - np.repeat(cen, n_sec, 0)) * m.N, 1)) < 0:
+        m = m.flipped()
+    return Mesh.merge([m, cap_ring(R[0], -T[0]), cap_ring(R[-1], T[-1])])
+
+
+# nose-gear fork (VQA r1 SHP-06: photos 130 / 188 show a smooth cast yoke arching over the tyre from the piston-bottom
+# casting to the axle bosses, not a box crown and flat plates): per side a Catmull-Rom arm through NOSE_FORK_ARM
+# (offsets from the crown: (dx, y, dz); the last point is the axle end), elliptic section a x b tapering crown -> axle
+NOSE_FORK_ARM = ((0.0, 0.0, 0.0), (0.0, 0.058, -0.004), (-0.004, 0.094, -0.030), (-0.008, 0.105, -0.085))
+NOSE_FORK_SEC = dict(a=(0.034, 0.024), b=(0.021, 0.015), boss_r=0.031)
+# VQA r2 SHP2-05: photos 188 / 130 show ONE flat plate arm (port side), ~80 mm wide fore-aft and ~20 mm thick, arching
+# from the crown casting down to the axle; the starboard axle end carries only a nut
+NOSE_FORK_SIDES = (-1,)
+NOSE_FORK_PLATE = dict(a=(0.046, 0.034), b=(0.011, 0.009))
+NOSE_LAMP = dict(frac=0.45, fwd=(0.060, 0.098), r=0.045)     # on the strut: fraction P -> fork, housing x offsets, radius
+
+
 def build_nose(parts):
     P = NOSE_PIVOT
     A = NOSE_AXLE
@@ -570,17 +669,15 @@ def build_nose(parts):
     struct.append(cylinder(P, upper_end, 0.052, n=24))                              # oleo cylinder
     collar = cylinder(P + 0.30 * (low - P), P + 0.34 * (low - P), 0.066, n=24)      # steering collar
     piston = cylinder(upper_end - 0.04 * u, low, 0.036, n=20)
-    struct.append(box(low + [0, 0, 0.0], (0.08, 2 * NOSE_FORK_CROWN_HW, 0.045)))     # fork crown
+    struct.append(superellipsoid(low + [0, 0, 0.004], (0.046, 0.052, 0.030), (0.6, 0.6), 12, 20))   # crown casting
+    fs, fp = NOSE_FORK_SEC, NOSE_FORK_PLATE
     for s in (-1, 1):
-        a = low + s * 0.105 * yax
-        b = A + s * 0.105 * yax
-        d = b - a
-        Ln = np.linalg.norm(d)
-        ex = d / Ln
-        ez = np.array([1.0, 0, 0]) - ex * ex[0]
-        ez /= np.linalg.norm(ez)
-        ey = np.cross(ez, ex)
-        struct.append(box((a + b) / 2, (Ln, 0.022, 0.07), R=np.stack([ex, ey, ez], 1)))
+        if s in NOSE_FORK_SIDES:                        # the plate arm arching over the tyre to the axle boss
+            pts = [low + [dx, s * y, dz] for dx, y, dz in NOSE_FORK_ARM] + [A + s * NOSE_FORK_ARM[-1][1] * yax]
+            struct.append(swept_arm(pts, fp["a"], fp["b"]))
+            struct.append(cylinder(A + s * 0.090 * yax, A + s * 0.120 * yax, fs["boss_r"], n=18))    # axle boss
+        else:
+            struct.append(cylinder(A + s * 0.090 * yax, A + s * 0.110 * yax, 0.022, n=6))            # axle nut
     struct.append(cylinder(A - 0.115 * yax, A + 0.115 * yax, 0.02, n=14))          # axle
     # torque links (scissor) in front of the strut
     k1 = P + 0.56 * (low - P) + [-0.055, 0, 0]
@@ -588,8 +685,11 @@ def build_nose(parts):
     knee = 0.5 * (k1 + k2) + [-0.09, 0, 0]
     for a, b in ((k1, knee), (knee, k2)):
         struct.append(cylinder(a, b, 0.014, n=10))
-    # taxi / landing light on the strut
-    lamp = cylinder(P + 0.45 * (low - P) + [-0.06, 0, 0], P + 0.45 * (low - P) + [-0.11, 0, 0], 0.045, n=20)
+    # taxi / landing light on the strut: housing + LED face (led_lamp_face; the rev r1 lamp was a plain lens puck)
+    q = NOSE_LAMP
+    lc = P + q["frac"] * (low - P)
+    lamp_house = cylinder(lc - [q["fwd"][0], 0, 0], lc - [q["fwd"][1], 0, 0], q["r"], n=24)
+    lamp_face = led_lamp_face(lc - [q["fwd"][1], 0, 0], (-1.0, 0.0, 0.0), q["r"])
     wh = wheel(A, yax, NOSE_TYRE, n=36)
     ang = NOSE_RETRACT_DEG
     gp = Part("gear_nose", "Nose gear (steerable, retracts aft)", "gear",
@@ -598,7 +698,9 @@ def build_nose(parts):
               material_note="Hydraulic shock strut, 17.5x6.25-6 tyre, +/-60 deg steering",
               info={"tyre": "17.5 x 6.25-6, 60 psi", "wheelbase": "3,480 mm",
                     "retraction": "aft, enclosed by doors", "steering": "+/-60 deg (Jane's)"})
-    gp.add(Mesh.merge(struct + [collar]), "gear_leg").add(piston, "chrome").add(lamp, "lens")
+    gp.add(Mesh.merge(struct + [collar, lamp_house]), "gear_leg").add(piston, "chrome")
+    for m, mat in lamp_face:
+        gp.add(m, mat)
     for m, mat in wh:
         gp.add(m, mat)
     parts[gp.id] = gp
@@ -847,9 +949,15 @@ def _brace_meshes(pid, A, B0, K0, axis):
     c1, c2 = MAIN_BRACE_CLEVIS
     r1, r2 = MAIN_BRACE_R
     p0, p1 = min(c1 - r1, c2 - r2), max(c1 + r1, c2 + r2)       # knee pin spans both link eyes
-    up = [cylinder(A + c1 * ax, K0 + c1 * ax, r1, n=12), superellipsoid(A + c1 * ax, (0.018,) * 3, (1, 1), 8, 12),
+    (w1a, w1k), (w2k, w2b) = MAIN_BRACE_W
+    kr = MAIN_BRACE_KNEE[1]
+    up = [swept_arm([A + c1 * ax, K0 + c1 * ax], (r1, r1), (w1a, w1k), n_path=6, fore=ax),
+          superellipsoid(A + c1 * ax, (r1 + 0.002, w1a + 0.004, w1a + 0.004), (1, 1), 8, 12),
+          superellipsoid(K0 + c1 * ax, (r1, kr, kr), (1, 1), 8, 14),                               # knee lug
           cylinder(K0 + p0 * ax, K0 + p1 * ax, 0.010, n=12)]                                        # knee pin
-    lo = [cylinder(K0 + c2 * ax, B0 + c2 * ax, r2, n=12), superellipsoid(B0 + c2 * ax, (0.022,) * 3, (1, 1), 8, 12)]
+    lo = [swept_arm([K0 + c2 * ax, B0 + c2 * ax], (r2, r2), (w2k, w2b), n_path=6, fore=ax),
+          superellipsoid(K0 + c2 * ax, (r2, kr * 0.85, kr * 0.85), (1, 1), 8, 14),
+          superellipsoid(B0 + c2 * ax, (0.022, w2b + 0.002, w2b + 0.002), (1, 1), 8, 12)]
     return Mesh.merge(up), Mesh.merge(lo)
 
 

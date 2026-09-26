@@ -261,59 +261,125 @@ def ring_path(x, r, n):
 # ---------------------------------------------------------------------------
 # chin inlet and exhaust stacks (external)
 # ---------------------------------------------------------------------------
-# Exhaust stack centre line (starboard; mirrored for port): (STA, BL, WL - AX_Z).  Stage 2 rev C (review round 3,
-# G3-4 / R3-4), re-seated on the Pilatus drawing 190.10.40.432 in all three views and checked on the s/n 3008 photos:
-#   * the tube leaves the cowl side at STA ~1.42-1.67 heading outboard, bends aft in a wide elbow (outer skin BL 747 at
-#     STA ~1.71 -- front view BL 317-747) and ends in a SCARFED outlet: the mouth is the vertical plane STACK_SCARF
-#     (plan line from the inner lip STA 1.736 / BL 0.477 to the outer lip STA 1.971 / BL 0.653), facing aft-inboard;
-#     the black heat-tinted collar in the photos is that scarfed end (outer lip ~STA 1.96, mouth centre ~STA 1.85 --
-#     the rev B photo value 1.84 was the mouth centre, the drawn 1.96 the outer lip: both agree);
-#   * section: ellipse STACK_AB, 0.19 wide in plan (drawn elbow 0.21-0.25) and 0.188 tall (front view WL 1601-1788);
-#   * centre WL: drawn 1.69-1.70 (side and front), i.e. 1.675-1.685 once the drawing's 15-18 mm higher nose / prop
-#     axis is allowed for (WL 1655 kept, as for the spinner); the photo projection (stbd_ground) had rev B ~30 mm low.
-# Fit to the drawn plan outline (outer skin + rear wall, both halves): rms 19 mm (the drawn elbow has a sharp outer
-# corner a swept ellipse cannot follow; outer extent BL 0.735 vs 0.747).  The last knot lies beyond the scarf plane.
-STACK_PTS = ((1.545, 0.300, 0.025), (1.530, 0.470, 0.025), (1.600, 0.582, 0.026), (1.725, 0.640, 0.028),
-             (1.885, 0.570, 0.030), (1.990, 0.515, 0.031))
-STACK_AB = (0.095, 0.094)        # section half-sizes: plan (horizontal) / side (vertical); bend radius >= 0.113
-STACK_SCARF = ((1.736, 0.477), (1.971, 0.653))    # outlet plane (vertical), plan (STA, BL): inner lip -> outer lip
-STACK_COLLAR = 0.085             # heat-blackened outlet collar: this far upstream of the scarf cut, along the tube
+# Exhaust stack (starboard; mirrored for port).  Stage 3 VQA r2 (SHP2-01) re-read of the Pilatus drawing 190.10.40.432,
+# checked on the s/n 3008 photos 81 / 130 / 188 (camera fits) and the Pilatus tech-data side render:
+#   * the tube leaves the cowl side square to it (centre STA 1.545, drawn root walls STA 1.43 / 1.665), turns aft in a
+#     tight bend (drawn inner wall corner STA 1.68 / BL 0.445) and then runs STRAIGHT aft-outboard at STACK_BEND['az']
+#     from the fuselage axis (the drawn plan's straight inner wall STA 1.68 / BL 0.44 -> STA 1.97 / BL 0.655);
+#   * the outlet is SCARFED by the vertical plane STACK_SCARF, which runs from the inner lip (aft-most point, STA 1.97 /
+#     BL 0.655) forward-outboard to the outer lip (the drawn plan's 'sharp outer corner' STA 1.71 / BL 0.748), so the
+#     mouth faces aft-OUTBOARD (normal ~20 deg aft of outboard).  From the forward-outboard cameras (81 / 130) the
+#     mouth is seen almost edge-on -- the straight vertical aft lip and the dark trapezoid of the photos -- from 188 it
+#     is seen at ~30 deg (the dark opening with the lit inner wall), from the side (drawn side view, tech-data render)
+#     face-on, a dark opening STA 1.72-1.96.  (Rev C read the corner as an elbow and turned the tube back inboard,
+#     with the mouth facing aft-inboard: from ahead-outboard the outer wall then wrapped round into a rounded dome.)
+#   * section: ellipse STACK_AB, 0.22 wide in plan (the drawn walls are 0.229 apart) and 0.188 tall (front view WL
+#     1601-1788); centre WL AX_Z + STACK_DZ (drawn 1.69-1.70 less the drawing's 15-18 mm higher nose / prop axis).
+# STACK_PTS: the centre line's key points (root inside the cowl, bend start, bend end, straight end beyond the scarf
+# plane) -- derived from STACK_ROOT / STACK_BEND, kept for the drawings (STACK_PTS[1] = where the tube leaves the cowl).
+STACK_ROOT = (1.545, 0.260)      # centre line start (inside the cowl, below the cut-out bottom), heading outboard
+STACK_BEND = dict(y=0.401, r=0.150, az=36.5, out=0.46)   # bend start BL, centre-line radius, heading after the
+#                                  bend (deg from the fuselage axis, outboard), straight length after the bend (m)
+STACK_DZ = (0.025, 0.031)        # centre WL - AX_Z at the root / at the end (a slight rise)
+STACK_AB = (0.110, 0.094)        # section half-sizes: plan (horizontal) / side (vertical)
+STACK_N = 3.4                    # section superellipse exponent |u/a|^n + |v/b|^n = 1: a rounded rectangle (drawn front
+#                                  view: flat top / bottom and a flat outboard end with ~50 mm corners; photos 81 / 130
+#                                  / 188: straight-sided black outlet trapezoid with sharp corners)
+
+
+def stack_section(th, a=None, b=None, n=None):
+    """(u, v) of the stack section (superellipse STACK_N, half-sizes STACK_AB) at the parameter angles th, and the
+    unnormalised outward normal (nu, nv) there."""
+    a = STACK_AB[0] if a is None else a
+    b = STACK_AB[1] if b is None else b
+    n = STACK_N if n is None else n
+    c, s_ = np.cos(th), np.sin(th)
+    u = a * np.sign(c) * np.abs(c) ** (2.0 / n)
+    v = b * np.sign(s_) * np.abs(s_) ** (2.0 / n)
+    nu = np.sign(c) * np.abs(c) ** (2.0 - 2.0 / n) / a
+    nv = np.sign(s_) * np.abs(s_) ** (2.0 - 2.0 / n) / b
+    return u, v, nu, nv
+def stack_th(m):
+    """m section parameter angles spaced uniformly in ARC LENGTH round the superellipse (angle-uniform samples bunch
+    at the corners and leave ~22 mm between generators on the flat sides at STACK_N 3.4)."""
+    thd = np.linspace(0.0, 2 * np.pi, 4097)
+    u, v, _, _ = stack_section(thd)
+    sl = np.r_[0.0, np.cumsum(np.hypot(np.diff(u), np.diff(v)))]
+    return np.interp(np.arange(m) * sl[-1] / m, sl, thd)
+
+
+STACK_SCARF = ((1.970, 0.655), (1.721, 0.744))    # outlet plane (vertical), plan (STA, BL): inner lip -> outer lip
+STACK_COLLAR = 0.065             # heat-blackened outlet collar: this far upstream of the scarf cut, along the tube
+STACK_GAP = 0.018                # dark annular cut-out round the tube where it leaves the cowl (radial clearance)
+STACK_GAP_DEPTH = 0.045          # ... its depth into the cowl (dark liner wall + bottom ring)
+
+
+def _stack_lengths():
+    """Arc lengths of the centre line's three pieces: root straight, bend, outlet straight."""
+    b = STACK_BEND
+    return b["y"] - STACK_ROOT[1], b["r"] * (np.pi / 2 - np.radians(b["az"])), b["out"]
+
+
+def _stack_centre(sgn=1, n=24, s=None):
+    """(n, 3) centre line, uniform in arc length (or at the arc lengths s): straight outboard from STACK_ROOT, an arc
+    of STACK_BEND['r'] to the heading STACK_BEND['az'], then straight for STACK_BEND['out']."""
+    x0, y0 = STACK_ROOT
+    b = STACK_BEND
+    r, az = b["r"], np.radians(b["az"])
+    L0, La, L1 = _stack_lengths()
+    s = np.linspace(0.0, L0 + La + L1, n) if s is None else np.asarray(s, float)
+    n = len(s)
+    P = np.zeros((n, 3))
+    for i, si in enumerate(s):
+        if si <= L0:
+            P[i, :2] = x0, y0 + si
+        elif si <= L0 + La:
+            ph = np.pi / 2 - (si - L0) / r                # heading angle from +x
+            P[i, :2] = x0 + r - r * np.sin(ph), b["y"] + r * np.cos(ph)
+        else:
+            e = np.array([x0 + r - r * np.sin(az), b["y"] + r * np.cos(az)])
+            P[i, :2] = e + (si - L0 - La) * np.array([np.cos(az), np.sin(az)])
+    P[:, 1] *= sgn
+    P[:, 2] = AX_Z + np.interp(s, [0.0, L0 + La + L1], STACK_DZ)
+    return P
+
+
+STACK_PTS = tuple(tuple(float(v) for v in (p[0], p[1], p[2] - AX_Z)) for p in
+                  _stack_centre(1, s=np.cumsum([0.0, *_stack_lengths()])))
 
 
 def exhaust_stack_path(sgn=1, n=24):
-    """Stack centre line (n, 3) for side sgn (+1 starboard), from the cowl side to beyond the outlet plane (the tube
-    is cut by STACK_SCARF); natural cubic spline through STACK_PTS."""
-    from scipy.interpolate import CubicSpline
-    pts = np.array([[x, sgn * y, AX_Z + dz] for x, y, dz in STACK_PTS])
-    cs = CubicSpline(np.linspace(0, 1, len(pts)), pts, bc_type="natural")
-    return cs(np.linspace(0, 1, n))
+    """Stack centre line (n, 3) for side sgn (+1 starboard), from inside the cowl side to beyond the outlet plane (the
+    tube is cut by STACK_SCARF): straight - bend - straight (_stack_centre), uniform in arc length."""
+    return _stack_centre(sgn, n)
 
 
 def stack_scarf_plane(sgn=1):
     """Outlet (scarf) plane of the stack on side sgn: (point, unit normal) in model axes; the normal points out of
-    the tube (aft-inboard).  Signed distance > 0 = cut away."""
+    the tube (aft-outboard).  Signed distance > 0 = cut away."""
     (x0, y0), (x1, y1) = STACK_SCARF
     p = np.array([x0, sgn * y0, AX_Z])
     e = np.array([x1 - x0, sgn * (y1 - y0), 0.0])
-    nrm = np.cross(e, [0.0, 0.0, 1.0]) * sgn          # (e_y, -e_x) for starboard: aft-inboard
+    nrm = np.cross(e, [0.0, 0.0, 1.0]) * sgn          # (e_y, -e_x) for starboard: aft-outboard
     return p, nrm / np.linalg.norm(nrm)
 
 
 def exhaust_stack_rings(sgn=1, n=40, m=28, scarf=False):
-    """Section rings (n, m, 3) of the stack tube (ellipse STACK_AB in the plane normal to the centre line; the
+    """Section rings (n, m, 3) of the stack tube (superellipse STACK_AB / STACK_N normal to the centre line; the
     vertical semi-axis stays vertical).  Also returns the arc length along the path (n,).  scarf=True cuts the tube
     at the outlet plane STACK_SCARF: every generator line (fixed ring angle) is clipped where it crosses the plane,
     so the rings beyond the cut collapse onto the mouth curve (for silhouettes / the Stage-3 builder)."""
     path = exhaust_stack_path(sgn, n)
     T = np.gradient(path, axis=0)
     T /= np.linalg.norm(T, axis=1)[:, None]
-    th = np.linspace(0, 2 * np.pi, m, endpoint=False)
+    th = stack_th(m)
     rings = []
     for p, t in zip(path, T):
         n1 = np.cross(t, [0.0, 0.0, 1.0])
         n1 /= np.linalg.norm(n1)
         n2 = np.cross(n1, t)
-        rings.append(p + np.outer(STACK_AB[0] * np.cos(th), n1) + np.outer(STACK_AB[1] * np.sin(th), n2))
+        u, v, _, _ = stack_section(th)
+        rings.append(p + np.outer(u, n1) + np.outer(v, n2))
     rings = np.array(rings)
     s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(path, axis=0), axis=1))]
     if scarf:
@@ -376,7 +442,7 @@ def exhaust_stack_collar_points(sgn=1, m=72, n=200, k=8, facing=None):
     (0, sgn, 0) from outboard, (0, 0, 1) from above) keeps only the generators whose outward normal faces it."""
     R, _ = exhaust_stack_rings(sgn, n, m, scarf=True)
     path = exhaust_stack_path(sgn, n)
-    th = np.linspace(0, 2 * np.pi, m, endpoint=False)
+    th = stack_th(m)
     out = []
     for j in range(m):
         g = R[:, j]
@@ -389,7 +455,8 @@ def exhaust_stack_collar_points(sgn=1, m=72, n=200, k=8, facing=None):
             n1 = np.cross(t, [0.0, 0.0, 1.0])
             n1 /= np.linalg.norm(n1)
             n2 = np.cross(n1, t)
-            nrm = np.cos(th[j]) / STACK_AB[0] * n1 + np.sin(th[j]) / STACK_AB[1] * n2
+            _, _, nu, nv = stack_section(th[j])
+            nrm = nu * n1 + nv * n2
             if float(nrm @ np.asarray(facing, float)) <= 0.0:
                 continue
         for s in np.linspace(sg[-1] - STACK_COLLAR, sg[-1], k):
@@ -772,24 +839,52 @@ def chin_duct(mouth, m=96):
     return np.array(rings)
 
 
-def exhaust_stack_mesh(sgn, n=48, m=36, wall=0.006):
-    """Scarfed stack (outer skin, inner wall, lip at the scarf plane); returns (tube, collar, inner)."""
+def _stack_normals(sgn, n, m):
+    """Analytic outward normals (n, m, 3) of the elliptic stack section rings (exhaust_stack_rings frames): the
+    polished stack mirrors the room, so the vertex normals must be smooth (VQA r1 R1-07: the mesh-derived normals
+    of the scarf-clipped grid gave wavy, 'crumpled foil' highlights)."""
+    path = exhaust_stack_path(sgn, n)
+    T = np.gradient(path, axis=0)
+    T /= np.linalg.norm(T, axis=1)[:, None]
+    th = stack_th(m)
+    N = []
+    for t in T:
+        n1 = np.cross(t, [0.0, 0.0, 1.0])
+        n1 /= np.linalg.norm(n1)
+        n2 = np.cross(n1, t)
+        _, _, nu, nv = stack_section(th)
+        v = np.outer(nu, n1) + np.outer(nv, n2)
+        N.append(v / np.linalg.norm(v, axis=1)[:, None])
+    return np.array(N)
+
+
+STACK_INNER_POLISH = 0.05       # the inside of the outlet is polished this far in from the scarf cut (photo 188: the
+#                                  far inner wall mirrors the apron through the opening), soot deeper in
+
+
+def exhaust_stack_mesh(sgn, n=96, m=72, wall=0.006):
+    """Scarfed stack (outer skin, inner wall, lip at the scarf plane); returns (tube, collar, inner soot, inner polish)."""
     R, _ = exhaust_stack_rings(sgn, n, m, scarf=True)
     path = exhaust_stack_path(sgn, n)
     cen = path[:, None, :]
-    # arc length of every generator from its scarf end (the collar is the last STACK_COLLAR of it)
-    seg = np.linalg.norm(np.diff(R, axis=0), axis=2)
-    s = np.vstack([np.zeros((1, m)), np.cumsum(seg, 0)])
-    to_end = s[-1][None, :] - s
-    UV = np.stack([to_end, np.zeros_like(to_end)], -1)
-    outer = grid_surface(R, close_v=True, UV=UV)
+
+    def to_end(Q):                   # arc length of every generator from its scarf end
+        seg = np.linalg.norm(np.diff(Q, axis=0), axis=2)
+        s = np.vstack([np.zeros((1, m)), np.cumsum(seg, 0)])
+        d = s[-1][None, :] - s
+        return np.stack([d, np.zeros_like(d)], -1)
+
+    Nout = _stack_normals(sgn, n, m)
+    outer = grid_surface(R, close_v=True, UV=to_end(R), N=Nout)
     if np.mean(np.sum((outer.V[:m] - path[0]) * outer.N[:m], 1)) < 0:
         outer = outer.flipped()
     Ri = cen + (R - cen) * (1 - wall / min(STACK_AB))
     Ri = _clip_generators(Ri, *stack_scarf_plane(sgn))
-    inner = grid_surface(Ri, close_v=True)
-    if np.mean(np.sum((inner.V[:m] - path[0]) * inner.N[:m], 1)) > 0:
-        inner = inner.flipped()
+    inner = grid_surface(Ri, close_v=True, UV=to_end(Ri), N=-Nout)        # smooth analytic normals (polished lip)
+    C = inner.V[inner.F].mean(1)                                             # wound to face the axis
+    near = path[np.argmin(np.linalg.norm(C[:, None, :] - path[None, :, :], axis=2), 1)]
+    if np.mean(np.sum((C - near) * inner.face_normals(), 1)) > 0:
+        inner.F = inner.F[:, ::-1].copy()
     V = np.vstack([R[-1], Ri[-1]])
     k = np.arange(m)
     lip = Mesh(V, np.vstack([np.stack([k, (k + 1) % m, (k + 1) % m + m], 1), np.stack([k, (k + 1) % m + m, k + m], 1)]))
@@ -797,7 +892,49 @@ def exhaust_stack_mesh(sgn, n=48, m=36, wall=0.006):
         lip = lip.flipped()
     collar = trim(outer, outer.UV[:, 0] - STACK_COLLAR, "negative")
     tube = trim(outer, outer.UV[:, 0] - STACK_COLLAR, "positive")
-    return tube, Mesh.merge([collar, lip]), inner
+    polish = trim(inner, inner.UV[:, 0] - STACK_INNER_POLISH, "negative")
+    soot = trim(inner, inner.UV[:, 0] - STACK_INNER_POLISH, "positive")
+    return tube, Mesh.merge([collar, lip]), soot, polish
+
+
+def _stack_root_frame():
+    """(x0, zc, a, b) of the tube's straight root piece, which runs square to the cowl side (along +-y)."""
+    zc = AX_Z + STACK_DZ[0] + (STACK_DZ[1] - STACK_DZ[0]) * (STACK_BEND["y"] - STACK_ROOT[1]) / sum(_stack_lengths())
+    return STACK_ROOT[0], zc, STACK_AB[0], STACK_AB[1]
+
+
+def stack_root_field(V):
+    """Dark annular cut-out round each stack root in the cowl skin (negative = hole): the tube's elliptic section
+    grown by STACK_GAP, projected along the root piece (square to the cowl side, so it is the exact footprint)."""
+    V = np.asarray(V, float)
+    x0, zc, a, b = _stack_root_frame()
+    A, B = a + STACK_GAP, b + STACK_GAP
+    rho = (np.abs((V[:, 0] - x0) / A) ** STACK_N + np.abs((V[:, 2] - zc) / B) ** STACK_N) ** (1.0 / STACK_N)
+    f = (rho - 1.0) * min(A, B)
+    return np.where(np.abs(V[:, 1]) > 0.15, f, 1.0)
+
+
+def stack_root_liner(sgn, m=96):
+    """The cut-out's dark liner: a wall from the cowl skin (the hole edge) STACK_GAP_DEPTH into the cowl and a bottom
+    ring closing the gap to the tube."""
+    x0, zc, a, b = _stack_root_frame()
+    A, B = a + STACK_GAP, b + STACK_GAP
+    th = stack_th(m)
+    uo, vo, _, _ = stack_section(th, A, B)
+    ui, vi, _, _ = stack_section(th)
+    xo, zo = x0 + uo, zc + vo
+    ys = np.array([float(F.side_y(x, z)) for x, z in zip(xo, zo)]) + 0.0005
+    rows = [np.c_[xo, sgn * (ys - d), zo] for d in np.linspace(0.0, STACK_GAP_DEPTH, 4)]
+    wall = grid_surface(np.array(rows), close_v=True)
+    c = np.array([x0, sgn * float(ys.mean()), zc])
+    if np.mean(np.sum((c - wall.V) * wall.N * [1, 0, 1], 1)) < 0:          # the wall faces the tube
+        wall = wall.flipped()
+    yb = ys - STACK_GAP_DEPTH
+    ring = np.array([np.c_[xo, sgn * yb, zo], np.c_[x0 + ui, sgn * yb, zc + vi]])
+    bot = grid_surface(ring, close_v=True)
+    if np.mean(bot.N[:, 1]) * sgn < 0:                                      # the bottom faces outboard
+        bot = bot.flipped()
+    return Mesh.merge([wall, bot])
 
 
 def build_inlet_and_exhaust(parts):
@@ -819,15 +956,17 @@ def build_inlet_and_exhaust(parts):
     parts[dp.id] = dp
 
     # exhaust stacks: tube along STACK_PTS / STACK_AB, cut by the scarf plane STACK_SCARF, heat-blackened collar
+    # (inside polished near the outlet); the dark annular cut-out round each root is the cowl's (stack_root_field /
+    # stack_root_liner, added to the cowl halves by fuselage_parts)
     tubes, collars, inners = [], [], []
     for sgn in (1, -1):
-        t, c, i = exhaust_stack_mesh(sgn)
-        tubes.append(t)
+        t, c, i, pol = exhaust_stack_mesh(sgn)
+        tubes += [t, pol]
         collars.append(c)
         inners.append(i)
     ep = Part("exhaust_stacks", "Exhaust stacks (L/R), scarfed outlets", "cowling", explode=(-0.2, 0, 0.0), qty=2,
               group="Powerplant installation", material_note="Inconel stacks, heat-tinted outlet collars")
-    ep.add(Mesh.merge(tubes), "exhaust").add(Mesh.merge(collars), "exhaust_soot").add(Mesh.merge(inners), "exhaust_soot")
+    ep.add(Mesh.merge(tubes), "exhaust").add(Mesh.merge(collars + inners), "exhaust_soot")
     parts[ep.id] = ep
 
 
@@ -835,11 +974,23 @@ def build_inlet_and_exhaust(parts):
 # propeller
 # ---------------------------------------------------------------------------
 
+# Blade root (VQA r1 SHP-01 / R1-02 / LIV-06): the Hartzell composite blade passes through the spinner on a ROUND
+# shank (radius BLADE_SHANK_R about the pitch-change axis, so the fit is the same at any pitch) that flares into the
+# airfoil outside the spinner (BLADE_SHANK_BLEND: radii along the pitch axis where the blend starts / ends); a black
+# rubber boot (BLADE_BOOT) round each shank closes the spinner cut-out (photos 81 / 130: round black cuffs in tight
+# round cut-outs, no open holes).
+BLADE_SHANK_R = 0.047            # VQA r2 SHP2-04: photo 130 / 188 shanks are slim (~0.09-0.10 m across; rev 0.055)
+BLADE_SHANK_BLEND = (0.272, 0.360)
+
+
 def blade_geometry(n_r=34, n_c=40):
     """One blade along +z (radial), pitch axis = z axis through the hub centre,
-    chord in the x-y plane at blade angle beta (0 = chord in the rotation plane)."""
-    rs = np.concatenate([np.linspace(0.155, 0.30, 8), np.linspace(0.30, PROP_R - 0.03, n_r - 8)[1:],
-                         PROP_R - np.array([0.02, 0.01, 0.004])])
+    chord in the x-y plane at blade angle beta (0 = chord in the rotation plane).  Inboard of BLADE_SHANK_BLEND[0]
+    the section is the round shank (radius BLADE_SHANK_R about the pitch axis); it blends into the airfoil by
+    BLADE_SHANK_BLEND[1]."""
+    b0, b1 = BLADE_SHANK_BLEND
+    rs = np.concatenate([np.linspace(0.155, b0, 5), np.linspace(b0, b1, 7)[1:], np.linspace(b1, PROP_R - 0.03,
+                         n_r - 10)[1:], PROP_R - np.array([0.02, 0.01, 0.004])])
     r_rel = rs / PROP_R
     # chord distribution (paddle blade, rounded tip)
     c = np.interp(r_rel, [0.116, 0.16, 0.22, 0.35, 0.55, 0.75, 0.90, 0.97, 1.0],
@@ -860,6 +1011,15 @@ def blade_geometry(n_r=34, n_c=40):
         # section in local (chord u, thickness v); pitch axis at 35 % chord
         u = (loop[:, 0] - 0.35 + sw / max(ch, 1e-3)) * ch
         v = loop[:, 1] * ch
+        # round shank inboard: the same loop parameter on a circle about the pitch axis (lower surface TE -> LE on
+        # v < 0, upper LE -> TE on v > 0), blended in over BLADE_SHANK_BLEND (smoothstep)
+        wb = float(np.clip((r - b0) / (b1 - b0), 0.0, 1.0))
+        wb = wb * wb * (3.0 - 2.0 * wb)
+        if wb < 1.0:
+            ph = np.arccos(np.clip(2.0 * loop[:, 0] - 1.0, -1.0, 1.0)) * np.r_[-np.ones(len(lower)), np.ones(len(upper))]
+            uc, vc = BLADE_SHANK_R * np.cos(ph), BLADE_SHANK_R * np.sin(ph)
+            u = wb * u + (1.0 - wb) * uc
+            v = wb * v + (1.0 - wb) * vc
         # rotate by blade angle: chord makes angle beta with the rotation plane.
         # rotation plane directions: tangential = +y, axial = -x (forward)
         tang = np.array([0, 1.0, 0])
@@ -880,7 +1040,15 @@ def blade_geometry(n_r=34, n_c=40):
     return Mesh.merge([m, tip, root]), rs, Pm
 
 
-BLADE_HOLE_R = 0.068          # blade-root openings in the spinner (pitch axis radius; clears the cuff at any pitch)
+BLADE_HOLE_R = BLADE_SHANK_R + 0.006   # blade-root cut-outs in the spinner: the round shank + 6 mm (any pitch)
+# rubber boot round each shank on the spinner (rotates with the spinner; round, so blade pitch does not move it):
+# profile (distance along the blade's pitch axis from the hub, radius about that axis) -- a collar buried in the
+# spinner shell below 'rho0', standing 'r_out' proud of the axis up to 'rho1', then rolling in (quarter ellipse) to
+# 'r_in' (shank + 2.5 mm) at 'rho2'; its base covers the cut-out edge all round (the shell slopes ~10 deg there)
+# VQA r2 SHP2-04: no collar bulge -- the boot is a slim cuff only 5 mm over the cut-out (r_out 0.072 -> hole + 5 mm),
+# standing just above the highest cut-out edge (the shell reaches rho 0.247 there) and rolling in over 12 mm
+BLADE_BOOT = dict(rho0=0.205, rho1=0.250, rho2=0.262, rho3=0.268, r_out=BLADE_HOLE_R + 0.005,
+                  r_in=BLADE_SHANK_R + 0.0025)
 # Spinner / cowl joint (MV2-03).  The spinner base plane is normal to the (2 deg tilted / yawed) thrust axis, the
 # cowl-front ring is vertical and not round about that axis (its radius about it is 0.246-0.254): so
 #   * the cowl skin ahead of the plane SPINNER_GAP behind the base plane is cut away (cowl_front_field) -- the fixed lip
@@ -927,7 +1095,17 @@ def spinner_skirt_r():
     return _SKIRT_R[0]
 
 
-def spinner_mesh(n_around=160, n_prof=90):
+def blade_boot(k, n=48):
+    """Rubber boot round blade k's shank where it passes through the spinner (BLADE_BOOT), closed inside."""
+    b = BLADE_BOOT
+    prof = [(b["rho0"], 0.0), (b["rho0"], b["r_out"]), (b["rho1"], b["r_out"])]
+    for a in np.linspace(0.0, np.pi / 2, 9)[1:]:
+        prof.append((b["rho1"] + (b["rho2"] - b["rho1"]) * np.sin(a), b["r_in"] + (b["r_out"] - b["r_in"]) * np.cos(a)))
+    prof += [(b["rho3"], b["r_in"])]
+    return revolve(prof, n=n, axis_origin=prop_hub(), axis_dir=blade_axis(k))
+
+
+def spinner_mesh(n_around=240, n_prof=110):
     """Spinner: surface of revolution of spinner_profile() about the thrust axis, tip at STA spinner_tip, base plane
     (normal to the axis) through the axis at the cowl front, a skirt of spinner_skirt_r() behind it; blade-root
     openings; returns (shell, bulkhead annulus)."""
@@ -951,7 +1129,8 @@ def spinner_mesh(n_around=160, n_prof=90):
     for k in range(N_BLADES):
         d = blade_axis(k)
         w = shell.V - hub
-        f = np.minimum(f, np.linalg.norm(w - np.outer(w @ d, d), axis=1) - BLADE_HOLE_R)
+        s = w @ d                    # one-sided (SHP-01: a cutter on the whole line also cut an empty hole opposite)
+        f = np.minimum(f, np.where(s > 0.0, np.linalg.norm(w - np.outer(s, d), axis=1) - BLADE_HOLE_R, 1.0))
     shell = trim(shell, f, "positive")
     c = axis_point(x0) + (L + SPINNER_SKIRT - 0.002) * a
     bulk = revolve([(0.0, SPINNER_BULK_R_IN), (0.0005, rs - 0.003)], n=n_around, axis_origin=c, axis_dir=a)
@@ -985,6 +1164,7 @@ def build_propeller(parts):
     hub = revolve([(0, 0.0), (0.001, h["r"]), (hl - 0.001, h["r"]), (hl, 0.0)], n=40,
                   axis_origin=axis_point(PROP_X - h["fwd"]), axis_dir=-thrust_dir())
     prop.add(spin, "paint_white").add(Mesh.merge([hub, bulk]), "metal_dark")
+    prop.add(Mesh.merge([blade_boot(k) for k in range(N_BLADES)]), "deice_boot")
     parts[prop.id] = prop
     for k in range(N_BLADES):
         R = Rt @ rotation_matrix((1, 0, 0), 2 * np.pi * k / N_BLADES)

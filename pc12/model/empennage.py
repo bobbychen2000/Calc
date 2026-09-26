@@ -281,6 +281,32 @@ def _cut_face_loop(sec, xc0, xc1=None, n=16):
     return np.vstack([up, lo[1:-1]]) if xc1 >= 1.0 - 1e-9 else np.vstack([up, lo])
 
 
+# VQA r3 (RQ2-05): the LE blend now starts at the front face's corner (STAB_HORN_CORNER), not at the horn root: along the
+# flat part of the slot the horn keeps the fixed tip's section (flush across a slit), so the side view no longer shows
+# the thinner horn as a trough behind the fixed tip; the section changes only round the drawn corner radius
+HORN_BLEND_Y0 = STAB_HORN_CORNER[0] - 0.010
+
+
+def horn_section(y):
+    """Section of the horn balance at BL y.  VQA r2 RQ2-05: stab_section's LE jumps 0.10 m at the notch (the fixed
+    tip's rake -> the horn's rake, a 4 mm ramp), so a horn lofted through it went from a 50 mm cut face of the thick
+    fixed-tip section to a fresh nose within one 12 mm station -- the crumpled, scooped horn / tip surface of the side
+    and below views.  The horn's sections run on a LE of their own instead, blended (smoothstep) from the tailplane's
+    LE at its inboard end (flush with the elevator) to the horn's raked LE at the end of the notch ramp; the drawn
+    plan outline (horn_front_x, the raked LE, the TE) is unchanged."""
+    y_ = abs(float(y))
+    y0, yn = HORN_BLEND_Y0, STAB_NOTCH_Y + 0.004
+    if y_ >= yn:
+        return stab_section(y)
+    t = float(np.clip((y_ - y0) / (yn - y0), 0.0, 1.0))
+    t = t * t * (3.0 - 2.0 * t)
+    s = stab_section(y)
+    xl = (1.0 - t) * float(stab_le(y_)) + t * float(_horn_le(y_))
+    c = max(float(stab_te(y_)) - xl, 0.02)
+    return Section(le=np.array([xl, s.le[1], STAB_Z]), chord=c, e_c=s.e_c, e_t=s.e_t, twist=s.twist,
+                   airfoil=s.airfoil)
+
+
 def horn_loop(sec):
     """Horn-balance section loop: the section aft of its front face (horn_front_x) with a flat front."""
     y = abs(float(sec.le[1]))
@@ -750,12 +776,14 @@ def fin_mesh():
 def dorsal_mesh():
     """Dorsal slab (above the tail-cone crown only) and its root fillet into the tail cone (both flanks)."""
     from cad.mesh import trim as _trim
-    zd = span_stations(2.40, float(_dorsal_curve()[-1, 1]) - 0.01, 0.03)
-    slab = skin(dorsal_section, zd, n=48)
+    # VQA r2 RQ2-04: fine enough (~10-15 mm) for the livery strokes that run up onto it (U1 / X1-X3 / H1): the 48-point
+    # chordwise grid (up to ~0.1 m mid-chord) and 30 mm rows broke them into slivers with hooked ends
+    zd = span_stations(2.40, float(_dorsal_curve()[-1, 1]) - 0.01, 0.012)
+    slab = skin(dorsal_section, zd, n=300)
     slab = _trim(slab, oml_field(slab.V), "positive")
     T = np.array(DORSAL_FILLET)
-    xs = np.unique(np.r_[np.linspace(T[0, 0] + 0.002, 9.25, 24), np.linspace(9.25, T[-1, 0], 90)])
-    rows = [dorsal_fillet_section(x, n=18) for x in xs]
+    xs = np.unique(np.r_[np.linspace(T[0, 0] + 0.002, 9.25, 60), np.linspace(9.25, T[-1, 0], 240)])
+    rows = [dorsal_fillet_section(x, n=24) for x in xs]
     P = np.array([np.c_[np.full(len(r), x), r] for x, r in zip(xs, rows)])
     fil = []
     for sgn in (1, -1):
@@ -890,9 +918,10 @@ def build(parts: dict):
 def horn_body():
     """Starboard horn balance (moves with the elevator): the tailplane tip aft of its front face (horn_front_x) from
     the elevator's outboard end (ELEV_HORN[0] + 6 mm) to the tip, with a rounded tip cap."""
-    ys = np.unique(np.r_[span_stations(ELEV_HORN[0] + 0.006, STAB_NOTCH_Y + 0.006, 0.012),
-                         span_stations(STAB_NOTCH_Y + 0.006, STAB_TIP_Y - 0.004, 0.02)])
-    body = closed_body(stab_section, ys, horn_loop)
+    ys = np.unique(np.r_[span_stations(ELEV_HORN[0] + 0.006, STAB_HORN_CORNER[0], 0.010),
+                         span_stations(STAB_HORN_CORNER[0], STAB_NOTCH_Y + 0.004, 0.004),
+                         span_stations(STAB_NOTCH_Y + 0.004, STAB_TIP_Y - 0.004, 0.02)])
+    body = closed_body(horn_section, ys, horn_loop)
     tip = stab_section(STAB_TIP_Y - 0.004)
     xx = cos_pts(40)
     loop = np.vstack([tip.lower(xx[::-1]), tip.upper(xx[1:-1])])

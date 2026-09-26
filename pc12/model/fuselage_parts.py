@@ -345,6 +345,7 @@ def build(parts_out: dict):
     # ---- cowling (upper / lower halves split on the prop axis water line), cowl front -> firewall ----
     cowl = sub(X0, F.STA["firewall"])
     cowl = trim(cowl, PP.cowl_front_field(cowl.V), "positive")    # a constant gap behind the spinner base plane
+    cowl = trim(cowl, PP.stack_root_field(cowl.V), "positive")    # annular cut-outs round the exhaust-stack roots
     split = cowl.V[:, 2] - (F.PROP_AXIS_Z + 0.02)
     up = trim(cowl, split, "positive")
     lo = trim(cowl, split, "negative")
@@ -354,10 +355,15 @@ def build(parts_out: dict):
                                    explode=(0, 0, 0.9), group="Powerplant installation",
                                    material_note="Carbon/Nomex honeycomb, Cu mesh")
     parts_out["cowl_upper"].add(up, "paint_white")
+    # the dark liner of the annular cut-outs round the exhaust-stack roots (a recess in the cowl skin, split like it)
+    liner = Mesh.merge([PP.stack_root_liner(s) for s in (1, -1)])
+    sl = liner.V[:, 2] - (F.PROP_AXIS_Z + 0.02)
+    liner_up, liner_lo = trim(liner, sl, "positive"), trim(liner, sl, "negative")
+    parts_out["cowl_upper"].add(liner_up, "exhaust_soot")
     parts_out["cowl_lower"] = Part("cowl_lower", "Lower engine cowling", "cowling",
                                    explode=(0, 0, -0.8), group="Powerplant installation",
                                    material_note="Carbon/Nomex honeycomb")
-    parts_out["cowl_lower"].add(lo, "paint_white")
+    parts_out["cowl_lower"].add(lo, "paint_white").add(liner_lo, "exhaust_soot")
     parts_out["chin_inlet"] = Part("chin_inlet", "Chin air inlet: polished lip, mouth & duct entry", "cowling",
                                    explode=(-0.4, 0, -0.75), group="Powerplant installation",
                                    material_note="Polished lip, electrically de-iced; composite duct")
@@ -419,6 +425,10 @@ def _assert_covers(field, patch_box, box0, what):
 # glossy dark-grey 'seal_cabin', panes in the two-ply 'glass_cabin'.  The flight-deck frames are the PRO black
 # ('seal' = the anti-glare black of the mask, trim_black).
 CABIN_RING = (-0.004, 0.004)
+# flight-deck pane retainers (VQA r2 LIV2-05, material 'glazing_retainer'): signed-distance band round each pane, over
+# the glass / on the skin.  VQA r3: 20 mm (-6 / +14) read as a broad silver frame and turned the 46 mm centre post
+# silver (photo 130: a black post with a bright fastener line, thin bright edges round the panes) -> 12 mm (-6 / +6)
+GLAZING_RETAINER = (-0.006, 0.006)
 
 
 def build_glazing(parts_out):
@@ -442,7 +452,7 @@ def build_glazing(parts_out):
         p = skin_patch(x0, x1, t0, t1, d=0.012)
         fn = lambda m: CG.sidewindow_sdf(m.V[:, 0], m.V[:, 1], m.V[:, 2])       # noqa: E731
         sw_glass.append(trim(p, fn(p) - 0.010, "negative").offset(-0.005))
-        sw_seal.append(band(p, fn, -0.006, 0.012).offset(0.0015))
+        sw_seal.append(band(p, fn, *GLAZING_RETAINER).offset(0.0015))
     # windshield (two panes either side of the centre post): the extent of windshield_sdf on the OML (+ 25 mm)
     ws_f = lambda x, y, z, s: CG.windshield_sdf(x, s, z, y)                        # noqa: E731
     box0 = (3.05, 4.30, -0.40, 0.40)
@@ -451,7 +461,7 @@ def build_glazing(parts_out):
     p = skin_patch(x0, x1, t0, t1, d=0.012)
     fn = lambda m: CG.windshield_sdf(m.V[:, 0], signed_s(m.V[:, 0], m.UV[:, 1]), m.V[:, 2], m.V[:, 1])  # noqa: E731
     ws_glass = trim(p, fn(p) - 0.012, "negative").offset(-0.004)
-    ws_seal = band(p, fn, -0.006, 0.014).offset(0.0015)
+    ws_seal = band(p, fn, *GLAZING_RETAINER).offset(0.0015)
 
     n_fixed = sum(len(v) for v in FIXED_WINDOWS.values())
     g = Part("glazing_cabin", f"Cabin windows ({n_fixed} fixed, stretched acrylic)", "glazing",
@@ -462,8 +472,10 @@ def build_glazing(parts_out):
     w = Part("glazing_flightdeck", "Windshield (2 heated panes) & side windows (no DV window, PRO)", "glazing",
              explode=(-0.3, 0, 0.35), group="Glazing", qty=4,
              material_note="Heated laminated glass windshield, acrylic side windows")
+    # VQA r2 LIV2-05: the band round each pane is the polished glazing RETAINER (photos 0517 / 82 / 188: a thin bright
+    # edge inside the black PRO mask), not more black -- the mask outline (surround_sdf) is unchanged
     w.add(ws_glass, "glass_windshield").add(Mesh.merge(sw_glass), "glass").add(
-        Mesh.merge([ws_seal] + sw_seal), "seal")
+        Mesh.merge([ws_seal] + sw_seal), "glazing_retainer")
     parts_out[w.id] = w
 
 

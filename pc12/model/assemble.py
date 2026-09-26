@@ -41,10 +41,11 @@ MATERIALS = {
     "black":         ((0.028, 0.028, 0.032), 0.0, 0.50),
     "prop_blade":    ((0.015, 0.015, 0.017), 0.0, 0.45, dict(specular=0.5)),   # satin black composite
     "prop_tip":      ((0.80, 0.80, 0.78), 0.0, 0.36),
-    "erosion":       ((0.66, 0.64, 0.60), 1.0, 0.22),             # nickel erosion sheath
+    "erosion":       ((0.45, 0.45, 0.44), 1.0, 0.40),             # satin nickel erosion sheath (VQA r1 LIV-04)
     "tire":          ((0.028, 0.028, 0.029), 0.0, 0.45),           # black rubber, satin sheen
     "wheel":         ((0.62, 0.63, 0.64), 0.25, 0.35, dict(clearcoat=0.6, clearcoat_rough=0.03, specular=0.2)),
     "gear_leg":      ((0.72, 0.73, 0.74), 0.0, 0.32, dict(clearcoat=0.6, clearcoat_rough=0.03, specular=0.2)),
+    "glazing_retainer": ((0.50, 0.51, 0.52), 1.0, 0.22),         # satin-polished windshield / side-window retainers
     "chrome":        ((0.90, 0.91, 0.92), 1.0, 0.035),             # polished spinner, oleo chrome, inlet lip
     "zinc_chromate": ((0.62, 0.66, 0.22), 0.0, 0.60),             # primer: internal structure only
     "gear_bay":      ((0.30, 0.31, 0.32), 0.0, 0.55, dict(specular=0.8)),      # grey wheel-well liners
@@ -73,9 +74,9 @@ MATERIALS = {
     # as sRGB design colours (livery.check_materials() compares); 'paint_*' + 'trim_black' are primed by the viewer
     # until its paint step, the polished metal and propeller colours are not.
     "paint_blue":       ((0.0066, 0.034, 0.205), 0.30, 0.50, PAINT),   # sRGB #13347D deep metallic blue (base)
-    "paint_blue_light": ((0.215, 0.305, 0.55), 0.50, 0.38, PAINT),     # sRGB #8096C4 light metallic (silver-)blue
+    "paint_blue_light": ((0.262, 0.332, 0.515), 0.50, 0.38, PAINT),    # sRGB #8C9CBE light metallic (silver-)blue
     "paint_pinstripe":  ((0.90, 0.905, 0.91), 0.0, 0.30, PAINT),       # sRGB #F3F4F5 white pinstripes / swooshes
-    "paint_champagne":  ((0.49, 0.41, 0.30), 0.40, 0.38, PAINT),       # sRGB #BAAC95 8 mm pinstripe outlines
+    "paint_champagne":  ((0.48, 0.47, 0.45), 0.40, 0.38, PAINT),       # sRGB #B8B6B3 ~6 mm neutral-silver outlines
     "paint_wing_dark":  ((0.009, 0.018, 0.070), 0.35, 0.42, PAINT),    # sRGB #18244B dark navy wing lower surfaces
     "paint_silver":     ((0.42, 0.42, 0.43), 0.55, 0.36, PAINT),       # sRGB #ADADAF silver-grey tailplane
     "paint_black":      ((0.012, 0.013, 0.015), 0.0, 0.30, dict(CC, specular=0.0)),   # sRGB #1D1E21 gloss radome

@@ -79,9 +79,15 @@ _ZC, _R = PROP_AXIS_Z, SPINNER_R
 # ----------------------------------------------------------------------------
 # longitudinal control lines: (station, value) knots
 # ----------------------------------------------------------------------------
+# Stage 3 VQA r2 (RQ2-03): the crown's windshield-base knots (3.000 / 3.150 / 3.300, fitted) made the pchip overshoot
+# (slope 0.27 -> 0.60 -> 0.52 over STA 3.15-3.30, a curvature reversal): the hangar ceiling strips' reflections hooked
+# on the cowl shoulders ahead of the windshield.  Knots 3.000-3.500 are now sampled from a C2 slope ramp (0.107 ->
+# 0.540, quintic smoothstep centred on STA 3.14, 0.45 m long) that follows the drawn crown within 3.1 mm (rms 1.9 mm
+# over STA 2.6-4.2; whole crown rms 1.01 -> 1.18 mm); the shoulders' normal-azimuth rate drops from 280 to 110 deg/m.
 # <fitted-tables> (written by python3 -m drawing.lines_fit fit --write)
-_top = [(_X0, 1.905), (1.140, 1.952), (1.200, 1.960), (1.500, 2.011), (2.000, 2.072), (2.500, 2.126), (3.000, 2.180),
-        (3.150, 2.207), (3.300, 2.284), (3.500, 2.388), (3.700, 2.497), (3.900, 2.607), (4.080, 2.696),
+_top = [(_X0, 1.905), (1.140, 1.952), (1.200, 1.960), (1.500, 2.011), (2.000, 2.072), (2.500, 2.126), (3.000, 2.1783),
+        (3.075, 2.1906), (3.150, 2.2113), (3.225, 2.2417), (3.300, 2.2793), (3.400, 2.3331), (3.500, 2.3871),
+        (3.700, 2.497), (3.900, 2.607), (4.080, 2.696),
         (4.200, 2.742), (4.400, 2.769), (9.000, 2.769), (9.750, 2.748), (10.800, 2.694), (11.850, 2.613),
         (12.650, 2.532), (_X1, 2.300)]
 _bot = [(_X0, 1.405), (1.140, 1.413), (1.200, 1.233), (1.250, 1.201), (1.350, 1.163), (1.500, 1.120), (1.800, 1.048),

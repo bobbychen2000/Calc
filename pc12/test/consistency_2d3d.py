@@ -1096,16 +1096,28 @@ def check_L4(ctx, rep, plots):
             in_gap = E.ELEV_HORN[0] < y < E.STAB_NOTCH_Y
             if in_gap:
                 g0, g1 = float(E.horn_gap_x(y)), float(E.horn_front_x(y))
-                keep = ~((loop[:, 0] > g0 - 0.002) & (loop[:, 0] < g1 + 0.002))
                 Sf = densify_segments(slice_segments(Vf, Ff, (0, 1, 0), sg * y), 0.001)
                 Se = densify_segments(slice_segments(Ve, Fe, (0, 1, 0), sg * y), 0.001)
                 if len(Sf):
                     gap_d.append(Sf[:, 0].max() - g0)
                 if len(Se):
                     gap_d.append(Se[:, 0].min() - g1)
+                # two parameter loops: the fixed tip = stab_section ahead of the gap, the horn = its own section
+                # (empennage.horn_section, VQA r2 RQ2-05: LE blended onto the horn's raked LE) behind its front face;
+                # the slot between them and the flat faces closing each piece are not compared
+                from matplotlib.path import Path as MPath
+                hl = sec_loop(E.horn_section(y)) * [1, sg, 1]
+                Q2 = Q[:, [0, 2]]
+                pf, ph = loop[loop[:, 0] < g0 - 0.002][:, [0, 2]], hl[hl[:, 0] > g1 + 0.002][:, [0, 2]]
+                a_ = cKDTree(Q2).query(np.r_[pf, ph])[0]
+                lf, lh = loop[loop[:, 0] <= g0][:, [0, 2]], hl[hl[:, 0] >= g1][:, [0, 2]]
+                out_ = ~MPath(np.vstack([lf, lf[:1]])).contains_points(Q2)
+                out_ &= ~MPath(np.vstack([lh, lh[:1]])).contains_points(Q2)
+                out_ &= ~((Q2[:, 0] > g0 - 0.004) & (Q2[:, 0] < g1 + 0.004))     # the slot's faces
+                b_ = (np.minimum(Curves([lf], closed=True).dist(Q2[out_])[0], Curves([lh], closed=True).dist(Q2[out_])[0])
+                      if out_.any() else np.zeros(1))
             else:
-                keep = np.ones(len(loop), bool)
-            a_, b_ = loop_compare(Q[:, [0, 2]], loop[:, [0, 2]], ~keep)
+                a_, b_ = loop_compare(Q[:, [0, 2]], loop[:, [0, 2]])
             p2m.append(a_.max())
             m2p.append(b_.max())
             plocs.append((sg * y, 1000 * a_.max(), 1000 * b_.max()))
@@ -1114,7 +1126,8 @@ def check_L4(ctx, rep, plots):
             worst_list(le_d, locs))
     rep.add("L4", "tailplane TE (plan, incl. raked tip) vs stab_te", np.array(te_d), tolp, "", worst_list(te_d, locs))
     rep.add("L4", "tailplane sections: parameter loop <-> mesh (side proj.)", np.r_[p2m, m2p], tolp,
-            "horn-gap slot excluded from the loop; mesh points inside the loop (coves) ignored",
+            "horn-gap slot excluded from the loop (fixed tip vs stab_section, horn vs horn_section); mesh points inside "
+            "the loop (coves) ignored",
             [f"BL {b:+.2f}: {c:.1f} / {d:.1f} mm (param->mesh / mesh->param)" for b, c, d in
              sorted(plocs, key=lambda t: -max(t[1], t[2]))[:4]])
     rep.add("L4", "horn gap: fixed-tip aft face / horn front vs parameters", np.array(gap_d), tolp,
@@ -1283,14 +1296,29 @@ def check_L4(ctx, rep, plots):
             f"STA {B[1, 0]:.3f}-{B[-2, 0]:.3f}; aft end {Vb[:, 0].max():.3f} vs {E.BULLET_X[1]:.3f}")
 
     # ---------------------------------------------------------------- radar pod
+    # body of revolution (tip -> POD_CYL_END) against radar_pod_profile; the swan neck (VQA r2 SHP2-02) against its
+    # spine / radius law (pod_neck_spine: distance from the spine station whose normal plane holds the vertex); the
+    # end cap inside the winglet (within r_end of the spine end) is skipped
     Vp = ctx.verts("radar_pod")
     prof = np.array(D.radar_pod_profile(400))
-    r_mesh = np.hypot(Vp[:, 1] - D.POD_Y, Vp[:, 2] - D.POD_Z)
-    r_par = np.interp(Vp[:, 0], prof[:, 0], prof[:, 1])
-    dev = np.r_[r_mesh - r_par, [Vp[:, 0].min() - D.POD_X_TIP, Vp[:, 0].max() - D.POD_X_END]]
-    rep.add("L4", "radar pod: radius about (POD_Y, POD_Z) vs profile, tip / end", dev, tolp,
-            f"x {Vp[:, 0].min():.3f}-{Vp[:, 0].max():.3f}, max r {r_mesh.max():.4f} (POD_R {D.POD_R})",
-            worst_list(dev[:-2], Vp))
+    body = Vp[:, 0] <= D.POD_CYL_END + 1e-6
+    r_mesh = np.hypot(Vp[body, 1] - D.POD_Y, Vp[body, 2] - D.POD_Z)
+    r_par = np.interp(Vp[body, 0], prof[:, 0], prof[:, 1])
+    Sp, Tp, rp = D.pod_neck_spine(3000)
+    Vn = Vp[~body]
+    Vn = Vn[np.linalg.norm(Vn - Sp[-1], axis=1) > D.POD_NECK["r_end"] + 1e-4]
+    dn = []
+    for v in Vn:
+        w_ = v - Sp
+        a_ = np.abs(np.sum(w_ * Tp, 1))
+        cand = np.argsort(a_)[:6]
+        dd = np.abs(np.linalg.norm(w_[cand] - np.sum(w_[cand] * Tp[cand], 1)[:, None] * Tp[cand], axis=1) - rp[cand])
+        dn.append(dd.min())
+    dev = np.r_[r_mesh - r_par, np.array(dn), [Vp[:, 0].min() - D.POD_X_TIP]]
+    rep.add("L4", "radar pod: body radius vs radar_pod_profile, swan neck vs pod_neck_spine, tip", dev, tolp,
+            f"x {Vp[:, 0].min():.3f}-{Vp[:, 0].max():.3f} (neck end {D.POD_X_END:.3f}, in the winglet), body max r "
+            f"{r_mesh.max():.4f} (POD_R {D.POD_R}), {len(Vn)} neck verts",
+            worst_list(dev[:-1], np.r_[Vp[body], Vn]))
 
     # ---------------------------------------------------------------- axles / tyres
     dev, lab = [], []
@@ -1528,8 +1556,20 @@ def _l4_fairing(ctx, rep):
     gx = (g(x + h, z) - g(x - h, z)) / (2 * h)
     gz = (g(x, z + h) - g(x, z - h)) / (2 * h)
     dn = f / np.sqrt(1.0 + gx ** 2 + gz ** 2)
+    # the first-order distance fails where the law is near-vertical in z (the nose's lower lobe wraps under the flat
+    # keel: side_y jumps from 0 to ~0.18 m within 2 mm of the keel WL) -- there the distance is searched along z at
+    # the vertex's station (the curve y = g(x, z) in the section plane, +-8 mm)
+    big = np.abs(dn) * 1000 > TOL["oml"]
+    n_ref = int(big.sum())
+    if big.any():
+        dz = np.linspace(-0.008, 0.008, 321)
+        Xb, Zb = np.repeat(x[big], len(dz)), (z[big][:, None] + dz[None, :]).ravel()
+        Gb = g(Xb, Zb).reshape(-1, len(dz))
+        dd = np.sqrt((np.abs(P[big, 1])[:, None] - Gb) ** 2 + dz[None, :] ** 2).min(1)
+        dn[big] = np.sign(dn[big]) * np.minimum(np.abs(dn[big]), dd)
     rep.add("L4", "root fillet / fairing nose on its law (side_y + standoff)", dn, TOL["oml"],
-            f"{len(P)} vertices; normal distance (first order)", worst_list(dn, P))
+            f"{len(P)} vertices; normal distance (first order; {n_ref} vertices at the keel corner searched along z)",
+            worst_list(dn, P))
     # (e) the fillet's upper edge (side view): mesh vs the parameter edge (standoff = ROOT_FILLET_MIN_D), 2-D both ways;
     # and how far below the drawn line (BELLY_FAIRING_NOSE_EDGE + TAIL) that tangent edge lies
     z_up, z_lo, y_out, (x0, x1) = D.root_fillet_lines()
@@ -2139,17 +2179,23 @@ def check_L5(ctx, rep, plots):
     a = -PP.thrust_dir()
     hub = PP.prop_hub()
     dev, Ps, labs = [], [], []
+    r_in = PP.PROP_R - L.PROP_BANDS[-1][2]
     for k in range(PP.N_BLADES):
         for P, ma, mb in colour_boundaries(ctx, f"blade_{k + 1}", mats={m for m, _, _ in L.PROP_BANDS}):
             w = P - hub
             r = np.linalg.norm(w - np.outer(w @ a, a), axis=1)
             exp_r = np.array(sorted(edges.get(frozenset((ma, mb)), {np.inf})))
-            dev.append(np.abs(r[:, None] - exp_r[None]).min(1))
+            d_r = np.abs(r[:, None] - exp_r[None]).min(1)
+            # the bands are on the FRONT face only (livery.blade_face_field): their edge along the LE / TE seam lies on
+            # the chord surface and must stay outboard of the innermost band edge
+            seam = np.abs(L.blade_face_field(P, k)) < 0.002
+            dev.append(np.where(seam, np.maximum(0.0, r_in - r), d_r))
             Ps.append(P)
-            labs += [f"blade_{k + 1} {ma}/{mb} at R {v:.4f}" for v in r]
+            labs += [f"blade_{k + 1} {ma}/{mb} at R {v:.4f}" + (" (LE/TE seam)" if sm else "") for v, sm in zip(r, seam)]
     all_r = sorted({v for e in edges.values() for v in e})
     rep.add("L5", "propeller blade band edges vs PROP_BANDS (R about the thrust axis)",
-            np.concatenate(dev) if dev else None, tol, f"band edges at R {', '.join(f'{v:.3f}' for v in all_r)}",
+            np.concatenate(dev) if dev else None, tol, f"band edges at R {', '.join(f'{v:.3f}' for v in all_r)} "
+            "(front face; LE / TE seams outboard of the innermost edge)",
             worst_list(np.concatenate(dev), np.vstack(Ps), labs) if dev else [])
 
     # ---- per-surface colours of the L5 surface table (SURFACES, STAB_BOOT, WINGLET_PIN)
@@ -2271,6 +2317,11 @@ def _l5_bands(ctx, rep):
     cb = colour_boundaries(ctx, "exhaust_stacks", mats={L.SURFACES["exhaust"]} | soot)
     B = np.vstack([P for P, ma, mb in cb if ma in soot | {L.SURFACES["exhaust"]} and mb in soot | {L.SURFACES["exhaust"]}
                    and len({ma, mb} & soot) == 1]) if cb else np.zeros((0, 3))
+    if len(B):
+        # the collar edge on the OUTER skin only: the outlet's inside is polished near the cut (STACK_INNER_POLISH,
+        # VQA r2 SHP2-01), so polished / soot boundaries also run round the inner wall (6 mm in from the outer skin)
+        outer = np.vstack([PP.exhaust_stack_rings(sg, 500, 240, scarf=True)[0].reshape(-1, 3) for sg in (1, -1)])
+        B = B[cKDTree(outer).query(B)[0] < 0.0025]
     if len(B):
         C = [PP.exhaust_stack_collar(sg) for sg in (1, -1)]
         d1 = Curves(C, step=5e-4).dist(B)[0]

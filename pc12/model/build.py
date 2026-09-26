@@ -118,7 +118,7 @@ def _steps():
         ("paint", "Paint & roll-out",
          f"The livery is that of PC-12 PRO {__import__('model.livery', fromlist=['x']).MASK_SCHEME} (N81DW), the "
          "first PRO delivered, without lettering: deep metallic blue, a light silver-blue swoosh, white "
-         "calligraphic pinstripes edged by thin silver-champagne outlines, a white fin cap and bullet, silver "
+         "calligraphic pinstripes edged by thin silver outlines, a white fin cap and bullet, silver "
          "tailplane, dark navy wing undersides and the PRO windshield mask, all trimmed into the skins as exact "
          "geometry. Colours, metallic flop and clear coat are fitted to photographs of the aircraft."),
     ]

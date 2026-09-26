@@ -20,7 +20,7 @@ Parts 'structure' are hidden.  World coordinates in Blender == MODEL coordinates
 (x = station aft of the datum, y = butt line + starboard, z = water line, ground = 0).
 
 Presets (reference photos in refs/cache/photos/, cameras in refs/cache/overlays/*/):
-  hangar_port34      MSN 3008 in the white delivery hangar, port 3/4 front, airstair open.  Photo
+  hangar_port34      MSN 3008 in the white delivery hangar, port 3/4 front, airstair and cargo door open.  Photo
                      pro3008_port34_pilatus.webp (== cand/..._MSN-3008_130); camera
                      overlays/livery/cams.json 'port_hangar_130' (livery agent's fit, rms 7.7 px).
                      Modelled room: epoxy floor, white walls, OSB ceiling with LED strips, closed
@@ -30,7 +30,9 @@ Presets (reference photos in refs/cache/photos/, cameras in refs/cache/overlays/
   nose_port_closeup  wide-angle low close-up of the port nose, airstair open (cand/..._MSN-3008_188);
                      camera fitted here (overlays/vqa/cams_beauty.json 'nose_188', rms ~36 px).
   air_below_left     air-to-air from below, gear UP (gear, braces and doors posed from the pivot
-                     extras), prop motion-blurred at 1700 rpm, 1/160 s (cand/..._PC-12-PRO-N81DW);
+                     extras), prop at 1700 rpm, 1/160 s: the blades are replaced by a baked motion-blur
+                     disc (Scene.prop_disc: coverage of the posed blades smeared over the shutter sweep;
+                     Cycles transform blur of the thin blades only gave speckle) (cand/..._PC-12-PRO-N81DW);
                      cams.json 'stbd_air'.
   wing_from_cabin    right wing, radar pod and winglet at golden hour over Kata Tjuta
                      (cand/..._IMG_0459); camera fitted here ('wing_0459', rms ~17 px): the fit puts
@@ -395,7 +397,8 @@ PRESETS = {
         env="hangar", hdri="white_studio_06", sun_az=None, hdri_rot=90.0, strength=1.5, exposure=1.0,
         room=dict(strip_strength=70.0, door=0.3), bounces=(5, 2, 3, 2, 8), samples=24, noise_threshold=0.04,
         white_balance=(5800.0, 0.0), grade=dict(white=0.86, gamma=1.18, sat=1.05),
-        pose=dict(gear=0.0, door_airstair=1.0, pitch=62.0, prop_clock=0.0),
+        # the photo has the aft cargo door open upward too (VQA r1 R1-09)
+        pose=dict(gear=0.0, door_airstair=1.0, door_cargo=1.0, pitch=62.0, prop_clock=0.0),
     ),
     "apron_stbd34": dict(
         photo="pro3008_stbd34_pilatus.webp",
@@ -407,7 +410,9 @@ PRESETS = {
         # model azimuth 48 deg (aft-starboard, elevation 53 deg)
         env="apron", hdri="zwartkops_straight_afternoon", sun_az=48.3, strength=1.0, exposure=0.6,
         ground_gain=3.0, samples=40,       # the photo apron (~0.4 lit) is lighter than race asphalt (~0.11)
-        camera_grade=dict(sat=1.25, val=0.95), grade=dict(white=0.95, gamma=1.05, sat=1.1),
+        # VQA r2 LIV2-03: the sunlit white strokes read 187-194 sRGB (photo 216-241) with the blue matched -> 'hi';
+        # r3: (0.50, 0.80) gave p99 214-217 against the photo's 243-245 (aircraft region) -> (0.45, 0.72)
+        camera_grade=dict(sat=1.25, val=0.95), grade=dict(white=0.95, gamma=1.05, sat=1.1, hi=(0.45, 0.72)),
         pose=dict(gear=0.0, pitch=62.0, prop_clock=20.0),
     ),
     "nose_port_closeup": dict(
@@ -431,7 +436,7 @@ PRESETS = {
         # shade); terrain radiance below the horizon instead of the puresky HDRI's flat, sky-bright lower half
         env="air", hdri="kloofendal_43d_clear_puresky", sun_az=80.0, strength=1.0, exposure=0.3,
         ground_albedo=(0.13, 0.11, 0.08), camera_grade=dict(sat=1.15, val=0.95, hue=0.52),
-        grade=dict(white=0.97, sat=1.08),
+        grade=dict(white=0.97, sat=1.08, hi=(0.55, 0.85)),       # VQA r2 LIV2-03: window-band whites 209-223 vs 239-255
         pose=dict(gear=1.0, pitch=24.0, prop_clock=10.0, rpm=1700, shutter_s=1 / 160),
     ),
     "wing_from_cabin": dict(
@@ -473,22 +478,34 @@ PRESETS = {
         photo="cand/pil_techdata_side_5000.webp",
         photo_note="Pilatus tech-data side view (NGX studio image; near-broadside perspective)",
         # framed like the photo (3500 x 1351): 209.3 px/m (spinner tip x 186 .. aft-most x 3200 = 14.40 m),
-        # ground at row 985 -> 16.72 m wide, centred on STA 7.86 / WL 1.48
-        camera=dict(ortho=dict(view="side_port", centre=(7.86, 0.0, 1.48), width_m=16.72, elev_deg=2.0),
+        # 16.72 m wide, centred on STA 7.86.  VQA r2 SHP2-08: the photo is a perspective render -- its row 985 is the
+        # NEAR (port) main tyre, the centre-line nose tyre sits at row 961, so every centre-line feature compared
+        # ~13 px (0.11 m) low: the ortho ground is registered on the nose tyre (row 961 -> centre WL 1.364)
+        camera=dict(ortho=dict(view="side_port", centre=(7.86, 0.0, 1.364), width_m=16.72, elev_deg=2.0),
                     W=3500, H=1351),
-        env="studio_white", hdri="white_studio_06", sun_az=None, hdri_rot=90.0, strength=1.1, exposure=0.1,
-        samples=32,
+        # VQA r2 RQ2-07: underexposed (nose paint 5/34/73 against the sunlit photo side ~19/57/107): +0.7 EV (a fill
+        # softbox on the camera side was tried: the clear coat mirrors it over the whole broadside); the floor shadow
+        # catcher is matte (spec 0: it mirrored the livery as ghost smudges)
+        env="studio_white", hdri="white_studio_06", sun_az=None, hdri_rot=90.0, strength=1.1, exposure=0.8,
+        catcher_spec=0.0, samples=32,
         pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
     ),
     "hero": dict(
         photo=None,
         # low 3/4 front from port, ~50 mm-equivalent; 'frame' re-aims and sets f from the posed mesh so the
         # aircraft fills 90 % of the width wherever the model grows or shrinks
-        camera=dict(fallback=dict(pos=(-12.5, -16.0, 1.05), target=(7.0, 0.0, 1.7), hfov=40.0), W=1600, H=1000,
-                    frame=dict(fill=0.90, align=(0.50, 0.53))),
-        env="studio_cyc", hdri="studio_small_09", sun_az=None, hdri_rot=200.0, strength=0.12, exposure=-0.4,
+        # VQA r2 RQ2-06: 16:9 (the upper third was empty backdrop); the HDRI still lights the aircraft but glossy rays
+        # see only the studio (its sky / cloud reflections read as stray white paint blobs on the dark set)
+        camera=dict(fallback=dict(pos=(-12.5, -16.0, 1.05), target=(7.0, 0.0, 1.7), hfov=40.0), W=1600, H=900,
+                    frame=dict(fill=0.90, align=(0.50, 0.54))),
+        # owner note (VQA r3): the blue still read electric (paint sRGB median 0/59/126, p90 32/88/173 at 800 px) against
+        # N81DW's deep metallic blue (0517 sunlit side 2-12/45-50/96-113, hangar 130 cowl side 46/75/144): -0.3 EV,
+        # saturation 1.05 -> 0.85 (AgX Punchy already saturates) and a firmer mid-tone, with the highlight shoulder
+        # ('hi') keeping the white strokes bright -> 8/55/110 median, p90 17/75/141, stroke whites 208-237
+        env="studio_cyc", hdri="studio_small_09", sun_az=None, hdri_rot=200.0, strength=0.12, exposure=-0.7,
+        world_glossy=False,
         cyc=dict(back=13.0, radius=7.0, colour=(0.007, 0.0075, 0.009), floor_rough=0.16, glow=5000.0),
-        grade=dict(white=0.97, gamma=1.05, sat=1.05), samples=32, noise_threshold=0.04,
+        grade=dict(white=0.97, gamma=1.1, sat=0.85, hi=(0.55, 0.85)), samples=32, noise_threshold=0.04,
         pose=dict(gear=0.0, pitch=18.0, prop_clock=16.0),
     ),
 }
@@ -497,10 +514,14 @@ DEFAULT_LOOK = "AgX - Punchy"
 # The aircraft is lit by a big high key from camera left and a low fill (+ the studio HDRI at low
 # strength); the overhead box and the two rims are light-linked to the cyclorama ONLY: a soft pool of
 # light and a grazing gradient on the glossy floor that ground the aircraft without washing out the
-# deep metallic blue; 'cyc_glow' paints the halo on the backdrop.
+# deep metallic blue; 'cyc_glow' paints the halo on the backdrop.  VQA r1 (owner note, R1-06): the key 9000 -> 3500 W:
+# at 9000 W the flake lobe of the port side caught so much of the big softbox that the side read an electric cobalt
+# (sRGB ~24/97/186 at 800 px) against N81DW's deep royal blue (hangar photo 130 cowl side 46/75/144, apron 0517 sunlit
+# side 2-12/45-50/96-113); 3500 W gives ~0/58/126 (nose top 6/84/168) with the white stripes still bright (the
+# photo-matched presets and the paint are unchanged).
 HERO_LIGHTS = (   # name, pos, target, size, W, colour, on_floor, spread deg
     ("overhead", (7.5, 0.0, 10.0), (7.5, 0.0, 1.5), (18.0, 4.0), 14000.0, (1.0, 0.98, 0.96), False, 100.0),
-    ("key", (-11.0, -6.0, 9.0), (5.0, 0.0, 1.4), (6.0, 4.0), 9000.0, (1.0, 0.97, 0.93), True, 55.0),
+    ("key", (-11.0, -6.0, 9.0), (5.0, 0.0, 1.4), (6.0, 4.0), 3500.0, (1.0, 0.97, 0.93), True, 55.0),
     ("rim_R", (20.0, 10.0, 4.5), (8.0, 0.0, 2.0), (2.0, 7.0), 7000.0, (0.86, 0.91, 1.0), False, 70.0),
     ("rim_L", (16.0, -14.0, 4.0), (8.0, 0.0, 2.0), (2.0, 7.0), 5000.0, (0.86, 0.91, 1.0), False, 70.0),
     ("fill_low", (-14.0, 3.0, 1.5), (4.0, 0.0, 1.2), (6.0, 2.0), 1000.0, (0.92, 0.95, 1.0), True, 90.0),
@@ -782,7 +803,175 @@ class Scene:
                     except Exception:
                         pass
         self.bpy.context.view_layer.update()
-        return dict(knees=knees)
+        disc = None
+        if rpm and shutter_s and prop is not None and pv is not None:
+            disc = self.prop_disc(rpm, shutter_s, gl2m(pv["origin"]), gl2m(pv["axis"]))
+        return dict(knees=knees, prop_disc=disc)
+
+    # ------------------------------------------------------------------ spinning propeller
+    def prop_disc(self, rpm, shutter_s, hub, fwd, n_r=40, n_th=360, r0=0.245):
+        """Replace the spinning blades by a baked motion-blur disc (VQA r1 R1-01: Cycles' transform motion blur of five
+        thin blades under-samples into speckle / fireflies at any affordable sample count).  The blades are measured
+        in their posed state (pitch, clocking): per radius bin, each blade's angular extent about the thrust axis and
+        the projected-area-weighted colour of its forward- and aft-facing faces (GLB material base colours of
+        render/lookdev_materials.json).  The shutter sweep s = rpm / 60 x 360 x shutter_s (centred, as the Cycles
+        blur) smears every blade: coverage(r, th) = sum_k |[th - th2_k, th - th1_k] n [-s/2, s/2]| / s, i.e. the
+        fraction of the exposure a blade covers that point -- a full faint disc at 1/160 s (64 deg sweep, 72 deg
+        blade pitch), short fans at 1/500 s.  The annulus is a Transparent / Principled mix by that coverage, front
+        or back colour by the face side seen (Backfacing).  The blades are hidden from the render.  The annulus is
+        coarse on purpose (1 deg x ~27 mm cells): a 0.25 deg x 17 mm grid rendered with light concentric / radial
+        seams at air-to-air distances.  PC12_DISC_DUMP=<file.npz> saves the coverage table for inspection."""
+        bpy = self.bpy
+        fwd = np.asarray(fwd, float) / np.linalg.norm(fwd)
+        hub = np.asarray(hub, float)
+        e1 = np.cross(fwd, [0.0, 0.0, 1.0])
+        e1 /= np.linalg.norm(e1)
+        e2 = np.cross(fwd, e1)
+        try:
+            base = json.loads((HERE / "lookdev_materials.json").read_text())["materials"]
+        except (OSError, ValueError, KeyError):
+            base = {}
+        col_of = lambda nm: np.array((base.get(nm.split(".")[0], {}).get("baseColorFactor") or (0.02, 0.02, 0.02))[:3])
+        blades = {}
+        for o in self.meshes_of(["blade_"]):
+            pid = next((c for c in self.chain[o.name] if c.startswith("blade_")), None)
+            if pid is not None and not o.hide_render:
+                blades.setdefault(pid, []).append(o)
+        if not blades:
+            return None
+        data = []
+        for pid, obs in blades.items():
+            Vs, cols, Fc, Fn, Fa = [], [], [], [], []
+            for o in obs:
+                me = o.data
+                M = np.array(o.matrix_world)
+                co = np.empty(len(me.vertices) * 3)
+                me.vertices.foreach_get("co", co)
+                Vs.append(co.reshape(-1, 3) @ M[:3, :3].T + M[:3, 3])
+                n = len(me.polygons)
+                c = np.empty(n * 3)
+                me.polygons.foreach_get("center", c)
+                nn = np.empty(n * 3)
+                me.polygons.foreach_get("normal", nn)
+                a = np.empty(n)
+                me.polygons.foreach_get("area", a)
+                mi = np.empty(n, dtype=np.int32)
+                me.polygons.foreach_get("material_index", mi)
+                Nw = nn.reshape(-1, 3) @ np.linalg.inv(M[:3, :3])
+                Nw /= np.maximum(np.linalg.norm(Nw, axis=1), 1e-12)[:, None]
+                Fc.append(c.reshape(-1, 3) @ M[:3, :3].T + M[:3, 3])
+                Fn.append(Nw)
+                Fa.append(a * abs(np.linalg.det(M[:3, :3])) ** (2 / 3))
+                mats = [col_of(sl.material.name if sl.material else "") for sl in o.material_slots] or [col_of("")]
+                cols.append(np.array(mats)[np.clip(mi, 0, len(mats) - 1)])
+            data.append((np.vstack(Vs) - hub, np.vstack(Fc) - hub, np.vstack(Fn), np.concatenate(Fa), np.vstack(cols)))
+        rad = lambda X: np.linalg.norm(X - np.outer(X @ fwd, fwd), axis=1)
+        R = float(max(rad(d[0]).max() for d in data))
+        edges = np.linspace(r0, R + 0.002, n_r + 1)
+        rc = 0.5 * (edges[1:] + edges[:-1])
+        ext = []                                              # per blade: (theta_mid, lo(r), hi(r)) relative
+        cf, cb = np.zeros((n_r, 3)), np.zeros((n_r, 3))
+        wf, wb = np.zeros(n_r), np.zeros(n_r)
+        for V, C, N, A, Cl in data:
+            th = np.arctan2(V @ e2, V @ e1)
+            r = rad(V)
+            tm = math.atan2(np.sin(th).mean(), np.cos(th).mean())
+            rel = (th - tm + np.pi) % (2 * np.pi) - np.pi
+            # angular envelope per radius: vertices within a window (the blade grid is ~40 mm radially, finer bins
+            # would catch no vertex on some blades -> rings), gaps interpolated
+            hw = max(0.6 * (edges[1] - edges[0]), 0.022)
+            lo = np.full(n_r, np.nan)
+            hi = np.full(n_r, np.nan)
+            for i in range(n_r):
+                m = np.abs(r - rc[i]) <= hw
+                if m.any():
+                    lo[i], hi[i] = rel[m].min(), rel[m].max()
+            fin = np.isfinite(lo)
+            if fin.any():
+                lo = np.where(fin, lo, np.interp(rc, rc[fin], lo[fin]))
+                hi = np.where(fin, hi, np.interp(rc, rc[fin], hi[fin]))
+                lo[rc > r[r > 0].max()] = np.nan
+            ext.append((tm, lo, hi))
+            rf = rad(C)
+            kf = np.clip(np.searchsorted(edges, rf) - 1, 0, n_r - 1)
+            d = N @ fwd
+            for side, acc, w in ((d > 0, cf, wf), (d < 0, cb, wb)):
+                ww = A * np.abs(d) * side * (rf >= edges[0])
+                np.add.at(acc, kf, Cl * ww[:, None])
+                np.add.at(w, kf, ww)
+        for acc, w in ((cf, wf), (cb, wb)):
+            ok = w > 0
+            acc /= np.maximum(w, 1e-12)[:, None]
+            if ok.any():
+                for j in range(3):
+                    acc[~ok, j] = np.interp(rc[~ok], rc[ok], acc[ok, j])
+        sweep = math.radians(rpm / 60.0 * 360.0 * shutter_s)
+        ths = np.linspace(-np.pi, np.pi, n_th, endpoint=False)
+        cov = np.zeros((n_r + 1, n_th))
+        for tm, lo, hi in ext:
+            lo_v = np.interp(edges, rc, np.nan_to_num(lo, nan=0.0))
+            hi_v = np.interp(edges, rc, np.nan_to_num(hi, nan=0.0))
+            has = np.interp(edges, rc, np.isfinite(lo).astype(float)) > 0.5
+            for wrap in (-2 * np.pi, 0.0, 2 * np.pi):
+                t = (ths[None, :] - tm + wrap)                   # angle relative to the blade's mean
+                a0 = np.maximum(t - hi_v[:, None], -sweep / 2)
+                a1 = np.minimum(t - lo_v[:, None], sweep / 2)
+                cov += np.where(has[:, None], np.clip(a1 - a0, 0.0, None), 0.0) / max(sweep, 1e-6)
+        cov = np.clip(cov, 0.0, 1.0)
+        if os.environ.get("PC12_DISC_DUMP"):
+            np.savez(os.environ["PC12_DISC_DUMP"], cov=cov, edges=edges, ext=np.array([np.r_[tm, lo, hi] for tm, lo, hi in ext]))
+        cfe = np.vstack([np.interp(edges, rc, cf[:, j]) for j in range(3)]).T
+        cbe = np.vstack([np.interp(edges, rc, cb[:, j]) for j in range(3)]).T
+        # annulus mesh (rings x angles), per-vertex front / back colour + coverage alpha
+        P = (hub[None, None, :] + edges[:, None, None] * (np.cos(ths)[None, :, None] * e1 + np.sin(ths)[None, :, None] * e2))
+        verts = P.reshape(-1, 3)
+        idx = np.arange((n_r + 1) * n_th).reshape(n_r + 1, n_th)
+        a_, b_ = idx[:-1], np.roll(idx[:-1], -1, axis=1)
+        c_, d_ = np.roll(idx[1:], -1, axis=1), idx[1:]
+        faces = np.stack([a_, b_, c_, d_], -1).reshape(-1, 4)
+        me = bpy.data.meshes.new("prop_disc")
+        me.from_pydata(verts.tolist(), [], faces.tolist())
+        me.update()
+        for nm, cc in (("disc_front", cfe), ("disc_back", cbe)):
+            att = me.color_attributes.new(nm, "FLOAT_COLOR", "POINT")
+            rgba = np.concatenate([np.repeat(cc[:, None, :], n_th, 1), cov[:, :, None]], -1).reshape(-1, 4)
+            att.data.foreach_set("color", rgba.astype(np.float32).ravel())
+        ob = bpy.data.objects.new("prop_disc", me)
+        bpy.context.scene.collection.objects.link(ob)
+        mat = bpy.data.materials.new("prop_disc")
+        mat.use_nodes = True
+        nt = mat.node_tree
+        for nd in list(nt.nodes):
+            nt.nodes.remove(nd)
+        out = nt.nodes.new("ShaderNodeOutputMaterial")
+        af = nt.nodes.new("ShaderNodeAttribute"); af.attribute_name = "disc_front"
+        ab = nt.nodes.new("ShaderNodeAttribute"); ab.attribute_name = "disc_back"
+        geo = nt.nodes.new("ShaderNodeNewGeometry")
+        mix_c = nt.nodes.new("ShaderNodeMix"); mix_c.data_type = "RGBA"
+        nt.links.new(geo.outputs["Backfacing"], mix_c.inputs["Factor"])
+        nt.links.new(af.outputs["Color"], mix_c.inputs[6])
+        nt.links.new(ab.outputs["Color"], mix_c.inputs[7])
+        bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
+        nt.links.new(mix_c.outputs[2], bsdf.inputs["Base Color"])
+        bsdf.inputs["Roughness"].default_value = 0.5
+        for key in ("Specular IOR Level", "Specular"):
+            if key in bsdf.inputs:
+                bsdf.inputs[key].default_value = 0.25
+                break
+        tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+        mix = nt.nodes.new("ShaderNodeMixShader")
+        nt.links.new(af.outputs["Alpha"], mix.inputs["Fac"])
+        nt.links.new(tr.outputs[0], mix.inputs[1])
+        nt.links.new(bsdf.outputs[0], mix.inputs[2])
+        nt.links.new(mix.outputs[0], out.inputs["Surface"])
+        me.materials.append(mat)
+        for obs in blades.values():
+            for o in obs:
+                o.hide_render = True
+        self._extra.append(ob)
+        return dict(sweep_deg=round(math.degrees(sweep), 1), r=[round(r0, 3), round(R, 3)], n=[n_r, n_th],
+                    max_coverage=round(float(cov.max()), 3),
+                    mean_coverage_by_r={f"{edges[i]:.2f}": round(float(cov[i].mean()), 3) for i in range(0, n_r + 1, 8)})
 
     # ------------------------------------------------------------------ materials
     def _bsdf(self, m):
@@ -1356,6 +1545,12 @@ def build_env(S: Scene, pre, cam: Cam, info):
             ground_rgb=ground_rgb, camera_grade=pre.get("camera_grade"), camera_sky=pre.get("camera_sky"),
             ground_gain=pre.get("ground_gain"))
     info["hdri"]["rot_z_deg"] = round(rot, 2)
+    if pre.get("world_glossy") is False:           # the HDRI lights, but glossy rays see only the studio (softboxes)
+        try:
+            S.sc.world.cycles_visibility.glossy = False
+            info["hdri"]["glossy_visible"] = False
+        except Exception as e:
+            info.setdefault("warnings", []).append(f"world glossy visibility: {e}")
     if pre.get("sun_lamp") and pre.get("sun_az") is not None:
         sl = pre["sun_lamp"]
         az, el = math.radians(pre["sun_az"]), math.radians(sl.get("el", sun["el"]))
@@ -1375,10 +1570,13 @@ def build_env(S: Scene, pre, cam: Cam, info):
     if env == "hangar":
         hangar_room(S, pre.get("room", {}))
     elif env in ("apron", "studio_white"):
-        p = S.plane("shadow_catcher", 400.0, (0, 0, -0.003), mat=S.new_material("catcher", (0.5, 0.5, 0.5), 0.9))
+        p = S.plane("shadow_catcher", 400.0, (0, 0, -0.003),
+                    mat=S.new_material("catcher", (0.5, 0.5, 0.5), 0.9, spec=pre.get("catcher_spec", 0.5)))
         p.is_shadow_catcher = True
         if env == "studio_white":
             sc.render.film_transparent = True
+            for nm, pos, tgt, size, power, col, _on, spread in pre.get("lights", ()):
+                S.area_light(nm, pos, tgt, size, power, col, spread)
     elif env == "studio_cyc":
         studio_cyc(S, pre, cam, info)
     elif env == "air_ground":
@@ -1881,7 +2079,8 @@ def render_preset(name, glb, out_dir, box, samples, compare, quiet=True):
 
 def finish_png(png, grade=None, white_bg=False):
     """16-bit render -> graded 8-bit PNG.  grade (display-referred, after AgX): dict(white=, black=,
-    gamma=, sat=): levels (input 'white' -> 1, 'black' -> 0), mid-tone power (> 1 darker), saturation.
+    gamma=, sat=, hi=(knee, white)): levels (input 'white' -> 1, 'black' -> 0), mid-tone power (> 1 darker),
+    saturation, and a highlight shoulder for near-neutral pixels (luminance knee..white -> knee..1).
     Photographic delivery images are graded like a camera JPEG (clipped whites, firmer mid-tones) while
     AgX rolls highlights off softly; the grade closes that gap without changing the scene.  white_bg:
     composite a transparent film over white (studio)."""
@@ -1905,6 +2104,17 @@ def finish_png(png, grade=None, white_bg=False):
         if grade.get("sat", 1.0) != 1.0:
             lum = rgb @ np.array([0.2126, 0.7152, 0.0722])
             rgb = np.clip(lum[..., None] + grade["sat"] * (rgb - lum[..., None]), 0.0, 1.0)
+        if grade.get("hi"):
+            # highlight shoulder for NEAR-NEUTRAL bright pixels (white paint in direct sun): luminance above 'knee'
+            # is stretched so 'white' maps to 1, weighted by (1 - saturation)^2 so the blues / sky keep their levels
+            # (a camera JPEG clips the white strokes where AgX rolls them off; VQA r2 LIV2-03)
+            k, w_ = (float(v) for v in grade["hi"])
+            lum = rgb @ np.array([0.2126, 0.7152, 0.0722])
+            mx, mn = rgb.max(-1), rgb.min(-1)
+            sat_ = (mx - mn) / np.maximum(mx, 1e-6)
+            up = np.where(lum > k, k + (lum - k) * (1.0 - k) / max(w_ - k, 1e-6), lum)
+            f = 1.0 + (up / np.maximum(lum, 1e-6) - 1.0) * (1.0 - sat_) ** 2
+            rgb = np.clip(rgb * f[..., None], 0.0, 1.0)
     Image.fromarray((np.clip(rgb, 0, 1) * 255.0 + 0.5).astype(np.uint8), "RGB").save(png, optimize=False,
                                                                                     compress_level=6)
 

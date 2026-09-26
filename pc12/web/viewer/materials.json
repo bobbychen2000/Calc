@@ -68,9 +68,9 @@
   },
   "paint_blue_light": {
    "baseColorFactor": [
-    0.215,
-    0.305,
-    0.55,
+    0.262,
+    0.332,
+    0.515,
     1.0
    ],
    "metallicFactor": 0.5,
@@ -83,7 +83,7 @@
    "blender_roughness": 0.37,
    "kind": "metal_paint",
    "note": "light metallic blue (silver-blue): lower nose / cowl, swoosh band, nose-gear doors",
-   "srgb_hex": "#8096C4"
+   "srgb_hex": "#8C9CBE"
   },
   "paint_wing_dark": {
    "baseColorFactor": [
@@ -125,9 +125,9 @@
   },
   "paint_champagne": {
    "baseColorFactor": [
-    0.49,
-    0.41,
-    0.3,
+    0.48,
+    0.47,
+    0.45,
     1.0
    ],
    "metallicFactor": 0.4,
@@ -139,8 +139,8 @@
    "blender_metallic": 0.45,
    "blender_roughness": 0.36,
    "kind": "metal_paint",
-   "note": "(render-only) ~8 mm champagne outline of every white pinstripe / swoosh (photo 82: sRGB 189/184/182 and 176/176/172 beside the white's 222-227; 188: 172/165/156 beside 240)",
-   "srgb_hex": "#BAAC95"
+   "note": "(render-only) ~6 mm neutral-silver metallic outline of every white pinstripe / swoosh (photo 82: sRGB 183/182/178 and 190/188/189 beside the white's 222-227)",
+   "srgb_hex": "#B8B6B3"
   },
   "paint_stripe": {
    "baseColorFactor": [
@@ -279,6 +279,22 @@
    "kind": "dielectric",
    "note": "flight-deck glazing frame strips / windshield centre post (black like the mask, photos 130 / 82)",
    "srgb_hex": "#19191D"
+  },
+  "glazing_retainer": {
+   "baseColorFactor": [
+    0.5,
+    0.51,
+    0.52,
+    1.0
+   ],
+   "metallicFactor": 1.0,
+   "roughnessFactor": 0.22,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "kind": "metal",
+   "note": "polished windshield / side-window retainer strips inside the PRO mask",
+   "srgb_hex": "#BCBDBF"
   },
   "seal_cabin": {
    "baseColorFactor": [
@@ -478,19 +494,19 @@
   },
   "erosion": {
    "baseColorFactor": [
-    0.66,
-    0.64,
-    0.6,
+    0.45,
+    0.45,
+    0.44,
     1.0
    ],
    "metallicFactor": 1.0,
-   "roughnessFactor": 0.22,
+   "roughnessFactor": 0.4,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "kind": "metal",
-   "note": "nickel erosion sheath",
-   "srgb_hex": "#D4D1CB"
+   "note": "satin nickel erosion sheath",
+   "srgb_hex": "#B3B3B1"
   },
   "tire": {
    "baseColorFactor": [
@@ -599,7 +615,7 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "render_collar": {
-    "x0": 1.765,
+    "x0": 1.995,
     "blend": 0.006,
     "tint_x0": 1.45,
     "tint": [
@@ -634,11 +650,11 @@
     ],
     "detail": 3.0,
     "rough": [
-     0.06,
+     0.09,
      0.16
     ],
     "tint_mix": 0.3,
-    "bump": 0.35,
+    "bump": 0.08,
     "bump_distance": 0.01
    },
    "kind": "metal",

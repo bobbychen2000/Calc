@@ -13,10 +13,10 @@ Scheme (sheet L5, drawing/livery_profiles.py, draws it from THESE parameters):
   * white calligraphic pinstripes and swooshes: a thick white band from low on the cowling that rises
     aft and crosses the crown just aft of the cabin, a thin white line running parallel above it from
     the cowling, a thin white line along the lower edge of the light band to the rudder, and several
-    strokes on the tail cone (STROKES); every white stroke is edged by a thin silver-champagne metallic
-    outline (OUTLINE; photos 82 / 130 / 188);
+    strokes on the tail cone (STROKES); every white stroke is edged by a thin neutral-silver metallic
+    outline (OUTLINE; photos 82 / 130 / 188; material name 'paint_champagne' kept for the viewer / tools);
   * white fin cap and bullet fairing, silver-grey metallic tailplane and elevators;
-  * dark navy-charcoal wing (and winglet outboard-face) lower surfaces, belly fairing, flap-track fairings;
+  * dark navy-charcoal wing (and winglet outboard-face) lower surfaces, belly fairing; base-blue flap-track fairings;
   * the PRO dark windshield mask ('trim_black', outline owned by model/cockpit_glazing.py);
   * polished spinner and exhaust stacks; black propeller blades with a white tip and a red band.
 
@@ -62,9 +62,9 @@ PALETTE = {
     # (photo-fitted to MSN 3008 in render/lookdev.py -- hangar photo 130 pins the albedo, the outdoor photos 188 /
     # 0517 / N81DW the metallic flop; glTF metallic / roughness as in render/lookdev_materials.json)
     "paint_blue":        ("#13347D", 0.30, 0.50, "deep metallic blue (base colour)"),
-    "paint_blue_light":  ("#8096C4", 0.50, 0.38, "light metallic (silver-)blue (lower nose, swoosh band)"),
+    "paint_blue_light":  ("#8C9CBE", 0.50, 0.38, "light metallic (silver-)blue (lower nose, swoosh band)"),
     "paint_pinstripe":   ("#F3F4F5", 0.00, 0.30, "white pinstripes and swooshes"),
-    "paint_champagne":   ("#BAAC95", 0.40, 0.38, "silver-champagne metallic outline of every white stroke"),
+    "paint_champagne":   ("#B8B6B3", 0.40, 0.38, "neutral silver metallic outline of every white stroke"),
     "paint_white":       ("#F3F4F5", 0.00, 0.30, "white (fin cap, bullet fairing)"),
     "paint_wing_dark":   ("#18244B", 0.35, 0.42, "dark navy metallic (wing lower surfaces, belly fairing)"),
     "paint_silver":      ("#ADADAF", 0.55, 0.36, "silver-grey metallic (tailplane, elevators)"),
@@ -129,10 +129,12 @@ STROKES = {
     # (rev B had a navy line 'N1' between B1 and P1: photos 130 / 82 / 188 show the base blue there -- the dark band
     # seen under P1 in photo 82 moves against the stripes along the fuselage in 130, a reflection horizon, not paint
     # (render/lookdev.py measurements, material review round 1 F3); the white strokes are edged by OUTLINE instead)
-    # thin white line above B1, curving up over the crown between the last two cabin windows
+    # thin white line above B1, curving up over the crown between the last two cabin windows.  VQA r1 LIV-01: it
+    # starts as a hairline tip just above B1's upper edge at STA ~2.3 (photos 130 / 81 port, 0517 starboard: the cowl
+    # carries ONE white band, B1) and thickens slowly toward the door (photo 82: P1 / B1 0.24 at its forward end)
     "P1": ("paint_pinstripe", [
-        (1.120, 1.420, 0.000), (1.300, 1.385, 0.013), (2.000, 1.340, 0.016), (2.500, 1.334, 0.017),
-        (3.000, 1.396, 0.020), (3.500, 1.452, 0.021), (4.000, 1.557, 0.022), (4.500, 1.680, 0.022),
+        (2.300, 1.310, 0.000), (2.500, 1.322, 0.006), (2.800, 1.352, 0.010), (3.000, 1.385, 0.013),
+        (3.500, 1.452, 0.017), (4.000, 1.557, 0.020), (4.500, 1.680, 0.022),
         (5.000, 1.802, 0.022), (5.500, 1.935, 0.022), (6.000, 2.070, 0.021), (6.500, 2.250, 0.020),
         (7.000, 2.440, 0.019), (7.500, 2.620, 0.017), (7.850, 2.770, 0.016), (8.050, 2.870, 0.016)]),
     # thin white line from under the cockpit along the lower edge of the light band to the rudder
@@ -158,9 +160,12 @@ STROKES = {
         (8.400, 1.840, 0.000), (9.000, 1.905, 0.016), (10.00, 2.065, 0.019), (11.00, 2.225, 0.020),
         (11.50, 2.300, 0.020), (12.00, 2.370, 0.020), (12.50, 2.420, 0.019), (12.90, 2.460, 0.012),
         (13.05, 2.475, 0.000)]),
-    # steeper diagonal from the fuselage side into the light band
+    # steeper diagonal from the fuselage side into the light band.  VQA r2 LIV2-01: it does not stop at P2 -- photo
+    # 0517 back-projected through cams.json 'stbd_ground' puts it at (8.55, 2.02), (7.87, 1.69), (7.25, 1.37) (the wing
+    # hides it below): it runs on below P2, steepening to a slope of ~0.5, down to the wing-root trailing edge
     "X2": ("paint_pinstripe", [
-        (8.500, 1.950, 0.000), (9.000, 2.110, 0.020), (9.500, 2.270, 0.022), (10.00, 2.420, 0.022),
+        (7.300, 1.400, 0.000), (7.600, 1.530, 0.010), (7.900, 1.700, 0.016), (8.500, 1.990, 0.019),
+        (9.000, 2.110, 0.020), (9.500, 2.270, 0.022), (10.00, 2.420, 0.022),
         (10.40, 2.540, 0.018), (10.80, 2.640, 0.000)]),
     # ... and its reflection off the crown: a short, steeper stroke descending aft from the crown that fades out above
     # H1 (R3-2: the photos show it only at STA 10.5-11.2, WL 2.62-2.54; no separate line above H1 further aft)
@@ -202,13 +207,18 @@ FIN_CAP_X0 = 12.0                     # the cap region starts on the fin (never 
 PAINT_ORDER = ("trim_black", "paint_white", "paint_pinstripe", "paint_champagne", "paint_blue", "paint_blue_light")
 BASE = "paint_blue"
 
-# silver-champagne outline of the white strokes (photo 82 edge profiles: 6-9 px ~ 8 mm on both edges of every white
+# silver outline of the white strokes (photo 82 edge profiles: 6-9 px ~ 8 mm on both edges of every white
 # stroke, sRGB 189/184/182 beside the white's 222-227; 188: 172/165/156 beside 240; render/lookdev.py measurements).
 # Each paint_pinstripe stroke grown by 'width' (side-projection z, like the strokes' half-heights) and painted just
 # below the white: h_outline = h + width * min(1, h / taper_h), so the outline tapers out with a calligraphic end (and
 # stops where the stroke is thinner than min_h); a blunt end (h > 0) gets a 'width' cap.  The exit ring (EXIT_MARK) is
 # edged the same way.
-OUTLINE = dict(material="paint_champagne", of="paint_pinstripe", width=0.008, taper_h=0.010, min_h=0.003)
+# VQA r1 LIV-02: photo 82 rims measure a NEUTRAL silver (sRGB 183/182/178, 190/188/189, 191/192/187, 172/172/174;
+# R/B 1.00-1.04) about 5-7 px ~ 6 mm wide on both the thin P1 and the broad B1; the rim is w = min(width,
+# (width / taper_h) h) = min(6 mm, 0.35 h), so thin strokes (h < 17 mm: tail cone, P2, D1) keep a white core
+# VQA r2 LIV2-03: on the thin tail-cone strokes (h 12-22 mm) the rim still took 25-35 % of the painted height and they
+# read grey: rim = min(width, 0.2 h) (taper_h 0.030), so X1 / X2 / H1 / U1 / D1 / P2 keep a mostly white core
+OUTLINE = dict(material="paint_champagne", of="paint_pinstripe", width=0.006, taper_h=0.030, min_h=0.003)
 
 # over-wing exit marking: white ring centred on the hatch seam (fuselage_parts.EXIT), starboard only
 # (rectified ground photo: ring 5.975-6.475 x 1.88-2.545 outer, ~25 mm wide)
@@ -224,7 +234,8 @@ SURFACES = dict(
     stab_upper="paint_silver", stab_lower="paint_silver",         # incl. elevators
     boot="deice_boot",                                            # wing / tailplane leading edges (not paint)
     bullet="paint_white", dorsal=BASE, strakes=BASE,
-    belly_fairing="paint_wing_dark", flap_fairings="paint_wing_dark",
+    # flap-track canoes: metallic base blue (VQA r1 LIV-05: N81DW air-to-air, saturated blue pods against the navy wing)
+    belly_fairing="paint_wing_dark", flap_fairings=BASE,
     pod_body="paint_blue", pod_radome="paint_black",              # radome forward of details.POD_X_JOINT
     main_gear_door="paint_blue", nose_gear_door="paint_blue_light",
     spinner="chrome", exhaust="exhaust_polished",
@@ -234,13 +245,26 @@ SURFACES = dict(
 STAB_BOOT = dict(upper=0.08, lower=0.06)      # tailplane LE boot, chord fractions (photos: black LE band)
 # white pinstripe on the winglet's inboard face (IMG_0459): a CHORDWISE line along the root blend, from the pod
 # joint to the trailing edge -- the winglet section at fraction s of the winglet path, chord fractions c0..c1
-WINGLET_PIN = dict(s=0.30, c0=0.02, c1=1.00, half_width=0.008)
+# VQA r2 LIV2-06 (IMG_0459): the white line runs along the winglet ROOT, just above the wing surface (s 0.30 -> 0.08),
+# ~20 mm wide (half_width 0.008 -> 0.011), and on the starboard side it starts on the radar-pod body behind the radome
+# and runs along the pod / wing junction into it: POD_PIN paints the same plane's band on the pod (upper crossing,
+# from POD_PIN['x0'] aft of the radome joint), so the two meet where the winglet leaves the pod.
+WINGLET_PIN = dict(s=0.08, c0=0.02, c1=1.00, half_width=0.011)
+# VQA r3: POD_PIN hugs the pod / wing-and-winglet junction (IMG_0459: the line runs in the corner where the wing's upper
+# surface and the winglet root meet the pod, from just aft of the radome joint round the neck into the winglet root):
+# the band of the pod surface whose distance from the wing / winglet skin (their parameter sections) is gap..gap +
+# width, on the pod's inboard upper side, from x0 aft of the radome joint (rev r2: a WINGLET_PIN plane section,
+# which crossed the pod's flank as a straight bar ~40 mm above the junction)
+POD_PIN = dict(x0=0.010, gap=0.004, width=0.020)
 # propeller blade tip bands, radial extent measured inward from the tip (m): white tip, black gap, red band
 # (hangar photo MSN-3008_130, upper blade against the ceiling: 17 / 11 / 12 px on a ~40 px = 0.13 m chord)
+# (front face only: blade_face_field)
 PROP_BANDS = (("prop_tip", 0.000, 0.060), ("prop_blade", 0.060, 0.095), ("prop_band_red", 0.095, 0.135))
 # blade leading-edge erosion shield (SURFACES blade_le; nickel sheath on the composite blades): a band round the leading
 # edge, BLADE_LE_STRIP['width'] (m, measured from the LE line) on each face, from r0 out to the red band's inner edge
-BLADE_LE_STRIP = dict(r0=0.40, width=0.020)
+# (VQA r1 LIV-04: photos 81 / 130 show a thin dull line, mainly toward the tip -- rev r0 0.40 / 20 mm read as a chrome
+# outline down every blade)
+BLADE_LE_STRIP = dict(r0=0.55, width=0.009)
 
 # PRO dark cockpit mask: its outline is built by model/cockpit_glazing.py from the glazing planes, but the AFT EDGE
 # is a livery item that differs between airframes (photos rectified onto the OML with the camera fits in
@@ -555,6 +579,28 @@ def blade_le_distance(V, k):
     return q[:, 2], np.hypot(q[:, 0] - lx, q[:, 1] - ly)
 
 
+def blade_face_field(V, k):
+    """Signed distance (m) of points V on blade k (0-based) from its chord surface (the LE -> TE line of each section,
+    in the blade's own frame as blade_le_distance): > 0 on the FRONT (cambered, forward-facing) face, < 0 on the aft
+    (thrust) face.  PROP_BANDS are painted on the front face only (VQA r1 LIV-03: photos 81 / 130, the feathered lower
+    blades show their plain black aft faces, the upper blades the banded front faces)."""
+    from model import powerplant as PP
+    from cad.mesh import rotation_matrix
+    _, rs, Pm = _blade_ref()
+    R = PP.thrust_rotation() @ rotation_matrix((1, 0, 0), 2 * np.pi * k / PP.N_BLADES)
+    q = (np.asarray(V, float) - PP.prop_hub()) @ R
+    i_le = Pm.shape[1] // 2
+    le, te = Pm[:, i_le, :], Pm[:, 0, :]
+    up = Pm[:, i_le + 1:, :].mean(1)                                # a point on the front (upper) face per section
+    c = te[:, :2] - le[:, :2]
+    n = np.c_[-c[:, 1], c[:, 0]] / np.linalg.norm(c, axis=1)[:, None]
+    n *= np.sign(np.sum((up[:, :2] - le[:, :2]) * n, 1))[:, None]  # orient toward the front face
+    z = q[:, 2]
+    lx, ly = np.interp(z, le[:, 2], le[:, 0]), np.interp(z, le[:, 2], le[:, 1])
+    nx, ny = np.interp(z, le[:, 2], n[:, 0]), np.interp(z, le[:, 2], n[:, 1])
+    return ((q[:, 0] - lx) * nx + (q[:, 1] - ly) * ny) / np.maximum(np.hypot(nx, ny), 1e-9)
+
+
 _BLADE_REF = None
 
 
@@ -592,21 +638,96 @@ def _blade_le_strip(rest, k, r_out):
     return out
 
 
-def _winglet_pin(m, sgn):
-    """Split WINGLET_PIN (the white chordwise line on the winglet's inboard face) off an inboard-face piece m of the
-    winglet on side sgn: the band |d| <= half_width about the plane of the winglet section at path fraction s
-    (the section sheet L5 draws: winglet_sections(40, 30)), chord c0..c1; sequential single-sided trims."""
+def winglet_pin_plane(sgn=1):
+    """(le, e_c, n, chord) of the WINGLET_PIN plane: the winglet section at path fraction s (the section sheet L5
+    draws: winglet_sections(40, 30)) on side sgn; n = its normal (e_c x e_t)."""
     from model import wing as W
-    p = WINGLET_PIN
     secs = W.winglet_sections(40, 30)
-    sec = secs[int(round(p["s"] * (len(secs) - 1)))]
+    sec = secs[int(round(WINGLET_PIN["s"] * (len(secs) - 1)))]
     le = sec.le * [1, sgn, 1]
     e_c = sec.e_c * [1, sgn, 1]
     e_t = np.asarray(sec.e_t, float) * [1, sgn, 1]
     n = np.cross(e_c, e_t)
-    n /= np.linalg.norm(n)
+    return le, e_c, n / np.linalg.norm(n), sec.chord
+
+
+_TIP_TREE = []
+
+
+def tip_skin_distance(P):
+    """Distance (m) of points P from the wing-tip / winglet skin (starboard), sampled from the parameter sections
+    (wing.section_at over the last 0.3 m of the semi-span, wing.winglet_sections densely through the bend; ~2 mm)."""
+    from model import wing as W
+    from scipy.spatial import cKDTree
+    if not _TIP_TREE:
+        xc = np.linspace(0.0, 1.0, 600)
+        pts = []
+        for sec in W.winglet_sections(160, 12):
+            pts += [sec.upper(xc), sec.lower(xc)]
+        for y in np.linspace(W.SEMI - 0.30, W.SEMI, 150):
+            sec = W.section_at(float(y))
+            pts += [sec.upper(xc), sec.lower(xc)]
+        _TIP_TREE.append(cKDTree(np.vstack(pts)))
+    return _TIP_TREE[0].query(np.asarray(P, float))[0]
+
+
+def _pod_pin_fields():
+    """POD_PIN's single-sided fields (<= 0 inside the band) on a mesh / point set V."""
+    from model import details as D
+    q = POD_PIN
+    return (lambda V: q["gap"] - tip_skin_distance(V), lambda V: tip_skin_distance(V) - q["gap"] - q["width"],
+            lambda V: V[:, 1] - D.POD_Y, lambda V: D.POD_Z - 0.03 - V[:, 2],
+            lambda V: D.POD_X_JOINT + q["x0"] - V[:, 0])
+
+
+def _pod_pin(m):
+    """Split POD_PIN off a radar-pod body piece (sequential single-sided trims, each field evaluated on the already
+    trimmed band).  Returns (band, [rest])."""
+    pieces, band = [], m
+    for g in _pod_pin_fields():
+        f = lambda mm, g=g: g(mm.V)                                # noqa: E731
+        v = f(band)
+        out = trim(band, v, "positive")
+        band = trim(band, v, "negative")
+        if out.nf:
+            pieces.append(out)
+        if band.nf == 0:
+            break
+    return band, pieces
+
+
+def pod_pin_trace(n=80):
+    """Centre line (k, 3) of POD_PIN on the radar pod (starboard), in x order: per section ring of the pod body / swan
+    neck the point on its inboard upper side at the band's mid distance from the wing / winglet skin (sheet L5)."""
+    from model import details as D
+    q = POD_PIN
+    rings = D.pod_neck_rings(n, 360)
+    th = np.linspace(0, 2 * np.pi, 361)[:-1]
+    xs = np.linspace(D.POD_X_JOINT + q["x0"], D.POD_CYL_END, 24)
+    body = [np.c_[np.full(360, x), D.POD_Y + D.POD_R * np.cos(th), D.POD_Z + D.POD_R * np.sin(th)] for x in xs]
+    fs = _pod_pin_fields()
+    out = []
+    for R in list(body) + list(rings[1:]):
+        ok = (fs[2](R) <= 0) & (fs[3](R) <= 0) & (fs[4](R) <= 0)
+        d = tip_skin_distance(R) - q["gap"] - 0.5 * q["width"]
+        k = np.where(ok & np.roll(ok, -1) & (np.sign(d) != np.sign(np.roll(d, -1))))[0]
+        if not len(k):
+            continue
+        i = k[np.argmax(R[k, 2])]
+        j = (i + 1) % len(R)
+        t = d[i] / (d[i] - d[j])
+        out.append(R[i] + t * (R[j] - R[i]))
+    return np.array(out)
+
+
+def _winglet_pin(m, sgn):
+    """Split WINGLET_PIN (the white chordwise line on the winglet's inboard face) off an inboard-face piece m of the
+    winglet on side sgn: the band |d| <= half_width about the plane of the winglet section at path fraction s
+    (winglet_pin_plane), chord c0..c1; sequential single-sided trims."""
+    p = WINGLET_PIN
+    le, e_c, n, chord = winglet_pin_plane(sgn)
     d = lambda mm: (mm.V - le) @ n                                  # noqa: E731
-    xc = lambda mm: ((mm.V - le) @ e_c) / sec.chord                 # noqa: E731
+    xc = lambda mm: ((mm.V - le) @ e_c) / chord                     # noqa: E731
     pieces, band = [], m
     for f in (lambda mm: d(mm) - p["half_width"], lambda mm: -d(mm) - p["half_width"],
               lambda mm: p["c0"] - xc(mm), lambda mm: xc(mm) - p["c1"]):
@@ -713,7 +834,14 @@ def apply(parts):
         new = []
         for m, mat in parts["radar_pod"].meshes:
             if mat in (UNPAINTED, "paint_belly"):
-                new += _split(m, m.V[:, 0] - D.POD_X_JOINT, SURFACES["pod_radome"], SURFACES["pod_body"])
+                for mm, mt in _split(m, m.V[:, 0] - D.POD_X_JOINT, SURFACES["pod_radome"], SURFACES["pod_body"]):
+                    if mt != SURFACES["pod_body"]:
+                        new.append((mm, mt))
+                        continue
+                    pin, rest = _pod_pin(mm)                  # POD_PIN: the winglet pinstripe's start on the pod
+                    new += [(r, mt) for r in rest]
+                    if pin.nf:
+                        new.append((pin, "paint_pinstripe"))
             else:
                 new.append((m, mat))
         parts["radar_pod"].meshes = new
@@ -737,9 +865,14 @@ def apply(parts):
         blade = [m for m, mm in parts[pid].meshes if mm in ("prop_blade", "prop_tip")]
         other = [(m, mm) for m, mm in parts[pid].meshes if mm not in ("prop_blade", "prop_tip")]
         if blade:
-            bands, rest = _radial_bands(Mesh.merge(blade), r_of, PROP_BANDS, PP.PROP_R, "prop_blade")
+            k = int(pid.split("_")[1]) - 1
+            bm = Mesh.merge(blade)
+            ff = blade_face_field(bm.V, k)
+            front, back = trim(bm, ff, "positive"), trim(bm, ff, "negative")
+            bands, rest = _radial_bands(front, r_of, PROP_BANDS, PP.PROP_R, "prop_blade")
+            rest = Mesh.merge([m for m in (rest, back) if m.nf])
             if rest.nf:
-                bands += _blade_le_strip(rest, int(pid.split("_")[1]) - 1, PP.PROP_R - PROP_BANDS[-1][2])
+                bands += _blade_le_strip(rest, k, PP.PROP_R - PROP_BANDS[-1][2])
             parts[pid].meshes = bands + other
     return parts
 

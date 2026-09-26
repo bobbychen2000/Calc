@@ -15,7 +15,7 @@
  8. the tailplane horn balances (carried by the elevators) clear the fixed tips at full elevator travel
  9. the airstair and cargo doors clear the wing-root fairing (fillet / nose) from closed to fully open
 10. main gear + side brace over 0-100 %: every vertex inside the wing box lies in the bay liner (bays.main_bay_sdf),
-    no triangle crosses the wing skins, bay liner, ribs / spars, flaps or belly fairing; the leg door clears the leg
+    no triangle crosses the wing skins, bay liner, ribs / spars, flaps, belly fairing or flap-track canoes; the leg door clears the leg
     gear down; the stowed tyre is under the liner roof
 11. nose gear + drag brace vs the clamshell doors at every state the viewer sequence reaches (doors open with the gear
     down and in transit, closing only once locked up) and vs the flight deck / bay liners
@@ -24,7 +24,8 @@
 14. each gear unit (leg, lug, wheel, main leg door + brackets) against its OWN folding-strut links over 0-100 % (only
     the lug round B excepted); the upper and lower link against each other (the knee joint excepted)
 15. the rotating propeller hub, spinner / skirt and bulkhead against the gearbox and the cowl lip; blades at
-    reverse / fine / feather against both
+    reverse / fine / feather against both; the spinner has exactly one cut-out per blade, round the blade's round
+    shank and covered from outside by its rubber boot
 16. the wing-root fairing (fillet + nose): no folds (dihedral > 90 deg) or normals against the winding; creases
     over 60 deg are counted
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
@@ -375,8 +376,9 @@ for side in ("R", "L"):
     gid, bid = f"gear_main_{side}", f"brace_main_{side}"
     sg = 1 if side == "R" else -1
     fixed = crop(cat(posed_mesh(f"wing_{side}", I4), posed_mesh("gear_bays", I4), posed_mesh("structure", I4),
-                     posed_mesh(f"flap_{side}", I4), posed_mesh("belly_fairing", I4)),
-                 np.array([5.6, min(sg * 0.8, sg * 2.8), 0.0]), np.array([7.0, max(sg * 0.8, sg * 2.8), 1.45]))
+                     posed_mesh(f"flap_{side}", I4), posed_mesh("belly_fairing", I4), posed_mesh("flap_fairings", I4),
+                     posed_mesh(f"flap_canoes_{side}", I4)),
+                 np.array([5.6, min(sg * 0.8, sg * 3.3), 0.0]), np.array([7.6, max(sg * 0.8, sg * 3.3), 1.45]))
     n_x, out_bay, worst = 0, 0, ""
     for f in np.linspace(0.0, 1.0, 11):
         g = parts[gid].pivot
@@ -391,7 +393,8 @@ for side in ("R", "L"):
         Vs = mov[0][::2]
         ins = wing_box_inside(Vs)
         out_bay += int((ins & (main_bay_sdf(Vs[:, 0], Vs[:, 1]) > 0.002)).sum())
-    report(f"main gear {side} + side brace 0-100 %: no crossing of the wing skins, bay liner, structure, flap, fairing",
+    report(f"main gear {side} + side brace 0-100 %: no crossing of the wing skins, bay liner, structure, flap, fairing, "
+           "flap-track canoes",
            n_x == 0, f"{n_x} crossings" + (f" ({worst})" if worst else ""))
     report(f"main gear {side} + side brace 0-100 %: everything inside the wing box lies in the bay liner",
            out_bay == 0, f"{out_bay} verts in the wing box outside bays.main_bay_sdf")
@@ -538,6 +541,41 @@ for k in range(1, 6):
             bad[f"blade {k} pitch {deg:+.0f}"] = n
 report("propeller hub / spinner / bulkhead (all spin angles) and blades (reverse..feather) clear the gearbox and cowl",
        not bad, "clear" if not bad else ", ".join(f"{a}: {n}" for a, n in bad.items()))
+
+# the spinner shell has exactly one blade-root cut-out per blade (VQA r1 SHP-01: a two-sided cutter had cut 10), each
+# round the blade's round shank (BLADE_HOLE_R about the pitch axis, the shank BLADE_SHANK_R inside it) and closed from
+# outside by its rubber boot (every cut-out edge point inside the boot's radius at that height)
+from cad.mesh import Mesh, boundary_loops  # noqa: E402
+shell = merged([m for m, mm in parts["propeller"].meshes if mm in ("chrome", "paint_white")])
+sm = Mesh(*shell)
+key = np.round(sm.V / 1e-7).astype(np.int64)
+_, inv = np.unique(key, axis=0, return_inverse=True)
+Vw = np.zeros((inv.max() + 1, 3))
+Vw[inv.reshape(-1)] = sm.V
+loops = [Vw[lp] for lp in boundary_loops(Mesh(Vw, inv.reshape(-1)[sm.F]))]
+hub = PP.prop_hub()
+holes, boot_gap = {}, []
+small = [L for L in loops if np.ptp(L, 0).max() < 0.2]         # cut-out sized loops (the skirt / step rings are 0.5 m)
+for L in small:
+    for k in range(PP.N_BLADES):
+        d = PP.blade_axis(k)
+        w = L - hub
+        s_ = w @ d
+        r_ = np.linalg.norm(w - np.outer(s_, d), axis=1)
+        if (s_ > 0).all() and r_.max() < PP.BLADE_HOLE_R + 0.004:
+            holes[k] = holes.get(k, 0) + 1
+            b = PP.BLADE_BOOT
+            ang = np.linspace(0.0, np.pi / 2, 9)
+            prof_s = np.r_[b["rho0"], b["rho1"], b["rho1"] + (b["rho2"] - b["rho1"]) * np.sin(ang[1:])]
+            prof_r = np.r_[b["r_out"], b["r_out"], b["r_in"] + (b["r_out"] - b["r_in"]) * np.cos(ang[1:])]
+            boot_gap.append(float((r_ - np.interp(s_, prof_s, prof_r)).max()))
+n_holes = sum(holes.values())
+report(f"spinner: one blade-root cut-out per blade, closed by its boot", len(small) == n_holes == PP.N_BLADES
+       and len(holes) == PP.N_BLADES
+       and max(boot_gap, default=1.0) < -0.002 and PP.BLADE_SHANK_R < PP.BLADE_HOLE_R,
+       f"{len(small)} cut-outs ({n_holes} round a blade shank) for {PP.N_BLADES} blades; cut-out edge "
+       f"{-1000 * max(boot_gap, default=0.0):.1f} mm inside the boot at worst; shank R {PP.BLADE_SHANK_R * 1000:.0f} / "
+       f"cut-out R {PP.BLADE_HOLE_R * 1000:.0f} mm")
 
 # 16 ----------------------------------------------------------------------------------------------- fairing folds
 # the wing-root fairing nose is an offset surface of the OML: no folded (> 60 deg) creases where it wraps the wing LE

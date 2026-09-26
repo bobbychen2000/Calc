@@ -214,7 +214,7 @@ def stab_boot_outline(sg=1, frac=0.08):
 
 def pod_plan(y_sign=1):
     prof = np.array(D.radar_pod_profile(60))
-    body = np.r_[np.c_[prof[:, 0], D.POD_Y + prof[:, 1]], np.c_[prof[::-1, 0], D.POD_Y - prof[::-1, 1]]]
+    body = D.pod_outline("plan")                        # body of revolution + the swan neck into the winglet LE
     m = prof[:, 0] <= D.POD_X_JOINT
     rad = np.r_[np.c_[prof[m, 0], D.POD_Y + prof[m, 1]], np.c_[prof[m][::-1, 0], D.POD_Y - prof[m][::-1, 1]]]
     return body * [1, y_sign], rad * [1, y_sign]
@@ -222,7 +222,7 @@ def pod_plan(y_sign=1):
 
 def pod_side():
     prof = np.array(D.radar_pod_profile(60))
-    body = np.r_[np.c_[prof[:, 0], D.POD_Z + prof[:, 1]], np.c_[prof[::-1, 0], D.POD_Z - prof[::-1, 1]]]
+    body = D.pod_outline("side")
     m = prof[:, 0] <= D.POD_X_JOINT
     rad = np.r_[np.c_[prof[m, 0], D.POD_Z + prof[m, 1]], np.c_[prof[m][::-1, 0], D.POD_Z - prof[m][::-1, 1]]]
     return body, rad
@@ -435,7 +435,7 @@ def draw_side(ds, v, side):
             m = L.EXIT_MARK
             ring = FP.opening_outline(dict(o, hx=o["hx"] + m["offset"], hz=o["hz"] + m["offset"],
                                            r=o["r"] + m["offset"]))
-            if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"]:          # champagne rim under the white ring
+            if L.outlines() and L.EXIT_MARK_MAT == L.OUTLINE["of"]:          # silver rim under the white ring
                 ds.cv.path(v.pts(ring), 2 * (m["half_width"] + L.OUTLINE["width"]) * v.k, None, closed=True,
                            color=col(L.OUTLINE["material"]))
             ds.cv.path(v.pts(ring), 2 * m["half_width"] * v.k, None, closed=True, color=col("paint_pinstripe"))
@@ -520,10 +520,12 @@ def wing_phantom():
 
 def draw_stack_side(ds, v, side):
     """Stack seen from the side: polished tube (side silhouette of the scarfed tube, powerplant.
-    exhaust_stack_silhouette) and the heat-blackened collar band at the scarfed outlet (STACK_COLLAR)."""
+    exhaust_stack_silhouette), the heat-blackened collar band at the scarfed outlet (STACK_COLLAR) and the dark
+    opening (the outlet faces aft-outboard, so the side view looks into it: powerplant.exhaust_stack_mouth)."""
     P = PP.exhaust_stack_silhouette(side, "side")
     poly(ds, v, P, col(L.SURFACES["exhaust"]))
     poly(ds, v, stack_collar_hull(side, "side"), "#1E1B18")
+    poly(ds, v, PP.exhaust_stack_mouth(side)[:, [0, 2]], "#0B0A09")
     zc = 0.5 * (P[:, 1].max() + P[:, 1].min())
     rb = 0.5 * (P[:, 1].max() - P[:, 1].min())
     x0, xc = float(P[:, 0].min()), float(PP.exhaust_stack_collar(side)[:, 0].min())
@@ -725,6 +727,9 @@ def draw_plan(ds, v, upper=True):
         body, rad = pod_plan(1)
         poly(ds, v, body, col(L.SURFACES["pod_body"]))
         poly(ds, v, rad, col(L.SURFACES["pod_radome"]))
+        if upper:              # POD_PIN: the winglet pinstripe's start on the pod (VQA r2 LIV2-06)
+            ds.cv.path(v.pts(L.pod_pin_trace()[:, :2]), 2 * L.WINGLET_PIN["half_width"] * v.k,
+                       color=col("paint_pinstripe"))
         outline(ds, v, body, W_FINE)
 
     def belly():
@@ -734,12 +739,8 @@ def draw_plan(ds, v, upper=True):
         poly(ds, v, P, col(L.SURFACES["belly_fairing"]))
         outline(ds, v, np.c_[xs, w], W_THIN, closed=False)
         for y in D.FLAP_CANOE_Y:
-            sec = W.section_at(y)
-            x0 = sec.le[0] + 0.55 * sec.chord
-            Lc = 0.60 * sec.chord
-            t = np.linspace(0, 1, 30)
-            r = 0.05 * (2.2 * np.sqrt(t) * (1 - t) ** 1.25) / 0.61
-            P = np.r_[np.c_[x0 + t * Lc, y + r], np.c_[(x0 + t * Lc)[::-1], (y - r)[::-1]]]
+            xs_c, r = D.canoe_plan(y, 40)                      # details.CANOE_X / CANOE_HW / canoe_law
+            P = np.r_[np.c_[xs_c, y + r], np.c_[xs_c[::-1], (y - r)[::-1]]]
             poly(ds, v, P, col(L.SURFACES["flap_fairings"]))
             outline(ds, v, P, W_GRID)
 
@@ -902,13 +903,14 @@ def draw_clean(ds):
 
 # ================================================================================================ tables
 LEGEND_ROWS = [
-    ("paint_blue", "base: fuselage, dorsal, fin, rudder, wing upper faces, winglet inboard faces, pod, leg doors"),
+    ("paint_blue", "base: fuselage, dorsal, fin, rudder, wing upper faces, winglet inboard faces, pod, leg doors, "
+                   "flap-track canoes"),
     ("paint_blue_light", "lower cowling / lower nose, swoosh band to the lower rudder, nose-gear doors"),
     ("paint_pinstripe", "pinstripes and swooshes (B1 P1 P2 H1 U1 X1-X3 D1), exit marking, winglet line"),
-    ("paint_champagne", "silver-champagne outline, 8 mm, of every white stroke and the exit ring (OUTLINE)"),
+    ("paint_champagne", "neutral-silver outline, min(6 mm, 0.35 h), of every white stroke and the exit ring (OUTLINE)"),
     ("paint_white", "fin cap (above FIN_CAP), bullet fairing"),
     ("paint_silver", "tailplane and elevators, both faces"),
-    ("paint_wing_dark", "wing lower faces, winglet outboard faces, belly fairing, flap-track fairings"),
+    ("paint_wing_dark", "wing lower faces, winglet outboard faces, belly fairing"),
     ("paint_black", "radar-pod radome (forward of the pod joint)"),
     ("trim_black", "PRO windshield mask (cockpit_glazing.surround_sdf) + flight-deck glazing frames"),
     ("deice_boot", "wing / tailplane leading-edge de-ice boots (rubber, not paint)"),
@@ -944,7 +946,7 @@ def draw_legend(ds):
 
 CURVE_NOTE = {
     "B1": "thick white band: cowl front, under the exhaust, rising aft; crosses the crown aft of the cabin",
-    "P1": "thin white line above B1; crosses the crown between the last two cabin windows",
+    "P1": "thin white line above B1 from a hairline tip at STA 2.3; crosses the crown between the last cabin windows",
     "P2": "thin white line: lower edge of the light band, under the cockpit to the lower rudder",
     "H1": "upper edge of the light band on the tail cone",
     "U1": "thin line above H1 rising aft to the crown",
@@ -1014,8 +1016,9 @@ PHOTO_ROWS = [
     ("port 3/4, hangar", "pro3008_port34 (= cand _130), cand _81, _82", "camera-matched _130 (7 points, 8 px rms) and _81 "
                                                                         "(7 points, 11 px): nose band group, light lower "
                                                                         "nose, blade bands, polished spinner / stacks"),
-    ("port nose, outdoors", "cand ..._MSN-3008_188", "B1 / P1 run parallel from the cowl front (base blue between "
-                                                     "them, no navy line: 82 / 130 too); champagne stroke edges"),
+    ("port nose, outdoors", "cand ..._MSN-3008_188", "B1 alone on the cowl; P1 starts as a hairline above B1 under "
+                                                     "the exhaust (STA ~2.3; 130 / 81 / 0517 too), base blue between "
+                                                     "them, no navy line; neutral-silver stroke edges"),
     ("starboard wing, flight", "cand ..._IMG_0459", "blue wing upper face, black LE boot, blue winglet with a white "
                                                     "line, blue pod with a black radome"),
 ]
@@ -1054,10 +1057,10 @@ SURFACE_ROWS = [
     ("stab_upper / stab_lower", "tailplane + elevators; STAB_BOOT LE band (8 / 6 % chord)"),
     ("boot", "wing BOOT_Y 0.95-7.43 and tailplane leading edges (black rubber)"),
     ("bullet / dorsal / strakes", "bullet fairing white; dorsal + strakes base blue"),
-    ("belly_fairing / flap_fairings", "dark wing paint"),
+    ("belly_fairing / flap_fairings", "belly fairing dark wing paint; flap-track canoes base blue"),
     ("pod_body / pod_radome", "radar pod blue; radome black ahead of POD_X_JOINT"),
     ("main / nose_gear_door", "leg doors blue; nose-gear doors light blue"),
-    ("spinner / exhaust / blade_le", "polished chrome / polished stacks / erosion strip"),
+    ("spinner / exhaust / blade_le", "polished chrome / polished stacks / erosion strip; blade bands front face only"),
     ("inlet_lip / inlet_mouth", "chin inlet (powerplant.CHIN_INLET): polished lip ring, dark crescent mouth"),
 ]
 
@@ -1230,8 +1233,8 @@ def draw_front(ds):
     outline(ds, v, lip[:-1], W_THIN, closed=False)
     outline(ds, v, mouth, W_THIN)
     for sg in (1, -1):
-        # the scarfed tube projected (from the cowl side outboard round the elbow); its outlet faces aft-inboard,
-        # so the collar is hidden from ahead (rev B drew a forward-facing dark opening at the outboard end)
+        # the scarfed tube projected (from the cowl side outboard round the bend); its outlet faces aft-outboard,
+        # so the opening is hidden from ahead (rev B drew a forward-facing dark opening at the outboard end)
         S_ = stack_front_silhouette(sg)
         poly(ds, v, S_, col(L.SURFACES["exhaust"]))
         zc_, rb = 0.5 * (S_[:, 1].max() + S_[:, 1].min()), 0.5 * np.ptp(S_[:, 1])
@@ -1481,6 +1484,9 @@ def render_livery(d, scale=0.5):
     pc = [[_rgb(L.SURFACES["pod_radome"] if prof[i, 0] < D.POD_X_JOINT else L.SURFACES["pod_body"])] * 36
           for i in range(len(prof) - 1)]
     quads += _surf_quads(Gs, pc, cam)
+    Rn = D.pod_neck_rings(24, 36)                                                    # the swan neck
+    Gn = np.concatenate([Rn, Rn[:, :1]], 1)
+    quads += _surf_quads(Gn, [[_rgb(L.SURFACES["pod_body"])] * 36] * 23, cam)
     img = Image.new("RGB", (int(cam.W * scale), int(cam.H * scale)), (236, 238, 240))
     dr = ImageDraw.Draw(img)
     for zz, q, c_ in sorted(quads, key=lambda r: -r[0]):
