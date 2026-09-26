@@ -9,7 +9,7 @@
 // What is drawn and where comes from the existing builders' output (world.items, LiveGateSystem, LiveAircraft);
 // how it is shaded is the TSL ports in js/three/*.js. WebGPURenderer uses WebGPU where available and falls back to
 // WebGL 2 automatically. GPU work that the app requests before the renderer finished its (async) init is queued.
-// Review round 1 changes made here: exposure (day gain, night exposure derived from the floodlight level), floodlight
+// Review round 1 changes made here: exposure (day gain; keyed on the total horizontal illuminance), lamp units (LAMP_M), floodlight
 // field + lamp state, ground-bake tiles spread over frames, dynamic resolution quantised with hysteresis, bridges / GSE
 // independent of the sign font (canvas-atlas fallback when the MSDF font fails), IBL ground from the airfield bake's
 // mean colour, fatal-error UI (init failure, WebGPU device loss), per-frame draw-call / memory metrics.

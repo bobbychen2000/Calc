@@ -131,22 +131,139 @@ high + low after the grade change). Observed:
 - Low tier (single MRT pass, 2 cascades x 1024²) renders all views. (The draw-call figures once quoted here were the
   cumulative `info.render.calls`; per-frame figures are in §4.)
 
+### 4.3 Review round 1 (25-26 Sep 2026): findings, fixes, evidence
+
+Renders (960x540, `SOFTGL=1`, snapshot + mock relay, tier high unless named `low_`), from
+`tools/build3/job_review.mjs`: `out/engine3/` (day, dusk before the twilight fix, night, low tier, TRAA orbit),
+`out/engine4/` (final grade, red-box fix: gate, hold 12, UAL close-up), `out/engine5/` (temporal PCF, twilight sky:
+UAL close-up, dusk, night). Luminance percentiles are of the PNGs.
+
+| # | Finding | Fix (file) | Evidence (Observed) |
+|---|---|---|---|
+| 1 | Night/dusk bloom veil | bloom on exposed values, threshold 1.6 after a soft luminance clamp (x8 white), strength 0.035 (`engine.js`) | night gate p1 0, sky (11,17,28), apron (97,90,82) (`engine5/rv_night_gate_B26_60_1_14.png`; review: p1 146, sky (246,236,223)) |
+| 2 | Night lighting inverted (emissive apron) | floods are a light (`flood.js`: 70 observed masts, ICAO 20 lux, lights ground, paint, signs, objects, aircraft); exposure keyed on lit concrete; lamp units vs sky units (§4.5) | lead-in line at night (162,128,35) on apron (97,90,82); aircraft side (141,137,135) (review: line (11,6,0) on (222,215,205), aircraft (11,18,32)) |
+| 3 | Thin markings vanish at grazing angles | 1.2 px minimum on the projected perpendicular, alpha x true/drawn width (`markings.js`); round 2 found and fixed translucent triangles at red-box corners (miter-scaled normal) | gate: taxilane line (222,209,184) on (206,201,195) (review: 2 levels); crossing centrelines and runway edges visible in `engine4/rv_real_hold_12_300.png`; clean red boxes in `engine4/rv_real_gate_B26_60_1_14.png` |
+| 4 | Marker sprite glare disk | sprites clamped to 2.2-12 px radius, halo capped at 0.5 exposed, x0.5 by day, markers fade out 150 -> 60 m (`lights.js`); generic airframe instead of a marker requested (`docs/requests/engine_exports.md` §5.1) | code; no marker disk in any round-2 render |
+| 5 | TRAA disocclusion dead with reversed depth | vendored patch of `TAAUtils.samplePreviousDepth` (`tools/build3/build.mjs`, build fails if the patch target moves) | in-app orbit (12 frames at 3 deg/frame around UAL, then 16 static): moving vs settled differ only at 1-2 px edges (mean 0.9, top-1 % 27 levels, no trails; `engine3/rv_real_orbit_moving.png` / `_settled.png`) |
+| 6 | Low-tier shadow acne, 2-cascade range | normal offset 1.25 texels per cascade, slope-scaled depth bias (`CSM3`), last split from `Q.shadowDist` (`engine.js`) | no roof striping in `engine3/low_real_tower.png`; soft (not stepped) wing shadow in `low_real_gate_B26_60_1_14.png` |
+| 7 | Curtain-wall glass near-black | MeshPhysical, IOR 2.0 coated glass over parallax rooms, per-pane roughness/normal (`objects.js`) | glass (98,103,104) close-up, (106-118) tower view (review: 55-64; reference photo about (119,128,129)) |
+| 8 | UAL title across the window belt | liveries workflow (not this renderer): §5.5 of the requests | fixed upstream: title above the window row in `engine4/rv_real_ac_ual_38.png` |
+| 9 | Flat daylight image | AgX look: contrast 1.8 in log2 around 18 % grey, look saturation 1.0, saturation 1.0, day gain 1.02 (§4.4) | gate p1 45 / p50 208 / p99.5 243, close-up p1 31-34 / p99.5 240-241, white fuselage (226,229,232) (review: p1 88-112, p99 180-220, fuselage (169,174,183)) |
+| 10 | Blue shade | saturation 1.2 -> 1.0; IBL below the horizon from the airfield bake's mean albedo (0.30,0.27,0.21) | partly rejected, see §4.4: open shade (58,82,110) |
+| 11 | Roof-junction dark lines | slope-scaled bias (not GTAO: the reviewer showed they stayed with AO off) | no dark seams in `engine3/rv_real_tower.png` |
+| 12 | Phantom cloud reflections, mirror-calm bay | water reflection = `skyAlong` from the water point (the visible sky's clouds); wave amplitude and roughness from the METAR wind | reflected cloud under the visible cloud in `engine3/rv_real_thr_28R_900_3.png`, ripples at 12 kt |
+| 13 | Dynamic resolution restarts TRAA | render scale quantised to 1/0.85/0.72/0.6/0.5/0.4, at most one change per 8 s, canvas changes at once (`renderer3.js resize`) | code |
+| 14 | Strobes/sprites through TRAA | sprites in their own pass after TRAA with the un-jittered camera, depth-tested per fragment against the scene depth | code; lights visible in all night renders |
+| 15 | Airfield bake alpha lost | bake materials `NoBlending` (`ground.js`) | Burlingame shore shows city texture in `engine3/rv_real_overview.png` |
+| 16 | Image copies kept (359 MB) | `createImageBitmap(premultiplyAlpha: none)` copies, uploaded at once, closed after upload (`compat/gl.js`, `convert.js`); round 2 also uploads textures made before their bitmap arrived | `retainedImageMB` 0 in every round-2 view (round 1: 232-374) |
+| 17 | Bridges/GSE gated on the font | bridges and GSE built at once; sign faces follow the font, or the canvas atlas if it fails (shader-side sRGB decode when the atlas was uploaded as linear); `build.mjs --app` copies the atlas next to the bundle | code; `out/build3/assets/` |
+| 18 | Device loss / init failure / fake caps | `onDeviceLost` -> synthetic `webglcontextlost` + message; init failure -> message and `__sfoError`; `getExtension` answers from a probe context | WebGL 2 loss path observed by the reviewer; WebGPU loss path **Unverified** |
+| 19 | Untiled bakes | tiles of <= 1024² texels, 1 per frame for rebakes (6 on the first bake, 8 with `?res=1`) | code; sun rebakes complete while rendering |
+| 20 | Wrong draw-call metric | `debugInfo()` reports `drawCalls`, `frameCalls`, `texMB`, `retainedImageMB` | §4 figures |
+| 21 | Tower LED ribbon black by day | coated-glass reflectance (IOR 2.0) | ribbon median (142,145,147) (review: (17-23,21-30,25-35); old renderer about (105,116,129)) |
+| 22 | Post chain not at parity | vignette 0.18, ordered dither, grain, bloom on every tier; the app's `sat`, `bloom`, `vignette`, `grain` read | code |
+
+Also found in round 2 and fixed: GTAO's noise pattern was static (`useTemporalFiltering` now on), and three's PCF rotates
+its taps by a per-pixel noise that never changes, which TRAA cannot average. `engine.js pcfTemporal` offsets the noise
+per frame. After the change the mottle under the wing is visibly smoother (`engine5/rv_real_ac_ual_38.png` vs
+`engine4/`). A soft grain on the fuselage above the wing root remains in both. It sits where the livery's dirt layer is
+(Inferred).
+
+### 4.4 Grade (day)
+
+The grade was chosen offline on the HDR dumps (`python3 tools/build3/grade_hdr.py <stem> --flip --gain g --contrast c
+--looksat l --sat s`). A higher contrast pivots around 18 % grey. It darkens the shade and the glass and lifts sunlit
+white, and p50 stays about the same:
+
+| gain / contrast / lookSat / sat | gate p1 / p50 / p99.5 | close-up p1 / p99.5 |
+|---|---|---|
+| 1.09 / 1.4 / 1.1 / 1.05 (round 1) | 85 / 204 / 238 | 66 / 230 |
+| 0.85 / 1.8 / 1.0 / 1.0 (adopted: `DAY_GAIN` 1.02) | 62 / 212 / 246 | 40 / 239 |
+
+The live renders came out at 45 / 208 / 243 and 31 / 240. They include GTAO and TRAA, and the dumps are taken before
+those.
+
+The shade colour is only partly changed (finding 10). Open shade on the apron is lit by the sky model's irradiance,
+which is about 12,000 K: B/R 1.9 in linear sRGB. A camera at daylight white balance renders that bluish, as it
+should. The reviewer's reference pixel (34,29,31) is shade under an aircraft, which is lit mostly by warm bounce from
+sunlit concrete. That second bounce is not modelled. The IBL's lower hemisphere now carries the bake's warm albedo,
+so downward-facing surfaces get warm bounce, but the ground itself does not. Saturation is 1.0, so the look no longer
+adds chroma.
+
+The hazy distant views keep a high p1 (overview 116, hold 12 at 300 m 132). They contain no dark surfaces, and aerial
+perspective lifts the shadows. This is content, not grade.
+
+### 4.5 Lamps vs sky: one set of units (the dusk re-check)
+
+The lamps are authored in "lamp units". The floods use E_STAND = 0.62 = 20 lux. Windows, signs, city lights, sprites
+and aircraft lenses are tuned against them. The sun and sky are in the sky model's units, where the sun outside the
+atmosphere is `sunI` = 20 = the luminous solar constant, about 133 klx, so 1 unit is about 6,670 lux. The luminous
+solar constant is Darula, Kittler & Gueymard 2005, 133.3 klx; that figure was recalled, not re-checked here.
+
+The two scales used to be mixed 1:1. That made the lamps about 200x too strong against the twilight sky. At the
+'dusk' preset (sun -4.5 deg) the apron rendered 5x brighter than the sky, and dusk looked like night
+(`engine2/rv_dusk_gate_B26_60_1_14.png`).
+
+`renderer3.js LAMP_M` = (20 lux / 6,670) / 0.62 = 0.0048 converts lamp units to sky units. It is applied as follows:
+- floods: intensity nightF x LAMP_M;
+- night-only emission: `nightE` = nightF x LAMP_M;
+- sprites, lenses and per-vertex emission: `lampK` = LAMP_M ^ nightF, which is 1 by day, so the day look is
+  unchanged;
+- the app's night floor: `max(sky, floor)` -> sky + LAMP_M x (floor - sky)+.
+
+The exposure is the larger of two values:
+- the app's day exposure without its night term, x `DAY_GAIN`;
+- the exposure that puts lit concrete (albedo 0.37) at the display key 0.16 under the total horizontal illuminance
+  (sun + sky + floods).
+
+The modelled horizontal illuminance (`debugInfo().eKeyLux`) is:
+- day: 66.7 klx;
+- dusk: 31.8 lx (floods 20 + twilight sky 11.8);
+- night: 20 lx.
+
+For comparison, the sky model alone gives:
+- sunset: about 1,270 lx;
+- -6 deg: 10 lx;
+- -8 deg: 0.8 lx.
+
+Real values are about 400-800 lx at sunset and about 3.4 lx at the end of civil twilight. Those reference figures were
+recalled, not re-checked here: Inferred.
+
+Twilight sky: single scattering alone left the -4.5 deg zenith grey and about 20x darker than the sunward horizon.
+The IBL therefore lit the whole scene orange (`engine3/rv_dusk_gate_B26_60_1_14.png`). The multiple-scattering
+stand-in now decays below the horizon (0.08 x exp(0.8 x elevation in deg)) instead of stopping at -3.8 deg. That adds
+a Rayleigh-blue dome of about 40 % of the single-scattered irradiance at -4.5 deg.
+
+The result is `engine5/rv_dusk_gate_B26_60_1_14.png`. The sky is blue (50,84,116) with the twilight gradient, and
+sun-facing surfaces are pink-lit. The apron is mid-grey (106,91,83) under floods and sky, with p1 13 / p99.5 243.
+
+Night is unchanged in look: exposure 453 x LAMP_M = 2.2 against the old 2.03.
+
 ## 5. Quality tiers (`engine.js QUALITY3`)
 
-| Tier | Chosen for | Shadows | AO | AA | Bloom | Bakes (m/texel) |
-|---|---|---|---|---|---|---|
-| high | desktop, > 4 GB | 3 cascades x 2048² | GTAO from a pre-pass, half res | TRAA | yes | airfield 0.8, city 4096² |
-| medium | <= 4 GB | 3 x 2048² | same | TRAA | no | 1.0, 4096² |
-| low | phones | 2 x 1024² | GTAO half res from the MRT normal of the single pass | TRAA | no | 1.25, 2048² |
+| Tier | Chosen for | Shadows | AO | AA | Bloom | Bakes (m/texel) | Max image texture |
+|---|---|---|---|---|---|---|---|
+| high | desktop, > 4 GB | 3 cascades x 2048², splits 1.4 / 5 / 16 x orbit distance (rig) | GTAO from a pre-pass, half res | TRAA | yes (half res) | airfield 0.8, city 4096² | full |
+| medium | <= 4 GB | 3 x 2048², same splits | same | TRAA | yes (half res) | 1.0, 4096² | 2048 |
+| low | phones | 2 x 1024², 1.4 x orbit distance, then the larger of 700 m (`shadowDist`) and 5 x (at most 16 x) | GTAO half res from the MRT normal of the single pass | TRAA | yes (quarter res) | 1.25, 2048² | 1024 |
 
 ## 6. Not ported yet / known gaps
 
 - `decal` items (stand centrelines; off by default in `js/live/world.js`) are not drawn.
 - Smoke particles (`scene.smokeFns`, unused by the live app) are not drawn.
 - The low tier's single-pass GTAO is applied to the lit colour (the high/medium tiers apply it to the ambient term only).
-- Aircraft `.sfom` -> `BufferGeometry` directly; the `.glb` + KTX2 path (engine.md §5) is not done.
-- WebGPU backend untested (see §4); the GTAO depth re-encode (§4.1) is written for both coordinate systems but only
-  exercised on WebGL 2.
-- Roof parapets get a thin dark GTAO line at 100-300 m (tower view): plausible contact shading, maybe strong; to be
-  judged by the adversarial reviewer against photos.
+- Aircraft `.sfom` -> `BufferGeometry` directly; the `.glb` + KTX2 path (engine.md §5) is not done. The texture memory
+  (§4: about 500 MB on the low tier with every aircraft texture uploaded, as the old renderer did) is the main phone
+  risk that KTX2 would remove.
+- **WebGPU backend unverified.** `tools/build3/wgpu_run.mjs` reaches three's WebGPU backend on SwiftShader, but the
+  device drops the instance ("A valid external Instance reference no longer exists") and the frames are blank
+  (`out/engine2/wgpu3.log`). Still to do on a real GPU (desktop Chrome, then the owner's iPhone):
+  - the swizzle patch;
+  - the GTAO depth re-encode;
+  - the reversed-depth TRAA patch;
+  - device-loss recovery.
+- No floodlight shadows: surfaces under wings and bridges are lit at night, and GTAO darkens only the spread part.
+- Under-aircraft shade lacks the second bounce from sunlit concrete (§4.4).
+- A dark smear on the apron at the B27 lead-in shows in every light. It is in the pavement wear map of the airfield
+  bake, not the renderer (Inferred from its presence by day).
 - Blender (tools/blender/): Cycles reference renders and baked-AO aircraft assets not started.

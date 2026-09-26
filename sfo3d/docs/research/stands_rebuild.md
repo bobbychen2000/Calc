@@ -541,8 +541,12 @@ can be combined with it. The app must show the OSM attribution (request for the 
 Resumed after the usage-limit interruption; the WIP of 767b56d was superseded by the committed state (HEAD 5e09706), which
 was re-checked. Pipeline re-run: `adsb_parked.py` (recording now to 25 Sep 23:57 UTC, 14 flysfo snapshots: 997 stays
 with an SFO stand window, was 730) -> `build_stands.py` -> `check_stands.py` -> `report.py`; `build_airfield_details.py`;
-`build_terminal_parts.py`; `tools/sat/check.py` / `check_bridges.py`; the offline xcheck steps (Overpass unreachable:
-504 / reset, cached OSM used); the 2-D drawing audit on the working tree in a scratch directory.
+`build_terminal_parts.py`; `tools/sat/check.py` / `check_bridges.py` (5 ISSUES: F5 x3, G7 A319, A10 graze); the
+offline xcheck steps (Overpass unreachable: 504 / reset, cached OSM used); the 2-D drawing audit (`tools/drawing/audit.py`)
+on a scratch copy of the working tree with HEAD's `js/live/gates.js` - the bridges workflow's uncommitted gates.js
+breaks `jobs/extract2d.mjs` ("reading 'toFixed'", its request `docs/requests/bridges_tools.md`). With HEAD's gates.js the
+audit still shows that renderer's own bridges (20 envelope-rest-bridge collisions, 17 bridge-bridge, 3 bridge-mast:
+request §1); its only envelope-envelope COLLISION is F19 B77L x F20 B736 = the SFO-path case of request §2.
 
 | finding (severity) | change | evidence now |
 |---|---|---|
