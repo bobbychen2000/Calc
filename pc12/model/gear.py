@@ -38,10 +38,21 @@ NOSE_AXLE = np.array([MAIN_AXLE[0] - WHEELBASE, 0.0, 0.222])
 MAIN_TRUNNION = np.array([5.950 - GEAR_SHIFT, TRACK / 2, 1.070])
 MAIN_LINK_PIVOT = np.array([6.118 - GEAR_SHIFT, TRACK / 2, 0.517])  # trailing-link pivot on the leg
 MAIN_SHOCK = ((6.333 - GEAR_SHIFT, 0.930), (6.380 - GEAR_SHIFT, 0.400))   # shock strut top / bottom (x, z)
-MAIN_BRACE = ((5.950 - GEAR_SHIFT, 1.330, 1.220), (6.040 - GEAR_SHIFT, 2.250, 0.840))  # side brace A, B0
+# side brace A (wing fitting) and B0 (lug on the leg).  Stage 3 (MV2-02): B0 moved 80 mm inboard of the drawn BL 2250
+# (front view; the side-view STA / WL are the drawn ones): at the drawn BL -- 15 mm inboard of the leg axis, inside the
+# 108 mm leg tube -- the stowed lower link ran along inside the leg for ~0.2 m (the leg lies inboard-aft, the link
+# inboard-forward from B); on a lug MAIN_BRACE_LUG inboard of the leg (= above it when stowed) it clears the stowed leg
+# by 18 mm (fit_check: leg vs its own brace links).
+MAIN_BRACE = ((5.950 - GEAR_SHIFT, 1.330, 1.220), (6.040 - GEAR_SHIFT, 2.170, 0.840))  # side brace A, B0
 NOSE_PIVOT = np.array([2.970 + GEAR_SHIFT, 0.0, 1.040])
 NOSE_FORK = np.array([2.930 + GEAR_SHIFT, 0.0, 0.520])             # fork crown / piston bottom
 NOSE_BRACE = ((3.470 + GEAR_SHIFT, 0.0, 1.070), (3.030 + GEAR_SHIFT, 0.0, 0.785))      # drag brace A, B0
+# The drag brace's upper link is a FORK (MV2-01): two arms at BL +/-NOSE_BRACE_FORK['y'] straddle the leg, which in the
+# last ~12 deg of its 105 deg swing passes over A (A lies inside the leg's swept disc: 0.50 m from NOSE_PIVOT, the leg
+# with its fork crown is 0.54 m long) and stows right above it; the fixed attach is two stub pins on the bay walls, the
+# lower link a single tube to the lug B0 on the leg's aft face.  Side view (the drawn A / B0 line) unchanged.
+NOSE_BRACE_FORK = dict(y=0.135, r=0.010, stub=(0.125, 0.147), pin_r=0.011, bend=0.60, y_knee=0.095)
+NOSE_FORK_CROWN_HW = 0.118          # fork crown half-width (covers the fork arms at +/-0.105, clears the brace fork)
 # Retraction (Stage 3).  Nose: 105 deg aft about NOSE_PIVOT puts the axle at WL ~1.20 and the tyre 33 mm above the
 # keel (95 deg left it 108 mm below the keel); the wheel stows in a tunnel under the centre pedestal
 # (NOSE_TUNNEL: x-range, half-width, top WL).  Folding struts: two links of unequal length (L1 = upper link A-K as a
@@ -56,6 +67,11 @@ NOSE_DOOR_OPEN_DEG = 85.0           # nose clamshells: closed -> open (hanging b
 NOSE_TUNNEL = dict(x0=3.200, x1=4.100, hy=0.155, z_top=1.460, z_low=1.200)
 NOSE_BRACE_SPLIT = (0.40, (-0.72, 0.0, 0.695))        # (L1 fraction, bend reference)
 MAIN_BRACE_SPLIT = (0.15, (0.0, 0.30, -0.95))         # starboard; the bend reference is mirrored for port
+# main side brace: the links are offset along the knee pin (x) by -/+ MAIN_BRACE_CLEVIS so the short upper link and the
+# lower link pass each other as the knee closes to ~26 deg (coplanar tubes overlapped up to 89 mm, MV2-02); both stay
+# inside the brace pocket (bays.BRACE_POCKET, x 5.894-6.062)
+MAIN_BRACE_CLEVIS = (0.016, 0.024)  # upper link at A.x - 0.016, lower link at A.x + 0.024 (6 mm between the tubes)
+MAIN_BRACE_R = (0.016, 0.018)       # upper / lower link tube radius
 
 
 # Main-gear leg door (ONE per leg, POH), Stage 2 rev B.1.  The Pilatus drawing shows it in TWO views: edge-on in the
@@ -257,6 +273,7 @@ def build_main(parts, side):
               material_note="Trailing link, hydraulic shock strut, electromechanical actuator",
               info={"tyre": "22 x 8.50-10, 55 psi", "track": "4,530 mm",
                     "retraction": "inward; tyre protrudes ~1 in (POH)", "door": "single leg-mounted door"})
+    lugs.append(main_brace_lug(sgn))                                             # side-brace lug B0 (MV2-02)
     gp.add(Mesh.merge(struct + lugs), "gear_leg").add(Mesh.merge([shock_body]), "gear_leg").add(shock_rod, "chrome")
     for m, mat in wh:
         gp.add(m, mat)
@@ -320,7 +337,7 @@ def build_nose(parts):
     struct.append(cylinder(P, upper_end, 0.052, n=24))                              # oleo cylinder
     collar = cylinder(P + 0.30 * (low - P), P + 0.34 * (low - P), 0.066, n=24)      # steering collar
     piston = cylinder(upper_end - 0.04 * u, low, 0.036, n=20)
-    struct.append(box(low + [0, 0, 0.0], (0.08, 0.25, 0.045)))                      # fork crown
+    struct.append(box(low + [0, 0, 0.0], (0.08, 2 * NOSE_FORK_CROWN_HW, 0.045)))     # fork crown
     for s in (-1, 1):
         a = low + s * 0.105 * yax
         b = A + s * 0.105 * yax
@@ -392,6 +409,8 @@ def build(parts):
 
 
 MAIN_BAY_ROOF_GAP = 0.006           # main-bay liner roof under the wing upper skin (m)
+MAIN_BAY_WALL_LIP = 0.0015          # liner wall foot below the lower skin round the opening (closes the cut edge)
+MAIN_BAY_WALL_UP = 0.002            # liner wall foot above the (intact) lower skin over the brace pocket
 
 
 def _wing_z(x, y, upper):
@@ -427,7 +446,11 @@ def bay_tubs(parts):
     from cad.sdf2d import rrect_outline
     meshes = []
     ol = main_bay_outline()
-    zlo = _wing_z(ol[:, 0], ol[:, 1], False) - 0.004
+    # wall foot: just below the lower skin round the real opening (closes the cut edge without a visible rim), but
+    # INSIDE the wing where the liner runs under intact skin (the brace pocket, BRACE_POCKET): there the wall stops
+    # MAIN_BAY_WALL_UP above the skin instead of drawing the pocket outline on the wing underside (MQ2-02)
+    on_hole = main_opening_sdf(ol[:, 0], ol[:, 1]) < 0.002
+    zlo = _wing_z(ol[:, 0], ol[:, 1], False) + np.where(on_hole, -MAIN_BAY_WALL_LIP, MAIN_BAY_WALL_UP)
     zhi = _wing_z(ol[:, 0], ol[:, 1], True) - MAIN_BAY_ROOF_GAP
     n = len(ol)
     k = np.arange(n)
@@ -493,22 +516,58 @@ def brace_specs():
     return out
 
 
+def _brace_meshes(pid, A, B0, K0, axis):
+    """(upper-link mesh, lower-link mesh) of folding strut pid, gear down.  Nose: fork upper link straddling the leg
+    (NOSE_BRACE_FORK), single lower link to the lug on the leg.  Main: links offset along the knee pin by
+    MAIN_BRACE_CLEVIS, the lower link's lug B0 carried on a bracket from the leg (in the gear part)."""
+    if pid == "brace_nose":
+        fk = NOSE_BRACE_FORK
+        ey = np.array([0.0, 1.0, 0.0])
+        up = []
+        for sg in (-1.0, 1.0):          # V-fork: straight past the stowed leg, then in to the knee (the knee sits
+            a = A + sg * fk["y"] * ey    # beside the open clamshell hinges when the gear is down)
+            m = A + fk["bend"] * (K0 - A) + sg * fk["y"] * ey
+            k = K0 + sg * fk["y_knee"] * ey
+            up += [cylinder(a, m, fk["r"], n=12), cylinder(m, k, fk["r"], n=12),
+                   superellipsoid(m, (fk["r"],) * 3, (1, 1), 6, 8)]
+            up.append(cylinder(A + sg * fk["stub"][0] * ey, A + sg * fk["stub"][1] * ey, 0.014, n=12))  # wall pin
+        up.append(cylinder(K0 - (fk["y_knee"] + 0.010) * ey, K0 + (fk["y_knee"] + 0.010) * ey, fk["pin_r"], n=12))
+        lo = [cylinder(K0, B0, 0.020, n=12), superellipsoid(B0, (0.024, 0.024, 0.024), (1, 1), 8, 12)]
+        return Mesh.merge(up), Mesh.merge(lo)
+    ax = np.asarray(axis, float) / np.linalg.norm(axis)
+    c1, c2 = MAIN_BRACE_CLEVIS
+    r1, r2 = MAIN_BRACE_R
+    up = [cylinder(A - c1 * ax, K0 - c1 * ax, r1, n=12), superellipsoid(A - c1 * ax, (0.018,) * 3, (1, 1), 8, 12),
+          cylinder(K0 - (c1 + r1) * ax, K0 + (c2 + r2) * ax, 0.010, n=12)]                        # knee pin
+    lo = [cylinder(K0 + c2 * ax, B0, r2, n=12), superellipsoid(B0, (0.022, 0.022, 0.022), (1, 1), 8, 12)]
+    return Mesh.merge(up), Mesh.merge(lo)
+
+
+def main_brace_lug(sgn):
+    """Bracket on the main leg carrying the side-brace lug B0 (gear down, side sgn): from the leg axis at B0's WL
+    inboard to B0 (moves with the leg)."""
+    T, Lp = MAIN_TRUNNION * [1, sgn, 1], MAIN_LINK_PIVOT * [1, sgn, 1]
+    B0 = np.array(MAIN_BRACE[1]) * [1, sgn, 1]
+    u = (Lp - T) / np.linalg.norm(Lp - T)
+    p = T + u * ((B0 - T) @ u)                              # leg-axis point abreast of the lug
+    return Mesh.merge([cylinder(p, B0, 0.016, n=12), cylinder(B0 - [0.03, 0, 0], B0 + [0.03, 0, 0], 0.012, n=10)])
+
+
 def brace_parts(parts):
     from model.brace import solve_knee
     for pid, gear_id, A, B0, T, axis, (f1, ref), name in brace_specs():
         L1, L2 = brace_lengths(A, B0, f1)
         K0 = solve_knee(A, B0, L1, L2, axis, ref)
+        m_up, m_lo = _brace_meshes(pid, A, B0, K0, axis)
         up = Part(pid + "_up", name + " (upper link)", "gear",
                   pivot=dict(origin=A.tolist(), axis=axis.tolist(), kind="brace", role="upper", gear=gear_id,
                              A=A.tolist(), B0=B0.tolist(), K0=K0.tolist(), L1=float(L1), L2=float(L2),
                              bend=ref.tolist()),
                   group="Landing gear", material_note="Over-centre lock, down-lock spring")
-        up.add(Mesh.merge([cylinder(A, K0, 0.022, n=12), superellipsoid(A, (0.03, 0.03, 0.03), (1, 1), 8, 12),
-                           superellipsoid(K0, (0.02, 0.02, 0.02), (1, 1), 8, 12)]), "gear_leg")
+        up.add(m_up, "gear_leg")
         lo = Part(pid + "_lo", name + " (lower link)", "gear", parent=pid + "_up",
                   pivot=dict(origin=K0.tolist(), axis=axis.tolist(), kind="brace", role="lower", gear=gear_id),
                   group="Landing gear", material_note="Over-centre lock")
-        lo.add(Mesh.merge([cylinder(K0, B0, 0.02, n=12), superellipsoid(B0, (0.024, 0.024, 0.024), (1, 1), 8, 12)]),
-               "gear_leg")
+        lo.add(m_lo, "gear_leg")
         parts[up.id] = up
         parts[lo.id] = lo

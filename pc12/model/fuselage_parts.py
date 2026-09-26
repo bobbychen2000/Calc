@@ -279,10 +279,22 @@ def _other_openings_field(m: Mesh):
 def build_skin():
     panels = [door_panel(o) for o in (AIRSTAIR, CARGO)]
     door_edges = [o["cx"] + s * o["hx"] for o in panels for s in (-1, 1)]
-    chin = list(np.arange(1.100, 1.262, 0.006))                    # the chin-inlet step (keel 1.413 -> 1.233)
-    xs = F.station_grid(0.030, 0.05, extra=[SPLIT_FWD, *CG.KEY_STATIONS] + door_edges + chin)
+    # the chin-inlet step (keel 1.413 -> 1.233) and the raised lip face / nose (x_le 1.118-1.20, nose 14 mm): 2 mm
+    # columns; the cheek behind it at 10 mm
+    chin = list(np.arange(1.100, 1.262, 0.002)) + list(np.arange(1.262, 1.72, 0.010))
+    from model.bays import NOSE_BAY as _NB                          # nose-bay ends: rows through the corner radii
+    bay = [e + sg * k for e, sg in ((_NB["cx"] - _NB["hx"], 1), (_NB["cx"] + _NB["hx"], -1))
+           for k in np.linspace(0.0, _NB["r"], 6)]
+    xs = F.station_grid(0.030, 0.05, extra=[SPLIT_FWD, *CG.KEY_STATIONS] + door_edges + chin + bay)
+    xs = xs[np.r_[True, np.diff(xs) > 2e-4]]                       # drop near-duplicate stations (sliver columns)
     ts = np.linspace(0, 1, N_AROUND, endpoint=False)
     P, UV = skin_grid(xs, ts)
+    from model import powerplant as PP
+    ic = xs < 1.80
+    Xs = PP.chin_shear_x(xs[ic], ts)                               # columns sheared onto the chin lip face
+    P[ic] = F.section(Xs, np.broadcast_to(ts[None, :], Xs.shape))
+    UV[ic, :, 0] = Xs
+    P[ic] = PP.chin_cheek_displace(P[ic])                          # proud chin-inlet lip + cheek (CONS2-01)
     N = grid_normals(P, close_u=False, close_v=True)
 
     def sub(x0, x1):
@@ -332,6 +344,7 @@ def build(parts_out: dict):
 
     # ---- cowling (upper / lower halves split on the prop axis water line), cowl front -> firewall ----
     cowl = sub(X0, F.STA["firewall"])
+    cowl = trim(cowl, PP.cowl_front_field(cowl.V), "positive")    # a constant gap behind the spinner base plane
     split = cowl.V[:, 2] - (F.PROP_AXIS_Z + 0.02)
     up = trim(cowl, split, "positive")
     lo = trim(cowl, split, "negative")

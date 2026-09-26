@@ -20,7 +20,13 @@
     down and in transit, closing only once locked up) and vs the flight deck / bay liners
 12. flaps 0-40 deg (flap-carried aft canoes included) clear the wing, the fixed canoes, the structure and the fairing
 13. rudder / tab at -25 / 0 / +25 deg: no triangle crossing the fin (tip underside, cove, strip), tail cone or strakes
-Checks 10-13 are exact triangle-crossing tests (test/isect.py), not vertex tests.
+14. each gear leg against its OWN folding-strut links over 0-100 % (only the lug round B excepted); the upper
+    and lower link against each other (the knee joint excepted)
+15. the rotating propeller hub, spinner / skirt and bulkhead against the gearbox and the cowl lip; blades at
+    reverse / fine / feather against both
+16. the wing-root fairing (fillet + nose): no folds (dihedral > 90 deg) or normals against the winding; creases
+    over 60 deg are counted
+Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
 import sys
@@ -441,6 +447,114 @@ for deg in (-25.0, 0.0, 25.0):
         bad[deg] = n
 report("rudder + tab at -25 / 0 / +25 deg: no triangle crossing the fin, tail cone, strakes or dorsal", not bad,
        "clear" if not bad else ", ".join(f"{a:+.0f} deg: {n}" for a, n in bad.items()))
+
+# 14 ----------------------------------------------------------------------------------------------- own brace links
+# fit checks 10 / 11 move gear + brace as ONE mesh, so a leg is never tested against its own links (MV2-01 / MV2-02):
+# here each leg against its upper and lower link over 0-100 %, ignoring only the lug round B (BRACE_LUG_SKIP)
+BRACE_LUG_SKIP = 0.050
+BRACE_KNEE_SKIP = (0.015, 0.160)      # knee pin: radius / half-length round the knee axis
+for pid, gear_id, A, B0, T, axis, (f1, ref), name in G.brace_specs():
+    g = parts[gear_id].pivot
+    worst, n_tot = "", 0
+    for f in np.linspace(0.0, 1.0, 21):
+        Mg = rotation_about(g["axis"], np.radians(g["retract"]) * f, g["origin"])
+        Mu, Ml = brace_pose(pid, f)
+        B = Mg[:3, :3] @ B0 + Mg[:3, 3]
+        leg = posed_mesh(gear_id, Mg, mats=("gear_leg", "chrome"))
+        for lk, Ml_ in (("_up", Mu), ("_lo", Ml)):
+            P = crossings(*leg, *posed_mesh(pid + lk, Ml_))
+            if len(P):
+                P = P[np.linalg.norm(P - B, axis=1) > BRACE_LUG_SKIP]
+            if len(P):
+                n_tot += len(P)
+                d = np.linalg.norm(P - B, axis=1)
+                worst = worst or f"gear {f:.2f} {lk[1:]} link: {len(P)} at {1000 * d.min():.0f}-{1000 * d.max():.0f} mm from B"
+    report(f"{gear_id} leg vs its own {pid} links 0-100 % (lug <= {BRACE_LUG_SKIP * 1000:.0f} mm from B excepted)",
+           n_tot == 0, "clear" if not n_tot else f"{n_tot} crossings ({worst})")
+    # the two links against each other (the knee pin joint excepted): they must pass as the knee closes (MV2-02)
+    pv = parts[pid + "_up"].pivot
+    n_ll, worst = 0, ""
+    for f in np.linspace(0.0, 1.0, 21):
+        Mu, Ml = brace_pose(pid, f)
+        K = Mu[:3, :3] @ np.array(pv["K0"]) + Mu[:3, 3]
+        P = crossings(*posed_mesh(pid + "_up", Mu), *posed_mesh(pid + "_lo", Ml))
+        if len(P):                                  # the knee pin itself (a cylinder round the knee axis)
+            ka = np.asarray(pv["axis"], float) / np.linalg.norm(pv["axis"])
+            w = P - K
+            along = w @ ka
+            radial = np.linalg.norm(w - np.outer(along, ka), axis=1)
+            P = P[~((radial < BRACE_KNEE_SKIP[0]) & (np.abs(along) < BRACE_KNEE_SKIP[1]))]
+        if len(P):
+            n_ll += len(P)
+            worst = worst or f"gear {f:.2f}: {len(P)} up to {1000 * np.linalg.norm(P - K, axis=1).max():.0f} mm from K"
+    report(f"{pid}: upper vs lower link 0-100 % (the knee pin, r <= {BRACE_KNEE_SKIP[0] * 1000:.0f} mm round the knee "
+           "axis, excepted)", n_ll == 0, "clear" if not n_ll else f"{n_ll} crossings ({worst})")
+
+# 15 ----------------------------------------------------------------------------------------------- propeller / engine
+# the rotating hub, spinner (skirt) and spinner bulkhead against the static gearbox and cowl lip (MV2-03), at spin angles
+# across one blade pitch; the blades at feather / fine / reverse against the gearbox and the cowl
+pp = parts["propeller"].pivot
+static = cat(posed_mesh("eng_rgb", I4), posed_mesh("cowl_upper", I4), posed_mesh("cowl_lower", I4),
+             posed_mesh("chin_inlet", I4))
+bad = {}
+for deg in (0.0, 18.0, 36.0, 54.0):
+    M = rotation_about(np.asarray(pp["axis"], float), np.radians(deg), pp["origin"])
+    n = len(crossings(*posed_mesh("propeller", M), *static))
+    if n:
+        bad[f"spin {deg:.0f}"] = n
+for k in range(1, 6):
+    bp = parts[f"blade_{k}"].pivot
+    for deg in (bp["reverse"], 0.0, bp["feather"]):
+        M = rotation_about(np.asarray(bp["axis"], float), np.radians(deg), bp["origin"])
+        n = len(crossings(*posed_mesh(f"blade_{k}", M), *static))
+        if n:
+            bad[f"blade {k} pitch {deg:+.0f}"] = n
+report("propeller hub / spinner / bulkhead (all spin angles) and blades (reverse..feather) clear the gearbox and cowl",
+       not bad, "clear" if not bad else ", ".join(f"{a}: {n}" for a, n in bad.items()))
+
+# 16 ----------------------------------------------------------------------------------------------- fairing folds
+# the wing-root fairing nose is an offset surface of the OML: no folded (> 60 deg) creases where it wraps the wing LE
+# (MQ2-01); welded dihedral angles over the fairing meshes
+
+
+def fold_count(meshes, lim_deg=60.0):
+    V, F_ = merged(meshes)
+    key = np.round(V / 2e-5).astype(np.int64)
+    _, inv = np.unique(key, axis=0, return_inverse=True)
+    Fw = inv.reshape(-1)[F_]
+    Fw = Fw[(Fw[:, 0] != Fw[:, 1]) & (Fw[:, 1] != Fw[:, 2]) & (Fw[:, 0] != Fw[:, 2])]
+    Vw = np.zeros((inv.max() + 1, 3))
+    Vw[inv.reshape(-1)] = V
+    n = np.cross(Vw[Fw[:, 1]] - Vw[Fw[:, 0]], Vw[Fw[:, 2]] - Vw[Fw[:, 0]])
+    ln = np.linalg.norm(n, axis=1)
+    ok = ln > 1e-14
+    Fw, n = Fw[ok], n[ok] / ln[ok, None]
+    E = np.vstack([Fw[:, [0, 1]], Fw[:, [1, 2]], Fw[:, [2, 0]]])
+    fi = np.tile(np.arange(len(Fw)), 3)
+    Es = np.sort(E, 1)
+    o = np.lexsort((Es[:, 1], Es[:, 0]))
+    Es, fi = Es[o], fi[o]
+    same = (Es[1:] == Es[:-1]).all(1)
+    a, b = fi[:-1][same], fi[1:][same]
+    ang = np.degrees(np.arccos(np.clip(np.einsum("ij,ij->i", n[a], n[b]), -1, 1)))
+    bad = ang > lim_deg
+    P = 0.5 * (Vw[Es[:-1][same][bad, 0]] + Vw[Es[:-1][same][bad, 1]])
+    return int(bad.sum()), P
+
+
+fil = [m for m, mm in parts["belly_fairing"].meshes if mm != _SURF["belly_fairing"]]   # root fillet + nose pieces
+nf60, Pf = fold_count(fil, 60.0)
+nf90, _ = fold_count(fil, 90.0)
+flip = 0
+for m in fil:                                   # vertex normals against the triangle winding
+    if m.nf and m.N is not None:
+        fn = np.cross(m.V[m.F[:, 1]] - m.V[m.F[:, 0]], m.V[m.F[:, 2]] - m.V[m.F[:, 0]])
+        flip += int((np.einsum("ij,ij->i", fn, m.N[m.F].sum(1)) < 0).sum())
+report("belly_fairing root fillet / fairing nose: no folds (dihedral > 90 deg), no normals against the winding",
+       nf90 == 0 and flip == 0,
+       f"{nf90} edges > 90 deg, {flip} flipped triangles; {nf60} creases > 60 deg"
+       + (f" (x {Pf[:, 0].min():.3f}-{Pf[:, 0].max():.3f} |y| {np.abs(Pf[:, 1]).min():.3f}-{np.abs(Pf[:, 1]).max():.3f} "
+          f"z {Pf[:, 2].min():.3f}-{Pf[:, 2].max():.3f})" if nf60 else "") + " (rev: 114 edges > 60 deg, max 150)")
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

@@ -173,7 +173,11 @@ def _place_label(ds, x, y, s, size, placed, step=2.4, below=None):
 
 def half_section(x, n=721):
     t = np.linspace(0, 0.5, n)
-    P = F.section(np.full_like(t, x), t)
+    if x < 1.8:                                 # cowl front: the OML with the chin lip / cheek raise (EF1)
+        from model import powerplant as PP
+        P = PP.cowl_section(np.full_like(t, x), t)
+    else:
+        P = F.section(np.full_like(t, x), t)
     return P[:, 1:]                             # (y >= 0, z) crown -> keel
 
 

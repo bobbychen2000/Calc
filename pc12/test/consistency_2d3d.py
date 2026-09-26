@@ -15,15 +15,23 @@ the approved Stage-2 drawing set is drawn from (sheets L1-L5, drawing/*.py -- th
   L5  livery             painted sub-mesh colour boundaries vs the livery curves (side projection) both ways,
                          paint regions (sampled per triangle against livery.region_fields), wing boot band, pod
                          radome joint, blade bands, per-surface colours (SURFACES, STAB_BOOT, WINGLET_PIN)
+  verify round 2 adds    L3 door / exit handles (DOOR_DETAILS), hinge lines vs the door pivots;
+                         L4 wing-to-body fairing (lower silhouette, front sections, root-fillet plan edge, fillet on its
+                         law, upper edge), chin inlet (mouth + lip ring front view, lip crescent side view), exhaust
+                         stacks (3 views), flap / aileron / tab ends and tab line, hinge lines vs pivots (aileron,
+                         elevator, rudder, rudder tab), rudder gap line, rudder tab, dorsal-fillet foot (plan), fin
+                         (front), strakes (front), gear pivots / brace ends, retracted main wheel;
+                         L5 STAB_BOOT / WINGLET_PIN / BLADE_LE_STRIP / exhaust-collar edges, flap-track canoes, nose bay
 
     python3 test/consistency_2d3d.py                  # all sheets
     python3 test/consistency_2d3d.py --only L2,L3     # some sheets
     options: --glb PATH (default out/pc12.glb), --json PATH (default out/tmp/stage3_consistency/report.json),
              --plots (diagnostic PNGs next to the JSON), -v (worst locations of every row)
 
-Tolerances (mm): 5 OML / openings / glazing, 10 livery, 15 planform features.  Prints one PASS / FAIL / INFO row
-per check (max and rms deviation, samples, tolerance) and 'CONSISTENCY OK' / 'CONSISTENCY FAIL'; exit code 1 on a
-FAIL, 2 when the GLB is missing.  The GLB must be newer than model/*.py and cad/*.py (first row) -- rebuild with
+Tolerances (mm): 5 OML / openings / glazing, 10 livery, 15 planform features (L4 outlines).  Prints one PASS / FAIL /
+INFO / OPEN row per check (max and rms deviation, samples, tolerance) and 'CONSISTENCY OK' / 'CONSISTENCY FAIL'; OPEN =
+a known deviation waiting for an owner decision (CLAUDE.md open items; listed, not failing); exit code 1 on a FAIL, 2
+when the GLB is missing.  The GLB must be newer than model/*.py and cad/*.py (first row) -- rebuild with
 python3 model/build.py.  Model axes throughout: x station aft, y butt line (+ starboard), z water line (m).
 """
 from __future__ import annotations
@@ -246,6 +254,14 @@ def boundary_components(V, F, min_area=5e-5, drop=None, seams=False):
     return out
 
 
+def comp_edge_points(V, comps, step=0.002):
+    """Boundary-edge points of boundary components, densified to `step` (edges can be long on coarse grids)."""
+    if not comps:
+        return np.zeros((0, 3))
+    E_ = np.vstack([c["E"] for c in comps])
+    return densify_segments(np.stack([V[E_[:, 0]], V[E_[:, 1]]], 1), step)
+
+
 PANEL_STATIONS = (X0, F.STA["firewall"], FP.SPLIT_FWD, FP.SPLIT_AFT)
 
 
@@ -375,7 +391,7 @@ class Report:
         rms_s = "   -   " if rms is None else f"{rms:7.1f}"
         tol_s = "  - " if tol is None else f"{tol:4.0f}"
         print(f"  {status:4s} {sheet} {item[:58]:58s} {mxs} {rms_s} {tol_s} {r.n:8d}  {detail}", flush=True)
-        if self.verbose or status == "FAIL":
+        if self.verbose or status in ("FAIL", "OPEN"):
             for w in r.worst[:6]:
                 print(f"         worst: {w}")
         return r
@@ -474,7 +490,8 @@ def expected_skin_hole(P, painted=False):
     hole |= CG.windshield_sdf(x, None, z, y) < 0
     hole |= (z < 1.1) & (BY.nose_bay_sdf(x, y) < 0)
     fm, fl, fs = PP.chin_fields(P)
-    hole |= (fm < 0) & (x <= PP.CHIN_STEP_X_MAX)
+    hole |= PP.chin_mouth_field(P) < 0
+    hole |= (x < X0 + 0.03) & (PP.cowl_front_field(P) < 0.0015)   # cowl lip cut behind the spinner base plane
     if painted:                                             # the polished chin-inlet lip is skin, but not painted
         hole |= (np.maximum(fl, fs) < 0.0015)
     hole |= E.tail_cut_field(x, z) > 0
@@ -498,8 +515,12 @@ def check_L1(ctx, rep, plots):
     P = V[used]
     out_rng = (P[:, 0] < X0 - 1e-3) | (P[:, 0] > X1 + 1e-3)
     d = oml_dist(P)
+    ch = P[:, 0] < PP.CHIN_CHEEK_AFT[1] + 0.05          # the cowl front: OML + the chin lip / cheek raise
+    if ch.any():
+        d[ch] = PP.chin_raised_dist(P[ch])
     rep.add("L1", "skin vertices on the OML (section law)", d, TOL["oml"],
-            f"{len(SKIN_PARTS)} skins + door slabs + inlet lip; {int(out_rng.sum())} outside STA {X0:.3f}-{X1:.3f}",
+            f"{len(SKIN_PARTS)} skins + door slabs + inlet lip (cowl front: OML + chin lip raise, "
+            f"powerplant.cowl_section); {int(out_rng.sum())} outside STA {X0:.3f}-{X1:.3f}",
             worst_list(d, P))
 
     # ---- profile: crown / keel at BL 0
@@ -551,7 +572,7 @@ def check_L1(ctx, rep, plots):
     all_m2p, all_p2m, w1, w2 = [], [], [], []
     per = []
     for name, x in F.FRAMES.items():
-        sec = F.section(np.full_like(t, x), t)
+        sec = PP.cowl_section(np.full_like(t, x), t) if x < 1.8 else F.section(np.full_like(t, x), t)
         S = slice_segments(V, Fm, (1, 0, 0), x)
         Qx = densify_segments(S, 0.002)
         cur = Curves([sec[:, 1:]], closed=True)
@@ -835,10 +856,58 @@ def check_L3(ctx, rep, plots):
             f"{len(comps)}/{n_fixed} panes; overlap {1000 * f.min():.1f}..{1000 * f.max():.1f} mm (nominal 10)"
             if len(f) else "no glass", worst_list(dev, np.vstack(P_all)) if P_all else [],
             status="PASS" if ok and len(comps) == n_fixed else "FAIL")
+    _l3_handles_hinges(ctx, rep)
     if plots:
         outl = [(o, "k") for _, o in expected]
         _plot_side(plots / "L3_openings.png", outl, [(np.vstack([P for p in matched.values() for P in p]), "b")],
                    (4.3, 9.1, 1.1, 2.8))
+
+
+def _l3_handles_hinges(ctx, rep):
+    """Door / exit handles (DOOR_DETAILS, side projection) and the door hinge lines (hinge_line) vs the pivots."""
+    dev, P_, lab = [], [], []
+    for pid, o in FP.DOORS:
+        h = FP.DOOR_DETAILS[FP.DOOR_HANDLE[pid]]
+        rs = [r for r in ctx.get(pid, mats=("metal_dark",))
+              if np.all(np.abs(FP.rr((r.V[:, 0], r.V[:, 2]), h)) < 0.04)]
+        if not rs:
+            dev.append(np.array([1.0]))
+            P_.append(np.array([[h["cx"], 0.0, h["cz"]]]))
+            lab.append(f"{pid}: no handle")
+            continue
+        V, Fm = merged(rs)
+        comps = boundary_components(V, Fm, min_area=1e-6)
+        B = comp_edge_points(V, comps)
+        O = densify_poly(FP.opening_outline(h, 32), 0.002)
+        d1 = np.abs(FP.rr((B[:, 0], B[:, 2]), h))
+        d2 = cKDTree(B[:, [0, 2]]).query(O)[0]
+        dev += [d1, d2]
+        P_ += [B, _xz(O)]
+        lab.append(f"{pid} {1000 * max(d1.max(), d2.max()):.1f}")
+    d = np.concatenate(dev)
+    rep.add("L3", "door / exit handles vs DOOR_DETAILS (side proj.)", d, TOL["opening"], "max mm: " + ", ".join(lab),
+            worst_list(d, np.vstack(P_)))
+    dev, lab = [], []
+    for pid, o in FP.DOORS:
+        hl = FP.hinge_line(o)
+        if hl is None:
+            continue
+        pv = (ctx.extras.get(pid) or {}).get("pivot")
+        if not pv:
+            dev.append(1.0)
+            lab.append(f"{pid}: no pivot")
+            continue
+        org, ax = _pivot(ctx, pid)
+        x0, x1, zh = hl
+        ang = math.degrees(math.acos(min(1.0, abs(float(ax[0])))))
+        yexp = float(F.side_y(0.5 * (x0 + x1), zh))
+        dev += [org[2] - zh, abs(org[1]) - yexp, math.radians(ang) * (x1 - x0)]
+        lab.append(f"{pid}: pivot WL {org[2]:.4f} vs hinge_line {zh:.4f}, BL {abs(org[1]):.4f} vs skin {yexp:.4f}, axis "
+                   f"{ang:.2f} deg off the drawn (horizontal) line, open {pv.get('open_deg')} vs {o.get('open_deg')}")
+        if pv.get("open_deg") != o.get("open_deg"):
+            dev.append(1.0)
+    rep.add("L3", "door hinge lines (hinge_line, open_deg) vs door pivots", np.array(dev), TOL["opening"],
+            "airstair (bottom), cargo (top)", lab)
 
 
 def _to_oml(P, iters=3):
@@ -884,9 +953,10 @@ def loop_compare(Q, loop, hole=None):
     return d_p2m, d_m2p
 
 
-def plan_silhouette(V, Fm, box, res=0.001, close_r=0.008, axes=(0, 1)):
+def plan_silhouette(V, Fm, box, res=0.001, close_r=0.008, axes=(0, 1), extra=(), area=None):
     """Boundary points (k, 2) of the view projection (axes) of a mesh inside box (a0, b0, a1, b1): triangles
-    rasterised at `res`, gaps narrower than 2 close_r closed (spanwise control-surface gaps)."""
+    rasterised at `res`, gaps narrower than 2 close_r closed (spanwise control-surface gaps).  extra: closed 2-D
+    polygons filled into the same raster; area: a dict that receives the projected area (m^2) under 'm2'."""
     from PIL import Image, ImageDraw
     from scipy import ndimage
     a0, b0, a1, b1 = box
@@ -897,7 +967,11 @@ def plan_silhouette(V, Fm, box, res=0.001, close_r=0.008, axes=(0, 1)):
     T = (T - [a0, b0]) / res
     for t in T:
         dr.polygon([tuple(p) for p in t], fill=1, outline=1)
+    for P in extra:
+        dr.polygon([tuple(p) for p in (np.asarray(P, float) - [a0, b0]) / res], fill=1, outline=1)
     m = np.array(img, bool)
+    if area is not None:
+        area["m2"] = float(m.sum()) * res * res
     k = int(round(close_r / res))
     yy, xx = np.mgrid[-k:k + 1, -k:k + 1]
     disk = xx ** 2 + yy ** 2 <= k * k
@@ -1279,11 +1353,536 @@ def check_L4(ctx, rep, plots):
     r_par = np.interp(s / Lsp, tt, rp, right=rp[-1])
     on = s <= Lsp + PP.SPINNER_SKIRT + 1e-4
     dev = r[on] - r_par[on]
-    # radial error overstates the normal error near the tip where the meridian is steep: use normal distance
-    mer = np.c_[np.r_[tt * Lsp, Lsp + PP.SPINNER_SKIRT], np.r_[rp, rp[-1]]]
+    # radial error overstates the normal error near the tip where the meridian is steep: use normal distance; behind
+    # the base plane the skirt steps in to spinner_skirt_r() (inside the cowl lip, MV2-03)
+    rs_ = PP.spinner_skirt_r()
+    mer = np.c_[np.r_[tt * Lsp, Lsp, Lsp + PP.SPINNER_SKIRT], np.r_[rp, rs_, rs_]]
     dn = Curves([mer]).dist(np.c_[s[on], r[on]])[0]
     rep.add("L4", "spinner meridian about the thrust axis vs spinner_profile", dn, TOL["oml"],
             f"SPINNER_R {F.SPINNER_R}, SHAPE {F.SPINNER_SHAPE}; base plane at the cowl front", worst_list(dn, Vsp[on]))
+
+    # ---------------------------------------------------------------- verify round 2: the rest of the drawn L4 items
+    for fn in (_l4_fairing, _l4_chin_inlet, _l4_exhaust_stacks, _l4_controls, _l4_tail_details, _l4_gear):
+        try:
+            fn(ctx, rep)
+        except Exception as ex:                             # one crashing group must not hide the others
+            import traceback
+            traceback.print_exc()
+            rep.add("L4", f"{fn.__name__} crashed", status="FAIL", detail=f"{type(ex).__name__}: {ex}")
+
+
+# =====================================================================================================================
+# L4 (cont.)  verify round 2: the items sheet L4 draws from the parameters that round 1 did not measure -- wing-to-body
+# fairing (side / plan / front), chin inlet (front + side), exhaust stacks (3 views), control-surface ends, hinges and
+# tabs, rudder gap line, dorsal-fillet foot (plan), fin (front), strakes (front, FR40), gear pivots / brace ends
+# =====================================================================================================================
+def _xz(P):
+    """3-D points for worst_list from 2-D (x, z) side-view points."""
+    P = np.asarray(P, float)
+    return np.c_[P[:, 0], np.zeros(len(P)), P[:, 1]]
+
+
+def _two_way(sil, polys, dense=None, step=0.002):
+    """(mesh -> parameter, parameter -> mesh) distances between 2-D silhouette points and parameter polylines
+    (dense: the parameter points to test the other way; default all polylines densified)."""
+    d_m2p = Curves(polys, step=5e-4).dist(sil)[0] if len(sil) else np.zeros(0)
+    if dense is None:
+        dense = np.vstack([densify_poly(P, step) for P in polys])
+    d_p2m = cKDTree(sil).query(dense)[0] if len(sil) else np.full(len(dense), 9.0)
+    return d_m2p, d_p2m, dense
+
+
+def _raster_mask(box, polys=(), tris=None, res=0.001):
+    """Boolean raster (rows = second axis) of filled 2-D polygons and / or triangles (m, 3, 2) inside box."""
+    from PIL import Image, ImageDraw
+    a0, b0, a1, b1 = box
+    img = Image.new("1", (int(math.ceil((a1 - a0) / res)) + 1, int(math.ceil((b1 - b0) / res)) + 1), 0)
+    dr = ImageDraw.Draw(img)
+    for P in polys:
+        dr.polygon([tuple(p) for p in (np.asarray(P, float) - [a0, b0]) / res], fill=1)
+    if tris is not None:
+        for t in (np.asarray(tris, float) - [a0, b0]) / res:
+            dr.polygon([tuple(p) for p in t], fill=1)
+    return np.array(img, bool)
+
+
+def _l4_fairing(ctx, rep):
+    """Wing-to-body fairing (details.py tables BELLY_FAIRING_*, root_fillet_*): lower silhouette (side), flat-bottomed
+    sections (front), root-fillet plan edge on the wing, fillet surface on its parameter law, fillet upper edge."""
+    tolp = TOL["planform"]
+    dark = L.SURFACES["belly_fairing"]
+    Vb, Fb = ctx.mesh(("belly_fairing",))
+    Vl, Fl = ctx.mesh(("belly_fairing",), mats=(dark,))              # lower (belly) fairing
+    Vf, Ff = ctx.mesh(("belly_fairing",), exclude=(dark,))           # upper root fillet + fairing nose (livery)
+    if not len(Fb) or not len(Fl) or not len(Ff):
+        rep.add("L4", "wing-to-body fairing: belly / root-fillet sub-meshes", status="FAIL",
+                detail=f"belly_fairing faces {len(Fb)}, lower {len(Fl)}, fillet {len(Ff)}")
+        return
+    # (a) side view: lower silhouette (drawn solid to STA 6465, dashed behind the main gear to 7450, then the keel);
+    # normal distance both ways (the nose tip is steep)
+    Bt = np.array(D.BELLY_FAIRING_BOT)
+    Es = []
+    for x in np.arange(Bt[0, 0], Bt[-1, 0] + 1e-9, 0.005):
+        S = slice_segments(Vb, Fb, (1, 0, 0), x)
+        if len(S):
+            Es.append((x, float(densify_segments(S, 0.002)[:, 2].min())))
+    Es = np.array(Es)
+    Bd = densify_poly(Bt, 0.002)
+    # the drawn nose tip on the fuselage side: where the law's standoff just above the line is below ROOT_FILLET_MIN_D
+    # the fairing is left to the skin (tangent), so those drawn points have no mesh edge
+    thin = (Bd[:, 1] > F.z_bot(F.clip_x(Bd[:, 0])) + 0.002) & \
+        (D.root_fillet_standoff(Bd[:, 0], Bd[:, 1] + 0.004) < D.ROOT_FILLET_MIN_D)
+    dm, dp, Bd = _two_way(Es, [Bt], dense=Bd[~thin])
+    rep.add("L4", "fairing lower silhouette (side) <-> BELLY_FAIRING_BOT", np.r_[dm, dp], tolp,
+            f"STA {Bt[0, 0]:.3f}-{Bt[-1, 0]:.3f} (incl. the stretch drawn dashed behind the gear); mesh nose tip STA "
+            f"{Es[0, 0]:.3f} WL {Es[0, 1]:.3f} vs drawn {Bt[0, 0]:.3f} / {Bt[0, 1]:.3f} ({int(thin.sum())} drawn points "
+            f"at the tip thinner than {1000 * D.ROOT_FILLET_MIN_D:.1f} mm skipped)",
+            worst_list(np.r_[dm, dp], _xz(np.r_[Es, Bd])))
+    # (b) front view: flat bottom WL + corner radius + vertical walls (belly_fairing_section), both ways
+    dm_all, dp_all, per = [], [], []
+    rr_ = D.BELLY_FAIRING_FLAT["r"]
+    for x in np.arange(5.45, 7.41, 0.15):
+        Q = densify_segments(slice_segments(Vl, Fl, (1, 0, 0), x), 0.002)
+        ring = D.belly_fairing_section(x, n=1440, z_top=1.30)[:, 1:]
+        if not len(Q):
+            dm_all.append(np.array([1.0]))
+            continue
+        dm = Curves([ring], closed=True).dist(Q[:, 1:])[0]
+        R = densify_poly(ring, 0.002, closed=True)
+        zb = float(D.belly_fairing_bottom(x))
+        P3 = np.c_[np.full(len(R), x), R]
+        keep = (R[:, 1] < zb + rr_ + 0.002) & (oml_dist(P3) > 0.004)
+        zl = D.wing_lower_z(P3[keep, 0], P3[keep, 1])
+        k2 = np.isnan(zl) | (P3[keep, 2] < zl - 0.004)
+        Pk = P3[keep][k2]
+        dp = cKDTree(Q[:, 1:]).query(Pk[:, 1:])[0] if len(Pk) else np.zeros(0)
+        dm_all.append(dm)
+        dp_all.append(dp)
+        per.append((x, 1000 * dm.max(), 1000 * (dp.max() if len(dp) else 0.0)))
+    d = np.r_[np.concatenate(dm_all), np.concatenate(dp_all) if dp_all else np.zeros(0)]
+    rep.add("L4", "fairing sections (front) <-> belly_fairing_section (flat, r 70)", d, tolp,
+            f"STA 5.45-7.40 every 150 mm; flat bottom BL +/-{D.BELLY_FAIRING_FLAT['hw']:.3f}, walls at the footprint "
+            "half-width", [f"STA {a:.2f}: {b:.1f} / {c:.1f} mm (mesh->param / param->mesh)"
+                           for a, b, c in sorted(per, key=lambda t: -max(t[1], t[2]))[:4]])
+    # (c) plan view: the root fillet's outer edge on the wing (BELLY_FAIRING_PLAN), both ways; aft of
+    # ROOT_FILLET_TAPER the fillet fades out ahead of the cargo-door (D2) seam -- open item, reported apart
+    Pp = np.array(D.BELLY_FAIRING_PLAN)
+    xt = D.ROOT_FILLET_TAPER
+    xs = np.arange(Pp[0, 0] - 0.04, Pp[-1, 0] + 0.03, 0.002)
+    d_in, d_open, P_in, P_open = [], [], [], []
+    for sg in (1, -1):
+        E_ = []
+        for x in xs:
+            Q = densify_segments(slice_segments(Vb, Fb, (1, 0, 0), x), 0.002)
+            Q = Q[Q[:, 1] * sg > 0]
+            if len(Q):
+                E_.append((x, float(np.abs(Q[:, 1]).max())))
+        E_ = np.array(E_)
+        a = E_[(E_[:, 0] <= xt) & (E_[:, 0] >= Pp[0, 0]) & (E_[:, 1] >= Pp[0, 1])]   # outboard of the drawn start
+        pp = densify_poly(Pp, 0.002)
+        d1 = Curves([Pp]).dist(a)[0]
+        d2 = cKDTree(E_).query(pp[pp[:, 0] <= xt])[0]
+        d3 = cKDTree(E_).query(pp[pp[:, 0] > xt])[0]
+        d_in += [d1, d2]
+        P_in += [np.c_[a[:, 0], sg * a[:, 1], np.full(len(a), 1.3)],
+                 np.c_[pp[pp[:, 0] <= xt, 0], sg * pp[pp[:, 0] <= xt, 1], np.full(int((pp[:, 0] <= xt).sum()), 1.3)]]
+        d_open.append(d3)
+        P_open.append(np.c_[pp[pp[:, 0] > xt, 0], sg * pp[pp[:, 0] > xt, 1], np.full(int((pp[:, 0] > xt).sum()), 1.3)])
+    d = np.concatenate(d_in)
+    rep.add("L4", "root-fillet plan edge on the wing <-> BELLY_FAIRING_PLAN", d, tolp,
+            f"STA {Pp[0, 0]:.3f}-{xt:.3f} (to ROOT_FILLET_TAPER), both sides, normal distance",
+            worst_list(d, np.vstack(P_in)))
+    d = np.concatenate(d_open)
+    Po = np.vstack(P_open)
+    far = Po[d * 1000 > tolp, 0] if (d * 1000 > tolp).any() else np.zeros(0)
+    rep.add("L4", "root-fillet plan edge aft of ROOT_FILLET_TAPER (fade-out) vs drawn", d, tolp,
+            f"OPEN (CLAUDE.md: fillet fades out ahead of the D2 seam instead of the drawn tail lobe); drawn edge STA "
+            f"{xt:.3f}-{Pp[-1, 0]:.3f} is > {tolp:.0f} mm from the mesh over STA "
+            f"{far.min() if len(far) else 0:.3f}-{far.max() if len(far) else 0:.3f}", worst_list(d, Po),
+            status="OPEN" if d.max() * 1000 > tolp else None)
+    # (d) the fillet / fairing-nose surface lies on its parameter law y = side_y(x, z) + root_fillet_standoff(x, z)
+    used = np.unique(Ff)
+    P = Vf[used]
+
+    def g(x, z):
+        return F.side_y(F.clip_x(x), z) + D.root_fillet_standoff(x, z)
+    h = 1e-4
+    x, z = P[:, 0], P[:, 2]
+    f = np.abs(P[:, 1]) - g(x, z)
+    gx = (g(x + h, z) - g(x - h, z)) / (2 * h)
+    gz = (g(x, z + h) - g(x, z - h)) / (2 * h)
+    dn = f / np.sqrt(1.0 + gx ** 2 + gz ** 2)
+    rep.add("L4", "root fillet / fairing nose on its law (side_y + standoff)", dn, TOL["oml"],
+            f"{len(P)} vertices; normal distance (first order)", worst_list(dn, P))
+    # (e) the fillet's upper edge (side view): mesh vs the parameter edge (standoff = ROOT_FILLET_MIN_D), 2-D both ways;
+    # and how far below the drawn line (BELLY_FAIRING_NOSE_EDGE + TAIL) that tangent edge lies
+    z_up, z_lo, y_out, (x0, x1) = D.root_fillet_lines()
+    Ep, Em = [], {1: [], -1: []}
+    for x in np.arange(x0 + 0.002, x1 - 0.002, 0.004):
+        zj, S, zu, zl, _ = (float(v) for v in D._fillet_frame(np.array(x)))
+        zz = np.linspace(zl, zu, 2400)
+        ok = zz[D.root_fillet_standoff(np.full_like(zz, x), zz) >= D.ROOT_FILLET_MIN_D]
+        if len(ok):
+            Ep.append((x, float(ok.max())))
+        Q = densify_segments(slice_segments(Vf, Ff, (1, 0, 0), x), 0.002)
+        for sg in (1, -1):
+            q = Q[Q[:, 1] * sg > 0] if len(Q) else Q
+            if len(q):
+                Em[sg].append((x, float(q[:, 2].max())))
+    Ep = np.array(Ep)
+    d_all, P_all = [], []
+    for sg in (1, -1):
+        M_ = np.array(Em[sg])
+        dm, dp, _ = _two_way(M_, [Ep], dense=Ep)
+        d_all += [dm, dp]
+        P_all += [np.c_[M_[:, 0], np.full(len(M_), sg * 0.8), M_[:, 1]], np.c_[Ep[:, 0], np.full(len(Ep), sg * 0.8), Ep[:, 1]]]
+    d = np.concatenate(d_all)
+    rep.add("L4", "root-fillet upper edge (side) <-> its parameter edge", d, tolp,
+            f"STA {x0:.3f}-{x1:.3f}, 2-D normal distance; parameter edge = standoff {1000 * D.ROOT_FILLET_MIN_D:.1f} mm "
+            "(thinner is left to the skin)", worst_list(d, np.vstack(P_all)))
+    off = np.array([(x, float(z_up(x)) - z) for x, z in Ep if x <= D.ROOT_FILLET_TAPER])
+    nose = off[off[:, 0] < 5.51]
+    i = int(np.argmax(nose[:, 1]))
+    aft = off[off[:, 0] >= 5.51]
+    rep.add("L4", "drawn fairing upper edge (NOSE_EDGE / TAIL) -> fillet edge", off[:, 1], None,
+            f"tangent blend (standoff < {1000 * D.ROOT_FILLET_MIN_D:.1f} mm above): the parameter edge lies "
+            f"{1000 * aft[:, 1].min():.0f}-{1000 * aft[:, 1].max():.0f} mm below the drawn line over STA 5.51-"
+            f"{D.ROOT_FILLET_TAPER:.2f}, up to {1000 * nose[i, 1]:.0f} mm under NOSE_EDGE (STA {nose[i, 0]:.3f}; the nose edge is "
+            "drawn clear of the open airstair door's swept wedge, so its door limit no longer cuts the bump)", status="INFO")
+
+
+def _l4_chin_inlet(ctx, rep):
+    """Chin inlet (powerplant.CHIN_INLET): the mouth (front view) and the polished lip ring (front view + side
+    crescent), as sheets L4 / L5 draw them.  The lip is the lower-cowl skin raised to the drawn lip outline
+    (powerplant.chin_cheek_offset); its polished part = the raised skin inside the front-view lip outline AND the side
+    crescent, so the polished arms end at the crescent top (WL ~1.56); the drawn loop's upper ends (to WL 1.685, into
+    the stack roots) are the painted cheek line.  Above the mouth tips the ring's inner edge is behind the spinner."""
+    lip_m = L.SURFACES["inlet_lip"]
+    mouth = PP.chin_inlet_outline("mouth")
+    lipO = PP.chin_inlet_outline("lip")[:-1]               # open at its top ends (they run into the stack roots)
+    side = PP.chin_inlet_outline("side")
+    z_top = float(side[:, 1].max())
+    V, Fm = merged(ctx.get("cowl_lower") + ctx.get("chin_inlet", mats=(lip_m,)))
+    comps = [c for c in boundary_components(V, Fm, min_area=1e-6) if c["P"][:, 0].max() < 1.3]
+    if not comps:
+        rep.add("L4", "chin-inlet mouth (front view) <-> CHIN_INLET mouth", status="FAIL", detail="no mouth hole")
+        return
+    P = comp_edge_points(V, comps)
+    d1, d2, Om = _two_way(P[:, 1:], [mouth])
+    rep.add("L4", "chin-inlet mouth (front view) <-> CHIN_INLET mouth outline", np.r_[d1, d2], TOL["opening"],
+            f"mesh mouth BL +/-{np.abs(P[:, 1]).max():.3f} WL {P[:, 2].min():.3f}-{P[:, 2].max():.3f} vs drawn BL "
+            f"+/-{np.abs(mouth[:, 0]).max():.3f} WL {mouth[:, 1].min():.3f}-{mouth[:, 1].max():.3f}; mouth edge STA "
+            f"{P[:, 0].min():.3f}-{P[:, 0].max():.3f} (in the raised lip face)",
+            worst_list(np.r_[d1, d2], np.r_[P, np.c_[np.full(len(Om), PP.CHIN_INLET['x']), Om]]))
+    Vl, Fl = ctx.mesh(("chin_inlet",), mats=(lip_m,))
+    sil = plan_silhouette(Vl, Fl, (-0.45, 1.12, 0.45, 1.78), res=0.001, close_r=0.002, axes=(1, 2))
+    sb = PP.axis_point(F.STA["cowl_front"])
+    th = np.linspace(0.0, 2.0 * np.pi, 400)
+    spin = np.c_[sb[1] + F.SPINNER_R * np.cos(th), sb[2] + F.SPINNER_R * np.sin(th)]
+    lipC = lipO[lipO[:, 1] <= z_top]                         # the polished part of the drawn outer edge
+    # the polished arms' top ends (the side crescent's top, PP.chin_lip_polished_top): L5 clips the chrome fill at its
+    # mean WL, from the spinner disc out to the loop
+    za, zb_ = PP.chin_lip_polished_top()
+    zt_ = 0.5 * (za + zb_)
+    ends = []
+    for sg in (1.0, -1.0):
+        H_ = lipO[lipO[:, 0] * sg > 0]
+        H_ = H_[np.argsort(H_[:, 1])]
+        yo = float(np.interp(zt_, H_[:, 1], np.abs(H_[:, 0])))
+        yi = float(np.sqrt(max(F.SPINNER_R ** 2 - (zt_ - sb[2]) ** 2, 0.0)))
+        ends.append(np.array([[sg * yi, zt_], [sg * yo, zt_]]))
+    dm, dp, Ol = _two_way(sil, [lipO, mouth, spin] + ends, dense=densify_poly(lipC, 0.002))
+    # visible (front view) areas: the drawn ring = lip outline - mouth - spinner disc (below the crescent top); the mesh
+    # chrome - spinner disc
+    box = (-0.45, 1.12, 0.45, 1.95)
+    S_ = _raster_mask(box, polys=[spin])
+    rows = np.arange(S_.shape[0]) * 0.001 + box[1]
+    below = (rows <= z_top)[:, None]
+    ring = _raster_mask(box, polys=[PP.chin_inlet_outline("lip")]) & ~_raster_mask(box, polys=[mouth]) & ~S_ & below
+    chrome = _raster_mask(box, tris=Vl[Fl][:, :, 1:]) & ~S_
+    px = 1e-6
+    rep.add("L4", "chin-inlet lip ring (front view) <-> CHIN_INLET lip outline", np.r_[dm, dp], TOL["livery"],
+            f"chrome lip BL +/-{np.abs(Vl[:, 1]).max():.3f} WL {Vl[:, 2].min():.3f}-{Vl[:, 2].max():.3f} vs drawn ring "
+            f"BL +/-{np.abs(lipO[:, 0]).max():.3f} WL {lipO[:, 1].min():.3f}-{lipO[:, 1].max():.3f} (polished to the side "
+            f"crescent top WL {z_top:.3f}; inner edge = mouth / spinner disc); visible area {chrome.sum() * px:.3f} vs "
+            f"{ring.sum() * px:.3f} m^2 ({100.0 * (ring & chrome).sum() / max(ring.sum(), 1):.0f} % of the drawn ring "
+            "is chrome)",
+            worst_list(np.r_[dm, dp], np.r_[np.c_[np.full(len(sil), 1.15), sil],
+                                              np.c_[np.full(len(Ol), 1.15), Ol]], fmt="x {:.2f} y {:+.3f} z {:.3f}"))
+    # the loop's upper ends above the crescent: the painted cheek -- front-view silhouette of the raised lower cowl
+    Vc, Fc = merged(ctx.get("cowl_lower") + ctx.get("chin_inlet"))
+    keep = Vc[Fc][:, :, 0].max(1) < 1.80
+    silc = plan_silhouette(Vc, Fc[keep], (-0.45, 1.12, 0.45, 1.78), res=0.001, close_r=0.002, axes=(1, 2))
+    up = lipO[lipO[:, 1] > z_top]
+    if len(up) and len(silc):
+        d_up = cKDTree(silc).query(densify_poly(up, 0.002))[0]
+        rep.add("L4", "chin-inlet cheek line (lip loop above the crescent top) vs raised cowl", d_up, None,
+                f"drawn loop WL {z_top:.3f}-{lipO[:, 1].max():.3f} (painted cheek into the stack roots, faded "
+                f"CHIN_CHEEK_TOP {PP.CHIN_CHEEK_TOP}) vs the front-view silhouette of the raised lower cowl",
+                status="INFO")
+    silS = plan_silhouette(Vl, Fl, (1.05, 1.12, 1.35, 1.66), res=0.001, close_r=0.002, axes=(0, 2))
+    dm, dp, Os = _two_way(silS, [side])
+    Vw, Fw = weld(Vl, Fl)
+    _, lab = connected_components(coo_matrix((np.ones(3 * len(Fw)), (np.r_[Fw[:, 0], Fw[:, 1], Fw[:, 2]],
+                                                                      np.r_[Fw[:, 1], Fw[:, 2], Fw[:, 0]])),
+                                             shape=(len(Vw), len(Vw))), directed=False)
+    pieces = sorted((float(Vw[lab == k, 2].min()), float(Vw[lab == k, 2].max())) for k in np.unique(lab[np.unique(Fw)]))
+    rep.add("L4", "chin-inlet lip (side view) <-> CHIN_INLET side crescent", np.r_[dm, dp], TOL["livery"],
+            f"chrome silhouette, both halves; {len(pieces)} chrome piece(s) at WL "
+            + ", ".join(f"{a:.3f}-{b:.3f}" for a, b in pieces[:6]) + (" ..." if len(pieces) > 6 else ""),
+            worst_list(np.r_[dm, dp], _xz(np.r_[silS, Os])))
+
+
+def _l4_exhaust_stacks(ctx, rep):
+    """Exhaust stacks: side / plan / front silhouettes of each scarfed tube vs powerplant.exhaust_stack_silhouette."""
+    V, Fm = ctx.mesh(("exhaust_stacks",))
+    d_all, P_all, per = [], [], []
+    for view, axes in (("side", (0, 2)), ("plan", (0, 1)), ("front", (1, 2))):
+        for sg in (1, -1):
+            keep = V[Fm][:, :, 1].mean(1) * sg > 0
+            S = PP.exhaust_stack_silhouette(sg, view)
+            box = (S[:, 0].min() - 0.03, S[:, 1].min() - 0.03, S[:, 0].max() + 0.03, S[:, 1].max() + 0.03)
+            sil = plan_silhouette(V, Fm[keep], box, res=0.001, close_r=0.002, axes=axes)
+            dm, dp, Sd = _two_way(sil, [S])
+            d_all += [dm, dp]
+            emb = lambda Q, ax=axes: np.array([[q[ax.index(k)] if k in ax else np.nan for k in range(3)] for q in Q])  # noqa: E731
+            P_all += [emb(sil), emb(Sd)]
+            per.append(f"{view} {'S' if sg > 0 else 'P'} {1000 * max(dm.max(), dp.max()):.1f}")
+    d = np.concatenate(d_all)
+    rep.add("L4", "exhaust stacks: side / plan / front silhouettes <-> parameters", d, TOL["planform"],
+            "max mm per view: " + ", ".join(per), worst_list(d, np.vstack(P_all)))
+
+
+def _pivot(ctx, pid):
+    """(origin, unit axis) of a part's pivot in model axes (extras are in glTF axes: X = y, Y = z, Z = x)."""
+    pv = (ctx.extras.get(pid) or {}).get("pivot")
+    if not pv:
+        return None, None
+    o, a = np.asarray(pv["origin"], float), np.asarray(pv["axis"], float)
+    return np.array([o[2], o[0], o[1]]), np.array([a[2], a[0], a[1]]) / np.linalg.norm(a)
+
+
+def _line_dist(o, a, P):
+    """Distances of points P from the line o + t a."""
+    w = np.atleast_2d(P) - o
+    return np.linalg.norm(w - np.outer(w @ a, a), axis=1)
+
+
+def _l4_controls(ctx, rep):
+    """Control-surface ends, hinge lines and tabs as sheet L4 draws them (plan: flap / aileron ends, aileron hinge and
+    Flettner tab, elevator hinge; side: rudder hinge, gap line and trim tab)."""
+    tolp = TOL["planform"]
+    # ---- wing: flap / aileron / tab span ends (plan), aileron + tab hinge (plan)
+    dev, lab = [], []
+    for side, sg in (("R", 1), ("L", -1)):
+        Vf_ = ctx.verts(f"flap_{side}")
+        Va = ctx.verts(f"aileron_{side}", exclude=("black",))
+        Vt = ctx.verts(f"ail_tab_{side}")
+        for nm, got, exp in (("flap outboard end", np.abs(Vf_[:, 1]).max(), W.Y_FLAP[1] - W.GAP),
+                             ("aileron inboard end", np.abs(Va[:, 1]).min(), W.Y_AIL[0] + W.GAP),
+                             ("aileron outboard end", np.abs(Va[:, 1]).max(), W.Y_AIL[1] - W.GAP),
+                             ("tab inboard end", np.abs(Vt[:, 1]).min(), W.Y_AIL[0] + 0.06 + 0.008),
+                             ("tab outboard end", np.abs(Vt[:, 1]).max(), W.Y_AIL[0] + 0.72 - 0.008)):
+            dev.append(got - exp)
+            lab.append(f"{side} {nm}: BL {got:.4f} vs {exp:.4f}")
+        # the tab's gap line (plan): its forward edge at the drawn 94.5 % chord line
+        for y in np.linspace(W.Y_AIL[0] + 0.12, W.Y_AIL[0] + 0.66, 5):
+            Q = densify_segments(slice_segments(*ctx.mesh((f"ail_tab_{side}",)), (0, 1, 0), sg * y), 0.001)
+            if len(Q):
+                exp = float(W.x_le(y) + 0.945 * W.chord(y))
+                dev.append(Q[:, 0].min() - exp)
+                lab.append(f"{side} tab front at BL {y:.2f}: STA {Q[:, 0].min():.4f} vs {exp:.4f}")
+    dev = np.array(dev)
+    i = np.argsort(-np.abs(dev))
+    rep.add("L4", "flap / aileron / Flettner-tab ends and tab line (plan)", dev, tolp,
+            f"Y_FLAP[1] {W.Y_FLAP[1]}, Y_AIL {W.Y_AIL}, tab BL +0.06..+0.72 at 94.5 % chord, spanwise gaps "
+            f"{1000 * W.GAP:.0f} / 8 mm", [lab[k] for k in i[:5]])
+    Vfl = ctx.verts("flap_R")
+    rep.add("L4", "flap inboard end: 3-D body vs drawn (hidden) Y_FLAP[0]", np.array([np.abs(Vfl[:, 1]).min() - W.Y_FLAP[0]]),
+            None, f"3-D flap body from BL {np.abs(Vfl[:, 1]).min():.3f} (FLAP_BODY_Y0 {W.FLAP_BODY_Y0}: outboard of the belly "
+            f"fairing) vs the drawn end BL {W.Y_FLAP[0]} dashed under the fairing (CLAUDE.md)", status="INFO")
+    (hy0, hx0), (hy1, hx1) = W.AIL_HINGE
+    dh, lab = [], []
+    for side, sg in (("R", 1), ("L", -1)):
+        o, a = _pivot(ctx, f"aileron_{side}")
+        if o is None:
+            dh.append(1.0)
+            lab.append(f"aileron_{side}: no pivot")
+            continue
+        for y, x in ((hy0, hx0), (hy1, hx1)):
+            t = (sg * y - o[1]) / a[1]
+            p = o + t * a
+            dh.append(p[0] - x)
+            lab.append(f"aileron_{side} hinge at BL {y:.2f}: STA {p[0]:.4f} vs AIL_HINGE {x:.4f}")
+    # elevator hinge (plan chain line: ELEV_XH of the local chord = STA ~14.000) and rudder hinge (side chain line)
+    for side, sg in (("R", 1), ("L", -1)):
+        o, a = _pivot(ctx, f"elevator_{side}")
+        for y in E.ELEV_Y:
+            x_exp = E.stab_le(y) + E.ELEV_XH * (E.stab_te(y) - E.stab_le(y))
+            t = (sg * y - o[1]) / a[1]
+            p = o + t * a
+            dh.append(math.hypot(p[0] - x_exp, p[2] - E.STAB_Z))
+            lab.append(f"elevator_{side} hinge at BL {y:.2f}: STA {p[0]:.4f} WL {p[2]:.4f} vs {x_exp:.4f} / {E.STAB_Z}")
+    o, a = _pivot(ctx, "rudder")
+    for e in ("bottom", "top"):
+        q = np.array(E.rudder_edge_point(E.RUD_XH, e))
+        dh.append(float(_line_dist(o, a, np.array([q[0], 0.0, q[1]]))[0]))
+        lab.append(f"rudder hinge {e} point ({q[0]:.4f}, {q[1]:.4f}) off the pivot line")
+    t0, t1, tx = E.RUD_TAB
+    o, a = _pivot(ctx, "rudder_tab")
+    for z in (t0, t1):
+        q = np.array([E.fin_le(z) + tx * (E.fin_te(z) - E.fin_le(z)), 0.0, z])
+        dh.append(float(_line_dist(o, a, q)[0]))
+        lab.append(f"rudder-tab hinge at WL {z:.2f}: drawn STA {q[0]:.4f} off the pivot line")
+    dh = np.array(dh)
+    i = np.argsort(-np.abs(dh))
+    rep.add("L4", "hinge lines: aileron / elevator / rudder / rudder tab vs pivots", dh, tolp,
+            "pivot extras (glTF) vs AIL_HINGE, ELEV_XH, RUD_XH (rudder_edge_point), RUD_TAB", [lab[k] for k in i[:5]])
+    # rudder gap line (side: E.rudder_outline's gap line at E.rudder_gap_xc(), drawn solid): the visible seam of the 3-D
+    # rudder is the fixed fin skin's aft edge (the cove lip, wing.x_end_of_plain); the rudder nose (RUD_NOSE_XC, drawn
+    # hidden) lies inside the cove
+    Vn, Fn = ctx.mesh(("fin",), mats=paint_mats())
+    Vru, Fru = ctx.mesh(("rudder",), mats=paint_mats())
+    dev, loc, xcs, noses = [], [], [], []
+    zb, ztp = E.RUD_Z
+    for z in np.arange(zb + 0.05, ztp - 0.05, 0.05):
+        Q = densify_segments(slice_segments(Vn, Fn, (0, 0, 1), z), 0.001)
+        R_ = densify_segments(slice_segments(Vru, Fru, (0, 0, 1), z), 0.001)
+        if not len(Q):
+            continue
+        le, te = E.fin_le(z), E.fin_te(z)
+        xg = float(E.fin_chord_x(E.rudder_gap_xc(), z))
+        dev.append(Q[:, 0].max() - xg)
+        loc.append((xg, 0.0, z))
+        xcs.append((Q[:, 0].max() - le) / (te - le))
+        if len(R_):
+            noses.append((R_[:, 0].min() - le) / (te - le))
+    lip = W.x_end_of_plain(E.fin_section(3.0), E.RUD_XH, E.RUD_COVE_GAP)[1]
+    rep.add("L4", "rudder gap line (side): fin-skin lip vs drawn gap line (rudder_gap_xc)", np.array(dev), tolp,
+            f"visible seam (fin skin aft edge) at {min(xcs):.4f}-{max(xcs):.4f} c (x_end_of_plain {lip:.4f}) vs the drawn "
+            f"gap line {E.rudder_gap_xc():.4f} c; the 3-D rudder nose ({min(noses):.3f}-{max(noses):.3f} c, drawn "
+            f"hidden at RUD_NOSE_XC {E.RUD_NOSE_XC:.3f}) is in the cove", worst_list(dev, np.array(loc)))
+    Vr, Fr = ctx.mesh(("rudder_tab",))
+    dev, loc = [], []
+    for z in np.linspace(t0 + 0.05, t1 - 0.05, 8):
+        Q = densify_segments(slice_segments(Vr, Fr, (0, 0, 1), z), 0.001)
+        xg = E.fin_le(z) + tx * (E.fin_te(z) - E.fin_le(z))
+        dev.append(Q[:, 0].min() - xg if len(Q) else 1.0)
+        loc.append((xg, 0.0, z))
+    Vt_ = ctx.verts("rudder_tab")
+    dev += [Vt_[:, 2].min() - t0, Vt_[:, 2].max() - t1]
+    loc += [(0, 0, t0), (0, 0, t1)]
+    rep.add("L4", "rudder trim tab (side) vs RUD_TAB", np.array(dev), tolp,
+            f"tab front vs {tx} chord; tab WL {Vt_[:, 2].min():.3f}-{Vt_[:, 2].max():.3f} vs {t0}-{t1}",
+            worst_list(dev, np.array(loc)))
+
+
+def _l4_tail_details(ctx, rep):
+    """Dorsal / fin root-fillet foot (plan: dorsal_fillet_hw), fin thickness (front view), strakes (front view at
+    FR40, strake_frame)."""
+    tolp = TOL["planform"]
+    V, Fm = ctx.mesh(("dorsal_fin", "fin"), mats=paint_mats())
+    T = np.array(E.DORSAL_FILLET)
+    dev, loc = [], []
+    for x in np.arange(T[0, 0] + 0.03, T[-1, 0] - 0.01, 0.05):
+        Q = densify_segments(slice_segments(V, Fm, (1, 0, 0), x), 0.002)
+        hw = float(E.dorsal_fillet_hw(x))
+        for sg in (1, -1):
+            q = Q[Q[:, 1] * sg > 0] if len(Q) else Q
+            dev.append(np.abs(q[:, 1]).max() - hw if len(q) else 1.0)
+            loc.append((x, sg * hw, float(F.z_at(x, hw))))
+    rep.add("L4", "dorsal / fin root-fillet foot (plan) vs dorsal_fillet_hw", np.array(dev), tolp,
+            f"STA {T[0, 0] + 0.03:.2f}-{T[-1, 0] - 0.01:.2f} every 50 mm, both sides (max |BL| of dorsal + fin)",
+            worst_list(dev, np.array(loc)))
+    # fin (front view): half-thickness per WL from the fin / crown junction to the bullet bottom
+    zc = float(np.linspace(2.3, 3.0, 701)[np.argmin(np.abs(F.z_top(E.fin_le(np.linspace(2.3, 3.0, 701)))
+                                                          - np.linspace(2.3, 3.0, 701)))])
+    Vn, Fn = ctx.mesh(("fin", "rudder", "rudder_tab"), mats=paint_mats())
+    dev, loc = [], []
+    for z in np.arange(zc + 0.10, E.BULLET[8][2] - 0.02, 0.05):
+        s = E.fin_section(z)
+        fw = 0.5 * s.chord * float(s.airfoil.thickness(np.linspace(0, 1, 401)).max())
+        Q = densify_segments(slice_segments(Vn, Fn, (0, 0, 1), z), 0.001)
+        dev.append(np.abs(Q[:, 1]).max() - fw if len(Q) else 1.0)
+        loc.append((float(E.fin_le(z)), fw, z))
+    rep.add("L4", "fin half-thickness (front view) vs fin_section", np.array(dev), tolp,
+            f"WL {zc + 0.1:.2f}-{E.BULLET[8][2] - 0.02:.2f} every 50 mm", worst_list(dev, np.array(loc)))
+    # strakes (front view at FR40): the plate's centre line root -> tip, canted STRAKE_CANT
+    Vs, Fs = ctx.mesh(("strakes",))
+    x = F.FRAMES["FR40"]
+    dev, loc = [], []
+    for xx in (x, x - 0.6, x - 1.2):
+        fr = E.strake_frame(xx)
+        if fr is None:
+            continue
+        r, t = fr
+        Q = densify_segments(slice_segments(Vs, Fs, (1, 0, 0), xx), 0.001)
+        for sg in (1, -1):
+            q = Q[Q[:, 1] * sg > 0]
+            if not len(q):
+                dev.append(1.0)
+                loc.append(tuple(t * [1, sg, 1]))
+                continue
+            rs, ts = r * [1, sg, 1], t * [1, sg, 1]
+            u = (ts - rs) / np.linalg.norm(ts - rs)
+            dl = _line_dist(rs, u, q) - 0.5 * E.STRAKE_T               # off the plate (beyond its half-thickness)
+            dev.append(max(0.0, float(dl.max())))
+            loc.append(tuple(ts))
+            tip = q[np.argmax((q - rs) @ u)]
+            dev.append(float((tip - rs) @ u - np.linalg.norm(ts - rs)))
+            loc.append(tuple(ts))
+    rep.add("L4", "strakes (front view, FR40 and 0.6 / 1.2 m ahead) vs strake_frame", np.array(dev), tolp,
+            f"plate centre line root -> tip (cant {math.degrees(E.STRAKE_CANT):.0f} deg) and tip reach",
+            worst_list(dev, np.array(loc)))
+
+
+def _l4_gear(ctx, rep):
+    """Gear pivots and brace ends (the drawn trunnion / pivot circles and brace lines) vs the pivot extras."""
+    dev, lab = [], []
+    for pid, P_exp, ax_exp in (("gear_main_R", G.MAIN_TRUNNION, (1, 0, 0)),
+                               ("gear_main_L", G.MAIN_TRUNNION * [1, -1, 1], (1, 0, 0)),
+                               ("gear_nose", G.NOSE_PIVOT, (0, 1, 0))):
+        o, a = _pivot(ctx, pid)
+        if o is None:
+            dev.append(1.0)
+            lab.append(f"{pid}: no pivot")
+            continue
+        dev += list(o - P_exp) + [math.sqrt(max(0.0, 1.0 - float(abs(a @ np.array(ax_exp))) ** 2))]
+        lab.append(f"{pid}: origin {np.round(o, 4).tolist()} vs {np.round(P_exp, 4).tolist()}, axis {np.round(a, 3).tolist()}")
+    for pid, (A, B) in (("brace_main_R_up", G.MAIN_BRACE), ("brace_main_L_up", tuple(np.array(p) * [1, -1, 1] for p in G.MAIN_BRACE)),
+                        ("brace_nose_up", G.NOSE_BRACE)):
+        pv = (ctx.extras.get(pid) or {}).get("pivot") or {}
+        if "A" not in pv:
+            dev.append(1.0)
+            lab.append(f"{pid}: no brace data")
+            continue
+        dev += list(np.array(pv["A"]) - np.array(A)) + list(np.array(pv["B0"]) - np.array(B))
+        lab.append(f"{pid}: A {np.round(pv['A'], 4).tolist()} B0 {np.round(pv['B0'], 4).tolist()} vs {np.round(A, 4).tolist()} "
+                   f"/ {np.round(B, 4).tolist()}")
+    dev = np.array(dev)
+    rep.add("L4", "gear trunnion / nose pivot / brace ends vs gear parameters", dev, TOL["planform"],
+            "pivot extras (MAIN_TRUNNION, NOSE_PIVOT, MAIN_BRACE, NOSE_BRACE)", lab)
+    # the retracted main wheel (L4 gear detail, phantom: gear.retracted_wheel) = the built tyre turned by the pivot's
+    # own retract angle (right-handed about the glTF axis, as web/viewer/kinematics.js poses it)
+    dev, lab = [], []
+    for pid, sg in (("gear_main_R", 1), ("gear_main_L", -1)):
+        o, a = _pivot(ctx, pid)
+        pv = (ctx.extras.get(pid) or {}).get("pivot") or {}
+        Vt = ctx.verts(pid, mats=("tire",))
+        if o is None or not len(Vt):
+            dev.append(1.0)
+            lab.append(f"{pid}: no pivot / tyre")
+            continue
+        th = math.radians(float(pv.get("retract", 0.0)))
+        K = np.array([[0, -a[2], a[1]], [a[2], 0, -a[0]], [-a[1], a[0], 0]])
+        Rm = np.eye(3) + math.sin(th) * K + (1 - math.cos(th)) * K @ K
+        c = 0.5 * (Vt.min(0) + Vt.max(0))
+        cr = o + Rm @ (c - o)
+        exp = G.retracted_wheel(sg)
+        dev += list(cr - exp)
+        lab.append(f"{pid}: retracted tyre centre {np.round(cr, 4).tolist()} vs retracted_wheel {np.round(exp, 4).tolist()}")
+    rep.add("L4", "retracted main wheel (phantom) vs pivot kinematics", np.array(dev), TOL["planform"],
+            "tyre centre turned by the pivot's retract angle", lab)
 
 
 # =====================================================================================================================
@@ -1496,11 +2095,17 @@ def check_L5(ctx, rep, plots):
             (np.interp(y, yg, te_z) - np.interp(y, yg, le_z)) / (np.interp(y, yg, te_x) - np.interp(y, yg, le_x))
         upper = P[:, 2] > zc
         dx = np.where(upper, P[:, 0] - np.interp(y, yg, up_x), P[:, 0] - np.interp(y, yg, lo_x))
-        dy = np.minimum(np.abs(y - W.BOOT_Y[0]), np.abs(y - W.BOOT_Y[1]))
+        # inboard end: BL 0.95, or the root fillet's foot line where the fillet covers it (details.boot_under_fillet:
+        # the boot ends in its own step on the foot line, MQ2-01)
+        Pp_ = np.array(D.BELLY_FAIRING_PLAN)
+        y_ft = D.root_fillet_lines()[2](np.clip(P[:, 0], Pp_[0, 0], Pp_[-1, 0]))
+        y0 = np.maximum(W.BOOT_Y[0], y_ft)
+        dy = np.minimum(np.abs(y - y0), np.abs(y - W.BOOT_Y[1]))
         dev.append(np.minimum(np.abs(dx), dy))
         Ps.append(P)
     d = np.concatenate(dev)
-    rep.add("L5", "wing boot band edges (10 % up / 6.5 % low, BL 0.95-7.43)", d, tol, "deice_boot boundary, both wings",
+    rep.add("L5", "wing boot band edges (10 % up / 6.5 % low, BL 0.95-7.43)", d, tol, "deice_boot boundary, both wings; "
+            "upper band from the root fillet's foot line where it covers BL 0.95-1.0",
             worst_list(d, np.vstack(Ps)))
 
     # ---- radar-pod radome joint, blade bands
@@ -1555,10 +2160,141 @@ def check_L5(ctx, rep, plots):
         rep.add("L5", f"surface colour: {name}", status="FAIL" if miss else "PASS", n=len(pairs),
                 detail=("missing " + ", ".join(miss[:6]) + (" ..." if len(miss) > 6 else "")) if miss else
                 " + ".join(sorted({m for _, m in pairs})))
+    for fn in (_l5_bands, _l5_details):
+        try:
+            fn(ctx, rep)
+        except Exception as ex:
+            import traceback
+            traceback.print_exc()
+            rep.add("L5", f"{fn.__name__} crashed", status="FAIL", detail=f"{type(ex).__name__}: {ex}")
     if plots and plot_pts:
         P = np.vstack([p for p, _ in plot_pts])
         dd = np.concatenate([d for _, d in plot_pts])
         _plot_livery(plots / "L5_boundaries.png", P, dd)
+
+
+def _l5_bands(ctx, rep):
+    """Colour bands whose edges round 1 only checked for presence: tailplane LE boot (STAB_BOOT), winglet pinstripe
+    (WINGLET_PIN), blade erosion strip (BLADE_LE_STRIP), exhaust-stack collar (STACK_COLLAR)."""
+    tol = TOL["livery"]
+    # ---- STAB_BOOT: chordwise edge 8 % (upper) / 6 % (lower) of the plan chord, span end at STAB_TIP_RIB
+    Vb, Fb = ctx.mesh(("stabilizer",), mats=(L.SURFACES["boot"],))
+    comps = boundary_components(Vb, Fb, min_area=1e-6, seams=True)
+    P = np.vstack([c["P"] for c in comps]) if comps else np.zeros((0, 3))
+    if len(P):
+        y = np.abs(P[:, 1])
+        le = np.array([E.stab_le(v) for v in y])
+        te = np.array([E.stab_te(v) for v in y])
+        frac = np.where(P[:, 2] >= E.STAB_Z, L.STAB_BOOT["upper"], L.STAB_BOOT["lower"])
+        dx = P[:, 0] - (le + frac * (te - le))
+        Bt = np.array(E.BULLET)
+        in_bullet = y <= np.interp(P[:, 0], Bt[:, 0], Bt[:, 3]) + 0.005     # the inboard end is inside the bullet
+        dy = np.where(in_bullet, 0.0, np.abs(y - E.STAB_TIP_RIB))           # span end at the tip rib
+        d = np.minimum(np.abs(dx), dy)
+        w = np.array([(P[i, 0] - le[i]) / (te[i] - le[i]) for i in range(len(P))])
+        rep.add("L5", "tailplane LE boot edges (STAB_BOOT 8 / 6 %, to STAB_TIP_RIB)", d, tol,
+                f"boot BL {y.min():.3f} (inside the bullet) - {y.max():.3f} (rib {E.STAB_TIP_RIB}); chord fraction of "
+                f"the edge {w[(dy > 0.01) & (P[:, 2] >= E.STAB_Z)].max():.4f} up / "
+                f"{w[(dy > 0.01) & (P[:, 2] < E.STAB_Z)].max():.4f} low",
+                worst_list(d, P))
+    else:
+        rep.add("L5", "tailplane LE boot edges (STAB_BOOT)", status="FAIL", detail="no boot sub-mesh")
+    # ---- WINGLET_PIN: |d| = half_width about the plane of winglet section s, chord c0..c1
+    p = L.WINGLET_PIN
+    secs = W.winglet_sections(40, 30)
+    sec = secs[int(round(p["s"] * (len(secs) - 1)))]
+    dev, P_, wid = [], [], []
+    for side, sg in (("R", 1), ("L", -1)):
+        V, Fm = ctx.mesh((f"winglet_{side}",), mats=("paint_pinstripe",))
+        comps = boundary_components(V, Fm, min_area=1e-7)
+        if not comps:
+            dev.append(np.array([1.0]))
+            P_.append(np.zeros((1, 3)))
+            continue
+        B = np.vstack([c["P"] for c in comps])
+        le = sec.le * [1, sg, 1]
+        e_c = sec.e_c * [1, sg, 1]
+        e_t = np.asarray(sec.e_t, float) * [1, sg, 1]
+        n = np.cross(e_c, e_t)
+        n /= np.linalg.norm(n)
+        dd = (B - le) @ n
+        xc = ((B - le) @ e_c) / sec.chord
+        d = np.minimum(np.abs(np.abs(dd) - p["half_width"]),
+                       np.minimum(np.abs(xc - p["c0"]), np.abs(xc - p["c1"])) * sec.chord)
+        dev.append(d)
+        P_.append(B)
+        mid = (xc > 0.2) & (xc < 0.8)
+        wid.append(1000 * (dd[mid].max() - dd[mid].min()) if mid.any() else np.nan)
+    d = np.concatenate(dev)
+    rep.add("L5", "winglet pinstripe edges (WINGLET_PIN, inboard face)", d, tol,
+            f"band width {', '.join(f'{w_:.1f}' for w_ in wid)} mm (R, L) vs {2000 * p['half_width']:.0f}; chord "
+            f"{p['c0']}-{p['c1']} of winglet section s {p['s']}", worst_list(d, np.vstack(P_)))
+    # ---- BLADE_LE_STRIP: erosion shield r0 .. red-band inner edge, width from the LE line
+    r_out = PP.PROP_R - L.PROP_BANDS[-1][2]
+    q = L.BLADE_LE_STRIP
+    dev, P_ = [], []
+    for k in range(PP.N_BLADES):
+        V, Fm = ctx.mesh((f"blade_{k + 1}",), mats=(L.SURFACES["blade_le"],))
+        comps = boundary_components(V, Fm, min_area=1e-7)
+        if not comps:
+            dev.append(np.array([1.0]))
+            P_.append(np.zeros((1, 3)))
+            continue
+        B = np.vstack([c["P"] for c in comps])
+        r, dl = L.blade_le_distance(B, k)
+        d = np.minimum(np.minimum(np.abs(r - q["r0"]), np.abs(r - r_out)), np.abs(dl - q["width"]))
+        dev.append(d)
+        P_.append(B)
+    d = np.concatenate(dev)
+    rep.add("L5", "blade erosion-strip edges (BLADE_LE_STRIP)", d, tol,
+            f"r {q['r0']}-{r_out:.3f}, {1000 * q['width']:.0f} mm from the LE line, 5 blades", worst_list(d, np.vstack(P_)))
+    # ---- exhaust-stack collar: polished / black boundary vs powerplant.exhaust_stack_collar
+    cb = colour_boundaries(ctx, "exhaust_stacks", mats={L.SURFACES["exhaust"], "black"})
+    B = np.vstack([P for P, ma, mb in cb if {ma, mb} == {L.SURFACES["exhaust"], "black"}]) if cb else np.zeros((0, 3))
+    if len(B):
+        C = [PP.exhaust_stack_collar(sg) for sg in (1, -1)]
+        d1 = Curves(C, step=5e-4).dist(B)[0]
+        d2 = cKDTree(B).query(np.vstack([densify_poly(c, 0.003) for c in C]))[0]
+        rep.add("L5", "exhaust-stack collar edge (STACK_COLLAR) <-> exhaust_stack_collar", np.r_[d1, d2], tol,
+                f"{PP.STACK_COLLAR * 1000:.0f} mm band at the scarfed outlets, both stacks",
+                worst_list(np.r_[d1, d2], np.r_[B, np.vstack([densify_poly(c, 0.003) for c in C])]))
+    else:
+        rep.add("L5", "exhaust-stack collar edge (STACK_COLLAR)", status="FAIL", detail="no polished / black boundary")
+
+
+def _l5_details(ctx, rep):
+    """Plan / side features L5 draws from the parameters: flap-track canoes (FLAP_CANOE_Y), nose-gear bay (NOSE_BAY)."""
+    # ---- canoes: the fixed fairings (and the flap-carried aft parts) at FLAP_CANOE_Y
+    V = np.vstack([ctx.verts("flap_fairings")] + [ctx.verts(f"flap_canoes_{s}") for s in ("R", "L")])
+    dev, lab = [], []
+    for sg in (1, -1):
+        for y in D.FLAP_CANOE_Y:
+            m = (V[:, 1] * sg > 0) & (np.abs(np.abs(V[:, 1]) - y) < 0.2)
+            if not m.any():
+                dev.append(1.0)
+                lab.append(f"BL {sg * y:+.3f}: no canoe")
+                continue
+            yc = 0.5 * (np.abs(V[m, 1]).min() + np.abs(V[m, 1]).max())
+            dev.append(yc - y)
+            lab.append(f"BL {sg * y:+.3f}: canoe centre {sg * yc:+.4f}")
+    rep.add("L5", "flap-track canoes: plan BL vs FLAP_CANOE_Y", np.array(dev), TOL["planform"], "; ".join(lab[:3]), lab)
+    # ---- nose-gear bay: the hole in the lower skins vs bays.NOSE_BAY (plan), both ways
+    V, Fm = merged(ctx.get("cowl_lower") + ctx.get("fus_fwd", mats=paint_mats()))
+    comps = [c for c in boundary_components(V, Fm, min_area=1e-5, drop=drop_panel_ends)
+             if c["P"][:, 2].max() < 1.15 and np.abs(BY.nose_bay_sdf(c["P"][:, 0], c["P"][:, 1])).mean() < 0.03]
+    if not comps:
+        rep.add("L5", "nose-gear bay opening vs NOSE_BAY (plan)", status="FAIL", detail="no bay hole found")
+        return
+    B = comp_edge_points(V, comps)
+    nb = BY.NOSE_BAY
+    O = densify_poly(sdf2d.rrect_outline(nb["cx"], nb["cy"], nb["hx"], nb["hy"], nb["r"], 32), 0.002, closed=True)
+    d1 = np.abs(BY.nose_bay_sdf(B[:, 0], B[:, 1]))
+    d2 = cKDTree(B[:, :2]).query(O)[0]
+    d = np.r_[d1, d2]
+    rep.add("L5", "nose-gear bay opening (plan) <-> NOSE_BAY", d, TOL["opening"],
+            f"hole STA {B[:, 0].min():.3f}-{B[:, 0].max():.3f} BL +/-{np.abs(B[:, 1]).max():.3f} vs NOSE_BAY "
+            f"{nb['cx'] - nb['hx']:.3f}-{nb['cx'] + nb['hx']:.3f} +/-{nb['hy']:.3f}; {len(comps)} loop(s)",
+            worst_list(d, np.r_[B, np.c_[O, np.full(len(O), 0.95)]]))
 
 
 # =====================================================================================================================
@@ -1671,12 +2407,13 @@ def main(argv=None):
                 traceback.print_exc()
                 rep.add(sheet, f"{fn.__name__} crashed", status="FAIL", detail=f"{type(ex).__name__}: {ex}")
     n_fail = sum(r.status == "FAIL" for r in rep.rows)
+    n_open = sum(r.status == "OPEN" for r in rep.rows)
     js = Path(a.json)
     js.parent.mkdir(parents=True, exist_ok=True)
     js.write_text(json.dumps(dict(glb=str(glb), tol_mm=TOL, seconds=round(time.time() - t0, 1),
                                   rows=[r.__dict__ for r in rep.rows]), indent=1))
     print(f"{'CONSISTENCY OK' if n_fail == 0 else 'CONSISTENCY FAIL'}: {len(rep.rows) - n_fail}/{len(rep.rows)} rows "
-          f"pass or info, {n_fail} fail ({time.time() - t0:.0f} s; report {js.relative_to(ROOT) if js.is_relative_to(ROOT) else js})")
+          f"pass, info or open ({n_open} open owner items), {n_fail} fail ({time.time() - t0:.0f} s; report {js.relative_to(ROOT) if js.is_relative_to(ROOT) else js})")
     return 1 if n_fail else 0
 
 

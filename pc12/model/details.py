@@ -38,8 +38,15 @@ BELLY_FAIRING_FLAT = dict(z=0.8715, hw=0.830, r=0.070)   # front view: flat bott
 # footprint half-width seen from below (flat bottom + corner radius; nose / aft closure assumed round)
 BELLY_FAIRING_HW = [(5.153, 0.060), (5.200, 0.420), (5.300, 0.690), (5.450, 0.860), (5.650, 0.900),
                     (7.150, 0.900), (7.350, 0.860), (7.480, 0.700), (7.550, 0.420), (7.600, 0.060)]
-BELLY_FAIRING_NOSE_EDGE = [(5.153, 1.052), (5.159, 1.082), (5.175, 1.119), (5.205, 1.162), (5.251, 1.213),
-                           (5.323, 1.288), (5.406, 1.360), (5.470, 1.407), (5.509, 1.432)]
+# Stage 3 (CONS2-05, parameter decision): the drawn nose edge ran up through the airstair door's lower aft corner (door
+# panel to STA 5290, hinge WL 1254, opens 160 deg: below the hinge the open slab sweeps everything more than 20 deg
+# outboard of the downward vertical).  The builder had to cut the nose bump there by up to 58 mm (a pinched crease
+# at the corner, the 3-D edge up to 83 mm under the drawn one).  The edge is redrawn clear of that wedge: it stays
+# under WL ~1.185 to the door edge + ROOT_FILLET_DOOR_CLEAR (the wedge limit meets the fuselage side at WL ~1.19
+# there) and rejoins the drawn line at STA 5406 -- up to 73 mm under the Pilatus line over STA 5.22-5.40
+# (rev: (5.205, 1.162), (5.251, 1.213), (5.323, 1.288)).
+BELLY_FAIRING_NOSE_EDGE = [(5.153, 1.052), (5.159, 1.082), (5.175, 1.119), (5.205, 1.148), (5.251, 1.168),
+                           (5.300, 1.180), (5.345, 1.232), (5.406, 1.360), (5.470, 1.407), (5.509, 1.432)]
 BELLY_FAIRING_TAIL = [(6.972, 1.631), (7.325, 1.605), (7.610, 1.574), (7.844, 1.531), (8.048, 1.483),
                       (8.251, 1.412), (8.436, 1.313), (8.567, 1.219), (8.581, 1.197), (8.585, 1.170),
                       (8.574, 1.141), (8.555, 1.124), (8.541, 1.118), (8.395, 1.104), (8.111, 1.078),
@@ -113,6 +120,20 @@ def belly_fairing():
     m = trim(m, oml_field(m.V) + 0.002, "positive")                      # outside the fuselage
     zl = wing_lower_z(m.V[:, 0], m.V[:, 1], behind_te=True)        # below the wing lower surface (behind the
     m = trim(m, np.where(np.isnan(zl), -1.0, m.V[:, 2] - zl - 0.002), "negative")   # chord: below its TE WL)
+    # and never above the drawn upper edge (nose edge / tail lobe): ahead of the wing the box walls (vertical up to
+    # WL 1.30) stood out of the fuselage side above the (redrawn, CONS2-05) fairing nose
+    z_up = root_fillet_lines()[0]
+    m = trim(m, m.V[:, 2] - z_up(np.clip(m.V[:, 0], BELLY_FAIRING_X[0], BELLY_FAIRING_X[1])), "negative")
+    # ahead of the wing the fairing nose (root_fillet) is the drawn shape: above its foot the box's walls stay inside
+    # it (they stood out of the nose near its upper edge, where the nose bump runs down to the fuselage side)
+    V = m.V
+    zj, _, _, zl, _ = _fillet_frame(V[:, 0])
+    zt, fch = wing_top(V[:, 0], V[:, 1])                # above the fillet foot, where the nose / fillet mesh exists
+    ahead = (V[:, 0] < 6.0) & (V[:, 2] > zj + 0.005) & ((fch > 0.0) | (V[:, 2] > zt + 0.004))
+    ys = F.side_y(np.clip(V[:, 0], F.STA["cowl_front"], F.STA["tail_end"]), V[:, 2])
+    f = np.where(ahead, ys + root_fillet_standoff(V[:, 0], V[:, 2]) - 0.008 - np.abs(V[:, 1]), 1.0)
+    if (f < 0).any():
+        m = trim(m, f, "positive")
     return m
 
 
@@ -130,10 +151,12 @@ def belly_fairing():
 # The drawn tail lobe runs on aft over the cargo-door panel (D2, STA 7540-8940) to STA 8585; sheet L3 note 7: the
 # fairing must not cut into the D2 panel, and the Pilatus NGX cargo-door photo shows the fairing ending at the door's
 # forward seam -- so the fillet fades out between ROOT_FILLET_TAPER and the D2 seam (both sides, symmetric).
-ROOT_FILLET_TAPER = 7.150          # STA where the aft fade-out starts (over ~0.37 m to the D2 seam)
+ROOT_FILLET_TAPER = 7.400          # STA where the aft fade-out starts (over ~0.13 m to the D2 seam); rev 7.150 left
+#                                    the drawn plan edge from STA 7.20, 0.26 m ahead of its knee at 7.457 (CONS2-04)
 ROOT_FILLET_GAP = 0.012            # m ahead of the D2 panel seam where the standoff has reached zero
 ROOT_FILLET_MIN_D = 0.0015         # standoffs below this are left to the fuselage skin (no z-fighting)
 ROOT_FILLET_BLEND = (0.020, 0.060) # m ahead of / behind the wing LE over which the nose bump turns into the fillet
+ROOT_FILLET_TE_BLEND = (0.050, 0.030)   # m ahead of / behind the wing TE over which the fillet turns back into the bump
 ROOT_FILLET_DOOR_CLEAR = 0.015     # m between the fairing nose and the open airstair door (door slab included)
 ROOT_FILLET_DOOR_RELAX = 4.0       # m of standoff per m of STA by which that limit relaxes aft of the door edge
 ROOT_FILLET_DOOR_SOFT = 0.012      # m, width of the soft minimum that applies the limit without a crease
@@ -179,7 +202,7 @@ def root_fillet_lines():
     lo = [p for p in BELLY_FAIRING_BOT if p[0] <= 5.34] + [(7.40, 0.930)] + [p for p in T[10:] if p[0] >= 7.53]
     z_lo = _pchip(lo)
     Pp = np.array(BELLY_FAIRING_PLAN)
-    y_out = lambda x: np.interp(x, Pp[:, 0], Pp[:, 1])                                   # noqa: E731
+    y_out = _pchip([tuple(p) for p in Pp])            # C1 through the drawn points (np.interp kinked the foot, MQ2-01)
     from model.fuselage_parts import CARGO, door_panel
     pan = door_panel(CARGO)
     x_end = pan["cx"] - pan["hx"] - ROOT_FILLET_GAP
@@ -189,6 +212,43 @@ def root_fillet_lines():
 def _smooth(t):
     t = np.clip(t, 0.0, 1.0)
     return t * t * (3.0 - 2.0 * t)
+
+
+ROOT_FILLET_FOOT_SMOOTH = 0.010    # m, Gaussian width over which the foot WL / standoff are smoothed along x (MQ2-01)
+
+
+def _foot(x, y_out):
+    """(WL, standoff) of the fillet foot at station(s) x: the wing's upper surface at the plan edge (clipped into the
+    chord) and the plan edge's standoff from the fuselage side there, both smoothed along x (Gaussian,
+    ROOT_FILLET_FOOT_SMOOTH) -- the raw foot jumps ~45 mm in WL and ~50 mm in standoff over ~10 mm where it rounds the
+    leading-edge nose (the drawn plan edge runs out along the unswept LE there) and kinks at the trailing edge, which
+    folded the surface in its 6 mm grid (MQ2-01).  Where the smoothed foot dips under the wing just aft of the LE nose
+    the fillet is trimmed by the wing."""
+    Pp = np.array(BELLY_FAIRING_PLAN)
+    ys, le, ch, _ = _wing_top_table()
+    x = np.asarray(x, float)
+    k = np.linspace(-2.0, 2.0, 11)
+    w = np.exp(-0.5 * k * k)
+    w /= w.sum()
+    x1 = root_fillet_lines()[3][1]
+    zj, S = np.zeros(x.shape), np.zeros(x.shape)
+    for kk, ww in zip(k, w):
+        xx = x + kk * ROOT_FILLET_FOOT_SMOOTH
+        xf = np.clip(xx, F.STA["cowl_front"], F.STA["tail_end"])
+        yo = y_out(np.clip(xx, Pp[0, 0], Pp[-1, 0]))
+        lo, te = np.interp(yo, ys, le), np.interp(yo, ys, le + ch)
+        z = wing_top(np.clip(xx, lo, te), yo)[0]
+        # aft fade-out (ROOT_FILLET_TAPER -> the D2 seam): the foot moves in towards the fuselage side -- keep it ON the
+        # wing at its faded butt line (the wing is lower inboard) instead of floating at the plan-edge WL
+        fade = 1.0 - _smooth((xx - ROOT_FILLET_TAPER) / (x1 - ROOT_FILLET_TAPER))
+        for _ in range(2):
+            ys_ = F.side_y(xf, z)
+            yf = np.maximum(ys_ + fade * (yo - ys_), ys[0])
+            lo, te = np.interp(yf, ys, le), np.interp(yf, ys, le + ch)
+            z = np.where(fade < 1.0, wing_top(np.clip(xx, lo, te), yf)[0], z)
+        zj += ww * z
+        S += ww * fade * np.maximum(yo - F.side_y(xf, z), 0.0)
+    return zj, S
 
 
 def _fillet_frame(x):
@@ -201,15 +261,21 @@ def _fillet_frame(x):
     xq = np.clip(x, xp0, Pp[-1, 0])
     yo = y_out(xq)
     ys, le, ch, _ = _wing_top_table()
-    le_o, te_o = np.interp(yo, ys, le), np.interp(yo, ys, le + ch)
-    zj = wing_top(np.clip(x, le_o, te_o), yo)[0]            # the fillet foot: wing upper surface at the plan edge
-    S = np.maximum(yo - F.side_y(np.clip(x, F.STA["cowl_front"], F.STA["tail_end"]), zj), 0.0)
+    le_o = np.interp(yo, ys, le)
+    zj, S = _foot(x, y_out)                                  # the fillet foot: wing upper surface at the plan edge
     s = np.clip((x - x0) / (xp0 - x0), 0.0, 1.0)            # nose ramp ahead of the plan outline (slender: the
     S = np.where(x < xp0, S * s * s, S)                      # open airstair door hangs next to it, see below)
-    S = S * (1.0 - _smooth((x - ROOT_FILLET_TAPER) / (x1 - ROOT_FILLET_TAPER)))   # fade out ahead of the D2 seam
+    # (the fade-out ahead of the D2 seam, ROOT_FILLET_TAPER -> x1, is applied in _foot)
     zu, zl = z_up(x), np.minimum(z_lo(x), zj - 1e-3)
     a = 1.0 - _smooth((le_o - x + ROOT_FILLET_BLEND[1]) / (ROOT_FILLET_BLEND[0] + ROOT_FILLET_BLEND[1]))
-    a = np.where(x > 0.5 * (xp0 + Pp[-1, 0]), 1.0, a)     # aft half: the fillet law right to the fade-out
+    # aft half: the fillet law, turning back into the round bump over ROOT_FILLET_TE_BLEND behind the wing's trailing
+    # edge at the (faded) foot -- with no wing left to be tangent to, the fillet met its closure below the foot in a
+    # 90 deg crease along the TE (MQ2-01)
+    yf = F.side_y(np.clip(x, F.STA["cowl_front"], F.STA["tail_end"]), zj) + S
+    te_f = np.interp(yf, ys, le + ch)
+    b0, b1 = ROOT_FILLET_TE_BLEND
+    a_te = 1.0 - _smooth((x - te_f + b0) / (b0 + b1))
+    a = np.where(x > 0.5 * (xp0 + Pp[-1, 0]), a_te, a)
     return zj, S, zu, zl, a
 
 
@@ -222,6 +288,7 @@ def root_fillet_standoff(x, z):
     v = np.clip((zj - z) / np.maximum(zj - zl, 1e-6), 0.0, 1.0)
     fil = 1.0 - np.sqrt(np.clip(u * (2.0 - u), 0.0, 1.0))  # concave elliptic fillet (tangent to wing and side)
     bump = (1.0 - u) ** 2 * (1.0 + 2.0 * u)                 # smooth bump (nose)
+    # below the foot (kept only outside the chord): the bump's round lower half (nose; tail behind the TE)
     P = np.where(z >= zj, a * fil + (1.0 - a) * bump, np.sqrt(np.clip(1.0 - v * v, 0.0, 1.0)))
     inside = (x >= x0) & (x <= x1) & (z <= zu) & (z >= zl)
     d = np.where(inside, S * P, 0.0)
@@ -233,7 +300,8 @@ def root_fillet_standoff(x, z):
         np.clip(x, F.STA["cowl_front"], F.STA["tail_end"]), z)
     # aft of the door's edge the limit relaxes at ROOT_FILLET_DOOR_RELAX (m per m of x) so the surface stays
     # continuous, and a soft minimum (width ROOT_FILLET_DOOR_SOFT) avoids a crease where the limit takes over
-    env = env + ROOT_FILLET_DOOR_RELAX * np.maximum(x - (xd1 + ROOT_FILLET_DOOR_CLEAR), 0.0)
+    kx = ROOT_FILLET_DOOR_SOFT                               # softplus: no slope kink at the door edge (MQ2-01)
+    env = env + ROOT_FILLET_DOOR_RELAX * kx * np.logaddexp(0.0, (x - (xd1 + ROOT_FILLET_DOOR_CLEAR)) / kx)
     env = np.where(z < zh, env, 1.0)
     k = ROOT_FILLET_DOOR_SOFT
     m = np.minimum(d, env)
@@ -283,6 +351,30 @@ def root_fillet(step=0.006, n_up=44, n_lo=18):
             out.append(m)
     m = Mesh.merge(out)
     return Mesh.merge([m, m.mirrored_y()])
+
+
+def boot_under_fillet(parts):
+    """Trim the wings' de-ice boot band (wing.BOOT_Y from BL 0.95, offset 1.5 mm) where it runs under the root fillet /
+    fairing nose: inboard of the fillet's plan edge on the wing (root_fillet_lines' y_out, the foot line the fillet is
+    tangent to the wing along).  The fillet lies 0.2-0.4 mm above the boot there and crossed it at a grazing angle --
+    a sawtooth edge at the root LE (MQ2-01); now the boot ends in its own 1.5 mm step on the fillet's foot line, round
+    the LE and on the lower band too (so it does not end in a notch at the LE; BL 0.95 -> ~0.99 underneath)."""
+    y_out = root_fillet_lines()[2]
+    Pp = np.array(BELLY_FAIRING_PLAN)
+    for pid in ("wing_R", "wing_L"):
+        if pid not in parts:
+            continue
+        new = []
+        for m, mat in parts[pid].meshes:
+            if mat == "deice_boot" and m.nf:
+                f = np.abs(m.V[:, 1]) - y_out(np.clip(m.V[:, 0], Pp[0, 0], Pp[-1, 0]))
+                if (f < 0).any():
+                    under = trim(m, f, "negative")      # the band IS the wing skin there: back onto the surface,
+                    m = trim(m, f, "positive")          # as plain (painted) skin under the fillet
+                    if under.nf:
+                        new.append((under.offset(-0.0015), "paint_white"))
+            new.append((m, mat))
+        parts[pid].meshes = new
 
 
 def teardrop(x0, length, depth, half_w, n=28, m=24):
@@ -444,6 +536,7 @@ def build(parts):
     bp.add(belly_fairing(), "paint_belly")            # recoloured by the livery (SURFACES['belly_fairing'])
     bp.add(root_fillet(), "paint_white")              # painted with the fuselage-side livery (livery.PAINTED)
     parts[bp.id] = bp
+    boot_under_fillet(parts)
 
     # -------- flap track canoes
     fixed, aft = flap_canoes()

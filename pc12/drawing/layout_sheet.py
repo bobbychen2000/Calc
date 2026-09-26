@@ -618,10 +618,12 @@ def draw_side(ds, v):
     vis = vzs < F.z_bot(vxs)
     for seg in _runs(vis):
         cv.path(v.pts(np.c_[vxs[seg], vzs[seg]]), W_OBJ)
-    # rudder (E.rudder_outline): nose / gap line and the sloped top edge; its sloped bottom edge is the ventral edge
+    # rudder (E.rudder_outline): gap line (the fixed skin's cove lip) and the sloped top edge; its sloped bottom edge is
+    # the ventral edge; the rudder nose inside the cove hidden
     ro = E.rudder_outline()
     k = len(ro) // 2
     cv.path(v.pts(ro[:k + 1]), W_FINE)
+    cv.path(v.pts(E.rudder_nose_line()), W_THIN, HID)
     hb, ht = (np.array(E.rudder_edge_point(E.RUD_XH, e)) for e in ("bottom", "top"))
     u = (ht - hb) / np.linalg.norm(ht - hb)
     cv.line(v.pt(*(hb - 0.08 * u)), v.pt(*(ht + 0.08 * u)), W_THIN, CHAIN)

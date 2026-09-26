@@ -459,7 +459,7 @@ def draw_side(ds, v, side):
     vzs = ventral_edge(vxs)
     for seg in _runs(vzs < F.z_bot(np.clip(vxs, X0_SIDE, X1_SIDE)) - 0.002):
         outline(ds, v, np.c_[vxs[seg], vzs[seg]], W_FINE, closed=False)
-    # rudder seams: nose / gap line and the sloped top edge (E.rudder_outline; its bottom edge is the ventral edge)
+    # rudder seams: gap line (cove lip) and the sloped top edge (E.rudder_outline; its bottom edge is the ventral edge)
     ro = E.rudder_outline()
     k = len(ro) // 2                                    # nose-bottom, top edge (nose -> TE), bottom edge (TE -> nose)
     outline(ds, v, ro[:k + 1], W_GRID, "#0B1020", closed=False)
@@ -1213,7 +1213,9 @@ def draw_front(ds):
     # chin inlet (powerplant.CHIN_INLET): polished lip ring round the lower spinner, dark crescent mouth; it masks the
     # side-projection stripes painted across the lower cowl
     lip = PP.chin_inlet_outline("lip")
-    poly(ds, v, lip, col(L.SURFACES["inlet_lip"]))
+    za, zb = PP.chin_lip_polished_top()                  # polished arms end at the side crescent's top (painted cheek above)
+    lipc = lip[lip[:, 1] <= 0.5 * (za + zb)]
+    poly(ds, v, lipc, col(L.SURFACES["inlet_lip"]))
     poly(ds, v, np.c_[0.30 * np.cos(th) - 0.03, 1.36 + 0.07 * np.sin(th)], "#E9ECEF")        # lip highlight
     mouth = PP.chin_inlet_outline("mouth")
     poly(ds, v, mouth, col(L.SURFACES["inlet_mouth"]))

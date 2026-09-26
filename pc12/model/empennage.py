@@ -39,7 +39,13 @@ FIN_TE = ((13.568, 1.912), (14.386, 3.919))     # rudder trailing edge
 # them (and models the ventral fairing, FR40) to this line
 VENTRAL_EDGE = ((11.950, 1.645), (13.568, 1.912))
 RUD_XH = 0.697                          # hinge at 69.7 % local chord (rudder nose-circle centre)
-RUD_NOSE_XC = RUD_XH - 0.05             # visible rudder nose / gap line drawn on the sheets (chord fraction)
+RUD_NOSE_XC = RUD_XH - 0.05             # rudder nose line (chord fraction): inside the fixed cove, drawn HIDDEN
+RUD_COVE_GAP = 0.010                     # fixed cove radius over the rudder nose (chord units, wing.plain_cove)
+# The visible rudder gap line is the fixed fin skin's aft edge -- the cove lip wing.x_end_of_plain(RUD_XH,
+# RUD_COVE_GAP), 0.6695 c, as for the aileron (wing.ail_gap_x) -- not the rudder nose, which the cove wraps (CONS2-03:
+# the sheets drew the nose line solid, 33-52 mm ahead of the 3-D seam).  The Pilatus side view draws its gap line at
+# ~0.638 c: the model keeps the fitted hinge (RUD_XH, sections VF1 / VF2) and the round-nosed rudder in a cove, so its
+# seam lies ~0.03 c aft of the drawn one (L4 deviation call-out).
 RUD_TAB = (2.55, 3.60, 0.940)           # rudder trim tab: WL range and hinge chord fraction
 # Rudder top and bottom edges (side view of the drawing), both SLOPED: the bottom edge runs along VENTRAL_EDGE from
 # the rudder nose (drawn STA 12,654 WL 1,759) to the lower TE corner (13,568 / 1,912); the top edge falls from the
@@ -92,10 +98,21 @@ def rudder_edge_point(xc, edge):
     return float(fin_chord_x(xc, z)), z
 
 
+def rudder_gap_xc():
+    """Chord fraction of the visible rudder gap line: the fixed skin's aft edge (cove lip) round the rudder nose."""
+    return float(x_end_of_plain(fin_section(3.0), RUD_XH, RUD_COVE_GAP)[1])
+
+
+def rudder_nose_line():
+    """Side-view (x, z) end points of the rudder nose line (RUD_NOSE_XC, hidden in the fixed cove), bottom -> top."""
+    return np.array([rudder_edge_point(RUD_NOSE_XC, "bottom"), rudder_edge_point(RUD_NOSE_XC, "top")])
+
+
 def rudder_outline(n=24):
-    """Closed side-view outline (x, z) of the rudder: nose line (bottom -> top), sloped top edge, trailing edge,
-    sloped bottom edge (parameters above)."""
-    nb, nt = rudder_edge_point(RUD_NOSE_XC, "bottom"), rudder_edge_point(RUD_NOSE_XC, "top")
+    """Closed side-view outline (x, z) of the rudder as seen: gap line (the cove lip, rudder_gap_xc(); bottom -> top),
+    sloped top edge, trailing edge, sloped bottom edge (parameters above)."""
+    xg = rudder_gap_xc()
+    nb, nt = rudder_edge_point(xg, "bottom"), rudder_edge_point(xg, "top")
     tb, tt = rudder_edge_point(1.0, "bottom"), rudder_edge_point(1.0, "top")
     xt = np.linspace(nt[0], tt[0], n)
     xb = np.linspace(tb[0], nb[0], n)
@@ -465,7 +482,6 @@ def strake_frame(x):
 # to the hinge line) just ahead of the fixed cove, and closed there by a flat bulkhead fairing.  The single-piece rudder
 # runs from its sloped top edge down to the ventral edge behind that cut, so it clears the fixed structure at any
 # deflection.  Below the tail cone the fixed part is a thin ventral fairing (FR40) from the strake end to the cut.
-RUD_COVE_GAP = 0.010                     # fixed cove radius over the rudder nose (chord units, wing.plain_cove)
 TAIL_CUT_XC = round(RUD_XH - 0.5 * float(FIN_AF_ROOT.thickness(RUD_XH)) - RUD_COVE_GAP - 0.010, 4)   # 0.6216
 RUD_EDGE_GAP = 0.010                     # m: rudder top edge / fin tip gap, each side of the drawn line
 VENTRAL_T = 0.020                        # ventral fairing half-thickness (m)

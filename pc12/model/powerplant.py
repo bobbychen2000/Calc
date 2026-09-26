@@ -12,7 +12,7 @@ Module envelopes are proportioned estimates, not manufacturer drawings.
 from __future__ import annotations
 import numpy as np
 
-from cad.mesh import (Mesh, revolve, sweep_profile, sweep_tube, cylinder, box, superellipsoid, disk,
+from cad.mesh import (Mesh, revolve, sweep_profile, sweep_tube, cylinder, box, superellipsoid,
                       grid_surface, cap_ring, rotation_matrix, planar_cap, trim)
 from model.airfoil import Airfoil, modified4_thickness, naca4_thickness
 from model.lifting import cos_pts
@@ -117,17 +117,25 @@ def thrust_matrix():
     return M
 
 
+# Propeller hub (rotating, estimated): a cylinder PROP_HUB['r'] on the thrust axis from 'fwd' ahead of to 'aft' behind
+# the disc (it carries the five blade roots at the pitch-change axes).  The prop-shaft flange (engine STA 0) is bolted
+# to its aft face: the engine sits ENG_FLANGE_GAP behind the hub on the thrust line (MV2-03: the rev-A flange at
+# STA 0.885 put the reduction gearbox 140 mm into the hub and through the spinner bulkhead).
+PROP_HUB = dict(r=0.130, fwd=0.070, aft=0.055)
+ENG_FLANGE_GAP = 0.008
+
 # EASA TCDS IM.E.008: PT6E-67XP overall length 1,870.9 mm, overall diameter 481.8 mm.
-ENG_FLANGE_X = 0.885
+ENG_FLANGE_X = PROP_X + PROP_HUB["aft"] + ENG_FLANGE_GAP     # prop-shaft flange face (on the drafted, untilted line)
 ENG_LENGTH = 1.8709
 ENG_DIAM = 0.4818
-_SX = ENG_LENGTH / (2.80 - ENG_FLANGE_X)       # module layout was drafted on a 1.915 m envelope
+_DRAFT_FLANGE = 0.885    # the module layout below was drafted from a flange at 0.885 on a 1.915 m envelope
+_SX = ENG_LENGTH / (2.80 - _DRAFT_FLANGE)
 _SR = 0.222 / 0.270      # case radius so that case + external fuel manifold = TCDS overall diameter
 
 
 def eng_x(x):
-    """Map a drafted station onto the certified engine envelope."""
-    return ENG_FLANGE_X + (np.asarray(x, float) - ENG_FLANGE_X) * _SX
+    """Map a drafted station onto the certified engine envelope (flange face at ENG_FLANGE_X)."""
+    return ENG_FLANGE_X + (np.asarray(x, float) - _DRAFT_FLANGE) * _SX
 
 
 def rev(profile, n=40, x0=0.0, ref=None):
@@ -215,9 +223,10 @@ def build_engine(parts):
     # engine mount truss (mount ring at the gas generator, on the thrust line -> 4 firewall pick-ups)
     tubes = []
     xf = lambda P: (Mt[:3, :3] @ np.asarray(P, float).T).T + Mt[:3, 3]            # noqa: E731
-    ring = xf(ring_path(2.20, 0.30, 64))
+    xr = float(eng_x(2.235))                 # mount ring round the gas-generator case (centrifugal diffuser)
+    ring = xf(ring_path(xr, 0.30, 64))
     tubes.append(sweep_tube(ring, 0.016, n=10, cap=False))
-    pads = [xf(np.array([2.20, 0, AX_Z]) + 0.30 * np.array([0, np.cos(a), np.sin(a)]))
+    pads = [xf(np.array([xr, 0, AX_Z]) + 0.30 * np.array([0, np.cos(a), np.sin(a)]))
             for a in np.radians([45, 135, 225, 315])]
     fw = [np.array([2.985, 0.33 * np.sign(np.cos(a)), AX_Z + 0.29 * np.sign(np.sin(a))])
           for a in np.radians([45, 135, 225, 315])]
@@ -409,7 +418,11 @@ def exhaust_stack_collar(sgn=1, m=72, n=200):
 #   lip    outer edge of the polished lip ring round the mouth and the lower half of the spinner (WL 1222-1685,
 #          BL +/-340; its upper ends run into the exhaust-stack roots at WL ~1.6-1.7)
 #   side   the polished lip crescent in side projection (x, z): the drawn lip leading-edge line (STA 1118 WL 1510 ->
-#          1160 / 1340, onto the keel step) and an aft edge ~50 mm behind it (photo port_hangar_130, rectified)
+#          1160 / 1340, onto the keel step) and an aft edge ~50 mm behind it (photo port_hangar_130, rectified); its
+#          aft-bottom corner on the keel moved from (1250, 1201) to (1226, 1216), where the keel leaves the front-view
+#          lip outline (lowest point WL 1223): the rev C corner lay 22 mm below the drawn front-view lip (Stage 3,
+#          CONS2-01).  The polished arms end at the crescent top (WL 1545-1560): the loop's upper ends above it are the
+#          painted cheek line into the stack roots (chin_lip_polished_top)
 CHIN_INLET = dict(
     x=1.140, x_step=1.200,
     mouth_lower=((0.000, 1.278), (0.070, 1.284), (0.133, 1.305), (0.177, 1.326), (0.207, 1.347), (0.229, 1.364),
@@ -420,8 +433,14 @@ CHIN_INLET = dict(
          (0.281, 1.330), (0.310, 1.363), (0.330, 1.398), (0.339, 1.430), (0.340, 1.456), (0.336, 1.485),
          (0.325, 1.513), (0.305, 1.540), (0.290, 1.565), (0.285, 1.595), (0.288, 1.630), (0.294, 1.685)),
     side=((1.118, 1.545), (1.125, 1.495), (1.140, 1.430), (1.160, 1.345), (1.180, 1.275), (1.200, 1.233),
-          (1.250, 1.201), (1.228, 1.290), (1.206, 1.380), (1.188, 1.460), (1.172, 1.530), (1.150, 1.560)),
+          (1.226, 1.216), (1.228, 1.290), (1.206, 1.380), (1.188, 1.460), (1.172, 1.530), (1.150, 1.560)),
 )
+
+
+def chin_lip_polished_top():
+    """(WL at the lip face, WL at the aft edge) where the polished lip arms end: the side crescent's top edge."""
+    S = CHIN_INLET["side"]
+    return float(S[0][1]), float(S[-1][1])
 
 
 def chin_inlet_outline(part):
@@ -439,8 +458,152 @@ def chin_inlet_outline(part):
     P = np.vstack([H, M[1:]]) if part == "mouth" else np.vstack([M, H[1:]])
     return np.vstack([P, P[:1]])
 
-CHIN_STEP_X_MAX = 1.215       # the mouth is the part of the keel step face (x <= this) inside the drawn mouth outline
+# Stage 3 (CONS2-01 / CONS2-02): the proud lip ring.  The fitted OML carries the keel step (the lip's leading edge at
+# BL 0) but not the lip's width: at the step its half-width is <= 0.25 where the drawn ring reaches BL 0.34 and the
+# mouth tips BL 0.274 (the drawing's plan view shows the same bulge, a cheek line outside the cowl from STA 1.12 to the
+# stack roots).  So the lower-cowl skin is pushed out radially (about the spinner axis at the cowl front, front view)
+# to the drawn lip outline behind the drawn lip leading-edge line: chin_cheek_offset().  At each polar angle the skin
+# aft of x_le(z_L) (the side-view LE line at the lip's outer WL z_L) is raised to the lip radius over a rounded nose
+# CHIN_LIP_NOSE long -- a forward-facing face (in which the mouth is cut) plus the outer lip surface -- and held there
+# (the painted cheek) until the OML catches up; it fades out aft (CHIN_CHEEK_AFT) and above the side crescent's top
+# (CHIN_CHEEK_TOP: the drawn loop's upper ends are the cheek line into the stack roots, painted -- the polished arms
+# end at the crescent top, as on the s/n 3001 / 3008 photos).  The polished lip = the raised skin inside the front-view
+# lip outline and the side-view crescent; the mouth = the lip face inside the drawn mouth outline.
+CHIN_LIP_NOSE = 0.008          # m (along x): rounded lip nose, from the LE face to the full lip radius
+CHIN_CHEEK_AFT = (1.50, 1.70)  # STA range over which the cheek fades into the cowl
+CHIN_CHEEK_TOP = (1.52, 1.60)  # lip-outline WL range over which the cheek fades out above the side crescent
+CHIN_CHEEK_SOFT = 0.004        # m: soft maximum of the raise (no crease where the OML catches up)
+CHIN_MOUTH_DX = 0.004          # m: the mouth is cut in the lip face, x <= x_le(z_L) + nose + this
+CHIN_LIP_TOL = 0.006           # m: polished band outside the front-view lip outline (the cheek's soft-max overshoot)
 _CHIN = {}                    # mouth edge loop of the last cut (fuselage_parts.build -> build_inlet_and_exhaust)
+_CHIN_POLAR = {}
+
+
+def _chin_centre_z():
+    return float(axis_point(F.STA["cowl_front"])[2])
+
+
+def chin_lip_polar():
+    """(theta, rho) of the drawn lip outline (starboard half) about the spinner axis at the cowl front, front view:
+    theta from the downward vertical towards +BL (rad), rho the radius (m); monotone in theta."""
+    if not _CHIN_POLAR:
+        H = np.array(CHIN_INLET["lip"], float)
+        zc = _chin_centre_z()
+        th = np.arctan2(H[:, 0], zc - H[:, 1])
+        _CHIN_POLAR["lip"] = (th, np.hypot(H[:, 0], zc - H[:, 1]))
+    return _CHIN_POLAR["lip"]
+
+
+def chin_lip_x(z, edge="fwd"):
+    """Station of the drawn side-view lip crescent's forward (LE line) or aft edge at WL z (held beyond its ends)."""
+    S = np.array(CHIN_INLET["side"], float)
+    E_ = S[:6] if edge == "fwd" else S[6:][::-1]
+    o = np.argsort(E_[:, 1])
+    return np.interp(np.asarray(z, float), E_[o, 1], E_[o, 0])
+
+
+def chin_cheek_offset(P):
+    """Radial raise (m, >= 0, front view about the spinner axis) of cowl-skin points P (N, 3) for the proud lip and
+    cheek (see above), and the unit radial directions (N, 3)."""
+    P = np.asarray(P, float)
+    zc = _chin_centre_z()
+    x, y, z = P[:, 0], P[:, 1], P[:, 2]
+    dz = zc - z
+    rho = np.hypot(y, dz)
+    th = np.arctan2(np.abs(y), dz)
+    thL, rL = chin_lip_polar()
+    ok = (th <= thL[-1]) & (x < CHIN_CHEEK_AFT[1] + 0.05)
+    rho_L = np.interp(th, thL, rL)
+    zL = zc - rho_L * np.cos(th)
+    xf = _chin_face_x(th, zL)
+    s = np.clip((x - xf) / CHIN_LIP_NOSE, 0.0, 1.0)
+    g = 1.0 - (1.0 - s) ** 2                                         # lip face -> rounded leading edge
+    k = CHIN_CHEEK_SOFT
+    base = k * np.logaddexp(0.0, (rho_L - rho) / k)
+    t = lambda a, r: np.clip((a - r[0]) / (r[1] - r[0]), 0.0, 1.0)  # noqa: E731
+    sm = lambda u: u * u * (3.0 - 2.0 * u)                          # noqa: E731
+    d = base * g * (1.0 - sm(t(x, CHIN_CHEEK_AFT))) * (1.0 - sm(t(zL, CHIN_CHEEK_TOP)))
+    d = np.where(ok & (x > xf), d, 0.0)
+    rh = np.maximum(rho, 1e-9)
+    u = np.stack([np.zeros_like(x), y / rh, (z - zc) / rh], 1)
+    return d, u
+
+
+CHIN_SHEAR_REF = 1.150         # grid column the lip face / nose is sheared onto (per around-line), see chin_shear_x
+CHIN_SHEAR_TAPER = 0.080       # m: the shear tapers to zero over this station distance either side
+CHIN_SHEAR_TH = (26.0, 36.0, 72.0, 84.0)   # deg: polar range of the shear (full between the middle two)
+
+
+def chin_shear_x(xs, ts):
+    """Station grid (len(xs), len(ts)) of the cowl skin with its columns sheared round the chin lip: along each
+    around-line t the columns at CHIN_SHEAR_REF .. + CHIN_LIP_NOSE move onto the lip face / nose at that polar angle
+    (_chin_face_x), tapering off over CHIN_SHEAR_TAPER -- so the steep face lies on whole columns and its leading edge
+    does not zig-zag across the fixed stations (the face's station changes by ~80 mm round the arms)."""
+    xs = np.asarray(xs, float)
+    ts = np.asarray(ts, float)
+    zc = _chin_centre_z()
+    Q = F.section(np.full_like(ts, CHIN_SHEAR_REF), ts)
+    th = np.arctan2(np.abs(Q[:, 1]), zc - Q[:, 2])
+    thL, rL = chin_lip_polar()
+    zL = zc - np.interp(th, thL, rL) * np.cos(th)
+    a0, a1, a2, a3 = np.radians(CHIN_SHEAR_TH)
+    sm = lambda u: np.clip(u, 0, 1) ** 2 * (3.0 - 2.0 * np.clip(u, 0, 1))          # noqa: E731
+    w = sm((th - a0) / (a1 - a0)) * (1.0 - sm((th - a2) / (a3 - a2)))
+    d = (_chin_face_x(th, zL) - CHIN_SHEAR_REF) * w
+    lo, hi = CHIN_SHEAR_REF - 0.004, CHIN_SHEAR_REF + CHIN_LIP_NOSE + 0.004
+    B = np.where(xs < lo, 1.0 - sm((lo - xs) / CHIN_SHEAR_TAPER), np.where(xs > hi, 1.0 - sm((xs - hi) / CHIN_SHEAR_TAPER),
+                                                                         1.0))
+    return xs[:, None] + B[:, None] * d[None, :]
+
+
+def cowl_section(x, t):
+    """Point(s) of the built cowl skin: the OML section (fuselage.section) with the chin lip / cheek raise applied."""
+    return chin_cheek_displace(F.section(x, t))
+
+
+def _oml_ray_radius(x, th, zc, lo=0.05, hi=0.9, iters=34):
+    """Radius along the front-view ray at polar angle th (from the downward vertical, +BL) from (BL 0, WL zc) where it
+    meets the OML section at station x (bisection on the section law)."""
+    x, th = np.broadcast_arrays(np.asarray(x, float), np.asarray(th, float))
+    a, b = np.full(x.shape, lo), np.full(x.shape, hi)
+    s_, c_ = np.sin(th), np.cos(th)
+    for _ in range(iters):
+        m = 0.5 * (a + b)
+        d = F._OML.section_distance(F.clip_x(x), m * s_, zc - m * c_)
+        a, b = np.where(d < 0, m, a), np.where(d < 0, b, m)
+    return 0.5 * (a + b)
+
+
+def chin_raised_dist(P, half=0.03, n=61):
+    """Distance (m) of points P (N, 3) from the built (raised) cowl skin, measured in the point's front-view polar
+    half-plane (station, radius) against the raised profile over +/-half of its station (robust on the steep lip face)."""
+    P = np.asarray(P, float)
+    zc = _chin_centre_z()
+    rho = np.hypot(P[:, 1], zc - P[:, 2])
+    th = np.arctan2(np.abs(P[:, 1]), zc - P[:, 2])
+    dx = np.linspace(-half, half, n)
+    X = P[:, 0][:, None] + dx[None, :]
+    TH = np.broadcast_to(th[:, None], X.shape)
+    R0 = _oml_ray_radius(X, TH, zc)
+    Q = np.stack([X, R0 * np.sin(TH), zc - R0 * np.cos(TH)], -1).reshape(-1, 3)
+    d, _ = chin_cheek_offset(Q)
+    R = R0 + d.reshape(X.shape)
+    # distance to the (station, radius) polyline through the samples (the lip face is nearly radial: point samples
+    # 1 mm apart are up to 40 mm apart in radius there)
+    ax_, ar = dx[None, :-1], R[:, :-1]
+    bx_, br = dx[None, 1:], R[:, 1:]
+    px, pr = 0.0, rho[:, None]
+    ex, er = bx_ - ax_, br - ar
+    u = np.clip(((px - ax_) * ex + (pr - ar) * er) / np.maximum(ex * ex + er * er, 1e-18), 0.0, 1.0)
+    dist = np.sqrt((ax_ + u * ex - px) ** 2 + (ar + u * er - pr) ** 2).min(1)
+    return dist * np.sign(rho - R[:, n // 2])
+
+
+def chin_cheek_displace(P):
+    """Cowl-skin grid points (..., 3) with the proud lip / cheek raise applied (chin_cheek_offset)."""
+    Q = np.asarray(P, float).reshape(-1, 3)
+    d, u = chin_cheek_offset(Q)
+    return (Q + d[:, None] * u).reshape(np.shape(P))
 
 
 def chin_fields(V):
@@ -458,12 +621,86 @@ def chin_fields(V):
     return fm, fl, fs
 
 
+CHIN_ARM_TH = (20.0, 35.0)      # deg: over this polar range the lip face moves from the OML keel step (bottom, the
+#                                 face's foot on the drawn LE line) to one nose length ahead of it (arms: the lip's
+#                                 outermost point -- its side-view leading edge -- on the drawn LE line)
+
+
+def _chin_face_x(th, zL):
+    """Station of the lip face's foot at polar angle th (rad) for the lip's outer WL zL."""
+    a0, a1 = np.radians(CHIN_ARM_TH)
+    w = np.clip((np.abs(th) - a0) / (a1 - a0), 0.0, 1.0)
+    w = w * w * (3.0 - 2.0 * w)
+    return chin_lip_x(zL, "fwd") - w * CHIN_LIP_NOSE
+
+
+def chin_face_s(V):
+    """Lip-face parameter of (raised) cowl-skin points: 0 at the face's foot on the cowl (x = x_le(z_L)) -> 1 at the full
+    lip radius (CHIN_LIP_NOSE aft); the raise is radial, so x and the polar angle are those of the OML point."""
+    V = np.asarray(V, float)
+    zc = _chin_centre_z()
+    th = np.arctan2(np.abs(V[:, 1]), zc - V[:, 2])
+    thL, rL = chin_lip_polar()
+    zL = zc - np.interp(th, thL, rL) * np.cos(th)
+    return (V[:, 0] - _chin_face_x(th, zL)) / CHIN_LIP_NOSE
+
+
+def _weld(m, tol=1e-9):
+    """Merge coincident vertices (exact duplicates from split trims)."""
+    key = np.round(m.V / tol).astype(np.int64)
+    _, idx, inv = np.unique(key, axis=0, return_index=True, return_inverse=True)
+    inv = inv.reshape(-1)
+    F_ = inv[m.F]
+    F_ = F_[(F_[:, 0] != F_[:, 1]) & (F_[:, 1] != F_[:, 2]) & (F_[:, 0] != F_[:, 2])]
+    return Mesh(m.V[idx], F_, None if m.N is None else m.N[idx], None if m.UV is None else m.UV[idx])
+
+
+def _split_levels(m, f, levels, eps=0.02):
+    """Insert the iso-lines f = level into mesh m (split trims, re-welded): refines the lip face radially so the mouth
+    cut follows the drawn outline (the face stands almost normal to the skin columns)."""
+    for c in levels:
+        v = f(m.V) - c
+        v = np.where(np.abs(v) < eps, np.where(v < 0, -eps, eps), v)   # no cut within ~eps of a vertex (slivers)
+        if (v < 0).any() and (v > 0).any():
+            m = _weld(Mesh.merge([trim(m, v, "positive"), trim(m, v, "negative")]))
+    return m
+
+
+def chin_mouth_field(V):
+    """Mouth hole field (negative = hole) on the raised lower cowl: inside the drawn front-view mouth outline and on the
+    lip face / keel step (x <= x_le(z_L) + CHIN_LIP_NOSE + CHIN_MOUTH_DX at the point's polar angle)."""
+    V = np.asarray(V, float)
+    zc = _chin_centre_z()
+    th = np.arctan2(np.abs(V[:, 1]), zc - V[:, 2])
+    thL, rL = chin_lip_polar()
+    zL = zc - np.interp(th, thL, rL) * np.cos(th)
+    xf = _chin_face_x(th, zL) + CHIN_LIP_NOSE + CHIN_MOUTH_DX
+    return np.maximum(chin_fields(V)[0], V[:, 0] - xf)
+
+
+def _chin_side_lip(V):
+    """Side-crescent field for the polished-lip classification: the crescent with its forward (LE) edge moved
+    CHIN_LIP_TOL ahead -- the keel step (fitted to that very line) lies on it and fell either side (a painted island
+    in the lower lip)."""
+    from cad import sdf2d
+    S = np.array(CHIN_INLET["side"], float)
+    S[:6, 0] -= CHIN_LIP_TOL
+    return sdf2d.polygon(np.asarray(V)[:, 0], np.asarray(V)[:, 2], S)
+
+
 def cut_chin_inlet(m):
-    """Cut the chin inlet into the lower cowling (decision D2: the OML keel owns the lip step STA 1.14 -> 1.20):
-    returns (cowl without mouth and lip, polished lip ring).  The mouth = the step face inside the drawn front-view
-    mouth outline; the lip = the skin inside both the front-view lip outline and the side-view lip crescent."""
+    """Cut the chin inlet into the lower cowling (decision D2: the OML keel owns the lip step STA 1.14 -> 1.20; the
+    skin is raised to the drawn lip, chin_cheek_offset): returns (cowl without mouth and lip, polished lip ring).  The
+    mouth = the lip face inside the drawn front-view mouth outline; the lip = the skin inside both the front-view lip
+    outline and the side-view lip crescent."""
     from cad.mesh import boundary_loops
-    fm = lambda mm: np.maximum(chin_fields(mm.V)[0], mm.V[:, 0] - CHIN_STEP_X_MAX)     # noqa: E731
+    zc = _chin_centre_z()
+    def face(V):                        # the raise fraction g on the lip face (uniform radial steps)
+        sv = np.clip(chin_face_s(V), -0.5, 1.5)
+        g = np.where(sv < 0, sv, np.where(sv > 1, sv, 1.0 - (1.0 - np.clip(sv, 0, 1)) ** 2))
+        return np.where(np.arctan2(np.abs(V[:, 1]), zc - V[:, 2]) < chin_lip_polar()[0][-1], g, -1.0)
+    m = _split_levels(m, face, np.arange(0.04, 0.99, 0.04), eps=0.008)
+    fm = lambda mm: chin_mouth_field(mm.V)                                              # noqa: E731
     m1 = trim(m, fm(m), "positive")
     best = None
     for lp in boundary_loops(m1):
@@ -474,7 +711,9 @@ def cut_chin_inlet(m):
         if best is None or e < best[0]:
             best = (e, P)
     _CHIN["mouth"] = best[1] if best is not None else None
-    fl = lambda mm: np.maximum(chin_fields(mm.V)[1], chin_fields(mm.V)[2])              # noqa: E731
+    # the raised cheek sits CHIN_CHEEK_SOFT ln2 (~3 mm) outside the drawn lip outline: polished up to the crescent's aft
+    # edge (a CHIN_LIP_TOL band outside the front-view outline counts as the lip)
+    fl = lambda mm: np.maximum(chin_fields(mm.V)[1] - CHIN_LIP_TOL, _chin_side_lip(mm.V))  # noqa: E731
     lip = trim(m1, fl(m1), "negative")
     rest = trim(m1, fl(m1), "positive")
     return rest, lip
@@ -642,23 +881,71 @@ def blade_geometry(n_r=34, n_c=40):
 
 
 BLADE_HOLE_R = 0.068          # blade-root openings in the spinner (pitch axis radius; clears the cuff at any pitch)
-# The spinner base plane is normal to the (2 deg tilted / yawed) thrust axis, the cowl-front ring is vertical: a
-# 25 mm cylindrical skirt (R SPINNER_R) behind the base plane tucks into the cowl so no gap opens at the top / port
-# side (the skirt stays inside the cowl skin, whose radius grows aft of the cowl front).
+# Spinner / cowl joint (MV2-03).  The spinner base plane is normal to the (2 deg tilted / yawed) thrust axis, the
+# cowl-front ring is vertical and not round about that axis (its radius about it is 0.246-0.254): so
+#   * the cowl skin ahead of the plane SPINNER_GAP behind the base plane is cut away (cowl_front_field) -- the fixed lip
+#     never reaches into the rotating spinner, which ends in a constant SPINNER_GAP ahead of the cowl;
+#   * a short cylindrical skirt (SPINNER_SKIRT long) behind the base plane tucks into the cowl, its radius
+#     spinner_skirt_r() = the smallest cowl radius over its length less SPINNER_GAP, so it hides the (up to 15 mm)
+#     wedge-shaped gap at the top / port side without ever touching the cowl;
+#   * the spinner bulkhead at the skirt end is an annulus (SPINNER_BULK_R_IN inside) round the reduction gearbox.
 SPINNER_SKIRT = 0.025
+SPINNER_GAP = 0.003
+SPINNER_BULK_R_IN = 0.160
+_SKIRT_R = []
+
+
+def spinner_length():
+    """Spinner length along the thrust axis: tip (STA spinner_tip) to the base plane through the axis at the cowl front."""
+    return float((F.STA["cowl_front"] - F.STA["spinner_tip"]) * np.linalg.norm([1.0, _TY, _TT]))
+
+
+def thrust_coords(V):
+    """(s, r) of points V: s along the thrust axis aft of the spinner tip, r = distance from the axis."""
+    a = -thrust_dir()
+    w = np.asarray(V, float) - axis_point(F.STA["spinner_tip"])
+    s = w @ a
+    return s, np.linalg.norm(w - np.outer(s, a), axis=1)
+
+
+def cowl_front_field(V):
+    """Signed field (m, negative = cut away) of the cowl skin: the plane SPINNER_GAP behind the spinner base plane."""
+    return thrust_coords(V)[0] - (spinner_length() + SPINNER_GAP)
+
+
+def spinner_skirt_r():
+    """Skirt radius: the smallest radius (about the thrust axis) of the cowl skin left by cowl_front_field over the
+    skirt's length, less SPINNER_GAP (cached)."""
+    if not _SKIRT_R:
+        L = spinner_length()
+        x0 = F.STA["cowl_front"]
+        X, T = np.meshgrid(np.linspace(x0, x0 + 0.09, 46), np.linspace(0, 1, 721)[:-1], indexing="ij")
+        P = F.section(X, T).reshape(-1, 3)
+        s, r = thrust_coords(P)
+        on = (s >= L + SPINNER_GAP - 1e-4) & (s <= L + SPINNER_SKIRT + 0.004)
+        _SKIRT_R.append(float(r[on].min()) - SPINNER_GAP)
+    return _SKIRT_R[0]
 
 
 def spinner_mesh(n_around=160, n_prof=90):
     """Spinner: surface of revolution of spinner_profile() about the thrust axis, tip at STA spinner_tip, base plane
-    (normal to the axis) through the axis at the cowl front; blade-root openings; returns (shell, bulkhead)."""
+    (normal to the axis) through the axis at the cowl front, a skirt of spinner_skirt_r() behind it; blade-root
+    openings; returns (shell, bulkhead annulus)."""
     t, r = spinner_profile(n_prof)
-    x0, x1 = F.STA["spinner_tip"], F.STA["cowl_front"]
+    x0 = F.STA["spinner_tip"]
     a = -thrust_dir()
-    L = (x1 - x0) * np.linalg.norm([1.0, _TY, _TT])
+    L = spinner_length()
+    rs = spinner_skirt_r()
     prof = [(L * tt, rr) for tt, rr in zip(t, r)]
     prof[0] = (0.0, 0.0)
-    prof += [(L + SPINNER_SKIRT * k / 4, float(r[-1])) for k in range(1, 5)]     # short skirt into the cowl front
-    shell = revolve(prof, n=n_around, axis_origin=axis_point(x0), axis_dir=a)
+    o = axis_point(x0)
+    cone = revolve(prof, n=n_around, axis_origin=o, axis_dir=a)
+    # base edge: a flat step in to the skirt, then the skirt cylinder into the cowl (separate grids: hard edges)
+    step = revolve([(L, rs), (L, float(r[-1]))], n=n_around, axis_origin=o, axis_dir=a)
+    if float(np.mean(step.N @ a)) < 0:
+        step = step.flipped()
+    skirt = revolve([(L + SPINNER_SKIRT * k / 4, rs) for k in range(5)], n=n_around, axis_origin=o, axis_dir=a)
+    shell = Mesh.merge([cone, step, skirt])
     hub = prop_hub()
     f = np.full(len(shell.V), 1.0)
     for k in range(N_BLADES):
@@ -666,7 +953,9 @@ def spinner_mesh(n_around=160, n_prof=90):
         w = shell.V - hub
         f = np.minimum(f, np.linalg.norm(w - np.outer(w @ d, d), axis=1) - BLADE_HOLE_R)
     shell = trim(shell, f, "positive")
-    bulk = disk(axis_point(x0) + (L + SPINNER_SKIRT - 0.002) * a, a, float(r[-1]) - 0.003, n=n_around)
+    c = axis_point(x0) + (L + SPINNER_SKIRT - 0.002) * a
+    bulk = revolve([(0.0, SPINNER_BULK_R_IN), (0.0005, rs - 0.003)], n=n_around, axis_origin=c, axis_dir=a)
+    bulk = Mesh.merge([bulk, bulk.flipped()])                      # thin plate: visible from both sides
     return shell, bulk
 
 
@@ -691,8 +980,10 @@ def build_propeller(parts):
                       "ground clearance": "320 mm", "thrust line": "2 deg nose-down, 2 deg right"})
     # spinner + hub (spin with the propeller) on the tilted / yawed thrust axis
     spin, bulk = spinner_mesh()
-    hub = revolve([(0, 0.0), (0.001, 0.13), (0.20, 0.13), (0.201, 0.0)], n=40,
-                  axis_origin=axis_point(PROP_X - 0.10), axis_dir=-thrust_dir())
+    h = PROP_HUB                                             # ends at the prop-shaft flange (ENG_FLANGE_X)
+    hl = (h["fwd"] + h["aft"]) * np.linalg.norm([1.0, _TY, _TT])
+    hub = revolve([(0, 0.0), (0.001, h["r"]), (hl - 0.001, h["r"]), (hl, 0.0)], n=40,
+                  axis_origin=axis_point(PROP_X - h["fwd"]), axis_dir=-thrust_dir())
     prop.add(spin, "paint_white").add(Mesh.merge([hub, bulk]), "metal_dark")
     parts[prop.id] = prop
     for k in range(N_BLADES):
