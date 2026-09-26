@@ -561,7 +561,7 @@ the 747). Blender renders of `UAL` (737-800) and `SWA` (737-700) after the full 
 | Virgin | signature small, titles grey, no nose icon | signature 0.25 fin height rising aft with its underline; titles #2E2A48 (dark purple, measured); flying icon (figure + Union flag, strongly simplified) and type name on the nose |
 | Volaris | title on the door, black, small cross | title from the door-1 aft edge + 0.55 m to 0.462 L in navy #1A1438; volaris.com sn 0.645; the pixel cross 5 × 5 cells of 0.135 fin height low and forward (13 cells, colours sampled on the photo) |
 | China Southern, Emirates, Qatar | non-Latin titles missing | 中国南方航空 (Noto Sans SC) forward of CHINA SOUTHERN, reading from the nose on both sides as photographed (right-to-left on the starboard side); الإمارات (Aref Ruqaa) aft of Emirates; Qatar above. **China Airlines: rejected** — both photos (B-18906, B-18918, port side) show only CHINA AIRLINES; its title was moved to sn 0.305-0.46 as photographed, with the small red mark |
-| Lufthansa 747 | blotches on the nose | not texture (the atlas texels there are uniform): 1,897 exact duplicate triangles of the FAM 747-8 (double-sided copies) with opposite normals; the occluded copy sat on an unpainted chart. `atlas.py` drops exact duplicates (b748 re-atlased: 17.6 px/m instead of 14.0), `js/live/models.js` drops them at load for every model and repairs degenerate normals, the nose normals of b744 / b748 are smoothed (`common.NORMAL_SMOOTH`); Blender render clean |
+| Lufthansa 747 | blotches on the nose | not texture (the atlas texels there are uniform white): the FAM 747-8 source has 1,897 exact duplicate triangles (double-sided copies) whose opposite normals shade as blotches in Cycles. The nose vertex normals are smoothed (`common.NORMAL_SMOOTH`, b744 / b748), degenerate normals repaired at load (`js/live/models.js repairNormals`). Dropping one twin (tried in the atlas, at load and in the check render) exposed unpainted twins on body panels, so the twins stay (the app's shader turns every normal to the camera; no Cycles artefact). **Open**: the Blender check render still shows faint nose smudges; the app view of a 747-8 was not captured (none in the snapshot) |
 | Avianca | orange stripe | removed; the photo's coral-orange is a small wedge at the fin root (#FD653C, sampled) |
 | EVA | title too dark, green tips | title #249243 (sampled), 787 raked tips unpainted |
 
@@ -606,3 +606,12 @@ the -300ER model keep the -300's overwing door outline in the skin detail.
 - 777 procedural glazing compressed to end 0.8 m ahead of door 1; raked-tip nav lights on the tip loft.
 - `check_dims`: engine / belly / wing-tip / tailplane clearances, rendered door sill vs cab floor, self-check marking,
   the renderer's stretch (common.apply_stretch). Result: 24 flagged, all explained, 0 unexplained.
+
+### 9.6 Verification
+
+- Full re-bake: 135 entries, 183 textures (hi 14.1 MB, mid 7.2 MB, lo 3.7 MB); snapshot `lo` set 22 files, 0.52 MB.
+- Blender renders (`out/liveries/*.png`) of UAL, SWA (one window row each), UAL-X, JAL, QTR, UPS, AFR, FJI, VIR, VOI, CSN, UAE,
+  DLH, AVA, EVA, CAL and UAL on the 777-200ER (`UAL_b772.png`); software previews of each new design.
+- App (headless, SOFTGL, snapshot): United 777-200ER N796UA with its brand bake and registration; United 737 MAX 8 N37371
+  starboard with the US flag aft of the registration (as photographed), NG winglet folded, split tip drawn; JetBlue
+  A321neo with sharklets (`out/live/idr_*.png`, `idr2_*.png`).

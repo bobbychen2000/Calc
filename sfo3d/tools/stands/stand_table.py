@@ -196,3 +196,24 @@ BRIDGE_IGNORE = {1102580432: 'OSM "F18 Jetway": a 7.8 m two-node stub 32-39 m ah
                               'parked ahead of its nose. Docking would need the tunnel to cross the nose and the cab to turn ~150 deg '
                               '(review round 1; standard cab 125 deg). Not used: F10 is modelled without a bridge (boarding by stairs '
                               'or by walking - inferred, not verified).'}
+
+# Static fix-up (26 Sep 2026; review round 4: "F5 L1 reach infeasible - decide from evidence"). Bridges that are NOT any
+# Oshkosh datasheet unit, with the evidence: way id -> {why}. The builder gives them ext_range = [imaged rest length,
+# longest observed docking] (rotunda centre -> cab pivot, PIVOT_TO_DOOR 2.4 m), model None, `short_unit` True.
+#   1102580434 F5 L1: NAIP 2024 (refs/cache/stands/view/f5raw.png, 0.06 m/px) shows a ~3.5 m wide roof running 9.3 m from
+#     the drum to the cab front; the OSM way is 9.1 m rotunda -> cab end. The shortest Oshkosh unit (AT2 41/55) is
+#     12.224 m fully retracted (sell sheet), so this bridge is ~3 m shorter than any datasheet unit. Two SkyWest E175s
+#     (ADS-B, SFO stand window F5, 1027 s and 273 s) stood at the model nose (+1.5 m vs the E-Jet norm), so the observed
+#     dockings need 7.2-7.5 m rotunda -> pivot, within reach of a unit that rests at ~6.7-6.9 m. Maker / model not known.
+BRIDGE_SHORT = {1102580434: {'why': 'NAIP 2024 roof 9.3 m drum -> cab front (OSM 9.1 m), ~3 m shorter than the shortest Oshkosh unit '
+                                    'fully retracted (12.224 m); two ADS-B E175 stays at the model nose need 7.2-7.5 m: a short '
+                                    'non-datasheet unit (maker / model not known; inferred from the imaged length)'}}
+
+# Static fix-up (26 Sep 2026; review round 4: "A1 / A2 L2 ... reach - decide from evidence (manufacturer range)").
+# (stand, door) -> {type: why}: an observed type the bridge does NOT dock, by decision. The 787-10's L2 door at A1 / A2
+# needs 43.7 / 42.4 m rotunda -> pivot; the only manufacturer data in hand (Oshkosh sell sheet) ends at 41.381 m, and
+# nothing shows SFO has longer units (TK Elevator's "14 to 50 m" gives no reference points and no SFO installation).
+# Decision: the L2 bridge stays at rest for the 787-10 (boarding through L1 only); stop / rotunda uncertainty (+-1.5 m
+# stop, OSM roof lean 1.3-2.1 m) could make it reachable - not proven either way.
+DOCK_OUT_DECIDED = {('A1', 2): {'B78X': 'L2 docking needs 43.7 m, beyond the longest Oshkosh unit (41.4 m); no evidence of a longer unit at SFO: L2 stays at rest, L1 boards (inferred)'},
+                    ('A2', 2): {'B78X': 'L2 docking needs 42.4 m, beyond the longest Oshkosh unit (41.4 m); no evidence of a longer unit at SFO: L2 stays at rest, L1 boards (inferred)'}}

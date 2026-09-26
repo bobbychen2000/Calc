@@ -978,6 +978,10 @@ class Gates:
         self.snap_path = None
         self.last_fetch = None
         self.n_records = 0
+        # resolved regional aliases, kept while the aircraft may still be shown (it can fall silent at its gate): callsign ->
+        # (alias record, source-time expiry). Review round 2: SKW5899 -> UAL5899 vanished from /api/gates once the aircraft
+        # was silent at F5 inside SFO's own stand window, and the card lost 'per SFO' and 'UA 5899'
+        self.alias_mem = {}
         if enabled and not replay_clock:
             self._load_newest()
 
@@ -1161,6 +1165,11 @@ class Gates:
                 e['stand'] = st
             by_callsign[cs] = e
         # regional operator callsigns (ADS-B) -> marketing flights (flysfo)
+        # Scoring (data, not an assumed partner table): +2 when the ADS-B type agrees with SFO's type for the flight, 0 when it
+        # differs (flagged: an aircraft-database type must not veto an otherwise unique flight-number match -- review round 2:
+        # N670QX is listed as E195 in the adsb.fi database, SFO and Horizon's fleet say E175, and QXE2139 -> ASA2139 was
+        # rejected); +2 / -2 when the VRS route agrees / disagrees. Mapped when the top candidate is unique and scores >= 0,
+        # or when it is the only candidate and its SFO stand window covers now.
         aliases = {}
         live = self.hub.current_callsigns() if self.hub else {}
         for cs in set(live) | {c.strip().upper() for c in extra_cs if c.strip()}:
@@ -1185,7 +1194,9 @@ class Gates:
                 if adsb_t and types:
                     tm = type_match(adsb_t, types)
                     chk['type'] = 'agree' if tm else 'differ'
-                    score += 2 if tm else -1
+                    if not tm:
+                        chk['types'] = {'adsb': adsb_t, 'sfo': sorted(types)}
+                    score += 2 if tm else 0
                 if vrs_codes and others:
                     ok = 'KSFO' in vrs_codes and bool(vrs_codes & others)
                     chk['route'] = 'agree' if ok else 'differ'
@@ -1194,8 +1205,26 @@ class Gates:
             scored.sort(key=lambda x: -x[0])
             top = scored[0]
             unique = len(scored) == 1 or top[0] > scored[1][0]
-            aliases[cs] = {'to': top[1] if unique and top[0] >= 0 else None, 'candidates': [s[1] for s in scored],
-                           'checks': top[2], 'score': top[0], 'how': 'regional flight number'}
+            ok = unique and top[0] >= 0
+            how = 'regional flight number'
+            if not ok and len(scored) == 1:
+                e = by_callsign.get(top[1]) or {}
+                st = e.get('stand')
+                if st and st.get('from') is not None and st.get('to') is not None:
+                    ok, how = True, 'only candidate, SFO stand window covers now'
+            rec = {'to': top[1] if ok else None, 'candidates': [s[1] for s in scored], 'checks': top[2], 'score': top[0], 'how': how}
+            aliases[cs] = rec
+            if ok:
+                e = by_callsign.get(top[1]) or {}
+                until = max(T + 3 * 3600, ((e.get('stand') or {}).get('to') or 0) and clock.to_src((e.get('stand') or {}).get('to')) + 1800)
+                self.alias_mem[cs] = (rec, until)
+        # held aliases: resolved earlier for an aircraft that is no longer on the feed (silent at its gate), until 3 h after
+        # the resolution or 30 min after its stand window, whichever is later
+        for cs, (rec, until) in list(self.alias_mem.items()):
+            if until < T:
+                del self.alias_mem[cs]
+            elif cs not in aliases and rec.get('to') in by_callsign:
+                aliases[cs] = dict(rec, held=True)
         for e in by_callsign.values():
             keep.update(i for i in (e.get('arr'), e.get('dep')) if i)
         # stand windows: current and upcoming (a turn's arrival and departure carry the same list: de-duplicate)

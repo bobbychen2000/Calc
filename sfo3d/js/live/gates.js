@@ -64,12 +64,13 @@ for (const p of (BUILDINGS && BUILDINGS.parts) || []) if (p.kind === 'walkway') 
 const BLD_BB = BLD.map(r => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const p of r) { a = Math.min(a, p[0]); c = Math.max(c, p[0]); b = Math.min(b, p[1]); d = Math.max(d, p[1]); } return [a, b, c, d]; });
 function inRing(x, z, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if (((a[1] > z) !== (b[1] > z)) && (x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0])) c = !c; } return c; }
 function inBuilding(x, z, all = false) { for (let i = 0; i < (all ? BLD.length : NBLD); i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRing(x, z, BLD[i])) return true; } return false; }
-function distBuilding(x, z) { // distance to the nearest outline edge incl. the sky bridges (0 inside)
-  if (inBuilding(x, z, true)) return 0; let d = 1e9;
+function nearestBuilding(x, z) { // nearest outline point incl. the sky bridges: {d (0 inside), p}
+  let d = 1e9, P = null;
   for (let i = 0; i < BLD.length; i++) { const bb = BLD_BB[i]; if (x < bb[0] - d || x > bb[2] + d || z < bb[1] - d || z > bb[3] + d) continue; const r = BLD[i];
-    for (let k = 0, j = r.length - 1; k < r.length; j = k++) { const a = r[j], b = r[k]; const ex = b[0] - a[0], ez = b[1] - a[1]; const L2 = ex * ex + ez * ez || 1; const t = clampN(((x - a[0]) * ex + (z - a[1]) * ez) / L2, 0, 1); d = Math.min(d, Math.hypot(a[0] + ex * t - x, a[1] + ez * t - z)); } }
-  return d;
+    for (let k = 0, j = r.length - 1; k < r.length; j = k++) { const a = r[j], b = r[k]; const ex = b[0] - a[0], ez = b[1] - a[1]; const L2 = ex * ex + ez * ez || 1; const t = clampN(((x - a[0]) * ex + (z - a[1]) * ez) / L2, 0, 1); const q = [a[0] + ex * t, a[1] + ez * t]; const dd = Math.hypot(q[0] - x, q[1] - z); if (dd < d) { d = dd; P = q; } } }
+  return { d: inBuilding(x, z, true) ? 0 : d, p: P, inside: inBuilding(x, z, true) };
 }
+function distBuilding(x, z) { return nearestBuilding(x, z).d; }
 
 const G = GROUND_Y;
 const stW = (p, h = 0) => stToWorld(p[0], p[1], h);
@@ -260,7 +261,12 @@ export class LiveGateSystem {
     let rot = b.rotundaW ? cz(b.rotundaW) : null;
     const nose = stW(g.nose, G), f = stD(g.dir);
     if (!rot) { const o = stD(g.outN || [-g.dir[0], -g.dir[1]]); rot = v3.add(att, v3.mul(o, -4)); } // no data rotunda: 4 m out
+    // a drum needs 1.5 m radius + 0.2 m to the terminal outline: a rotunda closer to the outline (the outline is +-5 m,
+    // several data rotundas are inferred "against the facade") is moved straight away from it by the deficit (<= 2 m)
+    { const nb = nearestBuilding(rot[0], rot[2]); const need = 1.7;
+      if (nb.p && !nb.inside && nb.d < need) { const dx = rot[0] - nb.p[0], dz = rot[2] - nb.p[1], l = Math.hypot(dx, dz) || 1; const m = Math.min(2.0, need - nb.d + 0.02); rot = [rot[0] + dx / l * m, G, rot[2] + dz / l * m]; b.rotShift = +m.toFixed(2); } }
     let walk = (b.walkW && b.walkW.length >= 2) ? b.walkW.map(cz) : [att, rot];
+    if (b.rotShift) walk[walk.length - 1] = rot.slice();
     if (Math.hypot(walk[walk.length - 1][0] - rot[0], walk[walk.length - 1][2] - rot[2]) > 0.05) walk.push(rot.slice());
     walk = walk.filter((p, i) => i === 0 || Math.hypot(p[0] - walk[i - 1][0], p[2] - walk[i - 1][2]) > 0.05);
     // the mapped walkway may start inside the (+-5 m) terminal outline: the fixed walkway begins where the polyline last
@@ -301,15 +307,12 @@ export class LiveGateSystem {
     }
     const s = (mechE - opR) / (nT - 1) + OVERLAP + STAGGER, F = opR - s - (nT - 1) * STAGGER;
     b.m = { n: nT, opR, opE, mechE, spacer, s, F, wh: SEC_WH[nT] };
-    // drum radius: 2.45 m (inferred), at most the data's rotundaMaxR (neighbouring rotundas / walkways) and clear of the
-    // terminal outline by 0.2 m, but never smaller than the tunnel-A half width + 0.2 m
-    b.rotR = clampN(Math.min(2.45, b.rotundaMaxR ?? 2.45, distBuilding(rot[0], rot[2]) - 0.2), Math.min(1.5, b.rotundaMaxR ?? 2.45), 2.45); b.rot = rot; b.att = walk[0];
+    // drum radius: 2.45 m (inferred), 0.25 m less than the data's rotundaMaxR (half the distance to the neighbouring
+    // rotunda / walkway: 0.5 m between drums) and clear of the terminal outline by 0.2 m, never below 1.5 m
+    b.rotR = clampN(Math.min(2.45, (b.rotundaMaxR ?? 2.7) - 0.25, distBuilding(rot[0], rot[2]) - 0.2), Math.min(1.5, (b.rotundaMaxR ?? 2.7) - 0.25), 2.45); b.rot = rot; b.att = walk[0];
     // rest pose (data stowW: the cab pivot at rest; cab straight on the tunnel)
     if (b.stowW) { b.a0 = yawOf(b.stowW[0] - rot[0], b.stowW[1] - rot[2]); b.e0 = clampN(stowL, opR, mechE); }
     else { const dp = doorOf(nose, f, TYPES[REF_TYPE[g.cls] || 'b38m'], b.door).door; b.a0 = yawOf(dp[0] - rot[0], dp[2] - rot[2]); b.e0 = opR; }
-    // heights: fixed walkway from the terminal's departure level (upper-deck bridges: level with the U1L sill), sloping at
-    // most 1:12 to the rotunda (36 CFR 1191 App. D 405.2 ramp slope); rotunda floor chosen so that the docked tunnel
-    // slopes as little as possible for the aircraft this bridge docks (minimax over their door sills)
     // rotunda centreline (not in the data): the middle of the smallest arc holding the rest pose and every docked pose the
     // bridge serves, when that arc fits the 175 deg swing (the bridge was installed for them); else the walkway direction
     b.swingFree = true; const tg0 = this.dockTargets(g, b); b.swingFree = false;
@@ -318,8 +321,11 @@ export class LiveGateSystem {
       const lo = angs[(gi + 1) % angs.length], span = 2 * Math.PI - gap;
       if (span <= 2 * ROT_SWING * DEG) b.ac = wrap(b.ac + lo + span / 2); else b.swingWide = +(span / DEG).toFixed(1); }
     const tg = this.dockTargets(g, b);
-    // (upper-deck bridges: from an upper level above the main-deck fixed walkways - their roof + 0.6 m - sloping down to
-    // the rotunda; inferred)
+    // heights: fixed walkway from the terminal's departure level, sloping at most 1:12 to the rotunda (36 CFR 1191
+    // App. D 405.2 ramp slope); rotunda floor chosen so that the docked tunnel slopes as little as possible for the
+    // aircraft this bridge docks (minimax over their door sills), with the drum 0.3 m clear above the wings of the
+    // stand's aircraft. Upper-deck bridges: a level walkway from an upper level above the main-deck fixed walkways (their
+    // roof + 0.6 m; inferred), the tunnel takes the slope down to U1L.
     const Hb = b.upper ? DEPARTURE_LEVEL + WALK_H + 0.6 : DEPARTURE_LEVEL, dh = b.upper ? 0 : wl / 12; // (upper: level walkway, the tunnel takes the slope)
     let Hr = Hb, best = 1e9;
     const wingAc = this.standAircraft(g); // the drum (floor - 0.3 m) must pass over the wings of the stand's aircraft
@@ -349,12 +355,15 @@ export class LiveGateSystem {
     for (const { g, b } of all) {
       const others = all.filter(o => o.b !== b && Math.hypot(o.b.rot[0] - b.rot[0], o.b.rot[2] - b.rot[2]) < 70).map(o => restOf.get(o.b));
       const acs = this.standAircraft(g); const tg = b._tg || [];
-      const poses = [{ q: { a: b.a0, e: b.e0, t: 0, h: b.h0 }, ac: acs }].concat(tg.map(t => ({ q: { a: t.a, e: t.e, t: 0, h: t.sill }, ac: [{ T: TYPES[t.key], nose: [t.nose[0], t.nose[2]], f: [t.f[0], t.f[2]] }] })));
+      const q0 = { a: b.a0, e: b.e0, t: 0, h: b.h0 };
+      const poses = [{ q: q0, ac: acs }].concat(tg.map(t => ({ q: { a: t.a, e: t.e, t: 0, h: t.sill }, ac: [{ T: TYPES[t.key], nose: [t.nose[0], t.nose[2]], f: [t.f[0], t.f[2]] }] })),
+        this.sweepQ(g, b, false).map(q => ({ q, ac: [] }))); // (every candidate docking path, sampled)
       const bad = {};
       for (const sd of [1, -1]) { b.stairSide = sd; let n = 0;
         for (const P of poses) { const S = this.stairBoxes(b, P.q);
           if (S.some(bx => P.ac.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 0.5)))) n += 2;
-          if (S.some(bx => others.some(O => O.some(o => o.hi > bx.lo && o.lo < bx.hi && solidOverlap(bx, o, 0.3))))) n += 1; }
+          if (S.some(bx => others.some(O => O.some(o => o.hi > bx.lo && o.lo < bx.hi && solidOverlap(bx, o, 0.3))))) n += 1;
+          if (S.some(bx => { const v = [-bx.u[1], bx.u[0]]; return [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 0]].some(([i, j]) => inBuilding(bx.c[0] + bx.u[0] * bx.hl * i + v[0] * bx.hw * j, bx.c[1] + bx.u[1] * bx.hl * i + v[1] * bx.hw * j)); })) n += 2; }
         bad[sd] = n; }
       b.stairSide = bad[-1] < bad[1] ? -1 : 1;
     }
@@ -572,11 +581,11 @@ export class LiveGateSystem {
       if (n < 2 || (b.walkFrom || 0) >= n - 1) continue;
       b.walkFrom = n - 1; const V = b.walk[n - 1], N = b.walk[n];
       const du = [N[0] - V[0], N[2] - V[2]]; const Lu = Math.hypot(du[0], du[1]) || 1;
-      if (twin) { const D = Math.hypot(b.rot[0] - o.rot[0], b.rot[2] - o.rot[2]); const r = Math.min(b.rotR, o.rotR, Math.max(1.3, (D - 0.3) / 2)); b.rotR = o.rotR = r; b.walkOff = r + 0.02; }
+      if (twin) { const D = Math.hypot(b.rot[0] - o.rot[0], b.rot[2] - o.rot[2]); const r = Math.min(b.rotR, o.rotR, Math.max(1.3, (D - 0.5) / 2)); b.rotR = o.rotR = r; b.walkOff = r + 0.25; }
       else { // start clear of the sibling's walkway (its segment through V, both sides)
         // (each sibling segment at V as a ray from V: the start face's corners must be half a width off its axis)
-        let off = WALK_W / 2 + 0.05; for (const [P0, P1] of [[o.walk[n - 1], o.walk[n - 2]], [o.walk[n - 1], o.walk[n]]]) { if (!P0 || !P1) continue; const dv = [P1[0] - P0[0], P1[2] - P0[2]]; const Lv = Math.hypot(dv[0], dv[1]) || 1;
-          const c = (du[0] * dv[0] + du[1] * dv[1]) / (Lu * Lv); if (c <= 0) continue; const sn = Math.sqrt(Math.max(0.01, 1 - c * c)); off = Math.max(off, Math.min(Lv, (WALK_W / 2) * (1 + c) / sn + 0.05)); }
+        let off = WALK_W / 2 + 0.5; for (const [P0, P1] of [[o.walk[n - 1], o.walk[n - 2]], [o.walk[n - 1], o.walk[n]]]) { if (!P0 || !P1) continue; const dv = [P1[0] - P0[0], P1[2] - P0[2]]; const Lv = Math.hypot(dv[0], dv[1]) || 1;
+          const c = (du[0] * dv[0] + du[1] * dv[1]) / (Lu * Lv); if (c <= 0) continue; const sn = Math.sqrt(Math.max(0.01, 1 - c * c)); off = Math.max(off, Math.min(Lv, (WALK_W / 2) * (1 + c) / sn + 0.5)); }
         b.walkOff = off; }
       b._own = null; o._own = null;
     }

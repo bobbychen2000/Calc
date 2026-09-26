@@ -39,3 +39,19 @@ Please include them (they dock only an A388, U1L door).
 replicates `dispBar: [-3.05, 0]` and checks for the string `band(xt, -3.05, 0.0` (paintCheck); measure.py / report.py
 say "draws a bar only at displaced thresholds, centred 1.525 m on the approach side". Please change to `[0, 3.05]` at all
 eight ends (model centre +1.52 m; your NAIP measurements +0.9..+1.9 m).
+
+## 5. ENVELOPE scenario: place each type at its stop point (`type_stops`)
+
+`audit.py` puts every accepted type with its nose on the stand nose. The data's `type_stops` say where each family
+stops (`js/live/traffic.js` parks there, and `gates.js` docks there); at F12 / F14 / F17 / F19 / F21 the stand data
+records that the 737 / A320 / E-Jet families stop 2-13 m short precisely because at the stand nose "wings / engines /
+tailplane ... came up to 4.5 m inside" the fixed bridge parts. The remaining `envelope-rest-bridge` COLLISION rows
+(F17 / F19 / F21 / F14 with `b736`, the whole fixed bridge incl. walkway and pedestal inside the envelope) are this
+placement, not a bridge pose. Please shift each type's placement by `type_stops[family].along` (traffic.js
+`stopAlong`); `gates.js` exports nothing new for this.
+
+## 6. `oversize-rest-bridge`, `bridge-aircraft` DOCK rows
+
+Docked poses: `gates.js` does not dock a type whose docking path it cannot clear (`docks(g, b)` false, the bridge
+stays at rest) - `bridgeParts(gp, b, 1)` for such a type draws the REST pose, which is correct; please treat
+`docks === false` as "rest" in the DOCK scenarios (it already records `docks`).

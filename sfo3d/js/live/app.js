@@ -69,6 +69,7 @@ export async function startApp(cfg) {
     onSelect: (hex, fly) => select(hex, fly), onView: (v) => view(v), onFollow: (m) => followCmd(m),
     onSetting: (k, v) => setting(k, v), showOthers: () => showOthers,
     onAtc: (a, v) => atcCmd(a, v), onStatsOpen: () => statsSheet(Date.now()),
+    planFor: (tr) => { try { return traffic.planFor(tr); } catch (e) { return null; } },   // (list rows: the leg SFO lists for the flight, ui.js routeText)
   });
   ui.root.querySelector('[data-set="light"]').value = lightMode; ui.root.querySelector('[data-set="quality"]').value = qPref; ui.root.querySelector('[data-set="others"]').checked = showOthers;
   ui.setAbout(cfg.about || ''); ui.setAttrib(cfg.attrib || '');
@@ -182,16 +183,31 @@ export async function startApp(cfg) {
     const h = hdgVec(P.hdg); const k = antOf(T);
     const n = worldToST(P.x + h[0] * k, P.z + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
   const traffic = new Traffic({ gates: world.gates, airport: cfg.airport, persist: cfg.mode === 'live', centerlines: cfg.details ? cfg.details.centerlines : null, taxigraph: cfg.taxigraph || null, stands: cfg.stands || null,
-    onGateChange: (g, tr) => applyGate(g, tr) });
+    onGateChange: (g, tr, opt) => applyGate(g, tr, opt) });
   // the physical bridges of a stand: its own, or -- for an alternative (MARS) position without bridges of its own, e.g.
   // B5S / B16S / C9V (data/sfo_stands.json shares_bridges_of) -- those of its base stand, which dock to the aircraft there
   const gateByName = new Map(world.gates.map(g => [g.name, g]));
   const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
   // jet-bridge docking follows the scene: traffic.js calls this at display time (docks once the drawn aircraft has come to
   // rest; retracts when it is leaving, before it moves) and only for aircraft with a 3-D airframe
-  function applyGate(g, tr) { const G = bridgeGate(g); gateSys.setOccupant(G, tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, booted(), Date.now(), tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
-  // extension (0 retracted .. 1 docked) of a stand's bridges, for the engine's hold-until-clear
-  traffic.bridgeK = (g) => { const G = bridgeGate(g); const a = gateSys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
+  // opt.fast (traffic.js undock of a departing / removed aircraft): the retraction takes opt.s seconds instead of the
+  // datasheet rates -- the data shows a departure only once the push-back has begun, when the real bridge is already
+  // retracted (traffic.js FAST_UNDOCK_S). gates.js has no such option yet (docs/requests/bridges_fast_undock.md): the
+  // retraction animation it just started is shortened here
+  function applyGate(g, tr, opt) {
+    const G = bridgeGate(g); const now = Date.now();
+    gateSys.setOccupant(G, tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, booted(), now, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
+    if (!tr && opt && opt.fast) hurryUndock(G, opt.s || 5, now);
+  }
+  function hurryUndock(G, s, now) {
+    if (gateSys.hurryUndock) return gateSys.hurryUndock(G, s, now);
+    const a = gateSys.anims.get(G.id); if (!a || a.to !== 0) return;
+    const u = a.dur > 0 ? clamp((now - a.t0) / a.dur, 0, 1) : 1; const k = a.from + (a.to - a.from) * u; const dur = s * 1000 * Math.max(0.2, k);
+    if (a.t0 + a.dur > now + dur) { a.from = k; a.k = k; a.t0 = now; a.dur = dur; }
+  }
+  // extension (0 retracted .. 1 docked) of a stand's bridges, for the engine's hold-until-clear (gates.js extension(): 1
+  // only when a bridge actually docks the occupant)
+  traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gateSys.extension) return gateSys.extension(G); const a = gateSys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
   const buildingAt = buildingGrid(cfg.airport); traffic.buildingAt = buildingAt;
   // ---------------------------------------------------------------- ATC (atc.js): tuned LiveATC feed + audio delay (per device)
   let atcTuned = store.get('atc.mount', null); if (atcTuned && !FEED_BY.has(atcTuned)) atcTuned = null;

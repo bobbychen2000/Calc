@@ -30,7 +30,11 @@ const GEOID_M = 32.29;          // EGM96 undulation at the ARP is -32.29 m (real
 export const DELAY_MS = 1500;   // initial display delay; adapted between DELAY_MIN and DELAY_MAX to the report ages
 export const DELAY_MIN = 1000, DELAY_MAX = 3000;
 const DR_MAX_S = 5;             // dead reckoning horizon past the newest report
-const STALE_AIR_MS = 60000, STALE_GROUND_MS = 75000, PARK_KEEP_MS = 8 * 3600e3, VEH_KEEP_MS = 120000, MOVING_LOST_MS = 45000;
+// an arrival that goes silent near a free stand -- moving, SILENT_DOCK_MS after its last position (the dead-reckoning
+// horizon + 3 s), or stopped for QUIET_MS -- completes its docking there (silentDock); the rest are faded out after
+// MOVING_LOST_MS (moving) or kept as parked after STALE_GROUND_MS
+const SILENT_DOCK_MS = 8000;
+const QUIET_MS = 15000, STALE_AIR_MS = 60000, STALE_GROUND_MS = 75000, PARK_KEEP_MS = 8 * 3600e3, VEH_KEEP_MS = 120000, MOVING_LOST_MS = 45000;
 // a settled parked aircraft (bridge docked) keeps its displayed pose through parked-pose estimate changes smaller than
 // this: the real aircraft does not move while docked, only our estimate does (review round 1: bridges misdocked when the
 // pose was refined after docking)
@@ -41,6 +45,13 @@ const CUT_S = 0.4;               // fade out / fade in (s) of a re-placement (da
 // an arrival's jet bridge starts docking this long after the drawn aircraft came to rest (+ gates.js DOCK_DELAY 12 s):
 // engines are shut down and the beacon is off before a bridge approaches [inferred design value; see syncBridge]
 const DOCK_WAIT_MS = 20000;
+// a departing aircraft's jet bridge: the real bridge is retracted BEFORE the push-back starts, but the data shows the
+// departure only when the push is already under way. So on the first push evidence the drawn bridge retracts in
+// FAST_UNDOCK_S (a visibly quick retraction instead of the datasheet rates, gates.js), and the body is never held longer
+// than HOLD_CAP_MS once its target moves (review round 2: every push-back was drawn 1-2 min behind the data -- AIC4174 B77W
+// at A1 held 80 s while its bridge retracted at the sheet's rates, then reversed at 3 m/s for minutes to catch up)
+export const FAST_UNDOCK_S = 5;
+const HOLD_CAP_MS = 6000;
 const REACQ_PARK_M = 15;         // a parked aircraft heard again within this distance of its parked pose has not moved
 const STORE_KEY = 'sfolive.parked.v4'; // v4: stand names back to gate numbers, new stands (static_geometry_round1.md #4)
 // audit s.6.4-6.6 (ft/min, kt/s, ft, ft/min). DECEL_TD: flare deceleration before touchdown was 0.4-0.8 kt/s at night
@@ -67,6 +78,15 @@ export const ANT = 0.2; // ADS-B position reference (GNSS antenna) assumed ~20% 
 export const ANT_A32X = 0.06;
 export const antOf = (T, L = 38) => (T && /^Airbus A3(18|19|20|21)/.test(T.name || '') ? ANT_A32X : ANT) * (T ? T.L : L);
 const typeOf = (tr) => (tr.model && TYPES[tr.model.t]) || null;
+// outline points of an aircraft of type T whose reference point (antenna) is at (x, z) with heading psi: nose, tail, the
+// wing tips, the stabiliser tips and the wing roots' leading edges (for the building veto of a moving body)
+function planPts(T, x, z, psi) {
+  const f = hdgVec(psi), r = [-f[1], f[0]], k = antOf(T); const nx = x + f[0] * k, nz = z + f[1] * k;
+  const P = (along, side) => [nx - f[0] * along + r[0] * side, nz - f[1] * along + r[1] * side];
+  const w = T.wing, span = w ? w.span / 2 : 16, le = w ? w.rootLE : T.L * 0.4, sw = Math.tan(((w && w.sweep) || 27) * DEG), tipC = w ? w.tipC : 1.5;
+  const hs = T.hstab ? T.hstab.span / 2 : 6, hx = T.hstab ? T.hstab.x + (T.hstab.rootC || 3) : T.L - 2;
+  return [P(0, 0), P(T.L, 0), P(le + span * sw + tipC / 2, span), P(le + span * sw + tipC / 2, -span), P(hx, hs), P(hx, -hs), P(le, T.R || 2), P(le, -(T.R || 2)), P(le + span * 0.5 * sw, span * 0.5), P(le + span * 0.5 * sw, -span * 0.5)];
+}
 
 // stop-point family of an ICAO designator: the families of data/sfo_stands.json `type_stops` (tools/stands/geom.py
 // FAMILY + ALIAS, docs/requests/static_geometry_round2.md #3)
@@ -282,8 +302,7 @@ export class Traffic {
   planFor(tr) {
     const P = this.plan; if (!P || !tr.cs || !tr.cs.callsign) return null;
     const norm = (c) => { const m = /^([A-Z]{3})0*(\d+[A-Z]?)$/.exec(c || ''); return m ? m[1] + m[2] : c; };
-    const cs0 = norm(tr.cs.callsign); let cs = cs0, alias = null;
-    if (P.aliases && P.aliases[cs]) { const a = P.aliases[cs]; const to = a && typeof a === 'object' ? a.to : a; if (to) { cs = to; alias = a; } }
+    const { cs0, cs, alias } = this.planCs(tr);
     const e = P.byCallsign && P.byCallsign[cs]; if (!e) return null;
     const F = P.flights || {}; const arr = e.arr ? F[e.arr] || null : null, dep = e.dep ? F[e.dep] || null : null;
     const ground = tr.disp && tr.disp.ground;
@@ -303,6 +322,17 @@ export class Traffic {
       for (const [n, a, b] of st) { const A = ms(a), B = ms(b); cands.push({ kind, fn, linked, stand: String(n).toUpperCase(), gate: f.gate ? String(f.gate).toUpperCase() : null, from: A, to: B, now: A != null && B != null && now >= A - 2700e3 && now <= B + 2700e3 }); }
     }
     return { cs: cs0, mapped: cs, alias, arr, dep, flight, stand: e.stand || null, gate: flight ? flight.gate || null : null, term: flight ? flight.term || null : null, cands };
+  }
+  // the callsign SFO lists this aircraft's flight under: its own (normalised: CAL003 -> CAL3), or -- for a regional operator
+  // callsign -- the marketing flight the relay's alias maps it to. A resolved alias is kept per track while the callsign is
+  // unchanged (review round 2: SKW5899 -> UAL5899 dropped out of /api/gates once the aircraft was silent at F5, and the card
+  // lost 'per SFO ✓' and 'UA 5899')
+  planCs(tr) {
+    const P = this.plan; const m = /^([A-Z]{3})0*(\d+[A-Z]?)$/.exec(tr.cs.callsign || ''); const cs0 = m ? m[1] + m[2] : tr.cs.callsign;
+    const a = P && P.aliases ? P.aliases[cs0] : null; const to = a && typeof a === 'object' ? a.to : a;
+    if (to) { tr.planAlias = { from: cs0, to, rec: a }; return { cs0, cs: to, alias: a }; }
+    if (tr.planAlias && tr.planAlias.from === cs0) return { cs0, cs: tr.planAlias.to, alias: { ...tr.planAlias.rec, held: true } };
+    return { cs0, cs: cs0, alias: null };
   }
   event(tr, t, kind, extra = {}) { const e = { t, kind, hex: tr.hex, flight: tr.info.flight || null, icao: tr.info.icao || null, reg: tr.info.reg || null, ...extra }; this.events.push(e); if (this.events.length > 5000) this.events.splice(0, 1000); this.onEvent && this.onEvent(e); return e; }
 
@@ -324,15 +354,31 @@ export class Traffic {
       // parked aircraft (AAL2856 A321 at B23, 24 Sep 08:13Z: alt_baro 75 ft, gs 0.7 kt, between ground reports) and E175s
       // switch it at ~50 kt (realtime_impl.md step 2). Rotorcraft keep the flag (they hover).
       // Elsewhere (Palo Alto, San Carlos, Hayward ...: GA parked 'airborne' at 0 kt, review round 1) below 25 kt.
-      if (!a.ground && !(a.category === 'A7' || (tr && tr.type && tr.type.species === 'H'))) {
-        const gs = a.gs ?? 0, low = a.altGeom != null ? a.altGeom < 150 : (a.altBaro == null || a.altBaro < 500); // SFO: 13 ft MSL = -93 ft HAE
+      const rotor = a.category === 'A7' || !!(tr && tr.type && tr.type.species === 'H');
+      if (!a.ground && !rotor) {
+        // ground speed of this report: the reported one, else the chord speed from the previous report (a missing gs is
+        // not 0 kt -- review round 2: UAL1506 B39M, a liftoff report with gs null / alt_baro 0 was turned into a ground
+        // report and started a second take-off roll, 25 Sep 20:02:21Z); neither known: no reclassification
+        const L0 = tr && tr.last; const tq = a.t != null && this.offset != null ? a.t + this.offset : null;
+        const gs = a.gs != null ? a.gs : (L0 && tq != null && tq - L0.t > 300 && tq - L0.t < 20000 ? Math.hypot(x - L0.x, z - L0.z) / ((tq - L0.t) / 1000) / KT : null);
+        const low = a.altGeom != null ? a.altGeom < 150 : (a.altBaro == null || a.altBaro < 500); // SFO: 13 ft MSL = -93 ft HAE
         const sfo = inAirport(x, z);
         // (elsewhere <= 40 kt, or <= 60 kt right after a ground report: GA landing / take-off rolls at San Carlos and Palo
         // Alto reported 'airborne' at 18-26 kt between ground reports and flickered approach <-> ground -- review round 2)
         // (elsewhere < 50 kt: light aircraft touch down at ~45-55 kt and roll out 'airborne'-flagged; drawn as slow floats at
         // ground level, replay check 25 Sep: vert.float.other_airfield 17,028 frames at Palo Alto / San Carlos)
-        const wasG = !!(tr && tr.last && tr.last.ground);
-        if (low && (sfo ? (gs < 30 || (wasG && gs < 50)) : (gs < 50 || (wasG && gs < 60)))) a = { ...a, ground: true, altBaro: null, altGeom: null, flagFixed: true };
+        const wasG = !!(L0 && L0.ground);
+        // (at SFO an airplane below 40 kt is on the ground whatever the altitude says: a single garbled 'airborne' report
+        // of a taxiing B77W (ANA7, 25 Sep 19:52:18.7Z: 4.2 kt, alt_baro 3,875 ft, repeated by the other provider) had lifted
+        // it off as a 'departed unseen' liftoff -- review round 2. Airplanes do not fly below 40 kt: the slowest types at SFO
+        // (light singles) stall at ~45-50 kt)
+        if (gs != null && (sfo ? (gs < 40 || (low && wasG && gs < 50)) : low && (gs < 50 || (wasG && gs < 60)))) a = { ...a, ground: true, altBaro: null, altGeom: null, flagFixed: true };
+      }
+      // a 'ground' report in the first minute after a liftoff, still fast (or with no speed): a flag glitch of a climbing
+      // aircraft, not a landing -- kept airborne at the last altitude (review round 2: UAL1506 logged a second take-off roll
+      // and liftoff 3 s after the first)
+      if (a.ground && tr && tr.m.phase === 'climb' && tr.liftoffAt && a.t != null && this.offset != null && a.t + this.offset - tr.liftoffAt < 60000 && !(a.gs != null && a.gs < 40)) {
+        a = { ...a, ground: false, altBaro: null, altGeom: null, flagFixed: 'air' }; this.counters.gndGlitch = (this.counters.gndGlitch || 0) + 1;
       }
       // (a position already older than the moving-on-the-ground limit is not worth starting a track for: it would be
       // dropped again at once)
@@ -363,7 +409,7 @@ export class Traffic {
       }
       const r = this.report(tr, a, x, z, tf);
       if (!r) { tr.lastRecv = recvNow; continue; }
-      if (tr.fadeOut) { tr.fadeOut = false; tr.reacquire = true; }   // heard again while fading out: re-placed where it is
+      if (tr.fadeOut || tr.dropping) { tr.fadeOut = false; tr.dropping = null; tr.reacquire = true; }   // heard again while fading out: re-placed where it is
       tr.reps.push(r); while (tr.reps.length > 60 || (tr.reps.length > 4 && r.t - tr.reps[0].t > 120000)) tr.reps.shift();
       tr.lastFixT = tf; tr.lastRecv = recvNow;
       if (tr.vehicle) { tr.phase = 'vehicle'; tr.m.phase = 'vehicle'; continue; }
@@ -417,8 +463,10 @@ export class Traffic {
       // altitude plausibility: a step implying > 6,000 ft/min against the previous airborne report (unless its own
       // vertical rate says so) is garbled -- accepted only when 3 reports in a row agree (review round 1: '~' TIS-B
       // targets and a C152 at -11,800 / -25,900 ft/min below 150 m)
-      if (L && !L.ground && tf > L.t) {
-        const dt = (tf - L.t) / 1000, pred = L.y + (L.vs || 0) * Math.min(dt, 10), lim = 30.5 * dt + 25 + Math.abs(L.vs || 0) * 0.5 * dt;
+      // (after a ground report too: the first airborne report of a real liftoff is < ~100 ft up; a garbled one of a taxiing
+      // aircraft said 3,875 ft -- review round 2, ANA7 25 Sep 19:52:18Z)
+      if (L && tf > L.t) {
+        const dt = (tf - L.t) / 1000, pred = L.ground ? GROUND_Y : L.y + (L.vs || 0) * Math.min(dt, 10), lim = 30.5 * dt + 25 + (L.ground ? 0 : Math.abs(L.vs || 0) * 0.5 * dt);
         if (Math.abs(y - pred) > lim && dt < 20) {
           const q = tr.altRej; tr.altRej = q && Math.abs(q.y - y) < 60 ? { y, n: q.n + 1 } : { y, n: 1 };
           if (tr.altRej.n < 3) { y = Math.max(GROUND_Y, pred + clamp(y - pred, -lim, lim)); this.counters.altRejects = (this.counters.altRejects || 0) + 1; }
@@ -478,7 +526,7 @@ export class Traffic {
         r.dir = L ? L.dir : (nose ?? 0);
       }
       r.hd = wrapPi(nose ?? r.dir);
-      if (tr.pushback) { r.push = true; if (!tr.pushbackFrom && tr.gate) tr.pushbackFrom = tr.gate.name; }
+      if (tr.pushback) { r.push = true; if (!tr.pushbackFrom && tr.gate) { tr.pushbackFrom = tr.gate.name; tr.pushG = tr.gate; } }
       // map matching (OSM taxiway/taxilane centrelines): snap taxiing reports laterally when close and aligned
       if (moving && !tr.pushback && r.gs > 2 && this.net.ok && !tr.dock && !tr.vehicle) {
         // (with a reported heading the edge must agree within 20 deg: at junctions a 30-deg-off crossing edge pulled a
@@ -550,8 +598,7 @@ export class Traffic {
   // flysfo 'E175' = ICAO E75L/E75S, realtime_impl.md s.4)
   planType(tr) {
     const P = this.plan; if (!P || !tr.cs || !tr.cs.callsign) return null;
-    const m = /^([A-Z]{3})0*(\d+[A-Z]?)$/.exec(tr.cs.callsign); let cs = m ? m[1] + m[2] : tr.cs.callsign;
-    if (P.aliases && P.aliases[cs]) { const q = P.aliases[cs]; cs = (q && typeof q === 'object' ? q.to : q) || cs; }
+    const { cs } = this.planCs(tr);
     const e = P.byCallsign && P.byCallsign[cs]; if (!e) return null;
     let t = e.type || null;
     if (!t) { const F = P.flights || {}; for (const k of ['dep', 'arr']) { const f = e[k] && F[e[k]]; if (f && f.type) { t = f.type; break; } } }
@@ -630,9 +677,16 @@ export class Traffic {
       if (R && (vr == null || vr > -300) && (alt == null || alt < 300)) { this.setPhase(tr, 'takeoff', t, R.name); this.setGround(tr, t, true); M.flagAir = t; M.climbN = 0; M.geomRef = []; M.coldT = t; M.rollT = t; return; }
     }
     // ---- airborne again after a data gap while we had it on the ground at SFO: it departed unseen
-    if (!gnd && ['taxi', 'lineup', 'still', 'pushback', 'takeoff'].includes(M.phase) && (alt ?? 0) > 400 && tr.groundSFO) {
-      this.setGround(tr, t, false); this.setPhase(tr, 'climb', t); M.lo = { t }; tr.liftoffAt = t; tr.dirSFO = 'dep';
-      this.event(tr, t, 'liftoff', { rwy: M.phase === 'takeoff' ? M.rwy : null, unseen: true }); return;
+    // (two consecutive airborne reports above 400 ft and 100 kt -- one garbled 'airborne' report of a taxiing aircraft is
+    // not a departure: review round 2, ANA7 B77W 'liftoff (unseen)' at 4 kt on the 28L taxiway, then its real liftoff)
+    if (!gnd && ['taxi', 'lineup', 'still', 'pushback', 'takeoff'].includes(M.phase) && tr.groundSFO) {
+      const F = tr.reps, p0 = F.length >= 2 ? F[F.length - 2] : null;
+      const fast = (q) => q && !q.ground && (q.alt ?? 0) > 400 && q.gs / KT > 100;
+      if (fast(r) && fast(p0) && r.t - p0.t < 30000) {
+        this.setGround(tr, p0.t, false); this.setPhase(tr, 'climb', p0.t); M.lo = { t: p0.t }; tr.liftoffAt = p0.t; tr.dirSFO = 'dep';
+        this.event(tr, p0.t, 'liftoff', { rwy: M.phase === 'takeoff' ? M.rwy : null, unseen: true }); return;
+      }
+      if (fast(r)) return;   // (the first one: wait for the second)
     }
     // ---- climb / departure
     if (M.phase === 'climb' || M.phase === 'departure') {
@@ -674,7 +728,7 @@ export class Traffic {
         for (const [n, v] of cand) { const p = Math.exp(v - m) / Z; if (p > tp) { tp = p; top = n; } }
         const R = RWYN[top]; const [aa, c] = rwyCoords(R, x, z);
         if (tp >= 0.9 && Math.abs(c) < 150 + 0.1 * Math.abs(aa)) {
-          if (!onFinal) { M.decidedAt = { t, a: Math.round(aa), rwy: top, p: +tp.toFixed(3) }; this.setPhase(tr, 'final', t, top); M.altRwy = null; tr.finalInfo = { R, a: aa, c }; tr.runway = top; M.rwyFirm = false; M.firmT = null; }
+          if (!onFinal && !(tr.landedAt && t - tr.landedAt < 180000 && t >= tr.landedAt)) { M.decidedAt = { t, a: Math.round(aa), rwy: top, p: +tp.toFixed(3) }; M.td = null; this.setPhase(tr, 'final', t, top); M.altRwy = null; tr.finalInfo = { R, a: aa, c }; tr.runway = top; M.rwyFirm = false; M.firmT = null; }
           else if (M.rwy !== top && !M.rwyFirm) {
             // not yet firm (shown as the parallel pair): follow the posterior without a runway-change event (review round 1:
             // 14 flips 6-23 km out -- all ended on the runway actually used, so they were corrections of an early call)
@@ -737,7 +791,15 @@ export class Traffic {
     const out = {}; for (const R of RWY) out[R.name] = n ? 0.1 + 0.35 * (pr[R.name] || 0) / n : 0.25; return out;
   }
   touchdown(tr, r, t, how) {
-    const M = tr.m; const R = RWYN[M.rwy]; const a = R ? rwyCoords(R, r.x, r.z)[0] : null;
+    const M = tr.m;
+    // one touchdown per arrival: a second trigger within 3 min (a 'late' ground-position touchdown, then the flare's
+    // deceleration test) is not a second landing (review round 2: TWY63 CL60 logged 28R 'late' then 28L 'decel' 1.7 s
+    // later, and the second overwrote the runway -- the drawn touchdown lay 227 m off the runway shown)
+    if (tr.landedAt && t > tr.landedAt - 60000 && t - tr.landedAt < 180000) { this.counters.tdRepeat = (this.counters.tdRepeat || 0) + 1; if (M.phase !== 'rollout') { M.rwy = tr.arrRunway || M.rwy; this.setPhase(tr, 'rollout', t); } return; }
+    // the runway under the touchdown position when it is a runway aligned with the motion and not the final's runway (the
+    // final's posterior can pick the parallel runway)
+    const rp = runwayAt(r.x, r.z, 36); if (rp && !rp.some(q => q.name === M.rwy)) { const Rg = alignedRunway(rp, r.dir ?? r.hd ?? 0, 20 * DEG); if (Rg) { this.counters.tdRwyFromPos = (this.counters.tdRwyFromPos || 0) + 1; M.rwy = Rg.name; } }
+    const R = RWYN[M.rwy]; const a = R ? rwyCoords(R, r.x, r.z)[0] : null;
     M.td = { t, a, how }; tr.landedAt = t; this.setGround(tr, t, true); this.setPhase(tr, 'rollout', t);
     this.event(tr, t, 'touchdown', { rwy: M.rwy, how, a: a != null ? Math.round(a) : null, gs: Math.round(r.gs / KT) });
     tr.arrRunway = M.rwy; tr.runway = M.rwy;
@@ -757,7 +819,9 @@ export class Traffic {
     // acceleration 3-5.8 kt/s; a runway back-taxi at 30-36 kt was 0.03-0.1 kt/s: audit s.3.5, s.6.5)
     let acc = null; const F = tr.reps;
     if (F.length >= 4) { const q = F[F.length - 4]; if (r.t - q.t > 1500) acc = (r.gs - q.gs) / KT / ((r.t - q.t) / 1000); }
-    if (rp && (kt >= 50 || (kt >= 12 && acc != null && acc >= 1.2))) {
+    // (not within a minute of a liftoff: a stray ground report of a climbing aircraft is not a second take-off roll --
+    // review round 2, UAL1506 25 Sep 20:02:20Z)
+    if (rp && (kt >= 50 || (kt >= 12 && acc != null && acc >= 1.2)) && !(tr.liftoffAt && t - tr.liftoffAt < 60000 && t >= tr.liftoffAt)) {
       const R = alignedRunway(rp, hdg);
       if (R) { if (M.phase !== 'takeoff') {
           // roll start: the last report below 5 kt (standing start) or on entering the runway (rolling start), <= 60 s back
@@ -777,6 +841,15 @@ export class Traffic {
       // 2 min at a reported 0.0 kt, 24 Sep 16:39-16:47Z)
       // (...unless it follows a moving candidate: a sparse track that moved and has already stopped at its new place)
       const cand = moving || (ref && Math.hypot(r.x - ref[0], r.z - ref[1]) > 6 && (!(r.gsKt != null && r.gsKt < 0.5) || !!(tr.mvCand && tr.mvCand.length)));
+      if (cand && this.candLog && tr.gate && tr.gate.bridge) { const g = tr.gate; const dx = r.x - (ref ? ref[0] : r.x), dz = r.z - (ref ? ref[1] : r.z); this.candLog.push({ t: r.t, hex: tr.hex, fl: tr.info.flight, g: g.name, on: tr.bridgeOn ? 1 : 0, gsKt: r.gsKt, d: +Math.hypot(dx, dz).toFixed(1), back: +(-(dx * g.w.dx + dz * g.w.dz)).toFixed(1), lat: +(-dx * g.w.dz + dz * g.w.dx).toFixed(1), push: r.push ? 1 : 0, th: r.th != null ? 1 : 0, n: tr.mvCand ? tr.mvCand.length : 0 }); }
+      // push hint: the FIRST report of motion out of a docked contact stand, backward along the stand axis (or flagged as a
+      // push-back against the reported nose): the drawn jet bridge starts its (fast) retraction now, before the second
+      // report confirms the motion -- a real bridge is retracted before the push starts (review round 2). Not confirmed
+      // within 20 s: the bridge docks again (stationary())
+      if (cand && tr.bridgeOn && ref && tr.gate && tr.gate.bridge && !tr.leaving && !this.creepToStop(tr, r)) {
+        const g = tr.gate, dx = r.x - ref[0], dz = r.z - ref[1], d = Math.hypot(dx, dz), back = -(dx * g.w.dx + dz * g.w.dz);
+        if (r.push || (d >= 2.5 && back >= 0.8 * d)) { tr.leaving = true; tr.leaveFast = true; tr.leaveHintT = r.t; this.counters.pushHints = (this.counters.pushHints || 0) + 1; }
+      }
       if (!cand) tr.mvCand = null;
       else if (!this.motionConfirmed(tr, r, ref)) { moving = false; r.noise = true; if (tr._pushSetAt === r.t) { tr.pushback = false; r.push = false; } this.counters.motionHeld = (this.counters.motionHeld || 0) + 1; }
       else moving = true;
@@ -801,10 +874,11 @@ export class Traffic {
     // leaving a parked position: the jet bridge retracts first (the display holds the body until it is clear); a creep
     // to the stop mark retracts only a bridge that is already out, and it re-docks when the aircraft has stopped
     // (a body at rest at a taxiway hold or on a ramp has no bridge: nothing to retract)
-    if (creep ? tr.bridgeOn : (tr.bridgeOn || (tr.lock && tr.gate))) tr.leaving = true;
+    if (creep ? tr.bridgeOn : (tr.bridgeOn || (tr.lock && tr.gate))) { tr.leaving = true; if (!creep) tr.leaveFast = true; }
     if (creep) this.counters.creeps = (this.counters.creeps || 0) + 1;
     const wasStill = M.phase === 'still';
     tr.still = []; tr.seenMoving = true; tr.stillPos = null; tr.stillHdg = null; tr.freePark = null; tr.dockComplete = false; tr.lock = null;
+    if (tr.silentDockG) { tr.silentDockG = null; tr.forceStand = false; }   // (heard again, moving: the silent docking is undone by the data)
     if (tr.gate && this.distToPark(tr, r) > (creep ? 30 : 12)) this.releaseGate(tr, t);
     // the start of the motion (first report of the confirmed sequence), for back-dating the phase
     const F2 = tr.reps; let t0 = t; for (let i = F2.length - 2; i >= 0 && t - F2[i].t < 30000; i--) { if (!F2[i].mv && !(F2[i].gs >= 0.6 && !F2[i].noise)) break; t0 = F2[i].t; }
@@ -838,6 +912,7 @@ export class Traffic {
       if (ok && da > 2 && step > 1 && Math.abs(wrapPi(vecHdg(a.x - ref[0], a.z - ref[1]) - vecHdg(r.x - a.x, r.z - a.z))) > 60 * DEG) ok = false;
     }
     if (!ok) return false;
+    if (this.candLog) this.candLog.push({ t: r.t, hex: tr.hex, confirmed: 1 });
     for (const q of C) q.mv = true; tr.mvCand = null; return true;
   }
   // moving forward along its contact stand's lead-in toward the stop point (< 3 kt, direction within 40 deg of the stand
@@ -871,11 +946,11 @@ export class Traffic {
     // a remembered aircraft whose transponder is off cannot be where a live one now stands: it has left (towed/departed)
     const T0 = typeOf(tr), L0 = T0 ? T0.L : 38;
     for (const o of this.tracks.values()) {
-      if (o === tr || !o.stale) continue; const P = o.parkPos || o.stillPos || (o.last && [o.last.x, o.last.z]); if (!P) continue;
+      if (o === tr || !o.stale || o.dropping) continue; const P = o.parkPos || o.stillPos || (o.last && [o.last.x, o.last.z]); if (!P) continue;
       // (fuselages overlapping: < 0.25 (L1 + L2) apart. Not 0.45: adjacent contact stands are only ~35-45 m apart, and a
       // live aircraft stopping at B23 removed the silent one parked at B24 -- review round 2, AAL2506, 24 Sep 08:57Z. The
       // same stand is handled by occupy())
-      const To = typeOf(o); if (Math.hypot(P[0] - mx, P[1] - mz) < 0.25 * (L0 + (To ? To.L : 38))) { this.event(o, t, 'stale-replaced', { by: tr.hex }); this.remove(o); }
+      const To = typeOf(o); if (Math.hypot(P[0] - mx, P[1] - mz) < 0.25 * (L0 + (To ? To.L : 38))) { this.event(o, t, 'stale-replaced', { by: tr.hex }); this.fadeRemove(o, 'replaced'); }
     }
     const dur = t - S[0].t;
     // no longer on its stand: a tow or a creep below the taxi threshold (1.5 kt) moves the median away from the stand while
@@ -886,7 +961,7 @@ export class Traffic {
     if (tr.gate && !tr.stale && this.gateScore(tr.gate, { x: mx, z: mz, hd: tr.stillHdg, hdReal: hs.length >= 3, icao: tr.info.icao }, T0, 1.3) == null) {
       if (tr.misfitT == null) tr.misfitT = t;
       if (t - tr.misfitT >= 20000 && t - (tr.inBlockAt ?? 0) >= 60000) {
-        this.event(tr, t, 'stand-left', { stand: tr.gate.name, slow: true }); this.releaseGate(tr, t); tr.leaving = false; this.counters.standLeftSlow = (this.counters.standLeftSlow || 0) + 1;
+        this.event(tr, t, 'stand-left', { stand: tr.gate.name, slow: true }); this.releaseGate(tr, t, true); tr.leaving = false; this.counters.standLeftSlow = (this.counters.standLeftSlow || 0) + 1;
       }
     } else tr.misfitT = null;
     // (not back onto the stand it was pushed back from within 10 min: a push-back that pauses on the lead-in -- engine
@@ -906,7 +981,9 @@ export class Traffic {
     if (!tr.pushOk && !tr.pushback && (tr.gate || (stillFor >= (tr.seenMoving ? 600000 : 60000) && !tr.pushed && !inPolys(this.taxiways, mx, mz) && !runwayAt(mx, mz)))) tr.pushOk = true;
     // it stopped again where it was parked (a creep to the stop mark, a re-position): the bridge may dock again. After an
     // off-block (a push that stopped within 12 m of the stand) only after 5 min
-    if (tr.leaving && dur >= (tr.pushed ? 300000 : 8000)) tr.leaving = false;
+    // (a push hint -- one report of motion out of a docked stand, pushHint in groundLogic -- that no second report confirmed
+    // within 20 s was position noise: the bridge docks again)
+    if (tr.leaving && dur >= (tr.pushed ? 300000 : 8000) && !(tr.leaveHintT && t - tr.leaveHintT < 20000)) { tr.leaving = false; tr.leaveFast = false; if (tr.leaveHintT) { tr.leaveHintT = null; this.counters.pushHintFalse = (this.counters.pushHintFalse || 0) + 1; } }
   }
   distToPark(tr, r) { const p = tr.parkRep || tr.stillPos; return p ? Math.hypot(r.x - p[0], r.z - p[1]) : 0; }
 
@@ -942,8 +1019,7 @@ export class Traffic {
   // ---------------------------------------------------------- stands
   planStand(tr) { // SFO's allocation for this callsign now (relay /api/gates), as a stand name
     const P = this.plan; if (!P || !tr.cs || !tr.cs.callsign) return null;
-    const norm = (c) => { const m = /^([A-Z]{3})0*(\d+[A-Z]?)$/.exec(c || ''); return m ? m[1] + m[2] : c; };
-    let cs = norm(tr.cs.callsign); if (P.aliases && P.aliases[cs]) cs = P.aliases[cs].to || P.aliases[cs];
+    const { cs } = this.planCs(tr);
     const e = P.byCallsign && P.byCallsign[cs]; if (!e || !e.stand) return null;
     const now = this._lastRecv || Date.now(); const s = e.stand;
     if (s.from && s.to && (now < s.from * (s.from > 1e12 ? 1 : 1000) - 1800e3 || now > s.to * (s.to > 1e12 ? 1 : 1000) + 1800e3)) return null;
@@ -984,9 +1060,14 @@ export class Traffic {
     const icao = tr.info.icao;
     if (pg && standFits(pg, T, icao, false) && !this.blocked(pg, tr, true) && this.gateScore(pg, p, T, 1.3) != null) { tr.gateScore = 0; tr.gateSrc = 'sfo'; return pg; }
     // 2. geometry + heading
+    // (a business jet / light aircraft -- a type of no airliner family that is < 30 m long or transmits emitter category
+    // A1/A2 -- is not matched to a contact stand by position alone: at SFO they park at the FBO / remote ramps, and the
+    // widebody stand pose put a CL60's fuselage into the G3 terminal face -- review round 2, VNT716. SFO's own allocation
+    // above is still followed)
+    const bizGA = !!icao && !familyOf(icao) && ((T && T.L < 30) || /^A[12]$/.test(tr.info.category || ''));
     let best = null, bd = 1e9;
     for (const g of this.gates) {
-      if (!standFits(g, T, icao)) continue;
+      if (!standFits(g, T, icao) || (bizGA && (g.bridge || g.sharesBridgesOf))) continue;
       const sc = this.gateScore(g, p, T); if (sc == null) continue;
       if (g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant); if (o && !o.stale && o.gateScore != null && o.gateScore <= sc) continue; }
       if (this.blocked(g, tr)) continue;
@@ -1006,9 +1087,9 @@ export class Traffic {
     return false;
   }
   occupy(tr, g, t) {
-    if (g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant); if (o) { if (o.stale) this.remove(o); else this.releaseGate(o); } }
+    if (g.occupant && g.occupant !== tr.hex) { const o = this.tracks.get(g.occupant); if (o) { if (o.stale) this.fadeRemove(o, 'replaced'); else this.releaseGate(o); } }
     // a silent aircraft remembered on a mutually exclusive stand (B5 / B5S ...) has left: this one stands there now
-    for (const n of g.excl || []) { const q = this.gateBy.get(n); const o = q && q.occupant && q.occupant !== tr.hex ? this.tracks.get(q.occupant) : null; if (o && o.stale) { this.event(o, t ?? tr.lastFixT, 'stale-replaced', { by: tr.hex, excl: g.name }); this.remove(o); } }
+    for (const n of g.excl || []) { const q = this.gateBy.get(n); const o = q && q.occupant && q.occupant !== tr.hex ? this.tracks.get(q.occupant) : null; if (o && o.stale && !o.dropping) { this.event(o, t ?? tr.lastFixT, 'stale-replaced', { by: tr.hex, excl: g.name }); this.fadeRemove(o, 'replaced'); } }
     // (a body that came to rest before the stand was recognised is re-settled onto the stand pose: its free-parking lock,
     // up to 8 m off, would otherwise be kept while within LOCK_M of the stand pose -- review round 2: UAL822 at G7 drawn
     // 5.6 m off the stand for the whole turn, its bridge docked there)
@@ -1018,7 +1099,7 @@ export class Traffic {
     this.updatePark(tr);
     // in-block: a new turn begins (its departure pushes from here; the arrival's runway no longer applies: review
     // round 1, SKW3007 reported the stale arrival runway at its departure)
-    tr.pushOk = !tr.pushback; tr.pushbackFrom = null; tr.pushed = false; tr.inBlockAt = t ?? tr.lastFixT; tr.leaving = false;
+    tr.pushOk = !tr.pushback; tr.pushbackFrom = null; tr.pushG = null; tr.pushed = false; tr.inBlockAt = t ?? tr.lastFixT; tr.leaving = false; tr.leaveFast = false; tr.leaveHintT = null;
     if (tr.m.phase === 'still') tr.m.rwy = null;
     if (t != null) this.event(tr, t, 'in-block', { stand: g.name, src: tr.gateSrc || 'geo' });
     // the jet bridge docks later, from the display side, once the drawn aircraft has settled at this pose (syncBridge)
@@ -1049,13 +1130,51 @@ export class Traffic {
       else { tr.parkMode = 'stand'; const a = noseAlong - antOf(T, L); tr.parkPos = [g.w.x + g.w.dx * a, g.w.z + g.w.dz * a]; tr.parkHdg = g.w.hdg; }
     } else { tr.parkMode = 'data'; tr.parkPos = sp.slice(); tr.parkHdg = tr.stillHdg ?? (tr.last ? tr.last.hd : g.w.hdg); }
   }
-  releaseGate(tr, t) {
+  releaseGate(tr, t, fast = false) {
     const g = tr.gate; if (!g) return; if (g.occupant === tr.hex) { g.occupant = null; g.oversize = false; }
-    tr.parkRep = null; tr.parkPos = null; tr.gate = null; tr.forceStand = false; tr.lock = null;
-    this.undock(tr); this.saveParkedSoon();
+    tr.parkRep = null; tr.parkPos = null; tr.gate = null; tr.forceStand = false; tr.lock = null; tr.silentDockG = null;
+    this.undock(tr, fast || !!tr.leaveFast); this.saveParkedSoon();
   }
-  // retract the jet bridge docked to this aircraft (the body is held until it is clear: holdForBridge)
-  undock(tr) { if (!tr.bridgeOn) return; tr.bridgeOn = false; this.counters.undocks = (this.counters.undocks || 0) + 1; this.onGateChange && this.onGateChange(tr.bridgeGate, null); }
+  // retract the jet bridge docked to this aircraft (the body is held until it is clear: ctlGround holdBridge); fast = a
+  // departure (or a removal): FAST_UNDOCK_S instead of the datasheet rates (onGateChange 3rd argument, app.js)
+  undock(tr, fast = false) { if (!tr.bridgeOn) return; tr.bridgeOn = false; this.counters.undocks = (this.counters.undocks || 0) + 1; if (fast) this.counters.fastUndocks = (this.counters.fastUndocks || 0) + 1; this.onGateChange && this.onGateChange(tr.bridgeGate, null, fast ? { fast: true, s: FAST_UNDOCK_S } : undefined); }
+  // remove a track the way the viewer should see it: its jet bridge retracts first (fast), then it fades out (CUT_S) --
+  // never an instant disappearance (review round 2: removals of stale-replaced / silent aircraft popped out in one frame and
+  // left their docked bridge standing at an empty stand, bridge.orphan)
+  fadeRemove(tr, why = 'drop') {
+    if (tr.removed || tr.dropping) return; tr.dropping = why; this.counters['drop_' + why] = (this.counters['drop_' + why] || 0) + 1;
+    if (tr.gate) this.releaseGate(tr, null, true); else this.undock(tr, true);
+  }
+  // an arrival that went silent on its way in: the stand it is docking to -- SFO's allocation for its callsign (within
+  // 300 m), else the lead-in it was lining up with (tr.dock), else (moving) a free contact stand whose lead-in it is
+  // heading into -- is occupied now and the drawn body drives in along the lead-in (ctlGround dockDrive). Heard again
+  // elsewhere, it leaves the stand like any other aircraft (motion out of a stop).
+  silentDock(tr, lf, tDisp) {
+    const T = typeOf(tr), icao = tr.info.icao; const P = [lf.x, lf.z];
+    const free = (g) => { if (!g || this.blocked(g, tr, true)) return false; if (!g.occupant || g.occupant === tr.hex) return true; const o = this.tracks.get(g.occupant); return !o || !!o.stale || !!o.dropping; };
+    const pg = this.gateByName(this.planStand(tr)); let g = null, how = null;
+    if (pg && Math.hypot(pg.w.x - P[0], pg.w.z - P[1]) < 300 && standFits(pg, T, icao, false) && free(pg)) { g = pg; how = 'sfo'; }
+    else if (tr.dock && tr.dock.g && free(tr.dock.g)) { g = tr.dock.g; how = 'leadin'; }
+    else if (tr.m.phase === 'taxi' && lf.gs > 0.5) {
+      // heading into a lead-in: stop point <= 120 m ahead, the motion within 50 deg of the stand heading, laterally within
+      // 12 m (+ 20 % of the distance) of the lead-in line
+      const L = T ? T.L : 38; let bd = 1e9;
+      for (const q of this.gates) {
+        if (!(q.bridge || q.sharesBridgesOf) || !standFits(q, T, icao) || !free(q) || (tr.offBlock && tr.offBlock.stand === q.name)) continue;
+        const ex = q.w.x - q.w.dx * antOf(T, L), ez = q.w.z - q.w.dz * antOf(T, L); const rx = P[0] - ex, rz = P[1] - ez;
+        const along = -(rx * q.w.dx + rz * q.w.dz), lat = -rx * q.w.dz + rz * q.w.dx;
+        if (along < 0 || along > 120 || Math.abs(lat) > 12 + 0.2 * along || Math.abs(wrapPi(lf.dir - q.w.hdg)) > 50 * DEG) continue;
+        const sc = Math.abs(lat) + 0.1 * along; if (sc < bd) { bd = sc; g = q; how = 'heading'; }
+      }
+    }
+    if (!g) return false;
+    const t = Math.max(tDisp, lf.t + 1, tr.hist.length ? tr.hist[tr.hist.length - 1][0] + 1 : 0);
+    this.setPhase(tr, 'still', t, null); tr.silentDockG = g; tr.dock = null;
+    tr.still = []; tr.stillPos = null; tr.stillHdg = g.w.hdg; tr.forceStand = true; tr.dockComplete = true; tr.gateSrc = how === 'sfo' ? 'sfo' : 'geo';
+    this.occupy(tr, g, t); if (tr.parkPos) { tr.stillPos = tr.parkPos.slice(); tr.parkRep = tr.stillPos; }
+    this.counters.silentDocks = (this.counters.silentDocks || 0) + 1; this.event(tr, t, 'silent-dock', { stand: g.name, how });
+    return true;
+  }
   // docking: a slow taxiing aircraft close to a free stand's lead-in line and heading along it follows that line
   docking(tr, r, t) {
     if (r.gs > 8 * KT || tr.pushback) { if (r.gs > 10 * KT) tr.dock = null; return; }
@@ -1063,7 +1182,9 @@ export class Traffic {
     const pn = this.planStand(tr); const pg = this.gateByName(pn);
     let best = null, bd = 1e9;
     for (const g of pg ? [pg] : this.gates) {
-      if (!g.bridge || (g.occupant && g.occupant !== tr.hex) || !standFits(g, T, tr.info.icao, !pg)) continue;
+      // (contact stands and their alternative positions -- B5S, B16S, C9V board through the base stand's bridges: review
+      // round 2, SJX012 A359 stopped beside B5 before it was matched to B5S)
+      if (!(g.bridge || g.sharesBridgesOf) || (g.occupant && g.occupant !== tr.hex) || !standFits(g, T, tr.info.icao, !pg)) continue;
       const ex = g.w.x - g.w.dx * antOf(T, L), ez = g.w.z - g.w.dz * antOf(T, L);
       const rx = r.x - ex, rz = r.z - ez; const along = -(rx * g.w.dx + rz * g.w.dz), lat = -rx * g.w.dz + rz * g.w.dx;
       if (along < -3 || along > 60 || Math.abs(lat) > (pg ? 14 : 8) + along * 0.15) continue;
@@ -1084,9 +1205,11 @@ export class Traffic {
     const tDisp = this.displayTime(now);
     const removed = [];
     // a track that has to go is faded out (CUT_S), then removed -- never a pop (a hidden one goes at once)
-    const gone = (tr) => { if (!tr.disp.valid || !(tr.disp.alpha > 0.01)) removed.push(tr); else if (!tr.fadeOut) { tr.fadeOut = true; this.counters.fadeOuts = (this.counters.fadeOuts || 0) + 1; } };
+    const gone = (tr) => { if (!tr.disp.valid || !(tr.disp.alpha > 0.01) || !tr.reps.length) removed.push(tr); else if (!tr.fadeOut) { tr.fadeOut = true; this.counters.fadeOuts = (this.counters.fadeOuts || 0) + 1; } };
     for (const tr of this.tracks.values()) {
       if (tr.fadeOut && !(tr.disp.alpha > 0.01)) { removed.push(tr); continue; }
+      // (a track being removed: once its jet bridge is clear of it, it fades out)
+      if (tr.dropping && !tr.fadeOut && !(tr.bridgeGate && this.bridgeK && this.bridgeK(tr.bridgeGate) > 0.3)) gone(tr);
       // lost during the take-off roll (coverage hole at the runway end): it lifted off unseen. Liftoff estimated where the
       // type's liftoff speed is reached at 2 m/s^2 from the last report; a synthetic initial climb follows (vertical()).
       // Review round 2: AAL3222 A21N, last report at 125 kt on 28L (24 Sep 20:35:34Z), was dead-reckoned on the ground
@@ -1103,13 +1226,22 @@ export class Traffic {
         // drove through it)
         const age = now - Math.max(tr.lastFixT || 0, tr.lastRecv && !tr.lastFixT ? tr.lastRecv : 0), lf = tr.last;
         tr.noData = age > 20000;   // shown on the card: the position is that old
+        // quiet: stopped off a stand with no position for QUIET_MS -- not solid for live traffic any more (GroundPhysics fades
+        // it out ahead of a live aircraft that reaches it; review round 2: SWA3085 stood solid on a taxilane 75 s after its
+        // last position while two aircraft drove through it)
+        tr.quiet = !!(lf && lf.ground && age > QUIET_MS && tr.m.phase === 'still' && !tr.gate && inAirport(lf.x, lf.z));
+        // an arrival silent on its way into a stand: it docks there (review round 2: QXE2139 went silent 60 m short of B8 at
+        // 8 kt and was deleted 45 s later -- nothing at B8 for 41 min; AAL2410 dead-reckoned 23 m straight across the
+        // taxilane during a 20 s gap before B19; SWA3085 stopped silent on a taxilane for 75 s, then was faded 58 m into D7)
+        if (lf && lf.ground && !tr.gate && !tr.silentDockG && !tr.pushed && !tr.pushback && tr.groundSFO && inAirport(lf.x, lf.z) && (tr.dirSFO === 'arr' || tr.landedAt) &&
+          ((tr.m.phase === 'taxi' && age > SILENT_DOCK_MS && (lf.gs || 0) < 15 * KT) || (tr.m.phase === 'still' && age > QUIET_MS)) && (!tr._sdT || now - tr._sdT > 5000)) { tr._sdT = now; this.silentDock(tr, lf, tDisp); }
         if (tr.vehicle && age > VEH_KEEP_MS) { gone(tr); }
         else if (lf && !lf.ground && age > STALE_AIR_MS) { gone(tr); }
         // moving on the ground (taxi, push-back, line-up, roll) with no position for 45 s: where it is now is unknown (it
         // may have moved 200 m) -- faded out, and faded in where it is heard next
         else if (lf && lf.ground && age > (this.movingLostMs ?? MOVING_LOST_MS) && inAirport(lf.x, lf.z) && !tr.gate && (tr.m.phase !== 'still' || (lf.gs || 0) > 1)) { this.counters.movingLost = (this.counters.movingLost || 0) + 1; gone(tr); }
         else if (lf && lf.ground && age > STALE_GROUND_MS) {
-          if (!inAirport(lf.x, lf.z) || tr.vehicle) { removed.push(tr); continue; }
+          if (!inAirport(lf.x, lf.z) || tr.vehicle) { gone(tr); continue; }   // (faded, not popped: review round 2 pop.remove.other_airfield)
           // transponder switched off on the ground: keep it where it is parked (at its gate if it was at one)
           // (switched off while docking: it completes the docking at the stand it was lining up with)
           if (!tr.gate && (lf.gs || 0) < 8 * KT && !tr.pushed) { const p = tr.stillPos ? { x: tr.stillPos[0], z: tr.stillPos[1], hd: tr.stillHdg, hdReal: false, icao: tr.info.icao } : { x: lf.x, z: lf.z, hd: lf.hd, hdReal: false, icao: tr.info.icao };
@@ -1124,7 +1256,7 @@ export class Traffic {
           // (silent at its stand after a creep / re-position: it is parked there, its bridge may dock)
           else { tr.stale = true; tr.staleSince = now; if (tr.gate && !tr.pushed) tr.leaving = false; this.saveParkedSoon(); }
         }
-      } else if (tr.stale && now - tr.lastRecv > PARK_KEEP_MS) { removed.push(tr); continue; }
+      } else if (tr.stale && now - tr.lastRecv > PARK_KEEP_MS && !tr.dropping) { this.fadeRemove(tr, 'expired'); }
       if (!tr.reps.length) continue;
       for (let i = 0; i < nSub; i++) this.step(tr, tDisp - (nSub - 1 - i) * h * 1000, h);
       this.syncBridge(tr, tDisp);
@@ -1147,15 +1279,17 @@ export class Traffic {
         tr.lock = null; this.undock(tr); this.counters.unlocks = (this.counters.unlocks || 0) + 1; unlocked = true;
       }
     }
-    if (tr.leaving) this.undock(tr);
+    if (tr.leaving) this.undock(tr, !!tr.leaveFast);
     if (tr.bridgeGate && !tr.bridgeOn && !(this.bridgeK && this.bridgeK(tr.bridgeGate) > 0.01)) tr.bridgeGate = null;
     if (!c || !c.ground || tr.vehicle || !D.valid) return;
     const ph = tr.phaseAt(tDisp); const parkedNow = tr.stale || (ph ? ph[1] : tr.m.phase) === 'still';
     // (at a stand: on the stand pose; elsewhere -- holding, free parking -- where it came to rest within the report
     // scatter, <= 8 m / 20 deg, see ctlGround)
     const S = unlocked ? null : tr._stop; const tolM = tr.gate ? 0.6 : 8, tolH = (tr.gate ? 1.5 : 20) * DEG;
+    // (or a small residual the controller accepted: ctlGround acceptKey)
+    const acc = S && c.acceptKey != null && c.acceptKey === Math.round(S.x * 2) + ',' + Math.round(S.z * 2) + ',' + Math.round((S.hd ?? 0) / DEG);
     if (!tr.lock && S && parkedNow && !tr.leaving && Math.abs(c.v) < 0.02 && !c.towing && !tr.cutting && D.alpha >= 1 &&
-      Math.hypot(S.x - c.x, S.z - c.z) < tolM && (S.hd == null || Math.abs(wrapPi(S.hd - c.psi)) < tolH)) {
+      (acc || (Math.hypot(S.x - c.x, S.z - c.z) < tolM && (S.hd == null || Math.abs(wrapPi(S.hd - c.psi)) < tolH)))) {
       tr.lock = { x: c.x, z: c.z, hdg: c.psi, t: tDisp }; this.counters.locks = (this.counters.locks || 0) + 1;
       if (S.hd == null && !tr.parkPos) tr.stillHdg = c.psi;   // (no heading reported: the body's heading is the estimate, see target())
     }
@@ -1178,7 +1312,7 @@ export class Traffic {
     const M = tr.m;
     const ph = tr.phaseAt(t); const p = ph ? ph[1] : M.phase;
     o.ground = tr.vehicle ? true : tr.groundAt(t, o.ground);
-    o.stop = false; o.hd = null;   // (the target object is reused: clear the per-track fields)
+    o.stop = false; o.hd = null; o.rwyHdg = null; o.vcap = null; o.lineup = false; o.dockDrive = false;   // (the target object is reused: clear the per-track fields)
     // parked: the median / stand pose (reports of parked aircraft scatter by up to ~20 m, audit s.4.2)
     const P = tr.parkPos || tr.stillPos || (tr.stale && tr.last ? [tr.last.x, tr.last.z] : null);
     // ...unless the next report shows it moving: then it left between the two reports (interpolate, no jump)
@@ -1193,18 +1327,71 @@ export class Traffic {
         // to 28L with 20-52 deg between the body and the inferred heading, each re-placed with a fade)
         if (!tr.parkPos && tr.seenMoving && !tr.stale && !tr.still.some(q => q.hdReal)) o.hd = null; }
       o.vx = o.vz = 0; o.gs = 0; o.stop = true; o.push = false;
+      if (tr.silentDockG) { o.vcap = 5; o.dockDrive = true; }   // (silent docking: taxi-in speed along the lead-in)
     }
+    // push-back from a contact stand: straight back along the stand axis until the nose is clear of the stand's jet bridges
+    // at rest, then the data's path (review round 2: an A388 pushed from A6 swung its wing through the retracted bridge 2
+    // tunnel; a real push-back is straight back until clear before the tug turns the aircraft)
+    if (o.ground && tr.pushG && (o.push || p === 'pushback') && !o.stop) this.pushStraight(tr, o);
+    else if (tr.pushG && p !== 'pushback' && p !== 'still' && !o.push) tr.pushG = null;
     // docking: pull the target onto the stand's lead-in line over the last 40 m
     if (o.ground && tr.dock && !o.stop) {
       const g = tr.dock.g, T = typeOf(tr), L = T ? T.L : 38;
       const ex = g.w.x - g.w.dx * antOf(T, L), ez = g.w.z - g.w.dz * antOf(T, L); const rx = o.x - ex, rz = o.z - ez;
-      const along = -(rx * g.w.dx + rz * g.w.dz); const w = 1 - sstep(8, 40, along);
+      // (over the last max(40 m, 1.2 fuselage lengths), with the stand heading once mostly on the line: the body aligns with
+      // the lead-in before its wing reaches the bridges at rest -- review round 2: DLH458 A359 creeping into G8 swept its
+      // wing through a retracted bridge)
+      const along = -(rx * g.w.dx + rz * g.w.dz); const w = 1 - sstep(8, Math.max(40, 1.2 * L), along);
       const px = ex - g.w.dx * along, pz = ez - g.w.dz * along; o.x += (px - o.x) * w; o.z += (pz - o.z) * w;
+      if (w > 0.6 && along > -2) { o.hd = g.w.hdg; const va = o.vx * g.w.dx + o.vz * g.w.dz; if (va > 0) { o.vx = o.vx * (1 - w) + g.w.dx * va * w; o.vz = o.vz * (1 - w) + g.w.dz * va * w; } }
     }
+    // on the runway: lined up = a stop ON the centreline with the runway heading; take-off / landing roll = the target held
+    // on the centreline (the ADS-B antenna scatters a few metres) with the runway heading. Review round 2: a lined-up
+    // aircraft had no heading target and kept the heading it had when the reports stopped (69 of ~483 take-offs lined up
+    // 15-77 deg off the runway; the roll then began with a turn at speed, 44-58 m off the centreline)
+    if (o.ground && (p === 'lineup' || p === 'takeoff' || p === 'rollout')) this.runwayTarget(tr, o, p, ph);
     if (o.ground) { o.y = GROUND_Y; o.vy = 0; }
     else this.vertical(tr, t, o, p);
     if (tr.physOff && !(o.stop && tr.lock)) { o.x += tr.physOff[0]; o.z += tr.physOff[1]; }
     o.phase = p; return o;
+  }
+  // outward distance (m, away from the terminal along the stand axis) beyond which a pushed aircraft's nose is clear of the
+  // stand's bridges at rest: the farthest bridge rest point (data stowW / rotunda / cab, js/live/airport.js) + 4 m
+  pushClear(g) {
+    if (g._pushClear != null) return g._pushClear; let m = 0;
+    for (const b of [...(g.bridges || []), ...(g.sharedBridges || [])]) for (const p of [b.stowW, b.rotundaW, b.cabW, b.tunnelEndW]) {
+      if (!p || !Number.isFinite(p[0])) continue; m = Math.max(m, -((p[0] - g.w.x) * g.w.dx + (p[1] - g.w.z) * g.w.dz)); }
+    return (g._pushClear = m + 4);
+  }
+  pushStraight(tr, o) {
+    const g = tr.pushG, T = typeOf(tr); const k = antOf(T, T ? T.L : 38);
+    const rx = o.x - g.w.x, rz = o.z - g.w.z; const out = -(rx * g.w.dx + rz * g.w.dz), lat = -rx * g.w.dz + rz * g.w.dx;
+    const noseOut = out - k, clr = this.pushClear(g);
+    if (noseOut > clr + 15 || Math.abs(lat) > 40) { if (noseOut > clr + 60) tr.pushG = null; return; }
+    const w = 1 - sstep(clr, clr + 15, noseOut); if (w <= 0) return;
+    const l2 = lat * (1 - w); o.x = g.w.x - g.w.dx * out - g.w.dz * l2; o.z = g.w.z - g.w.dz * out + g.w.dx * l2;
+    const va = o.vx * g.w.dx + o.vz * g.w.dz, vl = (-o.vx * g.w.dz + o.vz * g.w.dx) * (1 - w); o.vx = g.w.dx * va - g.w.dz * vl; o.vz = g.w.dz * va + g.w.dx * vl;
+    if (w > 0.5) o.hd = g.w.hdg;
+  }
+  runwayTarget(tr, o, p, ph) {
+    const rn = (ph && ph[2]) || tr.m.rwy || (p === 'rollout' ? tr.arrRunway : null); const R = RWYN[rn]; if (!R) return;
+    const [aa, cc] = rwyCoords(R, o.x, o.z); if (aa < -60 || aa > R.len + 300 || Math.abs(cc) > 45) return;
+    o.rwyHdg = R.hdg;
+    if (p === 'lineup' && o.gs < 2) {
+      // the stop point: on the centreline at the reported position, or further along when the drawn body still has to
+      // turn onto the runway (a forward arc of ~2 turning radii per radian of heading error, + 5 m)
+      // (never behind the drawn body: an aircraft does not reverse on a runway)
+      let a = aa; const c = tr.ctl;
+      if (c && c.ground && tr.disp.valid) { const T = typeOf(tr); const wb = T ? Math.max(6, (T.xMain || 15) - (T.xNose || 3)) : 12; const e = Math.abs(wrapPi(R.hdg - c.psi));
+        const [ab, cb] = rwyCoords(R, c.x, c.z); if (Math.abs(cb) < 60 && Math.abs(wrapPi(R.hdg - c.psi)) < 100 * DEG) a = Math.max(a, ab + (e > 3 * DEG ? 2 * Math.max(3, 0.27 * wb) * e + 5 : 0)); }
+      o.x = R.thr[0] + R.dir[0] * a; o.z = R.thr[1] + R.dir[1] * a; o.hd = R.hdg; o.stop = true; o.lineup = true; o.vx = o.vz = 0; o.gs = 0; o.push = false; o.vcap = 3;
+      return;
+    }
+    // (rolls: blended onto the centreline within 6 m, fading out by 20 m so that a turn off the runway is kept)
+    const w = 1 - sstep(6, 20, Math.abs(cc)); if (w <= 0) return;
+    const c2 = cc * (1 - w); o.x = R.thr[0] + R.dir[0] * aa - R.dir[1] * c2; o.z = R.thr[1] + R.dir[1] * aa + R.dir[0] * c2;
+    const va = o.vx * R.dir[0] + o.vz * R.dir[1], vc = (-o.vx * R.dir[1] + o.vz * R.dir[0]) * (1 - w); o.vx = R.dir[0] * va - R.dir[1] * vc; o.vz = R.dir[1] * va + R.dir[0] * vc;
+    if (w > 0.5 && va > 0) o.hd = R.hdg;
   }
   // vertical profile near the runway: the data (alt_geom, 25 ft quantised) blended below ~1000 ft into a straight
   // 3 deg path to the aiming point, a flare from 30 ft and a float to the predicted/detected touchdown point
@@ -1230,7 +1417,9 @@ export class Traffic {
     // re-placed with a fade rather than flown at an impossible rate)
     const err = c ? Math.max(Math.hypot(o.x - c.x, o.z - c.z), !o.ground && !c.ground ? Math.abs(o.y - c.y) * 1.5 : 0) : 0;
     // a take-off / landing roll is never re-placed (review round 1: bizjets out-accelerated the body on 28R and jumped)
-    const roll = o.phase === 'takeoff' || o.phase === 'rollout' || o.phase === 'ground-other';
+    // (on the ground at another airfield only above 15 m/s -- a take-off / landing roll there; taxiing or parked there the
+    // normal 200 m: review round 2, N125LT at Moffett sat 590 m from its data for an hour)
+    const roll = o.phase === 'takeoff' || o.phase === 'rollout' || (o.phase === 'ground-other' && Math.max(o.gs || 0, c ? Math.abs(c.v) : 0) > 15);
     const errMax = o.ground ? (roll ? 600 : 200) : Math.max(300, 4 * Math.hypot(o.vx, o.vz));
     // (after a gap an airborne body within ~2 s of flight of its target is corrected in flight, not faded: SWA2980 and
     // UAL2259 were faded for 30 m at 150 m/s, replay check 25 Sep)
@@ -1238,8 +1427,9 @@ export class Traffic {
     if (tr.reacquire && c && !reacq && !tr.cutting) tr.reacquire = false;   // (close enough: followed, the flag is spent)
     // re-placement of a VISIBLE body (data gap, re-acquisition, runaway error) is a fade out -> move -> fade in, never a
     // jump or a drive across the airport (review round 1: 11 km teleports after a 214 s data gap; S-curves across stands)
-    if (c && !tr.cutting && (reacq || err > errMax)) { if (D.valid && D.alpha > 0.01) tr.cutting = reacq ? 'gap' : 'err'; else { tr._reset = reacq ? 'gap' : 'err'; c = null; }
-      if (this.lockLog) this.lockLog.push([tDisp, tr.hex, 'cut-' + (reacq ? 'gap' : 'err'), +err.toFixed(0), o.phase, o.ground ? 'g' : 'a', tr.info.flight, tr.info.category, D.valid && D.alpha > 0.01 ? 'vis' : 'hid', +Math.hypot(o.x - c.x, o.z - c.z).toFixed(0), +(o.y - c.y).toFixed(0)]); }
+    if (c && !tr.cutting && (reacq || err > errMax)) { const c0 = c; if (D.valid && D.alpha > 0.01) tr.cutting = reacq ? 'gap' : 'err'; else { tr._reset = reacq ? 'gap' : 'err'; c = null; }
+      // (c0: the body before a hidden one is dropped -- review round 2: the log dereferenced the cleared c)
+      if (this.lockLog) this.lockLog.push([tDisp, tr.hex, 'cut-' + (reacq ? 'gap' : 'err'), +err.toFixed(0), o.phase, o.ground ? 'g' : 'a', tr.info.flight, tr.info.category, D.valid && D.alpha > 0.01 ? 'vis' : 'hid', +Math.hypot(o.x - c0.x, o.z - c0.z).toFixed(0), +(o.y - c0.y).toFixed(0)]); }
     if (tr.fadeOut) { D.alpha = Math.max(0, (D.alpha ?? 0) - dt / CUT_S); tr.cutting = null; }
     if (tr.cutting) { D.alpha = Math.max(0, D.alpha - dt / CUT_S); if (D.alpha <= 0) { this.counters['cut_' + tr.cutting] = (this.counters['cut_' + tr.cutting] || 0) + 1; tr._reset = 'cut'; tr.cutting = null; c = null; } }
     if (!c) {
@@ -1294,7 +1484,11 @@ export class Traffic {
     const dh = o.hd != null ? wrapPi(o.hd - c.psi) : 0;
     // a jet bridge docked or still retracting: the aircraft does not move until it is clear (review round 1: push-backs
     // dragged the fuselage through the cab and tunnel)
-    const holdBridge = !veh && (tr.bridgeOn || (tr.bridgeGate && this.bridgeK && this.bridgeK(tr.bridgeGate) > 0.01));
+    let holdBridge = !veh && (tr.bridgeOn || (tr.bridgeGate && this.bridgeK && this.bridgeK(tr.bridgeGate) > 0.01));
+    // (never held longer than HOLD_CAP_MS once the target moves: the bridge retracts fast on push evidence, and a body
+    // the data shows moving is not kept waiting for it -- review round 2)
+    if (holdBridge && !o.stop) { if (c.holdT == null) c.holdT = t; if (t - c.holdT > HOLD_CAP_MS) { holdBridge = false; if (!c.holdCapped) { c.holdCapped = true; this.counters.holdCapped = (this.counters.holdCapped || 0) + 1; } } }
+    else if (!holdBridge) { c.holdT = null; c.holdCapped = false; }
     // moved main-gear centre / antenna: back = antenna -> main-gear distance along the fuselage
     const back = T ? clamp((T.xMain ?? T.L * 0.47) - antOf(T), 1, 30) : (veh ? 0 : 8);
     // ---- the target is stopped (parked / holding) and the body is at rest
@@ -1305,29 +1499,30 @@ export class Traffic {
       if (holdBridge || tr.cutting) return;
       // stopped off a stand within the report scatter of its median pose (< 8 m, < 20 deg): it is there; nothing to move
       // (it came to rest in a physically consistent pose; syncBridge locks it there)
-      if (!tr.gate && !c.towing && dist < 8 && Math.abs(dh) < 20 * DEG) { c.stuckT = 0; return; }
+      if (!tr.gate && !c.towing && dist < 8 && Math.abs(dh) < 20 * DEG && !(o.lineup && Math.abs(dh) > 3 * DEG)) { c.stuckT = 0; return; }
       // where the main gear must go, relative to the nose: straight ahead = the aircraft creeps forward under its own power
       const fT = hdgVec(o.hd ?? c.psi); const gx = (o.x - fT[0] * back) - (c.x - f[0] * back), gz = (o.z - fT[1] * back) - (c.z - f[1] * back);
       const gA = gx * f[0] + gz * f[1], gL = -gx * f[1] + gz * f[0];
       // along its own axis (the parked-pose estimate moved along the lead-in line): it creeps there -- forward under its
       // own power, backward pushed (<= 0.45 m/s) -- rather than being slid or re-placed
       const axial = Math.abs(gL) < 0.3 * Math.abs(gA) + 0.5 && Math.abs(dh) < 5 * DEG && Math.abs(gA) < 30 && Math.abs(gA) > 0.3;
-      const creep = !c.towing && ((gA > 1.5 && Math.abs(gL) < 0.3 * gA + 0.5 && Math.abs(dh) < 15 * DEG && dist < 40) || axial);
+      // (lined up but not yet on the centreline / runway heading: it rolls forward onto it -- the stop point lies ahead on
+      // the centreline, see runwayTarget; the driving controller below steers the arc)
+      const lineDrive = !c.towing && ((o.lineup && gA > 1 && dist < 150) || (o.dockDrive && dist > 3 && gA > -2 && dist < 300));
+      const creep = lineDrive || (!c.towing && ((gA > 1.5 && Math.abs(gL) < 0.3 * gA + 0.5 && Math.abs(dh) < 15 * DEG && dist < 40) || axial));
       c.stuckT = (c.stuckT || 0) + dt;
-      if (creep && c.stuckT <= 10) { c.v = Math.sign(gA) * 0.09; c.creep = true; }   // (continues in the driving controller below, <= 1 m/s)
-      if (!creep || c.stuckT > 10) {
-        // a small residual (<= 3 m, <= 10 deg) is towed slowly (<= 0.5 m/s, <= 2 deg/s, ramped); anything larger -- or a
-        // body stuck for 10 s -- is re-placed with a fade: a parked aircraft is never driven in circles across a stand
-        // (review round 1: a0f566 A321 drove an S-curve across B26 and then sat 6.5 m / 21 deg off its pose)
-        if (c.stuckT <= 10 && ((dist <= 3 && Math.abs(dh) <= 10 * DEG) || (c.towing && dist <= 6 && Math.abs(dh) <= 15 * DEG))) {
-          const moveP = dist > 0.3, moveH = Math.abs(dh) > 1 * DEG;
-          c.towV = moveP ? Math.min((c.towV || 0) + 0.2 * dt, 0.5, Math.sqrt(2 * 0.2 * Math.max(0, dist - 0.3))) : 0;
-          c.towW = moveH ? Math.min((c.towW || 0) + 1 * DEG * dt, 2 * DEG, Math.sqrt(2 * 1 * DEG * Math.max(0, Math.abs(dh) - 1 * DEG))) : 0;
-          if (moveP && c.towV > 0) { const m = Math.min(dist, c.towV * dt) / dist; c.x += ex * m; c.z += ez * m; }
-          if (moveH) c.psi = wrapPi(c.psi + Math.sign(dh) * Math.min(Math.abs(dh), c.towW * dt));
-          if ((moveP || moveH) && !c.towing && this.towLog && this.towLog.length < 300) this.towLog.push([new Date(t).toISOString().slice(11, 19), tr.info.flight || tr.hex, +dist.toFixed(1), +(dh / DEG).toFixed(0), tr.gate ? tr.gate.name : '-', tr.parkMode || '-', o.phase, tr.stale ? 'stale' : '']);
-          c.towing = moveP || moveH; if (c.towing) { this.counters.towS = (this.counters.towS || 0) + dt; if (this.towBy) this.towBy.set(tr.info.flight || tr.hex, (this.towBy.get(tr.info.flight || tr.hex) || 0) + dt); }
-          return;
+      if (creep && (c.stuckT <= 10 || lineDrive)) { c.v = Math.sign(gA) * 0.09; c.creep = !lineDrive; }   // (continues in the driving controller below, <= 1 m/s)
+      if (!creep || (c.stuckT > 10 && !lineDrive)) {
+        // a small residual that is not along the axis (<= 3 m, <= 10 deg: the parked-pose estimate moved sideways or turned
+        // after the body came to rest) is ACCEPTED -- the body stays where it stopped and is locked there (syncBridge), and
+        // the bridge docks to that drawn pose. An aircraft cannot slide sideways or turn on the spot (review round 2: the
+        // slow tow here was a visible sideways slide / rotation in place, gnd.slide 193 aircraft in 15.7 h). Anything
+        // larger -- or a body stuck for 10 s -- is re-placed with a fade: a parked aircraft is never driven in circles
+        // across a stand (review round 1: a0f566 A321 drove an S-curve across B26 and then sat 6.5 m / 21 deg off its pose)
+        if (c.stuckT <= 10 && dist <= 3 && Math.abs(dh) <= 10 * DEG && !o.lineup && !o.dockDrive) {
+          const key = Math.round(o.x * 2) + ',' + Math.round(o.z * 2) + ',' + Math.round((o.hd ?? 0) / DEG);
+          if (c.acceptKey !== key) { c.acceptKey = key; this.counters.restAccepted = (this.counters.restAccepted || 0) + 1; }
+          c.towing = false; c.stuckT = 0; return;
         }
         if (this.lockLog) this.lockLog.push([t, tr.hex, 'cut-repark', +dist.toFixed(1), +(dh / DEG).toFixed(0), o.phase, tr.info.flight, tr.gate ? tr.gate.name : '-', tr.parkMode, c.stuckT > 10 ? 'stuck' : '', +gA.toFixed(1), +gL.toFixed(1)]);
         tr.cutting = 'repark'; c.towing = false; return;
@@ -1362,15 +1557,20 @@ export class Traffic {
     if (!push && !veh) sStar = Math.max(0, sStar);          // aircraft only reverse when pushed back (or power-back)
     // push-back 1-6 kt (audit s.3.6); never slower than the target itself moves forward (review round 1: a6bbef A21N was
     // held at 1 m/s by a stale push flag while taxiing at 4 m/s and fell 200 m behind)
-    if (push) sStar = clamp(sStar, -3, Math.max(1, vt + 0.5));
+    // (catching up a push-back: at most 1 m/s faster than the data's own push speed, <= 3 m/s -- review round 2: bodies
+    // reversed at the fixed 3 m/s clamp for minutes)
+    if (push) sStar = clamp(sStar, -Math.min(3, Math.max(1, -vt) + 1), Math.max(1, vt + 0.5));
     // (an inferred push -- no push-back in the data, the target just lies behind -- catches up at <= 0.7 m/s over the
     // target's own speed, >= 1 m/s: SKW3450 E75L, no true heading, reversed at 2.9 m/s after its stop target moved 17 m
     // behind it; replay check 25 Sep, 16:35Z)
     if (push && !(o.push || o.phase === 'pushback')) sStar = Math.max(sStar, -Math.max(1.0, tsp + 0.7));
     if (o.stop) {
       const lim = Math.sqrt(2 * 0.8 * Math.max(0, Math.abs(along) - 0.3));
-      sStar = along >= 0 ? Math.min(lim, c.creep ? 1.0 : 12) : (along < -0.5 ? -Math.min(lim, push || veh ? 0.6 : 0.45) : 0); // a stopped target behind: pushed back slowly
+      sStar = along >= 0 ? Math.min(lim, c.creep ? 1.0 : o.vcap || 12) : (along < -0.5 && !o.lineup ? -Math.min(lim, push || veh ? 0.6 : 0.45) : 0); // a stopped target behind: pushed back slowly (never on a runway)
     }
+    // take-off roll: the heading error first, then the speed (review round 2: rolls began with a turn at speed off the
+    // centreline). Below 10 m/s the body turns onto the runway heading at <= 6 m/s before it accelerates
+    if (o.phase === 'takeoff' && o.rwyHdg != null && Math.abs(c.v) < 10 && Math.abs(wrapPi(o.rwyHdg - c.psi)) > 8 * DEG) sStar = Math.min(sStar, 6);
     // target behind the nose while moving forward (a U-turn, or the heading was unknown when first seen): turn around
     // at low speed with full steering instead of reversing
     // ...and the same when the target moves off to the side (> 60 deg) and is not well ahead: a rolling take-off from a
@@ -1415,10 +1615,14 @@ export class Traffic {
     const f2 = hdgVec(c.psi); c.x = mx + f2[0] * back; c.z = mz + f2[1] * back;
     // building veto: the nose (driving forward) or the tail (pushed back) never enters a building -- the aircraft stops
     // at the face instead (review round 1: UAL888 B772 driven forward into the G5 terminal face on a wrong first guess)
-    if (T && this.buildingAt && Math.abs(c.v) > 0.01) {
+    // (the whole planform -- wing tips, stabiliser tips, wing roots -- not only the leading point: review round 2, an A321
+    // taxiing at 6.7 m/s put 32 wing samples into a building)
+    if (T && this.buildingAt && Math.abs(c.v) > 0.01 && !veh) {
       const lead = c.v > 0 ? antOf(T) + 1 : -(T.L - antOf(T) + 1); const qx = c.x + f2[0] * lead, qz = c.z + f2[1] * lead;
       const px = x0 + f[0] * lead, pz = z0 + f[1] * lead;
-      if (this.buildingAt(qx, qz) && !this.buildingAt(px, pz)) { c.x = x0; c.z = z0; c.psi = psi0; c.v = 0; c.a = 0; this.counters.buildingVeto = (this.counters.buildingVeto || 0) + 1; }
+      let hit = this.buildingAt(qx, qz) && !this.buildingAt(px, pz);
+      if (!hit) { const A = planPts(T, c.x, c.z, c.psi), B = planPts(T, x0, z0, psi0); for (let i = 0; i < A.length && !hit; i++) hit = this.buildingAt(A[i][0], A[i][1]) && !this.buildingAt(B[i][0], B[i][1]); }
+      if (hit) { c.x = x0; c.z = z0; c.psi = psi0; c.v = 0; c.a = 0; this.counters.buildingVeto = (this.counters.buildingVeto || 0) + 1; }
     }
   }
   // air: the same body with a bank-angle-limited turn radius, speed PD and a vertical channel (<= 0.25 g)
@@ -1426,17 +1630,23 @@ export class Traffic {
     if (c.ground) { c.ground = false; c.v = Math.abs(c.v); }
     if ((o.gs < 25 && c.v < 25) || tr.info.category === 'A7') { // rotorcraft (emitter category A7) and slow targets: a point that follows the target (<= 2 m/s^2)
       c.vx = c.vx ?? c.v * hdgVec(c.psi)[0]; c.vz = c.vz ?? c.v * hdgVec(c.psi)[1];
-      const am = tr.info.category === 'A7' ? 3 : 2;   // (rotorcraft: <= 0.3 g; they out-accelerated 2 m/s^2 and were re-placed)
-      const ax = clamp(0.8 * (o.x - c.x) + 1.8 * (o.vx - c.vx), -am, am), az = clamp(0.8 * (o.z - c.z) + 1.8 * (o.vz - c.vz), -am, am);
+      // critically damped follower (omega 0.9 rad/s) with the target's own acceleration fed forward, limited as a VECTOR
+      // (review round 2: a per-axis 3 m/s^2 clamp could not hold an orbiting EC20 at 60-78 kt on a ~350 m radius --
+      // v^2/R ~ 3-4.6 m/s^2 -- so the error grew to the 300 m re-placement limit every 30-60 s). Rotorcraft <= 0.6 g
+      // (~31 deg of bank), other slow targets <= 2 m/s^2
+      const rot = tr.info.category === 'A7' || (tr.type && tr.type.species === 'H'); const am = rot ? 6 : 2;
+      let fx = 0, fz = 0; if (c.tvx != null && dt > 0) { fx = (o.vx - c.tvx) / dt; fz = (o.vz - c.tvz) / dt; const fm = Math.hypot(fx, fz), fl = rot ? 5 : 1.5; if (fm > fl) { fx *= fl / fm; fz *= fl / fm; } }
+      c.tvx = o.vx; c.tvz = o.vz;
+      let ax = fx + 0.8 * (o.x - c.x) + 1.8 * (o.vx - c.vx), az = fz + 0.8 * (o.z - c.z) + 1.8 * (o.vz - c.vz); const an = Math.hypot(ax, az); if (an > am) { ax *= am / an; az *= am / an; }
       c.vx += ax * dt; c.vz += az * dt; c.x += c.vx * dt; c.z += c.vz * dt; c.v = Math.hypot(c.vx, c.vz); c.k = 0;
       if (c.v > 2) c.psi = wrapPi(c.psi + clamp(wrapPi(vecHdg(c.vx, c.vz) - c.psi), -10 * DEG * dt, 10 * DEG * dt));
-      const ay = clamp(0.8 * (o.y - c.y) + 1.8 * (o.vy - c.vy), -2, 2); c.vy += ay * dt; c.y = Math.max(GROUND_Y, c.y + c.vy * dt); c.crab = 0; return;
+      const ay = clamp(0.8 * (o.y - c.y) + 1.8 * (o.vy - c.vy), -2, 2); c.vy = clamp(c.vy + ay * dt, -30.5, 30.5); c.y = Math.max(GROUND_Y, c.y + c.vy * dt); c.crab = 0; return;
     }
     // leaving the point-follower (slow) branch: the body moves along its velocity from here, and the drawn heading stays
     // continuous through the crab term (it decays <= 1.5 deg/s). Before, the motion jumped to the lagging heading: air
     // acceleration spikes of 4.7 m/s^2 on light aircraft (air.acc, replay check 25 Sep)
     if (c.vx != null && Math.hypot(c.vx, c.vz) > 2) { const hv = vecHdg(c.vx, c.vz); c.crab = clamp(wrapPi(c.crab + c.psi - hv), -30 * DEG, 30 * DEG); c.psi = hv; }
-    c.vx = c.vz = undefined;
+    c.vx = c.vz = undefined; c.tvx = c.tvz = undefined;
     const f = hdgVec(c.psi); const ex = o.x - c.x, ez = o.z - c.z;
     const along = ex * f[0] + ez * f[1]; const vt = o.vx * f[0] + o.vz * f[1];
     // along-track loop, critically damped at omega 0.3 rad/s (errors of ~10 m at 100 m/s are 0.1 s: invisible; speed
@@ -1457,7 +1667,9 @@ export class Traffic {
     const ay = clamp(w * w * (o.y - c.y) + 2 * w * (o.vy - c.vy), -2.0, 2.0); c.ay += clamp(ay - c.ay, -(w > 1 ? 6 : 2) * dt, (w > 1 ? 6 : 2) * dt);
     // vertical speed <= 6,000 ft/min (30.5 m/s), or the reported rate if higher: an altitude step accepted after three
     // consistent reports is flown, not dived at 10,000-26,000 ft/min (review round 1: '~' TIS-B targets, a C152)
-    const vyMax = Math.max(30.5, Math.abs(o.vy || 0) * 1.1);
+    // (a fixed limit: the interpolated o.vy between an airborne and a ground report was hundreds of m/s and 1.1x it let the
+    // body dive at > 100,000 ft/min -- review round 2. Up to 7,500 ft/min only when the aircraft's own last report says so)
+    const Lr = tr.last; const vyMax = Math.min(38, Math.max(30.5, Lr && !Lr.ground && Lr.vs != null ? Math.abs(Lr.vs) * 1.1 : 0));
     c.vy += c.ay * dt; if (Math.abs(c.vy) > vyMax) { c.vy = Math.sign(c.vy) * vyMax; c.ay = 0; } c.y += c.vy * dt;
     if (c.y < GROUND_Y) { c.y = GROUND_Y; if (c.vy < 0) c.vy = 0; if (c.ay < 0) c.ay = 0; }
     // crab (true heading vs track), only when the aircraft reports its heading
@@ -1485,7 +1697,13 @@ export class Traffic {
         return tr._revLbl ? 'pushback' : 'taxi'; }
       case 'climb': return 'departure';
       case 'still': {
+        if (tr.gate && tr.silentDockG && c && tr.parkPos && Math.hypot(c.x - tr.parkPos[0], c.z - tr.parkPos[1]) > 15) return 'taxi';   // (driving in, silent)
         if (tr.gate) return 'gate';
+        // (stopped after its push-back -- engine start, tug disconnect -- not 'parked'; review round 2: DAL977 'Parked' at the
+        // instant it left C3, SWR39 'Parked' after its push from G10)
+        if (tr.m.phase === 'pushback') return 'pushback';
+        if (tr.pushed && !tr.stale && !tr.landedAt) return 'pushed';
+        if (tr.pushed && !tr.stale && tr.landedAt && tr.offBlock && tr.offBlock.t > tr.landedAt) return 'pushed';
         const key = Math.round(tr.disp.x / 3) + ',' + Math.round(tr.disp.z / 3);
         if (tr._stillKey !== key) { tr._stillKey = key; tr._stillLbl = runwayAt(tr.disp.x, tr.disp.z) || inPolys(this.taxiways, tr.disp.x, tr.disp.z) || (this.net.ok && this.net.match(tr.disp.x, tr.disp.z, null, null, 6)) ? 'holding' : 'parked'; }
         return tr._stillLbl;
@@ -1529,7 +1747,7 @@ export class Traffic {
   }
   setRoute(tr, route) { tr.route = route; tr.dirFromRoute = false; if (route && !tr.finalInfo && !tr.groundSFO) this.routeDirection(tr); }
   setPlan(plan) { this.plan = plan && plan.byCallsign ? plan : null; }
-  remove(tr) { if (tr.gate) this.releaseGate(tr); this.tracks.delete(tr.hex); tr.removed = true; this.onRemove && this.onRemove(tr); }
+  remove(tr) { if (tr.removed) return; if (tr.gate) this.releaseGate(tr); this.tracks.delete(tr.hex); tr.removed = true; this.onRemove && this.onRemove(tr); }
 
   // ---------------------------------------------------------- persistence of parked aircraft
   saveParkedSoon() { if (!this.persist || this._saveT) return; this._saveT = setTimeout(() => { this._saveT = null; this.saveParked(); }, 3000); }
@@ -1588,6 +1806,7 @@ function phaseLabel0(tr, now) {
     case 'taxi': return tr.dirSFO === 'arr' ? 'Taxiing in' : tr.dirSFO === 'dep' ? 'Taxiing out' : 'Taxiing';
     case 'pushback': return 'Pushback' + (tr.pushbackFrom ? ' from ' + tr.pushbackFrom : '');
     case 'holding': return 'Holding';
+    case 'pushed': return 'Push-back complete' + (tr.pushbackFrom ? ' · from ' + tr.pushbackFrom : '');
     case 'gate': return (tr.gate && !tr.gate.bridge ? 'Stand ' : 'Gate ') + g + (tr.gateSrc === 'sfo' ? ' · SFO' : '') + (tr.stale ? ' · last signal ' + ago(now - tr.lastRecv) : '');
     case 'parked': return 'Parked' + (tr.stale ? ' · last signal ' + ago(now - tr.lastRecv) : '');
     case 'ground-other': return 'On ground (other airport)';
@@ -1599,7 +1818,7 @@ function phaseLabel0(tr, now) {
 export function category(tr) {
   if (tr.vehicle || tr.phase === 'vehicle') return 'vehicle';
   if (tr.phase === 'ground-other') return 'other';
-  if (['gate', 'parked', 'taxi', 'pushback', 'holding', 'lineup', 'takeoff', 'landing'].includes(tr.phase)) return 'ground';
+  if (['gate', 'parked', 'taxi', 'pushback', 'pushed', 'holding', 'lineup', 'takeoff', 'landing'].includes(tr.phase)) return 'ground';
   if (tr.phase === 'final' || tr.phase === 'approach' || tr.phase === 'goaround') return 'arr';
   if (tr.phase === 'departure') return 'dep';
   return 'other';

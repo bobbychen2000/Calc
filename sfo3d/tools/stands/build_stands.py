@@ -69,6 +69,29 @@ PHYS = 3.0   # below this aircraft-to-aircraft distance two stands are treated a
 ROT_FACADE = 3.0   # m, facade -> rotunda centre where the drum stands against the building (inferred: r 2.45 m + connector)
 
 
+class Naip2022:
+    """NAIP 2022 (USDA, 2022-05-18, public domain; refs/cache/naip/naip_2022_sfo_utm10n.tif) with the patch() interface of
+    common.Naip, sampled per point through tools/imagery/common.NaipSampler (exact world -> UTM mapping). Static fix-up
+    (26 Sep 2026): a second, independent epoch for the fuselage-axis fit (naip_axis.axis_fit) where NAIP 2024 is the
+    only evidence (G12)."""
+    _S = None
+
+    def __init__(self):
+        if Naip2022._S is None:
+            import importlib.util
+            sp_ = importlib.util.spec_from_file_location('imagery_common', os.path.join(ROOT, 'tools', 'imagery', 'common.py'))
+            mod_ = importlib.util.module_from_spec(sp_); sp_.loader.exec_module(mod_)
+            Naip2022._S = mod_.NaipSampler('2022')
+
+    def patch(self, cx, cz, hdg, along, across, res=0.25):
+        f = hdg_vec(hdg); r = (math.cos(math.radians(hdg)), math.sin(math.radians(hdg)))
+        nu, nv = int(round(along / res)), int(round(across / res))
+        u = along / 2 - (np.arange(nu) + 0.5) * res; v = -across / 2 + (np.arange(nv) + 0.5) * res
+        U, V = np.meshgrid(u, v, indexing='ij'); X = cx + U * f[0] + V * r[0]; Z = cz + U * f[1] + V * r[1]
+        im = Naip2022._S(X, Z, gray=False)[..., ::-1].astype(np.uint8)          # RGB -> BGR like common.Naip
+        return np.ascontiguousarray(im), U, V
+
+
 def eff_type(st):
     """type of an ADS-B stay (review round 4): the feed's 't' where it is an aircraft type the app knows, else the type
     SFO's AODB planned for that flight (the feed's database has wrong entries: Air Canada A220-300s C-FHEI / C-FHFN /
@@ -172,15 +195,27 @@ def main():
     # planned on a stand shows the stand can take it, even if the flight was later moved (with only the newest version
     # a re-plan had removed G6's B77W and F19's A319 / B752 between runs). Intervals (simultaneous planning) keep the
     # newest version only, so a re-planned turn is not counted twice.
+    # Static fix-up (26 Sep 2026, review round 4 finding "D5 class E rests on one AODB plan that never happened"): the
+    # CLASS and the observed types (obs_types) now use the NEWEST version of every flight (its final plan: SFO re-planned
+    # UA1777's B772 from D5 to F15, UA1116's B753 from E12 to F11) plus the ADS-B types; a type that only a superseded
+    # version put on a stand is kept as provenance (`superseded_types`) and used only when a stand has no other type.
     import glob as _glob
-    seen_ = set()
+    seen_ = set(); newest_ = {}
     for path_ in sorted(_glob.glob(os.path.join(G.CACHE, 'flysfo_api_flight-status_*.json*')), key=G.snapshot_time):
         for r in G.load_flysfo(path_)[2]:
+            newest_[r['flight_id']] = r
             t = (r.get('aircraft_transport_type') or {}).get('icao_code'); turn = tuple(sorted([r['flight_id'], r.get('linked_flight_id') or '']))
             for s in r.get('stands') or []:
                 n = s['stand']['stand_name']
                 if (n, turn, t) in seen_: continue
                 seen_.add((n, turn, t)); aodb_types[n][t] += 1; aodb_turns[n].add(turn)
+    aodb_final = defaultdict(Counter); seen_f = set()
+    for fid_, r in newest_.items():
+        t = (r.get('aircraft_transport_type') or {}).get('icao_code'); turn = tuple(sorted([r['flight_id'], r.get('linked_flight_id') or '']))
+        for s in r.get('stands') or []:
+            n = s['stand']['stand_name']
+            if (n, turn, t) in seen_f: continue
+            seen_f.add((n, turn, t)); aodb_final[n][t] += 1
     for r in recs:
         t = (r.get('aircraft_transport_type') or {}).get('icao_code'); turn = tuple(sorted([r['flight_id'], r.get('linked_flight_id') or '']))
         for s in r.get('stands') or []:
@@ -222,10 +257,10 @@ def main():
             if len(ways) != 1: problems.append((n, 'OSM ways with this ref: %d' % len(ways))); continue
         w = ways[0]
         aodb = [n] if n in contact_aodb else sorted(a for a in contact_aodb if G.stand_base(a) == n and a not in names)
-        types = Counter()
-        for a in aodb or [n]: types.update(aodb_types.get(a, {}))
+        types = Counter(); types_final = Counter()
+        for a in aodb or [n]: types.update(aodb_types.get(a, {})); types_final.update(aodb_final.get(a, {}))
         stands.append({'name': n, 'gate': base, 'aodb': aodb, 'osm_way': w, 'why': ov['why'] if ov else 'OSM ref = SFO name',
-                       'alias': (ov or {}).get('alias', []), 'types': types})
+                       'alias': (ov or {}).get('alias', []), 'types': types, 'types_final': types_final})
     # suffix alternates share the base gate: 'alt_of'
     have = {s['name'] for s in stands}
     for s in stands:
@@ -241,7 +276,11 @@ def main():
     for s in stands:
         w = s['osm_way']; stop, h_osm = w['stop'], w['hdg']
         unknown = sorted(t for t in s['types'] if t and not type_cls(t))
-        sfo_types = [t for t in s['types'] if t and type_cls(t)]
+        sfo_types = [t for t in s['types_final'] if t and type_cls(t)]
+        s['superseded_types'] = sorted(t for t in s['types'] if t and type_cls(t) and t not in s['types_final'])
+        sfo_fallback = False
+        if not sfo_types and s['superseded_types']:
+            sfo_types = list(s['superseded_types']); sfo_fallback = True     # no final plan and no ADS-B type (G12: UA900 re-planned)
         ev = [st for a in s['aodb'] or [s['name']] for st in stays_by.get(a, [])]
         adsb_types = []
         for it in range(2):
@@ -251,7 +290,8 @@ def main():
             tall = sfo_types + adsb_types
             tcls = [type_cls(t) for t in tall]
             cls = max(tcls, key=ORDER.index) if tcls else ('C' if s['gate'][0] in 'BCDEF' else 'E')
-            s['cls_src'] = ('sfo types' + (' + adsb types' if adsb_types else '')) if tcls else 'default (no type seen)'
+            s['cls_src'] = (('sfo types (final plans)' if not sfo_fallback else 'sfo types (superseded plans only: no final plan / ADS-B type)')
+                            + (' + adsb types' if adsb_types else '')) if tcls else 'default (no type seen)'
             s['cls'] = cls; s['grp'] = 'wide' if cls in WIDE else 'narrow'
             s['largest_type'] = max(tall, key=lambda t: (ORDER.index(type_cls(t)), REF[ALIAS_T.get(t, t)]['span']), default=None)
             h = h_osm
@@ -324,9 +364,31 @@ def main():
                             ok_other = (pf and pf.get('applied') is not True and pf['n'] >= 7 and pf['rms'] <= 0.3 and abs(pf['lat_nose']) <= 0.8 and abs(pf['dh']) <= 1.5) \
                                 or (pf and pf.get('applied') and s.get('paint_after') and abs(s['paint_after']['lat_nose']) <= 0.8) \
                                 or (adh is not None and abs(adh) <= 2.0)
+                            # Static fix-up (26 Sep 2026; review round 4: "G12 axis: imaged wide body left of axis"): with no
+                            # paint and no ADS-B heading, a SECOND NAIP epoch decides. NAIP 2022 (flown 2022-05-18, independent
+                            # orthorectification) is fitted the same way; when both epochs show a parked aircraft off the model
+                            # axis in the same sense and agree (heading within 1.5 deg, nose and 30 m aft within 1.0 m), two
+                            # different aircraft two years apart stood on that axis: heading and lateral = the mean of the two.
+                            ax22 = None
+                            if not ok_other and adh is None:
+                                ax22 = NA.axis_fit(Naip2022(), nose, h, s['grp'], a1=45.0 if s['grp'] == 'wide' else 30.0, k=kR)
+                                s['naip_axis']['naip2022'] = ax22
+                            agree22 = bool(ax22 and ax22['rms'] <= 0.35 and ax22['n'] >= 40 and abs(ax22['dh'] - ax['dh']) <= 1.5
+                                           and abs(ax22['lat_nose'] - ax['lat_nose']) <= 1.0 and abs(ax22['lat_30'] - ax['lat_30']) <= 1.0)
                             if ok_other:
                                 s['naip_axis']['note'] = ('the NAIP aircraft stands off the model axis, but the %s confirms the axis: that aircraft was '
                                                           'parked askew or under tow in the image (not used)' % ('painted lead-in' if pf and pf['n'] >= 7 else 'ADS-B heading'))
+                            elif agree22:
+                                dh_ = (ax['dh'] + ax22['dh']) / 2; dl_ = (ax['lat_nose'] + ax22['lat_nose']) / 2; nose0_, h0_ = nose, h
+                                nose = (nose[0] + rt[0] * dl_, nose[1] + rt[1] * dl_); h = (h + dh_) % 360
+                                f = hdg_vec(h); rt = (math.cos(math.radians(h)), math.sin(math.radians(h)))
+                                s['pos_src'] += '+naip_axis_2022_2024'
+                                s['nose_rule'] += ('; axis corrected (static fix-up): NAIP 2024 fuselage axis %+.2f m at the nose / %+.1f deg and NAIP 2022 '
+                                                   '%+.2f m / %+.1f deg agree (two epochs, different aircraft) -> %+.2f m lateral, %+.1f deg'
+                                                   % (ax['lat_nose'], ax['dh'], ax22['lat_nose'], ax22['dh'], dl_, dh_))
+                                ax_after = NA.axis_fit(NAIPR, nose, h, s['grp'], a1=45.0 if s['grp'] == 'wide' else 30.0, k=kR)
+                                s['naip_axis'] = dict(ax_after or {}, before=ax, naip2022=ax22, adsb_dh=None, applied=True)
+                                s['_axis_tf'] = (nose0_, h0_, nose, h)
                             else:
                                 s['conflict_axis'] = {'with': 'naip', 'lat_nose': ax['lat_nose'], 'lat_30': ax['lat_30'], 'dh': ax['dh'],
                                                       'note': 'the parked NAIP aircraft (one image) lies %+.1f m / %+.1f m (nose / 30 m aft) and %+.1f deg off the '
@@ -426,6 +488,8 @@ def main():
         for st, a, c in good:
             if abs(c) <= 3 and (st['hex'] not in pbest or st['n_good'] > pbest[st['hex']][0]['n_good']): pbest[st['hex']] = (st, a, c)
         s['adsb_good'] = [(eff_type(v[0]), v[1]) for v in pbest.values()]
+        s['adsb_good_dur'] = [v[0]['dur_s'] for v in pbest.values()]
+        s['_good'] = good
         if s.get('conflict') or s.get('conflict_axis'): s['verified_unconfirmed'] = vb; vb = []      # conflicting evidence: nothing counts as verified
         if (s.get('naip') or {}).get('along_conflict'):
             # review round 3: the parked NAIP aircraft stopped more than 1.5 m from the model nose (relief-corrected)
@@ -450,12 +514,100 @@ def main():
     # group; where a family's aircraft on one stand stop more than 5 m (n >= 2) / 10 m (n = 1) off that, the stand gets
     # type_stops[family] = {along (m, - = short of the stand nose), n, src 'adsb'}. geom.stand_env uses them; the app
     # does not yet (request: js/live/traffic.js per-type stop points).
-    fam_al = defaultdict(list)
+    # Static fix-up (26 Sep 2026): the reference is the median over STANDS of each stand's median (was: over aircraft).
+    # The per-aircraft median jumped between the modes of bimodal data - A220: C4 / C10 / C11 / D5 -3..-6 m, D10 / D11
+    # -15..-17.5 m; one more A220 at D5 (its class change moved it into the narrow group) moved the median from -15.0 to
+    # -10.4 m - and let a stand with many aircraft outvote the others. One value per stand is one independent stop. Stands
+    # whose ADS-B conflicts with the axis do not calibrate (their along values are in a wrong frame).
+    fam_al = defaultdict(list); fam_st = defaultdict(lambda: defaultdict(list))
     for s in stands:
+        if s.get('conflict'): continue
         for t, a in s.get('adsb_good', []):
             fm = GM.FAMILY.get(ALIAS_T.get(t, t))
-            if fm and type_cls(t) and (type_cls(t) in WIDE) == (s['grp'] == 'wide'): fam_al[fm].append(a)
-    fam_ref = {fm: float(np.median(v)) for fm, v in fam_al.items() if len(v) >= 3}
+            if fm and type_cls(t) and (type_cls(t) in WIDE) == (s['grp'] == 'wide'): fam_al[fm].append(a); fam_st[fm][s['name']].append(a)
+    fam_ref = {fm: float(np.median([np.median(v) for v in st_.values()])) for fm, st_ in fam_st.items() if len(st_) >= 3}
+    # ---------------------------------------------------------------- ADS-B axis (static fix-up, 26 Sep 2026)
+    # Review round 4: "D3 / D4 headings 12-27 deg off, D9 ~11 deg / 5 m off, D8 8.5 m lateral, per the builder's own ADS-B
+    # evidence". Where the aircraft SFO put on a stand (stand window) park consistently off the OSM axis, the stand
+    # takes the ADS-B axis when ALL of these hold: >= 3 airframes; their surface headings within +-3.5 deg of the
+    # circular mean; their noses (antenna + the family's typical antenna offset, fam_ref) within 1.5 m of the median
+    # laterally; the same airframes' heading reports agree (median |dh| <= 3 deg, >= 2 stays) with the axis of OTHER
+    # stands that other evidence verifies (so the heading is not a feed / magnetic-reference bias); the aircraft stays
+    # >= 2 m from the building. NAIP 2024 (May 2024) aircraft on the old line are then the earlier layout: G1 shows the
+    # same kind of change between NAIP 2022 (on the OSM line, 207.9 deg) and NAIP 2024 / ADS-B 2026 (199 deg), so stands
+    # are re-striped between image epochs. Evidence and the replaced axis are kept (`axis_adsb`, `conflict_superseded`).
+    bpoly_ax = unary_union([Polygon(r).buffer(0) for r in building_rings()])
+    for s in stands:
+        cf = s.get('conflict')
+        if not cf or s['pos_src'] == 'naip': continue
+        per = {}
+        for st, a, c in s['_good']:
+            t_ = eff_type(st); fm = GM.FAMILY.get(ALIAS_T.get(t_, t_))
+            if st.get('hdg') is None or fm not in fam_ref: continue
+            if st['hex'] not in per or st['n_good'] > per[st['hex']][0]['n_good']: per[st['hex']] = (st, fm)
+        rows = list(per.values()); why = None
+        if len(rows) < 3: why = 'only %d airframe(s) with a heading (>= 3 needed): not enough to move the axis' % len(rows)
+        else:
+            hs = [st['hdg'] for st, fm in rows]
+            h_new = math.degrees(math.atan2(np.mean([math.sin(math.radians(x)) for x in hs]), np.mean([math.cos(math.radians(x)) for x in hs]))) % 360
+            dhs = [hdiff(x, h_new) for x in hs]; f_ = hdg_vec(h_new)
+            noses = [(st['x'] - f_[0] * fam_ref[fm], st['z'] - f_[1] * fam_ref[fm]) for st, fm in rows]
+            N0 = tuple(float(v) for v in np.median(np.array(noses), 0))
+            loc = [local(q, N0, h_new) for q in noses]
+            lat_sp = max(abs(c_) for a_, c_ in loc); al_sp = max(abs(a_) for a_, c_ in loc)
+            # heading reports are an avionics property: cross-check the same OPERATOR (callsign prefix) and family on
+            # other stands whose axis other evidence verifies
+            opf = {((st.get('callsign') or '')[:3], fm) for st, fm in rows}; xs = []
+            for o in stands:
+                if o is s or o.get('conflict') or not o['verified_by']: continue
+                for st, a, c in o['_good']:
+                    t2 = eff_type(st); k2 = ((st.get('callsign') or '')[:3], GM.FAMILY.get(ALIAS_T.get(t2, t2)))
+                    if k2 in opf and st.get('hdg') is not None and abs(c) <= 3: xs.append(abs(hdiff(st['hdg'], o['hdg'])))
+            dB = GM.stand_env(dict(s, nose=N0, hdg=h_new, type_stops=None)).distance(bpoly_ax)
+            if max(abs(d) for d in dhs) > 3.5: why = 'headings spread %+.1f..%+.1f deg (> 3.5)' % (min(dhs), max(dhs))
+            elif lat_sp > 1.5: why = 'noses spread %.1f m laterally (> 1.5)' % lat_sp
+            elif len(xs) < 2 or float(np.median(xs)) > 3.0: why = 'the same operators\' heading reports (same family) are not confirmed on other verified stands (%d stays, median |dh| %s)' % (len(xs), '%.1f' % np.median(xs) if xs else '-')
+            elif dB < 2.0: why = 'the ADS-B axis puts the envelope %.1f m from the building' % dB
+        if why:
+            cf['why_not_moved'] = why; print('  ADS-B axis NOT applied:', s['name'], why); continue
+        old_n, old_h = s['nose'], s['hdg']
+        dlat = local(N0, old_n, old_h)
+        s['nose'] = N0; s['hdg'] = h_new; s['pos_src'] = 'adsb'
+        s['axis_adsb'] = {'n_aircraft': len(rows), 'hdg': round(h_new, 2), 'hdg_spread': [round(min(dhs), 1), round(max(dhs), 1)],
+                          'nose_spread_lat_m': round(lat_sp, 1), 'nose_spread_along_m': round(al_sp, 1),
+                          'heading_crosscheck': {'operator_family': sorted('%s %s' % k for k in opf), 'stays_on_verified_stands': len(xs), 'median_abs_dh': round(float(np.median(xs)), 1)},
+                          'aircraft': sorted('%s %s %s' % (st.get('reg'), eff_type(st), st.get('callsign')) for st, fm in rows),
+                          'replaces': {'nose': [round(v, 2) for v in old_n], 'hdg': round(old_h, 2), 'src': s['nose_rule'],
+                                       'new_vs_old': {'along': round(dlat[0], 1), 'lat': round(dlat[1], 1), 'dh': round(hdiff(h_new, old_h), 1)}}}
+        s['nose_rule'] = ('ADS-B axis (static fix-up, 26 Sep 2026): %d airframes with SFO stand windows park at %.1f deg (circular mean of their '
+                          'surface headings, spread %+.1f..%+.1f), nose = median of antenna + family offset (lateral spread %.1f m); the same '
+                          'operators\' aircraft of the same family report headings within %.1f deg (median) of the axes of other verified stands. The OSM lead-in (and the NAIP 2024 '
+                          'aircraft on it, where imaged) is the earlier layout: the new axis is %+.1f m along / %+.1f m lateral / %+.1f deg from it'
+                          % (len(rows), h_new, min(dhs), max(dhs), lat_sp, float(np.median(xs)), dlat[0], dlat[1], hdiff(h_new, old_h)))
+        s['conflict_superseded'] = dict(cf, note='ADS-B 2026 vs the OSM lead-in: resolved by taking the ADS-B axis (see axis_adsb)')
+        s.pop('conflict', None)
+        s['_good'] = [(st, *local((st['x'], st['z']), s['nose'], s['hdg'])) for st, a, c in s['_good']]
+        pb = {}
+        for st, a, c in s['_good']:
+            if abs(c) <= 3 and (st['hex'] not in pb or st['n_good'] > pb[st['hex']][0]['n_good']): pb[st['hex']] = (st, a, c)
+        s['adsb_good'] = [(eff_type(v[0]), v[1]) for v in pb.values()]; s['adsb_good_dur'] = [v[0]['dur_s'] for v in pb.values()]
+        pr = {}
+        for st, a, c in s['_good']:
+            if st['hex'] not in pr or st['n_good'] > pr[st['hex']][0]['n_good']: pr[st['hex']] = (st, a, c)
+        A_ = [v[1] for v in pr.values()]; C_ = [v[2] for v in pr.values()]; D_ = [hdiff(v[0]['hdg'], s['hdg']) for v in pr.values() if v[0].get('hdg') is not None]
+        s['adsb'] = dict(s['adsb'], along_med=round(float(np.median(A_)), 1), lat_med=round(float(np.median(C_)), 1),
+                         lat_absmax=round(float(np.max(np.abs(C_))), 1), dhdg_med=round(float(np.median(D_)), 1) if D_ else None)
+        if s.get('naip'):
+            s['naip']['superseded'] = 'NAIP 2024 (2024-05-20) aircraft on the earlier (OSM) axis; not a check of the ADS-B axis'
+            s['naip'].pop('along_conflict', None)
+        s.pop('conflict_along', None); s.pop('conflict_axis', None); s.pop('_axis_tf', None)
+        # the ADS-B that placed the stand cannot verify it (like F15's NAIP reading); an aircraft WAS seen there -> obs
+        s['verified_by'] = []; s['verified_unconfirmed'] = []; s['src'] = 'obs'
+        s['paint'] = paint_fit(YEL, s['nose'], s['hdg']); s.pop('paint_after', None)
+        f_ = hdg_vec(s['hdg']); s['leadin_pts'] = [(s['nose'][0] - f_[0] * 40, s['nose'][1] - f_[1] * 40), tuple(s['nose'])]
+        s['leadin_src'] = 'inferred: straight 40 m along the ADS-B axis (the painted line of the current layout is not imaged: NAIP 2024 predates it)'
+        s['osm_resid'] = dict(zip(('along', 'lat'), [round(v, 1) for v in local(s['osm_way']['stop'], s['nose'], s['hdg'])]))
+        print('  ADS-B axis applied:', s['name'], 'hdg %.1f -> %.1f, nose moved %+.1f along / %+.1f lat' % (old_h, h_new, dlat[0], dlat[1]))
     # Review round 4: the stand stop point itself is moved where the parked NAIP aircraft (relief-corrected by-eye nose,
     # good to ~+-2 m: two readers differed by up to 2.7 m) and ADS-B (>= 2 aircraft of the stand's group, each at its
     # family's typical antenna offset, within 1.5 m of their median) agree within 2.0 m that aircraft stop off the model
@@ -469,9 +621,17 @@ def main():
         for t, a in s.get('adsb_good', []):
             fm = GM.FAMILY.get(ALIAS_T.get(t, t))
             if fm in fam_ref and type_cls(t) and (type_cls(t) in WIDE) == (s['grp'] == 'wide'): vals.append(a - fam_ref[fm])
-        if len(vals) < 2: continue
+        # static fix-up: every stand that keeps its conflict says why (conflict_along.why_not_moved)
+        if len(vals) < 2:
+            s['_why_along'] = ('NAIP only: no ADS-B stay of this stand\'s group on the line in the recording' if not vals else
+                               'NAIP %+.1f m and ONE ADS-B aircraft %+.1f m (family-corrected): >= 2 needed' % (rn['resid_along'], vals[0]))
+            continue
         md = float(np.median(vals))
-        if max(abs(v - md) for v in vals) > 1.5 or abs(md - rn['resid_along']) > 2.0: continue
+        if max(abs(v - md) for v in vals) > 1.5 or abs(md - rn['resid_along']) > 2.0:
+            s['_why_along'] = ('NAIP %+.1f m vs ADS-B %s m (family-corrected, n=%d): the sources disagree (ADS-B spread %.1f m, NAIP %.1f m from their median) - '
+                               'the imaged aircraft\'s type is unknown and stop marks are per type' % (rn['resid_along'], '/'.join('%+.1f' % v for v in sorted(vals)),
+                               len(vals), max(vals) - min(vals), abs(md - rn['resid_along'])))
+            continue
         mv = float(np.median(vals + [rn['resid_along']]))
         f = hdg_vec(s['hdg']); s['nose'] = (s['nose'][0] + f[0] * mv, s['nose'][1] + f[1] * mv)
         s['pos_src'] += '+naip+adsb'
@@ -487,14 +647,22 @@ def main():
             if s['verified_by'] and not s.get('conflict') and not s.get('conflict_axis'): s['src'] = 'obs'
         print('  stop moved (NAIP + ADS-B):', s['name'], round(mv, 1), 'm')
     for s in stands:
-        by = defaultdict(list)
-        for t, a in s.get('adsb_good', []):
+        by = defaultdict(list); dur_by = defaultdict(list)
+        for (t, a), du in zip(s.get('adsb_good', []), s.get('adsb_good_dur', [])):
             fm = GM.FAMILY.get(ALIAS_T.get(t, t))
-            if fm in fam_ref: by[fm].append(a)
+            if fm in fam_ref: by[fm].append(a); dur_by[fm].append(du)
         tsd = {}
         for fm, v in by.items():
             d_ = float(np.median(v)) - fam_ref[fm]
             if (len(v) >= 2 and abs(d_) >= 5) or abs(d_) >= 10:
+                # static fix-up (review round 4, G7 L1 reach): a stop from ONE stay needs that stay to be a parked turn, not a
+                # hold short of the stand. G7's only A319 (N854UA UAL822) stood 29 m short for 234 s, starting 3 min before
+                # SFO's stand window: the aircraft waiting for the stand / marshaller. Single stays under 10 min set no stop
+                # (listed in `stops_rejected`).
+                if len(v) == 1 and dur_by[fm][0] < 600 and d_ < 0:
+                    s.setdefault('stops_rejected', {})[fm] = {'along': round(d_, 1), 'n': 1, 'dur_s': dur_by[fm][0],
+                                                              'why': 'one ADS-B stay of %d s (< 10 min): a hold short of the stand, not a parked turn' % dur_by[fm][0]}
+                    continue
                 tsd[fm] = {'along': round(min(d_, 0.0), 1), 'n': len(v), 'src': 'adsb (median %.1f m vs family %.1f m)' % (float(np.median(v)), fam_ref[fm])}
         # review round 3: a family stop of 3-5 m that the NAIP aircraft on the same line confirms (its relief-corrected
         # nose within 1.5 m of the ADS-B stop, n >= 2 ADS-B aircraft; B22: three E-Jets 4.3-5.4 m short, NAIP -4.1 m)
@@ -508,6 +676,8 @@ def main():
                     s['conflict_along']['explained_by'] = fm
                     s['conflict_along']['note'] += '; explained by the %s stop (ADS-B n=%d at %+.1f m agrees)' % (fm, len(v), d_)
         s['type_stops'] = {k: v for k, v in tsd.items() if v['along'] < 0} or None
+        if s.get('conflict_along') and not s['conflict_along'].get('explained_by') and s.get('_why_along'):
+            s['conflict_along']['why_not_moved'] = s['_why_along']
         if (s.get('conflict_along') or {}).get('explained_by') and ('adsb' in s['verified_by'] or 'naip' in s['verified_by']): s['src'] = 'obs'
     # Stands whose calibrated nose puts the aircraft against the building (review round 2: F16 0.05 m, F17 0.59 m from the
     # Boarding Area F facade; their OSM lead-ins end at the facade) are moved back to the stop ADS-B shows there, when
@@ -866,11 +1036,40 @@ def main():
             continue
         a['excl'].append(b['name']); b['excl'].append(a['name'])
         how[(a['name'], b['name'])] = 'excl (SFO plans both at once %d times, but even its largest types overlap)' % sim
+    # Static fix-up (26 Sep 2026; review round 4: "state the evidence that SFO really operates them that way (ADS-B
+    # simultaneous occupancy) or restrict"): for every pair, the ADS-B stays (adsb.lol, SFO stand window, on the line
+    # within 3 m) of DIFFERENT airframes on the two stands that overlap in time by > 5 min; per airframe pair the types,
+    # the overlap and the clearance of the two planforms at their OBSERVED positions (antenna + family offset along the
+    # reported heading; ADS-B positions are good to ~1-2 m, so this is a check of the order of magnitude, not a survey).
+    def obs_pose(st, s_):
+        t_ = ALIAS_T.get(eff_type(st), eff_type(st)); fm = GM.FAMILY.get(t_); h_ = st['hdg'] if st.get('hdg') is not None else s_['hdg']
+        if t_ not in GM.APP or not GM.APP[t_]['span'] or fm not in fam_ref: return t_, None
+        f_ = hdg_vec(h_); return t_, GM.planform((st['x'] - f_[0] * fam_ref[fm], st['z'] - f_[1] * fam_ref[fm]), h_, t_)
+    def adsb_sim(a_, b_):
+        best = {}
+        for x, ax_, cx_ in a_.get('_good', []):
+            if abs(cx_) > 3: continue
+            for y, ay_, cy_ in b_.get('_good', []):
+                if abs(cy_) > 3 or x['hex'] == y['hex']: continue
+                ov = min(x['t1'], y['t1']) - max(x['t0'], y['t0'])
+                if ov <= 300: continue
+                k_ = (x['hex'], y['hex'])
+                if k_ in best and best[k_][2] >= ov // 60: continue
+                (ta, pa_), (tb, pb_) = obs_pose(x, a_), obs_pose(y, b_)
+                best[k_] = (ta, tb, int(ov // 60), round(pa_.distance(pb_), 1) if pa_ is not None and pb_ is not None else None,
+                            '%s/%s' % (x.get('callsign'), y.get('callsign')))
+        return sorted(best.values(), key=lambda r: (r[3] if r[3] is not None else 99))
     pairs = []
     for a, b in near:
         d_data = GM.stand_env(a).distance(GM.stand_env(b)); d_sfo = env_sfo(a).distance(env_sfo(b)); d = min(d_data, d_sfo)
         need = max(icao_clear(max(REF[t]['span'] for t in GM.accepted_types(dict(x, types_ok=None)))) for x in (a, b))
-        pairs.append((a['name'], b['name'], round(d, 1), need, sim_count(a, b), is_alt(a, b), how.get((a['name'], b['name'])), round(d_data, 1), round(d_sfo, 1)))
+        asim = adsb_sim(a, b) if d < need and not is_alt(a, b) else []
+        pairs.append((a['name'], b['name'], round(d, 1), need, sim_count(a, b), is_alt(a, b), how.get((a['name'], b['name'])), round(d_data, 1), round(d_sfo, 1), asim))
+        if d < need and not is_alt(a, b) and not (a['name'] in b['excl']):
+            for x_, y_ in ((a, b), (b, a)):
+                x_.setdefault('below_icao', {})[y_['name']] = {'clear_m': round(d, 1), 'icao_m': need, 'sfo_plan_overlaps': sim_count(a, b),
+                                                               'adsb_simultaneous': [{'types': [r[0], r[1]] if x_ is a else [r[1], r[0]], 'overlap_min': r[2],
+                                                                                      'clear_observed_m': r[3], 'flights': r[4]} for r in asim]}
         if d < 60: a['clear'][b['name']] = round(d, 1); b['clear'][a['name']] = round(d, 1)
     # ---------------------------------------------------------------- bridge poses (review round 1)
     # cab_pose: OSM maps some bridges docked (cab within 6 m of a door of a type the stand accepts), others parked.
@@ -936,6 +1135,14 @@ def main():
             b['model_src'] = 'not modelled (upper-deck bridge: the app docks main-deck doors only)' if b['door'] > 2 else 'no docking type'
             b['dock_types_out'] = []; continue
         lo, hi = min(d_[1] for d_ in dk), max(d_[1] for d_ in dk)
+        if b['osm_id'] in TB.BRIDGE_SHORT:
+            # static fix-up: an imaged bridge shorter than every datasheet unit (stand_table.BRIDGE_SHORT, F5)
+            pv_ = b.get('rotunda') or b['attach']; e_rest = math.dist(pv_, b['cab']) - GM.PIVOT_TO_DOOR
+            b['model'] = None; b['short_unit'] = True; b['ext_range'] = [round(min(e_rest, lo), 3), round(max(e_rest, hi), 3)]
+            b['model_src'] = 'INFERRED short non-datasheet unit: %s; ext_range = imaged rest %.1f m .. observed dockings %.1f-%.1f m' % (TB.BRIDGE_SHORT[b['osm_id']]['why'], e_rest, lo, hi)
+            e0, e1 = b['ext_range']
+            b['dock_types_out'] = sorted(set(d_[0] for d_ in acc if not (e0 - 1.0 <= d_[1] <= e1 + 1.0)))
+            continue
         m = GM.choose_model(lo, hi); tol = ''
         if not m: m = GM.choose_model(lo, hi, 1.0); tol = ' (within 1.0 m: stop-point / rotunda uncertainty)'
         if m:
@@ -954,6 +1161,9 @@ def main():
             problems.append((st['name'], 'bridge %s L%d: no single bridge model covers %.1f-%.1f m (%s)' % (b['osm_id'], b['door'], lo, hi, b['model_src'].split('(')[-1].rstrip(')'))))
         e0, e1 = b['ext_range']
         b['dock_types_out'] = sorted(set(d_[0] for d_ in acc if not (e0 - 1.0 <= d_[1] <= e1 + 1.0)))
+        dec = TB.DOCK_OUT_DECIDED.get((st['gate'], b['door'])) if not st.get('alt_of') else None
+        if dec:
+            b['dock_types_out'] = sorted(set(b['dock_types_out']) | set(dec)); b['dock_out_why'] = dec
     # cab rotation (review round 3): the sell sheet gives 125 deg standard = 92.5 deg cw / 32.5 deg ccw, 185 deg optional.
     # Docked, the cab faces the door (fuselage normal); its turn = signed angle tunnel -> cab axis. Which sense the sheet
     # calls cw is not stated: the sense under which more observed dockings fit the standard cab is taken (inferred;
@@ -1052,7 +1262,7 @@ def main():
         wk = [tuple(q) for q in b.get('walk') or [] if math.dist(q, pv) > 1.0]
         back = math.degrees(math.atan2(wk[-1][1] - pv[1], wk[-1][0] - pv[0])) if (b.get('rotunda') and wk) else None
         ddirs = dirs_of(b, pv) if b.get('rotunda') else []
-        e0, e1 = b['ext_range']; Lmin = max(GM.EXT_MIN, e0); Lmax = max(Lmin, min(30.0, e1))
+        e0, e1 = b['ext_range']; Lmin = e0 if b.get('short_unit') else max(GM.EXT_MIN, e0); Lmax = max(Lmin, min(30.0, e1))
         Lt = min(max(L0 if b['cab_pose'] == 'parked' else Lmin + 1.0, Lmin), Lmax)
         found = None
         for level in ('icao', 3.0, 1.0):
@@ -1071,9 +1281,13 @@ def main():
                         if O.intersects(tc2) or tc2.intersection(bld_poly).area > 0.1: continue
                         if OW is not None and OW.intersects(tc2): continue
                         cost = dd / 10 + abs(L - Lt) / 5
-                        cands.append((cost, cp, dd * sg, L, tc))
-                if cands and dd > 20 and min(c[0] for c in cands) < dd / 10: break
-            if cands: found = (level, min(cands, key=lambda c: c[0])); break
+                        # static fix-up (review round 4: rest poses 1.0-4.5 m from observed wings): where no pose keeps the ICAO
+                        # clearance, the relaxed search keeps the pose with the LARGEST clearance (0.25 m steps), then the
+                        # one nearest the OSM direction (it had kept the nearest-OSM pose that merely passed the relaxed test)
+                        clr = (-math.floor(min(w_.distance(tc2) for w_, c_ in WO) * 4) / 4) if (level != 'icao' and WO) else 0.0
+                        cands.append((cost, cp, dd * sg, L, tc, clr))
+                if level == 'icao' and cands and dd > 20 and min(c[0] for c in cands) < dd / 10: break
+            if cands: found = (level, min(cands, key=lambda c: (c[5], c[0]))); break
         if found:
             level, c = found
             b['stow'] = [round(c[1][0], 2), round(c[1][1], 2)]; b['stow_turn_deg'] = c[2]; b['stow_len'] = round(float(c[3]), 1)
@@ -1099,6 +1313,22 @@ def main():
             if any(g.buffer(1.0).intersects(tc2) for g in placed): why.append('other rest poses')
             if tc2.intersection(bld_poly).area > 0.1: why.append('building')
             b['stow'] = None; problems.append((st['name'], 'no stow pose for bridge %s (length %.1f-%.1f m; OSM direction blocked by: %s)' % (b['osm_id'], Lmin, Lmax, ', '.join(why) or 'docked bridges')))
+    # Static fix-up (26 Sep 2026; review round 4 critical: "B5S / B11S / B16S / C9V have no bridges; give the data what the app
+    # needs"). An alternative position without bridges of its own is served by its base stand's bridges; per bridge the
+    # alternative carries `bridges_shared`: which bridge (osm_id, door number as seen from the alternative's aircraft), the
+    # accepted types it docks there (within its ext_range + 1 m), those it cannot (it stays at rest), and the clearance
+    # of that bridge's REST pose from the alternative's envelope (every accepted type at its stop) - the rest pose search
+    # already treats the alternative's envelope as an obstacle (+1 m).
+    for o in stands:
+        if not o.get('alt_of') or o['bridge_list']: continue
+        base = stand_by_name[o['alt_of']]; out_ = []
+        for b in base['bridge_list']:
+            e0, e1 = b['ext_range']
+            dk = sorted({t for t, e_, cp, sn in b.get('_acc_docks', []) if sn == o['name'] and e0 - 1.0 <= e_ <= e1 + 1.0 and t not in (b.get('dock_types_out') or [])})
+            no = sorted({t for t, e_, cp, sn in b.get('_acc_docks', []) if sn == o['name']} - set(dk))
+            rc = round(GM.bridge_parts(b, b['stow'])[2].difference(Point(b.get('rotunda') or b['attach']).buffer((b.get('rotunda_max_r') or GM.ROT_R) + 0.3)).distance(envs[o['name']]), 2) if b.get('stow') else None
+            out_.append({'osm_id': b['osm_id'], 'of': base['name'], 'door': b['door'], 'dock_types': dk, 'dock_types_out': no, 'rest_clear_m': rc})
+        o['bridges_shared'] = out_
     for st, b in allb: b.pop('_acc_docks', None); b.pop('_obs_docks', None)
     # ---------------------------------------------------------------- remote / cargo / maintenance positions
     contact_ids = {s['osm_way']['osm_id'] for s in stands}
@@ -1188,7 +1418,7 @@ def main():
                          'reason': ex['why']})
     # ---------------------------------------------------------------- write
     res = build_output(stands, remote, positions, naip_off, info, osm, unplaced)
-    full = {'stands': [{k: v for k, v in s.items() if k not in ('osm_way', 'bridges', 'types')} | {
+    full = {'stands': [{k: v for k, v in s.items() if k not in ('osm_way', 'bridges', 'types', '_good', '_why_along')} | {
         'types': dict(s['types']), 'osm': {k: s['osm_way'][k] for k in ('osm_id', 'osm_version', 'osm_ts', 'ref', 'stop', 'hdg', 'orient', 'len')}} for s in stands],
         'pairs': pairs, 'problems': problems, 'orphan_bridges': [(jb['osm_id'], jb['ref'], jb.get('name'), [round(v, 1) for v in jb['cab']]) for jb in orphan_bridges],
         'naip_offset': naip_off, 'remote': remote, 'positions': positions, 'unplaced': unplaced}
@@ -1228,7 +1458,14 @@ def build_output(stands, remote, positions, naip_off, info, osm, unplaced=()):
                # wings inside the ICAO clearance of a fixed bridge part
                'naip_axis': s.get('naip_axis'), 'conflict_axis': s.get('conflict_axis'), 'stop_move': s.get('stop_move'),
                'fixed_clear_conflict': s.get('fixed_clear_conflict'), 'types_ok_all_paths': bool(s.get('types_ok_all_paths')),
-               'resid': {'naip': {k: s['naip'][k] for k in ('resid_along', 'resid_lat')} if s.get('naip') else None,
+               # static fix-up (26 Sep 2026): types only superseded AODB plans put here; ADS-B axis replacing the OSM one;
+               # rejected single-stay stops; lead-in provenance where it is not the OSM way
+               'superseded_types': s.get('superseded_types') or None, 'axis_adsb': s.get('axis_adsb'),
+               'bridges_shared': [dict(x, of=disp[x['of']]) for x in s['bridges_shared']] if s.get('bridges_shared') else None,
+               'below_icao': {disp[k]: v for k, v in s['below_icao'].items()} if s.get('below_icao') else None,
+               'conflict_superseded': s.get('conflict_superseded'), 'stops_rejected': s.get('stops_rejected'),
+               'leadin_src': s.get('leadin_src'),
+               'resid': {'naip': {k: s['naip'][k] for k in ('resid_along', 'resid_lat', 'superseded') if k in s['naip']} if s.get('naip') else None,
                          'adsb': {k: s['adsb'][k] for k in ('n_aircraft', 'along_med', 'lat_med', 'dhdg_med')} if s.get('adsb') else None,
                          'paint': s.get('paint_after') or s.get('paint'),
                          'osm': s['osm_resid']},

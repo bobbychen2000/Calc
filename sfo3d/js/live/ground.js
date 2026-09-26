@@ -99,7 +99,9 @@ export class GroundPhysics {
   resolve(traffic, dt) {
     const fixed = [], free = [], moving = [], silent = []; let conflicts = 0;
     for (const tr of traffic.tracks.values()) {
-      const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle) { tr.physOff = null; continue; }
+      const D = tr.disp; if (!D.valid || !D.ground || tr.vehicle || tr.dropping) { tr.physOff = null; continue; }
+      // (silent: transponder off (stale), or stopped off a stand with no position for a while (traffic.js tr.quiet))
+      const sil = tr.stale || tr.quiet;
       if (tr.gate && tr.gate.bridge && tr.parkPos && (tr.m.phase === 'still' || tr.stale)) {
         // the pose it is drawn in: its lock (where it came to rest, the pose its bridge docked to), else the parked pose
         const S = traffic.shownPark ? traffic.shownPark(tr) : { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg };
@@ -116,8 +118,8 @@ export class GroundPhysics {
           else if (short(hit.tr)) { hit.tr.shortBlocked = true; traffic.updatePark(hit.tr); traffic.counters.shortBlocked = (traffic.counters.shortBlocked || 0) + 1; }
           else conflicts++;
         }
-        fixed.push(B); tr.physOff = null; if (tr.stale) silent.push(B);
-      } else { const B = this.body(tr); if (!B) continue; if ((D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) { free.push(B); if (tr.stale) silent.push(B); } else moving.push(B); }
+        fixed.push(B); tr.physOff = null; if (sil) silent.push(B);
+      } else { const B = this.body(tr); if (!B) continue; if ((D.gs || 0) < 0.3 && (tr.m.phase === 'still' || tr.stale)) { free.push(B); if (sil) silent.push(B); } else moving.push(B); }
     }
     // stationary aircraft off the surveyed stands: nearest valid pose (once per pose), within the report scatter (6 m),
     // widened to 15 m when nothing nearer is clear of buildings / neighbours (review round 1: DAL1053 and UAL1881 were
@@ -157,14 +159,22 @@ export class GroundPhysics {
       if (tr.physOff) moved++; if (!tr.phys.ok) unresolved++;
       placed.push({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] });
     }
-    // moving aircraft: a fading target offset away from any displayed overlap. A remembered (silent) aircraft that a live
-    // one drives into is not there any more: removed (review round 1: stale ghosts overlapped by passing traffic)
+    // moving aircraft: a fading target offset away from any displayed overlap. A silent aircraft that a live one drives
+    // into is not there any more (the live one's positions are real): it fades out BEFORE the contact -- the live body
+    // 3 s ahead along its motion already touches it (off a stand; at a surveyed stand, whose layout is collision-free, only
+    // an actual overlap). Review round 1: stale ghosts overlapped by passing traffic; review round 2: removed with a pop, and
+    // only after the overlap had been drawn (SWA3085 on a taxilane driven through by two aircraft)
     let ghosts = 0;
     for (const B of moving) {
       const tr = B.tr; const cur = tr.physOff ? tr.physOff.slice() : [0, 0]; let push = [0, 0];
-      for (const S of silent) { if (!S.tr.removed && overlaps(B, S, 0)) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true }); traffic.remove(S.tr); ghosts++; } }
+      const v = tr.disp.gs || 0; const ahead = v > 0.5 ? (() => { const s = (tr.ctl && tr.ctl.v < 0 ? -1 : 1) * Math.min(40, v * 3); return { ...B, nose: [B.nose[0] + B.f[0] * s, B.nose[1] + B.f[1] * s], S: null }; })() : null;
+      for (const S of silent) {
+        if (S.tr.removed || S.tr.dropping) continue;
+        const hit = overlaps(B, S, 0) || (!S.tr.gate && ahead && overlaps(ahead, S, 0.5));
+        if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
+      }
       for (const o of placed) {
-        if (o.tr && o.tr.removed) continue;
+        if (o.tr && (o.tr.removed || o.tr.dropping)) continue;
         const d = Math.hypot(B.nose[0] - o.nose[0], B.nose[1] - o.nose[1]);
         if (d > (o.T.L + B.T.L) * 0.5 + 40) continue;
         const S = samples(B.T, B.nose, B.h); let hits = 0; for (const p of S.outline) if (inside(o, p, 1.5)) hits++;

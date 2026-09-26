@@ -149,6 +149,33 @@ class Gates(unittest.TestCase):
         self.assertTrue(any(v['now'] for v in p['byStand'].values()))
 
 
+    def test_regional_alias_type_conflict_and_hold(self):
+        # review round 2: QXE2139 (N670QX, E195 in the adsb.fi database; SFO and Horizon's all-E175 fleet say E75L) must map
+        # to ASA2139 -- the database type flags, it does not veto -- and the alias is held once the aircraft is silent
+        fs = sorted(glob.glob(os.path.join(ROOT, 'refs', 'cache', 'gate_truth', 'flysfo_api_flight-status_20260925T18*.json.gz')))
+        if not fs:
+            self.skipTest('no cached flysfo snapshot of 25 Sep 18Z')
+        class Hub:
+            live = {'QXE2139': {'t': 'E195', 'flight': 'QXE2139'}}
+            def current_callsigns(self):
+                return dict(self.live)
+        hub = Hub()
+        g = S.Gates(enabled=True, replay_clock=None, hub=hub)
+        t_file = S.Gates._file_time(fs[0])
+        g._ingest(json.load(gzip.open(fs[0], 'rt')), t_file, fs[0])
+        g.replay = S.Clock(time.time(), t_file + 1800, 1.0)
+        g._replay_load = lambda T: None
+        a = g.payload()['aliases'].get('QXE2139')
+        self.assertIsNotNone(a)
+        self.assertEqual(a['to'], 'ASA2139')
+        self.assertEqual(a['checks'].get('type'), 'differ')
+        hub.live = {}
+        a2 = g.payload()['aliases'].get('QXE2139')
+        self.assertIsNotNone(a2)
+        self.assertTrue(a2.get('held'))
+        self.assertEqual(a2['to'], 'ASA2139')
+
+
 class Routes(unittest.TestCase):
     def test_plausible(self):
         SFO = {'lat': 37.619, 'lon': -122.375}

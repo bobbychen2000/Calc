@@ -111,14 +111,18 @@ const gateByName = new Map(gates.map(g => [g.name, g]));
 const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
 const occ = new Map(); // physical gate name -> occupant track (as the bridge system was told)
 const undocking = new Map(); // physical gate name -> the occupant whose bridge is retracting (its cab leaves its door)
-function applyGate(g, tr) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; const prev = occ.get(G.name); if (!ty && prev) undocking.set(G.name, prev); else if (ty) undocking.delete(G.name); occ.set(G.name, ty ? tr : null); gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null); }
+function applyGate(g, tr, opt) { const G = bridgeGate(g); const ty = tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null; const prev = occ.get(G.name); if (!ty && prev) undocking.set(G.name, prev); else if (ty) undocking.delete(G.name); occ.set(G.name, ty ? tr : null); gsys.setOccupant(G, ty, booted, simNow, tr ? poseST(tr) : null, tr ? tr.info.icao : null);
+  if (!tr && opt && opt.fast) hurryUndock(G, opt.s || 5, simNow); }
+// (as js/live/app.js hurryUndock: a departing / removed aircraft's bridge retracts in opt.s seconds)
+function hurryUndock(G, s, now) { if (gsys.hurryUndock) return gsys.hurryUndock(G, s, now); const a = gsys.anims.get(G.id); if (!a || a.to !== 0) return;
+  const u = a.dur > 0 ? Math.min(1, Math.max(0, (now - a.t0) / a.dur)) : 1; const k = a.from + (a.to - a.from) * u; const dur = s * 1000 * Math.max(0.2, k); if (a.t0 + a.dur > now + dur) { a.from = k; a.k = k; a.t0 = now; a.dur = dur; } }
 function bridgeK(g, b) { const a = gsys.anims.get(g.id); if (a) return gsys.docks(g, b) ? a.k : 0; return g.acType && gsys.docks(g, b) ? 1 : 0; }
 // (gates.js step(): the app's own animation step -- it also records the height a retracted bridge rests at)
 function animStep(now) { if (gsys.step) { gsys.step(now); return; } for (const [id, a] of gsys.anims) { const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; if (u >= 1) gsys.anims.delete(id); } }
 
-const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr) => applyGate(g, tr) });
-traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (TRACE) { traffic.debug = TRACE; traffic.onEvent = (e) => { if (e.hex === TRACE) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); }; }
-traffic.bridgeK = (g) => { const G = bridgeGate(g); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
+const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlines: DETAILS.centerlines, taxigraph: TAXIGRAPH, stands: STANDS, onGateChange: (g, tr, opt) => applyGate(g, tr, opt) });
+traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (process.env.CANDLOG) traffic.candLog = []; if (TRACE) { traffic.debug = TRACE; traffic.onEvent = (e) => { if (e.hex === TRACE) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); }; }
+traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gsys.extension) return gsys.extension(G); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };   // (as app.js)
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net });
 const pavedMask = apt.paved, pavedAll = pavedUnion(apt.paved, traffic.net);
 
@@ -529,6 +533,7 @@ for (const [cls, v] of [...V.entries()].sort()) {
   report.classes[cls] = { frames: v.frames, episodes: v.eps, keys: aircraft, worst: who.slice(0, 12).map(w => ({ ...w.ex, frames: w.n })), longest: who.slice().sort((a, b) => b.n - a.n).slice(0, 6).map(w => ({ ...w.ex, frames: w.n })) };
 }
 report.offpaveCells = [...offCells.entries()].sort((a, b) => b[1].hex.size - a[1].hex.size || b[1].frames - a[1].frames).slice(0, 25).map(([k, v]) => { const [x, z] = k.split(',').map(Number); const ll = toLL(x, z); return { x, z, lat: +ll[0].toFixed(6), lon: +ll[1].toFixed(6), frames: v.frames, movingFrames: v.moving, aircraft: v.hex.size, who: [...v.hex].slice(0, 8) }; });
+if (traffic.candLog) report.candLog = traffic.candLog;
 fs.writeFileSync(OUTF, JSON.stringify(report, null, 1));
 console.log(`${OUTF}: checked ${checkedFrames} frames (${(checkedFrames * DT / 3600).toFixed(2)} h) in ${report.meta.wallS}s`);
 for (const [cls, c] of Object.entries(report.classes)) console.log(cls.padEnd(28), String(c.frames).padStart(8), 'frames', String(c.episodes).padStart(6), 'episodes', String(c.keys).padStart(5), 'keys');

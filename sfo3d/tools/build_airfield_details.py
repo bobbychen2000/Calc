@@ -228,7 +228,7 @@ def trace_paint(a, b, step=2.0):
 # (x -460), -387.8 (-520), -385.7 (-580), -383.7 (-625), -382.2 (-655)). The way is cut at `cut` (the vertex nearest to
 # it; the part beyond is dropped) and continued by a trace on the paint (trace_paint, as PAINT_TRACES) to `to`.
 PAINT_REROUTES = {
-    23718429: {'cut': (-470.0, -384.9), 'to': (-664.0, -381.9), 'why': 'OSM way end cuts across the striped shoulder; the painted centreline runs straight to the runway (review round 4, crop cl16_wide)'},
+    23718429: {'cut': (-452.0, -384.8), 'to': (-664.0, -381.9), 'why': 'OSM way end cuts across the striped shoulder; the painted centreline runs straight to the runway (review round 4, crop cl16_wide; static fix-up: cut moved from x -470 to -452, where the OSM way starts to drift off the paint - it left a 1.6 m jog at the cut)'},
 }
 
 centerlines, cl_meta = [], []
@@ -243,6 +243,12 @@ for w in OSM['taxiways']:
         head, tail = Pw[:k_ + 1], Pw[k_:]
         rev = np.hypot(*(head[0] - np.array(R_['to']))) <= np.hypot(*(tail[-1] - np.array(R_['to'])))
         keep_part, rest = (tail[::-1], head[::-1]) if rev else (head, tail)
+        # static fix-up (26 Sep 2026): the cut vertex itself lay 1.6 m off the paint (a jog at x -470 between the OSM part
+        # and the trace); it is snapped onto the painted line (cross-section peak) before the trace starts from it
+        td_ = np.asarray(R_['to'], float) - keep_part[-1]; td_ /= np.linalg.norm(td_)
+        r0_ = YEL.cross_peak(keep_part[-1], td_, half=2.5, avg=3.0, step=0.1, min_contrast=10.0)
+        if r0_ and r0_[2] < 0.6 * r0_[1]:
+            keep_part = np.vstack([keep_part[:-1], keep_part[-1] + np.array([-td_[1], td_[0]]) * r0_[0]])
         tr_, n_ok_, n_all_ = trace_paint(keep_part[-1], R_['to'])
         # the way beyond the runway it crosses is kept: from its first point on runway pavement on (that part is cut
         # out below; the runway-crossing lead-on is not a taxiway centreline) - it carries the far side's hold

@@ -3,6 +3,7 @@
 // list, the stats and the ATC panels are bottom sheets.
 import { phaseLabel, category, gateLabel } from './traffic.js';
 import { atcHtml, roleChip } from './atc.js';
+import { parseCallsign } from './lookup.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -151,7 +152,7 @@ export class UI {
     const html = rows.length ? rows.map(({ tr, cat }) => {
       const I = tr.info, D = tr.disp;
       const name = tr.cs && tr.cs.display || I.reg || tr.hex.toUpperCase();
-      const route = routeText(tr);
+      const route = routeText(tr, this.o.planFor ? this.o.planFor(tr) : null);
       const alt = D.ground || tr.stale || I.altBaro == null ? '' : `${fmtInt(I.altBaro)} ft`;
       const spd = tr.stale ? '' : D.gs > 1 ? `${fmtInt(D.gs / 0.514444)} kt` : '';
       return `<div class="row c-${cat}${this.sel === tr.hex ? ' sel' : ''}${tr.stale ? ' stale' : ''}${I.emergency ? ' emg' : ''}" data-hex="${tr.hex}" role="listitem">
@@ -169,13 +170,9 @@ export class UI {
     this.sel = tr.hex; C.hidden = false; document.body.classList.add('has-card');
     const I = tr.info, D = tr.disp, cat = category(tr), now = Date.now();
     const al = tr.cs && tr.cs.airline;
-    const title = al ? al.name : (I.ownOp ? titleCase(I.ownOp) : (I.flight ? 'Callsign ' + I.flight : 'Unidentified'));
-    const r = tr.route && tr.route.codes && tr.route.plausible ? tr.route : null;
-    const ap = (code) => { if (!r) return null; const a = r.airports.find(x => x.iata === code || x.icao === code); return a ? `${code} <span class="dim">${esc(a.city || a.name)}</span>` : esc(code); };
     const sfo = extra.sfo || null; const sf = sfo && sfo.flight;
-    const routeHtml = r ? r.codes.map(ap).join(' <span class="arrow">→</span> ') + (tr.route.src ? '' : '')
-      : sf && sf.other && sf.other.iata ? (sf.kind === 'A' ? `${esc(sf.other.iata)} <span class="dim">${esc(sf.other.city || '')}</span> <span class="arrow">→</span> SFO` : `SFO <span class="arrow">→</span> ${esc(sf.other.iata)} <span class="dim">${esc(sf.other.city || '')}</span>`) + ' <span class="dim">· per SFO</span>'
-      : '<span class="dim">Route not available</span>';
+    const titleHtml = headline(tr, sfo);
+    const routeHtml = routeRow(tr, sfo);
     const altFt = D.ground || tr.stale ? null : I.altBaro;
     const vs = I.vsFpm;
     const age = tr.lastFixT ? Math.max(0, (now - tr.lastFixT) / 1000) : null;
@@ -185,9 +182,9 @@ export class UI {
     const roles = extra.atc || [];
     C.className = 'c-' + cat;
     C.innerHTML = `
-<div class="ch"><div class="al">${esc(title)}</div><button data-act="close" class="x" aria-label="Close">×</button></div>
+<div class="ch"><div class="al">${titleHtml}</div><button data-act="close" class="x" aria-label="Close">×</button></div>
 <div class="fl"><b>${esc(tr.cs && tr.cs.display || I.reg || tr.hex.toUpperCase())}</b>${I.flight && tr.cs && tr.cs.display !== I.flight ? `<span class="mono dim">${esc(I.flight)}</span>` : ''}${sf && sf.fn && !(sfo.cands || []).some(c => c.linked && c.fn === sf.fn) && sf.fn.replace(/\s+/g, '') !== String(tr.cs && tr.cs.display || '').replace(/\s+/g, '') ? `<span class="mono dim" title="Flight number SFO lists for this callsign">${esc(sf.fn)}</span>` : ''}</div>
-<div class="ty">${esc(tr.type ? tr.type.full : 'Type not reported')}${I.icao ? ` <span class="mono dim">${esc(I.icao)}</span>` : ''}${typeNote(tr)}</div>
+<div class="ty">${esc(tr.type ? tr.type.full : 'Type not reported')}${I.icao ? ` <span class="mono dim">${esc(I.icao)}</span>` : ''}${typeNote(tr, sfo)}</div>
 <div class="ph c-${cat}">${esc(phaseLabel(tr, now))}</div>
 <dl>
   <dt>Tail</dt><dd class="mono">${esc(I.reg || '—')}</dd>
@@ -199,7 +196,7 @@ export class UI {
   <dt>Speed</dt><dd class="mono">${tr.stale ? '—' : fmtInt((I.gsKt ?? D.gs / 0.514444)) + ' kt'}</dd>
   ${vs != null && !D.ground && !tr.stale ? `<dt>Vertical</dt><dd class="mono">${vs > 0 ? '+' : ''}${fmtInt(vs)} ft/min</dd>` : ''}
   ${I.squawk ? `<dt>Squawk</dt><dd class="mono">${esc(I.squawk)}${I.emergency && I.emergency !== 'none' ? ' <span class="emg">' + esc(I.emergency) + '</span>' : ''}</dd>` : ''}
-  ${I.ownOp && al ? `<dt>Operator</dt><dd>${esc(titleCase(I.ownOp))}</dd>` : ''}
+  ${I.ownOp ? `<dt>Registered owner</dt><dd>${esc(titleCase(I.ownOp))}${lessor(I.ownOp) ? ' <span class="dim">(trustee / lessor, not the operator)</span>' : ''}</dd>` : ''}
   ${roles.length ? `<dt>ATC</dt><dd><span class="atcchip">${roles.map(roleChip).map(esc).join(' → ')}</span> <span class="dim">likely</span></dd>` : ''}
   <dt>Data</dt><dd>${tr.stale ? 'last received ' + ago(now - tr.lastRecv) : age == null ? '—' : `position <b class="mono">${age < 10 ? age.toFixed(1) : Math.round(age)} s</b> old`}${prov && !tr.stale ? ` <span class="dim">· ${prov}${mlat ? ' (MLAT)' : ''}</span>` : ''}<span class="dim"> · hex ${esc(tr.hex)}</span></dd>
 </dl>
@@ -233,7 +230,10 @@ ${m ? `<div class="model">${esc(m)}</div>` : ''}
     for (const [hex, e] of L) if (!seen.has(hex)) { if (e._gone) { e.remove(); L.delete(hex); } else { e.style.display = 'none'; e._gone = true; } } else e._gone = false;
   }
 }
-export function routeText(tr) {
+export function routeText(tr, sfo = null) {
+  if (sfo && sfo.flight) { const L = legOf(tr, sfo); if (L.leg && L.leg.length === 2 && L.leg.includes('SFO')) { const o = L.leg[0] === 'SFO' ? L.leg[1] : L.leg[0];
+    const a = L.r && L.r.airports.find(x => x.iata === o || x.icao === o); const sf = sfo.flight; const cty = a ? (a.city || a.name) : sf.other && sf.other.iata === o ? sf.other.city || '' : '';
+    return (L.leg[0] === 'SFO' ? 'to ' : 'from ') + o + (cty ? ' ' + cty : ''); } }
   const r = tr.route; if (!r || !r.codes || !r.plausible) return tr.gate ? '' : '';
   const c = r.codes; const i = c.indexOf('SFO');
   const city = (code) => { const a = r.airports.find(x => x.iata === code || x.icao === code); return a ? (a.city || a.name || code) : code; };
@@ -241,10 +241,62 @@ export function routeText(tr) {
   if (tr.dirSFO === 'dep' || i === 0) { const d = c[Math.min(c.length - 1, (i >= 0 ? i : 0) + 1)]; return `to ${d} ${city(d)}`; }
   return c.join(' → ');
 }
+// The ADS-B databases' `ownOp` is the REGISTERED OWNER (FAA registry), which for many airline aircraft is a bank or trust
+// holding the title for a lessor (review round 2: 'Umb Bank Na Trustee' was shown as the airline of N17428, 'Wilmingtontrust
+// Co Trustee' as AAL1110's operator) -- never an airline name
+const LESSOR_RE = /\b(TRUST|TRUSTEE|BANK|LEASING|LEASE|LESSOR|FINANCE|FINANCIAL|CAPITAL|CREDIT|HOLDINGS?)\b|TRUST CO/i;
+const lessor = (s) => !!s && LESSOR_RE.test(s);
+// regional operators and the brand of the marketing carrier they fly for (the flight is sold, numbered and painted as the
+// marketing carrier's: SFO lists SKW5899 as UA 5899, 'United'): United Express, American Eagle, Delta Connection; Horizon
+// (QXE) and SkyWest's Alaska flights are sold as Alaska Airlines
+const REGIONAL = new Set(['SKW', 'RPA', 'ENY', 'QXE', 'ASH', 'EDV', 'GJS', 'JIA', 'PDT', 'CPZ']);
+const BRAND = { UAL: 'United Express', AAL: 'American Eagle', DAL: 'Delta Connection', ASA: 'Alaska Airlines' };
+const OWNER_MKT = [[/UNITED AIRLINES/i, 'UAL'], [/AMERICAN AIRLINES/i, 'AAL'], [/DELTA AIR ?LINES/i, 'DAL'], [/ALASKA AIRLINES/i, 'ASA']];
+function headline(tr, sfo) {
+  const I = tr.info, al = tr.cs && tr.cs.airline;
+  if (al && REGIONAL.has(al.icao)) {
+    // the marketing carrier: the relay's regional alias (SFO's flight record), else the registered owner when it is one
+    const to = sfo && sfo.alias && sfo.alias.to ? String(sfo.alias.to).slice(0, 3) : null;
+    const own = I.ownOp ? (OWNER_MKT.find(([re]) => re.test(I.ownOp)) || [])[1] : null; const mk = to || own;
+    if (mk && BRAND[mk] && mk !== al.icao) return `${esc(BRAND[mk])} <span class="dim">· operated by ${esc(al.name)}</span>`;
+  }
+  if (al) return esc(al.name);
+  if (I.ownOp && !lessor(I.ownOp)) return esc(titleCase(I.ownOp));
+  return esc(I.flight ? 'Callsign ' + I.flight : 'Unidentified');
+}
+// route row: the leg in progress. SFO's own record for this flight (flysfo: the other airport of today's arrival /
+// departure) is authoritative for SFO flights; the VRS standing-data route (adsb.lol mirror) can be stale or name a
+// multi-leg rotation (review round 2: UAL1375 shown 'ONT → SFO → ORD' while SFO had it departing to PHX; DAL977
+// 'BOS → SFO → BOS'). When the two disagree, SFO's leg is shown and the VRS route is flagged.
+function legOf(tr, sfo) {
+  const sf = sfo && sfo.flight; const sfoLeg = sf && sf.other && sf.other.iata ? (sf.kind === 'A' ? [sf.other.iata, 'SFO'] : sf.kind === 'D' ? ['SFO', sf.other.iata] : null) : null;
+  const r = tr.route && tr.route.codes && tr.route.plausible ? tr.route : null; let leg = null;
+  if (r) { const c = r.codes, i = c.indexOf('SFO'); const dir = sfoLeg ? (sfoLeg[1] === 'SFO' ? 'arr' : 'dep') : tr.dirSFO;
+    if (i < 0) leg = c.slice(); else if (dir === 'arr' && i > 0) leg = [c[i - 1], 'SFO']; else if (dir === 'dep' && i < c.length - 1) leg = ['SFO', c[i + 1]];
+    else if (c.length === 2) leg = c.slice(); else leg = null; }
+  const conflict = !!(sfoLeg && r && (!leg || leg.join('-') !== sfoLeg.join('-')));
+  return { sfoLeg, leg: conflict ? sfoLeg : (leg || sfoLeg), per: conflict || (!leg && !!sfoLeg) ? 'sfo' : leg ? 'vrs' : null, conflict, r };
+}
+function routeRow(tr, sfo) {
+  const L = legOf(tr, sfo); if (!L.leg) return '<span class="dim">Route not available</span>';
+  const sf = sfo && sfo.flight; const r = L.r;
+  const city = (code) => { const a = r && r.airports.find(x => x.iata === code || x.icao === code); if (a) return a.city || a.name; if (sf && sf.other && sf.other.iata === code) return sf.other.city || ''; return code === 'SFO' ? 'San Francisco' : ''; };
+  const ap = (code) => `${esc(code)} <span class="dim">${esc(city(code))}</span>`;
+  let h = L.leg.map(ap).join(' <span class="arrow">→</span> ');
+  if (L.per === 'sfo') h += ' <span class="dim">· per SFO</span>';
+  if (L.conflict) h += `<br><span class="warn">Route data (VRS) says</span> <span class="dim">${esc(r.codes.join(' → '))} — not today's flight per SFO</span>`;
+  else if (r && r.codes.length > 2 && L.per === 'vrs') h += `<br><span class="dim">rotation ${esc(r.codes.join(' → '))}</span>`;
+  return h;
+}
 // where the type comes from when it is not simply the aircraft database's (traffic.js resolveType): the database entry
-// contradicted the transponder's own size category and another source was used -- or none agrees
-function typeNote(tr) {
+// contradicted the transponder's own size category and another source was used -- or none agrees. When SFO lists a
+// different type for this flight it is shown too (the registration databases are usually the more precise -- SFO lists
+// B738 / A321 for B38M / A21N aircraft -- but not always: N670QX is an E195 in the adsb.fi database while SFO lists E175)
+function typeNote(tr, sfo) {
   const s = tr.typeSrc; const db = tr.info.dbIcao;
+  const sfoT = sfo && sfo.flight && sfo.flight.type ? (sfo.flight.type === 'E175' ? 'E75L' : sfo.flight.type) : null;
+  const eqv = (a, b) => a === b || (a && b && a.replace(/^E75[LS]$/, 'E175') === b.replace(/^E75[LS]$/, 'E175'));
+  if (s === 'db' && sfoT && tr.info.icao && !eqv(sfoT, tr.info.icao)) return ` <span class="dim">· SFO lists ${esc(sfoT)} for this flight</span>`;
   if (s === 'sfo') return ` <span class="dim">· per SFO${db && db !== tr.info.icao ? ` (database says ${esc(db)})` : ''}</span>`;
   if (s === 'db2') return ` <span class="dim">· per the other ADS-B database (${esc(db || '?')} contradicts the transponder's size category)</span>`;
   if (s === 'conflict') return ` <span class="dim">· database type contradicts the transponder's size category (${esc(tr.info.category || '?')})</span>`;

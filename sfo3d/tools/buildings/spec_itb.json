@@ -1,0 +1,1715 @@
+{
+ "schema": "sfo3d building spec v1",
+ "building": "International Terminal Building (ITB) - Senator Dianne Feinstein International Terminal, with Boarding Areas A and G",
+ "generated": "2026-09-26",
+ "generator": "tools/buildings/build_spec_itb.py",
+ "frame": {
+  "id": "ltp-nad83-2011",
+  "axes": "world x east, z south, metres from the ARP; heights AGL (ground ~8 ft AMSL at the ITB) unless stated",
+  "roof_frame": {
+   "centre": [
+    -1245.03,
+    364.7
+   ],
+   "axis": [
+    0.29485,
+    0.95554
+   ],
+   "heading_deg": 162.85,
+   "u": "along the axis, + towards Boarding Area A (SSE)",
+   "v": "across, + towards ENE"
+  }
+ },
+ "status": {
+  "verified": "value read first-hand in at least one listed source (or measured by us)",
+  "conflict": "sources disagree - see conflicting_values",
+  "unverified": "no original could be read / no source exists - do not build on it without the owner",
+  "snippet-only": "all sources read only through search-engine extracts (site blocks automated access); the extracts of independent sources agree",
+  "secondary-only": "known only through a secondary source (Wikipedia) citing an original we could not open"
+ },
+ "tags": {
+  "pub": "published by an original source (architect, engineer, contractor, FAA, SF Planning, contemporary press) - see sources[].read",
+  "obs": "measured by us on public imagery/data (NAIP 2024, FAA DOF geometry, a public-domain photo, SFO Museum footprints) with the stated method",
+  "inf": "derived by stated arithmetic from pub/obs values"
+ },
+ "sources": {
+  "som": {
+   "title": "SOM project page: San Francisco International Airport - International Terminal",
+   "publisher": "Skidmore, Owings & Merrill",
+   "url": "https://www.som.com/projects/san-francisco-international-airport-international-terminal/",
+   "read": "full",
+   "cache": "refs/cache/buildings/itb/som_project.html",
+   "accessed": "2026-09-26"
+  },
+  "som_sketch": {
+   "title": "SOM project page, image \"sfairport_1400x800_plan_01\" (Craig Hartman concept sketches: west wall, roof segment, site diagram, roof elevation)",
+   "publisher": "SOM (image (c) SOM - reference only)",
+   "url": "https://www.som.com/wp-content/uploads/2021/07/sfairport_1400x800_plan_01jpg.jpg",
+   "read": "full",
+   "cache": "refs/cache/buildings/itb/sfairport_1400x800_plan_01jpg.jpg",
+   "accessed": "2026-09-26",
+   "note": "concept-stage sketch (competition 1993 / design 1995); handwritten dimensions are design intent, not as-built"
+  },
+  "som_section": {
+   "title": "SOM project page, images \"sfia_1575x900_som_02\" (Section at ticket counter) and \"_03\" (perspective section of the hall)",
+   "publisher": "SOM (images (c) SOM - reference only)",
+   "url": "https://www.som.com/wp-content/uploads/2021/07/sfia_1575x900_som_03.png",
+   "read": "full",
+   "cache": "refs/cache/buildings/itb/sfia_1575x900_som_02.png, sfia_1575x900_som_03.png",
+   "accessed": "2026-09-26",
+   "note": "perspective drawings, not to scale; used for topology only (5 three-chord trusses in section, column under each truss)"
+  },
+  "sfom_sketch": {
+   "title": "SFO Museum Collection 2000.086.009, \"Architectural design drawing: SFO, SOM\" (Craig Hartman roof plan sketch, 1995)",
+   "publisher": "SFO Museum",
+   "url": "https://collection.sfomuseum.org/objects/1511910403/",
+   "read": "full",
+   "cache": "refs/cache/buildings/itb/sfom_2000.086.009.jpg",
+   "accessed": "2026-09-26",
+   "note": "developmental sketch: column grid letters B-J, skylights, 3-D trusses"
+  },
+  "msc2000": {
+   "title": "R. E. Ferch, P. M. Hassett, \"S.F. Airport Roof Truss Erection\", Modern Steel Construction, February 2000 (AISC)",
+   "publisher": "AISC",
+   "url": "https://www.aisc.org/globalassets/modern-steel/archives/2000/02/2000v02_sf_airport.pdf",
+   "read": "snippet",
+   "note": "PDF behind a Cloudflare challenge (curl 403 / WebFetch 403; Scribd copy 373810186 also blocked); abstract text read via search-engine extracts only"
+  },
+  "seaonc": {
+   "title": "Hensolt SEAONC Legacy Project: San Francisco Airport International Terminal Building",
+   "publisher": "Structural Engineers Association of Northern California",
+   "url": "https://legacy.seaonc.org/structure/sfo-international-terminal/",
+   "read": "snippet",
+   "note": "site returns an sgcaptcha challenge to curl and an empty page to WebFetch; text read via search-engine extracts only"
+  },
+  "smith_emery": {
+   "title": "Smith-Emery project page: San Francisco International Airport Roof Truss System",
+   "publisher": "Smith-Emery (inspection/testing)",
+   "url": "https://www.smithemery.com/staging/4272/projects/san-francisco-international-airport-roof-truss-system-san-francisco-california/",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "sfgate2000": {
+   "title": "D. Armstrong, \"SFO terminal ready to take wing\", San Francisco Examiner (SFGate), 2000-01-30",
+   "publisher": "SF Examiner / SFGate",
+   "url": "https://www.sfgate.com/business/article/SFO-terminal-ready-to-take-wing-3077658.php",
+   "read": "full",
+   "cache": "refs/cache/buildings/itb/sfgate_3077658.html",
+   "accessed": "2026-09-26"
+  },
+  "enclos": {
+   "title": "Enclos project page: San Francisco International Airport: International Terminal",
+   "publisher": "Enclos (curtain wall)",
+   "url": "https://enclos.com/project/san-francisco-international-airport-international-terminal/",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "tutor_itb": {
+   "title": "Tutor Perini project page: SFO International Terminal",
+   "publisher": "Tutor Perini",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-international-terminal/",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "tutor_bag": {
+   "title": "Tutor Perini project page: SFO Boarding Area G",
+   "publisher": "Tutor Perini",
+   "url": "https://www.tutorperini.com/projects/aviation/sfo-boarding-area-g/",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "ags_baa": {
+   "title": "AGS project page: SFO Boarding Area A Gate Enhancements",
+   "publisher": "AGS Inc.",
+   "url": "https://www.agsinc.com/projects/sfo-gate-enhancement",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "airportworld25": {
+   "title": "SFO's International Terminal celebrates 25th anniversary",
+   "publisher": "Airport World",
+   "url": "https://airport-world.com/sfos-international-terminal-celebrates-25th-anniversary/",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "webcor_roof": {
+   "title": "Webcor: SFO International Terminal Building (ITB) Roof Upgrade Project",
+   "publisher": "Webcor",
+   "url": "https://www.webcor.com/projects/sfo-international-terminal-building-itb-roof-upgrade-project",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "webcor_ceremony": {
+   "title": "Webcor: Ceremony Marks Start of Upgrade to Roof of 24-Year-Old Terminal Roof (2024-06-27)",
+   "publisher": "Webcor",
+   "url": "https://www.webcor.com/webcor-articles/ceremony-marks-start-of-upgrade-to-roof-of-24-year-old-terminal-roof",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "ftf_roof": {
+   "title": "FTF Engineering: SFO Dianne Feinstein International Terminal - Building Envelope Upgrade & Solar Panel Installation",
+   "publisher": "FTF Engineering",
+   "url": "https://ftfengineering.com/portfolio_page/international-terminal-building-roof-upgrade-sfo/",
+   "read": "full",
+   "accessed": "2026-09-26"
+  },
+  "ai_roof": {
+   "title": "\"SFO to upgrade terminal roof\", Airports International",
+   "publisher": "Airports International",
+   "url": "https://www.airportsinternational.com/article/sfo-upgrade-terminal-roof",
+   "read": "snippet",
+   "note": "HTTP 403 to WebFetch; read via search extracts"
+  },
+  "radp_nop": {
+   "title": "SF Planning, Case 2017-007468ENV, SFO Recommended Airport Development Plan - Notice of Preparation of an EIR (May 2019)",
+   "publisher": "San Francisco Planning Department",
+   "url": "https://sfmea.sfplanning.org/2017-007468ENV_SFO_RADP_NOP.pdf",
+   "read": "full",
+   "cache": "refs/cache/buildings/itb/radp_nop_2017-007468ENV.pdf",
+   "accessed": "2026-09-26"
+  },
+  "wiki_sfo": {
+   "title": "Wikipedia: San Francisco International Airport (International Terminal section)",
+   "publisher": "Wikipedia",
+   "url": "https://en.wikipedia.org/wiki/San_Francisco_International_Airport",
+   "read": "secondary",
+   "cache": "refs/cache/buildings/itb/wiki_sfo.html",
+   "accessed": "2026-09-26",
+   "note": "cites \"Fact Sheet - International Terminal\", flySFO.com, 2007-01-30 (archived PDF http://www.flysfo.com/web/export/sites/default/download/about/news/pressres/fact-sheet/pdf/International_Terminal_Fact_Sheet.pdf); the fact sheet itself could not be opened (web.archive.org refused by the proxy)"
+  },
+  "dof": {
+   "title": "FAA Digital Obstacle File, DAILY_DOF_CSV.ZIP (DOF.CSV dated 2026-09-18)",
+   "publisher": "FAA Aeronautical Information Services",
+   "url": "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP",
+   "read": "full",
+   "cache": "refs/cache/lighting/DAILY_DOF_CSV.ZIP; extract refs/cache/buildings/itb/dof_itb_area.json",
+   "note": "accuracy code 1A = +-20 ft horizontal / +-3 ft vertical (DOF_README); horizontal datum WGS 84; heights AGL and AMSL in ft"
+  },
+  "naip": {
+   "title": "USDA NAIP 2024 (flown 2024-05-20), world raster refs/cache/naip/naip_2024_world_0.5m (docs/research/imagery.md)",
+   "publisher": "USDA FPAC-BC GEO",
+   "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+   "read": "full",
+   "licence": "US public domain (credit requested)",
+   "note": "measured by tools/buildings/itb_naip_measure.py -> itb_naip_measurements.json; relief displacement calibrated on DOF poles"
+  },
+  "sfom_data": {
+   "title": "SFO Museum architecture data (footprints) as data/sfo_airport.json / data/sfo_buildings.json",
+   "publisher": "SFO Museum",
+   "licence": "CDLA-Permissive-1.0",
+   "url": "https://github.com/sfomuseum-data/sfomuseum-data-architecture",
+   "read": "full"
+  },
+  "photo_dimi": {
+   "title": "Wikimedia Commons File:San_Francisco_International.jpg (DimiCalifornia, 2005-07)",
+   "licence": "Public domain",
+   "url": "https://commons.wikimedia.org/wiki/File:San_Francisco_International.jpg",
+   "read": "full",
+   "cache": "refs/cache/buildings/itb/photos/1975704.jpg",
+   "note": "measured by tools/buildings/itb_photo_skyline.py -> itb_photo_skyline.json (qualitative + pair means)"
+  },
+  "osm": {
+   "title": "OpenStreetMap (Overpass extract 2026-09-24, refs/cache/osm/overpass_ksfo_latest.json)",
+   "licence": "ODbL-1.0",
+   "url": "https://www.openstreetmap.org/",
+   "read": "full",
+   "note": "cross-reference only (contributor values without cited sources); never used as a source value"
+  }
+ },
+ "items": [
+  {
+   "id": "itb.name",
+   "group": "general",
+   "name": "Official name",
+   "value": "Senator Dianne Feinstein International Terminal (renamed by Airport Commission resolution of 2024-01-16); departures main hall named after Mayor Ed Lee",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "airportworld25",
+    "wiki_sfo"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "itb.opened",
+   "group": "general",
+   "name": "Opened (ribbon cutting)",
+   "value": "2000-12-10",
+   "unit": "date",
+   "tag": "pub",
+   "sources": [
+    "airportworld25"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "ground broken October 1995 (airportworld25; \"late 1995\" sfgate2000); SOM: design finish 1995, completion 2000"
+  },
+  {
+   "id": "itb.architect",
+   "group": "general",
+   "name": "Architect",
+   "value": "Skidmore, Owings & Merrill (design partner Craig W. Hartman) in joint venture with Del Campo & Maru and Michael Willis & Associates",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "som",
+    "sfgate2000"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "itb.structure_engineer",
+   "group": "general",
+   "name": "Structural engineer",
+   "value": "SOM (\"SOM engineered the building ... base isolation\")",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "som"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "itb.contractor",
+   "group": "general",
+   "name": "General contractor",
+   "value": "Tutor-Saliba / Perini / Buckley joint venture",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "som",
+    "tutor_itb"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "itb.steel",
+   "group": "general",
+   "name": "Roof steel fabricator / erector",
+   "value": "The Herrick Corporation (trusses assembled at Mare Island, shipped by barge in ~35 pieces)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "msc2000"
+   ],
+   "confidence": "medium",
+   "status": "snippet-only",
+   "note": "from the article abstract / author line only (PDF not readable)"
+  },
+  {
+   "id": "itb.gross_area",
+   "group": "general",
+   "name": "Gross floor area, main terminal",
+   "value": 1800000,
+   "unit": "sq ft",
+   "tag": "pub",
+   "sources": [
+    "som",
+    "tutor_itb"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "2.5 million sq ft including the two concourses (sfgate2000; webcor_roof)"
+  },
+  {
+   "id": "itb.site_area",
+   "group": "general",
+   "name": "Site area",
+   "value": 1000000,
+   "unit": "sq ft",
+   "tag": "pub",
+   "sources": [
+    "som"
+   ],
+   "confidence": "medium",
+   "status": "verified"
+  },
+  {
+   "id": "itb.stories",
+   "group": "general",
+   "name": "Stories",
+   "value": 5,
+   "unit": "count",
+   "tag": "pub",
+   "sources": [
+    "som",
+    "sfgate2000"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "itb.levels",
+   "group": "general",
+   "name": "Level use",
+   "value": "L1 services and baggage; L2 arrivals; L3 departures, ticketing, security; L4-L5 airline offices and lounges",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "sfgate2000",
+    "radp_nop"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "RADP NOP: \"levels two (arrivals) and three (departures) of the ITB\""
+  },
+  {
+   "id": "itb.height_som",
+   "group": "general",
+   "name": "Building height (as published by the architect)",
+   "value": 144,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "som",
+    "enclos"
+   ],
+   "confidence": "medium",
+   "status": "conflict",
+   "value_m": 43.89,
+   "note": "datum not stated (ground? lowest floor? MSL?). The FAA DOF roof tops are 131/132 ft AGL = 139/140 ft AMSL (ground ~8 ft AMSL); 144 ft matches neither exactly - do NOT use as roof height above ground",
+   "conflicting_values": [
+    {
+     "value": 131.5,
+     "unit": "ft AGL",
+     "src": "dof",
+     "note": "mean of 06-035315 (131) and 06-035316 (132)"
+    },
+    {
+     "value": 100,
+     "unit": "ft",
+     "src": "sfgate2000",
+     "note": "\"the soaring, 100-foot-high terminal roof\" (height above the hall floor, rounded)"
+    }
+   ]
+  },
+  {
+   "id": "itb.isolators",
+   "group": "general",
+   "name": "Seismic base isolation",
+   "value": 267,
+   "unit": "friction pendulum isolators",
+   "tag": "pub",
+   "sources": [
+    "enclos"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "\"the largest building in the world constructed on base isolators\" (airportworld25)"
+  },
+  {
+   "id": "itb.gates_2000",
+   "group": "general",
+   "name": "Gates at opening",
+   "value": 26,
+   "unit": "count",
+   "tag": "pub",
+   "sources": [
+    "seaonc"
+   ],
+   "confidence": "low",
+   "status": "unverified",
+   "note": "SEAONC text via search extract only"
+  },
+  {
+   "id": "itb.cladding",
+   "group": "facade",
+   "name": "Metal and glass cladding, total",
+   "value": 382000,
+   "unit": "sq ft",
+   "tag": "pub",
+   "sources": [
+    "tutor_itb"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "roof.form",
+   "group": "roof",
+   "name": "Roof structure",
+   "value": "five sets of steel balanced double-cantilever trusses with a central trussed span, linked into one continuous wing-like form; double-cantilevered trusses linked by bowstring trusses; three-chord \"football\" trusses",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "seaonc",
+    "msc2000",
+    "som",
+    "smith_emery"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "roof.length_pub",
+   "group": "roof",
+   "name": "Roof overall length (published)",
+   "value": 860,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "msc2000",
+    "seaonc",
+    "smith_emery"
+   ],
+   "confidence": "medium",
+   "status": "conflict",
+   "value_m": 262.13,
+   "note": "NAIP measures 252.7 m (829 ft) tip to tip (roof.length_obs) - 9 m / 31 ft shorter. Unresolved: possibly measured along the curved top chord or to steel beyond the visible fascia. Concept sketch: 866 ft",
+   "conflicting_values": [
+    {
+     "value": 866,
+     "unit": "ft",
+     "src": "som_sketch",
+     "note": "concept \"Main roof: 866' x 260'\""
+    },
+    {
+     "value": 252.7,
+     "unit": "m",
+     "src": "naip"
+    }
+   ]
+  },
+  {
+   "id": "roof.span_centre",
+   "group": "roof",
+   "name": "Centre span (between the inner column lines)",
+   "value": 380,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "seaonc",
+    "msc2000",
+    "sfgate2000"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": 115.82
+  },
+  {
+   "id": "roof.cantilever_end",
+   "group": "roof",
+   "name": "End cantilever (outer column line to roof tip)",
+   "value": 160,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "seaonc",
+    "msc2000"
+   ],
+   "confidence": "high",
+   "status": "snippet-only",
+   "value_m": 48.77
+  },
+  {
+   "id": "roof.truss_len",
+   "group": "roof",
+   "name": "Double-cantilever truss length",
+   "value": "up to 320",
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "msc2000"
+   ],
+   "confidence": "medium",
+   "status": "snippet-only"
+  },
+  {
+   "id": "roof.centre_section",
+   "group": "roof",
+   "name": "Central (suspended) section length",
+   "value": 180,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "msc2000"
+   ],
+   "confidence": "medium",
+   "status": "snippet-only",
+   "value_m": 54.86,
+   "note": "jacked up ~60 ft into place in two phases"
+  },
+  {
+   "id": "roof.truss_depth",
+   "group": "roof",
+   "name": "Truss depth, maximum (over the supports)",
+   "value": 29,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "seaonc",
+    "msc2000"
+   ],
+   "confidence": "high",
+   "status": "snippet-only",
+   "value_m": 8.84
+  },
+  {
+   "id": "roof.columns",
+   "group": "roof",
+   "name": "Roof columns",
+   "value": 20,
+   "unit": "count",
+   "tag": "pub",
+   "sources": [
+    "seaonc"
+   ],
+   "confidence": "medium",
+   "status": "snippet-only",
+   "note": "\"supported on 20 cantilevered columns rising from the third floor departures level\" (search extract of SEAONC)"
+  },
+  {
+   "id": "roof.col_grid",
+   "group": "roof",
+   "name": "Column grid (concept)",
+   "value": "40 ft E/W grid by 80 ft N/S column bays",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "som_sketch"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "truss-line spacing confirmed by NAIP (roof.truss_spacing_obs = 12.12 m)"
+  },
+  {
+   "id": "roof.height_above_floor",
+   "group": "roof",
+   "name": "Roof height above the ticketing hall floor",
+   "value": "60 to 90",
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "smith_emery",
+    "msc2000"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "\"soaring 60 to 90' above the floor of a cavernous ticketing hall\" - which surface (top / underside) is not stated"
+  },
+  {
+   "id": "hall.size_snippet",
+   "group": "hall",
+   "name": "Glass-enclosed great hall, length x width x height",
+   "value": "705 x 210 x up to 83",
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "seaonc"
+   ],
+   "confidence": "low",
+   "status": "unverified",
+   "note": "search engines attribute this sentence to the SEAONC page, which could not be opened. 83 ft is an INTERIOR hall height, not the roof height above ground (the current model js/live/terminals.js uses 83 ft as roof height above ground)"
+  },
+  {
+   "id": "hall.lobby_len",
+   "group": "hall",
+   "name": "Ticket lobby length",
+   "value": 700,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "sfgate2000"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": 213.36
+  },
+  {
+   "id": "hall.bamboo",
+   "group": "hall",
+   "name": "Bamboo grove height",
+   "value": 55,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "sfgate2000"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": 16.76,
+   "note": "\"stretches 55 feet high between Levels 2 and 3\" (interior)"
+  },
+  {
+   "id": "roof.rhythm_inf",
+   "group": "roof",
+   "name": "Structural rhythm along the axis (tip -> tip)",
+   "value": "20 ft roof overhang | 140 ft outer truss cantilever | outer column | 80 ft | inner column | 100 ft inner cantilever | 180 ft centre section | 100 | col | 80 | col | 140 | 20",
+   "unit": "ft",
+   "tag": "inf",
+   "sources": [
+    "seaonc",
+    "msc2000",
+    "som_sketch"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "method": "the only split that satisfies all published numbers at once: 160 (end cantilever) + 80 (column bay) + 380 (centre span) + 80 + 160 = 860; truss 140 + 80 + 100 = 320; centre section 380 - 2 x 100 = 180",
+   "note": "the 20 ft overhang beyond the truss ends is the inferred closure; if the as-built roof is 829 ft (NAIP) the cantilevers or the overhang are ~15 ft shorter each side"
+  },
+  {
+   "id": "roof.col_positions_inf",
+   "group": "roof",
+   "name": "Column lines from the roof centre along the axis",
+   "value": {
+    "inner": [
+     -190,
+     190
+    ],
+    "outer": [
+     -270,
+     270
+    ]
+   },
+   "unit": "ft",
+   "tag": "inf",
+   "sources": [
+    "seaonc",
+    "msc2000",
+    "som_sketch"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "= +-57.9 m and +-82.3 m. 20 columns = 5 truss lines x 2 double-cantilever trusses x 2 columns (inf; the SOM perspective section shows a column under each truss line)"
+  },
+  {
+   "id": "roof.axis_obs",
+   "group": "roof",
+   "name": "Roof axis heading (true north, towards Boarding Area A)",
+   "value": 162.85,
+   "unit": "deg",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "method": "glazed tip edges and the lens row are perpendicular to the axis; the straight west facade base line confirms it (sd 0.61 m over 182 rows)",
+   "note": "2.9 deg clockwise from the principal axis of the SFO Museum hall part used by the current model"
+  },
+  {
+   "id": "roof.centre_obs",
+   "group": "roof",
+   "name": "Roof centre (relief-corrected, world x/z)",
+   "value": [
+    -1245.03,
+    364.7
+   ],
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "dof"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "method": "NAIP roof features moved back by k*h (k = 0.418 at the ITB from DOF poles, h from the eave profile)",
+   "note": "+-1.5 m"
+  },
+  {
+   "id": "roof.corners_obs",
+   "group": "roof",
+   "name": "Main roof outline corners (relief-corrected, world x/z)",
+   "value": {
+    "NW": [
+     -1313.87,
+     252.48
+    ],
+    "NE": [
+     -1251.4,
+     233.2
+    ],
+    "SE": [
+     -1176.2,
+     476.93
+    ],
+    "SW": [
+     -1238.66,
+     496.2
+    ]
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "dof"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "rectangle at the eaves; +-1.5 m. Check: DOF roof tops 06-035315/06-035316 fall 1.1 / 0.8 m inside the corrected west eave line"
+  },
+  {
+   "id": "roof.length_obs",
+   "group": "roof",
+   "name": "Roof length tip to tip (fascia to fascia)",
+   "value": 252.68,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "medium",
+   "status": "conflict",
+   "method": "NAIP 0.25 m resampled profile along the axis; imaged 255.25 m, central-projection magnification of an elevated plane removed (H-h = 3633 m from the k(x) slope)",
+   "note": "+-1.5 m; conflicts with the published 860 ft (262.1 m)",
+   "conflicting_values": [
+    {
+     "value": 860,
+     "unit": "ft",
+     "src": "msc2000"
+    }
+   ]
+  },
+  {
+   "id": "roof.width_obs",
+   "group": "roof",
+   "name": "Roof width eave to eave",
+   "value": 65.37,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "+-1.0 m (214 ft); concept sketch 260 ft; published enclosed hall width 210 ft (unverified)",
+   "conflicting_values": [
+    {
+     "value": 260,
+     "unit": "ft",
+     "src": "som_sketch",
+     "note": "concept"
+    }
+   ]
+  },
+  {
+   "id": "roof.truss_lines_obs",
+   "group": "roof",
+   "name": "Truss / skylight lines",
+   "value": 5,
+   "unit": "count",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "som_sketch",
+    "seaonc"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "5 straight glazed lines along the roof (\"roof plane is opened with glass along major truss lines\", SOM sketch)"
+  },
+  {
+   "id": "roof.truss_spacing_obs",
+   "group": "roof",
+   "name": "Truss-line spacing",
+   "value": 12.123,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "method": "comb fit of 5 equally spaced lines (north half, 39 rows) and the lens-skylight centres; both 12.25 m imaged",
+   "note": "= 39.8 ft (published grid 40 ft); outer lines 48.5 m apart; outer line to eave ~8.4 m each side"
+  },
+  {
+   "id": "roof.lenses_obs",
+   "group": "roof",
+   "name": "Centre-section skylights",
+   "value": {
+    "count": 5,
+    "length_m": 48.4,
+    "max_width_m": 9.6,
+    "centred_on": "the 5 truss lines"
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "lens-shaped (pointed ends) glazed skylights, one per truss line, occupying the central section (published 180 ft = 54.9 m); interior photos show them as glazed basket trusses; +-1 m"
+  },
+  {
+   "id": "roof.glazed_tips_obs",
+   "group": "roof",
+   "name": "Glazed canopy bands at the two roof tips (depth along the axis)",
+   "value": {
+    "north": 18.75,
+    "south": 15.75
+   },
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "bluish glazed grid across the full roof width at both cantilever tips; N/S difference (3 m) not explained; +-1 m"
+  },
+  {
+   "id": "roof.dof_06-035315",
+   "group": "roof",
+   "name": "FAA DOF roof top 06-035315",
+   "value": 131,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "dof"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": 39.93,
+   "note": "AGL 131 ft / AMSL 139 ft, accuracy 1A, verified, JDATE 2013289, 37 36 53.77N 122 23 22.86W -> world (-1258.1, 429.4); lies at the west eave over the column pairs (u = 54.68 m)"
+  },
+  {
+   "id": "roof.dof_06-035316",
+   "group": "roof",
+   "name": "FAA DOF roof top 06-035316",
+   "value": 132,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "dof"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": 40.23,
+   "note": "AGL 132 ft / AMSL 140 ft, accuracy 1A, verified, JDATE 2013289, 37 36 57.35N 122 23 24.26W -> world (-1292.4, 319.1); lies at the west eave over the column pairs (u = -60.86 m)"
+  },
+  {
+   "id": "roof.ground_amsl",
+   "group": "site",
+   "name": "Ground elevation at the ITB (from DOF AMSL - AGL)",
+   "value": 8,
+   "unit": "ft",
+   "tag": "inf",
+   "sources": [
+    "dof"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "value_m": 2.44,
+   "note": "139-131 = 140-132 = 8 ft AMSL (DOF rounding +-1 ft); SFO field elevation 13 ft"
+  },
+  {
+   "id": "roof.profile",
+   "group": "roof",
+   "name": "Wing-roof height profile at the west eave (AGL), by distance |u| from the roof centre",
+   "value": {
+    "hump (|u| 60-75 m, over the column pairs)": {
+     "h": 40.08,
+     "tag": "pub",
+     "src": "dof"
+    },
+    "notch (|u| 25-31 m, where the wings meet the centre section)": {
+     "h": 35.7,
+     "tag": "obs",
+     "src": [
+      "naip",
+      "photo_dimi"
+     ],
+     "naip_drop": 3.83,
+     "photo_drop": 4.91
+    },
+    "centre crown (u ~ 0, glazed centre section top)": {
+     "h": 40.1,
+     "tag": "obs",
+     "src": [
+      "photo_dimi"
+     ],
+     "note": "photo only (NAIP cannot see it through the lens glass); +-2 m"
+    },
+    "|u| = 100 m": {
+     "h": 36.4,
+     "tag": "obs",
+     "src": "naip"
+    },
+    "tip (|u| ~ 126 m)": {
+     "h": 34.9,
+     "tag": "obs",
+     "src": [
+      "naip",
+      "photo_dimi"
+     ],
+     "naip_drop_at_119": 5.68,
+     "photo_drop": 4.62
+    }
+   },
+   "unit": "m AGL",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "photo_dimi",
+    "dof"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "method": "NAIP: the imaged west eave wanders east by 0.955*k*h relative to the straight facade-base line (k = 0.418); even-polynomial fit, RMS 0.20 m in plan; anchored at the peak to the DOF tops. Photo: public-domain frontal photograph, sky/roof silhouette, north/south pair means (perspective not modelled)",
+   "note": "the humps are highest at |u| 67 m, between the inferred inner (57.9 m) and outer (82.3 m) column lines; +-1.5 m below the anchor. The DOF value may belong to the skylight ridges rather than the eave (then all eave values drop by up to ~1-2 m) [unverified]",
+   "full_curve": [
+    {
+     "abs_u": 23.0,
+     "h_agl_m": 35.79
+    },
+    {
+     "abs_u": 27.0,
+     "h_agl_m": 36.25
+    },
+    {
+     "abs_u": 31.0,
+     "h_agl_m": 36.75
+    },
+    {
+     "abs_u": 35.0,
+     "h_agl_m": 37.26
+    },
+    {
+     "abs_u": 39.0,
+     "h_agl_m": 37.78
+    },
+    {
+     "abs_u": 43.0,
+     "h_agl_m": 38.29
+    },
+    {
+     "abs_u": 47.0,
+     "h_agl_m": 38.77
+    },
+    {
+     "abs_u": 51.0,
+     "h_agl_m": 39.19
+    },
+    {
+     "abs_u": 55.0,
+     "h_agl_m": 39.55
+    },
+    {
+     "abs_u": 59.0,
+     "h_agl_m": 39.83
+    },
+    {
+     "abs_u": 63.0,
+     "h_agl_m": 40.01
+    },
+    {
+     "abs_u": 67.0,
+     "h_agl_m": 40.08
+    },
+    {
+     "abs_u": 71.0,
+     "h_agl_m": 40.03
+    },
+    {
+     "abs_u": 75.0,
+     "h_agl_m": 39.86
+    },
+    {
+     "abs_u": 79.0,
+     "h_agl_m": 39.56
+    },
+    {
+     "abs_u": 83.0,
+     "h_agl_m": 39.15
+    },
+    {
+     "abs_u": 87.0,
+     "h_agl_m": 38.62
+    },
+    {
+     "abs_u": 91.0,
+     "h_agl_m": 38.0
+    },
+    {
+     "abs_u": 95.0,
+     "h_agl_m": 37.31
+    },
+    {
+     "abs_u": 99.0,
+     "h_agl_m": 36.58
+    },
+    {
+     "abs_u": 103.0,
+     "h_agl_m": 35.87
+    },
+    {
+     "abs_u": 107.0,
+     "h_agl_m": 35.22
+    },
+    {
+     "abs_u": 111.0,
+     "h_agl_m": 34.7
+    },
+    {
+     "abs_u": 115.0,
+     "h_agl_m": 34.4
+    },
+    {
+     "abs_u": 119.0,
+     "h_agl_m": 34.4
+    },
+    {
+     "abs_u": 123.0,
+     "h_agl_m": 34.83
+    }
+   ]
+  },
+  {
+   "id": "level3.floor",
+   "group": "hall",
+   "name": "Departures level (level 3) floor above ground",
+   "value": 11.5,
+   "unit": "m",
+   "tag": "inf",
+   "sources": [
+    "dof",
+    "smith_emery",
+    "sfgate2000"
+   ],
+   "confidence": "low",
+   "status": "unverified",
+   "method": "DOF roof top (40.1 m) minus \"90 ft\" (smith_emery, upper value) = 12.7 m, minus \"100 ft\" (sfgate2000) = 9.6 m; midpoint",
+   "note": "+-1.5 m; no drawing or survey found - see open questions"
+  },
+  {
+   "id": "facade.west",
+   "group": "facade",
+   "name": "West (landside, front) wall",
+   "value": "full-height glass wall, glass with three layers of ceramic frit (\"like a scrim\"); concept sketch: bands of translucent patterned frit, clear glass and translucent glass / metal brise-soleil",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "sfgate2000",
+    "som_sketch"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "photos: lower band clear glazing at the curb with entrance vestibules and a canopy; upper wall light fritted panels; pairs of white columns at the column lines; roof trusses exposed above the wall"
+  },
+  {
+   "id": "facade.end_walls",
+   "group": "facade",
+   "name": "North and south end walls",
+   "value": "custom unitized curtain walls spanning over 60 ft (vertical exterior end walls under the roof)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "enclos"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "facade.back_wall",
+   "group": "facade",
+   "name": "Hall back (east) wall, interior",
+   "value": "cherry-wood clad high wall",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "sfgate2000"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "roof.upgrade_2024",
+   "group": "roof",
+   "name": "Roof and envelope upgrade 2024-2026",
+   "value": "new roof membrane and waterproofing, ~1,400 kW rooftop PV, expansion joints, window-washing (facade access) system, curtain-wall mullion caps, exposed-steel corrosion repair; west facade scaffolded in four phases; ceremony 2024-06-27, completion early/mid 2026",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "webcor_roof",
+    "webcor_ceremony",
+    "ftf_roof",
+    "ai_roof",
+    "airportworld25"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "NAIP 2024 (2024-05-20) predates the works: the 2026 roof carries PV arrays whose layout is not documented in any open source found (open question)"
+  },
+  {
+   "id": "naip.k_model",
+   "group": "method",
+   "name": "NAIP 2024 relief displacement factor near the ITB",
+   "value": {
+    "model": "k(x) = a + b*x (x = world east of the object foot, m)",
+    "a": 0.75531,
+    "b": 0.0002753,
+    "scatter_sigma": 0.0022,
+    "H_minus_h_est_m": 3633,
+    "nadir_x_est": -2744,
+    "check_tower": {
+     "x": -741.06,
+     "k_pred": 0.551,
+     "imaged_cab_shift_m": [
+      38.0,
+      40.0
+     ],
+     "implied_height_m": [
+      68.9,
+      72.6
+     ],
+     "dof_top_agl_m": 74.7,
+     "src": "docs/research/imagery.md s.6 (tower_lean.py)"
+    }
+   },
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "dof"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "5 DOF poles 153-157 ft AGL; scatter 0.0022; k at ITB roof 0.418; predicts the tower cab lean (38-40 m) for 69-73 m height vs DOF top 74.7 m (245 ft incl. appurtenances)"
+  },
+  {
+   "id": "naip.sun",
+   "group": "method",
+   "name": "Sun at the NAIP 2024 exposure near the ITB",
+   "value": {
+    "oas": "06-034826",
+    "agl_ft": 108,
+    "shadow_len_m": 10.37,
+    "shadow_az_deg": 6.6,
+    "sun_az_deg": 186.6,
+    "sun_elev_deg": 72.5
+   },
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "dof"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "shadow of DOF pole 06-034826 (108 ft): azimuth ~187 deg, elevation ~72.4 deg (the local-noon maximum for 2024-05-20) - for later shadow checks"
+  },
+  {
+   "id": "ba_a.architect",
+   "group": "boarding_area_a",
+   "name": "Architect / builder",
+   "value": "Gerson/Overstreet Architects; built by Hensel Phelps Construction",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo"
+   ],
+   "confidence": "medium",
+   "status": "secondary-only",
+   "note": "secondary (Wikipedia citing the 2007 flySFO fact sheet)"
+  },
+  {
+   "id": "ba_a.gates",
+   "group": "boarding_area_a",
+   "name": "Gates",
+   "value": "A1-A15 (15)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo",
+    "ags_baa"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "note": "AGS: 23 passenger boarding bridges at A1-A15 reconfigured (completed 2020); A6 retrofitted for a three-bridge A380 operation (AGS) - Wikipedia names A11 for three jetways (conflict, gate-level detail)"
+  },
+  {
+   "id": "ba_a.footprint",
+   "group": "boarding_area_a",
+   "name": "Footprint",
+   "value": "SFO Museum polygon (data/sfo_airport.json \"Boarding Area A\"): 339 m along the pier axis incl. the connector; body width 38.7-38.8 m",
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "sfom_data"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "NAIP imaged roof (fascia to fascia) 36.5 m at three stations (by eye, +-1 m); the SFO Museum edge includes the oblique facade band"
+  },
+  {
+   "id": "ba_a.height_roof",
+   "group": "boarding_area_a",
+   "name": "Main pier roof height above apron",
+   "value": 17.0,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip",
+    "sfom_data"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "method": "(a) NAIP west-side dark band (oblique WNW facade + shadow) 8.5-9 m wide = (0.873 k + 0.122) h with k = 0.42 -> 17.4-18.4 m (minus any roof overhang); (b) NAIP roof centre vs SFO Museum footprint centre 5.85 m = 0.873 k h -> 15.9 m",
+   "note": "+-2.5 m. Consistent with a three-level pier (apron + two passenger levels) [inf]. OSM says 25 m (unsourced)",
+   "conflicting_values": [
+    {
+     "value": 25,
+     "unit": "m",
+     "src": "osm",
+     "note": "unsourced"
+    }
+   ]
+  },
+  {
+   "id": "ba_a.pods",
+   "group": "boarding_area_a",
+   "name": "Raised roof pods",
+   "value": {
+    "count": 3,
+    "plan": "D-shaped, curved west edge",
+    "lengths_m": [
+     70,
+     55,
+     55
+    ]
+   },
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "note": "by eye on NAIP (+-3 m); the first pod (nearest the ITB) top is FAA DOF 06-035352 = 85 ft AGL (25.9 m, 94 ft AMSL); its oblique rim band (2.5-3 m) gives ~7.5 m above the main roof, consistent with 17 + 7.5 = 24.5-26 m"
+  },
+  {
+   "id": "ba_a.dof_pod",
+   "group": "boarding_area_a",
+   "name": "FAA DOF 06-035352",
+   "value": 85,
+   "unit": "ft",
+   "tag": "pub",
+   "sources": [
+    "dof"
+   ],
+   "confidence": "high",
+   "status": "verified",
+   "value_m": 25.91,
+   "note": "BLDG 85 ft AGL / 94 ft AMSL, 1A, 37 36 49.70N 122 23 20.30W -> world (-1195.3, 555.0): west side of Boarding Area A pod 1 (pier frame u ~ -125 m)"
+  },
+  {
+   "id": "ba_g.architect",
+   "group": "boarding_area_g",
+   "name": "Architect / builder",
+   "value": "Robin Chiang & Company (Tutor Perini page); Wikipedia: Hellmuth, Obata + Kassabaum with Robin Chiang & Company and Robert B. Wong Architects; built by Tutor Perini; completed 1999; contract $95 M",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "tutor_bag",
+    "wiki_sfo"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "ba_g.area",
+   "group": "boarding_area_g",
+   "name": "Gross area",
+   "value": 380000,
+   "unit": "sq ft",
+   "tag": "pub",
+   "sources": [
+    "tutor_bag"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "ba_g.stories",
+   "group": "boarding_area_g",
+   "name": "Stories / levels",
+   "value": "three-story: apron level (airline operations, storage, MEP); level 2 international arrivals, sterile corridor, clubs, in-transit lounge with gate-room access; level 3 departures concourse with retail",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "tutor_bag"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "ba_g.gaterooms",
+   "group": "boarding_area_g",
+   "name": "Gate rooms",
+   "value": "six double-gated, two-level common-use gate rooms for twelve 747-400s",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "tutor_bag"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "ba_g.gates",
+   "group": "boarding_area_g",
+   "name": "Gates",
+   "value": "G1-G14 (14)",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "wiki_sfo"
+   ],
+   "confidence": "medium",
+   "status": "secondary-only"
+  },
+  {
+   "id": "ba_g.facade",
+   "group": "boarding_area_g",
+   "name": "Exterior",
+   "value": "metallic-finish composite aluminium panels and a tinted energy-efficient glazed curtain wall",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "tutor_bag"
+   ],
+   "confidence": "high",
+   "status": "verified"
+  },
+  {
+   "id": "ba_g.footprint",
+   "group": "boarding_area_g",
+   "name": "Footprint",
+   "value": "SFO Museum polygon (data/sfo_airport.json \"Boarding Area G\"): body width 38.3-38.4 m, 47 m at the middle pod",
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "sfom_data"
+   ],
+   "confidence": "medium",
+   "status": "verified",
+   "note": "NAIP imaged roof width ~33.5 m by eye (edges ambiguous, low); the SFO Museum G outline is offset ~3-6 m NNE of the relief-corrected NAIP roof (imagery.md s.6 lists +4 m) - unresolved"
+  },
+  {
+   "id": "ba_g.height_roof",
+   "group": "boarding_area_g",
+   "name": "Main pier roof height above apron",
+   "value": 17.0,
+   "unit": "m",
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "method": "NAIP: NNE shadow band + SSW oblique facade band = 4.5-5.5 m = 0.297 h (sun elevation 72.4 deg, azimuth 187 deg; k = 0.36)",
+   "note": "+-3 m; three-story (pub) supports ~17-20 m [inf]"
+  },
+  {
+   "id": "ba_g.pods",
+   "group": "boarding_area_g",
+   "name": "Raised roof pods",
+   "value": {
+    "count": 3,
+    "plan": "lens / elliptical",
+    "lengths_m": [
+     60,
+     55,
+     62
+    ]
+   },
+   "unit": null,
+   "tag": "obs",
+   "sources": [
+    "naip"
+   ],
+   "confidence": "low",
+   "status": "verified",
+   "note": "by eye on NAIP (+-3 m); heights not measured - no DOF entry on Boarding Area G"
+  },
+  {
+   "id": "radp.itb",
+   "group": "planned",
+   "name": "RADP projects touching the ITB (2019 NOP)",
+   "value": "Main Hall western expansion of levels 2-3 (~140,000 sq ft, 70,000 per level); Boarding Areas A (+10,800 sq ft) and G (+12,400 sq ft) \"bump-outs\"; ITB curbside expansion; Boarding Area H connected through the ITB",
+   "unit": null,
+   "tag": "pub",
+   "sources": [
+    "radp_nop"
+   ],
+   "confidence": "high",
+   "status": "unverified",
+   "note": "planning-stage only; whether any was built by 2026 is not verified"
+  }
+ ],
+ "photos": [
+  {
+   "file": "refs/cache/buildings/itb/photos/2690474.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3AInternational_Terminal_of_San_Francisco_International_Airport.jpg",
+   "title": "File:International Terminal of San Francisco International Airport.jpg",
+   "licence": "CC BY 3.0",
+   "use": "west elevation panorama from the garage/AirTrain level: wing humps, notches, glazed centre crown, column pairs, fritted wall",
+   "author": "Constantine Kulikovsky",
+   "date": "2007-08-04",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/54020895.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_INTERNATIONAL_TERMINAL_8-9_-_panoramio.jpg",
+   "title": "File:SFO INTERNATIONAL TERMINAL 8-9 - panoramio.jpg",
+   "licence": "CC BY-SA 3.0",
+   "use": "interior panorama: check-in islands 8/9, cherry-wood back wall, trusses",
+   "author": "Masrur Odinaev",
+   "date": "3 June 2010 (original upload date)",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/61673925.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_IT_%2835656942334%29.jpg",
+   "title": "File:SFO IT (35656942334).jpg",
+   "licence": "CC BY 2.0",
+   "use": "departures curb (west facade) oblique: roof eave overhang, exposed trusses, column pair, canopy",
+   "author": "Elizabeth K. Joseph from San Francisco, United States",
+   "date": "2017-08-10 18:44",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/53232672.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3AKSFO10.jpg",
+   "title": "File:KSFO10.jpg",
+   "licence": "CC BY-SA 4.0",
+   "use": "approach road view of the whole ITB with garages A/G",
+   "author": "Vmzp85",
+   "date": "2014-07-03 16:39:28",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/172433036.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3A2025-08-12_09_20_15_View_of_the_G_gate_side_of_the_International_Terminal_at_San_Francisco_International_Airport_in_San_Mateo_County%2C_California.jpg",
+   "title": "File:2025-08-12 09 20 15 View of the G gate side of the International Terminal at San Francisco International Airport in San Mateo County, California.jpg",
+   "licence": "CC BY-SA 4.0",
+   "use": "interior, main hall looking north: column pairs, three-chord trusses, lens \"basket\" trusses of the centre section, glazed truss lines",
+   "author": "Famartin",
+   "date": "2025-08-12 09:20:15",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/29357785.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_view_2008-3_%285299520824%29.jpg",
+   "title": "File:SFO view 2008-3 (5299520824).jpg",
+   "licence": "CC BY-SA 2.0",
+   "use": "Boarding Area G apron side (2008, pre-2011 gate numbers 92/94): pier facade panels, bridges",
+   "author": "Bill Larkins",
+   "date": "2008-09-19 00:00",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/1975704.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Francisco_International.jpg",
+   "title": "File:San Francisco International.jpg",
+   "licence": "Public domain",
+   "use": "west (landside) elevation from the access road, near-frontal, long lens: roof silhouette measured (itb_photo_skyline.py)",
+   "author": "DimiCalifornia",
+   "date": "2005-07",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/51069944.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Francisco_International_Airport%2C_California_LCCN2013632177.tif",
+   "title": "File:San Francisco International Airport, California LCCN2013632177.tif",
+   "licence": "Public domain",
+   "use": "west elevation from an elevated viewpoint (Highsmith, Library of Congress): departures and arrivals decks, column pairs, roof tips beyond the end walls",
+   "author": "Carol M. Highsmith",
+   "date": "Taken on\u00a08 July 2012, 23:20\u00a0(according t",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/51069959.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Francisco_International_Airport%2C_California_LCCN2013632178.tif",
+   "title": "File:San Francisco International Airport, California LCCN2013632178.tif",
+   "licence": "Public domain",
+   "use": "wider west view incl. a 153-157 ft DOF high-mast pole and the Garage G side (Highsmith)",
+   "author": "Carol M. Highsmith",
+   "date": "Taken on\u00a08 July 2012, 23:24\u00a0(according t",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/54020936.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_International_-_panoramio.jpg",
+   "title": "File:SFO International - panoramio.jpg",
+   "licence": "CC BY-SA 3.0",
+   "use": "interior, departures hall at night",
+   "author": "Masrur Odinaev",
+   "date": "3 June 2010 (original upload date)",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/31878092.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_-_The_new_international_terminal_%285381513749%29.jpg",
+   "title": "File:SFO - The new international terminal (5381513749).jpg",
+   "licence": "CC BY 2.0",
+   "use": "Boarding Area A interior (A6-A8), moving walkway",
+   "author": "Moto \"Club4AG\" Miwa from USA",
+   "date": "2011-01-22 14:47",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/31878106.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_New_International_Terminal_%285382111170%29.jpg",
+   "title": "File:SFO New International Terminal (5382111170).jpg",
+   "licence": "CC BY 2.0",
+   "use": "Boarding Area interior (gate room glazing, tapered columns)",
+   "author": "Moto \"Club4AG\" Miwa from USA",
+   "date": "2011-01-22 14:33",
+   "downloaded": true
+  },
+  {
+   "file": "refs/cache/buildings/itb/photos/10615771.jpg",
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_international_terminal.jpg",
+   "title": "File:SFO international terminal.jpg",
+   "licence": "CC BY 2.0",
+   "use": "night, departures curb: eave overhang, trusses, notch between north wing and centre section",
+   "author": "H\u00e5kan Dahlstr\u00f6m",
+   "date": "2009-11-18 18:19:50",
+   "downloaded": true
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3AInternational_Terminal_of_San_Francisco_International_Airport2.jpg",
+   "title": "File:International Terminal of San Francisco International Airport2.jpg",
+   "licence": "CC BY 3.0",
+   "use": "not reviewed",
+   "author": "Constantine Kulikovsky",
+   "date": "2007-08-04",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFOIntTermexterior_%284450348537%29.jpg",
+   "title": "File:SFOIntTermexterior (4450348537).jpg",
+   "licence": "CC BY-SA 2.0",
+   "use": "not reviewed",
+   "author": "Bill Larkins",
+   "date": "2006-04-29 00:00",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Francisco_International_Airport%2C_California_LCCN2013632596.tif",
+   "title": "File:San Francisco International Airport, California LCCN2013632596.tif",
+   "licence": "Public domain",
+   "use": "not reviewed",
+   "author": "Carol M. Highsmith",
+   "date": "Taken on\u00a08 July 2012, 19:28\u00a0(according t",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Francisco_International_Airport%2C_California_LCCN2013632597.tif",
+   "title": "File:San Francisco International Airport, California LCCN2013632597.tif",
+   "licence": "Public domain",
+   "use": "not reviewed",
+   "author": "Carol M. Highsmith",
+   "date": "Taken on\u00a08 July 2012, 19:28\u00a0(according t",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Francisco_International_Airport%2C_California_LCCN2013632598.tif",
+   "title": "File:San Francisco International Airport, California LCCN2013632598.tif",
+   "licence": "Public domain",
+   "use": "not reviewed",
+   "author": "Carol M. Highsmith",
+   "date": "Taken on\u00a08 July 2012, 19:28\u00a0(according t",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Mateo_County%2C_CA%2C_USA_-_panoramio_%282%29.jpg",
+   "title": "File:San Mateo County, CA, USA - panoramio (2).jpg",
+   "licence": "CC BY-SA 3.0",
+   "use": "not reviewed",
+   "author": "Masrur Odinaev",
+   "date": "3 June 2010 (original upload date)",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Mateo_County%2C_CA%2C_USA_-_panoramio_%283%29.jpg",
+   "title": "File:San Mateo County, CA, USA - panoramio (3).jpg",
+   "licence": "CC BY-SA 3.0",
+   "use": "not reviewed",
+   "author": "Masrur Odinaev",
+   "date": "3 June 2010 (original upload date)",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Mateo_County%2C_CA%2C_USA_-_panoramio_%284%29.jpg",
+   "title": "File:San Mateo County, CA, USA - panoramio (4).jpg",
+   "licence": "CC BY-SA 3.0",
+   "use": "not reviewed",
+   "author": "Masrur Odinaev",
+   "date": "3 June 2010 (original upload date)",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASan_Francisco_International_Airport_International_Terminal.jpg",
+   "title": "File:San Francisco International Airport International Terminal.jpg",
+   "licence": "CC BY-SA 3.0",
+   "use": "not reviewed",
+   "author": "",
+   "date": "",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3AX20130316_135947_%288954066539%29.jpg",
+   "title": "File:X20130316 135947 (8954066539).jpg",
+   "licence": "CC BY 2.0",
+   "use": "not reviewed",
+   "author": "Peter C in Toronto Canada from Toronto, Canada",
+   "date": "2013-03-16 13:59",
+   "downloaded": false
+  },
+  {
+   "file": null,
+   "page": "https://commons.wikimedia.org/wiki/File%3ASFO_rainbow_%2819138413200%29.jpg",
+   "title": "File:SFO rainbow (19138413200).jpg",
+   "licence": "CC BY 2.0",
+   "use": "not reviewed",
+   "author": "Neeta Lind",
+   "date": "2015-06-29 21:08",
+   "downloaded": false
+  }
+ ],
+ "current_model_deviations": [
+  "js/live/terminals.js greatHall(): roof top at 83 ft (25.3 m) above ground; the DOF roof tops are 131/132 ft AGL (40 m) - 83 ft is the (unverified) interior hall height",
+  "greatHall(): roof length 380 + 2x160 + 2x12 ft ~ 237 m and width 210 ft + 18 m ~ 82 m; NAIP: 252.7 m x 65.4 m (published 860 ft long)",
+  "greatHall(): placed on the SFO Museum hall part axis/centre; the roof axis is rotated 2.9 deg (heading 162.85) and its centre is [-1245.03, 364.7]",
+  "greatHall(): 20 columns as 2 x 10 along the long edges; published/inferred: 5 truss lines x 4 columns at +-190 / +-270 ft along the axis",
+  "greatHall(): roof top profile highest over the column lines and lower at centre/tips - matches qualitatively, but the centre crown (glazed lens section) rises again to ~the hump height and the notches between wings and centre are ~5 m lower",
+  "data/sfo_buildings.json: Boarding Areas A/G at 14.6 m; NAIP relief/shadow gives ~17 m (+-2.5/3 m) plus pods to ~26 m (A pod 1: DOF 85 ft)"
+ ],
+ "unverified": [
+  "flySFO \"Fact Sheet - International Terminal\" (2007) could not be retrieved (web.archive.org refused); its dimensions are only known through Wikipedia",
+  "AISC Modern Steel Construction Feb 2000 article and the SEAONC Legacy page: only search-engine extracts could be read (bot challenges)",
+  "the \"705 x 210 x 83 ft\" great-hall figures: attribution to SEAONC not confirmed first-hand",
+  "datum of the architect's \"144 ft\" building height",
+  "departures (level 3) floor elevation above ground (inferred 11.5 +-1.5 m)",
+  "roof tip and centre-crown heights (NAIP + one photo, +-1.5-2 m); whether the DOF tops are the eave or skylight ridges",
+  "as-built roof length: NAIP 252.7 m vs published 860 ft (262.1 m)",
+  "pier roof heights (NAIP relief/shadow only), heights of pods other than A pod 1, G pod heights",
+  "post-2024 roof: PV array layout, new membrane colour",
+  "gate with the three-bridge A380 operation: A6 (AGS) vs A11 (Wikipedia)"
+ ],
+ "open_questions": [
+  "Owner: can we obtain SFO / SF Planning / SOM drawings (sections, elevations) of the ITB? e.g. SFO Bureau of Design and Construction record drawings, or the 1992 SFO Master Plan FEIR (the ITB EIR) - they would fix the level heights and the roof profile",
+  "Which length to model: NAIP 252.7 m (as imaged) or the published 860 ft? Proposed: NAIP for the planform, published rhythm scaled to it, flagged on the drawing",
+  "Roof appearance for 2026: new membrane + 1.4 MW PV - needs post-2024 imagery (NAIP 2026 when released, or owner photos); until then model the 2024 roof",
+  "Pier heights: accept the NAIP-derived ~17 m (with pods ~26 m) or wait for an elevation source?",
+  "Boarding Area G outline: SFO Museum polygon offset vs NAIP - retrace from NAIP ground-level edges?"
+ ]
+}
