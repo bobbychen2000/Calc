@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841 594" width="841mm" height="594mm">
 <title>PC-12 INTERIOR ARRANGEMENT - CHECKS</title>
-<desc>PC12-L6 rev D, -, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
+<desc>PC12-L6 rev E, -, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
 <defs><style><![CDATA[@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');]]></style></defs>
 <rect width="841" height="594" fill="#FCFCFA"/>
 <g fill="none" stroke="#1B2429" stroke-linecap="round" stroke-linejoin="round">
@@ -76,7 +76,7 @@
 <text x="577" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">PC12-L6</text>
 <path stroke-width="0.18" d="M634.39 531l0 14"/>
 <text x="636.39" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">REV</text>
-<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">D</text>
+<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">E</text>
 <path stroke-width="0.18" d="M655.11 531l0 14"/>
 <text x="657.11" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">SCALE</text>
 <text x="657.11" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">-</text>
@@ -90,7 +90,7 @@
 <text x="577" y="555.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="4.4" stroke="none" fill="#1B2429" font-weight="500">Claude - loftkit parametric model</text>
 <path stroke-width="0.18" d="M739.36 545l0 13"/>
 <text x="741.36" y="548.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">DATE</text>
-<text x="741.36" y="555.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.6" stroke="none" fill="#1B2429" font-weight="500">2026-09-26</text>
+<text x="741.36" y="555.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.6" stroke="none" fill="#1B2429" font-weight="500">2026-09-27</text>
 <path stroke-width="0.35" fill="#1B2429" d="M575 558l250 0 0 20-250 0z"/>
 <text x="700" y="569.26" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.6" stroke="none" fill="#FCFCFA" text-anchor="middle" font-weight="700" letter-spacing="0.25">RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION</text>
 <path stroke-width="0.35" fill="#1B2429" d="M28 16l258 0 0 7-258 0z"/>
@@ -159,7 +159,7 @@
 <text x="115.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+38</text>
 <text x="140.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+50</text>
 <text x="165.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+51</text>
-<text x="190.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+84</text>
+<text x="190.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+80</text>
 <text x="193.2" y="79.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">criterion &gt;= 25; 3-D, knees on the hip-to-pedal line</text>
 <text x="193.2" y="83.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">(pedals ±125 [M]), 95th ±126</text>
 <path stroke="none" fill="#EEF1F2" d="M28 85.7l258 0 0 5.8-258 0z"/>
@@ -173,7 +173,7 @@
 <text x="115.8" y="95.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5 / 18</text>
 <text x="140.8" y="95.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">10 / 25</text>
 <text x="165.8" y="95.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">10 / 22</text>
-<text x="190.8" y="95.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">28 / 90</text>
+<text x="190.8" y="95.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">28 / 88</text>
 <text x="193.2" y="95.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">full pitch travel; 90 = no contact</text>
 <path stroke="none" fill="#EEF1F2" d="M28 97.3l258 0 0 10.3-258 0z"/>
 <text x="29.2" y="101.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">FULL RUDDER ±80: up-knee top</text>
@@ -192,10 +192,10 @@
 <text x="193.2" y="116.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pitch sweep</text>
 <path stroke="none" fill="#EEF1F2" d="M28 117.9l258 0 0 5.8-258 0z"/>
 <text x="29.2" y="121.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">... with roll ±70°</text>
-<text x="115.8" y="121.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-55</text>
-<text x="140.8" y="121.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-42</text>
+<text x="115.8" y="121.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-59</text>
+<text x="140.8" y="121.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-46</text>
 <text x="165.8" y="121.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-39</text>
-<text x="190.8" y="121.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-16</text>
+<text x="190.8" y="121.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-17</text>
 <text x="193.2" y="121.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crosswind flare: full aft, roll, opposite rudder</text>
 <text x="29.2" y="127.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">... roll to contact (deg)</text>
 <text x="115.8" y="127.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">0</text>
@@ -280,222 +280,227 @@
 <text x="124.8" y="231.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">15</text>
 <text x="127.2" y="231.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">trimmed inboard cushion (symmetric: -30; its top only 29 above the plinth at the lowest fwd</text>
 <text x="127.2" y="235.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">seat); plates 50</text>
-<text x="29.2" y="241.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">ingress: headrests / backs /</text>
-<text x="29.2" y="246.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cushions</text>
-<text x="124.8" y="241.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">470 / 310 / 380</text>
-<text x="127.2" y="241.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">95th hip 415: hips pass between the headrests, legs between the backs, then over the</text>
-<text x="127.2" y="246.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">inboard cushion with the armrest up (stowed along the back, top 772 above the floor); divider</text>
-<text x="127.2" y="250.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">opening 500</text>
-<path stroke="none" fill="#EEF1F2" d="M28 252.5l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="256.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">room behind the seat back</text>
-<text x="124.8" y="256.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">84 / 154</text>
-<text x="127.2" y="256.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">neutral / fwd notch</text>
-<text x="29.2" y="262.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">curtain to seat / track;</text>
-<text x="29.2" y="266.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">extinguisher</text>
-<text x="124.8" y="262.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+23 / +11 / +61</text>
-<text x="127.2" y="262.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">aft notch: the stowed curtain (LH, 60 deep [E]) to the seat back below its flare top and to the</text>
-<text x="127.2" y="266.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew track's aft end; the bottle to the co-pilot seat's back / plate</text>
-<path stroke-width="0.18" d="M80 176.3l0 92.3M126 176.3l0 92.3"/>
-<path stroke-width="0.35" d="M28 169.3l258 0 0 99.3-258 0z"/>
-<path stroke-width="0.35" fill="#1B2429" d="M28 273.6l258 0 0 7-258 0z"/>
-<text x="30" y="278.43" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">REACH FROM THE NEARER SHOULDER JOINT (mm)</text>
-<text x="64" y="284.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">TARGET</text>
-<text x="112" y="284.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">KIND</text>
-<text x="154" y="284.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">5TH F: DIST / CLASS</text>
-<text x="235" y="284.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95TH M: DIST / CLASS</text>
-<path stroke-width="0.35" d="M28 286.6l258 0"/>
-<text x="29.2" y="290.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">own PFD centre</text>
-<text x="112" y="290.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="290.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">669 LEAN</text>
-<text x="284.8" y="290.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">767 LOCKED</text>
-<path stroke="none" fill="#EEF1F2" d="M28 292.4l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="296.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">MFD centre</text>
-<text x="112" y="296.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="296.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">688 LEAN</text>
-<text x="284.8" y="296.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">767 LOCKED</text>
-<text x="29.2" y="302.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SDU, own side</text>
-<text x="112" y="302.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="302.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">669 LEAN</text>
-<text x="284.8" y="302.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">747 LOCKED</text>
-<path stroke="none" fill="#EEF1F2" d="M28 304l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="308.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SDU, far side</text>
-<text x="112" y="308.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="308.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">709 LEAN</text>
-<text x="284.8" y="308.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">777 LOCKED</text>
-<text x="29.2" y="313.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">GI 275 standby</text>
-<text x="112" y="313.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="313.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">667 LEAN</text>
-<text x="284.8" y="313.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">758 LOCKED</text>
-<path stroke="none" fill="#EEF1F2" d="M28 315.6l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="319.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PCL knob</text>
-<text x="112" y="319.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">GRASP</text>
-<text x="182.8" y="319.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">474 LOCKED</text>
-<text x="284.8" y="319.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">520 LOCKED</text>
-<text x="29.2" y="325.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">flap lever</text>
-<text x="112" y="325.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">GRASP</text>
-<text x="182.8" y="325.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">564 LOCKED</text>
-<text x="284.8" y="325.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">602 LOCKED</text>
-<path stroke="none" fill="#EEF1F2" d="M28 327.2l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="331.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">CCD palm grip</text>
-<text x="112" y="331.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">GRASP</text>
-<text x="182.8" y="331.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">575 LOCKED</text>
-<text x="284.8" y="331.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">594 LOCKED</text>
-<text x="29.2" y="337.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">overhead panel, centre</text>
-<text x="112" y="337.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="337.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">532 LOCKED</text>
-<text x="284.8" y="337.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">525 LOCKED</text>
-<path stroke="none" fill="#EEF1F2" d="M28 338.8l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="342.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">overhead panel, far end</text>
-<text x="112" y="342.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="342.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">647 LOCKED</text>
-<text x="284.8" y="342.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">629 LOCKED</text>
-<text x="29.2" y="348.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">autoland button</text>
-<text x="112" y="348.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="348.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">668 LEAN</text>
-<text x="284.8" y="348.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">628 LOCKED</text>
-<path stroke="none" fill="#EEF1F2" d="M28 350.4l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="354.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">CB panel, own side</text>
-<text x="112" y="354.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
-<text x="182.8" y="354.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">473 LOCKED</text>
-<text x="284.8" y="354.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">540 LOCKED</text>
-<path stroke-width="0.18" d="M100 280.6l0 75.6M124 280.6l0 75.6M184 280.6l0 75.6"/>
-<path stroke-width="0.35" d="M28 273.6l258 0 0 82.6-258 0z"/>
-<text x="28" y="360.08" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">GRASP (levers, CCD palm grip): straight arm, shoulder joint to thumbtip 740 (95th; 5th F 607), from the thumbtip reach 870 less the back-wall offset.</text>
-<text x="28" y="364.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">TOUCH (touch screens, push-buttons, switches, breakers): + 70 to the index fingertip [E] (810 / 664). LOCKED: within it, harness locked; LEAN: within</text>
-<text x="28" y="369.08" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">+200 with the inertia reel unlocked (normal in flight); NO: beyond.</text>
-<path stroke-width="0.35" fill="#1B2429" d="M28 376.2l258 0 0 7-258 0z"/>
-<text x="30" y="381.03" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">KNEE vs YOKE - SENSITIVITY TO THE ESTIMATED INPUTS (OPEN POINT 1)</text>
-<text x="51" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">INPUT (vs as set)</text>
-<text x="86.5" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95TH NOTCH /</text>
-<text x="86.5" y="391.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CRANK</text>
-<text x="108" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95</text>
-<text x="108" y="391.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CONTACT</text>
-<text x="130.5" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95 RUDDER</text>
-<text x="130.5" y="391.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">mm / CONTACT</text>
-<text x="156.5" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">50TH NOTCH /</text>
-<text x="156.5" y="391.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CRANK</text>
-<text x="178" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">50</text>
-<text x="178" y="391.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CONTACT</text>
-<text x="200.5" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">50 RUDDER</text>
-<text x="200.5" y="391.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">mm / CONTACT</text>
-<text x="239" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">EXT. KNEE 95 / 50 / 5F</text>
-<text x="275" y="387.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">HEAD TO</text>
-<text x="275" y="391.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DIVIDER</text>
-<path stroke-width="0.35" d="M28 393.2l258 0"/>
-<text x="29.2" y="397.15" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">as set</text>
-<text x="97.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
-<text x="115.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
-<text x="142.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-11 / 0°</text>
-<text x="167.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
-<text x="185.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">25°</text>
-<text x="212.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+5 / 0°</text>
-<text x="262.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
-<text x="284.8" y="397.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
-<path stroke="none" fill="#EEF1F2" d="M28 399l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="402.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">pedals +/-90 (rev B [E])</text>
-<text x="97.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
-<text x="115.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
-<text x="142.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-7 / 0°</text>
-<text x="167.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
-<text x="185.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">22°</text>
-<text x="212.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+9 / 2°</text>
-<text x="262.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
-<text x="284.8" y="402.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
-<text x="29.2" y="408.75" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">knees 30 wider (splay +30)</text>
-<text x="97.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
-<text x="115.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">70°</text>
-<text x="142.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-4 / 0°</text>
-<text x="167.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
-<text x="185.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">35°</text>
-<text x="212.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+10 / 5°</text>
-<text x="262.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
-<text x="284.8" y="408.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
-<path stroke="none" fill="#EEF1F2" d="M28 410.6l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="414.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">knee target 130 deg (120)</text>
-<text x="97.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+53 / -50</text>
-<text x="115.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">80°</text>
-<text x="142.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+8 / 2°</text>
-<text x="167.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -25</text>
-<text x="185.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">none</text>
-<text x="212.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+27 / 12°</text>
-<text x="262.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">154° / 173°! / 169°!</text>
-<text x="284.8" y="414.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
-<text x="29.2" y="420.35" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">SRP 35 aft</text>
-<text x="97.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -25</text>
-<text x="115.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">22°</text>
-<text x="142.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-6 / 0°</text>
-<text x="167.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-18 / +25</text>
-<text x="185.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">22°</text>
-<text x="212.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+2 / 0°</text>
-<text x="262.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">143° / 142° / 180°!</text>
-<text x="284.8" y="420.35" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-34</text>
-<path stroke="none" fill="#EEF1F2" d="M28 422.2l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="426.15" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">SRP 70 aft</text>
-<text x="97.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
-<text x="115.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
-<text x="142.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-9 / 0°</text>
-<text x="167.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-35 / +25</text>
-<text x="185.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">30°</text>
-<text x="212.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+10 / 2°</text>
-<text x="262.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">140° / 149° / 180°!</text>
-<text x="284.8" y="426.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-69</text>
-<text x="29.2" y="431.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">rudder travel +/-60 (80)</text>
-<text x="97.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
-<text x="115.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
-<text x="142.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0°</text>
-<text x="167.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
-<text x="185.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">25°</text>
-<text x="212.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+15 / 5°</text>
-<text x="262.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">133° / 137° / 153°</text>
-<text x="284.8" y="431.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
-<path stroke="none" fill="#EEF1F2" d="M28 433.8l258 0 0 5.8-258 0z"/>
-<text x="29.2" y="437.75" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">rudder travel +/-100 (80)</text>
-<text x="97.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
-<text x="115.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
-<text x="142.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-20 / 0°</text>
-<text x="167.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
-<text x="185.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">25°</text>
-<text x="212.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-3 / 0°</text>
-<text x="262.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">147° / 154° / 180°!</text>
-<text x="284.8" y="437.75" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
-<text x="29.2" y="443.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke hub 50 higher</text>
-<text x="97.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
-<text x="115.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">none</text>
-<text x="142.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+39 / 18°</text>
-<text x="167.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
-<text x="185.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">none</text>
-<text x="212.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+55 / 30°</text>
-<text x="262.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
-<text x="284.8" y="443.55" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
-<path stroke-width="0.18" d="M74 383.2l0 62.2M99 383.2l0 62.2M117 383.2l0 62.2M144 383.2l0 62.2M169 383.2l0 62.2M187 383.2l0 62.2M214 383.2l0 62.2M264 383.2l0 62.2"/>
-<path stroke-width="0.35" d="M28 376.2l258 0 0 69.2-258 0z"/>
-<text x="28" y="449.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">Left seat. Each row changes one input from the as-set state; every occupant then re-picks notch and crank (knee ~120° rule, least travel). CONTACT:</text>
-<text x="28" y="453.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">yoke roll (full pitch travel) at which a knee first touches a grip, neutral pedals. RUDDER: the up-knee on the pedal that came aft, other leg extended:</text>
-<text x="28" y="458.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">wings-level clearance / roll to contact; none = no contact to 90°. EXT. KNEE: at full forward rudder, ! = beyond 165° [E]. HEAD TO DIVIDER: aft notch,</text>
-<text x="28" y="462.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">top headrest lock.</text>
-<text x="28" y="473.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">NOTES (SHEET L6)</text>
-<text x="28" y="478.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">1.</text>
-<text x="33.5" y="478.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Sheet L6 is drawn from the parameter tables of model/interior.py and the fuselage, openings and glazing parameters (L1-L3), never from the mesh.</text>
-<text x="33.5" y="483.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Each value carries a source tag: [S] sourced, [M] measured from photos / renders, [E] estimated, [H] hard constraint.</text>
-<text x="28" y="489.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2.</text>
-<text x="33.5" y="489.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Seat stations: POH NGX Report 02406 weight-and-balance occupant arms (POH datum = model datum). EX-6S-2 is the PRO standard 6-seat</text>
-<text x="33.5" y="493.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">layout: aft-facing club pair, forward-facing club pair, staggered aft pair, forward RH lavatory.</text>
-<text x="28" y="499.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">3.</text>
-<text x="33.5" y="499.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Crew seat: IPECO 3A318-type, travel ±70 in 9 holes (POH), vertical ±51 (est.). Design eye = the 50th-pct eye on the neutral seat = SRP + 80 fwd /</text>
-<text x="33.5" y="503.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">799 up; the 95th (seat down) and 5th male (seat up) reach it. Accommodated range at the design eye as drawn: 5th male - 95th male; the 5th female</text>
-<text x="33.5" y="508.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">sits 51 below it (open point 2).</text>
-<text x="28" y="514" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">4.</text>
-<text x="33.5" y="514" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Manikins: 95TH-PCT MALE (ANSUR II) (stature 1870, sitting height 975, eye 850), scaled uniformly for the 50th / 5th male and 5th female. Crew:</text>
-<text x="33.5" y="518.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">each sets seat height, notch and pedal crank (knee angle ~120°); feet on the pedals, hands on the grips, knees on the hip-to-pedal line (pedals ±125</text>
-<text x="33.5" y="523" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M]); full rudder moves one pedal 80 forward and the other as far aft. Cabin: upright, outboard (TTL), feet flat under the knees unless noted. Sections</text>
-<text x="33.5" y="527.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">A-A / B-B draw what lies forward of the cut (legs, hands) in phantom.</text>
-<text x="28" y="533.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">5.</text>
-<text x="33.5" y="533.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Seat tracks: surface-mounted, 12 cabin / 18 crew [E], over the carry-through too; the seat heights include them.</text>
-<text x="28" y="538.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">6.</text>
-<text x="33.5" y="538.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Lining: headliner 40 below the OML at the crown, sidewall 85, giving the published 1.52 x 1.47 cabin; floor WL 1259 flush from the pedals to the</text>
-<text x="33.5" y="543.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">baggage wall. The pedestal stands on a carpeted plinth over the nose-wheel tunnel (gear, hard).</text>
-<text x="28" y="549.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">7.</text>
-<text x="33.5" y="549.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Stage 2 only: the 3-D interior is still rev A and is rebuilt from these tables after the owner's review.</text>
+<text x="29.2" y="241.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">armrests vs the pedestal</text>
+<text x="124.8" y="241.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">15</text>
+<text x="127.2" y="241.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">inboard arm face to the PCL grip over the seat travel (lowest seat), &gt;= 10 [E]; the arm's</text>
+<text x="127.2" y="246.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">bottom clears the quadrant top</text>
+<path stroke="none" fill="#EEF1F2" d="M28 248l258 0 0 14.8-258 0z"/>
+<text x="29.2" y="252.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">ingress: headrests / backs /</text>
+<text x="29.2" y="256.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cushions</text>
+<text x="124.8" y="252.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">470 / 310 / 380</text>
+<text x="127.2" y="252.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">95th hip 415: hips pass between the headrests, legs between the backs, then over the</text>
+<text x="127.2" y="256.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">inboard cushion with the armrest up (stowed along the back, top 772 above the floor); divider</text>
+<text x="127.2" y="261.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">opening 500</text>
+<text x="29.2" y="266.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">room behind the seat back</text>
+<text x="124.8" y="266.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">84 / 154</text>
+<text x="127.2" y="266.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">neutral / fwd notch</text>
+<path stroke="none" fill="#EEF1F2" d="M28 268.6l258 0 0 10.3-258 0z"/>
+<text x="29.2" y="272.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">curtain to seat / track;</text>
+<text x="29.2" y="277.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">extinguisher</text>
+<text x="124.8" y="272.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+23 / +11 / +61</text>
+<text x="127.2" y="272.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">aft notch: the stowed curtain (LH, 60 deep [E]) to the seat back below its flare top and to the</text>
+<text x="127.2" y="277.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew track's aft end; the bottle to the co-pilot seat's back / plate</text>
+<path stroke-width="0.18" d="M80 176.3l0 102.6M126 176.3l0 102.6"/>
+<path stroke-width="0.35" d="M28 169.3l258 0 0 109.6-258 0z"/>
+<path stroke-width="0.35" fill="#1B2429" d="M28 283.9l258 0 0 7-258 0z"/>
+<text x="30" y="288.73" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">REACH FROM THE NEARER SHOULDER JOINT (mm)</text>
+<text x="64" y="294.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">TARGET</text>
+<text x="112" y="294.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">KIND</text>
+<text x="154" y="294.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">5TH F: DIST / CLASS</text>
+<text x="235" y="294.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95TH M: DIST / CLASS</text>
+<path stroke-width="0.35" d="M28 296.9l258 0"/>
+<text x="29.2" y="300.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">own PFD centre</text>
+<text x="112" y="300.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="300.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">669 LEAN</text>
+<text x="284.8" y="300.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">767 LOCKED</text>
+<path stroke="none" fill="#EEF1F2" d="M28 302.7l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="306.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">MFD centre</text>
+<text x="112" y="306.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="306.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">688 LEAN</text>
+<text x="284.8" y="306.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">767 LOCKED</text>
+<text x="29.2" y="312.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SDU, own side</text>
+<text x="112" y="312.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="312.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">669 LEAN</text>
+<text x="284.8" y="312.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">747 LOCKED</text>
+<path stroke="none" fill="#EEF1F2" d="M28 314.3l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="318.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SDU, far side</text>
+<text x="112" y="318.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="318.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">709 LEAN</text>
+<text x="284.8" y="318.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">777 LOCKED</text>
+<text x="29.2" y="324.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">GI 275 standby</text>
+<text x="112" y="324.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="324.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">667 LEAN</text>
+<text x="284.8" y="324.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">758 LOCKED</text>
+<path stroke="none" fill="#EEF1F2" d="M28 325.9l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="329.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PCL knob</text>
+<text x="112" y="329.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">GRASP</text>
+<text x="182.8" y="329.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">474 LOCKED</text>
+<text x="284.8" y="329.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">520 LOCKED</text>
+<text x="29.2" y="335.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">flap lever</text>
+<text x="112" y="335.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">GRASP</text>
+<text x="182.8" y="335.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">564 LOCKED</text>
+<text x="284.8" y="335.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">602 LOCKED</text>
+<path stroke="none" fill="#EEF1F2" d="M28 337.5l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="341.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">CCD palm grip</text>
+<text x="112" y="341.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">GRASP</text>
+<text x="182.8" y="341.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">575 LOCKED</text>
+<text x="284.8" y="341.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">594 LOCKED</text>
+<text x="29.2" y="347.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">overhead panel, centre</text>
+<text x="112" y="347.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="347.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">532 LOCKED</text>
+<text x="284.8" y="347.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">525 LOCKED</text>
+<path stroke="none" fill="#EEF1F2" d="M28 349.1l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="353.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">overhead panel, far end</text>
+<text x="112" y="353.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="353.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">647 LOCKED</text>
+<text x="284.8" y="353.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">629 LOCKED</text>
+<text x="29.2" y="358.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">autoland button</text>
+<text x="112" y="358.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="358.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">668 LEAN</text>
+<text x="284.8" y="358.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">628 LOCKED</text>
+<path stroke="none" fill="#EEF1F2" d="M28 360.7l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="364.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">CB panel, own side</text>
+<text x="112" y="364.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">TOUCH</text>
+<text x="182.8" y="364.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">473 LOCKED</text>
+<text x="284.8" y="364.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">540 LOCKED</text>
+<path stroke-width="0.18" d="M100 290.9l0 75.6M124 290.9l0 75.6M184 290.9l0 75.6"/>
+<path stroke-width="0.35" d="M28 283.9l258 0 0 82.6-258 0z"/>
+<text x="28" y="370.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">GRASP (levers, CCD palm grip): straight arm, shoulder joint to thumbtip 740 (95th; 5th F 607), from the thumbtip reach 870 less the back-wall offset.</text>
+<text x="28" y="374.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">TOUCH (touch screens, push-buttons, switches, breakers): + 70 to the index fingertip [E] (810 / 664). LOCKED: within it, harness locked; LEAN: within</text>
+<text x="28" y="379.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">+200 with the inertia reel unlocked (normal in flight); NO: beyond.</text>
+<path stroke-width="0.35" fill="#1B2429" d="M28 386.5l258 0 0 7-258 0z"/>
+<text x="30" y="391.33" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">KNEE vs YOKE - SENSITIVITY TO THE ESTIMATED INPUTS (OPEN POINT 1)</text>
+<text x="51" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">INPUT (vs as set)</text>
+<text x="86.5" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95TH NOTCH /</text>
+<text x="86.5" y="401.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CRANK</text>
+<text x="108" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95</text>
+<text x="108" y="401.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CONTACT</text>
+<text x="130.5" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">95 RUDDER</text>
+<text x="130.5" y="401.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">mm / CONTACT</text>
+<text x="156.5" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">50TH NOTCH /</text>
+<text x="156.5" y="401.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CRANK</text>
+<text x="178" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">50</text>
+<text x="178" y="401.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CONTACT</text>
+<text x="200.5" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">50 RUDDER</text>
+<text x="200.5" y="401.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">mm / CONTACT</text>
+<text x="239" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">EXT. KNEE 95 / 50 / 5F</text>
+<text x="275" y="397.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">HEAD TO</text>
+<text x="275" y="401.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DIVIDER</text>
+<path stroke-width="0.35" d="M28 403.5l258 0"/>
+<text x="29.2" y="407.45" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">as set</text>
+<text x="97.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
+<text x="115.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
+<text x="142.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-11 / 0°</text>
+<text x="167.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
+<text x="185.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">25°</text>
+<text x="212.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+5 / 0°</text>
+<text x="262.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
+<text x="284.8" y="407.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
+<path stroke="none" fill="#EEF1F2" d="M28 409.3l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="413.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">pedals +/-90 (rev B [E])</text>
+<text x="97.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
+<text x="115.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
+<text x="142.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-7 / 0°</text>
+<text x="167.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
+<text x="185.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">22°</text>
+<text x="212.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+9 / 2°</text>
+<text x="262.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
+<text x="284.8" y="413.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
+<text x="29.2" y="419.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">knees 30 wider (splay +30)</text>
+<text x="97.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
+<text x="115.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">65°</text>
+<text x="142.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-4 / 0°</text>
+<text x="167.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
+<text x="185.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">35°</text>
+<text x="212.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+10 / 5°</text>
+<text x="262.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
+<text x="284.8" y="419.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
+<path stroke="none" fill="#EEF1F2" d="M28 420.9l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="424.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">knee target 130 deg (120)</text>
+<text x="97.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+53 / -50</text>
+<text x="115.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">78°</text>
+<text x="142.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+8 / 2°</text>
+<text x="167.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -25</text>
+<text x="185.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">88°</text>
+<text x="212.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+27 / 12°</text>
+<text x="262.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">154° / 173°! / 169°!</text>
+<text x="284.8" y="424.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
+<text x="29.2" y="430.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">SRP 35 aft</text>
+<text x="97.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -25</text>
+<text x="115.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">22°</text>
+<text x="142.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-6 / 0°</text>
+<text x="167.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-18 / +25</text>
+<text x="185.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">22°</text>
+<text x="212.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+2 / 0°</text>
+<text x="262.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">143° / 142° / 180°!</text>
+<text x="284.8" y="430.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-34</text>
+<path stroke="none" fill="#EEF1F2" d="M28 432.5l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="436.45" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">SRP 70 aft</text>
+<text x="97.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
+<text x="115.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
+<text x="142.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-9 / 0°</text>
+<text x="167.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-35 / +25</text>
+<text x="185.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">30°</text>
+<text x="212.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+10 / 2°</text>
+<text x="262.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">140° / 149° / 180°!</text>
+<text x="284.8" y="436.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-69</text>
+<text x="29.2" y="442.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">rudder travel +/-60 (80)</text>
+<text x="97.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
+<text x="115.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
+<text x="142.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0°</text>
+<text x="167.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
+<text x="185.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">25°</text>
+<text x="212.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+15 / 5°</text>
+<text x="262.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">133° / 137° / 153°</text>
+<text x="284.8" y="442.25" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
+<path stroke="none" fill="#EEF1F2" d="M28 444.1l258 0 0 5.8-258 0z"/>
+<text x="29.2" y="448.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">rudder travel +/-100 (80)</text>
+<text x="97.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
+<text x="115.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">18°</text>
+<text x="142.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-20 / 0°</text>
+<text x="167.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
+<text x="185.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">25°</text>
+<text x="212.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">-3 / 0°</text>
+<text x="262.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">147° / 154° / 180°!</text>
+<text x="284.8" y="448.05" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
+<text x="29.2" y="453.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke hub 50 higher</text>
+<text x="97.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+18 / -50</text>
+<text x="115.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">none</text>
+<text x="142.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+39 / 18°</text>
+<text x="167.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">0 / 0</text>
+<text x="185.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">none</text>
+<text x="212.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+55 / 30°</text>
+<text x="262.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">139° / 145° / 169°!</text>
+<text x="284.8" y="453.85" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="end">+1</text>
+<path stroke-width="0.18" d="M74 393.5l0 62.2M99 393.5l0 62.2M117 393.5l0 62.2M144 393.5l0 62.2M169 393.5l0 62.2M187 393.5l0 62.2M214 393.5l0 62.2M264 393.5l0 62.2"/>
+<path stroke-width="0.35" d="M28 386.5l258 0 0 69.2-258 0z"/>
+<text x="28" y="459.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">Left seat. Each row changes one input from the as-set state; every occupant then re-picks notch and crank (knee ~120° rule, least travel). CONTACT:</text>
+<text x="28" y="464.08" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">yoke roll (full pitch travel) at which a knee first touches a grip, neutral pedals. RUDDER: the up-knee on the pedal that came aft, other leg extended:</text>
+<text x="28" y="468.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">wings-level clearance / roll to contact; none = no contact to 90°. EXT. KNEE: at full forward rudder, ! = beyond 165° [E]. HEAD TO DIVIDER: aft notch,</text>
+<text x="28" y="473.08" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">top headrest lock.</text>
+<text x="28" y="483.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">NOTES (SHEET L6)</text>
+<text x="28" y="489.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">1.</text>
+<text x="33.5" y="489.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Sheet L6 is drawn from the parameter tables of model/interior.py and the fuselage, openings and glazing parameters (L1-L3), never from the mesh.</text>
+<text x="33.5" y="493.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Each value carries a source tag: [S] sourced, [M] measured from photos / renders, [E] estimated, [H] hard constraint.</text>
+<text x="28" y="499.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2.</text>
+<text x="33.5" y="499.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Seat stations: POH NGX Report 02406 weight-and-balance occupant arms (POH datum = model datum). EX-6S-2 is the PRO standard 6-seat</text>
+<text x="33.5" y="503.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">layout: aft-facing club pair, forward-facing club pair, staggered aft pair, forward RH lavatory.</text>
+<text x="28" y="509.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">3.</text>
+<text x="33.5" y="509.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Crew seat: IPECO 3A318-type, travel ±70 in 9 holes (POH), vertical ±51 (est.). Design eye = the 50th-pct eye on the neutral seat = SRP + 80 fwd /</text>
+<text x="33.5" y="514.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">799 up; the 95th (seat down) and 5th male (seat up) reach it. Accommodated range at the design eye as drawn: 5th male - 95th male; the 5th female</text>
+<text x="33.5" y="518.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">sits 51 below it (open point 2).</text>
+<text x="28" y="524.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">4.</text>
+<text x="33.5" y="524.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Manikins: 95TH-PCT MALE (ANSUR II) (stature 1870, sitting height 975, eye 850), scaled uniformly for the 50th / 5th male and 5th female. Crew:</text>
+<text x="33.5" y="528.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">each sets seat height, notch and pedal crank (knee angle ~120°); feet on the pedals, hands on the grips, knees on the hip-to-pedal line (pedals ±125</text>
+<text x="33.5" y="533.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M]); full rudder moves one pedal 80 forward and the other as far aft. Cabin: upright, outboard (TTL), feet flat under the knees unless noted. Sections</text>
+<text x="33.5" y="537.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">A-A / B-B draw what lies forward of the cut (legs, hands) in phantom.</text>
+<text x="28" y="543.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">5.</text>
+<text x="33.5" y="543.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Seat tracks: surface-mounted, 12 cabin / 18 crew [E], over the carry-through too; the seat heights include them.</text>
+<text x="28" y="549.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">6.</text>
+<text x="33.5" y="549.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Lining: headliner 40 below the OML at the crown, sidewall 85, giving the published 1.52 x 1.47 cabin; floor WL 1259 flush from the pedals to the</text>
+<text x="33.5" y="553.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">baggage wall. The pedestal stands on a carpeted plinth over the nose-wheel tunnel (gear, hard).</text>
+<text x="28" y="559.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">7.</text>
+<text x="33.5" y="559.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Stage 2 only: the 3-D interior is still rev A and is rebuilt from these tables after the owner's review.</text>
 <path stroke-width="0.35" fill="#1B2429" d="M296 16l260 0 0 7-260 0z"/>
 <text x="298" y="20.83" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">CABIN CHECKS (mm), 95TH-PCT MALE UNLESS NOTED</text>
 <text x="328" y="27.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CABIN (EX-6S-2)</text>
@@ -663,7 +668,7 @@
 <text x="296" y="401" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">1.</text>
 <text x="301.5" y="401" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">KNEES vs YOKE: WHICH INPUT TO FIX? With the measured hub, grips and pedals (grip bottoms WL 1805, pedals ±125), the 95th's knee meets a</text>
 <text x="301.5" y="405.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">grip from 18° roll with neutral pedals (50th 25°); with full rudder the 95th touches it wings level (-11) and the 50th from 0°. The estimated inputs move</text>
-<text x="301.5" y="410" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">this more than the measured ones (sensitivity table): knees 30 wider -&gt; 95th neutral contact 70°; a 130° knee target (seat further aft) -&gt; 80°, full rudder</text>
+<text x="301.5" y="410" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">this more than the measured ones (sensitivity table): knees 30 wider -&gt; 95th neutral contact 65°; a 130° knee target (seat further aft) -&gt; 78°, full rudder</text>
 <text x="301.5" y="414.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">+8, but the 50th's forward rudder needs 173° (&gt; 165°); the hub 50 higher -&gt; none, full-rudder contact from 18°. Please choose what to pin down: the</text>
 <text x="301.5" y="419" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">seat-setting rule (knee target), the knee spacing, the rudder travel, the hub height, or the roll travel / a roll limit. Wanted: the control-wheel roll and</text>
 <text x="301.5" y="423.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">rudder travel (AMM / POH) and a side-on photo of a seated pilot at the yoke.</text>
@@ -715,8 +720,12 @@
 <text x="330" y="558.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track</text>
 <text x="300.8" y="558.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">D</text>
 <text x="317.3" y="558.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-09-26</text>
-<path stroke-width="0.18" d="M296 559.32l260 0M305.6 536.52l0 22.8M329 536.52l0 22.8"/>
-<path stroke-width="0.35" d="M296 529.3l260 0 0 30.02-260 0z"/>
+<path stroke-width="0.18" d="M296 559.32l260 0"/>
+<text x="330" y="562.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row</text>
+<text x="300.8" y="562.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">E</text>
+<text x="317.3" y="562.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-09-27</text>
+<path stroke-width="0.18" d="M296 563.88l260 0M305.6 536.52l0 27.36M329 536.52l0 27.36"/>
+<path stroke-width="0.35" d="M296 529.3l260 0 0 34.58-260 0z"/>
 <path stroke-width="0.35" fill="#1B2429" d="M566 16l260 0 0 7-260 0z"/>
 <text x="568" y="20.83" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">KEY PARAMETERS ([S] SOURCED [M] MEASURED [E] ESTIMATED [H] HARD)</text>
 <text x="589" y="27.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">PARAMETER</text>
@@ -797,159 +806,162 @@
 <text x="657.2" y="187.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">hub 1.79-1.90; P1046408 -0.05..+0.09); tops ~0.04 above the hub top (P1046408)</text>
 <text x="567.2" y="193.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">yoke roll +/-</text>
 <text x="654.8" y="193.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">70°</text>
-<text x="657.2" y="193.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] roll travel each way (PC-12 figure not found): the knee check sweeps it</text>
-<path stroke="none" fill="#EEF1F2" d="M566 195.1l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="199.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedal heel point STA</text>
-<text x="654.8" y="199.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">3360</text>
-<text x="657.2" y="199.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] heel point on the floor (plan render pedal gear 3.04-3.31, neutral crank)</text>
-<text x="567.2" y="204.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">rudder pedal travel +/-</text>
-<text x="654.8" y="204.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">80</text>
-<text x="657.2" y="204.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] rudder travel at the pad each way: full rudder pushes one pedal 0.08 forward and lets the other</text>
-<text x="657.2" y="209.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">come 0.08 aft (PC-12 figure not found; typical 3-3.5 in)</text>
-<path stroke="none" fill="#EEF1F2" d="M566 211.2l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="215.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedestal top above floor</text>
-<text x="654.8" y="215.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">300</text>
-<text x="657.2" y="215.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] aft face ~0.30-0.32 tall above the floor with FUEL / ACS T-handles (P1046406)</text>
-<text x="567.2" y="221.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">divider aft face</text>
-<text x="654.8" y="221.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4571</text>
-<text x="657.2" y="221.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[S] POH seat charts 'divider aft surface' 179.95 in (render 4.571-4.583; FR16 4.590)</text>
-<path stroke="none" fill="#EEF1F2" d="M566 222.8l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="226.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat BL</text>
-<text x="654.8" y="226.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">400</text>
-<text x="657.2" y="226.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] plan render seat CL +/-0.40 (fully outboard for TTL [S placard]: outer arm at the ledge)</text>
-<text x="567.2" y="232.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat length</text>
-<text x="654.8" y="232.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">705</text>
-<text x="657.2" y="232.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] plan render, upright: back rear to cushion front</text>
-<path stroke="none" fill="#EEF1F2" d="M566 234.4l260 0 0 10.3-260 0z"/>
-<text x="567.2" y="238.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat arm</text>
-<text x="654.8" y="238.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">60</text>
-<text x="657.2" y="238.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] ONE armrest, on the aisle side (sliding [S]); no outboard arm: the 0.61 ledge is the outboard</text>
-<text x="657.2" y="242.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">armrest (Pilatus plan + front renders, P1046402 / 05 / 06; legacy POH 7-28 'sidewall armrests')</text>
-<text x="567.2" y="248.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin SRP above floor</text>
-<text x="654.8" y="248.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">360</text>
-<text x="657.2" y="248.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] SRP above the floor</text>
-<path stroke="none" fill="#EEF1F2" d="M566 250.5l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="254.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">ledge top above the floor</text>
-<text x="654.8" y="254.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">610</text>
-<text x="657.2" y="254.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] section render: ledge top above the floor (cup holders, USB, table slot)</text>
-<text x="567.2" y="260.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">club table top</text>
-<text x="654.8" y="260.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">590</text>
-<text x="657.2" y="260.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] slides out from under the ledge cap (0.61) and unfolds: top just below the ledge top (brochure</text>
-<text x="657.2" y="264.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">p.18, P1046405, P1046406)</text>
-<path stroke="none" fill="#EEF1F2" d="M566 266.6l260 0 0 10.3-260 0z"/>
-<text x="567.2" y="270.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">club table outboard leaf</text>
-<text x="654.8" y="270.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">290</text>
-<text x="657.2" y="270.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] the outboard leaf slides out of the ledge first (P1046404 / 05 show it alone); the inboard leaf</text>
-<text x="657.2" y="275.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">unfolds over the aisle (brochure p.18)</text>
-<text x="567.2" y="280.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lav cabinet x0 x1 d h</text>
-<text x="654.8" y="280.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4600 / 5165 / 365 /</text>
-<text x="654.8" y="285.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">350</text>
-<text x="657.2" y="280.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] gloss-veneer cabinet wall to wall (P1046411): x0, x1 [M] (x1 = aft wall - 0.030); depth [E]</text>
-<text x="657.2" y="285.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">0.35-0.38 (carpet between its foot and the door jambs); height [M] 0.32-0.36, the 0.33 seat ring as</text>
-<text x="657.2" y="289.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">scale (P1046411, lav teaser; r2 0.45)</text>
-<path stroke="none" fill="#EEF1F2" d="M566 291.7l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="295.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">FR34 partition</text>
-<text x="654.8" y="295.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">9250</text>
-<text x="657.2" y="295.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[S] FR34: POH floor length 4.68 from the divider; render 9.244</text>
-<text x="567.2" y="301.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">sidewall lining</text>
-<text x="654.8" y="301.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">85</text>
-<text x="657.2" y="301.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[H] OML - 0.085 gives the published 1.52 max width (L1 SIDE_ALLOW; render lining +/-0.755)</text>
-<path stroke="none" fill="#EEF1F2" d="M566 303.3l260 0 0 10.3-260 0z"/>
-<text x="567.2" y="307.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">touch reach allowance</text>
-<text x="654.8" y="307.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">70</text>
-<text x="657.2" y="307.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] thumbtip (grasp) to index fingertip (touch): push-buttons and the G3000 PRIME touch screens</text>
-<text x="657.2" y="311.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">are reached ~0.07 further than a grasped lever</text>
-<text x="567.2" y="317.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">extended-knee limit</text>
-<text x="654.8" y="317.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">165°</text>
-<text x="657.2" y="317.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] extended leg at full forward rudder: knee angle &lt;= 160-165 deg (reach limit)</text>
-<path stroke="none" fill="#EEF1F2" d="M566 319.4l260 0 0 10.3-260 0z"/>
-<text x="567.2" y="323.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedal centres +/-</text>
-<text x="654.8" y="323.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">125</text>
-<text x="657.2" y="323.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] pedal-pad centres at seat CL +/- (P1046408 face-on: 0.24-0.26 apart, MFD-bezel scale + depth</text>
-<text x="657.2" y="327.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">correction, the grip span checks it); rev B 0.09 [E]</text>
-<text x="567.2" y="333.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat track height</text>
-<text x="654.8" y="333.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">12</text>
-<text x="657.2" y="333.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] cabin tracks surface-mounted (low profile, carpet butted) over the whole floor: over the</text>
-<text x="657.2" y="338.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">carry-through the floor is &lt;= 15 mm [H], too thin for a flush ~20-25 track (L6B); the cabin seat</text>
-<text x="657.2" y="342.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">heights [M] are read from the carpet and include it</text>
-<path stroke-width="0.18" d="M612 23l0 321.5M656 23l0 321.5"/>
-<path stroke-width="0.35" d="M566 16l260 0 0 328.5-260 0z"/>
-<path stroke-width="0.35" fill="#1B2429" d="M566 349.5l260 0 0 7-260 0z"/>
-<text x="568" y="354.33" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">OTHER POH LAYOUTS (DATA ONLY)</text>
-<text x="580" y="360.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">LAYOUT</text>
-<text x="602" y="360.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SIDE</text>
-<text x="718" y="360.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">OCCUPANT ARMS (POH), FWD -&gt; AFT</text>
-<path stroke-width="0.35" d="M566 362.5l260 0"/>
-<text x="567.2" y="366.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">EX-8S</text>
-<text x="602" y="366.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">LH</text>
-<text x="611.2" y="366.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5899 7011 7824 8637</text>
-<path stroke="none" fill="#EEF1F2" d="M566 368.3l260 0 0 5.8-260 0z"/>
-<text x="602" y="372.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">RH</text>
-<text x="611.2" y="372.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5899 7011 7824 8637</text>
-<text x="567.2" y="378.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">STD-9S</text>
-<text x="602" y="378.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">LH</text>
-<text x="611.2" y="378.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5343 6181 7019 7857</text>
-<path stroke="none" fill="#EEF1F2" d="M566 379.9l260 0 0 5.8-260 0z"/>
-<text x="602" y="383.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">RH</text>
-<text x="611.2" y="383.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5267 6105 6943 7781 8619</text>
-<path stroke-width="0.18" d="M594 356.5l0 29.2M610 356.5l0 29.2"/>
-<path stroke-width="0.35" d="M566 349.5l260 0 0 36.2-260 0z"/>
-<path stroke-width="0.35" fill="#1B2429" d="M566 390.7l260 0 0 7-260 0z"/>
-<text x="568" y="395.53" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">POH OCCUPANT ARMS vs THE OCCUPANT CG (mm)</text>
-<text x="638" y="401.75" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SEAT (50TH-PCT MALE)</text>
-<text x="724.5" y="401.75" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">POH ARM</text>
-<text x="753.5" y="401.75" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SRP STA</text>
-<text x="782.5" y="401.75" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CG STA</text>
-<text x="811.5" y="401.75" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CG - POH</text>
-<path stroke-width="0.35" d="M566 403.7l260 0"/>
-<text x="567.2" y="407.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PILOT, centre notch</text>
-<text x="737.8" y="407.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4071</text>
-<text x="766.8" y="407.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4200</text>
-<text x="795.8" y="407.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4008</text>
-<text x="824.8" y="407.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-63</text>
-<path stroke="none" fill="#EEF1F2" d="M566 409.5l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="413.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PILOT, full aft</text>
-<text x="737.8" y="413.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4071</text>
-<text x="766.8" y="413.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4270</text>
-<text x="795.8" y="413.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4070</text>
-<text x="824.8" y="413.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-1</text>
-<text x="567.2" y="419.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 1 (aft-facing)</text>
-<text x="737.8" y="419.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5899</text>
-<text x="766.8" y="419.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5827</text>
-<text x="795.8" y="419.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5986</text>
-<text x="824.8" y="419.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+87</text>
-<path stroke="none" fill="#EEF1F2" d="M566 421.1l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="425.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 2 (aft-facing)</text>
-<text x="737.8" y="425.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5899</text>
-<text x="766.8" y="425.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5827</text>
-<text x="795.8" y="425.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5986</text>
-<text x="824.8" y="425.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+87</text>
-<text x="567.2" y="430.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 3 (fwd-facing)</text>
-<text x="737.8" y="430.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7011</text>
-<text x="766.8" y="430.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7191</text>
-<text x="795.8" y="430.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7032</text>
-<text x="824.8" y="430.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
-<path stroke="none" fill="#EEF1F2" d="M566 432.7l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="436.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 4 (fwd-facing)</text>
-<text x="737.8" y="436.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7011</text>
-<text x="766.8" y="436.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7191</text>
-<text x="795.8" y="436.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7032</text>
-<text x="824.8" y="436.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
-<text x="567.2" y="442.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 5 (fwd-facing)</text>
-<text x="737.8" y="442.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8180</text>
-<text x="766.8" y="442.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8360</text>
-<text x="795.8" y="442.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8201</text>
-<text x="824.8" y="442.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
-<path stroke="none" fill="#EEF1F2" d="M566 444.3l260 0 0 5.8-260 0z"/>
-<text x="567.2" y="448.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 6 (fwd-facing)</text>
-<text x="737.8" y="448.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8485</text>
-<text x="766.8" y="448.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8665</text>
-<text x="795.8" y="448.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8506</text>
-<text x="824.8" y="448.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
-<path stroke-width="0.18" d="M710 397.7l0 52.4M739 397.7l0 52.4M768 397.7l0 52.4M797 397.7l0 52.4"/>
-<path stroke-width="0.35" d="M566 390.7l260 0 0 59.4-260 0z"/>
-<text x="566" y="453.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">Method: Dempster (1955) segment-mass fractions and segment CG locations (Winter's table) on the sheet's 50th-pct poses, both limbs alike.</text>
-<text x="566" y="458.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">Forward-facing cabin seats +21..+21: the method agrees with the POH to ~2 cm. Pilot: -63 at the centre notch but -1 with the seat full aft, so the POH</text>
-<text x="566" y="462.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">crew arm reads as a full-aft value (conservative for the aft CG); the SRP stays at 4200 (the divider bounds it: open point 9). Aft-facing PAX 1/2: the</text>
-<text x="566" y="467.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">plan-render footprint (open point 4).</text>
+<text x="657.2" y="193.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] roll travel each way (PC-12 figure not found): the knee check sweeps it. OPEN, owner decision</text>
+<text x="657.2" y="197.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">(review r3 C3): at the L6B design seat setting the 95th-pct knees meet the yoke from ~17.5 deg of</text>
+<text x="657.2" y="202.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">roll (50th ~25, 5th male ~22.5, 5th female ~87.5; L6B detail F / fit_check 19 compute it); options:</text>
+<text x="657.2" y="206.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">the seat setting / pedal crank the 95th would use, a smaller roll [E], or the grip cant / span</text>
+<path stroke="none" fill="#EEF1F2" d="M566 208.6l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="212.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedal heel point STA</text>
+<text x="654.8" y="212.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">3360</text>
+<text x="657.2" y="212.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] heel point on the floor (plan render pedal gear 3.04-3.31, neutral crank)</text>
+<text x="567.2" y="218.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">rudder pedal travel +/-</text>
+<text x="654.8" y="218.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">80</text>
+<text x="657.2" y="218.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] rudder travel at the pad each way: full rudder pushes one pedal 0.08 forward and lets the other</text>
+<text x="657.2" y="222.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">come 0.08 aft (PC-12 figure not found; typical 3-3.5 in)</text>
+<path stroke="none" fill="#EEF1F2" d="M566 224.7l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="228.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedestal top above floor</text>
+<text x="654.8" y="228.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">300</text>
+<text x="657.2" y="228.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] aft face ~0.30-0.32 tall above the floor with FUEL / ACS T-handles (P1046406)</text>
+<text x="567.2" y="234.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">divider aft face</text>
+<text x="654.8" y="234.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4571</text>
+<text x="657.2" y="234.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[S] POH seat charts 'divider aft surface' 179.95 in (render 4.571-4.583; FR16 4.590)</text>
+<path stroke="none" fill="#EEF1F2" d="M566 236.3l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="240.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat BL</text>
+<text x="654.8" y="240.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">400</text>
+<text x="657.2" y="240.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] plan render seat CL +/-0.40 (fully outboard for TTL [S placard]: outer arm at the ledge)</text>
+<text x="567.2" y="246.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat length</text>
+<text x="654.8" y="246.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">705</text>
+<text x="657.2" y="246.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] plan render, upright: back rear to cushion front</text>
+<path stroke="none" fill="#EEF1F2" d="M566 247.9l260 0 0 10.3-260 0z"/>
+<text x="567.2" y="251.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat arm</text>
+<text x="654.8" y="251.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">60</text>
+<text x="657.2" y="251.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] ONE armrest, on the aisle side (sliding [S]); no outboard arm: the 0.61 ledge is the outboard</text>
+<text x="657.2" y="256.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">armrest (Pilatus plan + front renders, P1046402 / 05 / 06; legacy POH 7-28 'sidewall armrests')</text>
+<text x="567.2" y="262.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin SRP above floor</text>
+<text x="654.8" y="262.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">360</text>
+<text x="657.2" y="262.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] SRP above the floor</text>
+<path stroke="none" fill="#EEF1F2" d="M566 264l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="268.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">ledge top above the floor</text>
+<text x="654.8" y="268.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">610</text>
+<text x="657.2" y="268.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] section render: ledge top above the floor (cup holders, USB, table slot)</text>
+<text x="567.2" y="273.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">club table top</text>
+<text x="654.8" y="273.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">590</text>
+<text x="657.2" y="273.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] slides out from under the ledge cap (0.61) and unfolds: top just below the ledge top (brochure</text>
+<text x="657.2" y="278.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">p.18, P1046405, P1046406)</text>
+<path stroke="none" fill="#EEF1F2" d="M566 280.1l260 0 0 10.3-260 0z"/>
+<text x="567.2" y="284.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">club table outboard leaf</text>
+<text x="654.8" y="284.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">290</text>
+<text x="657.2" y="284.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] the outboard leaf slides out of the ledge first (P1046404 / 05 show it alone); the inboard leaf</text>
+<text x="657.2" y="288.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">unfolds over the aisle (brochure p.18)</text>
+<text x="567.2" y="294.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lav cabinet x0 x1 d h</text>
+<text x="654.8" y="294.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4600 / 5165 / 365 /</text>
+<text x="654.8" y="298.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">350</text>
+<text x="657.2" y="294.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] gloss-veneer cabinet wall to wall (P1046411): x0, x1 [M] (x1 = aft wall - 0.030); depth [E]</text>
+<text x="657.2" y="298.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">0.35-0.38 (carpet between its foot and the door jambs); height [M] 0.32-0.36, the 0.33 seat ring as</text>
+<text x="657.2" y="303.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">scale (P1046411, lav teaser; r2 0.45)</text>
+<path stroke="none" fill="#EEF1F2" d="M566 305.2l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="309.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">FR34 partition</text>
+<text x="654.8" y="309.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">9250</text>
+<text x="657.2" y="309.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[S] FR34: POH floor length 4.68 from the divider; render 9.244</text>
+<text x="567.2" y="315.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">sidewall lining</text>
+<text x="654.8" y="315.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">85</text>
+<text x="657.2" y="315.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[H] OML - 0.085 gives the published 1.52 max width (L1 SIDE_ALLOW; render lining +/-0.755)</text>
+<path stroke="none" fill="#EEF1F2" d="M566 316.8l260 0 0 10.3-260 0z"/>
+<text x="567.2" y="320.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">touch reach allowance</text>
+<text x="654.8" y="320.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">70</text>
+<text x="657.2" y="320.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] thumbtip (grasp) to index fingertip (touch): push-buttons and the G3000 PRIME touch screens</text>
+<text x="657.2" y="325.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">are reached ~0.07 further than a grasped lever</text>
+<text x="567.2" y="331.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">extended-knee limit</text>
+<text x="654.8" y="331.19" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">165°</text>
+<text x="657.2" y="331.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] extended leg at full forward rudder: knee angle &lt;= 160-165 deg (reach limit)</text>
+<path stroke="none" fill="#EEF1F2" d="M566 332.9l260 0 0 10.3-260 0z"/>
+<text x="567.2" y="336.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedal centres +/-</text>
+<text x="654.8" y="336.99" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">125</text>
+<text x="657.2" y="336.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[M] pedal-pad centres at seat CL +/- (P1046408 face-on: 0.24-0.26 apart, MFD-bezel scale + depth</text>
+<text x="657.2" y="341.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">correction, the grip span checks it); rev B 0.09 [E]</text>
+<text x="567.2" y="347.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat track height</text>
+<text x="654.8" y="347.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">12</text>
+<text x="657.2" y="347.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] cabin tracks surface-mounted (low profile, carpet butted) over the whole floor: over the</text>
+<text x="657.2" y="351.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">carry-through the floor is &lt;= 15 mm [H], too thin for a flush ~20-25 track (L6B); the cabin seat</text>
+<text x="657.2" y="356.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">heights [M] are read from the carpet and include it</text>
+<path stroke-width="0.18" d="M612 23l0 335M656 23l0 335"/>
+<path stroke-width="0.35" d="M566 16l260 0 0 342-260 0z"/>
+<path stroke-width="0.35" fill="#1B2429" d="M566 363l260 0 0 7-260 0z"/>
+<text x="568" y="367.83" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">OTHER POH LAYOUTS (DATA ONLY)</text>
+<text x="580" y="374.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">LAYOUT</text>
+<text x="602" y="374.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SIDE</text>
+<text x="718" y="374.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">OCCUPANT ARMS (POH), FWD -&gt; AFT</text>
+<path stroke-width="0.35" d="M566 376l260 0"/>
+<text x="567.2" y="380.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">EX-8S</text>
+<text x="602" y="380.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">LH</text>
+<text x="611.2" y="380.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5899 7011 7824 8637</text>
+<path stroke="none" fill="#EEF1F2" d="M566 381.8l260 0 0 5.8-260 0z"/>
+<text x="602" y="385.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">RH</text>
+<text x="611.2" y="385.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5899 7011 7824 8637</text>
+<text x="567.2" y="391.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">STD-9S</text>
+<text x="602" y="391.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">LH</text>
+<text x="611.2" y="391.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5343 6181 7019 7857</text>
+<path stroke="none" fill="#EEF1F2" d="M566 393.4l260 0 0 5.8-260 0z"/>
+<text x="602" y="397.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="middle">RH</text>
+<text x="611.2" y="397.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429">5267 6105 6943 7781 8619</text>
+<path stroke-width="0.18" d="M594 370l0 29.2M610 370l0 29.2"/>
+<path stroke-width="0.35" d="M566 363l260 0 0 36.2-260 0z"/>
+<path stroke-width="0.35" fill="#1B2429" d="M566 404.2l260 0 0 7-260 0z"/>
+<text x="568" y="409.03" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">POH OCCUPANT ARMS vs THE OCCUPANT CG (mm)</text>
+<text x="638" y="415.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SEAT (50TH-PCT MALE)</text>
+<text x="724.5" y="415.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">POH ARM</text>
+<text x="753.5" y="415.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SRP STA</text>
+<text x="782.5" y="415.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CG STA</text>
+<text x="811.5" y="415.25" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CG - POH</text>
+<path stroke-width="0.35" d="M566 417.2l260 0"/>
+<text x="567.2" y="421.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PILOT, centre notch</text>
+<text x="737.8" y="421.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4071</text>
+<text x="766.8" y="421.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4200</text>
+<text x="795.8" y="421.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4008</text>
+<text x="824.8" y="421.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-63</text>
+<path stroke="none" fill="#EEF1F2" d="M566 423l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="427.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PILOT, full aft</text>
+<text x="737.8" y="427.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4071</text>
+<text x="766.8" y="427.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4270</text>
+<text x="795.8" y="427.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">4070</text>
+<text x="824.8" y="427.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-1</text>
+<text x="567.2" y="432.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 1 (aft-facing)</text>
+<text x="737.8" y="432.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5899</text>
+<text x="766.8" y="432.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5827</text>
+<text x="795.8" y="432.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5986</text>
+<text x="824.8" y="432.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+87</text>
+<path stroke="none" fill="#EEF1F2" d="M566 434.6l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="438.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 2 (aft-facing)</text>
+<text x="737.8" y="438.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5899</text>
+<text x="766.8" y="438.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5827</text>
+<text x="795.8" y="438.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">5986</text>
+<text x="824.8" y="438.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+87</text>
+<text x="567.2" y="444.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 3 (fwd-facing)</text>
+<text x="737.8" y="444.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7011</text>
+<text x="766.8" y="444.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7191</text>
+<text x="795.8" y="444.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7032</text>
+<text x="824.8" y="444.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
+<path stroke="none" fill="#EEF1F2" d="M566 446.2l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="450.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 4 (fwd-facing)</text>
+<text x="737.8" y="450.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7011</text>
+<text x="766.8" y="450.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7191</text>
+<text x="795.8" y="450.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">7032</text>
+<text x="824.8" y="450.29" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
+<text x="567.2" y="456.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 5 (fwd-facing)</text>
+<text x="737.8" y="456.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8180</text>
+<text x="766.8" y="456.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8360</text>
+<text x="795.8" y="456.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8201</text>
+<text x="824.8" y="456.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
+<path stroke="none" fill="#EEF1F2" d="M566 457.8l260 0 0 5.8-260 0z"/>
+<text x="567.2" y="461.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 6 (fwd-facing)</text>
+<text x="737.8" y="461.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8485</text>
+<text x="766.8" y="461.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8665</text>
+<text x="795.8" y="461.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">8506</text>
+<text x="824.8" y="461.89" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+21</text>
+<path stroke-width="0.18" d="M710 411.2l0 52.4M739 411.2l0 52.4M768 411.2l0 52.4M797 411.2l0 52.4"/>
+<path stroke-width="0.35" d="M566 404.2l260 0 0 59.4-260 0z"/>
+<text x="566" y="467.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">Method: Dempster (1955) segment-mass fractions and segment CG locations (Winter's table) on the sheet's 50th-pct poses, both limbs alike.</text>
+<text x="566" y="471.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">Forward-facing cabin seats +21..+21: the method agrees with the POH to ~2 cm. Pilot: -63 at the centre notch but -1 with the seat full aft, so the POH</text>
+<text x="566" y="476.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">crew arm reads as a full-aft value (conservative for the aft CG); the SRP stays at 4200 (the divider bounds it: open point 9). Aft-facing PAX 1/2: the</text>
+<text x="566" y="480.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#5D6B73">plan-render footprint (open point 4).</text>
 </g></svg>

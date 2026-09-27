@@ -438,6 +438,11 @@ SPEC.update({
                                     "r2 F3; was 0.21 grey with a graphite face)"),
     "panel_silver":       dict(kind="dielectric", base=(0.46, 0.46, 0.45), metallic=0.55, rough=0.32,
                                note="light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)"),
+    "pedestal_gunmetal":  dict(kind="dielectric", base=(0.115, 0.115, 0.125), metallic=0.40, rough=0.42,
+                               note="control pedestal cheeks / aft skin below the SDU pad: dark gunmetal (throttle "
+                                    "photo, P1046408-10; review r3 F3)"),
+    "pcl_pewter":         dict(kind="dielectric", base=(0.20, 0.20, 0.215), metallic=0.50, rough=0.36,
+                               note="PCL grip: satin pewter paddle (throttle photo; P1046408 grip ~sRGB 112/114/123)"),
     "leather_glareshield": dict(kind="dielectric", base=(0.055, 0.055, 0.058), rough=0.62, spec=0.25,
                                 note="stitched glareshield leather"),
     "carpet_flightdeck":  dict(kind="dielectric", base=(0.045, 0.045, 0.050), rough=0.95, note="cockpit carpet"),

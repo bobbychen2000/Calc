@@ -378,23 +378,70 @@ async def numeric_checks(page):
               f"hub dZ {r['pull'][2]:+.3f} m")
         check("right rudder: right-foot pedal forward, left-foot pedal aft", r["yawR"]["R"][2] < -0.03 and
               r["yawR"]["L"][2] > 0.03, f"pad dZ R {r['yawR']['R'][2]:+.3f}, L {r['yawR']['L'][2]:+.3f} m")
-    # --- the cutaway clips the cabin furniture / divider port half, not the seats or the controls (review r2 M3)
+    # --- the cutaway clips the cabin furniture / divider port half, not the seats or the controls (review r2 M3);
+    #     every part is cut whole or not at all (review r3 C1: cup holders / switch caps floated over a clipped
+    #     console), and the floors the seats stand on stay (review r3 F4)
     r = await js(page, r"""
       const V = window.viewer, I = V._internals, out = {};
       V.setCutaway(true);
-      const clipped = (id, mat) => I.model.part(id).meshes.filter((mr) => !mat || mr.base.name === mat)
-                                   .map((mr) => (mr.mesh.material.clippingPlanes || []).length > 0);
-      out.divider = clipped('flight_deck', 'veneer_walnut');
+      const cut = (mr) => (mr.mesh.material.clippingPlanes || []).some((p) => p.normal.x === 1 && p.constant === 0);
+      const clipped = (id, mat) => I.model.part(id) ? I.model.part(id).meshes.filter((mr) => !mat || mr.base.name === mat)
+                                   .map(cut) : [];
+      out.divider = clipped('fd_divider');
+      out.consoles = clipped('fd_consoles');
       out.ledge = clipped('cabin_interior', 'ledge_top');
-      out.panel = clipped('flight_deck', 'panel_grey');
+      out.flight_deck = clipped('flight_deck');
+      out.cabin_floor = clipped('cabin_floor');
       out.seat = clipped('seat_pax1');
       out.yoke = clipped('yoke_L');
+      // parts cut by a material subset (some meshes clipped, some kept)
+      out.mixed = I.model.list.filter((p) => p.ex.group === 'Interior' && p.meshes.length &&
+        new Set(p.meshes.map(cut)).size > 1).map((p) => p.id);
+      // every seat stands on an uncut floor: the kept floor meshes (cabin_floor carpet, flight-deck carpet) cover the
+      // seat's footprint centre (glTF X = BL, Z = STA)
+      const floors = [...I.model.part('cabin_floor').meshes, ...I.model.part('flight_deck').meshes
+        .filter((mr) => mr.base.name === 'carpet_flightdeck')].filter((mr) => !cut(mr));
+      const fb = floors.map((mr) => new I.THREE.Box3().setFromObject(mr.mesh));
+      out.unsupported = I.model.list.filter((p) => /^seat_/.test(p.id)).filter((p) => {
+        const b = V.partWorldBox(p.id), cx = 0.5 * (b.min[0] + b.max[0]), cz = 0.5 * (b.min[2] + b.max[2]);
+        return !fb.some((f) => f.min.x <= cx && cx <= f.max.x && f.min.z <= cz && cz <= f.max.z &&
+          f.min.y <= b.min[1] + 0.03 && f.max.y >= b.min[1] - 0.03);
+      }).map((p) => p.id);
       V.setCutaway(false);
       return out;
     """)
-    check("cutaway clips the divider and the cabin ledges (their port halves), not the panel, seats or yokes",
-          all(r["divider"]) and all(r["ledge"]) and not any(r["panel"]) and not any(r["seat"]) and not any(r["yoke"]),
-          json.dumps(r))
+    check("cutaway clips the divider, consoles and cabin ledges (port halves), not the panel, floors, seats or yokes",
+          all(r["divider"]) and all(r["consoles"]) and all(r["ledge"]) and not any(r["flight_deck"]) and
+          not any(r["cabin_floor"]) and not any(r["seat"]) and not any(r["yoke"]),
+          json.dumps({k: (sum(v), len(v)) if isinstance(v, list) and v and isinstance(v[0], bool) else v
+                      for k, v in r.items()}))
+    check("[r3 C1] cutaway: every interior part cut whole or not at all (nothing left floating)", not r["mixed"],
+          f"mixed: {r['mixed']}")
+    check("[r3 F4] cutaway: every seat stands on an uncut floor", not r["unsupported"],
+          f"{len(r['unsupported'])} unsupported: {r['unsupported']}")
+    # --- club tables (review r3 F5): stowed = inside the ledge (fully clipped at the fascia), out at 0.5, the inboard
+    #     leaf unfolded over the aisle at 1
+    r = await js(page, r"""
+      const V = window.viewer, I = V._internals, out = {};
+      if (!I.model.part('table_club_p')) return {missing: true};
+      const bx = () => { const b = V.partWorldBox('table_club_p_leaf'); return [b.min[0], b.max[0], b.min[1], b.max[1]]; };
+      const ob = () => { const b = V.partWorldBox('table_club_p'); return [b.min[0], b.max[0]]; };
+      const fascia = I.model.part('table_club_p').ex.pivot.fascia_bl;
+      V.setTable(0, {instant: true}); out.stowed = ob(); out.fascia = fascia;
+      V.setTable(0.5, {instant: true}); out.leaf = ob(); out.leafFolded = bx();
+      V.setTable(1, {instant: true}); out.deployed = bx();
+      V.setTable(0, {instant: true});
+      out.clip = I.model.part('table_club_p').meshes.every((mr) => (mr.mesh.material.clippingPlanes || []).length > 0);
+      return out;
+    """)
+    if r.get("missing"):
+        check("[r3 F5] club tables are viewer parts", False, "table_club_p not in the GLB")
+    else:
+        check("[r3 F5] club table: stowed inside the ledge (outboard of the fascia, clipped there), the leaf out, the "
+              "inboard leaf unfolded over the aisle",
+              r["clip"] and r["stowed"][1] <= r["fascia"] + 0.035 and r["leaf"][1] > -0.40 and
+              r["deployed"][1] > -0.10 and r["deployed"][2] > r["leafFolded"][3] - 0.001,
+              json.dumps({k: [round(x, 3) for x in v] if isinstance(v, list) else v for k, v in r.items()}))
 
     # --- gear: mains inward, nose aft, nose doors open between the locks
     r = await js(page, r"""

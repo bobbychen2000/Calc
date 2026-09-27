@@ -38,6 +38,12 @@
     front of the lining; 22c the stowed divider curtain clear of the crew seat tracks
 23. closed interior shells wound outward, directed edges consistent; vertex normals against the face winding on
     <= 1 % of each interior primitive's area
+24. crew harness on the seat: no triangle crossing the sheepskin / leather cushion, and every harness vertex over
+    the fleece's top (plan inside it, off the side rolls) >= 1 mm above it (review r3 K1)
+25. crew armrests, down and stowed, and the rest of the seat vs the pedestal (quadrant, PCL, flap lever, CCD) over the
+    whole fore / aft and height travel: >= CRITERIA arm_pedestal (review r3 C2)
+26. no coplanar, same-facing, overlapping faces of DIFFERENT materials in the interior (they flicker in the viewer):
+    <= 0.5 cm2 per material pair (review r3 K3)
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
@@ -56,7 +62,10 @@ from isect import crossings, merged
 X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
 MARGIN = 0.02
 parts = build_parts()
-FD_KIDS = [k for k, q in parts.items() if q.parent == "flight_deck"]    # yokes, rudder pedals (review r2 M4)
+FD_KIDS = [k for k, q in parts.items() if q.parent == "flight_deck"]    # yokes, rudder pedals (review r2 M4), consoles,
+#                                                                         divider (review r3 C1)
+CAB_KIDS = [k for k, q in parts.items() if q.parent == "cabin_interior" or (q.parent and parts[q.parent].parent ==
+                                                                              "cabin_interior")]   # floor, tables (r3)
 fails = []
 opens = []
 
@@ -273,7 +282,7 @@ for pid, gear_id, A, B0, T, axis, (f1, ref), name in G.brace_specs():
 from model import interior as I
 from model import fuselage_parts as FPm
 SEAT_IDS = [k for k in parts if k.startswith("seat_")]
-V = np.vstack([verts(k) for k in ["cabin_interior", "flight_deck"] + FD_KIDS + SEAT_IDS])
+V = np.vstack([verts(k) for k in ["cabin_interior", "flight_deck"] + FD_KIDS + CAB_KIDS + SEAT_IDS])
 for r in openings_table():
     if r["id"] != "door_airstair":
         continue
@@ -719,7 +728,7 @@ for side in (-1, 1):
 # windows and the cargo door by the POH layout), (c) furniture AND seats never in the over-wing exit's clear zone (L6
 # CLEAR_ZONES exit_bl .. the starboard lining, abeam the hatch, from its sill to its top)
 from model import fuselage_parts as FP
-fur = {"cabin_interior": verts("cabin_interior")}
+fur = {"cabin_interior": np.vstack([verts(k) for k in ["cabin_interior"] + CAB_KIDS])}
 wins = [(side, cx) for side, xs in FP.FIXED_WINDOWS.items() for cx in xs] + \
        [(o["side"], FP.DOOR_WINDOWS[pid]) for pid, o in FP.DOORS if FP.DOOR_WINDOWS.get(pid) is not None]
 nw = {}
@@ -759,7 +768,7 @@ report(f"over-wing exit clear zone (BL > {I.CLEAR_ZONES['exit_bl']:.2f} abeam th
 # at full travel the handrail fittings bear on the jambs by design (door_frames excluded there).
 from model import airstair as AS
 swing_targets = ["cabin_interior", "flight_deck", "interior_lining", "door_frames", "fus_center", "fus_fwd",
-                 "belly_fairing"] + FD_KIDS + SEAT_IDS
+                 "belly_fairing"] + FD_KIDS + CAB_KIDS + SEAT_IDS
 fixed_all = {k: posed_mesh(k, I4) for k in swing_targets if k in parts}
 for pid in ("door_airstair", "door_cargo"):
     dp = parts[pid].pivot
@@ -845,7 +854,7 @@ def _pt_tri(P, T):
     return out
 
 
-INT_IDS = ["flight_deck", "cabin_interior", "interior_lining"] + FD_KIDS + SEAT_IDS
+INT_IDS = ["flight_deck", "cabin_interior", "interior_lining"] + FD_KIDS + CAB_KIDS + SEAT_IDS
 others = ["fus_fwd", "fus_center", "glazing_cabin", "glazing_flightdeck", "door_cargo", "door_frames", "exit_hatch"]
 pieces, allT, allC = [], [], []
 for pid in INT_IDS + [k for k in others if k in parts]:
@@ -989,7 +998,7 @@ report(f"lining fittings stand proud: >= 95 % of each piece's cabin-facing area 
 # 22c ------------------------------------------------------------------ divider curtain vs the crew tracks
 # the stowed curtain bundle (flight_deck 'curtain', down to the carpet) against the crew seat tracks (review r2 M2: the
 # pilot's inboard track end ran 14-17 mm into its foot): no crossing, and the gap along x to every track under it
-Vc = np.vstack([m.V for m, mm in parts["flight_deck"].meshes if mm == "curtain"])
+Vc = np.vstack([m.V for k in ["flight_deck"] + FD_KIDS for m, mm in parts[k].meshes if mm == "curtain"])
 Vc = Vc[Vc[:, 2] < FL + 0.10]
 gap_ct, x_cr = np.inf, 0
 for pid in ("seat_pilot", "seat_copilot"):
@@ -1002,7 +1011,7 @@ for pid in ("seat_pilot", "seat_copilot"):
             under = (Vc[:, 1] > cV[:, 1].min() - 0.002) & (Vc[:, 1] < cV[:, 1].max() + 0.002)
             if under.any():
                 gap_ct = min(gap_ct, float(Vc[under, 0].min() - cV[:, 0].max()))
-cm_ = [m for m, mm in parts["flight_deck"].meshes if mm == "curtain"]
+cm_ = [m for k in ["flight_deck"] + FD_KIDS for m, mm in parts[k].meshes if mm == "curtain"]
 tm_ = [m for pid in ("seat_pilot", "seat_copilot") for m, mm in parts[pid].meshes if mm in ("metal_dark", "seat_base_black")]
 x_cr = len(crossings(*cat(*[(m.V, m.F) for m in cm_]), *cat(*[(m.V, m.F) for m in tm_])))
 report("divider curtain bundle clear of the crew seat tracks (L6B curtain_track)", x_cr == 0 and gap_ct > 0.0,
@@ -1059,6 +1068,124 @@ for pid in INT_IDS:
             bad_n.append(f"{pid}/{mat} {100 * frac:.1f} %")
 report("interior vertex normals agree with the face winding (<= 1 % of each primitive's area against it)", not bad_n,
        "ok" if not bad_n else "; ".join(bad_n[:8]))
+
+# 24 ------------------------------------------------------------------------ crew harness on the fleece
+# lap belts / straps must lie ON the sheepskin (review r3 K1: 66 % of the lap-belt vertices were below the local fleece
+# top, 417 crossings per seat): exact triangle crossings harness x (sheepskin + leather cushion), and over the seat's
+# fleece top (upward faces, normal z > 0.8, forward of the back) every harness vertex >= 1 mm above that surface
+for pid in ("seat_pilot", "seat_copilot"):
+    Hm = [m for m, mm in parts[pid].meshes if mm == "harness"]
+    Sm = [m for m, mm in parts[pid].meshes if mm in ("sheepskin", "leather_crew")]
+    nx = len(crossings(*cat(*[(m.V, m.F) for m in Hm]), *cat(*[(m.V, m.F) for m in Sm])))
+    srp = I.crew_srp(-1 if pid == "seat_pilot" else 1)
+    Hv = np.vstack([m.V for m in Hm])
+    Hv = Hv[(Hv[:, 0] < srp[0] - 0.02) & (Hv[:, 2] < srp[2] + 0.08)]
+    T = np.vstack([m.V[m.F] for m, mm in parts[pid].meshes if mm == "sheepskin"])
+    nz = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])
+    nz = nz[:, 2] / np.maximum(np.linalg.norm(nz, axis=1), 1e-18)
+    T = T[(nz > 0.8) & (T[:, :, 0].max(1) < srp[0] - 0.02) & (T[:, :, 2].min(1) < srp[2] + 0.08)]
+    worst, n_on = np.inf, 0
+    for i0 in range(0, len(Hv), 256):
+        P = Hv[i0:i0 + 256]
+        a, b, c = T[:, 0][None], T[:, 1][None], T[:, 2][None]
+        det = (b[..., 1] - c[..., 1]) * (a[..., 0] - c[..., 0]) + (c[..., 0] - b[..., 0]) * (a[..., 1] - c[..., 1])
+        det = np.where(np.abs(det) < 1e-14, 1e-14, det)
+        l0 = ((b[..., 1] - c[..., 1]) * (P[:, None, 0] - c[..., 0]) + (c[..., 0] - b[..., 0]) *
+              (P[:, None, 1] - c[..., 1])) / det
+        l1 = ((c[..., 1] - a[..., 1]) * (P[:, None, 0] - c[..., 0]) + (a[..., 0] - c[..., 0]) *
+              (P[:, None, 1] - c[..., 1])) / det
+        l2 = 1.0 - l0 - l1
+        inside = (l0 >= 0) & (l1 >= 0) & (l2 >= 0)
+        zs = np.where(inside, l0 * a[..., 2] + l1 * b[..., 2] + l2 * c[..., 2], -np.inf).max(1)
+        on = np.isfinite(zs)
+        n_on += int(on.sum())
+        if on.any():
+            worst = min(worst, float((P[on, 2] - zs[on]).min()))
+    report(f"{pid} harness on the fleece: no crossing, >= 1 mm above its top", nx == 0 and worst >= 0.001,
+           f"{nx} crossings with the sheepskin / cushion; {n_on} harness vertices over the fleece top, least height "
+           f"{worst * 1000:+.1f} mm")
+
+# 25 ------------------------------------------------------------------------ crew seats vs the pedestal
+# the seat (armrests down and stowed) translated over its fore / aft and height travel against the pedestal group of
+# model/flightdeck.py (quadrant, rails, PCL paddle, flap lever, CCD, T-handles): exact point-triangle distances from
+# the seat's vertices near the pedestal (review r3 C2: the full-forward, full-down inboard sleeve came within 6 mm)
+from model import flightdeck as FDK, seats as SEATS
+Tp = np.vstack([m.V[m.F] for m, _ in FDK.build_flightdeck(groups=True)["pedestal"]])
+Tp = Tp[Tp[:, :, 0].max(1) > 3.70]
+crit = float(I.CRITERIA["arm_pedestal"])
+res_ = []
+for side in (-1, 1):
+    for up in (False, True):
+        Vs0 = np.vstack([m.V for m, _ in SEATS.crew_seat(side, arm_up=(up, up), tracks=False, harness=False)])
+        Vs0 = Vs0[np.abs(Vs0[:, 1]) < 0.20]
+        best = (np.inf, None)
+        for dx in (-CS["travel_x"], 0.0, CS["travel_x"]):
+            for dz in (-CS["travel_z"], 0.0, CS["travel_z"]):
+                Vs = Vs0 + [dx, 0.0, dz]
+                near = Vs[(Vs[:, 0] < Tp[:, :, 0].max() + 0.03) & (Vs[:, 2] < Tp[:, :, 2].max() + 0.03)]
+                if not len(near):
+                    continue
+                d = _pt_tri(near, Tp)
+                k = int(np.argmin(d))
+                if d[k] < best[0]:
+                    best = (float(d[k]), (dx, dz, near[k]))
+        res_.append((side, up, best))
+worst_ = min(res_, key=lambda r: r[2][0])
+report(f"crew seats (armrests down / stowed) clear of the pedestal over the travel (>= {crit * 1000:.0f} mm, CRITERIA "
+       f"arm_pedestal)", worst_[2][0] >= crit,
+       "; ".join(f"{'P' if s_ < 0 else 'CP'} arms {'up' if u_ else 'down'} {b_[0] * 1000:.1f} mm" for s_, u_, b_ in res_)
+       + f" (worst at dx {worst_[2][1][0] * 1000:+.0f} / dz {worst_[2][1][1] * 1000:+.0f} mm, "
+         f"STA {worst_[2][1][2][0]:.3f} BL {worst_[2][1][2][1]:+.3f} WL {worst_[2][1][2][2]:.3f}; L6B "
+         f"{I.crew_checks(-1)['arm_pedestal'] * 1000:.0f})")
+
+# 26 ------------------------------------------------------------------------ coplanar faces (z-fighting)
+# two faces of different materials in the same plane (within 0.1 mm), facing the same way and overlapping flicker in
+# the viewer at grazing angles (review r3 K3: crew-seat track brackets in the side plates' outer faces, the glareshield
+# end cap on a panel_dark triangle); same-material overlaps are invisible and ignored
+from isect import _pairs
+zf_T, zf_key = [], []
+for pid in INT_IDS:
+    for m, mat in parts[pid].meshes:
+        if len(m.F):
+            zf_T.append(m.V[m.F])
+            zf_key += [(pid, mat)] * len(m.F)
+zf_T = np.vstack(zf_T)
+zf_key = np.array([f"{p_}/{m_}" for p_, m_ in zf_key])
+zf_mat = np.array([k.split("/")[1] for k in zf_key])
+zn = np.cross(zf_T[:, 1] - zf_T[:, 0], zf_T[:, 2] - zf_T[:, 0])
+zA = 0.5 * np.linalg.norm(zn, axis=1)
+ok_ = zA > 1e-9
+zn = zn / np.maximum(2 * zA, 1e-18)[:, None]
+zC = zf_T.mean(1)
+lo_, hi_ = zf_T.min(1) - 0.0005, zf_T.max(1) + 0.0005
+h_ = float(np.clip(2 * np.median((hi_ - lo_).max(1)), 0.005, 0.1))
+ii, jj = _pairs(lo_, hi_, lo_, hi_, h_)
+m_ = (ii < jj) & ok_[ii] & ok_[jj] & (zf_mat[ii] != zf_mat[jj])
+ii, jj = ii[m_], jj[m_]
+m_ = ((zn[ii] * zn[jj]).sum(1) > 0.995) & (np.abs(((zC[ii] - zf_T[jj, 0]) * zn[jj]).sum(1)) < 1e-4)
+ii, jj = ii[m_], jj[m_]
+
+
+def _in_tri(P, Tr):
+    e1, e2, s_ = Tr[:, 1] - Tr[:, 0], Tr[:, 2] - Tr[:, 0], P - Tr[:, 0]
+    d00, d01, d11 = (e1 * e1).sum(1), (e1 * e2).sum(1), (e2 * e2).sum(1)
+    d20, d21 = (s_ * e1).sum(1), (s_ * e2).sum(1)
+    den = np.maximum(d00 * d11 - d01 * d01, 1e-30)
+    v_, w_ = (d11 * d20 - d01 * d21) / den, (d00 * d21 - d01 * d20) / den
+    return (v_ > -1e-6) & (w_ > -1e-6) & (v_ + w_ < 1 + 1e-6)
+
+
+m_ = _in_tri(zC[ii], zf_T[jj]) | _in_tri(zC[jj], zf_T[ii])
+ii, jj = ii[m_], jj[m_]
+zf = {}
+for a_, b_ in zip(ii, jj):
+    k_ = tuple(sorted((zf_key[a_], zf_key[b_])))
+    r_ = zf.setdefault(k_, [0.0, zC[a_]])
+    r_[0] += min(zA[a_], zA[b_])
+bad_zf = sorted(((a_, k_, c_) for k_, (a_, c_) in zf.items() if a_ > 0.5e-4), key=lambda r: -r[0])
+report("interior: no coplanar same-facing overlaps of different materials (<= 0.5 cm2 per pair)", not bad_zf,
+       "none" if not bad_zf else "; ".join(f"{k_[0]} vs {k_[1]} {a_ * 1e4:.1f} cm2 at STA {c_[0]:.3f} BL {c_[1]:+.3f} "
+                                           f"WL {c_[2]:.3f}" for a_, k_, c_ in bad_zf[:8]))
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

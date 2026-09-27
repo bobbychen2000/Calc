@@ -341,8 +341,8 @@ def pillow(outline, t, r, rb=None, h=None, crown=None, fluff=None, n_round=3, ma
     # crown / fleece on the top face
     top_ids = np.r_[base + np.arange(n), it0 + np.arange(len(Gt))]
     A = V[top_ids, :2]
-    if crown is not None:
-        d = -sdf2d.polygon(A[:, 0], A[:, 1], B)
+    if crown is not None:                                        # (a corner arc collapsed by the inset repeats
+        d = -sdf2d.polygon(A[:, 0], A[:, 1], _dedup(B, 1e-9))    # points: zero-length edges would give NaN)
         V[top_ids, 2] += crown(A[:, 0], A[:, 1], np.maximum(d, 0.0))
     if fluff is not None:
         V[top_ids, 2] += fluff(A[:, 0], A[:, 1])
@@ -469,11 +469,17 @@ def _catmull(P, n=24):
     return np.array(out)
 
 
-def ribbon(ctrl, up, width, mat, th=0.0035, n=20):
+def ribbon(ctrl, up, width, mat, th=0.0035, n=20, rounded=False):
     """Webbing strap through the control points ctrl (k, 3) lying flat with its face normal along up (k, 3) (the
-    surface under it): a thin closed box section swept along a Catmull-Rom path, crisp edges."""
-    P = _catmull(ctrl, n)
-    U = _catmull(up, n)
+    surface under it): a thin closed box section swept along a Catmull-Rom path, crisp edges; rounded: the long edges
+    rounded (a six-sided section, each side's two chamfers smooth-shaded: review r3 K1).  n=None: ctrl / up are
+    already dense, taken as they are."""
+    if n is None:
+        P, U = np.asarray(ctrl, float).copy(), np.asarray(up, float).copy()
+        n = len(P)
+    else:
+        P = _catmull(ctrl, n)
+        U = _catmull(up, n)
     T = np.gradient(P, axis=0)
     T /= np.linalg.norm(T, axis=1, keepdims=True)
     # the up hint made normal to the path, its sign kept continuous along it (review r2 N1: where a hint ran nearly
@@ -489,6 +495,25 @@ def ribbon(ctrl, up, width, mat, th=0.0035, n=20):
     W /= np.maximum(np.linalg.norm(W, axis=1, keepdims=True), 1e-12)
     U = np.cross(W, T)
     hw, ht = 0.5 * width, 0.5 * th
+    if rounded:
+        e = min(0.9 * ht, 0.2 * hw)
+        C = [P + W * (hw - e) + U * ht, P + W * hw, P + W * (hw - e) - U * ht, P - W * (hw - e) - U * ht, P - W * hw,
+             P - W * (hw - e) + U * ht]
+        V, F = [], []
+        ii = np.arange(n - 1)
+        for rows in ((C[5], C[0]), (C[0], C[1], C[2]), (C[2], C[3]), (C[3], C[4], C[5])):
+            o = sum(len(x) for x in V)
+            V.append(np.vstack(rows))
+            for r_ in range(len(rows) - 1):
+                a_, b_ = o + r_ * n, o + (r_ + 1) * n
+                F += [np.c_[a_ + ii, a_ + ii + 1, b_ + ii + 1], np.c_[a_ + ii, b_ + ii + 1, b_ + ii]]
+        for e_ in (0, n - 1):
+            o = sum(len(x) for x in V)
+            V.append(np.array([C[k][e_] for k in range(6)]))
+            cap = np.array([[o, o + 1, o + 2], [o, o + 2, o + 3], [o, o + 3, o + 4], [o, o + 4, o + 5]])
+            F.append(cap if e_ == 0 else cap[:, ::-1])
+        Vv, Ff = np.vstack(V), np.vstack(F)
+        return Geo(Vv, Ff, np.zeros(len(Ff)), {0: mat})
     C = [P + W * hw + U * ht, P - W * hw + U * ht, P - W * hw - U * ht, P + W * hw - U * ht]
     V, F = [], []
     for k in range(4):
@@ -568,6 +593,133 @@ def _outline_from_hw(b0, b1, hw_fn, r, nb=10, a_shift=0.0):
     return fillet(P, r)
 
 
+def _upper_hull(P):
+    """Upper convex hull (monotone chain) of 2-D points P, left to right."""
+    P = P[np.lexsort((P[:, 1], P[:, 0]))]
+    up = []
+    for p in P:
+        while len(up) >= 2 and ((up[-1][0] - up[-2][0]) * (p[1] - up[-2][1])
+                                - (up[-1][1] - up[-2][1]) * (p[0] - up[-2][0])) >= 0:
+            up.pop()
+        up.append(p)
+    return np.array(up)
+
+
+def _strap_frame(P, U):
+    """Path tangents T and the up hints U made normal to them (sign kept continuous), as ribbon() does."""
+    T = np.gradient(P, axis=0)
+    T /= np.linalg.norm(T, axis=1, keepdims=True)
+    U = U - T * np.einsum("ij,ij->i", U, T)[:, None]
+    for i in range(len(P)):
+        if np.linalg.norm(U[i]) < 1e-6:
+            U[i] = U[i - 1] if i else np.cross(T[i], [0.0, 1.0, 0.0])
+        U[i] /= np.linalg.norm(U[i])
+        if i and np.dot(U[i], U[i - 1]) < 0.0:
+            U[i] = -U[i]
+    W = np.cross(T, U)
+    W /= np.maximum(np.linalg.norm(W, axis=1, keepdims=True), 1e-12)
+    return T, np.cross(W, T), W
+
+
+def strap_clear(P, U, obst, width, th, clear=0.0015, depth=0.04, iters=5):
+    """Lift a dense strap path (P, up U) along its up vectors until its underside is `clear` above the obstacle Geos
+    (review r3 K1): from five points across the underside a ray is cast up the strap normal from `depth` below; the
+    highest obstacle hit sets the lift; lifts are dilated by one sample (no kinks) and the pass repeated.  Returns the
+    lifted (P, U)."""
+    T_ = np.vstack([g.V[g.F] for g in obst])
+    P, U = np.asarray(P, float).copy(), np.asarray(U, float).copy()
+    lo, hi = P.min(0) - depth - width, P.max(0) + depth + width
+    T_ = T_[((T_.max(1) > lo) & (T_.min(1) < hi)).all(1)]
+    if not len(T_):
+        return P, U
+    e1, e2 = T_[:, 1] - T_[:, 0], T_[:, 2] - T_[:, 0]
+    ws = np.linspace(-0.5, 0.5, 5) * width
+    for _ in range(iters):
+        _, Un, W = _strap_frame(P, U)
+        # rays at the samples and at the segment midpoints (a lump between two samples must not poke through)
+        Pm = np.vstack([P, 0.5 * (P[1:] + P[:-1])])
+        Um = np.vstack([Un, 0.5 * (Un[1:] + Un[:-1])])
+        Wm = np.vstack([W, 0.5 * (W[1:] + W[:-1])])
+        O = (Pm[:, None, :] + ws[None, :, None] * Wm[:, None, :] - (0.5 * th + depth) * Um[:, None, :]).reshape(-1, 3)
+        D = np.repeat(Um, len(ws), axis=0)
+        tmax = np.full(len(O), -np.inf)
+        for i0 in range(0, len(O), 64):
+            o, d = O[i0:i0 + 64, None, :], D[i0:i0 + 64, None, :]
+            pv = np.cross(d, e2[None])
+            det = (e1[None] * pv).sum(-1)
+            det = np.where(np.abs(det) < 1e-14, 1e-14, det)
+            tv = o - T_[None, :, 0]
+            u_ = (tv * pv).sum(-1) / det
+            qv = np.cross(tv, e1[None])
+            v_ = (d * qv).sum(-1) / det
+            t_ = (e2[None] * qv).sum(-1) / det
+            hit = (u_ >= 0) & (v_ >= 0) & (u_ + v_ <= 1) & (t_ >= 0) & (t_ <= depth + 0.03)
+            tmax[i0:i0 + 64] = np.where(hit, t_, -np.inf).max(1)
+        lm = np.maximum(tmax.reshape(len(Pm), len(ws)).max(1) - depth + clear, 0.0)
+        lift, mid = lm[:len(P)].copy(), lm[len(P):]
+        lift[:-1] = np.maximum(lift[:-1], mid)
+        lift[1:] = np.maximum(lift[1:], mid)
+        if not (lift > 1e-5).any():
+            break
+        lift = np.maximum(lift, np.maximum(np.r_[0.0, lift[:-1]], np.r_[lift[1:], 0.0]))
+        P = P + lift[:, None] * Un
+        U = Un
+    return P, U
+
+
+def draped_strap(obst, plan, A_c, B_c, dp, npn, width=0.046, th=0.002, clear=0.0015, step=0.025):
+    """Lap belt draped under tension over the seat (review r3 K1): plan = (k, 2) pan-plane path (a along the pan, b =
+    s) from the anchor side to the belt end; A_c / B_c = the pan-normal heights c of the anchor (at plan[0]) and the
+    end (at plan[-1]); obst = seat-local Geos the belt lies on (cushion, fleece sleeves, pan).  Every obstacle vertex
+    under the belt's width is unrolled onto the path (l along it, c along the pan normal); the belt follows the upper
+    convex hull of those points from the anchor to the end (a strap under tension wraps the hull: up the cushion side,
+    over the roll, bridging the fleece's troughs and resting on its crowns), offset clear + th / 2 outward.
+    Returns (points (n, 3), up vectors (n, 3)) seat-local."""
+    Pp = _catmull(plan, 48)
+    seg = np.diff(Pp, axis=0)
+    sl = np.linalg.norm(seg, axis=1)
+    L = np.r_[0.0, np.cumsum(sl)]
+    T = seg / sl[:, None]
+    Vs = np.vstack([g.V for g in obst])
+    a = Vs[:, 0] * dp[0] + Vs[:, 2] * dp[1]
+    c = Vs[:, 0] * npn[0] + Vs[:, 2] * npn[1]
+    q = np.c_[a, Vs[:, 1]]
+    # project onto the polyline (the first / last segments extended)
+    best_d = np.full(len(q), np.inf)
+    best_l = np.zeros(len(q))
+    for k in range(len(seg)):
+        t = (q - Pp[k]) @ T[k]
+        tc = np.clip(t, -np.inf if k == 0 else 0.0, np.inf if k == len(seg) - 1 else sl[k])
+        foot = Pp[k] + tc[:, None] * T[k]
+        d = np.abs((q - foot) @ np.array([-T[k, 1], T[k, 0]]))
+        d = np.where(np.linalg.norm(q - foot, axis=1) <= d + 1e-9, d, np.inf)
+        m = d < best_d
+        best_d[m], best_l[m] = d[m], L[k] + tc[m]
+    band = (best_d <= 0.5 * width + 0.002) & (best_l > 0.001) & (best_l < L[-1] - 0.001)
+    pts = np.vstack([[0.0, A_c], np.c_[best_l[band], c[band]], [L[-1], B_c]])
+    H = _upper_hull(pts)
+    # densify and offset outward (normal of the chain, pointing up / outboard)
+    dense = [H[0]]
+    for p0, p1 in zip(H[:-1], H[1:]):
+        k = max(1, int(np.ceil(np.linalg.norm(p1 - p0) / step)))
+        dense += [p0 + (p1 - p0) * t for t in np.linspace(0.0, 1.0, k + 1)[1:]]
+    D = np.array(dense)
+    tg = np.gradient(D, axis=0)
+    tg /= np.linalg.norm(tg, axis=1, keepdims=True)
+    nl = np.c_[-tg[:, 1], tg[:, 0]]                                   # left normal of a left-to-right chain: up
+    D = D + (clear + 0.5 * th) * nl
+    # back to 3-D: plan position at l (extended beyond the ends), c along the pan normal
+    li = np.clip(D[:, 0], 0.0, L[-1])
+    ab = np.c_[np.interp(li, L, Pp[:, 0]), np.interp(li, L, Pp[:, 1])]
+    kseg = np.clip(np.searchsorted(L, li, side="right") - 1, 0, len(seg) - 1)
+    ab += (D[:, 0] - li)[:, None] * T[kseg]
+    tan3 = np.c_[T[kseg, 0] * dp[0], T[kseg, 1], T[kseg, 0] * dp[1]]
+    N3 = np.array([npn[0], 0.0, npn[1]])
+    P3 = np.c_[ab[:, 0] * dp[0] + D[:, 1] * npn[0], ab[:, 1], ab[:, 0] * dp[1] + D[:, 1] * npn[1]]
+    U3 = nl[:, :1] * tan3 + nl[:, 1:] * N3[None, :]
+    return P3, U3
+
+
 def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, False), sheepskin=None,
               tracks=True, harness=True, finish=None):
     """IPECO 3A318-type crew seat of the pilot (side=-1) or co-pilot (+1) at interior.crew_srp(side, dx, dz): dx fore
@@ -630,6 +782,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
     g = pillow(lp, tl_c, rl if sk else 0.028, 0.012, h=None if sk else 0.024,
                crown=None if sk else thighs(0.012, 0.07), n_round=2 if sk else 3)
     geos.append(_mats(g.map(lambda V: pan_map(t0 - sk_in)(V, tl_c)), M_CREW))
+    obst = [geos[-1]]                                                # what the lap belts drape over (review r3 K1)
     if sk:
         # pad plan: the thigh-pad fronts run on SK_WRAP_SEAT past the leather front and are wrapped round its front
         # roll (radius rl, 2 mm clear); the pad's flat top SK_CROWN_SEAT + SK_LUMP below the drawn top, so the crowned,
@@ -655,10 +808,12 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
                        fluff=lambda a, b: lump(a, b) + fine(a, b))
             g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
             geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
+            obst.append(geos[-1])
 
     # ---- pan shell under the cushion (black), side plates, life-vest box, cross tubes, tracks, fittings
     pcs0, _ = I.crew_seat_profile(hc, 0.0)
     geos.append(slab(fillet(pcs0["pan"], 0.012), lo + 0.01, hi - 0.01, 0.010, M_BASE))
+    obst.append(geos[-1])
     base = I.crew_base_profile(vf)
     pw = 0.5 * float(c["base_w"])
     for sg in (-1, 1):
@@ -686,7 +841,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
     ry = float(c["rail_dy"])
     for sg in (-1, 1):
         for u in (ur + 0.035, uf - 0.035):
-            s_a, s_b = sg * (ry - 0.5 * tw), sg * (pw + 0.006)
+            s_a, s_b = sg * (ry - 0.5 * tw), sg * (pw + 0.0055)       # 0.5 mm inside the plate's outer face (r3 K3)
             geos.append(cbox((u, 0.5 * (s_a + s_b), vf + 0.5 * (th + 0.012)), (0.05, abs(s_b - s_a), th + 0.012),
                              M_RAIL))
 
@@ -811,31 +966,46 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
     backg = [g_.rot((0.0, 0.0), recline) for g_ in back]
     geos += backg
     if harness:
+        # everything a strap may rest on (cushion, fleece, pan, back shell / cover, headrest): strap_clear lifts each
+        # strap clear of it (review r3 K1: straps laid on the analytic fleece crown sank between its lumps)
+        rest_on = obst + [g_ for g_ in backg if set(g_.mats.values()) & {M_SHEEP, M_SHELL, M_CREW}]
         rr_ = math.radians(recline)
         Rr = np.array([[math.cos(rr_), 0, -math.sin(rr_)], [0, 1, 0], [math.sin(rr_), 0, math.cos(rr_)]])
         for pts, ups in straps:
             pts, ups = pts @ Rr.T, ups @ Rr.T
             end = buckle + [-0.022, np.sign(pts[0, 1]) * 0.018, 0.004]
             mid = 0.55 * pts[-1] + 0.45 * end + [0.010, 0.0, 0.004]
-            geos.append(ribbon(np.vstack([pts, mid, end]), np.vstack([ups, [[0.6, 0, 0.8]] * 2]), 0.046, M_HARN,
-                               n=30))
-        # lap-belt halves: anchor below the pan's rear corner, over the sleeve's side, across it to the buckle
+            Ps, Us = _catmull(np.vstack([pts, mid, end]), 30), _catmull(np.vstack([ups, [[0.6, 0, 0.8]] * 2]), 30)
+            Ps, Us = strap_clear(Ps, Us, rest_on, 0.046, 0.0035)
+            geos.append(ribbon(Ps, Us, 0.046, M_HARN, n=None))
+        # lap-belt halves (review r3 K1): from a bracket on the pan's side at its rear, up the cushion side, over the
+        # sleeve's roll and across it to the buckle, draped under tension over the modelled fleece (draped_strap: the
+        # upper hull of the fleece / cushion under the belt, 1.5 mm clear), 2 mm webbing with rounded edges
         for s_side in (lo, hi):
             sg = float(np.sign(s_side))
-            e_ = s_side - sg * 0.02
-            ctrl = np.array([[-0.06, s_side + sg * 0.010, -0.050], [-0.03, s_side + sg * 0.012, -0.010],
-                             fleece_pt(0.005, s_side - sg * 0.001, 0.004), fleece_pt(0.035, e_ - sg * 0.03),
-                             fleece_pt(0.075, sg * 0.095), buckle + [-0.004, sg * 0.036, -0.008]])
-            ups = np.array([[-0.8, sg * 0.6, 0.2], [-0.4, sg * 0.8, 0.4], [-0.1, sg * 0.6, 0.8], [0, sg * 0.1, 1],
-                            [0, 0, 1], [0.2, 0, 1]])
-            geos.append(ribbon(ctrl, ups, 0.046, M_HARN))
+            s_pan = s_side - sg * 0.010                                 # the pan shell's side face
+            ua, ca = 0.050, -(t1 + 0.0175)                             # anchor: pan side, ahead of the back's
+            #                                                              fleece, mid-depth of the pan
+            bend = buckle + [-0.004, sg * 0.036, -0.008]
+            a_b = float(bend[0] * dp[0] + bend[2] * dp[1])
+            c_b = float(bend[0] * npn[0] + bend[2] * npn[1])
+            plan = np.array([(ua, s_side + sg * 0.030), (ua, s_side - sg * 0.010), (ua + 0.022, s_side - sg * 0.065),
+                             (0.5 * (ua + a_b) + 0.012, sg * 0.080), (a_b, float(bend[1]))])
+            Pb, Ub = draped_strap(obst, plan, ca, c_b, dp, npn)
+            Pb, Ub = strap_clear(Pb, Ub, rest_on, 0.046, 0.002)
+            geos.append(ribbon(Pb, Ub, 0.046, M_HARN, th=0.002, n=None, rounded=True))
+            # the anchor bracket on the pan side (the belt end inside it)
+            s_out = float(Pb[0, 1])
+            geos.append(cbox((ua + 0.002, 0.5 * (s_pan + s_out), ca), (0.030, abs(s_out - s_pan) + 0.006, 0.026),
+                             M_BASE))
         # crotch strap: from the pan front under the notch, up through it and back along the split to the buckle
         a_n = D - nd
         z_split = lambda a: 0.5 * (fleece_pt(a, -0.021, 0.0) + fleece_pt(a, 0.021, 0.0))   # noqa: E731
-        ctrl = np.array([[a_n + 0.02, 0.0, (t0 - ct) * 1.0 + 0.012], [a_n + 0.012, 0.0, t0 - sk_t + 0.002],
-                         z_split(a_n - 0.02), z_split(0.30), z_split(0.21), buckle + [0.030, 0.0, -0.006]])
+        ctrl = np.array([[a_n + 0.02, 0.0, (t0 - ct) * 1.0 + 0.012], [a_n + 0.016, 0.0, t0 - sk_t + 0.014],
+                         z_split(a_n - 0.03), z_split(0.30), z_split(0.21), buckle + [0.030, 0.0, -0.006]])
         ups = np.array([[1, 0, 0], [0.7, 0, 0.7], [0, 0, 1], [0, 0, 1], [0, 0, 1], [-0.2, 0, 1]])
-        geos.append(ribbon(ctrl, ups, 0.040, M_HARN))
+        Pc, Uc = strap_clear(_catmull(ctrl, 20), _catmull(ups, 20), rest_on, 0.040, 0.0035)
+        geos.append(ribbon(Pc, Uc, 0.040, M_HARN, n=None))
         nrm = _unit3([0.25, 0.0, 0.97])
         geos.append(tube(buckle - 0.008 * nrm, buckle + 0.008 * nrm, 0.036, M_METAL, n=20))
         geos.append(tube(buckle + 0.007 * nrm, buckle + 0.012 * nrm, 0.020, M_BLACK, n=16))
@@ -853,15 +1023,28 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
                      for t in [np.radians(np.linspace(-90, 90, 9))]] +
                     [np.c_[piv[0] + ar * np.cos(t), piv[1] + ar * np.sin(t)]
                      for t in [np.radians(np.linspace(90, 270, 9))]])
+    # the drawn arm (CREW_SEAT arm_h / arm_lw, L6 detail E1: a 45-mm capsule) is the WHOLE arm, fleece included
+    # (review r3 C2: rev C's sleeves stood 15 mm above it and 4-6 mm outside it in plan): with the cover the shell is
+    # a slimmer capsule (top 12 mm down, 4 mm in each side) and the sleeve over it ends on the drawn top and sides
+    sk_top, sk_side = (0.012, 0.004) if sk else (0.0, 0.0)
+    ar_s = ar - 0.5 * sk_top
+    cap_s = np.vstack([np.c_[piv[0] + al - 0.02 + ar_s * np.cos(t), piv[1] - 0.5 * sk_top + ar_s * np.sin(t)]
+                       for t in [np.radians(np.linspace(-90, 90, 9))]] +
+                      [np.c_[piv[0] + ar_s * np.cos(t), piv[1] - 0.5 * sk_top + ar_s * np.sin(t)]
+                       for t in [np.radians(np.linspace(90, 270, 9))]])
     for sg in (-1, 1):
         s0, s1 = (sg * W_ - aw, sg * W_) if sg > 0 else (sg * W_, sg * W_ + aw)
-        arm = [slab(_subdivide(cap, 0.06), s0, s1, 0.012, M_SHELL)]
-        pl = rrect(piv[0] - 0.012, s0 - 0.004, piv[0] + al - 0.028, s1 + 0.004, 0.02)
-        g = pillow(pl, 0.024 if sk else 0.014, 0.010 if sk else 0.008, 0.005 if sk else 0.004, h=0.03 if sk else None,
-                   crown=dome(0.005, 0.02) if sk else None, fluff=fleece(0.0015, 3) if sk else None)
-        ztop = piv[1] + ar
-        arm.append(_mats(g.map(lambda V, z=ztop: np.c_[V[:, 0], V[:, 1], z - 0.010 + V[:, 2]]),
-                         M_SHEEP if sk else M_CREW))
+        arm = [slab(_subdivide(cap_s, 0.06), s0 + sk_side, s1 - sk_side, 0.012 if not sk else 0.010, M_SHELL)]
+        if sk:
+            f_amp = 0.0012                                   # fleece lumps: the outline wiggles 1.6 x this
+            pl = rrect(piv[0] - 0.012, s0 + 0.0025, piv[0] + al - 0.028, s1 - 0.0025, 0.02)
+            g = pillow(pl, 0.0095, 0.0045, 0.003, h=0.03, crown=dome(0.0025, 0.02), fluff=fleece(f_amp, 3))
+            z0 = piv[1] + ar - sk_top - 0.001                            # 1 mm into the shell's top
+        else:
+            pl = rrect(piv[0] - 0.012, s0 - 0.004, piv[0] + al - 0.028, s1 + 0.004, 0.02)
+            g = pillow(pl, 0.014, 0.008, 0.004)
+            z0 = piv[1] + ar - 0.010
+        arm.append(_mats(g.map(lambda V, z=z0: np.c_[V[:, 0], V[:, 1], z + V[:, 2]]), M_SHEEP if sk else M_CREW))
         inner = sg * (_crew_back_hw(float(np.dot(piv, db))) - 0.02)
         arm.append(tube((piv[0], inner, piv[1]), (piv[0], s0 if sg > 0 else s1, piv[1]), 0.016, M_BASE, n=12))
         up = arm_up[0] if sg == si else arm_up[1]
@@ -888,21 +1071,38 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
 REAR_ROUND = 0.025       # [E] executive back: rear face rounded across, sides this far forward of the centreline
 
 
-EXEC_TOP = (0.85, 0.018, 0.085)   # [M] P1046406: the sides draw in over the top 15 % by 18 mm, corners r 0.085 (r2 F1)
+EXEC_TOP = (0.80, 0.018, 0.085)   # [M] P1046406: the sides draw in over the top ~20 % by 18 mm, corners r 0.085 (r2 F1)
 
 
 def _exec_hw(b, s_top, extra=0.0):
-    """Half-width of the executive back at along-back position b: lumbar back_w[1] up to mid-height, the shoulder
-    width back_w[0] at 85 % of the height, drawing in by EXEC_TOP toward the top, top corners rounded [E/M: photos]
-    (inside the L6 front view's chamfered top corners)."""
+    """Half-width of the executive back at along-back position b: lumbar back_w[1] up to 0.22, widening to the
+    shoulder width back_w[0] at 85 % of the height, then drawing in by EXEC_TOP toward the top on a smoothstep from
+    EXEC_TOP[0] of the height (review r3 K2: rev C drew in on a kink), the top corners rounded r EXEC_TOP[2] by
+    subtracting the circle's deficit from that curve (value and slope continuous) [E/M: photos] (inside the L6 front
+    view's chamfered top corners)."""
     e = I.EXEC_SEAT
     bw0, bw1 = 0.5 * e["back_w"][0], 0.5 * e["back_w"][1]
-    f85, taper, rr = EXEC_TOP
+    f0, taper, rr = EXEC_TOP
     b = np.asarray(b, float)
-    hw = np.interp(b, [0.0, 0.22, f85 * s_top, s_top], [bw1, bw1, bw0, bw0 - taper])
-    h0 = float(np.interp(s_top - rr, [0.0, 0.22, f85 * s_top, s_top], [bw1, bw1, bw0, bw0 - taper]))
-    corner = (h0 - rr) + np.sqrt(np.maximum(rr * rr - (b - (s_top - rr)) ** 2, 0.0))
-    return np.where(b > s_top - rr, corner, hw) + extra
+    hw = bw1 + (bw0 - bw1) * smoothstep(0.22, 0.85 * s_top, b) - taper * smoothstep(f0 * s_top, s_top, b)
+    d = np.clip(b - (s_top - rr), 0.0, rr)
+    return hw - (rr - np.sqrt(np.maximum(rr * rr - d * d, 0.0))) + extra
+
+
+def _densify_top(P, o, db, b0, step):
+    """Profile polygon P (u, v) with extra points (every `step`) on its edges beyond b0 along the back (o, db): the
+    lateral taper of the top band is then sampled finely (review r3 K2)."""
+    out = []
+    P = np.asarray(P, float)
+    for k in range(len(P)):
+        a, c = P[k], P[(k + 1) % len(P)]
+        out.append(a)
+        ba, bc = float((a - o) @ db), float((c - o) @ db)
+        if max(ba, bc) > b0:
+            n = int(np.ceil(np.linalg.norm(c - a) / step))
+            for t in np.linspace(0.0, 1.0, n + 1)[1:-1]:
+                out.append(a + t * (c - a))
+    return np.array(out)
 
 
 def seat_record(seat_id, layout=None):
@@ -952,8 +1152,41 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
 
     # ---- skirt under the cushion (anthracite, like the shroud: P1046406 [M]) and the light-grey leather cushion
     #      (drawing exec_seat_side)
-    skirt = fillet([(-0.08, bh), (sf - 0.04, bh), (sf - 0.02, pt), (-0.06, pt)], 0.02)
-    geos.append(slab(skirt, -(cw - 0.01), cw - 0.01, 0.018, M_CAB_DARK))
+    und = I.exec_under_profile(rec["facing"])
+    lrest = und["legrest"]
+    skirt = und["skirt"].copy()
+    if lrest is not None:                         # the skirt stops 1 mm behind the legrest's rear face
+        skirt[1:3, 0] = float(lrest[:, 0].min()) - 0.001
+    geos.append(slab(fillet(skirt, 0.02), -(cw - 0.01), cw - 0.01, 0.018, M_CAB_DARK))
+    if lrest is not None:
+        # legrest (forward-facing seats, EXEC_SEAT legrest; review r3 F1): a crowned leather pad seen from the front
+        # (the drawn width x face height), its depth mapped onto the drawn side profile -- the full depth above the
+        # shroud, a lip only in front of the shroud face below its top edge; the front 10 mm (the rounded face edge)
+        # is kept undistorted
+        lw, lh, lset, ld = (float(v) for v in e["legrest"])
+        uf = float(lrest[:, 0].max())
+        vb, vt = float(lrest[:, 1].min()), float(lrest[:, 1].max())
+        lip = uf - float(lrest[2, 0])                                  # lip depth in front of the shroud
+        r_f = 0.010
+        ol = rrect(-0.5 * lw, vb, 0.5 * lw, vt, 0.024, max_len=0.04)
+        ins = []                                                       # outline points where the depth changes
+        for k in range(len(ol)):
+            p0_, p1_ = ol[k], ol[(k + 1) % len(ol)]
+            ins.append(p0_)
+            for vv in sorted(bh + np.array([0.001, 0.004, 0.008, 0.011]), reverse=bool(p1_[1] < p0_[1])):
+                if (p0_[1] - vv) * (p1_[1] - vv) < 0:
+                    ins.append(p0_ + (vv - p0_[1]) / (p1_[1] - p0_[1]) * (p1_ - p0_))
+        g = pillow(np.array(ins), ld, r_f, 0.004, h=0.03, crown=dome(0.004, 0.05))
+
+        def lr_map(V):
+            a, b, c = V[:, 0], V[:, 1], V[:, 2]
+            cr = np.maximum(ld - c, 0.0)                                # depth behind the face
+            T = lip + (ld - lip) * smoothstep(bh + 0.001, bh + 0.011, b)
+            k = (T - r_f) / (ld - r_f)
+            u = np.where(cr <= r_f, uf - cr, uf - r_f - (cr - r_f) * k)
+            u = u + np.maximum(c - ld, 0.0)                               # the crown bulges forward
+            return np.c_[u, a, b]
+        geos.append(_mats(g.map(lr_map), M_CAB))
     u_r, u_f = -0.02, sf - 0.05
     slope = (ctop - (sh + 0.025)) / (u_f - u_r)
 
@@ -975,8 +1208,10 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
         geos.append(_mats(g.map(cush_map(tc, extra=0.004)), M_CAB))
     # soft front drape: the leather rolls over the cushion's front edge down onto the skirt (P1046402 / 03 [M], review
     # r1 F10), inside the drawn cushion front
-    drape = fillet([(sf - 0.055, pt - 0.052), (sf - 0.006, pt - 0.040), (sf - 0.002, pt + 0.030),
-                    (sf - 0.055, pt + 0.030)], [0.016, 0.022, 0.020, 0.016], max_len=0.03)
+    d_lo = (0.004, 0.003) if lrest is not None else (0.052, 0.040)    # with a legrest it stops at its top (r3 F1)
+    drape = fillet([(sf - 0.055, pt - d_lo[0]), (sf - 0.006, pt - d_lo[1]), (sf - 0.002, pt + 0.030),
+                    (sf - 0.055, pt + 0.030)], [0.012, 0.012, 0.020, 0.012] if lrest is not None else
+                   [0.016, 0.022, 0.020, 0.016], max_len=0.03)
     geos.append(slab(drape, -(cw - 0.014), cw - 0.014, 0.012, M_CAB))
 
     # ---- back group (upright, then reclined about the SRP): shell, V-stitched front panels, rear insert + pocket,
@@ -987,7 +1222,8 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     o = np.array([0.0, sh])
     pr = I.exec_back_profile(False)
     bw1 = 0.5 * float(e["back_w"][1])
-    back = [slab(fillet(pr["back"], 0.03), -bw1, bw1, 0.03, M_CAB, max_len=0.035, h=0.05,
+    back = [slab(_densify_top(fillet(pr["back"], 0.03), o, db, 0.74 * s_top, 0.019), -bw1, bw1, 0.03, M_CAB,
+                 max_len=0.035, h=0.05,
                  width=lambda u, v: _exec_hw((u - o[0]) * db[0] + (v - o[1]) * db[1], s_top) / bw1,
                  post=lambda u, v, e: rear_round(nb, REAR_ROUND)(u - o[0], v - o[1], e))]
     fmap = _back_map(db, nb, o=o, front=lambda b: 0.02 + 0.0 * b)

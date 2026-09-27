@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="D", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-09-26")
+             size="A1", scale="-", rev="E", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-09-27")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -179,6 +179,9 @@ def crew_general(ds, x0, y0, x1, ctx):
         ("seat vs the tunnel plinth", f"{mm(kc['plinth_lat'])}",
          f"trimmed inboard cushion (symmetric: {sgn(kc['plinth_lat_sym'])}; its top only "
          f"{mm(kc['plinth_cushion_top'])} above the plinth at the lowest fwd seat); plates {mm(kc['plate_lat'])}"),
+        ("armrests vs the pedestal", f"{mm(kc['arm_pedestal'])}",
+         f"inboard arm face to the PCL grip over the seat travel (lowest seat), >= "
+         f"{mm(I.CRITERIA['arm_pedestal'])} [E]; the arm's bottom clears the quadrant top"),
         ("ingress: headrests / backs / cushions", f"{mm(ig['head_gap'])} / {mm(ig['back_gap'])} / "
          f"{mm(ig['cushion_gap'])}",
          f"95th hip {mm(ig['hip'])}: hips pass between the headrests, legs between the backs, then over the inboard "
@@ -568,7 +571,8 @@ def _height(fn, width, ctx):
 REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
              ("B", "2026-09-24", "Stage-2 parameter tables, checks; review r1"),
              ("C", "2026-09-26", "review r2 + r3 (list on sheet 1): sensitivity, CG cross-check, 5th-female point"),
-             ("D", "2026-09-26", "Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track"))
+             ("D", "2026-09-26", "Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track"),
+             ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

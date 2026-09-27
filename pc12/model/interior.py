@@ -223,9 +223,24 @@ YOKE = dict(
                                    "the hub): radius 0.020 -> 0.0155, length 0.125 -> 0.140 (the tops 15 mm higher)"),
     grip_dz=P(-0.040, "[M] grip bottoms 0.04 below the hub centre, near the hub bottom (JTF key: grips WL 1.80-1.93 "
                       "on hub 1.79-1.90; P1046408 -0.05..+0.09); tops ~0.04 above the hub top (P1046408)"),
+    grip_head=PT((0.036, 0.020), "[M] swollen grip head: over its top 36 mm the grip swells from the grip radius to "
+                                 "0.020, the hat switch on top (P1046408 pair: heads ~45 wide on ~31 grips; brochure "
+                                 "p.12), review r3 F2"),
+    shield=PT(((0.00, 1.00), (0.12, 0.92), (0.50, 0.37), (0.85, 0.05), (1.00, 0.00)),
+              "[M] white shield (the hub's front cover): half-width from its top (t = 0) to the stem (t = 1) as the "
+              "fraction between hub_bot_w / 2 and hub_whd width / 2 -- a goblet with concave sides, its top corners "
+              "at +/- hub width / 2 (P1046408: ~0.52 of the grip span; review r3 F2: rev C ran them out to the grips)"),
+    shield_dip=P(0.004, "[M] the shield's top edge dips this much to the centre under the badge (a shallow V)"),
+    body_arm=PT((-0.004, 0.005), "[M] black yoke body behind the shield: its lower edge leaves each grip's inner edge "
+                                 "this far above the hub centre and runs down-inboard to the shield foot, rimming it "
+                                 "by the second value; its top runs from the grip heads into the shield's top corners "
+                                 "(P1046408, review r3 F2)"),
     column_r=P(0.022, "[E] horizontal column into the lower panel"),
     travel=PT((-0.090, 0.090), "[E] pitch travel fwd / aft of neutral"),
-    roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it"),
+    roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it.  OPEN, owner decision "
+                 "(review r3 C3): at the L6B design seat setting the 95th-pct knees meet the yoke from ~17.5 deg of "
+                 "roll (50th ~25, 5th male ~22.5, 5th female ~87.5; L6B detail F / fit_check 19 compute it); options: "
+                 "the seat setting / pedal crank the 95th would use, a smaller roll [E], or the grip cant / span"),
 )
 PEDALS = dict(
     dy=P(0.125, "[M] pedal-pad centres at seat CL +/- (P1046408 face-on: 0.24-0.26 apart, MFD-bezel scale + depth "
@@ -248,6 +263,9 @@ PEDESTAL = dict(
              "[M] centre stack side profile at BL 0 (x, dz vs the MFD): MFD bezel foot, SDU top, SDU bottom (the "
              "0.19 face reclined 35 deg), pad; the face runs on at 35 deg to the quadrant (P1046406 / P1046408)"),
     pcl=PT((3.950, -0.050, 0.470), "[M] PCL knob x, BL, height above floor (0.45-0.5)"),
+    pcl_grip=PT((0.036, 0.080, 0.072), "[M] PCL grip: a satin pewter paddle, fore-aft, width, height, its top at the "
+                                       "PCL height, tipped forward (throttle photo, P1046408-10; review r3 F3: rev C "
+                                       "built a 60 x 88 x 48 puck)"),
     flap=PT((3.930, 0.050, 0.420), "[S] flap lever right of the PCL (POH 7-3-6); position [E]"),
     ccd=PT((4.090, 0.000, 0.340), "[S] cursor control device palm grip at the aft end (cockpit key 27)"),
     plinth_pad=PT((0.020, 0.025), "[H] carpeted plinth over gear.NOSE_TUNNEL: wall, top gap (fit_check 11)"),
@@ -296,6 +314,12 @@ EXEC_SEAT = dict(
     head_wh=PT((0.26, 0.19), "[M]"),
     base_wh=PT((0.36, 0.17), "[M] anthracite base shroud, life-vest pictogram"),
     base_u=P(0.380, "[E] base shroud front, from the SRP (+ = forward): under the front of the cushion (P1046405)"),
+    legrest=PT((0.360, 0.160, 0.020, 0.070),
+               "[M] FORWARD-facing seats only (review r3 F1; P1046402 / 03 / 04 / 05: a light leather block hanging "
+               "under the cushion front, about the base-shroud width, its face about as tall as the shroud face below "
+               "it, its lower edge over the shroud's top edge; the aft-facing PAX 1 / 2 have none, P1046406): width, "
+               "face height down from the cushion underside, face set back from the cushion front, depth [E]; the "
+               "cushion's leather drape stops at the legrest top"),
     travel=PT((0.1016, 0.0508, 0.0914), "[S] POH 7-7-1.2: fwd/aft 4 in (fwd-facing), 2 in (aft-facing), inboard 3.6 in"),
     recline_deg=P(45.0, "[E] recline for the drawing envelope (lay-flat where space allows [S])"),
 )
@@ -457,6 +481,8 @@ CRITERIA = dict(
     knee_angle=P(120.0, "[E] knee angle at neutral pedals each occupant sets with the seat notch and pedal crank"),
     knee_ext=P(165.0, "[E] extended leg at full forward rudder: knee angle <= 160-165 deg (reach limit)"),
     plinth_clear=P(0.015, "[E] seat pan / cushion to the tunnel plinth over the whole seat travel"),
+    arm_pedestal=P(0.010, "[E] crew armrests (down or stowed) to the pedestal and its levers over the whole seat "
+                          "travel (review r3 C2)"),
     furniture_clear=P(0.010, "[E] reclined seat back to furniture / the next occupant's knees"),
 )
 
@@ -769,6 +795,27 @@ def headrest_lock(p):
     return float(pos[int(np.argmin(np.abs(pos - s)))])
 
 
+def exec_under_profile(facing=1):
+    """Under-cushion pieces of the executive seat in seat-local side view (u forward from the SRP, v above the floor):
+    {'skirt': the anthracite skirt between the base shroud top and the cushion, 'legrest': the leather legrest block
+    (forward-facing seats only, EXEC_SEAT legrest; None for facing -1)}.  With a legrest the skirt stops behind it.
+    The block's face runs down over the shroud's top edge as a lip in front of the shroud face (P1046404 / 05)."""
+    e = EXEC_SEAT
+    sf, bh, bu = e["srp_front"], e["base_wh"][1], e["base_u"]
+    pt = e["cushion_top"] - e["cushion_t"]
+    out = dict(skirt=np.array([(-0.08, bh), (sf - 0.04, bh), (sf - 0.02, pt), (-0.06, pt)]), legrest=None)
+    if facing > 0:
+        lw, lh, lset, ld = e["legrest"]
+        uf, vt = sf - lset, pt - 0.005                                   # face; top tucked under the cushion
+        vb = vt - lh
+        ur = uf - ld
+        lip = bu + 0.002                                                 # lip rear: just in front of the shroud
+        out["legrest"] = (np.array([(ur, max(bh + 0.004, vb)), (lip, bh + 0.004), (lip, vb), (uf, vb), (uf, vt),
+                                    (ur, vt)]) if vb < bh else np.array([(ur, vb), (uf, vb), (uf, vt), (ur, vt)]))
+        out["skirt"] = np.array([(-0.08, bh), (ur + 0.010, bh), (ur + 0.010, pt), (-0.06, pt)])
+    return out
+
+
 def exec_back_profile(raised=False, recline=None):
     """Back + headrest of the executive seat in seat-local coordinates (u forward from the SRP, v above the floor):
     {'back', 'head', 'posts'}; the headrest lowest (or raised by head_slide), the back at back_deg (or `recline` deg
@@ -985,20 +1032,70 @@ def yoke_grip_y(z, d=1):
     return float(p0[0] + (z - p0[1]) * (p1[0] - p0[0]) / (p1[1] - p0[1]))
 
 
-def yoke_outline_yz(roll=0.0):
-    """Front-view outline pieces [(N, 2) (y, z)] of one yoke about its column axis (origin = the hub centre): the
-    white Y hub (narrowing to the stem, YOKE hub_bot_w, its shoulders reaching out to the grip axes) and the two
-    grips (capsules, tops leaning inboard: yoke_grip_axis), rolled `roll` deg (counter-clockwise seen from behind).
-    Piece 0 is the hub."""
-    hw, hh, hd = YOKE["hub_whd"]
+def yoke_grip_outline(d=1, n=10):
+    """Front-view outline (y, z) of the right (d=+1) or left grip about the hub centre: the capsule of yoke_grip_axis
+    (radius YOKE grip) swelling over its top grip_head[0] to the head radius grip_head[1], the tip where the capsule's
+    tip was (review r3 F2)."""
+    gl, gr, _ = YOKE["grip"]
+    hl, rh = YOKE["grip_head"]
+    p0, p1 = yoke_grip_axis(d)
+    ax = (p1 - p0) / np.linalg.norm(p1 - p0)
+    nrm = np.array([ax[1], -ax[0]])
+    tip = p1 + gr * ax
+    ch = tip - rh * ax                                                  # head circle centre
+    a = np.linspace(0.0, 1.0, 15)
+    C = p0[None, :] + a[:, None] * (ch - p0)[None, :]
+    along = (C - (p0 - gr * ax)) @ ax                                   # distance from the bottom tip
+    t = np.clip((along - (gl - hl - 0.010)) / (gl - rh - (gl - hl - 0.010)), 0.0, 1.0)
+    r = gr + (rh - gr) * t * t * (3.0 - 2.0 * t)
+    right, left = C + r[:, None] * nrm, C - r[:, None] * nrm
+    th0 = math.atan2(nrm[1], nrm[0])
+    top = [ch + rh * np.array([math.cos(th0 + u), math.sin(th0 + u)]) for u in np.linspace(0.0, math.pi, n)[1:-1]]
+    bot = [p0 + gr * np.array([math.cos(th0 + math.pi + u), math.sin(th0 + math.pi + u)])
+           for u in np.linspace(0.0, math.pi, n)[1:-1]]
+    return np.vstack([right, top, left[::-1], bot])
+
+
+def yoke_shield_yz():
+    """Front-view outline (y, z) of the white shield about the hub centre: top corners at +/- hub_whd width / 2 on the
+    hub top, the top edge dipping shield_dip to the centre, concave sides narrowing to the hub_bot_w stem (YOKE
+    shield)."""
+    hw, hh, _ = YOKE["hub_whd"]
     bw = YOKE["hub_bot_w"]
-    gr = YOKE["grip"][1]
-    z1, z2 = 0.5 * hh - 0.040, 0.5 * hh + 0.005
-    hub = [(-0.5 * bw, -0.5 * hh), (0.5 * bw, -0.5 * hh), (0.5 * hw, z1), (yoke_grip_y(z1, 1), z1),
-           (yoke_grip_y(z2, 1), z2), (yoke_grip_y(z2, -1), z2), (yoke_grip_y(z1, -1), z1), (-0.5 * hw, z1)]
-    out = [np.array(hub)]
-    for d in (-1, 1):
-        out.append(_capsule(*yoke_grip_axis(d), gr))
+    tt, ff = (np.array(v, float) for v in zip(*YOKE["shield"]))
+    t = np.linspace(0.0, 1.0, 11)
+    w = 0.5 * bw + (0.5 * hw - 0.5 * bw) * np.interp(t, tt, ff)
+    z = 0.5 * hh - t * hh
+    right = np.c_[w, z]
+    left = np.c_[-w, z][::-1]
+    return np.vstack([right, left, [(0.0, 0.5 * hh - YOKE["shield_dip"])]])
+
+
+def yoke_body_yz():
+    """Front-view outline (y, z) of the black yoke body about the hub centre: from the shield foot (rimmed by
+    body_arm[1]) its lower edge runs up-outboard to each grip's axis at body_arm[0], up the grip to the shoulder
+    (5 mm above the hub top) and back inboard under the shield's top corners (YOKE body_arm)."""
+    hw, hh, _ = YOKE["hub_whd"]
+    bw = YOKE["hub_bot_w"]
+    za, rim = YOKE["body_arm"]
+    zs = 0.5 * hh + 0.005
+    half = [(0.5 * bw + rim, -0.5 * hh - rim)]
+    y_a = yoke_grip_y(za, 1)
+    for f in (0.35, 0.70):                                              # slightly concave lower edge
+        q = np.array(half[0]) + f * (np.array([y_a, za]) - np.array(half[0]))
+        half.append((q[0] + 0.004 * f * (1 - f) * 4, q[1] - 0.004 * f * (1 - f) * 4))
+    half += [(y_a, za), (yoke_grip_y(zs, 1), zs), (0.5 * hw - 0.004, 0.5 * hh - 0.006)]
+    H = np.array(half)
+    cen = (0.0, 0.5 * hh - YOKE["shield_dip"] - 0.008)
+    return np.vstack([H[::-1] * [-1, 1], H, [cen]])[::-1]
+
+
+def yoke_outline_yz(roll=0.0):
+    """Front-view outline pieces [(N, 2) (y, z)] of one yoke about its column axis (origin = the hub centre): piece 0
+    the white shield (yoke_shield_yz), 1 the black body behind it (yoke_body_yz), 2 / 3 the left / right grips with
+    their swollen heads (yoke_grip_outline), rolled `roll` deg (counter-clockwise seen from behind).  Drawn in the order
+    1, 0, 2, 3 (the shield on the body)."""
+    out = [yoke_shield_yz(), yoke_body_yz()] + [yoke_grip_outline(d) for d in (-1, 1)]
     return [_rot(P, np.zeros(2), roll) for P in out] if roll else out
 
 
@@ -1231,6 +1328,17 @@ def crew_checks(side=-1):
         * math.tan(math.radians(c["pan_deg"]))
     out["plinth_cushion_top"] = float(zmin - pz)                   # lowest cushion top over the plinth, above it
     out["plate_lat"] = float(abs(c["bl"]) - 0.5 * c["base_w"] - phw)
+    # armrests vs the pedestal over the seat travel (review r3 C2): the inboard arm (its face at seat CL - width / 2,
+    # its bottom arm_h - 45 mm above the SRP, lowest seat) against the PCL grip standing above it (lateral) and the
+    # quadrant top with its switch boxes (vertical); stowed, the arm stands above the back's hinge, higher still
+    pe = PEDESTAL
+    arm_in = abs(c["bl"]) - 0.5 * c["width"]
+    zb_arm = FLOOR["fd_wl"] + c["srp_h"] - c["travel_z"] + c["arm_h"] - 0.045
+    gaps = [zb_arm - (FLOOR["fd_wl"] + pe["top_h"] + 0.020)]
+    pcl_top = FLOOR["fd_wl"] + pe["pcl"][2]
+    if pcl_top > zb_arm:
+        gaps.append(arm_in - (abs(pe["pcl"][1]) + 0.5 * pe["pcl_grip"][1]))
+    out["arm_pedestal"] = float(min(gaps))
     # reach (5th female and 95th male at their settings)
     out["reach"] = [(lab, kind, {k: reach_of(occ[k]["pose"], t, side, kind) for k in ("p5f", "p95m")})
                     for lab, t, kind in reach_targets(side)]

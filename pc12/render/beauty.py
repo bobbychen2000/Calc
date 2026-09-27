@@ -533,7 +533,7 @@ PRESETS = {
         env="interior", hdri="derelict_airfield_01", sun_az=100.0, strength=INTERIOR_DAYLIGHT,
         camera_grade=INTERIOR_WINDOW_VIEW, exposure=0.35, interior_lights=0.45, samples=48, noise_threshold=0.03,
         bounces=(8, 4, 4, 6, 12), grade=dict(white=0.97, gamma=1.05, sat=1.05),
-        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
+        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0, tables=dict(club_p=0.5)),   # the port leaf out, as P1046406
     ),
     "panel_faceon": dict(
         photo="interior/fd_commons_pro3001_P1046408.jpg",
@@ -559,12 +559,12 @@ PRESETS = {
     "cabin_club": dict(
         photo=None,
         photo_note="3/4 over the club four from the aisle behind PAX 4, head under the headliner (brochure-style), "
-                   "tables stowed",
+                   "the port club table's leaf out (P1046404 / 05)",
         camera=dict(fallback=dict(pos=(7.80, 0.20, 2.56), target=(6.10, -0.36, 1.45), hfov=70.0), W=1600, H=1000),
         env="interior", hdri="derelict_airfield_01", sun_az=100.0, strength=INTERIOR_DAYLIGHT,
         camera_grade=INTERIOR_WINDOW_VIEW, exposure=0.4, interior_lights=0.45, samples=48, noise_threshold=0.03,
         bounces=(8, 4, 4, 6, 12), grade=dict(white=0.97, gamma=1.05, sat=1.05),
-        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
+        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0, tables=dict(club_p=0.5)),
     ),
 }
 # interior env: soft cabin / cockpit lights (x, y, z, size x, size y, W; model axes, pointing down) under the
@@ -790,8 +790,32 @@ class Scene:
         o.rotation_quaternion = Quaternion(gl2b(pv["axis"]), math.radians(deg))
 
     def pose(self, gear=0.0, nose_doors=None, door_airstair=0.0, door_cargo=0.0, pitch=0.0, prop_clock=0.0,
-             flaps=0.0, rpm=0.0, shutter_s=0.0, **_):
+             flaps=0.0, rpm=0.0, shutter_s=0.0, tables=None, **_):
         P = self.pivot
+        # club tables (pivot kind 'table', model/cabin.py table_parts; review r3 F5): {table key: open}, 0 = stowed
+        # (TTL, the default: hidden in the ledge), 0.5 = the outboard leaf out (the built pose), 1 = deployed (the
+        # inboard leaf unfolded about its hinge) -- as the viewer poses them
+        tables = dict(tables or {})
+        sm = lambda t: t * t * (3.0 - 2.0 * t)                             # noqa: E731 -- the viewer's easing
+        for pid, pv in P.items():
+            if pv.get("kind") != "table":
+                continue
+            o = float(tables.get(pv.get("table"), 0.0))
+            if o <= 1e-6:
+                self.hide([pid])
+                continue
+            rest = float(pv.get("rest", 0.5))
+            fs, fsr = sm(min(1.0, o / 0.5)), sm(min(1.0, rest / 0.5))
+            ob = self.parts.get(pid)
+            if ob is not None and abs(fs - fsr) > 1e-9:
+                tr = np.asarray(pv.get("slide", (0, 0, 0)), float) * (fs - fsr)
+                ob.location = tuple(np.asarray(ob.location) + np.asarray(m2b(tr)))
+            lid = pid + "_leaf"
+            if lid in P:
+                ff = sm(min(1.0, max(0.0, (o - 0.5) / 0.5)))
+                ffr = sm(min(1.0, max(0.0, (rest - 0.5) / 0.5)))
+                if abs(ff - ffr) > 1e-9:
+                    self._rot_local(lid, math.degrees(P[lid]["fold"] * (ff - ffr)))
         # doors (open angle in radians)
         for pid, v in (("door_airstair", door_airstair), ("door_cargo", door_cargo)):
             if pid in P and v:

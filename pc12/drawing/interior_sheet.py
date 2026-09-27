@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="D", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-09-26")
+             size="A1", scale="AS SHOWN", rev="E", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-09-27")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -53,6 +53,10 @@ REVISIONS = (
     ("D", "2026-09-26", "Stage-3 review r2: crew sheepskin 34 [M] drawn inside the cushion / back outline (the "
                         "3-D cover had stood proud of it), yoke grips r 15.5 x 140 [M] (P1046408), crew tracks end "
                         "15 mm past the rear foot (clear of the stowed curtain, L6B)"),
+    ("E", "2026-09-27", "Stage-3 review r3: legrest under the cushion of the forward-facing executive seats [M] "
+                        "(P1046402-05); PC-24 yoke face: white goblet shield (top +/-70) on a black body, grip heads "
+                        "r 20 [M] (P1046408); PCL paddle grip [M]; armrest vs pedestal row (L6B); yoke-roll knee "
+                        "contact recorded as an owner decision"),
 )
 
 # ---- fills (clean sheet)
@@ -320,8 +324,11 @@ def exec_seat_side(rec, fl, raised=False, recline=None):
            ("ctrl", local(o, fx, rrect(a1 - cl_ - 0.008, at - 0.025 - ch_, a1 - 0.008, at - 0.025, 0.008)), "#C3C8CB"),
            ("rail", local(o, fx, np.array([(bu - bl_ - 0.06, 0.0), (bu + 0.04, 0.0), (bu + 0.04, th),
                                            (bu - bl_ - 0.06, th)])), INK),
-           ("base", local(o, fx, rrect(bu - bl_, th, bu, bh, 0.01)), BASE_FILL),
-           ("pan", local(o, fx, np.array([(-0.08, bh), (sf - 0.04, bh), (sf - 0.02, pt), (-0.06, pt)])), SHELL_FILL)]
+           ("base", local(o, fx, rrect(bu - bl_, th, bu, bh, 0.01)), BASE_FILL)]
+    und = I.exec_under_profile(rec["facing"])                        # skirt; legrest on forward-facing seats (r3)
+    out.append(("pan", local(o, fx, und["skirt"]), SHELL_FILL))
+    if und["legrest"] is not None:
+        out.append(("legrest", local(o, fx, und["legrest"]), SEAT_FILL))
     cush = np.array([(-0.04, pt - 0.01), (sf - 0.02, pt - 0.01), (sf, pt + 0.03), (sf - 0.01, ct - 0.01),
                      (sf - 0.05, ct), (-0.02, sh + 0.025)])
     out.append(("cushion", local(o, fx, cush), SEAT_FILL))
@@ -1276,8 +1283,11 @@ def front_seat_exec(yc, fl, raised=False):
            ("head", rrect(-0.5 * e["head_wh"][0], fl + e["head_top"] + hup - e["head_wh"][1], 0.5 * e["head_wh"][0],
                           fl + e["head_top"] + hup, 0.04), SEAT_FILL),
            ("base", rrect(-0.5 * bw, fl + I.SEAT_TRACKS["h"], 0.5 * bw, fl + bh, 0.01), BASE_FILL),
-           ("pan", rrect(-cw + 0.01, fl + bh, cw - 0.01, fl + pt, 0.01), SHELL_FILL),
-           ("cushion", rrect(-cw, fl + pt, cw, fl + e["cushion_top"], 0.03), SEAT_FILL)]
+           ("pan", rrect(-cw + 0.01, fl + bh, cw - 0.01, fl + pt, 0.01), SHELL_FILL)]
+    lg = I.exec_under_profile(1)["legrest"]                             # forward-facing: the legrest (review r3 F1)
+    lw = e["legrest"][0]
+    pcs.append(("legrest", rrect(-0.5 * lw, fl + lg[:, 1].min(), 0.5 * lw, fl + lg[:, 1].max(), 0.015), SEAT_FILL))
+    pcs.append(("cushion", rrect(-cw, fl + pt, cw, fl + e["cushion_top"], 0.03), SEAT_FILL))
     si = -math.copysign(1.0, yc)                                        # the aisle side
     ya, yb = sorted((si * W_, si * (W_ - e["arm_w"])))
     pcs.append(("arm", rrect(ya, fl + e["arm_h0"], yb, fl + e["arm_top"], 0.015), BASE_FILL))
@@ -1841,9 +1851,10 @@ def draw_panel_view(ds, v, ctx):
     for sg in (-1, 1):
         hub = I.yoke_hub(sg)
         P = yoke_front(hub[1], hub[2])
-        poly(ds, v, P[0], W_FINE, fill="#F4F4F2")                      # Y hub, its shoulders under the grips
-        for Q in P[1:]:
-            poly(ds, v, Q, W_THIN, fill="#2B3338")
+        poly(ds, v, P[1], W_THIN, fill="#2B3338")                      # black yoke body
+        poly(ds, v, P[0], W_FINE, fill="#F4F4F2")                      # white shield on it
+        for Q in P[2:]:
+            poly(ds, v, Q, W_THIN, fill="#2B3338")                     # grips, swollen heads
     zc = I.yoke_hub(-1)[2]
     dim(ds, v.pt(-pn["pdu_bl"][2], zm), v.pt(0.0, zm), v.pt(0, zm + 0.125)[1], mm(pn["pdu_bl"][2]), ext=False)
     dim(ds, v.pt(0.0, zm), v.pt(pn["pdu_bl"][2], zm), v.pt(0, zm + 0.125)[1], mm(pn["pdu_bl"][2]), ext=False)
@@ -1891,8 +1902,9 @@ def draw_yoke_sweep(ds, v, ctx):
         for Q in yoke_front(yc, zc, r):
             poly(ds, v, Q, W_THIN, fill=None, dash=PHANTOM, color=MUTED)
     P = yoke_front(yc, zc)
+    poly(ds, v, P[1], W_THIN, fill="#2B3338")
     poly(ds, v, P[0], W_FINE, fill="#F4F4F2")
-    for Q in P[1:]:
+    for Q in P[2:]:
         poly(ds, v, Q, W_THIN, fill="#2B3338")
     ds.cv.circle(*v.pt(yc, zc), I.YOKE["column_r"] * v.k, w=W_THIN, fill=SHELL_FILL)
     # knees (sphere sections) of the four occupants

@@ -293,6 +293,7 @@ function setStep(i, { instant = false } = {}) { build.playing = false; build.set
 function setGear(v, { instant = false } = {}) { kin.setGear(v, instant); if (instant) poseNow(); syncAnimUI(); }
 function setFlaps(d, { instant = false } = {}) { kin.setFlaps(d, instant); if (instant) poseNow(); syncAnimUI(); }
 function setDoor(id, v, { instant = false } = {}) { kin.setDoor(id, v, instant); if (instant) poseNow(); syncAnimUI(); }
+function setTable(v, { instant = false } = {}) { kin.setTable(v, instant); if (instant) poseNow(); syncAnimUI(); }
 function setProp(o, { instant = false } = {}) { kin.setProp(o, instant); if (instant) poseNow(); syncAnimUI(); }
 function setControls(o, { instant = false } = {}) { kin.setControls(o, instant); if (instant) poseNow(); syncAnimUI(); }
 
@@ -308,7 +309,7 @@ function reset() {
   showAllParts();
   clearSelection();
   neutral();
-  kin.setGear(0); kin.setFlaps(0); kin.setDoor('door_airstair', 0); kin.setDoor('door_cargo', 0); kin.setProp({ rpm: 0, pitch: 0 });
+  kin.setGear(0); kin.setFlaps(0); kin.setDoor('door_airstair', 0); kin.setDoor('door_cargo', 0); kin.setTable(0); kin.setProp({ rpm: 0, pitch: 0 });
   build.playing = false;
   if (build.index !== build.n - 1) build.setStep(build.n - 1, { instant: true });
   model.setPaint(true, false);
@@ -477,6 +478,7 @@ function syncAnimUI() {
   $('oStab').value = `${t.stabTrim.toFixed(1)}°`; $('oAilTrim').value = `${t.ailTrim.toFixed(1)}°`; $('oRudTrim').value = `${t.rudTrim.toFixed(1)}°`;
   $('aAirstair').setAttribute('aria-pressed', String(t.door_airstair > 0.5));
   $('aCargo').setAttribute('aria-pressed', String(t.door_cargo > 0.5));
+  if ($('aTable')) $('aTable').setAttribute('aria-pressed', String(t.table > 0.5));
   updateReadouts();
 }
 
@@ -569,6 +571,7 @@ function wireUI() {
   for (const b of document.querySelectorAll('[data-flap]')) b.addEventListener('click', () => { manual(); setFlaps(+b.dataset.flap); });
   $('aAirstair').addEventListener('click', () => { manual(); setDoor('door_airstair', kin.t.door_airstair > 0.5 ? 0 : 1); });
   $('aCargo').addEventListener('click', () => { manual(); setDoor('door_cargo', kin.t.door_cargo > 0.5 ? 0 : 1); });
+  if ($('aTable')) $('aTable').addEventListener('click', () => { manual(); setTable(kin.t.table > 0.5 ? 0 : 1); });
   const ctl = (id, key) => $(id).addEventListener('input', (e) => { manual(); setControls({ [key]: +e.target.value }); });
   ctl('sRoll', 'roll'); ctl('sPitchCtl', 'pitch'); ctl('sYaw', 'yaw');
   ctl('sStab', 'stabTrim'); ctl('sAilTrim', 'ailTrim'); ctl('sRudTrim', 'rudTrim');
@@ -737,7 +740,7 @@ const hooks = {
       gear: { pos: g.pos, door: g.door, target: g.target, moving: kin.gearMoving,
         noseDeg: kin.surf.gear_nose && kin.surf.gear_nose.angle, mainRDeg: kin.surf.gear_main_R && kin.surf.gear_main_R.angle,
         noseDoorDeg: kin.surf.gear_door_NR && kin.surf.gear_door_NR.angle },
-      flaps: c.flaps, doors: { airstair: c.door_airstair, cargo: c.door_cargo },
+      flaps: c.flaps, doors: { airstair: c.door_airstair, cargo: c.door_cargo }, table: c.table,
       prop: { rpm: c.rpm, pitch: c.pitch, angle: c.propAngle },
       controls: { roll: c.roll, pitch: c.pitchCmd, yaw: c.yaw, stabTrim: c.stabTrim, ailTrim: c.ailTrim, rudTrim: c.rudTrim },
       deflections: { ...kin.defl }, camera: stage.cameraState(), paused: S.paused, frames: frameCount,
@@ -757,6 +760,7 @@ const hooks = {
   setGear: (v, o = {}) => setGear(v, o),
   setFlaps: (d, o = {}) => setFlaps(d, o),
   setDoor: (id, v, o = {}) => setDoor(id, v, o),
+  setTable: (v, o = {}) => setTable(v, o),
   setProp: (p, o = {}) => setProp(p, o),
   setControls: (p, o = {}) => setControls(p, o),
   select: (id, o = {}) => select(id, { frame: true, ...o }),

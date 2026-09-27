@@ -72,6 +72,10 @@ MATERIALS = {
     "panel_grey":          ((0.33, 0.305, 0.325), 0.18, 0.45),
     # light brushed silver: overhead panel face, yoke-hub centre insert (P1046406 / AOPA overhead, P1046408 yoke)
     "panel_silver":        ((0.46, 0.46, 0.45), 0.55, 0.32),
+    # control pedestal below the SDU pad: dark gunmetal cheeks / aft skin; the PCL grip satin pewter (throttle photo,
+    # P1046408-10: grip ~sRGB 112/114/123 in the cabin light, the cheeks darker; review r3 F3)
+    "pedestal_gunmetal":   ((0.115, 0.115, 0.125), 0.40, 0.42),
+    "pcl_pewter":          ((0.20, 0.20, 0.215), 0.50, 0.36),
     "leather_glareshield": ((0.055, 0.055, 0.058), 0.0, 0.62, dict(specular=0.5)),
     "carpet_flightdeck":   ((0.045, 0.045, 0.050), 0.0, 0.95),
     "bezel_black":         ((0.010, 0.010, 0.012), 0.10, 0.32),

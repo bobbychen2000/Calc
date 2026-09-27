@@ -978,6 +978,40 @@
    "note": "light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)",
    "srgb_hex": "#B5B5B3"
   },
+  "pedestal_gunmetal": {
+   "baseColorFactor": [
+    0.115,
+    0.115,
+    0.125,
+    1.0
+   ],
+   "metallicFactor": 0.4,
+   "roughnessFactor": 0.42,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "control pedestal cheeks / aft skin below the SDU pad: dark gunmetal (throttle photo, P1046408-10; review r3 F3)",
+   "srgb_hex": "#5F5F63"
+  },
+  "pcl_pewter": {
+   "baseColorFactor": [
+    0.2,
+    0.2,
+    0.215,
+    1.0
+   ],
+   "metallicFactor": 0.5,
+   "roughnessFactor": 0.36,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "PCL grip: satin pewter paddle (throttle photo; P1046408 grip ~sRGB 112/114/123)",
+   "srgb_hex": "#7C7C80"
+  },
   "leather_glareshield": {
    "baseColorFactor": [
     0.055,

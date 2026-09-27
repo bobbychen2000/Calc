@@ -635,8 +635,9 @@ def _ledge_run(acc, side, xa, xb, layout, tables, yo_fn, wall_fn):
         P = np.array([(-hx + 0.06, -0.010), (hx - 0.06, 0.020), (hx - 0.06, 0.030), (-hx + 0.06, 0.000)])
         acc.add(slab(fk, P, 0.0, 0.0025, 0.0008, "chrome_trim", bottom=False))
         if state == "stowed":
-            acc.add(slab(fr, rrect2(-hx + 0.003, -0.5 * (z1 - z0), hx - 0.003, 0.5 * (z1 - z0), 0.002), 0.0, 0.0012,
-                         0.0005, "veneer_walnut", bottom=False))
+            # (0.5 mm inside the leaf's thickness: with the movable table out the band is inside it, review r3 K3)
+            acc.add(slab(fr, rrect2(-hx + 0.003, -0.5 * (z1 - z0) + 0.0005, hx - 0.003, 0.5 * (z1 - z0) - 0.0005,
+                                    0.002), 0.0, 0.0012, 0.0005, "veneer_walnut", bottom=False))
             acc.add(fr.poly(rrect2(-0.030, -0.004, 0.030, 0.004, 0.003), 0.0014), "black")     # finger pull
         else:
             acc.add(fr.poly(rrect2(-hx - 0.003, -0.5 * (z1 - z0) - 0.003, hx + 0.003, 0.5 * (z1 - z0) + 0.003,
@@ -732,7 +733,59 @@ def _table(acc, key, state):
                       "black"))
 
 
+def table_parts(key):
+    """Movable club table `key` (TABLES) for the viewer / renders (review r3 F5): (outboard [(Mesh, material)], leaf
+    [(Mesh, material)], pivot, leaf_pivot), model coordinates.  The outboard leaf is built slid out of the ledge fascia
+    (the 'leaf' state of P1046404 / 05 / 06) with the inboard leaf folded face-down under it about the hinge line at
+    the leaf's underside (its unfolded 'deployed' place, brochure p.18, is 180 deg round that hinge).  Pivots (origin /
+    axis model axes, written as glTF by assemble): 'table' -- open 0 stowed (slid outboard by `slide`, model axes, into
+    the ledge: the viewer clips it at the fascia plane |BL| = fascia_bl, so it vanishes), 0.5 the leaf out (= the built
+    rest), 1 deployed; 'table_leaf' -- the inboard leaf unfolds by `fold` rad about its axis over open 0.5 .. 1."""
+    t = I.TABLES[key]
+    s = int(t["side"])
+    x0, x1 = (float(v) for v in t["x"])
+    z1 = FL + float(t["top_h"])
+    th = float(t["t"])
+    z0 = z1 - th
+    leaf = float(t.get("leaf", 0.5 * (YI - float(t["bl_in"]))))
+    yh = YI - leaf                                                     # hinge line (outboard leaf's inner edge)
+    r, inl = DETAIL["table_r"], DETAIL["inlay"]
+    fr = Fr([0.0, 0.0, 0.0], [1.0, 0, 0], [0, 1.0, 0])
+
+    def leaf_meshes(ya, yb, yin_b):
+        acc = _Acc()
+        a0, a1 = sorted((s * ya, s * yb))
+        acc.add(slab(fr, rrect2(x0, a0, x1, a1, r, 4), z0, z1, 0.004, "ledge_panel"))
+        e0, e1 = sorted((s * (ya + 0.004), s * (yin_b - 0.004)))
+        acc.add(fr.poly(rrect2(x0 + 0.004, e0, x1 - 0.004, e1, max(r - 0.004, 0.004)), z1 + 0.0004), "veneer_walnut")
+        b0, b1 = sorted((s * (ya + inl), s * (yin_b - inl)))
+        acc.add(fr.poly(rrect2(x0 + inl, b0, x1 - inl, b1, max(r - inl, 0.004)), z1 + 0.0008), "gloss_black")
+        return acc
+    out = leaf_meshes(yh + 0.0015, YI + 0.015, YI)                     # into the slot by 15 mm
+    out.add(cylinder([x0 + 0.03, s * yh, z0 + 0.0045], [x1 - 0.03, s * yh, z0 + 0.0045], 0.0045, n=10), "chrome_trim")
+    lf = leaf_meshes(float(t["bl_in"]), yh - 0.0015, yh - 0.0015)
+    hinge = np.array([0.5 * (x0 + x1), s * yh, z0 - 0.00025])          # folded: 0.5 mm under the outboard leaf
+    axis = np.array([-s, 0.0, 0.0])
+
+    def folded(ms):                                                    # 180 deg about the hinge: under the outboard leaf
+        res = []
+        for m, mat in ms:
+            V = m.V - hinge
+            V = np.c_[V[:, 0], -V[:, 1], -V[:, 2]] + hinge
+            res.append((Mesh(V, m.F.copy()), mat))
+        return res
+    col = lambda a: _collect(a, False)                                 # noqa: E731
+    pv = dict(kind="table", origin=tuple(hinge), axis=(1.0, 0.0, 0.0), slide=(0.0, -s * (leaf + 0.03), 0.0),
+              fascia_bl=float(s * YI), rest=0.5, table=key,
+              note="open 0 stowed (slid outboard into the ledge by slide, model axes; clipped at |BL| = fascia_bl), "
+                   "0.5 leaf out (built), 1 deployed; the child table_leaf unfolds over 0.5 .. 1")
+    lpv = dict(kind="table_leaf", origin=tuple(hinge), axis=tuple(axis), fold=math.pi, rest=0.0, table=key,
+               note="the inboard leaf: built folded under the outboard leaf, unfolds by fold rad about axis")
+    return col(out), folded(col(lf)), pv, lpv
+
+
 # =====================================================================================================================
+# cabinets LH / RH (veneer, upper + lower drawer on the aisle face)# =====================================================================================================================
 # cabinets LH / RH (veneer, upper + lower drawer on the aisle face)
 # =====================================================================================================================
 def _vertical_block(xa, xb, y_in, side, z0, z1, r, rt, outboard, nz=10):
@@ -1098,8 +1151,8 @@ def _flush_door(acc, fw, s, lx, ly, r, lift=0.0006, notch=False):
     Qd = rrect2(-0.5 * lx + 0.0003, -0.5 * ly + 0.0003, 0.5 * lx - 0.0003, 0.5 * ly - 0.0003, r - 0.0003, 4)
     acc.add(_conform(slab(fw, Qd, -sk, face, min(0.0003, 0.3 * (face + sk)), "lining", bottom=False), fw, s))
     if notch:
-        acc.add(_conform(fw.poly(rrect2(-0.015, -0.5 * ly + 0.004, 0.015, -0.5 * ly + 0.012, 0.003), face + 0.0003),
-                         fw, s), "psu_panel")
+        acc.add(_conform(fw.poly(rrect2(-0.015, -0.5 * ly + 0.004, 0.015, -0.5 * ly + 0.012, 0.003), face + 0.0010),
+                         fw, s), "psu_panel")          # 1 mm: the door's flat face chords sag ~0.3 mm (r3 check)
     return face
 
 
@@ -1326,15 +1379,44 @@ def build(parts, layout=None, ceiling=None, **kw):
                    "floor": f"WL {FL * 1000:,.0f}, carpet STA {XA * 1000:,.0f} - {XB * 1000:,.0f}",
                    "partition": f"FR34 STA {XP * 1000:,.0f}: veneer header + pleated curtain (PRO)"})
     by_mat = defaultdict(list)
+    floor = defaultdict(list)
     for grp, ms in build_cabin_fittings(layout, groups=True, **kw).items():
         for m, mat in ms:
             if ceiling is not None and grp in ("headliner", "wall_fittings"):
                 ceiling.append((m, mat))
+            elif grp in ("floor", "runner", "tracks"):
+                floor[mat].append(m)
             else:
                 by_mat[mat].append(m)
     for mat, ms in by_mat.items():
         p.add(Mesh.merge(ms), mat)
     parts[p.id] = p
+    # the floor, carpet + aisle runner and the seat tracks: their own part, never clipped by the viewer's cutaway (the
+    # seats stand on them; review r3 F4)
+    fp = Part("cabin_floor", "Cabin floor: carpet with the aisle runner, surface-mounted seat tracks", "interior",
+              parent="cabin_interior", group="Interior", material_note="anthracite / navy carpet, AI Orange runner",
+              info={"floor": f"WL {FL * 1000:,.0f}, STA {XA * 1000:,.0f} - {XB * 1000:,.0f}",
+                    "tracks": f"BL +/-{', '.join(f'{b * 1000:.0f}' for b in I.SEAT_TRACKS['bl'])}"})
+    for mat, ms in floor.items():
+        fp.add(Mesh.merge(ms), mat)
+    parts[fp.id] = fp
+    # movable club tables (review r3 F5): built with the outboard leaf out, the inboard leaf folded under it; the
+    # viewer / renders start them stowed (pivot 'table' open 0)
+    for key in I.SEAT_LAYOUTS[layout]["tables"]:
+        ob, lf, pv, lpv = table_parts(key)
+        side = "port" if int(I.TABLES[key]["side"]) < 0 else "starboard"
+        tp = Part(f"table_{key}", f"Club table, {side} (slides out of the ledge, inboard leaf unfolds)", "interior",
+                  parent="cabin_interior", pivot=pv, group="Interior",
+                  material_note="anthracite leaves, walnut edge, gloss-black top",
+                  info={"table": f"interior.TABLES['{key}']", "states": "stowed / leaf out / deployed"})
+        for m, mat in ob:
+            tp.add(m, mat)
+        parts[tp.id] = tp
+        lp = Part(f"table_{key}_leaf", f"Club table inboard leaf, {side}", "interior", parent=tp.id, pivot=lpv,
+                  group="Interior", material_note="anthracite leaf, walnut edge, gloss-black top")
+        for m, mat in lf:
+            lp.add(m, mat)
+        parts[lp.id] = lp
     if "door_cargo" in parts:
         for m, mat in cargo_door_ledge(layout):
             parts["door_cargo"].add(m, mat)

@@ -12,13 +12,18 @@ export const CUT_PARTS = new Set([
   'door_airstair_rail', 'door_airstair_rail_up', 'door_airstair_cable',
 ]);
 // Fixed interior parts cut with the lining (review r2 M3): the port half of the cabin furniture (ledges -- their
-// cargo-door segment rides on the clipped door_cargo --, cabinets, carpet) and of the flight deck's divider, curtain,
-// consoles and floor.  null = every material of the part.  The panel, glareshield and pedestal stay whole, and so do
-// the seats and the crew controls (their own parts).
+// cargo-door segment rides on the clipped door_cargo --, cabinets, lavatory, headliner fittings) and of the flight
+// deck's divider (fd_divider: walnut walls, curtain, extinguisher) and side consoles (fd_consoles), each cut as a
+// whole part so no fitting is left floating over a clipped body (review r3 C1).  null = every material of the part.
+// The floor, carpet and seat tracks (cabin_floor; the flight deck's carpet and tunnel plinth in flight_deck) stay
+// whole -- the seats stand on them (review r3 F4) -- and so do the panel, glareshield, pedestal, the seats and the crew
+// controls.  The club tables (table_*, table_*_leaf) go with the ledges they slide out of.
 export const CUT_MATERIALS = {
   cabin_interior: null,
-  flight_deck: new Set(['veneer_walnut', 'curtain', 'panel_dark', 'carpet_flightdeck']),
+  fd_divider: null,
+  fd_consoles: null,
 };
+const CUT_PREFIX = /^table_/;
 // Exterior shells that turn translucent in X-ray.
 export const XRAY_PARTS = new Set([
   ...[...CUT_PARTS].filter((id) => id !== 'structure'),
@@ -190,12 +195,24 @@ export class Model {
           base.polygonOffsetUnits = 8;
           ch.material = base;
         }
-        const cm = CUT_MATERIALS[rec.id];
+        const cm = rec.id in CUT_MATERIALS ? CUT_MATERIALS[rec.id] : (CUT_PREFIX.test(rec.id) ? null : undefined);
+        // club tables: own material clones clipped at the ledge fascia plane (a stowed table slides into the ledge)
+        let extraClip = null;
+        const tpv = rec.ex.pivot && rec.ex.pivot.kind === 'table' ? rec.ex.pivot
+          : (rec.parent && rec.parent.ex.pivot && rec.parent.ex.pivot.kind === 'table' ? rec.parent.ex.pivot : null);
+        if (tpv && tpv.fascia_bl != null) {
+          const bl = tpv.fascia_bl;
+          extraClip = [new THREE.Plane(new THREE.Vector3(-Math.sign(bl), 0, 0), Math.abs(bl))];
+          base = base.clone();
+          base.clippingPlanes = extraClip;
+          base.clipShadows = true;
+          ch.material = base;
+        }
         const mr = { mesh: ch, part: rec, base, paint: PAINT_RE.test(name), glass: GLASS_RE.test(name),
           // structure: clip the fuselage frames/stringers but keep the wing spars & ribs whole
           cut: (rec.cut && !(rec.id === 'structure' && name === 'interior_green')) ||
             (cm !== undefined && (cm === null || cm.has(name))),
-          interiorCut: cm !== undefined };
+          interiorCut: cm !== undefined, extraClip };
         if (mr.paint && !patched.has(base)) { patchMaterial(base, this.U, { paint: true }); patched.add(base); }
         if (mr.glass && !patched.has(base)) { patchMaterial(base, this.U, { glass: true }); patched.add(base); }
         ch.castShadow = rec.xray || SHADOW_CASTERS.test(rec.id);
@@ -291,7 +308,7 @@ export class Model {
     let m = this._cut.get(key);
     if (!m) {
       m = mr.base.clone();
-      m.clippingPlanes = this.clipPlanes;
+      m.clippingPlanes = mr.extraClip ? [...this.clipPlanes, ...mr.extraClip] : this.clipPlanes;
       m.clipShadows = true;
       // furniture keeps its own colour on the cut back faces (the lining tint is for the skins)
       patchMaterial(m, this.U, { paint: mr.paint, lining: !mr.glass && !mr.interiorCut, glass: mr.glass });
