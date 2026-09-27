@@ -1,4 +1,4 @@
-/* PC-12 PRO viewer — neutral engineering theme (light default, dark via prefers-color-scheme). */
+/* PC-12 PRO viewer — neutral engineering theme (light default, dark via prefers-color-scheme or data-theme). */
 :root {
   --bg: #e9ecef;
   --surface: #ffffff;
@@ -26,8 +26,11 @@
   --studio: radial-gradient(130% 95% at 50% 36%, #fbfcfd 0%, #eef1f4 42%, #d9dee3 100%);
   color-scheme: light;
 }
+/* dark: the OS setting unless a host chose light (<html data-theme="light">), or a host's explicit dark choice
+   (<html data-theme="dark">: the claude.ai Artifact frame); both blocks hold the same tokens (web/package_artifact.py
+   checks) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #14181c;
     --surface: #1c2126;
     --surface-2: #232931;
@@ -47,6 +50,26 @@
     --studio: radial-gradient(130% 95% at 50% 36%, #41474e 0%, #292d32 44%, #131517 100%);
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #14181c;
+  --surface: #1c2126;
+  --surface-2: #232931;
+  --surface-glass: rgba(28, 33, 38, 0.88);
+  --border: #313a43;
+  --border-strong: #46515c;
+  --text: #e6eaee;
+  --text-2: #a0abb6;
+  --accent: #6ea8ff;
+  --accent-text: #0b1420;
+  --accent-soft: #1f3350;
+  --focus: #8cbcff;
+  --ok: #5fcf85;
+  --warn: #e0b050;
+  --bad: #ff8a80;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  --studio: radial-gradient(130% 95% at 50% 36%, #41474e 0%, #292d32 44%, #131517 100%);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }

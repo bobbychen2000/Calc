@@ -1,6 +1,6 @@
 // PC-12 PRO viewer: bootstrap, UI wiring, keyboard shortcuts, picking, render loop, test hooks.
 import * as THREE from 'three';
-import { Stage, PRESETS, QUALITY, LOOK } from './scene.js';
+import { Stage, PRESETS, QUALITY, LOOK, DARK_MQ, prefersDark } from './scene.js';
 import { loadGLB, parseGLB, Model, INTERNAL_PARTS } from './model.js';
 import { loadMaterialSpec, setLights } from './materials.js';
 import { Kinematics } from './kinematics.js';
@@ -85,7 +85,16 @@ async function boot() {
   setStage('Downloading model…');
   let glbP;
   if (window.PC12_GLB) {
-    glbP = window.PC12_GLB.then((buf) => { PERF.mark('glbBytes'); return parseGLB(buf, URLS.glb); });
+    const gz = () => !!BOOT.gzip;       // the boot script's gzip fallback (index.html, PC12_CONFIG.glbGz)
+    glbP = window.PC12_GLB.then((buf) => {
+      PERF.mark('glbBytes');
+      // a meshopt GLB that fails to decode (WebAssembly refused at run time): the gzip-compressed plain GLB instead
+      return parseGLB(buf, gz() ? URLS.glbGz : URLS.glb, { meshopt: !gz() }).catch((e) => {
+        if (gz() || !URLS.glbGz || !BOOT.fetchGLB) throw e;
+        console.warn('meshopt GLB did not decode, loading the gzip copy:', e.message || e);
+        return BOOT.fetchGLB(true).then((b) => parseGLB(b, URLS.glbGz, { meshopt: false }));
+      });
+    });
   } else {
     // no boot script (a page embedding main.js on its own): three's loader, with a monotonic bar
     let total = 0, frac = 0;
@@ -99,7 +108,12 @@ async function boot() {
   glbP.catch(() => {});
   try { meta = await metaP; PERF.mark('meta'); } catch (e) { fail(e, 'the model metadata (' + URLS.meta + ')'); return; }
   let gltf;
-  try { gltf = await glbP; PERF.mark('glb'); } catch (e) { fail(e, 'the 3-D model (' + URLS.glb + ')'); return; }
+  try { gltf = await glbP; PERF.mark('glb'); } catch (e) { fail(e, 'the 3-D model (' + (BOOT.gzip ? URLS.glbGz : URLS.glb) + ')'); return; }
+  if (BOOT.gzip && meta.stats && meta.stats.glb_gz_bytes) {
+    // the Specs panel's GLB size: the file this page loaded
+    meta.stats.glb_bytes = meta.stats.glb_gz_bytes;
+    meta.stats.glb_encoding = meta.stats.glb_gz_encoding || 'KHR_mesh_quantization, gzip';
+  }
   setStage('Preparing materials…');
   setProgress(0.94);
   const matSpec = await matP;
@@ -613,7 +627,11 @@ function wireUI() {
   wireSheetHeader();
   narrowMQ.addEventListener('change', () => { setPanel(app.classList.contains('panel-open')); });
   new ResizeObserver(() => { stage.resize(); layoutInsets(); }).observe($('stage'));
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => stage.setTheme(e.matches));
+  // colour scheme: the OS setting or a host's <html data-theme> (scene.js prefersDark)
+  const syncTheme = () => { if (prefersDark() !== stage.dark) stage.setTheme(prefersDark()); };
+  if (DARK_MQ) DARK_MQ.addEventListener('change', syncTheme);
+  new MutationObserver(syncTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  syncTheme();
   // tabs (arrow keys move between tabs)
   const tabs = [...document.querySelectorAll('#tabs [role="tab"]')];
   tabs.forEach((t, k) => {
@@ -863,7 +881,7 @@ const hooks = {
       controls: { roll: c.roll, pitch: c.pitchCmd, yaw: c.yaw, stabTrim: c.stabTrim, ailTrim: c.ailTrim, rudTrim: c.rudTrim },
       deflections: { ...kin.defl }, camera: stage.cameraState(), paused: S.paused, frames: frameCount,
       demo: !!S.demo, lights: S.lights, contextLost: stage.contextLost, camInside: model.camInside, structureVisible: model.structureOn, groundY: stage.groundY, propDiscPush: kin.push,
-      cameraPreset: stage.preset,
+      cameraPreset: stage.preset, dark: stage.dark,
       linesVisible: build.root.children.reduce((n, g) => n + (g.visible ? g.children.length : 0), 0),
       loading: !$('loading').hidden,
     };

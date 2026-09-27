@@ -15,6 +15,14 @@ const _t = new THREE.Vector3();
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const Q_ = new URLSearchParams(location.search);
 
+// Colour scheme: the OS setting, unless a host stamps an explicit choice on <html data-theme="light|dark"> (the
+// claude.ai Artifact frame does); viewer.css follows the same rule.
+export const DARK_MQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+export function prefersDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  return t === 'dark' || (t !== 'light' && !!(DARK_MQ && DARK_MQ.matches));
+}
+
 // Render quality by device class.  Phones: pixel ratio capped at 1.5 (1.0 while the camera moves: a drag, its
 // damped coast after lift-off, a preset tween; the full ratio is re-rendered once the camera has been still for two
 // frames; a tap never drops it), 1024 shadow map, 256 contact shadow.  ?dpr= / ?quality=low|high override (for tests
@@ -189,7 +197,7 @@ export class Stage {
     // only; the loop renders once more when the motion stops so they end exact
     this.busy = false;
     this._tick = 0;
-    this.setTheme(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    this.setTheme(prefersDark());
     this.resize();
   }
 
