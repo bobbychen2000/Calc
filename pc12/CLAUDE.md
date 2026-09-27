@@ -146,9 +146,14 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   `wheels.loaded_side_outline`). The 8.50-10's stowed tyre reaches STA ~6,730 at BL 1,39, behind the 66 % rear-spar
   line: the rear spar is interrupted at the main bay (`interior.build_structure`, like the ribs) and the flap cove's
   forward bulge is recessed over the well (`wing.cove_well_recess`, flap nose >= 15 mm clear; hidden with the flaps
-  up). Nose fork = two-arm yoke with a bolted crown block (`gear.NOSE_YOKE`), hex axle nuts on tear-drop lock plates
-  outside both arms; the nose doors open 92 deg so the nuts pass them; main trailing arm = swept swan-neck tube
-  (`gear.MAIN_ARM`); brake housing `brake_housing` (bright cast aluminium).
+  up). The loaded tread lies flat on the ground across its width (`wheels._loaded_tyre`, = L4W `loaded_headon_half`).
+  Nose fork = two slim arms (42-52 mm fore-aft) joined by ONE round arch over the tyre (superellipse fitted to the 3001
+  head-on, `gear.NOSE_YOKE` arch_h / arch_p) under a chamfered crown saddle with the torque-link lug; hex axle nuts on
+  tear-drop lock plates outside both arms; the nose doors open 92 deg so the nuts pass them; main trailing arm = swept
+  swan-neck tube (`gear.MAIN_ARM`). Wheel materials: the tyre is three zones (`wheels.TYRE_MATS`: `tire` sidewall,
+  `tire_tread`, `tire_groove`; tests take the tyre by that tuple), main wheel halves `wheel_main` (dark cast), brake
+  `brake_housing` (bright cast) / `brake_disc`, hub fairing `hub_fairing` (the leg-door blue, not repainted by the
+  livery), nose wheel `wheel`.
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
   the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
   `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`;

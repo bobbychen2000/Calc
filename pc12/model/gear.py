@@ -14,6 +14,8 @@ Wheel track 4.53 m (Pilatus), wheelbase 3.48 m (POH three-view).
 Stage 2 (rev B): axle, pivot and brace positions from the Pilatus NGX drawing (side / front views).
 """
 from __future__ import annotations
+import math
+
 import numpy as np
 
 from cad.mesh import (Mesh, revolve, cylinder, box, sweep_tube, grid_surface, trim, solidify,
@@ -388,9 +390,9 @@ def leg_door_retracted_drop(side=1):
     return float(dz.min()), float(dz.max())
 
 
-def main_tyre_protrusion(side=1, mats=("tire",)):
+def main_tyre_protrusion(side=1, mats=WH.TYRE_MATS):
     """Largest depth (m) of the retracted main tyre (mats: or other wheel parts, e.g. the hub fairing
-    'paint_white') below the local wing lower surface (POH: ~1 in)."""
+    'hub_fairing') below the local wing lower surface (POH: ~1 in)."""
     M = main_retract_matrix(side)
     V = np.vstack([m.V for m, mat in WH.main_wheel(MAIN_AXLE * [1, side, 1], (0.0, 1.0, 0.0), side, parts=mats)])
     V = V @ M[:3, :3].T + M[:3, 3]
@@ -712,46 +714,160 @@ def swept_arm(pts, a, b, n_path=28, n_sec=16, fore=(1.0, 0.0, 0.0), p=2.0):
     return sweep_section(C, a[0] + (a[1] - a[0]) * u, b[0] + (b[1] - b[0]) * u, n_sec, fore, p)
 
 
-# nose-gear fork (wheels review r1 F3, photos 3001 / 3036 head-on, 3036 mx4, 3008 188 / 130 / 0517): an inverted-U
-# YOKE of two straight arms, one each side of the tyre, joined over the tyre crown under a flat bolted crown block on the
-# piston bottom (the r2 single S-strap was wrong: the far arm shows behind the tyre in 188, the starboard one in 0517).
-# Front view (s across, r up from the axle) as sheet L4W draws it: arms' inner / outer faces +-wheels.NOSE_AXLE
-# fork_in / fork_out, the band over the tyre `arch` above the free tyre crown, NOSE_YOKE['top_t'] half-deep there, the
-# centre line turning with corner_R; fore-aft half-width arm_w (at the axle = the boss / at the top), the arms leaning with
-# the axle -> crown line; rounded-rectangle section (a casting).  Crown block: fore-aft / across half-sizes and its
-# bottom / top above the axle (the piston bottom NOSE_FORK sits inside it); 2 bolts on each side face.
-NOSE_YOKE = dict(arm_w=(0.029, 0.046), top_t=0.024, corner_R=0.040, sec_p=5.0, boss_r=0.031,
-                 crown=(0.050, 0.070, 0.285, 0.341), crown_bolts=((-0.030, 0.315), (0.030, 0.315)),
-                 hole=(0.200, 0.009))        # lightening hole on each arm's outer face: height above the axle, radius
+# nose-gear fork (wheels review r1 F3; r2 F1 / F2; photos 3001 / 3036 head-on, 3036 mx4, 3008 188 / 130 / 0517): an
+# inverted-U YOKE of two slim arms, one each side of the tyre, whose inner edge is ONE round arch over the tyre crown
+# (apex wheels.NOSE_AXLE `arch` above the free crown; the r1 yoke was a square portal: a flat beam on 40 mm corners), the
+# band thickening outward toward the crown (the arms flare into it), under a tapered crown SADDLE on the piston bottom
+# whose front is chamfered down to the band and carries the lower torque-link lug (r1: a rectangular block on a
+# rectangular bridge).
+# Front view (s across, r up from the axle), sheet L4W: arms' inner / outer faces +-fork_in / fork_out above the axle
+# bosses (the bosses step in to boss_in at the hub ends), straight up to the springing r_c; above it both edges are
+# superellipse quarter-arcs |s / a|^p + |(r - r_c) / h|^p = 1: the inner one with a = fork_in, h = arch_h (3001 head-on
+# zoom, 2296 px/m: arch height 0.076 = 0.85 x the half-span, the edge fits p 3.1 -- a semicircle is 2, the r1 portal ~8),
+# the outer one with a = fork_out, h = arch_h + 2 top_t, arch_po (boxier: the arms' outer faces stay vertical longer and
+# the band is ~37 mm deep on the diagonals, 30 on the arms, 28 at the apex).  Fore-aft half-width arm_w at the axle / at
+# the crown (3036 mx4 side view: a 42-48 mm strap; r1's 58-92 mm read as a paddle); rounded-rectangle section (a
+# casting), the arms leaning with the axle -> crown line.
+# Saddle: sections (r above the axle, x of its front face / back face from the piston axis, half-width across) lofted
+# bottom -> waist -> top: the bottom buried in the band, the front chamfered 34 deg from the band up to the waist (3008
+# 188 / 3036 mx4), near-vertical above; 2 cadmium bolts on each sloped side face.  Torque-link lug (a clevis boss along
+# y) at NOSE_TORQUE_LUG from the piston bottom, where the lower torque link ends.  Dark marks on each arm's outer face
+# (3036 mx4 / 188; plain, no lettering): a small round hole, a slot and a placard (kind, r above the axle, fore-aft
+# half-size, half-height).
+NOSE_YOKE = dict(arm_w=(0.021, 0.026), arch_h=0.076, arch_p=3.1, top_t=0.014, arch_po=3.6, sec_p=5.0, boss_r=0.031,
+                 saddle=((0.262, -0.024, 0.024, 0.074), (0.292, -0.044, 0.036, 0.061), (0.341, -0.046, 0.040, 0.046)),
+                 saddle_p=4.0, crown_bolts=((-0.022, 0.318), (0.022, 0.318)),
+                 marks=(("hole", 0.212, 0.0045, 0.0045), ("slot", 0.165, 0.0035, 0.008),
+                        ("plate", 0.100, 0.0085, 0.013)))
+NOSE_TORQUE_LUG = (-0.050, 0.030)            # lower torque-link pin from the piston bottom NOSE_FORK: (x, z)
 NOSE_FORK_SIDES = (-1, 1)                    # both arms (sheet L4W check table)
 NOSE_LAMP = dict(frac=0.45, fwd=(0.060, 0.098), r=0.045)     # on the strut: fraction P -> fork, housing x offsets, radius
 
 
-def nose_yoke_centre(n_arm=10, n_arc=8, n_top=8):
+def nose_yoke_frame():
+    """(fork_in, fork_out, r_c, arch_h): the arms' inner / outer faces, the springing height above the axle (the inner
+    arch's apex r_c + arch_h = free tyre R + arch) and the inner arch height."""
+    ax = WH.NOSE_AXLE
+    h = float(NOSE_YOKE["arch_h"])
+    r_c = float(WH.NOSE_TYRE_ENV["R"]) + ax["arch"] - h
+    return float(ax["fork_in"]), float(ax["fork_out"]), r_c, h
+
+
+def _sarc(a, h, p, r_c, n):
+    """Superellipse half-arc from (-a, r_c) over (0, r_c + h) to (a, r_c), n points (the parameter angle phi from
+    180 to 0 deg): s = a sgn(cos) |cos|^(2/p), r = r_c + h |sin|^(2/p)."""
+    ph = np.radians(np.linspace(180.0, 0.0, n))
+    c, s_ = np.cos(ph), np.sin(ph)
+    return np.c_[a * np.sign(c) * np.abs(c) ** (2.0 / p), r_c + h * np.abs(s_) ** (2.0 / p)]
+
+
+def nose_yoke_contours(n_arc=48):
+    """Exact front-view contours of the yoke band (s, r about the axle), port axle end -> starboard axle end: inner
+    (the arms' inner faces and the round arch over the tyre) and outer (arms' outer faces flaring into the crown)."""
+    fi, fo, r_c, h = nose_yoke_frame()
+    yk = NOSE_YOKE
+    inner = np.vstack([[[-fi, 0.0]], _sarc(fi, h, yk["arch_p"], r_c, n_arc), [[fi, 0.0]]])
+    outer = np.vstack([[[-fo, 0.0]], _sarc(fo, h + 2 * yk["top_t"], yk["arch_po"], r_c, n_arc), [[fo, 0.0]]])
+    return inner, outer
+
+
+def nose_yoke_centre(n_arm=10, n_arc=28):
     """Centre line of the nose-fork yoke in the front view: (s, r, t_half) from the port arm's axle end up, over the
-    tyre and down to the starboard axle end (s across, r above the axle, t_half = the band's half-depth normal to the
-    line: the arm thickness on the arms, NOSE_YOKE top_t over the tyre)."""
-    ax, yk = WH.NOSE_AXLE, NOSE_YOKE
-    sm, ta = 0.5 * (ax["fork_in"] + ax["fork_out"]), 0.5 * (ax["fork_out"] - ax["fork_in"])
-    r_top = float(WH.NOSE_TYRE_ENV["R"]) + ax["arch"] + yk["top_t"]
-    Rk = yk["corner_R"]
-    rk = r_top - Rk
-    arm = np.c_[np.full(n_arm, -sm), np.linspace(0.0, rk, n_arm)]
-    a = np.radians(np.linspace(180.0, 90.0, n_arc + 1))[1:]
-    arc = np.c_[-(sm - Rk) + Rk * np.cos(a), rk + Rk * np.sin(a)]
-    top = np.c_[np.linspace(-(sm - Rk), sm - Rk, n_top + 2)[1:-1], np.full(n_top, r_top)]
-    half = np.vstack([arm, arc])
-    P = np.vstack([half, top, (half * [-1, 1])[::-1]])
-    u = np.clip((P[:, 1] - rk) / Rk, 0.0, 1.0)
-    t = ta + (yk["top_t"] - ta) * u * u * (3 - 2 * u)
-    return P, t, r_top
+    tyre and down to the starboard axle end (s across, r above the axle; the midpoints of the inner / outer contours at
+    the same superellipse parameter, t_half = half their distance), and the line's top r."""
+    fi, fo, r_c, h = nose_yoke_frame()
+    yk = NOSE_YOKE
+    I = _sarc(fi, h, yk["arch_p"], r_c, n_arc + 2)[1:-1]
+    O = _sarc(fo, h + 2 * yk["top_t"], yk["arch_po"], r_c, n_arc + 2)[1:-1]
+    sm, ta = 0.5 * (fi + fo), 0.5 * (fo - fi)
+    arm = np.c_[np.full(n_arm, -sm), np.linspace(0.0, r_c, n_arm)]
+    P = np.vstack([arm, 0.5 * (I + O), (arm * [-1, 1])[::-1]])
+    t = np.r_[np.full(n_arm, ta), 0.5 * np.linalg.norm(O - I, axis=1), np.full(n_arm, ta)]
+    return P, t, float(P[:, 1].max())
+
+
+def nose_saddle_sections():
+    """Saddle sections (r above the axle, x front, x back relative to the piston axis at that height, half-width
+    across), bottom -> top (NOSE_YOKE saddle)."""
+    return [tuple(map(float, q)) for q in NOSE_YOKE["saddle"]]
+
+
+def _saddle_ring(A, lean, r, xf, xb, hy, p, n=32):
+    """One saddle section at r above the axle A: a superellipse (exponent p) from x = xf to xb about the leaning piston
+    axis (A.x + lean r) and +-hy across."""
+    th = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
+    c, s_ = np.cos(th), np.sin(th)
+    ce, se = np.sign(c) * np.abs(c) ** (2.0 / p), np.sign(s_) * np.abs(s_) ** (2.0 / p)
+    xc, a = 0.5 * (xf + xb), 0.5 * (xb - xf)
+    return np.c_[A[0] + lean * r + xc + a * ce, A[1] + hy * se, np.full(n, A[2] + r)]
+
+
+def nose_saddle_meshes():
+    """Crown saddle (model coordinates, gear down): the NOSE_YOKE sections lofted in two ruled bands (the chamfer
+    band's edge crisp), capped; the torque-link lug; the crown-bolt heads on the sloped side faces.
+    (saddle + lug mesh, bolt heads)."""
+    A = NOSE_AXLE
+    cr = NOSE_FORK - A
+    lean = cr[0] / cr[2]
+    p = NOSE_YOKE["saddle_p"]
+    S = nose_saddle_sections()
+    rings = [_saddle_ring(A, lean, *q, p) for q in S]
+    out = []
+    for r0, r1 in zip(rings[:-1], rings[1:]):
+        m = grid_surface(np.stack([r0, r1]), close_v=True)
+        c = 0.5 * (r0.mean(0) + r1.mean(0))
+        if np.mean(np.sum((m.V - c) * m.N, 1)) < 0:
+            m = m.flipped()
+        out.append(m)
+    out += [cap_ring(rings[0], (0.0, 0.0, -1.0)), cap_ring(rings[-1], (0.0, 0.0, 1.0))]
+    # torque-link lug: a clevis boss along y at the lower torque link's pin, on a tab from the saddle's front top
+    lx, lz = NOSE_TORQUE_LUG
+    k2 = NOSE_FORK + [lx, 0.0, lz]
+    out.append(cylinder(k2 - [0, 0.015, 0], k2 + [0, 0.015, 0], 0.013, n=14))
+    out.append(superellipsoid(k2 + [0.010, 0.0, -0.008], (0.016, 0.011, 0.012), (0.3, 0.3), 8, 16))
+    # crown bolts on the side faces (the section's s at the bolt's x, interpolated between the sections)
+    bolts = []
+    rs = np.array([q[0] for q in S])
+    for dx, rz in NOSE_YOKE["crown_bolts"]:
+        xf, xb, hy = (float(np.interp(rz, rs, [q[k] for q in S])) for k in (1, 2, 3))
+        a = 0.5 * (xb - xf)
+        u = abs((dx - 0.5 * (xf + xb)) / a)
+        sy = hy * max(1.0 - u ** p, 0.0) ** (1.0 / p) - 0.001
+        x = A[0] + rz * lean + dx
+        for sg in (-1.0, 1.0):
+            c = np.array([x, sg * sy, A[2] + rz])
+            bolts.append(cylinder(c, c + [0, sg * 0.0065, 0], 0.0075, n=6))
+    return Mesh.merge(out), Mesh.merge(bolts)
+
+
+def nose_arm_marks():
+    """Dark marks on each fork arm's outer face (NOSE_YOKE marks, photos 3036 mx4 / 188): a round hole, a slot and a
+    placard, 0.4 mm proud of the face, following the arm's lean.  Mesh (material 'black')."""
+    A = NOSE_AXLE
+    cr = NOSE_FORK - A
+    lean = cr[0] / cr[2]
+    d = np.array([lean, 0.0, 1.0]) / np.hypot(lean, 1.0)             # up the arm (x, z)
+    fwd = np.array([d[2], 0.0, -d[0]])
+    so = WH.NOSE_AXLE["fork_out"] + 0.0004
+    out = []
+    for kind, r, hw, hh in NOSE_YOKE["marks"]:
+        c0 = A + np.array([r * lean, 0.0, r])
+        for sg in (-1.0, 1.0):
+            c = c0 + [0.0, sg * so, 0.0]
+            if kind == "hole":
+                ring = np.array([c + hw * (math.cos(a) * fwd + math.sin(a) * d) for a in np.linspace(0, 2 * np.pi, 14,
+                                                                                                 endpoint=False)])
+            else:
+                ring = np.array([c + hw * fwd * i + hh * d * j for i, j in ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+            out.append(cap_ring(ring, (0.0, sg, 0.0)))
+    return Mesh.merge(out)
 
 
 def nose_yoke_meshes():
     """Two-arm nose-fork yoke (gear down, model coordinates): the swept band of nose_yoke_centre() (rounded-rectangle
     section, fore-aft half-width NOSE_YOKE arm_w tapering from the crown to the axle, the arms leaning with the axle ->
-    crown line), the axle bosses and the crown block round the piston bottom.  (meshes, crown-bolt heads, lightening
-    holes)."""
+    crown line), the axle bosses (boss_in .. fork_out) and the crown saddle with the torque-link lug.
+    (meshes, crown-bolt heads, arm marks)."""
     A, yk = NOSE_AXLE, NOSE_YOKE
     cr = NOSE_FORK - A                                          # crown (piston bottom) from the axle
     P, t, r_top = nose_yoke_centre()
@@ -762,20 +878,10 @@ def nose_yoke_meshes():
     out = [sweep_section(C, aa, t, n_sec=20, p=yk["sec_p"])]
     ax = WH.NOSE_AXLE
     for sg in (-1.0, 1.0):                                      # axle bosses round the arm ends
-        out.append(cylinder(A + [0, sg * ax["fork_in"], 0], A + [0, sg * ax["fork_out"], 0], yk["boss_r"], n=20))
-    hx, hy, r0, r1 = yk["crown"]
-    cc = np.array([A[0] + cr[0], 0.0, A[2] + 0.5 * (r0 + r1)])
-    out.append(superellipsoid(cc, (hx, hy, 0.5 * (r1 - r0)), (0.2, 0.2), 10, 24))
-    bolts, holes = [], []
-    for dx, rz in yk["crown_bolts"]:
-        for sg in (-1.0, 1.0):
-            c = np.array([A[0] + cr[0] + dx, sg * hy, A[2] + rz])
-            bolts.append(cylinder(c, c + [0, sg * 0.006, 0], 0.0075, n=6))
-    hr, hrad = yk["hole"]
-    for sg in (-1.0, 1.0):
-        c = np.array([A[0] + hr * lean, sg * (ax["fork_out"] + 0.0004), A[2] + hr])
-        holes.append(revolve([(0.0, hrad), (0.0, 0.0)], n=16, axis_origin=c, axis_dir=(0.0, sg, 0.0)))
-    return out, Mesh.merge(bolts), Mesh.merge(holes)
+        out.append(cylinder(A + [0, sg * ax["boss_in"], 0], A + [0, sg * ax["fork_out"], 0], yk["boss_r"], n=20))
+    saddle, bolts = nose_saddle_meshes()
+    out.append(saddle)
+    return out, bolts, nose_arm_marks()
 
 
 def nose_axle_meshes():
@@ -820,13 +926,13 @@ def build_nose(parts):
     struct.append(cylinder(P, upper_end, 0.052, n=24))                              # oleo cylinder
     collar = cylinder(P + 0.30 * (low - P), P + 0.34 * (low - P), 0.066, n=24)      # steering collar
     piston = cylinder(upper_end - 0.04 * u, low, 0.036, n=20)
-    yoke, crown_bolts, holes = nose_yoke_meshes()           # two-arm yoke + crown block (NOSE_YOKE, sheet L4W)
+    yoke, crown_bolts, holes = nose_yoke_meshes()           # two-arm yoke + crown saddle (NOSE_YOKE, sheet L4W)
     struct += yoke
     ax_parts, ax_dark = nose_axle_meshes()                  # axle, hex nuts + tear-drop lock plates outside the arms
     struct += ax_parts
     # torque links (scissor) in front of the strut
     k1 = P + 0.56 * (low - P) + [-0.055, 0, 0]
-    k2 = low + [-0.05, 0, 0.03]
+    k2 = low + [NOSE_TORQUE_LUG[0], 0, NOSE_TORQUE_LUG[1]]      # the saddle's torque-link lug
     knee = 0.5 * (k1 + k2) + [-0.09, 0, 0]
     for a, b in ((k1, knee), (knee, k2)):
         struct.append(cylinder(a, b, 0.014, n=10))

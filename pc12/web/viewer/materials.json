@@ -510,20 +510,54 @@
   },
   "tire": {
    "baseColorFactor": [
+    0.03,
+    0.03,
+    0.031,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.66,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.1,
+   "kind": "dielectric",
+   "note": "tyre sidewall rubber: matte charcoal with dust / scuff mottle (no lettering)",
+   "srgb_hex": "#303031"
+  },
+  "tire_tread": {
+   "baseColorFactor": [
     0.028,
     0.028,
     0.029,
     1.0
    ],
    "metallicFactor": 0.0,
-   "roughnessFactor": 0.45,
+   "roughnessFactor": 0.58,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "tyre rubber: black, satin sheen (the tread grooves are geometry)",
+   "note": "tyre tread ribs and shoulders: satin rubber with scuffing",
    "srgb_hex": "#2F2F30"
+  },
+  "tire_groove": {
+   "baseColorFactor": [
+    0.014,
+    0.014,
+    0.015,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.85,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.8,
+   "kind": "dielectric",
+   "note": "tyre groove walls / floors: darker, rougher",
+   "srgb_hex": "#1F1F21"
   },
   "deice_boot": {
    "baseColorFactor": [
@@ -682,8 +716,78 @@
    "ior": 1.5,
    "specularFactor": 0.2,
    "kind": "solid_paint",
-   "note": "painted wheel hubs",
+   "note": "painted wheel hubs (the white nose wheel)",
    "srgb_hex": "#CED0D1"
+  },
+  "wheel_main": {
+   "baseColorFactor": [
+    0.24,
+    0.24,
+    0.25,
+    1.0
+   ],
+   "metallicFactor": 0.3,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "main-wheel halves: weathered cast aluminium (darker than the housing)",
+   "srgb_hex": "#868689"
+  },
+  "brake_housing": {
+   "baseColorFactor": [
+    0.8,
+    0.8,
+    0.79,
+    1.0
+   ],
+   "metallicFactor": 0.25,
+   "roughnessFactor": 0.45,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "main brake housing: bright matte-satin cast aluminium (diffuse enough to stay light in the wing's shade: wheel_main_inboard lobes / flange L 29 / 12, 3036 mx5 80 / 46)",
+   "srgb_hex": "#E7E7E6"
+  },
+  "hub_fairing": {
+   "baseColorFactor": [
+    0.005,
+    0.024,
+    0.145,
+    1.0
+   ],
+   "metallicFactor": 0.3,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.5,
+   "clearcoatRoughnessFactor": 0.1,
+   "ior": 1.5,
+   "specularFactor": 0.2,
+   "blender_metallic": 0.4,
+   "blender_roughness": 0.5,
+   "kind": "metal_paint",
+   "note": "main-wheel hub fairings: the leg-door blue, a shade darker, soft coat",
+   "srgb_hex": "#102B6A"
+  },
+  "brake_disc": {
+   "baseColorFactor": [
+    0.1,
+    0.088,
+    0.075,
+    1.0
+   ],
+   "metallicFactor": 0.6,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "brake disc stack / rotor drive keys: heat-darkened steel",
+   "srgb_hex": "#59544D"
   },
   "gear_leg": {
    "baseColorFactor": [

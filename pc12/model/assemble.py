@@ -33,9 +33,17 @@ MATERIALS = {
     "deice_boot":    ((0.012, 0.012, 0.014), 0.0, 0.25),          # glossy black neoprene, one crisp highlight
     "metal":         ((0.62, 0.64, 0.66), 0.85, 0.35),
     "metal_dark":    ((0.25, 0.26, 0.27), 0.8, 0.45),
-    # main-wheel brake housing: bright satin cast aluminium (wheels review r1 F6: photo 3036 mx5 p90 ~195 in the sun
-    # against 155 rendered with 'metal', which mirrored the dark wheel well)
-    "brake_housing": ((0.70, 0.70, 0.69), 0.45, 0.42),
+    # main-wheel brake housing: bright matte-satin cast aluminium, the BRIGHTEST part of the inboard face (wheels review
+    # r1 F6: photo 3036 mx5 p90 ~195 in the sun; r2 F3: lobes L 75-89 in shade against the wheel flange's 44-48 -- a
+    # cast, not polished, surface: mostly diffuse, so it stays light in the shade of the wing instead of mirroring it)
+    "brake_housing": ((0.80, 0.80, 0.79), 0.25, 0.45),
+    # main-wheel halves: weathered cast aluminium, darker and rougher than the housing (review r2 F3: the r1 'wheel' grey
+    # made wheel, housing and arm one flat blue-grey washer); heat-darkened brake discs and rotor drive keys
+    "wheel_main":    ((0.24, 0.24, 0.25), 0.30, 0.60),
+    # main-wheel outboard hub fairing: the leg-door blue (MSN 3008 paint_blue) a shade darker, softer coat (review r2 F6:
+    # retracted, the gloss paint read 2x the photo's N81DW hub facing the sunlit ground, sRGB 14/23/44 vs 11/15/23)
+    "hub_fairing":   ((0.005, 0.024, 0.145), 0.30, 0.50, dict(clearcoat=0.5, clearcoat_rough=0.10, specular=0.2)),
+    "brake_disc":    ((0.10, 0.088, 0.075), 0.60, 0.55),
     # dark phosphated steel: nose axle nuts, tear-drop lock plates, axle ends (photo 3036 nose-hub zoom)
     "steel_dark":    ((0.085, 0.085, 0.09), 0.65, 0.45),
     "steel":         ((0.72, 0.73, 0.74), 0.9, 0.25),
@@ -49,7 +57,11 @@ MATERIALS = {
     "prop_blade":    ((0.015, 0.015, 0.017), 0.0, 0.45, dict(specular=0.5)),   # satin black composite
     "prop_tip":      ((0.80, 0.80, 0.78), 0.0, 0.36),
     "erosion":       ((0.45, 0.45, 0.44), 1.0, 0.40),             # satin nickel erosion sheath (VQA r1 LIV-04)
-    "tire":          ((0.028, 0.028, 0.029), 0.0, 0.45),           # black rubber, satin sheen
+    # tyre rubber in three zones (model/wheels.py tyre_zones, review r2 F4: one satin read as moulded plastic in the sun):
+    # matte dusty sidewall, satin tread ribs (+ shoulders), darker and rougher groove walls / floors
+    "tire":          ((0.030, 0.030, 0.031), 0.0, 0.66, dict(specular=1.1)),
+    "tire_tread":    ((0.028, 0.028, 0.029), 0.0, 0.58),
+    "tire_groove":   ((0.014, 0.014, 0.015), 0.0, 0.85, dict(specular=0.8)),
     "wheel":         ((0.62, 0.63, 0.64), 0.25, 0.35, dict(clearcoat=0.6, clearcoat_rough=0.03, specular=0.2)),
     "gear_leg":      ((0.72, 0.73, 0.74), 0.0, 0.32, dict(clearcoat=0.6, clearcoat_rough=0.03, specular=0.2)),
     "glazing_retainer": ((0.50, 0.51, 0.52), 1.0, 0.22),         # satin-polished windshield / side-window retainers

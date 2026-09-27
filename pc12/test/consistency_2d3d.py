@@ -62,6 +62,7 @@ from model import cockpit_glazing as CG  # noqa: E402
 from model import wing as W  # noqa: E402
 from model import empennage as E  # noqa: E402
 from model import gear as G  # noqa: E402
+from model.wheels import TYRE_MATS  # noqa: E402
 from model import details as D  # noqa: E402
 from model import powerplant as PP  # noqa: E402
 from model import livery as L  # noqa: E402
@@ -1336,7 +1337,7 @@ def check_L4(ctx, rep, plots):
     dev, lab = [], []
     for pid, A, T in (("gear_main_R", G.MAIN_AXLE, G.MAIN_TYRE), ("gear_main_L", G.MAIN_AXLE * [1, -1, 1], G.MAIN_TYRE),
                       ("gear_nose", G.NOSE_AXLE, G.NOSE_TYRE)):
-        Vt = ctx.verts(pid, mats=("tire",))
+        Vt = ctx.verts(pid, mats=TYRE_MATS)
         if not len(Vt):
             dev.append(1.0)
             lab.append(f"{pid}: no tyre")
@@ -1939,7 +1940,7 @@ def _l4_gear(ctx, rep):
     for pid, sg in (("gear_main_R", 1), ("gear_main_L", -1)):
         o, a = _pivot(ctx, pid)
         pv = (ctx.extras.get(pid) or {}).get("pivot") or {}
-        Vt = ctx.verts(pid, mats=("tire",))
+        Vt = ctx.verts(pid, mats=TYRE_MATS)
         if o is None or not len(Vt):
             dev.append(1.0)
             lab.append(f"{pid}: no pivot / tyre")
@@ -2024,7 +2025,7 @@ def check_L4W(ctx, rep, plots):
         k = np.argsort(phi_o)
         dev, lab = [], []
         for pid in pids:
-            L_ = _wheel_local(ctx, pid, ("tire",))
+            L_ = _wheel_local(ctx, pid, TYRE_MATS)
             phi = np.arctan2(L_[:, 3], L_[:, 2])
             bins = np.round(np.degrees(phi) * 2).astype(int)             # 0.5 deg bins
             order = np.lexsort((-L_[:, 1], bins))
@@ -2036,6 +2037,28 @@ def check_L4W(ctx, rep, plots):
                        f"(free R {R:.4f}, loaded {env['R_loaded']:.4f})")
         rep.add("L4W", f"{which} tyre side silhouette vs loaded_side_outline ({WH.TYRE_ENV[which]['size']})",
                 np.concatenate(dev), tol, "; ".join(lab))
+        # head-on at the contact (review r2 C1): the loaded tread lies flat on the ground ACROSS its width, as the
+        # sheet's loaded_headon_half draws it -- every rib vertex of the tyre's profile ring at the contact centre
+        # (|dx| < 4 mm, |s| up to the tread edge, below the max-width radius; groove walls / floors excepted: they lie
+        # higher by design) against loaded_crown_r(s)
+        fr = WH.tyre_frame(asm)
+        st_, t_ = float(fr["T1"][0]), asm["tyre"]
+        dev, lab = [], []
+        for pid in pids:
+            L_ = _wheel_local(ctx, pid, TYRE_MATS)
+            c_ = L_[(np.abs(L_[:, 2]) < 0.004) & (-L_[:, 3] > fr["rw"]) & (np.abs(L_[:, 0]) <= st_ + 1e-4)]
+            rib = np.ones(len(c_), bool)
+            for g in t_["grooves"]:
+                rib &= np.abs(np.abs(c_[:, 0]) - g) > t_["groove_w"] / 2 + 0.0015
+            c_ = c_[rib]
+            d_ = -c_[:, 3] - np.array([WH.loaded_crown_r(asm, v) for v in c_[:, 0]])
+            dev.append(d_)
+            lab.append(f"{pid}: {len(c_)} rib verts at the contact, {-c_[:, 3].min():.4f}..{-c_[:, 3].max():.4f} below "
+                       f"the axle over s {c_[:, 0].min():+.3f}..{c_[:, 0].max():+.3f} (loaded R "
+                       f"{WH.TYRE_ENV[which]['R_loaded']})" if len(c_) else f"{pid}: no contact verts")
+        dev = np.concatenate(dev) if dev else np.array([1.0])
+        rep.add("L4W", f"{which} loaded tread flat on the ground across its width vs loaded_headon_half",
+                np.array(dev), tol, "; ".join(lab))
         # front view: every tyre vertex of the upper half (s, rho) on the DRAWN section (tyre_outer_half with the
         # grooves + the bead contour round the rim-flange tip, both sides), and the drawn section covered by the
         # mesh's own profile (the ring at the top, ordered along the drawn contour)
@@ -2043,7 +2066,7 @@ def check_L4W(ctx, rep, plots):
         drawn = np.vstack([half[:0:-1] * [-1, 1], half])
         dev, lab = [], []
         for pid in pids:
-            L_ = _wheel_local(ctx, pid, ("tire",))
+            L_ = _wheel_local(ctx, pid, TYRE_MATS)
             up = L_[:, 3] > 0.05
             P = L_[up][:, :2]
             d1 = _poly_dist(P, drawn)
@@ -2059,7 +2082,7 @@ def check_L4W(ctx, rep, plots):
         Q1, Q2 = WH.rim_half(asm, 1), WH.rim_half(asm, -1)
         dev, lab = [], []
         for pid in pids:
-            L_ = _wheel_local(ctx, pid, ("wheel",), near=R)
+            L_ = _wheel_local(ctx, pid, ("wheel", "wheel_main"), near=R)
             d = np.minimum(_poly_dist(L_[:, :2], Q1, True), _poly_dist(L_[:, :2], Q2, True))
             dev.append(d)
             lab.append(f"{pid}: {len(L_)} verts, flange R {L_[:, 1].max():.4f} "
@@ -2068,7 +2091,7 @@ def check_L4W(ctx, rep, plots):
     # main hub fairing: its skin on fairing_section (offset t / 2), the face plane outboard of the tyre, the hole
     fa = WH.MAIN_FAIRING
     P, s0, s1 = WH.fairing_section(WH.MAIN)
-    paint = (L.SURFACES["main_gear_door"], "paint_white")
+    paint = ("hub_fairing", L.SURFACES["main_gear_door"], "paint_white")
     dev, lab = [], []
     for pid in ("gear_main_R", "gear_main_L"):
         L_ = _wheel_local(ctx, pid, paint, near=G.MAIN_TYRE["R"])
@@ -2103,6 +2126,25 @@ def check_L4W(ctx, rep, plots):
         dev.append(d)
         lab.append(f"{pid}: {int(m.sum())} lobe-wall verts, r {L_[m, 1].min():.4f}-{L_[m, 1].max():.4f}")
     rep.add("L4W", "main brake housing lobes vs brake_lobe_outline", np.concatenate(dev), tol, "; ".join(lab))
+    # nose-fork yoke, front view (review r2 F1): the band's vertices at its fore-aft centre (the swept section's
+    # inner / outer extremes) on gear.nose_yoke_contours -- the arms' faces and ONE semicircular inner arch
+    A_ = G.NOSE_AXLE
+    lean = (G.NOSE_FORK[0] - A_[0]) / (G.NOSE_FORK[2] - A_[2])
+    fi_, fo_, rc_, h_ = G.nose_yoke_frame()
+    inner, outer = G.nose_yoke_contours(n_arc=720)
+    V_ = ctx.verts("gear_nose", mats=("gear_leg",))
+    r_ = V_[:, 2] - A_[2]
+    x_ = V_[:, 0] - A_[0] - r_ * lean
+    s_ = V_[:, 1] - A_[1]
+    w_ = G.NOSE_YOKE["arm_w"][0]
+    band = (np.abs(x_) < 0.25 * w_) & (r_ > G.NOSE_YOKE["boss_r"] + 0.01) & (r_ < G.nose_saddle_sections()[0][0] - 0.002)
+    P_ = np.c_[s_[band], r_[band]]
+    d_ = np.minimum(_poly_dist(P_, inner), _poly_dist(P_, outer)) if len(P_) else np.array([1.0])
+    apex = r_[band & (np.abs(s_) < 0.01)]
+    rep.add("L4W", "nose fork yoke (front view) vs nose_yoke_contours (arms, round arch)", d_, tol,
+            f"{len(P_)} band verts; arms +-{fi_:.3f}..{fo_:.3f}, springing r {rc_:.4f}, arch height {h_:.3f} "
+            f"(p {G.NOSE_YOKE['arch_p']}), inner apex {apex.min() if len(apex) else 0:.4f} "
+            f"(free tyre R + arch {float(WH.NOSE_TYRE_ENV['R']) + WH.NOSE_AXLE['arch']:.4f})")
     # triangle budgets (4K close-ups within the part budget)
     n_main, n_nose = WH.tri_count("main"), WH.tri_count("nose")
     rep.add("L4W", "wheel triangle budgets (main <= 30k, nose <= 18k per wheel)", None, None,

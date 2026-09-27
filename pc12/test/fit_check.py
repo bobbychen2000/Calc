@@ -216,9 +216,9 @@ for side in ("R", "L"):
     zl_, zu_ = G.wing_z(V_[:, 0], V_[:, 1], False), G.wing_z(V_[:, 0], V_[:, 1], True)
     fp = G.leg_door_footprint(1)
     covered = sdf2d.polygon(V_[:, 0], np.abs(V_[:, 1]), fp) < 0.0             # over the (stowed) leg door
-    tyre = verts(f"gear_main_{side}", ("tire",)) @ M[:3, :3].T + M[:3, 3]
+    tyre = verts(f"gear_main_{side}", WH.TYRE_MATS) @ M[:3, :3].T + M[:3, 3]
     proud = float((G.wing_z(tyre[:, 0], tyre[:, 1], False) - tyre[:, 2]).max())   # depth below the LOCAL lower skin
-    kind = np.concatenate([np.full(len(m.V), 2 if mm == "tire" else (1 if wheel_mesh(f"gear_main_{side}", m) else 0))
+    kind = np.concatenate([np.full(len(m.V), 2 if mm in WH.TYRE_MATS else (1 if wheel_mesh(f"gear_main_{side}", m) else 0))
                            for m, mm in parts[f"gear_main_{side}"].meshes
                            if not is_door(f"gear_main_{side}", m, mm)])[::2]
     low_other = float((zl_ - V_[:, 2])[kind == 0].max())                      # > 0: something else below the skin
@@ -434,7 +434,7 @@ for side in ("R", "L"):
            "brackets the wheel", len(P) + len(Q) == 0, f"{len(P)} / {len(Q)} crossings")
     g = parts[gid].pivot
     Mg = rotation_about(g["axis"], np.radians(g["retract"]), g["origin"])
-    ty = verts(gid, ("tire",)) @ Mg[:3, :3].T + Mg[:3, 3]
+    ty = verts(gid, WH.TYRE_MATS) @ Mg[:3, :3].T + Mg[:3, 3]
     roof = np.array([wing_z(p[0], p[1], True) for p in ty[::4]]) - G.MAIN_BAY_ROOF_GAP
     report(f"main gear {side} up: stowed tyre under the bay liner roof", bool((ty[::4, 2] < roof - 0.002).all()),
            f"min clearance {1000 * (roof - ty[::4, 2]).min():.0f} mm")

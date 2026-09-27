@@ -350,8 +350,25 @@ SPEC = {
     # sidewall measures sRGB 56-60, tread ribs 67-81 (render r3 body p50 71).  Tread grooves: the model cuts them
     # (model/wheels.py tyre_profile_3d: main two pairs at +-0.14 / +-0.26 W, nose even at +-0.09 / +-0.28 W, rounded
     # rib edges), so the render-time groove bump (_tyre_grooves, 'grooves' key: n / width / tread / depth ...) is off.
-    "tire":             dict(kind="dielectric", base=(0.028, 0.028, 0.029), rough=0.45, spec=0.5,
-                             note="tyre rubber: black, satin sheen (the tread grooves are geometry)"),
+    # wheels review r2 F4: one uniform satin (0.028 / 0.45) read as moulded plastic in the sun (188 nose tread face
+    # p10-p90 59-113 against the photo's 80-108; 3036 mx5 sidewall matte charcoal).  The GLB splits the tyre in three
+    # zones (model/wheels.py tyre_zones): sidewall matte (0.70) with a low-frequency dust / scuff mottle ('dust': world-
+    # space noise scale per metre, the base colour pulled toward a dusty grey-brown and the roughness raised where it is
+    # high), tread ribs + shoulders satin (0.52) with finer scuffing, groove walls / floors darker and rougher.
+    # (nose_port_closeup vs 188, tread face luminance p10 / p50 / p90: photo 83 / 98 / 107, r2 render 59 / - / 113,
+    # these values 79 / 94 / 122 -- the rest of the spread is the sun's gradient over the curved tread).  Sidewall
+    # roughness 0.66 / Specular 0.55, not 0.70 / 0.5: in the hangar (130) the shaded stbd main tyre lost its room sheen
+    # (tyre-mask p50 52 -> 41, the nose tyre unchanged 71 -> 72); 0.62 / 0.6 gave 45 / 77
+    "tire":             dict(kind="dielectric", base=(0.030, 0.030, 0.031), rough=0.66, spec=0.55,
+                             dust=dict(scale=7.0, detail=4.0, colour=(0.080, 0.073, 0.062), mix=(0.05, 0.65),
+                                       rough=(0.62, 0.78)),
+                             note="tyre sidewall rubber: matte charcoal with dust / scuff mottle (no lettering)"),
+    "tire_tread":       dict(kind="dielectric", base=(0.028, 0.028, 0.029), rough=0.58, spec=0.5,
+                             dust=dict(scale=16.0, detail=5.0, colour=(0.070, 0.065, 0.057), mix=(0.10, 0.55),
+                                       rough=(0.52, 0.70)),
+                             note="tyre tread ribs and shoulders: satin rubber with scuffing"),
+    "tire_groove":      dict(kind="dielectric", base=(0.014, 0.014, 0.015), rough=0.85, spec=0.4,
+                             note="tyre groove walls / floors: darker, rougher"),
     "deice_boot":       dict(kind="dielectric", base=(0.012, 0.012, 0.014), rough=0.25, spec=0.5,
                              note="pneumatic de-ice boots: near-black glossy neoprene with one crisp highlight "
                                   "(photo 188 sRGB 32/36/44 in shade; 130: bright room reflections)"),
@@ -396,7 +413,26 @@ SPEC = {
                                   "(photo 130: a jet-black band with a crisp edge; 188: the dark inside of the scarfed "
                                   "opening); the GLB draws them in the shared satin 'black' (0.028), a dark-grey cap"),
     "wheel":            dict(kind="solid_paint", base=(0.62, 0.63, 0.64), rough=0.35, metallic=0.25,
-                             coat=0.6, lining=False, note="painted wheel hubs"),
+                             coat=0.6, lining=False, note="painted wheel hubs (the white nose wheel)"),
+    # wheels review r2 F3 (3036 mx5 brake zoom, in shade): the brake-housing lobes are the brightest part of the main
+    # wheel's inboard face (L 75-89), the wheel flange a narrow dark ring (L 44-48) round a dark barrel / disc stack; the
+    # r1 renders had wheel, housing and arm in one blue-grey (a flat washer).  Three materials now: dark weathered cast
+    # wheel halves, a bright satin cast housing, heat-darkened discs / drive keys.
+    "wheel_main":       dict(kind="dielectric", base=(0.24, 0.24, 0.25), rough=0.60, metallic=0.30, spec=0.5,
+                             note="main-wheel halves: weathered cast aluminium (darker than the housing)"),
+    "brake_housing":    dict(kind="dielectric", base=(0.80, 0.80, 0.79), rough=0.45, metallic=0.25, spec=0.5,
+                             note="main brake housing: bright matte-satin cast aluminium (diffuse enough to stay light "
+                                  "in the wing's shade: wheel_main_inboard lobes / flange L 29 / 12, 3036 mx5 80 / 46)"),
+    # wheels review r2 F6: the retracted hub fairing (the leg-door blue, gloss flake paint) read 2x too bright in the
+    # air view (air_below_left well crop: sRGB 14/23/44 against N81DW's 11/15/23, the wing beside it matched): facing the
+    # sunlit ground it mirrors it in the coat and shows the full pigment.  Its own finish: the leg-door blue a shade
+    # darker (brake dust), the flakes kept, a thinner / softer coat -> air crop 3/10/29, and at the apron close-up it
+    # still reads as the door's metallic blue (a satin without flakes read as a flat royal blue there)
+    "hub_fairing":      dict(kind="metal_paint", base=(0.005, 0.024, 0.145), metallic=0.40, rough=0.50, coat=0.5,
+                             coat_rough=0.10, lining=False, gltf=dict(metallic=0.30),
+                             note="main-wheel hub fairings: the leg-door blue, a shade darker, soft coat"),
+    "brake_disc":       dict(kind="dielectric", base=(0.10, 0.088, 0.075), rough=0.55, metallic=0.60, spec=0.5,
+                             note="brake disc stack / rotor drive keys: heat-darkened steel"),
     "gear_leg":         dict(kind="solid_paint", base=(0.72, 0.73, 0.74), rough=0.32, coat=0.6, lining=False,
                              note="gloss white-grey painted gear legs / links"),
     "seam":             dict(kind="dielectric", base=(0.018, 0.018, 0.020), rough=0.60, spec=0.3,
@@ -588,7 +624,36 @@ def build_dielectric(m, p):
     b = _principled(nt, q)
     if q.get("grooves"):
         _tyre_grooves(nt, b, q)
+    if q.get("dust"):
+        _dust(nt, b, q)
     _finish(nt, out, b.outputs[0], q)
+
+
+def _dust(nt, b, q):
+    """Dust / scuff mottle (tyres): a world-space noise (dust['scale'] per metre, 'detail' octaves) mapped 0 .. 1 over
+    its middle range drives the base colour from 'base' toward dust['colour'] (by dust['mix'] = (lo, hi)) and the
+    roughness over dust['rough'] = (lo, hi): low-frequency dusty patches, matte where dusty."""
+    d = q["dust"]
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    mp = nt.nodes.new("ShaderNodeVectorMath")
+    mp.operation = "SCALE"
+    mp.inputs["Scale"].default_value = float(d.get("scale", 8.0))
+    nt.links.new(geo.outputs["Position"], mp.inputs[0])
+    nz = nt.nodes.new("ShaderNodeTexNoise")
+    nz.inputs["Scale"].default_value = 1.0
+    nz.inputs["Detail"].default_value = float(d.get("detail", 4.0))
+    nz.inputs["Roughness"].default_value = float(d.get("roughness", 0.6))
+    nt.links.new(mp.outputs["Vector"], nz.inputs["Vector"])
+    nr = nt.nodes.new("ShaderNodeMapRange")
+    nr.clamp = True
+    nr.inputs["From Min"].default_value, nr.inputs["From Max"].default_value = 0.35, 0.65
+    nt.links.new(nz.outputs["Fac"], nr.inputs["Value"])
+    f = nr.outputs["Result"]
+    lo, hi = (float(v) for v in d.get("mix", (0.0, 0.5)))
+    col = _mixc(nt, _mixf(nt, f, lo, hi), tuple(q["base"]), tuple(d["colour"]))
+    nt.links.new(col, b.inputs["Base Color"])
+    r0, r1 = (float(v) for v in d.get("rough", (q.get("rough", 0.5), q.get("rough", 0.5))))
+    nt.links.new(_mixf(nt, f, r0, r1), b.inputs["Roughness"])
 
 
 # tyre frame: object custom properties written by apply() (_tyre_frames) on every object drawn in a material with
