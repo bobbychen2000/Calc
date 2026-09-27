@@ -516,6 +516,36 @@ PRESETS = {
         catcher_spec=0.0, samples=32,
         pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
     ),
+    # wheel close-ups (model/wheels.py, sheet L4W): daylight on the apron like photos 3036 mx4 / mx5 (outdoor, sun),
+    # 1:1-ish framing of one wheel; compare with the crops in refs/cache/photos/wheels/
+    "wheel_main_close": dict(
+        photo=None,
+        photo_note="port main wheel, outboard face (hub fairing, leg door) from forward-outboard, like 3036 mx5",
+        camera=dict(fallback=dict(pos=(5.05, -3.90, 0.55), target=(6.40, -2.30, 0.37), hfov=34.0), W=1600, H=1200),
+        env="apron", hdri="zwartkops_straight_afternoon", sun_az=-125.0, strength=1.0, exposure=0.6,
+        ground_gain=3.0, samples=32,
+        camera_grade=dict(sat=1.1, val=0.95), grade=dict(white=0.95, gamma=1.05, sat=1.05),
+        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
+    ),
+    "wheel_main_inboard": dict(
+        photo=None,
+        photo_note="starboard main wheel, inboard face (brake, trailing arm, axle boss) from the centre line, like "
+                   "3036 mx5 / 3008 130",
+        camera=dict(fallback=dict(pos=(5.30, 0.85, 0.55), target=(6.40, 2.20, 0.34), hfov=36.0), W=1600, H=1200),
+        env="apron", hdri="zwartkops_straight_afternoon", sun_az=-110.0, strength=1.0, exposure=0.8,
+        ground_gain=3.0, samples=32,
+        camera_grade=dict(sat=1.1, val=0.95), grade=dict(white=0.95, gamma=1.05, sat=1.05),
+        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
+    ),
+    "wheel_nose_close": dict(
+        photo=None,
+        photo_note="nose wheel, port face (white split-hub wheel, fork) from forward-port, like 3036 mx4",
+        camera=dict(fallback=dict(pos=(1.85, -1.35, 0.62), target=(2.915, 0.0, 0.36), hfov=36.0), W=1600, H=1200),
+        env="apron", hdri="zwartkops_straight_afternoon", sun_az=-125.0, strength=1.0, exposure=0.6,
+        ground_gain=3.0, samples=32,
+        camera_grade=dict(sat=1.1, val=0.95), grade=dict(white=0.95, gamma=1.05, sat=1.05),
+        pose=dict(gear=0.0, door_airstair=0.0, pitch=62.0, prop_clock=0.0),
+    ),
     "hero": dict(
         photo=None,
         # low 3/4 front from port, ~50 mm-equivalent; 'frame' re-aims and sets f from the posed mesh so the

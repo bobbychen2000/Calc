@@ -245,7 +245,7 @@ def draw_frame(sh: Sheet, frame=None, ncol=16, nrow=12):
     FX0, FY0, FX1, FY1 = frame or (globals()["FX0"], globals()["FY0"], globals()["FX1"], globals()["FY1"])
     SW, SH = cv.W, cv.H
     cv.rect(FX0, FY0, FX1 - FX0, FY1 - FY0, lw=W_FRAME)
-    letters = [c for c in "ABCDEFGHJKLMNP"][:nrow]
+    letters = [c for c in "ABCDEFGHJKLMNPQR"][:nrow]      # ISO 5457: no I, O (A0: 16 rows)
     xs = np.linspace(FX0, FX1, ncol + 1)
     ys = np.linspace(FY0, FY1, nrow + 1)
     for x in xs[1:-1]:

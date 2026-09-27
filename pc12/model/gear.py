@@ -5,7 +5,7 @@ Landing gear: electromechanically actuated tricycle (PC-12 NG MSN 1451+ / NGX / 
   Nose: hydraulic shock strut, retracts REARWARD, fully enclosed by spring-closed doors.
   All legs locked down by an over-centre two-piece folding strut.
   * Main: trailing-link units on the wing spars, retract INWARD into the wing.
-          Tyres 22 x 8.50-10.
+          Tyres 8.50-10 Type III (owner decision 2026-09-26; model/wheels.py MAIN_TYRE_CHOICE; Jane's 22 x 8.50-10 superseded).
   * Nose: steerable oleo strut, retracts REARWARD under the flight deck.
           Tyre 17.5 x 6.25-6, steering +/-60 deg.
 Geometry is built in the gear-DOWN position; each unit stores its retraction
@@ -14,6 +14,8 @@ Wheel track 4.53 m (Pilatus), wheelbase 3.48 m (POH three-view).
 Stage 2 (rev B): axle, pivot and brace positions from the Pilatus NGX drawing (side / front views).
 """
 from __future__ import annotations
+import math
+
 import numpy as np
 
 from cad.mesh import (Mesh, revolve, cylinder, box, sweep_tube, grid_surface, trim, solidify,
@@ -22,6 +24,7 @@ from cad import sdf2d
 from model.parts import Part
 from model import wing as W
 from model import fuselage as F
+from model import wheels as WH
 
 TRACK = 4.53
 WHEELBASE = 3.48
@@ -29,10 +32,15 @@ WHEELBASE = 3.48
 # 3.515 m apart; the POH 3.48 m is kept and the pair is centred on the drawn axles (each unit moved rigidly by
 # GEAR_SHIFT, forward for the main gear, aft for the nose gear).
 GEAR_SHIFT = 0.0175
-MAIN_TYRE = dict(R=0.2795, W=0.216, rim=0.127)      # 22 x 8.50-10
-NOSE_TYRE = dict(R=0.2225, W=0.159, rim=0.076)      # 17.5 x 6.25-6
+# tyre envelopes from the wheel tables (model/wheels.py): main 8.50-10 Type III (R 0.320, owner decision 2026-09-26;
+# Jane's 22 x 8.50-10 superseded, wheels.MAIN_TYRE_CHOICE), nose 17.5 x 6.25-6.  The axle WLs are the static LOADED radii
+# (the tyres flatten at the ground).  The wheels themselves: wheels.main_wheel / nose_wheel
+MAIN_TYRE = {k: float(WH.MAIN_TYRE_ENV[k]) for k in ("R", "W", "rim")}
+NOSE_TYRE = {k: float(WH.NOSE_TYRE_ENV[k]) for k in ("R", "W", "rim")}
 MAIN_AXLE = np.array([6.428 - GEAR_SHIFT, TRACK / 2, 0.279])        # static, tyre on the ground line
-NOSE_AXLE = np.array([MAIN_AXLE[0] - WHEELBASE, 0.0, 0.222])
+# nose axle WL = the nose tyre's static loaded radius (wheels.NOSE_TYRE_ENV R_loaded 0.207, photos 200-210; the drawn
+# circle touching the ground put it at 0.222): the tyre is flattened 15.5 mm at the ground, the fork arms reach 15 mm lower
+NOSE_AXLE = np.array([MAIN_AXLE[0] - WHEELBASE, 0.0, float(WH.NOSE_TYRE_ENV["R_loaded"])])
 # Main retraction pivot (axis along x).  Stage 3 leg-door decision (LD-1, owner-delegated): the drawn leg top
 # (STA 5,950 / WL 1,070 at the wing lower skin, MAIN_TRUNNION_DRAWN) cannot be the pivot of a FLUSH leg door: retracted,
 # the door lies in the skin and the leg above it, so the pivot must sit about one leg radius + the door thickness above
@@ -69,7 +77,7 @@ NOSE_BRACE = ((3.470 + GEAR_SHIFT, 0.0, 1.070), (3.030 + GEAR_SHIFT, 0.0, 0.785)
 # with its fork crown is 0.54 m long) and stows right above it; the fixed attach is two stub pins on the bay walls, the
 # lower link a single tube to the lug B0 on the leg's aft face.  Side view (the drawn A / B0 line) unchanged.
 NOSE_BRACE_FORK = dict(y=0.135, r=0.010, stub=(0.125, 0.147), pin_r=0.011, bend=0.60, y_knee=0.095)
-NOSE_FORK_CROWN_HW = 0.118          # fork crown half-width (covers the fork arms at +/-0.105, clears the brace fork)
+NOSE_FORK_CROWN_HW = 0.118          # fork half-width (the yoke arms end at +/-0.118, NOSE_YOKE; clears the brace fork)
 # Retraction (Stage 3).  Nose: 105 deg aft about NOSE_PIVOT puts the axle at WL ~1.20 and the tyre 33 mm above the
 # keel (95 deg left it 108 mm below the keel); the wheel stows in a tunnel under the centre pedestal
 # (NOSE_TUNNEL: x-range, half-width, top WL).  Folding struts: two links of unequal length (L1 = upper link A-K as a
@@ -83,7 +91,10 @@ NOSE_FORK_CROWN_HW = 0.118          # fork crown half-width (covers the fork arm
 # bay-liner roof (the binding pair: leg above the door vs shock under the upper skin, 0.28 m wing depth).
 NOSE_RETRACT_DEG = -105.0
 MAIN_RETRACT_DEG = 86.0
-NOSE_DOOR_OPEN_DEG = 85.0           # nose clamshells: closed -> open (hanging beside the leg; open while the gear is down)
+# nose clamshells: closed -> open (hanging beside the leg; open while the gear is down).  92 deg (was 85): the lower
+# edges lean 2 deg out, so the two-arm fork's axle nuts (+-0.130, wheels review r1 F3 / F4) pass the doors' inner faces
+# (+-0.136) as the gear retracts; at 85 deg the doors leaned in to +-0.126
+NOSE_DOOR_OPEN_DEG = 92.0
 # tunnel x0 3.20 (rev: 3.30): the drag brace's lower link (B at x 3.22-3.25, WL 1.12-1.16 when retracted, rising to the
 # knee under the pedestal) passes under the tunnel roof, not the low forward bay roof (M7)
 NOSE_TUNNEL = dict(x0=3.200, x1=4.100, hy=0.155, z_top=1.460, z_low=1.200)
@@ -139,7 +150,7 @@ MAIN_BRACE_KNEE = (0.036, 0.034)     # (unused x half-size, in-plane half-size o
 #     the skin and the wheel mid-plane ~83 mm above it (1 in protrusion of the 216 mm tyre), so the door is parallel
 #     to the wheel plane gear down;
 #   * side view: the drawn face overlaps the static tyre by up to 93 mm; retracted, that part would lie UNDER the
-#     protruding tyre, so the door is scalloped round the tyre (R 292 about the axle, >= 15 mm clear of the tyre at the door) and the
+#     protruding tyre, so the door is scalloped round the tyre (tyre R + 12.5 about the axle: R 332 with the 8.50-10) and the
 #     tyre sits in its own round well (bays.main_opening_sdf), as in the photos from below;
 #   * a forward top tab (hidden in the wing slot with the gear down) continues the door up past the trunnion over the
 #     leg's skin crossing, so the retracted door also closes the hole the leg passes through (the verify-fix round's
@@ -151,7 +162,7 @@ LEG_DOOR = dict(x_fwd=5.950 - GEAR_SHIFT, x_fwd_low=5.969 - GEAR_SHIFT, z_fwd_lo
                 x_aft=6.615 - GEAR_SHIFT, x_aft_top=6.603 - GEAR_SHIFT,                    # wide part's aft edge
                 z_top=(1.073, 1.088),                                                      # top edge WL fwd / aft
                 bl=(2.358, 2.472),                                                         # DRAWN front-view plane
-                scallop_r=0.292,                    # LD-1: tyre scallop about MAIN_AXLE (tyre R 279.5 + 12.5)
+                scallop_r=MAIN_TYRE["R"] + WH.SCALLOP_CLEAR,   # LD-1: tyre scallop about MAIN_AXLE (R + 12.5)
                 tab=(6.070, MAIN_TRUNNION[2] + 0.090))   # LD-1: forward top tab: aft STA, top WL (hidden, in the slot)
 LEG_DOOR_T = 0.012                  # door plate thickness (inboard of the outer face)
 LEG_DOOR_RECESS = 0.001             # retracted, the door's outer face lies this far inside the wing lower surface
@@ -421,11 +432,12 @@ def leg_door_retracted_drop(side=1):
     return float(dz.min()), float(dz.max())
 
 
-def main_tyre_protrusion(side=1):
-    """Largest depth (m) of the retracted main tyre below the local wing lower surface (POH: ~1 in)."""
+def main_tyre_protrusion(side=1, mats=WH.TYRE_MATS):
+    """Largest depth (m) of the retracted main tyre (mats: or other wheel parts, e.g. the hub fairing
+    'hub_fairing') below the local wing lower surface (POH: ~1 in)."""
     M = main_retract_matrix(side)
-    tyre = [m for m, mat in wheel(MAIN_AXLE * [1, side, 1], np.array([0, 1.0, 0]), MAIN_TYRE, n=44) if mat == "tire"][0]
-    V = tyre.V @ M[:3, :3].T + M[:3, 3]
+    V = np.vstack([m.V for m, mat in WH.main_wheel(MAIN_AXLE * [1, side, 1], (0.0, 1.0, 0.0), side, parts=mats)])
+    V = V @ M[:3, :3].T + M[:3, 3]
     return float((wing_z(V[:, 0], V[:, 1], False) - V[:, 2]).max())
 
 
@@ -433,32 +445,71 @@ from model.bays import NOSE_BAY, main_opening_sdf, main_bay_sdf, nose_bay_sdf
 
 
 # ---------------------------------------------------------------------------
-def wheel(center, axis, tyre, n=40, brake_side=0):
-    """Tyre + rim + hub (+ brake disc) about `axis` (unit) through `center`."""
-    R, Wd, rim = tyre["R"], tyre["W"], tyre["rim"]
-    h = Wd / 2
-    # tyre cross-section (bulged) as revolve profile in (s along axis, r)
-    th = np.linspace(-np.pi / 2, np.pi / 2, 21)
-    prof = [(-h * 0.80, rim + 0.005)]
-    bead_r = rim + 0.012
-    for t in th:
-        s = h * np.sin(t)
-        r = bead_r + (R - bead_r) * (0.5 + 0.5 * np.cos(t)) ** 0.35 * 1.0
-        prof.append((s * 1.0, r))
-    prof.append((h * 0.80, rim + 0.005))
-    prof = [(s, r) for s, r in prof]
-    # re-sort monotone in s for a clean revolve (profile runs -s -> +s over the crown)
-    tyre_m = revolve([(s + h, r) for s, r in prof], n=n, axis_origin=center - h * axis, axis_dir=axis)
-    rim_m = revolve([(0.0, rim * 0.55), (0.012, rim), (Wd * 0.84, rim), (Wd * 0.84 + 0.012, rim * 0.55),
-                     (Wd * 0.84 + 0.013, 0.0)], n=n, axis_origin=center - Wd * 0.42 * axis, axis_dir=axis)
-    hub_m = revolve([(0.0, 0.0), (0.001, rim * 0.55), (0.03, rim * 0.40), (0.031, 0.0)], n=24,
-                    axis_origin=center + Wd * 0.30 * axis, axis_dir=axis)   # hub cap inside the tyre width
-    parts = [(tyre_m, "tire"), (Mesh.merge([rim_m, hub_m]), "wheel")]
-    if brake_side:
-        d = revolve([(0, 0.05), (0.001, 0.115), (0.012, 0.115), (0.013, 0.05)], n=36,
-                    axis_origin=center + brake_side * (h + 0.012) * axis, axis_dir=axis)
-        parts.append((d, "steel"))
-    return parts
+def wheel(center, axis, tyre, n=None, brake_side=0):
+    """Wheel assembly about `axis` through `center` (kept for older callers): the model/wheels.py builders -- the main
+    wheel (tyre MAIN_TYRE; brake_side = the inboard side, -1 for the starboard unit, +1 for port) or the nose wheel."""
+    if tyre is MAIN_TYRE or float(tyre["R"]) == MAIN_TYRE["R"]:
+        return WH.main_wheel(center, axis, -brake_side if brake_side else (1 if center[1] >= 0 else -1))
+    return WH.nose_wheel(center, axis)
+
+
+def _catmull(P, n_seg=6):
+    """Catmull-Rom curve through the points P (m, 3), n_seg samples per span."""
+    P = np.asarray(P, float)
+    Q = np.vstack([2 * P[0] - P[1], P, 2 * P[-1] - P[-2]])
+    out = []
+    for i in range(1, len(Q) - 2):
+        p0, p1, p2, p3 = Q[i - 1], Q[i], Q[i + 1], Q[i + 2]
+        for t in np.linspace(0.0, 1.0, n_seg, endpoint=False):
+            t2, t3 = t * t, t * t * t
+            out.append(0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
+                              + (-p0 + 3 * p1 - 3 * p2 + p3) * t3))
+    out.append(P[-1])
+    return np.array(out)
+
+
+def main_brake_line(sgn, C, aa, fy_s):
+    """Brake line (flexible hose, wheels.MAIN_BRAKE line_d) from the radial inlet fitting on the brake's top lobe:
+    out of the fitting, inboard clear of the rim flange, then up along the trailing arm's upper edge to the yoke;
+    C: the arm's centre line from the link pivot to the axle (on its mid-plane s = fy_s), aa its half-depth there."""
+    A = MAIN_AXLE * [1, sgn, 1]
+    Mf = WH._frame(A, np.array([0.0, sgn, 0.0]))
+    p0, u = WH.brake_fitting_local()
+    loc = [p0, p0 + u * 0.004 + [0.0, -0.008, 0.0], p0 + u * 0.006 + [0.0, -0.022, 0.0]]
+    pts = [Mf[:3, :3] @ q + Mf[:3, 3] for q in loc]
+    L_ = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(C, axis=0), axis=1))]
+    T_ = np.gradient(C, axis=0)
+    T_ /= np.linalg.norm(T_, axis=1)[:, None]
+    for t in (0.30, 0.58, 0.88):                        # fraction of the arm from the axle end
+        i = int(np.argmin(np.abs(L_ - (1.0 - t) * L_[-1])))
+        up = np.array([0.0, 0.0, 1.0]) - T_[i] * T_[i][2]
+        q = C[i] + up / np.linalg.norm(up) * (aa[i] + 0.008)
+        q[1] = A[1] + sgn * fy_s
+        pts.append(q)
+    return sweep_tube(_catmull(pts, 7), WH.MAIN_BRAKE["line_d"] / 2, n=8)
+
+
+# main trailing arm (wheels review r1 F6: photos 3036 mx4 / mx5, 3008 130 inboard show a tubular swan-neck casting from
+# the link-pivot yoke to the big axle boss, not a flat bar): a swept oval tube on the arm plane (s = -fy inboard of the
+# wheel), bowed up by `bow` (fractions along the pivot -> axle chord, offsets normal to it) and tapering in depth
+# (half-depth `a`, half-thickness `b`, pivot end -> axle end); the shock strut's chrome rod MAIN_SHOCK_ROD_R
+MAIN_ARM = dict(fy=0.14, bow=((0.30, 0.022), (0.66, 0.014)), a=(0.031, 0.026), b=(0.021, 0.019), p=2.6)
+MAIN_SHOCK_ROD_R = 0.0175
+
+
+def main_arm_centre(sgn):
+    """Centre line (m, 3) of the main trailing arm, side sgn, from the link-pivot yoke to the axle boss, and its
+    half-depths aa (m,)."""
+    A, L = MAIN_AXLE * [1, sgn, 1], MAIN_LINK_PIVOT * [1, sgn, 1]
+    s = -sgn * MAIN_ARM["fy"]
+    a, b = L + [0.0, s, 0.0], A + [0.0, s, 0.0]
+    d = b - a
+    ez = np.array([0.0, 0.0, 1.0]) - d / np.linalg.norm(d) * (d[2] / np.linalg.norm(d))
+    ez /= np.linalg.norm(ez)
+    pts = [a] + [a + f * d + h * ez for f, h in MAIN_ARM["bow"]] + [b]
+    C = catmull_path(pts, 30)
+    u = np.linspace(0.0, 1.0, len(C))
+    return C, MAIN_ARM["a"][0] + (MAIN_ARM["a"][1] - MAIN_ARM["a"][0]) * u
 
 
 def build_main(parts, side):
@@ -476,32 +527,31 @@ def build_main(parts, side):
                           axis_dir=(L - T) / np.linalg.norm(L - T)))
     # yoke + trailing arm on the INBOARD side of the wheel only (it lies above the wheel when retracted inward;
     # an outboard arm would hang ~0.1 m below the wing), axle cantilevered from it
-    fy = 0.14
+    fy = MAIN_ARM["fy"]
     struct.append(cylinder(L - sgn * fy * yax, L - sgn * 0.03 * yax, 0.036, n=16))
-    for s in (-sgn,):
-        a = L + s * fy * yax
-        b = A + s * fy * yax
-        d = b - a
-        Ln = np.linalg.norm(d)
-        # flattened arm: box aligned with d
-        ex = d / Ln
-        ez = np.array([0, 0, 1.0]) - ex * ex[2]
-        ez /= np.linalg.norm(ez)
-        ey = np.cross(ez, ex)
-        R = np.stack([ex, ey, ez], 1)
-        struct.append(box((a + b) / 2, (Ln, 0.035, 0.07), R=R))
+    struct.append(superellipsoid(L - sgn * fy * yax, (0.036, 0.036, 0.036), (1, 1), 10, 16))   # yoke end round the arm
+    C, aa = main_arm_centre(sgn)                                # swan-neck tube, pivot yoke -> axle boss
+    u = np.linspace(0.0, 1.0, len(C))
+    bb = MAIN_ARM["b"][0] + (MAIN_ARM["b"][1] - MAIN_ARM["b"][0]) * u
+    struct.append(sweep_section(C, aa, bb, n_sec=18, fore=(0.0, 0.0, 1.0), p=MAIN_ARM["p"]))
+    brake_line = main_brake_line(sgn, C, aa, -fy)
     struct.append(cylinder(A - sgn * fy * yax, A + sgn * 0.05 * yax, 0.026, n=16))      # axle
+    struct.append(WH.main_axle_boss(A, yax, sgn))              # the arm's axle boss, open bore inboard (L4W)
     # shock absorber on the inboard side, over the trailing arm (fy), so it stows inside the wing above the leg
     s_in = -sgn * 0.15
     S1 = np.array([MAIN_SHOCK[0][0], T[1] + s_in, MAIN_SHOCK[0][1]])
     S2 = np.array([MAIN_SHOCK[1][0], T[1] + s_in * 0.95, MAIN_SHOCK[1][1]])
     mid = S1 + 0.55 * (S2 - S1)
     shock_body = cylinder(S1, mid, 0.036, n=18)
-    shock_rod = cylinder(mid - 0.05 * (S2 - S1), S2, 0.027, n=14)
+    shock_rod = cylinder(mid - 0.05 * (S2 - S1), S2, MAIN_SHOCK_ROD_R, n=14)
+    # the shock's lower eye sits on the trailing arm just above the axle boss (photos 3036 / 3008 inboard): a lug from
+    # the rod end down onto the arm, within the arm's thickness (the rev-A bracket ran 0.135 m outboard into the wheel)
+    z_arm = float(np.interp(S2[0], C[:, 0], C[:, 2]))           # arm centre line under S2 (C runs aft)
     lugs = [cylinder(S1 - [0, 0.03 * sgn, 0], S1 + [0, 0.03 * sgn, 0], 0.03, n=12),
-            box(S2 + [0.0, -s_in * 0.4, 0.0], (0.06, abs(s_in) * 0.9, 0.04)),
+            box(np.array([S2[0], S2[1], 0.5 * (S2[2] + 0.012 + z_arm)]), (0.040, 0.030, S2[2] + 0.012 - z_arm)),
+            cylinder(S2 - [0, 0.019, 0], S2 + [0, 0.019, 0], 0.019, n=14),
             box(np.array([MAIN_SHOCK[0][0], T[1] + s_in * 0.5, MAIN_SHOCK[0][1]]), (0.06, abs(s_in), 0.05))]
-    wh = wheel(A, yax, MAIN_TYRE, n=44, brake_side=-sgn)
+    wh = WH.main_wheel(A, yax, sgn)          # tyre, wheel halves, hub fairing, brake (model/wheels.py, sheet L4W)
 
     # leg door (LEG_DOOR / leg_door_face, sheet L4, LD-1): a piece of the wing lower skin carried by the leg (flush
     # when retracted), scalloped round the tyre, on two standoff brackets from the leg; it retracts rigidly with the leg
@@ -517,7 +567,8 @@ def build_main(parts, side):
               pivot=dict(origin=T.tolist(), axis=[1.0, 0, 0], kind="gear", retract=float(np.degrees(ang_retract))),
               explode=(0, sgn * 0.6, -0.7), group="Landing gear",
               material_note="Trailing link, hydraulic shock strut, electromechanical actuator",
-              info={"tyre": "22 x 8.50-10, 55 psi", "track": "4,530 mm",
+              info={"tyre": f"{WH.MAIN_TYRE_ENV['size'].replace('x', ' x ')}, "
+                            f"{WH.MAIN_TYRE_SEC['pressure']:.0f} psi", "track": "4,530 mm",
                     "retraction": f"{MAIN_RETRACT_DEG:.0f} deg inward; tyre protrudes ~1 in (POH)",
                     "door": "single leg-mounted door, flush with the wing skin when retracted"})
     lugs.append(main_brace_lug(sgn))                                             # side-brace lug B0 (MV2-02)
@@ -526,6 +577,7 @@ def build_main(parts, side):
     gp.add(Mesh.merge(struct + lugs), "gear_leg").add(Mesh.merge([shock_body]), "gear_leg").add(shock_rod, "chrome")
     for m, mat in wh:
         gp.add(m, mat)
+    gp.add(brake_line, "black")
     # the outer face carries the wing's lower-surface paint (LD-1: it IS the lower skin, flush when retracted), the
     # inner face and the rim the leg door's own paint (livery.SURFACES main_gear_door / main_gear_door_inner)
     gp.add(door_out, LEG_DOOR_OUTER_MAT).add(door_in, "paint_white").add(Mesh.merge(brackets), LEG_DOOR_BRACKET_MAT)
@@ -657,9 +709,8 @@ def leg_door_mesh(sgn, step=0.015, split=False):
     return door if sgn > 0 else door.mirrored_y()
 
 
-def swept_arm(pts, a, b, n_path=28, n_sec=16, fore=(1.0, 0.0, 0.0)):
-    """Smooth tapered arm: a Catmull-Rom curve through pts with an elliptic section, half-axis a(t) along the fore-aft
-    direction `fore` (projected normal to the curve) and b(t) across it (a, b: (start, end), linear in t); capped."""
+def catmull_path(pts, n_path=28):
+    """Catmull-Rom curve through pts, about n_path samples in all."""
     P = np.asarray(pts, float)
     Q = np.vstack([2 * P[0] - P[1], P, 2 * P[-1] - P[-2]])
     seg = []
@@ -670,47 +721,245 @@ def swept_arm(pts, a, b, n_path=28, n_sec=16, fore=(1.0, 0.0, 0.0)):
             seg.append(0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
                               + (-p0 + 3 * p1 - 3 * p2 + p3) * t3))
     seg.append(P[-1])
-    C = np.array(seg)
+    return np.array(seg)
+
+
+def sweep_section(C, aa, bb, n_sec=16, fore=(1.0, 0.0, 0.0), p=2.0, caps=True):
+    """Solid swept along the centre line C (m, 3): a superellipse section (exponent p: 2 = ellipse, larger = a rounded
+    rectangle, as a casting) with half-axis aa along the fore-aft direction `fore` (projected normal to the curve) and
+    bb across it; aa / bb scalars or one value per point of C; capped ends."""
+    C = np.asarray(C, float)
     T = np.gradient(C, axis=0)
     T /= np.linalg.norm(T, axis=1)[:, None]
-    u = np.linspace(0.0, 1.0, len(C))
-    aa = a[0] + (a[1] - a[0]) * u
-    bb = b[0] + (b[1] - b[0]) * u
+    aa = np.broadcast_to(np.asarray(aa, float), (len(C),))
+    bb = np.broadcast_to(np.asarray(bb, float), (len(C),))
     ph = np.linspace(0, 2 * np.pi, n_sec, endpoint=False)
+    ce, se = np.cos(ph), np.sin(ph)
+    ce, se = np.sign(ce) * np.abs(ce) ** (2.0 / p), np.sign(se) * np.abs(se) ** (2.0 / p)
     rows = []
     f = np.asarray(fore, float)
     for c, t, ai, bi in zip(C, T, aa, bb):
         ea = f - t * (f @ t)
         ea /= np.linalg.norm(ea)
         eb = np.cross(t, ea)
-        rows.append(c + ai * np.cos(ph)[:, None] * ea + bi * np.sin(ph)[:, None] * eb)
+        rows.append(c + ai * ce[:, None] * ea + bi * se[:, None] * eb)
     R = np.array(rows)
     m = grid_surface(R, close_v=True)
     cen = R.mean(1)
     if np.mean(np.sum((m.V - np.repeat(cen, n_sec, 0)) * m.N, 1)) < 0:
         m = m.flipped()
+    if not caps:
+        return m
     return Mesh.merge([m, cap_ring(R[0], -T[0]), cap_ring(R[-1], T[-1])])
 
 
-# nose-gear fork (VQA r1 SHP-06: photos 130 / 188 show a smooth cast yoke arching over the tyre from the piston-bottom
-# casting to the axle bosses, not a box crown and flat plates): per side a Catmull-Rom arm through NOSE_FORK_ARM
-# (offsets from the crown: (dx, y, dz); the last point is the axle end), elliptic section a x b tapering crown -> axle
-# VQA r3 SHP3-03: one continuous arc over the tyre shoulder (rev r2: 58 mm straight outboard, then a 0.21 m straight
-# drop -- an L-shaped crank that read as a bent bracket against the cast arch of photos 130 / 188 / s/n 3001)
-NOSE_FORK_ARM = ((0.0, 0.0, 0.0), (0.0, 0.070, -0.012), (-0.004, 0.100, -0.050), (-0.008, 0.112, -0.120))
-NOSE_FORK_SEC = dict(a=(0.034, 0.024), b=(0.021, 0.015), boss_r=0.031)
-# VQA r2 SHP2-05: photos 188 / 130 show ONE flat plate arm (port side), ~80 mm wide fore-aft and ~20 mm thick, arching
-# from the crown casting down to the axle; the starboard axle end carries only a nut
-# VQA r3 (SHP2-05 re-check): the fork is TWO-sided -- PRO s/n 3001 front and starboard close-ups (aero25) show a
-# yoke of two broad flat plate arms arching from the crown casting over the tyre down to both axle ends; in 188 / 130
-# the starboard arm is hidden behind the tyre (the r2 reading 'single-sided' came from those views).  Plates ~70-90 mm
-# fore-aft and ~25-30 mm thick (3001 front view).
-NOSE_FORK_SIDES = (-1, 1)
-# plate section half-axes crown -> axle boss (s/n 3001 starboard close-up, scaled by the 62 mm boss: ~95 mm fore-aft
-# at the crown tapering to ~65 mm at the boss; front view ~30 mm thick)
-NOSE_FORK_PLATE = dict(a=(0.048, 0.033), b=(0.015, 0.013))
+def swept_arm(pts, a, b, n_path=28, n_sec=16, fore=(1.0, 0.0, 0.0), p=2.0):
+    """Smooth tapered arm: a Catmull-Rom curve through pts with a superellipse section (sweep_section), half-axis a(t)
+    along the fore-aft direction `fore` and b(t) across it (a, b: (start, end), linear in t); capped."""
+    C = catmull_path(pts, n_path)
+    u = np.linspace(0.0, 1.0, len(C))
+    return sweep_section(C, a[0] + (a[1] - a[0]) * u, b[0] + (b[1] - b[0]) * u, n_sec, fore, p)
+
+
+# nose-gear fork (wheels review r1 F3; r2 F1 / F2; photos 3001 / 3036 head-on, 3036 mx4, 3008 188 / 130 / 0517): an
+# inverted-U YOKE of two slim arms, one each side of the tyre, whose inner edge is ONE round arch over the tyre crown
+# (apex wheels.NOSE_AXLE `arch` above the free crown; the r1 yoke was a square portal: a flat beam on 40 mm corners), the
+# band thickening outward toward the crown (the arms flare into it), under a tapered crown SADDLE on the piston bottom
+# whose front is chamfered down to the band and carries the lower torque-link lug (r1: a rectangular block on a
+# rectangular bridge).
+# Front view (s across, r up from the axle), sheet L4W: arms' inner / outer faces +-fork_in / fork_out above the axle
+# bosses (the bosses step in to boss_in at the hub ends), straight up to the springing r_c; above it both edges are
+# superellipse quarter-arcs |s / a|^p + |(r - r_c) / h|^p = 1: the inner one with a = fork_in, h = arch_h (3001 head-on
+# zoom, 2296 px/m: arch height 0.076 = 0.85 x the half-span, the edge fits p 3.1 -- a semicircle is 2, the r1 portal ~8),
+# the outer one with a = fork_out, h = arch_h + 2 top_t, arch_po (boxier: the arms' outer faces stay vertical longer and
+# the band is ~37 mm deep on the diagonals, 30 on the arms, 28 at the apex).  Fore-aft half-width arm_w at the axle / at
+# the crown (3036 mx4 side view: a 42-48 mm strap; r1's 58-92 mm read as a paddle); rounded-rectangle section (a
+# casting), the arms leaning with the axle -> crown line.
+# Saddle: sections (r above the axle, x of its front face / back face from the piston axis, half-width across) lofted
+# bottom -> waist -> top: the bottom buried in the band, the front chamfered 34 deg from the band up to the waist (3008
+# 188 / 3036 mx4), near-vertical above; 2 cadmium bolts on each sloped side face.  Torque-link lug (a clevis boss along
+# y) at NOSE_TORQUE_LUG from the piston bottom, where the lower torque link ends.  Dark marks on each arm's outer face
+# (3036 mx4 / 188; plain, no lettering): a small round hole, a slot and a placard (kind, r above the axle, fore-aft
+# half-size, half-height).
+NOSE_YOKE = dict(arm_w=(0.021, 0.026), arch_h=0.076, arch_p=3.1, top_t=0.014, arch_po=3.6, sec_p=5.0, boss_r=0.031,
+                 saddle=((0.262, -0.024, 0.024, 0.074), (0.292, -0.044, 0.036, 0.061), (0.341, -0.046, 0.040, 0.046)),
+                 saddle_p=4.0, crown_bolts=((-0.022, 0.318), (0.022, 0.318)),
+                 marks=(("hole", 0.212, 0.0045, 0.0045), ("slot", 0.165, 0.0035, 0.008),
+                        ("plate", 0.100, 0.0085, 0.013)))
+NOSE_TORQUE_LUG = (-0.050, 0.030)            # lower torque-link pin from the piston bottom NOSE_FORK: (x, z)
+NOSE_FORK_SIDES = (-1, 1)                    # both arms (sheet L4W check table)
 # VQA r3: the lamp is ~0.11 m across in 188 / 130 (60 px on the 250 px tyre of 188): r 0.045 -> 0.055
 NOSE_LAMP = dict(frac=0.45, fwd=(0.060, 0.098), r=0.055)     # on the strut: fraction P -> fork, housing x offsets, radius
+
+
+def nose_yoke_frame():
+    """(fork_in, fork_out, r_c, arch_h): the arms' inner / outer faces, the springing height above the axle (the inner
+    arch's apex r_c + arch_h = free tyre R + arch) and the inner arch height."""
+    ax = WH.NOSE_AXLE
+    h = float(NOSE_YOKE["arch_h"])
+    r_c = float(WH.NOSE_TYRE_ENV["R"]) + ax["arch"] - h
+    return float(ax["fork_in"]), float(ax["fork_out"]), r_c, h
+
+
+def _sarc(a, h, p, r_c, n):
+    """Superellipse half-arc from (-a, r_c) over (0, r_c + h) to (a, r_c), n points (the parameter angle phi from
+    180 to 0 deg): s = a sgn(cos) |cos|^(2/p), r = r_c + h |sin|^(2/p)."""
+    ph = np.radians(np.linspace(180.0, 0.0, n))
+    c, s_ = np.cos(ph), np.sin(ph)
+    return np.c_[a * np.sign(c) * np.abs(c) ** (2.0 / p), r_c + h * np.abs(s_) ** (2.0 / p)]
+
+
+def nose_yoke_contours(n_arc=48):
+    """Exact front-view contours of the yoke band (s, r about the axle), port axle end -> starboard axle end: inner
+    (the arms' inner faces and the round arch over the tyre) and outer (arms' outer faces flaring into the crown)."""
+    fi, fo, r_c, h = nose_yoke_frame()
+    yk = NOSE_YOKE
+    inner = np.vstack([[[-fi, 0.0]], _sarc(fi, h, yk["arch_p"], r_c, n_arc), [[fi, 0.0]]])
+    outer = np.vstack([[[-fo, 0.0]], _sarc(fo, h + 2 * yk["top_t"], yk["arch_po"], r_c, n_arc), [[fo, 0.0]]])
+    return inner, outer
+
+
+def nose_yoke_centre(n_arm=10, n_arc=28):
+    """Centre line of the nose-fork yoke in the front view: (s, r, t_half) from the port arm's axle end up, over the
+    tyre and down to the starboard axle end (s across, r above the axle; the midpoints of the inner / outer contours at
+    the same superellipse parameter, t_half = half their distance), and the line's top r."""
+    fi, fo, r_c, h = nose_yoke_frame()
+    yk = NOSE_YOKE
+    I = _sarc(fi, h, yk["arch_p"], r_c, n_arc + 2)[1:-1]
+    O = _sarc(fo, h + 2 * yk["top_t"], yk["arch_po"], r_c, n_arc + 2)[1:-1]
+    sm, ta = 0.5 * (fi + fo), 0.5 * (fo - fi)
+    arm = np.c_[np.full(n_arm, -sm), np.linspace(0.0, r_c, n_arm)]
+    P = np.vstack([arm, 0.5 * (I + O), (arm * [-1, 1])[::-1]])
+    t = np.r_[np.full(n_arm, ta), 0.5 * np.linalg.norm(O - I, axis=1), np.full(n_arm, ta)]
+    return P, t, float(P[:, 1].max())
+
+
+def nose_saddle_sections():
+    """Saddle sections (r above the axle, x front, x back relative to the piston axis at that height, half-width
+    across), bottom -> top (NOSE_YOKE saddle)."""
+    return [tuple(map(float, q)) for q in NOSE_YOKE["saddle"]]
+
+
+def _saddle_ring(A, lean, r, xf, xb, hy, p, n=32):
+    """One saddle section at r above the axle A: a superellipse (exponent p) from x = xf to xb about the leaning piston
+    axis (A.x + lean r) and +-hy across."""
+    th = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
+    c, s_ = np.cos(th), np.sin(th)
+    ce, se = np.sign(c) * np.abs(c) ** (2.0 / p), np.sign(s_) * np.abs(s_) ** (2.0 / p)
+    xc, a = 0.5 * (xf + xb), 0.5 * (xb - xf)
+    return np.c_[A[0] + lean * r + xc + a * ce, A[1] + hy * se, np.full(n, A[2] + r)]
+
+
+def nose_saddle_meshes():
+    """Crown saddle (model coordinates, gear down): the NOSE_YOKE sections lofted in two ruled bands (the chamfer
+    band's edge crisp), capped; the torque-link lug; the crown-bolt heads on the sloped side faces.
+    (saddle + lug mesh, bolt heads)."""
+    A = NOSE_AXLE
+    cr = NOSE_FORK - A
+    lean = cr[0] / cr[2]
+    p = NOSE_YOKE["saddle_p"]
+    S = nose_saddle_sections()
+    rings = [_saddle_ring(A, lean, *q, p) for q in S]
+    out = []
+    for r0, r1 in zip(rings[:-1], rings[1:]):
+        m = grid_surface(np.stack([r0, r1]), close_v=True)
+        c = 0.5 * (r0.mean(0) + r1.mean(0))
+        if np.mean(np.sum((m.V - c) * m.N, 1)) < 0:
+            m = m.flipped()
+        out.append(m)
+    out += [cap_ring(rings[0], (0.0, 0.0, -1.0)), cap_ring(rings[-1], (0.0, 0.0, 1.0))]
+    # torque-link lug: a clevis boss along y at the lower torque link's pin, on a tab from the saddle's front top
+    lx, lz = NOSE_TORQUE_LUG
+    k2 = NOSE_FORK + [lx, 0.0, lz]
+    out.append(cylinder(k2 - [0, 0.015, 0], k2 + [0, 0.015, 0], 0.013, n=14))
+    out.append(superellipsoid(k2 + [0.010, 0.0, -0.008], (0.016, 0.011, 0.012), (0.3, 0.3), 8, 16))
+    # crown bolts on the side faces (the section's s at the bolt's x, interpolated between the sections)
+    bolts = []
+    rs = np.array([q[0] for q in S])
+    for dx, rz in NOSE_YOKE["crown_bolts"]:
+        xf, xb, hy = (float(np.interp(rz, rs, [q[k] for q in S])) for k in (1, 2, 3))
+        a = 0.5 * (xb - xf)
+        u = abs((dx - 0.5 * (xf + xb)) / a)
+        sy = hy * max(1.0 - u ** p, 0.0) ** (1.0 / p) - 0.001
+        x = A[0] + rz * lean + dx
+        for sg in (-1.0, 1.0):
+            c = np.array([x, sg * sy, A[2] + rz])
+            bolts.append(cylinder(c, c + [0, sg * 0.0065, 0], 0.0075, n=6))
+    return Mesh.merge(out), Mesh.merge(bolts)
+
+
+def nose_arm_marks():
+    """Dark marks on each fork arm's outer face (NOSE_YOKE marks, photos 3036 mx4 / 188): a round hole, a slot and a
+    placard, 0.4 mm proud of the face, following the arm's lean.  Mesh (material 'black')."""
+    A = NOSE_AXLE
+    cr = NOSE_FORK - A
+    lean = cr[0] / cr[2]
+    d = np.array([lean, 0.0, 1.0]) / np.hypot(lean, 1.0)             # up the arm (x, z)
+    fwd = np.array([d[2], 0.0, -d[0]])
+    so = WH.NOSE_AXLE["fork_out"] + 0.0004
+    out = []
+    for kind, r, hw, hh in NOSE_YOKE["marks"]:
+        c0 = A + np.array([r * lean, 0.0, r])
+        for sg in (-1.0, 1.0):
+            c = c0 + [0.0, sg * so, 0.0]
+            if kind == "hole":
+                ring = np.array([c + hw * (math.cos(a) * fwd + math.sin(a) * d) for a in np.linspace(0, 2 * np.pi, 14,
+                                                                                                 endpoint=False)])
+            else:
+                ring = np.array([c + hw * fwd * i + hh * d * j for i, j in ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+            out.append(cap_ring(ring, (0.0, sg, 0.0)))
+    return Mesh.merge(out)
+
+
+def nose_yoke_meshes():
+    """Two-arm nose-fork yoke (gear down, model coordinates): the swept band of nose_yoke_centre() (rounded-rectangle
+    section, fore-aft half-width NOSE_YOKE arm_w tapering from the crown to the axle, the arms leaning with the axle ->
+    crown line), the axle bosses (boss_in .. fork_out) and the crown saddle with the torque-link lug.
+    (meshes, crown-bolt heads, arm marks)."""
+    A, yk = NOSE_AXLE, NOSE_YOKE
+    cr = NOSE_FORK - A                                          # crown (piston bottom) from the axle
+    P, t, r_top = nose_yoke_centre()
+    lean = cr[0] / cr[2]
+    C = np.c_[A[0] + P[:, 1] * lean, A[1] + P[:, 0], A[2] + P[:, 1]]
+    w0, w1 = yk["arm_w"]
+    aa = w0 + (w1 - w0) * np.clip(P[:, 1] / r_top, 0.0, 1.0)
+    out = [sweep_section(C, aa, t, n_sec=20, p=yk["sec_p"])]
+    ax = WH.NOSE_AXLE
+    for sg in (-1.0, 1.0):                                      # axle bosses round the arm ends
+        out.append(cylinder(A + [0, sg * ax["boss_in"], 0], A + [0, sg * ax["fork_out"], 0], yk["boss_r"], n=20))
+    saddle, bolts = nose_saddle_meshes()
+    out.append(saddle)
+    return out, bolts, nose_arm_marks()
+
+
+def nose_axle_meshes():
+    """Nose axle through both fork arms, and on each arm's outer face a tear-drop lock plate (tip up the arm) under a
+    hex axle nut, the threaded axle end with its dark bore (wheels.NOSE_AXLE nut_af / nut_s / lock_plate; photos
+    3036 mx4 nose-hub zoom, 3008 188): ([axle], [nuts, plates])."""
+    A, ax = NOSE_AXLE, WH.NOSE_AXLE
+    fo, (n0, n1) = ax["fork_out"], ax["nut_s"]
+    lt = ax["lock_t"]
+    axle = [cylinder(A - [0, fo, 0], A + [0, fo, 0], ax["r"], n=14)]
+    cr = NOSE_FORK - A
+    ud = np.array([cr[0], cr[2]]) / np.hypot(cr[0], cr[2])     # up the arm (x, z)
+    rc = ax["nut_af"] / 2 + 0.004
+    th = np.linspace(0.0, 2 * np.pi, 33)[:-1]
+    ring = np.c_[rc * np.cos(th), rc * np.sin(th)]
+    tip = ud * ax["lock_plate"]
+    from scipy.spatial import ConvexHull
+    Q = np.vstack([ring, tip])
+    Q = Q[ConvexHull(Q).vertices] + [A[0], A[2]]
+    dark = []
+    for sg in (-1.0, 1.0):
+        dark.append(WH._prism(Q, sg * n0, sg * (n0 + lt)))                         # lock plate
+        dark.append(WH._prism(WH.hexagon((A[0], A[2]), ax["nut_af"], 90.0), sg * (n0 + lt), sg * n1))   # nut
+        e0, e1 = sg * n1, sg * (n1 + 0.003)
+        dark.append(cylinder(A + [0, e0, 0], A + [0, e1, 0], ax["thread_r"], n=12, cap=False))    # threaded end
+        dark.append(revolve([(0.0, ax["thread_r"]), (0.0, 0.0065)], n=12, axis_origin=A + [0, e1, 0],
+                            axis_dir=(0.0, sg, 0.0)))                                            # end face ring
+        dark.append(revolve([(0.0, 0.0065), (-0.006, 0.0065), (-0.006, 0.0)], n=12, axis_origin=A + [0, e1, 0],
+                            axis_dir=(0.0, sg, 0.0)))                                            # bore
+    return axle, dark
 
 
 def build_nose(parts):
@@ -725,19 +974,13 @@ def build_nose(parts):
     struct.append(cylinder(P, upper_end, 0.052, n=24))                              # oleo cylinder
     collar = cylinder(P + 0.30 * (low - P), P + 0.34 * (low - P), 0.066, n=24)      # steering collar
     piston = cylinder(upper_end - 0.04 * u, low, 0.036, n=20)
-    struct.append(superellipsoid(low + [0, 0, 0.004], (0.046, 0.052, 0.030), (0.6, 0.6), 12, 20))   # crown casting
-    fs, fp = NOSE_FORK_SEC, NOSE_FORK_PLATE
-    for s in (-1, 1):
-        if s in NOSE_FORK_SIDES:                        # the plate arm arching over the tyre to the axle boss
-            pts = [low + [dx, s * y, dz] for dx, y, dz in NOSE_FORK_ARM] + [A + s * NOSE_FORK_ARM[-1][1] * yax]
-            struct.append(swept_arm(pts, fp["a"], fp["b"]))
-            struct.append(cylinder(A + s * 0.090 * yax, A + s * 0.120 * yax, fs["boss_r"], n=18))    # axle boss
-        else:
-            struct.append(cylinder(A + s * 0.090 * yax, A + s * 0.110 * yax, 0.022, n=6))            # axle nut
-    struct.append(cylinder(A - 0.115 * yax, A + 0.115 * yax, 0.02, n=14))          # axle
+    yoke, crown_bolts, holes = nose_yoke_meshes()           # two-arm yoke + crown saddle (NOSE_YOKE, sheet L4W)
+    struct += yoke
+    ax_parts, ax_dark = nose_axle_meshes()                  # axle, hex nuts + tear-drop lock plates outside the arms
+    struct += ax_parts
     # torque links (scissor) in front of the strut
     k1 = P + 0.56 * (low - P) + [-0.055, 0, 0]
-    k2 = low + [-0.05, 0, 0.03]
+    k2 = low + [NOSE_TORQUE_LUG[0], 0, NOSE_TORQUE_LUG[1]]      # the saddle's torque-link lug
     knee = 0.5 * (k1 + k2) + [-0.09, 0, 0]
     for a, b in ((k1, knee), (knee, k2)):
         struct.append(cylinder(a, b, 0.014, n=10))
@@ -746,7 +989,7 @@ def build_nose(parts):
     lc = P + q["frac"] * (low - P)
     lamp_house = cylinder(lc - [q["fwd"][0], 0, 0], lc - [q["fwd"][1], 0, 0], q["r"], n=24)
     lamp_face = led_lamp_face(lc - [q["fwd"][1], 0, 0], (-1.0, 0.0, 0.0), q["r"])
-    wh = wheel(A, yax, NOSE_TYRE, n=36)
+    wh = WH.nose_wheel(A, yax)               # tyre, white split-hub wheel, tie bolts, valve (model/wheels.py)
     ang = NOSE_RETRACT_DEG
     gp = Part("gear_nose", "Nose gear (steerable, retracts aft)", "gear",
               pivot=dict(origin=P.tolist(), axis=[0, 1.0, 0], kind="gear", retract=ang),
@@ -755,6 +998,7 @@ def build_nose(parts):
               info={"tyre": "17.5 x 6.25-6, 60 psi", "wheelbase": "3,480 mm",
                     "retraction": "aft, enclosed by doors", "steering": "+/-60 deg (Jane's)"})
     gp.add(Mesh.merge(struct + [collar, lamp_house]), "gear_leg").add(piston, "chrome")
+    gp.add(Mesh.merge(ax_dark), "steel_dark").add(crown_bolts, "cadmium").add(holes, "black")
     for m, mat in lamp_face:
         gp.add(m, mat)
     for m, mat in wh:

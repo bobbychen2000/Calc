@@ -32,6 +32,7 @@ from model import fuselage as F  # noqa: E402
 from model import wing as W  # noqa: E402
 from model import empennage as E  # noqa: E402
 from model import gear as G  # noqa: E402
+from model import wheels as WH  # noqa: E402
 from model import details as D  # noqa: E402
 from model import powerplant as PP  # noqa: E402
 from model.lifting import cos_pts  # noqa: E402
@@ -535,9 +536,11 @@ def leader_label(ds, v, a, b, s, off=(8.0, -6.0), size=2.2, color=INK, lines=Non
 
 
 def tyre_side(ds, v, c, tyre, dash=None):
-    R = tyre["R"]
+    """Tyre in side view: the statically LOADED outline of the wheel tables (wheels.loaded_side_outline: flat on the
+    ground over the contact patch, the axle WL = the loaded radius) and the rim circle."""
+    which = "main" if tyre is G.MAIN_TYRE else "nose"
+    ds.cv.path(v.pts(WH.loaded_side_outline(which, n=144) + [c[0], c[2]]), W_OBJ, dash, closed=True)
     a = np.linspace(0, 2 * np.pi, 73)
-    ds.cv.path(v.pts(np.c_[c[0] + R * np.cos(a), c[2] + R * np.sin(a)]), W_OBJ, dash, closed=True)
     r = tyre["rim"]
     ds.cv.path(v.pts(np.c_[c[0] + r * np.cos(a), c[2] + r * np.sin(a)]), W_FINE, dash, closed=True)
 
@@ -865,10 +868,10 @@ def draw_front(ds, v):
         cv.line(v.pt(sg * r[1], r[2]), v.pt(sg * tp[1], tp[2]), W_FINE, HID)
         A = G.MAIN_AXLE
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
-        cv.path(v.pts(rect_pts(sg * A[1] - Wt / 2, 0.0, sg * A[1] + Wt / 2, 2 * R)), W_OBJ, closed=True)
+        cv.path(v.pts(rect_pts(sg * A[1] - Wt / 2, 0.0, sg * A[1] + Wt / 2, A[2] + R)), W_OBJ, closed=True)
         T = G.MAIN_TRUNNION
         zk = G.main_leg_skin_z()
-        cv.line(v.pt(sg * T[1], zk), v.pt(sg * T[1], 2 * R), W_OBJ)
+        cv.line(v.pt(sg * T[1], zk), v.pt(sg * T[1], A[2] + R), W_OBJ)
         cv.line(v.pt(sg * T[1], T[2]), v.pt(sg * T[1], zk), W_FINE, HID)      # leg top / trunnion in the wing
         (ax, ay, az), (bx, by, bz) = G.MAIN_BRACE
         cv.line(v.pt(sg * ay, az), v.pt(sg * by, bz), W_FINE)
@@ -885,8 +888,8 @@ def draw_front(ds, v):
                         f"-{G.LEG_DOOR['bl'][1] * 1000:.0f}, PHANTOM):", "RETRACTED IT IS THE WING SKIN"])
     A = G.NOSE_AXLE
     R, Wt = G.NOSE_TYRE["R"], G.NOSE_TYRE["W"]
-    cv.path(v.pts(rect_pts(-Wt / 2, 0.0, Wt / 2, 2 * R)), W_OBJ, closed=True)
-    cv.line(v.pt(0.0, 2 * R), v.pt(0.0, float(F.z_bot(G.NOSE_PIVOT[0]))), W_OBJ)
+    cv.path(v.pts(rect_pts(-Wt / 2, 0.0, Wt / 2, A[2] + R)), W_OBJ, closed=True)
+    cv.line(v.pt(0.0, A[2] + R), v.pt(0.0, float(F.z_bot(G.NOSE_PIVOT[0]))), W_OBJ)
 
 
 # ============================================================================================ dimensions
@@ -911,12 +914,12 @@ def dims_side(ds, v):
     zc = fin_crown_z()
     items = [(F.STA["spinner_tip"], F.PROP_AXIS_Z, "390 SPINNER TIP"),
              (PP.PROP_X, F.PROP_AXIS_Z + 1.25, f"{PP.PROP_X * 1000:.0f} PROP DISC (HUB)"),
-             (G.NOSE_AXLE[0], 2 * G.NOSE_TYRE["R"], f"{G.NOSE_AXLE[0] * 1000:.0f} NOSE AXLE"),
+             (G.NOSE_AXLE[0], G.NOSE_AXLE[2] + G.NOSE_TYRE["R"], f"{G.NOSE_AXLE[0] * 1000:.0f} NOSE AXLE"),
              (F.STA["firewall"], float(F.z_top(3.0)), "3000 FIREWALL"),
              (float(W.x_le(1.0)), 1.30, f"{W.x_le(1.0) * 1000:.0f} WING LE BL1000"),
              (lemac, 1.30, f"{lemac * 1000:.0f} LEMAC"),
              (lemac + 0.25 * m, 1.30, f"{(lemac + 0.25 * m) * 1000:.0f} 25% MAC"),
-             (G.MAIN_AXLE[0], 2 * G.MAIN_TYRE["R"], f"{G.MAIN_AXLE[0] * 1000:.0f} MAIN AXLE"),
+             (G.MAIN_AXLE[0], G.MAIN_AXLE[2] + G.MAIN_TYRE["R"], f"{G.MAIN_AXLE[0] * 1000:.0f} MAIN AXLE"),
              (float(W.x_te(1.0)), 1.33, f"{W.x_te(1.0) * 1000:.0f} WING TE BL1000"),
              (E.DORSAL_X0, E.DORSAL_Z0, f"{E.DORSAL_X0 * 1000:.0f} DORSAL"),
              (E.fin_le(zc), zc, f"{E.fin_le(zc) * 1000:.0f} FIN LE (CROWN)"),
@@ -1074,6 +1077,10 @@ def draw_detail_gear(ds):
     for seg in _runs(m):
         cv.path(v.pts(P[seg][:, [0, 2]]), W_FINE)
     tyre_side(ds, v, G.MAIN_AXLE, G.MAIN_TYRE)
+    a_ = np.linspace(0, 2 * np.pi, 97)                      # the drawn 22 in circle (Pilatus drawing), superseded
+    R22 = float(WH.MAIN_TYRE_22["R"])
+    cv.path(v.pts(np.c_[G.MAIN_AXLE[0] + R22 * np.cos(a_), G.MAIN_AXLE[2] + R22 * np.sin(a_)]), W_FINE, PHANTOM,
+            closed=True)
     T, L, A = G.MAIN_TRUNNION, G.MAIN_LINK_PIVOT, G.MAIN_AXLE
     K = leg_skin_point()
     cv.path(v.pts([(T[0], T[2]), (K[0], K[2])]), W_FINE, HID)          # leg top in the wing (LD-1: trunnion raised)
@@ -1118,7 +1125,15 @@ def draw_detail_gear(ds):
                                (A, "AXLE", (12.0, 10.0), None), ((s1x, 0, s1z), "SHOCK (HIDDEN)", (20.0, -6.0), None)):
         leader_label(ds, v, p_[0], p_[2], t_, off=off, size=1.9,
                      lines=[f"{p_[0] * 1000:.0f} / WL {p_[2] * 1000:.0f}"] + ([extra] if extra else []))
-    leader_label(ds, v, c[0] + 0.5 * R, c[2] + Wt / 2, "RETRACTED (PHANTOM)", off=(4.0, -10.0), size=1.9,
+    Rm, Rl = G.MAIN_TYRE["R"], float(WH.MAIN_TYRE_ENV["R_loaded"])
+    a_ = math.radians(212.0)
+    leader_label(ds, v, A[0] + Rm * math.cos(a_), A[2] + Rm * math.sin(a_),
+                 f"MAIN TYRE 8.50-10 TYPE III Ø{2 * Rm * 1000:.0f}", off=(-5.0, 12.0), size=1.7,
+                 lines=["OWNER DECISION 2026-09-26 (TYRE MAKERS,", "PARTS LISTS, PHOTOS); DRAWN 22 IN "
+                        f"Ø{2 * R22 * 1000:.0f}", "(PHANTOM) SUPERSEDED. AXLE KEPT: WL "
+                        f"{A[2] * 1000:.0f}", f"= LOADED R, FLAT {(Rm - Rl) * 1000:.0f} ON THE GROUND"])
+    # (label right of the deviation table's end at x 559: the merged table (76 rows) reaches down to y 428)
+    leader_label(ds, v, c[0] + 0.5 * R, c[2] + Wt / 2, "RETRACTED (PHANTOM)", off=(12.0, -10.0), size=1.9,
                  lines=[f"BL {c[1] * 1000:.0f}, PROTRUDES {retract_protrusion() * 1000:.0f}"])
     M.view_title(ds, 530.0, 531.0, "DETAIL B - MAIN GEAR", "PORT UNIT, SEEN FROM PORT · 1:20", size=3.4)
 
@@ -1227,6 +1242,13 @@ def deviation_rows(O, R):
                      "not on FR38/40" if r else "-", "rev A strakes STA 12350-13750"))
     add("Nose axle STA", "nose_axle", "wheelbase 3480 (POH) centred on the drawn axles")
     add("Main axle STA", "main_axle", "")
+    rows.append(("Main / nose tyre OD (side)", f"{f_mm(2 * G.MAIN_TYRE['R'])} / {f_mm(2 * G.NOSE_TYRE['R'])}",
+                 f"{dev(2 * G.MAIN_TYRE['R'], 2 * WH.MAIN_TYRE_22['R'])} / 0",
+                 "-", "8.50-10 Type III (makers, photos): owner decision 2026-09-26"))
+    rows.append(("Main / nose axle WL = loaded tyre R", f"{f_mm(G.MAIN_AXLE[2])} / {f_mm(G.NOSE_AXLE[2])}",
+                 f"0 / {dev(G.NOSE_AXLE[2], float(WH.NOSE_TYRE_ENV['R']))}", "-",
+                 f"static deflection {(G.MAIN_TYRE['R'] - G.MAIN_AXLE[2]) * 1000:.0f} / "
+                 f"{(G.NOSE_TYRE['R'] - G.NOSE_AXLE[2]) * 1000:.1f} (photos); drawn circles on the ground"))
     add("Track (front)", "track", "Pilatus 4530")
     add("Radar pod nose STA (plan)", "pod_x0", "starboard wing tip; rev A at BL 3900")
     add2("Radar pod axis BL / WL (front)", "pod_y", "pod_z")
@@ -1262,7 +1284,8 @@ def deviation_rows(O, R):
     for key, lab, note in (("door_side_unit", "Leg door face outline, unit frame", "gear.LEG_DOOR fitted to the drawn "
                             "face (rev B.0: 116 / 58)"),
                            ("door_side_direct", "Leg door face outline, direct", "incl. the -17.5 unit shift"),
-                           ("door_side_model", "Leg door as built (scallop, tab), unit", "LD-1 tyre scallop R 292 + tab")):
+                           ("door_side_model", "Leg door as built (scallop, tab), unit",
+                            f"LD-1 tyre scallop R {G.LEG_DOOR['scallop_r'] * 1000:.0f} + tab")):
         r = (R or {}).get(key)
         rows.append((f"{lab} (max / rms)", "-", f"{r[0]:.0f} / {r[1]:.0f}" if r else "-", "-", note))
     return rows
@@ -1292,6 +1315,9 @@ def param_rows():
         ("      tip rake dx/dy / TE corner BL", f"{E.STAB_TIP_RAKE:.3f} / {E.STAB_TIP_TE[1] * 1000:.0f}"),
         ("      bullet / aft-most", f"STA {E.BULLET_X[0] * 1000:.0f} - {E.BULLET_X[1] * 1000:.0f}"),
         ("GEAR  nose / main axle, wheelbase", f"{G.NOSE_AXLE[0] * 1000:.0f} / {G.MAIN_AXLE[0] * 1000:.0f}, 3 480"),
+        ("      main / nose tyre, OD / axle WL", f"8.50-10 Type III {2 * G.MAIN_TYRE['R'] * 1000:.0f} / "
+                                              f"{G.MAIN_AXLE[2] * 1000:.0f}; 17.5x6.25-6 "
+                                              f"{2 * G.NOSE_TYRE['R'] * 1000:.0f} / {G.NOSE_AXLE[2] * 1000:.0f}"),
         ("      main trunnion / link pivot (STA, WL)", f"{G.MAIN_TRUNNION[0] * 1000:.0f},{G.MAIN_TRUNNION[2] * 1000:.0f} / "
                                                      f"{G.MAIN_LINK_PIVOT[0] * 1000:.0f},{G.MAIN_LINK_PIVOT[2] * 1000:.0f}"
                                                      f" (drawn top {G.MAIN_TRUNNION_DRAWN[0] * 1000:.0f},"

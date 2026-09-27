@@ -12,6 +12,9 @@ the approved Stage-2 drawing set is drawn from (sheets L1-L5, drawing/*.py -- th
                          winglet sections, tailplane planform (plan outline, horn gap), fin sections, tail side
                          silhouette both ways, main-gear leg door, bullet, radar pod, axles / tyres, propeller
                          blades / disc (pitch-axis plane, tip radius) and spinner
+  L4W wheels & tyres     (model/wheels.py tables) tyre side silhouette vs loaded_side_outline, tyre section with
+                         the grooves (front view) both ways, wheel halves vs rim_half, main hub fairing (skin, face,
+                         valve-access hole), brake housing lobes, triangle budgets
   L5  livery             painted sub-mesh colour boundaries vs the livery curves (side projection) both ways,
                          paint regions (sampled per triangle against livery.region_fields), wing boot band, pod
                          radome joint, blade bands, per-surface colours (SURFACES, STAB_BOOT, WINGLET_PIN)
@@ -35,10 +38,11 @@ the approved Stage-2 drawing set is drawn from (sheets L1-L5, drawing/*.py -- th
     options: --glb PATH (default out/pc12.glb), --json PATH (default out/tmp/stage3_consistency/report.json),
              --plots (diagnostic PNGs next to the JSON), -v (worst locations of every row)
 
-Tolerances (mm): 5 OML / openings / glazing, 10 livery and interior (L6), 15 planform features (L4 outlines).  Prints
-one PASS / FAIL / INFO / OPEN row per check (max and rms deviation, samples, tolerance) and 'CONSISTENCY OK' /
-'CONSISTENCY FAIL'; OPEN = a known deviation waiting for an owner decision (CLAUDE.md open items; listed, not failing);
-exit code 1 on a FAIL, 2 when the GLB is missing.  The GLB must be newer than model/*.py and cad/*.py (first row) -- rebuild with
+Tolerances (mm): 5 OML / openings / glazing, 10 livery and interior (L6), 15 planform features (L4 outlines), 2 wheels
+(L4W).  Prints one PASS / FAIL / INFO / OPEN row per check (max and rms deviation, samples, tolerance) and
+'CONSISTENCY OK' / 'CONSISTENCY FAIL'; OPEN = a known deviation waiting for an owner decision (CLAUDE.md open items;
+listed, not failing); exit code 1 on a FAIL, 2 when the GLB is missing.  The GLB must be newer than model/*.py and
+cad/*.py (first row) -- rebuild with
 python3 model/build.py.  Model axes throughout: x station aft, y butt line (+ starboard), z water line (m).
 """
 from __future__ import annotations
@@ -66,13 +70,14 @@ from model import cockpit_glazing as CG  # noqa: E402
 from model import wing as W  # noqa: E402
 from model import empennage as E  # noqa: E402
 from model import gear as G  # noqa: E402
+from model.wheels import TYRE_MATS  # noqa: E402
 from model import details as D  # noqa: E402
 from model import powerplant as PP  # noqa: E402
 from model import livery as L  # noqa: E402
 from model import bays as BY  # noqa: E402
 from model.lifting import cos_pts  # noqa: E402
 
-TOL = dict(oml=5.0, opening=5.0, glazing=5.0, livery=10.0, planform=15.0, interior=10.0)     # mm
+TOL = dict(oml=5.0, opening=5.0, glazing=5.0, livery=10.0, planform=15.0, interior=10.0, wheel=2.0)     # mm
 X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
 SKIN_PARTS = ("cowl_upper", "cowl_lower", "fus_fwd", "fus_center", "fus_aft")
 DOOR_PARTS = ("door_airstair", "door_cargo", "exit_hatch")
@@ -1278,7 +1283,16 @@ def check_L4(ctx, rep, plots):
     Pd = G.leg_door_face()
     zmx, zmn = Pd[:, 1].max(), Pd[:, 1].min()
     for side, sg in (("L", -1), ("R", 1)):
-        Vd, Fd = ctx.mesh((f"gear_main_{side}",), mats=(L.SURFACES["main_gear_door"],))
+        # the main hub fairing is painted in the door colour too: its records lie within the tyre radius of the axle
+        rs_ = [r for r in ctx.get(f"gear_main_{side}", (L.SURFACES["main_gear_door"],))
+               if float(np.hypot(r.V[:, 0] - G.MAIN_AXLE[0], r.V[:, 2] - G.MAIN_AXLE[2]).max()) > G.MAIN_TYRE["R"] + 0.005]
+        Vs_, Fs_, off_ = [], [], 0
+        for r in rs_:
+            v_, f_ = weld(r.V, r.F, r.key)
+            Vs_.append(v_)
+            Fs_.append(f_ + off_)
+            off_ += len(v_)
+        Vd, Fd = (np.vstack(Vs_), np.vstack(Fs_)) if Vs_ else (np.zeros((0, 3)), np.zeros((0, 3), int))
         if not len(Fd):
             rep.add("L4", f"main-gear leg door {side}: face vs gear.leg_door_face()", status="FAIL",
                     detail="no leg-door mesh")
@@ -1342,19 +1356,22 @@ def check_L4(ctx, rep, plots):
     dev, lab = [], []
     for pid, A, T in (("gear_main_R", G.MAIN_AXLE, G.MAIN_TYRE), ("gear_main_L", G.MAIN_AXLE * [1, -1, 1], G.MAIN_TYRE),
                       ("gear_nose", G.NOSE_AXLE, G.NOSE_TYRE)):
-        Vt = ctx.verts(pid, mats=("tire",))
+        Vt = ctx.verts(pid, mats=TYRE_MATS)
         if not len(Vt):
             dev.append(1.0)
             lab.append(f"{pid}: no tyre")
             continue
+        # statically loaded tyres (wheels.loaded_blend: flat on the ground, sidewalls bulged there): the free radius
+        # from the fore-aft extent, the axle WL from the crown, the width at the axle height, the contact on the ground
+        R = 0.5 * np.ptp(Vt[:, 0])
         c = np.array([0.5 * (Vt[:, 0].min() + Vt[:, 0].max()), 0.5 * (Vt[:, 1].min() + Vt[:, 1].max()),
-                      0.5 * (Vt[:, 2].min() + Vt[:, 2].max())])
-        R = 0.25 * (np.ptp(Vt[:, 0]) + np.ptp(Vt[:, 2]))
-        Wd = np.ptp(Vt[:, 1])
-        dev += list(c - A) + [R - T["R"], Wd - T["W"]]
+                      Vt[:, 2].max() - R])
+        mid = np.abs(Vt[:, 2] - A[2]) < 0.05
+        Wd = np.ptp(Vt[mid, 1])
+        dev += list(c - A) + [R - T["R"], Wd - T["W"], Vt[:, 2].min()]
         lab.append(f"{pid}: centre {np.round(c, 4).tolist()} vs {np.round(A, 4).tolist()}, R {R:.4f}/{T['R']}, "
-                   f"W {Wd:.4f}/{T['W']}")
-    rep.add("L4", "axles (tyre centres) and tyre R / width vs gear parameters", np.array(dev), tolp,
+                   f"W {Wd:.4f}/{T['W']}, lowest WL {Vt[:, 2].min() * 1000:.1f} mm")
+    rep.add("L4", "axles (tyre centres), tyre R / width and ground contact vs gear parameters", np.array(dev), tolp,
             f"track {2 * G.MAIN_AXLE[1]:.3f}, wheelbase {G.MAIN_AXLE[0] - G.NOSE_AXLE[0]:.3f}", lab,
             )
 
@@ -1944,7 +1961,7 @@ def _l4_gear(ctx, rep):
     for pid, sg in (("gear_main_R", 1), ("gear_main_L", -1)):
         o, a = _pivot(ctx, pid)
         pv = (ctx.extras.get(pid) or {}).get("pivot") or {}
-        Vt = ctx.verts(pid, mats=("tire",))
+        Vt = ctx.verts(pid, mats=TYRE_MATS)
         if o is None or not len(Vt):
             dev.append(1.0)
             lab.append(f"{pid}: no pivot / tyre")
@@ -1953,12 +1970,208 @@ def _l4_gear(ctx, rep):
         K = np.array([[0, -a[2], a[1]], [a[2], 0, -a[0]], [-a[1], a[0], 0]])
         Rm = np.eye(3) + math.sin(th) * K + (1 - math.cos(th)) * K @ K
         c = 0.5 * (Vt.min(0) + Vt.max(0))
+        c[2] = Vt[:, 2].max() - 0.5 * np.ptp(Vt[:, 0])          # the axle: crown - free R (the tyre is loaded, flat below)
         cr = o + Rm @ (c - o)
         exp = G.retracted_wheel(sg)
         dev += list(cr - exp)
         lab.append(f"{pid}: retracted tyre centre {np.round(cr, 4).tolist()} vs retracted_wheel {np.round(exp, 4).tolist()}")
     rep.add("L4", "retracted main wheel (phantom) vs pivot kinematics", np.array(dev), TOL["planform"],
             "tyre centre turned by the pivot's retract angle", lab)
+
+
+# =====================================================================================================================
+# L4W  wheels & tyres (model/wheels.py tables; sheet drawing/wheel_sheet.py)
+# =====================================================================================================================
+def _poly_dist(P, Q, closed=False):
+    """Distance (m) of the points P (n, 2) to the polyline Q (m, 2)."""
+    A = Q if not closed else np.vstack([Q, Q[:1]])
+    a, b = A[:-1], A[1:]
+    ab = b - a
+    L2 = np.maximum(np.sum(ab * ab, 1), 1e-18)
+    out = np.full(len(P), np.inf)
+    for k in range(0, len(P), 4000):
+        p = P[k:k + 4000, None, :]
+        t = np.clip(np.sum((p - a) * ab, -1) / L2, 0.0, 1.0)
+        out[k:k + 4000] = np.min(np.linalg.norm(p - (a + t[..., None] * ab), axis=-1), 1)
+    return out
+
+
+def _poly_param(P, Q):
+    """Arc-length parameter along the polyline Q of each point's nearest point on it (orders points along Q)."""
+    a, b = Q[:-1], Q[1:]
+    ab = b - a
+    L2 = np.maximum(np.sum(ab * ab, 1), 1e-18)
+    s0 = np.r_[0.0, np.cumsum(np.sqrt(L2))][:-1]
+    p = P[:, None, :]
+    t = np.clip(np.sum((p - a) * ab, -1) / L2, 0.0, 1.0)
+    d = np.linalg.norm(p - (a + t[..., None] * ab), axis=-1)
+    k = np.argmin(d, 1)
+    return s0[k] + t[np.arange(len(P)), k] * np.sqrt(L2[k])
+
+
+def _wheel_local(ctx, pid, mats=None, near=None):
+    """(s, rho, dx, dz) of the part's vertices about its axle in the wheel's local frame (main: s outboard, nose: s to
+    port); near = only meshes whose vertices all lie within this side-view radius of the axle (wheel parts, not the
+    leg door painted in the same colour)."""
+    A, sg = ((G.MAIN_AXLE, 1) if pid == "gear_main_R" else (G.MAIN_AXLE * [1, -1, 1], -1) if pid == "gear_main_L"
+             else (G.NOSE_AXLE, -1))
+    out = []
+    for r in ctx.get(pid, mats):
+        V = r.V
+        if near is not None and float(np.hypot(V[:, 0] - A[0], V[:, 2] - A[2]).max()) > near:
+            continue
+        out.append(V)
+    if not out:
+        return np.zeros((0, 4))
+    V = np.vstack(out)
+    dx, dz = V[:, 0] - A[0], V[:, 2] - A[2]
+    return np.c_[sg * (V[:, 1] - A[1]), np.hypot(dx, dz), dx, dz]
+
+
+def check_L4W(ctx, rep, plots):
+    """Sheet L4W: the built wheels against the parameter tables / profiles they are drawn from (never the mesh):
+    tyre side silhouette (loaded_side_outline), tyre front-view section (tyre_profile_3d = the drawn tyre_outer_half
+    construction with the grooves), wheel halves (rim_half), main hub fairing (fairing_section, hole, screws), brake
+    housing (brake_lobe_outline), triangle budgets."""
+    from model import wheels as WH
+    tol = TOL["wheel"]
+    for which, pids in (("main", ("gear_main_R", "gear_main_L")), ("nose", ("gear_nose",))):
+        asm = WH.MAIN if which == "main" else WH.NOSE
+        env = WH.envelope(which)
+        R = env["R"]
+        # side view: the silhouette radius per clock angle vs the (loaded) side outline of the tables
+        O = WH.loaded_side_outline(which, n=1440)
+        phi_o = np.arctan2(O[:, 1], O[:, 0])
+        rho_o = np.hypot(O[:, 0], O[:, 1])
+        k = np.argsort(phi_o)
+        dev, lab = [], []
+        for pid in pids:
+            L_ = _wheel_local(ctx, pid, TYRE_MATS)
+            phi = np.arctan2(L_[:, 3], L_[:, 2])
+            bins = np.round(np.degrees(phi) * 2).astype(int)             # 0.5 deg bins
+            order = np.lexsort((-L_[:, 1], bins))
+            first = np.r_[True, bins[order][1:] != bins[order][:-1]]
+            sil = order[first]                                         # outermost vertex per bin
+            d = L_[sil, 1] - np.interp(phi[sil], phi_o[k], rho_o[k], period=2 * np.pi)
+            dev.append(d)
+            lab.append(f"{pid}: {len(sil)} bins, silhouette {L_[sil, 1].min():.4f}-{L_[sil, 1].max():.4f} "
+                       f"(free R {R:.4f}, loaded {env['R_loaded']:.4f})")
+        rep.add("L4W", f"{which} tyre side silhouette vs loaded_side_outline ({WH.TYRE_ENV[which]['size']})",
+                np.concatenate(dev), tol, "; ".join(lab))
+        # head-on at the contact (review r2 C1): the loaded tread lies flat on the ground ACROSS its width, as the
+        # sheet's loaded_headon_half draws it -- every rib vertex of the tyre's profile ring at the contact centre
+        # (|dx| < 4 mm, |s| up to the tread edge, below the max-width radius; groove walls / floors excepted: they lie
+        # higher by design) against loaded_crown_r(s)
+        fr = WH.tyre_frame(asm)
+        st_, t_ = float(fr["T1"][0]), asm["tyre"]
+        dev, lab = [], []
+        for pid in pids:
+            L_ = _wheel_local(ctx, pid, TYRE_MATS)
+            c_ = L_[(np.abs(L_[:, 2]) < 0.004) & (-L_[:, 3] > fr["rw"]) & (np.abs(L_[:, 0]) <= st_ + 1e-4)]
+            rib = np.ones(len(c_), bool)
+            for g in t_["grooves"]:
+                rib &= np.abs(np.abs(c_[:, 0]) - g) > t_["groove_w"] / 2 + 0.0015
+            c_ = c_[rib]
+            d_ = -c_[:, 3] - np.array([WH.loaded_crown_r(asm, v) for v in c_[:, 0]])
+            dev.append(d_)
+            lab.append(f"{pid}: {len(c_)} rib verts at the contact, {-c_[:, 3].min():.4f}..{-c_[:, 3].max():.4f} below "
+                       f"the axle over s {c_[:, 0].min():+.3f}..{c_[:, 0].max():+.3f} (loaded R "
+                       f"{WH.TYRE_ENV[which]['R_loaded']})" if len(c_) else f"{pid}: no contact verts")
+        dev = np.concatenate(dev) if dev else np.array([1.0])
+        rep.add("L4W", f"{which} loaded tread flat on the ground across its width vs loaded_headon_half",
+                np.array(dev), tol, "; ".join(lab))
+        # front view: every tyre vertex of the upper half (s, rho) on the DRAWN section (tyre_outer_half with the
+        # grooves + the bead contour round the rim-flange tip, both sides), and the drawn section covered by the
+        # mesh's own profile (the ring at the top, ordered along the drawn contour)
+        half = np.vstack([WH.tyre_outer_half(asm, grooves=True, n=24), WH.tyre_bead_half(asm)])
+        drawn = np.vstack([half[:0:-1] * [-1, 1], half])
+        dev, lab = [], []
+        for pid in pids:
+            L_ = _wheel_local(ctx, pid, TYRE_MATS)
+            up = L_[:, 3] > 0.05
+            P = L_[up][:, :2]
+            d1 = _poly_dist(P, drawn)
+            ring = L_[(np.abs(L_[:, 2]) < 2e-4) & (L_[:, 3] > 0.0)][:, :2]         # the profile at clock 90
+            ring = ring[np.argsort(_poly_param(ring, drawn))]
+            d2 = _poly_dist(WH.tyre_outer_half(asm, grooves=True, n=24), ring)
+            dev += [d1, d2]
+            lab.append(f"{pid}: width {np.ptp(L_[:, 0]):.4f} (W {env['W']}), crown {P[:, 1].max():.4f}, "
+                       f"{len(ring)} profile points")
+        rep.add("L4W", f"{which} tyre section (front view, grooves) vs tyre_outer_half both ways",
+                np.concatenate(dev), tol, "; ".join(lab))
+        # wheel halves: (s, rho) of the 'wheel' vertices on the rim_half sections
+        Q1, Q2 = WH.rim_half(asm, 1), WH.rim_half(asm, -1)
+        dev, lab = [], []
+        for pid in pids:
+            L_ = _wheel_local(ctx, pid, ("wheel", "wheel_main"), near=R)
+            d = np.minimum(_poly_dist(L_[:, :2], Q1, True), _poly_dist(L_[:, :2], Q2, True))
+            dev.append(d)
+            lab.append(f"{pid}: {len(L_)} verts, flange R {L_[:, 1].max():.4f} "
+                       f"({asm['rim']['bead_r'] + asm['rim']['flange_h']:.4f})")
+        rep.add("L4W", f"{which} wheel halves vs rim_half sections", np.concatenate(dev), tol, "; ".join(lab))
+    # main hub fairing: its skin on fairing_section (offset t / 2), the face plane outboard of the tyre, the hole
+    fa = WH.MAIN_FAIRING
+    P, s0, s1 = WH.fairing_section(WH.MAIN)
+    paint = ("hub_fairing", L.SURFACES["main_gear_door"], "paint_white")
+    dev, lab = [], []
+    for pid in ("gear_main_R", "gear_main_L"):
+        L_ = _wheel_local(ctx, pid, paint, near=G.MAIN_TYRE["R"])
+        if not len(L_):
+            dev.append(np.array([1.0]))
+            lab.append(f"{pid}: no hub fairing")
+            continue
+        d = _poly_dist(L_[:, :2], P) - 0.5 * fa["t"]
+        face = L_[:, 0] > s1 - 0.001
+        hc = WH.clock_points(1, fa["hole_r"], fa["hole_th"])[0]
+        in_hole = np.hypot(L_[face, 2] - hc[0], L_[face, 3] - hc[1]) < fa["hole_d"] / 2 - 0.001
+        dev.append(np.r_[np.clip(np.abs(d), 0, None) - 0.001 * 0, [0.001 * in_hole.sum()]])
+        lab.append(f"{pid}: face s {L_[:, 0].max():.4f} (table {s1 + fa['t'] / 2:.4f}, tyre W/2 {G.MAIN_TYRE['W'] / 2:.3f}), "
+                   f"lip R {L_[:, 1].max():.4f} ({fa['r_lip']}), {int(in_hole.sum())} face verts in the hole")
+    rep.add("L4W", "main hub fairing vs fairing_section (skin, face, valve-access hole)", np.concatenate(dev), tol,
+            "; ".join(lab))
+    # brake housing: the lobed outline (side view) of the housing's outer face
+    ol = WH.brake_lobe_outline(WH.MAIN, n=720)
+    dev, lab = [], []
+    for pid in ("gear_main_R", "gear_main_L"):
+        L_ = _wheel_local(ctx, pid, ("brake_housing",), near=G.MAIN_TYRE["R"])
+        so = WH.MAIN_BRAKE["housing_s"]
+        # the lobe wall's two vertex rings (outer-face bevel edge, inner face); not the radial fitting / bleeder
+        b_ = WH.MAIN_BRAKE
+        ph = np.degrees(np.arctan2(L_[:, 3], L_[:, 2]))
+        fit = np.zeros(len(L_), bool)
+        for th_ in (b_["lobe_th"], b_["lobe_th"] + 180.0):                     # radial inlet fitting / bleeder
+            fit |= (np.abs((ph - th_ + 180.0) % 360.0 - 180.0) < 12.0) & (L_[:, 1] > b_["lobe_c"])
+        m = ((np.abs(L_[:, 0] - so[1]) < 2e-4) | (np.abs(L_[:, 0] - so[0] - 0.002) < 2e-4)) & \
+            (L_[:, 1] > b_["body_R"] - 0.002) & ~fit
+        d = _poly_dist(L_[m][:, 2:4], ol, True)
+        dev.append(d)
+        lab.append(f"{pid}: {int(m.sum())} lobe-wall verts, r {L_[m, 1].min():.4f}-{L_[m, 1].max():.4f}")
+    rep.add("L4W", "main brake housing lobes vs brake_lobe_outline", np.concatenate(dev), tol, "; ".join(lab))
+    # nose-fork yoke, front view (review r2 F1): the band's vertices at its fore-aft centre (the swept section's
+    # inner / outer extremes) on gear.nose_yoke_contours -- the arms' faces and ONE semicircular inner arch
+    A_ = G.NOSE_AXLE
+    lean = (G.NOSE_FORK[0] - A_[0]) / (G.NOSE_FORK[2] - A_[2])
+    fi_, fo_, rc_, h_ = G.nose_yoke_frame()
+    inner, outer = G.nose_yoke_contours(n_arc=720)
+    V_ = ctx.verts("gear_nose", mats=("gear_leg",))
+    r_ = V_[:, 2] - A_[2]
+    x_ = V_[:, 0] - A_[0] - r_ * lean
+    s_ = V_[:, 1] - A_[1]
+    w_ = G.NOSE_YOKE["arm_w"][0]
+    band = (np.abs(x_) < 0.25 * w_) & (r_ > G.NOSE_YOKE["boss_r"] + 0.01) & (r_ < G.nose_saddle_sections()[0][0] - 0.002)
+    P_ = np.c_[s_[band], r_[band]]
+    d_ = np.minimum(_poly_dist(P_, inner), _poly_dist(P_, outer)) if len(P_) else np.array([1.0])
+    apex = r_[band & (np.abs(s_) < 0.01)]
+    rep.add("L4W", "nose fork yoke (front view) vs nose_yoke_contours (arms, round arch)", d_, tol,
+            f"{len(P_)} band verts; arms +-{fi_:.3f}..{fo_:.3f}, springing r {rc_:.4f}, arch height {h_:.3f} "
+            f"(p {G.NOSE_YOKE['arch_p']}), inner apex {apex.min() if len(apex) else 0:.4f} "
+            f"(free tyre R + arch {float(WH.NOSE_TYRE_ENV['R']) + WH.NOSE_AXLE['arch']:.4f})")
+    # triangle budgets (4K close-ups within the part budget)
+    n_main, n_nose = WH.tri_count("main"), WH.tri_count("nose")
+    rep.add("L4W", "wheel triangle budgets (main <= 30k, nose <= 18k per wheel)", None, None,
+            f"main {n_main}, nose {n_nose}",
+            status="PASS" if n_main <= WH.TRI_BUDGET["main"] and n_nose <= WH.TRI_BUDGET["nose"] else "FAIL",
+            n=2)
 
 
 # =====================================================================================================================
@@ -2867,7 +3080,7 @@ def stale_sources(glb):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--glb", default=str(ROOT / "out" / "pc12.glb"))
-    ap.add_argument("--only", default="L1,L2,L3,L4,L5,L6")
+    ap.add_argument("--only", default="L1,L2,L3,L4,L4W,L5,L6")
     ap.add_argument("--json", default=str(DEFAULT_JSON))
     ap.add_argument("--plots", action="store_true")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -2891,8 +3104,8 @@ def main(argv=None):
     if a.plots:
         plots = Path(a.json).parent
         plots.mkdir(parents=True, exist_ok=True)
-    for sheet, fn in (("L1", check_L1), ("L2", check_L2), ("L3", check_L3), ("L4", check_L4), ("L5", check_L5),
-                      ("L6", check_L6)):
+    for sheet, fn in (("L1", check_L1), ("L2", check_L2), ("L3", check_L3), ("L4", check_L4), ("L4W", check_L4W),
+                      ("L5", check_L5), ("L6", check_L6)):
         if sheet in a.only.split(","):
             try:
                 fn(ctx, rep, plots)

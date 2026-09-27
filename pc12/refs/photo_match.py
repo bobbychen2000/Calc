@@ -323,13 +323,13 @@ class Reference:
             tip = S[np.abs(S[:, 1]) > np.abs(S[:, 1]).max() - 0.012]
             self.add(f"stab_tip_le_{lab}", tip[np.argmin(tip[:, 0])], 0.03, "model stabiliser (tail span 5.20 sourced)")
             self.add(f"stab_tip_te_{lab}", tip[np.argmax(tip[:, 0])], 0.03, "model stabiliser (tail span 5.20 sourced)")
-            G = V([f"gear_main_{lab}"], ["tire"])
+            G = V([f"gear_main_{lab}"], ["tire", "tire_tread", "tire_groove"])
             c = 0.5 * (G.min(0) + G.max(0))
             self.add(f"main_axle_{lab}", c, 0.02, "model main wheel centre (track 4.53 sourced)")
         B = V(["tail_bullet"])
         self.add("bullet_aft", B[np.argmax(B[:, 0])], 0.02, "model tail bullet (length 14.40 sourced)")
         self.add("bullet_nose", B[np.argmin(B[:, 0])], 0.04, "model tail bullet nose")
-        G = V(["gear_nose"], ["tire"])
+        G = V(["gear_nose"], ["tire", "tire_tread", "tire_groove"])
         self.add("nose_axle", 0.5 * (G.min(0) + G.max(0)) * [1, 0, 1], 0.02, "model nose wheel centre")
         self._nose_offsets = {"nose_hub_L": -0.07, "nose_hub_R": 0.07, "nose_axle_end_L": -0.115,
                               "nose_axle_end_R": 0.115}

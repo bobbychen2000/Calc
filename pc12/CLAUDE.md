@@ -3,11 +3,12 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (96 parts, ~1.43M tris of which the interior ~229k, ~20 MB;
+engineering-drawing generator. Output: `out/pc12.glb` (96 parts, ~1.50M tris of which the interior ~229k and the
+three wheels ~77k, ~21 MB;
 hinge pivots in node extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
-exterior -- lines plan, glazing, openings, general arrangement, livery --, L6 / L6B the interior arrangement and its
-checks),
+exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
+--, L6 / L6B the interior arrangement and its checks),
 `out/pc12_ga.svg|pdf` (legacy A1 GA, hidden-line from the mesh) and `out/pc12_sections.svg|pdf` (A2 sections).
 
 ## Commands
@@ -30,8 +31,9 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   '[open]' rows are known conflicts in the approved parameters that need an owner
                                 #   decision (they do not fail)
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
-python3 -m drawing.master       # the Stage-2 drawing set L1-L6B from the parameter modules (~2.5 min;
-                                #   `python3 -m drawing.master L6 L6B` for the interior sheets only)
+                                #   (L4W: wheels / tyres / nose yoke, 2 mm)
+python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from the parameter modules (~3 min;
+                                #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels)
 python3 -m drawing.sheet        # hidden-line drawings (~30 s) -> out/pc12_ga.*, out/pc12_sections.*
 python3 -m drawing.verify       # measures the SVG itself against the dimensions
 # dev viewer (three.js r160 expected at web/three_local -> a checkout of mrdoob/three.js tag r160):
@@ -108,8 +110,8 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
 - `model/empennage.py` (fin + ventral fairing, dorsal + root fillet, rudder with sloped edges, tail-cone closure,
   tailplane horn balances split off the fixed tips along the drawn horn gap and carried by the elevators),
   `powerplant.py` (PT6E-67XP modules + Hartzell 5-blade prop, chin inlet cut into the OML keel step, scarfed
-  stacks), `gear.py` (+ `bays.py`, `brace.py`; nose retracts 105° into a tunnel under the pedestal, unequal-link
-  braces), `interior.py` (the approved source-tagged interior tables that sheets L6 / L6B draw --
+  stacks), `gear.py` (+ `bays.py`, `brace.py`, `wheels.py` -- the L4W wheel / tyre tables and the 3-D wheels built from
+  them; nose retracts 105° into a tunnel under the pedestal, unequal-link braces), `interior.py` (the approved source-tagged interior tables that sheets L6 / L6B draw --
   `drawing/interior_sheet.py` / `interior_checks.py` -- and `build()`: the Stage-3 meshes built from exactly those
   tables by `flightdeck.py` (part `flight_deck`: G3000 PRIME panel, glareshield, PC-24-style yokes, pedals, pedestal on
   the nose-tunnel plinth, consoles, overhead, walnut divider + curtain; extras 'design eye' = `interior.design_eye`),
@@ -153,13 +155,16 @@ mains retract inward with ONE leg-mounted door each, tyres protrude ~1 in when r
 aft, enclosed by doors; over-centre two-piece folding struts; ailerons with Flettner geared balance
 tabs (opposite motion), elevator in two halves, rudder single piece, stabiliser trim (LE down = nose up).
 Jane's: airfoils LS(1)-0417MOD root / LS(1)-0313 tip, Fowler flaps 67 % of TE, T-tail, bullet fairing,
-dorsal fin + ventral strakes, tyres 22×8.50-10 / 17.5×6.25-6, NWS ±60°, exit right over wing (Jane's says
+dorsal fin + ventral strakes, tyres 22×8.50-10 (main: superseded, see below) / 17.5×6.25-6, NWS ±60°, exit right over wing (Jane's says
 Type III; the Pilatus drawing shows a 0.48 × 0.64 m plug hatch, which the model follows).
 EASA TCDS IM.E.008: PT6E-67XP length 1,870.9 mm, diameter 481.8 mm, 2-stage RGB, 2-stage PT, 1-stage
 CT, 4 axial + 1 centrifugal compressor. PC-12 PRO: pilot's direct-vision window deleted; Garmin
 G3000 PRIME (3×14-in + 2×7-in touch displays); PC-24-style yokes; radome enlarged for 12-in GWX 8000.
 NGX: cabin windows rectangular (PC-24 style), 10 % larger; dark windshield surround trim.
 POPA variant guide: "PC-21 style winglets" from Series 10A (MSN 684+). Weather-radar pod on right wing.
+Main tyres: 8.50-10 Type III, 10 PR tubeless (Goodyear 850T06-3 / Michelin 025-350-0 per tyre makers and parts
+listings; OD ~0.64 m, confirmed by four photo measurements and the main/nose OD ratio) — owner decision 2026-09-26,
+superseding Jane's 22×8.50-10 (`model/wheels.py MAIN_TYRE_CHOICE`; sheet L4W).
 
 ## Estimated / reconstructed (open to correction)
 Fuselage contours between anchors (fitted to the Pilatus drawing, RMS 1-2 mm), windshield & side-window
@@ -226,8 +231,8 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   21 re-run: the door + handrails clear the fairing and the interior over the whole swing; L3 notes the angle.
 - Main-gear leg door, decision LD-1 (owner-delegated, resolved; model/gear.py comment block): the door is the wing
   lower skin carried down by the leg (`gear.leg_door_offset`), so retracted it closes flush (1 mm recess, 3 mm panel
-  gap, `bays.DOOR_GAP`) and the tyre protrudes 26 mm in its own round well (`bays.well_sdf`); drawn side-view face
-  kept, scalloped round the tyre (R 292) plus a tab hidden in the slot over the leg's skin crossing
+  gap, `bays.DOOR_GAP`) and the tyre protrudes 24 mm in its own round well (`bays.well_sdf`); drawn side-view face
+  kept, scalloped round the tyre (tyre R + 12.5: R 332) plus a tab hidden in the slot over the leg's skin crossing
   (`gear.leg_door_face`); edge-on it stands at BL 2334-2383 instead of the drawn 2358-2472 lean (call-out on L4).
   Hidden changes: trunnion STA 5978 / WL 1155 (drawn leg top 5932 / 1070), retraction 86 deg (stowed wheel along
   the ~7 deg skin), side-brace stations 6040 / 6038, L1 split 0.19, B0 on a lug 80 mm inboard of the leg (`gear.MAIN_BRACE_LUG`) and the links offset along the knee pin (`MAIN_BRACE_CLEVIS`) so they clear the stowed leg, no forward slot; liner-only pockets
@@ -238,7 +243,28 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   the step's aft corner R 20 (`LEG_DOOR_CORNER_R`, like the aft top corner): sharp, they nicked the skin beside the
   cut-out by 2.8 / 1.3 mm at 96-99.5 % retraction (between the 10 % samples); fit_check 10 now sweeps the door against
   the skin every 0.5 % over 90-100 % (0 crossings).  The lowest point rises from the drawn WL 318 to 325 (call-out on
-  L4 detail B; the drawn face stays the phantom); the tyre scallop is untouched (the wheels branch re-fits it).
+  L4 detail B; the drawn face stays the phantom).  The tyre scallop is the wheels re-fit (8.50-10: R 332, below); the
+  rounded tip runs into the lower-edge arc 21 mm ahead of the scallop, and the combined door passes the fine sweep
+  (0 crossings) with the tyre 23.5 mm proud.  Paint (VQA r3 RQ3-07): the outer face is the wing's lower skin, so it
+  wears the wing-dark underside (`gear.LEG_DOOR_OUTER_MAT` -> `livery.SURFACES['main_gear_door']`), the inner face and
+  rim the base blue (`main_gear_door_inner`).
+- Wheels (`model/wheels.py` tables -> sheet L4W -> 3-D `main_wheel` / `nose_wheel`): both tyres are statically LOADED
+  (axle WL = the loaded radius: main 279 with the 8.50-10's R 320, 41 mm flat; nose 207, photos 200-210, 15.5 mm flat;
+  `wheels.loaded_side_outline`). The 8.50-10's stowed tyre reaches STA ~6,730 at BL 1,39, behind the 66 % rear-spar
+  line: the rear spar is interrupted at the main bay (`interior.build_structure`, like the ribs) and the flap cove's
+  forward bulge is recessed over the well (`wing.cove_well_recess`, flap nose >= 15 mm clear; hidden with the flaps
+  up). The loaded tread lies flat on the ground across its width (`wheels._loaded_tyre`, = L4W `loaded_headon_half`).
+  Nose fork = two slim arms (42-52 mm fore-aft) joined by ONE round arch over the tyre (superellipse fitted to the 3001
+  head-on, `gear.NOSE_YOKE` arch_h / arch_p) under a chamfered crown saddle with the torque-link lug; hex axle nuts on
+  tear-drop lock plates outside both arms; the nose doors open 92 deg so the nuts pass them (it supersedes the VQA r3
+  plate fork; the nose lamp keeps the VQA r3 R 55); main trailing arm = swept swan-neck tube (`gear.MAIN_ARM`) with the
+  brake hose along it. Wheel materials: the tyre is three zones (`wheels.TYRE_MATS`: `tire` sidewall, `tire_tread`,
+  `tire_groove`; tests take the tyre by that tuple), main wheel halves `wheel_main` (dark cast), brake `brake_housing`
+  (bright cast) / `brake_disc`, hub fairing `hub_fairing` (the leg door's base blue -- its inner face -- a shade darker,
+  not repainted by the livery), nose wheel `wheel`, axle nuts `steel_dark`, tie bolts / valves `cadmium`.  Triangles:
+  main wheel <= 30k, nose <= 18k (`wheels.TRI_BUDGET`, 29.5k / 17.9k built).  Blender: `render/lookdev.py` drops the
+  groove shader for the geometric grooves and mottles the tyres with dust (`_dust`); beauty presets
+  `wheel_main_close`, `wheel_main_inboard`, `wheel_nose_close`.
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
   the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
   `render/blender_ortho.py` for calibrated views; interior presets `cockpit_fwd` / `panel_faceon` (photo-fitted to

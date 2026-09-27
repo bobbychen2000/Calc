@@ -2028,10 +2028,16 @@ def build_structure(parts):
     bh = [bulkhead(F.STA["firewall"] + 0.01, 0.97, notch=nose_trunnion_notch, normal=(1, 0, 0)),
           bulkhead(F.STA["aft_pressure_bulkhead"] + 0.01, 0.97, normal=(1, 0, 0))]
     # wing spars (front ~15 %, rear ~66 %) and ribs; the carry-through flattened under the cabin floor (wing.py)
+    # the rear spar is interrupted at the main-gear bay like the ribs (bays.main_bay_sdf + RIB_BAY_CLEAR; 8.50-10 main
+    # tyre, owner decision 2026-09-26: the stowed tyre reaches STA ~6.730, behind the 66 % line), rows every 20 mm there
+    from model.bays import main_bay_sdf, MAIN_BAY_Y
+    y_bay = np.linspace(MAIN_BAY_Y[0], MAIN_BAY_Y[1], int(round((MAIN_BAY_Y[1] - MAIN_BAY_Y[0]) / 0.02)) + 1)
     sp = []
     for frac in (0.15, 0.66):
         rows = []
         ys = np.linspace(-W.SEMI + 0.05, W.SEMI - 0.05, 60)
+        if frac > 0.5:                                  # rear spar: dense rows where it is cut round the main bays
+            ys = np.unique(np.round(np.r_[ys, y_bay, -y_bay], 6))
         for y in ys:
             s = W.section_at(abs(y))
             fr = frac if frac < 0.5 else min(frac, rib_chord_end(abs(y)))     # rear spar ahead of the aileron cove
@@ -2042,6 +2048,9 @@ def build_structure(parts):
             rows.append(np.linspace(lo, up, 4))
         m = grid_surface(np.array(rows))
         m.V = W.centre_section_clamp(m.V, margin=0.004)
+        fb = RIB_BAY_CLEAR - main_bay_sdf(m.V[:, 0], m.V[:, 1])
+        if (fb > 0).any():
+            m = trim(m, fb, "negative")
         sp.append(m)
     ribs = []
     for y in list(np.arange(0.9, W.SEMI - 0.2, 0.55)):
