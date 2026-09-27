@@ -7,6 +7,8 @@ pc12/out/tmp/
 # static viewer bundle (web/package.py): a copy of web/ + out/pc12.glb
 pc12/dist/
 pc12/dist.zip
+# claude.ai Artifact bundle (web/package_artifact.py): the same + a gzip GLB fallback and the publish list
+pc12/dist_artifact/
 # third-party reference material (Pilatus drawings, photos) and data derived from it:
 # fetched by pc12/refs scripts, never committed (public repo)
 pc12/refs/cache/

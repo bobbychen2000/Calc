@@ -10,7 +10,9 @@
 <link rel="stylesheet" href="viewer/viewer.css">
 <!-- data: where pc12.glb / pc12_meta.json / the drawing SVGs live (overridden by ?data=, ?glb=, ?meta=).
      three: 'auto' = the jsDelivr CDN, or ./three_local/ (a checkout of three.js r160) with ?three=local;
-     a path = a vendored copy (web/package.py writes the bundle's line: {data: './data/', three: './three/'}). -->
+     a path = a vendored copy (web/package.py writes the bundle's line: {data: './data/', three: './three/'}).
+     glbGz (optional, web/package_artifact.py): a gzip-compressed plain GLB next to the data, loaded where WebAssembly
+     (the meshopt decoder) is refused. -->
 <script>window.PC12_CONFIG = { data: '../out/', three: 'auto' };</script>
 <script>
   // Boot, before any module script: feature checks, the three.js import map, the data requests (the model and its
@@ -92,6 +94,9 @@
     window.addEventListener('unhandledrejection', function (e) {
       if (window.__ready || B.failed) return;
       var r = e.reason;
+      // WebAssembly refused (a CSP without 'wasm-unsafe-eval'): the meshopt decoder's start-up; model.js / main.js
+      // handle it (the gzip fallback, or an error on the loading card)
+      if (r && /WebAssembly/.test(String(r.message || ''))) return;
       B.fail('The viewer stopped with an error:\n' + (r && r.message ? r.message : String(r)));
     });
 
@@ -128,13 +133,24 @@
     // module graph is in).  Total: the Content-Length when the transfer is not compressed; otherwise (gzip /
     // brotli hosts count decoded bytes against the compressed length) stats.glb_bytes from the metadata, when the
     // GLB is the one the metadata describes (no ?glb= override); until then only the bytes.  The bar never runs back.
+    //   A gzip fallback (PC12_CONFIG.glbGz, a file name next to the data: web/package_artifact.py): the packaged GLB is
+    // EXT_meshopt_compression, whose decoder needs WebAssembly, which a Content-Security-Policy without
+    // 'wasm-unsafe-eval' refuses.  Such a page loads the gzip-compressed KHR_mesh_quantization GLB instead, unpacked while
+    // it streams (DecompressionStream; the bar counts the compressed bytes, stats.glb_gz_bytes), and main.js falls back
+    // to it when the meshopt GLB fails to decode.  Without glbGz nothing changes.
+    U.glbGz = C.glbGz && !q.get('glb') ? data + C.glbGz : '';
+    if (U.glbGz) {
+      try { B.wasm = typeof WebAssembly === 'object' && !!new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])); }
+      catch (e) { B.wasm = false; }
+    }
     var D = B.download = { loaded: 0, total: 0, metaBytes: 0, frac: 0, done: false };
     window.PC12_META = fetch(U.meta).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + U.meta);
       return r.json();
     });
     window.PC12_META.then(function (m) {
-      var n = m && m.stats && m.stats.glb_bytes;
+      D.stats = m && m.stats;
+      var n = D.stats && (B.gzip ? D.stats.glb_gz_bytes : D.stats.glb_bytes);
       if (n && !q.get('glb')) { D.metaBytes = n; show(); }
     }, function () {});
     var shownAt = 0;
@@ -154,32 +170,60 @@
         txt.textContent = mb(D.loaded) + ' / ' + mb(D.total) + ' MB';
       } else txt.textContent = mb(D.loaded) + ' MB';
     }
-    window.PC12_GLB = fetch(U.glb).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + U.glb);
-      var enc = (r.headers.get('content-encoding') || 'identity').toLowerCase();
-      var len = +r.headers.get('content-length') || 0;
-      if (len && enc === 'identity') D.total = len;
-      if (!r.body || !r.body.getReader) return r.arrayBuffer();
-      var reader = r.body.getReader(), chunks = [];
-      function pump() {
-        return reader.read().then(function (x) {
-          if (x.done) return;
-          chunks.push(x.value);
-          D.loaded += x.value.length;
-          B.progress();
-          show();
-          return pump();
-        });
+    // gz: the gzip fallback (a restart after a failed meshopt decode, main.js, resets the bar)
+    B.fetchGLB = function (gz) {
+      var url = gz ? U.glbGz : U.glb;
+      if (gz !== !!B.gzip) {
+        B.gzip = gz;
+        var s = D.stats || {};
+        D.loaded = D.total = D.frac = 0; D.done = false;
+        D.metaBytes = q.get('glb') ? 0 : (gz ? s.glb_gz_bytes : s.glb_bytes) || 0;
       }
-      return pump().then(function () {
-        var buf = new Uint8Array(D.loaded), o = 0;
-        chunks.forEach(function (c) { buf.set(c, o); o += c.length; });
-        D.done = true;
-        if (!D.total) D.total = D.loaded;
-        show(true);
-        return buf.buffer;
+      if (gz && typeof DecompressionStream === 'undefined') {
+        return Promise.reject(new Error('This browser can neither run WebAssembly on this page nor unpack the gzip copy of the model (no DecompressionStream).'));
+      }
+      return fetch(url).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url);
+        var enc = (r.headers.get('content-encoding') || 'identity').toLowerCase();
+        var len = +r.headers.get('content-length') || 0;
+        if (len && enc === 'identity') D.total = len;
+        if (!gz && (!r.body || !r.body.getReader)) return r.arrayBuffer();
+        var reader = r.body.getReader(), chunks = [], unzip = null, unzipped = null;
+        function pump() {
+          return reader.read().then(function (x) {
+            if (x.done) return;
+            var c = x.value;
+            if (!c.length) return pump();
+            // gzip magic 1f 8b; a host that serves the file with Content-Encoding: gzip hands over the GLB itself
+            if (gz && !unzip && !chunks.length && c[0] === 0x1f && (c.length < 2 || c[1] === 0x8b)) {
+              var ds = new DecompressionStream('gzip');
+              unzip = ds.writable.getWriter();
+              unzipped = new Response(ds.readable).arrayBuffer();
+              unzipped.catch(function () {});                     // handled by the caller, once returned
+            }
+            if (unzip) unzip.write(c).catch(function () {});     // an error surfaces through `unzipped`
+            else chunks.push(c);
+            D.loaded += c.length;
+            B.progress();
+            show();
+            return pump();
+          });
+        }
+        return pump().then(function () {
+          D.done = true;
+          if (!D.total) D.total = D.loaded;
+          show(true);
+          if (unzip) {
+            unzip.close().catch(function () {});
+            return unzipped;
+          }
+          var buf = new Uint8Array(D.loaded), o = 0;
+          chunks.forEach(function (c) { buf.set(c, o); o += c.length; });
+          return buf.buffer;
+        });
       });
-    });
+    };
+    window.PC12_GLB = B.fetchGLB(!!U.glbGz && !B.wasm);
     window.PC12_META.catch(function () {});
     window.PC12_GLB.catch(function () {});
 

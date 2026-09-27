@@ -3,7 +3,6 @@
 // The materials themselves (lookdev PBR values and the shader patches) live in materials.js.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { U as MU, CABIN, INTERIOR_PARTS as LIT_INTERIOR, upgradeMaterials, clonePatched } from './materials.js';
 
 // Skin parts clipped by the cutaway plane (model y = 0, glTF X = 0; the port half X < 0 is removed).
@@ -51,19 +50,32 @@ const GLASS_RE = /^(glass|lens$)/;
 export const PRIMER_HEX = MU.primer.value.getHex();
 
 // The packaged GLB is EXT_meshopt_compression (web/package.py: ~3x smaller); out/pc12.glb (KHR_mesh_quantization
-// only) loads through the same loader.
+// only) loads through the same loader.  The meshopt decoder is WebAssembly, which a Content-Security-Policy without
+// 'wasm-unsafe-eval' refuses: it is imported on its own, so neither its evaluation nor its rejected start-up can stop
+// the viewer (null = no decoder), and not at all when index.html found WebAssembly refused (PC12_BOOT.wasm false: the
+// page loads the gzip-compressed plain GLB instead).
+const MESHOPT = window.PC12_BOOT && window.PC12_BOOT.wasm === false ? Promise.resolve(null)
+  : import('three/addons/libs/meshopt_decoder.module.js').then(({ MeshoptDecoder: d }) => {
+    if (d && d.ready) d.ready.catch(() => {});
+    return d && d.supported !== false ? d : null;
+  }, () => null);
 const asError = (err) => (err instanceof Error ? err : new Error(String(err && err.message || err)));
-export function loadGLB(url, onProgress) {
+async function loader(meshopt) {
+  const l = new GLTFLoader(), d = meshopt === false ? null : await MESHOPT;
+  return d ? l.setMeshoptDecoder(d) : l;
+}
+export async function loadGLB(url, onProgress) {
+  const l = await loader();
   return new Promise((resolve, reject) => {
-    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
-      .load(url, resolve, (e) => onProgress && onProgress(e), (err) => reject(asError(err)));
+    l.load(url, resolve, (e) => onProgress && onProgress(e), (err) => reject(asError(err)));
   });
 }
-// a GLB the page downloaded itself (index.html's boot script streams it for the loading bar)
-export function parseGLB(buffer, url) {
-  const base = new URL('.', new URL(url, location.href)).href;
+// a GLB the page downloaded itself (index.html's boot script streams it for the loading bar); meshopt false: a plain
+// GLB parsed without the decoder (the gzip fallback)
+export async function parseGLB(buffer, url, { meshopt = true } = {}) {
+  const base = new URL('.', new URL(url, location.href)).href, l = await loader(meshopt);
   return new Promise((resolve, reject) => {
-    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parse(buffer, base, resolve, (err) => reject(asError(err)));
+    l.parse(buffer, base, resolve, (err) => reject(asError(err)));
   });
 }
 
