@@ -46,6 +46,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import wing as W  # noqa: E402
 from model import empennage as E  # noqa: E402
 from model import gear as G  # noqa: E402
+from model import wheels as WH  # noqa: E402
 from model import bays as BY  # noqa: E402
 from model import details as D  # noqa: E402
 from model import powerplant as PP  # noqa: E402
@@ -568,8 +569,9 @@ def draw_gear_side(ds, v):
 
 
 def tyre(ds, v, c, t):
+    """Side view of a tyre: the statically loaded outline (wheels.loaded_side_outline, flat on the ground) + the rim."""
     a = np.linspace(0, 2 * np.pi, 73)
-    ring = np.c_[c[0] + t["R"] * np.cos(a), c[2] + t["R"] * np.sin(a)]
+    ring = WH.loaded_side_outline("main" if t is G.MAIN_TYRE else "nose", n=144) + [c[0], c[2]]
     poly(ds, v, ring, col("tire"))
     poly(ds, v, np.c_[c[0] + t["rim"] * np.cos(a), c[2] + t["rim"] * np.sin(a)], col("wheel"))
     outline(ds, v, ring, W_THIN)
@@ -1204,14 +1206,15 @@ def draw_front(ds):
         R, Wt = G.MAIN_TYRE["R"], G.MAIN_TYRE["W"]
         T = G.MAIN_TRUNNION
         ds.cv.line(v.pt(sg * T[1], G.main_leg_skin_z()), v.pt(sg * A_[1], A_[2]), 0.07 * v.k, color=col("gear_leg"))
-        P = FP.opening_outline(dict(cx=sg * A_[1], cz=A_[2], hx=Wt / 2, hz=R, r=0.05))
+        P = FP.opening_outline(dict(cx=sg * A_[1], cz=0.5 * (A_[2] + R), hx=Wt / 2, hz=0.5 * (A_[2] + R), r=0.05))
         poly(ds, v, P, col("tire"))
         outline(ds, v, P, W_THIN)
         fl = G.leg_door_front_line()                      # leg door edge-on as built (LD-1)
         ds.cv.path(v.pts(np.c_[sg * fl[:, 0], fl[:, 1]]), 0.018 * v.k, color=col(L.SURFACES["main_gear_door"]))
     Np, Na = G.NOSE_PIVOT, G.NOSE_AXLE
     ds.cv.line(v.pt(0.0, Np[2]), v.pt(0.0, Na[2]), 0.06 * v.k, color=col("gear_leg"))
-    P = FP.opening_outline(dict(cx=0.0, cz=Na[2], hx=G.NOSE_TYRE["W"] / 2, hz=G.NOSE_TYRE["R"], r=0.04))
+    P = FP.opening_outline(dict(cx=0.0, cz=0.5 * (Na[2] + G.NOSE_TYRE["R"]), hx=G.NOSE_TYRE["W"] / 2,
+                                hz=0.5 * (Na[2] + G.NOSE_TYRE["R"]), r=0.04))
     poly(ds, v, P, col("tire"))
     outline(ds, v, P, W_THIN)
     # fuselage front projection (painted), exhaust stacks, spinner, propeller disc

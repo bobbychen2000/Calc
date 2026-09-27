@@ -133,14 +133,22 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   decision D4 quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
 - Main-gear leg door, decision LD-1 (owner-delegated, resolved; model/gear.py comment block): the door is the wing
   lower skin carried down by the leg (`gear.leg_door_offset`), so retracted it closes flush (1 mm recess, 3 mm panel
-  gap, `bays.DOOR_GAP`) and the tyre protrudes 26 mm in its own round well (`bays.well_sdf`); drawn side-view face
-  kept, scalloped round the tyre (R 292) plus a tab hidden in the slot over the leg's skin crossing
+  gap, `bays.DOOR_GAP`) and the tyre protrudes 24 mm in its own round well (`bays.well_sdf`); drawn side-view face
+  kept, scalloped round the tyre (tyre R + 12.5: R 332) plus a tab hidden in the slot over the leg's skin crossing
   (`gear.leg_door_face`); edge-on it stands at BL 2334-2383 instead of the drawn 2358-2472 lean (call-out on L4).
   Hidden changes: trunnion STA 5978 / WL 1155 (drawn leg top 5932 / 1070), retraction 86 deg (stowed wheel along
   the ~7 deg skin), side-brace stations 6040 / 6038, L1 split 0.19, B0 on a lug 80 mm inboard of the leg (`gear.MAIN_BRACE_LUG`) and the links offset along the knee pin (`MAIN_BRACE_CLEVIS`) so they clear the stowed leg, no forward slot; liner-only pockets
   (`bays.TRUNNION_POCKET`, `BRACE_POCKET`), a black seal band on the lowest 60 mm of the main-bay liner, and a finer
   wing lower skin over the bay (wing.py sub-panel) so the cut-out corners are cut within a few mm. fit_check 5 / 10
   test flushness, protrusion (20-30 mm), the closed cut-out and every pose of the swing.
+- Wheels (`model/wheels.py` tables -> sheet L4W -> 3-D `main_wheel` / `nose_wheel`): both tyres are statically LOADED
+  (axle WL = the loaded radius: main 279 with the 8.50-10's R 320, 41 mm flat; nose 207, photos 200-210, 15.5 mm flat;
+  `wheels.loaded_side_outline`). The 8.50-10's stowed tyre reaches STA ~6,730 at BL 1,39, behind the 66 % rear-spar
+  line: the rear spar is interrupted at the main bay (`interior.build_structure`, like the ribs) and the flap cove's
+  forward bulge is recessed over the well (`wing.cove_well_recess`, flap nose >= 15 mm clear; hidden with the flaps
+  up). Nose fork = two-arm yoke with a bolted crown block (`gear.NOSE_YOKE`), hex axle nuts on tear-drop lock plates
+  outside both arms; the nose doors open 92 deg so the nuts pass them; main trailing arm = swept swan-neck tube
+  (`gear.MAIN_ARM`); brake housing `brake_housing` (bright cast aluminium).
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
   the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
   `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`;

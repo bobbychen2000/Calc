@@ -326,13 +326,75 @@ def shroud_underside(af, x):
     return af.upper(x) - (FLAP_SHROUD_T[0] + (FLAP_SHROUD_T[1] - FLAP_SHROUD_T[0]) * u)
 
 
-def flap_cove(sec, n=14):
-    """Flap cove (chord units): from the lower skin end FLAP_X_LO round the flap nose up to the shroud underside at
-    FLAP_COVE_TOP, aft along the shroud underside to the lip at FLAP_X_LIP, closed at the upper surface there."""
+# Main wheel well vs the flap cove (8.50-10 Type III main tyre, owner decision 2026-09-26): the stowed tyre (R 0.320
+# about the retracted axle; the retraction about the x axis keeps the axle station) reaches STA ~6.730 at BL 1.39, past
+# the cove's forward bulge (0.667 c = STA 6.726) and the rear spar (0.66 c).  Inside the main bay the bulge is recessed
+# aft (both forward Bezier control points by cove_well_recess(), a smooth bump along the span) so the cove wall stays
+# COVE_WELL_CLEAR behind the well's liner wall (bays.WELL_R about the stowed wheel); the retracted flap's nose (0.688 c)
+# keeps >= 15 mm; the rear spar is interrupted at the bay (interior.build_structure).  Hidden with the flaps up.
+COVE_WELL_CLEAR = 0.005
+COVE_BASE_CTRL = 0.650           # chord station of the cove Bezier's two forward control points (away from the bay)
+_COVE_BUMP = None
+
+
+def _cove_bezier(sec, d, n=14):
     af = sec.airfoil
     lo = np.array([FLAP_X_LO, float(af.lower(FLAP_X_LO))])
     top = np.array([FLAP_COVE_TOP, float(shroud_underside(af, FLAP_COVE_TOP))])
-    c = bezier(lo, lo + [-0.045, 0.004], [0.650, top[1]], top, n=n)
+    return bezier(lo, lo + [COVE_BASE_CTRL - FLAP_X_LO + d, 0.004], [COVE_BASE_CTRL + d, top[1]], top, n=n)
+
+
+def _cove_recess_raw(y):
+    """Smallest control-point shift (chord units) that puts the cove wall at BL y COVE_WELL_CLEAR aft of the main-gear
+    well's liner wall (0 outside the well)."""
+    from model.bays import well_centre, WELL_R
+    cx, cy = well_centre()
+    dy = abs(y) - cy
+    if abs(dy) >= WELL_R:
+        return 0.0
+    x_req = cx + np.sqrt(WELL_R * WELL_R - dy * dy) + COVE_WELL_CLEAR
+    sec = section_at(abs(y))
+
+    def xmin(d):
+        c = _cove_bezier(sec, d, n=41)
+        return float(sec.point(c[:, 0], c[:, 1])[:, 0].min())
+    if xmin(0.0) >= x_req:
+        return 0.0
+    a, b = 0.0, 0.05
+    for _ in range(40):
+        m = 0.5 * (a + b)
+        a, b = (a, m) if xmin(m) >= x_req else (m, b)
+    return b
+
+
+def cove_well_recess(y):
+    """Aft shift (chord units) of the flap cove's forward control points at BL |y|: a smooth cos^2 bump over the main
+    wheel well that covers _cove_recess_raw everywhere (cached: amplitude, centre, half-width)."""
+    global _COVE_BUMP
+    if _COVE_BUMP is None:
+        from model.bays import well_centre, WELL_R
+        cy = float(well_centre()[1])
+        ys = np.linspace(cy - WELL_R, cy + WELL_R, 81)
+        raw = np.array([_cove_recess_raw(v) for v in ys])
+        if raw.max() <= 0.0:
+            _COVE_BUMP = (0.0, cy, 1.0)
+        else:
+            on = ys[raw > 0]
+            h = max(on.max() - cy, cy - on.min()) + 0.08               # 80 mm fade beyond the affected span
+            b = np.cos(0.5 * np.pi * np.clip((ys - cy) / h, -1, 1)) ** 2
+            amp = float(np.max(raw[raw > 0] / b[raw > 0])) * 1.02
+            _COVE_BUMP = (amp, cy, h)
+    amp, cy, h = _COVE_BUMP
+    u = (abs(float(y)) - cy) / h
+    return amp * float(np.cos(0.5 * np.pi * u) ** 2) if abs(u) < 1.0 else 0.0
+
+
+def flap_cove(sec, n=14):
+    """Flap cove (chord units): from the lower skin end FLAP_X_LO round the flap nose up to the shroud underside at
+    FLAP_COVE_TOP, aft along the shroud underside to the lip at FLAP_X_LIP, closed at the upper surface there.  Over
+    the main wheel well its forward bulge is recessed (cove_well_recess)."""
+    af = sec.airfoil
+    c = _cove_bezier(sec, cove_well_recess(sec.le[1]), n=n)
     xs = np.linspace(FLAP_COVE_TOP, FLAP_X_LIP, max(8, n))[1:]
     under = np.stack([xs, shroud_underside(af, xs)], 1)
     return np.vstack([c, under, [[FLAP_X_LIP, float(af.upper(FLAP_X_LIP))]]])

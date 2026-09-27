@@ -12,10 +12,10 @@ First-angle projection, each assembly as a three-view at 1:3 on a common ground 
   NOSE              SIDE view from port, FRONT view with half section B-B to its right, TOP view below.
 Details at 1:2: H (main hub, brake and hub fairing in section), D / F (tyre sections with the groove pattern and the
 TRA growth envelope).  Tables: key dimensions with source tags, the photo check (deviation call-outs), materials.
-Main tyre: the MODELLED envelope wheels.MAIN_TYRE_ENV (MAIN_TYRE_CHOICE: the 22x8.50-10 of Jane's / the Pilatus
-drawing, pc12/CLAUDE.md's sourced size, until the owner decides) is drawn in full; the other candidate
-(wheels.MAIN_TYRE_ALT: the proposed 8.50-10 Type III of the tyre makers / parts lists / photos) as a deviation outline in
-the accent colour, its TRA growth envelope in detail D.  The 3-D wheels (model/wheels.py main_wheel / nose_wheel) are
+Main tyre: the MODELLED envelope wheels.MAIN_TYRE_ENV (MAIN_TYRE_CHOICE: the 8.50-10 Type III of the tyre makers /
+parts lists / photos, OWNER DECISION 2026-09-26) is drawn in full, with its TRA growth envelope in detail D; the
+superseded 22x8.50-10 of Jane's / the Pilatus drawing (wheels.MAIN_TYRE_ALT) as a deviation outline in the accent
+colour.  Both tyres are drawn statically loaded (flat on the ground, axle WL = the loaded radius).  The 3-D wheels (model/wheels.py main_wheel / nose_wheel) are
 built from these tables.  The overlay
 variant (refs/cache/overlays/L4W_overlay.*, git-ignored) adds the registered Pilatus drawing's wheel circles in red
 and the photo-measured tyre / fairing sizes and groove positions in blue.
@@ -786,11 +786,12 @@ def draw_main_hub_detail(ds):
 
 
 # ============================================================================================ nose wheel
-NOSE_ARM_W = (0.046, 0.034)     # fork plate half-width fore-aft at the crown / at the axle (gear.NOSE_FORK_PLATE)
+NOSE_ARM_W = (G.NOSE_YOKE["arm_w"][1], G.NOSE_YOKE["arm_w"][0])   # fork arm half-width fore-aft: at the top / axle
 
 
 def nose_fork_side():
-    """Port fork arm in the side view (dx, dz about the axle): a plate from the crown casting to the axle boss."""
+    """Port fork arm in the side view (dx, dz about the axle): a straight tapered arm from the crown block to the axle
+    boss (gear.NOSE_YOKE; the starboard arm is its mirror behind the tyre)."""
     ax, az = float(G.NOSE_AXLE[0]), float(G.NOSE_AXLE[2])
     cr = np.array([G.NOSE_FORK[0] - ax, G.NOSE_FORK[2] - az])
     d = cr / np.linalg.norm(cr)
@@ -824,11 +825,11 @@ def draw_nose_side(ds):
     # port fork arm (adjacent part, nearest the viewer), crown casting, piston; axle nut + lock plate on the arm
     cr, arm = nose_fork_side()
     ds.cv.path(v.pts(arm + c), W_FINE, PHANTOM, closed=True)
-    ds.cv.path(v.pts(np.array([[cr[0] - 0.050, cr[1] - 0.022], [cr[0] + 0.050, cr[1] - 0.022],
-                               [cr[0] + 0.050, cr[1] + 0.028], [cr[0] - 0.050, cr[1] + 0.028]]) + c), W_FINE, PHANTOM,
-               closed=True)
-    ds.cv.path(v.pts(np.array([[cr[0] - 0.036, cr[1] + 0.028], [cr[0] - 0.036, 0.40], [cr[0] + 0.036, 0.40],
-                               [cr[0] + 0.036, cr[1] + 0.028]]) + c), W_FINE, PHANTOM)
+    hx_, _, r0_, r1_ = G.NOSE_YOKE["crown"]                       # crown block (gear.NOSE_YOKE)
+    ds.cv.path(v.pts(np.array([[cr[0] - hx_, r0_], [cr[0] + hx_, r0_], [cr[0] + hx_, r1_], [cr[0] - hx_, r1_]]) + c),
+               W_FINE, PHANTOM, closed=True)
+    ds.cv.path(v.pts(np.array([[cr[0] - 0.036, r1_], [cr[0] - 0.036, 0.40], [cr[0] + 0.036, 0.40],
+                               [cr[0] + 0.036, r1_]]) + c), W_FINE, PHANTOM)
     wheel_circle(ds, v, c, axl["boss_r"], W_FINE, PHANTOM)
     ud = cr / np.linalg.norm(cr)                                  # tear-drop lock plate: along the arm, tip up
     ad = math.degrees(math.atan2(ud[1], ud[0]))
@@ -869,19 +870,18 @@ def draw_nose_side(ds):
 
 
 def nose_yoke(asm):
-    """Front-view outline of the two-arm fork yoke (s, r about the axle): inner and outer contours."""
+    """Front-view outline of the two-arm fork yoke (s, r about the axle): inner and outer contours = the 3-D yoke's
+    centre line (gear.nose_yoke_centre) offset by its half-depth each way, the arms continued down round the bosses."""
     axl = asm["axle"]
-    R = WH.envelope("nose")["R"]
-    fi, fo = axl["fork_in"], axl["fork_out"]
-    top_in = R + axl["arch"]
-    ri, ro = 0.020, 0.035
-
-    def contour(sf, top, rc):
-        q = [(sf, -axl["boss_r"]), (sf, top - rc)] + [
-            (sf - rc + rc * math.cos(a), top - rc + rc * math.sin(a)) for a in np.radians(np.linspace(0, 90, 9))[1:]]
-        q = np.array(q)
-        return np.vstack([mirror(q[::-1]), q])
-    return contour(fi, top_in, ri), contour(fo, top_in + 0.048, ro), top_in
+    P, t, r_top = G.nose_yoke_centre()
+    T = np.gradient(P, axis=0)
+    T /= np.linalg.norm(T, axis=1)[:, None]
+    N = np.c_[T[:, 1], -T[:, 0]]                     # right of travel: towards the tyre (the line runs port -> stbd)
+    inner, outer = P + N * t[:, None], P - N * t[:, None]
+    b = -axl["boss_r"]
+    inner = np.vstack([[inner[0] * [1, 0] + [0, b]], inner, [inner[-1] * [1, 0] + [0, b]]])
+    outer = np.vstack([[outer[0] * [1, 0] + [0, b]], outer, [outer[-1] * [1, 0] + [0, b]]])
+    return inner, outer, float(inner[:, 1].max())
 
 
 def draw_nose_front(ds):
@@ -929,7 +929,7 @@ def draw_nose_front(ds):
     ds.sh.dim(v.pt(-hw, -fr["rw"]), v.pt(hw, -fr["rw"]), yb, fmt(env["W"]), "h", f1=v.pt(-hw, -fr["rw"]),
               f2=v.pt(hw, -fr["rw"]))
     leader(ds, v.pt(fo - 0.004, top_in + 0.03), "FORK YOKE: TWO ARMS [M]", (22.0, -14.0),
-           lines=["ADJACENT; gear.py HAS ONE (STAGE 3)"], size=2.2, color=ACCENT)
+           lines=["ADJACENT; 3-D gear.NOSE_YOKE, NUTS + LOCK PLATES"], size=2.2)
     leader(ds, v.pt(0.004, rim["tie_r"]), f"TIE BOLT {rim['tie_n']}x [E]", (44.0, -20.0), size=2.2)
     leader(ds, v.pt(ns1 - 0.004, -axl["nut_af"] / 2), "AXLE NUTS OUTSIDE THE ARMS", (18.0, 20.0), size=2.2)
     leader(ds, v.pt(0.05, R - 0.004), "SPLIT HUB, TUBELESS [S]", (36.0, -44.0), lines=["17.5x6.25-6, 8 PR, 60 psi"],
@@ -1146,20 +1146,22 @@ def draw_tables(ds, x0, y0):
     frm, frn = WH.tyre_frame(WH.MAIN), WH.tyre_frame(WH.NOSE)
     stk = WH.brake_stack(WH.MAIN)
     _, _, am, rbm = WH.loaded_blend("main")
+    _, _, an, rbn = WH.loaded_blend("nose")
     tra_m = MOD is WH.MAIN_TYRE_850
     rows = [
         ("Tyre (modelled)", str(Me["size"]), "17.5x6.25-6",
-         ("P proposed 8.50-10 (MAIN_TYRE_CHOICE); S parts lists" if tra_m else
-          "S Jane's / Pilatus dwg (approved); P 8.50-10 proposed")),
+         ("O owner decision 2026-09-26; S tyre makers / parts lists" if tra_m else
+          "S Jane's / Pilatus dwg (superseded 2026-09-26)")),
         ("Part numbers", "850T06-3 / 025-350-0" if tra_m else "- (not a TRA size)", "175K88B1 / 021-327-0",
          "S Goodyear / Michelin (parts listings)"),
         ("Ply / type / pressure", "10 PR TL, 60 psi", "8 PR TL, 60 psi", "S data book; POH placard, GSG 02527"),
         ("Free OD / section W", f"{fmt(2 * Me['R'])} / {fmt(Me['W'])}", f"{fmt(2 * Ne['R'])} / {fmt(Ne['W'])}",
          "S TRA 627-652 / 208-221; M photos 620-650" if tra_m else "S 22 in / 8.50 in (TRA 8.50-10: 627-652)"),
         ("Axle WL = loaded R / defl.", f"{fmt(Me['R_loaded'])} / {fmt(Me['R'] - Me['R_loaded'], 0 if rbm else 1)}",
-         f"{fmt(Ne['R_loaded'])} / {fmt(Ne['R'] - Ne['R_loaded'], 1)}", "G axles kept; M main 270-280"),
+         f"{fmt(Ne['R_loaded'])} / {fmt(Ne['R'] - Ne['R_loaded'], 1)}", "G main axle kept; M main 270-280, nose 200-210"),
         ("Contact patch / blend R", f"{fmt(2 * am)} / {fmt(rbm)}" if rbm is not None else f"{fmt(2 * am)} (chord)",
-         "-", "E (free chord 313)" if rbm is not None else "D free circle cut by the ground"),
+         f"{fmt(2 * an)} / {fmt(rbn)}" if rbn is not None else f"{fmt(2 * an)} (chord)",
+         "E (free chords 313 / 163)"),
         ("Section H / aspect", f"{fmt(km['H'], 1)} / {km['aspect']:.2f}", f"{fmt(kn['H'], 1)} / {kn['aspect']:.2f}",
          "D (TRA 0.90 / 0.92)"),
         ("Bead seat / flange dia", f"{fmt(2 * Mr['bead_r'])} / {fmt(2 * km['r_flange'], 1)}",
@@ -1178,6 +1180,9 @@ def draw_tables(ds, x0, y0):
         ("Wheel", "split hub, 2 halves", "split hub, 2 halves", "S POH 7-4-11; Goodrich 3-1543 / 3-1501"),
         ("Tie bolts n on PCD", f"{Mr['tie_n']} on {fmt(2 * Mr['tie_r'])}", f"{Nr['tie_n']} on {fmt(2 * Nr['tie_r'])}",
          "E hidden (main); M PCD, E count (nose)"),
+        ("Web face s (dish depth)", f"{fmt(WH.web_face(Mr))} (split plane)",
+         f"{fmt(WH.web_face(Nr))} ({fmt(Nr['flange_s'] + Nr['flange_t'] - WH.web_face(Nr))} deep)",
+         "E main (covered); M nose (bolts + hub ring seen)"),
         ("Valve / safety plug", f"R {fmt(Mr['valve_r'])} / 1", f"R {fmt(Nr['valve_r'])} / 1", "M position; S POH"),
         ("Fusible plugs", f"{Mr['fusible_n']} (inboard half)", "-", "S POH 7-4-11; E position"),
         ("Hub fairing lip / face / proud", f"{fmt(2 * Mf['r_lip'])} / {fmt(2 * Mf['r_face'])} / {fmt(Mf['proud'])}",
@@ -1212,7 +1217,7 @@ def draw_check_tables(ds, x0, y0):
     p_t, _ = retracted_depths()
     rows2 = [
         ("Main tyre OD (modelled)", "620-650", fmt(2 * em["R"]), fmt(d_od) if d_od else "0",
-         "owner decision pending" if d_od else "-"),
+         "owner decision pending" if d_od else "owner decision 2026-09-26"),
         (f"  {ALT['size']} ({'proposed' if ALT is WH.MAIN_TYRE_850 else 'superseded'})", "-", fmt(2 * ALT["R"]),
          fmt(2 * ALT["R"] - 0.62) if ALT["R"] < 0.31 else "0", "MAIN_TYRE_CHOICE"),
         ("  3-D gear.MAIN_TYRE", "-", fmt(2 * gm["R"]), f"{fmt(2 * gm['R'] - 2 * em['R'])}", "from wheels.py"),
@@ -1227,13 +1232,18 @@ def draw_check_tables(ds, x0, y0):
          "3-D geometry"),
         ("Render groove shader", "-", "off (geometry)", "-", "done"),
         ("Nose tyre OD", "17.5 in", fmt(2 * en["R"]), "0", "-"),
-        ("Nose loaded radius", "200-210", f"axle {fmt(G.NOSE_AXLE[2])}", "+12..22", "axle kept"),
+        ("Nose loaded radius", "200-210", f"axle {fmt(G.NOSE_AXLE[2])}",
+         "0" if 0.200 <= G.NOSE_AXLE[2] <= 0.210 else f"{fmt(G.NOSE_AXLE[2] - 0.205)}",
+         f"{fmt(en['R'] - G.NOSE_AXLE[2], 1)} flat drawn"),
         ("Nose grooves / W", "0.09, 0.28", f"{kn['groove_frac'][0]:.2f}, {kn['groove_frac'][1]:.2f}", "0", "-"),
-        ("Nose fork arms", "2", f"gear.py {len(G.NOSE_FORK_SIDES)}", "-1", "Stage 3"),
+        ("Nose fork arms", "2", f"gear.py {len(G.NOSE_FORK_SIDES)}", f"{len(G.NOSE_FORK_SIDES) - 2:+d}"
+         if len(G.NOSE_FORK_SIDES) != 2 else "0", "3-D yoke, crown block"),
+        ("Nose axle nut / lock plate", "dark hex + tear-drop", "3-D both arms", "0", "steel_dark"),
+        ("Nose tie-bolt PCD", "~0.58 flange R", f"{fmt(2 * WH.NOSE_RIM['tie_r'])}", "0", "3036 nose-hub zoom"),
         ("Hub fairing dia / proud", "290-300 / 25-30", f"{fmt(2 * Mf['r_lip'])} / {fmt(Mf['proud'])}", "0",
          f"face {fmt(fbt)} > W/2"),
         ("Main pressure", "60 psi placard", f"gear.py info {WH.MAIN_TYRE_SEC['pressure']:.0f}", "0", "-"),
-        ("Main brake", "6-lobe, in wheel", "3-D: wheels.py", "0", "-"),
+        ("Main brake", "6-lobe, bright cast", "3-D: brake_housing", "0", "-"),
     ]
     cols2 = [("ITEM", 64.0, "l"), ("PHOTOS [M]", 48.0, "l"), ("TABLE / MODEL", 54.0, "l"), ("Δ", 24.0, "r"),
              ("ACTION", 84.0, "l")]
@@ -1243,10 +1253,11 @@ def draw_check_tables(ds, x0, y0):
         ("Tyre", "tire", "tire", "black satin; NO lettering"),
         ("Wheel halves", "wheel", "wheel", "gloss light grey / white"),
         ("Hub fairing", "main_gear_door", "-", "leg-door colour (3008 blue)"),
-        ("Brake housing / discs", "metal / metal_dark", "-", "dull alu / dark steel"),
+        ("Brake housing / discs", "brake_housing / metal_dark", "-", "bright satin cast alu / dark steel"),
         ("Bolts, valve stem", "cadmium", "cadmium", "yellow-chromate cadmium / brass"),
         ("Fairing screws, valve cap", "metal / black", "- / black", "rubber-sealed cap"),
-        ("Axle nut, hub cap", "steel", "steel", "lock plate (nose)"),
+        ("Axle nut, hub cap", "steel", "steel_dark", "dark steel nut + tear-drop lock plate (nose)"),
+        ("Bearing caps (nose hub ends)", "-", "chrome", "polished seal rings"),
         ("Arm / fork", "gear_leg", "gear_leg", "adjacent"),
     ]
     cols3 = [("PART", 64.0, "l"), ("MAIN", 60.0, "l"), ("NOSE", 40.0, "l"), ("NOTE", 110.0, "l")]
@@ -1255,6 +1266,8 @@ def draw_check_tables(ds, x0, y0):
 
 
 def draw_notes(ds, x0, y0, x1):
+    NOSE_E = WH.NOSE_TYRE_ENV
+    an_ = WH.loaded_blend("nose")[2]
     fbt = WH.fairing_beyond_tyre()
     chk = WH.tra_envelope_check("main")
     gm = WH.gear_envelope("main")
@@ -1273,10 +1286,12 @@ def draw_notes(ds, x0, y0, x1):
          "switches it (wheels.MAIN_TYRE_CHOICE; PC12_MAIN_TYRE=8.50-10 for a trial build): axles and static stance "
          "kept (axle WL 279 = its loaded radius, flat on the ground over a 250 mm patch, 41 mm deflection)."
          if MOD is WH.MAIN_TYRE_22 else
-         f"MAIN TYRE - modelled 8.50-10 Type III (tyre makers, parts lists, four photo methods; TRA OD 627-652, drawn "
-         f"free OD {fmt(2 * MOD['R'])}); Jane's / Pilatus drawing 22x8.50-10 (OD 559) shown in the accent colour. "
-         "Axles and static stance kept: axle WL 279 = the loaded radius, the tyre flat on the ground over a 250 mm "
-         "patch (41 mm deflection) with a 6 mm sidewall bulge."),
+         f"MAIN TYRE - modelled 8.50-10 Type III, OWNER DECISION 2026-09-26 (tyre makers, parts lists, four photo "
+         f"methods; TRA OD 627-652, drawn free OD {fmt(2 * MOD['R'])}); Jane's / Pilatus drawing 22x8.50-10 (OD 559), "
+         "superseded, shown in the accent colour. Axles and static stance kept: axle WL 279 = the loaded radius, the "
+         "tyre flat on the ground over a 250 mm patch (41 mm deflection) with a 6 mm sidewall bulge. Nose tyre loaded "
+         f"too: axle WL {fmt(G.NOSE_AXLE[2])} (photos 200-210), {fmt(2 * an_)} mm patch, "
+         f"{fmt(NOSE_E['R'] - G.NOSE_AXLE[2], 1)} mm deflection."),
         f"3-D model: gear.MAIN_TYRE = this envelope (R {fmt(gm['R'], 1)}); the LD-1 leg-door scallop (R + 12.5 = "
         f"{fmt(G.LEG_DOOR['scallop_r'], 1)}) and the round well (bays.WELL_R) follow it. model/wheels.py main_wheel / "
         "nose_wheel revolve / extrude the profiles of this sheet (tyre with the grooves, wheel halves, hub fairing, "

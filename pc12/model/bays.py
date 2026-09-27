@@ -18,8 +18,9 @@ from model import wheels as _WH
 # Nose bay = the drawn nose-door rectangle (STA 2.887-4.252, 0.30 wide) moved aft with the nose gear by
 # gear.GEAR_SHIFT.
 DOOR_GAP = 0.003                                                  # closed leg door -> skin cut-out edge (m)
-# main wheel well: the door's tyre scallop (gear.LEG_DOOR scallop_r = tyre R + wheels.SCALLOP_CLEAR) + the gap; 22 in
-# tyre: 295 (the stowed tyre, tilted 4 deg, is 287 mm half-wide in plan: 8 mm clear)
+# main wheel well: the door's tyre scallop (gear.LEG_DOOR scallop_r = tyre R + wheels.SCALLOP_CLEAR) + the gap: 8.50-10
+# tyre (R 0.320) 335.5.  Aft, the well reaches past the rear spar (interrupted at the bay, interior.build_structure) into
+# the flap cove's forward bulge, which is recessed there (wing.cove_well_recess)
 WELL_R = float(_WH.MAIN_TYRE_ENV["R"]) + _WH.SCALLOP_CLEAR + DOOR_GAP
 TRUNNION_POCKET = dict(cx=5.995, cy=2.300, hx=0.100, hy=0.115, r=0.040)  # x 5.895-6.095, BL 2.185-2.415 (liner)
 BRACE_POCKET = dict(cx=6.040, cy=1.480, hx=0.070, hy=0.370, r=0.040)     # x 5.970-6.110, BL 1.11-1.85 (liner)

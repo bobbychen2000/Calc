@@ -1341,14 +1341,17 @@ def check_L4(ctx, rep, plots):
             dev.append(1.0)
             lab.append(f"{pid}: no tyre")
             continue
+        # statically loaded tyres (wheels.loaded_blend: flat on the ground, sidewalls bulged there): the free radius
+        # from the fore-aft extent, the axle WL from the crown, the width at the axle height, the contact on the ground
+        R = 0.5 * np.ptp(Vt[:, 0])
         c = np.array([0.5 * (Vt[:, 0].min() + Vt[:, 0].max()), 0.5 * (Vt[:, 1].min() + Vt[:, 1].max()),
-                      0.5 * (Vt[:, 2].min() + Vt[:, 2].max())])
-        R = 0.25 * (np.ptp(Vt[:, 0]) + np.ptp(Vt[:, 2]))
-        Wd = np.ptp(Vt[:, 1])
-        dev += list(c - A) + [R - T["R"], Wd - T["W"]]
+                      Vt[:, 2].max() - R])
+        mid = np.abs(Vt[:, 2] - A[2]) < 0.05
+        Wd = np.ptp(Vt[mid, 1])
+        dev += list(c - A) + [R - T["R"], Wd - T["W"], Vt[:, 2].min()]
         lab.append(f"{pid}: centre {np.round(c, 4).tolist()} vs {np.round(A, 4).tolist()}, R {R:.4f}/{T['R']}, "
-                   f"W {Wd:.4f}/{T['W']}")
-    rep.add("L4", "axles (tyre centres) and tyre R / width vs gear parameters", np.array(dev), tolp,
+                   f"W {Wd:.4f}/{T['W']}, lowest WL {Vt[:, 2].min() * 1000:.1f} mm")
+    rep.add("L4", "axles (tyre centres), tyre R / width and ground contact vs gear parameters", np.array(dev), tolp,
             f"track {2 * G.MAIN_AXLE[1]:.3f}, wheelbase {G.MAIN_AXLE[0] - G.NOSE_AXLE[0]:.3f}", lab,
             )
 
@@ -1945,6 +1948,7 @@ def _l4_gear(ctx, rep):
         K = np.array([[0, -a[2], a[1]], [a[2], 0, -a[0]], [-a[1], a[0], 0]])
         Rm = np.eye(3) + math.sin(th) * K + (1 - math.cos(th)) * K @ K
         c = 0.5 * (Vt.min(0) + Vt.max(0))
+        c[2] = Vt[:, 2].max() - 0.5 * np.ptp(Vt[:, 0])          # the axle: crown - free R (the tyre is loaded, flat below)
         cr = o + Rm @ (c - o)
         exp = G.retracted_wheel(sg)
         dev += list(cr - exp)
@@ -2085,7 +2089,7 @@ def check_L4W(ctx, rep, plots):
     ol = WH.brake_lobe_outline(WH.MAIN, n=720)
     dev, lab = [], []
     for pid in ("gear_main_R", "gear_main_L"):
-        L_ = _wheel_local(ctx, pid, ("metal",), near=G.MAIN_TYRE["R"])
+        L_ = _wheel_local(ctx, pid, ("brake_housing",), near=G.MAIN_TYRE["R"])
         so = WH.MAIN_BRAKE["housing_s"]
         # the lobe wall's two vertex rings (outer-face bevel edge, inner face); not the radial fitting / bleeder
         b_ = WH.MAIN_BRAKE

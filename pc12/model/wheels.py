@@ -4,16 +4,16 @@ the 2-D profiles drawn from them (Stage 2: sheet L4W, drawing/wheel_sheet.py), a
 main_wheel() / nose_wheel() that revolve / extrude the same profiles (used by model/gear.py).
 
 Tyre envelopes (MAIN_TYRE_ENV / NOSE_TYRE_ENV): free radius R, section width W, bead-seat radius rim and the static
-loaded radius.  The MAIN tyre has two candidate envelopes, selected by MAIN_TYRE_CHOICE (one line; the environment
-variable PC12_MAIN_TYRE overrides it for a trial build):
-  '22x8.50-10'  Jane's and the Pilatus drawing circle (OD 559) -- the size of pc12/CLAUDE.md's sourced facts and of
-                the approved sheets L1-L5, so it is the MODELLED tyre until the owner decides otherwise;
+loaded radius.  The MAIN tyre has two envelopes, selected by MAIN_TYRE_CHOICE (the environment variable PC12_MAIN_TYRE
+overrides it for a trial build):
   '8.50-10'     the Type III 8.50-10 that the tyre makers, the parts lists and four photo measurements give for the
-                PC-12 (TRA OD 627-652; 22x8.50-10 is not a listed tyre size): PROPOSED (research 2026-09-26), pending
-                the owner's decision.  The axles and the static stance are kept either way: the axle WL is the loaded
-                radius, so this tyre is flattened at the ground (41 mm static deflection).
-gear.MAIN_TYRE, the LD-1 leg-door scallop (gear.LEG_DOOR) and the round wheel well (bays.WELL_R) follow the choice.
-The other envelope is MAIN_TYRE_ALT (drawn as a deviation outline on sheet L4W).  The nose tyre is the 17.5x6.25-6.
+                PC-12 (TRA OD 627-652): the MODELLED tyre, OWNER DECISION 2026-09-26.  The axles and the static stance
+                are kept: the axle WL is the loaded radius, so the tyre is flattened at the ground (41 mm static
+                deflection, contact patch, sidewall bulge);
+  '22x8.50-10'  Jane's and the Pilatus drawing circle (OD 559; not a listed tyre size): SUPERSEDED.
+gear.MAIN_TYRE, the LD-1 leg-door scallop (gear.LEG_DOOR), the round wheel well (bays.WELL_R) and the flap-cove recess
+over the well (wing.cove_well_recess) follow the choice.  The other envelope is MAIN_TYRE_ALT (drawn as a deviation
+outline on sheet L4W).  The nose tyre is the 17.5x6.25-6, loaded 15.5 mm (the nose axle WL is its loaded radius).
 The section tables refine the shape INSIDE the envelopes: tyre cross-section (bead, sidewall, shoulder, crown,
 grooves), the split-hub wheel halves, the main-wheel outboard hub fairing, the six-piston main brake, axle and paint.
 Source tags: [S] sourced (NGX POH 02406 7-4, Ground Servicing Guide 02527, Goodyear aviation data book 2018 = TRA
@@ -62,8 +62,9 @@ class PTable(dict):
 
 # ================================================================================================ tyre envelopes
 MAIN_TYRE_850 = PTable(
-    "Main tyre envelope: 8.50-10 Type III (tyre makers / parts lists / photos; proposed)",
-    size=("8.50-10 Type III", "P", "tyre makers / parts lists; Jane's 22x8.50-10 is not a listed size"),
+    "Main tyre envelope: 8.50-10 Type III (tyre makers / parts lists / photos; owner decision 2026-09-26)",
+    size=("8.50-10 Type III", "O", "tyre makers / parts lists / photos, owner decision 2026-09-26 (Jane's 22x8.50-10 "
+                                   "superseded: not a listed size)"),
     part=("Goodyear 850T06-3 / Michelin 025-350-0", "S", "10 PR tubeless (parts listings, Goodyear data book)"),
     R=(0.320, "M", "free radius (OD 640): inside the TRA OD 627-652; four photo methods give OD 620-650"),
     W=(0.216, "S", "section width: TRA 8.2-8.7 in (208-221); photos 214-224"),
@@ -83,8 +84,9 @@ MAIN_TYRE_850 = PTable(
 )
 
 MAIN_TYRE_22 = PTable(
-    "Main tyre envelope: 22x8.50-10 (Jane's; Pilatus drawing circle)",
-    size=("22x8.50-10", "S", "Jane's; Pilatus drawing 190.10.40.432 circle 558.8 (refs/mbp.py); CLAUDE.md facts"),
+    "Main tyre envelope: 22x8.50-10 (Jane's; Pilatus drawing circle; superseded 2026-09-26)",
+    size=("22x8.50-10", "S", "Jane's; Pilatus drawing 190.10.40.432 circle 558.8 (refs/mbp.py); superseded by the "
+                             "owner decision 2026-09-26"),
     part=("- (not a TRA size)", "S", "no 22 in tyre on a 10 in rim with an 8.5 in section in the Goodyear data book"),
     R=(0.2795, "S", "free radius: 22 in OD (558.8; gear.py rounds to 0.2795)"),
     W=(0.216, "S", "section width 8.50 in"),
@@ -124,10 +126,11 @@ NOSE_TYRE_ENV = PTable(
     R=(0.2225, "S", "free radius: 17.5 in OD (444.5); = gear.NOSE_TYRE"),
     W=(0.159, "S", "section width 6.25 in (TRA max; min 5.9 in); = gear.NOSE_TYRE"),
     rim=(0.076, "S", "bead-seat radius (6 in rim); = gear.NOSE_TYRE"),
-    R_loaded=(0.222, "G", "axle WL kept (gear.NOSE_AXLE); photos read ~205 (not modelled)"),
-    patch_l=(0.0, "D", "no blend: the free circle cut by the ground (0.5 mm static deflection)"),
-    bulge=(0.0, "E", "no bulge at 0.5 mm deflection"),
-    bulge_l=(0.0, "E", "-"),
+    R_loaded=(0.207, "M", "static loaded radius = the nose axle WL (gear.NOSE_AXLE): photos 200-210 (3036 R_bottom / "
+                          "R_top 0.92); 15.5 mm deflection (the drawn circle's axle was 0.222)"),
+    patch_l=(0.130, "E", "static contact-patch length (the free circle's chord at the ground would be 0.163)"),
+    bulge=(0.004, "E", "loaded sidewall bulge per side, at the ground"),
+    bulge_l=(0.200, "E", "circumferential extent of the bulge about the contact (plan view)"),
     od_max=(17.5 * IN, "S", "TRA OD max 17.5 in"),
     od_min=(16.85 * IN, "S", "TRA OD min 16.85 in"),
     W_max=(6.25 * IN, "S", "TRA section width max 6.25 in"),
@@ -248,7 +251,8 @@ MAIN_BRAKE = PTable(
     torque_plate=((-0.106, -0.100, 0.026, 0.062), "E", "torque plate on the axle flange: s0, s1, r0, r1"),
     fitting_d=(0.012, "E", "inlet fitting on the top lobe; bleeder on the lobe opposite"),
     line_d=(0.0064, "E", "brake line 1/4 in, up the trailing arm"),
-    material=("housing metal / discs metal_dark", "M", "dull aluminium housing, dark steel discs"),
+    material=("housing brake_housing / discs metal_dark", "M", "bright cast-aluminium housing (3036 mx5: p90 ~195 in "
+                                                              "the sun), dark steel discs"),
 )
 
 MAIN_AXLE = PTable(
@@ -270,7 +274,7 @@ MAIN_PAINT = PTable(
     tyre=("tire", "M", "black satin rubber; NO lettering (owner decision: no markings)"),
     fairing=("livery:main_gear_door", "M", "gloss paint in the leg-door colour (MSN 3008 paint_blue)"),
     wheel=("wheel", "M", "inboard half / flanges gloss light grey-white"),
-    brake=("metal", "M", "housing dull aluminium / cadmium grey"),
+    brake=("brake_housing", "M", "housing bright cast aluminium (satin), piston caps"),
     discs=("metal_dark", "M", "heat-darkened steel disc edges"),
     fasteners=("metal", "M", "tie bolts, screws: cadmium; valve brass"),
     axle=("steel", "E", "axle nut, hub cap"),
@@ -307,18 +311,20 @@ NOSE_RIM = PTable(
     flange_t=(0.007, "E", "axial flange thickness"),
     barrel_t=(0.007, "E", "rim barrel wall"),
     seat_step=(0.0015, "E", "barrel below the seat between the ledges"),
-    web_t=(0.009, "E", "web of each half beside the split plane"),
+    web_t=(0.009, "E", "web of each half"),
+    web_s=(0.032, "M", "outer face of each half's web: a dish 38 mm inside the flange face, so the tie-bolt heads and "
+                       "the hub ring show (3036 nose-hub zoom: bolt circle ~45 mm behind the flange, parallax)"),
     hub_r=(0.031, "M", "raised hub boss (dia ~0.3 x flange dia)"),
     hub_bore=(0.026, "E", "bearing-cup bore radius"),
     hub_s=((-0.081, 0.081), "M", "hub ends at the fork arms' inner faces (+-0.083)"),
     bearing_w=(0.016, "E", "bearing width"),
     tie_n=(4, "E", "tie bolts: 3 visible per face beside the fork arm, the 4th assumed behind it"),
-    tie_r=(0.048, "M", "tie-bolt circle radius (~0.5 x flange dia)"),
+    tie_r=(0.055, "M", "tie-bolt circle radius: ~0.58 x the flange RADIUS (3036 nose-hub zoom, parallax-corrected fit)"),
     tie_d=(0.008, "E", "tie-bolt shank; heads / nuts AF 0.013, cadmium-gold"),
     tie_th=(0.0, "M", "first tie bolt clock (+-20 deg)"),
     valve_r=(0.066, "M", "brass valve stem at ~0.7 x the flange radius, port face (3036)"),
     valve_th=(30.0, "M", "valve clock (drawn pose)"),
-    valve_s=(0.052, "E", "valve cap s (inside the flange face)"),
+    valve_s=(0.058, "E", "valve cap s (inside the flange face)"),
     plug_th=(210.0, "E", "overinflation safety plug [S: POH] clock, starboard face"),
     paint=("wheel", "M", "gloss white, open on both faces (no fairing)"),
 )
@@ -326,14 +332,17 @@ NOSE_RIM = PTable(
 NOSE_AXLE = PTable(
     "Nose axle, fork arms (context)",
     r=(0.020, "G", "axle radius (gear.build_nose)"),
-    fork_in=(0.083, "M", "fork arms' inner faces +-s: TWO arms (3001 / 3036 head-on, 3008 0517); gear.py has one"),
+    fork_in=(0.083, "M", "fork arms' inner faces +-s: TWO arms (3001 / 3036 head-on, 3008 0517, 188)"),
     fork_out=(0.118, "M", "fork arms' outer faces +-s (arm ~35 mm thick)"),
     thread_r=(0.014, "E", "threaded axle ends outboard of the fork arms"),
     boss_r=(0.031, "G", "fork-arm axle boss radius (gear.NOSE_FORK_SEC)"),
     arch=(0.025, "M", "yoke arch inner edge above the tyre crown (arch ~45-50 mm deep)"),
     nut_af=(0.032, "E", "hex axle nut across flats (steel), with a tear-drop lock plate"),
-    nut_s=((0.118, 0.134), "E", "nut s range, outboard of each fork arm"),
+    nut_s=((0.118, 0.130), "E", "lock plate + nut s range, outboard of each fork arm (the open nose doors' inner faces "
+                                 "pass at +-0.136)"),
     lock_plate=(0.050, "M", "tear-drop lock plate length along the arm (3036)"),
+    lock_t=(0.003, "E", "lock plate thickness (on the arm's outer face, under the nut)"),
+    cap_r=((0.021, 0.028), "M", "chrome bearing cap / seal ring at each hub end, inner / outer radius (3036 nose hub)"),
 )
 
 NOSE_PAINT = PTable(
@@ -341,8 +350,8 @@ NOSE_PAINT = PTable(
     tyre=("tire", "M", "black satin rubber, no lettering"),
     wheel=("wheel", "M", "gloss white halves, open both faces (photos read a touch whiter than 'wheel')"),
     fasteners=("metal", "M", "tie bolts cadmium-gold, valve brass"),
-    axle=("steel", "M", "hex axle nut + tear-drop lock plate"),
-    fork=("gear_leg", "M", "two-arm fork yoke"),
+    axle=("steel_dark", "M", "dark steel hex axle nut + tear-drop lock plate, threaded axle end with its bore"),
+    fork=("gear_leg", "M", "two-arm fork yoke, crown block (cadmium bolts), chrome bearing caps at the hub ends"),
 )
 
 MAIN = dict(tyre=MAIN_TYRE_SEC, rim=MAIN_RIM, fairing=MAIN_FAIRING, brake=MAIN_BRAKE, axle=MAIN_AXLE,
@@ -511,10 +520,18 @@ def bead_bundles(asm):
     return [(-s, r), (s, r)], t["bead_wire"]
 
 
+def web_face(rim):
+    """s of the outer face of each wheel half's web: web_s where the table gives it (nose: a shallow dish, the tie-bolt
+    heads visible), else the web lies beside the split plane (web_t; main: covered by the hub fairing / the brake)."""
+    ws = rim.get("web_s")
+    return float(rim["web_t"] if ws is None else ws)
+
+
 def rim_half(asm, side=1):
     """Closed cross-section (s, r) of ONE wheel half (side +1: s > 0 half, -1: s < 0 half), upper half-plane: rim
-    barrel with the bead ledge and flange (tip round), web beside the split plane, hub barrel with the bearing bore.
-    Features at discrete clock angles (tie bolts, valve) are separate (drawn revolved into the section plane)."""
+    barrel with the bead ledge and flange (tip round), web (beside the split plane, or its outer face at web_s with the
+    hollow between the two webs outside the section), hub barrel with the bearing bore.  Features at discrete clock
+    angles (tie bolts, valve) are separate (drawn revolved into the section plane)."""
     rim = asm["rim"]
     fs, br, ft = rim["flange_s"], rim["bead_r"], rim["flange_t"]
     rho = ft / 2
@@ -523,15 +540,21 @@ def rim_half(asm, side=1):
     hub_end = rim["hub_s"][1] if side > 0 else -rim["hub_s"][0]
     f = 0.004
     ri = br - bt
+    ws = web_face(rim)
     P = [np.array([[0.0, br - st], [fs - rim["ledge"] - 0.004, br - st], [fs - rim["ledge"], br],
                    [fs - 0.003, br]]),
          _arc((fs - 0.003, br + 0.003), 0.003, -90.0, 0.0, 5)[1:],
          np.array([[fs, rf - rho]]),
          _arc((fs + rho, rf - rho), rho, 180.0, 0.0, 9)[1:],
          np.array([[fs + ft, ri]]),
-         np.array([[wt + f, ri]]), _arc((wt + f, ri - f), f, 90.0, 180.0, 5)[1:],
-         np.array([[wt, rim["hub_r"] + f]]), _arc((wt + f, rim["hub_r"] + f), f, 180.0, 270.0, 5)[1:],
-         np.array([[hub_end, rim["hub_r"]], [hub_end, rim["hub_bore"]], [0.0, rim["hub_bore"]]])]
+         np.array([[ws + f, ri]]), _arc((ws + f, ri - f), f, 90.0, 180.0, 5)[1:],
+         np.array([[ws, rim["hub_r"] + f]]), _arc((ws + f, rim["hub_r"] + f), f, 180.0, 270.0, 5)[1:],
+         np.array([[hub_end, rim["hub_r"]], [hub_end, rim["hub_bore"]]])]
+    if ws > wt + 1e-9:                                   # web set out: its inner face, then the barrel back to s = 0
+        wi = ws - wt
+        P += [np.array([[wi, rim["hub_bore"]], [wi, ri], [0.0, ri]])]
+    else:
+        P += [np.array([[0.0, rim["hub_bore"]]])]
     P = np.vstack(P)
     return P * [side, 1]
 
@@ -554,8 +577,8 @@ def tie_bolt_section(asm):
     rim = asm["rim"]
     af = 0.016 if asm["which"] == "main" else 0.013
     h = 0.5 * af
-    return dict(s0=-rim["web_t"] - h, s1=rim["web_t"] + h + 0.004, r=rim["tie_r"], d=rim["tie_d"], af=af, h=h,
-                web=rim["web_t"])
+    ws = web_face(rim)
+    return dict(s0=-ws - h, s1=ws + h + 0.004, r=rim["tie_r"], d=rim["tie_d"], af=af, h=h, web=ws)
 
 
 def fairing_section(asm):
@@ -699,17 +722,19 @@ def loaded_side_outline(which, n=240):
     circle R, flattened onto the ground at dz = -R_loaded over the contact patch, joined by two blend arcs tangent to
     the flat and to the free circle."""
     R, h, a, rb = loaded_blend(which)
+    nf = max(3, int(math.ceil(2 * a / 0.004)) + 1)          # the flat carries its own points (every <= 4 mm): the 3-D
+    flat = np.c_[np.linspace(-a, a, nf), np.full(nf, -h)]    # deformation interpolates this outline by clock angle
     if rb is None:
         t0 = math.degrees(math.atan2(-h, a))
         P = _arc((0.0, 0.0), R, t0, -180.0 - t0 + 360.0, n)
-        return np.vstack([P, [[a, -h]]])
+        return np.vstack([P, flat[1:]])
     cr = np.array([a, -h + rb])
     tr = _ang(cr)
     tl = -180.0 - tr
     big = _arc((0.0, 0.0), R, tr, tl + 360.0, n)
     left = _arc((-a, -h + rb), rb, tl + 360.0, 270.0, 16)[1:]
-    right = _arc((a, -h + rb), rb, 270.0, tr + 360.0, 16)[:-1]
-    return np.vstack([big, left, right])
+    right = _arc((a, -h + rb), rb, 270.0, tr + 360.0, 16)[1:-1]
+    return np.vstack([big, left, flat[1:], right])
 
 
 def free_below_ground(which, n=60):
@@ -789,11 +814,12 @@ def fairing_plan(asm):
 # construction, rim_half, fairing_section, brake_lobe_outline, brake_stack, clock_points).  Local frame of one wheel:
 # X = dx (aft, clock 0), Y = s (the tables' s: main = the outboard / hub-fairing face, nose = the port face),
 # Z = dz (up); _frame() maps it into the model (the port main unit and the nose wheel's +s = -y are mirror frames).
-# Segments round the axle: tyre silhouette chord sag 0.11 (main) / 0.17 mm (nose), rims <= 0.2 mm (4K close-ups).
-SEGS = dict(main_tyre=112, nose_tyre=80, rim=64, nose_rim=48, rim_hidden=40, fairing=96, brake=40, small=12)
+# Segments round the axle: tyre silhouette chord sag 0.11 (main) / 0.19 mm (nose), rims <= 0.2 mm (4K close-ups).
+SEGS = dict(main_tyre=112, nose_tyre=76, rim=64, nose_rim=48, rim_hidden=40, fairing=96, brake=40, small=12)
 TRI_BUDGET = dict(main=30000, nose=18000)          # triangles per wheel assembly
 GROOVE_EDGE = 0.0008                               # rib-edge round at the tread grooves (catches the satin highlight)
-WHEEL_MATS = ("tire", "wheel", "paint_white", "metal", "metal_dark", "steel", "cadmium", "black")
+WHEEL_MATS = ("tire", "wheel", "paint_white", "metal", "metal_dark", "steel", "cadmium", "black", "brake_housing",
+              "chrome")
 
 
 def _unit(v):
@@ -1108,7 +1134,7 @@ def _brake_meshes(asm):
     if np.mean(np.sum(side.face_normals() * np.c_[side.V[side.F].mean(1)[:, 0], np.zeros(len(side.F)),
                                                      side.V[side.F].mean(1)[:, 2]], 1)) < 0:
         side.F = side.F[:, ::-1].copy()
-    out.append((Mesh.merge(face + [side]), "metal"))
+    out.append((Mesh.merge(face + [side]), "brake_housing"))
     # piston caps + bolts on the lobes; inlet fitting (top lobe) and bleeder (opposite)
     caps, bolts = [], []
     lobes = clock_points(int(b["lobes"]), b["lobe_c"], b["lobe_th"])
@@ -1118,7 +1144,7 @@ def _brake_meshes(asm):
         bolts.append(_prism(hexagon(c, 0.011, rot), so - 0.004, so - 0.0095))
     fit = [_radial_stud(b["lobe_th"], r0, r1, FITTING_S, rr, n) for r0, r1, rr, n in _fitting_parts(b)]
     bleed = [_radial_stud(b["lobe_th"] + 180.0, r0, r1, FITTING_S, 0.7 * rr, n) for r0, r1, rr, n in _fitting_parts(b)]
-    out += [(Mesh.merge(caps + fit + bleed), "metal"), (Mesh.merge(bolts), "steel")]
+    out += [(Mesh.merge(caps + fit + bleed), "brake_housing"), (Mesh.merge(bolts), "steel")]
     # disc stack: outer edges stepping rotor (keyed to the wheel) / stator / plates; bore along the torque tube
     st = brake_stack(asm)
     prof = [(st[0][1], r_in)]
@@ -1180,7 +1206,7 @@ def _main_local():
                             _rev_closed(rim_half(asm, 1), SEGS["rim_hidden"], 1)]), "wheel"))
     out += _fairing_meshes(asm)
     out.append((_tie_bolts(asm, 180.0 / rim["tie_n"]), "cadmium"))
-    out += _valve(clock_points(1, rim["valve_r"], rim["valve_th"])[0], rim["web_t"], rim["valve_s"], 1.0)
+    out += _valve(clock_points(1, rim["valve_r"], rim["valve_th"])[0], web_face(rim), rim["valve_s"], 1.0)
     out += _brake_meshes(asm)
     return out
 
@@ -1193,16 +1219,19 @@ def _nose_local():
     out.append((Mesh.merge([_rev_closed(rim_half(asm, -1), SEGS["nose_rim"], -1),
                             _rev_closed(rim_half(asm, 1), SEGS["nose_rim"], 1)]), "wheel"))
     out.append((_tie_bolts(asm, rim["tie_th"]), "cadmium"))
-    out += _valve(clock_points(1, rim["valve_r"], rim["valve_th"])[0], rim["web_t"], rim["valve_s"], 1.0)
-    # bearing seals at the hub ends (steel rings between the axle and the bore)
+    out += _valve(clock_points(1, rim["valve_r"], rim["valve_th"])[0], web_face(rim), rim["valve_s"], 1.0)
+    # chrome bearing cap / seal rings at the hub ends (NOSE_AXLE cap_r: between the axle and the white hub boss,
+    # 1.5 mm proud of the hub end -- the fork arm's inner face is 2 mm beyond it --, rounded outer edge)
     ax = asm["axle"]
+    c0, c1 = ax["cap_r"]
     rings = []
     for e in rim["hub_s"]:
         sg = 1.0 if e > 0 else -1.0
-        s_ = e - sg * 0.002
-        prof = np.array([[s_, ax["r"] + 0.0005], [s_, rim["hub_bore"]]])
-        rings.append(_rev([prof[::-1] if sg > 0 else prof], SEGS["small"] * 3))
-    out.append((Mesh.merge(rings), "steel"))
+        prof = np.vstack([[[e - sg * 0.004, c1]], [[e + sg * 0.0005, c1]],
+                          _arc((e + sg * 0.0005, c1 - 0.001), 0.001, 90.0, 90.0 - sg * 90.0, 4)[1:],
+                          [[e + sg * 0.0015, c0]], [[e - sg * 0.004, c0]]])
+        rings.append(_rev([prof if sg > 0 else prof[::-1]], SEGS["small"] * 2))
+    out.append((Mesh.merge(rings), "chrome"))
     return out
 
 

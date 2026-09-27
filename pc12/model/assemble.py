@@ -33,6 +33,11 @@ MATERIALS = {
     "deice_boot":    ((0.012, 0.012, 0.014), 0.0, 0.25),          # glossy black neoprene, one crisp highlight
     "metal":         ((0.62, 0.64, 0.66), 0.85, 0.35),
     "metal_dark":    ((0.25, 0.26, 0.27), 0.8, 0.45),
+    # main-wheel brake housing: bright satin cast aluminium (wheels review r1 F6: photo 3036 mx5 p90 ~195 in the sun
+    # against 155 rendered with 'metal', which mirrored the dark wheel well)
+    "brake_housing": ((0.70, 0.70, 0.69), 0.45, 0.42),
+    # dark phosphated steel: nose axle nuts, tear-drop lock plates, axle ends (photo 3036 nose-hub zoom)
+    "steel_dark":    ((0.085, 0.085, 0.09), 0.65, 0.45),
     "steel":         ((0.72, 0.73, 0.74), 0.9, 0.25),
     # yellow-chromate cadmium plating / brass: wheel tie-bolt heads and nuts, tyre valve stems (L4W; photo 3036 nose hub)
     "cadmium":       ((0.50, 0.40, 0.18), 0.85, 0.40),

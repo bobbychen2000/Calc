@@ -7,8 +7,8 @@
  4. dorsal fin, fin and rudder stay outside the fixed tail cone; the rudder at +/-25 deg clears the fin tip,
     the fixed cove and the tail-cone closure
  5. retracted gear: nose unit above the keel and inside the bay / pedestal tunnel; main tyres 20-30 mm below the
-    LOCAL wing lower skin (POH ~1 in; '[open]' for the 22 in tyre's ~19 mm: the tyre-size decision, wheels.py
-    MAIN_TYRE_CHOICE), nothing but the wheel below the skin (the hub fairing and rim inside the tyre's depth; the
+    LOCAL wing lower skin (POH ~1 in; the 8.50-10 Type III, owner decision 2026-09-26; '[open]' only for a trial build
+    of the superseded 22 in tyre, ~19 mm), nothing but the wheel below the skin (the hub fairing and rim inside the tyre's depth; the
     fairing, painted in the door colour, is told from the door by lying within the tyre radius of the axle),
     nothing above the upper skin; the stowed leg /
     strut above the closed leg door; the leg door flush with the skin (within 5 mm, decision LD-1 in model/gear.py);
@@ -19,7 +19,8 @@
  9. the airstair and cargo doors clear the wing-root fairing (fillet / nose) from closed to fully open
 10. main gear + side brace over 0-100 %: every vertex inside the wing box lies in the bay liner (bays.main_bay_sdf),
     no triangle crosses the wing skins, bay liner, ribs / spars, flaps, belly fairing or flap-track canoes; the leg door clears the leg
-    gear down; the stowed tyre is under the liner roof
+    gear down; the stowed tyre is under the liner roof; the bay liner itself crosses no wing skin (flap cove), flap,
+    spar / rib or fairing
 11. nose gear + drag brace vs the clamshell doors at every state the viewer sequence reaches (doors open with the gear
     down and in transit, closing only once locked up) and vs the flight deck / bay liners
 12. flaps 0-40 deg (flap-carried aft canoes included) clear the wing, the fixed canoes, the structure and the fairing
@@ -224,8 +225,8 @@ for side in ("R", "L"):
     low_wheel = float((zl_ - V_[:, 2])[kind == 1].max())                      # wheel halves, hub fairing, brake
     over = float((V_[:, 2] - zu_).max())
     ok_p = 0.020 <= proud <= 0.030
-    # the approved 22x8.50-10 with its drawn section (wheels.py) lies ~19 mm deep: a known conflict with the POH ~1 in
-    # that goes with the tyre-size decision (wheels.MAIN_TYRE_CHOICE; the proposed 8.50-10 Type III lies ~24 mm deep)
+    # the modelled 8.50-10 Type III (owner decision 2026-09-26) lies ~24 mm deep; the superseded 22x8.50-10 (trial build
+    # PC12_MAIN_TYRE=22x8.50-10) would lie ~19 mm deep, reported '[open]'
     open_p = (not ok_p) and (not WH.MAIN_IS_TRA) and 0.015 <= proud < 0.020
     report(f"main gear {side} retracted: tyre protrudes 20-30 mm below the local lower skin (POH ~1 in)",
            ok_p, f"{proud * 1000:.1f} mm ({WH.MAIN_TYRE_ENV['size']})" +
@@ -437,6 +438,17 @@ for side in ("R", "L"):
     roof = np.array([wing_z(p[0], p[1], True) for p in ty[::4]]) - G.MAIN_BAY_ROOF_GAP
     report(f"main gear {side} up: stowed tyre under the bay liner roof", bool((ty[::4, 2] < roof - 0.002).all()),
            f"min clearance {1000 * (roof - ty[::4, 2]).min():.0f} mm")
+# the bay liner (walls round the 8.50-10's well reach past the rear-spar line) clears the wing skins incl. the flap cove
+# (recessed over the well, wing.cove_well_recess), the flaps, spars / ribs and the fairings
+L_bay = posed_mesh("gear_bays", I4)
+bad = {}
+for pid in ("wing_R", "wing_L", "flap_R", "flap_L", "structure", "belly_fairing", "flap_fairings"):
+    P = crossings(*L_bay, *posed_mesh(pid, I4))
+    P = P[np.abs(P[:, 1]) > 0.95] if len(P) else P                 # (the nose bay / tunnel is checked in 11)
+    if len(P):
+        bad[pid] = len(P)
+report("main bay liners clear the wing skins (flap cove), flaps, spars / ribs and fairings", not bad,
+       "clear" if not bad else ", ".join(f"{k}: {v}" for k, v in bad.items()))
 
 # 11 ----------------------------------------------------------------------------------------------- nose gear / doors
 def door_M(did, v):
