@@ -1101,7 +1101,10 @@ def draw_detail_gear(ds):
     k = int(np.argmin(Pd[:, 1]))
     leader_label(ds, v, dd["x_aft_low"], 0.66, "LEG DOOR (OUTBOARD)", off=(20.0, 14.0), size=1.9,
                  lines=[f"STA {dd['x_fwd'] * 1000:.0f}-{dd['x_aft'] * 1000:.0f}, TIP {Pd[k, 0] * 1000:.0f} / WL "
-                        f"{Pd[k, 1] * 1000:.0f}", f"LOWER EDGE R {dd['arc_r'] * 1000:.0f}, STEPPED AFT EDGE"])
+                        f"{Pd[k, 1] * 1000:.0f} (DRAWN {dd['tip'][0] * 1000:.0f} / {dd['tip'][1] * 1000:.0f})",
+                        f"LOWER EDGE R {dd['arc_r'] * 1000:.0f}, STEPPED AFT EDGE",
+                        f"TIP R {G.LEG_DOOR_TIP_R * 1000:.0f}, STEP / TOP CORNERS R {G.LEG_DOOR_CORNER_R * 1000:.0f} "
+                        "(OWNER 2026-09-27):", "CLEARS THE SKIN CUT-OUT AT EVERY POSE"])
     a_ = math.radians(97.0)
     leader_label(ds, v, G.MAIN_AXLE[0] + dd["scallop_r"] * math.cos(a_), G.MAIN_AXLE[2] + dd["scallop_r"] * math.sin(a_),
                  f"TYRE SCALLOP R {dd['scallop_r'] * 1000:.0f} (LD-1)", off=(22.0, -5.0), size=1.7,
@@ -1251,7 +1254,8 @@ def deviation_rows(O, R):
     add2("Fairing nose / tail end STA (side)", "fair_nose", "fair_tail", "tail lobe on the fuselage side")
     add("Fairing root fillet BL, STA 6300 (plan)", "fair_plan_6.3", "upper fillet over the wing root")
     add("Leg door plane BL at WL 700 (front)", "door_bl_0.7", "LD-1 flush stow: door = wing skin retracted")
-    add("Leg door lowest WL (front)", "door_low", "= side-view tip WL 318 (the drawn views differ by 20)")
+    add("Leg door lowest WL (front)", "door_low", f"tip rounded R {G.LEG_DOOR_TIP_R * 1000:.0f} (owner 2026-09-27); "
+        f"drawn side-view tip WL {G.LEG_DOOR['tip'][1] * 1000:.0f}")
     o, r = O["door_side_tip"], (R or {}).get("door_side_tip")
     rows.append(("Leg door tip (side) STA / WL", f"{f_mm(o[0])} / {f_mm(o[1])}",
                  f"{dev(o[0], r[0])} / {dev(o[1], r[1])}" if r else "-", "-", "unit shifted -17.5 (wheelbase 3480)"))
@@ -1356,11 +1360,14 @@ def stage3_items():
         "slot over the leg's skin crossing; edge-on it stands at BL {4:.0f}-{5:.0f} (drawn plane 2358-2472, leaning "
         "out: not possible with a flush door). Hidden changes: trunnion {6:.0f} / WL {7:.0f} (drawn 5932 / 1070), "
         "retraction {8:.0f} deg, side-brace stations and split, brace B0 on a lug {9:.0f} inboard of the drawn BL 2250 "
-        "(the folded lower link clears the stowed leg), no forward slot.".format(
+        "(the folded lower link clears the stowed leg), no forward slot. Owner decision 2026-09-27: the pointed tip "
+        "rounded R {10:.0f} and the step / top corners R {11:.0f}, so the door clears the skin cut-out at every "
+        "retraction pose (fit_check: 90-100 % every 0.5 %).".format(
             -1000 * G.leg_door_retracted_drop()[1], -1000 * G.leg_door_retracted_drop()[0],
             1000 * G.main_tyre_protrusion(), 1000 * G.LEG_DOOR["scallop_r"],
             1000 * G.leg_door_front_line()[:, 0].min(), 1000 * G.leg_door_front_line()[:, 0].max(),
-            1000 * G.MAIN_TRUNNION[0], 1000 * G.MAIN_TRUNNION[2], G.MAIN_RETRACT_DEG, 1000 * G.MAIN_BRACE_LUG),
+            1000 * G.MAIN_TRUNNION[0], 1000 * G.MAIN_TRUNNION[2], G.MAIN_RETRACT_DEG, 1000 * G.MAIN_BRACE_LUG,
+            1000 * G.LEG_DOOR_TIP_R, 1000 * G.LEG_DOOR_CORNER_R),
         "Empennage: fin NACA 0018 down to WL 1760 (the ventral part below the tail cone is the drawn ventral fin); "
         "trim the rudder, tab and fin skins to the SLOPED rudder edges (E.rudder_bottom_z / rudder_top_z / "
         "rudder_outline; E.RUD_Z is now only the hinge-line WLs of those edges); "

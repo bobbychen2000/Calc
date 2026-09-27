@@ -106,11 +106,18 @@ def _steps():
          f"Track {G.TRACK * 1000:,.0f} mm, wheelbase "
          f"{G.WHEELBASE * 1000:,.0f} mm, prop clearance {PP.prop_clearance() * 1000:.0f} mm."),
         ("interior", "Flight deck & cabin",
-         "The PC-12 PRO flight deck has Garmin G3000 PRIME: three 14-inch touchscreens and two touch "
-         "controllers. The cabin shown is the six-seat executive layout in light grey leather, clear of the "
-         "airstair door, with baggage behind a net at the cargo door. Side-wall and headliner linings "
-         f"({F.CABIN_LINING * 1000:.0f} mm inside the skin, the 1.52 m cabin width) close the flight deck and the "
-         "cabin, with reveals round every window."),
+         "The PC-12 PRO flight deck has Garmin G3000 PRIME: three 14-inch touchscreens edge to edge under a stitched "
+         "glareshield with the GFC 700 on its eyebrow, two 7-inch touch controllers in the centre stack, PC-24-style "
+         "yokes and the power lever on a pedestal over the nose-wheel tunnel. The two IPECO-type crew seats (sheepskin "
+         f"covers, 4-point harnesses) sit on floor tracks at BL {interior.CREW_SEAT['bl'] * 1000:,.0f}, the design eye "
+         f"at WL {interior.design_eye()[2] * 1000:,.0f}. A walnut divider with a curtain opens into the cabin: the "
+         "six-seat executive layout (a club four and a staggered aft pair on surface-mounted tracks, POH occupant arms) "
+         "in light grey leather, side ledges with cup holders and stowed tables, a forward lavatory on the right, "
+         "drawer cabinets, a headliner with LED coves and reading lights, and a veneer header with a pleated curtain at "
+         "the baggage bay. Side-wall and headliner linings "
+         f"({interior.LINING['crown'] * 1000:.0f} mm inside the skin at the crown, "
+         f"{interior.LINING['side'] * 1000:.0f} mm at the sides: the 1.47 m high, 1.52 m wide cabin) close the flight "
+         "deck and the cabin, with reveals round every window and lined door wells."),
         ("details", "Systems & details",
          "The weather-radar pod at the right wing tip is standard; on the PRO its radome is enlarged for the "
          "12-inch GWX 8000 antenna. Also added: nav and strobe lights in the winglets, red beacons on the tail "
@@ -233,6 +240,24 @@ def construction():
     return C
 
 
+INTERIOR_BUDGET = dict(total=250_000, crew_seat=14_000, cabin_seat=12_000)   # triangles (Stage 3 brief)
+
+
+def cockpit_camera(side=-1):
+    """The viewer's cockpit camera (glTF axes, like the part extras): the L6 design eye of the left seat
+    (interior.design_eye: 50th-pct eye at the neutral SRP) looking straight ahead at its own BL, midway between the
+    glareshield lip (the grazing line over the nose) and the PFD centre, target 1.0 m out; model-axes copies too."""
+    e = interior.design_eye(side)
+    xl, zl = interior.glareshield_lip(float(e[1]))
+    pfd = interior.pdu_centre(side)
+    d = 0.5 * (np.array([xl, e[1], zl]) + np.array([pfd[0], e[1], pfd[2]])) - e
+    d /= np.linalg.norm(d)
+    t = e + 1.0 * d
+    return {"design_eye": [round(float(v), 4) for v in to_gl(e)], "target": [round(float(v), 4) for v in to_gl(t)],
+            "design_eye_model": [round(float(v), 4) for v in e], "target_model": [round(float(v), 4) for v in t],
+            "source": "interior.design_eye (sheet L6): STA / BL / WL of the 50th-pct eye at the neutral seat"}
+
+
 def verify(parts):
     ext = [p for k, p in parts.items() if p.step not in ("interior", "structure") and p.id not in ("firewall",)]
     V = np.vstack([m.V for p in ext for m, _ in p.meshes])
@@ -258,8 +283,9 @@ def verify(parts):
         ("Propeller ground clearance (blade down)", 0.32, PP.prop_hub()[2] - r * np.sqrt(1.0 - ax[2] ** 2), "eq"),
         ("Wheel track", 4.53, 2 * G.MAIN_AXLE[1], "eq"),
         ("Wheelbase", 3.48, G.MAIN_AXLE[0] - G.NOSE_AXLE[0], "eq"),
-        (f"Cabin floor width at WL {F.CABIN_FLOOR_WL * 1000:.0f} (OML - {F.CABIN_LINING * 1000:.0f} mm lining)",
-         1.30, F.cabin_floor_width(6.0), "min"),
+        (f"Cabin floor width at WL {F.CABIN_FLOOR_WL * 1000:.0f} "
+         f"(OML - {interior.LINING['side'] * 1000:.0f} mm lining)",
+         1.30, F.cabin_floor_width(6.0, lining=interior.LINING["side"]), "min"),
     ]
     out = []
     for name, target, got, kind in checks:
@@ -280,9 +306,7 @@ def build_parts():
     empennage.build(parts)
     powerplant.build(parts)
     gear.build(parts)
-    interior.build_flightdeck(parts)
-    interior.build_cabin(parts)
-    interior.build_lining(parts)
+    interior.build_interior(parts)      # flight deck, seats, cabin, lining (+ the headliner fittings on the lining)
     details.build(parts)
     livery.apply(parts)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}
@@ -295,8 +319,10 @@ def main():
     parts = build_parts()
     ids = list(parts.keys())
     checks = verify(parts)
+    cock = cockpit_camera()
     size, stats = write_glb(parts, str(__import__("pathlib").Path(__file__).resolve().parents[1]) + "/out/pc12.glb",
-                            meta={"model": "Pilatus PC-12 PRO", "units": "m", "datum": "STA 0 = 3.000 m fwd of firewall"})
+                            meta={"model": "Pilatus PC-12 PRO", "units": "m", "datum": "STA 0 = 3.000 m fwd of firewall",
+                                  "cockpit": cock})
     bom = []
     for k, p in parts.items():
         bom.append({"id": k, "name": p.name, "step": p.step, "group": p.group, "qty": p.qty,
@@ -311,6 +337,7 @@ def main():
                   "parts": len(parts)},
         "wing": {"semi_span": W.SEMI, "root_chord": W.C_ROOT, "tip_chord": W.C_TIP, "mac": W.MAC,
                  "lemac": W.LEMAC, "x_qc": W.X_QC},
+        "cockpit": cock,
     }
     with open(str(__import__("pathlib").Path(__file__).resolve().parents[1]) + "/out/pc12_meta.json", "w") as f:
         json.dump(meta, f, separators=(",", ":"))
@@ -320,6 +347,19 @@ def main():
         rel = ">=" if c["kind"] == "min" else "  "
         print(f"  {c['check']:52s} official {rel}{c['official']:7.3f}  model {c['model']:7.3f}  delta {dl}  "
               f"{'OK' if c['ok'] else 'FAIL'}")
+    # interior triangle budget (Stage 3 brief): whole interior <= 250k, crew seat <= 14k, cabin seat <= 12k
+    tot = 0
+    rows = []
+    for k, p in parts.items():
+        if p.step != "interior":
+            continue
+        n = p.tri_count()
+        tot += n
+        lim = INTERIOR_BUDGET.get("crew_seat" if k in ("seat_pilot", "seat_copilot") else
+                                  "cabin_seat" if k.startswith("seat_") else k)
+        rows.append(f"{k} {n:,}" + (f"/{lim // 1000}k{'' if n <= lim else ' OVER'}" if lim else ""))
+    lim = INTERIOR_BUDGET["total"]
+    print(f"  interior triangles {tot:,} (budget {lim:,}: {'OK' if tot <= lim else 'OVER'}): " + ", ".join(rows))
     # materials: livery palette <-> glTF table <-> the photo-fitted render/lookdev_materials.json
     from model.assemble import check_lookdev
     for what, bad in (("livery.PALETTE vs assemble.MATERIALS", livery.check_materials()),

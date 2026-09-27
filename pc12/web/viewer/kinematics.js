@@ -86,9 +86,43 @@ export class Kinematics {
       });
     }
 
+    // folding children of a door (pivot kind 'fold', e.g. the airstair handrails of model/airstair.py): they follow
+    // pivot.follows and unfold by pivot.open (rad) about their own axis over the door-travel window [w0, w1]
+    this.folds = [];
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || pv.kind !== 'fold' || !this.surf[pv.follows]) continue;
+      this.folds.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(), door: pv.follows,
+        w: pv.window || [0, 1], angle: 0 });
+    }
+
+    // crew controls (model/flightdeck.py control_pivots, review r2 M4): the yokes roll about their columns and slide
+    // fore / aft with the pitch command, the rudder pedals swing about their floor hinges with the yaw command
+    this.controls = [];
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || (pv.kind !== 'yoke' && pv.kind !== 'pedal')) continue;
+      this.controls.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(),
+        pull: pv.travel_pull ? modelToGl(pv.travel_pull) : null, push: pv.travel_push ? modelToGl(pv.travel_push) : null });
+    }
+
+    // club tables (model/cabin.py table_parts, review r3 F5): pivot kind 'table' on the outboard leaf (slides out of
+    // the ledge fascia by pivot.slide, model axes, over open 0 .. 0.5; built at open 0.5 = pivot.rest, the leaf out)
+    // and its child 'table_leaf' (the inboard leaf, built folded under it, unfolds by pivot.fold rad over 0.5 .. 1);
+    // the materials are clipped at the fascia plane (model.js), so a stowed table is inside the ledge, unseen
+    this.tables = [];
+    for (const rec of model.list) {
+      const pv = rec.ex.pivot;
+      if (!pv || pv.kind !== 'table') continue;
+      const lf = rec.children.find((c) => c.ex.pivot && c.ex.pivot.kind === 'table_leaf');
+      this.tables.push({ rec, pv, slide: modelToGl(pv.slide || [0, 0, 0]), rest: pv.rest != null ? pv.rest : 0.5,
+        leaf: lf || null, leafAxis: lf ? new THREE.Vector3().fromArray(lf.ex.pivot.axis).normalize() : null,
+        fold: lf ? lf.ex.pivot.fold : 0 });
+    }
+
     // commanded targets and current (smoothed) values
     this.t = { flaps: 0, rpm: 0, pitch: 0, roll: 0, pitchCmd: 0, yaw: 0, stabTrim: 0, ailTrim: 0, rudTrim: 0,
-      door_airstair: 0, door_cargo: 0 };
+      door_airstair: 0, door_cargo: 0, table: 0 };
     this.c = { ...this.t, propAngle: 0 };
     // gear: pos 0 = down .. 1 = up; door 0 = closed .. 1 = open (nose clamshells).  The nose doors hang open
     // whenever the gear is down or travelling and close only once it is locked up (photo s/n 3001); the GLB
@@ -178,6 +212,12 @@ export class Kinematics {
     if (instant) this.c[key] = this.t[key];
   }
 
+  // club tables: 0 stowed (TTL) .. 0.5 the outboard leaf out .. 1 deployed (inboard leaf unfolded)
+  setTable(v, instant) {
+    this.t.table = clamp(+v || 0, 0, 1);
+    if (instant) this.c.table = this.t.table;
+  }
+
   setProp({ rpm, pitch, angle } = {}, instant) {
     if (angle != null) this.c.propAngle = +angle;          // spin phase (radians), e.g. 0 for tests
     if (rpm != null) this.t.rpm = clamp(+rpm, 0, 1700);
@@ -242,6 +282,7 @@ export class Kinematics {
     approach('flaps', 11);                      // ~3.6 s for 0 -> 40 deg
     approach('door_airstair', 0.45);
     approach('door_cargo', 0.5);
+    approach('table', 0.5);
     approach('pitch', 35);
     lag('roll', 7, 1e-3); lag('pitchCmd', 7, 1e-3); lag('yaw', 7, 1e-3);
     approach('stabTrim', 1.2); approach('ailTrim', 6); approach('rudTrim', 6);
@@ -339,6 +380,16 @@ export class Kinematics {
         D.rudder_tab = td;
       }
     }
+    // yokes (right roll = clockwise as the pilot sees it = + about the forward-pointing column axis; pull = aft) and
+    // rudder pedals (right rudder: the right-foot pedals forward = - about +BL, gearing -1 for the left-foot ones)
+    for (const k of this.controls) {
+      if (k.pv.kind === 'yoke') {
+        k.rec.anim.quat.setFromAxisAngle(k.axis, c.roll * k.pv.roll_deg * DEG);
+        if (k.pull) k.rec.anim.pos.copy(c.pitchCmd >= 0 ? k.pull : k.push).multiplyScalar(Math.abs(c.pitchCmd));
+      } else {
+        k.rec.anim.quat.setFromAxisAngle(k.axis, -(k.pv.gearing || 0) * c.yaw * k.pv.travel_deg * DEG);
+      }
+    }
     // doors (open angle in radians), eased
     for (const id of ['door_airstair', 'door_cargo']) {
       const s = S[id];
@@ -346,6 +397,24 @@ export class Kinematics {
       const a = s.pv.open * smooth(c[id]);
       s.angle = a / DEG;
       s.rec.anim.quat.setFromAxisAngle(s.axis, a);
+    }
+    // club tables: slide over open 0 .. 0.5 (rest = built pose), the inboard leaf unfolds over 0.5 .. 1
+    for (const tb of this.tables) {
+      const o = c.table;
+      const fs = smooth(clamp(o / 0.5, 0, 1)), fsr = smooth(clamp(tb.rest / 0.5, 0, 1));
+      tb.rec.anim.pos.copy(tb.slide).multiplyScalar(fs - fsr);
+      if (tb.leaf) {
+        const ff = smooth(clamp((o - 0.5) / 0.5, 0, 1)), ffr = smooth(clamp((tb.rest - 0.5) / 0.5, 0, 1));
+        tb.leaf.anim.quat.setFromAxisAngle(tb.leafAxis, tb.fold * (ff - ffr));
+      }
+    }
+    // folding door children (airstair handrails): angle = open x clamp((door fraction - w0) / (w1 - w0)), the door
+    // fraction being the eased door angle / its open angle (model/airstair.py fold_fraction / posed)
+    for (const f of this.folds) {
+      const df = smooth(c[f.door] || 0);
+      const k = clamp((df - f.w[0]) / Math.max(f.w[1] - f.w[0], 1e-9), 0, 1);
+      f.angle = f.pv.open * k;
+      f.rec.anim.quat.setFromAxisAngle(f.axis, f.angle);
     }
     // gear (retract in degrees) and nose clamshell doors (open in degrees)
     const g = this.gear;

@@ -860,7 +860,10 @@ def deviation_rows(R, ref, ph, rd=None):
     rows.append(("D2 / D1 seam width ratio", f"{PC['hx'] / PA['hx']:.3f}", "0", f"{PC['hx'] / PA['hx'] - rd['d2_over_d1']:+.3f}"
                  if rok else "n/a", "", f"photo (NGX broadside, door openings) {ph['d2_over_d1']:.2f}"))
     rows.append(("Open angle D1 / D2 (deg)", f"{A['open_deg']:.0f} / {C['open_deg']:.0f}", "", "",
-                 f"{A['open_deg'] - 128:+.0f} / {C['open_deg'] - 100:+.0f}", "D1: free edge ~5 cm off the ground (contact ~164, section C-C); D2: render, door open (~120)"))
+                 f"{A['open_deg'] - 128:+.0f} / {C['open_deg'] - 100:+.0f}",
+                 f"D1: MSN 3008 photos 130 / 188, fitted cameras: free edge on the 145 line (was 160), "
+                 f"{FP.door_free_edge(FP.AIRSTAIR)[1] * 1000:.0f} off the ground (section C-C); D2: render, door open "
+                 "(~120)"))
     return rows
 
 
@@ -900,7 +903,8 @@ def stage3_items():
         "openings_field(), "
         "build_skin() door_edges, build_door() and build_doors() still use the clear openings only.",
         "Door kinematics: build_doors() passes open_angle 128 / 100 literally -- read AIRSTAIR['open_deg'] "
-        f"{FP.AIRSTAIR['open_deg']:.0f} (free edge ~5 cm off the ground, section C-C) and CARGO['open_deg'] "
+        f"{FP.AIRSTAIR['open_deg']:.0f} (photos 130 / 188: free edge {FP.door_free_edge(FP.AIRSTAIR)[1] * 1000:.0f} "
+        "off the ground, section C-C) and CARGO['open_deg'] "
         f"{FP.CARGO['open_deg']:.0f}, the hinge WLs from hinge_line() "
         f"({FP.hinge_line(FP.AIRSTAIR)[2] * 1000:.0f} / {FP.hinge_line(FP.CARGO)[2] * 1000:.0f}, on the panel); "
         "airstair steps / handrails and the cargo-door struts move with the doors; the airstair door has NO window.",

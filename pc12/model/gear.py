@@ -156,7 +156,16 @@ LEG_DOOR = dict(x_fwd=5.950 - GEAR_SHIFT, x_fwd_low=5.969 - GEAR_SHIFT, z_fwd_lo
 LEG_DOOR_T = 0.012                  # door plate thickness (inboard of the outer face)
 LEG_DOOR_RECESS = 0.001             # retracted, the door's outer face lies this far inside the wing lower surface
 LEG_DOOR_OUTER_MAT = "paint_belly"   # builder tag of the leg door's outer face (recoloured by livery.SURFACES)
-LEG_DOOR_CORNER_R = 0.020           # radius of the door's aft top corner (leg_door_face)
+LEG_DOOR_CORNER_R = 0.020           # radius of the door's aft top corner and of the step's aft corner (leg_door_face)
+# Owner decision 2026-09-27 (leg-door tip rounding): the drawn pointed tip (chamfer -> 15 mm flat -> lower-edge arc) is
+# one round of this radius, tangent to the forward chamfer and the lower-edge arc (leg_door_face), and the step's aft
+# corner (x_aft, z_step[1]) gets LEG_DOOR_CORNER_R.  Sharp, they nicked the wing skin beside the cut-out by 2.8 / 1.3 mm
+# at 96-99.5 % retraction (the marching-triangles cut chords a sharp slot corner; the 10 % sweep samples missed it);
+# rounded, the slot corners follow them (bays.main_opening_sdf = the stowed face + DOOR_GAP) and fit_check 10 sweeps
+# 90-100 % every 0.5 %: 0 crossings (the tip still nicked 0.2 mm at R 10, clear from R 15; the step corner 0.3 mm at
+# R 10, clear from R 15).  The lowest point rises from the drawn WL 318 to 325; the drawn outline (leg_door_outline,
+# the phantom on L4 detail B) is unchanged, the tyre scallop is not touched.
+LEG_DOOR_TIP_R = 0.020
 LEG_DOOR_BRACKET_MAT = "metal_dark"  # the door's two standoff brackets from the leg (the door assembly)
 
 
@@ -284,7 +293,8 @@ def leg_door_face(visible=False, n_arc=24, n_sc=28):
     A, rs = MAIN_AXLE[[0, 2]], d["scallop_r"]
     (cx, cz), r = d["arc_c"], d["arc_r"]
     Pi, Pj = _scallop_hits()
-    xa = np.linspace(d["arc_x0"], Pi[0], n_arc)
+    tipf = _tip_fillet(LEG_DOOR_TIP_R)                   # the rounded tip (owner decision 2026-09-27)
+    xa = np.linspace(tipf[-1, 0], Pi[0], n_arc)[1:]
     arc = np.c_[xa, cz + np.sqrt(np.maximum(r * r - (xa - cx) ** 2, 0.0))]
     ai = np.arctan2(Pi[1] - A[1], Pi[0] - A[0])
     aj = np.arctan2(Pj[1] - A[1], Pj[0] - A[0])
@@ -295,8 +305,13 @@ def leg_door_face(visible=False, n_arc=24, n_sc=28):
     top = np.c_[xs, _door_top_z(xs)]
     # aft top corner rounded (R LEG_DOOR_CORNER_R): the corner nearest the retraction axis swings into the skin
     # cut-out at ~45 deg, where a square corner would clip the cut-out's (mesh-chamfered) corner
-    fil = _fillet(np.array([d["x_aft"], d["z_step"][1]]), top[0], top[1], LEG_DOOR_CORNER_R)
+    step_hi = np.array([d["x_aft"], d["z_step"][1]])
+    fil = _fillet(step_hi, top[0], top[1], LEG_DOOR_CORNER_R)
     top = np.vstack([fil, top[1:]])
+    # the step's aft corner rounded too (R LEG_DOOR_CORNER_R, owner decision 2026-09-27): sharp, it nicked the cut-out
+    # by 1.3 mm at 96-98.5 % retraction
+    step_lo = np.array([d["x_aft_low"], d["z_step"][0]])
+    stepc = _fillet(step_lo, step_hi, fil[0], LEG_DOOR_CORNER_R)
     if visible:
         xw = np.linspace(x_tab, float(_door_fwd_x(1.09)), 8)
         zw = _door_wing_line(xw)
@@ -306,8 +321,34 @@ def leg_door_face(visible=False, n_arc=24, n_sc=28):
         tab = np.c_[xw, zw]
     else:
         tab = np.array([[x_tab, z_tab], [float(_door_fwd_x(z_tab)), z_tab]])
-    return np.vstack([[[d["x_fwd_low"], d["z_fwd_low"]], list(d["tip"])], arc, sc,
-                      [[d["x_aft_low"], d["z_step"][0]], [d["x_aft"], d["z_step"][1]]], top, tab])
+    return np.vstack([[[d["x_fwd_low"], d["z_fwd_low"]]], tipf, arc, sc, [step_lo], stepc, top, tab])
+
+
+def _tip_fillet(R, n=9):
+    """Points (n, 2) of the rounded door tip: a circle of radius R tangent to the forward chamfer (fwd-low corner ->
+    drawn tip) and externally to the concave lower-edge arc (LEG_DOOR arc_c / arc_r; the door lies outside that
+    circle), from the chamfer tangent point to the arc tangent point.  It replaces the drawn pointed tip and the 15 mm
+    flat after it (owner decision 2026-09-27)."""
+    d = LEG_DOOR
+    A0, B0 = np.array([d["x_fwd_low"], d["z_fwd_low"]]), np.array(d["tip"], float)
+    C, rc = np.array(d["arc_c"], float), d["arc_r"]
+    u = (B0 - A0) / np.linalg.norm(B0 - A0)
+    nl = np.array([-u[1], u[0]])                          # left of the counter-clockwise outline = inside the door
+    # centre O = A0 + s u + R nl with |O - C| = rc + R: s^2 + 2 s (w.u) + |w|^2 - (rc + R)^2 = 0, w = A0 + R nl - C
+    w = A0 + R * nl - C
+    bq, cq = float(w @ u), float(w @ w - (rc + R) ** 2)
+    disc = bq * bq - cq
+    if disc <= 0.0:
+        raise ValueError("leg-door tip fillet: no circle tangent to the chamfer and the lower edge")
+    s = min((-bq - np.sqrt(disc), -bq + np.sqrt(disc)), key=lambda t: abs(t - np.linalg.norm(B0 - A0)))
+    if not 0.0 < s < np.linalg.norm(B0 - A0) + 0.05:
+        raise ValueError("leg-door tip fillet: tangent point off the chamfer")
+    O = A0 + s * u + R * nl
+    T1, T2 = A0 + s * u, C + (O - C) * rc / (rc + R)
+    a1, a2 = np.arctan2(*(T1 - O)[::-1]), np.arctan2(*(T2 - O)[::-1])
+    a2 = a1 + (a2 - a1) % (2.0 * np.pi)                   # counter-clockwise about O (a convex corner)
+    ang = np.linspace(a1, a2, n)
+    return np.c_[O[0] + R * np.cos(ang), O[1] + R * np.sin(ang)]
 
 
 def _fillet(a, c, b, r, n=7):

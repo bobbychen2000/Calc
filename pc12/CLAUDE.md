@@ -3,9 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (71 parts, ~750k tris, hinge pivots in node
-extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
-`out/drawings/L1..L5` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`),
+engineering-drawing generator. Output: `out/pc12.glb` (96 parts, ~1.43M tris of which the interior ~229k, ~20 MB;
+hinge pivots in node extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
+`out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
+exterior -- lines plan, glazing, openings, general arrangement, livery --, L6 / L6B the interior arrangement and its
+checks),
 `out/pc12_ga.svg|pdf` (legacy A1 GA, hidden-line from the mesh) and `out/pc12_sections.svg|pdf` (A2 sections).
 
 ## Commands
@@ -15,18 +17,33 @@ python3 model/build.py          # build all parts -> out/pc12.glb + out/pc12_met
 python3 test/fit_check.py       # interference / kinematics checks (interior + engine in the skin, spinner at the cowl,
                                 #   carry-through under the floor, tail / rudder clearances, retracted gear, brace knees,
                                 #   exact triangle-crossing sweeps (test/isect.py): main gear + brace in the bay liner,
-                                #   nose gear vs doors / flight deck, flaps + canoes, rudder); '[open]' rows are known
-                                #   conflicts in the approved parameters that need an owner decision (they do not fail)
-python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L5
-python3 -m drawing.master       # the Stage-2 drawing set L1-L5 from the parameter modules (~2.5 min)
+                                #   nose gear vs doors / flight deck, flaps + canoes, rudder; interior 17-21: seats
+                                #   inside the lining / on the floor / on their tracks, 95th-pct knees vs the yokes,
+                                #   furniture clear of windows / door + exit openings, door swings vs the interior,
+                                #   the frames, skins and belly fairing (door travel every 0.02 and every 0.005
+                                #   inside each handrail's unfold window); 22 every interior piece seated (within
+                                #   3 mm of, or crossing, another surface), 22b lining fittings >= 0.5 mm proud of
+                                #   the lining, 22c curtain vs crew tracks; 23 closed interior shells wound outward,
+                                #   vertex normals with the face winding; 24 crew harness on the fleece, 25 armrests
+                                #   vs the pedestal over the seat travel, 26 no coplanar overlaps of different
+                                #   materials; the main-gear leg door vs the skin cut-out every 0.5 % over 90-100 %);
+                                #   '[open]' rows are known conflicts in the approved parameters that need an owner
+                                #   decision (they do not fail)
+python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
+python3 -m drawing.master       # the Stage-2 drawing set L1-L6B from the parameter modules (~2.5 min;
+                                #   `python3 -m drawing.master L6 L6B` for the interior sheets only)
 python3 -m drawing.sheet        # hidden-line drawings (~30 s) -> out/pc12_ga.*, out/pc12_sections.*
 python3 -m drawing.verify       # measures the SVG itself against the dimensions
 # dev viewer (three.js r160 expected at web/three_local -> a checkout of mrdoob/three.js tag r160):
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, slow on a loaded machine)
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~8 min; slower on a
+                                #   loaded machine -- rerun once on a screenshot timeout)
 python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLB, vendored three.js, verify step
+python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
+                                # interior renders (Blender / Cycles; cameras of the photo presets fitted in
+                                #   refs/cache/overlays/vqa/cams_beauty.json, compare sheets land there too)
 ```
 
 ## Method (owner's directive: drawings first, then 3D, then rendering)
@@ -57,7 +74,17 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   `pitch` (blades: feather/reverse deg), `flap` (Fowler: rotate + `travel`), `aileron`, `elevator`,
   `rudder`, `trim` (stabiliser), `tab` (`gearing` × parent deflection), `door` (`open` rad),
   `gear` (`retract` deg), `gear_door` (`open` deg = closed -> open, `rest` = the door fraction the geometry is
-  built at), `brace` (two-link over-centre strut: upper link rotates about A, lower link about knee K0; solve the knee
+  built at), `fold` (door children -- the airstair handrails `door_airstair_rail*` / `_cable`: rotate by
+  `open` x clamp((door fraction - window[0]) / (window[1] - window[0])) about their own axis, `follows` the door),
+  `yoke` (`yoke_L` / `yoke_R`, children of `flight_deck`: roll = roll command x `roll_deg` about the forward-pointing
+  column axis, + `travel_pull` / `travel_push` (MODEL axes) x |pitch command|), `pedal` (`pedal_LL/LR/RL/RR`: about the
+  floor hinge by -`gearing` x yaw command x `travel_deg`; `flightdeck.control_pivots`),
+  `table` (club tables `table_club_p` / `table_club_s`, children of `cabin_interior`: open 0 = stowed -- slid
+  outboard by `slide` (MODEL axes) into the ledge, the viewer clips it at the fascia plane |BL| = `fascia_bl` --,
+  `rest` 0.5 = the outboard leaf out (the built pose), 1 = deployed; translation = `slide` x (s(min(1, open / 0.5)) -
+  s(rest / 0.5)), s the smoothstep), `table_leaf` (`table_club_*_leaf`, child of its table: the inboard leaf, built
+  folded under it, unfolds by `fold` rad about its own axis over open 0.5 .. 1; `model/cabin.py` table_parts),
+  `brace` (two-link over-centre strut: upper link rotates about A, lower link about knee K0; solve the knee
   with `model/brace.py:solve_knee`, the leg attach point B0 moves with the parent `gear` node). Geometry is built
   gear-down, cabin doors closed; the nose-gear clamshells are built OPEN (`rest` 1: they hang open beside the leg
   whenever the gear is down or travelling and close only once it is locked up, photo s/n 3001), so a node's rotation
@@ -82,9 +109,25 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   tailplane horn balances split off the fixed tips along the drawn horn gap and carried by the elevators),
   `powerplant.py` (PT6E-67XP modules + Hartzell 5-blade prop, chin inlet cut into the OML keel step, scarfed
   stacks), `gear.py` (+ `bays.py`, `brace.py`; nose retracts 105° into a tunnel under the pedestal, unequal-link
-  braces), `interior.py` (flight deck, cabin on CABIN_FLOOR_WL, frames at the Pilatus frame stations; side-wall /
-  headliner lining `interior_lining` 40 mm inside the OML with window reveals, so the glazing never shows the
-  single-sided skins' back faces),
+  braces), `interior.py` (the approved source-tagged interior tables that sheets L6 / L6B draw --
+  `drawing/interior_sheet.py` / `interior_checks.py` -- and `build()`: the Stage-3 meshes built from exactly those
+  tables by `flightdeck.py` (part `flight_deck`: G3000 PRIME panel, glareshield, PC-24-style yokes, pedals, pedestal on
+  the nose-tunnel plinth, consoles, overhead, walnut divider + curtain; extras 'design eye' = `interior.design_eye`),
+  `seats.py` (IPECO 3A318-type crew seats `seat_pilot` / `seat_copilot` on their tracks, PRO executive seats
+  `seat_pax1..6` at `seat_map()`), `cabin.py` (part `cabin_interior`: floor + AI Orange runner, surface tracks, ledges,
+  stowed tables, forward RH lavatory, drawer cabinets, FR34 veneer header + curtain; the port ledge segment rides on
+  `door_cargo`; the headliner fittings -- LED coves, PSUs -- and the flight-deck overhead panel hang on
+  `interior_lining`, so the viewer's cutaway clips them with the lining: `interior.build_interior`) and
+  `airstair.py` (the airstair door's inner body, treads, stanchions and the folding handrail children; the door opens
+  145 deg -- its free edge on the 145 deg line in MSN 3008 photos 130 / 188 through the fitted cameras --, free edge
+  ~0.29 m off the ground, 3 treads + the bottom step at the free edge in equal risers from the sill); the flight deck's
+  side consoles `fd_consoles` and walnut divider `fd_divider`, the yokes and pedals are child parts of `flight_deck`;
+  the cabin floor + runner + tracks `cabin_floor` and the club tables are children of `cabin_interior`; side-wall /
+  headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
+  `interior.lining_offset` -- with window reveals and lined door wells; frames at the Pilatus frame stations;
+  interior triangles are budgeted in `build.INTERIOR_BUDGET` (250k, crew seat 14k, cabin seat 12k) and printed by
+  the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
+  eye),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
   fillet with a round-over crest (`ROOT_FILLET_ROUND`) running into the wing LE, the fillet law starts from the visible
@@ -99,7 +142,7 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   photos 82 / 130 / 188), `assemble.py` (MATERIALS = the photo-fitted MSN 3008 glTF values
   of `render/lookdev_materials.json`, clear coat / specular as KHR extensions; `check_lookdev()` and
   `livery.check_materials()` are printed by the build), `build.py` (steps + verification),
-  `drawing/` (Stage-2 sheets L1-L5 via `drawing.master`; legacy HLR GA via `drawing.sheet`).
+  `drawing/` (Stage-2 sheets L1-L6B via `drawing.master`; legacy HLR GA via `drawing.sheet`).
 
 ## Sourced facts (keep these fixed)
 Pilatus PC-12 PRO/NGX facts: span 16.28, length 14.40, height 4.26, wing area 25.81 m², tail span 5.20,
@@ -125,12 +168,62 @@ incidence/washout, airfoil ordinates, engine module proportions inside the TCDS 
 nose-gear stowage tunnel and brace link split, livery details (camera-matched photos).
 
 ## Status / next steps
-- Stage 1-2 done: reference drawings registered, drawing set L1-L5 approved (3 review rounds).
-- Stage 3 (3-D build from the approved parameters): `model/build.py` consumes the Stage-2 parameters end to end;
-  `test/fit_check.py`, `test/viewer_test.py`, `drawing.sheet/verify` and `drawing.master` pass. Known open items
-  (not modelled / needing an owner decision): the drawn fairing tail lobe aft of the cargo-door seam (STA 7540-8585,
-  it overlaps the D2 panel; the root fillet fades out ahead of the seam instead); cargo-door gas struts; dihedral:
-  decision D4 quotes 6.15 deg, the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
+- Stage 1-2 done: reference drawings registered, drawing set L1-L5 approved (3 review rounds); interior sheets
+  L6 (arrangement) / L6B (checks) approved, drawn from the source-tagged tables in `model/interior.py`, with the
+  default open points (owner): the 95th-percentile knee against the yoke at ~18 deg roll accepted, 5th-95th percentile
+  male accommodation, crew seat reference point STA 4.20, surface-mounted seat tracks.
+- Owner decisions: quality bar 7.5 for the visual reviews (owner 2026-09-26; the Stage-4 exterior VQA rounds 1-3 were
+  judged 8 / 8 / 7.5); the drawn fairing tail lobe aft of the cargo-door seam is left un-modelled; no cargo-door gas
+  struts; the main-gear leg door's pointed tip is rounded (see LD-1 below); markings: none (below).
+- Stage 3 (3-D build from the approved parameters): `model/build.py` consumes the Stage-2 parameters end to end,
+  the interior included (L6 / L6B tables -> flightdeck / seats / cabin / airstair; two tables were corrected in
+  Stage 3 and L6 / L6B regenerated: LAVATORY aft wall 5.228 -> 5.195 and the cabinets 0.75 -> 0.72 high, clear of RH
+  cabin window 1; the crew tracks lengthened by the fore / aft travel);
+  `test/fit_check.py`, `test/viewer_test.py`, `drawing.sheet/verify` and `drawing.master` pass. Not modelled (owner
+  decisions): the drawn fairing tail lobe aft of the cargo-door seam (STA 7540-8585, it overlaps the D2 panel; the root
+  fillet fades out ahead of the seam instead) and the cargo-door gas struts.  Dihedral: decision D4 quotes 6.15 deg,
+  the approved L4 / wing.py value (rev B airfoils) is 6.23 deg, which the model uses.
+- Interior open items (Stage 3): crew-seat finish -- s/n 3001 cream leather + anthracite shell (`seats.CREW_FINISH`
+  'pro3001', default) or the MSN 3008 grey ('light'), owner's choice; `interior.exec_seat` record 'rear' is 40 mm aft
+  of the drawn back profile (checks built on it are conservative); at full forward + down travel the crew back shell's
+  lower inboard corner comes within 14 mm of the nose-tunnel plinth (the L6B 15 mm criterion covers cushion / pan
+  only); the cabin tracks run under the RH lavatory and the
+  cabinets as L6 draws them; armrests / recline / headrest / travel are baked into the seat meshes (no viewer pivot;
+  the yokes, rudder pedals and club tables do have pivots).
+- Interior review r1 (fidelity / craft / mechanics): tables changed and L6 / L6B regenerated -- DIVIDER curtain (flare
+  top 0.85 [M: P1046406], 25 mm of the bundle tucked behind the walnut edge, an 18 mm gathered band above it) and
+  LEDGES door_segment 7.575-8.905 (inside the cargo clear opening) + door_foot 0.075 (clear of the sill jamb); the door
+  frames have no stop / jamb along the hinge edges (the doors' inner skins swing through there), a tan outer jamb band
+  (49-75 mm) and lining inboard of it, the cargo door an inner lining panel (75 mm, like the airstair), the door-well
+  reveals end on the seam at the stop depth; the lining runs flush over the exit hatch (standard window reveal); the
+  upper handrail unfolds the long way round (outboard of the skin); sculpted PC-24 yoke (domed white shield, recessed
+  silver insert), thick wrapped sheepskin (fleece bump in Blender, KHR_materials_sheen in the GLB), V-seamed exec seat
+  backs; panel_faceon uses the refitted camera 'panel_408b' (between the seat backs, as the photo); interior renders
+  gain the world only for primary rays through the (transparent) glazing, and lookdev's thin glass uses a two-sided
+  Schlick Fresnel (the Fresnel node made every obliquely seen cabin window a totally reflecting mirror).
+- Interior review r2: tables changed, L6 / L6B regenerated (rev D) -- CREW_SEAT sheepskin_t 34 [M] (the fleece's
+  crowned outer face IS the drawn cushion top / back front; the leather and shell lie inside it: the cover had stood
+  +14 / +32 mm proud of the outline the manikin checks sit on), YOKE grip r 15.5 x 140 (slim paddles, P1046408), the
+  crew tracks end 15 mm past the rear foot (11 mm clear of the stowed curtain, L6B 'curtain_track').  Builders: two
+  puffy thigh sleeves + tuft waves, full 4-point harness (lap halves, crotch strap), exec back V seams to the shoulders
+  over a flush lumbar trapezoid, lap belt across the cushion; white yoke shield out to the grip roots (no black bar);
+  warm titanium `panel_grey` on the PDU face; silver PSU pods, flush O2 doors / PULL cover with a proud dark gap all
+  round, downlight bezels on the soffit normal, soffit step 18 mm; thin grey airstair treads on open brackets, grey
+  inner flange; airstair top / fwd jambs lining; yokes / pedals are viewer parts with pivots; the cutaway clips the
+  cabin furniture and the divider / consoles (`web/viewer/model.js` CUT_MATERIALS); hangar_port34 opens the cargo door.
+- Interior review r3: L6 / L6B rev E -- executive-seat legrests (forward-facing seats), the PC-24 yoke face (white
+  shield, black body, swollen grip heads), the PCL paddle, the arm-vs-pedestal criterion (L6B, 15 mm); crew lap belts
+  draped over the fleece (fit_check 24), armrests vs the pedestal over the travel (25), no coplanar overlaps of
+  different materials (26); `fd_consoles`, `fd_divider`, `cabin_floor` and the club tables are own parts, so the
+  viewer's cutaway clips the divider, consoles, cabin furniture and tables whole while the floors, panel, seats and
+  controls stay; club tables movable (pivots 'table' / 'table_leaf', viewer toggle; cockpit_fwd / cabin_club pose the
+  port leaf out).
+- Airstair open angle (2026-09-27): 145 deg, not 160 -- the open door's outline and free edge lie on the 145 deg line
+  in both MSN 3008 photos 130 / 188 through their fitted cameras (livery/cams.json port_hangar_130, vqa/cams_beauty.json
+  nose_188); the treads were re-laid horizontal at 145 (bottom step at the free edge, equal risers from the sill), the
+  lower handrail's stanchion re-measured on the same photos (a short clevis post at open WL 0.70), the cable clamp kept
+  on the same place on the door; the knee and the jamb fittings are fuselage / world points (unchanged).  fit_check 9 /
+  21 re-run: the door + handrails clear the fairing and the interior over the whole swing; L3 notes the angle.
 - Main-gear leg door, decision LD-1 (owner-delegated, resolved; model/gear.py comment block): the door is the wing
   lower skin carried down by the leg (`gear.leg_door_offset`), so retracted it closes flush (1 mm recess, 3 mm panel
   gap, `bays.DOOR_GAP`) and the tyre protrudes 26 mm in its own round well (`bays.well_sdf`); drawn side-view face
@@ -140,10 +233,21 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   the ~7 deg skin), side-brace stations 6040 / 6038, L1 split 0.19, B0 on a lug 80 mm inboard of the leg (`gear.MAIN_BRACE_LUG`) and the links offset along the knee pin (`MAIN_BRACE_CLEVIS`) so they clear the stowed leg, no forward slot; liner-only pockets
   (`bays.TRUNNION_POCKET`, `BRACE_POCKET`), a black seal band on the lowest 60 mm of the main-bay liner, and a finer
   wing lower skin over the bay (wing.py sub-panel) so the cut-out corners are cut within a few mm. fit_check 5 / 10
-  test flushness, protrusion (20-30 mm), the closed cut-out and every pose of the swing.
+  test flushness, protrusion (20-30 mm), the closed cut-out and every pose of the swing.  Owner decision 2026-09-27:
+  the drawn pointed tip is one round R 20 (`gear.LEG_DOOR_TIP_R`, tangent to the chamfer and the lower-edge arc) and
+  the step's aft corner R 20 (`LEG_DOOR_CORNER_R`, like the aft top corner): sharp, they nicked the skin beside the
+  cut-out by 2.8 / 1.3 mm at 96-99.5 % retraction (between the 10 % samples); fit_check 10 now sweeps the door against
+  the skin every 0.5 % over 90-100 % (0 crossings).  The lowest point rises from the drawn WL 318 to 325 (call-out on
+  L4 detail B; the drawn face stays the phantom); the tyre scallop is untouched (the wheels branch re-fits it).
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
   the photo-matched materials / environments of `render/lookdev.py` right after its own material setup;
-  `render/blender_ortho.py` for calibrated views) and the three.js viewer (`web/`, three.js r160 in `web/three_local`;
-  `web/viewer/materials.json` must stay a copy of `render/lookdev_materials.json`: `viewer/materials.js` turns it into
-  MeshPhysicalMaterial by name, replacing the GLB's KHR clear-coat materials, and keeps the GLB values for the rest).
+  `render/blender_ortho.py` for calibrated views; interior presets `cockpit_fwd` / `panel_faceon` (photo-fitted to
+  PRO s/n 3001 P1046406 / P1046408), `cabin_aft_fwd`, `cabin_club`: env 'interior' = daylight through the glazing
+  (INTERIOR_DAYLIGHT; the view through the glass gained by INTERIOR_WINDOW_VIEW for primary rays only) +
+  INTERIOR_LIGHTS + the emissive displays / LED coves; every interior material is in assemble.MATERIALS
+  (+ EMISSIVE) and render/lookdev.py SPEC, `python3 render/lookdev.py --json` regenerates lookdev_materials.json) and
+  the three.js viewer (`web/`, three.js r160 in `web/three_local`; `web/viewer/materials.json` must stay a copy of
+  `render/lookdev_materials.json`: `viewer/materials.js` turns it into MeshPhysicalMaterial by name -- emissive and the
+  GLB's sheen carried over --, replacing the GLB's KHR clear-coat materials, and keeps the GLB values for the rest;
+  every part of the GLB group 'Interior' gets the cabin light).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).

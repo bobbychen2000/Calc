@@ -14,7 +14,7 @@ Layout of the bundle (everything the page loads, nothing else):
     viewer/*.js, viewer.css, materials.json
     assets/             studio HDRI, 1k and a 512 px copy for phones (CC0, see assets/SOURCES.md)
     data/pc12.glb       EXT_meshopt_compression (gltf-transform meshopt, lossless on the already quantised data:
-                        16-bit positions / 8-bit normals as in out/pc12.glb; ~12.9 -> ~4.4 MB at ~957k triangles);
+                        16-bit positions / 8-bit normals as in out/pc12.glb; ~19.1 -> ~6.4 MB at ~1.43M triangles);
                         --no-meshopt ships out/pc12.glb as it is
     data/pc12_meta.json stats.glb_bytes / glb_encoding rewritten for the packaged GLB (the progress bar's fallback
                         total under gzip / brotli transfer encoding)

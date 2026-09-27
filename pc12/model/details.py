@@ -44,7 +44,9 @@ BELLY_FAIRING_HW = [(5.153, 0.060), (5.200, 0.420), (5.300, 0.690), (5.450, 0.86
 # at the corner, the 3-D edge up to 83 mm under the drawn one).  The edge is redrawn clear of that wedge: it stays
 # under WL ~1.185 to the door edge + ROOT_FILLET_DOOR_CLEAR (the wedge limit meets the fuselage side at WL ~1.19
 # there) and rejoins the drawn line at STA 5406 -- up to 73 mm under the Pilatus line over STA 5.22-5.40
-# (rev: (5.205, 1.162), (5.251, 1.213), (5.323, 1.288)).
+# (rev: (5.205, 1.162), (5.251, 1.213), (5.323, 1.288)).  The airstair has opened 145 deg since 2026-09-27 (photos
+# 130 / 188): the swept wedge ends 35 deg outboard of the vertical, so the redrawn edge keeps clear with more margin
+# (the builder's door limit, _airstair_sweep, moves the surface by <= 1.5 mm).
 # VQA r3 (SHP3-01): the redrawn edge climbed 128 mm in 61 mm of STA ((5.345, 1.232) -> (5.406, 1.360), ~64 deg) from a
 # knee at the door limit -- the fairing nose's upper part stood up as a steep face with a crease on that climb.  It now
 # leaves the door limit gradually (max ~59 deg, no knee) and rejoins the drawn line at STA 5509; up to 30 mm under the

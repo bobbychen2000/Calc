@@ -51,6 +51,14 @@ Presets (reference photos in refs/cache/photos/, cameras in refs/cache/overlays/
   hero               low 3/4 front studio shot (no photo): charcoal cyclorama square to the camera,
                      glossy floor, car-studio softboxes; the camera re-aims and sets f from the posed
                      mesh (fills 90 % of the width), so the framing follows model changes.
+  cockpit_fwd        (interior) from the club aisle forward through the divider to the flight deck, PRO s/n 3001
+                     photo P1046406 (refs/cache/photos/interior); camera fitted here ('cabin_fwd_406', rms ~17 px).
+  panel_faceon       (interior) the G3000 PRIME panel face-on from the divider opening (P1046408; 'panel_408').
+  cabin_aft_fwd      (interior) from the baggage bay (the FR34 curtain drawn back: hidden) forward along the aisle.
+  cabin_club         (interior) 3/4 over the club four from the aisle behind PAX 4.
+                     Interior env: daylight through the glazing (airfield HDRI), INTERIOR_LIGHTS under the headliner
+                     and the emissive coves / reading lights / displays; hide_meshes hides single primitives
+                     (part prefix, material).
 A solved camera missing from the cache falls back to the preset's rough look-at camera.
 
 Cameras: pinhole fits in the livery-agent format (p = rotation vector (3), t (3), f; X_cam = R X + t,
@@ -67,6 +75,7 @@ refs/cache/hdri/<id>_<res>.hdr by ensure_hdri() (source URLs appended to refs/ca
   qwantani_sunset_puresky               low sun: wing from the cockpit (sky dimmed, + sun lamp)
   kloofendal_overcast_puresky           soft overcast: top view over the runway
   studio_small_09                       softbox studio: hero reflections (low strength)
+  derelict_airfield_01                  airfield, low sun: interior presets (the view through the windows)
   (driving_school, kloofendal_48d_partly_cloudy_puresky: spares, listed in HDRIS)
 Each HDRI is analysed once (<file>.sun.json: brightest region = sun azimuth / elevation, and the
 horizontal irradiance E_h) so a preset places the sun in MODEL azimuth (0 deg = toward +x / aft,
@@ -120,6 +129,7 @@ import argparse
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -157,6 +167,8 @@ HDRIS = {
     "qwantani_sunset_puresky": dict(res="4k", note="low sun (wing from the cabin)"),
     "kloofendal_overcast_puresky": dict(res="2k", note="soft overcast (top view)"),
     "studio_small_09": dict(res="2k", note="softbox studio (hero reflections, low strength)"),
+    "derelict_airfield_01": dict(res="4k", note="disused airfield: concrete apron, hangars, clear sky (interior "
+                                                "presets: the daylight and the view through the windows)"),
 }
 POLYHAVEN_FILES = "https://api.polyhaven.com/files/{id}"
 
@@ -388,6 +400,9 @@ def fit_camera(entry, iters=200, verbose=True):
 LIVERY_CAMS = "overlays/livery/cams.json"
 BEAUTY_CAMS_REL = "overlays/vqa/cams_beauty.json"
 
+INTERIOR_DAYLIGHT = 3.0                       # interior presets: world strength (lighting through the glazing)
+INTERIOR_WINDOW_VIEW = dict(val=3.0, sat=0.45)  # ... and the extra gain / desaturation of the view through the glass
+
 PRESETS = {
     "hangar_port34": dict(
         photo="pro3008_port34_pilatus.webp",
@@ -397,7 +412,8 @@ PRESETS = {
         env="hangar", hdri="white_studio_06", sun_az=None, hdri_rot=90.0, strength=1.5, exposure=1.0,
         room=dict(strip_strength=70.0, door=0.3), bounces=(5, 2, 3, 2, 8), samples=24, noise_threshold=0.04,
         white_balance=(5800.0, 0.0), grade=dict(white=0.86, gamma=1.18, sat=1.05),
-        # the photo has the aft cargo door open upward too (VQA r1 R1-09)
+        # photo 130: the cargo door stands open too (gull-wing up, its white inner face and the cabin showing: VQA r1
+        # R1-09, interior r2 F8)
         pose=dict(gear=0.0, door_airstair=1.0, door_cargo=1.0, pitch=62.0, prop_clock=0.0),
     ),
     "apron_stbd34": dict(
@@ -469,8 +485,9 @@ PRESETS = {
                (30, 270, 0, 400, 150), (130, 370, 150, 560, 150), (360, 335, 380, 470, 120),
                (700, 275, 700, 420, 130), (1250, 360, 1250, 620, 200), (130, 615, 130, 700, 180),
                (800, 650, 800, 790, 220), (1450, 300, 1500, 480, 200)),
-        camera_invisible=("fus_", "cowl_", "glazing_", "flight_deck", "cabin_interior", "interior_lining", "door_",
-                          "exit_hatch", "dorsal_fin", "antennas", "lights", "belly_fairing", "propeller", "blade_"),
+        camera_invisible=("fus_", "cowl_", "glazing_", "flight_deck", "cabin_interior", "interior_lining", "seat_",
+                          "door_", "exit_hatch", "dorsal_fin", "antennas", "lights", "belly_fairing", "propeller",
+                          "blade_"),
         pose=dict(gear=1.0, pitch=24.0, prop_clock=0.0),
     ),
     "top": dict(
@@ -522,7 +539,76 @@ PRESETS = {
         grade=dict(white=0.97, gamma=1.2, sat=0.65, hi=(0.55, 0.85)), samples=32, noise_threshold=0.04,
         pose=dict(gear=0.0, pitch=18.0, prop_clock=16.0),
     ),
+    # ---- interior (Stage 3): env 'interior' = daylight through the glazing (HDRI world at INTERIOR_DAYLIGHT, the
+    #      windows lighting the cabin) + soft cabin lights; camera rays that see the world through the glazing get
+    #      INTERIOR_WINDOW_VIEW on top (Light Path 'is camera ray'; transparent panes keep the camera ray type), so the
+    #      windshield and cabin windows read bright and a little blown out as in the photos, while the cabin keeps
+    #      its exposure (review r1 F1: at strength 1 / exposure 0.5 the windshield rendered as a navy sky)
+    #      (INTERIOR_LIGHTS, camera- and glossy-invisible area lights under the headliner) + the emissive LED coves,
+    #      reading lights and G3000 PRIME displays.  cockpit_fwd / panel_faceon: cameras fitted to the s/n 3001
+    #      photos (overlays/vqa/cams_beauty.json 'cabin_fwd_406': display centres, headrests, windows, divider
+    #      edges, 12 mm on MFT, hfov 68.7 deg after the in-camera distortion correction, rms 17 px; 'panel_408b'
+    #      (review r1 F5 refit, out/tmp/interior3d/r2/fitpanel.py): display / yoke-hub centres + the eyeball vents at
+    #      +/-0.64, the GI 275 and the PCL knob, f free: hfov 80.5 deg, rms 29 px (barrel residue at the edges), the
+    #      camera held up BETWEEN the seat backs at STA 4.42 / WL 2.03 -- the old 7-point fit (panel_408, flat in f)
+    #      put it at 4.58, behind the seat backs, which then framed the render); the fallbacks are those fits as
+    #      look-at cameras.  World: the Poly Haven airfield HDRI (low sun, rotated to the starboard side -- ahead for the
+    #      panel, brighter: the sunny apron of the photo through the windshield), so the windows show an airfield.
+    #      cabin_aft_fwd / cabin_club: look-at cameras (no photo).
+    "cockpit_fwd": dict(
+        photo="interior/cab_pro3001_aero25_P1046406_club_look_fwd.jpg",
+        photo_note="PRO s/n 3001 (AERO 2025): from the club aisle forward through the divider to the flight deck",
+        camera=dict(fit=dict(file=BEAUTY_CAMS_REL, key="cabin_fwd_406"),
+                    fallback=dict(pos=(7.438, 0.015, 2.111), target=(4.457, -0.006, 1.771), hfov=68.7),
+                    W=1920, H=1440),
+        env="interior", hdri="derelict_airfield_01", sun_az=100.0, strength=INTERIOR_DAYLIGHT,
+        camera_grade=INTERIOR_WINDOW_VIEW, exposure=0.35, interior_lights=0.45, samples=48, noise_threshold=0.03,
+        bounces=(8, 4, 4, 6, 12), grade=dict(white=0.97, gamma=1.05, sat=1.05),
+        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0, tables=dict(club_p=0.5)),   # the port leaf out, as P1046406
+    ),
+    "panel_faceon": dict(
+        photo="interior/fd_commons_pro3001_P1046408.jpg",
+        photo_note="PRO s/n 3001 (AERO 2025): G3000 PRIME panel face-on from the divider opening",
+        camera=dict(fit=dict(file=BEAUTY_CAMS_REL, key="panel_408b"),
+                    fallback=dict(pos=(4.422, -0.016, 2.030), target=(1.43, -0.01, 1.83), hfov=80.5),
+                    W=1920, H=1440),
+        env="interior", hdri="derelict_airfield_01", sun_az=160.0, strength=INTERIOR_DAYLIGHT,
+        camera_grade=dict(val=2.2, sat=0.55), exposure=1.1, interior_lights=0.8, samples=48, noise_threshold=0.03,
+        bounces=(8, 4, 4, 6, 12), grade=dict(white=0.97, gamma=1.05, sat=1.05),
+        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
+    ),
+    "cabin_aft_fwd": dict(
+        photo=None,
+        photo_note="from the baggage bay (FR34 curtain drawn back), crouched under the veneer header, forward along "
+                   "the aisle past PAX 5 / 6 and the club four to the flight deck",
+        camera=dict(fallback=dict(pos=(9.66, 0.0, 2.06), target=(4.30, 0.0, 1.80), hfov=72.0), W=1600, H=1000),
+        env="interior", hdri="derelict_airfield_01", sun_az=100.0, strength=INTERIOR_DAYLIGHT,
+        camera_grade=INTERIOR_WINDOW_VIEW, exposure=0.4, interior_lights=0.45, samples=48, noise_threshold=0.03,
+        bounces=(8, 4, 4, 6, 12), hide_meshes=(("cabin_interior", "curtain"),),
+        grade=dict(white=0.97, gamma=1.05, sat=1.05), pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0),
+    ),
+    "cabin_club": dict(
+        photo=None,
+        photo_note="3/4 over the club four from the aisle behind PAX 4, head under the headliner (brochure-style), "
+                   "the port club table's leaf out (P1046404 / 05)",
+        camera=dict(fallback=dict(pos=(7.80, 0.20, 2.56), target=(6.10, -0.36, 1.45), hfov=70.0), W=1600, H=1000),
+        env="interior", hdri="derelict_airfield_01", sun_az=100.0, strength=INTERIOR_DAYLIGHT,
+        camera_grade=INTERIOR_WINDOW_VIEW, exposure=0.4, interior_lights=0.45, samples=48, noise_threshold=0.03,
+        bounces=(8, 4, 4, 6, 12), grade=dict(white=0.97, gamma=1.05, sat=1.05),
+        pose=dict(gear=0.0, pitch=62.0, prop_clock=0.0, tables=dict(club_p=0.5)),
+    ),
 }
+# interior env: soft cabin / cockpit lights (x, y, z, size x, size y, W; model axes, pointing down) under the
+# headliner (the flat centre panel is ~WL 2.72 in the cabin), camera- and glossy-invisible, scaled by the preset's
+# 'interior_lights'; the LED coves / reading lights / displays are emissive materials (render/lookdev.py SPEC)
+INTERIOR_LIGHTS = (
+    (4.12, 0.0, 2.60, 0.40, 0.55, 5.0),        # flight-deck dome, behind the overhead panel
+    (5.30, 0.0, 2.66, 0.30, 0.70, 14.0),       # cabin ceiling panels, along the flat centre panel
+    (6.30, 0.0, 2.66, 0.30, 0.70, 14.0),
+    (7.30, 0.0, 2.66, 0.30, 0.70, 14.0),
+    (8.30, 0.0, 2.66, 0.30, 0.70, 14.0),
+    (9.10, 0.0, 2.62, 0.30, 0.70, 8.0),
+)
 DEFAULT_LOOK = "AgX - Punchy"
 # hero lights: name, position, target, size (m), power (W), colour, lights the aircraft?, spread (deg).
 # The aircraft is lit by a big high key from camera left and a low fill (+ the studio HDRI at low
@@ -752,12 +838,46 @@ class Scene:
         o.rotation_quaternion = Quaternion(gl2b(pv["axis"]), math.radians(deg))
 
     def pose(self, gear=0.0, nose_doors=None, door_airstair=0.0, door_cargo=0.0, pitch=0.0, prop_clock=0.0,
-             flaps=0.0, rpm=0.0, shutter_s=0.0, view_from=None, **_):
+             flaps=0.0, rpm=0.0, shutter_s=0.0, view_from=None, tables=None, **_):
         P = self.pivot
+        # club tables (pivot kind 'table', model/cabin.py table_parts; review r3 F5): {table key: open}, 0 = stowed
+        # (TTL, the default: hidden in the ledge), 0.5 = the outboard leaf out (the built pose), 1 = deployed (the
+        # inboard leaf unfolded about its hinge) -- as the viewer poses them
+        tables = dict(tables or {})
+        sm = lambda t: t * t * (3.0 - 2.0 * t)                             # noqa: E731 -- the viewer's easing
+        for pid, pv in P.items():
+            if pv.get("kind") != "table":
+                continue
+            o = float(tables.get(pv.get("table"), 0.0))
+            if o <= 1e-6:
+                self.hide([pid])
+                continue
+            rest = float(pv.get("rest", 0.5))
+            fs, fsr = sm(min(1.0, o / 0.5)), sm(min(1.0, rest / 0.5))
+            ob = self.parts.get(pid)
+            if ob is not None and abs(fs - fsr) > 1e-9:
+                tr = np.asarray(pv.get("slide", (0, 0, 0)), float) * (fs - fsr)
+                ob.location = tuple(np.asarray(ob.location) + np.asarray(m2b(tr)))
+            lid = pid + "_leaf"
+            if lid in P:
+                ff = sm(min(1.0, max(0.0, (o - 0.5) / 0.5)))
+                ffr = sm(min(1.0, max(0.0, (rest - 0.5) / 0.5)))
+                if abs(ff - ffr) > 1e-9:
+                    self._rot_local(lid, math.degrees(P[lid]["fold"] * (ff - ffr)))
         # doors (open angle in radians)
         for pid, v in (("door_airstair", door_airstair), ("door_cargo", door_cargo)):
             if pid in P and v:
                 self._rot_local(pid, math.degrees(P[pid]["open"]) * v)
+        # folding door children (pivot kind 'fold': the airstair handrails of model/airstair.py) unfold by open x
+        # clamp((door fraction - w0) / (w1 - w0)) about their own axis, in the door's frame (as the viewer does)
+        doors = dict(door_airstair=door_airstair, door_cargo=door_cargo)
+        for pid, pv in P.items():
+            if pv.get("kind") != "fold":
+                continue
+            w0, w1 = pv.get("window", (0.0, 1.0))
+            k = min(1.0, max(0.0, (doors.get(pv.get("follows"), 0.0) - w0) / max(w1 - w0, 1e-9)))
+            if k:
+                self._rot_local(pid, math.degrees(pv["open"]) * k)
         # gear + nose clamshells (open unless the gear is locked up, as in the viewer; the GLB builds them at
         # pivot 'rest' = 1 = open)
         if nose_doors is None:
@@ -1190,7 +1310,7 @@ class Scene:
 
     # ------------------------------------------------------------------ world
     def world(self, hdri_path, strength=1.0, rot_z_deg=0.0, env_R=None, camera_bg=None, ground_rgb=None,
-              camera_grade=None, camera_sky=None, ground_gain=None, glossy_sky=False):
+              camera_grade=None, camera_sky=None, ground_gain=None, glossy_sky=False, camera_through_glass=False):
         """HDRI world.  env_R: 3x3 rotation MODEL -> HDRI frame (tilted environments); rot_z_deg: extra
         azimuth rotation of the lookup.  camera_bg: RGB seen by camera rays instead of the HDRI (studio).
         ground_rgb: radiance that REPLACES the HDRI below its horizon (the 'puresky' HDRIs carry a flat,
@@ -1319,6 +1439,23 @@ class Scene:
                 nt.links.new(lp.outputs["Is Camera Ray"], mx.inputs[0])
                 nt.links.new(lp.outputs["Is Glossy Ray"], mx.inputs[1])
                 nt.links.new(mx.outputs[0], ms.inputs[0])
+            elif camera_through_glass:
+                # 'camera' = the primary path, also after transparent bounces (the glazing is a Transparent BSDF:
+                # 'Is Camera Ray' turns false behind it): ray depth 0 and not a shadow ray (direct-light samples of
+                # the first hit keep the lighting world)
+                lt = nt.nodes.new("ShaderNodeMath")
+                lt.operation = "LESS_THAN"
+                lt.inputs[1].default_value = 0.5
+                nt.links.new(lp.outputs["Ray Depth"], lt.inputs[0])
+                ns = nt.nodes.new("ShaderNodeMath")
+                ns.operation = "SUBTRACT"
+                ns.inputs[0].default_value = 1.0
+                nt.links.new(lp.outputs["Is Shadow Ray"], ns.inputs[1])
+                fac = nt.nodes.new("ShaderNodeMath")
+                fac.operation = "MULTIPLY"
+                nt.links.new(lt.outputs[0], fac.inputs[0])
+                nt.links.new(ns.outputs[0], fac.inputs[1])
+                nt.links.new(fac.outputs[0], ms.inputs[0])
             else:
                 nt.links.new(lp.outputs["Is Camera Ray"], ms.inputs[0])
             nt.links.new(bg.outputs[0], ms.inputs[1])
@@ -1594,7 +1731,8 @@ def build_env(S: Scene, pre, cam: Cam, info):
     S.world(hdri, strength=strength, rot_z_deg=rot, env_R=env_R,
             camera_bg={"studio_white": (1.0, 1.0, 1.0)}.get(env),
             ground_rgb=ground_rgb, camera_grade=pre.get("camera_grade"), camera_sky=pre.get("camera_sky"),
-            ground_gain=pre.get("ground_gain"), glossy_sky=bool(pre.get("glossy_sky")))
+            ground_gain=pre.get("ground_gain"), glossy_sky=bool(pre.get("glossy_sky")),
+            camera_through_glass=pre.get("env") == "interior")
     info["hdri"]["rot_z_deg"] = round(rot, 2)
     if pre.get("world_glossy") is False:           # the HDRI lights, but glossy rays see only the studio (softboxes)
         try:
@@ -1630,6 +1768,8 @@ def build_env(S: Scene, pre, cam: Cam, info):
                 S.area_light(nm, pos, tgt, size, power, col, spread)
     elif env == "studio_cyc":
         studio_cyc(S, pre, cam, info)
+    elif env == "interior":
+        interior_lights(S, pre, info)
     elif env == "air_ground":
         up = np.asarray(info["env_up_model"])
         centre = cam.C - pre.get("ground_depth", 1500.0) * up
@@ -1666,6 +1806,29 @@ def build_env(S: Scene, pre, cam: Cam, info):
         S.plane("snow", 20000.0, (0, 0, zg - 0.05), mat=snow)
         info["runway_footprint"] = [round(v, 1) for v in (x0, x1, y0, y1)]
     return info
+
+
+def interior_lights(S: Scene, pre, info):
+    """Interior presets: INTERIOR_LIGHTS x pre['interior_lights'] as soft area lights under the headliner (camera and
+    glossy rays do not see them) and a light grey apron under the aircraft for the window bounce."""
+    k = float(pre.get("interior_lights", 1.0))
+    n = 0
+    for i, (x, y, z, sx, sy, w) in enumerate(INTERIOR_LIGHTS):
+        if k <= 0:
+            break
+        o = S.area_light(f"cabin_light_{i}", (x, y, z), (x, y, z - 1.0), (sx, sy), w * k, (1.0, 0.95, 0.88))
+        for attr in ("visible_glossy", "visible_transmission"):
+            try:
+                setattr(o, attr, False)
+            except Exception:
+                pass
+        n += 1
+    ap = S.plane("apron", 400.0, (0, 0, -0.003), mat=S.new_material("apron", (0.32, 0.32, 0.31), 0.85, spec=0.3))
+    try:                          # the windows show the (gained) HDRI ground, the apron only bounces light in
+        ap.visible_camera = False
+    except Exception:
+        pass
+    info["interior_lights"] = dict(n=n, scale=k)
 
 
 def studio_cyc(S: Scene, pre, cam: Cam, info):
@@ -2083,6 +2246,11 @@ def render_preset(name, glb, out_dir, box, samples, compare, quiet=True):
     cam, cam_src = preset_camera(name, *box)
     info["camera_source"] = cam_src
     S.hide(["structure"] + list(pre.get("hide", ())))
+    for pid, mat in pre.get("hide_meshes", ()):          # single primitives: (part prefix, material)
+        for o in S.meshes_of([pid]):
+            if any(sl.material is not None and re.sub(r"\.\d{3}$", "", sl.material.name) == mat
+                   for sl in o.material_slots):
+                o.hide_render = True
     if pre.get("camera_invisible"):
         S.camera_invisible(pre["camera_invisible"])
     S.materials(pre.get("paint"))

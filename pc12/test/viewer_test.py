@@ -21,7 +21,9 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
     module fails to load, phone pixel ratio (taps keep it, drags and their coast drop it), 40 px touch targets,
     sheet header tap, landscape phone layout
   - merged with the stage-4 model: every GLB material has a viewer material, materials.json = the lookdev table,
-    KHR_materials_clearcoat applied once, the interior lining lit as the cabin
+    KHR_materials_clearcoat applied once, the interior lining lit as the cabin; every part of the GLB group 'Interior'
+    (seats, floor, consoles, divider, tables, crew controls) lit as the cabin, the table's emissive displays / cabin
+    lights and the GLB's sheepskin sheen carried into the viewer materials
   - review round-3 (viewer): WebGL context loss and restore (a note while lost, redraws by itself, same image), the
     Specs table fits the landscape panel, safe-area insets (landscape notch, portrait home indicator)
 Optional --blender: re-imports out/pc12.glb in Blender (bpy, /opt/venv-blender) and checks
@@ -57,7 +59,8 @@ VIEW = {"width": 960, "height": 600}
 PHONE = {"width": 390, "height": 844}
 LAUNCH_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
 # SwiftShader rasterises the MeshPhysicalMaterial scene on the CPU (~5-10 s a frame at 960x600); a screenshot
-# waits for the frames already queued, so Playwright's 30 s default is too tight
+# waits for the frames already queued, so Playwright's 30 s default is too tight (after the paint sweep, shot 09, a
+# capture took 27-31 s on the shared 4-core sandbox with the Stage-2 GLB too)
 SHOT_TIMEOUT = 240000
 
 results: list[tuple[str, bool, str, bool]] = []
@@ -388,6 +391,100 @@ async def numeric_checks(page):
     check("left aileron tab trim +5: tab TE down, right tab unaffected", t["tL"][1] < -0.002 and abs(t["tR"][1]) < 1e-6,
           f"L {t['tL'][1]*1000:+.1f} mm, R {t['tR'][1]*1000:+.2f} mm")
 
+    # --- crew controls (review r2 M4): the yokes roll with the roll command about their columns and slide with pitch,
+    #     the rudder pedals swing with yaw (right rudder: right-foot pedals forward = -Z)
+    r = await js(page, r"""
+      const V = window.viewer, out = {};
+      T.neutral();
+      if (!V._internals.model.part('yoke_L')) return {missing: true};
+      const hub = V.nodeWorldPoint('yoke_L', [0, 0, 0]);
+      const g0 = [hub[0] + 0.12, hub[1] + 0.08, hub[2]];               // a point up the right grip (gl: +X = stbd)
+      const loc = T.attach('yoke_L', g0);
+      const pads = {};
+      for (const id of ['pedal_LL', 'pedal_LR']) { const b = T.box(id); const p = [b.center[0], b.max[1] - 0.02, b.center[2]]; pads[id] = {p0: p, loc: T.attach(id, p)}; }
+      V.setControls({roll: 1}, {instant: true});
+      out.rollR = T.sub(T.world('yoke_L', loc), g0);
+      V.setControls({roll: 0, pitch: 1}, {instant: true});
+      out.pull = T.sub(V.nodeWorldPoint('yoke_L', [0, 0, 0]), hub);
+      V.setControls({pitch: 0, yaw: 1}, {instant: true});
+      out.yawR = {L: T.sub(T.world('pedal_LL', pads.pedal_LL.loc), pads.pedal_LL.p0), R: T.sub(T.world('pedal_LR', pads.pedal_LR.loc), pads.pedal_LR.p0)};
+      T.neutral();
+      return out;
+    """)
+    if r.get("missing"):
+        check("crew controls are viewer parts (yoke_L / pedals)", False, "yoke_L not in the GLB")
+    else:
+        check("right roll: the pilot's yoke turns clockwise (right grip goes down)", r["rollR"][1] < -0.03,
+              f"grip point dY {r['rollR'][1]:+.3f} m")
+        check("pull: the yoke comes aft (+Z) by the pitch travel", abs(r["pull"][2] - 0.09) < 0.005,
+              f"hub dZ {r['pull'][2]:+.3f} m")
+        check("right rudder: right-foot pedal forward, left-foot pedal aft", r["yawR"]["R"][2] < -0.03 and
+              r["yawR"]["L"][2] > 0.03, f"pad dZ R {r['yawR']['R'][2]:+.3f}, L {r['yawR']['L'][2]:+.3f} m")
+    # --- the cutaway clips the cabin furniture / divider port half, not the seats or the controls (review r2 M3);
+    #     every part is cut whole or not at all (review r3 C1: cup holders / switch caps floated over a clipped
+    #     console), and the floors the seats stand on stay (review r3 F4)
+    r = await js(page, r"""
+      const V = window.viewer, I = V._internals, out = {};
+      V.setCutaway(true);
+      const cut = (mr) => (mr.mesh.material.clippingPlanes || []).some((p) => p.normal.x === 1 && p.constant === 0);
+      const clipped = (id, mat) => I.model.part(id) ? I.model.part(id).meshes.filter((mr) => !mat || mr.base.name === mat)
+                                   .map(cut) : [];
+      out.divider = clipped('fd_divider');
+      out.consoles = clipped('fd_consoles');
+      out.ledge = clipped('cabin_interior', 'ledge_top');
+      out.flight_deck = clipped('flight_deck');
+      out.cabin_floor = clipped('cabin_floor');
+      out.seat = clipped('seat_pax1');
+      out.yoke = clipped('yoke_L');
+      // parts cut by a material subset (some meshes clipped, some kept)
+      out.mixed = I.model.list.filter((p) => p.ex.group === 'Interior' && p.meshes.length &&
+        new Set(p.meshes.map(cut)).size > 1).map((p) => p.id);
+      // every seat stands on an uncut floor: the kept floor meshes (cabin_floor carpet, flight-deck carpet) cover the
+      // seat's footprint centre (glTF X = BL, Z = STA)
+      const floors = [...I.model.part('cabin_floor').meshes, ...I.model.part('flight_deck').meshes
+        .filter((mr) => mr.base.name === 'carpet_flightdeck')].filter((mr) => !cut(mr));
+      const fb = floors.map((mr) => new I.THREE.Box3().setFromObject(mr.mesh));
+      out.unsupported = I.model.list.filter((p) => /^seat_/.test(p.id)).filter((p) => {
+        const b = V.partWorldBox(p.id), cx = 0.5 * (b.min[0] + b.max[0]), cz = 0.5 * (b.min[2] + b.max[2]);
+        return !fb.some((f) => f.min.x <= cx && cx <= f.max.x && f.min.z <= cz && cz <= f.max.z &&
+          f.min.y <= b.min[1] + 0.03 && f.max.y >= b.min[1] - 0.03);
+      }).map((p) => p.id);
+      V.setCutaway(false);
+      return out;
+    """)
+    check("cutaway clips the divider, consoles and cabin ledges (port halves), not the panel, floors, seats or yokes",
+          all(r["divider"]) and all(r["consoles"]) and all(r["ledge"]) and not any(r["flight_deck"]) and
+          not any(r["cabin_floor"]) and not any(r["seat"]) and not any(r["yoke"]),
+          json.dumps({k: (sum(v), len(v)) if isinstance(v, list) and v and isinstance(v[0], bool) else v
+                      for k, v in r.items()}))
+    check("[r3 C1] cutaway: every interior part cut whole or not at all (nothing left floating)", not r["mixed"],
+          f"mixed: {r['mixed']}")
+    check("[r3 F4] cutaway: every seat stands on an uncut floor", not r["unsupported"],
+          f"{len(r['unsupported'])} unsupported: {r['unsupported']}")
+    # --- club tables (review r3 F5): stowed = inside the ledge (fully clipped at the fascia), out at 0.5, the inboard
+    #     leaf unfolded over the aisle at 1
+    r = await js(page, r"""
+      const V = window.viewer, I = V._internals, out = {};
+      if (!I.model.part('table_club_p')) return {missing: true};
+      const bx = () => { const b = V.partWorldBox('table_club_p_leaf'); return [b.min[0], b.max[0], b.min[1], b.max[1]]; };
+      const ob = () => { const b = V.partWorldBox('table_club_p'); return [b.min[0], b.max[0]]; };
+      const fascia = I.model.part('table_club_p').ex.pivot.fascia_bl;
+      V.setTable(0, {instant: true}); out.stowed = ob(); out.fascia = fascia;
+      V.setTable(0.5, {instant: true}); out.leaf = ob(); out.leafFolded = bx();
+      V.setTable(1, {instant: true}); out.deployed = bx();
+      V.setTable(0, {instant: true});
+      out.clip = I.model.part('table_club_p').meshes.every((mr) => (mr.mesh.material.clippingPlanes || []).length > 0);
+      return out;
+    """)
+    if r.get("missing"):
+        check("[r3 F5] club tables are viewer parts", False, "table_club_p not in the GLB")
+    else:
+        check("[r3 F5] club table: stowed inside the ledge (outboard of the fascia, clipped there), the leaf out, the "
+              "inboard leaf unfolded over the aisle",
+              r["clip"] and r["stowed"][1] <= r["fascia"] + 0.035 and r["leaf"][1] > -0.40 and
+              r["deployed"][1] > -0.10 and r["deployed"][2] > r["leafFolded"][3] - 0.001,
+              json.dumps({k: [round(x, 3) for x in v] if isinstance(v, list) else v for k, v in r.items()}))
+
     # --- gear: mains inward, nose aft, nose doors open between the locks
     r = await js(page, r"""
       const V = window.viewer, out = {};
@@ -672,12 +769,20 @@ async def material_checks(page):
       const I = window.viewer._internals, out = {};
       for (const mr of I.model.meshRecs) {
         const m = mr.base, f = m.userData.pc12 || {};
-        const e = out[m.name] || (out[m.name] = {cc: [], ccr: [], physical: [], interior: [], parts: []});
+        const e = out[m.name] || (out[m.name] = {cc: [], ccr: [], physical: [], interior: [], parts: [], em: [], sheen: []});
         const add = (k, v) => { if (!e[k].includes(v)) e[k].push(v); };
         add('cc', +(m.clearcoat || 0).toFixed(4)); add('ccr', +(m.clearcoatRoughness || 0).toFixed(4));
         add('physical', !!m.isMeshPhysicalMaterial); add('interior', !!f.interior); add('parts', mr.part.id);
+        add('em', m.emissive ? m.emissive.toArray().map((v) => +v.toFixed(3)).join(',') : '');
+        add('sheen', +(m.sheen || 0).toFixed(3));
       }
-      return {mats: out, info: window.viewer.perf().materials};
+      const grp = {};
+      for (const mr of I.model.meshRecs) {
+        if (mr.part.ex.group !== 'Interior') continue;
+        const g = grp[mr.part.id] || (grp[mr.part.id] = [true, 0]);
+        g[0] = g[0] && !!(mr.base.userData.pc12 || {}).interior; g[1] += 1;
+      }
+      return {mats: out, info: window.viewer.perf().materials, grp};
     """)
     mats, info = r["mats"], r["info"]
     used = set(mats)
@@ -709,6 +814,27 @@ async def material_checks(page):
     check("materials: interior_lining (lining / lining_flightdeck) takes the cabin light (interior patch)",
           all(v == [True] for v in lin.values()) and "interior_lining" in (mats.get("lining_flightdeck") or {}).get("parts", []),
           str(lin))
+    # Stage-3 interior (merge of wip/interior): every part of the GLB group 'Interior' takes the cabin light, the
+    # table's emissiveFactor (G3000 PRIME page content, LED coves, reading lights, annunciators) survives the
+    # MeshPhysicalMaterial upgrade, and the sheepskin keeps the GLB's KHR_materials_sheen
+    grp = r["grp"]
+    unlit = sorted(k for k, (ok, _) in grp.items() if not ok)
+    check("materials: every part of the GLB group 'Interior' takes the cabin light (interior patch)",
+          len(grp) >= 20 and not unlit, f"{len(grp)} parts" + (f"; not lit as the cabin: {unlit}" if unlit else ""))
+    em_bad, n_em = [], 0
+    for n, e in mats.items():
+        f = T.get(n, {}).get("emissiveFactor")
+        if not f or not any(f):
+            continue
+        n_em += 1
+        for v in e["em"]:
+            got = [float(t) for t in v.split(",")] if v else [0.0, 0.0, 0.0]
+            if max(abs(a - b) for a, b in zip(got, f)) > 2e-3:
+                em_bad.append(f"{n}: {v} vs {f}")
+    sh = mats.get("sheepskin", {}).get("sheen", [])
+    check("materials: emissive displays / cabin lights keep the table's emissiveFactor; the sheepskin keeps its sheen",
+          n_em >= 8 and not em_bad and sh and min(sh) > 0,
+          f"{n_em} emissive materials, sheepskin sheen {sh}" + (f"; {'; '.join(em_bad[:4])}" if em_bad else ""))
 
 
 async def fit_check(page, label, refit_panel=False):
@@ -1025,7 +1151,8 @@ reset()
 for g in ("gear_main_R", "gear_main_L"): pose_gear(g, 1.0)
 res["mains_up_vs_flaps"] = pairs(["gear_main_R", "gear_main_L"], ["flap_R", "flap_L", "flap_fairings"])
 pose_gear("gear_nose", 1.0)
-res["nose_up_vs_flight_deck"] = pairs(["gear_nose"], ["flight_deck"])
+res["nose_up_vs_flight_deck"] = pairs(["gear_nose"], ["flight_deck"] + [k for k in parts if k.startswith(("yoke_",
+                                                                                                      "pedal_"))])
 reset()
 out["interference"] = res
 json.dump(out, open(args["out"], "w"))

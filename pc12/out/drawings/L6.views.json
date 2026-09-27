@@ -1,0 +1,282 @@
+{
+ "sheet": "L6",
+ "size": "A1",
+ "sheet_mm": [
+  841.0,
+  594.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "profile": {
+   "name": "profile",
+   "axes": "xz",
+   "A": [
+    [
+     50.0,
+     0.0
+    ],
+    [
+     0.0,
+     -50.0
+    ]
+   ],
+   "t": [
+    -100.0,
+    202.5
+   ],
+   "scale": 20.0,
+   "box": [
+    2.9,
+    0.9,
+    9.95,
+    2.85
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "plan": {
+   "name": "plan",
+   "axes": "xy",
+   "A": [
+    [
+     50.0,
+     0.0
+    ],
+    [
+     0.0,
+     -50.0
+    ]
+   ],
+   "t": [
+    -100.0,
+    239.0
+   ],
+   "scale": 20.0,
+   "box": [
+    2.9,
+    -1.15,
+    9.95,
+    1.05
+   ],
+   "note": "seen from above, starboard up",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "section_A": {
+   "name": "section_A",
+   "axes": "yz",
+   "A": [
+    [
+     -100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    125.0,
+    627.0
+   ],
+   "scale": 10.0,
+   "box": [
+    -0.92,
+    0.9,
+    0.92,
+    2.85
+   ],
+   "note": "seen from ahead, starboard left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "section_B": {
+   "name": "section_B",
+   "axes": "yz",
+   "A": [
+    [
+     -100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    318.0,
+    627.0
+   ],
+   "scale": 10.0,
+   "box": [
+    -0.92,
+    0.9,
+    0.92,
+    2.85
+   ],
+   "note": "seen from ahead, starboard left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "detail_C": {
+   "name": "detail_C",
+   "axes": "xz",
+   "A": [
+    [
+     100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    152.0,
+    320.0
+   ],
+   "scale": 10.0,
+   "box": [
+    2.95,
+    1.12,
+    4.66,
+    2.8
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "detail_E1": {
+   "name": "detail_E1",
+   "axes": "xz",
+   "A": [
+    [
+     100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    68.0,
+    493.0
+   ],
+   "scale": 10.0,
+   "box": [
+    3.6,
+    1.2,
+    4.52,
+    2.47
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "detail_E2": {
+   "name": "detail_E2",
+   "axes": "xz",
+   "A": [
+    [
+     100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    -135.0,
+    493.0
+   ],
+   "scale": 10.0,
+   "box": [
+    6.7,
+    1.2,
+    7.55,
+    2.47
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "view_D": {
+   "name": "view_D",
+   "axes": "yz_aft",
+   "A": [
+    [
+     100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    524.0,
+    628.0
+   ],
+   "scale": 10.0,
+   "box": [
+    -0.78,
+    1.24,
+    0.78,
+    2.32
+   ],
+   "note": "seen from aft, starboard right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "detail_F": {
+   "name": "detail_F",
+   "axes": "yz_aft",
+   "A": [
+    [
+     200.0,
+     0.0
+    ],
+    [
+     0.0,
+     -200.0
+    ]
+   ],
+   "t": [
+    802.0,
+    494.0
+   ],
+   "scale": 5.0,
+   "box": [
+    -0.62,
+    1.58,
+    -0.13,
+    2.04
+   ],
+   "note": "seen from aft, starboard right",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "detail_G": {
+   "name": "detail_G",
+   "axes": "xz",
+   "A": [
+    [
+     100.0,
+     0.0
+    ],
+    [
+     0.0,
+     -100.0
+    ]
+   ],
+   "t": [
+    40.0,
+    521.0
+   ],
+   "scale": 10.0,
+   "box": [
+    5.93,
+    1.22,
+    7.09,
+    2.03
+   ],
+   "note": "seen from port, nose left",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  }
+ }
+}

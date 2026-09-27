@@ -49,9 +49,10 @@ U.lining.value.setRGB(...LINING);
 // Materials whose back faces are the aircraft interior (jamb: the door / hatch reveals, whose back faces outline the
 // exit hatch and the airstair frame from inside the cabin).
 const LINING_RE = /^(paint_|trim_black$|seal|jamb$)/;
-// Parts inside the closed fuselage (cabin occlusion applies to all their faces), and materials that
-// only ever face the cabin (the door / hatch inner linings; the model's interior_lining part: cabin 'lining' and the
-// darker 'lining_flightdeck' ahead of it).
+// Parts inside the closed fuselage (cabin occlusion applies to all their faces: these two, and every part of the GLB
+// group 'Interior' -- the seats, floor, consoles, divider, club tables, crew controls, the lining's fittings), and
+// materials that only ever face the cabin (the door / hatch inner linings; the model's interior_lining part: cabin
+// 'lining' and the darker 'lining_flightdeck' ahead of it).
 export const INTERIOR_PARTS = new Set(['flight_deck', 'cabin_interior']);
 const INTERIOR_MATERIALS = new Set(['lining', 'lining_flightdeck', 'jamb']);
 const PAINT_RE = /^(paint_|trim_black$)/;
@@ -60,12 +61,10 @@ const PAINT_RE = /^(paint_|trim_black$)/;
 const GLASS_RE = /^(glass|lens$)/;
 const CABIN_GLASS_RE = /^glass/;
 
-// Viewer-only extras for materials the lookdev table does not cover (emissive displays, position lights).  The
-// lights are off, as in every reference photo: glossy coloured lenses; setLights(true) switches them on.
+// Viewer-only extras for materials the lookdev table does not cover (position lights; the G3000 PRIME displays' page
+// content is emissive in the table itself).  The lights are off, as in every reference photo: glossy coloured lenses;
+// setLights(true) switches them on.
 const EXTRAS = {
-  screen_pfd: { emissive: [0.018, 0.05, 0.1] },
-  screen_mfd: { emissive: [0.018, 0.05, 0.1] },
-  screen_sdu: { emissive: [0.018, 0.05, 0.1] },
   light_red: { color: [0.35, 0.01, 0.01], roughness: 0.1, light: [0.6, 0.02, 0.02] },
   light_green: { color: [0.01, 0.3, 0.05], roughness: 0.1, light: [0.02, 0.5, 0.1] },
   light_white: { color: [0.55, 0.55, 0.57], roughness: 0.1, light: [0.5, 0.5, 0.5] },
@@ -111,6 +110,10 @@ function partOf(o) {
   for (let p = o; p; p = p.parent) if (p.userData && p.userData.part) return p.userData.part;
   return null;
 }
+function groupOf(o) {
+  for (let p = o; p; p = p.parent) if (p.userData && p.userData.part) return p.userData.group || null;
+  return null;
+}
 
 // Glass: N reflecting surfaces (laminated windshield 2, double-pane cabin windows 4) reflect
 // R = N F / (1 + (N - 1) F) at normal incidence (lookdev build_glass); as an F0 scale over the
@@ -149,6 +152,10 @@ function physicalFrom(name, e, src) {
     depthWrite: !blend,
   });
   if (e.specularFactor == null && e.surfaces > 1) m.specularColor.setScalar(specularForSurfaces(e));
+  // the interior's emissive displays / LED coves / reading lights (assemble.EMISSIVE = the table's emissiveFactor)
+  if (e.emissiveFactor) m.emissive = lin(e.emissiveFactor);
+  // the crew sheepskin's pile (KHR_materials_sheen in the GLB: its colour lives in assemble.MATERIALS only)
+  if (src.sheen > 0) { m.sheen = src.sheen; m.sheenColor.copy(src.sheenColor); m.sheenRoughness = src.sheenRoughness; }
   for (const k of ['roughness', 'metalness', 'specularIntensity', 'envMapIntensity']) if (V[k] != null) m[k] = V[k];
   if (V.color) m.color.copy(lin(V.color));
   const pol = polishOf(name, e);
@@ -297,7 +304,7 @@ export function upgradeMaterials(root, spec) {
     if (LINING_RE.test(name) && m.side === THREE.DoubleSide) f.lining = true;
     if (GLASS_RE.test(name) && m.transparent) { f.glass = true; if (CABIN_GLASS_RE.test(name)) f.cabinGlass = true; }
     installPatch(m);
-    if (INTERIOR_PARTS.has(part) || INTERIOR_MATERIALS.has(name)) {
+    if (INTERIOR_PARTS.has(part) || groupOf(o) === 'Interior' || INTERIOR_MATERIALS.has(name)) {
       if (!interior.has(m)) interior.set(m, clonePatched(m, { interior: true }));
       m = interior.get(m);
     }
