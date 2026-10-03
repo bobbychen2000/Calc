@@ -50,6 +50,7 @@ export function signedAngle(u, v, n) {
 // ~15 s.
 export const PROP_RPM = { idle: 1000, cruise: 1550, max: 1700, governed: 900 };   // governed: below it, starting / running down
 const GOVERNED = PROP_RPM.governed;
+const FEATHERED = 60, UNFEATHER_RPM = 300;     // deg (feather 62), rpm: out of feather on a start (setProp)
 const START = { a0: 40, k: 0.12 };            // d rpm / dt = a0 + k rpm while starting
 const STOP = { a0: 25, k: 0.12 };             // d rpm / dt = -(a0 + k rpm) while running down
 const GOV = { k: 1.6, up: 320, down: 260 };   // governed: k (target - rpm), rate-limited
@@ -176,11 +177,18 @@ export class Kinematics {
     if (instant) this.c.table = this.t.table;
   }
 
+  // a start from feather (no pitch given, the blades feathered, the propeller below the governed range) comes out of
+  // feather to fine pitch once it turns UNFEATHER_RPM (the oil pressure the governor needs), as a PT6 / Hartzell does
   setProp({ rpm, pitch, angle } = {}, instant) {
     if (angle != null) this.c.propAngle = +angle;          // spin phase (radians), e.g. 0 for tests
     if (rpm != null) this.t.rpm = clamp(+rpm, 0, PROP_RPM.max);
     if (pitch != null) this.t.pitch = clamp(+pitch, -38, 62);
-    if (instant) { this.c.rpm = this.t.rpm; this.c.pitch = this.t.pitch; }
+    this.unfeather = pitch == null && rpm != null && this.t.rpm > 0 && this.t.pitch >= FEATHERED && this.c.rpm < GOVERNED;
+    if (instant) {
+      this.c.rpm = this.t.rpm;
+      if (this.unfeather && this.c.rpm >= UNFEATHER_RPM) { this.t.pitch = 0; this.unfeather = false; }
+      this.c.pitch = this.t.pitch;
+    }
   }
 
   setControls(o = {}, instant) {
@@ -245,6 +253,7 @@ export class Kinematics {
     lag('roll', 7, 1e-3); lag('pitchCmd', 7, 1e-3); lag('yaw', 7, 1e-3);
     approach('stabTrim', 1.2); approach('ailTrim', 6); approach('rudTrim', 6);
     if (t.rpm !== c.rpm) { c.rpm = this._spool(c.rpm, t.rpm, dt); moved = true; }
+    if (this.unfeather && c.rpm >= UNFEATHER_RPM) { t.pitch = 0; this.unfeather = false; }
     const movedBeforeSpin = moved;
     if (c.rpm > 0) {
       c.propAngle = (c.propAngle + (c.rpm / 60) * 2 * Math.PI * dt) % (2 * Math.PI);

@@ -110,6 +110,7 @@ async function boot() {
   try { meta = await metaP; PERF.mark('meta'); } catch (e) { fail(e, 'the model metadata (' + URLS.meta + ')'); return; }
   let gltf;
   try { gltf = await glbP; PERF.mark('glb'); } catch (e) { fail(e, 'the 3-D model (' + (BOOT.gzip ? URLS.glbGz : URLS.glb) + ')'); return; }
+  detailSwitch(meta.stats ? { ...meta.stats } : null);
   if (meta.stats && meta.stats.low && (URLS.low || (BOOT.gzip && meta.stats.glb_gz_tier === 'low'))) {
     // the light tier (phones; the gzip fallback): the Specs panel and the part cards count what this page loaded
     const lo = meta.stats.low;
@@ -336,6 +337,29 @@ function syncHiddenButtons() {
   $('pShowAll').disabled = S.hidden.size === 0 && !model.isolate;
 }
 
+// ------------------------------------------------------------------ model detail (phones / tablets)
+// The light tier loads on the 'low' quality tier (index.html); the Specs panel offers the full model there (review r1
+// RES1-02: tablets and capable phones never saw the higher-resolution model).  The choice is kept in localStorage
+// (or, where storage is refused, the page reloads with ?detail=); the gzip no-WebAssembly fallback stays light.
+function detailSwitch(st) {
+  const row = $('detailRow');
+  if (!row || !URLS.tierSwitch || !st) return;
+  const full = !URLS.low, mb = (n) => (n ? ` · ${(n / 1048576).toFixed(0)} MB` : '');
+  const tri = (n) => (n ? `${(n / 1e6).toFixed(1)}M triangles` : '');
+  $('detailBtn').textContent = full ? 'Use the light model' : 'Load the full-detail model';
+  $('detailNote').textContent = full ? `light: ${tri(st.low && st.low.triangles)}${mb(st.low && st.low.glb_bytes)}, faster on phones`
+    : `${tri(st.triangles)}${mb(st.glb_bytes)} — for tablets and recent phones`;
+  $('detailBtn').addEventListener('click', () => {
+    const v = full ? 'light' : 'full';
+    let stored = false;
+    try { localStorage.setItem('pc12-detail', v); stored = localStorage.getItem('pc12-detail') === v; } catch (e) { stored = false; }
+    const u = new URL(location.href);
+    if (stored) u.searchParams.delete('detail'); else u.searchParams.set('detail', v);
+    location.replace(u.href);
+  });
+  row.hidden = false;
+}
+
 // ------------------------------------------------------------------ picking
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
@@ -362,6 +386,11 @@ function pick(clientX, clientY) {
 let down = null, hoverAt = null, lastHover = 0;
 function wirePicking() {
   for (const mr of model.meshRecs) meshRec.set(mr.mesh, mr);
+  // the spinning propeller's blur disc is picked as the propeller (its blades are hidden once they have faded)
+  if (kin.blur) {
+    meshRec.set(kin.blur.disc, { mesh: kin.blur.disc, part: model.part('propeller'), cut: false });
+    model.pickables.push(kin.blur.disc);
+  }
   const cv = stage.renderer.domElement;
   cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, b: e.button }; });
   cv.addEventListener('pointerup', (e) => {
@@ -468,7 +497,9 @@ function tourEnter(s, motion) {
   refreshModes();
   hoverAt = null;
   if (model.setHighlight('hover', null)) stage.needsRender = true;
-  if (isNarrow() && tourSaved.panel) setPanel(false);
+  // the first-person view gets the whole window on every device (review r1 NAV1-06: on desktop the panel kept ~27 %
+  // of it with the build step's text); exit re-opens it
+  if (tourSaved.panel) setPanel(false);
 }
 // a door the tour opens (the airstair stop): animated, closed again on exit unless the user moved it meanwhile
 function tourDoor(k, v, motion = tour.motion) {
@@ -525,7 +556,7 @@ async function demo() {
     if (build.index !== build.n - 1) build.setStep(build.n - 1, { instant: true });
     stage.goTo('three_quarter');
     // engine start: the propeller spools up to ground idle (~12 s, kinematics.js) while the controls are checked
-    setProp({ rpm: PROP_RPM.idle, pitch: 0 }); await w(2.2);
+    setProp({ rpm: PROP_RPM.idle }); await w(2.2);         // (out of feather once it turns: kinematics.js)
     setFlaps(15); await w(1.8);
     for (const [k, v, t] of [['roll', 1, 1.1], ['roll', -1, 1.4], ['roll', 0, 0.8], ['pitch', 1, 1.1], ['pitch', -1, 1.3],
       ['pitch', 0, 0.8], ['yaw', 1, 1.1], ['yaw', -1, 1.3], ['yaw', 0, 0.8]]) { setControls({ [k]: v }); await w(t); }
@@ -545,7 +576,7 @@ async function demo() {
     for (let i = 0; i < 40 && kin.c.rpm > 60; i++) await w(0.5);
     setDoor('door_airstair', 1); setDoor('door_cargo', 1); await w(3.2);
     setDoor('door_airstair', 0); setDoor('door_cargo', 0); await w(3.0);
-    setFlaps(0); setProp({ pitch: 0 });
+    setFlaps(0);                                            // the propeller stays feathered, as parked
     stage.goTo('three_quarter');
   } catch (e) { if (e !== tk) throw e; }
   if (S.demo === tk) stopDemo();
@@ -762,7 +793,9 @@ function wireUI() {
   const manual = () => { if (S.demo) stopDemo(); };
   $('aDemo').addEventListener('click', demo);
   $('aCentre').addEventListener('click', () => { manual(); neutral(); });
-  for (const b of document.querySelectorAll('[data-rpm]')) b.addEventListener('click', () => { manual(); setProp({ rpm: +b.dataset.rpm }); });
+  // Off = shutdown: the propeller goes to feather as it runs down and stays feathered (PT6 / Hartzell; review r1
+  // PR1-04); a start from feather unfeathers once it turns (kinematics.js setProp)
+  for (const b of document.querySelectorAll('[data-rpm]')) b.addEventListener('click', () => { manual(); setProp(shutdownOr(+b.dataset.rpm)); });
   $('sPitch').addEventListener('input', (e) => { manual(); setProp({ pitch: +e.target.value }); });
   $('aReverse').addEventListener('click', () => { manual(); setProp({ pitch: -38 }); });
   $('aFine').addEventListener('click', () => { manual(); setProp({ pitch: 0 }); });
@@ -844,6 +877,9 @@ function toggleHelp(on = $('help').hidden) {
 
 const FLAP_CYCLE = [0, 15, 30, 40];
 const RPM_CYCLE = [0, PROP_RPM.idle, PROP_RPM.cruise, PROP_RPM.max];
+// a propeller speed command: 0 = shut down (feathered: PROP_FEATHER), anything else just the speed
+const PROP_FEATHER = 62;
+function shutdownOr(rpm) { return rpm > 0 ? { rpm } : { rpm: 0, pitch: PROP_FEATHER }; }
 const NON_TEXT_INPUT = /^(range|checkbox|radio|button|submit|reset|color)$/i;
 function onKey(e) {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -884,7 +920,7 @@ function onKey(e) {
     case 'l': case 'L': setLines(!S.lines); break;
     case 'g': case 'G': stopDemo(); setGear(kin.gear.target > 0.5 ? 'down' : 'up'); break;
     case 'f': case 'F': { stopDemo(); const i = FLAP_CYCLE.indexOf(kin.t.flaps); setFlaps(FLAP_CYCLE[(i + 1) % FLAP_CYCLE.length]); break; }
-    case 'p': case 'P': { stopDemo(); const i = RPM_CYCLE.indexOf(kin.t.rpm); setProp({ rpm: RPM_CYCLE[(i + 1) % RPM_CYCLE.length] }); break; }
+    case 'p': case 'P': { stopDemo(); const i = RPM_CYCLE.indexOf(kin.t.rpm); setProp(shutdownOr(RPM_CYCLE[(i + 1) % RPM_CYCLE.length])); break; }
     case 'r': case 'R': reset(); break;
     case '?': toggleHelp(); break;
     case 'Escape':

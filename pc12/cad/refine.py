@@ -8,7 +8,9 @@ from the straight chord -- the cubic edge curve of PN triangles (Vlachos et al. 
     P(1/2) = (Pa + Pb) / 2 - (wab Na + wba Nb) / 8,     wab = (Pb - Pa) . Na,   wba = (Pa - Pb) . Nb
 
 so a flat region keeps its triangles, a tight radius gets many, and the new vertices lie on the smooth surface the
-normals describe (a circle sampled every 22.5 deg: the chord misses the arc by 1.9 % of the radius, the PN midpoint
+normals describe.  A second criterion (turn_deg) splits an edge whose end normals turn more than a few degrees while it
+still bows more than min_sag: a small radius sampled every 30 deg bows only a fraction of a millimetre, but its flat
+facets show in the shading and on the silhouette at the viewer's close range (a circle sampled every 22.5 deg: the chord misses the arc by 1.9 % of the radius, the PN midpoint
 by 0.06 %).  Original vertices never move.  Triangles are split 1 -> 2 / 3 / 4 by the pattern of their split edges,
 so the mesh stays conforming (no T-junctions, no cracks).
 
@@ -81,7 +83,7 @@ def pn_mid_normal(Pa, Pb, Na, Nb):
 
 
 def refine(meshes, tol=0.0001, levels=3, min_len=0.0004, field=None, field_levels=None, field_near=0.5,
-           keep_boundary=False, bow_max=0.001):
+           keep_boundary=False, bow_max=0.001, turn_deg=None, min_sag=2e-5):
     """Refine a group of meshes (list of Mesh; returns new meshes in the same order).
 
     tol         sagitta (m): split an edge whose PN curve bows more than tol from its chord
@@ -96,6 +98,8 @@ def refine(meshes, tol=0.0001, levels=3, min_len=0.0004, field=None, field_level
     bow_max     an edge whose curve would bow more than this is sampled too coarsely for its normals to be trusted
                 (a long flat skid whose end normals carry the chamfer next door would sag through the floor): kept
                 straight
+    turn_deg    also split a bowable edge whose end normals turn more than this (deg) where it bows more than min_sag
+                (m): the facets of small radii (a cushion's rounded rim, a grip, a lip) whatever their sagitta
     """
     meshes = list(meshes)
     field_levels = levels if field_levels is None else field_levels
@@ -115,6 +119,7 @@ def refine(meshes, tol=0.0001, levels=3, min_len=0.0004, field=None, field_level
     cos_dev = np.cos(np.radians(FACE_DEV_DEG))
     cos_fold = np.cos(np.radians(FOLD_DEG))
     cos_turn = np.cos(np.radians(MAX_TURN_DEG))
+    cos_split = None if turn_deg is None else np.cos(np.radians(turn_deg))
 
     for level in range(max(levels, field_levels if field is not None else 0)):
         nf = len(F)
@@ -221,6 +226,11 @@ def refine(meshes, tol=0.0001, levels=3, min_len=0.0004, field=None, field_level
         split = np.zeros(ne, bool)
         if curv_on:
             split |= bowable & (dn > tol)
+            if cos_split is not None:
+                ct = np.sum(Na * Nb, 1)                      # end-normal turn per occurrence; the edge's: the larger
+                c_edge = ct[o1].copy()
+                c_edge[two] = np.minimum(ct[i1], ct[i2])
+                split |= bowable & (c_edge < cos_split) & (dn > min_sag)
         if field_on:
             fv = np.asarray(field(V), float)
             if fv.ndim == 1:

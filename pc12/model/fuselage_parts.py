@@ -301,6 +301,17 @@ def build_skin():
     UV[ic, :, 0] = Xs
     P[ic] = PP.chin_cheek_displace(P[ic])                          # proud chin-inlet lip + cheek (CONS2-01)
     N = grid_normals(P, close_u=False, close_v=True)
+    # the sheared columns: analytic normals of the raised skin S(X, t) (dS/dX x dS/dt at the grid points) -- differences
+    # along the sheared grid lines cross the steep lip face at different heights from one around-line to the next and
+    # tilted the polished lip's normals alternately (review r1 RES1-04: radial streaks round the lip)
+    h, k = 2e-4, 2e-4
+    T = np.broadcast_to(ts[None, :], Xs.shape)
+    Xa, Xb = np.maximum(Xs - h, F.STA["cowl_front"]), Xs + h
+    S_ = lambda X, t: PP.chin_cheek_displace(F.section(X, t % 1.0))     # noqa: E731
+    Na = np.cross(S_(Xb, T) - S_(Xa, T), S_(Xs, T + k) - S_(Xs, T - k))
+    Na /= np.maximum(np.linalg.norm(Na, axis=-1, keepdims=True), 1e-15)
+    Na *= np.sign(np.sum(Na * N[ic], -1, keepdims=True) + 1e-12)
+    N[ic] = Na
 
     def sub(x0, x1):
         i0 = int(np.searchsorted(xs, x0 - 1e-9))

@@ -40,6 +40,7 @@ import math
 
 import numpy as np
 
+from cad import res as _res
 from cad import sdf2d
 from cad.mesh import Mesh, _ear_clip, box, cylinder
 from model import interior as I
@@ -108,9 +109,34 @@ def _subdivide(P, max_len):
     return np.array(out)
 
 
+def _arc_k():
+    """Outline-arc refinement at the model's tessellation quality (cad.res.factor): 1 at PC12_RES=1, 1.5 at 2 -- the
+    corner arcs of the seat / yoke outlines every 15 deg instead of 22.5 (review r1 RES1-03: the polygonal headrest)."""
+    f = _res.factor()
+    return 1.0 if f <= 1.0 else 0.75 * f
+
+
+def _sk_h(h):
+    """Grid spacing of a sheepskin pad's top at the model's tessellation quality: h at PC12_RES=1, h / RES above -- the
+    pads wrap round the shell's edges (_wrap) and at h the wrap took ~60 deg a grid step: a polygonal headrest
+    silhouette (review r1 RES1-03); at h / 2 the refinement smooths the rest."""
+    f = _res.factor()
+    return h if f <= 1.0 else h / f
+
+
+def _rounds(n):
+    """Rim segments of a pillow's 90 deg roundings at the model's tessellation quality: n at PC12_RES=1, RES x n above
+    (3 -> 6: 15 deg a segment; review r1 RES1-01 / 03: at 30 / 45 deg a segment the rims' faces leaned 15-22 deg off
+    their vertex normals -- too coarse for the refinement to trust -- and the cushions read faceted)."""
+    f = _res.factor()
+    return int(n) if f <= 1.0 else int(round(n * f))
+
+
 def fillet(P, r, seg_deg=22.5, max_len=None):
     """Closed polygon P with each corner rounded by radius r (scalar or per vertex, clipped to half the adjacent
-    edges; arcs every seg_deg).  With max_len, straight runs are split so that no segment is longer."""
+    edges; arcs every seg_deg, finer at PC12_RES > 1: _arc_k).  With max_len, straight runs are split so that no
+    segment is longer."""
+    seg_deg = seg_deg / _arc_k()
     P = _dedup(P)
     n = len(P)
     rr = np.broadcast_to(np.asarray(r, float), (n,))
@@ -249,9 +275,42 @@ def _cap(B, h, seams=None):
     face smoothly; otherwise ear clipping.  Repeated points (a corner arc collapsed by the inset) are merged.  seams:
     closed outlines inside the face along which the triangulation must run (a recess / inlay edge): each adds two
     dense rings 0.5 mm either side and clears the grid round it.
-    Returns (triangles CCW: indices < k = boundary points, k.. = interior points G), G."""
+    Returns (triangles CCW: indices < k = boundary points, k.. = interior points G), G.
+    A boundary edge lost by the Delaunay triangulation (a sub-millimetre loop where a finely sampled corner arc folds
+    in the inset) is retried once with boundary points closer than MERGE_TOL to the previous one merged (the cap then
+    skips them; the gap to the rim is that small), before the plain cap."""
+    r = _cap_try(B, h, seams, 1e-7)
+    if r is None and h:
+        r = _cap_try(B, h, seams, min(MERGE_TOL, 0.1 * h))
+    if r is None:
+        _STATS["cap_fallback"] += 1                                    # a boundary edge was lost: plain cap
+        keep = np.linalg.norm(B - np.roll(B, 1, 0), axis=1) > 1e-7
+        return np.nonzero(keep)[0][_ear_clip(B[keep])], np.zeros((0, 2))
+    return r
+
+
+MERGE_TOL = 1.0e-3
+
+
+def _merge_keep(B, tol):
+    """Boundary points kept for a cap: each one further than tol from the previous kept point (and from the first)."""
+    keep = np.zeros(len(B), bool)
+    last = None
+    for i, p in enumerate(B):
+        if last is None or np.linalg.norm(p - last) > tol:
+            keep[i] = True
+            last = p
+    while tol > 1e-7 and keep.sum() > 3:
+        j = np.nonzero(keep)[0][-1]
+        if np.linalg.norm(B[j] - B[np.nonzero(keep)[0][0]]) > tol:
+            break
+        keep[j] = False
+    return keep
+
+
+def _cap_try(B, h, seams, tol):
     n = len(B)
-    keep = np.linalg.norm(B - np.roll(B, 1, 0), axis=1) > 1e-7
+    keep = np.linalg.norm(B - np.roll(B, 1, 0), axis=1) > 1e-7 if tol <= 1e-7 else _merge_keep(B, tol)
     idx = np.nonzero(keep)[0]
     Bu = B[keep]
     nu = len(Bu)
@@ -282,7 +341,7 @@ def _cap(B, h, seams=None):
         edges = {tuple(sorted(x)) for tt in tri for x in ((tt[0], tt[1]), (tt[1], tt[2]), (tt[2], tt[0]))}
         if all(tuple(sorted((k, (k + 1) % nu))) in edges for k in range(nu)):
             return np.where(tri < nu, idx[np.minimum(tri, nu - 1)], tri - nu + n), G
-        _STATS["cap_fallback"] += 1                                    # a boundary edge was lost: plain cap
+        return None
     return idx[_ear_clip(Bu)], np.zeros((0, 2))
 
 
@@ -292,7 +351,9 @@ def pillow(outline, t, r, rb=None, h=None, crown=None, fluff=None, n_round=3, ma
     top c = t, rb at the bottom).  With h, the top face is tessellated at spacing h (grid + Delaunay) so that
     crown(a, b, d) can puff it, where d = depth inside the top face's edge in m, and a curved mapping bends it
     smoothly; h_bottom does the same for the bottom face.  fluff(a, b) adds lumpiness.  Returns a Geo in (a, b, c)
-    with piece ids 0 top face, 1 rounded rim, 2 bottom face.  Outline corner radii must be >= r."""
+    with piece ids 0 top face, 1 rounded rim, 2 bottom face.  Outline corner radii must be >= r.  n_round: segments
+    per 90 deg rounding at PC12_RES=1 (more above: _rounds)."""
+    n_round = _rounds(n_round)
     Q = _ccw(outline)
     hs = [x for x in (max_len, h and 1.5 * h, h_bottom and 1.5 * h_bottom) if x]
     if hs:
@@ -585,7 +646,9 @@ def _back_map(db, nb, o=(0.0, 0.0), front=None):
 
 
 def _outline_from_hw(b0, b1, hw_fn, r, nb=10, a_shift=0.0):
-    """Outline (a, b) of a symmetric panel between b0 and b1 whose half-width is hw_fn(b), corners filleted r."""
+    """Outline (a, b) of a symmetric panel between b0 and b1 whose half-width is hw_fn(b), corners filleted r (nb side
+    samples at PC12_RES=1, RES x as many above)."""
+    nb = _rounds(nb)
     m = 2.2 * r                                                  # keep the side samples clear of the corners
     bs = np.r_[b0, np.linspace(b0 + m, b1 - m, max(nb - 2, 1)), b1] if b1 - b0 > 3 * m else np.array([b0, b1])
     hw = hw_fn(bs)
@@ -804,7 +867,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             pp[:, 0] -= SK_FRONT * smoothstep(D - 0.10, D - 0.03, pp[:, 0])
             pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
             sleeves.append(_ccw(pp))
-            g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=0.016, crown=dome(SK_CROWN_SEAT, 0.075),
+            g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.016), crown=dome(SK_CROWN_SEAT, 0.075),
                        fluff=lambda a, b: lump(a, b) + fine(a, b))
             g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
             geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
@@ -888,7 +951,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
                               lambda b: _crew_back_hw(np.minimum(b, L_s - 0.004), 0.004), 0.03)
         lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
         fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0))
-        g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=0.021, crown=dome(SK_CROWN_BACK, 0.06),
+        g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, 0.06),
                    fluff=lambda a, b: lump(a, b) + fine(a, b))
         g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))
         back.append(_mats(g.map(lambda V: bmap(V - [0, 0, apex])), M_SHEEP))
@@ -1038,7 +1101,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         if sk:
             f_amp = 0.0012                                   # fleece lumps: the outline wiggles 1.6 x this
             pl = rrect(piv[0] - 0.012, s0 + 0.0025, piv[0] + al - 0.028, s1 - 0.0025, 0.02)
-            g = pillow(pl, 0.0095, 0.0045, 0.003, h=0.03, crown=dome(0.0025, 0.02), fluff=fleece(f_amp, 3))
+            g = pillow(pl, 0.0095, 0.0045, 0.003, h=_sk_h(0.03), crown=dome(0.0025, 0.02), fluff=fleece(f_amp, 3))
             z0 = piv[1] + ar - sk_top - 0.001                            # 1 mm into the shell's top
         else:
             pl = rrect(piv[0] - 0.012, s0 - 0.004, piv[0] + al - 0.028, s1 + 0.004, 0.02)

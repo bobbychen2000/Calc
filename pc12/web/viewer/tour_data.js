@@ -11,22 +11,23 @@ export const TOUR = {
   "stand_eye": 2.609,
   "crouch_min": 2.209,
   "stops": [
-    {"id": "pilot", "label": "Pilot seat", "fov": 74.0, "note": "Left seat at the design eye (sheet L6)", "eye": [4.1197, -0.375, 2.338], "target": [3.189, -0.375, 1.9722], "via": [[4.2797, -0.05, 2.418]], "approach": "nose", "src": "interior.design_eye (50th-pct seated eye, neutral seat); build.cockpit_camera look point"},
-    {"id": "copilot", "label": "Co-pilot seat", "fov": 74.0, "note": "Right seat at the design eye (sheet L6)", "eye": [4.1197, 0.375, 2.338], "target": [3.189, 0.375, 1.9722], "via": [[4.2797, 0.05, 2.418]], "approach": "nose", "src": "interior.design_eye (50th-pct seated eye, neutral seat); build.cockpit_camera look point"},
+    {"id": "pilot", "label": "Pilot seat", "fov": 74.0, "note": "Left seat at the design eye (sheet L6)", "eye": [4.1197, -0.375, 2.338], "target": [3.189, -0.375, 1.9722], "via": [[4.1697, -0.05, 2.338], [4.49, -0.05, 2.418]], "approach": "nose", "src": "interior.design_eye (50th-pct seated eye, neutral seat); build.cockpit_camera look point"},
+    {"id": "copilot", "label": "Co-pilot seat", "fov": 74.0, "note": "Right seat at the design eye (sheet L6)", "eye": [4.1197, 0.375, 2.338], "target": [3.189, 0.375, 1.9722], "via": [[4.1697, 0.05, 2.338], [4.49, 0.05, 2.418]], "approach": "nose", "src": "interior.design_eye (50th-pct seated eye, neutral seat); build.cockpit_camera look point"},
     {"id": "fd_cabin", "label": "Flight deck from the cabin", "fov": 70.0, "note": "In the divider opening, between the crew seats", "eye": [4.621, 0.0, 2.509], "target": [3.5, 0.0, 2.0], "via": [], "approach": "door", "src": "DIVIDER x_aft / open_bl, interior.mfd_centre"},
-    {"id": "cabin_fwd", "label": "Cabin, looking forward", "fov": 70.0, "note": "Aft end of the aisle, toward the flight deck", "eye": [9.05, 0.0, 2.609], "target": [3.971, 0.0, 2.209], "via": [], "approach": "door", "src": "BAGGAGE partition_x, DIVIDER x_aft, CABIN height"},
-    {"id": "cabin_aft", "label": "Cabin, looking aft", "fov": 70.0, "note": "From the divider, down the aisle", "eye": [4.791, 0.0, 2.609], "target": [9.25, 0.0, 2.109], "via": [], "approach": "door", "src": "DIVIDER x_aft, BAGGAGE partition_x / bar_h"},
+    {"id": "cabin_fwd", "label": "Cabin, looking forward", "fov": 70.0, "note": "Aft end of the aisle, toward the flight deck", "eye": [8.85, 0.0, 2.609], "target": [3.971, 0.0, 2.209], "via": [], "approach": "door", "src": "BAGGAGE partition_x, DIVIDER x_aft, CABIN height"},
+    {"id": "cabin_aft", "label": "Cabin, looking aft", "fov": 70.0, "note": "From the divider, down the aisle", "eye": [4.891, 0.0, 2.609], "target": [9.25, 0.0, 2.109], "via": [], "approach": "door", "src": "DIVIDER x_aft, BAGGAGE partition_x / bar_h"},
     {"id": "club", "label": "Club seats", "fov": 70.0, "note": "PAX 3's seat in the club four, facing forward", "eye": [7.1269, -0.4, 2.4117], "target": [5.787, 0.1, 2.159], "via": [[7.1269, -0.05, 2.5117]], "approach": "door", "src": "seat_map 'PAX 3' / 'PAX 2', cabin_pose (50th pct)"},
-    {"id": "airstair", "label": "Airstair entry", "fov": 70.0, "doors": {"door_airstair": 1}, "note": "Standing in the open airstair door", "eye": [4.93, -0.55, 2.474], "target": [6.776, 0.3, 2.209], "via": [[4.97, -0.33, 2.474], [5.07, -0.05, 2.559]], "approach": "door", "src": "fuselage_parts.AIRSTAIR (cx, hz), DOOR_SILL_WL"}
+    {"id": "airstair", "label": "Airstair door", "fov": 70.0, "doors": {"door_airstair": 1}, "note": "In the open door, looking down the steps", "eye": [4.97, -0.55, 2.474], "target": [4.8107, -1.1447, 1.686], "via": [[4.97, -0.33, 2.474], [5.07, -0.05, 2.559]], "approach": "door", "src": "fuselage_parts.AIRSTAIR (cx, hz), DOOR_SILL_WL; heading AIRSTAIR_LOOK [E]"}
   ],
   "approach": {
     "nose": {"eye": [1.8197, 0.0, 2.638], "target": [4.1197, 0.0, 2.288], "note": "ahead of the windshield (both crew seats)"},
     "door": {"eye": [5.17, -2.9, 2.409], "target": [4.97, -0.8, 2.109], "note": "abeam the airstair door, port side"}
   },
   "regions": [
-    {"id": "flight_deck", "label": "flight deck", "x": [3.9, 4.621], "y": [-0.1, 0.1], "z": [2.209, 3.259], "ceil": true, "src": "CREW_SEAT bl / head_hwt, DIVIDER open_bl; forward to the overhead panel (OVERHEAD x), over the pedestal (aft end 4.150, top 0.30 above the floor)"},
-    {"id": "aisle", "label": "aisle", "x": [4.531, 9.13], "y": [-0.1, 0.1], "z": [2.209, 3.259], "ceil": true, "src": "EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain)"},
-    {"id": "vestibule", "label": "entry vestibule", "x": [4.671, 5.22], "y": [-0.45, 0.0], "z": [2.209, 3.259], "ceil": true, "src": "CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft .. CABINETS lh x0"},
+    {"id": "flight_deck", "label": "flight deck", "x": [4.45, 4.621], "y": [-0.1, 0.1], "z": [2.209, 2.529], "ceil": true, "src": "CREW_SEAT bl / head_hwt, DIVIDER open_bl; forward to 0.30 aft of the pedestal (PEDESTAL x aft end 4.150), between the seat backs"},
+    {"id": "crew_gap", "label": "between the crew seats", "x": [4.0397, 4.47], "y": [-0.1, 0.1], "z": [2.258, 2.458], "ceil": true, "zw": 1.0, "src": "interior.design_eye (seated eye height), CREW_SEAT bl / head_hwt: out of a crew seat"},
+    {"id": "aisle", "label": "aisle", "x": [4.531, 8.85], "y": [-0.1, 0.1], "z": [2.209, 3.259], "ceil": true, "src": "EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain) - WALL_CLEAR"},
+    {"id": "vestibule", "label": "entry vestibule", "x": [4.871, 5.22], "y": [-0.45, 0.0], "z": [2.209, 3.259], "ceil": true, "src": "CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft + DIVIDER_CLEAR .. CABINETS lh x0"},
     {"id": "doorway", "label": "airstair doorway", "when": "door_airstair", "x": [4.765, 5.175], "y": [-0.7, -0.3], "z": [2.204, 2.524], "ceil": false, "src": "fuselage_parts.AIRSTAIR clear opening (cx, hx, hz), DOOR_SILL_WL; open door only"},
     {"id": "seat_pilot", "label": "pilot", "x": [4.0397, 4.2197], "y": [-0.425, -0.06], "z": [2.258, 2.458], "ceil": true, "src": "interior.design_eye, CREW_SEAT bl"},
     {"id": "seat_copilot", "label": "co-pilot", "x": [4.0397, 4.2197], "y": [0.06, 0.425], "z": [2.258, 2.458], "ceil": true, "src": "interior.design_eye, CREW_SEAT bl"},

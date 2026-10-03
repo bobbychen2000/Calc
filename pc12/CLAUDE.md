@@ -3,11 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.63M tris of which the interior ~387k, ~44 MB
+engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.11M tris of which the interior ~527k, ~35 MB
 incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review: ~1.53M tris, interior ~237k, three wheels ~77k, ~22 MB, 8-bit normals; phones and the no-WebAssembly fallback
-load it), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
+review: ~1.53M tris, interior ~237k, three wheels ~77k, ~26 MB, 16-bit normals too; phones and the no-WebAssembly
+fallback load it, the Specs panel offers the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
 exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
 --, L6 / L6B the interior arrangement and its checks),
@@ -46,13 +46,13 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~23 min, 140 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~30 min, 145 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot timeout); [T1]-[T11] the interior tour
 python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLBs (both tiers; the build's own
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~54 MB: meshopt 17 + 8 MB, gzip of the light tier 12 MB, as base64 text parts)
+                                #   (~57 MB: meshopt 14 + 10 MB, gzip of the light tier 15 MB, as base64 text parts)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
                                 # interior renders (Blender / Cycles; cameras of the photo presets fitted in
@@ -114,12 +114,18 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   The round primitives (revolve, disk, circle2d / sweep_tube, superellipsoid, cylinder) take their segment count
   through `cad.res.seg` (up to RES x the builder's n where the chord sagitta exceeds 0.04 mm; n < 8 = polygons by
   design, kept), so a builder that relies on a primitive's vertex count must not assume n.
-- `cad/res.py` the ONE tessellation-quality setting `PC12_RES` (env; default 2, 1 = the judged grids): seg() above,
-  the refinement tolerances per viewing class (exterior 0.10 mm sagitta, interior 0.15 mm, hidden engine modules 1 mm;
-  bow ceilings 1 / 0.5 mm), triangle budgets in proportion (`budget()`: x1.75 at RES 2 -- `build.INTERIOR_BUDGET`,
-  `wheels.TRI_BUDGET`), 16-bit GLB normals at RES > 1 (`normal_bits()`: 8-bit normals broke the studio's reflected
-  streaks on the clear-coated paint into stairs).  `cad/refine.py` curvature-adaptive refinement: an edge is split where
-  the PN-triangle cubic through its end points / normals bows more than the tolerance (the new vertex on that curve:
+- `cad/res.py` the ONE tessellation-quality setting `PC12_RES` (env; default 2, 1 = the judged grids): seg() above
+  (not inside `res.coarse()`: the hidden engine modules, mount and firewall keep their own grids and are not refined),
+  `res.factor()` for builders whose own grids were coarse where it shows (1 at RES 1, RES above: the seats' pillow rims
+  `seats._rounds`, outline arcs `_arc_k`, sheepskin pad grids `_sk_h`, back outline samples; the chin-inlet duct entry
+  rings `powerplant._densify_rings`), the refinement settings per viewing class (silhouette sagitta exterior 0.30 mm /
+  interior 0.35 mm, facet turn 20 deg above 0.03 / 0.02 mm of bow, bow ceilings 6 / 1 mm -- interior 1 mm: at 4 mm a
+  crew seat's base plate bowed 1.4 mm into the floor), triangle budgets in proportion (`budget(n, scale)`: x1.75 at
+  RES 2 -- `wheels.TRI_BUDGET`; `build.INTERIOR_BUDGET` total x2.2, crew seat x3.4, cabin seat x2.9), 16-bit GLB
+  normals in both tiers (`normal_bits()`: 8-bit normals broke the studio's reflected streaks on the clear-coated paint
+  and the cockpit side windows into stairs -- the visible part of the first upgrade, review r1 RES1-02).
+  `cad/refine.py` curvature-adaptive refinement: an edge is split where the PN-triangle cubic through its end points /
+  normals bows more than the tolerance, or its end normals turn more than `turn_deg` (the new vertex on that curve:
   the smooth surface between two samples of the analytic one; original vertices never move); conforming 1->2/3/4
   splits across all meshes of a part (welded by position, so paint / patch boundaries stay watertight); open boundaries,
   creases / folds, flat faces carrying corner-averaged normals, kinked profiles drawn with averaged normals (an S in an
@@ -165,8 +171,8 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   the cabin floor + runner + tracks `cabin_floor` and the club tables are children of `cabin_interior`; side-wall /
   headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
   `interior.lining_offset` -- with window reveals and lined door wells; frames at the Pilatus frame stations;
-  interior triangles are budgeted in `build.INTERIOR_BUDGET` (250k, crew seat 14k, cabin seat 12k at PC12_RES=1; x1.75
-  at RES 2: 437.5k / 24.5k / 21k, built 387k / 18.2k / 15.8k) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
+  interior triangles are budgeted in `build.INTERIOR_BUDGET` (250k, crew seat 14k, cabin seat 12k at PC12_RES=1; at
+  RES 2: 550k / 47.6k / 34.8k, built 527k / 45.6k / 34.8k) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
   eye),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
@@ -322,12 +328,21 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   table's `render_stripes` (cabin carpet) become a band-limited pinstripe patch, and the carpets get an occlusion
   stand-in (VIEWER envMapIntensity 0.45: unoccluded, the studio washed the AI Orange runner out to pale peach); two
   model tiers: the boot script loads `PC12_CONFIG.glbLow` (out/pc12_low.glb) on the 'low' quality tier (phones) as it
-  picks the 512 px HDRI, the full model elsewhere (?glb= overrides both); the Specs panel and the part cards count the
-  tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the light tier).
+  picks the 512 px HDRI, the full model elsewhere (?glb= overrides both); there the Specs panel's detail switch loads
+  the full model instead (?detail=full|light, remembered in localStorage 'pc12-detail'; review r1 RES1-02); the Specs
+  panel and the part cards count the tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the light tier).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
-  `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.63M triangles where the curvature and the paint edges need them,
-  16-bit normals, crack-free shared quantisation grids, finer round primitives; the shape is the approved one (10
+  `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.11M triangles where facets show, 16-bit normals, crack-free shared
+  quantisation grids, finer round primitives.  Review r1 (RES1-01..05) re-spent the triangles: the first pass (2.63M)
+  had split every big skin uniformly at 0.10 mm and left the coarse small radii alone (seats 22 % of their area
+  faceted, > 12 deg between face and vertex normals); now the big skins keep their grids (0.30 mm silhouette
+  tolerance, one paint-boundary pass), the turn criterion and the builders' finer rims / arcs / pad grids go to the
+  seats (pax 22 -> 2 %, crew 18 -> 5 %), yokes (26 -> 8 %), pedals, braces, the chin inlet (27 -> 7 %: analytic
+  normals on the sheared lip columns, `fuselage_parts.build_skin`, which took the radial streaks out; a denser duct
+  entry), the blade boots (crisp folds); still faceted by that metric: the strakes, flap fairings / canoes (their
+  flattened tops under the skin), the rudder / rudder tab (trim slivers, the ruled top), the nose-gear tyre grooves.
+  The shape is the approved one (10
   dimension checks, consistency sheets, fit_check unchanged in tolerance).  Two consistency rows were made independent
   of the vertex spacing (no tolerance changed): the tyre side silhouette is taken along the mesh edges (a refined
   sidewall put vertices at clock angles where the tread had none), the fin / rudder slices sit 0.1 mm above their
@@ -338,23 +353,33 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   The toolbar's first group is an accent 'Go inside' menu button (also key I; the 'Cockpit' preset button / key 5 now
   enter at the pilot seat) opening a menu of 7 stops -- pilot / co-pilot seat (L6 design eye = pc12_meta 'cockpit'),
   flight deck from the cabin (divider opening), cabin forward / aft (standing, eye 1.35 above the floor), club seats
-  (PAX 3's 50th-pct seated eye), airstair entry (in the open door; the tour opens it) -- with flights: outside, an
+  (PAX 3's 50th-pct seated eye), airstair door (in the open door looking down the steps; the tour opens it) -- with
+  flights: outside, an
   orbit round the fuselage to an approach pose, a fade through the skin and a FOV settle; inside, a Catmull-Rom path
   stop -> via -> aisle -> via -> stop (looking along the aisle only when both ends do).  Inside, a first-person camera
   (OrbitControls off, near plane 1 cm): drag / one finger looks (grab the scene), W A S D / arrows walk and turn, Q E /
   PgUp PgDn the eye height, R F pitch, wheel / pinch / two-finger drag move, 1-7 stops, Esc exits; an on-screen walk
-  pad, a dismissable hint, a screen-reader live region.  The eye is projected after every move onto the walkable
+  pad (touch only: hidden for a fine pointer until a touch), a dismissable hint, a screen-reader live region; the
+  panel folds away inside on every device (exit re-opens it).  The eye is projected after every move onto the walkable
   volume of `web/viewer/tour_data.js` -- GENERATED by `python3 web/tour_data.py` from model/interior.py (seat_map,
   design_eye, cabin_pose, DIVIDER, CABINETS, BAGGAGE, CLEAR_ZONES, headliner_z / lining_crown + OVERHEAD) and
-  fuselage_parts.AIRSTAIR: boxes (flight deck between the seats, aisle, entry vestibule, the doorway while the airstair
-  is open, a pocket per seated eye) under a ceiling grid held 0.10 below the headliner / lining; height weighs 0.1 in
-  the projection, so a walk dips under the soffit / into a seat instead of stopping, and the kept eye height comes
-  back (0.6 m/s) once there is room.  Inside, the cabin keeps the light theme's studio and exposure in both themes
-  (`Stage.setInteriorLook`; the dark studio left the headliner near black) and is lit as inside wherever the eye is
-  (`Model.updateCabin` forceInside).  Exit (button / Esc / a camera preset / another build step) restores what the tour
+  fuselage_parts.AIRSTAIR: boxes (flight deck between the seat backs from 0.30 aft of the pedestal, eye <= 1.27 above
+  the floor; `crew_gap` between the crew seats at the seated eye height, the way out of a crew seat, height weight 1;
+  aisle; entry vestibule; the doorway while the airstair is open; a pocket per seated eye) under a ceiling grid held
+  0.10 below the headliner / lining; a walk's end facing a full-height wall stops WALL_CLEAR 0.40 short of it (the
+  divider 0.30); height weighs 0.1 in the projection, so a walk dips under the soffit / into a seat instead of
+  stopping, and the kept eye height comes back (0.6 m/s) once there is room; a sidestep held by the aisle edge within
+  0.5 m of a seat slides into it.  Review r1 (NAV1-01..07): the forward walk had ended over the pedestal in the
+  glareshield, the aft one 12 cm from the curtain (a full-screen smear), the airstair stop looked into the jamb.
+  Portrait phones: vertical FOV <= 85 and the optical axis 40 % down the view (`Stage.setViewShift`, an off-axis
+  window).  Inside, the cabin keeps the light theme's studio in both themes, +0.6 EV (`LOOK.interiorEV`) with the
+  cabin light `CABIN.inside` 1.0 (headliner ~190 / 255; at +1 EV AgX greyed the whole cabin) (`Stage.setInteriorLook`;
+  the dark studio left the headliner near black) and is lit as inside wherever the eye is (`Model.updateCabin`
+  forceInside).  Exit (button / Esc / a camera preset / another build step) restores what the tour
   changed: build step, cutaway, X-ray, explode, isolate, construction lines, the phone sheet, the door it opened.
   test/viewer_test.py [T1]-[T11] check it (data current, every stop from the menu with ray / table clearances and
-  exposure, walk clamps, keyboard / pointer / touch, flights, exit, phone, dark theme).
+  exposure, walk clamps incl. the walk ends' distance to the flight deck / curtain [T5b] and the seat sidestep,
+  keyboard / pointer / touch, flights, exit, phone, dark theme; [T4b] the headliner).
 - Viewer propeller in motion (owner 2026-10-03: "the propeller spinning doesn't look too real"; `web/viewer/propblur.js`,
   viewer only, no GLB change): once the blades turn more than a few degrees a frame they cross-fade into a prop disc
   (child of the spinning `propeller` node, plane of rotation on the pivot's thrust axis) whose shader draws the
@@ -364,10 +389,16 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   >= 2.5 frame steps, so the blades never alias; at ~290 rpm (60 fps) the pattern is the averaged disc (coverage ~20 %
   mid-span, faint white-tip / red-band rings, alpha mapped for three's display-space blend), plus a faint ghost of the
   smear that only ever moves forward (<= 0.4 blade spacing a frame); lit by the scene with the passing blade face's
-  normal; the root boots blur on a band 1.5 mm outside the chrome spinner.  Spool (`kinematics.js` PROP_RPM / _spool,
-  viewer estimate): start to ground idle 1,000 rpm ~12 s, governed 1,000 <-> 1,550 (low-speed mode) / 1,700 (max)
-  ~3 s, shutdown run-down ~15-18 s.  viewer_test `prop_blur_checks` covers the fade / sweep / ghost / axis / modes /
-  spool / pixel see-through.
+  normal; the root boots blur on a band 1.5 mm outside the chrome spinner (its meridian a least-squares quadratic
+  through the spinner's, normals from the fit).  Review r1 (PR1-01..04): the faded blades and boots are hidden as
+  meshes (`mr.blurHidden`, kept by `Model.updateVisibility`), so they are never picked and their highlight overlays
+  are not drawn; the disc is picked as 'propeller' and takes the selection / hover highlight as a tint (`uPbTint`);
+  once the blur is complete the chrome spinner is held still against the spin (axisymmetric under the band; turning,
+  its facets re-sampled the studio every frame and twinkled).  Spool (`kinematics.js` PROP_RPM / _spool, viewer
+  estimate): start to ground idle 1,000 rpm ~12 s, governed 1,000 <-> 1,550 (low-speed mode) / 1,700 (max) ~3 s,
+  shutdown run-down ~15-18 s; Off (and P cycling to 0) feathers the propeller (62 deg) as it runs down, it stays
+  feathered parked (the demo ends so), and a start from feather unfeathers once it turns 300 rpm.  viewer_test
+  `prop_blur_checks` covers the fade / sweep / ghost / axis / modes / spool / pixel see-through and [PR1-01/03/04].
 - Final judge r1 fixes, MODELLING only (2026-10-03; the owner put Blender on hold until the model is signed off, so
   the r1 render-stage changes -- airfield backplate / terrain, wheel close-up catcher, beauty preset tweaks -- stay
   parked on local branch `wip/final-fix-r1-partial`): G3000 PRIME pages in the GLB (above;

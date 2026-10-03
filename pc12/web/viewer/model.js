@@ -160,6 +160,7 @@ export class Model {
     this.overlays = { sel: [], hover: [] };
     this.selected = null;
     this.hovered = null;
+    this.blurFade = 0;                // the propeller blur's fade (propblur.js), for the blade overlays
     this.groundY = 0;                 // ground drop needed so exploded parts stay above the grid
     this.camInside = false;           // camera inside the closed cabin (updateCabin)
 
@@ -411,7 +412,8 @@ export class Model {
       if (shown && p.id === 'structure') shown = this.structureOn;
       if (shown && this.camInside && CABIN_HIDDEN.has(p.id)) shown = false;
       p.shown = shown;
-      for (const mr of p.meshes) mr.mesh.visible = shown;
+      // (a blade faded into the spinning propeller's blur disc stays hidden: propblur.js mr.blurHidden)
+      for (const mr of p.meshes) mr.mesh.visible = shown && !mr.blurHidden;
     }
   }
 
@@ -469,6 +471,14 @@ export class Model {
     }
   }
 
+  // the spinning propeller: the highlight overlays of its blades / boots show while the blades do (below half the
+  // fade into the blur disc); the disc takes the highlight as a tint above it (propblur.js)
+  syncBlurOverlays() {
+    for (const kind of ['sel', 'hover']) {
+      for (const o of this.overlays[kind]) if (o.userData.mr.blurFade) o.visible = !(this.blurFade >= 0.5);
+    }
+  }
+
   setHighlight(kind, id) {
     const cur = kind === 'sel' ? this.selected : this.hovered;
     if (cur === id) return false;
@@ -483,6 +493,7 @@ export class Model {
           for (const ghost of layers) {
             const o = new THREE.Mesh(mr.mesh.geometry, this.ov.sel);
             o.userData = { mr, ghost };
+            if (mr.blurFade) o.visible = !(this.blurFade >= 0.5);
             o.raycast = noRaycast;
             o.renderOrder = ghost ? 10 : 5;
             o.castShadow = false;

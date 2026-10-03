@@ -20,8 +20,15 @@
 //          the normal of the blade face that passes each point (so the stationary glints of a real disc), a clone of the
 //          blade material (same specular / environment response), double-sided, depth-tested, no depth write.
 //   band   the five black boots round the blade roots on the chrome spinner, blurred the same way on a surface of
-//          revolution 1.5 mm outside the spinner (profile sampled from the chrome mesh), so nothing on the spinner
-//          strobes either; the spinner itself keeps turning as geometry.
+//          revolution 1.5 mm outside the spinner (profile sampled from the chrome mesh and smoothed by a quadratic fit,
+//          normals from the fit: the raw samples gave stair-stepped reflections), so nothing on the spinner strobes
+//          either; once the blur is complete the chrome spinner is held still against the spin (it is axisymmetric under
+//          the band: its tessellation re-sampling the studio every frame made the highlights twinkle, review r1 PR1-03).
+//
+// Hidden, not just transparent: the faded blades and boots are hidden as meshes (mesh.visible, Model.updateVisibility
+// keeps it via mr.blurHidden), so neither picking nor the selection / hover overlays (children of the meshes) see
+// them (review r1 PR1-01: a hover over the disc drew one sharp blade at the true spin angle); the disc is picked as
+// 'propeller' instead and shows the highlight as a tint (uPbTint) while the propeller is selected / hovered.
 //
 // Anti-aliasing in time: the sweep is S = min(P, max(w T_eye, 2.5 w dt)) (P = 72 deg, dt = the smoothed frame time,
 // T_eye = 1/40 s): the smear always spans at least 2.5 frame steps, so the blades never jump more than 40 % of their
@@ -72,6 +79,7 @@ uniform sampler2D uPbH;    // support function h(r, phi): s = radius, t = direct
 uniform sampler2D uPbC;    // per radius: row 0 albedo + metalness, row 1 roughness, chord angle
 uniform vec4 uPbRad;       // data radius range R0, R1, radial push (explode), -
 uniform vec3 uPbCam;       // camera position in the propeller frame
+uniform vec4 uPbTint;      // highlight (selected / hovered propeller): colour, strength
 varying vec3 vPbN0, vPbN1, vPbN2;
 `;
 
@@ -121,7 +129,10 @@ function patchDisc(mat, uni) {
   vec4 pbC1 = texture2D(uPbC, vec2(pbS, 0.75));
   // three blends after tone mapping and the sRGB encoding: the alpha that makes that blend the linear-light average
   // of blade and background over the exposure (a coverage c would darken ~twice as much)
-  diffuseColor = vec4(pbC0.rgb, (1.0 - pow(1.0 - clamp(pbCov, 0.0, 1.0), 0.4545)) * uPbBlur.w);`)
+  diffuseColor = vec4(pbC0.rgb, (1.0 - pow(1.0 - clamp(pbCov, 0.0, 1.0), 0.4545)) * uPbBlur.w);
+  // the selection / hover highlight on the whole disc (the overlays of the hidden blades are not drawn)
+  diffuseColor.rgb = mix(diffuseColor.rgb, uPbTint.rgb, uPbTint.a);
+  diffuseColor.a += (1.0 - diffuseColor.a) * uPbTint.a * 0.45 * uPbBlur.w;`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = pbC1.x;')
       .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n  metalnessFactor = pbC0.a;')
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
@@ -160,7 +171,7 @@ function patchBand(mat, uni) {
   // by the fraction of time the chrome is there, plus the boots' faint dielectric sheen
   diffuseColor.rgb = mix(diffuseColor.rgb, uPbBoot, pbCov);
   // opaque wherever a boot passes (it hides the turning boots and their cut-outs), clear where none does
-  diffuseColor.a = uPbBlur.w * smoothstep(0.0, 0.03, pbW);`)
+  diffuseColor.a = uPbBlur.w * smoothstep(0.0, 0.06, pbW);`)
 
   };
   mat.customProgramCacheKey = () => 'pc12:propband';
@@ -361,6 +372,7 @@ export class PropBlur {
       uPbRad: { value: new THREE.Vector4(sec.r0, sec.r1, 0, 0) },
       uPbCam: { value: new THREE.Vector3() },
       uPbScale: { value: 1 },
+      uPbTint: { value: new THREE.Vector4(0, 0, 0, 0) },
     };
     patchDisc(discMat, this.discU);
     const disc = (this.disc = new THREE.Mesh(this._discGeometry(DISC_IN, this.outerR, 160), discMat));
@@ -385,6 +397,14 @@ export class PropBlur {
       m.visible = false;
       prop.node.add(m);
     }
+    // the disc stands for the propeller in picking once the blades have faded into it (main.js maps it to the part)
+    disc.raycast = (rc, hits) => { if (this.fade >= 0.5) THREE.Mesh.prototype.raycast.call(disc, rc, hits); };
+    // the chrome spinner, held still against the spin once the blur is complete (PR1-03)
+    // (the mesh's own local transform -- KHR_mesh_quantization's offset and scale -- is premultiplied by the inverse
+    // spin, position included, so the spinner stays put about the node's origin on the thrust axis)
+    this.still = prop.meshes.filter((mr) => mr.base.name === 'chrome')
+      .map((mr) => ({ mesh: mr.mesh, q0: mr.mesh.quaternion.clone(), p0: mr.mesh.position.clone() }));
+    this._q = new THREE.Quaternion();
 
     // the solid blades (and boots) fade out: own material clones (the red band is shared with the airstair door)
     this.fadeMats = [];
@@ -395,8 +415,11 @@ export class PropBlur {
       mr.base = c;
       mr.mesh.material = c;
     };
-    for (const bl of this.blades) for (const mr of bl.meshes) own(mr);
-    for (const mr of bootMr) own(mr);
+    this.fadeRecs = [];
+    for (const bl of this.blades) for (const mr of bl.meshes) { own(mr); this.fadeRecs.push(mr); }
+    for (const mr of bootMr) { own(mr); this.fadeRecs.push(mr); }
+    for (const mr of this.fadeRecs) mr.blurFade = true;
+    this.tint = { sel: new THREE.Color(0x1d7bff), hover: new THREE.Color(0xffb020) };
 
     this.dt = 1 / 60;            // smoothed frame time
     this.ghostPhase = 0;         // absolute phase of the ghost pattern (rad)
@@ -458,22 +481,36 @@ export class PropBlur {
     }
     // spinner profile: largest chrome radius per axial station over the band
     const chrome = partVerts(this.prop, (mr) => mr === chromeMr);
-    const NB = 24, zb0 = z0 - 0.004, zb1 = z1 + 0.004;
-    const rmax = new Float32Array(NB + 1).fill(0);
+    // the spinner's meridian over the band: the largest chrome radius per axial bin (the bins hold the spinner's own
+    // rows and the cut-out rims), then a least-squares quadratic r(z) through them -- smooth reflections, normals from
+    // its slope (review r1 PR1-02: 25 raw samples gave a scalloped, stair-stepped band)
+    const NB = 48, zb0 = z0 - 0.004, zb1 = z1 + 0.004;
+    const NS = 24, rs = new Float32Array(NS + 1).fill(0);
     for (const m of chrome) for (let i = 0; i < m.xyz.length; i += 3) {
       const x = m.xyz[i], y = m.xyz[i + 1], z = m.xyz[i + 2];
       const ax = x * a.x + y * a.y + z * a.z;
-      const k = Math.round((ax - zb0) / (zb1 - zb0) * NB);
-      if (k < 0 || k > NB || Math.abs(ax - (zb0 + k * (zb1 - zb0) / NB)) > 0.003) continue;
+      const k = Math.round((ax - zb0) / (zb1 - zb0) * NS);
+      if (k < 0 || k > NS || Math.abs(ax - (zb0 + k * (zb1 - zb0) / NS)) > 0.003) continue;
       const r = Math.hypot(x * e1.x + y * e1.y + z * e1.z, x * e2.x + y * e2.y + z * e2.z);
-      if (r > rmax[k]) rmax[k] = r;
+      if (r > rs[k]) rs[k] = r;
     }
-    for (let k = 0; k <= NB; k++) if (!rmax[k]) rmax[k] = rmax[k - 1] || 0.24;
+    // normal equations of r = c0 + c1 u + c2 u^2, u = (z - zm) / h
+    const zm = 0.5 * (zb0 + zb1), hz = 0.5 * (zb1 - zb0), A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], bv = [0, 0, 0];
+    for (let k = 0; k <= NS; k++) {
+      if (!rs[k]) continue;
+      const u = (zb0 + k * (zb1 - zb0) / NS - zm) / hz, ph = [1, u, u * u];
+      for (let i = 0; i < 3; i++) { bv[i] += ph[i] * rs[k]; for (let j = 0; j < 3; j++) A[i][j] += ph[i] * ph[j]; }
+    }
+    const det3 = (M) => M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) +
+      M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+    const D = det3(A);
+    const cf = [0, 1, 2].map((c) => (Math.abs(D) > 1e-12 ? det3(A.map((row, i) => row.map((v, j) => (j === c ? bv[i] : v)))) / D : 0));
+    if (!(Math.abs(D) > 1e-12)) cf[0] = Math.max(...rs) || 0.24;
+    const rFit = (z) => { const u = (z - zm) / hz; return cf[0] + cf[1] * u + cf[2] * u * u; };
+    const dFit = (z) => { const u = (z - zm) / hz; return (cf[1] + 2 * cf[2] * u) / hz; };
     const SEG = 160, pos = [], nrm = [], idx = [];
     for (let k = 0; k <= NB; k++) {
-      const z = zb0 + k * (zb1 - zb0) / NB, r = rmax[k] + BAND_OFF;
-      const kk = Math.min(NB, Math.max(0, k)), dr = (rmax[Math.min(NB, kk + 1)] - rmax[Math.max(0, kk - 1)]) /
-        ((Math.min(NB, kk + 1) - Math.max(0, kk - 1)) * (zb1 - zb0) / NB);
+      const z = zb0 + k * (zb1 - zb0) / NB, r = rFit(z) + BAND_OFF, dr = dFit(z);
       for (let i = 0; i <= SEG; i++) {
         const t = TAU * i / SEG, c = Math.cos(t), s = Math.sin(t);
         const er = new THREE.Vector3().copy(e1).multiplyScalar(c).addScaledVector(e2, s);
@@ -503,6 +540,7 @@ export class PropBlur {
     patchBand(mat, this.bandU);
     this.band = new THREE.Mesh(g, mat);
     this.band.name = 'prop_blur_band';
+    this.bandFit = { cf, zm, hz };
   }
 
   // radial offset of the blades (explode / build fly-in, m): the disc grows, its data shift outward
@@ -541,15 +579,37 @@ export class PropBlur {
     if (this.band) this.band.visible = f > 0.002;
     this.fadeChanged = f !== this.fade;
     if (f !== this.fade) {
+      const vis = f < 0.998;
       for (const m of this.fadeMats) {
-        const tr = f > 0.002, vis = f < 0.998;
+        const tr = f > 0.002;
         if (m.transparent !== tr) { m.transparent = tr; m.depthWrite = !tr; m.needsUpdate = true; }
         m.opacity = 1 - f;
         m.visible = vis;
       }
+      // hidden as meshes too: not picked, and their highlight overlays (children) not drawn (PR1-01)
+      for (const mr of this.fadeRecs) { mr.blurHidden = !vis; mr.mesh.visible = vis && mr.part.shown; }
       this.fade = f;
+      this.model.blurFade = f;
+      this.model.syncBlurOverlays();
     }
+    // the highlight: on the blades' overlays while they show (Model.syncBlurOverlays), as a tint of the disc after
+    const hl = (id) => !!id && (id === 'propeller' || id.startsWith('blade_'));
+    const T = this.discU.uPbTint.value;
+    if (hl(this.model.selected)) T.set(this.tint.sel.r, this.tint.sel.g, this.tint.sel.b, 0.3);
+    else if (hl(this.model.hovered)) T.set(this.tint.hover.r, this.tint.hover.g, this.tint.hover.b, 0.3);
+    else T.set(0, 0, 0, 0);
+    T.w *= smooth(0.5, 0.7, f);
+    // the chrome spinner held still against the spin once the blur is complete; turning with the propeller below
+    const hold = f >= 0.998;
+    for (const c of this.still) {
+      if (hold) {
+        this._q.setFromAxisAngle(this.frame.a, -propAngle);
+        c.mesh.quaternion.copy(this._q).multiply(c.q0);
+        c.mesh.position.copy(c.p0).applyQuaternion(this._q);
+      } else if (!c.mesh.quaternion.equals(c.q0)) { c.mesh.quaternion.copy(c.q0); c.mesh.position.copy(c.p0); }
+    }
+    this.holding = hold;
     const st = this.state;
-    st.fade = f; st.sweepDeg = sDeg; st.ghost = g; st.visible = this.disc.visible; st.dt = this.dt;
+    st.fade = f; st.sweepDeg = sDeg; st.ghost = g; st.visible = this.disc.visible; st.dt = this.dt; st.still = hold;
   }
 }

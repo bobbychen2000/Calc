@@ -1199,6 +1199,65 @@ async def prop_blur_checks(page):
     check("prop blur: no shadow-map passes while the blurred prop spins", r["shadow"] == 0 and r["renders"] >= 8,
           f"{r['shadow']} shadow renders in {r['renders']} frames")
 
+    # review r1 PR1-01..04: the faded blades are hidden as meshes (never picked, no highlight overlay drawn on them),
+    # the disc is picked as the propeller and tinted while it is selected; the chrome spinner is held still once the
+    # blur is complete; Off feathers the propeller, a start from feather unfeathers once it turns 300 rpm
+    r = await js(page, V + r"""
+      T.neutral(); V.panel(false); V.setCamera({pos: [-1.5, 2.25, -0.5], target: [0, 1.7, 1.1], fov: 32}, {instant: true});
+      V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.5);
+      const M = I.model, THREE = I.THREE, cam = I.stage.camera, cv = I.stage.renderer.domElement.getBoundingClientRect();
+      const prop = M.parts.get('propeller').node, picks = {};
+      for (let k = 0; k < 30; k++) {
+        V.advance(1 / 60); prop.updateMatrixWorld(true); cam.updateMatrixWorld();
+        for (const [r, a] of [[0.6, 0.3], [0.9, 2.0], [1.1, 4.1]]) {
+          const f = B.frame, p = new THREE.Vector3().addScaledVector(f.e1, r * Math.cos(a)).addScaledVector(f.e2, r * Math.sin(a))
+            .applyMatrix4(prop.matrixWorld).project(cam);
+          const id = V.pick(cv.left + (p.x + 1) / 2 * cv.width, cv.top + (1 - p.y) / 2 * cv.height);
+          picks[id] = (picks[id] || 0) + 1;
+        }
+      }
+      const hidden = B.fadeRecs.length > 0 && B.fadeRecs.every((mr) => !mr.mesh.visible);
+      V.select('blade_2', {frame: false}); V.advance(1 / 60);
+      const ovl = M.overlays.sel.filter((o) => o.userData.mr.blurFade);
+      const drawn = ovl.filter((o) => o.visible && o.parent && o.parent.visible).length;
+      const tint = B.discU.uPbTint.value.w;
+      V.select(null); V.advance(1 / 60);
+      const tint0 = B.discU.uPbTint.value.w;
+      // the chrome's world matrix (rotation, the quantisation scale and offset) unchanged frame to frame: the largest
+      // displacement of its bounding-box corners (m)
+      const chrome = B.still.length ? B.still[0].mesh : null, mw = [];
+      if (chrome && !chrome.geometry.boundingBox) chrome.geometry.computeBoundingBox();
+      for (let k = 0; k < 4 && chrome; k++) { V.advance(1 / 60); I.model.root.updateMatrixWorld(true); mw.push(chrome.matrixWorld.clone()); }
+      let still = chrome ? 0 : 9;
+      if (chrome) {
+        const bb = chrome.geometry.boundingBox;
+        for (let i = 0; i < 8; i++) {
+          const c = new THREE.Vector3(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z);
+          const p0 = c.clone().applyMatrix4(mw[0]);
+          for (const m of mw.slice(1)) still = Math.max(still, c.clone().applyMatrix4(m).distanceTo(p0));
+        }
+      }
+      document.querySelector('[data-rpm="0"]').click();
+      const off = {rpm: kin.t.rpm, pitch: kin.t.pitch};
+      V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.advance(0.05);
+      document.querySelector('[data-rpm="1000"]').click();
+      let at = null;
+      for (let t = 0; t < 15 && at == null; t += 0.05) { V.advance(0.05); if (kin.t.pitch === 0) at = V.state.prop.rpm; }
+      V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05);
+      const back = chrome ? B.still[0].mesh.quaternion.equals(B.still[0].q0) && B.still[0].mesh.position.equals(B.still[0].p0) : false;
+      T.neutral(); V.panel(true);
+      return {picks, hidden, ovl: ovl.length, drawn, tint, tint0, still, off, at, back};
+    """)
+    check("[PR1-01] blurred prop: the faded blades are hidden meshes, a pick over the disc is 'propeller' (never a blade), "
+          "a selected blade draws no overlay, the disc is tinted instead",
+          r["hidden"] and list(r["picks"]) == ["propeller"] and r["ovl"] > 0 and r["drawn"] == 0 and r["tint"] > 0.2 and r["tint0"] == 0,
+          f"picks {r['picks']}, overlays {r['drawn']}/{r['ovl']} drawn, tint {r['tint']:.2f} -> {r['tint0']:.2f}")
+    check("[PR1-03] blurred prop: the chrome spinner stands still (no twinkling facets), turns again when stopped",
+          r["still"] < 1e-5 and r["back"], f"spinner box corners moved <= {r['still'] * 1000:.4f} mm over 3 frames at 1,700 rpm")
+    check("[PR1-04] Off feathers the propeller (62 deg); a start from feather unfeathers once it turns ~300 rpm",
+          r["off"] == {"rpm": 0, "pitch": 62} and r["at"] is not None and 290 <= r["at"] <= 360,
+          f"Off -> {r['off']}, unfeathered at {r['at']} rpm")
+
     # pixels: the averaged disc on its own (isolated propeller, looking aft along the thrust axis) against the bare backdrop
     try:
         from PIL import Image
@@ -1376,6 +1435,10 @@ async def tour_checks(page, shots=True):
         dark = [x for x in lum if not (70 <= x[1] <= 215 and x[2] >= 12)]
         check("[T4] every stop well exposed (median luminance 70-215, 10th percentile >= 12)", not dark,
               ", ".join(f"{k} {m:.0f} ({a:.0f}-{b:.0f})" for k, m, a, b in lum))
+        # review r1 NAV1-04: the headliner reads light (the photos are near-white; at >= 200 AgX greys the whole cabin)
+        hl = [lum_stats(str(OUT / f"40_tour_{i + 1}_{s['id']}.png"), (330, 70, 630, 130))[0] for i, s in enumerate(stops)
+              if s["id"] == "cabin_fwd"]
+        check("[T4b] cabin_fwd headliner light (median >= 180 / 255)", bool(hl) and hl[0] >= 180, f"{hl[0]:.0f}" if hl else "no shot")
     # [T5] walking: clamped at the partition, the flight deck front, the seats, the headliner, the floor, the divider
     r = await js(page, r"""
       const V = window.viewer, T = V.tour, out = {};
@@ -1394,6 +1457,12 @@ async def tour_checks(page, shots=True):
       V.setDoor('airstair', 0, {instant: true}); V.advance(2.0); out.doorShut = T.state();
       V.setDoor('airstair', 1, {instant: true});
       at('pilot'); out.pilotFwd = T.walk({f: 1}, 3); out.pilotIn = T.walk({s: 1}, 3);
+      // out of the pilot seat: inboard into the gap between the seats, then aft into the flight deck (standing up)
+      at('pilot'); T.walk({s: 1}, 0.36); look(0); out.pilotAft = T.walk({f: 1}, 3);
+      // a sidestep in the aisle next to a seat slides into it (review r1 NAV1-07)
+      const p3 = V.tour.data.regions.find((g) => g.id === 'seat_pax3');
+      at('cabin_aft'); look(0); T.walk({f: 1}, (p3.x[0] - 0.30 - T.state().pos[0]) / 1.0);
+      out.pullFrom = T.state().pos; out.pull = T.walk({s: 1}, 2.5);
       return out;
     """)
     R = {x["id"]: x for x in data["regions"]}
@@ -1411,13 +1480,45 @@ async def tour_checks(page, shots=True):
           and abs(r["door"]["pos"][1] - R["doorway"]["y"][0]) < 2e-3                # the open doorway's outboard limit
           and r["doorShut"]["pos"][1] >= R["vestibule"]["y"][0] - 2e-3              # eased in once the door shut
           and r["pilotFwd"]["region"] == "seat_pilot" and r["pilotIn"]["region"] in ("flight_deck", "seat_copilot")
+          and r["pilotAft"]["region"] in ("flight_deck", "aisle") and r["pilotAft"]["pos"][2] - fl > 1.2
+          and r["pull"]["region"] == "seat_pax3"
           and outside < 1e-6 and worst[1]["min"] >= 0.05)
     check("[T5] walking is held inside the cabin: partition, flight-deck front, aisle edges at the seats, headliner, "
           "floor, vestibule lining, divider wall, doorway (and back in when the door shuts), the pilot's seat",
           ok, f"aft x {r['aft']['pos'][0]:.3f}, fwd x {r['fwd']['pos'][0]:.3f}, aisle y {r['port']['pos'][1]:+.3f}/{r['stbd']['pos'][1]:+.3f} "
               f"at x {r['club_x']:.2f}, eye {r['down']['pos'][2] - fl:.3f}-{r['up']['pos'][2] - fl:.3f} above the floor, vestibule y "
               f"{r['vest']['pos'][1]:+.3f}, divider x {r['divider']['pos'][0]:.3f}, doorway y {r['door']['pos'][1]:+.3f} -> "
-              f"{r['doorShut']['pos'][1]:+.3f} shut, nearest lining/headliner {worst[1]['min'] * 1000:.0f} mm ({worst[0]})")
+              f"{r['doorShut']['pos'][1]:+.3f} shut, nearest lining/headliner {worst[1]['min'] * 1000:.0f} mm ({worst[0]}); pilot seat "
+              f"-> {r['pilotAft']['region']}; aisle sidestep at x {r['pullFrom'][0]:.2f} -> {r['pull']['region']}")
+    # review r1 NAV1-01 / 02: the walk's ends keep the eye off the walls (no full-screen smear): forward, between the seat
+    # backs >= 0.45 m from every flight-deck mesh; aft, >= 0.35 m from the baggage curtain / header
+    near = {}
+    for k, setup in (("fwd", "TT.go('cabin_fwd', {motion: false}); look(180); TT.walk({f: 1}, 14);"),
+                     ("aft", "TT.go('cabin_aft', {motion: false}); look(0); TT.walk({f: 1}, 12);")):
+        near[k] = await js(page, "const TT = window.viewer.tour; const look = (deg) => { const s = TT.state(); "
+                                 "TT.look(deg - s.yawDeg, -s.pitchDeg); }; " + setup + " window.viewer.advance(0.05);" + r'''
+          // the nearest surface in the line of sight: rays within 12 deg left / right and 12 deg below .. 6 deg above the
+          // level walking direction, 1 m (the overhead console hangs above the head between the crew seat backs, as in
+          // the aircraft: a ray 12 deg up meets it ~0.4 m ahead)
+          const V = window.viewer, I = V._internals, THREE = I.THREE, cam = I.stage.camera;
+          I.model.root.updateMatrixWorld(true);
+          const eye = cam.position.clone(), d0 = new THREE.Vector3(), rc = new THREE.Raycaster();
+          cam.getWorldDirection(d0); d0.y = 0; d0.normalize();
+          rc.near = 0; rc.far = 1.0;
+          const meshes = I.model.meshRecs.filter((mr) => mr.mesh.visible).map((mr) => mr.mesh);
+          let best = 1.0, who = '';
+          for (const yaw of [-12, -6, 0, 6, 12]) for (const pit of [-12, -6, 0, 6]) {
+            const d = d0.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw * Math.PI / 180);
+            d.applyAxisAngle(new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0)).normalize(), pit * Math.PI / 180);
+            rc.set(eye, d.normalize());
+            const h = rc.intersectObjects(meshes, false)[0];
+            if (h && h.distance < best) { best = h.distance; who = I.model.meshToPart.get(h.object).id + '/' + (h.object.material.name || ''); }
+          }
+          return [best, who];''')
+    check("[T5b] walk ends: in the line of sight forward between the seat backs >= 0.45 m to the flight deck, aft "
+          ">= 0.35 m to the baggage curtain",
+          near["fwd"][0] >= 0.45 and near["aft"][0] >= 0.35,
+          f"forward end nearest mesh {near['fwd'][0] * 1000:.0f} mm ({near['fwd'][1]}), aft end {near['aft'][0] * 1000:.0f} mm ({near['aft'][1]})")
     # [T6] keyboard: the menu by keys (Enter / arrows / Enter), W walks, arrow turns, digits pick stops, Esc exits
     r = await js(page, "window.viewer.tour.exit({motion: false}); window.viewer.tour.menu(false); document.getElementById('tourEnter').focus(); return document.activeElement.id;")
     await page.keyboard.press("Enter")
@@ -1506,7 +1607,7 @@ async def tour_checks(page, shots=True):
       V.setStep('wing', {instant: true}); V.setCutaway(true); V.setExplode(0.4, {instant: true}); V.setDoor('cargo', 1, {instant: true});
       V.panel(true); V.isolate(null);
       const before = V.state;
-      V.tour.enter('airstair', {motion: false}); V.advance(0.1);
+      V.tour.enter('airstair', {motion: false}); V.advance(0.1); await V.frames(1);   // (camInside: the render loop's updateCabin)
       const inside = V.state;
       V.tour.exit({motion: false}); await V.frames(1);
       const after = V.state;
@@ -1594,7 +1695,8 @@ async def tour_dark_check(page, shots=True):
         path = await shot(page, "43_tour_dark_cabin_fwd", "")
         med = lum_stats(path, (0, 60, VIEW["width"], VIEW["height"] - 60))[0]
     r2 = await js(page, "const V = window.viewer, st = V._internals.stage; V.tour.exit({motion: false}); await V.frames(2); return [st.renderer.toneMappingExposure, st.lookKey];")
-    ok = r["dark"] and r["key"] == "light" and r["inside"] < r["out0"] and r2 == [r["out0"], "dark"] and (med is None or 70 <= med <= 215)
+    # inside: the light theme's exposure 1.9 lifted by LOOK.interiorEV 0.6 (review r1 NAV1-04)
+    ok = r["dark"] and r["key"] == "light" and abs(r["inside"] - 1.9 * 2 ** 0.6) < 0.01 and r2 == [r["out0"], "dark"] and (med is None or 70 <= med <= 215)
     check("[T11] dark theme: the cabin is lit with the daylight studio inside (exposure / grade), the dark look outside", ok,
           f"exposure {r['out0']} -> {r['inside']} -> {r2[0]}, grade {r['key']} -> {r2[1]}" + (f", median luminance {med:.0f}" if med is not None else ""))
 

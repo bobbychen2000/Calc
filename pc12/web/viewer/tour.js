@@ -26,6 +26,11 @@ const PITCH_MAX = 80 * D2R;
 const WHEEL_M = 0.0022;                 // m per wheel pixel (a 100 px notch = 0.22 m)
 const PINCH_M = 0.006;                  // m per pixel of pinch spread / two-finger drag
 const FOV_MAX = 95, H_FOV_MIN = 70;    // widen the vertical FOV until at least 70 deg show across
+// portrait phones (aspect < PORTRAIT): the vertical FOV capped lower and the optical axis (~ the horizon) put
+// PORTRAIT_AXIS of the way down the view instead of half way (Stage.setViewShift, an off-axis window: verticals stay
+// vertical) -- review r1 NAV1-03: at FOV_MAX the top ~40 % of every cabin view was flat headliner
+const PORTRAIT = 0.8, FOV_MAX_PORTRAIT = 85, PORTRAIT_AXIS = 0.4;
+const SIDESTEP_PULL = 0.5;              // m: a blocked sidestep in the aisle slides toward a seat this close (NAV1-07)
 const ZW = 0.1;                         // height weight of the walk projection (project)
 const RISE = 0.6;                       // m/s: the eye coming back up to the kept height (standing up, a ceiling passed)
 
@@ -44,7 +49,7 @@ export function ceilingAt(x, a) {
 }
 // nearest point of the union of the active regions: {p, d, region}.  zw < 1 weighs height differences less: a walk
 // goes on under a lower ceiling (soffit, side lining, flight deck) or into a seat, the eye dipping to fit, instead of
-// stopping at the edge
+// stopping at the edge; a region's own zw (crew_gap: 1) overrides it (a standing walker does not dip into it)
 export function project(p, doors = {}, zw = 1) {
   let best = null, bd = Infinity, who = null, bt = 0;
   for (const R of TOUR.regions) {
@@ -54,7 +59,8 @@ export function project(p, doors = {}, zw = 1) {
     if (R.ceil) zhi = Math.min(zhi, ceilingAt(x, Math.abs(y)));
     if (zhi < R.z[0]) continue;
     const z = clamp(p[2], R.z[0], zhi);
-    const d = (x - p[0]) ** 2 + (y - p[1]) ** 2 + (zw * (z - p[2])) ** 2;
+    const w = R.zw != null ? Math.max(zw, R.zw) : zw;
+    const d = (x - p[0]) ** 2 + (y - p[1]) ** 2 + (w * (z - p[2])) ** 2;
     if (d < bd) { bd = d; best = [x, y, z]; who = R.id; bt = (x - p[0]) ** 2 + (y - p[1]) ** 2 + (z - p[2]) ** 2; }
   }
   return { p: best || p.slice(), d: Math.sqrt(bt), region: who };
@@ -96,10 +102,11 @@ export class Tour {
     const cp = Math.cos(this.pitch);
     return [cp * Math.cos(this.yaw), cp * Math.sin(this.yaw), Math.sin(this.pitch)];
   }
+  get portrait() { const v = this.stage.size; return v.w / Math.max(1, v.h) < PORTRAIT; }
   fovFor(base) {
     const asp = Math.max(0.2, this.stage.camera.aspect);
     const need = 2 * Math.atan(Math.tan(H_FOV_MIN * D2R / 2) / asp) / D2R;
-    return clamp(Math.max(base, need), 20, FOV_MAX);
+    return clamp(Math.max(base, need), 20, this.portrait ? FOV_MAX_PORTRAIT : FOV_MAX);
   }
   apply() {
     const cam = this.stage.camera, c = this.stage.controls, d = this.dir();
@@ -108,6 +115,7 @@ export class Tour {
     cam.lookAt(c.target);
     const fov = this.fovFor(this.fovBase) + this.fovKick;
     if (Math.abs(cam.fov - fov) > 1e-3) { cam.fov = fov; cam.updateProjectionMatrix(); }
+    this.stage.setViewShift(this.inside && this.portrait ? 0.5 - PORTRAIT_AXIS : 0);
     this._aspect = cam.aspect;
     this.stage.needsRender = true;
   }
@@ -240,6 +248,7 @@ export class Tour {
       this.inside = false;
       this.stop = null;
       this.fovKick = 0;
+      this.stage.setViewShift(0);
       this.stage.controls.enabled = true;
       this.hooks.exit(to);
     };
@@ -346,7 +355,13 @@ export class Tour {
       if (ud < 0) this.zWant = Math.min(this.zWant, this.p[2] + 0.02);
       this.zWant = clamp(this.zWant + ud, TOUR.crouch_min, TOUR.floor + TOUR.cabin_height);
       // forward along the heading (level), right = heading x up; the eye rises back to the kept height gently
-      this.moveTo([this.p[0] + fwd * cy + sd * sy, this.p[1] + fwd * sy - sd * cy, Math.min(this.zWant, this.p[2] + RISE * dt)]);
+      const q = [this.p[0] + fwd * cy + sd * sy, this.p[1] + fwd * sy - sd * cy, Math.min(this.zWant, this.p[2] + RISE * dt)];
+      const y0 = this.p[1];
+      this.moveTo(q);
+      // a sidestep held by the aisle's edge next to a seat slides along the aisle into that seat (review r1 NAV1-07:
+      // the seats could only be reached from the menu, so a sidestep felt stuck rather than blocked)
+      const dy = q[1] - y0;
+      if (Math.abs(sd) > 1e-6 && Math.abs(dy) > 1e-6 && Math.abs(this.p[1] - y0) < 0.3 * Math.abs(dy)) this._pullToSeat(dy, Math.abs(sd));
     }
     const moved = Math.abs(this.p[0] - p0[0]) + Math.abs(this.p[1] - p0[1]) + Math.abs(this.p[2] - p0[2]) > 1e-6;
     if (!moved && !rot) return false;           // held by a ceiling: nothing to draw
@@ -356,13 +371,34 @@ export class Tour {
   }
 
   // move the eye to q, held inside the walkable volume (slides along the walls: the box clamp keeps the free axes);
-  // stepping out of a seat into the aisle / vestibule / flight deck stands the walker up again
+  // stepping out of a seat (or the gap between the crew seats) into the aisle / vestibule / flight deck stands the
+  // walker up again
   moveTo(q) {
     const r = project(q, this.doors(), ZW);
     const was = this.region;
     this.p = r.p;
     this.region = r.region;
-    if (was && was.startsWith('seat_') && r.region && !r.region.startsWith('seat_')) this.zWant = Math.max(this.zWant, TOUR.stand_eye);
+    const seated = (id) => !!id && (id.startsWith('seat_') || id === 'crew_gap');
+    if (seated(was) && r.region && !seated(r.region)) this.zWant = Math.max(this.zWant, TOUR.stand_eye);
+  }
+
+  // the nearest seat pocket on the side of a blocked sidestep (dy: the wanted lateral move) within SIDESTEP_PULL
+  // along the aisle: the eye slides toward it by up to `step` (it enters the seat once level with it)
+  _pullToSeat(dy, step) {
+    if (this.region !== 'aisle' && this.region !== 'vestibule') return;
+    const x = this.p[0];
+    let best = null, bd = SIDESTEP_PULL;
+    for (const R of TOUR.regions) {
+      if (!R.id.startsWith('seat_')) continue;
+      const side = 0.5 * (R.y[0] + R.y[1]);
+      if (Math.sign(side) !== Math.sign(dy)) continue;
+      const d = x < R.x[0] ? R.x[0] - x : x > R.x[1] ? x - R.x[1] : 0;
+      if (d < bd) { bd = d; best = R; }
+    }
+    if (!best) return;
+    const cx = 0.5 * (best.x[0] + best.x[1]);
+    const mx = Math.sign(cx - x) * Math.min(Math.abs(cx - x), step);
+    this.moveTo([x + mx, this.p[1] + dy, this.p[2]]);
   }
 
   look(dyaw, dpitch) {
@@ -505,6 +541,8 @@ export class TourUI {
       this.closeMenu(false);
     }, true);
     window.addEventListener('resize', () => { if (!E.menu.hidden) this._place(); });
+    // a touch anywhere shows the walk pad on a device whose primary pointer is fine (viewer.css)
+    document.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') E.app.classList.add('touch-used'); }, true);
     // walk pad: hold to walk (pointer), or a step per activation (keyboard)
     for (const b of E.pad.querySelectorAll('[data-walk]')) {
       const [axis, v] = b.dataset.walk.split(':');
@@ -565,8 +603,8 @@ export class TourUI {
     if (this.hintDismissed) return;
     const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
     this.el.hintText.textContent = coarse
-      ? 'Drag to look around · pinch or the arrows to move'
-      : 'Drag to look · W A S D or arrows to walk · wheel to move · Esc to exit';
+      ? 'Drag to look · pinch / arrows to move'
+      : 'Drag to look · W A S D or arrows to walk · wheel to move · 1–7 stops · Esc to exit';
     this.el.hint.hidden = false;
   }
 

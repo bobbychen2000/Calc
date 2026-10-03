@@ -244,8 +244,12 @@ def construction():
     return C
 
 
-# triangles (Stage 3 brief, the builders' own grids); at PC12_RES=2 raised in proportion to the model (cad.res.budget)
-INTERIOR_BUDGET = {k: res.budget(v) for k, v in dict(total=250_000, crew_seat=14_000, cabin_seat=12_000).items()}
+# triangles (Stage 3 brief, the builders' own grids); at PC12_RES=2 raised in proportion to the model (cad.res.budget):
+# the seats x 2.9 (crew x 3.4: their sheepskin pads on a grid RES x finer, seats._sk_h) -- their rounded rims and outline
+# corners are built RES x finer (seats._rounds / _arc_k, review r1 RES1-01 / 03: 22 % of their area had been faceted)
+# --, the interior as a whole x 2.2
+INTERIOR_BUDGET = {"total": res.budget(250_000, 2.2), "crew_seat": res.budget(14_000, 3.4),
+                   "cabin_seat": res.budget(12_000, 2.9)}
 
 
 def cockpit_camera(side=-1):

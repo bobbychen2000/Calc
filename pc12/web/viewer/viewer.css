@@ -188,6 +188,9 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 #tourPad .tp-l { grid-column: 1; grid-row: 2; }
 #tourPad .tp-b { grid-column: 2; grid-row: 2; }
 #tourPad .tp-r { grid-column: 3; grid-row: 2; }
+/* the walk pad is for touch: with a mouse / trackpad (keys and the wheel walk) it shows only once a touch has reached
+   the page (review r1 NAV1-06: it covered the view's bottom-left for mouse users) */
+@media not all and (pointer: coarse) { #app:not(.touch-used) #tourPad { display: none; } }
 /* the blink between outside and inside: under the toolbar and the panel */
 #tourFade { position: absolute; inset: 0; z-index: 3; background: #0b0d10; opacity: 0; pointer-events: none; }
 .help-card { max-height: calc(100% - 32px); overflow-y: auto; }
@@ -334,6 +337,8 @@ table.readouts td:last-child { text-align: right; font-family: var(--mono); font
 dl.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 4px 0; font-size: 13px; }
 dl.kv dt { color: var(--text-2); }
 dl.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+.detail-row { margin: 8px 0 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.detail-row button { min-height: 32px; }
 .table-wrap { overflow-x: auto; }
 table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 table.data th, table.data td { padding: 4px 5px; border-bottom: 1px solid var(--border); text-align: right; vertical-align: top; }

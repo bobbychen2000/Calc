@@ -883,6 +883,24 @@ def chin_duct(mouth, m=96):
     return np.array(rings)
 
 
+def _densify_rings(rings, upto):
+    """rings[:upto + 1] with rings inserted between them at PC12_RES > 1 (cad.res.factor: 3 per gap at RES 2), on the
+    natural cubic spline through every ring (by the rings' mean spacing), the given rings kept exactly: the duct entry
+    behind the mouth had three rings over a turn from the vertical crescent into the flat duct (review r1 RES1-04)."""
+    from cad import res
+    from scipy.interpolate import CubicSpline
+    k = int(round(1.5 * res.factor())) if res.on() else 1
+    R = np.asarray(rings, float)
+    if k <= 1:
+        return R[:upto + 1]
+    s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(R, axis=0), axis=2).mean(1))]
+    cs = CubicSpline(s, R, axis=0, bc_type="natural")
+    ss = np.concatenate([np.linspace(s[i], s[i + 1], k + 1)[:-1] for i in range(upto)] + [[s[upto]]])
+    out = cs(ss)
+    out[::k] = R[:upto + 1]
+    return out
+
+
 def _stack_normals(sgn, n, m):
     """Analytic outward normals (n, m, 3) of the elliptic stack section rings (exhaust_stack_rings frames): the
     polished stack mirrors the room, so the vertex normals must be smooth (VQA r1 R1-07: the mesh-derived normals
@@ -1002,7 +1020,7 @@ def build_inlet_and_exhaust(parts):
     if mouth is None:
         raise RuntimeError("chin inlet: the lower cowling was not cut (fuselage_parts.build must run first)")
     rings = chin_duct(mouth)
-    entry = grid_surface(rings[:3], close_v=True)                    # mouth -> STA 1.50 (seen through the mouth)
+    entry = grid_surface(_densify_rings(rings, 2), close_v=True)     # mouth -> STA 1.50 (seen through the mouth)
     duct = grid_surface(rings[2:], close_v=True)
     back = cap_ring(rings[-1], (1, 0, 0))
     p = parts.get("chin_inlet") or Part("chin_inlet", "Chin air inlet", "cowling", explode=(-0.4, 0, -0.75),
@@ -1205,11 +1223,15 @@ def blade_boot(k, n=48, n_ring=5):
     top = si @ d
     for f in (0.4, 0.8, 1.0):
         rows.append(row(b["r_in"], top + f * (b["rho0"] - top)))
-    m = grid_surface(np.array(rows), close_v=True)
-    if float(np.mean((m.N[n:(n_ring + 1) * n]) @ d)) < 0:            # the ring faces out of the spinner
-        m = m.flipped()
+    R = np.array(rows)
+    # skirt | draped ring | sleeve as three grids sharing their edge rows (crisp folds: one smooth grid had averaged the
+    # skirt's and the sleeve's normals into the ring's edges, review r1 RES1-01 'propeller' 12 % faceted)
+    ring = grid_surface(R[1:n_ring + 1], close_v=True)
+    flip = float(np.mean(ring.N @ d)) < 0                              # the ring faces out of the spinner
+    ms = [grid_surface(R[:2], close_v=True), ring, grid_surface(R[n_ring:], close_v=True)]
+    ms = [x.flipped() if flip else x for x in ms]
     cap = cap_ring(rows[-1], -d)
-    return Mesh.merge([m, cap])
+    return Mesh.merge(ms + [cap])
 
 
 def blade_boot_covers(k, P):
@@ -1298,7 +1320,9 @@ def build_propeller(parts):
 
 
 def build(parts):
-    build_engine(parts)
+    from cad import res
+    with res.coarse():                  # the engine modules, mount and firewall are seen only through the cutaway /
+        build_engine(parts)             # X-ray: the builders' own grids at every PC12_RES (review r1 RES1-05)
     build_inlet_and_exhaust(parts)
     build_propeller(parts)
     return parts

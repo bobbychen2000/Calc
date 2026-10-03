@@ -12,26 +12,35 @@ Every number comes from the source-tagged tables the L6 / L6B sheets draw and mo
                                looking where the viewer's cockpit camera looks (build.cockpit_camera)
               fd_cabin         standing in the divider opening (DIVIDER x_aft, open_bl), looking at the MFD
                                (interior.mfd_centre) between the crew seat backs
-              cabin_fwd / _aft standing in the aisle at the baggage partition (BAGGAGE partition_x) / the divider,
-                               crouched: the eye STAND_EYE above the floor (the cabin is 1.47 high, CABIN height)
+              cabin_fwd / _aft standing in the aisle WALL_CLEAR ahead of the baggage partition (BAGGAGE
+                               partition_x) / just aft of the divider, crouched: the eye STAND_EYE above the floor (the
+                               cabin is 1.47 high, CABIN height)
               club             PAX 3's seated eye (interior.cabin_pose, 50th pct: seat_map 'PAX 3', the club four's
                                port forward-facing seat), looking forward across the club
               airstair         standing in the airstair door's clear opening (fuselage_parts.AIRSTAIR, DOOR_SILL_WL),
-                               the door open, looking aft into the cabin
+                               the door open, looking out and down the steps (the treads, handrails, the wing)
             `via`: points from the stop out to the aisle centre band (|BL| <= AISLE_BAND); a flight runs stop ->
             via -> along the aisle -> the other stop's via (reversed) -> stop.  `approach`: the exterior pose the
             camera flies to before it fades into the cabin from outside.
   regions   the walkable volume of the eye point: boxes (x, y, z ranges) whose union the first-person camera is
             projected onto after every move, the clearances (MARGIN) built in:
-              flight_deck  between the crew seats, behind the pedestal, above the seats' armrests (CREW_SEAT bl,
-                           width) up to the divider opening
-              aisle        the cabin aisle between the executive seats (EXEC_SEAT bl, width), divider to the baggage
-                           partition
+              flight_deck  between the crew seat backs, from FD_AFT_OF_PEDESTAL aft of the pedestal (the eye stops
+                           there, as at the fd_cabin stop, not over the pedestal in the glareshield) up to the
+                           divider opening, the eye at most STAND_EYE_FD above the floor (ducked under the overhead
+                           panel, as at fd_cabin)
+              crew_gap     between the crew seats at the seated eye height, from the seated eyes aft to the
+                           flight deck: the way out of a crew seat (full height weight: a standing walker does
+                           not dip into it, a crouching one can)
+              aisle        the cabin aisle between the executive seats (EXEC_SEAT bl, width), divider to WALL_CLEAR
+                           ahead of the baggage partition
               vestibule    the entry area abeam the airstair door (CLEAR_ZONES entry_bl: no furniture outboard of the
-                           aisle there), divider to the LH cabinet (CABINETS lh x)
+                           aisle there), DIVIDER_CLEAR aft of the divider wall to the LH cabinet (CABINETS lh x)
               doorway      the airstair door's clear opening (only while the door is open)
               seat_*       a pocket round each seated eye (crew: design_eye; cabin: cabin_pose at the 50th pct)
-            regions marked `ceil` are also held MARGIN below the headliner / lining (`ceiling`).
+            regions marked `ceil` are also held MARGIN below the headliner / lining (`ceiling`); `zw` (default the
+            walker's 0.1) is the height weight of a region in the projection.  A region end facing a full-height wall
+            head-on keeps the eye WALL_CLEAR from it (review r1 NAV1-02: at 12 cm from the baggage curtain, with the
+            1 cm near plane, the whole view was a blurred smear).
   ceiling   the highest eye WL at (x, |y|) on a grid: the cabin headliner (interior.headliner_z: flat channel, soffit
             bands, curved side lining), the flight-deck lining crown (interior.lining_crown) with the overhead panel
             (OVERHEAD x, w, depth) hanging below it -- the lowest surface within MARGIN of the point, less MARGIN.
@@ -69,6 +78,12 @@ def _section_cached(x, n):
 I.lining_section = lambda x, n=1441: _section_cached(float(x), int(n))
 
 MARGIN = 0.10          # eye-point clearance to the lining, headliner, seats and walls [E: a head ~0.10 round the eye]
+WALL_CLEAR = 0.40      # eye to a full-height wall faced head-on at a walk's end: a head plus the near-plane margin [E]
+DIVIDER_CLEAR = 0.30   # the vestibule's forward end to the divider's aft face (the airstair door's front jamb is
+#                        at DIVIDER x_aft + 0.09: the vestibule must still reach the doorway) [E]
+FD_AFT_OF_PEDESTAL = 0.30   # the flight deck's walkable front: this far aft of the pedestal's aft end, between the seat
+#                             backs (review r1 NAV1-01: over the pedestal the eye stood in the glareshield; 0.15 left
+#                             the overhead console 0.3 m ahead of the eye, filling the top of the view) [E]
 AISLE_BAND = 0.06      # |BL| of the aisle centre band the flights run along [E]
 STAND_EYE = 1.35       # standing eye above the cabin floor: crouched, under the 1.47 cabin height [E; CABIN height S]
 STAND_EYE_FD = 1.25    # standing eye in the divider opening, over the crew seat backs at the flight deck [E]
@@ -76,6 +91,8 @@ CROUCH_MIN = 0.95      # lowest standing / crouching eye above the floor [E: a s
 DOOR_EYE = 1.22        # eye above the airstair sill, standing (stooped) in the 1.35 m clear opening [E]
 SEAT_POCKET = (0.08, 0.06, 0.12)   # seated-eye pocket: +/- along x, below / above the eye [E]
 FOV_CREW, FOV_CABIN = 74.0, 70.0   # vertical field of view (deg), widened on narrow viewports by the viewer
+AIRSTAIR_LOOK = (-105.0, -52.0)    # airstair stop: heading (deg, 0 = aft, -90 = port) and pitch (deg): the steps, the
+#                                    handrails and the wing in the door frame [E]
 
 
 def r3(v):
@@ -161,27 +178,32 @@ def regions():
     # cabin: the executive seats' aisle-side edge (CL - width / 2)
     aisle_hw = float(es["bl"]) - 0.5 * float(es["width"]) - 0.05         # = 0.10 (seat edge 0.15, the arm's 50 mm pad)
     ped_x1 = float(I.PEDESTAL["x"][1])
-    ox0 = float(I.OVERHEAD["x"][0])
     A = FP.AIRSTAIR
     sill = float(FP.DOOR_SILL_WL)
     lh_x0 = float(I.CABINETS["lh"]["x"][0])
+    fd_x0 = ped_x1 + FD_AFT_OF_PEDESTAL
+    e_crew = I.design_eye(-1)
+    dx, dzl, dzu = SEAT_POCKET
     out = [
-        dict(id="flight_deck", label="flight deck", x=[ox0 - 0.05, xa + 0.05], y=[-fd_hw, fd_hw],
+        dict(id="flight_deck", label="flight deck", x=[fd_x0, xa + 0.05], y=[-fd_hw, fd_hw],
+             z=[fl + CROUCH_MIN, fl + STAND_EYE_FD + 0.02], ceil=True,
+             src=f"CREW_SEAT bl / head_hwt, DIVIDER open_bl; forward to {FD_AFT_OF_PEDESTAL:.2f} aft of the pedestal "
+                 f"(PEDESTAL x aft end {ped_x1:.3f}), between the seat backs"),
+        dict(id="crew_gap", label="between the crew seats", x=[e_crew[0] - dx, fd_x0 + 0.02], y=[-fd_hw, fd_hw],
+             z=[e_crew[2] - dzl - 0.02, e_crew[2] + dzu], ceil=True, zw=1.0,
+             src="interior.design_eye (seated eye height), CREW_SEAT bl / head_hwt: out of a crew seat"),
+        dict(id="aisle", label="aisle", x=[xa - 0.04, float(I.BAGGAGE["partition_x"]) - WALL_CLEAR],
+             y=[-aisle_hw, aisle_hw], z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
+             src="EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain) - WALL_CLEAR"),
+        dict(id="vestibule", label="entry vestibule", x=[xa + DIVIDER_CLEAR, lh_x0 - 0.08], y=[-0.45, 0.0],
              z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
-             src="CREW_SEAT bl / head_hwt, DIVIDER open_bl; forward to the overhead panel (OVERHEAD x), over the "
-                 f"pedestal (aft end {ped_x1:.3f}, top {float(I.PEDESTAL['top_h']):.2f} above the floor)"),
-        dict(id="aisle", label="aisle", x=[xa - 0.04, float(I.BAGGAGE["partition_x"]) - 0.12], y=[-aisle_hw, aisle_hw],
-             z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
-             src="EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain)"),
-        dict(id="vestibule", label="entry vestibule", x=[xa + MARGIN, lh_x0 - 0.08], y=[-0.45, 0.0],
-             z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
-             src="CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft .. CABINETS lh x0"),
+             src="CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft + DIVIDER_CLEAR .. "
+                 "CABINETS lh x0"),
         dict(id="doorway", label="airstair doorway", when="door_airstair",
              x=[A["cx"] - A["hx"] + MARGIN, A["cx"] + A["hx"] - MARGIN], y=[-0.70, -0.30],
              z=[sill + CROUCH_MIN, sill + 2 * A["hz"] - 0.08], ceil=False,
              src="fuselage_parts.AIRSTAIR clear opening (cx, hx, hz), DOOR_SILL_WL; open door only"),
     ]
-    dx, dzl, dzu = SEAT_POCKET
     for sid, key in (("PILOT", "pilot"), ("CO-PILOT", "copilot")):
         r = S[sid]
         e = I.design_eye(r["side"])
@@ -235,19 +257,21 @@ def stops():
             id=key, label=label, fov=FOV_CREW,
             note=("Left" if side < 0 else "Right") + " seat at the design eye (sheet L6)",
             eye=e, target=cockpit_target(side),
-            via=[np.array([e[0] + 0.16, side * (AISLE_BAND - 0.01), e[2] + 0.08])],
+            via=[np.array([e[0] + 0.05, side * (AISLE_BAND - 0.01), e[2]]),
+                 np.array([float(I.PEDESTAL["x"][1]) + FD_AFT_OF_PEDESTAL + 0.04, side * (AISLE_BAND - 0.01),
+                           e[2] + 0.08])],
             approach="nose",
             src="interior.design_eye (50th-pct seated eye, neutral seat); build.cockpit_camera look point"))
     e = np.array([xa + 0.05, 0.0, fl + STAND_EYE_FD])
     out.append(dict(id="fd_cabin", label="Flight deck from the cabin", fov=FOV_CABIN,
                     note="In the divider opening, between the crew seats", eye=e, target=I.mfd_centre(), via=[],
                     approach="door", src="DIVIDER x_aft / open_bl, interior.mfd_centre"))
-    e = np.array([xb - 0.20, 0.0, fl + STAND_EYE])
+    e = np.array([xb - WALL_CLEAR, 0.0, fl + STAND_EYE])
     out.append(dict(id="cabin_fwd", label="Cabin, looking forward", fov=FOV_CABIN,
                     note="Aft end of the aisle, toward the flight deck", eye=e,
                     target=np.array([xa - 0.60, 0.0, fl + CROUCH_MIN]), via=[], approach="door",
                     src="BAGGAGE partition_x, DIVIDER x_aft, CABIN height"))
-    e = np.array([xa + 0.22, 0.0, fl + STAND_EYE])
+    e = np.array([xa + DIVIDER_CLEAR + 0.02, 0.0, fl + STAND_EYE])
     out.append(dict(id="cabin_aft", label="Cabin, looking aft", fov=FOV_CABIN,
                     note="From the divider, down the aisle", eye=e,
                     target=np.array([xb, 0.0, fl + 0.85]), via=[], approach="door",
@@ -259,13 +283,17 @@ def stops():
                     target=np.array([p2["x0"] + 0.25, 0.25 * p2["bl"], fl + 0.90]),
                     via=[np.array([e[0], -(AISLE_BAND - 0.01), e[2] + 0.10])], approach="door",
                     src="seat_map 'PAX 3' / 'PAX 2', cabin_pose (50th pct)"))
-    e = np.array([A["cx"] - 0.04, -0.55, sill + DOOR_EYE])
-    out.append(dict(id="airstair", label="Airstair entry", fov=FOV_CABIN, doors={"door_airstair": 1},
-                    note="Standing in the open airstair door", eye=e,
-                    target=np.array([float(p3["x0"]), 0.30, fl + 0.95]),
+    # the open door, looking out and down the steps (review r1 NAV1-05: looking aft from the door well the jamb and
+    # the paint cut a wedge into the frame and the stop was one more view down the cabin): aft-outboard and down
+    # over the treads and handrails to the wing root
+    e = np.array([A["cx"], -0.55, sill + DOOR_EYE])
+    yaw, pitch = np.radians(AIRSTAIR_LOOK[0]), np.radians(AIRSTAIR_LOOK[1])
+    out.append(dict(id="airstair", label="Airstair door", fov=FOV_CABIN, doors={"door_airstair": 1},
+                    note="In the open door, looking down the steps", eye=e,
+                    target=e + np.array([np.cos(pitch) * np.cos(yaw), np.cos(pitch) * np.sin(yaw), np.sin(pitch)]),
                     via=[np.array([A["cx"], -0.33, sill + DOOR_EYE]),
                          np.array([A["cx"] + 0.10, -(AISLE_BAND - 0.01), fl + STAND_EYE - 0.05])],
-                    approach="door", src="fuselage_parts.AIRSTAIR (cx, hz), DOOR_SILL_WL"))
+                    approach="door", src="fuselage_parts.AIRSTAIR (cx, hz), DOOR_SILL_WL; heading AIRSTAIR_LOOK [E]"))
     for s in out:
         s["eye"], s["target"] = r3(s["eye"]), r3(s["target"])
         s["via"] = [r3(v) for v in s["via"]]

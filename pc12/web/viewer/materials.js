@@ -39,7 +39,8 @@ export const U = {
 // the unoccluded irradiance ~4x a real cabin's; 0.05, re-checked with the light theme's hangar grade at exposure 1.9:
 // the seats read dark grey under the windshield's strip reflections, as in photo 130) / a door open / camera inside
 // (eye adapted) / opened up
-export const CABIN = { outside: 0.05, door: 0.45, inside: 0.8, open: 1 };
+export const CABIN = { outside: 0.05, door: 0.45, inside: 1.0, open: 1 };   // inside: review r1 NAV1-04 (0.8 left the
+//                                                                                cabin mid-grey; with scene.js LOOK.interiorEV)
 
 // Interior lining on the back faces.  The lookdev renders use a light grey (0.55) that Cycles darkens
 // with real occlusion; the viewer's image-based light has none (a back face inside the cockpit sees the

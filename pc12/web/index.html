@@ -36,13 +36,17 @@
     // render quality tier, the same test as scene.js QUALITY (phones: 'low', which also loads the 512 px studio HDRI)
     var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
     var quality = q.get('quality') || (coarse || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ? 'low' : 'high');
-    // phones: the light tier of the model (PC12_CONFIG.glbLow), as they get the 512 px HDRI
-    var low = quality === 'low' && !!C.glbLow && !q.get('glb');
+    // phones: the light tier of the model (PC12_CONFIG.glbLow), as they get the 512 px HDRI -- unless the viewer chose
+    // the full model there (the Specs panel's detail switch: ?detail=full|light, remembered in localStorage)
+    var detail = q.get('detail');
+    if (!detail) { try { detail = localStorage.getItem('pc12-detail'); } catch (e) { detail = null; } }
+    var tierSwitch = quality === 'low' && !!C.glbLow && !q.get('glb');
+    var low = tierSwitch && detail !== 'full';
     var U = window.PC12_URLS = {
       glb: q.get('glb') || data + (low ? C.glbLow : 'pc12.glb'), low: low, meta: q.get('meta') || data + 'pc12_meta.json',
       ga: svg[0] || data + 'pc12_ga.svg', sections: svg[1] || data + 'pc12_sections.svg',
       hdr: q.get('hdr') || (quality === 'low' ? 'assets/studio_small_09_512.hdr' : 'assets/studio_small_09_1k.hdr'),
-      materials: 'viewer/materials.json', quality: quality,
+      materials: 'viewer/materials.json', quality: quality, tierSwitch: tierSwitch,
     };
 
     // ---- loading card: error (with Retry) and "still loading" after 20 s without progress
@@ -538,6 +542,7 @@
         <dl class="kv" id="wingList"></dl>
         <h3>Model</h3>
         <dl class="kv" id="statsList"></dl>
+        <p class="small detail-row" id="detailRow" hidden><button type="button" id="detailBtn"></button> <span class="muted" id="detailNote"></span></p>
         <h3>Sources</h3>
         <div id="sourcesList"></div>
         <h4>Estimated / reconstructed</h4>

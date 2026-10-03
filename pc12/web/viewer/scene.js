@@ -78,6 +78,7 @@ export const LOOK = {
     dark: { floor: 0.12, walls: 0.3, top: 0.4, lift: 0, strips: 0, exposure: 2.6, ...OVERRIDE },
   },
   keyDir: [-0.45, 0.8, -0.4],
+  interiorEV: qn('interiorEV') ?? 0.6,      // the interior tour: this many stops over the light theme's exposure
   keyIntensity: qn('key') ?? 1.6,
 };
 
@@ -184,6 +185,7 @@ export class Stage {
     this.interiorLook = false;  // setInteriorLook: the interior tour's lighting
 
     this.insets = { right: 0, bottom: 0, top: 0, left: 0 };
+    this.viewShift = 0;         // setViewShift: the optical axis moved up the free viewport (fraction of its height)
     this.modelBox = new THREE.Box3(new THREE.Vector3(-8.2, 0, 0.4), new THREE.Vector3(8.2, 4.3, 14.8));
     this.silhouette = null;     // Float32Array of silhouette sample points (world, rest pose)
     this.tween = null;
@@ -238,10 +240,14 @@ export class Stage {
   // the studio grade and exposure in use: the theme's, except inside the cabin (the interior tour), which keeps the
   // light theme's daylight studio in both themes (the dark studio left the headliner near black)
   get lookKey() { return this.dark && !this.interiorLook ? 'dark' : 'light'; }
+  // exposure in use: the look's, LOOK.interiorEV brighter inside (review r1 NAV1-04: at the exterior exposure the
+  // headliner and side walls rendered mid-grey, ~165 / 255, where the cabin photos are near-white; with the cabin
+  // light CABIN.inside 1.0 (materials.js) the headliner is ~190; at +1 EV AgX flattened the cabin into a grey fog)
+  get exposure() { return LOOK.theme[this.lookKey].exposure * (this.interiorLook ? Math.pow(2, LOOK.interiorEV) : 1); }
   setInteriorLook(on) {
     if (this.interiorLook === !!on) return;
     this.interiorLook = !!on;
-    this.renderer.toneMappingExposure = LOOK.theme[this.lookKey].exposure;
+    this.renderer.toneMappingExposure = this.exposure;
     this._applyEnv();
     this.needsRender = true;
   }
@@ -271,7 +277,7 @@ export class Stage {
     this.shadowPlane.material.opacity = dark ? 0.3 : 0.16;
     this.contact.material.opacity = dark ? 0.85 : 0.62;
     this.dark = dark;
-    this.renderer.toneMappingExposure = LOOK.theme[this.lookKey].exposure;
+    this.renderer.toneMappingExposure = this.exposure;
     this._applyEnv();
     this.needsRender = true;
   }
@@ -314,9 +320,18 @@ export class Stage {
     this.resize();
   }
 
+  // the interior tour on a portrait phone: the optical axis (about the horizon) shown f of the free viewport's height
+  // above its centre (an off-axis window, so verticals stay vertical): more floor and seats, less headliner
+  setViewShift(f) {
+    f = +f || 0;
+    if (Math.abs(f - this.viewShift) < 1e-6) return;
+    this.viewShift = f;
+    this.resize();
+  }
+
   resize() {
     const w = Math.max(1, this.host.clientWidth), h = Math.max(1, this.host.clientHeight);
-    const key = `${w}x${h}:${this.insets.right},${this.insets.bottom},${this.insets.top},${this.insets.left}`;
+    const key = `${w}x${h}:${this.insets.right},${this.insets.bottom},${this.insets.top},${this.insets.left}:${this.viewShift}`;
     const changed = key !== this._fitKey;
     this._fitKey = key;
     this.size.w = w; this.size.h = h;
@@ -326,7 +341,8 @@ export class Stage {
     const fw = w + Math.abs(R - L), fh = h + B;
     const cam = this.camera;
     cam.aspect = fw / fh;
-    if (R || B || L) cam.setViewOffset(fw, fh, Math.max(0, R - L), B, w, h);
+    const sy = Math.round(this.viewShift * (h - B));
+    if (R || B || L || sy) cam.setViewOffset(fw, fh, Math.max(0, R - L), B + sy, w, h);
     else cam.clearViewOffset();
     cam.updateProjectionMatrix();
     this.visible = { w: w - R - L, h: h - B, fh, top: Math.min(this.insets.top, (h - B) * 0.3) };
