@@ -15,7 +15,8 @@ every part of the file it loads is requested once, and that the studio HDRI (not
   runtime  CSP with 'wasm-unsafe-eval', but WebAssembly.instantiate rejects at run time (the boot's compile test still
            passes): the meshopt GLB fails to decode and main.js falls back to the gzip copy
 
-each at a phone (390x844, touch) and a desktop (1400x900) viewport, with screenshots in out/tmp/artifact/.  The first
+each at a phone (390x844, touch) and a desktop (1400x900) viewport, with screenshots in out/tmp/artifact/; each also spins
+the propeller to 1,700 rpm (the blurred disc of web/viewer/propblur.js builds and draws under the CSP).  The first
 desktop run also checks the host's theme choice (<html data-theme="dark|light"> over the OS setting: the panels and
 the 3-D stage follow it; shot <mode>_desktop_dark.png).  The wrappers are removed afterwards.
 
@@ -143,6 +144,16 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
           f"requested {', '.join(hdr) or 'nothing'}")
     if want_gz:
         check(f"{name}: Specs panel names the gzip GLB", "gzip" in st["glbSpec"], st["glbSpec"][:120])
+    # the propeller in motion (web/viewer/propblur.js: half-float data textures, no blob / worker) under the host's CSP;
+    # a shader error would land in the console check below
+    pr = await page.evaluate("""async () => { const V = window.viewer;
+      V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.3); await V.frames(2);
+      const out = {blur: V.state.prop.blur, tris: V.perf().info.triangles};
+      V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05); await V.frames(1);
+      return out; }""")
+    b = pr["blur"] or {}
+    check(f"{name}: propeller blur disc at 1,700 rpm", b.get("visible") and b.get("fade") == 1 and pr["tris"] > 100000,
+          f"fade {b.get('fade')}, sweep {b.get('sweepDeg', 0):.0f} deg, {pr['tris']} triangles drawn")
     # expected: the CSP's WebAssembly refusals (nowasm); runtime: the decoder's own rejected start-up may be logged
     # (/favicon.ico: this skeleton has no icon and Chromium ignores the page's data-URI icon link outside <head>)
     unexpected = [e for e in errors if "WebAssembly" not in e and not e.endswith("/favicon.ico]")]

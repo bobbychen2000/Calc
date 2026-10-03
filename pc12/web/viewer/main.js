@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Stage, PRESETS, QUALITY, LOOK, DARK_MQ, prefersDark } from './scene.js';
 import { loadGLB, parseGLB, Model, INTERNAL_PARTS } from './model.js';
 import { loadMaterialSpec, setLights } from './materials.js';
-import { Kinematics } from './kinematics.js';
+import { Kinematics, PROP_RPM } from './kinematics.js';
 import { Build } from './build.js';
 import { PartsPanel, InfoCard, DrawingViewer, buildSpecs } from './panels.js';
 
@@ -178,11 +178,13 @@ async function init(gltf, matSpec) {
   setStage('Compiling shaders…');
   setProgress(0.97);
   await yieldFrame();
+  const unwarm = kin.blur ? kin.blur.warmup() : null;     // the prop blur's programs compile with the rest
   try {
     const R = stage.renderer;
     if (R.extensions.has('KHR_parallel_shader_compile')) await R.compileAsync(stage.scene, stage.camera);
     else R.compile(stage.scene, stage.camera);
   } catch (e) { /* compiled on first render instead */ }
+  if (unwarm) unwarm();
   PERF.mark('compiled');
   setStage('Rendering…');
   setProgress(1);
@@ -426,11 +428,12 @@ async function demo() {
   try {
     if (build.index !== build.n - 1) build.setStep(build.n - 1, { instant: true });
     stage.goTo('three_quarter');
-    setProp({ rpm: 1000, pitch: 0 }); await w(2.2);
-    setProp({ rpm: 1700 }); await w(1.5);
+    // engine start: the propeller spools up to ground idle (~12 s, kinematics.js) while the controls are checked
+    setProp({ rpm: PROP_RPM.idle, pitch: 0 }); await w(2.2);
     setFlaps(15); await w(1.8);
     for (const [k, v, t] of [['roll', 1, 1.1], ['roll', -1, 1.4], ['roll', 0, 0.8], ['pitch', 1, 1.1], ['pitch', -1, 1.3],
       ['pitch', 0, 0.8], ['yaw', 1, 1.1], ['yaw', -1, 1.3], ['yaw', 0, 0.8]]) { setControls({ [k]: v }); await w(t); }
+    setProp({ rpm: PROP_RPM.max }); await w(2.5);
     setGear('up'); await w(6.0);
     setFlaps(0); await w(1.6);
     setControls({ stabTrim: -3 }); await w(2.8);
@@ -440,8 +443,10 @@ async function demo() {
     stage.goTo('three_quarter');
     setFlaps(40); await w(3.8);
     setProp({ pitch: -38 }); await w(3.0);
-    setProp({ pitch: 62, rpm: 0 }); await w(3.5);
+    // shutdown: the propeller feathers and runs down; the doors open once it has (nearly) stopped
+    setProp({ pitch: 62, rpm: 0 }); await w(1.5);
     stage.goTo('side');
+    for (let i = 0; i < 40 && kin.c.rpm > 60; i++) await w(0.5);
     setDoor('door_airstair', 1); setDoor('door_cargo', 1); await w(3.2);
     setDoor('door_airstair', 0); setDoor('door_cargo', 0); await w(3.0);
     setFlaps(0); setProp({ pitch: 0 });
@@ -582,7 +587,10 @@ const SURF_ROWS = [
 let surfCells = null;
 function updateReadouts() {
   const c = kin.c, g = kin.gear, D = kin.defl;
-  $('rProp').textContent = `${Math.round(c.rpm).toLocaleString('en-US')} rpm · ${c.pitch.toFixed(0)}°`;
+  // start (below the governed range, accelerating) / run-down after shutdown (kinematics.js spool model)
+  const tr = kin.t.rpm, gov = PROP_RPM.governed;
+  const phase = tr > c.rpm && c.rpm < gov ? 'starting · ' : tr < c.rpm && tr < gov ? 'running down · ' : '';
+  $('rProp').textContent = `${phase}${Math.round(c.rpm).toLocaleString('en-US')} rpm · ${c.pitch.toFixed(0)}°`;
   // nose doors close only once locked up; with the gear down (or stopped between the locks) they stay open
   const status = g.pos === 0 && g.target === 0 && g.door === 1 ? 'DOWN' : g.pos === 1 && g.door === 0 ? 'UP'
     : g.pos !== g.target ? (g.door < 1 ? 'doors opening' : g.target > g.pos ? 'retracting' : 'extending')
@@ -732,7 +740,7 @@ function toggleHelp(on = $('help').hidden) {
 }
 
 const FLAP_CYCLE = [0, 15, 30, 40];
-const RPM_CYCLE = [0, 1000, 1550, 1700];
+const RPM_CYCLE = [0, PROP_RPM.idle, PROP_RPM.cruise, PROP_RPM.max];
 const NON_TEXT_INPUT = /^(range|checkbox|radio|button|submit|reset|color)$/i;
 function onKey(e) {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -812,8 +820,10 @@ function tick(adt) {
   if (posed) {
     model.applyTransforms(ex.cur);
     afterTransforms();
-    // a spinning prop alone only needs an occasional key-shadow refresh (and no contact-shadow render)
+    // a spinning prop alone only needs an occasional key-shadow refresh (and no contact-shadow render); none at all
+    // once its blades have faded into the blur disc (only the round spinner turns), but one as they fade
     if (!kin.onlySpin || build.animating || ex.cur !== ex.target) stage.shadowDirty = true;
+    else if (kin.blur && (kin.blur.fadeChanged || kin.blur.fade >= 1)) { if (kin.blur.fadeChanged) stage.keyShadowOnly(); }
     else if (++shadowSkip % 4 === 0) stage.keyShadowOnly();
     stage.needsRender = true;
   }
@@ -877,7 +887,7 @@ const hooks = {
         noseDeg: kin.surf.gear_nose && kin.surf.gear_nose.angle, mainRDeg: kin.surf.gear_main_R && kin.surf.gear_main_R.angle,
         noseDoorDeg: kin.surf.gear_door_NR && kin.surf.gear_door_NR.angle },
       flaps: c.flaps, doors: { airstair: c.door_airstair, cargo: c.door_cargo }, table: c.table,
-      prop: { rpm: c.rpm, pitch: c.pitch, angle: c.propAngle },
+      prop: { rpm: c.rpm, pitch: c.pitch, angle: c.propAngle, target: kin.t.rpm, blur: kin.blur ? { ...kin.blur.state } : null },
       controls: { roll: c.roll, pitch: c.pitchCmd, yaw: c.yaw, stabTrim: c.stabTrim, ailTrim: c.ailTrim, rudTrim: c.rudTrim,
         steerDeg: (kin.controls.find((k) => k.pv.kind === 'steer') || {}).angle || 0 },
       deflections: { ...kin.defl }, camera: stage.cameraState(), paused: S.paused, frames: frameCount,
