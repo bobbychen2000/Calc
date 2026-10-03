@@ -6,8 +6,8 @@ a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter,
 engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.13M tris of which the interior ~525k, ~35 MB
 incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review: ~1.54M tris, interior ~237k, three wheels ~77k, ~26 MB, 16-bit normals too; phones and the no-WebAssembly
-fallback load it, the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
+review: ~1.54M tris, interior ~237k, three wheels ~77k, ~26 MB, 16-bit normals too; phones load it (and its gzip when
+WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
 exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
 --, L6 / L6B the interior arrangement and its checks),
@@ -52,7 +52,9 @@ python3 web/package.py          # static viewer bundle -> dist/ (gitignored): me
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~57 MB: meshopt 14 + 10 MB, gzip of the light tier 15 MB, as base64 text parts)
+                                #   (~85 MB as base64 text parts: meshopt 14 + 10 MB, gzip of the full model 21 MB for desktops and of
+                                #   the light tier 15 MB for phones without WebAssembly; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
                                 # interior renders (Blender / Cycles; cameras of the photo presets fitted in
@@ -333,7 +335,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   stage chip offers it once after load on devices likely to take it (navigator.deviceMemory >= 4 or an iPad; not on
   the gzip no-WebAssembly path; Load / x remembered, ignored it leaves after 25 s; ?detailChip=1 forces it; review r2
   RES2-03); the Specs
-  panel and the part cards count the tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the light tier).
+  panel and the part cards count the tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the full model on desktops (data/pc12_glb.gz.bin) and the light
+  tier on phones (data/pc12_low_glb.gz.bin, PC12_CONFIG.glbGzLow), so a host that refuses WebAssembly still shows the
+  full resolution on a desktop).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
   `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.11M triangles where facets show, 16-bit normals, crack-free shared
