@@ -12,7 +12,10 @@
      three: 'auto' = the jsDelivr CDN, or ./three_local/ (a checkout of three.js r160) with ?three=local;
      a path = a vendored copy (web/package.py writes the bundle's line: {data: './data/', three: './three/'}).
      glbGz (optional, web/package_artifact.py): a gzip-compressed plain GLB next to the data, loaded where WebAssembly
-     (the meshopt decoder) is refused. -->
+     (the meshopt decoder) is refused.
+     b64 (optional, web/package_artifact.py): {file name: parts} of the binary files published as base64 text (the
+     claude.ai Artifact host serves no binary media type but images, media and fonts): x.glb is then requested as
+     x.glb.b64.txt (1 part) or x.glb.b64.0.txt, x.glb.b64.1.txt, ... and decoded while it streams. -->
 <script>window.PC12_CONFIG = { data: '../out/', three: 'auto' };</script>
 <script>
   // Boot, before any module script: feature checks, the three.js import map, the data requests (the model and its
@@ -139,6 +142,59 @@
     // it streams (DecompressionStream; the bar counts the compressed bytes, stats.glb_gz_bytes), and main.js falls back
     // to it when the meshopt GLB fails to decode.  Without glbGz nothing changes.
     U.glbGz = C.glbGz && !q.get('glb') ? data + C.glbGz : '';
+    // ---- binary files published as base64 text (PC12_CONFIG.b64): B.parts(url) = the URLs to request (null = the
+    // file itself), B.wire(url, n) = the bytes that transfer for an n-byte file, B.stream(url, onChunk, onLength)
+    // fetches the file or its parts in order and hands over the decoded bytes chunk by chunk (onChunk(bytes, wire
+    // bytes)); onLength(n) gets the Content-Length of a plain, uncompressed single-file transfer
+    B.parts = function (url) {
+      var n = C.b64 && C.b64[url.replace(/[?#].*$/, '').replace(/^.*\//, '')], a = [];
+      // only the bundle's own files: a ?glb= / ?hdr= override is a plain file
+      if (!n || (url === U.glb ? q.get('glb') : url === U.hdr ? q.get('hdr') : url !== U.glbGz)) return null;
+      if (n === 1) return [url + '.b64.txt'];
+      for (var i = 0; i < n; i++) a.push(url + '.b64.' + i + '.txt');
+      return a;
+    };
+    B.wire = function (url, n) { return n && B.parts(url) ? 4 * Math.ceil(n / 3) : n; };
+    function b64Bytes(s) {
+      var t = atob(s), u = new Uint8Array(t.length);
+      for (var i = 0; i < t.length; i++) u[i] = t.charCodeAt(i);
+      return u;
+    }
+    function b64Decoder() {                  // text chunks -> bytes; the 4-character groups split by a chunk are carried
+      var td = new TextDecoder(), rest = '';
+      return function (bytes, end) {
+        var s = rest + td.decode(bytes || new Uint8Array(0), { stream: !end }).replace(/[^A-Za-z0-9+\/]/g, '');
+        var k = end ? s.length : s.length - s.length % 4;
+        rest = s.slice(k);
+        return b64Bytes(s.slice(0, k));
+      };
+    }
+    B.stream = function (url, onChunk, onLength) {
+      var parts = B.parts(url), urls = parts || [url], dec = parts ? b64Decoder() : null;
+      function one(i) {
+        if (i === urls.length) {
+          if (dec) onChunk(dec(null, true), 0);
+          return Promise.resolve();
+        }
+        return fetch(urls[i]).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + urls[i]);
+          var enc = (r.headers.get('content-encoding') || 'identity').toLowerCase();
+          if (!parts && enc === 'identity' && onLength) onLength(+r.headers.get('content-length') || 0);
+          var put = function (c) { onChunk(dec ? dec(c) : c, c.length); };
+          if (!r.body || !r.body.getReader) return r.arrayBuffer().then(function (b) { put(new Uint8Array(b)); });
+          var reader = r.body.getReader();
+          function pump() {
+            return reader.read().then(function (x) {
+              if (x.done) return;
+              if (x.value.length) put(x.value);
+              return pump();
+            });
+          }
+          return pump();
+        }).then(function () { return one(i + 1); });
+      }
+      return one(0);
+    };
     if (U.glbGz) {
       try { B.wasm = typeof WebAssembly === 'object' && !!new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])); }
       catch (e) { B.wasm = false; }
@@ -150,7 +206,7 @@
     });
     window.PC12_META.then(function (m) {
       D.stats = m && m.stats;
-      var n = D.stats && (B.gzip ? D.stats.glb_gz_bytes : D.stats.glb_bytes);
+      var n = D.stats && B.wire(B.gzip ? U.glbGz : U.glb, B.gzip ? D.stats.glb_gz_bytes : D.stats.glb_bytes);
       if (n && !q.get('glb')) { D.metaBytes = n; show(); }
     }, function () {});
     var shownAt = 0;
@@ -177,50 +233,40 @@
         B.gzip = gz;
         var s = D.stats || {};
         D.loaded = D.total = D.frac = 0; D.done = false;
-        D.metaBytes = q.get('glb') ? 0 : (gz ? s.glb_gz_bytes : s.glb_bytes) || 0;
+        D.metaBytes = q.get('glb') ? 0 : B.wire(url, gz ? s.glb_gz_bytes : s.glb_bytes) || 0;
       }
       if (gz && typeof DecompressionStream === 'undefined') {
         return Promise.reject(new Error('This browser can neither run WebAssembly on this page nor unpack the gzip copy of the model (no DecompressionStream).'));
       }
-      return fetch(url).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url);
-        var enc = (r.headers.get('content-encoding') || 'identity').toLowerCase();
-        var len = +r.headers.get('content-length') || 0;
-        if (len && enc === 'identity') D.total = len;
-        if (!gz && (!r.body || !r.body.getReader)) return r.arrayBuffer();
-        var reader = r.body.getReader(), chunks = [], unzip = null, unzipped = null;
-        function pump() {
-          return reader.read().then(function (x) {
-            if (x.done) return;
-            var c = x.value;
-            if (!c.length) return pump();
-            // gzip magic 1f 8b; a host that serves the file with Content-Encoding: gzip hands over the GLB itself
-            if (gz && !unzip && !chunks.length && c[0] === 0x1f && (c.length < 2 || c[1] === 0x8b)) {
-              var ds = new DecompressionStream('gzip');
-              unzip = ds.writable.getWriter();
-              unzipped = new Response(ds.readable).arrayBuffer();
-              unzipped.catch(function () {});                     // handled by the caller, once returned
-            }
-            if (unzip) unzip.write(c).catch(function () {});     // an error surfaces through `unzipped`
-            else chunks.push(c);
-            D.loaded += c.length;
-            B.progress();
-            show();
-            return pump();
-          });
+      var chunks = [], size = 0, unzip = null, unzipped = null;
+      return B.stream(url, function (c, wire) {
+        // gzip magic 1f 8b; a host that serves the file with Content-Encoding: gzip hands over the GLB itself
+        if (gz && !unzip && !chunks.length && c.length && c[0] === 0x1f && (c.length < 2 || c[1] === 0x8b)) {
+          var ds = new DecompressionStream('gzip');
+          unzip = ds.writable.getWriter();
+          unzipped = new Response(ds.readable).arrayBuffer();
+          unzipped.catch(function () {});                     // handled by the caller, once returned
         }
-        return pump().then(function () {
-          D.done = true;
-          if (!D.total) D.total = D.loaded;
-          show(true);
-          if (unzip) {
-            unzip.close().catch(function () {});
-            return unzipped;
-          }
-          var buf = new Uint8Array(D.loaded), o = 0;
-          chunks.forEach(function (c) { buf.set(c, o); o += c.length; });
-          return buf.buffer;
-        });
+        if (c.length) {
+          if (unzip) unzip.write(c).catch(function () {});   // an error surfaces through `unzipped`
+          else { chunks.push(c); size += c.length; }
+        }
+        if (wire) {
+          D.loaded += wire;
+          B.progress();
+          show();
+        }
+      }, function (n) { if (n) D.total = n; }).then(function () {
+        D.done = true;
+        if (!D.total) D.total = D.loaded;
+        show(true);
+        if (unzip) {
+          unzip.close().catch(function () {});
+          return unzipped;
+        }
+        var buf = new Uint8Array(size), o = 0;
+        chunks.forEach(function (c) { buf.set(c, o); o += c.length; });
+        return buf.buffer;
       });
     };
     window.PC12_GLB = B.fetchGLB(!!U.glbGz && !B.wasm);
@@ -236,7 +282,7 @@
       add(l);
     }
     // the HDRI yields to the scripts and the model (it is only needed at the end, like the materials)
-    link('preload', U.hdr, 'fetch', 'low');
+    (B.parts(U.hdr) || [U.hdr]).forEach(function (u) { link('preload', u, 'fetch', 'low'); });
     link('preload', U.materials, 'fetch');
     // the module graph (web/package.py checks this list against the imports)
     ['viewer/main.js', 'viewer/scene.js', 'viewer/studio.js', 'viewer/model.js', 'viewer/materials.js', 'viewer/kinematics.js',

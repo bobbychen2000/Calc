@@ -9,6 +9,9 @@ leaves them out).  Scenarios:
   nowasm   CSP without 'wasm-unsafe-eval': WebAssembly refused -> the gzip GLB (data/pc12_glb.gz.bin), unpacked with
            DecompressionStream; the meshopt GLB is never requested; the only console errors are the CSP's wasm refusals
   wasm     CSP with 'wasm-unsafe-eval' -> the meshopt GLB (data/pc12.glb); the gzip copy is never requested
+
+The GLBs and the studio HDRIs are published as base64 text parts (ARTIFACT.json 'base64'): each scenario checks that
+every part of the file it loads is requested once, and that the studio HDRI (not the RoomEnvironment fallback) lit it.
   runtime  CSP with 'wasm-unsafe-eval', but WebAssembly.instantiate rejects at run time (the boot's compile test still
            passes): the meshopt GLB fails to decode and main.js falls back to the gzip copy
 
@@ -24,6 +27,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import functools
+import json
 import os
 import socket
 import sys
@@ -61,6 +65,7 @@ BREAK_INSTANTIATE = """(() => { const E = WebAssembly.CompileError;
 SCENARIOS = {"nowasm": "", "wasm": " 'wasm-unsafe-eval'", "runtime": " 'wasm-unsafe-eval'"}
 
 results: list[tuple[str, bool, str]] = []
+B64: dict[str, int] = {}                             # ARTIFACT.json 'base64': {file name: parts}
 
 
 def check(name, ok, detail=""):
@@ -121,15 +126,21 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
       loading: getComputedStyle(document.getElementById('loading')).display,
       scrollW: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth), w: innerWidth })""")
     name = f"{mode} {vp}"
-    glb = [u for u in reqs if u.endswith("/data/pc12.glb")]
-    gz = [u for u in reqs if u.endswith("/data/pc12_glb.gz.bin")]
+    glb = [u for u in reqs if "/data/pc12.glb" in u]
+    gz = [u for u in reqs if "/data/pc12_glb.gz.bin" in u]
     want_gz = mode in ("nowasm", "runtime")
+    n_glb, n_gz = B64.get("pc12.glb", 1), B64.get("pc12_glb.gz.bin", 1)
+    hdr_name = "studio_small_09_512.hdr" if vp == "phone" else "studio_small_09_1k.hdr"
+    hdr = sorted({u.rsplit("/", 1)[1] for u in reqs if "/assets/studio_small_09" in u})
+    want_hdr = [f"{hdr_name}.b64.txt"] if B64.get(hdr_name) == 1 else [f"{hdr_name}.b64.{i}.txt" for i in range(B64.get(hdr_name, 0))] or [hdr_name]
     check(f"{name}: loads", not st["err"] and st["parts"] > 50 and st["loading"] == "none",
           st["err"].splitlines()[0] if st["err"] else f"{dt:.0f} s, {st['parts']} parts, {st['tris']} triangles drawn")
     check(f"{name}: aircraft drawn", st["tris"] > 100000, f"{st['tris']} triangles in the last frame")
     check(f"{name}: path", (st["wasm"] is False if mode == "nowasm" else st["wasm"] is True) and st["gzip"] == want_gz
-          and len(gz) == (1 if want_gz else 0) and len(glb) == (0 if mode == "nowasm" else 1),
-          f"wasm {st['wasm']}, gzip {st['gzip']}, requests: pc12.glb x{len(glb)}, gz x{len(gz)}")
+          and len(gz) == len(set(gz)) == (n_gz if want_gz else 0) and len(glb) == len(set(glb)) == (0 if mode == "nowasm" else n_glb),
+          f"wasm {st['wasm']}, gzip {st['gzip']}, requests: pc12.glb x{len(glb)} (of {n_glb} parts), gz x{len(gz)} (of {n_gz})")
+    check(f"{name}: studio HDRI", hdr == sorted(want_hdr) and not any("HDRI environment unavailable" in w for w in warns),
+          f"requested {', '.join(hdr) or 'nothing'}")
     if want_gz:
         check(f"{name}: Specs panel names the gzip GLB", "gzip" in st["glbSpec"], st["glbSpec"][:120])
     # expected: the CSP's WebAssembly refusals (nowasm); runtime: the decoder's own rejected start-up may be logged
@@ -182,6 +193,7 @@ async def run(args):
     from playwright.async_api import async_playwright
     d = (ROOT / args.dir).resolve()
     page = (d / "index.html").read_text(encoding="utf-8")
+    B64.update(json.loads((d / "ARTIFACT.json").read_text()).get("base64") or {})
     hosts = []
     for name, wasm in (("nowasm", ""), ("wasm", " 'wasm-unsafe-eval'")):
         hosts.append(d / f"_host_{name}.html")

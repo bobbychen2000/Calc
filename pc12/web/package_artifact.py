@@ -11,12 +11,16 @@ The folder is the web/package.py bundle (vendored three.js r160, the meshopt GLB
                             html, head or body tags: the <title>, the stylesheet, the markup, then the config, boot and
                             module scripts (the boot script adds the import map after itself).  The description and the
                             icon are publish parameters (ARTIFACT.json), not tags.  Config: {data: './data/',
-                            three: './three/', glbGz: 'pc12_glb.gz.bin'}.
-    data/pc12.glb           EXT_meshopt_compression (~6.7 MB): loaded where WebAssembly compiles
-    data/pc12_glb.gz.bin    gzip of out/pc12.glb (KHR_mesh_quantization only, ~20 MB -> ~11 MB, under the 15 MB file
-                            limit): the host's CSP may refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder
-                            needs; index.html then loads this file instead, unpacked while it streams
-                            (DecompressionStream), and main.js falls back to it when the meshopt GLB fails to decode
+                            three: './three/', glbGz: 'pc12_glb.gz.bin', b64: {file name: parts}}.
+    data/pc12.glb           EXT_meshopt_compression (~7 MB): loaded where WebAssembly compiles
+    data/pc12_glb.gz.bin    gzip of out/pc12.glb (KHR_mesh_quantization only, ~21 MB -> ~12 MB): the host's CSP may
+                            refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder needs; index.html then
+                            loads this file instead, unpacked while it streams (DecompressionStream), and main.js falls
+                            back to it when the meshopt GLB fails to decode
+    *.glb / *.bin / *.hdr   published as base64 text (the host serves no binary media type but images, media and fonts):
+                            x.b64.txt, or x.b64.0.txt, x.b64.1.txt, ... when the text would exceed B64_PART characters
+                            (parts of equal length, whole 4-character groups); the originals are removed.  index.html
+                            decodes them while they stream (PC12_CONFIG.b64 = {file name: parts}, B.stream)
     data/pc12_meta.json     + stats.glb_gz_bytes / glb_gz_encoding (the loading bar's total on the gzip path)
     MANIFEST.json           web/package.py's file list (bytes, SHA-256, commit), not published
     ARTIFACT.json           the publish manifest: every file with its published path, content type and bytes -- `page`
@@ -32,6 +36,7 @@ with a strict CSP (with and without 'wasm-unsafe-eval') and checks both loading 
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime as dt
 import gzip
 import json
@@ -45,11 +50,11 @@ import package as P  # noqa: E402  (web/package.py)
 TITLE = "PC-12 PRO Parametric Model"
 ICON = "plane"                      # the publish call's `icon`: one generic word
 GZ_NAME = "pc12_glb.gz.bin"
-ARTIFACT_CONFIG = f"<script>window.PC12_CONFIG = {{ data: './data/', three: './three/', glbGz: '{GZ_NAME}' }};</script>"
-CONTENT_TYPES = {
+B64_SUFFIXES = (".glb", ".bin", ".hdr")   # binary files the host would refuse: published as base64 text
+B64_PART = 12_000_000                      # characters per part (the host's text limit is 16 MB a file)
+CONTENT_TYPES = {                          # the host's served types (a file of any other type is an error)
     ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
-    ".svg": "image/svg+xml", ".glb": "model/gltf-binary", ".hdr": "application/octet-stream",
-    ".bin": "application/octet-stream", ".txt": "text/plain", ".md": "text/markdown",
+    ".svg": "image/svg+xml", ".txt": "text/plain", ".md": "text/markdown",
 }
 TEXT_TYPES = ("text/", "application/json", "image/svg+xml")
 MAX_FILES, MAX_BINARY, MAX_TEXT, MAX_TOTAL = 255, 15_000_000, 16_000_000, 64_000_000
@@ -59,9 +64,35 @@ DARK_MEDIA = re.compile(r'@media \(prefers-color-scheme: dark\) \{\s*:root:not\(
 DARK_ATTR = re.compile(r':root\[data-theme="dark"\] \{([^}]*)\}')
 
 
-def artifact_page(html: str) -> tuple[str, str]:
+def artifact_config(b64: dict[str, int]) -> str:
+    return ("<script>window.PC12_CONFIG = { data: './data/', three: './three/', glbGz: '" + GZ_NAME + "', b64: "
+            + json.dumps(b64, sort_keys=True) + " };</script>")
+
+
+def to_base64(out: Path) -> dict[str, int]:
+    """Replace the bundle's binary files by base64 text parts (module docstring); returns {file name: parts}."""
+    parts = {}
+    for f in sorted(p for p in out.rglob("*") if p.is_file() and p.suffix.lower() in B64_SUFFIXES):
+        raw = f.read_bytes()
+        text = base64.b64encode(raw)
+        n = -(-len(text) // B64_PART)
+        step = -(-len(text) // n // 4) * 4
+        chunks = [text[i:i + step] for i in range(0, len(text), step)]
+        if b"".join(chunks) != text or base64.b64decode(b"".join(chunks)) != raw:
+            sys.exit(f"{f}: base64 parts do not decode to the file")
+        names = [f"{f.name}.b64.txt"] if len(chunks) == 1 else [f"{f.name}.b64.{i}.txt" for i in range(len(chunks))]
+        for name, c in zip(names, chunks):
+            (f.parent / name).write_bytes(c)
+        if f.name in parts:
+            sys.exit(f"{f}: two binary files named {f.name}")
+        parts[f.name] = len(chunks)
+        f.unlink()
+    return parts
+
+
+def artifact_page(html: str, config: str) -> tuple[str, str]:
     """The bundle's index.html as an Artifact page file (see the module docstring), and its meta description."""
-    html, n = re.subn(re.escape(P.BUNDLE_CONFIG["vendor"]), lambda _: ARTIFACT_CONFIG, html)
+    html, n = re.subn(re.escape(P.BUNDLE_CONFIG["vendor"]), lambda _: config, html)
     if n != 1:
         sys.exit("index.html: the bundle's PC12_CONFIG line is missing")
     m = re.search(r"<head\b[^>]*>(.*)</head>\s*<body\b([^>]*)>(.*)</body>", html, re.S | re.I)
@@ -86,19 +117,19 @@ def artifact_page(html: str) -> tuple[str, str]:
     return page, desc.group(1) if desc else ""
 
 
-def check_page(out: Path, html: str) -> list[str]:
+def check_page(out: Path, html: str, config: str) -> list[str]:
     errs = []
     if not html.startswith(f"<title>{TITLE}</title>"):
         errs.append("index.html does not start with the <title>")
     for m in SKELETON.finditer(html):
         errs.append(f"index.html keeps a skeleton tag: {m.group(0)}")
-    if ARTIFACT_CONFIG not in html:
+    if config not in html:
         errs.append("index.html: artifact config line missing")
     for m in re.finditer(r"""(?:src|href)="([^"#:]+)\"""", html):
         if not (out / m.group(1)).exists():
             errs.append(f"index.html references missing {m.group(1)}")
     for need in ("type = 'importmap'", 'type="module" src="viewer/main.js"', 'rel="stylesheet" href="viewer/viewer.css"',
-                 'id="loading"', "B.fetchGLB", "new WebAssembly.Module", "DecompressionStream"):
+                 'id="loading"', "B.fetchGLB", "B.stream", "new WebAssembly.Module", "DecompressionStream"):
         if need not in html:
             errs.append(f"index.html: {need!r} missing")
     for bad in ("<meta ", 'rel="icon"'):
@@ -147,10 +178,12 @@ def main():
     meta["stats"]["glb_gz_encoding"] = "KHR_mesh_quantization, gzip"
     meta_p.write_text(json.dumps(meta, indent=1) + "\n")
 
-    # 3. the page file
-    page, desc = artifact_page((out / "index.html").read_text(encoding="utf-8"))
+    # 3. binary files -> base64 text, and the page file
+    b64 = to_base64(out)
+    config = artifact_config(b64)
+    page, desc = artifact_page((out / "index.html").read_text(encoding="utf-8"), config)
     (out / "index.html").write_text(page, encoding="utf-8")
-    errs += check_page(out, page)
+    errs += check_page(out, page, config)
 
     # 4. manifests: package.py's (provenance, and a re-run may wipe the folder) and the publish manifest
     all_files = sorted(p for p in out.rglob("*") if p.is_file() and p.name not in NOT_PUBLISHED
@@ -189,13 +222,15 @@ def main():
         "page": {"path": "index.html", "contentType": types.get("index.html"), "bytes": sizes.get("index.html")},
         "files": pub,
         "bytes": sizes, "count": len(sizes), "total_bytes": total,
-        "glb": {"meshopt": sizes.get("data/pc12.glb"), "gzip_fallback": gz["bytes_out"], "plain_unpacked": gz["bytes_in"]},
+        "glb": {"meshopt": meta["stats"]["glb_bytes"], "gzip_fallback": gz["bytes_out"], "plain_unpacked": gz["bytes_in"]},
+        "base64": b64,
     }
     (out / "ARTIFACT.json").write_text(json.dumps(art, indent=1) + "\n")
 
     print(f"artifact bundle {out}: {len(sizes)} files (the page + {len(pub)}), {total:,} bytes ({total / 1e6:.1f} MB)")
-    print(f"  data/pc12.glb         {sizes['data/pc12.glb']:>11,} bytes  EXT_meshopt_compression")
+    print(f"  data/pc12.glb         {meta['stats']['glb_bytes']:>11,} bytes  EXT_meshopt_compression")
     print(f"  data/{GZ_NAME}  {gz['bytes_out']:>11,} bytes  gzip of the {gz['bytes_in']:,}-byte KHR_mesh_quantization GLB")
+    print("  as base64 text: " + ", ".join(f"{k} ({v} part{'s' * (v > 1)})" for k, v in b64.items()))
     print(f"  publish manifest: {out / 'ARTIFACT.json'}")
     if errs:
         print("VERIFY FAILED:", *errs, sep="\n  ")

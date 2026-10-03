@@ -73,6 +73,24 @@ export function installToneMapping(renderer, look = 'punchy') {
 
 // ------------------------------------------------------------------------------------ environment
 export function loadHDR(url, onProgress) {
+  const boot = window.PC12_BOOT;
+  if (boot && boot.parts && boot.parts(url)) {
+    // published as base64 text (the Artifact bundle, index.html PC12_CONFIG.b64): the boot's streamer fetches and
+    // decodes it, RGBELoader parses it into the texture its load() would make
+    const chunks = [];
+    return boot.stream(url, (c) => { if (c.length) chunks.push(c); }).then(() => {
+      const buf = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+      chunks.reduce((o, c) => { buf.set(c, o); return o + c.length; }, 0);
+      const d = new RGBELoader().parse(buf.buffer);
+      const tex = new THREE.DataTexture(d.data, d.width, d.height, THREE.RGBAFormat, d.type);
+      tex.colorSpace = THREE.LinearSRGBColorSpace;
+      tex.minFilter = tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      tex.flipY = true;
+      tex.needsUpdate = true;
+      return tex;
+    });
+  }
   return new Promise((resolve, reject) => {
     new RGBELoader().load(url, resolve, onProgress, (e) => reject(e instanceof Error ? e : new Error(String(e && e.message || e))));
   });
