@@ -26,6 +26,10 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
     lights and the GLB's sheepskin sheen carried into the viewer materials
   - review round-3 (viewer): WebGL context loss and restore (a note while lost, redraws by itself, same image), the
     Specs table fits the landscape panel, safe-area insets (landscape notch, portrait home indicator)
+  - interior tour (viewer/tour.js, owner 2026-10-03 "no good link to navigate into the interior"): the toolbar entry
+    (desktop and phone), every stop reached from the menu with the camera inside the cabin (tables and ray clearances)
+    and well exposed (both themes), the walk held inside the cabin at every boundary, keyboard / pointer / touch
+    controls, the flights, and exit restoring the exterior state; the tour data current with the interior tables
 Optional --blender: re-imports out/pc12.glb in Blender (bpy, /opt/venv-blender) and checks
 that Blender's scene graph gives the same part boxes and posed points as the viewer, and runs a
 BVH interference sweep of the gear against doors / flaps / flight deck.  Interferences that are
@@ -1061,6 +1065,337 @@ async def phone_card_check(page):
           f"card {r['card']:.0f}px of sheet {r['sheet']:.0f}px, hint {r['hint'][2]:.0f}px visible, tree {r['tree']:.0f}px, details {r['bodyShown']}->{r['expanded']}")
 
 
+# ----------------------------------------------------------------------------- interior tour (viewer/tour.js)
+def cabin_clearance(p, door_open=False):
+    """Clearance (m) of a MODEL-axes eye point to the cabin's lining / headliner / floor, from the interior tables
+    (model/interior.py): the side lining at the eye height, the headliner (cabin) or lining crown (flight deck) over
+    it, the floor under it.  In the airstair door's clear opening (door open) the side limit is the opening itself."""
+    from model import interior as I
+    from model import fuselage_parts as FP
+    x, y, z = p
+    fl = float(I.FLOOR["wl"])
+    A = FP.AIRSTAIR
+    in_door = door_open and y < -0.40 and abs(x - A["cx"]) <= A["hx"] and z <= FP.DOOR_SILL_WL + 2 * A["hz"]
+    if in_door:
+        side = min(x - (A["cx"] - A["hx"]), (A["cx"] + A["hx"]) - x, FP.DOOR_SILL_WL + 2 * A["hz"] - z)
+        top = side
+    else:
+        side = I.lining_half_width(x, z) - abs(y)
+        top = (I.headliner_z(x, y) if x >= float(I.DIVIDER["x_aft"]) else I.lining_crown(x, y)) - z
+    return {"side": side, "top": top, "floor": z - fl, "min": min(side, top, z - fl)}
+
+
+TOUR_RAYS = r"""
+  // nearest visible surface round the eye (26 directions, 0.5 m): the camera is not inside or against any mesh
+  const V = window.viewer, I = V._internals, THREE = I.THREE, cam = I.stage.camera;
+  I.model.root.updateMatrixWorld(true);
+  const eye = cam.position.clone(), rc = new THREE.Raycaster(), box = new THREE.Box3();
+  rc.near = 0; rc.far = 0.5;
+  const near = I.model.meshRecs.filter((mr) => mr.mesh.visible).filter((mr) => {
+    const g = mr.mesh.geometry; if (!g.boundingBox) g.computeBoundingBox();
+    return box.copy(g.boundingBox).applyMatrix4(mr.mesh.matrixWorld).distanceToPoint(eye) <= 0.5; });
+  const meshes = near.map((mr) => mr.mesh);
+  let best = 0.5, who = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) for (const c of [-1, 0, 1]) {
+    if (!a && !b && !c) continue;
+    rc.set(eye, new THREE.Vector3(a, b, c).normalize());
+    const h = rc.intersectObjects(meshes, false)[0];
+    if (h && h.distance < best) { best = h.distance; who = I.model.meshToPart.get(h.object).id + '/' + (h.object.material.name || ''); }
+  }
+  return [best, who, near.length];
+"""
+
+
+def lum_stats(path, box):
+    from PIL import Image
+    import numpy as np
+    a = np.asarray(Image.open(path).convert("L").crop(box), float)
+    return float(np.median(a)), float(np.percentile(a, 10)), float(np.percentile(a, 90))
+
+
+async def tour_checks(page, shots=True):
+    """Interior tour: the toolbar entry, every stop reached from the menu (camera inside the cabin, clear of every
+    surface, well exposed), the walk clamped at the lining / seats / divider / partition / headliner / doorway, the
+    keyboard and pointer controls, a flight with motion, and exit restoring the exterior state."""
+    V = "const V = window.viewer; "
+    # the generated data is current (web/tour_data.py from the interior tables) and self-consistent
+    r = subprocess.run([sys.executable, str(ROOT / "web" / "tour_data.py"), "--check"], capture_output=True, text=True)
+    check("[T1] tour data (web/viewer/tour_data.js) matches the interior tables", r.returncode == 0,
+          (r.stdout + r.stderr).strip().splitlines()[-1] if (r.stdout + r.stderr).strip() else "")
+    data = await js(page, "return window.viewer.tour.data;")
+    stops = data["stops"]
+    # [T2] the entry: first on the toolbar, an accessible menu button
+    e = await js(page, r"""
+      const b = document.getElementById('tourEnter'), tb = document.getElementById('toolbar'), r = b.getBoundingClientRect();
+      const first = tb.querySelector('button:not([hidden])');
+      return {first: first === b, name: b.textContent.trim(), popup: b.getAttribute('aria-haspopup'), ctrl: b.getAttribute('aria-controls'),
+        expanded: b.getAttribute('aria-expanded'), visible: r.width > 0 && r.right <= innerWidth && r.bottom <= innerHeight,
+        top: document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) === b || b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)),
+        bg: getComputedStyle(b).backgroundColor, accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
+    """)
+    check("[T2] 'Go inside' entry: first toolbar button, accent, menu button (aria-haspopup / controls / expanded)",
+          e["first"] and e["visible"] and e["top"] and "Go inside" in e["name"] and e["popup"] == "menu" and e["ctrl"] == "tourMenu"
+          and e["expanded"] == "false", f"{e['name']!r}, bg {e['bg']}")
+    # [T3] every stop from the menu: at the stop, inside, clear of the lining (tables) and of every mesh (rays)
+    await js(page, V + "T.neutral(); V.setStep('paint', {instant: true}); V.panel(false); await new Promise(r => setTimeout(r, 400));")
+    bad, rows, lum = [], [], []
+    for i, s in enumerate(stops):
+        st = await js(page, r"""
+          const V = window.viewer, id = arg;
+          const trig = V.state.tour.active ? document.getElementById('tourStop') : document.getElementById('tourEnter');
+          trig.click(); await V.frames(1);
+          const menuOpen = !document.getElementById('tourMenu').hidden;
+          document.querySelector(`#tourMenu [data-stop="${id}"]`).click();
+          V.tour.finish(); V.advance(3.0); await V.frames(2);
+          const st = V.state;
+          return {tour: st.tour, camInside: st.camInside, menuOpen, menuClosed: document.getElementById('tourMenu').hidden,
+            cam: st.camera.pos, doors: st.doors, cut: st.cutaway, label: document.getElementById('tourStopLabel').textContent,
+            exposure: V._internals.stage.renderer.toneMappingExposure};
+        """, s["id"])
+        t = st["tour"]
+        p = t["pos"]
+        cl = cabin_clearance(p, door_open=st["doors"]["airstair"] > 0.99)
+        ray = await js(page, TOUR_RAYS)
+        ok = (t["active"] and t["stop"] == s["id"] and max(abs(a - b) for a, b in zip(p, s["eye"])) < 1e-3 and t["outside"] < 1e-6
+              and st["camInside"] and st["menuOpen"] and st["menuClosed"] and st["label"] == s["label"] and not st["cut"]
+              and cl["min"] >= 0.05 and ray[0] >= 0.05 and (not s.get("doors") or st["doors"]["airstair"] > 0.99))
+        rows.append(f"{s['id']}: region {t['region']}, lining/top/floor {cl['side'] * 1000:.0f}/{cl['top'] * 1000:.0f}/"
+                    f"{cl['floor'] * 1000:.0f} mm, nearest mesh {ray[0] * 1000:.0f} mm")
+        if not ok:
+            bad.append(f"{s['id']}: {t} {cl} ray {ray} menu {st['menuOpen']}/{st['menuClosed']} label {st['label']!r}")
+        if shots:
+            path = await shot(page, f"40_tour_{i + 1}_{s['id']}", "", note=f"({s['label']})")
+            med, p10, p90 = lum_stats(path, (0, 60, VIEW["width"], VIEW["height"] - 60))
+            lum.append((s["id"], med, p10, p90))
+    check("[T3] every tour stop reachable from the menu: at its eye, camera inside the cabin (lining / headliner / floor "
+          ">= 50 mm by the tables, nearest mesh >= 50 mm), lit as inside", not bad, "; ".join(bad[:2]) or " | ".join(rows))
+    if lum:
+        dark = [x for x in lum if not (70 <= x[1] <= 215 and x[2] >= 12)]
+        check("[T4] every stop well exposed (median luminance 70-215, 10th percentile >= 12)", not dark,
+              ", ".join(f"{k} {m:.0f} ({a:.0f}-{b:.0f})" for k, m, a, b in lum))
+    # [T5] walking: clamped at the partition, the flight deck front, the seats, the headliner, the floor, the divider
+    r = await js(page, r"""
+      const V = window.viewer, T = V.tour, out = {};
+      const at = (id) => { T.go(id, {motion: false}); };
+      const look = (deg) => { const s = T.state(); T.look(deg - s.yawDeg, -s.pitchDeg); };
+      at('cabin_fwd'); look(0);   out.aft = T.walk({f: 1}, 12);
+      look(180);                  out.fwd = T.walk({f: 1}, 14);
+      at('cabin_aft'); look(0); T.walk({f: 1}, 1.6);
+      out.club_x = T.state().pos[0];
+      out.port = T.walk({s: -1}, 4); out.stbd = T.walk({s: 1}, 6);
+      out.up = T.walk({u: 1}, 4); out.down = T.walk({u: -1}, 6);
+      V.setDoor('airstair', 0, {instant: true});
+      at('cabin_aft'); look(180); T.walk({s: -1}, 4); out.vest = T.state();
+      out.divider = T.walk({f: 1}, 4);
+      at('airstair'); look(-90); out.door = T.walk({f: 1}, 4);
+      V.setDoor('airstair', 0, {instant: true}); V.advance(2.0); out.doorShut = T.state();
+      V.setDoor('airstair', 1, {instant: true});
+      at('pilot'); out.pilotFwd = T.walk({f: 1}, 3); out.pilotIn = T.walk({s: 1}, 3);
+      return out;
+    """)
+    R = {x["id"]: x for x in data["regions"]}
+    fl, ce = data["floor"], data["ceiling"]
+    walks = {k: v for k, v in r.items() if isinstance(v, dict)}
+    clear = {k: cabin_clearance(v["pos"], door_open=(k == "door")) for k, v in walks.items()}
+    worst = min(clear.items(), key=lambda kv: kv[1]["min"])
+    outside = max(v["outside"] for v in walks.values())
+    ok = (abs(r["aft"]["pos"][0] - R["aisle"]["x"][1]) < 2e-3                       # baggage partition (curtain)
+          and abs(r["fwd"]["pos"][0] - R["flight_deck"]["x"][0]) < 2e-3            # flight deck front, over the pedestal
+          and sorted(round(v["pos"][1], 3) for v in (r["port"], r["stbd"])) == [round(R["aisle"]["y"][0], 3), round(R["aisle"]["y"][1], 3)]
+          and r["down"]["pos"][2] >= data["crouch_min"] - 1e-6 and r["up"]["pos"][2] > r["down"]["pos"][2]
+          and abs(r["vest"]["pos"][1] - R["vestibule"]["y"][0]) < 2e-3              # entry vestibule, the lining side
+          and abs(r["divider"]["pos"][0] - R["vestibule"]["x"][0]) < 2e-3           # stopped at the divider's aft face
+          and abs(r["door"]["pos"][1] - R["doorway"]["y"][0]) < 2e-3                # the open doorway's outboard limit
+          and r["doorShut"]["pos"][1] >= R["vestibule"]["y"][0] - 2e-3              # eased in once the door shut
+          and r["pilotFwd"]["region"] == "seat_pilot" and r["pilotIn"]["region"] in ("flight_deck", "seat_copilot")
+          and outside < 1e-6 and worst[1]["min"] >= 0.05)
+    check("[T5] walking is held inside the cabin: partition, flight-deck front, aisle edges at the seats, headliner, "
+          "floor, vestibule lining, divider wall, doorway (and back in when the door shuts), the pilot's seat",
+          ok, f"aft x {r['aft']['pos'][0]:.3f}, fwd x {r['fwd']['pos'][0]:.3f}, aisle y {r['port']['pos'][1]:+.3f}/{r['stbd']['pos'][1]:+.3f} "
+              f"at x {r['club_x']:.2f}, eye {r['down']['pos'][2] - fl:.3f}-{r['up']['pos'][2] - fl:.3f} above the floor, vestibule y "
+              f"{r['vest']['pos'][1]:+.3f}, divider x {r['divider']['pos'][0]:.3f}, doorway y {r['door']['pos'][1]:+.3f} -> "
+              f"{r['doorShut']['pos'][1]:+.3f} shut, nearest lining/headliner {worst[1]['min'] * 1000:.0f} mm ({worst[0]})")
+    # [T6] keyboard: the menu by keys (Enter / arrows / Enter), W walks, arrow turns, digits pick stops, Esc exits
+    r = await js(page, "window.viewer.tour.exit({motion: false}); window.viewer.tour.menu(false); document.getElementById('tourEnter').focus(); return document.activeElement.id;")
+    await page.keyboard.press("Enter")
+    k1 = await js(page, "return [!document.getElementById('tourMenu').hidden, document.activeElement.dataset.stop || document.activeElement.id];")
+    await page.keyboard.press("ArrowDown")
+    await page.keyboard.press("ArrowDown")
+    k2 = await js(page, "return document.activeElement.dataset.stop || document.activeElement.id;")
+    await page.keyboard.press("Enter")
+    await js(page, "window.viewer.tour.finish(); await window.viewer.frames(1);")
+    k3 = await js(page, "return [window.viewer.state.tour.stop, document.activeElement.id];")
+    await page.keyboard.press("4")
+    await js(page, "window.viewer.tour.finish();")
+    s0 = await js(page, "return window.viewer.state.tour;")
+    # held keys act per animation frame (frame dt, at most 0.1 s): hold them over a few rendered frames (a SwiftShader
+    # frame of the cabin takes seconds, and headless Chromium hands requestAnimationFrame 1/60 s steps)
+    await page.keyboard.down("w")
+    await js(page, "await window.viewer.frames(4);")
+    await page.keyboard.up("w")
+    await page.keyboard.down("ArrowLeft")
+    await js(page, "await window.viewer.frames(4);")
+    await page.keyboard.up("ArrowLeft")
+    await js(page, "await window.viewer.frames(2);")
+    s1 = await js(page, "return window.viewer.state.tour;")
+    await page.keyboard.press("Escape")
+    await js(page, "window.viewer.tour.finish(); await window.viewer.frames(1);")
+    s2 = await js(page, "return [window.viewer.state.tour.active, window.viewer.state.cameraPreset];")
+    ok = (r == "tourEnter" and k1 == [True, "pilot"] and k2 == "fd_cabin" and k3 == ["fd_cabin", "tourStop"] and s0["stop"] == "cabin_fwd"
+          and s1["pos"][0] < s0["pos"][0] - 0.002 and abs(s1["yawDeg"] - s0["yawDeg"]) > 0.05 and s1["outside"] < 1e-6 and s2 == [False, "three_quarter"])
+    check("[T6] keyboard: Enter opens the stop menu (focus on stop 1), arrows + Enter enter stop 3 (focus on the stop button), "
+          "4 = cabin forward, W walks, Left turns, Esc goes back outside", ok,
+          f"menu {k1}, -> {k2}, entered {k3}, walked {s0['pos'][0]:.3f} -> {s1['pos'][0]:.3f}, yaw {s0['yawDeg']:.0f} -> {s1['yawDeg']:.0f}, out {s2}")
+    # [T7] pointer: a drag looks around (the eye stays put), the wheel moves forward, no picking while inside
+    await js(page, "window.viewer.tour.enter('cabin_aft', {motion: false}); await window.viewer.frames(1);")
+    a = await js(page, "return window.viewer.state.tour;")
+    cv = await js(page, "const r = window.viewer._internals.stage.renderer.domElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2];")
+    await page.mouse.move(cv[0], cv[1])
+    await page.mouse.down()
+    for i in range(1, 6):
+        await page.mouse.move(cv[0] + 30 * i, cv[1] + 6 * i)
+    await page.mouse.up()
+    b = await js(page, "return [window.viewer.state.tour, window.viewer.state.selected];")
+    await page.mouse.wheel(0, -300)
+    await page.wait_for_timeout(600)
+    c = await js(page, "await window.viewer.frames(2); return window.viewer.state.tour;")
+    ok = (abs(b[0]["yawDeg"] - a["yawDeg"]) > 10 and b[0]["pitchDeg"] > a["pitchDeg"] and b[0]["pos"] == a["pos"] and b[1] is None
+          and c["pos"][0] > a["pos"][0] + 0.2 and c["outside"] < 1e-6)
+    check("[T7] pointer: a drag turns the view (the eye stays), the wheel walks forward, nothing picked", ok,
+          f"yaw {a['yawDeg']:.0f} -> {b[0]['yawDeg']:.0f}, pitch {a['pitchDeg']:.1f} -> {b[0]['pitchDeg']:.1f}, wheel x {a['pos'][0]:.3f} -> {c['pos'][0]:.3f}")
+    # [T8] the flights (motion on): outside -> fade -> inside; inside -> inside along the aisle, never through a wall
+    r = await js(page, r"""
+      const V = window.viewer, T = V.tour;
+      T.exit({motion: false}); V.setCamera('three_quarter', {instant: true}); T.motion(true); V.pause(true);
+      T.enter('cabin_aft');
+      let fadeMax = 0, n = 0, cutAt = null, camOut = null;
+      while (V.state.tour.flying && n < 400) { V.advance(0.05); n++; const s = V.state.tour; fadeMax = Math.max(fadeMax, s.fade);
+        if (cutAt == null && V._internals.tour.inside) cutAt = n * 0.05; }
+      const end1 = V.state.tour;
+      T.go('club');
+      let worst = 0, jump = 0, prev = V.state.tour.yawDeg, m = 0, regions = new Set();
+      while (V.state.tour.flying && m < 400) { V.advance(0.05); m++; const s = V.state.tour; worst = Math.max(worst, s.outside);
+        jump = Math.max(jump, Math.abs(((s.yawDeg - prev + 540) % 360) - 180)); prev = s.yawDeg; regions.add(s.region); }
+      const end2 = V.state.tour;
+      T.go('pilot');
+      let k = 0, worst2 = 0; prev = V.state.tour.yawDeg;
+      while (V.state.tour.flying && k < 400) { V.advance(0.05); k++; const s = V.state.tour; worst2 = Math.max(worst2, s.outside);
+        jump = Math.max(jump, Math.abs(((s.yawDeg - prev + 540) % 360) - 180)); prev = s.yawDeg; }
+      const end3 = V.state.tour;
+      T.exit();
+      let x = 0; while (V.state.tour.flying && x < 100) { V.advance(0.05); x++; }
+      const out = {t1: n * 0.05, fadeMax, cutAt, end1, t2: m * 0.05, worst, jump, regions: [...regions], end2, t3: k * 0.05, worst2, end3,
+        t4: x * 0.05, exitState: V.state.tour, preset: V.state.cameraPreset, fadeEnd: V.state.tour.fade};
+      T.motion(null); V.pause(false);
+      return out;
+    """)
+    ok = (r["end1"]["stop"] == "cabin_aft" and not r["end1"]["flying"] and r["fadeMax"] > 0.98 and r["cutAt"] is not None
+          and 0.8 < r["t1"] < 3.0 and r["end2"]["stop"] == "club" and r["worst"] < 0.03 and r["jump"] < 12 and 0.8 < r["t2"] < 3.6
+          and r["end3"]["stop"] == "pilot" and r["worst2"] < 0.03 and not r["exitState"]["active"] and r["preset"] == "three_quarter"
+          and r["fadeEnd"] == 0)
+    check("[T8] flights: outside -> inside fades through the skin; cabin aft -> club seat -> pilot along the aisle (never "
+          "more than 30 mm off the walkable volume, the view turning < 240 deg/s); exit fades back to the 3/4 view", ok,
+          f"in {r['t1']:.2f} s (cut at {r['cutAt']}), -> club {r['t2']:.2f} s (off {r['worst'] * 1000:.0f} mm, yaw step <= {r['jump']:.1f} deg, "
+          f"via {r['regions']}), -> pilot {r['t3']:.2f} s (off {r['worst2'] * 1000:.0f} mm), out {r['t4']:.2f} s")
+    # [T9] exit restores what the tour changed: cutaway, X-ray, explode, build step, isolate, panel, the airstair door
+    r = await js(page, r"""
+      const V = window.viewer;
+      V.setStep('wing', {instant: true}); V.setCutaway(true); V.setExplode(0.4, {instant: true}); V.setDoor('cargo', 1, {instant: true});
+      V.panel(true); V.isolate(null);
+      const before = V.state;
+      V.tour.enter('airstair', {motion: false}); V.advance(0.1);
+      const inside = V.state;
+      V.tour.exit({motion: false}); await V.frames(1);
+      const after = V.state;
+      V.setCutaway(false); V.setExplode(0, {instant: true}); V.setDoor('cargo', 0, {instant: true}); V.setStep('paint', {instant: true});
+      return {before: [before.stepKey, before.cutawayUser, before.explodeTarget, before.doors, before.cameraPreset],
+        inside: [inside.stepKey, inside.cutaway, inside.explodeTarget, inside.doors, inside.camInside, inside.tour.active],
+        after: [after.stepKey, after.cutawayUser, after.explodeTarget, after.doors, after.cameraPreset, after.tour.active,
+          V._internals.stage.controls.enabled, document.getElementById('app').classList.contains('touring')]};
+    """)
+    b, i_, a_ = r["before"], r["inside"], r["after"]
+    ok = (i_[0] == "paint" and i_[1] is False and i_[2] == 0 and i_[3]["airstair"] == 1 and i_[3]["cargo"] == 1 and i_[4] and i_[5]
+          and a_[0] == b[0] and a_[1] is True and abs(a_[2] - 0.4) < 1e-9 and a_[3]["airstair"] == 0 and a_[3]["cargo"] == 1
+          and a_[4] == "three_quarter" and a_[5] is False and a_[6] is True and a_[7] is False)
+    check("[T9] exit restores the exterior state (build step, cutaway, explode, the airstair door it opened; a door the user "
+          "opened stays) and the orbit camera at the 3/4 view", ok, f"before {b}, inside {i_}, after {a_}")
+
+
+async def tour_phone_checks(page, ctx, shots=True):
+    """[T10] phones: the entry is visible on load (not scrolled off the toolbar), the menu fits, inside the sheet folds
+    away and the walk pad / hint show; one-finger drag looks, a pinch walks; exit re-opens the sheet."""
+    await js(page, "window.viewer.select(null); window.viewer.tab('build'); window.viewer.panel(true); window.viewer.setCamera('three_quarter', {instant: true}); await new Promise(r => setTimeout(r, 400));")
+    e = await js(page, r"""
+      const b = document.getElementById('tourEnter'), r = b.getBoundingClientRect(), el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return {box: [r.left, r.top, r.right, r.bottom], hit: b === el || b.contains(el), w: innerWidth, h: innerHeight};
+    """)
+    await js(page, "document.getElementById('tourEnter').click(); await window.viewer.frames(1);")
+    m = await js(page, "const r = document.getElementById('tourMenu').getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom, document.getElementById('tourMenu').scrollHeight <= document.getElementById('tourMenu').clientHeight + 1];")
+    if shots:
+        await shot(page, "41_tour_phone_menu", "")
+    await js(page, "document.querySelector('#tourMenu [data-stop=\"club\"]').click(); window.viewer.tour.finish(); await window.viewer.frames(2);")
+    s = await js(page, r"""
+      const V = window.viewer, q = (id) => document.getElementById(id), vis = (el) => !el.hidden && el.getBoundingClientRect().height > 0;
+      const pad = [...q('tourPad').querySelectorAll('button')].map((b) => { const r = b.getBoundingClientRect(); return [r.width, r.height, r.bottom]; });
+      const hint = q('tourHint').getBoundingClientRect(), sheet = q('panel').getBoundingClientRect();
+      return {tour: V.state.tour, sheetOpen: q('app').classList.contains('panel-open'), pad, padVis: vis(q('tourPad')), hintVis: vis(q('tourHint')),
+        hint: [hint.left, hint.right, hint.bottom], sheetTop: sheet.top, exitVis: vis(q('tourExit')), enterVis: vis(q('tourEnter'))};
+    """)
+    if shots:
+        await shot(page, "42_tour_phone_club", "")
+    cdp = await ctx.new_cdp_session(page)
+    x, y = 200, 300
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
+    for i in range(1, 6):
+        await cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x - 15 * i, "y": y}]})
+        await page.wait_for_timeout(30)
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    await page.wait_for_timeout(150)
+    dragged = await js(page, "return window.viewer.state.tour;")
+    t1 = await js(page, "window.viewer.tour.go('cabin_aft', {motion: false}); return window.viewer.state.tour;")
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": 180, "y": 300, "id": 1}, {"x": 220, "y": 300, "id": 2}]})
+    for i in range(1, 7):
+        await cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": 180 - 15 * i, "y": 300, "id": 1}, {"x": 220 + 15 * i, "y": 300, "id": 2}]})
+        await page.wait_for_timeout(30)
+    await cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    await page.wait_for_timeout(700)
+    t2 = await js(page, "await window.viewer.frames(2); return window.viewer.state.tour;")
+    await js(page, "document.getElementById('tourExit').click(); window.viewer.tour.finish(); await window.viewer.frames(1);")
+    after = await js(page, "return [window.viewer.state.tour.active, document.getElementById('app').classList.contains('panel-open'), window.viewer.state.cameraPreset];")
+    yaw_moved = s["tour"]["stop"] == "club" and abs(dragged["yawDeg"] - s["tour"]["yawDeg"]) > 5 and dragged["pos"] == s["tour"]["pos"]
+    ok = (e["hit"] and 0 <= e["box"][0] and e["box"][2] <= e["w"] and e["box"][3] - e["box"][1] >= 40
+          and m[0] >= 0 and m[2] <= e["w"] and m[3] <= e["h"] and m[4]
+          and s["tour"]["active"] and not s["sheetOpen"] and s["padVis"] and all(w >= 40 and h >= 40 for w, h, _ in s["pad"])
+          and s["hintVis"] and s["hint"][0] >= 0 and s["hint"][1] <= e["w"] and s["hint"][2] <= s["sheetTop"]
+          and max(b for _, _, b in s["pad"]) <= s["sheetTop"] and s["exitVis"] and not s["enterVis"]
+          and yaw_moved and t2["pos"][0] > t1["pos"][0] + 0.1 and t2["outside"] < 1e-6 and after == [False, True, "three_quarter"])
+    check("[T10] phone 390x844: 'Go inside' on screen at load (>= 40 px, not under the toolbar fade), the stop menu fits; "
+          "inside: sheet folded, walk pad (>= 40 px) and hint above it; a finger drag looks, a pinch walks; Exit re-opens the sheet", ok,
+          f"entry {[round(v) for v in e['box']]}, menu bottom {m[3]:.0f}/{e['h']}, pad {s['pad'][0][:2]}, hint {[round(v) for v in s['hint']]} "
+          f"(sheet top {s['sheetTop']:.0f}), drag yaw {s['tour']['yawDeg']:.0f} -> {dragged['yawDeg']:.0f}, pinch x {t1['pos'][0]:.3f} -> "
+          f"{t2['pos'][0]:.3f}, exit {after}")
+
+
+async def tour_dark_check(page, shots=True):
+    """[T11] dark theme: the cabin keeps the daylight studio and exposure inside (the dark studio left the headliner
+    near black), and the theme's look comes back outside."""
+    r = await js(page, r"""
+      const V = window.viewer, st = V._internals.stage;
+      V.panel(false); await new Promise(r => setTimeout(r, 300));
+      const out0 = st.renderer.toneMappingExposure;
+      V.tour.enter('cabin_fwd', {motion: false}); await V.frames(2);
+      return {dark: st.dark, out0, inside: st.renderer.toneMappingExposure, key: st.lookKey};
+    """)
+    med = None
+    if shots:
+        path = await shot(page, "43_tour_dark_cabin_fwd", "")
+        med = lum_stats(path, (0, 60, VIEW["width"], VIEW["height"] - 60))[0]
+    r2 = await js(page, "const V = window.viewer, st = V._internals.stage; V.tour.exit({motion: false}); await V.frames(2); return [st.renderer.toneMappingExposure, st.lookKey];")
+    ok = r["dark"] and r["key"] == "light" and r["inside"] < r["out0"] and r2 == [r["out0"], "dark"] and (med is None or 70 <= med <= 215)
+    check("[T11] dark theme: the cabin is lit with the daylight studio inside (exposure / grade), the dark look outside", ok,
+          f"exposure {r['out0']} -> {r['inside']} -> {r2[0]}, grade {r['key']} -> {r2[1]}" + (f", median luminance {med:.0f}" if med is not None else ""))
+
+
 # ----------------------------------------------------------------------------- blender cross-check
 BLENDER_SCRIPT = r'''
 import bpy, json, sys, math
@@ -1300,6 +1635,7 @@ async def phone_checks(browser, base, shots=True):
     if shots:
         await shot(page, "30b_phone_selected_card", "")
     await touch_checks(page, ctx)
+    await tour_phone_checks(page, ctx, shots)
     check("phone: no console errors", not errs, "; ".join(errs[:3]))
     await ctx.close()
 
@@ -1418,7 +1754,8 @@ async def landscape_check(browser, base, shots=True):
     r = await js(page, r"""
       await new Promise((r) => setTimeout(r, 400));
       const box = (e) => e.getBoundingClientRect(), W = innerWidth, H = innerHeight;
-      const tb = [...document.querySelectorAll('#toolbar button, #toolbar input')].map(box);
+      // (shown controls only: the interior tour's inside buttons are hidden outside, with an empty box at 0, 0)
+      const tb = [...document.querySelectorAll('#toolbar button, #toolbar input')].filter((e) => e.offsetParent !== null).map(box);
       // the tab row scrolls sideways: its box (not the tabs scrolled out of it) must clear the inset
       const pb = [...document.querySelectorAll('#panel .panel-head button, #tabs, #pane-build .build-controls button, #stepList')]
         .filter((e) => e.offsetParent !== null).map(box);
@@ -1546,6 +1883,9 @@ async def dark_and_data(browser, base, shots=True):
         await fit_check(page, "dark 960x600 ?cam=side")
     if shots and not err:
         await shot(page, "31_dark_theme", "window.viewer.setCamera('three_quarter', {instant: true}); window.viewer.setCutaway(true);")
+    if not err:
+        await js(page, "window.viewer.setCutaway(false);")
+        await tour_dark_check(page, shots)
     await page.close()
 
 
@@ -1685,6 +2025,7 @@ async def run(args):
                 await screenshots(page)
             await numeric_checks(page)
             await regression_checks(page)
+            await tour_checks(page, shots=not args.no_shots)
             if args.blender:
                 await blender_check(page)
             await context_loss_check(page)

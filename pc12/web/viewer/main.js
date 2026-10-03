@@ -6,6 +6,7 @@ import { loadMaterialSpec, setLights } from './materials.js';
 import { Kinematics } from './kinematics.js';
 import { Build } from './build.js';
 import { PartsPanel, InfoCard, DrawingViewer, buildSpecs } from './panels.js';
+import { Tour, TourUI, TOUR, project as tourProject, toGL } from './tour.js';
 
 const $ = (id) => document.getElementById(id);
 const app = $('app');
@@ -56,7 +57,7 @@ function fail(err, what) {
   readyReject(err);
 }
 
-let stage, model, kin, build, parts, info, drawings, meta;
+let stage, model, kin, build, parts, info, drawings, meta, tour, tourUI;
 const S = {
   explode: { target: 0, cur: 0 },
   cutUser: false, xray: false, lines: false,
@@ -152,6 +153,13 @@ async function init(gltf, matSpec) {
   stage.setModelBox(model.box, model.silhouettePoints());
   kin = new Kinematics(model);
   build = new Build({ model, meta, scene: stage.scene, labelsEl: $('labels') });
+  // interior tour: the pilot stop is the cockpit camera of the metadata when it carries one (the same design eye)
+  if (meta.cockpit && meta.cockpit.design_eye_model && meta.cockpit.target_model) {
+    const pilot = TOUR.stops.find((st) => st.id === 'pilot');
+    if (pilot) { pilot.eye = meta.cockpit.design_eye_model.slice(); pilot.target = meta.cockpit.target_model.slice(); }
+  }
+  tour = new Tour({ stage, kin, hooks: { enter: tourEnter, exit: tourExit, changed: tourChanged, door: tourDoor } });
+  tourUI = new TourUI(tour, { onEnterRequest: (id) => goInside(id) });
   parts = new PartsPanel({ meta, onSelect: (id) => select(id) });
   info = new InfoCard({ meta });
   drawings = new DrawingViewer({ sheets: [
@@ -162,7 +170,15 @@ async function init(gltf, matSpec) {
   buildStepList();
   wireUI();
 
-  build.onChange(() => { refreshModes(); syncBuildUI(); });
+  build.onChange(() => {
+    // the tour needs the finished aircraft: another build step takes the camera back outside
+    // (the step the user picked stays: it replaces the one saved on entering)
+    if (tour.active && build.index !== build.n - 1) {
+      if (tourSaved) tourSaved.step = build.index;
+      tour.exit({ motion: false });
+    }
+    refreshModes(); syncBuildUI();
+  });
   const qs = q.get('step');
   build.setStep(qs == null ? build.n - 1 : isNaN(+qs) ? qs : +qs, { instant: true });
   if (q.get('tab')) setTab(q.get('tab'));
@@ -263,7 +279,8 @@ function select(id, { frame = true, instant = false } = {}) {
   parts.setCurrent(id);
   $('icIsolate').setAttribute('aria-pressed', String(!!(model.isolate && S.isolate === id)));
   // internal parts are framed from further out so the surrounding structure gives context
-  if (frame) stage.frameBox(model.worldBox(id), { instant, minDist: INTERNAL_PARTS.has(id) && !S.xray && !effectiveCut() ? 4 : 1.5 });
+  // inside (the tour) a selection is highlighted where it is; Frame (the info card) goes back outside first
+  if (frame && !tour.active) stage.frameBox(model.worldBox(id), { instant, minDist: INTERNAL_PARTS.has(id) && !S.xray && !effectiveCut() ? 4 : 1.5 });
   stage.needsRender = true;
 }
 
@@ -339,6 +356,7 @@ function wirePicking() {
   cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, b: e.button }; });
   cv.addEventListener('pointerup', (e) => {
     if (!down) return;
+    if (tour.active) { down = null; return; }           // inside: drags look around (tour.js), no picking
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     const b = down.b;
     down = null;
@@ -348,7 +366,7 @@ function wirePicking() {
     else clearSelection();
   });
   cv.addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse' || e.buttons) { hoverAt = null; return; }
+    if (e.pointerType !== 'mouse' || e.buttons || tour.active) { hoverAt = null; return; }
     hoverAt = { x: e.clientX, y: e.clientY };
   });
   cv.addEventListener('pointerleave', () => { hoverAt = null; if (model.setHighlight('hover', null)) stage.needsRender = true; });
@@ -375,7 +393,15 @@ function setCutaway(on) { S.cutUser = !!on; refreshModes(); }
 function setXray(on) { S.xray = !!on; refreshModes(); }
 function setLines(on) { S.lines = !!on; build.setShowAllLines(S.lines); stage.needsRender = true; syncToolbar(); }
 function setPaint(on, { instant = false } = {}) { model.setPaint(!!on, instant); stage.needsRender = true; syncToolbar(); }
-function setCamera(v, { instant = false } = {}) { stage.goTo(v, { instant }); }
+function setCamera(v, { instant = false } = {}) {
+  if (tour.active) tour.exit({ motion: false, to: null });
+  stage.goTo(v, { instant });
+}
+// the toolbar's camera buttons and keys 1 - 6: the cockpit is the tour's pilot stop (first person, look around)
+function cameraButton(name) {
+  if (name === 'cockpit') goInside('pilot');
+  else setCamera(name);
+}
 function setStep(i, { instant = false } = {}) { build.playing = false; build.setStep(i, { instant }); if (instant) poseNow(); }
 function setGear(v, { instant = false } = {}) { kin.setGear(v, instant); if (instant) poseNow(); syncAnimUI(); }
 function setFlaps(d, { instant = false } = {}) { kin.setFlaps(d, instant); if (instant) poseNow(); syncAnimUI(); }
@@ -390,6 +416,7 @@ function neutral({ instant = false } = {}) {
 }
 
 function reset() {
+  if (tour.active) tour.exit({ motion: false, to: null });
   stopDemo();
   setExplode(0);
   S.cutUser = false; S.xray = false;
@@ -405,6 +432,67 @@ function reset() {
   refreshModes();
   stage.goTo('three_quarter');
   syncUI();
+}
+
+// ------------------------------------------------------------------ interior tour
+// enter: the exterior state is saved and the scene set up for the inside (finished aircraft, no explode / cutaway /
+// X-ray / isolate / construction lines, the stop's doors); exit restores it and the doors the tour opened.
+let tourSaved = null;
+function goInside(id) {
+  if (tour.active) tour.go(id);
+  else tour.enter(id);
+}
+function tourEnter(s, motion) {
+  stopDemo();
+  build.playing = false;
+  tourSaved = { step: build.index, cutUser: S.cutUser, xray: S.xray, explode: S.explode.target, isolate: S.isolate,
+    lines: S.lines, panel: app.classList.contains('panel-open'), doors: {} };
+  clearSelection();
+  if (S.isolate) setIsolate(null);
+  if (build.index !== build.n - 1) build.setStep(build.n - 1, { instant: true });
+  S.cutUser = false; S.xray = false;
+  if (S.lines) setLines(false);
+  setExplode(0, { instant: true });
+  if (S.tab === 'drawings') setTab('build');
+  if (s.doors) for (const k in s.doors) tourDoor(k, s.doors[k], motion);
+  refreshModes();
+  hoverAt = null;
+  if (model.setHighlight('hover', null)) stage.needsRender = true;
+  if (isNarrow() && tourSaved.panel) setPanel(false);
+}
+// a door the tour opens (the airstair stop): animated, closed again on exit unless the user moved it meanwhile
+function tourDoor(k, v, motion = tour.motion) {
+  if (tourSaved && !(k in tourSaved.doors)) tourSaved.doors[k] = { was: kin.t[k], set: v };
+  else if (tourSaved) tourSaved.doors[k].set = v;
+  kin.setDoor(k, v, !motion);
+  if (!motion) poseNow();
+  syncAnimUI();
+}
+function tourExit(to) {
+  const sv = tourSaved;
+  tourSaved = null;
+  if (sv) {
+    S.cutUser = sv.cutUser; S.xray = sv.xray;
+    for (const k in sv.doors) if (kin.t[k] === sv.doors[k].set) kin.setDoor(k, sv.doors[k].was, true);
+    if (sv.step !== build.index) build.setStep(sv.step, { instant: true });
+    setExplode(sv.explode, { instant: true });
+    if (sv.lines) setLines(true);
+    if (sv.isolate) setIsolate(sv.isolate);
+    if (sv.panel && !app.classList.contains('panel-open')) setPanel(true);
+  }
+  refreshModes();
+  poseNow();
+  syncAnimUI();
+  if (to) stage.goTo(to, { instant: true });
+}
+let tourWasActive = false;
+function tourChanged() {
+  tourUI.sync();
+  if (tour.active && !tourWasActive) tourUI.showHint();
+  tourWasActive = tour.active;
+  syncToolbar();
+  requestAnimationFrame(layoutInsets);
+  stage.needsRender = true;
 }
 
 // ------------------------------------------------------------------ demo
@@ -610,7 +698,7 @@ function updateReadouts() {
 function wireUI() {
   wirePicking();
   // toolbar
-  for (const b of document.querySelectorAll('[data-cam]')) b.addEventListener('click', () => setCamera(b.dataset.cam));
+  for (const b of document.querySelectorAll('[data-cam]')) b.addEventListener('click', () => cameraButton(b.dataset.cam));
   $('explode').addEventListener('input', (e) => setExplode(e.target.value));
   $('tCut').addEventListener('click', () => setCutaway(!S.cutUser));
   $('tXray').addEventListener('click', () => setXray(!S.xray));
@@ -679,7 +767,11 @@ function wireUI() {
     $(id).addEventListener('dblclick', () => setControls({ [key]: 0 }));
   // parts / info card
   $('icClose').addEventListener('click', clearSelection);
-  $('icFrame').addEventListener('click', () => S.selected && stage.frameBox(model.worldBox(S.selected)));
+  $('icFrame').addEventListener('click', () => {
+    if (!S.selected) return;
+    if (tour.active) tour.exit({ motion: false, to: null });
+    stage.frameBox(model.worldBox(S.selected));
+  });
   $('icIsolate').addEventListener('click', () => { if (!S.selected) return; setIsolate(S.isolate === S.selected ? null : S.selected); if (S.isolate) stage.frameBox(model.worldBox(S.selected)); });
   $('icHide').addEventListener('click', () => S.selected && hidePart(S.selected));
   $('icShowAll').addEventListener('click', showAllParts);
@@ -692,6 +784,9 @@ function wireUI() {
   $('dOut').addEventListener('click', () => drawings.zoomCentre(1 / 1.4));
   // keyboard
   window.addEventListener('keydown', onKey);
+  window.addEventListener('keyup', (e) => tour.keyup(e));
+  window.addEventListener('blur', () => tour.blur());
+  document.addEventListener('visibilitychange', () => { if (document.hidden) tour.blur(); });
   // a mouse/touch click must not leave focus on the button (Space would re-activate it instead of
   // playing the build); keyboard focus (Tab) is unaffected
   document.addEventListener('pointerup', (e) => {
@@ -747,6 +842,21 @@ function onKey(e) {
   if ((tag === 'BUTTON' || tag === 'SUMMARY' || tag === 'A') && (e.key === ' ' || e.key === 'Enter')) return;
   if (!model) return;
   const k = e.key;
+  // inside: walk / look keys, the stops (1 - 7), I (stop menu), Esc (back outside); the rest as outside
+  if (tour.active && S.tab !== 'drawings') {
+    if (k === 'Escape') {
+      e.preventDefault();
+      if (!$('tourMenu').hidden) tourUI.closeMenu(true);
+      else if (!$('help').hidden) toggleHelp(false);
+      else tour.exit();
+      return;
+    }
+    if (tour.keydown(e)) { e.preventDefault(); return; }
+    if (k === ' ') { e.preventDefault(); return; }       // the build player would take the camera back outside
+    const n = +k;
+    if (n >= 1 && n <= TOUR.stops.length) { e.preventDefault(); tour.go(TOUR.stops[n - 1].id); return; }
+  }
+  if ((k === 'i' || k === 'I') && S.tab !== 'drawings') { e.preventDefault(); tourUI.openMenu(); return; }
   let handled = true;
   switch (k) {
     case 'ArrowRight': build.playing = false; build.next(); break;
@@ -769,7 +879,7 @@ function onKey(e) {
     default: {
       const n = +k;
       const names = Object.keys(PRESETS);
-      if (n >= 1 && n <= names.length) setCamera(names[n - 1]);
+      if (n >= 1 && n <= names.length) cameraButton(names[n - 1]);
       else handled = false;
     }
   }
@@ -833,6 +943,8 @@ function frame(now) {
   const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
   last = now;
   const posed = tick(S.paused ? 0 : dt);
+  if (tour.update(S.paused ? 0 : dt)) stage.needsRender = true;
+  stage.setInteriorLook(tour.inside);
   if (stage.update(dt)) stage.needsRender = true;
   stage.applyQuality();
   if (forceFrames > 0) { forceFrames--; stage.needsRender = true; }
@@ -842,7 +954,7 @@ function frame(now) {
   // interior light by viewpoint (and how far a cabin door is open)
   if (stage.needsRender) {
     const wasInside = model.camInside;
-    model.updateCabin(stage.camera.position, S.explode.cur, Math.max(kin.c.door_airstair, kin.c.door_cargo));
+    model.updateCabin(stage.camera.position, S.explode.cur, Math.max(kin.c.door_airstair, kin.c.door_cargo), tour.inside);
     if (model.camInside !== wasInside) stage.shadowDirty = true;      // parts hidden inside the cabin (antennas)
   }
   if (stage.needsRender) {
@@ -882,7 +994,7 @@ const hooks = {
         steerDeg: (kin.controls.find((k) => k.pv.kind === 'steer') || {}).angle || 0 },
       deflections: { ...kin.defl }, camera: stage.cameraState(), paused: S.paused, frames: frameCount,
       demo: !!S.demo, lights: S.lights, contextLost: stage.contextLost, camInside: model.camInside, structureVisible: model.structureOn, groundY: stage.groundY, propDiscPush: kin.push,
-      cameraPreset: stage.preset, dark: stage.dark,
+      cameraPreset: stage.preset, dark: stage.dark, tour: tour.state(),
       linesVisible: build.root.children.reduce((n, g) => n + (g.visible ? g.children.length : 0), 0),
       loading: !$('loading').hidden,
     };
@@ -920,12 +1032,29 @@ const hooks = {
   frames: (n = 2) => waitFrames(n),
   // deterministic time stepping for tests: advance every animation by `sec` in 1/60 s steps
   advance: (sec, step = 1 / 60) => {
-    for (let t = 0; t < sec - 1e-9; t += step) tick(Math.min(step, sec - t));
+    for (let t = 0; t < sec - 1e-9; t += step) { tick(Math.min(step, sec - t)); tour.update(Math.min(step, sec - t)); }
     stage.update(0);
     poseNow();
     return hooks.state;
   },
   pick: (x, y) => pick(x, y),
+  // interior tour: stops (model axes), enter / go / exit ({motion}: force the flights on / off), walk({f, s, u, turn},
+  // sec) integrates held inputs through the walk clamp, project(p) = the walkable volume's nearest point (model axes)
+  tour: {
+    data: TOUR,
+    stops: () => TOUR.stops.map((st) => st.id),
+    enter: (id, o = {}) => tour.enter(id, o),
+    go: (id, o = {}) => tour.go(id, o),
+    exit: (o = {}) => tour.exit(o),
+    finish: () => tour.finish(),
+    walk: (input, sec) => tour.walk(input, sec),
+    look: (dyawDeg, dpitchDeg) => tour.look(dyawDeg * Math.PI / 180, dpitchDeg * Math.PI / 180),
+    state: () => tour.state(),
+    motion: (on) => { tour.motionOverride = on == null ? null : !!on; },
+    project: (p) => tourProject(p, tour.doors()),
+    toGL: (p) => toGL(p).toArray(),
+    menu: (open) => (open ? tourUI.openMenu() : tourUI.closeMenu(false)),
+  },
   // load timings (ms since navigation start) + render statistics
   perf: () => ({
     marks: { ...PERF.t }, firstRenderMs: PERF.firstRenderMs,
@@ -957,7 +1086,7 @@ const hooks = {
     return [r.left + ((v.x + 1) / 2) * r.width, r.top + ((1 - v.y) / 2) * r.height, v.z];
   },
 };
-Object.defineProperty(hooks, '_internals', { get: () => ({ THREE, stage, model, kin, build }) });   // for debugging
+Object.defineProperty(hooks, '_internals', { get: () => ({ THREE, stage, model, kin, build, tour }) });   // for debugging
 window.viewer = hooks;
 
 boot().catch((e) => fail(e, 'the viewer'));

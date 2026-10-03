@@ -339,9 +339,11 @@ export class Model {
   // camera is outside a closed skin (and far-side panes darken, see materials.js U.cabinClosed); from
   // inside (cockpit view) the eye adapts; opened up (cutaway / X-ray / explode) it is lit like the outside.
   // Returns true when a uniform or the visibility changed (the caller re-renders and refreshes the shadows).
-  updateCabin(camPos, explodeF = 0, doorOpen = 0) {
+  // forceInside: the interior tour's first-person camera (tour.js), lit as inside wherever it stands (the airstair
+  // doorway is outside the furniture's box)
+  updateCabin(camPos, explodeF = 0, doorOpen = 0, forceInside = false) {
     const open = this.cutaway || this.xray || explodeF > 0.02;
-    const inside = !open && !this.interiorBox.isEmpty() && this.interiorBox.containsPoint(camPos);
+    const inside = !open && (forceInside || (!this.interiorBox.isEmpty() && this.interiorBox.containsPoint(camPos)));
     const ao = open ? CABIN.open : inside ? CABIN.inside
       : CABIN.outside + (CABIN.door - CABIN.outside) * Math.min(1, Math.max(0, doorOpen));
     const closed = open || inside ? 0 : 1;
