@@ -34,9 +34,14 @@ Every number comes from the source-tagged tables the L6 / L6B sheets draw and mo
               aisle        the cabin aisle between the executive seats (EXEC_SEAT bl, width), divider to WALL_CLEAR
                            ahead of the baggage partition
               vestibule    the entry area abeam the airstair door (CLEAR_ZONES entry_bl: no furniture outboard of the
-                           aisle there), DIVIDER_CLEAR aft of the divider wall to the LH cabinet (CABINETS lh x)
+                           aisle there), DIVIDER_CLEAR aft of the divider wall to the LH cabinet (CABINETS lh x), its
+                           port edge WALL_CLEAR inboard of the closed door's lining (review r2 NAV2-06: at BL -0.45 the
+                           screen was the door's inner lining and its handle); vestibule_door widens it to BL -0.45
+                           while the door is open, onto the doorway
               doorway      the airstair door's clear opening (only while the door is open)
-              seat_*       a pocket round each seated eye (crew: design_eye; cabin: cabin_pose at the 50th pct)
+              seat_*       a pocket round each seated eye (crew: design_eye; cabin: cabin_pose at the 50th pct), with
+                           the seat's `facing` (seat_map: +1 forward, -1 aft: a walk into a seat turns the view to it)
+                           and `eye_bl` (the seated eye's BL: a sideways step into the seat ends there)
             regions marked `ceil` are also held MARGIN below the headliner / lining (`ceiling`); `zw` (default the
             walker's 0.1) is the height weight of a region in the projection.  A region end facing a full-height wall
             head-on keeps the eye WALL_CLEAR from it (review r1 NAV1-02: at 12 cm from the baggage curtain, with the
@@ -91,8 +96,11 @@ CROUCH_MIN = 0.95      # lowest standing / crouching eye above the floor [E: a s
 DOOR_EYE = 1.22        # eye above the airstair sill, standing (stooped) in the 1.35 m clear opening [E]
 SEAT_POCKET = (0.08, 0.06, 0.12)   # seated-eye pocket: +/- along x, below / above the eye [E]
 FOV_CREW, FOV_CABIN = 74.0, 70.0   # vertical field of view (deg), widened on narrow viewports by the viewer
-AIRSTAIR_LOOK = (-105.0, -52.0)    # airstair stop: heading (deg, 0 = aft, -90 = port) and pitch (deg): the steps, the
-#                                    handrails and the wing in the door frame [E]
+AIRSTAIR_LOOK = (-105.0, -38.0)    # airstair stop: heading (deg, 0 = aft, -90 = port) and pitch (deg): the steps, the
+#                                    handrails, the wing and the horizon in the door frame [E] (review r2 NAV2-05: at
+#                                    -52 a portrait phone saw only the treads and the desktop view half studio floor)
+VESTIBULE_WALL_Z = 1.00            # eye height above the floor at which the vestibule keeps WALL_CLEAR from the closed
+#                                    airstair door's lining (the lowest crouch, where the curved wall is furthest out)
 
 
 def r3(v):
@@ -184,6 +192,7 @@ def regions():
     fd_x0 = ped_x1 + FD_AFT_OF_PEDESTAL
     e_crew = I.design_eye(-1)
     dx, dzl, dzu = SEAT_POCKET
+    vest_hw = float(I.lining_half_width(float(A["cx"]), fl + VESTIBULE_WALL_Z)) - WALL_CLEAR       # = 0.30
     out = [
         dict(id="flight_deck", label="flight deck", x=[fd_x0, xa + 0.05], y=[-fd_hw, fd_hw],
              z=[fl + CROUCH_MIN, fl + STAND_EYE_FD + 0.02], ceil=True,
@@ -195,10 +204,13 @@ def regions():
         dict(id="aisle", label="aisle", x=[xa - 0.04, float(I.BAGGAGE["partition_x"]) - WALL_CLEAR],
              y=[-aisle_hw, aisle_hw], z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
              src="EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain) - WALL_CLEAR"),
-        dict(id="vestibule", label="entry vestibule", x=[xa + DIVIDER_CLEAR, lh_x0 - 0.08], y=[-0.45, 0.0],
+        dict(id="vestibule", label="entry vestibule", x=[xa + DIVIDER_CLEAR, lh_x0 - 0.08], y=[-vest_hw, 0.0],
              z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
              src="CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft + DIVIDER_CLEAR .. "
-                 "CABINETS lh x0"),
+                 "CABINETS lh x0; port edge WALL_CLEAR inboard of the door lining (interior.lining_half_width)"),
+        dict(id="vestibule_door", label="entry vestibule (door open)", when="door_airstair",
+             x=[xa + DIVIDER_CLEAR, lh_x0 - 0.08], y=[-0.45, -vest_hw], z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
+             src="the vestibule out to BL -0.45 while the airstair door is open, onto the doorway"),
         dict(id="doorway", label="airstair doorway", when="door_airstair",
              x=[A["cx"] - A["hx"] + MARGIN, A["cx"] + A["hx"] - MARGIN], y=[-0.70, -0.30],
              z=[sill + CROUCH_MIN, sill + 2 * A["hz"] - 0.08], ceil=False,
@@ -209,13 +221,15 @@ def regions():
         e = I.design_eye(r["side"])
         y0, y1 = sorted((r["side"] * (float(cs["bl"]) + 0.05), r["side"] * (fd_hw - 0.04)))
         out.append(dict(id="seat_" + key, label=sid.lower(), x=[e[0] - dx, e[0] + dx + 0.02], y=[y0, y1],
-                        z=[e[2] - dzl - 0.02, e[2] + dzu], ceil=True, src="interior.design_eye, CREW_SEAT bl"))
+                        z=[e[2] - dzl - 0.02, e[2] + dzu], ceil=True, facing=int(r["facing"]), eye_bl=round(float(e[1]), 4),
+                        src="interior.design_eye, CREW_SEAT bl"))
     for k in range(1, 7):
         r = S[f"PAX {k}"]
         e = seated_eye(r)
         y0, y1 = sorted((r["side"] * (float(es["bl"]) + 0.04), r["side"] * (aisle_hw - 0.04)))
         out.append(dict(id=f"seat_pax{k}", label=f"PAX {k}", x=[e[0] - dx, e[0] + dx], y=[y0, y1],
-                        z=[e[2] - dzl, e[2] + dzu], ceil=True, src=f"seat_map 'PAX {k}', cabin_pose (50th pct)"))
+                        z=[e[2] - dzl, e[2] + dzu], ceil=True, facing=int(r["facing"]), eye_bl=round(float(e[1]), 4),
+                        src=f"seat_map 'PAX {k}', cabin_pose (50th pct)"))
     for R in out:
         R["x"], R["y"], R["z"] = r3(R["x"]), r3(R["y"]), r3(R["z"])
     return out

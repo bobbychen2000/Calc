@@ -320,6 +320,7 @@ def build_parts():
     livery.apply(parts)                 # (at PC12_RES > 1 each skin is refined along its paint boundaries first)
     for pid, p in parts.items():        # curvature-adaptive refinement (cad.res: nothing at PC12_RES=1)
         res.refine_part(pid, p)
+    fuselage_parts.apply_skin_analytic_normals(parts)   # cowl / chin-lip vertices: the analytic skin normal (RES2-01)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}
     ids = sorted(parts.keys(), key=lambda k: order.get(parts[k].step, 99))
     return {k: parts[k] for k in ids}

@@ -321,6 +321,76 @@ def build_skin():
     return xs, sub
 
 
+SKIN_ANALYTIC_X = 1.80          # the cowl columns that carry analytic normals (build_skin: the sheared chin columns)
+SKIN_ANALYTIC_TOL = 3.0e-3      # m: a vertex further than this from the analytic skin keeps its normal
+SKIN_ANALYTIC_PARTS = ("cowl_upper", "cowl_lower", "chin_inlet")
+SKIN_FACE_DEG = 50.0            # deg: largest lean of a vertex normal from its faces' (_lean_to_faces)
+
+
+def skin_project(V, UV, iters=10):
+    """Closest points of the raised cowl skin to the points V (n, 3) from their surface parameters UV: (distance (n,),
+    unit normals (n, 3), unoriented) -- powerplant.cowl_project."""
+    from model import powerplant as PP
+    d, N, _ = PP.cowl_project(V, UV, iters)
+    return d, N
+
+
+def skin_analytic_normals(meshes, x_max=SKIN_ANALYTIC_X, tol=SKIN_ANALYTIC_TOL):
+    """Give the cowl-skin vertices ahead of x_max (by their UV station) the analytic normal of the raised skin at their
+    closest point (skin_project), in place; vertices further than tol from it (liners, the duct) keep theirs.
+    build_skin sets them at the grid points, but every trim (the chin-lip iso-lines, the mouth / lip cuts, the
+    livery's strokes) and the refinement interpolate between grid normals that turn ~80 deg across the lip's 8 mm
+    nose: neighbouring vertices on one iso-line got normals from different columns and the lip's light / dark line
+    became a sawtooth, the cowl's reflected streaks above it kinked (review r2 RES2-01).  Returns the count set."""
+    n = 0
+    for m in meshes:
+        if m.UV is None or m.N is None or len(m.UV) != len(m.V):
+            continue
+        sel = np.nonzero(m.UV[:, 0] < x_max)[0]
+        if not len(sel):
+            continue
+        d, N = skin_project(m.V[sel], m.UV[sel])
+        ok = d < tol
+        N *= np.where(np.sum(N * m.N[sel], 1) < 0, -1.0, 1.0)[:, None]
+        m.N[sel[ok]] = N[ok]
+        n += int(ok.sum())
+        _lean_to_faces(m, sel[ok])
+    return n
+
+
+def _lean_to_faces(m, idx, max_deg=SKIN_FACE_DEG):
+    """Where the mesh does not follow the analytic skin (the lip face's foot crease, the oblique columns of the keel
+    step below the shear's polar range: a vertex up to a few mm off it), lean the vertex normals idx no further than
+    max_deg from the vertex's area-weighted face normal: the shading then follows the faces that are there."""
+    T = m.V[m.F]
+    fn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])
+    acc = np.zeros_like(m.V)
+    for k in range(3):
+        np.add.at(acc, m.F[:, k], fn)
+    acc = acc[idx]
+    L = np.linalg.norm(acc, axis=1)
+    ok = L > 1e-14
+    a = acc[ok] / L[ok, None]
+    a *= 1.0 if np.sum(acc * m.N[idx]) >= 0 else -1.0          # the faces' winding against the normals
+    n = m.N[idx[ok]]
+    c = np.sum(n * a, 1)
+    far = c < np.cos(np.radians(max_deg))
+    if not far.any():
+        return
+    p = n[far] - c[far, None] * a[far]
+    pl = np.linalg.norm(p, axis=1, keepdims=True)
+    p = np.where(pl > 1e-9, p / np.maximum(pl, 1e-12), 0.0)
+    r = np.radians(max_deg)
+    m.N[idx[ok][far]] = np.cos(r) * a[far] + np.sin(r) * p
+
+
+def apply_skin_analytic_normals(parts):
+    """skin_analytic_normals on the cowl / chin-inlet parts (model/build.py, after the livery and the refinement)."""
+    for pid in SKIN_ANALYTIC_PARTS:
+        if pid in parts:
+            skin_analytic_normals([m for m, mat in parts[pid].meshes])
+
+
 def bulkhead(x, scale=0.97, notch=None, normal=(1, 0, 0), n_rings=14):
     """Flat bulkhead in the fuselage section at station x (the section scaled about its max-breadth centre),
     optionally trimmed by notch(V) (negative = cut away)."""
@@ -367,6 +437,7 @@ def build(parts_out: dict):
     lo = trim(cowl, split, "negative")
     lo = trim(lo, nose_bay_field(lo), "positive")                  # nose-gear bay runs forward of the firewall
     lo, lip = PP.cut_chin_inlet(lo)                                # mouth hole + polished lip ring (chin_inlet part)
+    skin_analytic_normals([up, lo, lip])                           # (again after the livery / refinement: build.py)
     parts_out["cowl_upper"] = Part("cowl_upper", "Upper engine cowling", "cowling",
                                    explode=(0, 0, 0.9), group="Powerplant installation",
                                    material_note="Carbon/Nomex honeycomb, Cu mesh")

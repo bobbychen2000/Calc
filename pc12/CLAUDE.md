@@ -3,11 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.11M tris of which the interior ~527k, ~35 MB
+engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.13M tris of which the interior ~525k, ~35 MB
 incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review: ~1.53M tris, interior ~237k, three wheels ~77k, ~26 MB, 16-bit normals too; phones and the no-WebAssembly
-fallback load it, the Specs panel offers the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
+review: ~1.54M tris, interior ~237k, three wheels ~77k, ~26 MB, 16-bit normals too; phones and the no-WebAssembly
+fallback load it, the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
 exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
 --, L6 / L6B the interior arrangement and its checks),
@@ -46,7 +46,7 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~30 min, 145 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25 min, 152 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot timeout); [T1]-[T11] the interior tour
 python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLBs (both tiers; the build's own
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
@@ -172,7 +172,7 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
   `interior.lining_offset` -- with window reveals and lined door wells; frames at the Pilatus frame stations;
   interior triangles are budgeted in `build.INTERIOR_BUDGET` (250k, crew seat 14k, cabin seat 12k at PC12_RES=1; at
-  RES 2: 550k / 47.6k / 34.8k, built 527k / 45.6k / 34.8k) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
+  RES 2: 550k / 47.6k / 34.8k, built 525k / 44.8k / 34.8k) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
   eye),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
@@ -329,7 +329,10 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   stand-in (VIEWER envMapIntensity 0.45: unoccluded, the studio washed the AI Orange runner out to pale peach); two
   model tiers: the boot script loads `PC12_CONFIG.glbLow` (out/pc12_low.glb) on the 'low' quality tier (phones) as it
   picks the 512 px HDRI, the full model elsewhere (?glb= overrides both); there the Specs panel's detail switch loads
-  the full model instead (?detail=full|light, remembered in localStorage 'pc12-detail'; review r1 RES1-02); the Specs
+  the full model instead (?detail=full|light, remembered in localStorage 'pc12-detail'; review r1 RES1-02), and a
+  stage chip offers it once after load on devices likely to take it (navigator.deviceMemory >= 4 or an iPad; not on
+  the gzip no-WebAssembly path; Load / x remembered, ignored it leaves after 25 s; ?detailChip=1 forces it; review r2
+  RES2-03); the Specs
   panel and the part cards count the tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the light tier).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
@@ -349,6 +352,30 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   stations (WL 3.60 is a mesh row over the rudder-tab cut-out; 16-bit rounding put it on either side).  fit_check 26
   (coplanar overlaps) builds its pairs slab by slab (the same pairs; the refined interior's all-pairs did not fit in
   memory).
+  Review r2 (RES2-01..05): the chin-inlet lip and the cowl round it -- the raised lip / cheek follow the drawn knots
+  through C1 PCHIP curves (`powerplant.chin_lip_rho`, `chin_lip_x`; the polylines creased the cheek along every knot's
+  polar angle and kinked the studio streaks above the inlet; <= 2 mm off the polylines the sheets draw), iso-lines of
+  the face parameter s at the nose top (`CHIN_NOSE_S`: the g-levels ended at s 0.8 with ~55 deg of the nose's turn left
+  across one row of large triangles -- the sawtooth light / dark line), the columns sheared onto the face up to polar
+  84 deg (`CHIN_SHEAR_TH` taper 84-96, was 72-84: oblique columns at the arms' top crossed the face's iso-lines into
+  ~17k sub-millimetre triangles whose quantised normals the reviewer's metric counted), the lip / cowl vertices the
+  cuts left on chords snapped onto the skin (`powerplant._snap_to_skin`, not on the face / nose -- its rows folded --
+  nor the mouth loop the duct is built on: the lip outline crossing the cheek's soft maximum lay up to 5 mm inside it;
+  the L1 skin-on-OML row 4.3 -> 3.1 mm), and every cowl / lip vertex ahead of STA 1.80
+  gets the analytic skin normal at its closest point (`fuselage_parts.skin_analytic_normals`, Gauss-Newton on
+  `powerplant.cowl_section` from the vertex's UV; again after the livery and the refinement, `build.build_parts`;
+  leaned to <= 50 deg of its faces where the mesh does not follow the skin, so no vertex normal is > 60 deg off its
+  faces); the cowl halves and the chin inlet quantise on one grid (`assemble.JOINT_GRIDS`).  The stacks' torn streaks
+  were the viewer's pixel-difference polish bump, not the mesh: `materials.js` VIEWER exhaust_polished bump 0 (the
+  roughness / tint noise stays).  The flap-track canoe noses (`details.CANOE_NOSE_*`): the axis hangs 2 mm under the
+  skin where it would rise above it and the lower half keeps >= 0.4 x the radius, a real tapered nose closing under the
+  skin (the first ~0.25 m had been flattened onto the skin into a spiky zero-thickness sheet).  Control-surface noses
+  every 7.5 deg at RES 2 (`wing._nose_n`: PN splits of the 15 deg rows drew the rudder nose's highlight as a sawtooth).
+  The crew fleece's fine waves are band-limited to the judged grid's (`seats.fleece` h_judged: the finer grid drew
+  them as a twisted rope).  Still faceted by the facet metric (> 12 deg): rudder 8.5 % / tab 16 % (the tab bay's flat
+  face and the ruled top cap, creases drawn with averaged normals), strakes, flap fairings / canoes (flattened tops).
+  Triangles 2.11M -> 2.13M (light tier 1.53M -> 1.54M); the reviewer's GLB bad-normal count on cowl_lower 103 -> 45
+  (the rest: quantised sub-millimetre faces at the lip face's ends and the keel step; none in the float mesh).
 - Viewer interior tour (owner 2026-10-03: "no good link to actually navigate into the interior"): `web/viewer/tour.js`.
   The toolbar's first group is an accent 'Go inside' menu button (also key I; the 'Cockpit' preset button / key 5 now
   enter at the pilot seat) opening a menu of 7 stops -- pilot / co-pilot seat (L6 design eye = pc12_meta 'cockpit'),
@@ -373,13 +400,22 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   glareshield, the aft one 12 cm from the curtain (a full-screen smear), the airstair stop looked into the jamb.
   Portrait phones: vertical FOV <= 85 and the optical axis 40 % down the view (`Stage.setViewShift`, an off-axis
   window).  Inside, the cabin keeps the light theme's studio in both themes, +0.6 EV (`LOOK.interiorEV`) with the
-  cabin light `CABIN.inside` 1.0 (headliner ~190 / 255; at +1 EV AgX greyed the whole cabin) (`Stage.setInteriorLook`;
+  cabin light `CABIN.inside` 1.6 (headliner ~207 / 255 at 1400 x 900, review r2 NAV2-04; at +1 EV AgX greyed the
+  whole cabin) (`Stage.setInteriorLook`;
   the dark studio left the headliner near black) and is lit as inside wherever the eye is (`Model.updateCabin`
   forceInside).  Exit (button / Esc / a camera preset / another build step) restores what the tour
   changed: build step, cutaway, X-ray, explode, isolate, construction lines, the phone sheet, the door it opened.
   test/viewer_test.py [T1]-[T11] check it (data current, every stop from the menu with ray / table clearances and
   exposure, walk clamps incl. the walk ends' distance to the flight deck / curtain [T5b] and the seat sidestep,
   keyboard / pointer / touch, flights, exit, phone, dark theme; [T4b] the headliner).
+  Review r2 (NAV2-01..06): `Tour.go` completes a pending exit first and goes back in from outside (a stop key / menu
+  pick during the exit fade had pushed a flight on the inactive tour); a sideways step out of a seat into the aisle /
+  the gap between the crew seats holds on that region's centre line until the strafe is released and pressed again
+  (`Tour.latch`), an aft step held by a crew seat's pocket slides inboard into the gap (the way out), and a walk into a
+  seat turns the view to its `facing` (-8 deg, 0.4 s) and carries a held sidestep on to the seated eye's `eye_bl`
+  (both per seat region in tour_data); the vestibule keeps WALL_CLEAR from the closed airstair door's lining (BL
+  -0.30; `vestibule_door` widens it to -0.45 while the door is open); the airstair stop looks out at -38 deg (was
+  -52: a portrait phone saw only the treads).  viewer_test [T12] checks them.
 - Viewer propeller in motion (owner 2026-10-03: "the propeller spinning doesn't look too real"; `web/viewer/propblur.js`,
   viewer only, no GLB change): once the blades turn more than a few degrees a frame they cross-fade into a prop disc
   (child of the spinning `propeller` node, plane of rotation on the pivot's thrust axis) whose shader draws the
@@ -399,6 +435,14 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   shutdown run-down ~15-18 s; Off (and P cycling to 0) feathers the propeller (62 deg) as it runs down, it stays
   feathered parked (the demo ends so), and a start from feather unfeathers once it turns 300 rpm.  viewer_test
   `prop_blur_checks` covers the fade / sweep / ghost / axis / modes / spool / pixel see-through and [PR1-01/03/04].
+  Review r2 (PR2-01 / 02): the standing dark notch on the band was the disc (it runs on inside the spinner, DISC_IN)
+  showing through the held-still spinner's blade cut-outs, drawn after a band that wrote no depth: the band now draws
+  first (renderOrder 1), writes depth, is opaque over its whole axial range (+-70 mm against the cut-outs' +-53,
+  feathered over BAND_FEATHER 5 mm, its fit lifted to clear every spinner sample) and carries no ghost (black boots on
+  a mirror flickered frame to frame; the disc keeps the ghost); boot outline at NZ 32 slices, ends feathered.  The
+  blades cross-fade over FADE_DEG [6, 10] (24-40 rpm at 60 fps; [4, 14] left half-faded 'grey glass' blades for ~1 s;
+  alpha hashing speckled them).  viewer_test [PR2-01] measures the band's frame-to-frame change, ghost and disc
+  see-through on its pixels, [PR2-02] the fade window.
 - Final judge r1 fixes, MODELLING only (2026-10-03; the owner put Blender on hold until the model is signed off, so
   the r1 render-stage changes -- airfield backplate / terrain, wheel close-up catcher, beauty preset tweaks -- stay
   parked on local branch `wip/final-fix-r1-partial`): G3000 PRIME pages in the GLB (above;

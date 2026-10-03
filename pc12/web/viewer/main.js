@@ -349,15 +349,40 @@ function detailSwitch(st) {
   $('detailBtn').textContent = full ? 'Use the light model' : 'Load the full-detail model';
   $('detailNote').textContent = full ? `light: ${tri(st.low && st.low.triangles)}${mb(st.low && st.low.glb_bytes)}, faster on phones`
     : `${tri(st.triangles)}${mb(st.glb_bytes)} — for tablets and recent phones`;
-  $('detailBtn').addEventListener('click', () => {
-    const v = full ? 'light' : 'full';
-    let stored = false;
-    try { localStorage.setItem('pc12-detail', v); stored = localStorage.getItem('pc12-detail') === v; } catch (e) { stored = false; }
-    const u = new URL(location.href);
-    if (stored) u.searchParams.delete('detail'); else u.searchParams.set('detail', v);
-    location.replace(u.href);
-  });
+  $('detailBtn').addEventListener('click', () => setDetail(full ? 'light' : 'full'));
   row.hidden = false;
+  if (!full) detailChip(st);
+}
+// remember the tier (localStorage, or ?detail= where storage is refused); reload = load that model
+function setDetail(v, reload = true) {
+  let stored = false;
+  try { localStorage.setItem('pc12-detail', v); stored = localStorage.getItem('pc12-detail') === v; } catch (e) { stored = false; }
+  if (!reload) return;
+  const u = new URL(location.href);
+  if (stored) u.searchParams.delete('detail'); else u.searchParams.set('detail', v);
+  location.replace(u.href);
+}
+// review r2 RES2-03: the Specs switch alone was where a phone viewer would not look -- the light model's devices that
+// can likely take the full one (navigator.deviceMemory >= 4 GB, or an iPad) get it offered once on the stage after
+// load; the choice is remembered (Load: 'full', x: 'light'), an ignored chip leaves after 25 s and comes back next
+// visit.  Not on the gzip no-WebAssembly fallback (the full tier is meshopt only).  ?detailChip=1 forces it (tests).
+function detailChip(st) {
+  const chip = $('detailChip');
+  if (!chip || BOOT.gzip || BOOT.wasm === false || q.get('detail')) return;
+  let chosen = null;
+  try { chosen = localStorage.getItem('pc12-detail'); } catch (e) { chosen = 'unknown'; }
+  if (chosen) return;
+  const ipad = /iPad/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!(ipad || navigator.deviceMemory >= 4 || q.get('detailChip') === '1')) return;
+  const tri = st.triangles ? `${(st.triangles / 1e6).toFixed(1)}M triangles` : 'more triangles';
+  const mb = st.glb_bytes ? ` · ${(st.glb_bytes / 1048576).toFixed(0)} MB` : '';
+  $('detailChipText').textContent = `Full-detail model: ${tri}${mb}`;
+  const hide = () => { chip.hidden = true; clearTimeout(timer); };
+  const timer = setTimeout(hide, 25000);
+  $('detailChipLoad').addEventListener('click', () => { hide(); setDetail('full'); });
+  $('detailChipClose').addEventListener('click', () => { hide(); setDetail('light', false); });
+  chip.hidden = false;
+  detailChip.hide = hide;
 }
 
 // ------------------------------------------------------------------ picking
@@ -528,6 +553,7 @@ function tourExit(to) {
 }
 let tourWasActive = false;
 function tourChanged() {
+  if (tour.active && detailChip.hide) detailChip.hide();
   tourUI.sync();
   if (tour.active && !tourWasActive) tourUI.showHint();
   tourWasActive = tour.active;

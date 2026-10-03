@@ -168,14 +168,15 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 #tourMenu .tm-t { display: flex; flex-direction: column; min-width: 0; }
 #tourMenu .tm-t b { font-weight: 600; }
 #tourMenu .tm-t .muted { font-size: 12.5px; }
-#tourHint {
+#tourHint, #detailChip {
   position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--gutter) + 4px); z-index: 5;
   display: flex; align-items: center; gap: 6px; width: max-content; max-width: calc(100% - 2 * var(--gutter));
   background: var(--surface-glass); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow);
   padding: 3px 4px 3px 14px; font-size: 13px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
-#tourHint button { min-height: 26px; min-width: 26px; padding: 0 6px; border-radius: 999px; border-color: transparent; background: none; }
-#app.panel-open #tourHint { left: calc((100% - var(--panel-w)) / 2); max-width: calc(100% - var(--panel-w) - 2 * var(--gutter)); }
+#tourHint button, #detailChip button { min-height: 26px; min-width: 26px; padding: 0 6px; border-radius: 999px; border-color: transparent; background: none; }
+#detailChip #detailChipLoad { padding: 0 12px; background: var(--accent); color: var(--accent-text); font-weight: 600; }
+#app.panel-open #tourHint, #app.panel-open #detailChip { left: calc((100% - var(--panel-w)) / 2); max-width: calc(100% - var(--panel-w) - 2 * var(--gutter)); }
 #tourHintText { min-width: 0; text-align: center; }
 #tourPad {
   position: absolute; left: max(var(--gutter), env(safe-area-inset-left)); bottom: calc(var(--gutter) + 64px); z-index: 5;
@@ -425,8 +426,8 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
   #infoCard .row { margin: 4px 0 0; }
   #icMore { display: inline-block; margin-left: auto; }
   #stepCaption, #app.panel-open #stepCaption { left: 50%; bottom: calc(var(--sheet-h) + 8px); }
-  #tourHint, #app.panel-open #tourHint { left: 50%; bottom: calc(var(--sheet-h) + 8px); font-size: 12.5px; }
-  #app:not(.panel-open) #tourHint { bottom: calc(100px + env(safe-area-inset-bottom)); }
+  #tourHint, #app.panel-open #tourHint, #detailChip, #app.panel-open #detailChip { left: 50%; bottom: calc(var(--sheet-h) + 8px); font-size: 12.5px; }
+  #app:not(.panel-open) #tourHint, #app:not(.panel-open) #detailChip { bottom: calc(100px + env(safe-area-inset-bottom)); }
   #tourPad { bottom: calc(var(--sheet-h) + 52px); }
   #app:not(.panel-open) #tourPad { bottom: calc(144px + env(safe-area-inset-bottom)); }
   #tourStop { max-width: 40vw; }
@@ -475,7 +476,7 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
   input[type="search"] { min-height: 40px; }
   #dOpen { display: inline-block; padding: 10px 4px; }
   #tabs [role="tab"] { min-height: 40px; }
-  #tourHint button { min-height: 40px; min-width: 40px; }
+  #tourHint button, #detailChip button { min-height: 40px; min-width: 40px; }
   #tourPrev, #tourNext { min-width: 40px; }
   #tourPad { grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 48px); }
 }

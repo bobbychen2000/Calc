@@ -586,6 +586,7 @@ CHIN_CHEEK_TOP = (1.52, 1.60)  # lip-outline WL range over which the cheek fades
 CHIN_CHEEK_SOFT = 0.004        # m: soft maximum of the raise (no crease where the OML catches up)
 CHIN_MOUTH_DX = 0.004          # m: the mouth is cut in the lip face, x <= x_le(z_L) + nose + this
 CHIN_LIP_TOL = 0.006           # m: polished band outside the front-view lip outline (the cheek's soft-max overshoot)
+CHIN_NOSE_S = (0.85, 0.89, 0.925, 0.95, 0.97, 0.985, 0.995)   # extra iso-lines of s at the lip nose's top
 _CHIN = {}                    # mouth edge loop of the last cut (fuselage_parts.build -> build_inlet_and_exhaust)
 _CHIN_POLAR = {}
 
@@ -605,12 +606,36 @@ def chin_lip_polar():
     return _CHIN_POLAR["lip"]
 
 
+# The raised lip / cheek follow the drawn knots through a C1 shape-preserving curve (PCHIP; mirrored about BL 0, so
+# the bottom centre is level), not the knots' polyline: linear interpolation creased the cheek along every knot's polar
+# angle and the face foot along every LE-line knot, which kinked the studio's reflected streaks on the cowl above the
+# inlet and the shading round the lip (review r2 RES2-01).  The curves stay within 2 mm of the polylines the sheets draw.
+def _pchip_held(xk, yk):
+    from scipy.interpolate import PchipInterpolator
+    f = PchipInterpolator(xk, yk, extrapolate=True)
+    lo, hi = float(xk[0]), float(xk[-1])
+    return lambda x: f(np.clip(np.asarray(x, float), lo, hi))
+
+
+def chin_lip_rho(th):
+    """Radius (m) of the drawn lip outline at front-view polar angle th (rad, |th| used; held beyond the arms' ends):
+    the C1 curve through the knots (chin_lip_polar)."""
+    if "rho_fn" not in _CHIN_POLAR:
+        thL, rL = chin_lip_polar()
+        _CHIN_POLAR["rho_fn"] = _pchip_held(np.r_[-thL[:0:-1], thL], np.r_[rL[:0:-1], rL])
+    return _CHIN_POLAR["rho_fn"](np.abs(np.asarray(th, float)))
+
+
 def chin_lip_x(z, edge="fwd"):
-    """Station of the drawn side-view lip crescent's forward (LE line) or aft edge at WL z (held beyond its ends)."""
-    S = np.array(CHIN_INLET["side"], float)
-    E_ = S[:6] if edge == "fwd" else S[6:][::-1]
-    o = np.argsort(E_[:, 1])
-    return np.interp(np.asarray(z, float), E_[o, 1], E_[o, 0])
+    """Station of the drawn side-view lip crescent's forward (LE line) or aft edge at WL z (held beyond its ends): the
+    C1 curve through the drawn knots (see chin_lip_rho)."""
+    key = "x_" + edge
+    if key not in _CHIN_POLAR:
+        S = np.array(CHIN_INLET["side"], float)
+        E_ = S[:6] if edge == "fwd" else S[6:][::-1]
+        o = np.argsort(E_[:, 1])
+        _CHIN_POLAR[key] = _pchip_held(E_[o, 1], E_[o, 0])
+    return _CHIN_POLAR[key](z)
 
 
 def chin_cheek_offset(P):
@@ -624,7 +649,7 @@ def chin_cheek_offset(P):
     th = np.arctan2(np.abs(y), dz)
     thL, rL = chin_lip_polar()
     ok = (th <= thL[-1]) & (x < CHIN_CHEEK_AFT[1] + 0.05)
-    rho_L = np.interp(th, thL, rL)
+    rho_L = chin_lip_rho(th)
     zL = zc - rho_L * np.cos(th)
     xf = _chin_face_x(th, zL)
     s = np.clip((x - xf) / CHIN_LIP_NOSE, 0.0, 1.0)
@@ -642,7 +667,9 @@ def chin_cheek_offset(P):
 
 CHIN_SHEAR_REF = 1.150         # grid column the lip face / nose is sheared onto (per around-line), see chin_shear_x
 CHIN_SHEAR_TAPER = 0.080       # m: the shear tapers to zero over this station distance either side
-CHIN_SHEAR_TH = (26.0, 36.0, 72.0, 84.0)   # deg: polar range of the shear (full between the middle two)
+CHIN_SHEAR_TH = (26.0, 36.0, 84.0, 96.0)   # deg: polar range of the shear (full between the middle two; review r2
+#   RES2-01: (.., 72, 84) left the columns oblique to the face's iso-lines at the arms' top, ~17k sub-millimetre
+#   triangles there whose quantised normals scrambled -- the 'cowl front ring' bad normals)
 
 
 def chin_shear_x(xs, ts):
@@ -656,7 +683,7 @@ def chin_shear_x(xs, ts):
     Q = F.section(np.full_like(ts, CHIN_SHEAR_REF), ts)
     th = np.arctan2(np.abs(Q[:, 1]), zc - Q[:, 2])
     thL, rL = chin_lip_polar()
-    zL = zc - np.interp(th, thL, rL) * np.cos(th)
+    zL = zc - chin_lip_rho(th) * np.cos(th)
     a0, a1, a2, a3 = np.radians(CHIN_SHEAR_TH)
     sm = lambda u: np.clip(u, 0, 1) ** 2 * (3.0 - 2.0 * np.clip(u, 0, 1))          # noqa: E731
     w = sm((th - a0) / (a1 - a0)) * (1.0 - sm((th - a2) / (a3 - a2)))
@@ -670,6 +697,61 @@ def chin_shear_x(xs, ts):
 def cowl_section(x, t):
     """Point(s) of the built cowl skin: the OML section (fuselage.section) with the chin lip / cheek raise applied."""
     return chin_cheek_displace(F.section(x, t))
+
+
+def cowl_project(V, UV, iters=10, h=2e-4, k=2e-4):
+    """Closest points of the raised cowl skin S(X, t) = cowl_section to the points V (n, 3), by Gauss-Newton from their
+    surface parameters UV (n, 2) = (station, around-line t): (distance (n,), unit normals (n, 3) at the closest points,
+    unoriented, the closest points (n, 3)).  Trimmed / split / refined vertices carry UV interpolated linearly, which on
+    the steep chin-lip face can lie centimetres up the face from the vertex, hence the projection."""
+    V = np.asarray(V, float)
+    x0 = F.STA["cowl_front"]
+    S = lambda X, T: cowl_section(np.maximum(X, x0), T % 1.0)          # noqa: E731
+    X, T = np.array(UV[:, 0], float), np.array(UV[:, 1], float)
+    for _ in range(iters):
+        Xa = np.maximum(X - h, x0)
+        Xb = Xa + 2 * h
+        P = S(X, T)
+        SX = (S(Xb, T) - S(Xa, T)) / (Xb - Xa)[:, None]
+        ST = (S(X, T + k) - S(X, T - k)) / (2 * k)
+        r = V - P
+        a, b, c = (SX * SX).sum(1), (SX * ST).sum(1), (ST * ST).sum(1)
+        p, q = (SX * r).sum(1), (ST * r).sum(1)
+        det = np.maximum(a * c - b * b, 1e-30)
+        X = np.maximum(X + np.clip((c * p - b * q) / det, -0.004, 0.004), x0)
+        T = T + np.clip((a * q - b * p) / det, -0.004, 0.004)
+    Xa = np.maximum(X - h, x0)
+    Xb = Xa + 2 * h
+    N = np.cross(S(Xb, T) - S(Xa, T), S(X, T + k) - S(X, T - k))
+    N /= np.maximum(np.linalg.norm(N, axis=1, keepdims=True), 1e-30)
+    P = S(X, T)
+    return np.linalg.norm(P - V, axis=1), N, P
+
+
+CHIN_SNAP = dict(x_max=1.40, z_max=1.62, d_min=0.2e-3, d_max=8e-3)   # cut_chin_inlet's snap of chord vertices
+
+
+def _snap_to_skin(meshes, keep):
+    """Move the vertices of the cut lip / cowl (UV ahead of CHIN_SNAP x_max, below z_max) that lie d_min .. d_max off
+    the raised skin onto it (cowl_project), except the mouth loop `keep` (the duct entry is built on it) and the face /
+    nose: the trim cuts put their vertices on chords -- on the lip outline where it crosses the cheek's soft maximum up
+    to ~5 mm inside it (review r2 RES2-01; the L1 skin-on-OML row).  The same position and UV give the same point, so
+    the boundaries the meshes share stay closed."""
+    kset = set(map(tuple, np.round(np.asarray(keep, float), 9))) if keep is not None else set()
+    c = CHIN_SNAP
+    for m in meshes:
+        if m.UV is None or not len(m.V):
+            continue
+        sel = np.nonzero((m.UV[:, 0] < c["x_max"]) & (m.V[:, 2] < c["z_max"]))[0]
+        if kset:
+            sel = sel[[tuple(v) not in kset for v in np.round(m.V[sel], 9)]]
+        if not len(sel):
+            continue
+        d, _, P = cowl_project(m.V[sel], m.UV[sel])
+        sv = chin_face_s(m.V[sel])
+        # not on the face / nose (s -0.2 .. 1.2): moved onto the ~1 mm nose radius, its iso-line rows folded over
+        ok = (d > c["d_min"]) & (d < c["d_max"]) & ((sv < -0.2) | (sv > 1.2))
+        m.V[sel[ok]] = P[ok]
 
 
 def _oml_ray_radius(x, th, zc, lo=0.05, hi=0.9, iters=34):
@@ -752,7 +834,7 @@ def chin_face_s(V):
     zc = _chin_centre_z()
     th = np.arctan2(np.abs(V[:, 1]), zc - V[:, 2])
     thL, rL = chin_lip_polar()
-    zL = zc - np.interp(th, thL, rL) * np.cos(th)
+    zL = zc - chin_lip_rho(th) * np.cos(th)
     return (V[:, 0] - _chin_face_x(th, zL)) / CHIN_LIP_NOSE
 
 
@@ -784,7 +866,7 @@ def chin_mouth_field(V):
     zc = _chin_centre_z()
     th = np.arctan2(np.abs(V[:, 1]), zc - V[:, 2])
     thL, rL = chin_lip_polar()
-    zL = zc - np.interp(th, thL, rL) * np.cos(th)
+    zL = zc - chin_lip_rho(th) * np.cos(th)
     xf = _chin_face_x(th, zL) + CHIN_LIP_NOSE + CHIN_MOUTH_DX
     return np.maximum(chin_fields(V)[0], V[:, 0] - xf)
 
@@ -811,6 +893,14 @@ def cut_chin_inlet(m):
         g = np.where(sv < 0, sv, np.where(sv > 1, sv, 1.0 - (1.0 - np.clip(sv, 0, 1)) ** 2))
         return np.where(np.arctan2(np.abs(V[:, 1]), zc - V[:, 2]) < chin_lip_polar()[0][-1], g, -1.0)
     m = _split_levels(m, face, np.arange(0.04, 0.99, 0.04), eps=0.008)
+    # ... and iso-lines of s itself near the nose top: the levels uniform in g end at s = 0.8, where the face's normal
+    # still leans ~55 deg forward of the lip's (the raise g = 1 - (1 - s)^2 rolls over within the last millimetre of
+    # station, a ~1 mm radius); the remaining turn lay across one row of large triangles whose corners zig-zag
+    # between s 0.8 and 1.25, which drew a sawtooth light / dark line along the lip (review r2 RES2-01)
+    def face_s(V):
+        sv = np.clip(chin_face_s(V), -0.5, 1.5)
+        return np.where(np.arctan2(np.abs(V[:, 1]), zc - V[:, 2]) < chin_lip_polar()[0][-1], sv, -1.0)
+    m = _split_levels(m, face_s, CHIN_NOSE_S, eps=0.004)
     fm = lambda mm: chin_mouth_field(mm.V)                                              # noqa: E731
     m1 = trim(m, fm(m), "positive")
     best = None
@@ -827,6 +917,7 @@ def cut_chin_inlet(m):
     fl = lambda mm: np.maximum(chin_fields(mm.V)[1] - CHIN_LIP_TOL, _chin_side_lip(mm.V))  # noqa: E731
     lip = trim(m1, fl(m1), "negative")
     rest = trim(m1, fl(m1), "positive")
+    _snap_to_skin([lip, rest], _CHIN["mouth"])
     return rest, lip
 
 

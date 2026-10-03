@@ -12,9 +12,10 @@ The folder is the web/package.py bundle (vendored three.js r160, the meshopt GLB
                             module scripts (the boot script adds the import map after itself).  The description and the
                             icon are publish parameters (ARTIFACT.json), not tags.  Config: {data: './data/',
                             three: './three/', glbLow: 'pc12_low.glb', glbGz: 'pc12_glb.gz.bin', b64: {file name: parts}}.
-    data/pc12.glb           EXT_meshopt_compression (~17 MB, ~2.6M triangles): loaded where WebAssembly compiles
-    data/pc12_low.glb       the light tier (PC12_RES=1, ~8 MB, ~1.5M triangles), EXT_meshopt_compression: phones
-    data/pc12_glb.gz.bin    gzip of the light tier out/pc12_low.glb (KHR_mesh_quantization only, ~22 MB -> ~12 MB):
+    data/pc12.glb           EXT_meshopt_compression (~14 MB, ~2.1M triangles, 16-bit normals): loaded where
+                            WebAssembly compiles
+    data/pc12_low.glb       the light tier (PC12_RES=1, ~10 MB, ~1.5M triangles), EXT_meshopt_compression: phones
+    data/pc12_glb.gz.bin    gzip of the light tier out/pc12_low.glb (KHR_mesh_quantization only, ~26 MB -> ~15 MB):
                             the host's CSP may refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder needs;
                             index.html then loads this file instead, unpacked while it streams (DecompressionStream),
                             and main.js falls back to it when the meshopt GLB fails to decode (the full model's gzip
@@ -32,7 +33,8 @@ The folder is the web/package.py bundle (vendored three.js r160, the meshopt GLB
                             not published
 
 Host limits checked here: <= 255 files, <= 15 MB per binary / 16 MB per text file, <= 64 MB in all (decimal MB, the
-conservative reading), standard media types only.  test/artifact_test.py serves the folder behind a host-like skeleton
+conservative reading; ~57 MB in 2026-10: a warning above WARN_TOTAL, the headroom for triangles is thin -- take them
+from the uniform skin refinement, not on top), standard media types only.  test/artifact_test.py serves the folder behind a host-like skeleton
 with a strict CSP (with and without 'wasm-unsafe-eval') and checks both loading paths in headless Chromium.
 """
 from __future__ import annotations
@@ -60,6 +62,7 @@ CONTENT_TYPES = {                          # the host's served types (a file of 
 }
 TEXT_TYPES = ("text/", "application/json", "image/svg+xml")
 MAX_FILES, MAX_BINARY, MAX_TEXT, MAX_TOTAL = 255, 15_000_000, 16_000_000, 64_000_000
+WARN_TOTAL = 58_000_000                    # the bundle's headroom warning (review r2 RES2-05)
 NOT_PUBLISHED = {"MANIFEST.json", "ARTIFACT.json", ".nojekyll"}
 SKELETON = re.compile(r"<!doctype[^>]*>|</?(html|head|body)\b[^>]*>", re.I)
 DARK_MEDIA = re.compile(r'@media \(prefers-color-scheme: dark\) \{\s*:root:not\(\[data-theme="light"\]\) \{([^}]*)\}\s*\}')
@@ -231,7 +234,11 @@ def main():
     }
     (out / "ARTIFACT.json").write_text(json.dumps(art, indent=1) + "\n")
 
-    print(f"artifact bundle {out}: {len(sizes)} files (the page + {len(pub)}), {total:,} bytes ({total / 1e6:.1f} MB)")
+    print(f"artifact bundle {out}: {len(sizes)} files (the page + {len(pub)}), {total:,} bytes ({total / 1e6:.1f} MB of the "
+          f"host's {MAX_TOTAL / 1e6:.0f} MB)")
+    if total > WARN_TOTAL:
+        print(f"  WARNING: {total / 1e6:.1f} MB is within {(MAX_TOTAL - total) / 1e6:.1f} MB of the host's limit "
+              f"(warning above {WARN_TOTAL / 1e6:.0f} MB)")
     print(f"  data/pc12.glb         {meta['stats']['glb_bytes']:>11,} bytes  EXT_meshopt_compression "
           f"({meta['stats'].get('triangles', 0):,} triangles)")
     print(f"  data/pc12_low.glb     {meta['stats']['low']['glb_bytes']:>11,} bytes  EXT_meshopt_compression, light tier "

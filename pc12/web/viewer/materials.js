@@ -39,8 +39,10 @@ export const U = {
 // the unoccluded irradiance ~4x a real cabin's; 0.05, re-checked with the light theme's hangar grade at exposure 1.9:
 // the seats read dark grey under the windshield's strip reflections, as in photo 130) / a door open / camera inside
 // (eye adapted) / opened up
-export const CABIN = { outside: 0.05, door: 0.45, inside: 1.0, open: 1 };   // inside: review r1 NAV1-04 (0.8 left the
-//                                                                                cabin mid-grey; with scene.js LOOK.interiorEV)
+export const CABIN = { outside: 0.05, door: 0.45, inside: 1.6, open: 1 };   // inside: review r1 NAV1-04 (0.8 left the
+//   cabin mid-grey; with scene.js LOOK.interiorEV) and r2 NAV2-04: 1.0 left the headliner at ~191 / 255 where the cabin
+//   photos are near-white; 1.6 lifts it to ~207 (1400 x 900, cabin_fwd / _aft / club) and keeps the seats' shading --
+//   a fill of the image-based light, not more exposure (at +1 EV AgX greyed the whole cabin)
 
 // Interior lining on the back faces.  The lookdev renders use a light grey (0.55) that Cycles darkens
 // with real occlusion; the viewer's image-based light has none (a back face inside the cockpit sees the
@@ -87,7 +89,10 @@ export function setLights(on) {
 //                    unoccluded white studio made them read ~40 levels lighter than photo 130 / the Blender hangar render
 //   specularIntensity also the dielectric F90 in three r160: less grazing sheen on the rubber / satin composite
 //   polish           exhaust_polished render_polish: calmer than the lookdev's (whose bump / tint noise reads as blotchy
-//                    camouflage at the viewer's sample count), streaks 3x longer along the stack
+//                    camouflage at the viewer's sample count), streaks 3x longer along the stack, and NO bump: the
+//                    pixel-difference bump of the value noise tore the studio's reflected streaks on the stacks and the
+//                    chin-inlet lip into zig-zags at any tessellation (review r2 RES2-01c); the roughness / tint noise
+//                    keeps the hand-polished waviness
 //   back             render_back_faces for a material the lookdev table leaves out
 const VIEWER = {
   tire: { specularIntensity: 0.5, envMapIntensity: 0.85 },
@@ -99,7 +104,7 @@ const VIEWER = {
   prop_blade: { specularIntensity: 0.3, envMapIntensity: 0.75 },
   wheel: { envMapIntensity: 0.75 },
   gear_leg: { envMapIntensity: 0.75 },
-  exhaust_polished: { polish: { bump: 0.1, tint_mix: 0.12, stretch_x: 1 / 3 } },
+  exhaust_polished: { polish: { bump: 0, tint_mix: 0.12, stretch_x: 1 / 3 } },
   // the cabin floor lies in the shade of the seats, ledges and furniture (P1046402 / 06: the AI Orange bands ~sRGB
   // 110/60/17 on a near-black navy); unoccluded, the studio washed the runner out to a pale peach (220/178/125)
   carpet: { envMapIntensity: 0.45 },

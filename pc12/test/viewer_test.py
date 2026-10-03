@@ -1265,6 +1265,7 @@ async def prop_blur_checks(page):
     except ImportError:
         check("prop blur: averaged disc is mostly see-through, rings at the tips", True, "PIL not installed: skipped")
         return
+    await prop_band_checks(page)
     setup = V + r"""
       T.neutral(); V.isolate('propeller');
       const pv = V.partExtras('propeller').pivot, ax = pv.axis, o = pv.origin;
@@ -1306,6 +1307,72 @@ async def prop_blur_checks(page):
           " / ".join(f"r {x}: spin sd {ring[x][1] * 100:.1f} %, stopped sd {ring[x][2] * 100:.0f} %" for x in (0.5, 0.8, 1.1)))
     check("prop blur: white tip band lighter than the black blade inboard of it", ring[1.31][0] > ring[1.1][0],
           f"tip {ring[1.31][0] * 100:.1f} % vs {ring[1.1][0] * 100:.1f} % of the backdrop")
+
+
+async def prop_band_checks(page):
+    """Review r2 PR2-01 / 02: the root-boot band on the spinner is steady frame to frame at 1,700 rpm (no ghost on it),
+    opaque and drawn before the disc (the disc inside the spinner never shows through the still spinner's blade
+    cut-outs: no standing dark notch); the solid blades cross-fade over a short sweep window."""
+    from PIL import Image
+    import numpy as np
+    V = "const V = window.viewer, I = V._internals, kin = I.kin, B = kin.blur; "
+    pts = await js(page, V + r"""
+      T.neutral(); V.panel(false); V.setStep('paint', {instant: true});
+      V.setCamera({pos: [-0.75, 1.85, -0.45], target: [0, 1.62, 0.95], fov: 35}, {instant: true});
+      V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(1.5); V.pause(true); await V.frames(2);
+      const THREE = I.THREE, f = B.frame, fit = B.bandFit, node = B.prop.node, cam = I.stage.camera;
+      node.updateMatrixWorld(true); cam.updateMatrixWorld();
+      const eye = cam.position.clone(), out = [];
+      // band points on the camera's side of the disc plane only (behind it the disc's blur legitimately covers them)
+      const camAx = node.worldToLocal(eye.clone()).dot(f.a);
+      for (let i = 0; i < 17; i++) {
+        const z = fit.z0 + 0.008 + (fit.z1 - fit.z0 - 0.016) * i / 16, u = (z - fit.zm) / fit.hz;
+        if (z * Math.sign(camAx) < 0.01) continue;
+        const r = fit.cf[0] + fit.cf[1] * u + fit.cf[2] * u * u + 0.0015;
+        for (let k = 0; k < 360; k++) {
+          const t = 2 * Math.PI * k / 360, er = f.e1.clone().multiplyScalar(Math.cos(t)).addScaledVector(f.e2, Math.sin(t));
+          const p = er.clone().multiplyScalar(r).addScaledVector(f.a, z).applyMatrix4(node.matrixWorld);
+          const n = er.clone().transformDirection(node.matrixWorld);
+          if (n.dot(eye.clone().sub(p).normalize()) < 0.35) continue;
+          out.push(V.project(p.toArray()));
+        }
+      }
+      return {pts: out, order: [B.band.renderOrder, B.disc.renderOrder], depthWrite: B.band.material.depthWrite};
+    """)
+    shots = {}
+    for key, js_set in (("f0", "V.pause(false); V.advance(1 / 60); V.pause(true);"),
+                        ("f1", "V.pause(false); V.advance(1 / 60); V.pause(true);"),
+                        ("f2", "V.pause(false); V.advance(1 / 60); V.pause(true);"),
+                        ("ghost0", "B._apR = B.apply; B.apply = (...a) => { B._apR(...a); B.U.uPbGhost.value.x = 0; }; "
+                                   "V.pause(false); V.advance(1 / 60); V.pause(true);"),
+                        ("ghost0_nodisc", "B.disc.visible = false; B.disc.layers.disable(0);"),
+                        ("ref", "B.disc.layers.enable(0); B.apply = B._apR; delete B._apR;")):
+        await js(page, V + js_set + " I.stage.needsRender = true; await V.frames(2);")
+        path = OUT / f"prop_band_{key}.png"
+        await page.screenshot(path=str(path), timeout=SHOT_TIMEOUT)
+        shots[key] = np.asarray(Image.open(path).convert("L"), dtype=float)
+    await js(page, "window.viewer.pause(false); T.neutral(); window.viewer.panel(true);")
+    H, W = shots["f0"].shape
+    xy = [(int(round(x)), int(round(y))) for x, y, _ in pts["pts"] if 0 <= x < W and 0 <= y < H]
+    val = {k: np.array([v[y, x] for x, y in xy]) for k, v in shots.items()}
+    flick = max(np.percentile(np.abs(val["f1"] - val["f0"]), 95), np.percentile(np.abs(val["f2"] - val["f1"]), 95))
+    ghost = np.percentile(np.abs(val["ghost0"] - val["f2"]), 95)
+    notch = np.percentile(np.abs(val["ghost0_nodisc"] - val["ghost0"]), 99)
+    check("[PR2-01] spinner band at 1,700 rpm (1/60 s steps): steady frame to frame (95th pct <= 8 levels), no ghost on it, "
+          "drawn first and opaque (the disc inside the spinner never shows through the cut-outs)",
+          len(xy) > 200 and flick <= 8 and ghost <= 3 and notch <= 2 and pts["order"][0] < pts["order"][1] and pts["depthWrite"],
+          f"{len(xy)} band pixels: frame-to-frame {flick:.1f}, ghost zeroed {ghost:.1f}, disc hidden {notch:.1f} levels; "
+          f"render order band {pts['order'][0]} / disc {pts['order'][1]}")
+    r = await js(page, V + r"""
+      T.neutral();
+      const rows = [];
+      for (const rpm of [20, 24, 28, 32, 36, 40, 44]) { V.setProp({rpm, pitch: 0}, {instant: true}); V.advance(0.6); rows.push([rpm, B.state.fade]); }
+      V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.1); T.neutral();
+      return rows;
+    """)
+    part = [rpm for rpm, f in r if 0.02 < f < 0.98]
+    check("[PR2-02] the solid blades cross-fade into the disc within ~24-40 rpm at 60 fps (half-faded 'glass' blades only briefly)",
+          bool(part) and min(part) >= 20 and max(part) <= 44, " ".join(f"{rpm}:{f:.2f}" for rpm, f in r))
 
 
 async def phone_card_check(page):
@@ -1432,13 +1499,15 @@ async def tour_checks(page, shots=True):
     check("[T3] every tour stop reachable from the menu: at its eye, camera inside the cabin (lining / headliner / floor "
           ">= 50 mm by the tables, nearest mesh >= 50 mm), lit as inside", not bad, "; ".join(bad[:2]) or " | ".join(rows))
     if lum:
-        dark = [x for x in lum if not (70 <= x[1] <= 215 and x[2] >= 12)]
-        check("[T4] every stop well exposed (median luminance 70-215, 10th percentile >= 12)", not dark,
+        # (the airstair stop looks out of the door at the studio floor, -38 deg since review r2 NAV2-05: an outside view,
+        # up to 235 like the exterior shots)
+        dark = [x for x in lum if not (70 <= x[1] <= (235 if x[0] == "airstair" else 215) and x[2] >= 12)]
+        check("[T4] every stop well exposed (median luminance 70-215, the airstair door's view out 70-235; 10th percentile >= 12)", not dark,
               ", ".join(f"{k} {m:.0f} ({a:.0f}-{b:.0f})" for k, m, a, b in lum))
         # review r1 NAV1-04: the headliner reads light (the photos are near-white; at >= 200 AgX greys the whole cabin)
         hl = [lum_stats(str(OUT / f"40_tour_{i + 1}_{s['id']}.png"), (330, 70, 630, 130))[0] for i, s in enumerate(stops)
               if s["id"] == "cabin_fwd"]
-        check("[T4b] cabin_fwd headliner light (median >= 180 / 255)", bool(hl) and hl[0] >= 180, f"{hl[0]:.0f}" if hl else "no shot")
+        check("[T4b] cabin_fwd headliner light (median >= 200 / 255; review r2 NAV2-04)", bool(hl) and hl[0] >= 200, f"{hl[0]:.0f}" if hl else "no shot")
     # [T5] walking: clamped at the partition, the flight deck front, the seats, the headliner, the floor, the divider
     r = await js(page, r"""
       const V = window.viewer, T = V.tour, out = {};
@@ -1479,7 +1548,7 @@ async def tour_checks(page, shots=True):
           and abs(r["divider"]["pos"][0] - R["vestibule"]["x"][0]) < 2e-3           # stopped at the divider's aft face
           and abs(r["door"]["pos"][1] - R["doorway"]["y"][0]) < 2e-3                # the open doorway's outboard limit
           and r["doorShut"]["pos"][1] >= R["vestibule"]["y"][0] - 2e-3              # eased in once the door shut
-          and r["pilotFwd"]["region"] == "seat_pilot" and r["pilotIn"]["region"] in ("flight_deck", "seat_copilot")
+          and r["pilotFwd"]["region"] == "seat_pilot" and r["pilotIn"]["region"] in ("crew_gap", "flight_deck", "seat_copilot")
           and r["pilotAft"]["region"] in ("flight_deck", "aisle") and r["pilotAft"]["pos"][2] - fl > 1.2
           and r["pull"]["region"] == "seat_pax3"
           and outside < 1e-6 and worst[1]["min"] >= 0.05)
@@ -1623,6 +1692,67 @@ async def tour_checks(page, shots=True):
           and a_[4] == "three_quarter" and a_[5] is False and a_[6] is True and a_[7] is False)
     check("[T9] exit restores the exterior state (build step, cutaway, explode, the airstair door it opened; a door the user "
           "opened stays) and the orbit camera at the 3/4 view", ok, f"before {b}, inside {i_}, after {a_}")
+
+
+    await tour_r2_checks(page, data, shots)
+
+
+async def tour_r2_checks(page, data, shots=True):
+    """[T12] review r2 (NAV2-01..06): a stop picked during the exit fade goes back inside cleanly; a sideways step out of
+    a seat holds on the aisle / gap centre line until pressed again, an aft step from a crew seat walks out through the
+    gap; a walk into a seat turns to its facing; the airstair stop looks out at -38 deg; the vestibule keeps WALL_CLEAR
+    from the closed door's lining."""
+    from model import interior as I
+    from model import fuselage_parts as FP
+    r = await js(page, r"""
+      const V = window.viewer, T = V.tour, out = {};
+      const look = (deg, pitch = 0) => { const s = T.state(); T.look(deg - s.yawDeg, pitch - s.pitchDeg); };
+      // NAV2-01: a stop picked 0.1 s into the exit fade
+      T.motion(true);
+      T.enter('cabin_fwd', {motion: false}); V.advance(0.2);
+      T.exit({motion: true}); V.advance(0.1); T.go('club'); V.advance(6); await V.frames(2);
+      const s1 = T.state();
+      out.race = {active: s1.active, stop: s1.stop, flying: s1.flying, camInside: V.state.camInside,
+        touring: document.getElementById('app').classList.contains('touring'), controls: V._internals.stage.controls.enabled};
+      T.motion(null);
+      // NAV2-02: from the club seat (PAX 3) a held sidestep stops on the aisle centre line; pressed again, into PAX 4
+      T.go('club', {motion: false});
+      const a = T.walk({s: 1}, 1.0), b = T.walk({s: 1}, 1.0);
+      out.club = [a.region, a.pos[1], b.region, b.pos[1]];
+      // ... a short sidestep in the pilot seat, then S: out through the gap to the cabin; a long one stops in the gap,
+      // pressed again it goes on into the co-pilot seat
+      T.go('pilot', {motion: false}); T.walk({s: 1}, 0.15); const c = T.walk({f: -1}, 3);
+      T.go('pilot', {motion: false}); const d = T.walk({s: 1}, 1.0), e = T.walk({s: 1}, 1.0);
+      out.pilot = [c.region, c.pos[0], d.region, d.pos[1], e.region];
+      // NAV2-03: walking aft from the divider, a sidestep into PAX 3 (forward-facing) turns the view forward
+      T.go('cabin_aft', {motion: false}); look(0); T.walk({f: 1}, 1.9); const f = T.walk({s: 1}, 1.5);
+      out.seat = [f.region, f.yawDeg, f.pitchDeg, f.pos[1]];
+      // NAV2-05: the airstair stop's pitch
+      T.go('airstair', {motion: false}); out.air = T.state().pitchDeg;
+      T.exit({motion: false}); await V.frames(1);
+      return out;
+    """)
+    R = {x["id"]: x for x in data["regions"]}
+    rc = r["race"]
+    check("[T12] NAV2-01: a stop picked during the exit fade goes back inside (tour, UI and camera agree)",
+          rc["active"] and rc["stop"] == "club" and not rc["flying"] and rc["touring"] and not rc["controls"] and rc["camInside"], str(rc))
+    cl, pi = r["club"], r["pilot"]
+    ok = (cl[0] == "aisle" and abs(cl[1]) < 1e-3 and cl[2] == "seat_pax4" and abs(cl[3] - R["seat_pax4"]["eye_bl"]) < 1e-3
+          and pi[0] in ("aisle", "flight_deck") and pi[1] > R["flight_deck"]["x"][0] and pi[2] == "crew_gap" and abs(pi[3]) < 1e-3
+          and pi[4] == "seat_copilot")
+    check("[T12] NAV2-02: a sidestep out of a seat holds on the aisle / gap centre line (pressed again: the opposite seat); "
+          "an aft step from a crew seat walks out through the gap", ok,
+          f"club: {cl[0]} y {cl[1]:+.3f} -> {cl[2]} y {cl[3]:+.3f}; pilot: S -> {pi[0]} x {pi[1]:.2f}, D -> {pi[2]} y {pi[3]:+.3f} -> {pi[4]}")
+    se = r["seat"]
+    check("[T12] NAV2-03: a sidestep into a forward-facing seat turns the view forward (-8 deg) and ends at the seated eye",
+          se[0] == "seat_pax3" and abs(abs(se[1]) - 180) < 0.5 and abs(se[2] + 8) < 0.5 and abs(se[3] - R["seat_pax3"]["eye_bl"]) < 1e-3,
+          f"{se[0]}, yaw {se[1]:.1f}, pitch {se[2]:.1f}, y {se[3]:+.3f}")
+    fl = float(I.FLOOR["wl"])
+    wall = float(I.lining_half_width(float(FP.AIRSTAIR["cx"]), fl + 1.0)) + R["vestibule"]["y"][0]
+    check("[T12] NAV2-05 / 06: the airstair stop looks out at -38 deg; the vestibule keeps 0.40 m from the closed door "
+          "(widened onto the doorway only while it is open)", abs(r["air"] + 38) < 0.5 and abs(wall - 0.40) < 2e-3
+          and R["vestibule_door"].get("when") == "door_airstair" and R["vestibule_door"]["y"][0] <= -0.449,
+          f"pitch {r['air']:.1f}, vestibule edge {R['vestibule']['y'][0]:+.3f} = {wall:.3f} m from the door lining")
 
 
 async def tour_phone_checks(page, ctx, shots=True):
@@ -1929,6 +2059,20 @@ async def phone_checks(browser, base, shots=True):
     check("phone: loads the light tier (pc12_low.glb) only, the Specs panel counts it", glbs == ["pc12_low.glb"]
           and bool(low) and f"{low.get('triangles', 0):,}" in spec,
           f"requested {glbs}, stats.low {low.get('triangles')} triangles")
+    # review r2 RES2-03: a capable phone (deviceMemory >= 4: headless Chromium reports 8) is offered the full model on
+    # the stage once; x keeps the light model, remembered
+    chip = await js(page, r"""
+      const c = document.getElementById('detailChip'), out = {shown: !c.hidden, text: document.getElementById('detailChipText').textContent};
+      if (out.shown) { const b = c.getBoundingClientRect(), s = document.getElementById('panel').getBoundingClientRect();
+        out.box = [b.left, b.right, b.bottom, s.top]; }
+      document.getElementById('detailChipClose').click();
+      out.after = c.hidden; out.stored = localStorage.getItem('pc12-detail'); localStorage.removeItem('pc12-detail');
+      return out;
+    """)
+    check("[RES2-03] phone: the full-detail model offered once on the stage (chip above the sheet); x keeps the light model",
+          chip["shown"] and "triangles" in chip["text"] and chip["after"] and chip["stored"] == "light"
+          and chip["box"][0] >= 0 and chip["box"][1] <= PHONE["width"] and chip["box"][2] <= chip["box"][3] + 1,
+          f"{chip['text']!r}, box {chip.get('box')}, after x: hidden {chip['after']}, stored {chip['stored']!r}")
     await fit_check(page, "phone 390x844 3/4")
     if shots:
         await shot(page, "28_phone_390x844", "")

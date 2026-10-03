@@ -465,6 +465,13 @@ def plain_cove(sec, xh, gap=0.010, n=16):
     return np.stack([xh + R * np.cos(th), zh + R * np.sin(th)], 1), (tu, tl, R)
 
 
+def _nose_n(n):
+    """Samples (incl. both ends) of a control surface's half-circle nose: n at PC12_RES=1, (n - 1) x res.factor() + 1
+    above (exact samples of the same circle)."""
+    from cad import res
+    return int(round((n - 1) * res.factor())) + 1
+
+
 def plain_surface_loop(sec, xh, n=16, x_end=1.0):
     """Control-surface section: round nose about the hinge, airfoil surfaces aft.
     x_end < 1 truncates it with a flat face (the cut-out for a tab)."""
@@ -476,7 +483,9 @@ def plain_surface_loop(sec, xh, n=16, x_end=1.0):
     lower = upper.copy()
     lower[:, 1] = af.lower(xu)
     lower = lower[::-1]
-    th = np.linspace(1.5 * np.pi, 0.5 * np.pi, 13)[1:-1]
+    # the nose circle every 15 deg (7.5 at PC12_RES 2: the refinement's PN splits of the 15 deg rows -- some edges of a
+    # quad split, its neighbour's not -- drew the highlight along the rudder's nose as a sawtooth, review r2 RES2-02)
+    th = np.linspace(1.5 * np.pi, 0.5 * np.pi, _nose_n(13))[1:-1]
     nose = np.stack([xh + r * np.cos(th), zh + r * np.sin(th)], 1)  # from bottom, around the front, to top
     # upper (LE->TE), TE, lower (TE->LE), nose (bottom->top)
     loop = np.vstack([upper, lower, nose])
@@ -491,7 +500,7 @@ def tab_loop(sec, x0, n=10):
     xu = cos_pts(n, 0, 1) * (1 - x0 - r) + x0 + r
     upper = np.stack([xu, af.upper(xu)], 1)
     lower = np.stack([xu[::-1], af.lower(xu[::-1])], 1)
-    th = np.linspace(1.5 * np.pi, 0.5 * np.pi, 9)[1:-1]
+    th = np.linspace(1.5 * np.pi, 0.5 * np.pi, _nose_n(9))[1:-1]
     nose = np.stack([x0 + r + r * np.cos(th), zh + r * np.sin(th)], 1)
     return np.vstack([upper, lower, nose])
 

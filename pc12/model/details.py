@@ -526,6 +526,18 @@ CANOE_UP = 0.25                        # upper half (where not flattened against
 CANOE_AXIS_GAP = 0.005                 # canoe axis below the lower skin at 75 % chord (m)
 CANOE_SPLIT_GAP = 0.005                # chord fraction between the fixed and the flap-carried part
 CANOE_SURF_GAP = 0.0015                # canoe top under the skin it hangs from (m)
+# review r2 RES2-01d: the axis runs straight at CANOE_AXIS_GAP under the skin at 75 % chord, so towards the nose (the
+# lower skin drops ~6 cm forward of it) the first quarter metre of the body lay inside the wing and was flattened
+# onto the skin into a zero-thickness sheet with spiky normals -- a dark artefact at every canoe's tip.  The axis now
+# hangs CANOE_NOSE_DROP under the clamp height where it would rise above it (soft, CANOE_NOSE_SOFT; aft of the
+# canoe's emergence it stays where it was, < 0.3 mm) and the lower half keeps at least CANOE_NOSE_DEPTH of its radius
+# below that axis, so the nose is a real tapering body closing a few mm under the skin (the plan outline L5 draws,
+# canoe_plan, unchanged)
+CANOE_NOSE_DROP = 0.002                # m: nose axis under the clamp height
+CANOE_NOSE_SOFT = 0.001                # m: softness of that drop
+CANOE_NOSE_DEPTH = 0.4                 # lower half at the nose: >= this x the radius below the axis
+CANOE_NOSE_BLEND = 0.15                # softness of the maximum of the two depths (x the radius: no crease, and
+#                                        the lower half aft of the nose stays as it was to 0.3 %)
 
 
 def canoe_law(t):
@@ -577,10 +589,16 @@ def flap_canoes():
             zc = zl - CANOE_AXIS_GAP
             c = c.scaled((1.0, CANOE_HW / CANOE_DEPTH, 1.0), origin=(0, 0, 0)).translated((x0, y, zc))
             V = c.V.copy()
-            V[:, 2] = np.where(V[:, 2] > zc, zc + CANOE_UP * (V[:, 2] - zc), V[:, 2])
+            zs = _lower_surface_z(sec, V[:, 0]) - CANOE_SURF_GAP
+            # the nose (RES2-01d, above): axis za, lower half depth D (>= CANOE_NOSE_DEPTH x the radius)
+            r = CANOE_DEPTH * canoe_law((V[:, 0] - x0) / L)
+            k, kb = CANOE_NOSE_SOFT, CANOE_NOSE_BLEND * np.maximum(r, 1e-9)
+            za = zc - k * np.logaddexp(0.0, (zc - (zs - CANOE_NOSE_DROP)) / k)
+            D = kb * np.logaddexp((r - (zc - za)) / kb, CANOE_NOSE_DEPTH * r / kb)     # soft max of the two depths
+            dz = V[:, 2] - zc
+            V[:, 2] = np.where(dz > 0, za + CANOE_UP * dz, za + dz / np.maximum(r, 1e-9) * D)
             # flatten against the wing (fixed part) / the retracted flap's lower surface (aft part, = the section's
             # lower contour aft of the lip); aft of the trailing edge the tail stays round
-            zs = _lower_surface_z(sec, V[:, 0]) - CANOE_SURF_GAP
             clamp = (V[:, 0] <= te) & (V[:, 2] > zs)
             V[:, 2] = np.where(clamp, zs, V[:, 2])
             c = Mesh(V, c.F)

@@ -207,16 +207,22 @@ def _wrap(V, axis, a0, R, c0):
     return V
 
 
-def fleece(amp, seed=0, k=(26.0, 43.0, 71.0)):
-    """Lumpiness for sheepskin faces: a sum of random plane waves (amplitude amp, m; wave numbers k, rad/m)."""
+def fleece(amp, seed=0, k=(26.0, 43.0, 71.0), h_judged=None):
+    """Lumpiness for sheepskin faces: a sum of random plane waves (amplitude amp, m; wave numbers k, rad/m).
+    h_judged: the pad's grid spacing at PC12_RES=1 -- above it (finer grids, _sk_h) each wave is scaled by
+    min(1, (k_c / k)^2), k_c = pi / (2 h_judged): the judged grid could not carry the fine waves (the 37-66 mm fleece
+    ripple was sampled every 16-21 mm and smoothed out), the finer one drew them as a twisted rope along the pads' edges
+    (review r2 RES2-04); the approved look keeps its band."""
     rng = np.random.default_rng(seed)
     waves = [(rng.normal(size=2), rng.uniform(0, 2 * np.pi), kk) for kk in k]
+    kc = np.pi / (2.0 * h_judged) if (h_judged and _res.factor() > 1.0) else None
+    gain = [1.0 if kc is None else min(1.0, (kc / kk) ** 2) for _, _, kk in waves]
 
     def f(a, b):
         out = np.zeros_like(np.asarray(a, float))
-        for dvec, ph, kk in waves:
+        for (dvec, ph, kk), g in zip(waves, gain):
             dvec = dvec / np.linalg.norm(dvec)
-            out += np.sin(kk * (dvec[0] * a + dvec[1] * b) + ph)
+            out += g * np.sin(kk * (dvec[0] * a + dvec[1] * b) + ph)
         return amp * out / len(waves)
     return f
 
@@ -857,7 +863,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         g2 = 0.5 * SK_SPLIT
         ai = np.linspace(-0.045 + 0.04, D - 0.035, 14)                   # the inner edge: the split, then the notch
         bi = g2 + (0.5 * nw - 0.01 - g2) * smoothstep(D - nd - 0.07, D - nd, ai) + 0.01 * smoothstep(D - nd, D, ai)
-        lump, fine = fleece(SK_LUMP, 11, k=SK_LUMP_K), fleece(SK_FLUFF, 1, k=(95.0, 120.0, 170.0))
+        lump, fine = fleece(SK_LUMP, 11, k=SK_LUMP_K), fleece(SK_FLUFF, 1, k=(95.0, 120.0, 170.0), h_judged=0.016)
         sleeves = []
         for sg_, edge in ((-1, lo), (1, hi)):
             P_ = np.vstack([[(-0.045, sg_ * g2)], np.c_[ai, sg_ * bi], [(D, sg_ * 0.5 * nw), (D, edge - sg_ * 0.03),
@@ -950,7 +956,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         ol = _outline_from_hw(0.035, L_s - 0.018 + 1.9 * Rb,
                               lambda b: _crew_back_hw(np.minimum(b, L_s - 0.004), 0.004), 0.03)
         lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
-        fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0))
+        fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0), h_judged=0.021)
         g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, 0.06),
                    fluff=lambda a, b: lump(a, b) + fine(a, b))
         g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))

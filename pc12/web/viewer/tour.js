@@ -31,6 +31,9 @@ const FOV_MAX = 95, H_FOV_MIN = 70;    // widen the vertical FOV until at least 
 // vertical) -- review r1 NAV1-03: at FOV_MAX the top ~40 % of every cabin view was flat headliner
 const PORTRAIT = 0.8, FOV_MAX_PORTRAIT = 85, PORTRAIT_AXIS = 0.4;
 const SIDESTEP_PULL = 0.5;              // m: a blocked sidestep in the aisle slides toward a seat this close (NAV1-07)
+const SEAT_TURN = 0.4;                  // s: a walk into a seat turns the view to the seat's facing (NAV2-03) ...
+const SEAT_PITCH = -8 * D2R;            // ... and this pitch
+const STANDING = new Set(['aisle', 'crew_gap', 'flight_deck', 'vestibule', 'vestibule_door']);
 const ZW = 0.1;                         // height weight of the walk projection (project)
 const RISE = 0.6;                       // m/s: the eye coming back up to the kept height (standing up, a ceiling passed)
 
@@ -87,6 +90,9 @@ export class Tour {
     this.vel = [0, 0, 0];           // forward, right, up (m/s), smoothed
     this.turnVel = 0;
     this.pending = 0;               // wheel / pinch travel still to cover (m, forward)
+    this.latch = null;              // a sideways step out of a seat held on the aisle / gap centre line until the strafe
+    //                                 is released ({dir: +-1 of the strafe, y: the line}; NAV2-02)
+    this.seatTurn = null;           // the turn to a seat's facing after a walk into it (NAV2-03)
     this.pointers = new Map();
     this.fade = document.getElementById('tourFade');
     this.motionOverride = null;     // tests: force flights on (true) / off (false) regardless of reduced motion
@@ -126,6 +132,7 @@ export class Tour {
     this.zWant = s.eye[2];
     this.region = project(this.p, this.doors()).region;
     this.yaw = a.yaw; this.pitch = a.pitch; this.fovBase = s.fov;
+    this.latch = null; this.seatTurn = null;
   }
   _setFade(o) {
     if (!this.fade) return;
@@ -184,8 +191,11 @@ export class Tour {
   go(id, { motion = this.motion } = {}) {
     const s = stopById(id);
     if (!s) return;
-    if (!this.active) { this.enter(id, { motion }); return; }
+    // a running flight completes first -- and so does a pending exit (a stop key / menu pick / prev / next during the
+    // exit fade): the tour is then outside and goes back in from there (review r2 NAV2-01: the flight had been
+    // pushed on the inactive tour, leaving the camera inside under the exterior UI with the orbit controls on)
     this.finish();
+    if (!this.active) { this.enter(id, { motion }); return; }
     this.stop = s.id;
     this.lastStop = s.id;
     if (s.doors) for (const k in s.doors) this.hooks.door(k, s.doors[k], motion);
@@ -243,6 +253,7 @@ export class Tour {
     if (!this.active) return;
     this.tasks = [];
     this.keys.clear(); this.pad = { f: 0, s: 0, u: 0 }; this.vel = [0, 0, 0]; this.turnVel = 0; this.pending = 0;
+    this.latch = null; this.seatTurn = null;
     const out = () => {
       this.active = false;
       this.inside = false;
@@ -324,6 +335,9 @@ export class Tour {
       turn = (has('ArrowLeft') ? 1 : 0) - (has('ArrowRight') ? 1 : 0);
       look = (has('KeyR') ? 1 : 0) - (has('KeyF') ? 1 : 0);
     }
+    // the latch holds while the same strafe is held (released or reversed, it lets go: NAV2-02)
+    const sDir = Math.sign(clamp(s, -1, 1));
+    if (this.latch && sDir !== this.latch.dir) this.latch = null;
     const want = [clamp(f, -1, 1) * run, clamp(s, -1, 1) * run, clamp(u, -1, 1) * SPEED.lift];
     const a = input ? 1 : 1 - Math.exp(-SPEED.accel * dt);
     let moving = false;
@@ -336,6 +350,16 @@ export class Tour {
     this.turnVel += (tw - this.turnVel) * a;
     if (Math.abs(this.turnVel) < 1e-3 && !tw) this.turnVel = 0;
     let rot = false;
+    if (tw || look) this.seatTurn = null;                // the user's own turn wins
+    if (this.seatTurn) {                                 // eased to the seat's facing (NAV2-03)
+      const T = this.seatTurn;
+      T.t += dt;
+      const e = smooth(clamp(T.t / SEAT_TURN, 0, 1));
+      this.yaw = lerpAngle(T.yaw0, T.yaw1, e);
+      this.pitch = T.pitch0 + (T.pitch1 - T.pitch0) * e;
+      if (e >= 1) this.seatTurn = null;
+      rot = true;
+    }
     if (this.turnVel) { this.yaw = wrap(this.yaw + this.turnVel * dt); rot = true; }
     if (look) { this.pitch = clamp(this.pitch + look * SPEED.pitch * dt, -PITCH_MAX, PITCH_MAX); rot = true; }
     let fwd = this.vel[0] * dt;
@@ -356,12 +380,28 @@ export class Tour {
       this.zWant = clamp(this.zWant + ud, TOUR.crouch_min, TOUR.floor + TOUR.cabin_height);
       // forward along the heading (level), right = heading x up; the eye rises back to the kept height gently
       const q = [this.p[0] + fwd * cy + sd * sy, this.p[1] + fwd * sy - sd * cy, Math.min(this.zWant, this.p[2] + RISE * dt)];
-      const y0 = this.p[1];
-      this.moveTo(q);
+      const x0 = this.p[0], y0 = this.p[1];
+      const L = this.latch;
+      if (L && L.seat) {                       // on into the seat, whichever way the turning view points the step
+        q[0] = x0 + fwd * cy;
+        q[1] = y0 + clamp(L.y - y0, -Math.abs(sd), Math.abs(sd));
+      }
+      else if (L) q[1] = L.side > 0 ? clamp(q[1], Math.min(y0, L.y), L.y) : clamp(q[1], L.y, Math.max(y0, L.y));
+      const strafe = Math.abs(sd) > 1e-6 ? sDir : 0;
+      this.moveTo(q, strafe);
       // a sidestep held by the aisle's edge next to a seat slides along the aisle into that seat (review r1 NAV1-07:
       // the seats could only be reached from the menu, so a sidestep felt stuck rather than blocked)
       const dy = q[1] - y0;
-      if (Math.abs(sd) > 1e-6 && Math.abs(dy) > 1e-6 && Math.abs(this.p[1] - y0) < 0.3 * Math.abs(dy)) this._pullToSeat(dy, Math.abs(sd));
+      if (!L && strafe && Math.abs(dy) > 1e-6 && Math.abs(this.p[1] - y0) < 0.3 * Math.abs(dy)) this._pullToSeat(dy, Math.abs(sd), strafe);
+      // an aft step held by a crew seat's pocket slides inboard into the gap between the seats, the way out (NAV2-02)
+      const dx = q[0] - x0;
+      if (dx > 1e-6 && (this.region === 'seat_pilot' || this.region === 'seat_copilot') && this.p[0] - x0 < 0.3 * dx) {
+        const G = TOUR.regions.find((g) => g.id === 'crew_gap');
+        if (G) {
+          const yc = 0.5 * (G.y[0] + G.y[1]);
+          this.moveTo([this.p[0] + dx, this.p[1] + Math.sign(yc - this.p[1]) * Math.min(Math.abs(yc - this.p[1]), dx), this.p[2]]);
+        }
+      }
     }
     const moved = Math.abs(this.p[0] - p0[0]) + Math.abs(this.p[1] - p0[1]) + Math.abs(this.p[2] - p0[2]) > 1e-6;
     if (!moved && !rot) return false;           // held by a ceiling: nothing to draw
@@ -373,18 +413,35 @@ export class Tour {
   // move the eye to q, held inside the walkable volume (slides along the walls: the box clamp keeps the free axes);
   // stepping out of a seat (or the gap between the crew seats) into the aisle / vestibule / flight deck stands the
   // walker up again
-  moveTo(q) {
+  // strafe: the sign of a held sideways step (0: none).  A sideways step out of a seat into the aisle / the gap between
+  // the crew seats is held on that region's centre line until the strafe is released and pressed again (review r2
+  // NAV2-02: the aisle is 0.2 m wide, a held key crossed it in 0.2 s into the opposite seat); a walk into a seat turns
+  // the view to the seat's facing (NAV2-03: a sidestep into a forward-facing seat while looking aft put the face in its
+  // own headrest) and holds a sideways step on the seated eye's line (the turned view would otherwise walk back out)
+  moveTo(q, strafe = 0) {
     const r = project(q, this.doors(), ZW);
     const was = this.region;
+    const y0 = this.p[1];
     this.p = r.p;
     this.region = r.region;
     const seated = (id) => !!id && (id.startsWith('seat_') || id === 'crew_gap');
     if (seated(was) && r.region && !seated(r.region)) this.zWant = Math.max(this.zWant, TOUR.stand_eye);
+    if (was === r.region || !r.region) return;
+    const R = TOUR.regions.find((g) => g.id === r.region);
+    if (strafe && was && was.startsWith('seat_') && STANDING.has(r.region)) {
+      const yc = 0.5 * (R.y[0] + R.y[1]);
+      this.latch = { dir: strafe, y: yc, side: Math.sign(yc - y0) || 1 };
+      if ((this.p[1] - yc) * this.latch.side > 0) this.moveTo([this.p[0], yc, this.p[2]]);
+    } else if (r.region.startsWith('seat_') && (!was || STANDING.has(was)) && R && R.facing) {
+      this.seatTurn = { t: 0, yaw0: this.yaw, yaw1: R.facing > 0 ? Math.PI : 0, pitch0: this.pitch, pitch1: SEAT_PITCH };
+      // the held step carries on to the seated eye's BL (the turned view would otherwise walk it back out)
+      if (strafe && R.eye_bl != null) this.latch = { dir: strafe, y: R.eye_bl, side: Math.sign(R.eye_bl - y0) || 1, seat: true };
+    }
   }
 
   // the nearest seat pocket on the side of a blocked sidestep (dy: the wanted lateral move) within SIDESTEP_PULL
   // along the aisle: the eye slides toward it by up to `step` (it enters the seat once level with it)
-  _pullToSeat(dy, step) {
+  _pullToSeat(dy, step, strafe = 0) {
     if (this.region !== 'aisle' && this.region !== 'vestibule') return;
     const x = this.p[0];
     let best = null, bd = SIDESTEP_PULL;
@@ -398,10 +455,11 @@ export class Tour {
     if (!best) return;
     const cx = 0.5 * (best.x[0] + best.x[1]);
     const mx = Math.sign(cx - x) * Math.min(Math.abs(cx - x), step);
-    this.moveTo([x + mx, this.p[1] + dy, this.p[2]]);
+    this.moveTo([x + mx, this.p[1] + dy, this.p[2]], strafe);
   }
 
   look(dyaw, dpitch) {
+    this.seatTurn = null;
     this.yaw = wrap(this.yaw + dyaw);
     this.pitch = clamp(this.pitch + dpitch, -PITCH_MAX, PITCH_MAX);
     if (this.tasks.length) this.finish();
@@ -419,8 +477,11 @@ export class Tour {
     this.keys.add(c);
     return true;
   }
-  keyup(e) { this.keys.delete(e.code); }
-  blur() { this.keys.clear(); this.pad = { f: 0, s: 0, u: 0 }; }
+  keyup(e) {
+    this.keys.delete(e.code);
+    if (e.code === 'KeyA' || e.code === 'KeyD') this.latch = null;
+  }
+  blur() { this.keys.clear(); this.pad = { f: 0, s: 0, u: 0 }; this.latch = null; }
 
   _wirePointer(cv) {
     const P = this.pointers;
@@ -481,11 +542,13 @@ export class Tour {
       active: this.active, stop: this.stop, lastStop: this.lastStop, flying: this.flying,
       pos: this.p.map((v) => Math.round(v * 1e5) / 1e5), yawDeg: this.yaw / D2R, pitchDeg: this.pitch / D2R,
       fov: this.stage.camera.fov, region: r.region, outside: r.d, fade: this.fade ? +this.fade.style.opacity || 0 : 0,
+      latched: !!this.latch, seatTurn: !!this.seatTurn,
     };
   }
   // integrate a held input {f, s, u, turn} (-1 .. 1) for sec seconds in 1/60 s steps (the key path, unsmoothed)
   walk(input, sec) {
     this.finish();
+    this.latch = null;                       // each call is a fresh press
     for (let t = 0; t < sec - 1e-9; t += 1 / 60) this.step(Math.min(1 / 60, sec - t), input);
     this.vel = [0, 0, 0]; this.turnVel = 0;
     return this.state();

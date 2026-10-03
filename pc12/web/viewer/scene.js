@@ -242,7 +242,8 @@ export class Stage {
   get lookKey() { return this.dark && !this.interiorLook ? 'dark' : 'light'; }
   // exposure in use: the look's, LOOK.interiorEV brighter inside (review r1 NAV1-04: at the exterior exposure the
   // headliner and side walls rendered mid-grey, ~165 / 255, where the cabin photos are near-white; with the cabin
-  // light CABIN.inside 1.0 (materials.js) the headliner is ~190; at +1 EV AgX flattened the cabin into a grey fog)
+  // light CABIN.inside 1.6 (materials.js, review r2 NAV2-04) the headliner is ~207; at +1 EV AgX flattened the cabin
+  // into a grey fog)
   get exposure() { return LOOK.theme[this.lookKey].exposure * (this.interiorLook ? Math.pow(2, LOOK.interiorEV) : 1); }
   setInteriorLook(on) {
     if (this.interiorLook === !!on) return;

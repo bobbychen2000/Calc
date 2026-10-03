@@ -251,6 +251,12 @@ def shared_grids(meshes, origin, pad=0.001):
     return [grid[r] for r in roots]
 
 
+# parts quantised on one grid with each other (same node origin): their joint is a long seam in plain view, where two
+# grids put the shared vertices up to ~0.02 mm apart and the rasteriser dropped pixels along it -- dark specks along the
+# chin-inlet lip's edge on the cowl (review r2 RES2-01).  Small enough for 16 bits (the cowl: ~2 m, 0.03 mm steps).
+JOINT_GRIDS = (("cowl_upper", "cowl_lower", "chin_inlet"),)
+
+
 def write_glb(parts: dict, path: str, quantize=True, meta=None, shared_grid=True, normal_bits=None):
     """shared_grid: quantise the touching meshes of a part on one grid (shared_grids).  normal_bits: 8 or 16 (default:
     16 for the refined model, 8 at PC12_RES=1 -- the light tier as judged; cad/res.py NORMAL_BITS)."""
@@ -279,6 +285,15 @@ def write_glb(parts: dict, path: str, quantize=True, meta=None, shared_grid=True
     for pid in ids:
         p = parts[pid]
         origin_of[pid] = np.asarray(p.pivot["origin"], float) if p.pivot else np.zeros(3)
+    joint = {}                                        # (pid, mesh index) -> grid, for the JOINT_GRIDS parts
+    if shared_grid:
+        for grp in JOINT_GRIDS:
+            grp = [g for g in grp if g in parts]
+            if len(grp) < 2 or any(np.any(origin_of[g] != origin_of[grp[0]]) for g in grp):
+                continue
+            keys = [(g, k) for g in grp for k in range(len(parts[g].meshes))]
+            grids = shared_grids([parts[g].meshes[k][0] for g, k in keys], origin_of[grp[0]])
+            joint.update(zip(keys, grids))
 
     # build nodes bottom-up: first meshes, then part nodes
     def make(pid):
@@ -287,6 +302,7 @@ def write_glb(parts: dict, path: str, quantize=True, meta=None, shared_grid=True
         p = parts[pid]
         kids = []
         grids = shared_grids([m for m, _ in p.meshes], origin_of[pid]) if shared_grid else [None] * len(p.meshes)
+        grids = [joint.get((pid, k), g) for k, g in enumerate(grids)]
         for k, (m, mat) in enumerate(p.meshes):
             if mat not in gb.mat_index:
                 raise KeyError(f"unknown material {mat} in {pid}")

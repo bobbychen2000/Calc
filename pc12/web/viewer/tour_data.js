@@ -17,7 +17,7 @@ export const TOUR = {
     {"id": "cabin_fwd", "label": "Cabin, looking forward", "fov": 70.0, "note": "Aft end of the aisle, toward the flight deck", "eye": [8.85, 0.0, 2.609], "target": [3.971, 0.0, 2.209], "via": [], "approach": "door", "src": "BAGGAGE partition_x, DIVIDER x_aft, CABIN height"},
     {"id": "cabin_aft", "label": "Cabin, looking aft", "fov": 70.0, "note": "From the divider, down the aisle", "eye": [4.891, 0.0, 2.609], "target": [9.25, 0.0, 2.109], "via": [], "approach": "door", "src": "DIVIDER x_aft, BAGGAGE partition_x / bar_h"},
     {"id": "club", "label": "Club seats", "fov": 70.0, "note": "PAX 3's seat in the club four, facing forward", "eye": [7.1269, -0.4, 2.4117], "target": [5.787, 0.1, 2.159], "via": [[7.1269, -0.05, 2.5117]], "approach": "door", "src": "seat_map 'PAX 3' / 'PAX 2', cabin_pose (50th pct)"},
-    {"id": "airstair", "label": "Airstair door", "fov": 70.0, "doors": {"door_airstair": 1}, "note": "In the open door, looking down the steps", "eye": [4.97, -0.55, 2.474], "target": [4.8107, -1.1447, 1.686], "via": [[4.97, -0.33, 2.474], [5.07, -0.05, 2.559]], "approach": "door", "src": "fuselage_parts.AIRSTAIR (cx, hz), DOOR_SILL_WL; heading AIRSTAIR_LOOK [E]"}
+    {"id": "airstair", "label": "Airstair door", "fov": 70.0, "doors": {"door_airstair": 1}, "note": "In the open door, looking down the steps", "eye": [4.97, -0.55, 2.474], "target": [4.766, -1.3112, 1.8583], "via": [[4.97, -0.33, 2.474], [5.07, -0.05, 2.559]], "approach": "door", "src": "fuselage_parts.AIRSTAIR (cx, hz), DOOR_SILL_WL; heading AIRSTAIR_LOOK [E]"}
   ],
   "approach": {
     "nose": {"eye": [1.8197, 0.0, 2.638], "target": [4.1197, 0.0, 2.288], "note": "ahead of the windshield (both crew seats)"},
@@ -27,16 +27,17 @@ export const TOUR = {
     {"id": "flight_deck", "label": "flight deck", "x": [4.45, 4.621], "y": [-0.1, 0.1], "z": [2.209, 2.529], "ceil": true, "src": "CREW_SEAT bl / head_hwt, DIVIDER open_bl; forward to 0.30 aft of the pedestal (PEDESTAL x aft end 4.150), between the seat backs"},
     {"id": "crew_gap", "label": "between the crew seats", "x": [4.0397, 4.47], "y": [-0.1, 0.1], "z": [2.258, 2.458], "ceil": true, "zw": 1.0, "src": "interior.design_eye (seated eye height), CREW_SEAT bl / head_hwt: out of a crew seat"},
     {"id": "aisle", "label": "aisle", "x": [4.531, 8.85], "y": [-0.1, 0.1], "z": [2.209, 3.259], "ceil": true, "src": "EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain) - WALL_CLEAR"},
-    {"id": "vestibule", "label": "entry vestibule", "x": [4.871, 5.22], "y": [-0.45, 0.0], "z": [2.209, 3.259], "ceil": true, "src": "CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft + DIVIDER_CLEAR .. CABINETS lh x0"},
+    {"id": "vestibule", "label": "entry vestibule", "x": [4.871, 5.22], "y": [-0.2996, 0.0], "z": [2.209, 3.259], "ceil": true, "src": "CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft + DIVIDER_CLEAR .. CABINETS lh x0; port edge WALL_CLEAR inboard of the door lining (interior.lining_half_width)"},
+    {"id": "vestibule_door", "label": "entry vestibule (door open)", "when": "door_airstair", "x": [4.871, 5.22], "y": [-0.45, -0.2996], "z": [2.209, 3.259], "ceil": true, "src": "the vestibule out to BL -0.45 while the airstair door is open, onto the doorway"},
     {"id": "doorway", "label": "airstair doorway", "when": "door_airstair", "x": [4.765, 5.175], "y": [-0.7, -0.3], "z": [2.204, 2.524], "ceil": false, "src": "fuselage_parts.AIRSTAIR clear opening (cx, hx, hz), DOOR_SILL_WL; open door only"},
-    {"id": "seat_pilot", "label": "pilot", "x": [4.0397, 4.2197], "y": [-0.425, -0.06], "z": [2.258, 2.458], "ceil": true, "src": "interior.design_eye, CREW_SEAT bl"},
-    {"id": "seat_copilot", "label": "co-pilot", "x": [4.0397, 4.2197], "y": [0.06, 0.425], "z": [2.258, 2.458], "ceil": true, "src": "interior.design_eye, CREW_SEAT bl"},
-    {"id": "seat_pax1", "label": "PAX 1", "x": [5.8111, 5.9711], "y": [-0.44, -0.06], "z": [2.3517, 2.5317], "ceil": true, "src": "seat_map 'PAX 1', cabin_pose (50th pct)"},
-    {"id": "seat_pax2", "label": "PAX 2", "x": [5.8111, 5.9711], "y": [0.06, 0.44], "z": [2.3517, 2.5317], "ceil": true, "src": "seat_map 'PAX 2', cabin_pose (50th pct)"},
-    {"id": "seat_pax3", "label": "PAX 3", "x": [7.0469, 7.2069], "y": [-0.44, -0.06], "z": [2.3517, 2.5317], "ceil": true, "src": "seat_map 'PAX 3', cabin_pose (50th pct)"},
-    {"id": "seat_pax4", "label": "PAX 4", "x": [7.0469, 7.2069], "y": [0.06, 0.44], "z": [2.3517, 2.5317], "ceil": true, "src": "seat_map 'PAX 4', cabin_pose (50th pct)"},
-    {"id": "seat_pax5", "label": "PAX 5", "x": [8.2159, 8.3759], "y": [-0.44, -0.06], "z": [2.3517, 2.5317], "ceil": true, "src": "seat_map 'PAX 5', cabin_pose (50th pct)"},
-    {"id": "seat_pax6", "label": "PAX 6", "x": [8.5209, 8.6809], "y": [0.06, 0.44], "z": [2.3517, 2.5317], "ceil": true, "src": "seat_map 'PAX 6', cabin_pose (50th pct)"}
+    {"id": "seat_pilot", "label": "pilot", "x": [4.0397, 4.2197], "y": [-0.425, -0.06], "z": [2.258, 2.458], "ceil": true, "facing": 1, "eye_bl": -0.375, "src": "interior.design_eye, CREW_SEAT bl"},
+    {"id": "seat_copilot", "label": "co-pilot", "x": [4.0397, 4.2197], "y": [0.06, 0.425], "z": [2.258, 2.458], "ceil": true, "facing": 1, "eye_bl": 0.375, "src": "interior.design_eye, CREW_SEAT bl"},
+    {"id": "seat_pax1", "label": "PAX 1", "x": [5.8111, 5.9711], "y": [-0.44, -0.06], "z": [2.3517, 2.5317], "ceil": true, "facing": -1, "eye_bl": -0.4, "src": "seat_map 'PAX 1', cabin_pose (50th pct)"},
+    {"id": "seat_pax2", "label": "PAX 2", "x": [5.8111, 5.9711], "y": [0.06, 0.44], "z": [2.3517, 2.5317], "ceil": true, "facing": -1, "eye_bl": 0.4, "src": "seat_map 'PAX 2', cabin_pose (50th pct)"},
+    {"id": "seat_pax3", "label": "PAX 3", "x": [7.0469, 7.2069], "y": [-0.44, -0.06], "z": [2.3517, 2.5317], "ceil": true, "facing": 1, "eye_bl": -0.4, "src": "seat_map 'PAX 3', cabin_pose (50th pct)"},
+    {"id": "seat_pax4", "label": "PAX 4", "x": [7.0469, 7.2069], "y": [0.06, 0.44], "z": [2.3517, 2.5317], "ceil": true, "facing": 1, "eye_bl": 0.4, "src": "seat_map 'PAX 4', cabin_pose (50th pct)"},
+    {"id": "seat_pax5", "label": "PAX 5", "x": [8.2159, 8.3759], "y": [-0.44, -0.06], "z": [2.3517, 2.5317], "ceil": true, "facing": 1, "eye_bl": -0.4, "src": "seat_map 'PAX 5', cabin_pose (50th pct)"},
+    {"id": "seat_pax6", "label": "PAX 6", "x": [8.5209, 8.6809], "y": [0.06, 0.44], "z": [2.3517, 2.5317], "ceil": true, "facing": 1, "eye_bl": 0.4, "src": "seat_map 'PAX 6', cabin_pose (50th pct)"}
   ],
   "ceiling": {"x0": 3.8, "dx": 0.025, "nx": 223, "da": 0.025, "na": 33, "z": [
     [2.3523,2.3496,2.3463,2.3424,2.3378,2.3325,2.3265,2.3198,2.3123,2.3039,2.2946,2.2843,2.2729,2.2604,2.2466,2.2312,2.2142,2.1951,2.1736,2.1492,2.121,2.0878,2.0473,1.9953,1.9212,1.7606,1.6315,1.6315,1.6315,1.6315,1.6315,1.6315,1.6315],

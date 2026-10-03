@@ -24,6 +24,10 @@
 //          normals from the fit: the raw samples gave stair-stepped reflections), so nothing on the spinner strobes
 //          either; once the blur is complete the chrome spinner is held still against the spin (it is axisymmetric under
 //          the band: its tessellation re-sampling the studio every frame made the highlights twinkle, review r1 PR1-03).
+//          The band is opaque over its whole axial range (it covers the spinner's blade cut-outs, +-53 mm against the
+//          boots' +-66: where it went clear with the boot outline the held-still chrome showed a standing dark notch),
+//          feathered over BAND_FEATHER at its ends, carries no ghost (black boots on a mirror flickered frame to frame;
+//          the disc carries the motion) and closes the boot outline over BAND_FEATHER too (review r2 PR2-01).
 //
 // Hidden, not just transparent: the faded blades and boots are hidden as meshes (mesh.visible, Model.updateVisibility
 // keeps it via mr.blurHidden), so neither picking nor the selection / hover overlays (children of the meshes) see
@@ -41,15 +45,19 @@ import * as THREE from 'three';
 const TAU = Math.PI * 2;
 const NR = 64;                 // radial sections
 const NPHI = 64;               // support-function directions
-const NZ = 16;                 // axial slices of the root boots
+const NZ = 32;                 // axial slices of the root boots
 const T_EYE = 1 / 40;          // exposure of the eye / a video camera (s)
 const STEP_SWEEP = 2.5;        // sweep >= 2.5 x the per-frame advance
 const GHOST = 0.35;            // gain of the moving ghost once the true pattern is uniform
 const GHOST_SWEEP = 0.7;       // its sweep (blade spacings)
 const GHOST_STEP = 0.4;        // its largest advance per frame (blade spacings)
-const FADE_DEG = [4, 14];      // sweep (deg) over which the solid blades fade into the disc
+// sweep (deg) over which the solid blades fade into the disc: [4, 14] left them half-faded -- grey glass, the cowl
+// showing through, overlaps darkening twice -- for ~1 s of every start and run-down (review r2 PR2-02); alpha hashing
+// instead speckled them with static noise (no temporal anti-aliasing here).  At 60 fps the fade now spans 24-40 rpm.
+const FADE_DEG = [6, 10];
 const DISC_IN = 0.2;           // disc inner radius (m), inside the spinner
 const BAND_OFF = 0.0015;       // band offset outside the chrome spinner (m)
+const BAND_FEATHER = 0.005;     // band ends and boot-outline ends feathered over this (m)
 // The disc is shaded as one dielectric: averaging a metal's colour into the albedo (and its metalness) would light the
 // thin nickel leading-edge sheath (~12 % of the section) like a grey paint covering the whole blade; it counts as a
 // grey of this fraction of its colour instead.
@@ -86,6 +94,7 @@ varying vec3 vPbN0, vPbN1, vPbN2;
 const GLSL_BAND_FS = GLSL_COMMON + `
 uniform vec2 uPbRing[${NZ}];   // boot outline: angular interval about the blade axis per axial slice
 uniform vec4 uPbZ;             // axial range of the slice centres, of the boots
+uniform vec4 uPbBandZ;         // axial range of the band, feather (m), -
 uniform vec3 uPbBoot;          // boot reflectance as a metal F0 (linear)
 `;
 
@@ -159,19 +168,21 @@ function patchBand(mat, uni) {
   float pbK = clamp((pbZa - uPbZ.x) / (uPbZ.y - uPbZ.x), 0.0, 1.0) * ${(NZ - 1).toFixed(1)};
   int pbI = int(min(floor(pbK), ${(NZ - 2).toFixed(1)}));
   vec2 pbIv = mix(uPbRing[pbI], uPbRing[pbI + 1], pbK - float(pbI));
-  // the outline closes at the boots' axial ends (beyond the first / last slice centre)
-  float pbEnd = smoothstep(uPbZ.z, uPbZ.x, pbZa) * smoothstep(uPbZ.w, uPbZ.y, pbZa);
+  // the outline closes at the boots' axial ends, feathered (no crisp ring step)
+  float pbEnd = smoothstep(uPbZ.z, uPbZ.z + uPbBandZ.z, pbZa) * smoothstep(uPbZ.w, uPbZ.w - uPbBandZ.z, pbZa);
   float pbMid = 0.5 * (pbIv.x + pbIv.y);
   pbIv = pbMid + (pbIv - pbMid) * pbEnd;
   float pbW = clamp(pbIv.y - pbIv.x, 0.0, uPbPeriod);
   float pbAA = (abs(dFdx(pbX2) * pbX1 - dFdx(pbX1) * pbX2) + abs(dFdy(pbX2) * pbX1 - dFdy(pbX1) * pbX2)) / pbR2;
-  float pbCov = mix(pbBlur(pbTh - uPbBlur.y, pbIv.x, pbW, uPbBlur.x, pbAA),
-                    pbBlur(pbTh - uPbGhost.z, pbIv.x, pbW, uPbGhost.y, pbAA), uPbGhost.x);
+  // the true pattern only, no ghost (PR2-01: a ghost of black boots on a mirror is a high-contrast flicker)
+  float pbCov = pbBlur(pbTh - uPbBlur.y, pbIv.x, pbW, uPbBlur.x, pbAA);
   // time average of the mirror spinner and the black boots: the chrome's reflection (sharp: its own roughness) scaled
   // by the fraction of time the chrome is there, plus the boots' faint dielectric sheen
   diffuseColor.rgb = mix(diffuseColor.rgb, uPbBoot, pbCov);
-  // opaque wherever a boot passes (it hides the turning boots and their cut-outs), clear where none does
-  diffuseColor.a = uPbBlur.w * smoothstep(0.0, 0.06, pbW);`)
+  // opaque over the band's whole axial range (it hides the turning boots and the still spinner's blade cut-outs, which
+  // are shorter than the boots), feathered at its ends
+  diffuseColor.a = uPbBlur.w * smoothstep(uPbBandZ.x, uPbBandZ.x + uPbBandZ.z, pbZa) *
+    (1.0 - smoothstep(uPbBandZ.y - uPbBandZ.z, uPbBandZ.y, pbZa));`)
 
   };
   mat.customProgramCacheKey = () => 'pc12:propband';
@@ -390,7 +401,10 @@ export class PropBlur {
     if (bootMr.length && chromeMr) this._makeBand(bootMr, chromeMr);
 
     for (const m of [disc, this.band].filter(Boolean)) {
-      m.renderOrder = 2;
+      // the band first, writing depth: the disc runs on inside the spinner (DISC_IN) and, drawn after a band that
+      // wrote none, showed its dark root coverage through the still spinner's blade cut-outs -- a standing dark notch
+      // on the band (review r2 PR2-01)
+      m.renderOrder = m === this.band ? 1 : 2;
       m.castShadow = m.receiveShadow = false;
       m.frustumCulled = false;
       m.raycast = () => {};
@@ -506,6 +520,15 @@ export class PropBlur {
     const D = det3(A);
     const cf = [0, 1, 2].map((c) => (Math.abs(D) > 1e-12 ? det3(A.map((row, i) => row.map((v, j) => (j === c ? bv[i] : v)))) / D : 0));
     if (!(Math.abs(D) > 1e-12)) cf[0] = Math.max(...rs) || 0.24;
+    // lifted so that the band clears every sample (a least-squares curve runs up to ~0.5 mm inside the samples; the
+    // band must lie outside the still spinner everywhere to hide it and its blade cut-outs, review r2 PR2-01)
+    let lift = 0;
+    for (let k = 0; k <= NS; k++) {
+      if (!rs[k]) continue;
+      const u = (zb0 + k * (zb1 - zb0) / NS - zm) / hz;
+      lift = Math.max(lift, rs[k] - (cf[0] + cf[1] * u + cf[2] * u * u));
+    }
+    cf[0] += lift;
     const rFit = (z) => { const u = (z - zm) / hz; return cf[0] + cf[1] * u + cf[2] * u * u; };
     const dFit = (z) => { const u = (z - zm) / hz; return (cf[1] + 2 * cf[2] * u) / hz; };
     const SEG = 160, pos = [], nrm = [], idx = [];
@@ -529,18 +552,19 @@ export class PropBlur {
     const mat = chromeMr.base.clone();
     mat.name = 'prop_band';
     mat.transparent = true;
-    mat.depthWrite = false;
+    mat.depthWrite = true;           // opaque over its range (feathered ends): hides the disc inside the spinner
     mat.side = THREE.FrontSide;
     this.bandU = {
       ...this.U,
       uPbRing: { value: ring }, uPbZ: { value: new THREE.Vector4(z0 + 0.5 * dz, z1 - 0.5 * dz, z0, z1) },
+      uPbBandZ: { value: new THREE.Vector4(zb0, zb1, BAND_FEATHER, 0) },
       // the boot as a metal's F0: its dielectric reflectance (the black rubber's diffuse is negligible)
       uPbBoot: { value: new THREE.Color(0.04, 0.04, 0.04).multiplyScalar(boot.specularIntensity ?? 1).add(boot.color.clone().multiplyScalar(0.25)) },
     };
     patchBand(mat, this.bandU);
     this.band = new THREE.Mesh(g, mat);
     this.band.name = 'prop_blur_band';
-    this.bandFit = { cf, zm, hz };
+    this.bandFit = { cf, zm, hz, zb0, zb1, z0, z1, lift, rs: Array.from(rs) };
   }
 
   // radial offset of the blades (explode / build fly-in, m): the disc grows, its data shift outward
