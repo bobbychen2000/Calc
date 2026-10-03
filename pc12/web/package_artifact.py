@@ -11,12 +11,14 @@ The folder is the web/package.py bundle (vendored three.js r160, the meshopt GLB
                             html, head or body tags: the <title>, the stylesheet, the markup, then the config, boot and
                             module scripts (the boot script adds the import map after itself).  The description and the
                             icon are publish parameters (ARTIFACT.json), not tags.  Config: {data: './data/',
-                            three: './three/', glbGz: 'pc12_glb.gz.bin', b64: {file name: parts}}.
-    data/pc12.glb           EXT_meshopt_compression (~7 MB): loaded where WebAssembly compiles
-    data/pc12_glb.gz.bin    gzip of out/pc12.glb (KHR_mesh_quantization only, ~21 MB -> ~12 MB): the host's CSP may
-                            refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder needs; index.html then
-                            loads this file instead, unpacked while it streams (DecompressionStream), and main.js falls
-                            back to it when the meshopt GLB fails to decode
+                            three: './three/', glbLow: 'pc12_low.glb', glbGz: 'pc12_glb.gz.bin', b64: {file name: parts}}.
+    data/pc12.glb           EXT_meshopt_compression (~17 MB, ~2.6M triangles): loaded where WebAssembly compiles
+    data/pc12_low.glb       the light tier (PC12_RES=1, ~8 MB, ~1.5M triangles), EXT_meshopt_compression: phones
+    data/pc12_glb.gz.bin    gzip of the light tier out/pc12_low.glb (KHR_mesh_quantization only, ~22 MB -> ~12 MB):
+                            the host's CSP may refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder needs;
+                            index.html then loads this file instead, unpacked while it streams (DecompressionStream),
+                            and main.js falls back to it when the meshopt GLB fails to decode (the full model's gzip
+                            would not fit the host's 64 MB with the meshopt tiers)
     *.glb / *.bin / *.hdr   published as base64 text (the host serves no binary media type but images, media and fonts):
                             x.b64.txt, or x.b64.0.txt, x.b64.1.txt, ... when the text would exceed B64_PART characters
                             (parts of equal length, whole 4-character groups); the originals are removed.  index.html
@@ -65,7 +67,7 @@ DARK_ATTR = re.compile(r':root\[data-theme="dark"\] \{([^}]*)\}')
 
 
 def artifact_config(b64: dict[str, int]) -> str:
-    return ("<script>window.PC12_CONFIG = { data: './data/', three: './three/', glbGz: '" + GZ_NAME + "', b64: "
+    return ("<script>window.PC12_CONFIG = { data: './data/', three: './three/', glbLow: 'pc12_low.glb', glbGz: '" + GZ_NAME + "', b64: "
             + json.dumps(b64, sort_keys=True) + " };</script>")
 
 
@@ -170,12 +172,13 @@ def main():
     errs = P.verify(out, "vendor")
     (out / ".nojekyll").unlink(missing_ok=True)       # GitHub Pages only
 
-    # 2. the gzip fallback + its size in the metadata
-    gz = gzip_glb(data / "pc12.glb", out / "data" / GZ_NAME)
+    # 2. the gzip fallback (the light tier) + its size in the metadata
+    gz = gzip_glb(data / "pc12_low.glb", out / "data" / GZ_NAME)
     meta_p = out / "data" / "pc12_meta.json"
     meta = json.loads(meta_p.read_text())
     meta["stats"]["glb_gz_bytes"] = gz["bytes_out"]
     meta["stats"]["glb_gz_encoding"] = "KHR_mesh_quantization, gzip"
+    meta["stats"]["glb_gz_tier"] = "low"
     meta_p.write_text(json.dumps(meta, indent=1) + "\n")
 
     # 3. binary files -> base64 text, and the page file
@@ -191,7 +194,7 @@ def main():
     (out / "MANIFEST.json").write_text(json.dumps({
         "about": "PC-12 PRO viewer, claude.ai Artifact bundle (web/package_artifact.py)",
         "three": f"three/ (r{P.THREE_REVISION}, from web/three_local)",
-        "glb": info.get("meshopt"), "glb_gz": {**gz, "file": f"data/{GZ_NAME}"},
+        "glb": info.get("meshopt"), "glb_low": info.get("meshopt_low"), "glb_gz": {**gz, "file": f"data/{GZ_NAME}"},
         "commit": P.git_commit(), "built": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "files": {str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": P.sha256(p)} for p in all_files},
     }, indent=1) + "\n")
@@ -222,14 +225,21 @@ def main():
         "page": {"path": "index.html", "contentType": types.get("index.html"), "bytes": sizes.get("index.html")},
         "files": pub,
         "bytes": sizes, "count": len(sizes), "total_bytes": total,
-        "glb": {"meshopt": meta["stats"]["glb_bytes"], "gzip_fallback": gz["bytes_out"], "plain_unpacked": gz["bytes_in"]},
+        "glb": {"meshopt": meta["stats"]["glb_bytes"], "meshopt_low": meta["stats"]["low"]["glb_bytes"],
+                "gzip_fallback_low": gz["bytes_out"], "plain_unpacked_low": gz["bytes_in"]},
         "base64": b64,
     }
     (out / "ARTIFACT.json").write_text(json.dumps(art, indent=1) + "\n")
 
     print(f"artifact bundle {out}: {len(sizes)} files (the page + {len(pub)}), {total:,} bytes ({total / 1e6:.1f} MB)")
-    print(f"  data/pc12.glb         {meta['stats']['glb_bytes']:>11,} bytes  EXT_meshopt_compression")
-    print(f"  data/{GZ_NAME}  {gz['bytes_out']:>11,} bytes  gzip of the {gz['bytes_in']:,}-byte KHR_mesh_quantization GLB")
+    print(f"  data/pc12.glb         {meta['stats']['glb_bytes']:>11,} bytes  EXT_meshopt_compression "
+          f"({meta['stats'].get('triangles', 0):,} triangles)")
+    print(f"  data/pc12_low.glb     {meta['stats']['low']['glb_bytes']:>11,} bytes  EXT_meshopt_compression, light tier "
+          f"({meta['stats']['low'].get('triangles', 0):,} triangles)")
+    print(f"  data/{GZ_NAME}  {gz['bytes_out']:>11,} bytes  gzip of the {gz['bytes_in']:,}-byte KHR_mesh_quantization "
+          f"light tier")
+    for k, v in sorted(sizes.items(), key=lambda kv: -kv[1])[:8]:
+        print(f"    {k:34s} {v:>11,} bytes")
     print("  as base64 text: " + ", ".join(f"{k} ({v} part{'s' * (v > 1)})" for k, v in b64.items()))
     print(f"  publish manifest: {out / 'ARTIFACT.json'}")
     if errs:

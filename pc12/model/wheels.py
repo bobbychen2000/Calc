@@ -37,6 +37,7 @@ import os
 import numpy as np
 
 from cad.mesh import Mesh, revolve, cylinder, cap_ring
+from cad.res import budget as _res_budget
 
 IN = 0.0254
 
@@ -871,7 +872,9 @@ def fairing_plan(asm):
 # Segments round the axle: tyre silhouette chord sag 0.15 (main) / 0.21 mm (nose), rims <= 0.2 mm (4K close-ups);
 # review r2 took 8 / 4 tyre segments back for the rim-protector step, the tread-zone split and the brake drive keys.
 SEGS = dict(main_tyre=104, nose_tyre=72, rim=64, nose_rim=48, rim_hidden=40, fairing=96, brake=40, small=12)
-TRI_BUDGET = dict(main=30000, nose=18000)          # triangles per wheel assembly
+# triangles per wheel assembly (the builders' own grids; at PC12_RES=2 the round primitives are finer: cad.res.budget
+# raises the budget in proportion to the whole model)
+TRI_BUDGET = {k: _res_budget(v) for k, v in dict(main=30000, nose=18000).items()}
 GROOVE_EDGE = 0.0008                               # rib-edge round at the tread grooves (catches the satin highlight)
 WHEEL_MATS = ("tire", "tire_tread", "tire_groove", "wheel", "wheel_main", "hub_fairing", "metal", "brake_disc", "steel",
               "cadmium", "black", "brake_housing",

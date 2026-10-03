@@ -6,9 +6,11 @@ charset + viewport-fit=cover viewport, the host's small reset) with a strict Con
 Chromium (SwiftShader).  The wrappers are written into the folder as _host_*.html (never published: ARTIFACT.json
 leaves them out).  Scenarios:
 
-  nowasm   CSP without 'wasm-unsafe-eval': WebAssembly refused -> the gzip GLB (data/pc12_glb.gz.bin), unpacked with
-           DecompressionStream; the meshopt GLB is never requested; the only console errors are the CSP's wasm refusals
-  wasm     CSP with 'wasm-unsafe-eval' -> the meshopt GLB (data/pc12.glb); the gzip copy is never requested
+  nowasm   CSP without 'wasm-unsafe-eval': WebAssembly refused -> the gzip GLB (data/pc12_glb.gz.bin: the light tier),
+           unpacked with DecompressionStream; the meshopt GLBs are never requested; the only console errors are the
+           CSP's wasm refusals
+  wasm     CSP with 'wasm-unsafe-eval' -> the meshopt GLB: data/pc12.glb on the desktop, the light tier
+           data/pc12_low.glb on the phone (never the other one); the gzip copy is never requested
 
 The GLBs and the studio HDRIs are published as base64 text parts (ARTIFACT.json 'base64'): each scenario checks that
 every part of the file it loads is requested once, and that the studio HDRI (not the RoomEnvironment fallback) lit it.
@@ -126,10 +128,13 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
       loading: getComputedStyle(document.getElementById('loading')).display,
       scrollW: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth), w: innerWidth })""")
     name = f"{mode} {vp}"
-    glb = [u for u in reqs if "/data/pc12.glb" in u]
+    # the tier: phones load the light tier (PC12_CONFIG.glbLow), desktops the full model -- never the other one
+    tier, other = ("pc12_low.glb", "pc12.glb") if vp == "phone" else ("pc12.glb", "pc12_low.glb")
+    glb = [u for u in reqs if f"/data/{tier}" in u]
+    wrong = [u for u in reqs if f"/data/{other}" in u]
     gz = [u for u in reqs if "/data/pc12_glb.gz.bin" in u]
     want_gz = mode in ("nowasm", "runtime")
-    n_glb, n_gz = B64.get("pc12.glb", 1), B64.get("pc12_glb.gz.bin", 1)
+    n_glb, n_gz = B64.get(tier, 1), B64.get("pc12_glb.gz.bin", 1)
     hdr_name = "studio_small_09_512.hdr" if vp == "phone" else "studio_small_09_1k.hdr"
     hdr = sorted({u.rsplit("/", 1)[1] for u in reqs if "/assets/studio_small_09" in u})
     want_hdr = [f"{hdr_name}.b64.txt"] if B64.get(hdr_name) == 1 else [f"{hdr_name}.b64.{i}.txt" for i in range(B64.get(hdr_name, 0))] or [hdr_name]
@@ -137,8 +142,10 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
           st["err"].splitlines()[0] if st["err"] else f"{dt:.0f} s, {st['parts']} parts, {st['tris']} triangles drawn")
     check(f"{name}: aircraft drawn", st["tris"] > 100000, f"{st['tris']} triangles in the last frame")
     check(f"{name}: path", (st["wasm"] is False if mode == "nowasm" else st["wasm"] is True) and st["gzip"] == want_gz
-          and len(gz) == len(set(gz)) == (n_gz if want_gz else 0) and len(glb) == len(set(glb)) == (0 if mode == "nowasm" else n_glb),
-          f"wasm {st['wasm']}, gzip {st['gzip']}, requests: pc12.glb x{len(glb)} (of {n_glb} parts), gz x{len(gz)} (of {n_gz})")
+          and len(gz) == len(set(gz)) == (n_gz if want_gz else 0) and len(glb) == len(set(glb)) == (0 if mode == "nowasm" else n_glb)
+          and not wrong,
+          f"wasm {st['wasm']}, gzip {st['gzip']}, requests: {tier} x{len(glb)} (of {n_glb} parts), gz x{len(gz)} (of {n_gz})"
+          + (f", {other} x{len(wrong)}" if wrong else ""))
     check(f"{name}: studio HDRI", hdr == sorted(want_hdr) and not any("HDRI environment unavailable" in w for w in warns),
           f"requested {', '.join(hdr) or 'nothing'}")
     if want_gz:

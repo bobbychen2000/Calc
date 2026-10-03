@@ -28,8 +28,12 @@ def quat_to_gl(q_model):
 
 
 class GLBBuilder:
-    def __init__(self, quantize=True):
+    def __init__(self, quantize=True, normal_bits=8):
         self.bin = bytearray()
+        # quantised NORMAL: 8 (BYTE) or 16 bits (SHORT), both normalised (KHR_mesh_quantization).  8 bits step the normal
+        # by ~0.45 deg: on the glossy clear-coated paint the studio's reflected streaks then break into stairs every few
+        # cm along a gently curved cowl or fuselage side; 16 bits keep them smooth (the refined model, cad/res.py)
+        self.normal_bits = normal_bits
         self.bufferViews, self.accessors = [], []
         self.meshes, self.materials, self.nodes = [], [], []
         self.images, self.textures, self.samplers = [], [], []
@@ -124,9 +128,20 @@ class GLBBuilder:
         return self.mat_index[name]
 
     # ---------------------------------------------------------------- meshes
-    def mesh(self, name, mesh: Mesh, material: int, origin=(0, 0, 0)):
+    @staticmethod
+    def grid(meshes, origin=(0, 0, 0)):
+        """The quantisation grid (centre, half extent; glTF axes) spanning the given meshes: pass it to mesh() for every
+        one of them and the vertices they share (a paint boundary, a patch seam) dequantise to the same point.  (One
+        grid across touching PARTS would also close the hairlines at the part joints, but over a whole fuselage or both
+        wings 16 bits are too coarse: slivers collapse and are dropped.)"""
+        V = np.vstack([to_gl(m.V - np.asarray(origin, float)) for m in meshes])
+        lo, hi = V.min(0), V.max(0)
+        return 0.5 * (lo + hi), np.maximum(0.5 * (hi - lo), 0.02)
+
+    def mesh(self, name, mesh: Mesh, material: int, origin=(0, 0, 0), grid=None):
         """Add a mesh.  `origin` (model coords) is subtracted so the geometry is
-        local to its parent node (used for hinge / pivot nodes).
+        local to its parent node (used for hinge / pivot nodes).  `grid`: a shared quantisation grid (GLBBuilder.grid),
+        else the mesh's own bounds.
         Returns (mesh_index, dequantisation translation, scale) in glTF axes."""
         V = to_gl(mesh.V - np.asarray(origin, float))
         N = to_gl(mesh.N)
@@ -139,9 +154,12 @@ class GLBBuilder:
         F = mesh.F.astype(np.int64)
         nv = len(V)
         if self.quantize:
-            lo, hi = V.min(0), V.max(0)
-            c = 0.5 * (lo + hi)
-            h = np.maximum(0.5 * (hi - lo), 0.02)
+            if grid is not None:
+                c, h = (np.asarray(g, float) for g in grid)
+            else:
+                lo, hi = V.min(0), V.max(0)
+                c = 0.5 * (lo + hi)
+                h = np.maximum(0.5 * (hi - lo), 0.02)
             q = np.round((V - c) / h * 32767.0).clip(-32767, 32767).astype(np.int16)
             Q = q[F].astype(np.int64)
             e = np.cross(Q[:, 1] - Q[:, 0], Q[:, 2] - Q[:, 0])
@@ -163,10 +181,16 @@ class GLBBuilder:
             # normals pre-multiplied by the node scale so the normal matrix undoes it
             Ns = N * h[None, :]
             Ns /= np.maximum(np.linalg.norm(Ns, axis=1, keepdims=True), 1e-12)
-            nb = np.zeros((nv, 4), np.int8)
-            nb[:, :3] = np.round(Ns * 127.0).clip(-127, 127).astype(np.int8)
-            nvw = self._view(nb.tobytes(), ARRAY_BUFFER, stride=4)
-            attrs["NORMAL"] = self._accessor(nvw, BYTE, nv, "VEC3", True)
+            if self.normal_bits > 8:
+                nb = np.zeros((nv, 4), np.int16)
+                nb[:, :3] = np.round(Ns * 32767.0).clip(-32767, 32767).astype(np.int16)
+                nvw = self._view(nb.tobytes(), ARRAY_BUFFER, stride=8)
+                attrs["NORMAL"] = self._accessor(nvw, SHORT, nv, "VEC3", True)
+            else:
+                nb = np.zeros((nv, 4), np.int8)
+                nb[:, :3] = np.round(Ns * 127.0).clip(-127, 127).astype(np.int8)
+                nvw = self._view(nb.tobytes(), ARRAY_BUFFER, stride=4)
+                attrs["NORMAL"] = self._accessor(nvw, BYTE, nv, "VEC3", True)
             trs = (c, h)
         else:
             pv = self._view(V.astype(np.float32).tobytes(), ARRAY_BUFFER)
@@ -209,9 +233,9 @@ class GLBBuilder:
         self.nodes.append(n)
         return len(self.nodes) - 1
 
-    def mesh_node(self, name, mesh: Mesh, material: int, origin=(0, 0, 0), extras=None):
+    def mesh_node(self, name, mesh: Mesh, material: int, origin=(0, 0, 0), extras=None, grid=None):
         """Convenience: mesh + node carrying the dequantisation transform."""
-        mi, (c, h) = self.mesh(name, mesh, material, origin)
+        mi, (c, h) = self.mesh(name, mesh, material, origin, grid)
         return self.node(name + ":geo", mesh=mi, translation=c, scale=h, extras=extras)
 
     # ------------------------------------------------------------------ write
