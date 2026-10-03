@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>PC-12 PRO Model Viewer</title>
-<meta name="description" content="Interactive viewer for a from-scratch parametric Pilatus PC-12 PRO model: step-by-step build, explode, cutaway, X-ray, animated controls, landing gear and propeller, parts list, drawings and dimension checks.">
+<meta name="description" content="Interactive viewer for a from-scratch parametric Pilatus PC-12 PRO model: step-by-step build, explode, cutaway, X-ray, a walk-through interior tour, animated controls, landing gear and propeller, parts list, drawings and dimension checks.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3l2 10 11 3v3l-11-1-1 7 4 3v2l-5-1-5 1v-2l4-3-1-7-11 1v-3l11-3z%22 fill=%22%231d5fbf%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="viewer/viewer.css">
 <!-- data: where pc12.glb / pc12_meta.json / the drawing SVGs live (overridden by ?data=, ?glb=, ?meta=).
@@ -292,7 +292,7 @@
     link('preload', U.materials, 'fetch');
     // the module graph (web/package.py checks this list against the imports)
     ['viewer/main.js', 'viewer/scene.js', 'viewer/studio.js', 'viewer/model.js', 'viewer/materials.js', 'viewer/kinematics.js',
-      'viewer/build.js', 'viewer/panels.js', 'viewer/sources.js'].forEach(function (u) { link('modulepreload', u); });
+      'viewer/build.js', 'viewer/panels.js', 'viewer/sources.js', 'viewer/tour.js', 'viewer/tour_data.js'].forEach(function (u) { link('modulepreload', u); });
     ['build/three.module.min.js', 'examples/jsm/controls/OrbitControls.js', 'examples/jsm/environments/RoomEnvironment.js',
       'examples/jsm/loaders/GLTFLoader.js', 'examples/jsm/utils/BufferGeometryUtils.js', 'examples/jsm/libs/meshopt_decoder.module.js',
       'examples/jsm/loaders/RGBELoader.js', 'examples/jsm/shaders/HorizontalBlurShader.js', 'examples/jsm/shaders/VerticalBlurShader.js'
@@ -309,12 +309,22 @@
 
   <!-- toolbar over the canvas -->
   <div id="toolbar" role="toolbar" aria-label="View tools">
+    <!-- interior tour (viewer/tour.js): Go inside opens the stop menu; inside, Exit / previous / stop menu / next -->
+    <div class="tb-group tb-tour" role="group" aria-label="Interior">
+      <button type="button" id="tourEnter" class="tour-enter" aria-haspopup="menu" aria-expanded="false" aria-controls="tourMenu" title="Go inside: tour the flight deck and the cabin (I)">
+        <svg class="ic" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 3h6.5v14H10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M2.5 10h9M8.5 6.5 12 10l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Go inside</span><span class="caret" aria-hidden="true">▾</span>
+      </button>
+      <button type="button" id="tourExit" class="tour-exit" hidden title="Back outside (Esc)"><span aria-hidden="true">✕</span> Exit</button>
+      <button type="button" id="tourPrev" hidden aria-label="Previous stop" title="Previous stop">‹</button>
+      <button type="button" id="tourStop" hidden aria-haspopup="menu" aria-expanded="false" aria-controls="tourMenu" title="Interior stops (I)"><span id="tourStopLabel">Stops</span><span class="caret" aria-hidden="true">▾</span></button>
+      <button type="button" id="tourNext" hidden aria-label="Next stop" title="Next stop">›</button>
+    </div>
     <div class="tb-group" role="group" aria-label="Camera">
       <button type="button" data-cam="three_quarter" title="3/4 view (1)">3/4</button>
       <button type="button" data-cam="front" title="Front (2)">Front</button>
       <button type="button" data-cam="side" title="Side (3)">Side</button>
       <button type="button" data-cam="top" title="Top (4)">Top</button>
-      <button type="button" data-cam="cockpit" title="Cockpit (5)">Cockpit</button>
+      <button type="button" data-cam="cockpit" title="Cockpit: the pilot's seat, look around and walk (5)">Cockpit</button>
       <button type="button" data-cam="gear_bay" title="Gear bay (6)">Gear bay</button>
     </div>
     <label class="tb-group tb-slider" title="Explode (E)">
@@ -334,6 +344,17 @@
   </div>
 
   <div id="stepCaption" hidden></div>
+  <!-- interior tour: stop menu, controls hint, walk pad, the fade between outside and inside (viewer/tour.js) -->
+  <div id="tourMenu" role="menu" aria-label="Interior stops" hidden></div>
+  <div id="tourHint" role="status" hidden><span id="tourHintText"></span><button type="button" class="icon" id="tourHintClose" aria-label="Dismiss the controls hint">×</button></div>
+  <div id="tourPad" role="group" aria-label="Walk" hidden>
+    <button type="button" data-walk="f:1" class="tp-f" aria-label="Walk forward" title="Walk forward (W)">▲</button>
+    <button type="button" data-walk="s:-1" class="tp-l" aria-label="Step left" title="Step left (A)">◀</button>
+    <button type="button" data-walk="f:-1" class="tp-b" aria-label="Walk back" title="Walk back (S)">▼</button>
+    <button type="button" data-walk="s:1" class="tp-r" aria-label="Step right" title="Step right (D)">▶</button>
+  </div>
+  <div id="tourFade" aria-hidden="true" hidden></div>
+  <div id="tourLive" class="sr-only" aria-live="polite"></div>
   <!-- WebGL context lost (main.js onContextChange) -->
   <div id="glNote" role="status" hidden>
     <span class="gl-wait">Restoring graphics…</span>
@@ -542,9 +563,21 @@
         <dt>G</dt><dd>Gear up / down</dd>
         <dt>F</dt><dd>Cycle flaps 0 / 15 / 30 / 40</dd>
         <dt>P</dt><dd>Cycle propeller off / idle / 1,550 / 1,700</dd>
-        <dt>1 – 6</dt><dd>Camera presets</dd>
+        <dt>1 – 6</dt><dd>Camera presets (5: the cockpit, inside)</dd>
+        <dt>I</dt><dd>Go inside: the interior stops</dd>
         <dt>R</dt><dd>Reset</dd>
         <dt>Esc</dt><dd>Clear selection</dd>
+      </dl>
+      <h3 class="help-sub">Inside</h3>
+      <dl class="kv keys">
+        <dt>Drag</dt><dd>Look around (touch: one finger)</dd>
+        <dt>W A S D / ↑ ↓</dt><dd>Walk forward / back, step sideways (Shift: faster)</dd>
+        <dt>← / →</dt><dd>Turn</dd>
+        <dt>Wheel, pinch</dt><dd>Move forward / back (touch: also a two-finger drag)</dd>
+        <dt>Q / E, PgDn / PgUp</dt><dd>Lower / raise the eye</dd>
+        <dt>R / F</dt><dd>Look up / down</dd>
+        <dt>1 – 7</dt><dd>Interior stops</dd>
+        <dt>Esc</dt><dd>Back outside</dd>
       </dl>
     </div>
   </div>

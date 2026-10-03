@@ -19,7 +19,8 @@ every part of the file it loads is requested once, and that the studio HDRI (not
 
 each at a phone (390x844, touch) and a desktop (1400x900) viewport, with screenshots in out/tmp/artifact/.  The first
 desktop run also checks the host's theme choice (<html data-theme="dark|light"> over the OS setting: the panels and
-the 3-D stage follow it; shot <mode>_desktop_dark.png).  The wrappers are removed afterwards.
+the 3-D stage follow it; shot <mode>_desktop_dark.png).  Every run also enters the interior tour under the CSP (Go
+inside -> the stop menu -> a cabin stop -> Exit; shot <mode>_<viewport>_tour.png).  The wrappers are removed afterwards.
 
 usage: python3 test/artifact_test.py [--dir dist_artifact] [--port 8851] [--only nowasm,wasm] [--no-shots]
 Exit code 0 = all checks pass.
@@ -167,9 +168,37 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
         p = OUT / f"{mode}_{vp}.png"
         await page.screenshot(path=str(p), timeout=240000)
         print(f"  shot {p.relative_to(ROOT)}")
+    await check_tour(page, name, errors, shots)
     if theme:
         await check_theme(page, name, shots)
     await ctx.close()
+
+
+TOUR_JS = """async () => {
+  const V = window.viewer, q = (id) => document.getElementById(id);
+  q('tourEnter').click(); await V.frames(1);
+  const menu = !q('tourMenu').hidden && q('tourMenu').querySelectorAll('[data-stop]').length;
+  q('tourMenu').querySelector('[data-stop="cabin_aft"]').click(); V.tour.finish(); await V.frames(2);
+  const st = V.state;
+  return { menu, active: st.tour.active, stop: st.tour.stop, inside: st.camInside, outside: st.tour.outside,
+    exitVisible: !q('tourExit').hidden, tris: V.perf().info.triangles }; }"""
+
+
+async def check_tour(page, name, errors, shots):
+    """The interior tour under the host's CSP: the menu, a stop (camera inside, the cabin drawn), Exit."""
+    n0 = len(errors)
+    r = await page.evaluate(TOUR_JS)
+    if shots:
+        p = OUT / f"{name.replace(' ', '_')}_tour.png"
+        await page.screenshot(path=str(p), timeout=240000)
+        print(f"  shot {p.relative_to(ROOT)}")
+    out = await page.evaluate("""async () => { document.getElementById('tourExit').click(); window.viewer.tour.finish();
+      await window.viewer.frames(1); return [window.viewer.state.tour.active, window.viewer.state.cameraPreset]; }""")
+    new = [e for e in errors[n0:] if not e.endswith("/favicon.ico]")]
+    check(f"{name}: interior tour (Go inside -> menu -> cabin stop -> Exit)",
+          r["menu"] == 7 and r["active"] and r["stop"] == "cabin_aft" and r["inside"] and r["outside"] < 1e-6 and r["exitVisible"]
+          and r["tris"] > 100000 and out == [False, "three_quarter"] and not new,
+          f"{r['menu']} stops, at {r['stop']} (inside {r['inside']}), {r['tris']} triangles drawn, exit {out}" + (f"; {new[:2]}" if new else ""))
 
 
 THEME_JS = """async (t) => { const r = document.documentElement;

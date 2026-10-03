@@ -181,6 +181,7 @@ export class Stage {
     this.grid = makeGrid();
     scene.add(this.grid);
     this.groundY = 0;          // lowered below exploded parts (see setGround)
+    this.interiorLook = false;  // setInteriorLook: the interior tour's lighting
 
     this.insets = { right: 0, bottom: 0, top: 0, left: 0 };
     this.modelBox = new THREE.Box3(new THREE.Vector3(-8.2, 0, 0.4), new THREE.Vector3(8.2, 4.3, 14.8));
@@ -234,9 +235,19 @@ export class Stage {
     this.setEnvironment(pm.fromScene(new RoomEnvironment(), 0.04).texture, 'room');
     pm.dispose();
   }
+  // the studio grade and exposure in use: the theme's, except inside the cabin (the interior tour), which keeps the
+  // light theme's daylight studio in both themes (the dark studio left the headliner near black)
+  get lookKey() { return this.dark && !this.interiorLook ? 'dark' : 'light'; }
+  setInteriorLook(on) {
+    if (this.interiorLook === !!on) return;
+    this.interiorLook = !!on;
+    this.renderer.toneMappingExposure = LOOK.theme[this.lookKey].exposure;
+    this._applyEnv();
+    this.needsRender = true;
+  }
   _applyEnv() {
     if (!this.studioEnv) return;
-    const { floor, walls, top, lift, wallLift, strips } = LOOK.theme[this.dark ? 'dark' : 'light'];
+    const { floor, walls, top, lift, wallLift, strips } = LOOK.theme[this.lookKey];
     this.setEnvironment(this.studioEnv.get({ floor, walls, top, lift, wallLift, strips }), 'hdri');
   }
   setEnvironment(tex, source) {
@@ -260,7 +271,7 @@ export class Stage {
     this.shadowPlane.material.opacity = dark ? 0.3 : 0.16;
     this.contact.material.opacity = dark ? 0.85 : 0.62;
     this.dark = dark;
-    this.renderer.toneMappingExposure = LOOK.theme[dark ? 'dark' : 'light'].exposure;
+    this.renderer.toneMappingExposure = LOOK.theme[this.lookKey].exposure;
     this._applyEnv();
     this.needsRender = true;
   }
