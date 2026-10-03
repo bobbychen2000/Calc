@@ -16,6 +16,10 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
     the ground when exploded / flying in, zero-explode parts grow in place, current build step always
     inside the panel, first camera fit uses the free viewport (and follows panel toggles), windshield
     see-through from the cockpit, prop blur disc follows exploded blades, compact info card on phones
+  - propeller in motion (owner 2026-10-03, web/viewer/propblur.js): solid blades only while they turn < P / 8 a frame
+    (60 / 30 fps), the blur sweep >= 2.5 frame steps, the ghost only moves forward (<= 0.4 P a frame), the disc in the
+    plane of rotation on the thrust axis just outside the tips, kept in X-ray / cutaway / explode, spool-up / run-down
+    times, and pixels: the averaged disc 60-97 % see-through, azimuthally smooth, the white tip ring
   - review round-2 (viewer): AgX + Punchy look and per-theme exposure, one GLB request (preloaded), the
     meshopt-compressed GLB (web/package.py) decodes to the same triangles, loading errors without WebGL 2 or when a
     module fails to load, phone pixel ratio (taps keep it, drags and their coast drop it), 40 px touch targets,
@@ -259,7 +263,11 @@ async def screenshots(page):
     await shot(page, "18b_controls_right_aileron", V + "V.setCamera({pos: [9.6, 1.62, 8.4], target: [6.3, 1.42, 6.45], fov: 34}, {instant: true});",
                note="(right roll: right aileron up, Flettner tab down)")
     await shot(page, "19_prop_feathered", V + "V.setControls({roll: 0, pitch: 0, yaw: 0}, {instant: true}); V.setCamera({pos: [-2.6, 2.3, -2.4], target: [0, 1.6, 1.0], fov: 45}, {instant: true}); V.setProp({rpm: 0, pitch: 62}, {instant: true});")
-    await shot(page, "20_prop_1700rpm", V + "V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.2); V.pause(true);")
+    await shot(page, "20_prop_1700rpm", V + "V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.2); V.pause(true);",
+               note="(blurred disc: blade colours as faint rings)")
+    await shot(page, "20b_prop_120rpm", V + "V.pause(false); V.setProp({rpm: 120, pitch: 0}, {instant: true}); V.advance(0.2); V.pause(true);",
+               note="(spool-up: smeared blades)")
+    await shot(page, "20c_prop_front_1700rpm", V + "V.pause(false); V.setCamera({pos: [0.05, 1.6, -3.5], target: [0, 1.65, 0.95], fov: 45}, {instant: true}); V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.2); V.pause(true);")
     await shot(page, "21_cockpit", V + "V.pause(false); V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.setCamera('cockpit', {instant: true});")
     await shot(page, "22_selected_part", V + "V.setCamera('three_quarter', {instant: true}); V.tab('parts'); V.select('eng_combustor', {instant: true});")
     await shot(page, "23_selected_in_xray", V + "V.setXray(true); V.setCamera('gear_bay', {instant: true}); V.select('gear_main_R', {instant: true});")
@@ -1032,18 +1040,213 @@ async def regression_checks(page):
       for (const f of [0, 1, 1.5]) {
         V.setExplode(f, {instant: true}); V.setProp({rpm: 1700, pitch: 0, angle: 0}, {instant: true}); V.advance(0.02);
         const hub = V.nodeWorldPoint('propeller', [0, 0, 0]); let tip = 0;
-        for (let k = 1; k <= 5; k++) { const b = V.partWorldBox('blade_' + k); for (const x of [b.min, b.max]) for (const y of [b.min, b.max]) tip = Math.max(tip, Math.hypot(x[0] - hub[0], y[1] - hub[1])); }
-        out[f] = {disc: 1.34 * I.kin.disc.children[0].scale.x, visible: I.kin.disc.visible, push: V.state.propDiscPush};
+        // blade tip radius about the spin axis (vertices, current pose)
+        const ax = new I.THREE.Vector3().fromArray(V.partExtras('propeller').pivot.axis).normalize(), h = new I.THREE.Vector3().fromArray(hub), v = new I.THREE.Vector3();
+        I.model.root.updateMatrixWorld(true);
+        for (let k = 1; k <= 5; k++) for (const mr of I.model.part('blade_' + k).meshes) {
+          const g = mr.mesh.geometry.attributes.position;
+          for (let i = 0; i < g.count; i += 5) { v.fromBufferAttribute(g, i).applyMatrix4(mr.mesh.matrixWorld).sub(h); tip = Math.max(tip, v.addScaledVector(ax, -v.dot(ax)).length()); }
+        }
+        out[f] = {disc: I.kin.blur.outerR * I.kin.blur.disc.scale.x, visible: I.kin.blur.disc.visible, push: V.state.propDiscPush, tip};
       }
       T.neutral();
       return out;
     """)
     ok = all(v["visible"] for v in r.values()) and abs(r["1"]["disc"] - r["0"]["disc"] - 0.45) < 0.01 and abs(r["1.5"]["disc"] - r["0"]["disc"] - 0.675) < 0.01
+    ok = ok and all(0 < v["disc"] - v["tip"] < 0.05 for v in r.values())
     check("[BV-6] prop blur disc grows with the exploded blades (radial push 0.45 m x f)", ok,
-          f"disc radius {r['0']['disc']:.3f} / {r['1']['disc']:.3f} / {r['1.5']['disc']:.3f} m at explode 0 / 1 / 1.5")
+          f"disc radius {r['0']['disc']:.3f} / {r['1']['disc']:.3f} / {r['1.5']['disc']:.3f} m at explode 0 / 1 / 1.5 "
+          f"(blade tips {r['0']['tip']:.3f} / {r['1']['tip']:.3f} / {r['1.5']['tip']:.3f} m)")
     # [BV-9] structure pushed behind the coincident skins
     r = await js(page, "const m = window.viewer._internals.model; return m.part('structure').meshes.map(mr => [mr.base.polygonOffset, mr.base.polygonOffsetFactor, mr.base.polygonOffsetUnits]);")
     check("[BV-9] structure materials carry a polygon offset (no z-fighting with the skins)", all(x[0] and x[1] > 0 and x[2] > 0 for x in r), str(r[0]))
+
+
+async def prop_blur_checks(page):
+    """Propeller in motion (owner 2026-10-03: "the propeller spinning doesn't look too real"; web/viewer/propblur.js):
+    the solid blades cross-fade into the motion-blurred disc before they could alias (wagon wheel), the disc lies in
+    the plane of rotation on the thrust axis, the averaged disc is mostly see-through with the blade colours as rings,
+    nothing strobes at any rpm or frame rate, realistic spool-up / run-down times."""
+    print("propeller blur checks")
+    V = "const V = window.viewer, I = V._internals, kin = I.kin, B = kin.blur; "
+    r = await js(page, V + r"""
+      T.neutral(); V.setStep('paint', {instant: true});
+      if (!B) return {has: false};
+      const P = B.period, out = {has: true, P, rows: {}};
+      const look = () => ({...B.state, bladeVis: B.fadeMats.every((m) => m.visible), bladeOpaque: B.fadeMats.every((m) => !m.transparent && m.opacity === 1),
+        disc: B.disc.visible, band: !!B.band && B.band.visible});
+      // rpm sweep at 60 and 30 frames a second (the smoothed frame time follows the animation steps)
+      for (const fps of [60, 30]) {
+        const rows = [];
+        for (const rpm of [0, 5, 10, 20, 30, 45, 60, 80, 100, 150, 200, 300, 500, 1000, 1550, 1700]) {
+          V.setProp({rpm, pitch: 0, angle: 0}, {instant: true});
+          V.advance(0.6, 1 / fps);
+          rows.push({rpm, step: rpm * 6 / fps, ...look()});
+        }
+        out.rows[fps] = rows;
+      }
+      // the ghost (and the true pattern) only ever advance forward, by at most 0.4 P a frame
+      V.setProp({rpm: 1700, pitch: 0, angle: 0}, {instant: true}); V.advance(0.5, 1 / 30);
+      let gmin = Infinity, gmax = -Infinity, prev = B.ghostPhase;
+      for (let i = 0; i < 40; i++) {
+        V.advance(1 / 30, 1 / 30);
+        const d = ((B.ghostPhase - prev) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+        prev = B.ghostPhase; gmin = Math.min(gmin, d); gmax = Math.max(gmax, d);
+      }
+      out.ghost = {min: gmin, max: gmax};
+      // the disc on the thrust axis: every disc vertex in the plane through the hub normal to the spin axis (at two
+      // spin angles), its outer edge just outside the blade tips
+      const pv = V.partExtras('propeller').pivot, ax = new I.THREE.Vector3().fromArray(pv.axis).normalize();
+      const hub = new I.THREE.Vector3().fromArray(V.nodeWorldPoint('propeller', [0, 0, 0]));
+      const plane = [], radii = [];
+      for (const ang of [0, 1.1]) {
+        V.setProp({rpm: 1700, pitch: 0, angle: ang}, {instant: true}); V.advance(0, 1 / 60);
+        I.model.root.updateMatrixWorld(true);
+        const g = B.disc.geometry.attributes.position, v = new I.THREE.Vector3();
+        let pmax = 0, rmax = 0;
+        for (let i = 0; i < g.count; i++) {
+          v.fromBufferAttribute(g, i).applyMatrix4(B.disc.matrixWorld).sub(hub);
+          pmax = Math.max(pmax, Math.abs(v.dot(ax)));
+          rmax = Math.max(rmax, v.addScaledVector(ax, -v.dot(ax)).length());
+        }
+        plane.push(pmax); radii.push(rmax);
+      }
+      let tip = 0;
+      for (const b of B.blades) {
+        for (const mr of b.meshes) {
+          const g = mr.mesh.geometry.attributes.position, v = new I.THREE.Vector3();
+          for (let i = 0; i < g.count; i += 7) { v.fromBufferAttribute(g, i).applyMatrix4(mr.mesh.matrixWorld).sub(hub); tip = Math.max(tip, v.addScaledVector(ax, -v.dot(ax)).length()); }
+        }
+      }
+      // the thrust line, 2 deg nose-down and 2 deg right of the station axis (powerplant.thrust_dir), in glTF axes
+      out.axis = {plane, radii, tip, thrustDeg: [Math.asin(-ax.y) * 180 / Math.PI, Math.asin(ax.x) * 180 / Math.PI],
+        hubErr: hub.distanceTo(new I.THREE.Vector3().fromArray(pv.origin))};
+      // modes: X-ray, cutaway and explode keep the disc (whole: no clipping), isolating a blade keeps solid geometry
+      const modes = {};
+      V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.3);
+      V.setXray(true); V.advance(0.05); modes.xray = B.disc.visible && B.band.visible;
+      V.setXray(false); V.setCutaway(true); V.advance(0.05); modes.cut = B.disc.visible && !(B.disc.material.clippingPlanes || []).length;
+      V.setCutaway(false); V.setExplode(1, {instant: true}); V.advance(0.05); modes.explode = B.disc.visible && Math.abs(B.disc.scale.x - (B.outerR + B.push) / B.outerR) < 1e-9 && B.push > 0.4;
+      V.setExplode(0, {instant: true}); V.isolate('blade_3'); V.advance(0.05); modes.isolated = !B.disc.visible && B.fadeMats.every((m) => m.visible && m.opacity === 1);
+      V.isolate(null); V.advance(0.05); modes.back = B.disc.visible;
+      // pitch when stopped: the solid blades show feather
+      V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.advance(0.05);
+      modes.feather = !B.disc.visible && B.fadeMats.every((m) => m.visible && !m.transparent) && Math.abs(kin.surf.blade_1.angle - 62) < 1e-6;
+      out.modes = modes;
+      // spool: start to ground idle, governed 1,000 -> 1,700, shutdown run-down (1/60 s steps, rpm sampled every 0.1 s)
+      const spool = (from, to, until, tmax) => {
+        V.setProp({rpm: from, pitch: 0}, {instant: true}); V.setProp({rpm: to});
+        let t = 0, mono = true, last = from;
+        while (t < tmax && !until(V.state.prop.rpm)) {
+          V.advance(0.1); t += 0.1;
+          const x = V.state.prop.rpm;
+          if ((to > from && x < last - 1e-9) || (to < from && x > last + 1e-9)) mono = false;
+          last = x;
+        }
+        return {t, mono, rpm: V.state.prop.rpm};
+      };
+      out.spool = {start: spool(0, 1000, (x) => x >= 990, 40), gov: spool(1000, 1700, (x) => x >= 1690, 20),
+        down: spool(1700, 1000, (x) => x <= 1010, 20), stop: spool(1700, 0, (x) => x <= 30, 60)};
+      T.neutral();
+      return out;
+    """)
+    if not r.get("has"):
+        check("prop blur: disc built from the blade geometry", False, "no kin.blur")
+        return
+    P = math.degrees(r["P"])
+    for fps, rows in r["rows"].items():
+        strobe = [x for x in rows if x["fade"] < 0.999 and x["step"] > P / 8]
+        check(f"prop blur {fps} fps: solid blades only while they turn < {P / 8:.0f} deg a frame (no strobing)", not strobe,
+              ", ".join(f"{x['rpm']} rpm fade {x['fade']:.2f}" for x in strobe) or
+              "fade: " + " ".join(f"{x['rpm']}:{x['fade']:.2f}" for x in rows if 0 < x["fade"] < 1 or x["rpm"] in (0, 100)))
+        short = [x for x in rows if x["disc"] and x["sweepDeg"] < min(P, 2.5 * x["step"]) - 1e-6]
+        check(f"prop blur {fps} fps: the smear spans >= 2.5 frame steps (or one blade spacing)", not short,
+              ", ".join(f"{x['rpm']} rpm sweep {x['sweepDeg']:.1f}" for x in short) or
+              "sweep: " + " ".join(f"{x['rpm']}:{x['sweepDeg']:.0f}" for x in rows if x["rpm"] in (30, 60, 100, 150, 200, 300)))
+        lo = rows[0]
+        check(f"prop blur {fps} fps: stopped = solid opaque blades, no disc", lo["fade"] == 0 and not lo["disc"] and lo["bladeVis"] and lo["bladeOpaque"],
+              str({k: lo[k] for k in ("fade", "disc", "bladeVis", "bladeOpaque")}))
+        hi = {x["rpm"]: x for x in rows}
+        ok = all(hi[k]["fade"] == 1 and hi[k]["disc"] and hi[k]["band"] and not hi[k]["bladeVis"] and abs(hi[k]["sweepDeg"] - P) < 1e-6
+                 and hi[k]["ghost"] > 0.1 for k in (1000, 1550, 1700))
+        check(f"prop blur {fps} fps: idle..1,700 rpm = blurred disc + spinner band, blades faded out, ghost on", ok,
+              f"1,700: fade {hi[1700]['fade']:.2f}, sweep {hi[1700]['sweepDeg']:.1f} deg (P {P:.0f}), ghost {hi[1700]['ghost']:.2f}, blades drawn {hi[1700]['bladeVis']}")
+    g = r["ghost"]
+    check("prop blur: the ghost only moves forward, <= 0.4 blade spacing a frame (no backwards wagon wheel)",
+          g["min"] > 0 and g["max"] <= 0.4 * r["P"] + 1e-6, f"{math.degrees(g['min']):.1f} .. {math.degrees(g['max']):.1f} deg a frame at 1,700 rpm / 30 fps")
+    a = r["axis"]
+    check("prop blur: disc in the plane of rotation through the hub (thrust line)", max(a["plane"]) < 1e-3 and a["hubErr"] < 1e-3
+          and abs(a["thrustDeg"][0] - 2) < 0.05 and abs(a["thrustDeg"][1] - 2) < 0.05,
+          f"off-plane {max(a['plane']) * 1000:.3f} mm; axis {a['thrustDeg'][0]:.2f} deg down, {a['thrustDeg'][1]:.2f} deg right")
+    check("prop blur: disc edge just outside the blade tips", 0 < min(a["radii"]) - a["tip"] < 0.03,
+          f"disc R {min(a['radii']):.3f} m, tips {a['tip']:.3f} m")
+    m = r["modes"]
+    check("prop blur: kept in X-ray, cutaway (unclipped) and explode; solid blades when one is isolated; feather stopped",
+          all(m.values()), str(m))
+    sp = r["spool"]
+    check("spool: start to ground idle in 8-16 s, monotonic", 8 <= sp["start"]["t"] <= 16 and sp["start"]["mono"], f"{sp['start']['t']:.1f} s")
+    check("spool: governed 1,000 -> 1,700 / 1,700 -> 1,000 in 1.5-5 s", 1.5 <= sp["gov"]["t"] <= 5 and 1.5 <= sp["down"]["t"] <= 5
+          and sp["gov"]["mono"] and sp["down"]["mono"], f"up {sp['gov']['t']:.1f} s, down {sp['down']['t']:.1f} s")
+    check("spool: shutdown run-down 1,700 -> 0 in 12-30 s", 12 <= sp["stop"]["t"] <= 30 and sp["stop"]["mono"], f"{sp['stop']['t']:.1f} s to < 30 rpm")
+
+    # a steadily spinning, blurred prop leaves the key-light shadow map alone (the blades are hidden, the spinner round)
+    r = await js(page, V + r"""
+      T.neutral(); V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.3); await V.frames(3);
+      const p0 = V.perf().renders; await V.frames(8); const p1 = V.perf().renders;
+      const out = {shadow: p1.shadowRenders - p0.shadowRenders, renders: p1.renders - p0.renders, moving: V.state.prop.angle};
+      T.neutral(); return out;
+    """)
+    check("prop blur: no shadow-map passes while the blurred prop spins", r["shadow"] == 0 and r["renders"] >= 8,
+          f"{r['shadow']} shadow renders in {r['renders']} frames")
+
+    # pixels: the averaged disc on its own (isolated propeller, looking aft along the thrust axis) against the bare backdrop
+    try:
+        from PIL import Image
+        import numpy as np
+    except ImportError:
+        check("prop blur: averaged disc is mostly see-through, rings at the tips", True, "PIL not installed: skipped")
+        return
+    setup = V + r"""
+      T.neutral(); V.isolate('propeller');
+      const pv = V.partExtras('propeller').pivot, ax = pv.axis, o = pv.origin;
+      V.setCamera({pos: [o[0] + 4.2 * ax[0], o[1] + 4.2 * ax[1], o[2] + 4.2 * ax[2]], target: o, fov: 45}, {instant: true});
+    """
+    pts = await js(page, setup + r"""
+      const THREE = I.THREE, a = new THREE.Vector3().fromArray(pv.axis).normalize();
+      const e1 = new THREE.Vector3(1, 0, 0).addScaledVector(a, -a.x).normalize(), e2 = new THREE.Vector3().crossVectors(a, e1);
+      const out = {};
+      for (const rr of [0.5, 0.8, 1.1, 1.22, 1.31]) {
+        out[rr] = [];
+        for (let k = 0; k < 72; k++) {
+          const t = 2 * Math.PI * (k + 0.5) / 72, p = new THREE.Vector3().fromArray(o).addScaledVector(e1, rr * Math.cos(t)).addScaledVector(e2, rr * Math.sin(t));
+          out[rr].push(V.project(p.toArray()));
+        }
+      }
+      return out;
+    """)
+    shots = {}
+    for key, js_set in (("bare", "V.hide('propeller'); V.advance(0.05);"),
+                        ("stopped", "V.showAll(); V.isolate('propeller'); V.setProp({rpm: 0, pitch: 0, angle: 0.2}, {instant: true}); V.advance(0.05);"),
+                        ("spin", "V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.5); V.pause(true);")):
+        await js(page, V + js_set + " await V.frames(2);")
+        path = OUT / f"prop_px_{key}.png"
+        await page.screenshot(path=str(path), timeout=SHOT_TIMEOUT)
+        shots[key] = np.asarray(Image.open(path).convert("RGB"), dtype=float)
+    await js(page, "window.viewer.pause(false); window.viewer.isolate(null); window.viewer.showAll(); T.neutral();")
+    lin = lambda x: np.where(x / 255 <= 0.04045, x / 255 / 12.92, ((x / 255 + 0.055) / 1.055) ** 2.4)
+    ring = {}
+    for rr, pp in pts.items():
+        vals = {k: np.array([lin(shots[k][int(round(y)), int(round(x))]).mean() for x, y, _ in pp]) for k in shots}
+        ratio = vals["spin"] / np.maximum(vals["bare"], 1e-4)
+        ring[float(rr)] = (float(ratio.mean()), float(ratio.std()), float(vals["stopped"].std() / max(vals["bare"].mean(), 1e-4)))
+    mid = [ring[x][0] for x in (0.5, 0.8, 1.1)]
+    check("prop blur: averaged disc mostly see-through (60-97 % of the backdrop at 0.5-1.1 m)", all(0.6 <= x <= 0.97 for x in mid),
+          " / ".join(f"r {x}: {ring[x][0] * 100:.0f} %" for x in (0.5, 0.8, 1.1, 1.22, 1.31)))
+    check("prop blur: azimuthally smooth at 1,700 rpm (vs the stopped blades)", all(ring[x][1] < 0.06 for x in (0.5, 0.8, 1.1))
+          and all(ring[x][2] > 0.2 for x in (0.5, 0.8, 1.1)),
+          " / ".join(f"r {x}: spin sd {ring[x][1] * 100:.1f} %, stopped sd {ring[x][2] * 100:.0f} %" for x in (0.5, 0.8, 1.1)))
+    check("prop blur: white tip band lighter than the black blade inboard of it", ring[1.31][0] > ring[1.1][0],
+          f"tip {ring[1.31][0] * 100:.1f} % vs {ring[1.1][0] * 100:.1f} % of the backdrop")
 
 
 async def phone_card_check(page):
@@ -2035,6 +2238,7 @@ async def run(args):
             if not args.no_shots:
                 await screenshots(page)
             await numeric_checks(page)
+            await prop_blur_checks(page)
             await regression_checks(page)
             await tour_checks(page, shots=not args.no_shots)
             if args.blender:

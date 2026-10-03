@@ -5,6 +5,7 @@
 // are converted with gl = (y, z, x).  All rotations are right-handed about the stored axis, applied
 // to the part node about its own origin (the mesh vertices are relative to the pivot).
 import * as THREE from 'three';
+import { PropBlur } from './propblur.js';
 
 const DEG = Math.PI / 180;
 export const modelToGl = (a) => new THREE.Vector3(a[1], a[2], a[0]);
@@ -42,9 +43,16 @@ export function signedAngle(u, v, n) {
   return Math.atan2(n.dot(_c), _a.dot(_b));
 }
 
-const PROP_BLUR_RPM = 300;
-const DISC_R = 1.34;          // blur disc radius (m), just outside the 2.67 m prop tips
-const RING_R = 1.2725;        // mid radius of the light tip ring
+// Propeller speed (PT6E-67XP free turbine driving the Hartzell 5-blade; POH NGX / PC-12 PRO): ground idle ~1,000 rpm,
+// 1,550 rpm low-speed (quiet cruise) mode, 1,700 rpm take-off / max.  Spool model (rpm / s), a viewer estimate of a
+// start and shutdown: below the governed range a start accelerates as the gas generator spools up (~12 s from rest to
+// ground idle); the governor moves between governed speeds in ~3 s; after shutdown the feathering prop runs down in
+// ~15 s.
+export const PROP_RPM = { idle: 1000, cruise: 1550, max: 1700, governed: 900 };   // governed: below it, starting / running down
+const GOVERNED = PROP_RPM.governed;
+const START = { a0: 40, k: 0.12 };            // d rpm / dt = a0 + k rpm while starting
+const STOP = { a0: 25, k: 0.12 };             // d rpm / dt = -(a0 + k rpm) while running down
+const GOV = { k: 1.6, up: 320, down: 260 };   // governed: k (target - rpm), rate-limited
 
 export class Kinematics {
   constructor(model) {
@@ -130,73 +138,22 @@ export class Kinematics {
     // builds them open (pivot.rest = 1), so the rest pose is gear down, doors open.
     this.gear = { pos: 0, door: 1, target: 0, run: null };
     this.defl = {};   // current surface deflections in degrees (for readouts / tests)
-    this._makePropDisc();
+    // the spinning propeller's motion blur (propblur.js): blurred disc + spinner band, the solid blades fade out
+    this.blur = this.surf.propeller ? PropBlur.create(model, this.surf.propeller.rec) : null;
+    this.disc = this.blur ? this.blur.disc : null;
+    this.bladeRec = this.model.part('blade_1');
+    this.bladePush = this.bladeRec ? this.bladeRec.explode.length() : 0;    // radial explode of each blade (m at f = 1)
+    this.push = 0;
     this.apply();
   }
 
-  // translucent blurred disc for a fast-turning propeller (cheap motion blur): a dark disc whose
-  // alpha comes from an opaque greyscale canvas (alphaMap, no premultiplied-alpha surprises) plus
-  // a light ring where the white blade tips sweep.  When the blades are pushed out radially (explode
-  // or build fly-in) the disc grows and its alpha is remapped radially (uPush) so the blurred band
-  // stays on the blades instead of on the empty hub gap.
-  _makePropDisc() {
-    const prop = this.surf.propeller;
-    if (!prop) return;
-    const cv = document.createElement('canvas');
-    cv.width = cv.height = 256;
-    const g = cv.getContext('2d');
-    g.fillStyle = '#000';
-    g.fillRect(0, 0, 256, 256);
-    const grd = g.createRadialGradient(128, 128, 0, 128, 128, 128);
-    grd.addColorStop(0.0, '#000');
-    grd.addColorStop(0.14, '#000');
-    grd.addColorStop(0.2, 'rgb(200,200,200)');
-    grd.addColorStop(0.7, 'rgb(135,135,135)');
-    grd.addColorStop(0.9, 'rgb(105,105,105)');
-    grd.addColorStop(0.93, '#000');
-    grd.addColorStop(1.0, '#000');
-    g.fillStyle = grd;
-    g.fillRect(0, 0, 256, 256);
-    const alpha = new THREE.CanvasTexture(cv);
-    const common = { transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false };
-    const disc = new THREE.Group();
-    const discMat = new THREE.MeshBasicMaterial({ ...common, color: 0x17181a, alphaMap: alpha });
-    this.discU = { uPush: { value: 0 }, uR1: { value: DISC_R } };
-    discMat.onBeforeCompile = (sh) => {
-      Object.assign(sh.uniforms, this.discU);
-      sh.fragmentShader = 'uniform float uPush;\nuniform float uR1;\n' + sh.fragmentShader.replace('#include <alphamap_fragment>', `{
-    vec2 dd = vAlphaMapUv - 0.5;
-    float rr = length(dd) * 2.0;                 // 0..1 across the (scaled) disc
-    float rho0 = rr * uR1 - uPush;               // radius (m) on the unexploded disc
-    vec2 uv0 = 0.5 + dd / max(rr, 1e-5) * (0.5 * rho0 / ${DISC_R.toFixed(3)});
-    diffuseColor.a *= rho0 < 0.0 ? 0.0 : texture2D(alphaMap, uv0).g;
-  }`);
-    };
-    discMat.customProgramCacheKey = () => 'pc12:propdisc';
-    disc.add(new THREE.Mesh(new THREE.CircleGeometry(DISC_R, 72), discMat));
-    disc.add(new THREE.Mesh(new THREE.RingGeometry(1.225, 1.32, 72), new THREE.MeshBasicMaterial({ ...common, color: 0xe6e6e0 })));
-    disc.position.set(0, 0, 0.02);   // blade pitch-axis plane, relative to the hub origin
-    for (const m of disc.children) { m.renderOrder = 3; m.raycast = () => {}; }
-    disc.visible = false;
-    prop.rec.node.add(disc);
-    this.disc = disc;
-    const b1 = this.model.part('blade_1');
-    this.bladeRec = b1;
-    this.bladePush = b1 ? b1.explode.length() : 0;    // radial explode of each blade (m at f = 1)
-    this.push = 0;
-  }
-
-  // radial offset of the blades (explode factor + build fly-in) -> disc size and alpha remap
+  // radial offset of the blades (explode factor + build fly-in): the blur disc grows with them
   setExplodeView(f) {
-    if (!this.disc) return;
     const b = this.bladeRec;
     const e = this.bladePush * (f + (b && b.fly > 0 && !b.grow ? 3 * b.fly : 0));
     if (e === this.push) return;
     this.push = e;
-    this.discU.uPush.value = e;
-    this.discU.uR1.value = DISC_R + e;
-    this.disc.children[0].scale.setScalar((DISC_R + e) / DISC_R);
-    this.disc.children[1].scale.setScalar((RING_R + e) / RING_R);
+    if (this.blur) this.blur.setPush(e);
   }
 
   // ------------------------------------------------------------------ commands
@@ -221,7 +178,7 @@ export class Kinematics {
 
   setProp({ rpm, pitch, angle } = {}, instant) {
     if (angle != null) this.c.propAngle = +angle;          // spin phase (radians), e.g. 0 for tests
-    if (rpm != null) this.t.rpm = clamp(+rpm, 0, 1700);
+    if (rpm != null) this.t.rpm = clamp(+rpm, 0, PROP_RPM.max);
     if (pitch != null) this.t.pitch = clamp(+pitch, -38, 62);
     if (instant) { this.c.rpm = this.t.rpm; this.c.pitch = this.t.pitch; }
   }
@@ -287,12 +244,13 @@ export class Kinematics {
     approach('pitch', 35);
     lag('roll', 7, 1e-3); lag('pitchCmd', 7, 1e-3); lag('yaw', 7, 1e-3);
     approach('stabTrim', 1.2); approach('ailTrim', 6); approach('rudTrim', 6);
-    lag('rpm', 1.1, 0.5);
+    if (t.rpm !== c.rpm) { c.rpm = this._spool(c.rpm, t.rpm, dt); moved = true; }
     const movedBeforeSpin = moved;
     if (c.rpm > 0) {
       c.propAngle = (c.propAngle + (c.rpm / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
       moved = true;
     }
+    if (this.blur) this.blur.tick(dt, c.rpm);
     // gear sequence: nose doors open -> gear travels (~4 s, eased) -> doors close once locked UP (they stay open
     // with the gear down)
     const g = this.gear;
@@ -317,6 +275,21 @@ export class Kinematics {
     this.onlySpin = moved && !movedBeforeSpin && g.pos === g.target && g.door === this.doorTarget();
     if (moved) this.apply();
     return moved;
+  }
+
+  // propeller speed one step toward the target: start / governed / run-down laws (see GOVERNED)
+  _spool(rpm, target, dt) {
+    let r;
+    if (target > rpm) {
+      r = rpm < GOVERNED ? rpm + (START.a0 + START.k * rpm) * dt
+        : rpm + Math.min(GOV.up, GOV.k * (target - rpm) + 2) * dt;
+      r = Math.min(r, target);
+    } else {
+      r = target < GOVERNED || rpm < GOVERNED ? rpm - (STOP.a0 + STOP.k * rpm) * dt
+        : rpm - Math.min(GOV.down, GOV.k * (rpm - target) + 2) * dt;
+      r = Math.max(r, target);
+    }
+    return Math.abs(r - target) < 0.05 ? target : r;
   }
 
   // ------------------------------------------------------------------ pose
@@ -452,12 +425,8 @@ export class Kinematics {
     if (S.propeller) {
       S.propeller.rec.anim.quat.setFromAxisAngle(S.propeller.axis, c.propAngle);
       for (let k = 1; k <= 5; k++) this._rot('blade_' + k, c.pitch);
-      if (this.disc) {
-        const f = clamp((c.rpm - PROP_BLUR_RPM) / 900, 0, 1);
-        this.disc.children[0].material.opacity = 0.8 * f;
-        this.disc.children[1].material.opacity = 0.45 * f;
-        this.disc.visible = f > 0.01 && S.propeller.rec.shown;
-      }
+      // motion blur only with the whole propeller on show (a hidden / isolated blade keeps the solid geometry)
+      if (this.blur) this.blur.apply(c.rpm, c.pitch, c.propAngle, S.propeller.rec.shown && this.blur.blades.every((b) => b.shown));
     }
   }
 }

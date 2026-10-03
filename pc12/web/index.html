@@ -291,7 +291,7 @@
     (B.parts(U.hdr) || [U.hdr]).forEach(function (u) { link('preload', u, 'fetch', 'low'); });
     link('preload', U.materials, 'fetch');
     // the module graph (web/package.py checks this list against the imports)
-    ['viewer/main.js', 'viewer/scene.js', 'viewer/studio.js', 'viewer/model.js', 'viewer/materials.js', 'viewer/kinematics.js',
+    ['viewer/main.js', 'viewer/scene.js', 'viewer/studio.js', 'viewer/model.js', 'viewer/materials.js', 'viewer/kinematics.js', 'viewer/propblur.js',
       'viewer/build.js', 'viewer/panels.js', 'viewer/sources.js', 'viewer/tour.js', 'viewer/tour_data.js'].forEach(function (u) { link('modulepreload', u); });
     ['build/three.module.min.js', 'examples/jsm/controls/OrbitControls.js', 'examples/jsm/environments/RoomEnvironment.js',
       'examples/jsm/loaders/GLTFLoader.js', 'examples/jsm/utils/BufferGeometryUtils.js', 'examples/jsm/libs/meshopt_decoder.module.js',
@@ -435,10 +435,10 @@
 
         <h3>Propeller <span class="readout" id="rProp"></span></h3>
         <div class="seg" role="group" aria-label="Propeller speed">
-          <button type="button" data-rpm="0" aria-pressed="true">Off</button>
-          <button type="button" data-rpm="1000" aria-pressed="false" title="Ground idle (viewer estimate)">Idle</button>
-          <button type="button" data-rpm="1550" aria-pressed="false">1,550</button>
-          <button type="button" data-rpm="1700" aria-pressed="false">1,700</button>
+          <button type="button" data-rpm="0" aria-pressed="true" title="Shut down: the propeller runs down in about 15 s">Off</button>
+          <button type="button" data-rpm="1000" aria-pressed="false" title="Start to ground idle, about 1,000 rpm (about 12 s from rest; viewer estimate)">Idle</button>
+          <button type="button" data-rpm="1550" aria-pressed="false" title="1,550 rpm: low-speed (quiet cruise) mode">1,550</button>
+          <button type="button" data-rpm="1700" aria-pressed="false" title="1,700 rpm: take-off / maximum">1,700</button>
         </div>
         <label class="slider"><span>Blade pitch</span>
           <input id="sPitch" type="range" min="-38" max="62" step="1" value="0" aria-label="Blade pitch in degrees">

@@ -46,7 +46,7 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~11 min; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~23 min, 140 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot timeout); [T1]-[T11] the interior tour
 python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLBs (both tiers; the build's own
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
@@ -355,6 +355,19 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   changed: build step, cutaway, X-ray, explode, isolate, construction lines, the phone sheet, the door it opened.
   test/viewer_test.py [T1]-[T11] check it (data current, every stop from the menu with ray / table clearances and
   exposure, walk clamps, keyboard / pointer / touch, flights, exit, phone, dark theme).
+- Viewer propeller in motion (owner 2026-10-03: "the propeller spinning doesn't look too real"; `web/viewer/propblur.js`,
+  viewer only, no GLB change): once the blades turn more than a few degrees a frame they cross-fade into a prop disc
+  (child of the spinning `propeller` node, plane of rotation on the pivot's thrust axis) whose shader draws the
+  motion-blurred blades analytically from blade_1's real geometry sampled at load (per-radius section support
+  functions + material-averaged colour + chord angle): each section turned by the commanded pitch and projected along
+  the view ray, box-filtered over the exposure sweep S = min(72 deg, max(w / 40 s, 2.5 w dt)) -- the smear spans
+  >= 2.5 frame steps, so the blades never alias; at ~290 rpm (60 fps) the pattern is the averaged disc (coverage ~20 %
+  mid-span, faint white-tip / red-band rings, alpha mapped for three's display-space blend), plus a faint ghost of the
+  smear that only ever moves forward (<= 0.4 blade spacing a frame); lit by the scene with the passing blade face's
+  normal; the root boots blur on a band 1.5 mm outside the chrome spinner.  Spool (`kinematics.js` PROP_RPM / _spool,
+  viewer estimate): start to ground idle 1,000 rpm ~12 s, governed 1,000 <-> 1,550 (low-speed mode) / 1,700 (max)
+  ~3 s, shutdown run-down ~15-18 s.  viewer_test `prop_blur_checks` covers the fade / sweep / ghost / axis / modes /
+  spool / pixel see-through.
 - Final judge r1 fixes, MODELLING only (2026-10-03; the owner put Blender on hold until the model is signed off, so
   the r1 render-stage changes -- airfield backplate / terrain, wheel close-up catcher, beauty preset tweaks -- stay
   parked on local branch `wip/final-fix-r1-partial`): G3000 PRIME pages in the GLB (above;
