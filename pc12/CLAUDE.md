@@ -3,9 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~1.53M tris of which the interior ~237k and the
-three wheels ~77k, ~22 MB incl. the 0.5 MB G3000 page atlas;
-hinge pivots in node extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
+engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.63M tris of which the interior ~387k, ~44 MB
+incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
+hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
+review: ~1.53M tris, interior ~237k, three wheels ~77k, ~22 MB, 8-bit normals; phones and the no-WebAssembly fallback
+load it), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
 exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
 --, L6 / L6B the interior arrangement and its checks),
@@ -15,6 +17,9 @@ exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyr
 ```bash
 pip install numpy scipy matplotlib pillow reportlab playwright   # lxml optional
 python3 model/build.py          # build all parts -> out/pc12.glb + out/pc12_meta.json + prints 10 dimension checks
+                                #   (~75 s; the light tier out/pc12_low.glb is built alongside at PC12_RES=1 in a second
+                                #   process, --no-low skips it; PC12_RES=1 python3 model/build.py --no-low gives the
+                                #   judged model byte for byte but for the shared quantisation grids)
 python3 test/fit_check.py       # interference / kinematics checks (interior + engine in the skin, spinner at the cowl,
                                 #   carry-through under the floor, tail / rudder clearances, retracted gear, brace knees,
                                 #   exact triangle-crossing sweeps (test/isect.py): main gear + brace in the bay liner,
@@ -43,7 +48,11 @@ python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
 python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~8 min; slower on a
                                 #   loaded machine -- rerun once on a screenshot timeout)
-python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLB, vendored three.js, verify step
+python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLBs (both tiers; the build's own
+                                #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
+                                #   three.js, verify step
+python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
+                                #   (~54 MB: meshopt 17 + 8 MB, gzip of the light tier 12 MB, as base64 text parts)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
                                 # interior renders (Blender / Cycles; cameras of the photo presets fitted in
                                 #   refs/cache/overlays/vqa/cams_beauty.json, compare sheets land there too)
@@ -101,8 +110,28 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
 - `cad/mesh.py` kernel: `grid_surface`, `trim` (marching-triangles implicit trimming), `band`,
   `boundary_loops`, `solidify`, `revolve`, `sweep_profile/tube`, `superellipsoid`, `planar_cap`.
   **Gotcha:** when trimming twice, re-evaluate the field on the trimmed mesh (use `band()`/`trim_fn`).
+  The round primitives (revolve, disk, circle2d / sweep_tube, superellipsoid, cylinder) take their segment count
+  through `cad.res.seg` (up to RES x the builder's n where the chord sagitta exceeds 0.04 mm; n < 8 = polygons by
+  design, kept), so a builder that relies on a primitive's vertex count must not assume n.
+- `cad/res.py` the ONE tessellation-quality setting `PC12_RES` (env; default 2, 1 = the judged grids): seg() above,
+  the refinement tolerances per viewing class (exterior 0.10 mm sagitta, interior 0.15 mm, hidden engine modules 1 mm;
+  bow ceilings 1 / 0.5 mm), triangle budgets in proportion (`budget()`: x1.75 at RES 2 -- `build.INTERIOR_BUDGET`,
+  `wheels.TRI_BUDGET`), 16-bit GLB normals at RES > 1 (`normal_bits()`: 8-bit normals broke the studio's reflected
+  streaks on the clear-coated paint into stairs).  `cad/refine.py` curvature-adaptive refinement: an edge is split where
+  the PN-triangle cubic through its end points / normals bows more than the tolerance (the new vertex on that curve:
+  the smooth surface between two samples of the analytic one; original vertices never move); conforming 1->2/3/4
+  splits across all meshes of a part (welded by position, so paint / patch boundaries stay watertight); open boundaries,
+  creases / folds, flat faces carrying corner-averaged normals, kinked profiles drawn with averaged normals (an S in an
+  edge), slivers and bows over the ceiling are kept as built -- these guards are what keeps fit_check / the consistency
+  sheets passing (a seat skid sagged 3 mm into the floor, a clamped carry-through rose 0.7 mm, a fairing nose folded
+  before them).  build_parts() refines every part after the livery (`res.refine_part`); `livery.paint_mesh` /
+  `_winglet_pin` / `_pod_pin` / `_stab_boot` first refine the skin along the paint boundaries
+  (`res.refine_for_trim`, 2 passes) so the marching-triangle trims cut smooth stroke edges.
 - `cad/glb.py` glTF writer with KHR_mesh_quantization and embedded image textures (`GLBBuilder.texture`; a textured
-  material's meshes carry `Mesh.UV` as TEXCOORD_0 -- only those: elsewhere `Mesh.UV` is a surface parameter);
+  material's meshes carry `Mesh.UV` as TEXCOORD_0 -- only those: elsewhere `Mesh.UV` is a surface parameter); the
+  touching meshes of a part share one quantisation grid (`assemble.shared_grids`: per-mesh grids left hairline cracks --
+  dark specks -- along every paint edge; the joints BETWEEN parts, e.g. fus_center / fus_aft at STA 9.85, still
+  quantise on each part's own grid: one grid over a whole fuselage collapses slivers at 16 bits); normals 8- or 16-bit;
   `cad/sdf2d.py` 2-D signed distances.
 - `model/fuselage.py` OML lofted from control lines (crown, keel, half-breadth, max-breadth WL) +
   super-ellipse section law. `fuselage_parts.py` cuts skins/doors/windows; `cockpit_glazing.py`
@@ -135,8 +164,8 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   the cabin floor + runner + tracks `cabin_floor` and the club tables are children of `cabin_interior`; side-wall /
   headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
   `interior.lining_offset` -- with window reveals and lined door wells; frames at the Pilatus frame stations;
-  interior triangles are budgeted in `build.INTERIOR_BUDGET` (250k, crew seat 14k, cabin seat 12k) and printed by
-  the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
+  interior triangles are budgeted in `build.INTERIOR_BUDGET` (250k, crew seat 14k, cabin seat 12k at PC12_RES=1; x1.75
+  at RES 2: 437.5k / 24.5k / 21k, built 387k / 18.2k / 15.8k) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
   eye),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
@@ -275,7 +304,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   `tire_groove`; tests take the tyre by that tuple), main wheel halves `wheel_main` (dark cast), brake `brake_housing`
   (bright cast) / `brake_disc`, hub fairing `hub_fairing` (the leg door's outer-face navy, `paint_wing_dark`'s hue, a
   shade darker -- model judging r1 GR1-03: door and fairing one navy in 0517 --, not repainted by the livery), nose wheel `wheel`, axle nuts `steel_dark`, tie bolts / valves `cadmium`.  Triangles:
-  main wheel <= 30k, nose <= 18k (`wheels.TRI_BUDGET`, 29.5k / 17.9k built).  Blender: `render/lookdev.py` drops the
+  main wheel <= 30k, nose <= 18k at PC12_RES=1 (`wheels.TRI_BUDGET`, 29.5k / 17.9k built; x1.75 at RES 2).  Blender: `render/lookdev.py` drops the
   groove shader for the geometric grooves and mottles the tyres with dust (`_dust`); beauty presets
   `wheel_main_close`, `wheel_main_inboard`, `wheel_nose_close`.
 - Stage 4: Blender (Cycles) beauty renders (`render/beauty.py` presets, `--compare` photo side-by-sides; it applies
@@ -290,8 +319,20 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   GLB's sheen and its textures (the display pages' emissive map) carried over --, replacing the GLB's KHR clear-coat
   materials, and keeps the GLB values for the rest; every part of the GLB group 'Interior' gets the cabin light; the
   table's `render_stripes` (cabin carpet) become a band-limited pinstripe patch, and the carpets get an occlusion
-  stand-in (VIEWER envMapIntensity 0.45: unoccluded, the studio washed the AI Orange runner out to pale peach)).
+  stand-in (VIEWER envMapIntensity 0.45: unoccluded, the studio washed the AI Orange runner out to pale peach); two
+  model tiers: the boot script loads `PC12_CONFIG.glbLow` (out/pc12_low.glb) on the 'low' quality tier (phones) as it
+  picks the 512 px HDRI, the full model elsewhere (?glb= overrides both); the Specs panel and the part cards count the
+  tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the light tier).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
+- Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
+  `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.63M triangles where the curvature and the paint edges need them,
+  16-bit normals, crack-free shared quantisation grids, finer round primitives; the shape is the approved one (10
+  dimension checks, consistency sheets, fit_check unchanged in tolerance).  Two consistency rows were made independent
+  of the vertex spacing (no tolerance changed): the tyre side silhouette is taken along the mesh edges (a refined
+  sidewall put vertices at clock angles where the tread had none), the fin / rudder slices sit 0.1 mm above their
+  stations (WL 3.60 is a mesh row over the rudder-tab cut-out; 16-bit rounding put it on either side).  fit_check 26
+  (coplanar overlaps) builds its pairs slab by slab (the same pairs; the refined interior's all-pairs did not fit in
+  memory).
 - Final judge r1 fixes, MODELLING only (2026-10-03; the owner put Blender on hold until the model is signed off, so
   the r1 render-stage changes -- airfield backplate / terrain, wheel close-up catcher, beauty preset tweaks -- stay
   parked on local branch `wip/final-fix-r1-partial`): G3000 PRIME pages in the GLB (above;

@@ -224,8 +224,38 @@ def check_lookdev(tol=2e-3, path=LOOKDEV_JSON):
     return bad
 
 
-def write_glb(parts: dict, path: str, quantize=True, meta=None):
-    gb = GLBBuilder(quantize=quantize)
+def shared_grids(meshes, origin, pad=0.001):
+    """One quantisation grid per group of a part's meshes whose boxes touch (union-find, pad m): pieces that share
+    boundary vertices -- paint regions, skin patches, trims -- are quantised on the same grid, so the shared vertices
+    stay shared in the GLB (each mesh on its own grid left hairline cracks along every stroke edge, dark specks in
+    the viewer); separate pieces of a part (the two pitot tubes, the lights) keep their own, finer grids."""
+    n = len(meshes)
+    if n == 0:
+        return []
+    box = np.array([np.r_[m.V.min(0) - pad, m.V.max(0) + pad] for m in meshes])
+    par = list(range(n))
+
+    def find(i):
+        while par[i] != i:
+            par[i] = par[par[i]]
+            i = par[i]
+        return i
+    for i in range(n):
+        hit = np.nonzero(np.all(box[i, :3] <= box[:, 3:], 1) & np.all(box[:, :3] <= box[i, 3:], 1))[0]
+        for j in hit:
+            a, b = find(i), find(int(j))
+            if a != b:
+                par[b] = a
+    roots = [find(i) for i in range(n)]
+    grid = {r: GLBBuilder.grid([meshes[i] for i in range(n) if roots[i] == r], origin) for r in set(roots)}
+    return [grid[r] for r in roots]
+
+
+def write_glb(parts: dict, path: str, quantize=True, meta=None, shared_grid=True, normal_bits=None):
+    """shared_grid: quantise the touching meshes of a part on one grid (shared_grids).  normal_bits: 8 or 16 (default:
+    16 for the refined model, 8 at PC12_RES=1 -- the light tier as judged; cad/res.py NORMAL_BITS)."""
+    from cad import res
+    gb = GLBBuilder(quantize=quantize, normal_bits=normal_bits or res.normal_bits())
     tex = {}
 
     def texture(src):
@@ -256,10 +286,11 @@ def write_glb(parts: dict, path: str, quantize=True, meta=None):
             return node_of[pid]
         p = parts[pid]
         kids = []
+        grids = shared_grids([m for m, _ in p.meshes], origin_of[pid]) if shared_grid else [None] * len(p.meshes)
         for k, (m, mat) in enumerate(p.meshes):
             if mat not in gb.mat_index:
                 raise KeyError(f"unknown material {mat} in {pid}")
-            kids.append(gb.mesh_node(f"{pid}#{k}", m, gb.mat_index[mat], origin=origin_of[pid]))
+            kids.append(gb.mesh_node(f"{pid}#{k}", m, gb.mat_index[mat], origin=origin_of[pid], grid=grids[k]))
         for cid in [c for c in ids if parts[c].parent == pid]:
             kids.append(make(cid))
         parent_origin = origin_of[p.parent] if p.parent else np.zeros(3)

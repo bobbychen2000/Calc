@@ -1,7 +1,10 @@
 """
 PC-12 master build: runs every component builder, applies the livery, writes
-  out/pc12.glb          glTF 2.0 assembly (quantised), hinge pivots in node extras
-  out/pc12_meta.json    build steps, bill of materials, construction geometry, checks
+  out/pc12.glb          glTF 2.0 assembly (quantised), hinge pivots in node extras, at the tessellation quality
+                        PC12_RES (cad/res.py; default 2: refined where it shows)
+  out/pc12_low.glb      the light tier at PC12_RES=1 (the builders' own grids; built in a second process; --no-low skips
+                        it): the viewer loads it on phones and in the no-WebAssembly fallback
+  out/pc12_meta.json    build steps, bill of materials, construction geometry, checks (stats.low: the light tier)
 and prints a dimensional verification against the official figures.
 """
 from __future__ import annotations
@@ -11,6 +14,7 @@ import time
 import numpy as np
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
+from cad import res
 from cad.glb import to_gl
 from model import fuselage as F
 from model import fuselage_parts, wing, empennage, powerplant, gear, details, interior, livery, flightdeck
@@ -240,7 +244,8 @@ def construction():
     return C
 
 
-INTERIOR_BUDGET = dict(total=250_000, crew_seat=14_000, cabin_seat=12_000)   # triangles (Stage 3 brief)
+# triangles (Stage 3 brief, the builders' own grids); at PC12_RES=2 raised in proportion to the model (cad.res.budget)
+INTERIOR_BUDGET = {k: res.budget(v) for k, v in dict(total=250_000, crew_seat=14_000, cabin_seat=12_000).items()}
 
 
 def cockpit_camera(side=-1):
@@ -308,21 +313,49 @@ def build_parts():
     gear.build(parts)
     interior.build_interior(parts)      # flight deck, seats, cabin, lining (+ the headliner fittings on the lining)
     details.build(parts)
-    livery.apply(parts)
+    livery.apply(parts)                 # (at PC12_RES > 1 each skin is refined along its paint boundaries first)
+    for pid, p in parts.items():        # curvature-adaptive refinement (cad.res: nothing at PC12_RES=1)
+        res.refine_part(pid, p)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}
     ids = sorted(parts.keys(), key=lambda k: order.get(parts[k].step, 99))
     return {k: parts[k] for k in ids}
 
 
-def main():
+OUT = __import__("pathlib").Path(__file__).resolve().parents[1] / "out"
+LOW_GLB = "pc12_low.glb"            # the light tier (phones, the no-WebAssembly fallback): PC12_RES=1, as judged
+
+
+def glb_meta():
+    return {"model": "Pilatus PC-12 PRO", "units": "m", "datum": "STA 0 = 3.000 m fwd of firewall",
+            "cockpit": cockpit_camera(), "displays": flightdeck.display_frames()}
+
+
+def build_low():
+    """`build.py --low`: the light tier out/pc12_low.glb at the builders' own grids (run with PC12_RES=1 by main());
+    prints its stats as one JSON line."""
+    if res.on():
+        sys.exit("build.py --low runs at PC12_RES=1 (main() starts it that way)")
+    parts = build_parts()
+    size, stats = write_glb(parts, str(OUT / LOW_GLB), meta=glb_meta())
+    print(json.dumps({"file": LOW_GLB, "glb_bytes": size, "triangles": stats["triangles"],
+                      "vertices": stats["vertices"], "res": res.RES}))
+
+
+def main(low=True):
+    """Build out/pc12.glb + out/pc12_meta.json at PC12_RES (cad/res.py, default 2) and, alongside in a second process,
+    the light tier out/pc12_low.glb at PC12_RES=1 (low=False skips it; its stats land in meta stats.low)."""
+    import os
+    import subprocess
     t0 = time.time()
+    lowp = None
+    if low:
+        lowp = subprocess.Popen([sys.executable, __file__, "--low"], env={**os.environ, "PC12_RES": "1"},
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     parts = build_parts()
     ids = list(parts.keys())
     checks = verify(parts)
     cock = cockpit_camera()
-    size, stats = write_glb(parts, str(__import__("pathlib").Path(__file__).resolve().parents[1]) + "/out/pc12.glb",
-                            meta={"model": "Pilatus PC-12 PRO", "units": "m", "datum": "STA 0 = 3.000 m fwd of firewall",
-                                  "cockpit": cock, "displays": flightdeck.display_frames()})
+    size, stats = write_glb(parts, str(OUT / "pc12.glb"), meta=glb_meta())
     bom = []
     for k, p in parts.items():
         bom.append({"id": k, "name": p.name, "step": p.step, "group": p.group, "qty": p.qty,
@@ -334,14 +367,22 @@ def main():
         "construction": construction(),
         "checks": checks,
         "stats": {"triangles": stats["triangles"], "vertices": stats["vertices"], "glb_bytes": size,
-                  "parts": len(parts)},
+                  "parts": len(parts), "res": res.RES},
         "wing": {"semi_span": W.SEMI, "root_chord": W.C_ROOT, "tip_chord": W.C_TIP, "mac": W.MAC,
                  "lemac": W.LEMAC, "x_qc": W.X_QC},
         "cockpit": cock,
     }
-    with open(str(__import__("pathlib").Path(__file__).resolve().parents[1]) + "/out/pc12_meta.json", "w") as f:
+    if lowp is not None:
+        out, err = lowp.communicate()
+        if lowp.returncode != 0:
+            sys.exit(f"light tier (build.py --low) failed:\n{err[-3000:]}")
+        meta["stats"]["low"] = json.loads(out.strip().splitlines()[-1])
+    with open(OUT / "pc12_meta.json", "w") as f:
         json.dump(meta, f, separators=(",", ":"))
     print(f"parts {len(parts)}  triangles {stats['triangles']:,}  GLB {size/1e6:.2f} MB  ({time.time()-t0:.1f}s)")
+    if "low" in meta["stats"]:
+        lo = meta["stats"]["low"]
+        print(f"light tier out/{lo['file']} (PC12_RES=1): triangles {lo['triangles']:,}  GLB {lo['glb_bytes']/1e6:.2f} MB")
     for c in checks:
         dl = f"{c['delta']:+7.3f} m2" if c["delta_mm"] is None else f"{c['delta_mm']:+7.1f} mm"
         rel = ">=" if c["kind"] == "min" else "  "
@@ -371,4 +412,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--low" in sys.argv:
+        build_low()
+    else:
+        main(low="--no-low" not in sys.argv)

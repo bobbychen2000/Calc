@@ -109,6 +109,12 @@ async function boot() {
   try { meta = await metaP; PERF.mark('meta'); } catch (e) { fail(e, 'the model metadata (' + URLS.meta + ')'); return; }
   let gltf;
   try { gltf = await glbP; PERF.mark('glb'); } catch (e) { fail(e, 'the 3-D model (' + (BOOT.gzip ? URLS.glbGz : URLS.glb) + ')'); return; }
+  if (meta.stats && meta.stats.low && (URLS.low || (BOOT.gzip && meta.stats.glb_gz_tier === 'low'))) {
+    // the light tier (phones; the gzip fallback): the Specs panel and the part cards count what this page loaded
+    const lo = meta.stats.low;
+    Object.assign(meta.stats, { triangles: lo.triangles, vertices: lo.vertices, glb_bytes: lo.glb_bytes,
+      glb_encoding: lo.glb_encoding || meta.stats.glb_encoding, tier: 'low' });
+  }
   if (BOOT.gzip && meta.stats && meta.stats.glb_gz_bytes) {
     // the Specs panel's GLB size: the file this page loaded
     meta.stats.glb_bytes = meta.stats.glb_gz_bytes;
@@ -147,6 +153,8 @@ async function init(gltf, matSpec) {
     PRESETS.cockpit.target = meta.cockpit.target.slice();
   }
   model = new Model(gltf, meta, { materials: matSpec });
+  // part cards: the triangle counts of the GLB this page loaded (the light tier on phones: its node extras)
+  for (const b of meta.bom) { const r = model.part(b.id); if (r && r.ex.tris != null) b.tris = r.ex.tris; }
   stage.scene.add(model.root);
   stage.addToContactLayer(model.root);
   stage.setModelBox(model.box, model.silhouettePoints());

@@ -11,12 +11,14 @@
 <!-- data: where pc12.glb / pc12_meta.json / the drawing SVGs live (overridden by ?data=, ?glb=, ?meta=).
      three: 'auto' = the jsDelivr CDN, or ./three_local/ (a checkout of three.js r160) with ?three=local;
      a path = a vendored copy (web/package.py writes the bundle's line: {data: './data/', three: './three/'}).
+     glbLow (optional): the light tier of the model (model/build.py: out/pc12_low.glb, the builders' own grids, ~1.5M
+     triangles instead of ~2.6M), loaded on the 'low' quality tier (phones) as the 512 px HDRI is; ?glb= overrides it.
      glbGz (optional, web/package_artifact.py): a gzip-compressed plain GLB next to the data, loaded where WebAssembly
      (the meshopt decoder) is refused.
      b64 (optional, web/package_artifact.py): {file name: parts} of the binary files published as base64 text (the
      claude.ai Artifact host serves no binary media type but images, media and fonts): x.glb is then requested as
      x.glb.b64.txt (1 part) or x.glb.b64.0.txt, x.glb.b64.1.txt, ... and decoded while it streams. -->
-<script>window.PC12_CONFIG = { data: '../out/', three: 'auto' };</script>
+<script>window.PC12_CONFIG = { data: '../out/', three: 'auto', glbLow: 'pc12_low.glb' };</script>
 <script>
   // Boot, before any module script: feature checks, the three.js import map, the data requests (the model and its
   // metadata are fetched here, with a progress bar, while the module graph loads; the rest is preloaded), and the
@@ -34,8 +36,10 @@
     // render quality tier, the same test as scene.js QUALITY (phones: 'low', which also loads the 512 px studio HDRI)
     var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
     var quality = q.get('quality') || (coarse || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ? 'low' : 'high');
+    // phones: the light tier of the model (PC12_CONFIG.glbLow), as they get the 512 px HDRI
+    var low = quality === 'low' && !!C.glbLow && !q.get('glb');
     var U = window.PC12_URLS = {
-      glb: q.get('glb') || data + 'pc12.glb', meta: q.get('meta') || data + 'pc12_meta.json',
+      glb: q.get('glb') || data + (low ? C.glbLow : 'pc12.glb'), low: low, meta: q.get('meta') || data + 'pc12_meta.json',
       ga: svg[0] || data + 'pc12_ga.svg', sections: svg[1] || data + 'pc12_sections.svg',
       hdr: q.get('hdr') || (quality === 'low' ? 'assets/studio_small_09_512.hdr' : 'assets/studio_small_09_1k.hdr'),
       materials: 'viewer/materials.json', quality: quality,
@@ -200,13 +204,15 @@
       catch (e) { B.wasm = false; }
     }
     var D = B.download = { loaded: 0, total: 0, metaBytes: 0, frac: 0, done: false };
+    // the size of the GLB this page requests (metadata stats: the light tier's under stats.low)
+    B.glbBytes = function (s, gz) { return gz ? s.glb_gz_bytes : U.low ? (s.low || {}).glb_bytes : s.glb_bytes; };
     window.PC12_META = fetch(U.meta).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + U.meta);
       return r.json();
     });
     window.PC12_META.then(function (m) {
       D.stats = m && m.stats;
-      var n = D.stats && B.wire(B.gzip ? U.glbGz : U.glb, B.gzip ? D.stats.glb_gz_bytes : D.stats.glb_bytes);
+      var n = D.stats && B.wire(B.gzip ? U.glbGz : U.glb, B.glbBytes(D.stats, B.gzip));
       if (n && !q.get('glb')) { D.metaBytes = n; show(); }
     }, function () {});
     var shownAt = 0;
@@ -233,7 +239,7 @@
         B.gzip = gz;
         var s = D.stats || {};
         D.loaded = D.total = D.frac = 0; D.done = false;
-        D.metaBytes = q.get('glb') ? 0 : B.wire(url, gz ? s.glb_gz_bytes : s.glb_bytes) || 0;
+        D.metaBytes = q.get('glb') ? 0 : B.wire(url, B.glbBytes(s, gz)) || 0;
       }
       if (gz && typeof DecompressionStream === 'undefined') {
         return Promise.reject(new Error('This browser can neither run WebAssembly on this page nor unpack the gzip copy of the model (no DecompressionStream).'));

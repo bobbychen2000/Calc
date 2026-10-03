@@ -20,6 +20,13 @@ import numpy as np
 EPS = 1e-12
 
 
+def _seg(n, r=None):
+    """Segment count of a round primitive of radius r at the model's tessellation quality (cad.res.seg; n at
+    PC12_RES=1)."""
+    from . import res
+    return res.seg(n, r)
+
+
 def _normalize(a, fallback=None):
     n = np.linalg.norm(a, axis=-1, keepdims=True)
     bad = (n[..., 0] < 1e-14)
@@ -422,6 +429,7 @@ def revolve(profile, n=48, axis_origin=(0, 0, 0), axis_dir=(1, 0, 0), ref_dir=No
     e1 /= np.linalg.norm(e1)
     e2 = np.cross(ax, e1)
     full = abs((a1 - a0) - 2 * np.pi) < 1e-9
+    n = _seg(n, float(np.max(np.abs(prof[:, 1]))) if len(prof) else None)
     th = np.linspace(a0, a1, n, endpoint=not full)
     th = -th  # orientation so that normals point outward
     c, s = np.cos(th), np.sin(th)
@@ -433,12 +441,12 @@ def revolve(profile, n=48, axis_origin=(0, 0, 0), axis_dir=(1, 0, 0), ref_dir=No
         for k, sign in ((0, -1), (-1, 1)):
             r = prof[k, 1]
             if r > 1e-6:
-                caps.append(disk(o + prof[k, 0] * ax, sign * ax, r, n=n, ref=e1))
+                caps.append(disk(o + prof[k, 0] * ax, sign * ax, r, n=n, ref=e1, _raw=True))
         m = Mesh.merge([m] + caps)
     return m
 
 
-def disk(center, normal, r, n=32, ref=None, r_inner=0.0):
+def disk(center, normal, r, n=32, ref=None, r_inner=0.0, _raw=False):
     nrm = np.asarray(normal, float)
     nrm = nrm / np.linalg.norm(nrm)
     if ref is None:
@@ -446,6 +454,7 @@ def disk(center, normal, r, n=32, ref=None, r_inner=0.0):
     e1 = np.asarray(ref, float) - nrm * np.dot(ref, nrm)
     e1 /= np.linalg.norm(e1)
     e2 = np.cross(nrm, e1)
+    n = n if _raw else _seg(n, r)            # _raw: revolve's end cap, its count already scaled
     th = np.linspace(0, 2 * np.pi, n, endpoint=False)
     ring = np.asarray(center)[None] + r * (np.cos(th)[:, None] * e1 + np.sin(th)[:, None] * e2)
     if r_inner > 0:
@@ -533,7 +542,7 @@ def sweep_profile(path, profile2d, closed_profile=True, scale=None, twist=None, 
 
 
 def circle2d(r, n=16, rx=None):
-    th = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    th = np.linspace(0, 2 * np.pi, _seg(n, max(abs(r), abs(rx) if rx is not None else 0.0)), endpoint=False)
     return np.stack([(rx if rx is not None else r) * np.cos(th), r * np.sin(th)], 1)
 
 
@@ -569,6 +578,9 @@ def superellipsoid(center, radii, e=(0.25, 0.25), nu=24, nv=32, R=None):
     """Rounded box / pillow shape: |x/a|^(2/e2)+... ; e close to 0 = boxy, 1 = ellipsoid."""
     a, b, c = radii
     e1, e2 = e
+    if nv >= 8:                      # round (cad.res.seg): both directions finer; tiny knobs (nv < 8) as drawn
+        nv2 = _seg(nv, max(a, b, c))
+        nu, nv = max(nu, int(round(nu * nv2 / nv))), nv2
     u = np.linspace(-np.pi / 2, np.pi / 2, nu)
     v = np.linspace(-np.pi, np.pi, nv, endpoint=False)
     U, Vv = np.meshgrid(u, v, indexing="ij")

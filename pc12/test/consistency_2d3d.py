@@ -1200,7 +1200,9 @@ def check_L4(ctx, rep, plots):
     for z in zs:
         sec = E.fin_section(z)
         loop = sec_loop(sec)
-        S = slice_segments(Vn, Fn, (0, 0, 1), z)
+        # sliced 0.1 mm above the station: WL 3.60 is also the rudder's span row over the tab cut-out (tab top 3.592),
+        # and the GLB's 16-bit quantisation puts that row a few um above or below 3.600 -- the plane must not ride on it
+        S = slice_segments(Vn, Fn, (0, 0, 1), z + 1e-4)
         Q = densify_segments(S, 0.001)
         if not len(Q):
             te_d.append(1.0)
@@ -2030,6 +2032,27 @@ def _wheel_local(ctx, pid, mats=None, near=None):
     return np.c_[sg * (V[:, 1] - A[1]), np.hypot(dx, dz), dx, dz]
 
 
+def _wheel_local_edges(ctx, pid, mats=None, step=0.001):
+    """_wheel_local of points every <= step along the triangle edges of the part's meshes: the mesh's own silhouette,
+    whatever its vertices' spacing (a refined sidewall puts vertices at clock angles where the tread has none, so the
+    outermost VERTEX per angle bin is no silhouette there; PC12_RES)."""
+    A, sg = ((G.MAIN_AXLE, 1) if pid == "gear_main_R" else (G.MAIN_AXLE * [1, -1, 1], -1) if pid == "gear_main_L"
+             else (G.NOSE_AXLE, -1))
+    out = []
+    for r in ctx.get(pid, mats):
+        E = np.unique(np.sort(np.vstack([r.F[:, [0, 1]], r.F[:, [1, 2]], r.F[:, [2, 0]]]), 1), axis=0)
+        P0, P1 = r.V[E[:, 0]], r.V[E[:, 1]]
+        n = np.maximum(1, np.ceil(np.linalg.norm(P1 - P0, axis=1) / step).astype(int))
+        k = np.repeat(np.arange(len(E)), n + 1)
+        t = (np.arange(int((n + 1).sum())) - np.repeat(np.cumsum(np.r_[0, n[:-1] + 1]), n + 1)) / np.repeat(n, n + 1)
+        out.append(P0[k] + t[:, None] * (P1[k] - P0[k]))
+    if not out:
+        return np.zeros((0, 4))
+    V = np.vstack(out)
+    dx, dz = V[:, 0] - A[0], V[:, 2] - A[2]
+    return np.c_[sg * (V[:, 1] - A[1]), np.hypot(dx, dz), dx, dz]
+
+
 def check_L4W(ctx, rep, plots):
     """Sheet L4W: the built wheels against the parameter tables / profiles they are drawn from (never the mesh):
     tyre side silhouette (loaded_side_outline), tyre front-view section (tyre_profile_3d = the drawn tyre_outer_half
@@ -2048,7 +2071,7 @@ def check_L4W(ctx, rep, plots):
         k = np.argsort(phi_o)
         dev, lab = [], []
         for pid in pids:
-            L_ = _wheel_local(ctx, pid, TYRE_MATS)
+            L_ = _wheel_local_edges(ctx, pid, TYRE_MATS)                  # points along the edges: the mesh silhouette
             phi = np.arctan2(L_[:, 3], L_[:, 2])
             bins = np.round(np.degrees(phi) * 2).astype(int)             # 0.5 deg bins
             order = np.lexsort((-L_[:, 1], bins))
@@ -2170,7 +2193,8 @@ def check_L4W(ctx, rep, plots):
             f"(free tyre R + arch {float(WH.NOSE_TYRE_ENV['R']) + WH.NOSE_AXLE['arch']:.4f})")
     # triangle budgets (4K close-ups within the part budget)
     n_main, n_nose = WH.tri_count("main"), WH.tri_count("nose")
-    rep.add("L4W", "wheel triangle budgets (main <= 30k, nose <= 18k per wheel)", None, None,
+    rep.add("L4W", f"wheel triangle budgets (main <= {WH.TRI_BUDGET['main'] / 1000:g}k, nose <= "
+                   f"{WH.TRI_BUDGET['nose'] / 1000:g}k per wheel; cad.res.budget)", None, None,
             f"main {n_main}, nose {n_nose}",
             status="PASS" if n_main <= WH.TRI_BUDGET["main"] and n_nose <= WH.TRI_BUDGET["nose"] else "FAIL",
             n=2)

@@ -1275,12 +1275,20 @@ async def blender_check(page):
 async def phone_checks(browser, base, shots=True):
     ctx = await browser.new_context(viewport=PHONE, device_scale_factor=1, is_mobile=True, has_touch=True, reduced_motion="reduce", **CTX)
     page = await ctx.new_page()
-    errs = []
+    errs, reqs = [], []
     page.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
     page.on("pageerror", lambda e: errs.append(str(e)))
+    page.on("request", lambda r: reqs.append(r.url.split("?")[0].rsplit("/", 1)[-1]))
     await page.goto(base)
     await page.wait_for_function("window.__ready === true", timeout=180000)
     await page.evaluate(JS_HELPERS)
+    # the light tier (model/build.py out/pc12_low.glb, PC12_RES=1) on phones, as the 512 px HDRI; its part cards count it
+    glbs = sorted(u for u in reqs if u.endswith(".glb"))
+    low = json.loads((ROOT / "out" / "pc12_meta.json").read_text())["stats"].get("low", {})
+    spec = await js(page, "return document.getElementById('statsList').textContent;")
+    check("phone: loads the light tier (pc12_low.glb) only, the Specs panel counts it", glbs == ["pc12_low.glb"]
+          and bool(low) and f"{low.get('triangles', 0):,}" in spec,
+          f"requested {glbs}, stats.low {low.get('triangles')} triangles")
     await fit_check(page, "phone 390x844 3/4")
     if shots:
         await shot(page, "28_phone_390x844", "")
@@ -1672,6 +1680,9 @@ async def run(args):
             glb_req = [u for u in requests if u.split("?")[0].endswith((".glb", ".hdr", "pc12_meta.json", "materials.json"))]
             check("[m2] model / HDRI / meta / materials preloaded and downloaded once each", len(glb_req) == 4 and len(set(glb_req)) == 4,
                   f"{len(glb_req)} requests: " + ", ".join(sorted(u.rsplit('/', 1)[-1] for u in glb_req)))
+            check("desktop: loads the full model (pc12.glb), not the light tier",
+                  sorted(u.split("?")[0].rsplit("/", 1)[-1] for u in glb_req if u.split("?")[0].endswith(".glb")) == ["pc12.glb"],
+                  ", ".join(sorted(u.rsplit('/', 1)[-1] for u in glb_req)))
             # [R1/R2/R4] Blender's AgX + Punchy look; the light theme's lifted studio and exposure
             pf = await js(page, "return window.viewer.perf();")
             lk = pf["look"]

@@ -549,11 +549,25 @@ def _extract(m: Mesh, fields):
     return piece, rest
 
 
+def boundary_field(order=PAINT_ORDER, cockpit=False, fin=False):
+    """fn(V) -> (n, k): one column per paint region (the max of its half-space fields: negative inside, zero on its
+    outline) -- cad.res refines a skin along these zero sets before paint_mesh trims it."""
+    regs = [fs for mat in order for fs in region_fields(mat, cockpit=cockpit, fin=fin)]
+
+    def fn(V):
+        if not regs:
+            return np.zeros((len(V), 0))
+        return np.stack([np.max(np.stack([f(V) for f in fs], 1), 1) for fs in regs], 1)
+    return fn
+
+
 def paint_mesh(m: Mesh, order=PAINT_ORDER, cockpit=False, fin=False, base=BASE):
     """Split one unpainted mesh into livery regions -> list of (mesh, material), topmost paint first.
-    cockpit=False skips the PRO mask (it lies on the forward fuselage, the forward cabin skin and the upper cowl)."""
+    cockpit=False skips the PRO mask (it lies on the forward fuselage, the forward cabin skin and the upper cowl).
+    The mesh is first refined along the paint boundaries (cad.res.refine_for_trim; nothing at PC12_RES=1)."""
+    from cad import res
     out = []
-    rest = m
+    rest = res.refine_for_trim(m, boundary_field(order, cockpit=cockpit, fin=fin))
     for mat in order:
         for fields in region_fields(mat, cockpit=cockpit, fin=fin):
             if rest.nf == 0:
@@ -723,10 +737,16 @@ def _pod_pin_fields():
             lambda V: D.POD_X_JOINT + q["x0"] - V[:, 0])
 
 
+def _band_field(fields):
+    """fn(V) -> (n, 1): the intersection (max) of single-sided fields, for cad.res.refine_for_trim."""
+    return lambda V: np.max(np.stack([f(V) for f in fields], 1), 1)[:, None]
+
+
 def _pod_pin(m):
     """Split POD_PIN off a radar-pod body piece (sequential single-sided trims, each field evaluated on the already
     trimmed band).  Returns (band, [rest])."""
-    pieces, band = [], m
+    from cad import res
+    pieces, band = [], res.refine_for_trim(m, _band_field(_pod_pin_fields()))
     for g in _pod_pin_fields():
         f = lambda mm, g=g: g(mm.V)                                # noqa: E731
         v = f(band)
@@ -767,11 +787,16 @@ def _winglet_pin(m, sgn):
     """Split WINGLET_PIN (the white chordwise line on the winglet's inboard face) off an inboard-face piece m of the
     winglet on side sgn: the band |d| <= half_width about the plane of the winglet section at path fraction s
     (winglet_pin_plane), chord c0..c1; sequential single-sided trims."""
+    from cad import res
     p = WINGLET_PIN
     le, e_c, n, chord = winglet_pin_plane(sgn)
     d = lambda mm: (mm.V - le) @ n                                  # noqa: E731
     xc = lambda mm: ((mm.V - le) @ e_c) / chord                     # noqa: E731
-    pieces, band = [], m
+    dv = lambda V: (V - le) @ n                                     # noqa: E731
+    xv = lambda V: (V - le) @ e_c                                   # noqa: E731
+    pieces, band = [], res.refine_for_trim(m, _band_field([lambda V: np.abs(dv(V)) - p["half_width"],
+                                                          lambda V: p["c0"] * chord - xv(V),
+                                                          lambda V: xv(V) - p["c1"] * chord]))
     for f in (lambda mm: d(mm) - p["half_width"], lambda mm: -d(mm) - p["half_width"],
               lambda mm: p["c0"] - xc(mm), lambda mm: xc(mm) - p["c1"]):
         v = f(band)
@@ -789,11 +814,19 @@ def _stab_boot(m):
     sheet L5 draws stab_boot_outline) off a stabiliser skin piece; chordwise edge and span end trimmed in turn.
     Returns (boot, [rest pieces])."""
     from model import empennage as E
+    from cad import res
     def xc_field(mm):
         y = np.abs(mm.V[:, 1])
         le, te = E.stab_le(y), E.stab_te(y)
         xc = (mm.V[:, 0] - le) / np.maximum(te - le, 1e-3)
         return xc - np.where(mm.V[:, 2] >= E.STAB_Z, STAB_BOOT["upper"], STAB_BOOT["lower"])
+
+    def metres(V):                   # the boot outline as a field in metres (chord fraction x chord; the span end)
+        y = np.abs(V[:, 1])
+        le, te = E.stab_le(y), E.stab_te(y)
+        xc = (V[:, 0] - le) - (te - le) * np.where(V[:, 2] >= E.STAB_Z, STAB_BOOT["upper"], STAB_BOOT["lower"])
+        return np.maximum(xc, y - E.STAB_TIP_RIB)[:, None]
+    m = res.refine_for_trim(m, metres)
     rest = []
     v = xc_field(m)
     boot = trim(m, v, "negative")

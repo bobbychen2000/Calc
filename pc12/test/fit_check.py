@@ -1327,11 +1327,24 @@ zn = zn / np.maximum(2 * zA, 1e-18)[:, None]
 zC = zf_T.mean(1)
 lo_, hi_ = zf_T.min(1) - 0.0005, zf_T.max(1) + 0.0005
 h_ = float(np.clip(2 * np.median((hi_ - lo_).max(1)), 0.005, 0.1))
-ii, jj = _pairs(lo_, hi_, lo_, hi_, h_)
-m_ = (ii < jj) & ok_[ii] & ok_[jj] & (zf_mat[ii] != zf_mat[jj])
-ii, jj = ii[m_], jj[m_]
-m_ = ((zn[ii] * zn[jj]).sum(1) > 0.995) & (np.abs(((zC[ii] - zf_T[jj, 0]) * zn[jj]).sum(1)) < 1e-4)
-ii, jj = ii[m_], jj[m_]
+
+
+def _zf_pairs(S):
+    """The candidate pairs (i < j) whose first triangle is in S (the same pairs as one _pairs over every triangle,
+    found slab by slab: the self-pairs of the refined interior did not fit in memory at once)."""
+    B = np.nonzero((hi_[:, 0] >= lo_[S, 0].min()) & (lo_[:, 0] <= hi_[S, 0].max()))[0]
+    a, b = _pairs(lo_[S], hi_[S], lo_[B], hi_[B], h_)
+    i, j = S[a], B[b]
+    m = (i < j) & ok_[i] & ok_[j] & (zf_mat[i] != zf_mat[j])
+    i, j = i[m], j[m]
+    m = ((zn[i] * zn[j]).sum(1) > 0.995) & (np.abs(((zC[i] - zf_T[j, 0]) * zn[j]).sum(1)) < 1e-4)
+    return i[m], j[m]
+
+
+_ord = np.argsort(zC[:, 0], kind="stable")
+_got = [_zf_pairs(_ord[k:k + 40000]) for k in range(0, len(_ord), 40000)]
+ii = np.concatenate([g[0] for g in _got]) if _got else np.zeros(0, int)
+jj = np.concatenate([g[1] for g in _got]) if _got else np.zeros(0, int)
 
 
 def _in_tri(P, Tr):

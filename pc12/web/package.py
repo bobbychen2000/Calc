@@ -13,9 +13,11 @@ Layout of the bundle (everything the page loads, nothing else):
                         tests use too).  No third-party origin at run time; --three cdn keeps the jsDelivr CDN instead.
     viewer/*.js, viewer.css, materials.json
     assets/             studio HDRI, 1k and a 512 px copy for phones (CC0, see assets/SOURCES.md)
-    data/pc12.glb       EXT_meshopt_compression (gltf-transform meshopt, lossless on the already quantised data:
-                        16-bit positions / 8-bit normals as in out/pc12.glb; ~19.1 -> ~6.4 MB at ~1.43M triangles);
-                        --no-meshopt ships out/pc12.glb as it is
+    data/pc12.glb       EXT_meshopt_compression (gltf-transform's reorder + EXT_meshopt_compression, lossless on the
+                        build's quantised data: 16-bit positions on shared per-part grids / 8-bit normals as in
+                        out/pc12.glb; ~44 -> ~17 MB at ~2.6M triangles); --no-meshopt ships out/pc12.glb as it is
+    data/pc12_low.glb   the light tier (out/pc12_low.glb, PC12_RES=1, ~1.5M triangles; ~22 -> ~8 MB), the same way:
+                        index.html loads it on phones (PC12_CONFIG.glbLow)
     data/pc12_meta.json stats.glb_bytes / glb_encoding rewritten for the packaged GLB (the progress bar's fallback
                         total under gzip / brotli transfer encoding)
     data/pc12_ga.svg, pc12_sections.svg
@@ -52,12 +54,36 @@ THREE_CDN = "https://cdn.jsdelivr.net/npm/three@0.160.0/"
 THREE_LOCAL = WEB / "three_local"
 THREE_REVISION = "160"
 THREE_MAIN = "build/three.module.min.js"         # what the import map maps 'three' to (index.html)
-DATA_FILES = ["pc12.glb", "pc12_meta.json", "pc12_ga.svg", "pc12_sections.svg"]
+DATA_FILES = ["pc12.glb", "pc12_low.glb", "pc12_meta.json", "pc12_ga.svg", "pc12_sections.svg"]
+GLB_FILES = ("pc12.glb", "pc12_low.glb")         # the full model and its light tier (phones: PC12_CONFIG.glbLow)
 VIEWER_EXT = {".js", ".css", ".json"}
 CONFIG_RE = re.compile(r"<script>window\.PC12_CONFIG = \{[^<]*\};</script>")
-BUNDLE_CONFIG = {"vendor": "<script>window.PC12_CONFIG = { data: './data/', three: './three/' };</script>",
-                 "cdn": "<script>window.PC12_CONFIG = { data: './data/', three: 'cdn' };</script>"}
-MESHOPT_ARGS = ["--level", "medium", "--quantize-position", "16", "--quantize-normal", "8"]
+BUNDLE_CONFIG = {"vendor": "<script>window.PC12_CONFIG = { data: './data/', three: './three/', glbLow: 'pc12_low.glb' };</script>",
+                 "cdn": "<script>window.PC12_CONFIG = { data: './data/', three: 'cdn', glbLow: 'pc12_low.glb' };</script>"}
+MESHOPT_ARGS = ["--level", "medium", "--quantize-position", "16", "--quantize-normal", "8"]   # CLI fallback only
+# EXT_meshopt_compression on the build's own quantised data (gltf-transform's API: reorder + the extension, method
+# QUANTIZE = the CLI's --level medium without its quantize step): out/pc12.glb quantises the touching meshes of a part
+# on one grid (model/assemble.shared_grids) so the vertices they share stay shared; re-quantising every mesh on its own
+# bounds (the CLI) put hairline cracks back along every paint edge.  argv: node_modules dir, source, destination.
+MESHOPT_JS = r"""
+import { pathToFileURL } from 'url';
+import { join } from 'path';
+const nm = process.argv[2];
+const imp = (p) => import(pathToFileURL(join(nm, p)).href);
+const { NodeIO } = await imp('@gltf-transform/core/dist/index.js');
+const { ALL_EXTENSIONS, EXTMeshoptCompression } = await imp('@gltf-transform/extensions/dist/index.js');
+const { reorder } = await imp('@gltf-transform/functions/dist/index.js');
+const { MeshoptEncoder, MeshoptDecoder } = await imp('meshoptimizer/index.js');
+await MeshoptEncoder.ready;
+await MeshoptDecoder.ready;
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
+  .registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
+const doc = await io.read(process.argv[3]);
+await doc.transform(reorder({ encoder: MeshoptEncoder, target: 'size' }));
+doc.createExtension(EXTMeshoptCompression).setRequired(true)
+  .setEncoderOptions({ method: EXTMeshoptCompression.EncoderMethod.QUANTIZE });
+await io.write(process.argv[4], doc);
+"""
 
 
 def sha256(p: Path) -> str:
@@ -133,6 +159,18 @@ def gltf_transform() -> list[str] | None:
         return [node, cached[-1]]
     npx = shutil.which("npx")
     return [npx, "--yes", "@gltf-transform/cli@4"] if npx else None
+
+
+def gltf_transform_modules(cmd: list[str]) -> Path | None:
+    """The node_modules folder that holds @gltf-transform/core (+ extensions, functions) and meshoptimizer next to the
+    gltf-transform CLI found by gltf_transform(), or None."""
+    if not cmd:
+        return None
+    cli = Path(cmd[-1] if cmd[-1].endswith(".js") else os.path.realpath(cmd[0]))
+    for d in [cli, *cli.parents]:
+        if d.name == "node_modules" and (d / "@gltf-transform" / "core").is_dir() and (d / "meshoptimizer").is_dir():
+            return d
+    return None
 
 
 def used_materials(j: dict) -> list[str]:
@@ -223,15 +261,32 @@ def meshopt(src: Path, dst: Path) -> dict:
     if not cmd:
         raise RuntimeError("gltf-transform not found: `npm i -g @gltf-transform/cli@4` (or install Node.js for npx), "
                            "or package with --no-meshopt")
-    # dequantize first: gltf-transform's quantizer re-fits the node scale of already-quantised meshes that do not span
-    # the full int16 range (the winglets, the dorsal fin: 0.02 -> 0.0137) without re-mapping their integers, which
-    # shrinks them by up to ~4 mm; from float it re-quantises correctly (16-bit over each mesh: < 0.02 mm)
+    nm = gltf_transform_modules(cmd)
+    if nm is None and cmd[-1].startswith("@gltf-transform/cli"):      # npx: fetch it into the cache, then look again
+        subprocess.run(cmd + ["--version"], capture_output=True, text=True)
+        cmd = gltf_transform() or cmd
+        nm = gltf_transform_modules(cmd)
     with tempfile.TemporaryDirectory() as td:
-        mid = Path(td) / "dequantized.glb"
-        for args in (["dequantize", str(src), str(mid)], ["meshopt", str(mid), str(dst)] + MESHOPT_ARGS):
-            r = subprocess.run(cmd + args, capture_output=True, text=True)
+        if nm is not None and shutil.which("node"):
+            # the build's quantisation kept as it is (MESHOPT_JS): shared grids stay crack-free, nothing moves
+            js = Path(td) / "meshopt.mjs"
+            js.write_text(MESHOPT_JS)
+            r = subprocess.run([shutil.which("node"), str(js), str(nm), str(src), str(dst)], capture_output=True, text=True)
             if r.returncode != 0:
-                raise RuntimeError(f"gltf-transform {args[0]} failed ({r.returncode}):\n{r.stdout}\n{r.stderr}")
+                raise RuntimeError(f"meshopt (gltf-transform API) failed ({r.returncode}):\n{r.stdout}\n{r.stderr}")
+            how = "reorder + EXT_meshopt_compression on the build's quantisation"
+        else:
+            # CLI fallback.  Dequantize first: gltf-transform's quantizer re-fits the node scale of already-quantised
+            # meshes that do not span the full int16 range (the winglets, the dorsal fin: 0.02 -> 0.0137) without
+            # re-mapping their integers, which shrinks them by up to ~4 mm; from float it re-quantises correctly (16-bit
+            # over each mesh: < 0.02 mm), but each mesh on its own grid (hairline cracks along shared edges)
+            print("meshopt: gltf-transform's modules not found next to the CLI: re-quantising with the CLI", file=sys.stderr)
+            mid = Path(td) / "dequantized.glb"
+            for args in (["dequantize", str(src), str(mid)], ["meshopt", str(mid), str(dst)] + MESHOPT_ARGS):
+                r = subprocess.run(cmd + args, capture_output=True, text=True)
+                if r.returncode != 0:
+                    raise RuntimeError(f"gltf-transform {args[0]} failed ({r.returncode}):\n{r.stdout}\n{r.stderr}")
+            how = "gltf-transform CLI dequantize + meshopt (per-mesh grids)"
     if not dst.is_file():
         raise RuntimeError("gltf-transform meshopt wrote nothing")
     a, b = glb_json(src), glb_json(dst)
@@ -287,7 +342,7 @@ def meshopt(src: Path, dst: Path) -> dict:
         raise RuntimeError(f"meshopt changed material definitions: {', '.join(changed)}")
     dropped = sorted({m.get("name") for m in a.get("materials", [])} - {m.get("name") for m in b.get("materials", [])})
     return {"bytes_in": src.stat().st_size, "bytes_out": dst.stat().st_size, "pruned_unused_materials": dropped,
-            "geometry": geo, "tool": " ".join(Path(c).name for c in cmd[:2])}
+            "geometry": geo, "tool": " ".join(Path(c).name for c in cmd[:2]), "method": how}
 
 
 def build(out: Path, data: Path, materials: Path | None, three: str, use_meshopt: bool) -> tuple[list[Path], dict]:
@@ -338,19 +393,21 @@ def build(out: Path, data: Path, materials: Path | None, three: str, use_meshopt
     if missing:
         sys.exit(f"missing model files in {data}: {', '.join(missing)} (run model/build.py and drawing.sheet first)")
     for f in DATA_FILES:
-        if f == "pc12.glb" and use_meshopt:
+        if f in GLB_FILES and use_meshopt:
             try:
-                info["meshopt"] = meshopt(data / f, out / "data" / f)
+                info["meshopt" if f == "pc12.glb" else "meshopt_low"] = meshopt(data / f, out / "data" / f)
             except RuntimeError as e:
-                sys.exit(f"meshopt: {e}")
+                sys.exit(f"meshopt ({f}): {e}")
         else:
             shutil.copy2(data / f, out / "data" / f)
-    # the progress bar's fallback total (gzip / brotli transfers report the compressed Content-Length)
+    # the progress bar's fallback total (gzip / brotli transfers report the compressed Content-Length), per tier
     meta_p = out / "data" / "pc12_meta.json"
     meta = json.loads(meta_p.read_text())
     st = meta.setdefault("stats", {})
+    enc = "EXT_meshopt_compression" if use_meshopt else "KHR_mesh_quantization"
     st["glb_bytes"] = (out / "data" / "pc12.glb").stat().st_size
-    st["glb_encoding"] = "EXT_meshopt_compression" if use_meshopt else "KHR_mesh_quantization"
+    st["glb_encoding"] = enc
+    st.setdefault("low", {}).update(glb_bytes=(out / "data" / "pc12_low.glb").stat().st_size, glb_encoding=enc)
     meta_p.write_text(json.dumps(meta, indent=1) + "\n")
     (out / ".nojekyll").write_text("")
     return sorted(p for p in out.rglob("*") if p.is_file()), info
@@ -417,16 +474,20 @@ def verify(out: Path, three: str) -> list[str]:
     meta = json.loads((out / "data" / "pc12_meta.json").read_text())
     if not meta.get("steps"):
         errs.append("data/pc12_meta.json has no build steps")
-    glb = out / "data" / "pc12.glb"
-    try:
-        j = glb_json(glb)
-        req = j.get("extensionsRequired") or []
-        if (meta.get("stats") or {}).get("glb_bytes") != glb.stat().st_size:
-            errs.append("data/pc12_meta.json stats.glb_bytes is not the packaged GLB's size")
-        if "EXT_meshopt_compression" in req and "setMeshoptDecoder" not in (out / "viewer" / "model.js").read_text(encoding="utf-8"):
-            errs.append("the GLB needs EXT_meshopt_compression but model.js sets no MeshoptDecoder")
-    except ValueError as e:
-        errs.append(str(e))
+    for f in GLB_FILES:
+        glb = out / "data" / f
+        try:
+            j = glb_json(glb)
+            req = j.get("extensionsRequired") or []
+            st = meta.get("stats") or {}
+            if (st if f == "pc12.glb" else st.get("low") or {}).get("glb_bytes") != glb.stat().st_size:
+                errs.append(f"data/pc12_meta.json stats{'' if f == 'pc12.glb' else '.low'}.glb_bytes is not data/{f}'s size")
+            if "EXT_meshopt_compression" in req and "setMeshoptDecoder" not in (out / "viewer" / "model.js").read_text(encoding="utf-8"):
+                errs.append(f"{f} needs EXT_meshopt_compression but model.js sets no MeshoptDecoder")
+        except (ValueError, OSError) as e:
+            errs.append(str(e))
+    if "glbLow: 'pc12_low.glb'" not in html:
+        errs.append("index.html: the bundle config does not name the light tier (glbLow)")
     return errs
 
 
@@ -448,6 +509,7 @@ def main():
         "about": "PC-12 PRO viewer static bundle (web/package.py)",
         "three": f"three/ (r{THREE_REVISION}, from web/three_local)" if a.three == "vendor" else THREE_CDN,
         "glb": info.get("meshopt") or "KHR_mesh_quantization (as built)",
+        "glb_low": info.get("meshopt_low") or "KHR_mesh_quantization (as built)",
         "commit": git_commit(),
         "built": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "files": {str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": sha256(p)} for p in files},
@@ -458,10 +520,11 @@ def main():
     for k, v in manifest["files"].items():
         if v["bytes"] > 200_000:
             print(f"  {k:36s} {v['bytes'] / 1048576:6.2f} MB")
-    if info.get("meshopt"):
-        m = info["meshopt"]
-        print(f"meshopt: {m['bytes_in'] / 1048576:.2f} -> {m['bytes_out'] / 1048576:.2f} MB ({m['tool']}); "
-              f"pruned unused materials: {', '.join(m['pruned_unused_materials']) or 'none'}")
+    for k, f in (("meshopt", "pc12.glb"), ("meshopt_low", "pc12_low.glb")):
+        if info.get(k):
+            m = info[k]
+            print(f"meshopt {f}: {m['bytes_in'] / 1048576:.2f} -> {m['bytes_out'] / 1048576:.2f} MB ({m['tool']}: "
+                  f"{m.get('method', '')}); pruned unused materials: {', '.join(m['pruned_unused_materials']) or 'none'}")
     if a.zip:
         z = out.with_suffix(".zip")
         with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
