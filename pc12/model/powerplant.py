@@ -306,7 +306,10 @@ def stack_section(th, a=None, b=None, n=None):
 # section law along the centre line (stack_section_law): a circle of STACK_ROUND['r'] on the root piece, blended over
 # the bend (C1 smoothstep in arc length) into the STACK_AB / STACK_N superellipse, whose vertical half-size then falls
 # to STACK_ROUND['b_out'] at the end of the outlet straight.
-STACK_ROUND = dict(r=0.095, b_out=0.080)
+# model judging r1 EXT1-01 (photos 130 / 81 / 188: the outlet a full-height black trapezoid, the tube full-height or
+# flaring slightly to the mouth): the outlet's vertical half-size 0.080 -> 0.098, a ~4 % flare over STACK_AB (the
+# 15-20 % taper of VQA r3 made the mouth read as a plain cut cylinder)
+STACK_ROUND = dict(r=0.095, b_out=0.098)
 
 
 def stack_section_law(s):
@@ -348,7 +351,8 @@ STACK_GAP_DEPTH = 0.045          # ... its depth into the cowl (dark liner wall 
 # dz below the tube's (the tube's superellipse corners keep >= 4 mm clearance)
 # (rev r3 fix: n 2.4, da 0.020, db 0.022 about the rounded-rectangle root) -- with the round root (STACK_ROUND) the cut is
 # a circle-like ring: ~12 mm above, ~28 mm below the tube
-STACK_CUT = dict(n=2.0, da=0.020, db=0.020, dz=-0.008)
+STACK_CUT = dict(n=2.0, da=0.022, db=0.026, dz=-0.012)   # model judging r1 EXT1-01: the photos' dark annulus is
+#                                                          larger, deepest below the tube (db 0.020 -> 0.026, dz -0.012)
 
 
 def _stack_lengths():
@@ -899,9 +903,10 @@ def _stack_normals(sgn, n, m):
     return np.array(N)
 
 
-STACK_INNER_POLISH = 0.02       # the inside of the outlet is polished this far in from the scarf cut (photo 188: the
+STACK_INNER_POLISH = 0.003      # the inside of the outlet is polished this far in from the scarf cut (photo 188: the
 #                                  far inner wall mirrors the apron through the opening), soot deeper in (VQA r3: 0.05
-#                                  -> 0.02, photos 130 / 3001 show the mouth black to the lip)
+#                                  -> 0.02, photos 130 / 3001 show the mouth black to the lip; model judging r1 EXT1-01:
+#                                  0.02 -> 0.003, the polished ring inside the rim still read as a lit oval mouth)
 
 
 def exhaust_stack_mesh(sgn, n=96, m=72, wall=0.006):

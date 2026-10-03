@@ -479,7 +479,7 @@ def _items():
         (15, ["chin_inlet"], "side", (1.19, -0.12, float(F.z_bot(1.25)) + 0.06), (1.40, 0.70)),
         (16, ["exhaust_stacks"], "side", tuple(ex), (1.68, 3.35)),
         (17, ["gear_main_R", "gear_main_L"], "side", tuple(G.MAIN_AXLE * [1, -1, 1] + [0, -0.11, 0.14]), (7.45, 0.35)),
-        (18, ["gear_nose"], "side", tuple(G.NOSE_AXLE + [0, -0.08, 0.10]), (2.05, 0.30)),
+        (18, ["gear_nose", "gear_nose_steer"], "side", tuple(G.NOSE_AXLE + [0, -0.08, 0.10]), (2.05, 0.30)),
         (19, ["door_airstair"], "side", port(pa["cx"] - 0.20, pa["cz"] - pa["hz"] + 0.10), (4.20, 0.35)),
         (20, ["door_cargo"], "side", port(pc["cx"] + 0.45, pc["cz"] - pc["hz"] + 0.20), (9.90, 0.35)),
         (21, ["exit_hatch"], "plan", (FP.EXIT["cx"], float(F.side_y(FP.EXIT["cx"], FP.EXIT["cz"])) - 0.02,

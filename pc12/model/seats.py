@@ -1282,11 +1282,16 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
             p_ = o[None, :] + b[:, None] * db[None, :] + n[:, None] * nb[None, :]
             return np.c_[p_[:, 0], a, p_[:, 1]]
         return fn
-    arch = lambda b: hwf(b, -0.035) * np.sqrt(np.clip(1.0 - ((b - 0.30) / 0.17) ** 2, 0.0, 1.0) ** (b > 0.30))  # noqa
-    g = pillow(_outline_from_hw(-0.02, 0.465, arch, 0.035, nb=14), 0.012, 0.005, 0.003, h=0.05)
+    # final judge r1 I5 (cab_pro_aero25_0405_seatbacks): the shell's top edge runs nearly HORIZONTAL at ~45 % of the
+    # back height (round corners), not an arch up to the shoulders; the map pocket is black mesh under a grey leather
+    # flap (the flap 4 mm proud of the mesh); the photo's round fitting at the lower outboard corner is left out (the
+    # seat is at its 12k triangle budget)
+    g = pillow(_outline_from_hw(-0.02, 0.42, lambda b: hwf(b, -0.035), 0.06, nb=8), 0.012, 0.005, 0.003, h=0.05)
     back.append(_mats(g.map(rmap(0.008)), M_CAB_SHELL))
-    g = pillow(_outline_from_hw(0.03, 0.27, lambda b: hwf(b, -0.07), 0.03), 0.012, 0.005, 0.003, h=0.05)
+    g = pillow(_outline_from_hw(0.03, 0.235, lambda b: hwf(b, -0.07), 0.03, nb=6), 0.012, 0.005, 0.003, h=0.06)
     back.append(_mats(g.map(rmap(0.004 - 0.006)), M_BLACK))
+    g = pillow(_outline_from_hw(0.205, 0.30, lambda b: hwf(b, -0.066), 0.025, nb=4), 0.010, 0.004, 0.003, h=0.06)
+    back.append(_mats(g.map(rmap(-0.008)), M_CAB_SHELL))
     # headrest (lowest position or raised by head_slide), front centre panel, dark rear insert, two posts
     hw_, hh_ = (float(v) for v in e["head_wh"])
     hup = float(e["head_slide"]) if raised else 0.0

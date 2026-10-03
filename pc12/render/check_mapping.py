@@ -115,7 +115,7 @@ def reference_points(parts, hide=("structure",)):
     ext("winglet tip L (min y)", cat(["winglet_L"]), 1, -1)
     ext("main wheel R contact (min z)", cat(["gear_main_R"]), 2, -1)
     ext("main wheel L contact (min z)", cat(["gear_main_L"]), 2, -1)
-    ext("nose wheel contact (min z)", cat(["gear_nose"]), 2, -1)
+    ext("nose wheel contact (min z)", cat(["gear_nose", "gear_nose_steer"]), 2, -1)
     G = cat(["glazing_flightdeck"])
     ws = G[(G[:, 0] < 3.9) & (np.abs(G[:, 1]) < 0.7)]
     # glazing outline extremes (checked against the glazing region of the part-index map)

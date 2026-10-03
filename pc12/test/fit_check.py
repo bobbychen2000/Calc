@@ -11,7 +11,8 @@
     of the superseded 22 in tyre, ~19 mm), nothing but the wheel below the skin (the hub fairing and rim inside the tyre's depth; the
     fairing, painted in the door colour, is told from the door by lying within the tyre radius of the axle),
     nothing above the upper skin; the stowed leg /
-    strut above the closed leg door; the leg door flush with the skin (within 5 mm, decision LD-1 in model/gear.py);
+    strut above the closed leg door; the leg door flush with the skin (within 5 mm, decision LD-1 in model/gear.py)
+    except its tyre blister (model judging r1 GR1-01: no deeper than the tyre protrusion + 10 mm);
     the skin cut-out closed by the door and the tyre (only the panel gap and the tyre's well ring open)
  6. folding-strut knees over 0-100 % retraction: main knees between the wing skins, nose knee inside the bay
  7. cabin furniture and seats clear of the airstair entry zone (L6 CLEAR_ZONES entry_bl)
@@ -50,6 +51,9 @@
     whole fore / aft and height travel: >= CRITERIA arm_pedestal (review r3 C2)
 26. no coplanar, same-facing, overlapping faces of DIFFERENT materials in the interior (they flicker in the viewer):
     <= 0.5 cm2 per material pair (review r3 K3)
+27. G3000 PDU bezel tops (and so the glass) visible from both design eyes: sight lines from interior.design_eye to
+    points along the PFD / MFD / far-PFD bezel tops cross no flight-deck, glareshield or lining triangle (model judging
+    r1 INT-M1: the rev F eyebrow fascia hid the top 50-55 mm of the glass)
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
@@ -68,6 +72,11 @@ from isect import crossings, merged
 X0, X1 = F.STA["cowl_front"], F.STA["tail_end"]
 MARGIN = 0.02
 parts = build_parts()
+# the steered nose-wheel fork (gear_nose_steer, pivot 'steer', model judging r1 GR1-07) is a child of gear_nose: at its
+# rest pose (steering 0) it belongs to the nose-gear unit in every check that poses gear_nose
+for _k, _q in list(parts.items()):
+    if _q.pivot and _q.pivot.get("kind") == "steer":
+        parts[_q.parent].meshes = parts[_q.parent].meshes + _q.meshes
 FD_KIDS = [k for k, q in parts.items() if q.parent == "flight_deck"]    # yokes, rudder pedals (review r2 M4), consoles,
 #                                                                         divider (review r3 C1)
 CAB_KIDS = [k for k, q in parts.items() if q.parent == "cabin_interior" or (q.parent and parts[q.parent].parent ==
@@ -262,20 +271,41 @@ for side in ("R", "L"):
            f"other parts lowest {-low_other * 1000:+.0f} mm vs the skin (hub fairing / rim / brake "
            f"{-low_wheel * 1000:+.0f} mm, inside the tyre), highest {over * 1000:+.0f} mm vs the upper skin")
     # the stowed leg / strut / trunnion lie above the closed door's inner face (within its plan footprint), M3
-    above = V_[covered, 2] - (zl_[covered] + G.LEG_DOOR_T + G.LEG_DOOR_RECESS)
+    # (the wheel itself lies under the door's tyre blister, model judging r1 GR1-01: its clearance is checked gear
+    # down just below)
+    legv = covered & (kind == 0)
+    above = V_[legv, 2] - (zl_[legv] + G.LEG_DOOR_T + G.LEG_DOOR_RECESS)
     report(f"main gear {side} retracted: leg, strut and trunnion above the closed leg door",
            bool((above > 0.001).all()), f"closest {above.min() * 1000:.0f} mm above the door's inner face "
-                                        f"({int(covered.sum())} verts over the door)")
-    # leg door flush with the wing lower skin (LD-1): the analytic face and the posed mesh
-    Vd, Fd = merged([m for m, mm in parts[f"gear_main_{side}"].meshes
-                     if mm in PLATE_MAT and is_door(f"gear_main_{side}", m, mm)], M)
+                                        f"({int(legv.sum())} verts over the door)")
+    # gear down: the door's inner face (outer face - LEG_DOOR_T) outboard of the wheel (tyre, rim, hub fairing) by
+    # LEG_DOOR_TYRE_CLEAR where the door covers it (the blister), within 2 mm
+    Vw = np.vstack([m.V for m, mm in parts[f"gear_main_{side}"].meshes
+                    if not is_door(f"gear_main_{side}", m, mm) and wheel_mesh(f"gear_main_{side}", m)])
+    inw = sdf2d.polygon(Vw[:, 0], Vw[:, 2], G.leg_door_face()) < 0
+    gapw = (G.leg_door_bl(Vw[inw, 0], Vw[inw, 2]) - G.LEG_DOOR_T) - np.abs(Vw[inw, 1])
+    report(f"main gear {side} down: leg door clears the wheel it covers by ~{G.LEG_DOOR_TYRE_CLEAR * 1000:.0f} mm "
+           "(tyre blister)", bool(inw.any()) and float(gapw.min()) >= G.LEG_DOOR_TYRE_CLEAR - 0.002,
+           f"{int(inw.sum())} wheel verts behind the door, closest {gapw.min() * 1000:.1f} mm to its inner face"
+           if inw.any() else "no wheel behind the door")
+    # leg door flush with the wing lower skin (LD-1) outside its tyre blister (model judging r1 GR1-01: over the
+    # tyre crescent the door covers, it bulges outboard gear down = below the skin retracted, no deeper than the tyre
+    # protrusion + 10 mm): the analytic face and the posed mesh
+    dms = [m for m, mm in parts[f"gear_main_{side}"].meshes if mm in PLATE_MAT and is_door(f"gear_main_{side}", m, mm)]
+    V0d, _ = merged(dms, np.eye(4))
+    Vd, Fd = merged(dms, M)
+    bl_ = G.leg_door_blister(V0d[:, 0], V0d[:, 2])
     dd = Vd[:, 2] - G.wing_z(Vd[:, 0], Vd[:, 1], False)                      # height above the local lower skin
-    outer = dd < 0.5 * G.LEG_DOOR_T
+    outer = (dd < 0.5 * G.LEG_DOOR_T) & (bl_ < 0.0005)
     dmin, dmax = G.leg_door_retracted_drop(sg)
-    report(f"main gear {side} retracted: leg door flush with the wing lower skin (within 5 mm), nothing below it",
-           abs(dmin) <= 0.005 and abs(dmax) <= 0.005 and np.abs(dd[outer]).max() <= 0.005 and dd.min() >= -0.0005,
+    bmin, bmax = G.leg_door_retracted_drop(sg, blister=True)
+    report(f"main gear {side} retracted: leg door flush with the wing lower skin (within 5 mm) outside its tyre "
+           f"blister, the blister no deeper than the tyre protrusion + 10 mm, nothing else below the skin",
+           abs(dmin) <= 0.005 and abs(dmax) <= 0.005 and np.abs(dd[outer]).max() <= 0.005
+           and (dd + bl_).min() >= -0.0015 and bmax <= proud + 0.010,
            f"outer face {dd[outer].min() * 1000:+.1f}..{dd[outer].max() * 1000:+.1f} mm above the skin (mesh), "
-           f"{-dmax * 1000:+.1f}..{-dmin * 1000:+.1f} mm (face), lowest door vertex {dd.min() * 1000:+.1f} mm")
+           f"{-dmax * 1000:+.1f}..{-dmin * 1000:+.1f} mm (face); blister {bmax * 1000:.1f} mm below the skin over the "
+           f"stowed tyre (tyre {proud * 1000:.1f}); lowest door vertex vs skin - blister {(dd + bl_).min() * 1000:+.1f} mm")
     # the underside is closed: every point of the skin cut-out is under the closed door or in the tyre's well; only
     # the door's panel gap (DOOR_GAP) and the ring round the tyre (tread -> well edge) stay open
     xs_, ys_ = np.meshgrid(np.arange(5.85, 6.75, 0.004), np.arange(1.0, 2.5, 0.004))
@@ -761,7 +791,9 @@ FL = float(I.FLOOR["wl"])
 for pid in SEAT_IDS:
     V = verts(pid)
     side_cl = float((LIN.hw(V[:, 0], V[:, 2]) - np.abs(V[:, 1])).min())
-    head_cl = float((LIN.crown(V[:, 0], V[:, 1]) - V[:, 2]).min())
+    # under the headliner's underside: in the cabin the soffit bands (LINING soffit, model judging r1 INT-M2)
+    roof = np.where(V[:, 0] > CB.XA, CB.ceiling(np.clip(V[:, 0], CB.XA, 9.8), V[:, 1]), LIN.crown(V[:, 0], V[:, 1]))
+    head_cl = float((roof - V[:, 2]).min())
     low = float(V[:, 2].min() - FL)
     report(f"{pid} inside the lining (side wall, headliner) and standing on the floor",
            side_cl > 0.0 and head_cl > 0.0 and -0.0005 <= low <= 0.0005,
@@ -1057,7 +1089,7 @@ report(f"interior fittings seated: every piece ({len(pieces)}) within 3 mm of an
 # C2 / C7: the O2 gap plates were 92-100 % within 0.3 mm of the lining or behind it, the flat downlights half buried).
 # Parent surface: the large lining-coloured pieces of interior_lining (side walls, headliner panels, soffits), faces
 # wound toward the cabin; distances exact (point-triangle) over the 12 nearest parent triangles.
-LIN_MATS = ("lining", "lining_flightdeck")
+LIN_MATS = ("lining", "lining_flightdeck", "carpet_flightdeck")     # + the flight deck's carpeted kick panels
 par_T, fit_pc = [], []
 for m, mat in parts["interior_lining"].meshes:
     T = m.V[m.F]
@@ -1322,6 +1354,32 @@ bad_zf = sorted(((a_, k_, c_) for k_, (a_, c_) in zf.items() if a_ > 0.5e-4), ke
 report("interior: no coplanar same-facing overlaps of different materials (<= 0.5 cm2 per pair)", not bad_zf,
        "none" if not bad_zf else "; ".join(f"{k_[0]} vs {k_[1]} {a_ * 1e4:.1f} cm2 at STA {c_[0]:.3f} BL {c_[1]:+.3f} "
                                            f"WL {c_[2]:.3f}" for a_, k_, c_ in bad_zf[:8]))
+
+# 27 ------------------------------------------------------------------------ PDU tops seen from the design eye
+from isect import seg_tri
+from model import flightdeck as FDK, interior as IINT
+vis_T = np.vstack([m.V[m.F] for pid in ["flight_deck", "fd_consoles", "interior_lining"] if pid in parts
+                   for m, mat in parts[pid].meshes if len(m.F) and mat not in ("display_page", "bezel_black")])
+vis_bad, vis_n = [], 0
+for name, kind, sg_, fr_, W_, H_, brd_, kw_ in FDK._display_specs():
+    if kind == "sdu":
+        continue
+    for u_ in np.linspace(-0.5 * W_ + 0.004, 0.5 * W_ - 0.004, 9):
+        Pt = fr_.p(u_, 0.5 * H_ - 0.002, 0.0)
+        for es in (-1, 1):
+            Eye = IINT.design_eye(es)
+            Q = Pt + 0.006 * (Eye - Pt) / np.linalg.norm(Eye - Pt)
+            n_ = len(vis_T)
+            hit, _ = seg_tri(np.repeat(Eye[None], n_, 0), np.repeat(Q[None], n_, 0), vis_T[:, 0], vis_T[:, 1],
+                             vis_T[:, 2])
+            vis_n += 1
+            if hit.any():
+                vis_bad.append(f"{name} u {u_:+.3f} from the {'L' if es < 0 else 'R'} eye")
+mb_, mg_, wpair = FDK.brow_visibility()
+report("PDU bezel tops visible from the design eyes (sight lines clear of the brow / glareshield / lining)",
+       not vis_bad, f"{vis_n - len(vis_bad)}/{vis_n} clear; 2-D margin under the fascia foot: bezel tops "
+                    f"{1000 * mb_:.1f} mm, glass tops {1000 * mg_:.1f} mm (worst {wpair})"
+                    + ("; blocked: " + ", ".join(vis_bad[:6]) if vis_bad else ""))
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

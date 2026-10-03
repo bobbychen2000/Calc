@@ -1,5 +1,5 @@
 """
-loftkit.glb -- minimal glTF 2.0 binary writer with KHR_mesh_quantization.
+loftkit.glb -- minimal glTF 2.0 binary writer with KHR_mesh_quantization (+ embedded image textures).
 
 Model axes (x aft, y starboard, z up) are converted to glTF / three.js axes:
     X = y (starboard), Y = z (up), Z = x (aft)
@@ -32,7 +32,9 @@ class GLBBuilder:
         self.bin = bytearray()
         self.bufferViews, self.accessors = [], []
         self.meshes, self.materials, self.nodes = [], [], []
+        self.images, self.textures, self.samplers = [], [], []
         self.mat_index = {}
+        self.textured = set()           # material indices with a texture: their meshes carry TEXCOORD_0
         self.ext_used = set()
         self.quantize = quantize
         self.stats = {"vertices": 0, "triangles": 0}
@@ -73,11 +75,22 @@ class GLBBuilder:
                     "sheen_color": ("KHR_materials_sheen", "sheenColorFactor"),
                     "sheen_rough": ("KHR_materials_sheen", "sheenRoughnessFactor")}
 
+    def texture(self, name, data: bytes, mime="image/jpeg"):
+        """Embed an image (PNG / JPEG bytes) in the binary chunk; returns its texture index (linear filtering with
+        trilinear mipmaps, clamped to the edge: an atlas, not a tiling pattern)."""
+        if not self.samplers:
+            self.samplers.append({"magFilter": 9729, "minFilter": 9987, "wrapS": 33071, "wrapT": 33071})
+        self.images.append({"name": name, "bufferView": self._view(bytes(data)), "mimeType": mime})
+        self.textures.append({"name": name, "sampler": 0, "source": len(self.images) - 1})
+        return len(self.textures) - 1
+
     def material(self, name, color, metallic=0.0, roughness=0.5, emissive=None,
-                 double_sided=False, alpha=None, extras=None, ext=None):
+                 double_sided=False, alpha=None, extras=None, ext=None, textures=None):
         """ext: {clearcoat, clearcoat_rough, specular, ior, sheen_color, sheen_rough} -> KHR_materials_clearcoat /
         _specular / _ior / _sheen (listed in
-        extensionsUsed, not required: a loader without them falls back to the core metallic-roughness values)."""
+        extensionsUsed, not required: a loader without them falls back to the core metallic-roughness values).
+        textures: {'base': texture index, 'emissive': texture index} (baseColorTexture / emissiveTexture, UV set 0):
+        the material's meshes must carry Mesh.UV, written as TEXCOORD_0."""
         if name in self.mat_index:
             return self.mat_index[name]
         c = list(color) + ([1.0] if len(color) == 3 else [])
@@ -98,8 +111,16 @@ class GLBBuilder:
             self.ext_used.add(e)
         if extras:
             m["extras"] = extras
+        tx = textures or {}
+        if tx.get("base") is not None:
+            m["pbrMetallicRoughness"]["baseColorTexture"] = {"index": int(tx["base"])}
+        if tx.get("emissive") is not None:
+            m["emissiveTexture"] = {"index": int(tx["emissive"])}
+            m.setdefault("emissiveFactor", [1.0, 1.0, 1.0])
         self.materials.append(m)
         self.mat_index[name] = len(self.materials) - 1
+        if tx:
+            self.textured.add(self.mat_index[name])
         return self.mat_index[name]
 
     # ---------------------------------------------------------------- meshes
@@ -153,6 +174,12 @@ class GLBBuilder:
             nvw = self._view(N.astype(np.float32).tobytes(), ARRAY_BUFFER)
             attrs["NORMAL"] = self._accessor(nvw, FLOAT, nv, "VEC3")
             trs = (np.zeros(3), np.ones(3))
+        if material in self.textured:
+            if mesh.UV is None or len(mesh.UV) != nv:
+                raise ValueError(f"{name}: textured material {self.materials[material]['name']} needs Mesh.UV")
+            UV = np.asarray(mesh.UV, np.float32)
+            tv = self._view(UV.tobytes(), ARRAY_BUFFER)
+            attrs["TEXCOORD_0"] = self._accessor(tv, FLOAT, nv, "VEC2", False, UV.min(0), UV.max(0))
         if nv < 65535:
             iv = self._view(F.astype(np.uint16).tobytes(), ELEMENT_ARRAY_BUFFER)
             ia = self._accessor(iv, USHORT, F.size, "SCALAR")
@@ -200,6 +227,8 @@ class GLBBuilder:
             "bufferViews": self.bufferViews,
             "buffers": [{"byteLength": len(self.bin)}],
         }
+        if self.images:
+            gltf.update(images=self.images, textures=self.textures, samplers=self.samplers)
         used = (["KHR_mesh_quantization"] if self.quantize else []) + sorted(self.ext_used)
         if used:
             gltf["extensionsUsed"] = used

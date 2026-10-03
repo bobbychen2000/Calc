@@ -1113,9 +1113,12 @@ def draw_detail_gear(ds):
                         f"TIP R {G.LEG_DOOR_TIP_R * 1000:.0f}, STEP / TOP CORNERS R {G.LEG_DOOR_CORNER_R * 1000:.0f} "
                         "(OWNER 2026-09-27):", "CLEARS THE SKIN CUT-OUT AT EVERY POSE"])
     a_ = math.radians(97.0)
-    leader_label(ds, v, G.MAIN_AXLE[0] + dd["scallop_r"] * math.cos(a_), G.MAIN_AXLE[2] + dd["scallop_r"] * math.sin(a_),
-                 f"TYRE SCALLOP R {dd['scallop_r'] * 1000:.0f} (LD-1)", off=(22.0, -5.0), size=1.7,
-                 lines=["DRAWN FACE (PHANTOM) OVERLAPS THE TYRE:", "STOWED IT WOULD LIE UNDER THE TYRE BULGE"])
+    rb_ = 0.5 * (G.MAIN_TYRE["R"] + 0.19)
+    bmax_ = G.leg_door_retracted_drop(blister=True)[1]
+    leader_label(ds, v, G.MAIN_AXLE[0] + rb_ * math.cos(a_), G.MAIN_AXLE[2] + rb_ * math.sin(a_),
+                 f"TYRE BLISTER (MODEL JUDGING R1)", off=(22.0, -5.0), size=1.7,
+                 lines=["DRAWN FACE KEPT OVER THE TYRE TO THE HUB;", f"OUTER FACE BULGES <= {bmax_ * 1000:.0f} OUTBOARD "
+                        f"({G.LEG_DOOR_TYRE_CLEAR * 1000:.0f} CLEAR),", f"STOWED <= {bmax_ * 1000:.0f} BELOW THE SKIN"])
     xt, zt = dd["tab"]
     leader_label(ds, v, 0.5 * (dd["x_fwd"] + xt), float(G._door_wing_line(np.array([xt]))[0]) - 0.006,
                  "TAB INTO THE SLOT (LD-1)", off=(-26.0, 6.0), size=1.7,
@@ -1284,8 +1287,8 @@ def deviation_rows(O, R):
     for key, lab, note in (("door_side_unit", "Leg door face outline, unit frame", "gear.LEG_DOOR fitted to the drawn "
                             "face (rev B.0: 116 / 58)"),
                            ("door_side_direct", "Leg door face outline, direct", "incl. the -17.5 unit shift"),
-                           ("door_side_model", "Leg door as built (scallop, tab), unit",
-                            f"LD-1 tyre scallop R {G.LEG_DOOR['scallop_r'] * 1000:.0f} + tab")):
+                           ("door_side_model", "Leg door as built (tip, tab), unit",
+                            "drawn face, R 20 tip / corners, LD-1 tab (no tyre scallop: model judging r1)")):
         r = (R or {}).get(key)
         rows.append((f"{lab} (max / rms)", "-", f"{r[0]:.0f} / {r[1]:.0f}" if r else "-", "-", note))
     return rows
@@ -1382,15 +1385,18 @@ def stage3_items():
         "box at the winglet top), details.py still places them at the tip rib (inside the pod on starboard).",
         "Gear, leg door (decision LD-1, resolved): the door is the wing lower skin carried down by the leg "
         "(gear.leg_door_offset), so retracted it closes flush ({0:+.0f}..{1:+.0f} mm) and the tyre protrudes {2:.0f} mm "
-        "in its own well. Drawn side-view face kept, scalloped round the tyre (R {3:.0f}) with a hidden tab up the "
-        "slot over the leg's skin crossing; edge-on it stands at BL {4:.0f}-{5:.0f} (drawn plane 2358-2472, leaning "
-        "out: not possible with a flush door). Hidden changes: trunnion {6:.0f} / WL {7:.0f} (drawn 5932 / 1070), "
+        "in its own well. Drawn side-view face kept whole over the tyre down to the hub (model judging r1: LD-1's "
+        "tyre scallop is gone), its outer face bulging up to {3:.0f} mm outboard over the tyre crescent it covers "
+        "(a blister, 10 mm clear of the tyre; stowed it stands as deep below the skin over the protruding tyre), with "
+        "a hidden tab up the slot over the leg's skin crossing; edge-on it stands at BL {4:.0f}-{5:.0f} (drawn plane "
+        "2358-2472, leaning out: only the blister's share with a flush door). Hidden changes: trunnion {6:.0f} / WL "
+        "{7:.0f} (drawn 5932 / 1070), "
         "retraction {8:.0f} deg, side-brace stations and split, brace B0 on a lug {9:.0f} inboard of the drawn BL 2250 "
         "(the folded lower link clears the stowed leg), no forward slot. Owner decision 2026-09-27: the pointed tip "
         "rounded R {10:.0f} and the step / top corners R {11:.0f}, so the door clears the skin cut-out at every "
         "retraction pose (fit_check: 90-100 % every 0.5 %).".format(
             -1000 * G.leg_door_retracted_drop()[1], -1000 * G.leg_door_retracted_drop()[0],
-            1000 * G.main_tyre_protrusion(), 1000 * G.LEG_DOOR["scallop_r"],
+            1000 * G.main_tyre_protrusion(), 1000 * G.leg_door_retracted_drop(blister=True)[1],
             1000 * G.leg_door_front_line()[:, 0].min(), 1000 * G.leg_door_front_line()[:, 0].max(),
             1000 * G.MAIN_TRUNNION[0], 1000 * G.MAIN_TRUNNION[2], G.MAIN_RETRACT_DEG, 1000 * G.MAIN_BRACE_LUG,
             1000 * G.LEG_DOOR_TIP_R, 1000 * G.LEG_DOOR_CORNER_R),

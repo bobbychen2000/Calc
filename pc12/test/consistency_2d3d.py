@@ -438,6 +438,8 @@ class Ctx:
                 self.by_part.setdefault("flight_deck", []).append(r)  # and divider (review r3 C1): own parts
             if r.part == "cabin_floor":                                # carpet + seat tracks (review r3 F4)
                 self.by_part.setdefault("cabin_interior", []).append(r)
+            if r.part == "gear_nose_steer":                            # steered fork + wheel (model judging r1)
+                self.by_part.setdefault("gear_nose", []).append(r)
 
     def get(self, part, mats=None, exclude=()):
         return [r for r in self.by_part.get(part, []) if (mats is None or r.mat in mats) and r.mat not in exclude]
@@ -491,7 +493,7 @@ def skin_mesh(ctx, with_doors=True, with_lip=True):
         Vd, Fd = ctx.mesh(DOOR_PARTS, mats=paint_mats())
         parts.append((Vd, outer_faces(Vd, Fd)))
     if with_lip:
-        parts.append(ctx.mesh(("chin_inlet",), mats=("chrome",)))
+        parts.append(ctx.mesh(("chin_inlet",), mats=(L.SURFACES["inlet_lip"],)))
     Vs, Fs, off = [], [], 0
     for v, f in parts:
         Vs.append(v)
@@ -2752,8 +2754,7 @@ def check_L6(ctx, rep, plots):
     rep.add("L6", "seat tracks: crew (CREW_SEAT rail_dy, drawn rail run, crew_h), cabin (SEAT_TRACKS bl, x0-x1, h)",
             np.array(dev), tol, "4 crew + 4 cabin tracks", _wl(dev, lab))
     # ---- displays: PDU / SDU centres, PDU plane
-    Vs = np.vstack([r.V for r in ctx.get("flight_deck", mats=("screen",))]) if ctx.get("flight_deck", ("screen",)) \
-        else np.zeros((0, 3))
+    Vs = ctx.verts("flight_deck", mats=("display_page",))           # the glass carrying the G3000 PRIME pages
     zm = float(I.PANEL["mfd_z"])
     dev, lab = [], []
     pdu = Vs[(Vs[:, 2] > zm - 0.14) & (Vs[:, 2] < zm + 0.14) & (Vs[:, 0] < 3.58) & (np.abs(Vs[:, 1]) < 0.56)]

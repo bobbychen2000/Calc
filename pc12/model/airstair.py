@@ -11,7 +11,8 @@ door stops and the 60 mm jambs.
 
 Reference (refs/cache, not in git): MSN 3008 handover photos 130 / 188 (door open: grey bolted edge band, white
 inner face and side stringers, three grey tread trays with dark tops, the bottom step at the free edge, a red inner
-handle below the third tray, polished two-link handrails from stanchions on the stringers to fittings on the jamb,
+handle below the third tray, a polished two-link handrail from a stanchion on the FORWARD stringer to a fitting on
+the jamb (final judge r1 S1: the aft stringer has none),
 thin restraint cables), NGX s/n 2281 cabin photo (door closed: the dark bottom-step tray at the top, the red lever
 below it, a polished rod folded down the door), POH 'integral steps'.  The rail joints were measured on photos 130 /
 188 with their fitted cameras (rays through the stringer plane).  The door opens 145 deg (the free edge on the
@@ -21,7 +22,7 @@ so the bottom step sits at the free edge and the treads divide sill -> bottom st
 drawing or interior table carries a step pitch [D].
 
 Door part (rigid, pivot unchanged): edge band + fasteners, flange, lining panel, perimeter frame (side stringers),
-treads + pads, bottom step, inner handle, the two stanchions.  Handrails: a rigid door cannot carry a folding handrail,
+treads + pads, bottom step, inner handle, the stanchion (forward stringer, RAIL sides).  Handrails: a rigid door cannot carry a folding handrail,
 so the moving pieces are child parts of door_airstair that FOLD about their own x-parallel pivot, in the door's frame
 (pivot kind 'fold', 'follows': 'door_airstair', 'window': the door-travel fraction over which they unfold, 'open': the
 angle at full unfold):
@@ -65,7 +66,8 @@ TREAD = dict(depth=0.160,    # [M] tray depth (horizontal, open)
              bracket=(0.006, 0.090),   # [E] open side brackets under each plate: thickness, drop along the wall
              embed=0.012,    # [E] into the lining panel
              gap=0.002,      # [E] to the stringer walls
-             pad=(0.022, 0.022, 0.020, 0.0022))   # [E] anti-slip pad inset back / front / sides, thickness
+             pad=(0.022, 0.022, 0.020, 0.0022),   # [E] anti-slip pad inset back / front / sides, thickness
+             shadow=(0.075, 0.0012, 0.003))   # [M] dark recess under each plate: height down the wall, off it, thick
 FOOT = dict(depth=0.215, lip=0.012)   # [M] bottom step at the free edge (foot, photo 188: the step he stands on)
 RAIL = dict(r=0.0125,        # [M] polished rods ~25 mm (photos 130 / 188, against the 22x8.50 tyre scale)
             post_wl=0.70,    # [M] stanchion foot on the stringer at open WL 0.70, between treads 2 and 3: the lower
@@ -79,7 +81,13 @@ RAIL = dict(r=0.0125,        # [M] polished rods ~25 mm (photos 130 / 188, again
             A_wl=1.97,       # [M] jamb fitting WL (photos 188 / 130: WL 2.02 / 1.91 on the fwd jamb)
             A_depth=0.065,   # [E] fittings bolted to the jamb face (jamb: 49-109 mm inside the skin)
             knee_r=0.017, knee_l=0.050,   # [E] knee / eye fittings
-            lug=(0.020, 0.032, 0.012))    # [E] stanchion foot half sizes (x, along, up)
+            lug=(0.020, 0.032, 0.012),    # [E] stanchion foot half sizes (x, along, up)
+            sides=("fwd",))  # [M] final judge r1 S1: the two-link rail is on the FORWARD stringer only -- both
+#                              rails projected through the fitted cameras (livery cams.json port_hangar_130,
+#                              vqa/cams_beauty.json nose_188): the forward one lies on the photos' long upper rod and
+#                              lower rod (knee at the hand), the aft one on nothing (its upper rod read as a doubled
+#                              rail); the aft side carries the restraint cable only (and an unmodelled short strut from
+#                              the jamb foot, out/tmp/fix_r1/railproj_*.png)
 CABLE = dict(r=0.0030,       # [M] thin restraint cables (photos 188 / 130: thin lines jamb -> stringers)
              C_wl=1.75,      # [M] upper end on the jamb (photo 188: WL 1.75)
              z_low=0.80,     # [M] lower end on the stringer at open WL 0.80, between treads 2 and 3 (photo 188;
@@ -90,9 +98,12 @@ HANDLE = dict(zs=2.31,       # [M] inner door handle between tread 3 and the bot
               x=(4.80, 5.06),  # [E] lever span (station), hub at the aft end
               w=0.034, t=0.018, off=0.024, tilt=12.0, hub_r=0.024)   # [E] section, off the panel, twist (deg)
 FASTENERS = dict(pitch=0.065, r=0.0042, h=0.0015)   # [M] fastener row on the grey edge band (photos 130 / 188)
-MAT = dict(edge="metal", flange="metal", body="lining", frame="lining", tread="metal", bracket="metal",
+# model judging r1 GR1-06 (photos 130 / 188): the curved door rim is a darker riveted metal band (edge metal_dark with
+# steel_dark fasteners; it had read light grey), and every tread throws a dark cavity onto the inner face below it
+# (TREAD 'shadow': a dark recess panel under each plate between its brackets)
+MAT = dict(edge="metal_dark", flange="metal", body="lining", frame="lining", tread="metal", bracket="metal",
            antislip="metal_dark", rod="chrome", fitting="steel", cable="steel", handle="prop_band_red",
-           fastener="metal_dark")
+           fastener="steel_dark", shadow="vent_dark")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -423,7 +434,10 @@ def inner_body(door):
         N3 /= np.linalg.norm(N3, axis=1, keepdims=True)
         m.N = np.vstack([N3, N3])
         _orient(m)
-    return [(panel, MAT["body"]), (top, MAT["frame"]), (wo, MAT["frame"]), (wi, MAT["frame"])]
+    # final judge r1 S3: the outer wall is part of the grey bolted edge band seen from the side (photos 130 / 188: a
+    # thin metal rim, the white stringers set inside it), not white lining -- the side face had read as a thick slab;
+    # A1: the frame's top band too (the photos' bright metal rim round the door, the white lining inside it)
+    return [(panel, MAT["body"]), (top, MAT["edge"]), (wo, MAT["edge"]), (wi, MAT["frame"])]
 
 
 def inner_handle(door):
@@ -526,6 +540,16 @@ def treads(door):
         gb, gz = door.closed_bz(G[:, 0], G[:, 1])
         for x0g in (xa + 0.002, xb - 0.002 - bt):
             out += _extrude(np.c_[gb, gz], x0g, x0g + bt, door, [(0, 3, False, MAT["bracket"])], MAT["bracket"])
+        # dark recess panel on the inner face under the plate, between its brackets (photos 130 / 188: a shadowed
+        # cavity under every tread; model judging r1 GR1-06)
+        if not tp["foot"]:
+            sh, so, st = TREAD["shadow"]
+            zt_, zb_ = zk - TREAD["t"] - 0.0015, zk - TREAD["t"] - sh
+            wt, wbm = float(np.interp(zt_, wz_, wb_)), float(np.interp(zb_, wz_, wb_))
+            S_ = np.array([(wt + so, zt_), (wt + so + st, zt_), (wbm + so + st, zb_), (wbm + so, zb_)])
+            sb, sz = door.closed_bz(S_[:, 0], S_[:, 1])
+            out += _extrude(np.c_[sb, sz], xa + bt + 0.003, xb - bt - 0.003, door, [(0, 4, False, MAT["shadow"])],
+                            MAT["shadow"])
         # anti-slip pad (open pose: a thin plate on the top)
         zk = tp["z"]
         Q = np.array([(tp["b_back"] + pb, zk - 0.001), (tp["b_front"] - pf, zk - 0.001),
@@ -739,7 +763,14 @@ def rail_meshes(door):
     r = RAIL["r"]
     posts, low, upp, cbl = [], [], [], []
     zsB = lay["points"]["zsB"]
-    for x in door.frame_x():
+    xs = dict(zip(("fwd", "aft"), door.frame_x()))
+    for side_name, x in xs.items():
+        Cj, Cs = cab["seg"]                                             # restraint cables on both stringers
+        cbl.append((cylinder(door.to3(x, *Cj), door.to3(x, *Cs), CABLE["r"], n=8), MAT["cable"]))
+        cbl.append((_bracket(door, x, Cj, CABLE["r"] + 0.004), MAT["fitting"]))
+        cbl.append((_eye(door, x, Cs, CABLE["r"] + 0.004, 0.010), MAT["fitting"]))
+        if side_name not in RAIL["sides"]:                              # two-link rail: forward stringer only
+            continue
         posts += _stanchion(door, x, zsB)
         B, K = lo["seg"]
         low.append((cylinder(door.to3(x, *B), door.to3(x, *K), r, n=16), MAT["rod"]))
@@ -749,10 +780,6 @@ def rail_meshes(door):
         Ks, As = up["seg"]
         upp.append((cylinder(door.to3(x, *Ks), door.to3(x, *As), 0.92 * r, n=16), MAT["rod"]))
         upp.append((_bracket(door, x, As, r + 0.004), MAT["fitting"]))
-        Cj, Cs = cab["seg"]
-        cbl.append((cylinder(door.to3(x, *Cj), door.to3(x, *Cs), CABLE["r"], n=8), MAT["cable"]))
-        cbl.append((_bracket(door, x, Cj, CABLE["r"] + 0.004), MAT["fitting"]))
-        cbl.append((_eye(door, x, Cs, CABLE["r"] + 0.004, 0.010), MAT["fitting"]))
     return posts, dict(door_airstair_rail=low, door_airstair_rail_up=upp, door_airstair_cable=cbl), lay
 
 

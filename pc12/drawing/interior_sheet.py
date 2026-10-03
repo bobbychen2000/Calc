@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="E", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-09-27")
+             size="A1", scale="AS SHOWN", rev="G", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-03")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -57,6 +57,13 @@ REVISIONS = (
                         "(P1046402-05); PC-24 yoke face: white goblet shield (top +/-70) on a black body, grip heads "
                         "r 20 [M] (P1046408); PCL paddle grip [M]; armrest vs pedestal row (L6B); yoke-roll knee "
                         "contact recorded as an owner decision"),
+    ("F", "2026-10-03", "Stage-4 final judge r1 (I2, P1046408 re-measured): yoke shield a full U (half-width "
+                        "fractions 0.80 / 0.50 at 1/2 / 4/5 of its height, ~0.86 / 0.66 of the top width; the goblet "
+                        "left a broad black body), grips 160 long (tops 20 higher), heads r 18 over 42 [M]"),
+    ("G", "2026-10-03", "model judging r1: headliner soffit bands (LINING soffit: 50 step at the raised channel's "
+                        "edge, straight band to the lining at |BL| 400, P1046402 / 04 / 06) carrying the PSU pods "
+                        "(psu_bl 370 -> 320) and downlights, cabin headroom to the headliner underside (L6B); PDU "
+                        "bezel tops visible from the design eyes under the eyebrow fascia (L6B row)"),
 )
 
 # ---- fills (clean sheet)
@@ -1445,12 +1452,15 @@ def _section_cabin(ds, v, x, ctx):
         P = np.array([(sg * lg["inner_bl"], zt), (sg * yo, zt), (sg * I.lining_half_width(x, fl + 0.01), fl),
                       (sg * yf, fl), (sg * (lg["inner_bl"] - 0.003), zt - lg["fascia"])])
         poly(ds, v, P, W_FINE, fill=LEDGE_FILL)
-    zc = I.lining_crown(x, 0.0)
+    # headliner underside (LINING): the raised flat centre channel, the soffit steps and bands (model judging r1
+    # INT-M2), the PSU pods on the bands
     hf = 0.5 * I.LINING["headliner_flat"]
-    line(ds, v, [(-hf, zc - 0.012), (hf, zc - 0.012)], W_THIN, (1.2, 0.8), MUTED)
+    y2 = float(I.LINING["soffit"][1])
+    ys = np.r_[np.linspace(-y2, -hf - 1e-4, 8), np.linspace(-hf + 1e-4, hf - 1e-4, 9), np.linspace(hf + 1e-4, y2, 8)]
+    line(ds, v, [(y, I.headliner_z(x, y)) for y in ys], W_THIN, None, MUTED)
     for sg in (-1, 1):
         y = sg * I.LINING["psu_bl"]
-        X, Y = v.pt(y, I.lining_crown(x, y))
+        X, Y = v.pt(y, I.headliner_z(x, y))
         ds.cv.circle(X, Y + 0.5, 0.6, w=W_THIN, fill=PAPER)
     st = I.SEAT_TRACKS
     for yb in st["bl"]:
@@ -1637,13 +1647,13 @@ def _detail_dims(ds, v, ctx, e, s0, p):
         size=TXT, text_at=(v.pt(s0[0] - tx, 0)[0] - 30.0, Yt + 0.3))
     o95 = cc["occ"]["p95m"]
     kn = p["knee"]
-    leader_to(ds, v, (kn[0] - 0.05, kn[1] - 0.03), (3.37, 1.66),
+    leader_to(ds, v, (kn[0] - 0.05, kn[1] - 0.03), (3.13, 1.66),
               f"95TH KNEE: PANEL {mm(o95['clear_panel'])}, YOKE ±{mm(I.YOKE['travel'][1])} PITCH "
               f"{sgn_mm(o95['yoke_pitch'])}", "end", color=ACCENT, weight=600,
               lines=[f"FULL RUDDER (PHANTOM LEG, PEDAL {mm(I.PEDALS['travel'])} AFT): {sgn_mm(o95['rud_pitch'])}",
                      f"ROLL: CONTACT FROM {o95['roll_contact']:.0f}° (DETAIL F)", "DASHED CIRCLE: 5TH FEMALE KNEE"])
     pd = I.pedal_points(p["crank"])
-    leader_to(ds, v, tuple(pd["ball"]), (3.37, 1.555),
+    leader_to(ds, v, tuple(pd["ball"]), (3.13, 1.555),
               f"H-PT TO BALL {mm(o95['hip_to_ball'])}, KNEE {o95['knee_angle']:.0f}°", "end", color=ACCENT,
               weight=600, lines=[f"PEDALS {mm(-p['crank'])} FWD"])
     leader_to(ds, v, (e[0], e[2]), (3.62, 2.755), f"DESIGN EYE {mm(e[0])} / {mm(abs(e[1]))} / {mm(e[2])}", "end",

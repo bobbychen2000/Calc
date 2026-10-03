@@ -401,13 +401,21 @@ async def numeric_checks(page):
       const g0 = [hub[0] + 0.12, hub[1] + 0.08, hub[2]];               // a point up the right grip (gl: +X = stbd)
       const loc = T.attach('yoke_L', g0);
       const pads = {};
-      for (const id of ['pedal_LL', 'pedal_LR']) { const b = T.box(id); const p = [b.center[0], b.max[1] - 0.02, b.center[2]]; pads[id] = {p0: p, loc: T.attach(id, p)}; }
+      // a point on the pad, near its lower end (the hanging pedals' arms run up to the pivot under the panel: model
+      // judging r1 INT-m1)
+      for (const id of ['pedal_LL', 'pedal_LR']) { const b = T.box(id); const p = [b.center[0], b.min[1] + 0.05, b.center[2]]; pads[id] = {p0: p, loc: T.attach(id, p)}; }
       V.setControls({roll: 1}, {instant: true});
       out.rollR = T.sub(T.world('yoke_L', loc), g0);
       V.setControls({roll: 0, pitch: 1}, {instant: true});
       out.pull = T.sub(V.nodeWorldPoint('yoke_L', [0, 0, 0]), hub);
+      const nb = T.box('gear_nose_steer'), nw = [nb.center[0], nb.center[1], nb.min[2] + 0.02];   // tyre front
+      const nloc = V._internals.model.part('gear_nose_steer') ? T.attach('gear_nose_steer', nw) : null;
       V.setControls({pitch: 0, yaw: 1}, {instant: true});
       out.yawR = {L: T.sub(T.world('pedal_LL', pads.pedal_LL.loc), pads.pedal_LL.p0), R: T.sub(T.world('pedal_LR', pads.pedal_LR.loc), pads.pedal_LR.p0)};
+      if (nloc) { out.steer = V.state.controls.steerDeg; out.noseFront = T.sub(T.world('gear_nose_steer', nloc), nw); }
+      V.setGear(1, {instant: true});
+      out.steerUp = V.state.controls.steerDeg;
+      V.setGear(0, {instant: true});
       T.neutral();
       return out;
     """)
@@ -420,6 +428,10 @@ async def numeric_checks(page):
               f"hub dZ {r['pull'][2]:+.3f} m")
         check("right rudder: right-foot pedal forward, left-foot pedal aft", r["yawR"]["R"][2] < -0.03 and
               r["yawR"]["L"][2] > 0.03, f"pad dZ R {r['yawR']['R'][2]:+.3f}, L {r['yawR']['L'][2]:+.3f} m")
+        check("[MJ r1 GR1-07] right rudder steers the nose wheel right (tyre front to +X), centred with the gear up",
+              "steer" in r and r["steer"] > 10 and r["noseFront"][0] > 0.02 and abs(r["steerUp"]) < 1e-6,
+              f"steer {r.get('steer', 'missing')} deg, tyre-front dX {r.get('noseFront', [0])[0]:+.3f} m, gear up "
+              f"{r.get('steerUp')}")
     # --- the cutaway clips the cabin furniture / divider port half, not the seats or the controls (review r2 M3);
     #     every part is cut whole or not at all (review r3 C1: cup holders / switch caps floated over a clipped
     #     console), and the floors the seats stand on stay (review r3 F4)
@@ -769,12 +781,14 @@ async def material_checks(page):
       const I = window.viewer._internals, out = {};
       for (const mr of I.model.meshRecs) {
         const m = mr.base, f = m.userData.pc12 || {};
-        const e = out[m.name] || (out[m.name] = {cc: [], ccr: [], physical: [], interior: [], parts: [], em: [], sheen: []});
+        const e = out[m.name] || (out[m.name] = {cc: [], ccr: [], physical: [], interior: [], parts: [], em: [], sheen: [], tex: [], stripes: []});
         const add = (k, v) => { if (!e[k].includes(v)) e[k].push(v); };
         add('cc', +(m.clearcoat || 0).toFixed(4)); add('ccr', +(m.clearcoatRoughness || 0).toFixed(4));
         add('physical', !!m.isMeshPhysicalMaterial); add('interior', !!f.interior); add('parts', mr.part.id);
         add('em', m.emissive ? m.emissive.toArray().map((v) => +v.toFixed(3)).join(',') : '');
         add('sheen', +(m.sheen || 0).toFixed(3));
+        add('tex', m.emissiveMap && m.emissiveMap.image ? `${m.emissiveMap.image.width}x${m.emissiveMap.image.height}` : '');
+        add('stripes', !!f.stripes);
       }
       const grp = {};
       for (const mr of I.model.meshRecs) {
@@ -835,6 +849,18 @@ async def material_checks(page):
     check("materials: emissive displays / cabin lights keep the table's emissiveFactor; the sheepskin keeps its sheen",
           n_em >= 8 and not em_bad and sh and min(sh) > 0,
           f"{n_em} emissive materials, sheepskin sheen {sh}" + (f"; {'; '.join(em_bad[:4])}" if em_bad else ""))
+    # final judge r1 R2 / I1: the G3000 PRIME pages are the GLB's embedded atlas (model/g3000_pages.py) on the display
+    # glass 'display_page' (TEXCOORD_0) -- the MeshPhysicalMaterial upgrade keeps it as the emissive map; the cabin
+    # carpet carries the table's render_stripes pinstripe patch
+    imgs = gltf.get("images") or []
+    dp = mats.get("display_page", {})
+    glb_dp = glb_mats.get("display_page", {})
+    check("materials: the G3000 PRIME pages (GLB atlas texture) stay the display glass's emissive map in the viewer",
+          len(imgs) == 1 and "emissiveTexture" in glb_dp and dp.get("tex") and all(dp["tex"])
+          and "flight_deck" in dp.get("parts", []),
+          f"GLB images {[i.get('name') for i in imgs]}, display_page emissive map {dp.get('tex')} on {dp.get('parts')}")
+    cs = mats.get("carpet", {}).get("stripes", [])
+    check("materials: the cabin carpet carries the render_stripes pinstripes", cs == [True], f"carpet stripes {cs}")
 
 
 async def fit_check(page, label, refit_panel=False):
