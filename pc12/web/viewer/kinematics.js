@@ -45,13 +45,15 @@ export function signedAngle(u, v, n) {
 
 // Propeller speed (PT6E-67XP free turbine driving the Hartzell 5-blade; POH NGX / PC-12 PRO): ground idle ~1,000 rpm,
 // 1,550 rpm low-speed (quiet cruise) mode, 1,700 rpm take-off / max.  Spool model (rpm / s), a viewer estimate of a
-// start and shutdown: below the governed range a start accelerates as the gas generator spools up (~12 s from rest to
-// ground idle); the governor moves between governed speeds in ~3 s; after shutdown the feathering prop runs down in
-// ~15 s.
+// start and shutdown: on a start the free power turbine -- and the propeller -- stays still (a creep of a few rpm) until
+// the gas generator lights off (GasGenerator below, ~2.3 s after the start), then accelerates as the gas generator
+// spools up (~12 s from the start to ground idle); the governor moves between governed speeds in ~3 s; after shutdown
+// the feathering prop runs down in ~15 s.
 export const PROP_RPM = { idle: 1000, cruise: 1550, max: 1700, governed: 900 };   // governed: below it, starting / running down
 const GOVERNED = PROP_RPM.governed;
 const FEATHERED = 60, UNFEATHER_RPM = 300;     // deg (feather 62), rpm: out of feather on a start (setProp)
-const START = { a0: 40, k: 0.12 };            // d rpm / dt = a0 + k rpm while starting
+const START = { a0: 55, k: 0.14 };            // d rpm / dt = a0 + k rpm while starting (from light-off)
+const CREEP = { rpm: 4, tau: 1.5 };           // before light-off: the propeller creeps toward CREEP.rpm (first order)
 const STOP = { a0: 25, k: 0.12 };             // d rpm / dt = -(a0 + k rpm) while running down
 const GOV = { k: 1.6, up: 320, down: 260 };   // governed: k (target - rpm), rate-limited
 
@@ -254,9 +256,14 @@ export class Kinematics {
     approach('pitch', 35);
     lag('roll', 7, 1e-3); lag('pitchCmd', 7, 1e-3); lag('yaw', 7, 1e-3);
     approach('stabTrim', 1.2); approach('ailTrim', 6); approach('rudTrim', 6);
-    if (t.rpm !== c.rpm) { c.rpm = this._spool(c.rpm, t.rpm, dt); moved = true; }
-    if (this.unfeather && c.rpm >= UNFEATHER_RPM) { t.pitch = 0; this.unfeather = false; }
     this.gg.update(dt, t.rpm, c.pitch);
+    // a start: no power on the propeller until light-off (the free turbine); a creep from the compressor's air flow
+    if (t.rpm > c.rpm && this.gg.phase === 'start' && !this.gg.lit) {
+      const r = c.rpm <= CREEP.rpm ? c.rpm + (CREEP.rpm - c.rpm) * (1 - Math.exp(-dt / CREEP.tau))
+        : this._spool(c.rpm, CREEP.rpm, dt);                       // a restart while running down: it keeps slowing
+      if (r !== c.rpm) { c.rpm = r; moved = true; }
+    } else if (t.rpm !== c.rpm) { c.rpm = this._spool(c.rpm, t.rpm, dt); moved = true; }
+    if (this.unfeather && c.rpm >= UNFEATHER_RPM) { t.pitch = 0; this.unfeather = false; }
     const movedBeforeSpin = moved;
     if (c.rpm > 0) {
       c.propAngle = (c.propAngle + (c.rpm / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
@@ -446,11 +453,12 @@ export class Kinematics {
 // ------------------------------------------------------------------ gas generator (engine sound, sound.js)
 // The PT6E-67XP's gas-generator speed Ng (% of 37,468 rpm: the PT6A-60 / -67 series' 100 %, assumed for the -67XP),
 // a viewer estimate of a start, a ground run and a shutdown that runs alongside the propeller spool above.  sound.js
-// turns it into the compressor whine, the combustion roar, the light-off and the starter / igniter sounds; it moves
-// nothing on screen.  PT6 practice (POH-style start: starter on, fuel at 12-13 % Ng, light-off, starter off at ~50 %):
+// turns it into the compressor whine, the combustion roar, the light-off and the starter / igniter sounds; on screen
+// only its light-off counts (the propeller waits for it).  PT6 practice (POH-style start: starter on, fuel at 12-13 % Ng, light-off, starter off at ~50 %):
 //   start      starter engaged: Ng toward ~18 % on the starter alone; fuel at 12 % Ng, light-off NG.lightDelay (0.7 s)
-//              later (ignition delay), then the acceleration to ground idle (~60 % Ng) at <= 6.5 % / s, the starter and the
-//              igniters off at 50 %; with the propeller start law above, both reach ground idle ~12 s after the start
+//              later (ignition delay, ~2.3 s after the start), then the acceleration to ground idle (~60 % Ng) at
+//              <= 6.5 % / s, the starter and the igniters off at 50 %; the propeller starts turning at light-off
+//              (Kinematics.update) and both reach ground idle ~12 s after the start
 //   running    Ng follows the power the governed propeller absorbs (ngRun: rpm and blade pitch), <= 12 % / s up, 10 down
 //   shutdown   a commanded rpm of 0 = fuel off: the flame goes out, Ng runs down at -(0.6 + 0.16 Ng) % / s (~18 s from
 //              ground idle, ~20 s from 95 %), as the feathered propeller runs down
