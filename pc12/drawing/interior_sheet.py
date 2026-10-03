@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="E", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-09-27")
+             size="A1", scale="AS SHOWN", rev="F", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-03")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -57,6 +57,9 @@ REVISIONS = (
                         "(P1046402-05); PC-24 yoke face: white goblet shield (top +/-70) on a black body, grip heads "
                         "r 20 [M] (P1046408); PCL paddle grip [M]; armrest vs pedestal row (L6B); yoke-roll knee "
                         "contact recorded as an owner decision"),
+    ("F", "2026-10-03", "Stage-4 final judge r1 (I2, P1046408 re-measured): yoke shield a full U (half-width "
+                        "fractions 0.80 / 0.50 at 1/2 / 4/5 of its height, ~0.86 / 0.66 of the top width; the goblet "
+                        "left a broad black body), grips 160 long (tops 20 higher), heads r 18 over 42 [M]"),
 )
 
 # ---- fills (clean sheet)

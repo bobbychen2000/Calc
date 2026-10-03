@@ -13,7 +13,7 @@ import numpy as np
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
 from cad.glb import to_gl
 from model import fuselage as F
-from model import fuselage_parts, wing, empennage, powerplant, gear, details, interior, livery
+from model import fuselage_parts, wing, empennage, powerplant, gear, details, interior, livery, flightdeck
 from model import wing as W, empennage as E
 from model.assemble import write_glb
 from model.lifting import cos_pts
@@ -322,7 +322,7 @@ def main():
     cock = cockpit_camera()
     size, stats = write_glb(parts, str(__import__("pathlib").Path(__file__).resolve().parents[1]) + "/out/pc12.glb",
                             meta={"model": "Pilatus PC-12 PRO", "units": "m", "datum": "STA 0 = 3.000 m fwd of firewall",
-                                  "cockpit": cock})
+                                  "cockpit": cock, "displays": flightdeck.display_frames()})
     bom = []
     for k, p in parts.items():
         bom.append({"id": k, "name": p.name, "step": p.step, "group": p.group, "qty": p.qty,

@@ -769,12 +769,14 @@ async def material_checks(page):
       const I = window.viewer._internals, out = {};
       for (const mr of I.model.meshRecs) {
         const m = mr.base, f = m.userData.pc12 || {};
-        const e = out[m.name] || (out[m.name] = {cc: [], ccr: [], physical: [], interior: [], parts: [], em: [], sheen: []});
+        const e = out[m.name] || (out[m.name] = {cc: [], ccr: [], physical: [], interior: [], parts: [], em: [], sheen: [], tex: [], stripes: []});
         const add = (k, v) => { if (!e[k].includes(v)) e[k].push(v); };
         add('cc', +(m.clearcoat || 0).toFixed(4)); add('ccr', +(m.clearcoatRoughness || 0).toFixed(4));
         add('physical', !!m.isMeshPhysicalMaterial); add('interior', !!f.interior); add('parts', mr.part.id);
         add('em', m.emissive ? m.emissive.toArray().map((v) => +v.toFixed(3)).join(',') : '');
         add('sheen', +(m.sheen || 0).toFixed(3));
+        add('tex', m.emissiveMap && m.emissiveMap.image ? `${m.emissiveMap.image.width}x${m.emissiveMap.image.height}` : '');
+        add('stripes', !!f.stripes);
       }
       const grp = {};
       for (const mr of I.model.meshRecs) {
@@ -835,6 +837,18 @@ async def material_checks(page):
     check("materials: emissive displays / cabin lights keep the table's emissiveFactor; the sheepskin keeps its sheen",
           n_em >= 8 and not em_bad and sh and min(sh) > 0,
           f"{n_em} emissive materials, sheepskin sheen {sh}" + (f"; {'; '.join(em_bad[:4])}" if em_bad else ""))
+    # final judge r1 R2 / I1: the G3000 PRIME pages are the GLB's embedded atlas (model/g3000_pages.py) on the display
+    # glass 'display_page' (TEXCOORD_0) -- the MeshPhysicalMaterial upgrade keeps it as the emissive map; the cabin
+    # carpet carries the table's render_stripes pinstripe patch
+    imgs = gltf.get("images") or []
+    dp = mats.get("display_page", {})
+    glb_dp = glb_mats.get("display_page", {})
+    check("materials: the G3000 PRIME pages (GLB atlas texture) stay the display glass's emissive map in the viewer",
+          len(imgs) == 1 and "emissiveTexture" in glb_dp and dp.get("tex") and all(dp["tex"])
+          and "flight_deck" in dp.get("parts", []),
+          f"GLB images {[i.get('name') for i in imgs]}, display_page emissive map {dp.get('tex')} on {dp.get('parts')}")
+    cs = mats.get("carpet", {}).get("stripes", [])
+    check("materials: the cabin carpet carries the render_stripes pinstripes", cs == [True], f"carpet stripes {cs}")
 
 
 async def fit_check(page, label, refit_panel=False):

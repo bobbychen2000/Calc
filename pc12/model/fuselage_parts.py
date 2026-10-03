@@ -370,7 +370,8 @@ def build(parts_out: dict):
     parts_out["chin_inlet"] = Part("chin_inlet", "Chin air inlet: polished lip, mouth & duct entry", "cowling",
                                    explode=(-0.4, 0, -0.75), group="Powerplant installation",
                                    material_note="Polished lip, electrically de-iced; composite duct")
-    parts_out["chin_inlet"].add(lip, "chrome")
+    # the lip's metal = livery SURFACES['inlet_lip'] (final judge r1 S4: the stacks' warm polished metal, not chrome)
+    parts_out["chin_inlet"].add(lip, "exhaust_polished")
 
     # ---- forward fuselage (cockpit) ----
     fwd = sub(F.STA["firewall"], SPLIT_FWD)
@@ -652,6 +653,30 @@ def _rim_open(V, N, d0, d1):
     return Mesh(np.vstack([a, b]), Fc)
 
 
+HINGE_SEAL = dict(depth=DOOR_T + 0.004, reach=DOOR_GAP + 0.006)   # [E] see _hinge_seal
+
+
+def _hinge_seal(Lv, Ln, pan):
+    """Final judge r1 R7: the rubber seal closing the panel-seam gap along a door's HINGE edge from the cabin side -- a
+    flat strip at the foot of the dark hinge-gap rim (HINGE_SEAL depth inside the skin), reaching HINGE_SEAL 'reach'
+    toward the door (across the DOOR_GAP slot, under the slab's inner edge), facing the cabin.  Without it the cabin
+    renders saw the sky through the 4 mm slot as a saturated blue line along the cargo door's top.  The door swings
+    OUTWARD from its hinge, so nothing of it ever enters the strip (fit_check door-swing sweeps)."""
+    d, w = HINGE_SEAL["depth"], HINGE_SEAL["reach"]
+    A = Lv - d * Ln
+    T = np.gradient(Lv, axis=0)
+    T /= np.maximum(np.linalg.norm(T, axis=1, keepdims=True), 1e-12)
+    t = np.cross(Ln, T)
+    t /= np.maximum(np.linalg.norm(t, axis=1, keepdims=True), 1e-12)
+    cen = np.array([pan["cx"], 0.0, pan["cz"]])
+    sg = np.sign(np.sum((cen - Lv)[:, [0, 2]] * t[:, [0, 2]], 1).mean())
+    B = A + w * sg * t
+    n = len(A)
+    i = np.arange(n - 1)
+    m = Mesh(np.vstack([A, B]), np.vstack([np.stack([i, i + 1, n + i + 1], 1), np.stack([i, n + i + 1, n + i], 1)]))
+    return m.flipped() if np.mean(np.sum(m.face_normals() * Ln.mean(0), 1)) > 0 else m    # faces the cabin
+
+
 def build_doors(parts_out):
     for pid, o in DOORS:
         parts_out[pid] = build_door(pid, o)
@@ -662,7 +687,7 @@ def build_doors(parts_out):
     # seams, skin-edge lips, door stops (flange between the panel seam and the clear opening) and opening jambs.  The
     # lip (the frame edge round the panel seam, DOOR_T + 4 mm deep) carries the livery like the skin beside it (photos
     # 130 / 188: a dark blue lip, then the seal, then the tan / khaki jamb lining; material review F9)
-    seams, jambs, stops, lips, jambs_in, stops_in = [], [], [], [], [], []
+    seams, jambs, stops, lips, jambs_in, stops_in, seals = [], [], [], [], [], [], []
     for pid, o in DOORS:
         pan = door_panel(o)
         p = side_patch(pan, o["side"], pad=0.03, d=0.010)
@@ -682,6 +707,7 @@ def build_doors(parts_out):
                     lips.append(_into_opening(_rim_open(Lv[a], Ln[a], 0.0, DOOR_T + 0.004), pan))
                 for a in _runs(~hb):
                     seams.append(_into_opening(_rim_open(Lv[a], Ln[a], 0.0, DOOR_T + 0.004), pan))
+                    seals.append(_hinge_seal(Lv[a], Ln[a], pan))
         if pan is not o:                             # door with a clear opening inside the panel seam
             fo = lambda m, q=o: rr((m.V[:, 0], m.V[:, 2]), q)                        # noqa: E731
             st = trim(trim(p, fs(p) + 0.002, "negative"), fo(trim(p, fs(p) + 0.002, "negative")), "positive")
@@ -718,7 +744,7 @@ def build_doors(parts_out):
                             jambs_in.append(_into_opening(_rim_open(Lr[seg], Nr[seg], JAMB_TAN, JAMB_D), o))
     s = Part("door_frames", "Door surrounds, seals, stops & jambs", "doors", group="Doors",
              material_note="Machined door frames")
-    s.add(Mesh.merge(seams), "seam").add(Mesh.merge(jambs), "jamb").add(Mesh.merge(stops), "jamb")
+    s.add(Mesh.merge(seams + seals), "seam").add(Mesh.merge(jambs), "jamb").add(Mesh.merge(stops), "jamb")
     s.add(Mesh.merge(jambs_in + stops_in), "lining")
     s.add(Mesh.merge(lips), "paint_white")          # unpainted skin material: model/livery.py paints it
     parts_out[s.id] = s

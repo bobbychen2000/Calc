@@ -217,19 +217,25 @@ YOKE = dict(
     hub_bot_w=P(0.045, "[M] the Y hub narrows to a stem this wide at its bottom (JTF cockpit key item 15)"),
     span=P(0.285, "[M] grips overall, outer edge to outer edge at their bottoms (JTF cockpit key, P1046408 with the "
                   "0.14 hub for scale); PC-24-style yoke [S]"),
-    grip=PT((0.140, 0.0155, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
+    grip=PT((0.160, 0.0155, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
                                    "key: tops +/-0.10, bottoms +/-0.125 from the hub CL; P1046408 ~8 deg); review r2 F2 "
                                    "(P1046408 pair: slim paddles 55 px against the render's 70 px, rising well above "
-                                   "the hub): radius 0.020 -> 0.0155, length 0.125 -> 0.140 (the tops 15 mm higher)"),
+                                   "the hub): radius 0.020 -> 0.0155, length 0.125 -> 0.140 (the tops 15 mm higher); "
+                                   "final judge r1 I2 (P1046408: the grips rise ~0.07 above the shield top with the thumb "
+                                   "knob, the render's stopped at 0.045): 0.140 -> 0.160, the bottoms kept"),
     grip_dz=P(-0.040, "[M] grip bottoms 0.04 below the hub centre, near the hub bottom (JTF key: grips WL 1.80-1.93 "
                       "on hub 1.79-1.90; P1046408 -0.05..+0.09); tops ~0.04 above the hub top (P1046408)"),
-    grip_head=PT((0.036, 0.020), "[M] swollen grip head: over its top 36 mm the grip swells from the grip radius to "
-                                 "0.020, the hat switch on top (P1046408 pair: heads ~45 wide on ~31 grips; brochure "
-                                 "p.12), review r3 F2"),
-    shield=PT(((0.00, 1.00), (0.12, 0.92), (0.50, 0.37), (0.85, 0.05), (1.00, 0.00)),
+    grip_head=PT((0.042, 0.0180), "[M] swollen grip head: over its top 42 mm the grip swells from the grip radius to "
+                                  "0.018, the thumb knob on top (P1046408 pair: heads ~45 wide on ~31 grips; brochure "
+                                  "p.12), review r3 F2; final judge r1 I2: 0.020 read bulbous (heads 36 mm -> a longer, "
+                                  "gentler 42 mm swell to 0.018)"),
+    shield=PT(((0.00, 1.00), (0.12, 0.97), (0.50, 0.80), (0.80, 0.50), (0.93, 0.22), (1.00, 0.00)),
               "[M] white shield (the hub's front cover): half-width from its top (t = 0) to the stem (t = 1) as the "
-              "fraction between hub_bot_w / 2 and hub_whd width / 2 -- a goblet with concave sides, its top corners "
-              "at +/- hub width / 2 (P1046408: ~0.52 of the grip span; review r3 F2: rev C ran them out to the grips)"),
+              "fraction between hub_bot_w / 2 and hub_whd width / 2, its top corners at +/- hub width / 2 (P1046408: "
+              "~0.52 of the grip span; review r3 F2: rev C ran them out to the grips).  Final judge r1 I2 (P1046408 "
+              "re-measured on the shield's own height: 0.85 / 0.60 of its top width at 1/2 and 4/5 of the height, a "
+              "full U round to the stem): the rev D goblet (0.37 at mid-height, 0.05 at 0.85) left a broad black "
+              "body round a narrow white V"),
     shield_dip=P(0.004, "[M] the shield's top edge dips this much to the centre under the badge (a shallow V)"),
     body_arm=PT((-0.004, 0.005), "[M] black yoke body behind the shield: its lower edge leaves each grip's inner edge "
                                  "this far above the hub centre and runs down-inboard to the shield foot, rimming it "
@@ -1906,11 +1912,19 @@ def build_lining(parts):
              info={"lining": f"{LINING['crown'] * 1000:.0f} mm (crown) - {LINING['side'] * 1000:.0f} mm (sides) inside "
                              f"the OML (L6 LINING: cabin {CABIN['height']:.2f} m high, {CABIN['width']:.2f} m wide)",
                    "extent": f"STA {x0 * 1000:,.0f} - {x1 * 1000:,.0f}, flight deck to STA {xa * 1000:,.0f}"})
+    # the flight deck's lower side walls (the footwells, up to the side-console top) are dark carpeted kick panels
+    # (P1046408 / 09: dark grey beside the pedals; final judge r1 R9 / I4 -- lit, the grey lining read as beige walls)
+    zk = float(FLOOR["fd_wl"]) + float(SIDE_CONSOLE["top_h"])
     for piece, keep, mat in ((m, "negative", "lining_flightdeck"), (rv, "negative", "lining_flightdeck"),
                              (m, "positive", "lining"), (rv, "positive", "lining")):
         q = trim(piece, piece.V[:, 0] - xa, keep).compact()
-        q._reveal = piece is rv          # reveals end ON the skin openings (test/fit_check.py checks them apart)
-        p.add(q, mat)
+        qs = [(q, mat)]
+        if mat == "lining_flightdeck" and piece is m:
+            qs = [(trim(q, q.V[:, 2] - zk, "positive").compact(), mat),
+                  (trim(q, q.V[:, 2] - zk, "negative").compact(), "carpet_flightdeck")]
+        for q_, mat_ in qs:
+            q_._reveal = piece is rv     # reveals end ON the skin openings (test/fit_check.py checks them apart)
+            p.add(q_, mat_)
     parts[p.id] = p
 
 

@@ -1057,7 +1057,7 @@ report(f"interior fittings seated: every piece ({len(pieces)}) within 3 mm of an
 # C2 / C7: the O2 gap plates were 92-100 % within 0.3 mm of the lining or behind it, the flat downlights half buried).
 # Parent surface: the large lining-coloured pieces of interior_lining (side walls, headliner panels, soffits), faces
 # wound toward the cabin; distances exact (point-triangle) over the 12 nearest parent triangles.
-LIN_MATS = ("lining", "lining_flightdeck")
+LIN_MATS = ("lining", "lining_flightdeck", "carpet_flightdeck")     # + the flight deck's carpeted kick panels
 par_T, fit_pc = [], []
 for m, mat in parts["interior_lining"].meshes:
     T = m.V[m.F]

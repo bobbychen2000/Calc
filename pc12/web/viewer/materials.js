@@ -14,6 +14,7 @@
 //   back    a material's own back-face colour (render_back_faces: the sooty inside of the exhaust stacks; the nose-gear
 //           lamp's dark LED face behind its clear lens, drawn opaque)
 //   grooves the tyres' circumferential tread grooves (render_grooves), in the mesh's own frame about the wheel axis
+//   stripes woven transverse pinstripes (render_stripes: the cabin carpet), along the rest-pose station, band-limited
 // Patch flags live in material.userData.pc12 (JSON-able, so Material.clone() keeps them) and are
 // (re)installed with installPatch().
 import * as THREE from 'three';
@@ -98,6 +99,15 @@ const VIEWER = {
   wheel: { envMapIntensity: 0.75 },
   gear_leg: { envMapIntensity: 0.75 },
   exhaust_polished: { polish: { bump: 0.1, tint_mix: 0.12, stretch_x: 1 / 3 } },
+  // the cabin floor lies in the shade of the seats, ledges and furniture (P1046402 / 06: the AI Orange bands ~sRGB
+  // 110/60/17 on a near-black navy); unoccluded, the studio washed the runner out to a pale peach (220/178/125)
+  carpet: { envMapIntensity: 0.45 },
+  carpet_orange: { envMapIntensity: 0.45 },
+  carpet_light: { envMapIntensity: 0.45 },
+  carpet_grey: { envMapIntensity: 0.45 },
+  // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
+  // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
+  panel_titanium: { envMapIntensity: 0.6 },
   // the nose-gear lamp: a clear lens with nothing modelled behind it; its back face is the dark (switched-off) LED face.
   // Clear: no milky diffuse on the front (the lookdev's light base colour is for its transmission variant)
   lens: { color: [0.02, 0.02, 0.022], back: { base: [0.03, 0.03, 0.035], rough: 0.25, opaque: true } },
@@ -159,6 +169,9 @@ function physicalFrom(name, e, src) {
   if (e.specularFactor == null && e.surfaces > 1) m.specularColor.setScalar(specularForSurfaces(e));
   // the interior's emissive displays / LED coves / reading lights (assemble.EMISSIVE = the table's emissiveFactor)
   if (e.emissiveFactor) m.emissive = lin(e.emissiveFactor);
+  // textures the GLB carries (cad/glb.py; the table's render_texture names the slot): the G3000 PRIME pages are the
+  // emissive map of 'display_page' (model/g3000_pages.py atlas) -- kept, the table holds only the factors
+  for (const k of ['map', 'emissiveMap']) if (src[k]) m[k] = src[k];
   // the crew sheepskin's pile (KHR_materials_sheen in the GLB: its colour lives in assemble.MATERIALS only)
   if (src.sheen > 0) { m.sheen = src.sheen; m.sheenColor.copy(src.sheenColor); m.sheenRoughness = src.sheenRoughness; }
   for (const k of ['roughness', 'metalness', 'specularIntensity', 'envMapIntensity']) if (V[k] != null) m[k] = V[k];
@@ -284,6 +297,13 @@ export function upgradeMaterials(root, spec) {
           m.userData.pc12 = { ...(m.userData.pc12 || {}), grooves: g, rest: o.matrixWorld.toArray() };
         }
       }
+      if (e.render_stripes) {
+        // pinstripes along the station (model x = glTF Z) of the rest pose: one clone per mesh (its rest matrix)
+        const st = e.render_stripes;
+        m = m.clone();
+        m.userData.pc12 = { ...(m.userData.pc12 || {}), stripes: { pitch: st.pitch ?? 0.012, duty: st.duty ?? 0.35,
+          colour: (st.colour || e.baseColorFactor).slice(0, 3) }, rest: o.matrixWorld.toArray() };
+      }
       const b = e.render_back_faces || (VIEWER[name] && VIEWER[name].back);
       if (b && m.side === THREE.DoubleSide && !(m.userData.pc12 && m.userData.pc12.back)) {
         // e.g. the sooty inside of the polished exhaust stacks, the lamp face behind the nose-gear lens
@@ -391,9 +411,9 @@ const GLSL_BACKFACE = `bool pcIsBack() {
 export function installPatch(mat, extra = {}) {
   const f = { ...(mat.userData.pc12 || {}), ...extra };
   mat.userData.pc12 = f;
-  const { paint, lining, glass, cabinGlass, collar, interior, back, grooves, rest } = f;
-  if (!paint && !lining && !glass && !collar && !interior && !back && !grooves) return mat;
-  const restP = !!(rest && (collar || grooves));
+  const { paint, lining, glass, cabinGlass, collar, interior, back, grooves, stripes, rest } = f;
+  if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes) return mat;
+  const restP = !!(rest && (collar || grooves || stripes));
   const physical = !!mat.isMeshPhysicalMaterial;
   if (glass) {
     // premultiplied output: src = diffuse * a + reflections, dst * (1 - a)
@@ -489,6 +509,21 @@ export function installPatch(mat, extra = {}) {
   material.specularF90 *= mix(1.0, ${f6(g.floor)}, pcGroove);`);
       }
     }
+    if (stripes && restP) {
+      // lookdev _carpet_stripes without the wobble: stripe mask 1 within duty / 2 of each pitch line (soft woven
+      // edges), widened by the fragment's footprint and faded to its mean (duty) once a pitch is under ~2 pixels, so
+      // the floor does not alias into moire at a distance
+      const st = stripes, f4 = (x) => (+x).toFixed(5);
+      fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
+  {
+    float pcPh = vRestP.z / ${f4(st.pitch)};
+    float pcSw = fwidth(pcPh);
+    float pcSd = abs(fract(pcPh + 0.5) - 0.5);
+    float pcSm = 1.0 - smoothstep(${f4(0.5 * st.duty - 0.06)} - pcSw, ${f4(0.5 * st.duty + 0.06)} + pcSw, pcSd);
+    pcSm = mix(pcSm, ${f4(st.duty)}, smoothstep(0.25, 0.6, pcSw));
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${st.colour.map(f4).join(', ')}), pcSm);
+  }`);
+    }
     if (back) {
       const v3 = (a) => `vec3(${a.map((x) => (+x).toFixed(5)).join(', ')})`;
       fs = fs.replace('#include <normal_fragment_begin>',
@@ -549,7 +584,7 @@ export function installPatch(mat, extra = {}) {
     sh.fragmentShader = fsHead + fs;
   };
   // the rest matrix is a uniform: programs are shared
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}`;
+  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}`;
   mat.needsUpdate = true;
   return mat;
 }

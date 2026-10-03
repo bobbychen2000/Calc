@@ -738,7 +738,10 @@ def winglet_light_caps(sgn, split=0.45, lift=0.0008):
 # scale); the louvre is its dark opening on the skin under a small raised lip.
 COWL_SEAMS = dict(rings=(2.00, 3.00), split_wl=1.600, split_x=(2.00, 3.00), width=0.0025, lift=0.0004,
                   bottom_gap=(0.44, 0.56), latches=((2.21, 1.620), (2.72, 1.625)), latch=(0.026, 0.088, 0.006))
-OIL_COOLER_EXIT = dict(x=(2.12, 2.40), top=1.487, h_fwd=0.035, h_aft=0.092, lip=(0.006, 0.003), side=-1)
+# final judge r1 LIV-F1-03: the 280 x 92 mm pure-black patch read as a pasted decal next to photo 188's small recessed
+# slot with lit lips -> ~30 % smaller (about its aft end, which the lip line keeps), the opening a dark GREY recess
+# ('vent_dark') with a shadow band under the lip ('inlet_dark', the upper 40 %)
+OIL_COOLER_EXIT = dict(x=(2.20, 2.40), top=1.487, h_fwd=0.025, h_aft=0.064, lip=(0.006, 0.003), side=-1, shade=0.40)
 COWL_VENT = dict(x=2.80, wl=1.480, r=0.037, slats=4, side=-1)
 
 
@@ -828,16 +831,18 @@ def oil_cooler_exit(n=24):
     t = (xs - x0) / (x1 - x0)
     zt = np.full(n, q["top"])
     zb = q["top"] - (q["h_fwd"] + (q["h_aft"] - q["h_fwd"]) * t ** 0.8)
-    rows = []
-    for f in np.linspace(0.0, 1.0, 6):
-        rows.append(_oml_frame(xs, zt + f * (zb - zt), q["side"]))
-    P = np.stack([r[0] + 0.0005 * r[1] for r in rows], 1)
-    hole = grid_surface(P)
-    if np.mean(hole.face_normals() @ rows[0][1].mean(0)) < 0:
-        hole = hole.flipped()
+    holes = []
+    fs = q.get("shade", 0.0)
+    for f0, f1 in (((0.0, fs), (fs, 1.0)) if fs else ((0.0, 1.0),)):
+        rows = [_oml_frame(xs, zt + f * (zb - zt), q["side"]) for f in np.linspace(f0, f1, 4)]
+        P = np.stack([r[0] + 0.0005 * r[1] for r in rows], 1)
+        hole = grid_surface(P)
+        if np.mean(hole.face_normals() @ rows[0][1].mean(0)) < 0:
+            hole = hole.flipped()
+        holes.append(hole)
     Pl, Nl, _, Tz = _oml_frame(xs, zt + 0.5 * q["lip"][0], q["side"])
     lip = _surface_ribbon(Pl, Nl, q["lip"][0], q["lip"][1])
-    return lip, hole
+    return lip, holes
 
 
 def build(parts):
@@ -846,8 +851,10 @@ def build(parts):
         up, lo = cowl_seams()
         parts["cowl_upper"].add(up, "seam")
         parts["cowl_lower"].add(lo, "seam")
-        lip, hole = oil_cooler_exit()
-        parts["cowl_lower"].add(lip, "paint_white").add(hole, "inlet_dark")
+        lip, holes = oil_cooler_exit()
+        parts["cowl_lower"].add(lip, "paint_white").add(holes[0], "inlet_dark")
+        for h in holes[1:]:
+            parts["cowl_lower"].add(h, "vent_dark")
 
     # -------- belly fairing (goes with the wing)
     bp = Part("belly_fairing", "Wing-to-body fairing: belly fairing + upper root fillet", "wing", explode=(0, 0, -0.9),

@@ -53,7 +53,7 @@ from model import powerplant as PP  # noqa: E402
 from model.lifting import cos_pts  # noqa: E402
 
 SHEET = dict(id="L5", title="LIVERY - MSN 3008 SCHEME", subtitle="LIVERY - MSN 3008 (N81DW) SCHEME", size="A1",
-             scale="AS SHOWN", rev="A", order=50)
+             scale="AS SHOWN", rev="B", order=50)
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = ROOT / "refs" / "cache"
@@ -1051,6 +1051,10 @@ def draw_left_bottom(ds):
         "schematic width; nose-gear doors open.",
         "Estimated: plan-view crossings, winglet line position, lower-surface colours between photos, blade band "
         "widths (+/- 10 mm). No logos, lettering or registration marks are drawn.",
+        f"Rev B (Stage-4 final judge r1, LIV-F1-02): the tail-cone strokes {', '.join(L.AFT_STROKES['ids'])} drawn "
+        f"{L.AFT_STROKES['scale']:.2f} x their measured half-heights (0517: white bands, not silver hairlines); "
+        f"LIV-F1-01: the light metallic blue {L.PALETTE['paint_blue_light'][0]} (was #8C9CBE, washed out outdoors in "
+        "photos 188 / 0517).",
     ]
     yn = notes(ds, x0, y + 4.0, x0 + 318.0, items, size=2.1, line_h=3.0)
     scale_bar(ds, x0 + 2.0, max(yn + 10.0, 548.0), 30, 3.0, 0.5, "SCALE 1:30 (SIDE VIEWS, VIEW C)")

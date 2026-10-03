@@ -43,14 +43,14 @@ from model import interior as I
 # =====================================================================================================================
 from model.assemble import MATERIALS as _MAT, EMISSIVE as _EMI     # noqa: E402
 
-OWN_MATERIALS = ("panel_dark", "panel_grey", "leather_glareshield", "carpet_flightdeck", "bezel_black", "screen",
-                 "screen_sky", "screen_ground", "screen_map", "screen_ui", "screen_ui_hi", "screen_green", "screen_cyan",
-                 "screen_white", "light_amber", "yoke_white", "grip_black", "veneer_walnut", "curtain", "paint_red",
-                 "panel_silver", "pedestal_gunmetal", "pcl_pewter")
+OWN_MATERIALS = ("panel_dark", "panel_grey", "leather_glareshield", "carpet_flightdeck", "bezel_black", "display_page",
+                 "screen", "screen_sky", "screen_ground", "screen_green", "screen_cyan", "screen_white", "light_amber",
+                 "yoke_white", "grip_black", "veneer_walnut", "curtain", "paint_red", "panel_silver",
+                 "pedestal_gunmetal", "pcl_pewter", "panel_titanium")
 MATERIALS = {k: _MAT[k] for k in OWN_MATERIALS}
 EMISSIVE = {k: v for k, v in _EMI.items() if k in OWN_MATERIALS}
-# also used, already in assemble.MATERIALS: metal, metal_dark, steel, black, light_red, light_white
-USED_EXISTING = ("metal", "metal_dark", "steel", "black", "light_red", "light_white")
+# also used, already in assemble.MATERIALS: metal, metal_dark, steel, black, light_red, light_white, chrome_trim
+USED_EXISTING = ("metal", "metal_dark", "steel", "black", "light_red", "light_white", "chrome_trim")
 
 # =====================================================================================================================
 # detail constants (not drawn on L6)
@@ -375,12 +375,13 @@ def _panel_face(acc):
     inside = (np.abs(C[:, 1]) < ry - 1e-6) & (C[:, 2] > rz0 + 1e-6) & (C[:, 2] < rz1 - 1e-6)
     m.F = m.F[~inside]
     m.compact()
-    # the face round the PDUs: the same warm titanium grey as the sub-panels (P1046408: one metallic surface, black
-    # only on the bezels and switch blocks: review r2 F3)
-    acc.add(_oriented(m, N_AFT), "panel_grey")
+    # the face round the PDUs: the same warm titanium as the sub-panels (P1046408: one metallic surface, black only on
+    # the bezels and switch blocks: review r2 F3); final judge r1 LIV-F1-04 / I4: a darker satin titanium
+    # ('panel_titanium', metallic) -- the light 'panel_grey' read as beige plastic against the photo's grey metal
+    acc.add(_oriented(m, N_AFT), "panel_titanium")
     # lower edge return (the face is a moulding, not a sheet): 40 mm forward under the bottom edge
     bot = P[:, 0]
-    acc.add(_oriented(_strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_grey")
+    acc.add(_oriented(_strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_titanium")
     # recess (black box behind the PDU row)
     fr = Fr([I.panel_x(ZM), 0.0, ZM], [0, 1.0, 0], V_UP)
     d = DETAIL["recess_depth"]
@@ -396,85 +397,21 @@ def _panel_face(acc):
 # =====================================================================================================================
 # displays
 # =====================================================================================================================
-def _screen(acc, g, aw, ah, kind, side=0):
-    """Simple G3000 PRIME-like layout on the glass frame g (active area aw x ah, u right, v up).  Layers: k = 1
-    backgrounds, 2 panes, 3 details, 4 symbols (k x 0.6 mm above the glass, inside the 3 mm bezel lip)."""
-    hw, hh = 0.5 * aw, 0.5 * ah
-    c = 0.0006
-
-    def R(u0, v0, u1, v1, mat, k=1):
-        acc.add(g.rect(u0, v0, u1, v1, c * k), mat)
-
-    def rows(u0, u1, v0, v1, n, mat="screen_ui_hi", gap=0.004, k=2):
-        h = (v1 - v0 - (n - 1) * gap) / n
-        for i in range(n):
-            vv = v1 - i * (h + gap)
-            R(u0, vv - h, u1, vv, mat, k)
-
-    if kind == "pfd":
-        # PFD pane on the outboard 60 %, a nav / flight-plan pane inboard
-        w_p = 0.60 * aw
-        if side <= 0:
-            pu0, pu1, ou0, ou1 = -hw, -hw + w_p, -hw + w_p + 0.003, hw
-        else:
-            pu0, pu1, ou0, ou1 = hw - w_p, hw, -hw, hw - w_p - 0.003
-        R(ou0, -hh, ou1, hh, "screen_ui")
-        rows(ou0 + 0.006, ou1 - 0.006, -hh + 0.020, hh - 0.022, 7)
-        R(ou0 + 0.006, hh - 0.016, ou0 + 0.040, hh - 0.006, "screen_cyan", 2)
-        uc = 0.5 * (pu0 + pu1)
-        vh = 0.010                                                   # horizon
-        R(pu0, vh, pu1, hh - 0.012, "screen_sky")
-        R(pu0, -hh + 0.010, pu1, vh, "screen_ground")
-        R(pu0, hh - 0.012, pu1, hh, "screen_ui")                    # top bar
-        R(pu0 + 0.004, hh - 0.009, pu0 + 0.030, hh - 0.003, "screen_green", 2)
-        R(pu1 - 0.050, hh - 0.009, pu1 - 0.020, hh - 0.003, "screen_cyan", 2)
-        R(pu0, -hh, pu1, -hh + 0.010, "screen_ui")                  # bottom bar
-        R(pu0 + 0.006, -hh + 0.003, pu0 + 0.030, -hh + 0.007, "screen_green", 2)
-        R(pu0, vh - 0.0007, pu1, vh + 0.0007, "screen_white", 2)
-        for s in (-1, 1):                                             # airspeed / altitude tapes
-            u0 = uc + s * 0.062
-            R(min(u0, u0 + s * 0.024), -0.030, max(u0, u0 + s * 0.024), 0.058, "screen_ui", 2)
-            R(min(u0, u0 + s * 0.024), 0.008, max(u0, u0 + s * 0.024), 0.020, "screen_white", 3)
-        for s in (-1, 1):                                             # aircraft symbol
-            R(uc + s * 0.012, vh - 0.003, uc + s * 0.030, vh + 0.000, "light_amber", 4)
-        R(uc - 0.003, vh - 0.003, uc + 0.003, vh + 0.003, "light_amber", 4)
-        for k in range(1, 4):                                          # pitch ladder
-            R(uc - 0.012, vh + k * 0.012, uc + 0.012, vh + k * 0.012 + 0.0008, "screen_white", 3)
-        acc.add(g.disk(uc, -hh + 0.040, 0.030, 3 * c, 32), "screen_ui")      # HSI
-        acc.add(g.disk(uc, -hh + 0.040, 0.030, 4 * c, 32, r_inner=0.0285), "screen_white")
-    elif kind == "mfd":
-        R(-hw, -hh, hw, hh, "screen_ui")
-        ue = -hw + 0.20 * aw                                          # engine strip
-        for k, v in enumerate((0.060, 0.030, 0.000, -0.030)):
-            acc.add(g.disk(-hw + 0.016, v, 0.009, 2 * c, 20, r_inner=0.007), "screen_green")
-            acc.add(g.disk(-hw + 0.040, v, 0.009, 2 * c, 20, r_inner=0.007), "screen_green" if k else "screen_white")
-        rows(-hw + 0.005, ue - 0.005, -hh + 0.010, -0.050, 4, "screen_ui_hi", 0.003)
-        R(ue, -0.030, hw, hh - 0.010, "screen_map", 2)               # map
-        for (a, b, w_, h_) in ((-0.04, -0.02, 0.05, 0.030), (0.06, 0.04, 0.05, 0.035), (0.00, 0.050, 0.04, 0.020),
-                               (0.10, -0.025, 0.04, 0.025)):
-            R(a, b, a + w_, b + h_, "screen_ground", 3)              # terrain shading
-        for (a, b, w_, h_) in ((0.02, 0.02, 0.030, 0.010), (0.05, 0.035, 0.015, 0.018), (-0.01, 0.05, 0.020, 0.006),
-                               (-0.055, 0.010, 0.012, 0.022)):
-            R(a, b, a + w_, b + h_, "screen_sky", 4)                 # lakes
-        R(0.030, 0.010, 0.036, 0.016, "screen_white", 4)             # own ship
-        R(ue + 0.01, 0.006, hw - 0.02, 0.0075, "screen_cyan", 4)     # route
-        R(ue, hh - 0.010, hw, hh, "screen_ui", 2)                    # top bar
-        R(ue + 0.004, hh - 0.008, ue + 0.060, hh - 0.003, "screen_cyan", 3)
-        R(ue, -hh + 0.004, hw, -0.034, "screen_ui_hi", 2)            # vertical profile
-        R(ue + 0.004, -hh + 0.008, hw - 0.004, -hh + 0.016, "screen_green", 3)
-        R(ue + 0.004, -0.046, hw - 0.004, -0.045, "screen_white", 3)
-    elif kind == "sdu":
-        R(-hw, -hh, hw, hh, "screen_ui")
-        R(-hw + 0.004, hh - 0.030, hw - 0.004, hh - 0.004, "screen_ui_hi", 2)
-        for u0, mat in ((-hw + 0.008, "screen_green"), (-0.005, "screen_cyan"), (0.025, "screen_green")):
-            R(u0, hh - 0.020, u0 + 0.018, hh - 0.010, mat, 3)
-        rows(-hw + 0.006, hw - 0.006, -hh + 0.028, hh - 0.038, 6)
-        R(-hw, -hh, hw, -hh + 0.020, "screen_ui_hi", 2)
-        R(-hw + 0.010, -hh + 0.005, -hw + 0.024, -hh + 0.015, "screen_sky", 3)
+def _page_glass(glass, g, aw, ah, name):
+    """The display glass carrying its G3000 PRIME page (final judge r1 R2 / I1): UVs into the atlas of
+    model/g3000_pages.py from each vertex's place on the active area (g: frame at the active-area centre, u right, v up);
+    material 'display_page' (emissive texture, cad/glb.py).  The flat coloured page geometry it replaces (_screen, up
+    to rev E) read as a placeholder."""
+    from model import g3000_pages
+    d = glass.V - g.o
+    glass.UV = g3000_pages.uv_rect(name, d @ g.u / aw + 0.5, d @ g.v / ah + 0.5)
+    return glass
 
 
-def _displays(acc):
-    acc.group = "displays"
+def _display_specs():
+    """The five G3000 PRIME displays: [(name, kind, side, bezel frame fr, W, H, border (l, r, t, b), bezel kwargs)] --
+    the three PDUs (PFD L, MFD, PFD R) on the panel face, the two SDU touch controllers on the pedestal stack."""
+    out = []
     fr0 = Fr([I.panel_x(ZM), 0.0, ZM], [0, 1.0, 0], V_UP)
     cant = math.radians(PN["pdu_cant"])
     for yc in PN["pdu_bl"]:
@@ -485,11 +422,8 @@ def _displays(acc):
             fr = Fr(o, u, fr0.v)
         else:
             fr = Fr(o, fr0.u, fr0.v)
-        bz, glass, g, (aw, ah) = _bezel(fr, PDU_W, PDU_H, DETAIL["pdu_border"], depth=DETAIL["bezel_depth"])
-        acc.add(bz, "bezel_black")
-        acc.add(glass, "screen")
-        acc.add(fr.rect(-0.018, 0.5 * PDU_H - 0.013, 0.018, 0.5 * PDU_H - 0.009, 0.0003), "panel_grey")  # logo
-        _screen(acc, g, aw, ah, "pfd" if sg else "mfd", sg)
+        out.append(({-1: "pfd_L", 0: "mfd", 1: "pfd_R"}[sg], "pfd" if sg else "mfd", sg, fr, PDU_W, PDU_H,
+                    tuple(DETAIL["pdu_border"]), dict(depth=DETAIL["bezel_depth"])))
     # SDUs: portrait, side by side on the reclined stack face (interior.sdu_centre)
     sw, sh = (float(v) for v in PN["sdu_wh"])
     a_w, a_h = DETAIL["sdu_active"]
@@ -499,10 +433,38 @@ def _displays(acc):
         c = I.sdu_centre(sg)
         fr = Fr(c + 0.004 * np.array([math.cos(rec), 0.0, math.sin(rec)]), [0, 1.0, 0], v_up)
         brd = (0.5 * (sw - a_w), 0.5 * (sw - a_w), 0.5 * (sh - a_h), 0.5 * (sh - a_h))
-        bz, glass, g, (aw, ah) = _bezel(fr, sw, sh, brd, r_out=0.006, depth=0.012)
+        out.append(({-1: "sdu_L", 1: "sdu_R"}[sg], "sdu", sg, fr, sw, sh, brd, dict(r_out=0.006, depth=0.012)))
+    return out
+
+
+def display_frames():
+    """Active areas of the five displays (model axes): {name: dict(kind, side, centre (on the glass), u (right), v (up),
+    w (out of the screen, toward the crew), size (active w, h), bezel_lip (m from the glass forward to the bezel face),
+    page (the page's pixel rectangle x0, y0, x1, y1 in the model/g3000_pages.py atlas, y down))}.  Written into the
+    GLB's model meta (the root node's extras) 'displays' by model/build.py; the glass itself carries the page
+    (_page_glass)."""
+    from model import g3000_pages
+    out = {}
+    for name, kind, sg, fr, W, H, brd, kw in _display_specs():
+        l, r, t, b = brd
+        glass_in = kw.get("glass_in", 0.003)
+        aw, ah = W - l - r, H - t - b
+        c = fr.p(0.5 * (l - r), 0.5 * (b - t), -glass_in)
+        out[name] = dict(kind=kind, side=sg, centre=[round(float(v), 5) for v in c],
+                         u=[round(float(v), 6) for v in fr.u], v=[round(float(v), 6) for v in fr.v],
+                         w=[round(float(v), 6) for v in fr.w], size=[round(float(aw), 5), round(float(ah), 5)],
+                         bezel_lip=glass_in, page=list(g3000_pages.ATLAS["rects"][name]))
+    return out
+
+
+def _displays(acc):
+    acc.group = "displays"
+    for name, kind, sg, fr, W, H, brd, kw in _display_specs():
+        bz, glass, g, (aw, ah) = _bezel(fr, W, H, brd, **kw)
         acc.add(bz, "bezel_black")
-        acc.add(glass, "screen")
-        _screen(acc, g, aw, ah, "sdu", sg)
+        acc.add(_page_glass(glass, g, aw, ah, name), "display_page")
+        if kind != "sdu":
+            acc.add(fr.rect(-0.018, 0.5 * PDU_H - 0.013, 0.018, 0.5 * PDU_H - 0.009, 0.0003), "panel_grey")  # logo
     # GI 275 standby (round face in a square case) and the eyeball ECS outlets, on the wrapped face
     acc.group = "panel"
     sby, sdz, sd = (float(v) for v in PN["standby"])
@@ -557,10 +519,11 @@ def _glareshield(acc):
         xe = float(face_x(y, zf))
         sof.append(np.c_[np.linspace(xd, xe, 3), np.full(3, y), np.full(3, zf)])
     for G, mat, hint in ((hood, "leather_glareshield", [0.1, 0, 1.0]), (lip, "leather_glareshield", [1.0, 0, 0.3]),
-                         (fas, "panel_grey", [1.0, 0, 0.1]), (sof, "panel_dark", [0, 0, -1.0])):
-        # the soffit's clamped end 3.5 mm inboard of the lip's, 1.5 mm inboard of the CB-panel bezel (review r3 K3)
-        P = _clamp_lining(np.array(G), 0.0075 if mat == "panel_dark" else 0.004,
-                          cheek - (0.002 if mat == "panel_dark" else 0.0))
+                         (fas, "panel_grey", [1.0, 0, 0.1]), (sof, "panel_titanium", [0, 0, -1.0])):
+        # the soffit's clamped end 3.5 mm inboard of the lip's, 1.5 mm inboard of the CB-panel bezel (review r3 K3);
+        # final judge r1 LIV-F1-04: the soffit (the brow over the PDUs) dark titanium, not near-black graphite
+        P = _clamp_lining(np.array(G), 0.0075 if mat == "panel_titanium" else 0.004,
+                          cheek - (0.002 if mat == "panel_titanium" else 0.0))
         # normals from the final faces (the grid's own one-sided differences at the windshield row pointed against the
         # winding on 1.6 % of the hood: review r2 N1 check)
         acc.add(_oriented(grid_surface(P).compute_normals(), hint), mat)
@@ -606,7 +569,7 @@ def _glareshield(acc):
 # =====================================================================================================================
 # lower panel: sub-panels (brushed grey), switch blocks, gear handle, parking brake, feather inhibit, oxygen lever
 # =====================================================================================================================
-def _face_plate(acc, y0, y1, z0, z1, off=0.004, mat="panel_grey"):
+def _face_plate(acc, y0, y1, z0, z1, off=0.004, mat="panel_titanium"):
     ny = max(2, int(math.ceil(abs(y1 - y0) / 0.02)) + 1)
     Y, Z = np.meshgrid(np.linspace(y0, y1, ny), np.linspace(z0, z1, 4), indexing="ij")
     P = np.stack([face_x(Y, Z), Y, Z], -1)
@@ -622,9 +585,38 @@ def _face_plate(acc, y0, y1, z0, z1, off=0.004, mat="panel_grey"):
         acc.add(_oriented(_flat(_strip(E0, E1, closed=False)), lambda C: C - top.mean((0, 1))), mat)
 
 
-def _toggle(acc, f, a, b, bat=0.013):
-    acc.add(f.box(a, b, 0.002, (0.011, 0.018, 0.004)), "bezel_black")
-    acc.add(cylinder(f.p(a, b, 0.003), f.p(a, b + 0.004, 0.003 + bat), 0.0022, n=8), "metal")
+# push-button blocks on the inner lower sub-panels [M: P1046408]: rows of dark rectangular buttons with white legends
+# under white group placards on the titanium face (final judge r1 I4: the old black square with six toggle dots read as
+# an empty block).  Per side: rows (v of the row centre, number of buttons, u of the row centre), button w x h, pitch
+# along u, placards (v, half-length); co-pilot: + two white guarded switches (u, v)
+BUTTONS = dict(w=0.022, h=0.016, depth=0.005, pitch=0.028, legend=0.0003,
+               rows={-1: ((0.044, 3, 0.0), (0.020, 3, 0.0), (-0.026, 3, 0.0), (-0.050, 3, 0.0)),
+                     1: ((0.044, 3, 0.0), (0.020, 3, 0.0), (-0.034, 1, -0.030))},
+               placards={-1: ((0.061, 0.044), (-0.009, 0.044)), 1: ((0.061, 0.044), (0.003, 0.030))},
+               guards={1: ((0.006, -0.034), (0.034, -0.034))})
+
+
+def _button(acc, f, a, b):
+    """One push-button: a dark cap seated on the face with two light legend bars (abstract, no lettering)."""
+    q = BUTTONS
+    w, h, d = q["w"], q["h"], q["depth"]
+    acc.add(f.box(a, b, 0.5 * d, (w, h, d)), "bezel_black")
+    c = d + q["legend"]
+    acc.add(f.rect(a - 0.34 * w, b + 0.08 * h, a + 0.34 * w, b + 0.26 * h, c), "light_white")
+    acc.add(f.rect(a - 0.22 * w, b - 0.26 * h, a + 0.22 * w, b - 0.10 * h, c), "light_white")
+
+
+def _button_block(acc, f, sg):
+    q = BUTTONS
+    for v, nb, u0 in q["rows"][sg]:
+        for i in range(nb):
+            _button(acc, f, u0 + (i - 0.5 * (nb - 1)) * q["pitch"], v)
+    for v, hl in q["placards"][sg]:                                    # white group placards (blank)
+        acc.add(f.rect(-hl, v - 0.0022, hl, v + 0.0022, 0.0004), "light_white")
+    for a, b in q["guards"].get(sg, ()):                              # guarded switches: white guard + bat toggle
+        acc.add(f.box(a, b, 0.0055, (0.020, 0.026, 0.011)), "yoke_white")
+        acc.add(f.box(a, b, 0.0115, (0.012, 0.018, 0.001)), "bezel_black")
+        acc.add(cylinder(f.p(a, b, 0.0115), f.p(a, b + 0.004, 0.024), 0.0022, n=8), "metal")
 
 
 def _lower_panel(acc):
@@ -642,12 +634,8 @@ def _lower_panel(acc):
         f = face_frame(sg * yc, float(I.yoke_hub(sg)[2])).moved(c=0.004)
         acc.add(revolve([(0.0, 0.050), (0.004, 0.048), (0.010, 0.030), (0.014, 0.026)], n=24, axis_origin=f.o,
                         axis_dir=f.w, ref_dir=f.u, cap_ends=False), "black")
-        # inner sub-panel: ice protection (pilot) / ACS + CPCS (co-pilot) switch blocks
-        f = face_frame(sg * 0.205, zc).moved(c=0.004)
-        acc.add(f.box(0, 0, 0.001, (0.085, 0.085, 0.002)), "bezel_black")
-        for i in range(3):
-            for j in range(2):
-                _toggle(acc, f, -0.025 + 0.025 * i, 0.018 - 0.036 * j)
+        # inner sub-panel: ICE PROTECTION (pilot) / ELECTRICAL + CABIN PRESSURE (co-pilot) push-button blocks
+        _button_block(acc, face_frame(sg * 0.205, zc).moved(c=0.004), sg)
         if sg < 0:
             # landing-gear selector (pilot's lower right panel, next to the stack) and FEATHER INHIBIT
             f = face_frame(-0.160, zc + 0.010).moved(c=0.004)
@@ -659,10 +647,12 @@ def _lower_panel(acc):
             f = face_frame(-0.458, zc - 0.030).moved(c=0.004)
             acc.add(f.box(0, 0, 0.002, (0.024, 0.024, 0.004)), "bezel_black")
             acc.add(f.box(0, 0, 0.0055, (0.014, 0.014, 0.003)), "panel_dark")
-            # PARKING BRK T-handle, lower left
+            # PARKING BRK T-handle, lower left: a stem out of the bezel and a horizontal grip bar (final judge r1 I4:
+            # the upright pillow read as a black slot)
             f = face_frame(-0.635, zc - 0.005).moved(c=0.004)
             acc.add(f.box(0, 0, 0.001, (0.040, 0.075, 0.002)), "bezel_black")
-            acc.add(f.se(0, 0, 0.016, (0.009, 0.036, 0.013), (0.35, 0.35), (8, 12)), "black")
+            acc.add(cylinder(f.p(0, -0.012, 0.0015), f.p(0, -0.012, 0.022), 0.0045, n=12), "steel")
+            acc.add(f.se(0, -0.012, 0.026, (0.030, 0.0085, 0.0075), (0.35, 0.35), (10, 12)), "black")
         else:
             # OXYGEN lever (vertical slot) next to the stack
             f = face_frame(0.160, zc).moved(c=0.004)
@@ -693,8 +683,8 @@ def _pedestal(acc):
     O = np.array(O)
     # the stack face round the SDUs stays titanium grey; below the SDU pad the quadrant's skins are dark gunmetal
     # with the black slotted quadrant top (throttle photo, P1046408-10: review r3 F3)
-    mats = ["panel_dark", "panel_dark", "panel_grey", "pedestal_gunmetal", "bezel_black", "pedestal_gunmetal", None,
-            None, None, "panel_grey", None]
+    mats = ["panel_dark", "panel_dark", "panel_titanium", "pedestal_gunmetal", "bezel_black", "pedestal_gunmetal", None,
+            None, None, "panel_titanium", None]
     # each outline edge faces outward by the polygon's own winding (the centroid test turned the reclined SDU face
     # inward: review r1 C6)
     ccw = 0.5 * float(np.sum(O[:, 0] * np.roll(O[:, 1], -1) - np.roll(O[:, 0], -1) * O[:, 1])) > 0
@@ -721,7 +711,7 @@ def _pedestal(acc):
                 t = (xs_ - a[0]) / (b[0] - a[0])
                 out.append(a + t * (b - a))
         return np.array(out)
-    for keep_fwd, mat in ((True, "panel_grey"), (False, "pedestal_gunmetal")):
+    for keep_fwd, mat in ((True, "panel_titanium"), (False, "pedestal_gunmetal")):
         Q = clip_x(O[:, :2], keep_fwd)
         side = planar_cap(np.c_[Q[:, 0], np.zeros(len(Q)), Q[:, 1]], [0, 1.0, 0])
         for sg in (-1, 1):
@@ -738,7 +728,7 @@ def _pedestal(acc):
         P3 = np.c_[path[:, 0], sg * (hws - rr_), path[:, 1] + 0.002]
         P3 = np.vstack([P3[:5], [[qx1 - 0.01, sg * (hw - rr_), zt + 0.002]],
                         [[qx1 - rr_, sg * (hw - rr_), zt - 0.01]], [[qx1 - rr_, sg * (hw - rr_), FL + 0.02]]])
-        for part_, mat in ((P3[:4], "panel_grey"), (P3[3:], "pedestal_gunmetal")):
+        for part_, mat in ((P3[:4], "panel_titanium"), (P3[3:], "pedestal_gunmetal")):
             dense = [part_[0]]
             for a, b in zip(part_[:-1], part_[1:]):
                 n = max(1, int(np.linalg.norm(b - a) / 0.02))
@@ -790,9 +780,17 @@ def _pedestal(acc):
     fa = Fr([qx1 + 0.0005, 0.0, FL], [0, 1.0, 0], [0, 0, 1.0])       # w = aft
     acc.add(fa.rect(-hw + 0.012, 0.030, hw - 0.012, zt - FL - 0.040, 0.0), "bezel_black")
     acc.add(fa.rect(-hw + 0.006, zt - FL - 0.032, hw - 0.006, zt - FL - 0.010, 0.0004), "panel_grey")
+    # final judge r1 I7 (P1046406 / 08): FLAT red pull paddles -- a bottle-shaped plate (wide body, tapered neck) with
+    # a T grip on top and white legend bars low on the body, standing 15 mm proud of the black panel (the rounded
+    # pillows read as two red cylinders)
+    body = _fillet(np.array([(-0.017, 0.072), (0.017, 0.072), (0.017, 0.172), (0.010, 0.198), (0.010, 0.226),
+                             (-0.010, 0.226), (-0.010, 0.198), (-0.017, 0.172)]), 0.004, n=3, max_seg=0.01)
     for sg in (-1, 1):
-        acc.add(fa.se(sg * 0.056, 0.150, 0.010, (0.017, 0.080, 0.010), (0.3, 0.3), (8, 12)), "paint_red")
-        acc.add(fa.se(sg * 0.056, 0.232, 0.018, (0.024, 0.010, 0.012), (0.4, 0.4), (8, 12)), "paint_red")
+        fp = Fr(fa.p(sg * 0.056, 0.0, 0.0080), fa.u, fa.v)
+        acc.add(_extrusion(fp, body, 0.015, bevel=0.003), "paint_red")
+        acc.add(_extrusion(fp, rrect_loop(0.024, 0.0095, 0.006, cx=0.0, cy=0.232), 0.017, bevel=0.004), "paint_red")
+        for v0, v1, hl in ((0.084, 0.091, 0.010), (0.097, 0.104, 0.007), (0.140, 0.146, 0.011)):
+            acc.add(fp.rect(-hl, v0, hl, v1, 0.0080), "light_white")
     acc.add(fa.se(0.0, 0.150, 0.008, (0.018, 0.070, 0.008), (0.3, 0.3), (8, 12)), "black")
     acc.add(fa.rect(-0.012, 0.185, 0.012, 0.197, 0.0170), "light_white")          # 'OPEN' flag
 
@@ -831,7 +829,8 @@ def _plinth_floor(acc, floor=True):
             acc.add(_oriented(grid_surface(P), [0, 0, 1.0]), "carpet_flightdeck")
     # threshold strip across the divider opening (metal, flush floor: P1046406)
     ob0, ob1 = (float(v) for v in DV["open_bl"])
-    acc.add(box([xd, 0.5 * (ob0 + ob1), FL + 0.0015], (0.040, ob1 - ob0 + 0.02, 0.003)), "metal")
+    # (final judge r1 I7: a polished strip, 55 mm, as P1046406's bright threshold; was a 40 mm satin bar)
+    acc.add(box([xd, 0.5 * (ob0 + ob1), FL + 0.0015], (0.055, ob1 - ob0 + 0.02, 0.003)), "chrome_trim")
     # footwell front closure at the forward end of the lining (dark)
     S = I.lining_section(xa, n=361)
     S = S[S[:, 1] >= zb]
@@ -960,9 +959,13 @@ def _yokes(acc):
     # shield's V
     r_w = 0.006                                                       # the shield's top-edge roll
     ti = 0.5 * hh - float(YK["shield_dip"]) - r_w - 0.003               # inside the top face (its seams kept)
-    insert = np.array([(0.011, -0.030), (0.020, -0.004), (0.029, 0.026), (0.031, ti), (-0.031, ti),
-                       (-0.029, 0.026), (-0.020, -0.004), (-0.011, -0.030)])
-    insert = S.fillet(insert, 0.008, max_len=0.003)
+    # final judge r1 I2 (P1046408): the grey insert is a tongue in the LOWER middle of the shield (about 0.3 of its top
+    # width, from ~15 mm above the hub centre down toward the stem), white all round and above it up to the badge band
+    # along the top edge -- the rev D insert ran up to the top edge and read as a grey V framed by a thin white rim
+    ti = min(ti, 0.016)
+    insert = np.array([(0.010, -0.036), (0.016, -0.022), (0.020, -0.004), (0.022, ti), (-0.022, ti),
+                       (-0.020, -0.004), (-0.016, -0.022), (-0.010, -0.036)])
+    insert = S.fillet(insert, 0.007, max_len=0.003)
     rec = 0.0028
 
     def crown_w(a, b, d):
@@ -995,8 +998,9 @@ def _yokes(acc):
             c = _top_height(g, a, b)
             return c + float(lean(np.array(a), np.array(b), np.array(c)))
         # badge on the insert floor, TCS on the white inboard shoulder, AFCS DISC on the black shoulder
-        cbg = on(white, 0.0, 0.034)
-        acc.add(fr.se(0.0, 0.034, cbg + 0.0004, (0.016, 0.0032, 0.0012), (0.3, 0.3), (6, 12)), "metal")
+        zb = 0.5 * hh - float(YK["shield_dip"]) - 0.0125                # silver badge band along the top edge
+        cbg = on(white, 0.0, zb)                                          # (P1046408: ~0.35 of the top width)
+        acc.add(fr.se(0.0, zb, cbg + 0.0004, (0.024, 0.0042, 0.0012), (0.3, 0.3), (6, 12)), "metal")
         ob = sg                                                        # outboard: TCS on the white shoulder, the
         c_t = on(white, ob * 0.052, 0.040)                             # red AFCS DISC below it on the black arm
         acc.add(fr.knob(ob * 0.052, 0.040, 0.0068, 0.0055, 16, c_t - 0.0015), "black")      # (P1046408 pair)
@@ -1012,19 +1016,21 @@ def _yokes(acc):
             o = fr.p(b0[0], b0[1], 0.5 * hd)
             s_h0, s_h1 = 1.0 - (hl + 0.010) / gl, 1.0 - rh / gl                # swollen head (YOKE grip_head)
             wp = lambda s_: gr * 0.93 + (rh - gr * 0.93) * S.smoothstep(s_h0, s_h1, s_)    # noqa: E731
-            dp = lambda s_: (0.5 * hd - 0.004) * (0.80 + 0.18 * S.smoothstep(0.45, 0.9, s_))   # noqa: E731
+            # final judge r1 I2: slimmer paddles (depth 0.62 -> 0.85 of the hub slab from the root to the head; 0.80 ->
+            # 0.98 read as fat round handles from behind)
+            dp = lambda s_: (0.5 * hd - 0.004) * (0.62 + 0.23 * S.smoothstep(0.45, 0.9, s_))   # noqa: E731
             cp = lambda s_: 0.002 * S.smoothstep(0.5, 0.95, s_)                 # noqa: E731 -- head leans aft
             acc.add(_grip_loft(o, ax, lat, fr.w, gl, wp, dp, cp), "grip_black")
             # grained leather panel on the outboard / aft face [M: P1046408 / brochure p.12]
-            pc = o + 0.42 * gl * ax + 0.25 * gr * lat + (0.5 * hd - 0.004) * 0.80 * fr.w
+            pc = o + 0.42 * gl * ax + 0.25 * gr * lat + (0.5 * hd - 0.004) * 0.66 * fr.w
             acc.add(superellipsoid(pc, (0.30 * gl, 0.55 * gr, 0.0020), (0.5, 0.5), nu=8, nv=14,
                                    R=np.stack([ax, lat, fr.w], 1)), "black")
             hdir = _unit(ax + 0.5 * fr.w)                               # hat switch on the head, aft-up
             tip = o + (gl - 0.016) * ax + 0.006 * fr.w
-            acc.add(cylinder(tip, tip + 0.010 * hdir, 0.0048, n=12), "black")
-            acc.add(cylinder(tip + 0.010 * hdir, tip + 0.0135 * hdir, 0.0062, n=12), "metal_dark")
+            acc.add(cylinder(tip, tip + 0.010 * hdir, 0.0048, n=12), "black")    # black thumb knob (P1046408)
+            acc.add(cylinder(tip + 0.010 * hdir, tip + 0.0145 * hdir, 0.0070, n=12), "black")
             if d == sg:                                                  # trim rocker, aft face of the head
-                q = o + (gl - 0.032) * ax + (0.5 * hd - 0.004) * 0.97 * fr.w
+                q = o + (gl - 0.032) * ax + (0.5 * hd - 0.004) * 0.83 * fr.w
                 acc.add(superellipsoid(q, (0.007, 0.005, 0.004), (0.4, 0.4), nu=6, nv=10,
                                        R=np.stack([ax, lat, fr.w], 1)), "panel_grey")
         # horizontal column into the lower panel (into the black body's forward face)
@@ -1083,15 +1089,16 @@ def _pedals(acc):
             s_c = 0.06 + 0.5 * pl
             f = Fr(heel + s_c * d + [0.0, yc, 0.0], [0, 1.0, 0], d)
             acc.add(f.se(0, 0, 0.004, (0.5 * pw, 0.5 * pl, 0.008), (0.25, 0.25), (8, 14)), "black")
-            for k in range(-2, 3):                                     # anti-slip ribs
-                acc.add(f.box(0, k * 0.035, 0.0125, (pw - 0.020, 0.005, 0.003)), "metal_dark")
+            # fine tread (final judge r1 I7 / R9: five metal ribs read as ladder slats): eleven narrow dark ribs
+            for k in range(-5, 6):
+                acc.add(f.box(0, k * 0.0145, 0.0118, (pw - 0.026, 0.0035, 0.0020)), "bezel_black")
             piv = np.array([hx, yc, FL + hz])
             top = f.p(0.0, 0.050, -0.002)                             # into the pad's back (it floated 6 mm)
             low = f.p(0.0, -0.090, -0.002)
-            for sy in (-1, 1):
+            for sy in (-1, 1):                                         # arms: lighter satin metal (P1046408)
                 off = np.array([0.0, sy * 0.030, 0.0])
-                acc.add(cylinder(piv + off, top + off, 0.006, n=8), "metal_dark")
-            acc.add(cylinder(piv + [0.02, 0, 0.004], low, 0.007, n=8), "metal_dark")
+                acc.add(cylinder(piv + off, top + off, 0.006, n=8), "metal")
+            acc.add(cylinder(piv + [0.02, 0, 0.004], low, 0.007, n=8), "metal")
             acc.add(cylinder(piv + [0.01, 0, 0.018], f.p(0.0, 0.0, -0.012), 0.011, n=10), "steel")   # brake cyl.
             acc.group = "pedals"
             acc.add(box([hx, yc, FL + 0.5 * (hz + 0.010)], (0.040, 0.075, hz + 0.010)), "metal_dark")  # hinge

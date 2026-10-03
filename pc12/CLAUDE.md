@@ -3,8 +3,8 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (96 parts, ~1.50M tris of which the interior ~229k and the
-three wheels ~77k, ~21 MB;
+engineering-drawing generator. Output: `out/pc12.glb` (96 parts, ~1.50M tris of which the interior ~232k and the
+three wheels ~77k, ~21.7 MB incl. the 0.5 MB G3000 page atlas;
 hinge pivots in node extras), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
 exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
@@ -97,7 +97,9 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
 - `cad/mesh.py` kernel: `grid_surface`, `trim` (marching-triangles implicit trimming), `band`,
   `boundary_loops`, `solidify`, `revolve`, `sweep_profile/tube`, `superellipsoid`, `planar_cap`.
   **Gotcha:** when trimming twice, re-evaluate the field on the trimmed mesh (use `band()`/`trim_fn`).
-- `cad/glb.py` glTF writer with KHR_mesh_quantization; `cad/sdf2d.py` 2-D signed distances.
+- `cad/glb.py` glTF writer with KHR_mesh_quantization and embedded image textures (`GLBBuilder.texture`; a textured
+  material's meshes carry `Mesh.UV` as TEXCOORD_0 -- only those: elsewhere `Mesh.UV` is a surface parameter);
+  `cad/sdf2d.py` 2-D signed distances.
 - `model/fuselage.py` OML lofted from control lines (crown, keel, half-breadth, max-breadth WL) +
   super-ellipse section law. `fuselage_parts.py` cuts skins/doors/windows; `cockpit_glazing.py`
   defines windshield / side windows / dark surround as signed-distance constraints.
@@ -113,7 +115,9 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   stacks), `gear.py` (+ `bays.py`, `brace.py`, `wheels.py` -- the L4W wheel / tyre tables and the 3-D wheels built from
   them; nose retracts 105° into a tunnel under the pedestal, unequal-link braces), `interior.py` (the approved source-tagged interior tables that sheets L6 / L6B draw --
   `drawing/interior_sheet.py` / `interior_checks.py` -- and `build()`: the Stage-3 meshes built from exactly those
-  tables by `flightdeck.py` (part `flight_deck`: G3000 PRIME panel, glareshield, PC-24-style yokes, pedals, pedestal on
+  tables by `flightdeck.py` (part `flight_deck`: G3000 PRIME panel -- the five pages drawn by `model/g3000_pages.py`
+  (unbranded, numerals only) into one JPEG atlas that the display glass (material 'display_page') carries as its
+  emissive texture (`assemble.TEXTURES`), so the GLB, the viewer and any importer show the same pages --, glareshield, PC-24-style yokes, pedals, pedestal on
   the nose-tunnel plinth, consoles, overhead, walnut divider + curtain; extras 'design eye' = `interior.design_eye`),
   `seats.py` (IPECO 3A318-type crew seats `seat_pilot` / `seat_copilot` on their tracks, PRO executive seats
   `seat_pax1..6` at `seat_map()`), `cabin.py` (part `cabin_interior`: floor + AI Orange runner, surface tracks, ledges,
@@ -273,7 +277,26 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   INTERIOR_LIGHTS + the emissive displays / LED coves; every interior material is in assemble.MATERIALS
   (+ EMISSIVE) and render/lookdev.py SPEC, `python3 render/lookdev.py --json` regenerates lookdev_materials.json) and
   the three.js viewer (`web/`, three.js r160 in `web/three_local`; `web/viewer/materials.json` must stay a copy of
-  `render/lookdev_materials.json`: `viewer/materials.js` turns it into MeshPhysicalMaterial by name -- emissive and the
-  GLB's sheen carried over --, replacing the GLB's KHR clear-coat materials, and keeps the GLB values for the rest;
-  every part of the GLB group 'Interior' gets the cabin light).
+  `render/lookdev_materials.json`: `viewer/materials.js` turns it into MeshPhysicalMaterial by name -- emissive, the
+  GLB's sheen and its textures (the display pages' emissive map) carried over --, replacing the GLB's KHR clear-coat
+  materials, and keeps the GLB values for the rest; every part of the GLB group 'Interior' gets the cabin light; the
+  table's `render_stripes` (cabin carpet) become a band-limited pinstripe patch, and the carpets get an occlusion
+  stand-in (VIEWER envMapIntensity 0.45: unoccluded, the studio washed the AI Orange runner out to pale peach)).
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
+- Final judge r1 fixes, MODELLING only (2026-10-03; the owner put Blender on hold until the model is signed off, so
+  the r1 render-stage changes -- airfield backplate / terrain, wheel close-up catcher, beauty preset tweaks -- stay
+  parked on local branch `wip/final-fix-r1-partial`): G3000 PRIME pages in the GLB (above;
+  `flightdeck.display_frames()` -> GLB meta 'displays' records each page's frame and atlas rectangle); PC-24 yoke a
+  full-U white shield with the grey insert a tongue low in its middle, grips 160, heads r 18 over 42, slimmer paddles
+  (L6 / L6B rev F); AI Orange runner of broad 50-85 mm angular bands in 4 lanes over 0.42 m (`cabin.RUNNER`,
+  crossing-free) on a navy carpet with transverse pinstripes (lookdev `stripes`, viewer patch), cream bands; dark
+  satin titanium (`panel_titanium`) on the PDU face, lower sub-panels, glareshield soffit and centre-stack face;
+  push-button blocks on the inner sub-panels, parking-brake T-handle, flat red FUEL / ACS pull paddles, fine pedal
+  tread, polished threshold strip, carpeted flight-deck kick panels (lining below the console top), dark-grey
+  glareshield leather, a lighter lavender-grey sheepskin; lighter exec back shells with a near-horizontal top edge;
+  light metallic blue #7D92BA (LIV-F1-01, glTF metallic 0.65, L5 rev B) and tail-cone strokes x1.35
+  (`livery.AFT_STROKES`, LIV-F1-02); airstair two-link rail on the forward stringer only (the aft rail matched nothing
+  in photos 130 / 188 through their cameras), grey outer edge wall; chin-inlet lip in the stacks' polished metal;
+  smaller grey oil-cooler exit (`vent_dark`); hinge-edge seal strips close the panel-seam slot (no sky line in the
+  cabin); club-table slide rails.  The lookdev Blender nodes for the carpet stripes, the fleece fibre / fuzz and the
+  display texture (SPEC `texture`) are written but not yet run in Blender.

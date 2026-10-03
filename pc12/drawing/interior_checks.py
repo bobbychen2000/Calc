@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="E", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-09-27")
+             size="A1", scale="-", rev="F", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-03")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -572,7 +572,8 @@ REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
              ("B", "2026-09-24", "Stage-2 parameter tables, checks; review r1"),
              ("C", "2026-09-26", "review r2 + r3 (list on sheet 1): sensitivity, CG cross-check, 5th-female point"),
              ("D", "2026-09-26", "Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track"),
-             ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"))
+             ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"),
+             ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

@@ -260,8 +260,15 @@ SPEC = {
     # sky through a strongly blue F0.  Base desaturated at about the same luminance (#8096C4 -> #8C9CBE; the hangar pair
     # was already a little less saturated in the photo, 185/202/221 against 173/191/213) and the flake's F82 edge tint
     # half-way to white (spec_tint 0.4), so sky and sun reflections go silver toward grazing.
-    "paint_blue_light": dict(kind="metal_paint", base=(0.262, 0.332, 0.515), metallic=0.70, rough=0.37, spec_tint=0.4,
-                             gltf=dict(metallic=0.50, rough=0.38),
+    # final judge r1 LIV-F1-01: outdoors the band still read washed out (188 lower band sRGB ~128-137/149 against the
+    # photo's ~91-113/116, 0517 region 67/92/129 against 47/77/108), the hangar pair matched.  Variants through
+    # --verify (region dE2000 188 / 130 / 0517): as was 10.0 / 2.9 / 6.1; the judge's #6F88B4 + metallic 0.85
+    # 9.5 / 5.1 / 4.1 (the hangar nose patch 2.7 -> 7.3); spec_tint 0 + metallic 0.85 8.7 / 2.8 / 5.9; #7D92BA +
+    # metallic 0.85 + spec_tint 0.2 9.2 / 3.7 / 4.9 (hangar patch 5.0) -> taken: darker and more saturated outdoors,
+    # a stronger off-specular flop, the hangar a little darker (the remaining 188 gap is the band mirroring the
+    # sunlit apron: 0.55 against the photo's 0.45 V)
+    "paint_blue_light": dict(kind="metal_paint", base=(0.2051, 0.2874, 0.491), metallic=0.85, rough=0.37, spec_tint=0.2,
+                             gltf=dict(metallic=0.65, rough=0.38),
                              note="light metallic blue (silver-blue): lower nose / cowl, swoosh band, nose-gear doors"),
     # paint_navy: set equal to paint_blue below (the livery's N1 'navy line' is not on the aircraft)
     # round 4: the navy moved from the air preset's terrain into the paint (0.008/0.016/0.056 -> 0.009/0.018/0.070):
@@ -376,6 +383,9 @@ SPEC = {
                              note="satin black parts"),
     "inlet_dark":       dict(kind="dielectric", base=(0.018, 0.018, 0.022), rough=0.85, spec=0.3,
                              note="engine inlet / duct interior"),
+    "vent_dark":        dict(kind="dielectric", base=(0.060, 0.062, 0.068), rough=0.60, spec=0.3,
+                             note="oil-cooler exit recess below its shadowed lip band (final judge r1 LIV-F1-03: dark "
+                                  "grey, not the pasted-black patch)"),
     # ---- metals and painted gear
     "chrome":           dict(kind="metal", base=(0.90, 0.91, 0.92), rough=0.035,
                              note="polished spinner, oleo chrome, pitot"),
@@ -467,8 +477,12 @@ SPEC.update({
                                note="crew-seat cream leather (PRO s/n 3001)"),
     "leather_crew_shell": dict(kind="dielectric", base=(0.042, 0.044, 0.048), rough=0.50, spec=0.4,
                                note="crew-seat anthracite back shell / headrest back"),
-    "sheepskin":          dict(kind="dielectric", base=(0.36, 0.33, 0.35), rough=1.00, spec=0.15, sheen=1.0,
-                               sheen_rough=0.45, fleece=dict(scale=70.0, strength=1.0, dist=0.011, mottle=0.28),
+    # final judge r1 I6 (P1046408 / 09: a long-pile LAVENDER-grey fleece, ~185/178/190 in the sun): the base a little
+    # lighter and lavender, larger tufts (scale 70: 10-20 mm), the fibre-scale pile and a soft lavender fuzz at grazing
+    "sheepskin":          dict(kind="dielectric", base=(0.38, 0.345, 0.40), rough=1.00, spec=0.15, sheen=1.0,
+                               sheen_rough=0.45, fleece=dict(scale=70.0, strength=0.9, dist=0.011, mottle=0.28,
+                                                             fibre=(900.0, 0.45, 0.0015), fuzz=0.40,
+                                                             fuzz_colour=(0.72, 0.67, 0.75)),
                                note="grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm "
                                     "mauve-grey: AOPA / P1046408-10, review r1 F3; bump / mottle coarsened to read "
                                     "at the panel camera's distance, review r2 F4)"),
@@ -479,7 +493,7 @@ SPEC.update({
     "seat_shell_dark":    dict(kind="dielectric", base=(0.060, 0.063, 0.070), rough=0.55, spec=0.35,
                                note="executive-seat base shroud, armrest, rear inserts"),
     "seat_tab_red":       dict(kind="dielectric", base=(0.45, 0.02, 0.02), rough=0.40, note="red pull tab"),
-    "seat_back_shell":    dict(kind="dielectric", base=(0.15, 0.155, 0.165), rough=0.55, spec=0.35,
+    "seat_back_shell":    dict(kind="dielectric", base=(0.21, 0.215, 0.228), rough=0.55, spec=0.35,
                                note="executive-seat back rear shell, mid grey (cab_pro_aero25_0405, review r1 F10)"),
     # flight deck
     "panel_dark":         dict(kind="dielectric", base=(0.040, 0.041, 0.044), metallic=0.25, rough=0.48, spec=0.25,
@@ -488,6 +502,12 @@ SPEC.update({
                                note="warm titanium-grey panel: the PDU face and cheeks, sub-panels, eyebrow, centre "
                                     "stack (P1046408 pair: one warm metallic surface, knee panel 127/116/125, review "
                                     "r2 F3; was 0.21 grey with a graphite face)"),
+    # final judge r1 LIV-F1-04 / I4: P1046408 reads ~sRGB 88-105 on the face round the displays and the lower
+    # sub-panels; base 0.105 / metallic 0.55 rendered 30-60 at panel_408b (the metal mirrored the dark cockpit), base
+    # 0.20 / metallic 0.45 renders 85-95 -- a satin titanium between that and the old beige-reading panel_grey
+    "panel_titanium":     dict(kind="dielectric", base=(0.20, 0.19, 0.185), metallic=0.45, rough=0.38,
+                               note="satin titanium: PDU face, lower sub-panels, glareshield soffit, centre-stack face "
+                                    "(final judge r1 LIV-F1-04 / I4: P1046408's warm grey metal round the displays)"),
     "panel_silver":       dict(kind="dielectric", base=(0.46, 0.46, 0.45), metallic=0.55, rough=0.32,
                                note="light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)"),
     "pedestal_gunmetal":  dict(kind="dielectric", base=(0.115, 0.115, 0.125), metallic=0.40, rough=0.42,
@@ -495,23 +515,27 @@ SPEC.update({
                                     "photo, P1046408-10; review r3 F3)"),
     "pcl_pewter":         dict(kind="dielectric", base=(0.20, 0.20, 0.215), metallic=0.50, rough=0.36,
                                note="PCL grip: satin pewter paddle (throttle photo; P1046408 grip ~sRGB 112/114/123)"),
-    "leather_glareshield": dict(kind="dielectric", base=(0.055, 0.055, 0.058), rough=0.62, spec=0.25,
-                                note="stitched glareshield leather"),
+    "leather_glareshield": dict(kind="dielectric", base=(0.075, 0.075, 0.078), rough=0.62, spec=0.25,
+                                note="stitched glareshield leather (final judge r1 LIV-F1-04: dark grey, 0.055 read "
+                                     "black on the lip)"),
     "carpet_flightdeck":  dict(kind="dielectric", base=(0.045, 0.045, 0.050), rough=0.95, note="cockpit carpet"),
     "bezel_black":        dict(kind="dielectric", base=(0.010, 0.010, 0.012), metallic=0.10, rough=0.32,
                                note="display bezels"),
+    # the five G3000 PRIME displays: dark glass whose page is the GLB's emissive texture (model/g3000_pages.py atlas,
+    # final judge r1 R2 / I1); texture='emission' keeps the importer's image node on the Emission Color
+    "display_page":       dict(_SCREEN, base=(0.004, 0.005, 0.007), rough=0.05, emission=(1.0, 1.0, 1.0),
+                               texture="emission", note="display glass with the G3000 PRIME page (emissive texture)"),
     "screen":             dict(_SCREEN, base=(0.004, 0.005, 0.007), rough=0.05, emission=(0.004, 0.006, 0.012),
-                               note="display glass (dark)"),
-    "screen_sky":         dict(_SCREEN, base=(0.005, 0.020, 0.080), emission=(0.02, 0.13, 0.70), note="PFD sky"),
-    "screen_ground":      dict(_SCREEN, base=(0.050, 0.025, 0.010), emission=(0.20, 0.13, 0.05), note="PFD ground"),
-    "screen_map":         dict(_SCREEN, base=(0.050, 0.042, 0.025), emission=(0.34, 0.29, 0.16), note="MFD map"),
-    "screen_ui":          dict(_SCREEN, base=(0.008, 0.010, 0.016), emission=(0.018, 0.024, 0.038),
-                               note="display page background"),
-    "screen_ui_hi":       dict(_SCREEN, base=(0.030, 0.034, 0.042), emission=(0.075, 0.085, 0.105),
-                               note="display buttons / tiles"),
-    "screen_green":       dict(_SCREEN, base=(0.010, 0.060, 0.020), emission=(0.10, 0.65, 0.22), note="green legends"),
-    "screen_cyan":        dict(_SCREEN, base=(0.008, 0.045, 0.070), emission=(0.05, 0.48, 0.80), note="cyan legends"),
-    "screen_white":       dict(_SCREEN, base=(0.080, 0.080, 0.080), emission=(0.80, 0.80, 0.80), note="white legends"),
+                               note="dark glass (master warning / caution lenses)"),
+    "screen_sky":         dict(_SCREEN, base=(0.005, 0.020, 0.080), emission=(0.02, 0.13, 0.70), note="standby sky"),
+    "screen_ground":      dict(_SCREEN, base=(0.050, 0.025, 0.010), emission=(0.20, 0.13, 0.05),
+                               note="standby ground"),
+    "screen_green":       dict(_SCREEN, base=(0.010, 0.060, 0.020), emission=(0.10, 0.65, 0.22),
+                               note="lit CB-panel legend strip (co-pilot)"),
+    "screen_cyan":        dict(_SCREEN, base=(0.008, 0.045, 0.070), emission=(0.05, 0.48, 0.80),
+                               note="lit CB-panel legend strip (pilot)"),
+    "screen_white":       dict(_SCREEN, base=(0.080, 0.080, 0.080), emission=(0.80, 0.80, 0.80),
+                               note="standby horizon line"),
     "light_amber":        dict(kind="dielectric", base=(0.90, 0.50, 0.05), rough=0.20, emission=(1.00, 0.55, 0.05),
                                emission_strength=1.0, note="lit annunciators / legends"),
     "yoke_white":         dict(kind="dielectric", base=(0.78, 0.78, 0.77), rough=0.22, **_ICC,
@@ -526,9 +550,14 @@ SPEC.update({
     "paint_red":          dict(kind="dielectric", base=(0.50, 0.015, 0.012), rough=0.30, **_ICC,
                                note="FUEL / ACS T-handles, extinguisher"),
     # cabin
-    "carpet":             dict(kind="dielectric", base=(0.022, 0.024, 0.032), rough=0.95, note="anthracite carpet"),
+    # final judge r1 I3 (P1046402 / 04 / 06): a dark NAVY pile with fine light grey-blue transverse pinstripes
+    # (~12 mm pitch; the render's flat near-black read as a void), the runner bands cream rather than white-grey
+    "carpet":             dict(kind="dielectric", base=(0.016, 0.021, 0.046), rough=0.95,
+                               stripes=dict(pitch=0.012, duty=0.34, colour=(0.085, 0.095, 0.125), wobble=0.15,
+                                            pile=0.35),
+                               note="navy carpet with light grey-blue transverse pinstripes"),
     "carpet_orange":      dict(kind="dielectric", base=(0.69, 0.25, 0.019), rough=0.95, note="AI Orange runner"),
-    "carpet_light":       dict(kind="dielectric", base=(0.62, 0.62, 0.60), rough=0.95, note="runner, light"),
+    "carpet_light":       dict(kind="dielectric", base=(0.64, 0.58, 0.46), rough=0.95, note="runner, cream"),
     "carpet_grey":        dict(kind="dielectric", base=(0.26, 0.28, 0.30), rough=0.95, note="runner, grey"),
     "floor_panel":        dict(kind="dielectric", base=(0.20, 0.21, 0.22), metallic=0.1, rough=0.60,
                                note="floor panel edges"),
@@ -727,11 +756,29 @@ def build_solid_paint(m, p):
     _finish(nt, out, b.outputs[0], q)
 
 
+def _imported_image(m):
+    """The image of the imported material's first image-texture node (a texture embedded in the GLB), or None."""
+    try:
+        for n in m.node_tree.nodes:
+            if n.type == "TEX_IMAGE" and n.image is not None:
+                return n.image
+    except Exception:
+        pass
+    return None
+
+
 def build_dielectric(m, p):
+    img = _imported_image(m) if p.get("texture") else None
     nt, out = _reset(m)
     q = dict(p)
     q.setdefault("lining", False)                 # opt-in for dielectrics (trim_black / seal: the mask skin)
     b = _principled(nt, q)
+    if img is not None:                           # SPEC texture: the GLB's image re-linked (display pages: emission)
+        tx = nt.nodes.new("ShaderNodeTexImage")
+        tx.image = img
+        tx.interpolation = "Cubic"
+        tx.extension = "EXTEND"
+        nt.links.new(tx.outputs["Color"], b.inputs["Emission Color" if q["texture"] == "emission" else "Base Color"])
     if q.get("grooves"):
         _tyre_grooves(nt, b, q)
     if q.get("grain"):
@@ -740,7 +787,67 @@ def build_dielectric(m, p):
         _fleece(nt, b, q)
     if q.get("dust"):
         _dust(nt, b, q)
+    if q.get("stripes"):
+        _carpet_stripes(nt, b, q)
     _finish(nt, out, b.outputs[0], q)
+
+
+def _carpet_stripes(nt, b, q):
+    """Woven transverse pinstripes (the cabin carpet, final judge r1 I3: P1046402 / 04 -- light grey-blue stripes across
+    the navy pile at ~12 mm pitch): stripes['pitch'] (m, along the MODEL x axis = Blender -Y), 'duty' (stripe share),
+    'colour' (linear), a little noise wobble so the lines are not ruled, and a fine pile bump.  Blender world
+    coordinates (the imported hierarchy keeps the floor unmoved)."""
+    st = q["stripes"]
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(geo.outputs["Position"], sep.inputs[0])
+    wob = nt.nodes.new("ShaderNodeTexNoise")
+    wob.inputs["Scale"].default_value = 6.0
+    wob.inputs["Detail"].default_value = 2.0
+    nt.links.new(geo.outputs["Position"], wob.inputs["Vector"])
+    ph = nt.nodes.new("ShaderNodeMath")                       # phase = 2 pi (y / pitch + 0.15 wobble)
+    ph.operation = "MULTIPLY_ADD"
+    ph.inputs[1].default_value = 1.0 / float(st.get("pitch", 0.012))
+    nt.links.new(sep.outputs["Y"], ph.inputs[0])
+    wm = nt.nodes.new("ShaderNodeMath")
+    wm.operation = "MULTIPLY"
+    wm.inputs[1].default_value = float(st.get("wobble", 0.15))
+    nt.links.new(wob.outputs["Factor"], wm.inputs[0])
+    nt.links.new(wm.outputs[0], ph.inputs[2])
+    fr = nt.nodes.new("ShaderNodeMath")                       # fractional position across one pitch
+    fr.operation = "FRACT"
+    nt.links.new(ph.outputs[0], fr.inputs[0])
+    tri = nt.nodes.new("ShaderNodeMath")                      # 0 at the stripe centre .. 0.5 between stripes
+    tri.operation = "PINGPONG"
+    tri.inputs[1].default_value = 0.5
+    nt.links.new(fr.outputs[0], tri.inputs[0])
+    duty = float(st.get("duty", 0.35))
+    mr = nt.nodes.new("ShaderNodeMapRange")                   # stripe mask with soft woven edges
+    mr.clamp = True
+    mr.inputs["From Min"].default_value = 0.5 * duty - 0.06
+    mr.inputs["From Max"].default_value = 0.5 * duty + 0.06
+    mr.inputs["To Min"].default_value, mr.inputs["To Max"].default_value = 1.0, 0.0
+    nt.links.new(tri.outputs[0], mr.inputs["Value"])
+    mix = nt.nodes.new("ShaderNodeMix")
+    mix.data_type = "RGBA"
+    nt.links.new(mr.outputs["Result"], mix.inputs["Factor"])
+    mix.inputs["A"].default_value = (*q["base"], 1.0)
+    mix.inputs["B"].default_value = (*st["colour"], 1.0)
+    nt.links.new(mix.outputs["Result"], b.inputs["Base Color"])
+    pile = nt.nodes.new("ShaderNodeTexNoise")                 # cut-pile bump (~1 mm)
+    pile.inputs["Scale"].default_value = 900.0
+    pile.inputs["Detail"].default_value = 2.0
+    nt.links.new(geo.outputs["Position"], pile.inputs["Vector"])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = float(st.get("pile", 0.35))
+    bump.inputs["Distance"].default_value = 0.001
+    hsum = nt.nodes.new("ShaderNodeMath")                     # the stripes stand a hair proud of the pile
+    hsum.operation = "MULTIPLY_ADD"
+    hsum.inputs[1].default_value = 0.5
+    nt.links.new(mr.outputs["Result"], hsum.inputs[0])
+    nt.links.new(pile.outputs["Factor"], hsum.inputs[2])
+    nt.links.new(hsum.outputs[0], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], b.inputs["Normal"])
 
 
 def _fleece(nt, b, q):
@@ -762,6 +869,22 @@ def _fleece(nt, b, q):
     bump.inputs["Distance"].default_value = float(f.get("dist", 0.004))
     nt.links.new(nz.outputs["Factor"], bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"], b.inputs["Normal"])
+    if f.get("fibre"):                    # final judge r1 R9: a fibre-scale pile on the curls (~1 mm, stretched noise),
+        fs, fst, fd = f["fibre"]          # the curls alone read as crumpled paper
+        nf = nt.nodes.new("ShaderNodeTexNoise")
+        nf.inputs["Scale"].default_value = float(fs)
+        nf.inputs["Detail"].default_value = 4.0
+        try:
+            nf.inputs["Distortion"].default_value = 2.0
+        except Exception:
+            pass
+        nt.links.new(geo.outputs["Position"], nf.inputs["Vector"])
+        b2 = nt.nodes.new("ShaderNodeBump")
+        b2.inputs["Strength"].default_value = float(fst)
+        b2.inputs["Distance"].default_value = float(fd)
+        nt.links.new(nf.outputs["Factor"], b2.inputs["Height"])
+        nt.links.new(bump.outputs["Normal"], b2.inputs["Normal"])
+        nt.links.new(b2.outputs["Normal"], b.inputs["Normal"])
     nz2 = nt.nodes.new("ShaderNodeTexNoise")
     nz2.inputs["Scale"].default_value = float(f.get("scale", 240.0)) / 8.0
     nz2.inputs["Detail"].default_value = 3.0
@@ -781,7 +904,22 @@ def _fleece(nt, b, q):
     for ch in ("Red", "Green", "Blue"):
         nt.links.new(mr.outputs["Result"], cv.inputs[ch])
     nt.links.new(cv.outputs["Color"], mul.inputs["B"])
-    nt.links.new(mul.outputs["Result"], b.inputs["Base Color"])
+    out = mul.outputs["Result"]
+    if f.get("fuzz"):                     # soft, lighter silhouette: the pile's tips catch the light at grazing
+        lw = nt.nodes.new("ShaderNodeLayerWeight")
+        lw.inputs["Blend"].default_value = 0.45
+        fz = nt.nodes.new("ShaderNodeMix")
+        fz.data_type = "RGBA"
+        fz.blend_type = "SCREEN"
+        mf = nt.nodes.new("ShaderNodeMath")
+        mf.operation = "MULTIPLY"
+        mf.inputs[1].default_value = float(f["fuzz"])
+        nt.links.new(lw.outputs["Facing"], mf.inputs[0])
+        nt.links.new(mf.outputs[0], fz.inputs["Factor"])
+        nt.links.new(out, fz.inputs["A"])
+        fz.inputs["B"].default_value = (*f.get("fuzz_colour", (0.70, 0.67, 0.68)), 1.0)
+        out = fz.outputs["Result"]
+    nt.links.new(out, b.inputs["Base Color"])
 
 
 def _veneer_grain(nt, b, q):
@@ -1735,6 +1873,10 @@ def gltf_table(overrides=None):
             d["render_grain"] = {k: (list(v) if isinstance(v, tuple) else v) for k, v in p["grain"].items()}
         if p.get("fleece"):
             d["render_fleece"] = dict(p["fleece"])
+        if p.get("stripes"):
+            d["render_stripes"] = {k: (list(v) if isinstance(v, tuple) else v) for k, v in p["stripes"].items()}
+        if p.get("texture"):                       # the GLB carries the image (cad/glb.py): 'emission' / 'base' slot
+            d["render_texture"] = p["texture"]
         d["kind"] = kind
         d["note"] = p.get("note", "")
         d["srgb_hex"] = _hex(d["baseColorFactor"][:3])

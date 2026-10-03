@@ -62,7 +62,9 @@ PALETTE = {
     # (photo-fitted to MSN 3008 in render/lookdev.py -- hangar photo 130 pins the albedo, the outdoor photos 188 /
     # 0517 / N81DW the metallic flop; glTF metallic / roughness as in render/lookdev_materials.json)
     "paint_blue":        ("#13347D", 0.30, 0.50, "deep metallic blue (base colour)"),
-    "paint_blue_light":  ("#8C9CBE", 0.50, 0.38, "light metallic (silver-)blue (lower nose, swoosh band)"),
+    # final judge r1 LIV-F1-01: #8C9CBE read washed out, near-white outdoors (188 lower band, 0517 fills) -> a darker,
+    # more saturated #7D92BA with a stronger metallic flop (glTF metallic 0.50 -> 0.65; render/lookdev.py 0.70 -> 0.85)
+    "paint_blue_light":  ("#7D92BA", 0.65, 0.38, "light metallic (silver-)blue (lower nose, swoosh band)"),
     "paint_pinstripe":   ("#F3F4F5", 0.00, 0.30, "white pinstripes and swooshes"),
     "paint_champagne":   ("#B8B6B3", 0.40, 0.38, "neutral silver metallic outline of every white stroke"),
     "paint_white":       ("#F3F4F5", 0.00, 0.30, "white (fin cap, bullet fairing)"),
@@ -189,6 +191,14 @@ STROKES = {
         (9.500, 1.700, 0.017), (10.00, 1.830, 0.016), (10.50, 1.950, 0.012), (10.80, 2.020, 0.000)]),
 }
 
+# final judge r1 LIV-F1-02 (apron_stbd34 against 0517): the thin tail-cone strokes aft of the cargo door read as
+# silver-grey hairlines, the photo's as white bands -- about 1.35 x the drawn half-heights (h 16-22 -> 22-30 mm), so
+# they keep a white core of well over twice the OUTLINE rim at the apron camera's ~8 mm / px
+AFT_STROKES = dict(ids=("H1", "U1", "X1", "X2", "X3", "D1"), scale=1.35)
+for _k in AFT_STROKES["ids"]:
+    _m, _v = STROKES[_k]
+    STROKES[_k] = (_m, [(x, z, round(h * AFT_STROKES["scale"], 4)) for x, z, h in _v])
+
 # REGIONS: id -> (material, top knots, bottom knots); the band bot(x) < z < top(x) over the knot range
 REGIONS = {
     "light": ("paint_blue_light",
@@ -265,7 +275,9 @@ SURFACES = dict(
     # the inner face and the rim keep the rev r2 base blue
     main_gear_door="paint_wing_dark", main_gear_door_inner="paint_blue", nose_gear_door="paint_blue_light",
     spinner="chrome", exhaust="exhaust_polished",
-    inlet_lip="chrome", inlet_mouth="inlet_dark",                 # chin inlet (powerplant.CHIN_INLET): polished lip
+    # chin inlet (powerplant.CHIN_INLET): polished lip -- final judge r1 S4: the warm polished metal of the stacks
+    # (photo 130: a bronze-grey ring mirroring the dark mouth and the blue cowl; chrome mirrored the white hangar)
+    inlet_lip="exhaust_polished", inlet_mouth="inlet_dark",
     blade_le="erosion",                                           # blade leading-edge erosion strip (metal)
 )
 STAB_BOOT = dict(upper=0.08, lower=0.06)      # tailplane LE boot, chord fractions (photos: black LE band)

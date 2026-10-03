@@ -80,33 +80,37 @@ MATERIALS = {
     "leather_crew":       ((0.60, 0.55, 0.47), 0.0, 0.50, dict(specular=0.8)),
     "leather_crew_shell": ((0.042, 0.044, 0.048), 0.0, 0.50, dict(specular=0.8)),
     # sheepskin: warm mauve-grey fleece (AOPA / P1046408-10 [M], review r1 F3), a sheen lobe for the pile
-    "sheepskin":          ((0.36, 0.33, 0.35), 0.0, 1.00, dict(specular=0.3, sheen_color=(0.62, 0.58, 0.62),
+    "sheepskin":          ((0.38, 0.345, 0.40), 0.0, 1.00, dict(specular=0.3, sheen_color=(0.64, 0.59, 0.66),
                                                               sheen_rough=0.45)),
     "seat_base_black":    ((0.022, 0.022, 0.025), 0.3, 0.45),
     "harness":            ((0.069, 0.072, 0.080), 0.0, 0.80, dict(specular=0.5)),       # dark grey webbing
     "seat_shell_dark":    ((0.060, 0.063, 0.070), 0.0, 0.55, dict(specular=0.7)),       # executive shroud, armrest
     "seat_tab_red":       ((0.45, 0.02, 0.02), 0.0, 0.40),                              # base-shroud pull tab
-    "seat_back_shell":    ((0.15, 0.155, 0.165), 0.0, 0.55, dict(specular=0.7)),   # mid-grey exec back rear shell
+    # mid-grey exec back rear shell (final judge r1 I5: lighter -- 0.15 read anthracite from behind in cabin_aft_fwd)
+    "seat_back_shell":    ((0.21, 0.215, 0.228), 0.0, 0.55, dict(specular=0.7)),
     # flight deck: graphite panel face, brushed titanium-grey sub-panels / stack, grey leather hood, dark carpet
     "panel_dark":          ((0.040, 0.041, 0.044), 0.25, 0.48, dict(specular=0.5)),
     "panel_grey":          ((0.33, 0.305, 0.325), 0.18, 0.45),
+    # satin titanium: the PDU face, lower sub-panels, glareshield soffit, centre-stack face (final judge r1 LIV-F1-04 /
+    # I4: P1046408's warm grey metal round the displays; panel_grey stays on the eyebrow fascia / overhead)
+    "panel_titanium":      ((0.20, 0.19, 0.185), 0.45, 0.38),
     # light brushed silver: overhead panel face, yoke-hub centre insert (P1046406 / AOPA overhead, P1046408 yoke)
     "panel_silver":        ((0.46, 0.46, 0.45), 0.55, 0.32),
     # control pedestal below the SDU pad: dark gunmetal cheeks / aft skin; the PCL grip satin pewter (throttle photo,
     # P1046408-10: grip ~sRGB 112/114/123 in the cabin light, the cheeks darker; review r3 F3)
     "pedestal_gunmetal":   ((0.115, 0.115, 0.125), 0.40, 0.42),
     "pcl_pewter":          ((0.20, 0.20, 0.215), 0.50, 0.36),
-    "leather_glareshield": ((0.055, 0.055, 0.058), 0.0, 0.62, dict(specular=0.5)),
+    "leather_glareshield": ((0.075, 0.075, 0.078), 0.0, 0.62, dict(specular=0.5)),
     "carpet_flightdeck":   ((0.045, 0.045, 0.050), 0.0, 0.95),
     "bezel_black":         ((0.010, 0.010, 0.012), 0.10, 0.32),
-    # displays: dark glass; the page content is emissive (EMISSIVE) so the G3000 PRIME screens read as ON
-    "screen":              ((0.004, 0.005, 0.007), 0.0, 0.05),
+    # displays: dark glass carrying the G3000 PRIME page as an emissive texture (TEXTURES: the model/g3000_pages.py
+    # atlas, final judge r1 R2 / I1), so the screens read as ON; the GI 275 standby's face, the master warning / caution
+    # lenses and the CB panels' lit legend strips are flat emissive geometry
+    "display_page":        ((0.004, 0.005, 0.007), 0.0, 0.05),
+    "screen":              ((0.004, 0.005, 0.007), 0.0, 0.05),         # dark glass: master warning / caution lenses
     "screen_sky":          ((0.005, 0.020, 0.080), 0.0, 0.10),
     "screen_ground":       ((0.050, 0.025, 0.010), 0.0, 0.10),
-    "screen_map":          ((0.050, 0.042, 0.025), 0.0, 0.10),
-    "screen_ui":           ((0.008, 0.010, 0.016), 0.0, 0.10),
-    "screen_ui_hi":        ((0.030, 0.034, 0.042), 0.0, 0.10),
-    "screen_green":        ((0.010, 0.060, 0.020), 0.0, 0.10),
+    "screen_green":        ((0.010, 0.060, 0.020), 0.0, 0.10),         # lit CB-panel legend strips
     "screen_cyan":         ((0.008, 0.045, 0.070), 0.0, 0.10),
     "screen_white":        ((0.080, 0.080, 0.080), 0.0, 0.10),
     "light_amber":         ((0.90, 0.50, 0.05), 0.0, 0.20),           # annunciators / switch legends (lit)
@@ -120,9 +124,9 @@ MATERIALS = {
     "curtain":             ((0.44, 0.19, 0.036), 0.0, 0.92, dict(specular=0.3)),
     "paint_red":           ((0.50, 0.015, 0.012), 0.0, 0.30, dict(clearcoat=1.0, clearcoat_rough=0.06)),  # T-handles
     # cabin floor: anthracite / navy ribbed carpet with the AI Orange aisle runner (P1046406 [M])
-    "carpet":          ((0.022, 0.024, 0.032), 0.0, 0.95),
+    "carpet":          ((0.016, 0.021, 0.046), 0.0, 0.95),       # navy (render/lookdev.py adds the pinstripes)
     "carpet_orange":   ((0.69, 0.25, 0.019), 0.0, 0.95),
-    "carpet_light":    ((0.62, 0.62, 0.60), 0.0, 0.95),
+    "carpet_light":    ((0.64, 0.58, 0.46), 0.0, 0.95),          # cream runner bands
     "carpet_grey":     ((0.26, 0.28, 0.30), 0.0, 0.95),
     "floor_panel":     ((0.20, 0.21, 0.22), 0.1, 0.60),
     # side ledges: dark anthracite satin top, gloss-black fascia band, anthracite kick panels, brushed trim
@@ -152,12 +156,13 @@ MATERIALS = {
     "light_white":   ((0.95, 0.95, 0.95), 0.0, 0.1),
     "lens":          ((0.85, 0.87, 0.90, 0.15), 0.0, 0.02),       # clear polycarbonate light lens
     "inlet_dark":    ((0.018, 0.018, 0.022), 0.0, 0.85, dict(specular=0.6)),
+    "vent_dark":     ((0.060, 0.062, 0.068), 0.0, 0.60, dict(specular=0.6)),   # oil-cooler exit recess (dark grey)
     "composite":     ((0.20, 0.21, 0.22), 0.1, 0.55),
     # ---- livery: PC-12 PRO MSN 3008 (N81DW) scheme.  Linear base colours; model/livery.PALETTE holds the same colours
     # as sRGB design colours (livery.check_materials() compares); 'paint_*' + 'trim_black' are primed by the viewer
     # until its paint step, the polished metal and propeller colours are not.
     "paint_blue":       ((0.0066, 0.034, 0.205), 0.30, 0.50, PAINT),   # sRGB #13347D deep metallic blue (base)
-    "paint_blue_light": ((0.262, 0.332, 0.515), 0.50, 0.38, PAINT),    # sRGB #8C9CBE light metallic (silver-)blue
+    "paint_blue_light": ((0.2051, 0.2874, 0.491), 0.65, 0.38, PAINT),  # sRGB #7D92BA light metallic (silver-)blue
     "paint_pinstripe":  ((0.90, 0.905, 0.91), 0.0, 0.30, PAINT),       # sRGB #F3F4F5 white pinstripes / swooshes
     "paint_champagne":  ((0.48, 0.47, 0.45), 0.40, 0.38, PAINT),       # sRGB #B8B6B3 ~6 mm neutral-silver outlines
     "paint_wing_dark":  ((0.009, 0.018, 0.070), 0.35, 0.42, PAINT),    # sRGB #18244B dark navy wing lower surfaces
@@ -169,12 +174,10 @@ MATERIALS = {
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)
 EMISSIVE = {
+    "display_page":  (1.00, 1.00, 1.00),          # x the page texture (sRGB-decoded): white legends ~0.84 linear
     "screen":        (0.004, 0.006, 0.012),
     "screen_sky":    (0.02, 0.13, 0.70),
     "screen_ground": (0.20, 0.13, 0.05),
-    "screen_map":    (0.34, 0.29, 0.16),
-    "screen_ui":     (0.018, 0.024, 0.038),
-    "screen_ui_hi":  (0.075, 0.085, 0.105),
     "screen_green":  (0.10, 0.65, 0.22),
     "screen_cyan":   (0.05, 0.48, 0.80),
     "screen_white":  (0.80, 0.80, 0.80),
@@ -182,6 +185,10 @@ EMISSIVE = {
     "light_cove":    (1.00, 0.95, 0.85),
     "light_reading": (1.00, 0.90, 0.72),
 }
+# image textures (cad/glb.py GLBBuilder.texture): material -> {slot ('base' / 'emissive'): source}; 'g3000_atlas' =
+# model/g3000_pages.atlas(), the five G3000 PRIME pages in one JPEG, mapped by the UVs model/flightdeck.py gives the
+# display glass (final judge r1 R2 / I1)
+TEXTURES = {"display_page": {"emissive": "g3000_atlas"}}
 LOOKDEV_JSON = __import__("pathlib").Path(__file__).resolve().parents[1] / "render" / "lookdev_materials.json"
 
 
@@ -216,10 +223,20 @@ def check_lookdev(tol=2e-3, path=LOOKDEV_JSON):
 
 def write_glb(parts: dict, path: str, quantize=True, meta=None):
     gb = GLBBuilder(quantize=quantize)
+    tex = {}
+
+    def texture(src):
+        if src not in tex:
+            if src != "g3000_atlas":
+                raise KeyError(f"unknown texture source {src}")
+            from model import g3000_pages
+            tex[src] = gb.texture(src, g3000_pages.atlas()[0], "image/jpeg")
+        return tex[src]
     for name, spec in MATERIALS.items():
         rgba, met, rough = spec[:3]
         gb.material(name, rgba, met, rough, emissive=EMISSIVE.get(name), double_sided=True,
-                    ext=spec[3] if len(spec) > 3 else None)
+                    ext=spec[3] if len(spec) > 3 else None,
+                    textures={k: texture(v) for k, v in TEXTURES.get(name, {}).items()} or None)
 
     ids = list(parts.keys())
     node_of = {}
