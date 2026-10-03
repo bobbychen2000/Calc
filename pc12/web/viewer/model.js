@@ -60,8 +60,31 @@ const MESHOPT = window.PC12_BOOT && window.PC12_BOOT.wasm === false ? Promise.re
     return d && d.supported !== false ? d : null;
   }, () => null);
 const asError = (err) => (err instanceof Error ? err : new Error(String(err && err.message || err)));
+// Images embedded in the GLB (the G3000 page atlas): three's loader turns the bufferView into a blob: URL and fetch()es
+// it, which a Content-Security-Policy whose connect-src has no blob: refuses (the claude.ai Artifact host: the displays
+// stayed blank).  The bytes are decoded directly instead, as its ImageBitmapLoader would (no premultiply, no colour
+// conversion); without createImageBitmap three's own path is kept.
+function embeddedImages(parser) {
+  const own = parser.loadImageSource.bind(parser);
+  parser.loadImageSource = (index, texLoader) => {
+    const def = parser.json.images[index];
+    if (def.bufferView === undefined || typeof createImageBitmap === 'undefined') return own(index, texLoader);
+    if (parser.sourceCache[index] !== undefined) return parser.sourceCache[index].then((t) => t.clone());
+    const p = parser.getDependency('bufferView', def.bufferView)
+      .then((bv) => createImageBitmap(new Blob([bv], { type: def.mimeType }), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
+      .then((bmp) => {
+        const t = new THREE.Texture(bmp);
+        t.needsUpdate = true;
+        t.userData.mimeType = def.mimeType;
+        return t;
+      });
+    parser.sourceCache[index] = p;
+    return p;
+  };
+  return { name: 'pc12_embedded_images' };
+}
 async function loader(meshopt) {
-  const l = new GLTFLoader(), d = meshopt === false ? null : await MESHOPT;
+  const l = new GLTFLoader().register(embeddedImages), d = meshopt === false ? null : await MESHOPT;
   return d ? l.setMeshoptDecoder(d) : l;
 }
 export async function loadGLB(url, onProgress) {
