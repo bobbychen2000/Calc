@@ -19,7 +19,8 @@ every part of the file it loads is requested once, and that the studio HDRI (not
            passes): the meshopt GLB fails to decode and main.js falls back to the gzip copy
 
 each at a phone (390x844, touch) and a desktop (1400x900) viewport, with screenshots in out/tmp/artifact/; each also spins
-the propeller to 1,700 rpm (the blurred disc of web/viewer/propblur.js builds and draws under the CSP).  The first
+the propeller to 1,700 rpm (the blurred disc of web/viewer/propblur.js builds and draws under the CSP) and starts the
+engine with its sound (keys M + P: the Web Audio graph of web/viewer/sound.js is made in the gesture, without errors).  The first
 desktop run also checks the host's theme choice (<html data-theme="dark|light"> over the OS setting: the panels and
 the 3-D stage follow it; shot <mode>_desktop_dark.png).  Every run also enters the interior tour under the CSP (Go
 inside -> the stop menu -> a cabin stop -> Exit; shot <mode>_<viewport>_tour.png).  The wrappers are removed afterwards.
@@ -167,6 +168,7 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
     b = pr["blur"] or {}
     check(f"{name}: propeller blur disc at 1,700 rpm", b.get("visible") and b.get("fade") == 1 and pr["tris"] > 100000,
           f"fade {b.get('fade')}, sweep {b.get('sweepDeg', 0):.0f} deg, {pr['tris']} triangles drawn")
+    await check_sound(page, name, errors)
     # expected: the CSP's WebAssembly refusals (nowasm); runtime: the decoder's own rejected start-up may be logged
     # (/favicon.ico: this skeleton has no icon and Chromium ignores the page's data-URI icon link outside <head>)
     unexpected = [e for e in errors if "WebAssembly" not in e and not e.endswith("/favicon.ico]")]
@@ -188,6 +190,32 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
     if theme:
         await check_theme(page, name, shots)
     await ctx.close()
+
+
+SOUND_JS = """async () => { const V = window.viewer;
+  V.advance(4); const s = V.sound.sync();
+  await new Promise((r) => setTimeout(r, 400)); const v = V.sound.sync();
+  V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05); V.sound.toggle(false); V.sound.sync();
+  return {s, v}; }"""
+
+
+async def check_sound(page, name, errors):
+    """The engine sound under the host's CSP (web/viewer/sound.js: built-in Web Audio nodes only -- no AudioWorklet
+    module, no blob: URL): M (sound on; off by default under automation) and P (start to ground idle) as real key
+    presses, so the AudioContext is made inside a user gesture; the graph is built and follows the start."""
+    n0 = len(errors)
+    await page.keyboard.press("m")
+    await page.keyboard.press("p")
+    r = await page.evaluate(SOUND_JS)
+    s, v = r["s"], r["v"]
+    e, t = s["engine"], s["targets"] or {}
+    new = [x for x in errors[n0:] if not x.endswith("/favicon.ico]")]
+    check(f"{name}: engine sound (M, P): AudioContext + graph made in the gesture, follows the start, no errors",
+          s["created"] == 1 and s["graph"] and v["ctx"] == "running" and e["phase"] == "start" and e["lit"]
+          and abs(t.get("bladeHz", -1) - 5 * e["rpm"] / 60) < 0.01 * max(1, 5 * e["rpm"] / 60) and t.get("whine1", 0) > 0
+          and (v["values"] or {}).get("ngHz", 0) > 0 and not new,
+          f"{s['created']} context ({v['ctx']}), {e['phase']} at {e['rpm']:.0f} rpm / Ng {e['ng']:.0f} %, blade pass "
+          f"{t.get('bladeHz', 0):.1f} Hz, whine {t.get('whineHz', 0):.0f} Hz" + (f"; {new[:2]}" if new else ""))
 
 
 TOUR_JS = """async () => {

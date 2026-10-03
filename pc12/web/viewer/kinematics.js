@@ -145,6 +145,7 @@ export class Kinematics {
     this.bladeRec = this.model.part('blade_1');
     this.bladePush = this.bladeRec ? this.bladeRec.explode.length() : 0;    // radial explode of each blade (m at f = 1)
     this.push = 0;
+    this.gg = new GasGenerator();     // engine sound (sound.js): the gas generator's Ng alongside the propeller spool
     this.apply();
   }
 
@@ -188,6 +189,7 @@ export class Kinematics {
       this.c.rpm = this.t.rpm;
       if (this.unfeather && this.c.rpm >= UNFEATHER_RPM) { this.t.pitch = 0; this.unfeather = false; }
       this.c.pitch = this.t.pitch;
+      this.gg.snap(this.t.rpm, this.c.rpm, this.c.pitch);
     }
   }
 
@@ -254,6 +256,7 @@ export class Kinematics {
     approach('stabTrim', 1.2); approach('ailTrim', 6); approach('rudTrim', 6);
     if (t.rpm !== c.rpm) { c.rpm = this._spool(c.rpm, t.rpm, dt); moved = true; }
     if (this.unfeather && c.rpm >= UNFEATHER_RPM) { t.pitch = 0; this.unfeather = false; }
+    this.gg.update(dt, t.rpm, c.pitch);
     const movedBeforeSpin = moved;
     if (c.rpm > 0) {
       c.propAngle = (c.propAngle + (c.rpm / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
@@ -437,5 +440,118 @@ export class Kinematics {
       // motion blur only with the whole propeller on show (a hidden / isolated blade keeps the solid geometry)
       if (this.blur) this.blur.apply(c.rpm, c.pitch, c.propAngle, S.propeller.rec.shown && this.blur.blades.every((b) => b.shown));
     }
+  }
+}
+
+// ------------------------------------------------------------------ gas generator (engine sound, sound.js)
+// The PT6E-67XP's gas-generator speed Ng (% of 37,468 rpm: the PT6A-60 / -67 series' 100 %, assumed for the -67XP),
+// a viewer estimate of a start, a ground run and a shutdown that runs alongside the propeller spool above.  sound.js
+// turns it into the compressor whine, the combustion roar, the light-off and the starter / igniter sounds; it moves
+// nothing on screen.  PT6 practice (POH-style start: starter on, fuel at 12-13 % Ng, light-off, starter off at ~50 %):
+//   start      starter engaged: Ng toward ~18 % on the starter alone; fuel at 12 % Ng, light-off NG.lightDelay (0.7 s)
+//              later (ignition delay), then the acceleration to ground idle (~60 % Ng) at <= 6.5 % / s, the starter and the
+//              igniters off at 50 %; with the propeller start law above, both reach ground idle ~12 s after the start
+//   running    Ng follows the power the governed propeller absorbs (ngRun: rpm and blade pitch), <= 12 % / s up, 10 down
+//   shutdown   a commanded rpm of 0 = fuel off: the flame goes out, Ng runs down at -(0.6 + 0.16 Ng) % / s (~18 s from
+//              ground idle, ~20 s from 95 %), as the feathered propeller runs down
+export const NG = { idle: 60, max: 101, crank: 18, crankTau: 1.4, fuelAt: 12, lightDelay: 0.7, starterOff: 50,
+  startRate: 6.5, k: 0.9, up: 12, down: 10, stop: { a0: 0.6, k: 0.16 }, rpm100: 37468 };
+
+// relative blade loading of the Hartzell on the ground (no forward speed), by blade pitch (deg relative to the modelled
+// fine pitch: feather +62, reverse -38): fine pitch 0.45; most near 20 deg (the blades close to the stall); the
+// feathered blades edge-on to the flow ~0.05; reverse (beta) 1.0.  An estimate for the sound levels and the power.
+const LOAD = [[-38, 1.0], [-20, 0.75], [0, 0.45], [20, 0.85], [40, 0.6], [62, 0.05]];
+export function bladeLoad(pitch) {
+  const p = clamp(+pitch || 0, LOAD[0][0], LOAD[LOAD.length - 1][0]);
+  let i = 0;
+  while (i < LOAD.length - 2 && p > LOAD[i + 1][0]) i++;
+  const [x0, y0] = LOAD[i], [x1, y1] = LOAD[i + 1];
+  return y0 + (y1 - y0) * (p - x0) / (x1 - x0);
+}
+
+// absorbed power (0 .. 1 of the full reverse / max power at 1,700 rpm) ~ blade loading x rpm^3, and the Ng that holds
+// it: ground idle (1,000 rpm, fine pitch) 60 %, 1,700 rpm at fine pitch ~86 %, 1,700 at 20 deg ~98 %, full reverse 101 %
+export function propPower(rpm, pitch) { return bladeLoad(pitch) * Math.pow(Math.max(0, rpm) / PROP_RPM.max, 3); }
+const P_IDLE = propPower(PROP_RPM.idle, 0);
+export function ngRun(rpm, pitch) {
+  if (!(rpm > 0)) return 0;
+  const p = Math.max(0, propPower(rpm, pitch) - P_IDLE) / (1 - P_IDLE);
+  return NG.idle + (NG.max - NG.idle) * Math.sqrt(Math.min(1, p));
+}
+
+export class GasGenerator {
+  constructor() { this.reset(); }
+
+  reset() {
+    this.ng = 0;               // % of 100 % Ng
+    this.phase = 'off';        // off | start | run | rundown
+    this.t = 0;                // s since the start was commanded
+    this.fuelT = -1;           // start time of fuel flow (s, -1 = none) and of the light-off
+    this.lightT = -1;
+    this.lit = false;          // a flame in the combustor
+    this.comb = 0;             // combustion level 0 .. 1 (first-order: ~0.3 s up at light-off, 0.25 s down at fuel off)
+    this.light = 0;            // the light-off transient 0 .. 1 (rise ~0.07 s, decay ~0.7 s): the 'whoomp'
+    this.starter = 0;          // starter-generator motoring (0 / 1) and the igniters (0 / 1)
+    this.ign = 0;
+    this.power = 0;            // 0 .. 1 above ground idle (for the roar)
+  }
+
+  // instant poses (Kinematics.setProp(.., instant)): running at the commanded speed, or stopped
+  snap(rpmT, rpm, pitch) {
+    if (rpmT > 0 && Math.abs(rpm - rpmT) < 1e-6) {
+      this.reset();
+      Object.assign(this, { phase: 'run', ng: ngRun(rpmT, pitch), lit: true, comb: 1 });
+      this.power = this._power();
+    } else if (!(rpmT > 0) && !(rpm > 0)) this.reset();
+  }
+
+  _power() { return clamp((this.ng - NG.idle) / (NG.max - NG.idle), 0, 1); }
+
+  // rpmT: the commanded propeller speed (0 = shut down: fuel off); pitch: the current blade pitch (deg)
+  update(dt, rpmT, pitch) {
+    if (!(dt > 0)) return;
+    const run = rpmT > 0;
+    if (run && (this.phase === 'off' || this.phase === 'rundown')) {
+      // a start (also a restart while running down): starter engaged, fuel at 12 % Ng
+      Object.assign(this, { phase: 'start', t: 0, fuelT: -1, lightT: -1, lit: false });
+    } else if (!run && (this.phase === 'start' || this.phase === 'run')) {
+      Object.assign(this, { phase: 'rundown', lit: false, fuelT: -1 });
+    }
+    this.t += dt;
+    const step = (target, k, up, down) => {      // rate-limited first order, no overshoot
+      const d = target - this.ng, v = Math.min(Math.abs(d) * k, d > 0 ? up : down) * dt;
+      this.ng = Math.abs(d) <= v ? target : this.ng + Math.sign(d) * v;
+    };
+    switch (this.phase) {
+      case 'start':
+        if (this.fuelT < 0 && this.ng >= NG.fuelAt) this.fuelT = this.t;
+        if (this.fuelT >= 0 && this.lightT < 0 && this.t - this.fuelT >= NG.lightDelay) { this.lightT = this.t; this.lit = true; }
+        if (!this.lit) this.ng += (NG.crank - this.ng) * (1 - Math.exp(-dt / NG.crankTau));   // the starter alone
+        else step(NG.idle + 0.5, NG.k, NG.startRate, NG.down);
+        if (this.lit && this.ng >= NG.idle - 0.5) this.phase = 'run';
+        break;
+      case 'run':
+        step(ngRun(rpmT, pitch), NG.k, NG.up, NG.down);
+        break;
+      case 'rundown':
+        this.ng -= (NG.stop.a0 + NG.stop.k * this.ng) * dt;
+        if (this.ng <= 0) { this.ng = 0; this.phase = 'off'; }
+        break;
+      default:
+        this.ng = 0;
+    }
+    this.starter = this.phase === 'start' && this.ng < NG.starterOff ? 1 : 0;
+    this.ign = this.starter;
+    this.comb += ((this.lit ? 1 : 0) - this.comb) * (1 - Math.exp(-dt / (this.lit ? 0.3 : 0.25)));
+    if (this.comb < 1e-4 && !this.lit) this.comb = 0;
+    // light-off transient: (1 - e^(-s / 0.07)) e^(-s / 0.7), peak-normalised (0.715 at s = 0.168 s)
+    const s = this.lightT >= 0 && this.phase !== 'rundown' && this.phase !== 'off' ? this.t - this.lightT : -1;
+    this.light = s >= 0 && s < 6 ? (1 - Math.exp(-s / 0.07)) * Math.exp(-s / 0.7) / 0.7152 : 0;
+    this.power = this.lit ? this._power() : 0;
+  }
+
+  get state() {
+    return { ng: this.ng, phase: this.phase, lit: this.lit, comb: this.comb, light: this.light, starter: this.starter,
+      ign: this.ign, power: this.power, t: this.t };
   }
 }

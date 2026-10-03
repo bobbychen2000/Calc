@@ -7,6 +7,7 @@ import { Kinematics, PROP_RPM } from './kinematics.js';
 import { Build } from './build.js';
 import { PartsPanel, InfoCard, DrawingViewer, buildSpecs } from './panels.js';
 import { Tour, TourUI, TOUR, project as tourProject, toGL } from './tour.js';
+import { Sound, renderOfflineWav } from './sound.js';
 
 const $ = (id) => document.getElementById(id);
 const app = $('app');
@@ -58,6 +59,7 @@ function fail(err, what) {
 }
 
 let stage, model, kin, build, parts, info, drawings, meta, tour, tourUI;
+let sound = null;      // engine / propeller sound (sound.js)
 const S = {
   explode: { target: 0, cur: 0 },
   cutUser: false, xray: false, lines: false,
@@ -179,6 +181,7 @@ async function init(gltf, matSpec) {
   buildSpecs(meta);
   buildStepList();
   wireUI();
+  sound = new Sound({ kin, stage, model, tour, ui: { buttons: [$('aSound'), $('soundChip')], chip: $('soundChip'), volume: $('sVolume') } });
 
   build.onChange(() => {
     // the tour needs the finished aircraft: another build step takes the camera back outside
@@ -949,6 +952,7 @@ function onKey(e) {
     case 'f': case 'F': { stopDemo(); const i = FLAP_CYCLE.indexOf(kin.t.flaps); setFlaps(FLAP_CYCLE[(i + 1) % FLAP_CYCLE.length]); break; }
     case 'p': case 'P': { stopDemo(); const i = RPM_CYCLE.indexOf(kin.t.rpm); setProp(shutdownOr(RPM_CYCLE[(i + 1) % RPM_CYCLE.length])); break; }
     case 'r': case 'R': reset(); break;
+    case 'm': case 'M': if (sound) sound.toggle(); break;
     case '?': toggleHelp(); break;
     case 'Escape':
       if (tag === 'INPUT') t.blur();
@@ -1051,6 +1055,7 @@ function frame(now) {
   // readouts: at most every 100 ms while things move, plus once when they stop (never stale)
   const moving = kinMoving || kin.gearMoving;
   if (readoutsDirty && (!moving || now - readoutT > 100)) { readoutT = now; readoutsDirty = false; updateReadouts(); }
+  if (sound) sound.update();
 }
 
 // ------------------------------------------------------------------ test hooks
@@ -1119,6 +1124,14 @@ const hooks = {
     return hooks.state;
   },
   pick: (x, y) => pick(x, y),
+  // engine sound (sound.js): state(), sync() = update now (after advance), toggle(on), render(o) = the offline
+  // render of a scripted run ({script: [{t, set: setProp argument}], duration, listener}) as a base64 WAV + state log
+  sound: {
+    state: () => (sound ? sound.state() : null),
+    sync: () => { if (sound) sound.update(); return sound ? sound.state() : null; },
+    toggle: (on) => (sound ? sound.toggle(on) : null),
+    render: (o = {}) => renderOfflineWav({ kin, ...o }),
+  },
   // interior tour: stops (model axes), enter / go / exit ({motion}: force the flights on / off), walk({f, s, u, turn},
   // sec) integrates held inputs through the walk clamp, project(p) = the walkable volume's nearest point (model axes)
   tour: {
