@@ -6,7 +6,8 @@ charset + viewport-fit=cover viewport, the host's small reset) with a strict Con
 Chromium (SwiftShader).  The wrappers are written into the folder as _host_*.html (never published: ARTIFACT.json
 leaves them out).  Scenarios:
 
-  nowasm   CSP without 'wasm-unsafe-eval': WebAssembly refused -> the gzip GLB (data/pc12_glb.gz.bin: the light tier),
+  nowasm   CSP without 'wasm-unsafe-eval': WebAssembly refused -> the gzip GLB of the tier (data/pc12_glb.gz.bin: the full model on the desktop,
+           data/pc12_low_glb.gz.bin: the light tier on the phone),
            unpacked with DecompressionStream; the meshopt GLBs are never requested; the only console errors are the
            CSP's wasm refusals
   wasm     CSP with 'wasm-unsafe-eval' -> the meshopt GLB: data/pc12.glb on the desktop, the light tier
@@ -134,9 +135,13 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
     tier, other = ("pc12_low.glb", "pc12.glb") if vp == "phone" else ("pc12.glb", "pc12_low.glb")
     glb = [u for u in reqs if f"/data/{tier}" in u]
     wrong = [u for u in reqs if f"/data/{other}" in u]
-    gz = [u for u in reqs if "/data/pc12_glb.gz.bin" in u]
+    # the gzip fallback of the same tier (desktops: the full model's, phones: the light tier's)
+    gz_name = "pc12_low_glb.gz.bin" if vp == "phone" and "pc12_low_glb.gz.bin" in B64 else "pc12_glb.gz.bin"
+    gz_other = "pc12_glb.gz.bin" if gz_name != "pc12_glb.gz.bin" else "pc12_low_glb.gz.bin"
+    gz = [u for u in reqs if f"/data/{gz_name}" in u]
+    wrong += [u for u in reqs if f"/data/{gz_other}" in u]
     want_gz = mode in ("nowasm", "runtime")
-    n_glb, n_gz = B64.get(tier, 1), B64.get("pc12_glb.gz.bin", 1)
+    n_glb, n_gz = B64.get(tier, 1), B64.get(gz_name, 1)
     hdr_name = "studio_small_09_512.hdr" if vp == "phone" else "studio_small_09_1k.hdr"
     hdr = sorted({u.rsplit("/", 1)[1] for u in reqs if "/assets/studio_small_09" in u})
     want_hdr = [f"{hdr_name}.b64.txt"] if B64.get(hdr_name) == 1 else [f"{hdr_name}.b64.{i}.txt" for i in range(B64.get(hdr_name, 0))] or [hdr_name]

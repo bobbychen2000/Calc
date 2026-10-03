@@ -11,15 +11,18 @@ The folder is the web/package.py bundle (vendored three.js r160, the meshopt GLB
                             html, head or body tags: the <title>, the stylesheet, the markup, then the config, boot and
                             module scripts (the boot script adds the import map after itself).  The description and the
                             icon are publish parameters (ARTIFACT.json), not tags.  Config: {data: './data/',
-                            three: './three/', glbLow: 'pc12_low.glb', glbGz: 'pc12_glb.gz.bin', b64: {file name: parts}}.
+                            three: './three/', glbLow: 'pc12_low.glb', glbGz: 'pc12_glb.gz.bin',
+                            glbGzLow: 'pc12_low_glb.gz.bin', b64: {file name: parts}}.
     data/pc12.glb           EXT_meshopt_compression (~14 MB, ~2.1M triangles, 16-bit normals): loaded where
                             WebAssembly compiles
     data/pc12_low.glb       the light tier (PC12_RES=1, ~10 MB, ~1.5M triangles), EXT_meshopt_compression: phones
-    data/pc12_glb.gz.bin    gzip of the light tier out/pc12_low.glb (KHR_mesh_quantization only, ~26 MB -> ~15 MB):
-                            the host's CSP may refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder needs;
-                            index.html then loads this file instead, unpacked while it streams (DecompressionStream),
-                            and main.js falls back to it when the meshopt GLB fails to decode (the full model's gzip
-                            would not fit the host's 64 MB with the meshopt tiers)
+    data/pc12_glb.gz.bin    gzip of the full model out/pc12.glb (KHR_mesh_quantization only, ~35 MB -> ~19 MB): the
+                            host's CSP may refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder needs;
+                            index.html then loads this file instead (desktops), unpacked while it streams
+                            (DecompressionStream), and main.js falls back to it when the meshopt GLB fails to decode --
+                            so a desktop without WebAssembly still gets the full resolution
+    data/pc12_low_glb.gz.bin  the same for the light tier out/pc12_low.glb (~26 MB -> ~15 MB): phones without
+                            WebAssembly
     *.glb / *.bin / *.hdr   published as base64 text (the host serves no binary media type but images, media and fonts):
                             x.b64.txt, or x.b64.0.txt, x.b64.1.txt, ... when the text would exceed B64_PART characters
                             (parts of equal length, whole 4-character groups); the originals are removed.  index.html
@@ -28,13 +31,15 @@ The folder is the web/package.py bundle (vendored three.js r160, the meshopt GLB
     MANIFEST.json           web/package.py's file list (bytes, SHA-256, commit), not published
     ARTIFACT.json           the publish manifest: every file with its published path, content type and bytes -- `page`
                             (index.html, the publish call's file_path) and `files` {published path: {from, contentType}}
-                            (the call's `files`, sources relative to `root`) -- plus title, description and icon.
+                            (the call's `files`, sources relative to `root`) -- plus title, description and icon,
+                            and `publishes`: the files split into groups of <= 64 MB (one publish call each, the page in
+                            the first; later publishes to the same url add their files)
                             MANIFEST.json, ARTIFACT.json and local test pages (_host*.html, test/artifact_test.py) are
                             not published
 
-Host limits checked here: <= 255 files, <= 15 MB per binary / 16 MB per text file, <= 64 MB in all (decimal MB, the
-conservative reading; ~57 MB in 2026-10: a warning above WARN_TOTAL, the headroom for triangles is thin -- take them
-from the uniform skin refinement, not on top), standard media types only.  test/artifact_test.py serves the folder behind a host-like skeleton
+Host limits checked here (decimal MB, the conservative reading): <= 255 files and <= 64 MB per publish call (the
+bundle is split into `publishes` groups), <= 511 files and <= 256 MB per artifact version, <= 15 MB per binary / 16 MB
+per text file, standard media types only; ~85 MB in 2026-10 (two publishes).  test/artifact_test.py serves the folder behind a host-like skeleton
 with a strict CSP (with and without 'wasm-unsafe-eval') and checks both loading paths in headless Chromium.
 """
 from __future__ import annotations
@@ -53,7 +58,8 @@ import package as P  # noqa: E402  (web/package.py)
 
 TITLE = "PC-12 PRO Parametric Model"
 ICON = "plane"                      # the publish call's `icon`: one generic word
-GZ_NAME = "pc12_glb.gz.bin"
+GZ_NAME = "pc12_glb.gz.bin"                # gzip of the full model (desktops without WebAssembly)
+GZ_LOW_NAME = "pc12_low_glb.gz.bin"        # gzip of the light tier (phones without WebAssembly)
 B64_SUFFIXES = (".glb", ".bin", ".hdr")   # binary files the host would refuse: published as base64 text
 B64_PART = 12_000_000                      # characters per part (the host's text limit is 16 MB a file)
 CONTENT_TYPES = {                          # the host's served types (a file of any other type is an error)
@@ -61,8 +67,10 @@ CONTENT_TYPES = {                          # the host's served types (a file of 
     ".svg": "image/svg+xml", ".txt": "text/plain", ".md": "text/markdown",
 }
 TEXT_TYPES = ("text/", "application/json", "image/svg+xml")
-MAX_FILES, MAX_BINARY, MAX_TEXT, MAX_TOTAL = 255, 15_000_000, 16_000_000, 64_000_000
-WARN_TOTAL = 58_000_000                    # the bundle's headroom warning (review r2 RES2-05)
+MAX_FILES, MAX_BINARY, MAX_TEXT = 255, 15_000_000, 16_000_000      # per publish call / per file
+MAX_PUBLISH = 64_000_000                   # bytes per publish call: the bundle goes up in groups of at most this
+MAX_TOTAL, MAX_VERSION_FILES = 256_000_000, 511                     # per artifact version (all publishes)
+WARN_TOTAL = 180_000_000                   # headroom warning
 NOT_PUBLISHED = {"MANIFEST.json", "ARTIFACT.json", ".nojekyll"}
 SKELETON = re.compile(r"<!doctype[^>]*>|</?(html|head|body)\b[^>]*>", re.I)
 DARK_MEDIA = re.compile(r'@media \(prefers-color-scheme: dark\) \{\s*:root:not\(\[data-theme="light"\]\) \{([^}]*)\}\s*\}')
@@ -70,7 +78,7 @@ DARK_ATTR = re.compile(r':root\[data-theme="dark"\] \{([^}]*)\}')
 
 
 def artifact_config(b64: dict[str, int]) -> str:
-    return ("<script>window.PC12_CONFIG = { data: './data/', three: './three/', glbLow: 'pc12_low.glb', glbGz: '" + GZ_NAME + "', b64: "
+    return ("<script>window.PC12_CONFIG = { data: './data/', three: './three/', glbLow: 'pc12_low.glb', glbGz: '" + GZ_NAME + "', glbGzLow: '" + GZ_LOW_NAME + "', b64: "
             + json.dumps(b64, sort_keys=True) + " };</script>")
 
 
@@ -175,13 +183,15 @@ def main():
     errs = P.verify(out, "vendor")
     (out / ".nojekyll").unlink(missing_ok=True)       # GitHub Pages only
 
-    # 2. the gzip fallback (the light tier) + its size in the metadata
-    gz = gzip_glb(data / "pc12_low.glb", out / "data" / GZ_NAME)
+    # 2. the gzip fallbacks (full model for desktops, light tier for phones) + their sizes in the metadata
+    gz = gzip_glb(data / "pc12.glb", out / "data" / GZ_NAME)
+    gz_low = gzip_glb(data / "pc12_low.glb", out / "data" / GZ_LOW_NAME)
     meta_p = out / "data" / "pc12_meta.json"
     meta = json.loads(meta_p.read_text())
     meta["stats"]["glb_gz_bytes"] = gz["bytes_out"]
     meta["stats"]["glb_gz_encoding"] = "KHR_mesh_quantization, gzip"
-    meta["stats"]["glb_gz_tier"] = "low"
+    meta["stats"]["glb_gz_tier"] = "full"
+    meta["stats"]["low"]["glb_gz_bytes"] = gz_low["bytes_out"]
     meta_p.write_text(json.dumps(meta, indent=1) + "\n")
 
     # 3. binary files -> base64 text, and the page file
@@ -198,6 +208,7 @@ def main():
         "about": "PC-12 PRO viewer, claude.ai Artifact bundle (web/package_artifact.py)",
         "three": f"three/ (r{P.THREE_REVISION}, from web/three_local)",
         "glb": info.get("meshopt"), "glb_low": info.get("meshopt_low"), "glb_gz": {**gz, "file": f"data/{GZ_NAME}"},
+        "glb_gz_low": {**gz_low, "file": f"data/{GZ_LOW_NAME}"},
         "commit": P.git_commit(), "built": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "files": {str(p.relative_to(out)): {"bytes": p.stat().st_size, "sha256": P.sha256(p)} for p in all_files},
     }, indent=1) + "\n")
@@ -216,10 +227,18 @@ def main():
         if rel != "index.html":
             pub[rel] = {"from": rel, "contentType": ct}
     total = sum(sizes.values())
-    if len(sizes) > MAX_FILES:
-        errs.append(f"{len(sizes)} files, over the {MAX_FILES} limit")
+    if len(sizes) > MAX_VERSION_FILES:
+        errs.append(f"{len(sizes)} files, over the {MAX_VERSION_FILES} per-version limit")
     if total > MAX_TOTAL:
-        errs.append(f"{total / 1e6:.1f} MB, over the {MAX_TOTAL / 1e6:.0f} MB limit")
+        errs.append(f"{total / 1e6:.1f} MB, over the {MAX_TOTAL / 1e6:.0f} MB per-version limit")
+    # publish groups: the page and the small files first, then the largest files first-fit, each group <= MAX_PUBLISH
+    groups = [{"bytes": sizes.get("index.html", 0), "files": {}}]
+    for rel in sorted(pub, key=lambda r: (sizes[r] > 1_000_000, -sizes[r], r)):
+        g = next((g for g in groups if g["bytes"] + sizes[rel] <= MAX_PUBLISH and len(g["files"]) < MAX_FILES - 1), None)
+        if g is None:
+            groups.append(g := {"bytes": 0, "files": {}})
+        g["files"][rel] = pub[rel]
+        g["bytes"] += sizes[rel]
     art = {
         "about": "claude.ai Artifact publish manifest (web/package_artifact.py): publish `page` as file_path with `files` "
                  "and `root` (every `from` is relative to root; root must lie where the publishing session may read, "
@@ -228,14 +247,17 @@ def main():
         "page": {"path": "index.html", "contentType": types.get("index.html"), "bytes": sizes.get("index.html")},
         "files": pub,
         "bytes": sizes, "count": len(sizes), "total_bytes": total,
+        "publishes": groups,
         "glb": {"meshopt": meta["stats"]["glb_bytes"], "meshopt_low": meta["stats"]["low"]["glb_bytes"],
-                "gzip_fallback_low": gz["bytes_out"], "plain_unpacked_low": gz["bytes_in"]},
+                "gzip_fallback": gz["bytes_out"], "plain_unpacked": gz["bytes_in"],
+                "gzip_fallback_low": gz_low["bytes_out"], "plain_unpacked_low": gz_low["bytes_in"]},
         "base64": b64,
     }
     (out / "ARTIFACT.json").write_text(json.dumps(art, indent=1) + "\n")
 
     print(f"artifact bundle {out}: {len(sizes)} files (the page + {len(pub)}), {total:,} bytes ({total / 1e6:.1f} MB of the "
-          f"host's {MAX_TOTAL / 1e6:.0f} MB)")
+          f"host's {MAX_TOTAL / 1e6:.0f} MB per version), in {len(groups)} publish call(s) of "
+          + ", ".join(f"{g['bytes'] / 1e6:.1f}" for g in groups) + " MB")
     if total > WARN_TOTAL:
         print(f"  WARNING: {total / 1e6:.1f} MB is within {(MAX_TOTAL - total) / 1e6:.1f} MB of the host's limit "
               f"(warning above {WARN_TOTAL / 1e6:.0f} MB)")
@@ -244,7 +266,9 @@ def main():
     print(f"  data/pc12_low.glb     {meta['stats']['low']['glb_bytes']:>11,} bytes  EXT_meshopt_compression, light tier "
           f"({meta['stats']['low'].get('triangles', 0):,} triangles)")
     print(f"  data/{GZ_NAME}  {gz['bytes_out']:>11,} bytes  gzip of the {gz['bytes_in']:,}-byte KHR_mesh_quantization "
-          f"light tier")
+          f"full model (desktops without WebAssembly)")
+    print(f"  data/{GZ_LOW_NAME}  {gz_low['bytes_out']:>11,} bytes  gzip of the {gz_low['bytes_in']:,}-byte light tier "
+          f"(phones without WebAssembly)")
     for k, v in sorted(sizes.items(), key=lambda kv: -kv[1])[:8]:
         print(f"    {k:34s} {v:>11,} bytes")
     print("  as base64 text: " + ", ".join(f"{k} ({v} part{'s' * (v > 1)})" for k, v in b64.items()))

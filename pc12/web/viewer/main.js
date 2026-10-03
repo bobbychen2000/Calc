@@ -117,9 +117,10 @@ async function boot() {
     Object.assign(meta.stats, { triangles: lo.triangles, vertices: lo.vertices, glb_bytes: lo.glb_bytes,
       glb_encoding: lo.glb_encoding || meta.stats.glb_encoding, tier: 'low' });
   }
-  if (BOOT.gzip && meta.stats && meta.stats.glb_gz_bytes) {
-    // the Specs panel's GLB size: the file this page loaded
-    meta.stats.glb_bytes = meta.stats.glb_gz_bytes;
+  const gzBytes = meta.stats && (URLS.low && meta.stats.low && meta.stats.low.glb_gz_bytes || meta.stats.glb_gz_bytes);
+  if (BOOT.gzip && gzBytes) {
+    // the Specs panel's GLB size: the file this page loaded (the light tier's gzip on phones)
+    meta.stats.glb_bytes = gzBytes;
     meta.stats.glb_encoding = meta.stats.glb_gz_encoding || 'KHR_mesh_quantization, gzip';
   }
   setStage('Preparing materials…');
