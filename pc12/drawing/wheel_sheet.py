@@ -1327,8 +1327,8 @@ def draw_notes(ds, x0, y0, x1):
          "sidewall bulge. Nose tyre loaded "
          f"too: axle WL {fmt(G.NOSE_AXLE[2])} (photos 200-210), {fmt(2 * an_)} mm patch, "
          f"{fmt(NOSE_E['R'] - G.NOSE_AXLE[2], 1)} mm deflection."),
-        f"3-D model: gear.MAIN_TYRE = this envelope (R {fmt(gm['R'], 1)}); the LD-1 leg-door scallop (R + 12.5 = "
-        f"{fmt(G.LEG_DOOR['scallop_r'], 1)}) and the round well (bays.WELL_R) follow it. model/wheels.py main_wheel / "
+        f"3-D model: gear.MAIN_TYRE = this envelope (R {fmt(gm['R'], 1)}); the leg door's tyre blister (10 clear, "
+        f"model judging r1) and the round well (bays.WELL_R) follow it. model/wheels.py main_wheel / "
         "nose_wheel revolve / extrude the profiles of this sheet (tyre with the grooves, wheel halves, hub fairing, "
         "brake, valve, tie bolts); test/consistency_2d3d.py (L4W) compares the mesh with them.",
         "Tyre section: tangent arcs - crown R to the tread half-width, shoulder round, upper sidewall (radius solved: "

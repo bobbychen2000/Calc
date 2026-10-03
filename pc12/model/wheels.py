@@ -116,7 +116,8 @@ MAIN_TYRE_ALT = MAIN_TYRE_OPTIONS["8.50-10" if MAIN_TYRE_CHOICE == "22x8.50-10" 
 MAIN_TRA = MAIN_TYRE_850                 # the TRA data (growth envelope, loaded radii) of the listed PC-12 main tyre
 MAIN_IS_TRA = MAIN_TYRE_ENV is MAIN_TYRE_850
 ALT_STATUS = "SUPERSEDED" if MAIN_IS_TRA else "PROPOSED - OWNER DECISION PENDING"
-# the scallop the LD-1 leg door leaves round the (static, free) main tyre: tyre R + this (gear.LEG_DOOR, bays.WELL_R)
+# the wheel well's clearance round the (static, free) main tyre: tyre R + this (bays.WELL_R; LD-1's door scallop until
+# model judging r1)
 SCALLOP_CLEAR = 0.0125
 
 NOSE_TYRE_ENV = PTable(
@@ -228,7 +229,8 @@ MAIN_FAIRING = PTable(
     hole_r=(0.077, "M", "hole centre off the axle (75-80 mm)"),
     hole_th=(162.0, "M", "hole clock (drawn pose, between two screws)"),
     s0=(None, "D", "lip plane = outboard rim-flange face (flange_s + flange_t)"),
-    paint=("leg-door colour", "M", "livery.SURFACES['main_gear_door_inner']: MSN 3008 paint_blue (3010 red, 3036 silver)"),
+    paint=("leg-door colour", "M", "the leg door's outer face, livery.SURFACES['main_gear_door']: MSN 3008 navy "
+                                   "paint_wing_dark (3010 red, 3036 silver)"),
 )
 
 MAIN_BRAKE = PTable(
@@ -284,8 +286,9 @@ MAIN_PAINT = PTable(
     "Main wheel materials (model/assemble.py MATERIALS names)",
     tyre=("tire / tire_tread / tire_groove", "M", "matte dusty sidewall, satin scuffed tread ribs, darker rougher "
                                                   "groove floors (review r2 F4); NO lettering (owner decision)"),
-    fairing=("hub_fairing", "M", "the leg-door colour (MSN 3008 paint_blue) a shade darker, softer coat: retracted "
-                                 "it reads dark as in N81DW from below (review r2 F6)"),
+    fairing=("hub_fairing", "M", "the leg door's outer-face navy (paint_wing_dark) a shade darker, softer coat: "
+                                 "retracted it reads dark as in N81DW from below (review r2 F6), gear down door and "
+                                 "fairing one navy (0517; model judging r1 GR1-03: the paint_blue hue read royal blue)"),
     wheel=("wheel_main", "M", "weathered cast aluminium halves, darker than the brake housing (3036 mx5: flange L "
                               "44-48 vs lobes 75-89; review r2 F3)"),
     brake=("brake_housing", "M", "housing bright cast aluminium (satin), piston caps"),
@@ -1116,7 +1119,7 @@ def _fairing_meshes(asm):
     """Main hub fairing (local frame): the lip ring on the outboard rim-flange face, conical wall and face round
     revolved from fairing_section() (sheet thickness t: outer skin), the flat face with the off-axis valve-access
     hole (Delaunay, exact outline) and the hole's wall; 5 countersunk screw heads on the lip.
-    [(mesh, material)]; the paint is 'hub_fairing': the leg-door colour (MSN 3008 paint_blue) a shade darker with a
+    [(mesh, material)]; the paint is 'hub_fairing': the leg door's outer-face navy (paint_wing_dark) a shade darker with a
     softer coat (review r2 F6: the gloss paint read 2x too bright retracted, facing the sunlit ground)."""
     from scipy.spatial import Delaunay
     fa = asm["fairing"]

@@ -6,11 +6,11 @@ from model import wheels as _WH
 # right-side plan-view shapes (x, y) -- mirrored by |y|
 # Main gear, Stage 3 leg-door decision LD-1 (see model/gear.py): the opening in the wing lower skin is exactly what the
 # retracted gear closes, so the underside is flush with only the tyre showing:
-#   * the leg slot = the plan footprint of the retracted leg door (gear.leg_door_footprint: the door face, scalloped
-#     round the tyre, with the forward tab over the leg's skin crossing) plus DOOR_GAP all round (a panel gap: the
+#   * the leg slot = the plan footprint of the retracted leg door (gear.leg_door_footprint: the drawn door face over
+#     the tyre crescent, with the forward tab over the leg's skin crossing) plus DOOR_GAP all round (a panel gap: the
 #     closed door's outer face lies in the skin surface, so the two never overlap / z-fight);
 #   * the wheel well = a circle WELL_R about the retracted wheel centre (gear.retracted_wheel): the tyre protrudes
-#     ~1 in through it (POH), the door's scallop is its other half;
+#     ~1 in through it (POH); its upper crescent lies under the door's blister;
 #   * no forward slot any more: the leg now passes the skin behind the door's forward edge (gear.MAIN_TRUNNION), and
 #     the trunnion pin, the leg top and the swinging door tab stay inside the wing (liner pocket TRUNNION_POCKET only).
 # The bay LINER (main_bay_sdf) is the opening plus liner-only pockets above the intact skin: BRACE_POCKET (folded side
@@ -18,7 +18,8 @@ from model import wheels as _WH
 # Nose bay = the drawn nose-door rectangle (STA 2.887-4.252, 0.30 wide) moved aft with the nose gear by
 # gear.GEAR_SHIFT.
 DOOR_GAP = 0.003                                                  # closed leg door -> skin cut-out edge (m)
-# main wheel well: the door's tyre scallop (gear.LEG_DOOR scallop_r = tyre R + wheels.SCALLOP_CLEAR) + the gap: 8.50-10
+# main wheel well: a circle tyre R + wheels.SCALLOP_CLEAR + the gap about the stowed wheel (the tyre crescent the door
+# covers lies under the door's blister, model judging r1 GR1-01; the rest of the tyre shows in the well): 8.50-10
 # tyre (R 0.320) 335.5.  Aft, the well reaches past the rear spar (interrupted at the bay, interior.build_structure) into
 # the flap cove's forward bulge, which is recessed there (wing.cove_well_recess)
 WELL_R = float(_WH.MAIN_TYRE_ENV["R"]) + _WH.SCALLOP_CLEAR + DOOR_GAP

@@ -42,7 +42,7 @@ MATERIALS = {
     "wheel_main":    ((0.24, 0.24, 0.25), 0.30, 0.60),
     # main-wheel outboard hub fairing: the leg-door blue (MSN 3008 paint_blue) a shade darker, softer coat (review r2 F6:
     # retracted, the gloss paint read 2x the photo's N81DW hub facing the sunlit ground, sRGB 14/23/44 vs 11/15/23)
-    "hub_fairing":   ((0.005, 0.024, 0.145), 0.30, 0.50, dict(clearcoat=0.5, clearcoat_rough=0.10, specular=0.2)),
+    "hub_fairing":   ((0.0075, 0.016, 0.064), 0.30, 0.50, dict(clearcoat=0.5, clearcoat_rough=0.10, specular=0.2)),
     "brake_disc":    ((0.10, 0.088, 0.075), 0.60, 0.55),
     # dark phosphated steel: nose axle nuts, tear-drop lock plates, axle ends (photo 3036 nose-hub zoom)
     "steel_dark":    ((0.085, 0.085, 0.09), 0.65, 0.45),
@@ -79,8 +79,9 @@ MATERIALS = {
     # crew seats, PRO s/n 3001: cream leather, anthracite back shell / headrest back, grey sheepskin, black base
     "leather_crew":       ((0.60, 0.55, 0.47), 0.0, 0.50, dict(specular=0.8)),
     "leather_crew_shell": ((0.042, 0.044, 0.048), 0.0, 0.50, dict(specular=0.8)),
-    # sheepskin: warm mauve-grey fleece (AOPA / P1046408-10 [M], review r1 F3), a sheen lobe for the pile
-    "sheepskin":          ((0.38, 0.345, 0.40), 0.0, 1.00, dict(specular=0.3, sheen_color=(0.64, 0.59, 0.66),
+    # sheepskin: neutral light-to-mid grey fleece with a faint warm cast (AOPA / P1046408-10 [M], review r1 F3; model
+    # judging r1 INT-m2: the mauve base, blue above red, read lavender), a sheen lobe for the pile
+    "sheepskin":          ((0.40, 0.375, 0.37), 0.0, 1.00, dict(specular=0.3, sheen_color=(0.66, 0.625, 0.61),
                                                               sheen_rough=0.45)),
     "seat_base_black":    ((0.022, 0.022, 0.025), 0.3, 0.45),
     "harness":            ((0.069, 0.072, 0.080), 0.0, 0.80, dict(specular=0.5)),       # dark grey webbing
@@ -136,6 +137,8 @@ MATERIALS = {
     "chrome_trim":     ((0.62, 0.62, 0.61), 1.0, 0.22),
     # headliner fittings, placards
     "psu_panel":       ((0.030, 0.031, 0.035), 0.1, 0.35),
+    # PSU / reading-light pods: light satin silver-white housings (P1046402 / 06; model judging r1 INT-m4)
+    "psu_housing":     ((0.55, 0.55, 0.54), 0.30, 0.35),
     "light_cove":      ((0.90, 0.90, 0.88), 0.0, 0.30),
     "light_reading":   ((0.90, 0.88, 0.80), 0.0, 0.20),
     "placard_red":     ((0.55, 0.020, 0.015), 0.0, 0.35),

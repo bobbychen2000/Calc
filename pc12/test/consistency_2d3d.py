@@ -438,6 +438,8 @@ class Ctx:
                 self.by_part.setdefault("flight_deck", []).append(r)  # and divider (review r3 C1): own parts
             if r.part == "cabin_floor":                                # carpet + seat tracks (review r3 F4)
                 self.by_part.setdefault("cabin_interior", []).append(r)
+            if r.part == "gear_nose_steer":                            # steered fork + wheel (model judging r1)
+                self.by_part.setdefault("gear_nose", []).append(r)
 
     def get(self, part, mats=None, exclude=()):
         return [r for r in self.by_part.get(part, []) if (mats is None or r.mat in mats) and r.mat not in exclude]

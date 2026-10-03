@@ -97,11 +97,12 @@ export class Kinematics {
     }
 
     // crew controls (model/flightdeck.py control_pivots, review r2 M4): the yokes roll about their columns and slide
-    // fore / aft with the pitch command, the rudder pedals swing about their floor hinges with the yaw command
+    // fore / aft with the pitch command, the rudder pedals swing about their hanging-arm pivots with the yaw command,
+    // the nose-wheel fork ('steer', gear_nose_steer) turns with it while the gear is down
     this.controls = [];
     for (const rec of model.list) {
       const pv = rec.ex.pivot;
-      if (!pv || (pv.kind !== 'yoke' && pv.kind !== 'pedal')) continue;
+      if (!pv || (pv.kind !== 'yoke' && pv.kind !== 'pedal' && pv.kind !== 'steer')) continue;
       this.controls.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(),
         pull: pv.travel_pull ? modelToGl(pv.travel_pull) : null, push: pv.travel_push ? modelToGl(pv.travel_push) : null });
     }
@@ -380,12 +381,18 @@ export class Kinematics {
         D.rudder_tab = td;
       }
     }
-    // yokes (right roll = clockwise as the pilot sees it = + about the forward-pointing column axis; pull = aft) and
-    // rudder pedals (right rudder: the right-foot pedals forward = - about +BL, gearing -1 for the left-foot ones)
+    // yokes (right roll = clockwise as the pilot sees it = + about the forward-pointing column axis; pull = aft),
+    // rudder pedals (right rudder: the right-foot pedals forward = - about +BL, gearing -1 for the left-foot ones) and
+    // the nose-wheel fork (model judging r1 GR1-07: + about the down-pointing strut axis = nose wheel right, pedal_deg
+    // at full rudder, centred as soon as the gear leaves the down lock)
     for (const k of this.controls) {
       if (k.pv.kind === 'yoke') {
         k.rec.anim.quat.setFromAxisAngle(k.axis, c.roll * k.pv.roll_deg * DEG);
         if (k.pull) k.rec.anim.pos.copy(c.pitchCmd >= 0 ? k.pull : k.push).multiplyScalar(Math.abs(c.pitchCmd));
+      } else if (k.pv.kind === 'steer') {
+        const down = 1 - clamp(this.gear.pos / 0.05, 0, 1);
+        k.angle = c.yaw * k.pv.pedal_deg * down;
+        k.rec.anim.quat.setFromAxisAngle(k.axis, k.angle * DEG);
       } else {
         k.rec.anim.quat.setFromAxisAngle(k.axis, -(k.pv.gearing || 0) * c.yaw * k.pv.travel_deg * DEG);
       }

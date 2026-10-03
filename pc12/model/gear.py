@@ -90,6 +90,9 @@ NOSE_FORK_CROWN_HW = 0.118          # fork half-width (the yoke arms end at +/-0
 # 85 mm above it the tyre protrudes the POH ~1 in (main_tyre_protrusion(): 26 mm) and the shock strut stays under the
 # bay-liner roof (the binding pair: leg above the door vs shock under the upper skin, 0.28 m wing depth).
 NOSE_RETRACT_DEG = -105.0
+# nose-wheel steering (model judging r1 GR1-07): the fork turns about the strut axis, +/-pedal_deg with full rudder
+# pedal [E: the usual pedal-steering authority of the class], castoring to +/-max_deg (Jane's NWS +/-60 deg)
+NOSE_STEER = dict(pedal_deg=12.0, max_deg=60.0)
 MAIN_RETRACT_DEG = 86.0
 # nose clamshells: closed -> open (hanging beside the leg; open while the gear is down).  92 deg (was 85): the lower
 # edges lean 2 deg out, so the two-arm fork's axle nuts (+-0.130, wheels review r1 F3 / F4) pass the doors' inner faces
@@ -162,8 +165,17 @@ LEG_DOOR = dict(x_fwd=5.950 - GEAR_SHIFT, x_fwd_low=5.969 - GEAR_SHIFT, z_fwd_lo
                 x_aft=6.615 - GEAR_SHIFT, x_aft_top=6.603 - GEAR_SHIFT,                    # wide part's aft edge
                 z_top=(1.073, 1.088),                                                      # top edge WL fwd / aft
                 bl=(2.358, 2.472),                                                         # DRAWN front-view plane
-                scallop_r=MAIN_TYRE["R"] + WH.SCALLOP_CLEAR,   # LD-1: tyre scallop about MAIN_AXLE (R + 12.5)
+                scallop_r=None,      # model judging r1 GR1-01: no tyre scallop (LD-1 had R + 12.5 about MAIN_AXLE)
                 tab=(6.070, MAIN_TRUNNION[2] + 0.090))   # LD-1: forward top tab: aft STA, top WL (hidden, in the slot)
+# Model judging r1 GR1-01 (photos pro3036 mx4 / mx5, 0517, 3010, N81DW retracted; the drawn face on L4 detail B): the
+# door hangs OUTBOARD of the tyre and covers its upper-forward sidewall down to hub height, its concave lower edge (the
+# drawn arc R 348) hugging the hub fairing -- LD-1's tyre scallop (R 332) had left the whole sidewall bare and the tip
+# in the air ahead of the tyre.  The drawn face is kept whole (its arc passes 187 mm from the axle, 39 mm outside the
+# hub-fairing lip), and over the tyre crescent it covers the door's outer face bulges outboard in a smooth BLISTER
+# (leg_door_blister) so its inner face clears the tyre (LEG_DOOR_TYRE_CLEAR) gear down; retracted, that blister stands
+# below the skin over the stowed tyre (the rest of the door stays flush), as the door's curved edge over the tyre in
+# N81DW from below.  Outboard bulge low on the door = part of the drawn outboard lean (GR1-04).
+LEG_DOOR_TYRE_CLEAR = 0.010         # door inner face -> tyre / wheel, gear down (blister)
 LEG_DOOR_T = 0.012                  # door plate thickness (inboard of the outer face)
 LEG_DOOR_RECESS = 0.001             # retracted, the door's outer face lies this far inside the wing lower surface
 LEG_DOOR_OUTER_MAT = "paint_belly"   # builder tag of the leg door's outer face (recoloured by livery.SURFACES)
@@ -242,9 +254,50 @@ def leg_door_offset(x, z, n_iter=8):
     return u
 
 
+_BLISTER = None
+
+
+def leg_door_blister(x, z):
+    """Outboard bulge (m) of the leg door's outer face over the flush surface at side-view point (x, z), gear down
+    (model judging r1 GR1-01): over the tyre crescent the drawn face covers, the outer face stands LEG_DOOR_T +
+    LEG_DOOR_TYRE_CLEAR outboard of the static main wheel (tyre incl. the loaded bulge, wheel half, hub fairing: their
+    outermost BL within 8 mm in side view), smoothed into a blister (5 mm grid, repeated Gaussian envelope >= the
+    need); 0 elsewhere.  Cached interpolator."""
+    global _BLISTER
+    if _BLISTER is None:
+        from scipy.spatial import cKDTree
+        from scipy.ndimage import gaussian_filter
+        from scipy.interpolate import RegularGridInterpolator as RGI
+        A = MAIN_AXLE
+        V = np.vstack([m.V for m, mat in WH.main_wheel(A, (0.0, 1.0, 0.0), 1)])
+        tree = cKDTree(V[:, [0, 2]])
+        h = 0.005
+        xs = np.arange(5.85, 6.75 + 1e-9, h)
+        zs = np.arange(0.20, 1.30 + 1e-9, h)
+        X, Z = np.meshgrid(xs, zs, indexing="ij")
+        need = np.zeros(X.shape)
+        near = np.hypot(X - A[0], Z - A[2]) < MAIN_TYRE["R"] + 0.03
+        for i, j in zip(*np.nonzero(near)):
+            ii = tree.query_ball_point([X[i, j], Z[i, j]], 0.008)
+            if ii:
+                need[i, j] = V[ii, 1].max() + LEG_DOOR_TYRE_CLEAR + LEG_DOOR_T - (MAIN_TRUNNION[1]
+                                                                                 + leg_door_offset(X[i, j], Z[i, j]))
+        b0 = np.maximum(need, 0.0)
+        b = b0.copy()
+        for _ in range(8):
+            b = gaussian_filter(np.maximum(b, b0), 3.0, mode="nearest")
+        b = np.maximum(b, b0)
+        b = gaussian_filter(b, 1.0, mode="nearest")
+        b = np.maximum(b, b0)
+        _BLISTER = RGI((xs, zs), b, bounds_error=False, fill_value=0.0)
+    x, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(z, float))
+    return _BLISTER(np.stack([x.ravel(), z.ravel()], 1)).reshape(x.shape)
+
+
 def leg_door_bl(x, z):
-    """Butt line of the model leg door's outer face at side-view point (x, z), gear down (starboard)."""
-    return MAIN_TRUNNION[1] + leg_door_offset(x, z)
+    """Butt line of the model leg door's outer face at side-view point (x, z), gear down (starboard): the flush
+    surface (leg_door_offset) plus the tyre blister (leg_door_blister)."""
+    return MAIN_TRUNNION[1] + leg_door_offset(x, z) + leg_door_blister(x, z)
 
 
 def leg_door_drawn_bl(z):
@@ -259,7 +312,7 @@ def leg_door_drawn_bl(z):
 def leg_door_stowed(x, z, side=1):
     """Retracted plan point (x, y') and WL z' of the door's outer face at side-view point (x, z)."""
     x, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(z, float))
-    P = np.stack([x, MAIN_TRUNNION[1] + leg_door_offset(x, z), z], -1) * [1, side, 1]
+    P = np.stack([x, leg_door_bl(x, z), z], -1) * [1, side, 1]
     M = main_retract_matrix(side)
     return P @ M[:3, :3].T + M[:3, 3]
 
@@ -303,14 +356,19 @@ def leg_door_face(visible=False, n_arc=24, n_sc=28):
     d = LEG_DOOR
     A, rs = MAIN_AXLE[[0, 2]], d["scallop_r"]
     (cx, cz), r = d["arc_c"], d["arc_r"]
-    Pi, Pj = _scallop_hits()
     tipf = _tip_fillet(LEG_DOOR_TIP_R)                   # the rounded tip (owner decision 2026-09-27)
-    xa = np.linspace(tipf[-1, 0], Pi[0], n_arc)[1:]
-    arc = np.c_[xa, cz + np.sqrt(np.maximum(r * r - (xa - cx) ** 2, 0.0))]
-    ai = np.arctan2(Pi[1] - A[1], Pi[0] - A[0])
-    aj = np.arctan2(Pj[1] - A[1], Pj[0] - A[0])
-    ang = np.linspace(ai, aj, n_sc)[1:]
-    sc = np.c_[A[0] + rs * np.cos(ang), A[1] + rs * np.sin(ang)]
+    if rs is None:                                       # the drawn lower-edge arc to the narrow part's aft edge
+        xa = np.linspace(tipf[-1, 0], d["x_aft_low"], n_arc + n_sc // 2)[1:]
+        arc = np.c_[xa, cz + np.sqrt(np.maximum(r * r - (xa - cx) ** 2, 0.0))]
+        sc = np.zeros((0, 2))
+    else:
+        Pi, Pj = _scallop_hits()
+        xa = np.linspace(tipf[-1, 0], Pi[0], n_arc)[1:]
+        arc = np.c_[xa, cz + np.sqrt(np.maximum(r * r - (xa - cx) ** 2, 0.0))]
+        ai = np.arctan2(Pi[1] - A[1], Pi[0] - A[0])
+        aj = np.arctan2(Pj[1] - A[1], Pj[0] - A[0])
+        ang = np.linspace(ai, aj, n_sc)[1:]
+        sc = np.c_[A[0] + rs * np.cos(ang), A[1] + rs * np.sin(ang)]
     x_tab, z_tab = d["tab"]
     xs = np.linspace(d["x_aft_top"], x_tab, 14)
     top = np.c_[xs, _door_top_z(xs)]
@@ -420,14 +478,18 @@ def leg_door_footprint(side=1, step=0.010):
     return S[:, :2]
 
 
-def leg_door_retracted_drop(side=1):
+def leg_door_retracted_drop(side=1, blister=False):
     """(min, max) of wing lower WL - retracted door outer-face WL (m) over the door (sampled on its face): the flushness
-    (LD-1: = LEG_DOOR_RECESS by construction, up to the Newton residual)."""
+    (LD-1: = LEG_DOOR_RECESS by construction, up to the Newton residual) where the door has no tyre blister
+    (leg_door_blister < 0.5 mm); blister=True: over the blister instead (its depth below the skin)."""
     from cad import sdf2d
     P = leg_door_face()
-    X, Z = np.meshgrid(np.linspace(P[:, 0].min(), P[:, 0].max(), 40), np.linspace(P[:, 1].min(), P[:, 1].max(), 60))
+    X, Z = np.meshgrid(np.linspace(P[:, 0].min(), P[:, 0].max(), 80), np.linspace(P[:, 1].min(), P[:, 1].max(), 120))
     k = sdf2d.polygon(X.ravel(), Z.ravel(), P) < 0
-    S = leg_door_stowed(X.ravel()[k], Z.ravel()[k], side)
+    xk, zk = X.ravel()[k], Z.ravel()[k]
+    bl = leg_door_blister(xk, zk) >= 0.0005
+    xk, zk = (xk[bl], zk[bl]) if blister else (xk[~bl], zk[~bl])
+    S = leg_door_stowed(xk, zk, side)
     dz = wing_z(S[:, 0], S[:, 1], False) - S[:, 2]
     return float(dz.min()), float(dz.max())
 
@@ -646,7 +708,7 @@ def wing_lower_patch(x0, x1, y0, y1, n=18):
     return m
 
 
-def leg_door_mesh(sgn, step=0.015, split=False):
+def leg_door_mesh(sgn, step=0.010, split=False):
     """Leg door, gear down (LD-1): the model face leg_door_face() (side view) with its outer face on the flush surface
     leg_door_bl(x, z) (the wing lower skin carried down by the inverse retraction), LEG_DOOR_T thick inboard (towards
     the leg; up into the wing when retracted); starboard for sgn = +1.  The face is triangulated with its exact outline
@@ -997,13 +1059,26 @@ def build_nose(parts):
               material_note="Hydraulic shock strut, 17.5x6.25-6 tyre, +/-60 deg steering",
               info={"tyre": "17.5 x 6.25-6, 60 psi", "wheelbase": "3,480 mm",
                     "retraction": "aft, enclosed by doors", "steering": "+/-60 deg (Jane's)"})
-    gp.add(Mesh.merge(struct + [collar, lamp_house]), "gear_leg").add(piston, "chrome")
-    gp.add(Mesh.merge(ax_dark), "steel_dark").add(crown_bolts, "cadmium").add(holes, "black")
+    # fixed: trunnion and oleo cylinder, the taxi lamp on it; steered (child gear_nose_steer, model judging r1 GR1-07):
+    # the steering collar, torque links, piston, fork, axle and wheel turn about the strut axis
+    nfix = 2                                                    # struct[0:2] = trunnion, oleo cylinder
+    gp.add(Mesh.merge(struct[:nfix] + [lamp_house]), "gear_leg")
     for m, mat in lamp_face:
         gp.add(m, mat)
-    for m, mat in wh:
-        gp.add(m, mat)
     parts[gp.id] = gp
+    sp = Part("gear_nose_steer", "Nose-wheel fork and wheel (steering)", "gear", parent="gear_nose",
+              pivot=dict(origin=P.tolist(), axis=u.tolist(), kind="steer", pedal_deg=NOSE_STEER["pedal_deg"],
+                         max_deg=NOSE_STEER["max_deg"],
+                         note="angle = yaw command x pedal_deg about the strut axis (+ = nose wheel right) while the "
+                              "gear is down and locked; castors to max_deg with differential braking"),
+              group="Landing gear", material_note="Steering collar, torque links, fork, 17.5x6.25-6 wheel",
+              info={"steering": f"+/-{NOSE_STEER['pedal_deg']:.0f} deg by the rudder pedals, castoring to "
+                                f"+/-{NOSE_STEER['max_deg']:.0f} deg"})
+    sp.add(Mesh.merge(struct[nfix:] + [collar]), "gear_leg").add(piston, "chrome")
+    sp.add(Mesh.merge(ax_dark), "steel_dark").add(crown_bolts, "cadmium").add(holes, "black")
+    for m, mat in wh:
+        sp.add(m, mat)
+    parts[sp.id] = sp
 
     # nose doors (clamshell, hinged at the outer edges)
     for side, sgn in (("R", 1), ("L", -1)):

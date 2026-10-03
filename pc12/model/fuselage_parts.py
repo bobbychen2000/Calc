@@ -55,7 +55,9 @@ AIRSTAIR = dict(side=-1, cx=4.970, cz=DOOR_SILL_WL + 0.675, hx=0.305, hz=0.675, 
 #                                                   before, free edge ~5 cm off the ground: too far); open, the free
 #                                                   edge is ~0.29 m off the ground (ground contact would be ~164 deg)
 CARGO = dict(side=-1, cx=8.240, cz=DOOR_SILL_WL + 0.660, hx=0.675, hz=0.660, r=0.055,
-             hinge="top", open_deg=120.0)         # 1.35 x 1.32 m; opens up ~120 deg (Pilatus render with the door
+             hinge="top", open_deg=120.0)         # 1.35 x 1.32 m; opens up ~120 deg (model judging r1 EXT1-02: the
+#                                                  free edge projected through the fitted camera port_hangar_130 lies on
+#                                                  photo 130's at 120 deg, 135 deg is ~90 px off; Pilatus render with the door
 #                                                   open: free edge ~0.99 m above the hinge line)
 EXIT = dict(side=+1, cx=6.205, cz=2.2015, hx=0.241, hz=0.3205, r=0.100,
             hinge=None, open_deg=None)     # over-wing emergency exit (plug), drawn 5964-6446 x 1881-2522 = the hatch
@@ -495,7 +497,7 @@ DOOR_NAMES = {"door_airstair": "Airstair passenger door (0.61 x 1.35 m clear ope
               "door_cargo": "Cargo door (1.35 x 1.32 m clear opening)",
               "exit_hatch": "Over-wing emergency exit (plug hatch, right)"}
 DOOR_NOTES = {"door_airstair": "Downward-opening, integral steps",
-              "door_cargo": "Upward-opening, gas-strut assisted",
+              "door_cargo": "Upward-opening, 120 deg (its gas struts are not modelled: owner decision)",
               "exit_hatch": "Plug type, removed inward (0.48 x 0.64 m projected)"}
 DOOR_EXPLODE = {"door_airstair": (0, -0.9, 0), "door_cargo": (0, -1.0, 0.2), "exit_hatch": (0, 0.8, 0.1)}
 DOOR_HANDLE = {"door_airstair": "airstair_handle", "door_cargo": "cargo_handle", "exit_hatch": "exit_handle"}

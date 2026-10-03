@@ -772,9 +772,9 @@
   },
   "hub_fairing": {
    "baseColorFactor": [
-    0.005,
-    0.024,
-    0.145,
+    0.0075,
+    0.016,
+    0.064,
     1.0
    ],
    "metallicFactor": 0.3,
@@ -786,8 +786,8 @@
    "blender_metallic": 0.4,
    "blender_roughness": 0.5,
    "kind": "metal_paint",
-   "note": "main-wheel hub fairings: the leg-door blue, a shade darker, soft coat",
-   "srgb_hex": "#102B6A"
+   "note": "main-wheel hub fairings: the leg door's outer-face navy (paint_wing_dark), a shade darker, soft coat",
+   "srgb_hex": "#152248"
   },
   "brake_disc": {
    "baseColorFactor": [
@@ -944,9 +944,9 @@
   },
   "sheepskin": {
    "baseColorFactor": [
-    0.38,
-    0.345,
     0.4,
+    0.375,
+    0.37,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -972,13 +972,13 @@
     "fuzz": 0.4,
     "fuzz_colour": [
      0.72,
-     0.67,
-     0.75
+     0.69,
+     0.67
     ]
    },
    "kind": "dielectric",
-   "note": "grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm mauve-grey: AOPA / P1046408-10, review r1 F3; bump / mottle coarsened to read at the panel camera's distance, review r2 F4)",
-   "srgb_hex": "#A69FAA"
+   "note": "grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a neutral light grey with a faint warm cast: AOPA / P1046408-10, review r1 F3, model judging r1 INT-m2 (the mauve read lavender); bump / mottle coarsened to read at the panel camera's distance, review r2 F4)",
+   "srgb_hex": "#AAA5A4"
   },
   "seat_base_black": {
    "baseColorFactor": [
@@ -1678,8 +1678,25 @@
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "PSU housings, wall sockets",
+   "note": "dark gap rings round the lining doors, wall sockets, grilles",
    "srgb_hex": "#303135"
+  },
+  "psu_housing": {
+   "baseColorFactor": [
+    0.55,
+    0.55,
+    0.54,
+    1.0
+   ],
+   "metallicFactor": 0.3,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "PSU / reading-light pods: light satin silver-white (P1046402 / 06; model judging r1 INT-m4)",
+   "srgb_hex": "#C4C4C2"
   },
   "light_cove": {
    "baseColorFactor": [

@@ -438,9 +438,13 @@ SPEC = {
     # sunlit ground it mirrors it in the coat and shows the full pigment.  Its own finish: the leg-door blue a shade
     # darker (brake dust), the flakes kept, a thinner / softer coat -> air crop 3/10/29, and at the apron close-up it
     # still reads as the door's metallic blue (a satin without flakes read as a flat royal blue there)
-    "hub_fairing":      dict(kind="metal_paint", base=(0.005, 0.024, 0.145), metallic=0.40, rough=0.50, coat=0.5,
+    # model judging r1 GR1-03 (0517 gear down: the door and the fairing read as ONE navy blue, door 0/44/90 G/B 0.49
+    # -- the wing-dark hue, sRGB G/B 0.48 -- fairing 8/32/72 in its shade; the paint_blue-hued fairing read royal
+    # blue beside the slate door): the leg door's outer-face colour (paint_wing_dark), a shade darker
+    "hub_fairing":      dict(kind="metal_paint", base=(0.0075, 0.016, 0.064), metallic=0.40, rough=0.50, coat=0.5,
                              coat_rough=0.10, lining=False, gltf=dict(metallic=0.30),
-                             note="main-wheel hub fairings: the leg-door blue, a shade darker, soft coat"),
+                             note="main-wheel hub fairings: the leg door's outer-face navy (paint_wing_dark), a shade "
+                                  "darker, soft coat"),
     "brake_disc":       dict(kind="dielectric", base=(0.10, 0.088, 0.075), rough=0.55, metallic=0.60, spec=0.5,
                              note="brake disc stack / rotor drive keys: heat-darkened steel"),
     "gear_leg":         dict(kind="solid_paint", base=(0.72, 0.73, 0.74), rough=0.32, coat=0.6, lining=False,
@@ -479,13 +483,14 @@ SPEC.update({
                                note="crew-seat anthracite back shell / headrest back"),
     # final judge r1 I6 (P1046408 / 09: a long-pile LAVENDER-grey fleece, ~185/178/190 in the sun): the base a little
     # lighter and lavender, larger tufts (scale 70: 10-20 mm), the fibre-scale pile and a soft lavender fuzz at grazing
-    "sheepskin":          dict(kind="dielectric", base=(0.38, 0.345, 0.40), rough=1.00, spec=0.15, sheen=1.0,
+    "sheepskin":          dict(kind="dielectric", base=(0.40, 0.375, 0.37), rough=1.00, spec=0.15, sheen=1.0,
                                sheen_rough=0.45, fleece=dict(scale=70.0, strength=0.9, dist=0.011, mottle=0.28,
                                                              fibre=(900.0, 0.45, 0.0015), fuzz=0.40,
-                                                             fuzz_colour=(0.72, 0.67, 0.75)),
-                               note="grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a light warm "
-                                    "mauve-grey: AOPA / P1046408-10, review r1 F3; bump / mottle coarsened to read "
-                                    "at the panel camera's distance, review r2 F4)"),
+                                                             fuzz_colour=(0.72, 0.69, 0.67)),
+                               note="grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a neutral light "
+                                    "grey with a faint warm cast: AOPA / P1046408-10, review r1 F3, model judging r1 "
+                                    "INT-m2 (the mauve read lavender); bump / mottle coarsened to read at the panel "
+                                    "camera's distance, review r2 F4)"),
     "seat_base_black":    dict(kind="dielectric", base=(0.022, 0.022, 0.025), metallic=0.3, rough=0.45,
                                note="black-anodised seat base, pan, life-vest box"),
     "harness":            dict(kind="dielectric", base=(0.069, 0.072, 0.080), rough=0.80, spec=0.25,
@@ -569,7 +574,10 @@ SPEC.update({
                                note="gloss-black fascia band, table inlay"),
     "chrome_trim":        dict(kind="metal", base=(0.62, 0.62, 0.61), rough=0.22, note="brushed rims, rods, handles"),
     "psu_panel":          dict(kind="dielectric", base=(0.030, 0.031, 0.035), metallic=0.1, rough=0.35,
-                               note="PSU housings, wall sockets"),
+                               note="dark gap rings round the lining doors, wall sockets, grilles"),
+    "psu_housing":        dict(kind="dielectric", base=(0.55, 0.55, 0.54), metallic=0.30, rough=0.35,
+                               note="PSU / reading-light pods: light satin silver-white (P1046402 / 06; model "
+                                    "judging r1 INT-m4)"),
     "light_cove":         dict(kind="dielectric", base=(0.90, 0.90, 0.88), rough=0.30, emission=(1.00, 0.95, 0.85),
                                emission_strength=1.0,
                                note="LED cove strips (a soft glow: P1046402 / 06 show no bright line)"),

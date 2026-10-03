@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="F", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-03")
+             size="A1", scale="-", rev="G", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-03")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -101,6 +101,8 @@ def text_block(ds, x0, y0, x1, lines, size=TXT, color=MUTED):
 # ---------------------------------------------------------------------------------------------------- blocks
 def crew_occupants(ds, x0, y0, x1, ctx):
     kc = ctx["crew"]
+    from model import flightdeck as FDK
+    kc["brow"] = FDK.brow_visibility()
     c = I.CREW_SEAT
     occ = kc["occ"]
     keys = ("p95m", "p50m", "p5m", "p5f")
@@ -152,6 +154,8 @@ def crew_occupants(ds, x0, y0, x1, ctx):
 
 def crew_general(ds, x0, y0, x1, ctx):
     kc = ctx["crew"]
+    from model import flightdeck as FDK
+    kc["brow"] = FDK.brow_visibility()
     c = I.CREW_SEAT
     occ = kc["occ"]
     e, f_u = kc["eye"], kc["eye_off"]
@@ -170,6 +174,8 @@ def crew_general(ds, x0, y0, x1, ctx):
          "cushion"),
         ("eye to own PFD / to MFD", f"{mm(kc['eye_to_pfd'])} / {mm(kc['eye_to_mfd'])}",
          f"PFD centre {kc['pfd_down_deg']:.0f}° below horizontal"),
+        ("PDU bezel / glass tops under the brow", f"{sgn(kc['brow'][0])} / {sgn(kc['brow'][1])}",
+         "both design eyes see the PFD / MFD / far-PFD tops under the fascia foot (r1 INT-M1)"),
         ("over the nose / abeam down / up", f"{v['over_nose_down']:.1f}° / {v['abeam_down_over_sill']:.0f}° / "
          f"{v['abeam_up_to_top']:.0f}°", f"glareshield lip {kc['lip_down_deg']:.0f}° down: clear of the view"),
         ("aft notch: headrest to divider", f"{sgn(da[lo])} / {sgn(da[c['head_c']])} / {sgn(da[hi])}",
@@ -290,7 +296,8 @@ def cabin_block(ds, x0, y0, x1, ctx):
          f"{sgn(k['club_feet_kick'])} to the kick panel"),
         ("pitch PAX 3 -> 5, stagger 5 -> 6", f"{mm(k['pitch_fwd'])} / {mm(k['stagger'])}", "POH"),
         ("headroom 95th: outboard / inboard", f"{mm(k['headroom'])} / {mm(k['headroom_in'])}",
-         f"seat slid inboard {mm(I.EXEC_SEAT['travel'][2])} [S]"),
+         f"head top to the headliner underside (soffit band inboard of |BL| {mm(I.LINING['soffit'][1])}); seat slid "
+         f"inboard {mm(I.EXEC_SEAT['travel'][2])} [S]"),
         ("shoulder room 95th: out / in", f"{sgn(k['shoulder_room'])} / {sgn(k['shoulder_room_in'])}",
          "deltoid to the sidewall lining"),
         ("headrest (raised) top over head centre", f"{sgn(hr['p95m'][0])} / {sgn(hr['p50m'][0])}",
@@ -573,7 +580,8 @@ REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
              ("C", "2026-09-26", "review r2 + r3 (list on sheet 1): sensitivity, CG cross-check, 5th-female point"),
              ("D", "2026-09-26", "Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track"),
              ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"),
-             ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]"))
+             ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]"),
+             ("G", "2026-10-03", "model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

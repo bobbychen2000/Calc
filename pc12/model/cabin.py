@@ -55,7 +55,7 @@ from model import fuselage as F
 from model.assemble import MATERIALS as _MAT, EMISSIVE as _EMI     # noqa: E402
 
 OWN_MATERIALS = ("carpet", "carpet_orange", "carpet_light", "carpet_grey", "floor_panel", "ledge_top", "ledge_panel",
-                 "gloss_black", "chrome_trim", "veneer_walnut", "curtain", "psu_panel", "light_cove", "light_reading",
+                 "gloss_black", "chrome_trim", "veneer_walnut", "curtain", "psu_panel", "psu_housing", "light_cove", "light_reading",
                  "placard_red", "lav_white", "toilet_white", "toilet_bowl", "lav_grey", "upholstery_grey", "net")
 MATERIALS = {k: _MAT[k] for k in OWN_MATERIALS}
 EMISSIVE = {k: v for k, v in _EMI.items() if k in OWN_MATERIALS}
@@ -72,7 +72,6 @@ DETAIL = dict(
     usb=(0.065, 0.028, 0.12),          # [M] switch / USB plate on the ledge: length, width, ahead of the cups
     wall_usb=(0.024, 0.030, 0.14),     # [M] USB socket on the sidewall: width, height, centre above the ledge top
     table_r=0.020,                    # [E] table leaf corner radius
-    inlay=0.010,                      # [M] gloss-black top inside the veneer edge band
     cab_r=(0.012, 0.008),             # [E] cabinet vertical-edge / top-edge radii
     drawer_split=0.400,               # [E] lower / upper drawer joint above the floor
     lav_wall=0.030,                   # [E] lav wall thickness (as L6 plan draws it)
@@ -83,14 +82,11 @@ DETAIL = dict(
     pad_t=0.050,                      # [E] padded shelf cushion
     niche_rim=(0.015, 0.030),         # [E] lit niche surround: width, depth proud of the lining
     tp=(0.055, 0.090),                # [M] toilet roll radius (L6 profile), length [E]
-    soffit=(0.200, 0.262, 0.300, 0.018),  # [M] headliner soffit: inner BL (flat panel edge), bottom to, fairs out
-                                          # at, drop below the lining (step = LED cove; P1046402 / 06 show the raised
-                                          # centre channel stepped 15-20 mm above the side panels: review r2 F5)
-    flat_drop=0.012,                  # [M] flat centre panel below the crown lining (L6 section)
+    cove_h=0.007,                     # [E] LED strip along the top of the soffit step (washes the raised channel)
     psu=(0.200, 0.070, 0.012, 0.30),  # [M] PSU housing along x, across, proud; over the lap: head x - 0.30 x facing
     fit_proud=(0.0012, 0.002),        # [E] flush lining fittings (O2 doors, PULL cover, downlights): dark gap ring /
                                       # bezel face this far proud of the lining, walls this far into it (r2 C2 / C7)
-    downlight=(0.60, 0.016),          # [E] soffit downlights: pitch, bezel radius
+    downlight=(0.60, 0.022, 0.245),   # [M] soffit downlights: pitch, bezel radius (~45 dia, P1046402), |BL| on the band
     o2=(0.100, 0.090, 2.58),          # [M] oxygen-mask flap (optional system): along x, along the wall, WL
     pull=(0.20, 0.13, 0.090),         # [M] exit-release PULL cover above the exit: size, above the hatch top
     pleat=0.060,                      # [E] FR34 curtain pleat pitch (depth = BAGGAGE curtain_t)
@@ -197,17 +193,34 @@ def lining():
     return _LIN
 
 
-def soffit_drop(y):
-    """Depth of the headliner soffit below the lining at |BL| y (0 outboard of it): the step at the flat centre panel's
-    edge is the LED cove (LINING headliner_flat)."""
-    y0, y1, y2, d = DETAIL["soffit"]
+def soffit_band(x, y):
+    """WL of the soffit band (interior.headliner_z, LINING soffit) at (x, |y|) for |y| in the band, vectorised on the
+    tabulated lining: the straight band from LINING soffit[0] below the lining at the channel edge (|BL|
+    headliner_flat / 2) to the lining at |BL| soffit[1]."""
+    L = lining()
     a = np.abs(np.asarray(y, float))
-    return np.where(a < y0, 0.0, np.where(a <= y1, d, np.clip(d + (0.0015 - d) * (a - y1) / (y2 - y1), 0.0, d)))
+    y0 = 0.5 * float(I.LINING["headliner_flat"])
+    d, y2 = (float(v) for v in I.LINING["soffit"])
+    z0, z2 = L.crown(x, y0) - d, L.crown(x, y2)
+    return np.minimum(z0 + (z2 - z0) * (a - y0) / (y2 - y0), L.crown(x, a))
+
+
+def band_normal(x, side):
+    """Unit normal of the soffit band on `side` (pointing into the cabin: down and inboard)."""
+    y0 = 0.5 * float(I.LINING["headliner_flat"])
+    y2 = float(I.LINING["soffit"][1])
+    m = float((soffit_band(x, y2) - soffit_band(x, y0)) / (y2 - y0))
+    return _unit([0.0, side * m, -1.0])
 
 
 def ceiling(x, y):
-    """Underside of the headliner (lining or soffit) at (x, y): what full-height walls end against."""
-    return lining().crown(x, y) - soffit_drop(y)
+    """Underside of the headliner (lining or soffit band) at (x, y): what full-height walls end against."""
+    L = lining()
+    a = np.abs(np.asarray(y, float))
+    y0 = 0.5 * float(I.LINING["headliner_flat"])
+    y2 = float(I.LINING["soffit"][1])
+    c = L.crown(x, a)
+    return np.where((a >= y0) & (a <= y2), soffit_band(x, a), c)
 
 
 # =====================================================================================================================
@@ -725,7 +738,7 @@ def _table(acc, key, state):
     z0 = z1 - th
     leaf = float(t.get("leaf", 0.5 * (YI - float(t["bl_in"]))))
     yh = YI - leaf                                                     # hinge line (outboard leaf's inner edge)
-    r, inl = DETAIL["table_r"], DETAIL["inlay"]
+    r = DETAIL["table_r"]
     fr = Fr([0.0, 0.0, 0.0], [1.0, 0, 0], [0, 1.0, 0])
     leaves = [(yh + 0.0015, YI + 0.015)]                               # into the slot by 15 mm
     if state == "deployed":
@@ -734,14 +747,12 @@ def _table(acc, key, state):
     for ya, yb in leaves:
         a0, a1 = sorted((s * ya, s * yb))
         Q = rrect2(x0, a0, x1, a1, ro, 4)
-        # anthracite leaf, thin wood edge round the gloss-black top (PRO s/n 3001 [M])
+        # anthracite leaf, the whole top dark smoked walnut under a gloss coat inside a thin dark-grey edge band
+        # (P1046404 / 06; model judging r1 INT-m3: the rev F gloss-black inlay read as a black glass top)
         acc.add(slab(fr, Q, z0, z1, 0.004, "ledge_panel"))
         e0, e1 = sorted((s * (ya + 0.004), s * (min(yb, YI) - 0.004)))
         acc.add(fr.poly(rrect2(x0 + 0.004, e0, x1 - 0.004, e1, max(ro - 0.004, 0.004)), z1 + 0.0004),
                 "veneer_walnut")
-        yin0, yin1 = (ya + inl, min(yb, YI) - inl)
-        b0, b1 = sorted((s * yin0, s * yin1))
-        acc.add(fr.poly(rrect2(x0 + inl, b0, x1 - inl, b1, max(ro - inl, 0.004)), z1 + 0.0008), "gloss_black")
     # carriage tray under the outboard leaf, slid out of the fascia slot with it (anthracite [M]), hinge, bracket
     ya, yb = yh + 0.030, YI + 0.015
     a0, a1 = sorted((s * ya, s * yb))
@@ -771,7 +782,7 @@ def table_parts(key):
     z0 = z1 - th
     leaf = float(t.get("leaf", 0.5 * (YI - float(t["bl_in"]))))
     yh = YI - leaf                                                     # hinge line (outboard leaf's inner edge)
-    r, inl = DETAIL["table_r"], DETAIL["inlay"]
+    r = DETAIL["table_r"]
     fr = Fr([0.0, 0.0, 0.0], [1.0, 0, 0], [0, 1.0, 0])
 
     def leaf_meshes(ya, yb, yin_b):
@@ -780,8 +791,6 @@ def table_parts(key):
         acc.add(slab(fr, rrect2(x0, a0, x1, a1, r, 4), z0, z1, 0.004, "ledge_panel"))
         e0, e1 = sorted((s * (ya + 0.004), s * (yin_b - 0.004)))
         acc.add(fr.poly(rrect2(x0 + 0.004, e0, x1 - 0.004, e1, max(r - 0.004, 0.004)), z1 + 0.0004), "veneer_walnut")
-        b0, b1 = sorted((s * (ya + inl), s * (yin_b - inl)))
-        acc.add(fr.poly(rrect2(x0 + inl, b0, x1 - inl, b1, max(r - inl, 0.004)), z1 + 0.0008), "gloss_black")
         return acc
     out = leaf_meshes(yh + 0.0015, YI + 0.015, YI)                     # into the slot by 15 mm
     out.add(cylinder([x0 + 0.03, s * yh, z0 + 0.0045], [x1 - 0.03, s * yh, z0 + 0.0045], 0.0045, n=10), "chrome_trim")
@@ -1078,13 +1087,14 @@ def _lavatory(acc, doors="closed"):
 def _headliner(acc, layout, o2=True):
     acc.group = "headliner"
     L = lining()
-    y0s, y1s, y2s, dd = DETAIL["soffit"]
+    y0s = 0.5 * float(I.LINING["headliner_flat"])
+    dd, y2s = (float(v) for v in I.LINING["soffit"])
     xe = XP - 0.5 * float(I.BAGGAGE["header_t"])
     xs = _floor_stations(XA, xe, 0.25, (9.0, 9.1, 9.2))
     # flat centre panel (flush with the lining where the lining is lower)
     ny = 25
     ys = np.linspace(-y0s, y0s, ny)
-    zf = L.crown(xs, 0.0) - DETAIL["flat_drop"]
+    zf = L.crown(xs, 0.0) - float(I.LINING["flat_drop"])
     Z = np.minimum(zf[:, None], L.crown(xs[:, None], ys[None, :]) - 0.002)
     P = np.stack([np.repeat(xs[:, None], ny, 1), np.repeat(ys[None, :], len(xs), 0), Z], -1)
     acc.add(_oriented(grid_surface(P), [0, 0, -1.0]), "lining")
@@ -1092,31 +1102,36 @@ def _headliner(acc, layout, o2=True):
         A = P[i]
         B = np.c_[A[:, 0], A[:, 1], L.crown(A[:, 0], A[:, 1]) + 0.004]
         acc.add(_oriented(_strip(A, B), [nx, 0, 0]), "lining")
-    # soffits: LED cove (inner face), flat bottom, fairing back into the lining
+    # soffit bands (model judging r1 INT-M2, LINING soffit; P1046402 / 04 / 06): the step down from the raised channel
+    # (lining white, an LED strip along its top washing the channel) and the straight band from the step's foot to
+    # the curved side lining; downlights and PSU pods on the band
+    ch = DETAIL["cove_h"]
+    nb = 9
     for sg in (-1, 1):
-        def pts(yv, dz):
-            yv = np.asarray(yv, float)
-            return np.stack([np.repeat(xs[:, None], len(yv), 1), np.repeat(sg * yv[None, :], len(xs), 0),
-                             L.crown(xs[:, None], yv[None, :]) + np.asarray(dz)[None, :]], -1)
-        cove = pts([y0s, y0s], [0.006, -dd])
-        bottom = pts(np.linspace(y0s, y1s, 5), np.full(5, -dd))
-        fair = pts(np.linspace(y1s, y2s, 4), np.linspace(-dd, -0.0015, 4))
-        acc.add(_oriented(grid_surface(cove), [0, -sg, 0]), "light_cove")
-        acc.add(_oriented(grid_surface(bottom), [0, 0, -1.0]), "lining")
-        acc.add(_oriented(grid_surface(fair), [0, 0, -1.0]), "lining")
-        for i, nx in ((0, -1.0), (-1, 1.0)):
-            ring = np.vstack([cove[i], bottom[i][1:], fair[i][1:]])
-            ring = np.vstack([ring, [[ring[0, 0], ring[-1, 1], ring[0, 2]]]])
+        yb = np.linspace(y0s, y2s, nb)
+        Zb = soffit_band(xs[:, None], yb[None, :])
+        band = np.stack([np.repeat(xs[:, None], nb, 1), sg * np.repeat(yb[None, :], len(xs), 0), Zb], -1)
+        zt = L.crown(xs, y0s)
+        zs0 = Zb[:, 0]
+        step = np.stack([np.stack([xs, np.full_like(xs, sg * y0s), zt + 0.004], -1),
+                         np.stack([xs, np.full_like(xs, sg * y0s), zt - ch], -1),
+                         np.stack([xs, np.full_like(xs, sg * y0s), zs0], -1)], 1)
+        led = np.stack([np.stack([xs, np.full_like(xs, sg * (y0s - 0.0006)), zt - 0.0005], -1),
+                        np.stack([xs, np.full_like(xs, sg * (y0s - 0.0006)), zt - ch], -1)], 1)
+        acc.add(_oriented(grid_surface(step), [0, -sg, 0]), "lining")
+        acc.add(_oriented(grid_surface(led), [0, -sg, 0]), "light_cove")
+        acc.add(_oriented(grid_surface(band), [0, 0, -1.0]), "lining")
+        for i, nx in ((0, -1.0), (-1, 1.0)):                 # end caps: step + band below, the lining above
+            yl = np.linspace(y2s, y0s, nb)
+            top = np.c_[np.full(nb, xs[i]), sg * yl, L.crown(xs[i], yl) + 0.004]
+            ring = np.vstack([step[i][2:3], band[i][1:], top])
             acc.add(_oriented(planar_cap(ring, [nx, 0, 0]), [nx, 0, 0]), "lining")
-        # downlights along the soffit bottom: a short chrome bezel set into the soffit along its local normal (the
-        # soffit follows the curved headliner; flat discs at one WL were half buried: review r2 C7) and the lens
-        pitch, rdl = DETAIL["downlight"]
-        yd = 0.5 * (y0s + y1s)
+        # downlights along the band: a short chrome bezel set into the band along its normal, and the lens
+        pitch, rdl, yd = DETAIL["downlight"]
         pr, sk = DETAIL["fit_proud"]
         for x in np.arange(XA + 0.30, xe - 0.10, pitch):
-            _downlight(acc, np.array([x, sg * yd, float(L.crown(x, yd)) - dd]), L.head_normal(x, sg * yd), rdl,
-                       pr, sk)
-    # PSU per seat (reading light + gasper in a dark housing on the curved side panel at psu_bl, over the lap)
+            _downlight(acc, np.array([x, sg * yd, float(soffit_band(x, yd))]), band_normal(x, sg), rdl, pr, sk)
+    # PSU per seat (reading light + gasper pod on the soffit band at psu_bl, over the lap)
     pl, pw, ph, pdx = DETAIL["psu"]
     ybl = float(I.LINING["psu_bl"])
     o2l, o2w, o2z = DETAIL["o2"]
@@ -1125,12 +1140,13 @@ def _headliner(acc, layout, o2=True):
         f_ = r["facing"]
         x = _head_x(r) - f_ * pdx
         y = s * ybl
-        z = float(L.crown(x, y))
-        n = L.head_normal(x, y)
+        z = float(soffit_band(x, ybl))
+        n = band_normal(x, s)
         fr = Fr([x, y, z] - 0.003 * n, [1.0, 0, 0], np.cross(n, [1.0, 0, 0]), n)
-        # brushed-silver pod (P1046402 / 06: silver reading-light pods, not black boxes: review r2 F5)
+        # light satin silver-white pod (P1046402 / 06; model judging r1 INT-m4: the metallic 'panel_silver' read as a
+        # black box under the cabin light)
         acc.add(slab(fr, rrect2(-0.5 * pl, -0.5 * pw, 0.5 * pl, 0.5 * pw, 0.022, 5), 0.0, ph + 0.003, 0.004,
-                     "panel_silver"))
+                     "psu_housing"))
         top = ph + 0.003
         a_read = -f_ * 0.05                                              # reading light toward the seat front
         acc.add(fr.disk(a_read, 0.0, 0.022, top + 0.0004, 24, r_inner=0.017), "chrome_trim")
@@ -1249,7 +1265,7 @@ def _partition(acc, kind):
     # return-air grille on the flat panel just ahead of the header
     gw, gl = DETAIL["grille"]
     xg = xa - 0.5 * gl - 0.03
-    zg = float(L.crown(xg, 0.0)) - DETAIL["flat_drop"]
+    zg = float(L.crown(xg, 0.0)) - float(I.LINING["flat_drop"])
     fg = Fr([xg, 0.0, zg], [0, 1.0, 0], [1.0, 0, 0], [0, 0, -1.0])
     acc.add(slab(fg, rrect2(-0.5 * gw, -0.5 * gl, 0.5 * gw, 0.5 * gl, 0.010), -0.003, 0.010, 0.003, "psu_panel"))
     for k in range(6):

@@ -66,7 +66,8 @@ TREAD = dict(depth=0.160,    # [M] tray depth (horizontal, open)
              bracket=(0.006, 0.090),   # [E] open side brackets under each plate: thickness, drop along the wall
              embed=0.012,    # [E] into the lining panel
              gap=0.002,      # [E] to the stringer walls
-             pad=(0.022, 0.022, 0.020, 0.0022))   # [E] anti-slip pad inset back / front / sides, thickness
+             pad=(0.022, 0.022, 0.020, 0.0022),   # [E] anti-slip pad inset back / front / sides, thickness
+             shadow=(0.075, 0.0012, 0.003))   # [M] dark recess under each plate: height down the wall, off it, thick
 FOOT = dict(depth=0.215, lip=0.012)   # [M] bottom step at the free edge (foot, photo 188: the step he stands on)
 RAIL = dict(r=0.0125,        # [M] polished rods ~25 mm (photos 130 / 188, against the 22x8.50 tyre scale)
             post_wl=0.70,    # [M] stanchion foot on the stringer at open WL 0.70, between treads 2 and 3: the lower
@@ -97,9 +98,12 @@ HANDLE = dict(zs=2.31,       # [M] inner door handle between tread 3 and the bot
               x=(4.80, 5.06),  # [E] lever span (station), hub at the aft end
               w=0.034, t=0.018, off=0.024, tilt=12.0, hub_r=0.024)   # [E] section, off the panel, twist (deg)
 FASTENERS = dict(pitch=0.065, r=0.0042, h=0.0015)   # [M] fastener row on the grey edge band (photos 130 / 188)
-MAT = dict(edge="metal", flange="metal", body="lining", frame="lining", tread="metal", bracket="metal",
+# model judging r1 GR1-06 (photos 130 / 188): the curved door rim is a darker riveted metal band (edge metal_dark with
+# steel_dark fasteners; it had read light grey), and every tread throws a dark cavity onto the inner face below it
+# (TREAD 'shadow': a dark recess panel under each plate between its brackets)
+MAT = dict(edge="metal_dark", flange="metal", body="lining", frame="lining", tread="metal", bracket="metal",
            antislip="metal_dark", rod="chrome", fitting="steel", cable="steel", handle="prop_band_red",
-           fastener="metal_dark")
+           fastener="steel_dark", shadow="vent_dark")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -536,6 +540,16 @@ def treads(door):
         gb, gz = door.closed_bz(G[:, 0], G[:, 1])
         for x0g in (xa + 0.002, xb - 0.002 - bt):
             out += _extrude(np.c_[gb, gz], x0g, x0g + bt, door, [(0, 3, False, MAT["bracket"])], MAT["bracket"])
+        # dark recess panel on the inner face under the plate, between its brackets (photos 130 / 188: a shadowed
+        # cavity under every tread; model judging r1 GR1-06)
+        if not tp["foot"]:
+            sh, so, st = TREAD["shadow"]
+            zt_, zb_ = zk - TREAD["t"] - 0.0015, zk - TREAD["t"] - sh
+            wt, wbm = float(np.interp(zt_, wz_, wb_)), float(np.interp(zb_, wz_, wb_))
+            S_ = np.array([(wt + so, zt_), (wt + so + st, zt_), (wbm + so + st, zb_), (wbm + so, zb_)])
+            sb, sz = door.closed_bz(S_[:, 0], S_[:, 1])
+            out += _extrude(np.c_[sb, sz], xa + bt + 0.003, xb - bt - 0.003, door, [(0, 4, False, MAT["shadow"])],
+                            MAT["shadow"])
         # anti-slip pad (open pose: a thin plate on the top)
         zk = tp["z"]
         Q = np.array([(tp["b_back"] + pb, zk - 0.001), (tp["b_front"] - pf, zk - 0.001),

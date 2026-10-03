@@ -97,7 +97,14 @@ LINING = dict(
     side=P(0.085, "[H] OML - 0.085 gives the published 1.52 max width (L1 SIDE_ALLOW; render lining +/-0.755)"),
     blend_p=P(2.0, "[E] offset = crown + (side - crown) |n_y|^p round the section (n = OML normal)"),
     headliner_flat=P(0.40, "[M] flat centre panel with LED coves either side (PRO photos)"),
-    psu_bl=P(0.37, "[E] reading light + gasper per seat in the curved side panel (photos)"),
+    flat_drop=P(0.012, "[M] the flat centre panel (raised channel) this far below the crown lining"),
+    soffit=PT((0.050, 0.400), "[M] soffit band either side of the raised centre channel (P1046402 / 04 / 06): its "
+                              "drop below the lining at the channel edge (|BL| headliner_flat / 2: the step, LED "
+                              "cove) and the |BL| where the straight band meets the curved side lining; the band "
+                              "carries the downlights and the PSU pods (model judging r1 INT-M2: rev F's 18 mm step "
+                              "over 0.06 read as a smooth barrel; the photos' step is 50-60 deep)"),
+    psu_bl=P(0.320, "[M] reading light + gasper pod per seat ON the soffit band (P1046402 / 06; rev F 0.37 in the "
+                    "curved side panel)"),
     reveal=P(0.085, "[M] deep white window reveals through the sidewall lining (photos)"),
 )
 DIVIDER = dict(
@@ -259,7 +266,10 @@ PEDALS = dict(
                     "other come 0.08 aft (PC-12 figure not found; typical 3-3.5 in)"),
     toe_brake=P(15.0, "[E] toe brake: the pedal face tips this far forward about the heel under braking [S: toe "
                       "brakes, POH 7-4-7]"),
-    pivot=PT((3.080, 0.040), "[E] floor-hinge x, height; toe-brake master cylinders above [S: POH 7-4-7]"),
+    pivot=PT((3.170, 0.440), "[M] HANGING pedals: the arm pivot (rudder-bar torque tube) under the lower panel, x / "
+                             "height above the floor (P1046408 / 09: each pair hangs on dark vertical arms and rods "
+                             "from under the lower panel; model judging r1 INT-m1 -- rev F had floor-hinged pads); "
+                             "toe-brake master cylinders on the arms [S: POH 7-4-7]"),
 )
 PEDESTAL = dict(
     x=PT((3.730, 4.150), "[M] control quadrant fwd / aft end (plan render 3.73-4.15)"),
@@ -882,6 +892,22 @@ def lining_crown(x, y):
     k = len(L) // 4
     S = L[:k]                                                          # crown -> starboard max breadth: y increasing
     return float(np.interp(abs(y), S[:, 0], S[:, 1]))
+
+
+def headliner_z(x, y):
+    """Water line of the CABIN headliner's underside at station x, butt line y (LINING): the flat centre channel
+    (flat_drop below the crown, not below the lining), the straight soffit band from soffit[0] below the lining at
+    the channel edge to the lining at |BL| soffit[1], the curved side lining outboard.  The flight deck has no soffits
+    (lining_crown there)."""
+    a = abs(float(y))
+    y0 = 0.5 * LINING["headliner_flat"]
+    d, y2 = (float(v) for v in LINING["soffit"])
+    if a <= y0:
+        return min(lining_crown(x, 0.0) - LINING["flat_drop"], lining_crown(x, a) - 0.002)
+    if a <= y2:
+        z0, z2 = lining_crown(x, y0) - d, lining_crown(x, y2)
+        return min(z0 + (z2 - z0) * (a - y0) / (y2 - y0), lining_crown(x, a))
+    return lining_crown(x, a)
 
 
 # ---------------------------------------------------------------------------------------------------- manikin
@@ -1626,12 +1652,12 @@ def cabin_checks(layout=DEFAULT_LAYOUT):
     p = cabin_pose(r)
     out["pose"] = p
     out["pose50"] = cabin_pose(r, P50_SCALE)
-    out["headroom"] = float(lining_crown(p["head_c"][0], r["bl"]) - p["head_top"])
+    out["headroom"] = float(headliner_z(p["head_c"][0], r["bl"]) - p["head_top"])
     out["eye_wl"] = float(p["eye"][1])
     out["shoulder_room"] = float(lining_half_width(p["shoulder"][0], p["shoulder"][1] + 0.02)
                                  - (abs(r["bl"]) + 0.5 * MANIKIN["bideltoid"]))
     din = EXEC_SEAT["travel"][2]                                       # the seat slid fully inboard
-    out["headroom_in"] = float(lining_crown(p["head_c"][0], abs(r["bl"]) - din) - p["head_top"])
+    out["headroom_in"] = float(headliner_z(p["head_c"][0], abs(r["bl"]) - din) - p["head_top"])
     out["shoulder_room_in"] = out["shoulder_room"] + din
     out["eye_wl_p50"] = float(out["pose50"]["eye"][1])
     out["win"] = (float(FP_WIN()[0]), float(FP_WIN()[1]))
@@ -1932,14 +1958,25 @@ def build_lining(parts):
 # structure
 # ---------------------------------------------------------------------------
 
-def frame_ring(x, depth=0.055, n=144):
+def frame_ring(x, depth=0.055, n=144, lining_clear=0.005):
+    """Fuselage frame ring at station x: radially from 4 mm inside the OML to `depth` further in, but never closer
+    than lining_clear to the lining (LINING law along the OML normal; model judging r1 INT-m8: the 0.065 frames
+    pierced the 0.040 crown lining -- cream rings through the headliner in X-ray views)."""
     t = np.linspace(0, 1, n, endpoint=False)
     outer = F.section(np.full(n, x), t)
     c = np.array([x, 0, float(F.z_mw(x))])
     d = outer - c
     dn = d / np.linalg.norm(d, axis=1, keepdims=True)
+    Q = outer[:, 1:]
+    dQ = np.roll(Q, -1, 0) - np.roll(Q, 1, 0)
+    nrm = np.c_[dQ[:, 1], -dQ[:, 0]]
+    nrm /= np.linalg.norm(nrm, axis=1, keepdims=True)
+    nrm *= np.sign(np.sum((Q - c[1:]) * nrm, 1))[:, None]              # outward section normal
+    cosn = np.maximum(np.sum(dn[:, 1:] * nrm, 1), 0.2)                 # radial vs normal
+    dmax = ((lining_offset(nrm[:, 0]) - lining_clear) / cosn - 0.004 if lining_clear is not None
+            else np.full(n, float(depth)))
     o = outer - dn * 0.004
-    i = outer - dn * (0.004 + depth)
+    i = outer - dn * (0.004 + np.clip(np.minimum(depth, dmax), 0.010, None))[:, None]
     V = np.vstack([o, i])
     k = np.arange(n)
     Fc = np.vstack([np.stack([k, (k + 1) % n, (k + 1) % n + n], 1), np.stack([k, (k + 1) % n + n, k + n], 1)])
@@ -2017,7 +2054,8 @@ def build_structure(parts):
     rings = []
     frames = frame_stations()
     for name, x in frames:
-        r = frame_ring(x, depth=0.065 if x < 10 else 0.045)
+        r = frame_ring(x, depth=0.065 if x < 10 else 0.045,
+                       lining_clear=0.005 if LINING_X[0] <= x <= LINING_X[1] else None)
         r = cut_openings(r)
         if (E.tail_cut_field(r.V[:, 0], r.V[:, 2]) > 0).any():
             r = trim(r, E.tail_cut_field(r.V[:, 0], r.V[:, 2]), "negative")
