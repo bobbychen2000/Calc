@@ -32,6 +32,14 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
     lights and the GLB's sheepskin sheen carried into the viewer materials
   - review round-3 (viewer): WebGL context loss and restore (a note while lost, redraws by itself, same image), the
     Specs table fits the landscape panel, safe-area insets (landscape notch, portrait home indicator)
+  - picture quality (owner 2026-10-03 "sharper crisper picture", web/viewer/picture.js): the still supersampling engages
+    when still (2x multisampled target, jittered passes accumulated) and releases while moving, target sizes within the
+    pixel / byte budget and the GL limits, MSAA samples (canvas and target), the same colours and position as the plain
+    frame, moving supersampling and the no-MSAA canvas path, max anisotropy + mipmaps on every texture, specular AA, the
+    PCSS ground shadow on a fitted shadow camera, the 1k HDRI, Auto's calibration (drained, min of 3) and the passes
+    given back once frames fit, single supersampled passes while moving / while the prop spins, 1x / 2x still scales, the
+    phone still canvas at the native ratio within the budget, the contact shadow at 512 while animating, the Specs panel's setting
+    remembered across a reload, no GL / console errors
   - interior tour (viewer/tour.js, owner 2026-10-03 "no good link to navigate into the interior"): the toolbar entry
     (desktop and phone), every stop reached from the menu with the camera inside the cabin (tables and ray clearances)
     and well exposed (both themes), the walk held inside the cabin at every boundary, keyboard / pointer / touch
@@ -2280,6 +2288,27 @@ async def touch_checks(page, ctx):
     want = [["tap down", 1.5], ["tap up", 1.5], ["drag", 1], ["coast", 1], ["coast", 1], ["still 1", 1], ["still 2", 1.5]]
     check("[M3] phone pixel ratio: tap keeps it; drag + coast at dprMove; back after 2 still frames, 1 resize per switch",
           r["seq"] == want and r["sizes"] == 2, f"{r['seq']}, setSize calls {r['sizes']}")
+    # review CR1-01: on a 3x phone the still canvas goes up to the native ratio within the pixel budget (Auto 2.1 MP:
+    # ~2.5x at 390 x 844) before any supersampling; the tier's ratio while the scene animates; PERF-3: phone Auto keeps
+    # the 1024 / 256 shadow maps
+    r = await js(page, r"""
+      const st = window.viewer._internals.stage, P = st.picture, q0 = st.quality, pred = P.predicted, busy = st.busy, cap = P.framesCap;
+      st.quality = {...q0, dprMax: 1.5, dprNative: 3, dprMove: 1}; P.predicted = true; P.framesCap = Infinity;
+      const out = {still: P.stillDpr(), css: [st.size.w, st.size.h], px: P.pxBudget, profile: [P.device, P.mode], S: null,
+        shadow: st.key.shadow.mapSize.x, contact: st.contact.size};
+      st.dpr = 0; st._still = 5; st._busy = true; st.applyQuality(); out.busyDpr = st.dpr;
+      st._busy = false; st.applyQuality(); out.stillDprSet = st.dpr; out.S = P._plan().S;
+      st.quality = q0; P.predicted = pred; P.framesCap = cap; st._busy = busy; st.dpr = q0.dprMax; st.renderer.setPixelRatio(q0.dprMax); P.invalidate();
+      st.needsRender = true;
+      return out;
+    """)
+    css = r["css"][0] * r["css"][1]
+    exp = max(1.5, min(3, math.floor(math.sqrt(r["px"] / css) * 20) / 20))
+    check("[CR1-01 / PERF-3] phone 3x: still canvas at the native ratio within the budget (then 1x, no supersampling), "
+          "1.5 while animating; Auto shadows 1024 / 256",
+          r["profile"] == ["phone", "auto"] and abs(r["still"] - exp) < 1e-9 and r["still"] > 2.3 and r["stillDprSet"] == r["still"]
+          and r["busyDpr"] == 1.5 and r["S"] == 1 and r["still"] ** 2 * css <= r["px"] * 1.0001
+          and r["shadow"] == 1024 and r["contact"] == 256, str(r))
     # the controls' own events: a tap does not count as a drag, a moving finger does
     cdp = await ctx.new_cdp_session(page)
     x, y = 60, 330
@@ -2505,6 +2534,388 @@ async def dark_and_data(browser, base, shots=True):
         await js(page, "window.viewer.setCutaway(false);")
         await tour_dark_check(page, shots)
     await page.close()
+
+
+# ----------------------------------------------------------------------------- picture quality (web/viewer/picture.js)
+PIC_VIEW = {"width": 480, "height": 320}     # small: SwiftShader renders each 2x supersampled frame in a few seconds
+PIC_WAIT = r"""
+  const P = window.viewer._internals.stage.picture, t0 = performance.now(), f0 = P.frame;
+  while (P.frame < f0 + 2 && performance.now() - t0 < 60000) await new Promise((r) => setTimeout(r, 30));
+  while (!P.state().done && performance.now() - t0 < 600000) await new Promise((r) => setTimeout(r, 200));
+  return P.state();
+"""
+
+
+def image_shift(png_a: bytes, png_b: bytes, box):
+    """Sub-pixel shift (dx, dy) of image b against a over box (x0, y0, x1, y1): the integer offset in -3..3 with the
+    least mean absolute difference, refined by a parabola through its neighbours; None without PIL / numpy."""
+    try:
+        from PIL import Image
+        import io
+        import numpy as np
+    except ImportError:
+        return None
+    a = np.asarray(Image.open(io.BytesIO(png_a)).convert("L"), float)
+    b = np.asarray(Image.open(io.BytesIO(png_b)).convert("L"), float)
+    x0, y0, x1, y1 = box
+
+    def err(dx, dy):
+        return float(np.abs(a[y0 + dy:y1 + dy, x0 + dx:x1 + dx] - b[y0:y1, x0:x1]).mean())
+    e, bx, by = min((err(dx, dy), dx, dy) for dx in range(-3, 4) for dy in range(-3, 4))
+
+    def sub(em, e0, ep):
+        den = em - 2 * e0 + ep
+        return 0.5 * (em - ep) / den if den > 1e-9 else 0.0
+    return (bx + sub(err(bx - 1, by), e, err(bx + 1, by)), by + sub(err(bx, by - 1), e, err(bx, by + 1)), e)
+
+
+async def picture_auto_check(page):
+    """Picture quality, Auto on this page: the frame times it measured and what it chose; specular AA, PCSS ground
+    shadow on a fitted shadow camera, the 1k studio HDRI, anisotropic filtering, MSAA on the canvas, no GL errors."""
+    r = await js(page, r"""
+      const I = window.viewer._internals, st = I.stage, P = st.picture, R = st.renderer, gl = R.getContext();
+      const s = P.state(), sc = st.key.shadow.camera, chunk = I.THREE.ShaderChunk.lights_physical_fragment;
+      const tex = [];
+      I.model.root.traverse((o) => { const m = o.material; if (!m || Array.isArray(m)) return;
+        for (const k of Object.keys(m)) { const t = m[k]; if (t && t.isTexture && !t.isDataTexture && !t.isRenderTargetTexture && !tex.includes(t)) tex.push(t); } });
+      const ct = st.contact.rt.texture;
+      return {s, specAA: chunk.includes('pcSpecAA') && !chunk.includes('geometryRoughness'),
+        shadowType: R.shadowMap.type, pcf: I.THREE.PCFShadowMap, pcss: st.shadowPlane.material.defines,
+        frustum: [sc.right - sc.left, sc.top - sc.bottom, sc.far - sc.near], envW: st.studioEnv && st.studioEnv.W,
+        tex: tex.map((t) => [t.name, t.anisotropy, t.generateMipmaps, t.minFilter]), maxAniso: R.capabilities.getMaxAnisotropy(),
+        contact: [ct.anisotropy, ct.generateMipmaps, st.contact.size], lmf: I.THREE.LinearMipmapLinearFilter,
+        attrs: gl.getContextAttributes(), samples: gl.getParameter(gl.SAMPLES), glError: gl.getError()};
+    """)
+    s = r["s"]
+    check("[PQ] Auto: measured the frame time and chose the still refinement for it (a slow software renderer: none)",
+          s["mode"] == "auto" and s["adaptive"] and any(v is not None for k, v in s["cost"].items() if k != "idle") and len(s["events"]) >= 1
+          and (s["N"] == 0) == any("no still refinement" in e["what"] or "no refinement" in e["what"] for e in s["events"]),
+          f"costs {s['cost']}, vsync {s['vsync']} ms, passes {s['N']}, events {[e['what'] for e in s['events']]}")
+    check("[PQ] specular anti-aliasing (normal-variance roughness) installed in three's physical shading",
+          r["specAA"], "lights_physical_fragment patched" if r["specAA"] else "three's geometryRoughness still in place")
+    fw, fh, fd = r["frustum"]
+    check("[PQ] key-light shadow: PCSS on the ground, shadow camera fitted to the casters (< 21 m; was a 24.4 m square), 4096 map on desktop",
+          r["shadowType"] == r["pcf"] and (r["pcss"] or {}).get("PC_PCSS_FILTER", 0) >= 16 and fw < 21 and fh < 21
+          and s["shadowMap"] == 4096, f"frustum {fw:.1f} x {fh:.1f} x {fd:.1f} m, PCSS {r['pcss']}, map {s['shadowMap']}")
+    check("[PQ] 1k studio HDRI on desktop (the 2k copy measured no sharper reflections: review CR1-06)", r["envW"] == 1024,
+          f"env width {r['envW']}")
+    bad = [t for t in r["tex"] if t[1] != r["maxAniso"] or not t[2] or t[3] != r["lmf"]]
+    check("[PQ] textures: max anisotropy + trilinear mipmaps (page atlas, contact shadow)",
+          r["tex"] and not bad and r["contact"][0] == r["maxAniso"] and r["contact"][1] and r["contact"][2] == 1024,
+          f"{len(r['tex'])} textures at {r['maxAniso']}x {', '.join(t[0] or '?' for t in r['tex'])}; contact {r['contact']}; bad {bad}")
+    check("[PQ] MSAA on the canvas (antialias, >= 4 samples)", r["attrs"]["antialias"] and r["samples"] >= 4,
+          f"antialias {r['attrs']['antialias']}, SAMPLES {r['samples']}")
+    check("[PQ] no GL errors", r["glError"] == 0, f"gl.getError() {r['glError']}")
+    # review PERF-1: the calibration = the median of up to 3 drained plain frames (one over 3 s ends it), and passes cut
+    # on a stall come back once plain frames fit the refresh (simulated: fast frame times injected, then put back)
+    rc = await js(page, r"""
+      const P = window.viewer._internals.stage.picture, keep = {cap: P.framesCap, px: P.stillPx, cut: P._cutAt, pc: P._predictCut,
+        vs: P.vsync, direct: P.costs.direct.slice(), restored: P._restored, ev: P.events.length};
+      const calib = P._calib.slice(), N0 = P.N;
+      P.framesCap = 0; P._cutAt = -1e9; P.vsync = 16.7; P.costs.direct = [5, 6, 5, 7, 5];
+      P._adapt('direct');
+      const back = {N: P.N, frames: P.profile.frames, ev: P.events.slice(-1)[0]};
+      P.framesCap = keep.cap; P.stillPx = keep.px; P._cutAt = keep.cut; P._predictCut = keep.pc; P.vsync = keep.vs;
+      P.costs.direct = keep.direct; P._restored = keep.restored; P.events.length = keep.ev; P.invalidate();
+      return {calib, N0, back, predicted: P.predicted};
+    """)
+    check("[PERF-1] Auto calibration: median of <= 3 drained plain frames; passes cut on a stall come back when frames fit the refresh",
+          rc["predicted"] and 1 <= len(rc["calib"]) <= 3 and (len(rc["calib"]) == 3 or max(rc["calib"]) > 3000)
+          and rc["back"]["N"] == rc["back"]["frames"] and "back on" in (rc["back"]["ev"] or {}).get("what", ""),
+          f"calibration {rc['calib']} ms, passes {rc['N0']}; fast frames injected: passes {rc['back']['N']} / {rc['back']['frames']}, "
+          f"{(rc['back']['ev'] or {}).get('what')}")
+
+
+async def picture_checks(browser, base):
+    """Picture quality (owner 2026-10-03 "sharper crisper picture"): the supersampled still path in High (a fixed mode),
+    its render-target sizes within budget, MSAA samples, the release while moving, the same colours / no shift against
+    the plain frame, moving supersampling and the no-MSAA canvas path, and the Specs panel setting remembered."""
+    ctx = await browser.new_context(viewport=PIC_VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
+    page = await ctx.new_page()
+    errs = []
+    page.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    await page.goto(base + "&quality=high&ssframes=3", wait_until="domcontentloaded", timeout=300000)
+    await page.wait_for_function("window.__ready === true", timeout=300000)
+    await js(page, "window.viewer.panel(false); window.viewer.setCamera('three_quarter', {instant: true}); "
+                   "await new Promise((r) => setTimeout(r, 400)); window.viewer.setCamera('three_quarter', {instant: true});")
+    gl0 = await js(page, "return window.viewer._internals.stage.renderer.getContext().getError();")
+    s = await js(page, PIC_WAIT)
+    still_png = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "34_picture_still_high.png").write_bytes(still_png)
+    pl, rt, acc, cap = s["plan"], s["rt"] or {}, s["acc"] or {}, s["caps"]
+    check("[PQ] still supersampling engages: 2x target, 3 jittered passes accumulated, at the canvas size",
+          s["path"] == "still" and s["done"] and s["k"] == s["N"] == 3 and abs(pl["S"] - 2) < 1e-6
+          and [rt.get("w"), rt.get("h")] == [2 * s["out"][0], 2 * s["out"][1]] and [acc.get("w"), acc.get("h")] == s["out"],
+          f"path {s['path']}, k {s['k']}/{s['N']}, out {s['out']}, target {rt}, accumulation {acc}")
+    check("[PQ] render target within budget: pixels, bytes, MAX_TEXTURE / RENDERBUFFER / VIEWPORT size",
+          pl["w"] * pl["h"] <= s["budget"]["px"] and pl["bytes"] <= s["budget"]["mem"] and max(pl["w"], pl["h"]) <= cap["maxSize"],
+          f"{pl['w']}x{pl['h']} = {pl['w'] * pl['h'] / 1e6:.2f} MP <= {s['budget']['px'] / 1e6:.1f} MP, {pl['bytes'] / 1e6:.0f} MB <= "
+          f"{s['budget']['mem'] / 1e6:.0f} MB, max size {cap['maxSize']}")
+    check("[PQ] MSAA in the supersampling target (2 samples at 2x, 4 below 1.5x; never above MAX_SAMPLES)",
+          rt.get("samples") == min(2, cap["maxSamples"]) and cap["maxSamples"] >= 4 and cap["canvasSamples"] >= 4,
+          f"target {rt.get('samples')} samples, MAX_SAMPLES {cap['maxSamples']}, canvas {cap['canvasSamples']}")
+    # moving: the temporal AA path (the accumulation dropped, the history continues from the still image); still
+    # again: it restarts and converges
+    mv = await js(page, r"""
+      const st = window.viewer._internals.stage, P = st.picture;
+      st.interacting = true; st.dragged = true; st.needsRender = true;
+      const t0 = performance.now();
+      while (P.kind !== 'taa' && performance.now() - t0 < 120000) await new Promise((r) => setTimeout(r, 100));
+      const during = P.state();
+      return {path: during.path, valid: during.valid, k: during.k, dpr: st.dpr, taa: during.taa};
+    """)
+    move_png = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "34b_picture_moving_high.png").write_bytes(move_png)
+    s2 = await js(page, "const st = window.viewer._internals.stage; st.interacting = false; st.dragged = false; st.needsRender = true; " + PIC_WAIT)
+    last = (mv["taa"] or {}).get("last") or {}
+    check("[PQ] moving: temporal AA frames (the still accumulation dropped, the history seeded from the still image); "
+          "still again: the accumulation restarts and converges",
+          mv["path"] == "taa" and not mv["valid"] and last.get("seeded") and last.get("history")
+          and s2["path"] in ("still", "shown") and s2["done"] and s2["k"] == 3,
+          f"moving: path {mv['path']}, accumulation valid {mv['valid']}, taa {last}; still again: {s2['path']} {s2['k']}/{s2['N']}")
+    b0, b1 = blue_median(move_png), blue_median(still_png)
+    sh = image_shift(move_png, still_png, (20, 60, PIC_VIEW["width"] - 20, PIC_VIEW["height"] - 20))
+    same = b0 and b1 and max(abs(x - y) for x, y in zip(b0[0], b1[0])) <= 3
+    check("[PQ] the supersampled still keeps the plain frame's colours and position (no pop / shift on the switch)",
+          bool(same) and (sh is None or math.hypot(sh[0], sh[1]) < 0.25),
+          f"blue median {b0 and b0[0]} -> {b1 and b1[0]}, image shift "
+          + ("n/a (no numpy)" if sh is None else f"({sh[0]:+.3f}, {sh[1]:+.3f}) px, mean |diff| {sh[2]:.2f}"))
+    # the moving paths: a supersampled pass before the temporal blend (fast GPUs: one 1.5x pass, High's moveSS), the
+    # temporal AA at the canvas size (its MSAA), without temporal AA a canvas without MSAA (through a multisampled target)
+    # and the plain canvas; render targets, accumulation and history released once unused for 30 s (PERF-4); an
+    # animation with the camera still (explode): one 2x pass per frame when it fits, no accumulation
+    paths = await js(page, r"""
+      const V = window.viewer, st = V._internals.stage, P = st.picture, out = {};
+      const until = async (f) => { const t0 = performance.now(); while (!f() && performance.now() - t0 < 180000) await new Promise((r) => setTimeout(r, 100)); };
+      P.moveSS = true; st.interacting = true; st.dragged = true; st.needsRender = true;
+      await until(() => P.kind === 'movess'); out.movess = [P.kind, P.rt && P.rt.width, st.dpr, !!(P.taa.last && P.taa.last.ss)];
+      P.moveSS = false; st.needsRender = true;
+      await until(() => P.kind === 'taa'); out.taa = [P.kind, P.rt && P.rt.width, P.rt && P.rt.samples, !!(P.rt && P.rt.depthTexture)];
+      P.allowTaa = false; P.caps.canvasSamples = 0; st.needsRender = true;
+      await until(() => P.kind === 'rt'); out.rt = [P.kind, P.rt && P.rt.width, P.rt && P.rt.samples];
+      P.caps.canvasSamples = 4; st.needsRender = true;
+      await until(() => P.kind === 'move'); out.move = [P.kind];
+      P.allowTaa = true;
+      for (const t of P.pool) t._pcUsed = -1e9;
+      P._used = {acc: -1e9, hist: -1e9, cur: -1e9}; P._gcAt = 0;
+      const r0 = P.releases || 0; st.needsRender = true;
+      await until(() => (P.releases || 0) > r0); out.release = [P.kind, P.pool.length, !!P.acc[0], (P.releases || 0) - r0];
+      st.interacting = false; st.dragged = false;
+      P.busySS = true; P.busyCool = Infinity; V.setExplode(0.4);
+      await until(() => P.kind === 'busyss'); out.busy = [P.kind, P.rt && P.rt.width, st.busy, P.state().valid];
+      P.busySS = false; V.setExplode(0, {instant: true});
+      await until(() => !st.busy && P.kind !== 'busyss'); P.busyCool = 0;
+      st.needsRender = true;
+      return out;
+    """)
+    W = PIC_VIEW["width"]
+    check("[PQ] moving paths: a 1.5x pass before the temporal blend, the temporal AA at the canvas size (MSAA, depth resolved), "
+          "a no-MSAA canvas through a multisampled target; unused targets released; an explode animation: one 2x pass per frame",
+          paths["movess"][0] == "movess" and paths["movess"][1] == round(1.5 * W) and paths["movess"][3]
+          and paths["taa"][0] == "taa" and paths["taa"][1] == W and paths["taa"][2] >= 4 and paths["taa"][3]
+          and paths["rt"][0] == "rt" and paths["rt"][1] == W and paths["rt"][2] >= 4 and paths["move"][0] == "move"
+          and paths["release"][1] <= 1 and not paths["release"][2] and paths["release"][3] >= 1
+          and paths["busy"][0] == "busyss" and paths["busy"][1] == 2 * W and paths["busy"][2] and not paths["busy"][3], str(paths))
+    # still frames at 1x or 2x only (a fractional scale adds the target pixels' own box: CR1-04), the jitter within one
+    # MSAA cell; the contact shadow at 512 while the scene animates, full size once still (PERF-4)
+    sc = await js(page, r"""
+      const st = window.viewer._internals.stage, P = st.picture, o = P._out(), keep = P.stillPx, out = {};
+      P.stillPx = o.x * o.y * 2.25; out.s15 = P._plan().S; P.stillPx = o.x * o.y * 4; out.s2 = P._plan().S; P.stillPx = keep;
+      st.busy = true; st.contactDirty = true; st.render(); out.busy = st.contact.shown;
+      st.busy = false; out.dirty = st.contactDirty; st.render(); out.still = st.contact.shown;
+      st.needsRender = true;
+      return out;
+    """)
+    check("[CR1-04 / PERF-4] still scale 1x or 2x only (1.5x budget -> 1x); contact shadow 512 while animating, 1024 once still",
+          sc["s15"] == 1 and sc["s2"] == 2 and sc["busy"] == 512 and sc["dirty"] and sc["still"] == 1024, str(sc))
+    # the Specs panel setting, remembered across a reload (localStorage)
+    await js(page, PIC_WAIT)
+    ui = await js(page, r"""
+      window.viewer.panel(true); window.viewer.tab('specs'); await window.viewer.frames(1);
+      document.querySelector('#pictureSeg [data-picture="max"]').click();
+      const P = window.viewer._internals.stage.picture;
+      return {mode: P.mode, stored: localStorage.getItem('pc12-picture'), note: document.getElementById('pictureNote').textContent,
+        pressed: [...document.querySelectorAll('#pictureSeg button')].map((b) => b.getAttribute('aria-pressed'))};
+    """)
+    gl1 = await js(page, "return window.viewer._internals.stage.renderer.getContext().getError();")
+    await page.goto(base.replace("?", "?ssframes=1&") + "&tab=specs", wait_until="domcontentloaded", timeout=300000)
+    await page.wait_for_function("window.__ready === true", timeout=300000)
+    after = await js(page, r"""
+      const P = window.viewer._internals.stage.picture, q = window.viewer.perf().quality;
+      const out = {mode: P.mode, forced: P.forced, quality: q.picture, shadow: q.shadowMap,
+        pressed: [...document.querySelectorAll('#pictureSeg button')].map((b) => b.getAttribute('aria-pressed'))};
+      document.querySelector('#pictureSeg [data-picture="auto"]').click();
+      out.back = [P.mode, localStorage.getItem('pc12-picture')];
+      localStorage.removeItem('pc12-picture');
+      return out;
+    """)
+    check("[PQ] 'Picture quality' setting: Max chosen in the Specs panel, remembered after a reload, back to Auto",
+          ui["mode"] == "max" and ui["stored"] == "max" and ui["pressed"] == ["false", "false", "true"]
+          and ("passes" in ui["note"] or "as drawn" in ui["note"]) and "MSAA" not in ui["note"]
+          and after["mode"] == "max" and not after["forced"] and after["quality"] == "max" and after["pressed"] == ["false", "false", "true"]
+          and after["back"] == ["auto", "auto"], f"click {ui}; reload {after}")
+    check("[PQ] no GL errors in the supersampled paths", gl0 == 0 and gl1 == 0, f"gl.getError() {gl0} / {gl1}")
+    check("[PQ] no console errors (picture quality page)", not errs, "; ".join(errs[:3]))
+    await ctx.close()
+
+
+PIC_RENDERED = r"""
+  window.PQ = {
+    st: () => window.viewer._internals.stage,
+    P: () => window.viewer._internals.stage.picture,
+    // n more renders, then two animation frames (the canvas presented)
+    rendered: async (n = 1) => {
+      const st = PQ.st(), r0 = st.stats.renders, t0 = performance.now();
+      while (st.stats.renders < r0 + n && performance.now() - t0 < 600000) await new Promise((r) => setTimeout(r, 50));
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    },
+    converge: async () => {
+      const t0 = performance.now(), f0 = PQ.P().frame;
+      // (two animation frames first: a camera change made before the call is seen by then)
+      while (PQ.P().frame < f0 + 2) await new Promise((r) => setTimeout(r, 30));
+      while (performance.now() - t0 < 1200000) { const s = PQ.P().state(); if (s.done && s.path !== 'none') break; await new Promise((r) => setTimeout(r, 100)); }
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return PQ.P().state();
+    },
+    // the camera turned about the orbit centre (vertical axis), a frame due
+    orbit: (deg) => {
+      const V = window.viewer, st = PQ.st(), c = st.camera, t = st.controls.target.clone();
+      const d = c.position.clone().sub(t); d.applyAxisAngle(new V._internals.THREE.Vector3(0, 1, 0), deg * Math.PI / 180);
+      c.position.copy(t).add(d); c.lookAt(t); c.updateMatrixWorld(); st.needsRender = true;
+    },
+  };
+"""
+
+
+def png_array(png: bytes):
+    try:
+        from PIL import Image
+        import io
+        import numpy as np
+    except ImportError:
+        return None
+    return np.asarray(Image.open(io.BytesIO(png)).convert("RGB"), float)
+
+
+async def picture_motion_checks(browser, base):
+    """[CR1-02] temporal anti-aliasing of moving frames: closer to the converged supersampled image than the plain 4x MSAA
+    frame after the same orbit, the history continued from the still image, a cut resets it; [CR1-03] the spinning
+    propeller with the camera still: the static scene refines (layered: still passes without the disc, then the disc
+    drawn over the converged image every frame), consecutive frames differ only on the disc."""
+    ctx = await browser.new_context(viewport=PIC_VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
+    page = await ctx.new_page()
+    errs = []
+    page.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    await page.goto(base + "&quality=high&ssframes=4", wait_until="domcontentloaded", timeout=300000)
+    await page.wait_for_function("window.__ready === true", timeout=300000)
+    await js(page, PIC_RENDERED + "window.viewer.panel(false); window.viewer.setCamera('three_quarter', {instant: true});")
+    # the orbit: 8 moving frames of 0.15 deg from the converged still at A, ending at B; with temporal AA, then the same
+    # from A again with it off (the plain 4x MSAA canvas frame); the reference: the converged still at B
+    shots, kinds = {}, {}
+    for mode in ("taa", "plain"):
+        await js(page, "window.viewer.setCamera('three_quarter', {instant: true}); await PQ.converge();")
+        kinds[mode] = await js(page, r"""
+          const st = PQ.st(), P = PQ.P(), out = [];
+          P.allowTaa = arg === 'taa';
+          st.interacting = true; st.dragged = true;
+          for (let i = 0; i < 8; i++) { PQ.orbit(0.15); await PQ.rendered(1); out.push([P.kind, P.taa.last && P.taa.last.history]); }
+          return out;
+        """, mode)
+        shots[mode] = await page.screenshot(timeout=SHOT_TIMEOUT)
+        (OUT / f"35_picture_orbit_{mode}.png").write_bytes(shots[mode])
+        if mode == "taa":
+            await js(page, "const st = PQ.st(); st.interacting = false; st.dragged = false; st.needsRender = true; await PQ.converge();")
+            shots["ref"] = await page.screenshot(timeout=SHOT_TIMEOUT)
+            (OUT / "35_picture_orbit_still.png").write_bytes(shots["ref"])
+        await js(page, "const st = PQ.st(), P = PQ.P(); st.interacting = false; st.dragged = false; P.allowTaa = true; st.needsRender = true;")
+    a = {k: png_array(v) for k, v in shots.items()}
+    try:
+        from scipy.ndimage import gaussian_filter
+    except ImportError:
+        gaussian_filter = None
+    if a["ref"] is not None and gaussian_filter is not None:
+        import numpy as np
+        ref = a["ref"]
+        # where the picture has detail (edges, panel lines, the livery): the reference's gradient in its top quarter
+        g = np.abs(np.diff(ref.mean(axis=2), axis=1))[:-1, :] + np.abs(np.diff(ref.mean(axis=2), axis=0))[:, :-1]
+        m = g > max(4.0, float(np.percentile(g, 75)))
+        # the error at the scale of the artefacts (dotted gaps, stair-stepped edges, sparkle): both images through a
+        # 0.7 px Gaussian, which leaves those and takes out the temporal blend's sub-pixel softness; raw for the record
+        gb = lambda x: gaussian_filter(x, (0.7, 0.7, 0))
+        err = {k: float(np.abs(gb(a[k]) - gb(ref))[:-1, :-1].mean(axis=2)[m].mean()) for k in ("taa", "plain")}
+        raw = {k: round(float(np.abs(a[k] - ref)[:-1, :-1].mean(axis=2)[m].mean()), 2) for k in ("taa", "plain")}
+        cols = {k: [round(float(np.median(a[k][..., c][a[k][..., 2] > a[k][..., 0] + 40]))) for c in range(3)] for k in a}
+    else:
+        err, raw, cols = {"taa": None, "plain": None}, {}, {}
+    ok_k = all(k == "taa" for k, _ in kinds["taa"]) and all(h for _, h in kinds["taa"]) and all(k == "move" for k, _ in kinds["plain"])
+    check("[CR1-02] moving: temporal AA frames are closer to the converged supersampled image than the plain 4x MSAA frame "
+          "after the same 8-frame orbit (edge pixels, at the artefacts' scale), same colours",
+          ok_k and err["taa"] is not None and err["taa"] < 0.97 * err["plain"]
+          and all(max(abs(x - y) for x, y in zip(cols[k], cols["ref"])) <= 3 for k in ("taa", "plain")),
+          f"mean |diff| to the still on edges (0.7 px Gaussian): taa {err['taa'] and round(err['taa'], 2)}, plain "
+          f"{err['plain'] and round(err['plain'], 2)} (raw {raw}); paths {kinds['taa'][-1]} / {kinds['plain'][-1]}; blue medians {cols}")
+    # a cut (a preset jump while 'moving') starts the history afresh
+    cut = await js(page, r"""
+      const st = PQ.st(), P = PQ.P(), c0 = P.taa.cuts;
+      st.interacting = true; st.dragged = true; PQ.orbit(0.1); await PQ.rendered(1);
+      window.viewer.setCamera('front', {instant: true}); st.needsRender = true; await PQ.rendered(1);
+      const out = {cuts: P.taa.cuts - c0, last: P.taa.last, kind: P.kind};
+      st.interacting = false; st.dragged = false; st.needsRender = true;
+      return out;
+    """)
+    check("[CR1-02] a camera cut (preset jump) restarts the temporal history instead of smearing the old view",
+          cut["kind"] == "taa" and cut["cuts"] >= 1, str(cut))
+    # [CR1-03] the spinning propeller, camera still: still passes without the overlay, then the overlay alone per frame
+    pr = await js(page, r"""
+      const V = window.viewer, st = PQ.st(), P = PQ.P(), R = st.renderer, out = {kinds: []};
+      V.setCamera({pos: [-4.2, 2.2, -2.2], target: [0, 1.6, 1.6], fov: 36}, {instant: true});
+      await PQ.converge();
+      V.setProp({rpm: 1700}, {instant: true});
+      for (let i = 0; i < 16; i++) {
+        await PQ.rendered(1);
+        const s = P.state(); out.kinds.push([P.kind, s.k, s.layered, (st.overlay || []).length, s.N]);
+        if (P.kind === 'layer') break;
+      }
+      out.calls = R.info.render.calls; out.tris = R.info.render.triangles;
+      // the blur disc's screen box: its bounding sphere's box (world), projected
+      const T = V._internals.THREE, disc = V._internals.kin.blur.disc, pts = [];
+      disc.geometry.computeBoundingSphere();
+      const sph = disc.geometry.boundingSphere.clone().applyMatrix4(disc.matrixWorld), r = sph.radius;
+      for (const x of [-r, r]) for (const y of [-r, r]) for (const z of [-r, r]) {
+        const p = sph.center.clone().add(new T.Vector3(x, y, z)).project(st.camera);
+        pts.push([(p.x + 1) / 2 * st.size.w, (1 - p.y) / 2 * st.size.h]);
+      }
+      out.box = [Math.min(...pts.map((p) => p[0])), Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[1]))];
+      return out;
+    """)
+    pa = await page.screenshot(timeout=SHOT_TIMEOUT)
+    await js(page, "await PQ.rendered(1);")
+    pb = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "36_picture_prop_layered.png").write_bytes(pa)
+    ka, kb = png_array(pa), png_array(pb)
+    if ka is not None:
+        import numpy as np
+        d = np.abs(ka - kb).max(axis=2)
+        x0, y0, x1, y1 = (int(v) for v in pr["box"])
+        out_mask = np.ones(d.shape, bool)
+        out_mask[max(0, y0 - 4):max(0, y1 + 4), max(0, x0 - 4):max(0, x1 + 4)] = False
+        outside, inside = float(d[out_mask].max()), float(d[~out_mask].max())
+    else:
+        outside = inside = None
+    refined = [k for k in pr["kinds"] if k[0] == "still"]
+    check("[CR1-03] spinning propeller, camera still: the static scene refines (still passes without the disc) and converges; "
+          "then each frame draws only the disc over it (frames differ only on the propeller)",
+          len(refined) >= 1 and all(k[2] for k in refined) and pr["kinds"][-1][0] == "layer" and pr["kinds"][-1][3] >= 2
+          and pr["kinds"][-1][1] == pr["kinds"][-1][4] >= 2
+          and pr["calls"] <= 12 and outside is not None and outside <= 2 and inside > 2,
+          f"paths {pr['kinds']}, overlay draw calls {pr['calls']} ({pr['tris']} triangles); max |frame diff| outside the "
+          f"propeller {outside}, on it {inside}")
+    await js(page, "window.viewer.setProp({rpm: 0}, {instant: true}); PQ.st().needsRender = true;")
+    gl = await js(page, "return window.viewer._internals.stage.renderer.getContext().getError();")
+    check("[CR1-02 / 03] no GL / console errors (temporal AA, layered propeller)", gl == 0 and not errs, f"gl {gl}; " + "; ".join(errs[:3]))
+    await ctx.close()
 
 
 async def error_path(browser, base):
@@ -3136,6 +3547,7 @@ async def run(args):
             if args.blender:
                 await blender_check(page)
             await context_loss_check(page)
+            await picture_auto_check(page)
             snd = await js(page, "return window.viewer.sound.state();")
             check("[sound] off by default under automation: no AudioContext made in the whole main run",
                   snd["supported"] and not snd["on"] and snd["created"] == 0 and snd["ctx"] is None,
@@ -3149,6 +3561,8 @@ async def run(args):
             await landscape_check(browser, base, shots=not args.no_shots)
             await safe_area_portrait(browser, base)
             await dark_and_data(browser, base, shots=not args.no_shots)
+            await picture_checks(browser, base)
+            await picture_motion_checks(browser, base)
             await error_path(browser, base)
             await boot_failures(pw, browser, base)
             await meshopt_check(browser, base, ref_geo)

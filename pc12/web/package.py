@@ -12,7 +12,8 @@ Layout of the bundle (everything the page loads, nothing else):
                         relative imports), copied from web/three_local (a checkout of mrdoob/three.js r160, which the
                         tests use too).  No third-party origin at run time; --three cdn keeps the jsDelivr CDN instead.
     viewer/*.js, viewer.css, materials.json
-    assets/             studio HDRI, 1k and a 512 px copy for phones (CC0, see assets/SOURCES.md)
+    assets/             studio HDRI: 1k (desktops; phones set to Picture quality Max) and a 512 px copy (phones)
+                        (CC0, see assets/SOURCES.md)
     data/pc12.glb       EXT_meshopt_compression (gltf-transform's reorder + EXT_meshopt_compression, lossless on the
                         build's quantised data: 16-bit positions on shared per-part grids / 8-bit normals as in
                         out/pc12.glb; ~44 -> ~17 MB at ~2.6M triangles); --no-meshopt ships out/pc12.glb as it is

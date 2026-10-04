@@ -443,6 +443,9 @@ export class PropBlur {
     for (const bl of this.blades) for (const mr of bl.meshes) { own(mr); this.fadeRecs.push(mr); }
     for (const mr of bootMr) { own(mr); this.fadeRecs.push(mr); }
     for (const mr of this.fadeRecs) mr.blurFade = true;
+    // the propeller's own meshes that still turn once the blur is complete (the hub; not the held spinner, not the
+    // faded boots): drawn with the disc and band over a still image of the rest (picture.js, the layered propeller)
+    this.turning = prop.meshes.filter((mr) => mr.base.name !== 'chrome' && !this.fadeRecs.includes(mr)).map((mr) => mr.mesh);
     this.tint = { sel: new THREE.Color(0x1d7bff), hover: new THREE.Color(0xffb020) };
 
     this.dt = 1 / 60;            // smoothed frame time
@@ -452,6 +455,18 @@ export class PropBlur {
     this.fadeChanged = false;    // the fade moved at the last apply (the key-light shadow map needs the blades' change)
     this.state = { fade: 0, sweepDeg: 0, ghost: 0, visible: false };
     this.buildMs = performance.now() - t0;
+  }
+
+  // what animates while the blur is complete (the blades faded into the disc, the spinner held still): the disc, the
+  // root band and the turning hub -- the overlay picture.js draws over a still image of the rest; null otherwise
+  get overlay() {
+    if (!this.holding || !this.disc.visible) return null;
+    const o = this._ovl || (this._ovl = []);
+    o.length = 0;
+    o.push(this.disc);
+    if (this.band && this.band.visible) o.push(this.band);
+    for (const m of this.turning) if (m.visible) o.push(m);
+    return o;
   }
 
   // the disc and band on show while the scene's programs compile at load (no shader-compile hitch on the first spin);
@@ -652,6 +667,8 @@ export class PropBlur {
       } else if (!c.mesh.quaternion.equals(c.q0)) { c.mesh.quaternion.copy(c.q0); c.mesh.position.copy(c.p0); }
     }
     this.holding = hold;
+    this.holdChanged = hold !== this._held;
+    this._held = hold;
     const st = this.state;
     st.fade = f; st.sweepDeg = sDeg; st.ghost = g; st.visible = this.disc.visible; st.dt = this.dt; st.still = hold;
   }

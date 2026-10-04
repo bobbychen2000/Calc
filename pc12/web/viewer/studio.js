@@ -81,7 +81,7 @@ export function loadHDR(url, onProgress) {
     return boot.stream(url, (c) => { if (c.length) chunks.push(c); }).then(() => {
       const buf = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
       chunks.reduce((o, c) => { buf.set(c, o); return o + c.length; }, 0);
-      const d = new RGBELoader().parse(buf.buffer);
+      const d = new RGBELoader().setDataType(THREE.FloatType).parse(buf.buffer);
       const tex = new THREE.DataTexture(d.data, d.width, d.height, THREE.RGBAFormat, d.type);
       tex.colorSpace = THREE.LinearSRGBColorSpace;
       tex.minFilter = tex.magFilter = THREE.LinearFilter;
@@ -92,7 +92,8 @@ export function loadHDR(url, onProgress) {
     });
   }
   return new Promise((resolve, reject) => {
-    new RGBELoader().load(url, resolve, onProgress, (e) => reject(e instanceof Error ? e : new Error(String(e && e.message || e))));
+    // FloatType: StudioEnvironment reads the pixels on the CPU (no half-float decode of the 2k file's 2M texels)
+    new RGBELoader().setDataType(THREE.FloatType).load(url, resolve, onProgress, (e) => reject(e instanceof Error ? e : new Error(String(e && e.message || e))));
   });
 }
 
@@ -137,14 +138,25 @@ export class StudioEnvironment {
     hdrTexture.dispose();
   }
 
-  // fraction of the texel (column x, row y; fractional = a point) covered by a ceiling strip
+  // 1 if the point (column xf, row yf, in texels; sampled at eighths of a texel) lies on a ceiling strip.  The trig is
+  // tabulated per eighth of a column / row (a 2k HDRI has 2M texels: its light grade took ~0.5 s without)
   _strip(xf, yf) {
-    const { W, H } = this, S = STRIPS;
-    const el = (0.5 - yf / H) * Math.PI, se = Math.sin(el);
-    if (se <= 0.08) return 0;
-    const phi = (xf / W - 0.5) * 2 * Math.PI, t = (S.h / se) * Math.cos(el);
-    const X = t * Math.cos(phi), Z = t * Math.sin(phi);
+    const S = STRIPS;
+    if (!this._tab) {
+      const { W, H } = this, nx = 8 * W + 1, ny = 8 * H + 1;
+      const cp = new Float32Array(nx), sp = new Float32Array(nx), tr = new Float32Array(ny);
+      for (let i = 0; i < nx; i++) { const phi = (i / 8 / W - 0.5) * 2 * Math.PI; cp[i] = Math.cos(phi); sp[i] = Math.sin(phi); }
+      for (let j = 0; j < ny; j++) {
+        const el = (0.5 - j / 8 / H) * Math.PI, se = Math.sin(el);
+        tr[j] = se <= 0.08 ? -1 : (S.h / se) * Math.cos(el);
+      }
+      this._tab = { cp, sp, tr };
+    }
+    const T = this._tab, t = T.tr[Math.round(yf * 8)];
+    if (t < 0) return 0;
+    const i = Math.round(xf * 8), Z = t * T.sp[i];
     if (Math.abs(Z) >= S.len) return 0;
+    const X = t * T.cp[i];
     for (const x of S.x) if (Math.abs(X - x) < S.w / 2) return 1;
     return 0;
   }
@@ -210,18 +222,14 @@ export const CONTACT_LAYER = 3;
 export class ContactShadow {
   constructor(renderer, { size = 512, height = 1.6, darkness = 1.25, blur = 3.2, opacity = 0.62 } = {}) {
     this.renderer = renderer;
-    this.size = size;
     this.height = height;
     this.blur = blur;
-    const rtOpts = { type: THREE.HalfFloatType };
-    this.rt = new THREE.WebGLRenderTarget(size, size, rtOpts);
-    this.rt.texture.generateMipmaps = false;
-    this.rtBlur = new THREE.WebGLRenderTarget(size, size, rtOpts);
-    this.rtBlur.texture.generateMipmaps = false;
+    this._targets(size);
     this.group = new THREE.Group();
     this.group.name = 'contact_shadow';
     const geo = new THREE.PlaneGeometry(1, 1).rotateX(Math.PI / 2);
     this.material = new THREE.MeshBasicMaterial({ map: this.rt.texture, transparent: true, opacity, depthWrite: false, toneMapped: false, fog: false });
+    this._filter();
     this.plane = new THREE.Mesh(geo, this.material);
     this.plane.renderOrder = -2;
     this.plane.scale.y = -1;            // the texture's v runs the other way
@@ -270,26 +278,68 @@ export class ContactShadow {
 
   setGround(y) { this.group.position.y = y; }
 
-  _blur(amount) {
+  // the map and its blur buffer.  The blur radii are amount / size in map UV: at the still size (the picture profile's)
+  // the look of 2026-10 (desktop 1024); the reduced map rendered while the scene animates (update(scene, loSize)) uses
+  // the same UV radii, so it is the same shadow, only coarser
+  _targets(size) {
+    this.size = size;
+    [this.rt, this.rtBlur] = this._pair(size);
+  }
+  _pair(size) {
+    const rtOpts = { type: THREE.HalfFloatType };
+    const rt = new THREE.WebGLRenderTarget(size, size, rtOpts), rtBlur = new THREE.WebGLRenderTarget(size, size, rtOpts);
+    rtBlur.texture.generateMipmaps = false;
+    // the ground plane is seen at grazing angles: trilinear mipmaps + the maximum anisotropy on the displayed map
+    const t = rt.texture;
+    t.generateMipmaps = true;
+    t.minFilter = THREE.LinearMipmapLinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+    return [rt, rtBlur];
+  }
+  _filter() {
+    this.material.map = this.rt.texture;
+    this.material.needsUpdate = true;
+  }
+  setSize(size) {
+    if (size === this.size) return;
+    this.dispose();
+    this._targets(size);
+    this._filter();
+  }
+
+  _blur(amount, rt, rtBlur) {
     const r = this.renderer, bp = this.blurPlane;
     bp.visible = true;
     bp.position.copy(this.group.position).y += 0.01;
     bp.material = this.hBlur;
-    this.hBlur.uniforms.tDiffuse.value = this.rt.texture;
+    this.hBlur.uniforms.tDiffuse.value = rt.texture;
     this.hBlur.uniforms.h.value = amount / this.size;
-    r.setRenderTarget(this.rtBlur);
+    r.setRenderTarget(rtBlur);
     r.render(bp, this.cam);
     bp.material = this.vBlur;
-    this.vBlur.uniforms.tDiffuse.value = this.rtBlur.texture;
+    this.vBlur.uniforms.tDiffuse.value = rtBlur.texture;
     this.vBlur.uniforms.v.value = amount / this.size;
-    r.setRenderTarget(this.rt);
+    r.setRenderTarget(rt);
     r.render(bp, this.cam);
     bp.visible = false;
   }
 
-  update(scene) {
+  // render the map: at the still size, or at loSize (< size) while the scene animates (Stage.render)
+  update(scene, loSize = 0) {
     const r = this.renderer;
-    const bg = scene.background, ov = scene.overrideMaterial, rt = r.getRenderTarget();
+    let rt = this.rt, rtBlur = this.rtBlur;
+    if (loSize && loSize < this.size) {
+      if (!this.lo || this.lo.size !== loSize) {
+        if (this.lo) { this.lo.rt.dispose(); this.lo.rtBlur.dispose(); }
+        const [a, b] = this._pair(loSize);
+        this.lo = { size: loSize, rt: a, rtBlur: b };
+      }
+      rt = this.lo.rt; rtBlur = this.lo.rtBlur;
+    }
+    this.shown = rt === this.rt ? this.size : loSize;
+    if (this.material.map !== rt.texture) { this.material.map = rt.texture; this.material.needsUpdate = true; }
+    const bg = scene.background, ov = scene.overrideMaterial, prev = r.getRenderTarget();
     const clear = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();
     const sm = r.shadowMap.autoUpdate, smu = r.shadowMap.needsUpdate;
     this.group.updateMatrixWorld(true);
@@ -298,20 +348,23 @@ export class ContactShadow {
     r.shadowMap.autoUpdate = false;       // the key-light shadow map is not this render's business
     r.shadowMap.needsUpdate = false;
     r.setClearColor(0x000000, 0);
-    r.setRenderTarget(this.rt);
+    r.setRenderTarget(rt);
     r.clear();
     r.render(scene, this.cam);
     scene.overrideMaterial = ov;
-    this._blur(this.blur);
-    this._blur(this.blur * 0.4);
-    r.setRenderTarget(rt);
+    this._blur(this.blur, rt, rtBlur);
+    this._blur(this.blur * 0.4, rt, rtBlur);
+    r.setRenderTarget(prev);
     r.setClearColor(clear, alpha);
     r.shadowMap.autoUpdate = sm;
     r.shadowMap.needsUpdate = smu;
     scene.background = bg;
   }
 
-  dispose() { this.rt.dispose(); this.rtBlur.dispose(); }
+  dispose() {
+    this.rt.dispose(); this.rtBlur.dispose();
+    if (this.lo) { this.lo.rt.dispose(); this.lo.rtBlur.dispose(); this.lo = null; }
+  }
 }
 
 // ------------------------------------------------------------------------------------ ground grid
@@ -323,10 +376,11 @@ export function makeGrid() {
       uAlpha: { value: 0.12 },
       uCenter: { value: new THREE.Vector2(0, 7) },
       uR: { value: new THREE.Vector2(5, 21) },
+      uPx: { value: 1 },        // render-target pixels per output pixel (picture.js: the line width stays in output px)
     },
     vertexShader: `varying vec3 vW;
 void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
-    fragmentShader: `uniform vec3 uColor; uniform float uAlpha; uniform vec2 uCenter; uniform vec2 uR;
+    fragmentShader: `uniform vec3 uColor; uniform float uAlpha; uniform vec2 uCenter; uniform vec2 uR; uniform float uPx;
 varying vec3 vW;
 float gridLine(vec2 p, float spacing, float width) {
   vec2 c = p / spacing;
@@ -334,8 +388,8 @@ float gridLine(vec2 p, float spacing, float width) {
   return 1.0 - min(min(g.x, g.y) / width, 1.0);
 }
 void main() {
-  float minor = gridLine(vW.xz, 1.0, 1.0);
-  float major = gridLine(vW.xz, 5.0, 1.4);
+  float minor = gridLine(vW.xz, 1.0, 1.0 * uPx);
+  float major = gridLine(vW.xz, 5.0, 1.4 * uPx);
   float fade = 1.0 - smoothstep(uR.x, uR.y, distance(vW.xz, uCenter));
   float a = max(minor * 0.5, major) * uAlpha * fade;
   if (a < 0.003) discard;
