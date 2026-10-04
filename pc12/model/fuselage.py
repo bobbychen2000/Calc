@@ -84,8 +84,18 @@ _ZC, _R = PROP_AXIS_Z, SPINNER_R
 # on the cowl shoulders ahead of the windshield.  Knots 3.000-3.500 are now sampled from a C2 slope ramp (0.107 ->
 # 0.540, quintic smoothstep centred on STA 3.14, 0.45 m long) that follows the drawn crown within 3.1 mm (rms 1.9 mm
 # over STA 2.6-4.2; whole crown rms 1.01 -> 1.18 mm); the shoulders' normal-azimuth rate drops from 280 to 110 deg/m.
+# Review r4 GEO8-02: the cowl-front knots (1.044 / 1.140 / 1.200 / 1.500) put the crown's slope through 26 -> 7.6 -> 9.6
+# -> 7 deg -- a curvature reversal at STA 1.14-1.20 (a 1.2 deg concave dip) that kinked every studio streak 0.1-0.15 m
+# behind the cowl front, in both tiers.  Knots 1.044-1.680 are now sampled from a monotone-slope blend: slope
+# s(t) = 0.2058 - 0.1270 t + 0.9864 exp(-t / 0.025), t = x - 1.044 (z(1.044) = 1.905, the spinner base: the model keeps
+# the POH prop axis WL 1.655, 15 mm under the drawing's, so the drawn lip's first ~0.05 m is not followed), fitted to
+# the drawn crown over STA 1.05-1.80 (x >= 1.12 weighted 1, the lip 0.15): drawn crown STA 1.09-3.0 max 2.7 mm off
+# (was 4.1), the slope falls monotonically 45 -> 11 -> 6.4 deg over STA 1.05-2.0.  (A re-fit with lines_fit --write
+# would replace them: keep the blend.)
 # <fitted-tables> (written by python3 -m drawing.lines_fit fit --write)
-_top = [(_X0, 1.905), (1.140, 1.952), (1.200, 1.960), (1.500, 2.011), (2.000, 2.072), (2.500, 2.126), (3.000, 2.1783),
+_top = [(_X0, 1.905), (1.052, 1.9134), (1.062, 1.9213), (1.075, 1.9288), (1.090, 1.9351), (1.110, 1.9412),
+        (1.140, 1.9483), (1.180, 1.9564), (1.240, 1.9676), (1.320, 1.9816), (1.420, 1.9981), (1.540, 2.0161),
+        (1.680, 2.0349), (2.000, 2.072), (2.500, 2.126), (3.000, 2.1783),
         (3.075, 2.1906), (3.150, 2.2113), (3.225, 2.2417), (3.300, 2.2793), (3.400, 2.3331), (3.500, 2.3871),
         (3.700, 2.497), (3.900, 2.607), (4.080, 2.696),
         (4.200, 2.742), (4.400, 2.769), (9.000, 2.769), (9.750, 2.748), (10.800, 2.694), (11.850, 2.613),

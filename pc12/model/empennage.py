@@ -23,7 +23,7 @@ Anchors: tailplane span 5.20 m (Pilatus), overall height 4.26 m (top of bullet),
 from __future__ import annotations
 import numpy as np
 
-from cad.mesh import Mesh, grid_surface, planar_cap, revolve, cap_ring, trim
+from cad.mesh import Mesh, grid_surface, grid_normals, planar_cap, revolve, cap_ring, trim
 from model.airfoil import Airfoil, naca00, naca4_thickness
 from model.lifting import Section, skin, strip, curve_patch, closed_body, cos_pts
 from model.wing import plain_cove, plain_surface_loop, x_end_of_plain, span_stations
@@ -852,9 +852,12 @@ def build(parts: dict):
         # raked LE meets the gap line); rev r2 lofted it on to the tip at 20 mm pitch, so the row pair straddling the
         # notch (BL 2.458 / 2.478) spanned the 0.10 m LE jump and the trim at the gap left skewed slivers there.  Rows
         # now stop at the notch, with the LE kink (STAB_TIP_KINK_Y) as a station and 10 mm pitch along the rake
+        # review r4 GEO8-04: along the raked LE the nose moves 2.08 m aft per m of span, so at 10 mm rows each section's
+        # nose stood 21 mm behind the last -- ~4 nose radii: the triangles across the nose sheared and drew the highlight
+        # in Z-shaped steps; at STAB_RAKE_STEP (3 mm) the nose moves ~6 mm (about its radius) row to row
         ys2 = np.unique(np.concatenate([span_stations(ELEV_Y[1], 2.30, 0.05),
-                                        span_stations(2.30, STAB_TIP_KINK_Y, 0.02),
-                                        span_stations(STAB_TIP_KINK_Y, STAB_NOTCH_Y, 0.010)]))
+                                        span_stations(2.30, STAB_TIP_KINK_Y, 0.01),
+                                        span_stations(STAB_TIP_KINK_Y, STAB_NOTCH_Y, STAB_RAKE_STEP)]))
         ms = []
         ms.append(skin(sec_fn, ys0, n=48))
         ms.append(strip(sec_fn, ys0, 1.0, 1.0))
@@ -927,17 +930,56 @@ def build(parts: dict):
     return parts
 
 
+HORN_LOOP_N = 40          # chord points per surface of the horn-balance sections (review r4 GEO8-04: 16 drew its nose
+#                           highlight in Z-shaped steps -- 384 of its 2,590 faces > 12 deg off their vertex normals)
+HORN_TIP_STEP = 0.003     # m: spanwise station pitch on the raked tip outboard of the notch (was 0.02; the nose moves
+#                           2.08 x this aft row to row: see STAB_RAKE_STEP)
+STAB_RAKE_STEP = 0.003    # m: the fixed tip's rows along its raked LE (was 0.010)
+
+
 def horn_body():
     """Starboard horn balance (moves with the elevator): the tailplane tip aft of its front face (horn_front_x) from
-    the elevator's outboard end (ELEV_HORN[0] + 6 mm) to the tip, with a rounded tip cap."""
+    the elevator's outboard end (ELEV_HORN[0] + 6 mm) to the tip, capped at both ends.  Review r4 GEO8-04: the airfoil
+    surface and the flat front face are separate patches (a crease, each with its own normals: averaged across the
+    corner the front face's tilt smeared into the nose); where the front face has shrunk to the nose (the raked tip,
+    xc0 = 0) the surface's two ends meet at the LE and share the forward normal."""
     ys = np.unique(np.r_[span_stations(ELEV_HORN[0] + 0.006, STAB_HORN_CORNER[0], 0.010),
                          span_stations(STAB_HORN_CORNER[0], STAB_NOTCH_Y + 0.004, 0.004),
-                         span_stations(STAB_NOTCH_Y + 0.004, STAB_TIP_Y - 0.004, 0.02)])
-    body = closed_body(horn_section, ys, horn_loop)
-    tip = stab_section(STAB_TIP_Y - 0.004)
-    xx = cos_pts(40)
-    loop = np.vstack([tip.lower(xx[::-1]), tip.upper(xx[1:-1])])
-    return Mesh.merge([body, cap_ring(loop, (0, 1, 0))])
+                         span_stations(STAB_NOTCH_Y + 0.004, STAB_TIP_Y - 0.004, HORN_TIP_STEP)])
+    rows, x0s = [], []
+    for y in ys:
+        sec = horn_section(y)
+        yy = abs(float(sec.le[1]))
+        xc0 = float(np.clip((float(horn_front_x(yy)) - sec.le[0]) / sec.chord, 0.0, 0.98))
+        af = sec.airfoil                         # upper xc0 -> TE, lower TE -> xc0 (both ends kept: open loop)
+        xu = cos_pts(HORN_LOOP_N, 0, 1) * (1.0 - xc0) + xc0
+        loop = np.vstack([np.stack([xu, af.upper(xu)], 1), np.stack([xu[::-1], af.lower(xu[::-1])], 1)[1:]])
+        rows.append(sec.point(loop[:, 0], loop[:, 1]))
+        x0s.append(xc0)
+    P = np.array(rows)
+    N = grid_normals(P, False, False)
+    nose = np.array(x0s) < 1e-4                                  # the two ends meet at the LE
+    if nose.any():
+        n_le = N[nose, 0] + N[nose, -1]
+        n_le /= np.linalg.norm(n_le, axis=1)[:, None]
+        N[nose, 0] = n_le
+        N[nose, -1] = n_le
+    body = grid_surface(P, N=N)
+    cen = P.mean(1)
+    if np.mean(np.sum((body.V - np.repeat(cen, P.shape[1], 0)) * body.N, 1)) < 0:
+        body = body.flipped()
+    out = [body]
+    face = ~nose
+    if face.sum() >= 2:                                          # the flat front face: lower(xc0) -> upper(xc0)
+        k = np.nonzero(face)[0]
+        k = np.r_[k, k[-1] + 1] if k[-1] + 1 < len(ys) else k     # up to the first nose row (zero width there)
+        F_ = grid_surface(np.stack([P[k, -1], P[k, 0]], 1))
+        if np.mean(F_.N[:, 0]) > 0:                              # outward = forward (-x)
+            F_ = F_.flipped()
+        out.append(F_)
+    span_dir = P[-1].mean(0) - P[0].mean(0)
+    out += [cap_ring(P[0], -span_dir), cap_ring(P[-1], span_dir)]
+    return Mesh.merge(out)
 
 
 def fix_orient(m: Mesh, zc):

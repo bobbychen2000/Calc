@@ -71,7 +71,9 @@ DETAIL = dict(
     ecs_r=0.024,                               # [M] eyeball outlet (cockpit key 47 mm)
     afcs_z=0.180,                              # [M] GFC 700 centre above the MFD centre (sheet: +0.18)
     baro_bl=0.228, warn_bl=0.300,              # [M] BARO knob, master warning / caution pair (face-on photo)
-    cb=(4, 10, 0.0055),                        # [M] CB rows, breakers per row, knob radius (P1046409 / 10)
+    cb=(4, 10, 0.0045),                        # [M] CB rows, breakers per row, knob radius (P1046409 / 10; review r4
+    #                                            INT8-02: small black breaker heads, 7 mm proud on a white collar ring,
+    #                                            not 11 mm metal pills of r 5.5)
     cup_x=(3.875, 3.985),                      # [M] cup-holder pair in the console pod under the CB panel
     compass_z=2.380,                           # [M] compass on the centre post (P1046408 elevation 23 deg)
 )
@@ -786,21 +788,36 @@ def _pedestal(acc):
     pv = _unit(np.array([st[2][0] - st[3][0], 0.0, st[2][1] - st[3][1]]))
     pc = 0.5 * (np.array([st[2][0], 0.0, st[2][1]]) + np.array([st[3][0], 0.0, st[3][1]]))
     f = Fr(pc, [0, 1.0, 0], pv)
-    acc.add(f.se(0, -0.005, 0.002, (0.075, 0.040, 0.003), (0.1, 0.1), (6, 12)), "panel_grey")
+    acc.add(f.se(0, -0.005, 0.002, (0.075, 0.040, 0.003), (0.1, 0.1), (6, 12)), "panel_titanium")   # (r4 INT8-03)
     for sg in (-1, 1):
         acc.add(f.knob(sg * 0.105, 0.035, 0.009, 0.014, 14), "black")
-    # quadrant top (fwd -> aft): TRIM INTERRUPT, ALTERNATE STAB TRIM, AILERON TRIM, FLAP INTERRUPT (guarded)
+    # quadrant top, forward end: the trim panel -- a black bezel across the top carrying TRIM INTERRUPT (a square button
+    # in a raised guard), the split ALTERNATE STAB TRIM rocker and the AILERON TRIM rocker, white legend bars, and the
+    # guarded FLAP INTERRUPT beside the flap gate (P1046408, throttle photo; review r4 INT8-03: four loose cubes, one
+    # of them a cream square)
     ft = Fr([0.5 * (qx0 + qx1), 0.0, zt], [1.0, 0, 0], [0, 1.0, 0])   # u = aft, v = starboard, w = up
-    for a, b, sz, mat in ((-0.160, -0.070, (0.018, 0.018, 0.006), "panel_dark"),
-                          (-0.160, -0.030, (0.024, 0.014, 0.010), "black"),
-                          (-0.160, 0.015, (0.018, 0.026, 0.010), "black"),
-                          (-0.155, 0.070, (0.022, 0.020, 0.012), "light_amber")):
-        acc.add(ft.box(a, b, 0.5 * sz[2], sz), mat)
-    # PCL (power control lever: slot, stem, big grey knob) and flap lever (slot, black paddle)
+    pt_ = 0.003                                                        # bezel plate thickness
+    acc.add(ft.box(-0.160, 0.0, 0.5 * pt_, (0.070, 2 * hw - 0.030, pt_)), "bezel_black")
+    for a, b, sz, w0, mat in ((-0.158, -0.062, (0.026, 0.026, 0.008), 0.0, "pedestal_gunmetal"),   # TRIM INTERRUPT guard
+                              (-0.158, -0.062, (0.016, 0.016, 0.006), 0.005, "black"),       # ... its button
+                              (-0.158, -0.020, (0.020, 0.010, 0.010), 0.0, "black"),         # ALT STAB TRIM halves
+                              (-0.158, -0.006, (0.020, 0.010, 0.010), 0.0, "black"),
+                              (-0.158, 0.034, (0.018, 0.028, 0.009), 0.0, "black"),          # AILERON TRIM rocker
+                              (-0.158, 0.034, (0.004, 0.024, 0.006), 0.006, "pedestal_gunmetal")):   # ... its ridge
+        # 0.2 mm off the plate, and nested pieces starting inside their base: no coplanar faces (fit_check 26)
+        acc.add(ft.box(a, b, pt_ + 0.0002 + w0 + 0.5 * sz[2], sz), mat)
+    for b, hl in ((-0.062, 0.010), (-0.013, 0.012), (0.034, 0.011)):                         # legend bars
+        acc.add(ft.box(-0.186, b, pt_ + 0.0003, (0.003, 2 * hl, 0.0004)), "light_white")
+    # PCL (power control lever: slot, stem, big grey knob) and flap lever (slot in its gate, black paddle)
     pcx, pcy, pch = (float(v) for v in PE["pcl"])
     fx_, fy_, fh_ = (float(v) for v in PE["flap"])
+    acc.add(box([fx_ + 0.010, fy_, zt + 0.0004], (0.180, 0.034, 0.0008)), "bezel_black")      # flap gate plate
+    for k in range(4):                                                  # its detents 0 / 15 / 30 / 40 (white marks)
+        acc.add(box([fx_ - 0.050 + 0.040 * k, fy_ + 0.013, zt + 0.0011], (0.003, 0.006, 0.0004)), "light_white")
+    acc.add(box([fx_ - 0.105, fy_ + 0.020, zt + 0.0062], (0.024, 0.022, 0.012)), "pedestal_gunmetal")  # FLAP INTERRUPT
+    acc.add(box([fx_ - 0.105, fy_ + 0.020, zt + 0.0135], (0.014, 0.012, 0.003)), "black")
     for (xa, xb, y) in ((pcx - 0.11, pcx + 0.07, pcy), (fx_ - 0.07, fx_ + 0.09, fy_)):
-        acc.add(box([0.5 * (xa + xb), y, zt + 0.0006], (xb - xa, 0.012, 0.0012)), "black")
+        acc.add(box([0.5 * (xa + xb), y, zt + 0.0011], (xb - xa, 0.012, 0.0012)), "black")
     acc.add(cylinder([pcx + 0.020, pcy, zt], [pcx + 0.004, pcy, FL + pch - 0.045], 0.008, n=10), "metal")
     # PCL grip: a satin pewter paddle, thin fore / aft, tall, round-topped, tipped forward (throttle photo, P1046408-10;
     # review r3 F3: rev C was a flat 60 x 88 x 48 puck); its top on the drawn PCL height (PEDESTAL pcl)
@@ -1247,14 +1264,15 @@ def _consoles(acc):
             for j in range(nb):
                 x = cx0 + 0.030 + j * (cx1 - cx0 - 0.060) / (nb - 1)
                 y = sg * (float(L.hw(x, z)) - 0.006)
-                acc.add(cylinder([x, y, z], [x, y - sg * 0.011, z], kr, n=8), "metal_dark")
+                acc.add(cylinder([x, y + sg * 0.0005, z], [x, y - sg * 0.0015, z], kr + 0.0004, n=12), "yoke_white")
+                acc.add(cylinder([x, y - sg * 0.0015, z], [x, y - sg * 0.007, z], kr, n=12), "black")
             zl = z - 0.019
             # lit legend strip following the curved panel face 0.5 mm in front of it (a straight box was buried at
             # one end: fit_check 22b)
             xs_ = np.linspace(cx0 + 0.025, cx1 - 0.025, 8)
             G_ = np.stack([np.stack([xs_, sg * (L.hw(xs_, np.full(8, zz)) - 0.0075), np.full(8, zz)], -1)
                            for zz in (zl - 0.0015, zl + 0.0015)], 1)                # 1.5 mm proud (r3 K3)
-            acc.add(_oriented(grid_surface(G_), [0, -sg, 0]), "screen_cyan" if sg < 0 else "screen_green")
+            acc.add(_oriented(grid_surface(G_), [0, -sg, 0]), "screen_green")      # PRO: green legends both sides
 
 
 # =====================================================================================================================

@@ -100,9 +100,12 @@ DETAIL = dict(
 # band width range, band length range, the navy break between bands along a lane, end cut (x run per unit band width;
 # the ends are cut at an angle), step slope (x run per unit sideways step: 45 deg), colour mix (weights: ~35 % of the
 # runner orange, cream blocks, a few light-grey ones)
-RUNNER = {"lanes": 4, "gap": 0.016, "width": (0.050, 0.085), "length": (0.45, 1.40), "break": (0.03, 0.25),
+# review r4 INT8-05 (P1046406 / 07 / 11): long, continuous stripes with angular jogs, mostly AI Orange with a few
+# light-grey (not cream) strands -- the r3 bands (0.45-1.40 m, 0.03-0.25 m navy breaks, 28 % cream) read as scattered
+# blocks; now 0.9-2.4 m with 5-60 mm breaks, the jogs (step_slope) the main discontinuity, 70 / 18 / 12 %
+RUNNER = {"lanes": 4, "gap": 0.016, "width": (0.050, 0.085), "length": (0.90, 2.40), "break": (0.005, 0.06),
           "end_cut": (0.4, 1.0), "step_slope": 1.0,
-          "mix": (("carpet_orange", 0.60), ("carpet_light", 0.28), ("carpet_grey", 0.12))}
+          "mix": (("carpet_orange", 0.70), ("carpet_light", 0.18), ("carpet_grey", 0.12))}
 
 FL = float(I.FLOOR["wl"])
 LG = I.LEDGES
@@ -464,7 +467,7 @@ def _runner(acc):
         while x < x_end - 0.30:
             x1 = min(x + rng.uniform(*q["length"]), x_end)
             mat = mats[int(rng.choice(len(mats), p=wts))]
-            ns = int(rng.integers(1, 4)) if x1 - x > 0.6 else 0              # steps along the band
+            ns = int(rng.integers(1, 3 + int((x1 - x) / 0.8))) if x1 - x > 0.6 else 0   # steps (jogs) along it
             xs = []
             for xx in np.sort(rng.uniform(x + 0.20, x1 - 0.25, ns)) if ns else ():
                 if not xs or xx - xs[-1] > 0.15:
@@ -969,13 +972,19 @@ def _lavatory(acc, doors="closed"):
             g = 0.0015
             Q = rrect2(-0.5 * Lp + g, hz0, 0.5 * Lp - g, hz1, 0.004)
             acc.add(slab(fr, Q, -0.5 * dt, 0.5 * dt, 0.003, "veneer_walnut", bottom="lav_white"))
-            if k == 1:                                  # vertical pull on the aisle face, by the meeting edge
-                a_ = 0.5 * Lp - 0.035
-                for zz in (0.80, 1.05):
-                    acc.add(cylinder(fr.p(a_, zz, 0.5 * dt), fr.p(a_, zz, 0.5 * dt + 0.022), 0.004, n=8),
-                            "chrome_trim")
-                acc.add(cylinder(fr.p(a_, 0.78, 0.5 * dt + 0.022), fr.p(a_, 1.07, 0.5 * dt + 0.022), 0.0065, n=12),
-                        "chrome_trim")
+            # review r4 INT8-06 (Pilatus lavatory photo, P1046406): one slim recessed dark pull on the aft door's
+            # leaf by the meeting edge and a small flush latch plate on the other -- not two proud chrome bar handles
+            # (a kitchen fridge); the recess as a dark inset 0.2 mm off the veneer (no coplanar faces, check 26)
+            if k == 1:
+                a_ = 0.5 * Lp - 0.032
+                if s_ < 0:
+                    acc.add(slab(fr, rrect2(a_ - 0.0075, 0.86, a_ + 0.0075, 1.06, 0.006), 0.5 * dt + 0.0002,
+                                 0.5 * dt + 0.0008, 0.0003, "metal_dark", bottom=False))
+                    acc.add(slab(fr, rrect2(a_ - 0.0045, 0.875, a_ + 0.0045, 1.045, 0.004), 0.5 * dt + 0.0008,
+                                 0.5 * dt + 0.0010, 0.0001, "black", bottom=False))
+                else:
+                    acc.add(slab(fr, rrect2(a_ - 0.006, 0.93, a_ + 0.006, 0.98, 0.003), 0.5 * dt + 0.0002,
+                                 0.5 * dt + 0.0008, 0.0003, "chrome_trim", bottom=False))
     # ---- toilet cabinet along the outboard wall (cabinet x0 .. x1, depth, 350 height)
     cx0, cx1, cdep, cht = (float(v) for v in lz["cabinet"])
     bx = float(lz["bowl_x"])

@@ -702,6 +702,22 @@
    "note": "polished exhaust stacks (heat tint) with a heat-blackened outlet collar",
    "srgb_hex": "#BCAD95"
   },
+  "inlet_lip": {
+   "baseColorFactor": [
+    0.624,
+    0.6038,
+    0.5647,
+    1.0
+   ],
+   "metallicFactor": 1.0,
+   "roughnessFactor": 0.12,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "kind": "metal",
+   "note": "chin-inlet lip: polished aluminium (neutral silver)",
+   "srgb_hex": "#CFCCC6"
+  },
   "exhaust_soot": {
    "baseColorFactor": [
     0.006,
@@ -1548,9 +1564,9 @@
   },
   "carpet_light": {
    "baseColorFactor": [
-    0.64,
-    0.58,
-    0.46,
+    0.52,
+    0.52,
+    0.51,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1560,8 +1576,8 @@
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "runner, cream",
-   "srgb_hex": "#D1C8B5"
+   "note": "runner, light-grey strands (review r4 INT8-05: P1046406 / 07 / 11, not cream)",
+   "srgb_hex": "#BFBFBD"
   },
   "carpet_grey": {
    "baseColorFactor": [

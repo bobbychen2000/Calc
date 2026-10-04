@@ -287,6 +287,9 @@ def build_skin():
     # the chin-inlet step (keel 1.413 -> 1.233) and the raised lip face / nose (x_le 1.118-1.20, nose 14 mm): 2 mm
     # columns; the cheek behind it at 10 mm
     chin = list(np.arange(1.100, 1.262, 0.002)) + list(np.arange(1.262, 1.72, 0.010))
+    # the crown's cowl-front blend (fuselage._top, review r4 GEO8-02: 45 -> 24 deg over its first 0.04 m): rows every
+    # 6-12 mm ahead of the chin columns (the station grid alone put one row between 1.044 and 1.10)
+    chin += [1.050, 1.057, 1.065, 1.075, 1.087]
     from model.bays import NOSE_BAY as _NB                          # nose-bay ends: rows through the corner radii
     bay = [e + sg * k for e, sg in ((_NB["cx"] - _NB["hx"], 1), (_NB["cx"] + _NB["hx"], -1))
            for k in np.linspace(0.0, _NB["r"], 6)]
@@ -454,8 +457,9 @@ def build(parts_out: dict):
     parts_out["chin_inlet"] = Part("chin_inlet", "Chin air inlet: polished lip, mouth & duct entry", "cowling",
                                    explode=(-0.4, 0, -0.75), group="Powerplant installation",
                                    material_note="Polished lip, electrically de-iced; composite duct")
-    # the lip's metal = livery SURFACES['inlet_lip'] (final judge r1 S4: the stacks' warm polished metal, not chrome)
-    parts_out["chin_inlet"].add(lip, "exhaust_polished")
+    # the lip's metal = livery SURFACES['inlet_lip'] (review r4 EXT8-02: its own neutral polished aluminium)
+    from model.livery import SURFACES as _LS
+    parts_out["chin_inlet"].add(lip, _LS["inlet_lip"])
 
     # ---- forward fuselage (cockpit) ----
     fwd = sub(F.STA["firewall"], SPLIT_FWD)

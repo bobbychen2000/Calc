@@ -77,6 +77,9 @@ PALETTE = {
     "deice_boot":        ("#1D1D1F", 0.00, 0.25, "wing / tailplane leading-edge de-ice boots (black rubber)"),
     "chrome":            ("#F3F5F6", 1.00, 0.035, "polished chrome (spinner)"),
     "exhaust_polished":  ("#BCAD95", 1.00, 0.06, "polished exhaust stacks (heat tint)"),
+    # chin-inlet lip: neutral polished aluminium (photo 130: 208/207/205 with a yellow-brown heat stain low aft; review
+    # r4 EXT8-02: the stacks' gold-tinted metal read as a khaki washer round the inlet in the white studio)
+    "inlet_lip":         ("#CFCCC6", 1.00, 0.12, "chin-inlet lip (polished aluminium)"),
     "prop_blade":        ("#212123", 0.00, 0.45, "propeller blade (satin black composite)"),
     "prop_tip":          ("#E7E7E5", 0.00, 0.36, "propeller blade tip (white)"),
     "prop_band_red":     ("#8E2D0D", 0.00, 0.40, "propeller blade red band"),
@@ -85,7 +88,7 @@ PALETTE = {
 EXISTING = ("paint_white", "trim_black", "chrome", "prop_blade", "prop_tip", "deice_boot")
 # flat colours for the drawings where the PBR base colour would mislead (polished metal renders from its
 # reflections)
-DRAWING_COLOR = {"chrome": "#C5CBD1", "exhaust_polished": "#B3AA9B"}
+DRAWING_COLOR = {"chrome": "#C5CBD1", "exhaust_polished": "#B3AA9B", "inlet_lip": "#C2C2BF"}
 
 
 def srgb_to_linear(hexcol):
@@ -275,9 +278,9 @@ SURFACES = dict(
     # the inner face and the rim keep the rev r2 base blue
     main_gear_door="paint_wing_dark", main_gear_door_inner="paint_blue", nose_gear_door="paint_blue_light",
     spinner="chrome", exhaust="exhaust_polished",
-    # chin inlet (powerplant.CHIN_INLET): polished lip -- final judge r1 S4: the warm polished metal of the stacks
-    # (photo 130: a bronze-grey ring mirroring the dark mouth and the blue cowl; chrome mirrored the white hangar)
-    inlet_lip="exhaust_polished", inlet_mouth="inlet_dark",
+    # chin inlet (powerplant.CHIN_INLET): polished lip -- final judge r1 S4 gave it the stacks' warm metal; review r4
+    # EXT8-02: its own neutral polished aluminium (PALETTE inlet_lip), a little rougher than chrome
+    inlet_lip="inlet_lip", inlet_mouth="inlet_dark",
     blade_le="erosion",                                           # blade leading-edge erosion strip (metal)
 )
 STAB_BOOT = dict(upper=0.08, lower=0.06)      # tailplane LE boot, chord fractions (photos: black LE band)

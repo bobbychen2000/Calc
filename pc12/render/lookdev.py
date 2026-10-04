@@ -418,6 +418,10 @@ SPEC = {
                                          tint_mix=0.30, bump=0.08, bump_distance=0.01),
                              back=dict(base=(0.006, 0.006, 0.006), rough=0.85, spec=0.08),
                              note="polished exhaust stacks (heat tint) with a heat-blackened outlet collar"),
+    # review r4 EXT8-02: the chin-inlet lip its own neutral polished aluminium (photo 130: 208/207/205, a yellow-brown heat
+    # stain low aft), no longer the stacks' gold-tinted metal (a khaki washer round the inlet in the white studio)
+    "inlet_lip":        dict(kind="metal", base=(0.624, 0.6038, 0.5647), rough=0.12,
+                             note="chin-inlet lip: polished aluminium (neutral silver)"),
     "exhaust_soot":     dict(kind="dielectric", base=(0.006, 0.006, 0.006), rough=0.60, spec=0.08,
                              note="(render-only) heat-blackened outlet band, inner wall and rim of the exhaust stacks "
                                   "(photo 130: a jet-black band with a crisp edge; 188: the dark inside of the scarfed "
@@ -562,7 +566,8 @@ SPEC.update({
                                             pile=0.35),
                                note="navy carpet with light grey-blue transverse pinstripes"),
     "carpet_orange":      dict(kind="dielectric", base=(0.69, 0.25, 0.019), rough=0.95, note="AI Orange runner"),
-    "carpet_light":       dict(kind="dielectric", base=(0.64, 0.58, 0.46), rough=0.95, note="runner, cream"),
+    "carpet_light":       dict(kind="dielectric", base=(0.52, 0.52, 0.51), rough=0.95,
+                               note="runner, light-grey strands (review r4 INT8-05: P1046406 / 07 / 11, not cream)"),
     "carpet_grey":        dict(kind="dielectric", base=(0.26, 0.28, 0.30), rough=0.95, note="runner, grey"),
     "floor_panel":        dict(kind="dielectric", base=(0.20, 0.21, 0.22), metallic=0.1, rough=0.60,
                                note="floor panel edges"),

@@ -179,8 +179,11 @@ def belly_fairing():
 # The drawn tail lobe runs on aft over the cargo-door panel (D2, STA 7540-8940) to STA 8585; sheet L3 note 7: the
 # fairing must not cut into the D2 panel, and the Pilatus NGX cargo-door photo shows the fairing ending at the door's
 # forward seam -- so the fillet fades out between ROOT_FILLET_TAPER and the D2 seam (both sides, symmetric).
-ROOT_FILLET_TAPER = 7.400          # STA where the aft fade-out starts (over ~0.13 m to the D2 seam); rev 7.150 left
-#                                    the drawn plan edge from STA 7.20, 0.26 m ahead of its knee at 7.457 (CONS2-04)
+ROOT_FILLET_TAPER = 7.300          # STA where the aft fade-out starts (over ~0.23 m to the D2 seam); rev 7.150 left
+#                                    the drawn plan edge from STA 7.20, 0.26 m ahead of its knee at 7.457 (CONS2-04);
+#                                    review r4 EXT8-04: from 7.400 (a 0.13 m fade) the fade's foot turned with ~0.1 1/m
+#                                    curvature along x -- a notched highlight and a blob ahead of the seam; over 0.23 m
+#                                    it is ~0.04
 ROOT_FILLET_GAP = 0.012            # m ahead of the D2 panel seam where the standoff has reached zero
 ROOT_FILLET_MIN_D = 0.0015         # standoffs below this are left to the fuselage skin (no z-fighting)
 # Nose half (ahead of the mid-chord), VQA r3 SHP3-01 / RQ3-01: above the foot the section is the concave elliptic fillet
@@ -193,7 +196,10 @@ ROOT_FILLET_MIN_D = 0.0015         # standoffs below this are left to the fusela
 # blended into the fillet over 0.08 / 0.2 m behind it: the bump either stood up as a ridge or left a dome on the wing,
 # and its blend with the fillet (infinite slope at the foot) creased the foot line -- the knotted highlight of the
 # hero / apron renders.)
-ROOT_FILLET_ROUND = dict(e_nose=0.90, e_le=0.25, run=0.20, behind=0.10)   # run: m ahead of the LE over which e falls
+ROOT_FILLET_ROUND = dict(e_nose=0.90, e_le=0.25, run=0.40, behind=0.25)   # run: m ahead of the LE over which e falls
+# (review r4 EXT8-04: run 0.20 / behind 0.10 changed the round-over's share so fast along x near the LE that the crest's
+# rows bent with up to ~600 1/m^2 curvature along x just above the foot -- several tight wiggling highlight bands on the
+# nose where the LE boot meets the fillet; 0.40 / 0.25: ~180, the foot / plan edge unchanged)
 ROOT_FILLET_TAIL_K = 3.0           # tail bump law (1 - u)^k (1 + k u) behind the wing TE (ROOT_FILLET_TE_BLEND; rev r2 k 2:
 #                                    a sharper fold where the fillet turns back into the bump)
 ROOT_FILLET_TIP_RUNIN = 0.030     # m behind the nose tip over which the standoff runs in from zero (smoothstep)

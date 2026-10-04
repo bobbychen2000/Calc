@@ -127,7 +127,7 @@ MATERIALS = {
     # cabin floor: anthracite / navy ribbed carpet with the AI Orange aisle runner (P1046406 [M])
     "carpet":          ((0.016, 0.021, 0.046), 0.0, 0.95),       # navy (render/lookdev.py adds the pinstripes)
     "carpet_orange":   ((0.69, 0.25, 0.019), 0.0, 0.95),
-    "carpet_light":    ((0.64, 0.58, 0.46), 0.0, 0.95),          # cream runner bands
+    "carpet_light":    ((0.52, 0.52, 0.51), 0.0, 0.95),          # light-grey runner strands (r4 INT8-05: not cream)
     "carpet_grey":     ((0.26, 0.28, 0.30), 0.0, 0.95),
     "floor_panel":     ((0.20, 0.21, 0.22), 0.1, 0.60),
     # side ledges: dark anthracite satin top, gloss-black fascia band, anthracite kick panels, brushed trim
@@ -172,6 +172,7 @@ MATERIALS = {
     "paint_silver":     ((0.42, 0.42, 0.43), 0.55, 0.36, PAINT),       # sRGB #ADADAF silver-grey tailplane
     "paint_black":      ((0.012, 0.013, 0.015), 0.0, 0.30, dict(CC, specular=0.0)),   # sRGB #1D1E21 gloss radome
     "exhaust_polished": ((0.50, 0.42, 0.30), 1.0, 0.06),               # sRGB #BCAD95 polished, heat-tinted stacks
+    "inlet_lip":        ((0.624, 0.6038, 0.5647), 1.0, 0.12),          # sRGB #CFCCC6 polished aluminium chin-inlet lip
     "prop_band_red":    ((0.27, 0.026, 0.004), 0.0, 0.40, dict(specular=0.4)),   # sRGB #8E2D0D deep signal red
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so

@@ -112,6 +112,24 @@ class coarse:
         return False
 
 
+class override:
+    """with res.override(2.0): ... builds / refines at that RES whatever PC12_RES is (the light tier's small, tightly
+    curved parts, model/build.py LOW_FINE: review r4 GEO8-01)."""
+    def __init__(self, r):
+        self.r = float(r)
+
+    def __enter__(self):
+        global RES
+        self._was = RES
+        RES = self.r
+        return self
+
+    def __exit__(self, *a):
+        global RES
+        RES = self._was
+        return False
+
+
 def factor() -> float:
     """Sample-count factor for builders whose own grids are coarse where it shows (1 at PC12_RES=1, RES above)."""
     return RES if on() else 1.0

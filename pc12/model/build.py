@@ -306,6 +306,30 @@ def verify(parts):
     return out
 
 
+# The light tier (PC12_RES=1, phones) builds and refines these small, tightly curved parts as the full model does (RES 2:
+# finer rims / arcs / pad grids, the facet criterion): review r4 GEO8-01 -- phones load the light tier, and at the
+# builders' own grids the seats (22 % of their area faceted), yokes, pedals, braces and the nose leg showed none of the
+# smoother-curves work; ~+0.2M triangles on the light tier, the big skins stay at their own grids.
+LOW_FINE = ("seat_", "yoke_", "pedal_", "brace_", "gear_nose")
+LOW_FINE_RES = 2.0
+
+
+def _low_fine(parts):
+    """Light tier only: rebuild the LOW_FINE parts at LOW_FINE_RES into `parts`; returns their ids."""
+    if res.on():
+        return set()
+    tmp = {}
+    with res.override(LOW_FINE_RES):
+        interior.build_flightdeck(tmp, ceiling=[])
+        interior.build_cabin(tmp, ceiling=[])
+        gear.build_nose(tmp)
+        gear.brace_parts(tmp)
+    fine = {k for k in tmp if k.startswith(LOW_FINE) and k in parts}
+    for k in fine:
+        parts[k] = tmp[k]
+    return fine
+
+
 def build_parts():
     """Build every component (no files written). Returns the ordered parts dict."""
     parts = {}
@@ -317,9 +341,14 @@ def build_parts():
     gear.build(parts)
     interior.build_interior(parts)      # flight deck, seats, cabin, lining (+ the headliner fittings on the lining)
     details.build(parts)
+    fine = _low_fine(parts)             # light tier: the small curved parts as in the full model (LOW_FINE)
     livery.apply(parts)                 # (at PC12_RES > 1 each skin is refined along its paint boundaries first)
-    for pid, p in parts.items():        # curvature-adaptive refinement (cad.res: nothing at PC12_RES=1)
-        res.refine_part(pid, p)
+    for pid, p in parts.items():        # curvature-adaptive refinement (cad.res: nothing at PC12_RES=1 but LOW_FINE)
+        if pid in fine:
+            with res.override(LOW_FINE_RES):
+                res.refine_part(pid, p)
+        else:
+            res.refine_part(pid, p)
     fuselage_parts.apply_skin_analytic_normals(parts)   # cowl / chin-lip vertices: the analytic skin normal (RES2-01)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}
     ids = sorted(parts.keys(), key=lambda k: order.get(parts[k].step, 99))

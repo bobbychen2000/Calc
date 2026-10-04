@@ -53,7 +53,11 @@ MAIN_TRUNNION_DRAWN = np.array([5.950 - GEAR_SHIFT, TRACK / 2, 1.070])
 MAIN_TRUNNION = np.array([5.995 - GEAR_SHIFT, TRACK / 2, 1.155])
 MAIN_LEG_R = (0.050, 0.047)          # main leg radius at the trunnion / at the trailing-link pivot
 MAIN_LINK_PIVOT = np.array([6.118 - GEAR_SHIFT, TRACK / 2, 0.517])  # trailing-link pivot on the leg
-MAIN_SHOCK = ((6.333 - GEAR_SHIFT, 0.930), (6.380 - GEAR_SHIFT, 0.400))   # shock strut top / bottom (x, z)
+MAIN_SHOCK = ((6.333 - GEAR_SHIFT, 0.930), (6.340 - GEAR_SHIFT, 0.415))   # shock strut top / bottom (x, z)
+# review r4 WG8-03 (photo 3036 mx5 stbdmain_inboard_brake): the lower eye sits in a clevis on top of the trailing arm
+# ~90 mm ahead of and ~135 mm above the axle boss (the arm at 0.7 of its length), not on the boss at 6.380 / 0.400;
+# a forked lug with a pin at either end (MAIN_SHOCK_CLEVIS: plate half-gap, thickness, pin radius)
+MAIN_SHOCK_CLEVIS = (0.023, 0.006, 0.008)
 # side brace A (wing fitting), B0 (lug on the leg).  WL as drawn (front view); A at the drawn BL; stations hidden (behind
 # the door in the side view, inside the wing).
 # LD-1: A 5,950 -> 6,058 and B0 6,040 -> 6,056 (drawing frame), so the brace plane lies just behind the door's
@@ -257,6 +261,12 @@ def leg_door_offset(x, z, n_iter=8):
 _BLISTER = None
 BLISTER_SHORT_TOL = 0.25e-3     # m: the smoothed blister may fall this far short of the need (LEG_DOOR_TYRE_CLEAR 10 mm)
 LEG_DOOR_BLISTER_STEP = 0.004   # m: the door face's grid over the blister (elsewhere `step`, 10 mm), RES3-03
+# m: Gaussian widths of the blister's envelope and of its lifts (review r4 GEO8-03: at 15 / 10 mm the shoulder over the
+# tyre crescent's top edge turned within ~20 mm and drew a hard, lightning-shaped highlight along the blister's outline:
+# it read as a dent, not a formed blister; at 30 / 20 mm the largest curvature is 0.55 x, the steepest slope 17 deg
+# (was 22), and the jagged edge of the need -- the tyre's silhouette sampled by its vertices -- is smoothed out; depth
+# 29.7 mm, stowed 28.9 below the skin, <= the tyre's 23.5 + 10)
+BLISTER_SIGMA = (0.030, 0.020)
 
 
 def leg_door_blister(x, z):
@@ -290,13 +300,14 @@ def leg_door_blister(x, z):
                                                                                  + leg_door_offset(X[i, j], Z[i, j]))
         b0 = np.maximum(need, 0.0)
         b = b0.copy()
+        se, sl = BLISTER_SIGMA
         for _ in range(8):
-            b = gaussian_filter(np.maximum(b, b0), 3.0, mode="nearest")
+            b = gaussian_filter(np.maximum(b, b0), se / h, mode="nearest")
         for _ in range(24):                          # smooth lifts where the envelope is short of the need
             short = np.maximum(b0 - b, 0.0)
             if short.max() < BLISTER_SHORT_TOL:
                 break
-            b = b + 2.5 * gaussian_filter(short, 2.0, mode="nearest")
+            b = b + 2.5 * gaussian_filter(short, sl / h, mode="nearest")
         _BLISTER = (RectBivariateSpline(xs, zs, b, kx=3, ky=3, s=0), (xs[0], xs[-1], zs[0], zs[-1]))
     x, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(z, float))
     spl, (x0, x1, z0, z1) = _BLISTER
@@ -617,13 +628,24 @@ def build_main(parts, side):
     mid = S1 + 0.55 * (S2 - S1)
     shock_body = cylinder(S1, mid, 0.036, n=18)
     shock_rod = cylinder(mid - 0.05 * (S2 - S1), S2, MAIN_SHOCK_ROD_R, n=14)
-    # the shock's lower eye sits on the trailing arm just above the axle boss (photos 3036 / 3008 inboard): a lug from
-    # the rod end down onto the arm, within the arm's thickness (the rev-A bracket ran 0.135 m outboard into the wheel)
+    # the shock's lower eye sits in a clevis on top of the trailing arm (photo 3036 mx5, review r4 WG8-03), within the
+    # arm's thickness (the rev-A bracket ran 0.135 m outboard into the wheel)
     z_arm = float(np.interp(S2[0], C[:, 0], C[:, 2]))           # arm centre line under S2 (C runs aft)
+    gy, gt, pr = MAIN_SHOCK_CLEVIS
+    a_top = z_arm + float(np.interp(S2[0], C[:, 0], aa))          # the arm's top under the eye
     lugs = [cylinder(S1 - [0, 0.03 * sgn, 0], S1 + [0, 0.03 * sgn, 0], 0.03, n=12),
-            box(np.array([S2[0], S2[1], 0.5 * (S2[2] + 0.012 + z_arm)]), (0.040, 0.030, S2[2] + 0.012 - z_arm)),
-            cylinder(S2 - [0, 0.019, 0], S2 + [0, 0.019, 0], 0.019, n=14),
-            box(np.array([MAIN_SHOCK[0][0], T[1] + s_in * 0.5, MAIN_SHOCK[0][1]]), (0.06, abs(s_in), 0.05))]
+            cylinder(S2 - [0, 0.017, 0], S2 + [0, 0.017, 0], 0.019, n=14)]
+    # clevis on the arm: two plates either side of the lower eye, from inside the arm's top up past the eye, + its pin
+    for sy in (-1.0, 1.0):
+        zb_, zt_ = a_top - 0.012, S2[2] + 0.024
+        lugs.append(box(np.array([S2[0], S2[1] + sy * (gy + 0.5 * gt), 0.5 * (zb_ + zt_)]), (0.046, gt, zt_ - zb_)))
+    lugs.append(cylinder(S2 - [0, gy + gt + 0.004, 0], S2 + [0, gy + gt + 0.004, 0], pr, n=12))
+    # forked lug on the leg at the top: a web from the leg out to two plates round the upper eye, + its pin
+    ty = S1[1] - T[1]
+    lugs.append(box(np.array([S1[0], T[1] + 0.5 * (ty - np.sign(ty) * 0.035), S1[2]]), (0.040, abs(ty) - 0.035, 0.030)))
+    for sy in (-1.0, 1.0):
+        lugs.append(box(np.array([S1[0], S1[1] + sy * (0.030 + 0.5 * gt + 0.001), S1[2]]), (0.060, gt, 0.070)))
+    lugs.append(cylinder(S1 - [0, 0.030 + gt + 0.005, 0], S1 + [0, 0.030 + gt + 0.005, 0], pr + 0.001, n=12))
     wh = WH.main_wheel(A, yax, sgn)          # tyre, wheel halves, hub fairing, brake (model/wheels.py, sheet L4W)
 
     # leg door (LEG_DOOR / leg_door_face, sheet L4, LD-1): a piece of the wing lower skin carried by the leg (flush
@@ -877,8 +899,30 @@ NOSE_YOKE = dict(arm_w=(0.021, 0.026), arch_h=0.076, arch_p=3.1, top_t=0.014, ar
                         ("plate", 0.100, 0.0085, 0.013)))
 NOSE_TORQUE_LUG = (-0.050, 0.030)            # lower torque-link pin from the piston bottom NOSE_FORK: (x, z)
 NOSE_FORK_SIDES = (-1, 1)                    # both arms (sheet L4W check table)
-# VQA r3: the lamp is ~0.11 m across in 188 / 130 (60 px on the 250 px tyre of 188): r 0.045 -> 0.055
-NOSE_LAMP = dict(frac=0.45, fwd=(0.060, 0.098), r=0.055)     # on the strut: fraction P -> fork, housing x offsets, radius
+# VQA r3: the lamp is ~0.11 m across in 188 / 130 (60 px on the 250 px tyre of 188): r 0.045 -> 0.055.  Review r4
+# WG8-01: on the steering housing's front face, centre WL ~0.75 (188: 0.75), not on the bare cylinder (frac 0.45)
+NOSE_LAMP = dict(frac=0.56, fwd=(0.062, 0.108), r=0.055)     # on the strut: fraction P -> fork, housing x offsets, radius
+# The static leg's proportions (review r4 WG8-01; photo 3008 188 nose_port at ~690 px/m on the tyre, 3036 mx4 nose_port,
+# 3066 b3): under the doors a bulky STEERING HOUSING (WL ~0.82 -> 0.65) carrying the taxi lamp, below it the steered
+# collar with the upper torque-link lug, then only ~0.08 m of chrome piston above the fork crown (WL 0.64 -> 0.55; the
+# r3 leg showed 0.17 m: its cylinder ended at 0.62 of the strut), and FLAT A-plate torque links (~30 mm deep, broad
+# across) in a wide, flattened V: the knee 0.14 m ahead of the strut at WL ~0.59 (188: ~0.17; retracted, ahead of the
+# strut is DOWN -- at 0.17 the knee stood 14 mm through the closed clamshells, fit_check 11), the lower link
+# near-horizontal (19 deg) to the crown lug NOSE_TORQUE_LUG.  Fractions along NOSE_PIVOT -> NOSE_FORK (0.52 m); x offsets
+# from the strut axis (- = forward).
+#   cyl_end   the oleo cylinder's lower end (inside the collar)
+#   housing   (f0, f1, centre x offset, fore-aft half, lateral half, superellipse p): a fixed casting round the
+#             cylinder, its front ahead of the cylinder (the actuator / lamp mount), its back flush with it (the drag
+#             brace's lug B0 sits behind it at WL 0.785)
+#   collar    (f0, f1, r): the steering collar (steered with the fork), the upper torque link's lug on its front
+#   link_top  (f, x): the upper torque-link pin;  knee (x from the strut axis, WL)
+#   link_w    lateral half-width (upper: at the collar, at the knee; lower: at the knee, at the lug)
+#   link_t    in-plane half-depth (upper, lower): plates, broad across
+NOSE_STRUT = dict(cyl_end=0.77, cyl_r=0.052, piston_r=0.036,
+                  housing=(0.43, 0.75, -0.016, 0.062, 0.058, 3.0),
+                  collar=(0.75, 0.79, 0.058),
+                  link_top=(0.79, -0.048), knee=(-0.138, 0.590),
+                  link_w=((0.032, 0.016), (0.016, 0.024)), link_t=(0.016, 0.013))
 
 
 def nose_yoke_frame():
@@ -1059,20 +1103,50 @@ def build_nose(parts):
     u = (low - P) / np.linalg.norm(low - P)
     struct = []
     struct.append(cylinder(P - 0.12 * yax, P + 0.12 * yax, 0.035, n=16))           # trunnion
-    upper_end = P + 0.62 * (low - P)
-    struct.append(cylinder(P, upper_end, 0.052, n=24))                              # oleo cylinder
-    collar = cylinder(P + 0.30 * (low - P), P + 0.34 * (low - P), 0.066, n=24)      # steering collar
-    piston = cylinder(upper_end - 0.04 * u, low, 0.036, n=20)
+    ns = NOSE_STRUT
+    at = lambda f: P + f * (low - P)                                                # strut axis at fraction f
+    upper_end = at(ns["cyl_end"])
+    struct.append(cylinder(P, upper_end, ns["cyl_r"], n=24))                         # oleo cylinder
+    # steering housing (fixed): a rounded-box casting round the cylinder (NOSE_STRUT housing)
+    f0, f1, hx0, hxa, hya, hp = ns["housing"]
+    zs = np.linspace(f0, f1, 7)
+    hz = np.linspace(-1.0, 1.0, 7)
+    prof = (1.0 - np.abs(hz) ** 8) ** 0.125                                         # flat sides, rounded top / bottom
+    th = np.linspace(0.0, 2 * np.pi, 33)[:-1]
+    ce, se = np.cos(th), np.sin(th)
+    ce, se = np.sign(ce) * np.abs(ce) ** (2.0 / hp), np.sign(se) * np.abs(se) ** (2.0 / hp)
+    rings = []
+    for f, k in zip(zs, prof):
+        c = at(f) + [hx0, 0.0, 0.0]
+        kk = 0.82 + 0.18 * k                                                         # 18 % chamfer-like round-off
+        rings.append(np.c_[c[0] + hxa * kk * ce, hya * kk * se, np.full(len(th), c[2])])
+    housing = grid_surface(np.array(rings), close_v=True)
+    if np.mean(np.sum((housing.V - housing.V.mean(0)) * housing.N, 1)) < 0:
+        housing = housing.flipped()
+    housing = Mesh.merge([housing, cap_ring(rings[0], (0.0, 0.0, 1.0)), cap_ring(rings[-1], (0.0, 0.0, -1.0))])
+    c0, c1, cr_ = ns["collar"]
+    collar = cylinder(at(c0), at(c1), cr_, n=28)                                     # steering collar (steered)
+    piston = cylinder(upper_end - 0.04 * u, low, ns["piston_r"], n=20)
     yoke, crown_bolts, holes = nose_yoke_meshes()           # two-arm yoke + crown saddle (NOSE_YOKE, sheet L4W)
     struct += yoke
     ax_parts, ax_dark = nose_axle_meshes()                  # axle, hex nuts + tear-drop lock plates outside the arms
     struct += ax_parts
-    # torque links (scissor) in front of the strut
-    k1 = P + 0.56 * (low - P) + [-0.055, 0, 0]
+    # torque links (scissor) in front of the strut: flat A-plates (broad across, NOSE_STRUT link_w / link_t), pin
+    # bosses along y at the collar lug, the knee and the crown lug
+    ft, xt = ns["link_top"]
+    k1 = at(ft) + [xt, 0, 0]
     k2 = low + [NOSE_TORQUE_LUG[0], 0, NOSE_TORQUE_LUG[1]]      # the saddle's torque-link lug
-    knee = 0.5 * (k1 + k2) + [-0.09, 0, 0]
-    for a, b in ((k1, knee), (knee, k2)):
-        struct.append(cylinder(a, b, 0.014, n=10))
+    kx, kz = ns["knee"]
+    knee = at((P[2] - kz) / (P[2] - low[2])) + [kx, 0, 0]
+    links = []
+    for (a, b), (w0, w1), t in zip(((k1, knee), (knee, k2)), ns["link_w"], ns["link_t"]):
+        C = a + np.linspace(0.0, 1.0, 9)[:, None] * (b - a)
+        links.append(sweep_section(C, t, np.linspace(w0, w1, 9), n_sec=20, fore=(0.0, 0.0, 1.0), p=4.0))
+    for c, hw, r in ((k1, ns["link_w"][0][0] + 0.004, 0.013), (knee, ns["link_w"][0][1] + 0.003, 0.012),
+                     (k2, ns["link_w"][1][1] + 0.003, 0.0115)):
+        links.append(cylinder(c - [0, hw, 0], c + [0, hw, 0], r, n=14))
+    lug = box(at(ft) + [0.5 * xt, 0.0, 0.0], (abs(xt), 0.036, 0.020))                # collar lug under the pin
+    struct += links + [lug]
     # taxi / landing light on the strut: housing + LED face (led_lamp_face; the rev r1 lamp was a plain lens puck)
     q = NOSE_LAMP
     lc = P + q["frac"] * (low - P)
@@ -1086,10 +1160,10 @@ def build_nose(parts):
               material_note="Hydraulic shock strut, 17.5x6.25-6 tyre, +/-60 deg steering",
               info={"tyre": "17.5 x 6.25-6, 60 psi", "wheelbase": "3,480 mm",
                     "retraction": "aft, enclosed by doors", "steering": "+/-60 deg (Jane's)"})
-    # fixed: trunnion and oleo cylinder, the taxi lamp on it; steered (child gear_nose_steer, model judging r1 GR1-07):
-    # the steering collar, torque links, piston, fork, axle and wheel turn about the strut axis
+    # fixed: trunnion, oleo cylinder and the steering housing with the taxi lamp on it; steered (child gear_nose_steer,
+    # model judging r1 GR1-07): the steering collar, torque links, piston, fork, axle and wheel turn about the strut axis
     nfix = 2                                                    # struct[0:2] = trunnion, oleo cylinder
-    gp.add(Mesh.merge(struct[:nfix] + [lamp_house]), "gear_leg")
+    gp.add(Mesh.merge(struct[:nfix] + [lamp_house, housing]), "gear_leg")
     for m, mat in lamp_face:
         gp.add(m, mat)
     parts[gp.id] = gp
