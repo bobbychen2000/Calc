@@ -148,7 +148,8 @@ function rawParams(e, L) {
   // (the tone gains less in reverse than the loading alone says: the stalled blades' energy goes broadband, below)
   const prop = 0.16 * Math.pow(r, 2.0) * loadN * (1 - 0.4 * rev) * L.dirProp;
   const lightV = clamp(+e.light || 0, 0, 1);
-  const whine1 = 0.045 * Math.pow(ng, 0.6) * (0.7 + 0.3 * comb) * L.dirWhine;
+  // (the compressor chord fades out below ~6 % Ng: the run-down's last seconds end smoothly)
+  const whine1 = 0.045 * Math.pow(ng, 0.6) * clamp(ng / 0.06, 0, 1) * (0.7 + 0.3 * comb) * L.dirWhine;
   return {
     bladeHz: BLADES * rpm / 60, ngHz: ng * F_NG100, whineHz: WHINE[0] * ng * F_NG100,
     // propeller: tone + fundamental, harmonic content by tip Mach (more in reverse), the upper harmonics lifted in
