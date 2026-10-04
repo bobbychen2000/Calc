@@ -10,8 +10,9 @@ export const CUT_PARTS = new Set([
   'fus_center', 'fus_fwd', 'fus_aft', 'glazing_cabin', 'glazing_flightdeck', 'door_airstair', 'door_cargo',
   'exit_hatch', 'door_frames', 'belly_fairing', 'cowl_upper', 'cowl_lower', 'chin_inlet',
   'gear_door_NR', 'gear_door_NL', 'dorsal_fin', 'structure', 'interior_lining',
-  // the airstair's folding handrails (children of door_airstair) are cut with the door
-  'door_airstair_rail', 'door_airstair_rail_up', 'door_airstair_cable',
+  // the airstair's handrail (lower rod, telescoping upper rod, its sleeve on the jamb) and restraint cables are cut
+  // with the door
+  'door_airstair_rail', 'door_airstair_rail_up', 'door_airstair_rail_sleeve', 'door_airstair_cable',
 ]);
 // Fixed interior parts cut with the lining (review r2 M3): the port half of the cabin furniture (ledges -- their
 // cargo-door segment rides on the clipped door_cargo --, cabinets, lavatory, headliner fittings) and of the flight

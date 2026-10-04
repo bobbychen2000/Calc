@@ -175,6 +175,7 @@ JS_HELPERS = r"""
 window.T = {
   V: window.viewer,
   sub: (a, b) => a.map((x, i) => x - b[i]),
+  add: (a, b) => a.map((x, i) => x + b[i]),
   // attach a world point (current pose) to a part: returns its local coordinates
   attach: (id, p) => window.viewer.worldToLocal(id, p),
   world: (id, local) => window.viewer.nodeWorldPoint(id, local),
@@ -611,6 +612,60 @@ async def numeric_checks(page):
     """)
     check("airstair door: top edge swings out and down", r["air"][0] < -0.3 and r["air"][1] < -0.5, f"dX {r['air'][0]:+.3f}, dY {r['air'][1]:+.3f} m")
     check("cargo door: bottom edge swings out and up", r["cargo"][0] < -0.3 and r["cargo"][1] > 0.5, f"dX {r['cargo'][0]:+.3f}, dY {r['cargo'][1]:+.3f} m")
+
+    # --- [RAIL-1] airstair handrail + restraint cables stay pinned through the door's travel (owner 2026-10-04: the
+    # upper rod and the cables had flown in "from the sky", turning up to 189 deg about mid-air centres): the lower
+    # rod's knee = the telescoping rod's knee end, the rod's far end on the jamb pivot, the sleeve pointing at the knee,
+    # each cable from its door clamp to its jamb fitting; no pinned end moves more than 0.15 m per 1/40 of the command
+    r = await js(page, r"""
+      const V = window.viewer; T.neutral();
+      const ids = ['door_airstair', 'door_airstair_rail', 'door_airstair_rail_up', 'door_airstair_cable', 'door_airstair_rail_sleeve'];
+      const ex = {}, org = {};
+      for (const id of ids) { ex[id] = V.partExtras(id); org[id] = V.nodeWorldPoint(id, [0, 0, 0]); }
+      if (ids.some((id) => !ex[id])) return {missing: ids.filter((id) => !ex[id])};
+      const J = (id, k) => ex[id].pivot.joints[k];
+      const P = (id, w) => V.meshWorldPoint(id, T.sub(w, org[id]));
+      const N = (id, w) => V.nodeWorldPoint(id, T.sub(w, org[id]));
+      const A = J('door_airstair_rail_up', 'A'), Cj = J('door_airstair_cable', 'Cj'), Cs = J('door_airstair_cable', 'Cs');
+      const rows = [];
+      for (let i = 0; i <= 40; i++) {
+        const v = i / 40;
+        V.setDoor('airstair', v, {instant: true});
+        const kLo = P('door_airstair_rail', J('door_airstair_rail', 'K'));
+        const kUp = P('door_airstair_rail_up', J('door_airstair_rail_up', 'K'));
+        const aUp = P('door_airstair_rail_up', A);
+        const sl = N('door_airstair_rail_sleeve', T.add(A, T.sub(J('door_airstair_rail_up', 'K'), A)));
+        rows.push({v, kLo, kUp, aUp, sl, cj: P('door_airstair_cable', Cj), cs: P('door_airstair_cable', Cs),
+                   csDoor: N('door_airstair', Cs), top: Math.max(...ids.slice(1).map((id) => T.box(id).max[1]))});
+      }
+      V.setDoor('airstair', 0, {instant: true}); T.neutral();
+      return {A, Cj, rows};
+    """)
+    if r.get("missing"):
+        check("[RAIL-1] airstair handrail parts present", False, f"missing {r['missing']}")
+    else:
+        d = lambda a, b: math.dist(a, b)                                          # noqa: E731
+        knee = max(math.hypot(q["kLo"][0] - q["kUp"][0], q["kLo"][1] - q["kUp"][1]) for q in r["rows"])
+        a_err = max(d(q["aUp"], r["A"]) for q in r["rows"])
+        cj_err = max(d(q["cj"], r["Cj"]) for q in r["rows"])
+        cs_err = max(d(q["cs"], q["csDoor"]) for q in r["rows"])
+
+        def ang(q):   # sleeve axis vs the line jamb pivot -> knee (deg), in the (X, Y) plane of the rails
+            u = (q["sl"][0] - r["A"][0], q["sl"][1] - r["A"][1])
+            w = (q["kUp"][0] - r["A"][0], q["kUp"][1] - r["A"][1])
+            c = (u[0] * w[0] + u[1] * w[1]) / max(math.hypot(*u) * math.hypot(*w), 1e-12)
+            return math.degrees(math.acos(max(-1.0, min(1.0, c))))
+        sl_err = max(ang(q) for q in r["rows"])
+        step = max(max(d(a[k], b[k]) for k in ("kLo", "aUp", "cj", "cs"))
+                   for a, b in zip(r["rows"], r["rows"][1:]))
+        top = max(q["top"] for q in r["rows"])
+        check("[RAIL-1] airstair handrail pinned through the swing: knee joint, rod end on the jamb pivot, sleeve on "
+              "the knee, cables jamb -> clamp; no jumps",
+              knee < 0.002 and a_err < 0.002 and sl_err < 0.5 and cj_err < 0.002 and cs_err < 0.002 and step < 0.15
+              and top < 2.62,
+              f"knee {1000 * knee:.2f} mm, rod end {1000 * a_err:.2f} mm, sleeve {sl_err:.2f} deg, cable jamb "
+              f"{1000 * cj_err:.2f} / clamp {1000 * cs_err:.2f} mm, max step {1000 * step:.0f} mm per 1/40, top WL "
+              f"{top:.3f}")
 
     # --- propeller: spin + feather
     r = await js(page, r"""

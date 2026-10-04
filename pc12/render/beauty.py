@@ -867,6 +867,32 @@ class Scene:
         o.rotation_mode = "QUATERNION"
         o.rotation_quaternion = Quaternion(gl2b(pv["axis"]), math.radians(deg))
 
+    def _stretch(self, pid, d, k):
+        """Scale part pid's mesh data by k along the unit direction d (Blender axes) about its origin (the pivot)."""
+        o = self.parts.get(pid)
+        if o is None:
+            return
+        import numpy as _np
+        base = getattr(self, "_stretch_base", None)
+        if base is None:
+            base = self._stretch_base = {}
+        obs = [o] + [c for c in o.children_recursive if c.type == "MESH" and c.parent is o] \
+            if o.type != "MESH" else [o]
+        for ob in obs:
+            if ob.type != "MESH":
+                continue
+            me = ob.data
+            if me.name not in base:
+                co = _np.empty(len(me.vertices) * 3)
+                me.vertices.foreach_get("co", co)
+                base[me.name] = co.reshape(-1, 3)
+            V = base[me.name]
+            dv = _np.asarray(d, float)
+            dv = dv / _np.linalg.norm(dv)
+            W = V + (k - 1.0) * _np.outer(V @ dv, dv)
+            me.vertices.foreach_set("co", W.ravel())
+            me.update()
+
     def pose(self, gear=0.0, nose_doors=None, door_airstair=0.0, door_cargo=0.0, pitch=0.0, prop_clock=0.0,
              flaps=0.0, rpm=0.0, shutter_s=0.0, view_from=None, tables=None, **_):
         P = self.pivot
@@ -898,16 +924,29 @@ class Scene:
         for pid, v in (("door_airstair", door_airstair), ("door_cargo", door_cargo)):
             if pid in P and v:
                 self._rot_local(pid, math.degrees(P[pid]["open"]) * v)
-        # folding door children (pivot kind 'fold': the airstair handrails of model/airstair.py) unfold by open x
-        # clamp((door fraction - w0) / (w1 - w0)) about their own axis, in the door's frame (as the viewer does)
+        # pieces moved by a door (model/airstair.py child_parts: the airstair handrail, its sleeve, the cables), as the
+        # viewer does: 'fold' turns about its own axis by curve(door fraction) (or open x clamp((f - w0) / (w1 - w0)));
+        # 'stretch' also scales by scale(f) along its built direction 'dir' about its origin (applied to the mesh data,
+        # restored from the built coordinates on every pose)
         doors = dict(door_airstair=door_airstair, door_cargo=door_cargo)
+
+        def table(tab, t):
+            x = min(1.0, max(0.0, t)) * (len(tab) - 1)
+            i = min(int(math.floor(x)), len(tab) - 2)
+            return tab[i] + (x - i) * (tab[i + 1] - tab[i])
         for pid, pv in P.items():
-            if pv.get("kind") != "fold":
+            if pv.get("kind") not in ("fold", "stretch"):
                 continue
-            w0, w1 = pv.get("window", (0.0, 1.0))
-            k = min(1.0, max(0.0, (doors.get(pv.get("follows"), 0.0) - w0) / max(w1 - w0, 1e-9)))
-            if k:
-                self._rot_local(pid, math.degrees(pv["open"]) * k)
+            f = doors.get(pv.get("follows"), 0.0)
+            if "curve" in pv:
+                a = table(pv["curve"], f)
+            else:
+                w0, w1 = pv.get("window", (0.0, 1.0))
+                a = pv["open"] * min(1.0, max(0.0, (f - w0) / max(w1 - w0, 1e-9)))
+            if a:
+                self._rot_local(pid, math.degrees(a))
+            if pv.get("kind") == "stretch":
+                self._stretch(pid, gl2b(pv["dir"]), table(pv["scale"], f))
         # gear + nose clamshells (open unless the gear is locked up, as in the viewer; the GLB builds them at
         # pivot 'rest' = 1 = open)
         if nose_doors is None:

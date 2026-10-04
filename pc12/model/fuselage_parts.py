@@ -768,7 +768,7 @@ def _hinge_seal(Lv, Ln, pan):
 def build_doors(parts_out):
     for pid, o in DOORS:
         parts_out[pid] = build_door(pid, o)
-        if pid == "door_airstair":                  # folding handrails (children, pivot kind 'fold')
+        if pid == "door_airstair":                  # handrail + restraint cables (model/airstair.py child_parts)
             from model import airstair
             for c in airstair.child_parts(o, parent=pid):
                 parts_out[c.id] = c
@@ -835,4 +835,7 @@ def build_doors(parts_out):
     s.add(Mesh.merge(seams + seals), "seam").add(Mesh.merge(jambs), "jamb").add(Mesh.merge(stops), "jamb")
     s.add(Mesh.merge(jambs_in + stops_in), "lining")
     s.add(Mesh.merge(lips), "paint_white")          # unpainted skin material: model/livery.py paints it
+    from model import airstair                      # the handrail's jamb bracket / pivot pin, the cables' jamb fittings
+    for m, mat in airstair.jamb_fittings(AIRSTAIR):
+        s.add(m, mat)
     parts_out[s.id] = s

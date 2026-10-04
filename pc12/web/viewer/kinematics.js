@@ -11,6 +11,11 @@ const DEG = Math.PI / 180;
 export const modelToGl = (a) => new THREE.Vector3(a[1], a[2], a[0]);
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const smooth = (t) => t * t * (3 - 2 * t);
+// a table sampled at even steps of [0, 1] (model/airstair.py _interp), linear between them
+export const tableAt = (tab, t) => {
+  const x = clamp(t, 0, 1) * (tab.length - 1), i = Math.min(Math.floor(x), tab.length - 2);
+  return tab[i] + (x - i) * (tab[i + 1] - tab[i]);
+};
 
 // scratch vectors (no per-frame allocation)
 const _d = new THREE.Vector3(), _u = new THREE.Vector3(), _p = new THREE.Vector3();
@@ -97,14 +102,31 @@ export class Kinematics {
       });
     }
 
-    // folding children of a door (pivot kind 'fold', e.g. the airstair handrails of model/airstair.py): they follow
-    // pivot.follows and unfold by pivot.open (rad) about their own axis over the door-travel window [w0, w1]
+    // pieces moved by a door's travel (model/airstair.py child_parts: the airstair handrail and restraint cables).
+    // They follow pivot.follows: kind 'fold' turns about its own axis by pivot.curve(door fraction) (an angle table
+    // at even steps of the eased door fraction) or by pivot.open over the door-travel window [w0, w1]; kind
+    // 'stretch' also scales by pivot.scale(fraction) along its built unit direction pivot.dir about its origin (the
+    // telescoping rail, the cables paying out of the jamb fittings): its meshes are wrapped in
+    // node > g (rotation Q: +X -> dir, scale (s, 1, 1)) > gi (Q^-1) > meshes, so only g.scale.x changes per frame
     this.folds = [];
+    const _x = new THREE.Vector3(1, 0, 0);
     for (const rec of model.list) {
       const pv = rec.ex.pivot;
-      if (!pv || pv.kind !== 'fold' || !this.surf[pv.follows]) continue;
-      this.folds.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(), door: pv.follows,
-        w: pv.window || [0, 1], angle: 0 });
+      if (!pv || (pv.kind !== 'fold' && pv.kind !== 'stretch') || !this.surf[pv.follows]) continue;
+      const f = { rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(), door: pv.follows,
+        w: pv.window || [0, 1], curve: pv.curve || null, scale: pv.scale || null, angle: 0, s: 1, g: null };
+      if (pv.kind === 'stretch' && f.scale) {
+        const q = new THREE.Quaternion().setFromUnitVectors(_x, new THREE.Vector3().fromArray(pv.dir).normalize());
+        const g = new THREE.Group(), gi = new THREE.Group();
+        g.quaternion.copy(q);
+        gi.quaternion.copy(q).invert();
+        for (const ch of [...rec.node.children]) if (ch.isMesh) gi.add(ch);
+        g.add(gi);
+        rec.node.add(g);
+        g.name = rec.id + ':stretch';
+        f.g = g;
+      }
+      this.folds.push(f);
     }
 
     // crew controls (model/flightdeck.py control_pivots, review r2 M4): the yokes roll about their columns and slide
@@ -407,13 +429,15 @@ export class Kinematics {
         tb.leaf.anim.quat.setFromAxisAngle(tb.leafAxis, tb.fold * (ff - ffr));
       }
     }
-    // folding door children (airstair handrails): angle = open x clamp((door fraction - w0) / (w1 - w0)), the door
-    // fraction being the eased door angle / its open angle (model/airstair.py fold_fraction / posed)
+    // pieces moved by a door (airstair handrail, cables): the door fraction is the eased door angle / its open angle;
+    // angle = curve(fraction) (linear between the table's even steps) or open x clamp((fraction - w0) / (w1 - w0)),
+    // 'stretch' also scale(fraction) along its direction (model/airstair.py child_matrix / posed_matrix)
     for (const f of this.folds) {
       const df = smooth(c[f.door] || 0);
-      const k = clamp((df - f.w[0]) / Math.max(f.w[1] - f.w[0], 1e-9), 0, 1);
-      f.angle = f.pv.open * k;
+      if (f.curve) f.angle = tableAt(f.curve, df);
+      else f.angle = f.pv.open * clamp((df - f.w[0]) / Math.max(f.w[1] - f.w[0], 1e-9), 0, 1);
       f.rec.anim.quat.setFromAxisAngle(f.axis, f.angle);
+      if (f.g) { f.s = tableAt(f.scale, df); f.g.scale.set(f.s, 1, 1); }
     }
     // gear (retract in degrees) and nose clamshell doors (open in degrees)
     const g = this.gear;

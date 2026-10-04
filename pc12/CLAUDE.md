@@ -3,7 +3,7 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.32M tris of which the interior ~525k, ~39 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.32M tris of which the interior ~525k, ~39 MB
 incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
 review: ~1.62M tris, interior ~237k, three wheels ~77k, ~27 MB, 16-bit normals too; phones load it (and its gzip when
@@ -92,8 +92,13 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   `pitch` (blades: feather/reverse deg), `flap` (Fowler: rotate + `travel`), `aileron`, `elevator`,
   `rudder`, `trim` (stabiliser), `tab` (`gearing` × parent deflection), `door` (`open` rad),
   `gear` (`retract` deg), `gear_door` (`open` deg = closed -> open, `rest` = the door fraction the geometry is
-  built at), `fold` (door children -- the airstair handrails `door_airstair_rail*` / `_cable`: rotate by
-  `open` x clamp((door fraction - window[0]) / (window[1] - window[0])) about their own axis, `follows` the door),
+  built at), `fold` (pieces moved by a door's travel, `follows` the door: rotate about their own axis by
+  `curve`(door fraction) -- an angle table at `airstair.N_MOTION` + 1 even steps of the eased door fraction -- or by
+  `open` x clamp((door fraction - window[0]) / (window[1] - window[0])); the airstair handrail's lower rod
+  `door_airstair_rail` (the door's child) and the sleeve `door_airstair_rail_sleeve` (a fuselage part pivoting on the
+  jamb bracket)), `stretch` (also scaled by `scale`(door fraction) along the built unit direction `dir` about the
+  origin: the telescoping upper rod `door_airstair_rail_up`, the lower rod's child, and the restraint cables
+  `door_airstair_cable`, the door's child; `joints` = their pinned ends in the built pose for tests),
   `yoke` (`yoke_L` / `yoke_R`, children of `flight_deck`: roll = roll command x `roll_deg` about the forward-pointing
   column axis, + `travel_pull` / `travel_push` (MODEL axes) x |pitch command|), `pedal` (`pedal_LL/LR/RL/RR`: hanging
   pedals, about the arm pivot under the lower panel (axis -y) by -`gearing` x yaw command x `travel_deg`;
@@ -169,7 +174,11 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   stowed tables, forward RH lavatory, drawer cabinets, FR34 veneer header + curtain; the port ledge segment rides on
   `door_cargo`; the headliner fittings -- LED coves, PSUs -- and the flight-deck overhead panel hang on
   `interior_lining`, so the viewer's cutaway clips them with the lining: `interior.build_interior`) and
-  `airstair.py` (the airstair door's inner body, treads, stanchions and the folding handrail children; the door opens
+  `airstair.py` (the airstair door's inner body, treads, stanchion and the handrail / cables, pinned at both ends
+  through the whole swing -- owner 2026-10-04: the old stowed upper rod and cables turned up to 189 deg about mid-air
+  centres, "floating in from the sky": the lower rod folds about the stanchion, the upper rail telescopes from the knee
+  into a sleeve on a jamb bracket (A on the jamb's inner edge, depth 160 mm), the cables pay out of the jamb fittings;
+  viewer_test [RAIL-1] follows the pinned ends, fit_check 21 sweeps them; the door opens
   145 deg -- its free edge on the 145 deg line in MSN 3008 photos 130 / 188 through the fitted cameras --, free edge
   ~0.29 m off the ground, 3 treads + the bottom step at the free edge in equal risers from the sill); the flight deck's
   side consoles `fd_consoles` and walnut divider `fd_divider`, the yokes and pedals are child parts of `flight_deck`;

@@ -929,35 +929,35 @@ report(f"over-wing exit clear zone (BL > {I.CLEAR_ZONES['exit_bl']:.2f} abeam th
        "furniture and seats", not ne, "clear" if not ne else "; ".join(f"{a}: {n}" for a, n in ne.items()))
 
 # 21 ----------------------------------------------------------------------------------------------- door swings
-# the airstair door (with its folding handrails at their unfold fraction) and the cargo door (with its ledge segment)
-# from closed to fully open: no triangle crossing the cabin furniture, the seats, the flight deck, the lining, the door
-# frames (jambs, stops, lips), the fuselage skins or the belly fairing.  Door travel sampled every 0.02 and every
-# 0.005 inside each handrail's unfold window (review r1 M1: 11 samples missed the rail sweeping through the skin);
-# at full travel the handrail fittings bear on the jambs by design (door_frames excluded there).
+# the airstair door (with its handrail, sleeve and restraint cables at their pose for the door fraction) and the cargo
+# door (with its ledge segment) from closed to fully open: no triangle crossing the cabin furniture, the seats, the
+# flight deck, the lining, the door frames (jambs, stops, lips, the handrail's jamb fittings), the fuselage skins or
+# the belly fairing.  Door travel sampled every 0.02 and every 0.005 inside each moving piece's window (review r1 M1:
+# 11 samples missed the rail sweeping through the skin; the telescoping rail and the cables move over the whole
+# travel); at full travel door_frames is excluded (the pieces end 0.5-1 mm off their jamb fittings).
 from model import airstair as AS
 swing_targets = ["cabin_interior", "flight_deck", "interior_lining", "door_frames", "fus_center", "fus_fwd",
                  "belly_fairing"] + FD_KIDS + CAB_KIDS + SEAT_IDS
 fixed_all = {k: posed_mesh(k, I4) for k in swing_targets if k in parts}
 for pid in ("door_airstair", "door_cargo"):
     dp = parts[pid].pivot
-    kids = [k for k, q in parts.items() if q.parent == pid]
+    # the door's descendants and the pieces that follow it (the airstair handrail's sleeve pivots on the jamb):
+    # posed down their parent chains (model/airstair.py posed_matrix: 'fold' / 'stretch' tables)
+    kids = [k for k, q in parts.items() if k != pid and AS.follows_door(q, parts, pid)]
     o = [o for k_, o in FP.DOORS if k_ == pid][0]
     lo = np.array([o["cx"] - o["hx"] - 0.40, -2.6 if o["side"] < 0 else 0.0, -0.2])
     hi = np.array([o["cx"] + o["hx"] + 0.40, 0.0 if o["side"] < 0 else 2.6, 2.9])
     fixed = {k: crop(v, lo, hi) for k, v in fixed_all.items()}
     fracs = set(np.round(np.linspace(0.0, 1.0, 51), 4))
     for k in kids:
-        w0, w1 = parts[k].pivot.get("window", (0.0, 1.0))
+        w0, w1 = parts[k].pivot.get("window", (0.0, 1.0)) if parts[k].pivot else (1.0, 1.0)
         fracs |= set(np.round(np.arange(w0, w1 + 1e-9, 0.005), 4))
     bad = {}
     for f in sorted(fracs):
         M = rotation_about(np.asarray(dp["axis"], float), dp["open"] * f, dp["origin"])
         mv = [posed_mesh(pid, M)]
         for k in kids:
-            cp = parts[k].pivot
-            Mk = M @ rotation_about(cp["axis"], cp["open"] * AS.fold_fraction(cp, f), cp["origin"]) \
-                if cp and cp.get("kind") == "fold" else M
-            mv.append(posed_mesh(k, Mk))
+            mv.append(posed_mesh(k, AS.posed_matrix(k, parts, f)))
         mvc = cat(*mv)
         for k, fm in fixed.items():
             if k == "door_frames" and f > 0.999:

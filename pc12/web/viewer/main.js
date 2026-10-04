@@ -1121,6 +1121,12 @@ const hooks = {
   partWorldBox: (id) => { poseNow(); return boxOut(model.worldBox(id)); },
   nodeWorldPoint: (id, p = [0, 0, 0]) => { poseNow(); const r = model.part(id); return r ? r.node.localToWorld(v3(p)).toArray() : null; },
   worldToLocal: (id, p) => { poseNow(); const r = model.part(id); return r ? r.node.worldToLocal(v3(p)).toArray() : null; },
+  // a node-local point (rest pose) through the frame that holds the part's meshes: includes a 'stretch' piece's
+  // scale (kinematics.js wraps its meshes; the mesh nodes themselves carry the GLB's dequantisation transform)
+  meshWorldPoint: (id, p = [0, 0, 0]) => {
+    poseNow(); const r = model.part(id); if (!r || !r.meshes.length) return null;
+    const f = r.meshes[0].mesh.parent; f.updateWorldMatrix(true, false); return f.localToWorld(v3(p)).toArray();
+  },
   partExtras: (id) => { const r = model.part(id); return r ? JSON.parse(JSON.stringify(r.ex)) : null; },
   parts: () => model.list.map((p) => p.id),
   visibleParts: () => model.list.filter((p) => p.shown).map((p) => p.id),

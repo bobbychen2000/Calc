@@ -319,6 +319,10 @@ def write_glb(parts: dict, path: str, quantize=True, meta=None, shared_grid=True
             pv = dict(p.pivot)
             pv["origin"] = to_gl(np.asarray(pv["origin"], float)).tolist()
             pv["axis"] = to_gl(np.asarray(pv["axis"], float)).tolist()
+            if "dir" in pv:                               # 'stretch': the built unit direction it scales along
+                pv["dir"] = to_gl(np.asarray(pv["dir"], float)).tolist()
+            if "joints" in pv:                            # pinned ends a viewer test follows (built pose)
+                pv["joints"] = {k: to_gl(np.asarray(v, float)).tolist() for k, v in pv["joints"].items()}
             extras["pivot"] = pv
         node_of[pid] = gb.node(pid, translation=t, children=kids, extras=extras)
         return node_of[pid]
