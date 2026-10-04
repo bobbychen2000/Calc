@@ -1294,6 +1294,9 @@ async def prop_blur_checks(page):
             ndc.set(v.x, v.y); rc.setFromCamera(ndc, cam);
             const h = rc.intersectObject(B.disc, false)[0];
             if (!h || B.pickCore(h.point)) continue;
+            // only points actually seen through the disc: a silhouette vertex whose ray grazes past every mesh has nothing
+            // behind the disc to take the click (the disc is then the fallback, by design)
+            if (!rc.intersectObjects(M.pickables, false).some((x) => x.object !== B.disc && x.distance > h.distance)) continue;
             const pid = V.pick(cv.left + (v.x + 1) / 2 * cv.width, cv.top + (1 - v.y) / 2 * cv.height);
             res[pid] = (res[pid] || 0) + 1; n++;
           }
@@ -1790,6 +1793,7 @@ async def tour_checks(page, shots=True):
 
     await tour_r2_checks(page, data, shots)
     await tour_r3_checks(page, data, shots)
+    await tour_r4_checks(page, data, shots)
 
 
 async def tour_r2_checks(page, data, shots=True):
@@ -1913,15 +1917,162 @@ async def tour_r3_checks(page, data, shots=True):
           and abs(o1["pos"][1]) <= R["aisle"]["y"][1] + 1e-3,
           f"in: {n1['region']} yaw {n1b['yawDeg']:.0f} flip {n1b['seatFlip']}; other strafe -> {o1['region']} y {o1['pos'][1]:+.3f}")
     ai = r["air"]
-    check("[T13] NAV3-02: the airstair stop from inside the door frame (BL -0.42) looking down the steps (-112 / -48 deg), "
+    import importlib.util as _ilu
+    _sp = _ilu.spec_from_file_location("tour_data_py", ROOT / "web" / "tour_data.py")
+    _td = _ilu.module_from_spec(_sp); _sp.loader.exec_module(_td)
+    air_look = _td.AIRSTAIR_LOOK                        # (-106 / -48 since review r4 NAV8-05; r3: -112 / -48)
+    check(f"[T13] NAV3-02: the airstair stop from inside the door frame (BL -0.42) looking down the steps ({air_look[0]:.0f} / {air_look[1]:.0f} deg), "
           "its hint under the toolbar, gone after the first look input",
-          abs(ai["pos"][1] + 0.42) < 1e-3 and abs(ai["yawDeg"] + 112) < 0.5 and abs(ai["pitchDeg"] + 48) < 0.5
+          abs(ai["pos"][1] + 0.42) < 1e-3 and abs(ai["yawDeg"] - air_look[0]) < 0.5 and abs(ai["pitchDeg"] - air_look[1]) < 0.5
           and r["hintTop"] and r["hintGone"],
           f"eye {ai['pos']}, yaw {ai['yawDeg']:.1f}, pitch {ai['pitchDeg']:.1f}, hint top {r['hintTop']}, faded {r['hintGone']}")
     if shots:
         await js(page, "const T = window.viewer.tour; T.enter('airstair', {motion: false}); await window.viewer.frames(2);")
         await shot(page, "43_tour_airstair_r3", "")
         await js(page, "window.viewer.tour.exit({motion: false}); await window.viewer.frames(1);")
+
+
+# material-ID pass at the current camera: each listed group of material names in its own flat colour (R = (k + 1) * 16,
+# G = B = 0), everything else black, rendered with the stage camera into a target the size of the drawing buffer
+MAT_MASK = r"""
+  const groups = arg, V = window.viewer, I = V._internals, THREE = I.THREE, st = I.stage, r = st.renderer;
+  const size = r.getDrawingBufferSize(new THREE.Vector2());
+  const rt = new THREE.WebGLRenderTarget(size.x, size.y);
+  const cols = groups.map((g, i) => new THREE.MeshBasicMaterial({color: new THREE.Color().setRGB((i + 1) / 16, 0, 0, THREE.LinearSRGBColorSpace), toneMapped: false}));
+  const blank = new THREE.MeshBasicMaterial({color: 0x000000, toneMapped: false});
+  const saved = new Map();
+  // a group lists material names, or 'part:material' for one part's material only
+  I.model.root.traverse((o) => { if (o.isMesh) { saved.set(o, o.material); const pr = I.model.meshToPart.get(o), pid = pr ? pr.id : '';
+    const nm = o.material.name || ''; const gi = groups.findIndex((g) => g.includes(nm) || g.includes(pid + ':' + nm));
+    const m = (gi >= 0 ? cols[gi] : blank).clone(); m.side = o.material.side; m.clippingPlanes = o.material.clippingPlanes; o.material = m; } });
+  const bg = st.scene.background; st.scene.background = null;
+  const hid = []; st.scene.traverse((o) => { if (o.visible && (o.isMesh || o.isLine || o.isPoints || o.isSprite) && !saved.has(o)) { hid.push(o); o.visible = false; } });
+  r.setRenderTarget(rt); r.setClearColor(0x000000, 1); r.clear(); r.render(st.scene, st.camera); r.setRenderTarget(null); r.setClearColor(0x000000, 0);
+  const px = new Uint8Array(size.x * size.y * 4); r.readRenderTargetPixels(rt, 0, 0, size.x, size.y, px);
+  for (const [o, m] of saved) o.material = m;
+  for (const o of hid) o.visible = true;
+  st.scene.background = bg; rt.dispose(); st.needsRender = true;
+  // per CSS pixel (nearest), flipped to screen rows: the group index + 1, 0 = none
+  const W = innerWidth, H = innerHeight, out = new Array(W * H).fill(0);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const sx = Math.min(size.x - 1, Math.floor((x + 0.5) * size.x / W)), sy = size.y - 1 - Math.min(size.y - 1, Math.floor((y + 0.5) * size.y / H));
+    const i = (sy * size.x + sx) * 4, R = px[i];
+    if (px[i + 1] < 4 && px[i + 2] < 4 && R >= 8) { const k = Math.round(R / 16); if (Math.abs(R - 16 * k) <= 3 && k >= 1 && k <= groups.length) out[y * W + x] = k; }
+  }
+  return {W, H, mask: out.join(',')};
+"""
+
+
+async def material_stats(page, png_path, groups):
+    """Median sRGB and HSV of each material group's interior pixels (the ID mask eroded by one pixel) in the screenshot
+    png_path taken at the current camera: {name: (n, (r, g, b), lum, hue_deg, sat)}."""
+    import colorsys
+    import numpy as np
+    from PIL import Image
+    names = list(groups)
+    m = await js(page, MAT_MASK, [groups[k] for k in names])
+    W, H = m["W"], m["H"]
+    k = np.array(m["mask"].split(","), int).reshape(H, W)
+    img = np.asarray(Image.open(png_path).convert("RGB"), float)[:H, :W]
+    out = {}
+    for i, n in enumerate(names):
+        g = k == i + 1
+        e = g.copy()
+        e[1:, :] &= g[:-1, :]; e[:-1, :] &= g[1:, :]; e[:, 1:] &= g[:, :-1]; e[:, :-1] &= g[:, 1:]
+        if e.sum() < 20:
+            out[n] = (int(e.sum()), None, None, None, None)
+            continue
+        c = np.median(img[e], 0)
+        h, s_, v = colorsys.rgb_to_hsv(*(c / 255.0))
+        out[n] = (int(e.sum()), tuple(int(x) for x in c), float(0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]), h * 360.0, s_)
+    return out
+
+
+async def tour_r4_checks(page, data, shots=True):
+    """[T14]-[T18] review r4: the cabin light (NAV8-01 / INT8-01: no veil over the dark trim, the light trim near-white,
+    the runner's AI Orange saturated), a released sidestep stops at once (NAV8-02: real key events), a walk into a crew
+    seat turns to its stop's pitch (NAV8-03), the stop button follows the walk (NAV8-04), the airstair stop's portrait
+    heading and the walk pad aside there (NAV8-05)."""
+    from model import interior as I
+    V = "const V = window.viewer, T = V.tour; "
+    await js(page, V + "V.panel(false); await new Promise(r => setTimeout(r, 300));")
+    look = {}
+    for sid in ("pilot", "fd_cabin", "cabin_fwd"):
+        await js(page, V + "T.enter(arg, {motion: false}); T.finish(); V.advance(0.5); await V.frames(3);", sid)
+        path = await shot(page, f"44_tour_look_{sid}", "")
+        look[sid] = await material_stats(page, path, {
+            "lining": ["lining"], "overhead": ["interior_lining:panel_dark"], "bezel": ["flight_deck:bezel_black"],
+            "runner": ["carpet_orange"],
+            "ledge": ["ledge_top", "ledge_panel"], "walnut": ["veneer_walnut"]})
+        await js(page, V + "T.exit({motion: false}); await V.frames(1);")
+    rows, ok = [], True
+    for sid, st in look.items():
+        rows.append(sid + ": " + ", ".join(f"{k} {v[2]:.0f}" + (f" h{v[3]:.0f} s{v[4]:.2f}" if k == "runner" else "")
+                                          for k, v in st.items() if v[1] is not None))
+    fd = [look[s][k][2] for s in ("pilot", "fd_cabin") for k in ("overhead", "bezel") if look[s][k][1] is not None]
+    hl = [look[s]["lining"][2] for s in ("cabin_fwd", "fd_cabin") if look[s]["lining"][1] is not None]
+    cf = look["cabin_fwd"]
+    run, led, wal = cf["runner"], cf["ledge"], cf["walnut"]
+    ok = (len(fd) >= 3 and max(fd) <= 50 and cf["lining"][1] is not None and min(hl) >= 190 and run[1] is not None and 20 <= run[3] <= 35
+          and run[4] >= 0.6 and led[1] is not None and led[2] <= 80 and wal[1] is not None and wal[2] <= 90)
+    check("[T14] NAV8-01 / INT8-01: the cabin light -- overhead panel and display bezels near-black (<= 50) on the pilot / "
+          "fd_cabin stops, the lining light (>= 190), at cabin_fwd the runner AI Orange (hue 20-35 deg, saturation >= 0.6), "
+          "ledges <= 80, walnut <= 90 (median sRGB luminance of each material's pixels)", ok, " | ".join(rows))
+    r = await js(page, r"""
+      const V = window.viewer, T = V.tour, out = {};
+      const key = (type, code) => document.body.dispatchEvent(new KeyboardEvent(type, {code, key: code.slice(-1).toLowerCase(), bubbles: true}));
+      const look = (deg, pitch = 0) => { const s = T.state(); T.look(deg - s.yawDeg, pitch - s.pitchDeg); };
+      const R = (id) => V.tour.data.regions.find((g) => g.id === id);
+      const p3 = R('seat_pax3');
+      // NAV8-02: walking aft to PAX 3, D (real key events) into the seat: the view turns forward; released, the eye stays
+      // at the seated eye; then A (into the side wall in the turned view) slides out, released, it ends on the centre line
+      T.enter('cabin_aft', {motion: false}); T.finish(); look(0, -6);
+      T.walk({f: 1}, (0.5 * (p3.x[0] + p3.x[1]) - T.state().pos[0]) / 1.0);
+      key('keydown', 'KeyD'); V.advance(1.2); key('keyup', 'KeyD'); out.inHeld = T.state(); V.advance(1.0); out.inRel = T.state();
+      key('keydown', 'KeyA'); V.advance(1.6); key('keyup', 'KeyA'); V.advance(1.0); out.out = T.state();
+      // NAV8-03 / 04: cabin_fwd -> W into the gap between the crew seats -> D into the co-pilot seat
+      T.go('cabin_fwd', {motion: false}); T.walk({f: 1}, 6); out.gapLabel = document.getElementById('tourStopLabel').textContent;
+      key('keydown', 'KeyD'); V.advance(1.2); key('keyup', 'KeyD'); V.advance(0.8); await V.frames(1);
+      out.cop = T.state(); out.copLabel = document.getElementById('tourStopLabel').textContent;
+      out.checked = [...document.querySelectorAll('#tourMenu [aria-checked="true"]')].map((b) => b.dataset.stop);
+      T.go('club', {motion: false}); await V.frames(1); out.stopLabel = document.getElementById('tourStopLabel').textContent;
+      out.stopChecked = [...document.querySelectorAll('#tourMenu [aria-checked="true"]')].map((b) => b.dataset.stop);
+      // NAV8-05: the airstair stop's heading on a portrait screen; the walk pad aside there
+      T.go('airstair', {motion: false}); await V.frames(1);
+      const TT = V._internals.tour, s = V.tour.data.stops.find((x) => x.id === 'airstair');
+      Object.defineProperty(TT, 'portrait', {value: true, configurable: true}); out.airP = TT.stopAngles(s);
+      delete TT.portrait; out.airL = TT.stopAngles(s);
+      out.padAside = document.getElementById('tourPad').classList.contains('aside');
+      T.go('club', {motion: false}); out.padAfter = document.getElementById('tourPad').classList.contains('aside');
+      T.exit({motion: false}); await V.frames(1);
+      return out;
+    """)
+    R = {x["id"]: x for x in data["regions"]}
+    ih, ir, o = r["inHeld"], r["inRel"], r["out"]
+    check("[T15] NAV8-02: a released sidestep stops at once (real key events): into PAX 3 the eye stays within 1 cm of the "
+          "seated eye; out of the turned seat (A, into the side wall) it ends on the aisle's centre line",
+          ih["region"] == "seat_pax3" and ir["region"] == "seat_pax3" and abs(ir["pos"][1] - R["seat_pax3"]["eye_bl"]) <= 0.01
+          and o["region"] == "aisle" and abs(o["pos"][1]) < 0.02,
+          f"in: {ih['region']} y {ih['pos'][1]:+.3f} -> released {ir['pos'][1]:+.3f} (eye_bl {R['seat_pax3']['eye_bl']:+.3f}); "
+          f"out: {o['region']} y {o['pos'][1]:+.3f}")
+    cp = r["cop"]
+    want = R["seat_copilot"].get("pitch")
+    check("[T16] NAV8-03: a walk into a crew seat turns to its stop's pitch (the panel and yoke framed, not the sky)",
+          cp["region"] == "seat_copilot" and want is not None and want < -15 and abs(cp["pitchDeg"] - want) < 0.5,
+          f"{cp['region']}, pitch {cp['pitchDeg']:.1f} (region pitch {want})")
+    check("[T17] NAV8-04: the stop button follows the walk (the region's label, no menu stop marked) and names a stop at one",
+          r["gapLabel"] == "Flight deck" and r["copLabel"] == "Co-pilot seat" and not r["checked"]
+          and r["stopLabel"] == "Club seats" and r["stopChecked"] == ["club"],
+          f"gap {r['gapLabel']!r}, walked into {r['copLabel']!r} (marked {r['checked']}), at a stop {r['stopLabel']!r} {r['stopChecked']}")
+    import math as _m
+    ap, al = r["airP"], r["airL"]
+    s_air = next(x for x in data["stops"] if x["id"] == "airstair")
+    check("[T18] NAV8-05: the airstair stop takes its own heading / pitch on a portrait screen; the walk pad moves aside "
+          "there (and back elsewhere)",
+          abs(_m.degrees(ap["yaw"]) - s_air["yaw_portrait"]) < 0.1 and abs(_m.degrees(ap["pitch"]) - s_air["pitch_portrait"]) < 0.1
+          and abs(_m.degrees(al["yaw"]) - s_air["yaw_portrait"]) > 2 and r["padAside"] and not r["padAfter"],
+          f"portrait {_m.degrees(ap['yaw']):.1f} / {_m.degrees(ap['pitch']):.1f}, landscape {_m.degrees(al['yaw']):.1f} / "
+          f"{_m.degrees(al['pitch']):.1f}, pad aside {r['padAside']} -> {r['padAfter']}")
 
 
 async def tour_phone_checks(page, ctx, shots=True):
@@ -1987,15 +2138,17 @@ async def tour_dark_check(page, shots=True):
       V.panel(false); await new Promise(r => setTimeout(r, 300));
       const out0 = st.renderer.toneMappingExposure;
       V.tour.enter('cabin_fwd', {motion: false}); await V.frames(2);
-      return {dark: st.dark, out0, inside: st.renderer.toneMappingExposure, key: st.lookKey};
+      const S = await import(new URL('viewer/scene.js', location.href).href);
+      return {dark: st.dark, out0, inside: st.renderer.toneMappingExposure, key: st.lookKey, ev: S.LOOK.interiorEV};
     """)
     med = None
     if shots:
         path = await shot(page, "43_tour_dark_cabin_fwd", "")
         med = lum_stats(path, (0, 60, VIEW["width"], VIEW["height"] - 60))[0]
     r2 = await js(page, "const V = window.viewer, st = V._internals.stage; V.tour.exit({motion: false}); await V.frames(2); return [st.renderer.toneMappingExposure, st.lookKey];")
-    # inside: the light theme's exposure 1.9 lifted by LOOK.interiorEV 0.6 (review r1 NAV1-04)
-    ok = r["dark"] and r["key"] == "light" and abs(r["inside"] - 1.9 * 2 ** 0.6) < 0.01 and r2 == [r["out0"], "dark"] and (med is None or 70 <= med <= 215)
+    # inside: the light theme's exposure 1.9 lifted by LOOK.interiorEV (review r1 NAV1-04; 0.3 since review r4 NAV8-01)
+    ok = (r["dark"] and r["key"] == "light" and abs(r["ev"] - 0.3) < 1e-9 and abs(r["inside"] - 1.9 * 2 ** r["ev"]) < 0.01
+          and r2 == [r["out0"], "dark"] and (med is None or 70 <= med <= 215))
     check("[T11] dark theme: the cabin is lit with the daylight studio inside (exposure / grade), the dark look outside", ok,
           f"exposure {r['out0']} -> {r['inside']} -> {r2[0]}, grade {r['key']} -> {r2[1]}" + (f", median luminance {med:.0f}" if med is not None else ""))
 
@@ -2211,6 +2364,23 @@ async def blender_check(page):
 
 
 # ----------------------------------------------------------------------------- phone + error path
+async def iphone_chip_check(browser, base):
+    """[GEO8-01] an iPhone (Safari: no navigator.deviceMemory) with a >= 1080 px wide screen is offered the full model."""
+    ctx = await browser.new_context(viewport=PHONE, device_scale_factor=1, is_mobile=True, has_touch=True, reduced_motion="reduce",
+                                    user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 "
+                                               "(KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1", **CTX)
+    await ctx.add_init_script("""Object.defineProperty(Navigator.prototype, 'deviceMemory', {get: () => undefined});
+      Object.defineProperty(screen, 'width', {get: () => 1170}); Object.defineProperty(screen, 'height', {get: () => 2532});""")
+    page = await ctx.new_page()
+    await page.goto(base)
+    await page.wait_for_function("window.__ready === true", timeout=180000)
+    r = await js(page, "return {mem: navigator.deviceMemory, shown: !document.getElementById('detailChip').hidden, "
+                       "text: document.getElementById('detailChipText').textContent};")
+    check("[GEO8-01] iPhone (no deviceMemory, 1170 px screen): the full-detail model is offered on the stage",
+          r["mem"] is None and r["shown"] and "triangles" in r["text"], f"deviceMemory {r['mem']}, chip {r['shown']} {r['text']!r}")
+    await ctx.close()
+
+
 async def phone_checks(browser, base, shots=True):
     ctx = await browser.new_context(viewport=PHONE, device_scale_factor=1, is_mobile=True, has_touch=True, reduced_motion="reduce", **CTX)
     page = await ctx.new_page()
@@ -3504,6 +3674,15 @@ async def run(args):
                 await sound_checks(browser, base, args.sound_out)
                 await browser.close()
                 return
+            if args.only in ("phone", "picture"):
+                if args.only == "phone":
+                    await phone_checks(browser, base, shots=not args.no_shots)
+                    await iphone_chip_check(browser, base)
+                else:
+                    await picture_checks(browser, base)
+                    await picture_motion_checks(browser, base)
+                await browser.close()
+                return
             page = await browser.new_page(viewport=VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
             errors, failed, aborted, ok_urls = [], [], [], set()
             page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
@@ -3525,6 +3704,14 @@ async def run(args):
             if err:
                 return
             await page.evaluate(JS_HELPERS)
+            if args.only in ("tour", "prop"):
+                if args.only == "tour":
+                    await tour_checks(page, shots=not args.no_shots)
+                else:
+                    await prop_blur_checks(page)
+                await page.close()
+                await browser.close()
+                return
             st = await js(page, "return window.viewer.state;")
             check("starts on the finished aircraft", st["stepKey"] == "paint" and st["paint"] and not st["loading"], st["stepKey"])
             # [m2] the boot script's preloads are the requests the viewer makes: one download each
@@ -3563,6 +3750,7 @@ async def run(args):
                   "; ".join(bad[:4]) or (f"{len(aborted)} aborted after a 200 response (stream)" if aborted else ""))
             await page.close()
             await phone_checks(browser, base, shots=not args.no_shots)
+            await iphone_chip_check(browser, base)
             await landscape_check(browser, base, shots=not args.no_shots)
             await safe_area_portrait(browser, base)
             await dark_and_data(browser, base, shots=not args.no_shots)
@@ -3586,8 +3774,10 @@ def main():
     ap.add_argument("--no-shots", action="store_true", help="skip screenshots (numeric checks only)")
     ap.add_argument("--three", default="local", choices=["local", "cdn"],
                     help="three.js source: web/three_local (default) or the jsDelivr CDN")
-    ap.add_argument("--only", default="all", choices=["all", "sound"],
-                    help="sound: only the engine-sound section (its own page; ~2 min)")
+    ap.add_argument("--only", default="all", choices=["all", "sound", "tour", "prop", "phone", "picture"],
+                    help="sound: only the engine-sound section (its own page; ~2 min); tour: only the interior tour "
+                         "[T1]-[T18] on the desktop page; prop / phone / picture: those sections alone (a rerun of a "
+                         "section that timed out or was starved under load)")
     ap.add_argument("--sound-out", type=Path, default=OUT / "sound",
                     help="folder for the offline render pc12_engine_sequence.wav + spectrogram.png (default out/tmp/viewer/sound)")
     args = ap.parse_args()

@@ -32,7 +32,8 @@ const FOV_MAX = 95, H_FOV_MIN = 70;    // widen the vertical FOV until at least 
 const PORTRAIT = 0.8, FOV_MAX_PORTRAIT = 85, PORTRAIT_AXIS = 0.4;
 const SIDESTEP_PULL = 0.5;              // m: a blocked sidestep in the aisle slides toward a seat this close (NAV1-07)
 const SEAT_TURN = 0.4;                  // s: a walk into a seat turns the view to the seat's facing (NAV2-03) ...
-const SEAT_PITCH = -8 * D2R;            // ... and this pitch
+const SEAT_PITCH = -8 * D2R;            // ... and this pitch (a seat region's own `pitch`: the crew seats take their stop's,
+//                                          review r4 NAV8-03: at -8 the walked-in crew seat saw half sky, the PFD cut off)
 const STANDING = new Set(['aisle', 'crew_gap', 'flight_deck', 'vestibule', 'vestibule_door']);
 // a walk from a stop's steep look (pilot -21, airstair -48 deg) levels the view to WALK_PITCH over ~LEVEL_TIME while
 // it moves in one of these regions (review r3 NAV3-03: walking on, the carpet filled the view); any look input (R / F,
@@ -46,6 +47,16 @@ const RISE = 0.6;                       // m/s: the eye coming back up to the ke
 const SINK = 0.6;                       // m/s: ... and down to a lower kept height (into the gap between the crew seats)
 
 export function stopById(id) { return TOUR.stops.find((s) => s.id === id) || null; }
+// where the eye is, for the stop button once walked away from a stop (review r4 NAV8-04)
+const REGION_LABEL = { seat_pilot: 'Pilot seat', seat_copilot: 'Co-pilot seat', crew_gap: 'Flight deck',
+  flight_deck: 'Flight deck', aisle: 'Cabin aisle', vestibule: 'Cabin entry', vestibule_door: 'Cabin entry',
+  doorway: 'Airstair door' };
+export function regionLabel(id) {
+  if (!id) return null;
+  if (REGION_LABEL[id]) return REGION_LABEL[id];
+  const m = /^seat_pax(\d+)$/.exec(id);
+  return m ? `PAX ${m[1]} seat` : null;
+}
 function angles(eye, target) {
   const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
   return { yaw: Math.atan2(dy, dx), pitch: Math.atan2(dz, Math.hypot(dx, dy)) };
@@ -136,10 +147,11 @@ export class Tour {
     this._aspect = cam.aspect;
     this.stage.needsRender = true;
   }
-  // a stop's heading / pitch (a portrait screen may take its own pitch: the airstair, NAV3-02)
+  // a stop's heading / pitch (a portrait screen may take its own pitch and heading: the airstair, NAV3-02 / NAV8-05)
   stopAngles(s) {
     const a = angles(s.eye, s.target);
     if (s.pitch_portrait != null && this.portrait) a.pitch = s.pitch_portrait * D2R;
+    if (s.yaw_portrait != null && this.portrait) a.yaw = s.yaw_portrait * D2R;
     return a;
   }
   setPose(stop) {
@@ -465,8 +477,11 @@ export class Tour {
     }
     const moved = Math.abs(this.p[0] - p0[0]) + Math.abs(this.p[1] - p0[1]) + Math.abs(this.p[2] - p0[2]) > 1e-6;
     if (!moved && !rot) return false;           // held by a ceiling: nothing to draw
-    if (this.stop && moving && moved) this.stop = null;
+    const left = this.stop && moving && moved;
+    if (left) this.stop = null;
     this.apply();
+    // the stop button / live region follow the walk (review r4 NAV8-04)
+    if (left || this.region !== this._regionSaid) { this._regionSaid = this.region; this.hooks.changed(); }
     return true;
   }
 
@@ -491,10 +506,15 @@ export class Tour {
     const R = TOUR.regions.find((g) => g.id === r.region);
     if (strafe && was && was.startsWith('seat_') && STANDING.has(r.region)) {
       const yc = 0.5 * (R.y[0] + R.y[1]);
-      this.latch = { dir: strafe, y: yc, side: Math.sign(yc - y0) || 1 };
+      // a seat-type latch (the step out of a turned seat, whichever way the view points) stays one on the way to the
+      // centre line: built from the strafe instead, a strafe pointing back at the seat held the eye on the aisle's
+      // edge and the drift after the release took it back into the seat (review r4 NAV8-02)
+      const carried = !!(this.latch && this.latch.seat);
+      this.latch = { dir: strafe, y: yc, side: Math.sign(yc - y0) || 1, seat: carried };
       if ((this.p[1] - yc) * this.latch.side > 0) this.moveTo([this.p[0], yc, this.p[2]]);
     } else if (r.region.startsWith('seat_') && (!was || STANDING.has(was)) && R && R.facing) {
-      this.seatTurn = { t: 0, yaw0: this.yaw, yaw1: R.facing > 0 ? Math.PI : 0, pitch0: this.pitch, pitch1: SEAT_PITCH };
+      this.seatTurn = { t: 0, yaw0: this.yaw, yaw1: R.facing > 0 ? Math.PI : 0, pitch0: this.pitch,
+        pitch1: R.pitch != null ? R.pitch * D2R : SEAT_PITCH };
       this.seatFlip = Math.abs(wrap(this.seatTurn.yaw1 - this.yaw)) > Math.PI / 2;
       // the held step carries on to the seated eye's BL (the turned view would otherwise walk it back out)
       if (strafe && R.eye_bl != null) this.latch = { dir: strafe, y: R.eye_bl, side: Math.sign(R.eye_bl - y0) || 1, seat: true };
@@ -543,7 +563,14 @@ export class Tour {
   }
   keyup(e) {
     this.keys.delete(e.code);
-    if (e.code === 'KeyA' || e.code === 'KeyD') this.latch = null;
+    if (e.code === 'KeyA' || e.code === 'KeyD') this.strafeUp();
+  }
+  // a released sideways step stops at once in and round the seats (the walk's velocity smoothing drifted the eye
+  // ~0.1 m on: back into a seat after a step out, off the seated eye after a step in -- review r4 NAV8-02)
+  strafeUp() {
+    const seatish = this.latch || (this.region && (this.region.startsWith('seat_') || this.region === 'crew_gap'));
+    if (seatish) this.vel[1] = 0;
+    this.latch = null;
   }
   blur() { this.keys.clear(); this.pad = { f: 0, s: 0, u: 0 }; this.latch = null; }
 
@@ -680,7 +707,7 @@ export class TourUI {
     // walk pad: hold to walk (pointer), or a step per activation (keyboard)
     for (const b of E.pad.querySelectorAll('[data-walk]')) {
       const [axis, v] = b.dataset.walk.split(':');
-      const set = (on) => { tour.pad[axis] = on ? +v : 0; };
+      const set = (on) => { tour.pad[axis] = on ? +v : 0; if (!on && axis === 's') tour.strafeUp(); };
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (err) { /* */ } set(true); });
       for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, () => set(false));
       b.addEventListener('click', (e) => { if (e.detail === 0) tour.walk({ [axis]: +v }, 0.3); });
@@ -755,17 +782,23 @@ export class TourUI {
     E.app.classList.toggle('touring', on);
     E.enter.hidden = on;
     for (const b of [E.exit, E.prev, E.next, E.stop]) b.hidden = !on;
-    const s = stopById(t.lastStop);
-    E.stopLabel.textContent = s ? s.label : 'Stops';
-    E.stop.setAttribute('aria-label', `Interior stop: ${s ? s.label : 'none'}. Choose another stop`);
-    for (const b of E.menu.querySelectorAll('[data-stop]')) b.setAttribute('aria-checked', String(on && b.dataset.stop === t.lastStop));
+    // at a stop (or flying to one) its label; walked away from it, where the eye is (review r4 NAV8-04: the button kept
+    // the last stop's label -- 'Club seats' seated in the co-pilot seat); the menu marks a stop only while at it
+    const s = t.stop ? stopById(t.stop) : null;
+    const where = s ? s.label : on ? regionLabel(t.region) : null;
+    const label = where || (stopById(t.lastStop) || {}).label || 'Stops';
+    E.stopLabel.textContent = label;
+    E.stop.setAttribute('aria-label', `Interior: ${where || 'none'}. Choose a stop`);
+    for (const b of E.menu.querySelectorAll('[data-stop]')) b.setAttribute('aria-checked', String(on && !!s && b.dataset.stop === s.id));
     E.pad.hidden = !on;
     if (!on) E.hint.hidden = true;
-    // at the airstair door the hint sits under the toolbar: the treads fill the bottom of that view (NAV3-02)
+    // at the airstair door the hint sits under the toolbar and the walk pad goes right, translucent: the treads fill
+    // the bottom-left of that view (NAV3-02, NAV8-05)
     E.hint.classList.toggle('top', on && t.lastStop === 'airstair');
+    E.pad.classList.toggle('aside', on && !!s && s.id === 'airstair');
     if (!E.menu.hidden) this._place();
     // screen readers: where the camera went
-    const say = on ? (s ? `Inside: ${s.label}. ${s.note}.` : 'Inside') : this._said ? 'Back outside' : null;
+    const say = on ? (s ? `Inside: ${s.label}. ${s.note}.` : `Inside: ${where || 'cabin'}`) : this._said ? 'Back outside' : null;
     if (say && say !== this._said && E.live) E.live.textContent = say;
     this._said = on ? say : null;
   }

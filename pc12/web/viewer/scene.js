@@ -99,7 +99,8 @@ export const LOOK = {
   // the key light as a softbox of this angular diameter (deg): the PCSS ground shadow's penumbra = the caster's
   // distance over the floor along the light x 2 tan(angle / 2) -- crisp at the tyres, ~0.15 m under the wing
   keyAngle: qn('keyangle') ?? 4,
-  interiorEV: qn('interiorEV') ?? 0.6,      // the interior tour: this many stops over the light theme's exposure
+  interiorEV: qn('interiorEV') ?? 0.3,      // the interior tour: this many stops over the light theme's exposure (review r4
+  //                                           NAV8-01: 0.6 with CABIN.inside 1.6 veiled every dark surface; materials.js CABIN_LOOK)
   keyIntensity: qn('key') ?? 1.6,
 };
 
@@ -292,9 +293,9 @@ export class Stage {
   // light theme's daylight studio in both themes (the dark studio left the headliner near black)
   get lookKey() { return this.dark && !this.interiorLook ? 'dark' : 'light'; }
   // exposure in use: the look's, LOOK.interiorEV brighter inside (review r1 NAV1-04: at the exterior exposure the
-  // headliner and side walls rendered mid-grey, ~165 / 255, where the cabin photos are near-white; with the cabin
-  // light CABIN.inside 1.6 (materials.js, review r2 NAV2-04) the headliner is ~207; at +1 EV AgX flattened the cabin
-  // into a grey fog)
+  // headliner and side walls rendered mid-grey, ~165 / 255, where the cabin photos are near-white; review r4 NAV8-01:
+  // +0.3 EV with the cabin light of materials.js CABIN / CABIN_LOOK -- the light trim's own fill keeps the headliner at
+  // ~205 while the dark trim keeps its albedo; at +1 EV AgX flattened the cabin into a grey fog)
   get exposure() { return LOOK.theme[this.lookKey].exposure * (this.interiorLook ? Math.pow(2, LOOK.interiorEV) : 1); }
   setInteriorLook(on) {
     if (this.interiorLook === !!on) return;

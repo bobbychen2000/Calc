@@ -3,10 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.32M tris of which the interior ~525k, ~39 MB
+engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.37M tris of which the interior ~525k, ~40 MB
 incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review: ~1.62M tris, interior ~237k, three wheels ~77k, ~27 MB, 16-bit normals too; phones load it (and its gzip when
+review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~1.92M tris, ~32 MB,
+16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
 exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
@@ -46,8 +47,9 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25-40 min, 208 checks; slower on a
-                                #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T13] the interior tour
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25-40 min, 215 checks; slower on a
+                                #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
+                                #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -120,7 +122,8 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   through `cad.res.seg` (up to RES x the builder's n where the chord sagitta exceeds 0.04 mm; n < 8 = polygons by
   design, kept), so a builder that relies on a primitive's vertex count must not assume n.
 - `cad/res.py` the ONE tessellation-quality setting `PC12_RES` (env; default 2, 1 = the judged grids): seg() above
-  (not inside `res.coarse()`: the hidden engine modules, mount and firewall keep their own grids and are not refined),
+  (not inside `res.coarse()`: the hidden engine modules, mount and firewall keep their own grids and are not refined;
+  `with res.override(2.0):` builds / refines at RES 2 whatever PC12_RES is -- the light tier's `build.LOW_FINE` parts),
   `res.factor()` for builders whose own grids were coarse where it shows (1 at RES 1, RES above: the seats' pillow rims
   `seats._rounds`, outline arcs `_arc_k`, sheepskin pad grids `_sk_h`, back outline samples; the chin-inlet duct entry
   rings `powerplant._densify_rings`), the refinement settings per viewing class (silhouette sagitta exterior 0.30 mm /
@@ -335,7 +338,8 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   GLB's sheen and its textures (the display pages' emissive map) carried over --, replacing the GLB's KHR clear-coat
   materials, and keeps the GLB values for the rest; every part of the GLB group 'Interior' gets the cabin light; the
   table's `render_stripes` (cabin carpet) become a band-limited pinstripe patch, and the carpets get an occlusion
-  stand-in (VIEWER envMapIntensity 0.45: unoccluded, the studio washed the AI Orange runner out to pale peach); two
+  stand-in (VIEWER envMapIntensity 0.3 and a deeper orange since review r4: unoccluded, the studio washed the AI Orange
+  runner out to pale peach); two
   model tiers: the boot script loads `PC12_CONFIG.glbLow` (out/pc12_low.glb) on the 'low' quality tier (phones) as it
   picks the 512 px HDRI, the full model elsewhere (?glb= overrides both); there the Specs panel's detail switch loads
   the full model instead (?detail=full|light, remembered in localStorage 'pc12-detail'; review r1 RES1-02), and a
@@ -490,11 +494,11 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   0.5 m of a seat slides into it.  Review r1 (NAV1-01..07): the forward walk had ended over the pedestal in the
   glareshield, the aft one 12 cm from the curtain (a full-screen smear), the airstair stop looked into the jamb.
   Portrait phones: vertical FOV <= 85 and the optical axis 40 % down the view (`Stage.setViewShift`, an off-axis
-  window).  Inside, the cabin keeps the light theme's studio in both themes, +0.6 EV (`LOOK.interiorEV`) with the
-  cabin light `CABIN.inside` 1.6 (headliner ~207 / 255 at 1400 x 900, review r2 NAV2-04; at +1 EV AgX greyed the
-  whole cabin) (`Stage.setInteriorLook`;
+  window).  Inside, the cabin keeps the light theme's studio in both themes, +0.3 EV (`LOOK.interiorEV`) with the
+  cabin light `CABIN.inside` 0.8 and the CABIN_LOOK below (review r4; r2 had +0.6 EV x 1.6: headliner ~207 but every
+  dark surface veiled) (`Stage.setInteriorLook`;
   the dark studio left the headliner near black) and is lit as inside wherever the eye is (`Model.updateCabin`
-  forceInside).  Exit (button / Esc / a camera preset / another build step) restores what the tour
+  forceInside, `U.cabinIn`).  Exit (button / Esc / a camera preset / another build step) restores what the tour
   changed: build step, cutaway, X-ray, explode, isolate, construction lines, the phone sheet, the door it opened.
   test/viewer_test.py [T1]-[T11] check it (data current, every stop from the menu with ray / table clearances and
   exposure, walk clamps incl. the walk ends' distance to the flight deck / curtain [T5b] and the seat sidestep,
@@ -642,3 +646,55 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   re-lays the verified over-centre chain), GR1-05 (oleo pre-stroke: the viewer cycles the gear on the ground, an
   extension would push the tyres into the floor); owner flag: the port ledge segment on the open cargo door is the
   approved s/n 3001 anthracite, photo 130 (MSN 3008) shows it light.
+- Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
+  CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
+  materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been
+  x CABIN.inside^2 = 2.6 on every up-facing surface), the studio's diffuse light weighted by the surface's facing (`diff`
+  0.75 facing the floor .. 1 up), its reflections by where they point (`spec` 0.06 toward the floor / seats .. 0.3 toward
+  the headliner / windows: the studio's bright floor had mirrored in every panel and display), clear coat and sheen
+  likewise, and per-material `CABIN_TRIM` [share of the fill, own factor]: the lining the whole cove / window fill
+  (`fill` 3.4), the leathers part, the flight deck's grey lining round the windshield 0.3, the sheepskin 0.6; with
+  CABIN.inside 0.8 and +0.3 EV.  Tuned at the photo-fitted cabin_fwd (P1046406) / pilot / fd_cabin views: headliner
+  ~209, walnut ~57/38/25, lower side panels ~65-75, runner hue 30 deg / saturation 0.72, overhead panel ~21, display
+  bezels ~18 (all were 87-101); ?cabKey= ?cabDiff= ?cabSpec= ?cabFill= override them.  Sheepskin fibre (INT8-04): a
+  `fleece` patch -- band-limited world-space fBm tufts (~4 mm) in its albedo (0.62-1.15) and a surface-gradient bump,
+  sheen roughness 0.8.  viewer_test [T14] measures it through a material-ID pass (`MAT_MASK`: each group in a flat colour
+  with the stage camera, the screenshot's pixels per material, eroded by one pixel).  Viewer overrides (EXT8-01 / 03):
+  `deice_boot` roughness 0.6 / specular 0.18 / env 0.35 (satin neoprene: the 0.25-rough dielectric mirrored the white
+  studio silver -- 170-215 at the wing_0459 camera, now ~65-80; photo 17-61); `paint_blue` / `paint_navy` env 0.75 (the
+  studio fill in the clear coat had greyed the ultramarine to periwinkle).
+  TOUR (NAV8-02..05): a seat-type latch stays one into the aisle (a strafe pointing back at the turned seat had held the
+  eye on the aisle's edge), a released strafe stops at once round the seats (`Tour.strafeUp`, keys and the walk pad); a
+  walk into a crew seat turns to its stop's pitch (tour_data seat region `pitch`, -21.5); the stop button / live region
+  name where the eye is once walked away (`regionLabel`, hooks.changed on a region change; the menu marks a stop only at
+  it); the airstair stop -106 / -48 on landscape screens (was -112: the walnut divider filled the right), -98 / -51 on
+  portrait ones (`yaw_portrait`: the treads in the upper middle) with the walk pad right and translucent there (`.aside`)
+  and the hint under the toolbar on phones too (both edges had been set: a full-height card).  viewer_test [T15]-[T18]
+  drive real key events.
+  MODEL: nose leg (WG8-01, photo 3008 188 at ~690 px/m): `gear.NOSE_STRUT` -- the oleo cylinder to 0.77 of the strut, a
+  fixed steering-housing casting (WL ~0.82 -> 0.65) with the taxi lamp on its front (NOSE_LAMP frac 0.56), the steered
+  collar with the upper torque-link lug, ~0.08 m of chrome, flat A-plate links (32 / 26 mm deep, broad across) in a
+  flattened V, knee 0.14 m ahead at WL 0.59 (188: ~0.17; retracted, ahead of the strut is down -- at 0.17 it crossed the
+  closed clamshells, fit_check 11); main shock (WG8-03): its lower eye in a clevis on the trailing arm ~90 mm ahead of /
+  135 mm above the axle (MAIN_SHOCK, MAIN_SHOCK_CLEVIS), a forked top lug with a pin.  Cowl-front crown (GEO8-02):
+  knots 1.044-1.68 sampled from a monotone-slope blend (`fuselage._top` comment: the old knots put a 1.2 deg concave dip
+  at STA 1.18-1.20 that kinked every studio streak behind the cowl front), skin rows every 6-12 mm ahead of the chin
+  columns; drawn crown STA 1.09-3.0 within 2.7 mm.  Leg-door blister (GEO8-03): `gear.BLISTER_SIGMA` 30 / 20 mm (no hard
+  highlight along its edge; depth 29.7 mm, stowed 28.9 below the skin).  Tailplane tip (GEO8-04): horn-balance sections
+  40 points per surface with the flat front face a separate creased patch (`HORN_LOOP_N`), 3 mm rows along both raked
+  LEs (`STAB_RAKE_STEP`, `HORN_TIP_STEP`: the nose moves 2.08 x the row pitch aft; at 10 mm the triangles across it
+  sheared into Z-shaped highlight steps); tip facet area 0.9 / 1.2 %.  Root fillet (EXT8-04): `ROOT_FILLET_ROUND` run
+  0.40 / behind 0.25 (curvature along x above the foot ~1/3), `ROOT_FILLET_TAPER` 7.30 (a 0.23 m aft fade).  Chin lip
+  (EXT8-02): its own neutral polished aluminium `inlet_lip` (#CFCCC6, rough 0.12; livery SURFACES, lookdev SPEC).
+  Light tier (GEO8-01): `build.LOW_FINE` (seat_, yoke_, pedal_, brace_, gear_nose) rebuilt and refined at RES 2 in the
+  PC12_RES=1 process (facet area: pax seats 22.5 -> 2.3 %, crew 17.6 -> 3.4, yokes 25.6 -> 8.2, pedals 50 -> 3.1, braces
+  51 -> 8.2; +0.3M triangles); iPhones (no navigator.deviceMemory) with a >= 1080 px screen get the full-model chip
+  (viewer_test [GEO8-01]).  Interior: CB panels small black heads on white collars, green legends (INT8-02); the
+  pedestal's trim panel (black bezel, guarded TRIM INTERRUPT, split ALT STAB TRIM and AILERON TRIM rockers, legends),
+  flap gate with detents, guarded FLAP INTERRUPT, titanium palm pad (INT8-03: the cream square was the amber box);
+  `cabin.RUNNER` 0.9-2.4 m stripes, 5-60 mm breaks, more jogs, 70 % orange / 18 % light grey (`carpet_light`, no longer
+  cream) / 12 % grey (INT8-05; the sheets do not draw the runner); one recessed dark pull and a latch plate on the
+  lavatory's bi-fold doors (INT8-06).  Deferred: INT8-07 shade cassettes (they sit in the window reveal, which the fit
+  checks keep clear: needs an L6 reveal-profile change), WG8-02 leg-door lean (the documented LD-1 deviation, L4
+  call-out), GEO8-05 rudder tab bay / flap canoes / fin root facets (not visible at the review cameras), the chin lip's
+  face width (the drawn lip outline; a re-trace needs the drawing review).
