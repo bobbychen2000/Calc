@@ -351,9 +351,11 @@ export class Model {
     const closed = open || inside ? 0 : 1;
     let changed = false;
     if (inside !== this.camInside) { this.camInside = inside; this.updateVisibility(); changed = true; }
-    if (MU.cabinAO.value === ao && MU.cabinClosed.value === closed) return changed;
+    const cin = inside ? 1 : 0;
+    if (MU.cabinAO.value === ao && MU.cabinClosed.value === closed && MU.cabinIn.value === cin) return changed;
     MU.cabinAO.value = ao;
     MU.cabinClosed.value = closed;
+    MU.cabinIn.value = cin;      // the cabin light (materials.js CABIN_LOOK) instead of the studio's
     return true;
   }
 

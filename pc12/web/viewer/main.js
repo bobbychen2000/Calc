@@ -367,7 +367,7 @@ function setDetail(v, reload = true) {
   location.replace(u.href);
 }
 // review r2 RES2-03: the Specs switch alone was where a phone viewer would not look -- the light model's devices that
-// can likely take the full one (navigator.deviceMemory >= 4 GB, or an iPad) get it offered once on the stage after
+// can likely take the full one (navigator.deviceMemory >= 4 GB, an iPad, an iPhone with a >= 1080 px screen) get it offered once on the stage after
 // load; the choice is remembered (Load: 'full', x: 'light'), an ignored chip leaves after 25 s and comes back next
 // visit.  Not on the gzip no-WebAssembly fallback (the full tier is meshopt only).  ?detailChip=1 forces it (tests).
 function detailChip(st) {
@@ -376,13 +376,19 @@ function detailChip(st) {
   let chosen = null;
   try { chosen = localStorage.getItem('pc12-detail'); } catch (e) { chosen = 'unknown'; }
   if (chosen) return;
-  const ipad = /iPad/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!(ipad || navigator.deviceMemory >= 4 || q.get('detailChip') === '1')) return;
+  const ua = navigator.userAgent || '';
+  const ipad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // review r4 GEO8-01: Safari has no navigator.deviceMemory, so iPhones were never offered the full model -- an iPhone
+  // with a >= 1080-px-wide screen (iPhone 8 Plus / X and later: 3 GB and up) is offered it too
+  const iphone = /iPhone/.test(ua) && Math.min(screen.width, screen.height) * (window.devicePixelRatio || 1) >= 1080;
+  if (!(ipad || iphone || navigator.deviceMemory >= 4 || q.get('detailChip') === '1')) return;
   const tri = st.triangles ? `${(st.triangles / 1e6).toFixed(1)}M triangles` : 'more triangles';
   const mb = st.glb_bytes ? ` · ${(st.glb_bytes / 1048576).toFixed(0)} MB` : '';
   $('detailChipText').textContent = `Full-detail model: ${tri}${mb}`;
+  // the 25 s count starts once the loading screen is gone (on a slow first render it had run out unseen)
+  let timer = 0;
   const hide = () => { chip.hidden = true; clearTimeout(timer); };
-  const timer = setTimeout(hide, 25000);
+  ready.then(() => { if (!chip.hidden) timer = setTimeout(hide, 25000); }, () => {});
   $('detailChipLoad').addEventListener('click', () => { hide(); setDetail('full'); });
   $('detailChipClose').addEventListener('click', () => { hide(); setDetail('light', false); });
   chip.hidden = false;

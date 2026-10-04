@@ -189,6 +189,8 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 #tourPad button { padding: 0; min-height: 0; font-size: 14px; color: var(--text); background: var(--surface-glass);
   border-color: var(--border); box-shadow: var(--shadow); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   touch-action: none; user-select: none; -webkit-user-select: none; }
+/* the airstair stop: right and translucent, off the treads at the bottom-left of that view (review r4 NAV8-05) */
+#tourPad.aside { left: auto; right: max(var(--gutter), env(safe-area-inset-right)); opacity: 0.7; }
 #tourPad .tp-f { grid-column: 2; grid-row: 1; }
 #tourPad .tp-l { grid-column: 1; grid-row: 2; }
 #tourPad .tp-b { grid-column: 2; grid-row: 2; }
@@ -448,6 +450,9 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
   #stepCaption, #app.panel-open #stepCaption { left: 50%; bottom: calc(var(--sheet-h) + 8px); }
   #tourHint, #app.panel-open #tourHint, #detailChip, #app.panel-open #detailChip { left: 50%; bottom: calc(var(--sheet-h) + 8px); font-size: 12.5px; }
   #app:not(.panel-open) #tourHint, #app:not(.panel-open) #detailChip { bottom: calc(100px + env(safe-area-inset-bottom)); }
+  /* the airstair stop's hint under the toolbar here too (the rules above outrank #tourHint.top: with both edges set the
+     hint stretched into a full-height card over the treads, review r4) */
+  #app #tourHint.top, #app:not(.panel-open) #tourHint.top { top: calc(var(--gutter) + 52px); bottom: auto; }
   #tourPad { bottom: calc(var(--sheet-h) + 52px); }
   #app:not(.panel-open) #tourPad { bottom: calc(144px + env(safe-area-inset-bottom)); }
   #tourStop { max-width: 40vw; }

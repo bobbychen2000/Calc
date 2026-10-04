@@ -15,13 +15,14 @@ The folder is the web/package.py bundle (vendored three.js r160, the meshopt GLB
                             glbGzLow: 'pc12_low_glb.gz.bin', b64: {file name: parts}}.
     data/pc12.glb           EXT_meshopt_compression (~15 MB, ~2.3M triangles, 16-bit normals): loaded where
                             WebAssembly compiles
-    data/pc12_low.glb       the light tier (PC12_RES=1, ~11 MB, ~1.6M triangles), EXT_meshopt_compression: phones
+    data/pc12_low.glb       the light tier (PC12_RES=1 + build.LOW_FINE, ~13 MB, ~1.9M triangles),
+                            EXT_meshopt_compression: phones
     data/pc12_glb.gz.bin    gzip of the full model out/pc12.glb (KHR_mesh_quantization only, ~39 MB -> ~23 MB): the
                             host's CSP may refuse WebAssembly ('wasm-unsafe-eval'), which the meshopt decoder needs;
                             index.html then loads this file instead (desktops), unpacked while it streams
                             (DecompressionStream), and main.js falls back to it when the meshopt GLB fails to decode --
                             so a desktop without WebAssembly still gets the full resolution
-    data/pc12_low_glb.gz.bin  the same for the light tier out/pc12_low.glb (~27 MB -> ~16 MB): phones without
+    data/pc12_low_glb.gz.bin  the same for the light tier out/pc12_low.glb (~32 MB -> ~19 MB): phones without
                             WebAssembly
     *.glb / *.bin / *.hdr   published as base64 text (the host serves no binary media type but images, media and fonts):
                             x.b64.txt, or x.b64.0.txt, x.b64.1.txt, ... when the text would exceed B64_PART characters
