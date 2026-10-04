@@ -396,17 +396,19 @@ function pick(clientX, clientY) {
   raycaster.setFromCamera(ndc, stage.camera);
   const hits = raycaster.intersectObjects(model.pickables, false);
   const cut = model.cutaway;
-  let skin = null;
+  let skin = null, disc = null;
   for (const h of hits) {
     const m = h.object;
     if (!m.visible) continue;
     const mr = meshRec.get(m);
     if (!mr) continue;
     if (cut && mr.cut && h.point.x < 0) continue;              // clipped away by the cutaway
+    // the spinning propeller's blur disc: the propeller over its root smear, else only if nothing is behind it (PR3-02)
+    if (kin.blur && m === kin.blur.disc && !kin.blur.pickCore(h.point)) { if (!disc) disc = mr.part.id; continue; }
     if (model.xray && mr.part.xray) { if (!skin) skin = mr.part.id; continue; } // prefer what's inside
     return mr.part.id;
   }
-  return skin;
+  return skin || disc;
 }
 
 let down = null, hoverAt = null, lastHover = 0;
@@ -1167,7 +1169,7 @@ const hooks = {
     return [r.left + ((v.x + 1) / 2) * r.width, r.top + ((1 - v.y) / 2) * r.height, v.z];
   },
 };
-Object.defineProperty(hooks, '_internals', { get: () => ({ THREE, stage, model, kin, build, tour }) });   // for debugging
+Object.defineProperty(hooks, '_internals', { get: () => ({ THREE, stage, model, kin, build, tour, tourUI }) });   // for debugging
 window.viewer = hooks;
 
 boot().catch((e) => fail(e, 'the viewer'));

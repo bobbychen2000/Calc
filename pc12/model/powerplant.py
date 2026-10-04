@@ -914,11 +914,46 @@ def cut_chin_inlet(m):
     _CHIN["mouth"] = best[1] if best is not None else None
     # the raised cheek sits CHIN_CHEEK_SOFT ln2 (~3 mm) outside the drawn lip outline: polished up to the crescent's aft
     # edge (a CHIN_LIP_TOL band outside the front-view outline counts as the lip)
-    fl = lambda mm: np.maximum(chin_fields(mm.V)[1] - CHIN_LIP_TOL, _chin_side_lip(mm.V))  # noqa: E731
-    lip = trim(m1, fl(m1), "negative")
-    rest = trim(m1, fl(m1), "positive")
+    # two single-sided trims, not one max() field (review r3 RES3-02: at the lip's top outboard corners, where the
+    # front-view outline meets the side-view crescent, the max() field's crease zig-zagged the cut across the sheared
+    # columns -- a sawtooth lip / cheek edge and a jagged highlight beside it)
+    # (both pieces of the first cut take the second, so its crossings with the first are inserted on both sides of
+    # that seam: no T-junctions)
+    f_front = lambda mm: chin_fields(mm.V)[1] - CHIN_LIP_TOL                               # noqa: E731
+    pieces = []
+    for keep in ("negative", "positive"):
+        q = trim(m1, f_front(m1), keep)
+        fs = _chin_side_lip(q.V)
+        pieces.append((trim(q, fs, "negative"), trim(q, fs, "positive")))
+    lip = pieces[0][0]
+    rest = Mesh.merge([m_ for m_ in (pieces[0][1], pieces[1][0], pieces[1][1]) if m_.nf])
+    rest, lip = _refine_cheek_corners([rest, lip])
     _snap_to_skin([lip, rest], _CHIN["mouth"])
     return rest, lip
+
+
+# review r3 RES3-02: over the cheek beside the lip's top outboard corners the sheared columns (CHIN_SHEAR_TH taper)
+# leave fans of long slivers; their analytic vertex normals, interpolated linearly along edges up to a few cm long,
+# drew the studio's streak there as a zig-zag.  The cowl's and the lip's edges longer than 2 x CHIN_CORNER_EDGE in
+# CHIN_CORNER_BOX (off the lip face / nose, which the snap leaves alone) are split CHIN_CORNER_PASSES times, both
+# meshes in one call (their seam split alike; open boundaries -- the mouth the duct is built on -- kept), before the
+# snap, which puts the new vertices on the skin; they get the analytic normal with the rest
+CHIN_CORNER_BOX = dict(x=(1.10, 1.30), z=(1.47, 1.64), ay=(0.16, 0.38))
+CHIN_CORNER_EDGE = 0.0015
+CHIN_CORNER_PASSES = 2
+
+
+def _refine_cheek_corners(meshes):
+    from cad.refine import refine
+    b = CHIN_CORNER_BOX
+
+    def field(V):
+        sv = chin_face_s(V)
+        inside = ((V[:, 0] > b["x"][0]) & (V[:, 0] < b["x"][1]) & (V[:, 2] > b["z"][0]) & (V[:, 2] < b["z"][1])
+                  & (np.abs(V[:, 1]) > b["ay"][0]) & (np.abs(V[:, 1]) < b["ay"][1]) & ((sv < -0.2) | (sv > 1.2)))
+        return np.where(inside, CHIN_CORNER_EDGE, 1.0)[:, None]
+    return refine(list(meshes), levels=0, field=field, field_levels=CHIN_CORNER_PASSES, field_near=0.5, min_len=0.0015,
+                  keep_boundary=True)
 
 
 # duct stations aft of the mouth: (STA, centre WL, half-width, half-height); a flattened duct under the engine that
@@ -1105,6 +1140,23 @@ def stack_root_liner(sgn, m=96):
     return Mesh.merge([wall, bot])
 
 
+CHIN_MOUTH_SKIRT = 0.008      # m: the dark strip from the exact mouth edge aft into the duct (RES3-02)
+
+
+def chin_mouth_skirt(mouth, entry):
+    """A dark strip from the mouth edge loop -- the lip's own boundary vertices -- CHIN_MOUTH_SKIRT aft into the duct
+    entry.  The entry's first ring resamples that loop (96 points by arc length, chin_duct), so between the two hairline
+    gaps (up to ~0.7 mm) showed the dark cowl interior as specks along the lip's inner edge (review r3 RES3-02); the
+    strip shares the loop with the lip and lies over the entry, facing the way it does."""
+    P = np.asarray(mouth, float)
+    if np.linalg.norm(P[0] - P[-1]) < 1e-12:
+        P = P[:-1]
+    sk = grid_surface(np.stack([P, P + np.array([CHIN_MOUTH_SKIRT, 0.0, 0.0])]), close_v=True)
+    c = P.mean(0)
+    side = lambda m_: float(np.mean(np.sum((m_.V - c)[:, 1:] * m_.N[:, 1:], 1)))       # noqa: E731
+    return sk.flipped() if side(sk) * side(entry) < 0 else sk
+
+
 def build_inlet_and_exhaust(parts):
     # chin inlet (D2): the lip was cut from the lower cowling (cut_chin_inlet); the duct lofts from that mouth edge
     mouth = _CHIN.get("mouth")
@@ -1116,7 +1168,7 @@ def build_inlet_and_exhaust(parts):
     back = cap_ring(rings[-1], (1, 0, 0))
     p = parts.get("chin_inlet") or Part("chin_inlet", "Chin air inlet", "cowling", explode=(-0.4, 0, -0.75),
                                         group="Powerplant installation")
-    p.add(entry, "inlet_dark")
+    p.add(entry, "inlet_dark").add(chin_mouth_skirt(mouth, entry), "inlet_dark")
     parts[p.id] = p
     dp = Part("inlet_duct", "Inlet duct + inertial separator (to the plenum)", "powerplant", explode=(0, 0, -0.9),
               group="Powerplant installation", material_note="Composite duct, ice-vane separator")
@@ -1222,6 +1274,11 @@ BLADE_HOLE_R = BLADE_SHANK_R + 0.006   # blade-root cut-outs in the spinner: the
 # pitch axis draped on the shell 'lift' above it (blade_boot_surface_s), a skirt 'skirt' under its outer edge and a
 # sleeve down the shank to rho0 inside the spinner.
 BLADE_BOOT = dict(rho0=0.205, r_in=BLADE_SHANK_R + 0.0015, r_out=BLADE_HOLE_R + 0.013, lift=0.0015, skirt=0.004)
+# review r3 RES3-01: the seal ring's edges are rolled (a moulded rubber ring), not cut: its outer edge rounds from the
+# skirt over a quarter circle of radius 'lift' onto the top, the inner edge over BOOT_INNER_ROUND down into the sleeve
+# (one smooth surface; the skirt below the shell keeps its crisp fold)
+BOOT_INNER_ROUND = 0.0015
+BOOT_ROUND_N = 6                 # rows per rolled edge
 # Spinner / cowl joint (MV2-03).  The spinner base plane is normal to the (2 deg tilted / yawed) thrust axis, the
 # cowl-front ring is vertical and not round about that axis (its radius about it is 0.246-0.254): so
 #   * the cowl skin ahead of the plane SPINNER_GAP behind the base plane is cut away (cowl_front_field) -- the fixed lip
@@ -1233,6 +1290,10 @@ BLADE_BOOT = dict(rho0=0.205, r_in=BLADE_SHANK_R + 0.0015, r_out=BLADE_HOLE_R + 
 SPINNER_SKIRT = 0.025
 SPINNER_GAP = 0.003
 SPINNER_BULK_R_IN = 0.160
+# review r3 RES3-01: the spinner's base edge (the cone running tangent into the r = SPINNER_R cylinder, then a sharp 90 deg
+# turn into the flat step in to the skirt) is a rolled edge of radius SPINNER_BASE_ROUND, the step's outer part in one
+# smooth surface with the cone (the spun shell's rim); <= 0.9 mm off the drawn corner (L4 spinner meridian row)
+SPINNER_BASE_ROUND = 0.003
 _SKIRT_R = []
 
 
@@ -1297,8 +1358,10 @@ def blade_boot(k, n=48, n_ring=5):
     """Rubber seal round blade k's shank where it passes through the spinner (BLADE_BOOT): a ring draped on the shell
     (r_in..r_out about the pitch axis, 'lift' above the shell) with a skirt under its outer edge and a sleeve down the
     shank to rho0, closed inside."""
+    from cad import res
     b = BLADE_BOOT
     d, e1, e2 = _boot_frame(k)
+    n = res.seg(n, b["r_out"])                  # round outline: finer at PC12_RES > 1 (the close-ups' seal ring)
     phi = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
     hub = prop_hub()
     rows = []
@@ -1308,18 +1371,26 @@ def blade_boot(k, n=48, n_ring=5):
 
     so = blade_boot_surface_s(k, np.full(n, b["r_out"]), phi)
     rows.append(row(b["r_out"], so - b["skirt"]))
-    for r in np.linspace(b["r_out"], b["r_in"], n_ring):
-        rows.append(row(r, blade_boot_surface_s(k, np.full(n, r), phi) + b["lift"]))
+    # the ring's cross-section (radius about the pitch axis, height over the shell): rolled outer edge, the draped top,
+    # rolled inner edge down to the sleeve (RES3-01; review r1 RES1-01 had made the edges crisp folds between three grids
+    # because one smooth grid averaged the skirt's and the sleeve's normals over a single row -- the rolls now carry the
+    # turn over BOOT_ROUND_N rows each)
+    lf, ci = b["lift"], min(BOOT_INNER_ROUND, b["lift"])
+    ph = np.linspace(0.0, 0.5 * np.pi, BOOT_ROUND_N)
+    sec = [(b["r_out"] - lf + lf * np.cos(a), lf * np.sin(a)) for a in ph]
+    sec += [(r, lf) for r in np.linspace(b["r_out"] - lf, b["r_in"] + ci, n_ring)[1:-1]]
+    sec += [(b["r_in"] + ci - ci * np.sin(a), lf - ci + ci * np.cos(a)) for a in ph]
+    for r, h in sec:
+        rows.append(row(r, blade_boot_surface_s(k, np.full(n, r), phi) + h))
     si = rows[-1] - hub
     top = si @ d
-    for f in (0.4, 0.8, 1.0):
+    for f in (0.15, 0.4, 0.8, 1.0):
         rows.append(row(b["r_in"], top + f * (b["rho0"] - top)))
     R = np.array(rows)
-    # skirt | draped ring | sleeve as three grids sharing their edge rows (crisp folds: one smooth grid had averaged the
-    # skirt's and the sleeve's normals into the ring's edges, review r1 RES1-01 'propeller' 12 % faceted)
-    ring = grid_surface(R[1:n_ring + 1], close_v=True)
-    flip = float(np.mean(ring.N @ d)) < 0                              # the ring faces out of the spinner
-    ms = [grid_surface(R[:2], close_v=True), ring, grid_surface(R[n_ring:], close_v=True)]
+    # skirt (below the shell: a crisp fold, hidden) | rolled ring + sleeve (one smooth surface)
+    ring = grid_surface(R[1:], close_v=True)
+    flip = float(np.mean(grid_surface(R[1 + BOOT_ROUND_N:1 + BOOT_ROUND_N + 2], close_v=True).N @ d)) < 0
+    ms = [grid_surface(R[:2], close_v=True), ring]
     ms = [x.flipped() if flip else x for x in ms]
     cap = cap_ring(rows[-1], -d)
     return Mesh.merge(ms + [cap])
@@ -1338,17 +1409,28 @@ def spinner_mesh(n_around=240, n_prof=110):
     """Spinner: surface of revolution of spinner_profile() about the thrust axis, tip at STA spinner_tip, base plane
     (normal to the axis) through the axis at the cowl front, a skirt of spinner_skirt_r() behind it; blade-root
     openings; returns (shell, bulkhead annulus)."""
+    from cad import res
+    # the chrome mirrors the studio's strip lights as long streaks along the meridian: with rows 6 mm apart their edges
+    # zig-zagged once per row in the close-ups (the triangles' linear normals); 3x the rows at PC12_RES 2 (RES3-01)
+    n_prof = int(round(n_prof * (1.5 * res.factor() if res.on() else 1.0)))
     t, r = spinner_profile(n_prof)
     x0 = F.STA["spinner_tip"]
     a = -thrust_dir()
     L = spinner_length()
     rs = spinner_skirt_r()
-    prof = [(L * tt, rr) for tt, rr in zip(t, r)]
+    rb = SPINNER_BASE_ROUND
+    prof = [(L * tt, rr) for tt, rr in zip(t, r) if L * tt < L - rb - 1e-4]
     prof[0] = (0.0, 0.0)
+    # the rolled base edge: a quarter round from the cylinder (r = SPINNER_R) onto the base plane, then the step's
+    # outer part on that plane (one smooth surface with the cone; the profile runs tangent into the cylinder there)
+    R0 = float(r[-1])
+    for ph in np.linspace(0.0, 0.5 * np.pi, 9):
+        prof.append((L - rb + rb * np.sin(ph), R0 - rb + rb * np.cos(ph)))
+    prof.append((L, 0.5 * (rs + R0 - rb)))
     o = axis_point(x0)
     cone = revolve(prof, n=n_around, axis_origin=o, axis_dir=a)
-    # base edge: a flat step in to the skirt, then the skirt cylinder into the cowl (separate grids: hard edges)
-    step = revolve([(L, rs), (L, float(r[-1]))], n=n_around, axis_origin=o, axis_dir=a)
+    # base step's inner edge: into the skirt cylinder (separate grids: a hard edge, inside the cowl lip)
+    step = revolve([(L, rs), (L, 0.5 * (rs + R0 - rb))], n=n_around, axis_origin=o, axis_dir=a)
     if float(np.mean(step.N @ a)) < 0:
         step = step.flipped()
     skirt = revolve([(L + SPINNER_SKIRT * k / 4, rs) for k in range(5)], n=n_around, axis_origin=o, axis_dir=a)

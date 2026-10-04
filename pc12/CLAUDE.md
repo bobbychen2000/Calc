@@ -3,10 +3,10 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.13M tris of which the interior ~525k, ~35 MB
+engineering-drawing generator. Output: `out/pc12.glb` (97 parts, ~2.32M tris of which the interior ~525k, ~39 MB
 incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review: ~1.54M tris, interior ~237k, three wheels ~77k, ~26 MB, 16-bit normals too; phones load it (and its gzip when
+review: ~1.62M tris, interior ~237k, three wheels ~77k, ~27 MB, 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
 exterior -- lines plan, glazing, openings, general arrangement, L4W wheels & tyres (`model/wheels.py` tables), livery
@@ -46,14 +46,14 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25 min, 152 checks; slower on a
-                                #   loaded machine -- rerun once on a screenshot timeout); [T1]-[T11] the interior tour
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25 min, 160 checks; slower on a
+                                #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T13] the interior tour
 python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLBs (both tiers; the build's own
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~85 MB as base64 text parts: meshopt 14 + 10 MB, gzip of the full model 21 MB for desktops and of
-                                #   the light tier 15 MB for phones without WebAssembly; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   (~90 MB as base64 text parts: meshopt 15 + 11 MB, gzip of the full model 23 MB for desktops and of
+                                #   the light tier 16 MB for phones without WebAssembly; ARTIFACT.json 'publishes' = groups of <= 64 MB,
                                 #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
@@ -180,8 +180,10 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
   fillet with a round-over crest (`ROOT_FILLET_ROUND`) running into the wing LE, the fillet law starts from the visible
   foot on the wing (`_visible_foot`), fit_check 16 guards its creases; flap-track canoes split at the cove lip
-  into a fixed forward part and an aft part carried by the flap; cowl panel lines / latches / vent / oil-cooler exit
-  (`COWL_SEAMS`, photo 188); lights, antennas, pod with its straight tapering tail under the winglet),
+  into a fixed forward part and an aft part carried by the flap; cowl panel joints / latches / vent / oil-cooler exit
+  (`COWL_SEAMS`, photo 188: the ring joints at STA 2.00 / 3.00 and the split line are real grooves cut into the skin,
+  `cowl_grooves` / `COWL_GROOVES`, walls painted with the skin, a dark 'seam' floor; latches and vent stay painted-on
+  dark lines); lights, antennas, pod with its straight tapering tail under the winglet),
   `livery.py` (PC-12 PRO MSN 3008 scheme; the 3-D painter trims with one-sided smooth fields so thin strokes stay
   continuous; zero-area slivers from trims are dropped by `cad/glb.py`; per-surface bands -- wing / tailplane boots,
   winglet pinstripe (+ POD_PIN along the pod / winglet junction), blade tip bands about the thrust axis, blade LE
@@ -380,6 +382,27 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   face and the ruled top cap, creases drawn with averaged normals), strakes, flap fairings / canoes (flattened tops).
   Triangles 2.11M -> 2.13M (light tier 1.53M -> 1.54M); the reviewer's GLB bad-normal count on cowl_lower 103 -> 45
   (the rest: quantised sub-millimetre faces at the lip face's ends and the keel step; none in the float mesh).
+  Review r3 (RES3-01 major: at the default orbit distance the old and new models rendered the same -- the old one was
+  already sub-pixel there -- so the gain must be detail where the close-up cameras look, and shown to the owner as
+  before / after pairs, out/tmp/owner_gallery 01-14): real geometry instead of painted lines and cut edges -- the cowl
+  joints are grooves in the skin (`details.cowl_grooves`, above), the spinner's base edge a rolled R 3 edge
+  (`powerplant.SPINNER_BASE_ROUND`, <= 0.9 mm off the drawn corner), the blade seal rings moulded with rolled edges
+  (`BOOT_INNER_ROUND`, `BOOT_ROUND_N`; outline through `res.seg`), and 3x the spinner's profile rows at RES 2 (its
+  streaks zig-zagged once per 6 mm row in the close-ups; the propeller part 58k -> 177k triangles); RES3-03 the leg
+  door's tyre blister is a smooth envelope (no final max() back up to the need: smooth Gaussian lifts within
+  `BLISTER_SHORT_TOL` 0.25 mm), read through a bicubic spline, sampled on a 4 mm grid over it
+  (`LEG_DOOR_BLISTER_STEP`) and shaded with the analytic normal of y = leg_door_bl(x, z) (it looked dented); RES3-04
+  the strakes' section has a constant thickness, a round tip edge and its root sunk 15 mm into the tail cone
+  (`STRAKE_ROOT_SINK`; the 15 % root / tip ramps drew a crinkled highlight), and the canoes' flattened tops are their
+  own patches (`details._crease_split`: averaged across that edge the body's normals leaned up to 45 deg); RES3-02 the
+  chin lip outline is cut by two single-sided trims (the front-view outline, then the side-view crescent, both pieces
+  of the first cut taking the second: no T-junctions), not one max() field; the cheek and lip edges longer than 3 mm
+  beside the lip's top outboard corners are split twice before the snap (`powerplant._refine_cheek_corners`,
+  CHIN_CORNER_BOX: the sheared columns' slivers drew the cowl's streak there as a zig-zag; off the lip face / nose,
+  open boundaries kept); and a dark skirt from the exact mouth edge 8 mm into the duct (`chin_mouth_skirt`,
+  CHIN_MOUTH_SKIRT: the duct entry's first ring resamples the jagged mouth loop at 96 points, and the up to 0.7 mm
+  gaps between them showed the dark cowl interior as specks along the lip).  Not changed: the slivers on the lip face
+  itself at those corners (their re-meshing is open).  Triangles 2.13M -> 2.32M (light tier 1.54M -> 1.62M).
 - Viewer interior tour (owner 2026-10-03: "no good link to actually navigate into the interior"): `web/viewer/tour.js`.
   The toolbar's first group is an accent 'Go inside' menu button (also key I; the 'Cockpit' preset button / key 5 now
   enter at the pilot seat) opening a menu of 7 stops -- pilot / co-pilot seat (L6 design eye = pc12_meta 'cockpit'),
@@ -420,6 +443,20 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   (both per seat region in tour_data); the vestibule keeps WALL_CLEAR from the closed airstair door's lining (BL
   -0.30; `vestibule_door` widens it to -0.45 while the door is open); the airstair stop looks out at -38 deg (was
   -52: a portrait phone saw only the treads).  viewer_test [T12] checks them.
+  Review r3 (NAV3-01..05, viewer_test [T13]): a forward walk held at the flight deck's front face carries on down into
+  `crew_gap`, the eye gliding (SINK 0.6 m/s) to the seated eye (`eye_z`) and the walk ending level with the seated
+  eyes (`face_x0`, >= 0.45 m to the flight deck in the line of sight): the way back into a crew seat by walking, a
+  sidestep then enters either seat; a walk
+  from a stop's steep look (pilot -21, airstair -48) levels the view to -6 deg over ~0.5 s in the standing regions and
+  the doorway (`Tour.pitchAuto`; any R / F / drag keeps the user's pitch); walking aft while looking aft ends
+  FACE_CLEAR 0.90 short of the baggage partition (tour_data aisle `face_x1`; backing up still reaches the cabin_fwd
+  stop); in a seat the walk into it turned round (`Tour.seatFlip`: an aft-facing seat from a forward walk), the
+  strafe that pushes into the side wall slides back out to the aisle (a seat-type latch carries it to the aisle / gap
+  centre line, whichever way the view points); the airstair stop stands inside the door frame
+  (BL -0.42, `AIRSTAIR_EYE_BL`) looking -112 / -48 deg down the steps (`pitch_portrait` -38 on portrait screens), its
+  hint under the toolbar; the controls hint fades 2.5 s after the first look / walk input; the walnut veneer gets a
+  viewer override (`materials.js` VIEWER veneer_walnut: warmer brown, envMapIntensity 0.5 -- the studio in its clear
+  coat had read as grey-mauve plastic).
 - Viewer propeller in motion (owner 2026-10-03: "the propeller spinning doesn't look too real"; `web/viewer/propblur.js`,
   viewer only, no GLB change): once the blades turn more than a few degrees a frame they cross-fade into a prop disc
   (child of the spinning `propeller` node, plane of rotation on the pivot's thrust axis) whose shader draws the
@@ -447,6 +484,14 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   blades cross-fade over FADE_DEG [6, 10] (24-40 rpm at 60 fps; [4, 14] left half-faded 'grey glass' blades for ~1 s;
   alpha hashing speckled them).  viewer_test [PR2-01] measures the band's frame-to-frame change, ghost and disc
   see-through on its pixels, [PR2-02] the fade window.
+  Review r3 (PR3-01..03): the ghost is GHOST 0.72 over GHOST_SWEEP 0.45 blade spacings (0.35 / 0.7 left a uniform grey
+  veil at every governed rpm; the photos and the 50-200 rpm spool frames show a fan of five smeared blades), still
+  advancing <= GHOST_STEP 0.4 a frame, none on the band; the disc picks as the propeller only over its root smear
+  (`PropBlur.pickCore`, r < 0.45 m), further out the parts behind it take the click and the disc is only the fallback
+  (main.js pick()); edge-on its alpha drops to GRAZE_ALPHA 0.55 (|view . axis| < 0.03, full from 0.25: a flat disc's
+  coverage tends to 1 there -- an opaque black crescent).  viewer_test: the azimuthal smoothness is measured on the
+  true pattern (ghost zeroed), [PR3-01] the ghost's fan (azimuthal sd 4-35 %), [PR3-02] picks through the disc,
+  [PR3-03] the edge-on disc translucent.
 - Final judge r1 fixes, MODELLING only (2026-10-03; the owner put Blender on hold until the model is signed off, so
   the r1 render-stage changes -- airfield backplate / terrain, wheel close-up catcher, beauty preset tweaks -- stay
   parked on local branch `wip/final-fix-r1-partial`): G3000 PRIME pages in the GLB (above;

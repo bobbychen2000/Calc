@@ -18,7 +18,8 @@ Every number comes from the source-tagged tables the L6 / L6B sheets draw and mo
               club             PAX 3's seated eye (interior.cabin_pose, 50th pct: seat_map 'PAX 3', the club four's
                                port forward-facing seat), looking forward across the club
               airstair         standing in the airstair door's clear opening (fuselage_parts.AIRSTAIR, DOOR_SILL_WL),
-                               the door open, looking out and down the steps (the treads, handrails, the wing)
+                               the door open, looking out and down the steps between the lined jambs (the treads,
+                               handrails; `pitch_portrait`: a portrait screen's pitch)
             `via`: points from the stop out to the aisle centre band (|BL| <= AISLE_BAND); a flight runs stop ->
             via -> along the aisle -> the other stop's via (reversed) -> stop.  `approach`: the exterior pose the
             camera flies to before it fades into the cabin from outside.
@@ -45,7 +46,9 @@ Every number comes from the source-tagged tables the L6 / L6B sheets draw and mo
             regions marked `ceil` are also held MARGIN below the headliner / lining (`ceiling`); `zw` (default the
             walker's 0.1) is the height weight of a region in the projection.  A region end facing a full-height wall
             head-on keeps the eye WALL_CLEAR from it (review r1 NAV1-02: at 12 cm from the baggage curtain, with the
-            1 cm near plane, the whole view was a blurred smear).
+            1 cm near plane, the whole view was a blurred smear); the aisle's `face_x1`: a walk aft while looking aft
+            ends FACE_CLEAR ahead of the baggage partition (review r3 NAV3-04: at WALL_CLEAR the FR34 header and the
+            curtain filled the screen as one flat wall; backing up, the cabin_fwd stop's eye is still reached).
   ceiling   the highest eye WL at (x, |y|) on a grid: the cabin headliner (interior.headliner_z: flat channel, soffit
             bands, curved side lining), the flight-deck lining crown (interior.lining_crown) with the overhead panel
             (OVERHEAD x, w, depth) hanging below it -- the lowest surface within MARGIN of the point, less MARGIN.
@@ -84,6 +87,8 @@ I.lining_section = lambda x, n=1441: _section_cached(float(x), int(n))
 
 MARGIN = 0.10          # eye-point clearance to the lining, headliner, seats and walls [E: a head ~0.10 round the eye]
 WALL_CLEAR = 0.40      # eye to a full-height wall faced head-on at a walk's end: a head plus the near-plane margin [E]
+FACE_CLEAR = 0.90      # ... the aft end of the aisle while looking aft: the curtain / header read as an end wall with the
+#                        side lining and the last seats in view (review r3 NAV3-04) [E]
 DIVIDER_CLEAR = 0.30   # the vestibule's forward end to the divider's aft face (the airstair door's front jamb is
 #                        at DIVIDER x_aft + 0.09: the vestibule must still reach the doorway) [E]
 FD_AFT_OF_PEDESTAL = 0.30   # the flight deck's walkable front: this far aft of the pedestal's aft end, between the seat
@@ -96,9 +101,15 @@ CROUCH_MIN = 0.95      # lowest standing / crouching eye above the floor [E: a s
 DOOR_EYE = 1.22        # eye above the airstair sill, standing (stooped) in the 1.35 m clear opening [E]
 SEAT_POCKET = (0.08, 0.06, 0.12)   # seated-eye pocket: +/- along x, below / above the eye [E]
 FOV_CREW, FOV_CABIN = 74.0, 70.0   # vertical field of view (deg), widened on narrow viewports by the viewer
-AIRSTAIR_LOOK = (-105.0, -38.0)    # airstair stop: heading (deg, 0 = aft, -90 = port) and pitch (deg): the steps, the
-#                                    handrails, the wing and the horizon in the door frame [E] (review r2 NAV2-05: at
-#                                    -52 a portrait phone saw only the treads and the desktop view half studio floor)
+AIRSTAIR_LOOK = (-112.0, -48.0)    # airstair stop: heading (deg, 0 = aft, -90 = port) and pitch (deg): down the steps
+#                                    and handrails between the door jambs [E] (review r2 NAV2-05: at -52 a portrait
+#                                    phone saw only the treads; review r3 NAV3-02: from BL -0.55 at -105 / -38 the port
+#                                    wing filled ~40 % of a landscape view and the treads were a small box at the
+#                                    bottom: from inside the frame, 7 deg further forward and 10 deg further down, the
+#                                    jambs frame the treads and the wing is a corner of the view)
+AIRSTAIR_PITCH_PORTRAIT = -38.0    # ... on a portrait screen (taller view, optical axis 40 % down: tour.js)
+AIRSTAIR_EYE_BL = -0.42            # the eye's BL in the open door: inside the frame, 0.12 m outboard of the closed door's
+#                                    lining line (vestibule edge), so the lined jambs frame the view [E]
 VESTIBULE_WALL_Z = 1.00            # eye height above the floor at which the vestibule keeps WALL_CLEAR from the closed
 #                                    airstair door's lining (the lowest crouch, where the curved wall is furthest out)
 
@@ -200,10 +211,14 @@ def regions():
                  f"(PEDESTAL x aft end {ped_x1:.3f}), between the seat backs"),
         dict(id="crew_gap", label="between the crew seats", x=[e_crew[0] - dx, fd_x0 + 0.02], y=[-fd_hw, fd_hw],
              z=[e_crew[2] - dzl - 0.02, e_crew[2] + dzu], ceil=True, zw=1.0,
-             src="interior.design_eye (seated eye height), CREW_SEAT bl / head_hwt: out of a crew seat"),
+             eye_z=round(float(e_crew[2]), 4), face_x0=round(float(e_crew[0]), 4),
+             src="interior.design_eye (seated eye height), CREW_SEAT bl / head_hwt: out of a crew seat; a forward walk "
+                 "into it (review r3 NAV3-01) at the seated eye (eye_z), ending level with the seated eyes (face_x0)"),
         dict(id="aisle", label="aisle", x=[xa - 0.04, float(I.BAGGAGE["partition_x"]) - WALL_CLEAR],
              y=[-aisle_hw, aisle_hw], z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
-             src="EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain) - WALL_CLEAR"),
+             face_x1=round(float(I.BAGGAGE["partition_x"]) - FACE_CLEAR, 4),
+             src="EXEC_SEAT bl / width; DIVIDER x_aft .. BAGGAGE partition_x (curtain) - WALL_CLEAR; looking aft "
+                 "FACE_CLEAR"),
         dict(id="vestibule", label="entry vestibule", x=[xa + DIVIDER_CLEAR, lh_x0 - 0.08], y=[-vest_hw, 0.0],
              z=[fl + CROUCH_MIN, fl + 2.0], ceil=True,
              src="CLEAR_ZONES entry_bl (no furniture abeam the airstair door), DIVIDER x_aft + DIVIDER_CLEAR .. "
@@ -300,11 +315,12 @@ def stops():
     # the open door, looking out and down the steps (review r1 NAV1-05: looking aft from the door well the jamb and
     # the paint cut a wedge into the frame and the stop was one more view down the cabin): aft-outboard and down
     # over the treads and handrails to the wing root
-    e = np.array([A["cx"], -0.55, sill + DOOR_EYE])
+    e = np.array([A["cx"], AIRSTAIR_EYE_BL, sill + DOOR_EYE])
     yaw, pitch = np.radians(AIRSTAIR_LOOK[0]), np.radians(AIRSTAIR_LOOK[1])
     out.append(dict(id="airstair", label="Airstair door", fov=FOV_CABIN, doors={"door_airstair": 1},
                     note="In the open door, looking down the steps", eye=e,
                     target=e + np.array([np.cos(pitch) * np.cos(yaw), np.cos(pitch) * np.sin(yaw), np.sin(pitch)]),
+                    pitch_portrait=AIRSTAIR_PITCH_PORTRAIT,
                     via=[np.array([A["cx"], -0.33, sill + DOOR_EYE]),
                          np.array([A["cx"] + 0.10, -(AISLE_BAND - 0.01), fl + STAND_EYE - 0.05])],
                     approach="door", src="fuselage_parts.AIRSTAIR (cx, hz), DOOR_SILL_WL; heading AIRSTAIR_LOOK [E]"))

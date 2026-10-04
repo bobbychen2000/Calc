@@ -178,6 +178,10 @@ output { font-family: var(--mono); font-size: 12.5px; min-width: 4.2em; text-ali
 #detailChip #detailChipLoad { padding: 0 12px; background: var(--accent); color: var(--accent-text); font-weight: 600; }
 #app.panel-open #tourHint, #app.panel-open #detailChip { left: calc((100% - var(--panel-w)) / 2); max-width: calc(100% - var(--panel-w) - 2 * var(--gutter)); }
 #tourHintText { min-width: 0; text-align: center; }
+#tourHint { transition: opacity 0.4s ease; }
+#tourHint.fading { opacity: 0; }
+/* the airstair stop: under the toolbar (its treads fill the bottom of the view) */
+#tourHint.top { bottom: auto; top: calc(var(--gutter) + 52px); }
 #tourPad {
   position: absolute; left: max(var(--gutter), env(safe-area-inset-left)); bottom: calc(var(--gutter) + 64px); z-index: 5;
   display: grid; grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(2, 40px); gap: 4px;

@@ -111,6 +111,11 @@ const VIEWER = {
   carpet_orange: { envMapIntensity: 0.45 },
   carpet_light: { envMapIntensity: 0.45 },
   carpet_grey: { envMapIntensity: 0.45 },
+  // the walnut divider / FR34 header / table tops: the lookdev's dark grey-brown under a gloss lacquer read as grey-mauve
+  // plastic in the tour (review r3 NAV3-04: the unoccluded white studio in its clear coat, lifted by the interior's
+  // +0.6 EV, ~154/144/139); the panels stand in a narrow passage and mirror the cabin, not the studio: less
+  // environment (an occlusion stand-in) and a warmer, more saturated brown (P1046406: dark walnut, ~sRGB 75/55/40)
+  veneer_walnut: { color: [0.075, 0.042, 0.022], envMapIntensity: 0.5 },
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   panel_titanium: { envMapIntensity: 0.6 },

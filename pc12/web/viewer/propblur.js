@@ -37,7 +37,7 @@
 // Anti-aliasing in time: the sweep is S = min(P, max(w T_eye, 2.5 w dt)) (P = 72 deg, dt = the smoothed frame time,
 // T_eye = 1/40 s): the smear always spans at least 2.5 frame steps, so the blades never jump more than 40 % of their
 // own smear between frames and never alias; by 0.4 P a frame (~290 rpm at 60 fps) the true pattern has blurred into the
-// uniform disc.  Above that a faint ghost of the blade smear (gain GHOST, its own sweep) keeps the disc reading as a
+// uniform disc.  Above that a ghost of the blade smear (gain GHOST, its own sweep) keeps the disc reading as a
 // turning propeller rather than a glass plate: its phase advances with the prop but never more than 0.4 P a frame, so
 // it always moves forward (no backwards / standing wagon wheel at any rpm or frame rate).
 import * as THREE from 'three';
@@ -48,14 +48,19 @@ const NPHI = 64;               // support-function directions
 const NZ = 32;                 // axial slices of the root boots
 const T_EYE = 1 / 40;          // exposure of the eye / a video camera (s)
 const STEP_SWEEP = 2.5;        // sweep >= 2.5 x the per-frame advance
-const GHOST = 0.35;            // gain of the moving ghost once the true pattern is uniform
-const GHOST_SWEEP = 0.7;       // its sweep (blade spacings)
+// the ghost (review r3 PR3-01): at 0.35 over a 0.7 spacing sweep the disc read as a uniform grey veil, the same at
+// 1,000 and 1,700 rpm, where photos of a running PC-12 (and the spool-up frames at 50-200 rpm) show a fan of five
+// smeared blades with dark root smears: a stronger, shorter smear keeps that look at every governed rpm
+const GHOST = 0.72;            // gain of the moving ghost once the true pattern is uniform
+const GHOST_SWEEP = 0.45;      // its sweep (blade spacings)
 const GHOST_STEP = 0.4;        // its largest advance per frame (blade spacings)
 // sweep (deg) over which the solid blades fade into the disc: [4, 14] left them half-faded -- grey glass, the cowl
 // showing through, overlaps darkening twice -- for ~1 s of every start and run-down (review r2 PR2-02); alpha hashing
 // instead speckled them with static noise (no temporal anti-aliasing here).  At 60 fps the fade now spans 24-40 rpm.
 const FADE_DEG = [6, 10];
 const DISC_IN = 0.2;           // disc inner radius (m), inside the spinner
+const PICK_CORE_R = 0.45;      // m: the disc picks as the propeller inside this radius, as a fallback outside (PR3-02)
+const GRAZE_ALPHA = 0.55;      // the disc's alpha scale seen edge-on (|view . axis| < 0.03), 1 from 0.25 (PR3-03)
 const BAND_OFF = 0.0015;       // band offset outside the chrome spinner (m)
 const BAND_FEATHER = 0.005;     // band ends and boot-outline ends feathered over this (m)
 // The disc is shaded as one dielectric: averaging a metal's colour into the albedo (and its metalness) would light the
@@ -83,6 +88,7 @@ float pbBlur(float th, float lo, float w, float s, float aa) {
 `;
 
 const GLSL_DISC_FS = GLSL_COMMON + `
+#define GRAZE_ALPHA ${GRAZE_ALPHA.toFixed(3)}
 uniform sampler2D uPbH;    // support function h(r, phi): s = radius, t = direction (repeat)
 uniform sampler2D uPbC;    // per radius: row 0 albedo + metalness, row 1 roughness, chord angle
 uniform vec4 uPbRad;       // data radius range R0, R1, radial push (explode), -
@@ -117,6 +123,9 @@ function patchDisc(mat, uni) {
   // projects to q = s . R(-p) (1, -t) along the disc's tangent
   vec3 pbV = normalize(vPbP - uPbCam);
   float pbVa = dot(pbV, uPbA);
+  // edge-on (review r3 PR3-03) the flat disc's coverage tends to 1 along the whole radius -- a near-opaque black
+  // crescent like a stopped blade seen edge-on; a running prop's swept slab stays translucent dark grey
+  float pbGraze = mix(GRAZE_ALPHA, 1.0, smoothstep(0.03, 0.25, abs(pbVa)));
   pbVa = pbVa >= 0.0 ? max(pbVa, 0.03) : min(pbVa, -0.03);
   float pbT = dot(pbV, pbEt) / pbVa;
   float pbPt = uPbBlur.z;
@@ -138,7 +147,7 @@ function patchDisc(mat, uni) {
   vec4 pbC1 = texture2D(uPbC, vec2(pbS, 0.75));
   // three blends after tone mapping and the sRGB encoding: the alpha that makes that blend the linear-light average
   // of blade and background over the exposure (a coverage c would darken ~twice as much)
-  diffuseColor = vec4(pbC0.rgb, (1.0 - pow(1.0 - clamp(pbCov, 0.0, 1.0), 0.4545)) * uPbBlur.w);
+  diffuseColor = vec4(pbC0.rgb, (1.0 - pow(1.0 - clamp(pbCov, 0.0, 1.0), 0.4545)) * pbGraze * uPbBlur.w);
   // the selection / hover highlight on the whole disc (the overlays of the hidden blades are not drawn)
   diffuseColor.rgb = mix(diffuseColor.rgb, uPbTint.rgb, uPbTint.a);
   diffuseColor.a += (1.0 - diffuseColor.a) * uPbTint.a * 0.45 * uPbBlur.w;`)
@@ -411,7 +420,8 @@ export class PropBlur {
       m.visible = false;
       prop.node.add(m);
     }
-    // the disc stands for the propeller in picking once the blades have faded into it (main.js maps it to the part)
+    // the disc stands for the propeller in picking once the blades have faded into it (main.js maps it to the part;
+    // outside the root smear it is only a fallback behind the parts seen through it: pickCore)
     disc.raycast = (rc, hits) => { if (this.fade >= 0.5) THREE.Mesh.prototype.raycast.call(disc, rc, hits); };
     // the chrome spinner, held still against the spin once the blur is complete (PR1-03)
     // (the mesh's own local transform -- KHR_mesh_quantization's offset and scale -- is premultiplied by the inverse
@@ -565,6 +575,15 @@ export class PropBlur {
     this.band = new THREE.Mesh(g, mat);
     this.band.name = 'prop_blur_band';
     this.bandFit = { cf, zm, hz, zb0, zb1, z0, z1, lift, rs: Array.from(rs) };
+  }
+
+  // a pick on the disc at world point p counts as the propeller only over the dense root smear (r < PICK_CORE_R on the
+  // unexploded blades); further out the disc is 80-94 % see-through and the cowl, stacks and nose gear behind it take
+  // the click (review r3 PR3-02; main.js pick() keeps an outer disc hit as the fallback when nothing else is hit)
+  pickCore(p) {
+    const q = this.prop.node.worldToLocal(p.clone());
+    const { e1, e2 } = this.frame;
+    return Math.hypot(q.dot(e1), q.dot(e2)) - this.push < PICK_CORE_R;
   }
 
   // radial offset of the blades (explode / build fly-in, m): the disc grows, its data shift outward

@@ -483,6 +483,12 @@ STRAKE_ROOT = ((9.750, 1.365), (12.190, 1.955))   # attachment line on the tail-
 STRAKE_TIP = ((9.790, 1.335), (11.870, 1.530))    # lower (tip) edge; aft edge from its end to the root end
 STRAKE_CANT = np.radians(11.0)                      # from vertical, tip outboard
 STRAKE_T = 0.022                                    # plate thickness
+# review r3 RES3-04: the plate's section was a polyline whose thickness ramped down to 15 % at the root and the tip
+# (min(1, 6 min(s, 1 - s) + 0.15)): its kinks, averaged into the vertex normals, drew a crinkled highlight along the
+# strake, and the thin root lay flattened on the tail cone.  Now: constant thickness, a round tip edge (radius = half
+# the thickness, its outermost point on the drawn tip line) and the root sunk STRAKE_ROOT_SINK into the tail cone (the
+# skin cuts the plate along a clean root line, as the attached plate does)
+STRAKE_ROOT_SINK = 0.015
 
 
 def strake_frame(x):
@@ -975,9 +981,12 @@ def build_bullet():
 
 def build_strakes():
     """Two canted ventral strakes: thin plates between the root line (on the tail-cone side) and the tip line."""
+    from cad import res
     ms = []
     (r0x, _), (r1x, _) = STRAKE_ROOT
-    xs = np.linspace(r0x + 0.01, r1x - 0.005, 40)
+    k = res.factor()
+    xs = np.linspace(r0x + 0.01, r1x - 0.005, int(round(40 * k)))
+    n_side, n_round = int(round(8 * k)), 2 * int(round(4 * k)) + 1
     for sgn in (1, -1):
         rows = []
         for x in xs:
@@ -989,11 +998,15 @@ def build_strakes():
             L = max(np.linalg.norm(d), 1e-4)
             u = d / L
             nrm = np.array([0.0, u[2], -u[1]])          # plate normal (in the cross-section plane)
-            ss = np.linspace(0, 1, 8)
-            h = 0.5 * STRAKE_T * np.minimum(1.0, 6 * np.minimum(ss, 1 - ss) + 0.15) * min(1.0, L / 0.05)
-            a = r[None] + ss[:, None] * d[None] + h[:, None] * nrm[None]
-            b = (r[None] + ss[:, None] * d[None] - h[:, None] * nrm[None])[::-1]
-            ring = np.vstack([a, b[1:-1]]) if len(a) > 2 else np.vstack([a, b])
+            hh = 0.5 * STRAKE_T * min(1.0, L / 0.05)     # half-thickness (thinner only at the pointed forward end)
+            rr = min(hh, 0.45 * L)                       # tip-edge radius
+            e = L - rr                                   # the tip round's centre along the plate
+            w = np.linspace(-STRAKE_ROOT_SINK, e, n_side)
+            a = r[None] + w[:, None] * u[None] + hh * nrm[None]
+            ph = np.linspace(0.5 * np.pi, -0.5 * np.pi, n_round)[1:-1]
+            tip = r[None] + (e + rr * np.cos(ph))[:, None] * u[None] + (hh * np.sin(ph))[:, None] * nrm[None]
+            b = (r[None] + w[:, None] * u[None] - hh * nrm[None])[::-1]
+            ring = np.vstack([a, tip, b])
             if sgn < 0:
                 ring = ring * [1, -1, 1]
             rows.append(ring)

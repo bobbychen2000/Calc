@@ -572,6 +572,24 @@ def _lower_surface_z(sec, x):
     return sec.lower(xc)[:, 2]
 
 
+def _crease_split(m, top):
+    """m with the faces lying flat on the skin (all three vertices flattened: `top`) as their own patch: the canoe body
+    and its flattened top each carry their own normals, a crisp edge where the body meets the skin (review r3 RES3-04:
+    averaged across that edge the body's vertex normals leaned up to ~45 deg off their faces -- the flap fairings 15 %
+    and the canoes 12 % 'faceted' -- and drew a soft false highlight along the junction)."""
+    ft = top[m.F].all(1)
+    out = []
+    for sel in (ft, ~ft):
+        if not sel.any():
+            continue
+        F_ = m.F[sel]
+        used = np.unique(F_)
+        remap = np.full(len(m.V), -1, int)
+        remap[used] = np.arange(len(used))
+        out.append(Mesh(m.V[used], remap[F_]))
+    return Mesh.merge(out)
+
+
 def flap_canoes():
     """(fixed forward parts, {side: flap-carried aft parts}) of the flap-track canoes, flaps retracted."""
     fixed, aft = [], {"R": [], "L": []}
@@ -601,7 +619,7 @@ def flap_canoes():
             # lower contour aft of the lip); aft of the trailing edge the tail stays round
             clamp = (V[:, 0] <= te) & (V[:, 2] > zs)
             V[:, 2] = np.where(clamp, zs, V[:, 2])
-            c = Mesh(V, c.F)
+            c = _crease_split(Mesh(V, c.F), clamp)
             if dst == "fixed":
                 fixed += [c, c.mirrored_y()]
             else:
@@ -752,13 +770,18 @@ def winglet_light_caps(sgn, split=0.45, lift=0.0008):
 #   * the lower oil-cooler exit on the port lower cowl (a dark recess under a straight lip, STA 2.12-2.40, 35 mm tall
 #     at its forward end, 92 mm at the aft end, lip WL 1.487) and a round louvred vent (~75 mm, STA ~2.80, WL ~1.48)
 #     -- port side only (seen in 188; no starboard close-up).
-# Painted-on dark 'seam' lines COWL_SEAMS['width'] wide, 'lift' proud of the skin (the engraved joints at the photo's
-# scale); the louvre is its dark opening on the skin under a small raised lip.
+# The ring joints and the split line are real grooves in the skin (review r3 RES3-01, COWL_GROOVES: the joints had
+# been painted-on dark lines): a slot COWL_SEAMS['width'] wide cut out of the cowl skin, its walls -- painted with the
+# skin by the livery -- COWL_GROOVES['depth'] deep, a dark sealant floor ('seam'); the firewall joint (STA 3.00, the
+# cowl's aft edge against the forward fuselage) is the slot's width on the cowl side, walled on both.  The latch
+# outlines (26 x 88 mm, smaller than a skin cell) and the louvred vent stay painted-on dark lines COWL_SEAMS['width']
+# (latches 0.6 x) wide, 'lift' proud of the skin; the louvre is its dark opening on the skin under a small raised lip.
 COWL_SEAMS = dict(rings=(2.00, 3.00), split_wl=1.600, split_x=(2.00, 3.00), width=0.0025, lift=0.0004,
                   bottom_gap=(0.44, 0.56), latches=((2.21, 1.620), (2.72, 1.625)), latch=(0.026, 0.088, 0.006))
 # final judge r1 LIV-F1-03: the 280 x 92 mm pure-black patch read as a pasted decal next to photo 188's small recessed
 # slot with lit lips -> ~30 % smaller (about its aft end, which the lip line keeps), the opening a dark GREY recess
 # ('vent_dark') with a shadow band under the lip ('inlet_dark', the upper 40 %)
+COWL_GROOVES = dict(depth=0.0012)
 OIL_COOLER_EXIT = dict(x=(2.20, 2.40), top=1.487, h_fwd=0.025, h_aft=0.064, lip=(0.006, 0.003), side=-1, shade=0.40)
 COWL_VENT = dict(x=2.80, wl=1.480, r=0.037, slats=4, side=-1)
 
@@ -797,23 +820,7 @@ def cowl_seams():
     """(upper, lower) seam-line meshes of the cowling (COWL_SEAMS, split at the model's cowl split WL)."""
     q = COWL_SEAMS
     out = []
-    h = 1e-4
-    for xr in q["rings"]:                                   # ring joints: the OML section at xr
-        for t0, t1 in ((q["bottom_gap"][1] - 1.0, q["bottom_gap"][0]),):
-            t = np.linspace(t0, t1, 400) % 1.0
-            P = F.section(np.full(len(t), xr), t)
-            Pt = F.section(np.full(len(t), xr), (t + h) % 1.0)
-            Px = F.section(np.full(len(t), xr + h), t)
-            N = np.cross(Pt - P, Px - P)
-            N /= np.linalg.norm(N, axis=1)[:, None]
-            c = np.array([xr, 0.0, float(np.mean(P[:, 2]))])
-            if np.mean(np.sum((P - c) * N * [0, 1, 1], 1)) < 0:
-                N = -N
-            out.append(_surface_ribbon(P, N, q["width"], q["lift"]))
-    for side in (1, -1):                                    # the upper / lower split with the latch outlines
-        xs = np.linspace(q["split_x"][0], q["split_x"][1], 120)
-        P, N, _, _ = _oml_frame(xs, np.full(len(xs), q["split_wl"]), side)
-        out.append(_surface_ribbon(P, N, q["width"], q["lift"]))
+    for side in (1, -1):                                    # the latch outlines (the joints are grooves: cowl_grooves)
         lw, lh, lr = q["latch"]
         for xc, zc in q["latches"]:
             a = np.linspace(0, 2 * np.pi, 80)
@@ -837,6 +844,114 @@ def cowl_seams():
     m = Mesh.merge(out)
     zc = F.PROP_AXIS_Z + 0.02                               # the parts' split (fuselage_parts.build)
     return trim(m, m.V[:, 2] - zc, "positive"), trim(m, m.V[:, 2] - zc, "negative")
+
+
+def groove_fields():
+    """The cowl joints of COWL_SEAMS as slots: per groove the half-space fields (negative inside) whose intersection is
+    the slot -- the ring joints at constant STA over the sides and top (not across the nose-bay opening under the
+    keel: |BL| < the section's BL at bottom_gap), the firewall joint on the cowl side of STA 3.00, the upper / lower
+    split line at split_wl between the rings."""
+    q = COWL_SEAMS
+    w = q["width"]
+    xf = float(F.STA["firewall"])
+    out = []
+    for xr in q["rings"]:
+        yg = abs(float(F.section(np.array([xr]), np.array([q["bottom_gap"][0]]))[0, 1]))
+        x0, x1 = (xr - w, xr + 1.0) if xr >= xf - 1e-9 else (xr - 0.5 * w, xr + 0.5 * w)
+        out.append([lambda V, a=x0: a - V[:, 0], lambda V, b=x1: V[:, 0] - b,
+                    lambda V, g=yg: np.minimum(g - np.abs(V[:, 1]), F.PROP_AXIS_Z - V[:, 2])])
+    z0, z1 = q["split_wl"] - 0.5 * w, q["split_wl"] + 0.5 * w
+    out.append([lambda V: z0 - V[:, 2], lambda V: V[:, 2] - z1,
+                lambda V: q["split_x"][0] - V[:, 0], lambda V: V[:, 0] - q["split_x"][1]])
+    return out
+
+
+def _slot(m, fields):
+    """(inside every field, the rest) of m by sequential single-sided trims (fields re-evaluated on each piece)."""
+    piece, outs = m, []
+    for f in fields:
+        v = f(piece.V)
+        if not (v < 0).any():
+            return None, m
+        if (v >= 0).any():
+            outs.append(trim(piece, v, "positive"))
+            piece = trim(piece, v, "negative")
+        if piece.nf == 0:
+            return None, m
+    outs = [o for o in outs if o.nf]
+    return piece, (Mesh.merge(outs) if outs else None)
+
+
+def _open_edges(m):
+    """Directed boundary edges (a, b) of m with the third vertex c of their face, internal seams (an edge whose
+    reverse is a boundary edge at the same positions: duplicated cut vertices between merged pieces) left out."""
+    F_ = m.F
+    e = np.vstack([F_[:, [0, 1]], F_[:, [1, 2]], F_[:, [2, 0]]])
+    c = np.concatenate([F_[:, 2], F_[:, 0], F_[:, 1]])
+    key = np.sort(e, 1)
+    _, inv, cnt = np.unique(key, axis=0, return_inverse=True, return_counts=True)
+    b = cnt[inv.ravel()] == 1
+    e, c = e[b], c[b]
+    q = np.round(m.V / 1e-8).astype(np.int64)
+    fwd = {(tuple(q[i]), tuple(q[j])) for i, j in e}
+    keep = np.array([(tuple(q[j]), tuple(q[i])) not in fwd for i, j in e], bool) if len(e) else np.zeros(0, bool)
+    return e[keep], c[keep]
+
+
+def _walls(m, e, c, depth, toward_c):
+    """Groove walls hanging `depth` along -N from the edges e (with face apexes c) of m: one strip mesh (shared
+    vertices along it, smooth along / flat across), facing away from (toward_c=False) or toward the face side."""
+    if not len(e):
+        return None
+    used = np.unique(e)
+    loc = np.full(len(m.V), -1, int)
+    loc[used] = np.arange(len(used))
+    top = m.V[used]
+    bot = top - depth * m.N[used]
+    n = len(used)
+    a, b = loc[e[:, 0]], loc[e[:, 1]]
+    F_ = np.vstack([np.stack([a, b, b + n], 1), np.stack([a, b + n, a + n], 1)])
+    V = np.vstack([top, bot])
+    fn = np.cross(V[F_[:, 1]] - V[F_[:, 0]], V[F_[:, 2]] - V[F_[:, 0]])
+    side = np.einsum("ij,ij->i", fn, np.tile(m.V[c] - m.V[e[:, 0]], (2, 1)))
+    flip = (side < 0) if toward_c else (side > 0)
+    F_[flip] = F_[flip][:, ::-1]
+    UV = None if m.UV is None else np.vstack([m.UV[used], m.UV[used]])
+    w = Mesh(V, F_, UV=UV)
+    return w
+
+
+def cowl_grooves(m):
+    """Cut the cowl joints (groove_fields) into the skin mesh m: (skin with the slots cut out and their walls, the
+    slots' floor) -- the walls carry the skin's material (the livery paints them with it), the floor is the dark seam;
+    (m, None) where no groove crosses m."""
+    depth = COWL_GROOVES["depth"]
+    groups = groove_fields()
+    removed, rest = [], m
+    for fields in groups:
+        piece, r = _slot(rest, fields)
+        if piece is None:
+            continue
+        removed.append(piece)
+        rest = r
+    if not removed:
+        return m, None
+    allf = [f for fs in groups for f in fs]
+    on = np.zeros(len(rest.V), bool)
+    for f in allf:
+        on |= np.abs(f(rest.V)) < 1e-9
+    e, c = _open_edges(rest)
+    sel = on[e[:, 0]] & on[e[:, 1]]
+    walls = [_walls(rest, e[sel], c[sel], depth, toward_c=False)]
+    # the firewall joint: the slot's aft edge is the cowl's own end (STA 3.00), walled too (the fuselage side)
+    xf = float(F.STA["firewall"])
+    for p in removed:
+        ep, cp = _open_edges(p)
+        at = (np.abs(p.V[ep[:, 0], 0] - xf) < 1e-6) & (np.abs(p.V[ep[:, 1], 0] - xf) < 1e-6)
+        walls.append(_walls(p, ep[at], cp[at], depth, toward_c=True))
+    floor = Mesh.merge(removed)
+    floor = Mesh(floor.V - depth * floor.N, floor.F, floor.N.copy(), floor.UV)
+    return Mesh.merge([rest] + [w for w in walls if w is not None]), floor
 
 
 def oil_cooler_exit(n=24):
@@ -866,6 +981,15 @@ def oil_cooler_exit(n=24):
 def build(parts):
     # -------- cowling panel lines, latches, vent, oil-cooler exit (VQA r3 RQ3-09)
     if "cowl_upper" in parts and "cowl_lower" in parts:
+        for pid in ("cowl_upper", "cowl_lower"):      # the joints as grooves in the skin (RES3-01)
+            new = []
+            for m, mat in parts[pid].meshes:
+                if mat == "paint_white":
+                    m, floor = cowl_grooves(m)
+                    if floor is not None:
+                        new.append((floor, "seam"))
+                new.insert(0, (m, mat)) if mat == "paint_white" else new.append((m, mat))
+            parts[pid].meshes = new
         up, lo = cowl_seams()
         parts["cowl_upper"].add(up, "seam")
         parts["cowl_lower"].add(lo, "seam")

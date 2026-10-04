@@ -255,6 +255,8 @@ def leg_door_offset(x, z, n_iter=8):
 
 
 _BLISTER = None
+BLISTER_SHORT_TOL = 0.25e-3     # m: the smoothed blister may fall this far short of the need (LEG_DOOR_TYRE_CLEAR 10 mm)
+LEG_DOOR_BLISTER_STEP = 0.004   # m: the door face's grid over the blister (elsewhere `step`, 10 mm), RES3-03
 
 
 def leg_door_blister(x, z):
@@ -262,12 +264,16 @@ def leg_door_blister(x, z):
     (model judging r1 GR1-01): over the tyre crescent the drawn face covers, the outer face stands LEG_DOOR_T +
     LEG_DOOR_TYRE_CLEAR outboard of the static main wheel (tyre incl. the loaded bulge, wheel half, hub fairing: their
     outermost BL within 8 mm in side view), smoothed into a blister (5 mm grid, repeated Gaussian envelope >= the
-    need); 0 elsewhere.  Cached interpolator."""
+    need); 0 elsewhere.  Cached interpolator.
+    Review r3 RES3-03: the envelope is no longer clipped back up to the need at the end (that max() put the need's
+    ridges back as creases -- the door looked dented over the tyre) but lifted where it fell short by smooth Gaussian
+    corrections (BLISTER_SHORT_TOL), and it is read through a bicubic spline (linear interpolation of the 5 mm grid
+    drew its cells as facets); leg_door_mesh samples it finely and shades it with its analytic normal."""
     global _BLISTER
     if _BLISTER is None:
         from scipy.spatial import cKDTree
         from scipy.ndimage import gaussian_filter
-        from scipy.interpolate import RegularGridInterpolator as RGI
+        from scipy.interpolate import RectBivariateSpline
         A = MAIN_AXLE
         V = np.vstack([m.V for m, mat in WH.main_wheel(A, (0.0, 1.0, 0.0), 1)])
         tree = cKDTree(V[:, [0, 2]])
@@ -286,12 +292,17 @@ def leg_door_blister(x, z):
         b = b0.copy()
         for _ in range(8):
             b = gaussian_filter(np.maximum(b, b0), 3.0, mode="nearest")
-        b = np.maximum(b, b0)
-        b = gaussian_filter(b, 1.0, mode="nearest")
-        b = np.maximum(b, b0)
-        _BLISTER = RGI((xs, zs), b, bounds_error=False, fill_value=0.0)
+        for _ in range(24):                          # smooth lifts where the envelope is short of the need
+            short = np.maximum(b0 - b, 0.0)
+            if short.max() < BLISTER_SHORT_TOL:
+                break
+            b = b + 2.5 * gaussian_filter(short, 2.0, mode="nearest")
+        _BLISTER = (RectBivariateSpline(xs, zs, b, kx=3, ky=3, s=0), (xs[0], xs[-1], zs[0], zs[-1]))
     x, z = np.broadcast_arrays(np.asarray(x, float), np.asarray(z, float))
-    return _BLISTER(np.stack([x.ravel(), z.ravel()], 1)).reshape(x.shape)
+    spl, (x0, x1, z0, z1) = _BLISTER
+    xc, zc = np.clip(x.ravel(), x0, x1), np.clip(z.ravel(), z0, z1)
+    inside = (x.ravel() >= x0) & (x.ravel() <= x1) & (z.ravel() >= z0) & (z.ravel() <= z1)
+    return np.where(inside, np.maximum(spl.ev(xc, zc), 0.0), 0.0).reshape(x.shape)
 
 
 def leg_door_bl(x, z):
@@ -721,7 +732,17 @@ def leg_door_mesh(sgn, step=0.010, split=False):
     B = _densify(P, 0.8 * step)
     X, Z = np.meshgrid(np.arange(P[:, 0].min(), P[:, 0].max(), step), np.arange(P[:, 1].min(), P[:, 1].max(), step))
     Q = np.c_[X.ravel(), Z.ravel()]
-    Q = Q[sdf2d.polygon(Q[:, 0], Q[:, 1], P) < -0.5 * step]
+    # over the tyre blister (and 2 cells round it) a finer grid (RES3-03: the 10 mm cells drew the blister's curvature
+    # as dents), the coarse points there dropped
+    hs = LEG_DOOR_BLISTER_STEP
+    Xf, Zf = np.meshgrid(np.arange(P[:, 0].min(), P[:, 0].max(), hs), np.arange(P[:, 1].min(), P[:, 1].max(), hs))
+    Qf = np.c_[Xf.ravel(), Zf.ravel()]
+    zone = lambda q: leg_door_blister(q[:, 0] + np.array([[0.0], [2 * step], [-2 * step], [0.0], [0.0]]),   # noqa: E731
+                                      q[:, 1] + np.array([[0.0], [0.0], [0.0], [2 * step], [-2 * step]])).max(0) > 1e-4
+    Q = Q[~zone(Q)]
+    Qf = Qf[zone(Qf)]
+    Q = np.vstack([Q, Qf])
+    Q = Q[sdf2d.polygon(Q[:, 0], Q[:, 1], P) < -0.5 * hs]
     pts = np.vstack([B, Q])
     tri = Delaunay(pts).simplices
     T3 = pts[tri]
@@ -733,7 +754,13 @@ def leg_door_mesh(sgn, step=0.010, split=False):
     outer = Mesh(V, tri)
     if outer.face_normals()[:, 1].mean() < 0:              # outer face points outboard (+y)
         outer = outer.flipped()
-    outer.compute_normals()
+    # the analytic normal of the face y = leg_door_bl(x, z) (RES3-03; area-weighted face normals of the Delaunay mesh
+    # wobbled with its triangles' shapes)
+    e = 2e-4
+    gx = (leg_door_bl(V[:, 0] + e, V[:, 2]) - leg_door_bl(V[:, 0] - e, V[:, 2])) / (2 * e)
+    gz = (leg_door_bl(V[:, 0], V[:, 2] + e) - leg_door_bl(V[:, 0], V[:, 2] - e)) / (2 * e)
+    Na = np.c_[-gx, np.ones(len(V)), -gz]
+    outer.N = Na / np.linalg.norm(Na, axis=1, keepdims=True)
     loops = boundary_loops(outer)
     if len(loops) != 1:
         raise RuntimeError("leg door face triangulation is not a single patch")

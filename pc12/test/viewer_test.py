@@ -19,7 +19,9 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
   - propeller in motion (owner 2026-10-03, web/viewer/propblur.js): solid blades only while they turn < P / 8 a frame
     (60 / 30 fps), the blur sweep >= 2.5 frame steps, the ghost only moves forward (<= 0.4 P a frame), the disc in the
     plane of rotation on the thrust axis just outside the tips, kept in X-ray / cutaway / explode, spool-up / run-down
-    times, and pixels: the averaged disc 60-97 % see-through, azimuthally smooth, the white tip ring
+    times, and pixels: the averaged disc 60-97 % see-through, the true pattern azimuthally smooth, the white tip
+    ring; review r3: the ghost's fan visible at 1,700 rpm [PR3-01], picks through the outer disc reach the parts
+    behind it [PR3-02], the disc translucent edge-on [PR3-03]
   - review round-2 (viewer): AgX + Punchy look and per-theme exposure, one GLB request (preloaded), the
     meshopt-compressed GLB (web/package.py) decodes to the same triangles, loading errors without WebGL 2 or when a
     module fails to load, phone pixel ratio (taps keep it, drags and their coast drop it), 40 px touch targets,
@@ -33,7 +35,9 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
   - interior tour (viewer/tour.js, owner 2026-10-03 "no good link to navigate into the interior"): the toolbar entry
     (desktop and phone), every stop reached from the menu with the camera inside the cabin (tables and ray clearances)
     and well exposed (both themes), the walk held inside the cabin at every boundary, keyboard / pointer / touch
-    controls, the flights, and exit restoring the exterior state; the tour data current with the interior tables
+    controls, the flights, and exit restoring the exterior state; the tour data current with the interior tables;
+    review r3 [T13]: a forward walk into a crew seat, the walk levelling a stop's steep look, the aisle's aft end
+    looking aft, the strafe out of an aft-facing seat, the airstair stop and its hint
 Optional --blender: re-imports out/pc12.glb in Blender (bpy, /opt/venv-blender) and checks
 that Blender's scene graph gives the same part boxes and posed points as the viewer, and runs a
 BVH interference sweep of the gear against doors / flaps / flight deck.  Interferences that are
@@ -935,11 +939,11 @@ async def regression_checks(page):
           f"flaps readout '{r['flaps']}', aileron R '{r['ail']}'")
     # [UX-5] shortcuts after clicking a slider / a toolbar button
     await js(page, V + "T.neutral(); V.setXray(false); V.setCutaway(false); V.setConstruction(false); V.play(false); V.tab('build');")
-    await page.click("#explode")
+    await page.click("#explode", timeout=SHOT_TIMEOUT)      # (the actionability wait: two rAFs, slow on a loaded machine)
     await page.keyboard.press("x")
     s1 = await js(page, "return window.viewer.state;")
     await page.keyboard.press("x")
-    await page.click("#tLines")
+    await page.click("#tLines", timeout=SHOT_TIMEOUT)
     await page.keyboard.press(" ")
     s2 = await js(page, "return window.viewer.state;")
     check("[UX-5] shortcuts work after clicking a slider; Space plays after clicking a button",
@@ -1206,14 +1210,15 @@ async def prop_blur_checks(page):
       T.neutral(); V.panel(false); V.setCamera({pos: [-1.5, 2.25, -0.5], target: [0, 1.7, 1.1], fov: 32}, {instant: true});
       V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.5);
       const M = I.model, THREE = I.THREE, cam = I.stage.camera, cv = I.stage.renderer.domElement.getBoundingClientRect();
-      const prop = M.parts.get('propeller').node, picks = {};
+      const prop = M.parts.get('propeller').node, picks = {}, core = {};
       for (let k = 0; k < 30; k++) {
         V.advance(1 / 60); prop.updateMatrixWorld(true); cam.updateMatrixWorld();
-        for (const [r, a] of [[0.6, 0.3], [0.9, 2.0], [1.1, 4.1]]) {
+        for (const [r, a] of [[0.3, 0.3], [0.6, 0.3], [0.9, 2.0], [1.1, 4.1]]) {
           const f = B.frame, p = new THREE.Vector3().addScaledVector(f.e1, r * Math.cos(a)).addScaledVector(f.e2, r * Math.sin(a))
             .applyMatrix4(prop.matrixWorld).project(cam);
           const id = V.pick(cv.left + (p.x + 1) / 2 * cv.width, cv.top + (1 - p.y) / 2 * cv.height);
           picks[id] = (picks[id] || 0) + 1;
+          if (r < 0.4) core[id] = (core[id] || 0) + 1;
         }
       }
       const hidden = B.fadeRecs.length > 0 && B.fadeRecs.every((mr) => !mr.mesh.visible);
@@ -1246,12 +1251,50 @@ async def prop_blur_checks(page):
       V.setProp({rpm: 0, pitch: 0}, {instant: true}); V.advance(0.05);
       const back = chrome ? B.still[0].mesh.quaternion.equals(B.still[0].q0) && B.still[0].mesh.position.equals(B.still[0].p0) : false;
       T.neutral(); V.panel(true);
-      return {picks, hidden, ovl: ovl.length, drawn, tint, tint0, still, off, at, back};
+      return {picks, core, hidden, ovl: ovl.length, drawn, tint, tint0, still, off, at, back};
     """)
-    check("[PR1-01] blurred prop: the faded blades are hidden meshes, a pick over the disc is 'propeller' (never a blade), "
-          "a selected blade draws no overlay, the disc is tinted instead",
-          r["hidden"] and list(r["picks"]) == ["propeller"] and r["ovl"] > 0 and r["drawn"] == 0 and r["tint"] > 0.2 and r["tint0"] == 0,
-          f"picks {r['picks']}, overlays {r['drawn']}/{r['ovl']} drawn, tint {r['tint']:.2f} -> {r['tint0']:.2f}")
+    check("[PR1-01] blurred prop: the faded blades are hidden meshes, a pick over the disc's root smear is 'propeller' "
+          "(never a blade; further out the part behind it, PR3-02), a selected blade draws no overlay, the disc is tinted instead",
+          r["hidden"] and list(r["core"]) == ["propeller"] and not any(k and k.startswith("blade_") for k in r["picks"])
+          and r["ovl"] > 0 and r["drawn"] == 0 and r["tint"] > 0.2 and r["tint0"] == 0,
+          f"picks {r['picks']} (root smear {r['core']}), overlays {r['drawn']}/{r['ovl']} drawn, tint {r['tint']:.2f} -> {r['tint0']:.2f}")
+    # review r3 PR3-02: with the prop at 1,700 rpm in the 3/4 view, the cowl, chin inlet, stacks and nose gear seen through
+    # the outer disc are picked as themselves (the whole 2.67 m disc had caught every click)
+    rp = await js(page, V + r"""
+      T.neutral(); V.panel(false); V.setCamera('three_quarter', {instant: true});
+      V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.5);
+      const M = I.model, THREE = I.THREE, cam = I.stage.camera, cv = I.stage.renderer.domElement.getBoundingClientRect();
+      M.root.updateMatrixWorld(true); cam.updateMatrixWorld();
+      const rc = new THREE.Raycaster(), ndc = new THREE.Vector2(), v = new THREE.Vector3(), out = {};
+      for (const id of ['cowl_upper', 'cowl_lower', 'chin_inlet', 'exhaust_stacks', 'gear_nose_steer']) {
+        const res = {};
+        let n = 0;
+        for (const mr of M.part(id).meshes) {
+          const g = mr.mesh.geometry.attributes.position;
+          for (let i = 0; i < g.count && n < 40; i += 97) {
+            v.fromBufferAttribute(g, i).applyMatrix4(mr.mesh.matrixWorld).project(cam);
+            if (Math.abs(v.x) > 1 || Math.abs(v.y) > 1) continue;
+            ndc.set(v.x, v.y); rc.setFromCamera(ndc, cam);
+            const h = rc.intersectObject(B.disc, false)[0];
+            if (!h || B.pickCore(h.point)) continue;
+            const pid = V.pick(cv.left + (v.x + 1) / 2 * cv.width, cv.top + (1 - v.y) / 2 * cv.height);
+            res[pid] = (res[pid] || 0) + 1; n++;
+          }
+        }
+        out[id] = res;
+      }
+      const sp = new THREE.Vector3().fromArray(V.nodeWorldPoint('propeller', [0, 0, 0])).project(cam);
+      out.spinner = V.pick(cv.left + (sp.x + 1) / 2 * cv.width, cv.top + (1 - sp.y) / 2 * cv.height);
+      T.neutral(); V.panel(true);
+      return out;
+    """)
+    tried = {k: v for k, v in rp.items() if isinstance(v, dict)}
+    # (a point of a part may be hidden behind another part, which then takes the pick; never the disc)
+    ok = (rp["spinner"] == "propeller" and sum(1 for v in tried.values() if sum(v.values()) > 0) >= 3
+          and not any(v.get("propeller") or any(k and k.startswith("blade_") for k in v) for v in tried.values()))
+    check("[PR3-02] spinning prop (3/4 view): the parts seen through the outer disc pick as themselves (or the part in "
+          "front of them), never the propeller; the spinner as the propeller", ok,
+          f"spinner -> {rp['spinner']}; " + "; ".join(f"{k}: {v}" for k, v in tried.items()))
     check("[PR1-03] blurred prop: the chrome spinner stands still (no twinkling facets), turns again when stopped",
           r["still"] < 1e-5 and r["back"], f"spinner box corners moved <= {r['still'] * 1000:.4f} mm over 3 frames at 1,700 rpm")
     check("[PR1-04] Off feathers the propeller (62 deg); a start from feather unfeathers once it turns ~300 rpm",
@@ -1287,24 +1330,57 @@ async def prop_blur_checks(page):
     shots = {}
     for key, js_set in (("bare", "V.hide('propeller'); V.advance(0.05);"),
                         ("stopped", "V.showAll(); V.isolate('propeller'); V.setProp({rpm: 0, pitch: 0, angle: 0.2}, {instant: true}); V.advance(0.05);"),
-                        ("spin", "V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.5); V.pause(true);")):
+                        ("spin", "V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.5); V.pause(true);"),
+                        ("spin0", "B._apG = B.apply; B.apply = (...a) => { B._apG(...a); B.U.uPbGhost.value.x = 0; }; "
+                                  "V.pause(false); V.advance(1 / 60); V.pause(true);")):
         await js(page, V + js_set + " await V.frames(2);")
         path = OUT / f"prop_px_{key}.png"
         await page.screenshot(path=str(path), timeout=SHOT_TIMEOUT)
         shots[key] = np.asarray(Image.open(path).convert("RGB"), dtype=float)
-    await js(page, "window.viewer.pause(false); window.viewer.isolate(null); window.viewer.showAll(); T.neutral();")
+    await js(page, "const B = window.viewer._internals.kin.blur; if (B._apG) { B.apply = B._apG; delete B._apG; } "
+                   "window.viewer.pause(false); window.viewer.isolate(null); window.viewer.showAll(); T.neutral();")
     lin = lambda x: np.where(x / 255 <= 0.04045, x / 255 / 12.92, ((x / 255 + 0.055) / 1.055) ** 2.4)
     ring = {}
     for rr, pp in pts.items():
         vals = {k: np.array([lin(shots[k][int(round(y)), int(round(x))]).mean() for x, y, _ in pp]) for k in shots}
         ratio = vals["spin"] / np.maximum(vals["bare"], 1e-4)
-        ring[float(rr)] = (float(ratio.mean()), float(ratio.std()), float(vals["stopped"].std() / max(vals["bare"].mean(), 1e-4)))
+        ratio0 = vals["spin0"] / np.maximum(vals["bare"], 1e-4)
+        ring[float(rr)] = (float(ratio.mean()), float(ratio0.std()), float(vals["stopped"].std() / max(vals["bare"].mean(), 1e-4)),
+                           float(ratio.std()))
     mid = [ring[x][0] for x in (0.5, 0.8, 1.1)]
     check("prop blur: averaged disc mostly see-through (60-97 % of the backdrop at 0.5-1.1 m)", all(0.6 <= x <= 0.97 for x in mid),
           " / ".join(f"r {x}: {ring[x][0] * 100:.0f} %" for x in (0.5, 0.8, 1.1, 1.22, 1.31)))
-    check("prop blur: azimuthally smooth at 1,700 rpm (vs the stopped blades)", all(ring[x][1] < 0.06 for x in (0.5, 0.8, 1.1))
-          and all(ring[x][2] > 0.2 for x in (0.5, 0.8, 1.1)),
+    check("prop blur: the true pattern azimuthally smooth at 1,700 rpm (ghost zeroed; vs the stopped blades)",
+          all(ring[x][1] < 0.06 for x in (0.5, 0.8, 1.1)) and all(ring[x][2] > 0.2 for x in (0.5, 0.8, 1.1)),
           " / ".join(f"r {x}: spin sd {ring[x][1] * 100:.1f} %, stopped sd {ring[x][2] * 100:.0f} %" for x in (0.5, 0.8, 1.1)))
+    check("[PR3-01] prop blur at 1,700 rpm: the ghost draws a visible fan of smeared blades (azimuthal sd 4-35 % of the "
+          "backdrop at 0.5-1.1 m), not a uniform veil", all(0.04 <= ring[x][3] <= 0.35 for x in (0.5, 0.8, 1.1)),
+          " / ".join(f"r {x}: sd {ring[x][3] * 100:.1f} %" for x in (0.5, 0.8, 1.1)))
+    # PR3-03: edge-on (camera in the plane of rotation) the disc stays translucent (a flat disc's coverage tends to 1 there)
+    pts = await js(page, r"""
+      const V = window.viewer, I = V._internals, THREE = I.THREE, B = I.kin.blur; T.neutral(); V.isolate('propeller');
+      const pv = V.partExtras('propeller').pivot, o = new THREE.Vector3().fromArray(pv.origin), a = new THREE.Vector3().fromArray(pv.axis).normalize();
+      const side = new THREE.Vector3(1, 0, 0).addScaledVector(a, -a.x).normalize(), up = new THREE.Vector3().crossVectors(a, side).normalize();
+      // ~2 deg off the plane of rotation (as the Side preset): exactly in it the flat disc rasterises to nothing
+      V.setCamera({pos: o.clone().addScaledVector(side, -4.5).addScaledVector(a, 0.15).toArray(), target: o.toArray(), fov: 40}, {instant: true});
+      return [0.5, 0.7, 0.85].flatMap((rr) => [rr, -rr].map((q) => V.project(o.clone().addScaledVector(up, q).toArray())));
+    """)
+    edge = {}
+    for key, js_set in (("bare", "V.hide('propeller'); V.advance(0.05);"),
+                        ("spin", "V.showAll(); V.isolate('propeller'); V.setProp({rpm: 1700, pitch: 0}, {instant: true}); V.advance(0.5); V.pause(true);")):
+        await js(page, V + js_set + " await V.frames(2);")
+        path = OUT / f"prop_px_edge_{key}.png"
+        await page.screenshot(path=str(path), timeout=SHOT_TIMEOUT)
+        edge[key] = np.asarray(Image.open(path).convert("RGB"), dtype=float)
+    await js(page, "window.viewer.pause(false); window.viewer.isolate(null); window.viewer.showAll(); T.neutral();")
+    er = []
+    for x, y, _ in pts:
+        xi, yi = int(round(x)), int(round(y))
+        win = lambda im: im[yi - 1:yi + 2, xi - 1:xi + 2].mean(axis=2).min()      # the darkest pixel round it (sRGB)
+        er.append(win(edge["spin"]) / max(win(edge["bare"]), 1e-4))
+    check("[PR3-03] prop blur seen edge-on (~2 deg off its plane): translucent (the darkest pixel along the disc 35-95 % "
+          "of the backdrop's sRGB value: drawn, not an opaque black crescent)", 0.35 <= min(er) and max(er) <= 0.95,
+          " ".join(f"{v * 100:.0f}%" for v in er))
     check("prop blur: white tip band lighter than the black blade inboard of it", ring[1.31][0] > ring[1.1][0],
           f"tip {ring[1.31][0] * 100:.1f} % vs {ring[1.1][0] * 100:.1f} % of the backdrop")
 
@@ -1541,7 +1617,8 @@ async def tour_checks(page, shots=True):
     worst = min(clear.items(), key=lambda kv: kv[1]["min"])
     outside = max(v["outside"] for v in walks.values())
     ok = (abs(r["aft"]["pos"][0] - R["aisle"]["x"][1]) < 2e-3                       # baggage partition (curtain)
-          and abs(r["fwd"]["pos"][0] - R["flight_deck"]["x"][0]) < 2e-3            # flight deck front, over the pedestal
+          and abs(r["fwd"]["pos"][0] - R["crew_gap"]["face_x0"]) < 2e-3 and r["fwd"]["region"] == "crew_gap"   # on
+          #   down into the gap between the crew seats, level with the seated eyes (review r3 NAV3-01), not over the pedestal
           and sorted(round(v["pos"][1], 3) for v in (r["port"], r["stbd"])) == [round(R["aisle"]["y"][0], 3), round(R["aisle"]["y"][1], 3)]
           and r["down"]["pos"][2] >= data["crouch_min"] - 1e-6 and r["up"]["pos"][2] > r["down"]["pos"][2]
           and abs(r["vest"]["pos"][1] - R["vestibule"]["y"][0]) < 2e-3              # entry vestibule, the lining side
@@ -1554,7 +1631,7 @@ async def tour_checks(page, shots=True):
           and outside < 1e-6 and worst[1]["min"] >= 0.05)
     check("[T5] walking is held inside the cabin: partition, flight-deck front, aisle edges at the seats, headliner, "
           "floor, vestibule lining, divider wall, doorway (and back in when the door shuts), the pilot's seat",
-          ok, f"aft x {r['aft']['pos'][0]:.3f}, fwd x {r['fwd']['pos'][0]:.3f}, aisle y {r['port']['pos'][1]:+.3f}/{r['stbd']['pos'][1]:+.3f} "
+          ok, f"aft x {r['aft']['pos'][0]:.3f}, fwd x {r['fwd']['pos'][0]:.3f} ({r['fwd']['region']}), aisle y {r['port']['pos'][1]:+.3f}/{r['stbd']['pos'][1]:+.3f} "
               f"at x {r['club_x']:.2f}, eye {r['down']['pos'][2] - fl:.3f}-{r['up']['pos'][2] - fl:.3f} above the floor, vestibule y "
               f"{r['vest']['pos'][1]:+.3f}, divider x {r['divider']['pos'][0]:.3f}, doorway y {r['door']['pos'][1]:+.3f} -> "
               f"{r['doorShut']['pos'][1]:+.3f} shut, nearest lining/headliner {worst[1]['min'] * 1000:.0f} mm ({worst[0]}); pilot seat "
@@ -1584,9 +1661,9 @@ async def tour_checks(page, shots=True):
             if (h && h.distance < best) { best = h.distance; who = I.model.meshToPart.get(h.object).id + '/' + (h.object.material.name || ''); }
           }
           return [best, who];''')
-    check("[T5b] walk ends: in the line of sight forward between the seat backs >= 0.45 m to the flight deck, aft "
-          ">= 0.35 m to the baggage curtain",
-          near["fwd"][0] >= 0.45 and near["aft"][0] >= 0.35,
+    check("[T5b] walk ends: in the line of sight forward from the gap between the crew seats >= 0.45 m to the flight "
+          "deck, aft (looking aft) >= 0.80 m to the baggage curtain / header (review r3 NAV3-04: 0.40 m was one flat wall)",
+          near["fwd"][0] >= 0.45 and near["aft"][0] >= 0.80,
           f"forward end nearest mesh {near['fwd'][0] * 1000:.0f} mm ({near['fwd'][1]}), aft end {near['aft'][0] * 1000:.0f} mm ({near['aft'][1]})")
     # [T6] keyboard: the menu by keys (Enter / arrows / Enter), W walks, arrow turns, digits pick stops, Esc exits
     r = await js(page, "window.viewer.tour.exit({motion: false}); window.viewer.tour.menu(false); document.getElementById('tourEnter').focus(); return document.activeElement.id;")
@@ -1695,6 +1772,7 @@ async def tour_checks(page, shots=True):
 
 
     await tour_r2_checks(page, data, shots)
+    await tour_r3_checks(page, data, shots)
 
 
 async def tour_r2_checks(page, data, shots=True):
@@ -1727,7 +1805,7 @@ async def tour_r2_checks(page, data, shots=True):
       // NAV2-03: walking aft from the divider, a sidestep into PAX 3 (forward-facing) turns the view forward
       T.go('cabin_aft', {motion: false}); look(0); T.walk({f: 1}, 1.9); const f = T.walk({s: 1}, 1.5);
       out.seat = [f.region, f.yawDeg, f.pitchDeg, f.pos[1]];
-      // NAV2-05: the airstair stop's pitch
+      // NAV2-05 / NAV3-02: the airstair stop's pitch (landscape)
       T.go('airstair', {motion: false}); out.air = T.state().pitchDeg;
       T.exit({motion: false}); await V.frames(1);
       return out;
@@ -1749,10 +1827,84 @@ async def tour_r2_checks(page, data, shots=True):
           f"{se[0]}, yaw {se[1]:.1f}, pitch {se[2]:.1f}, y {se[3]:+.3f}")
     fl = float(I.FLOOR["wl"])
     wall = float(I.lining_half_width(float(FP.AIRSTAIR["cx"]), fl + 1.0)) + R["vestibule"]["y"][0]
-    check("[T12] NAV2-05 / 06: the airstair stop looks out at -38 deg; the vestibule keeps 0.40 m from the closed door "
-          "(widened onto the doorway only while it is open)", abs(r["air"] + 38) < 0.5 and abs(wall - 0.40) < 2e-3
+    check("[T12] NAV2-05 / 06: the airstair stop looks down the steps (-48 deg on a landscape screen, review r3 NAV3-02); "
+          "the vestibule keeps 0.40 m from the closed door (widened onto the doorway only while it is open)",
+          abs(r["air"] + 48) < 0.5 and abs(wall - 0.40) < 2e-3
           and R["vestibule_door"].get("when") == "door_airstair" and R["vestibule_door"]["y"][0] <= -0.449,
           f"pitch {r['air']:.1f}, vestibule edge {R['vestibule']['y'][0]:+.3f} = {wall:.3f} m from the door lining")
+
+
+async def tour_r3_checks(page, data, shots=True):
+    """[T13] review r3 (NAV3-01..05): a forward walk from the cabin goes on into the gap between the crew seats and a
+    sidestep from there into a crew seat; a walk from a stop's steep look levels the view (a look input keeps the
+    user's pitch); the aft end of the aisle looking aft stops 0.9 m short of the baggage partition; in a seat the walk
+    turned round, the strafe that pushes into the side wall slides back out to the aisle; the airstair stop from inside
+    the door frame (BL -0.42, -112 / -48 deg), its hint under the toolbar, the hint fading after the first input."""
+    r = await js(page, r"""
+      const V = window.viewer, T = V.tour, out = {};
+      const look = (deg, pitch = 0) => { const s = T.state(); T.look(deg - s.yawDeg, pitch - s.pitchDeg); };
+      // NAV3-01: cabin_fwd -> W 6 s -> A: the pilot seat
+      T.go('cabin_fwd', {motion: false}); out.fwd = T.walk({f: 1}, 6); out.into = T.walk({s: -1}, 1.2);
+      // NAV3-03: out of the pilot seat (-21 deg) and aft: levelled to -6; with an F press first, the user's pitch stays
+      T.go('pilot', {motion: false}); out.p0 = T.state().pitchDeg; out.lvl = T.walk({f: -1}, 1.6);
+      T.go('pilot', {motion: false}); T.walk({f: -1}, 0.3); T.look(0, -10); out.own = T.walk({f: -1}, 1.3);
+      // NAV3-04: walking aft looking aft ends FACE_CLEAR short of the partition; backing up still reaches cabin_fwd
+      T.go('cabin_aft', {motion: false}); look(0); out.aft = T.walk({f: 1}, 8);
+      look(180); out.back = T.walk({f: -1}, 3);
+      // NAV3-05: forward down the aisle, a sidestep into PAX 1 (aft-facing: the view turns round), then the other
+      // strafe (pushing outboard) slides back out to the aisle
+      const p1 = V.tour.data.regions.find((g) => g.id === 'seat_pax1');
+      T.go('cabin_fwd', {motion: false});
+      T.walk({f: 1}, (T.state().pos[0] - 0.5 * (p1.x[0] + p1.x[1])) / 1.0);
+      out.in1 = T.walk({s: -1}, 1.2); V.advance(0.5); out.in1b = T.state();
+      out.out1 = T.walk({s: 1}, 1.5);
+      // NAV3-02: the airstair stop and its hint (shown again: earlier checks' looks have faded it)
+      T.exit({motion: false}); await V.frames(1);
+      const U = V._internals.tourUI; U.hintDismissed = false; clearTimeout(U.hintTimer); U.hintTimer = null;
+      T.enter('airstair', {motion: false}); await V.frames(1);
+      const h = document.getElementById('tourHint');
+      out.air = T.state();
+      out.hintTop = !h.hidden && h.classList.contains('top') && h.getBoundingClientRect().top < innerHeight / 3;
+      T.look(5, 0);
+      for (let i = 0; i < 150 && !h.hidden; i++) await new Promise((res) => setTimeout(res, 100));   // ~2.9 s nominal
+      out.hintGone = h.hidden;
+      T.exit({motion: false}); await V.frames(1);
+      return out;
+    """)
+    R = {x["id"]: x for x in data["regions"]}
+    f, i = r["fwd"], r["into"]
+    check("[T13] NAV3-01: a forward walk from the cabin goes on into the gap between the crew seats (seated eye), a sidestep "
+          "from there into the pilot seat",
+          f["region"] == "crew_gap" and abs(f["pos"][0] - R["crew_gap"]["face_x0"]) < 2e-3
+          and abs(f["pos"][2] - R["crew_gap"]["eye_z"]) < 2e-3 and i["region"] == "seat_pilot"
+          and abs(i["pos"][1] - R["seat_pilot"]["eye_bl"]) < 2e-3,
+          f"W -> {f['region']} {f['pos']}, A -> {i['region']} {i['pos']}")
+    lv, ow = r["lvl"], r["own"]
+    check("[T13] NAV3-03: a walk out of a stop's steep look levels the view to -6 deg; after a look input the user's "
+          "pitch stays", r["p0"] < -15 and abs(lv["pitchDeg"] + 6) < 0.5 and lv["region"] in ("aisle", "flight_deck", "crew_gap")
+          and ow["pitchDeg"] < -20 and not ow["pitchAuto"],
+          f"pilot {r['p0']:.1f} -> {lv['pitchDeg']:.1f} deg ({lv['region']}); with a look first {ow['pitchDeg']:.1f}")
+    a, b = r["aft"], r["back"]
+    face = R["aisle"].get("face_x1")
+    check("[T13] NAV3-04: walking aft looking aft ends 0.9 m short of the baggage partition; backing up reaches the "
+          "cabin_fwd stop's eye", face is not None and abs(a["pos"][0] - face) < 2e-3 and abs(b["pos"][0] - R["aisle"]["x"][1]) < 2e-3,
+          f"aft end x {a['pos'][0]:.3f} (face_x1 {face}), backing up x {b['pos'][0]:.3f} (aisle end {R['aisle']['x'][1]})")
+    n1, n1b, o1 = r["in1"], r["in1b"], r["out1"]
+    check("[T13] NAV3-05: a sidestep into an aft-facing seat from a forward walk turns the view round; the other strafe "
+          "(into the side wall) slides back out to the aisle",
+          n1["region"] == "seat_pax1" and n1b["seatFlip"] and abs(n1b["yawDeg"]) < 1 and o1["region"] == "aisle"
+          and abs(o1["pos"][1]) <= R["aisle"]["y"][1] + 1e-3,
+          f"in: {n1['region']} yaw {n1b['yawDeg']:.0f} flip {n1b['seatFlip']}; other strafe -> {o1['region']} y {o1['pos'][1]:+.3f}")
+    ai = r["air"]
+    check("[T13] NAV3-02: the airstair stop from inside the door frame (BL -0.42) looking down the steps (-112 / -48 deg), "
+          "its hint under the toolbar, gone after the first look input",
+          abs(ai["pos"][1] + 0.42) < 1e-3 and abs(ai["yawDeg"] + 112) < 0.5 and abs(ai["pitchDeg"] + 48) < 0.5
+          and r["hintTop"] and r["hintGone"],
+          f"eye {ai['pos']}, yaw {ai['yawDeg']:.1f}, pitch {ai['pitchDeg']:.1f}, hint top {r['hintTop']}, faded {r['hintGone']}")
+    if shots:
+        await js(page, "const T = window.viewer.tour; T.enter('airstair', {motion: false}); await window.viewer.frames(2);")
+        await shot(page, "43_tour_airstair_r3", "")
+        await js(page, "window.viewer.tour.exit({motion: false}); await window.viewer.frames(1);")
 
 
 async def tour_phone_checks(page, ctx, shots=True):
@@ -2151,9 +2303,9 @@ async def touch_checks(page, ctx):
     # the sheet header: tap toggles, swipe down closes, swipe up opens
     await js(page, "window.viewer.tab('build');")
     is_open = "return document.getElementById('app').classList.contains('panel-open');"
-    await page.click("#panel .brand h1")
+    await page.click("#panel .brand h1", timeout=SHOT_TIMEOUT)
     t1 = await js(page, is_open)
-    await page.click("#panel .brand h1")
+    await page.click("#panel .brand h1", timeout=SHOT_TIMEOUT)
     t2 = await js(page, is_open)
     hy = await js(page, "const r = document.querySelector('#panel .brand h1').getBoundingClientRect(); return [r.left + 10, r.top + r.height / 2];")
 
