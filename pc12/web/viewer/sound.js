@@ -587,9 +587,9 @@ export class EngineVoice {
     put('hissF', p.hissF); put('hiss', p.hiss * bandGain(sr / 2 - p.hissF, sr));
     put('roarF', p.roarF); put('roPre', bandGain(1.1 * p.roarF, sr) / K); put('roar', p.roar);
     put('whoomp', p.whoomp * bandGain(1.1 * 140, sr)); put('tick', p.tick); put('shot', p.shot);
-    // the one-shots: an event that counted up less than 0.5 s ago plays from its own time (a late frame starts it now)
+    // the one-shots: an event that counted up less than 1 s ago plays from its own time (a late frame starts it now)
     if (p.lightN !== this.seen.light) {
-      if (p.lightAge >= 0 && p.lightAge < 0.5) this.fire('light', when - p.lightAge);
+      if (p.lightAge >= 0 && p.lightAge < 1) this.fire('light', when - p.lightAge);
       this.seen.light = p.lightN;
     }
     put('gain', p.gain, TL); put('lpDist', Math.min(p.lpDist, lim), TL); put('lpIn', Math.min(p.lpIn, lim), TL);
