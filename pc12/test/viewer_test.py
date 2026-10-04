@@ -3241,6 +3241,9 @@ async def sound_checks(browser, base, out_dir: Path):
     print("sound checks")
     ctx = await browser.new_context(viewport=VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
     await ctx.add_init_script(AC_COUNTER)
+    # iOS 17's navigator.audioSession (absent in Chromium): a stub, so the test sees what sound.js asks of it (SND8-01)
+    await ctx.add_init_script("if (!navigator.audioSession) Object.defineProperty(navigator, 'audioSession', "
+                              "{ value: { type: 'auto' }, configurable: true });")
     page = await ctx.new_page()
     errs = []
     page.on("console", lambda m: errs.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
@@ -3268,7 +3271,9 @@ async def sound_checks(browser, base, out_dir: Path):
     await page.wait_for_timeout(300)
     r1 = await js(page, S + "V.advance(0.05); return {n: window.__acCreated, s: S.sync()};")
     await page.click('[data-rpm="1000"]')
-    r2 = await js(page, S + "V.advance(0.1); return {n: window.__acCreated, s: S.sync(), rpmCmd: V._internals.kin.t.rpm, pressed: [...document.querySelectorAll('#aSound, #soundChip')].map((b) => b.getAttribute('aria-pressed')), chip: !document.getElementById('soundChip').hidden};")
+    r2 = await js(page, S + "V.advance(0.1); return {n: window.__acCreated, s: S.sync(), rpmCmd: V._internals.kin.t.rpm, pressed: [...document.querySelectorAll('#aSound, #soundChip')].map((b) => b.getAttribute('aria-pressed')), chip: !document.getElementById('soundChip').hidden, session: navigator.audioSession.type};")
+    check("[sound] iOS audio session 'playback' once the engine sound starts (the silent switch does not mute it; SND8-01)",
+          r2["session"] == "playback", f"navigator.audioSession.type {r2['session']!r} after the Idle click")
     check("[sound] no AudioContext for gestures with the engine off (tab click, orbit drag); the click on Idle makes one (running)",
           r1["n"] == 0 and r1["s"]["ctx"] is None and r1["s"]["gesture"] and r2["n"] == 1 and r2["s"]["graph"]
           and r2["s"]["ctx"] == "running" and r2["rpmCmd"] == 1000 and r2["s"]["engine"]["phase"] == "start" and r2["s"]["active"]

@@ -689,10 +689,18 @@ export class Sound {
   _resumeIn(afterHandlers) {
     const ctx = this.ctx;
     if (!ctx || !this.on || document.hidden || ctx.state === 'running' || ctx.state === 'closed') return;
-    if (!this.unlocked || (afterHandlers && this._wanted())) ctx.resume().catch(() => {});
+    if (!this.unlocked || (afterHandlers && this._wanted())) { this._session('playback'); ctx.resume().catch(() => {}); }
+  }
+
+  // iOS (Safari 16.4+ / iOS 17+, and every iOS browser): Web Audio plays in the 'ambient' audio session, which the
+  // ring / silent switch mutes -- an iPhone on silent heard nothing with the chip showing 'on' (review SND8-01).  'playback'
+  // while the engine sound plays (set inside the gesture), back to 'auto' when muted or suspended so other audio is free
+  _session(type) {
+    try { if (navigator.audioSession && navigator.audioSession.type !== type) navigator.audioSession.type = type; } catch (e) { /* not supported */ }
   }
 
   _create() {
+    this._session('playback');
     try {
       try { this.ctx = new this.AC({ latencyHint: 'interactive' }); } catch (e) { this.ctx = new this.AC(); }
     } catch (e) {
@@ -722,7 +730,7 @@ export class Sound {
       this.idleTimer = 0;
       const ctx = this.ctx;
       if (!ctx || ctx.state !== 'running') return;
-      if (!this._wanted()) ctx.suspend().catch(() => {});
+      if (!this._wanted()) { ctx.suspend().catch(() => {}); this._session('auto'); }
       else if (!this._engineOn() || !this.on) this._scheduleIdle();      // the tail is still running out
     }, (this.on && !document.hidden ? Math.max(0, this.tailUntil - performance.now()) : 0) + 450);
   }
@@ -737,6 +745,7 @@ export class Sound {
     this.on = !!on;
     lsSet(SOUND.storeKey, this.on ? 'on' : 'off');
     if (this.on && this.supported) {
+      this._session('playback');
       if (!this.ctx && this.gesture && this._engineOn()) this._create();
       this.tailUntil = Math.max(this.tailUntil, performance.now() + 600);
       if (this.ctx && this.ctx.state !== 'running' && !document.hidden) this.ctx.resume().catch(() => {});
