@@ -1377,7 +1377,50 @@ def bay_tubs(parts):
     p = Part("gear_bays", "Wheel wells (grey liners)", "gear", group="Landing gear",
              material_note="Painted aluminium liners, black rubber seal band at the cut-out")
     p.add(Mesh.merge(meshes), "gear_bay").add(Mesh.merge(seals), "seal")   # grey (no MSN 3008 photo shows primer: F12)
+    p.add(Mesh.merge([main_brace_fitting(sgn) for sgn in (1, -1)]), "gear_leg")
     parts[p.id] = p
+
+
+MAIN_BRACE_FITTING = dict(t=0.006, gap=0.0015, hy=0.026, below=0.026, embed=0.0025, boss=(0.010, 0.006))
+# [E] the side brace's wing pivot A: a fitting plate hanging from the bay roof beside the upper link's eye (aft of it,
+# MAIN_BRACE_CLEVIS: the links turn at A.x + 0.016 / - 0.024, so the plate at the eye's aft face is clear of both over
+# the whole retraction, and of the stowed leg / wheel), t thick, gap off the eye, +-hy across, from `below` under the pin
+# up `embed` into the liner roof (1.5 mm under the upper skin), a pin boss (r, length) on its aft face.  The animation
+# review 2026-10-04: the eye hung 34 mm under the bay roof with nothing holding it.
+
+
+def _quad_hexa(P):
+    """Flat-shaded hexahedron from 8 corners (0-3 bottom, 4-7 top, both counter-clockwise seen from above)."""
+    faces = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+    out = []
+    for q in faces:
+        V = P[list(q)]
+        m = Mesh(V, [[0, 1, 2], [0, 2, 3]])
+        c = P.mean(0)
+        if np.dot(m.face_normals().mean(0), V.mean(0) - c) < 0:
+            m = m.flipped()
+        out.append(m)
+    return Mesh.merge(out)
+
+
+def main_brace_fitting(sgn):
+    """Wing fitting of the main side brace's upper pivot A (gear down = always: A is fixed), side sgn."""
+    fp = MAIN_BRACE_FITTING
+    A = np.array(MAIN_BRACE[0]) * [1, sgn, 1]
+    c1, r1 = MAIN_BRACE_CLEVIS[0], MAIN_BRACE_R[0]
+    x0 = A[0] + c1 + r1 + 0.002 + fp["gap"]                 # the eye's aft face (its x half-size r1 + 2 mm)
+    x1 = x0 + fp["t"]
+    ys = A[1] + np.array([-fp["hy"], fp["hy"]])
+    zb = A[2] - fp["below"]
+    P = []
+    for top in (False, True):
+        for x, y in ((x0, ys[0]), (x1, ys[0]), (x1, ys[1]), (x0, ys[1])):
+            z = float(wing_z(np.array([x]), np.array([y]), True)[0]) - MAIN_BAY_ROOF_GAP + fp["embed"] if top else zb
+            P.append((x, y, z))
+    plate = _quad_hexa(np.array(P))
+    r, L = fp["boss"]
+    boss = cylinder([x1 - 0.001, A[1], A[2]], [x1 + L, A[1], A[2]], r, n=16, cap=True)
+    return Mesh.merge([plate, boss])
 
 
 

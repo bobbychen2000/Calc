@@ -630,6 +630,13 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   smaller grey oil-cooler exit (`vent_dark`); hinge-edge seal strips close the panel-seam slot (no sky line in the
   cabin); club-table slide rails.  The lookdev Blender nodes for the carpet stripes, the fleece fibre / fuzz and the
   display texture (SPEC `texture`) are written but not yet run in Blender.
+- Animation review (2026-10-04, after the owner's handrail report; every pivot driver swept in the viewer, parts'
+  boxes and nearest-neighbour gaps per pose): besides the airstair handrail (above) two detachments were fixed -- the
+  yoke columns are built the full pull travel (YOKE travel 0.090) deeper than 30 mm behind the panel face
+  (`flightdeck._yokes`: at full pull they had left their boots, the panel showing through the hole), and the main side
+  braces' wing pivot A carries a fitting plate from the bay-liner roof beside the upper link's eye (`gear.MAIN_BRACE_FITTING`
+  / `main_brace_fitting`, in gear_bays: the eye had hung 34 mm under the roof); clean: gear, nose clamshells, cargo
+  door, flaps / canoes, ailerons / tabs, elevators / trim, rudder, pedals, steering, prop pitch, club tables.
 - Model judging r1 fixes (2026-10-03, modelling only, no Blender; L6 / L6B rev G, L4 / L4W notes): INT-M1 the eyebrow
   fascia leans back 15 deg with its foot 30 mm aft of the PDU plane and 18 mm above the bezels (`flightdeck.fascia_x`,
   DETAIL brow_gap / brow_depth / fascia_lean; the leather lip overhangs it), so every PDU bezel top shows from both

@@ -1096,8 +1096,10 @@ def _yokes(acc):
                 q = o + (gl - 0.032) * ax + (0.5 * hd - 0.004) * 0.83 * fr.w
                 acc.add(superellipsoid(q, (0.007, 0.005, 0.004), (0.4, 0.4), nu=6, nv=10,
                                        R=np.stack([ax, lat, fr.w], 1)), "panel_grey")
-        # horizontal column into the lower panel (into the black body's forward face)
-        acc.add(cylinder([xf - 0.03, hub[1], hub[2]], [hub[0] + 0.010, hub[1], hub[2]],
+        # horizontal column into the lower panel (into the black body's forward face); it reaches the full pull
+        # travel deeper than 30 mm behind the panel face, so at full pull it is still in its boot (the animation review
+        # 2026-10-04: built 30 mm deep, the 90 mm pull drew it out of the boot, the panel showing through the hole)
+        acc.add(cylinder([xf - 0.03 - float(YK["travel"][1]) - 0.005, hub[1], hub[2]], [hub[0] + 0.010, hub[1], hub[2]],
                          float(YK["column_r"]), n=16), "steel")
 
 
