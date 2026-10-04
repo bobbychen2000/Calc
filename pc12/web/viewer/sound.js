@@ -13,7 +13,7 @@
 //    142 Hz at 1,700 rpm) with its harmonics -- the classic result of propeller-noise theory (Gutin; Hubbard ed.,
 //    "Aeroacoustics of Flight Vehicles", NASA RP-1258, 1991: loading and thickness noise at the blade-passage harmonics,
 //    the higher harmonics growing steeply with the tip Mach number).  Tip Mach 0.41 at 1,000 rpm, 0.70 at 1,700 static:
-//    harmonics ~ n^-0.7 low-passed at a harmonic count that grows with Mt^2, level ~ (rpm / 1,700)^2.2 x the blade
+//    harmonics ~ n^-0.7 low-passed at a harmonic count that grows with Mt^2, level ~ (rpm / 1,700)^2 x the blade
 //    loading (kinematics.js bladeLoad: the feathered blades edge-on to the flow are much quieter; reverse loads them
 //    most).  Two paths on one frequency driver: harmonics 1-3 in phase (the blade-passage pulse) and 4+ with scattered
 //    (Schroeder) phases, the latter amplitude-modulated by band-limited 3-15 Hz noise -- a static propeller ingests
@@ -27,12 +27,19 @@
 //    stage orders, 21 and 27, a few dB down), each tone with its own slow pitch drift, a narrowband 'haystack' of noise
 //    around the main tone (turbulence scattering) and a 25-90 Hz roughness: a breathy, slightly beating chord rather
 //    than a pure line; a faint 1 x Ng shaft tone and a broadband inlet hiss ~ Ng^2.5.  During the start: the electric
-//    starter-generator's whine (a sine pair + a gear-mesh partial, low-passed) and the igniters' snaps (~2.5 a second)
-//    until the starter cuts out at 50 % Ng (PT6 start practice).  The propeller stays still until light-off (the free
-//    power turbine turns only once hot gas flows: kinematics.js).
+//    starter-generator's whine (a sine pair + a gear-mesh partial, low-passed, and its brush whirr sweeping up through
+//    the mid band: the start is heard from its first ~0.3 s, on small speakers too) and the igniters' snaps (~2.5 a
+//    second) until the starter cuts out at 50 % Ng (PT6 start practice).  The propeller stays still until light-off (the
+//    free power turbine turns only once hot gas flows: kinematics.js); as it starts rolling its blades' chopped
+//    'whoosh' is heard (the swish held up below ground idle while the engine burns).
 //  - combustion / exhaust: broadband roar once lit (low-passed noise, brighter and louder with power); the light-off a
-//    soft low 'whoomp' (GasGenerator.light).
-//  - listener = the camera: distance to the propeller hub -> level ~ D0 / d (spherical spreading, capped at ~6 m) and
+//    one-shot 'whump' (SHOTS.light: a falling thump, a broadband poof, the combustor's hollow resonances and a rumble,
+//    sample-accurate when GasGenerator.lightN counts up; ~+9 LU over the crank) and a surge of the roar.
+//  - crest factor (how loud it plays under the same peaks): the broadband bands' rare 4-5 sigma peaks are rounded
+//    above 2.5 sigma (TAME), the gust / turbulence modulators cap their swells (MOD.lim) and the chop of the swish
+//    trails the tonal pulse by an eighth of a blade passage (CHOP): the 3/4 view's peak-to-loudness ~10-11 dB (14-22)
+//  - listener = the camera: distance to the propeller hub -> level ~ (D0 / d)^0.8 (a compressed spherical spreading,
+//    capped at ~5.6 m and at the loudness ceiling: SOUND.ceil) and
 //    a gentle low-pass (air absorption); the propeller tone loudest in its plane of rotation, the inlet whine ahead (the
 //    chin inlet), the exhaust beside / behind (the stacks).  Inside the cabin (the interior tour or a camera inside the
 //    closed cabin): low-passed (~0.9 kHz on the flight deck, ~0.5 kHz in the aft cabin) with the propeller's low drone
@@ -40,13 +47,16 @@
 //    (through the firewall and the windshield), quieter aft; an open door lets more in.  Stereo: panned toward the hub's
 //    side of the screen, plus a synthesised room: outside the apron's early reflections and a ~0.4 s tail, inside a
 //    boxy ~80 ms cabin (ConvolverNode, independent noise per channel), ~-12 dB.
-//  - output: DC block, master gain (volume^2 x mute), a safety limiter (it only touches the loudest state -- reverse at
-//    1,700 rpm with the camera ~6 m from the disc at full volume -- by a dB or two) and a soft clip above 0.85.
+//  - output (review r2 SR2-01: the default listening level): DC block, master gain (SOUND.level x volume^2 x mute: the
+//    3/4 view at BS.1770 ~-25 LUFS short-term at ground idle, ~-15 at 1,700 rpm, ~-12 in reverse, the crank ~-32 and the
+//    light-off ~-22 momentary), a safety limiter above every peak of the 3/4 view (LIMITER: it works only at the
+//    loudness ceiling close to the disc, by a fraction of a dB on average) and the output curve (OUT_CURVE: linear to
+//    0.7, a tanh shoulder to 0.95; < 0.01 % of the 3/4 view's samples reach it).
 // Browsers start audio only after a user gesture: the AudioContext is created by the gesture that starts the engine
 // (or, sticky activation, on a later start while sound is on), suspended while the engine is off, the page hidden or
 // the sound muted.
 import * as THREE from 'three';
-import { PROP_RPM, NG, bladeLoad } from './kinematics.js';
+import { PROP_RPM, NG, bladeLoad, ngRun } from './kinematics.js';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const BLADES = 5, DIAM = 2.67, C_SOUND = 340;
@@ -54,14 +64,30 @@ const F_NG100 = NG.rpm100 / 60;           // Hz, the gas generator's shaft frequ
 const WHINE = [16, 32, 21, 27];           // compressor tones: blade-passing orders of the shaft frequency (assumed):
                                           // the main stage, its 2nd harmonic, two more stages
 const STARTER = [2.6, 5.2, 11.3];         // starter-generator whine: its order, 2nd harmonic, AGB gear mesh (assumed)
+const STARTER_BRUSH = 23.4;               // its brush / commutator whirr (9 segments x 2.6, assumed)
+const R_IDLE = PROP_RPM.idle / PROP_RPM.max;
+const CHOP = 0.125;                       // the broadband chop's delay after the tonal pulse (blade passages; measured:
+                                          // the mix's 99.99th-percentile peak 1.2 dB under the coincident 0.5)
 const PROP_N = 40, PROP_LO = 3;           // propeller harmonics: 1 .. PROP_LO in phase, PROP_LO + 1 .. PROP_N scattered
 const SQRT2 = Math.SQRT2;
 
+export const LIMITER = { pre: 0.41, threshold: -6, knee: 3, ratio: 20, attack: 0.001, release: 0.15, makeup: Math.pow(10, 2.91 / 20) };
+export const OUT_CURVE = { knee: 0.7, ceil: 0.95 };
 export const SOUND = {
   volume: 1.0,                            // default volume (master gain = level x volume^2): the slider attenuates
-  level: 0.085,                           // master scale: the loudest state's headroom (crest ~13-14 dB) sets it
+  level: 0.595,                           // master scale (the default listening level): the 3/4 view at ~-12 LUFS short-term
+                                          // in reverse at 1,700 rpm (its rare peaks rounded by ~1 dB, OUT_CURVE), ~-15.5 at
+                                          // 1,700 rpm, ~-25 at ground idle
   D0: 22,                                 // m: the 3/4 view's camera distance to the hub (960 x 600) -> listener gain 1
-  gainMax: 3.5,                           // the distance law's cap (D0 / 6.3 m)
+  distExp: 0.8,                           // the distance law (D0 / d)^distExp: a game-audio roll-off, gentler than 1 / d
+  gainMax: 3.0,                           // its cap (+9.5 dB, reached at ~5.6 m)
+  ceil: 1.2,                              // the loudness ceiling: closer than D0 the listener gain stops where the mix would
+                                          // be ceil x (+1.6 dB) the 3/4 view's reverse at 1,700 rpm (the loudest state there):
+                                          // a close-up at idle is ~+9 dB louder, one in reverse only ~+1.6 (a mixer's ride,
+                                          // instead of the limiter / the output curve working)
+  panOut: 0.25,                           // outside / inside: pan = this x the hub's screen side (-1 .. 1): ~3 dB between
+  panIn: 0.25,                            // the channels with the hub at the edge of the view (~25 deg off-axis); level
+                                          // only (an interaural delay combed the mono sum of phone speakers)
   tau: 0.05,                              // s, source parameter smoothing (setTargetAtTime): no zipper noise
   tauL: 0.12,                             // s, listener (distance, cabin) smoothing
   tauM: 0.04,                             // s, master (mute)
@@ -77,13 +103,14 @@ export function listenerParams(g) {
   const f = clamp((g.sta - I.staFwd) / (I.staAft - I.staFwd), 0, 1);
   return {
     gain: inside ? Math.min(1, (I.gainFwd + (I.gainAft - I.gainFwd) * f) * (1 + door))
-      : Math.min(SOUND.gainMax, SOUND.D0 / Math.max(+g.d || 0, 1)),
+      : Math.min(SOUND.gainMax, Math.pow(SOUND.D0 / Math.max(+g.d || 0, 1), SOUND.distExp)),
     lpDist: inside ? 20000 : clamp(20000 * Math.pow(10 / Math.max(g.d, 10), 0.45), 3500, 20000),
     lpIn: inside ? Math.min(20000, (I.lpFwd + (I.lpAft - I.lpFwd) * f) * (1 + 3 * door)) : 20000,
     hiIn: inside ? I.hi * (1 - 0.4 * f) * (1 + 2 * door) : 0,       // the whine through the firewall / windshield
     body: inside ? I.body * (1 - 0.5 * door) : 0,
-    pan: clamp(+g.side || 0, -1, 1) * (inside ? 0.25 : 0.6),
+    pan: clamp(+g.side || 0, -1, 1) * (inside ? SOUND.panIn : SOUND.panOut),
     wetOut: inside ? 0 : 1, wetIn: inside ? 1 : 0,                    // the room: apron outside, cabin inside
+    inside,
     dirProp: inside ? 1 : 0.7 + 0.3 * (1 - c * c),
     dirWhine: inside ? 1 : 0.65 + 0.35 * Math.max(0, c),
     dirRoar: inside ? 1 : 0.85 + 0.15 * (1 - c) / 2,
@@ -92,41 +119,68 @@ export function listenerParams(g) {
 // the reference listener: the 3/4 view (front-port, ~22 m)
 export const LISTEN_REF = { d: SOUND.D0, cos: 0.55, side: -0.25, inside: false, sta: -15, door: 0 };
 
-// engine state e: {rpm, pitch (deg), ng (%), comb, light, starter, ign, power} -> parameter targets.  Levels are
-// approximate RMS amplitudes at the reference listener before the master gain (EngineVoice.set scales by the wave /
-// noise-band RMS); frequencies in Hz; depths are modulation depths (rms, the modulators have unit rms).
+// engine state e: {rpm, pitch (deg), ng (%), comb, light, starter, ign, power, lightN, lightAge} -> parameter
+// targets.  Levels are approximate RMS amplitudes at the reference listener before the master gain (EngineVoice.set
+// scales by the wave / noise-band RMS; the light-off's one-shot plays at shot x SHOTS.light.level); frequencies in Hz;
+// depths are modulation depths (rms, the modulators have unit rms).  Closer than the 3/4 view the listener gain stops
+// at the loudness ceiling (SOUND.ceil x the 3/4 view's reverse at 1,700 rpm, by the rms sum of the levels)
 export function engineParams(e, L = listenerParams(LISTEN_REF)) {
+  const p = rawParams(e, L);
+  if (p.gain > 1 && !L.inside) p.gain = Math.min(p.gain, Math.max(1, SOUND.ceil * E_REF() / Math.max(levelE(p), 1e-9)));
+  return p;
+}
+// the rms sum of the component levels (the mix's level before the listener gain, ~ its loudness for the ceiling)
+function levelE(p) {
+  let e = 0;
+  for (const k of ['prop', 'fund', 'swish', 'growl', 'rasp', 'whine1', 'whine2', 'whine3', 'whine4', 'hay', 'roar', 'hiss', 'starter'])
+    e += (p[k] || 0) ** 2;
+  return Math.sqrt(e);
+}
+let _eRef = 0;
+const E_REF = () => _eRef || (_eRef = levelE(rawParams({ rpm: PROP_RPM.max, pitch: -38, ng: ngRun(PROP_RPM.max, -38), comb: 1, power: 1 },
+  listenerParams(LISTEN_REF))));
+function rawParams(e, L) {
   const rpm = Math.max(0, +e.rpm || 0), r = rpm / PROP_RPM.max, pitch = +e.pitch || 0;
   const mTip = Math.PI * DIAM * rpm / 60 / C_SOUND;             // 0.70 at 1,700 rpm
   const load = bladeLoad(pitch), loadN = (0.1 + 0.9 * load) / (0.1 + 0.9 * bladeLoad(0));
   const rev = clamp(-pitch / 38, 0, 1), fea = clamp((pitch - 40) / 22, 0, 1);
   const ngN = (+e.ng || 0) / 100, ng = clamp(ngN, 0, 1.05), comb = clamp(+e.comb || 0, 0, 1), power = clamp(+e.power || 0, 0, 1);
   // (the tone gains less in reverse than the loading alone says: the stalled blades' energy goes broadband, below)
-  const prop = 0.16 * Math.pow(r, 2.2) * loadN * (1 - 0.35 * rev) * L.dirProp;
-  const whine1 = 0.045 * Math.pow(ng, 0.8) * (0.7 + 0.3 * comb) * L.dirWhine;
+  const prop = 0.16 * Math.pow(r, 2.0) * loadN * (1 - 0.4 * rev) * L.dirProp;
+  const lightV = clamp(+e.light || 0, 0, 1);
+  const whine1 = 0.045 * Math.pow(ng, 0.6) * (0.7 + 0.3 * comb) * L.dirWhine;
   return {
     bladeHz: BLADES * rpm / 60, ngHz: ng * F_NG100, whineHz: WHINE[0] * ng * F_NG100,
     // propeller: tone + fundamental, harmonic content by tip Mach (more in reverse), the upper harmonics lifted in
     // reverse and modulated by the ingested turbulence, 1/rev wobble and gusts
-    prop, fund: 0.7 * prop, propHi: 1 + 0.4 * rev,
+    prop, fund: 0.7 * prop, propHi: 1 + 0.3 * rev,
     propLP: clamp(BLADES * rpm / 60 * (2 + 16 * mTip * mTip * (1 + 1.5 * rev) * (1 - 0.6 * fea)), 40, 9000),
     turbDepth: 0.42 + 0.1 * rev, shaftDepth: 0.05 + 0.10 * rev, gustDepth: 0.22 + 0.08 * rev,
-    swish: 0.1 * Math.pow(r, 1.3) * (0.3 + 0.7 * load) / (0.3 + 0.7 * bladeLoad(0)) * L.dirProp,
+    // (below ground idle, while the engine burns, the swish falls off as r^0.5 instead of r^1.1: the blades'
+    // 'whoosh .. whoosh' as the propeller starts rolling after the light-off -- the moment the owner asked for -- is
+    // heard, not only seen; it fades in over the first ~100 rpm; the run-down, fuel off, keeps r^1.1)
+    swish: 0.11 * (r >= R_IDLE ? Math.pow(r, 1.1)
+      : Math.pow(R_IDLE, 1.1) * Math.pow(r / R_IDLE, 1.1 - 0.6 * comb) * (1 - Math.exp(-((r / 0.06) ** 2))))
+      * (0.3 + 0.7 * load) / (0.3 + 0.7 * bladeLoad(0)) * L.dirProp,
     swishF: 300 + 1200 * mTip, amBase: 0.3 + 0.55 * r,
-    growl: 0.12 * rev * Math.pow(r, 1.8) * L.dirProp, growlF: 180 + 160 * r,
-    rasp: 0.12 * rev * r * r * L.dirProp,                            // reverse: the broad 0.6-1.5 kHz rasp
+    growl: 0.11 * rev * Math.pow(r, 1.8) * L.dirProp, growlF: 180 + 160 * r,
+    rasp: 0.11 * rev * r * r * L.dirProp,                            // reverse: the broad 0.6-1.5 kHz rasp
     // gas generator: the compressor chord + haystack, the shaft tone, the starter, the inlet hiss
     whine1, whine2: 0.4 * 0.045 * Math.pow(ng, 1.8) * L.dirWhine, whine3: 0.35 * whine1, whine4: 0.25 * whine1,
     hay: 0.4 * whine1, roughDepth: 0.22,
     hum: 0.056 * whine1,                                             // 1 x Ng, -25 dB under the main whine
-    // the starter: the main sound of the crank (the compressor barely turns), ~5 dB under the whine past 40 % Ng
-    starter: 0.02 * (1 - 0.5 * clamp((ngN - 0.2) / 0.2, 0, 1)) * L.dirWhine * (+e.starter || 0) * clamp(ngN / 0.05, 0, 1),
+    // the starter: the main sound of the crank (the compressor barely turns), ~5 dB under the whine past 40 % Ng; its
+    // brush / commutator whirr (STARTER_BRUSH x the shaft) sweeps up through the mid band in the first ~0.5 s: the
+    // start's onset is heard on small speakers too
+    starter: 0.034 * (1 - 0.5 * clamp((ngN - 0.2) / 0.2, 0, 1)) * L.dirWhine * (+e.starter || 0) * clamp(ngN / 0.03, 0, 1),
     hiss: 0.03 * Math.pow(ng, 2.5) * L.dirWhine, hissF: 2500 + 3000 * ng,
     // combustion / exhaust, light-off, igniters
-    roar: comb * (0.03 + 0.15 * power) * L.dirRoar, roarF: 300 + 1300 * power + 150 * comb,
-    whoomp: 0.07 * clamp(+e.light || 0, 0, 1),
+    // (the light-off: the one-shot SHOTS.light, plus a surge of the roar and its low swell while the flame settles)
+    roar: (comb * (0.033 + 0.165 * power) + 0.035 * lightV) * L.dirRoar, roarF: 300 + 1300 * power + 150 * comb + 400 * lightV,
+    whoomp: 0.04 * lightV,
+    shot: L.dirRoar, lightN: +e.lightN || 0, lightAge: e.lightAge === undefined ? -1 : +e.lightAge,
     tick: 0.25 * clamp(+e.ign || 0, 0, 1),
-    // listener
+    // listener (closer than the 3/4 view: no louder than the ceiling, by the levels above)
     gain: L.gain, lpDist: L.lpDist, lpIn: L.lpIn, hiIn: L.hiIn, body: L.body, pan: L.pan, wetOut: L.wetOut, wetIn: L.wetIn,
   };
 }
@@ -170,7 +224,11 @@ function biquad(x, type, f, Q, sr) {
 //   2 drift  < 0.3 Hz     pitch / playback-rate drift
 //   3 rough  25-90 Hz     the compressor scream's roughness
 const MOD = { rate: 1 / 8, seconds: 47.3, sr: 1000,
-  bands: [[0.05, 1.2], [3, 15], [0, 0.3], [25, 90]] };
+  bands: [[0.05, 1.2], [3, 15], [0, 0.3], [25, 90]],
+  // soft limits (sigma) of each channel's swells / dips: a gust or a turbulent load is capped where it would swell
+  // (the multiplied swells of the chopped swish x turbulence x gusts made the loudest, rarest peaks: crest) and dips
+  // as deep as before; then zero mean, unit rms again (the same envelope fluctuation)
+  lim: [[1.5, 2.4], [1.5, 2.4], [2.2, 2.2], [2.2, 2.2]] };
 function modBuffer(ctx) {
   const n = Math.round(MOD.seconds * MOD.sr), F = Math.round(2 * MOD.sr), pre = Math.round(20 * MOD.sr);
   const b = ctx.createBuffer(MOD.bands.length, n, 8000);
@@ -187,9 +245,13 @@ function modBuffer(ctx) {
       y[i] = x[pre + i] * w + (i < F ? x[pre + n + i] * (1 - w) : 0);
       sq += y[i] * y[i];
     }
-    // unit rms, the Gaussian tails softened to ~+-2.2 sigma (a gust is a swell, not a spike: less crest for the limiter)
-    let k = 1 / Math.sqrt(sq / n), sq2 = 0;
-    for (let i = 0; i < n; i++) { y[i] = 2.2 * Math.tanh(y[i] * k / 2.2); sq2 += y[i] * y[i]; }
+    // unit rms, the Gaussian tails softened (MOD.lim: a gust is a swell, not a spike), zero mean, unit rms again
+    const [lp, ln] = MOD.lim[ch];
+    let k = 1 / Math.sqrt(sq / n), mean = 0;
+    for (let i = 0; i < n; i++) { const v = y[i] * k; y[i] = v > 0 ? lp * Math.tanh(v / lp) : ln * Math.tanh(v / ln); mean += y[i]; }
+    mean /= n;
+    let sq2 = 0;
+    for (let i = 0; i < n; i++) { y[i] -= mean; sq2 += y[i] * y[i]; }
     k = 1 / Math.sqrt(sq2 / n);
     for (let i = 0; i < n; i++) y[i] *= k;
   });
@@ -205,6 +267,51 @@ function tickBuffer(ctx) {
       d[i0 + i] += Math.exp(-t / 0.0015) * (0.6 * (2 * r() - 1) + 0.5 * Math.sin(2 * Math.PI * 3200 * t));
     }
   }
+  return b;
+}
+// Gaussian band noise with its peaks rounded above TAME.lim sigma (a WaveShaper working in sigma units: the band is
+// scaled to unit rms / TAME.k into the curve and back by TAME.k): the rare 4-5 sigma peaks of the broadband components
+// set the crest factor of the whole mix, and so how loud it can play under the same peak level.  ~1.2 % of the
+// samples are touched; what spills over (odd harmonics of a noise band) is noise again, and the tones stay clean
+const TAME = { k: 8, lim: 2.5 };
+function tameCurve() {
+  const n = 4097, c = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const v = TAME.k * (2 * i / (n - 1) - 1); c[i] = TAME.lim * Math.tanh(v / TAME.lim) / TAME.k; }
+  return c;
+}
+// The light-off (one-shot, played sample-accurately when GasGenerator.lightN counts up): the flame front's dull
+// 'whump' -- a falling 95 -> 42 Hz thump, a broadband 'poof' (0.15-1.6 kHz, ~0.3 s), the combustor / stacks' hollow
+// resonances (190 / 430 Hz) and a low rumble that hands over to the rising roar (~0.9 s).  Mono, peak 1; most of it
+// above 150 Hz, so small speakers play it too.  Levels / timings are a viewer estimate
+export const SHOTS = { light: { len: 2.2, level: 0.55 } };
+function lightBuffer(ctx) {
+  const sr = ctx.sampleRate, n = Math.round(SHOTS.light.len * sr), r = rng(0x11647);
+  const noise = () => { const x = new Float64Array(n); for (let i = 0; i < n; i++) x[i] = 2 * r() - 1; return x; };
+  const env = (x, rise, decay) => {
+    let e = 0;
+    for (let i = 0; i < n; i++) { const t = i / sr; x[i] *= (1 - Math.exp(-t / rise)) * Math.exp(-t / decay); e = Math.max(e, Math.abs(x[i])); }
+    for (let i = 0; i < n; i++) x[i] /= e;
+    return x;
+  };
+  const thump = new Float64Array(n);
+  let ph = 0;
+  for (let i = 0; i < n; i++) { const t = i / sr; ph += 2 * Math.PI * (42 + 53 * Math.exp(-t / 0.10)) / sr; thump[i] = Math.sin(ph); }
+  env(thump, 0.010, 0.20);
+  const poof = noise();
+  biquad(poof, 'lowpass', 1600, 0.7, sr); biquad(poof, 'lowpass', 1600, 0.7, sr); biquad(poof, 'highpass', 150, 0.7, sr);
+  env(poof, 0.018, 0.28);
+  const hollow = noise(), h2 = noise();
+  biquad(hollow, 'bandpass', 190, 4, sr); biquad(h2, 'bandpass', 430, 5, sr);
+  for (let i = 0; i < n; i++) hollow[i] += 0.8 * h2[i];
+  env(hollow, 0.035, 0.5);
+  const rumble = noise();
+  biquad(rumble, 'lowpass', 260, 0.7, sr); biquad(rumble, 'lowpass', 260, 0.7, sr);
+  env(rumble, 0.12, 0.85);
+  const b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0);
+  let pk = 0;
+  for (let i = 0; i < n; i++) { d[i] = 0.75 * thump[i] + 0.6 * poof[i] + 0.55 * hollow[i] + 0.45 * rumble[i]; pk = Math.max(pk, Math.abs(d[i])); }
+  const fade = Math.round(0.2 * sr);
+  for (let i = 0; i < n; i++) d[i] *= (i > n - fade ? 0.5 + 0.5 * Math.cos(Math.PI * (i - n + fade) / fade) : 1) / pk;
   return b;
 }
 // The rooms (ConvolverNode impulse responses, stereo, independent per channel; the direct sound is the dry path):
@@ -291,6 +398,15 @@ export class EngineVoice {
     };
     const chain = (...n) => { for (let i = 0; i < n.length - 1; i++) n[i].connect(n[i + 1]); return n[n.length - 1]; };
     const sources = [], starts = new Map();
+    const tameC = tameCurve();
+    // a band of noise -> unit rms / TAME.k (the AudioParam `pre`) -> the peak-rounding curve -> x TAME.k: unit rms out
+    const tame = (src, name) => {
+      const pre = g(0), sh = ctx.createWaveShaper(), post = g(TAME.k);
+      sh.curve = tameC;
+      chain(src, pre, sh, post);
+      P[name] = pre.gain;
+      return post;
+    };
     const P = (this.p = {});            // name -> AudioParam
 
     // output: DC block -> distance low-pass -> cabin low-pass -> structure-borne drone -> listener gain (+ inside, the
@@ -299,21 +415,26 @@ export class EngineVoice {
     const dc = bq('highpass', 20, 0.7), lpDist = bq('lowpass', 20000, 0.5), lpIn = bq('lowpass', 20000, 0.6);
     const body = bq('peaking', 120, 0.9, 0), listen = g(0), master = g(0), hiHP = bq('highpass', 1800, 0.7), hiIn = g(0);
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
-    const comp = (this.comp = ctx.createDynamicsCompressor());
-    // a safety limiter: idle below ~-5 dBFS out (the browser adds ~+3.8 dB makeup gain to everything), so it only
-    // touches the loudest state (reverse 1,700 rpm, the camera ~6 m from the disc, full volume: ~1.8 dB, peaks ~0.84)
-    comp.threshold.value = -9; comp.knee.value = 6; comp.ratio.value = 12; comp.attack.value = 0.002; comp.release.value = 0.2;
-    // soft clip: linear to 0.85, then a tanh knee to < 0.99; the curve spans inputs of +-2 (pre-gain 0.5)
-    const clipIn = g(0.5), clip = ctx.createWaveShaper(), curve = new Float32Array(4097);
+    const comp = (this.comp = ctx.createDynamicsCompressor()), compIn = g(LIMITER.pre), compOut = g(1 / (LIMITER.pre * LIMITER.makeup));
+    // a safety limiter for the close-ups: it sees the master x LIMITER.pre, so its threshold sits at
+    // threshold - 20 log10(pre) dBFS of the mix (0 dBFS: above every peak of the 3/4 view); the browser's automatic
+    // makeup gain (LIMITER.makeup, measured in Chromium for these settings) is taken back after it
+    comp.threshold.value = LIMITER.threshold; comp.knee.value = LIMITER.knee; comp.ratio.value = LIMITER.ratio;
+    comp.attack.value = LIMITER.attack; comp.release.value = LIMITER.release;
+    // peak rounding (OUT_CURVE): linear to `knee`, then a tanh shoulder to `ceil`; the curve spans inputs of +-4
+    // (pre-gain 0.25).  It rounds the rare peaks of the loud states (in reverse at the 3/4 view ~1-2 % of the samples
+    // pass the knee, by <= 2 dB) without the gain riding of a compressor; quieter states never reach it
+    const clipIn = g(0.25), clip = ctx.createWaveShaper(), curve = new Float32Array(8193);
+    const { knee: kn, ceil: cl } = OUT_CURVE;
     for (let i = 0; i < curve.length; i++) {
-      const x = 2 * (2 * i / (curve.length - 1) - 1), a = Math.abs(x);
-      curve[i] = Math.sign(x) * (a < 0.85 ? a : 0.85 + 0.14 * Math.tanh((a - 0.85) / 0.14));
+      const x = 4 * (2 * i / (curve.length - 1) - 1), a = Math.abs(x);
+      curve[i] = Math.sign(x) * (a < kn ? a : kn + (cl - kn) * Math.tanh((a - kn) / (cl - kn)));
     }
     clip.curve = curve;
     chain(bus, dc, lpDist, lpIn, body, listen);
     chain(lpDist, hiHP, hiIn, listen);
     if (pan) chain(listen, pan, master); else listen.connect(master);
-    chain(master, comp, clipIn, clip, dest);
+    chain(master, compIn, comp, compOut, clipIn, clip, dest);
     const wetOut = g(0), wetIn = g(0);
     for (const [w, room, seed] of [[wetOut, ROOMS.out, 0x0a7e], [wetIn, ROOMS.in, 0xcab1]]) {
       const cv = ctx.createConvolver();
@@ -354,7 +475,9 @@ export class EngineVoice {
     // turbulence; all of it wobbling at 1/rev and with the gusts
     const lo = harmonicWave(ctx, PROP_LO, propAmp);
     const hi = harmonicWave(ctx, PROP_N, (n) => (n > PROP_LO ? propAmp(n) : 0), (n) => Math.PI * n * (n - 1) / 12);
-    const soft = harmonicWave(ctx, 6, (n) => Math.pow(0.55, n - 1));
+    // (the chop of the swish / growl / rasp: the same blade-passage rhythm, its peak an eighth of a passage after the
+    // tonal pulse -- the trailing edge leaving --, inaudible as such, but the two peaks no longer stack: CHOP)
+    const soft = harmonicWave(ctx, 6, (n) => Math.pow(0.55, n - 1), (n) => 2 * Math.PI * n * CHOP);
     this.waves = { lo: lo.peak, hi: hi.peak, softMin: soft.min };
     const loO = osc(null, lo.wave), hiO = osc(null, hi.wave), fundO = osc('sine'), amO = osc(null, soft.wave), shaftO = osc('sine');
     for (const o of [loO, hiO, fundO, amO]) drive(blade, 1, o.frequency);
@@ -367,15 +490,18 @@ export class EngineVoice {
       gustDepth: gustD.gain, turbDepth: turbD.gain });
     // blade swish: broadband, amplitude-modulated by a soft pulse per blade passage (gain = base + pulse), unsteady
     const swBP = bq('bandpass', 600, 0.8), swAM = g(0.5), swG = g(0);
-    chain(noise(nA), swBP, swAM, swG, turb);
+    chain(noise(nA), swBP);
+    chain(tame(swBP, 'swPre'), swAM, swG, turb);
     amO.connect(swAM.gain);
     Object.assign(P, { swish: swG.gain, swishF: swBP.frequency, amBase: swAM.gain });
     // reverse / beta: the low growl (blade passage + 1/rev) and the broad rasp (blade passage, unsteady)
     const grBP = bq('bandpass', 220, 0.6), grAM = g(0.6), grG = g(0), grD = g(0.8), grS = g(0.35);
-    chain(noise(nB), grBP, grAM, grG, wob);
+    chain(noise(nB), grBP);
+    chain(tame(grBP, 'grPre'), grAM, grG, wob);
     chain(amO, grD, grAM.gain); chain(shaftO, grS, grAM.gain);
     const raBP = bq('bandpass', 950, 0.5), raAM = g(0.55), raG = g(0), raD = g(0.6);
-    chain(noise(nB), raBP, raAM, raG, turb);
+    chain(noise(nB), raBP);
+    chain(tame(raBP, 'raPre'), raAM, raG, turb);
     chain(amO, raD, raAM.gain);
     Object.assign(P, { growl: grG.gain, growlF: grBP.frequency, rasp: raG.gain });
 
@@ -399,13 +525,25 @@ export class EngineVoice {
     const stLP = bq('lowpass', 700, 0.7), stG = g(0);
     STARTER.forEach((k, i) => { const o = osc('sine'), og = g([1, 0.5, 0.3][i]); drive(gas, k, o.frequency); chain(o, og, stLP); });
     chain(stLP, stG, bus);
+    const brO = osc('sine'), brLP = bq('lowpass', 3200, 0.7), brG = g(0.45);
+    drive(gas, STARTER_BRUSH, brO.frequency);
+    chain(M(2, 8), brO.detune);
+    chain(brO, brLP, brG, stG);
     const hiHPn = bq('highpass', 3000, 0.6), hiG2 = g(0);
     chain(noise(nA), hiHPn, hiG2, bus);
     Object.assign(P, { whine1: wG[0].gain, whine2: wG[1].gain, whine3: wG[2].gain, whine4: wG[3].gain, hay: hayG.gain,
       roughDepth: roughD.gain, hum: humG.gain, starter: stG.gain, hiss: hiG2.gain, hissF: hiHPn.frequency });
     // combustion / exhaust roar, the light-off 'whoomp', the igniters
     const roLP = bq('lowpass', 500, 0.5), roG = g(0), whLP = bq('lowpass', 140, 0.9), whG = g(0);
-    chain(noise(nB), roLP, roG, bus); chain(noise(nA), whLP, whG, bus);
+    chain(noise(nB), roLP);
+    chain(tame(roLP, 'roPre'), roG, bus); chain(noise(nA), whLP, whG, bus);
+    // the one-shots (the light-off): fixed relative levels into one listener-scaled gain
+    const shotG = g(0);
+    shotG.connect(bus);
+    P.shot = shotG.gain;
+    this.shots = {};
+    for (const [k, o] of Object.entries(SHOTS)) { const sg = g(o.level); sg.connect(shotG); this.shots[k] = { buffer: lightBuffer(ctx), gain: sg }; }
+    this.seen = {};
     const tk = ctx.createBufferSource(), tkG = g(0);
     tk.buffer = tickBuffer(ctx); tk.loop = true; sources.push(tk);
     chain(tk, tkG, bus);
@@ -437,20 +575,38 @@ export class EngineVoice {
     put('bladeHz', p.bladeHz); put('ngHz', p.ngHz);
     put('propLo', A * W.lo); put('propHi', A * W.hi * p.propHi); put('fund', p.fund * SQRT2); put('propLP', Math.min(p.propLP, lim));
     put('shaftDepth', p.shaftDepth); put('gustDepth', p.gustDepth); put('turbDepth', p.turbDepth);
-    put('swishF', p.swishF); put('swish', p.swish * bandGain(1.57 * p.swishF / 0.8, sr)); put('amBase', Math.max(p.amBase, -W.softMin));
-    put('growlF', p.growlF); put('growl', p.growl * bandGain(1.57 * p.growlF / 0.6, sr));
-    put('rasp', p.rasp * bandGain(1.57 * 950 / 0.5, sr));
+    const K = TAME.k;
+    put('swishF', p.swishF); put('swPre', bandGain(1.57 * p.swishF / 0.8, sr) / K); put('swish', p.swish);
+    put('amBase', Math.max(p.amBase, -W.softMin));
+    put('growlF', p.growlF); put('grPre', bandGain(1.57 * p.growlF / 0.6, sr) / K); put('growl', p.growl);
+    put('raPre', bandGain(1.57 * 950 / 0.5, sr) / K); put('rasp', p.rasp);
     put('whine1', p.whine1 * SQRT2); put('whine2', p.whine2 * SQRT2); put('whine3', p.whine3 * SQRT2); put('whine4', p.whine4 * SQRT2);
     put('hay', p.hay * bandGain(1.57 * Math.max(p.whineHz, 100) / 25, sr)); put('roughDepth', p.roughDepth);
     put('hum', p.hum * SQRT2); put('starter', p.starter * SQRT2);
     put('hissF', p.hissF); put('hiss', p.hiss * bandGain(sr / 2 - p.hissF, sr));
-    put('roarF', p.roarF); put('roar', p.roar * bandGain(1.1 * p.roarF, sr));
-    put('whoomp', p.whoomp * bandGain(1.1 * 140, sr)); put('tick', p.tick);
+    put('roarF', p.roarF); put('roPre', bandGain(1.1 * p.roarF, sr) / K); put('roar', p.roar);
+    put('whoomp', p.whoomp * bandGain(1.1 * 140, sr)); put('tick', p.tick); put('shot', p.shot);
+    // the one-shots: an event that counted up less than 0.5 s ago plays from its own time (a late frame starts it now)
+    if (p.lightN !== this.seen.light) {
+      if (p.lightAge >= 0 && p.lightAge < 0.5) this.fire('light', when - p.lightAge);
+      this.seen.light = p.lightN;
+    }
     put('gain', p.gain, TL); put('lpDist', Math.min(p.lpDist, lim), TL); put('lpIn', Math.min(p.lpIn, lim), TL);
     put('hiIn', p.hiIn, TL); put('body', p.body, TL); put('pan', p.pan, TL); put('wetOut', p.wetOut, TL); put('wetIn', p.wetIn, TL);
   }
 
   setMaster(v, when) { this._put('master', v, when, SOUND.tauM); }
+
+  fire(name, at) {
+    const sh = this.shots[name];
+    if (!sh) return;
+    const s = this.ctx.createBufferSource();
+    s.buffer = sh.buffer;
+    s.connect(sh.gain);
+    s.onended = () => s.disconnect();
+    s.start(Math.max(at, this.ctx.currentTime, 0));
+    this.fired = (this.fired || 0) + 1;
+  }
 
   // current AudioParam values (tests)
   values() {
@@ -663,7 +819,7 @@ export class Sound {
       unlocked: this.unlocked, engine: { rpm: c.rpm, pitch: c.pitch, ...this.kin.gg.state },
       targets: this.params ? { ...this.params } : null, values: this.voice ? this.voice.values() : null,
       set: this.voice ? { ...this.voice.target } : null, listener: this.geo ? { ...this.geo } : null,
-      chip: this.ui.chip ? !this.ui.chip.hidden : null,
+      chip: this.ui.chip ? !this.ui.chip.hidden : null, shots: this.voice ? this.voice.fired || 0 : 0,
     };
   }
 }

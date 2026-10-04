@@ -488,7 +488,11 @@ export function ngRun(rpm, pitch) {
 }
 
 export class GasGenerator {
-  constructor() { this.reset(); }
+  constructor() {
+    this.startN = 0;           // event counters (never reset): starts, light-offs (sound.js plays the light-off as a
+    this.lightN = 0;           // one-shot when it counts up)
+    this.reset();
+  }
 
   reset() {
     this.ng = 0;               // % of 100 % Ng
@@ -522,6 +526,7 @@ export class GasGenerator {
     if (run && (this.phase === 'off' || this.phase === 'rundown')) {
       // a start (also a restart while running down): starter engaged, fuel at 12 % Ng
       Object.assign(this, { phase: 'start', t: 0, fuelT: -1, lightT: -1, lit: false });
+      this.startN++;
     } else if (!run && (this.phase === 'start' || this.phase === 'run')) {
       Object.assign(this, { phase: 'rundown', lit: false, fuelT: -1 });
     }
@@ -533,7 +538,9 @@ export class GasGenerator {
     switch (this.phase) {
       case 'start':
         if (this.fuelT < 0 && this.ng >= NG.fuelAt) this.fuelT = this.t;
-        if (this.fuelT >= 0 && this.lightT < 0 && this.t - this.fuelT >= NG.lightDelay) { this.lightT = this.t; this.lit = true; }
+        if (this.fuelT >= 0 && this.lightT < 0 && this.t - this.fuelT >= NG.lightDelay) {
+          this.lightT = this.t; this.lit = true; this.lightN++;
+        }
         if (!this.lit) this.ng += (NG.crank - this.ng) * (1 - Math.exp(-dt / NG.crankTau));   // the starter alone
         else step(NG.idle + 0.5, NG.k, NG.startRate, NG.down);
         if (this.lit && this.ng >= NG.idle - 0.5) this.phase = 'run';
@@ -560,6 +567,8 @@ export class GasGenerator {
 
   get state() {
     return { ng: this.ng, phase: this.phase, lit: this.lit, comb: this.comb, light: this.light, starter: this.starter,
-      ign: this.ign, power: this.power, t: this.t };
+      ign: this.ign, power: this.power, t: this.t, startN: this.startN, lightN: this.lightN,
+      // s since the light-off (-1: none in this run)
+      lightAge: this.lightT >= 0 && this.phase !== 'rundown' && this.phase !== 'off' ? this.t - this.lightT : -1 };
   }
 }

@@ -50,7 +50,7 @@ python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium
                                 #   loaded machine -- rerun once on a screenshot timeout); [T1]-[T11] the interior tour
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
-                                #   _steady / _pilot.wav (default out/tmp/viewer/sound)
+                                #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
 python3 web/package.py          # static viewer bundle -> dist/ (gitignored): meshopt GLBs (both tiers; the build's own
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
@@ -461,18 +461,31 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   blade-passage chopped swish, reverse growl + 0.6-1.5 kHz rasp (the tone gains less, the broadband more), feather
   quiet; compressor chord 16 / 21 / 27 / 32 x Ng (100 % = 37,468 rpm assumed) with independent slow drifts, a Q 25
   noise haystack on the main tone and a 25-90 Hz roughness, 1 x Ng shaft tone at -25 dB, inlet hiss, starter whine
-  (sines 2.6 / 5.2 x Ng + an 11.3 x gear mesh, low-passed 700 Hz), igniter ticks, combustion roar, light-off whoomp.
-  Modulators: one 4-channel unit-rms looping buffer (gust / turbulence / drift / roughness); noise: 11.3 / 13.7 s
-  loops, each component its own source at its own offset with a +-1.5 % playback-rate wander (nothing repeats).
-  Listener = camera: gain D0 / d (D0 22 m = the 3/4 view, capped 3.5 at ~6 m), air-absorption low-pass, directivity;
+  (sines 2.6 / 5.2 x Ng + an 11.3 x gear mesh, low-passed 700 Hz, + a 23.4 x brush whirr to 3.2 kHz: the start is heard
+  from its first ~0.3 s, small speakers too), igniter ticks, combustion roar, the light-off a ONE-SHOT 'whump'
+  (`SHOTS.light`, 2.2 s buffer: a falling 95 -> 42 Hz thump, a 0.15-1.6 kHz poof, 190 / 430 Hz hollow resonances, a
+  rumble; played sample-accurately when `GasGenerator.lightN` counts up) + a roar surge; the swish held up below
+  ground idle while the engine burns (r^0.5, faded in over the first ~100 rpm: the blades' 'whoosh' as the prop starts
+  rolling; the fuel-off run-down keeps r^1.1).  Modulators: one 4-channel unit-rms looping buffer (gust / turbulence
+  / drift / roughness; gust + turbulence swells capped at 1.5 sigma, dips to 2.4: `MOD.lim`); noise: 11.3 / 13.7 s
+  loops, each component its own source at its own offset with a +-1.5 % playback-rate wander (nothing repeats); the
+  swish / growl / rasp / roar bands rounded above 2.5 sigma (`TAME`, a WaveShaper in sigma units) and the broadband
+  chop trailing the tonal pulse by 1/8 blade passage (`CHOP`): the 3/4 view's peak-to-loudness ratio ~10-11 dB (was
+  14-22).  Listener = camera: gain (D0 / d)^0.8 (D0 22 m = the 3/4 view, capped 3.0) and closer than D0 never above
+  the loudness ceiling (`SOUND.ceil` 1.2 x the 3/4 view's reverse at 1,700 by the rms sum of the levels: a close-up
+  at idle +9.8 LU, the loudest state +1.9), air-absorption low-pass, directivity;
   inside the cabin low-passed 0.9 kHz (flight deck) .. 0.5 kHz (aft) plus the whine's band above 1.8 kHz at -18 dB
-  (`SOUND.inside.hi`), quieter aft; pan by screen side; rooms = two ConvolverNodes with synthesised stereo IRs
+  (`SOUND.inside.hi`), quieter aft; pan by screen side (x 0.25: ~3 dB at the edge of the view; level only -- an
+  interaural delay combed phones' mono sum); rooms = two ConvolverNodes with synthesised stereo IRs
   (`ROOMS`: apron reflections 7-27 ms + 0.4 s tail outside, a boxy ~80 ms cabin inside, ~-12 dB).  Output: master =
-  `SOUND.level` 0.085 x volume^2 (default volume 1.0: the slider only attenuates) -> safety limiter (threshold -9,
-  knee 6, ratio 12; Chromium's compressor adds ~+3.8 dB makeup gain) -> soft clip above 0.85.  Gain staging (review r1
-  SR1-01): no gain reduction anywhere in the 3/4 view at the default volume (rms dBFS idle ~-42, 1,700 rpm ~-32,
-  reverse ~-28; +12 dBA idle -> 1,700, +4.7 dBA reverse); the loudest state (reverse 1,700, 6 m in the disc plane)
-  averages ~1.8 dB of limiting with peaks ~0.84 -- the default level is set by that headroom (crest ~13-14 dB).
+  `SOUND.level` 0.595 x volume^2 (default volume 1.0: the slider only attenuates) -> safety limiter (`LIMITER`: fed
+  x 0.41, threshold -6 / knee 3 / ratio 20, i.e. from ~+1.7 dBFS of the mix, above every peak of the 3/4 view;
+  Chromium's +2.91 dB makeup taken back) -> output curve (`OUT_CURVE`: linear to 0.7, tanh shoulder to 0.95).
+  Default listening level (review r2 SR2-01; BS.1770, 3/4 view, volume 1.0): crank -32 LUFS, light-off momentary
+  -22 (+7.5 LU over the crank), spool-up -28, ground idle -25, 1,700 rpm -15.4, reverse -11.8, feathered -22 (it was
+  -50 / -40 / -42 / -39 / -28 / -24 / -35); dBA steps kept (+10.9 idle -> 1,700, +4.4 reverse); limiter <= 0.05 dB and
+  0.006 % of the samples on the output curve in the whole 3/4-view run; the loudest state (reverse 1,700, 6 m in
+  the disc plane) -10 LUFS, 0.06 dB average limiting, 0.4 % of the samples on the curve.
   UX: the AudioContext is made by the gesture that starts the engine (Idle / P / the demo button; a later scripted
   start after any gesture: sticky activation) while sound is on -- an orbit drag with the engine off opens no audio
   device (default on; off under automation `navigator.webdriver` unless `?sound=1`), toggle in the Animate tab
@@ -480,9 +493,11 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   `.soundVolume`, suspended when muted, hidden or stopped (a timer, not frames; also when a new context starts running
   with nothing to play).  Tests: viewer_test `sound_checks` ([sound] rows, own page; `viewer.sound.render()` renders
   scripted runs offline through the same EngineVoice, with `instant` steps, the limiter's gain-reduction trace and
-  `mute` for diagnostics): spectral lines vs 5 rpm / 60 and 16 Ng, dBA steps, the limiter, tonal share / envelope /
-  L-R correlation, the loudest state, noise-loop repetition, the flight deck's whine band; the main run checks no
-  AudioContext is made; artifact_test starts the engine with sound under the strict CSP (keys M + P).
+  `mute` for diagnostics): spectral lines vs 5 rpm / 60 and 16 Ng, dBA steps, BS.1770 loudness per phase (+ a 250 Hz
+  high-passed small-speaker proxy) and through the start (onset, light-off one-shot), the limiter / output curve, tonal
+  share / envelope / L-R correlation, close-ups (idle, the loudest state) under the ceiling, noise-loop repetition, the
+  flight deck's whine band; the main run checks no AudioContext is made; artifact_test starts the engine with sound
+  under the strict CSP (keys M + P).
 - Final judge r1 fixes, MODELLING only (2026-10-03; the owner put Blender on hold until the model is signed off, so
   the r1 render-stage changes -- airfield backplate / terrain, wheel close-up catcher, beauty preset tweaks -- stay
   parked on local branch `wip/final-fix-r1-partial`): G3000 PRIME pages in the GLB (above;
