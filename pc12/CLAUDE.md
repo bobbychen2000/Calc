@@ -338,6 +338,31 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   panel and the part cards count the tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the full model on desktops (data/pc12_glb.gz.bin) and the light
   tier on phones (data/pc12_low_glb.gz.bin, PC12_CONFIG.glbGzLow), so a host that refuses WebAssembly still shows the
   full resolution on a desktop).
+- Viewer picture quality (owner 2026-10-03 "smoother curves, edges and sharper crisper picture"; the picture side,
+  `web/viewer/picture.js`, Stage.render() -> Picture): once the camera and the scene are still for 3 frames the scene is
+  rendered into a multisampled render target at up to 2x the canvas resolution (pixel budget 8.3 MP High / Auto, 16.6 MP
+  Max, 2.1-8.3 MP phones; byte budget; MAX_TEXTURE / RENDERBUFFER / VIEWPORT size; 2 MSAA samples at >= 1.5x, 4 below,
+  Max 4 / 8), box-filtered down (exact area average) and accumulated over N Halton-jittered passes (16 High / Auto, 32
+  Max, 8-16 phones; frame 0 unjittered, so the switch does not shift the image).  The target is an 'XR' render target
+  (rt.isXRRenderTarget, RGBA8, sRGB colour space): three applies the AgX + Punchy tone mapping and sRGB encoding into it
+  exactly as on the canvas and the passes average premultiplied, encoded values like the canvas' MSAA resolve -- the
+  colours never change between moving and still frames.  Moving frames: the canvas (4x MSAA) at the moving pixel ratio;
+  through the target where the canvas has no MSAA, supersampled when a supersampled frame fits in the refresh (Auto / Max).
+  Pixel-sized effects follow the scale (grid line width uPx, construction-line opacity).  Specular AA: three's additive
+  `geometryRoughness` replaced in ShaderChunk.lights_physical_fragment by the normal-variance kernel (Tokuyoshi &
+  Kaplanyan; Filament 0.15 / 0.2) on alpha^2, roughness floor 0.038 with the 2k HDRI (its 512 px base mip).  Textures:
+  max anisotropy + trilinear mipmaps (G3000 atlas, contact shadow 1024 desktop).  Studio HDRI: 2k on desktops
+  (assets/studio_small_09_2k.hdr, CC0 Poly Haven; 512 phones, 1k phones on Max; RGBELoader FloatType, the strip grade
+  tabulated).  Key shadow: PCSS on the ground ShadowMaterial (PCFShadowMap, 4096 desktop / 2048 phones; a 4 deg
+  softbox, LOOK.keyAngle: crisp at the tyres, soft under the wing) on a shadow camera fitted to the posed casters at each
+  shadow render (Stage._fitShadow).  Auto measures real frame times (a 1-pixel-read calibration of the 2nd frame during
+  loading, fences for isolated frames, rAF intervals when back-to-back) and steps the still budget / passes (a software
+  renderer such as SwiftShader gets none: the pre-2026-10 picture), the moving pixel ratio (never below min(1, dprMax))
+  and moving supersampling.  The end of an orbit coast settles faster below 0.5 px / frame and is applied at once
+  below 0.05 px (Stage.update), so stills start promptly.  Specs panel 'Picture quality' Auto / High / Max (localStorage
+  'pc12-picture'); ?picture=, ?quality=high|max fix it (tests), ?ssframes= / ?sspx= override passes / budget,
+  ?keyangle= the softbox.  Tests: viewer_test.py '[PQ]' rows (a 480 x 320 page in High, 3 passes).  SwiftShader takes
+  ~20-30 s per 2x frame at 800 x 500 on the shared sandbox: compare frame costs relatively, never tune on them.
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
   `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.11M triangles where facets show, 16-bit normals, crack-free shared

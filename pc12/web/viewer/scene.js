@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { installToneMapping, loadHDR, StudioEnvironment, ContactShadow, CONTACT_LAYER, makeGrid } from './studio.js';
+import { Picture, PROFILES, pictureChoice, installSpecularAA, patchShadowMaterial, PCSS_U } from './picture.js';
 
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
@@ -11,8 +12,13 @@ const _u = new THREE.Vector3();
 const _f = new THREE.Vector3();
 const _corner = new THREE.Vector3();
 const _t = new THREE.Vector3();
+const _box = new THREE.Box3();
+const _b2 = new THREE.Box3();
+const _p = new THREE.Vector3();
 
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+// OrbitControls' damping; the last sub-pixel stretch of a coast settles faster (Stage.update)
+const DAMPING = 0.085, SETTLE_DAMPING = 0.3;
 const Q_ = new URLSearchParams(location.search);
 
 // Colour scheme: the OS setting, unless a host stamps an explicit choice on <html data-theme="light|dark"> (the
@@ -25,8 +31,10 @@ export function prefersDark() {
 
 // Render quality by device class.  Phones: pixel ratio capped at 1.5 (1.0 while the camera moves: a drag, its
 // damped coast after lift-off, a preset tween; the full ratio is re-rendered once the camera has been still for two
-// frames; a tap never drops it), 1024 shadow map, 256 contact shadow.  ?dpr= / ?quality=low|high override (for tests
-// and slow devices).
+// frames; a tap never drops it).  ?dpr= / ?quality=low|high|max override (for tests and slow devices; high / max also
+// fix the picture mode, see picture.js).  The shadow / contact map sizes and the still supersampling come from the
+// picture profile (picture.js PROFILES: desktop 4096 / 1024, phones 2048 / 512; Picture keeps them current when the
+// Specs panel's 'Picture quality' changes).
 // index.html's boot script makes the same choice first (PC12_URLS.quality: it preloads the matching studio HDRI).
 export const QUALITY = (() => {
   const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
@@ -37,11 +45,13 @@ export const QUALITY = (() => {
   const dpr = window.devicePixelRatio || 1;
   const cap = +Q_.get('dpr') || (low ? 1.5 : 2);
   const dprMax = Math.min(dpr, cap);
+  const picture = pictureChoice().mode, P = PROFILES[low ? 'phone' : 'desktop'][picture];
+  const dprMoveBase = low ? Math.min(dprMax, 1) : dprMax;
   return {
-    mobile, low, dprMax,
-    dprMove: low ? Math.min(dprMax, 1) : dprMax,
-    shadowMap: low ? 1024 : 2048,
-    contactMap: low ? 256 : 512,
+    mobile, low, dprMax, dprMoveBase, picture,
+    dprMove: picture === 'max' ? dprMax : dprMoveBase,
+    shadowMap: P.shadow,
+    contactMap: P.contact,
   };
 })();
 
@@ -66,11 +76,14 @@ export const QUALITY = (() => {
 // development).
 const qn = (k) => (Q_.has(k) && Q_.get(k) !== '' && isFinite(+Q_.get(k)) ? +Q_.get(k) : undefined);
 const OVERRIDE = Object.fromEntries(['floor', 'walls', 'top', 'lift', 'wallLift', 'strips', 'exposure'].map((k) => [k, qn(k)]).filter(([, v]) => v !== undefined));
-// the studio HDRI: 1k, or a 512 x 256 box-filtered copy on the low tier (phones: a quarter of the download, the same
-// look at phone sizes); index.html's boot script picks and preloads it (PC12_URLS.hdr), ?hdr= overrides
-const HDR = { high: '../assets/studio_small_09_1k.hdr', low: '../assets/studio_small_09_512.hdr' };
+// the studio HDRI: 2k on desktops (a 512 px prefiltered environment face: the softbox and strip edges stay crisp in
+// the glass, chrome and clear coat), a 512 x 256 box-filtered copy on the low tier (phones: a sixteenth of the
+// download, the same look at phone sizes), the 1k one on phones set to Max; index.html's boot script picks and
+// preloads it (PC12_URLS.hdr), ?hdr= overrides
+const HDR = { high: '../assets/studio_small_09_2k.hdr', low: '../assets/studio_small_09_512.hdr', lowMax: '../assets/studio_small_09_1k.hdr' };
+const hdrDefault = QUALITY.low ? (QUALITY.picture === 'max' ? HDR.lowMax : HDR.low) : HDR.high;
 export const LOOK = {
-  hdr: Q_.get('hdr') || (window.PC12_URLS && window.PC12_URLS.hdr) || new URL(QUALITY.low ? HDR.low : HDR.high, import.meta.url).href,
+  hdr: Q_.get('hdr') || (window.PC12_URLS && window.PC12_URLS.hdr) || new URL(hdrDefault, import.meta.url).href,
   envRot: qn('envrot') ?? 212,
   look: Q_.get('look') || 'punchy',
   theme: {
@@ -78,6 +91,9 @@ export const LOOK = {
     dark: { floor: 0.12, walls: 0.3, top: 0.4, lift: 0, strips: 0, exposure: 2.6, ...OVERRIDE },
   },
   keyDir: [-0.45, 0.8, -0.4],
+  // the key light as a softbox of this angular diameter (deg): the PCSS ground shadow's penumbra = the caster's
+  // distance over the floor along the light x 2 tan(angle / 2) -- crisp at the tyres, ~0.15 m under the wing
+  keyAngle: qn('keyangle') ?? 4,
   interiorEV: qn('interiorEV') ?? 0.6,      // the interior tour: this many stops over the light theme's exposure
   keyIntensity: qn('key') ?? 1.6,
 };
@@ -112,8 +128,11 @@ export class Stage {
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.localClippingEnabled = true;
     r.shadowMap.enabled = true;
-    r.shadowMap.type = THREE.VSMShadowMap;      // soft studio shadow (only the ground receives it)
+    // the ground (the only receiver) filters it as a soft-edged PCSS shadow (picture.js patchShadowMaterial)
+    r.shadowMap.type = THREE.PCFShadowMap;
     r.shadowMap.autoUpdate = false;          // re-rendered only when the pose changes
+    // specular anti-aliasing for every lit material; the roughness floor = the environment's base mip (2k HDRI: 512 px)
+    installSpecularAA(/_2k\.hdr/.test(LOOK.hdr) ? 0.038 : 0.0525);
     host.appendChild(r.domElement);
     r.domElement.tabIndex = 0;
     // WebGL context loss (phones drop the context of a backgrounded tab or under GPU memory pressure).  three.js
@@ -124,6 +143,7 @@ export class Stage {
     this.onContextChange = null;
     r.domElement.addEventListener('webglcontextlost', () => {
       this.contextLost = true;
+      if (this.picture) this.picture.contextLost();
       if (this.onContextChange) this.onContextChange(true);
     });
     r.domElement.addEventListener('webglcontextrestored', () => {
@@ -139,7 +159,7 @@ export class Stage {
     this.camera = new THREE.PerspectiveCamera(35, 1, 0.05, 500);
     const c = (this.controls = new OrbitControls(this.camera, r.domElement));
     c.enableDamping = true;
-    c.dampingFactor = 0.085;
+    c.dampingFactor = DAMPING;
     c.screenSpacePanning = true;
     c.minDistance = 0.05;
     c.maxDistance = 120;
@@ -161,10 +181,8 @@ export class Stage {
     const key = (this.key = new THREE.DirectionalLight(0xffffff, LOOK.keyIntensity));
     key.castShadow = true;
     key.shadow.mapSize.set(QUALITY.shadowMap, QUALITY.shadowMap);
-    key.shadow.bias = -0.0004;
-    key.shadow.normalBias = 0.02;
-    key.shadow.radius = 10;
-    key.shadow.blurSamples = 16;
+    key.shadow.bias = -0.0002;            // _fitShadow: ~3 mm in the fitted depth range (the ground casts nothing)
+    key.shadow.normalBias = 0;
     scene.add(key, key.target);
 
     // ground: key-light shadow catcher + contact shadow + fading grid
@@ -181,6 +199,7 @@ export class Stage {
     scene.add(this.contact.group);
     this.grid = makeGrid();
     scene.add(this.grid);
+    this.modelRoot = null;      // addToContactLayer: the model (its posed bounds fit the key-light shadow camera)
     this.groundY = 0;          // lowered below exploded parts (see setGround)
     this.interiorLook = false;  // setInteriorLook: the interior tour's lighting
 
@@ -191,7 +210,8 @@ export class Stage {
     this.tween = null;
     this._sd = true;
     this.contactDirty = true;
-    this.needsRender = true;
+    this._needs = true;         // needsRender: a change asked for a new frame
+    this._refine = false;       // ... or Picture asks for one more still-refinement frame
     this._near = 0.05;
     this.size = { w: 1, h: 1 };
     this.stats = { renders: 0, contactRenders: 0, shadowRenders: 0, lastRenderMs: 0 };
@@ -200,9 +220,17 @@ export class Stage {
     // only; the loop renders once more when the motion stops so they end exact
     this.busy = false;
     this._tick = 0;
+    // render paths, still supersampling, adaptive resolution, the 'Picture quality' setting (picture.js)
+    this.picture = new Picture(this);
+    patchShadowMaterial(shadowPlane.material, PROFILES[this.picture.device][this.picture.mode].pcss);
+    this.picture.bindUI(document);
     this.setTheme(prefersDark());
     this.resize();
   }
+
+  // a frame is due: something changed (any caller sets it), or Picture refines a still image
+  get needsRender() { return this._needs || this._refine; }
+  set needsRender(v) { this._needs = !!v; if (!v) this._refine = false; }
 
   // pose changes invalidate both shadows; keyShadowOnly() (a spinning prop) only the key-light map
   get shadowDirty() { return this._sd; }
@@ -223,6 +251,7 @@ export class Stage {
   _restoreGL() {
     // drop the dead PMREM textures without disposing them (their GL objects belong to the lost context)
     this.scene.environment = null;
+    this.picture.invalidate();
     if (this.studioEnv) {
       this.studioEnv.cache.clear();
       this._applyEnv();
@@ -265,9 +294,11 @@ export class Stage {
     this.needsRender = true;
   }
 
-  // meshes that darken the contact shadow
+  // meshes that darken the contact shadow (the model: also its textures' filtering and the key-light shadow fit)
   addToContactLayer(root) {
     root.traverse((o) => { if (o.isMesh) o.layers.enable(CONTACT_LAYER); });
+    this.modelRoot = root;
+    this.picture.filterTextures(root);
     this.contactDirty = true;
   }
 
@@ -298,16 +329,67 @@ export class Stage {
     this.modelBox.copy(box);
     this.silhouette = points;
     const c = box.getCenter(new THREE.Vector3());
-    const k = this.key;
-    k.target.position.copy(c);
-    k.position.copy(c).add(_v.fromArray(LOOK.keyDir).normalize().multiplyScalar(18));
-    const s = k.shadow.camera;
-    const R = box.getSize(_v).length() * 0.55;
-    s.left = -R; s.right = R; s.top = R; s.bottom = -R; s.near = 1; s.far = 40;
-    s.updateProjectionMatrix();
+    this._fitShadow(box);
     this.contact.fit(box, this.groundY + 0.001);
     this.grid.material.uniforms.uCenter.value.set(c.x, c.z);
     this.shadowDirty = true;
+  }
+
+  // The key light's shadow camera fitted to the posed shadow casters (re-fitted each time the map is rendered: explode,
+  // gear, doors): every caster mesh's bounds and their shadows on the ground, in the light's view (per mesh: one box
+  // round the whole aircraft is mostly empty corners, ~23 m across in the light's view instead of ~18), plus the PCSS
+  // reach.  Its depth range sets the PCSS uniforms (filter radius per unit of blocker-to-receiver depth = the softbox's
+  // half angle).
+  _fitShadow(fallback = this.modelBox) {
+    const k = this.key, s = k.shadow.camera, root = this.modelRoot;
+    const boxes = [];
+    _box.makeEmpty();
+    if (root) {
+      root.updateMatrixWorld();
+      root.traverseVisible((o) => {
+        if (!o.isMesh || !o.castShadow || !o.geometry) return;
+        const g = o.geometry;
+        if (!g.boundingBox) g.computeBoundingBox();
+        if (g.boundingBox.isEmpty()) return;
+        boxes.push([g.boundingBox, o.matrixWorld]);
+        _box.union(_b2.copy(g.boundingBox).applyMatrix4(o.matrixWorld));
+      });
+    }
+    if (_box.isEmpty()) { _box.copy(fallback); boxes.length = 0; boxes.push([fallback, null]); }
+    const c = _box.getCenter(_v2), dir = _v.fromArray(LOOK.keyDir).normalize();
+    const R = _box.getSize(_t).length() * 0.5;
+    k.target.position.copy(c);
+    k.position.copy(c).addScaledVector(dir, R + 2);
+    k.updateMatrixWorld(); k.target.updateMatrixWorld();
+    // as DirectionalLightShadow.updateMatrices: camera at the light, looking at the target
+    s.position.copy(k.position); s.lookAt(c); s.updateMatrixWorld();
+    const inv = s.matrixWorldInverse, gy = this.groundY;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    const add = (p) => {
+      p.applyMatrix4(inv);
+      if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
+      if (p.z < z0) z0 = p.z; if (p.z > z1) z1 = p.z;
+    };
+    for (const [b, mw] of boxes) {
+      for (let i = 0; i < 8; i++) {
+        _corner.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z);
+        if (mw) _corner.applyMatrix4(mw);
+        // the corner's shadow on the ground, along the light
+        const h = Math.max(0, _corner.y - gy) / Math.max(0.05, dir.y);
+        add(_p.copy(_corner).addScaledVector(dir, -h));
+        add(_corner);
+      }
+    }
+    const tanH = Math.tan((LOOK.keyAngle * Math.PI) / 360);
+    const reach = Math.min(0.6, (z1 - z0) * tanH) + 0.05;     // the widest penumbra + a margin
+    s.left = x0 - reach; s.right = x1 + reach; s.bottom = y0 - reach; s.top = y1 + reach;
+    s.near = Math.max(0.05, -z1 - 0.5); s.far = -z0 + 0.5;
+    s.updateProjectionMatrix();
+    const depth = s.far - s.near, W = s.right - s.left, H = s.top - s.bottom, n = k.shadow.mapSize.x;
+    PCSS_U.uPcssK.value.set(depth * tanH / W, depth * tanH / H);
+    PCSS_U.uPcssSearch.value.set(reach / W, reach / H);
+    PCSS_U.uPcssMin.value.set(1.2 / n, 1.2 / n);
+    k.shadow.bias = -0.003 / depth;
   }
 
   // Keep the model centred in the part of the canvas not covered by the panel (right / bottom) or a notch (left: the
@@ -337,6 +419,7 @@ export class Stage {
     this._fitKey = key;
     this.size.w = w; this.size.h = h;
     this.renderer.setSize(w, h, false);
+    this.picture.invalidate();
     const R = Math.min(this.insets.right, w * 0.6), B = Math.min(this.insets.bottom, h * 0.7);
     const L = Math.min(this.insets.left, w * 0.2);
     const fw = w + Math.abs(R - L), fh = h + B;
@@ -502,20 +585,29 @@ export class Stage {
     this._lastEye.copy(this.camera.position);
     this._lastTarget.copy(this.controls.target);
     this.camMoving = !!this.tween || moved > 2e-4 * Math.max(dist, 0.5);
+    // the end of a damped coast creeps by fractions of a pixel for a second or more, every frame a re-render (and no
+    // supersampled still): below half a pixel a frame it settles faster, below 1/20 px the rest is applied at once
+    // (a jump of < 0.2 px).  Orbit mode only (the interior tour moves the camera itself).
+    const c = this.controls;
+    if (this.interacting || this.tween || !c.enabled) c.dampingFactor = DAMPING;
+    else if (moved > 1e-7 * Math.max(dist, 0.5)) {        // (not float noise)
+      const px = (moved / Math.max(dist, 1e-3)) * (this.size.h * this.dpr) / (2 * Math.tan((this.camera.fov * Math.PI) / 360));
+      if (px < 0.05) {
+        c.enableDamping = false; c.update(); c.enableDamping = true;
+        c.dampingFactor = DAMPING;
+        if (this.camera.position.distanceTo(this._lastEye) + c.target.distanceTo(this._lastTarget) > 1e-9) active = true;
+        this._lastEye.copy(this.camera.position);
+        this._lastTarget.copy(c.target);
+      } else if (px < 0.5) c.dampingFactor = SETTLE_DAMPING;
+    }
     return active;
   }
 
-  // phones: lower pixel ratio while the camera moves (drag, damping coast, tween), the full ratio again after two
-  // still frames (one render).  A tap (no 'change' between 'start' and 'end') keeps the full ratio.
+  // once per animation frame (main.js): the pixel ratio while moving / still (phones: lower while the camera moves --
+  // drag, damping coast, tween --, the full ratio again after two still frames; a tap, no 'change' between 'start'
+  // and 'end', keeps it) and the still image's refinement frames; see picture.js
   applyQuality() {
-    const moving = (this.interacting && this.dragged) || !!this.tween || this.camMoving;
-    this._still = moving ? 0 : this._still + 1;
-    const want = moving ? this.quality.dprMove : this._still >= 2 ? this.quality.dprMax : this.dpr;
-    if (want === this.dpr) return false;
-    this.dpr = want;
-    this.renderer.setPixelRatio(want);     // r160: setPixelRatio() re-applies setSize() itself (one buffer realloc)
-    this.needsRender = true;
-    return true;
+    return this.picture.beginFrame();
   }
 
   render() {
@@ -529,12 +621,13 @@ export class Stage {
       st.contactRenders++;
     }
     if (this._sd && !skip) {
+      this._fitShadow();
       this.renderer.shadowMap.needsUpdate = true;
       this._sd = false;
       st.shadowRenders++;
     }
-    this.renderer.render(this.scene, this.camera);
-    this.needsRender = false;
+    // the path (canvas / supersampled still refinement / supersampled moving frame) is Picture's
+    this.picture.render();
     st.renders++;
     st.lastRenderMs = performance.now() - t0;
   }

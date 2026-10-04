@@ -142,7 +142,7 @@ async def run_one(browser, base, mode, vp, shots, theme=False):
     wrong += [u for u in reqs if f"/data/{gz_other}" in u]
     want_gz = mode in ("nowasm", "runtime")
     n_glb, n_gz = B64.get(tier, 1), B64.get(gz_name, 1)
-    hdr_name = "studio_small_09_512.hdr" if vp == "phone" else "studio_small_09_1k.hdr"
+    hdr_name = "studio_small_09_512.hdr" if vp == "phone" else "studio_small_09_2k.hdr"
     hdr = sorted({u.rsplit("/", 1)[1] for u in reqs if "/assets/studio_small_09" in u})
     want_hdr = [f"{hdr_name}.b64.txt"] if B64.get(hdr_name) == 1 else [f"{hdr_name}.b64.{i}.txt" for i in range(B64.get(hdr_name, 0))] or [hdr_name]
     check(f"{name}: loads", not st["err"] and st["parts"] > 50 and st["loading"] == "none",

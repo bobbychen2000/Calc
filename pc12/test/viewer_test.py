@@ -30,6 +30,12 @@ out/tmp/viewer/ and runs numeric kinematic checks through the window.viewer hook
     lights and the GLB's sheepskin sheen carried into the viewer materials
   - review round-3 (viewer): WebGL context loss and restore (a note while lost, redraws by itself, same image), the
     Specs table fits the landscape panel, safe-area insets (landscape notch, portrait home indicator)
+  - picture quality (owner 2026-10-03 "sharper crisper picture", web/viewer/picture.js): the still supersampling engages
+    when still (2x multisampled target, jittered passes accumulated) and releases while moving, target sizes within the
+    pixel / byte budget and the GL limits, MSAA samples (canvas and target), the same colours and position as the plain
+    frame, moving supersampling and the no-MSAA canvas path, max anisotropy + mipmaps on every texture, specular AA, the
+    PCSS ground shadow on a fitted shadow camera, the 2k HDRI, Auto's measured frame times, the Specs panel's setting
+    remembered across a reload, no GL / console errors
   - interior tour (viewer/tour.js, owner 2026-10-03 "no good link to navigate into the interior"): the toolbar entry
     (desktop and phone), every stop reached from the menu with the camera inside the cabin (tables and ray clearances)
     and well exposed (both themes), the walk held inside the cabin at every boundary, keyboard / pointer / touch
@@ -2346,6 +2352,171 @@ async def dark_and_data(browser, base, shots=True):
     await page.close()
 
 
+# ----------------------------------------------------------------------------- picture quality (web/viewer/picture.js)
+PIC_VIEW = {"width": 480, "height": 320}     # small: SwiftShader renders each 2x supersampled frame in a few seconds
+PIC_WAIT = r"""
+  const P = window.viewer._internals.stage.picture, t0 = performance.now();
+  while (!P.state().done && performance.now() - t0 < 600000) await new Promise((r) => setTimeout(r, 200));
+  return P.state();
+"""
+
+
+def image_shift(png_a: bytes, png_b: bytes, box):
+    """Sub-pixel shift (dx, dy) of image b against a over box (x0, y0, x1, y1): the integer offset in -3..3 with the
+    least mean absolute difference, refined by a parabola through its neighbours; None without PIL / numpy."""
+    try:
+        from PIL import Image
+        import io
+        import numpy as np
+    except ImportError:
+        return None
+    a = np.asarray(Image.open(io.BytesIO(png_a)).convert("L"), float)
+    b = np.asarray(Image.open(io.BytesIO(png_b)).convert("L"), float)
+    x0, y0, x1, y1 = box
+
+    def err(dx, dy):
+        return float(np.abs(a[y0 + dy:y1 + dy, x0 + dx:x1 + dx] - b[y0:y1, x0:x1]).mean())
+    e, bx, by = min((err(dx, dy), dx, dy) for dx in range(-3, 4) for dy in range(-3, 4))
+
+    def sub(em, e0, ep):
+        den = em - 2 * e0 + ep
+        return 0.5 * (em - ep) / den if den > 1e-9 else 0.0
+    return (bx + sub(err(bx - 1, by), e, err(bx + 1, by)), by + sub(err(bx, by - 1), e, err(bx, by + 1)), e)
+
+
+async def picture_auto_check(page):
+    """Picture quality, Auto on this page: the frame times it measured and what it chose; specular AA, PCSS ground
+    shadow on a fitted shadow camera, the 2k studio HDRI, anisotropic filtering, MSAA on the canvas, no GL errors."""
+    r = await js(page, r"""
+      const I = window.viewer._internals, st = I.stage, P = st.picture, R = st.renderer, gl = R.getContext();
+      const s = P.state(), sc = st.key.shadow.camera, chunk = I.THREE.ShaderChunk.lights_physical_fragment;
+      const tex = [];
+      I.model.root.traverse((o) => { const m = o.material; if (!m || Array.isArray(m)) return;
+        for (const k of Object.keys(m)) { const t = m[k]; if (t && t.isTexture && !t.isDataTexture && !t.isRenderTargetTexture && !tex.includes(t)) tex.push(t); } });
+      const ct = st.contact.rt.texture;
+      return {s, specAA: chunk.includes('pcSpecAA') && !chunk.includes('geometryRoughness'),
+        shadowType: R.shadowMap.type, pcf: I.THREE.PCFShadowMap, pcss: st.shadowPlane.material.defines,
+        frustum: [sc.right - sc.left, sc.top - sc.bottom, sc.far - sc.near], envW: st.studioEnv && st.studioEnv.W,
+        tex: tex.map((t) => [t.name, t.anisotropy, t.generateMipmaps, t.minFilter]), maxAniso: R.capabilities.getMaxAnisotropy(),
+        contact: [ct.anisotropy, ct.generateMipmaps, st.contact.size], lmf: I.THREE.LinearMipmapLinearFilter,
+        attrs: gl.getContextAttributes(), samples: gl.getParameter(gl.SAMPLES), glError: gl.getError()};
+    """)
+    s = r["s"]
+    check("[PQ] Auto: measured the frame time and chose the still refinement for it (a slow software renderer: none)",
+          s["mode"] == "auto" and s["adaptive"] and any(v is not None for k, v in s["cost"].items() if k != "idle") and len(s["events"]) >= 1
+          and (s["N"] == 0) == any("no still refinement" in e["what"] or "no refinement" in e["what"] for e in s["events"]),
+          f"costs {s['cost']}, vsync {s['vsync']} ms, passes {s['N']}, events {[e['what'] for e in s['events']]}")
+    check("[PQ] specular anti-aliasing (normal-variance roughness) installed in three's physical shading",
+          r["specAA"], "lights_physical_fragment patched" if r["specAA"] else "three's geometryRoughness still in place")
+    fw, fh, fd = r["frustum"]
+    check("[PQ] key-light shadow: PCSS on the ground, shadow camera fitted to the casters (< 21 m; was a 24.4 m square), 4096 map on desktop",
+          r["shadowType"] == r["pcf"] and (r["pcss"] or {}).get("PC_PCSS_FILTER", 0) >= 16 and fw < 21 and fh < 21
+          and s["shadowMap"] == 4096, f"frustum {fw:.1f} x {fh:.1f} x {fd:.1f} m, PCSS {r['pcss']}, map {s['shadowMap']}")
+    check("[PQ] 2k studio HDRI on desktop", r["envW"] == 2048, f"env width {r['envW']}")
+    bad = [t for t in r["tex"] if t[1] != r["maxAniso"] or not t[2] or t[3] != r["lmf"]]
+    check("[PQ] textures: max anisotropy + trilinear mipmaps (page atlas, contact shadow)",
+          r["tex"] and not bad and r["contact"][0] == r["maxAniso"] and r["contact"][1] and r["contact"][2] == 1024,
+          f"{len(r['tex'])} textures at {r['maxAniso']}x {', '.join(t[0] or '?' for t in r['tex'])}; contact {r['contact']}; bad {bad}")
+    check("[PQ] MSAA on the canvas (antialias, >= 4 samples)", r["attrs"]["antialias"] and r["samples"] >= 4,
+          f"antialias {r['attrs']['antialias']}, SAMPLES {r['samples']}")
+    check("[PQ] no GL errors", r["glError"] == 0, f"gl.getError() {r['glError']}")
+
+
+async def picture_checks(browser, base):
+    """Picture quality (owner 2026-10-03 "sharper crisper picture"): the supersampled still path in High (a fixed mode),
+    its render-target sizes within budget, MSAA samples, the release while moving, the same colours / no shift against
+    the plain frame, moving supersampling and the no-MSAA canvas path, and the Specs panel setting remembered."""
+    ctx = await browser.new_context(viewport=PIC_VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
+    page = await ctx.new_page()
+    errs = []
+    page.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: errs.append(str(e)))
+    await page.goto(base + "&quality=high&ssframes=3", wait_until="domcontentloaded", timeout=300000)
+    await page.wait_for_function("window.__ready === true", timeout=300000)
+    await js(page, "window.viewer.panel(false); window.viewer.setCamera('three_quarter', {instant: true}); "
+                   "await new Promise((r) => setTimeout(r, 400)); window.viewer.setCamera('three_quarter', {instant: true});")
+    gl0 = await js(page, "return window.viewer._internals.stage.renderer.getContext().getError();")
+    s = await js(page, PIC_WAIT)
+    still_png = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "34_picture_still_high.png").write_bytes(still_png)
+    pl, rt, acc, cap = s["plan"], s["rt"] or {}, s["acc"] or {}, s["caps"]
+    check("[PQ] still supersampling engages: 2x target, 3 jittered passes accumulated, at the canvas size",
+          s["path"] == "still" and s["done"] and s["k"] == s["N"] == 3 and abs(pl["S"] - 2) < 1e-6
+          and [rt.get("w"), rt.get("h")] == [2 * s["out"][0], 2 * s["out"][1]] and [acc.get("w"), acc.get("h")] == s["out"],
+          f"path {s['path']}, k {s['k']}/{s['N']}, out {s['out']}, target {rt}, accumulation {acc}")
+    check("[PQ] render target within budget: pixels, bytes, MAX_TEXTURE / RENDERBUFFER / VIEWPORT size",
+          pl["w"] * pl["h"] <= s["budget"]["px"] and pl["bytes"] <= s["budget"]["mem"] and max(pl["w"], pl["h"]) <= cap["maxSize"],
+          f"{pl['w']}x{pl['h']} = {pl['w'] * pl['h'] / 1e6:.2f} MP <= {s['budget']['px'] / 1e6:.1f} MP, {pl['bytes'] / 1e6:.0f} MB <= "
+          f"{s['budget']['mem'] / 1e6:.0f} MB, max size {cap['maxSize']}")
+    check("[PQ] MSAA in the supersampling target (2 samples at 2x, 4 below 1.5x; never above MAX_SAMPLES)",
+          rt.get("samples") == min(2, cap["maxSamples"]) and cap["maxSamples"] >= 4 and cap["canvasSamples"] >= 4,
+          f"target {rt.get('samples')} samples, MAX_SAMPLES {cap['maxSamples']}, canvas {cap['canvasSamples']}")
+    # moving: the plain canvas frame, the accumulation dropped; still again: it restarts and converges
+    mv = await js(page, r"""
+      const st = window.viewer._internals.stage, P = st.picture;
+      st.interacting = true; st.dragged = true; st.needsRender = true;
+      const t0 = performance.now();
+      while (P.kind !== 'move' && performance.now() - t0 < 120000) await new Promise((r) => setTimeout(r, 100));
+      const during = P.state();
+      return {path: during.path, valid: during.valid, k: during.k, dpr: st.dpr};
+    """)
+    move_png = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "34b_picture_moving_high.png").write_bytes(move_png)
+    s2 = await js(page, "const st = window.viewer._internals.stage; st.interacting = false; st.dragged = false; st.needsRender = true; " + PIC_WAIT)
+    check("[PQ] supersampling releases while moving (plain canvas frame) and resumes once still",
+          mv["path"] == "move" and not mv["valid"] and s2["path"] == "still" and s2["done"] and s2["k"] == 3,
+          f"moving: path {mv['path']}, accumulation valid {mv['valid']}; still again: {s2['path']} {s2['k']}/{s2['N']}")
+    b0, b1 = blue_median(move_png), blue_median(still_png)
+    sh = image_shift(move_png, still_png, (20, 60, PIC_VIEW["width"] - 20, PIC_VIEW["height"] - 20))
+    same = b0 and b1 and max(abs(x - y) for x, y in zip(b0[0], b1[0])) <= 3
+    check("[PQ] the supersampled still keeps the plain frame's colours and position (no pop / shift on the switch)",
+          bool(same) and (sh is None or math.hypot(sh[0], sh[1]) < 0.25),
+          f"blue median {b0 and b0[0]} -> {b1 and b1[0]}, image shift "
+          + ("n/a (no numpy)" if sh is None else f"({sh[0]:+.3f}, {sh[1]:+.3f}) px, mean |diff| {sh[2]:.2f}"))
+    # moving supersampling (fast GPUs) and a canvas without MSAA: both through the multisampled target
+    paths = await js(page, r"""
+      const st = window.viewer._internals.stage, P = st.picture, out = {};
+      const until = async (f) => { const t0 = performance.now(); while (!f() && performance.now() - t0 < 120000) await new Promise((r) => setTimeout(r, 100)); };
+      P.moveSS = true; st.interacting = true; st.dragged = true; st.needsRender = true;
+      await until(() => P.kind === 'movess'); out.movess = [P.kind, P.rt && P.rt.width, st.dpr];
+      P.moveSS = false; P.caps.canvasSamples = 0; st.needsRender = true;
+      await until(() => P.kind === 'rt'); out.rt = [P.kind, P.rt && P.rt.width, P.rt && P.rt.samples];
+      P.caps.canvasSamples = 4; st.interacting = false; st.dragged = false; st.needsRender = true;
+      return out;
+    """)
+    check("[PQ] moving supersampling and a canvas without MSAA render through the multisampled target",
+          paths["movess"][0] == "movess" and paths["movess"][1] == 2 * PIC_VIEW["width"] and paths["rt"][0] == "rt"
+          and paths["rt"][1] == PIC_VIEW["width"] and paths["rt"][2] >= 4, str(paths))
+    # the Specs panel setting, remembered across a reload (localStorage)
+    await js(page, PIC_WAIT)
+    ui = await js(page, r"""
+      window.viewer.panel(true); window.viewer.tab('specs'); await window.viewer.frames(1);
+      document.querySelector('#pictureSeg [data-picture="max"]').click();
+      const P = window.viewer._internals.stage.picture;
+      return {mode: P.mode, stored: localStorage.getItem('pc12-picture'), note: document.getElementById('pictureNote').textContent,
+        pressed: [...document.querySelectorAll('#pictureSeg button')].map((b) => b.getAttribute('aria-pressed'))};
+    """)
+    gl1 = await js(page, "return window.viewer._internals.stage.renderer.getContext().getError();")
+    await page.goto(base.replace("?", "?ssframes=1&") + "&tab=specs", wait_until="domcontentloaded", timeout=300000)
+    await page.wait_for_function("window.__ready === true", timeout=300000)
+    after = await js(page, r"""
+      const P = window.viewer._internals.stage.picture, q = window.viewer.perf().quality;
+      const out = {mode: P.mode, forced: P.forced, quality: q.picture, shadow: q.shadowMap,
+        pressed: [...document.querySelectorAll('#pictureSeg button')].map((b) => b.getAttribute('aria-pressed'))};
+      document.querySelector('#pictureSeg [data-picture="auto"]').click();
+      out.back = [P.mode, localStorage.getItem('pc12-picture')];
+      localStorage.removeItem('pc12-picture');
+      return out;
+    """)
+    check("[PQ] 'Picture quality' setting: Max chosen in the Specs panel, remembered after a reload, back to Auto",
+          ui["mode"] == "max" and ui["stored"] == "max" and ui["pressed"] == ["false", "false", "true"] and "MSAA" in ui["note"]
+          and after["mode"] == "max" and not after["forced"] and after["quality"] == "max" and after["pressed"] == ["false", "false", "true"]
+          and after["back"] == ["auto", "auto"], f"click {ui}; reload {after}")
+    check("[PQ] no GL errors in the supersampled paths", gl0 == 0 and gl1 == 0, f"gl.getError() {gl0} / {gl1}")
+    check("[PQ] no console errors (picture quality page)", not errs, "; ".join(errs[:3]))
+    await ctx.close()
+
+
 async def error_path(browser, base):
     page = await browser.new_page(viewport=VIEW, **CTX)
     await page.goto(base + "&glb=../out/does_not_exist.glb")
@@ -2490,6 +2661,7 @@ async def run(args):
             if args.blender:
                 await blender_check(page)
             await context_loss_check(page)
+            await picture_auto_check(page)
             check("no console errors / page errors", not errors, "; ".join(errors[:4]))
             bad = [t for _, t in failed] + [t for u, t in aborted if u not in ok_urls]
             check("no failed requests", not bad,
@@ -2499,6 +2671,7 @@ async def run(args):
             await landscape_check(browser, base, shots=not args.no_shots)
             await safe_area_portrait(browser, base)
             await dark_and_data(browser, base, shots=not args.no_shots)
+            await picture_checks(browser, base)
             await error_path(browser, base)
             await boot_failures(pw, browser, base)
             await meshopt_check(browser, base, ref_geo)

@@ -12,7 +12,8 @@ Layout of the bundle (everything the page loads, nothing else):
                         relative imports), copied from web/three_local (a checkout of mrdoob/three.js r160, which the
                         tests use too).  No third-party origin at run time; --three cdn keeps the jsDelivr CDN instead.
     viewer/*.js, viewer.css, materials.json
-    assets/             studio HDRI, 1k and a 512 px copy for phones (CC0, see assets/SOURCES.md)
+    assets/             studio HDRI: 2k (desktops), 1k (phones set to Picture quality Max) and a 512 px copy
+                        (phones) (CC0, see assets/SOURCES.md)
     data/pc12.glb       EXT_meshopt_compression (gltf-transform's reorder + EXT_meshopt_compression, lossless on the
                         build's quantised data: 16-bit positions on shared per-part grids / 8-bit normals as in
                         out/pc12.glb; ~44 -> ~17 MB at ~2.6M triangles); --no-meshopt ships out/pc12.glb as it is
@@ -430,7 +431,7 @@ def verify(out: Path, three: str) -> list[str]:
     for m in re.finditer(r"""(?:src|href)="([^"#:]+)\"""", html):
         if not (out / m.group(1)).exists():
             errs.append(f"index.html references missing {m.group(1)}")
-    for rel in ("assets/studio_small_09_1k.hdr", "assets/studio_small_09_512.hdr", "viewer/materials.json"):
+    for rel in ("assets/studio_small_09_2k.hdr", "assets/studio_small_09_1k.hdr", "assets/studio_small_09_512.hdr", "viewer/materials.json"):
         if f"'{rel}'" not in html:
             errs.append(f"index.html: no preload for {rel}")
         if not (out / rel).is_file():
