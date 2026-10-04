@@ -44,7 +44,16 @@ BVH interference sweep of the gear against doors / flaps / flight deck.  Interfe
 GLB-data issues owned by model/gear.py are reported as KNOWN (they do not fail the run; they flip
 to PASS once the GLB is fixed).
 
-usage: python3 test/viewer_test.py [--blender] [--no-shots] [--three cdn]
+  - engine / propeller sound (owner 2026-10-03, web/viewer/sound.js): no AudioContext before a user gesture (off by
+    default under automation, ?sound=1 turns it on) nor for a gesture with the engine off, the gesture that starts the
+    engine makes one, the graph follows the state (blade-passing frequency = 5 x rpm / 60, the whine rising with Ng
+    through the start, the propeller still until light-off, reverse / feather levels), quieter and low-passed inside
+    with the whine kept faintly, M mutes, suspended when hidden / stopped; offline renders through the same graph:
+    start -> idle -> 1,700 rpm -> reverse -> fine -> feather -> shutdown as a WAV + spectrogram (--sound-out) with its
+    lines, dBA levels, BS.1770 loudness per phase (the default listening level, the start, the light-off), limiter /
+    output curve, stereo and texture measured; close-ups under the loudness ceiling (idle, the loudest state), a steady
+    run (noise loops), the start from the flight deck (the whine through the firewall)
+usage: python3 test/viewer_test.py [--blender] [--no-shots] [--three cdn] [--only sound] [--sound-out DIR]
 Exit code 0 = all checks pass.
 """
 from __future__ import annotations
@@ -2579,6 +2588,487 @@ async def meshopt_check(browser, base, ref):
     await page.close()
 
 
+# ----------------------------------------------------------------------------- engine sound (web/viewer/sound.js)
+# counts AudioContext constructions (the page must not make one before the gesture that starts the engine)
+AC_COUNTER = """(() => { window.__acCreated = 0;
+  for (const k of ['AudioContext', 'webkitAudioContext']) { const A = window[k]; if (!A) continue;
+    window[k] = class extends A { constructor(...a) { super(...a); window.__acCreated++; } }; } })();"""
+# the offline render: start -> ground idle -> 1,700 rpm -> reverse -> fine -> feather -> shutdown (setProp arguments
+# at t, s), heard from the 3/4 view at the default volume
+SOUND_SCRIPT = [{"t": 0.5, "set": {"rpm": 1000}}, {"t": 16.0, "set": {"rpm": 1700}}, {"t": 23.0, "set": {"pitch": -38}},
+                {"t": 28.0, "set": {"pitch": 0}}, {"t": 31.0, "set": {"pitch": 62}}, {"t": 35.0, "set": {"rpm": 0, "pitch": 62}}]
+SOUND_SECONDS = 60.0
+SOUND_EVENTS = ((0.5, "start"), (16, "1,700 rpm"), (23, "reverse"), (28, "fine"), (31, "feather"), (35, "shutdown"))
+# steady segments of that render (s)
+SOUND_SEGS = {"crank": (1.0, 2.2), "idle": (13.0, 16.0), "max": (19.5, 23.0), "rev": (25.5, 28.0), "feather": (33.5, 35.0),
+              "stop": (45.0, 47.0)}
+# extra renders from instant poses: the loudest state (reverse at 1,700 rpm, the camera 6 m from the hub in the plane of
+# rotation, full volume), a steady 1,700 rpm (noise-loop repetition) and a start heard from the flight deck
+LISTEN_CLOSE = {"d": 6, "cos": 0.0, "side": -0.9, "inside": False, "sta": 0.9, "door": 0}
+LISTEN_PILOT = {"d": 3.8, "cos": -1, "side": 0, "inside": True, "sta": 4.5, "door": 0}
+GR_FROM = 2.0     # s: the gain reduction counts from here (Chromium's compressor meters a decaying start-up value first)
+SOUND_EXTRA = {
+    "loudest": {"script": [{"t": 0, "set": {"rpm": 1700, "pitch": -38}, "instant": True}], "duration": 8,
+                "listener": LISTEN_CLOSE, "volume": 1.0},
+    "close_idle": {"script": [{"t": 0, "set": {"rpm": 1000, "pitch": 0}, "instant": True}], "duration": 8,
+                   "listener": LISTEN_CLOSE},
+    "steady": {"script": [{"t": 0, "set": {"rpm": 1700, "pitch": 0}, "instant": True}], "duration": 16},
+    "pilot": {"script": [{"t": 0.5, "set": {"rpm": 1000}}], "duration": 16, "listener": LISTEN_PILOT},
+}
+
+
+def _wav(path: Path):
+    import wave
+    import numpy as np
+    with wave.open(str(path)) as w:
+        sr, n, ch = w.getframerate(), w.getnframes(), w.getnchannels()
+        x = np.frombuffer(w.readframes(n), dtype="<i2").reshape(-1, ch).astype(np.float64) / 32768
+    return sr, x
+
+
+def _a_weight_db(f):
+    import numpy as np
+    f2 = f ** 2
+    ra = 12194 ** 2 * f2 ** 2 / ((f2 + 20.6 ** 2) * np.sqrt((f2 + 107.7 ** 2) * (f2 + 737.9 ** 2)) * (f2 + 12194 ** 2))
+    return 20 * np.log10(ra + 1e-20) + 2.0
+
+
+def _kweight(x, sr):
+    """ITU-R BS.1770-4 K-weighting (its 48 kHz coefficients; other rates resampled to 48 kHz first) of a (n, ch)
+    signal; returns (y, 48000)"""
+    from math import gcd
+    from scipy import signal
+    if sr != 48000:
+        g = gcd(48000, sr)
+        x = signal.resample_poly(x, 48000 // g, sr // g, axis=0)
+    y = signal.lfilter([1.53512485958697, -2.69169618940638, 1.19839281085285], [1, -1.69065929318241, 0.73248077421585],
+                       x, axis=0)
+    return signal.lfilter([1, -2, 1], [1, -1.99004745483398, 0.99007225036621], y, axis=0), 48000
+
+
+def loudness(x, sr, a=0.0, b=None, hp=None):
+    """BS.1770 loudness (LUFS) of the stereo signal x (n, 2) over [a, b] s: gated integrated (400 ms blocks, 75 %
+    overlap, -70 / -10 LU gates); hp: a 4th-order high-pass first (Hz: 250 = a small-speaker proxy)"""
+    import numpy as np
+    from scipy import signal
+    s = x[int(a * sr):int(b * sr) if b else None]
+    if hp:
+        s = signal.sosfilt(signal.butter(4, hp, "hp", fs=sr, output="sos"), s, axis=0)
+    y, fs = _kweight(s, sr)
+    e = np.concatenate([[0], np.cumsum((y ** 2).sum(axis=1))])
+    W, H = int(0.4 * fs), int(0.1 * fs)
+    ends = np.arange(W, len(y) + 1, H)
+    l = -0.691 + 10 * np.log10((e[ends] - e[ends - W]) / W + 1e-30)
+    l = l[l > -70]
+    if not len(l):
+        return -99.0
+    rel = -0.691 + 10 * math.log10(float((10 ** ((l + 0.691) / 10)).mean())) - 10
+    l = l[l > rel]
+    return -0.691 + 10 * math.log10(float((10 ** ((l + 0.691) / 10)).mean()))
+
+
+def momentary(x, sr, hop=0.05):
+    """BS.1770 momentary loudness (400 ms windows every hop s): (window end times, LUFS)"""
+    import numpy as np
+    y, fs = _kweight(x, sr)
+    e = np.concatenate([[0], np.cumsum((y ** 2).sum(axis=1))])
+    W, H = int(0.4 * fs), int(hop * fs)
+    ends = np.arange(W, len(y) + 1, H)
+    return ends / fs, -0.691 + 10 * np.log10((e[ends] - e[ends - W]) / W + 1e-30)
+
+
+def sound_stats(m, sr, a, b, log=None):
+    """One segment [a, b] s of a mono signal: rms dBFS, A-weighted level (dB, same reference), the A-weighted share
+    above 2 kHz (dB), and -- with the state log -- the tonal share (blade-pass harmonics +- 2.5 bins, the whine and its
+    2nd harmonic +- 6 bins, unweighted %) and the propeller band's envelope fluctuation (0.7-12 x blade pass,
+    envelope < 30 Hz: std / mean)."""
+    import numpy as np
+    from scipy import signal
+    s = m[int(a * sr):int(b * sr)]
+    f, P = signal.welch(s, sr, nperseg=16384)
+    df = f[1]
+    PA = P * 10 ** (_a_weight_db(f) / 10)
+    out = {"rms": 10 * math.log10(float((s * s).mean()) + 1e-24), "la": 10 * math.log10(float(PA.sum() * df) + 1e-24),
+           "hi2k": 10 * math.log10(float(PA[f > 2000].sum() / max(PA.sum(), 1e-30)) + 1e-24)}
+    if log:
+        rows = [r for r in log if a <= r["t"] <= b]
+        bpf = sum(r["bladeHz"] for r in rows) / len(rows)
+        wh = rows[len(rows) // 2]["whineHz"]
+        tone = np.zeros_like(P, bool)
+        k = 1
+        while bpf > 5 and k * bpf < sr / 2:
+            tone |= np.abs(f - k * bpf) < 2.5 * df
+            k += 1
+        for o in (1, 2):
+            tone |= np.abs(f - o * wh) < 6 * df
+        out["tonal"] = 100 * float(P[tone].sum() / P.sum())
+        if bpf > 20:
+            sos = signal.butter(4, [0.7 * bpf, min(12 * bpf, 0.45 * sr)], "bandpass", fs=sr, output="sos")
+            env = np.abs(signal.hilbert(signal.sosfilt(sos, s)))
+            env = signal.sosfilt(signal.butter(2, 30, fs=sr, output="sos"), env)[sr // 2:]
+            out["env"] = float(env.std() / env.mean())
+    return out
+
+
+def write_spectrogram(wav_path: Path, log: list, gr: list, png: Path) -> dict:
+    """Spectrogram of the rendered WAV (log frequency) with the expected blade-pass harmonics (5 rpm / 60) and the
+    whine (16 x Ng) from the state log overlaid, the level and the limiter's gain reduction below; returns the
+    measured spectral peaks / levels for the checks."""
+    import numpy as np
+    from scipy import signal
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    sr, x = _wav(wav_path)
+    m = x.mean(axis=1)
+    t = np.array([r["t"] for r in log])
+    bp = np.array([r["bladeHz"] for r in log])
+    wh = np.array([r["whineHz"] for r in log])
+    f, tt, S = signal.spectrogram(m, sr, nperseg=8192, noverlap=8192 - 1024, window="hann", scaling="spectrum")
+    db = 10 * np.log10(S + 1e-14)
+    fig = plt.figure(figsize=(14, 10))
+    gs = fig.add_gridspec(2, 2, height_ratios=[3, 1], width_ratios=[60, 1], hspace=0.12, wspace=0.03)
+    ax, cax, ax1 = fig.add_subplot(gs[0, 0]), fig.add_subplot(gs[0, 1]), fig.add_subplot(gs[1, 0])
+    pc = ax.pcolormesh(tt, f[1:], db[1:], shading="auto", cmap="magma", vmin=db.max() - 90, vmax=db.max())
+    ax.set_yscale("log"); ax.set_ylim(20, 20000); ax.set_xlim(0, t[-1]); ax.set_ylabel("Hz")
+    for k, ls in ((1, "-"), (2, "--"), (3, ":")):
+        ax.plot(t, k * bp, color="cyan", lw=0.8, ls=ls, alpha=0.85, label=f"{k} x blade pass (5 x rpm / 60)")
+    ax.plot(t, wh, color="lime", lw=0.8, alpha=0.85, label="compressor whine (16 x Ng)")
+    ax.plot(t, 2 * wh, color="lime", lw=0.6, ls="--", alpha=0.6, label="2 x whine")
+    lit = next((r["t"] for r in log if r.get("lit")), None)
+    for tc, lab in SOUND_EVENTS + (((lit, "light-off"),) if lit else ()):
+        ax.axvline(tc, color="w", lw=0.6, alpha=0.5); ax.text(tc + 0.2, 25, lab, color="w", fontsize=8)
+    ax.legend(loc="upper right", fontsize=8)
+    ax.set_title("PC-12 PRO viewer engine sound (web/viewer/sound.js, offline render of the live graph, 3/4 view, default volume)")
+    fig.colorbar(pc, cax=cax, label="dB")
+    hop = sr // 20
+    rms = np.sqrt(np.convolve(m * m, np.ones(hop) / hop, mode="same"))[::hop]
+    ax1.plot(np.arange(len(rms)) * hop / sr, 20 * np.log10(rms + 1e-9), color="k", lw=0.8, label="rms dBFS")
+    g = np.array([v for v in gr if v[0] >= GR_FROM]) if gr else None
+    if g is not None and len(g):      # (the compressor's start-up metering, < GR_FROM s, left out)
+        ax1.plot(g[:, 0], g[:, 1] * 10 - 70, color="tab:red", lw=0.8, label="limiter gain reduction x 10 (dB, 0 at -70)")
+    ax1.set_ylim(-80, 0); ax1.set_xlim(0, t[-1]); ax1.set_ylabel("dBFS"); ax1.set_xlabel("s")
+    ax2 = ax1.twinx()
+    ax2.plot(t, [r["rpm"] for r in log], color="tab:blue", lw=0.8, label="propeller rpm")
+    ax2.plot(t, [r["ng"] * 17 for r in log], color="tab:green", lw=0.8, label="Ng % x 17")
+    ax2.set_ylim(0, 1800); ax1.legend(loc="upper left", fontsize=8); ax2.legend(loc="upper right", fontsize=8)
+    fig.savefig(png, dpi=90, bbox_inches="tight")
+    plt.close(fig)
+
+    def level(a, b):
+        s = m[int(a * sr):int(b * sr)]
+        return 20 * math.log10(math.sqrt(float((s * s).mean())) + 1e-12)
+
+    def peak(a, b, lo, hi):
+        s = m[int(a * sr):int(b * sr)]
+        sp = np.abs(np.fft.rfft(s * np.hanning(len(s)), 1 << 20))
+        fr = np.fft.rfftfreq(1 << 20, 1 / sr)
+        k = (fr >= lo) & (fr <= hi)
+        return float(fr[k][np.argmax(sp[k])])
+
+    def expect(key, a, b):
+        v = [r[key] for r in log if a <= r["t"] <= b]
+        return sum(v) / len(v)
+
+    seg = {k: sound_stats(m, sr, a, b, log) for k, (a, b) in SOUND_SEGS.items()}
+    lo_t = lit if lit is not None else 3.0
+    # BS.1770 per phase (the stereo signal), on a small-speaker proxy too; the momentary loudness through the start
+    for k, (a_, b_) in SOUND_SEGS.items():
+        seg[k]["lufs"] = loudness(x, sr, a_, b_)
+        seg[k]["lufs_hp"] = loudness(x, sr, a_, b_, hp=250)
+    tm, lm = momentary(x, sr)
+    mom = lambda a_, b_: float(lm[(tm >= a_) & (tm <= b_)].max())        # noqa: E731
+    start_m = {"onset": mom(SOUND_EVENTS[0][0] + 0.4, SOUND_EVENTS[0][0] + 0.8), "crank": mom(lo_t - 1.0, lo_t),
+               "light": mom(lo_t, lo_t + 1.0), "after": float(lm[(tm >= lo_t + 2.0) & (tm <= lo_t + 2.5)].mean())}
+    L, R = x[sr:, 0], x[sr:, 1]
+    gr_after = [v for tg, v in gr if tg >= GR_FROM]
+    I, M = SOUND_SEGS["idle"], SOUND_SEGS["max"]
+    return {
+        "peak": float(np.abs(x).max()), "pre": level(0.0, 0.45), "end": level(SOUND_SECONDS - 2, SOUND_SECONDS), "seg": seg,
+        "lightoff": level(lo_t, lo_t + 0.5), "lit": lit, "gr": min(gr_after) if gr_after else 0.0,
+        "corr": float(np.corrcoef(L, R)[0, 1]), "mom": start_m, "shoulder": 100 * float((np.abs(x[sr:]) > 0.7).mean()),
+        "lufs_rd": loudness(x, sr, 7.0, 11.0),
+        "bp_idle": (peak(*I, 50, 200), expect("bladeHz", *I)), "bp_max": (peak(*M, 50, 250), expect("bladeHz", *M)),
+        "wh_idle": (peak(*I, 3000, 12000), expect("whineHz", *I)), "wh_max": (peak(*M, 3000, 12000), expect("whineHz", *M)),
+        # the whine line through the start (sweeping ~650 Hz / s): measured peak vs the log in 0.4 s windows
+        "wh_start": [(a, peak(a, a + 0.4, 0.8 * expect("whineHz", a, a + 0.4), 1.2 * expect("whineHz", a, a + 0.4)),
+                      expect("whineHz", a, a + 0.4)) for a in (4, 6, 8, 10)],
+    }
+
+
+def loop_correlation(wav_path: Path, lags=(2.71, 3.23, 11.3, 13.7)) -> dict:
+    """The noise loops must not repeat: the normalised correlation of a 0.5 s window of the 9-11 kHz band (the inlet
+    hiss, broadband only) with the signal lag s later (+- 45 ms), for the old (2.71 / 3.23 s) and the new loop lengths."""
+    import numpy as np
+    from scipy import signal
+    sr, x = _wav(wav_path)
+    y = signal.sosfilt(signal.butter(6, (9000, 11000), "bandpass", fs=sr, output="sos"), x.mean(axis=1))
+    a = y[int(1.5 * sr):int(2.0 * sr)]
+    out = {}
+    for lag in lags:
+        i0 = int((1.5 + lag) * sr)
+        seg = y[i0 - 2000:i0 + 2000 + len(a)]
+        if len(seg) < len(a) + 4000:
+            continue
+        c = signal.correlate(seg, a, "valid", method="fft")
+        cs = np.concatenate([[0], np.cumsum(seg ** 2)])
+        e = np.sqrt((cs[len(a):] - cs[:-len(a)]) * float(np.dot(a, a)))
+        out[lag] = float(np.abs(c / np.maximum(e, 1e-20)).max())
+    return out
+
+
+async def sound_checks(browser, base, out_dir: Path):
+    """Engine / propeller sound (owner 2026-10-03, web/viewer/sound.js): no AudioContext before a user gesture, nor for
+    a gesture with the engine off (an orbit drag); the gesture that starts the engine (a click on Idle) makes it; the
+    graph follows the state (blade-passing frequency = 5 x rpm / 60, the whine rising with Ng through the start, the
+    propeller still until light-off, reverse / feather levels); quieter and low-passed inside the cabin with the whine
+    kept faintly (the flight deck louder than the aft cabin); M mutes the master gain; hidden page / engine off ->
+    suspended; and offline renders through the same graph: start -> idle -> 1,700 -> reverse -> fine -> feather ->
+    shutdown, written as a 16-bit WAV with its spectrogram (out_dir), its lines, levels (dBA), limiter, stereo and
+    texture measured; the loudest state (6 m, reverse, full volume) for the limiter; a steady run for the noise loops;
+    the start from the flight deck."""
+    print("sound checks")
+    ctx = await browser.new_context(viewport=VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
+    await ctx.add_init_script(AC_COUNTER)
+    page = await ctx.new_page()
+    errs = []
+    page.on("console", lambda m: errs.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
+    page.on("pageerror", lambda e: errs.append(f"pageerror: {e}"))
+    await page.goto(base + "&sound=1")
+    await page.wait_for_function("window.__ready === true", timeout=180000)
+    S = "const V = window.viewer, S = V.sound; "
+    # 1. no context before a gesture, even with sound on and the engine started from script
+    r = await js(page, S + """
+      V.pause(true);
+      const s0 = S.state();
+      V.setProp({rpm: 1000}); V.advance(1.0); const s1 = S.sync();     // (main.js setProp: no gesture)
+      V.setProp({rpm: 0, pitch: 62}, {instant: true}); V.advance(0.05); S.sync();
+      return {s0, s1, n: window.__acCreated, chip: !document.getElementById('soundChip').hidden};""")
+    check("[sound] no AudioContext before a user gesture (sound on, engine started by script)",
+          r["n"] == 0 and r["s0"]["ctx"] is None and r["s1"]["ctx"] is None and r["s0"]["on"] and not r["s0"]["gesture"]
+          and r["s1"]["active"],
+          f"{r['n']} contexts, engine {r['s1']['engine']['phase']} at {r['s1']['engine']['rpm']:.0f} rpm")
+    # 2. gestures with the engine off (a tab click, an orbit drag on the canvas) open no audio device; the gesture that
+    #    starts the engine -- the click on Idle -- creates one, running
+    await page.click("#tab-animate")
+    box = await page.locator("canvas").first.bounding_box()
+    cx, cy = box["x"] + box["width"] * 0.4, box["y"] + box["height"] * 0.5
+    await page.mouse.move(cx, cy); await page.mouse.down(); await page.mouse.move(cx + 60, cy + 10, steps=4); await page.mouse.up()
+    await page.wait_for_timeout(300)
+    r1 = await js(page, S + "V.advance(0.05); return {n: window.__acCreated, s: S.sync()};")
+    await page.click('[data-rpm="1000"]')
+    r2 = await js(page, S + "V.advance(0.1); return {n: window.__acCreated, s: S.sync(), rpmCmd: V._internals.kin.t.rpm, pressed: [...document.querySelectorAll('#aSound, #soundChip')].map((b) => b.getAttribute('aria-pressed')), chip: !document.getElementById('soundChip').hidden};")
+    check("[sound] no AudioContext for gestures with the engine off (tab click, orbit drag); the click on Idle makes one (running)",
+          r1["n"] == 0 and r1["s"]["ctx"] is None and r1["s"]["gesture"] and r2["n"] == 1 and r2["s"]["graph"]
+          and r2["s"]["ctx"] == "running" and r2["rpmCmd"] == 1000 and r2["s"]["engine"]["phase"] == "start" and r2["s"]["active"]
+          and r2["pressed"] == ["true", "true"] and r2["chip"],
+          f"after the tab click + drag: {r1['n']} ({r1['s']['ctx']}); after Idle: {r2['n']}, {r2['s']['ctx']}, {r2['rpmCmd']} rpm "
+          f"commanded, phase {r2['s']['engine']['phase']}, pressed {r2['pressed']}, chip {r2['chip']}")
+    # 3. the start: the whine pitch (16 x Ng) rises, light-off, the propeller still until then, the blade-passing tone =
+    #    5 x rpm / 60 throughout
+    r = await js(page, S + """
+      const rows = [];
+      for (let i = 0; i < 64; i++) { V.advance(0.25); const s = S.sync(), e = s.engine, p = s.targets;
+        rows.push({t: e.t, rpm: e.rpm, ng: e.ng, phase: e.phase, lit: e.lit, light: e.light, comb: e.comb, whine: p.whineHz,
+          blade: p.bladeHz, prop: p.prop, w1: p.whine1, starter: p.starter, tick: p.tick, shots: s.shots}); }
+      return rows;""")
+    start = [x for x in r if x["phase"] == "start"]
+    mono = all(b["whine"] >= a["whine"] - 1e-6 for a, b in zip(start, start[1:]))
+    lo = next((x for x in r if x["light"] > 0.3), None)
+    idle = r[-1]
+    check("[sound] start: the whine pitch rises with Ng (monotonic) to ~6 kHz at ground idle; light-off 1.5-4 s, its one-shot "
+          "played once; starter + igniters",
+          mono and len(start) > 20 and start[0]["whine"] < 2000 and abs(idle["whine"] - 16 * 0.6 * 37468 / 60) < 0.02 * 6000
+          and lo is not None and 1.5 <= lo["t"] <= 4 and start[2]["starter"] > 0 and start[2]["tick"] > 0 and idle["starter"] == 0
+          and r[0]["shots"] == 0 and idle["shots"] == 1,
+          f"whine {start[0]['whine']:.0f} -> {idle['whine']:.0f} Hz over {len(start)} samples, light-off at {lo['t'] if lo else -1:.2f} s "
+          f"(one-shots {r[0]['shots']} -> {idle['shots']}), idle Ng {idle['ng']:.1f} % / {idle['rpm']:.0f} rpm at {idle['t']:.1f} s")
+    pre = [x for x in r if not x["lit"]]
+    lit0 = next((x["t"] for x in r if x["lit"]), 99)
+    after = next((x for x in r if x["t"] >= lit0 + 2.0), None)
+    check("[sound] the propeller stays still until light-off (free turbine: <= 5 rpm creep), then accelerates (> 100 rpm 2 s later)",
+          pre and max(x["rpm"] for x in pre) <= 5 and after is not None and after["rpm"] > 100,
+          f"max {max((x['rpm'] for x in pre), default=-1):.1f} rpm before light-off at {lit0:.2f} s, "
+          f"{after['rpm'] if after else -1:.0f} rpm at {after['t'] if after else -1:.2f} s")
+    bad = [x for x in r if abs(x["blade"] - 5 * x["rpm"] / 60) > 0.01 * max(5 * x["rpm"] / 60, 1e-3)]
+    check("[sound] blade-passing target = 5 x rpm / 60 at every step of the start", not bad and idle["prop"] > 0.02,
+          f"{len(r) - len(bad)}/{len(r)} within 1 %, idle prop level {idle['prop']:.3f}")
+
+    async def settle(body):
+        """run body (JS), let the AudioParams settle in real time (tau 0.05 / 0.12 s), return the sound state"""
+        await js(page, S + body + " S.sync();")
+        await page.wait_for_timeout(900)
+        return await js(page, S + "return S.sync();")
+    # 4. steady idle / 1,700 rpm: the live AudioParam = 5 x rpm / 60 within 1 %
+    si = await settle("V.advance(3);")
+    sm = await settle("V.setProp({rpm: 1700}); V.advance(6);")
+    ok = []
+    for s in (si, sm):
+        want = 5 * s["engine"]["rpm"] / 60
+        ok.append((s["values"]["bladeHz"], want, abs(s["values"]["bladeHz"] - want) <= 0.01 * want))
+    check("[sound] blade-passing AudioParam = 5 x rpm / 60 within 1 % (idle, 1,700 rpm)", all(o[2] for o in ok) and abs(ok[1][1] - 141.67) < 0.5,
+          ", ".join(f"{v:.2f} / {w:.2f} Hz" for v, w, _ in ok))
+    check("[sound] 1,700 rpm: louder and higher than idle (prop level, whine pitch, Ng)",
+          sm["targets"]["prop"] > 2 * si["targets"]["prop"] and sm["targets"]["whineHz"] > si["targets"]["whineHz"] * 1.25
+          and sm["engine"]["ng"] > 80,
+          f"prop {si['targets']['prop']:.3f} -> {sm['targets']['prop']:.3f}, whine {si['targets']['whineHz']:.0f} -> "
+          f"{sm['targets']['whineHz']:.0f} Hz, Ng {si['engine']['ng']:.1f} -> {sm['engine']['ng']:.1f} %")
+    # 5. blade pitch: reverse = the growl + rasp and a louder propeller, more of it broadband; feather quiet
+    sr_ = await settle("V.setProp({pitch: -38}); V.advance(4);")
+    sf = await settle("V.setProp({pitch: 62}); V.advance(4);")
+    tot = lambda t: math.sqrt(sum(t[k] ** 2 for k in ("prop", "fund", "swish", "growl", "rasp")))  # noqa: E731
+    check("[sound] reverse (-38 deg): growl + rasp on, the propeller louder (tone + broadband); feather (62 deg): the prop < 40 % of fine pitch",
+          sr_["targets"]["growl"] > 0.05 and sr_["targets"]["rasp"] > 0.05 and tot(sr_["targets"]) > 1.4 * tot(sm["targets"])
+          and sm["targets"]["growl"] == 0 and sm["targets"]["rasp"] == 0 and sf["targets"]["prop"] < 0.4 * sm["targets"]["prop"]
+          and sf["engine"]["rpm"] > 1690,
+          f"propeller total fine {tot(sm['targets']):.3f}, reverse {tot(sr_['targets']):.3f} (growl {sr_['targets']['growl']:.3f}, "
+          f"rasp {sr_['targets']['rasp']:.3f}), feather tone {sf['targets']['prop']:.3f} vs {sm['targets']['prop']:.3f}")
+    # 6. inside: quieter and low-passed with the whine's high band kept faintly, the flight deck louder than the aft cabin
+    so = await settle("V.setProp({pitch: 0}); V.advance(3); V.setCamera('three_quarter', {instant: true});")
+    sp = await settle("V.tour.enter('pilot', {motion: false}); V.tour.finish(); V.advance(0.1);")
+    sa = await settle("V.tour.go('cabin_fwd', {motion: false}); V.tour.finish(); V.advance(0.1);")   # the aisle's aft end
+    await js(page, S + "V.tour.exit({motion: false}); V.tour.finish(); V.advance(0.1); S.sync();")
+    L = lambda s: (s["targets"]["gain"], s["targets"]["lpIn"], s["values"]["gain"], s["listener"]["inside"], s["targets"]["hiIn"],  # noqa: E731
+                   s["targets"]["wetIn"])
+    check("[sound] inside: quieter + low-passed, the whine band ~-20 dB, cabin room (flight deck < 3/4 view, aft cabin < flight deck)",
+          not L(so)[3] and L(sp)[3] and L(sa)[3] and L(sp)[0] < L(so)[0] and L(sa)[0] < L(sp)[0] and L(sp)[1] <= 1500
+          and L(sa)[1] < L(sp)[1] and L(so)[1] >= 15000 and abs(L(sa)[2] - L(sa)[0]) < 0.05 * L(sa)[0]
+          and L(so)[4] == 0 and 0.05 <= L(sp)[4] <= 0.2 and L(sp)[5] == 1 and L(so)[5] == 0,
+          f"gain / low-pass / whine band: 3/4 view {L(so)[0]:.2f} / {L(so)[1]:.0f} Hz / {L(so)[4]:.2f}, pilot {L(sp)[0]:.2f} / "
+          f"{L(sp)[1]:.0f} Hz / {L(sp)[4]:.2f}, aft cabin {L(sa)[0]:.2f} / {L(sa)[1]:.0f} Hz / {L(sa)[4]:.2f}")
+    # 7. M mutes the master gain (then the context suspends); M again restores it; the choice is stored
+    await page.keyboard.press("m")
+    await page.wait_for_timeout(1000)
+    m1 = await js(page, S + "return {s: S.state(), store: localStorage.getItem('pc12.viewer.sound'), pressed: document.getElementById('aSound').getAttribute('aria-pressed')};")
+    await page.keyboard.press("m")
+    await page.wait_for_timeout(900)
+    m2 = await js(page, S + "return {s: S.sync(), store: localStorage.getItem('pc12.viewer.sound')};")
+    want_master = m2["s"]["level"] * m2["s"]["volume"] ** 2
+    check("[sound] M mutes: master gain -> 0 (context then suspended), stored 'off', aria-pressed false; M again: on (level x volume^2)",
+          not m1["s"]["on"] and m1["s"]["set"]["master"] == 0 and m1["s"]["values"]["master"] < 1e-3 and m1["s"]["ctx"] == "suspended"
+          and m1["store"] == "off" and m1["pressed"] == "false" and m2["s"]["on"] and m2["store"] == "on" and m2["s"]["ctx"] == "running"
+          and abs(m2["s"]["set"]["master"] - want_master) < 1e-6 and want_master > 0,
+          f"muted: master {m1['s']['values']['master']:.4f} ({m1['s']['ctx']}); on again: master target {m2['s']['set']['master']:.3f} "
+          f"= {want_master:.3f} ({m2['s']['ctx']})")
+    # 8. the page hidden -> suspended; visible again -> running
+    h = await js(page, S + """
+      const def = (k, v) => Object.defineProperty(document, k, {configurable: true, get: () => v});
+      def('hidden', true); def('visibilityState', 'hidden'); document.dispatchEvent(new Event('visibilitychange'));
+      await new Promise((r) => setTimeout(r, 400)); const hid = S.state().ctx;
+      delete document.hidden; delete document.visibilityState; document.dispatchEvent(new Event('visibilitychange'));
+      await new Promise((r) => setTimeout(r, 600)); return [hid, S.sync().ctx];""")
+    check("[sound] page hidden -> context suspended, visible -> running", h == ["suspended", "running"], str(h))
+    # 9. shutdown: every source fades out, the chip hides, the context suspends once the engine has stopped
+    sd = await js(page, S + "V.setProp({rpm: 0, pitch: 62}); V.advance(30); return S.sync();")
+    lv = {k: sd["targets"][k] for k in ("prop", "fund", "swish", "growl", "rasp", "whine1", "whine2", "whine3", "whine4", "hay",
+                                         "hum", "roar", "hiss", "starter", "tick", "whoomp")}
+    for _ in range(40):                    # the idle suspend runs on a timer (~2.5 s after the engine has stopped)
+        await page.wait_for_timeout(250)
+        sd2 = await js(page, S + "return S.state();")
+        if sd2["ctx"] == "suspended":
+            break
+    check("[sound] shutdown: no sound once stopped (every level 0), chip hidden, context suspended",
+          max(lv.values()) < 1e-6 and not sd["active"] and sd2["chip"] is False and sd2["ctx"] == "suspended",
+          f"max level {max(lv.values()):.2e}, ctx {sd2['ctx']}")
+    # 10. the offline renders (the same EngineVoice / engineParams; Kinematics stepped at 60 Hz)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    import base64
+
+    async def render(o):
+        t0 = time.time()
+        rr = await js(page, S + "V.setProp({rpm: 0, pitch: 62, angle: 0}, {instant: true}); return await S.render(arg);", o)
+        rr["took"] = time.time() - t0
+        return rr
+    rr = await render({"script": SOUND_SCRIPT, "duration": SOUND_SECONDS})
+    wav = out_dir / "pc12_engine_sequence.wav"
+    wav.write_bytes(base64.b64decode(rr["wav"]))
+    (out_dir / "pc12_engine_sequence_log.json").write_text(json.dumps(rr["log"]))
+    png = out_dir / "spectrogram.png"
+    a = write_spectrogram(wav, rr["log"], rr["gr"], png)
+    print(f"  wav {wav} ({rr['seconds']:.0f} s, {rr['sampleRate']} Hz, {rr['channels']} ch, rendered in {rr['took']:.1f} s), spectrogram {png}")
+    sg = a["seg"]
+    check("[sound] offline render: 16-bit WAV, peaks < 0.96 (the output curve's ceiling 0.95), silent before the start and after the run-down",
+          a["peak"] < 0.96 and a["pre"] < -90 and a["end"] < -90 and wav.stat().st_size > 44 + 2 * 2 * 44100 * 50,
+          f"peak {a['peak']:.3f}, rms before {a['pre']:.0f} / end {a['end']:.0f} dBFS")
+    # SR2-01: the default listening level (BS.1770, the 3/4 view, volume 1.0) and the start heard
+    lu = {k: sg[k]["lufs"] for k in sg}
+    mo = a["mom"]
+    check("[sound] default listening level (BS.1770, 3/4 view, volume 1.0): ground idle -27 .. -22 LUFS, 1,700 rpm -18 .. -13, "
+          "reverse -14 .. -10; the crank <= 12 LU under idle (small-speaker proxy too), the spool-up <= 6",
+          -27 <= lu["idle"] <= -22 and -18 <= lu["max"] <= -13 and -14 <= lu["rev"] <= -10 and lu["crank"] >= lu["idle"] - 12
+          and sg["crank"]["lufs_hp"] >= sg["idle"]["lufs_hp"] - 12 and a["lufs_rd"] >= lu["idle"] - 6,
+          f"LUFS crank {lu['crank']:.1f}, spool-up (7-11 s) {a['lufs_rd']:.1f}, idle {lu['idle']:.1f}, 1,700 {lu['max']:.1f}, reverse "
+          f"{lu['rev']:.1f}, feathered {lu['feather']:.1f}; HP 250 Hz: crank {sg['crank']['lufs_hp']:.1f}, idle {sg['idle']['lufs_hp']:.1f}")
+    check("[sound] the start: audible within 0.4 s of the click (momentary >= idle - 16 LU), the light-off a distinct "
+          "event (momentary >= crank + 6 LU and >= what follows + 2)",
+          mo["onset"] >= lu["idle"] - 16 and mo["light"] >= mo["crank"] + 6 and mo["light"] >= mo["after"] + 2,
+          f"momentary LUFS: 0.4-0.8 s after the click {mo['onset']:.1f}, the crank {mo['crank']:.1f}, light-off {mo['light']:.1f} "
+          f"({mo['light'] - mo['crank']:+.1f} LU), 2 s later {mo['after']:.1f}")
+    check("[sound] offline render levels (dBA, 3/4 view, default volume): 1,700 >= idle + 10; reverse 1,700 + 4..8; feathered < 1,700 - 3; "
+          "crank audible (> idle - 20), light-off a step up; run-down fading",
+          sg["max"]["la"] >= sg["idle"]["la"] + 10 and sg["max"]["la"] + 4 <= sg["rev"]["la"] <= sg["max"]["la"] + 8
+          and sg["feather"]["la"] < sg["max"]["la"] - 3 and sg["idle"]["la"] - 20 < sg["crank"]["la"] < sg["idle"]["la"]
+          and a["lightoff"] > sg["crank"]["rms"] + 6 and sg["stop"]["la"] < sg["idle"]["la"] - 10,
+          f"dBA re idle: crank {sg['crank']['la'] - sg['idle']['la']:+.1f}, 1,700 {sg['max']['la'] - sg['idle']['la']:+.1f}, reverse "
+          f"{sg['rev']['la'] - sg['idle']['la']:+.1f}, feathered {sg['feather']['la'] - sg['idle']['la']:+.1f}, run-down "
+          f"{sg['stop']['la'] - sg['idle']['la']:+.1f}; rms dBFS idle {sg['idle']['rms']:.1f}, 1,700 {sg['max']['rms']:.1f}, reverse "
+          f"{sg['rev']['rms']:.1f}; light-off {a['lightoff'] - sg['crank']['rms']:+.1f} dB over the crank")
+    check("[sound] the limiter idles at the default volume in the 3/4 view (gain reduction > -0.2 dB throughout), the output "
+          "curve rounds < 0.1 % of the samples",
+          a["gr"] > -0.2 and a["shoulder"] < 0.1, f"deepest {a['gr']:.2f} dB, {a['shoulder']:.3f} % of the samples above the curve's knee")
+    check("[sound] texture at 1,700 rpm: tonal share 50-70 % (unweighted), propeller-band envelope std/mean 0.2-0.4 (gusts, "
+          "turbulence); stereo L/R correlation 0.5-0.97 (the room)",
+          50 <= sg["max"]["tonal"] <= 70 and 0.2 <= sg["max"]["env"] <= 0.4 and 0.5 <= a["corr"] <= 0.97,
+          f"tonal {sg['max']['tonal']:.1f} % (idle {sg['idle']['tonal']:.1f} %, reverse {sg['rev']['tonal']:.1f} %), envelope "
+          f"{sg['max']['env']:.3f} (idle {sg['idle']['env']:.3f}), L/R corr {a['corr']:.3f}")
+    bp = [a["bp_idle"], a["bp_max"]]
+    check("[sound] spectrum: the blade-passing line at 5 x rpm / 60 (idle, 1,700 rpm) within 1 %",
+          all(abs(m_ - w_) <= 0.01 * w_ for m_, w_ in bp), ", ".join(f"{m_:.2f} / {w_:.2f} Hz" for m_, w_ in bp))
+    wh = [a["wh_idle"], a["wh_max"]]
+    ws = [(m_, w_) for _, m_, w_ in a["wh_start"]]
+    # steady: 1 %; through the start sweep 2.5 % (the parameters follow the state with a 0.05 s smoothing lag: ~30 Hz)
+    check("[sound] spectrum: the whine line follows 16 x Ng (idle, 1,700 rpm: 1 %; through the start sweep: 2.5 %)",
+          all(abs(m_ - w_) <= 0.01 * w_ for m_, w_ in wh) and all(abs(m_ - w_) <= 0.025 * w_ for m_, w_ in ws),
+          ", ".join(f"{m_:.0f}/{w_:.0f}" for m_, w_ in wh + ws) + " Hz")
+    # the extra renders
+    ex = {}
+    for name, o in SOUND_EXTRA.items():
+        rx = await render(o)
+        p_ = out_dir / f"pc12_sound_{name}.wav"
+        p_.write_bytes(base64.b64decode(rx["wav"]))
+        ex[name] = (p_, rx)
+        print(f"  wav {p_} ({rx['seconds']:.0f} s, rendered in {rx['took']:.1f} s)")
+    p_, rx = ex["loudest"]
+    srL, xL = _wav(p_)
+    grL = [v for t_, v in rx["gr"] if t_ >= GR_FROM]
+    xL = xL[int(GR_FROM * srL):]
+    loud = loudness(xL, srL)
+    shL = 100 * float((abs(xL) > 0.7).mean())
+    srI, xI = _wav(ex["close_idle"][0])
+    close_idle = loudness(xI[int(GR_FROM * srI):], srI)
+    check("[sound] close-ups (6 m in the disc plane): idle >= 6 LU louder than the 3/4 view (the distance law); the loudest "
+          "state (reverse 1,700 rpm, full volume) held at the ceiling (<= 3 LU over the 3/4 view): limiter gain reduction "
+          "<= 1 dB on average, < 1 % of the samples on the output curve, peaks < 0.96",
+          close_idle >= lu["idle"] + 6 and grL and sum(grL) / len(grL) >= -1.0 and float(abs(xL).max()) < 0.96
+          and loud <= lu["rev"] + 3 and shL < 1.0,
+          f"idle {close_idle:.1f} LUFS ({close_idle - lu['idle']:+.1f} LU); loudest {loud:.1f} LUFS ({loud - lu['rev']:+.1f} LU), gain "
+          f"reduction mean {sum(grL) / max(len(grL), 1):.2f} / deepest {min(grL, default=0):.2f} dB, {shL:.2f} % on the curve, peak "
+          f"{float(abs(xL).max()):.3f}")
+    lc = loop_correlation(ex["steady"][0])
+    check("[sound] the noise does not loop audibly: the 9-11 kHz hiss correlates < 0.25 with itself 2.7 / 3.2 / 11.3 / 13.7 s later",
+          len(lc) == 4 and max(lc.values()) < 0.25, ", ".join(f"{k} s: {v:.3f}" for k, v in lc.items()))
+    srP, xP = _wav(ex["pilot"][0])
+    pl = sound_stats(xP.mean(axis=1), srP, 13.0, 16.0)
+    po = sg["idle"]
+    check("[sound] flight deck at idle: the whine heard faintly through the firewall (A-weighted share above 2 kHz -25 .. -12 dB; "
+          "outside > -6 dB), quieter than the 3/4 view",
+          -25 <= pl["hi2k"] <= -12 and po["hi2k"] > -6 and pl["la"] < po["la"],
+          f"above 2 kHz: inside {pl['hi2k']:.1f} dB, 3/4 view {po['hi2k']:.1f} dB; level {pl['la'] - po['la']:+.1f} dBA re the 3/4 view")
+    check("[sound] no console errors / page errors", not errs, "; ".join(errs[:4]))
+    await js(page, "window.viewer.pause(false);")
+    await ctx.close()
+
+
 # ----------------------------------------------------------------------------- main
 async def run(args):
     from playwright.async_api import async_playwright
@@ -2594,6 +3084,10 @@ async def run(args):
     try:
         async with async_playwright() as pw:
             browser = await launch(pw)
+            if args.only == "sound":
+                await sound_checks(browser, base, args.sound_out)
+                await browser.close()
+                return
             page = await browser.new_page(viewport=VIEW, device_scale_factor=1, reduced_motion="reduce", **CTX)
             errors, failed, aborted, ok_urls = [], [], [], set()
             page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
@@ -2642,6 +3136,10 @@ async def run(args):
             if args.blender:
                 await blender_check(page)
             await context_loss_check(page)
+            snd = await js(page, "return window.viewer.sound.state();")
+            check("[sound] off by default under automation: no AudioContext made in the whole main run",
+                  snd["supported"] and not snd["on"] and snd["created"] == 0 and snd["ctx"] is None,
+                  f"on {snd['on']}, {snd['created']} contexts, gesture seen {snd['gesture']}")
             check("no console errors / page errors", not errors, "; ".join(errors[:4]))
             bad = [t for _, t in failed] + [t for u, t in aborted if u not in ok_urls]
             check("no failed requests", not bad,
@@ -2654,6 +3152,7 @@ async def run(args):
             await error_path(browser, base)
             await boot_failures(pw, browser, base)
             await meshopt_check(browser, base, ref_geo)
+            await sound_checks(browser, base, args.sound_out)
             if not args.no_shots:
                 await loading_shot(browser, base)
             await browser.close()
@@ -2668,6 +3167,10 @@ def main():
     ap.add_argument("--no-shots", action="store_true", help="skip screenshots (numeric checks only)")
     ap.add_argument("--three", default="local", choices=["local", "cdn"],
                     help="three.js source: web/three_local (default) or the jsDelivr CDN")
+    ap.add_argument("--only", default="all", choices=["all", "sound"],
+                    help="sound: only the engine-sound section (its own page; ~2 min)")
+    ap.add_argument("--sound-out", type=Path, default=OUT / "sound",
+                    help="folder for the offline render pc12_engine_sequence.wav + spectrogram.png (default out/tmp/viewer/sound)")
     args = ap.parse_args()
     try:
         asyncio.run(run(args))

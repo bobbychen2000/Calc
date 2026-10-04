@@ -391,6 +391,21 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
 #loading.stalled:not(.error) .load-stall { display: block; margin: 10px 0 6px; }
 #loading.error .load-retry, #loading.stalled .load-retry { display: inline-block; margin-top: 10px; min-width: 96px; }
 
+/* ---------- engine sound (sound.js): the Animate tab's toggle + volume, the floating chip while the engine runs ---------- */
+.sound-toggle, .sound-chip { display: inline-flex; align-items: center; gap: 6px; }
+.sound-toggle .ic, .sound-chip .ic { width: 18px; height: 18px; flex: 0 0 auto; }
+[aria-pressed="true"] > .ic .snd-off, [aria-pressed="false"] > .ic .snd-on { display: none; }
+.sound-vol { flex: 1 1 140px; display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; }
+.sound-vol span { color: var(--text-2); }
+.sound-chip {
+  position: absolute; right: calc(var(--panel-w) + var(--gutter)); bottom: calc(var(--gutter) + 4px); z-index: 5;
+  justify-content: center; min-width: 36px; min-height: 36px; padding: 0; border-radius: 999px;
+  background: var(--surface-glass); box-shadow: var(--shadow); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+#app:not(.panel-open) .sound-chip { right: max(var(--gutter), env(safe-area-inset-right)); }
+.sound-chip[aria-pressed="false"] { color: var(--text-2); }
+#app.drawings .sound-chip { display: none; }
+
 /* ---------- narrow screens: bottom sheet (portrait phones; main.js narrowMQ is the same query) ---------- */
 @media (max-width: 760px) and (min-height: 501px) {
   :root { --gutter: 16px; --panel-w: 0px; }
@@ -436,6 +451,9 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
   #app:not(.panel-open) #tourPad { bottom: calc(144px + env(safe-area-inset-bottom)); }
   #tourStop { max-width: 40vw; }
   #app:not(.panel-open) #stepCaption { bottom: calc(100px + env(safe-area-inset-bottom)); }
+  /* right, above the caption / hint row (the walk pad is on the left) */
+  .sound-chip, #app:not(.panel-open) .sound-chip { right: max(var(--gutter), env(safe-area-inset-right)); bottom: calc(var(--sheet-h) + 52px); }
+  #app:not(.panel-open) .sound-chip { bottom: calc(144px + env(safe-area-inset-bottom)); }
   #drawingView, #app:not(.panel-open) #drawingView { right: env(safe-area-inset-right); bottom: var(--sheet-h); top: 52px; }
   .slider { grid-template-columns: 6.5em 1fr auto; }
   .step-list { max-height: none; }
@@ -482,6 +500,7 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
   #tabs [role="tab"] { min-height: 40px; }
   #tourHint button, #detailChip button { min-height: 40px; min-width: 40px; }
   #tourPrev, #tourNext { min-width: 40px; }
+  .sound-chip { min-width: 44px; min-height: 44px; }
   #tourPad { grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 48px); }
 }
 
