@@ -2462,13 +2462,17 @@ async def touch_checks(page, ctx):
     # ~2.5x at 390 x 844) before any supersampling; the tier's ratio while the scene animates; PERF-3: phone Auto keeps
     # the 1024 / 256 shadow maps
     r = await js(page, r"""
-      const st = window.viewer._internals.stage, P = st.picture, q0 = st.quality, pred = P.predicted, busy = st.busy, cap = P.framesCap;
-      st.quality = {...q0, dprMax: 1.5, dprNative: 3, dprMove: 1}; P.predicted = true; P.framesCap = Infinity;
+      const st = window.viewer._internals.stage, P = st.picture, q0 = st.quality, pred = P.predicted, busy = st.busy, cap = P.framesCap,
+        spx = P.stillPx;
+      // Auto's measured state set aside (calibrated, no cut passes, the profile's own budget): SwiftShader's frame times
+      // on the phone page (the light tier's 1.9M triangles) cut the still budget towards the floor -- Auto working, not
+      // the ratio logic under test
+      st.quality = {...q0, dprMax: 1.5, dprNative: 3, dprMove: 1}; P.predicted = true; P.framesCap = Infinity; P.stillPx = Infinity;
       const out = {still: P.stillDpr(), css: [st.size.w, st.size.h], px: P.pxBudget, profile: [P.device, P.mode], S: null,
         shadow: st.key.shadow.mapSize.x, contact: st.contact.size};
       st.dpr = 0; st._still = 5; st._busy = true; st.applyQuality(); out.busyDpr = st.dpr;
       st._busy = false; st.applyQuality(); out.stillDprSet = st.dpr; out.S = P._plan().S;
-      st.quality = q0; P.predicted = pred; P.framesCap = cap; st._busy = busy; st.dpr = q0.dprMax; st.renderer.setPixelRatio(q0.dprMax); P.invalidate();
+      st.quality = q0; P.predicted = pred; P.framesCap = cap; P.stillPx = spx; st._busy = busy; st.dpr = q0.dprMax; st.renderer.setPixelRatio(q0.dprMax); P.invalidate();
       st.needsRender = true;
       return out;
     """)
@@ -3016,7 +3020,13 @@ async def picture_motion_checks(browser, base):
         gb = lambda x: gaussian_filter(x, (0.7, 0.7, 0))
         err = {k: float(np.abs(gb(a[k]) - gb(ref))[:-1, :-1].mean(axis=2)[m].mean()) for k in ("taa", "plain")}
         raw = {k: round(float(np.abs(a[k] - ref)[:-1, :-1].mean(axis=2)[m].mean()), 2) for k in ("taa", "plain")}
-        cols = {k: [round(float(np.median(a[k][..., c][a[k][..., 2] > a[k][..., 0] + 40]))) for c in range(3)] for k in a}
+        # the colours: medians over the paint's blue areas 2 px inside their edges (the edge pixels blend with their
+        # light neighbours as much as each path's anti-aliasing softens them, which shifts a whole-mask median's red by
+        # 3-4 / 255 without any pixel changing colour), pixels blue in both images
+        from scipy.ndimage import binary_erosion
+        blue = lambda x: x[..., 2] > x[..., 0] + 40
+        core = binary_erosion(blue(ref), iterations=2)
+        cols = {k: [round(float(np.median(a[k][..., c][core & blue(a[k])]))) for c in range(3)] for k in a}
     else:
         err, raw, cols = {"taa": None, "plain": None}, {}, {}
     ok_k = all(k == "taa" for k, _ in kinds["taa"]) and all(h for _, h in kinds["taa"]) and all(k == "move" for k, _ in kinds["plain"])
@@ -3025,7 +3035,7 @@ async def picture_motion_checks(browser, base):
           ok_k and err["taa"] is not None and err["taa"] < 0.97 * err["plain"]
           and all(max(abs(x - y) for x, y in zip(cols[k], cols["ref"])) <= 3 for k in ("taa", "plain")),
           f"mean |diff| to the still on edges (0.7 px Gaussian): taa {err['taa'] and round(err['taa'], 2)}, plain "
-          f"{err['plain'] and round(err['plain'], 2)} (raw {raw}); paths {kinds['taa'][-1]} / {kinds['plain'][-1]}; blue medians {cols}")
+          f"{err['plain'] and round(err['plain'], 2)} (raw {raw}); paths {kinds['taa'][-1]} / {kinds['plain'][-1]}; blue medians (2 px inside) {cols}")
     # a cut (a preset jump while 'moving') starts the history afresh
     cut = await js(page, r"""
       const st = PQ.st(), P = PQ.P(), c0 = P.taa.cuts;

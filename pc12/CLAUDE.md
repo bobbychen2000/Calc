@@ -343,8 +343,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   model tiers: the boot script loads `PC12_CONFIG.glbLow` (out/pc12_low.glb) on the 'low' quality tier (phones) as it
   picks the 512 px HDRI, the full model elsewhere (?glb= overrides both); there the Specs panel's detail switch loads
   the full model instead (?detail=full|light, remembered in localStorage 'pc12-detail'; review r1 RES1-02), and a
-  stage chip offers it once after load on devices likely to take it (navigator.deviceMemory >= 4 or an iPad; not on
-  the gzip no-WebAssembly path; Load / x remembered, ignored it leaves after 25 s; ?detailChip=1 forces it; review r2
+  stage chip offers it once after load on devices likely to take it (navigator.deviceMemory >= 4, an iPad, or an iPhone
+  with a >= 1080 px screen; not on the gzip no-WebAssembly path; Load / x remembered, ignored it leaves 25 s after the
+  loading screen; ?detailChip=1 forces it; review r2
   RES2-03); the Specs
   panel and the part cards count the tier loaded; the Artifact bundle's gzip no-WebAssembly fallback is the full model on desktops (data/pc12_glb.gz.bin) and the light
   tier on phones (data/pc12_low_glb.gz.bin, PC12_CONFIG.glbGzLow), so a host that refuses WebAssembly still shows the
@@ -688,8 +689,10 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   (EXT8-02): its own neutral polished aluminium `inlet_lip` (#CFCCC6, rough 0.12; livery SURFACES, lookdev SPEC).
   Light tier (GEO8-01): `build.LOW_FINE` (seat_, yoke_, pedal_, brace_, gear_nose) rebuilt and refined at RES 2 in the
   PC12_RES=1 process (facet area: pax seats 22.5 -> 2.3 %, crew 17.6 -> 3.4, yokes 25.6 -> 8.2, pedals 50 -> 3.1, braces
-  51 -> 8.2; +0.3M triangles); iPhones (no navigator.deviceMemory) with a >= 1080 px screen get the full-model chip
-  (viewer_test [GEO8-01]).  Interior: CB panels small black heads on white collars, green legends (INT8-02); the
+  51 -> 8.2; +0.3M triangles); iPhones (no navigator.deviceMemory) with a >= 1080 px screen get the full-model chip,
+  whose 25 s now counts from the loading screen's end (viewer_test [GEO8-01]; it had run out unseen behind a slow first
+  render).  viewer_test CR1-01 sets Auto's measured still budget aside (the heavier light tier's SwiftShader frames cut
+  it), CR1-02 compares the colours 2 px inside the blue areas (a whole-mask median moved with the edge softness).  Interior: CB panels small black heads on white collars, green legends (INT8-02); the
   pedestal's trim panel (black bezel, guarded TRIM INTERRUPT, split ALT STAB TRIM and AILERON TRIM rockers, legends),
   flap gate with detents, guarded FLAP INTERRUPT, titanium palm pad (INT8-03: the cream square was the amber box);
   `cabin.RUNNER` 0.9-2.4 m stripes, 5-60 mm breaks, more jogs, 70 % orange / 18 % light grey (`carpet_light`, no longer
