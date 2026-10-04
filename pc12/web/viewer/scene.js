@@ -16,6 +16,7 @@ const _box = new THREE.Box3();
 const _b2 = new THREE.Box3();
 const _p = new THREE.Vector3();
 
+const CONTACT_BUSY = 512;   // contact-shadow map size while the scene animates (the still size: the picture profile's)
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 // OrbitControls' damping; the last sub-pixel stretch of a coast settles faster (Stage.update)
 const DAMPING = 0.085, SETTLE_DAMPING = 0.3;
@@ -30,11 +31,13 @@ export function prefersDark() {
 }
 
 // Render quality by device class.  Phones: pixel ratio capped at 1.5 (1.0 while the camera moves: a drag, its
-// damped coast after lift-off, a preset tween; the full ratio is re-rendered once the camera has been still for two
-// frames; a tap never drops it).  ?dpr= / ?quality=low|high|max override (for tests and slow devices; high / max also
-// fix the picture mode, see picture.js).  The shadow / contact map sizes and the still supersampling come from the
-// picture profile (picture.js PROFILES: desktop 4096 / 1024, phones 2048 / 512; Picture keeps them current when the
-// Specs panel's 'Picture quality' changes).
+// damped coast after lift-off, a preset tween; a tap never drops it); once the camera and the scene have been still for
+// two frames the still ratio: up to the screen's own (dprNative, 3 at most) as far as the picture profile's pixel budget
+// allows (picture.js stillDpr: ~2.5x on a 390 x 844 phone on Auto), else dprMax.  Desktops: up to 2 (and the native
+// ratio above 2 when still, within the budget).  ?dpr= / ?quality=low|high|max override (for tests and slow devices;
+// high / max also fix the picture mode, see picture.js; ?dpr= also fixes the still ratio).  The shadow / contact map
+// sizes and the still supersampling come from the picture profile (picture.js PROFILES: desktop 4096 / 1024, phones
+// 1024 / 256 on Auto, 2048 / 512 on High; Picture keeps them current when the Specs panel's 'Picture quality' changes).
 // index.html's boot script makes the same choice first (PC12_URLS.quality: it preloads the matching studio HDRI).
 export const QUALITY = (() => {
   const coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
@@ -43,12 +46,14 @@ export const QUALITY = (() => {
   const boot = window.PC12_URLS && window.PC12_URLS.quality;
   const low = force ? force === 'low' : boot ? boot === 'low' : mobile;
   const dpr = window.devicePixelRatio || 1;
-  const cap = +Q_.get('dpr') || (low ? 1.5 : 2);
+  const fixed = +Q_.get('dpr');
+  const cap = fixed || (low ? 1.5 : 2);
   const dprMax = Math.min(dpr, cap);
+  const dprNative = fixed ? dprMax : Math.min(dpr, 3);
   const picture = pictureChoice().mode, P = PROFILES[low ? 'phone' : 'desktop'][picture];
   const dprMoveBase = low ? Math.min(dprMax, 1) : dprMax;
   return {
-    mobile, low, dprMax, dprMoveBase, picture,
+    mobile, low, dprMax, dprMoveBase, dprNative, picture,
     dprMove: picture === 'max' ? dprMax : dprMoveBase,
     shadowMap: P.shadow,
     contactMap: P.contact,
@@ -76,11 +81,11 @@ export const QUALITY = (() => {
 // development).
 const qn = (k) => (Q_.has(k) && Q_.get(k) !== '' && isFinite(+Q_.get(k)) ? +Q_.get(k) : undefined);
 const OVERRIDE = Object.fromEntries(['floor', 'walls', 'top', 'lift', 'wallLift', 'strips', 'exposure'].map((k) => [k, qn(k)]).filter(([, v]) => v !== undefined));
-// the studio HDRI: 2k on desktops (a 512 px prefiltered environment face: the softbox and strip edges stay crisp in
-// the glass, chrome and clear coat), a 512 x 256 box-filtered copy on the low tier (phones: a sixteenth of the
-// download, the same look at phone sizes), the 1k one on phones set to Max; index.html's boot script picks and
-// preloads it (PC12_URLS.hdr), ?hdr= overrides
-const HDR = { high: '../assets/studio_small_09_2k.hdr', low: '../assets/studio_small_09_512.hdr', lowMax: '../assets/studio_small_09_1k.hdr' };
+// the studio HDRI: 1k on desktops, a 512 x 256 box-filtered copy on the low tier (phones: a quarter of the download, the
+// same look at phone sizes), the 1k one on phones set to Max; index.html's boot script picks and preloads it
+// (PC12_URLS.hdr), ?hdr= overrides.  (A 2k copy was tried in 2026-10: no measurable gain in the reflected softbox and
+// strip edges of the glazing, chrome or clear coat -- review CR1-06 -- for 4.7 MB more on the way to the first frame.)
+const HDR = { high: '../assets/studio_small_09_1k.hdr', low: '../assets/studio_small_09_512.hdr', lowMax: '../assets/studio_small_09_1k.hdr' };
 const hdrDefault = QUALITY.low ? (QUALITY.picture === 'max' ? HDR.lowMax : HDR.low) : HDR.high;
 export const LOOK = {
   hdr: Q_.get('hdr') || (window.PC12_URLS && window.PC12_URLS.hdr) || new URL(hdrDefault, import.meta.url).href,
@@ -131,7 +136,8 @@ export class Stage {
     // the ground (the only receiver) filters it as a soft-edged PCSS shadow (picture.js patchShadowMaterial)
     r.shadowMap.type = THREE.PCFShadowMap;
     r.shadowMap.autoUpdate = false;          // re-rendered only when the pose changes
-    // specular anti-aliasing for every lit material; the roughness floor = the environment's base mip (2k HDRI: 512 px)
+    // specular anti-aliasing for every lit material; the roughness floor = the environment's base mip (1k HDRI: a
+    // 256 px face, three's 0.0525; a 2k one given by ?hdr=: 512 px, 0.038)
     installSpecularAA(/_2k\.hdr/.test(LOOK.hdr) ? 0.038 : 0.0525);
     host.appendChild(r.domElement);
     r.domElement.tabIndex = 0;
@@ -212,13 +218,20 @@ export class Stage {
     this.contactDirty = true;
     this._needs = true;         // needsRender: a change asked for a new frame
     this._refine = false;       // ... or Picture asks for one more still-refinement frame
+    this._ovl = false;          // ... or only the overlay moved (overlayDirty: the spinning propeller's blur)
+    // objects animating over an otherwise still scene (main.js: the propeller's blur disc, band and hub while its
+    // blades have faded into the disc), or null; Picture keeps the still image of the rest and draws these over it
+    this.overlay = null;
     this._near = 0.05;
     this.size = { w: 1, h: 1 };
     this.stats = { renders: 0, contactRenders: 0, shadowRenders: 0, lastRenderMs: 0 };
     // true while the pose animates (set by the render loop): on the low-quality tier the key-light shadow
     // map and the contact shadow (each a full pass over the ~700k-triangle model) follow every 3rd frame
-    // only; the loop renders once more when the motion stops so they end exact
-    this.busy = false;
+    // only; the contact shadow renders at CONTACT_BUSY while busy (review PERF-4: a 1024 map took ~7x the 512 one on
+    // every frame of an explode / gear / door / build animation); the loop renders once more when the motion stops so
+    // they end exact and full size
+    this._busy = false;
+    this._contactLo = false;
     this._tick = 0;
     // render paths, still supersampling, adaptive resolution, the 'Picture quality' setting (picture.js)
     this.picture = new Picture(this);
@@ -229,8 +242,17 @@ export class Stage {
   }
 
   // a frame is due: something changed (any caller sets it), or Picture refines a still image
-  get needsRender() { return this._needs || this._refine; }
-  set needsRender(v) { this._needs = !!v; if (!v) this._refine = false; }
+  get needsRender() { return this._needs || this._refine || this._ovl; }
+  set needsRender(v) { this._needs = !!v; if (!v) { this._refine = false; this._ovl = false; } }
+  // a frame is due because only the overlay (Stage.overlay) moved: the still image of the rest stays valid
+  set overlayDirty(v) { this._ovl = !!v; }
+  get overlayDirty() { return this._ovl; }
+
+  get busy() { return this._busy; }
+  set busy(v) {
+    this._busy = !!v;
+    if (!v && this._contactLo) this.contactDirty = true;      // the animation ended: the full-size contact shadow
+  }
 
   // pose changes invalidate both shadows; keyShadowOnly() (a spinning prop) only the key-light map
   get shadowDirty() { return this._sd; }
@@ -616,8 +638,10 @@ export class Stage {
     const st = this.stats;
     const skip = this.quality.low && this.busy && (this._tick++ % 3) !== 0;
     if (this.contactDirty && !skip) {
-      this.contact.update(this.scene);
+      const lo = this.busy && this.contact.size > CONTACT_BUSY;
+      this.contact.update(this.scene, lo ? CONTACT_BUSY : 0);
       this.contactDirty = false;
+      this._contactLo = lo;
       st.contactRenders++;
     }
     if (this._sd && !skip) {

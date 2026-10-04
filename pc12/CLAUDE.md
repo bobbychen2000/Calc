@@ -339,30 +339,64 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   tier on phones (data/pc12_low_glb.gz.bin, PC12_CONFIG.glbGzLow), so a host that refuses WebAssembly still shows the
   full resolution on a desktop).
 - Viewer picture quality (owner 2026-10-03 "smoother curves, edges and sharper crisper picture"; the picture side,
-  `web/viewer/picture.js`, Stage.render() -> Picture): once the camera and the scene are still for 3 frames the scene is
-  rendered into a multisampled render target at up to 2x the canvas resolution (pixel budget 8.3 MP High / Auto, 16.6 MP
-  Max, 2.1-8.3 MP phones; byte budget; MAX_TEXTURE / RENDERBUFFER / VIEWPORT size; 2 MSAA samples at >= 1.5x, 4 below,
-  Max 4 / 8), box-filtered down (exact area average) and accumulated over N Halton-jittered passes (16 High / Auto, 32
-  Max, 8-16 phones; frame 0 unjittered, so the switch does not shift the image).  The target is an 'XR' render target
-  (rt.isXRRenderTarget, RGBA8, sRGB colour space): three applies the AgX + Punchy tone mapping and sRGB encoding into it
-  exactly as on the canvas and the passes average premultiplied, encoded values like the canvas' MSAA resolve -- the
-  colours never change between moving and still frames.  Moving frames: the canvas (4x MSAA) at the moving pixel ratio;
-  through the target where the canvas has no MSAA, supersampled when a supersampled frame fits in the refresh (Auto / Max).
-  Pixel-sized effects follow the scale (grid line width uPx, construction-line opacity).  Specular AA: three's additive
-  `geometryRoughness` replaced in ShaderChunk.lights_physical_fragment by the normal-variance kernel (Tokuyoshi &
-  Kaplanyan; Filament 0.15 / 0.2) on alpha^2, roughness floor 0.038 with the 2k HDRI (its 512 px base mip).  Textures:
-  max anisotropy + trilinear mipmaps (G3000 atlas, contact shadow 1024 desktop).  Studio HDRI: 2k on desktops
-  (assets/studio_small_09_2k.hdr, CC0 Poly Haven; 512 phones, 1k phones on Max; RGBELoader FloatType, the strip grade
-  tabulated).  Key shadow: PCSS on the ground ShadowMaterial (PCFShadowMap, 4096 desktop / 2048 phones; a 4 deg
-  softbox, LOOK.keyAngle: crisp at the tyres, soft under the wing) on a shadow camera fitted to the posed casters at each
-  shadow render (Stage._fitShadow).  Auto measures real frame times (a 1-pixel-read calibration of the 2nd frame during
-  loading, fences for isolated frames, rAF intervals when back-to-back) and steps the still budget / passes (a software
-  renderer such as SwiftShader gets none: the pre-2026-10 picture), the moving pixel ratio (never below min(1, dprMax))
-  and moving supersampling.  The end of an orbit coast settles faster below 0.5 px / frame and is applied at once
-  below 0.05 px (Stage.update), so stills start promptly.  Specs panel 'Picture quality' Auto / High / Max (localStorage
-  'pc12-picture'); ?picture=, ?quality=high|max fix it (tests), ?ssframes= / ?sspx= override passes / budget,
-  ?keyangle= the softbox.  Tests: viewer_test.py '[PQ]' rows (a 480 x 320 page in High, 3 passes).  SwiftShader takes
-  ~20-30 s per 2x frame at 800 x 500 on the shared sandbox: compare frame costs relatively, never tune on them.
+  `web/viewer/picture.js`, Stage.render() -> Picture; crisp review r1 fixes in r2): once nothing moves the canvas goes up
+  to the screen's own pixel ratio (3 at most) within the profile's pixel budget (`stillDpr`: phones ~2.5x on Auto at
+  390 x 844 instead of 1.5 -- CR1-01, phones sharper than before, not only smoother; desktops above 2x), then the scene
+  is rendered into a multisampled render target at 1x or 2x that canvas (whatever budget is left: 8.3 MP High / Auto,
+  16.6 MP Max, 2.1-8.3 MP phones; byte budget; MAX_TEXTURE / RENDERBUFFER / VIEWPORT size; 2 MSAA samples at 2x, 4 at
+  1x, Max 4 / 8; fractional still scales are not used: the straddling target pixels add their own box to the filter),
+  box-filtered down and accumulated over N passes jittered by Halton offsets within ONE MSAA CELL (+-1 / 2n target px:
+  the n-rooks MSAA samples then fill each output pixel evenly, the box filter of a dense supersampling; a whole-pixel
+  jitter made a 1.5-2 px tent) (16 High / Auto, 32 Max, 8-16 phones; frame 0 unjittered, so the switch does not shift
+  the image).  The targets are 'XR' render targets (rt.isXRRenderTarget, RGBA8, sRGB colour space): three applies the
+  AgX + Punchy tone mapping and sRGB encoding into them exactly as on the canvas and the passes average premultiplied,
+  encoded values like the canvas' MSAA resolve -- the colours never change between paths; each carries a resolved
+  depth texture.  Spinning propeller with the camera still (CR1-03, 'layered'): main.js sets Stage.overlay =
+  PropBlur.overlay (disc, root band, turning hub) once the blades have faded into the blur disc and the spinner is held,
+  and marks those frames overlayDirty instead of needsRender; the still passes then render WITHOUT the overlay (the
+  static aircraft refines and converges as usual, also where still refinement is off: one 1x pass), and every frame
+  shows that image with its depth (COMPOSE: gl_FragDepth from the target's depth texture) and draws only the overlay on
+  camera layer OVERLAY_LAYER (5; the lights get it too, so the programs are the full scene's) with the canvas' MSAA
+  -- a full-screen copy plus the disc instead of the 2M-triangle scene per frame.  Moving frames (CR1-02): temporal AA
+  -- the scene into a multisampled target at the canvas size (4x, Max 8x) jittered within one MSAA cell (Halton, 8-cycle),
+  blended with the history reprojected through the depth buffer (world position from the nearest depth of the 3 x 3
+  neighbourhood; where nothing wrote depth -- the ground grid, contact and key shadows -- the ground plane under the view
+  ray: without it the ground smeared), Catmull-Rom history samples (5 taps), the history clipped to the neighbourhood's
+  YCoCg variance (1.25 sigma) and range, new-frame weight 0.15 rising to 0.6 from 1 px of motion a frame (TAA_ALPHA /
+  TAA_FAST: the history is resampled every frame, keeping more of it went soft); the first moving frame continues from
+  the still image (its camera kept as the seed), a cut (> 20 deg turn, > 0.3 x the orbit distance, fov +-20 %) starts
+  afresh; shown unsharpened (a display sharpen and sharper resampling kernels measured worse).  Tuned on 8-frame orbits
+  of 0.15 / 0.5 deg a frame against the converged still (out/tmp/viewer/35_picture_orbit_*.png): continuous door gaps
+  and smooth edges where the plain 4x MSAA frame dots and steps them, a little softer at speed.  Where a supersampled frame is predicted from the measured
+  still passes (cost per target pixel) and then measured to fit the refresh, one supersampled pass (moveSS: 1.5 Auto /
+  High, 2 Max; 'movess') feeds the temporal blend; camera still while gear / door / explode animate: one supersampled
+  pass up to the still scale ('busyss', no temporal blend: no motion vectors for moving parts); ?movess=1|0 forces them,
+  ?taa=0 / ?layer=0 switch the temporal AA / the layered propeller off.  Targets: a pool of at most two multisampled
+  targets (the still and the moving plan, shared when they agree), the accumulation pair, the history pair; each
+  released after 30 s unused.  Pixel-sized effects follow the scale (grid line width uPx, construction-line opacity).
+  Specular AA: three's additive `geometryRoughness` replaced in ShaderChunk.lights_physical_fragment by the
+  normal-variance kernel (Tokuyoshi & Kaplanyan; Filament 0.15 / 0.2) on alpha^2, roughness floor 0.0525 (the 1k HDRI's
+  256 px base mip).  Textures: max anisotropy + trilinear mipmaps (G3000 atlas, contact shadow).  Studio HDRI: 1k on
+  desktops (a 2k copy measured no sharper reflections -- review CR1-06: the glazing / chrome / clear-coat roughness sits
+  at the floor either way -- for 4.7 MB more before the first frame, and was dropped), 512 phones, 1k phones on Max
+  (RGBELoader FloatType, the strip grade tabulated).  Key shadow: PCSS on the ground ShadowMaterial (PCFShadowMap, 4096
+  desktop, phones 1024 Auto / 2048 High-Max; contact shadow 1024 desktop, 256 / 512 / 1024 phones, rendered at 512 while
+  the scene animates and full size once still, same UV blur radii; a 4 deg softbox, LOOK.keyAngle) on a shadow camera
+  fitted to the posed casters at each shadow render (Stage._fitShadow).  Auto: a start-up calibration = the MEDIAN of 3
+  plain frames (2nd-4th), each drained with a 1-pixel read before and after (review PERF-1: no queued GPU work of frame 1
+  in the sample; one over 3 s ends it: software rendering such as SwiftShader gets no refinement, the pre-2026-10
+  picture); at run time fences (isolated frames) and rAF intervals (back to back) step the still budget (2x target,
+  then the still canvas ratio), the passes, phone Max's moving ratio and the single-pass supersampling, and give cut
+  passes back once plain frames fit the refresh (backing off 5 s, 10 s, ...).  The end of an orbit coast settles faster
+  below 0.5 px / frame and is applied at once below 0.05 px (Stage.update), so stills start promptly.  Specs panel
+  'Picture quality' Auto / High / Max (above the model statistics; a plain-language note; localStorage 'pc12-picture';
+  a line in the '?' help); ?picture=, ?quality=high|max fix it (tests), ?ssframes= / ?sspx= override passes / budget,
+  ?keyangle= the softbox.  Tests: viewer_test.py '[PQ]' / '[PERF-1]' / '[CR1-..]' rows (480 x 320 pages in High, 3-4
+  passes; the phone still ratio at 390 x 844; the temporal AA against the converged still after an orbit; the layered
+  propeller's frames differing only on the disc).  The door outlines are 4 mm gaps between door and skin (sub-pixel
+  slivers at orbit distance: dotted under 4x MSAA alone, continuous in the still passes and the temporal blend).
+  SwiftShader takes ~20-30 s per 2x frame at 800 x 500 on the shared sandbox: compare frame costs relatively, never
+  tune on them.
   The model carries NO markings (owner decision: no logos, registration, serials, flags or lettering).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
   `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.11M triangles where facets show, 16-bit normals, crack-free shared

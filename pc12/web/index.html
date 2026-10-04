@@ -34,7 +34,7 @@
     var data = (q.get('data') || C.data || '../out/').replace(/\/?$/, '/');
     var svg = (q.get('svg') || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
     // render quality tier, the same test as scene.js QUALITY (phones: 'low', which also loads the 512 px studio HDRI;
-    // desktops the 2k one); the picture setting as picture.js pictureChoice() (phones set to Max: the 1k HDRI)
+    // desktops the 1k one); the picture setting as picture.js pictureChoice() (phones set to Max: the 1k HDRI)
     var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
     var quality = q.get('quality') || (coarse || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ? 'low' : 'high');
     var picture = q.get('picture') || (/^(high|max|auto)$/.test(q.get('quality') || '') ? q.get('quality') : null);
@@ -48,8 +48,7 @@
     var U = window.PC12_URLS = {
       glb: q.get('glb') || data + (low ? C.glbLow : 'pc12.glb'), low: low, meta: q.get('meta') || data + 'pc12_meta.json',
       ga: svg[0] || data + 'pc12_ga.svg', sections: svg[1] || data + 'pc12_sections.svg',
-      hdr: q.get('hdr') || (quality !== 'low' ? 'assets/studio_small_09_2k.hdr'
-        : picture === 'max' ? 'assets/studio_small_09_1k.hdr' : 'assets/studio_small_09_512.hdr'),
+      hdr: q.get('hdr') || (quality !== 'low' || picture === 'max' ? 'assets/studio_small_09_1k.hdr' : 'assets/studio_small_09_512.hdr'),
       materials: 'viewer/materials.json', quality: quality, tierSwitch: tierSwitch,
     };
 
@@ -549,17 +548,17 @@
         <div class="table-wrap"><table class="data" id="checksTable"></table></div>
         <h3>Wing</h3>
         <dl class="kv" id="wingList"></dl>
+        <!-- picture quality (viewer/picture.js): sharpening passes on still frames, adaptive resolution; remembered -->
+        <h3>Picture quality</h3>
+        <div class="seg" role="group" aria-label="Picture quality" id="pictureSeg">
+          <button type="button" data-picture="auto" aria-pressed="true" title="Adapts to this device: how much the still image is sharpened, and the resolution while moving, follow how fast it draws">Auto</button>
+          <button type="button" data-picture="high" aria-pressed="false" title="The still image sharpened over 16 passes at up to twice the resolution; edges smoothed over successive frames while moving">High</button>
+          <button type="button" data-picture="max" aria-pressed="false" title="32 passes and finer edge sampling; also supersampled while moving when the graphics card keeps up (for fast graphics cards)">Max</button>
+        </div>
+        <p class="muted small" id="pictureNote"></p>
         <h3>Model</h3>
         <dl class="kv" id="statsList"></dl>
         <p class="small detail-row" id="detailRow" hidden><button type="button" id="detailBtn"></button> <span class="muted" id="detailNote"></span></p>
-        <!-- picture quality (viewer/picture.js): supersampled still frames, adaptive resolution; remembered -->
-        <h3>Picture quality</h3>
-        <div class="seg" role="group" aria-label="Picture quality" id="pictureSeg">
-          <button type="button" data-picture="auto" aria-pressed="true" title="Adapts to this device: supersampled still frames and the moving resolution follow the measured frame times">Auto</button>
-          <button type="button" data-picture="high" aria-pressed="false" title="Still frames supersampled up to 2× and refined over 16 passes; the full pixel ratio while moving">High</button>
-          <button type="button" data-picture="max" aria-pressed="false" title="Up to 2× with 32 passes and 8× MSAA, supersampled while moving when the GPU keeps up (for fast graphics cards)">Max</button>
-        </div>
-        <p class="muted small" id="pictureNote"></p>
         <h3>Sources</h3>
         <div id="sourcesList"></div>
         <h4>Estimated / reconstructed</h4>
@@ -601,6 +600,7 @@
         <dt>1 – 7</dt><dd>Interior stops</dd>
         <dt>Esc</dt><dd>Back outside</dd>
       </dl>
+      <p class="muted small help-note">The picture sharpens itself a moment after you stop moving. Specs → Picture quality sets how much (Auto adapts to this device).</p>
     </div>
   </div>
 

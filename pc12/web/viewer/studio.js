@@ -139,7 +139,7 @@ export class StudioEnvironment {
   }
 
   // 1 if the point (column xf, row yf, in texels; sampled at eighths of a texel) lies on a ceiling strip.  The trig is
-  // tabulated per eighth of a column / row (the 2k HDRI has 2M texels: the light grade took ~0.5 s without)
+  // tabulated per eighth of a column / row (a 2k HDRI has 2M texels: its light grade took ~0.5 s without)
   _strip(xf, yf) {
     const S = STRIPS;
     if (!this._tab) {
@@ -278,23 +278,27 @@ export class ContactShadow {
 
   setGround(y) { this.group.position.y = y; }
 
-  // the map and its blur buffer; the blur radii are in map units (amount / size), so a larger map is the same shadow
-  // with less blockiness
+  // the map and its blur buffer.  The blur radii are amount / size in map UV: at the still size (the picture profile's)
+  // the look of 2026-10 (desktop 1024); the reduced map rendered while the scene animates (update(scene, loSize)) uses
+  // the same UV radii, so it is the same shadow, only coarser
   _targets(size) {
     this.size = size;
-    const rtOpts = { type: THREE.HalfFloatType };
-    this.rt = new THREE.WebGLRenderTarget(size, size, rtOpts);
-    this.rtBlur = new THREE.WebGLRenderTarget(size, size, rtOpts);
-    this.rtBlur.texture.generateMipmaps = false;
+    [this.rt, this.rtBlur] = this._pair(size);
   }
-  // the ground plane is seen at grazing angles: trilinear mipmaps + the maximum anisotropy on the displayed map
-  _filter() {
-    const t = this.rt.texture;
+  _pair(size) {
+    const rtOpts = { type: THREE.HalfFloatType };
+    const rt = new THREE.WebGLRenderTarget(size, size, rtOpts), rtBlur = new THREE.WebGLRenderTarget(size, size, rtOpts);
+    rtBlur.texture.generateMipmaps = false;
+    // the ground plane is seen at grazing angles: trilinear mipmaps + the maximum anisotropy on the displayed map
+    const t = rt.texture;
     t.generateMipmaps = true;
     t.minFilter = THREE.LinearMipmapLinearFilter;
     t.magFilter = THREE.LinearFilter;
     t.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-    this.material.map = t;
+    return [rt, rtBlur];
+  }
+  _filter() {
+    this.material.map = this.rt.texture;
     this.material.needsUpdate = true;
   }
   setSize(size) {
@@ -304,26 +308,38 @@ export class ContactShadow {
     this._filter();
   }
 
-  _blur(amount) {
+  _blur(amount, rt, rtBlur) {
     const r = this.renderer, bp = this.blurPlane;
     bp.visible = true;
     bp.position.copy(this.group.position).y += 0.01;
     bp.material = this.hBlur;
-    this.hBlur.uniforms.tDiffuse.value = this.rt.texture;
+    this.hBlur.uniforms.tDiffuse.value = rt.texture;
     this.hBlur.uniforms.h.value = amount / this.size;
-    r.setRenderTarget(this.rtBlur);
+    r.setRenderTarget(rtBlur);
     r.render(bp, this.cam);
     bp.material = this.vBlur;
-    this.vBlur.uniforms.tDiffuse.value = this.rtBlur.texture;
+    this.vBlur.uniforms.tDiffuse.value = rtBlur.texture;
     this.vBlur.uniforms.v.value = amount / this.size;
-    r.setRenderTarget(this.rt);
+    r.setRenderTarget(rt);
     r.render(bp, this.cam);
     bp.visible = false;
   }
 
-  update(scene) {
+  // render the map: at the still size, or at loSize (< size) while the scene animates (Stage.render)
+  update(scene, loSize = 0) {
     const r = this.renderer;
-    const bg = scene.background, ov = scene.overrideMaterial, rt = r.getRenderTarget();
+    let rt = this.rt, rtBlur = this.rtBlur;
+    if (loSize && loSize < this.size) {
+      if (!this.lo || this.lo.size !== loSize) {
+        if (this.lo) { this.lo.rt.dispose(); this.lo.rtBlur.dispose(); }
+        const [a, b] = this._pair(loSize);
+        this.lo = { size: loSize, rt: a, rtBlur: b };
+      }
+      rt = this.lo.rt; rtBlur = this.lo.rtBlur;
+    }
+    this.shown = rt === this.rt ? this.size : loSize;
+    if (this.material.map !== rt.texture) { this.material.map = rt.texture; this.material.needsUpdate = true; }
+    const bg = scene.background, ov = scene.overrideMaterial, prev = r.getRenderTarget();
     const clear = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();
     const sm = r.shadowMap.autoUpdate, smu = r.shadowMap.needsUpdate;
     this.group.updateMatrixWorld(true);
@@ -332,20 +348,23 @@ export class ContactShadow {
     r.shadowMap.autoUpdate = false;       // the key-light shadow map is not this render's business
     r.shadowMap.needsUpdate = false;
     r.setClearColor(0x000000, 0);
-    r.setRenderTarget(this.rt);
+    r.setRenderTarget(rt);
     r.clear();
     r.render(scene, this.cam);
     scene.overrideMaterial = ov;
-    this._blur(this.blur);
-    this._blur(this.blur * 0.4);
-    r.setRenderTarget(rt);
+    this._blur(this.blur, rt, rtBlur);
+    this._blur(this.blur * 0.4, rt, rtBlur);
+    r.setRenderTarget(prev);
     r.setClearColor(clear, alpha);
     r.shadowMap.autoUpdate = sm;
     r.shadowMap.needsUpdate = smu;
     scene.background = bg;
   }
 
-  dispose() { this.rt.dispose(); this.rtBlur.dispose(); }
+  dispose() {
+    this.rt.dispose(); this.rtBlur.dispose();
+    if (this.lo) { this.lo.rt.dispose(); this.lo.rtBlur.dispose(); this.lo = null; }
+  }
 }
 
 // ------------------------------------------------------------------------------------ ground grid

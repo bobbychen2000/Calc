@@ -372,6 +372,7 @@ table.data td:not(:first-child), table.data th:not(:first-child) { white-space: 
   padding: 14px 18px; width: min(420px, calc(100% - 32px)); }
 .help-card header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .keys dt { font-family: var(--mono); }
+.help-note { margin: 12px 0 2px; }
 
 /* loading */
 #loading { position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--bg); transition: opacity 0.4s; }

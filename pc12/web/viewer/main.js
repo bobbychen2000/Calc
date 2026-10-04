@@ -975,7 +975,7 @@ function syncUI() {
 
 // ------------------------------------------------------------------ render loop
 let last = performance.now(), frameCount = 0, forceFrames = 0, readoutT = 0, shadowSkip = 0;
-let readoutsDirty = false, kinMoving = false;
+let readoutsDirty = false, kinMoving = false, overlayOnly = false;
 const frameWaiters = [];
 function waitFrames(n = 1) {
   forceFrames = Math.max(forceFrames, n);
@@ -998,6 +998,7 @@ function tick(adt) {
     posed = true;
   }
   if (model.updatePaint(adt)) stage.needsRender = true;
+  overlayOnly = false;
   if (posed) {
     model.applyTransforms(ex.cur);
     afterTransforms();
@@ -1006,7 +1007,12 @@ function tick(adt) {
     if (!kin.onlySpin || build.animating || ex.cur !== ex.target) stage.shadowDirty = true;
     else if (kin.blur && (kin.blur.fadeChanged || kin.blur.fade >= 1)) { if (kin.blur.fadeChanged) stage.keyShadowOnly(); }
     else if (++shadowSkip % 4 === 0) stage.keyShadowOnly();
-    stage.needsRender = true;
+    // only the blur disc / band / hub moved (blades faded, spinner held): the rest of the picture stays a still image
+    // (picture.js, the layered propeller: it keeps refining while the propeller turns)
+    overlayOnly = kin.onlySpin && !build.animating && ex.cur === ex.target && !!kin.blur && kin.blur.holding
+      && !kin.blur.holdChanged && !kin.blur.fadeChanged;
+    if (overlayOnly) stage.overlayDirty = true;
+    else stage.needsRender = true;
   }
   if (waits.length) {
     for (let i = waits.length - 1; i >= 0; i--) {
@@ -1029,7 +1035,8 @@ function frame(now) {
   if (stage.update(dt)) stage.needsRender = true;
   stage.applyQuality();
   if (forceFrames > 0) { forceFrames--; stage.needsRender = true; }
-  stage.busy = posed;
+  stage.busy = posed && !overlayOnly;
+  stage.overlay = kin.blur ? kin.blur.overlay : null;
   // shadows skipped while animating on the low tier (Stage.render): one more frame once the motion stops
   if (!posed && (stage.shadowDirty || stage.contactDirty)) stage.needsRender = true;
   // interior light by viewpoint (and how far a cabin door is open)
