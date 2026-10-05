@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="K", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="AS SHOWN", rev="L", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -81,6 +81,8 @@ REVISIONS = (
     ("K", "2026-10-05", "yoke rev K (L6Y judges r2): exact 2-D fields, switches as solids, outboard grip walls "
                         "fore-aft, grip planes joint-fitted to 7 photos; the 95th clears 37 wings level, meets a grip "
                         "from 15 deg of roll (criteria unchanged)"),
+    ("L", "2026-10-05", "yoke rev L (L6Y judges r3): grips refitted on 6 views, head zones, C2 outlines; knee sweep "
+                        "fixed (a grip band was dropped): the 95th clears 24 level (< 25: owner), contact 12.5 deg"),
 )
 
 # ---- fills (clean sheet)
@@ -568,7 +570,7 @@ def draw_clean(ds):
     M.detail_circle(ds, vp, 6.52, 1.75, 0.50, "G", at=(-0.2, -1.0))
     draw_tables(ds, ctx)
     draw_notes(ds, ctx)
-    revisions_block(ds, COL_X[0] + 4.0, 419.0, COL_X[1])   # rev K: 11 rows clear of the title block
+    revisions_block(ds, COL_X[0] + 4.0, 419.0, COL_X[1])   # rev L: 12 rows clear of the title block
     M.break_paths_at_text(ds, lambda d: d.get("color") == GRID, pad=0.4)
     M.break_paths_at_text(ds, lambda d: d.get("w") == W_THIN and d.get("color") in (None, INK, MUTED)
                           and not d.get("closed"), pad=0.3)
@@ -833,7 +835,7 @@ def draw_fd_side(ds, v, bl, simple=False, crank=0.0, travel=False):
 
 @lru_cache(maxsize=1)
 def yoke_side_outlines():
-    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (model.yoke_geom, the rev K solids
+    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (model.yoke_geom, the rev L solids
     sheet L6Y draws: body, cover and the outboard grip): (body, cover, grip)."""
     from model import yoke_geom as YG
     hub = I.yoke_hub(-1)

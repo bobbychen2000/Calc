@@ -57,7 +57,8 @@ OUT = CACHE / "overlays" / "yoke"
 IMG = {"p408": CACHE / "photos/interior/fd_commons_pro3001_P1046408.jpg",
        "p410": CACHE / "photos/interior/fd_commons_pro3001_P1046410.jpg",
        "mex": CACHE / "fd_research/pc12pro_layout/pilnews/pil_Mexico_PC12PRO_8.jpg",
-       "press": CACHE / "photos/interior/fd_aopa_pro_cockpit.jpg"}
+       "press": CACHE / "photos/interior/fd_aopa_pro_cockpit.jpg",
+       "p409": CACHE / "photos/interior/fd_commons_pro3001_P1046409.jpg"}
 COVER_FEATS = ("tcs", "red", "badge", "stp_o", "stp_i", "inb_o", "inb_i", "foot")
 try:
     FONT = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 15)
@@ -121,6 +122,10 @@ def cameras():
     cams = {"p408": Cam(cb["panel_408"]["p"], 1920, 1440)}
     for k in ("p410", "mex", "press"):
         cams[k] = Cam(B["Q"][k], *WH[k])
+    f9 = MEAS / "r4" / "p409cam2.pkl"                                # rev L (judges FID3-01): two-view adjustment
+    if f9.exists():
+        C9 = pickle.load(open(f9, "rb"))
+        cams["p409"] = Cam(C9["q"], C9["W"], C9["H"])
     return cams
 
 
@@ -294,12 +299,18 @@ def grip_rows(g_img, xs, ys, mask, ppm, axis_h, outer_left):
     return out
 
 
+SLOT_TOP = 24.0     # rev L (judges FID3-05): slot-side rows above the hand slot's top (h 24 on the grip axis) trace the
+                    # neck / web's edge against the white arm, not a grip edge -- not scored
+
+
 def curated_rows(ph, side, xs, ys, ids, cam, pose, ppm):
     """Residuals of the ray-cast grip silhouettes against the CURATED photo silhouette data (rev K, judges FID2-03 /
     04: refs/cache/.../measure/r3/sil2.pkl -- masked auto rows of the near-face-on views, hand-traced and snapped
     inboard slot sides, hand traces of the AOPA co-pilot view; the AOPA pilot view's auto rows are dropped: they lock
     onto the leather texture on the dark panel): {g: {kind: dict(h, d, pts)}} (+ = drawn wider / lower)."""
-    f = MEAS / "r3" / "sil2.pkl"
+    f = MEAS / "r4" / "sil4.pkl"                                     # rev L: + P1046409 (judges FID3-01)
+    if not f.exists():
+        f = MEAS / "r3" / "sil2.pkl"
     if not f.exists():
         return None
     data = pickle.load(open(f, "rb"))
@@ -329,6 +340,8 @@ def curated_rows(ph, side, xs, ys, ids, cam, pose, ppm):
                     hh.append(float(x))
                 else:
                     y, x, h = row[0], row[1], row[2]
+                    if kind == "slot" and h > SLOT_TOP:                 # above the hand slot's top: the neck / web
+                        continue
                     i = int(np.argmin(np.abs(ys - y)))
                     j = np.where(mask[i])[0]
                     if not len(j):
@@ -574,23 +587,32 @@ def render(ph, side, cams, picks, box, step_px, title, traces):
     return canvas, rep
 
 
-JOBS = [("p408", -1, "L", (240, 690, 680, 960), 1.0, "P1046408 pilot yoke through panel_408"),
-        ("press", 1, "R", (2680, 1780, 3220, 2260), 1.5, "AOPA / Pilatus press photo, co-pilot yoke from aft-INBOARD "
-                                                         "(~54 deg)"),
-        ("p408", 1, "R", (1260, 690, 1720, 960), 1.0, "P1046408 co-pilot yoke through panel_408"),
-        ("mex", -1, "L", (1800, 1750, 3000, 2650), 3.0, "Mexico press photo, pilot yoke (bundle-adj. camera)"),
-        ("mex", 1, "R", (4600, 1700, 5950, 2650), 3.0, "Mexico press photo, co-pilot yoke (bundle-adj. camera)"),
-        ("press", -1, "L", (1050, 1950, 2350, 2950), 3.0, "AOPA / Pilatus press photo, pilot yoke from aft-outboard"),
-        ("p410", -1, "L", (480, 1150, 1200, 1650), 1.5, "P1046410 pilot yoke (bundle-adj. camera)")]
+# (photo, side, L / R, ray-cast step px, title); the crop boxes (photo pixels) live with the picks in refs/cache
+# (measure/r4/picks4.py BOXES, judges DR3-09)
+JOBS = [("p408", -1, "L", 1.0, "P1046408 pilot yoke through panel_408"),
+        ("press", 1, "R", 1.5, "AOPA / Pilatus press photo, co-pilot yoke from aft-INBOARD (~54 deg; CHECK ONLY)"),
+        ("p408", 1, "R", 1.0, "P1046408 co-pilot yoke through panel_408"),
+        ("mex", -1, "L", 3.0, "Mexico press photo, pilot yoke (bundle-adj. camera)"),
+        ("mex", 1, "R", 3.0, "Mexico press photo, co-pilot yoke (bundle-adj. camera)"),
+        ("press", -1, "L", 3.0, "AOPA / Pilatus press photo, pilot yoke from aft-outboard (CHECK ONLY)"),
+        ("p410", -1, "L", 1.5, "P1046410 pilot yoke (bundle-adj. camera)"),
+        ("p409", 1, "R", 1.0, "P1046409 co-pilot yoke from aft-inboard (two-view camera with panel_408)")]
 TRACES = ((("p408", -1, "out"), "P408L_PAD_OUT"), (("p408", -1, "in"), "P408L_PAD_IN"),
           (("p408", 1, "out"), "P408R_PAD_OUT"), (("p408", 1, "in"), "P408R_PAD_IN"),
           (("mex", -1, "in"), "MEXL_PAD_IN"), (("press", -1, "out"), "PRESSL_PAD_OUT"),
           (("press", -1, "in"), "PRESSL_PAD_IN"))
 TRACES3 = ((("press", 1, "in"), "PRESSR_PAD_IN", True), (("mex", 1, "out"), "MEXR_PAD_OUT", False))
-# extra cover picks of the AOPA co-pilot view (r2: the step ends and the lower insert's bottom corners; the r2 judges'
-# run had tcs / red / foot only)
-EXTRA_PICKS = {("press", "R"): dict(stp_i=(2931.0, 2016.0), stp_o=(2952.0, 2010.0), inb_i=(2939.0, 2046.0),
-                                    inb_o=(2954.0, 2041.0))}
+TRACES4 = ((("p409", 1, "out"), "P409_PAD_OUT", True), (("p409", 1, "in"), "P409_PAD_IN", True))
+
+
+def cached_picks():
+    """(extra cover picks {(photo, 'L' / 'R'): {feature: (x, y)}}, crop boxes {(photo, side): box}) from refs/cache
+    (measure/r4/picks4.py): the AOPA co-pilot view's step / lower-insert picks (r3) and the P1046409 picks (r4)."""
+    f = MEAS / "r4" / "picks4.py"
+    if not f.exists():
+        return {}, {}
+    m = _load("picks4", f)
+    return m.EXTRA, m.BOXES
 
 
 def main(argv=None):
@@ -607,11 +629,17 @@ def main(argv=None):
     if tf3.exists():
         t3 = _load("traces_r3", tf3)
         traces.update({key: (getattr(t3, nm), closed) for key, nm, closed in TRACES3 if hasattr(t3, nm)})
+    tf4 = MEAS / "r4" / "traces4.py"
+    if tf4.exists():
+        t4 = _load("traces_r4", tf4)
+        traces.update({key: (getattr(t4, nm), closed) for key, nm, closed in TRACES4 if hasattr(t4, nm)})
+    extra, boxes = cached_picks()
     report = {}
-    for ph, side, sd, box, step, title in JOBS:
-        if argv and ph not in argv:
+    for ph, side, sd, step, title in JOBS:
+        if argv and ph not in argv or ph not in cams or (ph, side) not in boxes:
             continue
-        picks = {f: v for f, v in dict(PK.get((ph, sd), {}), **EXTRA_PICKS.get((ph, sd), {})).items()
+        box = boxes[(ph, side)]
+        picks = {f: v for f, v in dict(PK.get((ph, sd), {}), **extra.get((ph, sd), {})).items()
                  if not f.startswith("j")}
         img, rep = render(ph, side, cams, picks, box, step, title, traces)
         name = f"yoke_{ph}_{'pilot' if side < 0 else 'copilot'}.png"

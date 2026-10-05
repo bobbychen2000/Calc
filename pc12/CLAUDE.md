@@ -777,11 +777,17 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   face width (the drawn lip outline; a re-trace needs the drawing review).
 - Yoke design drawings (owner 2026-10-05: "the yoke isn't quite right ... better design drawings?"; DRAWING stage only,
   the 3-D yoke is still rev H -- `interior.YOKE_REVH`, frozen -- until the owner approves): `interior.YOKE_DESIGN`
-  (rev K, every value source-tagged) -> the solids of `model/yoke_geom.py` (white cover with flush inserts; black body +
-  grips one moulding; switches as solids; exact 2-D signed distances to the curve-law polylines) -> sheets L6Y (front /
-  side / above / B-B) and L6Y2 (sections, grip profiles, details, corners & radii, photo check), every view an exact
-  silhouette / cut; `model/yoke_checks.py` acceptance; `drawing/yoke_overlay.py` ray-casts the solids through 7 photo
-  cameras (private overlays, refs/cache).  Stage-3 route stated on L6Y (trimmed patches + swept rounds, not an implicit
-  mesher).  Open (owner): the grips' fore-aft lie (5 views from inboard confirm the table, the AOPA photo disagrees
-  5-15 mm: side view / view from above provisional), crown soft break vs crease, J band vs full collar, shell skew
-  <= 2 mm, the 95th's knee meets a grip from 15 deg of roll (full rudder: -11 mm wings level).
+  (rev L, every value source-tagged) -> the solids of `model/yoke_geom.py` (white cover with flush inserts; black body +
+  grips one moulding joined by a true round `rmin`; switches as solids; exact 2-D signed distances to C2-spline
+  outlines; the heads a `head_zone` of named surfaces and tabled rounds) -> sheets L6Y (front / side / above / B-B) and
+  L6Y2 (sections, grip profiles, details, corners & radii, photo check), every view an exact silhouette / cut;
+  `model/yoke_checks.py` acceptance (curve law, cusps with 3-D normal-turn confirmation, one piece per side, normals
+  on 9 patches); `drawing/yoke_overlay.py` ray-casts the solids through 8 photo cameras (private overlays, refs/cache;
+  the grips fitted on 6 views incl. P1046409, the AOPA press photo check-only); `drawing/yoke_station.py` the knee rows
+  with the neutral moved forward.  Stage-3 route stated on L6Y (trimmed patches + swept rounds, not an implicit
+  mesher).  Rev L fixed the knee sweep (`interior._clip_band` doubled a vertex on the band edge: NaN distances dropped
+  the inboard grip's lowest band, so rev K's 37 mm was optimistic; re-swept rev K 25.3).  Open (owner): the 95th clears
+  23.8 mm wings level (criterion 25, not loosened) and meets a grip from 12.5 deg of roll; the fore-aft station (every
+  posed photo 14-65 forward of the drawn neutral; a 45 mm shift leaves the knee rows unchanged); the grip toe (weak,
+  views from inboard only); crown soft break vs crease; J band vs full collar; shell skew <= 2 mm; the forward-face
+  switches (PTT / checklist expected, never seen).

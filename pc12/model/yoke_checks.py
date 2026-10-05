@@ -1,17 +1,23 @@
 """
-Acceptance checks of the yoke solids (model/yoke_geom.py, YOKE_DESIGN rev K) -- printed by sheets L6Y / L6Y2 and
-summarised on L6Y2 (judges r2 DR2-01..04):
+Acceptance checks of the yoke solids (model/yoke_geom.py, YOKE_DESIGN rev L) -- printed by sheets L6Y / L6Y2 and
+summarised on L6Y2 (judges r2 DR2-01..04, r3 DR3-01 / 02 / 07 / 10):
 
   exactness   the 2-D fields' zero level against the curve-law polylines (shell, grips, pads, body, shield): the
               zero crossings along rows / columns vs the dense outline, max mm, and the crossing direction noise
   proud       nothing of the moulding stands above the outboard head's round trim face or the inboard shield facet
               inside their outlines (max height, mm; the switches that sit on them excluded)
-  cusps       exact sections of the grips (every 2.5 mm of the axis, normal to it) and of the body / cover at the
-              centreline and across the arm: contour corners turning more than CUSP_DEG over a 0.6 mm chord that are
-              not a tabled crease (the pad pocket's step, groove and bead; the cover's parting grooves / step V)
-  normals     a 0.25 mm depth-map mesh of the cover and the grips seen from aft (patches): the facet-averaged vertex
-              normals against the solids' analytic normals (the distance fields' gradient) away from silhouettes and
-              tabled creases -- the Stage-3 acceptance metric (vertex normals within 2 deg at the 95th percentile)
+  curve law   every interior sample of every outline (not a corner): the curvature either side of it from the run's
+              spline (rev L: C2 cubic, judges DR3-07) -- max relative jump
+  cusps       exact sections of the black MOULDING (body + grips, judges DR3-04) normal to each grip axis every
+              2.5 mm from its bottom to the top of its head, planes u = const through the necks / web / heads and
+              horizontal planes h = const, and the cover at the centreline / across the arm: contour corners turning
+              more than CUSP_DEG within +-CUSP_CHORD that are not a tabled crease (the pad pocket's step, groove and
+              bead; the cover's parting grooves / step V; the trim face's grooves)
+  connected   every horizontal section h 62..94 cuts the black moulding in ONE piece per side (no free fin, DR3-01)
+  normals     0.25 mm depth-map meshes seen from aft (cover, both grips' pads and frames, both heads, the web) and from
+              the front (the body's and grips' forward faces, the body's top): facet-averaged vertex normals against
+              the solids' analytic normals away from silhouettes; the tabled creases (grooves, step V, pad steps, the
+              face / facet rims) reported apart -- the Stage-3 acceptance metric (95th percentile within 2 deg)
 
     python3 -m model.yoke_checks          (prints; disk-cached per design in out/tmp/yoke_geom_cache)
 """
@@ -57,6 +63,58 @@ def exactness():
                 devs.append(d)
         d = np.concatenate(devs)
         out[nm] = dict(n=int(len(d)), max=float(d.max()), mean=float(d.mean()))
+    return out
+
+
+# ============================================================================================ curve law (DR3-07)
+CURVE_KEYS = (("shell_half", True), ("insert_side", False), ("insert_lower_half", True), ("grip_out", False),
+              ("grip_in", False), ("pad_out", False), ("pad_in", False), ("body_half", False), ("body_in", False),
+              ("shield", False))
+
+
+def _kappa(cs, t):
+    d1, d2 = cs(t, 1), cs(t, 2)
+    return (d1[..., 0] * d2[..., 1] - d1[..., 1] * d2[..., 0]) / np.maximum(np.hypot(d1[..., 0], d1[..., 1]), 1e-12) ** 3
+
+
+def curve_law():
+    """Max relative curvature jump at the interior samples of every outline's spline runs (corners excluded: they are
+    tabled fillets / creases), from the run splines' left / right limits."""
+    out = {}
+    T = G.T()
+    for key, mirror in CURVE_KEYS:
+        P = np.asarray(T[key], float)
+        corners = {int(i) for i, _ in T.get(key + "_corners", ())}
+        closed = key not in ("insert_side",)
+        if mirror:
+            P, cs = G.mirror_half(P, {i: 0.0 for i in corners})
+            corners = set(cs)
+        n = len(P)
+        idx = sorted(corners)
+        runs = []
+        if not idx and closed:
+            runs.append((P, True))
+        elif closed:
+            for k, i in enumerate(idx):
+                j = idx[(k + 1) % len(idx)]
+                seq = list(range(i, j + 1)) if j > i else list(range(i, n)) + list(range(0, j + 1))
+                runs.append((P[seq], False))
+        else:
+            runs.append((P, False))
+        worst = 0.0
+        nk = 0
+        for R, per in runs:
+            if len(R) < 3:
+                continue
+            spl, t = G.spline_of(R, closed=per)
+            inner = t[:-1] if per else t[1:-1]
+            for tk in inner:
+                ka, kb = _kappa(spl, np.array([tk - 1e-7, tk + 1e-7]))
+                den = max(abs(ka), abs(kb), 1e-6)
+                if den > 1.0 / 200.0:
+                    worst = max(worst, abs(ka - kb) / den)
+                nk += 1
+        out[key] = dict(knots=nk, jump=float(worst))
     return out
 
 
@@ -119,63 +177,157 @@ def _turns(C, chord=CUSP_CHORD):
     return out
 
 
-def cusps():
-    """Untabled sharp corners in the grip sections (every 2.5 mm, normal to the axis) and the body / cover sections
-    at the centreline (Z-Z) and across the arm (K-K): {name: [(h or label, turn deg, (x, y))]}."""
+def _scan(pt, e1, e2, ext, parts, step=0.1, thr=None):
+    """Untabled corners of the exact section of `parts` on the plane (pt; e1, e2) over ext: [(part, turn, X)] and the
+    number of closed contours per part."""
+    thr = thr or CUSP_DEG
     T = G.T()
+    gw, bead = float(T["pad_section"][4]), float(T["pad_section"][3])
+    S = G.section(pt, e1, e2, ext, parts=parts, step=step)
+    found = []
+    grazing = 0
+    for part, Cs in S.items():
+        for C in Cs:
+            if len(C) < 20:
+                continue
+            tn = _turns(C)
+            k = np.where(tn > thr)[0]
+            k = k[np.minimum.reduce([C[k, 0] - ext[0], ext[2] - C[k, 0], C[k, 1] - ext[1], ext[3] - C[k, 1]]) > 0.6]
+            if not len(k):
+                continue
+            X = np.asarray(pt)[None] + C[k, :1] * np.asarray(e1)[None] + C[k, 1:2] * np.asarray(e2)[None]
+            # confirm in 3-D: the surface normals CUSP_CHORD either side of the corner along the contour must turn more
+            # than CUSP_DEG too -- a plane grazing a tabled round (an R 2 ridge cut at ~10-20 deg) shows a sharp-looking
+            # contour tip although the surface turns smoothly (rev L)
+            keep3 = _normal_turn(part, C, k, pt, e1, e2) > thr
+            grazing += int((~keep3).sum())
+            k, X = k[keep3], X[keep3]
+            if not len(k):
+                continue
+            tab = np.zeros(len(k), bool)
+            if part != "cover":
+                for g in ("out", "in"):
+                    Xg = X * ([-1.0, 1.0, 1.0] if g == "in" else [1.0, 1.0, 1.0])
+                    z, uf, hf = G._to_plane(Xg[:, 0], Xg[:, 1], Xg[:, 2], g)
+                    dp = G.field("pad_" + g, G.pad_outline(g))(uf, hf)
+                    tab |= (dp > -(gw + 2 * bead) - 0.8) & (dp < 0.8) & (np.abs(z) < 4.0)
+                tab |= _trim_face_tabled(X)
+            for j, kk in enumerate(k):
+                if tab[j]:
+                    continue
+                if part == "cover" and _cover_tabled(X[j]):
+                    continue
+                if part != "cover" and _black_tabled(X[j]):
+                    continue
+                found.append((part, round(float(tn[kk]), 1), tuple(np.round(X[j], 1))))
+    cl = []
+    for f in found:                                                    # one per 1 mm cluster
+        if all(np.linalg.norm(np.subtract(f[2], c_[2])) > 1.0 for c_ in cl):
+            cl.append(f)
+    _scan.grazing = getattr(_scan, "grazing", 0) + grazing
+    return cl, {p_: len([C for C in Cs if len(C) >= 20]) for p_, Cs in S.items()}
+
+
+def _normal_turn(part, C, k, pt, e1, e2, chord=None):
+    """Angle (deg) between the solid's surface normals at the contour points `chord` before / after each index k."""
+    chord = chord or CUSP_CHORD
+    C = np.asarray(C, float)
+    closed = np.allclose(C[0], C[-1])
+    Cc = C[:-1] if closed else C
+    L = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(np.vstack([Cc, Cc[:1]]), axis=0), axis=1))]
+    tot = L[-1]
+    s0 = L[np.minimum(k, len(Cc) - 1)]
+    Q = np.vstack([Cc, Cc[:1]])
+
+    def at(sv):
+        sv = sv % tot
+        return np.c_[np.interp(sv, L, Q[:, 0]), np.interp(sv, L, Q[:, 1])]
+    out = []
+    for sa, sb in zip(s0 - chord, s0 + chord):
+        P2 = np.vstack([at(np.array([sa])), at(np.array([sb]))])
+        X = np.asarray(pt)[None] + P2[:, :1] * np.asarray(e1)[None] + P2[:, 1:2] * np.asarray(e2)[None]
+        e = 0.005
+        off = np.vstack([np.eye(3) * e, -np.eye(3) * e])
+        Y = (X[:, None, :] + off[None, :, :]).reshape(-1, 3)
+        f = np.asarray(G.part_sdf(part, Y[:, 0], Y[:, 1], Y[:, 2]), float).reshape(len(X), 6)
+        g = []
+        for r in f:
+            v = r[:3] - r[3:]
+            g.append(v / max(np.linalg.norm(v), 1e-12))
+        out.append(math.degrees(math.acos(float(np.clip(np.dot(g[0], g[1]), -1.0, 1.0)))))
+    return np.array(out)
+
+
+def _trim_face_tabled(X):
+    """On the trim face's grooves (ring, slot chords) or its rim's R 1.5 edge band."""
+    T = G.T()
+    c, n = G.head_out_face()
+    eu, ev = G._facet_frame(c, n)
+    Q = np.atleast_2d(X) - c
+    return (np.abs(Q @ n) < 1.0) & (np.hypot(Q @ eu, Q @ ev) < 0.5 * float(T["head_out"][2]) + 0.5)
+
+
+CUSP_PLANES_U = (-96.3, -92.3, -88.3, -84.3, -80.3, -76.3, -72.7, -68.3, -64.3, 64.3, 68.3, 72.7, 76.3, 80.3, 84.3,
+                 88.3, 92.3, 96.3, 100.3)
+CUSP_PLANES_H = (-50.0, -20.0, 10.0, 30.0, 40.0, 50.0, 58.0, 62.0, 66.0, 70.0, 74.0, 78.0, 82.0, 86.0, 90.0, 93.0)
+
+
+def cusps():
+    """Untabled sharp corners in exact sections of the black moulding and the cover: {name: dict(cusps, sections)}
+    -- grip-normal sections from each grip's bottom to its head top (every 2.5 mm), planes u = const through the necks /
+    web / heads, horizontal planes, Z-Z and K-K (rev L, judges DR3-02 / 04)."""
     out = {}
+    _scan.grazing = 0
     for g in ("out", "in"):
-        pg = "grip_" + g
         Q = G.grip_outline(g)
-        hz = float(T["head_out"][7] if g == "out" else T["head_in"][5])
-        bad = []
-        n_sec = 0
-        ext = (-42.0, -48.0, 36.0, 10.0)
-        for h in np.arange(Q[:, 1].min() + 2.5, hz - 4.5, 2.5):        # below the heads' transition zone
+        h_top = float(G.T()["head_out"][1] + 0.5 * G.T()["head_out"][2]) if g == "out" else float(Q[:, 1].max())
+        bad, n_sec = [], 0
+        for h in np.arange(Q[:, 1].min() + 2.5, h_top + 0.1, 2.5):
             p, e1, e2 = G.grip_section_frame(g, h)
-            S = G.grip_section(g, h, extent=ext, parts=(pg,), step=0.1)
-            for C in S.get(pg, []):
-                if len(C) < 20:
-                    continue
-                n_sec += 1
-                tn = _turns(C)
-                k = np.where(tn > CUSP_DEG)[0]
-                k = k[np.minimum.reduce([C[k, 0] - ext[0], ext[2] - C[k, 0], C[k, 1] - ext[1], ext[3] - C[k, 1]]) > 0.6]
-                if not len(k):
-                    continue
-                # 3-D points -> plane coordinates: tabled creases = within 0.8 mm (in the plane) of the pad outline
-                X = p[None, :] + C[k, :1] * e1[None, :] + C[k, 1:2] * e2[None, :]
-                z, uf, hf = G._to_plane(X[:, 0], X[:, 1], X[:, 2], g)
-                dp = G.field("pad_" + g, G.pad_outline(g))(uf, hf)
-                gw, bead = float(T["pad_section"][4]), float(T["pad_section"][3])
-                tabled = (dp > -(gw + 2 * bead) - 0.8) & (dp < 0.8)
-                for j, kk in enumerate(k):
-                    if not tabled[j]:
-                        bad.append((round(float(h), 1), round(float(tn[kk]), 1), tuple(np.round(C[kk], 2))))
-        out[pg] = dict(sections=n_sec, cusps=bad)
+            cl, nc = _scan(G.to_cop(p, g), G.to_cop(e1, g), G.to_cop(e2, g), (-42.0, -48.0, 36.0, 14.0), ("black",))
+            n_sec += 1
+            bad += [(round(float(h), 1),) + c_[1:] for c_ in cl]
+        out["grip_" + g] = dict(sections=n_sec, cusps=bad)
+    bad, n_sec = [], 0
+    for u in CUSP_PLANES_U:
+        cl, nc = _scan((u, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0), (-80.0, -10.0, 22.0, 100.0), ("black", "cover"))
+        n_sec += 1
+        bad += [("u", u) + c_[1:] for c_ in cl]
+    out["necks / web / heads (u planes)"] = dict(sections=n_sec, cusps=bad)
+    bad, n_sec = [], 0
+    for h in CUSP_PLANES_H:
+        cl, nc = _scan((0.0, h, 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (-150.0, -80.0, 150.0, 22.0), ("black",),
+                       step=0.15)
+        n_sec += 1
+        bad += [("h", h) + c_[1:] for c_ in cl]
+    out["horizontal (h planes)"] = dict(sections=n_sec, cusps=bad)
     # Z-Z (u = 0) and K-K (across the outboard arm at (52, 45), 30 deg up outboard)
     for nm, pt, e1, e2, ext in (("Z-Z", (0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0), (-76.0, -66.0, 12.0, 70.0)),
                                 ("K-K", (52.0, 45.0, 0.0), (0.0, 0.0, 1.0),
                                  (-math.sin(math.radians(30.0)), math.cos(math.radians(30.0)), 0.0),
                                  (-80.0, -26.0, 10.0, 26.0))):
-        S = G.section(pt, e1, e2, ext, parts=("black", "cover"), step=0.1)
-        bad = []
-        for part, Cs in S.items():
-            for C in Cs:
-                if len(C) < 20:
-                    continue
-                tn = _turns(C)
-                for kk in np.where(tn > CUSP_DEG)[0]:
-                    if min(C[kk, 0] - ext[0], ext[2] - C[kk, 0], C[kk, 1] - ext[1], ext[3] - C[kk, 1]) < 0.6:
-                        continue                                       # the cut's own boundary
-                    X = np.asarray(pt) + C[kk, 0] * np.asarray(e1) + C[kk, 1] * np.asarray(e2)
-                    if part == "cover" and _cover_tabled(X):
-                        continue
-                    if part == "black" and _black_tabled(X):
-                        continue
-                    bad.append((part, round(float(tn[kk]), 1), tuple(np.round(C[kk], 2))))
-        out[nm] = dict(cusps=bad)
+        cl, nc = _scan(pt, e1, e2, ext, ("black", "cover"))
+        out[nm] = dict(cusps=[c_ for c_ in cl])
+    out["_grazing"] = int(_scan.grazing)
     return out
+
+
+def connected(hs=np.arange(62.0, 94.1, 2.0)):
+    """Islands of the black moulding per side in horizontal sections h 62..94 (judges DR3-01: the rev K web stood as a
+    free fin beside the trim head at h 85-93)."""
+    rows = []
+    for h in hs:
+        S = G.section((0.0, float(h), 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (-160.0, -90.0, 160.0, 24.0),
+                      parts=("black",), step=0.2)
+        Cs = [C for C in S.get("black", []) if len(C) > 12 and abs(_area2(C)) > 1.0]
+        n_out = sum(1 for C in Cs if C[:, 0].mean() > 0)
+        n_in = sum(1 for C in Cs if C[:, 0].mean() < 0)
+        rows.append((float(h), n_out, n_in))
+    return rows
+
+
+def _area2(C):
+    return 0.5 * float(np.sum(C[:, 0] * np.roll(C[:, 1], -1) - np.roll(C[:, 0], -1) * C[:, 1]))
 
 
 def _cover_tabled(X):
@@ -215,46 +367,97 @@ def _black_tabled(X):
 
 
 # ============================================================================================ normals
-PATCHES = {"cover stem / inserts": (-20.0, -50.0, 20.0, 10.0), "cover arm + TCS": (36.0, 24.0, 70.0, 62.0),
-           "outboard grip pad / frame": (102.0, -40.0, 142.0, 40.0),
-           "inboard grip pad / frame": (-144.0, -46.0, -96.0, 34.0)}
+PATCHES = {"cover stem / inserts": ((-20.0, -50.0, 20.0, 10.0), 1), "cover arm + TCS": ((36.0, 24.0, 70.0, 62.0), 1),
+           "outboard grip pad / frame": ((102.0, -40.0, 142.0, 40.0), 1),
+           "inboard grip pad / frame": ((-144.0, -46.0, -96.0, 34.0), 1),
+           "outboard head + face": ((92.0, 60.0, 134.0, 98.0), 1), "inboard head + shield": ((-128.0, 50.0, -84.0, 92.0), 1),
+           "web (aft)": ((58.0, 30.0, 98.0, 92.0), 1),
+           "body top + web top (from above-aft)": ((-60.0, 40.0, 90.0, 92.0), 3),
+           "forward faces (from the front)": ((-140.0, -50.0, 140.0, 90.0), -1)}
 
 
-def _depth_patch(box, px=0.25, parts=("black", "cover")):
+def _depth_patch(box, px=0.25, parts=("black", "cover"), view=1):
+    """Depth map of the solids over the front-view box: view 1 = seen from aft (rays along -a), -1 = from the front
+    (rays along +a), 3 = from above-aft (rays 40 deg below the horizontal, forward-down: the tops)."""
     u = np.arange(box[0], box[2], px)
     h = np.arange(box[1], box[3], px)
     UU, HH = np.meshgrid(u, h)
     f = lambda U, H_, A: np.minimum.reduce([G.part_sdf(p, U, H_, A) for p in parts])  # noqa: E731
-    A = np.full(UU.shape, 30.0)
-    alive = np.ones(UU.shape, bool)
-    hit = np.zeros(UU.shape, bool)
-    for _ in range(400):
+    if view == 3:
+        d = np.array([0.0, -math.sin(math.radians(40.0)), -math.cos(math.radians(40.0))])
+    else:
+        d = np.array([0.0, 0.0, -1.0 if view == 1 else 1.0])
+    O = np.stack([UU, HH, np.full(UU.shape, 0.0)], -1) - 120.0 * d
+    t = np.zeros(UU.shape)
+    tp = np.zeros(UU.shape)                    # the last position known OUTSIDE (rev L: the bisection brackets
+    alive = np.ones(UU.shape, bool)            # [tp, t]; the top land's field is up to ~4-Lipschitz, the march could
+    hit = np.zeros(UU.shape, bool)             # overshoot it by more than the old +-0.12 bracket)
+    for _ in range(800):
         if not alive.any():
             break
-        v = f(UU[alive], HH[alive], A[alive])
-        st = np.maximum(0.8 * v, 0.02)
         idx = np.where(alive)
+        P = O[idx] + t[idx][:, None] * d
+        v = f(P[:, 0], P[:, 1], P[:, 2])
         done = v < 0.02
         hit[idx[0][done], idx[1][done]] = True
-        A[idx[0][~done], idx[1][~done]] -= st[~done]
-        alive[idx] = ~done & (A[idx] > -90.0)
-    # refine by bisection along a in [A - 0.1, A + 0.1]
-    lo, hi = A - 0.12, A + 0.12
-    for _ in range(18):
+        go = ~done
+        tp[idx[0][go & (v > 0)], idx[1][go & (v > 0)]] = t[idx[0][go & (v > 0)], idx[1][go & (v > 0)]]
+        t[idx[0][go], idx[1][go]] += np.maximum(0.7 * v[go], 0.02)
+        alive[idx] = ~done & (t[idx] < 260.0)
+    lo, hi = np.where(hit, np.minimum(tp, t - 0.02), t - 0.12), t + 0.12
+    for _ in range(24):
         mid = 0.5 * (lo + hi)
-        v = np.where(hit, f(UU, HH, mid), 1.0)
+        P = O + mid[..., None] * d
+        v = np.where(hit, f(P[..., 0], P[..., 1], P[..., 2]), 1.0)
         inside = v < 0
-        lo = np.where(hit & inside, mid, lo)
-        hi = np.where(hit & ~inside, mid, hi)
-    return UU, HH, np.where(hit, 0.5 * (lo + hi), np.nan), f
+        hi = np.where(hit & inside, mid, hi)
+        lo = np.where(hit & ~inside, mid, lo)
+    tt = np.where(hit, 0.5 * (lo + hi), np.nan)
+    P = O + np.nan_to_num(tt)[..., None] * d
+    P[~hit] = np.nan
+    return P, hit, f, d
+
+
+def _tabled_crease_curves():
+    """Front-view (u, h) curves of the tabled creases (co-pilot sense): grooves, step V, lower insert, badge, pads,
+    the trim face rim, the shield outline, TCS / AFCS rings."""
+    F = []
+    for nm, P in G._groove_curves().items():
+        F.append(np.asarray(P, float))
+    for g, sg in (("out", 1.0), ("in", -1.0)):
+        F.append(G.pad_outline(g) * [sg, 1.0])
+    c, n = G.head_out_face()
+    eu, ev = G._facet_frame(c, n)
+    t = np.linspace(0, 2 * np.pi, 145)
+    for R in (0.5 * float(G.T()["head_out"][2]), 0.5 * float(G.T()["trim"][2])):
+        F.append((c + R * (np.cos(t)[:, None] * eu + np.sin(t)[:, None] * ev))[:, :2])
+    ci, ni = G.head_in_face()
+    e1, e2 = G._facet_frame(ci, ni)
+    S = G.shield_outline()
+    F.append((ci + S[:, :1] * e1 + S[:, 1:2] * e2)[:, :2] * [-1.0, 1.0])
+    for key, k in (("tcs", 2), ("afcs", 4), ("afcs", 2)):
+        cc = np.asarray(G.T()[key][:2], float)
+        F.append(cc + 0.5 * float(G.T()[key][k]) * np.c_[np.cos(t), np.sin(t)])
+    # the cover's TOP LAND (crown[2] x crown[3]: 2.0 fore-aft over 0.8, its normal turning ~75 deg inside 0.8 mm,
+    # finer than the 0.4 mm above-aft sampling) along the outline's upward-facing edges, with the R 1 perimeter round
+    S = G.shell_outline()
+    Fs = G.field("shell", S)
+    gh = (Fs(S[:, 0], S[:, 1] + 0.2) - Fs(S[:, 0], S[:, 1] - 0.2)) / 0.4
+    gu = (Fs(S[:, 0] + 0.2, S[:, 1]) - Fs(S[:, 0] - 0.2, S[:, 1])) / 0.4
+    n = np.c_[gu, gh] / np.maximum(np.hypot(gu, gh), 1e-9)[:, None]
+    top = gh > 0.3
+    F.append(S[top])
+    F.append(S[top] - 0.8 * n[top])            # its inner C1 edge: the 0.4 mm mesh stencil reaches across it
+    return np.vstack(F)
 
 
 def normals(px=0.25):
+    from scipy.spatial import cKDTree
+    tree = cKDTree(_tabled_crease_curves())
     out = {}
-    for nm, box in PATCHES.items():
-        UU, HH, A, f = _depth_patch(box, px)
-        hit = ~np.isnan(A)
-        P = np.stack([UU, HH, A], -1)
+    for nm, (box, view) in PATCHES.items():
+        pxx = px if view == 1 else 0.4
+        P, hit, f, d = _depth_patch(box, pxx, view=view)
         e = 0.01
         Pf = P[hit]
         gx = f(Pf[:, 0] + e, Pf[:, 1], Pf[:, 2]) - f(Pf[:, 0] - e, Pf[:, 1], Pf[:, 2])
@@ -262,37 +465,44 @@ def normals(px=0.25):
         gz = f(Pf[:, 0], Pf[:, 1], Pf[:, 2] + e) - f(Pf[:, 0], Pf[:, 1], Pf[:, 2] - e)
         na = np.full(P.shape, np.nan)
         na[hit] = np.c_[gx, gy, gz] / np.linalg.norm(np.c_[gx, gy, gz], axis=1)[:, None]
-        # facet normals of the depth-map mesh, averaged per vertex (4 triangles)
+        Pz = np.nan_to_num(P)
         nm_ = np.zeros(P.shape)
         for (di, dj), (dk, dl) in (((0, 1), (1, 0)), ((1, 0), (0, -1)), ((0, -1), (-1, 0)), ((-1, 0), (0, 1))):
-            a = np.roll(P, (-di, -dj), (0, 1)) - P
-            b = np.roll(P, (-dk, -dl), (0, 1)) - P
-            c = np.cross(b, a)
-            nm_ += np.nan_to_num(c)
+            a = np.roll(Pz, (-di, -dj), (0, 1)) - Pz
+            b = np.roll(Pz, (-dk, -dl), (0, 1)) - Pz
+            nm_ += np.cross(b, a)
         nm_ /= np.maximum(np.linalg.norm(nm_, axis=-1, keepdims=True), 1e-12)
         nm_ *= np.sign(np.sum(nm_ * np.nan_to_num(na), axis=-1, keepdims=True) + 1e-12)
-        dev = np.degrees(np.arccos(np.clip(np.sum(nm_ * na, -1), -1, 1)))
-        # exclusions: borders, silhouettes / occlusions (depth jumps), grazing faces, creases (analytic normals of
-        # neighbours more than 25 deg apart: the tabled grooves, steps, frame edges)
+        dev = np.degrees(np.arccos(np.clip(np.sum(nm_ * np.nan_to_num(na), -1), -1, 1)))
         ok = hit.copy()
         ok[:2, :] = ok[-2:, :] = ok[:, :2] = ok[:, -2:] = False
-        Af = np.nan_to_num(A, nan=-500.0)
-        for s in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
-            nb = np.roll(Af, s, (0, 1))
-            ok &= np.abs(nb - Af) < 3.0 * px
-            nn = np.roll(np.nan_to_num(na), s, (0, 1))
+        depth = np.where(hit, np.einsum("ijk,k->ij", Pz, d), 1e3)
+        for sft in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+            nb = np.roll(depth, sft, (0, 1))
+            ok &= np.abs(nb - depth) < 3.0 * pxx
+            nn = np.roll(np.nan_to_num(na), sft, (0, 1))
             ok &= np.sum(nn * np.nan_to_num(na), -1) > math.cos(math.radians(25.0))
-        ok &= np.abs(np.nan_to_num(na)[..., 2]) > math.cos(math.radians(70.0))
-        d = dev[ok]
-        crease = hit & ~ok
-        out[nm] = dict(n=int(ok.sum()), p50=float(np.percentile(d, 50)), p95=float(np.percentile(d, 95)),
-                       p99=float(np.percentile(d, 99)), max=float(d.max()), excluded=float(crease.sum() / hit.sum()))
+        ok &= np.abs(np.einsum("ijk,k->ij", np.nan_to_num(na), d)) > math.cos(math.radians(70.0))
+        # part boundaries (the white cover's top edge seen against the black body's top behind it from above-aft: a
+        # depth step under the 3-pixel test) are not surfaces: pixels whose neighbours belong to the other part apart
+        lab = np.full(hit.shape, -1)
+        lab[hit] = np.argmin(np.stack([G.part_sdf(p_, Pf[:, 0], Pf[:, 1], Pf[:, 2]) for p_ in ("black", "cover")]), 0)
+        for sft in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+            ok &= np.roll(lab, sft, (0, 1)) == lab
+        dc, _ = tree.query(Pz[..., :2].reshape(-1, 2))
+        near = (dc.reshape(hit.shape) < 1.0) & hit
+        d_all = dev[ok & ~near]
+        d_cr = dev[ok & near]
+        out[nm] = dict(n=int((ok & ~near).sum()), p50=float(np.percentile(d_all, 50)),
+                       p95=float(np.percentile(d_all, 95)), p99=float(np.percentile(d_all, 99)), max=float(d_all.max()),
+                       crease_max=float(d_cr.max()) if len(d_cr) else 0.0,
+                       excluded=float((hit & ~ok).sum() / hit.sum()))
     return out
 
 
 def run_all():
-    return G.disk_cached(("acceptance", "v2"), lambda: dict(exactness=exactness(), proud=proud(), cusps=cusps(),
-                                                           normals=normals()))
+    return G.disk_cached(("acceptance", "v5"), lambda: dict(exactness=exactness(), curve_law=curve_law(), proud=proud(),
+                                                           cusps=cusps(), connected=connected(), normals=normals()))
 
 
 def summary_lines(r=None):
@@ -300,16 +510,29 @@ def summary_lines(r=None):
     ex = r["exactness"]
     lines = ["fields: zero level vs the curve-law polylines, max " +
              ", ".join(f"{k} {v['max']:.4f}" for k, v in ex.items()) + " mm"]
+    cl = r["curve_law"]
+    lines.append("curve law (C2): max relative curvature jump at the interior samples %.1e over %d samples of %d outlines"
+                 % (max(v["jump"] for v in cl.values()), sum(v["knots"] for v in cl.values()), len(cl)))
     pr = r["proud"]
     lines.append(f"nothing above the trim face: max {pr['trim_face']:.2f} mm; above the shield facet: max "
                  f"{pr['shield']:.2f} mm")
-    cu = r["cusps"]
-    lines.append("untabled cusps (> %g deg within +-%g mm): " % (CUSP_DEG, CUSP_CHORD) +
+    cu = dict(r["cusps"])
+    gz = cu.pop("_grazing", 0)
+    lines.append("untabled cusps (contour turning > %g deg within +-%g mm AND the surface normals turning as much): "
+                 % (CUSP_DEG, CUSP_CHORD) +
                  ", ".join(f"{k} {len(v['cusps'])}" + (f" / {v['sections']} sections" if 'sections' in v else "")
-                           for k, v in cu.items()))
+                           for k, v in cu.items()) +
+                 f" ({gz} contour tips set aside: planes grazing a tabled round, the normals turning less)")
+    cn = r["connected"]
+    bad = [(h, a, b) for h, a, b in cn if a > 1 or b > 1]
+    lines.append(f"black moulding one piece per side in every horizontal section h {cn[0][0]:g}..{cn[-1][0]:g} (step "
+                 f"{cn[1][0] - cn[0][0]:g}; none above a head's top): "
+                 + ("yes" if not bad else "NO at " + ", ".join(f"h {h:g} ({a} / {b})" for h, a, b in bad)))
     nr = r["normals"]
-    lines.append("vertex normals vs analytic (0.25 mm depth-map mesh, 95th / 99th / max deg): " +
-                 "; ".join(f"{k} {v['p95']:.2f} / {v['p99']:.2f} / {v['max']:.1f}" for k, v in nr.items()))
+    lines.append("vertex normals vs analytic (depth-map meshes 0.25 mm from aft, 0.4 from above-aft / the front; 95th / "
+                 "99th / max deg; tabled creases, the cover's 0.8 mm top land and part boundaries apart): " +
+                 "; ".join(f"{k} {v['p95']:.2f} / {v['p99']:.2f} / {v['max']:.1f} (creases {v['crease_max']:.0f})"
+                           for k, v in nr.items()))
     return lines
 
 

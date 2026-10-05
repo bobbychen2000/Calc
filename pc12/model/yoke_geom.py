@@ -7,10 +7,10 @@ YOKE-LOCAL MILLIMETRES (as YOKE_DESIGN): u lateral, + OUTBOARD (the co-pilot yok
 image), h up from the hub centre (the column axis / roll pivot), a aft (+x) of the aft face at the insert step.  The
 grips' own outlines are given in their own sense (u > 0 away from the yoke centreline: the inboard grip is mirrored).
 
-CURVE LAW (YOKE_DESIGN curve_law; judges D4): every outline is a centripetal Catmull-Rom spline (alpha 0.5, C1)
-through its samples, sampled every 0.25 mm; the samples listed in the outline's corner table are corners -- R 0 a
-sharp crease, R > 0 a fillet of that radius tangent to both sides (a cubic Bezier arc).  A run of two samples between
-corners is straight.
+CURVE LAW (YOKE_DESIGN curve_law; judges D4, rev L DR3-07): every outline is a C2 cubic spline on centripetal knots
+(alpha 0.5) through its samples, sampled every 0.25 mm -- curvature continuous at every sample that is not a corner;
+the samples listed in the outline's corner table are corners -- R 0 a sharp crease, R > 0 a fillet of that radius
+tangent to both sides (a cubic Bezier arc).  A run of two samples between corners is straight.
 
 2-D FIELDS (judges DR2-01): the EXACT signed distance to those dense polylines (Field2D: KD-tree + segment projection
 near the zero level, exact node values elsewhere) -- the zero level is the polyline itself, the rounds and blends see a
@@ -56,50 +56,37 @@ def tv(key):
 
 
 # ============================================================================================ curves (D4)
-def _cr_run(P, step=0.25, alpha=0.5):
-    """Open centripetal Catmull-Rom curve through P (m, 2), m >= 2; ends extrapolated linearly (natural)."""
+def _spline_run(P, step=0.25, alpha=0.5, closed=False):
+    """C2 cubic spline through P (m, 2) on centripetal knots (chord length ** alpha): open runs between corners
+    'natural' at their ends (the corner fillets join them G1 with their tabled radius), closed corner-free outlines
+    periodic; sampled per segment every <= step mm along the chord.  Rev L (judges DR3-07): curvature is continuous
+    at every interior sample (rev K's centripetal Catmull-Rom was C1 only -- R 13 / R 3.4 either side of a shell knot).
+    A run of two samples is straight."""
+    from scipy.interpolate import CubicSpline
     P = np.asarray(P, float)
-    if len(P) == 2:
-        L = float(np.linalg.norm(P[1] - P[0]))
+    Q = np.vstack([P, P[:1]]) if closed else P
+    if len(Q) == 2:
+        L = float(np.linalg.norm(Q[1] - Q[0]))
         n = max(2, int(math.ceil(L / step)) + 1)
         t = np.linspace(0.0, 1.0, n)[:, None]
-        return P[0] + t * (P[1] - P[0])
-    Q = np.vstack([2 * P[0] - P[1], P, 2 * P[-1] - P[-2]])
-    out = [P[:1]]
-    for i in range(1, len(Q) - 2):
-        p0, p1, p2, p3 = Q[i - 1], Q[i], Q[i + 1], Q[i + 2]
-
-        def tj(ti, a, b):
-            return ti + max(float(np.linalg.norm(b - a)), 1e-9) ** alpha
-        t0 = 0.0
-        t1 = tj(t0, p0, p1)
-        t2 = tj(t1, p1, p2)
-        t3 = tj(t2, p2, p3)
-        L = float(np.linalg.norm(p2 - p1))
-        n = max(2, int(math.ceil(L / step)) + 1)
-        t = np.linspace(t1, t2, n)[1:, None]
-        A1 = (t1 - t) / (t1 - t0) * p0 + (t - t0) / (t1 - t0) * p1
-        A2 = (t2 - t) / (t2 - t1) * p1 + (t - t1) / (t2 - t1) * p2
-        A3 = (t3 - t) / (t3 - t2) * p2 + (t - t2) / (t3 - t2) * p3
-        B1 = (t2 - t) / (t2 - t0) * A1 + (t - t0) / (t2 - t0) * A2
-        B2 = (t3 - t) / (t3 - t1) * A2 + (t - t1) / (t3 - t1) * A3
-        out.append((t2 - t) / (t2 - t1) * B1 + (t - t1) / (t2 - t1) * B2)
-    return np.vstack(out)
+        return Q[0] + t * (Q[1] - Q[0])
+    t = np.r_[0.0, np.cumsum(np.maximum(np.linalg.norm(np.diff(Q, axis=0), axis=1), 1e-9) ** alpha)]
+    cs = CubicSpline(t, Q, bc_type="periodic" if closed else "natural")
+    out = [Q[:1]]
+    for i in range(len(Q) - 1):
+        n = max(2, int(math.ceil(float(np.linalg.norm(Q[i + 1] - Q[i])) / step)) + 1)
+        out.append(cs(np.linspace(t[i], t[i + 1], n)[1:]))
+    R = np.vstack(out)
+    return R[:-1] if closed else R
 
 
-def _cr_closed(P, step=0.25, alpha=0.5):
+def spline_of(P, alpha=0.5, closed=False):
+    """The CubicSpline object (and its knots) of _spline_run, for the curve-law acceptance (knot curvature)."""
+    from scipy.interpolate import CubicSpline
     P = np.asarray(P, float)
-    n = len(P)
-    Q = np.vstack([P[-1:], P, P[:2]])
-    out = []
-    for i in range(1, n + 1):
-        seg = _cr_run(Q[i - 1:i + 3], step, alpha)
-        # _cr_run on 4 points with phantom ends: take its middle segment only
-        p1, p2 = Q[i], Q[i + 1]
-        k0 = int(np.argmin(np.linalg.norm(seg - p1, axis=1)))
-        k1 = int(np.argmin(np.linalg.norm(seg - p2, axis=1)))
-        out.append(seg[k0:k1])
-    return np.vstack(out)
+    Q = np.vstack([P, P[:1]]) if closed else P
+    t = np.r_[0.0, np.cumsum(np.maximum(np.linalg.norm(np.diff(Q, axis=0), axis=1), 1e-9) ** alpha)]
+    return CubicSpline(t, Q, bc_type="periodic" if closed else "natural"), t
 
 
 def _arclen(Q):
@@ -150,7 +137,7 @@ def smooth_outline(pts, corners=None, closed=True, step=0.25):
     P = np.asarray(pts, float)
     corners = {int(k) % len(P): float(v) for k, v in dict(corners or {}).items()}
     if closed and not corners:
-        return _cr_closed(P, step)
+        return _spline_run(P, step, closed=True)
     idx = sorted(corners)
     if not closed:
         idx = sorted(set(idx) | {0, len(P) - 1})
@@ -159,10 +146,10 @@ def smooth_outline(pts, corners=None, closed=True, step=0.25):
         for k, i in enumerate(idx):
             j = idx[(k + 1) % len(idx)]
             seq = list(range(i, j + 1)) if j > i else list(range(i, len(P))) + list(range(0, j + 1))
-            runs.append(_cr_run(P[seq], step))
+            runs.append(_spline_run(P[seq], step))
     else:
         for i, j in zip(idx[:-1], idx[1:]):
-            runs.append(_cr_run(P[i:j + 1], step))
+            runs.append(_spline_run(P[i:j + 1], step))
     # fillets at the junctions (run k ends at corner idx[k + 1])
     nj = len(runs) if closed else len(runs) - 1
     for k in range(nj):
@@ -401,6 +388,11 @@ def smin(a, b, k):
     return b + (a - b) * h - k * h * (1.0 - h)
 
 
+def rmin(a, b, r):
+    """Union of two fields, the concave edge filled with a true round of radius r (the dual of rmax)."""
+    return -rmax(-np.asarray(a, float), -np.asarray(b, float), r)
+
+
 def smoothstep(x, e0, e1):
     t = np.clip((np.asarray(x, float) - e0) / (e1 - e0), 0.0, 1.0)
     return t * t * (3.0 - 2.0 * t)
@@ -463,7 +455,7 @@ def _groove_curves():
     key = ("grooves", id(T()["insert_side"]), id(T()["step"]), id(T()["insert_lower_half"]))
     if key in _CACHE:
         return _CACHE[key]
-    side = _cr_run(tv("insert_side"))
+    side = _spline_run(tv("insert_side"))
     st = tv("step")
     step = np.vstack([st[1] * [-1, 1], st[0], st[1]])
     out = dict(side_r=side, side_l=side * [-1, 1], step=step, lower=np.vstack([insert_lower_outline(),
@@ -803,19 +795,20 @@ def shield_outline():
 
 
 def _head_in(U, H, A):
-    """The inboard head's shaping field: the shield facet plane, the head's top surfaces falling forward from the
-    shield outline at the chamfer angle (head_in)."""
+    """The inboard head's shaping field: the shield facet plane and, round the shield's top and sides, a fall-off
+    surface at head_in[4] deg to it (its directrix the shield outline continued straight down below the shield's widest
+    points, that corner blended R shield_edge[1]); the facet edge rounded R shield_edge[0] (rev L)."""
     c, n = head_in_face()
     eu, ev = _facet_frame(c, n)
     P = np.stack([U, H, A], -1) - c
     zf = P @ n
     x, y = P @ eu, P @ ev
     S = shield_outline()
-    # the fall-off runs round the shield's top and sides only: below it the head runs on into the grip's aft face
     rect = np.array([(S[:, 0].min(), -80.0), (S[:, 0].max(), -80.0), (S[:, 0].max(), 0.0), (S[:, 0].min(), 0.0)])
-    ds = np.minimum(field("shield", S)(x, y), field("shield_below", rect, closed=True)(x, y))
+    r_fo, r_d = (float(v) for v in T()["shield_edge"][:2])
+    ds = rmin(field("shield", S)(x, y), field("shield_below", rect, closed=True)(x, y), r_d)
     chi = math.radians(float(T()["head_in"][4]))
-    return zf + np.maximum(ds, 0.0) * math.tan(chi)
+    return rmax(zf, zf * math.cos(chi) + ds * math.sin(chi), r_fo)
 
 
 def _head_chamfer(U, H, A):
@@ -851,12 +844,14 @@ def _trim_face_grooves(U, H, A):
 
 def grip(U, H, A, g):
     """Signed distance of grip g (own sense: u > 0 away from the yoke centreline), incl. its head, pad and heel.
-    The grip prism (aft-face outline G on the raked / toed aft plane, the pad pocket, groove, bead and heel lip, the
-    PCHIP depth law, edge radii: aft R grip_edges[0] growing to the heel's R in the heel, forward fwd_radius) is kept
-    1 mm inside the head's shape above the head zone; the head is a second solid unioned with it, so the round trim
-    face / the shield facet ARE the head's surface (exactly planar): outboard the round face on a near-cylinder about
-    the face normal, its lower edge chamfered back to the aft plane; inboard the shield facet, the head falling forward
-    at head_in[4] deg round it."""
+    The grip PRISM: the aft-face outline G (a construction curve) on the raked / toed aft plane, the pad pocket,
+    groove, bead and heel lip, the PCHIP depth law, edge radii aft R grip_edges[0] growing to the heel's R in the heel,
+    forward fwd_radius.  The HEAD ZONE (head_zone, rev L judges DR3-01 / 02): above the plane height hz the prism is
+    trimmed kh inside the head's shaping surface (outboard: the round face on its flared near-cylinder; inboard: the
+    shield facet with its 45 deg fall-off), that trimming surface drafted outward `draft` mm per mm below hz, the cut
+    edge R r_t; the HEAD SOLID = shaping surface x lower chamfer (outboard, R r_ch) x forward face (R r_hf) x the walls
+    of G (R r_w), bounded below by the plane height h_hb (R r_hb); prism and head joined by a concave round R r_u.
+    Every edge a tabled round, every surface a named one (rev K: field offsets)."""
     U, H, A = (np.asarray(x, float) for x in (U, H, A))
     z, uf, hf = _to_plane(U, H, A, g)
     d2 = field("grip_" + g, grip_outline(g))(uf, hf)
@@ -867,23 +862,40 @@ def grip(U, H, A, g):
     rf = fwd_radius(hf, g)
     aft = _aft_field(z, uf, hf, g)
     fwd = -z - _depth(hf, g)
-    side_fwd = rmax(d2, fwd, rf)
-    prism = np.maximum(rmax(d2, aft, ra_h), side_fwd)
-    kh = 1.0
+    prism = np.maximum(rmax(d2, aft, ra_h), rmax(d2, fwd, rf))
+    hz, kh, draft, r_t, h_hb, r_hb, r_ch, r_hf, r_w, r_u = (float(x) for x in T()["head_zone"][0 if g == "out" else 1])
+    sc = _hf_scale(g)
     if g == "out":
-        hz = float(T()["head_out"][7])
         cut = _head_out(U, H, A)
-        prism = np.maximum(prism, cut + kh - 3.0 * np.maximum(hz - hf, 0.0))
-        head = np.maximum.reduce([cut, _head_chamfer(U, H, A), side_fwd])
-        head = np.maximum(head, -_trim_face_grooves(U, H, A))
-        head = head + 2.0 * kh * (1.0 - smoothstep(hf, hz - 12.0, hz - 4.0))      # only in the head zone
+        head = rmax(cut, _head_chamfer(U, H, A), r_ch)
     else:
-        hz = float(T()["head_in"][5])
         cut = _head_in(U, H, A)
-        prism = np.maximum(prism, cut + kh - 3.0 * np.maximum(hz - hf, 0.0))
-        head = np.maximum.reduce([cut, side_fwd, z - grip_surface_z(uf, hf, g) - 4.0])
-        head = head + 2.0 * kh * (1.0 - smoothstep(hf, hz - 12.0, hz - 4.0))      # only in the head zone
-    return smin(prism, head, kh)
+        head = cut
+    # the head's shaping surface, drafted below hz: a C1 ramp (rev L acceptance: max(hz - hf, 0) creased the
+    # trimming surface along hz -- the outboard draft 3 turned it 72 deg at once), its bend radius ~r_t; the field
+    # divided by its gradient's length so the rounds on it are true radii
+    wr = max(0.5 * r_t * draft, 1e-6)
+    x = hz - hf
+    ramp = np.where(x <= -wr, 0.0, np.where(x >= wr, x, (x + wr) ** 2 / (4.0 * wr)))
+    dramp = np.clip((x + wr) / (2.0 * wr), 0.0, 1.0)
+    trim = (cut + kh - draft * ramp * sc) / np.sqrt(1.0 + (draft * dramp) ** 2)
+    prism = rmax(prism, trim, r_t)
+    head = rmax(rmax(rmax(head, fwd, r_hf), d2, r_w), (h_hb - hf) * sc, r_hb)
+    if g == "out":
+        head = np.maximum(head, -_trim_face_grooves(U, H, A))
+    return rmin(prism, head, r_u)
+
+
+def _hf_scale(g):
+    """1 / |grad hf| of grip g's plane-height coordinate (hf varies ~1.0-1.1 per mm of h): the head zone's plane-height
+    terms are scaled to millimetres of distance."""
+    f = grip_frame(g)
+    n = f["n"]
+    w = _gsel("grip_walls", g)
+    e = (1.0 - w) * n + w * np.array([0.0, 0.0, 1.0])
+    e /= np.linalg.norm(e)
+    grad = np.array([0.0, 1.0, 0.0]) - (e[1] / float(np.dot(n, e))) * n
+    return 1.0 / float(np.linalg.norm(grad))
 
 
 def grip_part(U, H, A, g):
@@ -905,35 +917,69 @@ def body_outline():
     return _CACHE[key]
 
 
-def body_top_h(u):
-    """h of the body's top line at its aft face (table body_top, symmetric in u): a smooth C1 curve."""
-    from scipy.interpolate import PchipInterpolator
-    key = ("bodytop", id(T()["body_top"]))
+def top_line(U):
+    """h of the body's TOP LINE at |u| per side (rev L, body_top): the body outline's own top edge (its first
+    body_top samples, the dense curve-law polyline), held beyond its end (inside the heads)."""
+    key = ("topline", id(T()["body_half"]), id(T()["body_in"]), id(T()["body_top"]))
     if key not in _CACHE:
-        bt = tv("body_top")
-        _CACHE[key] = PchipInterpolator(bt[:, 0], bt[:, 1], extrapolate=True)
-    u0 = float(T()["neck"][0])
-    return _CACHE[key](np.clip(np.abs(np.asarray(u, float)), 0.0, u0))
+        Q = body_outline()
+        nt = [int(x) for x in T()["body_top"]]
+        out = {}
+        for sgn, src, n in ((1, T()["body_half"], nt[0]), (-1, T()["body_in"], nt[1])):
+            end = np.array([sgn * src[n - 1][0], src[n - 1][1]])
+            k = int(np.argmin(np.hypot(Q[:, 0] - end[0], Q[:, 1] - end[1])))
+            P = Q[:k + 1] if sgn > 0 else np.vstack([Q[k:][::-1], Q[:1]])
+            uu = np.abs(P[:, 0])
+            o = np.argsort(uu)
+            out[sgn] = (uu[o], P[o, 1])
+        _CACHE[key] = out
+    d = _CACHE[key]
+    U = np.asarray(U, float)
+    return np.where(U >= 0, np.interp(np.abs(U), *d[1]), np.interp(np.abs(U), *d[-1]))
+
+
+TOP_LIFT = 40.0
+
+
+def body_side_outline():
+    """The body outline with its top-edge samples lifted TOP_LIFT mm: the field of the body's SIDES and BOTTOM only
+    (rev L: the top surface is the top plane through the top line; rev K's outline top and plane met in a crease)."""
+    key = ("sideol", id(T()["body_half"]), id(T()["body_in"]), id(T()["body_top"]))
+    if key not in _CACHE:
+        nt = [int(x) for x in T()["body_top"]]
+        bh = np.array(T()["body_half"], float)
+        bi = np.array(T()["body_in"], float)
+        bh[:nt[0], 1] += TOP_LIFT
+        bi[:nt[1], 1] += TOP_LIFT
+        pts, cs = join_halves(bh, bi, dict(T().get("body_half_corners", ())), dict(T().get("body_in_corners", ())))
+        _CACHE[key] = smooth_outline(pts, cs)
+    return _CACHE[key]
 
 
 def body_aft(U, H):
-    """a of the body's aft surface: cover_t ahead of the face in the core, blending over the neck zone onto the grip's
-    aft plane (necks), own grip by the sign of u; under the trim head's round face (outboard) held face_clear[0] mm
-    forward of the face plane over its disc + face_clear[1] (judges DR2-02: rev J's web stood up to 5 mm proud of
-    the face's inboard rim)."""
+    """a of the body's aft surface: cover_t ahead of the face in the core, blending (smoothstep over the neck zone)
+    onto the necks' aft surface -- outboard the WEB's: the trim face's plane web[0] forward of it where that lies forward
+    of the grip's aft plane, joined to it by a smooth minimum web[1] wide (rev L, judges DR3-01: rev K held the web under
+    the face's disc only and it stood as a fin beside the head); inboard the grip's aft plane, blending (smoothstep over
+    |u| neck_in[0] -> neck_in[1]) onto the shield facet's plane neck_in[2] forward of it where the low neck meets the
+    head (the facet is recessed 1.5-5 below the grip plane: rev L)."""
     U, H = np.asarray(U, float), np.asarray(H, float)
     u0, u1 = (float(x) for x in T()["neck"][:2])
     core = face_a(H) - crown_bevel(U, H) - float(T()["cover_t"])
     w = smoothstep(np.abs(U), u0, u1)
-    gp = np.where(U >= 0, grip_plane_a(np.abs(U), H, "out"), grip_plane_a(np.abs(U), H, "in"))
-    ab = (1.0 - w) * core + w * gp
-    gap, extra = (float(x) for x in T()["face_clear"][:2])
-    c, n = head_out_face()
-    R = 0.5 * float(T()["head_out"][2])
-    af = face_plane_a(U, H)
-    rho = np.sqrt((U - c[0]) ** 2 + (H - c[1]) ** 2 + (af - c[2]) ** 2)
-    wf = (1.0 - smoothstep(rho, R, R + extra)) * (U > 0)
-    return ab - wf * np.maximum(ab - (af - gap), 0.0)
+    gap, kw = (float(x) for x in T()["web"][:2])
+    web = smin(grip_plane_a(np.abs(U), H, "out"), face_plane_a(U, H) - gap, kw)
+    v0, v1, gi = (float(x) for x in T()["neck_in"][:3])
+    s_in = smoothstep(np.abs(U), v0, v1)
+    neck_in = (1.0 - s_in) * grip_plane_a(np.abs(U), H, "in") + s_in * (facet_plane_a(np.abs(U), H) - gi)
+    gp = np.where(U >= 0, web, neck_in)
+    return (1.0 - w) * core + w * gp
+
+
+def facet_plane_a(U, H):
+    """a of the inboard head's shield-facet plane at the front-view point (u, h), own sense (u > 0)."""
+    c, n = head_in_face()
+    return c[2] - (n[0] * (np.asarray(U, float) - c[0]) + n[1] * (np.asarray(H, float) - c[1])) / n[2]
 
 
 def afcs_boss(U, H, A):
@@ -942,11 +988,12 @@ def afcs_boss(U, H, A):
     below the body's lower edge over the hand slot; judges DR2-04), aft edge R afcs_boss[2]."""
     c, nrm = afcs_axis()
     proud, depth, r_e = (float(x) for x in T()["afcs_boss"][:3])
+    r_b = float(T()["afcs_boss"][5])
     R = 0.5 * float(T()["afcs"][4])
     P = np.stack([U, H, A], -1) - c
     z = P @ nrm
     r = np.linalg.norm(P - z[..., None] * nrm, axis=-1)
-    return np.maximum(rmax(r - R, z, r_e), -z - depth)
+    return rmax(rmax(r - R, z, r_e), -z - depth, r_b)
 
 
 def afcs_axis():
@@ -960,32 +1007,45 @@ def afcs_axis():
 
 
 def body(U, H, A):
-    """Signed distance of the black body (mm): the front outline extruded forward from its aft surface (body_aft)
-    with a side draft; its top falls forward at body_form[1] deg FROM THE HORIZONTAL from the top line at the aft face
-    (rev J measured the run from the tilted aft face: ~42 deg labelled 35, judges DR2-05), the top-to-front edge rounded
-    R body_form[6] (DR2-03), the forward face body_form[0] ahead of the aft surface; edges aft R body_form[3], forward
-    R body_form[4] growing to R body_form[5] at the foot; the necks 'neck[2]' deep; the AFCS boss blended on."""
+    """Signed distance of the black body (mm), rev L (judges DR3-01 / 02): the SIDES and BOTTOM are the front outline
+    without its top edge (body_side_outline) extruded forward from the aft surface (body_aft) with a side draft
+    behind the stem; the TOP is a plane falling forward at body_form[1] deg FROM THE HORIZONTAL from the top line
+    (top_line) at the aft surface; the FORWARD FACE body_form[0] ahead of the aft surface behind the stem, tapering
+    (smoothstep over |u| 35 -> 62) to the necks' neck[2]; rounds in order: sides x aft R body_form[3], x top R
+    body_form[3], x forward face R body_form[4] easing to R body_form[5] under the foot, reduced to R body_form[7]
+    over |u| 40 -> 62 (the thin arm / neck region); the top plane and the aft surface divided by their gradients'
+    lengths (true radii); the AFCS boss blended on."""
     U, H, A = (np.asarray(x, float) for x in (U, H, A))
     bf = T()["body_form"]
     depth, top_deg, draft, r_aft, r_fwd, r_foot, r_tf = (float(x) for x in bf[:7])
     u0, u1, nd = (float(x) for x in T()["neck"][:3])
-    d2 = field("body", body_outline())(U, H)
+    side = field("body_side", body_side_outline())(U, H)
     ab = body_aft(U, H)
-    s_in = ab - A                                                     # depth below the aft surface
     w = smoothstep(np.abs(U), u0, u1)
-    d2e = d2 + (1.0 - w) * np.maximum(s_in, 0.0) * math.tan(math.radians(draft))
-    htu = body_top_h(U)
+    # rev L: under the foot the draft's inward offset is capped at body_form[8] (smoothly, released over h -45 -> -30)
+    # so offset + forward round stay inside the foot corners' R ~11 (an R 14 round over the full 10 deg draft reached
+    # the outline's medial axis there and creased the corners)
+    cap = float(bf[8]) + (20.0 - float(bf[8])) * smoothstep(H, -45.0, -30.0)
+    off = (1.0 - w) * np.maximum(ab - A, 0.0) * math.tan(math.radians(draft))
+    side = side + smin(off, cap, 2.0)
+    htu = top_line(U)
     th = math.radians(top_deg)
-    a_t = face_a(htu) - float(T()["cover_t"])                         # the aft face's a at the top line
-    f_top = (H - htu) * math.cos(th) + (a_t - A) * math.sin(th)       # the top plane (outside +)
-    f_front = (ab - depth) - A
-    core = rmax(f_front, f_top, r_tf)
-    neck = (ab - nd) - A
-    fwd = (1.0 - w) * core + w * neck
-    aft = A - ab
-    rf = r_fwd + (r_foot - r_fwd) * smoothstep(-H, 40.0, 55.0)
-    core_body = np.maximum(rmax(d2e, aft, r_aft), rmax(d2e, fwd, rf))
-    return smin(core_body, afcs_boss(U, H, A), float(T()["afcs_boss"][3]))
+
+    def ftop(Uq):
+        hq = top_line(Uq)
+        return (H - hq) * math.cos(th) + (body_aft(Uq, hq) - A) * math.sin(th)
+    du = 0.25                     # rev L: the top plane and the aft surface divided by their gradients' lengths
+    gU = (ftop(U + du) - ftop(U - du)) / (2.0 * du)   # (the top line rises ~1:1 at the necks: |grad| 1.5 had made
+    f_top = ((H - htu) * math.cos(th) + (body_aft(U, htu) - A) * math.sin(th)) / np.sqrt(1.0 + gU ** 2)  # R 2 ~R 1)
+    aU = (body_aft(U + du, H) - body_aft(U - du, H)) / (2.0 * du)
+    aH = (body_aft(U, H + du) - body_aft(U, H - du)) / (2.0 * du)
+    f_aft = (A - ab) / np.sqrt(1.0 + aU ** 2 + aH ** 2)
+    D_ = depth - (depth - nd) * smoothstep(np.abs(U), 35.0, u0)
+    f_front = (ab - D_) - A
+    r_nf = float(bf[7])
+    rf = r_fwd + (r_nf - r_fwd) * smoothstep(np.abs(U), 40.0, u0) + (r_foot - r_fwd) * smoothstep(-H, 40.0, 55.0)
+    core = rmax(rmax(rmax(side, f_aft, r_aft), f_top, r_aft), f_front, rf)
+    return smin(core, afcs_boss(U, H, A), float(T()["afcs_boss"][3]))
 
 
 # ============================================================================================ switches (DR2-04)
@@ -1168,8 +1228,8 @@ SWITCHES = ("tcs", "afcs", "trim", "button")          # small solids seated on t
 
 def part_sdf(name, U, H, A):
     if name == "black":
-        k = float(T()["neck"][3])
-        return smin(smin(body(U, H, A), grip(U, H, A, "out"), k), grip(-U, H, A, "in"), k)
+        r = float(T()["neck"][3])                           # rev L: a true concave round R neck[3] (rev K: smin)
+        return rmin(rmin(body(U, H, A), grip(U, H, A, "out"), r), grip(-np.asarray(U, float), H, A, "in"), r)
     if name == "cover":
         return cover(U, H, A)
     if name == "body":
@@ -1200,7 +1260,7 @@ def union_sdf(U, H, A, parts=PARTS):
 
 
 BOX = dict(black=(-154, -68, -78, 154, 104, 26), body=(-108, -68, -78, 108, 100, 6), cover=(-77, -61, -34, 77, 71, 6),
-           grip_out=(76, -54, -66, 154, 104, 26), grip_in=(-154, -54, -66, -76, 104, 26),
+           grip_out=(76, -62, -66, 154, 104, 26), grip_in=(-154, -62, -66, -76, 104, 26),
            tcs=(46, 39, -22, 71, 64, -6), afcs=(47, 10, -18, 74, 37, 4), trim=(92, 62, -40, 131, 102, -10),
            button=(-125, 58, -32, -87, 95, -8))
 

@@ -325,7 +325,7 @@ def tangent_edges(g, sign=1.0):
     Q = G.grip_outline(g)
     F = G.field("grip_" + g, Q)
     ra = float(D["grip_edges"][0])
-    hz = float(D["head_out"][7] if g == "out" else D["head_in"][5])
+    hz = float(D["head_zone"][0 if g == "out" else 1][0])
     u = np.arange(Q[:, 0].min() - 1.0, Q[:, 0].max() + 1.0, 0.2)
     h = np.arange(Q[:, 1].min() - 1.0, hz - 3.0, 0.2)
     UU, HH = np.meshgrid(u, h)

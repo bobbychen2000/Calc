@@ -34,7 +34,7 @@ from drawing import yoke_sheet as YS  # noqa: E402
 from drawing import master as M  # noqa: E402
 
 SHEET = dict(id="L6Y2", title="CONTROL YOKE - SECTIONS", subtitle="PC-24-STYLE CONTROL YOKE - SECTIONS & DETAILS",
-             size="A1", scale="AS SHOWN", rev="B", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
+             size="A1", scale="AS SHOWN", rev="C", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
 REVISIONS = (
     ("A", "2026-10-05", "first issue with L6Y rev B (judges r1 D1 / D2 / D5 / D10, FID1-04..06 / 09..12): exact "
                         "sections of the rev J solids -- centreline, arm, 8 grip sections, the grips' axial profiles "
@@ -48,6 +48,11 @@ REVISIONS = (
                         "of the column band; acceptance checks; photo check on curated silhouettes incl. the AOPA "
                         "co-pilot view, part-labelled ray-cast, per-band maxima; grip planes joint-fitted to 7 "
                         "views (the table confirmed by 5, the AOPA photo open)"),
+    ("C", "2026-10-05", "rev L (judges r3): K-K cuts the TCS / AFCS too; grip sections cut the moulding (the prism a "
+                        "phantom); dimensions read off the solids (crown top edge); the head zone's named surfaces and "
+                        "tabled rounds in CORNERS & RADII; acceptance extended to the heads, necks, web, tops and "
+                        "forward faces + one-piece and C2 curve-law rows; photo check on 6 views incl. P1046409 (AOPA "
+                        "dropped), slot rows above the hand slot not scored; detail J: the U recess [M]"),
 )
 COL_X = (588.0, 826.0)
 GRIP_SECTION_H = YS.GRIP_SECTION_H
@@ -102,7 +107,7 @@ def draw_secZ(ds, v):
     T_ = X0 + 26.0
     items = [((aF(h_top) - 1.0, h_top - 0.5), (T_, Y0 - 140.0), f"CROWN TOP h {h_top:g}, TOP LAND {float(cr[2]):g} x "
                                                                 f"{float(cr[3]):g}", ["C1 chamfer [M low]"]),
-             ((aF(float(cr[0])), float(cr[0])), (T_, Y0 - 122.0), f"CROWN SOFT BREAK h {float(cr[0]):g}",
+             ((aF(float(cr[0])), float(cr[0])), (T_, Y0 - 128.0), f"CROWN SOFT BREAK h {float(cr[0]):g}",
               [f"insert top {float(cr[1]):g}° further fwd, blend R {float(cr[4]):g} [M low / E]"]),
              ((aF(49.65), 49.65), (T_, Y0 - 104.0), f"BADGE: GROOVES {float(D['badge_relief'][1]):g} WIDE x "
                                                     f"{float(D['badge_relief'][0]):g}", ["plain field, no lettering"]),
@@ -124,8 +129,8 @@ def draw_secZ(ds, v):
     rc = cov[np.abs(cov[:, 1] + 30.0) < 0.6]
     dim(ds, v.pt(float(rc[:, 0].min()), -30.0), v.pt(float(rc[:, 0].max()), -30.0), Y0 + 134.0,
         f"{float(rc[:, 0].max() - rc[:, 0].min()):.1f} COVER", outside=True)
-    a_cr = aF(h_top)
-    dim(ds, v.pt(a_cr, h_top), v.pt(0.0, h_top), Y0 - 152.0, f"{-a_cr:.1f} CROWN FWD OF a 0", outside=True)
+    h_ct, a_ct = YS.crown_top()                     # rev L (judges DR3-05): the solid's crown top edge
+    dim(ds, v.pt(a_ct, h_ct), v.pt(0.0, h_ct), Y0 - 145.0, f"{-a_ct:.1f} CROWN TOP EDGE FWD OF a 0", outside=True)
     top = blk[blk[:, 1] > 30.0]
     k = int(np.argmin(top[:, 0] + 0.6 * top[:, 1]))
     leader(ds, v.pt(*top[k]), (X0 + 26.0, Y0 - 86.0), f"BODY TOP {float(D['body_form'][1]):g}° FROM HORIZONTAL",
@@ -135,12 +140,14 @@ def draw_secZ(ds, v):
     ords = [(aF(h_top), h_top, None), (aF(float(cr[0])), float(cr[0]), None),
             (aF(53.2), 53.2, None), (aF(46.1), 46.1, None), (0.0, float(st[0, 1]), None),
             (aF(float(il[:, 1].min())), float(il[:, 1].min()), None), (aF(-56.0), -56.0, None),
-            (a_f + 25.0, float(blk[:, 1].min()), None), (float(blk[np.argmax(blk[:, 1]), 0]), float(blk[:, 1].max()), None)]
+            (a_f + 25.0, float(blk[:, 1].min()), "BODY FOOT"),
+            (float(blk[np.argmax(blk[:, 1]), 0]), float(blk[:, 1].max()), "BODY TOP (BEHIND THE CROWN)")]
     ordinates(ds, v, ords, X0 + 20.0, side=+1, min_gap=3.0)
     for k_, t in enumerate((f"BODY: {float(D['body_form'][0]):g} DEEP [E], ITS TOP A PLANE {float(D['body_form'][1]):g}° "
-                            f"FROM THE HORIZONTAL THROUGH THE TOP LINE (h {float(D['body_top'][0][1]):g} AT u 0)",
-                            f"forward edges R {float(D['body_form'][4]):g}, top-to-front R {float(D['body_form'][6]):g}, "
-                            f"foot R {float(D['body_form'][5]):g} [E]; black body and grips one moulding",
+                            f"FROM THE HORIZONTAL THROUGH THE TOP LINE (h {float(G.top_line(0.0)):.1f} AT u 0)",
+                            f"rounds in order: aft R {float(D['body_form'][3]):g}, top R {float(D['body_form'][3]):g}, "
+                            f"forward R {float(D['body_form'][4]):g}, foot R {float(D['body_form'][5]):g} [E]; one moulding "
+                            f"with the grips (R {float(D['neck'][3]):g})",
                             "PLANE u 0 (CUTTING PLANE Z-Z ON L6Y FRONT ELEVATION)")):
         lbl(ds, X0 - 140.0, Y0 + 142.0 + 3.0 * k_, t, TXT_S, color=MUTED)
     lbl(ds, *v.pt(-70.0, 74.0), f"AFT FACE {float(D['face_tilt']):g}° TOP FWD", TXT_S, color=ACCENT, weight=600)
@@ -161,9 +168,18 @@ def arm_frame():
 
 def draw_secK(ds, v):
     p, e1 = arm_frame()
-    S = G.section(p, (0.0, 0.0, 1.0), e1, (-80.0, -26.0, 10.0, 26.0), parts=("black", "cover"), step=0.15, clip=True)
-    draw_section(ds, v, S, parts=("black", "cover"))
+    parts = ("black", "cover", "tcs", "afcs")                 # rev L (judges DR3-03): every solid the plane cuts
+    S = G.section(p, (0.0, 0.0, 1.0), e1, (-80.0, -26.0, 10.0, 26.0), parts=parts, step=0.15, clip=True)
+    draw_section(ds, v, S, parts=parts)
     X0, Y0 = v.pt(0.0, 0.0)
+    for nm_, at, txt, more in (("tcs", (X0 + 26.0, Y0 - 24.0), f"TCS BEZEL IN ITS {float(D['tcs_seat']):g} SEAT",
+                                 ["(cut 8.8 off its axis)"]),
+                                ("afcs", (X0 + 26.0, Y0 + 22.0), "AFCS CAP ON ITS BOSS", ["(cut 3.4 off its axis)"])):
+        Cs = [C for p_, C in section_contours(S, (nm_,))]
+        if Cs:
+            C = max(Cs, key=len)
+            k = int(np.argmax(C[:, 0]))
+            leader(ds, v.pt(*C[k]), at, txt, more, size=TXT_S, weight=500)
     cr = D["crown"]
     E = D["edges"]
     cov = [C for p_, C in section_contours(S, ("cover",))]
@@ -181,9 +197,9 @@ def draw_secK(ds, v):
     if blk:
         B = blk[0]
         dim(ds, v.pt(float(B[:, 0].min()), float(B[:, 1].min())), v.pt(float(B[:, 0].max()), float(B[:, 1].min())),
-            Y0 + 48.0, f"{float(B[:, 0].max() - B[:, 0].min()):.1f} BODY BEHIND THE ARM")
+            Y0 + 52.5, f"{float(B[:, 0].max() - B[:, 0].min()):.1f} BODY BEHIND THE ARM")
     lbl(ds, X0 - 98.0, Y0 - 50.0, "UP-INBOARD", TXT_S, color=MUTED, weight=600)
-    lbl(ds, X0 - 98.0, Y0 + 54.0, "FWD <-   -> AFT", TXT_S, color=MUTED)
+    lbl(ds, X0 - 98.0, Y0 + 57.0, "FWD <-   -> AFT", TXT_S, color=MUTED)
     view_title(ds, X0 - 40.0, Y0 + 62.0, "SECTION K-K", "THROUGH (52, 45) NORMAL TO THE ARM (30° UP OUTBOARD), LOOKING "
                                                        "INBOARD (L6Y FRONT ELEVATION) - 2:1", size=3.4)
 
@@ -195,29 +211,45 @@ def draw_grip_sections(ds):
     x_cells = [272.0 + 66.0 * k for k in range(4)]
     for g, Yc, lets, sx in (("out", 62.0, "A", -1.0), ("in", 136.0, "N", 1.0)):
         pg = "grip_" + g
+        ph_any = False
         for k, h in enumerate(GRIP_SECTION_H):
             Xc = x_cells[k]
             vs = ds.add_view(mkview(f"sec_{lets}{k + 1}", "yz", sx, 1, (Xc, Yc), 1.0,
                                     f"grip section {lets}{k + 1} (across, along the aft normal)"))
-            S = G.grip_section(g, h, extent=(-42.0, -40.0, 36.0, 10.0), parts=(pg,), step=0.15)
-            draw_section(ds, vs, S, parts=(pg,), style={pg: ("#E3E6E8", 45.0, 0.8)})
+            ext = (-42.0, -40.0, 36.0, 10.0)
+            # rev L (judges DR3-04): the cut of the MOULDING (the grip joined to the web / neck where they meet), the
+            # grip prism alone as a phantom where the two differ; cut edges along the frame of the section broken
+            p_, e1_, e2_ = G.grip_section_frame(g, h)
+            Sb = G.section(G.to_cop(p_, g), G.to_cop(e1_, g), G.to_cop(e2_, g), ext, parts=("black",), step=0.15,
+                           clip=True)
+            S = G.grip_section(g, h, extent=ext, parts=(pg,), step=0.15)
+            draw_section(ds, vs, Sb, parts=("black",), style={"black": ("#E3E6E8", 45.0, 0.8)})
             C = [c for _, c in section_contours(S, (pg,))]
+            Cb = [c for _, c in section_contours(Sb, ("black",))]
             if C:
                 C = C[0]
+                diff = Cb and abs(_area(Cb[0]) - _area(C)) > 2.0
+                if diff:
+                    poly(ds, vs, C, W_THIN, dash=PHANTOM, color=MUTED)
+                    ph_any = True
                 w = float(C[:, 0].max() - C[:, 0].min())
                 dpt = float(C[:, 1].max() - C[:, 1].min())
-                ds.text(Xc, Yc + 9.0, f"{w:.1f} x {dpt:.1f}", TXT_S, "mono", "middle", tag="dim")
+                ds.text(Xc, Yc + 9.0, f"GRIP {w:.1f} x {dpt:.1f}", TXT_S, "mono", "middle", tag="dim")
             ds.cv.line((Xc - 28.0, Yc), (Xc + 28.0, Yc), W_THIN, CHAIN, color=MUTED)
             view_title(ds, Xc, Yc + 15.0, f"{lets}{k + 1}-{lets}{k + 1}", f"h {h:g} - 1:1", size=3.0)
         lbl(ds, x_cells[0] - 30.0, Yc - 40.0,
             f"{'OUTBOARD' if g == 'out' else 'INBOARD'} GRIP, NORMAL TO THE AXIS, LOOKING DOWN IT (FWD UP, PAD DOWN; "
             f"{'OUTBOARD LEFT' if g == 'out' else 'INBOARD RIGHT'})", TXT_S, color=MUTED, weight=600)
+        if ph_any:
+            lbl(ds, x_cells[0] - 30.0, Yc - 36.6, "hatched: the cut of the black moulding; dashed phantom: the grip "
+                                                  f"alone where the moulding runs on into the "
+                                                  f"{'web' if g == 'out' else 'neck'}", 1.8, color=MUTED)
     ps = D["pad_section"]
     lbl(ds, x_cells[0] - 30.0, 168.0, f"PAD: leather {float(ps[0]):g} below the {float(D['grip_frame']):g} frame, "
                                       f"crowned to {abs(float(ps[1])):g} below over {float(ps[2]):g}; groove "
                                       f"{float(ps[4]):g} x {float(ps[5]):g} + bead {float(ps[3]):g}; frame roll R "
                                       f"{float(D['grip_edges'][0]):g}; forward R {float(D['grip_edges'][1]):g} [E] <= "
-                                      f"{float(D['grip_edges'][2]):g} x half-width; depth PCHIP (grip_depth) [M low]",
+                                      f"{float(D['grip_edges'][2]):g} x half-width; depth {float(D['grip_depth'][1][1]):g} (grip_depth) [M]",
         TXT_S, color=MUTED)
     # DETAIL S: A3's outer pad edge / frame at 5:1
     p, e1, e2 = G.grip_section_frame("out", GRIP_SECTION_H[2])
@@ -239,6 +271,11 @@ def draw_grip_sections(ds):
                [f"leather {float(ps[0]):g} below the frame, crowned to {abs(float(ps[1])):g} over {float(ps[2]):g}"],
                size=TXT_S, weight=500)
         view_title(ds, X0, Y0 + 30.0, "DETAIL S", "A3 OUTER PAD EDGE - 5:1", size=3.0)
+
+
+def _area(C):
+    C = np.asarray(C, float)
+    return 0.5 * abs(float(np.sum(C[:, 0] * np.roll(C[:, 1], -1) - np.roll(C[:, 0], -1) * C[:, 1])))
 
 
 # ============================================================================================ grip profiles P-P / Q-Q
@@ -443,7 +480,13 @@ def draw_switches(ds):
     S = G.section(c, (1.0, 0.0, 0.0), n, (-14.0, -9.0, 14.0, 7.0), parts=("black", "afcs"), step=0.05, clip=True)
     draw_section(ds, vE2, S, parts=("black", "afcs"))
     X1, Y1_ = vE2.pt(0, 0)
-    dim(ds, vE2.pt(0.5 * cd, ch), vE2.pt(0.5 * cd, 0.0), X1 + 1.5 * bdo + 6.0, f"{ch:g}", orient="v")
+    from cad import sdf2d
+    for p_, C in section_contours(S, ("black",)):                    # rev L (judges DR3-08): name the other island
+        if sdf2d.polygon(np.array([0.0]), np.array([-1.0]), C)[0] > 0 and len(C) > 8:
+            k = int(np.argmax(C[:, 1]))
+            leader(ds, vE2.pt(*C[k]), (X1 + 1.5 * bdo + 4.0, Y1_ - 22.0), "NECK (BEHIND), CUT BY THE WINDOW", None,
+                   size=1.8, weight=400, color=MUTED)
+    dim(ds, vE2.pt(-0.5 * cd, ch), vE2.pt(-0.5 * cd, 0.0), X1 - 1.5 * bdo - 16.0, f"{ch:g}", orient="v")
     dim(ds, vE2.pt(-0.5 * cd, ch), vE2.pt(0.5 * cd, ch), Y1_ - 3 * ch - 6.0, f"{cd:g} CAP")
     dim(ds, vE2.pt(-0.5 * bdo, 0.0), vE2.pt(-0.5 * bdo, -float(ab[1])), X1 - 1.5 * bdo - 6.0, f"{float(ab[1]):g}",
         orient="v", outside=True)
@@ -502,16 +545,17 @@ def draw_column(ds):
     X0, Y0 = vJ.pt(0, 0)
     # the dished recess and the band in it (hidden behind the yoke from outboard): recess floor 'dep' forward of the
     # panel face, the band from the floor 'bh' proud (column_band, judges FID2-05)
-    hc_r, R_r, dep_r = (float(x) for x in D["column_recess"])
+    hw_r, hb_r, rc_r, dep_r, ht_r = (float(x) for x in D["column_recess"])
     bh_ = float(D["column_band"][1])
-    hh = np.linspace(hc_r - R_r, hc_r + R_r, 25)
+    hc_b = float(D["column_band"][4])
+    hh = np.linspace(hb_r, ht_r, 25)
     apl = Y1_a_panel(hh)
     poly(ds, vJ, np.r_[np.c_[apl, hh], np.c_[apl - dep_r, hh][::-1]], W_THIN, dash=HID, color=MUTED)
-    hb_ = np.linspace(hc_r - R_r + 6.0, h_top, 20)
+    hb_ = np.linspace(hb_r + 6.0, h_top, 20)
     line(ds, vJ, np.c_[Y1_a_panel(hb_) - dep_r + bh_, hb_], W_THIN, dash=HID, color=ACCENT)
-    leader(ds, vJ.pt(float(Y1_a_panel(hc_r)[0]) - dep_r + bh_, hc_r), (X0 - 70.0, Y0 - 62.0),
-           f"J BAND {bh_:g} PROUD OF THE RECESS FLOOR", [f"recess {dep_r:g} deep, R {R_r:g} [E] (hidden)"], size=TXT_S,
-           weight=500)
+    leader(ds, vJ.pt(float(Y1_a_panel(hc_b)[0]) - dep_r + bh_, hc_b), (X0 - 70.0, Y0 - 62.0),
+           f"J BAND {bh_:g} PROUD OF THE RECESS FLOOR", [f"recess {dep_r:g} deep [E], floor to h {hb_r:g} [M] (hidden)"],
+           size=TXT_S, weight=500)
     dim(ds, vJ.pt(a_p0, -r), vJ.pt(-depth, -r), Y0 + 22.0, f"{-depth - a_p0:.0f}")
     lbl(ds, X0 - 70.0, Y0 + 33.0, f"PHANTOM: FULL PUSH {t0:+.0f} [E], leaves {-depth + t0 - a_p0:.0f} to the panel",
         TXT_S)
@@ -521,8 +565,9 @@ def draw_column(ds):
     bw = float(col[4])
     u_in = -(float(col[0]) * 1000.0 - float(I.YOKE["bl"]) * 1000.0)       # inboard side of the band, u (negative)
     rc = abs(u_in) - 0.5 * bw                                              # band centreline radius about the axis
-    hc_, R_rec, dep = (float(x) for x in D["column_recess"])
-    circ(ds, vF, (0.0, hc_), 2 * R_rec, W_FINE, fill="#E3E6E8")
+    hw_, hb2, rcr, dep, ht_ = (float(x) for x in D["column_recess"])
+    hc_ = float(D["column_band"][4])
+    poly(ds, vF, recess_u(hw_, hb2, rcr, ht_), W_FINE, fill="#E3E6E8")
     # band: vertical leg (inboard) from the top end down to the joint, then an arc about (0, hc_) under the stem
     leg = np.array([(-rc, h_top - 0.5 * bw), (-rc, hc_)])
     th = np.radians(np.linspace(180.0, 330.0, 40))
@@ -545,9 +590,11 @@ def draw_column(ds):
            weight=500)
     leader(ds, vF.pt(-rc + 0.5 * bw, h_joint), (X0 + 44.0, Y0 + 6.0), f"JOINT WL {float(col[2]) * 1000:.0f} [M]",
            [f"screw WL {float(col[3]) * 1000:.0f} [M]"], size=TXT_S, weight=500)
-    leader(ds, vF.pt(-R_rec * 0.7, hc_ - R_rec * 0.7), (X0 + 26.0, Y0 + 30.0), f"DISHED RECESS R {R_rec:g}, "
-                                                                              f"{dep:g} DEEP [E]",
-           ["the band's arc curves under the stem [E]"], size=TXT_S, weight=500)
+    Pr = vF.pt(-hw_, hb2 + rcr + 12.0)
+    leader(ds, Pr, (Pr[0] + 5.0, Pr[1] + 4.0), f"RECESS: U {2 * hw_:g} WIDE [M]",
+           [f"floor h {hb2:g}, corners R {rcr:g} [M]", f"{dep:g} deep [E]; outboard half", "hidden (symmetric [E]);",
+            f"band arc about h {hc_:g} [E]"], size=1.9, weight=500)
+    dim(ds, vF.pt(-hw_, hb2), vF.pt(hw_, hb2), Y0 + 44.0, f"{2 * hw_:g}")
     lbl(ds, X0 - 40.0, Y0 + 50.0, "phantom: the shell; hidden: the column dia 44", TXT_S, color=MUTED)
     view_title(ds, X0, Y0 + 58.0, "DETAIL J - SURROUND, FRONT", "LOOKING FORWARD (PILOT; INBOARD RIGHT) - 1:2",
                size=3.0)
@@ -570,6 +617,15 @@ def draw_column(ds):
     lbl(ds, X3 + bw_ + 14.0, Y3 - 9.0, f"ROLLED EDGES R {br_:g}, FLAT TOP {bf_:g}", TXT_S, color=MUTED)
     lbl(ds, X3 + bw_ + 14.0, Y3 - 6.0, "[M low]; ON THE RECESS FLOOR;", TXT_S, color=MUTED)
     lbl(ds, X3 + bw_ + 14.0, Y3 - 3.0, "J OR FULL COLLAR: OPEN (OWNER)", TXT_S, color=MUTED)
+
+
+def recess_u(hw, hb, rc, ht, n=12):
+    """The column recess's front outline (u, h): a U of half-width hw about the column axis, floor at h hb, bottom
+    corners R rc, the straight sides up to h ht (column_recess, rev L judges FID3-02), closed along the top."""
+    t = np.linspace(0.0, 0.5 * math.pi, n)
+    left = np.c_[-hw + rc - rc * np.cos(t), hb + rc - rc * np.sin(t)]
+    right = np.c_[hw - rc + rc * np.sin(t), hb + rc - rc * np.cos(t)]
+    return np.vstack([[(-hw, ht)], left, right, [(hw, ht)]])
 
 
 def Y1_a_panel(h):
@@ -595,7 +651,7 @@ def draw_tables(ds):
             ("PADS mean (max)", W - 186.0, "c")]
     rows = [tuple(r) for r in PHOTO_TABLE]
     y = table(ds, x0, 15.0, cols, wrap_rows(rows, [c[1] for c in cols], size),
-              title="PHOTO CHECK (rev K): THE DRAWN SOLIDS RAY-CAST THROUGH THE PHOTO CAMERAS (mm, + = drawn wider)",
+              title="PHOTO CHECK (rev L): THE DRAWN SOLIDS RAY-CAST THROUGH THE PHOTO CAMERAS (mm, + = drawn wider)",
               size=size, row_h=3.3, font="label")
     # per-band signed maxima of the grip sides (judges FID2-02: not means)
     cw = (W - 24.0) / len(BAND_VIEWS)
@@ -626,24 +682,43 @@ def draw_tables(ds):
                                  f"{float(D['heel'][2]):g}; trim face R {float(D['head_out'][6]):g}; pad step crisp, "
                                  f"groove {float(D['pad_section'][4]):g} x {float(D['pad_section'][5]):g}, bead "
                                  f"{float(D['pad_section'][3]):g}"),
-             ("body edges", "-", f"aft R {float(D['body_form'][3]):g}; forward R {float(D['body_form'][4]):g} [E]; "
-                                 f"top-to-front R {float(D['body_form'][6]):g} [E]; foot R {float(D['body_form'][5]):g} "
-                                 f"[E]; neck-to-head blend R {float(D['neck'][3]):g}; AFCS boss R "
-                                 f"{float(D['afcs_boss'][2]):g}, blend R {float(D['afcs_boss'][3]):g}"),
+             ("body edges", "-", f"rounds in order: sides x aft face R {float(D['body_form'][3]):g}, x top plane R "
+                                 f"{float(D['body_form'][3]):g}, x forward face R {float(D['body_form'][4]):g} [E] easing to "
+                                 f"R {float(D['body_form'][5]):g} under the foot, R {float(D['body_form'][7]):g} behind the "
+                                 f"arms / necks [E]; under the foot the side draft's offset capped at "
+                                 f"{float(D['body_form'][8]):g} [E]; AFCS boss aft edge R "
+                                 f"{float(D['afcs_boss'][2]):g}, back edge R {float(D['afcs_boss'][5]):g}, blend R "
+                                 f"{float(D['afcs_boss'][3]):g}"),
+             ("moulding", "-", f"body + grips: a true concave round R {float(D['neck'][3]):g}; the web's aft face on the "
+                               f"trim face's plane {float(D['web'][0]):g} below it, joined to the grip plane over "
+                               f"{float(D['web'][1]):g}; the low neck's aft face onto the shield facet's plane "
+                               f"{float(D['neck_in'][2]):g} below it over |u| {float(D['neck_in'][0]):g}-"
+                               f"{float(D['neck_in'][1]):g}"),
+             ("head zone out / in", "-", "trim cut R {0:g} / {1:g} (drafted {2:g} / {3:g} per mm below h {4:g} / {5:g}, "
+                                        "the draft's start bent C1); "
+                                        "head chamfer R {6:g}; head x forward face R {7:g}; x walls R {8:g}; floor R {9:g} "
+                                        "at h {10:g} / {11:g}; head-to-prism R {12:g}; shield facet edge R {13:g}, "
+                                        "its directrix corner R {14:g}".format(
+                 *[float(x) for x in (D['head_zone'][0][3], D['head_zone'][1][3], D['head_zone'][0][2],
+                                      D['head_zone'][1][2], D['head_zone'][0][0], D['head_zone'][1][0],
+                                      D['head_zone'][0][6], D['head_zone'][0][7], D['head_zone'][0][8],
+                                      D['head_zone'][0][5], D['head_zone'][0][4], D['head_zone'][1][4],
+                                      D['head_zone'][0][9], D['shield_edge'][0], D['shield_edge'][1])])),
              ("cover features", "-", f"crown soft break R {float(D['crown'][4]):g}; top land C1 chamfer "
                                      f"{float(D['crown'][2]):g} x {float(D['crown'][3]):g}; TCS seat "
                                      f"{float(D['tcs_seat']):g} deep")]
     cols2 = [("OUTLINE", 46.0, "l"), ("N", 9.0, "c"), ("CORNERS: SAMPLE #, (u, h), RADIUS (curve_law)", W - 55.0, "l")]
     y = table(ds, x0, y + 1.0, cols2, wrap_rows(rows, [c[1] for c in cols2], size),
-              title="CORNERS & RADII (every other sample is on a C1 spline)", size=size, row_h=3.3, font="label")
+              title="CORNERS & RADII (every other sample is on a C2 spline); NO OTHER EDGE IS SHARP", size=size,
+              row_h=3.3, font="label")
     from model import yoke_checks as YC
     acc = YC.summary_lines()
-    nts = ["CURVE LAW: centripetal Catmull-Rom (alpha 0.5) through the table samples, 0.25 sampling; corners as "
-           "listed (R 0 sharp, R > 0 tangent fillet); YOKE_DESIGN curve_law; the solids use the EXACT distance to "
-           "these polylines.",
+    nts = ["CURVE LAW (rev L, judges DR3-07): a C2 cubic spline on centripetal knots through the table samples (curvature "
+           "continuous at every sample that is not a corner), 0.25 sampling; corners as listed (R 0 sharp, R > 0 "
+           "tangent fillet); YOKE_DESIGN curve_law; the solids use the EXACT distance to these polylines.",
            "ACCEPTANCE (model/yoke_checks.py, judges DR2-01..04): " + "; ".join(acc) + ".",
            "SECTIONS: exact contours of the solids (model/yoke_geom.py) on the cutting planes; the black body and the "
-           "grips are one moulding (smooth union R 3), the white cover a separate part; hatching per part.",
+           "grips are one moulding (a true round R 3), the white cover a separate part; hatching per part.",
            "Sources per value: the [M] / [E] / [S] tags of YOKE_DESIGN (printed in model/interior.py)."]
     notes(ds, x0, y + 1.0, x1, nts, title="NOTES", size=size, line_h=2.9)
     from drawing.interior_sheet import revisions_block
@@ -656,43 +731,47 @@ def draw_tables(ds):
         IS.SHEET = saved
 
 
-# rev K photo check, python3 -m drawing.yoke_overlay 2026-10-05 (refs/cache/overlays/yoke/deviations.json): cover
+# rev L photo check, python3 -m drawing.yoke_overlay 2026-10-05 (refs/cache/overlays/yoke/deviations.json): cover
 # landmarks mean / max (the pose fit), heads (trim face / push-button cap: checked, not fitted), grip silhouette
 # rows per side (mean, signed max; + = drawn wider), pads vs traces mean (max); BAND_TABLE the signed max per band
-# of h on the grip axis (judges FID2-02: maxima per band, not means)
+# of h on the grip axis (judges FID2-02: maxima per band, not means); generated from deviations.json (6 fitted
+# views; the AOPA press photo is check-only and not tabled, judges FID3-01)
 PHOTO_TABLE = (
-    ('P1046408 pilot (panel_408)', '1.4 / 2.7', '2.1 / 1.4', '+0.3, +4.6 / +0.1, +3.0', '-0.1, -6.5 / -1.2, -3.9', 'out 0.7 (2.6); in 0.8 (1.7)'),
-    ('P1046408 co-pilot (panel_408)', '1.8 / 3.9', '2.9 / 0.8', '+1.4, +6.6 / -0.2, -2.1', '-0.9, -3.5 / +0.7, +4.1', 'out 1.7 (3.4); in 0.8 (2.2)'),
-    ('P1046410 pilot', '0.8 / 1.6', '5.4 / 0.9', '-0.3, +7.3 / -0.6, -5.4', '-1.2, -8.4 / +3.3, +7.4', '-'),
-    ('Mexico press, pilot', '1.7 / 3.9', '1.7 / 1.9', '+2.7, +5.5 / +1.1, +1.5', '-2.6, -8.6 / +1.6, +2.4', 'in 2.3 (5.9)'),
-    ('Mexico press, co-pilot', '1.9 / 3.1', '0.9 / 0.9', '+0.3, +6.7 / -0.1, +0.9', '+1.3, +4.0 / -7.4, -20.8', 'out 1.1 (2.7)'),
-    ('AOPA press, pilot (15 deg from outboard)', '1.9 / 4.0', '1.9 / 0.2', '- / -', '- / -', 'out 5.6 (15.9); in 2.9 (9.1)'),
-    ('AOPA press, co-pilot (~50 deg from inboard)', '1.6 / 3.7', '4.4 / 13.1', '-11.2, -22.1 / -', '- / -8.8, -14.9', 'in 9.4 (19.6)'),
-    ('rev J, P1046408 L (judges r2)', '-', '-', 'slot +4.0 (h 14) .. -2.8', '-', 'out 0.7; in 0.5'),
+    ('P1046408 pilot (panel_408)', '1.4 / 2.7', '2.1 / 1.4', '+0.3, +4.6 / +1.1, +6.6', '+0.4, +6.2 / -1.8, -4.2', 'out 0.7 (2.5); in 0.6 (1.3)'),
+    ('P1046408 co-pilot (panel_408)', '1.8 / 3.9', '2.9 / 1.0', '+1.4, +6.6 / +0.8, +3.3', '-0.4, -2.8 / +0.1, +3.3', 'out 1.7 (3.4); in 0.8 (1.9)'),
+    ('P1046410 pilot', '0.8 / 1.6', '5.4 / 0.7', '-0.3, +7.3 / +0.2, -6.1', '-0.5, -7.6 / +2.9, +6.2', '-'),
+    ('Mexico press, pilot', '1.7 / 3.9', '1.7 / 2.3', '+2.6, +5.5 / +0.7, +1.2', '-1.9, -7.8 / +0.4, +1.3', 'in 1.9 (5.1)'),
+    ('Mexico press, co-pilot', '1.9 / 3.1', '0.9 / 0.6', '+0.3, +6.7 / +0.5, +2.6', '+1.7, +4.8 / -3.9, -6.8', 'out 1.1 (2.7)'),
+    ('P1046409 co-pilot (two-view camera)', '1.0 / 2.1', '6.8 / 2.7', '-2.0, -7.7 / +0.5, +10.3', '+0.8, +7.8 / -2.9, -7.4', 'out 1.7 (4.3); in 3.4 (6.9)'),
+    ('rev K, P1046408 pilot (judges r3)', '1.4 / 2.7', '2.1 / 1.4', '+0.3, +4.6 / +0.1, +3.0', '-0.1, -6.5 / -1.2, -3.9', 'out 0.7; in 0.8'),
 )
 BAND_TABLE = (   # signed max per band of h (axis), mm: (-50..-30, -30..-10, -10..10, 10..30)
-    ('OUT SLOT', '+3.0 -1.2 +1.3 +1.5', '-2.1 -1.3 +1.2 +1.3', '+2.9 -1.2 -0.7 -5.4', '  .   . +1.5 +1.2', '+0.9 -0.7 -0.7 -0.8', '-', '-'),
-    ('OUT OUTER', '+2.8 -0.8 -0.3 -0.8', '+3.6 +1.1   .   .', '+2.7 +3.1 -1.5 -0.6', '  .   .   .   .', '-2.1   . -5.5 -0.7', '-', '-22.1 -17.5 -13.4 -12.2'),
-    ('IN SLOT', '-2.1 -3.9 -2.7 +1.0', '+0.8 -1.6 +2.5 +4.1', '+2.5 +3.9 +6.2 +7.4', '  . +1.4 +2.4 +2.2', '  . -4.6 -2.4 -11.5', '-', '  . -12.5 -11.5 -8.6'),
-    ('IN OUTER', '-6.5 -5.9 -1.2 -0.6', '-3.5 -2.5 -1.5 -1.3', '-6.1 -8.4 -6.5 +0.5', '+5.6 -8.6 -7.3 -8.0', '+4.0 +2.0 +1.7 +2.2', '-', '-'),
+    ('OUT SLOT', '+6.6 +1.9 +1.1 +0.4', '+3.3 +2.1 +0.8 +0.5', '+6.0 +1.9 -1.3 -6.1', '  .   . +1.2 +0.9', '+2.6 +2.3 -1.0 -1.6', '+10.3 +1.6 -0.8 -5.1'),
+    ('OUT OUTER', '+2.8 -0.8 -0.3 -0.8', '+3.6 +1.1   .   .', '+2.7 +3.1 -1.5 -0.6', '  .   .   .   .', '-2.1   . -5.5 -0.7', '-7.1 +5.8 -4.7 -7.7'),
+    ('IN SLOT', '-2.5 -4.2 -4.1 -1.8', '-0.8 -2.3 +1.8 +3.3', '+2.4 +3.4 +5.4 +6.2', '  . +0.3 +1.3 +1.0', '  . -5.3 -3.2 -6.8', '-7.4 -5.0 -7.3 +1.1'),
+    ('IN OUTER', '-5.8 -5.2 -1.1 +0.9', '-2.8 -2.1 -0.9 -1.0', '-5.3 -7.6 -6.5 +1.2', '+6.4 -7.8 -6.5 -7.2', '+4.8 +2.0 +2.5 +2.2', '+7.8 -6.2 -7.0 -6.5'),
 )
-BAND_VIEWS = ('P408 L', 'P408 R', 'P410 L', 'MEX L', 'MEX R', 'AOPA L', 'AOPA R')
-PLANE_FIT = ("GRIP PLANES (judges FID2-01): rake / toe / a0 / wall direction fitted per grip to these curated rows and the pad "
-             "traces of all 7 views (the grip prism, defined in its plane coordinates, re-mapped exactly for each "
-             "plane).  The 5 views from inboard (P1046408 L / R, P1046410, Mexico L / R: 23-27° off aft, Mexico 15-20° "
-             "from above) give outboard 19.3° / 19.4° / -3.7 / 0.61, inboard 20.5° / 18.4° / -4.9 / 0.03 -- the table's "
-             "20 / 18 / -3.75 / 0.6, 0 kept; their cost rises 10 % at rake +/-3° (out) / +/-5° (in), a0 +/-3 / +/-5.  "
-             "With the AOPA views the fit moves < 1.5° / 2.5 and the 7-view cost drops only 7 / 3 %: no plane the 5 "
-             "views allow meets the AOPA residuals (co-pilot: outboard outer edge -9..-16 below h 0, inboard slot -10.."
-             "-12, inboard pad 9; pilot: pads 5.6 / 2.9) -- the same view puts the inboard button 13 off (6 views "
-             "within 1-2) and its pose is degenerate along the line of sight: reported, not fitted (L6Y open point 2).")
-NECK = ("INBOARD NECK (criterion, P1046408): the drawn moulding's top edge vs the photo per pixel column, arm tip "
-        "to head -- pilot mean -0.6, |mean| 2.3, max -6.9 mm (against the red placard; rev I 'neck in' 14.2 / 20.7); co-pilot -4.5, max -7.5 (drawn LOW "
-        "near the head; against the dark PFD, low contrast).")
+BAND_VIEWS = ('P408 L', 'P408 R', 'P410 L', 'MEX L', 'MEX R', 'P409 R')
+PLANE_FIT = ("GRIP PLANES (rev L, judges FID3-01): rake / toe / a0 / walls / depth fitted per grip to the curated rows and "
+             "pad traces of 6 views -- P1046408 L / R, P1046410, Mexico L / R and P1046409 (posed this round: a two-view "
+             "camera with panel_408, 25° from inboard) -- with the front outline held: outboard 20.4° / 6.9° / -4.4 / "
+             "0.64, depth 30 / 27 / 22 at h -47 / 0 / 45; inboard 21.3° / 16.7° / -6.1 / 0.04 (its depth above h 0 "
+             "unconstrained: no view sees the inboard forward face).  Table: 20 / 18 / -3.75, -6.0 / 0.6, 0 / 27.5 at "
+             "the bottom, 27 above.  Outboard cost +7 % at rake -2.5°, +8 % at a0 +/-5, +10 % at a bottom depth +/-4; the "
+             "TOE is weak (7..22 within +7 %, inboard 0..26 within the noise; open point 2 of L6Y).  The AOPA views are "
+             "CHECK ONLY (one radial term, the pose degenerate along the line of sight; co-pilot outer -11 / -22, slot "
+             "-12 / -15, pad 9.5): not fitted, not tabled.")
+NECK = ("INBOARD NECK (criterion, P1046408): the drawn moulding's top edge vs the strongest photo edge per pixel column, arm "
+        "tip to head -- pilot mean -1.3, |mean| 2.3, max -7.4 mm (against the red placard; the max where the edge turns "
+        "vertical under the head, ill-posed per column); co-pilot -4.6, max -7.5: there the search locks onto the PFD's "
+        "text rows above the neck (overlay inspected: the drawn edge lies on the photo's neck, dark on dark).  Rev L "
+        "raised the last three samples 0.6-2.2 mm (body_in).")
 PHOTO_NOTE = ("Pose per photo fitted to the COVER landmarks only (TCS, AFCS, badge, step ends, lower-insert corners, "
-              "foot; the AOPA co-pilot view with its step / insert picks); heads, grips, pads, neck and shell are "
-              "checks.  Grip rows: the CURATED photo silhouettes -- auto edges per image row in the near views with "
-              "the panel recesses masked, the inboard slot sides hand-traced and snapped past the J band / panel seam, "
-              "the AOPA co-pilot sides hand-traced; the AOPA pilot auto rows dropped (they lock onto the leather on "
-              "the dark panel) -- against the ray-cast grip's own hits (part-labelled), per image row, h on the grip "
-              "axis.  Overlays: refs/cache/overlays/yoke (private).")
+              "foot; P1046409 with its own picks); heads, grips, pads, neck and shell are checks.  Grip rows: the "
+              "CURATED photo silhouettes -- auto edges per image row in the near views with the panel recesses masked, "
+              "the inboard slot sides hand-traced and snapped past the J band / panel seam, P1046409 traced at 4x; "
+              "slot rows above h 24 (the arm's underside, not the grip) not scored -- against the ray-cast grip's own "
+              "hits (part-labelled), per image row, h on the grip axis.  The band maxima below h -37 are the rows that "
+              "cut the grips' rounded bottom ends (1 mm of height reads 3-10 mm of width there); above it the row "
+              "medians are 0.5-0.7 (outboard slot), 0.3-2.6 (outer sides), 0.4-3.5 (inboard slot), 90 % of the rows "
+              "within 1-6.6.  Overlays: refs/cache/overlays/yoke (private).")
