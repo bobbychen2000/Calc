@@ -737,7 +737,7 @@
 <text x="300.8" y="571.77" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">G</text>
 <text x="317.3" y="571.77" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-03</text>
 <path stroke-width="0.18" d="M296 573l260 0"/>
-<text x="330" y="576.33" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]</text>
+<text x="330" y="576.33" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">flight deck r1: yoke, CCD, lip arch, SDU [M]; CB panel pairs, overhead [S+M]</text>
 <text x="300.8" y="576.33" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">H</text>
 <text x="317.3" y="576.33" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
 <path stroke-width="0.18" d="M296 577.56l260 0M305.6 536.52l0 41.04M329 536.52l0 41.04"/>
