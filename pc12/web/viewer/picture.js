@@ -214,9 +214,16 @@ export function patchShadowMaterial(mat, [blocker, filter]) {
   const pars = chunk.replace('float getShadow(', GLSL_PCSS + 'float getShadow(')
     .replace(re, '#if defined( SHADOWMAP_TYPE_PCF )\n\t\t\tshadow = pcPCSS( shadowMap, shadowCoord );');
   mat.defines = { ...(mat.defines || {}), PC_PCSS_BLOCKER: blocker | 0, PC_PCSS_FILTER: filter | 0 };
+  // the ground catches the key light's shadow only (directional shadow 0): the sun inside (scene.js LOOK.sun) is
+  // directional shadow 1, its map left as it was when the camera went back outside
+  const mask = THREE.ShaderChunk.shadowmask_pars_fragment;
+  const dirLoop = 'for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {\n\t\tdirectionalLight = directionalLightShadows[ i ];';
+  const maskKey = mask.includes(dirLoop) ? mask.replace(dirLoop, 'for ( int i = 0; i < 1; i ++ ) {\n\t\tdirectionalLight = directionalLightShadows[ i ];') : null;
+  if (!maskKey) console.warn('ground shadow: three.js shadowmask_pars_fragment changed (every directional shadow kept)');
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, PCSS_U);
     sh.fragmentShader = sh.fragmentShader.replace('#include <shadowmap_pars_fragment>', pars);
+    if (maskKey) sh.fragmentShader = sh.fragmentShader.replace('#include <shadowmask_pars_fragment>', maskKey);
   };
   mat.customProgramCacheKey = () => `pc12:pcss${blocker}/${filter}`;
   mat.needsUpdate = true;

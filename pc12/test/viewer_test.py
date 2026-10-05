@@ -2135,6 +2135,219 @@ async def tour_r4_checks(page, data, shots=True):
           f"{_m.degrees(al['pitch']):.1f}, pad aside {r['padAside']} -> {r['padAfter']}")
 
 
+# the photo-fitted cameras (refs/cache/overlays/vqa/cams_beauty.json: Rodrigues vector, translation, focal length in px of
+# a W x H photo; model axes) as tour.place() poses {eye, target, fov (vertical)}; the git-ignored file may be missing in a
+# fresh clone: then the fitted values below (2026-10 fit)
+PHOTO_CAMS = {
+    "panel_408b": {"eye": [4.42190, -0.01600, 2.03021], "target": [3.42611, -0.01337, 1.93857], "fov": 64.807},
+    "cabin_fwd_406": {"eye": [7.43752, 0.01466, 2.11088], "target": [6.44396, 0.00793, 1.99775], "fov": 54.277},
+}
+
+
+def photo_cam(key):
+    try:
+        import math as _m
+        import numpy as np
+        e = json.loads((ROOT / "refs" / "cache" / "overlays" / "vqa" / "cams_beauty.json").read_text())[key]
+        p = np.array(e["p"], float)
+        r = p[:3]
+        th = np.linalg.norm(r)
+        K = np.array([[0, -r[2], r[1]], [r[2], 0, -r[0]], [-r[1], r[0], 0]]) / max(th, 1e-12)
+        R = np.eye(3) + _m.sin(th) * K + (1 - _m.cos(th)) * K @ K
+        C = -R.T @ p[3:6]
+        return {"eye": C.tolist(), "target": (C + R[2]).tolist(), "fov": _m.degrees(2 * _m.atan(e["H"] / 2 / p[6]))}
+    except (OSError, KeyError, ValueError):
+        return PHOTO_CAMS[key]
+
+
+async def fd_look_checks(page, shots=True):
+    """[FD-L1]-[FD-L9] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
+    window sky, the PRO's dark palette (median sRGB luminance of each material's pixels: the MAT_MASK pass), the
+    exterior unchanged, the Cockpit preset lit as the tour.  1200 x 900 pages (the photos' 4:3) in their own context."""
+    import numpy as np
+    from PIL import Image
+    ctx = await page.context.browser.new_context(viewport={"width": 1200, "height": 900}, device_scale_factor=1,
+                                                 reduced_motion="reduce", **CTX)
+    pg = await ctx.new_page()
+    pg.set_default_timeout(SHOT_TIMEOUT * 2)
+    await pg.goto(page.url)
+    await pg.wait_for_function("window.__ready === true", timeout=300000)
+    await pg.evaluate(JS_HELPERS)
+    V = "const V = window.viewer, T = V.tour; "
+    await js(pg, V + "window.T.neutral(); V.setStep('paint', {instant: true}); V.panel(false); await new Promise(r => setTimeout(r, 300));")
+    G = {"glass": ["glass_windshield", "glass"], "carpet": ["carpet_flightdeck"],
+         # the consoles' dark trim (the kick panels / sides; the grey upper face is the lining's, lit by the side window)
+         "console": ["fd_consoles:panel_dark", "fd_consoles:carpet_flightdeck", "fd_consoles:leather_black",
+                     "fd_consoles:rubber_black", "fd_consoles:black"], "glare": ["leather_glareshield"],
+         "yoke": ["yoke_white"], "sheep": ["sheepskin"], "lining_fd": ["lining_flightdeck"], "titanium": ["panel_titanium"],
+         "display": ["display_page"]}
+
+    async def snap(name):
+        await js(pg, "await window.viewer.frames(3);")
+        path = OUT / f"{name}.png"
+        await pg.screenshot(path=str(path), timeout=SHOT_TIMEOUT * 2)
+        print(f"  shot {path.relative_to(ROOT)}")
+        return path
+
+    shots_ = {}
+    stats = {}
+    look = {}
+    for sid in ("pilot", "copilot"):
+        await js(pg, V + "T.enter(arg, {motion: false}); T.finish(); V.advance(0.5);", sid)
+        path = await snap(f"46_fd_look_{sid}")
+        shots_[sid] = path
+        m = await js(pg, MAT_MASK, [G["glass"]])
+        W, H = m["W"], m["H"]
+        k = np.array(m["mask"].split(","), int).reshape(H, W) == 1
+        img = np.asarray(Image.open(path).convert("RGB"), float)[:H, :W]
+        L = 0.2126 * img[..., 0] + 0.7152 * img[..., 1] + 0.0722 * img[..., 2]
+        top = k.copy()
+        top[H // 3:, :] = False                       # the upper third: the sky over the cowl
+        stats[sid] = (float(np.median(L[k])) if k.sum() else 0.0, float(np.std(L[k])) if k.sum() else 0.0,
+                      float(np.median(img[top][:, 2] - img[top][:, 0])) if top.sum() > 50 else -99.0, int(k.sum()))
+        look[sid] = await js(pg, "const I = window.viewer._internals, st = I.stage; return {exp: st.renderer.toneMappingExposure, env: st.envSource, "
+                                 "world: st.outside.group.visible, grid: st.grid.visible, sun: st.sun.intensity, key: st.key.intensity, "
+                                 "cast: I.model.meshRecs.filter((r) => r.mesh.castShadow && /^(glass|lens)/.test(r.mesh.material.name)).length};")
+        await js(pg, V + "T.exit({motion: false}); await V.frames(1);")
+    ok1 = all(v[0] >= 225 and v[1] > 4 and v[2] >= 8 and v[3] > 1000 for v in stats.values()) and \
+        all(l["world"] and not l["grid"] and l["env"] == "outside" and l["sun"] > 0 and l["key"] == 0 and l["cast"] == 0 for l in look.values())
+    check("[FD-L1] a real world through the glazing at the pilot / co-pilot stops: the window pixels bright (median >= 225) "
+          "and not a flat void (sd > 4), blue sky above the cowl (B - R >= 8); the world, the sun and the outside "
+          "environment on, the ground grid and the key light off, no glass casting", ok1,
+          " | ".join(f"{s}: median {v[0]:.0f}, sd {v[1]:.1f}, sky B-R {v[2]:.0f} ({v[3]} px)" for s, v in stats.items())
+          + f" | {look['pilot']}")
+    # the photo-fitted panel_408b camera (P1046408): the footwell and console, the glareshield and its lip, the yoke,
+    # the sheepskin, the whole frame's histogram
+    cam = photo_cam("panel_408b")
+    await js(pg, V + "T.place({eye: arg.eye, target: arg.target, fov: arg.fov}, {clamp: false, stop: 'fd_cabin'}); V.advance(0.3);", cam)
+    path = await snap("47_fd_look_panel_408b")
+    ms = await material_stats(pg, str(path), G)
+    v = {k: (x[2] if x[1] is not None else None) for k, x in ms.items()}
+    rows = ", ".join(f"{k} {x:.0f}" for k, x in v.items() if x is not None)
+    check("[FD-L2] the footwell carpet and the side consoles near-black at panel_408b (< 20; P1046408 5-15)",
+          v["carpet"] is not None and v["carpet"] < 20 and v["console"] is not None and v["console"] < 20, rows)
+    # the glareshield seen from the photo's eye (WL 2.03, ~0.2 m below the hood: the hood's top is hidden behind its lip):
+    # each column's leather run is the rolled lip (its upper part, the roll facing aft / up) over the flat underside
+    # that runs forward to the eyebrow fascia (its lower part).  P1046408 along the same columns: the roll 141-169 with
+    # its crest highlight, the underside darkening to 99-124 at the fascia -- the lip the brighter band.  Upper / lower
+    # third of each column's run from the bottom (2 px off both ends: the anti-aliased sky / fascia edges)
+    m = await js(pg, MAT_MASK, [G["glare"]])
+    W, H = m["W"], m["H"]
+    k = np.array(m["mask"].split(","), int).reshape(H, W) == 1
+    img = np.asarray(Image.open(path).convert("RGB"), float)[:H, :W]
+    L = 0.2126 * img[..., 0] + 0.7152 * img[..., 1] + 0.0722 * img[..., 2]
+    lip = np.zeros_like(k)
+    und = np.zeros_like(k)
+    for x in range(W):
+        ys = np.nonzero(k[:, x])[0][::-1]
+        if len(ys) < 15:
+            continue
+        br = np.nonzero(np.diff(ys) != -1)[0]
+        ys = (ys[:br[0] + 1] if len(br) else ys)[2:-2]
+        t = len(ys) // 3
+        if t >= 4:
+            und[ys[:t], x] = True
+            lip[ys[-t:], x] = True
+    lipv = float(np.median(L[lip])) if lip.sum() > 200 else None
+    undv = float(np.median(L[und])) if und.sum() > 200 else None
+    check("[FD-L3] the black leather glareshield 50-100 at panel_408b, its rolled lip brighter than the underside below "
+          "it (>= 8 levels: the roll catches the light; P1046408 roll 141-169 / underside 99-124 along the same columns)",
+          v["glare"] is not None and 50 <= v["glare"] <= 100 and lipv is not None and undv is not None and lipv >= undv + 8,
+          f"glareshield {v['glare']}, lip {lipv} / underside {undv} ({int(lip.sum())} / {int(und.sum())} px)")
+    check("[FD-L4] the PC-24 yoke's white shield light (>= 190) at panel_408b", v["yoke"] is not None and v["yoke"] >= 190,
+          f"yoke {v['yoke']}")
+    sh = ms["sheep"]
+    check("[FD-L5] the crew sheepskin lavender-grey: 90-130 with blue above red (B - R >= 10) at panel_408b (P1046408 / 09)",
+          sh[1] is not None and 90 <= sh[2] <= 130 and sh[1][2] - sh[1][0] >= 10, f"sheepskin {sh[1]} lum {sh[2]}")
+    Lall = L[60:, :]
+    p10, p50 = float(np.percentile(Lall, 10)), float(np.percentile(Lall, 50))
+    dark = float((Lall < 20).mean())
+    # the tonal bands of P1046408 at the same camera (sRGB luminance below the toolbar): < 40 24.7 %, 40-140 46.6 %,
+    # > 230 15.3 %; its median 93 comes from a mid band a shade lighter than the per-material targets above allow
+    # (titanium 50-70, glareshield 55-90, carpet 5-15 over most of the frame)
+    b40, bmid, b230 = float((Lall < 40).mean()), float(((Lall >= 40) & (Lall < 140)).mean()), float((Lall > 230).mean())
+    check("[FD-L6] panel_408b has the photo's dark premium palette: p10 <= 20, >= 10 % of the pixels < 20, median >= 65, "
+          "the tonal bands within 8 points of P1046408's (< 40: 24.7 %, 40-140: 46.6 %, > 230: 15.3 %)",
+          p10 <= 20 and dark >= 0.10 and p50 >= 65 and abs(b40 - 0.247) <= 0.08 and abs(bmid - 0.466) <= 0.08
+          and abs(b230 - 0.153) <= 0.08,
+          f"p10 {p10:.0f}, p50 {p50:.0f} (photo 93), < 20: {100 * dark:.0f} %, bands {100 * b40:.0f} / {100 * bmid:.0f} / "
+          f"{100 * b230:.0f} %")
+    await js(pg, V + "T.exit({motion: false}); await V.frames(1);")
+    # [FD-L7] the exterior default view: the world and the sun add nothing outside -- the 3/4 view rendered with them and
+    # without them (removed from the scene: the light count changes, every program recompiles) is the same picture,
+    # also after a round trip inside
+    r = await js(pg, r"""
+      const V = window.viewer, I = V._internals, st = I.stage, THREE = I.THREE;
+      V.setCamera('three_quarter', {instant: true}); V.advance(0.2); await V.frames(2);
+      const grab = () => { const r = st.renderer, rt = new THREE.WebGLRenderTarget(480, 300, {samples: 0});
+        rt.texture.colorSpace = THREE.SRGBColorSpace; rt.isXRRenderTarget = true;
+        st.contact.update(st.scene); st.renderer.shadowMap.needsUpdate = true;
+        r.setRenderTarget(rt); r.setClearColor(0x000000, 0); r.clear(); r.render(st.scene, st.camera); r.setRenderTarget(null);
+        const px = new Uint8Array(480 * 300 * 4); r.readRenderTargetPixels(rt, 0, 0, 480, 300, px); rt.dispose(); return px; };
+      const cam = st.camera, aspect = cam.aspect;
+      const a = grab();
+      const state = {world: st.outside.group.visible, sun: st.sun.intensity, sunMap: st.sun.shadow.autoUpdate, key: st.key.intensity,
+        env: st.envSource, grid: st.grid.visible, look: st.interiorLook};
+      st.scene.remove(st.sun, st.sun.target, st.outside.group);
+      const b = grab();
+      st.scene.add(st.sun, st.sun.target, st.outside.group);
+      V.tour.enter('pilot', {motion: false}); V.advance(0.3); await V.frames(1);
+      V.tour.exit({motion: false}); V.setCamera('three_quarter', {instant: true}); V.advance(0.2); await V.frames(2);
+      const c = grab();
+      let dab = 0, dac = 0, nab = 0, nac = 0;
+      for (let i = 0; i < a.length; i++) { const x = Math.abs(a[i] - b[i]), y = Math.abs(a[i] - c[i]); dab = Math.max(dab, x); dac = Math.max(dac, y); if (x > 2) nab++; if (y > 2) nac++; }
+      st.needsRender = true;
+      return {state, dab, dac, nab, nac, after: {world: st.outside.group.visible, sun: st.sun.intensity, env: st.envSource, grid: st.grid.visible}};
+    """)
+    s0 = r["state"]
+    check("[FD-L7] the exterior default view unchanged: outside, the world hidden, the sun off (its map not rendered), the "
+          "studio environment and ground grid as judged; the 3/4 view the same with and without the world / sun in the "
+          "scene and after a round trip inside (<= 2 levels, a few anti-aliased pixels)",
+          not s0["world"] and s0["sun"] == 0 and not s0["sunMap"] and s0["env"] == "hdri" and s0["grid"] and not s0["look"]
+          and r["nab"] <= 50 and r["nac"] <= 50 and not r["after"]["world"] and r["after"]["sun"] == 0 and r["after"]["env"] == "hdri",
+          f"{s0}; max diff without world / sun {r['dab']} ({r['nab']} > 2), after the round trip {r['dac']} ({r['nac']} > 2)")
+    # [FD-L8] the Cockpit preset is lit and exposed as the tour (LK-08)
+    r = await js(pg, r"""
+      const V = window.viewer, I = V._internals, st = I.stage;
+      V.tour.enter('pilot', {motion: false}); V.advance(0.3); await V.frames(1);
+      const tour = {exp: st.renderer.toneMappingExposure, env: st.envSource, world: st.outside.group.visible, sun: st.sun.intensity};
+      V.tour.exit({motion: false}); await V.frames(1);
+      V.setCamera('cockpit', {instant: true}); V.advance(0.3); await V.frames(2);
+      const pre = {exp: st.renderer.toneMappingExposure, env: st.envSource, world: st.outside.group.visible, sun: st.sun.intensity,
+        inside: V.state.camInside, tour: V.state.tour.active};
+      V.setCamera('three_quarter', {instant: true}); await V.frames(1);
+      return {tour, pre};
+    """)
+    t_, p_ = r["tour"], r["pre"]
+    check("[FD-L8] the Cockpit preset takes the tour's interior look: the same exposure, the outside world and environment, "
+          "the sun", p_["inside"] and not p_["tour"] and abs(p_["exp"] - t_["exp"]) < 1e-6 and p_["env"] == t_["env"] == "outside"
+          and p_["world"] and p_["sun"] == t_["sun"] > 0, f"tour {t_}, preset {p_}")
+    # [FD-L9] inside, a still view settles (the still refinement, where the profile has one, then nothing) and the viewer
+    # idles: animation frames run at the display rate again and no render happens (the hidden contact shadow, left dirty
+    # inside, had requested a render every frame -- each a plain 'move' / 'busyss' frame: the picture never supersampled,
+    # the viewer never idled).  Measured on the clock and with the page's own rAF rate, not with V.frames() (whose forced
+    # frames are themselves render requests).
+    r9 = await js(pg, V + """T.enter('pilot', {motion: false}); T.finish(); V.advance(0.5);
+      const I = V._internals, st = I.stage, p = st.picture, seen = [], t0 = performance.now();
+      const rate = async (ms) => { let n = 0, on = true; const f = () => { n++; if (on) requestAnimationFrame(f); };
+        requestAnimationFrame(f); await new Promise((r) => setTimeout(r, ms)); on = false; return n * 1000 / ms; };
+      let hz = 0, idle = false;
+      while (performance.now() - t0 < 300000) {
+        const r0 = st.stats.renders;
+        hz = await rate(2000);
+        if (seen[seen.length - 1] !== p.kind) seen.push(p.kind);
+        idle = hz >= 8 && st.stats.renders === r0 && (p.N === 0 || p.a.done);
+        if (idle) break;
+      }
+      return {idle, hz: Math.round(hz), seen, kind: p.kind, k: p.a.k, N: p.N, look: st.interiorLook,
+              contactDirty: st.contactDirty, s: Math.round((performance.now() - t0) / 1000)};""")
+    check("[FD-L9] inside, a still view settles and the viewer idles (no render requested every frame by the hidden "
+          "contact shadow; the still refinement, where the profile has one, runs to its end)", r9["look"] and r9["idle"],
+          f"idle {r9['idle']} after {r9['s']} s at {r9['hz']} Hz rAF, paths {r9['seen']}, still passes {r9['k']} / {r9['N']}, "
+          f"contact shadow dirty {r9['contactDirty']}")
+    await ctx.close()
+
+
 async def tour_phone_checks(page, ctx, shots=True):
     """[T10] phones: the entry is visible on load (not scrolled off the toolbar), the menu fits, inside the sheet folds
     away and the walk pad / hint show; one-finger drag looks, a pinch walks; exit re-opens the sheet."""
@@ -3774,9 +3987,11 @@ async def run(args):
             if err:
                 return
             await page.evaluate(JS_HELPERS)
-            if args.only in ("tour", "prop"):
+            if args.only in ("tour", "prop", "fdlook"):
                 if args.only == "tour":
                     await tour_checks(page, shots=not args.no_shots)
+                elif args.only == "fdlook":
+                    await fd_look_checks(page, shots=not args.no_shots)
                 else:
                     await prop_blur_checks(page)
                 await page.close()
@@ -3806,6 +4021,7 @@ async def run(args):
             await prop_blur_checks(page)
             await regression_checks(page)
             await tour_checks(page, shots=not args.no_shots)
+            await fd_look_checks(page, shots=not args.no_shots)
             if args.blender:
                 await blender_check(page)
             await context_loss_check(page)
@@ -3844,10 +4060,11 @@ def main():
     ap.add_argument("--no-shots", action="store_true", help="skip screenshots (numeric checks only)")
     ap.add_argument("--three", default="local", choices=["local", "cdn"],
                     help="three.js source: web/three_local (default) or the jsDelivr CDN")
-    ap.add_argument("--only", default="all", choices=["all", "sound", "tour", "prop", "phone", "picture"],
+    ap.add_argument("--only", default="all", choices=["all", "sound", "tour", "prop", "phone", "picture", "fdlook"],
                     help="sound: only the engine-sound section (its own page; ~2 min); tour: only the interior tour "
                          "[T1]-[T18] on the desktop page; prop / phone / picture: those sections alone (a rerun of a "
-                         "section that timed out or was starved under load)")
+                         "section that timed out or was starved under load); fdlook: the flight-deck look rows "
+                         "[FD-L1]-[FD-L9] (1200 x 900, ~10 min)")
     ap.add_argument("--sound-out", type=Path, default=OUT / "sound",
                     help="folder for the offline render pc12_engine_sequence.wav + spectrogram.png (default out/tmp/viewer/sound)")
     args = ap.parse_args()

@@ -204,6 +204,17 @@ class GLBBuilder:
             UV = np.asarray(mesh.UV, np.float32)
             tv = self._view(UV.tobytes(), ARRAY_BUFFER)
             attrs["TEXCOORD_0"] = self._accessor(tv, FLOAT, nv, "VEC2", False, UV.min(0), UV.max(0))
+        ao = getattr(mesh, "AO", None)
+        if ao is not None and len(ao) == nv:
+            # baked interior light (cad/ao.py, model/build.py bake_interior_ao): the application-specific attribute _AO,
+            # (occlusion, window sky visibility) as normalised bytes on a 4-byte stride (vertex attributes are 4-byte
+            # aligned); a single column is the occlusion alone (sky 1)
+            a = np.asarray(ao, float).reshape(nv, -1)
+            ab = np.zeros((nv, 4), np.uint8)
+            ab[:, 0] = np.round(np.clip(a[:, 0], 0.0, 1.0) * 255.0).astype(np.uint8)
+            ab[:, 1] = np.round(np.clip(a[:, 1] if a.shape[1] > 1 else 1.0, 0.0, 1.0) * 255.0).astype(np.uint8)
+            av = self._view(ab.tobytes(), ARRAY_BUFFER, stride=4)
+            attrs["_AO"] = self._accessor(av, UBYTE, nv, "VEC2", True)
         if nv < 65535:
             iv = self._view(F.astype(np.uint16).tobytes(), ELEMENT_ARRAY_BUFFER)
             ia = self._accessor(iv, USHORT, F.size, "SCALAR")

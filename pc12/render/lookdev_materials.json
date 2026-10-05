@@ -960,9 +960,9 @@
   },
   "sheepskin": {
    "baseColorFactor": [
-    0.4,
-    0.375,
-    0.37,
+    0.28,
+    0.275,
+    0.33,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -987,14 +987,14 @@
     ],
     "fuzz": 0.4,
     "fuzz_colour": [
-     0.72,
-     0.69,
-     0.67
+     0.62,
+     0.61,
+     0.7
     ]
    },
    "kind": "dielectric",
    "note": "grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a neutral light grey with a faint warm cast: AOPA / P1046408-10, review r1 F3, model judging r1 INT-m2 (the mauve read lavender); bump / mottle coarsened to read at the panel camera's distance, review r2 F4)",
-   "srgb_hex": "#AAA5A4"
+   "srgb_hex": "#908F9B"
   },
   "seat_base_black": {
    "baseColorFactor": [
@@ -1100,9 +1100,9 @@
   },
   "panel_grey": {
    "baseColorFactor": [
-    0.33,
-    0.305,
-    0.325,
+    0.2,
+    0.19,
+    0.2,
     1.0
    ],
    "metallicFactor": 0.18,
@@ -1113,7 +1113,7 @@
    "specularFactor": 1.0,
    "kind": "dielectric",
    "note": "warm titanium-grey panel: the PDU face and cheeks, sub-panels, eyebrow, centre stack (P1046408 pair: one warm metallic surface, knee panel 127/116/125, review r2 F3; was 0.21 grey with a graphite face)",
-   "srgb_hex": "#9B969A"
+   "srgb_hex": "#7C797C"
   },
   "panel_titanium": {
    "baseColorFactor": [
@@ -1185,26 +1185,26 @@
   },
   "leather_glareshield": {
    "baseColorFactor": [
-    0.075,
-    0.075,
-    0.078,
+    0.045,
+    0.045,
+    0.047,
     1.0
    ],
    "metallicFactor": 0.0,
-   "roughnessFactor": 0.62,
+   "roughnessFactor": 0.48,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 0.5,
    "kind": "dielectric",
-   "note": "stitched glareshield leather (final judge r1 LIV-F1-04: dark grey, 0.055 read black on the lip)",
-   "srgb_hex": "#4D4D4F"
+   "note": "stitched glareshield leather (black satin: flight deck r1 LOOK; the r1 dark grey 0.075 read mid grey in the sun)",
+   "srgb_hex": "#3C3C3D"
   },
   "carpet_flightdeck": {
    "baseColorFactor": [
-    0.045,
-    0.045,
-    0.05,
+    0.03,
+    0.03,
+    0.034,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1214,8 +1214,8 @@
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "cockpit carpet",
-   "srgb_hex": "#3C3C3F"
+   "note": "cockpit carpet (near-black footwells, P1046408: 5-15)",
+   "srgb_hex": "#303034"
   },
   "bezel_black": {
    "baseColorFactor": [

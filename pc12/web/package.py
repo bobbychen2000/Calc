@@ -318,6 +318,25 @@ def meshopt(src: Path, dst: Path) -> dict:
         raise RuntimeError(f"meshopt changed the geometry: {geo}")
     if sorted(m.get("name", "") for m in a["meshes"]) != sorted(m.get("name", "") for m in b["meshes"]):
         raise RuntimeError("meshopt changed the meshes")
+    # the baked interior light (the application-specific vertex attribute _AO, model/build.py bake_interior_ao): kept on
+    # every mesh that has it, as two normalised bytes (the viewer reads it as the attribute '_ao')
+
+    def ao_meshes(j):
+        out = {}
+        for m in j["meshes"]:
+            for pr in m["primitives"]:
+                i = pr["attributes"].get("_AO")
+                if i is not None:
+                    acc = j["accessors"][i]
+                    n = j["accessors"][pr["attributes"]["POSITION"]]["count"]
+                    out[m.get("name", "")] = (acc["type"], acc["componentType"], bool(acc.get("normalized")), acc["count"] == n)
+        return out
+    ao_a, ao_b = ao_meshes(a), ao_meshes(b)
+    if ao_a != ao_b:
+        lost = sorted(set(ao_a) - set(ao_b))
+        changed = sorted(k for k in ao_a if k in ao_b and ao_a[k] != ao_b[k])
+        raise RuntimeError(f"meshopt changed the baked _AO attribute: {len(lost)} lost, {len(changed)} changed "
+                           f"({(lost + changed)[:3]})")
     if used_materials(a) != used_materials(b):
         raise RuntimeError("meshopt changed the materials the meshes use")
     # ... and their definitions: PBR factors and the KHR_materials_clearcoat / _specular extensions cad/glb.py writes
@@ -343,6 +362,7 @@ def meshopt(src: Path, dst: Path) -> dict:
         raise RuntimeError(f"meshopt changed material definitions: {', '.join(changed)}")
     dropped = sorted({m.get("name") for m in a.get("materials", [])} - {m.get("name") for m in b.get("materials", [])})
     return {"bytes_in": src.stat().st_size, "bytes_out": dst.stat().st_size, "pruned_unused_materials": dropped,
+            "ao_meshes": len(ao_a),
             "geometry": geo, "tool": " ".join(Path(c).name for c in cmd[:2]), "method": how}
 
 

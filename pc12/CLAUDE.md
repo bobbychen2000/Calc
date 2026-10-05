@@ -3,10 +3,10 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.38M tris of which the interior ~525k, ~40 MB
-incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.40M tris of which the interior ~550k, ~42 MB
+incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~1.92M tris, ~32 MB,
+review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~1.94M tris, ~33 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -47,9 +47,10 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25-40 min, 216 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25-40 min, 225 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
-                                #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise)
+                                #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
+                                #   --only fdlook: [FD-L1]-[FD-L9] the flight-deck look, ~20 min)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -57,8 +58,8 @@ python3 web/package.py          # static viewer bundle -> dist/ (gitignored): me
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~98 MB as base64 text parts: meshopt 15 + 13 MB, gzip of the full model 23 MB for desktops and of
-                                #   the light tier 19 MB for phones without WebAssembly; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   (~102 MB as base64 text parts: meshopt 16 + 13 MB, gzip of the full model 24 MB for desktops and of
+                                #   the light tier 19 MB for phones without WebAssembly, every part <= 10.7 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
                                 #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
@@ -419,6 +420,66 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   slivers at orbit distance: dotted under 4x MSAA alone, continuous in the still passes and the temporal blend).
   SwiftShader takes ~20-30 s per 2x frame at 800 x 500 on the shared sandbox: compare frame costs relatively, never
   tune on them.
+- Flight deck r1 LOOK (owner 2026-10-04 "can you make cockpit a bit better? ... 1/10"; track 'look': the viewer's light
+  and the baked interior light, no geometry): inside the closed cabin -- the tour, the Cockpit preset, any camera there
+  (`main.js syncInteriorLook`: `tour.inside || model.camInside`, LK-08) -- `Stage.setInteriorLook` swaps the studio for
+  the outside world, the exterior lens staying exactly as judged (viewer_test [FD-L7] renders the 3/4 view with and
+  without the world / sun in the scene and after a round trip inside).  `web/viewer/outside.js`: procedural only (no
+  image files, no lettering) -- a sky dome (r 440 m, through the tone mapping: zenith (0.26, 0.47, 1.0), horizon
+  (1.24, 1.33, 1.43), sun glow + disc), a 400 m apron canvas (2048 px, 1024 on phones: mottled concrete, 7.5 m slab
+  joints, a taxi line + lead-in arc, grass), a far ring, five pre-lit hangars (cladding / door bay / high-window facade
+  texture), a ridge; no raycast, no shadows, layer 0 only, the ground / ring drawn first without depth (no z-fight at
+  200 m with the 1 cm near plane); shown inside, while the ground grid, shadow catcher and contact shadow hide.  The
+  image-based light inside is that world's PMREM (built once, the zenith desaturated 60 % for it, `SKY.envDesat`: the
+  deep blue overhead had tinted every up-facing trim slate blue; rebuilt after a context loss).  A permanent sun
+  (`scene.js LOOK.sun`, made after the key so the key stays directional shadow 0 and the light count never changes --
+  no recompiles in and out): az 125 deg from dead ahead to starboard, el 40 (`outside.js SUN`: through the co-pilot's
+  side window and the forward cabin windows onto the pedestal, sub-panels and seats, the glareshield shading the PDU
+  tops; the assessment's az 65 / el 26 lit only the glareshield lip), 5 inside (the brief's 3.5 left faint patches under the calibrated window-light law; 5 changes no P1046408 row --
+  the sunlit pedestal 113 -> 121 only; az 95 / el 35, which lit the pilot side dramatically, put sun on the seats and
+  consoles that P1046408 does not show: sheepskin 168, consoles 54) / 0 outside, its own 2048 px map (1024 phones, PCF radius 3 / 2) on a fixed
+  +-1.9 m box round the flight deck, rendered on pose changes only (`shadow.autoUpdate` follows the look; the key's map
+  is not rendered inside, a spinning propeller's blades leave the sun's casters); interior receivers outside that box
+  are shaded (`materials.js` interior patch: getShadow's out-of-frustum default 0); inside casters / receivers
+  `model.js SUN_CASTERS / SUN_RECEIVERS` (skins, cowl, glazing frames, doors, every interior part; glass and lenses
+  never cast -- the exterior set, where the glazing casts with its X-ray shell, comes back on exit); the ground's PCSS
+  shadow reads the key's map only (`picture.js patchShadowMaterial`).
+  Baked interior light (`cad/ao.py`, `model/build.py bake_interior_ao`, in `build_parts(ao=True)` of main() and
+  build_low(); written as the vertex attribute `_AO`, two normalised bytes: `cad/glb.py`): channel 0 cone-traced
+  occlusion (0.36 m reach; the far steps from a 16 mm distance transform, ~5x faster than the k-d tree alone), channel 1
+  the window light -- the share of the cosine-weighted hemisphere that sees out through the glazing within 2.5 m (a
+  20 mm voxel march through the interior, skins, frames and doors, never the glass; out = beyond the OML) plus one
+  bounce (a ray meeting the interior brings albedo x (its sky + `AO_GLOW` 0.25), the displays' / coves' glow
+  `AO_EMIT`): the footwell under the dark panel 0.04, the yoke facing the seats 0.16, the glareshield 0.32.  Both are
+  per vertex, deduplicated by 6 mm cell + normal; the flight deck's floor, kick panels, consoles and footwell walls are
+  first split to <= 60 mm edges (`AO_SPLIT`, flat midpoints, conforming across a part's meshes: +23k triangles at RES 2,
+  +20k on the light tier).  Bake ~2-4 min a tier (printed by the build).  The viewer (`materials.js` 'ao' patch + the
+  interior block) inside: diffuse x `CABIN_LOOK.gain` x occ x mix(sky floor 0, 1, light) capped at 1.5 x the open
+  world's (`gain` [18, 1.6, 1.5]: calibrated on the photo-fitted panel_408b against P1046408 -- yoke 204 / 208,
+  sheepskin 113 / 110-134, footwell 9 / 6, eyebrow 101 / 100-113, posts 93), reflections x 1.6 x occ x mix(0.35, 1, light);
+  the light trim's fill share keeps that share out of the law (the cabin lining: none of it, half its occlusion; the
+  cabin fill 3.4 -> 2.3 for the brighter world: T4 cabin medians ~210 / 215, T4b headliner >= 200); reflection facing weights [0.12, 0.5] (were 0.06 / 0.3),
+  with `SPEC_KEEP` (titanium, gunmetal, pewter, chrome, bezels, black leathers, yoke white, displays; for the geometry
+  tracks' detail also the annunciator caps `annun_*` and the smoked visors `fdb_visor`) exempt (FD-J10).  A material
+  with no entry (stitch_thread, rubber_black, legend_plate, the fda_ / fdb_ trim) takes the interior law as it is; an
+  emissive one (legend_lit, the CB glow bands) keeps its emission.  ?cabGain= ?cabSky= ?cabOcc= ?cabIn= override them.
+  Palette (L5, `render/lookdev.py` SPEC + `assemble.MATERIALS`): lining_flightdeck 0.10 rough 0.75 (no CABIN_TRIM),
+  leather_glareshield 0.045 rough 0.48, panel_grey 0.20, carpet_flightdeck 0.03, sheepskin lavender-grey (0.28, 0.275,
+  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.55], leather_crew [0, 0.8], panel_dark [0, 0.5], panel_titanium [0, 0.45], carpet_flightdeck
+  [0, 0.85], yoke_white [0, 1.08] (panel_408b: titanium 72 / P1046408 66-78, carpet 13, consoles 13, yoke 202; a lower
+  reflection floor `cabSky` 0.12 / 0 measured further from the photo's tonal bands: 32 / 41 / 16 % vs 25 / 47 / 15).  Viewer
+  patches (L6): fleece clumps 12-20 mm with darker crevices, a fine pebble grain on the leathers, the walnut figure
+  (render_grain streaks, rest pose), brushed titanium (anisotropy 0.6 along BL, streaky roughness; no env 0.6 stand-in),
+  the G3000 pages x1.45 inside.  `viewer.tour.place({eye, target, fov}, {clamp: false})` puts the tour camera at an
+  exact pose (the photo-fitted panel_408b / cabin_fwd_406 cameras); viewer_test `fd_look_checks` [FD-L1]-[FD-L9]
+  (`--only fdlook`, 1200 x 900; [FD-L3]: panel_408b's eye is WL 2.03, ~0.2 m under the hood, so the leather it sees
+  is the rolled lip over the flat underside -- the lip the brighter band, as in P1046408 along the same columns: roll
+  141-169, underside 99-124; [FD-L6]: median >= 65 with P1046408's tonal bands instead of the brief's p50 85-110, which
+  its own per-material targets cannot reach in that frame).  Cost: the dark one of the two directional lights (the key inside, the sun outside)
+  is skipped by a uniform branch on its colour in three's `lights_fragment_begin` (`scene.js installDarkLightSkip`:
+  exact, no recompiles; ?darkskip=0 off); inside, the hidden contact shadow stays dirty for the way out without asking
+  for frames (main.js: it had requested a render every frame, so the inside picture never settled into its still
+  refinement and the viewer never idled -- [FD-L9] measures the idle rAF rate after a stop).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
   `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.11M triangles where facets show, 16-bit normals, crack-free shared
   quantisation grids, finer round primitives.  Review r1 (RES1-01..05) re-spent the triangles: the first pass (2.63M)

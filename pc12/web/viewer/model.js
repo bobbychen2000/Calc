@@ -41,6 +41,13 @@ export const INTERNAL_PARTS = new Set([
   'eng_agb', 'engine_mount', 'firewall', 'inlet_duct', 'flight_deck', 'cabin_interior', 'interior_lining', 'gear_bays',
 ]);
 const SHADOW_CASTERS = /^(gear_|blade_|propeller|brace_|exhaust_stacks|antennas|pitot|lights)/;
+// Inside (look L2: the sun's shadow map round the flight deck, scene.js LOOK.sun): the skins, the cowl, the glazing frames,
+// the doors and every interior part cast; the glass never does (the exterior set lets the glazing cast with its xray
+// shell: inside, the windshield would block the sun); a spinning propeller's blades do not (a frozen blade shadow; the
+// map follows the pose, not the spin).  The interior parts, the door / glazing frames and the doors' inner faces receive.
+const SUN_CASTERS = /^(fus_|cowl_|chin_inlet|blade_|propeller|glazing_|door_|exit_hatch|flight_deck|fd_|yoke_|pedal_|seat_|interior_lining|cabin_|table_)/;
+const SUN_RECEIVERS = /^(flight_deck|fd_|yoke_|pedal_|seat_|interior_lining|cabin_|table_|glazing_|door_|exit_hatch)/;
+const NO_CAST_RE = /^(glass|lens)/;
 // Exterior parts whose bases reach through the skin into the cabin (the dorsal antenna bases hang ~5 cm below the
 // crown skin): hidden while the camera is inside the cabin, where they would show as glossy blue blobs on the
 // ceiling.  A stopgap until model/details.py trims them at the OML.
@@ -164,6 +171,8 @@ export class Model {
     this.blurFade = 0;                // the propeller blur's fade (propblur.js), for the blade overlays
     this.groundY = 0;                 // ground drop needed so exploded parts stay above the grid
     this.camInside = false;           // camera inside the closed cabin (updateCabin)
+    this.sunInside = false;           // the inside caster / receiver set for the sun (setSunInside)
+    this.sunSpin = false;             // ... with a spinning propeller's blades left out
 
     const stepIndex = new Map(meta.steps.map((s, i) => [s.key, i]));
     // register parts in traversal order (parents first)
@@ -221,6 +230,7 @@ export class Model {
           interiorCut: cm !== undefined, extraClip };
         ch.castShadow = rec.xray || SHADOW_CASTERS.test(rec.id);
         ch.receiveShadow = false;
+        mr.noCast = NO_CAST_RE.test(name);
         rec.meshes.push(mr);
         this.meshRecs.push(mr);
         this.meshToPart.set(ch, rec);
@@ -370,9 +380,30 @@ export class Model {
         m = this.cutVariant(mr);
       }
       mr.mesh.material = m;
-      mr.mesh.castShadow = (p.xray && !this.xray) || SHADOW_CASTERS.test(p.id);
+      mr.mesh.castShadow = this._casts(mr);
     }
     this._refreshOverlays();
+  }
+
+  // shadow casting: the exterior set (the key light onto the ground), or inside the sun's (setSunInside)
+  _casts(mr) {
+    const id = mr.part.id;
+    if (!this.sunInside) return (mr.part.xray && !this.xray) || SHADOW_CASTERS.test(id);
+    if (mr.noCast || (this.sunSpin && id.startsWith('blade_'))) return false;
+    return SUN_CASTERS.test(id);
+  }
+  // the sun's casters / receivers inside (look L2; scene.js setInteriorLook), the exterior set back outside; spin: the
+  // propeller turns (its blades leave the sun's casters).  Returns true when anything changed (the caller re-renders the
+  // shadow map).
+  setSunInside(on, spin = false) {
+    on = !!on; spin = !!spin;
+    if (on === this.sunInside && spin === this.sunSpin) return false;
+    this.sunInside = on; this.sunSpin = spin;
+    for (const mr of this.meshRecs) {
+      mr.mesh.castShadow = this._casts(mr);
+      mr.mesh.receiveShadow = on && !mr.noCast && SUN_RECEIVERS.test(mr.part.id);
+    }
+    return true;
   }
 
   setCutaway(on) { this.cutaway = !!on; this.applyMaterials(); }

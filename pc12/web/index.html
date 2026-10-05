@@ -303,7 +303,7 @@
     link('preload', U.materials, 'fetch');
     // the module graph (web/package.py checks this list against the imports)
     ['viewer/main.js', 'viewer/scene.js', 'viewer/studio.js', 'viewer/picture.js', 'viewer/model.js', 'viewer/materials.js', 'viewer/kinematics.js',
-      'viewer/propblur.js', 'viewer/sound.js',
+      'viewer/propblur.js', 'viewer/sound.js', 'viewer/outside.js',
       'viewer/build.js', 'viewer/panels.js', 'viewer/sources.js', 'viewer/tour.js', 'viewer/tour_data.js'].forEach(function (u) { link('modulepreload', u); });
     ['build/three.module.min.js', 'examples/jsm/controls/OrbitControls.js', 'examples/jsm/environments/RoomEnvironment.js',
       'examples/jsm/loaders/GLTFLoader.js', 'examples/jsm/utils/BufferGeometryUtils.js', 'examples/jsm/libs/meshopt_decoder.module.js',

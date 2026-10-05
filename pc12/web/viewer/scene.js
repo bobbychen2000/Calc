@@ -4,6 +4,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { installToneMapping, loadHDR, StudioEnvironment, ContactShadow, CONTACT_LAYER, makeGrid } from './studio.js';
 import { Picture, PROFILES, pictureChoice, installSpecularAA, patchShadowMaterial, PCSS_U } from './picture.js';
+import { OutsideWorld, sunDirection } from './outside.js';
+import { U as MU, CABIN_LOOK } from './materials.js';
 
 const _v = new THREE.Vector3();
 const _v2 = new THREE.Vector3();
@@ -15,6 +17,24 @@ const _t = new THREE.Vector3();
 const _box = new THREE.Box3();
 const _b2 = new THREE.Box3();
 const _p = new THREE.Vector3();
+
+// A directional light at zero intensity -- the key inside the cabin, the sun outside it (Stage.setInteriorLook) -- adds
+// nothing to any surface, yet three evaluates its shadow lookup (17 PCF taps on the interior's receivers) and its BRDF
+// in every lit fragment.  Each light's term in three's shader chunk is wrapped in a uniform branch on its colour, so the
+// dark light is skipped (exact: its radiance is zero) while the light and shadow counts stay fixed (no shader recompiles
+// in and out of the cabin).
+function installDarkLightSkip() {
+  const C = THREE.ShaderChunk, src = C.lights_fragment_begin;
+  if (src.includes('pcDirLit')) return true;
+  const re = /(#pragma unroll_loop_start\n\tfor \( int i = 0; i < NUM_DIR_LIGHTS; i \+\+ \) \{\n)([\s\S]*?RE_Direct\( directLight, [^;\n]*\);\n)(\t\}\n\t#pragma unroll_loop_end)/;
+  if (!re.test(src)) {
+    console.warn('dark-light skip not installed: three.js lights_fragment_begin changed');
+    return false;
+  }
+  C.lights_fragment_begin = src.replace(re, (_, open, body, close) =>
+    `${open}\t\tif ( dot( directionalLights[ i ].color, vec3( 1.0 ) ) > 0.0 ) { // pcDirLit\n${body}\t\t}\n${close}`);
+  return true;
+}
 
 const CONTACT_BUSY = 512;   // contact-shadow map size while the scene animates (the still size: the picture profile's)
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -102,6 +122,16 @@ export const LOOK = {
   interiorEV: qn('interiorEV') ?? 0.3,      // the interior tour: this many stops over the light theme's exposure (review r4
   //                                           NAV8-01: 0.6 with CABIN.inside 1.6 veiled every dark surface; materials.js CABIN_LOOK)
   keyIntensity: qn('key') ?? 1.6,
+  // the sun inside (look L2, review FD-J01a/b / LK-02): a directional light through the glazing with its own shadow map
+  // round the flight deck (outside.js SUN: az 125 deg from dead ahead to starboard, el 40 deg).  Off outside (intensity 0,
+  // its map not rendered: the exterior studio stays as judged); inside the key light is off instead.  The ortho shadow
+  // box +-box m round `centre` (model axes) in the light's view, the light `dist` m out along its direction; the map
+  // 2048 px on desktops, 1024 on phones (~1.9 / 3.7 mm texels), PCF radius `radius`.  Intensity 5 (the brief's 3.5
+  // under the calibrated window light law read as faint patches; a sweep at panel_408b / pilot / fd_cabin: 5 leaves
+  // every P1046408 row as it was -- only the sunlit pedestal 113 -> 121 -- and the pilot's glareshield 86 -> 90;
+  // az 95 / el 35 lit the pilot's seat and console, which P1046408 does not show: sheepskin 107 -> 168, console 13 -> 54)
+  sun: { intensity: qn('sun') ?? 5, color: 0xfff4e6, centre: [4.0, 0.0, 2.0], box: 1.9, dist: 8, near: 4, far: 13,
+    bias: -0.0003, normalBias: 0.006, radius: 3 },
 };
 
 // Camera presets.  `dir` points from the target to the camera (glTF axes: X starboard, Y up, Z aft);
@@ -140,6 +170,8 @@ export class Stage {
     // specular anti-aliasing for every lit material; the roughness floor = the environment's base mip (1k HDRI: a
     // 256 px face, three's 0.0525; a 2k one given by ?hdr=: 512 px, 0.038)
     installSpecularAA(/_2k\.hdr/.test(LOOK.hdr) ? 0.038 : 0.0525);
+    // the dark one of the two directional lights (the key inside, the sun outside) costs nothing (?darkskip=0: off)
+    if (Q_.get('darkskip') !== '0') installDarkLightSkip();
     host.appendChild(r.domElement);
     r.domElement.tabIndex = 0;
     // WebGL context loss (phones drop the context of a backgrounded tab or under GPU memory pressure).  three.js
@@ -191,6 +223,26 @@ export class Stage {
     key.shadow.bias = -0.0002;            // _fitShadow: ~3 mm in the fitted depth range (the ground casts nothing)
     key.shadow.normalBias = 0;
     scene.add(key, key.target);
+    // the sun inside (LOOK.sun): made here, after the key, so the light count never changes (no shader recompiles in and
+    // out) and the key stays directional shadow 0 (the ground's PCSS shadow reads that one only: picture.js
+    // patchShadowMaterial)
+    const S = LOOK.sun, sun = (this.sun = new THREE.DirectionalLight(S.color, 0));
+    sun.name = 'sun';
+    sun.castShadow = true;
+    const sunPx = QUALITY.low ? 1024 : 2048;
+    sun.shadow.mapSize.set(sunPx, sunPx);
+    sun.shadow.bias = S.bias;
+    sun.shadow.normalBias = S.normalBias;
+    sun.shadow.radius = QUALITY.low ? 2 : S.radius;
+    sun.shadow.autoUpdate = false;          // outside: never rendered (setInteriorLook)
+    this.sunDir = sunDirection();
+    const c0 = new THREE.Vector3(S.centre[1], S.centre[2], S.centre[0]);
+    sun.target.position.copy(c0);
+    sun.position.copy(c0).addScaledVector(this.sunDir, S.dist);
+    const sc = sun.shadow.camera;
+    sc.left = -S.box; sc.right = S.box; sc.top = S.box; sc.bottom = -S.box; sc.near = S.near; sc.far = S.far;
+    sc.updateProjectionMatrix();
+    scene.add(sun, sun.target);
 
     // ground: key-light shadow catcher + contact shadow + fading grid
     const shadowPlane = (this.shadowPlane = new THREE.Mesh(
@@ -206,6 +258,9 @@ export class Stage {
     scene.add(this.contact.group);
     this.grid = makeGrid();
     scene.add(this.grid);
+    // the world outside the glazing, shown only inside (outside.js; look L1)
+    this.outside = new OutsideWorld({ low: QUALITY.low, sun: this.sunDir });
+    scene.add(this.outside.group);
     this.modelRoot = null;      // addToContactLayer: the model (its posed bounds fit the key-light shadow camera)
     this.groundY = 0;          // lowered below exploded parts (see setGround)
     this.interiorLook = false;  // setInteriorLook: the interior tour's lighting
@@ -258,7 +313,9 @@ export class Stage {
   // pose changes invalidate both shadows; keyShadowOnly() (a spinning prop) only the key-light map
   get shadowDirty() { return this._sd; }
   set shadowDirty(v) { this._sd = !!v; if (v) this.contactDirty = true; }
-  keyShadowOnly() { this._sd = true; }
+  // (inside, the key light's map is not rendered and the sun's follows the pose only: main.js keeps a spinning
+  // propeller's blades out of the sun's casters)
+  keyShadowOnly() { if (!this.interiorLook) this._sd = true; }
 
   // Environment: the studio HDRI (falls back to three's RoomEnvironment if it cannot be loaded).
   async loadEnvironment(url = LOOK.hdr, onProgress) {
@@ -275,10 +332,10 @@ export class Stage {
     // drop the dead PMREM textures without disposing them (their GL objects belong to the lost context)
     this.scene.environment = null;
     this.picture.invalidate();
-    if (this.studioEnv) {
-      this.studioEnv.cache.clear();
-      this._applyEnv();
-    } else if (this.envSource === 'room') this.useRoomEnvironment();
+    this.outside.contextLost();          // (the world's environment is rebuilt on demand)
+    if (this.studioEnv) this.studioEnv.cache.clear();
+    if (this.interiorLook || this.studioEnv) this._applyEnv();
+    else if (this.envSource === 'room') this.useRoomEnvironment();
     this.contactDirty = true;
     this._sd = true;
     this.renderer.shadowMap.needsUpdate = true;
@@ -289,29 +346,45 @@ export class Stage {
     this.setEnvironment(pm.fromScene(new RoomEnvironment(), 0.04).texture, 'room');
     pm.dispose();
   }
-  // the studio grade and exposure in use: the theme's, except inside the cabin (the interior tour), which keeps the
-  // light theme's daylight studio in both themes (the dark studio left the headliner near black)
+  // the exposure in use: the theme's, except inside the cabin (the interior tour, a camera in the closed cabin), which
+  // takes the light theme's in both themes and the outside world's light (the dark studio left the headliner near black)
   get lookKey() { return this.dark && !this.interiorLook ? 'dark' : 'light'; }
   // exposure in use: the look's, LOOK.interiorEV brighter inside (review r1 NAV1-04: at the exterior exposure the
   // headliner and side walls rendered mid-grey, ~165 / 255, where the cabin photos are near-white; review r4 NAV8-01:
   // +0.3 EV with the cabin light of materials.js CABIN / CABIN_LOOK -- the light trim's own fill keeps the headliner at
   // ~205 while the dark trim keeps its albedo; at +1 EV AgX flattened the cabin into a grey fog)
   get exposure() { return LOOK.theme[this.lookKey].exposure * (this.interiorLook ? Math.pow(2, LOOK.interiorEV) : 1); }
+  // Inside (the tour, the Cockpit preset, any camera in the closed cabin: main.js) the cabin takes the outside world
+  // (look L1-L4): the procedural apron and sky in the windows instead of the studio's ground grid and shadows, its
+  // prefiltered environment as the image-based light, the sun (LOOK.sun, with its own shadow map) instead of the key
+  // light, which the cabin materials then take (U.cabinKey 1: materials.js); outside everything is as judged
   setInteriorLook(on) {
     if (this.interiorLook === !!on) return;
-    this.interiorLook = !!on;
+    const inside = (this.interiorLook = !!on);
     this.renderer.toneMappingExposure = this.exposure;
+    this.outside.setVisible(inside);
+    this.grid.visible = !inside;
+    this.shadowPlane.visible = !inside;
+    this.contact.group.visible = !inside;
+    this.key.intensity = inside ? 0 : LOOK.keyIntensity;
+    this.key.shadow.autoUpdate = !inside;
+    this.sun.intensity = inside ? LOOK.sun.intensity : 0;
+    this.sun.shadow.autoUpdate = inside;
+    MU.cabinKey.value = inside ? 1 : CABIN_LOOK.key;
     this._applyEnv();
+    this._sd = true;                 // the sun's map (inside) / the key's (back outside) for the current pose
+    this.renderer.shadowMap.needsUpdate = true;
     this.needsRender = true;
   }
   _applyEnv() {
+    if (this.interiorLook) { this.setEnvironment(this.outside.environment(this.renderer), 'outside'); return; }
     if (!this.studioEnv) return;
     const { floor, walls, top, lift, wallLift, strips } = LOOK.theme[this.lookKey];
     this.setEnvironment(this.studioEnv.get({ floor, walls, top, lift, wallLift, strips }), 'hdri');
   }
   setEnvironment(tex, source) {
     const old = this.scene.environment;
-    if (old && old !== tex && !(this.studioEnv && [...this.studioEnv.cache.values()].includes(old))) old.dispose();
+    if (old && old !== tex && !(this.studioEnv && [...this.studioEnv.cache.values()].includes(old)) && !this.outside.ownsEnv(old)) old.dispose();
     this.scene.environment = tex;
     this.envSource = source;
     this.needsRender = true;
@@ -638,7 +711,8 @@ export class Stage {
     const t0 = performance.now();
     const st = this.stats;
     const skip = this.quality.low && this.busy && (this._tick++ % 3) !== 0;
-    if (this.contactDirty && !skip) {
+    // inside, the ground's contact shadow is hidden: it renders once back outside (contactDirty kept)
+    if (this.contactDirty && !skip && !this.interiorLook) {
       const lo = this.busy && this.contact.size > CONTACT_BUSY;
       this.contact.update(this.scene, lo ? CONTACT_BUSY : 0);
       this.contactDirty = false;
@@ -646,7 +720,7 @@ export class Stage {
       st.contactRenders++;
     }
     if (this._sd && !skip) {
-      this._fitShadow();
+      if (!this.interiorLook) this._fitShadow();       // (the sun's box is fixed round the flight deck)
       this.renderer.shadowMap.needsUpdate = true;
       this._sd = false;
       st.shadowRenders++;

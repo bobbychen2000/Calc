@@ -81,7 +81,8 @@ MATERIALS = {
     "leather_crew_shell": ((0.042, 0.044, 0.048), 0.0, 0.50, dict(specular=0.8)),
     # sheepskin: neutral light-to-mid grey fleece with a faint warm cast (AOPA / P1046408-10 [M], review r1 F3; model
     # judging r1 INT-m2: the mauve base, blue above red, read lavender), a sheen lobe for the pile
-    "sheepskin":          ((0.40, 0.375, 0.37), 0.0, 1.00, dict(specular=0.3, sheen_color=(0.66, 0.625, 0.61),
+    # flight deck r1 LOOK (L5): the lavender-grey pile of P1046408 / 09 (blue above red, rendered 90-130)
+    "sheepskin":          ((0.28, 0.275, 0.33), 0.0, 1.00, dict(specular=0.3, sheen_color=(0.50, 0.50, 0.60),
                                                               sheen_rough=0.45)),
     "seat_base_black":    ((0.022, 0.022, 0.025), 0.3, 0.45),
     "harness":            ((0.069, 0.072, 0.080), 0.0, 0.80, dict(specular=0.5)),       # dark grey webbing
@@ -91,7 +92,7 @@ MATERIALS = {
     "seat_back_shell":    ((0.21, 0.215, 0.228), 0.0, 0.55, dict(specular=0.7)),
     # flight deck: graphite panel face, brushed titanium-grey sub-panels / stack, grey leather hood, dark carpet
     "panel_dark":          ((0.040, 0.041, 0.044), 0.25, 0.48, dict(specular=0.5)),
-    "panel_grey":          ((0.33, 0.305, 0.325), 0.18, 0.45),
+    "panel_grey":          ((0.20, 0.19, 0.20), 0.18, 0.45),          # (flight deck r1 LOOK: darker titanium grey)
     # satin titanium: the PDU face, lower sub-panels, glareshield soffit, centre-stack face (final judge r1 LIV-F1-04 /
     # I4: P1046408's warm grey metal round the displays; panel_grey stays on the eyebrow fascia / overhead)
     "panel_titanium":      ((0.20, 0.19, 0.185), 0.45, 0.38),
@@ -101,8 +102,8 @@ MATERIALS = {
     # P1046408-10: grip ~sRGB 112/114/123 in the cabin light, the cheeks darker; review r3 F3)
     "pedestal_gunmetal":   ((0.115, 0.115, 0.125), 0.40, 0.42),
     "pcl_pewter":          ((0.20, 0.20, 0.215), 0.50, 0.36),
-    "leather_glareshield": ((0.075, 0.075, 0.078), 0.0, 0.62, dict(specular=0.5)),
-    "carpet_flightdeck":   ((0.045, 0.045, 0.050), 0.0, 0.95),
+    "leather_glareshield": ((0.045, 0.045, 0.047), 0.0, 0.48, dict(specular=0.5)),   # black satin hood (r1 LOOK)
+    "carpet_flightdeck":   ((0.030, 0.030, 0.034), 0.0, 0.95),
     "bezel_black":         ((0.010, 0.010, 0.012), 0.10, 0.32),
     # displays: dark glass carrying the G3000 PRIME page as an emissive texture (TEXTURES: the model/g3000_pages.py
     # atlas, final judge r1 R2 / I1), so the screens read as ON; the GI 275 standby's face, the master warning / caution
@@ -150,10 +151,11 @@ MATERIALS = {
     "upholstery_grey": ((0.092, 0.097, 0.105), 0.0, 0.60, dict(specular=0.6)),
     "net":             ((0.020, 0.020, 0.022), 0.0, 0.85),             # optional baggage net (non-PRO fit)
     "lining":        ((0.86, 0.84, 0.80), 0.0, 0.70),
-    # flight-deck side-wall / headliner lining (interior.build_lining, x < STA cockpit_aft): mid grey, so the
-    # windshield and side windows read as dark panes outdoors (photos 188 / 0517) and a lit grey cockpit in the hangar
-    # (82)
-    "lining_flightdeck": ((0.30, 0.30, 0.295), 0.0, 0.60),
+    # flight-deck side-wall / headliner lining (interior.build_lining, x < STA cockpit_aft): the PRO's anthracite
+    # (flight deck r1 LOOK L5, FD-J03: P1046408 / 10 posts and side walls 70-110 in the daylight, sunlit 80-150; the
+    # mid grey 0.30 read as light grey plastic posts), so the windshield and side windows read as dark panes outdoors
+    # (photos 188 / 0517)
+    "lining_flightdeck": ((0.10, 0.10, 0.105), 0.0, 0.75),
     "light_red":     ((0.9, 0.05, 0.05), 0.0, 0.2),
     "light_green":   ((0.05, 0.8, 0.2), 0.0, 0.2),
     "light_white":   ((0.95, 0.95, 0.95), 0.0, 0.1),
