@@ -119,6 +119,9 @@ export class Tour {
     this.seatEase = null;           // ... and the glide onto the seated eye (NAV9-03)
     this.pitchAuto = false;         // the pitch is a stop's (not the user's): a walk levels it (NAV3-03)
     this.seatFlip = false;          // the walk into this seat turned the view round (> 90 deg): strafes reversed (NAV3-05)
+    this.free = false;              // place({clamp: false}): an exact pose the walk projection leaves alone (tests,
+    //                                 photo-fitted cameras) until the next walk / look / stop
+    this.fovExact = null;           // ... and its vertical field of view, as given (not widened by fovFor)
     this.onInput = null;            // TourUI: the first walk / look input (the hint fades)
     this.pointers = new Map();
     this.fade = document.getElementById('tourFade');
@@ -146,7 +149,7 @@ export class Tour {
     cam.position.copy(toGL(this.p));
     c.target.copy(toGL([this.p[0] + 0.3 * d[0], this.p[1] + 0.3 * d[1], this.p[2] + 0.3 * d[2]]));
     cam.lookAt(c.target);
-    const fov = this.fovFor(this.fovBase) + this.fovKick;
+    const fov = this.fovExact != null ? this.fovExact : this.fovFor(this.fovBase) + this.fovKick;
     if (Math.abs(cam.fov - fov) > 1e-3) { cam.fov = fov; cam.updateProjectionMatrix(); }
     this.stage.setViewShift(this.inside && this.portrait ? 0.5 - PORTRAIT_AXIS : 0);
     this._aspect = cam.aspect;
@@ -168,6 +171,32 @@ export class Tour {
     this.yaw = a.yaw; this.pitch = a.pitch; this.fovBase = s.fov;
     this.latch = null; this.seatTurn = null; this.seatEase = null; this.seatFlip = false;
     this.pitchAuto = true;
+    this.free = false; this.fovExact = null;
+  }
+  // An exact pose (look L7: the photo-fitted cameras panel_408b / cabin_fwd_406, tests): eye / target in MODEL axes, fov
+  // the vertical field of view in degrees (as given: not widened for the aspect).  clamp false: the eye is not
+  // projected onto the walkable volume (it may stand where a walker cannot, e.g. between the seat backs at a photo's
+  // height); the first walk / look / stop afterwards hands it back to the walk clamp.  Enters the tour (at `stop`,
+  // without the flight) when outside.
+  place({ eye, target, fov = null }, { clamp: clampIt = true, stop = 'fd_cabin' } = {}) {
+    if (!this.active) this.enter(stop, { motion: false });
+    this.finish();
+    const a = angles(eye, target);
+    const r = project(eye, this.doors());
+    this.p = clampIt ? r.p : eye.slice();
+    this.zWant = this.p[2];
+    this.region = r.region;
+    this.yaw = a.yaw; this.pitch = a.pitch;
+    this.latch = null; this.seatTurn = null; this.seatEase = null; this.seatFlip = false;
+    this.pitchAuto = false;
+    this.vel = [0, 0, 0]; this.turnVel = 0; this.pending = 0;
+    this.stop = null;
+    this.free = !clampIt;
+    this.fovExact = fov != null ? +fov : null;
+    if (fov != null) this.fovBase = +fov;
+    this.apply();
+    this.hooks.changed();
+    return this.state();
   }
   _setFade(o) {
     if (!this.fade) return;
@@ -292,6 +321,7 @@ export class Tour {
     const out = () => {
       this.active = false;
       this.inside = false;
+      this.free = false; this.fovExact = null;
       this.stop = null;
       this.fovKick = 0;
       this.stage.setViewShift(0);
@@ -344,8 +374,8 @@ export class Tour {
     if (this.inside) {
       // the viewport changed shape (panel, rotation): the field of view follows
       if (this.stage.camera.aspect !== this._aspect) { this.apply(); changed = true; }
-      // a door closed over the doorway (the Animate tab): eased back into the cabin
-      const r = project(this.p, this.doors());
+      // a door closed over the doorway (the Animate tab): eased back into the cabin (not an exact place()d pose)
+      const r = this.free ? { d: 0 } : project(this.p, this.doors());
       if (r.d > 1e-4) {
         const a = 1 - Math.exp(-6 * dt);
         this.p = this.p.map((v, i) => v + (r.p[i] - v) * (r.d < 0.002 ? 1 : a));
@@ -417,6 +447,7 @@ export class Tour {
     }
     const rising = Math.abs(this.zWant - this.p[2]) > 1e-4;      // rising to (or sinking to) the kept height
     if (!moving && !rot && !rising) return false;
+    if (this.free) { this.free = false; this.fovExact = null; }   // a walk / turn hands a place()d pose back to the clamp
     const p0 = this.p;
     if (moving || rising) {
       const cy = Math.cos(this.yaw), sy = Math.sin(this.yaw);
@@ -574,6 +605,7 @@ export class Tour {
 
   look(dyaw, dpitch) {
     this.seatTurn = null;
+    this.free = false; this.fovExact = null;
     if (dpitch) this.pitchAuto = false;
     if (this.onInput) this.onInput();
     this.yaw = wrap(this.yaw + dyaw);
@@ -664,7 +696,7 @@ export class Tour {
     return {
       active: this.active, stop: this.stop, lastStop: this.lastStop, flying: this.flying,
       pos: this.p.map((v) => Math.round(v * 1e5) / 1e5), yawDeg: this.yaw / D2R, pitchDeg: this.pitch / D2R,
-      fov: this.stage.camera.fov, region: r.region, outside: r.d, fade: this.fade ? +this.fade.style.opacity || 0 : 0,
+      fov: this.stage.camera.fov, region: r.region, outside: r.d, fade: this.fade ? +this.fade.style.opacity || 0 : 0, free: this.free,
       latched: !!this.latch, seatTurn: !!this.seatTurn, seatEase: !!this.seatEase, seatFlip: this.seatFlip, pitchAuto: this.pitchAuto,
       zWant: Math.round(this.zWant * 1e5) / 1e5,
     };

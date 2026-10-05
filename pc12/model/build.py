@@ -330,8 +330,10 @@ def _low_fine(parts):
     return fine
 
 
-def build_parts():
-    """Build every component (no files written). Returns the ordered parts dict."""
+def build_parts(ao=False):
+    """Build every component (no files written). Returns the ordered parts dict.  ao: bake the interior's light (the
+    occlusion and the window-sky visibility) into its meshes (Mesh.AO; main() / build_low() write it to the GLBs, the
+    checks build without it)."""
     parts = {}
     interior.build_structure(parts)
     fuselage_parts.build(parts)
@@ -350,9 +352,78 @@ def build_parts():
         else:
             res.refine_part(pid, p)
     fuselage_parts.apply_skin_analytic_normals(parts)   # cowl / chin-lip vertices: the analytic skin normal (RES2-01)
+    if ao:
+        bake_interior_ao(parts)         # the cabin / flight-deck light as a vertex attribute (_AO: viewer, inside)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}
     ids = sorted(parts.keys(), key=lambda k: order.get(parts[k].step, 99))
     return {k: parts[k] for k in ids}
+
+
+# Interior light (flight deck r1 LOOK, L3; review FD-J01c / LK-03: the viewer's image-based light has no occlusion, so the
+# flight deck read flat -- footwells, consoles and the panel's recesses as light as the glareshield top).  Every mesh of
+# the 'Interior' group gets two baked channels, written to the GLB as the vertex attribute _AO (two normalised bytes:
+# cad/glb.py); the viewer's cabin light takes them inside (web/viewer/materials.js 'ao'), other importers ignore an
+# application-specific attribute:
+#   0  ambient occlusion: cone traces on a k-d tree of the interior surfaces and the closed doors' inner faces, 0.36 m
+#      reach, the glass left out (cad/ao.py bake)
+#   1  window light: the share of the cosine-weighted hemisphere that sees out through the glazing within 2.5 m (cad/ao.py
+#      sky: marched through a 20 mm voxel grid of the interior, skins, frames and doors -- never the glass -- until a
+#      wall, or out of the outer mould line), plus that light after one bounce: a ray that meets the interior brings the
+#      wall's albedo x (its own sky + AO_GLOW) (+ the displays' glow) -- the footwell under the dark panel stays dark,
+#      the yoke facing the seats and the cabin, the seats facing the windows pick up the light the photos show
+#      (P1046408: footwell 4-6, yoke 208, sheepskin 110-134)
+# Moving children (yokes, pedals, tables, doors) are baked at their built pose.  The flight deck's large flat triangles
+# (floor, kick panels, consoles, footwell walls) are split first to <= AO_SPLIT so the per-vertex light resolves there.
+AO_DOOR_PARTS = ("door_airstair", "door_cargo", "exit_hatch", "door_frames")
+AO_SKIN_PARTS = ("fus_fwd", "fus_center", "fus_aft", "cowl_upper", "cowl_lower", "glazing_flightdeck", "glazing_cabin",
+                 "door_frames", "door_airstair", "door_cargo", "exit_hatch", "firewall")
+AO_SPLIT = 0.060                        # m: the longest edge left on the flight deck's floor / walls / consoles
+AO_SPLIT_PARTS = ("flight_deck", "fd_consoles", "fd_divider", "interior_lining")
+AO_SPLIT_BOX = ((2.30, -1.0, 0.0), (4.80, 1.0, 1.75))   # model axes: the flight deck below the glareshield
+AO_SKY_BOX = ((0.90, -1.05, 0.15), (13.70, 1.05, 2.95))
+GLASS = ("glass", "lens")
+AO_GLOW = 0.25                          # the cabin's general glow in the bounce's radiance proxy (x albedo)
+AO_EMIT = {"display_page": 0.25, "screen_white": 0.3, "light_cove": 0.8, "light_reading": 0.5}   # emitters' own light
+
+
+def _albedo(mat):
+    from model.assemble import MATERIALS
+    spec = MATERIALS.get(mat)
+    if not spec:
+        return 0.2
+    c = np.asarray(spec[0][:3], float)
+    return float(0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2])
+
+
+def bake_interior_ao(parts):
+    from cad import ao
+    t0 = time.time()
+    lo, hi = (np.asarray(b) for b in AO_SPLIT_BOX)
+    sel = lambda c: np.all((c >= lo) & (c <= hi), axis=1)      # noqa: E731
+    added = sum(ao.presplit([m for m, _ in parts[pid].meshes], AO_SPLIT, sel) for pid in AO_SPLIT_PARTS if pid in parts)
+    t1 = time.time()
+    rec = [m for p in parts.values() if p.group == "Interior" for m, _ in p.meshes]
+    solid = lambda pid: [m for m, mat in parts[pid].meshes if not mat.startswith(GLASS)] if pid in parts else []  # noqa: E731
+    occ = rec + [m for pid in AO_DOOR_PARTS for m in solid(pid)]
+    occl = ao.bake(rec, occ)
+    t2 = time.time()
+    walls = rec + [m for pid in AO_SKIN_PARTS for m in solid(pid)]
+    outside = lambda P: ~F.inside(P[:, 0], P[:, 1], P[:, 2], margin=-0.02)    # noqa: E731
+    skyv = ao.sky(rec, walls, outside, AO_SKY_BOX)
+    t3 = time.time()
+    mats = [mat for p in parts.values() if p.group == "Interior" for _, mat in p.meshes]
+    rad = [_albedo(mat) * (sv + AO_GLOW) + AO_EMIT.get(mat, 0.0) for mat, sv in zip(mats, skyv)]
+    light = ao.sky(rec, walls, outside, AO_SKY_BOX, bounce=(rec, rad))
+    for m, a, b in zip(rec, occl, light):
+        m.AO = np.stack([a, b], 1)
+    nv = sum(len(m.V) for m in rec)
+    fd = [b[(m.V[:, 0] < 4.75)] for m, b in zip(rec, skyv)]
+    fd = np.concatenate(fd) if fd else np.zeros(1)
+    fl = [b[(m.V[:, 0] < 4.75)] for m, b in zip(rec, light)]
+    fl = np.concatenate(fl) if fl else np.zeros(1)
+    print(f"  interior light baked on {nv:,} vertices: +{added:,} split triangles ({t1 - t0:.0f} s), occlusion "
+          f"({t2 - t1:.0f} s), window sky ({t3 - t2:.0f} s) + one bounce ({time.time() - t3:.0f} s); flight deck medians "
+          f"sky {np.median(fd):.2f}, light {np.median(fl):.2f}", file=sys.stderr)
 
 
 OUT = __import__("pathlib").Path(__file__).resolve().parents[1] / "out"
@@ -369,7 +440,7 @@ def build_low():
     prints its stats as one JSON line."""
     if res.on():
         sys.exit("build.py --low runs at PC12_RES=1 (main() starts it that way)")
-    parts = build_parts()
+    parts = build_parts(ao=True)
     size, stats = write_glb(parts, str(OUT / LOW_GLB), meta=glb_meta())
     print(json.dumps({"file": LOW_GLB, "glb_bytes": size, "triangles": stats["triangles"],
                       "vertices": stats["vertices"], "res": res.RES}))
@@ -385,7 +456,7 @@ def main(low=True):
     if low:
         lowp = subprocess.Popen([sys.executable, __file__, "--low"], env={**os.environ, "PC12_RES": "1"},
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    parts = build_parts()
+    parts = build_parts(ao=True)
     ids = list(parts.keys())
     checks = verify(parts)
     cock = cockpit_camera()

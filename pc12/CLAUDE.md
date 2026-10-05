@@ -419,6 +419,53 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   slivers at orbit distance: dotted under 4x MSAA alone, continuous in the still passes and the temporal blend).
   SwiftShader takes ~20-30 s per 2x frame at 800 x 500 on the shared sandbox: compare frame costs relatively, never
   tune on them.
+- Flight deck r1 LOOK (owner 2026-10-04 "can you make cockpit a bit better? ... 1/10"; track 'look': the viewer's light
+  and the baked interior light, no geometry): inside the closed cabin -- the tour, the Cockpit preset, any camera there
+  (`main.js syncInteriorLook`: `tour.inside || model.camInside`, LK-08) -- `Stage.setInteriorLook` swaps the studio for
+  the outside world, the exterior lens staying exactly as judged (viewer_test [FD-L7] renders the 3/4 view with and
+  without the world / sun in the scene and after a round trip inside).  `web/viewer/outside.js`: procedural only (no
+  image files, no lettering) -- a sky dome (r 440 m, through the tone mapping: zenith (0.26, 0.47, 1.0), horizon
+  (1.24, 1.33, 1.43), sun glow + disc), a 400 m apron canvas (2048 px, 1024 on phones: mottled concrete, 7.5 m slab
+  joints, a taxi line + lead-in arc, grass), a far ring, five pre-lit hangars (cladding / door bay / high-window facade
+  texture), a ridge; no raycast, no shadows, layer 0 only, the ground / ring drawn first without depth (no z-fight at
+  200 m with the 1 cm near plane); shown inside, while the ground grid, shadow catcher and contact shadow hide.  The
+  image-based light inside is that world's PMREM (built once, the zenith desaturated 60 % for it, `SKY.envDesat`: the
+  deep blue overhead had tinted every up-facing trim slate blue; rebuilt after a context loss).  A permanent sun
+  (`scene.js LOOK.sun`, made after the key so the key stays directional shadow 0 and the light count never changes --
+  no recompiles in and out): az 125 deg from dead ahead to starboard, el 40 (`outside.js SUN`: through the co-pilot's
+  side window and the forward cabin windows onto the pedestal, sub-panels and seats, the glareshield shading the PDU
+  tops; the assessment's az 65 / el 26 lit only the glareshield lip), 3.5 inside / 0 outside, its own 2048 px map (1024 phones, PCF radius 3 / 2) on a fixed
+  +-1.9 m box round the flight deck, rendered on pose changes only (`shadow.autoUpdate` follows the look; the key's map
+  is not rendered inside, a spinning propeller's blades leave the sun's casters); interior receivers outside that box
+  are shaded (`materials.js` interior patch: getShadow's out-of-frustum default 0); inside casters / receivers
+  `model.js SUN_CASTERS / SUN_RECEIVERS` (skins, cowl, glazing frames, doors, every interior part; glass and lenses
+  never cast -- the exterior set, where the glazing casts with its X-ray shell, comes back on exit); the ground's PCSS
+  shadow reads the key's map only (`picture.js patchShadowMaterial`).
+  Baked interior light (`cad/ao.py`, `model/build.py bake_interior_ao`, in `build_parts(ao=True)` of main() and
+  build_low(); written as the vertex attribute `_AO`, two normalised bytes: `cad/glb.py`): channel 0 cone-traced
+  occlusion (0.36 m reach; the far steps from a 16 mm distance transform, ~5x faster than the k-d tree alone), channel 1
+  the window light -- the share of the cosine-weighted hemisphere that sees out through the glazing within 2.5 m (a
+  20 mm voxel march through the interior, skins, frames and doors, never the glass; out = beyond the OML) plus one
+  bounce (a ray meeting the interior brings albedo x (its sky + `AO_GLOW` 0.25), the displays' / coves' glow
+  `AO_EMIT`): the footwell under the dark panel 0.04, the yoke facing the seats 0.16, the glareshield 0.32.  Both are
+  per vertex, deduplicated by 6 mm cell + normal; the flight deck's floor, kick panels, consoles and footwell walls are
+  first split to <= 60 mm edges (`AO_SPLIT`, flat midpoints, conforming across a part's meshes: +23k triangles at RES 2,
+  +20k on the light tier).  Bake ~2-4 min a tier (printed by the build).  The viewer (`materials.js` 'ao' patch + the
+  interior block) inside: diffuse x `CABIN_LOOK.gain` x occ x mix(sky floor 0, 1, light) capped at 1.5 x the open
+  world's (`gain` [18, 1.6, 1.5]: calibrated on the photo-fitted panel_408b against P1046408 -- yoke 204 / 208,
+  sheepskin 113 / 110-134, footwell 9 / 6, eyebrow 101 / 100-113, posts 93), reflections x 1.6 x occ x mix(0.35, 1, light);
+  the light trim's fill share keeps that share out of the law (the cabin lining: none of it, half its occlusion; the
+  cabin fill 3.4 -> 2.6 for the brighter world, T4b / T14); reflection facing weights [0.12, 0.5] (were 0.06 / 0.3),
+  with `SPEC_KEEP` (titanium, gunmetal, pewter, chrome, bezels, black leathers, yoke white, displays) exempt (FD-J10).
+  ?cabGain= ?cabSky= ?cabOcc= ?cabIn= override them.
+  Palette (L5, `render/lookdev.py` SPEC + `assemble.MATERIALS`): lining_flightdeck 0.10 rough 0.75 (no CABIN_TRIM),
+  leather_glareshield 0.045 rough 0.48, panel_grey 0.20, carpet_flightdeck 0.03, sheepskin lavender-grey (0.28, 0.275,
+  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.45], leather_crew [0, 0.8], panel_dark [0, 0.6], panel_titanium [0, 0.6].  Viewer
+  patches (L6): fleece clumps 12-20 mm with darker crevices, a fine pebble grain on the leathers, the walnut figure
+  (render_grain streaks, rest pose), brushed titanium (anisotropy 0.6 along BL, streaky roughness; no env 0.6 stand-in),
+  the G3000 pages x1.45 inside.  `viewer.tour.place({eye, target, fov}, {clamp: false})` puts the tour camera at an
+  exact pose (the photo-fitted panel_408b / cabin_fwd_406 cameras); viewer_test `fd_look_checks` [FD-L1]-[FD-L8]
+  (`--only fdlook`, 1200 x 900).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
   `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.11M triangles where facets show, 16-bit normals, crack-free shared
   quantisation grids, finer round primitives.  Review r1 (RES1-01..05) re-spent the triangles: the first pass (2.63M)

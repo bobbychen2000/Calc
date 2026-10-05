@@ -487,10 +487,11 @@ SPEC.update({
                                note="crew-seat anthracite back shell / headrest back"),
     # final judge r1 I6 (P1046408 / 09: a long-pile LAVENDER-grey fleece, ~185/178/190 in the sun): the base a little
     # lighter and lavender, larger tufts (scale 70: 10-20 mm), the fibre-scale pile and a soft lavender fuzz at grazing
-    "sheepskin":          dict(kind="dielectric", base=(0.40, 0.375, 0.37), rough=1.00, spec=0.15, sheen=1.0,
+    # flight deck r1 LOOK (L5): the lavender-grey of P1046408 / 09 (rendered 90-130 in the cabin light, blue above red)
+    "sheepskin":          dict(kind="dielectric", base=(0.28, 0.275, 0.33), rough=1.00, spec=0.15, sheen=1.0,
                                sheen_rough=0.45, fleece=dict(scale=70.0, strength=0.9, dist=0.011, mottle=0.28,
                                                              fibre=(900.0, 0.45, 0.0015), fuzz=0.40,
-                                                             fuzz_colour=(0.72, 0.69, 0.67)),
+                                                             fuzz_colour=(0.62, 0.61, 0.70)),
                                note="grey sheepskin covers (fleece: sheen lobe + curly-pile bump, a neutral light "
                                     "grey with a faint warm cast: AOPA / P1046408-10, review r1 F3, model judging r1 "
                                     "INT-m2 (the mauve read lavender); bump / mottle coarsened to read at the panel "
@@ -507,7 +508,9 @@ SPEC.update({
     # flight deck
     "panel_dark":         dict(kind="dielectric", base=(0.040, 0.041, 0.044), metallic=0.25, rough=0.48, spec=0.25,
                                note="graphite instrument-panel face"),
-    "panel_grey":         dict(kind="dielectric", base=(0.33, 0.305, 0.325), metallic=0.18, rough=0.45,
+    # flight deck r1 LOOK (L5): darker -- the eyebrow fascia and the overhead read light grey plastic (~128) against the
+    # photos' dark titanium (P1046408 eyebrow ~95-125 with its sun / sky light)
+    "panel_grey":         dict(kind="dielectric", base=(0.20, 0.19, 0.20), metallic=0.18, rough=0.45,
                                note="warm titanium-grey panel: the PDU face and cheeks, sub-panels, eyebrow, centre "
                                     "stack (P1046408 pair: one warm metallic surface, knee panel 127/116/125, review "
                                     "r2 F3; was 0.21 grey with a graphite face)"),
@@ -524,10 +527,13 @@ SPEC.update({
                                     "photo, P1046408-10; review r3 F3)"),
     "pcl_pewter":         dict(kind="dielectric", base=(0.20, 0.20, 0.215), metallic=0.50, rough=0.36,
                                note="PCL grip: satin pewter paddle (throttle photo; P1046408 grip ~sRGB 112/114/123)"),
-    "leather_glareshield": dict(kind="dielectric", base=(0.075, 0.075, 0.078), rough=0.62, spec=0.25,
-                                note="stitched glareshield leather (final judge r1 LIV-F1-04: dark grey, 0.055 read "
-                                     "black on the lip)"),
-    "carpet_flightdeck":  dict(kind="dielectric", base=(0.045, 0.045, 0.050), rough=0.95, note="cockpit carpet"),
+    # flight deck r1 LOOK (L5, FD-J03): the PRO's black leather hood (P1046408 / 10: 55-90 in the sun / sky light, the
+    # lip brighter) -- satin, its stitched lip catching the light
+    "leather_glareshield": dict(kind="dielectric", base=(0.045, 0.045, 0.047), rough=0.48, spec=0.25,
+                                note="stitched glareshield leather (black satin: flight deck r1 LOOK; the r1 dark grey "
+                                     "0.075 read mid grey in the sun)"),
+    "carpet_flightdeck":  dict(kind="dielectric", base=(0.030, 0.030, 0.034), rough=0.95,
+                               note="cockpit carpet (near-black footwells, P1046408: 5-15)"),
     "bezel_black":        dict(kind="dielectric", base=(0.010, 0.010, 0.012), metallic=0.10, rough=0.32,
                                note="display bezels"),
     # the five G3000 PRIME displays: dark glass whose page is the GLB's emissive texture (model/g3000_pages.py atlas,

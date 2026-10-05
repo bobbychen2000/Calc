@@ -994,6 +994,15 @@ function waitFrames(n = 1) {
   return new Promise((res) => frameWaiters.push({ at: frameCount + n, res }));
 }
 
+// The interior look (outside world, sun, exposure: scene.js setInteriorLook) wherever the eye is inside the closed cabin:
+// the tour, the Cockpit preset, any camera there (look L7, LK-08: the Cockpit preset had kept the studio light and
+// exposure); the sun's casters follow it, without a spinning propeller's blades
+function syncInteriorLook() {
+  const inside = tour.inside || model.camInside;
+  stage.setInteriorLook(inside);
+  if (model.setSunInside(inside, inside && kin.c.rpm > 0)) { stage.shadowDirty = true; stage.needsRender = true; }
+}
+
 // advance all animation state by adt seconds; returns true if the pose changed
 function tick(adt) {
   animClock += adt;
@@ -1043,7 +1052,6 @@ function frame(now) {
   last = now;
   const posed = tick(S.paused ? 0 : dt);
   if (tour.update(S.paused ? 0 : dt)) stage.needsRender = true;
-  stage.setInteriorLook(tour.inside);
   if (stage.update(dt)) stage.needsRender = true;
   stage.applyQuality();
   if (forceFrames > 0) { forceFrames--; stage.needsRender = true; }
@@ -1057,6 +1065,7 @@ function frame(now) {
     model.updateCabin(stage.camera.position, S.explode.cur, Math.max(kin.c.door_airstair, kin.c.door_cargo), tour.inside);
     if (model.camInside !== wasInside) stage.shadowDirty = true;      // parts hidden inside the cabin (antennas)
   }
+  syncInteriorLook();
   if (stage.needsRender) {
     stage.render();
     frameCount++;
@@ -1163,6 +1172,9 @@ const hooks = {
     exit: (o = {}) => tour.exit(o),
     finish: () => tour.finish(),
     walk: (input, sec) => tour.walk(input, sec),
+    // an exact pose {eye, target (model axes), fov (vertical deg)}; {clamp: false} leaves the walk projection out (the
+    // photo-fitted cameras; look L7), {stop} the stop entered from outside
+    place: (pose, o = {}) => tour.place(pose, o),
     look: (dyawDeg, dpitchDeg) => tour.look(dyawDeg * Math.PI / 180, dpitchDeg * Math.PI / 180),
     state: () => tour.state(),
     motion: (on) => { tour.motionOverride = on == null ? null : !!on; },
