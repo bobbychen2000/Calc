@@ -57,7 +57,8 @@ USED_EXISTING = ("metal", "metal_dark", "steel", "black", "light_red", "light_wh
 # detail constants (not drawn on L6)
 # =====================================================================================================================
 DETAIL = dict(
-    pdu_border=(0.014, 0.014, 0.020, 0.022),   # [M] bezel l, r, top (GARMIN logo), bottom: active 302 x 188 (P1046408)
+    pdu_border=(0.013, 0.012, 0.020, 0.0205),  # [M] bezel l, r, top, bottom: active 302 x 188 (P1046408; flight deck r1
+    #                                            research: L 13 / R 12 / top 20 / bottom 20.5, no wordmark modelled)
     sdu_active=(0.094, 0.151),                 # [S] 7-in 16:10 portrait active area
     bezel_depth=0.040,                         # [E] display unit depth visible in the recess
     recess_margin=0.006,                       # [E] recess round the PDU row (the three faces touch, 'edge to edge')
@@ -421,18 +422,21 @@ def _panel_face(acc):
     P = _clamp_lining(P, 0.004, cheek)
     P[..., 0] = face_x(P[..., 1], P[..., 2])
     m = grid_surface(P)
-    # drop the cells of the PDU-row recess
+    # drop the cells of the PDU-row recess and of the yoke wells (fd_detail_a.LOWER well: the well's walls cover the
+    # cut, the titanium plates hide its ragged edge)
+    from model import fd_detail_a as A
     C = m.V[m.F].mean(1)
     inside = (np.abs(C[:, 1]) < ry - 1e-6) & (C[:, 2] > rz0 + 1e-6) & (C[:, 2] < rz1 - 1e-6)
-    m.F = m.F[~inside]
+    ww, wz0 = A.LOWER["well"][:2]
+    well = (np.abs(np.abs(C[:, 1]) - float(YK["bl"])) < ww - 0.004) & (C[:, 2] > wz0 + 0.004) & (C[:, 2] < rz0)
+    m.F = m.F[~(inside | well)]
     m.compact()
-    # the face round the PDUs: the same warm titanium as the sub-panels (P1046408: one metallic surface, black only on
-    # the bezels and switch blocks: review r2 F3); final judge r1 LIV-F1-04 / I4: a darker satin titanium
-    # ('panel_titanium', metallic) -- the light 'panel_grey' read as beige plastic against the photo's grey metal
-    acc.add(_oriented(m, N_AFT), "panel_titanium")
+    # flight deck r1 (A6 zoning, P1046408 / 10, brochure p.10): the face itself is the charcoal moulding round the PDU
+    # row and behind the titanium sub-panels (their 2 mm seams read dark); titanium only on the band and sub-panels
+    acc.add(_oriented(m, N_AFT), "panel_dark")
     # lower edge return (the face is a moulding, not a sheet): 40 mm forward under the bottom edge
     bot = P[:, 0]
-    acc.add(_oriented(_strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_titanium")
+    acc.add(_oriented(_strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_dark")
     # recess (black box behind the PDU row)
     fr = Fr([I.panel_x(ZM), 0.0, ZM], [0, 1.0, 0], V_UP)
     d = DETAIL["recess_depth"]
@@ -516,32 +520,39 @@ def _displays(acc):
         acc.add(_page_glass(glass, g, aw, ah, name), "display_page")
         if kind != "sdu":
             acc.add(fr.rect(-0.018, 0.5 * PDU_H - 0.013, 0.018, 0.5 * PDU_H - 0.009, 0.0003), "panel_grey")  # logo
+    from model import fd_detail_a as A
+    for m, mat in A.display_details():                 # bezel screws, light sensor, the SDUs' gripping lips (A8)
+        acc.add(m, mat)
     # GI 275 standby (round face in a square case) and the eyeball ECS outlets, on the wrapped face
     acc.group = "panel"
     sby, sdz, sd = (float(v) for v in PN["standby"])
-    f = face_frame(sby, ZM + sdz)
-    acc.add(f.se(0, 0, 0.008, (0.5 * sd - 0.002, 0.5 * sd - 0.002, 0.012), (0.3, 0.3), (8, 16)), "bezel_black")
-    r = 0.5 * sd - 0.010
-    top = np.array([[r * math.cos(a), r * math.sin(a)] for a in np.linspace(0, math.pi, 17)])
-    acc.add(f.poly(top, 0.0205), "screen_sky")
-    acc.add(f.poly(-top, 0.0205), "screen_ground")
-    acc.add(f.rect(-r, -0.0006, r, 0.0006, 0.0208), "screen_white")
-    acc.add(f.rect(-0.010, -0.002, 0.010, 0.0, 0.0209), "light_amber")
-    for sg in (-1, 1):
+    ub, ud = (float(v) for v in PN["standby_unit"])     # flight deck r1: the 82.6 square bezel on the face over the
+    f = face_frame(sby, ZM + sdz)                        # 3.125-in cut-out, a 68.3 display
+    acc.add(_extrusion(f.moved(c=0.006), rrect_loop(0.5 * ub, 0.5 * ub, 0.007, nc=6), 0.012, bevel=0.0025, nb=2),
+            "bezel_black")
+    r = 0.5 * ud
+    top = np.array([[r * math.cos(a), r * math.sin(a)] for a in np.linspace(0, math.pi, 33)])
+    acc.add(f.poly(top, 0.0123), "screen_sky")
+    acc.add(f.poly(-top, 0.0123), "screen_ground")
+    acc.add(f.rect(-r, -0.0006, r, 0.0006, 0.0126), "screen_white")
+    acc.add(f.rect(-0.010, -0.002, 0.010, 0.0, 0.0128), "light_amber")
+    for m, mat in A.standby_details(f, ub, ud):        # a dark ring round the display, its dual knob (A8)
+        acc.add(m, mat)
+    for sg in (-1, 1):                                  # V-speed placards beside the PFDs (A5)
+        for m, mat in A.vspeed_placard(sg):
+            acc.add(m, mat)
+    for sg in (-1, 1):                                  # eyeball vents in dark moulded pods (flight deck r1, FD-J05)
         f = face_frame(sg * PN["ecs_bl"], ZM - 0.063)
-        rr = DETAIL["ecs_r"]
-        ring = revolve([(0.0, rr), (0.006, rr), (0.010, 0.8 * rr)], n=20, axis_origin=f.o, axis_dir=f.w,
-                       ref_dir=f.u, cap_ends=False)
-        acc.add(ring, "panel_grey")
-        acc.add(f.disk(0, 0, 0.8 * rr, 0.004, 20), "black")
-        acc.add(f.se(0, 0, 0.004, (0.55 * rr, 0.55 * rr, 0.55 * rr), (0.9, 0.9), (8, 12)), "metal_dark")
+        for m, mat in A.ecs_vent(f, DETAIL["ecs_r"]):
+            acc.add(m, mat)
 
 
 # =====================================================================================================================
 # glareshield: hood (leather), rolled lip, eyebrow fascia (GFC 700, BARO, master warning / caution), soffit
 # =====================================================================================================================
-def _glareshield(acc):
-    acc.group = "glareshield"
+def _hood_grids():
+    """The glareshield's surface grids (ny rows across the BL, model axes): hood (windshield frame -> the lip's start),
+    lip roll, lip underside, eyebrow fascia, soffit -- each clamped to the lining -- and the fascia frame function."""
     cheek = float(PN["cheek_bl"])
     yw = np.linspace(0.0, 0.62, 14)
     we = np.array([I.ws_lower_edge(y) for y in yw])
@@ -569,22 +580,70 @@ def _glareshield(acc):
         und.append(np.c_[np.linspace(lx - r, xt, 3), np.full(3, y), np.full(3, zc)])
         xe = float(face_x(y, zf))
         sof.append(np.c_[np.linspace(xd, xe, 3), np.full(3, y), np.full(3, zf)])
-    for G, mat, hint in ((hood, "leather_glareshield", [0.1, 0, 1.0]), (lip, "leather_glareshield", [1.0, 0, 0.3]),
-                         (und, "leather_glareshield", [0, 0, -1.0]), (fas, "panel_grey", [1.0, 0, -0.2]),
-                         (sof, "panel_titanium", [0, 0, -1.0])):
-        # the soffit's clamped end 3.5 mm inboard of the lip's, 1.5 mm inboard of the CB-panel bezel (review r3 K3);
-        # final judge r1 LIV-F1-04: the soffit (the brow over the PDUs) dark titanium, not near-black graphite
-        P = _clamp_lining(np.array(G), 0.0075 if mat == "panel_titanium" else 0.004,
-                          cheek - (0.002 if mat == "panel_titanium" else 0.0))
+    out = {}
+    for key, G, mat in (("hood", hood, "leather_glareshield"), ("lip", lip, "leather_black"),
+                        ("und", und, "leather_black"), ("fas", fas, "panel_grey"), ("sof", sof, "panel_titanium")):
+        # the soffit's clamped end 3.5 mm inboard of the lip's, 1.5 mm inboard of the CB-panel bezel (review r3 K3)
+        out[key] = _clamp_lining(np.array(G), 0.0075 if mat == "panel_titanium" else 0.004,
+                                 cheek - (0.002 if mat == "panel_titanium" else 0.0))
+    return out
+
+
+def hood_end_section(side=-1):
+    """The glareshield's section at its outboard end (|BL| = PANEL cheek_bl, clamped to the lining) for the sidewall
+    sill that continues it (track B, flight deck r1): {'points': (n, 3) model axes from the windshield frame over the
+    hood, the rolled lip and its underside to the fascia top, 'mats': per segment ('leather_glareshield' on the hood,
+    'leather_black' on the lip), 'lip_start': index of the lip's first point, 'stitch': dict(pitch, dash, rows (m from
+    the lip's start along the hood), raise, seam (m), material)}."""
+    from model import fd_detail_a as A
+    G = _hood_grids()
+    i = 0 if side < 0 else -1
+    hood, lip, und = G["hood"][i], G["lip"][i], G["und"][i]
+    pts = np.vstack([hood, lip[1:], und[1:]])
+    mats = ["leather_glareshield"] * (len(hood) - 1) + ["leather_black"] * (len(lip) - 1 + len(und) - 1)
+    q = A.GLARE
+    return dict(points=pts, mats=mats, lip_start=len(hood) - 1,
+                stitch=dict(pitch=q["stitch_pitch"], dash=q["stitch_dash"], rows=q["stitch_rows"],
+                            raise_=q["stitch_raise"], seam=q["crown_seam"], material="stitch_thread"))
+
+
+def _glareshield(acc):
+    """Glareshield hood (grey leather, leather_glareshield) from the windshield frame to the separate rolled black lip
+    (leather_black, its underside too), double contrast stitching 8 / 11.5 mm inside the lip and either side of a
+    crown seam 0.10 forward of it (stitch_thread dashes, 6 mm pitch; brochure p.10), the eyebrow fascia (panel_grey)
+    leaning back over the soffit (panel_titanium) above the PDUs, the GFC 700 and the eyebrow items on it.  Flight deck
+    r1 (FD-J05 / J15, PNL-03): the lip arch was measured against P1046408 relative to the ECS vents (the camera fits
+    carry 30-50 px at the panel ends) and kept -- the outboard lip edge passes 0.13-0.15 above the vents' centres in
+    the photo as in GLARESHIELD lip_dz."""
+    from model import fd_detail_a as A
+    acc.group = "glareshield"
+    G = _hood_grids()
+    hints = dict(hood=[0.1, 0, 1.0], lip=[1.0, 0, 0.3], und=[0, 0, -1.0], fas=[1.0, 0, -0.2], sof=[0, 0, -1.0])
+    mats = dict(hood="leather_glareshield", lip="leather_black", und="leather_black", fas="panel_grey",
+                sof="panel_titanium")
+    meshes = {}
+    for key in ("hood", "lip", "und", "fas", "sof"):
         # normals from the final faces (the grid's own one-sided differences at the windshield row pointed against the
         # winding on 1.6 % of the hood: review r2 N1 check)
-        acc.add(_oriented(grid_surface(P).compute_normals(), hint), mat)
-    # contrast stitching along the hood, 8 mm ahead of the lip (brochure p.10)
-    H = np.array(hood)
-    st = H[:, -1] + (H[:, -2] - H[:, -1]) * (0.008 / np.linalg.norm(H[0, -2] - H[0, -1]))
-    band = np.array([st + [0.0006, 0, 0.0008], st + [-0.0006, 0, 0.0008]])
-    acc.add(_oriented(grid_surface(_clamp_lining(band.transpose(1, 0, 2), 0.006, cheek - 0.01)), [0, 0, 1.0]),
-            "panel_grey")
+        meshes[key] = _oriented(grid_surface(G[key]).compute_normals(), hints[key])
+        acc.add(meshes[key], mats[key])
+    # double contrast stitching along the lip and either side of the crown seam (the seam a dark welt)
+    q = A.GLARE
+    H = G["hood"]
+    Hm = grid_surface(H).compute_normals()
+    Hn = Hm.N.reshape(H.shape)
+    if np.mean(Hn[..., 2]) < 0:
+        Hn = -Hn
+    trim = q["end_trim"]
+    rows = list(q["stitch_rows"]) + [q["crown_seam"] - 0.003, q["crown_seam"] + 0.003]
+    for (P, N) in A.hood_lines(H, Hn, rows):
+        yy = P[:, 1]
+        sel = np.abs(yy) <= np.abs(yy).max() - trim
+        acc.add(A.dashes(P[sel], N[sel], q["stitch_pitch"], *q["stitch_dash"], raise_=q["stitch_raise"]),
+                "stitch_thread")
+    (P, N), = A.hood_lines(H, Hn, [q["crown_seam"]])
+    sel = np.abs(P[:, 1]) <= np.abs(P[:, 1]).max() - 0.004
+    acc.add(A.dashes(P[sel], N[sel], 0.004, 0.0044, q["seam_w"], raise_=0.0006), "leather_black")
     # GFC 700 and the eyebrow items on the fascia (centre, BL +/- baro / warn)
     zc = ZM + DETAIL["afcs_z"]
 
@@ -592,253 +651,58 @@ def _glareshield(acc):
         lean = math.radians(DETAIL["fascia_lean"])
         return Fr([float(fascia_x(y, z)), y, z], [0, 1.0, 0], [math.sin(lean), 0.0, math.cos(lean)])
     aw, ah = (float(v) for v in GS["afcs_wh"])
-    f = fascia_frame(0.0, zc)
-    acc.add(f.se(0, 0, 0.004, (0.5 * aw, 0.5 * ah, 0.009), (0.12, 0.12), (6, 16)), "bezel_black")
-    for u in (-0.118, -0.040, 0.050):                                 # FMS / HDG / ALT knobs
-        acc.add(f.knob(u, 0.006, 0.0085, 0.014, 14, 0.010), "black")
-    for k in range(9):                                                # key row
-        acc.add(f.box(-0.125 + k * 0.031, -0.020, 0.0135, (0.014, 0.008, 0.004)), "panel_dark")
-    for u in (0.105, 0.125):
-        for v in (0.012, -0.004):
-            acc.add(f.box(u, v, 0.0135, (0.012, 0.009, 0.004)), "panel_dark")
+    for m, mat in A.gfc700(fascia_frame(0.0, zc), aw, ah):
+        acc.add(m, mat)
     for sg in (-1, 1):
-        f = fascia_frame(sg * DETAIL["baro_bl"], zc)
-        acc.add(f.box(0, 0, 0.004, (0.030, 0.034, 0.008)), "bezel_black")
-        acc.add(f.knob(0, 0.003, 0.0085, 0.012, 14, 0.008), "black")
-        f = fascia_frame(sg * DETAIL["warn_bl"], zc)
-        acc.add(f.box(0, 0, 0.004, (0.078, 0.036, 0.008)), "bezel_black")
-        for k in (-1, 1):
-            acc.add(f.se(k * 0.019, 0, 0.0085, (0.013, 0.012, 0.003), (0.3, 0.3), (6, 8)), "screen")
-        f = fascia_frame(sg * 0.372, zc - 0.012)
-        acc.add(f.rect(-0.015, -0.007, 0.015, 0.007, 0.001), "light_white")        # RADIO-CALL placard
-        acc.add(f.rect(-0.013, -0.005, 0.013, 0.005, 0.0012), "black")
+        for m, mat in A.eyebrow_items(fascia_frame, zc, sg):
+            acc.add(m, mat)
 
 
 # =====================================================================================================================
 # lower panel: sub-panels (brushed grey), switch blocks, gear handle, parking brake, feather inhibit, oxygen lever
 # =====================================================================================================================
-def _face_plate(acc, y0, y1, z0, z1, off=0.004, mat="panel_titanium"):
-    ny = max(2, int(math.ceil(abs(y1 - y0) / 0.02)) + 1)
-    Y, Z = np.meshgrid(np.linspace(y0, y1, ny), np.linspace(z0, z1, 4), indexing="ij")
-    P = np.stack([face_x(Y, Z), Y, Z], -1)
-    P = _clamp_lining(P, 0.006)
-    P[..., 0] = face_x(P[..., 1], P[..., 2])
-    Nn = np.zeros_like(P)
-    for i in range(ny):
-        for j in range(4):
-            Nn[i, j] = face_frame(P[i, j, 1], P[i, j, 2]).w
-    top = P + off * Nn
-    acc.add(_oriented(grid_surface(top), N_AFT), mat)
-    for E0, E1 in ((top[:, 0], P[:, 0]), (top[:, -1], P[:, -1]), (top[0], P[0]), (top[-1], P[-1])):
-        acc.add(_oriented(_flat(_strip(E0, E1, closed=False)), lambda C: C - top.mean((0, 1))), mat)
-
-
-# push-button blocks on the inner lower sub-panels [M: P1046408]: rows of dark rectangular buttons with white legends
-# under white group placards on the titanium face (final judge r1 I4: the old black square with six toggle dots read as
-# an empty block).  Per side: rows (v of the row centre, number of buttons, u of the row centre), button w x h, pitch
-# along u, placards (v, half-length); co-pilot: + two white guarded switches (u, v)
-BUTTONS = dict(w=0.022, h=0.016, depth=0.005, pitch=0.028, legend=0.0003,
-               rows={-1: ((0.044, 3, 0.0), (0.020, 3, 0.0), (-0.026, 3, 0.0), (-0.050, 3, 0.0)),
-                     1: ((0.044, 3, 0.0), (0.020, 3, 0.0), (-0.034, 1, -0.030))},
-               placards={-1: ((0.061, 0.044), (-0.009, 0.044)), 1: ((0.061, 0.044), (0.003, 0.030))},
-               guards={1: ((0.006, -0.034), (0.034, -0.034))})
-
-
-def _button(acc, f, a, b):
-    """One push-button: a dark cap seated on the face with two light legend bars (abstract, no lettering)."""
-    q = BUTTONS
-    w, h, d = q["w"], q["h"], q["depth"]
-    acc.add(f.box(a, b, 0.5 * d, (w, h, d)), "bezel_black")
-    c = d + q["legend"]
-    acc.add(f.rect(a - 0.34 * w, b + 0.08 * h, a + 0.34 * w, b + 0.26 * h, c), "light_white")
-    acc.add(f.rect(a - 0.22 * w, b - 0.26 * h, a + 0.22 * w, b - 0.10 * h, c), "light_white")
-
-
-def _button_block(acc, f, sg):
-    q = BUTTONS
-    for v, nb, u0 in q["rows"][sg]:
-        for i in range(nb):
-            _button(acc, f, u0 + (i - 0.5 * (nb - 1)) * q["pitch"], v)
-    for v, hl in q["placards"][sg]:                                    # white group placards (blank)
-        acc.add(f.rect(-hl, v - 0.0022, hl, v + 0.0022, 0.0004), "light_white")
-    for a, b in q["guards"].get(sg, ()):                              # guarded switches: white guard + bat toggle
-        acc.add(f.box(a, b, 0.0055, (0.020, 0.026, 0.011)), "yoke_white")
-        acc.add(f.box(a, b, 0.0115, (0.012, 0.018, 0.001)), "bezel_black")
-        acc.add(cylinder(f.p(a, b, 0.0115), f.p(a, b + 0.004, 0.024), 0.0022, n=8), "metal")
-
-
 def _lower_panel(acc):
+    """The lower (yoke / switch) panel, flight deck r1 (PNL-02, FD-J06; fd_detail_a.lower_panel): per side a satin
+    titanium band under the PDU row and three titanium sub-panels (inner: ICE PROTECTION / ACS-CPCS, yoke, outer:
+    PARKING BRK) proud of the charcoal face with dark 2 mm seams and pan-head screws 8 mm in from their corners; a
+    rounded yoke well round each column with a rubber bellows; on the pilot's side two blocks of three rocker
+    switches, the gear handle (wheel knob) beside its placard, the guarded FEATHER INHIBIT, the vertical PARKING BRK
+    lozenge; on the co-pilot's the ACS row of four lit caps, the rockers, the guarded DUMP and the OXYGEN lever; the
+    panel-end rotary knobs and the O2 / mic sockets [M: P1046408 / 09 / 10, JTF p.18, brochure p.10]."""
+    from model import fd_detail_a as A
     acc.group = "panel"
-    shw = float(PN["stack_hw"])
-    z0, z1 = Z_LO + 0.008, ZM - 0.5 * PDU_H * math.cos(TILT) - DETAIL["recess_margin"] - 0.006
-    yc = float(YK["bl"])
     for sg in (-1, 1):
-        edges = [shw + 0.008, 0.262, yc + 0.118, float(PN["cheek_bl"])]
-        for a, b in zip(edges[:-1], edges[1:]):
-            y0, y1 = sorted((sg * (a + 0.003), sg * (b - 0.003)))
-            _face_plate(acc, y0, y1, z0, z1)
-        zc = 0.5 * (z0 + z1)
-        # yoke column boot
-        f = face_frame(sg * yc, float(I.yoke_hub(sg)[2])).moved(c=0.004)
-        acc.add(revolve([(0.0, 0.050), (0.004, 0.048), (0.010, 0.030), (0.014, 0.026)], n=24, axis_origin=f.o,
-                        axis_dir=f.w, ref_dir=f.u, cap_ends=False), "black")
-        # inner sub-panel: ICE PROTECTION (pilot) / ELECTRICAL + CABIN PRESSURE (co-pilot) push-button blocks
-        _button_block(acc, face_frame(sg * 0.205, zc).moved(c=0.004), sg)
-        if sg < 0:
-            # landing-gear selector (pilot's lower right panel, next to the stack) and FEATHER INHIBIT
-            f = face_frame(-0.160, zc + 0.010).moved(c=0.004)
-            acc.add(f.box(0, 0, 0.001, (0.022, 0.090, 0.002)), "bezel_black")
-            acc.add(cylinder(f.p(0, 0.02, 0.001), f.p(0, 0.02, 0.045), 0.005, n=10), "steel")   # from inside the
-            #                                                                   bezel (r3 K3: coplanar with its back)
-            acc.add(revolve([(0.0, 0.004), (0.006, 0.019), (0.014, 0.019), (0.018, 0.004)], n=20,
-                            axis_origin=f.p(0.0, 0.02, 0.040), axis_dir=f.u, ref_dir=f.w, cap_ends=True), "grip_black")
-            f = face_frame(-0.458, zc - 0.030).moved(c=0.004)
-            acc.add(f.box(0, 0, 0.002, (0.024, 0.024, 0.004)), "bezel_black")
-            acc.add(f.box(0, 0, 0.0055, (0.014, 0.014, 0.003)), "panel_dark")
-            # PARKING BRK T-handle, lower left: a stem out of the bezel and a horizontal grip bar (final judge r1 I4:
-            # the upright pillow read as a black slot)
-            f = face_frame(-0.635, zc - 0.005).moved(c=0.004)
-            acc.add(f.box(0, 0, 0.001, (0.040, 0.075, 0.002)), "bezel_black")
-            acc.add(cylinder(f.p(0, -0.012, 0.0015), f.p(0, -0.012, 0.022), 0.0045, n=12), "steel")
-            acc.add(f.se(0, -0.012, 0.026, (0.030, 0.0085, 0.0075), (0.35, 0.35), (10, 12)), "black")
-        else:
-            # OXYGEN lever (vertical slot) next to the stack
-            f = face_frame(0.160, zc).moved(c=0.004)
-            acc.add(f.box(0, 0, 0.001, (0.018, 0.100, 0.002)), "bezel_black")
-            acc.add(f.box(0, -0.030, 0.010, (0.012, 0.016, 0.018)), "panel_dark")
-            f = face_frame(0.300, zc + 0.030).moved(c=0.004)
-            acc.add(f.rect(-0.022, -0.008, 0.022, 0.008, 0.0015), "light_white")    # cabin pressure placard
-        # USB / outboard knob on the outer sub-panel
-        f = face_frame(sg * 0.600, zc + 0.020).moved(c=0.004)
-        acc.add(f.knob(0, 0, 0.010, 0.012, 14), "black")
+        for m, mat in A.lower_panel(sg):
+            acc.add(m, mat)
 
 
 # =====================================================================================================================
 # centre stack + pedestal (control quadrant) on the nose-wheel tunnel plinth
 # =====================================================================================================================
 def _pedestal(acc):
+    """Centre stack + pedestal (flight deck r1, PNL-04 / FD-J13; fd_detail_a.stack_shell / quadrant): the waisted stack
+    moulding with moulded radius edges (no tube rails), the charcoal SDU surround, the recessed touch pad in its
+    titanium bezel with the lighter hand-rest lip, the COM 1/2 VOL knobs on the horns; the quadrant's gunmetal cheeks,
+    its satin-black plate in a raised gunmetal frame with the framed trim panel, brush-sealed PCL / flap slots, the PCL
+    (arm + pewter cylinder handle), the flap paddle, the 5 + 2 lighting knobs and the CCD palm grip; on the aft face the
+    FUEL / ACS emergency shut-off paddles and the emergency gear-extension handle."""
+    from model import fd_detail_a as A
     acc.group = "pedestal"
     x0, x1, phw, pz = I.pedestal_plinth()
-    shw, hw = float(PN["stack_hw"]), float(PE["hw"])
-    st = [(float(p[0]), ZM + float(p[1])) for p in PE["stack"]]
+    hw = float(PE["hw"])
     qx0, qx1 = (float(v) for v in PE["x"])
     zt = FL + float(PE["top_h"])
-    xf = float(I.panel_x(Z_LO))
-    # side outline (x, z, half-width): stack face with the SDUs, pad, quadrant top, aft face, foot on the plinth
-    O = [(st[0][0], st[0][1], shw), (st[1][0], st[1][1], shw), (st[2][0], st[2][1], shw), (st[3][0], st[3][1], hw),
-         (qx0, zt, hw), (qx1, zt, hw), (qx1, FL, hw), (x1 + 0.002, FL, hw), (x1 + 0.002, pz, hw), (xf, pz, hw),
-         (xf, Z_LO, shw)]
-    O = np.array(O)
-    # the stack face round the SDUs stays titanium grey; below the SDU pad the quadrant's skins are dark gunmetal
-    # with the black slotted quadrant top (throttle photo, P1046408-10: review r3 F3)
-    mats = ["panel_dark", "panel_dark", "panel_titanium", "pedestal_gunmetal", "bezel_black", "pedestal_gunmetal", None,
-            None, None, "panel_titanium", None]
-    # each outline edge faces outward by the polygon's own winding (the centroid test turned the reclined SDU face
-    # inward: review r1 C6)
-    ccw = 0.5 * float(np.sum(O[:, 0] * np.roll(O[:, 1], -1) - np.roll(O[:, 0], -1) * O[:, 1])) > 0
-    for k in range(len(O)):
-        a, b = O[k], O[(k + 1) % len(O)]
-        if mats[k] is None:
-            continue
-        q = Mesh(np.array([[a[0], -a[2], a[1]], [b[0], -b[2], b[1]], [b[0], b[2], b[1]], [a[0], a[2], a[1]]]),
-                 np.array([[0, 1, 2], [0, 2, 3]]))
-        ex_, ez_ = b[0] - a[0], b[1] - a[1]
-        nrm = np.array([ez_, 0.0, -ex_]) * (1.0 if ccw else -1.0)
-        acc.add(_oriented(q, nrm), mats[k])
-    # side cheeks: grey round the stack, gunmetal aft of the SDU pad (the outline clipped at the pad station)
-    xs_ = float(st[3][0])
-
-    def clip_x(P, keep_fwd):
-        out = []
-        for k in range(len(P)):
-            a, b = P[k], P[(k + 1) % len(P)]
-            ina, inb = (a[0] <= xs_) == keep_fwd, (b[0] <= xs_) == keep_fwd
-            if ina:
-                out.append(a)
-            if ina != inb:
-                t = (xs_ - a[0]) / (b[0] - a[0])
-                out.append(a + t * (b - a))
-        return np.array(out)
-    for keep_fwd, mat in ((True, "panel_titanium"), (False, "pedestal_gunmetal")):
-        Q = clip_x(O[:, :2], keep_fwd)
-        side = planar_cap(np.c_[Q[:, 0], np.zeros(len(Q)), Q[:, 1]], [0, 1.0, 0])
-        for sg in (-1, 1):
-            s = side.copy()
-            s.V[:, 1] = sg * O[np.argmin(np.linalg.norm(s.V[:, None, [0, 2]] - O[None, :, [0, 1]], axis=2), 1), 2]
-            acc.add(_oriented(s, [0, sg, 0]), mat)
-    # rounded rails along the top edges (brushed, P1046408 / throttle photo) and down the aft edges, their outer faces
-    # on the drawn half-widths (PEDESTAL hw; review r3 C2: rev C stood 5 mm proud of them); grey on the stack, gunmetal
-    # from the SDU pad aft
-    rr_ = 0.009
-    path = np.array([(p[0], p[1]) for p in O[:6]])
-    hws = O[:6, 2]
+    # quadrant cheeks (gunmetal) from the floor / plinth to the top, and the aft face
+    O = np.array([(qx0, zt), (qx1, zt), (qx1, FL), (x1 + 0.002, FL), (x1 + 0.002, pz), (qx0, pz)])
+    side = planar_cap(np.c_[O[:, 0], np.zeros(len(O)), O[:, 1]], [0, 1.0, 0])
     for sg in (-1, 1):
-        P3 = np.c_[path[:, 0], sg * (hws - rr_), path[:, 1] + 0.002]
-        P3 = np.vstack([P3[:5], [[qx1 - 0.01, sg * (hw - rr_), zt + 0.002]],
-                        [[qx1 - rr_, sg * (hw - rr_), zt - 0.01]], [[qx1 - rr_, sg * (hw - rr_), FL + 0.02]]])
-        for part_, mat in ((P3[:4], "panel_titanium"), (P3[3:], "pedestal_gunmetal")):
-            dense = [part_[0]]
-            for a, b in zip(part_[:-1], part_[1:]):
-                n = max(1, int(np.linalg.norm(b - a) / 0.02))
-                dense += [a + (b - a) * t for t in np.linspace(0, 1, n + 1)[1:]]
-            acc.add(sweep_profile(np.array(dense),
-                                  np.c_[rr_ * np.cos(np.linspace(0, 2 * np.pi, 10, endpoint=False)),
-                                        rr_ * np.sin(np.linspace(0, 2 * np.pi, 10, endpoint=False))]), mat)
-    # pad under the SDUs: COM 1/2 VOL knobs and the flat hand-rest pad
-    pv = _unit(np.array([st[2][0] - st[3][0], 0.0, st[2][1] - st[3][1]]))
-    pc = 0.5 * (np.array([st[2][0], 0.0, st[2][1]]) + np.array([st[3][0], 0.0, st[3][1]]))
-    f = Fr(pc, [0, 1.0, 0], pv)
-    acc.add(f.se(0, -0.005, 0.002, (0.075, 0.040, 0.003), (0.1, 0.1), (6, 12)), "panel_titanium")   # (r4 INT8-03)
-    for sg in (-1, 1):
-        acc.add(f.knob(sg * 0.105, 0.035, 0.009, 0.014, 14), "black")
-    # quadrant top, forward end: the trim panel -- a black bezel across the top carrying TRIM INTERRUPT (a square button
-    # in a raised guard), the split ALTERNATE STAB TRIM rocker and the AILERON TRIM rocker, white legend bars, and the
-    # guarded FLAP INTERRUPT beside the flap gate (P1046408, throttle photo; review r4 INT8-03: four loose cubes, one
-    # of them a cream square)
-    ft = Fr([0.5 * (qx0 + qx1), 0.0, zt], [1.0, 0, 0], [0, 1.0, 0])   # u = aft, v = starboard, w = up
-    pt_ = 0.003                                                        # bezel plate thickness
-    acc.add(ft.box(-0.160, 0.0, 0.5 * pt_, (0.070, 2 * hw - 0.030, pt_)), "bezel_black")
-    for a, b, sz, w0, mat in ((-0.158, -0.062, (0.026, 0.026, 0.008), 0.0, "pedestal_gunmetal"),   # TRIM INTERRUPT guard
-                              (-0.158, -0.062, (0.016, 0.016, 0.006), 0.005, "black"),       # ... its button
-                              (-0.158, -0.020, (0.020, 0.010, 0.010), 0.0, "black"),         # ALT STAB TRIM halves
-                              (-0.158, -0.006, (0.020, 0.010, 0.010), 0.0, "black"),
-                              (-0.158, 0.034, (0.018, 0.028, 0.009), 0.0, "black"),          # AILERON TRIM rocker
-                              (-0.158, 0.034, (0.004, 0.024, 0.006), 0.006, "pedestal_gunmetal")):   # ... its ridge
-        # 0.2 mm off the plate, and nested pieces starting inside their base: no coplanar faces (fit_check 26)
-        acc.add(ft.box(a, b, pt_ + 0.0002 + w0 + 0.5 * sz[2], sz), mat)
-    for b, hl in ((-0.062, 0.010), (-0.013, 0.012), (0.034, 0.011)):                         # legend bars
-        acc.add(ft.box(-0.186, b, pt_ + 0.0003, (0.003, 2 * hl, 0.0004)), "light_white")
-    # PCL (power control lever: slot, stem, big grey knob) and flap lever (slot in its gate, black paddle)
-    pcx, pcy, pch = (float(v) for v in PE["pcl"])
-    fx_, fy_, fh_ = (float(v) for v in PE["flap"])
-    acc.add(box([fx_ + 0.010, fy_, zt + 0.0004], (0.180, 0.034, 0.0008)), "bezel_black")      # flap gate plate
-    for k in range(4):                                                  # its detents 0 / 15 / 30 / 40 (white marks)
-        acc.add(box([fx_ - 0.050 + 0.040 * k, fy_ + 0.013, zt + 0.0011], (0.003, 0.006, 0.0004)), "light_white")
-    acc.add(box([fx_ - 0.105, fy_ + 0.020, zt + 0.0062], (0.024, 0.022, 0.012)), "pedestal_gunmetal")  # FLAP INTERRUPT
-    acc.add(box([fx_ - 0.105, fy_ + 0.020, zt + 0.0135], (0.014, 0.012, 0.003)), "black")
-    for (xa, xb, y) in ((pcx - 0.11, pcx + 0.07, pcy), (fx_ - 0.07, fx_ + 0.09, fy_)):
-        acc.add(box([0.5 * (xa + xb), y, zt + 0.0011], (xb - xa, 0.012, 0.0012)), "black")
-    acc.add(cylinder([pcx + 0.020, pcy, zt], [pcx + 0.004, pcy, FL + pch - 0.045], 0.008, n=10), "metal")
-    # PCL grip: a satin pewter paddle, thin fore / aft, tall, round-topped, tipped forward (throttle photo, P1046408-10;
-    # review r3 F3: rev C was a flat 60 x 88 x 48 puck); its top on the drawn PCL height (PEDESTAL pcl)
-    Rk = np.array(Fr([0, 0, 0], [math.cos(0.30), 0, math.sin(0.30)], [0, 1.0, 0]).R)     # top tipped forward
-    gd, gw, gh = (0.5 * float(v) for v in PE["pcl_grip"])
-    g_ = superellipsoid([0.0, 0.0, 0.0], (gd, gw, gh), (0.65, 0.35), nu=12, nv=16)
-    zc_ = g_.V[:, 2] / gh                                               # the paddle narrows toward its stem
-    g_.V[:, 1] *= 0.62 + 0.38 * np.clip((zc_ + 1.0) / 1.3, 0.0, 1.0) ** 0.8
-    g_.V[:, 0] *= 0.80 + 0.20 * np.clip((zc_ + 1.0) / 1.3, 0.0, 1.0)
-    g_ = Mesh(g_.V @ Rk.T + [pcx, pcy, FL + pch - gh], g_.F)
-    acc.add(g_, "pcl_pewter")
-    acc.add(cylinder([fx_ + 0.010, fy_, zt], [fx_, fy_, FL + fh_ - 0.015], 0.005, n=8), "metal")
-    acc.add(superellipsoid([fx_, fy_, FL + fh_ - 0.010], (0.012, 0.015, 0.016), (0.3, 0.3), nu=8, nv=12), "black")
-    # lighting-knob row and the CCD palm grip at the aft end
-    for k in range(6):
-        acc.add(ft.knob(0.100, -0.075 + 0.030 * k, 0.0065, 0.012, 12), "black")
-    ccx, ccy, cch = (float(v) for v in PE["ccd"])
-    acc.add(superellipsoid([ccx, ccy, FL + cch - 0.020], (0.045, 0.034, 0.021), (0.5, 0.5), nu=10, nv=16),
-            "grip_black")
-    acc.add(cylinder([ccx - 0.028, ccy, FL + cch - 0.004], [ccx - 0.028, ccy, FL + cch + 0.006], 0.007, n=12),
-            "panel_grey")
+        s_ = side.copy()
+        s_.V[:, 1] = sg * hw
+        acc.add(_oriented(s_, [0, sg, 0]), "pedestal_gunmetal")
+    aft = Mesh(np.array([[qx1, -hw, FL], [qx1, hw, FL], [qx1, hw, zt], [qx1, -hw, zt]]), np.array([[0, 1, 2], [0, 2, 3]]))
+    acc.add(_oriented(aft, [1.0, 0, 0]), "pedestal_gunmetal")
+    for m, mat in A.stack_shell() + A.quadrant():
+        acc.add(m, mat)
     # aft face: FUEL / ACS emergency shut-off T-handles (red), emergency gear extension (centre), Pilatus band
     fa = Fr([qx1 + 0.0005, 0.0, FL], [0, 1.0, 0], [0, 0, 1.0])       # w = aft
     acc.add(fa.rect(-hw + 0.012, 0.030, hw - 0.012, zt - FL - 0.040, 0.0), "bezel_black")
@@ -988,66 +852,89 @@ def _grip_loft(o, ax, lat, dep, L, w_prof, d_prof, c_prof, n=16, nr=18, e=0.6):
 
 
 def _yokes(acc):
-    """PC-24-style yokes (YOKE table; P1046408 face-on, P1046409, brochure p.12): a black yoke body (the drawn
-    interior.yoke_body_yz: from the grip heads its arms sweep down-inboard round the shield to the stem), the domed
-    white goblet shield on it (interior.yoke_shield_yz: top corners at +/- hub width / 2, a shallow V top edge, concave
-    sides) with a RECESSED silver centre insert carrying the badge (modelled, not painted), the two canted paddle grips
-    swelling to a round head (YOKE grip_head, hat switch on top, trim rocker on the pilot's-side grip), TCS on the white
-    outboard shoulder, AFCS DISC on the black arm below it; horizontal column into the lower panel.  Everything stays
+    """PC-24-style yokes (YOKE table; P1046408 face-on at 0.72 mm/px, P1046409, brochure p.12).  Flight deck r1 (rev H,
+    owner "the details are drastically missing"; PNL-01 / FD-J07): the white Y shield (interior.yoke_shield_yz: horns
+    flaring to the top corners over a broad body to a round 76 mm foot) domed 8.5 mm with two ridges along the silver
+    V's sides, the facets falling to its edges; the V a stepped recess (two 1.5 mm steps, panel_silver) with an abstract
+    silver bar badge at its top; the black body behind it (interior.yoke_body_yz) whose horns run from the grips into
+    the shield's top corners; flat-backed D-section paddle grips (fd_detail_a.paddle_grip: 40 mm across at the root,
+    flaring to 54 under the head, 28 deep) with a grained oval leather inset in a moulded rim on the aft face, the trim
+    switch on the outboard grip's head, the 4-way hat on the inboard one, the PTT trigger on the outboard grip's front;
+    TCS on the white horn, the red AP DISC on the black arm below it; a satin dark column (no chrome).  Everything stays
     inside the envelope the L6B knee / yoke check sweeps (interior.yoke_roll_clearances): the x-slab hub face .. hub
-    face + hub depth times the drawn front-view outline.  The aft faces lean back 10 mm toward the top (P1046409).
-    Review r1 F4 / C3 / C5: no coplanar white / black faces, every button seated on its surface; review r3 F2: the
-    shield no longer runs out to the grips, the black arms carry them."""
-    from model import seats as S
+    face + hub depth times the drawn front-view outline.  The aft faces lean back 10 mm toward the top (P1046409)."""
+    from model import seats as S, fd_detail_a as A
     acc.group = "yokes"
     hw, hh, hd = (float(v) for v in YK["hub_whd"])
     gl, gr, gc = (float(v) for v in YK["grip"])
     hl, rh = (float(v) for v in YK["grip_head"])
-    lean_k = 0.010 / 0.11                                         # aft face 10 mm further forward at the top edge
+    YD = A.YOKE_DETAIL
+    lean_k = 0.010 / hh                                           # aft face 10 mm further forward at the top edge
 
     def lean(a, b, c):
-        return -lean_k * np.clip(b + 0.055, 0.0, None) * np.clip(c / hd, 0.0, 1.0)
+        return -lean_k * np.clip(b + 0.5 * hh, 0.0, None) * np.clip(c / hd, 0.0, 1.0)
     # black body: the drawn body outline (c 0.004 .. hd - 0.016, + dome), behind the shield
-    body_ol = S.fillet(I.yoke_body_yz(), 0.010, max_len=0.012)
+    body_ol = S.fillet(I.yoke_body_yz(), 0.010, max_len=0.010)
     cb0, cbt = 0.004, hd - 0.016
-    body = S.pillow(body_ol, cbt, 0.010, 0.005, h=0.012, crown=S.dome(0.003, 0.012), n_round=2)
+    body = S.pillow(body_ol, cbt, 0.010, 0.005, h=0.010, crown=S.dome(0.003, 0.012), n_round=2)
     body = body.map(lambda V: V + [0.0, 0.0, cb0])
-    # white goblet shield (the drawn shield outline), proud of the body
+    body.mats = {0: "grip_black", 1: "grip_black", 2: "grip_black"}
+    # white Y shield (the drawn outline): sharp-ish horn corners, a broad round foot
     shield = I.yoke_shield_yz()
     tc = shield[np.abs(shield[:, 0]) > 0.5 * hw - 1e-9]                # the two top corners
     far = np.min(np.linalg.norm(shield[:, None, :] - tc[None, :, :], axis=2), axis=1)
-    shield = shield[(far < 1e-9) | (far > 0.025)]                    # side samples next to the acute top corners
-    shield = S.fillet(shield, 0.010, max_len=0.005)                   # dropped (< 1 mm): full-radius corners
-    # recessed silver insert: badge panel narrowing to a rounded tongue [M: P1046408 / 09], its top 5 mm under the
-    # shield's V
-    r_w = 0.006                                                       # the shield's top-edge roll
-    ti = 0.5 * hh - float(YK["shield_dip"]) - r_w - 0.003               # inside the top face (its seams kept)
-    # final judge r1 I2 (P1046408): the grey insert is a tongue in the LOWER middle of the shield (about 0.3 of its top
-    # width, from ~15 mm above the hub centre down toward the stem), white all round and above it up to the badge band
-    # along the top edge -- the rev D insert ran up to the top edge and read as a grey V framed by a thin white rim
-    ti = min(ti, 0.016)
-    insert = np.array([(0.010, -0.036), (0.016, -0.022), (0.020, -0.004), (0.022, ti), (-0.022, ti),
-                       (-0.020, -0.004), (-0.016, -0.022), (-0.010, -0.036)])
-    insert = S.fillet(insert, 0.007, max_len=0.003)
-    rec = 0.0028
+    shield = shield[(far < 1e-9) | (far > 0.008)]
+    rad = np.where(shield[:, 1] < -0.5 * hh + 0.002, 0.022, 0.008)       # foot corners R 22, horns R 8
+    shield = S.fillet(shield, rad, max_len=0.004)
+    r_w = 0.005                                                       # the shield's rolled edge
+    top_in = 0.5 * hh - float(YK["shield_dip"]) - r_w - 0.0025          # the V's top, inside the top face
+    # the stepped silver V, a funnel [M: P1046408 at 0.70 mm/px, both yokes -- 63-66 mm across at the top, 36-42 a
+    # third down, 25-31 at the step, ~13 at its round foot, 80 tall; the lower step from 74 % of its height]
+    vh = 0.080
+    vb, vz = 0.0085, top_in - vh
+    vside = [(0.0325, 0.0), (0.0235, 0.14), (0.0195, 0.30), (0.0150, 0.60), (0.0110, 0.85), (vb, 1.0)]
+    V_ = np.array([(w_, top_in - t_ * vh) for w_, t_ in vside[::-1]] + [(-w_, top_in - t_ * vh) for w_, t_ in vside])
+    V_ = S.fillet(V_, np.r_[[0.0] * (len(vside) - 1) + [0.004, 0.004] + [0.0] * (len(vside) - 1)] *
+                  0 + np.where(np.abs(V_[:, 1] - vz) < 1e-9, 0.006, np.where(np.abs(V_[:, 1] - top_in) < 1e-9, 0.004,
+                                                                         0.0)), max_len=0.003)
+    zs_ = top_in - 0.74 * vh                                          # the step line
+    lo_ = A.clip_below(S._ccw(V_), zs_)
+    lo_ = S.fillet(S._dedup(S.offset_outline(S._dedup(lo_, 2e-4), -0.0012), 2e-4), 0.003, max_len=0.003)
+    rec1, rec2 = 0.0015, 0.0030
+    h0 = 0.0085
+
+    zk = np.array([top_in - t_ * vh for _, t_ in vside])[::-1]
+    wk = np.array([w_ for w_, _ in vside])[::-1]
+
+    def ridge_out(a, b):
+        """distance outboard of the V's side lines (0 inside the V)"""
+        ar = np.interp(b, np.r_[vz - 0.04, zk], np.r_[vb - 0.006, wk])
+        return np.clip(np.abs(a) - ar, 0.0, None)
 
     def crown_w(a, b, d):
-        sd = sdf2d.polygon(a, b, insert)
-        return 0.0045 * S.smoothstep(0.0, 0.016, d) - rec * (sd < 0.0)
-    cw0, cwt = hd - 0.034, 0.029
+        sd1 = sdf2d.polygon(a, b, V_)
+        sd2 = sdf2d.polygon(a, b, lo_)
+        return (h0 * S.smoothstep(0.0, 0.009, d) - 0.0022 * S.smoothstep(0.0, 0.030, ridge_out(a, b))
+                - rec1 * (sd1 < 0.0) - (rec2 - rec1) * (sd2 < 0.0))
+    cw0 = 0.022
+    cwt = hd - h0 - cw0
     fb0 = S._STATS["cap_fallback"]
-    white = S.pillow(shield, cwt, r_w, 0.004, h=0.0055, crown=crown_w, seams=[insert])
-    assert S._STATS["cap_fallback"] == fb0, "yoke shield: the insert seam left the top face"
+    white = S.pillow(shield, cwt, r_w, 0.004, h=0.0045, crown=crown_w, seams=[V_, lo_])
+    assert S._STATS["cap_fallback"] == fb0, "yoke shield: the V's seams left the top face"
     white = white.map(lambda V: V + [0.0, 0.0, cw0])
     tops = np.nonzero(white.pid == 0)[0]
     Pc = white.V[white.F[tops]]
-    inside = sdf2d.polygon(Pc[..., 0].ravel(), Pc[..., 1].ravel(), insert).reshape(-1, 3) < 0.0
+    in1 = sdf2d.polygon(Pc[..., 0].ravel(), Pc[..., 1].ravel(), V_).reshape(-1, 3) < 0.0
+    in2 = sdf2d.polygon(Pc[..., 0].ravel(), Pc[..., 1].ravel(), lo_).reshape(-1, 3) < 0.0
     pid = white.pid.copy()
-    pid[tops[inside.all(1)]] = 3                                      # insert floor
-    pid[tops[inside.any(1) & ~inside.all(1)]] = 4                     # recess wall: its own normals (crisp edge)
+    pid[tops[in1.all(1)]] = 3                                         # V floor
+    pid[tops[in1.any(1) & ~in1.all(1)]] = 4                           # V wall: own normals (crisp edge)
+    pid[tops[in2.all(1)]] = 5                                         # lower step floor
+    pid[tops[in2.any(1) & ~in2.all(1)]] = 6                           # its wall
     white = S.Geo(white.V, white.F, pid, {0: "yoke_white", 1: "yoke_white", 2: "yoke_white", 3: "panel_silver",
-                                          4: "yoke_white"})
-    body.mats = {0: "grip_black", 1: "grip_black", 2: "grip_black"}
+                                          4: "yoke_white", 5: "panel_silver", 6: "panel_silver"})
+    badge = _fillet(np.array([(-0.021, 0.0), (-0.017, 0.0030), (0.017, 0.0030), (0.021, 0.0), (0.017, -0.0030),
+                              (-0.017, -0.0030)]), 0.0008, n=2, max_seg=0.004)
     for sg in (-1, 1):
         acc.group = "yoke_" + SIDE[sg]                                  # own part + pivot (review r2 M4)
         hub = I.yoke_hub(sg)
@@ -1059,17 +946,24 @@ def _yokes(acc):
 
         def on(g, a, b):
             c = _top_height(g, a, b)
-            return c + float(lean(np.array(a), np.array(b), np.array(c)))
-        # badge on the insert floor, TCS on the white inboard shoulder, AFCS DISC on the black shoulder
-        zb = 0.5 * hh - float(YK["shield_dip"]) - 0.0125                # silver badge band along the top edge
-        cbg = on(white, 0.0, zb)                                          # (P1046408: ~0.35 of the top width)
-        acc.add(fr.se(0.0, zb, cbg + 0.0004, (0.024, 0.0042, 0.0012), (0.3, 0.3), (6, 12)), "metal")
-        ob = sg                                                        # outboard: TCS on the white shoulder, the
-        c_t = on(white, ob * 0.052, 0.040)                             # red AFCS DISC below it on the black arm
-        acc.add(fr.knob(ob * 0.052, 0.040, 0.0068, 0.0055, 16, c_t - 0.0015), "black")      # (P1046408 pair)
-        c_r = on(body, ob * 0.066, 0.012)
-        acc.add(fr.knob(ob * 0.066, 0.012, 0.0046, 0.0045, 12, c_r - 0.0015), "light_red")
-        # grips on the canted axes (interior.yoke_grip_axis, radius YOKE grip), centred in the hub slab
+            return None if c is None else c + float(lean(np.array(a), np.array(b), np.array(c)))
+        # abstract bar badge on the V floor along its top (no lettering)
+        zb = top_in - 0.0075
+        cbg = on(white, 0.0, zb)
+        fb = Fr(fr.p(0.0, zb, cbg + 0.0005), fr.u, fr.v, fr.w)
+        acc.add(_flat(_extrusion(fb, badge, 0.0012, bevel=0.0004, nb=1)), "panel_grey")   # crisp (thin) facets
+        ob = sg                                                        # outboard: TCS on the white horn, the red
+        # TCS: a black boss through the horn, its button in a ring (P1046408: on the horn tip)
+        c_t = on(white, ob * 0.052, 0.043)
+        ft = Fr(fr.p(ob * 0.054, 0.044, 0.0), fr.u, fr.v, fr.w)
+        acc.add(A.knob(ft.o + 0.040 * fr.w, fr.w, fr.u, 0.0080, c_t + 0.0012 - 0.040, n=20), "grip_black")
+        acc.add(A.knob(ft.o + (c_t + 0.0008) * fr.w, fr.w, fr.u, 0.0052, 0.0030, n=16, chamfer=0.3), "black")
+        # AP DISC: red button in a black collar on the black arm below the TCS
+        c_r = on(body, ob * 0.066, 0.020)
+        fa = ft.o + (ob * 0.012) * fr.u + (-0.026) * fr.v
+        acc.add(A.knob(fa + (c_r - 0.0015) * fr.w, fr.w, fr.u, 0.0060, 0.0025, n=16), "grip_black")
+        acc.add(A.knob(fa + (c_r + 0.0008) * fr.w, fr.w, fr.u, 0.0042, 0.0035, n=16, chamfer=0.35), "light_red")
+        # paddle grips on the canted axes (interior.yoke_grip_axis), centred in the hub slab, flat aft face
         for d in (-1, 1):
             p0, p1 = I.yoke_grip_axis(d)
             ax2 = _unit(np.r_[p1 - p0])
@@ -1077,30 +971,40 @@ def _yokes(acc):
             ax = ax2[0] * fr.u + ax2[1] * fr.v
             lat = d * (ax2[1] * fr.u - ax2[0] * fr.v)                    # outboard, across the grip
             o = fr.p(b0[0], b0[1], 0.5 * hd)
-            s_h0, s_h1 = 1.0 - (hl + 0.010) / gl, 1.0 - rh / gl                # swollen head (YOKE grip_head)
-            wp = lambda s_: gr * 0.93 + (rh - gr * 0.93) * S.smoothstep(s_h0, s_h1, s_)    # noqa: E731
-            # final judge r1 I2: slimmer paddles (depth 0.62 -> 0.85 of the hub slab from the root to the head; 0.80 ->
-            # 0.98 read as fat round handles from behind)
-            dp = lambda s_: (0.5 * hd - 0.004) * (0.62 + 0.23 * S.smoothstep(0.45, 0.9, s_))   # noqa: E731
-            cp = lambda s_: 0.002 * S.smoothstep(0.5, 0.95, s_)                 # noqa: E731 -- head leans aft
-            acc.add(_grip_loft(o, ax, lat, fr.w, gl, wp, dp, cp), "grip_black")
-            # grained leather panel on the outboard / aft face [M: P1046408 / brochure p.12]
-            pc = o + 0.42 * gl * ax + 0.25 * gr * lat + (0.5 * hd - 0.004) * 0.66 * fr.w
-            acc.add(superellipsoid(pc, (0.30 * gl, 0.55 * gr, 0.0020), (0.5, 0.5), nu=8, nv=14,
-                                   R=np.stack([ax, lat, fr.w], 1)), "black")
-            hdir = _unit(ax + 0.5 * fr.w)                               # hat switch on the head, aft-up
-            tip = o + (gl - 0.016) * ax + 0.006 * fr.w
-            acc.add(cylinder(tip, tip + 0.010 * hdir, 0.0048, n=12), "black")    # black thumb knob (P1046408)
-            acc.add(cylinder(tip + 0.010 * hdir, tip + 0.0145 * hdir, 0.0070, n=12), "black")
-            if d == sg:                                                  # trim rocker, aft face of the head
-                q = o + (gl - 0.032) * ax + (0.5 * hd - 0.004) * 0.83 * fr.w
-                acc.add(superellipsoid(q, (0.007, 0.005, 0.004), (0.4, 0.4), nu=6, nv=10,
-                                       R=np.stack([ax, lat, fr.w], 1)), "panel_grey")
+            f0, f1 = (gl - hl - 0.010) / gl, (gl - rh) / gl              # the drawn widening (yoke_grip_outline)
+            w_of = lambda s_: gr + (rh - gr) * S.smoothstep(f0, f1, s_)        # noqa: E731
+            gm, aft = A.paddle_grip(o, ax, lat, fr.w, gl, w_of, YD["grip_d"], YD["grip_ra"], YD["grip_rf"])
+            acc.add(gm, "grip_black")
+            # grained leather inset in its moulded rim on the flat aft face, following the paddle's width [M: P1046409,
+            # brochure p.12]
+            s0, s1, rim = YD["inset"]
+            ol = A.taper_outline(gl, s0, s1, lambda s_: w_of(s_) - YD["grip_ra"] - rim + 0.0008, n=22)
+            for m, mat in A.inset(o + YD["grip_d"] * fr.w, ax, lat, fr.w, ol, rim):
+                acc.add(m, mat)
+            hdir = _unit(ax + 0.35 * fr.w)                              # switches on the head, aft-up
+            tip = o + (gl - 0.010) * ax + 0.004 * fr.w
+            if d == sg:                                                  # outboard grip: pitch trim switch, PTT
+                acc.add(A.knob(tip, hdir, lat, 0.0075, 0.0040, n=20, chamfer=0.2), "grip_black")
+                rk = tip + 0.0058 * hdir
+                acc.add(superellipsoid(rk, (0.0045, 0.0062, 0.0030), (0.35, 0.35), nu=8, nv=12,
+                                       R=np.stack([_unit(np.cross(hdir, lat)), lat, hdir], 1)), "black")
+                st, tw, th_, tp = YD["trigger"]
+                q = o + st * gl * ax - (YD["grip_d"] - 0.002) * fr.w
+                acc.add(superellipsoid(q - 0.5 * tp * fr.w, (0.5 * th_, 0.5 * tw, 0.5 * tp + 0.002), (0.4, 0.4),
+                                       nu=8, nv=12, R=np.stack([ax, lat, fr.w], 1)), "black")
+            else:                                                        # inboard grip: 4-way hat (knurled cap)
+                acc.add(A.knob(tip, hdir, lat, 0.0068, 0.0030, n=20, chamfer=0.2), "grip_black")
+                acc.add(A.knob(tip + 0.0028 * hdir, hdir, lat, 0.0034, 0.0042, n=12), "black")
+                acc.add(A.knob(tip + 0.0062 * hdir, hdir, lat, 0.0052, 0.0034, n=32, flutes=16, chamfer=0.3),
+                        "black")
         # horizontal column into the lower panel (into the black body's forward face); it reaches the full pull
         # travel deeper than 30 mm behind the panel face, so at full pull it is still in its boot (the animation review
-        # 2026-10-04: built 30 mm deep, the 90 mm pull drew it out of the boot, the panel showing through the hole)
+        # 2026-10-04: built 30 mm deep, the 90 mm pull drew it out of the boot, the panel showing through the hole);
+        # satin dark metal, not chrome (flight deck r1)
         acc.add(cylinder([xf - 0.03 - float(YK["travel"][1]) - 0.005, hub[1], hub[2]], [hub[0] + 0.010, hub[1], hub[2]],
-                         float(YK["column_r"]), n=16), "steel")
+                         float(YK["column_r"]), n=24), "metal_dark")
+        for m, mat in A.yoke_bellows(sg):                              # its rubber bellows, moving with the yoke
+            acc.add(m, mat)
 
 
 SIDE = {-1: "L", 1: "R"}
@@ -1142,7 +1046,10 @@ def _pedals(acc):
     """Rudder pedals at neutral crank (interior.pedal_points): pads at seat CL +/- PEDALS dy on the drawn face line,
     HANGING arms from the rudder-bar torque tube under the lower panel (PEDALS pivot; model judging r1 INT-m1: P1046408
     / 09 show dark arms and rods filling the knee hole), toe-brake master cylinders on the arms, the adjustment crank
-    between each pair on the floor."""
+    between each pair on the floor.  Flight deck r1 (FD-J04): satin black pads with fine dark rubber ribs (no light
+    treads), every arm, rod and cylinder dark satin metal (no chrome), the footwells closed by dark walls
+    (fd_detail_a.footwell_walls)."""
+    from model import fd_detail_a as A
     acc.group = "pedals"
     pp = I.pedal_points(0.0)
     d = np.array([pp["dir"][0], 0.0, pp["dir"][1]])                 # up the pedal face
@@ -1155,23 +1062,26 @@ def _pedals(acc):
             yc = sg * float(I.CREW_SEAT["bl"]) + dd * float(PD["dy"])
             s_c = 0.06 + 0.5 * pl
             f = Fr(heel + s_c * d + [0.0, yc, 0.0], [0, 1.0, 0], d)
-            acc.add(f.se(0, 0, 0.004, (0.5 * pw, 0.5 * pl, 0.008), (0.25, 0.25), (8, 14)), "black")
-            # fine tread (final judge r1 I7 / R9: five metal ribs read as ladder slats): eleven narrow dark ribs
-            for k in range(-5, 6):
-                acc.add(f.box(0, k * 0.0145, 0.0118, (pw - 0.026, 0.0035, 0.0020)), "bezel_black")
+            acc.add(f.se(0, 0, 0.004, (0.5 * pw, 0.5 * pl, 0.008), (0.25, 0.25), (10, 16)), "grip_black")
+            # fine moulded ribs across the pad, dark rubber, and a raised toe lip at its top (P1046408 / 09)
+            for k in range(-6, 7):
+                acc.add(f.se(0, k * 0.0135, 0.0118, (0.5 * pw - 0.014, 0.0021, 0.0016), (0.2, 0.6), (4, 6)),
+                        "rubber_black")
+            acc.add(f.se(0, 0.5 * pl - 0.010, 0.0130, (0.5 * pw - 0.008, 0.0055, 0.0040), (0.3, 0.5), (6, 8)),
+                    "grip_black")
             piv = np.array([hx, yc, FL + hz])
             top = f.p(0.0, 0.050, -0.002)                             # into the pad's back (it floated 6 mm)
             mid = f.p(0.0, -0.020, -0.004)
             for sy in (-1, 1):                                         # two dark hanging arms (P1046408 / 09)
                 off = np.array([0.0, sy * 0.032, 0.0])
-                acc.add(cylinder(piv + off, mid + off, 0.0075, n=10), "metal_dark")
-                acc.add(cylinder(mid + off, mid + off * 0.6 + [0.010, 0, -0.030], 0.0065, n=8), "metal_dark")
-            acc.add(cylinder(piv + [0.0, -0.040, 0.0], piv + [0.0, 0.040, 0.0], 0.014, n=12), "metal_dark")  # hub
-            # toe-brake master cylinder: from the arm hub down to the pad's top (its body steel, the rod chrome)
+                acc.add(cylinder(piv + off, mid + off, 0.0075, n=12), "metal_dark")
+                acc.add(cylinder(mid + off, mid + off * 0.6 + [0.010, 0, -0.030], 0.0065, n=10), "metal_dark")
+            acc.add(cylinder(piv + [0.0, -0.040, 0.0], piv + [0.0, 0.040, 0.0], 0.014, n=14), "metal_dark")  # hub
+            # toe-brake master cylinder: from the arm hub down to the pad's top (dark body, dark rod)
             cb_ = piv + [0.035, 0.0, -0.030]
             cm_ = cb_ + 0.6 * (top - cb_)
-            acc.add(cylinder(cb_, cm_, 0.010, n=10), "steel")
-            acc.add(cylinder(cm_, top, 0.004, n=8), "chrome_trim")
+            acc.add(cylinder(cb_, cm_, 0.010, n=12), "metal_dark")
+            acc.add(cylinder(cm_, top, 0.004, n=8), "steel_dark")
             acc.group = "pedals"
         # rudder-bar torque tube across each pair at the arm pivots and its two bearing brackets up under the lower
         # panel (fixed; the pedal arms turn on it)
@@ -1182,8 +1092,12 @@ def _pedals(acc):
         # adjustment crank between each pair (POH 7-3-4), on the floor
         c = np.array([3.110, sg * float(I.CREW_SEAT["bl"]), FL + 0.030])
         acc.add(box(c, (0.040, 0.050, 0.050)), "metal_dark")
-        acc.add(cylinder(c + [0.02, 0, 0.0], c + [0.045, 0, 0.0], 0.006, n=8), "steel")
-        acc.add(cylinder(c + [0.045, 0, 0.0], c + [0.045, 0, 0.035], 0.005, n=8), "steel")
+        acc.add(cylinder(c + [0.02, 0, 0.0], c + [0.045, 0, 0.0], 0.006, n=8), "steel_dark")
+        acc.add(cylinder(c + [0.045, 0, 0.0], c + [0.045, 0, 0.035], 0.005, n=8), "grip_black")
+    # the footwells: dark walls, the panel's underside, the outboard cubby with the USB pair (FD-J04)
+    acc.group = "footwell"
+    for m, mat in A.footwell_walls():
+        acc.add(m, mat)
 
 
 # =====================================================================================================================

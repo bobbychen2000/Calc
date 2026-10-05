@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="G", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-03")
+             size="A1", scale="AS SHOWN", rev="H", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -64,6 +64,11 @@ REVISIONS = (
                         "edge, straight band to the lining at |BL| 400, P1046402 / 04 / 06) carrying the PSU pods "
                         "(psu_bl 370 -> 320) and downlights, cabin headroom to the headliner underside (L6B); PDU "
                         "bezel tops visible from the design eyes under the eyebrow fascia (L6B row)"),
+    ("H", "2026-10-05", "flight deck r1 (owner: details): yoke re-measured on P1046408 / 09 and the JTF elevation -- "
+                        "hub 140 x 120, white Y shield (horns to +/-70, mid-height +/-39, round 45 foot), paddle grips "
+                        "r 16 widening to 21 over their top 90 (no round head); CCD palm grip 100 x 85, top 385 above "
+                        "the floor [M]; glareshield lip arch from both JTF elevations (outboard 15-70 lower); GI 275 "
+                        "unit 82.6 square over its 79.4 cut-out [S]; SDUs 110 x 195 [M]"),
 )
 
 # ---- fills (clean sheet)
