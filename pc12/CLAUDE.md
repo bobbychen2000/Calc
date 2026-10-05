@@ -791,5 +791,5 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   with the table changes (rev label untouched: the merge writes rev H); viewer_test [T12] NAV2-05 / [T13] NAV3-02 take
   the airstair stop's pose from web/tour_data.py (they still expected r4's -48 deg / BL -0.42 after tour review r5 and
   failed on the base).  Verified on this build: fit_check OK (26 none; 30 nearest 3.9 mm, 0 crossings; 30b all seated;
-  31 nearest 10.3 mm), consistency_2d3d 138 PASS, viewer_test 216 / 216.  Owner question: the compass on the post
-  (the PRO simulator photo has it, the s/n 3001 photos show the post empty below the grab handle's V fitting).
+  31 nearest 10.3 mm), consistency_2d3d 138 PASS, viewer_test 216 / 216.  Owner decision (2026-10-05): the compass stays on the post
+  (the PRO simulator photo and the NGX POH have it; the s/n 3001 photos show the post empty below the grab handle's V fitting).
