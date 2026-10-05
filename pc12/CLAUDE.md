@@ -58,8 +58,8 @@ python3 web/package.py          # static viewer bundle -> dist/ (gitignored): me
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~98 MB as base64 text parts: meshopt 15 + 13 MB, gzip of the full model 23 MB for desktops and of
-                                #   the light tier 19 MB for phones without WebAssembly; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   (~102 MB as base64 text parts: meshopt 16 + 13 MB, gzip of the full model 24 MB for desktops and of
+                                #   the light tier 19 MB for phones without WebAssembly, every part <= 10.7 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
                                 #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
