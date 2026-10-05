@@ -582,7 +582,7 @@ REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
              ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"),
              ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]"),
              ("G", "2026-10-03", "model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row"),
-             ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]"))
+             ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU [M]; CB panel pairs, overhead [S+M]"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

@@ -72,11 +72,12 @@ DETAIL = dict(
     ecs_r=0.024,                               # [M] eyeball outlet (cockpit key 47 mm)
     afcs_z=0.180,                              # [M] GFC 700 centre above the MFD centre (sheet: +0.18)
     baro_bl=0.228, warn_bl=0.300,              # [M] BARO knob, master warning / caution pair (face-on photo)
-    cb=(4, 10, 0.0045),                        # [M] CB rows, breakers per row, knob radius (P1046409 / 10; review r4
-    #                                            INT8-02: small black breaker heads, 7 mm proud on a white collar ring,
-    #                                            not 11 mm metal pills of r 5.5)
+    cb=(4, 12, 0.0040),                        # [M] CB rows, breakers per row (front panel), head radius -- the panel
+    #                                            pair's grids are SIDE_CONSOLE cb_grid (12 / 11 x 4), the heads
+    #                                            fd_detail_b.CB (flight deck r1 GEOM B, B3)
     cup_x=(3.875, 3.985),                      # [M] cup-holder pair in the console pod under the CB panel
-    compass_z=2.380,                           # [M] compass on the centre post (P1046408 elevation 23 deg)
+    compass_z=2.380,                           # [M] compass on the centre post (P1046408 elevation 23 deg); built at
+    #                                            fd_detail_b.POST compass_z (r1 GEOM B: under the grab handle's bracket)
 )
 
 FL = float(I.FLOOR["fd_wl"])
@@ -1160,91 +1161,35 @@ def _consoles(acc):
         for du in (-0.026, -0.008):                                # USB-A / -C socket pair (P1046409)
             acc.add(f.rect(du - 0.007, -0.034, du + 0.007, -0.024, 0.0003), "black")
             acc.add(f.rect(du - 0.0045, -0.0305, du + 0.0045, -0.0275, 0.0006), "chrome_trim")
-    # circuit-breaker panels on the sidewall lining above the consoles (rows 1-4, lit legends): group 'cb_panels', hung
-    # on the lining part like the overhead panel (viewer cutaway, review r1 M3)
+    # armrest pads, map pockets, keypads, sidewall eyeball outlets (flight deck r1 GEOM B, B6)
+    from model import fd_detail_b as FDB
+    for m, mat in FDB.console_fittings(FL):
+        acc.add(m, mat)
+    # circuit-breaker panel pairs on the sidewall lining above the consoles, their bezels and the ledge fittings above
+    # (stowage slot, placards, map light): group 'cb_panels', hung on the lining part like the overhead panel (viewer
+    # cutaway, review r1 M3); flight deck r1 GEOM B (B3): model/fd_detail_b.cb_panels
     acc.group = "cb_panels"
-    cx0, cx1, h0, h1 = (float(v) for v in SC["cb_panel"])
-    nr, nb, kr = DETAIL["cb"]
-    for sg in (-1, 1):
-        X, Z = np.meshgrid(np.linspace(cx0, cx1, 8), np.linspace(FL + h0, FL + h1, 8), indexing="ij")
-        Yv = sg * (L.hw(X, Z) - 0.006)
-        P = np.stack([X, Yv, Z], -1)
-        acc.add(_oriented(grid_surface(P), [0, -sg, 0]), "bezel_black")
-        pc_ = P.reshape(-1, 3).mean(0)
-        for E0 in (P[0], P[-1], P[:, 0], P[:, -1]):
-            E1 = E0.copy()
-            E1[:, 1] = sg * (L.hw(E0[:, 0], E0[:, 2]) - 0.001)
-            acc.add(_oriented(_strip(E0, E1, closed=False), lambda C, c=pc_: (C - c) * [1, 0, 1]), "bezel_black")
-        for i in range(nr):
-            z = FL + h0 + 0.040 + i * (h1 - h0 - 0.070) / (nr - 1)
-            for j in range(nb):
-                x = cx0 + 0.030 + j * (cx1 - cx0 - 0.060) / (nb - 1)
-                y = sg * (float(L.hw(x, z)) - 0.006)
-                acc.add(cylinder([x, y + sg * 0.0005, z], [x, y - sg * 0.0015, z], kr + 0.0004, n=12), "yoke_white")
-                acc.add(cylinder([x, y - sg * 0.0015, z], [x, y - sg * 0.007, z], kr, n=12), "black")
-            zl = z - 0.019
-            # lit legend strip following the curved panel face 0.5 mm in front of it (a straight box was buried at
-            # one end: fit_check 22b)
-            xs_ = np.linspace(cx0 + 0.025, cx1 - 0.025, 8)
-            G_ = np.stack([np.stack([xs_, sg * (L.hw(xs_, np.full(8, zz)) - 0.0075), np.full(8, zz)], -1)
-                           for zz in (zl - 0.0015, zl + 0.0015)], 1)                # 1.5 mm proud (r3 K3)
-            acc.add(_oriented(grid_surface(G_), [0, -sg, 0]), "screen_green")      # PRO: green legends both sides
+    for m, mat in FDB.cb_panels(FL):
+        acc.add(m, mat)
 
 
 # =====================================================================================================================
 # overhead panel (+ SAFETY AUTOLAND cup, eyeballs), magnetic compass on the centre post
 # =====================================================================================================================
 def _overhead(acc):
+    """Overhead panel and its ceiling pod (flight deck r1 GEOM B, B4: model/fd_detail_b.overhead_panel / overhead_pod),
+    the SAFETY AUTOLAND cup aft of it, the centre-post fittings (_post_trim) and the flight-deck headliner fittings and
+    sun visors (B9)."""
+    from model import fd_detail_b as FDB
     acc.group = "overhead"
     L = lining()
-    xa, xb = (float(v) for v in OV["x"])
-    w, dep = float(OV["w"]), float(OV["depth"])
-    xs = np.linspace(xa, xb, 6)
-    zc = L.crown(xs, 0.0)
-    slope = float(np.polyfit(xs, zc, 1)[0])
-    xm = 0.5 * (xa + xb)
-    zb = float(L.crown(xm, 0.0)) - dep
-    u = _unit([1.0, 0.0, slope])
-    f = Fr([xm, 0.0, zb], u, [0, -1.0, 0])                             # w = down (toward the crew)
-    hl, hwid = 0.5 * (xb - xa) * math.sqrt(1 + slope ** 2), 0.5 * w        # along the slope: the drawn x extent
-    O = rrect_loop(hl, hwid, 0.012, 4)
-    top_c = np.array([float(L.crown(xm + a * u[0], abs(b))) for a, b in O]) - (zb + slope * O[:, 0] * u[0]) + 0.004
-    side = _strip(f.p(O[:, 0], O[:, 1], 0.0), f.p(O[:, 0], O[:, 1], -np.maximum(top_c, 0.004)))
-    acc.add(_oriented(side, lambda C: C - f.o), "panel_grey")
-    acc.add(_oriented(f.poly(O, 0.0), f.w), "panel_grey")
-    # anthracite face inside a grey frame, chrome bat-handle toggles, the white bus-diagram / section lines and the
-    # bright red MASTER POWER guard (Pilatus PRO overhead photo, P1046406; model judging r1 INT-m5: review r1 F6's
-    # brushed-silver face with black lines came from the over-exposed AOPA studio shot -- the PRO overhead is dark
-    # with white printing)
-    acc.add(f.rect(-hl + 0.010, -hwid + 0.010, hl - 0.010, hwid - 0.010, 0.0006), "panel_dark")
-    # switch layout (look-up photo, [M]; a = aft, s = starboard from the panel centre): SYSTEM TEST / FUEL PUMPS /
-    # ENGINE (port), ELECTRICAL POWER MANAGEMENT (aft centre), MASTER POWER guard (aft stbd), EXTERNAL LIGHTS (fwd),
-    # PASSENGER WARNING (fwd stbd)
-    P = lambda a, s_, c=0.0: f.p(a, -s_, c)                                                  # noqa: E731
-    togg = [(-0.012, -0.205), (-0.012, -0.166), (-0.072, -0.150), (0.060, -0.035), (0.066, 0.039), (0.021, -0.082),
-            (0.021, -0.034), (0.021, 0.086), (-0.021, -0.080), (-0.021, -0.034), (-0.021, 0.084), (-0.074, -0.100),
-            (-0.074, -0.078), (-0.074, -0.056), (-0.074, -0.033), (-0.074, 0.035), (-0.072, 0.154), (-0.072, 0.190)]
-    for a_, s_ in togg:                                   # hex nut + chrome bat handle with a ball end
-        acc.add(cylinder(P(a_, s_, 0.0006), P(a_, s_, 0.0045), 0.0045, n=6), "metal_dark")
-        acc.add(cylinder(P(a_, s_, 0.004), P(a_ - 0.005, s_, 0.018), 0.0019, n=8), "chrome_trim")
-        acc.add(superellipsoid(P(a_ - 0.005, s_, 0.018), (0.0030, 0.0030, 0.0030), (1, 1), 6, 8), "chrome_trim")
-    for a_, s_ in ((0.057, -0.220), (0.057, -0.162), (-0.070, -0.177)):                     # FIRE WARN, LAMP, START
-        acc.add(box(P(a_, s_, 0.004), (0.018, 0.018, 0.008), R=f.R), "panel_dark")
-    acc.add(box(P(-0.070, -0.207, 0.008), (0.030, 0.016, 0.016), R=f.R), "panel_grey")      # RUN lever
-    for s_ in (0.057, 0.080):                                                                 # LANDING, PULSE paddles
-        acc.add(box(P(-0.076, s_, 0.007), (0.012, 0.014, 0.014), R=f.R), "yoke_white")
-    acc.add(box(P(0.055, 0.190, 0.006), (0.050, 0.056, 0.012), R=f.R), "placard_red")        # MASTER POWER guard
-    acc.add(box(P(0.055, 0.190, 0.0135), (0.010, 0.030, 0.004), R=f.R), "black")            # its guard lever
-    for a0, s0, a1, s1 in ((0.021, -0.233, 0.021, -0.133), (-0.039, -0.233, -0.039, 0.233), (0.088, -0.133,
-                           -0.039, -0.133), (-0.039, -0.123, -0.095, -0.123), (-0.039, 0.120, -0.095, 0.120),
-                           (0.021, -0.082, 0.021, 0.086), (0.060, -0.058, -0.021, -0.058), (0.066, 0.064,
-                           -0.021, 0.064), (-0.021, -0.080, -0.021, 0.084)):
-        q = np.array([P(a0, s0, 0.0011), P(a1, s1, 0.0011)])
-        dv = _unit(q[1] - q[0])
-        sd = 0.0010 * _unit(np.cross(dv, f.w))
-        quad = Mesh(np.array([q[0] - sd, q[1] - sd, q[1] + sd, q[0] + sd]), np.array([[0, 1, 2], [0, 2, 3]]))
-        acc.add(_oriented(quad, f.w), "light_white")
-    # SAFETY AUTOLAND cup + two eyeball outlets aft of the panel
+    for m, mat in FDB.overhead_panel():
+        acc.add(m, mat)
+    acc.group = "pod"
+    for m, mat in FDB.overhead_pod():
+        acc.add(m, mat)
+    acc.group = "overhead"
+    # SAFETY AUTOLAND cup aft of the pod
     ax_, ay_, asz = (float(v) for v in OV["autoland"])
     zc_ = float(L.crown(ax_, ay_))
     # a proud square bezel on the headliner with the cup inside it (the lining is not cut: the old cup went 8 mm INTO
@@ -1258,72 +1203,38 @@ def _overhead(acc):
     O2 = rrect_loop(0.5 * asz, 0.5 * asz, 0.012, 4)
     In2 = rrect_loop(0.5 * asz - 0.010, 0.5 * asz - 0.010, 0.006, 4)
     acc.add(_oriented(_strip(fa.p(O2[:, 0], O2[:, 1], -0.004), fa.p(O2[:, 0], O2[:, 1], 0.012)),
-                      lambda C: C - fa.o), "panel_grey")
+                      lambda C: C - fa.o), "panel_dark")
     acc.add(_oriented(_strip(fa.p(O2[:, 0], O2[:, 1], 0.012), fa.p(In2[:, 0], In2[:, 1], 0.012), closed=True),
-                      fa.w), "panel_grey")
+                      fa.w), "panel_dark")
     acc.add(_oriented(_strip(fa.p(In2[:, 0], In2[:, 1], 0.012), fa.p(In2[:, 0], In2[:, 1], 0.004)),
-                      lambda C: fa.o - C), "panel_grey")
-    acc.add(_oriented(fa.poly(In2, 0.004), fa.w), "panel_dark")
+                      lambda C: fa.o - C), "panel_dark")
+    acc.add(_oriented(fa.poly(In2, 0.004), fa.w), "bezel_black")
     acc.add(fa.knob(0, 0, 0.016, 0.006, 20, 0.004), "paint_red")
     acc.add(fa.disk(0, 0, 0.019, 0.0045, 24, r_inner=0.016), "light_red")
-    for by in (-0.070, 0.070):
-        x = xb + 0.065
-        fe = Fr([x, by, float(L.crown(x, by)) - 0.002], [1.0, 0, 0], [0, -1.0, 0])
-        acc.add(revolve([(0.0, 0.026), (0.006, 0.024), (0.009, 0.017)], n=20, axis_origin=fe.o, axis_dir=fe.w,
-                        ref_dir=fe.u), "panel_grey")
-        acc.add(fe.se(0, 0, 0.004, (0.014, 0.014, 0.014), (0.9, 0.9), (8, 12)), "metal_dark")
-    # magnetic compass on the windshield centre post (P1046408: ~23 deg above the divider camera; P1046409 / 10)
-    from model import fuselage as F
-    zc = DETAIL["compass_z"]
-    xx = np.linspace(3.25, 4.0, 751)
-    xp = float(xx[np.argmin(np.abs(F.z_top(xx) - zc))])
-    a = math.atan2(float(F.z_top(xp + 0.01) - F.z_top(xp - 0.01)), 0.02)
-    inward = np.array([math.sin(a), 0.0, -math.cos(a)])
-    p0 = np.array([xp, 0.0, zc])
-    # on the centre-post trim (POST_TRIM, model judging r1 INT-m7): the stem from 0.5 mm inside the trim face, the
-    # housing clear of it
-    fc = Fr(p0 + (POST_TRIM["d"][1] + 0.052) * inward, [0, 1.0, 0], [0, 0, 1.0])          # w = aft
-    acc.add(cylinder(p0 + (POST_TRIM["d"][1] - 0.0005) * inward, fc.o, 0.009, n=10), "black")
-    acc.add(fc.se(0, 0, 0, (0.034, 0.036, 0.030), (0.3, 0.3), (8, 14)), "panel_grey")
-    acc.add(fc.se(0, 0.004, 0.012, (0.026, 0.022, 0.020), (0.3, 0.3), (6, 12)), "black")
-    acc.add(fc.rect(-0.017, -0.004, 0.017, 0.012, 0.0325), "light_white")
-    acc.add(fc.rect(-0.0008, -0.004, 0.0008, 0.012, 0.0330), "light_red")
+    acc.add(fa.disk(0, 0, 0.010, 0.0102, 20), "light_white")
     _post_trim(acc)
+    acc.group = "headliner_fd"
+    for m, mat in FDB.headliner_fittings():
+        acc.add(m, mat)
+    acc.group = "visors"
+    for m, mat in FDB.visors():
+        acc.add(m, mat)
 
 
-POST_TRIM = dict(hw=0.033, d=(0.022, 0.058), n=3.0)   # [M] interior windshield centre-post fairing: half-width, depth
-#                                                      from / to inside the OML, section exponent (model judging r1
-#                                                      INT-m7: P1046408 / AOPA show a moulded grey post ~65-70 wide
-#                                                      from the glareshield to the overhead fairing, the compass on it)
+POST_TRIM = dict(group="post")     # the centre post's moulding is the two windshield reveals + the lining strip between
+#                                    them (fd_detail_b.glazing_mouldings: 90 mm at the glass, P1046408); its fittings:
+#                                    fd_detail_b.POST (grab handle, card holder, compass)
 
 
 def _post_trim(acc):
-    """Moulded lining-grey fairing over the windshield centre post, inside the glass: from the glareshield hood (the
-    glass lower edge at BL 0, run 25 mm into the hood) up along the OML crown line to the overhead panel's forward end;
-    a rounded-rectangle section POST_TRIM hw x d, closed at both ends."""
-    from model import fuselage as F
-    hw, (d0, d1), ne = POST_TRIM["hw"], POST_TRIM["d"], POST_TRIM["n"]
-    xw, zw = I.ws_lower_edge(0.0)
-    xs = np.linspace(xw + 0.010, float(OV["x"][0]) + 0.005, 40)
-    zt = F.z_top(xs)
-    dz = np.gradient(zt, xs)
-    nin = np.stack([dz, np.zeros_like(xs), -np.ones_like(xs)], 1)
-    nin /= np.linalg.norm(nin, axis=1, keepdims=True)                 # into the cabin (down / aft)
-    Q = np.stack([xs, np.zeros_like(xs), zt], 1)
-    Q[0] -= 0.025 * _unit([1.0, 0.0, dz[0]])                           # into the hood
-    th = np.linspace(0.0, 2 * np.pi, 28, endpoint=False)
-    c, s_ = np.cos(th), np.sin(th)
-    u = hw * np.sign(c) * np.abs(c) ** (2.0 / ne)
-    vv = 0.5 * (d1 - d0) * np.sign(s_) * np.abs(s_) ** (2.0 / ne)
-    dm = 0.5 * (d0 + d1)
-    G = np.stack([Q[i] + nin[i] * dm + np.outer(u, [0.0, 1.0, 0.0]) + np.outer(vv, nin[i]) for i in range(len(xs))])
-    side = grid_surface(G, close_v=True)
-    cen = Q + nin * dm
-    side = _oriented(side, lambda C: C - cen[np.argmin(np.linalg.norm(C[:, None] - cen[None], axis=2), 1)])
-    acc.add(side, "lining_flightdeck")
-    for i, sgn in ((0, -1.0), (-1, 1.0)):
-        t = _unit([1.0, 0.0, dz[i]]) * sgn
-        acc.add(_oriented(planar_cap(G[i], t), t), "lining_flightdeck")
+    """Centre-post fittings (flight deck r1 GEOM B, B1 / B5): the grab handle from the overhead pod down to its V end
+    bracket, the deviation-card holder and the magnetic compass (model/fd_detail_b.post_fittings).  Model judging r1
+    INT-m7's broad lining-grey fairing tube over the post is gone: the post moulding is the windshield reveals' post
+    edges with the lining strip between them (FD-J11: 'a dark moulding, not a broad grey slab')."""
+    from model import fd_detail_b as FDB
+    acc.group = POST_TRIM["group"]
+    for m, mat in FDB.post_fittings():
+        acc.add(m, mat)
 
 
 # =====================================================================================================================
@@ -1343,6 +1254,10 @@ def _divider(acc):
         Q = S[m]
         if sg > 0:
             Q = Q[::-1]
+        # flight deck r1 GEOM B (B8): the faces stop half a wall thickness short of the drawn opening edge, where the
+        # half-round walnut edge of fd_detail_b.divider_fittings takes over (its apex on the edge)
+        edge_d = edge
+        edge = edge + sg * 0.5 * t
         Q = Q[(Q[:, 1] >= FL) & (sg * Q[:, 0] >= sg * edge)]
         zc = float(L.crown(xa, edge))
         ywall = float(L.hw(xa, FL))
@@ -1356,16 +1271,11 @@ def _divider(acc):
         P2 = np.vstack([out, Gi])
         for x, nx in ((xa, 1.0), (xa - t, -1.0)):
             acc.add(_oriented(Mesh(np.c_[np.full(len(P2), x), P2], tri), [nx, 0, 0]), "veneer_walnut")
-        on = np.abs(out[:, 0] - (edge - sg * 0.001)) < 1e-6
-        E = out[on][np.argsort(out[on][:, 1])]
-        E0 = np.c_[np.full(len(E), xa - t), E]
-        E1 = np.c_[np.full(len(E), xa), E]
-        acc.add(_oriented(_strip(E0, E1, closed=False), [0, -sg, 0]), "veneer_walnut")
         # aft-face placard (pax signs, LH) / sign plate (RH), cabin side
         if sg < 0:
-            acc.add(box([xa + 0.0015, 0.5 * (edge - 0.60), FL + 1.02], (0.002, 0.11, 0.035)), "paint_red")
+            acc.add(box([xa + 0.0015, 0.5 * (edge_d - 0.60), FL + 1.02], (0.002, 0.11, 0.035)), "paint_red")
         else:
-            acc.add(box([xa + 0.0015, edge + 0.10, FL + 1.20], (0.002, 0.07, 0.035)), "bezel_black")
+            acc.add(box([xa + 0.0015, edge_d + 0.10, FL + 1.20], (0.002, 0.07, 0.035)), "bezel_black")
     # curtain track across the opening at the headliner (fwd face) and the stowed bundle at the stow-side edge
     from model import seats as S_
     x0, x1, y0, y1, zt, xt = I.curtain_bundle()
@@ -1432,6 +1342,11 @@ def _divider(acc):
                                                    [-0.001, 0.009]]), cap=False), "metal_dark")
     xf = xa - float(DV["t"])
     acc.add(box([xf - 0.003, ey, zb + 0.5 * eh], (0.006, 0.050, eh - 0.04)), "metal_dark")      # bracket plate
+    # rounded aisle edges, oxygen-mask cups, smoke goggles, headset hooks, document pocket, latches, track end caps
+    # (flight deck r1 GEOM B, B8)
+    from model import fd_detail_b as FDB
+    for m, mat in FDB.divider_fittings(FL):
+        acc.add(m, mat)
 
 
 # =====================================================================================================================
@@ -1473,6 +1388,7 @@ def build(parts, ceiling=None):
     builder).  ceiling: a list that takes the 'overhead' group [(Mesh, material)] instead of the part (interior.build
     hangs the overhead panel on the interior_lining part: the viewer's cutaway clips it with the headliner)."""
     from model.parts import Part
+    from model import fd_detail_b as FDB
     e = I.design_eye(-1)
     p = Part("flight_deck", "Flight deck: Garmin G3000 PRIME panel, PC-24-style yokes, pedestal, divider", "interior",
              explode=(0, 0, 0.0), group="Interior",
@@ -1487,7 +1403,7 @@ def build(parts, ceiling=None):
     fixed = defaultdict(lambda: defaultdict(list))                        # WHOLE piece set (review r3 C1)
     for grp, ms in build_flightdeck(groups=True).items():
         for m, mat in ms:
-            if ceiling is not None and grp in ("overhead", "cb_panels"):
+            if ceiling is not None and grp in FDB.CEILING_GROUPS:
                 ceiling.append((m, mat))
             elif grp in pivots:
                 kids[grp].append((m, mat))

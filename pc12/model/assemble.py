@@ -174,6 +174,19 @@ MATERIALS = {
     "exhaust_polished": ((0.50, 0.42, 0.30), 1.0, 0.06),               # sRGB #BCAD95 polished, heat-tinted stacks
     "inlet_lip":        ((0.624, 0.6038, 0.5647), 1.0, 0.12),          # sRGB #CFCCC6 polished aluminium chin-inlet lip
     "prop_band_red":    ((0.27, 0.026, 0.004), 0.0, 0.40, dict(specular=0.4)),   # sRGB #8E2D0D deep signal red
+    # ---- flight deck detail B (flight deck r1 GEOM B, model/fd_detail_b.py; append-only): the CB panels' lit bus bands
+    #      (P1046409 / 10, AOPA, PRO Mexico photo: LH blue, RH yellow / green front and white rear rows), dim
+    "fdb_cb_glow_blue":   ((0.020, 0.060, 0.140), 0.0, 0.35),
+    "fdb_cb_glow_green":  ((0.030, 0.120, 0.040), 0.0, 0.35),
+    "fdb_cb_glow_yellow": ((0.140, 0.120, 0.020), 0.0, 0.35),
+    "fdb_cb_glow_white":  ((0.130, 0.125, 0.110), 0.0, 0.35),
+    # stowed sun visors: smoked acrylic panels (AOPA visor photo), gloss
+    "fdb_visor":          ((0.016, 0.017, 0.020), 0.0, 0.10, dict(specular=0.6)),
+    # crew oxygen-mask hose (quick-donning masks in the divider cups: green hose, NGX POH 7-19-2 / panorama)
+    "fdb_hose_green":     ((0.040, 0.20, 0.080), 0.0, 0.50),
+    # CB panels: backlit white legend cells on the black plates; the RH rear block's light silver label strips (AOPA)
+    "fdb_cb_legend":      ((0.80, 0.80, 0.78), 0.0, 0.40),
+    "fdb_cb_label":       ((0.42, 0.42, 0.40), 0.20, 0.40),
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)
@@ -188,6 +201,13 @@ EMISSIVE = {
     "light_amber":   (1.00, 0.55, 0.05),
     "light_cove":    (1.00, 0.95, 0.85),
     "light_reading": (1.00, 0.90, 0.72),
+    # ---- flight deck detail B (append-only): the CB panels' lit bus bands
+    "fdb_cb_glow_blue":   (0.05, 0.20, 0.62),
+    "fdb_cb_glow_green":  (0.08, 0.48, 0.14),
+    "fdb_cb_glow_yellow": (0.50, 0.46, 0.06),
+    "fdb_cb_glow_white":  (0.50, 0.48, 0.42),
+    "fdb_cb_legend":      (0.30, 0.30, 0.28),
+    "fdb_cb_label":       (0.10, 0.10, 0.09),
 }
 # image textures (cad/glb.py GLBBuilder.texture): material -> {slot ('base' / 'emissive'): source}; 'g3000_atlas' =
 # model/g3000_pages.atlas(), the five G3000 PRIME pages in one JPEG, mapped by the UVs model/flightdeck.py gives the

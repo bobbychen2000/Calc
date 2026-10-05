@@ -79,6 +79,16 @@ SK_WRAP_SEAT, SK_WRAP_BACK = 0.012, 0.050     # run-on past the cushion front / 
 SK_SPLIT = 0.010                               # gap between the two thigh-pad sleeves along the seat CL
 SK_FRONT = 0.022                               # the leather cushion's front sits this far behind the drawn front
 SK_TOP = 0.020                                 # the back shell's top sits this far below the drawn top (fleece over it)
+# silhouette shag (flight deck r1 GEOM B, B7 / FD-J03): the pile's clumps stand up to SK_SHAG out of the pads' rims, in
+# 25-50 mm clumps (P1046408 / 09 / 10, PRO Mexico photo: a ragged, tufted outline, not a smooth pillow edge); the rims
+# are sampled every SK_SHAG_STEP along the outline so the clumps are drawn, not aliased
+SK_SHAG, SK_SHAG_K, SK_SHAG_STEP = 0.005, (110.0, 150.0, 190.0), 0.008
+
+
+def shag(seed):
+    """Clump displacement (m, 0 .. SK_SHAG) of a sheepskin pad's rim at outline points (a, b)."""
+    f = fleece(1.0, seed, k=SK_SHAG_K)
+    return lambda a, b: SK_SHAG * (0.5 + 0.5 * np.tanh(3.0 * f(a, b)))
 
 
 # =====================================================================================================================
@@ -352,7 +362,7 @@ def _cap_try(B, h, seams, tol):
 
 
 def pillow(outline, t, r, rb=None, h=None, crown=None, fluff=None, n_round=3, max_len=None, h_bottom=None,
-           seams=None):
+           seams=None, shag=None):
     """Upholstered pad: a closed 2-D outline (a, b) extruded along c from 0 to t, every edge rounded (radius r at the
     top c = t, rb at the bottom).  With h, the top face is tessellated at spacing h (grid + Delaunay) so that
     crown(a, b, d) can puff it, where d = depth inside the top face's edge in m, and a curved mapping bends it
@@ -387,6 +397,14 @@ def pillow(outline, t, r, rb=None, h=None, crown=None, fluff=None, n_round=3, ma
     if fluff is not None:                                        # fleece: a wavy outline too
         w = 1.6 * fluff(Q[:, 0], Q[:, 1])
         rows = [(P2 + w[:, None] * N, c) for P2, c in rows]
+    if shag is not None:
+        # silhouette shag (flight deck r1 GEOM B, B7): clumps standing out of the rim, full at its outermost rows,
+        # half at the top / bottom edge rows -- the pile's ragged outline seen edge-on (P1046408 / 09 / 10), not
+        # band-limited (the judged-grid limit of `fluff` keeps applying to the face's inner waves)
+        w = shag(Q[:, 0], Q[:, 1])
+        R_ = len(rows)
+        prof = [0.5 + 0.5 * math.sin(math.pi * k / max(R_ - 1, 1)) for k in range(R_)]
+        rows = [(P2 + (pk * w)[:, None] * N, c) for (P2, c), pk in zip(rows, prof)]
     R = len(rows)
     V = [np.c_[P2, np.full(n, c)] for P2, c in rows]
     i = np.arange(n)
@@ -874,7 +892,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
             sleeves.append(_ccw(pp))
             g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.016), crown=dome(SK_CROWN_SEAT, 0.075),
-                       fluff=lambda a, b: lump(a, b) + fine(a, b))
+                       fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_SHAG_STEP)
             g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
             geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
             obst.append(geos[-1])
@@ -958,7 +976,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
         fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0), h_judged=0.021)
         g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, 0.06),
-                   fluff=lambda a, b: lump(a, b) + fine(a, b))
+                   fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_SHAG_STEP)
         g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))
         back.append(_mats(g.map(lambda V: bmap(V - [0, 0, apex])), M_SHEEP))
     else:
@@ -1029,8 +1047,15 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
                            + [[nb[0], 0.0, nb[1]]] * 4)
             straps.append((pts, ups))
             q = 0.47 * db + (_crew_front(0.47) + pad_top + 0.0065) * nb        # adjuster clear of the strap
-            back.append(rbox((q[0], sg * 0.049, q[1]), (0.012, 0.056, 0.030), 0.004, M_METAL,
-                             R=np.array([[nb[0], 0, db[0]], [0, 1, 0], [nb[1], 0, db[1]]])))
+            Rq = np.array([[nb[0], 0, db[0]], [0, 1, 0], [nb[1], 0, db[1]]])
+            # cam-lock adjuster (flight deck r1 GEOM B, B7): a black moulded frame, its satin cam bar across
+            back.append(rbox((q[0], sg * 0.049, q[1]), (0.012, 0.058, 0.032), 0.004, M_BLACK, R=Rq))
+            qb = q + 0.0065 * nb + 0.004 * db
+            back.append(tube((qb[0], sg * 0.049 - 0.024, qb[1]), (qb[0], sg * 0.049 + 0.024, qb[1]), 0.0028, M_METAL,
+                             n=8))
+            # shoulder-strap guide on the back top (the straps leave the reel slot through it)
+            qg = (L_s - 0.030) * db + (n_s + 0.004) * nb
+            back.append(rbox((qg[0], sg * 0.060, qg[1]), (0.020, 0.064, 0.016), 0.005, M_BLACK, R=Rq))
 
     backg = [g_.rot((0.0, 0.0), recline) for g_ in back]
     geos += backg
@@ -1076,8 +1101,23 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         Pc, Uc = strap_clear(_catmull(ctrl, 20), _catmull(ups, 20), rest_on, 0.040, 0.0035)
         geos.append(ribbon(Pc, Uc, 0.040, M_HARN, n=None))
         nrm = _unit3([0.25, 0.0, 0.97])
-        geos.append(tube(buckle - 0.008 * nrm, buckle + 0.008 * nrm, 0.036, M_METAL, n=20))
-        geos.append(tube(buckle + 0.007 * nrm, buckle + 0.012 * nrm, 0.020, M_BLACK, n=16))
+        # rotary buckle (flight deck r1 GEOM B, B7): black body, thin satin rim, a ridged black turn knob, the four
+        # strap tongues entering it
+        geos.append(tube(buckle - 0.008 * nrm, buckle + 0.007 * nrm, 0.034, M_BLACK, n=24))
+        geos.append(tube(buckle + 0.0055 * nrm, buckle + 0.0085 * nrm, 0.0355, M_METAL, n=24))
+        geos.append(tube(buckle + 0.007 * nrm, buckle + 0.015 * nrm, 0.021, M_BLACK, n=16))
+        t1_ = _unit3(np.cross(nrm, [0.0, 1.0, 0.0]))
+        t2_ = _unit3(np.cross(nrm, t1_))
+        for k in range(8):                                          # grip ridges round the knob
+            a_ = 2 * math.pi * k / 8
+            d_ = math.cos(a_) * t1_ + math.sin(a_) * t2_
+            geos.append(cbox(buckle + 0.0115 * nrm + 0.020 * d_, (0.004, 0.004, 0.008), M_BLACK,
+                             R=np.stack([d_, np.cross(nrm, d_), nrm], 1)))
+        geos.append(tube(buckle + 0.0148 * nrm, buckle + 0.0152 * nrm, 0.006, M_METAL, n=12))
+        for a_ in (math.radians(35), math.radians(145), math.radians(215), math.radians(325)):
+            d_ = math.cos(a_) * t2_ + math.sin(a_) * t1_
+            c_ = buckle + 0.037 * d_ - 0.001 * nrm
+            geos.append(cbox(c_, (0.016, 0.022, 0.003), M_METAL, R=np.stack([d_, np.cross(nrm, d_), nrm], 1)))
 
     # ---- armrests: hinged on the back sides at arm_pivot; level (down) or flipped up along the back
     ah = float(c["arm_h"])
@@ -1130,7 +1170,10 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             u0, u1 = float(rl[:, 0].min()), float(rl[:, 0].max())
             out.append(cbox((srp0[0] - 0.5 * (u0 + u1), srp0[1] + sg * ry, fl + 0.5 * th), (u1 - u0, tw, th), M_RAIL))
             out.append(cbox((srp0[0] - 0.5 * (u0 + u1), srp0[1] + sg * ry, fl + th + 0.0004),
-                            (u1 - u0 - 0.02, 0.35 * tw, 0.001), M_BLACK))
+                            (u1 - u0 - 0.02, 0.12 * tw, 0.001), M_BLACK))
+            # locating holes at the POH 0.69-in notch pitch along the slot (flight deck r1 GEOM B, B7)
+            for xh in np.arange(srp0[0] - u1 + 0.018, srp0[0] - u0 - 0.012, float(c["notch"])):
+                out.append(cbox((xh, srp0[1] + sg * ry, fl + th + 0.0006), (0.009, 0.42 * tw, 0.0012), M_BLACK))
     return to_meshes(out)
 
 

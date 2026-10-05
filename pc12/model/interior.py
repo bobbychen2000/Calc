@@ -316,13 +316,23 @@ SIDE_CONSOLE = dict(
     x=PT((3.640, 4.420), "[M] armrest console along each sidewall, panel cheek to the seat back (render, photos)"),
     top_h=P(0.500, "[E] above the floor (cup holders, USB, 1-kg pocket placard [M])"),
     inner_bl=P(0.680, "[E] inboard face"),
-    cb_panel=PT((3.620, 3.950, 0.480, 0.780), "[M] circuit-breaker panels on the sidewall lining ABOVE the console "
-                                              "(rows 1-4, row 4 at the cup holders; P1046409 / P1046410): x0, x1, h0, "
-                                              "h1 above the floor, estimated from the photos"),
+    cb_panel=PT((3.630, 4.160, 0.505, 0.700), "[S+M] circuit-breaker panel pair on the sidewall lining above the "
+                                              "console: x0, x1, h0, h1 above the floor of the pair (flight deck r1, "
+                                              "research C3: NGX POH Fig 7-13-2 / 3 + panorama S15 STA 3.63-4.16; the "
+                                              "bottom on the console top (P1046409 / AOPA: row 4 just above the cup "
+                                              "holders), the outline aspect 1.35 / 1.30 of the POH; rev G 3.62-3.95 / "
+                                              "0.48-0.78 was one panel)"),
+    cb_split=PT((3.900, 3.910), "[S+M] the pair's front / rear panel ends: two panels per side with a 10 mm mullion "
+                                "(POH Fig 7-13-2 / 3)"),
+    cb_grid=PT(((12, 4), (11, 4)), "[S] breakers per row, rows: FRONT 12 x 4 (LH A-M), REAR 11 x 4 (N-Z) (NGX POH "
+                                   "Fig 7-13-2, verified); each row a label strip and a lit bus band"),
 )
 OVERHEAD = dict(
-    x=PT((3.950, 4.170), "[M] overhead panel 0.50 x 0.21 on the ceiling at the windshield top (P1046406)"),
-    w=P(0.500, "[M]"),
+    x=PT((3.860, 4.070), "[S+M] overhead panel on the ceiling at the windshield top: NGX panorama S15 front edge "
+                         "3.84-3.89, aft 4.07, aspect 2.30 (POH Fig 7-13-1); the P1046406 fitted camera puts this "
+                         "outline on the photo's panel within 3 px (rev G 3.95-4.17 / 0.50: 20-25 px high and wide) "
+                         "(flight deck r1, research C4)"),
+    w=P(0.470, "[S+M] research C5: 0.45 (S15) - 0.50 (P1046406 at its depth); 0.47 fits the fitted camera"),
     depth=P(0.035, "[E] below the headliner"),
     autoland=PT((4.230, 0.170, 0.070), "[S] SAFETY AUTOLAND button in a recessed cup aft of the panel; x, BL, size [M]"),
 )
@@ -1936,6 +1946,8 @@ def build_lining(parts):
         Lv = m.V[loop]
         if Lv[:, 0].min() < x0 + 1e-3 or Lv[:, 0].max() > x1 - 1e-3:
             continue
+        if Lv[:, 0].mean() < F.STA["cockpit_aft"] and Lv[:, 2].mean() > 1.9:
+            continue                    # windshield / side windows: the moulded reveals of fd_detail_b (below)
         Ov = F.section(m.UV[loop, 0], m.UV[loop, 1] % 1.0)
         c = Lv.mean(0)
         door = next((FP.door_panel(o) for o in (FP.AIRSTAIR, FP.CARGO)
@@ -1977,6 +1989,13 @@ def build_lining(parts):
         for q_, mat_ in qs:
             q_._reveal = piece is rv     # reveals end ON the skin openings (test/fit_check.py checks them apart)
             p.add(q_, mat_)
+    # flight deck r1 GEOM B (B1 / B2): the windshield and side-window reveals are moulded funnels from the lining hole
+    # to the visible outline on the glass (A-pillar, roof and centre-post mouldings, the oval side-window reveal) with a
+    # black seal lip at the glass (model/fd_detail_b.glazing_mouldings); reveals: they end at the glass, not the lining
+    from model import fd_detail_b as FDB
+    for q_, mat_ in FDB.glazing_mouldings():
+        q_._reveal = q_._fd_glazing = True
+        p.add(q_, mat_)
     parts[p.id] = p
 
 

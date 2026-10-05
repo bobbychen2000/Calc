@@ -1092,6 +1092,11 @@ report(f"interior fittings seated: every piece ({len(pieces)}) within 3 mm of an
 LIN_MATS = ("lining", "lining_flightdeck", "carpet_flightdeck")     # + the flight deck's carpeted kick panels
 par_T, fit_pc = [], []
 for m, mat in parts["interior_lining"].meshes:
+    if getattr(m, "_fd_glazing", False):
+        # the flight deck's moulded glazing surround (flight deck r1 GEOM B: windshield / side-window funnel reveals,
+        # their seal lips, the leather sill, its stitching and sill placards) runs from the lining hole to the glass:
+        # checked against the OML (1), the glass (30), seated (22 / 30b), neither a parent nor a fitting on the lining
+        continue
     T = m.V[m.F]
     lab = _components(m.V, m.F)
     for c in np.unique(lab):
@@ -1393,6 +1398,15 @@ report("PDU bezel tops visible from the design eyes (sight lines clear of the br
        not vis_bad, f"{vis_n - len(vis_bad)}/{vis_n} clear; 2-D margin under the fascia foot: bezel tops "
                     f"{1000 * mb_:.1f} mm, glass tops {1000 * mg_:.1f} mm (worst {wpair})"
                     + ("; blocked: " + ", ".join(vis_bad[:6]) if vis_bad else ""))
+
+# 28-31 ---------------------------------------------------------------- flight deck r1 track checks
+# test/fit_fd_a.py (28-29: footwells, yokes vs the panel detail) and test/fit_fd_b.py (30-31: the glass vs the surround,
+# the crew seats vs the divider / console fittings), run in this namespace when present
+import pathlib as _pl  # noqa: E402
+for _fn in ("fit_fd_a.py", "fit_fd_b.py"):
+    _fp = _pl.Path(__file__).resolve().parent / _fn
+    if _fp.exists():
+        exec(compile(_fp.read_text(), str(_fp), "exec"))
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

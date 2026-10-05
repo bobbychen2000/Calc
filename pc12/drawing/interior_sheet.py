@@ -68,7 +68,10 @@ REVISIONS = (
                         "hub 140 x 120, white Y shield (horns to +/-70, mid-height +/-39, round 45 foot), paddle grips "
                         "r 16 widening to 21 over their top 90 (no round head); CCD palm grip 100 x 85, top 385 above "
                         "the floor [M]; glareshield lip arch from both JTF elevations (outboard 15-70 lower); GI 275 "
-                        "unit 82.6 square over its 79.4 cut-out [S]; SDUs 110 x 195 [M]"),
+                        "unit 82.6 square over its 79.4 cut-out [S]; SDUs 110 x 195 [M]; CB panels a pair per side (STA "
+                        "3630-4160, 505-700 above the floor, split 3900 / 3910, 12 / 11 x 4 breakers: NGX POH Fig "
+                        "7-13-2 / 3) [S+M]; overhead panel STA 3860-4070 x 470 wide (POH Fig 7-13-1, P1046406 "
+                        "camera) [S+M]"),
 )
 
 # ---- fills (clean sheet)
@@ -1572,8 +1575,9 @@ def draw_detail(ds, v, ctx):
     line(ds, v, [(ov["x"][0], zo[0] - ov["depth"]), (ov["x"][1], zo[1] - ov["depth"])], W_OBJ + 0.3, None, "#5E676C")
     # CB panel on the removed port sidewall (phantom)
     cb = I.SIDE_CONSOLE["cb_panel"]
-    poly(ds, v, [(cb[0], fl + cb[2]), (cb[1], fl + cb[2]), (cb[1], fl + cb[3]), (cb[0], fl + cb[3])], W_THIN,
-         fill=None, dash=PHANTOM, color=MUTED)
+    for xa_, xb_ in ((cb[0], I.SIDE_CONSOLE["cb_split"][0]), (I.SIDE_CONSOLE["cb_split"][1], cb[1])):   # the pair
+        poly(ds, v, [(xa_, fl + cb[2]), (xb_, fl + cb[2]), (xb_, fl + cb[3]), (xa_, fl + cb[3])], W_THIN,
+             fill=None, dash=PHANTOM, color=MUTED)
     draw_fd_side(ds, v, bl, crank=p["crank"], travel=True)
     pd0 = I.pedal_points(0.0)
     line(ds, v, [pd0["heel"] + 0.03 * pd0["dir"], pd0["toe"]], W_THIN, PHANTOM, MUTED)
