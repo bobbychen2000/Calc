@@ -2156,7 +2156,7 @@ def photo_cam(key):
 
 
 async def fd_look_checks(page, shots=True):
-    """[FD-L1]-[FD-L8] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
+    """[FD-L1]-[FD-L9] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
     window sky, the PRO's dark palette (median sRGB luminance of each material's pixels: the MAT_MASK pass), the
     exterior unchanged, the Cockpit preset lit as the tour.  1200 x 900 pages (the photos' 4:3) in their own context."""
     import numpy as np
@@ -2310,6 +2310,29 @@ async def fd_look_checks(page, shots=True):
     check("[FD-L8] the Cockpit preset takes the tour's interior look: the same exposure, the outside world and environment, "
           "the sun", p_["inside"] and not p_["tour"] and abs(p_["exp"] - t_["exp"]) < 1e-6 and p_["env"] == t_["env"] == "outside"
           and p_["world"] and p_["sun"] == t_["sun"] > 0, f"tour {t_}, preset {p_}")
+    # [FD-L9] inside, a still view settles (the still refinement, where the profile has one, then nothing) and the viewer
+    # idles: animation frames run at the display rate again and no render happens (the hidden contact shadow, left dirty
+    # inside, had requested a render every frame -- each a plain 'move' / 'busyss' frame: the picture never supersampled,
+    # the viewer never idled).  Measured on the clock and with the page's own rAF rate, not with V.frames() (whose forced
+    # frames are themselves render requests).
+    r9 = await js(pg, V + """T.enter('pilot', {motion: false}); T.finish(); V.advance(0.5);
+      const I = V._internals, st = I.stage, p = st.picture, seen = [], t0 = performance.now();
+      const rate = async (ms) => { let n = 0, on = true; const f = () => { n++; if (on) requestAnimationFrame(f); };
+        requestAnimationFrame(f); await new Promise((r) => setTimeout(r, ms)); on = false; return n * 1000 / ms; };
+      let hz = 0, idle = false;
+      while (performance.now() - t0 < 300000) {
+        const r0 = st.stats.renders;
+        hz = await rate(2000);
+        if (seen[seen.length - 1] !== p.kind) seen.push(p.kind);
+        idle = hz >= 8 && st.stats.renders === r0 && (p.N === 0 || p.a.done);
+        if (idle) break;
+      }
+      return {idle, hz: Math.round(hz), seen, kind: p.kind, k: p.a.k, N: p.N, look: st.interiorLook,
+              contactDirty: st.contactDirty, s: Math.round((performance.now() - t0) / 1000)};""")
+    check("[FD-L9] inside, a still view settles and the viewer idles (no render requested every frame by the hidden "
+          "contact shadow; the still refinement, where the profile has one, runs to its end)", r9["look"] and r9["idle"],
+          f"idle {r9['idle']} after {r9['s']} s at {r9['hz']} Hz rAF, paths {r9['seen']}, still passes {r9['k']} / {r9['N']}, "
+          f"contact shadow dirty {r9['contactDirty']}")
     await ctx.close()
 
 
@@ -4029,7 +4052,7 @@ def main():
                     help="sound: only the engine-sound section (its own page; ~2 min); tour: only the interior tour "
                          "[T1]-[T18] on the desktop page; prop / phone / picture: those sections alone (a rerun of a "
                          "section that timed out or was starved under load); fdlook: the flight-deck look rows "
-                         "[FD-L1]-[FD-L8] (1200 x 900, ~10 min)")
+                         "[FD-L1]-[FD-L9] (1200 x 900, ~10 min)")
     ap.add_argument("--sound-out", type=Path, default=OUT / "sound",
                     help="folder for the offline render pc12_engine_sequence.wav + spectrogram.png (default out/tmp/viewer/sound)")
     args = ap.parse_args()

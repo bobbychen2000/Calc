@@ -3,10 +3,10 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.38M tris of which the interior ~525k, ~40 MB
-incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.40M tris of which the interior ~550k, ~42 MB
+incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~1.92M tris, ~32 MB,
+review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~1.94M tris, ~33 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -455,17 +455,21 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   world's (`gain` [18, 1.6, 1.5]: calibrated on the photo-fitted panel_408b against P1046408 -- yoke 204 / 208,
   sheepskin 113 / 110-134, footwell 9 / 6, eyebrow 101 / 100-113, posts 93), reflections x 1.6 x occ x mix(0.35, 1, light);
   the light trim's fill share keeps that share out of the law (the cabin lining: none of it, half its occlusion; the
-  cabin fill 3.4 -> 2.6 for the brighter world, T4b / T14); reflection facing weights [0.12, 0.5] (were 0.06 / 0.3),
+  cabin fill 3.4 -> 2.3 for the brighter world: T4 cabin medians ~210 / 215, T4b headliner >= 200); reflection facing weights [0.12, 0.5] (were 0.06 / 0.3),
   with `SPEC_KEEP` (titanium, gunmetal, pewter, chrome, bezels, black leathers, yoke white, displays) exempt (FD-J10).
   ?cabGain= ?cabSky= ?cabOcc= ?cabIn= override them.
   Palette (L5, `render/lookdev.py` SPEC + `assemble.MATERIALS`): lining_flightdeck 0.10 rough 0.75 (no CABIN_TRIM),
   leather_glareshield 0.045 rough 0.48, panel_grey 0.20, carpet_flightdeck 0.03, sheepskin lavender-grey (0.28, 0.275,
-  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.45], leather_crew [0, 0.8], panel_dark [0, 0.6], panel_titanium [0, 0.6].  Viewer
+  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.55], leather_crew [0, 0.8], panel_dark [0, 0.6], panel_titanium [0, 0.6].  Viewer
   patches (L6): fleece clumps 12-20 mm with darker crevices, a fine pebble grain on the leathers, the walnut figure
   (render_grain streaks, rest pose), brushed titanium (anisotropy 0.6 along BL, streaky roughness; no env 0.6 stand-in),
   the G3000 pages x1.45 inside.  `viewer.tour.place({eye, target, fov}, {clamp: false})` puts the tour camera at an
-  exact pose (the photo-fitted panel_408b / cabin_fwd_406 cameras); viewer_test `fd_look_checks` [FD-L1]-[FD-L8]
-  (`--only fdlook`, 1200 x 900).
+  exact pose (the photo-fitted panel_408b / cabin_fwd_406 cameras); viewer_test `fd_look_checks` [FD-L1]-[FD-L9]
+  (`--only fdlook`, 1200 x 900).  Cost: the dark one of the two directional lights (the key inside, the sun outside)
+  is skipped by a uniform branch on its colour in three's `lights_fragment_begin` (`scene.js installDarkLightSkip`:
+  exact, no recompiles; ?darkskip=0 off); inside, the hidden contact shadow stays dirty for the way out without asking
+  for frames (main.js: it had requested a render every frame, so the inside picture never settled into its still
+  refinement and the viewer never idled -- [FD-L9] measures the idle rAF rate after a stop).
 - Higher-resolution model (owner 2026-10-03 "can you make the 3d modeling higher resolution?"): `cad/res.py` /
   `cad/refine.py` above -- PC12_RES=2: 1.53M -> 2.11M triangles where facets show, 16-bit normals, crack-free shared
   quantisation grids, finer round primitives.  Review r1 (RES1-01..05) re-spent the triangles: the first pass (2.63M)

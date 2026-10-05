@@ -89,7 +89,7 @@ const qv = (k, d) => {
 // directional light outside the tour (the key light; 0: no key through the closed skin), 1 inside (the sun, shadowed);
 // the reflections' facing weights [down, up] x the window sky visibility (FD-J10: 0.06 / 0.3 had cut every reflection of
 // the dark panel, the bezels and the titanium to nothing); the baked occlusion `occ` and the sky law `sky` (look L3)
-export const CABIN_LOOK = { key: qv('cabKey', 0), diff: qv('cabDiff', [0.75, 1]), spec: qv('cabSpec', [0.12, 0.5]), fill: qv('cabFill', 2.6),
+export const CABIN_LOOK = { key: qv('cabKey', 0), diff: qv('cabDiff', [0.75, 1]), spec: qv('cabSpec', [0.12, 0.5]), fill: qv('cabFill', 2.3),
   occ: qv('cabOcc', [1, 1, 1]), sky: qv('cabSky', [0.0, 0.35]), gain: qv('cabGain', [18, 1.6, 1.5]) };
 U.cabinOcc.value.set(...CABIN_LOOK.occ);
 U.cabinGain.value.set(...CABIN_LOOK.gain);
@@ -108,7 +108,7 @@ U.cabinFill.value = CABIN_LOOK.fill;
 const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
-  sheepskin: [0, 0.45],
+  sheepskin: [0, 0.55],
   // the graphite of the side consoles, the overhead panel, the AFCS strip: near-black (P1046408 consoles 4-9, the
   // overhead ~45 under the windshield's light; T14 <= 50)
   panel_dark: [0, 0.6],

@@ -1057,8 +1057,10 @@ function frame(now) {
   if (forceFrames > 0) { forceFrames--; stage.needsRender = true; }
   stage.busy = posed && !overlayOnly;
   stage.overlay = kin.blur ? kin.blur.overlay : null;
-  // shadows skipped while animating on the low tier (Stage.render): one more frame once the motion stops
-  if (!posed && (stage.shadowDirty || stage.contactDirty)) stage.needsRender = true;
+  // shadows skipped while animating on the low tier (Stage.render): one more frame once the motion stops.  Inside the
+  // cabin the ground's contact shadow is hidden and Stage.render leaves it dirty for the way back out: it asks for no
+  // frame there (it had re-requested one every frame, so the still image never settled into its refinement passes)
+  if (!posed && (stage.shadowDirty || (stage.contactDirty && !stage.interiorLook))) stage.needsRender = true;
   // interior light by viewpoint (and how far a cabin door is open)
   if (stage.needsRender) {
     const wasInside = model.camInside;

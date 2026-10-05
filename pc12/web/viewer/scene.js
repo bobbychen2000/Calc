@@ -18,6 +18,24 @@ const _box = new THREE.Box3();
 const _b2 = new THREE.Box3();
 const _p = new THREE.Vector3();
 
+// A directional light at zero intensity -- the key inside the cabin, the sun outside it (Stage.setInteriorLook) -- adds
+// nothing to any surface, yet three evaluates its shadow lookup (17 PCF taps on the interior's receivers) and its BRDF
+// in every lit fragment.  Each light's term in three's shader chunk is wrapped in a uniform branch on its colour, so the
+// dark light is skipped (exact: its radiance is zero) while the light and shadow counts stay fixed (no shader recompiles
+// in and out of the cabin).
+function installDarkLightSkip() {
+  const C = THREE.ShaderChunk, src = C.lights_fragment_begin;
+  if (src.includes('pcDirLit')) return true;
+  const re = /(#pragma unroll_loop_start\n\tfor \( int i = 0; i < NUM_DIR_LIGHTS; i \+\+ \) \{\n)([\s\S]*?RE_Direct\( directLight, [^;\n]*\);\n)(\t\}\n\t#pragma unroll_loop_end)/;
+  if (!re.test(src)) {
+    console.warn('dark-light skip not installed: three.js lights_fragment_begin changed');
+    return false;
+  }
+  C.lights_fragment_begin = src.replace(re, (_, open, body, close) =>
+    `${open}\t\tif ( dot( directionalLights[ i ].color, vec3( 1.0 ) ) > 0.0 ) { // pcDirLit\n${body}\t\t}\n${close}`);
+  return true;
+}
+
 const CONTACT_BUSY = 512;   // contact-shadow map size while the scene animates (the still size: the picture profile's)
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 // OrbitControls' damping; the last sub-pixel stretch of a coast settles faster (Stage.update)
@@ -149,6 +167,8 @@ export class Stage {
     // specular anti-aliasing for every lit material; the roughness floor = the environment's base mip (1k HDRI: a
     // 256 px face, three's 0.0525; a 2k one given by ?hdr=: 512 px, 0.038)
     installSpecularAA(/_2k\.hdr/.test(LOOK.hdr) ? 0.038 : 0.0525);
+    // the dark one of the two directional lights (the key inside, the sun outside) costs nothing (?darkskip=0: off)
+    if (Q_.get('darkskip') !== '0') installDarkLightSkip();
     host.appendChild(r.domElement);
     r.domElement.tabIndex = 0;
     // WebGL context loss (phones drop the context of a backgrounded tab or under GPU memory pressure).  three.js
