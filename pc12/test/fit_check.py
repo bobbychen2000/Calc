@@ -1394,6 +1394,15 @@ report("PDU bezel tops visible from the design eyes (sight lines clear of the br
                     f"{1000 * mb_:.1f} mm, glass tops {1000 * mg_:.1f} mm (worst {wpair})"
                     + ("; blocked: " + ", ".join(vis_bad[:6]) if vis_bad else ""))
 
+# 28-31 ---------------------------------------------------------------- flight deck r1 track checks
+# test/fit_fd_a.py (28-29: footwells, yokes vs the panel detail) and test/fit_fd_b.py (30-31: the glass vs the surround,
+# the crew seats vs the divider / console fittings), run in this namespace when present
+import pathlib as _pl  # noqa: E402
+for _fn in ("fit_fd_a.py", "fit_fd_b.py"):
+    _fp = _pl.Path(__file__).resolve().parent / _fn
+    if _fp.exists():
+        exec(compile(_fp.read_text(), str(_fp), "exec"))
+
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)
 sys.exit(1 if fails else 0)

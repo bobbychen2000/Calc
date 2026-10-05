@@ -248,8 +248,12 @@ def construction():
 # the seats x 2.9 (crew x 3.4: their sheepskin pads on a grid RES x finer, seats._sk_h) -- their rounded rims and outline
 # corners are built RES x finer (seats._rounds / _arc_k, review r1 RES1-01 / 03: 22 % of their area had been faceted)
 # --, the interior as a whole x 2.2
-INTERIOR_BUDGET = {"total": res.budget(250_000, 2.2), "crew_seat": res.budget(14_000, 3.4),
-                   "cabin_seat": res.budget(12_000, 2.9)}
+# --; flight deck r1 (owner 2026-10-04 "the details are drastically missing"): per-part caps for the flight deck's
+# parts (keys = part ids; the build print reads them by part id) and the interior total raised for them
+INTERIOR_BUDGET = {"total": res.budget(370_000, 2.2), "crew_seat": res.budget(16_500, 3.4),
+                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(68_000, 2.2),
+                   "yoke_L": 24_000, "yoke_R": 24_000, "pedal_LL": 3_000, "pedal_LR": 3_000, "pedal_RL": 3_000,
+                   "pedal_RR": 3_000, "fd_consoles": 30_000, "fd_divider": 15_000, "interior_lining": 175_000}
 
 
 def cockpit_camera(side=-1):
@@ -310,7 +314,7 @@ def verify(parts):
 # finer rims / arcs / pad grids, the facet criterion): review r4 GEO8-01 -- phones load the light tier, and at the
 # builders' own grids the seats (22 % of their area faceted), yokes, pedals, braces and the nose leg showed none of the
 # smoother-curves work; ~+0.2M triangles on the light tier, the big skins stay at their own grids.
-LOW_FINE = ("seat_", "yoke_", "pedal_", "brace_", "gear_nose")
+LOW_FINE = ("seat_", "yoke_", "pedal_", "brace_", "gear_nose", "flight_deck", "fd_")   # + the flight deck (r1)
 LOW_FINE_RES = 2.0
 
 
