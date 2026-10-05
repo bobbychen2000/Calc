@@ -1567,8 +1567,9 @@ def draw_detail(ds, v, ctx):
     line(ds, v, [(ov["x"][0], zo[0] - ov["depth"]), (ov["x"][1], zo[1] - ov["depth"])], W_OBJ + 0.3, None, "#5E676C")
     # CB panel on the removed port sidewall (phantom)
     cb = I.SIDE_CONSOLE["cb_panel"]
-    poly(ds, v, [(cb[0], fl + cb[2]), (cb[1], fl + cb[2]), (cb[1], fl + cb[3]), (cb[0], fl + cb[3])], W_THIN,
-         fill=None, dash=PHANTOM, color=MUTED)
+    for xa_, xb_ in ((cb[0], I.SIDE_CONSOLE["cb_split"][0]), (I.SIDE_CONSOLE["cb_split"][1], cb[1])):   # the pair
+        poly(ds, v, [(xa_, fl + cb[2]), (xb_, fl + cb[2]), (xb_, fl + cb[3]), (xa_, fl + cb[3])], W_THIN,
+             fill=None, dash=PHANTOM, color=MUTED)
     draw_fd_side(ds, v, bl, crank=p["crank"], travel=True)
     pd0 = I.pedal_points(0.0)
     line(ds, v, [pd0["heel"] + 0.03 * pd0["dir"], pd0["toe"]], W_THIN, PHANTOM, MUTED)

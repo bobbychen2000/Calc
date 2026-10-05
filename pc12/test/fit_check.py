@@ -1092,6 +1092,11 @@ report(f"interior fittings seated: every piece ({len(pieces)}) within 3 mm of an
 LIN_MATS = ("lining", "lining_flightdeck", "carpet_flightdeck")     # + the flight deck's carpeted kick panels
 par_T, fit_pc = [], []
 for m, mat in parts["interior_lining"].meshes:
+    if getattr(m, "_fd_glazing", False):
+        # the flight deck's moulded glazing surround (flight deck r1 GEOM B: windshield / side-window funnel reveals,
+        # their seal lips, the leather sill, its stitching and sill placards) runs from the lining hole to the glass:
+        # checked against the OML (1), the glass (30), seated (22 / 30b), neither a parent nor a fitting on the lining
+        continue
     T = m.V[m.F]
     lab = _components(m.V, m.F)
     for c in np.unique(lab):

@@ -717,3 +717,55 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   checks keep clear: needs an L6 reveal-profile change), WG8-02 leg-door lean (the documented LD-1 deviation, L4
   call-out), GEO8-05 rudder tab bay / flap canoes / fin root facets (not visible at the review cameras), the chin lip's
   face width (the drawn lip outline; a re-trace needs the drawing review).
+- Flight deck r1 GEOM B (owner 2026-10-04: the flight deck "1/10", "the details are drastically missing"; track B = the
+  surround, branch wip/fd-geom-b; `model/fd_detail_b.py`, called from the owned builders `flightdeck._consoles /
+  _overhead / _post_trim / _divider`, `interior.build_lining` and `seats.crew_seat`): B1 / B2 the windshield and
+  side-window reveals are moulded FUNNELS (`fd_detail_b.glazing_mouldings`, added to `interior_lining` as reveals,
+  `_reveal`): from the lining hole (the pane outline, as before) to a VISIBLE outline on the glass that lies inside the
+  pane by a margin per edge (`GLAZING_TRIM`: windshield sill 3 / A-pillar 32 / roof 42 mm, the centre post's moulding 94
+  mm wide at the glass -- P1046408 through the fitted camera; side window sill 12, aft 175, top 85, front 35 mm: the
+  oval opening of the NGX panorama S15 / AOPA, the trim hiding the D-pane's aft end), profile 1 - (1 - tau)^2.4 (tangent
+  to the lining, rolled into it, 1.5 mm proud over its hole edge), an 8 mm black 'seal' lip 4-5 mm inboard of the glass
+  hiding the retainer band; pane outlines matched edge by edge (`_pane_pairs`, corner bisector anchors).  The old flat
+  reveals of the four flight-deck panes are gone (build_lining skips them).  The side-window reveal is LEATHER below WL
+  2.23 (`SILL`: the padded sill continuing the glareshield leather at the window's front-low corner, wrapping the
+  aft-lower corner), two stitch seams, abstract placards on the sill top; the old fairing tube over the centre post
+  (`_post_trim`, INT-m7) is replaced by the two reveals' post edges + the lining strip between them (`POST_TRIM` now
+  only names the group).  B3 CB panels (`fd_detail_b.cb_panels`, group cb_panels): table `SIDE_CONSOLE` cb_panel (3.630,
+  4.160, 0.505, 0.700) = the PAIR's extent, new cb_split (3.900, 3.910) and cb_grid ((12, 4), (11, 4)) (research C3: NGX
+  POH Fig 7-13-2 / 3; the bottom on the console top, P1046409 / AOPA); black plates 2.5 mm proud in a 6.5 mm panel_dark
+  bezel frame (4 mm recess), per row black breaker heads on white collars, a label strip of abstract legend cells, a dim
+  lit bus band (`fdb_cb_glow_*`: LH blue, RH front yellow / green, rear white), row marks as 1-4 dots; above it the
+  ledge with the long stowage slot (zip teeth, pull), a satin edge strip, red placards, the map light, the
+  operating-limitations placard.  B4 overhead (`overhead_panel`, `overhead_pod`): table `OVERHEAD` x (3.86, 4.07), w
+  0.47 (research C4 / C5; the P1046406 fitted camera puts this outline on the photo's panel within 3 px, rev G's 20-25
+  px off); panel_dark bezel with R 24 corners, 45 deg chamfer, plate 6 mm down, the photo's section frames / bus diagram
+  (white strokes, dashed where drawn so), abstract title bars, 18 bat toggles (hex nut, satin lever, ball), FIRE WARN /
+  LAMP / STARTER squares, guarded RUN lever, LANDING / PULSE paddles, MASTER POWER guard, screws; a pod moulding
+  (lining) whose face lies in the panel plane (the headliner falls 28 mm across the panel) blended into the headliner by
+  a smooth minimum, the two eyeball outlets on it; AUTOLAND cup kept.  B5 post (`post_fittings`, group post): grab
+  handle from the pod down to its V end bracket (satin, P1046406 / 08), deviation-card holder, E2B-type compass facing
+  aft (black housing, dark card with white strokes, red lubber line, screws; simulator photo).  B6 consoles
+  (`console_fittings`): leather armrest pad with stitching aft of the CB pair, map pocket with an elastic lip, keypad
+  (P1046409), sidewall eyeball. B7 crew seats (`seats.py`): sheepskin rims carry a silhouette shag (`pillow(shag=...)`,
+  `SK_SHAG` 5 mm clumps of 33-57 mm sampled every 8 mm; the judged-grid band limit stays on the inner waves only),
+  rotary buckle (black body, satin rim, ridged knob, four tongues), cam-lock adjusters, shoulder-strap guides on the
+  back top, track locating holes at the POH notch pitch; 55.4k triangles per crew seat (cap 56.1k).  B8 divider
+  (`divider_fittings`): half-round walnut aisle edges with a titanium inlay (the faces stop half a thickness short of
+  DIVIDER open_bl), crew O2-mask cups on each wall's forward face outboard (NGX POH 7-19-2, panorama), smoke-goggle box
+  (LH), headset hooks, RH document pocket, access latches, curtain-track end caps.  B9 headliner (`headliner_fittings`,
+  `visors`): dome lights, speaker grilles (S15 positions), smoked sun visors (`fdb_visor`) stowed on black rails above
+  each side window (rail STA 3.975-4.30, |BL| 0.375-0.485), pivot arm and knob; the PRO's round centre dome-light bezel
+  at port (`HEAD` dome_c). Groups hung on interior_lining: `fd_detail_b.CEILING_GROUPS` (overhead, cb_panels, pod, sill,
+  visors, post, headliner_fd).  Every interior_lining piece is built under `res.coarse()` (explicit segment counts:
+  identical in both tiers).  New materials: assemble block 'flight deck detail B' (fdb_cb_glow_blue / green / yellow /
+  white with emissive, fdb_visor, fdb_hose_green); the seed's shared names are registered by setdefault
+  (`fd_detail_b.SHARED_FALLBACK`, the same values as track A's).  Seed stand-ins this branch carries (the seed commit
+  never landed): build.INTERIOR_BUDGET per-part caps / total 814k, LOW_FINE += flight_deck, fd_; fit_check runs
+  test/fit_fd_a.py / fit_fd_b.py when present.  Checks: fit_check 30 (the glass >= 2 mm from every interior piece near
+  it, no crossing), 30b (the surround fittings seated within 3 mm), 31 (crew seats at full aft, height extremes, both
+  headrest locks, arms down / up >= 5 mm from the divider / console fittings); 22b leaves the moulded surround
+  (`_fd_glazing`) out of both its parents and its fittings (it runs from the lining hole to the glass; the cabin reveals
+  as before).  Build: 2.42M triangles (interior 572k of 814k: fd_consoles 8.6k, fd_divider 10.2k, interior_lining 128k,
+  crew seats 55.4k), light tier 2.01M; seat_pax3-6 34,834 / 34.8k print OVER as at the base.  L6 draws the CB pair (both
+  phantom boxes); L6 / L6B regenerated with the table changes (rev label untouched: the merge writes rev H).

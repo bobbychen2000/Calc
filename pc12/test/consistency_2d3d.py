@@ -2895,8 +2895,10 @@ def _l6_details(ctx, rep, tol, fl):
     from model import interior as I
     Y = I.YOKE
     dev, lab = [], []
-    Vy = ctx.verts("flight_deck", mats=("yoke_white", "panel_silver"))
-    Vg = ctx.verts("flight_deck", mats=("grip_black",))
+    # the yokes' own parts (flight deck r1 GEOM B: the divider's satin latch pulls and the CB caps are panel_silver /
+    # grip_black too, and the flight_deck record set carries the fd_ parts)
+    Vy = np.vstack([ctx.verts(p_, mats=("yoke_white", "panel_silver")) for p_ in ("yoke_L", "yoke_R")])
+    Vg = np.vstack([ctx.verts(p_, mats=("grip_black",)) for p_ in ("yoke_L", "yoke_R")])
     for side in (-1, 1):
         hub = I.yoke_hub(side)
         nm = "L" if side < 0 else "R"
@@ -2986,8 +2988,11 @@ def _l6_details(ctx, rep, tol, fl):
         _ext_dev(dev, lab, f"{nm} CB panel bottom", float(q[:, 2].min()), fl + h0)
         _ext_dev(dev, lab, f"{nm} CB panel top", float(q[:, 2].max()), fl + h1)
     OV = I.OVERHEAD
-    Vo = ctx.verts("interior_lining", mats=("panel_grey", "panel_silver"))
-    q = Vo[(Vo[:, 0] > float(OV["x"][0]) - 0.03) & (Vo[:, 0] < float(OV["x"][1]) + 0.015) & (Vo[:, 2] > 2.2)]
+    # the overhead's bezel frame is panel_dark since flight deck r1 GEOM B (B4; was panel_grey); the CB panels' frames
+    # (panel_dark too) lie below WL 2.2 and outboard
+    Vo = ctx.verts("interior_lining", mats=("panel_dark",))
+    q = Vo[(Vo[:, 0] > float(OV["x"][0]) - 0.03) & (Vo[:, 0] < float(OV["x"][1]) + 0.015) & (Vo[:, 2] > 2.2) &
+           (np.abs(Vo[:, 1]) < 0.5 * float(OV["w"]) + 0.03)]
     if len(q):
         _ext_dev(dev, lab, "overhead panel fwd x", float(q[:, 0].min()), float(OV["x"][0]))
         _ext_dev(dev, lab, "overhead panel aft x", float(q[:, 0].max()), float(OV["x"][1]))
