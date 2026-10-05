@@ -1369,6 +1369,26 @@ def yoke_head_facet():
     return dict(c=c, n=n, eu=eu, ev=ev, size=size)
 
 
+def yoke_grip_aft_top(u, h, g="out"):
+    """a (mm) of a grip's aftmost surface at (u, h): the aft-face plane, on the outboard (trim) head the flat facet
+    (proud below its centre, a chamfer above it) whose lower edge blends back into the aft face at 45 deg [E]."""
+    u, h = np.asarray(u, float), np.asarray(h, float)
+    a_aft = yoke_grip_aft_a(u, h, g)
+    if g != "out":
+        return a_aft
+    hf = yoke_head_facet()
+    s = 0.5 * hf["size"]
+    rel = np.stack([a_aft - hf["c"][0], u - hf["c"][1], h - hf["c"][2]], -1)
+    su, sv = rel @ hf["eu"], rel @ hf["ev"]
+    a_fac = hf["c"][0] - (rel[..., 1] * hf["n"][1] + rel[..., 2] * hf["n"][2]) / hf["n"][0]
+    on_u = np.abs(su) <= s
+    below = np.clip(-s - sv, 0.0, None)                                  # distance below the facet's lower edge
+    a_bot = hf["c"][0] - ((u - hf["c"][1]) * hf["n"][1] + (-s * hf["ev"][2]) * hf["n"][2]) / hf["n"][0] \
+        + (-s * hf["ev"][0]) - below
+    out = np.where(on_u & (sv >= -s) & (sv <= s), a_fac, a_aft)
+    return np.where(on_u & (sv < -s), np.maximum(a_aft, a_bot), out)
+
+
 def yoke_front_mm():
     """Every front-view piece of the yoke (mm, u outboard, h up; the copilot sense -- the pilot yoke is its mirror):
     dict of closed outlines 'shell', 'insert_upper', 'insert_lower', 'body', 'badge', 'badge_border', 'badge_field',
@@ -1492,7 +1512,6 @@ def yoke_sweep_pieces_mm(band=12.0):
     a_back = float(np.max(yoke_face_a(np.linspace(-62.0, 67.0, 130))))
     out = [(yd_mirror(D["shell_half"]), -float(D["body_depth"]), a_back, None),
            (yd_mirror(D["body_half"]), -float(D["body_depth"]), a_back, None)]
-    hf = yoke_head_facet()
     for g in ("out", "in"):
         gf = yoke_grip_faces(g)
         S, G = gf["S"], gf["G"]
@@ -1503,12 +1522,7 @@ def yoke_sweep_pieces_mm(band=12.0):
         m = sdf2d.polygon(uu, hh, G) <= 0
         Q = np.vstack([G, np.c_[uu[m], hh[m]]])
         a_aft = yoke_grip_aft_a(Q[:, 0], Q[:, 1], g)
-        a_top = a_aft
-        if g == "out":                     # the trim head's facet: aft of the aft-face plane below its centre
-            rel = np.c_[a_aft - hf["c"][0], Q[:, 0] - hf["c"][1], Q[:, 1] - hf["c"][2]]
-            on_f = (np.abs(rel @ hf["eu"]) <= 0.5 * hf["size"]) & (np.abs(rel @ hf["ev"]) <= 0.5 * hf["size"])
-            a_fac = hf["c"][0] - (rel[:, 1] * hf["n"][1] + rel[:, 2] * hf["n"][2]) / hf["n"][0]
-            a_top = np.where(on_f, a_fac, a_aft)       # proud below its centre, a chamfer above it
+        a_top = yoke_grip_aft_top(Q[:, 0], Q[:, 1], g)  # the trim head's facet (proud below its centre)
         allp = np.vstack([np.c_[Q, a_top], np.c_[Q + v, a_aft + da]])
         h_lo, h_hi = S[:, 1].min(), S[:, 1].max()
         edges = np.arange(h_lo, h_hi + band, band)

@@ -185,13 +185,7 @@ def grip_samples(g):
     m = sdf2d.polygon(uu, hh, G) <= 0
     Q = np.vstack([G, np.c_[uu[m], hh[m]]])
     a_aft = I.yoke_grip_aft_a(Q[:, 0], Q[:, 1], g)
-    a_top = a_aft.copy()
-    if g == "out":
-        hf = I.yoke_head_facet()
-        rel = np.c_[a_aft - hf["c"][0], Q[:, 0] - hf["c"][1], Q[:, 1] - hf["c"][2]]
-        on_f = (np.abs(rel @ hf["eu"]) <= 0.5 * hf["size"]) & (np.abs(rel @ hf["ev"]) <= 0.5 * hf["size"])
-        a_fac = hf["c"][0] - (rel[:, 1] * hf["n"][1] + rel[:, 2] * hf["n"][2]) / hf["n"][0]
-        a_top = np.where(on_f, a_fac, a_aft)          # the facet: proud below its centre, a chamfer above
+    a_top = I.yoke_grip_aft_top(Q[:, 0], Q[:, 1], g)
     a_fwd = a_aft + da
     out = []
     for t in np.linspace(0.0, 1.0, 13):
@@ -503,7 +497,8 @@ def front_annotations(ds, v):
     dim(ds, v.pt(72.3, 51.5), v.pt(-72.3, 51.5), Y0 - 74.0, "144.6 ARM TIPS")
     dim(ds, v.pt(141.6, -25.0), v.pt(-141.6, -25.0), Y0 + 77.0, "283 GRIPS OVERALL (BOTTOMS)")
     dim(ds, v.pt(21.1, -50.0), v.pt(-21.1, -50.0), Y0 + 68.0, "42.2 STEM @ h -50")
-    dim(ds, v.pt(127.5, 95.4), v.pt(91.0, 95.4), Y0 - 101.0, "36.6 HEAD")
+    dim(ds, v.pt(127.5, 95.4), v.pt(91.0, 95.4), Y0 - 101.0, "36.6 HEAD",
+        text_at=(v.pt(140.0, 0)[0] - 8.0, Y0 - 101.0))
     hx = X0 + 150.0                                                      # height ladder right of the inboard grip
     for h, t, u in ((95.4, "95.4", -127.5), (67.0, "67.0", 0.0), (-42.3, "-42.3", -122.5), (-56.0, "-56.0", 0.0),
                     (-61.8, "-61.8", 0.0)):
@@ -525,6 +520,17 @@ def front_annotations(ds, v):
     for P, T, n in B:
         balloon(ds, v.pt(*P), T, n)
     poly(ds, v, circle((0.0, 0.0), 22.0, 60), W_THIN, dash=HID, color=MUTED)    # the column behind (hidden)
+    # edges, radii and creases (detail.json) -- notes left of the outboard grip and right of the height ladder
+    RN = [((72.3, 51.5), (X0 - 160.0, Y0 - 66.0), "ARM TIP: 7.8 END + 45° FACETS", ["corners R 2 [M]"]),
+          ((-50.0, 61.6), (X0 + 160.0, Y0 - 76.0), "ARM TOP: 2 TOP FACE", ["crease along the arm [M]"]),
+          ((-28.0, 57.9), (X0 + 160.0, Y0 - 64.0), "CROWN: ROLLED, CRISP", ["chamfered to the junctions"]),
+          ((-35.3, 10.0), (X0 + 160.0, Y0 - 30.0), "SHELL PERIMETER R 1", ["crisp (0.45-0.95 blur) [M]"]),
+          ((-55.0, 32.6), (X0 + 160.0, Y0 - 52.0), "ARM LOWER EDGE R 2", None),
+          ((-18.2, -54.3), (X0 + 160.0, Y0 + 40.0), "FOOT CORNERS R 6", ["underside R <= 3"]),
+          ((-12.0, 3.6), (X0 + 160.0, Y0 + 8.0), "STEP: 2 V, LOWER INSERT", ["1 proud below it [M]"]),
+          ((-127.0, 40.0), (X0 + 160.0, Y0 + 24.0), "GRIP EDGES R 5 AFT", ["R 11 FWD [E]"])]
+    for P, T, t_, more in RN:
+        leader(ds, v.pt(*P), T, t_, more, size=TXT_S, weight=500)
     # ---- detail circles and section planes
     for c, r, let, at in (((58.5, 51.4), 12.5, "D", (-1, -1)), ((60.6, 23.4), 11.5, "E", (-1, 1)),
                           ((-106.5, 79.5), 11.5, "G", (1, -1)), ((0.0, 49.7), 25.0, "H", (1, -1))):
@@ -539,7 +545,7 @@ def front_annotations(ds, v):
     M.cutting_plane(ds, v, tuple(cA - 31.0 * nrm), tuple(cA + 31.0 * nrm), "A", look=(ax[0], ax[1]), ext=1.5,
                     length=6.0)
     M.cutting_plane(ds, v, (146.0, 48.0), (-146.0, 48.0), "B", look=(0.0, 1.0), ext=1.5, length=6.0)
-    M.cutting_plane(ds, v, (109.5, 108.0), (109.5, 55.0), "C", look=(1.0, 0.0), ext=1.0, length=5.5)
+    M.cutting_plane(ds, v, (109.5, 106.0), (109.5, -50.0), "C", look=(1.0, 0.0), ext=1.0, length=5.5)
     view_title(ds, X0, Y0 + 91.0, "FRONT ELEVATION - PILOT YOKE",
                "LOOKING FORWARD, AS THE PILOT SEES IT (CO-PILOT YOKE = MIRROR IMAGE) - SCALE 1:1")
 
@@ -575,7 +581,6 @@ def draw_side(ds, v):
     poly(ds, v, [(a_brk, r), (-float(D["body_depth"]), r), (-float(D["body_depth"]), -r), (a_brk, -r)], W_FINE,
          fill="#D9DCDF")
     break_line(ds, v, (a_brk, r + 3), (a_brk, -r - 3))
-    lbl(ds, *v.pt(a_brk - 2.0, r + 8.0), "11 TO THE PANEL: DETAIL J", TXT_S, "end", color=MUTED)
     body = side_outline(body_samples())
     poly(ds, v, body, W_OBJ, fill="#555C61")
     cov = side_outline(cover_samples())
@@ -622,10 +627,10 @@ def draw_side(ds, v):
     leader(ds, v.pt(float(hf["c"][0]) + 2.0, float(hf["c"][2]) + 4.0), (X0 + 22.0, Y0 - 92.0),
            "TRIM FACET 38° ABOVE AFT", ["ring flush, rocker 6.5 proud"], size=TXT_S)
     leader(ds, v.pt(3.5, -22.0), (X0 + 22.0, Y0 + 40.0), "CONVEX LOWER FACE", ["+4.6 at h -30"], size=TXT_S)
-    leader(ds, v.pt(-55.0, 20.0), (X0 - 70.0, Y0 - 64.0), "BODY FWD FACE, TOP", ["R 14 FOOT [E]: hidden"],
+    leader(ds, v.pt(-52.0, 40.0), (X0 + 26.0, Y0 - 74.0), "BODY FWD FACE, TOP,", ["R 14 FOOT [E]: hidden"],
            size=TXT_S)
-    view_title(ds, X0 - 22.0, Y0 + 91.0, "SIDE ELEVATION", "FROM OUTBOARD, NOSE LEFT, NEUTRAL PITCH; a 0 = X 3700 "
-                                                           "- 1:1")
+    view_title(ds, X0 - 22.0, Y0 + 91.0, "SIDE ELEVATION", "FROM OUTBOARD, NOSE LEFT, NEUTRAL PITCH; a 0 = X 3700; "
+                                                           "COLUMN BROKEN (DETAIL J) - 1:1")
 
 
 # ============================================================================================ view from above
@@ -648,7 +653,8 @@ def draw_top(ds, v):
         line(ds, v, np.c_[sg * uu, aa], W_FINE, color="#C9CFD3")
         ang = float(D["grip_toe"][0 if g == "out" else 1])
         X, Y = v.pt(sg * uu.mean(), float(aa.mean()))
-        lbl(ds, X, Y + 9.0, f"PAD @ h 14, TOE-OUT {ang:.0f}°", TXT_S, "middle", color=ACCENT, weight=600)
+        leader(ds, (X, Y), (X + (-6.0 if sg > 0 else 6.0), v.pt(0, 34.0)[1]), f"AFT FACE @ h 14: TOE-OUT {ang:.0f}°",
+               size=TXT_S, color=ACCENT)
     hf = I.yoke_head_facet()
     s_ = 0.5 * hf["size"]
     from cad import sdf2d
@@ -731,7 +737,9 @@ def draw_sections(ds):
     ds.cv.line((X0, Y0), (X0 + 24.0 * nn[0], Y0 - 24.0 * nn[1]), W_THIN, CHAIN, color=ACCENT)
     lbl(ds, X0 + 25.0 * nn[0] - 8.0, Y0 - 25.0 * nn[1] - 3.0, "NORMAL 38° ABOVE AFT", TXT_S, color=ACCENT, weight=600)
     lbl(ds, X0 + 25.0 * nn[0] - 8.0, Y0 - 25.0 * nn[1] + 0.5, "10° TOWARD THE CL", TXT_S, color=ACCENT)
-    view_title(ds, X0 - 10.0, Y0 + 54.0, "SECTION C-C", "TRIM HEAD AT u 109.5 - 2:1", size=3.4)
+    lbl(ds, X0 - 10.0, Y0 + 51.0, "head front / top [E] (not resolved in any photo)", TXT_S, "middle",
+        color=MUTED)
+    view_title(ds, X0 - 10.0, Y0 + 58.0, "SECTION C-C (HEAD ONLY)", "TRIM HEAD AT u 109.5 - 2:1", size=3.4)
     # ---- B-B: horizontal at h 48 through the badge and the TCS, outboard half + the grip (1:1), from above
     vB = ds.add_view(mkview("sec_B", "xy", -1, 1, (176.0, 448.0), 1.0, "section B-B, (u, a) mm from above"))
     hB = 48.0
