@@ -1897,6 +1897,172 @@
    "kind": "metal_paint",
    "note": "livery N1 line: rendered as the base blue (no navy line on MSN 3008)",
    "srgb_hex": "#13347D"
+  },
+  "fdb_cb_glow_blue": {
+   "baseColorFactor": [
+    0.02,
+    0.06,
+    0.14,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.05,
+    0.2,
+    0.62
+   ],
+   "kind": "dielectric",
+   "note": "CB panel lit bus band, LH (P1046410)",
+   "srgb_hex": "#274569"
+  },
+  "fdb_cb_glow_green": {
+   "baseColorFactor": [
+    0.03,
+    0.12,
+    0.04,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.08,
+    0.48,
+    0.14
+   ],
+   "kind": "dielectric",
+   "note": "CB panel lit bus band, RH front (P1046409 / AOPA)",
+   "srgb_hex": "#306138"
+  },
+  "fdb_cb_glow_yellow": {
+   "baseColorFactor": [
+    0.14,
+    0.12,
+    0.02,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.5,
+    0.46,
+    0.06
+   ],
+   "kind": "dielectric",
+   "note": "CB panel lit bus band, RH front row 1 (AOPA)",
+   "srgb_hex": "#696127"
+  },
+  "fdb_cb_glow_white": {
+   "baseColorFactor": [
+    0.13,
+    0.125,
+    0.11,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.35,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.5,
+    0.48,
+    0.42
+   ],
+   "kind": "dielectric",
+   "note": "CB panel lit bus band, RH rear (AOPA)",
+   "srgb_hex": "#65635D"
+  },
+  "fdb_cb_legend": {
+   "baseColorFactor": [
+    0.8,
+    0.8,
+    0.78,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.3,
+    0.3,
+    0.28
+   ],
+   "kind": "dielectric",
+   "note": "CB panel backlit legend cells (abstract strokes)",
+   "srgb_hex": "#E7E7E5"
+  },
+  "fdb_cb_label": {
+   "baseColorFactor": [
+    0.42,
+    0.42,
+    0.4,
+    1.0
+   ],
+   "metallicFactor": 0.2,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "emissiveFactor": [
+    0.1,
+    0.1,
+    0.09
+   ],
+   "kind": "dielectric",
+   "note": "CB panel light label strips, RH rear block (AOPA)",
+   "srgb_hex": "#ADADAA"
+  },
+  "fdb_visor": {
+   "baseColorFactor": [
+    0.016,
+    0.017,
+    0.02,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.1,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "stowed sun visor, smoked acrylic (AOPA visor photo)",
+   "srgb_hex": "#222327"
+  },
+  "fdb_hose_green": {
+   "baseColorFactor": [
+    0.04,
+    0.2,
+    0.08,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "crew O2-mask hose in the divider cups",
+   "srgb_hex": "#387C50"
   }
  }
 }

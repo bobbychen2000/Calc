@@ -603,6 +603,27 @@ SPEC.update({
 # region 91/122/182); the dark band seen under P1 in 82 moves relative to the stripes along the fuselage in 130 (a
 # reflection horizon, not paint), and the white stripes are edged by thin champagne outlines instead (OUTLINE)
 SPEC["paint_navy"] = dict(SPEC["paint_blue"], note="livery N1 line: rendered as the base blue (no navy line on MSN 3008)")
+# ---- flight deck detail B (flight deck r1 GEOM B, model/fd_detail_b.py; append-only): the CB panels' dim lit bus
+#      bands, backlit legends and light label strips, the stowed sun visors, the crew O2-mask hose (= assemble.MATERIALS
+#      / EMISSIVE 'flight deck detail B')
+SPEC.update({
+    "fdb_cb_glow_blue":   dict(kind="dielectric", base=(0.020, 0.060, 0.140), rough=0.35, emission=(0.05, 0.20, 0.62),
+                               note="CB panel lit bus band, LH (P1046410)"),
+    "fdb_cb_glow_green":  dict(kind="dielectric", base=(0.030, 0.120, 0.040), rough=0.35, emission=(0.08, 0.48, 0.14),
+                               note="CB panel lit bus band, RH front (P1046409 / AOPA)"),
+    "fdb_cb_glow_yellow": dict(kind="dielectric", base=(0.140, 0.120, 0.020), rough=0.35, emission=(0.50, 0.46, 0.06),
+                               note="CB panel lit bus band, RH front row 1 (AOPA)"),
+    "fdb_cb_glow_white":  dict(kind="dielectric", base=(0.130, 0.125, 0.110), rough=0.35, emission=(0.50, 0.48, 0.42),
+                               note="CB panel lit bus band, RH rear (AOPA)"),
+    "fdb_cb_legend":      dict(kind="dielectric", base=(0.80, 0.80, 0.78), rough=0.40, emission=(0.30, 0.30, 0.28),
+                               note="CB panel backlit legend cells (abstract strokes)"),
+    "fdb_cb_label":       dict(kind="dielectric", base=(0.42, 0.42, 0.40), metallic=0.20, rough=0.40,
+                               emission=(0.10, 0.10, 0.09), note="CB panel light label strips, RH rear block (AOPA)"),
+    "fdb_visor":          dict(kind="dielectric", base=(0.016, 0.017, 0.020), rough=0.10, spec=0.3,
+                               note="stowed sun visor, smoked acrylic (AOPA visor photo)"),
+    "fdb_hose_green":     dict(kind="dielectric", base=(0.040, 0.20, 0.080), rough=0.50,
+                               note="crew O2-mask hose in the divider cups"),
+})
 
 
 def _base_name(n):

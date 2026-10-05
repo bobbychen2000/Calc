@@ -114,7 +114,9 @@ GLAZING_TRIM = dict(
     # WL 2.09-2.11, top 2.43-2.46, aft edge STA 4.15-4.19, front-low corner ~3.56 / 2.15 (S15 panoramas, +-0.03); the
     # front edge 35 mm in (P1046408 overlay: the glass shows up to ~1/3 of the 50 mm tried first) [M]
     sw_margin=(0.012, 0.175, 0.085, 0.035, 0.035), sw_radii=(0.120, 0.105, 0.045, 0.050, 0.050),
-    seal_w=0.008,          # [E] black seal lip over the glass (brief: 8 mm)
+    seal_w=0.004,          # [M] black seal lip over the glass: 4 mm (P1046409 / 10, AOPA and the PRO simulator photos
+    #                        show at most a hairline dark edge at the glass; the 8 mm first tried drew a heavy black outline
+    #                        round every pane from the crew seats)
     glass_d=0.0090,        # funnel / seal depth inside the OML at the glass (panes 4-5 mm in: >= 3.5 mm clear) [E]
     proud=0.0015,          # the funnel's outer edge 1.5 mm in front of the lining, overlapping its hole edge
     overlap=0.010,         # ... by 10 mm
@@ -359,8 +361,11 @@ SILL = dict(
     leather_z=2.230,       # [M] side-window reveal in leather below this WL (the sill and the aft-lower corner: AOPA /
     #                        P1046409 -- the stitched leather panel wraps the window bottom up to ~40 % of the aft edge)
     stitch_rows=(5, 10),   # funnel rows carrying a stitch seam (tau 0.28 near the opening, 0.87 on the roll)
-    # placards on the sill top, (u from the sill's forward end, width, height) [M] AOPA / P1046409 / 10 (abstract)
-    placards=((0.24, 0.040, 0.018, "white"), (0.29, 0.085, 0.014, "red"), (0.39, 0.110, 0.022, "red")),
+    # placards on the sill top, (u from the sill's forward end, width, height) [M] AOPA / P1046409 / 10 (abstract):
+    # a small black / white placard at the forward end, then two red ones, all on the sill's narrow forward part
+    # (x < 3.93, 31-45 mm wide between the stitch rows: aft of it the reveal fans out into the window's aft-lower
+    # corner and the placards had drawn as skewed red parallelograms ~2x their size)
+    placards=((0.055, 0.034, 0.015, "white"), (0.100, 0.085, 0.014, "red"), (0.195, 0.095, 0.016, "red")),
 )
 
 
@@ -403,13 +408,18 @@ def glazing_mouldings():
                     pos = {int(c): k for k, c in enumerate(il)}
                     sm = SurfMap(G[sc][:, 5:10], Nn[[pos[int(i)] for i in sc]][:, 5:10])
                     vmid = 0.5 * sm.sv[-1]
+                    # the map's v is the middle column's arc length: scale each placard's v extent by the strip's
+                    # local width there, so the placards keep their size
+                    wcol = np.linalg.norm(np.diff(G[sc][:, 5:10], axis=1), axis=2).sum(1)
                     for u, w, h, col in SILL["placards"]:
                         if u + w > sm.su[-1]:
                             continue
+                        k = sm.sv[-1] / float(np.interp(u + 0.5 * w, sm.su, wcol))
+                        hv = h * k
                         mat = "placard_red" if col == "red" else "legend_plate"
-                        out.append((sm.quads([(u, vmid - 0.5 * h, u + w, vmid + 0.5 * h)], 0.0007), mat))
-                        R = legend_rects(u + 0.003, vmid - 0.5 * h + 0.002, w - 0.006, h - 0.004, rng,
-                                         lines=2 if h > 0.016 else 1, bar=0.36)
+                        out.append((sm.quads([(u, vmid - 0.5 * hv, u + w, vmid + 0.5 * hv)], 0.0007), mat))
+                        R = legend_rects(u + 0.003, vmid - 0.5 * hv + 0.0025 * k, w - 0.006, hv - 0.005 * k, rng,
+                                         lines=3 if h > 0.014 else 2, fill=0.88, bar=0.22)
                         out.append((sm.quads(R, 0.0011), "light_white"))
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]
 
@@ -479,11 +489,19 @@ class SurfMap:
         m = grid_surface(P + off * N)
         return _orient(m, lambda C, Nm=N.reshape(-1, 3).mean(0): np.broadcast_to(Nm, C.shape))
 
-    def quads(self, rects, off):
-        """Flat quads (u0, v0, u1, v1) lifted `off` off the surface (legend strokes, placards): one Mesh."""
+    def quads(self, rects, off, seg=0.012):
+        """Quads (u0, v0, u1, v1) lifted `off` off the surface (legend strokes, placards): one Mesh.  A rect longer
+        than `seg` is split into pieces of at most that length, so it follows the surface: one flat chord across a
+        CB block (0.25 m) stood up to ~0.5 mm off the curved lining and buried the strokes laid on it."""
         if not len(rects):
             return None
-        R = np.asarray(rects, float)
+        R = []
+        for u0, v0, u1, v1 in np.asarray(rects, float):
+            nu = max(1, int(math.ceil(abs(u1 - u0) / seg)))
+            nv = max(1, int(math.ceil(abs(v1 - v0) / seg)))
+            uu, vv = np.linspace(u0, u1, nu + 1), np.linspace(v0, v1, nv + 1)
+            R += [(uu[i], vv[j], uu[i + 1], vv[j + 1]) for i in range(nu) for j in range(nv)]
+        R = np.asarray(R, float)
         U = np.stack([R[:, 0], R[:, 2], R[:, 2], R[:, 0]], 1)
         Vv = np.stack([R[:, 1], R[:, 1], R[:, 3], R[:, 3]], 1)
         P, N = self.frame(U, Vv)
@@ -569,6 +587,9 @@ CB = dict(
     # lit bus bands per row (1-4) [M]: LH rows blue (P1046410, PRO Mexico photo); RH front yellow / green, rear white
     # (P1046409, AOPA studio photo)
     glow={-1: (("blue",) * 4, ("blue",) * 4), 1: (("yellow", "green", "green", "green"), ("white",) * 4)},
+    # label strips per block [M]: backlit white legend cells on the black plate, except the RH rear block's light
+    # silver strips with dark legends (AOPA studio photo, P1046409)
+    label={-1: ("dark", "dark"), 1: ("dark", "light")},
     slot=(0.010, 0.032),                           # [M] stowage slot height, its centre above the bezel top
 )
 
@@ -628,15 +649,19 @@ def cb_panels(fl):
                     sgn = 1.0 if ring is ring_o else -1.0
                     out.append((_orient(m, lambda C, c=cen, s_=sgn: s_ * (C - c)), "panel_dark"))
             # the two plates (bezel_black: consistency_2d3d measures the pair's extent on it), the mullion between
-            for (pa, pb), (ncol, nrow), glow in zip(((x0, xs0), (xs1, x1)), grids, CB["glow"][sg]):
+            for (pa, pb), (ncol, nrow), glow, lab in zip(((x0, xs0), (xs1, x1)), grids, CB["glow"][sg],
+                                                         CB["label"][sg]):
                 out.append((M.patch(u(pa), b0, u(pb), b1, pp, step=0.02), "bezel_black"))
                 rows = _row_layout(0.0, z1 - z0, nrow)
                 du = (pb - pa) / ncol
-                legends, white = [], []
+                legends, white, strips = [], [], []
                 for r, (vk, (l0, l1), (g0, g1)) in enumerate(rows):
                     out.append((M.quads([(u(pa) + 0.004, b0 + g0, u(pb) - 0.004, b0 + g1)], pp + 0.0007),
                                 f"fdb_cb_glow_{glow[r]}"))
-                    white += [(u(pa) + 0.004, b0 + l1 - 0.0005, u(pb) - 0.004, b0 + l1)]
+                    if lab == "light":                 # a light label strip under the row's legends
+                        strips.append((u(pa) + 0.004, b0 + l0 - 0.0006, u(pb) - 0.004, b0 + l1 + 0.0006))
+                    else:
+                        white += [(u(pa) + 0.004, b0 + l1 - 0.0005, u(pb) - 0.004, b0 + l1)]
                     for c in range(ncol):
                         uc = u(pa) + (c + 0.5) * du
                         if c:
@@ -652,8 +677,13 @@ def cb_panels(fl):
                         dots = [(u(pa) - 0.0085 + 0.0022 * (d % 2), b0 + vk - 0.006 + 0.003 * d,
                                  u(pa) - 0.0065 + 0.0022 * (d % 2), b0 + vk - 0.004 + 0.003 * d) for d in range(r + 1)]
                         out.append((M.quads(dots, fp + 0.0006), "light_white"))
-                out.append((M.quads(white, pp + 0.0008), "light_white"))
-                out.append((M.quads(legends, pp + 0.0009), "light_white"))
+                if strips:                             # light strips: dark cell dividers and legends on them
+                    out.append((M.quads(strips, pp + 0.0006), "fdb_cb_label"))
+                    out.append((M.quads(white, pp + 0.0008), "black"))
+                    out.append((M.quads(legends, pp + 0.0009), "black"))
+                else:                                  # backlit white legends on the black plate
+                    out.append((M.quads(white, pp + 0.0008), "light_white"))
+                    out.append((M.quads(legends, pp + 0.0009), "fdb_cb_legend"))
             out.append((M.patch(u(xs0) - 0.0005, b0, u(xs1) + 0.0005, b1, fp, step=0.02), "panel_dark"))
             # ledge above: stowage slot with a zip edge, satin edge strip, red placards, map light, limitations placard
             hs, dz = CB["slot"]
@@ -937,12 +967,21 @@ def overhead_pod():
 # photo, P1046408 V bracket at WL ~2.43-2.46 through the fitted camera]
 # =====================================================================================================================
 POST = dict(
-    handle=(0.011, 0.008),          # [M] grab handle half-width (across), half-depth (off the post)
-    stand=0.020,                    # [E] handle centre line off the post moulding
-    top_x=3.835, end_z=2.435,       # [M] handle from the pod's forward edge down to its end bracket at this WL
-    card=(0.020, 0.016),            # [E] deviation-card holder half sizes (across, along the post)
+    bar_r=0.0115,                   # [M] grab handle: a round satin bar, ~1/4 of the post's width at the glass (P1046406
+    #                                 / 08 / 10, the Pilatus PRO overhead photo: light satin grey, a dark screw hole
+    #                                 near its top)
+    stand=0.026,                    # [M] bar axis off the post moulding
+    top_x=3.835, end_z=2.435,       # [M] handle from the pod's forward edge down to its V end fitting at this WL
+    # V end fitting (P1046408 / 10, PRO simulator): a faceted satin block twice the bar's width, its top cut into a
+    # V round the bar, its aft face two planes meeting on the centre line; on a rounded mounting plate on the post
+    vend=(0.027, 0.020, 0.026, 0.012, 0.040, 0.30),   # half-width, bottom / top of the wings below / above the bar's
+    #                                                    end, notch depth, ridge off the post, ridge fall per m across
+    plate=(0.034, 0.042, 0.006, 0.010, 0.005),          # [M] plate half-width, half-length, centre above the bar's end,
+    #                                                    corner radius, proud of the post
+    card=(0.020, 0.014),            # [M] deviation-card holder half sizes (across, along the post): PRO simulator photo
     compass=(0.026, 0.028, 0.024),  # [E] housing half sizes (across, along the post, off the post): E2B ~2.5 in
-    compass_z=2.372,                # [M] housing centre WL (DETAIL compass_z 2.380 kept within 10 mm)
+    compass_z=2.372,                # [M] housing centre WL (DETAIL compass_z 2.380 kept within 10 mm): the PRO
+    #                                 simulator photo's order down the post -- handle, V fitting, card, compass
 )
 
 
@@ -977,31 +1016,53 @@ def post_fittings():
     with res.coarse():
         xe = _x_at_post_z(q["end_z"])
         P, Nin, T = _post_line(xe, q["top_x"], 36, off=q["stand"])
-        hw, hd = q["handle"]
+        r = q["bar_r"]
         th = np.linspace(0, 2 * np.pi, 16, endpoint=False)
-        c, s_ = np.cos(th), np.sin(th)
-        prof = np.c_[hw * np.sign(c) * np.abs(c) ** 0.6, hd * np.sign(s_) * np.abs(s_) ** 0.6]
-        G = np.stack([P[i] + prof[:, 0, None] * [0, 1.0, 0] + prof[:, 1, None] * Nin[i] for i in range(len(P))])
+        G = np.stack([P[i] + r * np.cos(th)[:, None] * [0, 1.0, 0] + r * np.sin(th)[:, None] * Nin[i]
+                      for i in range(len(P))])
         bar = grid_surface(G, close_v=True)
         bar = _orient(bar, lambda C: C - P[np.argmin(np.linalg.norm(C[:, None] - P[None], axis=2), 1)])
         out.append((bar, "panel_silver"))
         out.append((_orient(planar_cap(G[-1], T[-1]), T[-1]), "panel_silver"))
-        # standoffs (top one into the pod) and the V end bracket (a faceted block with a notch, P1046408)
-        for i in (len(P) - 4,):
-            a = P[i] - (q["stand"] + 0.004) * Nin[i]
-            out.append((cylinder(a, P[i], 0.008, n=10), "panel_silver"))
-        e0, ne, te = P[0], Nin[0], T[0]
-        fr = FD.Fr(e0 - 0.006 * te, [0, 1.0, 0], te)                         # w = y x t: off the post (outward?)
-        if np.dot(fr.w, ne) < 0:
-            fr = FD.Fr(e0 - 0.006 * te, [0, -1.0, 0], te)
-        V2 = np.array([[-0.017, 0.014], [0.017, 0.014], [0.017, -0.006], [0.007, -0.017], [0.0, -0.011],
-                       [-0.007, -0.017], [-0.017, -0.006]])
-        top = fr.p(V2[:, 0], V2[:, 1], 0.008)
-        bot = fr.p(V2[:, 0], V2[:, 1], -(q["stand"] + 0.004))
-        side = grid_surface(np.stack([bot, top], 1), close_u=True)
-        cen = fr.p(0.0, 0.0, 0.0)
-        out.append((_orient(side, lambda C, c=cen: (C - c) - np.outer((C - c) @ fr.w, fr.w)), "panel_silver"))
-        out.append((_orient(planar_cap(top, fr.w), fr.w), "panel_silver"))
+        out.append((_orient(planar_cap(G[0], -T[0]), -T[0]), "panel_silver"))
+        # standoff at the top (into the pod) and the dark screw hole on the bar's aft face below it
+        i = len(P) - 4
+        a = P[i] - (q["stand"] + 0.004) * Nin[i]
+        out.append((cylinder(a, P[i], 0.008, n=10), "panel_silver"))
+        from cad.mesh import disk
+        j = len(P) - 9
+        out.append((disk(P[j] + (r + 0.0003) * Nin[j], Nin[j], 0.0033, n=10), "black"))
+        # mounting plate on the post behind the V end fitting (a rounded pad, 5 mm proud)
+        hwv, vb, vt, vn, wr, fall = q["vend"]
+        pw, pl, pc, pr, pp = q["plate"]
+        Pe, Ne, Te = _post_line(xe - 0.002, xe + 0.002, 3)
+        Pe, Ne, Te = Pe[1], Ne[1], Te[1]
+        fr = FD.Fr(Pe, [0, 1.0, 0], Te)
+        if np.dot(fr.w, Ne) < 0:
+            fr = FD.Fr(Pe, [0, -1.0, 0], Te)
+        Lp = FD.rrect_loop(pw, pl, pr, 5, cy=pc)
+        A, B = fr.p(Lp[:, 0], Lp[:, 1], -0.002), fr.p(Lp[:, 0], Lp[:, 1], pp)
+        cen = fr.p(0.0, pc, 0.0)
+        out.append((_orient(grid_surface(np.stack([A, B], 1), close_u=True),
+                            lambda C, c=cen: (C - c) - np.outer((C - c) @ fr.w, fr.w)), "panel_grey"))
+        out.append((_orient(planar_cap(B, fr.w), fr.w), "panel_grey"))
+        # V end fitting: outline (across, along the post) round the bar's end, the aft face two planes on the ridge
+        Vo = np.array([[0.0, -vb - 0.005], [hwv, -vb], [hwv, vt], [r + 0.001, vn], [0.0, vn],
+                       [-(r + 0.001), vn], [-hwv, vt], [-hwv, -vb]])
+        wf = lambda uu: wr - fall * np.abs(uu)                                   # noqa: E731
+        back = fr.p(Vo[:, 0], Vo[:, 1], pp - 0.001)
+        front = fr.p(Vo[:, 0], Vo[:, 1], wf(Vo[:, 0]))
+        cv = fr.p(0.0, 0.0, 0.5 * (pp + wr))
+        walls = grid_surface(np.stack([back, front], 1), close_u=True)
+        walls = _orient(walls, lambda C, c=cv: (C - c) - np.outer((C - c) @ fr.w, fr.w))
+        from model.flightdeck import _flat
+        out.append((_flat(walls), "panel_silver"))
+        for half in ([0, 1, 2, 3, 4], [4, 5, 6, 7, 0]):
+            Q = front[half]
+            nq = np.cross(Q[1] - Q[0], Q[2] - Q[0])
+            nq = nq if np.dot(nq, fr.w) > 0 else -nq
+            out.append((_flat(_orient(planar_cap(Q, _unit(nq)), _unit(nq))), "panel_silver"))
+        out.append((fr.disk(0.0, -vb + 0.002, 0.0022, wf(0.0) + 0.0002, n=8), "black"))      # screw hole
         # deviation-card holder and compass below the bracket, on the post moulding
         zc = q["compass_z"]
         xc = _x_at_post_z(zc)
@@ -1019,23 +1080,29 @@ def post_fittings():
             fc = FD.Fr(o_c - cd * face, [0, -1.0, 0], upv)
         out.append((cylinder(Pc - 0.002 * Nc, o_c, 0.007, n=8), "black"))
         out.append((fc.se(0, 0, 0, (cw, cl, cd + 0.002), (0.35, 0.35), (8, 16)), "black"))
-        out.append((fc.se(0, 0, cd - 0.0005, (cw * 0.80, cl * 0.80, 0.004), (0.4, 0.4), (6, 14)), "bezel_black"))
-        win = FD.rrect_loop(0.016, 0.013, 0.004, 4)
-        out.append((_orient(planar_cap(fc.p(win[:, 0], win[:, 1], cd + 0.0005), fc.w), fc.w), "screen"))
+        # round front bezel (PRO simulator photo: a round black bezel with four screws, a square card window in it)
+        from cad.mesh import revolve
+        cf = cd + 0.0016
+        out.append((revolve([(0.0, 0.0250), (0.0022, 0.0246), (0.0034, 0.0226), (0.0036, 0.0200), (0.0028, 0.0186)],
+                            n=24, axis_origin=fc.p(0, 0, cf), axis_dir=fc.w, cap_ends=False), "bezel_black"))
+        out.append((fc.disk(0, 0, 0.0190, cf + 0.0006, n=24), "bezel_black"))
+        win = FD.rrect_loop(0.0125, 0.0105, 0.003, 4)
+        out.append((_orient(planar_cap(fc.p(win[:, 0], win[:, 1], cf + 0.0012), fc.w), fc.w), "screen"))
         marks = []
-        for k, uu in enumerate(np.linspace(-0.014, 0.014, 15)):
-            hgt = 0.006 if k % 5 == 2 else 0.003
-            marks.append((uu - 0.0003, -0.002 - hgt, uu + 0.0003, -0.002))
-        marks += legend_rects(-0.012, 0.002, 0.024, 0.006, rng, lines=1, bar=0.5)
+        for k, uu in enumerate(np.linspace(-0.0105, 0.0105, 15)):
+            hgt = 0.0045 if k % 5 == 2 else 0.0022
+            marks.append((uu - 0.00022, -0.0015 - hgt, uu + 0.00022, -0.0015))
+        marks += [(-0.0095 + 0.0075 * j, 0.0020, -0.0095 + 0.0075 * j + 0.0035, 0.0034) for j in range(3)]  # numerals
         V, F = [], []
         for u0, v0, u1, v1 in marks:
             k = len(V)
-            V += [fc.p(u0, v0, cd + 0.0010), fc.p(u1, v0, cd + 0.0010), fc.p(u1, v1, cd + 0.0010), fc.p(u0, v1, cd + 0.0010)]
+            V += [fc.p(u0, v0, cf + 0.0017), fc.p(u1, v0, cf + 0.0017), fc.p(u1, v1, cf + 0.0017),
+                  fc.p(u0, v1, cf + 0.0017)]
             F += [[k, k + 1, k + 2], [k, k + 2, k + 3]]
         out.append((_orient(Mesh(np.array(V), np.array(F)), lambda C: np.broadcast_to(fc.w, C.shape)), "light_white"))
-        out.append((fc.rect(-0.0003, -0.012, 0.0003, 0.012, cd + 0.0013), "light_red"))         # lubber line
+        out.append((fc.rect(-0.0003, -0.0095, 0.0003, 0.0095, cf + 0.0021), "light_red"))       # lubber line
         for su, sv in ((-1, -1), (1, -1), (-1, 1), (1, 1)):                                    # bezel screws
-            out.append((fc.se(su * 0.020, sv * 0.021, cd + 0.0005, (0.0018, 0.0018, 0.0010), (1, 1), (4, 6)),
+            out.append((fc.se(su * 0.0155, sv * 0.0155, cf + 0.0036, (0.0016, 0.0016, 0.0008), (1, 1), (4, 6)),
                         "metal_dark"))
         # card holder between the bracket and the compass: a black frame with a light card (abstract table strokes)
         zh = 0.5 * (zc + cl * Tc[2] + q["end_z"] - 0.024)
@@ -1048,8 +1115,9 @@ def post_fittings():
         cw2, cl2 = q["card"]
         out.append((fh.box(0, 0, 0.0, (2 * cw2, 2 * cl2, 0.006)), "black"))
         out.append((fh.rect(-cw2 + 0.002, -cl2 + 0.002, cw2 - 0.002, cl2 - 0.002, 0.0032), "legend_lit"))
-        lines = [(-cw2 + 0.003, v - 0.0002, cw2 - 0.003, v + 0.0002) for v in np.linspace(-cl2 + 0.004, cl2 - 0.004, 5)]
-        lines += [(u - 0.0002, -cl2 + 0.003, u + 0.0002, cl2 - 0.003) for u in (-0.006, 0.006)]
+        # the deviation table: 3 rule lines and 5 column lines, fine (0.3 mm)
+        lines = [(-cw2 + 0.003, v - 0.00015, cw2 - 0.003, v + 0.00015) for v in np.linspace(-cl2 + 0.004, cl2 - 0.004, 3)]
+        lines += [(u - 0.00015, -cl2 + 0.003, u + 0.00015, cl2 - 0.003) for u in np.linspace(-cw2 + 0.009, cw2 - 0.009, 5)]
         V, F = [], []
         for u0, v0, u1, v1 in lines:
             k = len(V)
@@ -1070,7 +1138,11 @@ HEAD = dict(
     # the PRO's centre dome light in a dark square bezel at port, mirroring the SAFETY AUTOLAND cup (P1046406 through
     # the cabin_fwd_406 camera: a round lens in a dark rectangle left of the two eyeballs) [M]
     dome_c=(4.230, -0.170, 0.070),
-    visor_x=(3.975, 4.300), visor_bl=(0.375, 0.485), rail_w=0.012, visor_off=0.0085, rail_off=0.006,
+    visor_x=(3.975, 4.300), visor_bl=(0.375, 0.485), visor_off=0.0085,
+    # [M] AOPA visor photo: the forward end nearly round, the aft corners ~R 30; a satin rim ~5 mm wide round the
+    # smoked panel (face 1.5 mm below it, its outer wall 3 mm up toward the headliner); the black arm ~1/5 of the
+    # visor's width along its outboard edge, 3 mm below the rim, from the pivot clamp at the forward end
+    visor_r=(0.045, 0.030), visor_rim=(0.005, 0.0015, 0.003), visor_bar=(0.022, 0.003),
 )
 
 
@@ -1137,52 +1209,110 @@ def FD_flip(f):
     return FD.Fr(f.o, f.u, -f.v)
 
 
+def _visor_rows(x0, x1, y0, y1, rf, ra, n_end=8, n_mid=9):
+    """Rows of a rounded-rectangle outline in (x, |y|): row stations x and the span ylo..yhi per row (corner radius rf
+    at the forward end, ra at the aft end; the rows crowd into the end radii so the grid's border IS the outline)."""
+    th = np.linspace(0.0, 0.5 * np.pi, n_end + 1)
+    xf, df = x0 + rf * (1 - np.cos(th)), rf * (1 - np.sin(th))
+    xm = np.linspace(x0 + rf, x1 - ra, n_mid)[1:-1]
+    xa, da = (x1 - ra * (1 - np.cos(th)))[::-1], (ra * (1 - np.sin(th)))[::-1]
+    xs = np.r_[xf, xm, xa]
+    d = np.r_[df, np.zeros(len(xm)), da]
+    return xs, y0 + d, y1 - d
+
+
+def _inset2(L2, t):
+    """2-D closed loop moved t inward (vertex normals from the neighbours; counter-clockwise or not)."""
+    tg = np.roll(L2, -1, 0) - np.roll(L2, 1, 0)
+    nrm = np.c_[tg[:, 1], -tg[:, 0]]
+    nrm /= np.linalg.norm(nrm, axis=1, keepdims=True)
+    c = L2.mean(0)
+    s = np.sign(np.sum(nrm * (L2 - c), 1))[:, None]                       # outward
+    return L2 - t * s * nrm
+
+
 def visors():
-    """Stowed sun visors on their rails above each side window (smoked panel 'fdb_visor', satin rim, black rail)."""
-    from cad.mesh import cylinder, superellipsoid
+    """Stowed sun visors on their rails above each side window (AOPA visor photo): a smoked panel ('fdb_visor') with
+    rounded ends -- nearly round forward, R 30 aft -- in a 5 mm satin rim, carried by a flat black arm along its
+    outboard edge (a satin slot line and the slider button on it) from the pivot clamp on a round base plate at the
+    forward end."""
+    from cad.mesh import cylinder, superellipsoid, revolve, disk
     from model import flightdeck as FD
     L = FD.lining()
     q = HEAD
     out = []
     x0, x1 = q["visor_x"]
     y0, y1 = q["visor_bl"]
+    rf, ra = q["visor_r"]
+    ov = q["visor_off"]
+    rim_w, rim_drop, rim_h = q["visor_rim"]
+    bar_w, bar_drop = q["visor_bar"]
+    down = lambda C: np.broadcast_to([0, 0, -1.0], C.shape)                 # noqa: E731
+
+    def lift(X, Y, off, sg):
+        return np.stack([X, sg * Y, L.crown(X, Y) - off], -1)
+
     with res.coarse():
         for sg in (-1, 1):
-            # rail: a black strip along the outboard edge, rail_off below the headliner
-            xs = np.linspace(x0 - 0.02, x1 + 0.03, 20)
-            yr = y1 + 0.004
-            for (ya, yb, off, mat) in ((yr - q["rail_w"], yr, q["rail_off"], "black"),):
-                Y = np.array([ya, yb])
-                X, YY = np.meshgrid(xs, Y, indexing="ij")
-                Z = L.crown(X, YY) - off
-                G = np.stack([X, sg * YY, Z], -1)
-                out.append((_orient(grid_surface(G), lambda C: np.broadcast_to([0, 0, -1.0], C.shape)), mat))
-                # rail sides up to the headliner
-                for yy in (ya, yb):
-                    A = np.stack([xs, np.full_like(xs, sg * yy), L.crown(xs, np.full_like(xs, yy)) - off], 1)
-                    B = np.stack([xs, np.full_like(xs, sg * yy), L.crown(xs, np.full_like(xs, yy)) + 0.001], 1)
-                    m = grid_surface(np.stack([A, B], 1))
-                    out.append((_orient(m, lambda C, s=sg * (1 if yy == yb else -1): np.broadcast_to([0, s, 0], C.shape)),
-                                mat))
-            # visor panel: rounded rectangle following the headliner, visor_off below it, with a satin rim
-            nu, nv = 14, 6
-            U, Vv = np.meshgrid(np.linspace(x0, x1, nu), np.linspace(y0, y1 - 0.002, nv), indexing="ij")
-            Zp = L.crown(U, Vv) - q["visor_off"]
-            G = np.stack([U, sg * Vv, Zp], -1)
-            out.append((_orient(grid_surface(G), lambda C: np.broadcast_to([0, 0, -1.0], C.shape)), "fdb_visor"))
-            # rim (satin): thin band round the panel 1 mm below it
-            loop = np.vstack([G[:, 0], G[-1, 1:], G[::-1, -1][1:], G[0, ::-1][1:-1]])
-            cen = loop.mean(0)
-            inner = cen + (loop - cen) * 0.985
-            ring = np.stack([loop + [0, 0, -0.0012], inner + [0, 0, -0.0012]], 1)
-            out.append((_orient(grid_surface(ring, close_u=True), lambda C: np.broadcast_to([0, 0, -1.0], C.shape)),
+            # smoked panel: rows of the rounded outline, visor_off below the headliner
+            xs, ylo, yhi = _visor_rows(x0, x1, y0, y1, rf, ra)
+            V = np.linspace(0.0, 1.0, 7)
+            X = np.repeat(xs[:, None], len(V), 1)
+            Y = ylo[:, None] + (yhi - ylo)[:, None] * V[None]
+            out.append((_orient(grid_surface(lift(X, Y, ov, sg)), down), "fdb_visor"))
+            # satin rim: a face ring rim_drop below the panel over its outer rim_w, an outer wall up toward the
+            # headliner (rim_h) and a short inner lip down onto the panel
+            L2 = np.vstack([np.c_[xs, ylo], np.c_[np.full(len(V) - 2, xs[-1]), Y[-1, 1:-1]], np.c_[xs[::-1], yhi[::-1]],
+                            np.c_[np.full(len(V) - 2, xs[0]), Y[0, 1:-1][::-1]]])
+            I2 = _inset2(L2, rim_w)
+            c2 = L2.mean(0)
+            Lo = lambda P2, off: lift(P2[:, 0], P2[:, 1], off, sg)            # noqa: E731
+            cen3 = Lo(c2[None], ov)[0]
+            outward = lambda C, c=cen3: (C - c) * [1.0, 1.0, 0.0]          # noqa: E731
+            face = grid_surface(np.stack([Lo(L2, ov + rim_drop), Lo(I2, ov + rim_drop)], 1), close_u=True)
+            out.append((_orient(face, down), "panel_silver"))
+            wall = grid_surface(np.stack([Lo(L2, ov - rim_h), Lo(L2, ov + rim_drop)], 1), close_u=True)
+            out.append((_orient(wall, outward), "panel_silver"))
+            lip = grid_surface(np.stack([Lo(I2, ov + rim_drop), Lo(I2, ov - 0.0003)], 1), close_u=True)
+            out.append((_orient(lip, lambda C, c=cen3: (c - C) * [1.0, 1.0, 0.0]), "panel_silver"))
+            # black arm along the outboard edge: a flat bar bar_drop below the panel, walls up onto it, end caps
+            xa_, xb_ = x0 - 0.012, x1 - 0.045
+            yb0, yb1 = y1 - bar_w + 0.004, y1 + 0.004
+            xb = np.linspace(xa_, xb_, 16)
+            Xb, Yb = np.meshgrid(xb, np.linspace(yb0, yb1, 5), indexing="ij")      # follows the crown across
+            top_off, bot_off = ov + rim_drop + bar_drop, ov - 0.001
+            out.append((_orient(grid_surface(lift(Xb, Yb, top_off, sg)), down), "black"))
+            for yy, s_ in ((yb0, -1.0), (yb1, 1.0)):
+                A = lift(xb, np.full_like(xb, yy), bot_off, sg)
+                B = lift(xb, np.full_like(xb, yy), top_off, sg)
+                out.append((_orient(grid_surface(np.stack([A, B], 1)),
+                                    lambda C, s=s_ * sg: np.broadcast_to([0, s, 0], C.shape)), "black"))
+            for xx, s_ in ((xa_, -1.0), (xb_, 1.0)):
+                Q = np.vstack([lift(np.full(2, xx), np.array([yb0, yb1]), bot_off, sg),
+                               lift(np.full(2, xx), np.array([yb1, yb0]), top_off, sg)])
+                out.append((_orient(planar_cap(Q, [s_, 0, 0]), [s_, 0, 0]), "black"))
+            # slot line and the slider button on the bar
+            xl = np.linspace(x0 + 0.060, xb_ - 0.025, 10)
+            ym = 0.5 * (yb0 + yb1)
+            Xl, Yl = np.meshgrid(xl, [ym - 0.0012, ym + 0.0012], indexing="ij")
+            out.append((_orient(grid_surface(lift(Xl, Yl, top_off + 0.0006, sg)), down), "panel_silver"))
+            xk = x0 + 0.115
+            pk = lift(np.array([xk]), np.array([ym]), top_off, sg)[0]
+            out.append((revolve([(0.0, 0.0042), (0.0012, 0.0040), (0.0020, 0.0030), (0.0022, 0.0001)], n=10,
+                                axis_origin=pk, axis_dir=[0, 0, -1.0], cap_ends=False), "panel_silver"))
+            # pivot: round base plate on the headliner, a screw, the clamp block between it and the arm's end
+            xp, yp = x0 - 0.004, y1 - 0.004
+            f = _ceiling_frame(xp, sg * yp)
+            if np.dot(f.w, [0, 0, -1.0]) < 0:
+                f = FD_flip(f)
+            out.append((revolve([(-0.0005, 0.0150), (0.0018, 0.0148), (0.0028, 0.0135), (0.0030, 0.0001)], n=16,
+                                axis_origin=f.o, axis_dir=f.w, cap_ends=False), "black"))
+            out.append((disk(f.o + 0.0032 * f.w, f.w, 0.0030, n=8), "panel_silver"))
+            pc = f.o + 0.5 * (0.002 + top_off) * f.w + [0.008, -sg * 0.004, 0.0]
+            out.append((superellipsoid(pc, (0.011, 0.0085, 0.5 * (top_off - 0.002) + 0.0005), (0.5, 0.5), 6, 10),
+                        "black"))
+            out.append((cylinder(pc + [0.0, -sg * 0.0095, 0.0], pc + [0.0, sg * 0.0095, 0.0], 0.0022, n=8),
                         "panel_silver"))
-            # pivot arm + knob at the forward end, on the rail
-            a = np.array([x0 - 0.012, sg * (y1 - 0.002), float(L.crown(x0 - 0.012, y1)) - 0.012])
-            b = np.array([x0 + 0.030, sg * (y1 - 0.010), float(L.crown(x0 + 0.03, y1 - 0.01)) - 0.013])
-            out.append((cylinder(a, b, 0.0045, n=8), "black"))
-            out.append((superellipsoid(a + [0, 0, -0.002], (0.008, 0.008, 0.007), (0.6, 0.6), 6, 10), "black"))
-            out.append((cylinder(a + [0, 0, 0.004], a + [0, 0, -0.010], 0.0025, n=8), "metal_dark"))
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]
 
 
@@ -1357,9 +1487,83 @@ def divider_fittings(fl):
                 out.append((fp.box(0, 0.5 * (pz1 - pz0) - 0.004, 0.0, (py1 - py0, 0.008, 0.010)), "black"))
                 for side_ in (-1, 1):
                     out.append((fp.box(side_ * 0.5 * (py1 - py0), 0.0, -0.002, (0.006, pz1 - pz0, 0.012)), "black"))
+        # fire extinguisher (flightdeck._divider: bottle, valve, handle, straps, plate): strap buckles, gauge, pin
+        out += extinguisher_fittings(fl)
         # curtain track end caps
         x0c, x1c, y0c, y1c, ztc, xt = I.curtain_bundle()
         for yy in (ob0 - 0.02, ob1 + 0.02):
             zz = float(L.crown(xt, yy)) - 0.008
             out.append((box([xt, yy - np.sign(yy) * 0.004, zz], (0.016, 0.010, 0.028)), "metal_dark"))
+    return [(m, mat) for m, mat in out if m is not None and len(m.F)]
+
+
+def extinguisher_fittings(fl):
+    """Detail on the fire extinguisher of flightdeck._divider (DIVIDER extinguisher; NGX POH 7-19 / the cfsjets entry
+    photos: a red Halon bottle in a quick-release bracket): an over-centre buckle with its lever on each strap, a heel
+    cup under the bottle, the pressure gauge on the valve head (silver bezel, white face, green band, needle), the
+    safety pin with its pull ring through the handle, and a white instruction label with abstract strokes between the
+    straps facing the flight deck."""
+    from model import interior as I
+    from cad.mesh import box, cylinder, disk, sweep_profile
+    ex, ey, ez, ed, eh = (float(v) for v in I.DIVIDER["extinguisher"])
+    r = 0.5 * ed
+    zb = fl + ez - 0.5 * eh
+    out = []
+    circ = lambda rr, n: np.c_[rr * np.cos(np.linspace(0, 2 * np.pi, n, endpoint=False)),        # noqa: E731
+                               rr * np.sin(np.linspace(0, 2 * np.pi, n, endpoint=False))]
+    with res.coarse():
+        for zz in (zb + 0.06, zb + eh - 0.07):                          # the straps' buckles (front, toward the deck)
+            out.append((box([ex - r - 0.006, ey, zz], (0.008, 0.026, 0.020)), "metal_dark"))
+            out.append((box([ex - r - 0.0115, ey + 0.003, zz - 0.003], (0.004, 0.011, 0.030)), "black"))
+        xs_ = float(I.DIVIDER["x_aft"]) - float(I.DIVIDER["t"]) - 0.003   # the bracket plate's mid-plane
+        out.append((box([0.5 * (ex - r - 0.004 + xs_), ey, zb - 0.004], (xs_ - (ex - r - 0.004), 0.046, 0.008)),
+                    "metal_dark"))                                     # heel cup under the bottle
+        out.append((box([ex - r - 0.003, ey, zb + 0.010], (0.004, 0.046, 0.028)), "metal_dark"))
+        # pressure gauge on the valve head, facing inboard (the aisle)
+        zg = zb + eh + 0.014
+        gy0, gy1 = ey - 0.010, ey - 0.019
+        out.append((cylinder([ex, gy0, zg], [ex, gy1, zg], 0.0095, n=16), "panel_silver"))
+        out.append((disk([ex, gy1 - 0.0003, zg], [0, -1.0, 0], 0.0078, n=16), "light_white"))
+        th = np.linspace(np.radians(35), np.radians(145), 8)
+        V, F = [], []
+        for k in range(len(th) - 1):                                    # green band of the dial
+            a, b = th[k], th[k + 1]
+            q = [(0.0052, a), (0.0068, a), (0.0068, b), (0.0052, b)]
+            i0 = len(V)
+            V += [[ex + rr * math.cos(t_), gy1 - 0.0006, zg + rr * math.sin(t_)] for rr, t_ in q]
+            F += [[i0, i0 + 1, i0 + 2], [i0, i0 + 2, i0 + 3]]
+        out.append((_orient(Mesh(np.array(V), np.array(F)), [0, -1.0, 0]), "annun_green"))
+        na = np.radians(78)
+        nd = np.array([math.cos(na), 0.0, math.sin(na)])
+        tn = np.array([-nd[2], 0.0, nd[0]])
+        P0 = np.array([ex, gy1 - 0.0009, zg])
+        Q = np.array([P0 - 0.0004 * tn, P0 + 0.0004 * tn, P0 + 0.0062 * nd + 0.0002 * tn, P0 + 0.0062 * nd - 0.0002 * tn])
+        out.append((_orient(Mesh(Q, np.array([[0, 1, 2], [0, 2, 3]])), [0, -1.0, 0]), "black"))
+        # safety pin through the handle and its pull ring hanging inboard
+        zp = zb + eh + 0.030
+        out.append((cylinder([ex - 0.024, ey + 0.010, zp], [ex - 0.024, ey - 0.014, zp], 0.0015, n=8), "panel_silver"))
+        ring = np.c_[np.full(13, ex - 0.024) + 0.0085 * np.sin(np.linspace(0, 2 * np.pi, 13)),
+                     np.full(13, ey - 0.016),
+                     zp - 0.0085 + 0.0085 * np.cos(np.linspace(0, 2 * np.pi, 13))]
+        out.append((sweep_profile(ring, circ(0.0011, 6), cap=False), "panel_silver"))
+        # instruction label (white) wrapped on the bottle between the straps, abstract strokes on it
+        zl0, zl1 = zb + 0.082, zb + eh - 0.092
+        a = np.pi + np.linspace(-0.55, 0.55, 9)
+        rl = r + 0.0004
+        G = np.stack([np.c_[ex + rl * np.cos(a), ey + rl * np.sin(a), np.full(len(a), z)] for z in (zl0, zl1)], 1)
+        out.append((_orient(grid_surface(G), lambda C: (C - [ex, ey, 0.0]) * [1.0, 1.0, 0.0]), "light_white"))
+        V, F = [], []
+        rs = r + 0.0008
+        for j, (zz, frac) in enumerate(((zl1 - 0.012, 0.70), (zl1 - 0.020, 0.85), (zl1 - 0.034, 0.80), (zl1 - 0.046,
+                                         0.60), (zl1 - 0.058, 0.85), (zl1 - 0.070, 0.50), (zl0 + 0.020, 0.75))):
+            h = 0.0035 if j == 0 else 0.0018
+            aa = np.pi + np.linspace(-0.45 * frac, 0.45 * frac, 5)
+            i0 = len(V)
+            for t_ in aa:
+                V += [[ex + rs * math.cos(t_), ey + rs * math.sin(t_), zz], [ex + rs * math.cos(t_), ey + rs * math.sin(t_),
+                                                                            zz + h]]
+            for k in range(len(aa) - 1):
+                b0 = i0 + 2 * k
+                F += [[b0, b0 + 2, b0 + 3], [b0, b0 + 3, b0 + 1]]
+        out.append((_orient(Mesh(np.array(V), np.array(F)), lambda C: (C - [ex, ey, 0.0]) * [1.0, 1.0, 0.0]), "black"))
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]

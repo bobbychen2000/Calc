@@ -184,6 +184,9 @@ MATERIALS = {
     "fdb_visor":          ((0.016, 0.017, 0.020), 0.0, 0.10, dict(specular=0.6)),
     # crew oxygen-mask hose (quick-donning masks in the divider cups: green hose, NGX POH 7-19-2 / panorama)
     "fdb_hose_green":     ((0.040, 0.20, 0.080), 0.0, 0.50),
+    # CB panels: backlit white legend cells on the black plates; the RH rear block's light silver label strips (AOPA)
+    "fdb_cb_legend":      ((0.80, 0.80, 0.78), 0.0, 0.40),
+    "fdb_cb_label":       ((0.42, 0.42, 0.40), 0.20, 0.40),
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)
@@ -203,6 +206,8 @@ EMISSIVE = {
     "fdb_cb_glow_green":  (0.08, 0.48, 0.14),
     "fdb_cb_glow_yellow": (0.50, 0.46, 0.06),
     "fdb_cb_glow_white":  (0.50, 0.48, 0.42),
+    "fdb_cb_legend":      (0.30, 0.30, 0.28),
+    "fdb_cb_label":       (0.10, 0.10, 0.09),
 }
 # image textures (cad/glb.py GLBBuilder.texture): material -> {slot ('base' / 'emissive'): source}; 'g3000_atlas' =
 # model/g3000_pages.atlas(), the five G3000 PRIME pages in one JPEG, mapped by the UVs model/flightdeck.py gives the
