@@ -30,29 +30,8 @@ from cad.mesh import Mesh, grid_surface, planar_cap
 # centre-post fittings
 CEILING_GROUPS = ("overhead", "cb_panels", "pod", "sill", "visors", "post", "headliner_fd")
 
-# The flight-deck shared materials are the seed's ('flight deck shared (seed)' block of model/assemble.py); until that
-# block lands these stand-ins register the names this track uses so the branch builds on its own (setdefault only: the
-# seed's values -- or track A's identical stand-ins -- win, no existing material changes).
-SHARED_FALLBACK = {
-    "leather_black": ((0.030, 0.030, 0.032), 0.0, 0.60, dict(specular=0.5)),
-    "stitch_thread": ((0.30, 0.29, 0.27), 0.0, 0.70),
-    "rubber_black": ((0.020, 0.020, 0.022), 0.0, 0.85),
-    "legend_plate": ((0.020, 0.020, 0.022), 0.0, 0.55),
-    "legend_lit": ((0.80, 0.80, 0.78), 0.0, 0.40),
-    "annun_amber": ((0.60, 0.33, 0.04), 0.0, 0.30),
-    "annun_red": ((0.55, 0.04, 0.03), 0.0, 0.30),
-    "annun_green": ((0.05, 0.40, 0.12), 0.0, 0.30),
-    "annun_blue": ((0.05, 0.20, 0.55), 0.0, 0.30),
-}
-
-
-def _register_fallback():
-    from model import assemble
-    for k, v in SHARED_FALLBACK.items():
-        assemble.MATERIALS.setdefault(k, v)
-
-
-_register_fallback()
+# The flight-deck shared materials (leather_black, stitch_thread, rubber_black, legend_*, annun_*) are
+# model/assemble.MATERIALS' 'flight deck shared' block (render/lookdev.py SPEC the same).
 
 
 def _unit(v):

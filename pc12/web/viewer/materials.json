@@ -1132,6 +1132,23 @@
    "note": "satin titanium: PDU face, lower sub-panels, glareshield soffit, centre-stack face (final judge r1 LIV-F1-04 / I4: P1046408's warm grey metal round the displays)",
    "srgb_hex": "#7C7977"
   },
+  "panel_graphite": {
+   "baseColorFactor": [
+    0.13,
+    0.125,
+    0.125,
+    1.0
+   ],
+   "metallicFactor": 0.45,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "satin graphite panel face round the PDUs, cheek legs (Garmin / brochure renders)",
+   "srgb_hex": "#656363"
+  },
   "panel_silver": {
    "baseColorFactor": [
     0.46,
@@ -2063,6 +2080,159 @@
    "kind": "dielectric",
    "note": "crew O2-mask hose in the divider cups",
    "srgb_hex": "#387C50"
+  },
+  "leather_black": {
+   "baseColorFactor": [
+    0.03,
+    0.03,
+    0.032,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "black leather: the glareshield's rolled lip, the side-window sills",
+   "srgb_hex": "#303032"
+  },
+  "stitch_thread": {
+   "baseColorFactor": [
+    0.3,
+    0.29,
+    0.27,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.7,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "stitching on the hood, sills and armrest pads",
+   "srgb_hex": "#95938E"
+  },
+  "rubber_black": {
+   "baseColorFactor": [
+    0.02,
+    0.02,
+    0.022,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.85,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke bellows, pedal ribs, sealed slots",
+   "srgb_hex": "#272729"
+  },
+  "legend_plate": {
+   "baseColorFactor": [
+    0.02,
+    0.02,
+    0.022,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "black legend plates",
+   "srgb_hex": "#272729"
+  },
+  "legend_lit": {
+   "baseColorFactor": [
+    0.8,
+    0.8,
+    0.78,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "light legend strokes (abstract, no lettering)",
+   "srgb_hex": "#E7E7E5"
+  },
+  "annun_amber": {
+   "baseColorFactor": [
+    0.6,
+    0.33,
+    0.04,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "amber caps / lenses",
+   "srgb_hex": "#CB9B38"
+  },
+  "annun_red": {
+   "baseColorFactor": [
+    0.55,
+    0.04,
+    0.03,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "red caps / lenses",
+   "srgb_hex": "#C43830"
+  },
+  "annun_green": {
+   "baseColorFactor": [
+    0.05,
+    0.4,
+    0.12,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "green caps / LEDs",
+   "srgb_hex": "#3FAA61"
+  },
+  "annun_blue": {
+   "baseColorFactor": [
+    0.05,
+    0.2,
+    0.55,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "blue caps",
+   "srgb_hex": "#3F7CC4"
   }
  }
 }

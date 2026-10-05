@@ -3,10 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.40M tris of which the interior ~550k, ~42 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.53M tris of which the interior ~680k, ~45 MB
 incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~1.94M tris, ~33 MB,
+review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`: ~2.11M
+tris, ~37 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -47,7 +48,7 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25-40 min, 225 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 225 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
                                 #   --only fdlook: [FD-L1]-[FD-L9] the flight-deck look, ~20 min)
@@ -58,8 +59,8 @@ python3 web/package.py          # static viewer bundle -> dist/ (gitignored): me
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~102 MB as base64 text parts: meshopt 16 + 13 MB, gzip of the full model 24 MB for desktops and of
-                                #   the light tier 19 MB for phones without WebAssembly, every part <= 10.7 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   (~110 MB as base64 text parts: meshopt 17 + 15 MB, gzip of the full model 26 MB for desktops and of
+                                #   the light tier 21 MB for phones without WebAssembly, every part <= 11.5 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
                                 #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
@@ -189,8 +190,10 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   the cabin floor + runner + tracks `cabin_floor` and the club tables are children of `cabin_interior`; side-wall /
   headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
   `interior.lining_offset` -- with window reveals and lined door wells; frames at the Pilatus frame stations;
-  interior triangles are budgeted in `build.INTERIOR_BUDGET` (250k, crew seat 14k, cabin seat 12k at PC12_RES=1; at
-  RES 2: 550k / 47.6k / 34.8k, built 525k / 44.8k / 34.8k) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
+  interior triangles are budgeted in `build.INTERIOR_BUDGET` (370k, crew seat 16.5k, cabin seat 12k at PC12_RES=1; at
+  RES 2: 814k / 56.1k / 34.8k, built 681k / 55.4k / 34.8k, with per-part caps for the flight deck -- flight_deck 150k
+  (built 105k), yokes 24k (22.6k), pedals 3k (3.0k), fd_consoles 30k (13.7k), fd_divider 18k (16.8k), interior_lining
+  175k (134k); counted after the interior-light bake's split) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
   eye),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
@@ -465,7 +468,8 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   emissive one (legend_lit, the CB glow bands) keeps its emission.  ?cabGain= ?cabSky= ?cabOcc= ?cabIn= override them.
   Palette (L5, `render/lookdev.py` SPEC + `assemble.MATERIALS`): lining_flightdeck 0.10 rough 0.75 (no CABIN_TRIM),
   leather_glareshield 0.045 rough 0.48, panel_grey 0.20, carpet_flightdeck 0.03, sheepskin lavender-grey (0.28, 0.275,
-  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.55], leather_crew [0, 0.8], panel_dark [0, 0.5], panel_titanium [0, 0.45], carpet_flightdeck
+  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.55], leather_crew [0, 0.8], panel_dark [0, 0.5], panel_titanium [0, 0.45] (0.6 since the
+  flight deck r1 merge, below; + panel_graphite [0, 0.85]), carpet_flightdeck
   [0, 0.85], yoke_white [0, 1.08] (panel_408b: titanium 72 / P1046408 66-78, carpet 13, consoles 13, yoke 202; a lower
   reflection floor `cabSky` 0.12 / 0 measured further from the photo's tonal bands: 32 / 41 / 16 % vs 25 / 47 / 15).  Viewer
   patches (L6): fleece clumps 12-20 mm with darker crevices, a fine pebble grain on the leathers, the walnut figure
@@ -762,19 +766,18 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   striped reverse gate, the PCL a dark arm under a pewter cylinder handle, the flap paddle, 5 + 2 skirted lighting knobs
   with dimmer arcs (JTF p.18), the CCD palm dome (PEDESTAL ccd / ccd_wl: 100 x 85, top 385 [M]) with its trackball in a
   ring, rocker, keys and two green LEDs.  Legends are abstract light strokes (geometry; no text).  The flight-deck
-  shared materials (leather_black, stitch_thread, rubber_black, annun_*) are the seed's block; until it lands
-  `fd_detail_a.SHARED_FALLBACK` registers stand-ins by setdefault (the seed's values win).  Checks: `test/fit_fd_a.py`
+  shared materials (leather_black, stitch_thread, rubber_black, annun_*) are `assemble.MATERIALS`' 'flight deck shared'
+  block (since the merge; the track's stand-ins had the same values).  Checks: `test/fit_fd_a.py`
   28 (pedals over their travel, the 95th's shoes and legs vs the footwell walls >= 10 mm: 10.1 / 27.5 / 20.9), 29
   (yokes over the pull travel and 60 mm of push x roll +/-70 vs the panel detail >= 3 mm: 16.1) and 29b [open] -- at
   the full [E] push (-90 mm) the grips reach within ~8 mm of the bare lower-panel face wings level and cross it from ~45
   deg of roll: the switch blocks under the inboard grips are hit; owner decision: a shorter [E] forward travel (~-65 mm)
   or accept; consistency rows select the yoke / pedal parts and the lip's leather_black (materials moved).  Triangles
   (RES 2):
-  flight_deck 35.6k -> 87.3k, yokes 13.75k -> 22.6k, pedals 1.9k -> 3.0k; the interior 601k is over
-  build.INTERIOR_BUDGET's 550k until the seed's caps land (flight_deck 150k, yoke 24k, pedal 3k).  Deferred: legends
-  on the shared legend atlas (seed S had not landed), the flight deck in build.LOW_FINE (the seed's; the light tier
-  builds it at RES 1 meanwhile), the pedestal front height (no PNL-04 figure in hand), PANEL.mfd_z (research C7: a
-  camera fit first).
+  flight_deck 35.6k -> 87.3k, yokes 13.75k -> 22.6k, pedals 1.9k -> 3.0k (per-part caps in build.INTERIOR_BUDGET:
+  flight_deck 150k, yoke 24k, pedal 3k; the flight deck is in build.LOW_FINE, so phones get the same detail).
+  Deferred: legends on a shared legend atlas (never built: legends stay geometric strokes), the pedestal front height
+  (no PNL-04 figure in hand), PANEL.mfd_z (research C7: a camera fit first).
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been
@@ -887,14 +890,15 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   identical in both tiers).  New materials: assemble block 'flight deck detail B' (fdb_cb_glow_blue / green / yellow /
   white and fdb_cb_legend / fdb_cb_label with emissive, fdb_visor, fdb_hose_green), the same values in
   render/lookdev.py's 'flight deck detail B' SPEC block (lookdev_materials.json / web/viewer/materials.json
-  regenerated); the seed's shared names are registered by setdefault (`fd_detail_b.SHARED_FALLBACK`, the same values as
-  track A's).  Seed stand-ins this branch carries (the seed commit never landed): build.INTERIOR_BUDGET per-part caps /
-  total 814k, LOW_FINE += flight_deck, fd_; fit_check runs test/fit_fd_a.py / fit_fd_b.py when present.  Checks:
+  regenerated); the shared names (leather_black, stitch_thread, rubber_black, legend_*, annun_*) are the 'flight deck
+  shared' block of assemble.MATERIALS / lookdev SPEC since the merge.  This track also carried the planned seed's
+  pieces (that commit never landed): build.INTERIOR_BUDGET per-part caps / total 814k, LOW_FINE += flight_deck, fd_;
+  fit_check runs test/fit_fd_a.py / fit_fd_b.py when present.  Checks:
   fit_check 30 (the glass >= 2 mm from every interior piece near it, no crossing), 30b (the surround fittings seated
   within 3 mm), 31 (crew seats at full aft, height extremes, both headrest locks, arms down / up >= 5 mm from the
   divider / console fittings); 22b leaves the moulded surround (`_fd_glazing`) out of both its parents and its fittings
   (it runs from the lining hole to the glass; the cabin reveals as before).  Legends are geometry (thin quads in the
-  legend / lit colours), not tiles of the seed's legend atlas (fd_legends / fd_legends_b never landed on this branch).
+  legend / lit colours), not tiles of a legend atlas (none was built).
   The surface quads of the CB panels, sills and placards (`SurfMap.quads`) are split into <= 12 mm pieces so they follow
   the curved lining (one flat chord across a CB block stood ~0.5 mm off it: the RH rear block's label strips and their
   dark strokes z-fought, fit_check 26).  Build: 2.43M triangles, 41.0 MB (interior 579k of 814k: fd_consoles 8.6k,
@@ -905,3 +909,34 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   failed on the base).  Verified on this build: fit_check OK (26 none; 30 nearest 3.9 mm, 0 crossings; 30b all seated;
   31 nearest 10.3 mm), consistency_2d3d 138 PASS, viewer_test 216 / 216.  Owner decision (2026-10-05): the compass stays on the post
   (the PRO simulator photo and the NGX POH have it; the s/n 3001 photos show the post empty below the grab handle's V fitting).
+- Flight deck r1 MERGE (2026-10-05; wip/fd-geom-a, wip/fd-geom-b and wip/fd-look merged into wip/stage2-drawings in that
+  order): no source conflict but consistency_2d3d's yoke rows (track A's per-side selection from the yoke parts kept)
+  and the L6 / L6B rev H description, which now names both tracks' table changes (YOKE, GLARESHIELD lip_dz, PANEL
+  standby_unit / sdu_wh, PEDESTAL ccd / ccd_wl; SIDE_CONSOLE cb_panel / cb_split / cb_grid, OVERHEAD x / w); the generated
+  files were rebuilt on the merged parameters (tour_data.js regenerates identical to the merged file; L1-L5, the GA and
+  the sections only changed their PDF timestamps and were left alone).  The planned seed commit never landed: its
+  shared materials are now a 'flight deck shared' block in assemble.MATERIALS and render/lookdev.py SPEC (leather_black,
+  stitch_thread, rubber_black, legend_plate, legend_lit, annun_amber / red / green / blue: the tracks' stand-in values;
+  the `SHARED_FALLBACK` setdefaults are gone; lookdev_materials.json = web/viewer/materials.json regenerated).
+  The combination broke two viewer rows -- [FD-L6] (panel_408b p50 62, < 40 band 35 %) and [T4] (fd_cabin median 66):
+  track A's charcoal face round the PDU row (panel_dark, the consoles' near-black) rendered 25-45 where P1046408 at its
+  fitted camera reads the face ~90 (final judge r1: 88-105, like the sub-panels), and the titanium plates came out 64
+  (look target 72) on the new geometry.  Fix: the moulded face and the cheek-leg faces take a new satin `panel_graphite`
+  (0.13 / metallic 0.45 / rough 0.40: a shade darker than the titanium, as the Garmin / brochure renders; the edge
+  returns, ECS pods, yoke wells, the stack's SDU surround and the consoles stay panel_dark), and materials.js
+  CABIN_TRIM panel_titanium 0.45 -> 0.6, panel_graphite [0, 0.85] (both SPEC_KEEP): titanium 72, graphite 64,
+  p50 68, bands 31 / 47 / 13 %, fd_cabin 70 (its histogram has a gap at the median: 49 % < 66, 52 % < 75 -- the row
+  swings with a percent of pixels).  Other panel_408b values after the merge: carpet 4, consoles 9, glareshield 62
+  (lip 57 / underside 35: the rolled lip is track A's leather_black, so [FD-L3]'s leather_glareshield columns are the
+  hood), yoke 202, sheepskin 106, eyebrow fascia 119, displays 98.  Budget: the bake's split (+28.7k) counts in the
+  per-part caps, fd_divider 15k -> 18k (16.8k built).  Build: 2,530,569 triangles / 44.65 MB, light tier 2,111,944 /
+  37.03 MB (the flight deck at RES 2 there too); interior 681k of 814k (flight_deck 104.9k, fd_consoles 13.7k,
+  fd_divider 16.8k, interior_lining 133.7k, crew seats 55.4k); the bake ~1.5 min on 444k interior vertices.  Verified:
+  fit_check OK (131 ok; 29b the one open owner item), consistency_2d3d 143 / 143, drawing.master (L6: 25 texts crossed
+  by lines, as track A's rev H; L4: 1 leader pair, as before), drawing.sheet / verify (SVGs unchanged), viewer_test
+  225 / 225, web/package.py verify OK (_AO kept), the Artifact bundle 109.9 MB in 2 publishes (61.9 + 48.0 MB; meshopt
+  17.2 + 14.6 MB, gzip 25.7 + 21.4 MB, every base64 part <= 11.5 MB).  Photo comparisons of the 8 standard views
+  (photo | c5560f1 | look only | merged): out/tmp/fd_merge/gallery_* (gitignored: they embed the photos).  Open after
+  the merge: 29b (full [E] push); the stack's sunlit titanium surround at panel_408b 172 against the photo's 138 (the
+  pad 123 / 122 matches); the ledge placards above the CB panels read as long red bars from the pilot seat; the eyebrow
+  fascia a little light (119 against the photo's 100-113).

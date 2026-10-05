@@ -46,7 +46,7 @@ from model.assemble import MATERIALS as _MAT, EMISSIVE as _EMI     # noqa: E402
 OWN_MATERIALS = ("panel_dark", "panel_grey", "leather_glareshield", "carpet_flightdeck", "bezel_black", "display_page",
                  "screen", "screen_sky", "screen_ground", "screen_green", "screen_cyan", "screen_white", "light_amber",
                  "yoke_white", "grip_black", "veneer_walnut", "curtain", "paint_red", "panel_silver",
-                 "pedestal_gunmetal", "pcl_pewter", "panel_titanium")
+                 "pedestal_gunmetal", "pcl_pewter", "panel_titanium", "panel_graphite")
 MATERIALS = {k: _MAT[k] for k in OWN_MATERIALS}
 EMISSIVE = {k: v for k, v in _EMI.items() if k in OWN_MATERIALS}
 # also used, already in assemble.MATERIALS: metal, metal_dark, steel, black, light_red, light_white, chrome_trim
@@ -432,9 +432,12 @@ def _panel_face(acc):
     well = (np.abs(np.abs(C[:, 1]) - float(YK["bl"])) < ww - 0.004) & (C[:, 2] > wz0 + 0.004) & (C[:, 2] < rz0)
     m.F = m.F[~(inside | well)]
     m.compact()
-    # flight deck r1 (A6 zoning, P1046408 / 10, brochure p.10): the face itself is the charcoal moulding round the PDU
-    # row and behind the titanium sub-panels (their 2 mm seams read dark); titanium only on the band and sub-panels
-    acc.add(_oriented(m, N_AFT), "panel_dark")
+    # flight deck r1 (A6 zoning, P1046408 / 10, brochure p.10): the face itself is the graphite moulding round the PDU
+    # row and behind the titanium sub-panels (their 2 mm seams read dark); titanium only on the band and sub-panels.
+    # Graphite, not the consoles' near-black panel_dark (flight deck r1 merge): P1046408 at its fitted camera reads the
+    # face round the displays like the sub-panels (final judge r1: ~88-105), the Garmin / brochure studio renders a
+    # shade darker than the plates; panel_dark rendered it 25-45 (viewer_test [FD-L6] / [T4] fd_cabin)
+    acc.add(_oriented(m, N_AFT), "panel_graphite")
     # lower edge return (the face is a moulding, not a sheet): 40 mm forward under the bottom edge
     bot = P[:, 0]
     acc.add(_oriented(_strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_dark")

@@ -2952,7 +2952,7 @@ def _l6_details(ctx, rep, tol, fl):
         _ext_dev(dev, lab, "glareshield lip top at BL 0", float(c[c[:, 0] > float(I.GLARESHIELD["lip_x"]) - 0.03, 2]
                                                                 .max()), float(I.glareshield_lip(0.0)[1]))
     PE = I.PEDESTAL
-    Vq = ctx.verts("flight_deck", mats=("panel_grey", "panel_dark", "bezel_black", "pedestal_gunmetal"))
+    Vq = ctx.verts("flight_deck", mats=("panel_grey", "panel_dark", "panel_graphite", "bezel_black", "pedestal_gunmetal"))
     zt = fl + float(PE["top_h"])
     q = Vq[(np.abs(Vq[:, 2] - zt) < 0.003) & (np.abs(Vq[:, 1]) < float(PE["hw"]) + 0.02) & (Vq[:, 0] > 3.6)]
     if len(q):

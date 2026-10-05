@@ -96,6 +96,9 @@ MATERIALS = {
     # satin titanium: the PDU face, lower sub-panels, glareshield soffit, centre-stack face (final judge r1 LIV-F1-04 /
     # I4: P1046408's warm grey metal round the displays; panel_grey stays on the eyebrow fascia / overhead)
     "panel_titanium":      ((0.20, 0.19, 0.185), 0.45, 0.38),
+    # graphite: the moulded panel face round the PDU row and behind the sub-panels, the cheek legs (flight deck r1 GEOM A
+    # zoning; a shade darker than the titanium plates, as the Garmin / brochure renders; P1046408 reads both alike)
+    "panel_graphite":      ((0.13, 0.125, 0.125), 0.45, 0.40),
     # light brushed silver: overhead panel face, yoke-hub centre insert (P1046406 / AOPA overhead, P1046408 yoke)
     "panel_silver":        ((0.46, 0.46, 0.45), 0.55, 0.32),
     # control pedestal below the SDU pad: dark gunmetal cheeks / aft skin; the PCL grip satin pewter (throttle photo,
@@ -189,6 +192,19 @@ MATERIALS = {
     # CB panels: backlit white legend cells on the black plates; the RH rear block's light silver label strips (AOPA)
     "fdb_cb_legend":      ((0.80, 0.80, 0.78), 0.0, 0.40),
     "fdb_cb_label":       ((0.42, 0.42, 0.40), 0.20, 0.40),
+    # ---- flight deck shared (flight deck r1: the materials both detail tracks use, model/fd_detail_a.py / _b.py; the
+    #      planned seed block never landed, the tracks' identical stand-ins are these values; render/lookdev.py SPEC
+    #      'flight deck shared' carries the same): the black hood lip / sill leather, the stitching, rubber boots and
+    #      pads, the legend plates and their light strokes (abstract: no lettering), the annunciator / key caps (unlit)
+    "leather_black":      ((0.030, 0.030, 0.032), 0.0, 0.60, dict(specular=0.5)),
+    "stitch_thread":      ((0.30, 0.29, 0.27), 0.0, 0.70),
+    "rubber_black":       ((0.020, 0.020, 0.022), 0.0, 0.85),
+    "legend_plate":       ((0.020, 0.020, 0.022), 0.0, 0.55),
+    "legend_lit":         ((0.80, 0.80, 0.78), 0.0, 0.40),
+    "annun_amber":        ((0.60, 0.33, 0.04), 0.0, 0.30),
+    "annun_red":          ((0.55, 0.04, 0.03), 0.0, 0.30),
+    "annun_green":        ((0.05, 0.40, 0.12), 0.0, 0.30),
+    "annun_blue":         ((0.05, 0.20, 0.55), 0.0, 0.30),
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)

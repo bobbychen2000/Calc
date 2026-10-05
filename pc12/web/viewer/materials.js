@@ -112,8 +112,11 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // the graphite of the side consoles, the overhead panel, the AFCS strip: near-black (P1046408 consoles 4-9, the
   // overhead ~45 under the windshield's light; T14 <= 50)
   panel_dark: [0, 0.5],
-  // the satin titanium face round the PDUs and the sub-panels (P1046408 66-78; its own reflections carry it, SPEC_KEEP)
-  panel_titanium: [0, 0.45],
+  // the satin titanium sub-panels, band and stack (P1046408 66-78; its own reflections carry it, SPEC_KEEP; 0.45 on
+  // the look track's geometry, 0.6 since the flight deck r1 merge: the proud plates and the moulded face round them
+  // rendered them 64, now 72) and the graphite panel face round the PDU row and the cheek legs (the merge: 64, a shade
+  // under the plates as the Garmin / brochure renders; P1046408 reads the face ~90)
+  panel_titanium: [0, 0.6], panel_graphite: [0, 0.85],
   // the near-black footwell carpet (P1046408 5-15) and the PC-24 yoke's white shield (P1046408 ~208)
   carpet_flightdeck: [0, 0.85], yoke_white: [0, 1.08] };
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
@@ -122,7 +125,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
 // the smoked acrylic sun visors.  Every other new material -- stitch_thread, rubber_black, legend_plate, the fda_ /
 // fdb_ trim -- takes the interior law with no entry (diffuse x gain x occlusion x window light, reflections by facing),
 // and an emissive one (legend_lit, the annunciators' glow, fdb_cb_glow_*) keeps its emission as built)
-const SPEC_KEEP = new Set(['panel_titanium', 'pedestal_gunmetal', 'pcl_pewter', 'chrome_trim', 'bezel_black',
+const SPEC_KEEP = new Set(['panel_titanium', 'panel_graphite', 'pedestal_gunmetal', 'pcl_pewter', 'chrome_trim', 'bezel_black',
   'leather_glareshield', 'leather_black', 'yoke_white', 'display_page', 'screen',
   'annun_amber', 'annun_red', 'annun_green', 'annun_blue', 'fdb_visor']);
 

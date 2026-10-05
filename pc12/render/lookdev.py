@@ -520,6 +520,11 @@ SPEC.update({
     "panel_titanium":     dict(kind="dielectric", base=(0.20, 0.19, 0.185), metallic=0.45, rough=0.38,
                                note="satin titanium: PDU face, lower sub-panels, glareshield soffit, centre-stack face "
                                     "(final judge r1 LIV-F1-04 / I4: P1046408's warm grey metal round the displays)"),
+    # flight deck r1 (GEOM A zoning, merge): the moulded face round the PDU row / behind the sub-panels and the cheek
+    # legs, a satin graphite a shade darker than the titanium plates (the consoles' panel_dark rendered it 25-45 at
+    # panel_408b against P1046408's ~90)
+    "panel_graphite":     dict(kind="dielectric", base=(0.13, 0.125, 0.125), metallic=0.45, rough=0.40,
+                               note="satin graphite panel face round the PDUs, cheek legs (Garmin / brochure renders)"),
     "panel_silver":       dict(kind="dielectric", base=(0.46, 0.46, 0.45), metallic=0.55, rough=0.32,
                                note="light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)"),
     "pedestal_gunmetal":  dict(kind="dielectric", base=(0.115, 0.115, 0.125), metallic=0.40, rough=0.42,
@@ -629,6 +634,24 @@ SPEC.update({
                                note="stowed sun visor, smoked acrylic (AOPA visor photo)"),
     "fdb_hose_green":     dict(kind="dielectric", base=(0.040, 0.20, 0.080), rough=0.50,
                                note="crew O2-mask hose in the divider cups"),
+})
+# ---- flight deck shared (flight deck r1: the materials both detail tracks use; = assemble.MATERIALS 'flight deck
+#      shared'): leathers, stitching, rubber, the legend plates / strokes, the annunciator and key caps (unlit)
+SPEC.update({
+    "leather_black":      dict(kind="dielectric", base=(0.030, 0.030, 0.032), rough=0.60, spec=0.25,
+                               note="black leather: the glareshield's rolled lip, the side-window sills"),
+    "stitch_thread":      dict(kind="dielectric", base=(0.30, 0.29, 0.27), rough=0.70,
+                               note="stitching on the hood, sills and armrest pads"),
+    "rubber_black":       dict(kind="dielectric", base=(0.020, 0.020, 0.022), rough=0.85,
+                               note="yoke bellows, pedal ribs, sealed slots"),
+    "legend_plate":       dict(kind="dielectric", base=(0.020, 0.020, 0.022), rough=0.55,
+                               note="black legend plates"),
+    "legend_lit":         dict(kind="dielectric", base=(0.80, 0.80, 0.78), rough=0.40,
+                               note="light legend strokes (abstract, no lettering)"),
+    "annun_amber":        dict(kind="dielectric", base=(0.60, 0.33, 0.04), rough=0.30, note="amber caps / lenses"),
+    "annun_red":          dict(kind="dielectric", base=(0.55, 0.04, 0.03), rough=0.30, note="red caps / lenses"),
+    "annun_green":        dict(kind="dielectric", base=(0.05, 0.40, 0.12), rough=0.30, note="green caps / LEDs"),
+    "annun_blue":         dict(kind="dielectric", base=(0.05, 0.20, 0.55), rough=0.30, note="blue caps"),
 })
 
 

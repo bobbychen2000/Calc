@@ -21,26 +21,8 @@ import numpy as np
 from cad import sdf2d
 from cad.mesh import Mesh, grid_surface, planar_cap
 
-# The flight-deck shared materials are the seed's ('flight deck shared (seed)' block of model/assemble.py); until that
-# block lands these stand-ins register the names this track uses so the branch builds on its own.  setdefault only:
-# the seed's values (or any existing entry) win, no existing material changes.
-SHARED_FALLBACK = {
-    "leather_black": ((0.030, 0.030, 0.032), 0.0, 0.60, dict(specular=0.5)),
-    "stitch_thread": ((0.30, 0.29, 0.27), 0.0, 0.70),
-    "rubber_black": ((0.020, 0.020, 0.022), 0.0, 0.85),
-    "annun_amber": ((0.60, 0.33, 0.04), 0.0, 0.30),
-    "annun_red": ((0.55, 0.04, 0.03), 0.0, 0.30),
-    "annun_green": ((0.05, 0.40, 0.12), 0.0, 0.30),
-}
-
-
-def _register_fallback():
-    from model import assemble
-    for k, v in SHARED_FALLBACK.items():
-        assemble.MATERIALS.setdefault(k, v)
-
-
-_register_fallback()
+# The flight-deck shared materials (leather_black, stitch_thread, rubber_black, legend_*, annun_*) are
+# model/assemble.MATERIALS' 'flight deck shared' block (render/lookdev.py SPEC the same).
 
 
 def _FD():
@@ -662,7 +644,8 @@ def lower_panel(sg):
     e1, e2 = q["edges"]
     plates = [(shw + 0.008, e1), (e1, e2), (e2, yend(0.5 * (z0 + zb)))]
     r = q["plate_r"]
-    # the cheek leg below the lower-panel edge: charcoal face (+ its return under the edge) behind the outer plate
+    # the cheek leg below the lower-panel edge: the graphite face (+ its charcoal return under the edge) behind the
+    # outer plate
     ysl = np.linspace(q["leg"][0], cheek, 14)
     zsl = np.linspace(0.0, 1.0, 6)
     Yl, Tl = np.meshgrid(ysl, zsl, indexing="ij")
@@ -671,7 +654,7 @@ def lower_panel(sg):
     Pl = FD._clamp_lining(Pl, 0.004, cheek)
     Pl[..., 0] = FD.face_x(Pl[..., 1], Pl[..., 2])
     Pl[..., 1] *= sg
-    out.append((FD._oriented(grid_surface(Pl), FD.N_AFT), "panel_dark"))
+    out.append((FD._oriented(grid_surface(Pl), FD.N_AFT), "panel_graphite"))
     bot = Pl[:, 0]
     out.append((FD._oriented(FD._strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_dark"))
     for k, (a, b) in enumerate(plates):
