@@ -852,7 +852,9 @@ def _grip_loft(o, ax, lat, dep, L, w_prof, d_prof, c_prof, n=16, nr=18, e=0.6):
 
 
 def _yokes(acc):
-    """PC-24-style yokes (YOKE table; P1046408 face-on at 0.72 mm/px, P1046409, brochure p.12).  Flight deck r1 (rev H,
+    """PC-24-style yokes -- REV H, frozen (interior.YOKE_REVH / _revh_*): the rev I design drawing L6Y (interior.YOKE_DESIGN)
+    is awaiting the owner's review; the Stage-3 yoke rebuild replaces this builder.  (YOKE table; P1046408 face-on at
+    0.72 mm/px, P1046409, brochure p.12).  Flight deck r1 (rev H,
     owner "the details are drastically missing"; PNL-01 / FD-J07): the white Y shield (interior.yoke_shield_yz: horns
     flaring to the top corners over a broad body to a round 76 mm foot) domed 8.5 mm with two ridges along the silver
     V's sides, the facets falling to its edges; the V a stepped recess (two 1.5 mm steps, panel_silver) with an abstract
@@ -865,29 +867,30 @@ def _yokes(acc):
     face + hub depth times the drawn front-view outline.  The aft faces lean back 10 mm toward the top (P1046409)."""
     from model import seats as S, fd_detail_a as A
     acc.group = "yokes"
-    hw, hh, hd = (float(v) for v in YK["hub_whd"])
-    gl, gr, gc = (float(v) for v in YK["grip"])
-    hl, rh = (float(v) for v in YK["grip_head"])
+    YKH = I.YOKE_REVH                                           # rev H outline, frozen (interior.YOKE_REVH)
+    hw, hh, hd = (float(v) for v in YKH["hub_whd"])
+    gl, gr, gc = (float(v) for v in YKH["grip"])
+    hl, rh = (float(v) for v in YKH["grip_head"])
     YD = A.YOKE_DETAIL
     lean_k = 0.010 / hh                                           # aft face 10 mm further forward at the top edge
 
     def lean(a, b, c):
         return -lean_k * np.clip(b + 0.5 * hh, 0.0, None) * np.clip(c / hd, 0.0, 1.0)
     # black body: the drawn body outline (c 0.004 .. hd - 0.016, + dome), behind the shield
-    body_ol = S.fillet(I.yoke_body_yz(), 0.010, max_len=0.010)
+    body_ol = S.fillet(I._revh_body_yz(), 0.010, max_len=0.010)
     cb0, cbt = 0.004, hd - 0.016
     body = S.pillow(body_ol, cbt, 0.010, 0.005, h=0.010, crown=S.dome(0.003, 0.012), n_round=2)
     body = body.map(lambda V: V + [0.0, 0.0, cb0])
     body.mats = {0: "grip_black", 1: "grip_black", 2: "grip_black"}
     # white Y shield (the drawn outline): sharp-ish horn corners, a broad round foot
-    shield = I.yoke_shield_yz()
+    shield = I._revh_shield_yz()
     tc = shield[np.abs(shield[:, 0]) > 0.5 * hw - 1e-9]                # the two top corners
     far = np.min(np.linalg.norm(shield[:, None, :] - tc[None, :, :], axis=2), axis=1)
     shield = shield[(far < 1e-9) | (far > 0.008)]
     rad = np.where(shield[:, 1] < -0.5 * hh + 0.002, 0.022, 0.008)       # foot corners R 22, horns R 8
     shield = S.fillet(shield, rad, max_len=0.004)
     r_w = 0.005                                                       # the shield's rolled edge
-    top_in = 0.5 * hh - float(YK["shield_dip"]) - r_w - 0.0025          # the V's top, inside the top face
+    top_in = 0.5 * hh - float(YKH["shield_dip"]) - r_w - 0.0025          # the V's top, inside the top face
     # the stepped silver V, a funnel [M: P1046408 at 0.70 mm/px, both yokes -- 63-66 mm across at the top, 36-42 a
     # third down, 25-31 at the step, ~13 at its round foot, 80 tall; the lower step from 74 % of its height]
     vh = 0.080
@@ -965,7 +968,7 @@ def _yokes(acc):
         acc.add(A.knob(fa + (c_r + 0.0008) * fr.w, fr.w, fr.u, 0.0042, 0.0035, n=16, chamfer=0.35), "light_red")
         # paddle grips on the canted axes (interior.yoke_grip_axis), centred in the hub slab, flat aft face
         for d in (-1, 1):
-            p0, p1 = I.yoke_grip_axis(d)
+            p0, p1 = I._revh_grip_axis(d)
             ax2 = _unit(np.r_[p1 - p0])
             b0 = p0 - gr * ax2                                          # bottom end of the grip (front view)
             ax = ax2[0] * fr.u + ax2[1] * fr.v

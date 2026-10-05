@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="H", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="AS SHOWN", rev="I", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -69,6 +69,12 @@ REVISIONS = (
                         "r 16 widening to 21 over their top 90 (no round head); CCD palm grip 100 x 85, top 385 above "
                         "the floor [M]; glareshield lip arch from both JTF elevations (outboard 15-70 lower); GI 275 "
                         "unit 82.6 square over its 79.4 cut-out [S]; SDUs 110 x 195 [M]"),
+    ("I", "2026-10-05", "yoke rev I (owner: 'the yoke isn't quite right especially if you look at the details'): the "
+                        "outline, side profile and switches of the new yoke detail sheet PC12-L6Y (interior.YOKE_DESIGN: "
+                        "8 PRO photos + a 4-photo bundle adjustment) -- a Y shell with a raised silver crown (-56 .. +67), "
+                        "black rim / necks, open hand slots, grips hanging from the arm tips (heads 95, bottoms -42, span "
+                        "283), the aft face 17.5 deg top forward, grips raked 20 and toed out 13 / 28 deg; the knee sweep "
+                        "takes each piece's own fore-aft slab (detail F, L6B)"),
 )
 
 # ---- fills (clean sheet)
@@ -803,22 +809,34 @@ def draw_fd_side(ds, v, bl, simple=False, crank=0.0, travel=False):
     px0, px1, phw, pz = I.pedestal_plinth()
     poly(ds, v, [(px0, fl), (px1, fl), (px1, pz), (px0, pz)], W_THIN, fill="#CDD1D3", color="#6F7B82")
     hub = I.yoke_hub(-1)
-    hw, hh, hd = I.YOKE["hub_whd"]
     xf = float(I.panel_x(hub[2]))
+    body, cover, grip = yoke_side_outlines()                            # rev I: the L6Y side elevation
     if travel:
         for t in I.YOKE["travel"]:
-            poly(ds, v, rrect(hub[0] + t, hub[2] - 0.5 * hh, hub[0] + hd + t, hub[2] + 0.5 * hh, 0.015), W_THIN,
-                 fill=None, dash=PHANTOM, color=MUTED)
+            for P in (body, grip):
+                poly(ds, v, P + [t, 0.0], W_THIN, fill=None, dash=PHANTOM, color=MUTED)
     line(ds, v, [(xf, hub[2]), (hub[0], hub[2])], 2 * I.YOKE["column_r"] * v.k * 0.9, None, "#6F7B82")
-    poly(ds, v, rrect(hub[0], hub[2] - 0.5 * hh, hub[0] + hd, hub[2] + 0.5 * hh, 0.015), W_FINE, fill="#F4F4F2")
-    p0, p1 = I.yoke_grip_axis(1)                                        # grip axis (y, z) about the hub centre
-    gr = I.YOKE["grip"][1]
-    g0 = np.array([hub[0] + 0.03, hub[2] + p0[1]])
-    poly(ds, v, capsule(g0, g0 + np.array([0.0, p1[1] - p0[1]]), gr), W_THIN, fill="#2B3338")
+    poly(ds, v, body, W_THIN, fill="#4A5257")
+    poly(ds, v, cover, W_THIN, fill="#F4F4F2")
+    poly(ds, v, grip, W_THIN, fill="#2B3338")
     pd = I.pedal_points(crank)
     piv = np.array([I.PEDALS["pivot"][0], fl + I.PEDALS["pivot"][1]])
     line(ds, v, [piv, pd["heel"] + 0.06 * pd["dir"] + np.array([0.02, 0.0])], W_FINE)
     line(ds, v, [pd["heel"] + 0.03 * pd["dir"], pd["toe"]], W_OBJ + 0.3, None, "#2B3338")
+
+
+@lru_cache(maxsize=1)
+def yoke_side_outlines():
+    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (drawing.yoke_sheet: the rev I
+    YOKE_DESIGN body + cover and the outboard grip): (body, cover, grip)."""
+    from drawing import yoke_sheet as YS
+    hub = I.yoke_hub(-1)
+    xr = float(hub[0] + I.YOKE["hub_whd"][2])
+
+    def tm(P):
+        return np.c_[xr + P[:, 0] * 1e-3, hub[2] + P[:, 1] * 1e-3]
+    return (tm(YS.side_outline(YS.body_samples())), tm(YS.side_outline(YS.cover_samples())),
+            tm(YS.side_outline(YS.grip_samples("out"))))
 
 
 def _profile_labels(ds, v, ctx):

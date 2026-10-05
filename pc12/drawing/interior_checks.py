@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="H", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="-", rev="I", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -343,9 +343,9 @@ def deviations_block(ds, x0, y0, x1, ctx):
     tb = cc["table"]
     y = I.YOKE
     dev = [
-        ("yoke grips (r2)", f"built from the measured span {mm(y['span'])}: grips {mm(y['grip'][0])} long from "
-                            f"{sgn(y['grip_dz'])} below the hub centre, tops {y['grip'][2]:.0f}° inboard (JTF key, "
-                            "P1046408); rev B: 15° outboard from the hub centre, span unused"),
+        ("yoke (rev I, L6Y)", f"YOKE_DESIGN: grips {mm(y['grip'][0])} long, bottoms {sgn(y['grip_dz'])}, span "
+                              f"{mm(y['span'])}, raked 20°: 95th level 38 -> {1000 * o95['yoke_pitch']:.0f}, "
+                              f"keep-25 roll 5 -> {o95['roll_clear']:.1f}°"),
         ("DECISION: yoke vs knees", f"keep the measured hub, grips and pedals: the 95th's knee meets a grip from "
                                     f"{max(o95['roll_contact'], 0):.0f}° roll (neutral pedals). The outcome depends on "
                                     "the estimated inputs more than on the measured ones (sensitivity table): the "
@@ -413,7 +413,7 @@ KEY_PARAMS = [("CREW_SEAT", "srp_x", "crew SRP STA (centre notch)"), ("CREW_SEAT
               ("PANEL", "glass_x", "PDU glass STA"), ("PANEL", "mfd_z", "MFD centre WL"),
               ("PANEL", "sdu_top_dz", "SDU top vs MFD centre"), ("PANEL", "sdu_recline", "SDU recline"),
               ("YOKE", "hub_dz", "yoke hub vs MFD centre"), ("YOKE", "span", "yoke grips overall"),
-              ("YOKE", "grip", "grip length / r / cant"), ("YOKE", "grip_dz", "grip bottoms vs hub"),
+              ("YOKE", "grip", "grip length / half-width / cant"), ("YOKE", "grip_dz", "grip bottoms vs hub"),
               ("YOKE", "roll", "yoke roll +/-"), ("PEDALS", "heel_x", "pedal heel point STA"),
               ("PEDALS", "travel", "rudder pedal travel +/-"), ("PEDESTAL", "top_h", "pedestal top above floor"),
               ("DIVIDER", "x_aft", "divider aft face"), ("EXEC_SEAT", "bl", "cabin seat BL"),
@@ -582,7 +582,8 @@ REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
              ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"),
              ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]"),
              ("G", "2026-10-03", "model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row"),
-             ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]"))
+             ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]"),
+             ("I", "2026-10-05", "yoke rev I (sheet L6Y), sweep per piece"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

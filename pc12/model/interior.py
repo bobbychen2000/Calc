@@ -225,57 +225,207 @@ GLARESHIELD = dict(
     finish="grey stitched leather top [M: brochure p.10]",
 )
 YOKE = dict(
-    bl=P(0.375, "[M] +/-0.372 (cockpit key): on the seat centreline"),
-    hub_dx=P(0.140, "[M] hub face aft of the PDU glass (face-on photo, depth-corrected)"),
-    hub_dz=P(-0.155, "[M] hub centre 0.15-0.17 below the MFD centre"),
-    hub_whd=PT((0.140, 0.120, 0.060), "[M] white Y hub: width at the grip roots, height; depth [E].  Flight deck r1 "
-                                      "(rev H, P1046408 at 0.72 mm/px): height 0.110 -> 0.120 (the silver V's top to "
-                                      "the shield's round foot)"),
-    hub_bot_w=P(0.045, "[M] the Y hub narrows to a round foot this wide at its bottom (JTF cockpit key item 15).  "
-                       "Flight deck r1 (rev H) re-measured: the white foot is 0.040-0.045 on both P1046408 yokes (0.70 "
-                       "mm/px) and in the JTF elevation; 0.066-0.076 is the shield's MID-height width (the profile "
-                       "below), the black body's U rim round the foot ~0.055-0.08"),
-    span=P(0.285, "[M] grips overall, outer edge to outer edge at their bottoms (JTF cockpit key, P1046408 with the "
-                  "0.14 hub for scale); PC-24-style yoke [S]"),
-    grip=PT((0.160, 0.016, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
-                                   "key: tops +/-0.10, bottoms +/-0.125 from the hub CL; P1046408 ~8 deg); review r2 F2 "
-                                   "(P1046408 pair: slim paddles 55 px against the render's 70 px, rising well above "
-                                   "the hub): radius 0.020 -> 0.0155, length 0.125 -> 0.140 (the tops 15 mm higher); "
-                                   "final judge r1 I2 (P1046408: the grips rise ~0.07 above the shield top with the thumb "
-                                   "knob, the render's stopped at 0.045): 0.140 -> 0.160, the bottoms kept.  "
-                                   "Rev H: r 0.016 (28-32 mm across near the bottom, P1046408 / 09), widening to "
-                                   "the head (grip_head)"),
-    grip_dz=P(-0.040, "[M] grip bottoms 0.04 below the hub centre, near the hub bottom (JTF key: grips WL 1.80-1.93 "
-                      "on hub 1.79-1.90; P1046408 -0.05..+0.09); tops ~0.04 above the hub top (P1046408)"),
-    grip_head=PT((0.090, 0.021), "[M] paddle head: over its top 90 mm the grip widens gradually from the grip radius "
-                                 "to 0.021, the hat / trim switch on top (P1046409 at 0.52 mm/px: 42 mm across under "
-                                 "the head, 39 at mid-length, 29 near the bottom; P1046408: 39-42 / 28-30; brochure "
-                                 "p.12).  Flight deck r1 (rev H): no round swollen head -- rev F's 0.018 bulb over 42 "
-                                 "mm read as a lollipop; the paddle widens instead"),
-    shield=PT(((0.00, 1.00), (0.10, 0.97), (0.22, 0.74), (0.33, 0.52), (0.45, 0.38), (0.60, 0.28), (0.80, 0.14),
-               (1.00, 0.00)),
-              "[M] white shield (the hub's front cover): half-width from its top (t = 0) to the stem (t = 1) as the "
-              "fraction between hub_bot_w / 2 and hub_whd width / 2, its top corners at +/- hub width / 2 (P1046408: "
-              "~0.52 of the grip span; review r3 F2: rev C ran them out to the grips).  Final judge r1 I2 (P1046408 "
-              "re-measured on the shield's own height: 0.85 / 0.60 of its top width at 1/2 and 4/5 of the height, a "
-              "full U round to the stem): the rev D goblet (0.37 at mid-height, 0.05 at 0.85) left a broad black "
-              "body round a narrow white V.  Flight deck r1 (rev H; P1046408 right yoke at 0.70 mm/px: half-widths "
-              "70 / 61 / 44 / 33 / 29 / 25 / 20 mm at t 0.09 / 0.21 / 0.33 / 0.45 / 0.57 / 0.75 / 0.90, left yoke "
-              "39 at t 0.5; the JTF elevation 66 / 49 / 38 at t 0 / 0.25 / 0.5): a Y -- horns flaring to the top "
-              "corners over the top third, a slowly narrowing body, a round foot (the rev F U was 0.80 at "
-              "mid-height)"),
-    shield_dip=P(0.004, "[M] the shield's top edge dips this much to the centre under the badge (a shallow V)"),
-    body_arm=PT((-0.004, 0.005), "[M] black yoke body behind the shield: its lower edge leaves each grip's inner edge "
-                                 "this far above the hub centre and runs down-inboard to the shield foot, rimming it "
-                                 "by the second value; its top runs from the grip heads into the shield's top corners "
-                                 "(P1046408, review r3 F2)"),
-    column_r=P(0.022, "[E] horizontal column into the lower panel"),
+    bl=P(0.375, "[M] +/-0.372 (cockpit key): on the seat centreline.  Rev I: the insert axis measured 1.8 (pilot) / 4.2 "
+                "(co-pilot) mm outboard of it through panel_408, inside that camera's +/-7 mm: kept"),
+    hub_dx=P(0.140, "[M] hub face aft of the PDU glass (face-on photo, depth-corrected).  Rev I: the yoke's front face "
+                    "(the black body's forward face, YOKE_DESIGN body_depth ahead of the aft face at the insert step); "
+                    "the locked-pose photos put that aft face 60 +/-30 mm further forward (bundle adjustment of 4 "
+                    "photos, absolute station +/-30 mm): read as the gust-lock pose, not moved (OPEN, owner)"),
+    hub_dz=P(-0.155, "[M] hub centre 0.15-0.17 below the MFD centre = the column axis / roll pivot (WL 1.845).  Rev I: "
+                     "the shell is drawn -56 .. +67 mm about it (P1046408 through panel_408); the column surround's "
+                     "joint line reads WL 1.817-1.824 (+/-10 mm): OPEN, owner (YOKE_DESIGN column)"),
+    hub_whd=PT((0.1446, 0.123, 0.060), "[M] rev I: white shell 144.6 across the arm tips, 123 tall (-56 .. +67 about "
+                                       "the hub centre, YOKE_DESIGN shell); depth [E] 60 = the black body's forward "
+                                       "face to the aft face at the insert step (hidden in every photo)"),
+    span=P(0.283, "[M] rev I: grips 283 overall at their bottoms (both P1046408 yokes, the outboard and the mirrored "
+                  "inboard grip averaged: 279 / 288 as seen); rev H 285 (JTF cockpit key)"),
+    grip=PT((0.1377, 0.021, 16.0), "[M] rev I (YOKE_DESIGN grip): length bottom to head top 137.7 (rev H 160: the heads "
+                                   "were 23 mm too high), mid-grip half-width (section A-A 42 x 27), cant of the paddle "
+                                   "from vertical with the TOPS INBOARD 15-17 deg (P1046408 both grips; rev H 10)"),
+    grip_dz=P(-0.0423, "[M] rev I: grip bottoms 42.3 below the hub centre (P1046408, both grips; rev H -40)"),
+    column_r=P(0.022, "[E] the column (never seen: behind the black body / in its surround): dia 44 kept"),
     travel=PT((-0.090, 0.090), "[E] pitch travel fwd / aft of neutral"),
     roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it.  OPEN, owner decision "
                  "(review r3 C3): at the L6B design seat setting the 95th-pct knees meet the yoke from ~17.5 deg of "
-                 "roll (50th ~25, 5th male ~22.5, 5th female ~87.5; L6B detail F / fit_check 19 compute it); options: "
-                 "the seat setting / pedal crank the 95th would use, a smaller roll [E], or the grip cant / span"),
+                 "roll (rev H; 50th ~25, 5th male ~22.5, 5th female ~87.5; L6B detail F / fit_check 19 compute it); "
+                 "options: the seat setting / pedal crank the 95th would use, a smaller roll [E], or the grip cant / "
+                 "span"),
 )
+# rev H front-outline parameters, FROZEN: read only by the rev H 3-D builder (flightdeck._yokes via the _revh_* helpers
+# below) so that a rebuild keeps today's GLB yoke until the Stage-3 yoke rebuild consumes YOKE_DESIGN; nothing else
+# reads them (the L6 / L6B sheets, the knee checks and L6Y draw rev I)
+YOKE_REVH = dict(hub_whd=(0.140, 0.120, 0.060), hub_bot_w=0.045, span=0.285, grip=(0.160, 0.016, 10.0),
+                 grip_dz=-0.040, grip_head=(0.090, 0.021),
+                 shield=((0.00, 1.00), (0.10, 0.97), (0.22, 0.74), (0.33, 0.52), (0.45, 0.38), (0.60, 0.28),
+                         (0.80, 0.14), (1.00, 0.00)),
+                 shield_dip=0.004, body_arm=(-0.004, 0.005))
+
+# ---------------------------------------------------------------------------------------------------- yoke design
+# YOKE_DESIGN (rev I, owner 2026-10-05 "the yoke isn't quite right especially if you look at the details"): the yoke's
+# own design drawing, sheet L6Y (drawing/yoke_sheet.py), drawn from this table; the knee / roll checks of L6B and the
+# L6 views take its outline (yoke_outline_yz, yoke_sweep_pieces).  YOKE-LOCAL MILLIMETRES:
+#   u  lateral, + OUTBOARD (co-pilot yoke: + model y; pilot: - model y -- the pilot yoke is the mirror image, its
+#      switches outboard as well); 0 = the hub centreline (BL +/-YOKE bl)
+#   h  up from the hub centre (the column axis / roll pivot, WL = PANEL mfd_z + YOKE hub_dz)
+#   a  aft (+x, toward the pilot) from the aft face at the insert step line; model x = yoke_hub()[0] + YOKE
+#      hub_whd[2] + a at neutral pitch
+# Outlines are front-view (u, h) polylines.  '*_half' outlines run from the top centre round the OUTBOARD side to the
+# bottom centre and are mirrored (the moulding is symmetric; only the switches differ).  The grips are given in the
+# OUTBOARD-grip sense and mirrored for the inboard grip; the front-view grip outline is its silhouette (the aft face
+# and the inner side face the toe-out turns aft).  Sources (git-ignored refs/cache/fd_research/yoke/measure:
+# front.json / depth.json / detail.json, 2026-10-05): P1046408 rectified through the fitted camera panel_408 (0.71
+# mm/px, both yokes), P1046409 / 10 (PnP cameras, 0.50-0.58 mm/px), the Pilatus Mexico press photo (0.24-0.27 mm/px),
+# the AOPA (= Pilatus press) photo, the JTF p.18 elevation, a bundle adjustment of 4 photos (depth), the PC-24
+# (samuelnicz 1-4, same family) for what the PRO photos do not show.  All PRO photos look from INBOARD: features off
+# the rectification plane shift toward the camera, so the outboard and the mirrored inboard traces were AVERAGED
+# (first-order parallax cancels); what remains is listed on L6Y and in the overlays (refs/cache/overlays/yoke).
+# NO MARKINGS: the badge is an abstract winged plate, the legends are tick strokes.
+YOKE_DESIGN = dict(
+    # ---- white shell (cover) and silver insert, front view
+    shell_half=PT(((0.0, 67.0), (8.0, 66.8), (15.0, 66.1), (20.0, 65.2), (22.0, 64.5), (24.0, 63.0), (26.0, 60.6),
+                   (28.0, 57.9), (30.0, 55.8), (32.0, 54.3), (33.7, 53.7), (36.0, 54.6), (39.0, 56.1), (42.0, 57.7),
+                   (45.0, 59.3), (48.0, 60.7), (51.0, 61.9), (54.0, 62.9), (57.0, 63.4), (60.0, 63.3), (63.0, 62.8),
+                   (66.0, 61.9), (72.3, 55.6), (72.3, 47.8), (69.0, 44.6), (66.0, 41.9), (63.0, 39.5), (60.0, 37.2),
+                   (57.0, 34.9), (54.0, 32.6), (51.0, 30.6), (48.0, 28.8), (45.5, 26.6), (43.6, 25.0), (41.0, 22.4),
+                   (38.7, 20.0), (37.4, 17.5), (36.6, 15.0), (35.3, 10.0), (32.8, 0.0), (30.2, -10.0), (27.9, -20.0),
+                   (25.6, -30.0), (23.3, -40.0), (21.1, -50.0), (20.2, -52.6), (18.2, -54.3), (14.0, -55.3),
+                   (7.0, -55.8), (0.0, -56.0)),
+                  "[M] P1046408 through panel_408, both yokes (agree within 1.5 mm), each half-width the mean of the "
+                  "outboard (true edge) and inboard silhouette (the inboard one shows 2-8 mm of side wall); sigma 1.5.  "
+                  "The silver insert IS the crown (67.0 at the centre, 64.5 at +/-22, chamfered to the arm junctions "
+                  "+/-33.7 / 53.7); the arms rise to 63.4 at |u| 57; FACETED tips (detail.json: a vertical end 47.8-"
+                  "55.6 at |u| 72.3 between 45 deg chamfers, corner R 2; Mexico R tips, P1046409); the stem 65.6 wide at "
+                  "h 0, 42.2 at h -50 (rev H 6-7 mm too wide a side); foot -56.0, corners R 6"),
+    insert_side=PT(((33.7, 53.7), (30.0, 51.8), (26.0, 50.0), (22.5, 47.5), (21.0, 45.0), (19.5, 40.0), (17.8, 32.0),
+                    (16.0, 25.0), (14.8, 19.0), (13.6, 14.0), (13.1, 8.0), (12.9, 4.1)),
+                   "[M] parting groove of the upper insert from the arm junction to the step end (intensity minima, "
+                   "P1046408 R + L within 0.5 mm; Mexico): concave, 39 wide at h 40, 32 at h 25, 25.8 at the step"),
+    step=PT(((0.0, 2.1), (12.9, 4.1)), "[M] the step / parting line: a 2 mm V (P1046408, Mexico, P1046409 / 10), the "
+                                        "lower insert standing ~1 mm proud below it (lit top edge, Mexico / press)"),
+    insert_lower_half=PT(((0.0, 1.0), (12.6, 3.0), (11.6, -4.0), (10.4, -11.0), (9.6, -15.5), (8.8, -17.6),
+                          (6.5, -18.6), (0.0, -18.9)),
+                         "[M] darker (smoke) lower insert, 25.2 -> 17.6 wide, bottom -18.9 (P1046408 R + L; bundle "
+                         "adjustment -17.3 / -18.5); recessed ~1 mm in the white cover"),
+    badge=PT(((22.0, 53.2), (15.8, 46.1)), "[M] badge groove outline, half: top corner, bottom corner (a winged "
+                                           "trapezoid 44.0 / 31.6 x 7.1, ends 41 deg from vertical; rectified Mexico R / "
+                                           "L, P1046409 / 10, AOPA, JTF at 16 px/mm; sigma 0.5).  Drawn ABSTRACT: an "
+                                           "inner border 0.8 inside, three speed-line grooves per wing, a plain field"),
+    badge_lines=PT((51.55, 50.25, 48.95, 14.0, 0.8),
+                   "[M] speed lines: z of the three grooves, from |u| to the inner border; the border offset (Mexico R "
+                   "/ L vertical profiles at |u| 16 / 18: minima at 51.5-51.75, 50.1-50.3, 48.6-49.3)"),
+    badge_field=PT((13.5, 47.0, 52.2), "[M] plain centre field half-width, bottom, top (the extent of the lettering, "
+                                       "NOT reproduced: no markings)"),
+    # ---- black body (behind the cover), front view
+    body_half=PT(((0.0, 62.0), (33.0, 50.0), (58.0, 59.5), (60.5, 63.3), (63.0, 66.0), (67.0, 71.5), (73.5, 78.5),
+                  (80.0, 83.5), (86.0, 86.8), (92.4, 88.5), (100.0, 60.0), (92.0, 25.0), (85.6, 20.0), (82.0, 22.2),
+                  (78.0, 23.6), (72.0, 24.2), (66.0, 23.8), (60.0, 22.0), (55.0, 18.8), (51.0, 14.5), (47.9, 10.0),
+                  (45.6, 5.0), (42.9, 0.0), (39.2, -10.0), (35.9, -20.0), (32.6, -30.0), (29.0, -40.0), (25.6, -50.0),
+                  (23.5, -55.5), (20.0, -59.3), (14.0, -61.0), (7.0, -61.6), (0.0, -61.8)),
+                 "[M] satin black body: a rim round the stem 13.0 / 10.1 / 9.0 / 8.0 / 7.0 / 5.7 / 4.5 mm wide at h "
+                 "10 / 0 / -10 / -20 / -30 / -40 / -50 and 5.8 under the foot (bottom -61.8; P1046408 R + L, the "
+                 "outboard true edge mirrored); the OPEN hand slot's top arching from the rim at h 10 to 24 at |u| "
+                 "66-78 (outboard 20.5 [front] / 23-26 [detail], inboard 27 as seen: averaged, +/-3); the necks from "
+                 "the arm tops (|u| 62) up to the grip heads' inner sides at h 88.5 (the outboard trace, 57 / 63 -> 86 / 94, "
+                 "checked through the photo cameras: the averaged inboard trace sat 5-8 low in P1046410 / Mexico).  Points (0, 62) .. "
+                 "(58, 59.5) and (100, 60) .. (92, 25) lie hidden behind the shell / the grip"),
+    body_depth=P(60.0, "[E] the body's forward face this far ahead of the aft face at the step (rev H hub depth; "
+                       "hidden in every photo); the white cover shows no side face from 23-26 deg (depth.json B-B): a "
+                       "3 mm cover with R 1 edges on the body, which forms the sides and the rim"),
+    cover_t=P(3.0, "[E] white cover thickness (no side face seen in P1046408 / 10 at 23-26 deg: <= ~4)"),
+    # ---- side profile of the aft face (a vs h) at the centreline: depth.json
+    face_tilt=P(17.5, "[M] the aft face ABOVE the step is one plane, top forward 17.5 +/-4 deg (badge, TCS, AFCS cap, "
+                      "head collars, pad centres: bundle adjustment of P1046408 / 10, Mexico, press; TCS bezel ellipses "
+                      "in 6 views 16 +/-2; pad normals 21-24 deg up).  Rev H: 4.8 deg"),
+    face_lower=PT(((2.1, 0.0), (-8.0, 2.6), (-18.5, 4.2), (-30.0, 4.6), (-42.0, 3.4), (-52.0, 1.6), (-56.0, 0.5)),
+                  "[M] below the step the face is convex, near vertical: (h, a) -- lower-insert bottom +3..+6 aft of "
+                  "the step, the foot -1.5..+0.4 (bundle adjustment, 4 camera solutions)"),
+    crown_top=P(2.0, "[M low] a narrow upward-facing top face along the arm tops ~2 mm deep (Mexico, from above; "
+                     "0.65-1.05 from level views); the insert crown edge rolls over smoothly (press 35 deg view)"),
+    edges=PT((1.0, 2.0, 3.0, 2.0), "[M] edge radii: shell perimeter R 1 (10-90 % transitions 0.45-0.95 mm in 5 "
+                                   "photos), arm lower edge R 2, foot underside R <= 3, arm-tip facet corners R 2"),
+    # ---- grips (outboard-grip sense, mirrored for the inboard grip)
+    grip=PT(((95.5, 94.8), (102.0, 95.4), (110.0, 95.4), (118.0, 95.3), (123.6, 94.0), (126.6, 91.0), (127.6, 87.3),
+             (127.4, 74.0), (127.4, 60.0), (129.5, 42.0), (134.4, 20.0), (138.4, 0.0), (140.7, -15.0), (141.6, -25.0),
+             (141.3, -30.0), (139.8, -34.5), (136.3, -38.5), (129.5, -41.5), (122.5, -42.3), (117.0, -42.0),
+             (114.0, -40.3), (108.5, -30.0), (100.2, -12.5), (92.4, 4.0), (88.5, 13.0), (85.6, 20.0), (84.8, 36.0),
+             (85.6, 50.0), (88.0, 57.0), (90.2, 63.0), (90.8, 70.0), (90.6, 78.0), (90.8, 85.0), (92.6, 91.5)),
+            "[M] grip silhouette (closed, from the head top's inner corner clockwise): the outboard grip (P1046408 R) "
+            "and the mirrored inboard grip averaged (outer edge 122-126 / 131-134 as seen at h 40-60: the toe-out "
+            "puts the outer edges forward, so they shift toward the camera); flat-topped head at 95.4, 36.8 wide at "
+            "h 85 (trim ring 29.5 + 3.4 margins; detail.json, front.json 35.4-35.9), a narrow neck ~36 under it at h 60-66, widest 48 at h "
+            "20, 33 at the bottom; bottom -42.3, lowest at the inner corner, rising outward ~20 deg; outer edge "
+            "141.6 at h -25 (span 283).  Inner edge above h 20 hidden by the body: the pad's inner edge + 3.5 "
+            "(P1046408 inboard pad)"),
+    grip_rake=P(20.0, "[M] the grips' aft faces lean top FORWARD 20 +/-5 deg in side view (pad corners triangulated "
+                      "in P1046408 L / R, Mexico, press: 18.5 / 18.9, 17.8-32 over the camera solutions; pad bottom 27 "
+                      "aft of its top over 79).  Rev H: vertical"),
+    grip_toe=PT((13.0, 28.0), "[M] the aft faces are TOED OUT (normal turned away from the yoke centreline) about "
+                              "the grip axis: outboard grip 13, inboard grip 28 (plane fits of the triangulated pad "
+                              "corners, +/-8; 41 deg between the two pads); kept per grip -- 20 / 20 left the outboard "
+                              "pad 10 mm wide in P1046410 (photo ~22 as seen).  Rev H: flat aft face normal to x"),
+    grip_a0=PT((14.0, -1.75), "[M] the aft face passes a = -1.75 at h 14 on the grip axis (the pad centres lie 0.4-4.4 "
+                              "aft of the 17.5 deg face plane; the trim collar centre then lands at a -26.3 = the "
+                              "bundle adjustment's -26.3)"),
+    grip_axis=PT(((127.5, -42.0), (109.5, 95.4)), "[M] grip axis (front view): mid of the bottom edge -> mid of the "
+                                                    "head top; the toe-out turns the aft face about it"),
+    grip_section=PT((42.0, 27.0, 5.0, 11.0), "[M] section A-A (mid-pad, normal to the axis): width 42 +/-4 (pad 37.5 + "
+                                             "rims; P1046408 apparent 50-52 reduced for the view and cant), depth 27 "
+                                             "+/-4 (press copilot view: rulers along the pad normal); aft corners R 5 "
+                                             "[E: 6-8 px lit rim], forward corners R 11 [E]"),
+    pad=PT((61.0, -32.5, 4.0, 10.0, 6.0, 1.5, 1.0),
+           "[M] grained leather pad on the aft face: top h 61 (flat, P1046408 inboard pad z 62), bottom -32.5, frame "
+           "4 mm to the aft-face edge (0.3-0.5 bead, ~1 groove, 2-4 black frame: AOPA, Mexico, brochure p.12), "
+           "corner R 10 top-inner / R 6 others [M], crown 1.5 [E], rim 1 [E]; grain 1.1 mm pebble [M: PC-24 "
+           "close-up, brochure p.12], ~1 mm wavy creases along the grip [M: AOPA]"),
+    head_facet=PT((36.0, 38.0, 10.0), "[M] outboard (trim) head: a flat face ~36 across (ring + 3.4 margins) facing "
+                                      "aft-up 38 +/-5 deg above aft, turned 10 (10-30) deg toward the yoke centreline "
+                                      "(trim ring ellipses in 5 views, bundle-adjustment cameras); it meets the grip's "
+                                      "aft face plane at the ring centre"),
+    head_btn_tilt=P(15.0, "[M] inboard head: the button collar faces the pilot, pitched <= 15 deg (collar ellipses "
+                          "0.92-0.98 in P1046408; bundle adjustment 8 +/-9)"),
+    # ---- switches (u, h centre; sizes)
+    tcs=PT((58.5, 51.4, 19.2, 8.6, 1.0), "[M] TCS: centre -- u from the bundle adjustment (59.1 from the insert "
+                                         "axis, 56.8-62.4 over its camera solutions; the face-plane reads 55.4-57.0 "
+                                         "put it 3.5-4.5 mm inboard in all 6 photo projections of this drawing), h "
+                                         "front.json (Mexico R / L, P1046409 / 10 within 1.7); 4 mm from the tip facet; "
+                                         "gloss black bezel OD 19.2 +/-0.5 (ray-edge ellipse fits) <= 1 proud of the "
+                                         "white, a dish r 4.8-8.7, a 0.5 clearance ring, a satin black domed button "
+                                         "dia 8.6 RECESSED in the dish (AOPA 41 deg view shows no button side; the "
+                                         "PC-24's protrudes); legend: 3 ticks at 70-110 deg, r 7.2"),
+    afcs=PT((60.6, 23.4, 9.8, 5.5, 18.6), "[M] AFCS disconnect: red cap centre (red-blob centroids 60.2-60.6 / "
+                                          "23.4-23.9: Mexico R / L, P1046409 / 10), cap dia 9.8 +/-0.4 x 5.5 +/-1.0 "
+                                          "high (AOPA side drop), a plain glossy straight cylinder (not a mushroom), "
+                                          "top edge R 1; it sits ON the body's lower edge, its lower half over the "
+                                          "slot; a black legend HALF-ring OD 18.6 on its upper-inboard side (25-205 "
+                                          "deg, 9 ticks r 7.0), raised ~1-1.5 [E]"),
+    trim=PT((109.5, 81.5, 29.5, 27.0, 8.0, 4.0, 0.8, 6.5, 3.5),
+            "[M] pitch trim on the OUTBOARD head: centre (u: the head facet's centre -- front.json 6-view mean 105.1 "
+            "+/-3.0, bundle adjustment 115.8 (105.8-117.1); h 81.5 +/-1.7), flat satin black legend ring OD 29.5 "
+            "+/-1.1 flush in the facet (5 views) with a fine groove; two legend lunes ~7.3 deep (fore = DN, aft = UP; "
+            "7 ticks each over 84 deg at r 11, 3 long) and a ~15 mm slot between them holding a split bow-tie "
+            "rocker ACROSS the head: 27 +/-1.5 long, 8 wide at the ends, 4 at the waist, 0.8 split (AOPA, Mexico "
+            "R), saddle 6.5 at the ends / 3.5 at the split [E +/-2]"),
+    button=PT((106.5, 79.5, 17.3, 10.2, 6.0, 2.0),
+              "[M] round push button on the INBOARD head (not a 4-way hat): collar centre on the grip's aft face (the "
+              "bundle adjustment's cap at 106.6 / 81.1 less the cap height along the normal; front.json's plane read "
+              "-109.5 / 83 put the cap 5-7 mm off in all 6 photo projections), a black dished collar OD 17.3 +/-0.8 ~2 "
+              "deep, a plain smooth cylindrical cap dia 10.2 +/-0.6 standing 6 +/-2 above the collar rim, top R 1 "
+              "with a ~2 mm centre dimple (P1046408 R / L, P1046409); legend: 6 ticks on the inboard / upper arc "
+              "70-210 deg, r 7.2"),
+    ptt=P(0.0, "[M negative] no PTT / trigger on the PRO grips in 8 views (the only forward-face view, press copilot, "
+               "is smooth where a 6 mm trigger would show ~7 px); the PC-24 has a flat tab at its outboard grip's "
+               "bottom: not drawn (OPEN, owner)"),
+    # ---- column and its surround (no bellows)
+    column=PT((0.330, 1.857, 1.821, 1.801, 23.0),
+              "[M] NO bellows / boot in any PRO photo (P1046408 L+R, P1046409 / 10, Mexico L+R, press): the rev H "
+              "8-pleat boot is deleted.  Seen through the inboard hand slot: a satin dark-grey moulded surround band "
+              "23 (22-25) wide round the column opening on the lower panel -- |BL| of its inboard side, WL of its "
+              "rounded top end, of a horizontal joint line, of a panel-fixed screw (back-projected onto the lower "
+              "panel face, 4 views, both poses); the column itself and where it meets the black body are hidden.  "
+              "OPEN (owner): the joint line puts the column axis at WL ~1.82 +/-0.01, 25 mm under the hub centre the "
+              "roll pivot uses (kept); fixed split collar (PC-24 photo 4) vs a part moving with the yoke"),
+)
+
 PEDALS = dict(
     dy=P(0.125, "[M] pedal-pad centres at seat CL +/- (P1046408 face-on: 0.24-0.26 apart, MFD-bezel scale + depth "
                 "correction, the grip span checks it); rev B 0.09 [E]"),
@@ -1073,94 +1223,364 @@ def cabin_pose(rec, scale=1.0, shank_deg=10.0):
                        scale=scale, shank_deg=shank_deg)
 
 
-# ---------------------------------------------------------------------------------------------------- yoke sweep
+# ---------------------------------------------------------------------------------------------------- yoke geometry
+# Rev I: the yoke's outline comes from YOKE_DESIGN (sheet L6Y); everything below works in yoke-local mm (u outboard, h
+# up from the hub centre, a aft of the aft face at the insert step) and the public helpers return model metres.
+_YD_CACHE = {}
+
+
+def _yd(key):
+    return np.asarray(YOKE_DESIGN[key], float)
+
+
+def yd_mirror(half):
+    """Closed symmetric outline (N, 2) from a half outline running from the top centre (u = 0) round the +u side to the
+    bottom centre (u = 0)."""
+    H = np.asarray(half, float)
+    M = H[::-1].copy()
+    M[:, 0] *= -1.0
+    return np.vstack([H, M[1:-1]])
+
+
+def _ccw2(P):
+    P = np.asarray(P, float)
+    a = 0.5 * np.sum(P[:, 0] * np.roll(P[:, 1], -1) - np.roll(P[:, 0], -1) * P[:, 1])
+    return P if a > 0 else P[::-1]
+
+
+def _contour(F, box, step=0.25, level=0.0):
+    """Longest closed `level` contour (N, 2) of the field F(U, H) sampled on box (u0, h0, u1, h1) every `step` mm,
+    counter-clockwise."""
+    import contourpy
+    u = np.arange(box[0], box[2] + 0.5 * step, step)
+    h = np.arange(box[1], box[3] + 0.5 * step, step)
+    U, H = np.meshgrid(u, h)
+    lines = contourpy.contour_generator(u, h, F(U, H)).lines(level)
+    P = np.asarray(max(lines, key=len), float)
+    if np.allclose(P[0], P[-1]):
+        P = P[:-1]
+    return _ccw2(P)
+
+
+def _decimate(P, step=0.6):
+    """Closed outline resampled to about `step` mm spacing (corners kept within step / 2)."""
+    P = np.asarray(P, float)
+    L = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(np.vstack([P, P[:1]]), axis=0), axis=1))]
+    n = max(8, int(L[-1] / step))
+    t = np.linspace(0.0, L[-1], n, endpoint=False)
+    Q = np.vstack([P, P[:1]])
+    return np.c_[np.interp(t, L, Q[:, 0]), np.interp(t, L, Q[:, 1])]
+
+
+def _rmax(a, b, r):
+    """Intersection of two signed-distance fields, its corner rounded by r."""
+    return np.minimum(-r, np.maximum(a, b)) + np.hypot(np.maximum(r + a, 0.0), np.maximum(r + b, 0.0))
+
+
+def _poly_sdf(U, H, P):
+    from cad import sdf2d
+    return sdf2d.polygon(U, H, P)
+
+
+def yoke_face_a(h):
+    """a (mm) of the shell's aft face on the centreline at height h (mm): the face_tilt plane above the step, the
+    convex face_lower profile below it."""
+    h = np.asarray(h, float)
+    fl = _yd("face_lower")
+    up = -(h - fl[0, 0]) * math.tan(math.radians(YOKE_DESIGN["face_tilt"]))
+    return np.where(h >= fl[0, 0], up, np.interp(h, fl[::-1, 0], fl[::-1, 1]))
+
+
+def _toe(g):
+    return float(YOKE_DESIGN["grip_toe"][0 if g == "out" else 1])
+
+
+def yoke_grip_normal(g="out"):
+    """Unit normal (a, u, h) of a grip's aft face in its own outboard-grip sense (u away from the yoke centreline;
+    g = 'out' / 'in' for the outboard / inboard grip): raked top-forward grip_rake (it looks up), toed out grip_toe
+    (it looks away from the yoke centreline)."""
+    n = np.array([1.0, math.tan(math.radians(_toe(g))), math.tan(math.radians(YOKE_DESIGN["grip_rake"]))])
+    return n / np.linalg.norm(n)
+
+
+def yoke_grip_axis_u(h):
+    """u (mm) of the grip axis (front view) at height h, outboard-grip sense."""
+    (ub, hb), (ut, ht) = YOKE_DESIGN["grip_axis"]
+    return ub + (np.asarray(h, float) - hb) * (ut - ub) / (ht - hb)
+
+
+def yoke_grip_aft_a(u, h, g="out"):
+    """a (mm) of a grip's aft-face plane at (u, h) (u = |u|, away from the yoke centreline): through grip_a0 on the
+    axis, raked and toed (g = 'out' / 'in')."""
+    h0, a0 = YOKE_DESIGN["grip_a0"]
+    h = np.asarray(h, float)
+    return (a0 - (h - h0) * math.tan(math.radians(YOKE_DESIGN["grip_rake"]))
+            - (np.asarray(u, float) - yoke_grip_axis_u(h)) * math.tan(math.radians(_toe(g))))
+
+
+def yoke_grip_shift(g="out"):
+    """((du, dh), da) of the grip's forward face from its aft face: the section depth (grip_section[1], along the
+    normal) taken HORIZONTALLY, square to the aft face in plan -- the grip's bottom end is cut level [E], so the forward
+    face does not hang below the aft face; the toe-out turns the inner side face aft (du < 0)."""
+    n = yoke_grip_normal(g)
+    d = float(YOKE_DESIGN["grip_section"][1])
+    q = math.hypot(n[0], n[1])
+    t = d / q
+    return np.array([-t * n[1] / q, 0.0]), -t * n[0] / q
+
+
+def yoke_grip_faces(g="out"):
+    """Front-view outlines (mm, outboard-grip sense, counter-clockwise) of one grip: dict(S = the silhouette (the
+    YOKE_DESIGN grip table), G = its aft face = S with the forward face's offset taken off the inner edge and the
+    bottom (S n (S - v)), pad = G inset by the pad frame between the pad's bottom and top, corners rounded)."""
+    key = ("grip", g, id(YOKE_DESIGN["grip"]), id(YOKE_DESIGN["pad"]), float(YOKE_DESIGN["grip_rake"]), _toe(g))
+    if key in _YD_CACHE:
+        return _YD_CACHE[key]
+    S = _ccw2(_yd("grip"))
+    v, _ = yoke_grip_shift(g)
+    box = (S[:, 0].min() - 3.0, S[:, 1].min() - 3.0, S[:, 0].max() + 3.0, S[:, 1].max() + 3.0)
+
+    def fG(U, H):
+        return np.maximum(_poly_sdf(U, H, S), _poly_sdf(U + v[0], H + v[1], S))
+    G = _decimate(_contour(fG, box, 0.2))
+    top, bot, frame, r_ti, r_o = (float(x) for x in YOKE_DESIGN["pad"][:5])
+
+    def fP(U, H):
+        r_top = np.where(U < yoke_grip_axis_u(H), r_ti, r_o)
+        d = _rmax(fG(U, H) + frame, H - top, r_top)
+        return _rmax(d, bot - H, r_o)
+    pad = _decimate(_contour(fP, box, 0.2))
+    _YD_CACHE[key] = out = dict(S=S, G=G, pad=pad)
+    return out
+
+
+def yoke_head_facet():
+    """The outboard (trim) head's flat face: dict(c = centre (a, u, h) on the grip's aft-face plane at the trim centre,
+    n = unit normal (a, u, h) -- head_facet[1] deg above aft, turned head_facet[2] deg toward the yoke centreline --,
+    eu / ev = in-face axes (across, up the face), size)."""
+    size, up, turn = (float(x) for x in YOKE_DESIGN["head_facet"])
+    tu, th = (float(x) for x in YOKE_DESIGN["trim"][:2])
+    c = np.array([float(yoke_grip_aft_a(tu, th, "out")), tu, th])
+    e, t = math.radians(up), math.radians(turn)
+    n = np.array([math.cos(e) * math.cos(t), -math.cos(e) * math.sin(t), math.sin(e)])
+    eu = np.array([-n[1], n[0], 0.0])
+    eu /= np.linalg.norm(eu)
+    ev = np.cross(n, eu)
+    return dict(c=c, n=n, eu=eu, ev=ev, size=size)
+
+
+def yoke_front_mm():
+    """Every front-view piece of the yoke (mm, u outboard, h up; the copilot sense -- the pilot yoke is its mirror):
+    dict of closed outlines 'shell', 'insert_upper', 'insert_lower', 'body', 'badge', 'badge_border', 'badge_field',
+    'grip_out' / 'grip_in' (silhouettes), 'aft_out' / 'aft_in' (aft faces), 'pad_out' / 'pad_in', 'facet' (the trim
+    head's face), open polylines 'step', 'badge_lines' (list), and circles 'tcs', 'afcs', 'trim', 'button' as
+    (u, h, outer dia, inner dia)."""
+    D = YOKE_DESIGN
+    shell = yd_mirror(D["shell_half"])
+    sh = _yd("shell_half")
+    j = int(np.argmin(np.hypot(sh[:, 0] - 33.7, sh[:, 1] - 53.7)))
+    side = _yd("insert_side")
+    st = _yd("step")
+    up_half = np.vstack([sh[:j + 1], side[1:], st[:1]])
+    ins_up = np.vstack([up_half, (up_half[::-1] * [-1, 1])[1:-1]])
+    ins_lo = yd_mirror(D["insert_lower_half"])
+    (bu0, bh0), (bu1, bh1) = D["badge"]
+    badge = np.array([(-bu0, bh0), (bu0, bh0), (bu1, bh1), (-bu1, bh1)])
+    z1, z2, z3, u0, off = (float(x) for x in D["badge_lines"])
+    # inner border: the outline offset `off` inward (flat top / bottom, slanted ends)
+    ang = math.atan2(bu0 - bu1, bh0 - bh1)
+    du = off / math.cos(ang)
+    bt, bb = bh0 - off, bh1 + off
+
+    def end_u(z):
+        return bu1 + (z - bh1) * (bu0 - bu1) / (bh0 - bh1) - du
+    border = np.array([(-end_u(bt), bt), (end_u(bt), bt), (end_u(bb), bb), (-end_u(bb), bb)])
+    lines = [np.array([(sg * u0, z), (sg * end_u(z), z)]) for z in (z1, z2, z3) for sg in (-1, 1)]
+    fw, f0, f1 = (float(x) for x in D["badge_field"])
+    field = np.array([(-fw, f1), (fw, f1), (fw, f0), (-fw, f0)])
+    gf, gi = yoke_grip_faces("out"), yoke_grip_faces("in")
+    hf = yoke_head_facet()
+    s = 0.5 * hf["size"]
+    from cad import sdf2d
+    sq = sdf2d.rrect_outline(0.0, 0.0, s, s, 4.0, n_corner=6)
+    F3 = hf["c"][None, :] + sq[:, :1] * hf["eu"][None, :] + sq[:, 1:2] * hf["ev"][None, :]
+    mir = np.array([-1.0, 1.0])
+    t, a, b = D["tcs"][:2], D["afcs"][:2], D["trim"][:2]
+    return dict(shell=shell, insert_upper=ins_up, insert_lower=ins_lo, step=np.array([(-st[1, 0], st[1, 1]), tuple(st[0]), tuple(st[1])]),
+                body=yd_mirror(D["body_half"]), badge=badge, badge_border=border, badge_field=field,
+                badge_lines=lines, grip_out=gf["S"], grip_in=gi["S"] * mir, aft_out=gf["G"], aft_in=gi["G"] * mir,
+                pad_out=gf["pad"], pad_in=gi["pad"] * mir, facet=F3[:, 1:3],
+                tcs=(t[0], t[1], D["tcs"][2], D["tcs"][3]), afcs=(a[0], a[1], D["afcs"][4], D["afcs"][2]),
+                trim=(b[0], b[1], D["trim"][2], D["trim"][3]),
+                button=(-D["button"][0], D["button"][1], D["button"][2], D["button"][3]))
+
+
+def _mm_yz(P, d=1.0):
+    """Yoke-local mm (u, h) -> metres (y, z) about the hub centre; d = -1 mirrors."""
+    return np.asarray(P, float) * [d * 1e-3, 1e-3]
+
+
 def yoke_grip_axis(d=1):
-    """(bottom, top) centres (y, z) of the right (d=+1) or left grip's capsule axis about the hub centre: the outer
-    edge at the bottom on YOKE span / 2, the outline bottom at grip_dz, length grip[0] tip to tip, the top leaning
-    inboard by the cant."""
-    gl, gr, gc = YOKE["grip"]
-    a = math.radians(gc)
-    p0 = np.array([d * (0.5 * YOKE["span"] - gr), YOKE["grip_dz"] + gr])
-    return p0, p0 + (gl - 2.0 * gr) * np.array([-d * math.sin(a), math.cos(a)])
+    """(bottom, top) of the right (d=+1) or left grip's axis (y, z) about the hub centre (m): the middle of the grip's
+    bottom edge and of its head top (YOKE_DESIGN grip_axis; rev I)."""
+    (ub, hb), (ut, ht) = YOKE_DESIGN["grip_axis"]
+    return np.array([d * ub, hb]) * 1e-3, np.array([d * ut, ht]) * 1e-3
 
 
 def yoke_grip_y(z, d=1):
-    """y of the grip axis at height z (about the hub centre)."""
+    """y of the grip axis at height z (about the hub centre, m)."""
     p0, p1 = yoke_grip_axis(d)
     return float(p0[0] + (z - p0[1]) * (p1[0] - p0[0]) / (p1[1] - p0[1]))
 
 
-def yoke_grip_outline(d=1, n=10):
-    """Front-view outline (y, z) of the right (d=+1) or left grip about the hub centre: the capsule of yoke_grip_axis
-    (radius YOKE grip) swelling over its top grip_head[0] to the head radius grip_head[1], the tip where the capsule's
-    tip was (review r3 F2)."""
-    gl, gr, _ = YOKE["grip"]
-    hl, rh = YOKE["grip_head"]
-    p0, p1 = yoke_grip_axis(d)
-    ax = (p1 - p0) / np.linalg.norm(p1 - p0)
-    nrm = np.array([ax[1], -ax[0]])
-    tip = p1 + gr * ax
-    ch = tip - rh * ax                                                  # head circle centre
-    a = np.linspace(0.0, 1.0, 15)
-    C = p0[None, :] + a[:, None] * (ch - p0)[None, :]
-    along = (C - (p0 - gr * ax)) @ ax                                   # distance from the bottom tip
-    t = np.clip((along - (gl - hl - 0.010)) / (gl - rh - (gl - hl - 0.010)), 0.0, 1.0)
-    r = gr + (rh - gr) * t * t * (3.0 - 2.0 * t)
-    right, left = C + r[:, None] * nrm, C - r[:, None] * nrm
-    th0 = math.atan2(nrm[1], nrm[0])
-    top = [ch + rh * np.array([math.cos(th0 + u), math.sin(th0 + u)]) for u in np.linspace(0.0, math.pi, n)[1:-1]]
-    bot = [p0 + gr * np.array([math.cos(th0 + math.pi + u), math.sin(th0 + math.pi + u)])
-           for u in np.linspace(0.0, math.pi, n)[1:-1]]
-    return np.vstack([right, top, left[::-1], bot])
+def yoke_grip_outline(d=1, n=None):
+    """Front-view silhouette (y, z) of the right (d=+1) or left grip about the hub centre (m; YOKE_DESIGN grip)."""
+    return _mm_yz(yoke_grip_faces()["S"], d)
 
 
 def yoke_shield_yz():
-    """Front-view outline (y, z) of the white shield about the hub centre: top corners at +/- hub_whd width / 2 on the
-    hub top, the top edge dipping shield_dip to the centre, concave sides narrowing to the hub_bot_w stem (YOKE
-    shield)."""
-    hw, hh, _ = YOKE["hub_whd"]
-    bw = YOKE["hub_bot_w"]
-    tt, ff = (np.array(v, float) for v in zip(*YOKE["shield"]))
-    t = np.linspace(0.0, 1.0, 11)
-    w = 0.5 * bw + (0.5 * hw - 0.5 * bw) * np.interp(t, tt, ff)
-    z = 0.5 * hh - t * hh
-    right = np.c_[w, z]
-    left = np.c_[-w, z][::-1]
-    return np.vstack([right, left, [(0.0, 0.5 * hh - YOKE["shield_dip"])]])
+    """Front-view outline (y, z) of the white shell about the hub centre (m; YOKE_DESIGN shell_half, mirrored)."""
+    return _mm_yz(yd_mirror(YOKE_DESIGN["shell_half"]))
 
 
 def yoke_body_yz():
-    """Front-view outline (y, z) of the black yoke body about the hub centre: from the shield foot (rimmed by
-    body_arm[1]) its lower edge runs up-outboard to each grip's axis at body_arm[0], up the grip to the shoulder
-    (5 mm above the hub top) and back inboard under the shield's top corners (YOKE body_arm)."""
-    hw, hh, _ = YOKE["hub_whd"]
-    bw = YOKE["hub_bot_w"]
-    za, rim = YOKE["body_arm"]
-    zs = 0.5 * hh + 0.005
-    half = [(0.5 * bw + rim, -0.5 * hh - rim)]
-    y_a = yoke_grip_y(za, 1)
-    for f in (0.35, 0.70):                                              # slightly concave lower edge
-        q = np.array(half[0]) + f * (np.array([y_a, za]) - np.array(half[0]))
-        half.append((q[0] + 0.004 * f * (1 - f) * 4, q[1] - 0.004 * f * (1 - f) * 4))
-    half += [(y_a, za), (yoke_grip_y(zs, 1), zs), (0.5 * hw - 0.004, 0.5 * hh - 0.006)]
-    H = np.array(half)
-    cen = (0.0, 0.5 * hh - YOKE["shield_dip"] - 0.008)
-    return np.vstack([H[::-1] * [-1, 1], H, [cen]])[::-1]
+    """Front-view outline (y, z) of the black body behind the shell about the hub centre (m; YOKE_DESIGN body_half:
+    the rim round the stem, the slot tops, the necks to the grip heads)."""
+    return _mm_yz(yd_mirror(YOKE_DESIGN["body_half"]))
 
 
 def yoke_outline_yz(roll=0.0):
-    """Front-view outline pieces [(N, 2) (y, z)] of one yoke about its column axis (origin = the hub centre): piece 0
-    the white shield (yoke_shield_yz), 1 the black body behind it (yoke_body_yz), 2 / 3 the left / right grips with
-    their swollen heads (yoke_grip_outline), rolled `roll` deg (counter-clockwise seen from behind).  Drawn in the order
-    1, 0, 2, 3 (the shield on the body)."""
+    """Front-view outline pieces [(N, 2) (y, z)] of one yoke about its column axis (origin = the hub centre, m): piece 0
+    the white shell (yoke_shield_yz), 1 the black body behind it (yoke_body_yz), 2 / 3 the left / right grip
+    silhouettes (yoke_grip_outline), rolled `roll` deg (counter-clockwise seen from behind).  Drawn in the order 1, 0,
+    2, 3 (the shell on the body)."""
     out = [yoke_shield_yz(), yoke_body_yz()] + [yoke_grip_outline(d) for d in (-1, 1)]
     return [_rot(P, np.zeros(2), roll) for P in out] if roll else out
 
 
+def _clip_band(P, lo, hi):
+    """Sutherland-Hodgman clip of the polygon P (N, 2) to the strip lo <= P[:, 1] <= hi."""
+    def clip(Q, k, sg):
+        out = []
+        n = len(Q)
+        for i in range(n):
+            a, b = Q[i - 1], Q[i]
+            ia, ib = sg * (a[1] - k) >= 0, sg * (b[1] - k) >= 0
+            if ib:
+                if not ia:
+                    out.append(a + (b - a) * (k - a[1]) / (b[1] - a[1]))
+                out.append(b)
+            elif ia:
+                out.append(a + (b - a) * (k - a[1]) / (b[1] - a[1]))
+        return np.array(out) if out else np.zeros((0, 2))
+    Q = clip(np.asarray(P, float), lo, 1.0)
+    return clip(Q, hi, -1.0) if len(Q) else Q
+
+
+def yoke_sweep_pieces_mm(band=12.0):
+    """Pieces of the yoke for the knee / roll sweep (mm, about the hub centre): [(front outline (N, 2), a_min, a_max,
+    grip)] -- the shell and the body (grip None) each with their whole a-range (body forward face .. the aftmost of the
+    convex lower face), each grip ('out' / 'in', in its own sense u > 0 = away from the centreline) cut into h-bands
+    `band` mm tall, every band with the a-range of the grip's aft face (and the trim head's facet) and its forward face
+    over that band."""
+    key = ("sweep", band, float(YOKE_DESIGN["grip_rake"]), _toe("out"), _toe("in"), float(YOKE_DESIGN["body_depth"]),
+           id(YOKE_DESIGN["grip"]))
+    if key in _YD_CACHE:
+        return _YD_CACHE[key]
+    from cad import sdf2d
+    D = YOKE_DESIGN
+    a_back = float(np.max(yoke_face_a(np.linspace(-62.0, 67.0, 130))))
+    out = [(yd_mirror(D["shell_half"]), -float(D["body_depth"]), a_back, None),
+           (yd_mirror(D["body_half"]), -float(D["body_depth"]), a_back, None)]
+    hf = yoke_head_facet()
+    for g in ("out", "in"):
+        gf = yoke_grip_faces(g)
+        S, G = gf["S"], gf["G"]
+        v, da = yoke_grip_shift(g)
+        # sample the aft face densely (its outline + a grid inside) for the a-ranges
+        uu, hh = np.meshgrid(np.arange(G[:, 0].min(), G[:, 0].max() + 1, 1.0),
+                             np.arange(G[:, 1].min(), G[:, 1].max() + 1, 1.0))
+        m = sdf2d.polygon(uu, hh, G) <= 0
+        Q = np.vstack([G, np.c_[uu[m], hh[m]]])
+        a_aft = yoke_grip_aft_a(Q[:, 0], Q[:, 1], g)
+        a_top = a_aft
+        if g == "out":                     # the trim head's facet: aft of the aft-face plane below its centre
+            rel = np.c_[a_aft - hf["c"][0], Q[:, 0] - hf["c"][1], Q[:, 1] - hf["c"][2]]
+            on_f = (np.abs(rel @ hf["eu"]) <= 0.5 * hf["size"]) & (np.abs(rel @ hf["ev"]) <= 0.5 * hf["size"])
+            a_fac = hf["c"][0] - (rel[:, 1] * hf["n"][1] + rel[:, 2] * hf["n"][2]) / hf["n"][0]
+            a_top = np.where(on_f, a_fac, a_aft)       # proud below its centre, a chamfer above it
+        allp = np.vstack([np.c_[Q, a_top], np.c_[Q + v, a_aft + da]])
+        h_lo, h_hi = S[:, 1].min(), S[:, 1].max()
+        edges = np.arange(h_lo, h_hi + band, band)
+        edges[-1] = h_hi
+        for lo, hi in zip(edges[:-1], edges[1:]):
+            P = _clip_band(S, lo, hi)
+            if len(P) < 3:
+                continue
+            sel = (allp[:, 1] >= lo - 1.0) & (allp[:, 1] <= hi + 1.0)
+            out.append((P, float(allp[sel, 2].min()), float(allp[sel, 2].max()), g))
+    _YD_CACHE[key] = out
+    return out
+
+
+def yoke_sweep_pieces(side=-1, roll=0.0):
+    """The yoke of the seat on `side` as sweep pieces in model terms: [(front outline (N, 2) (y - hub y, z - hub z) m,
+    rolled `roll` deg, x0, x1 at neutral pitch, bounding radius about the hub (m))] -- yoke_sweep_pieces_mm with the
+    outboard grip toward `side`."""
+    hub = yoke_hub(side)
+    x_ref = float(hub[0] + YOKE["hub_whd"][2])
+    out = []
+    for P, a0, a1, g in yoke_sweep_pieces_mm():
+        d = 1.0 if g is None else (float(side) if g == "out" else -float(side))
+        Q = _mm_yz(P, d)
+        Q = _rot(Q, np.zeros(2), roll) if roll else Q
+        out.append((Q, x_ref + a0 * 1e-3, x_ref + a1 * 1e-3, Q.min(0), Q.max(0)))
+    return out
+
+
 def yoke_hand_dz():
-    """Height of the hand (grip centre) above the hub centre: the middle of the grips."""
-    p0, p1 = yoke_grip_axis(1)
-    return float(0.5 * (p0[1] + p1[1]))
+    """Height of the hand (the pad centre) above the hub centre (m)."""
+    top, bot = YOKE_DESIGN["pad"][:2]
+    return 0.5 * (float(top) + float(bot)) * 1e-3
+
+
+# ---- rev H outline, FROZEN for the rev H 3-D builder (flightdeck._yokes) until the Stage-3 yoke rebuild
+def _revh_grip_axis(d=1):
+    gl, gr, gc = YOKE_REVH["grip"]
+    a = math.radians(gc)
+    p0 = np.array([d * (0.5 * YOKE_REVH["span"] - gr), YOKE_REVH["grip_dz"] + gr])
+    return p0, p0 + (gl - 2.0 * gr) * np.array([-d * math.sin(a), math.cos(a)])
+
+
+def _revh_grip_y(z, d=1):
+    p0, p1 = _revh_grip_axis(d)
+    return float(p0[0] + (z - p0[1]) * (p1[0] - p0[0]) / (p1[1] - p0[1]))
+
+
+def _revh_shield_yz():
+    hw, hh, _ = YOKE_REVH["hub_whd"]
+    bw = YOKE_REVH["hub_bot_w"]
+    tt, ff = (np.array(v, float) for v in zip(*YOKE_REVH["shield"]))
+    t = np.linspace(0.0, 1.0, 11)
+    w = 0.5 * bw + (0.5 * hw - 0.5 * bw) * np.interp(t, tt, ff)
+    z = 0.5 * hh - t * hh
+    return np.vstack([np.c_[w, z], np.c_[-w, z][::-1], [(0.0, 0.5 * hh - YOKE_REVH["shield_dip"])]])
+
+
+def _revh_body_yz():
+    hw, hh, _ = YOKE_REVH["hub_whd"]
+    bw = YOKE_REVH["hub_bot_w"]
+    za, rim = YOKE_REVH["body_arm"]
+    zs = 0.5 * hh + 0.005
+    half = [(0.5 * bw + rim, -0.5 * hh - rim)]
+    y_a = _revh_grip_y(za, 1)
+    for f in (0.35, 0.70):
+        q = np.array(half[0]) + f * (np.array([y_a, za]) - np.array(half[0]))
+        half.append((q[0] + 0.004 * f * (1 - f) * 4, q[1] - 0.004 * f * (1 - f) * 4))
+    half += [(y_a, za), (_revh_grip_y(zs, 1), zs), (0.5 * hw - 0.004, 0.5 * hh - 0.006)]
+    H = np.array(half)
+    cen = (0.0, 0.5 * hh - YOKE_REVH["shield_dip"] - 0.008)
+    return np.vstack([H[::-1] * [-1, 1], H, [cen]])[::-1]
 
 
 def leg_spheres(p, yc, legs=(-1, 1)):
@@ -1201,26 +1621,28 @@ def rudder_spheres(p_aft, p_fwd, side=-1, up=-1):
 
 
 def yoke_roll_clearances(p, side=-1, pitch=True, step=2.5, max_roll=90.0, spheres=None):
-    """{roll deg: (clearance, sphere)} of the pose's thighs, knees and shanks to the yoke (hub + grips) rolled +/-roll
-    (the worse of the two) and swept over its pitch travel (pitch=True): the x-slab of the travel times the rolled
-    front-view outline.  spheres: leg spheres to test instead of the pose's (e.g. rudder_spheres).  Clearance in m,
-    < 0 = interference."""
+    """{roll deg: (clearance, sphere)} of the pose's thighs, knees and shanks to the yoke (shell, body and the grips in
+    h-bands, yoke_sweep_pieces) rolled +/-roll (the worse of the two) and swept over its pitch travel (pitch=True):
+    each piece's x-slab (its own a-range: rev I, the grips rake 20 deg and their lower ends stand ~20 mm aft of the
+    step face) widened by the travel, times its rolled front-view outline.  spheres: leg spheres to test instead of
+    the pose's (e.g. rudder_spheres).  Clearance in m, < 0 = interference."""
     hub = yoke_hub(side)
-    hd = YOKE["hub_whd"][2]
     t0, t1 = YOKE["travel"] if pitch else (0.0, 0.0)
-    xa, xb = hub[0] + t0, hub[0] + hd + t1
-    sph = [(max(0.0, xa - x, x - xb), np.array([y - hub[1], z - hub[2]]), r, (x, y, z, r))
+    sph = [(np.array([y - hub[1], z - hub[2]]), x, r, (x, y, z, r))
            for x, y, z, r in (spheres if spheres is not None else leg_spheres(p, side * CREW_SEAT["bl"]))]
     out = {}
     for ang in np.arange(0.0, max_roll + 1e-9, step):
-        polys = yoke_outline_yz(ang) + (yoke_outline_yz(-ang) if ang else [])
+        pcs = yoke_sweep_pieces(side, ang) + (yoke_sweep_pieces(side, -ang) if ang else [])
         best = (np.inf, None)
-        for dx, q, r, s_ in sph:
-            if dx - r >= best[0]:
-                continue
-            cl = math.hypot(dx, min(_pt_poly_dist(q, P) for P in polys)) - r
-            if cl < best[0]:
-                best = (cl, s_)
+        for q, x, r, s_ in sph:
+            for P, x0, x1, lo, hi in pcs:
+                dx = max(0.0, x0 + t0 - x, x - x1 - t1)
+                bb = math.hypot(max(0.0, lo[0] - q[0], q[0] - hi[0]), max(0.0, lo[1] - q[1], q[1] - hi[1]))
+                if math.hypot(dx, bb) - r >= best[0]:
+                    continue
+                cl = math.hypot(dx, _pt_poly_dist(q, P)) - r
+                if cl < best[0]:
+                    best = (cl, s_)
         out[round(float(ang), 3)] = best
     return out
 

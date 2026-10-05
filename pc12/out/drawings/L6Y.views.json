@@ -1,0 +1,298 @@
+{
+ "sheet": "L6Y",
+ "size": "A1",
+ "sheet_mm": [
+  841.0,
+  594.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "front": {
+   "name": "front",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0
+    ]
+   ],
+   "t": [
+    232.0,
+    122.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "front elevation of the PILOT yoke looking forward: (u, h), u outboard = sheet left -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "side": {
+   "name": "side",
+   "axes": "xz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0
+    ]
+   ],
+   "t": [
+    530.0,
+    122.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "side elevation from outboard (port for the pilot yoke), nose left: (a, h) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "top": {
+   "name": "top",
+   "axes": "xy",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    232.0,
+    330.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "from above, forward up: (u, a), u outboard = left -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "sec_A": {
+   "name": "sec_A",
+   "axes": "yz",
+   "A": [
+    [
+     -2.0,
+     0.0
+    ],
+    [
+     0.0,
+     2.0
+    ]
+   ],
+   "t": [
+    447.0,
+    300.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "section A-A, (across, d) mm: aft face at d 0, forward up -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_C": {
+   "name": "sec_C",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    566.0,
+    292.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "section C-C, (a, h) mm about the trim centre -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "sec_B": {
+   "name": "sec_B",
+   "axes": "xy",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    176.0,
+    448.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "section B-B, (u, a) mm from above -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "det_D": {
+   "name": "det_D",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    58.0,
+    527.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail D (TCS), mm about its centre -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_E": {
+   "name": "det_E",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    150.0,
+    527.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail E (AFCS DISC), mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_G": {
+   "name": "det_G",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    240.0,
+    527.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail G (push button), mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_F": {
+   "name": "det_F",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    462.0,
+    410.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail F (trim), facet plane mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_F2": {
+   "name": "det_F2",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    462.0,
+    470.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail F rocker profile, mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_H": {
+   "name": "det_H",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    360.0,
+    527.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail H (badge), mm about h 49.65 -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_J": {
+   "name": "det_J",
+   "axes": "xz",
+   "A": [
+    [
+     0.5,
+     0.0
+    ],
+    [
+     0.0,
+     -0.5
+    ]
+   ],
+   "t": [
+    706.0,
+    306.0
+   ],
+   "scale": 2.0,
+   "box": null,
+   "note": "detail J, (a, h) mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  }
+ }
+}
