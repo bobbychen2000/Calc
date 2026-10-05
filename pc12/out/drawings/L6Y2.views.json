@@ -96,8 +96,8 @@
    "note": "grip profile Q-Q (inboard), (aft, axis) -- yoke-local mm",
    "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
   },
-  "det_P": {
-   "name": "det_P",
+  "det_L": {
+   "name": "det_L",
    "axes": "xz",
    "A": [
     [
@@ -115,7 +115,7 @@
    ],
    "scale": 0.3333333333333333,
    "box": null,
-   "note": "detail P (heel), (aft, axis) about the pad bottom -- yoke-local mm",
+   "note": "detail L (heel lip), (aft, axis) about the pad bottom -- yoke-local mm",
    "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
   },
   "sec_A1": {
@@ -308,7 +308,7 @@
     ]
    ],
    "t": [
-    617.0100881163394,
+    638.7183823121843,
     118.0
    ],
    "scale": 0.2,
@@ -353,7 +353,7 @@
    ],
    "t": [
     506.0,
-    300.0
+    310.0
    ],
    "scale": 0.5,
    "box": null,
@@ -374,7 +374,7 @@
     ]
    ],
    "t": [
-    506.0,
+    512.0,
     362.0
    ],
    "scale": 0.5,
@@ -396,8 +396,8 @@
     ]
    ],
    "t": [
-    432.0,
-    418.0
+    458.0,
+    410.0
    ],
    "scale": 0.3333333333333333,
    "box": null,
@@ -441,7 +441,7 @@
    ],
    "t": [
     300.0,
-    510.0
+    512.0
    ],
    "scale": 0.3333333333333333,
    "box": null,
@@ -462,8 +462,8 @@
     ]
    ],
    "t": [
-    410.0,
-    456.0
+    395.0,
+    460.0
    ],
    "scale": 0.3333333333333333,
    "box": null,
@@ -484,8 +484,8 @@
     ]
    ],
    "t": [
-    410.0,
-    516.0
+    395.0,
+    522.0
    ],
    "scale": 0.3333333333333333,
    "box": null,
@@ -507,7 +507,7 @@
    ],
    "t": [
     510.0,
-    450.0
+    452.0
    ],
    "scale": 0.5,
    "box": null,
@@ -557,6 +557,28 @@
    "box": null,
    "note": "detail J front, (u, h) mm -- yoke-local mm",
    "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_JJ": {
+   "name": "det_JJ",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    624.0,
+    452.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "section J-J of the band -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
   }
  }
 }

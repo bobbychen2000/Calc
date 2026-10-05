@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="J", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="AS SHOWN", rev="K", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -78,6 +78,9 @@ REVISIONS = (
     ("J", "2026-10-05", "yoke rev J (L6Y judges r1): the yoke as solids (model/yoke_geom.py, sheets L6Y / L6Y2) -- "
                         "crown 65.3, outboard web / inboard low neck, round trim-face and shield heads (97 / 90), "
                         "grips refitted per grip, toe 18 / 18; L6 / L6B take its outline and sweep pieces"),
+    ("K", "2026-10-05", "yoke rev K (L6Y judges r2): exact 2-D fields, switches as solids, outboard grip walls "
+                        "fore-aft, grip planes joint-fitted to 7 photos; the 95th clears 37 wings level, meets a grip "
+                        "from 15 deg of roll (criteria unchanged)"),
 )
 
 # ---- fills (clean sheet)
@@ -565,7 +568,7 @@ def draw_clean(ds):
     M.detail_circle(ds, vp, 6.52, 1.75, 0.50, "G", at=(-0.2, -1.0))
     draw_tables(ds, ctx)
     draw_notes(ds, ctx)
-    revisions_block(ds, COL_X[0] + 4.0, 430.0, COL_X[1])
+    revisions_block(ds, COL_X[0] + 4.0, 419.0, COL_X[1])   # rev K: 11 rows clear of the title block
     M.break_paths_at_text(ds, lambda d: d.get("color") == GRID, pad=0.4)
     M.break_paths_at_text(ds, lambda d: d.get("w") == W_THIN and d.get("color") in (None, INK, MUTED)
                           and not d.get("closed"), pad=0.3)
@@ -830,7 +833,7 @@ def draw_fd_side(ds, v, bl, simple=False, crank=0.0, travel=False):
 
 @lru_cache(maxsize=1)
 def yoke_side_outlines():
-    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (model.yoke_geom, the rev J solids
+    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (model.yoke_geom, the rev K solids
     sheet L6Y draws: body, cover and the outboard grip): (body, cover, grip)."""
     from model import yoke_geom as YG
     hub = I.yoke_hub(-1)
@@ -1820,7 +1823,7 @@ def draw_seat_details(ds, v1, v2, ctx):
 
 def yoke_front(yc, zc, roll=0.0, side=None):
     """Yoke pieces in a front view (y, z) about the hub centre (yc, zc) at roll deg (interior.yoke_outline_yz; the
-    yoke on `side`, by default the side of yc: rev J, the body's necks and the grips differ outboard / inboard)."""
+    yoke on `side`, by default the side of yc: rev J / K, the body's necks and the grips differ outboard / inboard)."""
     side = side if side is not None else (1 if yc > 0 else -1)
     return [P + np.array([yc, zc]) for P in I.yoke_outline_yz(roll, side)]
 

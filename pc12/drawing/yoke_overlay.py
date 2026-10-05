@@ -1,33 +1,35 @@
 """
-Photo overlays of the yoke design (sheets L6Y / L6Y2, interior.YOKE_DESIGN rev J) -- PRIVATE REFERENCE, git-ignored
+Photo overlays of the yoke design (sheets L6Y / L6Y2, interior.YOKE_DESIGN rev K) -- PRIVATE REFERENCE, git-ignored
 output.
 
 The drawn yoke is the set of solids of model/yoke_geom.py; it is RAY-CAST (sphere tracing of the signed-distance
-solids) through the fitted cameras of the photos, so the overlays show what the camera would see of the drawn yoke --
-silhouettes of the white cover and of the black moulding -- plus the table's feature curves on the solids' faces
-(inserts, badge, pads, trim face, shield, switches):
+solids, the switches included) through the fitted cameras of the photos, so the overlays show what the camera would see
+of the drawn yoke -- silhouettes of the white cover and of the black moulding -- plus the table's feature curves on the
+solids' faces (inserts, badge, pads, trim face, shield, switches):
 
     P1046408   cams_beauty.json 'panel_408' (the one calibrated face-on view), both yokes
     Mexico     the Pilatus press photo pil_Mexico_PC12PRO_8 (bundle-adjustment camera), both yokes
-    AOPA       fd_aopa_pro_cockpit.jpg (= the Pilatus press photo), pilot yoke from aft-OUTBOARD
+    AOPA       fd_aopa_pro_cockpit.jpg (= the Pilatus press photo): pilot yoke from aft-OUTBOARD, co-pilot yoke from
+               aft-INBOARD (~54 deg; rev K, judges FID2-01, with its step / lower-insert picks EXTRA_PICKS)
     P1046410   bundle-adjustment camera, pilot yoke
 
 Only the yoke's photo POSE is fitted (fore-aft dx, lateral dy, vertical dz, roll -- the photos show the gust-locked /
 hand-held column, never the drawn neutral), to the COVER landmarks only (TCS, AFCS cap, badge, step ends, lower-insert
-corners, foot: rev J -- the heads are checked, not fitted).  Criteria per photo (deviations.json, sheet L6Y2):
+corners, foot; the heads are checked, not fitted).  Criteria per photo (deviations.json, sheet L6Y2):
   landmarks   pick vs drawn landmark, mm (trim / hbtn: the heads, not fitted)
-  grip rows   the photo's grip silhouette edges (strongest edge per image row within 8 mm of the drawn one, outliers
-              rejected by a smoothing spline) vs the ray-cast silhouette, mm (+ = drawn wider), outer side h -38..68,
-              slot side h -38..14 (below the pad's slot corner, where the slot is open)
-  pads        the pad outlines traced at 2-7x (refs/cache/fd_research/yoke/measure/r2/traces.py) vs the drawn pads on
-              the grips' aft faces, mm (mean / max nearest distance)
-  neck        P1046408: the inboard neck's top edge -- per pixel column between the white arm tip and the inboard
-              head, the drawn black moulding's top edge vs the photo's strongest vertical edge, mm (+ = drawn high)
+  grip rows   rev K: the CURATED photo silhouettes (refs/cache/.../measure/r3/sil2.pkl -- the near-face-on views' auto
+              rows with the background features masked (the round panel recesses), the inboard slot sides hand-traced
+              and snapped (the J band / panel seam behind them), the AOPA co-pilot view hand-traced; the AOPA pilot
+              view's auto rows are dropped: they lock onto the leather texture against the dark panel) vs the ray-cast
+              silhouette per image row, mm (+ = drawn wider / lower), with per-band (h) mean and max
+  pads        the pad outlines traced at 2-7x (r2 traces + r3 AOPA co-pilot / Mexico R) vs the drawn pads, mm (mean /
+              max nearest distance)
+  neck        P1046408: the inboard neck's top edge per pixel column, mm (+ = drawn high)
   shell       the shell outline snapped to the photo edges (+-4 mm), signed mean by region, mm (+ = photo outside)
 
     python3 -m drawing.yoke_overlay [p408 mex press p410]   -> refs/cache/overlays/yoke/*.png (+ deviations.json)
 
-Inputs (all git-ignored, refs/cache): photos, fd_research/yoke/measure/{depth_scripts, r2}.  No photo and no overlay
+Inputs (all git-ignored, refs/cache): photos, fd_research/yoke/measure/{depth_scripts, r2, r3}.  No photo and no overlay
 that embeds one is ever written outside refs/cache.
 """
 from __future__ import annotations
@@ -135,8 +137,10 @@ def features():
     pb = np.array([-float(b[0]), float(b[1])])
     a_b = cci[2] - ((pb[0] - cci[0]) * nci[0] + (pb[1] - cci[1]) * nci[1]) / nci[2]
     hb = np.array([pb[0], pb[1], a_b]) + (float(b[4]) + float(b[5])) * nci       # the cap top
+    ca, na = G.afcs_axis()
+    red = ca + 0.8 * float(D["afcs"][3]) * na                       # 0.8 up the red cap on its boss (rev K)
     f = dict(tcs=(tu, th, float(G.face_a(th))),
-             red=(au, ah, float(G.face_a(ah)) - float(D["cover_t"]) + 0.8 * float(D["afcs"][3])),
+             red=tuple(red),
              badge=(0.0, 49.65, float(G.face_a(49.65))), stp_o=(12.9, 4.1, 0.0), stp_i=(-12.9, 4.1, 0.0),
              inb_o=(8.8, -17.6, float(G.face_a(-17.6))), inb_i=(-8.8, -17.6, float(G.face_a(-17.6))),
              foot=(0.0, -56.0, float(G.face_a(-56.0))), trim=tuple(c), hbtn=tuple(hb))
@@ -183,11 +187,14 @@ def px_per_mm(cam, side, pose, at=(0.0, 0.0, 0.0)):
 
 
 # ------------------------------------------------------------------------------------------------ ray casting
-PARTS = ("black", "cover")
+PARTS = ("body", "cover", "switches", "grip_out", "grip_in")    # rev K: grips labelled apart (no lateral-mask heuristics)
+BLACK = (0, 3, 4)                                                 # the black moulding = body + both grips
+GRIP_ID = {"out": 3, "in": 4}
 
 
 def raycast(cam, side, pose, box, step_px):
-    """Sphere-trace the solids (0 black moulding, 1 white cover, -1 miss) for the pixels of box every step_px."""
+    """Sphere-trace the solids for the pixels of box every step_px: ids index PARTS (0 body, 1 white cover, 2 switches,
+    3 outboard grip, 4 inboard grip; -1 miss) -- the part whose field is smallest at the hit."""
     xs = np.arange(box[0], box[2], step_px) + 0.5 * step_px
     ys = np.arange(box[1], box[3], step_px) + 0.5 * step_px
     X, Y = np.meshgrid(xs, ys)
@@ -287,6 +294,66 @@ def grip_rows(g_img, xs, ys, mask, ppm, axis_h, outer_left):
     return out
 
 
+def curated_rows(ph, side, xs, ys, ids, cam, pose, ppm):
+    """Residuals of the ray-cast grip silhouettes against the CURATED photo silhouette data (rev K, judges FID2-03 /
+    04: refs/cache/.../measure/r3/sil2.pkl -- masked auto rows of the near-face-on views, hand-traced and snapped
+    inboard slot sides, hand traces of the AOPA co-pilot view; the AOPA pilot view's auto rows are dropped: they lock
+    onto the leather texture on the dark panel): {g: {kind: dict(h, d, pts)}} (+ = drawn wider / lower)."""
+    f = MEAS / "r3" / "sil2.pkl"
+    if not f.exists():
+        return None
+    data = pickle.load(open(f, "rb"))
+    X = np.broadcast_to(xs[None, :], ids.shape)
+    xm = cam(to_model(np.array([[0.0, 0.0, -10.0]]), side, pose))[0, 0]
+    out = {}
+    for g, sg in (("out", 1.0), ("in", -1.0)):
+        xc = cam(to_model(np.array([[sg * 100.0, 0.0, -10.0]]), side, pose))[0, 0]
+        mask = ids == GRIP_ID[g]                                     # the grip's own hits (rev K)
+        outer_left = xc < xm
+        hw = 0.5 * (xs[1] - xs[0])
+        res = {}
+        for kind in ("outer", "slot", "bottom"):
+            D = data.get((ph, side, g, kind))
+            if D is None or not len(D):
+                continue
+            hh, dd, pts = [], [], []
+            for row in D:
+                if kind == "bottom":
+                    x, y = row[0], row[1]
+                    j = int(np.argmin(np.abs(xs - x)))
+                    i = np.where(mask[:, j])[0]
+                    if not len(i):
+                        continue
+                    ym = ys[i[-1]] + hw
+                    dd.append((ym - y) / ppm)
+                    hh.append(float(x))
+                else:
+                    y, x, h = row[0], row[1], row[2]
+                    i = int(np.argmin(np.abs(ys - y)))
+                    j = np.where(mask[i])[0]
+                    if not len(j):
+                        continue
+                    left = (kind == "outer") == outer_left
+                    xm_ = xs[j[0]] - hw if left else xs[j[-1]] + hw
+                    dd.append(((x - xm_) if left else (xm_ - x)) / ppm)
+                    hh.append(float(h))
+                pts.append((x, y))
+            res[kind] = dict(h=hh, d=dd, pts=pts)
+        out[g] = res
+    return out
+
+
+def band_stats(h, d, edges=(-50, -30, -10, 10, 30, 50, 70)):
+    """Per-band (h) mean and max residual: [(lo, hi, n, mean, max)]."""
+    h, d = np.asarray(h, float), np.asarray(d, float)
+    out = []
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        m = (h >= lo) & (h < hi)
+        if m.any():
+            out.append((lo, hi, int(m.sum()), float(d[m].mean()), float(d[m][np.argmax(np.abs(d[m]))])))
+    return out
+
+
 # ------------------------------------------------------------------------------------------------ feature curves
 def pad_curve3(g, sg):
     """The drawn pad outline on grip g's aft plane, co-pilot sense (u, h, a), closed."""
@@ -378,7 +445,7 @@ def neck_check(g_img, xs, ys, ids, cam, side, pose, ppm):
     res, pts = [], []
     for x in np.arange(x0 + 1.0, x1 - 1.0, 1.0):
         j = int(np.argmin(np.abs(xs - x)))
-        col = ids[:, j] == 0
+        col = np.isin(ids[:, j], BLACK)
         if not col.any():
             continue
         y_top = ys[np.where(col)[0][0]] - 0.5 * (ys[1] - ys[0])
@@ -409,7 +476,7 @@ def render(ph, side, cams, picks, box, step_px, title, traces):
 
     def to(uv):
         return [((u - box[0]) * k, (v - box[1]) * k) for u, v in uv]
-    for keep, col in (([1], STYLE["cover"]), ([0, 1], STYLE["black"])):
+    for keep, col in (([1], STYLE["cover"]), ([0, 1, 2, 3, 4], STYLE["black"])):
         for L in id_contours(xs, ys, ids, keep):
             dr.line(to(L), fill=col, width=2)
     for nm, P in curves3().items():
@@ -440,15 +507,24 @@ def render(ph, side, cams, picks, box, step_px, title, traces):
         def axis_h(y, qa=qa, o=o, hs=hs):
             return np.interp(y, qa[o, 1], hs[o])
         xc = cam(to_model(np.array([[sg * 100.0, 0.0, -10.0]]), side, pose))[0, 0]
-        mask = (ids >= 0) & ((X - xm) * (xc - xm) > 0) & (np.abs(X - xm) > 0.75 * abs(xc - xm))
+        mask = ids == GRIP_ID[g]
         gr[g] = grip_rows(g_img, xs, ys, mask, ppm, axis_h, xc < xm)
         for v in gr[g].values():
             for x_, y_ in v["pts"]:
                 p = to([(x_, y_)])[0]
                 dr.ellipse([p[0] - 2, p[1] - 2, p[0] + 2, p[1] + 2], outline=STYLE["trace"], width=1)
+    cur = curated_rows(ph, side, xs, ys, ids, cam, pose, ppm)
+    if cur is not None:
+        gr = cur
+        for v in [v for d_ in cur.values() for v in d_.values()]:
+            for x_, y_ in v["pts"]:
+                p = to([(x_, y_)])[0]
+                dr.ellipse([p[0] - 2, p[1] - 2, p[0] + 2, p[1] + 2], outline=(255, 255, 0), width=1)
     rep["grip_rows_mm"] = {
         g: {s_: dict(n=len(v["d"]), mean=float(np.mean(v["d"])) if v["d"] else None,
                      rms=float(np.sqrt(np.mean(np.square(v["d"])))) if v["d"] else None,
+                     max=float(np.asarray(v["d"])[np.argmax(np.abs(v["d"]))]) if v["d"] else None,
+                     bands=band_stats(v["h"], v["d"]) if s_ != "bottom" else None,
                      rows=[[round(h, 1), round(d, 2)] for h, d in zip(v["h"], v["d"])])
             for s_, v in d_.items()} for g, d_ in gr.items()}
     pads = {}
@@ -456,9 +532,12 @@ def render(ph, side, cams, picks, box, step_px, title, traces):
         tr = traces.get((ph, side, g))
         if tr is None:
             continue
+        closed = True
+        if isinstance(tr, tuple):
+            tr, closed = tr
         q = cam(to_model(pad_curve3(g, sg), side, pose))
         tq = np.asarray(tr, float)
-        dr.line(to(np.vstack([tq, tq[:1]])), fill=STYLE["trace"], width=1)
+        dr.line(to(np.vstack([tq, tq[:1]]) if closed else tq), fill=STYLE["trace"], width=1)
         dd = _seg_dist(tq, q) / ppm
         pads[g] = dict(mean=float(np.mean(dd)), max=float(np.max(dd)))
     rep["pads_mm"] = pads
@@ -474,8 +553,8 @@ def render(ph, side, cams, picks, box, step_px, title, traces):
                     f"{pose[2] * 1000:+.1f}, roll {pose[3]:+.1f} deg; {ppm:.2f} px/mm at the hub",
              "landmarks mm: " + ", ".join(f"{f} {v:.1f}" for f, v in lm.items())]
     for g, d_ in rep["grip_rows_mm"].items():
-        lines.append(f"grip {g}: " + "; ".join(f"{s_} n {v['n']} mean {v['mean']:+.1f} rms {v['rms']:.1f}"
-                                               for s_, v in d_.items() if v["n"]) + " mm (+ = drawn wider)")
+        lines.append(f"grip {g}: " + "; ".join(f"{s_} n {v['n']} mean {v['mean']:+.1f} max {v['max']:+.1f}"
+                                               for s_, v in d_.items() if v["n"]) + " mm (+ = drawn wider / lower)")
     if pads:
         lines.append("pads vs traces: " + "; ".join(f"{g} {v['mean']:.1f} / {v['max']:.1f}" for g, v in pads.items())
                      + " mm (mean / max)")
@@ -496,6 +575,8 @@ def render(ph, side, cams, picks, box, step_px, title, traces):
 
 
 JOBS = [("p408", -1, "L", (240, 690, 680, 960), 1.0, "P1046408 pilot yoke through panel_408"),
+        ("press", 1, "R", (2680, 1780, 3220, 2260), 1.5, "AOPA / Pilatus press photo, co-pilot yoke from aft-INBOARD "
+                                                         "(~54 deg)"),
         ("p408", 1, "R", (1260, 690, 1720, 960), 1.0, "P1046408 co-pilot yoke through panel_408"),
         ("mex", -1, "L", (1800, 1750, 3000, 2650), 3.0, "Mexico press photo, pilot yoke (bundle-adj. camera)"),
         ("mex", 1, "R", (4600, 1700, 5950, 2650), 3.0, "Mexico press photo, co-pilot yoke (bundle-adj. camera)"),
@@ -505,6 +586,11 @@ TRACES = ((("p408", -1, "out"), "P408L_PAD_OUT"), (("p408", -1, "in"), "P408L_PA
           (("p408", 1, "out"), "P408R_PAD_OUT"), (("p408", 1, "in"), "P408R_PAD_IN"),
           (("mex", -1, "in"), "MEXL_PAD_IN"), (("press", -1, "out"), "PRESSL_PAD_OUT"),
           (("press", -1, "in"), "PRESSL_PAD_IN"))
+TRACES3 = ((("press", 1, "in"), "PRESSR_PAD_IN", True), (("mex", 1, "out"), "MEXR_PAD_OUT", False))
+# extra cover picks of the AOPA co-pilot view (r2: the step ends and the lower insert's bottom corners; the r2 judges'
+# run had tcs / red / foot only)
+EXTRA_PICKS = {("press", "R"): dict(stp_i=(2931.0, 2016.0), stp_o=(2952.0, 2010.0), inb_i=(2939.0, 2046.0),
+                                    inb_o=(2954.0, 2041.0))}
 
 
 def main(argv=None):
@@ -517,11 +603,16 @@ def main(argv=None):
     if tf.exists():
         tr_mod = _load("traces_r2", tf)
         traces = {key: getattr(tr_mod, nm) for key, nm in TRACES if hasattr(tr_mod, nm)}
+    tf3 = MEAS / "r3" / "traces3.py"
+    if tf3.exists():
+        t3 = _load("traces_r3", tf3)
+        traces.update({key: (getattr(t3, nm), closed) for key, nm, closed in TRACES3 if hasattr(t3, nm)})
     report = {}
     for ph, side, sd, box, step, title in JOBS:
         if argv and ph not in argv:
             continue
-        picks = {f: v for f, v in PK.get((ph, sd), {}).items() if not f.startswith("j")}
+        picks = {f: v for f, v in dict(PK.get((ph, sd), {}), **EXTRA_PICKS.get((ph, sd), {})).items()
+                 if not f.startswith("j")}
         img, rep = render(ph, side, cams, picks, box, step, title, traces)
         name = f"yoke_{ph}_{'pilot' if side < 0 else 'copilot'}.png"
         img.save(OUT / name)
@@ -531,7 +622,8 @@ def main(argv=None):
         for g, d_ in rep["grip_rows_mm"].items():
             for s_, v in d_.items():
                 if v["n"]:
-                    print(f"    grip {g} {s_:5s} n {v['n']:2d} mean {v['mean']:+5.1f} rms {v['rms']:4.1f}")
+                    b = " ".join(f"{lo}..{hi}:{mn:+.1f}/{mx:+.1f}" for lo, hi, n, mn, mx in (v["bands"] or []))
+                    print(f"    grip {g} {s_:6s} n {v['n']:3d} mean {v['mean']:+5.1f} max {v['max']:+5.1f}  {b}")
         for g, v in rep["pads_mm"].items():
             print(f"    pad {g} mean {v['mean']:.1f} max {v['max']:.1f}")
         print("    shell " + ", ".join(f"{k} {v['outboard']:+.1f}/{v['inboard']:+.1f}" for k, v in rep["shell_mm"].items()))

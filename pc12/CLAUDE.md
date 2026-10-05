@@ -44,7 +44,10 @@ python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from 
                                 #   `L6Y L6Y2` the yoke design drawings: interior.YOKE_DESIGN through the solids of
                                 #   model/yoke_geom.py, exact views / sections, disk cache out/tmp/yoke_geom_cache)
 python3 -m drawing.yoke_overlay # the yoke solids ray-cast through the photo cameras -> refs/cache/overlays/yoke
-                                #   (private; landmarks, grip rows, pads, inboard neck -> deviations.json, L6Y2 table)
+                                #   (private; landmarks, curated grip rows per band, pads, inboard neck -> deviations.json,
+                                #   the L6Y2 photo-check tables)
+python3 -m model.yoke_checks    # acceptance of the yoke solids: exact 2-D fields, nothing above the trim face / shield,
+                                #   no untabled section cusps, vertex normals vs analytic (printed on L6Y2)
 python3 -m drawing.sheet        # hidden-line drawings (~30 s) -> out/pc12_ga.*, out/pc12_sections.*
 python3 -m drawing.verify       # measures the SVG itself against the dimensions
 # dev viewer (three.js r160 expected at web/three_local -> a checkout of mrdoob/three.js tag r160):
@@ -772,3 +775,13 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   checks keep clear: needs an L6 reveal-profile change), WG8-02 leg-door lean (the documented LD-1 deviation, L4
   call-out), GEO8-05 rudder tab bay / flap canoes / fin root facets (not visible at the review cameras), the chin lip's
   face width (the drawn lip outline; a re-trace needs the drawing review).
+- Yoke design drawings (owner 2026-10-05: "the yoke isn't quite right ... better design drawings?"; DRAWING stage only,
+  the 3-D yoke is still rev H -- `interior.YOKE_REVH`, frozen -- until the owner approves): `interior.YOKE_DESIGN`
+  (rev K, every value source-tagged) -> the solids of `model/yoke_geom.py` (white cover with flush inserts; black body +
+  grips one moulding; switches as solids; exact 2-D signed distances to the curve-law polylines) -> sheets L6Y (front /
+  side / above / B-B) and L6Y2 (sections, grip profiles, details, corners & radii, photo check), every view an exact
+  silhouette / cut; `model/yoke_checks.py` acceptance; `drawing/yoke_overlay.py` ray-casts the solids through 7 photo
+  cameras (private overlays, refs/cache).  Stage-3 route stated on L6Y (trimmed patches + swept rounds, not an implicit
+  mesher).  Open (owner): the grips' fore-aft lie (5 views from inboard confirm the table, the AOPA photo disagrees
+  5-15 mm: side view / view from above provisional), crown soft break vs crease, J band vs full collar, shell skew
+  <= 2 mm, the 95th's knee meets a grip from 15 deg of roll (full rudder: -11 mm wings level).

@@ -359,6 +359,50 @@ class DrawingSheet:
                 out.append((tot, txt, x0, y1))
         return sorted(out, key=lambda r: -r[0])
 
+    def check_text_buried(self, min_frac=0.12, ignore_fills=(PAPER, "#ffffff", "#FFFFFF", "white", "none")):
+        """Texts hidden under filled shapes drawn AFTER them (judges r2 DR2-07: check_text_strikes only sees stroked
+        lines): [(covered fraction of the text's cap band, text, x, y)] for fractions above min_frac.  The band is
+        sampled on a 0.25 mm grid and tested against each later closed filled path (point in polygon) and filled
+        circle; paper-coloured fills (label backgrounds drawn under their own text) are ignored."""
+        from matplotlib.path import Path as MPath
+        items = self.cv.items
+        fills = []
+        for idx, it in enumerate(items):
+            d = it.data
+            if it.kind == "path" and d.get("fill") and d.get("closed") and d.get("fill") not in ignore_fills:
+                P = np.asarray(d["pts"], float)
+                fills.append((idx, "poly", P, P.min(0), P.max(0)))
+            elif it.kind == "circle" and d.get("fill") and d.get("fill") not in ignore_fills:
+                c, r = np.array([d["cx"], d["cy"]]), d["r"]
+                fills.append((idx, "circ", (c, r), c - r, c + r))
+        bands = []
+        k = 0
+        for idx, it in enumerate(items):
+            if it.kind != "text":
+                continue
+            bands.append(idx)
+        tb = self.text_bands()
+        out = []
+        texts = [i for i, it in enumerate(items) if it.kind == "text" and abs(it.data.get("rot", 0.0)) <= 1e-6
+                 and str(it.data["s"]).strip()]
+        for (x0, y0, x1, y1, txt), ti in zip(tb, texts):
+            if x1 <= x0 or y1 <= y0:
+                continue
+            gx, gy = np.meshgrid(np.arange(x0, x1, 0.25) + 0.125, np.arange(y0, y1, 0.25) + 0.125)
+            Q = np.c_[gx.ravel(), gy.ravel()]
+            hit = np.zeros(len(Q), bool)
+            for fi, kind, geo, lo, hi in fills:
+                if fi <= ti or hi[0] < x0 or lo[0] > x1 or hi[1] < y0 or lo[1] > y1:
+                    continue
+                if kind == "poly":
+                    hit |= MPath(geo).contains_points(Q)
+                else:
+                    hit |= np.hypot(Q[:, 0] - geo[0][0], Q[:, 1] - geo[0][1]) < geo[1]
+            f = float(hit.mean()) if len(hit) else 0.0
+            if f > min_frac:
+                out.append((f, txt, x0, y1))
+        return sorted(out, key=lambda r: -r[0])
+
     def check_text_overlaps(self, ignore=("zone",)):
         """Pairs of overlapping text boxes (sheet.Sheet.text records a box per text)."""
         B = [b for b in self.sh.boxes if b[4] not in ignore]
@@ -800,6 +844,11 @@ def build_sheet(sid, mod_name, spec, clean_only=False, dpi=110, verbose=True):
             print(f"  CHECK: {len(st)} texts crossed by lines, e.g.")
             for L, t, x, y in st[:10]:
                 print(f"    {L:4.1f} mm  {t[:48]!r} @({x:.0f},{y:.0f})")
+        bu = ds.check_text_buried()
+        if bu:
+            print(f"  CHECK: {len(bu)} texts under later fills, e.g.")
+            for f, t, x, y in bu[:10]:
+                print(f"    {100 * f:3.0f} %  {t[:48]!r} @({x:.0f},{y:.0f})")
     files = ds.write(clean_only, dpi, verbose)
     return ds, files
 
