@@ -23,7 +23,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from drawing import master as M  # noqa: E402
-from drawing.master import (INK, GRID, MUTED, PAPER, ACCENT, W_OBJ, W_FINE, W_THIN, CHAIN, PHANTOM, table,  # noqa
+from drawing.master import (INK, MUTED, PAPER, ACCENT, W_OBJ, W_FINE, W_THIN, CHAIN, PHANTOM, table,  # noqa
                             view_title, notes)
 from drawing.canvas import text_width  # noqa: E402
 from drawing.wheel_sheet import hatch  # noqa: E402
@@ -381,7 +381,6 @@ def context():
 # ============================================================================================ front elevation
 def draw_front(ds, v):
     F = I.yoke_front_mm()
-    mir = np.array([-1.0, 1.0])
     # black body (with its hidden parts: covered by the shell / grips drawn after it)
     poly(ds, v, F["body"], W_OBJ, fill=BLACK)
     for g, S_, G_, pad in (("out", F["grip_out"], F["aft_out"], F["pad_out"]),
@@ -745,8 +744,6 @@ def draw_sections(ds):
     hB = 48.0
     aF = float(I.yoke_face_a(hB))
     cov = float(D["cover_t"])
-    F = I.yoke_front_mm()
-    sh = F["shell"]
     u_tip = 72.3
     u_ins = float(np.interp(hB, *np.array(D["insert_side"])[::-1, ::-1].T))
     Gb = I.yoke_grip_faces("out")["G"]
