@@ -111,9 +111,11 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   sheepskin: [0, 0.55],
   // the graphite of the side consoles, the overhead panel, the AFCS strip: near-black (P1046408 consoles 4-9, the
   // overhead ~45 under the windshield's light; T14 <= 50)
-  panel_dark: [0, 0.6],
+  panel_dark: [0, 0.5],
   // the satin titanium face round the PDUs and the sub-panels (P1046408 66-78; its own reflections carry it, SPEC_KEEP)
-  panel_titanium: [0, 0.6] };
+  panel_titanium: [0, 0.45],
+  // the near-black footwell carpet (P1046408 5-15) and the PC-24 yoke's white shield (P1046408 ~208)
+  carpet_flightdeck: [0, 0.85], yoke_white: [0, 1.08] };
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
 // the gunmetal, the bezels, the black leather and the displays to flat matte); the sky law and the occlusion still apply
 // (+ the flight deck's shared detail materials (seed) and the geometry tracks' glossy ones: the annunciator / key caps,

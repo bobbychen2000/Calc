@@ -47,9 +47,10 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25-40 min, 216 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~25-40 min, 225 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
-                                #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise)
+                                #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
+                                #   --only fdlook: [FD-L1]-[FD-L9] the flight-deck look, ~20 min)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -434,7 +435,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   (`scene.js LOOK.sun`, made after the key so the key stays directional shadow 0 and the light count never changes --
   no recompiles in and out): az 125 deg from dead ahead to starboard, el 40 (`outside.js SUN`: through the co-pilot's
   side window and the forward cabin windows onto the pedestal, sub-panels and seats, the glareshield shading the PDU
-  tops; the assessment's az 65 / el 26 lit only the glareshield lip), 3.5 inside / 0 outside, its own 2048 px map (1024 phones, PCF radius 3 / 2) on a fixed
+  tops; the assessment's az 65 / el 26 lit only the glareshield lip), 5 inside (the brief's 3.5 left faint patches under the calibrated window-light law; 5 changes no P1046408 row --
+  the sunlit pedestal 113 -> 121 only; az 95 / el 35, which lit the pilot side dramatically, put sun on the seats and
+  consoles that P1046408 does not show: sheepskin 168, consoles 54) / 0 outside, its own 2048 px map (1024 phones, PCF radius 3 / 2) on a fixed
   +-1.9 m box round the flight deck, rendered on pose changes only (`shadow.autoUpdate` follows the look; the key's map
   is not rendered inside, a spinning propeller's blades leave the sun's casters); interior receivers outside that box
   are shaded (`materials.js` interior patch: getShadow's out-of-frustum default 0); inside casters / receivers
@@ -462,7 +465,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   emissive one (legend_lit, the CB glow bands) keeps its emission.  ?cabGain= ?cabSky= ?cabOcc= ?cabIn= override them.
   Palette (L5, `render/lookdev.py` SPEC + `assemble.MATERIALS`): lining_flightdeck 0.10 rough 0.75 (no CABIN_TRIM),
   leather_glareshield 0.045 rough 0.48, panel_grey 0.20, carpet_flightdeck 0.03, sheepskin lavender-grey (0.28, 0.275,
-  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.55], leather_crew [0, 0.8], panel_dark [0, 0.6], panel_titanium [0, 0.6].  Viewer
+  0.33) with sheen (0.50, 0.50, 0.60) and CABIN_TRIM [0, 0.55], leather_crew [0, 0.8], panel_dark [0, 0.5], panel_titanium [0, 0.45], carpet_flightdeck
+  [0, 0.85], yoke_white [0, 1.08] (panel_408b: titanium 72 / P1046408 66-78, carpet 13, consoles 13, yoke 202; a lower
+  reflection floor `cabSky` 0.12 / 0 measured further from the photo's tonal bands: 32 / 41 / 16 % vs 25 / 47 / 15).  Viewer
   patches (L6): fleece clumps 12-20 mm with darker crevices, a fine pebble grain on the leathers, the walnut figure
   (render_grain streaks, rest pose), brushed titanium (anisotropy 0.6 along BL, streaky roughness; no env 0.6 stand-in),
   the G3000 pages x1.45 inside.  `viewer.tour.place({eye, target, fov}, {clamp: false})` puts the tour camera at an
