@@ -1904,9 +1904,13 @@ async def tour_r2_checks(page, data, shots=True):
           f"{se[0]}, yaw {se[1]:.1f}, pitch {se[2]:.1f}, y {se[3]:+.3f}")
     fl = float(I.FLOOR["wl"])
     wall = float(I.lining_half_width(float(FP.AIRSTAIR["cx"]), fl + 1.0)) + R["vestibule"]["y"][0]
-    check("[T12] NAV2-05 / 06: the airstair stop looks down the steps (-48 deg on a landscape screen, review r3 NAV3-02); "
-          "the vestibule keeps 0.40 m from the closed door (widened onto the doorway only while it is open)",
-          abs(r["air"] + 48) < 0.5 and abs(wall - 0.40) < 2e-3
+    import importlib.util as _ilu
+    _sp = _ilu.spec_from_file_location("tour_data_py", ROOT / "web" / "tour_data.py")
+    _td = _ilu.module_from_spec(_sp); _sp.loader.exec_module(_td)
+    air_pitch = _td.AIRSTAIR_LOOK[1]                    # -46 since tour review r5 NAV9-02 (r3 / r4: -48)
+    check(f"[T12] NAV2-05 / 06: the airstair stop looks down the steps ({air_pitch:.0f} deg on a landscape screen, review r3 "
+          "NAV3-02, r5 NAV9-02); the vestibule keeps 0.40 m from the closed door (widened onto the doorway only while it is open)",
+          abs(r["air"] - air_pitch) < 0.5 and abs(wall - 0.40) < 2e-3
           and R["vestibule_door"].get("when") == "door_airstair" and R["vestibule_door"]["y"][0] <= -0.449,
           f"pitch {r['air']:.1f}, vestibule edge {R['vestibule']['y'][0]:+.3f} = {wall:.3f} m from the door lining")
 
@@ -1976,10 +1980,11 @@ async def tour_r3_checks(page, data, shots=True):
     import importlib.util as _ilu
     _sp = _ilu.spec_from_file_location("tour_data_py", ROOT / "web" / "tour_data.py")
     _td = _ilu.module_from_spec(_sp); _sp.loader.exec_module(_td)
-    air_look = _td.AIRSTAIR_LOOK                        # (-106 / -48 since review r4 NAV8-05; r3: -112 / -48)
-    check(f"[T13] NAV3-02: the airstair stop from inside the door frame (BL -0.42) looking down the steps ({air_look[0]:.0f} / {air_look[1]:.0f} deg), "
+    air_look = _td.AIRSTAIR_LOOK                        # (-92 / -46 since tour review r5 NAV9-02; r4: -106 / -48)
+    air_bl = _td.AIRSTAIR_EYE_BL                        # (-0.48 since r5 NAV9-02; r3 / r4: -0.42)
+    check(f"[T13] NAV3-02: the airstair stop from inside the door frame (BL {air_bl:.2f}) looking down the steps ({air_look[0]:.0f} / {air_look[1]:.0f} deg), "
           "its hint under the toolbar, gone after the first look input",
-          abs(ai["pos"][1] + 0.42) < 1e-3 and abs(ai["yawDeg"] - air_look[0]) < 0.5 and abs(ai["pitchDeg"] - air_look[1]) < 0.5
+          abs(ai["pos"][1] - air_bl) < 1e-3 and abs(ai["yawDeg"] - air_look[0]) < 0.5 and abs(ai["pitchDeg"] - air_look[1]) < 0.5
           and r["hintTop"] and r["hintGone"],
           f"eye {ai['pos']}, yaw {ai['yawDeg']:.1f}, pitch {ai['pitchDeg']:.1f}, hint top {r['hintTop']}, faded {r['hintGone']}")
     if shots:
