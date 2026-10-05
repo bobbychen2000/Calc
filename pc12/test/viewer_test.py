@@ -2221,27 +2221,34 @@ async def fd_look_checks(page, shots=True):
     rows = ", ".join(f"{k} {x:.0f}" for k, x in v.items() if x is not None)
     check("[FD-L2] the footwell carpet and the side consoles near-black at panel_408b (< 20; P1046408 5-15)",
           v["carpet"] is not None and v["carpet"] < 20 and v["console"] is not None and v["console"] < 20, rows)
-    # the glareshield's lip: the lowest 5 rows of each column of its pixels (seen from behind, the rounded aft edge)
+    # the glareshield seen from the photo's eye (WL 2.03, ~0.2 m below the hood: the hood's top is hidden behind its lip):
+    # each column's leather run is the rolled lip (its upper part, the roll facing aft / up) over the flat underside
+    # that runs forward to the eyebrow fascia (its lower part).  P1046408 along the same columns: the roll 141-169 with
+    # its crest highlight, the underside darkening to 99-124 at the fascia -- the lip the brighter band.  Upper / lower
+    # third of each column's run from the bottom (2 px off both ends: the anti-aliased sky / fascia edges)
     m = await js(pg, MAT_MASK, [G["glare"]])
     W, H = m["W"], m["H"]
     k = np.array(m["mask"].split(","), int).reshape(H, W) == 1
     img = np.asarray(Image.open(path).convert("RGB"), float)[:H, :W]
     L = 0.2126 * img[..., 0] + 0.7152 * img[..., 1] + 0.0722 * img[..., 2]
     lip = np.zeros_like(k)
+    und = np.zeros_like(k)
     for x in range(W):
-        ys = np.nonzero(k[:, x])[0]
-        if len(ys) >= 12:
-            lip[ys[-5:], x] = True
-    body = k & ~lip
-    lipv = float(np.median(L[lip])) if lip.sum() > 50 else None
-    bodyv = float(np.median(L[body])) if body.sum() > 50 else None
-    # (P1046408: the hood reads 98 against the sky, the rolled lip below it darker, 59, with a highlight along its edge:
-    # the lip band's brightest tenth above the hood's median)
-    lip90 = float(np.percentile(L[lip], 90)) if lip.sum() > 50 else None
-    check("[FD-L3] the black leather glareshield 50-100 at panel_408b, a highlight along its rolled lip (the lip's 90th "
-          "percentile above the hood's median; P1046408)",
-          v["glare"] is not None and 50 <= v["glare"] <= 100 and lip90 is not None and bodyv is not None and lip90 > bodyv,
-          f"glareshield {v['glare']}, lip median {lipv} / p90 {lip90}, hood {bodyv}")
+        ys = np.nonzero(k[:, x])[0][::-1]
+        if len(ys) < 15:
+            continue
+        br = np.nonzero(np.diff(ys) != -1)[0]
+        ys = (ys[:br[0] + 1] if len(br) else ys)[2:-2]
+        t = len(ys) // 3
+        if t >= 4:
+            und[ys[:t], x] = True
+            lip[ys[-t:], x] = True
+    lipv = float(np.median(L[lip])) if lip.sum() > 200 else None
+    undv = float(np.median(L[und])) if und.sum() > 200 else None
+    check("[FD-L3] the black leather glareshield 50-100 at panel_408b, its rolled lip brighter than the underside below "
+          "it (>= 8 levels: the roll catches the light; P1046408 roll 141-169 / underside 99-124 along the same columns)",
+          v["glare"] is not None and 50 <= v["glare"] <= 100 and lipv is not None and undv is not None and lipv >= undv + 8,
+          f"glareshield {v['glare']}, lip {lipv} / underside {undv} ({int(lip.sum())} / {int(und.sum())} px)")
     check("[FD-L4] the PC-24 yoke's white shield light (>= 190) at panel_408b", v["yoke"] is not None and v["yoke"] >= 190,
           f"yoke {v['yoke']}")
     sh = ms["sheep"]

@@ -116,8 +116,13 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   panel_titanium: [0, 0.6] };
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
 // the gunmetal, the bezels, the black leather and the displays to flat matte); the sky law and the occlusion still apply
+// (+ the flight deck's shared detail materials (seed) and the geometry tracks' glossy ones: the annunciator / key caps,
+// the smoked acrylic sun visors.  Every other new material -- stitch_thread, rubber_black, legend_plate, the fda_ /
+// fdb_ trim -- takes the interior law with no entry (diffuse x gain x occlusion x window light, reflections by facing),
+// and an emissive one (legend_lit, the annunciators' glow, fdb_cb_glow_*) keeps its emission as built)
 const SPEC_KEEP = new Set(['panel_titanium', 'pedestal_gunmetal', 'pcl_pewter', 'chrome_trim', 'bezel_black',
-  'leather_glareshield', 'leather_black', 'yoke_white', 'display_page', 'screen']);
+  'leather_glareshield', 'leather_black', 'yoke_white', 'display_page', 'screen',
+  'annun_amber', 'annun_red', 'annun_green', 'annun_blue', 'fdb_visor']);
 
 // Interior lining on the back faces.  The lookdev renders use a light grey (0.55) that Cycles darkens
 // with real occlusion; the viewer's image-based light has none (a back face inside the cockpit sees the
