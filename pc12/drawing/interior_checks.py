@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="I", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="-", rev="J", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -343,7 +343,7 @@ def deviations_block(ds, x0, y0, x1, ctx):
     tb = cc["table"]
     y = I.YOKE
     dev = [
-        ("yoke (rev I, L6Y)", f"YOKE_DESIGN: grips {mm(y['grip'][0])} long, bottoms {sgn(y['grip_dz'])}, span "
+        ("yoke (rev J, L6Y)", f"YOKE_DESIGN: grips {mm(y['grip'][0])} long, bottoms {sgn(y['grip_dz'])}, span "
                               f"{mm(y['span'])}, raked 20°: 95th level 38 -> {1000 * o95['yoke_pitch']:.0f}, "
                               f"keep-25 roll 5 -> {o95['roll_clear']:.1f}°"),
         ("DECISION: yoke vs knees", f"keep the measured hub, grips and pedals: the 95th's knee meets a grip from "

@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="I", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="AS SHOWN", rev="J", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -75,6 +75,9 @@ REVISIONS = (
                         "black rim / necks, open hand slots, grips hanging from the arm tips (heads 95, bottoms -42, span "
                         "283), the aft face 17.5 deg top forward, grips raked 20 and toed out 13 / 28 deg; the knee sweep "
                         "takes each piece's own fore-aft slab (detail F, L6B)"),
+    ("J", "2026-10-05", "yoke rev J (L6Y judges r1): the yoke as solids (model/yoke_geom.py, sheets L6Y / L6Y2) -- "
+                        "crown 65.3, outboard web / inboard low neck, round trim-face and shield heads (97 / 90), "
+                        "grips refitted per grip, toe 18 / 18; L6 / L6B take its outline and sweep pieces"),
 )
 
 # ---- fills (clean sheet)
@@ -827,16 +830,17 @@ def draw_fd_side(ds, v, bl, simple=False, crank=0.0, travel=False):
 
 @lru_cache(maxsize=1)
 def yoke_side_outlines():
-    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (drawing.yoke_sheet: the rev I
-    YOKE_DESIGN body + cover and the outboard grip): (body, cover, grip)."""
-    from drawing import yoke_sheet as YS
+    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (model.yoke_geom, the rev J solids
+    sheet L6Y draws: body, cover and the outboard grip): (body, cover, grip)."""
+    from model import yoke_geom as YG
     hub = I.yoke_hub(-1)
     xr = float(hub[0] + I.YOKE["hub_whd"][2])
+    sil = YG.view_silhouettes("u")
 
-    def tm(P):
+    def tm(name):
+        P = max(sil[name], key=len)
         return np.c_[xr + P[:, 0] * 1e-3, hub[2] + P[:, 1] * 1e-3]
-    return (tm(YS.side_outline(YS.body_samples())), tm(YS.side_outline(YS.cover_samples())),
-            tm(YS.side_outline(YS.grip_samples("out"))))
+    return tm("body"), tm("cover"), tm("grip_out")
 
 
 def _profile_labels(ds, v, ctx):
@@ -1814,9 +1818,11 @@ def draw_seat_details(ds, v1, v2, ctx):
                "CREW (NEUTRAL) / EXECUTIVE (UPRIGHT), SEEN FROM PORT - HEIGHTS ABOVE THE FLOOR - SCALE 1:10")
 
 
-def yoke_front(yc, zc, roll=0.0):
-    """Yoke pieces in a front view (y, z) about the hub centre (yc, zc) at roll deg (interior.yoke_outline_yz)."""
-    return [P + np.array([yc, zc]) for P in I.yoke_outline_yz(roll)]
+def yoke_front(yc, zc, roll=0.0, side=None):
+    """Yoke pieces in a front view (y, z) about the hub centre (yc, zc) at roll deg (interior.yoke_outline_yz; the
+    yoke on `side`, by default the side of yc: rev J, the body's necks and the grips differ outboard / inboard)."""
+    side = side if side is not None else (1 if yc > 0 else -1)
+    return [P + np.array([yc, zc]) for P in I.yoke_outline_yz(roll, side)]
 
 
 def draw_panel_view(ds, v, ctx):

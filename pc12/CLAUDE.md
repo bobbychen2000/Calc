@@ -40,7 +40,11 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
                                 #   (L4W: wheels / tyres / nose yoke, 2 mm)
 python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from the parameter modules (~3 min;
-                                #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels)
+                                #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels,
+                                #   `L6Y L6Y2` the yoke design drawings: interior.YOKE_DESIGN through the solids of
+                                #   model/yoke_geom.py, exact views / sections, disk cache out/tmp/yoke_geom_cache)
+python3 -m drawing.yoke_overlay # the yoke solids ray-cast through the photo cameras -> refs/cache/overlays/yoke
+                                #   (private; landmarks, grip rows, pads, inboard neck -> deviations.json, L6Y2 table)
 python3 -m drawing.sheet        # hidden-line drawings (~30 s) -> out/pc12_ga.*, out/pc12_sections.*
 python3 -m drawing.verify       # measures the SVG itself against the dimensions
 # dev viewer (three.js r160 expected at web/three_local -> a checkout of mrdoob/three.js tag r160):
