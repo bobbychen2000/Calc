@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="G", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-03")
+             size="A1", scale="-", rev="H", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -381,8 +381,8 @@ def deviations_block(ds, x0, y0, x1, ctx):
                                  f"unfolding inboard leaf); up to the 50th fits (feet fwd "
                                  f"{tb['p50m']['posture']['shank']:.0f}°); the 95th does not "
                                  f"({sgn(tb['p95m']['full'][0])}): open point 3"),
-        ("full rudder (r2)", f"pedal travel ±{mm(I.PEDALS['travel'])} [E] and the toe brake added; the knee checks "
-                             "pose the up-knee on the aft pedal and the extended leg on the forward one"),
+        ("full rudder (r2)", f"pedal travel ±{mm(I.PEDALS['travel'])} [E], toe brake; knee checks: up-knee on the aft "
+                             "pedal, the other leg extended"),
         ("reach (r2)", f"grasp vs touch: touch targets get the {mm(I.MANIKIN['fingertip'])} fingertip; the 95th "
                        "reaches the PDUs and SDUs harness locked"),
         ("crew armrest hinge (r2)", "in the back's thickness, stowed along the back side; rev B hinged it 125 ahead "
@@ -577,11 +577,12 @@ def _height(fn, width, ctx):
 
 REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
              ("B", "2026-09-24", "Stage-2 parameter tables, checks; review r1"),
-             ("C", "2026-09-26", "review r2 + r3 (list on sheet 1): sensitivity, CG cross-check, 5th-female point"),
+             ("C", "2026-09-26", "review r2 + r3 (sheet 1): sensitivity, CG check, 5th-female point"),
              ("D", "2026-09-26", "Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track"),
              ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"),
              ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]"),
-             ("G", "2026-10-03", "model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row"))
+             ("G", "2026-10-03", "model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row"),
+             ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

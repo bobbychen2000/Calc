@@ -663,6 +663,57 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   re-lays the verified over-centre chain), GR1-05 (oleo pre-stroke: the viewer cycles the gear on the ground, an
   extension would push the tyres into the floor); owner flag: the port ledge segment on the open cargo door is the
   approved s/n 3001 anthracite, photo 130 (MSN 3008) shows it light.
+- Flight deck r1 GEOM A (owner 2026-10-04: "the flight deck ... 1/10", "the details are drastically missing"; the panel
+  area: the owned `flightdeck.py` builders + `model/fd_detail_a.py`, L6 / L6B rev H; the G3000 PRIME / PC-12 PRO
+  research of 2026-10-05 applied where it corrects the tables): YOKES re-measured (P1046408 at 0.70 mm/px, P1046409 at
+  0.52, the JTF elevation; YOKE hub 140 x 120, the white Y shield -- horns to +/-70, +/-39 at mid-height, a round 45
+  foot (hub_bot_w kept: 0.076 is the mid-height width) --, paddle grips r 16 widening to 21 over their top 90, no round
+  head): shield domed 8.5 mm with two ridges along a stepped silver V funnel (an abstract bar badge), black horns from
+  the grips into its corners, flat-backed D-section paddles (`fd_detail_a.paddle_grip`) with a grained leather inset in
+  a moulded rim (`inset`), trim switch / knurled 4-way hat / PTT trigger, TCS on the white horn, red AP DISC on the black
+  arm, a satin dark column in an 8-pleat rubber bellows carried by the yoke (`yoke_bellows`, OD 90).  FOOTWELLS
+  (`footwell_walls`): dark tunnel-side and outboard walls, the panel's underside (rising 50 mm forward over the
+  rudder-bar pivots), the cubby face under the cheek leg with the USB pair; pedals satin black pads with rubber ribs and
+  a toe lip.  GLARESHIELD: the lip arch from both Pilatus 'Just the Facts' elevations (research C1: GLARESHIELD lip_dz,
+  outboard 15-70 mm lower than rev G, whose face-on photo reading the perspective had lifted; it lowers
+  build.cockpit_camera's look point: the crew stops' pitch -21.5 -> -22.1, web/viewer/tour_data.js regenerated), a
+  separate rolled black
+  lip (leather_black), double stitching 8 / 11.5 mm inside the lip and either side of a crown seam 0.10 forward
+  (stitch_thread dashes, 6 mm pitch, `GLARE`), `flightdeck.hood_end_section()` for the sidewall sill (track B), ECS
+  eyeballs in dark moulded pods (`ecs_vent`).  GFC 700 (`gfc700`, research M4 on P1046408: four sections, three dual
+  concentric knurled knobs FMS / HDG / ALT, the VS thumbwheel in its slot, 13 keys, a raised frame with corner screws,
+  the light sensor); BARO knobs on black plates, master WARNING / CAUTION lenses (annun_red / amber), RADIO-CALL plates,
+  round recesses and fascia screws (`eyebrow_items`).  DISPLAYS: PDU bezels L 13 / R 12 / top 20 / bottom 20.5
+  (`DETAIL pdu_border`), four anthracite corner pads with screws on every PDU (33 / 23 x 10) and SDU (26 / 18 x 9), a
+  metal rim round the PDU glass, the MFD's light sensor (`display_details`); the GI 275 as the unit -- PANEL standby is
+  its 79.4 round cut-out, `standby_unit` the 82.6 square bezel and 68.3 display (research C2), its knob lower-left (PRO
+  P1046410), V-speed placards above it; SDUs 110 x 195 (C6).  LOWER PANEL (`lower_panel`, `LOWER`): the face charcoal
+  (panel_dark) round the PDU row and behind titanium plates -- a band under the PDUs, inner / yoke / outer sub-panels
+  split at BL 0.290 / 0.575 [M], 2 mm dark seams, pan-head screws --, the cheek LEGS (research M17: the bottom edge
+  sweeps down 111 mm over |BL| 0.575-0.660, `z_bot`; the outer plate follows it, O2 / mic sockets on them), rounded yoke
+  wells with a satin lip, ICE PROTECTION 2 x 3 rockers, the gear handle with its wheel knob and V-LE / V-LO placard,
+  guarded FEATHER INHIBIT, the PARKING BRK lozenge; co-pilot ACS row of four lit caps, rockers, guarded DUMP, OXYGEN
+  lever; skirted panel-end knobs.  STACK + PEDESTAL (`stack_shell`, `quadrant`): the waisted stack moulding (0.14 at the
+  SDUs -> 0.098 waist -> the quadrant's 0.11, P1046408) with a moulded R 12 edge, the charcoal SDU surround, the recessed
+  touch pad in its titanium bezel with a hand-rest lip, COM 1 / 2 VOL knobs dia 19 at BL +/-0.10 on the horns
+  (research M6); the quadrant a satin-black plate in a raised gunmetal frame, the framed trim panel (TRIM INTERRUPT,
+  ALT STAB TRIM / AILERON TRIM rockers, guarded FLAP INTERRUPT), brush-sealed PCL / flap slots, detent ticks, the
+  striped reverse gate, the PCL a dark arm under a pewter cylinder handle, the flap paddle, 5 + 2 skirted lighting knobs
+  with dimmer arcs (JTF p.18), the CCD palm dome (PEDESTAL ccd / ccd_wl: 100 x 85, top 385 [M]) with its trackball in a
+  ring, rocker, keys and two green LEDs.  Legends are abstract light strokes (geometry; no text).  The flight-deck
+  shared materials (leather_black, stitch_thread, rubber_black, annun_*) are the seed's block; until it lands
+  `fd_detail_a.SHARED_FALLBACK` registers stand-ins by setdefault (the seed's values win).  Checks: `test/fit_fd_a.py`
+  28 (pedals over their travel, the 95th's shoes and legs vs the footwell walls >= 10 mm: 10.1 / 27.5 / 20.9), 29
+  (yokes over the pull travel and 60 mm of push x roll +/-70 vs the panel detail >= 3 mm: 16.1) and 29b [open] -- at
+  the full [E] push (-90 mm) the grips reach within ~8 mm of the bare lower-panel face wings level and cross it from ~45
+  deg of roll: the switch blocks under the inboard grips are hit; owner decision: a shorter [E] forward travel (~-65 mm)
+  or accept; consistency rows select the yoke / pedal parts and the lip's leather_black (materials moved).  Triangles
+  (RES 2):
+  flight_deck 35.6k -> 87.3k, yokes 13.75k -> 22.6k, pedals 1.9k -> 3.0k; the interior 601k is over
+  build.INTERIOR_BUDGET's 550k until the seed's caps land (flight_deck 150k, yoke 24k, pedal 3k).  Deferred: legends
+  on the shared legend atlas (seed S had not landed), the flight deck in build.LOW_FINE (the seed's; the light tier
+  builds it at RES 1 meanwhile), the pedestal front height (no PNL-04 figure in hand), PANEL.mfd_z (research C7: a
+  camera fit first).
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been

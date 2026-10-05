@@ -198,10 +198,14 @@ PANEL = dict(
     pdu_cant=P(10.0, "[M] side PDUs canted toward their pilot (foreshortening 0.97)"),
     lower_dz=P(-0.275, "[M] lower (yoke / switch) panel bottom below the MFD centre"),
     cheek_bl=P(0.710, "[M] panel face 1.42 wide incl. the side cheeks (cockpit key)"),
-    standby=PT((-0.565, -0.047, 0.080), "[S] GI 275 standby left of the PFD: BL, dz vs MFD [M], 3.125-in bezel"),
+    standby=PT((-0.565, -0.047, 0.080), "[S] GI 275 standby left of the PFD: BL, dz vs MFD [M], its 3.125-in round "
+                                        "panel cut-out (0.0794; rev G called it the bezel)"),
+    standby_unit=PT((0.0826, 0.0683), "[S] GI 275 unit on the face over the cut-out: square bezel 3.25 in, display "
+                                      "dia 68.3 (Garmin spec sheet; flight deck r1, rev H)"),
     ecs_bl=P(0.640, "[M] eyeball ECS outlets at the panel ends"),
     stack_hw=P(0.140, "[M] centre stack 0.28 wide at the SDUs"),
-    sdu_wh=PT((0.115, 0.190), "[S] 2 x 7-in GDU 770W touch displays, portrait, side by side; bezel [M]"),
+    sdu_wh=PT((0.110, 0.195), "[S] 2 x 7-in GDU 770W touch displays, portrait, side by side; face [M] 109 x 195 "
+                              "(sides 7-9, top 21, bottom 23: P1046408 / flight deck r1 research; rev G 115 x 190)"),
     sdu_bl=P(0.065, "[M] SDU centres +/-"),
     sdu_top_dz=P(-0.130, "[M] SDU bezel top 10-20 below the MFD bezel foot (1.885): JTF p.18 elevation on MFD "
                          "2.00 gives 1.873-1.732, camera-matched P1046406 1.868-1.710, P1046408 agrees (rev B: -0.170)"),
@@ -210,8 +214,12 @@ PANEL = dict(
 )
 GLARESHIELD = dict(
     lip_x=P(3.630, "[M] lip 0.12-0.15 aft of the PDU glass (face-on photo); plan render ~3.70"),
-    lip_dz=PT(((0.00, 0.260), (0.20, 0.255), (0.375, 0.240), (0.50, 0.210), (0.60, 0.150), (0.66, 0.075),
-               (0.71, -0.020)), "[M] lip arch (|BL|, height above the MFD centre), cockpit key + face-on photo"),
+    lip_dz=PT(((0.00, 0.260), (0.20, 0.252), (0.375, 0.225), (0.50, 0.184), (0.60, 0.081), (0.66, 0.017),
+               (0.70, -0.019)), "[M] lip arch (|BL|, height above the MFD centre): the top silhouette of both Pilatus "
+                                "'Just the Facts' panel elevations (PRO 2025 p.18, NGX 2024 p.8, within 0.02) dropped "
+                                "from +0.26.  Flight deck r1 (rev H): rev G's (0.375, 0.240) .. (0.66, 0.075) came from "
+                                "the face-on photo, whose perspective lifts the outboard lip (it wraps aft, nearer the "
+                                "camera)"),
     frame_drop=P(0.020, "[E] hood meets the windshield inner frame this far below the glass edge"),
     afcs_wh=PT((0.286, 0.062), "[M] GFC 700 on the eyebrow, centre 0.18 above the MFD [S: cockpit key item 10]"),
     finish="grey stitched leather top [M: brochure p.10]",
@@ -220,29 +228,42 @@ YOKE = dict(
     bl=P(0.375, "[M] +/-0.372 (cockpit key): on the seat centreline"),
     hub_dx=P(0.140, "[M] hub face aft of the PDU glass (face-on photo, depth-corrected)"),
     hub_dz=P(-0.155, "[M] hub centre 0.15-0.17 below the MFD centre"),
-    hub_whd=PT((0.140, 0.110, 0.060), "[M] white Y hub: width at the grip roots, height; depth [E]"),
-    hub_bot_w=P(0.045, "[M] the Y hub narrows to a stem this wide at its bottom (JTF cockpit key item 15)"),
+    hub_whd=PT((0.140, 0.120, 0.060), "[M] white Y hub: width at the grip roots, height; depth [E].  Flight deck r1 "
+                                      "(rev H, P1046408 at 0.72 mm/px): height 0.110 -> 0.120 (the silver V's top to "
+                                      "the shield's round foot)"),
+    hub_bot_w=P(0.045, "[M] the Y hub narrows to a round foot this wide at its bottom (JTF cockpit key item 15).  "
+                       "Flight deck r1 (rev H) re-measured: the white foot is 0.040-0.045 on both P1046408 yokes (0.70 "
+                       "mm/px) and in the JTF elevation; 0.066-0.076 is the shield's MID-height width (the profile "
+                       "below), the black body's U rim round the foot ~0.055-0.08"),
     span=P(0.285, "[M] grips overall, outer edge to outer edge at their bottoms (JTF cockpit key, P1046408 with the "
                   "0.14 hub for scale); PC-24-style yoke [S]"),
-    grip=PT((0.160, 0.0155, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
+    grip=PT((0.160, 0.016, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
                                    "key: tops +/-0.10, bottoms +/-0.125 from the hub CL; P1046408 ~8 deg); review r2 F2 "
                                    "(P1046408 pair: slim paddles 55 px against the render's 70 px, rising well above "
                                    "the hub): radius 0.020 -> 0.0155, length 0.125 -> 0.140 (the tops 15 mm higher); "
                                    "final judge r1 I2 (P1046408: the grips rise ~0.07 above the shield top with the thumb "
-                                   "knob, the render's stopped at 0.045): 0.140 -> 0.160, the bottoms kept"),
+                                   "knob, the render's stopped at 0.045): 0.140 -> 0.160, the bottoms kept.  "
+                                   "Rev H: r 0.016 (28-32 mm across near the bottom, P1046408 / 09), widening to "
+                                   "the head (grip_head)"),
     grip_dz=P(-0.040, "[M] grip bottoms 0.04 below the hub centre, near the hub bottom (JTF key: grips WL 1.80-1.93 "
                       "on hub 1.79-1.90; P1046408 -0.05..+0.09); tops ~0.04 above the hub top (P1046408)"),
-    grip_head=PT((0.042, 0.0180), "[M] swollen grip head: over its top 42 mm the grip swells from the grip radius to "
-                                  "0.018, the thumb knob on top (P1046408 pair: heads ~45 wide on ~31 grips; brochure "
-                                  "p.12), review r3 F2; final judge r1 I2: 0.020 read bulbous (heads 36 mm -> a longer, "
-                                  "gentler 42 mm swell to 0.018)"),
-    shield=PT(((0.00, 1.00), (0.12, 0.97), (0.50, 0.80), (0.80, 0.50), (0.93, 0.22), (1.00, 0.00)),
+    grip_head=PT((0.090, 0.021), "[M] paddle head: over its top 90 mm the grip widens gradually from the grip radius "
+                                 "to 0.021, the hat / trim switch on top (P1046409 at 0.52 mm/px: 42 mm across under "
+                                 "the head, 39 at mid-length, 29 near the bottom; P1046408: 39-42 / 28-30; brochure "
+                                 "p.12).  Flight deck r1 (rev H): no round swollen head -- rev F's 0.018 bulb over 42 "
+                                 "mm read as a lollipop; the paddle widens instead"),
+    shield=PT(((0.00, 1.00), (0.10, 0.97), (0.22, 0.74), (0.33, 0.52), (0.45, 0.38), (0.60, 0.28), (0.80, 0.14),
+               (1.00, 0.00)),
               "[M] white shield (the hub's front cover): half-width from its top (t = 0) to the stem (t = 1) as the "
               "fraction between hub_bot_w / 2 and hub_whd width / 2, its top corners at +/- hub width / 2 (P1046408: "
               "~0.52 of the grip span; review r3 F2: rev C ran them out to the grips).  Final judge r1 I2 (P1046408 "
               "re-measured on the shield's own height: 0.85 / 0.60 of its top width at 1/2 and 4/5 of the height, a "
               "full U round to the stem): the rev D goblet (0.37 at mid-height, 0.05 at 0.85) left a broad black "
-              "body round a narrow white V"),
+              "body round a narrow white V.  Flight deck r1 (rev H; P1046408 right yoke at 0.70 mm/px: half-widths "
+              "70 / 61 / 44 / 33 / 29 / 25 / 20 mm at t 0.09 / 0.21 / 0.33 / 0.45 / 0.57 / 0.75 / 0.90, left yoke "
+              "39 at t 0.5; the JTF elevation 66 / 49 / 38 at t 0 / 0.25 / 0.5): a Y -- horns flaring to the top "
+              "corners over the top third, a slowly narrowing body, a round foot (the rev F U was 0.80 at "
+              "mid-height)"),
     shield_dip=P(0.004, "[M] the shield's top edge dips this much to the centre under the badge (a shallow V)"),
     body_arm=PT((-0.004, 0.005), "[M] black yoke body behind the shield: its lower edge leaves each grip's inner edge "
                                  "this far above the hub centre and runs down-inboard to the shield foot, rimming it "
@@ -283,7 +304,12 @@ PEDESTAL = dict(
                                        "PCL height, tipped forward (throttle photo, P1046408-10; review r3 F3: rev C "
                                        "built a 60 x 88 x 48 puck)"),
     flap=PT((3.930, 0.050, 0.420), "[S] flap lever right of the PCL (POH 7-3-6); position [E]"),
-    ccd=PT((4.090, 0.000, 0.340), "[S] cursor control device palm grip at the aft end (cockpit key 27)"),
+    ccd=PT((4.105, 0.000, 0.385), "[S] cursor control device palm grip at the aft end (cockpit key 27): x, BL, top "
+                                  "above the floor.  Flight deck r1 (rev H) [M: P1046406 through the fitted "
+                                  "cabin_fwd_406 camera, the JTF p.18 pedestal plan]: a large palm dome, its top "
+                                  "0.34 -> 0.385 above the floor, its centre 15 mm further aft"),
+    ccd_wl=PT((0.100, 0.085), "[M] CCD palm grip width (BL) and length (fore / aft): P1046406, JTF p.18 (rev G built a "
+                              "0.068-wide puck)"),
     plinth_pad=PT((0.020, 0.025), "[H] carpeted plinth over gear.NOSE_TUNNEL: wall, top gap (fit_check 11)"),
 )
 SIDE_CONSOLE = dict(

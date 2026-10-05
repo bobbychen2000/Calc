@@ -2895,11 +2895,12 @@ def _l6_details(ctx, rep, tol, fl):
     from model import interior as I
     Y = I.YOKE
     dev, lab = [], []
-    Vy = ctx.verts("flight_deck", mats=("yoke_white", "panel_silver"))
-    Vg = ctx.verts("flight_deck", mats=("grip_black",))
     for side in (-1, 1):
         hub = I.yoke_hub(side)
         nm = "L" if side < 0 else "R"
+        # the yoke's own part (flight deck r1: the pedal pads and lower-panel caps are grip_black too)
+        Vy = ctx.verts("yoke_" + nm, mats=("yoke_white", "panel_silver"))
+        Vg = ctx.verts("yoke_" + nm, mats=("grip_black",))
         q = Vy[np.abs(Vy[:, 1] - hub[1]) < 0.10]
         g = Vg[(np.abs(Vg[:, 1] - hub[1]) < 0.20) & (np.abs(Vg[:, 1] - hub[1]) > 0.09)]      # the grips (body out)
         if not len(q) or not len(g):
@@ -2924,7 +2925,8 @@ def _l6_details(ctx, rep, tol, fl):
     # pedal pads: centres at seat CL +/- dy
     PD = I.PEDALS
     dev, lab = [], []
-    Vp = ctx.verts("flight_deck", mats=("black",))
+    # the pads of the pedal parts (flight deck r1: satin grip_black pads, were 'black')
+    Vp = np.vstack([r.V for r in ctx.get("flight_deck", ("grip_black", "black")) if str(r.part).startswith("pedal_")])
     Vp = Vp[(Vp[:, 0] > 3.15) & (Vp[:, 0] < 3.55) & (Vp[:, 2] < fl + 0.35) & (Vp[:, 2] > fl + 0.02)]
     for side in (-1, 1):
         for dd in (-1, 1):
@@ -2941,7 +2943,9 @@ def _l6_details(ctx, rep, tol, fl):
             "4 pads", _wl(dev, lab))
     # glareshield lip, pedestal quadrant, side consoles
     dev, lab = [], []
-    Vl = ctx.verts("flight_deck", mats=("leather_glareshield",))
+    # the hood and its rolled lip (flight deck r1: a separate black leather lip) of the flight_deck part itself
+    Vl = np.vstack([r.V for r in ctx.get("flight_deck", ("leather_glareshield", "leather_black")) if r.part ==
+                    "flight_deck"] or [np.zeros((0, 3))])
     if len(Vl):
         _ext_dev(dev, lab, "glareshield lip aft edge x", float(Vl[:, 0].max()), float(I.GLARESHIELD["lip_x"]))
         c = Vl[np.abs(Vl[:, 1]) < 0.05]
