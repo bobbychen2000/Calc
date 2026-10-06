@@ -41,7 +41,9 @@ W_CREASE = 0.22              # crease / parting lines (visible edges inside an o
 W_TAN = 0.10                 # tangent edges (the start of a radius)
 PART_STYLE = dict(cover=(WHITE, -45.0, 0.8), body=("#E3E6E8", 45.0, 1.4), grip_out=("#D7DBDE", 45.0, 1.0),
                   grip_in=("#D7DBDE", -45.0, 1.0), black=("#E3E6E8", 45.0, 1.2), tcs=("#D0D4D8", 0.0, 0.5),
-                  afcs=("#F2C9C6", 0.0, 0.5), trim=("#D0D4D8", 90.0, 0.5), button=("#D0D4D8", 0.0, 0.5))
+                  afcs=("#F2C9C6", 0.0, 0.5), trim=("#D0D4D8", 90.0, 0.5), button=("#D0D4D8", 0.0, 0.5),
+                  pad_out=("#CFC4B8", 0.0, 0.45), pad_in=("#CFC4B8", 0.0, 0.45),
+                  fwd_out=("#D0D4D8", 0.0, 0.5), fwd_in=("#D0D4D8", 0.0, 0.5))
 
 
 # ============================================================================================ primitives (local mm)
@@ -489,9 +491,58 @@ def section_contours(S, parts):
     return out
 
 
-def draw_section(ds, v, S, parts=("body", "cover", "grip_out", "grip_in"), style=None):
-    """Hatch the section contours (each part its own angle / step: adjacent parts read apart)."""
+def draw_section(ds, v, S, parts=("body", "cover", "grip_out", "grip_in"), style=None, clip=None, min_island=3.0):
+    """Hatch the section contours (each part its own angle / step: adjacent parts read apart).  clip = (extent, step)
+    of a CLIPPED section (G.section(..., clip=True): its contours run 2 steps inside the extent where the cut leaves the
+    window): those runs are drawn as thin break lines, not object lines, and islands under min_island mm2 that touch
+    the window are dropped (rev M, judges DR4-05)."""
     style = style or PART_STYLE
     for p, C in section_contours(S, parts):
         fill, ang, step = style.get(p, (PAPER, 45.0, 1.0))
-        hatch_poly(ds, v, C, ang=ang, step=step, fill=fill)
+        if clip is None:
+            hatch_poly(ds, v, C, ang=ang, step=step, fill=fill)
+            continue
+        on = _on_clip(C, *clip)
+        area = 0.5 * abs(float(np.sum(C[:, 0] * np.roll(C[:, 1], -1) - np.roll(C[:, 0], -1) * C[:, 1])))
+        if on.any() and area < min_island:
+            continue
+        hatch_poly(ds, v, C, ang=ang, step=step, fill=fill, w=0.0)
+        _stroke_runs(ds, v, C, on)
+
+
+def _on_clip(C, ext, step):
+    """Vertices of contour C lying on the clip window's edges (within 2.6 steps of the extent)."""
+    tol = 2.6 * step
+    d = np.minimum.reduce([C[:, 0] - ext[0], ext[2] - C[:, 0], C[:, 1] - ext[1], ext[3] - C[:, 1]])
+    return d < tol
+
+
+def _stroke_runs(ds, v, C, on):
+    """Stroke the closed contour C: runs on the clip window as thin break (phantom) lines, the rest as object lines."""
+    n = len(C)
+    seg_clip = on & np.roll(on, -1)                                    # segment i -> i + 1 lies on the window
+    if not seg_clip.any():
+        poly(ds, v, C, W_OBJ)
+        return
+    if seg_clip.all():
+        poly(ds, v, C, W_THIN, dash=PHANTOM, color=MUTED)
+        return
+    start = int(np.where(seg_clip != np.roll(seg_clip, 1))[0][0])
+    run, kind = [C[start]], bool(seg_clip[start])
+    for k in range(n):
+        i = (start + k) % n
+        j = (i + 1) % n
+        if bool(seg_clip[i]) != kind:
+            _stroke(ds, v, run, kind)
+            run, kind = [C[i]], bool(seg_clip[i])
+        run.append(C[j])
+    _stroke(ds, v, run, kind)
+
+
+def _stroke(ds, v, run, clip_run):
+    if len(run) < 2:
+        return
+    if clip_run:
+        poly(ds, v, np.asarray(run), W_THIN, dash=PHANTOM, color=MUTED, closed=False)
+    else:
+        poly(ds, v, np.asarray(run), W_OBJ, closed=False)

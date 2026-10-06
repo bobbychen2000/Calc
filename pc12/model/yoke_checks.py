@@ -431,6 +431,10 @@ def _tabled_crease_curves():
     t = np.linspace(0, 2 * np.pi, 145)
     for R in (0.5 * float(G.T()["head_out"][2]), 0.5 * float(G.T()["trim"][2])):
         F.append((c + R * (np.cos(t)[:, None] * eu + np.sin(t)[:, None] * ev))[:, :2])
+    od, lune = float(G.T()["trim"][2]), float(G.T()["trim_lunes"][0])
+    xs = np.linspace(-0.5 * od, 0.5 * od, 60)
+    for sg in (-1.0, 1.0):                                       # the trim face's slot chords (grooves, rev M)
+        F.append((c + xs[:, None] * eu + sg * (0.5 * od - lune) * ev)[:, :2])
     ci, ni = G.head_in_face()
     e1, e2 = G._facet_frame(ci, ni)
     S = G.shield_outline()
@@ -451,20 +455,104 @@ def _tabled_crease_curves():
     return np.vstack(F)
 
 
+# side / below views (rev M, judges DR4-02): the grips' walls, the necks' undersides, the heels -- (centre (u, h, a),
+# azimuth from aft toward +u (outboard), elevation, half width, half height)
+SIDE_PATCHES = {"outboard grip slot side + web (from aft-inboard)": ((100.0, 30.0, -10.0), -50.0, 10.0, 26.0, 70.0),
+                "outboard grip outer side (from aft-outboard)": ((128.0, 25.0, -10.0), 55.0, 5.0, 22.0, 72.0),
+                "inboard grip slot side + neck (from aft-outboard)": ((-98.0, 25.0, -10.0), 50.0, 10.0, 26.0, 68.0),
+                "inboard grip outer side (from aft-inboard)": ((-128.0, 20.0, -10.0), -55.0, 5.0, 22.0, 70.0),
+                "heels, foot, slot tops (from below-aft)": ((0.0, -20.0, -15.0), 0.0, -40.0, 150.0, 40.0)}
+
+
+def _view_frame(az, el):
+    """(d ray direction, right, up) of an orthographic view: az from aft (+a) toward +u, el up."""
+    a, e = math.radians(az), math.radians(el)
+    eye = np.array([math.sin(a) * math.cos(e), math.sin(e), math.cos(a) * math.cos(e)])
+    right = np.cross([0.0, 1.0, 0.0], eye)
+    right /= np.linalg.norm(right)
+    return -eye, right, np.cross(eye, right)
+
+
+def _depth_view(c, az, el, hw, hh, px, parts=("black", "cover")):
+    """Depth map of the solids in an arbitrary orthographic view (as _depth_patch): P (ny, nx, 3), hit, f, d."""
+    d, right, up = _view_frame(az, el)
+    xs = np.arange(-hw, hw, px)
+    ys = np.arange(-hh, hh, px)
+    X, Y = np.meshgrid(xs, ys)
+    f = lambda U, H_, A: np.minimum.reduce([G.part_sdf(p, U, H_, A) for p in parts])  # noqa: E731
+    O = np.asarray(c, float) + X[..., None] * right + Y[..., None] * up - 160.0 * d
+    return _march(O, d, f) + (f, d)
+
+
+def _march(O, d, f, tmax=330.0):
+    t = np.zeros(O.shape[:2])
+    tp = np.zeros(O.shape[:2])
+    alive = np.ones(O.shape[:2], bool)
+    hit = np.zeros(O.shape[:2], bool)
+    for _ in range(900):
+        if not alive.any():
+            break
+        idx = np.where(alive)
+        P = O[idx] + t[idx][:, None] * d
+        v = f(P[:, 0], P[:, 1], P[:, 2])
+        done = v < 0.02
+        hit[idx[0][done], idx[1][done]] = True
+        go = ~done
+        tp[idx[0][go & (v > 0)], idx[1][go & (v > 0)]] = t[idx[0][go & (v > 0)], idx[1][go & (v > 0)]]
+        t[idx[0][go], idx[1][go]] += np.maximum(0.7 * v[go], 0.02)
+        alive[idx] = ~done & (t[idx] < tmax)
+    lo, hi = np.where(hit, np.minimum(tp, t - 0.02), t - 0.12), t + 0.12
+    for _ in range(24):
+        mid = 0.5 * (lo + hi)
+        P = O + mid[..., None] * d
+        v = np.where(hit, f(P[..., 0], P[..., 1], P[..., 2]), 1.0)
+        inside = v < 0
+        hi = np.where(hit & inside, mid, hi)
+        lo = np.where(hit & ~inside, mid, lo)
+    tt = np.where(hit, 0.5 * (lo + hi), np.nan)
+    P = O + np.nan_to_num(tt)[..., None] * d
+    P[~hit] = np.nan
+    return P, hit
+
+
+_PATCH_CACHE = {}
+
+
+def _patch(nm, px=0.25):
+    """Shared depth map + analytic normals + part labels of a named patch (PATCHES or SIDE_PATCHES)."""
+    key = (nm, px)
+    if key in _PATCH_CACHE:
+        return _PATCH_CACHE[key]
+    if nm in PATCHES:
+        box, view = PATCHES[nm]
+        pxx = px if view == 1 else 0.4
+        P, hit, f, d = _depth_patch(box, pxx, view=view)
+    else:
+        c, az, el, hw, hh = SIDE_PATCHES[nm]
+        pxx = 0.3 if hw < 40 else 0.4
+        P, hit, f, d = _depth_view(c, az, el, hw, hh, pxx)
+    na = np.full(P.shape, np.nan)
+    Pf = P[hit]
+    na[hit] = _normals_at(f, Pf)
+    lab = np.full(hit.shape, -1)
+    lab[hit] = np.argmin(np.stack([G.part_sdf(p_, Pf[:, 0], Pf[:, 1], Pf[:, 2]) for p_ in ("black", "cover")]), 0)
+    _PATCH_CACHE[key] = (P, hit, f, d, na, lab, pxx)
+    return _PATCH_CACHE[key]
+
+
+def _normals_at(f, Q, e=0.005):
+    g = np.stack([f(Q[:, 0] + e, Q[:, 1], Q[:, 2]) - f(Q[:, 0] - e, Q[:, 1], Q[:, 2]),
+                  f(Q[:, 0], Q[:, 1] + e, Q[:, 2]) - f(Q[:, 0], Q[:, 1] - e, Q[:, 2]),
+                  f(Q[:, 0], Q[:, 1], Q[:, 2] + e) - f(Q[:, 0], Q[:, 1], Q[:, 2] - e)], -1)
+    return g / np.maximum(np.linalg.norm(g, axis=1, keepdims=True), 1e-12)
+
+
 def normals(px=0.25):
     from scipy.spatial import cKDTree
     tree = cKDTree(_tabled_crease_curves())
     out = {}
-    for nm, (box, view) in PATCHES.items():
-        pxx = px if view == 1 else 0.4
-        P, hit, f, d = _depth_patch(box, pxx, view=view)
-        e = 0.01
-        Pf = P[hit]
-        gx = f(Pf[:, 0] + e, Pf[:, 1], Pf[:, 2]) - f(Pf[:, 0] - e, Pf[:, 1], Pf[:, 2])
-        gy = f(Pf[:, 0], Pf[:, 1] + e, Pf[:, 2]) - f(Pf[:, 0], Pf[:, 1] - e, Pf[:, 2])
-        gz = f(Pf[:, 0], Pf[:, 1], Pf[:, 2] + e) - f(Pf[:, 0], Pf[:, 1], Pf[:, 2] - e)
-        na = np.full(P.shape, np.nan)
-        na[hit] = np.c_[gx, gy, gz] / np.linalg.norm(np.c_[gx, gy, gz], axis=1)[:, None]
+    for nm in PATCHES:
+        P, hit, f, d, na, lab, pxx = _patch(nm, px)
         Pz = np.nan_to_num(P)
         nm_ = np.zeros(P.shape)
         for (di, dj), (dk, dl) in (((0, 1), (1, 0)), ((1, 0), (0, -1)), ((0, -1), (-1, 0)), ((-1, 0), (0, 1))):
@@ -485,8 +573,6 @@ def normals(px=0.25):
         ok &= np.abs(np.einsum("ijk,k->ij", np.nan_to_num(na), d)) > math.cos(math.radians(70.0))
         # part boundaries (the white cover's top edge seen against the black body's top behind it from above-aft: a
         # depth step under the 3-pixel test) are not surfaces: pixels whose neighbours belong to the other part apart
-        lab = np.full(hit.shape, -1)
-        lab[hit] = np.argmin(np.stack([G.part_sdf(p_, Pf[:, 0], Pf[:, 1], Pf[:, 2]) for p_ in ("black", "cover")]), 0)
         for sft in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
             ok &= np.roll(lab, sft, (0, 1)) == lab
         dc, _ = tree.query(Pz[..., :2].reshape(-1, 2))
@@ -500,9 +586,248 @@ def normals(px=0.25):
     return out
 
 
+# ============================================================================================ creases (rev M, DR4-02)
+CREASE_SEED = 4.0          # deg between adjacent pixels: a candidate (R < ~3.6 mm at 0.25 px)
+CREASE_SUB = 16            # sub-samples per refinement level
+
+
+def _resample(f, d, Oa, Ob, k):
+    """(N, k + 1, 3) surface points on the sub-rays between the ray origins Oa, Ob (N, 3) (origins 1.5 mm before the
+    surface along d), marched and bisected -- vectorised over the N pairs."""
+    w = np.linspace(0.0, 1.0, k + 1)[None, :, None]
+    O = (Oa[:, None, :] + w * (Ob - Oa)[:, None, :]).reshape(-1, 3)
+    t = np.zeros(len(O))
+    alive = np.ones(len(O), bool)
+    for _ in range(300):
+        if not alive.any():
+            break
+        ia = np.where(alive)[0]
+        v = f(*(O[ia] + t[ia, None] * d).T)
+        done = v < 2e-5
+        t[ia[~done]] += np.maximum(0.8 * v[~done], 2e-5)
+        alive[ia[done]] = False
+        alive &= t < 6.0
+    lo, hi = t - 1e-4, t + 1e-4
+    for _ in range(16):
+        m = 0.5 * (lo + hi)
+        ins = f(*(O + m[:, None] * d).T) < 0
+        hi, lo = np.where(ins, m, hi), np.where(ins, lo, m)
+    return (O + (0.5 * (lo + hi))[:, None] * d).reshape(-1, k + 1, 3)
+
+
+def _concentrated(f, d, Pa, Pb, levels=2, min_turn=2.0):
+    """For N pixel pairs (surface points Pa, Pb): True where the normal turn between them stays CONCENTRATED in one
+    sub-step (>= half of the level's total and >= min_turn deg) through `levels` 16x refinements -- a normal
+    discontinuity (crease) -- False where it spreads (a round); and the first level's total turn."""
+    N = len(Pa)
+    Oa, Ob = Pa - 1.5 * d, Pb - 1.5 * d
+    keep = np.ones(N, bool)
+    tot0 = np.zeros(N)
+    idx = np.arange(N)
+    for lev in range(levels):
+        if not len(idx):
+            break
+        Q = _resample(f, d, Oa[idx], Ob[idx], CREASE_SUB)
+        step = float(np.median(np.linalg.norm(Q[:, 1] - Q[:, 0], axis=1))) if len(Q) else 0.01
+        n = _normals_at(f, Q.reshape(-1, 3), e=max(min(0.005, 0.25 * step), 2e-5)).reshape(Q.shape)
+        turn = np.degrees(np.arccos(np.clip(np.sum(n[:, 1:] * n[:, :-1], -1), -1.0, 1.0)))
+        tot = turn.sum(1)
+        k = np.argmax(turn, 1)
+        mx = turn[np.arange(len(idx)), k]
+        if lev == 0:
+            tot0[idx] = tot
+        ok = (mx >= 0.5 * tot) & (mx >= min_turn)
+        keep[idx[~ok]] = False
+        idx, k, Q = idx[ok], k[ok], Q[ok]
+        # the worst sub-step's two surface points become the next level's pair
+        Oa[idx] = Q[np.arange(len(idx)), k] - 1.5 * d
+        Ob[idx] = Q[np.arange(len(idx)), k + 1] - 1.5 * d
+    return keep, tot0
+
+
+def creases(px=0.25):
+    """Untabled CREASES on the visible surfaces (rev M, judges DR4-02 -- rev L's section scan sampled the contours every
+    0.1-0.25 mm and missed a crease along a line between its planes): every patch of normals() plus side / below views;
+    a candidate is a pair of adjacent pixels whose analytic normals turn > CREASE_SEED, same part, no depth step,
+    facing the view within 75 deg, more than 1.0 mm (front view) from a tabled crease curve; it is CONFIRMED when the
+    turn stays concentrated in one sub-step through two 16x refinements along the pair (a normal discontinuity at <=
+    1 micron), and set aside as a round otherwise.  {patch: dict(candidates, rounds, creases [(u, h, a, turn)])}."""
+    from scipy.spatial import cKDTree
+    tree = cKDTree(_tabled_crease_curves())
+    out = {}
+    for nm in list(PATCHES) + list(SIDE_PATCHES):
+        P, hit, f, d, na, lab, pxx = _patch(nm, px)
+        Pz = np.nan_to_num(P)
+        nz = np.nan_to_num(na)
+        depth = np.where(hit, np.einsum("ijk,k->ij", Pz, d), 1e3)
+        dc, _ = tree.query(Pz[..., :2].reshape(-1, 2))
+        free = hit & (dc.reshape(hit.shape) > 1.0) & (np.abs(np.einsum("ijk,k->ij", nz, d)) > math.cos(math.radians(75.0)))
+        cands = []
+        for sft in ((0, 1), (1, 0)):
+            nn = np.roll(nz, (-sft[0], -sft[1]), (0, 1))
+            ang = np.degrees(np.arccos(np.clip(np.sum(nn * nz, -1), -1.0, 1.0)))
+            ok = (free & np.roll(free, (-sft[0], -sft[1]), (0, 1)) &
+                  (np.abs(np.roll(depth, (-sft[0], -sft[1]), (0, 1)) - depth) < 3.0 * pxx) &
+                  (np.roll(lab, (-sft[0], -sft[1]), (0, 1)) == lab) & (ang > CREASE_SEED))
+            ok[-1, :] = ok[:, -1] = False
+            for i, j in zip(*np.where(ok)):
+                cands.append(((i, j), (i + sft[0], j + sft[1])))
+        found, rounds, tabled = [], 0, 0
+        if cands:
+            A_ = np.array([Pz[a] for a, _ in cands])
+            B_ = np.array([Pz[b] for _, b in cands])
+            ok_, tot = _concentrated(f, d, A_, B_)
+            rounds = int((~ok_).sum())
+            labs = [lab[a] for a, _ in cands]
+            for i in np.where(ok_)[0]:
+                X = 0.5 * (A_[i] + B_[i])
+                if _tabled_3d(X, "cover" if labs[i] == 1 else "black"):
+                    tabled += 1
+                    continue
+                found.append(tuple(np.round(X, 2)) + (round(float(tot[i]), 1),))
+        cl = []
+        for q in found:                                                   # one per 1 mm cluster
+            if all(np.linalg.norm(np.subtract(q[:3], c_[:3])) > 1.0 for c_ in cl):
+                cl.append(q)
+        out[nm] = dict(candidates=len(cands), rounds=rounds, tabled=tabled, creases=cl, n_crease_px=len(found))
+    return out
+
+
+def _tabled_3d(X, part=None):
+    """A confirmed crease that IS tabled, tested in 3-D (the front-view distance to the tabled curves misses the pad
+    pocket's floor corners, which lie up to ~1.3 mm (front view) off the outline on the toed planes): the pad pocket's
+    step, groove and bead (plane coordinates of the point itself), the trim face's rim / grooves, the shield facet's
+    edge, the cover's tabled features (_cover_tabled) and the cover / moulding contact (_black_tabled)."""
+    T_ = G.T()
+    gw, bead = float(T_["pad_section"][4]), float(T_["pad_section"][3])
+    Xa = np.atleast_2d(np.asarray(X, float))
+    for g, sg in (("out", 1.0), ("in", -1.0)):
+        Xg = Xa * [sg, 1.0, 1.0]
+        z, uf, hf = G._to_plane(Xg[:, 0], Xg[:, 1], Xg[:, 2], g)
+        dp = G.field("pad_" + g, G.pad_outline(g))(uf, hf)
+        if bool(((dp > -(gw + 2 * bead) - 0.8) & (dp < 0.8) & (np.abs(z) < 4.0)).any()):
+            return True
+    if bool(_trim_face_tabled(Xa).any()):
+        return True
+    ci, ni = G.head_in_face()
+    e1, e2 = G._facet_frame(ci, ni)
+    Q = Xa * [-1.0, 1.0, 1.0] - ci
+    from cad import sdf2d
+    ds_ = sdf2d.polygon(Q @ e1, Q @ e2, G.shield_outline())
+    if bool(((np.abs(ds_) < 1.2) & (np.abs(Q @ ni) < 1.2)).any()):
+        return True
+    x = Xa[0]
+    if part == "cover":
+        return bool(_cover_tabled(x))
+    return bool(_black_tabled(x))
+
+
+# ============================================================================================ field ridges (DR4-02)
+RIDGE_DEG = 20.0
+
+
+def _unit(fn, Q, e=0.004):
+    return _normals_at(fn, Q, e)
+
+
+def ridges(px=0.25):
+    """Do the joins' rounds read smooth fields?  (rev M, judges DR4-02: rev L's body-grip R 3 read grip_out 1.3 mm out
+    where its field had a ridge -- gradient norm 0.68, the normal flipping > 70 deg within 0.015 mm.)  The ROUNDS' OWN
+    SURFACE POINTS: the moulding's surface points (head / web / neck / pad / forward-face patches) where both fields of a
+    join lie between 0.02 and its radius -- the points whose position and normal the round takes from both fields:
+    the body vs either grip (R neck[3]) and, inside each grip, the prism vs the head (R r_u); a RIDGE where a field's
+    unit gradient turns > RIDGE_DEG within 0.01 mm (any axis).  gmin = the smallest gradient norm met (a field that
+    is not a true distance there draws its round larger than tabled: 1 / gmin x at worst).  {join: dict(points,
+    ridges, gmin, worst [(u, h, a, field, turn, |grad|)])}."""
+    r = float(G.T()["neck"][3])
+    pts = []
+    for nm in ("outboard head + face", "inboard head + shield", "web (aft)", "outboard grip pad / frame",
+               "inboard grip pad / frame", "forward faces (from the front)", "body top + web top (from above-aft)",
+               "outboard grip slot side + web (from aft-inboard)", "inboard grip slot side + neck (from aft-outboard)"):
+        P, hit, f, d, na, lab, pxx = _patch(nm, px)
+        pts.append(P[hit & (lab != 1)])
+    X = np.vstack(pts)
+    out = {}
+    fo = lambda U, H_, A: G.grip_solid(U, H_, A, "out")                       # noqa: E731
+    fi = lambda U, H_, A: G.grip_solid(-U, H_, A, "in")                       # noqa: E731
+    b = G.body(X[:, 0], X[:, 1], X[:, 2])
+    for jn, fg, rr in (("body x outboard grip (R %g)" % r, fo, r), ("body x inboard grip (R %g)" % r, fi, r)):
+        gv = fg(X[:, 0], X[:, 1], X[:, 2])
+        m = (b > 0.02) & (gv > 0.02) & (b < rr) & (gv < rr)
+        out[jn] = _ridge_rows(X[m], (("body", G.body), ("grip", fg)))
+    for g, sg in (("out", 1.0), ("in", -1.0)):
+        r_u = float(G.T()["head_zone"][0 if g == "out" else 1][9])
+        Xg = X * [sg, 1.0, 1.0]
+        pr, hd = G._grip_parts(Xg[:, 0], Xg[:, 1], Xg[:, 2], g, split=True)
+        m = (pr > 0.02) & (hd > 0.02) & (pr < r_u) & (hd < r_u)
+        fp = lambda U, H_, A, g=g: G._grip_parts(U, H_, A, g, split=True)[0]    # noqa: E731
+        fh = lambda U, H_, A, g=g: G._grip_parts(U, H_, A, g, split=True)[1]    # noqa: E731
+        out[f"{g}board prism aft side x head (R {r_u:g})"] = _ridge_rows(Xg[m], (("prism", fp), ("head", fh)))
+    return out
+
+
+def _ridge_rows(Q, fns, e=0.01):
+    if not len(Q):
+        return dict(points=0, ridges=0, worst=[])
+    if len(Q) > 60000:
+        Q = Q[np.linspace(0, len(Q) - 1, 60000).astype(int)]
+    worst = []
+    gmin = 9.0
+    bad = np.zeros(len(Q), bool)
+    for nm, fn in fns:
+        n0 = _unit(fn, Q)
+        g0 = np.stack([fn(Q[:, 0] + 0.002, Q[:, 1], Q[:, 2]) - fn(Q[:, 0] - 0.002, Q[:, 1], Q[:, 2]),
+                       fn(Q[:, 0], Q[:, 1] + 0.002, Q[:, 2]) - fn(Q[:, 0], Q[:, 1] - 0.002, Q[:, 2]),
+                       fn(Q[:, 0], Q[:, 1], Q[:, 2] + 0.002) - fn(Q[:, 0], Q[:, 1], Q[:, 2] - 0.002)], -1) / 0.004
+        gn = np.linalg.norm(g0, axis=1)
+        tmax = np.zeros(len(Q))
+        for k in range(3):
+            dv = np.zeros(3)
+            dv[k] = e
+            n1 = _unit(fn, Q + dv)
+            tmax = np.maximum(tmax, np.degrees(np.arccos(np.clip(np.sum(n0 * n1, -1), -1.0, 1.0))))
+        r_ = tmax > RIDGE_DEG
+        gmin = min(gmin, float(gn.min())) if len(gn) else gmin
+        bad |= r_
+        for i in np.argsort(-tmax)[:3]:
+            if r_[i]:
+                worst.append(tuple(np.round(Q[i], 2)) + (nm, round(float(tmax[i]), 1), round(float(gn[i]), 2)))
+    return dict(points=int(len(Q)), ridges=int(bad.sum()), worst=worst[:6], gmin=round(gmin, 2))
+
+
+# ============================================================================================ pads exposed (DR4-01)
+def pads_exposed(px=0.2):
+    """Each pad's EXPOSED surface vs its drawn section (rev M, judges DR4-01: the rev L body buried the outboard pad's
+    slot-side upper corner): the moulding ray-cast from aft over the pad; at every hit inside the drawn pad outline
+    (dp < -0.15, away from the groove / bead steps) the hit's height above the grip plane vs grip_surface_z (leather,
+    groove, bead as drawn).  {grip: dict(px, area_mm2 of mismatch > 0.05, max |dz|, buried_mm2 (hit > 0.3 above))}."""
+    out = {}
+    T_ = G.T()
+    gw, bead = float(T_["pad_section"][4]), float(T_["pad_section"][3])
+    for g, sg in (("out", 1.0), ("in", -1.0)):
+        Pd = G.pad_outline(g)
+        box = (Pd[:, 0].min() - 2.0, Pd[:, 1].min() - 2.0, Pd[:, 0].max() + 2.0, Pd[:, 1].max() + 2.0)
+        if sg < 0:
+            box = (-box[2], box[1], -box[0], box[3])
+        P, hit, f, d = _depth_patch(box, px, view=1, parts=("black",))
+        Q = P[hit] * [sg, 1.0, 1.0]
+        z, uf, hf = G._to_plane(Q[:, 0], Q[:, 1], Q[:, 2], g)
+        dp = G.field("pad_" + g, Pd)(uf, hf)
+        s_ = -dp
+        zs = G.grip_surface_z(uf, hf, g)
+        m = (dp < -0.15) & (np.abs(s_ - gw) > 0.12) & (np.abs(s_ - gw - 2.0 * bead) > 0.12)
+        dz = z[m] - zs[m]
+        out[g] = dict(px=int(m.sum()), area_mm2=float((np.abs(dz) > 0.05).sum() * px * px),
+                      max_dz=float(np.abs(dz).max()) if m.any() else 0.0,
+                      buried_mm2=float((dz > 0.3).sum() * px * px))
+    return out
+
+
 def run_all():
-    return G.disk_cached(("acceptance", "v5"), lambda: dict(exactness=exactness(), curve_law=curve_law(), proud=proud(),
-                                                           cusps=cusps(), connected=connected(), normals=normals()))
+    return G.disk_cached(("acceptance", "v7"), lambda: dict(exactness=exactness(), curve_law=curve_law(), proud=proud(),
+                                                           cusps=cusps(), connected=connected(), normals=normals(),
+                                                           creases=creases(), ridges=ridges(),
+                                                           pads=pads_exposed(), capped=G.capped_fillets()))
 
 
 def summary_lines(r=None):
@@ -528,6 +853,33 @@ def summary_lines(r=None):
     lines.append(f"black moulding one piece per side in every horizontal section h {cn[0][0]:g}..{cn[-1][0]:g} (step "
                  f"{cn[1][0] - cn[0][0]:g}; none above a head's top): "
                  + ("yes" if not bad else "NO at " + ", ".join(f"h {h:g} ({a} / {b})" for h, a, b in bad)))
+    cr = r.get("creases")
+    if cr:
+        n_un = sum(len(v["creases"]) for v in cr.values())
+        worst = sorted([q for v in cr.values() for q in v["creases"]], key=lambda q: -q[3])[:3]
+        lines.append(f"CREASES (rev M, judges DR4-02; adaptive scan of {len(cr)} views incl. sides / below: every pixel "
+                     f"pair turning > {CREASE_SEED:g} deg refined 2 x {CREASE_SUB}x, a crease when the turn stays in one "
+                     f"sub-step): untabled {n_un}" +
+                     (" at " + ", ".join(f"({q[0]:.1f}, {q[1]:.1f}, {q[2]:.1f}) {q[3]:.0f} deg" for q in worst)
+                      if worst else "") +
+                     f"; {sum(v['tabled'] for v in cr.values())} tabled crease pixels set aside, "
+                     f"{sum(v['rounds'] for v in cr.values())} candidate pairs resolved as rounds")
+    rg = r.get("ridges")
+    if rg:
+        lines.append("joins read smooth fields at the rounds' own surface points (a ridge = a unit gradient turning "
+                     "> %g deg within 0.01 mm; min |grad| in brackets): " % RIDGE_DEG +
+                     ", ".join(f"{k} {v['ridges']} / {v['points']} points (|grad| >= {v.get('gmin', 0):.2f})"
+                               for k, v in rg.items()))
+    pdx = r.get("pads")
+    if pdx:
+        lines.append("pads EXPOSED as drawn (judges DR4-01; the moulding ray-cast from aft vs the drawn leather / groove "
+                     "/ bead heights inside each pad outline): " +
+                     ", ".join(f"{g} {v['area_mm2']:.1f} mm2 off by > 0.05 (max {v['max_dz']:.2f}), buried "
+                               f"{v['buried_mm2']:.1f} mm2" for g, v in pdx.items()))
+    if "capped" in r:
+        lines.append("fillets reduced by the 0.45-of-run cap (judges DR4-03): " +
+                     ("none" if not r["capped"] else "; ".join(f"{c[0]} at {c[1]} R {c[2]:g} -> {c[3]:.2f}"
+                                                               for c in r["capped"])))
     nr = r["normals"]
     lines.append("vertex normals vs analytic (depth-map meshes 0.25 mm from aft, 0.4 from above-aft / the front; 95th / "
                  "99th / max deg; tabled creases, the cover's 0.8 mm top land and part boundaries apart): " +

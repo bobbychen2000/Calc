@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841 594" width="841mm" height="594mm">
 <title>PC-12 INTERIOR ARRANGEMENT - CHECKS</title>
-<desc>PC12-L6 rev L, -, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
+<desc>PC12-L6 rev M, -, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
 <defs><style><![CDATA[@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');]]></style></defs>
 <rect width="841" height="594" fill="#FCFCFA"/>
 <g fill="none" stroke="#1B2429" stroke-linecap="round" stroke-linejoin="round">
@@ -76,7 +76,7 @@
 <text x="577" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">PC12-L6</text>
 <path stroke-width="0.18" d="M634.39 531l0 14"/>
 <text x="636.39" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">REV</text>
-<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">L</text>
+<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">M</text>
 <path stroke-width="0.18" d="M655.11 531l0 14"/>
 <text x="657.11" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">SCALE</text>
 <text x="657.11" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">-</text>
@@ -160,8 +160,8 @@
 <text x="140.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+36</text>
 <text x="165.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+35</text>
 <text x="190.8" y="79.49" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">+65</text>
-<text x="193.2" y="79.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">criterion &gt;= 25; 3-D, knees on the hip-to-pedal line</text>
-<text x="193.2" y="83.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">(pedals ±125 [M]), 95th ±126</text>
+<text x="193.2" y="79.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">criterion &gt;= 25 kept; 95th 1.2 short, ACCEPTED AS</text>
+<text x="193.2" y="83.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">MEASURED (owner 2026-10-05)</text>
 <path stroke="none" fill="#EEF1F2" d="M28 85.7l258 0 0 5.8-258 0z"/>
 <text x="29.2" y="89.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">... with roll ±70° [E]</text>
 <text x="115.8" y="89.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">-19</text>
@@ -603,145 +603,147 @@
 <text x="321" y="202.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">ITEM</text>
 <text x="451" y="202.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DEVIATION / DECISION (vs the references and rev B)</text>
 <path stroke-width="0.35" d="M296 204.8l260 0"/>
-<text x="297.2" y="208.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">yoke (rev L, L6Y)</text>
+<text x="297.2" y="208.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">yoke (rev M, L6Y)</text>
 <text x="347.2" y="208.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">YOKE_DESIGN: grips 136 long, solids' bottom -54 (aft faces -46), span 281, raked 20°, 27.5 deep [M]: 95th level 25 (rev K</text>
-<text x="347.2" y="213.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">re-swept; 37 as issued, a band was dropped) -&gt; 24 (&lt; 25: owner decision), keep-25 roll 0 -&gt; 0.0°</text>
-<path stroke="none" fill="#EEF1F2" d="M296 215.1l260 0 0 14.8-260 0z"/>
-<text x="297.2" y="219.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">DECISION: yoke vs knees</text>
-<text x="347.2" y="219.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">keep the measured hub, grips and pedals: the 95th's knee meets a grip from 12° roll (neutral pedals). The outcome</text>
-<text x="347.2" y="223.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">depends on the estimated inputs more than on the measured ones (sensitivity table): the owner is asked which input to fix,</text>
-<text x="347.2" y="228.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">open point 1</text>
-<text x="297.2" y="233.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedals (r3)</text>
-<text x="347.2" y="233.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">±125 centres, 125 pads, measured face-on (P1046408, MFD bezel scale + depth correction); rev B ±90 / 80 [E]. The crew</text>
-<text x="347.2" y="238.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">knees sit on the hip-to-pedal line + 15 splay: 95th ±126 (rev B ±105)</text>
-<path stroke="none" fill="#EEF1F2" d="M296 240.2l260 0 0 10.3-260 0z"/>
-<text x="297.2" y="244.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew SRP vs POH arm (r3)</text>
-<text x="347.2" y="244.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SRP kept at 4200: the POH arm 4071 is the 50th's CG with the seat full aft (CG table); 60-85 further aft would put the</text>
-<text x="347.2" y="248.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">aft-notch headrest as far into the divider and off the render's cushion front 3720 [M]</text>
-<text x="297.2" y="254.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">seat tracks (r3)</text>
-<text x="347.2" y="254.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">surface-mounted 12 [E] over the whole cabin floor (crew 18): over the carry-through the floor is &lt;= 15 [H], too thin for a</text>
-<text x="347.2" y="259.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">flush 20-25 track; local channels in the spar cap would need the structure (not modelled). The cabin seat heights [M] are</text>
-<text x="347.2" y="263.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">read from the carpet and include the track; the seat bases stand on the tracks (B-B)</text>
-<path stroke="none" fill="#EEF1F2" d="M296 265.3l260 0 0 10.3-260 0z"/>
-<text x="297.2" y="269.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lavatory (r3)</text>
-<text x="347.2" y="269.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet 350 tall [M] (0.33 ring as scale; r2 450 [E]), niche 440-640 [M]; the lower seat puts the 95th's knees 226 past the</text>
-<text x="347.2" y="273.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">door line</text>
-<text x="297.2" y="279.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">divider (r3)</text>
-<text x="347.2" y="279.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">curtain drawn: track at the headliner, bundle stowed LH (PRO 3001, orange; NGX 2281 stows a grey one RH); fire</text>
-<text x="347.2" y="284.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">extinguisher on the RH divider's fwd face (plan); autoland cup (A-A)</text>
-<path stroke="none" fill="#EEF1F2" d="M296 285.9l260 0 0 10.3-260 0z"/>
-<text x="297.2" y="289.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SDUs (r2)</text>
-<text x="347.2" y="289.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">top -130 vs the MFD centre (10-20 under the MFD bezel), reclined 35° (JTF, camera-matched P1046406, P1046408);</text>
-<text x="347.2" y="294.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">drawn 160 tall in view D; rev B -170 / 20°</text>
-<text x="297.2" y="300.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat arms (r2)</text>
-<text x="347.2" y="300.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">one armrest, inboard: a deep side panel (base top to 435) with the seat control on its forward end; the 610 ledge is the</text>
-<text x="347.2" y="304.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">outboard armrest; rev B drew two arms</text>
-<path stroke="none" fill="#EEF1F2" d="M296 306.5l260 0 0 10.3-260 0z"/>
-<text x="297.2" y="310.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lavatory (r2)</text>
-<text x="347.2" y="310.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet wall to wall 4600-5165, bowl at the POH arm 4831, shelf + drawer aft of 5040, lit niche, TP holder (P1046411);</text>
-<text x="347.2" y="315.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">depth 365 [E]; rev B 400 x 450 box</text>
-<text x="297.2" y="320.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">DECISION: club table</text>
-<text x="347.2" y="320.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">keep the measured table (top 590, outboard leaf + unfolding inboard leaf); up to the 50th fits (feet fwd 28°); the 95th does</text>
-<text x="347.2" y="325.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">not (-45): open point 3</text>
-<path stroke="none" fill="#EEF1F2" d="M296 327.1l260 0 0 5.8-260 0z"/>
-<text x="297.2" y="331.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">full rudder (r2)</text>
-<text x="347.2" y="331.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedal travel ±80 [E], toe brake; knee checks: up-knee on the aft pedal, the other leg extended</text>
-<text x="297.2" y="336.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">reach (r2)</text>
-<text x="347.2" y="336.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">grasp vs touch: touch targets get the 70 fingertip; the 95th reaches the PDUs and SDUs harness locked</text>
-<path stroke="none" fill="#EEF1F2" d="M296 338.7l260 0 0 5.8-260 0z"/>
-<text x="297.2" y="342.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew armrest hinge (r2)</text>
-<text x="347.2" y="342.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">in the back's thickness, stowed along the back side; rev B hinged it 125 ahead of the back</text>
-<text x="297.2" y="348.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 1/2 aft-facing club</text>
-<text x="347.2" y="348.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">render footprint used: 108 aft of the POH-occupant mirror</text>
-<path stroke="none" fill="#EEF1F2" d="M296 350.3l260 0 0 5.8-260 0z"/>
-<text x="297.2" y="354.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 5 (LH aft)</text>
-<text x="347.2" y="354.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">POH 8180 used; the marketing plan render shows it 180 fwd</text>
-<text x="297.2" y="360.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">LH cabinet</text>
-<text x="347.2" y="360.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">moved +56 aft of the render (5244) to clear the airstair opening</text>
-<path stroke="none" fill="#EEF1F2" d="M296 361.9l260 0 0 5.8-260 0z"/>
-<text x="297.2" y="365.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">design eye</text>
-<text x="347.2" y="365.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">4120/375/2338 = the 50th eye on the neutral seat; replaces 3980 (info) and 4080/335/2360 (L2); over-nose 7.6° vs 8.9°</text>
-<text x="297.2" y="371.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">vs rev A (legacy 3-D)</text>
-<text x="347.2" y="371.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew seat BL 375 (335; yoke key 372), SRP 280 above the floor (300), vertical ±51 (±40), back 13° (11°), inboard cushion</text>
-<text x="347.2" y="376.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">185 (tunnel plinth); flight-deck floor flush 1259 (1240 + 19 step); MFD WL 2000 (1960; notes 1830; cabin-photo check 2010</text>
-<text x="347.2" y="380.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">±50); hood closed onto the WS frame (plate 80-150 below); CB panels on the sidewall above the consoles (below them);</text>
-<text x="347.2" y="385.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">FR34 veneer header + curtain (net); aft wall 9731 = divider + 5160 (FR36 9750, render 9744)</text>
-<path stroke-width="0.18" d="M346 198.8l0 188.2"/>
-<path stroke-width="0.35" d="M296 191.8l260 0 0 195.2-260 0z"/>
-<text x="296" y="395.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">OPEN POINTS FOR THE OWNER</text>
-<text x="296" y="401" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">1.</text>
-<text x="301.5" y="401" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">KNEES vs YOKE: WHICH INPUT TO FIX? With the measured hub, grips and pedals (grip solids' bottom WL 1791, pedals ±125), the 95th's knee</text>
-<text x="301.5" y="405.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">meets a grip from 12° roll with neutral pedals (50th 22°); with full rudder the 95th touches it wings level (-24) and the 50th from 0°. The estimated</text>
-<text x="301.5" y="410" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">inputs move this more than the measured ones (sensitivity table): knees 30 wider -&gt; 95th neutral contact 65°; a 130° knee target (seat further aft) -&gt;</text>
-<text x="301.5" y="414.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">75°, full rudder -5, but the 50th's forward rudder needs 173° (&gt; 165°); the hub 50 higher -&gt; none, full-rudder contact from 12°. Please choose what to</text>
-<text x="301.5" y="419" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pin down: the seat-setting rule (knee target), the knee spacing, the rudder travel, the hub height, or the roll travel / a roll limit. Wanted: the</text>
-<text x="301.5" y="423.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">control-wheel roll and rudder travel (AMM / POH) and a side-on photo of a seated pilot at the yoke.</text>
-<text x="296" y="429.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2.</text>
-<text x="301.5" y="429.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">5TH-FEMALE ACCOMMODATION. At the forward notch, pedals cranked fully aft and the seat full up (+51, the travel limit [E]), her eye is 51 below the</text>
-<text x="301.5" y="433.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">design eye: over the nose 4.3° along her BL (design eye 7.6°), 2.3° along BL 200; full forward rudder straightens her knee to 169° (limit 165° [E]; a 5 ft</text>
-<text x="301.5" y="438.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2 in pilot, scale 0.84: 150°). As drawn the station accommodates 5th male - 95th male. Options: a booster cushion, more vertical travel (the IPECO</text>
-<text x="301.5" y="442.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">3A318 figure is wanted; ±51 is [E]), or state the range as 5M-95M.</text>
-<text x="296" y="448.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">3.</text>
-<text x="301.5" y="448.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">CLUB TABLE. Deployed (top 590, under the ledge cap), the 95th's knees are 45 into it and the 50th's 8 with the feet under the knees (the outboard</text>
-<text x="301.5" y="452.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">leaf alone: the same, the outboard leg is under it). The 50th fits with the feet 28° forward (toes 6 short of the facing seat's base); the 95th would need</text>
-<text x="301.5" y="457.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">38° and put his feet 125 under it. Kept: the table serves up to about the 50th. Confirm, or re-measure the table / ledge height.</text>
-<text x="296" y="463.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">4.</text>
-<text x="301.5" y="463.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Aft-facing club PAX 1/2: plan render (used) or POH-occupant mirror? The render leaves 204 of the 482 exit hatch clear of the PAX 2 cushion; the</text>
-<text x="301.5" y="467.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">mirror gives a 642 club gap (render 534, 95th toes pass 424).</text>
-<text x="296" y="473.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">5.</text>
-<text x="301.5" y="473.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Design eye 4120 / 375 / 2338 (over-nose 7.6°) to replace cockpit_glazing.EYE (L2) and the viewer camera.</text>
-<text x="296" y="479" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">6.</text>
-<text x="301.5" y="479" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Tunnel plinth (gear, 350 wide, 226 tall to STA 4120): the crew cushions are trimmed to 185 inboard to clear it; the photos show symmetric cushions</text>
-<text x="301.5" y="483.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">and no step at the pedestal foot. Can the tunnel end or drop?</text>
-<text x="296" y="489.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">7.</text>
-<text x="301.5" y="489.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Lavatory: cabinet wall to wall, 365 deep [E], leaves 72 of floor to the bi-fold line (BL 260); a seated 95th's knees still reach 226 past it. Door line /</text>
-<text x="301.5" y="493.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet depth to confirm.</text>
-<text x="296" y="499.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">8.</text>
-<text x="301.5" y="499.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Cabin seated eye above the window top (95th 2462, 50th 2412 vs 2380): a seated-passenger photo would test the cushion 420 / SRP 360 (the</text>
-<text x="301.5" y="503.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">windows are fixed by L3).</text>
-<text x="296" y="509.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">9.</text>
-<text x="301.5" y="509.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Crew SRP 4200 vs the POH pilot arm 4071: the 50th's CG is -63 from it at the centre notch and -1 with the seat full aft, so the POH arm is read as a</text>
-<text x="301.5" y="514.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">full-aft value and the SRP is kept (the aft-notch headrest is already at the divider). Confirm the POH arm convention; crew seat vertical travel (±51</text>
-<text x="301.5" y="518.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">est.), back / headrest heights (side-on photo), MFD WL; interior scheme and cabin height 1.47 vs 1.45.</text>
-<path stroke-width="0.35" fill="#1B2429" d="M296 529.3l260 0 0 7.22-260 0z"/>
-<text x="297.5" y="534.24" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600">REVISIONS - PC12-L6</text>
-<text x="300.8" y="539.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">REV</text>
-<text x="317.3" y="539.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DATE</text>
-<text x="442.5" y="539.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DESCRIPTION</text>
-<path stroke-width="0.35" d="M296 541.08l260 0"/>
-<text x="330" y="544.41" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">first issue .. Stage-3 review r2: tables, checks, CG, sheepskin (see sheet 1)</text>
-<text x="300.8" y="544.41" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">A-D</text>
-<text x="317.3" y="544.41" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-09-26</text>
-<path stroke-width="0.18" d="M296 545.64l260 0"/>
-<text x="330" y="548.97" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row</text>
-<text x="300.8" y="548.97" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">E</text>
-<text x="317.3" y="548.97" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-09-27</text>
-<path stroke-width="0.18" d="M296 550.2l260 0"/>
-<text x="330" y="553.53" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]</text>
-<text x="300.8" y="553.53" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">F</text>
-<text x="317.3" y="553.53" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-03</text>
-<path stroke-width="0.18" d="M296 554.76l260 0"/>
-<text x="330" y="558.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row</text>
-<text x="300.8" y="558.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">G</text>
-<text x="317.3" y="558.09" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-03</text>
-<path stroke-width="0.18" d="M296 559.32l260 0"/>
-<text x="330" y="562.65" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]</text>
-<text x="300.8" y="562.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">H</text>
-<text x="317.3" y="562.65" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
-<path stroke-width="0.18" d="M296 563.88l260 0"/>
-<text x="330" y="567.21" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke rev I (sheet L6Y), sweep per piece; rev J: the yoke as solids (L6Y2)</text>
-<text x="300.8" y="567.21" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">I-J</text>
-<text x="317.3" y="567.21" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
-<path stroke-width="0.18" d="M296 568.44l260 0"/>
-<text x="330" y="571.77" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke rev K: knee rows on the rev K solids, criteria unchanged</text>
-<text x="300.8" y="571.77" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">K</text>
-<text x="317.3" y="571.77" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
-<path stroke-width="0.18" d="M296 573l260 0"/>
-<text x="330" y="576.33" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke rev L: knee rows on the rev L solids, sweep band fix, criteria unchanged</text>
-<text x="300.8" y="576.33" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">L</text>
-<text x="317.3" y="576.33" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
-<path stroke-width="0.18" d="M296 577.56l260 0M305.6 536.52l0 41.04M329 536.52l0 41.04"/>
-<path stroke-width="0.35" d="M296 529.3l260 0 0 48.26-260 0z"/>
+<text x="347.2" y="213.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">re-swept; 37 as issued, a band was dropped) -&gt; 23.8 (&lt; 25: accepted as measured, owner 2026-10-05), keep-25 roll 0 -&gt;</text>
+<text x="347.2" y="217.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">0.0°</text>
+<path stroke="none" fill="#EEF1F2" d="M296 219.6l260 0 0 14.8-260 0z"/>
+<text x="297.2" y="223.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">OWNER DECISION: yoke</text>
+<text x="297.2" y="228.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">vs knees</text>
+<text x="347.2" y="223.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2026-10-05: the measured hub, grips, pedals and seat rule kept; the 95th's 23.8 mm wings level (criterion 25, kept, not</text>
+<text x="347.2" y="228.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">loosened) and contact from 12.5° roll are ACCEPTED AS MEASURED (open point 1 closed); L6Y rev D / L6Y2 rev C</text>
+<text x="347.2" y="232.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">approved as the 3-D yoke's basis</text>
+<text x="297.2" y="238.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedals (r3)</text>
+<text x="347.2" y="238.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">±125 centres, 125 pads, measured face-on (P1046408, MFD bezel scale + depth correction); rev B ±90 / 80 [E]. The crew</text>
+<text x="347.2" y="242.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">knees sit on the hip-to-pedal line + 15 splay: 95th ±126 (rev B ±105)</text>
+<path stroke="none" fill="#EEF1F2" d="M296 244.7l260 0 0 10.3-260 0z"/>
+<text x="297.2" y="248.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew SRP vs POH arm (r3)</text>
+<text x="347.2" y="248.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SRP kept at 4200: the POH arm 4071 is the 50th's CG with the seat full aft (CG table); 60-85 further aft would put the</text>
+<text x="347.2" y="253.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">aft-notch headrest as far into the divider and off the render's cushion front 3720 [M]</text>
+<text x="297.2" y="259.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">seat tracks (r3)</text>
+<text x="347.2" y="259.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">surface-mounted 12 [E] over the whole cabin floor (crew 18): over the carry-through the floor is &lt;= 15 [H], too thin for a</text>
+<text x="347.2" y="263.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">flush 20-25 track; local channels in the spar cap would need the structure (not modelled). The cabin seat heights [M] are</text>
+<text x="347.2" y="268.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">read from the carpet and include the track; the seat bases stand on the tracks (B-B)</text>
+<path stroke="none" fill="#EEF1F2" d="M296 269.8l260 0 0 10.3-260 0z"/>
+<text x="297.2" y="273.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lavatory (r3)</text>
+<text x="347.2" y="273.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet 350 tall [M] (0.33 ring as scale; r2 450 [E]), niche 440-640 [M]; the lower seat puts the 95th's knees 226 past the</text>
+<text x="347.2" y="278.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">door line</text>
+<text x="297.2" y="284.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">divider (r3)</text>
+<text x="347.2" y="284.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">curtain drawn: track at the headliner, bundle stowed LH (PRO 3001, orange; NGX 2281 stows a grey one RH); fire</text>
+<text x="347.2" y="288.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">extinguisher on the RH divider's fwd face (plan); autoland cup (A-A)</text>
+<path stroke="none" fill="#EEF1F2" d="M296 290.4l260 0 0 10.3-260 0z"/>
+<text x="297.2" y="294.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">SDUs (r2)</text>
+<text x="347.2" y="294.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">top -130 vs the MFD centre (10-20 under the MFD bezel), reclined 35° (JTF, camera-matched P1046406, P1046408);</text>
+<text x="347.2" y="298.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">drawn 160 tall in view D; rev B -170 / 20°</text>
+<text x="297.2" y="304.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabin seat arms (r2)</text>
+<text x="347.2" y="304.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">one armrest, inboard: a deep side panel (base top to 435) with the seat control on its forward end; the 610 ledge is the</text>
+<text x="347.2" y="309.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">outboard armrest; rev B drew two arms</text>
+<path stroke="none" fill="#EEF1F2" d="M296 311l260 0 0 10.3-260 0z"/>
+<text x="297.2" y="315.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">lavatory (r2)</text>
+<text x="347.2" y="315.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet wall to wall 4600-5165, bowl at the POH arm 4831, shelf + drawer aft of 5040, lit niche, TP holder (P1046411);</text>
+<text x="347.2" y="319.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">depth 365 [E]; rev B 400 x 450 box</text>
+<text x="297.2" y="325.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">DECISION: club table</text>
+<text x="347.2" y="325.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">keep the measured table (top 590, outboard leaf + unfolding inboard leaf); up to the 50th fits (feet fwd 28°); the 95th does</text>
+<text x="347.2" y="329.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">not (-45): open point 3</text>
+<path stroke="none" fill="#EEF1F2" d="M296 331.6l260 0 0 5.8-260 0z"/>
+<text x="297.2" y="335.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">full rudder (r2)</text>
+<text x="347.2" y="335.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedal travel ±80 [E], toe brake; knee checks: up-knee on the aft pedal, the other leg extended</text>
+<text x="297.2" y="341.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">reach (r2)</text>
+<text x="347.2" y="341.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">grasp vs touch: touch targets get the 70 fingertip; the 95th reaches the PDUs and SDUs harness locked</text>
+<path stroke="none" fill="#EEF1F2" d="M296 343.2l260 0 0 5.8-260 0z"/>
+<text x="297.2" y="347.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew armrest hinge (r2)</text>
+<text x="347.2" y="347.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">in the back's thickness, stowed along the back side; rev B hinged it 125 ahead of the back</text>
+<text x="297.2" y="353.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 1/2 aft-facing club</text>
+<text x="347.2" y="353.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">render footprint used: 108 aft of the POH-occupant mirror</text>
+<path stroke="none" fill="#EEF1F2" d="M296 354.8l260 0 0 5.8-260 0z"/>
+<text x="297.2" y="358.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">PAX 5 (LH aft)</text>
+<text x="347.2" y="358.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">POH 8180 used; the marketing plan render shows it 180 fwd</text>
+<text x="297.2" y="364.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">LH cabinet</text>
+<text x="347.2" y="364.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">moved +56 aft of the render (5244) to clear the airstair opening</text>
+<path stroke="none" fill="#EEF1F2" d="M296 366.4l260 0 0 5.8-260 0z"/>
+<text x="297.2" y="370.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">design eye</text>
+<text x="347.2" y="370.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">4120/375/2338 = the 50th eye on the neutral seat; replaces 3980 (info) and 4080/335/2360 (L2); over-nose 7.6° vs 8.9°</text>
+<text x="297.2" y="376.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">vs rev A (legacy 3-D)</text>
+<text x="347.2" y="376.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">crew seat BL 375 (335; yoke key 372), SRP 280 above the floor (300), vertical ±51 (±40), back 13° (11°), inboard cushion</text>
+<text x="347.2" y="380.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">185 (tunnel plinth); flight-deck floor flush 1259 (1240 + 19 step); MFD WL 2000 (1960; notes 1830; cabin-photo check 2010</text>
+<text x="347.2" y="385.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">±50); hood closed onto the WS frame (plate 80-150 below); CB panels on the sidewall above the consoles (below them);</text>
+<text x="347.2" y="389.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">FR34 veneer header + curtain (net); aft wall 9731 = divider + 5160 (FR36 9750, render 9744)</text>
+<path stroke-width="0.18" d="M346 198.8l0 192.7"/>
+<path stroke-width="0.35" d="M296 191.8l260 0 0 199.7-260 0z"/>
+<text x="296" y="399.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">OPEN POINTS FOR THE OWNER</text>
+<text x="296" y="405.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">1.</text>
+<text x="301.5" y="405.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">KNEES vs YOKE -- CLOSED (owner 2026-10-05): the 95th's 23.8 mm wings level (criterion 25 kept) and contact from 12.5° roll are accepted as</text>
+<text x="301.5" y="410" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">measured; the measured hub, grips, pedals and seat rule stay (sensitivity table for the record).</text>
+<text x="296" y="415.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2.</text>
+<text x="301.5" y="415.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">5TH-FEMALE ACCOMMODATION. At the forward notch, pedals cranked fully aft and the seat full up (+51, the travel limit [E]), her eye is 51 below the</text>
+<text x="301.5" y="420.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">design eye: over the nose 4.3° along her BL (design eye 7.6°), 2.3° along BL 200; full forward rudder straightens her knee to 169° (limit 165° [E]; a 5 ft</text>
+<text x="301.5" y="424.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2 in pilot, scale 0.84: 150°). As drawn the station accommodates 5th male - 95th male. Options: a booster cushion, more vertical travel (the IPECO</text>
+<text x="301.5" y="429.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">3A318 figure is wanted; ±51 is [E]), or state the range as 5M-95M.</text>
+<text x="296" y="434.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">3.</text>
+<text x="301.5" y="434.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">CLUB TABLE. Deployed (top 590, under the ledge cap), the 95th's knees are 45 into it and the 50th's 8 with the feet under the knees (the outboard</text>
+<text x="301.5" y="439.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">leaf alone: the same, the outboard leg is under it). The 50th fits with the feet 28° forward (toes 6 short of the facing seat's base); the 95th would need</text>
+<text x="301.5" y="443.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">38° and put his feet 125 under it. Kept: the table serves up to about the 50th. Confirm, or re-measure the table / ledge height.</text>
+<text x="296" y="449.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">4.</text>
+<text x="301.5" y="449.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Aft-facing club PAX 1/2: plan render (used) or POH-occupant mirror? The render leaves 204 of the 482 exit hatch clear of the PAX 2 cushion; the</text>
+<text x="301.5" y="454.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">mirror gives a 642 club gap (render 534, 95th toes pass 424).</text>
+<text x="296" y="459.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">5.</text>
+<text x="301.5" y="459.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Design eye 4120 / 375 / 2338 (over-nose 7.6°) to replace cockpit_glazing.EYE (L2) and the viewer camera.</text>
+<text x="296" y="465.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">6.</text>
+<text x="301.5" y="465.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Tunnel plinth (gear, 350 wide, 226 tall to STA 4120): the crew cushions are trimmed to 185 inboard to clear it; the photos show symmetric cushions</text>
+<text x="301.5" y="470" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">and no step at the pedestal foot. Can the tunnel end or drop?</text>
+<text x="296" y="475.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">7.</text>
+<text x="301.5" y="475.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Lavatory: cabinet wall to wall, 365 deep [E], leaves 72 of floor to the bi-fold line (BL 260); a seated 95th's knees still reach 226 past it. Door line /</text>
+<text x="301.5" y="480.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">cabinet depth to confirm.</text>
+<text x="296" y="485.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">8.</text>
+<text x="301.5" y="485.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Cabin seated eye above the window top (95th 2462, 50th 2412 vs 2380): a seated-passenger photo would test the cushion 420 / SRP 360 (the</text>
+<text x="301.5" y="490.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">windows are fixed by L3).</text>
+<text x="296" y="496.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">9.</text>
+<text x="301.5" y="496.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">Crew SRP 4200 vs the POH pilot arm 4071: the 50th's CG is -63 from it at the centre notch and -1 with the seat full aft, so the POH arm is read as a</text>
+<text x="301.5" y="500.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">full-aft value and the SRP is kept (the aft-notch headrest is already at the divider). Confirm the POH arm convention; crew seat vertical travel (±51</text>
+<text x="301.5" y="505.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">est.), back / headrest heights (side-on photo), MFD WL; interior scheme and cabin height 1.47 vs 1.45.</text>
+<path stroke-width="0.35" fill="#1B2429" d="M296 515.8l260 0 0 7.22-260 0z"/>
+<text x="297.5" y="520.74" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600">REVISIONS - PC12-L6</text>
+<text x="300.8" y="526.35" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">REV</text>
+<text x="317.3" y="526.35" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DATE</text>
+<text x="442.5" y="526.35" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DESCRIPTION</text>
+<path stroke-width="0.35" d="M296 527.58l260 0"/>
+<text x="330" y="530.91" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">first issue .. Stage-3 review r2: tables, checks, CG, sheepskin (see sheet 1)</text>
+<text x="300.8" y="530.91" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">A-D</text>
+<text x="317.3" y="530.91" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-09-26</text>
+<path stroke-width="0.18" d="M296 532.14l260 0"/>
+<text x="330" y="535.47" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row</text>
+<text x="300.8" y="535.47" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">E</text>
+<text x="317.3" y="535.47" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-09-27</text>
+<path stroke-width="0.18" d="M296 536.7l260 0"/>
+<text x="330" y="540.03" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]</text>
+<text x="300.8" y="540.03" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">F</text>
+<text x="317.3" y="540.03" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-03</text>
+<path stroke-width="0.18" d="M296 541.26l260 0"/>
+<text x="330" y="544.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row</text>
+<text x="300.8" y="544.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">G</text>
+<text x="317.3" y="544.59" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-03</text>
+<path stroke-width="0.18" d="M296 545.82l260 0"/>
+<text x="330" y="549.15" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]</text>
+<text x="300.8" y="549.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">H</text>
+<text x="317.3" y="549.15" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
+<path stroke-width="0.18" d="M296 550.38l260 0"/>
+<text x="330" y="553.71" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke rev I (sheet L6Y), sweep per piece; rev J: the yoke as solids (L6Y2)</text>
+<text x="300.8" y="553.71" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">I-J</text>
+<text x="317.3" y="553.71" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
+<path stroke-width="0.18" d="M296 554.94l260 0"/>
+<text x="330" y="558.27" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke rev K: knee rows on the rev K solids, criteria unchanged</text>
+<text x="300.8" y="558.27" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">K</text>
+<text x="317.3" y="558.27" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
+<path stroke-width="0.18" d="M296 559.5l260 0"/>
+<text x="330" y="562.83" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke rev L: knee rows on the rev L solids, sweep band fix, criteria unchanged</text>
+<text x="300.8" y="562.83" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">L</text>
+<text x="317.3" y="562.83" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
+<path stroke-width="0.18" d="M296 564.06l260 0"/>
+<text x="330" y="567.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">owner: L6Y rev D approved for 3-D; 95th knee 23.8 &lt; 25 accepted as measured (row, open point 1 closed); knee rows on the rev M solids</text>
+<text x="300.8" y="567.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">M</text>
+<text x="317.3" y="567.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
+<path stroke-width="0.18" d="M296 568.62l260 0M305.6 523.02l0 45.6M329 523.02l0 45.6"/>
+<path stroke-width="0.35" d="M296 515.8l260 0 0 52.82-260 0z"/>
 <path stroke-width="0.35" fill="#1B2429" d="M566 16l260 0 0 7-260 0z"/>
 <text x="568" y="20.83" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">KEY PARAMETERS ([S] SOURCED [M] MEASURED [E] ESTIMATED [H] HARD)</text>
 <text x="589" y="27.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">PARAMETER</text>
@@ -825,10 +827,10 @@
 <text x="657.2" y="196.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">about the hub centre, the lower one here (P1046408; rev I -42.3, rev H -40)</text>
 <text x="567.2" y="202.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">yoke roll +/-</text>
 <text x="654.8" y="202.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">70°</text>
-<text x="657.2" y="202.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] roll travel each way (PC-12 figure not found): the knee check sweeps it. OPEN, owner decision</text>
-<text x="657.2" y="206.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">(review r3 C3): at the L6B design seat setting the 95th-pct knees meet the yoke from ~17.5 deg of</text>
-<text x="657.2" y="211.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">roll (rev H; 50th ~25, 5th male ~22.5, 5th female ~87.5; L6B detail F / fit_check 19 compute it);</text>
-<text x="657.2" y="215.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">options: the seat setting / pedal crank the 95th would use, a smaller roll [E], or the grip cant / span</text>
+<text x="657.2" y="202.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">[E] roll travel each way (PC-12 figure not found): the knee check sweeps it. OWNER DECISION</text>
+<text x="657.2" y="206.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">2026-10-05: the 95th's knee result on the rev L / M solids -- 23.8 mm wings level (CRITERIA</text>
+<text x="657.2" y="211.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">knee_clear 25 kept, not loosened) and contact from 12.5 deg -- ACCEPTED AS MEASURED (L6B</text>
+<text x="657.2" y="215.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">open point 1 closed; L6B detail F / fit_check 19 compute it)</text>
 <path stroke="none" fill="#EEF1F2" d="M566 217.6l260 0 0 5.8-260 0z"/>
 <text x="567.2" y="221.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429">pedal heel point STA</text>
 <text x="654.8" y="221.69" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3.4" stroke="none" fill="#1B2429" text-anchor="end">3360</text>

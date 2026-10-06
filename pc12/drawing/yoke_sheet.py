@@ -34,7 +34,7 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                vline_gapped, hline_gapped)
 
 SHEET = dict(id="L6Y", title="CONTROL YOKE - VIEWS", subtitle="PC-24-STYLE CONTROL YOKE - VIEWS", size="A1",
-             scale="AS SHOWN", rev="D", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
+             scale="AS SHOWN", rev="E", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
 REVISIONS = (
     ("A", "2026-10-05", "first issue (owner 2026-10-05: 'the yoke isn't quite right especially if you look at the "
                         "details'): yoke re-measured on 8 PRO photos; YOKE_DESIGN rev I replaces the rev H outline"),
@@ -60,6 +60,16 @@ REVISIONS = (
                         "law; U column recess [M]; forward-face switches unverified (PTT expected); knee sweep with "
                         "the inboard grip's lowest band restored (rev K re-swept); acceptance clean: the head zone's "
                         "draft starts C1, inboard cut R 1.5, foot R 5 under a 4 mm draft cap, unit-gradient top / aft"),
+    ("E", "2026-10-05", "rev M (judges r4; owner: rev D approved as the 3-D basis, the 95th knee accepted as measured): "
+                        "pad pocket cut after the body-grip round (the outboard pad's slot-side corner no longer buried); "
+                        "the moulding joined by a rolling-ball R 3 (no bulge where flush); head zones: head and prism share "
+                        "walls and forward face, joined R 3 (was 1), trim inset 3, draft start R 4, outboard hz 67; body "
+                        "top line and heel lip C2; outboard heel corner raised 2.5 (R 9), waist 127.4 at h 66; [E] "
+                        "forward-face switches; heads' a and switch axes dimensioned; adaptive crease / field-ridge / "
+                        "pad-exposure acceptance, and what it found fixed: the head's top onto the forward face R 3, "
+                        "body sides x top a rolling-ball R 2 between pieces rounded onto the forward face (aft face "
+                        "cut last), forward-edge radius cap C2, the inboard fall-off's directrix one tangent curve (R 4 "
+                        "withdrawn), outlines sampled 0.05, C2 fields"),
 )
 TRIM_COL = "#23292D"
 FR_O = (202.0, 134.0)       # front elevation: sheet position of the hub centre (1:1)
@@ -268,9 +278,12 @@ ITEMS = (  # item, part, material (render/lookdev name), finish [source]
     (8, "AFCS DISCONNECT", "button_red (new) / black", "red cap 0.70 / 0.035 / 0.04, clear coat 0.3, NOT emissive, "
                                                        "on a black boss [M]"),
     (9, "PITCH TRIM ON ROUND FACE", "black / legend_white", "satin black face, ring + rocker, tick legends 0.80 [M]"),
-    (10, "PUSH BUTTON ON SHIELD", "black", "satin black hex collar, smooth cap, centre dimple [M]"),
+    (10, "PUSH BUTTON ON SHIELD", "black", "satin black hex collar, smooth cap, centre dimple [M]; function: MAP "
+                                           "LIGHTS (AOPA crop; no lettering drawn)"),
     (11, "COLUMN", "metal_dark", "satin dark metal, dia 44 [E] (never seen)"),
     (12, "COLUMN SURROUND (PANEL)", "pedestal_gunmetal", "satin dark grey J band 23 wide + dished recess [M / E]"),
+    (13, "FORWARD-FACE SWITCHES (2) [E]", "grip_black", "PTT trigger (outboard grip), checklist rocker (inboard): "
+                                                        "placeholders, never seen (L6Y2 detail W) [E]"),
 )
 
 
@@ -431,6 +444,9 @@ def draw_side(ds, v):
     draw_parts(ds, v, S, ("button",), {"button": "#4A5257"})            # on the far (inboard) head
     draw_parts(ds, v, S, ("cover",), {"cover": WHITE})
     draw_parts(ds, v, S, ("grip_out",), {"grip_out": BLACK})
+    for C in S.get("fwd_out", []):                                       # [E] PTT trigger: phantom (rev M, FID4-08)
+        if len(C) > 8:
+            poly(ds, v, C, W_THIN, fill="#5A6268", dash=PHANTOM, color="#C9CFD3")
     draw_parts(ds, v, S, ("trim",), {"trim": SWITCH})                    # on the near (outboard) head
     for p_ in ("cover", "body"):
         for C in S[p_]:
@@ -449,7 +465,9 @@ def draw_side(ds, v):
     R = math.tan(math.radians(G._gsel("grip_rake", "out")))
     line(ds, v, [(a0 + (h0 + 64.0) * R, -64.0), (a0 - (104.0 - h0) * R, 104.0)], W_THIN, CHAIN, color=ACCENT)
     X, Y = v.pt(-(104.0 - float(fl[0, 0])) * T, 104.0)
-    lbl(ds, X + 1.0, Y - 1.6, f"AFT FACE {float(D['face_tilt']):.1f}° TOP FWD", TXT_S, color=ACCENT, weight=600)
+    # rev M: left of the line's top, clear of the head-position dims' extension lines (a -27 / -23.3 / -58.9)
+    lbl(ds, X - 1.2, Y - 4.4, f"AFT FACE {float(D['face_tilt']):.1f}°", TXT_S, "end", color=ACCENT, weight=600)
+    lbl(ds, X - 1.2, Y - 1.6, "TOP FWD", TXT_S, "end", color=ACCENT, weight=600)
     X, Y = v.pt(a0 + (h0 + 64.0) * R, -64.0)
     lbl(ds, X + 1.2, Y + 1.6, f"GRIP RAKE {G._gsel('grip_rake', 'out'):.0f}° [M +/-2.5]", TXT_S, color=ACCENT,
         weight=600)
@@ -472,8 +490,11 @@ def draw_side(ds, v):
     h_hf = float(gout[np.argmin(gout[:, 0]), 1])
     dim(ds, v.pt(a_hf, h_hf), v.pt(0.0, 2.1), Y0 - 111.0, f"{-a_hf:.1f} OUTBOARD HEAD FWD",
         outside=True)
+    c_t, _ = G.head_out_face()                           # rev M (judges DR4-06): the heads' fore-aft positions
+    dim(ds, v.pt(float(c_t[2]), float(c_t[1])), v.pt(0.0, 2.1), Y0 - 118.0,
+        f"{-float(c_t[2]):.1f} TRIM FACE CENTRE (h {float(c_t[1]):g}) [M weak +/-5]", outside=True)
     # ---- ordinate heights from h 0, named (the centre features; the front view carries the grips') + envelope
-    items = [(a_back + 2.0, h_top, "TOP (HEAD)"), (a_cr, h_cr, "CROWN TOP EDGE"),
+    items = [(a_back + 2.0, h_top, "TOP (HEAD)"), (a_cr, h_cr, "CROWN TOP EDGE (SOLID)"),
              (float(G.face_a(56.0)), float(D["crown"][0]), "CROWN BREAK"),
              (0.0, float(D["step"][0][1]), "STEP V"),
              (float(G.face_a(-18.9)), float(np.min(I.yoke_front_mm()["insert_lower"][:, 1])), "LOWER INSERT"),
@@ -483,9 +504,13 @@ def draw_side(ds, v):
     ordinates(ds, v, items, X0 + 44.0, side=+1, min_gap=3.2)
     dim(ds, v.pt(a_back, h_top), v.pt(a_back, h_bot), X0 + 36.0, f"{h_top - h_bot:.1f} OVERALL HEIGHT", orient="v",
         outside=False)
-    leader(ds, v.pt(float(tp["face"][:, 2].mean()), float(tp["face"][:, 1].mean())), (X0 - 70.0, Y0 - 100.0),
-           f"TRIM FACE {float(D['head_out'][3]):g}° ABOVE AFT", [f"dia {float(D['head_out'][2]):g}, ring flush"],
-           size=TXT_S)
+    # rev M (DR4-06): both heads' call-outs above the front view's labels (the trim leader above the shield's)
+    leader(ds, v.pt(float(tp["face"][:, 2].mean()), float(tp["face"][:, 1].mean())), (X0 - 70.0, Y0 - 114.0),
+           f"TRIM FACE {float(D['head_out'][3]):g}° ABOVE AFT, {float(D['head_out'][4]):g}° IN",
+           [f"dia {float(D['head_out'][2]):g}, ring flush"], size=TXT_S)
+    c_s, _ = G.head_in_face()
+    leader(ds, v.pt(float(c_s[2]), float(c_s[1])), (X0 - 70.0, Y0 - 106.0), "SHIELD FACET POINT (HIDDEN)",
+           [f"a {float(c_s[2]):g}: {float(D['head_in'][2]):g}° UP, TOE {float(D['head_in'][3]):g}°"], size=TXT_S)
     leader(ds, v.pt(3.5, -22.0), (X0 - 96.0, Y0 + 54.0), "CONVEX LOWER FACE", ["C1, tangent at the step"],
            size=TXT_S)
     gl = gout[gout[:, 1] < -25.0]
@@ -515,6 +540,10 @@ def draw_top(ds, v):
     draw_parts(ds, v, S, ("cover",), {"cover": WHITE})
     draw_parts(ds, v, S, ("grip_in", "grip_out"), {"grip_in": BLACK, "grip_out": BLACK})
     draw_parts(ds, v, S, ("trim", "button"), {"trim": SWITCH, "button": "#4A5257"})
+    for p_ in ("fwd_out", "fwd_in"):                                     # [E] forward-face switches: phantom
+        for C in S.get(p_, []):
+            if len(C) > 8:
+                poly(ds, v, C, W_THIN, fill="#5A6268", dash=PHANTOM, color="#C9CFD3")
     tp = trim_pieces()
     poly(ds, v, VIEWPROJ(tp["face"], "plan"), W_FINE, fill="#2B3135", color="#B9C0C5")
     poly(ds, v, VIEWPROJ(tp["ring"], "plan"), W_THIN, color="#AEB6BB")
@@ -659,15 +688,26 @@ def draw_tables(ds, ctx):
                                                f"{D['pad_in'][7][1]:g}) / {pi[:, 1].min():.1f}", "[M] diagonal top 33°"),
         ("frame / leather below it / heel lip", f"{float(D['grip_frame']):g} / {float(D['pad_section'][0]):g} / "
                                                 f"{float(D['heel'][1]):g} proud R {float(D['heel'][2]):g}", "[M]"),
-        ("trim face centre / dia / up, turn", f"({float(D['head_out'][0]):g}, {float(D['head_out'][1]):g}) / "
-                                              f"{float(D['head_out'][2]):g} / {float(D['head_out'][3]):g}°, "
-                                              f"{float(D['head_out'][4]):g}°", "[M] triangulated, 7 views"),
-        ("shield facet / button centre", f"{np.ptp(np.asarray(D['shield'])[:, 0]):g} x "
-                                         f"{np.ptp(np.asarray(D['shield'])[:, 1]):g} / ({float(D['button'][0]):g}, "
-                                         f"{float(D['button'][1]):g})",
+        ("trim face centre (u, h, a) / dia / normal", f"({float(D['head_out'][0]):g}, {float(D['head_out'][1]):g}, "
+                                                       f"{float(D['head_out_a']):g}) / {float(D['head_out'][2]):g} / "
+                                                       f"{float(D['head_out'][3]):g}° up, {float(D['head_out'][4]):g}° in",
+         "[M] (u, h) 7 views; a [M weak +/-5]"),
+        ("shield facet point (u, h, a) / normal / size", f"({float(D['head_in'][0]):g}, {float(D['head_in'][1]):g}, "
+                                                         f"{float(D['head_in_a']):g}) / {float(D['head_in'][2]):g}° up, "
+                                                         f"toe {float(D['head_in'][3]):g}° / "
+                                                         f"{np.ptp(np.asarray(D['shield'])[:, 0]):g} x "
+                                                         f"{np.ptp(np.asarray(D['shield'])[:, 1]):g}",
          "[M] (inboard: -u)"),
+        ("switch axes (u, h, a): button / TCS / AFCS",
+         "({0:.1f}, {1:.1f}, {2:.1f}) along the facet normal / ({3:.1f}, {4:.1f}, {5:.1f}) / ({6:.1f}, {7:.1f}, "
+         "{8:.1f}) along the 17.5° face's normal".format(*[float(x) for x in np.r_[G.button_frame()[0],
+                                                                                     G.tcs_axis()[0],
+                                                                                     G.afcs_axis()[0]]]),
+         "[M]; TCS on the face, AFCS boss face = face - 3 + 1.5"),
         ("TCS / AFCS cap / boss", f"({float(D['tcs'][0]):g}, {float(D['tcs'][1]):g}) {float(D['tcs'][2]):g} / "
                                   f"{float(D['afcs'][2]):g} x {float(D['afcs'][3]):g} / {float(D['afcs'][4]):g}", "[M]"),
+        ("forward-face switches out / in (h, L x W, proud)",
+         " / ".join(f"h {r_[0]:g}, {r_[1]:g} x {r_[2]:g}, {r_[3]:g}" for r_ in D["fwd_switch"]), "[E] placeholders"),
         ("column dia / axis", f"{2000 * float(I.YOKE['column_r']):g} [E] / h 0 = WL {1000 * float(I.yoke_hub(-1)[2]):.0f}",
          "kept; surround reads 1821"),
         ("pitch travel / roll", f"+/-{1000 * float(I.YOKE['travel'][1]):g} [E] / +/-{float(I.YOKE['roll']):g} [E]",
@@ -686,56 +726,68 @@ def draw_tables(ds, ctx):
                                       for c, dd in ((0, 0), (1, 0), (2, 1), (3, 1), (4, 0))))
     cols3 = [("OCCUPANT", 20.0, "l"), ("LEVEL mm", 40.0, "c"), ("ROLL+/-70 mm", 42.0, "c"),
              ("CONTACT deg", 50.0, "c"), ("KEEP 25 deg", 46.0, "c"), ("RUDDER mm", W - 198.0, "c")]
-    y = table(ds, x0, y + 3.0, cols3, rows3, title="KNEES vs YOKE (L6B), REV H > I > J > K (RE-SWEPT) > L - CRITERIA UNCHANGED",
+    y = table(ds, x0, y + 3.0, cols3, rows3, title="KNEES vs YOKE (L6B), REV H > I > J > K (RE-SWEPT) > M - CRITERIA UNCHANGED, ACCEPTED AS MEASURED",
               size=size, row_h=3.3, font="label")
     o95 = K["p95m"]
+    hz_o, hz_i = (D["head_zone"][k] for k in (0, 1))
     nts = [
+        "OWNER 2026-10-05: L6Y rev D / L6Y2 rev C APPROVED as the basis of the 3-D yoke; this rev E carries the "
+        "judges' round-4 drawing-stage cleanup (the measured outline unchanged but the outboard grip's heel corner and "
+        "waist, FID4-01 / 02).  Signed off with the approval: the rev L hidden estimates foot round R 14 -> R 5 under a "
+        "4 mm draft cap and inboard head cut R 3 -> R 1.5.",
         "Yoke-local mm: u outboard (pilot: -y), h up from the hub centre = the column axis / roll pivot (WL 1845, "
         "BL -/+375), a aft of the aft face at the insert step (X 3700 at neutral pitch).  Drawn from "
-        "model/interior.py YOKE_DESIGN rev L through the solids of model/yoke_geom.py; L6 / L6B take the same "
+        "model/interior.py YOKE_DESIGN rev M through the solids of model/yoke_geom.py; L6 / L6B take the same "
         "solids (yoke_outline_yz, yoke_sweep_pieces).",
-        "CURVE LAW (table curve_law, rev L): every outline is a C2 cubic spline on centripetal knots through its "
-        "samples (curvature continuous at every sample that is not a corner), sampled every 0.25; the samples in "
-        "the *_corners tables are corners (R 0 sharp, R > 0 a tangent fillet); the lower aft face is a C1 Hermite "
-        "tangent to the 17.5° plane.  The solids use the EXACT distance to those polylines (no raster); views are "
-        "exact silhouettes, sections exact cuts.",
+        "CURVE LAW (table curve_law, rev M text): each outline split at its corner samples into runs, each run a C2 "
+        "cubic spline on centripetal knots ('natural' ends at the corners, periodic for a closed outline without "
+        f"corners), sampled every {float(D['curve_law'][0]):g} (arcs too); corners R 0 sharp, R > 0 a tangent fillet (cubic Bezier arc, tangent length "
+        "R tan(th/2) capped at 0.45 of the shorter run: none capped in rev M); the lower aft face a C1 Hermite tangent "
+        "to the 17.5° plane.  The solids use the EXACT distance to those polylines (no raster; beyond 0.3 mm a C2 "
+        "B-spline of exact node distances); views are exact silhouettes, sections exact cuts.",
         "SURFACES: the cover's face (the 17.5° plane, the lower Hermite, the crown bevel) trimmed by its outline; the "
         "body: sides / bottom = its outline without the top edge, top = a plane 42° from the horizontal through the "
-        "outline's top edge (body_top), forward face, rounds in order R 2 / R 2 / R 8 (R 5 at the foot, the draft's "
-        "offset capped at 4 there); the web's "
-        "aft face = the trim face's plane 3.5 below it (web); each grip = its prism (outline G, a construction "
-        "curve, on the raked / toed plane) + its HEAD (head_zone: the prism trimmed 1 inside the head's shaping "
-        "surface drafted outward below the plane height 70 / 61 (a C1 start), edge R 1.5; the head solid = round face on its "
-        "flared cylinder / shield facet + fall-off, x chamfer R 3, x forward face R 3, x walls R 2, floor R 3; "
-        "joined R 1); body + grips one moulding, joined by a true round R 3.  Every edge is a tabled round or a "
-        "tabled crease (L6Y2 CORNERS & RADII).",
+        "outline's top edge (body_top, a C2 cubic in |u|), forward face, rounds in order R 2 / R 2 / R 8 (R 5 at the "
+        "foot, the draft's offset capped at 4 there; the crown's top edge h 65.2 = the outline's 65.3 less its R 1); the web's aft face = the trim face's plane 3.5 below it (web); "
+        f"each grip: its AFT SIDE = the prism's aft plane trimmed {hz_o[1]:g} inside the head's shaping surface above "
+        f"the plane height {hz_o[0]:g} / {hz_i[0]:g}, drafted outward below it from a bend of R {hz_o[10]:g} (an exact "
+        f"2-D distance), cut edge R {hz_o[3]:g}, joined R {hz_o[9]:g} to the HEAD's aft shape (round face on its flared "
+        "cylinder / shield facet + fall-off, x chamfer R 3, floor R 3); then the walls (outline G, a construction "
+        f"curve) and the forward face cut both, edges R 1.5 easing to R {hz_o[8]:g} / R 11 (capped) easing to R "
+        f"{hz_o[7]:g} over the head, the head's top onto the forward face R {hz_o[7]:g}; body + grips one moulding joined by a ROLLING-BALL R 3 (a true round where they "
+        "meet at an angle, none where they run flush); the pad pocket, groove and bead cut after that join.  Every "
+        "edge is a tabled round or a tabled crease (L6Y2 CORNERS & RADII).",
         "STAGE-3 SURFACE ROUTE: each named surface a grid_surface over its parametrisation (planes, the face "
         "Hermite, the head cylinder about the face normal) trimmed by cad.mesh.trim with these exact 2-D fields; "
         "each tabled round a sweep_profile of its radius; the head-zone trimming surface is a draft from the head "
         "surface's offset curve; vertex normals from the analytic surfaces.  The solids stay the inside / outside "
         "oracle.  Acceptance (model/yoke_checks.py, L6Y2): vertex normals within 2° at the 95th percentile on 9 "
-        "patches incl. the heads, web, tops and forward faces; no untabled section cusps (grips to the head tops, "
-        "necks, h planes); one piece per side in every h section above 62; nothing above the trim face / shield.",
+        "patches; NO UNTABLED CREASE in an adaptive scan of 14 views (every pixel pair turning > 4° refined 256x); "
+        "the joins read smooth fields (no ridge at their rounds' own surface points); each pad's exposed surface = its drawn "
+        "section; no untabled section cusps; one piece per side in every h section above 62; nothing above the trim "
+        "face / shield.",
         "White moulding symmetric; the black body and the grips are NOT: an outboard web running into the trim "
         "head's rim (10-11 o'clock), an inboard LOW NECK with an open notch under the inboard head; switches "
         "outboard (TCS, AFCS, trim), the MAP LIGHTS push button on the inboard head; co-pilot yoke = mirror image.",
         "NO MARKINGS: the badge is an abstract winged plate, every legend a row of ticks.",
         "Not modelled: the rev H column bellows (none in 8 photos), the PC-24's grip tab (not on the PRO).  The grips' "
         "FORWARD (finger-side) faces are UNVERIFIED -- no photo shows them; AOPA (2025-03-17) lists push-to-talk and "
-        "checklist among the yoke's one-hand functions, and only trim, TCS, AFCS DISC and MAP LIGHTS are seen: the "
-        "PTT (and a checklist switch) are expected there (open point 7).",
+        "checklist among the yoke's one-hand functions and only trim, TCS, AFCS DISC and MAP LIGHTS are seen: drawn "
+        "as [E] PLACEHOLDERS (rev M, judges FID4-08): a PTT trigger on the outboard grip, a checklist rocker on the "
+        "inboard grip (item 13, L6Y2 detail W; open point 7).",
         "GRIPS' 3-D LIE (L6Y2 photo check): rake / toe / a0 / walls / depth fitted per grip to the curated silhouettes "
-        "of 6 views -- P1046408 L / R, P1046410, Mexico L / R and P1046409 (posed this round: a two-view camera with "
-        "panel_408, the co-pilot yoke 25° from inboard) -- with the front outline held: rake 20 +/-2.5, a0 -3.75 "
-        "+/-3, walls 0.6 / 0 +/-0.2, depth 27 +/-4 (P1046409's slot wall; no bottom taper); the toe is weakly "
-        "determined by views from inboard only (open point 2).  The AOPA photo is not used (one radial term, pose "
-        "degenerate along the line of sight).",
-        f"Knee checks on the rev L solids: the 95th clears the yoke by {o95[0]:.1f} mm wings level (criterion 25: "
-        + ("passes" if o95[0] >= 25.0 else f"MISSED by {25.0 - o95[0]:.1f}") +
-        f"; the lowest band of the inboard grip, whose forward face now runs the measured 27.5 deep to the bottom); "
-        f"roll to contact {o95[2]:.1f}°, keeping 25 mm to {max(o95[3], 0.0):.1f}° -- owner decision (open point 1 "
-        f"of L6B; criteria not loosened).  K column = rev K re-swept: as issued ({REV_K_ISSUED['p95m'][0]:.0f} mm, "
-        f"{REV_K_ISSUED['p95m'][2]:.0f}°) the sweep had dropped that band (a doubled vertex in the band clip, fixed).",
+        "of 6 views -- P1046408 L / R, P1046410, Mexico L / R and P1046409 (posed with a two-view camera, the co-pilot "
+        "yoke 25° from inboard) -- with the front outline held: rake 20 +/-2.5, a0 -3.75 +/-3, walls 0.6 / 0 +/-0.2, "
+        "depth 27 +/-4 (P1046409's slot wall; no bottom taper); the toe is weakly determined by views from inboard only "
+        "(open point 2).  The AOPA photo is not used: its co-pilot camera is EXTRAPOLATED from the pilot-yoke solution "
+        "(judges FID4-05; re-calibrating it on the panel round the co-pilot yoke is open) -- until then the toe, the "
+        "depth law and the head depths stay [M weak].",
+        f"Knee checks on the rev M solids: the 95th clears the yoke by {o95[0]:.1f} mm wings level (criterion 25 kept: "
+        + ("passes" if o95[0] >= 25.0 else f"short by {25.0 - o95[0]:.1f}") +
+        f"), roll to contact {o95[2]:.1f}°, keeping 25 mm to {max(o95[3], 0.0):.1f}° -- ACCEPTED AS MEASURED (owner "
+        f"2026-10-05; L6B open point 1 closed).  K column = rev K re-swept: as issued "
+        f"({REV_K_ISSUED['p95m'][0]:.0f} mm, {REV_K_ISSUED['p95m'][2]:.0f}°) the sweep had dropped a band of the "
+        "inboard grip (a doubled vertex in the band clip, fixed in rev L).",
     ]
     y = notes(ds, x0, y + 2.0, x1, nts, title="NOTES", size=size, line_h=2.9)
     opn = [
@@ -747,20 +799,24 @@ def draw_tables(ds, ctx):
         f"roll {STATION_KNEE[0]:.1f}° -> {STATION_KNEE[1]:.1f}°, wings-level clearance {STATION_KNEE[2]:.1f} -> "
         f"{STATION_KNEE[3]:.1f} mm (L6B sweep: the knees lie inside the +/-90 pitch-swept slab either way, so the "
         f"station does not move the knee rows).  Kept 140 (owner).",
-        "Grip toe: all six usable views look from INBOARD (15-27°), which fixes rake, a0, walls and depth but leaves "
-        "the toe +/-8 (silhouette cost +5 % at 18 vs 7; the pads flat 0-26); the one view from outboard (AOPA, "
-        "camera caveat) favours 18-26.  Kept 18; a view from outboard of a PRO yoke would settle it.",
+        "Grip toe: all six usable views look from INBOARD (15-27°): the silhouettes prefer 7 (outboard, +5 % at 18) "
+        "and 16.7 (inboard), the inboard PAD traces alone ~26 (judges FID4-06: both optima); the one view from "
+        "outboard (AOPA, its camera extrapolated from the pilot-yoke solution, FID4-05) favours 18-26, and there the "
+        "outboard pad's lower outer edge reaches the drawn grip silhouette (FID4-07: leather wrapping the outer edge "
+        "low on the grip, or an outer frame + roll under 2.0 + R 1.5?) -- to decide after that camera's "
+        "re-calibration.  Kept 18 / 18.  The trim head's depth is weak too: a -27 vs the judges' fit (110.7, 83.7, "
+        "-23.6), P1046409 / 10 agreeing in sign (FID4-04).",
         "Column: the surround's joint line reads WL 1821 +/-10 (25 under the pivot, kept); J band or a full collar "
         "round the column (L6Y2 detail J); the recess a U 114 wide to h -72 [M]; push travel 90 [E].",
-        "Shell skew: posed on the symmetric landmarks the stem sits ~1.6 inboard and the arm tips ~1.5 outboard of "
-        "the inserts' centreline in all 7 views (TCS / AFCS u fit within 0.7): carry the <= 2 mm skew or keep it "
-        "symmetric (kept).",
-        f"Knees: the 95th clears {o95[0]:.1f} wings level (criterion 25) and meets a grip from {o95[2]:.1f}° of roll "
-        f"(rev K re-swept {REV_K_KNEES['p95m'][0]:.1f} / {REV_K_KNEES['p95m'][2]:.1f}°): owner decision, criteria "
-        "unchanged.",
+        "Shell skew (judges FID4-03): ONE left / right pattern in all 8 views of both yokes, each in its own sense "
+        "(means of 8, + = photo outside): stem -1.5 / +1.7 (~1.6 inboard), arm tips +1.7 / -1.5 (both ~1.6 "
+        "outboard), inboard arm top -1.7 / lower edge +1.7 (~1.7 low); crown, chamfers, foot within 1.2.  Kept "
+        "SYMMETRIC: one decision for the stem, both tips and the inboard arm.",
+        f"Knees: CLOSED (owner 2026-10-05) -- the 95th's {o95[0]:.1f} mm wings level (criterion 25 kept) and "
+        f"contact from {o95[2]:.1f}° are accepted as measured.",
         "Crown soft break (R 20 [E]) vs a crease; hidden: body depth 60, the necks' depth 30, rocker / cap heights.",
-        "Forward-face switches (PTT, checklist): expected from the AOPA function list, never seen -- a photo of a "
-        "grip's finger side would add them.",
+        "Forward-face switches (PTT, checklist): drawn as [E] placeholders (item 13, L6Y2 detail W) -- a photo of a "
+        "grip's finger side would replace them.",
     ]
     y = notes(ds, x0, y + 1.0, x1, opn, title="OPEN POINTS FOR THE OWNER", size=size, line_h=2.9)
     ds.log.append(f"right column (tables) ends at y {y:.1f}")

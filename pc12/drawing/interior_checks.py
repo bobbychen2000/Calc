@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="L", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="-", rev="M", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -124,8 +124,8 @@ def crew_occupants(ds, x0, y0, x1, ctx):
             f"grip solids' bottom {mm(I.PANEL['mfd_z'] + I.YOKE['hub_dz'] + I.yoke_grip_low())}"),
         row("knee to the lower panel", lambda o: mm(o["clear_panel"]), "side view"),
         row(f"legs to the yoke, pitch ±{mm(I.YOKE['travel'][1])}, wings level", lambda o: sgn(o["yoke_pitch"]),
-            f"criterion >= {mm(kr)}; 3-D, knees on the hip-to-pedal line (pedals ±{mm(I.PEDALS['dy'])} [M]), 95th "
-            f"±{mm(occ['p95m']['pose']['leg_y'][1])}"),
+            f"criterion >= {mm(kr)} kept; 95th {1000 * kr - 1000 * occ['p95m']['yoke_pitch']:.1f} short, ACCEPTED AS "
+            f"MEASURED (owner 2026-10-05)"),
         row(f"... with roll ±{R:.0f}° [E]", lambda o: sgn(o["yoke_sweep"]), "pitch x roll sweep; - = contact"),
         row(f"roll keeping {mm(kr)} / to contact (deg)",
             lambda o: f"{max(o['roll_clear'], 0):.0f} / {max(o['roll_contact'], 0):.0f}",
@@ -343,15 +343,16 @@ def deviations_block(ds, x0, y0, x1, ctx):
     tb = cc["table"]
     y = I.YOKE
     dev = [
-        ("yoke (rev L, L6Y)", f"YOKE_DESIGN: grips {mm(y['grip'][0])} long, solids' bottom "
+        ("yoke (rev M, L6Y)", f"YOKE_DESIGN: grips {mm(y['grip'][0])} long, solids' bottom "
                               f"{sgn(I.yoke_grip_low())} (aft faces {sgn(y['grip_dz'])}), span {mm(y['span'])}, raked "
                               f"20°, 27.5 deep [M]: 95th level 25 (rev K re-swept; 37 as issued, a band was dropped) -> "
-                              f"{1000 * o95['yoke_pitch']:.0f} (< 25: owner decision), keep-25 roll 0 -> "
+                              f"{1000 * o95['yoke_pitch']:.1f} (< 25: accepted as measured, owner 2026-10-05), keep-25 roll 0 -> "
                               f"{max(o95['roll_clear'], 0):.1f}°"),
-        ("DECISION: yoke vs knees", f"keep the measured hub, grips and pedals: the 95th's knee meets a grip from "
-                                    f"{max(o95['roll_contact'], 0):.0f}° roll (neutral pedals). The outcome depends on "
-                                    "the estimated inputs more than on the measured ones (sensitivity table): the "
-                                    "owner is asked which input to fix, open point 1"),
+        ("OWNER DECISION: yoke vs knees", f"2026-10-05: the measured hub, grips, pedals and seat rule kept; the "
+                                          f"95th's {1000 * o95['yoke_pitch']:.1f} mm wings level (criterion 25, kept, "
+                                          f"not loosened) and contact from {max(o95['roll_contact'], 0):.1f}° roll are "
+                                          "ACCEPTED AS MEASURED (open point 1 closed); L6Y rev D / L6Y2 rev C approved "
+                                          "as the 3-D yoke's basis"),
         ("pedals (r3)", f"±{mm(I.PEDALS['dy'])} centres, {mm(I.PEDALS['pad_wh'][0])} pads, measured face-on "
                         "(P1046408, MFD bezel scale + depth correction); rev B ±90 / 80 [E]. The crew knees sit on the "
                         f"hip-to-pedal line + {mm(I.MANIKIN['knee_splay'])} splay: 95th "
@@ -515,18 +516,9 @@ def open_points_items(ctx):
     e5 = o5f["pose"]["eye"]
     v200 = CG.vision(np.array([e5[0], -0.200, e5[1]]))["over_nose_down"]
     return [
-        f"KNEES vs YOKE: WHICH INPUT TO FIX? With the measured hub, grips and pedals (grip solids' bottom WL "
-        f"{mm(I.PANEL['mfd_z'] + I.YOKE['hub_dz'] + I.yoke_grip_low())}, pedals ±{mm(I.PEDALS['dy'])}), the 95th's "
-        f"knee meets a grip from {max(o95['roll_contact'], 0):.0f}° roll with neutral pedals (50th "
-        f"{max(o50['roll_contact'], 0):.0f}°); with full rudder the 95th touches it wings level "
-        f"({sgn(o95['rud_pitch'])}) and the 50th from {max(o50['rud_roll_contact'], 0):.0f}°. The estimated inputs move "
-        f"this more than the measured ones (sensitivity table): knees 30 wider -> 95th neutral contact "
-        f"{_deg(sw['p95m']['contact'])}; a 130° knee target (seat further aft) -> {_deg(sk['p95m']['contact'])}, full "
-        f"rudder {sgn(sk['p95m']['rud'])}, but the 50th's forward rudder needs {sk['p50m']['ext']:.0f}° "
-        f"(> {lim:.0f}°); the hub 50 higher -> {_deg(sh['p95m']['contact'])}, full-rudder contact from "
-        f"{_deg(sh['p95m']['rud_contact'])}. Please choose what to pin down: the seat-setting rule (knee target), the "
-        "knee spacing, the rudder travel, the hub height, or the roll travel / a roll limit. Wanted: the control-wheel "
-        "roll and rudder travel (AMM / POH) and a side-on photo of a seated pilot at the yoke.",
+        f"KNEES vs YOKE -- CLOSED (owner 2026-10-05): the 95th's {1000 * o95['yoke_pitch']:.1f} mm wings level "
+        f"(criterion 25 kept) and contact from {max(o95['roll_contact'], 0):.1f}° roll are accepted as measured; the "
+        "measured hub, grips, pedals and seat rule stay (sensitivity table for the record).",
         f"5TH-FEMALE ACCOMMODATION. At the forward notch, pedals cranked fully aft and the seat full up "
         f"(+{mm(I.CREW_SEAT['travel_z'])}, the travel limit [E]), her eye is {mm(-o5f['eye_dz'])} below the design eye: "
         f"over the nose {o5f['over_nose']:.1f}° along her BL (design eye {kc['vision']['over_nose_down']:.1f}°), "
@@ -585,7 +577,9 @@ REV_SHORT = (("A-D", "2026-09-26", "first issue .. Stage-3 review r2: tables, ch
              ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU re-measured [M]"),
              ("I-J", "2026-10-05", "yoke rev I (sheet L6Y), sweep per piece; rev J: the yoke as solids (L6Y2)"),
              ("K", "2026-10-05", "yoke rev K: knee rows on the rev K solids, criteria unchanged"),
-             ("L", "2026-10-05", "yoke rev L: knee rows on the rev L solids, sweep band fix, criteria unchanged"))
+             ("L", "2026-10-05", "yoke rev L: knee rows on the rev L solids, sweep band fix, criteria unchanged"),
+             ("M", "2026-10-05", "owner: L6Y rev D approved for 3-D; 95th knee 23.8 < 25 accepted as measured (row, "
+                                 "open point 1 closed); knee rows on the rev M solids"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

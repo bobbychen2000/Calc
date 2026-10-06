@@ -308,7 +308,7 @@
     ]
    ],
    "t": [
-    637.6788640149045,
+    604.7499999999973,
     118.0
    ],
    "scale": 0.2,
@@ -375,7 +375,7 @@
    ],
    "t": [
     512.0,
-    362.0
+    365.5
    ],
    "scale": 0.5,
    "box": null,
@@ -578,6 +578,50 @@
    "scale": 0.5,
    "box": null,
    "note": "section J-J of the band -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_W1": {
+   "name": "det_W1",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    505.0,
+    507.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail W1: section along the outboard grip axis through its forward switch -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_W2": {
+   "name": "det_W2",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    505.0,
+    551.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail W2: section along the inboard grip axis through its forward switch -- yoke-local mm",
    "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
   }
  }

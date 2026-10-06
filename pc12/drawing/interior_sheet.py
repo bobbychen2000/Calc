@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="L", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="AS SHOWN", rev="M", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -78,11 +78,10 @@ REVISIONS = (
     ("J", "2026-10-05", "yoke rev J (L6Y judges r1): the yoke as solids (model/yoke_geom.py, sheets L6Y / L6Y2) -- "
                         "crown 65.3, outboard web / inboard low neck, round trim-face and shield heads (97 / 90), "
                         "grips refitted per grip, toe 18 / 18; L6 / L6B take its outline and sweep pieces"),
-    ("K", "2026-10-05", "yoke rev K (L6Y judges r2): exact 2-D fields, switches as solids, outboard grip walls "
-                        "fore-aft, grip planes joint-fitted to 7 photos; the 95th clears 37 wings level, meets a grip "
-                        "from 15 deg of roll (criteria unchanged)"),
-    ("L", "2026-10-05", "yoke rev L (L6Y judges r3): grips refitted on 6 views, head zones, C2 outlines; knee sweep "
-                        "fixed (a grip band was dropped): the 95th clears 24 level (< 25: owner), contact 12.5 deg"),
+    ("K-L", "2026-10-05", "yoke rev K / L (L6Y judges r2 / r3): exact 2-D fields, switches as solids, grip planes "
+                          "fitted to the photos, head zones, C2 outlines; knee sweep fixed (a grip band was dropped)"),
+    ("M", "2026-10-05", "owner: L6Y rev D approved as the 3-D basis; the 95th's 24 level (< 25, criterion kept), contact "
+                        "12.5 deg: ACCEPTED AS MEASURED; yoke rev M (judges r4 drafting cleanup)"),
 )
 
 # ---- fills (clean sheet)

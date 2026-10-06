@@ -47,7 +47,8 @@ python3 -m drawing.yoke_overlay # the yoke solids ray-cast through the photo cam
                                 #   (private; landmarks, curated grip rows per band, pads, inboard neck -> deviations.json,
                                 #   the L6Y2 photo-check tables)
 python3 -m model.yoke_checks    # acceptance of the yoke solids: exact 2-D fields, nothing above the trim face / shield,
-                                #   no untabled section cusps, vertex normals vs analytic (printed on L6Y2)
+                                #   no untabled section cusps / creases (adaptive scan), smooth join fields, pads exposed
+                                #   as drawn, vertex normals vs analytic (printed on L6Y2)
 python3 -m drawing.sheet        # hidden-line drawings (~30 s) -> out/pc12_ga.*, out/pc12_sections.*
 python3 -m drawing.verify       # measures the SVG itself against the dimensions
 # dev viewer (three.js r160 expected at web/three_local -> a checkout of mrdoob/three.js tag r160):
@@ -776,18 +777,29 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   call-out), GEO8-05 rudder tab bay / flap canoes / fin root facets (not visible at the review cameras), the chin lip's
   face width (the drawn lip outline; a re-trace needs the drawing review).
 - Yoke design drawings (owner 2026-10-05: "the yoke isn't quite right ... better design drawings?"; DRAWING stage only,
-  the 3-D yoke is still rev H -- `interior.YOKE_REVH`, frozen -- until the owner approves): `interior.YOKE_DESIGN`
-  (rev L, every value source-tagged) -> the solids of `model/yoke_geom.py` (white cover with flush inserts; black body +
-  grips one moulding joined by a true round `rmin`; switches as solids; exact 2-D signed distances to C2-spline
-  outlines; the heads a `head_zone` of named surfaces and tabled rounds) -> sheets L6Y (front / side / above / B-B) and
-  L6Y2 (sections, grip profiles, details, corners & radii, photo check), every view an exact silhouette / cut;
-  `model/yoke_checks.py` acceptance (curve law, cusps with 3-D normal-turn confirmation, one piece per side, normals
-  on 9 patches); `drawing/yoke_overlay.py` ray-casts the solids through 8 photo cameras (private overlays, refs/cache;
-  the grips fitted on 6 views incl. P1046409, the AOPA press photo check-only); `drawing/yoke_station.py` the knee rows
-  with the neutral moved forward.  Stage-3 route stated on L6Y (trimmed patches + swept rounds, not an implicit
-  mesher).  Rev L fixed the knee sweep (`interior._clip_band` doubled a vertex on the band edge: NaN distances dropped
-  the inboard grip's lowest band, so rev K's 37 mm was optimistic; re-swept rev K 25.3).  Open (owner): the 95th clears
-  23.8 mm wings level (criterion 25, not loosened) and meets a grip from 12.5 deg of roll; the fore-aft station (every
-  posed photo 14-65 forward of the drawn neutral; a 45 mm shift leaves the knee rows unchanged); the grip toe (weak,
-  views from inboard only); crown soft break vs crease; J band vs full collar; shell skew <= 2 mm; the forward-face
-  switches (PTT / checklist expected, never seen).
+  the 3-D yoke is still rev H -- `interior.YOKE_REVH`, frozen -- until the Stage-3 yoke build): `interior.YOKE_DESIGN`
+  (rev M, every value source-tagged) -> the solids of `model/yoke_geom.py` (white cover with flush inserts; black body +
+  grips one moulding joined by a ROLLING-BALL round `rmin_ang` (true round at an angle, none where the faces run flush),
+  then each pad's pocket / groove / bead cut (`pad_finish`); each grip = its aft side (prism trimmed in the
+  `head_zone` -- an exact 2-D trim distance `trim_field`, bend R 4 -- joined R 3 to the head's aft shape) cut by the
+  shared walls and forward face, R r_hf where the head wraps onto the forward face; switches as solids incl. the [E]
+  forward-face PTT / checklist placeholders `fwd_switch`; 2-D signed distances to C2-spline outlines sampled every
+  0.05 mm (`curve_law`), exact within 0.3 mm and a C2 B-spline of exact node distances beyond (`Field2D`); the
+  rolling-ball's angle eased C2 through 90 deg (`_ang_map`); the body = side and top pieces (each rounded onto the
+  forward face) joined by a rolling ball, the aft face cut last (`_body_pieces`, `isect_ang`); the grips' forward
+  radius cap C2 (`fwd_radius`); the inboard fall-off's directrix one tangent curve
+  (`shield_directrix`); `design_key` hashes the source a process imported, so a file edited mid-run cannot re-key
+  its cache) -> sheets L6Y (front / side / above / B-B) and L6Y2
+  (sections with the leather pad hatched apart, grip profiles, details incl. W, corners & radii, photo check), every
+  view an exact silhouette / cut; `model/yoke_checks.py` acceptance (curve law + capped fillets, cusps, one piece per
+  side, normals on 9 patches, an ADAPTIVE CREASE scan of 14 views -- pixel pairs turning > 4 deg refined 2 x 16x --,
+  field ridges at the rounds' own surface points + the smallest gradient norm they read, pads exposed as drawn); `drawing/yoke_overlay.py` ray-casts the solids through
+  8 photo cameras (private overlays, refs/cache; the grips fitted on 6 views incl. P1046409, the AOPA press photo
+  check-only: its co-pilot camera is extrapolated from the pilot-yoke solution); `drawing/yoke_station.py` the knee
+  rows with the neutral moved forward.  Stage-3 route stated on L6Y (trimmed patches + swept rounds, not an implicit
+  mesher).  OWNER DECISIONS 2026-10-05: L6Y rev D / L6Y2 rev C approved as the 3-D basis (rev E / D carry the judges'
+  round-4 cleanup); the 95th's knee result (23.8 mm wings level vs the 25 mm criterion, kept; contact from 12.5 deg)
+  ACCEPTED AS MEASURED (L6B rev M); the centre-post compass stays.  Open (owner): the fore-aft station (every posed photo
+  14-65 forward of the drawn neutral); the grip toe (weak, views from inboard only; silhouettes 16.7 vs inboard pads
+  ~26); the trim head's depth (weak); crown soft break vs crease; J band vs full collar; the shell skew (one pattern in
+  8 views, kept symmetric); the forward-face switches ([E] placeholders, never seen).
