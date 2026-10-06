@@ -2233,6 +2233,74 @@
    "kind": "dielectric",
    "note": "blue caps",
    "srgb_hex": "#3F7CC4"
+  },
+  "annun_off_red": {
+   "baseColorFactor": [
+    0.06,
+    0.016,
+    0.014,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.14,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "master WARNING lens, unlit (smoked)",
+   "srgb_hex": "#45221F"
+  },
+  "annun_off_amber": {
+   "baseColorFactor": [
+    0.066,
+    0.044,
+    0.014,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.14,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "master CAUTION lens / ACS cap split, unlit (smoked)",
+   "srgb_hex": "#493B1F"
+  },
+  "annun_off_green": {
+   "baseColorFactor": [
+    0.016,
+    0.04,
+    0.022,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.14,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "ACS cap splits, unlit (smoked)",
+   "srgb_hex": "#223829"
+  },
+  "brush_seal": {
+   "baseColorFactor": [
+    0.055,
+    0.055,
+    0.06,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.95,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "quadrant slot brush seals",
+   "srgb_hex": "#424245"
   }
  }
 }

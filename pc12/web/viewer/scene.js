@@ -130,8 +130,9 @@ export const LOOK = {
   // under the calibrated window light law read as faint patches; a sweep at panel_408b / pilot / fd_cabin: 5 leaves
   // every P1046408 row as it was -- only the sunlit pedestal 113 -> 121 -- and the pilot's glareshield 86 -> 90;
   // az 95 / el 35 lit the pilot's seat and console, which P1046408 does not show: sheepskin 107 -> 168, console 13 -> 54)
-  sun: { intensity: qn('sun') ?? 5, color: 0xfff4e6, centre: [4.0, 0.0, 2.0], box: 1.9, dist: 8, near: 4, far: 13,
-    bias: -0.0003, normalBias: 0.006, radius: 3 },
+  // flight deck fix r1 (FDO1-05): 8 at outside.js SUN az 25 / el 45 -- a sunlit patch reads ~1.5 stops over its shade
+  sun: { intensity: qn('sun') ?? 8, color: 0xfff4e6, centre: [4.0, 0.0, 2.0], box: 1.9, dist: 8, near: 4, far: 13,
+    bias: -0.0003, normalBias: 0.006, radius: qn('sunrad') ?? 3 },
 };
 
 // Camera presets.  `dir` points from the target to the camera (glTF axes: X starboard, Y up, Z aft);

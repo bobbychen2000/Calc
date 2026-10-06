@@ -205,6 +205,13 @@ MATERIALS = {
     "annun_red":          ((0.55, 0.04, 0.03), 0.0, 0.30),
     "annun_green":        ((0.05, 0.40, 0.12), 0.0, 0.30),
     "annun_blue":         ((0.05, 0.20, 0.55), 0.0, 0.30),
+    # flight deck fix r1 (FID-FD1-03): the master WARNING / CAUTION lenses, the ACS caps' annunciator splits -- unlit
+    # smoked caps on the parked aircraft (P1046408 / 09 / 10, AOPA, the brochure: dark squares, a hint of their colour)
+    "annun_off_red":      ((0.060, 0.016, 0.014), 0.0, 0.14, dict(specular=0.6)),
+    "annun_off_amber":    ((0.066, 0.044, 0.014), 0.0, 0.14, dict(specular=0.6)),
+    "annun_off_green":    ((0.016, 0.040, 0.022), 0.0, 0.14, dict(specular=0.6)),
+    # the quadrant slots' brush seals: dark grey fibres against the black slot (the Pilatus throttle photo; FDO1-07)
+    "brush_seal":         ((0.055, 0.055, 0.060), 0.0, 0.95),
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)

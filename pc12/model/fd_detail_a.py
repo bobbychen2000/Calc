@@ -378,8 +378,10 @@ def ecs_vent(f, rr):
     brochure p.10]: a raised pod (panel_dark) round a satin bezel ring, the dark throat and the turned eyeball with its
     nozzle.  Returns [(Mesh, material)]."""
     out = []
-    pod = [(0.0, rr + 0.022), (0.003, rr + 0.020), (0.0075, rr + 0.012), (0.0085, rr + 0.007), (0.0085, rr + 0.004)]
-    out.append((_FD().revolve(pod, n=40, axis_origin=f.o, axis_dir=f.w, ref_dir=f.u, cap_ends=False), "panel_dark"))
+    # flight deck fix r1 (FID-FD1-08): the pod 76 mm across (rr + 0.014; P1046408 at the GI 275's scale: ~77 against its
+    # 82.6, the first build's rr + 0.022 = 92 mm read as a speaker), a slim moulded lip in the face's graphite
+    pod = [(0.0, rr + 0.014), (0.003, rr + 0.0125), (0.0065, rr + 0.009), (0.0085, rr + 0.0065), (0.0085, rr + 0.004)]
+    out.append((_FD().revolve(pod, n=40, axis_origin=f.o, axis_dir=f.w, ref_dir=f.u, cap_ends=False), "panel_graphite"))
     ring = [(0.0080, rr + 0.0045), (0.0105, rr + 0.0035), (0.0110, rr + 0.0005), (0.0060, rr - 0.0005)]
     out.append((_FD().revolve(ring, n=40, axis_origin=f.o, axis_dir=f.w, ref_dir=f.u, cap_ends=False), "panel_silver"))
     out.append((f.disk(0, 0, rr, 0.0040, 32), "black"))
@@ -446,8 +448,11 @@ def gfc700(f, aw, ah):
         out.append((knob(c + 0.0016 * f.w, f.w, f.u, 0.5 * rd - 0.0004, 0.0005, n=40, chamfer=0.0, cap=False),
                     "panel_silver"))                                                           # thin silver trim
         out.append((knob(c + 0.0010 * f.w, f.w, f.u, 0.5 * rd - 0.0016, 0.0012, n=40, chamfer=0.0), "bezel_black"))
-        out.append((fluted_knob(c + 0.0022 * f.w, f.w, f.u, 0.5 * od, 0.0072, flutes=24), "black"))
-        out.append((fluted_knob(c + 0.0094 * f.w, f.w, f.u, 0.5 * idm, 0.0062, flutes=18, depth=0.0004), "black"))
+        # flight deck fix r1 (FID-FD1-07): the knobs stand ~19 mm proud as the knurled cylinders of AOPA / P1046408
+        # (the first build's 15.6 mm stack read as shallow discs), a satin ring between the outer and inner knob
+        out.append((fluted_knob(c + 0.0022 * f.w, f.w, f.u, 0.5 * od, 0.0086, flutes=24), "black"))
+        out.append((knob(c + 0.0108 * f.w, f.w, f.u, 0.5 * od - 0.0012, 0.0008, n=40, chamfer=0.0), "panel_silver"))
+        out.append((fluted_knob(c + 0.0116 * f.w, f.w, f.u, 0.5 * idm, 0.0074, flutes=18, depth=0.0004), "black"))
     su_, sv_ = q["sensor"]
     out.append((knob(f.p(su_, sv_, zf - 0.0002), f.w, f.u, 0.0016, 0.0005, n=12, chamfer=0.4), "screen"))
     wu, wv, wd, ww = q["wheel"]                                        # VS thumbwheel: slot + ribbed wheel across u
@@ -465,9 +470,10 @@ def gfc700(f, aw, ah):
     kw, kh = q["key_wh"]
     for u, v in q["keys"]:                                             # keys: rounded caps, a light legend bar each
         fk = f.moved(u, v, zf)
-        out.append((FD._extrusion(fk.moved(c=0.0012), FD.rrect_loop(0.5 * kw, 0.5 * kh, 0.0015, nc=3), 0.0024,
-                                  bevel=0.0007, nb=1), "grip_black"))
-        out.append((fk.rect(-0.30 * kw, -0.10 * kh, 0.30 * kw, 0.10 * kh, 0.0028), "light_white"))
+        # raised charcoal caps 4 mm proud (FID-FD1-07: the 2.4 mm black caps vanished into the black face)
+        out.append((FD._extrusion(fk.moved(c=0.0020), FD.rrect_loop(0.5 * kw, 0.5 * kh, 0.0015, nc=3), 0.0040,
+                                  bevel=0.0008, nb=1), "panel_dark"))
+        out.append((fk.rect(-0.30 * kw, -0.10 * kh, 0.30 * kw, 0.10 * kh, 0.0044), "light_white"))
     return out
 
 
@@ -486,7 +492,7 @@ def eyebrow_items(fascia_frame, zc, sg):
     f = fascia_frame(sg * D["warn_bl"], zc)
     out.append((FD._extrusion(f.moved(c=0.002), FD.rrect_loop(0.0375, 0.016, 0.003, nc=4), 0.004, bevel=0.0008, nb=1),
                 "bezel_black"))
-    for k, mat in ((-1, "annun_red"), (1, "annun_amber")):
+    for k, mat in ((-1, "annun_off_red"), (1, "annun_off_amber")):     # unlit smoked lenses (FID-FD1-03)
         fk = f.moved(k * 0.019, 0.0, 0.004)
         out.append((FD._extrusion(fk.moved(c=0.0015), FD.rrect_loop(0.0155, 0.0135, 0.002, nc=3), 0.003, bevel=0.0006,
                                   nb=1), "bezel_black"))
@@ -592,7 +598,7 @@ def rocker_block(f, n, cap=(0.018, 0.028), pitch=0.023, pad=0.004, legend=True):
     return out
 
 
-def push_cap(f, w=0.012, h=0.012, proud=0.003, annun="annun_green"):
+def push_cap(f, w=0.012, h=0.012, proud=0.003, annun="annun_off_green"):
     """Square push-button cap (R 1, `proud` mm proud, black satin) with a legend bar and a dim annunciator split."""
     FD = _FD()
     out = [(FD._extrusion(f.moved(c=0.5 * proud), FD.rrect_loop(0.5 * w, 0.5 * h, 0.001, nc=3), proud, bevel=0.0006,
@@ -752,7 +758,8 @@ def lower_panel(sg):
                                       bevel=0.0003, nb=1), "bezel_black"))
             for v in (-0.0022, 0.0022):
                 out.append((f.rect(-0.015, v - 0.0006, 0.015, v + 0.0006, 0.0014), "light_white"))
-        for yy, an in ((0.186, "annun_green"), (0.208, "annun_green"), (0.231, "annun_amber"), (0.254, "annun_green")):
+        for yy, an in ((0.186, "annun_off_green"), (0.208, "annun_off_green"), (0.231, "annun_off_amber"),
+                       (0.254, "annun_off_green")):                 # unlit on a parked aircraft (FID-FD1-03)
             f = FD.face_frame(yy, 1.816).moved(c=q["plate_off"])
             out.append((FD._extrusion(f.moved(c=0.001), FD.rrect_loop(0.0105, 0.0105, 0.0015, nc=3), 0.002,
                                       bevel=0.0004, nb=1), "bezel_black"))
@@ -993,7 +1000,8 @@ def _bristles(x0, x1, y, zt, w):
     for sg in (-1, 1):
         a = np.array([[x0, y + sg * 0.5 * w, zt + 0.0004], [x1, y + sg * 0.5 * w, zt + 0.0004]])
         b = np.array([[x0, y + sg * 0.0006, zt - 0.003], [x1, y + sg * 0.0006, zt - 0.003]])
-        out.append((FD._oriented(FD._strip(a, b, closed=False), [0, 0, 1.0]), "rubber_black"))
+        # dark grey fibres against the black slot (FDO1-07: the throttle photo's brush seals read; rubber_black did not)
+        out.append((FD._oriented(FD._strip(a, b, closed=False), [0, 0, 1.0]), "brush_seal"))
     return out
 
 
@@ -1040,7 +1048,11 @@ def quadrant():
                 "pedestal_gunmetal"))
     out.append((FD._extrusion(fk.moved(c=0.004), FD.rrect_loop(0.008, 0.008, 0.0015, nc=3), 0.004, bevel=0.0007,
                               nb=1), "grip_black"))
-    out.append((fk.rect(-0.004, -0.004, 0.004, 0.004, 0.0064), "annun_red"))
+    # TRIM INTERRUPT: a black square cap with a white frame stroke, unlit (FID-FD1-03: the Pilatus throttle photo; the
+    # red cap read as an alarm on the parked aircraft)
+    for a_, b_, c_, d_ in ((-0.0058, 0.0050, 0.0058, 0.0058), (-0.0058, -0.0058, 0.0058, -0.0050),
+                           (-0.0058, -0.0050, -0.0050, 0.0050), (0.0050, -0.0050, 0.0058, 0.0050)):
+        out.append((fk.rect(a_, b_, c_, d_, 0.0063), "light_white"))
     for yy, horiz in ((y2, False), (y3, True)):                          # rockers in their raised bezels
         fk = ft.moved(0.006, yy, 0.0024)
         bw, bh = (0.016, 0.026) if not horiz else (0.026, 0.016)
@@ -1096,6 +1108,23 @@ def quadrant():
     for k in range(3):
         out.append((_box(root + [0.0, 0.0, 0.020 + 0.006 * k], (0.010, 0.0035, 0.0055)),
                     "paint_red" if k % 2 == 0 else "light_white"))
+    # a chrome collar where the arm enters the handle (the Pilatus throttle photo: the handle's root ring)
+    out.append((_FD().revolve([(0.0, 0.0), (0.0, 0.0125), (0.001, 0.0135), (0.0045, 0.0135), (0.0055, 0.0125),
+                               (0.0055, 0.0)], n=28,
+                              axis_origin=tip - 0.021 * _unit(tip - root), axis_dir=_unit(tip - root),
+                              ref_dir=[0, 1.0, 0], cap_ends=False), "chrome_trim"))
+    # abstract legend strokes on the plate (no lettering): the POWER title by the PCL slot, the flap angle marks' labels,
+    # the stabilised-propeller caution line along the plate's port edge (FDO1-07: the face read empty)
+    a0, b0 = q["pcl_slot"]
+    out.append((fp.rect(a0 - cx + 0.004, pcy + sw + 0.004, a0 - cx + 0.026, pcy + sw + 0.0065, 0.0003), "light_white"))
+    for k in range(4):
+        x_ = fx - 0.050 + 0.040 * k
+        out.append((fp.rect(x_ - cx - 0.003, fy + sw + 0.010, x_ - cx + 0.003, fy + sw + 0.0125, 0.0003),
+                    "light_white"))
+    out.append((fp.rect(a0 - cx, -hw + fw + 0.005, b0 - cx + 0.020, -hw + fw + 0.0062, 0.0003), "light_white"))
+    for k, (u0_, u1_) in enumerate(((0.0, 0.030), (0.034, 0.052), (0.056, 0.090), (0.094, 0.120))):
+        out.append((fp.rect(a0 - cx + 0.010 + u0_, -hw + fw + 0.0085, a0 - cx + 0.010 + u1_, -hw + fw + 0.0095, 0.0003),
+                    "light_white"))
     # flap lever: stem + black square paddle
     out.append((_cyl([fx + 0.010, fy, zt - 0.006], [fx, fy, FL + fh_ - 0.015], 0.0045, n=10), "metal_dark"))
     out.append((_se([fx, fy, FL + fh_ - 0.010], (0.012, 0.015, 0.016), (0.3, 0.3), nu=8, nv=12), "grip_black"))
@@ -1184,9 +1213,11 @@ def _corner_pads(fr, W, H, wo, wi, h, inset=0.0):
             from model import seats as S
             P = S._ccw(np.array([(cu - 0.5 * wo, v0), (cu + 0.5 * wo, v0), (cu + 0.5 * wi, v1), (cu - 0.5 * wi, v1)]))
             P = _FD()._fillet(P, 0.0012, n=2, max_seg=0.02)
-            out.append((_FD()._flat(_FD()._extrusion(fr.moved(c=0.0003), P, 0.0006, bevel=0.0002, nb=1)), "metal_dark"))
+            # dark charcoal, a shade off the bezel black (AOPA Garmin close-up: the PDU / MFD corners carry a dark
+            # chamfered insert with a small screw; the first build's grey metal read as tabs -- FDO1-06)
+            out.append((_FD()._flat(_FD()._extrusion(fr.moved(c=0.0003), P, 0.0006, bevel=0.0002, nb=1)), "panel_dark"))
             c = fr.p(cu, 0.5 * (v0 + v1), 0.0006)
-            out.append((knob(c - 0.0002 * fr.w, fr.w, fr.u, 0.0024, 0.0005, n=12, chamfer=0.6), "steel_dark"))
+            out.append((knob(c - 0.0002 * fr.w, fr.w, fr.u, 0.0017, 0.0005, n=12, chamfer=0.6), "steel_dark"))
     return out
 
 
@@ -1236,10 +1267,20 @@ def vspeed_placard(sg):
     f = FD.face_frame(sg * 0.547, 2.013).moved(c=0.0006)
     out = [(FD._extrusion(f.moved(c=0.0006), FD.rrect_loop(0.0225, 0.025, 0.0015, nc=3), 0.0012, bevel=0.0003, nb=1),
             "bezel_black")]
-    for k, v in enumerate((0.016, 0.0095, 0.003, -0.0035, -0.013, -0.0195)):
-        hl = 0.016 if k not in (4, 5) else 0.013
-        out.append((f.rect(-hl, v - 0.0008, hl - 0.010, v + 0.0008, 0.0016), "light_white"))
-        out.append((f.rect(hl - 0.008, v - 0.0008, hl, v + 0.0008, 0.0016), "light_white"))
+    # text-like rows (FID-FD1-07: the first build's full-width bars read as a louvred grille): two blocks as the AOPA
+    # close-up shows them -- four rows, a gap, two rows --, each row a label of word-length strokes on the left and a
+    # value on the right, 1 mm high (abstract: no lettering)
+    rng = np.random.default_rng(275 + sg)
+    for k, v in enumerate((0.0175, 0.0120, 0.0065, 0.0010, -0.0110, -0.0165)):
+        u = -0.0195
+        while True:
+            wl = float(rng.uniform(0.0025, 0.0065))
+            if u + wl > 0.0010:
+                break
+            out.append((f.rect(u, v - 0.0005, u + wl, v + 0.0005, 0.0016), "light_white"))
+            u += wl + 0.0014
+        out.append((f.rect(0.0080, v - 0.0005, 0.0080 + float(rng.uniform(0.006, 0.010)), v + 0.0005, 0.0016),
+                    "light_white"))
     return out
 
 

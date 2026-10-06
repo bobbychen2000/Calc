@@ -385,6 +385,16 @@ AO_SKIN_PARTS = ("fus_fwd", "fus_center", "fus_aft", "cowl_upper", "cowl_lower",
 AO_SPLIT = 0.060                        # m: the longest edge left on the flight deck's floor / walls / consoles
 AO_SPLIT_PARTS = ("flight_deck", "fd_consoles", "fd_divider", "interior_lining")
 AO_SPLIT_BOX = ((2.30, -1.0, 0.0), (4.80, 1.0, 1.75))   # model axes: the flight deck below the glareshield
+# flight deck fix r1 (FDO1-03 / FID-FD1-05): the glareshield, the windshield / side-window surround and the posts, the
+# flight deck's ceiling ahead of the divider -- their long triangles had smeared one vertex's occlusion / window light
+# into dark blots (the post feet, the hood) -- split to AO_SPLIT_HI as well
+AO_SPLIT_HI = 0.035
+AO_SPLIT_BOX_HI = ((2.85, -1.0, 1.75), (4.30, 1.0, 2.75))
+# ... and the bake's per-vertex estimates averaged over AO_DENOISE m of like-facing neighbours on the flight deck
+# (cad/ao._denoise; the cabin aft of AO_DENOISE_X keeps its edge smoothing only, as tuned for T4 / T14)
+AO_DENOISE = 0.035
+AO_DENOISE_X = 4.75
+AO_SKY_K = 24                           # window-sky directions per vertex (was 16: the gain x18 amplified its noise)
 AO_SKY_BOX = ((0.90, -1.05, 0.15), (13.70, 1.05, 2.95))
 GLASS = ("glass", "lens")
 AO_GLOW = 0.25                          # the cabin's general glow in the bounce's radiance proxy (x albedo)
@@ -403,22 +413,25 @@ def _albedo(mat):
 def bake_interior_ao(parts):
     from cad import ao
     t0 = time.time()
-    lo, hi = (np.asarray(b) for b in AO_SPLIT_BOX)
-    sel = lambda c: np.all((c >= lo) & (c <= hi), axis=1)      # noqa: E731
-    added = sum(ao.presplit([m for m, _ in parts[pid].meshes], AO_SPLIT, sel) for pid in AO_SPLIT_PARTS if pid in parts)
+    added = 0
+    for box, ml in ((AO_SPLIT_BOX, AO_SPLIT), (AO_SPLIT_BOX_HI, AO_SPLIT_HI)):
+        lo, hi = (np.asarray(b) for b in box)
+        sel = lambda c, lo=lo, hi=hi: np.all((c >= lo) & (c <= hi), axis=1)      # noqa: E731
+        added += sum(ao.presplit([m for m, _ in parts[pid].meshes], ml, sel) for pid in AO_SPLIT_PARTS if pid in parts)
     t1 = time.time()
     rec = [m for p in parts.values() if p.group == "Interior" for m, _ in p.meshes]
     solid = lambda pid: [m for m, mat in parts[pid].meshes if not mat.startswith(GLASS)] if pid in parts else []  # noqa: E731
     occ = rec + [m for pid in AO_DOOR_PARTS for m in solid(pid)]
-    occl = ao.bake(rec, occ)
+    dn = (AO_DENOISE, lambda P: P[:, 0] < AO_DENOISE_X)
+    occl = ao.bake(rec, occ, denoise=dn)
     t2 = time.time()
     walls = rec + [m for pid in AO_SKIN_PARTS for m in solid(pid)]
     outside = lambda P: ~F.inside(P[:, 0], P[:, 1], P[:, 2], margin=-0.02)    # noqa: E731
-    skyv = ao.sky(rec, walls, outside, AO_SKY_BOX)
+    skyv = ao.sky(rec, walls, outside, AO_SKY_BOX, k=AO_SKY_K, denoise=dn)
     t3 = time.time()
     mats = [mat for p in parts.values() if p.group == "Interior" for _, mat in p.meshes]
     rad = [_albedo(mat) * (sv + AO_GLOW) + AO_EMIT.get(mat, 0.0) for mat, sv in zip(mats, skyv)]
-    light = ao.sky(rec, walls, outside, AO_SKY_BOX, bounce=(rec, rad))
+    light = ao.sky(rec, walls, outside, AO_SKY_BOX, bounce=(rec, rad), k=AO_SKY_K, denoise=dn)
     for m, a, b in zip(rec, occl, light):
         m.AO = np.stack([a, b], 1)
     nv = sum(len(m.V) for m in rec)

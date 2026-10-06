@@ -84,7 +84,7 @@ def _frames(N):
 
 
 def bake(receivers, occluders, spacing=0.010, steps=STEPS, far=(0.10, 0.36, 0.45), offset=0.003, k=K_DIRS,
-         smooth=1, workers=-1, chunk=60000, edt_from=0.08, edt_h=0.016):
+         smooth=1, workers=-1, chunk=60000, edt_from=0.08, edt_h=0.016, denoise=None):
     """Ambient occlusion (n,) in [0, 1] (1 = open) per vertex of each mesh in `receivers` (list), occluded by the
     surfaces of `occluders` (list of meshes, normally including the receivers).  far = (t0, t1, w1): blockers beyond
     t0 count with a weight falling linearly to w1 at t1.  The steps from edt_from on (cone radius >= 40 mm) read the
@@ -136,7 +136,37 @@ def bake(receivers, occluders, spacing=0.010, steps=STEPS, far=(0.10, 0.36, 0.45
             vis = np.minimum(vis, c)
         vis = np.minimum(1.0, vis / flat[None, :])
         ao[s:s + chunk] = vis.mean(1)
+    if denoise is not None:
+        ao = _denoise(V, N, ao, *denoise)
     return _scatter(receivers, ao[inv], cuts, smooth)
+
+
+def _denoise(V, N, a, radius, select=None, ndot=0.75):
+    """Normal-aware spatial filter of per-representative values `a` (flight deck fix r1, FDO1-03 / FID-FD1-05): each
+    selected representative becomes the Gaussian-weighted mean (sigma radius / 2) of the representatives within
+    `radius` whose normals lie within acos(ndot) of its own.  The per-vertex estimates are a dozen or two rays each --
+    noise that the viewer's window-light gain (x18 at a low sky share) turned into blotches on the long triangles of the
+    glareshield and the posts; edge smoothing (_smooth) averages over the mesh's own spacing only, which is centimetres
+    there.  Unselected representatives keep their values (and still feed their neighbours)."""
+    if not len(V):
+        return a
+    sel = np.ones(len(V), bool) if select is None else np.asarray(select(V), bool)
+    if not sel.any():
+        return a
+    tree = cKDTree(V)
+    idx = np.nonzero(sel)[0]
+    out = a.copy()
+    sig2 = (0.5 * radius) ** 2
+    for s0 in range(0, len(idx), 50000):
+        ii = idx[s0:s0 + 50000]
+        d, j = tree.query(V[ii], k=48, distance_upper_bound=radius)
+        ok = np.isfinite(d)
+        j = np.where(ok, j, 0)
+        w = np.exp(-0.5 * np.where(ok, d, 0.0) ** 2 / sig2) * ok
+        w *= np.sum(N[j] * N[ii][:, None, :], axis=2) >= ndot
+        sw = w.sum(1)
+        out[ii] = np.where(sw > 0, (w * a[j]).sum(1) / np.maximum(sw, 1e-12), a[ii])
+    return out
 
 
 def _representatives(meshes, cell=0.006, nq=2.0):
@@ -202,7 +232,7 @@ def voxelize(meshes, lo, h, shape, spacing=None, dilate=1):
 
 
 def sky(receivers, walls, outside, box, h=0.02, reach=2.5, k=16, theta_max=85.0, offset=0.02, step=None,
-        smooth=2, chunk=40000, bounce=None):
+        smooth=2, chunk=40000, bounce=None, denoise=None):
     """Window-sky visibility (n,) in [0, 1] per vertex of each mesh in `receivers`.  walls: the blocking meshes (no
     glass); outside(P) -> bool: points outside the fuselage (a ray that gets there before a wall saw out); box = (lo, hi)
     of the voxel grid (model axes).  The grid holds 0 free / 1 wall / 2 outside (evaluated once at the voxel centres).
@@ -224,7 +254,7 @@ def sky(receivers, walls, outside, box, h=0.02, reach=2.5, k=16, theta_max=85.0,
     rad = None
     if bounce is not None:
         rad = _radiance_grid(bounce[0], bounce[1], lo, h, shape)
-    return _march(receivers, occ, lo, h, reach, k, theta_max, offset, step or 0.5 * h, smooth, chunk, rad)
+    return _march(receivers, occ, lo, h, reach, k, theta_max, offset, step or 0.5 * h, smooth, chunk, rad, denoise)
 
 
 def _radiance_grid(meshes, values, lo, h, shape, spacing=None):
@@ -255,7 +285,7 @@ def _radiance_grid(meshes, values, lo, h, shape, spacing=None):
     return ndimage.maximum_filter(g, size=3)
 
 
-def _march(receivers, occ, lo, h, reach, k, theta_max, offset, step, smooth, chunk, rad=None):
+def _march(receivers, occ, lo, h, reach, k, theta_max, offset, step, smooth, chunk, rad=None, denoise=None):
     ts = np.arange(offset, reach + 1e-9, step)
     D = _dirs_cos(k, theta_max)
     dims = np.array(occ.shape)
@@ -302,6 +332,8 @@ def _march(receivers, occ, lo, h, reach, k, theta_max, offset, step, smooth, chu
                 act = act[state[act] == 0]
             got[state == 1] = 1.0
             res[s0:s0 + chunk] = (got if rflat is not None else (state == 1)).reshape(-1, k).mean(1)
+    if denoise is not None:
+        res = _denoise(V, N, res, *denoise)
     return [np.clip(a, 0.0, 1.0) for a in _scatter(receivers, res[inv], cuts, smooth)]
 
 

@@ -141,8 +141,11 @@ NEW_MATS = {"fdb_visor", "fdb_cb_glow_blue", "fdb_cb_glow_green", "fdb_cb_glow_y
             "stitch_thread", "placard_red", "legend_plate", "legend_lit", "panel_silver", "black", "bezel_black",
             "metal_dark", "lens", "seal", "panel_dark", "light_white", "screen", "light_red", "psu_panel"}
 lin = parts["interior_lining"]
-allT = np.vstack([m.V[m.F] for pid in ("interior_lining", "flight_deck", "fd_consoles", "fd_divider") if pid in parts
-                  for m, _ in parts[pid].meshes if len(m.F)])
+# (+ the flight-deck glass: the windshield's heating bus bars -- flight deck fix r1, fd_detail_b GLAZING_TRIM wire_* --
+# are mounted on it, 2.5 mm inside it; check 30 keeps every piece >= 2 mm off the glass, so only a piece within the
+# 2-3 mm band beside the glass can be seated by it)
+allT = np.vstack([m.V[m.F] for pid in ("interior_lining", "flight_deck", "fd_consoles", "fd_divider", "glazing_flightdeck")
+                  if pid in parts for m, _ in parts[pid].meshes if len(m.F)])
 loose = []
 n_pc = 0
 fd_box = lambda V: (V[:, 0] < 4.60) & (V[:, 0] > 3.0)                                 # noqa: E731

@@ -652,6 +652,15 @@ SPEC.update({
     "annun_red":          dict(kind="dielectric", base=(0.55, 0.04, 0.03), rough=0.30, note="red caps / lenses"),
     "annun_green":        dict(kind="dielectric", base=(0.05, 0.40, 0.12), rough=0.30, note="green caps / LEDs"),
     "annun_blue":         dict(kind="dielectric", base=(0.05, 0.20, 0.55), rough=0.30, note="blue caps"),
+    # flight deck fix r1 (FID-FD1-03 / FDO1-07): unlit smoked caps, the quadrant's brush seals
+    "annun_off_red":      dict(kind="dielectric", base=(0.060, 0.016, 0.014), rough=0.14, spec=0.3,
+                               note="master WARNING lens, unlit (smoked)"),
+    "annun_off_amber":    dict(kind="dielectric", base=(0.066, 0.044, 0.014), rough=0.14, spec=0.3,
+                               note="master CAUTION lens / ACS cap split, unlit (smoked)"),
+    "annun_off_green":    dict(kind="dielectric", base=(0.016, 0.040, 0.022), rough=0.14, spec=0.3,
+                               note="ACS cap splits, unlit (smoked)"),
+    "brush_seal":         dict(kind="dielectric", base=(0.055, 0.055, 0.060), rough=0.95,
+                               note="quadrant slot brush seals"),
 })
 
 

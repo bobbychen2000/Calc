@@ -16,7 +16,13 @@ const D2R = Math.PI / 180;
 // on the pedestal, the sub-panels and the seats, the glareshield's shade over the PDU tops (a sun-only sweep: az 65 /
 // el 26 -- the look assessment's -- lit only the glareshield's lip from the seats; az 40 / el 50 and the port-side
 // mirror images lit no more)
-export const SUN = { az: 125, el: 40 };
+const Q_O = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+const qo = (k, d) => { const v = parseFloat(Q_O.get(k)); return Number.isFinite(v) ? v : d; };
+// flight deck fix r1 (FDO1-05): az 25 / el 45 -- ahead and to starboard, over the windshield: sun on the hood with the
+// posts' shadows across it, on the pedestal, the armrests and the seats, the panel in the glareshield's shade (P1046409:
+// the sun patch on the co-pilot's fleece; the look track's az 125 / el 40 from behind the starboard wing root lit only
+// the stack face from the seats)
+export const SUN = { az: qo('sunaz', 25), el: qo('sunel', 45) };      // ?sunaz= ?sunel= (look development)
 export function sunDirection(az = SUN.az, el = SUN.el) {
   const a = az * D2R, e = el * D2R;
   // model (-cos e cos a, cos e sin a, sin e) -> glTF (y, z, x)
@@ -37,7 +43,11 @@ export const SKY = {
   // up-facing surface -- the sheepskin read slate blue, B - R ~50 against P1046408's ~22)
   envDesat: 0.6,
 };
+// flight deck fix r1 (FDO1-08): the apron as seen through the glazing x `shown` (0.86: the near-white concrete clipped
+// at the interior exposure); the image-based light inside keeps the full value (`environment()`: the calibrated cabin
+// light is unchanged)
 const GROUND = { size: 400, y: -0.004, apron: [-120, -160, 240, 260], slab: 7.5, concrete: '#c9c6bf', grass: '#6f7a52',
+  shown: 0.86, envK: 1.05,
   taxi: '#d9b43a', farColor: [0.20, 0.26, 0.13], farR: [199, 440], ridgeR: 400, ridgeColor: [0.42, 0.50, 0.58] };
 // hangars / buildings: centre X, Z, width, height, depth (m), albedo; pre-lit by facing the sun (vertex colours)
 const HANGARS = [
@@ -45,6 +55,11 @@ const HANGARS = [
   [130, -20, 30, 10, 60, [0.8, 0.82, 0.85]], [-150, -40, 40, 9, 25, [0.85, 0.8, 0.75]],
   [10, -190, 90, 12, 20, [0.9, 0.9, 0.92]],
 ];
+
+// parked shapes on the apron (FDO1-08: the photos show other aircraft and vehicles beyond the nose): generic low-poly
+// single-engine turboprops (white, grey trim; no markings) and a tug -- [x, z, heading deg (0 = nose to -Z), scale]
+const PARKED = [[-34, -52, 155, 1.0], [42, -66, 200, 0.95], [-62, -78, 120, 1.05]];
+const TUGS = [[30, -58, 70]];
 
 // a deterministic PRNG (the apron's mottling is the same on every load and device)
 function rng(seed) {
@@ -96,6 +111,13 @@ function facadeTexture() {
   for (let i = 0; i <= 8; i++) { const x = W * (0.08 + 0.84 * i / 8); g.beginPath(); g.moveTo(x, H * 0.34); g.lineTo(x, H); g.stroke(); }
   g.fillStyle = '#5d6b78';
   for (let x = W * 0.1; x < W * 0.9; x += W * 0.07) g.fillRect(x, H * 0.16, W * 0.045, H * 0.08);   // high windows
+  // (FDO1-08) cladding panel seams, the door leaves' horizontal joints and a shade of grime toward the ground
+  g.fillStyle = 'rgba(70,74,80,0.35)';
+  for (let x = 0; x < W; x += W / 16) g.fillRect(x, 10, 1.5, H * 0.34 - 10);
+  for (const y of [0.52, 0.70, 0.88]) g.fillRect(W * 0.08, H * y, W * 0.84, 1.5);
+  const gr = g.createLinearGradient(0, H * 0.75, 0, H);
+  gr.addColorStop(0, 'rgba(60,58,54,0)'); gr.addColorStop(1, 'rgba(60,58,54,0.28)');
+  g.fillStyle = gr; g.fillRect(0, H * 0.75, W, H * 0.25);
   return cv;
 }
 
@@ -145,7 +167,8 @@ void main() {
     tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
     this._tex = tex;
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(G.size, G.size),
-      new THREE.MeshBasicMaterial({ name: 'outside_ground', map: tex, color: lin([1.05, 1.05, 1.05]), depthWrite: false }));
+      new THREE.MeshBasicMaterial({ name: 'outside_ground', map: tex, color: lin([G.shown, G.shown, G.shown]), depthWrite: false }));
+    this._groundMat = ground.material;
     ground.rotation.x = -Math.PI / 2; ground.position.y = G.y; ground.renderOrder = -8;
     w.add(ground);
     // ---- hangars (pre-lit: sunlit faces bright, the shaded ones sky-lit): corrugated cladding, a darker door bay
@@ -169,6 +192,60 @@ void main() {
       const m = new THREE.Mesh(geo, [side, side, roof, roof, side, side]);
       m.position.set(cx, bh / 2, cz);
       w.add(m);
+    }
+    // ---- parked aircraft and a tug (pre-lit like the hangars; generic shapes, no markings)
+    const prelit = (geo, col) => {
+      const nrm = geo.attributes.normal, c = [], n = new THREE.Vector3();
+      for (let i = 0; i < nrm.count; i++) {
+        n.fromBufferAttribute(nrm, i);
+        const k = lit(n);
+        c.push(col[0] * k, col[1] * k, col[2] * k);
+      }
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+      return geo;
+    };
+    const vmat = new THREE.MeshBasicMaterial({ name: 'outside_parked', vertexColors: true });
+    const part = (geo, col, x, y, z, rx = 0, ry = 0, rz = 0) => {
+      geo.rotateX(rx); geo.rotateY(ry); geo.rotateZ(rz); geo.translate(x, y, z);
+      return prelit(geo.toNonIndexed(), col);
+    };
+    const WHITE = [0.86, 0.87, 0.88], GREY = [0.42, 0.44, 0.47], DARK = [0.06, 0.065, 0.07];
+    for (const [px, pz, hd, sc] of PARKED) {
+      const gs = [
+        part(new THREE.CylinderGeometry(0.62, 0.78, 9.0, 16), WHITE, 0, 1.75, 0.6, Math.PI / 2),          // fuselage
+        part(new THREE.ConeGeometry(0.62, 3.6, 16), WHITE, 0, 1.75, 6.9, Math.PI / 2),                    // tail cone
+        part(new THREE.SphereGeometry(0.78, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), WHITE, 0, 1.75, -3.9, -Math.PI / 2),
+        part(new THREE.ConeGeometry(0.30, 0.55, 12), GREY, 0, 1.75, -4.95, -Math.PI / 2),                  // spinner
+        part(new THREE.BoxGeometry(16.0, 0.22, 1.8), WHITE, 0, 1.25, -0.6),                                 // wing
+        part(new THREE.BoxGeometry(0.16, 2.3, 1.6), WHITE, 0, 3.4, 7.6),                                    // fin
+        part(new THREE.BoxGeometry(5.2, 0.12, 1.0), WHITE, 0, 4.5, 8.0),                                    // T-tail
+        part(new THREE.BoxGeometry(1.15, 0.38, 0.06), DARK, 0, 2.35, -2.45, 0.55),                          // windshield
+        part(new THREE.BoxGeometry(1.62, 0.32, 2.6), DARK, 0, 2.05, 0.2),                                   // window band
+        part(new THREE.CylinderGeometry(0.18, 0.18, 1.2, 8), GREY, 0, 0.55, -3.2),                          // nose leg
+        part(new THREE.CylinderGeometry(0.28, 0.28, 0.2, 12), DARK, 0, 0.28, -3.2, 0, 0, Math.PI / 2),      // nose wheel
+        part(new THREE.CylinderGeometry(0.32, 0.32, 0.24, 12), DARK, -2.25, 0.32, 0.4, 0, 0, Math.PI / 2),  // mains
+        part(new THREE.CylinderGeometry(0.32, 0.32, 0.24, 12), DARK, 2.25, 0.32, 0.4, 0, 0, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.1, 0.1, 1.1, 6), GREY, -2.25, 0.85, 0.4),
+        part(new THREE.CylinderGeometry(0.1, 0.1, 1.1, 6), GREY, 2.25, 0.85, 0.4),
+      ];
+      for (const g of gs) {
+        const m = new THREE.Mesh(g, vmat);
+        m.scale.setScalar(sc);
+        m.rotation.y = -hd * D2R;
+        m.position.set(px, 0, pz);
+        w.add(m);
+      }
+    }
+    for (const [tx, tz, hd] of TUGS) {
+      for (const g of [part(new THREE.BoxGeometry(1.5, 0.75, 2.6), [0.55, 0.45, 0.14], 0, 0.62, 0),
+        part(new THREE.BoxGeometry(1.2, 0.85, 0.9), [0.55, 0.45, 0.14], 0, 1.4, 0.7),
+        part(new THREE.BoxGeometry(1.1, 0.45, 0.05), DARK, 0, 1.55, 0.24),
+        ...[-0.62, 0.62].flatMap((x) => [-0.85, 0.85].map((z) => part(new THREE.CylinderGeometry(0.3, 0.3, 0.25, 10), DARK, x, 0.3, z, 0, 0, Math.PI / 2)))]) {
+        const m = new THREE.Mesh(g, vmat);
+        m.rotation.y = -hd * D2R;
+        m.position.set(tx, 0, tz);
+        w.add(m);
+      }
     }
     // ---- the ridge on the horizon (a hazy blue-grey band of hills)
     const N = 256, pos = [], idx = [];
@@ -206,10 +283,13 @@ void main() {
     const zen = this._skyMat.uniforms.uZen.value, keep = zen.clone();
     const y = 0.2126 * zen.r + 0.7152 * zen.g + 0.0722 * zen.b, k = SKY.envDesat;
     zen.setRGB(zen.r + (y - zen.r) * k, zen.g + (y - zen.g) * k, zen.b + (y - zen.b) * k, THREE.LinearSRGBColorSpace);
+    const gk = this._groundMat.color.clone();
+    this._groundMat.color.setRGB(GROUND.envK, GROUND.envK, GROUND.envK, THREE.LinearSRGBColorSpace);
     const pm = new THREE.PMREMGenerator(renderer);
     this._env = pm.fromScene(es, 0, 0.1, 500).texture;
     pm.dispose();
     zen.copy(keep);
+    this._groundMat.color.copy(gk);
     return this._env;
   }
   // the cached environment belongs to a lost context: forget it (not disposed: its GL objects are gone)

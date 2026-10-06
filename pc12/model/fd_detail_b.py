@@ -93,6 +93,8 @@ GLAZING_TRIM = dict(
     # WL 2.09-2.11, top 2.43-2.46, aft edge STA 4.15-4.19, front-low corner ~3.56 / 2.15 (S15 panoramas, +-0.03); the
     # front edge 35 mm in (P1046408 overlay: the glass shows up to ~1/3 of the 50 mm tried first) [M]
     sw_margin=(0.012, 0.175, 0.085, 0.035, 0.035), sw_radii=(0.120, 0.105, 0.045, 0.050, 0.050),
+    wire_d=(0.015, 0.023), wire_w=0.0008,   # [E] heating bus bars inside the visible edge (P1046408 / 10), dark grey,
+    wire_depth=0.0070,     # 2.5 mm off the glass's inner face (fit_check 30 >= 2 mm; 22: seated within 3 mm)
     seal_w=0.004,          # [M] black seal lip over the glass: 4 mm (P1046409 / 10, AOPA and the PRO simulator photos
     #                        show at most a hairline dark edge at the glass; the 8 mm first tried drew a heavy black outline
     #                        round every pane from the crew seats)
@@ -333,18 +335,55 @@ def pane_moulding(kind, side):
     s_in = PV + g["seal_w"] * in_dir - g["glass_d"] * N3V
     seal = grid_surface(np.stack([s_in, s_out], 1), close_u=True)
     seal = _orient(seal, lambda C: -np.mean(N3V, 0)[None].repeat(len(C), 0))
-    return [(funnel, "lining_flightdeck"), (seal, "seal")], G, lab
+    out = [(funnel, "lining_flightdeck"), (seal, "seal")]
+    if kind == "ws":
+        # the windshield's heating bus bars / wires: thin dark lines on the glass's inner side parallel to the A-pillar
+        # and centre-post edges (P1046408 / 10 show two or three of them beside each post; flight deck fix r1
+        # FID-FD1-09), 2.5 mm inside the glass (fit_check 30 / 22), dark metal (black read as cracks across the glass)
+        for k0, k1 in _label_spans(lab, (1, 3), trim=4):
+            idx = np.arange(k0, k1)
+            for d0 in g["wire_d"]:
+                a = PV[idx] + d0 * in_dir[idx] - g["wire_depth"] * N3V[idx]
+                b = PV[idx] + (d0 + g["wire_w"]) * in_dir[idx] - g["wire_depth"] * N3V[idx]
+                w = grid_surface(np.stack([a, b], 1))
+                out.append((_orient(w, lambda C: -np.mean(N3V, 0)[None].repeat(len(C), 0)), "metal_dark"))
+    return out, G, lab
+
+
+def _label_spans(lab, keep, trim=0):
+    """Index spans [k0, k1) of the cyclic label sequence `lab` whose label is in `keep`, `trim` points off both ends
+    (clear of the corners); spans wrapping the loop's start are left out."""
+    out = []
+    n = len(lab)
+    k = 0
+    while k < n:
+        if lab[k] in keep:
+            j = k
+            while j < n and lab[j] == lab[k]:
+                j += 1
+            whole = (k > 0 or lab[-1] != lab[0]) and (j < n or lab[-1] != lab[0])
+            if whole and j - k > 2 * trim + 2:
+                out.append((k + trim, j - trim))
+            k = j
+        else:
+            k += 1
+    return out
 
 
 SILL = dict(
     leather_z=2.230,       # [M] side-window reveal in leather below this WL (the sill and the aft-lower corner: AOPA /
     #                        P1046409 -- the stitched leather panel wraps the window bottom up to ~40 % of the aft edge)
-    stitch_rows=(5, 10),   # funnel rows carrying a stitch seam (tau 0.28 near the opening, 0.87 on the roll)
+    stitch_rows=(10,),     # funnel rows carrying a stitch seam (tau 0.87 on the roll; flight deck fix r1 FDO1-04: one
+    #                        tone-on-tone seam -- the photos show no light thread on the sill, the two light seams read
+    #                        as white dashed lines round the side windows from the seats)
     # placards on the sill top, (u from the sill's forward end, width, height) [M] AOPA / P1046409 / 10 (abstract):
     # a small black / white placard at the forward end, then two red ones, all on the sill's narrow forward part
     # (x < 3.93, 31-45 mm wide between the stitch rows: aft of it the reveal fans out into the window's aft-lower
     # corner and the placards had drawn as skewed red parallelograms ~2x their size)
-    placards=((0.055, 0.034, 0.015, "white"), (0.100, 0.085, 0.014, "red"), (0.195, 0.095, 0.016, "red")),
+    # flight deck fix r1 (FDO1-04): one red placard and a dark one, about half the first build's lengths (from the
+    # crew seats, 0.3 m off, the 85 / 95 mm red bands read as broad red stripes along the sill; P1046410 / AOPA show a
+    # dark placard group with one red label)
+    placards=((0.055, 0.034, 0.014, "white"), (0.098, 0.046, 0.012, "red"), (0.153, 0.040, 0.012, "white")),
 )
 
 
@@ -378,7 +417,7 @@ def glazing_mouldings():
                     out.append((_orient(m, lambda C, f=funnel: _toward(f, C)), mat))
                 Nn = _grid_n(G[il], funnel)
                 for r in SILL["stitch_rows"]:
-                    out.append((dashes(G[il, r], Nn[:, r]), "stitch_thread"))
+                    out.append((dashes(G[il, r], Nn[:, r]), "panel_grey"))      # tone-on-tone (FDO1-04)
                 # placards on the sill top (sill label 0 columns, between the stitch rows)
                 sill_cols = np.array([i for i in il if lab[i] == 0])
                 if len(sill_cols) > 4:
@@ -679,7 +718,9 @@ def cb_panels(fl):
                         "metal_dark"))                                              # zip pull
             out.append((Ml.patch(ul(xa_) - 0.01, vl(zs - 0.5 * hs - 0.006), ul(xb_) + 0.01,
                                  vl(zs - 0.5 * hs - 0.003), 0.0012, step=0.02), "panel_silver"))
-            for xp, w, h in ((x0 + 0.20, 0.090, 0.008), (x0 + 0.31, 0.120, 0.009)):
+            # (flight deck fix r1 FDO1-04: 70 / 85 mm long -- the AOPA studio photo's pair over the RH panels, ~0.1 m
+            # each; the first build's 90 / 120 mm read as long red bars from the crew seats)
+            for xp, w, h in ((x0 + 0.20, 0.070, 0.008), (x0 + 0.30, 0.085, 0.009)):
                 R = [(ul(xp), vl(zs - 0.5 * hs - 0.016), ul(xp + w), vl(zs - 0.5 * hs - 0.016 + h))]
                 out.append((Ml.quads(R, 0.0010), "placard_red"))
                 out.append((Ml.quads(legend_rects(ul(xp) + 0.003, vl(zs - 0.5 * hs - 0.016) + 0.0012, w - 0.006,
