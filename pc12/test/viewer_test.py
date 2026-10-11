@@ -2204,18 +2204,23 @@ async def fd_look_checks(page, shots=True):
         top = k.copy()
         top[H // 3:, :] = False                       # the upper third: the sky over the cowl
         stats[sid] = (float(np.median(L[k])) if k.sum() else 0.0, float(np.std(L[k])) if k.sum() else 0.0,
-                      float(np.median(img[top][:, 2] - img[top][:, 0])) if top.sum() > 50 else -99.0, int(k.sum()))
+                      float(np.median(img[top][:, 2] - img[top][:, 0])) if top.sum() > 50 else -99.0, int(k.sum()),
+                      float(np.median(L[top])) if top.sum() > 50 else 0.0)
         look[sid] = await js(pg, "const I = window.viewer._internals, st = I.stage; return {exp: st.renderer.toneMappingExposure, env: st.envSource, "
                                  "world: st.outside.group.visible, grid: st.grid.visible, sun: st.sun.intensity, key: st.key.intensity, "
                                  "cast: I.model.meshRecs.filter((r) => r.mesh.castShadow && /^(glass|lens)/.test(r.mesh.material.name)).length};")
         await js(pg, V + "T.exit({motion: false}); await V.frames(1);")
-    ok1 = all(v[0] >= 225 and v[1] > 4 and v[2] >= 8 and v[3] > 1000 for v in stats.values()) and \
+    # (flight deck fix r2 FDO2-08 / FID-FD2-08: the judges asked for the apron at ~150-180 as seen -- it filled the side
+    # windows near-white, ~230 -- so the whole-window median now sits ~190-215; the sky over the cowl, the upper third
+    # of the window pixels, stays as bright as P1046408 / 10's through the glass: >= 225)
+    ok1 = all(v[4] >= 225 and v[0] >= 170 and v[1] > 4 and v[2] >= 8 and v[3] > 1000 for v in stats.values()) and \
         all(l["world"] and not l["grid"] and l["env"] == "outside" and l["sun"] > 0 and l["key"] == 0 and l["cast"] == 0 for l in look.values())
-    check("[FD-L1] a real world through the glazing at the pilot / co-pilot stops: the window pixels bright (median >= 225) "
-          "and not a flat void (sd > 4), blue sky above the cowl (B - R >= 8); the world, the sun and the outside "
-          "environment on, the ground grid and the key light off, no glass casting", ok1,
-          " | ".join(f"{s}: median {v[0]:.0f}, sd {v[1]:.1f}, sky B-R {v[2]:.0f} ({v[3]} px)" for s, v in stats.items())
-          + f" | {look['pilot']}")
+    check("[FD-L1] a real world through the glazing at the pilot / co-pilot stops: the sky over the cowl bright (upper "
+          "third median >= 225), the window pixels a lit world (median >= 170) and not a flat void (sd > 4), blue sky "
+          "above the cowl (B - R >= 8); the world, the sun and the outside environment on, the ground grid and the key "
+          "light off, no glass casting", ok1,
+          " | ".join(f"{s}: median {v[0]:.0f} (sky {v[4]:.0f}), sd {v[1]:.1f}, sky B-R {v[2]:.0f} ({v[3]} px)"
+                     for s, v in stats.items()) + f" | {look['pilot']}")
     # the photo-fitted panel_408b camera (P1046408): the footwell and console, the glareshield and its lip, the yoke,
     # the sheepskin, the whole frame's histogram
     cam = photo_cam("panel_408b")

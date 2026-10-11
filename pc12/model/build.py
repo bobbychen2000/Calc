@@ -251,10 +251,10 @@ def construction():
 # --; flight deck r1 (owner 2026-10-04 "the details are drastically missing"): per-part caps for the flight deck's
 # parts (keys = part ids; the build print reads them by part id) and the interior total raised for them; the counts are
 # taken after the interior-light bake's split (AO_SPLIT, below: the divider's large walnut faces +6.1k, so its cap 18k)
-INTERIOR_BUDGET = {"total": res.budget(370_000, 2.2), "crew_seat": res.budget(16_500, 3.4),
+INTERIOR_BUDGET = {"total": res.budget(370_000, 2.2), "crew_seat": res.budget(17_500, 3.4),
                    "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(68_000, 2.2),
                    "yoke_L": 24_000, "yoke_R": 24_000, "pedal_LL": 3_000, "pedal_LR": 3_000, "pedal_RL": 3_000,
-                   "pedal_RR": 3_000, "fd_consoles": 30_000, "fd_divider": 18_000, "interior_lining": 175_000}
+                   "pedal_RR": 3_000, "fd_consoles": 30_000, "fd_divider": 18_000, "interior_lining": 190_000}
 
 
 def cockpit_camera(side=-1):

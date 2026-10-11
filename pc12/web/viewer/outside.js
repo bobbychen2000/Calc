@@ -22,7 +22,10 @@ const qo = (k, d) => { const v = parseFloat(Q_O.get(k)); return Number.isFinite(
 // posts' shadows across it, on the pedestal, the armrests and the seats, the panel in the glareshield's shade (P1046409:
 // the sun patch on the co-pilot's fleece; the look track's az 125 / el 40 from behind the starboard wing root lit only
 // the stack face from the seats)
-export const SUN = { az: qo('sunaz', 25), el: qo('sunel', 45) };      // ?sunaz= ?sunel= (look development)
+// flight deck fix r2 (FDO2-02 / FID-FD2-04): el 45 -> 30, az 25 -> 20 -- the sun through the windshield now lands on the
+// hood crown with the centre post's and A-pillars' shadows across it from both crew stops (an az 20-90 / el 28-35 sweep:
+// az 60 lit the pilot's sill and console, az 90 the seats -- P1046408's sheepskin 127 -> 192)
+export const SUN = { az: qo('sunaz', 20), el: qo('sunel', 30) };      // ?sunaz= ?sunel= (look development)
 export function sunDirection(az = SUN.az, el = SUN.el) {
   const a = az * D2R, e = el * D2R;
   // model (-cos e cos a, cos e sin a, sin e) -> glTF (y, z, x)
@@ -46,8 +49,13 @@ export const SKY = {
 // flight deck fix r1 (FDO1-08): the apron as seen through the glazing x `shown` (0.86: the near-white concrete clipped
 // at the interior exposure); the image-based light inside keeps the full value (`environment()`: the calibrated cabin
 // light is unchanged)
+// flight deck fix r2 (FDO2-08 / FID-FD2-08: a bright bland sim floor, ~230 sRGB with regular seams, filling the side
+// windows): shown at 0.34 (0.62 still read ~215 through AgX; ~180-195 from the seats), low-frequency stains and tone variation, tyre marks along the lead-in
+// lines, oil spots, tie-down rings, the hangars' and parked shapes' cast shadows and contact darkening baked into the
+// apron (the sun is fixed), a second taxi line, a distance haze toward the horizon (`haze`: colour, from / to m, most);
+// the image-based light inside keeps the apron's mean albedo (`envK`, the calibrated cabin light unchanged)
 const GROUND = { size: 400, y: -0.004, apron: [-120, -160, 240, 260], slab: 7.5, concrete: '#c9c6bf', grass: '#6f7a52',
-  shown: 0.86, envK: 1.05,
+  shown: 0.34, envK: 1.08, haze: ['198,205,212', 55, 200, 0.5],
   taxi: '#d9b43a', farColor: [0.20, 0.26, 0.13], farR: [199, 440], ridgeR: 400, ridgeColor: [0.42, 0.50, 0.58] };
 // hangars / buildings: centre X, Z, width, height, depth (m), albedo; pre-lit by facing the sun (vertex colours)
 const HANGARS = [
@@ -60,6 +68,9 @@ const HANGARS = [
 // single-engine turboprops (white, grey trim; no markings) and a tug -- [x, z, heading deg (0 = nose to -Z), scale]
 const PARKED = [[-34, -52, 155, 1.0], [42, -66, 200, 0.95], [-62, -78, 120, 1.05]];
 const TUGS = [[30, -58, 70]];
+// (fix r2 FID-FD2-08) a fuel truck and cones off the port beam, seen through the pilot's side window [x, z, heading]
+const TRUCKS = [[-27, 4, 80]];
+const CONES = [[-9.5, 1.5], [-9.5, -3.5], [9.5, 1.5]];
 
 // a deterministic PRNG (the apron's mottling is the same on every load and device)
 function rng(seed) {
@@ -67,7 +78,22 @@ function rng(seed) {
   return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 
-function groundTexture(px) {
+// shadow polygon of an axis-aligned box (centre x, z, width, depth, height) on the ground for the sun direction
+// (glTF; towards the sun): the convex hull of its footprint and its top projected along -sun
+function boxShadow(cx, cz, bw, bd, bh, sun) {
+  const kx = -sun.x / Math.max(sun.y, 0.05), kz = -sun.z / Math.max(sun.y, 0.05), P = [];
+  for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    P.push([cx + 0.5 * dx * bw, cz + 0.5 * dz * bd], [cx + 0.5 * dx * bw + kx * bh, cz + 0.5 * dz * bd + kz * bh]);
+  }
+  P.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const p of P) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+  for (const p of P.slice().reverse()) { while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+
+function groundTexture(px, sun = sunDirection()) {
   const cv = document.createElement('canvas');
   cv.width = cv.height = px;
   const g = cv.getContext('2d'), G = GROUND, S = px / G.size, o = G.size / 2;
@@ -93,6 +119,62 @@ function groundTexture(px) {
   g.strokeStyle = G.taxi; g.lineWidth = Math.max(1, 0.3 * S);
   g.beginPath(); g.moveTo(o * S, (az + o) * S); g.lineTo(o * S, (az + ad + o) * S); g.stroke();
   g.beginPath(); g.arc((o + 25) * S, (o - 30) * S, 25 * S, Math.PI * 0.5, Math.PI); g.stroke();
+  // (fix r2) a second taxi line across the apron ahead and a lead-in from the port side
+  g.beginPath(); g.moveTo((ax + o) * S, (o - 42) * S); g.lineTo((ax + aw + o) * S, (o - 42) * S); g.stroke();
+  g.beginPath(); g.arc((o - 30) * S, (o - 12) * S, 30 * S, 0, Math.PI * 0.5); g.stroke();
+  const W2 = (x, z) => [(x + o) * S, (z + o) * S];
+  // low-frequency stains and tone variation over the apron (soft blobs 3-18 m)
+  for (let i = 0; i < 220; i++) {
+    const [cx, cz] = W2(ax + R() * aw, az + R() * ad), rr = (3 + 15 * R()) * S;
+    const gr = g.createRadialGradient(cx, cz, 0, cx, cz, rr);
+    const c = R() < 0.7 ? '78,76,72' : '214,210,202', a = 0.06 + 0.12 * R();
+    gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(1, `rgba(${c},0)`);
+    g.fillStyle = gr; g.fillRect(cx - rr, cz - rr, 2 * rr, 2 * rr);
+  }
+  // tyre marks along the lead-in lines (dark rubber, 0.25 m wide, either side of the line)
+  g.lineCap = 'round';
+  for (const d of [-1.6, -1.3, 1.3, 1.6]) {
+    g.strokeStyle = `rgba(40,40,40,${0.10 + 0.08 * R()})`; g.lineWidth = Math.max(1, 0.25 * S);
+    g.beginPath(); g.moveTo((o + d) * S, (o - 140) * S); g.lineTo((o + d) * S, (o + 60) * S); g.stroke();
+    g.beginPath(); g.arc((o + 25) * S, (o - 30) * S, (25 + d) * S, Math.PI * 0.5, Math.PI); g.stroke();
+  }
+  // tie-down rings in rows and oil spots under the parked aircraft
+  g.strokeStyle = 'rgba(52,52,50,0.7)'; g.lineWidth = Math.max(1, 0.06 * S);
+  for (let x = -60; x <= 60; x += 15) for (const z of [-30, -75]) { const [cx, cz] = W2(x, z); g.beginPath(); g.arc(cx, cz, 0.18 * S, 0, 2 * Math.PI); g.stroke(); }
+  for (const [x, z, hd] of PARKED) {
+    const h = hd * D2R;
+    for (let k = 0; k < 3; k++) {
+      const [cx, cz] = W2(x - Math.sin(h) * (4 + 2 * R()) + (R() - 0.5), z + Math.cos(h) * (4 + 2 * R()) + (R() - 0.5)), rr = (0.4 + 0.9 * R()) * S;
+      const gr = g.createRadialGradient(cx, cz, 0, cx, cz, rr);
+      gr.addColorStop(0, 'rgba(30,28,26,0.45)'); gr.addColorStop(1, 'rgba(30,28,26,0)');
+      g.fillStyle = gr; g.fillRect(cx - rr, cz - rr, 2 * rr, 2 * rr);
+    }
+  }
+  // the buildings' cast shadows and the dark band at their foot (the sun is fixed: baked), the parked shapes' shadows
+  const poly = (P, style) => { g.fillStyle = style; g.beginPath(); P.forEach(([x, z], i) => { const [u, v] = W2(x, z); if (i) g.lineTo(u, v); else g.moveTo(u, v); }); g.closePath(); g.fill(); };
+  for (const [cx, cz, bw, bh, bd] of HANGARS) {
+    poly(boxShadow(cx, cz, bw, bd, bh, sun), 'rgba(38,40,46,0.42)');
+    g.strokeStyle = 'rgba(30,30,32,0.35)'; g.lineWidth = 1.6 * S;
+    const [u0, v0] = W2(cx - 0.5 * bw, cz - 0.5 * bd);
+    g.strokeRect(u0, v0, bw * S, bd * S);
+  }
+  const kx = -sun.x / Math.max(sun.y, 0.05), kz = -sun.z / Math.max(sun.y, 0.05);
+  const rot = (x, z, h, sc, dx, dz) => [x + sc * (dx * Math.cos(h) - dz * Math.sin(h)), z + sc * (dx * Math.sin(h) + dz * Math.cos(h))];
+  for (const [x, z, hd, sc] of PARKED) {
+    const h = hd * D2R;
+    const ell = []; for (let k = 0; k < 24; k++) { const a = 2 * Math.PI * k / 24; ell.push(rot(x + kx * 1.75 * sc, z + kz * 1.75 * sc, h, sc, 0.75 * Math.cos(a), 1.0 + 6.4 * Math.sin(a))); }
+    poly(ell, 'rgba(38,40,46,0.40)');
+    poly([[-8, -1.5], [8, -1.5], [8, 0.3], [-8, 0.3]].map(([dx, dz]) => rot(x + kx * 1.25 * sc, z + kz * 1.25 * sc, h, sc, dx, dz)), 'rgba(38,40,46,0.38)');
+    poly([[-2.6, 7.5], [2.6, 7.5], [2.6, 8.5], [-2.6, 8.5]].map(([dx, dz]) => rot(x + kx * 4.5 * sc, z + kz * 4.5 * sc, h, sc, dx, dz)), 'rgba(38,40,46,0.32)');
+  }
+  for (const [x, z, hd, bw, bl] of [...TUGS.map(([a, b, c]) => [a, b, c, 1.5, 2.6]), ...TRUCKS.map(([a, b, c]) => [a, b, c, 2.5, 8.2])]) {
+    poly([[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([dx, dz]) => rot(x + kx * 1.2, z + kz * 1.2, hd * D2R, 1, dx * bw, dz * bl)), 'rgba(38,40,46,0.40)');
+  }
+  // distance haze toward the horizon
+  const [hc, h0, h1, hk] = G.haze;
+  const gr = g.createRadialGradient(o * S, o * S, h0 * S, o * S, o * S, h1 * S);
+  gr.addColorStop(0, `rgba(${hc},0)`); gr.addColorStop(1, `rgba(${hc},${hk})`);
+  g.fillStyle = gr; g.fillRect(0, 0, px, px);
   return cv;
 }
 
@@ -119,6 +201,19 @@ function facadeTexture() {
   gr.addColorStop(0, 'rgba(60,58,54,0)'); gr.addColorStop(1, 'rgba(60,58,54,0.28)');
   g.fillStyle = gr; g.fillRect(0, H * 0.75, W, H * 0.25);
   return cv;
+}
+
+// (fix r2) the distance haze on the pre-lit shapes: their vertex colours mixed toward the haze colour (linear) by distance
+const HAZE_LIN = [0.56, 0.61, 0.66];
+function hazeK(x, z) {
+  const [, h0, h1, hk] = GROUND.haze, d = Math.hypot(x, z), t = Math.min(1, Math.max(0, (d - h0) / (h1 - h0)));
+  return hk * t * t * (3 - 2 * t);
+}
+function hazeGeo(geo, k) {
+  if (!(k > 0)) return geo;
+  const c = geo.attributes.color;
+  for (let i = 0; i < c.count; i++) c.setXYZ(i, c.getX(i) + (HAZE_LIN[0] - c.getX(i)) * k, c.getY(i) + (HAZE_LIN[1] - c.getY(i)) * k, c.getZ(i) + (HAZE_LIN[2] - c.getZ(i)) * k);
+  return geo;
 }
 
 export class OutsideWorld {
@@ -162,7 +257,7 @@ void main() {
       new THREE.MeshBasicMaterial({ name: 'outside_far', color: lin(G.farColor), side: THREE.DoubleSide, depthWrite: false }));
     far.rotation.x = -Math.PI / 2; far.position.y = G.y - 0.002; far.renderOrder = -9;
     w.add(far);
-    const tex = new THREE.CanvasTexture(groundTexture(this.texPx));
+    const tex = new THREE.CanvasTexture(groundTexture(this.texPx, this.sun));
     tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
     tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
     this._tex = tex;
@@ -188,6 +283,7 @@ void main() {
         c.push(col[0] * k, col[1] * k, col[2] * k);
       }
       geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+      hazeGeo(geo, hazeK(cx, cz));
       // BoxGeometry groups: +x, -x, +y, -y, +z, -z
       const m = new THREE.Mesh(geo, [side, side, roof, roof, side, side]);
       m.position.set(cx, bh / 2, cz);
@@ -229,7 +325,7 @@ void main() {
         part(new THREE.CylinderGeometry(0.1, 0.1, 1.1, 6), GREY, 2.25, 0.85, 0.4),
       ];
       for (const g of gs) {
-        const m = new THREE.Mesh(g, vmat);
+        const m = new THREE.Mesh(hazeGeo(g, hazeK(px, pz)), vmat);
         m.scale.setScalar(sc);
         m.rotation.y = -hd * D2R;
         m.position.set(px, 0, pz);
@@ -241,9 +337,34 @@ void main() {
         part(new THREE.BoxGeometry(1.2, 0.85, 0.9), [0.55, 0.45, 0.14], 0, 1.4, 0.7),
         part(new THREE.BoxGeometry(1.1, 0.45, 0.05), DARK, 0, 1.55, 0.24),
         ...[-0.62, 0.62].flatMap((x) => [-0.85, 0.85].map((z) => part(new THREE.CylinderGeometry(0.3, 0.3, 0.25, 10), DARK, x, 0.3, z, 0, 0, Math.PI / 2)))]) {
-        const m = new THREE.Mesh(g, vmat);
+        const m = new THREE.Mesh(hazeGeo(g, hazeK(tx, tz)), vmat);
         m.rotation.y = -hd * D2R;
         m.position.set(tx, 0, tz);
+        w.add(m);
+      }
+    }
+    // (fix r2 FID-FD2-08) a fuel truck off the port beam and traffic cones by the wing tips: generic shapes, no markings
+    const TANK = [0.80, 0.81, 0.82], CONE = [0.95, 0.32, 0.04];
+    for (const [tx, tz, hd] of TRUCKS) {
+      const wheels = [-2.6, 1.0, 2.4].flatMap((z) => [-1.05, 1.05].map((x) => part(new THREE.CylinderGeometry(0.48, 0.48, 0.35, 12), DARK, x, 0.48, z, 0, 0, Math.PI / 2)));
+      for (const g of [part(new THREE.BoxGeometry(2.4, 2.3, 2.1), WHITE, 0, 1.65, -3.0),                     // cab
+        part(new THREE.BoxGeometry(2.2, 0.75, 0.05), DARK, 0, 2.15, -4.07),                                    // windshield
+        part(new THREE.BoxGeometry(2.42, 0.6, 1.2), DARK, 0, 2.2, -3.0),                                       // side windows
+        part(new THREE.CylinderGeometry(1.08, 1.08, 5.4, 18), TANK, 0, 1.95, 1.0, Math.PI / 2),                // tank
+        part(new THREE.BoxGeometry(2.3, 0.35, 7.8), GREY, 0, 0.78, -0.3),                                      // chassis
+        part(new THREE.BoxGeometry(2.25, 0.5, 1.0), GREY, 0, 1.2, 3.6),                                        // hose cabinet
+        ...wheels]) {
+        const m = new THREE.Mesh(hazeGeo(g, hazeK(tx, tz)), vmat);
+        m.rotation.y = -hd * D2R;
+        m.position.set(tx, 0, tz);
+        w.add(m);
+      }
+    }
+    for (const [cx, cz] of CONES) {
+      for (const g of [part(new THREE.ConeGeometry(0.17, 0.7, 12), CONE, 0, 0.38, 0), part(new THREE.BoxGeometry(0.42, 0.04, 0.42), CONE, 0, 0.02, 0),
+        part(new THREE.CylinderGeometry(0.105, 0.125, 0.09, 12), WHITE, 0, 0.42, 0)]) {
+        const m = new THREE.Mesh(g, vmat);
+        m.position.set(cx, 0, cz);
         w.add(m);
       }
     }

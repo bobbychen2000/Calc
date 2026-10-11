@@ -998,8 +998,38 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
     g = pillow(hol, ht, 0.03, 0.03, h=0.035, crown=dome(0.006, 0.05))
     wing = lambda a: 0.025 * (np.abs(a) / (0.5 * hwid)) ** 3   # noqa: E731 -- winged sides, [E] (IPECO line art)
     hmap = _back_map(db, nb)
-    back.append(_mats(g.map(lambda V: hmap(np.c_[V[:, 0], V[:, 1], V[:, 2] - (ht - 0.035) + wing(V[:, 0])])),
-                      M_CREW, M_SHELL, M_SHELL))
+    hfn = lambda V: hmap(np.c_[V[:, 0], V[:, 1], V[:, 2] - (ht - 0.035) + wing(V[:, 0])])   # noqa: E731
+    back.append(_mats(g.map(hfn), M_CREW, M_SHELL, M_SHELL))
+    # flight deck fix r2 (FDO2-09: plain off-white slabs): the front's perimeter piping -- an anthracite welt (r 2.2 mm)
+    # along the crest where the face rolls into the rim -- and a horizontal stitch seam across the face at 40 % of its
+    # height (IPECO line art; P1046406 / 10: a piped front panel) [E]
+    Qh = _ccw(_subdivide(np.asarray(hol, float), 0.010))
+    Bh = Qh - 0.03 * _normals2(Qh)
+    Nh = _normals2(Qh)
+    th_ = np.linspace(0.0, 2 * np.pi, 8, endpoint=False)
+    Vp = np.vstack([np.c_[Bh + 0.0022 * math.cos(t_) * Nh, np.full(len(Bh), ht - 0.0004 + 0.0022 * math.sin(t_))]
+                    for t_ in th_])
+    nq, mq = len(Bh), len(th_)
+    ii, jj = np.meshgrid(np.arange(nq), np.arange(mq), indexing="ij")
+    a_, b_ = jj * nq + ii, jj * nq + (ii + 1) % nq
+    c_, d_ = ((jj + 1) % mq) * nq + (ii + 1) % nq, ((jj + 1) % mq) * nq + ii
+    Fp = np.vstack([np.c_[a_.ravel(), b_.ravel(), c_.ravel()], np.c_[a_.ravel(), c_.ravel(), d_.ravel()]])
+    back.append(Geo(Vp, Fp, np.zeros(len(Fp)), {0: M_SHELL}).map(hfn))
+    bs_ = hc - 0.5 * hh + 0.40 * hh
+    us_ = np.arange(-0.5 * hwid + 0.045, 0.5 * hwid - 0.045, 0.006)
+    ds_ = -sdf2d.polygon(us_, np.full(len(us_), bs_), Bh)
+    zs_ = ht + dome(0.006, 0.05)(us_, bs_, np.maximum(ds_, 0.0)) + 0.0004
+    Vs, Fs = [], []
+    bx = np.array([[0, 1, 2], [0, 2, 3], [4, 6, 5], [4, 7, 6], [0, 4, 5], [0, 5, 1], [1, 5, 6], [1, 6, 2],
+                   [2, 6, 7], [2, 7, 3], [3, 7, 4], [3, 4, 0]])        # a closed box (Geo.meshes orients by volume)
+    for u_, z_ in zip(us_, zs_):
+        k_ = len(Vs)
+        Vs += [(u_, bs_ - 0.0005, z_ - 0.0006), (u_ + 0.0036, bs_ - 0.0005, z_ - 0.0006),
+               (u_ + 0.0036, bs_ + 0.0005, z_ - 0.0006), (u_, bs_ + 0.0005, z_ - 0.0006),
+               (u_, bs_ - 0.0005, z_ + 0.0006), (u_ + 0.0036, bs_ - 0.0005, z_ + 0.0006),
+               (u_ + 0.0036, bs_ + 0.0005, z_ + 0.0006), (u_, bs_ + 0.0005, z_ + 0.0006)]
+        Fs += (bx + k_).tolist()
+    back.append(Geo(np.array(Vs), np.array(Fs), np.zeros(len(Fs)), {0: "stitch_thread"}).map(hfn))
     for a in (-0.065, 0.065):
         p0 = (L - 0.045) * db - 0.035 * nb
         p1 = (hc - 0.5 * hh + 0.03) * db - 0.035 * nb
@@ -1050,6 +1080,9 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             Rq = np.array([[nb[0], 0, db[0]], [0, 1, 0], [nb[1], 0, db[1]]])
             # cam-lock adjuster (flight deck r1 GEOM B, B7): a black moulded frame, its satin cam bar across
             back.append(rbox((q[0], sg * 0.049, q[1]), (0.012, 0.058, 0.032), 0.004, M_BLACK, R=Rq))
+            # (flight deck fix r2 FDO2-09: plain block buckles) a chrome face plate on the frame's front
+            qf = q + 0.0060 * nb - 0.003 * db
+            back.append(rbox((qf[0], sg * 0.049, qf[1]), (0.0016, 0.046, 0.020), 0.0007, "chrome_trim", R=Rq))
             qb = q + 0.0065 * nb + 0.004 * db
             back.append(tube((qb[0], sg * 0.049 - 0.024, qb[1]), (qb[0], sg * 0.049 + 0.024, qb[1]), 0.0028, M_METAL,
                              n=8))

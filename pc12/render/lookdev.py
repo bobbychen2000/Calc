@@ -510,7 +510,7 @@ SPEC.update({
                                note="graphite instrument-panel face"),
     # flight deck r1 LOOK (L5): darker -- the eyebrow fascia and the overhead read light grey plastic (~128) against the
     # photos' dark titanium (P1046408 eyebrow ~95-125 with its sun / sky light)
-    "panel_grey":         dict(kind="dielectric", base=(0.20, 0.19, 0.20), metallic=0.18, rough=0.45,
+    "panel_grey":         dict(kind="dielectric", base=(0.21, 0.195, 0.18), metallic=0.18, rough=0.45,
                                note="warm titanium-grey panel: the PDU face and cheeks, sub-panels, eyebrow, centre "
                                     "stack (P1046408 pair: one warm metallic surface, knee panel 127/116/125, review "
                                     "r2 F3; was 0.21 grey with a graphite face)"),
@@ -523,14 +523,14 @@ SPEC.update({
     # flight deck r1 (GEOM A zoning, merge): the moulded face round the PDU row / behind the sub-panels and the cheek
     # legs, a satin graphite a shade darker than the titanium plates (the consoles' panel_dark rendered it 25-45 at
     # panel_408b against P1046408's ~90)
-    "panel_graphite":     dict(kind="dielectric", base=(0.13, 0.125, 0.125), metallic=0.45, rough=0.40,
+    "panel_graphite":     dict(kind="dielectric", base=(0.13, 0.122, 0.115), metallic=0.45, rough=0.40,
                                note="satin graphite panel face round the PDUs, cheek legs (Garmin / brochure renders)"),
     "panel_silver":       dict(kind="dielectric", base=(0.46, 0.46, 0.45), metallic=0.55, rough=0.32,
                                note="light brushed silver: overhead panel face, yoke-hub insert (review r1 F6 / F4)"),
-    "pedestal_gunmetal":  dict(kind="dielectric", base=(0.115, 0.115, 0.125), metallic=0.40, rough=0.42,
+    "pedestal_gunmetal":  dict(kind="dielectric", base=(0.088, 0.086, 0.088), metallic=0.40, rough=0.42,
                                note="control pedestal cheeks / aft skin below the SDU pad: dark gunmetal (throttle "
                                     "photo, P1046408-10; review r3 F3)"),
-    "pcl_pewter":         dict(kind="dielectric", base=(0.20, 0.20, 0.215), metallic=0.50, rough=0.36,
+    "pcl_pewter":         dict(kind="dielectric", base=(0.110, 0.106, 0.104), metallic=0.55, rough=0.34,
                                note="PCL grip: satin pewter paddle (throttle photo; P1046408 grip ~sRGB 112/114/123)"),
     # flight deck r1 LOOK (L5, FD-J03): the PRO's black leather hood (P1046408 / 10: 55-90 in the sun / sky light, the
     # lip brighter) -- satin, its stitched lip catching the light
@@ -653,14 +653,26 @@ SPEC.update({
     "annun_green":        dict(kind="dielectric", base=(0.05, 0.40, 0.12), rough=0.30, note="green caps / LEDs"),
     "annun_blue":         dict(kind="dielectric", base=(0.05, 0.20, 0.55), rough=0.30, note="blue caps"),
     # flight deck fix r1 (FID-FD1-03 / FDO1-07): unlit smoked caps, the quadrant's brush seals
-    "annun_off_red":      dict(kind="dielectric", base=(0.060, 0.016, 0.014), rough=0.14, spec=0.3,
-                               note="master WARNING lens, unlit (smoked)"),
-    "annun_off_amber":    dict(kind="dielectric", base=(0.066, 0.044, 0.014), rough=0.14, spec=0.3,
-                               note="master CAUTION lens / ACS cap split, unlit (smoked)"),
-    "annun_off_green":    dict(kind="dielectric", base=(0.016, 0.040, 0.022), rough=0.14, spec=0.3,
-                               note="ACS cap splits, unlit (smoked)"),
+    # (flight deck fix r2 FID-FD2-06: near-black glass, a faint tint, a gloss coat)
+    "annun_off_red":      dict(kind="dielectric", base=(0.045, 0.030, 0.028), rough=0.20, spec=0.3, coat=1.0,
+                               coat_rough=0.05, note="master WARNING lens, unlit (smoked dark glass)"),
+    "annun_off_amber":    dict(kind="dielectric", base=(0.045, 0.038, 0.026), rough=0.20, spec=0.3, coat=1.0,
+                               coat_rough=0.05, note="master CAUTION lens / ACS cap split, unlit (smoked dark glass)"),
+    "annun_off_green":    dict(kind="dielectric", base=(0.028, 0.040, 0.032), rough=0.20, spec=0.3, coat=1.0,
+                               coat_rough=0.05, note="ACS cap splits, unlit (smoked dark glass)"),
     "brush_seal":         dict(kind="dielectric", base=(0.055, 0.055, 0.060), rough=0.95,
                                note="quadrant slot brush seals"),
+    # flight deck fix r2 (model/assemble.MATERIALS the same)
+    "busbar_bronze":      dict(kind="dielectric", base=(0.105, 0.072, 0.040), metallic=0.60, rough=0.40,
+                               note="windshield heating bus bars (dark bronze, FDO2-06 / FID-FD2-05)"),
+    "placard_red_dim":    dict(kind="dielectric", base=(0.20, 0.022, 0.018), rough=0.45,
+                               note="muted red placards on the sills / CB ledges (FID-FD2-09)"),
+    "lining_fd_reveal":   dict(kind="dielectric", base=(0.052, 0.051, 0.051), metallic=0.20, rough=0.46, spec=0.3,
+                               note="the glazing surround's darker satin inner face (FDO2-03)"),
+    "trim_satin":         dict(kind="dielectric", base=(0.20, 0.19, 0.18), metallic=0.50, rough=0.30,
+                               note="satin edge moulding along the glazing surround (FDO2-03)"),
+    "stack_gunmetal":     dict(kind="dielectric", base=(0.088, 0.086, 0.088), metallic=0.40, rough=0.42,
+                               note="the centre stack's flanks, the quadrant cheeks' gunmetal (FID-FD2-03)"),
 })
 
 

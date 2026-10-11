@@ -139,7 +139,11 @@ report("flight-deck glass: reveals, seal lips, sills, visors, post fittings and 
 # 30b ------------------------------------------------------------------------- new surround fittings seated
 NEW_MATS = {"fdb_visor", "fdb_cb_glow_blue", "fdb_cb_glow_green", "fdb_cb_glow_yellow", "fdb_cb_glow_white",
             "stitch_thread", "placard_red", "legend_plate", "legend_lit", "panel_silver", "black", "bezel_black",
-            "metal_dark", "lens", "seal", "panel_dark", "light_white", "screen", "light_red", "psu_panel"}
+            "metal_dark", "lens", "seal", "panel_dark", "light_white", "screen", "light_red", "psu_panel",
+            # flight deck fix r2: the bronze bus bars, muted placards, the surround's edge bead, the overhead's chrome
+            # toggles and smoked button lenses, the CB heads' sleeves
+            "busbar_bronze", "placard_red_dim", "trim_satin", "chrome_trim", "annun_off_red", "annun_off_amber",
+            "grip_black"}
 lin = parts["interior_lining"]
 # (+ the flight-deck glass: the windshield's heating bus bars -- flight deck fix r1, fd_detail_b GLAZING_TRIM wire_* --
 # are mounted on it, 2.5 mm inside it; check 30 keeps every piece >= 2 mm off the glass, so only a piece within the

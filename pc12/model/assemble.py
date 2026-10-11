@@ -92,19 +92,19 @@ MATERIALS = {
     "seat_back_shell":    ((0.21, 0.215, 0.228), 0.0, 0.55, dict(specular=0.7)),
     # flight deck: graphite panel face, brushed titanium-grey sub-panels / stack, grey leather hood, dark carpet
     "panel_dark":          ((0.040, 0.041, 0.044), 0.25, 0.48, dict(specular=0.5)),
-    "panel_grey":          ((0.20, 0.19, 0.20), 0.18, 0.45),          # (flight deck r1 LOOK: darker titanium grey)
+    "panel_grey":          ((0.21, 0.195, 0.18), 0.18, 0.45),          # (flight deck r1 LOOK: darker; fix r2: warm, R > G > B)
     # satin titanium: the PDU face, lower sub-panels, glareshield soffit, centre-stack face (final judge r1 LIV-F1-04 /
     # I4: P1046408's warm grey metal round the displays; panel_grey stays on the eyebrow fascia / overhead)
     "panel_titanium":      ((0.20, 0.19, 0.185), 0.45, 0.38),
     # graphite: the moulded panel face round the PDU row and behind the sub-panels, the cheek legs (flight deck r1 GEOM A
     # zoning; a shade darker than the titanium plates, as the Garmin / brochure renders; P1046408 reads both alike)
-    "panel_graphite":      ((0.13, 0.125, 0.125), 0.45, 0.40),
+    "panel_graphite":      ((0.13, 0.122, 0.115), 0.45, 0.40),   # (fix r2: warm graphite)
     # light brushed silver: overhead panel face, yoke-hub centre insert (P1046406 / AOPA overhead, P1046408 yoke)
     "panel_silver":        ((0.46, 0.46, 0.45), 0.55, 0.32),
     # control pedestal below the SDU pad: dark gunmetal cheeks / aft skin; the PCL grip satin pewter (throttle photo,
     # P1046408-10: grip ~sRGB 112/114/123 in the cabin light, the cheeks darker; review r3 F3)
-    "pedestal_gunmetal":   ((0.115, 0.115, 0.125), 0.40, 0.42),
-    "pcl_pewter":          ((0.20, 0.20, 0.215), 0.50, 0.36),
+    "pedestal_gunmetal":   ((0.088, 0.086, 0.088), 0.40, 0.42),     # (fix r2 FID-FD2-03: darker, neutral)
+    "pcl_pewter":          ((0.110, 0.106, 0.104), 0.55, 0.34),     # (fix r2 FID-FD2-07: mid pewter, not near-white)
     "leather_glareshield": ((0.045, 0.045, 0.047), 0.0, 0.48, dict(specular=0.5)),   # black satin hood (r1 LOOK)
     "carpet_flightdeck":   ((0.030, 0.030, 0.034), 0.0, 0.95),
     "bezel_black":         ((0.010, 0.010, 0.012), 0.10, 0.32),
@@ -158,7 +158,7 @@ MATERIALS = {
     # (flight deck r1 LOOK L5, FD-J03: P1046408 / 10 posts and side walls 70-110 in the daylight, sunlit 80-150; the
     # mid grey 0.30 read as light grey plastic posts), so the windshield and side windows read as dark panes outdoors
     # (photos 188 / 0517)
-    "lining_flightdeck": ((0.10, 0.10, 0.105), 0.0, 0.75),
+    "lining_flightdeck": ((0.10, 0.098, 0.095), 0.0, 0.75),     # (fix r2 FDO2-01: a warm anthracite)
     "light_red":     ((0.9, 0.05, 0.05), 0.0, 0.2),
     "light_green":   ((0.05, 0.8, 0.2), 0.0, 0.2),
     "light_white":   ((0.95, 0.95, 0.95), 0.0, 0.1),
@@ -207,11 +207,22 @@ MATERIALS = {
     "annun_blue":         ((0.05, 0.20, 0.55), 0.0, 0.30),
     # flight deck fix r1 (FID-FD1-03): the master WARNING / CAUTION lenses, the ACS caps' annunciator splits -- unlit
     # smoked caps on the parked aircraft (P1046408 / 09 / 10, AOPA, the brochure: dark squares, a hint of their colour)
-    "annun_off_red":      ((0.060, 0.016, 0.014), 0.0, 0.14, dict(specular=0.6)),
-    "annun_off_amber":    ((0.066, 0.044, 0.014), 0.0, 0.14, dict(specular=0.6)),
-    "annun_off_green":    ((0.016, 0.040, 0.022), 0.0, 0.14, dict(specular=0.6)),
+    # (flight deck fix r2 FID-FD2-06: near-black glass with a faint tint -- saturation <= 0.3 -- under a gloss coat; the
+    #  r1 caps still read maroon / ochre at panel_408b where P1046408 shows dark squares)
+    "annun_off_red":      ((0.045, 0.030, 0.028), 0.0, 0.20, dict(specular=0.6, clearcoat=1.0, clearcoat_rough=0.05)),
+    "annun_off_amber":    ((0.045, 0.038, 0.026), 0.0, 0.20, dict(specular=0.6, clearcoat=1.0, clearcoat_rough=0.05)),
+    "annun_off_green":    ((0.028, 0.040, 0.032), 0.0, 0.20, dict(specular=0.6, clearcoat=1.0, clearcoat_rough=0.05)),
     # the quadrant slots' brush seals: dark grey fibres against the black slot (the Pilatus throttle photo; FDO1-07)
     "brush_seal":         ((0.055, 0.055, 0.060), 0.0, 0.95),
+    # ---- flight deck fix r2 (append-only; render/lookdev.py SPEC 'flight deck fix r2' the same): the windshield's
+    #      heating bus bars in a dark bronze (FDO2-06 / FID-FD2-05: the dark-metal lines read as stray wires), muted red
+    #      placards on the sill / CB ledge (FID-FD2-09: the strongest colour on the sidewall), the darker satin inner face
+    #      of the glazing surround and its lighter satin edge moulding (FDO2-03: P1046409 / 10, AOPA)
+    "busbar_bronze":      ((0.105, 0.072, 0.040), 0.60, 0.40),
+    "placard_red_dim":    ((0.20, 0.022, 0.018), 0.0, 0.45),
+    "lining_fd_reveal":   ((0.052, 0.051, 0.051), 0.20, 0.46, dict(specular=0.6)),
+    "trim_satin":         ((0.20, 0.19, 0.18), 0.50, 0.30),
+    "stack_gunmetal":     ((0.088, 0.086, 0.088), 0.40, 0.42),      # the stack's flanks (= pedestal_gunmetal's values)
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)

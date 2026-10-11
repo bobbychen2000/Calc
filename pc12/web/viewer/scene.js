@@ -132,7 +132,7 @@ export const LOOK = {
   // az 95 / el 35 lit the pilot's seat and console, which P1046408 does not show: sheepskin 107 -> 168, console 13 -> 54)
   // flight deck fix r1 (FDO1-05): 8 at outside.js SUN az 25 / el 45 -- a sunlit patch reads ~1.5 stops over its shade
   sun: { intensity: qn('sun') ?? 8, color: 0xfff4e6, centre: [4.0, 0.0, 2.0], box: 1.9, dist: 8, near: 4, far: 13,
-    bias: -0.0003, normalBias: 0.006, radius: qn('sunrad') ?? 3 },
+    bias: -0.0003, normalBias: 0.006, radius: qn('sunrad') ?? 2 },   // (fix r2: PCF radius 3 -> 2, crisper post shadows; 1.5 showed the texels)
 };
 
 // Camera presets.  `dir` points from the target to the camera (glTF axes: X starboard, Y up, Z aft);

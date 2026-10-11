@@ -88,12 +88,19 @@ GLAZING_TRIM = dict(
     # edges and at the centre post (|BL|: the post moulding ~94 mm wide at the glass, P1046408 projected through the
     # fitted camera: 102 px at the glareshield, 126 px at the top = |BL| 0.044-0.047; the pillar edges overlaid on the
     # same photo: 2/3 of the way from the lining edge to rev 1's 40 mm, the fit carrying 30-50 px) [M]; radii [E]
-    ws_margin=(0.003, 0.032, 0.042), ws_post=0.047, ws_radii=(0.060, 0.045, 0.0), ws_post_r=0.045,
+    # (flight deck fix r2b: the sill margin 3 -> 34 mm -- through the lowest ~30 mm of the pane the crew eyes looked past
+    #  the 9 mm deep seal under the retainer / mask skin's overlap onto the skin's inner face, a sunlit white rim line
+    #  under the windshield from both seats; P1046409 / 10 show the hood meeting the glass in a dark line)
+    ws_margin=(0.034, 0.032, 0.042), ws_post=0.047, ws_radii=(0.060, 0.045, 0.0), ws_post_r=0.045,
     # side window: sill / aft / top / front (A-pillar) / lower-front chamfer: the visible opening from inside -- sill
     # WL 2.09-2.11, top 2.43-2.46, aft edge STA 4.15-4.19, front-low corner ~3.56 / 2.15 (S15 panoramas, +-0.03); the
     # front edge 35 mm in (P1046408 overlay: the glass shows up to ~1/3 of the 50 mm tried first) [M]
-    sw_margin=(0.012, 0.175, 0.085, 0.035, 0.035), sw_radii=(0.120, 0.105, 0.045, 0.050, 0.050),
-    wire_d=(0.015, 0.023), wire_w=0.0008,   # [E] heating bus bars inside the visible edge (P1046408 / 10), dark grey,
+    # (flight deck fix r2b: the sill 12 -> 19 mm -- just over the seal lip the crew eyes saw the retainer band's glass-side
+    #  face through the pane, ~0.3 deg of polished metal: a white line along each side window's sill from both seats)
+    sw_margin=(0.019, 0.175, 0.085, 0.035, 0.035), sw_radii=(0.120, 0.105, 0.045, 0.050, 0.050),
+    wire_d=(0.009,), wire_w=0.0007,   # [E] heating bus bar inside the visible edge (P1046408 / 10): ONE per edge, 9 mm
+    #                        in, 0.7 mm, dark bronze (flight deck fix r2 FDO2-06 / FID-FD2-05: the two dark-metal lines
+    #                        15 / 23 mm in read as stray wires / cracks across the glass from both seats)
     wire_depth=0.0070,     # 2.5 mm off the glass's inner face (fit_check 30 >= 2 mm; 22: seated within 3 mm)
     seal_w=0.004,          # [M] black seal lip over the glass: 4 mm (P1046409 / 10, AOPA and the PRO simulator photos
     #                        show at most a hairline dark edge at the glass; the 8 mm first tried drew a heavy black outline
@@ -346,7 +353,7 @@ def pane_moulding(kind, side):
                 a = PV[idx] + d0 * in_dir[idx] - g["wire_depth"] * N3V[idx]
                 b = PV[idx] + (d0 + g["wire_w"]) * in_dir[idx] - g["wire_depth"] * N3V[idx]
                 w = grid_surface(np.stack([a, b], 1))
-                out.append((_orient(w, lambda C: -np.mean(N3V, 0)[None].repeat(len(C), 0)), "metal_dark"))
+                out.append((_orient(w, lambda C: -np.mean(N3V, 0)[None].repeat(len(C), 0)), "busbar_bronze"))
     return out, G, lab
 
 
@@ -398,11 +405,12 @@ def glazing_mouldings():
         for kind in ("ws", "sw"):
             for side in (-1, 1):
                 ms, G, lab = pane_moulding(kind, side)
+                funnel = ms[0][0]
                 if kind == "ws":
-                    out += ms
+                    out += _reveal_zones(G, np.arange(len(G)), funnel, True)   # inner face / lining / edge bead
+                    out += ms[1:]
                     continue
                 out.append(ms[1])                                       # seal lip
-                funnel = ms[0][0]
                 zv = G[:, 0, 2]
                 low = zv < SILL["leather_z"]
                 # contiguous run of 'low' columns (cyclic): the leather part
@@ -412,9 +420,9 @@ def glazing_mouldings():
                 nlow = int(low.sum())
                 il = idx[:nlow + 1]                                     # leather columns (+ the boundary column)
                 iu = np.r_[idx[nlow:], idx[0]]                          # lining columns (+ both boundary columns)
-                for cols, mat in ((il, "leather_glareshield"), (iu, "lining_flightdeck")):
-                    m = grid_surface(G[cols])
-                    out.append((_orient(m, lambda C, f=funnel: _toward(f, C)), mat))
+                m = grid_surface(G[il])
+                out.append((_orient(m, lambda C, f=funnel: _toward(f, C)), "leather_glareshield"))
+                out += _reveal_zones(G, iu, funnel, False)
                 Nn = _grid_n(G[il], funnel)
                 for r in SILL["stitch_rows"]:
                     out.append((dashes(G[il, r], Nn[:, r]), "panel_grey"))      # tone-on-tone (FDO1-04)
@@ -434,12 +442,57 @@ def glazing_mouldings():
                             continue
                         k = sm.sv[-1] / float(np.interp(u + 0.5 * w, sm.su, wcol))
                         hv = h * k
-                        mat = "placard_red" if col == "red" else "legend_plate"
+                        mat = "placard_red_dim" if col == "red" else "legend_plate"     # (fix r2 FID-FD2-09)
                         out.append((sm.quads([(u, vmid - 0.5 * hv, u + w, vmid + 0.5 * hv)], 0.0007), mat))
                         R = legend_rects(u + 0.003, vmid - 0.5 * hv + 0.0025 * k, w - 0.006, hv - 0.005 * k, rng,
                                          lines=3 if h > 0.014 else 2, fill=0.88, bar=0.22)
                         out.append((sm.quads(R, 0.0011), "light_white"))
     return [(m, mat) for m, mat in out if m is not None and len(m.F)]
+
+
+# flight deck fix r2 (FDO2-03: the A-pillar / side-window surround read as one huge plain grey slab from the seats; the
+# photos -- P1046409 / 10, AOPA -- show a darker inner face toward the glass and a light-catching rolled edge): the funnel
+# rows from the glass up to `inner_row` (tau 0.39) in a darker satin (lining_fd_reveal), the rest the lining, and a
+# satin edge bead (trim_satin, half-round r `bead_r`, sunk 30 % into the funnel) along that row; the leather sill keeps
+# its own finish (its top carries the placards)
+REVEAL = dict(inner_row=6, bead_r=0.0028, bead_phi=(-20.0, 200.0, 13), bead_step=0.012)
+
+
+def _reveal_zones(G, cols, funnel, closed):
+    """[(Mesh, material)] of the funnel grid G's columns `cols` (cyclic when `closed`): the inner face, the lining
+    beyond it and the edge bead along the row between them."""
+    from scipy.spatial import cKDTree
+    q = REVEAL
+    k = q["inner_row"]
+    out = []
+    for rows, mat in ((slice(0, k + 1), "lining_fd_reveal"), (slice(k, None), "lining_flightdeck")):
+        m = grid_surface(G[cols][:, rows], close_u=closed)
+        out.append((_orient(m, lambda C, f=funnel: _toward(f, C)), mat))
+    Gc = G[cols]
+    Nn = _grid_n(Gc, funnel)
+    P, N = Gc[:, k], Nn[:, k]
+    # resample the row at ~bead_step (the funnel's columns are ~7 mm apart)
+    s = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(np.vstack([P, P[:1]]) if closed else P, axis=0), axis=1))]
+    L = s[-1]
+    nb = max(4, int(round(L / q["bead_step"])))
+    t = np.linspace(0.0, L, nb, endpoint=not closed)
+    PP = np.vstack([P, P[:1]]) if closed else P
+    NN = np.vstack([N, N[:1]]) if closed else N
+    Pb = np.stack([np.interp(t, s, PP[:, i]) for i in range(3)], 1)
+    Nb = _unit(np.stack([np.interp(t, s, NN[:, i]) for i in range(3)], 1))
+    D = Gc[:, k + 1] - Gc[:, k - 1]                                      # across the row (toward the lining)
+    DD = np.vstack([D, D[:1]]) if closed else D
+    Db = np.stack([np.interp(t, s, DD[:, i]) for i in range(3)], 1)
+    Db = _unit(Db - np.sum(Db * Nb, 1)[:, None] * Nb)
+    r = q["bead_r"]
+    a0, a1, na = q["bead_phi"]
+    ph = np.radians(np.linspace(a0, a1, na))
+    C0 = Pb - 0.3 * r * Nb
+    B = np.stack([C0 + r * (np.cos(f) * Db + np.sin(f) * Nb) for f in ph], 1)        # (nb, na, 3)
+    bead = grid_surface(B, close_u=closed)
+    tree = cKDTree(C0)
+    out.append((_orient(bead, lambda C: C - C0[tree.query(C)[1]]), "trim_satin"))
+    return out
 
 
 def _toward(ref, C):
@@ -600,11 +653,16 @@ def lining_map(side, x0, x1, z0, z1, off, nx=None, nz=None, step=0.01):
 # =====================================================================================================================
 CB = dict(
     head_r=0.0040, head_h=0.0065, collar=0.0004,   # [M] breaker heads (P1046409 / 10, AOPA): small black, white collar
+    # (flight deck fix r2 FID-FD2-09: the heads read as holes in a black field from the seats -- each now stands on a
+    #  white collar SLEEVE `sleeve` = (radial width, height) and 3 mm higher, `raise`)
+    sleeve=(0.0012, 0.0025), raise_=0.0030,
     frame=0.013, frame_proud=0.0065, plate_proud=0.0025,   # [E] bezel frame width, faces (4 mm recess)
     band=0.0026,                                   # [E] lit bus band height
     # lit bus bands per row (1-4) [M]: LH rows blue (P1046410, PRO Mexico photo); RH front yellow / green, rear white
     # (P1046409, AOPA studio photo)
-    glow={-1: (("blue",) * 4, ("blue",) * 4), 1: (("yellow", "green", "green", "green"), ("white",) * 4)},
+    # (flight deck fix r2 FID-FD2-09: LH white -- the blue bands read as diagonal blue lines across the black field from
+    #  the pilot seat; the AOPA studio photo shows the lit strips white / green / yellow)
+    glow={-1: (("white",) * 4, ("white",) * 4), 1: (("yellow", "green", "green", "green"), ("white",) * 4)},
     # label strips per block [M]: backlit white legend cells on the black plate, except the RH rear block's light
     # silver strips with dark legends (AOPA studio photo, P1046409)
     label={-1: ("dark", "dark"), 1: ("dark", "light")},
@@ -688,9 +746,10 @@ def cb_panels(fl):
                                                 lines=2, fill=0.8, bar=0.30)
                         P, Nn = M.frame(uc, b0 + vk)
                         P = P + pp * Nn
-                        out.append((cylinder(P + 0.0002 * Nn, P + CB["head_h"] * Nn, CB["head_r"], n=8), "grip_black"))
-                        out.append((disk(P + 0.0006 * Nn, Nn, CB["head_r"] + CB["collar"], n=8,
-                                         r_inner=CB["head_r"] - 0.0002), "light_white"))
+                        sw_, sh_ = CB["sleeve"]
+                        out.append((cylinder(P - 0.0002 * Nn, P + sh_ * Nn, CB["head_r"] + sw_, n=10), "light_white"))
+                        out.append((cylinder(P + 0.0010 * Nn, P + (CB["head_h"] + CB["raise_"]) * Nn, CB["head_r"],
+                                             n=10), "grip_black"))
                     if pa == x0:                       # row marks: 1-4 dots on the frame's forward band
                         dots = [(u(pa) - 0.0085 + 0.0022 * (d % 2), b0 + vk - 0.006 + 0.003 * d,
                                  u(pa) - 0.0065 + 0.0022 * (d % 2), b0 + vk - 0.004 + 0.003 * d) for d in range(r + 1)]
@@ -722,7 +781,7 @@ def cb_panels(fl):
             # each; the first build's 90 / 120 mm read as long red bars from the crew seats)
             for xp, w, h in ((x0 + 0.20, 0.070, 0.008), (x0 + 0.30, 0.085, 0.009)):
                 R = [(ul(xp), vl(zs - 0.5 * hs - 0.016), ul(xp + w), vl(zs - 0.5 * hs - 0.016 + h))]
-                out.append((Ml.quads(R, 0.0010), "placard_red"))
+                out.append((Ml.quads(R, 0.0010), "placard_red_dim"))         # (fix r2 FID-FD2-09: muted)
                 out.append((Ml.quads(legend_rects(ul(xp) + 0.003, vl(zs - 0.5 * hs - 0.016) + 0.0012, w - 0.006,
                                                   h - 0.0024, rng, lines=1, bar=0.5), 0.0014), "light_white"))
             # map light at the slot's forward end (NGX POH 7-19-2: above the CB panels): black bezel ring, lens
@@ -776,7 +835,39 @@ OVH = dict(
     boxes=((0.752, 0.126, 0.887, 0.312), (0.626, 0.116, 0.707, 0.280)),
     titles=((0.12, 0.905, 0.12), (0.49, 0.895, 0.22), (0.86, 0.885, 0.11), (0.15, 0.555, 0.10), (0.15, 0.300, 0.07),
             (0.49, 0.300, 0.14), (0.82, 0.290, 0.13)),
+    # bat levers thrown fore (-) / aft (+) of the panel normal, deg, per toggle in order (flight deck fix r2 FDO2-07) [M:
+    # the Pilatus PRO overhead photo -- most levers thrown aft on the parked aircraft, a few forward]
+    toggle_throw=(-28.0, -28.0, 28.0, 28.0, 28.0, -28.0, 28.0, -28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, -28.0,
+                  28.0, 28.0),
 )
+
+
+def knurl_ring(o, axis, ref, r, h, flutes=18, depth=0.0004):
+    """A knurled bezel ring / nut (explicit segment count): fd_detail_a.knob with flutes."""
+    from model import fd_detail_a as A
+    return A.knob(o, axis, ref, r, h, n=4 * flutes, flutes=flutes, depth=depth, chamfer=0.15)
+
+
+def bat_lever(base, ax, side, L, r0=0.0015, bat=(0.0032, 0.0020), n=12):
+    """A toggle's bat lever from `base` along unit `ax` (length L): a round stem r0 swelling over its outer half into a
+    flattened bat (half-widths bat = across `side`, along the throw plane) with a rounded end -- a closed revolved body
+    squashed along the throw plane; it starts 1 mm inside the bushing (open end hidden)."""
+    from cad.mesh import revolve
+    ax = _unit(np.asarray(ax, float))
+    side = _unit(np.asarray(side, float) - ax * np.dot(side, ax))
+    nrm = np.cross(ax, side)
+    wa, wb = bat
+    s = np.r_[-0.001, np.linspace(0.0, L, 9)]
+    k = np.clip((s / L - 0.35) / 0.45, 0.0, 1.0) ** 0.8
+    r = r0 + (wa - r0) * k
+    tip = [(L + wa * math.sin(t), wa * math.cos(t)) for t in np.radians((30.0, 60.0, 80.0))] + [(L + wa, 0.0)]
+    prof = [(float(a), float(b)) for a, b in zip(s, r)] + tip
+    m = revolve(prof, n=n, axis_origin=base, axis_dir=ax, ref_dir=side)
+    d = m.V - base
+    sv = d @ ax
+    f = 1.0 - (1.0 - wb / wa) * np.interp(sv, s, k)                    # the throw-plane thickness: round stem, flat bat
+    m.V = m.V - np.outer((d @ nrm) * (1.0 - f), nrm)
+    return m.compute_normals()
 
 
 def _ovh_frame():
@@ -882,17 +973,26 @@ def overhead_panel():
             V += [P(a, s_, -O["recess"] + 0.0006) for a, s_ in q]
             F += [[k, k + 1, k + 2], [k, k + 2, k + 3]]
         out.append((_orient(Mesh(np.array(V), np.array(F)), lambda C: np.broadcast_to(f.w, C.shape)), "light_white"))
-        # toggles: hex nut, satin lever leaning aft, ball end
-        for fs, fa in O["toggles"]:
+        # toggles (flight deck fix r2 FDO2-07: from the seats the first build's levers -- 17 mm straight down with a ball
+        # end -- read as hex nuts with small balls lying flat): a knurled bezel ring and a chrome hex nut on the bushing,
+        # a chrome BAT lever ~15 mm proud thrown fore or aft (O toggle_throw), swelling into a flattened bat
+        for k, (fs, fa) in enumerate(O["toggles"]):
             b = Pp(fs, fa)
-            out.append((cylinder(b - 0.0004 * f.w, b + 0.004 * f.w, 0.0046, n=6), "metal_dark"))
-            tip = b + 0.017 * f.w + 0.004 * f.u
-            out.append((cylinder(b + 0.0035 * f.w, tip, 0.0018, n=8), "panel_silver"))
-            out.append((superellipsoid(tip, (0.0029, 0.0029, 0.0029), (1, 1), 6, 8), "panel_silver"))
-        for fs, fa, mat in O["squares"]:                                           # square push buttons in a frame
+            out.append((knurl_ring(b - 0.0004 * f.w, f.w, f.u, 0.0060, 0.0022, flutes=18), "metal_dark"))
+            out.append((cylinder(b + 0.0016 * f.w, b + 0.0044 * f.w, 0.0045, n=6), "chrome_trim"))
+            out.append((cylinder(b + 0.0040 * f.w, b + 0.0062 * f.w, 0.0026, n=12), "chrome_trim"))
+            th = math.radians(O["toggle_throw"][k % len(O["toggle_throw"])])
+            out.append((bat_lever(b + 0.0062 * f.w, math.cos(th) * f.w + math.sin(th) * f.u, f.v, 0.0145),
+                        "chrome_trim"))
+        # square push buttons (FDO2-07: a lens face in a dark rim, not a plain extruded box): the black frame, the
+        # cap's dark rim, its smoked lens (unlit) and a legend stroke
+        for fs, fa, mat in O["squares"]:
             c = Pp(fs, fa)
             out.append((box(c + 0.002 * f.w, (0.020, 0.020, 0.004), R=f.R), "bezel_black"))
-            out.append((box(c + 0.0055 * f.w, (0.015, 0.015, 0.004), R=f.R), mat))
+            out.append((box(c + 0.0050 * f.w, (0.0155, 0.0155, 0.003), R=f.R), "black"))
+            lens = "annun_off_amber" if mat == "panel_silver" else "annun_off_red"
+            out.append((box(c + 0.0066 * f.w, (0.0125, 0.0125, 0.0008), R=f.R), lens))
+            out.append((box(c + 0.0071 * f.w - 0.0030 * f.u, (0.0012, 0.0080, 0.0004), R=f.R), "light_white"))
         for fs, fa in O["paddles"]:
             c = Pp(fs, fa)
             out.append((cylinder(c - 0.0004 * f.w, c + 0.004 * f.w, 0.0046, n=6), "metal_dark"))
