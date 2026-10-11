@@ -842,8 +842,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   a yoke_mesh_check row).  41.8k triangles meshed, 42.5k in the GLB part: build.YOKE_BUDGET 40k -> 43k.  VIEWER
   (FID1-01 / CR1-06): materials.js CABIN_TRIM entries 3 / 4 -- a reflection floor and the key light's share in the
   specular -- for yoke_white / yoke_silver / yoke_silver_dark / yoke_nickel (?cabTrim=name:a,b,c,d overrides), VIEWER
-  yoke_silver_dark colour 0.44; at P1046408 / 09's cameras the cover 210-214 (rev M 184-197), the inserts 0.92-0.94 /
-  0.78-0.87 of it (rev M 0.50-0.76 / 0.34-0.68; photos ~0.94 / 0.84-0.87); viewer_test [Y1] at the pilot stop.
+  yoke_silver_dark colour 0.44; at P1046408 / 09's cameras the cover 213-214 (rev M 184-197), the upper insert 0.90-0.92 and the lower 0.76 (P1046408) / 0.95 (P1046409) of it (rev M 0.50-0.76 / 0.34-0.68; photos ~0.94 / 0.84-0.87; final GLB, out/tmp/yoke3d/r1fix/final/vlook2.py); viewer_test [Y1] at the pilot stop.
   KINEMATICS (CR1-09): the push 65 mm (owner, above; a push x roll envelope -- 0.95 of the [E] 90 wings level, 0.83 at
   70 deg -- had been the interim fix).  BUDGET (CR1-07): `build.BUDGET_OPEN` printed while the interior is over (flight
   deck ~91k against the seed's cap that never landed; seat_pax3-6 34,834 / 34,800).  SHEETS: L6Y2 regenerated on the
