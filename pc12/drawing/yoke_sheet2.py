@@ -49,12 +49,10 @@ REVISIONS = (
                         "[E] switches; adaptive crease / ridge / pad acceptance, all clean (head top R 3 onto the "
                         "forward face, body sides x top rolling ball, C2 forward-radius cap, tangent inboard "
                         "directrix, 0.05 sampling, C2 fields); photo check re-run"),
-    ("E", "2026-10-11", "rev N (3-D judges r1): detail F the trim rocker's recessed slot (2.5, draft 7 deg) and the "
-                        "legends as letter blocks; detail G MAP LIGHTS blocks, satin-nickel collar; detail H the "
-                        "raised blank plate; detail J the recess up to h 27 (column 5 mm clear), the J band 22 wide "
-                        "(1 mm clear of the column); OWNER DECISIONS 2026-10-11: detail J band and recess re-centred on "
-                        "the column axis (hub WL 1845; the photos read the joint line, i.e. the axis, at 1821), full "
-                        "push 65 (was 90 [E])"),
+    ("E", "2026-10-11", "rev N (3-D judges r1): F rocker slot 2.5 deep (draft 7 deg), letter-block legends in the "
+                        "pilot's reading order; G MAP LIGHTS blocks, satin-nickel collar; H raised blank plate; J recess "
+                        "to h 27, band 22 wide; OWNER DECISIONS 2026-10-11: J band + recess re-centred on the column axis "
+                        "(hub WL 1845; photos 1821), push 65 (was 90 [E])"),
 )
 COL_X = (588.0, 826.0)
 GRIP_SECTION_H = YS.GRIP_SECTION_H
@@ -79,7 +77,7 @@ def make_views(ds):
 
 def draw(ds):
     v = make_views(ds)
-    ds.frame_and_title(fields=dict(date="2026-10-05"))
+    ds.frame_and_title(fields=dict(date="2026-10-11"))
     draw_secZ(ds, v["Z"])
     draw_secK(ds, v["K"])
     draw_grip_sections(ds)
@@ -411,10 +409,10 @@ def draw_heads(ds):
            [f"waist {float(tr[5]):g}, split {float(tr[6]):g}", "two mirrored lobes"], size=TXT_S, weight=500)
     sd_ = D["trim_slot"]
     leader(ds, vF.pt(0.0, 11.5), (X0 + 44.0, Y0 - 30.0), "DN LUNE (FWD), GLOSS",
-           ["legend: 2 words of letter blocks (no lettering)"], size=TXT_S, weight=500)
+           ["legend: 2 words of letter", "blocks (no lettering)"], size=TXT_S, weight=500)
     leader(ds, vF.pt(0.0, -11.5), (X0 + 44.0, Y0 + 16.0), "UP LUNE (AFT)",
-           [f"ring groove {float(tg[0]):g} x {float(tg[1]):g}; SLOT RECESSED {float(sd_[0]):g},",
-            f"walls on the chords, draft {float(sd_[2]):g}°, ends {float(sd_[1]):g} inside the ring"],
+           [f"ring groove {float(tg[0]):g} x {float(tg[1]):g}; SLOT", f"RECESSED {float(sd_[0]):g}, walls on the",
+            f"chords, draft {float(sd_[2]):g}°, ends {float(sd_[1]):g}", "inside the ring"],
            size=TXT_S, weight=500)
     from model import yoke_checks as YC
     pr = YC.run_all()["proud"]
@@ -440,12 +438,12 @@ def draw_heads(ds):
     X1, Y1 = vR.pt(0, 0)
     dim(ds, vR.pt(0.5 * L, he), vR.pt(0.5 * L, 0.0), X1 + L + 7.0, f"{he:g}", orient="v")
     dim(ds, vR.pt(0.0, hm), vR.pt(0.0, 0.0), X1 - L - 9.0, f"{hm:g}", orient="v", outside=True)
-    lbl(ds, X1 + 12.0, Y1 + 7.0, f"SADDLE (EXPONENT {sexp:g}) [E +/-2], TOP EDGES R {float(tg[2]):g}, LOBES FROM THE SLOT "
-                                 f"FLOOR {dep_:g} BELOW THE FACE (HIDDEN)", TXT_S, "middle")
+    lbl(ds, X1 + 12.0, Y1 + 7.0, f"SADDLE (EXPONENT {sexp:g}) [E +/-2], TOP EDGES R {float(tg[2]):g}", TXT_S, "middle")
+    lbl(ds, X1 + 12.0, Y1 + 9.5, f"LOBES FROM THE SLOT FLOOR {dep_:g} BELOW THE FACE (HIDDEN)", TXT_S, "middle")
     cF, nF = G.head_out_face()
-    lbl(ds, X1 + 12.0, Y1 + 10.0, "AXIS: the face normal ({3:.2f}, {4:.2f}, {5:.2f}) through ({0:.1f}, {1:.1f}, a "
+    lbl(ds, X1 + 12.0, Y1 + 12.0, "AXIS: the face normal ({3:.2f}, {4:.2f}, {5:.2f}) through ({0:.1f}, {1:.1f}, a "
                                   "{2:.1f})".format(*np.r_[cF, nF]), TXT_S, "middle", color=MUTED)
-    view_title(ds, X0, Y1 + 15.0, "DETAIL F - TRIM HEAD", f"VIEW NORMAL TO THE ROUND FACE "
+    view_title(ds, X0, Y1 + 16.0, "DETAIL F - TRIM HEAD", f"VIEW NORMAL TO THE ROUND FACE "
                                                           f"({float(D['head_out'][3]):g}° UP) - 2:1", size=3.0)
     # G: view normal to the shield facet (2:1) + the button profile (an exact section of the solids)
     vG = ds.add_view(mkview("det_G", "yz_aft", 1, -1, (512.0, 365.5), 2.0, "detail G (shield), facet plane mm"))

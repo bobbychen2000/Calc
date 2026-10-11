@@ -12,7 +12,8 @@ A1, first-angle, yoke-local millimetres (u outboard, h up from the hub centre = 
 at the insert step).  The PILOT yoke is drawn; the co-pilot yoke is its mirror image (switches outboard on both).
   FRONT ELEVATION (1:1, looking forward, as the pilot sees it), SIDE ELEVATION (1:1, from outboard), VIEW FROM ABOVE
   (1:1), SECTION B-B (h 48), tables: items & finishes, main dimensions, the knee / roll check (L6B) rev H -> I -> J,
-  notes, open points, revisions.  NO MARKINGS: the badge is an abstract winged plate, legends are tick strokes.
+  notes, open points, revisions.  NO MARKINGS: the badge is an abstract winged plate with a blank raised field,
+  legends are plain letter blocks.
 """
 from __future__ import annotations
 
@@ -77,7 +78,8 @@ REVISIONS = (
                         "(non-metallic); column recess up to h 27 (the column, about the hub, 5 mm clear), J band 22 "
                         "(1 mm clear of the column), the band pewter, the recess charcoal; items 9-14 re-written.  "
                         "OWNER DECISIONS 2026-10-11: the J band and the U recess re-centred on the column axis (hub WL "
-                        "1845; the photos read 1821), push travel 65 (was 90 [E]), pull 90"),
+                        "1845; the photos read 1821), push travel 65 (was 90 [E]), pull 90; the pilot yoke's legends keep their "
+                        "reading order (item 14)"),
 )
 TRIM_COL = "#23292D"
 FR_O = (202.0, 134.0)       # front elevation: sheet position of the hub centre (1:1)
@@ -102,7 +104,7 @@ def make_views(ds):
 
 def draw(ds):
     v = make_views(ds)
-    ds.frame_and_title(fields=dict(date="2026-10-05"))
+    ds.frame_and_title(fields=dict(date="2026-10-11"))
     ctx = context()
     draw_front(ds, v["front"])
     front_annotations(ds, v["front"])
@@ -298,7 +300,7 @@ ITEMS = (  # item, part, material (render/lookdev name), finish [source]
     (13, "FORWARD-FACE SWITCHES (2) [E]", "grip_black", "PTT trigger (outboard grip), checklist rocker (inboard): "
                                                         "placeholders, never seen (L6Y2 detail W) [E]"),
     (14, "LEGENDS", "legend_grey (new)", "words of plain letter blocks, the lettering's mean tone, 0.12 proud -- NO "
-                                         "lettering (rev N)"),
+                                         "lettering (rev N); the pilot's in reading order, not mirrored"),
 )
 
 
@@ -785,7 +787,8 @@ def draw_tables(ds, ctx):
         "White moulding symmetric; the black body and the grips are NOT: an outboard web running into the trim "
         "head's rim (10-11 o'clock), an inboard LOW NECK with an open notch under the inboard head; switches "
         "outboard (TCS, AFCS, trim), the MAP LIGHTS push button on the inboard head; co-pilot yoke = mirror image.",
-        "NO MARKINGS: the badge is an abstract winged plate, every legend a row of ticks.",
+        "NO MARKINGS: the badge is an abstract winged plate with a blank raised field, every legend plain letter "
+        "blocks.",
         "Not modelled: the rev H column bellows (none in 8 photos), the PC-24's grip tab (not on the PRO).  The grips' "
         "FORWARD (finger-side) faces are UNVERIFIED -- no photo shows them; AOPA (2025-03-17) lists push-to-talk and "
         "checklist among the yoke's one-hand functions and only trim, TCS, AFCS DISC and MAP LIGHTS are seen: drawn "

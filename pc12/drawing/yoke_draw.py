@@ -177,11 +177,23 @@ LEGEND = "#B9BEC3"           # legend letter blocks (rev N: plain blocks at the 
 SLOT = "#14181A"             # the trim rocker's recessed slot (rev N)
 
 
-def legend_quads(c, k, mirror=False):
+def legend_quads(c, k, mirror=False, reading=True):
     """Switch k's legend letter blocks (yoke_geom.legend_quads: closed quads in its front-view frame) about the centre c;
-    mirror: x -> -x (a view from the other side)."""
+    mirror: x -> -x (a view from the other side).  reading (default -- the sheets draw the PILOT yoke, whose views
+    mirror the co-pilot-sense geometry): the blocks laid out as the 3-D pilot yoke's (model/yoke3d.reading_blocks: each
+    reflected about its row's centre, so the mirrored words keep their reading order); False: the table's co-pilot
+    layout."""
+    if reading:
+        from model import yoke3d as Y3
+        quads = []
+        for P0, P1, w in Y3.reading_blocks(k):
+            d = (P1 - P0) / np.linalg.norm(P1 - P0)
+            t = 0.5 * w * np.array([-d[1], d[0]])
+            quads.append(np.array([P0 - t, P1 - t, P1 + t, P0 + t, P0 - t]))
+    else:
+        quads = G.legend_quads(k)
     out = []
-    for Q in G.legend_quads(k):
+    for Q in quads:
         Q = Q * [-1.0, 1.0] if mirror else Q
         out.append(np.asarray(c, float) + Q)
     return out

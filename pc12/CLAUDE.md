@@ -48,7 +48,8 @@ python3 test/consistency_2d3d.py   # the built GLB projected / sliced against th
 python3 test/yoke_mesh_check.py # the Stage-3 yoke mesh (~4 min): triangles vs build.YOKE_BUDGET (as built: cad.res +
                                 #   the column), cad.res a fixed point on the cover, watertight, folds, slivers, corner
                                 #   normals vs the solids, the frame's highlight error (interpolated vs exact normals on
-                                #   the faces seen from the aft hemisphere: z-buffered visibility classes)
+                                #   the faces seen from the aft hemisphere: z-buffered visibility classes), the pilot
+                                #   yoke's legends in reading order
 python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from the parameter modules (~3 min;
                                 #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels,
                                 #   `L6Y L6Y2` the yoke design drawings: interior.YOKE_DESIGN through the solids of
@@ -818,7 +819,11 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   station, OPEN) and holds its finish dark.  DETAILS: the legends as WORDS of plain letter BLOCKS (FID1-05:
   the radial tick rows read as a dial; YOKE_DESIGN legends (r0, r1 = the cap-height band, ((from, to, letters), ...))
   + legend_style; `yoke_geom.legend_blocks / legend_quads` feed the sheets and `yoke3d.legend_pieces`; `legend_grey`, the
-  lettering's mean tone; TCS / AFCS DISC / TRIM DN / TRIM UP / MAP LIGHTS by letter count -- no letters); the trim
+  lettering's mean tone; TCS / AFCS DISC / TRIM DN / TRIM UP / MAP LIGHTS by letter count -- no letters; the pilot yoke is the moulding's
+  mirror image but its printed words keep their reading order -- `yoke3d.reading_blocks` reflects each block about its
+  row's centre before `place()` mirrors it (`side_pieces`, `pilot_legends`): TRIM DN / TRIM UP read left to right as in
+  Mexico L / the AOPA pilot view, LIGHTS on the collar's inboard arc as in Mexico L; the mirrored rows had read DN TRIM /
+  UP TRIM with LIGHTS over the collar); the trim
   rocker in a recessed SLOT (trim_slot 2.5 deep, 7 deg draft, sharp edges: the solid `_trim_face_grooves`, the mesh
   `yoke_patch.Terrain` slot pieces SLOT_FLOOR / WALL / END), its lobes satin dark grey (`yoke_rocker`), the lunes gloss
   black; the badge's raised blank PLATE (FID1-06: badge_field + proud 0.3 / R 1 / edge R 0.2; the solid
@@ -841,7 +846,12 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   0.78-0.87 of it (rev M 0.50-0.76 / 0.34-0.68; photos ~0.94 / 0.84-0.87); viewer_test [Y1] at the pilot stop.
   KINEMATICS (CR1-09): the push 65 mm (owner, above; a push x roll envelope -- 0.95 of the [E] 90 wings level, 0.83 at
   70 deg -- had been the interim fix).  BUDGET (CR1-07): `build.BUDGET_OPEN` printed while the interior is over (flight
-  deck ~91k against the seed's cap that never landed; seat_pax3-6 34,834 / 34,800).  DEFERRED (owner): FID1-03 the
+  deck ~91k against the seed's cap that never landed; seat_pax3-6 34,834 / 34,800).  SHEETS: L6Y2 regenerated on the
+  rev N solids -- its acceptance (model/yoke_checks.py) is disk-cached per check (`acc_part`, `ACC_VERSION`; the
+  crease scan per view: one run_all had taken > 2 h on a loaded machine); the cusp scan tables the trim slot's sharp
+  edges (`_trim_slot_tabled`: 25 slot corners had read as untabled cusps) and `connected` counts islands, not holes
+  (h 76 cuts the slot's pocket under its lip as a closed hole); detail F's leaders re-wrapped off the notes column.
+  DEFERRED (owner): FID1-03 the
   grips' fore-aft depth -- grip_depth 27 [M weak] / toe 18 are approved values; the AOPA co-pilot view (check only: its
   camera extrapolated from the pilot yoke) reads both grips narrower, but its 4-DOF cover pose misses the inboard
   button by 13.9 mm; a 6-DOF relative pose on all 9 landmarks (<= 4.2 mm) leaves the outboard grip -4.6 mean (-8.4

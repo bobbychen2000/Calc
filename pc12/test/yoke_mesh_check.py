@@ -15,6 +15,8 @@ Mesh quality of the Stage-3 yoke (model/yoke3d.py, rev M; yoke-local mm, the co-
   6. what cad.res's interior refinement adds at build (PN bow / turn criterion; counted in 1): nothing on the cover (a
      fixed point, yoke3d.res_fixed_point), <= 1 % on the moulding;
   7. folds: no face wound against its own corner normals or the solid's gradient (rev N).
+  8. the pilot yoke's legends in reading order (rev N): built as the co-pilot's mirror image, its printed words must
+     still read in the table's order (yoke3d.reading_blocks / side_pieces).
 Prints one row per check and 'YOKE MESH OK' / 'YOKE MESH FAIL'.  ~3-5 min (the cached pieces; the highlight report
 projects ~60k points).
 """
@@ -197,6 +199,30 @@ def main():
     hr2 = YM.highlight_report("msmooth", frame.V, frame.F, frame.N, tol_k=YP.frame_tol_k)
     info("the same over rev M's proxy class (for comparison)", f"p50 {hr2['p50']:.2f}, p95 {hr2['p95']:.2f} deg; "
          f"> 2 deg {hr2['over2']:.1f} %, > 4 deg {hr2['over4']:.1f} % ({hr2['faces']} faces)")
+    # 8 ------------------------------------------------------------------------------------------------ legends
+    import math
+    bad, rows8 = [], []
+    for k, (_, _, words) in enumerate(G.T()["legends"]):
+        if len(words) < 2:
+            continue
+        wid = np.repeat(np.arange(len(words)), [int(w[2]) for w in words])
+        for side, blk, sg in (("co-pilot", G.legend_blocks(k), 1), ("pilot", Y.reading_blocks(k), -1)):
+            aw = np.array([math.degrees(math.atan2(P0[1], P0[0])) for P0, _, _ in blk])
+            aw = aw if sg > 0 else 180.0 - aw                                   # front view (world): the pilot mirrored
+            c = math.degrees(math.atan2(np.sin(np.radians(aw)).sum(), np.cos(np.radians(aw)).sum()))
+            rel = (aw - c + 180.0) % 360.0 - 180.0
+            cw = 0.0 < c % 360.0 < 180.0                                       # upper arc: read clockwise
+            order = wid[np.argsort(-rel if cw else rel)]
+            if np.any(np.diff(order) < 0):
+                bad.append(f"{side} row {k}")
+        rows8.append(k)
+    pl = Y.side_pieces(-1, ps)
+    swapped = sum(p is Y.pilot_legends() for p in pl) == 1 and all(p.name != "legends" or p is Y.pilot_legends()
+                                                                   for p in pl)
+    report("the pilot yoke's legends read in the table's word order (built mirrored, each block reflected about its "
+           "row's centre first: yoke3d.reading_blocks / side_pieces); the co-pilot's likewise", not bad and swapped,
+           f"rows {rows8} in order on both yokes" if not bad and swapped else
+           ("out of order: " + ", ".join(bad) if bad else "the pilot's pieces do not carry pilot_legends"))
     YM.close_pool()
     print(f"YOKE MESH {'OK' if not fails else 'FAIL'}" + (f" ({len(fails)}): " + "; ".join(fails) if fails else "")
           + f"  ({time.time() - t0:.0f} s)")

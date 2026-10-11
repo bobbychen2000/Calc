@@ -460,11 +460,30 @@ def _slab(P0, P1, z0, z1, frame, width=TICK_W, proud=TICK_PROUD, sink=0.15, seg=
     return Piece(V3, np.array(F), N3, "legend_white").oriented()
 
 
-def legend_pieces():
+def reading_blocks(k):
+    """yoke_geom.legend_blocks(k) laid out for the PILOT yoke, which place() builds as the co-pilot's mirror image: the
+    moulding is mirrored, printed words are not -- each block's angle reflected about its row's centre (the middle of
+    the row's span, YOKE_DESIGN legends), so that after the mirror the words keep their reading order and the row its
+    place: TRIM / DN over the trim slot and TRIM / UP under it read left to right (Mexico L, AOPA pilot), MAP / LIGHTS
+    run clockwise round the collar with LIGHTS on the inboard arc (Mexico L: ~+45 .. -10 deg); a one-word row (TCS) and
+    AFCS / DISC (two 4-letter words) come out as before.  Same radii, same span: the blocks stay on their faces."""
+    _, _, words = G.T()["legends"][k]
+    c2 = min(float(w[0]) for w in words) + max(float(w[1]) for w in words)          # 2 x the row's centre angle
+    out = []
+    for P0, P1, w in G.legend_blocks(k):
+        a = math.radians(c2) - math.atan2(P0[1], P0[0])
+        e = np.array([math.cos(a), math.sin(a)])
+        out.append((np.linalg.norm(P0) * e, np.linalg.norm(P1) * e, w))
+    return out
+
+
+def legend_pieces(reading=False):
     """The legends (YOKE_DESIGN legends: words of plain letter BLOCKS, rev N -- no lettering; yoke_geom.legend_blocks):
     TCS on its bezel's dish, AFCS DISC on the boss's aft face, TRIM DN / TRIM UP on the trim face's two lunes, MAP LIGHTS
-    on the shield facet round the push button's hex collar; each block a thin slab legend_style[1] proud, legend_grey."""
+    on the shield facet round the push button's hex collar; each block a thin slab legend_style[1] proud, legend_grey.
+    reading: the pilot yoke's layout (reading_blocks, mirrored by place())."""
     D = G.T()
+    blocks = reading_blocks if reading else G.legend_blocks
     proud = float(D["legend_style"][1])
     out = []
 
@@ -480,19 +499,19 @@ def legend_pieces():
 
     def zd(r):
         return bz - dish + dish * (r - r_in) / (Rb - re - r_in)
-    for P0, P1, w in G.legend_blocks(0):
+    for P0, P1, w in blocks(0):
         out.append(slab(P0, P1, zd(np.linalg.norm(P0)), zd(np.linalg.norm(P1)), fr, w))
     # AFCS boss face (flat)
     c, nrm = G.afcs_axis()
     fr = (c, e1, np.cross(nrm, e1), nrm)
-    for P0, P1, w in G.legend_blocks(1):
+    for P0, P1, w in blocks(1):
         out.append(slab(P0, P1, 0.0, 0.0, fr, w))
     # the trim face's lunes (the flat round face outside the slot)
     c, n = G.head_out_face()
     eu, ev = G._facet_frame(c, n)
     fr = (c, eu, ev, n)
     for k in (2, 3):
-        for P0, P1, w in G.legend_blocks(k):
+        for P0, P1, w in blocks(k):
             out.append(slab(P0, P1, 0.0, 0.0, fr, w))
     # the shield facet round the hex collar: front-view blocks about the button (co-pilot sense) lifted along a onto the
     # facet plane (as the sheet's button_pieces), then expressed in the facet frame
@@ -503,7 +522,7 @@ def legend_pieces():
     b = D["button"]
     bc = np.array([-float(b[0]), float(b[1])])
     fr = (ci, eui, evi, ni)
-    for P0, P1, w in G.legend_blocks(4):
+    for P0, P1, w in blocks(4):
         Q = np.array([bc + P0, bc + P1])
         aa = ci[2] - ((Q[:, 0] - ci[0]) * ni[0] + (Q[:, 1] - ci[1]) * ni[1]) / ni[2]
         Q3 = np.c_[Q, aa] - ci
@@ -771,7 +790,7 @@ def _build_pieces(verbose=False):
             u, inv = np.unique(Fm.ravel(), return_inverse=True)
             out.append(Piece(V[u], inv.reshape(-1, 3), N[u], str(mt), "moulding"))
     out += tcs_pieces() + afcs_pieces() + button_pieces() + trim_pieces() + fwd_pieces() + badge_pieces()
-    out.append(merge(legend_pieces(), "legend_grey", "legends"))
+    out.append(merge(legend_pieces(), "legend_grey", "legends"))      # its own material: wound alone below
     # one consistent winding per material (the part merges a material's pieces; fit_check 23): pieces that share
     # positions -- the frame and its pockets, the folds at the AFCS boss / badge corners -- traverse every edge once
     # each way, each component keeping its majority winding
@@ -794,16 +813,39 @@ def _build_pieces(verbose=False):
     return out
 
 
+def pilot_legends():
+    """The pilot yoke's legend piece (co-pilot sense, before place()'s mirror): legend_pieces(reading=True), merged and
+    wound / fold-repaired as _build_pieces does the co-pilot's."""
+    if "pilot_legends" in _MEM:
+        return _MEM["pilot_legends"]
+    from model import yoke_tri as YT
+    p = merge(legend_pieces(reading=True), "legend_grey", "legends")
+    p = Piece(p.V, YT.orient_group([(p.V, p.F)], 0.02)[0], p.N, p.mat, p.name)
+    if len(fold_faces(p)):
+        p, _ = repair_folds(p)
+    _MEM["pilot_legends"] = p = fix_fold_normals([p])[0]
+    return p
+
+
+def side_pieces(side, pieces=None):
+    """yoke_pieces() for `side`: the co-pilot's as meshed; the pilot's with its legends in reading order (pilot_legends:
+    place() mirrors the moulding, the printed words keep their order)."""
+    pieces = pieces if pieces is not None else yoke_pieces()
+    if side > 0:
+        return pieces
+    return [pilot_legends() if p.name == "legends" else p for p in pieces]
+
+
 def place(side, pieces=None):
     """The yoke on `side` (-1 pilot, +1 co-pilot) in model axes (m): [(cad.mesh.Mesh, material)] -- (u, h, a) mm ->
     x = hub x + hub depth + a, y = hub y + side u, z = hub z + h (drawing.yoke_overlay.to_model at the drawn neutral);
-    the pilot yoke mirrored (winding flipped)."""
+    the pilot yoke mirrored (winding flipped), its legends in reading order (side_pieces)."""
     from cad.mesh import Mesh
     from model import interior as I
     hub = I.yoke_hub(side)
     x_ref = float(hub[0] + I.YOKE["hub_whd"][2])
     out = []
-    for p in (pieces if pieces is not None else yoke_pieces()):
+    for p in side_pieces(side, pieces):
         V = np.c_[x_ref + p.V[:, 2] * 1e-3, hub[1] + side * p.V[:, 0] * 1e-3, hub[2] + p.V[:, 1] * 1e-3]
         N = np.c_[p.N[:, 2], side * p.N[:, 0], p.N[:, 1]]
         # (u, h, a) -> (x, y, z) is a cyclic permutation (det +1) for side +1; the pilot's mirror flips the winding

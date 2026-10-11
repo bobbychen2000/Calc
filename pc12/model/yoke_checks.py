@@ -211,7 +211,7 @@ def _scan(pt, e1, e2, ext, parts, step=0.1, thr=None):
                     z, uf, hf = G._to_plane(Xg[:, 0], Xg[:, 1], Xg[:, 2], g)
                     dp = G.field("pad_" + g, G.pad_outline(g))(uf, hf)
                     tab |= (dp > -(gw + 2 * bead) - 0.8) & (dp < 0.8) & (np.abs(z) < 4.0)
-                tab |= _trim_face_tabled(X)
+                tab |= _trim_face_tabled(X) | _trim_slot_tabled(X)
             for j, kk in enumerate(k):
                 if tab[j]:
                     continue
@@ -267,6 +267,18 @@ def _trim_face_tabled(X):
     return (np.abs(Q @ n) < 1.0) & (np.hypot(Q @ eu, Q @ ev) < 0.5 * float(T["head_out"][2]) + 0.5)
 
 
+def _trim_slot_tabled(X):
+    """In the trim rocker's recessed slot (rev N, trim_slot: walls and floor meeting at SHARP tabled edges, 2.5 deep --
+    below _trim_face_tabled's 1 mm band): within the slot's footprint (|y| < the chord half-width + 1, r < the end
+    radius + 1 in the face frame) from 1 mm above the face to 0.6 mm under the floor."""
+    c, n = G.head_out_face()
+    eu, ev = G._facet_frame(c, n)
+    yl, r_end, dep, _ = G.trim_slot_dims()
+    Q = np.atleast_2d(X) - c
+    z, x, y = Q @ n, Q @ eu, Q @ ev
+    return (z < 1.0) & (z > -dep - 0.6) & (np.abs(y) < yl + 1.0) & (np.hypot(x, y) < r_end + 1.0)
+
+
 CUSP_PLANES_U = (-96.3, -92.3, -88.3, -84.3, -80.3, -76.3, -72.7, -68.3, -64.3, 64.3, 68.3, 72.7, 76.3, 80.3, 84.3,
                  88.3, 92.3, 96.3, 100.3)
 CUSP_PLANES_H = (-50.0, -20.0, 10.0, 30.0, 40.0, 50.0, 58.0, 62.0, 66.0, 70.0, 74.0, 78.0, 82.0, 86.0, 90.0, 93.0)
@@ -314,15 +326,20 @@ def cusps():
 
 def connected(hs=np.arange(62.0, 94.1, 2.0)):
     """Islands of the black moulding per side in horizontal sections h 62..94 (judges DR3-01: the rev K web stood as a
-    free fin beside the trim head at h 85-93)."""
+    free fin beside the trim head at h 85-93).  An island is an OUTER boundary -- wound as the side's largest contour;
+    holes (the opposite winding) are not pieces: rev N's recessed trim slot shows as a closed pocket under its lip in
+    the sections that pass below the slot's mouth (h 76: 67 mm2 inside the head's contour)."""
     rows = []
     for h in hs:
         S = G.section((0.0, float(h), 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (-160.0, -90.0, 160.0, 24.0),
                       parts=("black",), step=0.2)
         Cs = [C for C in S.get("black", []) if len(C) > 12 and abs(_area2(C)) > 1.0]
-        n_out = sum(1 for C in Cs if C[:, 0].mean() > 0)
-        n_in = sum(1 for C in Cs if C[:, 0].mean() < 0)
-        rows.append((float(h), n_out, n_in))
+        row = [float(h)]
+        for sg in (1.0, -1.0):
+            side = [C for C in Cs if sg * C[:, 0].mean() > 0]
+            s0 = np.sign(_area2(max(side, key=lambda C: abs(_area2(C))))) if side else 0.0
+            row.append(sum(1 for C in side if np.sign(_area2(C)) == s0))
+        rows.append(tuple(row))
     return rows
 
 
@@ -525,25 +542,37 @@ def _march(O, d, f, tmax=330.0):
 _PATCH_CACHE = {}
 
 
+def _patch_f(U, H_, A):
+    """The field the patches are cast against: black moulding and white cover."""
+    return np.minimum.reduce([G.part_sdf(p, U, H_, A) for p in ("black", "cover")])
+
+
 def _patch(nm, px=0.25):
-    """Shared depth map + analytic normals + part labels of a named patch (PATCHES or SIDE_PATCHES)."""
+    """Shared depth map + analytic normals + part labels of a named patch (PATCHES or SIDE_PATCHES); the arrays are
+    disk-cached under the design key (G.disk_cached), so the acceptance checks can be filled patch by patch in
+    parallel processes and a killed run keeps what it finished (rev N: the sheet's run_all took > 2 h on a loaded
+    machine)."""
     key = (nm, px)
     if key in _PATCH_CACHE:
         return _PATCH_CACHE[key]
-    if nm in PATCHES:
-        box, view = PATCHES[nm]
-        pxx = px if view == 1 else 0.4
-        P, hit, f, d = _depth_patch(box, pxx, view=view)
-    else:
-        c, az, el, hw, hh = SIDE_PATCHES[nm]
-        pxx = 0.3 if hw < 40 else 0.4
-        P, hit, f, d = _depth_view(c, az, el, hw, hh, pxx)
-    na = np.full(P.shape, np.nan)
-    Pf = P[hit]
-    na[hit] = _normals_at(f, Pf)
-    lab = np.full(hit.shape, -1)
-    lab[hit] = np.argmin(np.stack([G.part_sdf(p_, Pf[:, 0], Pf[:, 1], Pf[:, 2]) for p_ in ("black", "cover")]), 0)
-    _PATCH_CACHE[key] = (P, hit, f, d, na, lab, pxx)
+
+    def comp():
+        if nm in PATCHES:
+            box, view = PATCHES[nm]
+            pxx = px if view == 1 else 0.4
+            P, hit, f, d = _depth_patch(box, pxx, view=view)
+        else:
+            c, az, el, hw, hh = SIDE_PATCHES[nm]
+            pxx = 0.3 if hw < 40 else 0.4
+            P, hit, f, d = _depth_view(c, az, el, hw, hh, pxx)
+        na = np.full(P.shape, np.nan)
+        Pf = P[hit]
+        na[hit] = _normals_at(f, Pf)
+        lab = np.full(hit.shape, -1)
+        lab[hit] = np.argmin(np.stack([G.part_sdf(p_, Pf[:, 0], Pf[:, 1], Pf[:, 2]) for p_ in ("black", "cover")]), 0)
+        return P, hit, d, na, lab, pxx
+    P, hit, d, na, lab, pxx = G.disk_cached(("acc_patch", "v1", nm, px), comp)
+    _PATCH_CACHE[key] = (P, hit, _patch_f, d, na, lab, pxx)
     return _PATCH_CACHE[key]
 
 
@@ -659,10 +688,17 @@ def creases(px=0.25):
     facing the view within 75 deg, more than 1.0 mm (front view) from a tabled crease curve; it is CONFIRMED when the
     turn stays concentrated in one sub-step through two 16x refinements along the pair (a normal discontinuity at <=
     1 micron), and set aside as a round otherwise.  {patch: dict(candidates, rounds, creases [(u, h, a, turn)])}."""
-    from scipy.spatial import cKDTree
-    tree = cKDTree(_tabled_crease_curves())
     out = {}
     for nm in list(PATCHES) + list(SIDE_PATCHES):
+        out[nm] = G.disk_cached(("acc_crease", "v1", nm, px), lambda nm=nm: _crease_patch(nm, px))
+    return out
+
+
+def _crease_patch(nm, px=0.25):
+    """creases() of one patch (disk-cached per patch by creases())."""
+    from scipy.spatial import cKDTree
+    tree = cKDTree(_tabled_crease_curves())
+    if True:
         P, hit, f, d, na, lab, pxx = _patch(nm, px)
         Pz = np.nan_to_num(P)
         nz = np.nan_to_num(na)
@@ -696,8 +732,7 @@ def creases(px=0.25):
         for q in found:                                                   # one per 1 mm cluster
             if all(np.linalg.norm(np.subtract(q[:3], c_[:3])) > 1.0 for c_ in cl):
                 cl.append(q)
-        out[nm] = dict(candidates=len(cands), rounds=rounds, tabled=tabled, creases=cl, n_crease_px=len(found))
-    return out
+        return dict(candidates=len(cands), rounds=rounds, tabled=tabled, creases=cl, n_crease_px=len(found))
 
 
 def _tabled_3d(X, part=None):
@@ -830,11 +865,22 @@ def pads_exposed(px=0.2):
     return out
 
 
+ACC_PARTS = dict(exactness=lambda: exactness(), curve_law=lambda: curve_law(), proud=lambda: proud(),
+                 cusps=lambda: cusps(), connected=lambda: connected(), normals=lambda: normals(),
+                 creases=lambda: creases(), ridges=lambda: ridges(), pads=lambda: pads_exposed(),
+                 capped=lambda: G.capped_fillets())
+
+
+ACC_VERSION = dict(cusps="v8", connected="v8")       # rev N: the trim slot's sharp edges tabled, holes not islands
+
+
+def acc_part(name):
+    """One acceptance check, disk-cached on its own (rev N: a killed run keeps the checks it finished)."""
+    return G.disk_cached(("acc_part", ACC_VERSION.get(name, "v7"), name), ACC_PARTS[name])
+
+
 def run_all():
-    return G.disk_cached(("acceptance", "v7"), lambda: dict(exactness=exactness(), curve_law=curve_law(), proud=proud(),
-                                                           cusps=cusps(), connected=connected(), normals=normals(),
-                                                           creases=creases(), ridges=ridges(),
-                                                           pads=pads_exposed(), capped=G.capped_fillets()))
+    return G.disk_cached(("acceptance", "v8"), lambda: {k: acc_part(k) for k in ACC_PARTS})
 
 
 def summary_lines(r=None):

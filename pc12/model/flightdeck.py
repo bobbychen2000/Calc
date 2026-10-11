@@ -773,7 +773,8 @@ def _yokes(acc):
     solids of model/yoke_geom.py meshed by model/yoke3d.py (white cover + inserts + grooves + badge, the black moulding
     with its pads, heads and AFCS boss, the TCS / AFCS / trim rocker / push button / forward-face switches, the legend
     ticks) in yoke-local mm, placed at the drawn neutral (yoke3d.place: the aft face at the insert step hub_whd[2] aft of
-    the hub's forward face, h about the column axis = the roll pivot); the pilot yoke the mirror image.  Each yoke is its
+    the hub's forward face, h about the column axis = the roll pivot); the pilot yoke the mirror image, its legends in
+    reading order (yoke3d.side_pieces).  Each yoke is its
     own part (pivot 'yoke').  The column: a satin BLACK non-metallic cylinder (rev N, judges CR1-02: yoke_column;
     YOKE column_r) from inside the body forward through the
     lower panel's U recess into the panel, the full pull travel deeper than 30 mm behind the recess floor (at full pull it

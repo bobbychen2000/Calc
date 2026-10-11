@@ -286,7 +286,7 @@ YOKE = dict(
 # step ends, lower-insert corners, foot), the heads' switch centres triangulated from 7 views, the pads traced in 4
 # views (P1046408 L / R, Mexico L, AOPA from outboard) and back-projected onto the grips' aft planes, the inboard neck /
 # heads traced in P1046408 L / R.  The PC-24 (samuelnicz 1-4, same family) for what the PRO photos do not show.
-# NO MARKINGS: the badge is an abstract winged plate, the legends are tick strokes.
+# NO MARKINGS: the badge is an abstract winged plate with a blank raised field, the legends plain letter blocks.
 # OWNER DECISIONS 2026-10-05: (1) sheets L6Y rev D / L6Y2 rev C APPROVED as the basis of the 3-D yoke (this table, rev M,
 # carries the drawing-stage cleanup of the judges' round 4 on top of it); (2) the 95th-percentile knee result accepted as
 # measured (YOKE roll, L6B); signed off with the approval: the hidden estimates changed in rev L -- the body's foot round
@@ -776,7 +776,11 @@ YOKE_DESIGN = dict(
                "hex collar (MAP / LIGHTS, the upper / inboard arc); the letter count and each word's extent along its "
                "arc as the photos' lettering (detail_switches.jpg: AOPA pilot trim, Mexico co-pilot trim / TCS / "
                "AFCS DISC, P1046408 / 09 inboard heads; the AOPA hbtn crop reads MAP LIGHTS); angles in the front view "
-               "of the co-pilot yoke, 0 = outboard, 90 = up (the pilot yoke mirrors them)"),
+               "of the co-pilot yoke, 0 = outboard, 90 = up.  The pilot yoke is the moulding's mirror image but its PRINTED "
+               "words keep their reading order (rev N, 3-D judges r1 follow-up: the mirrored rows had read DN TRIM / UP "
+               "TRIM and put LIGHTS over the collar): each block's angle reflected about its row's centre before the "
+               "mirror (yoke3d.reading_blocks) -- TRIM / DN, TRIM / UP left to right over / under the slot as in Mexico L "
+               "and the AOPA pilot view, LIGHTS on the inboard arc ~+45 .. -10 deg as in Mexico L"),
     legend_style=PT((0.70, 0.12),
                     "[E] a legend letter is a plain block the cap height tall (the row's r0..r1) and 0.70 of the letter "
                     "pitch wide (the word's arc / letters), printed 0.12 proud (above fit_check 26's 0.1 mm "
