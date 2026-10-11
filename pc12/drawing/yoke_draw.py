@@ -36,6 +36,7 @@ RED = "#C8423B"
 GLOSS = "#1E2326"            # gloss black bezels
 SWITCH = "#3E464B"
 COLLAR = "#6F777D"           # column surround (satin dark grey)
+NICKEL = "#B9B4AC"           # the push button's satin-nickel hex (rev O)
 HID = (1.6, 0.9)
 W_CREASE = 0.22              # crease / parting lines (visible edges inside an outline)
 W_TAN = 0.10                 # tangent edges (the start of a radius)

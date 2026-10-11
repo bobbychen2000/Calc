@@ -29,14 +29,14 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                SWITCH, HID, W_CREASE, W_TAN, INK, MUTED, PAPER, ACCENT, W_OBJ, W_FINE, W_THIN, CHAIN,
                                PHANTOM, table, view_title, notes, mkview, poly, line, circle, circ, lbl, dim, leader,
                                balloon, centre_mark, hatch_poly, break_line, ticks, wrap_rows, rocker_halves, hexagon,
-                               legend_quads, LEGEND, SLOT,
+                               legend_quads, LEGEND, SLOT, NICKEL,
                                trim_frame, shield_frame, on_frame, front_to_plane, VIEWPROJ, tcs_centre3,
                                afcs_centre3, face_normal3, top_land_line, crown_crease, heel_line, views, draw_parts,
                                draw_section, tangent_edges, ordinates, clear_anchor, clear_boxes,
                                vline_gapped, hline_gapped)
 
 SHEET = dict(id="L6Y", title="CONTROL YOKE - VIEWS", subtitle="PC-24-STYLE CONTROL YOKE - VIEWS", size="A1",
-             scale="AS SHOWN", rev="F", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
+             scale="AS SHOWN", rev="G", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
 REVISIONS = (
     ("A", "2026-10-05", "first issue (owner 2026-10-05: 'the yoke isn't quite right especially if you look at the "
                         "details'): yoke re-measured on 8 PRO photos; YOKE_DESIGN rev I replaces the rev H outline"),
@@ -80,6 +80,12 @@ REVISIONS = (
                         "OWNER DECISIONS 2026-10-11: the J band and the U recess re-centred on the column axis (hub WL "
                         "1845; the photos read 1821), push travel 65 (was 90 [E]), pull 90; the pilot yoke's legends keep their "
                         "reading order (item 14)"),
+    ("G", "2026-10-11", "rev O (3-D judges r2): item 10 -- the push button a GLOSS-BLACK LEGEND DISC 17.5 (0.75 proud) with "
+                        "MAP LIGHTS at its rim, a small satin-nickel hex 12 A/C under the 10.2 cap (rev N's 17.3 collar "
+                        "read as a big bright nut where every photo shows a dark disc); item 9 -- rocker ends 9.5 proud "
+                        "(6.5), lobes crowned 0.6, satin black; legend blocks 0.35 of the pitch, tone 0.45; badge: ONE "
+                        "outline groove (the inner border dropped), speed lines into it, plate 0.2 proud; open point 3 "
+                        "closed (owner 2026-10-11)"),
 )
 TRIM_COL = "#23292D"
 FR_O = (202.0, 134.0)       # front elevation: sheet position of the hub centre (1:1)
@@ -175,16 +181,19 @@ def slot_outline(n=40):
 
 
 def button_pieces():
-    """3-D pieces of the inboard head: shield facet outline, hex collar, cap, ticks (co-pilot sense, u < 0)."""
+    """3-D pieces of the inboard head: shield facet outline, the gloss-black legend disc (rev O), the nickel hex, the
+    cap, ticks (co-pilot sense, u < 0)."""
     fr = shield_frame()
     b = D["button"]
+    bd = G.button_dims()
     c3 = fr[0]
     out = dict(shield=on_frame(fr, G.shield_outline()))
     bc = front_to_plane(fr, [(-float(b[0]), float(b[1]))])[0]
     off2 = np.array([np.dot(bc - c3, fr[2]), np.dot(bc - c3, fr[3])])
     out["centre2"] = off2
-    out["hex"] = on_frame(fr, hexagon(float(b[2])) + off2)
-    out["cap"] = on_frame(fr, circle(off2, 0.5 * float(b[3]), 61)[:-1])
+    out["disc"] = on_frame(fr, circle(off2, 0.5 * bd["disc_d"], 73)[:-1])
+    out["hex"] = on_frame(fr, hexagon(bd["hex_c"]) + off2)
+    out["cap"] = on_frame(fr, circle(off2, 0.5 * bd["cap_d"], 61)[:-1])
     out["ticks"] = [front_to_plane(fr, Q) for Q in legend_quads((-float(b[0]), float(b[1])), 4)]
     return out
 
@@ -219,7 +228,8 @@ def draw_front(ds, v):
         poly(ds, v, VIEWPROJ(h, "front"), W_THIN, fill=SWITCH, color="#C9CFD3")
     bp = button_pieces()
     poly(ds, v, VIEWPROJ(bp["shield"], "front"), W_CREASE, fill="#2F363A", color="#B9C0C5")
-    poly(ds, v, VIEWPROJ(bp["hex"], "front"), W_THIN, fill=TRIM_COL, color="#AEB6BB")
+    poly(ds, v, VIEWPROJ(bp["disc"], "front"), W_THIN, fill=TRIM_COL, color="#AEB6BB")     # rev O: gloss-black disc
+    poly(ds, v, VIEWPROJ(bp["hex"], "front"), W_THIN, fill=NICKEL, color="#C9CFD3")
     poly(ds, v, VIEWPROJ(bp["cap"], "front"), W_THIN, fill="#3A4247", color="#C9CFD3")
     for T in bp["ticks"]:
         poly(ds, v, VIEWPROJ(T, "front"), 0.05, fill=LEGEND, color=LEGEND)
@@ -233,7 +243,8 @@ def draw_front(ds, v):
     if cc is not None:                                                   # a soft break (blend R crown[4]), phantom
         line(ds, v, cc, W_THIN, dash=PHANTOM, color="#7E878D")
     poly(ds, v, F["badge"], W_THIN)
-    poly(ds, v, F["badge_border"], W_THIN)
+    if F["badge_border"] is not None:
+        poly(ds, v, F["badge_border"], W_THIN)
     for L in F["badge_lines"]:
         line(ds, v, L, W_THIN)
     poly(ds, v, F["badge_plate"], W_THIN, fill="#DDE0E3")                # rev N: the raised blank plate
@@ -278,7 +289,7 @@ ITEMS = (  # item, part, material (render/lookdev name), finish [source]
     (1, "WHITE COVER (Y SHELL)", "yoke_white", "gloss clear-coat white, neutral-cool (0.77 / 0.78 / 0.80), fine "
                                                "pearl; R 1 edges, top land [M]"),
     (2, "UPPER INSERT = CROWN, BADGE", "yoke_silver", "satin aluminium 0.62, metallic 0.85, rough 0.30; flush, "
-                                                      "0.6 x 0.5 grooves; the badge's blank plate 0.3 proud [M / E]"),
+                                                      "0.6 x 0.5 grooves; the badge's blank plate 0.2 proud [M / E]"),
     (3, "LOWER INSERT", "yoke_silver_dark", "smoke silver 0.30, metallic 0.85, rough 0.34; flush [M]"),
     (4, "BLACK BODY (RIM, WEB, NECK)", "grip_black", "satin black, rough 0.42: crisp edge highlights; R 2 aft edge [M]"),
     (5, "GRIP (2) WITH FRAME, HEEL LIP", "grip_black", "satin black; 2.0 frame R 1.5, heel lip 3 proud R 4 [M]"),
@@ -288,12 +299,14 @@ ITEMS = (  # item, part, material (render/lookdev name), finish [source]
                                              "[M low]; legend blocks (legend_grey)"),
     (8, "AFCS DISCONNECT", "button_red / black", "red cap 0.70 / 0.035 / 0.04, clear coat 0.3, NOT emissive, "
                                                  "on a black boss [M]; legend blocks"),
-    (9, "PITCH TRIM ON ROUND FACE", "gloss_black / yoke_rocker (new) / black", "gloss black ring + lunes, satin dark "
-                                                                              "grey rocker #3A3A3C in a 2.5 deep satin "
-                                                                              "black slot [M / E]; legend blocks"),
-    (10, "PUSH BUTTON ON SHIELD", "yoke_nickel (new) / black", "SATIN NICKEL hex collar, smooth black cap, centre "
-                                                               "dimple [M]; function: MAP LIGHTS (legend blocks, "
-                                                               "no lettering)"),
+    (9, "PITCH TRIM ON ROUND FACE", "gloss_black / yoke_rocker / black", "gloss black ring + lunes; rocker (rev O) "
+                                                                          "near-black satin 0.02, rough 0.30, ends 9.5 "
+                                                                          "proud, crowned; 2.5 deep satin black slot "
+                                                                          "[M / E]; legend blocks"),
+    (10, "PUSH BUTTON ON SHIELD", "gloss_black / yoke_nickel / black", "rev O: GLOSS-BLACK legend disc 17.5, 0.75 "
+                                                                       "proud, legend blocks at its rim; small SATIN "
+                                                                       "NICKEL hex 11 A/C; smooth black cap, centre "
+                                                                       "dimple [M]; function: MAP LIGHTS (no lettering)"),
     (11, "COLUMN", "yoke_column (new)", "satin black, non-metallic, dia 44 [E] (never seen in a PRO photo)"),
     (12, "COLUMN SURROUND (PANEL)", "pcl_pewter / panel_dark", "satin pewter J band 22 wide, charcoal dished "
                                                                "recess [M / E]"),
@@ -540,8 +553,8 @@ def draw_side(ds, v):
     lbl(ds, X0 - 74.0, Y0 + 108.0, f"BODY (HIDDEN): TOP {float(D['body_form'][1]):g}° FROM THE HORIZONTAL, TOP-TO-FRONT "
                                    f"R {float(D['body_form'][6]):g}, DEPTH {depth:g} [E], FOOT R "
                                    f"{float(D['body_form'][5]):g} [E] (L6Y2 Z-Z)", TXT_S, color=MUTED)
-    lbl(ds, X0 - 74.0, Y0 + 104.5, "GRIP PLANES [M], 6 VIEWS INCL. P1046409: RAKE 20 (+/-2.5), a0 -3.75 (+/-3), DEPTH 27 "
-                                   "(+/-4), WALLS 0.6 / 0; TOE 18 WEAK (+/-8, OPEN POINT 2)", TXT_S, color=ACCENT, weight=600)
+    lbl(ds, X0 - 74.0, Y0 + 104.5, "GRIP PLANES [M], 6 VIEWS INCL. P1046409: RAKE 20 +/-2.5, a0 -3.75 +/-3, DEPTH 27 "
+                                   "+/-4, WALLS 0.6 / 0; TOE 18 WEAK +/-8 (OPEN POINT 2)", TXT_S, color=ACCENT, weight=600)
 
 
 # ============================================================================================ view from above
@@ -825,8 +838,10 @@ def draw_tables(ds, ctx):
         "low on the grip, or an outer frame + roll under 2.0 + R 1.5?) -- to decide after that camera's "
         "re-calibration.  Kept 18 / 18.  The trim head's depth is weak too: a -27 vs the judges' fit (110.7, 83.7, "
         "-23.6), P1046409 / 10 agreeing in sign (FID4-04).",
-        "Column: the surround's joint line reads WL 1821 +/-10 (25 under the pivot, kept); J band or a full collar "
-        "round the column (L6Y2 detail J); the recess a U 114 wide to h -72 [M]; push travel 90 [E].",
+        "Column: CLOSED (owner 2026-10-11) -- the J band and the U recess re-centred on the column axis / roll pivot "
+        "(hub WL 1845; the photos' joint line reads 1821 +/-10): recess h -48 .. 27 about it, the band 1.0 off the "
+        "column; push travel 65 (was 90 [E]), pull 90 (L6Y2 detail J).  Still open: a J band or a full collar round "
+        "the column.",
         "Shell skew (judges FID4-03): ONE left / right pattern in all 8 views of both yokes, each in its own sense "
         "(means of 8, + = photo outside): stem -1.5 / +1.7 (~1.6 inboard), arm tips +1.7 / -1.5 (both ~1.6 "
         "outboard), inboard arm top -1.7 / lower edge +1.7 (~1.7 low); crown, chamfers, foot within 1.2.  Kept "

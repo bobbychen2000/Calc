@@ -376,18 +376,23 @@ YOKE_DESIGN = dict(
              "[M low: Mexico from above (a lit 1.5-2 px rim), rev I crown_top 2 mm; P1046408 1-2 px dark band]"),
     badge=PT(((22.0, 53.2), (15.8, 46.1)), "[M] badge groove outline, half: top corner, bottom corner (a winged "
                                            "trapezoid 44.0 / 31.6 x 7.1, ends 41 deg from vertical; rectified Mexico R / "
-                                           "L, P1046409 / 10, AOPA, JTF at 16 px/mm; sigma 0.5).  Drawn ABSTRACT: an "
-                                           "inner border 0.8 inside, three speed-line grooves per wing, a plain field"),
-    badge_lines=PT((51.55, 50.25, 48.95, 14.0, 0.8),
-                   "[M] speed lines: z of the three grooves, from |u| to the inner border; the border offset (Mexico R "
-                   "/ L vertical profiles at |u| 16 / 18: minima at 51.5-51.75, 50.1-50.3, 48.6-49.3)"),
-    badge_field=PT((13.5, 47.0, 52.2, 0.3, 1.0, 0.2),
+                                           "L, P1046409 / 10, AOPA, JTF at 16 px/mm; sigma 0.5).  Drawn ABSTRACT: ONE "
+                                           "outline groove (rev O), three speed-line grooves per wing, a plain field"),
+    badge_lines=PT((51.55, 50.25, 48.95, 14.0, 0.0),
+                   "[M] speed lines: z of the three grooves, from |u| to the outline; the inner border offset -- 0 = NO "
+                   "inner border, the speed lines run on into the outline groove (rev O, 3-D judges r2 FID2-06: rev J-N's "
+                   "border groove 0.8 inside drew a DOUBLE outline, 'an empty label holder'; the rectified views' second "
+                   "line 0.8 inside (detail_badge.jpg, cyan) is the single groove's lit lower flank / the raised field's "
+                   "edge, and the speed lines reach it; Mexico R / L vertical profiles at |u| 16 / 18: minima at "
+                   "51.5-51.75, 50.1-50.3, 48.6-49.3)"),
+    badge_field=PT((13.5, 47.0, 52.2, 0.2, 1.0, 0.2),
                    "[M] plain centre field half-width, bottom, top (the extent of the lettering, NOT reproduced: no "
                    "markings).  Rev N (3-D judges FID1-06: the blank field between the speed lines read as a vent "
-                   "grille): a RAISED blank plate over it -- 0.3 proud of the insert [E: the embossed lettering's "
-                   "relief], corners R 1.0, top edge R 0.2 [E], inset to clear the border groove by 0.1 mm -- the "
-                   "speed lines running from it to the plate's slanted ends [M: Mexico L / R, P1046409, PC-24 "
-                   "samuelnicz-2: a raised name field between the wing-lines]"),
+                   "grille): a RAISED blank plate over it -- 0.2 proud of the insert [E: the embossed lettering's "
+                   "relief; rev O (3-D judges r2 FID2-06: 'flush or 0.2 proud') -- rev N 0.3], corners R 1.0, top edge "
+                   "R 0.2 [E], inset to clear the border groove by 0.1 mm -- the speed lines running from it to the "
+                   "outline's slanted ends [M: Mexico L / R, P1046409, PC-24 samuelnicz-2: a raised name field between "
+                   "the wing-lines]"),
     badge_relief=PT((0.3, 0.5), "[E] badge outline / speed-line groove depth 0.3, groove width 0.5 [M]"),
     # ---- black body (behind the cover), front view: NOT symmetric
     body_half=PT(((0.0, 60.5), (20.0, 58.5), (33.0, 55.0), (50.0, 56.5), (58.0, 59.0), (60.5, 62.9), (65.3, 70.8),
@@ -729,19 +734,24 @@ YOKE_DESIGN = dict(
                                            "R 1; on a ROUND black boss dia 21.6 (twice the cap) on the body's lower "
                                            "edge, the legend (9 ticks) on its upper half [M: Mexico L / R, judges "
                                            "FID1-09; rev I a half-ring sector], boss 1.5 proud [E]"),
-    trim=PT((111.5, 82.0, 29.5, 27.0, 8.0, 4.0, 0.8, 6.5, 3.5),
+    trim=PT((111.5, 82.0, 29.5, 27.0, 8.0, 4.0, 0.8, 9.5, 3.5),
             "[M] pitch trim on the OUTBOARD head's round face: centre = head_out (triangulated, rev J; rev I 109.5 / "
             "81.5), flat satin black legend ring OD 29.5 +/-1.1 flush in the face with a fine groove; two legend "
             "lunes ~7.3 deep (fore = DN, aft = UP; 7 ticks each over 84 deg at r 11, 3 long) and a ~15 mm slot "
             "between them holding a split bow-tie rocker ACROSS the head: 27 +/-1.5 long, 8 wide at the ends, 4 at "
-            "the waist, 0.8 split (AOPA, Mexico R), saddle 6.5 at the ends / 3.5 at the split [E +/-2]"),
+            "the waist, 0.8 split (AOPA, Mexico R; Mexico L), saddle 9.5 at the ends / 3.5 at the split above the face "
+            "[rev O, 3-D judges r2 FID2-02: the lobe ends stand ~9-10 proud -- in P1046409 / Mexico R the outboard end "
+            "projects 4-7 mm further up / out than rev N's 6.5 and rises past the ring (ph_p409_trim_x6), the face-on "
+            "views (AOPA pilot, Mexico L) keep the 27 length inside the 29.5 ring; M low +/-1.5]"),
     trim_grooves=PT((0.4, 0.3, 0.5),
                     "[M/E] fine V-grooves in the round trim face, 0.4 wide x 0.3 deep: the legend ring's outer edge and "
                     "the two chords bounding the rocker slot [M: Mexico R / L, a 1 px dark line]; the rocker's top edges "
                     "R 0.5 [E]"),
-    trim_lunes=PT((7.3, 10.0, 13.0, 1.6),
+    trim_lunes=PT((7.3, 10.0, 13.0, 1.6, 0.6),
                   "[M] legend lunes: depth 7.3 of each lune (the slot between them 2 x (14.75 - 7.3) = 14.9 wide), the "
-                  "legend band from r 10 to 13 (rev N: the legends' rows), the rocker's saddle exponent 1.6 [E]"),
+                  "legend band from r 10 to 13 (rev N: the legends' rows), the rocker's saddle exponent 1.6 [E]; rev O "
+                  "(3-D judges r2 FID2-02: a 'dark sculpted lever with crisp highlights', not a flat bow-tie): each "
+                  "lobe's top CROWNED 0.6 across its width (z - 0.6 (y / (end width / 2))^2) [E]"),
     trim_slot=PT((2.5, 0.8, 7.0),
                  "rev N (3-D judges FID1-05): the rocker SLOT between the two lunes is a recess, not flat face -- 2.5 "
                  "deep [E 2-3] below the face, its side walls on the chords (|y| = trim[2] / 2 - trim_lunes[0], the "
@@ -751,29 +761,37 @@ YOKE_DESIGN = dict(
                  "satin black, the rocker lobes standing from the slot floor [M: a deep black slot under the grey "
                  "rocker in AOPA pilot / Mexico co-pilot / P1046409 (refs/cache/fd_research/yoke/measure/"
                  "detail_switches.jpg)]"),
-    button=PT((106.3, 76.0, 17.3, 10.2, 6.0, 2.0, 15.0, 2.0, 0.4),
-              "[M] round push button on the INBOARD head's shield facet: collar centre (106.3, 76.0) [M rev J: the "
-              "cap top triangulated from 6 views at (107.1, 77.2) less the cap height along the facet normal; rev I "
-              "106.5 / 79.5 on the grip face], a black HEX collar 17.3 across the corners / 15.0 across the flats "
-              "[M rev J: faceted highlights in Mexico L / R at 3.8 px/mm, judges FID1-11] ~2 proud, a plain smooth "
-              "cylindrical cap dia 10.2 +/-0.6 standing 6 +/-2 above the collar, top R 1 with a ~2 mm centre dimple "
-              "0.4 deep [E] (P1046408 R / L, P1046409); legend: MAP LIGHTS on the upper / inboard arc (legends).  Rev N "
-              "(3-D judges FID1-04): the hex collar is SATIN NICKEL, the cap black [M: a bright faceted metal collar "
-              "with a crisp highlight on a hex corner under the black knob in Mexico L (3.7 px/mm), P1046409 and the "
-              "AOPA co-pilot view; P1046408 R a light grey ring]"),
+    button=PT((106.3, 76.0, 17.5, 10.2, 5.75, 0.75, 12.0, 2.0, 0.4, 1.5, 0.5),
+              "[M] round push button on the INBOARD head's shield facet: centre (106.3, 76.0) [M rev J: the cap top "
+              "triangulated from 6 views at (107.1, 77.2) less the cap height along the facet normal; rev I 106.5 / "
+              "79.5 on the grip face].  REV O (3-D judges r2 FID2-01): a round GLOSS-BLACK LEGEND DISC dia 17.5 "
+              "(index 2) standing 0.75 proud of the facet (index 5; [E 0.5-1]), its outer edge rolled R 0.5 (index 10) "
+              "-- finished as the TCS bezel -- carrying the MAP LIGHTS legend at its rim (legends row 4) [M: the black "
+              "disc 17.6-18.3 in Mexico L (15.4 px/mm grid crop), 17.8 in P1046409, 16.4-17.7 in P1046408 R / L "
+              "(measure/detail_switches.jpg: rev I's 'collar'); the lettering inside it, at its rim]; on it a SMALL "
+              "SATIN-NICKEL HEX 12.0 across the corners (index 6; 10.4 across the flats) x 1.5 high (index 9) [M: 10-12 "
+              "under the cap in Mexico L / P1046409 / the AOPA co-pilot view, a bright faceted nut with a crisp corner "
+              "highlight (rev N's FID1-04 reading) showing round the cap (Mexico L: its lit lower facets reach ~2 mm "
+              "past the cap's side): the top of that range, so its corners stand 0.9 past the 10.2 cap; the height E]; the plain smooth cylindrical black cap dia 10.2 "
+              "+/-0.6 (index 3) standing 5.75 above the hex (index 4: its top 8.0 above the facet, as rev J-N's 2 + 6 "
+              "[M +/-2]), top R 1 with a ~2 mm centre dimple 0.4 deep (indices 7, 8) [E] (P1046408 R / L, P1046409).  "
+              "Rev J-N drew a 17.3 / 15.0 hex collar 2 proud over the whole disc: the photos' brightness in that "
+              "footprint is 0.20-0.36 of the cover's (a dark disc), the satin-nickel collar rendered 0.64-0.83"),
     legends=PT(((6.3, 8.1, ((64.0, 116.0, 3),)),
                 (7.2, 9.4, ((95.0, 155.0, 4), (25.0, 85.0, 4))),
                 (10.4, 12.6, ((84.0, 132.0, 4), (48.0, 72.0, 2))),
                 (10.4, 12.6, ((228.0, 276.0, 4), (288.0, 312.0, 2))),
-                (9.4, 11.4, ((165.0, 210.0, 3), (70.0, 150.0, 6)))),
+                (6.3, 8.0, ((166.0, 212.0, 3), (60.0, 152.0, 6)))),
                "[M] the legends as WORDS of plain letter BLOCKS (rev N, 3-D judges FID1-05: rev M's radial tick rows "
                "read as a dial), NO lettering: per switch (r0, r1 = the cap-height band, ((from deg, to deg, letters), "
                "...) one entry per word; the cap height 1.8-2.2, letters ~0.7 as wide: rev M's tick rows ran 3.4 deep "
                "on the AFCS boss, drawn as blocks they still read as ticks) -- TCS on its bezel's dish (TCS), AFCS on the "
                "boss's upper half (AFCS / DISC), "
                "the trim face's fore lune (TRIM / DN) and aft lune (TRIM / UP, read along the lower arc: the fore "
-               "lune's angles mirrored about the horizontal, not turned 180), the push button on the shield round its "
-               "hex collar (MAP / LIGHTS, the upper / inboard arc); the letter count and each word's extent along its "
+               "lune's angles mirrored about the horizontal, not turned 180), the push button's (MAP / LIGHTS, the upper "
+               "/ inboard arc) -- rev O (3-D judges r2 FID2-01): ON ITS GLOSS-BLACK LEGEND DISC at the rim, r 6.3-8.0 "
+               "outside the hex (rev N: on the shield round the hex collar, r 9.4-11.4), the words' arcs widened so the "
+               "letter pitch stays ~1.9 mm at the smaller radius; the letter count and each word's extent along its "
                "arc as the photos' lettering (detail_switches.jpg: AOPA pilot trim, Mexico co-pilot trim / TCS / "
                "AFCS DISC, P1046408 / 09 inboard heads; the AOPA hbtn crop reads MAP LIGHTS); angles in the front view "
                "of the co-pilot yoke, 0 = outboard, 90 = up.  The pilot yoke is the moulding's mirror image but its PRINTED "
@@ -781,11 +799,12 @@ YOKE_DESIGN = dict(
                "TRIM and put LIGHTS over the collar): each block's angle reflected about its row's centre before the "
                "mirror (yoke3d.reading_blocks) -- TRIM / DN, TRIM / UP left to right over / under the slot as in Mexico L "
                "and the AOPA pilot view, LIGHTS on the inboard arc ~+45 .. -10 deg as in Mexico L"),
-    legend_style=PT((0.70, 0.12),
-                    "[E] a legend letter is a plain block the cap height tall (the row's r0..r1) and 0.70 of the letter "
-                    "pitch wide (the word's arc / letters), printed 0.12 proud (above fit_check 26's 0.1 mm "
-                    "coplanarity); light grey legend_grey (white strokes at ~35 % ink cover: the lettering's mean "
-                    "tone, judges FID1-05 'legend_white at reduced contrast')"),
+    legend_style=PT((0.35, 0.12),
+                    "[E] a legend letter is a plain block the cap height tall (the row's r0..r1) and 0.35 of the letter "
+                    "pitch wide (the word's arc / letters; rev N 0.70 -- 3-D judges r2 FID2-06: chunky mid-grey "
+                    "rectangles read as dial ticks / LED segments where the photos' lettering is thin fine strokes), "
+                    "printed 0.12 proud (above fit_check 26's 0.1 mm coplanarity); legend_grey ~0.45 of white (sRGB; "
+                    "rev N 0.58: judges FID1-05 'legend_white at reduced contrast', FID2-06 'tone about 0.45')"),
     ptt=P(0.0, "[S: AOPA 2025-03-17 -- the PC-24-style yoke's one-hand functions 'pitch trim, push-to-talk, checklist, "
                "TCAS and autopilot quick disconnect' (TCAS: AOPA's word for the TCS button); JTF cockpit key lists push-to-talk] four of them are seen: "
                "trim, TCS, AFCS DISC and the inboard head's button, whose legend reads MAP LIGHTS (AOPA hbtn crop, "
@@ -1728,7 +1747,8 @@ def yoke_grip_low():
 
 def yoke_front_mm():
     """Every front-view piece of the yoke (mm, u outboard, h up; the co-pilot sense -- the pilot yoke is its mirror):
-    closed dense outlines 'shell', 'insert_upper', 'insert_lower', 'body', 'badge', 'badge_border', 'badge_field',
+    closed dense outlines 'shell', 'insert_upper', 'insert_lower', 'body', 'badge', 'badge_border' (None: rev O has
+    no inner border), 'badge_field',
     'badge_plate' (rev N: the raised blank plate),
     'grip_out' / 'grip_in' (solid silhouettes), 'aft_out' / 'aft_in' (aft-face outlines), 'pad_out' / 'pad_in',
     'trim_face' (the trim head's round face), 'shield' (the inboard head's facet), open polylines 'step',
@@ -1749,7 +1769,8 @@ def yoke_front_mm():
 
     def end_u(z):
         return bu1 + (z - bh1) * (bu0 - bu1) / (bh0 - bh1) - du
-    border = np.array([(-end_u(bt), bt), (end_u(bt), bt), (end_u(bb), bb), (-end_u(bb), bb)])
+    border = (np.array([(-end_u(bt), bt), (end_u(bt), bt), (end_u(bb), bb), (-end_u(bb), bb)]) if off > 0.0
+              else None)                     # rev O (3-D judges r2 FID2-06): one outline groove, no inner border
     lines = [np.array([(sg * u0, z), (sg * end_u(z), z)]) for z in (z1, z2, z3) for sg in (-1, 1)]
     fw, f0, f1 = (float(x) for x in D["badge_field"][:3])
     field = np.array([(-fw, f1), (fw, f1), (fw, f0), (-fw, f0)])

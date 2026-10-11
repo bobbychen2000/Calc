@@ -29,12 +29,12 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                SWITCH, HID, W_CREASE, W_TAN, INK, MUTED, PAPER, ACCENT, W_OBJ, W_FINE, W_THIN, CHAIN,
                                PHANTOM, COLLAR, table, view_title, notes, mkview, poly, line, circle, circ, lbl, dim,
                                leader, centre_mark, hatch_poly, break_line, ticks, wrap_rows, rocker_halves, hexagon,
-                               views, draw_section, section_contours, PART_STYLE, legend_quads, LEGEND, SLOT)
+                               views, draw_section, section_contours, PART_STYLE, legend_quads, LEGEND, SLOT, NICKEL)
 from drawing import yoke_sheet as YS  # noqa: E402
 from drawing import master as M  # noqa: E402
 
 SHEET = dict(id="L6Y2", title="CONTROL YOKE - SECTIONS", subtitle="PC-24-STYLE CONTROL YOKE - SECTIONS & DETAILS",
-             size="A1", scale="AS SHOWN", rev="E", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
+             size="A1", scale="AS SHOWN", rev="F", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
 REVISIONS = (
     ("A", "2026-10-05", "first issue with L6Y rev B (judges r1): exact sections of the rev J solids, grip profiles with "
                         "the heel lip, trim face / shield, switch profiles, column surround, corner table, photo check"),
@@ -53,6 +53,9 @@ REVISIONS = (
                         "pilot's reading order; G MAP LIGHTS blocks, satin-nickel collar; H raised blank plate; J recess "
                         "to h 27, band 22 wide; OWNER DECISIONS 2026-10-11: J band + recess re-centred on the column axis "
                         "(hub WL 1845; photos 1821), push 65 (was 90 [E])"),
+    ("F", "2026-10-11", "rev O (3-D judges r2): G push button = gloss-black legend disc 17.5 + nickel hex 12 A/C + cap "
+                        "10.2, MAP LIGHTS on the disc; F rocker ends 9.5, crowned 0.6; H one outline groove, plate 0.2; "
+                        "legends 0.35 of the pitch"),
 )
 COL_X = (588.0, 826.0)
 GRIP_SECTION_H = YS.GRIP_SECTION_H
@@ -387,7 +390,7 @@ def draw_heads(ds):
     vF = ds.add_view(mkview("det_F", "yz_aft", -1, -1, (506.0, 236.0), 2.0, "detail F (trim face), face plane mm"))
     R = 0.5 * float(D["head_out"][2])
     od = float(D["trim"][2])
-    lune, r0, r1, sexp = (float(x) for x in D["trim_lunes"])
+    lune, r0, r1, sexp = (float(x) for x in D["trim_lunes"][:4])
     c = np.zeros(2)
     for C in sorted(_trim_view_sil(), key=len, reverse=True):
         poly(ds, vF, C, W_FINE, fill="#596166")                          # clipped at +-21 (the frame of the detail)
@@ -438,7 +441,8 @@ def draw_heads(ds):
     X1, Y1 = vR.pt(0, 0)
     dim(ds, vR.pt(0.5 * L, he), vR.pt(0.5 * L, 0.0), X1 + L + 7.0, f"{he:g}", orient="v")
     dim(ds, vR.pt(0.0, hm), vR.pt(0.0, 0.0), X1 - L - 9.0, f"{hm:g}", orient="v", outside=True)
-    lbl(ds, X1 + 12.0, Y1 + 7.0, f"SADDLE (EXPONENT {sexp:g}) [E +/-2], TOP EDGES R {float(tg[2]):g}", TXT_S, "middle")
+    lbl(ds, X1 + 12.0, Y1 + 7.0, f"SADDLE (EXPONENT {sexp:g}) [M low], CROWNED {G.rocker_crown():g} ACROSS, TOP EDGES "
+                                  f"R {float(tg[2]):g}", TXT_S, "middle")
     lbl(ds, X1 + 12.0, Y1 + 9.5, f"LOBES FROM THE SLOT FLOOR {dep_:g} BELOW THE FACE (HIDDEN)", TXT_S, "middle")
     cF, nF = G.head_out_face()
     lbl(ds, X1 + 12.0, Y1 + 12.0, "AXIS: the face normal ({3:.2f}, {4:.2f}, {5:.2f}) through ({0:.1f}, {1:.1f}, a "
@@ -452,20 +456,23 @@ def draw_heads(ds):
     bp = YS.button_pieces()
     c2 = bp["centre2"]
     b = D["button"]
-    poly(ds, vG, hexagon(float(b[2])) + c2, W_FINE, fill="#23292D", color="#C9CFD3")
-    circ(ds, vG, c2, float(b[3]), W_FINE, fill="#3A4247", color="#C9CFD3")
-    circ(ds, vG, c2, float(b[7]), W_THIN, color="#C9CFD3")
+    bd = G.button_dims()
+    circ(ds, vG, c2, bd["disc_d"], W_FINE, fill="#23292D", color="#C9CFD3")          # rev O: the gloss-black disc
     for Q in legend_quads(c2, 4, mirror=True):
         poly(ds, vG, Q, 0.05, fill=LEGEND, color=LEGEND)
+    poly(ds, vG, hexagon(bd["hex_c"]) + c2, W_FINE, fill=NICKEL, color="#C9CFD3")
+    circ(ds, vG, c2, bd["cap_d"], W_FINE, fill="#3A4247", color="#C9CFD3")
+    circ(ds, vG, c2, bd["dimple_d"], W_THIN, color="#C9CFD3")
     X0, Y0 = vG.pt(*c2)
     sc = np.asarray(D["shield"], float)
     dim(ds, vG.pt(sc[0, 0], sc[0, 1]), vG.pt(sc[1, 0], sc[1, 1]), vG.pt(0, sc[0, 1])[1] - 6.0,
         f"{sc[1, 0] - sc[0, 0]:.0f} SHIELD")
-    leader(ds, vG.pt(c2[0] - 6.0, c2[1] - 6.0), (X0 - 40.0, Y0 + 14.0), f"HEX COLLAR {float(b[2]):g} / "
-                                                                        f"{float(b[6]):g} A/F",
-           [f"cap {float(b[3]):g}, {float(b[4]):g} proud, dimple {float(b[7]):g}"], size=TXT_S, weight=500)
-    leader(ds, vG.pt(c2[0] - 7.0, c2[1] + 7.5), (X0 - 40.0, Y0 - 18.0), "MAP LIGHTS AS LETTER BLOCKS",
-           ["on the upper / inboard arc (no lettering)"], size=TXT_S, weight=500)
+    leader(ds, vG.pt(c2[0] - 6.5, c2[1] - 5.5), (X0 - 40.0, Y0 + 14.0), f"GLOSS-BLACK DISC {bd['disc_d']:g}, "
+                                                                        f"{bd['disc_z']:g} PROUD",
+           [f"nickel hex {bd['hex_c']:g} A/C / {bd['hex_f']:.1f} A/F x {bd['hex_h']:g}; cap {bd['cap_d']:g}, top "
+            f"{bd['cap_z']:g} above the facet, dimple {bd['dimple_d']:g}"], size=TXT_S, weight=500)
+    leader(ds, vG.pt(c2[0] - 4.5, c2[1] + 5.5), (X0 - 40.0, Y0 - 18.0), "MAP LIGHTS AS LETTER BLOCKS",
+           ["on the disc's rim, upper / inboard arc (no lettering)"], size=TXT_S, weight=500)
     lbl(ds, X0 - 22.0, Y0 + 29.0, "INBOARD -> RIGHT (pilot); facet "
                                   f"{float(D['head_in'][2]):g}° up, toe {float(D['head_in'][3]):g}°", TXT_S,
         color=MUTED)
@@ -477,12 +484,13 @@ def draw_heads(ds):
     Sb = _axis_section(("button", "black"), cb * m, nb * m, evb * m, (-13.0, -4.0, 13.0, 10.0), step=0.05)
     draw_section(ds, vB, Sb, parts=("black", "button"))
     X2, Y2 = vB.pt(0, 0)
-    af, cd_, ch_, dimple = float(b[6]), float(b[3]), float(b[4]), float(b[7])
-    col_h = float(b[5])
-    dim(ds, vB.pt(0.5 * cd_, col_h + ch_), vB.pt(0.5 * cd_, col_h), X2 + 24.0, f"{ch_:g}", orient="v")
-    dim(ds, vB.pt(-0.5 * af, col_h), vB.pt(-0.5 * af, 0.0), X2 - 26.0, f"{col_h:g}", orient="v", outside=True)
-    lbl(ds, X2 - 12.0, Y2 + 16.0, f"HEX {af:g} A/F, CAP {cd_:g}, TOP R 1, DIMPLE {dimple:g} x {float(b[8]):g} [E]",
-        TXT_S)
+    af, cd_, ch_, dimple = bd["hex_f"], bd["cap_d"], bd["cap_h"], bd["dimple_d"]
+    hz, dz = bd["hex_z"], bd["disc_z"]
+    dim(ds, vB.pt(0.5 * cd_, hz + ch_), vB.pt(0.5 * cd_, hz), X2 + 24.0, f"{ch_:g}", orient="v")
+    dim(ds, vB.pt(-0.5 * af, hz), vB.pt(-0.5 * af, 0.0), X2 - 26.0, f"{hz:g}", orient="v", outside=True)
+    dim(ds, vB.pt(-0.5 * bd["disc_d"], dz), vB.pt(0.5 * bd["disc_d"], dz), Y2 + 6.0, f"DISC {bd['disc_d']:g}")
+    lbl(ds, X2 - 12.0, Y2 + 16.0, f"DISC {dz:g} PROUD R {bd['disc_r']:g}; HEX {af:.1f} A/F x {bd['hex_h']:g}; CAP "
+                                  f"{cd_:g}, TOP R 1, DIMPLE {dimple:g} x {bd['dimple_t']:g} [E]", TXT_S)
     lbl(ds, X2 - 12.0, Y2 + 19.0, "BUTTON: EXACT CUT ALONG THE FACET NORMAL - 3:1", TXT_S, color=MUTED)
     lbl(ds, X2 - 12.0, Y2 + 22.0, "AXIS: the facet normal through (-{0:.1f}, {1:.1f}, a {2:.1f}); facet point (-{3:g}, "
                                   "{4:g}, a {5:g})".format(*np.r_[cb, float(D['head_in'][0]), float(D['head_in'][1]),
@@ -552,7 +560,8 @@ def draw_switches(ds):
     hc = 49.65
     sub = np.array([0.0, hc])
     poly(ds, vH, F["badge"] - sub, W_OBJ, fill=SILVER)
-    poly(ds, vH, F["badge_border"] - sub, W_FINE)
+    if F["badge_border"] is not None:
+        poly(ds, vH, F["badge_border"] - sub, W_FINE)
     for Ln in F["badge_lines"]:
         line(ds, vH, Ln - sub, W_FINE)
     poly(ds, vH, F["badge_plate"] - sub, W_FINE, fill="#DDE0E3")       # rev N: the raised blank plate
@@ -835,7 +844,8 @@ def draw_tables(ds):
     saved = IS.SHEET
     IS.SHEET = SHEET
     try:
-        revisions_block(ds, x0, 470.0, x1, size=2.1, title_size=2.4, rows=REVISIONS)
+        # rev F: six rows -- 1.9 high (2.1 to rev E) to stay clear of the title block
+        revisions_block(ds, x0, 470.0, x1, size=1.9, title_size=2.2, rows=REVISIONS)
     finally:
         IS.SHEET = saved
 

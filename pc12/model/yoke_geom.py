@@ -577,8 +577,9 @@ def _groove_curves():
 
 
 def badge_curves():
-    """The badge's groove curves (front view): 'badge' its outline (closed), 'badge_border' the inner border,
-    'badge_l0'.. the speed lines (three per wing) -- the same geometry interior.yoke_front_mm draws (H detail)."""
+    """The badge's groove curves (front view): 'badge' its outline (closed), 'badge_border' the inner border (only
+    when badge_lines[4] > 0: rev O has none), 'badge_l0'.. the speed lines (three per wing, running to the border or,
+    rev O, on into the outline groove) -- the same geometry interior.yoke_front_mm draws (H detail)."""
     D = T()
     (bu0, bh0), (bu1, bh1) = D["badge"]
     z1, z2, z3, u0, off = (float(x) for x in D["badge_lines"])
@@ -589,8 +590,10 @@ def badge_curves():
     def end_u(z):
         return bu1 + (z - bh1) * (bu0 - bu1) / (bh0 - bh1) - du
     badge = np.array([(-bu0, bh0), (bu0, bh0), (bu1, bh1), (-bu1, bh1), (-bu0, bh0)])
-    border = np.array([(-end_u(bt), bt), (end_u(bt), bt), (end_u(bb), bb), (-end_u(bb), bb), (-end_u(bt), bt)])
-    out = dict(badge=_densify(badge), badge_border=_densify(border))
+    out = dict(badge=_densify(badge))
+    if off > 0.0:                    # rev O (3-D judges r2 FID2-06): off 0 = no inner border, one outline groove
+        border = np.array([(-end_u(bt), bt), (end_u(bt), bt), (end_u(bb), bb), (-end_u(bb), bb), (-end_u(bt), bt)])
+        out["badge_border"] = _densify(border)
     k = 0
     for z in (z1, z2, z3):
         for sg in (-1, 1):
@@ -1469,7 +1472,7 @@ def afcs(U, H, A):
 def trim_rocker(U, H, A):
     """The split bow-tie pitch-trim rocker on the round face: the two mirrored lobes (yoke_draw.rocker_halves'
     outline) extruded along the face normal from 1 below the slot floor (rev N) to the saddle top z = hm + (he - hm) (|x| / (L /
-    2))^sexp; top edges R trim_grooves[2]."""
+    2))^sexp, crowned across (rev O: - crown (y / (we / 2))^2, trim_lunes[4]); top edges R trim_grooves[2]."""
     from cad import sdf2d
     c, n = head_out_face()
     eu, ev = _facet_frame(c, n)
@@ -1485,10 +1488,16 @@ def trim_rocker(U, H, A):
         z, x, y = Q @ n, Q @ eu, Q @ ev
         lobe = rocker_lobe()
         d = np.minimum(sdf2d.polygon(x, y, lobe), sdf2d.polygon(-x, y, lobe))
-        top = hm + (he - hm) * (np.abs(x) / (0.5 * L)) ** sexp
+        top = hm + (he - hm) * (np.abs(x) / (0.5 * L)) ** sexp - rocker_crown() * (y / (0.5 * we)) ** 2
         out = out.copy()
         out[m] = np.maximum(rmax(d, z - top, r_e), -1.0 - trim_slot_dims()[2] - z)   # seated 1 into the slot floor
     return out
+
+
+def rocker_crown():
+    """The rocker lobes' crown across their width (trim_lunes[4], rev O; 0 for older tables)."""
+    tl = T()["trim_lunes"]
+    return float(tl[4]) if len(tl) > 4 else 0.0
 
 
 def rocker_lobe(n=12):
@@ -1513,43 +1522,62 @@ def button_frame():
     return np.array([u, h, a]), ni, eu, ev
 
 
+def button_dims():
+    """The push button's table (rev O, 3-D judges r2 FID2-01) as a dict: disc (dia, proud, edge R), hex (across the
+    corners, across the flats, height), cap (dia, height above the hex, top z above the facet), dimple (dia, depth)."""
+    b = [float(x) for x in T()["button"]]
+    rc = 0.5 * b[6]
+    return dict(disc_d=b[2], disc_z=b[5], disc_r=b[10], hex_c=b[6], hex_f=2.0 * rc * math.cos(math.radians(30.0)),
+                hex_h=b[9], hex_z=b[5] + b[9], cap_d=b[3], cap_h=b[4], cap_z=b[5] + b[9] + b[4], dimple_d=b[7],
+                dimple_t=b[8])
+
+
+def button_disc(U, H, A):
+    """The gloss-black legend disc (button[2] dia, button[5] proud of the shield facet, its outer edge rolled
+    button[10]; seated 1 below the facet), own sense."""
+    c, n, _, _ = button_frame()
+    d = button_dims()
+    r, z, re = 0.5 * d["disc_d"], d["disc_z"], d["disc_r"]
+    prof = _rounded_profile([(-r, -1.0), (r, -1.0), (r, z), (-r, z)], {2: re, 3: re})
+    return _revolve(U, H, A, c, n, prof, math.hypot(r, z) + 2.0)
+
+
 def hex_collar(U, H, A):
-    """The black hex collar (button[2] across the corners, button[6] across the flats) button[5] proud of the shield
-    facet, seated 1 below it; own sense."""
+    """The small satin-nickel hex (button[6] across the corners, button[9] high) on the legend disc, its top edges R
+    0.3; seated 0.5 into the disc; own sense."""
     from cad import sdf2d
     c, n, eu, ev = button_frame()
-    b = T()["button"]
-    rc, hp = 0.5 * float(b[2]), float(b[5])
+    d = button_dims()
+    rc, z0, z1 = 0.5 * d["hex_c"], d["disc_z"], d["hex_z"]
     a = np.radians(np.arange(6) * 60.0 + 30.0)
     hexa = np.c_[rc * np.cos(a), rc * np.sin(a)]
     P = np.stack([U, H, A], -1) - c
-    out = np.linalg.norm(P, axis=-1) - (rc + hp + 3.0)
+    out = np.linalg.norm(P, axis=-1) - (rc + z1 + 3.0)
     m = out < 1.5
     if m.any():
         Q = P[m]
         z, x, y = Q @ n, Q @ eu, Q @ ev
         out = out.copy()
-        out[m] = np.maximum(rmax(sdf2d.polygon(x, y, hexa), z - hp, 0.3), -1.0 - z)
+        out[m] = np.maximum(rmax(sdf2d.polygon(x, y, hexa), z - z1, 0.3), (z0 - 0.5) - z)
     return out
 
 
 def button_cap(U, H, A):
-    """The push button's cap: a cylinder button[3] dia standing button[4] above the collar, top edge R 1, a centre
-    dimple button[7] dia, button[8] deep (spherical); own sense."""
+    """The push button's cap: a cylinder button[3] dia standing button[4] above the hex, top edge R 1, a centre
+    dimple button[7] dia, button[8] deep (spherical); seated 0.5 into the hex; own sense."""
     c, n, _, _ = button_frame()
-    b = T()["button"]
-    r, hh, hp, dd, ddep = 0.5 * float(b[3]), float(b[4]), float(b[5]), float(b[7]), float(b[8])
-    ztop = hp + hh
+    d = button_dims()
+    r, z0, ztop, dd, ddep = 0.5 * d["cap_d"], d["hex_z"] - 0.5, d["cap_z"], d["dimple_d"], d["dimple_t"]
     rs = (0.25 * dd * dd + ddep * ddep) / (2.0 * ddep)                # dimple sphere radius
-    prof = _rounded_profile([(-r, 0.0), (r, 0.0), (r, ztop), (-r, ztop)], {2: 1.0, 3: 1.0})
+    prof = _rounded_profile([(-r, z0), (r, z0), (r, ztop), (-r, ztop)], {2: 1.0, 3: 1.0})
     cyl = _revolve(U, H, A, c, n, prof, math.hypot(r, ztop) + 2.0)
     sph = np.linalg.norm(np.stack([U, H, A], -1) - (c + (ztop + rs - ddep) * n), axis=-1) - rs
     return np.maximum(cyl, -sph)
 
 
 def button(U, H, A):
-    """Hex collar + cap of the inboard head's push button (own sense)."""
-    return np.minimum(hex_collar(U, H, A), button_cap(U, H, A))
+    """Legend disc + hex + cap of the inboard head's push button (own sense; rev O)."""
+    return np.minimum(np.minimum(button_disc(U, H, A), hex_collar(U, H, A)), button_cap(U, H, A))
 
 
 def legend_blocks(k):

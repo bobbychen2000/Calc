@@ -141,7 +141,7 @@ def features():
     nci, cci = ni * [-1, 1, 1], ci * [-1, 1, 1]
     pb = np.array([-float(b[0]), float(b[1])])
     a_b = cci[2] - ((pb[0] - cci[0]) * nci[0] + (pb[1] - cci[1]) * nci[1]) / nci[2]
-    hb = np.array([pb[0], pb[1], a_b]) + (float(b[4]) + float(b[5])) * nci       # the cap top
+    hb = np.array([pb[0], pb[1], a_b]) + G.button_dims()["cap_z"] * nci           # the cap top
     ca, na = G.afcs_axis()
     red = ca + 0.8 * float(D["afcs"][3]) * na                       # 0.8 up the red cap on its boss (rev K)
     f = dict(tcs=(tu, th, float(G.face_a(th))),
@@ -392,6 +392,7 @@ def curves3():
     bp = YS.button_pieces()
     out["shield"] = np.vstack([bp["shield"], bp["shield"][:1]])
     out["hex"] = np.vstack([bp["hex"], bp["hex"][:1]])
+    out["disc"] = np.vstack([bp["disc"], bp["disc"][:1]])                # rev O: the legend disc
     t = np.linspace(0, 2 * np.pi, 61)
     for nm, c, r, aoff in (("tcs", D["tcs"], 0.5 * float(D["tcs"][2]), 0.0),
                            ("afcs", D["afcs"], 0.5 * float(D["afcs"][2]), -float(D["cover_t"]) + float(D["afcs"][3])),
@@ -403,7 +404,7 @@ def curves3():
 
 STYLE = {"cover": (0, 230, 255), "black": (80, 160, 255), "insert": (255, 220, 0), "badge": (255, 220, 0),
          "pad": (255, 120, 255), "trim": (255, 255, 255), "shield": (255, 255, 255), "hex": (255, 80, 80),
-         "tcs": (255, 80, 80), "afcs": (255, 80, 80), "trace": (255, 0, 200)}
+         "disc": (255, 80, 80), "tcs": (255, 80, 80), "afcs": (255, 80, 80), "trace": (255, 0, 200)}
 
 
 def _style(nm):
