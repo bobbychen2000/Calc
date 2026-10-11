@@ -76,7 +76,8 @@ U.cabinKey.value = CABIN_LOOK.key;
 U.cabinDiff.value.set(...CABIN_LOOK.diff);
 U.cabinSpec.value.set(...CABIN_LOOK.spec);
 U.cabinFill.value = CABIN_LOOK.fill;
-// per material inside: [share of the fill (uCabinFill ^ share), own factor] on the studio's diffuse light -- the light
+// per material inside: [share of the fill (uCabinFill ^ share), own factor(, reflection floor(, key in the specular))] on
+// the studio's diffuse light (and its reflections, the key light's glint) -- the light
 // trim gets the cove / window light (the cabin lining all of it, the leathers part), the flight deck's grey lining
 // round the windshield (centre post, pillars, the walls under the side windows: P1046408 ~70-110) faces aft-down at
 // the studio's bright floor and read near-white (~200) without its own factor
@@ -84,7 +85,22 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0.45, 1],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1], lining_flightdeck: [0, 0.3],
   // the crew seats' sheepskin faces up into the studio's softboxes: near-white (~220) without its own factor, where
   // P1046408 / 09 show a lavender-grey pile (~150-170)
-  sheepskin: [0, 0.6] };
+  sheepskin: [0, 0.6],
+  // the yoke (3-D judges r1 FID1-01 / CR1-06): a third entry is the material's own REFLECTION floor -- the reflections
+  // keep at least this share of the studio's (its clear coat / metal shows the windshield and headliner as in the
+  // photos, not the floor-facing 0.06-0.3 of the dark trim) -- and a fourth the key light's share in its specular
+  // only (the sun through the windshield: the photos' window streaks on the gloss cover); the gloss pearl-white cover a
+  // little fill, its reflections and the key's glint, the satin-aluminium / smoke inserts their reflections near full
+  // (tuned at P1046408 / 09's fitted cameras and the pilot stop -- before: cover 184-204 flat, inserts 0.50-0.76 / 0.34-0.68
+  // of it; photos: cover 214-228, 0.94 / 0.84-0.87)
+  yoke_white: [0.4, 1, 1, 1], yoke_silver: [0.5, 1, 0.9, 0.6], yoke_silver_dark: [0.5, 1, 0.9, 0.6],
+  yoke_nickel: [0, 1, 0.8, 0.6] };
+// ?cabTrim=name:share,factor,floor|... overrides entries (look development)
+for (const it of (Q_M.get('cabTrim') || '').split('|')) {
+  const [k, v] = it.split(':');
+  const a = (v || '').split(',').map(Number);
+  if (k && a.length >= 2 && a.every(Number.isFinite)) CABIN_TRIM[k] = a;
+}
 
 // Interior lining on the back faces.  The lookdev renders use a light grey (0.55) that Cycles darkens
 // with real occlusion; the viewer's image-based light has none (a back face inside the cockpit sees the
@@ -177,6 +193,11 @@ const VIEWER = {
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   panel_titanium: { envMapIntensity: 0.6 },
+  // the yoke's smoke-silver lower insert (3-D judges r1 FID1-01): 0.30 read 0.34-0.68 of the cover in the cabin light
+  // where P1046408 / 09 show 0.84-0.87 -- the viewer's image light has no window / headliner glow for its metal to
+  // mirror; a lighter base (the judges' 0.45-0.5: 0.52 read 0.99 of the cover at P1046409, 0.30 0.68 at P1046408) with
+  // the CABIN_TRIM reflection floor below
+  yoke_silver_dark: { color: [0.44, 0.44, 0.44] },
   // the nose-gear lamp: a clear lens with nothing modelled behind it; its back face is the dark (switched-off) LED face.
   // Clear: no milky diffuse on the front (the lookdev's light base colour is for its transmission variant)
   lens: { color: [0.02, 0.02, 0.022], back: { base: [0.03, 0.03, 0.035], rough: 0.25, opaque: true } },
@@ -661,12 +682,13 @@ export function installPatch(mat, extra = {}) {
     ${lit ? `vec3 pcNW = inverseTransformDirection( geometryNormal, viewMatrix );
     vec3 pcRW = inverseTransformDirection( reflect( - geometryViewDir, geometryNormal ), viewMatrix );` : 'vec3 pcNW = vec3( 0.0 ), pcRW = vec3( 0.0 );'}
     float pcKd = mix( 1.0, mix( uCabinDiff.x, uCabinDiff.y, 0.5 + 0.5 * pcNW.y )${cabinFill ? ` * ${(+cabinFill[1]).toFixed(3)} * pow( uCabinFill, ${(+cabinFill[0]).toFixed(3)} )` : ''}, pcIn );
-    float pcKs = mix( 1.0, mix( uCabinSpec.x, uCabinSpec.y, smoothstep( - 0.5, 0.7, pcRW.y ) ), pcIn );
+    float pcKs = mix( 1.0, ${cabinFill && cabinFill.length > 2 ? `max( ${(+cabinFill[2]).toFixed(3)}, ` : '('} mix( uCabinSpec.x, uCabinSpec.y, smoothstep( - 0.5, 0.7, pcRW.y ) ) ), pcIn );
     float pcKk = mix( pcAO * pcAO, uCabinKey, pcIn );
-    reflectedLight.directDiffuse *= pcKk; reflectedLight.directSpecular *= pcKk;
+    float pcKks = mix( pcAO * pcAO, ${cabinFill && cabinFill.length > 3 ? `max( uCabinKey, ${(+cabinFill[3]).toFixed(3)} )` : 'uCabinKey'}, pcIn );
+    reflectedLight.directDiffuse *= pcKk; reflectedLight.directSpecular *= pcKks;
     reflectedLight.indirectDiffuse *= pcAO * pcKd; reflectedLight.indirectSpecular *= pcAO * pcKs;
     #ifdef USE_CLEARCOAT
-      clearcoatSpecularDirect *= mix( 1.0, pcKk, pcIn ); clearcoatSpecularIndirect *= mix( 1.0, pcAO * pcKs, pcIn );
+      clearcoatSpecularDirect *= mix( 1.0, pcKks, pcIn ); clearcoatSpecularIndirect *= mix( 1.0, pcAO * pcKs, pcIn );
     #endif
     #ifdef USE_SHEEN
       sheenSpecularDirect *= mix( 1.0, pcKk, pcIn ); sheenSpecularIndirect *= mix( 1.0, pcAO * pcKd, pcIn );

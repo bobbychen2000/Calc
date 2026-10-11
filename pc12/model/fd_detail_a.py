@@ -525,6 +525,8 @@ def guarded_toggle(f, guard_mat="yoke_white"):
 
 
 RECESS_MARGIN = 0.0030       # the titanium plates' notch stands this far outside the recess outline (the rim flange covers it)
+RECESS_MAT = "panel_dark"    # the U recess's walls, rim flange and floor (rev N, judges FID1-08: pedestal_gunmetal read pale)
+BAND_MAT = "pcl_pewter"      # the J band: satin pewter, the slimmer dark-grey / metallic arc of P1046408 / 09
 
 
 def recess_dims():
@@ -566,10 +568,13 @@ def column_surround(sg):
     """The lower panel's column surround of one side (rev M, sheet L6Y2 detail J; YOKE_DESIGN column / column_band /
     column_recess): the U recess cut column_recess[3] deep from the titanium plate's top (walls + floor, a 3 mm rim
     flange over the plates' notch), the column's opening in its floor (+ a dark sleeve behind it) and the J BAND on the
-    floor -- 23 wide, 8 proud, R 4 rolled edges, a flat top 15 wide: its vertical leg on the inboard side (|BL| of its
-    inboard side column[0]) from a round top end at WL column[1] down to the joint line (WL column[2]), then hooking under
-    the stem on an arc about the column axis at h column_band[4]; a panel-fixed pan-head screw on the arc at WL
-    column[3].  The band is the panel's (no bellows: none in any PRO photo).  pedestal_gunmetal, screw steel_dark.
+    floor -- column_band[0] wide, [1] proud, R [2] rolled edges, a flat top [3] wide: its vertical leg on the inboard side
+    (|BL| of its inboard side column[0]) from a round top end at WL column[1] down to the joint line (WL column[2]), then
+    hooking under the stem on an arc about the column axis at h column_band[4]; a panel-fixed pan-head screw on the arc at
+    WL column[3].  The band is the panel's (no bellows: none in any PRO photo).  Rev N (judges FID1-08: the band and the
+    floor read as a large pale hook beside the cover): the recess walls / flange / floor charcoal (RECESS_MAT), the band
+    satin pewter (BAND_MAT), the screw steel_dark; owner 2026-10-11 (judges CR1-01, fit_check 30c): the band and the
+    recess re-centred on the column axis (the hub: joint line on it, the hook concentric with the column, 1 mm off it).
     [(Mesh, material)]."""
     FD = _FD()
     from model import interior as I
@@ -590,13 +595,13 @@ def column_surround(sg):
     ring_t = np.array([pt(y, z, off_top) for y, z in W])
     ring_b = np.array([pt(y, z, off_floor) for y, z in W])
     cw = np.array([FD.face_x(sg * yc, zc), sg * yc, zc])
-    out.append((FD._oriented(FD._strip(ring_t, ring_b), lambda C: cw - C), "pedestal_gunmetal"))
+    out.append((FD._oriented(FD._strip(ring_t, ring_b), lambda C: cw - C), RECESS_MAT))
     # rim flange on the plates (covers their notch)
     Wo = recess_outline(RECESS_MARGIN + 0.0005)
     ring_o = np.array([pt(y, z, off_top + 0.0001) for y, z in Wo])
-    out.append((FD._oriented(FD._strip(ring_o, ring_t), FD.N_AFT), "pedestal_gunmetal"))
+    out.append((FD._oriented(FD._strip(ring_o, ring_t), FD.N_AFT), RECESS_MAT))
     edge_o = np.array([pt(y, z, q["plate_off"] - 0.0005) for y, z in Wo])
-    out.append((FD._oriented(FD._strip(edge_o, ring_o), lambda C: C - cw), "pedestal_gunmetal"))
+    out.append((FD._oriented(FD._strip(edge_o, ring_o), lambda C: C - cw), RECESS_MAT))
     # floor with the column's opening (CDT of the U with the round hole)
     rh = float(I.YOKE["column_r"]) + q["col_clear"]
     a = np.linspace(0.0, 2 * math.pi, 48, endpoint=False)
@@ -612,7 +617,7 @@ def column_surround(sg):
     T = YT.cdt(X, cons)
     T = YT.inside(T, X, [np.arange(nW), nW + np.arange(len(Hc))])
     Pf = np.array([pt(y, z, off_floor) for y, z in X])
-    out.append((FD._oriented(Mesh(Pf, T), FD.N_AFT), "pedestal_gunmetal"))
+    out.append((FD._oriented(Mesh(Pf, T), FD.N_AFT), RECESS_MAT))
     # the sleeve behind the opening (dark), closed beyond the column's forward end at full push (sleeve_depth)
     ring_h = Pf[nW:]
     ring_s = ring_h - [sleeve_depth(), 0.0, 0.0]
@@ -636,7 +641,7 @@ def column_surround(sg):
     prof = _band_profile(bw, bh, br)
     for path, cap0 in ((leg, "round"), (arc, "flat")):
         for m_ in _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
-            out.append((m_, "pedestal_gunmetal"))
+            out.append((m_, BAND_MAT))
     # the screw on the arc (pan head, cross slot), on the band's top
     us = -math.sqrt(max(rcb * rcb - (h_scr - hcb) ** 2, 0.0))
     f = FD.face_frame(sg * (yc + us), zc + h_scr)
@@ -705,7 +710,8 @@ def _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
             a, b, c, d = i * m + j, (i + 1) * m + j, (i + 1) * m + j + 1, i * m + j + 1
             F += [(a, b, c), (a, c, d)]
     body = Mesh(V, np.array(F), Nn)
-    body = FD._oriented(body, lambda C: C - np.array(to3(*path.mean(0), (0.0, 0.0), 0.0, 0.0)))
+    # wound by its own (exact, outward) section normals -- rev N: FD._oriented's mean-normal test flipped the mirrored
+    # pilot band together with its normals, so the pilot's band came out inside-out (its caps wound the other way)
     out = [_orient_by_normals(body)]
     # the far end: flat cap
     endr = G[-1]
@@ -766,8 +772,15 @@ def lower_panel(sg):
     def yend(z):
         return min(cheek, float(L.hw(float(FD.face_x(cheek, z)), z)) - 0.008)
     # the band under the PDU row: two pieces either side of the column recess and a bridge over its top (rev M)
-    for a, b, za in ((shw + 0.008, yc - ww - mrg, zb), (yc + ww + mrg, yend(zb), zb),
-                     (yc - ww - mrg, yc + ww + mrg, zt_r + mrg)):
+    # rev N (judges CR1-01; owner 2026-10-11: band + recess re-centred on the column axis): the U runs up through the
+    # band (column_recess top h 27: the column, r 22 about the hub, stands 5 mm clear), its rim flange's top edge on the
+    # band's top edge -- the bridge over the U is gone
+    if zt_r + mrg + 0.0005 > z1 + 1e-4:
+        raise ValueError("column recess: its rim flange would stand above the titanium band under the PDU row")
+    pieces = [(shw + 0.008, yc - ww - mrg, zb), (yc + ww + mrg, yend(zb), zb)]
+    if z1 - (zt_r + mrg) > 0.008:                                        # a bridge over the U (rev M) where it fits
+        pieces.append((yc - ww - mrg, yc + ww + mrg, zt_r + mrg))
+    for a, b, za in pieces:
         ol = S.fillet(np.array([(a + g, za + g), (b - g, za + g), (b - g, z1 - g), (a + g, z1 - g)]), 0.004,
                       max_len=0.02)
         out += panel_plate(ol * [sg, 1] if sg > 0 else (ol * [sg, 1])[::-1], q["band_off"], "panel_titanium")

@@ -54,13 +54,14 @@
 27. G3000 PDU bezel tops (and so the glass) visible from both design eyes: sight lines from interior.design_eye to
     points along the PFD / MFD / far-PFD bezel tops cross no flight-deck, glareshield or lining triangle (model judging
     r1 INT-M1: the rev F eyebrow fascia hid the top 50-55 mm of the glass)
-30. the rev M yokes (yoke_L / yoke_R) swept over +/- YOKE roll x the pull travel and the first 60 mm of push vs the
-    flight deck round them -- the lower panel, its U column recess and J band, the glareshield, the pedestal: exact
-    point-to-triangle distances both ways >= 3 mm (the column excepted: 30a its clearance in the recess floor's hole
-    and sleeve over the travel, >= 0.5 mm, its end >= 5 mm short of the sleeve's closed end at full push; 30c [open]
-    the column vs the J band and the panel face above the recess: drawn about the photos' column axis WL ~1.821, 24 mm
-    under the hub the column / roll pivot keep -- the sheets' open point); 30b the full [E] push, reported as the owner decision of fit_fd_a 29b while it is not
-    clear
+30. the yokes (yoke_L / yoke_R) swept over +/- YOKE roll (every 10 deg) x the whole pitch travel (YOKE travel: push 65,
+    owner 2026-10-11; pull 90) vs the flight deck round them -- the lower panel, its U column recess and J band, the
+    glareshield, the pedestal: exact point-to-triangle distances both ways >= 3 mm (the column excepted: 30a its
+    clearance in the recess floor's hole and sleeve over the travel, >= 0.5 mm, its end >= 5 mm short of the sleeve's
+    closed end at full push; 30c the column clear of the J band and the panel round the recess >= 0.5 mm (owner
+    2026-10-11: band + recess re-centred on the column axis); 30d where the column shows from the design eyes / fd_cabin
+    stop, its finish dark and non-metallic); 30b the full push every 5 deg of roll (>= 3 mm; rev M reported the [E]
+    90 mm push as an open owner decision: the grips reached the lower panel from ~45 deg)
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
@@ -1499,24 +1500,60 @@ def _yoke_panel_sweep(pushes):
     return worst
 
 
+def _yoke_panel_sweep_at(t, roll):
+    """The 30 sweep at one pose (push / pull t m, roll deg) for both yokes: (distance, where)."""
+    worst = (np.inf, "")
+    for side in (-1, 1):
+        pid = "yoke_" + ("L" if side < 0 else "R")
+        hub = I.yoke_hub(side)
+        key = (pid, "sweep")
+        if key not in _SWEEP_CACHE:
+            To = np.vstack([m.V[m.F] for k in ("flight_deck", "fd_consoles") if k in parts for m, mat in parts[k].meshes
+                            if len(m.F)])
+            To = To[((np.abs(To[:, :, 1] - hub[1]) < 0.30) & (np.abs(To[:, :, 2] - hub[2]) < 0.30) &
+                     (To[:, :, 0] > hub[0] - 0.25) & (To[:, :, 0] < hub[0] + 0.20)).any(1)]
+            To = _subdiv(To)
+            Ty = np.vstack([m.V[m.F] for m, mat in parts[pid].meshes if len(m.F)])
+            cen = Ty.mean(1)
+            col = (np.hypot(cen[:, 1] - hub[1], cen[:, 2] - hub[2]) < COL_R + 0.002) & (cen[:, 0] < hub[0] + 0.012)
+            Ty = _subdiv(Ty[~col])
+            _SWEEP_CACHE[key] = (To, cKDTree(To.mean(1)), np.unique(np.round(To.reshape(-1, 3), 6), axis=0), Ty,
+                                 np.unique(np.round(Ty.reshape(-1, 3), 6), axis=0))
+        To, tree_o, Po, Ty, Py = _SWEEP_CACHE[key]
+        a = np.radians(roll)
+        R = np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+        Pr = (Py - hub) @ R.T + hub + [t, 0.0, 0.0]
+        Tr = (Ty - hub) @ R.T + hub + [t, 0.0, 0.0]
+        d1, i1 = _closest(Pr, To, tree_o, reach=SWEEP_REACH)
+        d2, i2 = _closest(Po, Tr, cKDTree(Tr.mean(1)), reach=SWEEP_REACH)
+        d, at = (d1, Pr[i1]) if d1 <= d2 else (d2, Po[i2] if i2 >= 0 else hub)
+        if d < worst[0]:
+            worst = (d, f"{pid} pitch {t * 1000:+.0f} mm roll {roll:+.0f} deg at STA {at[0]:.3f} BL {at[1]:+.3f} WL "
+                        f"{at[2]:.3f}")
+    return worst
+
+
+_SWEEP_CACHE = {}
 _t0, _t1 = (float(v) for v in YK["travel"])
-_PUSH_HARD = -0.060
-_w = _yoke_panel_sweep(np.r_[np.linspace(_PUSH_HARD, 0.0, 4), np.linspace(0.0, _t1, 4)[1:]])
-report(f"yokes (rev M, own parts) over roll +/-{YK['roll']:.0f} deg x the pull travel and {_PUSH_HARD * 1000:+.0f} mm "
-       "of push vs the lower panel, U recess, J band, glareshield, pedestal (>= 3 mm, exact both ways; column excepted)",
-       _w[0] >= 0.003, f"{_mm(_w[0])}" + (f" ({_w[1]})" if _w[1] else ""))
+_w = _yoke_panel_sweep(np.r_[np.linspace(_t0, 0.0, 4), np.linspace(0.0, _t1, 4)[1:]])
+report(f"yokes (own parts) over roll +/-{YK['roll']:.0f} deg x the pitch travel ({_t0 * 1000:+.0f} push, owner 2026-10-11 / "
+       f"{_t1 * 1000:+.0f} pull) vs the lower panel, U recess, J band, glareshield, pedestal (>= 3 mm, exact both ways; "
+       "column excepted)", _w[0] >= 0.003, f"{_mm(_w[0])}" + (f" ({_w[1]})" if _w[1] else ""))
 # 30a: the column in the recess floor's opening and its sleeve (the column only translates along / turns about its own
 # axis, so its disc in (y, z) is the same at every pose): radially clear of the sleeve (polygons' chords incl.; the
-# opening is its first ring), and its forward end short of the sleeve's closed end at full push.  30c [open]: the J band
-# and the recess were measured / drawn about the photos' column axis (YOKE_DESIGN column: WL ~1.821, 24 mm under the hub
-# the roll pivot keeps -- the sheets' open point): the band's inboard leg runs tangent to the column (inner edge |u| 22
-# = column_r) and the recess top (h +12 [E], hidden under the shell) lies inside its radius -- reported, not failed
+# opening is its first ring), and its forward end short of the sleeve's closed end at full push.  30c (rev N, judges
+# CR1-01: rev M reported it [open] at -10.7 mm, the column's top through the panel face above the U and the band's leg
+# tangent to it, and that showed from the crew stops; owner 2026-10-11: the band and the recess re-centred on the column
+# axis, the hub WL 1.845 -- the photos put the band round a column at WL ~1.821): the column (about the hub, the roll
+# pivot) clear of the J band and the panel round the recess by >= 0.5 mm -- the recess top h 27 [E], the band 22 wide
+# [M 22-25], its hook concentric with the column; the column only translates along its axis, so its disc in (y, z) is
+# the same over the pull / push travel
 _cw, _ca, _nring, _cc = np.inf, np.inf, 0, (np.inf, "")
 from model import flightdeck as _FDK
 from model import fd_detail_a as _FDA
 for side in (-1, 1):
     hub = I.yoke_hub(side)
-    Vc = np.vstack([m.V for m, mat in parts["yoke_" + ("L" if side < 0 else "R")].meshes if mat == "metal_dark"])
+    Vc = np.vstack([m.V for m, mat in parts["yoke_" + ("L" if side < 0 else "R")].meshes if mat == "yoke_column"])
     rc = np.hypot(Vc[:, 1] - hub[1], Vc[:, 2] - hub[2]).max()
     x_fl = float(_FDK.face_x(hub[1], hub[2])) - _FDK.A_recess_depth()    # the recess floor (the opening)
     for m, mat in parts["flight_deck"].meshes:
@@ -1546,14 +1583,62 @@ report("yoke columns clear the recess floor's opening and its sleeve over the tr
        ">= 0.5 mm; the column's end >= 5 mm short of the sleeve's closed end at full push)",
        np.isfinite(_cw) and _cw >= 0.0005 and _ca >= 0.005,
        f"radial {_cw * 1000:.2f} mm ({_nring} sleeve vertices), axial {_ca * 1000:.1f} mm")
-report("yoke columns vs the J band and the panel face above the U recess (the band / recess about the photos' column "
-       "axis WL ~1.821, the column about the hub WL 1.845: the sheets' open point)", _cc[0] >= 0.0005,
-       f"{_cc[0] * 1000:+.1f} mm ({_cc[1]}; - = inside the column); owner decision: the column axis (hub / roll pivot) "
-       "vs the band and recess top as measured", open_item=_cc[0] < 0.0005)
-_wf = _yoke_panel_sweep(np.linspace(_t0, _PUSH_HARD, 4))
-report(f"yokes at full push ({_t0 * 1000:+.0f} mm, YOKE travel [E]) and roll vs the lower panel / recess (fit_fd_a 29b)",
-       _wf[0] >= 0.003, f"{_mm(_wf[0])} ({_wf[1]}); owner decision of fit_fd_a 29b (a shorter [E] push "
-                        "travel or accept)", open_item=_wf[0] < 0.003)
+report("yoke columns clear the J band and the panel round the U recess (radial, the 20 mm aft of the recess floor; the "
+       "column about the hub WL 1.845, band + recess re-centred on it: owner 2026-10-11) >= 0.5 mm over the travel",
+       _cc[0] >= 0.0005, f"{_cc[0] * 1000:+.1f} mm ({_cc[1]}; - = inside the column)")
+# 30d (rev N, judges CR1-02 / FID1-02): where the column shows -- its exposed length at the drawn neutral (the body's
+# forward face to the recess floor) and the share of its exposed surface seen from the crew design eyes (both yokes
+# from both seats) and the fd_cabin stop (sight lines vs the flight deck, yokes and lining); its finish must be dark and
+# non-metallic (yoke_column: it reads as the recess's dark interior, as Mexico L's dark column in the hand slot)
+from isect import seg_tri as _seg_tri
+from model.assemble import MATERIALS as _AM
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1] / "web"))
+import tour_data as _TD                                                          # noqa: E402
+_eyes = [("L eye", I.design_eye(-1)), ("R eye", I.design_eye(1))] + [(s_["id"], np.asarray(s_["eye"], float))
+                                                                    for s_ in _TD.stops() if s_["id"] == "fd_cabin"]
+_occ = np.vstack([m.V[m.F] for pid in ("flight_deck", "fd_consoles", "interior_lining", "yoke_L", "yoke_R") if pid in parts
+                  for m, mat in parts[pid].meshes if len(m.F) and mat != "yoke_column"])
+_rows, _expo = [], []
+for side in (-1, 1):
+    hub = I.yoke_hub(side)
+    pid = "yoke_" + ("L" if side < 0 else "R")
+    Vb = np.vstack([m.V for m, mat in parts[pid].meshes if mat != "yoke_column"])
+    near = np.hypot(Vb[:, 1] - hub[1], Vb[:, 2] - hub[2]) < COL_R - 0.001
+    x_body = float(Vb[near, 0].min())                                           # the body's forward face on the axis
+    x_fl = float(_FDK.face_x(hub[1], hub[2])) - _FDK.A_recess_depth()
+    _expo.append(x_body - x_fl)
+    xs = np.linspace(x_fl + 0.002, x_body - 0.002, 12)
+    ang = np.radians(np.arange(0.0, 360.0, 15.0))
+    Pc = np.array([[x, hub[1] + (COL_R + 0.0005) * np.cos(a), hub[2] + (COL_R + 0.0005) * np.sin(a)] for x in xs
+                   for a in ang])
+    for nm, Eye in _eyes:
+        lo = np.minimum(Eye, Pc.min(0)) - 0.02
+        hi = np.maximum(Eye, Pc.max(0)) + 0.02
+        T_ = _occ[((_occ >= lo) & (_occ <= hi)).all(2).any(1)]
+        nrm = np.c_[np.zeros(len(Pc)), Pc[:, 1] - hub[1], Pc[:, 2] - hub[2]]
+        front = np.sum(nrm * (Eye - Pc), 1) > 0
+        seen = 0
+        for P_ in Pc[front]:
+            Q_ = P_ + 0.002 * (Eye - P_) / np.linalg.norm(Eye - P_)
+            hit, _ = _seg_tri(np.repeat(Eye[None], len(T_), 0), np.repeat(Q_[None], len(T_), 0), T_[:, 0], T_[:, 1],
+                              T_[:, 2])
+            seen += int(not hit.any())
+        _rows.append(f"{pid} from {nm}: {seen}/{len(Pc)} samples seen")
+_cm = _AM["yoke_column"]
+_lum = 0.2126 * _cm[0][0] + 0.7152 * _cm[0][1] + 0.0722 * _cm[0][2]
+report("yoke columns: where they show, dark and non-metallic (yoke_column base luminance <= 0.04, metallic 0)",
+       _lum <= 0.04 and _cm[1] == 0.0, f"exposed {min(_expo) * 1000:.0f}-{max(_expo) * 1000:.0f} mm at the drawn neutral "
+                                       f"(the fore-aft station: OPEN, owner); " + "; ".join(_rows)
+       + f"; base luminance {_lum:.3f}, metallic {_cm[1]:g}")
+# 30b: the full push (YOKE travel: 65, owner 2026-10-11 -- the [E] 90 put the grips into the lower panel from ~45 deg of
+# roll, rev M's open item; fit_fd_a 29b) every 5 deg of roll: >= 3 mm
+_wf = (np.inf, "")
+for _roll in np.arange(-float(YK["roll"]), float(YK["roll"]) + 1e-9, 5.0):
+    _w5 = _yoke_panel_sweep_at(_t0, float(_roll))
+    if _w5[0] < _wf[0]:
+        _wf = _w5
+report(f"yokes at full push ({_t0 * 1000:+.0f} mm, owner 2026-10-11) every 5 deg of roll +/-{YK['roll']:.0f} vs the lower "
+       "panel / recess / J band (>= 3 mm; fit_fd_a 29b)", _wf[0] >= 0.003, f"{_mm(_wf[0])} ({_wf[1]})")
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

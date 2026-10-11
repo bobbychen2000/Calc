@@ -774,7 +774,8 @@ def _yokes(acc):
     with its pads, heads and AFCS boss, the TCS / AFCS / trim rocker / push button / forward-face switches, the legend
     ticks) in yoke-local mm, placed at the drawn neutral (yoke3d.place: the aft face at the insert step hub_whd[2] aft of
     the hub's forward face, h about the column axis = the roll pivot); the pilot yoke the mirror image.  Each yoke is its
-    own part (pivot 'yoke').  The column: a satin dark cylinder (YOKE column_r) from inside the body forward through the
+    own part (pivot 'yoke').  The column: a satin BLACK non-metallic cylinder (rev N, judges CR1-02: yoke_column;
+    YOKE column_r) from inside the body forward through the
     lower panel's U recess into the panel, the full pull travel deeper than 30 mm behind the recess floor (at full pull it
     stays in its opening); NO bellows -- the photos show a J band on the panel (fd_detail_a.lower_panel, L6Y2 detail J)."""
     from model import yoke3d as Y3
@@ -787,7 +788,7 @@ def _yokes(acc):
         hub = I.yoke_hub(sg)
         x_floor = float(face_x(hub[1], hub[2])) - float(A_recess_depth())
         acc.add(cylinder([x_floor - 0.030 - t1, hub[1], hub[2]], [hub[0] + 0.010, hub[1], hub[2]],
-                         float(YK["column_r"]), n=32), "metal_dark")
+                         float(YK["column_r"]), n=32), "yoke_column")
 
 
 def A_recess_depth():
@@ -802,7 +803,7 @@ def control_pivots():
     """{group / part id: pivot} of the crew controls built as their own parts (review r2 M4), model axes:
     yoke_L / yoke_R: kind 'yoke' -- origin the hub centre, axis along the column pointing FORWARD (a + rotation is a
     right roll, clockwise as the pilot sees it), roll_deg = YOKE roll, travel = the column's pitch travel along +x (aft)
-    at full pull / full push (YOKE travel);
+    at full pull / full push (YOKE travel: push 65, owner 2026-10-11);
     pedal_<seat><foot> (LL, LR, RL, RR): kind 'pedal' -- origin the hanging arm pivot (PEDALS pivot, under the lower
     panel), axis -y, travel_deg = the rotation that moves the pad PEDALS travel, gearing +1 for the right-foot pedals
     (forward with right rudder), -1 for the left: angle = -gearing x yaw x travel_deg (+ yaw = right rudder; a -

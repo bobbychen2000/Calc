@@ -173,6 +173,20 @@ def break_line(ds, v, p0, p1, amp=1.6, n=4):
     line(ds, v, p0 + t[:, None] * d + off[:, None] * nrm, W_THIN)
 
 
+LEGEND = "#B9BEC3"           # legend letter blocks (rev N: plain blocks at the lettering's mean tone, no letters)
+SLOT = "#14181A"             # the trim rocker's recessed slot (rev N)
+
+
+def legend_quads(c, k, mirror=False):
+    """Switch k's legend letter blocks (yoke_geom.legend_quads: closed quads in its front-view frame) about the centre c;
+    mirror: x -> -x (a view from the other side)."""
+    out = []
+    for Q in G.legend_quads(k):
+        Q = Q * [-1.0, 1.0] if mirror else Q
+        out.append(np.asarray(c, float) + Q)
+    return out
+
+
 def ticks(c, r0, r1, a0, a1, n):
     """Tick strokes (list of 2-point arrays) radially between r0 and r1 at n angles from a0 to a1 deg (0 = +x)."""
     out = []

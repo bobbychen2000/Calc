@@ -10,9 +10,11 @@ Mesh quality of the Stage-3 yoke (model/yoke3d.py, rev M; yoke-local mm, the co-
      0.03 mm inside each face from each corner (so a crease vertex is compared with its own side), 95th percentile
      per group (<= 2 deg wanted);
   5. HIGHLIGHTS: the frame's corner normals interpolated (then normalised) at its edge midpoints / centroids against the
-     exact normal there (yoke_mesh.highlight_report, the faces any crew / cabin camera sees); the cover terrain the same
-     against its pieces' normals (yoke_cover.terrain_interp_error);
-  6. what cad.res's interior refinement adds at build (PN bow / turn criterion; counted in 1).
+     exact normal there (yoke_mesh.highlight_report) over the faces seen from the aft hemisphere (yoke_patch.vis_tol_k:
+     z-buffered visibility classes, rev N);
+  6. what cad.res's interior refinement adds at build (PN bow / turn criterion; counted in 1): nothing on the cover (a
+     fixed point, yoke3d.res_fixed_point), <= 1 % on the moulding;
+  7. folds: no face wound against its own corner normals or the solid's gradient (rev N).
 Prints one row per check and 'YOKE MESH OK' / 'YOKE MESH FAIL'.  ~3-5 min (the cached pieces; the highlight report
 projects ~60k points).
 """
@@ -80,9 +82,16 @@ def main():
            f"<= build.YOKE_BUDGET", n_glb <= B.YOKE_BUDGET, f"{n_glb} / {B.YOKE_BUDGET}")
     # 6 ------------------------------------------------------------------------------------------------ cad.res fixed point
     grow = {k: b - a for k, (a, b) in rows.items() if b != a}
-    info("cad.res's interior refinement at build (counted in the GLB part above; it splits the cover strip's and the "
-         "rounded extrusions' quad diagonals that turn past 20 deg)", ", ".join(f"{n}/{m} +{v}" for (n, m), v in
-                                                                                grow.items()) or "nothing")
+    info("cad.res's interior refinement at build (counted in the GLB part above)", ", ".join(
+        f"{n}/{m} +{v}" for (n, m), v in grow.items()) or "nothing")
+    # rev N (judges CR1-04: rev M demoted this row to [info] while it failed): the cover a fixed point (its splits made
+    # in the mesher, on the solid: yoke3d.res_fixed_point), the moulding within 1 % of its triangles
+    g_cov = sum(v for (n, m), v in grow.items() if n == "cover")
+    g_mou = sum(v for (n, m), v in grow.items() if n == "moulding")
+    n_mou = sum(a for (n, m), (a, b) in rows.items() if n == "moulding")
+    report("cad.res adds nothing to the cover (a fixed point of the interior turn / bow criterion: the mesher splits "
+           "there, on the solid) and <= 1 % to the moulding", g_cov == 0 and g_mou <= 0.01 * n_mou,
+           f"cover +{g_cov}, moulding +{g_mou} on {n_mou}")
     # 2 ------------------------------------------------------------------------------------------------ watertight
     bad = []
     for mat in sorted({p.mat for p in ps}):
@@ -125,6 +134,32 @@ def main():
                       f"a {c[0, 2]:.1f})")
     nsl = sum(int((YM._min_angles_deg(p.V, p.F) < 5.0).sum()) for p in ps)
     info("sliver triangles (a corner < 5 deg)", f"{nsl}" + (": " + "; ".join(sl) if sl else ""))
+    # 3b ----------------------------------------------------------------------------------------------- folds
+    # rev N (judges CR1-05): no face wound against one of its own corner normals (a fold: a pinhole under FrontSide
+    # culling), and on the cover / moulding none against the solid's gradient at its centroid (outside the switches: the
+    # cover's face runs on under the TCS bezel over its seat pocket, whose wall sets the gradient there)
+    nfold, where = 0, []
+    for p in ps:
+        b = Y.fold_faces(p)
+        if p.name in ("cover", "moulding") and len(p.F):
+            fn_ = G.cover if p.name == "cover" else G.moulding
+            P = p.V[p.F]
+            C = P.mean(1)
+            fnr = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0])
+            ar = np.linalg.norm(fnr, axis=1)
+            near = (ar > 1e-12) & (np.abs(fn_(*C.T)) < 0.05)
+            near[near] &= G.part_sdf("switches", *C[near].T) > 0.05       # not under a switch (the TCS seat pocket)
+            g = _grad(fn_, C[near])
+            gn = np.linalg.norm(g, axis=1)
+            opp = np.zeros(len(p.F), bool)
+            opp[np.nonzero(near)[0]] = (np.sum(fnr[near] * g, 1) <= 0) & (gn > 0.3)
+            b = np.union1d(b, np.nonzero(opp)[0])
+        if len(b):
+            nfold += len(b)
+            c = p.V[p.F[b[0]]].mean(0)
+            where.append(f"{p.name}/{p.mat} {len(b)} (e.g. u {c[0]:.1f} h {c[1]:.1f} a {c[2]:.1f})")
+    report("no folded faces: face normal . each corner normal > 0, and . the solid's gradient > 0 on the cover / "
+           "moulding", nfold == 0, f"{nfold}" + (": " + "; ".join(where) if where else ""))
     # 4 ------------------------------------------------------------------------------------------------ vertex normals
     per = {}
     for p in ps:
@@ -149,11 +184,19 @@ def main():
                                                    f"p99 {np.percentile(a, 99):.2f} deg over {len(a)} corners")
     # 5 ------------------------------------------------------------------------------------------------ highlights
     frame = max((p for p in ps if p.name == "moulding" and p.mat == "grip_black"), key=lambda p: len(p.F))
-    hr = YM.highlight_report("msmooth", frame.V, frame.F, frame.N, tol_k=YP.frame_tol_k)
-    report(f"frame highlights (visible faces): corner normals interpolated vs exact at edge midpoints / centroids, "
-           f"95th percentile (area) <= {YP.FRAME_TOL:g} deg (FRAME_TOL)", hr["p95"] <= YP.FRAME_TOL,
+    _, vcls = YP.visibility()
+    info("visibility classes of the dense moulding (rev N, judges CR1-03: z-buffered from "
+         f"{len(YP.VIS_AFT)} aft-hemisphere / {len(YP.VIS_FWD)} forward cameras, not rev M's 'under the cover' proxy)",
+         "seen from aft {}, only from forward {}, never {} vertices".format(*np.bincount(vcls, minlength=3)))
+    hr = YM.highlight_report("msmooth", frame.V, frame.F, frame.N, tol_k=YP.vis_tol_k)
+    report(f"frame highlights (faces seen from the aft hemisphere): corner normals interpolated vs exact at edge "
+           f"midpoints / centroids, 95th percentile (area) <= {YP.FRAME_TOL:g} deg (FRAME_TOL)", hr["p95"] <= YP.FRAME_TOL,
            f"p50 {hr['p50']:.2f}, p95 {hr['p95']:.2f} deg; area > 2 deg {hr['over2']:.1f} %, > 4 deg {hr['over4']:.1f} % "
-           f"({hr['faces']} faces; the first QEM-decimated mesh: p50 1.40, p95 8.0, 43 % / 29 %)")
+           f"({hr['faces']} faces; rev M at 3.5 deg / the proxy: p50 0.86, p95 2.97, 16 % / 1.2 %; the first "
+           f"QEM-decimated mesh: p50 1.40, p95 8.0, 43 % / 29 %)")
+    hr2 = YM.highlight_report("msmooth", frame.V, frame.F, frame.N, tol_k=YP.frame_tol_k)
+    info("the same over rev M's proxy class (for comparison)", f"p50 {hr2['p50']:.2f}, p95 {hr2['p95']:.2f} deg; "
+         f"> 2 deg {hr2['over2']:.1f} %, > 4 deg {hr2['over4']:.1f} % ({hr2['faces']} faces)")
     YM.close_pool()
     print(f"YOKE MESH {'OK' if not fails else 'FAIL'}" + (f" ({len(fails)}): " + "; ".join(fails) if fails else "")
           + f"  ({time.time() - t0:.0f} s)")

@@ -3147,7 +3147,7 @@ def _axis_dist(P, c, n):
 
 
 def check_L6Y(ctx, rep, plots):
-    """The built rev M yokes (yoke_L / yoke_R at their neutral pose, in yoke-local mm) against the outlines sheets L6Y /
+    """The built rev N yokes (yoke_L / yoke_R at their neutral pose, in yoke-local mm) against the outlines sheets L6Y /
     L6Y2 draw from the tables (interior.yoke_front_mm, the solids' side silhouettes yoke_geom.view_silhouettes 'u',
     the switch axes): front silhouette, cover, inserts, pads, switch centres, side silhouette; 1.5 mm."""
     from model import interior as I
@@ -3165,7 +3165,7 @@ def check_L6Y(ctx, rep, plots):
             continue
         loc = [(r.mat, _yoke_local(r.V, side), r.F) for r in rs]
 
-        def tris(mats=None, exclude=("metal_dark",), axes=(0, 1), aft=False):
+        def tris(mats=None, exclude=("metal_dark", "yoke_column"), axes=(0, 1), aft=False):
             T = []
             for m, V, Fi in loc:
                 if (mats is None or m in mats) and m not in exclude:
@@ -3214,18 +3214,21 @@ def check_L6Y(ctx, rep, plots):
         allV = {m: np.vstack([V for mm, V, F in loc if mm == m]) for m in {m for m, _, _ in loc}}
         c, n = YG.tcs_axis()
         for m, nm in (("gloss_black", "TCS bezel"),):
-            dv.append(float(_axis_dist(allV[m].mean(0), c, n)[0]))
+            Vt = allV[m]
+            Vt = Vt[np.linalg.norm(Vt - c, axis=1) < 12.0]               # rev N: the trim face's lunes are gloss too
+            dv.append(float(_axis_dist(Vt.mean(0), c, n)[0]))
             lab.append(nm)
         c, n = YG.afcs_axis()
         dv.append(float(_axis_dist(allV["button_red"].mean(0), c, n)[0]))
         lab.append("AFCS cap")
         c, n = YG.head_out_face()
-        Vb = allV["black"]
-        sel = (np.linalg.norm(Vb - c, axis=1) < 16.0) & ((Vb - c) @ n > 0.1)
-        dv.append(float(_axis_dist(Vb[sel].mean(0), c, n)[0]) if sel.any() else 99.0)
+        Vr = allV.get("yoke_rocker", allV["black"])                      # rev N: the rocker's own satin dark grey
+        sel = (np.linalg.norm(Vr - c, axis=1) < 16.0) & ((Vr - c) @ n > 0.1)
+        dv.append(float(_axis_dist(Vr[sel].mean(0), c, n)[0]) if sel.any() else 99.0)
         lab.append("pitch-trim rocker")
         cb, nb, _, _ = YG.button_frame()
         cb, nb = cb * [-1.0, 1.0, 1.0], nb * [-1.0, 1.0, 1.0]
+        Vb = np.vstack([allV[m] for m in ("black", "yoke_nickel") if m in allV])   # the cap + (rev N) its nickel collar
         sel = (np.linalg.norm(Vb - cb, axis=1) < 9.0) & ((Vb - cb) @ nb > 0.05)
         dv.append(float(_axis_dist(Vb[sel].mean(0), cb, nb)[0]) if sel.any() else 99.0)
         lab.append("inboard push button")

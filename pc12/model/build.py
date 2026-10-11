@@ -250,7 +250,14 @@ def construction():
 # --, the interior as a whole x 2.2
 # -- the rev M yokes (model/yoke3d.py: one mesh at every RES, the light tier's LOW_FINE included) <= 40k each; the
 # total raised by their 2 x 40k over the rev H yokes' 2 x 22.6k
-YOKE_BUDGET = 40_000
+YOKE_BUDGET = 43_000       # rev N (3-D judges r1 FID1-07 / CR1-03: the frame's highlight tolerance 2.5 deg on every face
+#                            seen from the aft hemisphere, +3.6k; the badge plate, the trim slot): rev M's 40k
+# the interior budget's open items (printed by the build while it is over; owner: the flight-deck seed's caps)
+BUDGET_OPEN = ("flight deck r1 GEOM A put flight_deck at ~91k against the seed's 150k cap that never landed in "
+               "INTERIOR_BUDGET (the total was over before the rev M yokes)",
+               "the rear cabin seats seat_pax3-6 34,834 at RES 2 against the 34,800 cap (the RES-2 rims, review r1 "
+               "RES1-02)",
+               "decision wanted: raise INTERIOR_BUDGET by the flight deck's detail, or trim it")
 INTERIOR_BUDGET = {"total": res.budget(250_000, 2.2) + 2 * (YOKE_BUDGET - 22_600), "crew_seat": res.budget(14_000, 3.4),
                    "cabin_seat": res.budget(12_000, 2.9), "yoke_L": YOKE_BUDGET, "yoke_R": YOKE_BUDGET}
 
@@ -438,6 +445,8 @@ def main(low=True):
         rows.append(f"{k} {n:,}" + (f"/{lim // 1000}k{'' if n <= lim else ' OVER'}" if lim else ""))
     lim = INTERIOR_BUDGET["total"]
     print(f"  interior triangles {tot:,} (budget {lim:,}: {'OK' if tot <= lim else 'OVER'}): " + ", ".join(rows))
+    if tot > lim or any("OVER" in r for r in rows):
+        print("  OPEN budget item (owner decision, not the yoke's: 3-D judges r1 CR1-07): " + "; ".join(BUDGET_OPEN))
     # materials: livery palette <-> glTF table <-> the photo-fitted render/lookdev_materials.json
     from model.assemble import check_lookdev
     for what, bad in (("livery.PALETTE vs assemble.MATERIALS", livery.check_materials()),

@@ -1849,6 +1849,7 @@ async def tour_checks(page, shots=True):
     await tour_r2_checks(page, data, shots)
     await tour_r3_checks(page, data, shots)
     await tour_r4_checks(page, data, shots)
+    await yoke_look_checks(page, shots)
 
 
 async def tour_r2_checks(page, data, shots=True):
@@ -2041,6 +2042,45 @@ async def material_stats(page, png_path, groups):
         h, s_, v = colorsys.rgb_to_hsv(*(c / 255.0))
         out[n] = (int(e.sum()), tuple(int(x) for x in c), float(0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]), h * 360.0, s_)
     return out
+
+
+# the yoke in the cabin light (3-D judges r1 FID1-01 / CR1-06: the gloss white cover read matte light grey ~200 with no
+# highlight, the satin-aluminium / smoke inserts mid / dark grey -- photos P1046408 / 09: cover 214-228 with window
+# streaks, the inserts 0.85-0.95 / 0.8-0.9 of it); thresholds at the pilot stop (YOKE_LOOK)
+YOKE_LOOK = dict(cover=205.0, cover_p99=215.0, up=0.78, lo=0.70, column=70.0)   # rev M: 204 / 214, 0.50, 0.34, 111
+
+
+async def yoke_look_checks(page, shots=True):
+    """[Y1] the yoke's cover / inserts at the pilot stop (median and 99th-percentile sRGB luminance per material, the
+    material-ID pass eroded by one pixel): the cover light with visible highlights, the inserts near it, the column dark
+    (judges CR1-02: it read as a light grey pipe)."""
+    import numpy as np
+    from PIL import Image
+    V = "const V = window.viewer, T = V.tour; "
+    await js(page, V + "T.enter('pilot', {motion: false}); T.finish(); V.advance(0.5); await V.frames(3);")
+    path = await shot(page, "45_yoke_look_pilot", "")
+    names = {"cover": ["yoke_white"], "up": ["yoke_silver"], "lo": ["yoke_silver_dark"], "column": ["yoke_column"]}
+    m = await js(page, MAT_MASK, [names[k] for k in names])
+    W, H = m["W"], m["H"]
+    k = np.array(m["mask"].split(","), int).reshape(H, W)
+    img = np.asarray(Image.open(path).convert("RGB"), float)[:H, :W]
+    lum = 0.2126 * img[..., 0] + 0.7152 * img[..., 1] + 0.0722 * img[..., 2]
+    st = {}
+    for i, n in enumerate(names):
+        g = k == i + 1
+        e = g.copy()
+        e[1:, :] &= g[:-1, :]; e[:-1, :] &= g[1:, :]; e[:, 1:] &= g[:, :-1]; e[:, :-1] &= g[:, 1:]
+        st[n] = (int(e.sum()), float(np.median(lum[e])) if e.sum() >= 20 else None,
+                 float(np.percentile(lum[e], 99)) if e.sum() >= 20 else None)
+    await js(page, V + "T.exit({motion: false}); await V.frames(1);")
+    c, u, l_, col = st["cover"], st["up"], st["lo"], st["column"]
+    L = YOKE_LOOK
+    ok = (c[1] is not None and u[1] is not None and l_[1] is not None and c[1] >= L["cover"] and c[2] >= L["cover_p99"]
+          and u[1] / c[1] >= L["up"] and l_[1] / c[1] >= L["lo"] and (col[1] is None or col[1] <= L["column"]))
+    check(f"[Y1] FID1-01 / CR1-06: the yoke at the pilot stop -- the gloss white cover >= {L['cover']:.0f} with highlights "
+          f"(p99 >= {L['cover_p99']:.0f}), the upper / lower inserts >= {L['up']:.2f} / {L['lo']:.2f} of it, the column "
+          f"dark (<= {L['column']:.0f}) (median sRGB luminance per material)", ok,
+          ", ".join(f"{n} {v[1]:.0f} (p99 {v[2]:.0f}, {v[0]} px)" for n, v in st.items() if v[1] is not None))
 
 
 async def tour_r4_checks(page, data, shots=True):

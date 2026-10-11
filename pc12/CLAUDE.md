@@ -33,10 +33,11 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   the lining, 22c curtain vs crew tracks; 23 closed interior shells wound outward,
                                 #   vertex normals with the face winding; 24 crew harness on the fleece, 25 armrests
                                 #   vs the pedestal over the seat travel, 26 no coplanar overlaps of different
-                                #   materials, 27 the PDU bezel tops visible from both design eyes, 30 the rev M yokes
+                                #   materials, 27 the PDU bezel tops visible from both design eyes, 30 the rev N yokes
                                 #   over roll x pitch vs the panel / U recess / J band / glareshield / pedestal (exact
-                                #   distances both ways, >= 3 mm; 30a the column in its opening / sleeve, 30b full push
-                                #   [open], 30c the column vs the J band / recess top [open]);
+                                #   distances both ways, >= 3 mm, over the whole travel; 30a the column in its opening
+                                #   / sleeve, 30b the full push every 5 deg of roll, 30c the column vs the J band /
+                                #   panel >= 0.5 mm, 30d where the column shows, its finish dark);
                                 #   the main-gear leg
                                 #   door vs the skin cut-out every 0.5 % over 90-100 %, flush outside its tyre blister);
                                 #   '[open]' rows are known conflicts in the approved parameters that need an owner
@@ -45,8 +46,9 @@ python3 test/consistency_2d3d.py   # the built GLB projected / sliced against th
                                 #   (L4W: wheels / tyres / nose yoke, 2 mm; L6Y: the built yokes in yoke-local mm vs the
                                 #   L6Y front / side views, cover, inserts, pads, switch axes, 1.5 mm)
 python3 test/yoke_mesh_check.py # the Stage-3 yoke mesh (~4 min): triangles vs build.YOKE_BUDGET (as built: cad.res +
-                                #   the column), watertight, slivers, corner normals vs the solids, the frame's
-                                #   highlight error (interpolated vs exact normals on the visible faces)
+                                #   the column), cad.res a fixed point on the cover, watertight, folds, slivers, corner
+                                #   normals vs the solids, the frame's highlight error (interpolated vs exact normals on
+                                #   the faces seen from the aft hemisphere: z-buffered visibility classes)
 python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from the parameter modules (~3 min;
                                 #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels,
                                 #   `L6Y L6Y2` the yoke design drawings: interior.YOKE_DESIGN through the solids of
@@ -719,7 +721,7 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   yokes: fit_check 30, Yoke rev M) and 29b [open] -- at
   the full [E] push (-90 mm) the grips reach within ~8 mm of the bare lower-panel face wings level and cross it from ~45
   deg of roll: the switch blocks under the inboard grips are hit; owner decision: a shorter [E] forward travel (~-65 mm)
-  or accept; consistency rows select the yoke / pedal parts and the lip's leather_black (materials moved).  Triangles
+  or accept (decided 2026-10-11: push 65, Yoke rev N); consistency rows select the yoke / pedal parts and the lip's leather_black (materials moved).  Triangles
   (RES 2):
   flight_deck 35.6k -> 87.3k, yokes 13.75k -> 22.6k (rev M: 39.9k, below), pedals 1.9k -> 3.0k; the interior 601k is over
   build.INTERIOR_BUDGET's 550k until the seed's caps land (flight_deck 150k, yoke 24k, pedal 3k).  Deferred: legends
@@ -786,10 +788,65 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   co-pilot, P1046409, P1046410, Mexico pilot / co-pilot, AOPA / press pilot / co-pilot: refs/cache/overlays/yoke/3d,
   private) and out/tmp/yoke3d (renders alone, viewer view_*_revM / _revH; the first mesh's _revM_qem).  Open: the AFCS
   boss (its R 0.8 edges and 1.5 mm blend hold 1.8k faces: an explicit revolve would free them), the slivers above,
-  30c (the column axis vs the band / recess, owner),
+  30c (closed in rev N, below),
   the inboard grip's forward-face field kink (a ~2 mm scar in the solid, hidden); the sheets' own open points (the
   fore-aft station, grip toe, trim head depth, crown soft break vs crease, J band vs full collar, shell skew, the [E]
   forward-face switches).
+- Yoke rev N (3-D judges r1, 2026-10-11; L6Y rev F / L6Y2 rev E, L6 / L6B rev N): OWNER DECISIONS 2026-10-11 (the two
+  [open] rows of rev M): (1) fit_check 30c -- the J band and the U recess are RE-CENTRED ON THE COLUMN AXIS (the hub, WL
+  1.845: the column / roll pivot and the knee results kept); the photos read the band's joint line -- the column axis
+  on the aircraft -- at WL ~1.821, 24 mm under the hub, so the band and the recess are drawn 24 mm up with the axis
+  (YOKE_DESIGN column 0.330 / 1.869 / 1.845 / 1.825: joint line on the axis, screw 1.825, the leg's round top end 1.869
+  -- +24 would cut the PDU row, so 3 mm under the recess top; column_band hook about h 0, concentric with the column, its
+  inner edge 1.0 mm off it all round; column_recess bottom h -72 -> -48, top h 27 [E]); recorded on L6Y2 detail J
+  and in the tables; (2) fit_check 30b / fit_fd_a 29b -- the PUSH travel shortened to 65 mm (YOKE travel (-0.065,
+  0.090): the [E] 90 put the grips into the lower panel from ~45 deg of roll), the pull kept; the viewer pivot's
+  travel_push follows (rev N's push x roll envelope `push_roll` is gone); 30 sweeps the whole travel, 30b the full push
+  every 5 deg of roll, both hard (>= 3 mm), as is fit_fd_a 29b; L6 / L6B take -65 / +90 in the knee sweeps and the
+  phantoms.  As built: fit_check 30 / 30b 13.5 mm (yoke_R at full push, roll 70), fit_fd_a 29 / 29b 18.4 / 13.6 mm,
+  30a radial 0.95 / axial 11.0 mm, 30c +0.9 mm (the band's inner edge), 30d dark; the knees unchanged (24 / -17 mm,
+  L6B 24 / -19); FIT OK with no [open] row.  COLUMN / RECESS / BAND (CR1-01 blocker, CR1-02, FID1-02, FID1-08): rev M's fit_check 30c [open] (-10.7
+  mm: the column, r 22 about the hub, ran its top through the panel face above the U and the J band's leg lay tangent
+  to it -- visible from the crew stops): column_recess top h 12 -> 27 (the U runs up through the titanium band under
+  the PDU row, its rim flange's top edge on the band's top edge WL 1.8755, the bridge over it gone:
+  `fd_detail_a.lower_panel`), column_band 23 -> 22 (the low end of the measured 22-25: 1.0 mm off the column, as the
+  floor's opening), then re-centred (above); 30c a hard row (>= 0.5 mm); `_band_sweep` winds the band by its own section
+  normals (FD._oriented had turned the mirrored pilot band inside-out: fit_check 23's pcl_pewter row); the column SATIN
+  BLACK non-metallic (`yoke_column`, rough 0.7, specular 0.5: the metal_dark pipe read light grey where Mexico L shows
+  a dark column), the recess walls / flange / floor charcoal (`fd_detail_a.RECESS_MAT` panel_dark), the band satin
+  pewter (BAND_MAT pcl_pewter); 30d reports where the column shows (~100 mm of it at the drawn neutral: the fore-aft
+  station, OPEN) and holds its finish dark.  DETAILS: the legends as WORDS of plain letter BLOCKS (FID1-05:
+  the radial tick rows read as a dial; YOKE_DESIGN legends (r0, r1 = the cap-height band, ((from, to, letters), ...))
+  + legend_style; `yoke_geom.legend_blocks / legend_quads` feed the sheets and `yoke3d.legend_pieces`; `legend_grey`, the
+  lettering's mean tone; TCS / AFCS DISC / TRIM DN / TRIM UP / MAP LIGHTS by letter count -- no letters); the trim
+  rocker in a recessed SLOT (trim_slot 2.5 deep, 7 deg draft, sharp edges: the solid `_trim_face_grooves`, the mesh
+  `yoke_patch.Terrain` slot pieces SLOT_FLOOR / WALL / END), its lobes satin dark grey (`yoke_rocker`), the lunes gloss
+  black; the badge's raised blank PLATE (FID1-06: badge_field + proud 0.3 / R 1 / edge R 0.2; the solid
+  `yoke_geom.badge_plate`, in SWITCHES; the mesh a rounded extrusion); the push button's hex collar SATIN NICKEL (FID1-04,
+  `yoke_nickel`).  `yoke_geom.NON_SOLID_KEYS` (legends, legend_style, column*, ptt) stay out of design_key -- printed /
+  panel values do not re-key the solids' caches (`yoke3d._src_key` adds `table_key`).  MESH: visibility by Z-BUFFER
+  (CR1-03: rev M's 'under the cover' proxy held the body top behind the cover's upper edge, which the crew eye sees at
+  ~45 deg, to 20 deg) -- `yoke_patch.visibility`: the dense moulding + cover rasterised from 67 aft-hemisphere / 25
+  forward cameras (VIS_*), each dense vertex seen from aft (256k) / only from forward (16k) / never (2.4k) ->
+  FRAME_TOL / FWD_TOL_K / HIDDEN_TOL (stage 'vis', `vis_tol_k`); FRAME_TOL 3.5 -> 2.5 deg (FID1-07): frame 18.8k ->
+  22.4k faces, the aft-visible faces' interpolated-vs-exact normal p50 0.67, p95 2.25 deg, > 2 deg 8.5 %, > 4 deg 0.6 %
+  of the area (rev M: 0.86 / 2.97 / 16 % / 1.2 % on its proxy class); the cover a FIXED POINT of cad.res (CR1-04:
+  `yoke3d.res_fixed_point` splits where cad.res would, +200 vertices projected onto the cover solid with exact normals;
+  yoke_mesh_check's row restored: cover +0, moulding +74 on 29.4k); FOLDS (CR1-05: `fold_faces`, `repair_folds`,
+  `fix_fold_normals` -- 24 -> 0: flipped vertex normals at the AFCS boss seam, the badge grooves' sub-0.1 mm2 end faces;
+  a yoke_mesh_check row).  41.8k triangles meshed, 42.5k in the GLB part: build.YOKE_BUDGET 40k -> 43k.  VIEWER
+  (FID1-01 / CR1-06): materials.js CABIN_TRIM entries 3 / 4 -- a reflection floor and the key light's share in the
+  specular -- for yoke_white / yoke_silver / yoke_silver_dark / yoke_nickel (?cabTrim=name:a,b,c,d overrides), VIEWER
+  yoke_silver_dark colour 0.44; at P1046408 / 09's cameras the cover 210-214 (rev M 184-197), the inserts 0.92-0.94 /
+  0.78-0.87 of it (rev M 0.50-0.76 / 0.34-0.68; photos ~0.94 / 0.84-0.87); viewer_test [Y1] at the pilot stop.
+  KINEMATICS (CR1-09): the push 65 mm (owner, above; a push x roll envelope -- 0.95 of the [E] 90 wings level, 0.83 at
+  70 deg -- had been the interim fix).  BUDGET (CR1-07): `build.BUDGET_OPEN` printed while the interior is over (flight
+  deck ~91k against the seed's cap that never landed; seat_pax3-6 34,834 / 34,800).  DEFERRED (owner): FID1-03 the
+  grips' fore-aft depth -- grip_depth 27 [M weak] / toe 18 are approved values; the AOPA co-pilot view (check only: its
+  camera extrapolated from the pilot yoke) reads both grips narrower, but its 4-DOF cover pose misses the inboard
+  button by 13.9 mm; a 6-DOF relative pose on all 9 landmarks (<= 4.2 mm) leaves the outboard grip -4.6 mean (-8.4
+  low .. -0.3 high) and the inboard slot side -19.4 (out/tmp/yoke3d/r1fix/press6dof.py): a deeper grip is plausible
+  but needs a fitted camera (and shortens 30b's push clearance) -- the next drawing revision, with the owner.
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been
@@ -844,8 +901,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   checks keep clear: needs an L6 reveal-profile change), WG8-02 leg-door lean (the documented LD-1 deviation, L4
   call-out), GEO8-05 rudder tab bay / flap canoes / fin root facets (not visible at the review cameras), the chin lip's
   face width (the drawn lip outline; a re-trace needs the drawing review).
-- Yoke design drawings (owner 2026-10-05: "the yoke isn't quite right ... better design drawings?"; DRAWING stage only,
-  the 3-D yoke is still rev H -- `interior.YOKE_REVH`, frozen -- until the Stage-3 yoke build): `interior.YOKE_DESIGN`
+- Yoke design drawings (owner 2026-10-05: "the yoke isn't quite right ... better design drawings?"; the 3-D yoke is
+  built from them since rev M -- see "Yoke rev M / N (L6Y / L6Y2)" above; the rev H yoke and `interior.YOKE_REVH` are
+  gone): `interior.YOKE_DESIGN`
   (rev M, every value source-tagged) -> the solids of `model/yoke_geom.py` (white cover with flush inserts; black body +
   grips one moulding joined by a ROLLING-BALL round `rmin_ang` (true round at an angle, none where the faces run flush),
   then each pad's pocket / groove / bead cut (`pad_finish`); each grip = its aft side (prism trimmed in the

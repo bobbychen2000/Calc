@@ -336,16 +336,46 @@ def pad_pocket(V, N, loop, g):
 
 
 # ============================================================================================ a terrain with grooves
+SLOT_FLOOR, SLOT_WALL, SLOT_END = 1 << 40, (1 << 40) + 2, (1 << 40) + 4    # labels of a Terrain's slot pieces (above
+#                                                                              every groove label)
+
+
 class Terrain:
     """A height field z = H(x, y) in a frame (c, ex, ey, ez): the base surface (base(X) -> z, base_normal(X) -> unit
     normals in the frame) cut by V-grooves (yoke_cover.Groove: depth g (1 - 2 dc / w) below the reference height
     ref(X)); H = min(base, ref - depth_k).  Labels: 0 the base, else the groove pieces of yoke_cover (run / side, end
-    cones).  Its creases come from the label grid (yoke_cover's method), forced into a constrained Delaunay
-    triangulation; heights exact, normals per piece (split only along the creases)."""
+    cones) and, optionally, a recessed SLOT with drafted walls (slot_at: the trim face's rocker slot, rev N).  Its creases
+    come from the label grid (yoke_cover's method), forced into a constrained Delaunay triangulation; heights exact,
+    normals per piece (split only along the creases)."""
 
-    def __init__(self, grooves, base, base_normal, ref=None):
+    def __init__(self, grooves, base, base_normal, ref=None, slot=None):
         self.GR, self.base, self.base_normal = grooves, base, base_normal
         self.ref = ref if ref is not None else (lambda X: np.zeros(len(X)))
+        self.slot = slot              # (yl, r_end, depth, draft rad): a recessed slot |y| < yl, r < r_end (the trim face)
+
+    def slot_at(self, X):
+        """The slot's (label, height) at X (label 0 / height +inf outside it): drafted walls z = -m / tan(draft) for
+        m = min(yl - |y|, r_end - r) (the side walls SLOT_WALL + (y > 0), the end walls SLOT_END), its floor SLOT_FLOOR
+        at -depth."""
+        X = np.atleast_2d(np.asarray(X, float))
+        lab = np.zeros(len(X), np.int64)
+        z = np.full(len(X), np.inf)
+        if self.slot is None:
+            return lab, z
+        yl, r_end, dep, dr = self.slot
+        my = yl - np.abs(X[:, 1])
+        mr = r_end - np.hypot(X[:, 0], X[:, 1])
+        m = np.minimum(my, mr)
+        ins = m > 0.0
+        t = math.tan(dr)
+        zw = -m / t
+        floor = ins & (zw <= -dep)
+        wall = ins & ~floor
+        z[ins] = np.maximum(zw[ins], -dep)
+        lab[floor] = SLOT_FLOOR
+        lab[wall & (my <= mr)] = SLOT_WALL + (X[wall & (my <= mr), 1] > 0)
+        lab[wall & (my > mr)] = SLOT_END
+        return lab, z
 
     def pieces_at(self, X):
         X = np.asarray(X, float)
@@ -360,11 +390,28 @@ class Terrain:
             best = np.where(b, h, best)
             lk = np.where(vid >= 0, 1 + 4096 * k + 2048 + vid, 1 + 4096 * k + 16 * run + (side > 0))
             lab = np.where(b, lk, lab)
-        return lab, best
+        ls, zs = self.slot_at(X)
+        b = zs < best
+        return np.where(b, ls, lab), np.where(b, zs, best)
+
+    def is_crease(self, la, lb):
+        if la >= SLOT_FLOOR or lb >= SLOT_FLOOR:
+            return la != lb
+        from model import yoke_cover as YC
+        return YC.is_crease(la, lb, self.GR)
 
     def normal(self, lab, X):
         from model import yoke_cover as YC
         X = np.atleast_2d(np.asarray(X, float))
+        if lab >= SLOT_FLOOR:
+            t = math.tan(self.slot[3])
+            if lab == SLOT_FLOOR:
+                return np.repeat(np.array([[0.0, 0.0, 1.0]]), len(X), 0)
+            if lab == SLOT_END:
+                r = np.maximum(np.hypot(X[:, 0], X[:, 1]), 1e-9)
+                return _unit(np.c_[-X[:, 0] / r / t, -X[:, 1] / r / t, np.ones(len(X))])
+            sy = 1.0 if lab == SLOT_WALL + 1 else -1.0
+            return _unit(np.c_[np.zeros(len(X)), np.full(len(X), -sy / t), np.ones(len(X))])
         k, kind, j, sg = YC.decode(lab)
         if k < 0:
             return self.base_normal(X)
@@ -400,6 +447,10 @@ class Terrain:
         near = np.zeros(len(Cc), bool)
         for g in GR:
             near |= g.query(Cc)[0] < 0.5 * g.w + margin + 0.71 * cs
+        if self.slot is not None:                                   # the slot's edges (walls m < depth x tan + margin)
+            yl, r_end, dep, dr = self.slot
+            m = np.minimum(yl - np.abs(Cc[:, 1]), r_end - np.hypot(Cc[:, 0], Cc[:, 1]))
+            near |= (m > -(margin + 0.71 * cs)) & (m < dep * math.tan(dr) + margin + 0.71 * cs)
         act = np.zeros((nx, ny), bool)
         ii, jj = np.unravel_index(np.nonzero(near)[0], CX.shape)
         for a, b in zip(ii, jj):
@@ -426,7 +477,7 @@ class Terrain:
                 same = self.pieces_at(p0 + tm[:, None] * d)[0] == la
                 t0 = np.where(same, tm, t0)
                 t1 = np.where(same, t1, tm)
-            crease = np.array([YC.is_crease(x, y, GR) for x, y in zip(la, lb)], bool)
+            crease = np.array([self.is_crease(x, y) for x, y in zip(la, lb)], bool)
             P = (p0 + (0.5 * (t0 + t1))[:, None] * d)[crease]
             ei, ej = ei[crease], ej[crease]
             pts.append(P)
@@ -541,21 +592,17 @@ def _face_height(P2, c, eu, ev, n, z0=None, iters=6):
 
 def trim_terrain():
     """The trim face's Terrain (face frame, mm): base = the smooth moulding's height over the face plane (0 inside the
-    flat face, the R head_out[6] edge round / lower chamfer beyond), the legend ring's V-groove (circle trim[2] / 2)
-    and the rocker slot's two chords (|y| = trim[2] / 2 - trim_lunes[0], ending 0.6 inside the ring, cone ends:
-    yoke_geom ends them square), w x g = trim_grooves, cut from the face plane (ref 0) -- the ring fades out where
-    the chamfer drops the face more than g below the plane, as in the solid."""
+    flat face, the R head_out[6] edge round / lower chamfer beyond), the legend ring's V-groove (circle trim[2] / 2,
+    w x g = trim_grooves, cut from the face plane (ref 0) -- it fades out where the chamfer drops the face more than g
+    below the plane, as in the solid) and, rev N, the recessed rocker SLOT between the chords (yoke_geom.trim_slot_dims:
+    drafted walls, a flat floor trim_slot[0] deep; rev M's chord V-grooves are its top edges)."""
     from scipy.interpolate import RegularGridInterpolator
     from model import yoke_cover as YC
     D = G.T()
     w, g = (float(x) for x in D["trim_grooves"][:2])
     R0 = 0.5 * float(D["trim"][2])
-    yl = R0 - float(D["trim_lunes"][0])
-    xc = math.sqrt((R0 - 0.6) ** 2 - yl ** 2)
     th = np.linspace(0.0, 2 * math.pi, 721)[:-1]
-    GR = [YC.Groove("ring", np.c_[R0 * np.cos(th), R0 * np.sin(th)], w, g, closed=True),
-          YC.Groove("chord_up", [(-xc, yl), (xc, yl)], w, g),
-          YC.Groove("chord_dn", [(-xc, -yl), (xc, -yl)], w, g)]
+    GR = [YC.Groove("ring", np.c_[R0 * np.cos(th), R0 * np.sin(th)], w, g, closed=True)]
     c, eu, ev, n = trim_frame()
     rr = np.arange(12.0, TRIM_CUT_R + 0.2501, 0.05)
     ph = np.linspace(-math.pi, math.pi, 361)
@@ -580,12 +627,13 @@ def trim_terrain():
         P = c + X[:, :1] * eu + X[:, 1:2] * ev + z[:, None] * n
         g3 = _unit(YM._grad_raw("msmooth", P, 0.003))
         return np.c_[g3 @ eu, g3 @ ev, g3 @ n]
-    return Terrain(GR, base, base_normal)
+    return Terrain(GR, base, base_normal, slot=G.trim_slot_dims())
 
 
 def trim_patch(V, N, loop, verbose=False):
-    """The trim face inside the cut loop (frame mesh V / N vertex ids) as [(V, F, N, material)]: 'black' inside the
-    legend ring's groove bottom (the satin black face + ring), 'grip_black' outside; heights exact (Newton on the
+    """The trim face inside the cut loop (frame mesh V / N vertex ids) as [(V, F, N, material)]: inside the legend
+    ring's groove bottom the lunes 'gloss_black' (the bezel ring, rev N) and the recessed slot 'black', 'grip_black'
+    outside; heights exact (Newton on the
     smooth field / the grooves' planes), normals split along the creases only.  The loop is no crease: its vertices
     keep the frame mesh's normals."""
     c, eu, ev, n = trim_frame()
@@ -602,7 +650,7 @@ def trim_patch(V, N, loop, verbose=False):
     for gr in Tr.GR:
         dc = gr.query(Xi)[0]
         zg = np.minimum(zg, -gr.g * (1.0 - 2.0 * dc / gr.w))
-    Zi = np.minimum(zb, zg)
+    Zi = np.minimum(np.minimum(zb, zg), Tr.slot_at(Xi)[1])
     Pi = c + Xi[:, :1] * eu + Xi[:, 1:2] * ev + Zi[:, None] * n
     # one vertex per (point, piece) on the creases
     keymap, newP, newL, newX = {}, [], [], []
@@ -634,7 +682,8 @@ def trim_patch(V, N, loop, verbose=False):
     Fo[flip] = Fo[flip][:, ::-1]
     R0 = 0.5 * float(G.T()["trim"][2])
     cen = X[T].mean(1)
-    mat = np.where(np.hypot(cen[:, 0], cen[:, 1]) < R0, "black", "grip_black")
+    mat = np.where(np.hypot(cen[:, 0], cen[:, 1]) < R0, "gloss_black", "grip_black").astype(object)
+    mat[lab >= SLOT_FLOOR] = "black"                                    # the recessed slot: satin black
     out = []
     for mt in np.unique(mat):
         Fm = Fo[mat == mt]
@@ -660,14 +709,14 @@ CUT_VERSION = "cut1"
 # must reproduce -- corner normals interpolated within FRAME_TOL of its exact normal, the face within its sdist --; the
 # faces no crew or cabin camera sees are held to less: the forward faces (toward the panel) FWD_TOL_K x the tolerance and
 # FRAME_SDIST[1], the body's aft face under the cover HIDDEN_TOL and FRAME_SDIST[2] (their QEM bounds likewise)
-FRAME_TOL = 3.5          # deg (satin black, roughness 0.42; 1.5: 26.4k frame faces, visible area > 2 deg 0.8 %;
-#                          2.0: 24.2k, 3.1 %; 2.5 with the curvature factor: 20.5k, 8.3 %, p95 2.2 -- the yoke's
-#                          40k budget sets it)
+FRAME_TOL = 2.5          # deg (satin black, roughness 0.42; 1.5: 26.4k frame faces, visible area > 2 deg 0.8 %;
+#                          2.0: 24.2k, 3.1 %; 2.5 with the curvature factor: 20.5k, 8.3 %, p95 2.2; rev M shipped 3.5
+#                          -- 3-D judges r1 FID1-07: blotches on the frame band beside the pads and the heads)
 FWD_TOL_K = 4.0
 HIDDEN_TOL = 20.0        # deg
 FRAME_SDIST = (0.15, 0.40, 0.50)   # mm: visible, forward, hidden
 HIDDEN_CONE_TURN = (30.0, 40.0)    # deg: the hidden region's cone / turn bounds (cad.res bows no edge turning > 32 deg)
-DECI_VERSION = "deci1"
+DECI_VERSION = "deci2"
 
 
 CURV_R0, CURV_KMAX = 4.0, 6.0   # the tolerance grows as R0 / radius on rounds tighter than R0 mm, at most KMAX x
@@ -687,10 +736,136 @@ def curvature_tol_k(V, F, N):
     return np.clip(CURV_R0 * kap, 1.0, CURV_KMAX)
 
 
+# VISIBILITY (rev N, 3-D judges r1 CR1-03: rev M's proxy -- inside the cover's front-view outline and forward of its
+# front face = 'under the cover' -- held the body's top behind the cover's upper edge, which the crew eye looks down
+# onto at ~45 deg, to the hidden faces' 20 deg): every dense DC vertex classed by z-buffer visibility of the moulding
+# + cover from VIS_AFT cameras over the aft hemisphere (the crew / cabin / viewer side; rolling the yoke turns a view
+# about a, within it) and VIS_FWD ones over the rest of the sphere -- 0 seen from the aft hemisphere (FRAME_TOL), 1 only
+# from forward (FWD_TOL_K), 2 never (HIDDEN_TOL)
+VIS_DIST, VIS_FOV, VIS_PX = 600.0, 34.0, 900           # mm from the yoke centre (0, 15, -20), deg, pixels (0.41 mm)
+VIS_AFT = [(az, el) for el in (-50.0, -25.0, 0.0, 25.0, 50.0, 75.0) for az in np.arange(-75.0, 75.1, 15.0)] + [(0.0, 88.0)]
+VIS_FWD = [(az, el) for el in (-50.0, -10.0, 30.0, 70.0) for az in np.arange(105.0, 255.1, 30.0)] + [(0.0, -88.0)]
+VIS_VERSION = "vis1"
+
+
+def _vis_dir(az, el):
+    a, e = math.radians(az), math.radians(el)
+    return np.array([math.sin(a) * math.cos(e), math.sin(e), math.cos(a) * math.cos(e)])
+
+
+def visibility_classes(Vd, Nd, occluders, verbose=False):
+    """Per point Vd (normals Nd, yoke-local mm): 0 visible from a VIS_AFT camera, 1 only from a VIS_FWD one, 2 never --
+    z-buffered against the occluder meshes [(V, F)] (the dense moulding + the cover): front-facing and within
+    0.15 mm + 1.5 px x tan(view angle) of the nearest surface at its pixel (or its 3 x 3 neighbourhood's farthest)."""
+    import sys
+    import time
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "test"))
+    import yoke_raster as YR
+    t0 = time.time()
+    OV = np.vstack([v for v, _ in occluders])
+    OF = np.vstack([f + o for (v, f), o in zip(occluders, np.cumsum([0] + [len(v) for v, _ in occluders])[:-1])])
+    ctr = np.array([0.0, 15.0, -20.0])
+    seen_aft = np.zeros(len(Vd), bool)
+    seen_any = np.zeros(len(Vd), bool)
+    W = VIS_PX
+    pxk = 2.0 * math.tan(math.radians(0.5 * VIS_FOV)) / W
+    for kind, cams in (("aft", VIS_AFT), ("fwd", VIS_FWD)):
+        for az, el in cams:
+            d = _vis_dir(az, el)
+            up = (0.0, 1.0, 0.0) if abs(d[1]) < 0.95 else (0.0, 0.0, 1.0)
+            cam = YR.look_at(ctr + VIS_DIST * d, ctr, up=up, fov=VIS_FOV, W=W, H=W)
+            px, z = cam(OV)
+            _, _, zb = YR.raster(px[OF], z[OF], W, W)
+            zf_ = np.where(np.isfinite(zb), zb, -np.inf)                  # the neighbourhood's farthest surface
+            zp = np.pad(zf_, 1, constant_values=-np.inf)
+            zmax = np.max(np.stack([zp[1 + dy:W + 1 + dy, 1 + dx:W + 1 + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)]),
+                          0)
+            pv, zv = cam(Vd)
+            ix, iy = np.floor(pv[:, 0]).astype(int), np.floor(pv[:, 1]).astype(int)
+            ok = (ix >= 0) & (iy >= 0) & (ix < W) & (iy < W)
+            view = cam.eye - Vd
+            view /= np.linalg.norm(view, axis=1, keepdims=True)
+            cs = np.sum(Nd * view, 1)
+            ok &= cs > 0.02
+            tn = np.sqrt(np.maximum(1.0 - cs * cs, 0.0)) / np.maximum(cs, 1e-3)
+            tol = 0.15 + 1.5 * zv * pxk * np.minimum(tn, 8.0)
+            vis = np.zeros(len(Vd), bool)
+            i = np.nonzero(ok)[0]
+            zr = np.maximum(np.where(np.isfinite(zb[iy[i], ix[i]]), zb[iy[i], ix[i]], -np.inf), zmax[iy[i], ix[i]])
+            vis[i] = zv[i] <= zr + tol[i]
+            seen_any |= vis
+            if kind == "aft":
+                seen_aft |= vis
+    cls = np.where(seen_aft, 0, np.where(seen_any, 1, 2)).astype(np.int8)
+    if verbose:
+        print(f"  visibility: {len(VIS_AFT)} aft + {len(VIS_FWD)} forward cameras, {np.bincount(cls, minlength=3)} "
+              f"(aft / forward only / never), {time.time() - t0:.0f}s", flush=True)
+    return cls
+
+
+def _cut_key():
+    return YM.dc_key() + (CUT_VERSION, PAD_CUT_DEPTH, TRIM_CUT_R, TRIM_CUT_DEPTH)
+
+
+def _cut_stage(verbose=False):
+    """The dense moulding with the pads and the trim face cut out (stage 'cut'): (V, F, N)."""
+    V, F, N = YM.dense_moulding(verbose=verbose)
+    cfs = {"pad_out": pad_cfun("out"), "pad_in": pad_cfun("in"), "trim": trim_cfun}
+
+    def cutstage():
+        V1, F1, N1 = V, F, N
+        for nm, cf in cfs.items():
+            V1, F1, N1, lp = cut(V1, F1, N1, "msmooth", cf)
+            if verbose:
+                print(f"  cut {nm}: {len(F1)} faces, loops {[len(x) for x in lp]}", flush=True)
+        return V1, F1, N1
+    return YM.stage_cached("cut", _cut_key(), cutstage)
+
+
+def _vis_key():
+    import hashlib
+    from pathlib import Path
+    h = hashlib.sha1()
+    for f in ("yoke_cover.py", "yoke_tri.py"):                      # the cover occluder's mesher
+        h.update((Path(__file__).resolve().parent / f).read_bytes())
+    return _cut_key() + (h.hexdigest()[:12], VIS_VERSION, VIS_DIST, VIS_FOV, VIS_PX, tuple(VIS_AFT), tuple(VIS_FWD))
+
+
+def visibility(cover=None, verbose=False):
+    """(V, cls): the cut-stage dense moulding's vertices and their visibility classes (visibility_classes; stage
+    'vis'); cover: the cover's meshes [(V, F, ...)] as occluder (default yoke_cover.cover_meshes())."""
+    V, F, N = _cut_stage(verbose=verbose)
+
+    def comp():
+        from model import yoke_cover as YC
+        cv = cover if cover is not None else YC.cover_meshes()
+        return visibility_classes(V, N, [(V, F)] + [(c[0], c[1]) for c in cv], verbose=verbose)
+    return V, YM.stage_cached("vis", _vis_key(), comp)
+
+
+_VIS_TREE = {}
+
+
+def vis_tol_k(C, fn=None):
+    """The frame's highlight-tolerance factor per point (yoke-local mm), by the visibility class of the nearest dense
+    vertex (visibility(): needs its stage cached): 1 seen from the aft hemisphere, FWD_TOL_K only from forward, inf
+    never."""
+    from scipy.spatial import cKDTree
+    key = _vis_key()
+    if key not in _VIS_TREE:
+        V, cls = visibility()
+        _VIS_TREE.clear()
+        _VIS_TREE[key] = (cKDTree(V), cls)
+    tree, cls = _VIS_TREE[key]
+    _, i = tree.query(np.asarray(C, float))
+    return np.array([1.0, FWD_TOL_K, np.inf])[cls[i]]
+
+
 def frame_tol_k(C, fn):
-    """The frame's highlight-tolerance factor per point / face (positions C, normals fn; yoke-local mm): inf under the
-    cover (inside its shell outline by 1.5 mm, behind its front face: never seen), FWD_TOL_K on the forward faces (normal
-    a < -0.6), 1 elsewhere."""
+    """REV M's positional proxy (kept for comparison; rev N decimates by vis_tol_k): the frame's highlight-tolerance
+    factor per point / face (positions C, normals fn; yoke-local mm): inf under the cover (inside its shell outline by
+    1.5 mm, behind its front face), FWD_TOL_K on the forward faces (normal a < -0.6), 1 elsewhere."""
     from model import yoke_cover as YC
     C = np.asarray(C, float)
     k = np.ones(len(C))
@@ -703,7 +878,7 @@ def frame_tol_k(C, fn):
     return k
 
 
-def moulding_parts(verbose=False):
+def moulding_parts(verbose=False, cover=None):
     """The black moulding as pieces [(V, F, N, material)] (co-pilot sense, yoke-local mm): the smooth moulding's
     dense DC mesh with the pads and the trim face cut out along their tabled edges (cut: exact boundary vertices),
     decimated under the highlight criterion (yoke_mesh.decimate_interp: FRAME_TOL / FRAME_SDIST, the cut loops sliding
@@ -711,21 +886,13 @@ def moulding_parts(verbose=False):
     pad pockets and the trim face stitched into the loops (shared positions)."""
     import time
     t0 = time.time()
-    V, F, N = YM.dense_moulding(verbose=verbose)
     cfs = {"pad_out": pad_cfun("out"), "pad_in": pad_cfun("in"), "trim": trim_cfun}
-    key = YM.dc_key() + (CUT_VERSION, PAD_CUT_DEPTH, TRIM_CUT_R, TRIM_CUT_DEPTH)
-
-    def cutstage():
-        V1, F1, N1 = V, F, N
-        for nm, cf in cfs.items():
-            V1, F1, N1, lp = cut(V1, F1, N1, "msmooth", cf)
-            if verbose:
-                print(f"  cut {nm}: {len(F1)} faces, loops {[len(x) for x in lp]}", flush=True)
-        return V1, F1, N1
-    V, F, N = YM.stage_cached("cut", key, cutstage)
+    V, F, N = _cut_stage(verbose=verbose)
+    _, vcls = visibility(cover=cover, verbose=verbose)
+    key = _vis_key()
 
     def dec():
-        vis = frame_tol_k(V, N)
+        vis = np.array([1.0, FWD_TOL_K, np.inf])[vcls]
         ts = FRAME_TOL * np.minimum(vis * curvature_tol_k(V, F, N), HIDDEN_TOL / FRAME_TOL)
         sd = np.where(np.isfinite(vis), np.where(vis > 1.0, FRAME_SDIST[1], FRAME_SDIST[0]), FRAME_SDIST[2])
         hid = ~np.isfinite(vis)
@@ -742,7 +909,7 @@ def moulding_parts(verbose=False):
     V, F, N = YM.stage_cached("deci", key + (tuple(sorted(dict(YM.DEC, **PATCH_DEC).items())), FRAME_TOL, FWD_TOL_K,
                                              HIDDEN_TOL, FRAME_SDIST, HIDDEN_CONE_TURN, CURV_R0, CURV_KMAX, DECI_VERSION), dec)
     fn_, _ = YM._face_normals(V, F)
-    hid_f = ~np.isfinite(frame_tol_k(V[F].mean(1), fn_))
+    hid_f = ~np.isfinite(vis_tol_k(V[F].mean(1), fn_))
     hid_v = np.ones(len(V), bool)
     for j in range(3):
         hid_v[F[~hid_f, j]] = False                    # a vertex is hidden when all its faces are
@@ -752,7 +919,7 @@ def moulding_parts(verbose=False):
     V, F, N = YM.sliver_cleanup("msmooth", V, F, N, verbose=verbose)
     N = YM._fix_normals(V, F, N)
     if verbose:
-        hr = YM.highlight_report("msmooth", V, F, N, tol_k=frame_tol_k)
+        hr = YM.highlight_report("msmooth", V, F, N, tol_k=vis_tol_k)
         print(f"  moulding frame: {len(F)} triangles, {time.time() - t0:.0f}s; highlights (visible faces, interpolated "
               f"vs exact normal): p50 {hr['p50']:.2f} p95 {hr['p95']:.2f} deg, area > 2 deg {hr['over2']:.1f} %, "
               f"> 4 deg {hr['over4']:.1f} %", flush=True)

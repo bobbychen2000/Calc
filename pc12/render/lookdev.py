@@ -562,8 +562,18 @@ SPEC.update({
                                     "(viewer: a band-limited bump patch, materials.js); the glareshield lip"),
     "button_red":         dict(kind="dielectric", base=(0.70, 0.035, 0.04), rough=0.30, coat=0.3, coat_rough=0.06,
                                note="AFCS disconnect cap: red, light clear coat, NOT emissive (L6Y item 8)"),
-    "legend_white":       dict(kind="dielectric", base=(0.80, 0.80, 0.80), rough=0.50,
-                               note="yoke legend ticks (no lettering: L6Y items 7-10)"),
+    "legend_grey":        dict(kind="dielectric", base=(0.30, 0.30, 0.30), rough=0.50,
+                               note="yoke legends as plain letter blocks at the lettering's mean tone (white strokes "
+                                    "~35 % ink; no lettering: L6Y items 7-10, rev N)"),
+    "yoke_nickel":        dict(kind="dielectric", base=(0.60, 0.56, 0.50), metallic=0.90, rough=0.30,
+                               note="yoke push button's hex collar: satin nickel (L6Y item 10, rev N: Mexico L / "
+                                    "P1046409 / AOPA)"),
+    "yoke_rocker":        dict(kind="dielectric", base=(0.042, 0.042, 0.045), rough=0.45,
+                               note="yoke pitch-trim rocker lobes: satin dark grey #3A3A3C, lighter than the gloss "
+                                    "bezel (L6Y item 9, rev N)"),
+    "yoke_column":        dict(kind="dielectric", base=(0.022, 0.022, 0.024), rough=0.70, spec=0.25,
+                               note="yoke column: satin black, non-metallic [E] (L6Y item 11, rev N: the dark metal "
+                                    "read as a light grey pipe)"),
     "veneer_walnut":      dict(kind="dielectric", base=(0.060, 0.047, 0.040), rough=0.35, **_ICC,
                                grain=dict(scale=(70.0, 70.0, 2.5), amp=0.30, detail=4.0),
                                note="dark grey-brown walnut veneer, vertical grain, gloss lacquer (P1046406)"),

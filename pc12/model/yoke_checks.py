@@ -431,10 +431,17 @@ def _tabled_crease_curves():
     t = np.linspace(0, 2 * np.pi, 145)
     for R in (0.5 * float(G.T()["head_out"][2]), 0.5 * float(G.T()["trim"][2])):
         F.append((c + R * (np.cos(t)[:, None] * eu + np.sin(t)[:, None] * ev))[:, :2])
-    od, lune = float(G.T()["trim"][2]), float(G.T()["trim_lunes"][0])
-    xs = np.linspace(-0.5 * od, 0.5 * od, 60)
-    for sg in (-1.0, 1.0):                                       # the trim face's slot chords (grooves, rev M)
-        F.append((c + xs[:, None] * eu + sg * (0.5 * od - lune) * ev)[:, :2])
+    yl, r_end, dep, dr = G.trim_slot_dims()                     # the recessed rocker slot's edges (rev N): top, foot
+    for k_, z_ in ((0.0, 0.0), (dep * math.tan(dr), -dep)):
+        a_ = math.asin((yl - k_) / (r_end - k_))
+        t1 = np.linspace(-a_, a_, 40)
+        for sx in (-1.0, 1.0):
+            arc = np.c_[sx * (r_end - k_) * np.cos(t1), (r_end - k_) * np.sin(t1)]
+            F.append((c + arc[:, :1] * eu + arc[:, 1:2] * ev + z_ * n)[:, :2])
+        xs = np.linspace(-(r_end - k_) * math.cos(a_), (r_end - k_) * math.cos(a_), 60)
+        for sg in (-1.0, 1.0):
+            F.append((c + xs[:, None] * eu + sg * (yl - k_) * ev + z_ * n)[:, :2])
+    F.append(G.badge_plate_outline())                            # the badge's raised plate (rev N)
     ci, ni = G.head_in_face()
     e1, e2 = G._facet_frame(ci, ni)
     S = G.shield_outline()

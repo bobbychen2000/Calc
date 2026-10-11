@@ -28,13 +28,14 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                SWITCH, HID, W_CREASE, W_TAN, INK, MUTED, PAPER, ACCENT, W_OBJ, W_FINE, W_THIN, CHAIN,
                                PHANTOM, table, view_title, notes, mkview, poly, line, circle, circ, lbl, dim, leader,
                                balloon, centre_mark, hatch_poly, break_line, ticks, wrap_rows, rocker_halves, hexagon,
+                               legend_quads, LEGEND, SLOT,
                                trim_frame, shield_frame, on_frame, front_to_plane, VIEWPROJ, tcs_centre3,
                                afcs_centre3, face_normal3, top_land_line, crown_crease, heel_line, views, draw_parts,
                                draw_section, tangent_edges, ordinates, clear_anchor, clear_boxes,
                                vline_gapped, hline_gapped)
 
 SHEET = dict(id="L6Y", title="CONTROL YOKE - VIEWS", subtitle="PC-24-STYLE CONTROL YOKE - VIEWS", size="A1",
-             scale="AS SHOWN", rev="E", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
+             scale="AS SHOWN", rev="F", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
 REVISIONS = (
     ("A", "2026-10-05", "first issue (owner 2026-10-05: 'the yoke isn't quite right especially if you look at the "
                         "details'): yoke re-measured on 8 PRO photos; YOKE_DESIGN rev I replaces the rev H outline"),
@@ -70,6 +71,13 @@ REVISIONS = (
                         "body sides x top a rolling-ball R 2 between pieces rounded onto the forward face (aft face "
                         "cut last), forward-edge radius cap C2, the inboard fall-off's directrix one tangent curve (R 4 "
                         "withdrawn), outlines sampled 0.05, C2 fields"),
+    ("F", "2026-10-11", "rev N (3-D judges r1): legends as words of plain letter blocks (the tick rows read as a dial); "
+                        "trim rocker in a 2.5 deep slot (7 deg draft), satin dark-grey lobes, gloss lunes; badge: a "
+                        "raised blank plate 0.3 proud; push button hex collar satin nickel; column satin black "
+                        "(non-metallic); column recess up to h 27 (the column, about the hub, 5 mm clear), J band 22 "
+                        "(1 mm clear of the column), the band pewter, the recess charcoal; items 9-14 re-written.  "
+                        "OWNER DECISIONS 2026-10-11: the J band and the U recess re-centred on the column axis (hub WL "
+                        "1845; the photos read 1821), push travel 65 (was 90 [E]), pull 90"),
 )
 TRIM_COL = "#23292D"
 FR_O = (202.0, 134.0)       # front elevation: sheet position of the hub centre (1:1)
@@ -146,17 +154,22 @@ def trim_pieces():
     fr = trim_frame()
     R = 0.5 * float(D["head_out"][2])
     od = float(D["trim"][2])
-    lune, r0, r1, _ = (float(x) for x in D["trim_lunes"])
-    lg = D["legends"][2]
     out = dict(face=on_frame(fr, circle((0, 0), R, 97)[:-1]), ring=on_frame(fr, circle((0, 0), 0.5 * od, 97)[:-1]))
-    yl = 0.5 * od - lune
-    out["slot"] = [on_frame(fr, [(-0.5 * od + 2.0, s * yl), (0.5 * od - 2.0, s * yl)]) for s in (-1, 1)]
-    tk = []
-    for a0, a1 in ((lg[2], lg[3]), (lg[2] + 180.0, lg[3] + 180.0)):
-        tk += [on_frame(fr, T) for T in ticks((0.0, 0.0), r0, r1, a0, a1, int(lg[4]))]
-    out["ticks"] = tk
+    out["slot"] = on_frame(fr, slot_outline())
+    out["ticks"] = [on_frame(fr, Q) for k in (2, 3) for Q in legend_quads((0.0, 0.0), k)]
     out["rocker"] = [on_frame(fr, h) for h in rocker_halves()]
     return out
+
+
+def slot_outline(n=40):
+    """The trim rocker's recessed slot at the face (rev N, yoke_geom.trim_slot_dims): the chords |y| = yl closed by the
+    end-wall arcs r = r_end, in the face frame, closed."""
+    yl, r_end, _, _ = G.trim_slot_dims()
+    a = math.asin(yl / r_end)
+    t1 = np.linspace(-a, a, n)
+    t2 = np.linspace(math.pi - a, math.pi + a, n)
+    P = np.vstack([np.c_[r_end * np.cos(t1), r_end * np.sin(t1)], np.c_[r_end * np.cos(t2), r_end * np.sin(t2)]])
+    return np.vstack([P, P[:1]])
 
 
 def button_pieces():
@@ -170,9 +183,7 @@ def button_pieces():
     out["centre2"] = off2
     out["hex"] = on_frame(fr, hexagon(float(b[2])) + off2)
     out["cap"] = on_frame(fr, circle(off2, 0.5 * float(b[3]), 61)[:-1])
-    lg = D["legends"][3]
-    out["ticks"] = [front_to_plane(fr, T) for T in ticks((-float(b[0]), float(b[1])), lg[0], lg[1], lg[2], lg[3],
-                                                          int(lg[4]))]
+    out["ticks"] = [front_to_plane(fr, Q) for Q in legend_quads((-float(b[0]), float(b[1])), 4)]
     return out
 
 
@@ -199,10 +210,9 @@ def draw_front(ds, v):
     tp = trim_pieces()
     poly(ds, v, VIEWPROJ(tp["face"], "front"), W_CREASE, fill="#2B3135", color="#B9C0C5")
     poly(ds, v, VIEWPROJ(tp["ring"], "front"), W_FINE, fill=TRIM_COL, color="#AEB6BB")
-    for L in tp["slot"]:
-        line(ds, v, VIEWPROJ(L, "front"), W_TAN, color="#9AA3A9")
+    poly(ds, v, VIEWPROJ(tp["slot"], "front"), W_TAN, fill=SLOT, color="#9AA3A9")
     for T in tp["ticks"]:
-        line(ds, v, VIEWPROJ(T, "front"), 0.2, color="#E8EAEC")
+        poly(ds, v, VIEWPROJ(T, "front"), 0.05, fill=LEGEND, color=LEGEND)
     for h in tp["rocker"]:
         poly(ds, v, VIEWPROJ(h, "front"), W_THIN, fill=SWITCH, color="#C9CFD3")
     bp = button_pieces()
@@ -210,7 +220,7 @@ def draw_front(ds, v):
     poly(ds, v, VIEWPROJ(bp["hex"], "front"), W_THIN, fill=TRIM_COL, color="#AEB6BB")
     poly(ds, v, VIEWPROJ(bp["cap"], "front"), W_THIN, fill="#3A4247", color="#C9CFD3")
     for T in bp["ticks"]:
-        line(ds, v, VIEWPROJ(T, "front"), 0.2, color="#E8EAEC")
+        poly(ds, v, VIEWPROJ(T, "front"), 0.05, fill=LEGEND, color=LEGEND)
     poly(ds, v, F["shell"], W_OBJ, fill=WHITE)
     poly(ds, v, F["insert_upper"], W_CREASE, fill=SILVER)
     poly(ds, v, F["insert_lower"], W_CREASE, fill=SMOKE)
@@ -224,6 +234,7 @@ def draw_front(ds, v):
     poly(ds, v, F["badge_border"], W_THIN)
     for L in F["badge_lines"]:
         line(ds, v, L, W_THIN)
+    poly(ds, v, F["badge_plate"], W_THIN, fill="#DDE0E3")                # rev N: the raised blank plate
     draw_tcs(ds, v)
     draw_afcs(ds, v)
     from cad import sdf2d
@@ -248,42 +259,46 @@ def draw_tcs(ds, v, k=1.0, c=None):
     circ(ds, v, c, 2 * r_out, W_THIN, color="#7E878D")
     circ(ds, v, c, 2 * r_in, W_THIN, color="#7E878D")
     circ(ds, v, c, bd, W_THIN, fill="#2B3135", color="#9AA3A9")
-    lg = D["legends"][0]
-    for T in ticks(c, lg[0], lg[1], lg[2], lg[3], int(lg[4])):
-        line(ds, v, T, 0.25 * k, color="#E8EAEC")
+    for Q in legend_quads(c, 0):
+        poly(ds, v, Q, 0.05, fill=LEGEND, color=LEGEND)
 
 
 def draw_afcs(ds, v, k=1.0, c=None):
     u, h, cd, ch, bd = (float(x) for x in D["afcs"][:5])
     c = np.array([u, h]) if c is None else np.asarray(c, float)
     circ(ds, v, c, bd, W_THIN, fill=GLOSS)
-    lg = D["legends"][1]
-    for T in ticks(c, lg[0], lg[1], lg[2], lg[3], int(lg[4])):
-        line(ds, v, T, 0.22 * k, color="#E8EAEC")
+    for Q in legend_quads(c, 1):
+        poly(ds, v, Q, 0.05, fill=LEGEND, color=LEGEND)
     circ(ds, v, c, cd, W_FINE, fill=RED)
 
 
 ITEMS = (  # item, part, material (render/lookdev name), finish [source]
     (1, "WHITE COVER (Y SHELL)", "yoke_white", "gloss clear-coat white, neutral-cool (0.77 / 0.78 / 0.80), fine "
                                                "pearl; R 1 edges, top land [M]"),
-    (2, "UPPER INSERT = CROWN, BADGE", "yoke_silver (new)", "satin aluminium 0.62, metallic 0.85, rough 0.30; flush, "
-                                                            "0.6 x 0.5 grooves [M]"),
-    (3, "LOWER INSERT", "yoke_silver_dark (new)", "smoke silver 0.30, metallic 0.85, rough 0.34; flush [M]"),
+    (2, "UPPER INSERT = CROWN, BADGE", "yoke_silver", "satin aluminium 0.62, metallic 0.85, rough 0.30; flush, "
+                                                      "0.6 x 0.5 grooves; the badge's blank plate 0.3 proud [M / E]"),
+    (3, "LOWER INSERT", "yoke_silver_dark", "smoke silver 0.30, metallic 0.85, rough 0.34; flush [M]"),
     (4, "BLACK BODY (RIM, WEB, NECK)", "grip_black", "satin black, rough 0.42: crisp edge highlights; R 2 aft edge [M]"),
     (5, "GRIP (2) WITH FRAME, HEEL LIP", "grip_black", "satin black; 2.0 frame R 1.5, heel lip 3 proud R 4 [M]"),
     (6, "LEATHER PAD (2)", "leather_black", "charcoal 0.05, rough 0.58, 1.1 pebble grain, ~1 creases, 2.5 below the "
                                             "frame, groove 1.0 x 0.5 + bead 0.4 at its edge [M / E]"),
     (7, "TCS BUTTON", "gloss_black / black", "gloss black bezel 1 proud [E], satin domed button 2 proud of it "
-                                             "[M low]"),
-    (8, "AFCS DISCONNECT", "button_red (new) / black", "red cap 0.70 / 0.035 / 0.04, clear coat 0.3, NOT emissive, "
-                                                       "on a black boss [M]"),
-    (9, "PITCH TRIM ON ROUND FACE", "black / legend_white", "satin black face, ring + rocker, tick legends 0.80 [M]"),
-    (10, "PUSH BUTTON ON SHIELD", "black", "satin black hex collar, smooth cap, centre dimple [M]; function: MAP "
-                                           "LIGHTS (AOPA crop; no lettering drawn)"),
-    (11, "COLUMN", "metal_dark", "satin dark metal, dia 44 [E] (never seen)"),
-    (12, "COLUMN SURROUND (PANEL)", "pedestal_gunmetal", "satin dark grey J band 23 wide + dished recess [M / E]"),
+                                             "[M low]; legend blocks (legend_grey)"),
+    (8, "AFCS DISCONNECT", "button_red / black", "red cap 0.70 / 0.035 / 0.04, clear coat 0.3, NOT emissive, "
+                                                 "on a black boss [M]; legend blocks"),
+    (9, "PITCH TRIM ON ROUND FACE", "gloss_black / yoke_rocker (new) / black", "gloss black ring + lunes, satin dark "
+                                                                              "grey rocker #3A3A3C in a 2.5 deep satin "
+                                                                              "black slot [M / E]; legend blocks"),
+    (10, "PUSH BUTTON ON SHIELD", "yoke_nickel (new) / black", "SATIN NICKEL hex collar, smooth black cap, centre "
+                                                               "dimple [M]; function: MAP LIGHTS (legend blocks, "
+                                                               "no lettering)"),
+    (11, "COLUMN", "yoke_column (new)", "satin black, non-metallic, dia 44 [E] (never seen in a PRO photo)"),
+    (12, "COLUMN SURROUND (PANEL)", "pcl_pewter / panel_dark", "satin pewter J band 22 wide, charcoal dished "
+                                                               "recess [M / E]"),
     (13, "FORWARD-FACE SWITCHES (2) [E]", "grip_black", "PTT trigger (outboard grip), checklist rocker (inboard): "
                                                         "placeholders, never seen (L6Y2 detail W) [E]"),
+    (14, "LEGENDS", "legend_grey (new)", "words of plain letter blocks, the lettering's mean tone, 0.12 proud -- NO "
+                                         "lettering (rev N)"),
 )
 
 
@@ -709,9 +724,10 @@ def draw_tables(ds, ctx):
         ("forward-face switches out / in (h, L x W, proud)",
          " / ".join(f"h {r_[0]:g}, {r_[1]:g} x {r_[2]:g}, {r_[3]:g}" for r_ in D["fwd_switch"]), "[E] placeholders"),
         ("column dia / axis", f"{2000 * float(I.YOKE['column_r']):g} [E] / h 0 = WL {1000 * float(I.yoke_hub(-1)[2]):.0f}",
-         "kept; surround reads 1821"),
-        ("pitch travel / roll", f"+/-{1000 * float(I.YOKE['travel'][1]):g} [E] / +/-{float(I.YOKE['roll']):g} [E]",
-         "unchanged (YOKE)"),
+         "kept; surround re-centred on it (owner 2026-10-11)"),
+        ("pitch travel push / pull / roll", f"{-1000 * float(I.YOKE['travel'][0]):g} / {1000 * float(I.YOKE['travel'][1]):g}"
+                                            f" [E] / +/-{float(I.YOKE['roll']):g} [E]",
+         "push: owner 2026-10-11 (was 90 [E])"),
     ]
     cols2 = [("DIMENSION (mm, YOKE-LOCAL)", 86.0, "l"), ("VALUE", 78.0, "l"), ("SOURCE", W - 164.0, "l")]
     rows2 = wrap_rows(dims_, [c[1] for c in cols2], size)

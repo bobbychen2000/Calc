@@ -7,8 +7,9 @@ python3 test/fit_fd_a.py builds the flight deck alone).
     the cubby too
 29. the yokes over their pull travel and the first 60 mm of push (YOKE travel) and +/- YOKE roll clear the panel
     around them -- the lower panel's plates, switch blocks, handles and knobs, the glareshield items, the stack -- by
-    >= 3 mm (the column runs through its bellows / well by design: column and bellows excepted); 29b the full [E]
-    push travel, reported as an owner decision while it is not clear (the bare panel face comes within ~8 mm)
+    >= 3 mm (the column runs through its bellows / well by design: column and bellows excepted); 29b the full push
+    travel -- 65 mm, OWNER DECISION 2026-10-11 (the [E] 90 brought the grips within ~8 mm of the bare panel face wings
+    level and into it from ~45 deg of roll: reported as an open item until then) -- >= 3 mm too
 """
 from __future__ import annotations
 
@@ -156,16 +157,12 @@ w_hard = _yoke_sweep(np.r_[np.linspace(PUSH_HARD, 0.0, 4), np.linspace(0.0, t1, 
 report(f"yokes over the pull travel and {PUSH_HARD * 1000:+.0f} mm of push, roll +/-{Y['roll']:.0f} deg, clear the panel, "
        "glareshield and stack detail (>= 3 mm; column / bellows excepted)", w_hard[0] >= 0.003,
        f"{w_hard[0] * 1000:.1f} mm ({w_hard[1]})")
-# 29b: the full [E] push travel.  With the measured hub (hub_dx) and the panel face's [E] 12 deg tilt the grips reach
-# within ~8 mm of the bare lower-panel face at full push wings level and cross it from ~45 deg of roll, independent of
-# the switch blocks under them (P1046408 / 09 / 10: the ICE PROTECTION and ACS / CPCS blocks sit under the inboard
-# grips): a conflict in the approved [E] parameters (YOKE travel / roll, PANEL tilt) for the owner -- reported, not
-# failed
+# 29b: the full push travel.  With the measured hub (hub_dx) and the panel face's [E] 12 deg tilt the [E] 90 mm of push
+# brought the grips within ~8 mm of the bare lower-panel face wings level and across it from ~45 deg of roll (reported
+# as an open owner decision); OWNER DECISION 2026-10-11: the push shortened to 65 mm (YOKE travel), the pull kept
 w_full = _yoke_sweep(np.linspace(t0, PUSH_HARD, 4))
-report(f"yokes at full push ({t0 * 1000:+.0f} mm, YOKE travel [E]) and roll vs the lower panel", w_full[0] >= 0.003,
-       f"{w_full[0] * 1000:.1f} mm ({w_full[1]}); the bare panel face itself comes within ~8 mm at full push wings "
-       f"level: owner decision -- a shorter [E] forward travel (~-65 mm clears every switch by >= 3 mm) or accept",
-       open_item=w_full[0] < 0.003)
+report(f"yokes at full push ({t0 * 1000:+.0f} mm, YOKE travel: owner 2026-10-11) and roll vs the lower panel (>= 3 mm)",
+       w_full[0] >= 0.003, f"{w_full[0] * 1000:.1f} mm ({w_full[1]})")
 
 if _STANDALONE:
     print("FIT FD-A OK" if not fails else "FIT FD-A FAIL: " + "; ".join(fails))

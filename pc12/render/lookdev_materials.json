@@ -1527,11 +1527,11 @@
    "note": "AFCS disconnect cap: red, light clear coat, NOT emissive (L6Y item 8)",
    "srgb_hex": "#DA3538"
   },
-  "legend_white": {
+  "legend_grey": {
    "baseColorFactor": [
-    0.8,
-    0.8,
-    0.8,
+    0.3,
+    0.3,
+    0.3,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1541,8 +1541,59 @@
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "yoke legend ticks (no lettering: L6Y items 7-10)",
-   "srgb_hex": "#E7E7E7"
+   "note": "yoke legends as plain letter blocks at the lettering's mean tone (white strokes ~35 % ink; no lettering: L6Y items 7-10, rev N)",
+   "srgb_hex": "#959595"
+  },
+  "yoke_nickel": {
+   "baseColorFactor": [
+    0.6,
+    0.56,
+    0.5,
+    1.0
+   ],
+   "metallicFactor": 0.9,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke push button's hex collar: satin nickel (L6Y item 10, rev N: Mexico L / P1046409 / AOPA)",
+   "srgb_hex": "#CBC5BC"
+  },
+  "yoke_rocker": {
+   "baseColorFactor": [
+    0.042,
+    0.042,
+    0.045,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.45,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke pitch-trim rocker lobes: satin dark grey #3A3A3C, lighter than the gloss bezel (L6Y item 9, rev N)",
+   "srgb_hex": "#3A3A3C"
+  },
+  "yoke_column": {
+   "baseColorFactor": [
+    0.022,
+    0.022,
+    0.024,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.7,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "yoke column: satin black, non-metallic [E] (L6Y item 11, rev N: the dark metal read as a light grey pipe)",
+   "srgb_hex": "#29292B"
   },
   "veneer_walnut": {
    "baseColorFactor": [

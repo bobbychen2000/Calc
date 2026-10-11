@@ -959,22 +959,33 @@ def _head_chamfer(U, H, A):
     return P @ nn
 
 
+def trim_slot_dims():
+    """(yl, r_end, depth, draft rad): the rocker slot's half-width at the face (the chords |y| = trim[2] / 2 -
+    trim_lunes[0]), the radius of its end walls at the face (trim_slot[1] inside the legend ring's groove), its depth
+    below the face (trim_slot[0]) and its walls' draft (trim_slot[2]: they lean in by depth x tan(draft))."""
+    od = float(T()["trim"][2])
+    w = float(T()["trim_grooves"][0])
+    dep, inset, dr = (float(x) for x in T()["trim_slot"][:3])
+    return 0.5 * od - float(T()["trim_lunes"][0]), 0.5 * od - 0.5 * w - inset, dep, math.radians(dr)
+
+
 def _trim_face_grooves(U, H, A):
-    """V-grooves cut into the round trim face (trim_grooves): the legend ring's outer edge (a circle at trim[2] / 2)
-    and the two chords bounding the rocker slot between the lunes; negative = inside the groove."""
+    """The cuts in the round trim face (negative = cut away): the legend ring's V-groove (trim_grooves, a circle at
+    trim[2] / 2) and, rev N (judges FID1-05), the rocker SLOT between the lunes recessed trim_slot[0] -- side walls on
+    the chords (rev M's chord V-grooves), end walls on the circle trim_slot_dims()[1], drafted trim_slot[2], all edges
+    sharp."""
     c, n = head_out_face()
     eu, ev = _facet_frame(c, n)
     w, g = (float(x) for x in T()["trim_grooves"][:2])
     od = float(T()["trim"][2])
-    lune = float(T()["trim_lunes"][0])
     P = np.stack([U, H, A], -1) - c
     zf, x, y = P @ n, P @ eu, P @ ev
     rho = np.hypot(x, y)
-    yl = 0.5 * od - lune
-    ring = np.abs(rho - 0.5 * od)
-    chord = np.where(rho < 0.5 * od - 0.6, np.abs(np.abs(y) - yl), 1e3)
-    dc = np.minimum(ring, chord)
-    return (dc - 0.5 * w * (1.0 + zf / g)) * (g / math.hypot(g, 0.5 * w))
+    ring = (np.abs(rho - 0.5 * od) - 0.5 * w * (1.0 + zf / g)) * (g / math.hypot(g, 0.5 * w))
+    yl, r_end, dep, dr = trim_slot_dims()
+    cd, sd = math.cos(dr), math.sin(dr)
+    slot = np.maximum(np.maximum((np.abs(y) - yl) * cd - zf * sd, (rho - r_end) * cd - zf * sd), -dep - zf)
+    return np.minimum(ring, slot)
 
 
 def grip(U, H, A, g):
@@ -1457,7 +1468,7 @@ def afcs(U, H, A):
 
 def trim_rocker(U, H, A):
     """The split bow-tie pitch-trim rocker on the round face: the two mirrored lobes (yoke_draw.rocker_halves'
-    outline) extruded along the face normal from 1 below the face to the saddle top z = hm + (he - hm) (|x| / (L /
+    outline) extruded along the face normal from 1 below the slot floor (rev N) to the saddle top z = hm + (he - hm) (|x| / (L /
     2))^sexp; top edges R trim_grooves[2]."""
     from cad import sdf2d
     c, n = head_out_face()
@@ -1476,7 +1487,7 @@ def trim_rocker(U, H, A):
         d = np.minimum(sdf2d.polygon(x, y, lobe), sdf2d.polygon(-x, y, lobe))
         top = hm + (he - hm) * (np.abs(x) / (0.5 * L)) ** sexp
         out = out.copy()
-        out[m] = np.maximum(rmax(d, z - top, r_e), -1.0 - z)
+        out[m] = np.maximum(rmax(d, z - top, r_e), -1.0 - trim_slot_dims()[2] - z)   # seated 1 into the slot floor
     return out
 
 
@@ -1541,6 +1552,75 @@ def button(U, H, A):
     return np.minimum(hex_collar(U, H, A), button_cap(U, H, A))
 
 
+def legend_blocks(k):
+    """The legend of switch k (YOKE_DESIGN legends rows: 0 TCS, 1 AFCS, 2 / 3 the trim face's fore / aft lune, 4 the push
+    button) as plain letter BLOCKS (rev N, judges FID1-05: no lettering): [(P0, P1, width)] -- each block the radial
+    segment P0 -> P1 (r0 -> r1 at the letter's centre angle, in the switch's front-view frame about its centre: x
+    outboard, y up, co-pilot sense) and its width across, legend_style[0] of the letter pitch."""
+    r0, r1, words = T()["legends"][k]
+    r0, r1 = float(r0), float(r1)
+    frac = float(T()["legend_style"][0])
+    rm = 0.5 * (r0 + r1)
+    out = []
+    for a0, a1, n in words:
+        dp = math.radians(float(a1) - float(a0)) / int(n)
+        for i in range(int(n)):
+            a = math.radians(float(a0)) + (i + 0.5) * dp
+            e = np.array([math.cos(a), math.sin(a)])
+            out.append((r0 * e, r1 * e, frac * rm * dp))
+    return out
+
+
+def legend_quads(k):
+    """legend_blocks(k) as closed quads (5, 2) (front-view frame of the switch, co-pilot sense)."""
+    out = []
+    for P0, P1, w in legend_blocks(k):
+        d = (P1 - P0) / np.linalg.norm(P1 - P0)
+        t = 0.5 * w * np.array([-d[1], d[0]])
+        out.append(np.array([P0 - t, P1 - t, P1 + t, P0 + t, P0 - t]))
+    return out
+
+
+def badge_plate_dims():
+    """(half-width, bottom h, top h, proud, corner R, top-edge R) of the badge's raised blank plate (badge_field, rev N
+    judges FID1-06): the tabled field inset to clear the badge's border groove (badge_lines offset, badge_relief width)
+    and the speed lines' inner ends by 0.1 mm."""
+    D = T()
+    hw, f0, f1, proud, rc, rt = (float(x) for x in D["badge_field"][:6])
+    (_, bh0), (_, bh1) = D["badge"]
+    off = float(D["badge_lines"][4])
+    u0 = float(D["badge_lines"][3])
+    gw = float(D["badge_relief"][1])
+    top = min(f1, float(bh0) - off - 0.5 * gw - 0.1)
+    bot = max(f0, float(bh1) + off + 0.5 * gw + 0.1)
+    return min(hw, u0 - 0.5 * gw - 0.1), bot, top, proud, rc, rt
+
+
+def badge_plate_outline(n=8):
+    """The plate's front-view outline (u, h): a rectangle with R corners, closed CCW, dense."""
+    hw, h0, h1, _, rc, _ = badge_plate_dims()
+    hc, hh = 0.5 * (h0 + h1), 0.5 * (h1 - h0)
+    pts = []
+    for cx, cy, a0 in ((hw - rc, hh - rc, 0.0), (-hw + rc, hh - rc, 90.0), (-hw + rc, -hh + rc, 180.0),
+                       (hw - rc, -hh + rc, 270.0)):
+        for t in np.radians(np.linspace(a0, a0 + 90.0, n + 1)):
+            pts.append((cx + rc * math.cos(t), hc + cy + rc * math.sin(t)))
+    P = np.array(pts)
+    return np.vstack([P, P[:1]])
+
+
+def badge_plate(U, H, A):
+    """The badge's raised blank plate (rev N): the rounded rectangle badge_plate_outline() extruded along a from 1
+    below the insert's face to badge_field[3] above it, its top edge rounded badge_field[5]."""
+    U, H, A = (np.asarray(x, float) for x in (U, H, A))
+    hw, h0, h1, proud, rc, rt = badge_plate_dims()
+    hc, hh = 0.5 * (h0 + h1), 0.5 * (h1 - h0)
+    qx, qy = np.abs(U) - (hw - rc), np.abs(H - hc) - (hh - rc)
+    d2 = np.hypot(np.maximum(qx, 0.0), np.maximum(qy, 0.0)) + np.minimum(np.maximum(qx, qy), 0.0) - rc
+    fa = face_a(H)
+    return np.maximum(rmax(d2, A - (fa + proud), rt), (fa - 1.0) - A)
+
+
 def fwd_switch_frame(g):
     """(c, t, w, n, row) of grip g's forward-face switch (fwd_switch, rev M judges FID4-08, [E] placeholders): c the
     centre ON the forward face (own sense (u, h, a)), t the unit direction along the grip (up the grip axis, in the
@@ -1593,8 +1673,8 @@ def fwd_switch(U, H, A, g):
 
 # ============================================================================================ the assembly
 PARTS = ("body", "cover", "grip_out", "grip_in")
-SWITCHES = ("tcs", "afcs", "trim", "button", "fwd_out", "fwd_in")   # small solids seated on the cover / boss / heads
-#                                                       (DR2-04) and the grips' forward faces ([E] placeholders, FID4-08)
+SWITCHES = ("tcs", "afcs", "trim", "button", "fwd_out", "fwd_in", "badge")   # small solids seated on the cover / boss /
+#                               heads (DR2-04), the grips' forward faces ([E] placeholders, FID4-08), the badge plate (rev N)
 
 
 C_STENCIL = 0.15                   # mm: the normals that set the rolling ball's angle are central differences over
@@ -1656,6 +1736,8 @@ def part_sdf(name, U, H, A):
         return fwd_switch(U, H, A, "out")
     if name == "fwd_in":
         return fwd_switch(-np.asarray(U, float), H, A, "in")
+    if name == "badge":
+        return badge_plate(U, H, A)
     if name == "switches":
         return np.minimum.reduce([part_sdf(p, U, H, A) for p in SWITCHES])
     raise KeyError(name)
@@ -1673,7 +1755,7 @@ BOX = dict(black=(-154, -68, -78, 154, 104, 26), body=(-108, -68, -78, 108, 100,
            grip_out=(76, -62, -66, 154, 104, 26), grip_in=(-154, -62, -66, -76, 104, 26),
            tcs=(46, 39, -22, 71, 64, -6), afcs=(47, 10, -18, 74, 37, 4), trim=(92, 62, -40, 131, 102, -10),
            button=(-125, 58, -32, -87, 95, -8), fwd_out=(96, 36, -55, 118, 68, -33), fwd_in=(-110, 27, -50, -89, 55, -30),
-           pad_out=(84, -36, -10, 146, 66, 6), pad_in=(-146, -42, -10, -84, 60, 6))
+           pad_out=(84, -36, -10, 146, 66, 6), pad_in=(-146, -42, -10, -84, 60, 6), badge=(-16, 44, -19, 16, 55, -12))
 
 
 def section(plane_pt, e1, e2, extent, parts=PARTS, step=0.25, clip=False):
@@ -1783,12 +1865,26 @@ def view_silhouettes(axis, step=0.4, depth_step=1.0, parts=PARTS):
     return disk_cached(("views", axis, step, depth_step, tuple(parts)), fn)
 
 
+# YOKE_DESIGN keys no solid reads (the legends are printed blocks drawn by the sheets and meshed by yoke3d, the column /
+# band / recess belong to the panel): left out of design_key, so a change to them does not re-key the solids' caches
+# (the views / sections, the moulding's contouring and decimation); yoke3d keys its pieces on the whole table
+NON_SOLID_KEYS = ("legends", "legend_style", "column", "column_band", "column_recess", "ptt")
+
+
+def table_key():
+    """Hash of every YOKE_DESIGN value (the yoke pieces' cache: yoke3d._src_key)."""
+    import hashlib
+    return hashlib.sha1(repr(sorted((k, tuple(map(repr, np.ravel(np.asarray(v, dtype=object)))) if not isinstance(v, str)
+                                     else v) for k, v in T().items())).encode()).hexdigest()[:16]
+
+
 def design_key():
-    """Hash of everything the solids depend on: the YOKE_DESIGN table (values) and this module's source."""
+    """Hash of everything the solids depend on: the YOKE_DESIGN table (values, NON_SOLID_KEYS left out) and this
+    module's source."""
     import hashlib
     from pathlib import Path
     h = hashlib.sha1(repr(sorted((k, tuple(map(repr, np.ravel(np.asarray(v, dtype=object)))) if not isinstance(v, str)
-                                  else v) for k, v in T().items())).encode())
+                                  else v) for k, v in T().items() if k not in NON_SOLID_KEYS)).encode())
     h.update(_SRC_HASH)
     return h.hexdigest()[:16]
 

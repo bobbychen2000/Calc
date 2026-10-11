@@ -29,12 +29,12 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                SWITCH, HID, W_CREASE, W_TAN, INK, MUTED, PAPER, ACCENT, W_OBJ, W_FINE, W_THIN, CHAIN,
                                PHANTOM, COLLAR, table, view_title, notes, mkview, poly, line, circle, circ, lbl, dim,
                                leader, centre_mark, hatch_poly, break_line, ticks, wrap_rows, rocker_halves, hexagon,
-                               views, draw_section, section_contours, PART_STYLE)
+                               views, draw_section, section_contours, PART_STYLE, legend_quads, LEGEND, SLOT)
 from drawing import yoke_sheet as YS  # noqa: E402
 from drawing import master as M  # noqa: E402
 
 SHEET = dict(id="L6Y2", title="CONTROL YOKE - SECTIONS", subtitle="PC-24-STYLE CONTROL YOKE - SECTIONS & DETAILS",
-             size="A1", scale="AS SHOWN", rev="D", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
+             size="A1", scale="AS SHOWN", rev="E", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
 REVISIONS = (
     ("A", "2026-10-05", "first issue with L6Y rev B (judges r1): exact sections of the rev J solids, grip profiles with "
                         "the heel lip, trim face / shield, switch profiles, column surround, corner table, photo check"),
@@ -48,7 +48,13 @@ REVISIONS = (
                         "head zones share walls / forward face; leather hatched apart; detail S, break lines, detail W "
                         "[E] switches; adaptive crease / ridge / pad acceptance, all clean (head top R 3 onto the "
                         "forward face, body sides x top rolling ball, C2 forward-radius cap, tangent inboard "
-                        "directrix, 0.05 sampling, C2 fields); photo check re-run")
+                        "directrix, 0.05 sampling, C2 fields); photo check re-run"),
+    ("E", "2026-10-11", "rev N (3-D judges r1): detail F the trim rocker's recessed slot (2.5, draft 7 deg) and the "
+                        "legends as letter blocks; detail G MAP LIGHTS blocks, satin-nickel collar; detail H the "
+                        "raised blank plate; detail J the recess up to h 27 (column 5 mm clear), the J band 22 wide "
+                        "(1 mm clear of the column); OWNER DECISIONS 2026-10-11: detail J band and recess re-centred on "
+                        "the column axis (hub WL 1845; the photos read the joint line, i.e. the axis, at 1821), full "
+                        "push 65 (was 90 [E])"),
 )
 COL_X = (588.0, 826.0)
 GRIP_SECTION_H = YS.GRIP_SECTION_H
@@ -107,7 +113,7 @@ def draw_secZ(ds, v):
              ((aF(float(cr[0])), float(cr[0])), (T_, Y0 - 128.0), f"CROWN SOFT BREAK h {float(cr[0]):g}",
               [f"insert top {float(cr[1]):g}° further fwd, blend R {float(cr[4]):g} [M low / E]"]),
              ((aF(49.65), 49.65), (T_, Y0 - 104.0), f"BADGE: GROOVES {float(D['badge_relief'][1]):g} WIDE x "
-                                                    f"{float(D['badge_relief'][0]):g}", ["plain field, no lettering"]),
+                                                    f"{float(D['badge_relief'][0]):g}", ["raised blank plate, no lettering"]),
              ((aF(float(st[0, 1])), float(st[0, 1])), (T_, Y0 - 14.0),
               f"STEP V {D['grooves'][1][0]:g} WIDE x {D['grooves'][1][1]:g} DEEP", ["both inserts FLUSH [M]"]),
              ((aF(-10.0), -10.0), (T_, Y0 + 20.0), f"LOWER INSERT TO h {float(il[:, 1].min()):g}",
@@ -389,13 +395,10 @@ def draw_heads(ds):
         poly(ds, vF, C, W_FINE, fill="#596166")                          # clipped at +-21 (the frame of the detail)
     circ(ds, vF, c, 2 * R, W_OBJ, fill="#2B3135")
     circ(ds, vF, c, od, W_FINE, fill="#23292D", color="#C9CFD3")
-    for s_ in (-1, 1):
-        line(ds, vF, [(-0.5 * od + 2.0, s_ * (0.5 * od - lune)), (0.5 * od - 2.0, s_ * (0.5 * od - lune))], W_THIN,
-             color="#9AA3A9")
-    lg = D["legends"][2]
-    for a0, a1 in ((lg[2], lg[3]), (lg[2] + 180.0, lg[3] + 180.0)):
-        for T in ticks(c, r0, r1, a0, a1, int(lg[4])):
-            line(ds, vF, T, 0.3, color="#E8EAEC")
+    poly(ds, vF, YS.slot_outline(), W_THIN, fill=SLOT, color="#9AA3A9")          # rev N: the recessed rocker slot
+    for k in (2, 3):
+        for Q in legend_quads(c, k):
+            poly(ds, vF, Q, 0.05, fill=LEGEND, color=LEGEND)
     for half in rocker_halves():
         poly(ds, vF, half, W_FINE, fill=SWITCH, color="#C9CFD3")
     centre_mark(ds, vF, c, R)
@@ -406,10 +409,13 @@ def draw_heads(ds):
     tg = D["trim_grooves"]
     leader(ds, vF.pt(10.0, 1.0), (X0 + 44.0, Y0 - 12.0), f"ROCKER {float(tr[3]):g} x {float(tr[4]):g}",
            [f"waist {float(tr[5]):g}, split {float(tr[6]):g}", "two mirrored lobes"], size=TXT_S, weight=500)
-    leader(ds, vF.pt(0.0, 11.5), (X0 + 44.0, Y0 - 30.0), "DN LUNE (FWD)", [f"{int(lg[4])} ticks / 84°"], size=TXT_S,
-           weight=500)
+    sd_ = D["trim_slot"]
+    leader(ds, vF.pt(0.0, 11.5), (X0 + 44.0, Y0 - 30.0), "DN LUNE (FWD), GLOSS",
+           ["legend: 2 words of letter blocks (no lettering)"], size=TXT_S, weight=500)
     leader(ds, vF.pt(0.0, -11.5), (X0 + 44.0, Y0 + 16.0), "UP LUNE (AFT)",
-           [f"grooves {float(tg[0]):g} x {float(tg[1]):g}: ring + slot"], size=TXT_S, weight=500)
+           [f"ring groove {float(tg[0]):g} x {float(tg[1]):g}; SLOT RECESSED {float(sd_[0]):g},",
+            f"walls on the chords, draft {float(sd_[2]):g}°, ends {float(sd_[1]):g} inside the ring"],
+           size=TXT_S, weight=500)
     from model import yoke_checks as YC
     pr = YC.run_all()["proud"]
     lbl(ds, X0 - 48.0, Y0 + 2 * R + 19.0, "grey: the black moulding seen along the face normal (exact silhouette, "
@@ -428,11 +434,14 @@ def draw_heads(ds):
         P = np.vstack([[(sg * 0.5 * split, 0.0)], np.c_[xs[sel], prof[sel]][::sg], [(sg * 0.5 * L, 0.0)]])
         poly(ds, vR, P, W_FINE, fill=SWITCH)
     line(ds, vR, [(-0.5 * od, 0.0), (0.5 * od, 0.0)], W_OBJ)
+    yl_, re_, dep_, dr_ = G.trim_slot_dims()                             # rev N: the slot floor under the rocker
+    xe_ = math.sqrt(max(re_ ** 2 - yl_ ** 2, 0.0))
+    line(ds, vR, [(-re_ + dep_ * math.tan(dr_), -dep_), (re_ - dep_ * math.tan(dr_), -dep_)], W_FINE, dash=HID)
     X1, Y1 = vR.pt(0, 0)
     dim(ds, vR.pt(0.5 * L, he), vR.pt(0.5 * L, 0.0), X1 + L + 7.0, f"{he:g}", orient="v")
     dim(ds, vR.pt(0.0, hm), vR.pt(0.0, 0.0), X1 - L - 9.0, f"{hm:g}", orient="v", outside=True)
-    lbl(ds, X1 + 12.0, Y1 + 7.0, f"SADDLE (EXPONENT {sexp:g}) [E +/-2], TOP EDGES R {float(tg[2]):g}, RING FLUSH", TXT_S,
-        "middle")
+    lbl(ds, X1 + 12.0, Y1 + 7.0, f"SADDLE (EXPONENT {sexp:g}) [E +/-2], TOP EDGES R {float(tg[2]):g}, LOBES FROM THE SLOT "
+                                 f"FLOOR {dep_:g} BELOW THE FACE (HIDDEN)", TXT_S, "middle")
     cF, nF = G.head_out_face()
     lbl(ds, X1 + 12.0, Y1 + 10.0, "AXIS: the face normal ({3:.2f}, {4:.2f}, {5:.2f}) through ({0:.1f}, {1:.1f}, a "
                                   "{2:.1f})".format(*np.r_[cF, nF]), TXT_S, "middle", color=MUTED)
@@ -448,9 +457,8 @@ def draw_heads(ds):
     poly(ds, vG, hexagon(float(b[2])) + c2, W_FINE, fill="#23292D", color="#C9CFD3")
     circ(ds, vG, c2, float(b[3]), W_FINE, fill="#3A4247", color="#C9CFD3")
     circ(ds, vG, c2, float(b[7]), W_THIN, color="#C9CFD3")
-    lg = D["legends"][3]
-    for T in ticks(c2, lg[0], lg[1], 180.0 - lg[3], 180.0 - lg[2], int(lg[4])):
-        line(ds, vG, T, 0.3, color="#E8EAEC")
+    for Q in legend_quads(c2, 4, mirror=True):
+        poly(ds, vG, Q, 0.05, fill=LEGEND, color=LEGEND)
     X0, Y0 = vG.pt(*c2)
     sc = np.asarray(D["shield"], float)
     dim(ds, vG.pt(sc[0, 0], sc[0, 1]), vG.pt(sc[1, 0], sc[1, 1]), vG.pt(0, sc[0, 1])[1] - 6.0,
@@ -458,8 +466,8 @@ def draw_heads(ds):
     leader(ds, vG.pt(c2[0] - 6.0, c2[1] - 6.0), (X0 - 40.0, Y0 + 14.0), f"HEX COLLAR {float(b[2]):g} / "
                                                                         f"{float(b[6]):g} A/F",
            [f"cap {float(b[3]):g}, {float(b[4]):g} proud, dimple {float(b[7]):g}"], size=TXT_S, weight=500)
-    leader(ds, vG.pt(c2[0] - 7.0, c2[1] + 7.5), (X0 - 40.0, Y0 - 18.0), f"{int(lg[4])} TICKS ON THE UPPER /",
-           [f"INBOARD ARC {lg[2]:g}-{lg[3]:g}° (no lettering)"], size=TXT_S, weight=500)
+    leader(ds, vG.pt(c2[0] - 7.0, c2[1] + 7.5), (X0 - 40.0, Y0 - 18.0), "MAP LIGHTS AS LETTER BLOCKS",
+           ["on the upper / inboard arc (no lettering)"], size=TXT_S, weight=500)
     lbl(ds, X0 - 22.0, Y0 + 29.0, "INBOARD -> RIGHT (pilot); facet "
                                   f"{float(D['head_in'][2]):g}° up, toe {float(D['head_in'][3]):g}°", TXT_S,
         color=MUTED)
@@ -549,13 +557,15 @@ def draw_switches(ds):
     poly(ds, vH, F["badge_border"] - sub, W_FINE)
     for Ln in F["badge_lines"]:
         line(ds, vH, Ln - sub, W_FINE)
-    poly(ds, vH, F["badge_field"] - sub, W_THIN, dash=(1.0, 0.8), color=MUTED)
+    poly(ds, vH, F["badge_plate"] - sub, W_FINE, fill="#DDE0E3")       # rev N: the raised blank plate
     X0, Y0 = vH.pt(0, 0)
     (bu0, bh0), (bu1, bh1) = D["badge"]
     dim(ds, vH.pt(bu0, bh0 - hc), vH.pt(-bu0, bh0 - hc), Y0 - 12.0, f"{2 * bu0:.1f}")
     dim(ds, vH.pt(bu1, bh1 - hc), vH.pt(-bu1, bh1 - hc), Y0 + 12.0, f"{2 * bu1:.1f}")
     dim(ds, vH.pt(-bu0, bh0 - hc), vH.pt(-bu1, bh1 - hc), X0 + 52.0, f"{bh0 - bh1:.1f}", orient="v", outside=True)
-    lbl(ds, X0, Y0 + 20.0, f"PLAIN FIELD (NO LETTERING); GROOVES {float(D['badge_relief'][1]):g} x "
+    bp_ = G.badge_plate_dims()
+    lbl(ds, X0, Y0 + 20.0, f"RAISED BLANK PLATE {2 * bp_[0]:.1f} x {bp_[2] - bp_[1]:.1f}, {bp_[3]:g} PROUD, R {bp_[4]:g} "
+                           f"/ EDGE R {bp_[5]:g} (NO LETTERING); GROOVES {float(D['badge_relief'][1]):g} x "
                            f"{float(D['badge_relief'][0]):g} CUT IN THE INSERT", TXT_S, "middle")
     view_title(ds, X0, Y0 + 28.0, "DETAIL H - BADGE", f"ABSTRACT WINGED PLATE, TOP AT h {bh0:g} - 2:1", size=3.0)
 
@@ -632,15 +642,15 @@ def draw_column(ds):
     hb_ = np.linspace(hb_r + 6.0, h_top, 20)
     line(ds, vJ, np.c_[Y1_a_panel(hb_) - dep_r + bh_, hb_], W_THIN, dash=HID, color=ACCENT)
     leader(ds, vJ.pt(float(Y1_a_panel(hc_b)[0]) - dep_r + bh_, hc_b), (X0 - 70.0, Y0 - 62.0),
-           f"J BAND {bh_:g} PROUD OF THE RECESS FLOOR", [f"recess {dep_r:g} deep [E], floor to h {hb_r:g} [M] (hidden)"],
+           f"J BAND {bh_:g} PROUD OF THE RECESS FLOOR", [f"recess {dep_r:g} deep [E], floor to h {hb_r:g} [M, re-centred] (hidden)"],
            size=TXT_S, weight=500)
     dim(ds, vJ.pt(a_p0, -r), vJ.pt(-depth, -r), Y0 + 22.0, f"{-depth - a_p0:.0f}")
-    lbl(ds, X0 - 70.0, Y0 + 33.0, f"PHANTOM: FULL PUSH {t0:+.0f} [E], leaves {-depth + t0 - a_p0:.0f} to the panel",
-        TXT_S)
+    lbl(ds, X0 - 70.0, Y0 + 33.0, f"PHANTOM: FULL PUSH {t0:+.0f} (OWNER 2026-10-11; WAS -90 [E]), leaves "
+                                  f"{-depth + t0 - a_p0:.0f} to the panel", TXT_S)
     view_title(ds, X0 - 30.0, Y0 + 38.0, "DETAIL J - COLUMN, SIDE", "AT THE LOWER PANEL, FROM OUTBOARD - 1:2", size=3.0)
     # front view of the surround on the panel (pilot: inboard = right)
     vF = ds.add_view(mkview("det_J2", "yz_aft", -1, -1, (756.0, 384.0), 0.5, "detail J front, (u, h) mm"))
-    bw = float(col[4])
+    bw = float(D["column_band"][0])                                       # rev N: 22 (column measured 22-25)
     u_in = -(float(col[0]) * 1000.0 - float(I.YOKE["bl"]) * 1000.0)       # inboard side of the band, u (negative)
     rc = abs(u_in) - 0.5 * bw                                              # band centreline radius about the axis
     hw_, hb2, rcr, dep, ht_ = (float(x) for x in D["column_recess"])
@@ -663,20 +673,31 @@ def draw_column(ds):
     circ(ds, vF, (0.0, 0.0), 44.0, W_THIN, dash=HID, color=MUTED)
     poly(ds, vF, G.shell_outline(), W_THIN, dash=PHANTOM, color=MUTED)
     X0, Y0 = vF.pt(0, 0)
-    leader(ds, vF.pt(-rc, h_top - 0.5 * bw), (X0 + 26.0, Y0 - 42.0), f"J BAND {bw:g} WIDE [M]",
-           [f"inboard leg |BL| {float(col[0]) * 1000:.0f}, top WL {float(col[1]) * 1000:.0f}"], size=TXT_S,
-           weight=500)
-    leader(ds, vF.pt(-rc + 0.5 * bw, h_joint), (X0 + 44.0, Y0 + 6.0), f"JOINT WL {float(col[2]) * 1000:.0f} [M]",
-           [f"screw WL {float(col[3]) * 1000:.0f} [M]"], size=TXT_S, weight=500)
+    leader(ds, vF.pt(-rc, h_top - 0.5 * bw), (X0 + 26.0, Y0 - 42.0), f"J BAND {bw:g} WIDE [M 22-25]",
+           [f"inboard leg |BL| {float(col[0]) * 1000:.0f}, top WL {float(col[1]) * 1000:.0f}",
+            f"{abs(u_in) - bw - r:.1f} clear of the column all round"], size=TXT_S, weight=500)
+    leader(ds, vF.pt(-rc + 0.5 * bw, h_joint), (X0 + 44.0, Y0 + 6.0), f"JOINT WL {float(col[2]) * 1000:.0f} = AXIS",
+           [f"screw WL {float(col[3]) * 1000:.0f}"], size=TXT_S, weight=500)
+    # the owner decision of 2026-10-11 (fit_check 30c, 3-D judges r1 CR1-01), above the view
+    hub_wl = float(I.yoke_hub(-1)[2]) * 1000.0
+    for i, t in enumerate(("OWNER DECISION 2026-10-11 (fit_check 30c):",
+                           "THE J BAND AND THE U RECESS RE-CENTRED ON THE",
+                           f"COLUMN AXIS = THE HUB (WL {hub_wl:.0f}; ROLL PIVOT AND KNEE",
+                           "RESULTS KEPT).  REASON: THE PHOTOS READ THE JOINT",
+                           f"LINE, I.E. THE COLUMN AXIS, AT WL 1821 +/-10, {hub_wl - 1821.0:.0f} UNDER",
+                           f"THE HUB: BAND AND RECESS DRAWN {hub_wl - 1821.0:.0f} UP WITH THE AXIS")):
+        lbl(ds, X0 - 42.0, Y0 - 66.0 + 2.6 * i, t, TXT_S, color=ACCENT if i == 0 else INK)
     Pr = vF.pt(-hw_, hb2 + rcr + 12.0)
     leader(ds, Pr, (Pr[0] + 5.0, Pr[1] + 4.0), f"RECESS: U {2 * hw_:g} WIDE [M]",
-           [f"floor h {hb2:g}, corners R {rcr:g} [M]", f"{dep:g} deep [E]; outboard half", "hidden (symmetric [E]);",
-            f"band arc about h {hc_:g} [E]"], size=1.9, weight=500)
+           [f"floor h {hb2:g} [M, re-centred], corners R {rcr:g} [M]", f"{dep:g} deep [E]; outboard half", "hidden (symmetric [E]);",
+            f"band arc about h {hc_:g} (the axis);", f"top h {ht_:g} [E]: the column {ht_ - r:.0f} clear"],
+           size=1.9, weight=500)
     dim(ds, vF.pt(-hw_, hb2), vF.pt(hw_, hb2), Y0 + 44.0, f"{2 * hw_:g}")
-    lbl(ds, X0 - 40.0, Y0 + 50.0, "phantom: the shell; hidden: the column dia 44", TXT_S, color=MUTED)
+    lbl(ds, X0 - 40.0, Y0 + 50.0, "phantom: the shell; hidden: the column dia 44 (satin black)", TXT_S, color=MUTED)
     view_title(ds, X0, Y0 + 58.0, "DETAIL J - SURROUND, FRONT", "LOOKING FORWARD (PILOT; INBOARD RIGHT) - 1:2",
                size=3.0)
-    M.cutting_plane(ds, vF, (-rc - 0.5 * bw - 4.0, -6.0), (-rc + 0.5 * bw + 4.0, -6.0), "J", look=(0.0, 1.0), ext=3.0,
+    hJ = 0.5 * (h_top - 0.5 * bw + h_joint)                              # mid-leg (re-centred: h 0 .. 13)
+    M.cutting_plane(ds, vF, (-rc - 0.5 * bw - 4.0, hJ), (-rc + 0.5 * bw + 4.0, hJ), "J", look=(0.0, 1.0), ext=3.0,
                     length=4.0)
     # SECTION J-J: the band across its vertical leg (judges FID2-05), 2:1
     bw_, bh_, br_, bf_ = (float(x) for x in D["column_band"][:4])

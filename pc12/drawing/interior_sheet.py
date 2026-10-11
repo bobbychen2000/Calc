@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="M", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="AS SHOWN", rev="N", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-11")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -82,6 +82,9 @@ REVISIONS = (
                           "fitted to the photos, head zones, C2 outlines; knee sweep fixed (a grip band was dropped)"),
     ("M", "2026-10-05", "owner: L6Y rev D approved as the 3-D basis; the 95th's 24 level (< 25, criterion kept), contact "
                         "12.5 deg: ACCEPTED AS MEASURED; yoke rev M (judges r4 drafting cleanup)"),
+    ("N", "2026-10-11", "owner 2026-10-11 (yoke 3-D judges r1): yoke push travel 65 (was 90 [E]; the grips reached the "
+                        "lower panel at full push + roll), pull 90 kept -- the knee sweeps and the phantoms take "
+                        "-65 / +90; the column's J band and U recess re-centred on the column axis (L6Y2 detail J)"),
 )
 
 # ---- fills (clean sheet)
@@ -1679,7 +1682,7 @@ def _detail_dims(ds, v, ctx, e, s0, p):
     o95 = cc["occ"]["p95m"]
     kn = p["knee"]
     leader_to(ds, v, (kn[0] - 0.05, kn[1] - 0.03), (3.13, 1.66),
-              f"95TH KNEE: PANEL {mm(o95['clear_panel'])}, YOKE ±{mm(I.YOKE['travel'][1])} PITCH "
+              f"95TH KNEE: PANEL {mm(o95['clear_panel'])}, YOKE PITCH -{mm(-I.YOKE['travel'][0])} / +{mm(I.YOKE['travel'][1])} "
               f"{sgn_mm(o95['yoke_pitch'])}", "end", color=ACCENT, weight=600,
               lines=[f"FULL RUDDER (PHANTOM LEG, PEDAL {mm(I.PEDALS['travel'])} AFT): {sgn_mm(o95['rud_pitch'])}",
                      f"ROLL: CONTACT FROM {o95['roll_contact']:.0f}° (DETAIL F)", "DASHED CIRCLE: 5TH FEMALE KNEE"])
@@ -1718,7 +1721,7 @@ def _detail_dims(ds, v, ctx, e, s0, p):
     hub = I.yoke_hub(-1)
     leader_to(ds, v, (hub[0] + 0.05, hub[2] + 0.03), (3.97, 2.095), "YOKE HUB (PC-24 STYLE)", "start",
               lines=[f"{mm(hub[0])} / WL {mm(hub[2])}, BL {mm(I.YOKE['bl'])}",
-                     f"PITCH ±{mm(I.YOKE['travel'][1])} (PHANTOM)"])
+                     f"PITCH -{mm(-I.YOKE['travel'][0])} / +{mm(I.YOKE['travel'][1])} (PHANTOM)"])
     xl, zl_ = I.glareshield_lip(e[1])
     leader_to(ds, v, (xl, zl_), (3.02, 2.615), f"GLARESHIELD LIP {mm(zl_)}", "start",
               lines=["HOOD CLOSED ONTO THE WS FRAME"])

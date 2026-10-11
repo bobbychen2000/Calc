@@ -14,8 +14,9 @@ the aft face at the insert step), placed by place() for either seat (the pilot y
   PARAMETRIC SWITCHES (here): the TCS bezel and button, the AFCS cap and the push button's cap as REVOLVES of their
   profiles (yoke_geom.tcs_profiles / afcs / button_cap: true arcs for the rounds the solids sample as polygons), the hex
   collar, the split trim rocker's two lobes and the forward-face switches as ROUNDED EXTRUSIONS (outline, top height
-  field, the tabled top-edge round as an exact rolling quarter circle); the legend TICKS (YOKE_DESIGN legends) as thin
-  slabs 0.12 proud of the face they are printed on.
+  field, the tabled top-edge round as an exact rolling quarter circle), the badge's raised blank plate (rev N); the
+  legends (YOKE_DESIGN legends) as words of plain letter BLOCKS (rev N: rev M's radial ticks read as a dial), thin slabs
+  0.12 proud of the face they are printed on -- no lettering.
 Every piece is a closed (watertight) mesh with per-vertex normals; materials per the L6Y items / finishes table.
 """
 from __future__ import annotations
@@ -335,7 +336,8 @@ def _mirror_u(p):
 
 
 def button_pieces():
-    """The inboard head's push button (MAP LIGHTS): the black hex collar (rounded extrusion, top edges R 0.3) and the
+    """The inboard head's push button (MAP LIGHTS): the satin-nickel hex collar (rev N, judges FID1-04; rounded
+    extrusion, top edges R 0.3) and the
     smooth cap (revolve: top R 1, the spherical centre dimple) on the shield facet; built in the inboard grip's own sense
     and mirrored."""
     D = G.T()
@@ -346,8 +348,8 @@ def button_pieces():
     hexa = np.c_[rc * np.cos(ang), rc * np.sin(ang)]
     parts = [outline_line(hexa[i], hexa[(i + 1) % 6], 1.5) for i in range(6)]
     P, sh = _closed(parts, set(range(6)))
-    collar = rounded_extrusion(P, sh, (c, eu, ev, n), -1.0, lambda x, y: (hp, 0.0, 0.0), 0.3, "black", "button_collar",
-                               inner_step=2.5)
+    collar = rounded_extrusion(P, sh, (c, eu, ev, n), -1.0, lambda x, y: (hp, 0.0, 0.0), 0.3, "yoke_nickel",
+                               "button_collar", inner_step=2.5)
     r, hh, dd, ddep = 0.5 * float(b[3]), float(b[4]), float(b[7]), float(b[8])
     zt = hp + hh
     rs = (0.25 * dd * dd + ddep * ddep) / (2.0 * ddep)
@@ -361,8 +363,9 @@ def button_pieces():
 
 def trim_pieces():
     """The split bow-tie pitch-trim rocker across the outboard head's round face: two mirrored lobes (yoke_geom
-    rocker_lobe: from the split to the round end), extruded from 1 below the face to the saddle top z = hm + (he - hm)
-    (|x| / (L / 2)) ^ sexp, top edges R trim_grooves[2]."""
+    rocker_lobe: from the split to the round end), extruded from 1 below the slot floor (rev N: the slot is recessed
+    trim_slot[0]) to the saddle top z = hm + (he - hm) (|x| / (L / 2)) ^ sexp, top edges R trim_grooves[2]; satin dark
+    grey yoke_rocker (rev N, judges FID1-05: lighter than the gloss-black lunes, as every photo)."""
     D = G.T()
     c, n = G.head_out_face()
     eu, ev = G._facet_frame(c, n)
@@ -389,7 +392,7 @@ def trim_pieces():
         Pm = P * [sg, 1.0]
         if sg < 0:
             Pm, sh = Pm[::-1], sh[::-1]
-        out.append(rounded_extrusion(Pm, sh, (c, eu, ev, n), -1.0, top, r_e, "black",
+        out.append(rounded_extrusion(Pm, sh, (c, eu, ev, n), -1.0 - G.trim_slot_dims()[2], top, r_e, "yoke_rocker",
                                      f"trim_lobe_{'r' if sg > 0 else 'l'}", inner_step=1.5))
     return out
 
@@ -457,17 +460,17 @@ def _slab(P0, P1, z0, z1, frame, width=TICK_W, proud=TICK_PROUD, sink=0.15, seg=
     return Piece(V3, np.array(F), N3, "legend_white").oriented()
 
 
-def _tick_dirs(r0, r1, a0, a1, n):
-    return [(r0 * np.array([math.cos(a), math.sin(a)]), r1 * np.array([math.cos(a), math.sin(a)]))
-            for a in np.radians(np.linspace(a0, a1, int(n)))]
-
-
-def tick_pieces():
-    """The legend ticks (YOKE_DESIGN legends: tick strokes, no lettering): TCS on its bezel's dish, AFCS on the boss's
-    aft face, the trim face's two lunes, the push button's on the shield facet round its collar."""
+def legend_pieces():
+    """The legends (YOKE_DESIGN legends: words of plain letter BLOCKS, rev N -- no lettering; yoke_geom.legend_blocks):
+    TCS on its bezel's dish, AFCS DISC on the boss's aft face, TRIM DN / TRIM UP on the trim face's two lunes, MAP LIGHTS
+    on the shield facet round the push button's hex collar; each block a thin slab legend_style[1] proud, legend_grey."""
     D = G.T()
-    lg = D["legends"]
+    proud = float(D["legend_style"][1])
     out = []
+
+    def slab(P0, P1, z0, z1, fr, w):
+        p_ = _slab(P0, P1, z0, z1, fr, width=w, proud=proud)
+        return Piece(p_.V, p_.F, p_.N, "legend_grey").oriented()
     # TCS dish (the bezel's straight dish line from the rolled edge's top to the bore)
     c, nrm = G.tcs_axis()
     bz, rr, dish, _, _, r_in, _ = (float(x) for x in D["tcs_profile"][:7])
@@ -477,40 +480,58 @@ def tick_pieces():
 
     def zd(r):
         return bz - dish + dish * (r - r_in) / (Rb - re - r_in)
-    for p0, p1 in _tick_dirs(*lg[0]):
-        out.append(_slab(p0, p1, zd(np.linalg.norm(p0)), zd(np.linalg.norm(p1)), fr))
+    for P0, P1, w in G.legend_blocks(0):
+        out.append(slab(P0, P1, zd(np.linalg.norm(P0)), zd(np.linalg.norm(P1)), fr, w))
     # AFCS boss face (flat)
     c, nrm = G.afcs_axis()
     fr = (c, e1, np.cross(nrm, e1), nrm)
-    for p0, p1 in _tick_dirs(*lg[1]):
-        out.append(_slab(p0, p1, 0.0, 0.0, fr))
-    # trim face lunes (flat round face), the fore lune's row and the aft one mirrored (+180)
+    for P0, P1, w in G.legend_blocks(1):
+        out.append(slab(P0, P1, 0.0, 0.0, fr, w))
+    # the trim face's lunes (the flat round face outside the slot)
     c, n = G.head_out_face()
     eu, ev = G._facet_frame(c, n)
     fr = (c, eu, ev, n)
-    r0, r1 = (float(x) for x in D["trim_lunes"][1:3])
-    l2 = lg[2]
-    for a0, a1 in ((l2[2], l2[3]), (l2[2] + 180.0, l2[3] + 180.0)):
-        for p0, p1 in _tick_dirs(r0, r1, a0, a1, l2[4]):
-            out.append(_slab(p0, p1, 0.0, 0.0, fr))
-    # the shield facet round the hex collar: front-view strokes about the button (co-pilot sense) lifted along a onto
-    # the facet plane (as the sheet's button_pieces), then expressed in the facet frame
+    for k in (2, 3):
+        for P0, P1, w in G.legend_blocks(k):
+            out.append(slab(P0, P1, 0.0, 0.0, fr, w))
+    # the shield facet round the hex collar: front-view blocks about the button (co-pilot sense) lifted along a onto the
+    # facet plane (as the sheet's button_pieces), then expressed in the facet frame
     ci, ni = G.head_in_face()
     eui, evi = G._facet_frame(ci, ni)
     m = np.array([-1.0, 1.0, 1.0])
     ci, ni, eui, evi = ci * m, ni * m, eui * m, evi * m
     b = D["button"]
     bc = np.array([-float(b[0]), float(b[1])])
-    l3 = lg[3]
     fr = (ci, eui, evi, ni)
-    for a in np.radians(np.linspace(l3[2], l3[3], int(l3[4]))):
-        e = np.array([math.cos(a), math.sin(a)])
-        Q = np.array([bc + l3[0] * e, bc + l3[1] * e])
+    for P0, P1, w in G.legend_blocks(4):
+        Q = np.array([bc + P0, bc + P1])
         aa = ci[2] - ((Q[:, 0] - ci[0]) * ni[0] + (Q[:, 1] - ci[1]) * ni[1]) / ni[2]
         Q3 = np.c_[Q, aa] - ci
         q2 = np.c_[Q3 @ eui, Q3 @ evi]
-        out.append(_slab(q2[0], q2[1], 0.0, 0.0, fr))
+        out.append(slab(q2[0], q2[1], 0.0, 0.0, fr, w))
     return out
+
+
+def badge_pieces():
+    """The badge's raised blank plate (rev N, yoke_geom.badge_plate): its rounded rectangle extruded along a from below
+    the insert's face to badge_field[3] above it (the face plane's slope carried by the top), top edge R badge_field[5];
+    yoke_silver."""
+    hw, h0, h1, proud, rc, rt = G.badge_plate_dims()
+    hc, hh = 0.5 * (h0 + h1), 0.5 * (h1 - h0)
+    fa_c = float(G.face_a(hc))
+    slope = float(G.face_a(hc + 1.0) - G.face_a(hc - 1.0)) / 2.0           # da / dh of the face plane
+    xs, ys = hw - rc, hh - rc
+    parts = [outline_line((-xs, -hh), (xs, -hh), 4.0), outline_arc((xs, -ys), rc, -0.5 * math.pi, 0.0),
+             outline_line((hw, -ys), (hw, ys), 4.0), outline_arc((xs, ys), rc, 0.0, 0.5 * math.pi),
+             outline_line((xs, hh), (-xs, hh), 4.0), outline_arc((-xs, ys), rc, 0.5 * math.pi, math.pi),
+             outline_line((-hw, ys), (-hw, -ys), 4.0), outline_arc((-xs, -ys), rc, math.pi, 1.5 * math.pi)]
+    P, sh = _closed(parts, set())
+    z0 = -abs(slope) * hh - 1.0
+
+    def top(x, y):
+        return slope * y + proud, 0.0, slope
+    frame = (np.array([0.0, hc, fa_c]), np.array([1.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0]))
+    return [rounded_extrusion(P, sh, frame, z0, top, rt, "yoke_silver", "badge_plate", inner_step=3.0)]
 
 
 # ============================================================================================ the moulding's materials
@@ -530,13 +551,13 @@ def moulding_materials(V, F):
 
 
 # ============================================================================================ the whole yoke (cached)
-MESH_VERSION = "m1"
+MESH_VERSION = "m3"
 
 
 def _src_key():
     import hashlib
     from pathlib import Path
-    h = hashlib.sha1(G.design_key().encode())
+    h = hashlib.sha1((G.design_key() + G.table_key()).encode())          # the solids + every table value
     for f in ("yoke_mesh.py", "yoke_cover.py", "yoke3d.py", "yoke_tri.py", "yoke_patch.py"):
         h.update((Path(__file__).resolve().parent / f).read_bytes())
     h.update(MESH_VERSION.encode())
@@ -574,17 +595,173 @@ def yoke_pieces(verbose=False):
     return out
 
 
+def _grad_mm(fn, P, e=0.002):
+    g = np.zeros_like(P)
+    for k in range(3):
+        d = np.zeros(3)
+        d[k] = e
+        g[:, k] = (fn(*(P + d).T) - fn(*(P - d).T)) / (2 * e)
+    return g
+
+
+def res_fixed_point(pieces, fn, rounds=4, verbose=False, tag=""):
+    """Make the pieces (one surface of the solid fn, yoke-local mm) a fixed point of the build's interior refinement
+    (cad.res at RES 2: PN bow / turn criterion -- rev N, judges CR1-04: it split the cover strip's quad diagonals at build,
+    +391 vertices on PN cubics, not on the solid): split here exactly as cad.res would, every new vertex that came from
+    a smooth (bowed) edge projected onto fn's zero level with its exact normal, until cad.res adds nothing."""
+    from cad import res
+    from cad.mesh import Mesh
+    from cad.refine import refine
+    pieces = list(pieces)
+    added = 0
+    for rnd in range(rounds):
+        with res.override(2.0):
+            ms = refine([Mesh(p.V * 1e-3, p.F, p.N) for p in pieces], **res._kw("interior"))
+        n_new = sum(len(m.V) - len(p.V) for m, p in zip(ms, pieces))
+        if n_new == 0:
+            break
+        added += n_new
+        out = []
+        for m, p in zip(ms, pieces):
+            V, N = m.V * 1e3, _unit(m.N)
+            k = len(p.V)
+            if len(V) > k:
+                Q = V[k:].copy()
+                for _ in range(3):
+                    f = fn(*Q.T)
+                    g = _grad_mm(fn, Q)
+                    Q = Q - (f / np.maximum(np.sum(g * g, 1), 1e-9))[:, None] * g
+                g = _grad_mm(fn, Q)
+                gn = _unit(g)
+                ok = (np.linalg.norm(Q - V[k:], axis=1) < 0.02) & (np.sum(gn * N[k:], 1) > math.cos(math.radians(15.0)))
+                V[k:][ok] = Q[ok]
+                N[k:][ok] = gn[ok]
+            out.append(Piece(V, m.F, N, p.mat, p.name))
+        pieces = out
+    if verbose:
+        print(f"  cad.res fixed point{tag}: +{added} vertices in {rnd + 1} rounds", flush=True)
+    return pieces
+
+
+def fold_faces(p):
+    """Faces of piece p whose geometric normal opposes one of its corner normals (or is degenerate) -- a fold."""
+    fn = np.cross(p.V[p.F[:, 1]] - p.V[p.F[:, 0]], p.V[p.F[:, 2]] - p.V[p.F[:, 0]])
+    a = np.linalg.norm(fn, axis=1)
+    fn = fn / np.maximum(a, 1e-30)[:, None]
+    bad = np.zeros(len(p.F), bool)
+    for k in range(3):
+        bad |= np.sum(fn * p.N[p.F[:, k]], 1) <= 0.0
+    return np.nonzero(bad & (a > 1e-12))[0]
+
+
+def repair_folds(p, rounds=4):
+    """Collapse the folded faces of piece p (fold_faces) away: each one's shortest edge whose moving end is inside the
+    piece (its open boundary is shared with the next piece: kept), accepted only where no face round it folds or
+    flips.  Returns (piece, folds left)."""
+    V, F, N = p.V.copy(), p.F.copy(), p.N.copy()
+    for _ in range(rounds):
+        q = Piece(V, F, N, p.mat, p.name)
+        bad = fold_faces(q)
+        if not len(bad):
+            break
+        e = np.sort(np.vstack([F[:, [0, 1]], F[:, [1, 2]], F[:, [2, 0]]]), 1)
+        ue, cnt = np.unique(e, axis=0, return_counts=True)
+        bnd = np.zeros(len(V), bool)
+        bnd[ue[cnt == 1].ravel()] = True
+        alive = np.ones(len(F), bool)
+        moved = set()
+        for f in bad:
+            if not alive[f]:
+                continue
+            tri = F[f]
+            cand = sorted(((np.linalg.norm(V[tri[i]] - V[tri[(i + 1) % 3]]), tri[i], tri[(i + 1) % 3])
+                           for i in range(3)), key=lambda t: t[0])
+            for _, a, b in cand:
+                for src, dst in ((a, b), (b, a)):
+                    if bnd[src] or src in moved or dst in moved:
+                        continue
+                    ring = np.nonzero(alive & (F == src).any(1))[0]
+                    keep = [r for r in ring if dst not in F[r]]
+                    F2 = F[keep].copy()
+                    F2[F2 == src] = dst
+                    fn0 = np.cross(V[F[keep, 1]] - V[F[keep, 0]], V[F[keep, 2]] - V[F[keep, 0]])
+                    fn1 = np.cross(V[F2[:, 1]] - V[F2[:, 0]], V[F2[:, 2]] - V[F2[:, 0]])
+                    a1 = np.linalg.norm(fn1, axis=1)
+                    if (a1 < 1e-12).any() or (np.sum(fn0 * fn1, 1) <= 0).any():
+                        continue
+                    u1 = fn1 / a1[:, None]
+                    if any((np.sum(u1 * N[F2[:, k]], 1) <= 0).any() for k in range(3)):
+                        continue
+                    gone = [r for r in ring if dst in F[r]]               # the collapsed edge's faces
+                    F[keep] = F2
+                    alive[gone] = False
+                    moved.update((src, dst))
+                    break
+                else:
+                    continue
+                break
+        F = F[alive]
+    u, inv = np.unique(F.ravel(), return_inverse=True)
+    q = Piece(V[u], inv.reshape(-1, 3), N[u], p.mat, p.name)
+    return q, len(fold_faces(q))
+
+
+def fix_fold_normals(pieces):
+    """Normals of the folded corners (fold_faces) after repair_folds: (1) a vertex whose normal opposes the area-weighted
+    mean of the faces round its POSITION (every piece's: the AFCS boss / body seam, where the field's gradient
+    turned over) takes that mean, in every piece that shares the position; (2) a corner still opposing its own face (the
+    badge grooves' sub-0.1 mm2 end faces, every corner on the piece's seams) gets its own copy of the vertex with the
+    face's normal -- a crease at a point, positions unchanged (watertight by position)."""
+    pieces = list(pieces)
+    V = np.vstack([p.V for p in pieces])
+    off = np.cumsum([0] + [len(p.V) for p in pieces])
+    key = np.round(V * 1e4).astype(np.int64)
+    _, g = np.unique(key, axis=0, return_inverse=True)
+    g = g.ravel()
+    acc = np.zeros((g.max() + 1, 3))
+    for p, o in zip(pieces, off):
+        fn = np.cross(p.V[p.F[:, 1]] - p.V[p.F[:, 0]], p.V[p.F[:, 2]] - p.V[p.F[:, 0]])     # area-weighted
+        for k in range(3):
+            np.add.at(acc, g[o + p.F[:, k]], fn)
+    out = []
+    for p, o in zip(pieces, off):
+        N = p.N.copy()
+        bad_v = np.zeros(len(p.V), bool)
+        bf = fold_faces(p)
+        if len(bf):
+            bad_v[np.unique(p.F[bf])] = True
+        m = acc[g[o:o + len(p.V)]]
+        flip = bad_v & (np.sum(N * m, 1) < 0) & (np.linalg.norm(m, axis=1) > 1e-12)
+        N[flip] = _unit(m[flip])
+        q = Piece(p.V, p.F, N, p.mat, p.name)
+        bf = fold_faces(q)
+        if len(bf):
+            V2, N2, F2 = list(q.V), list(q.N), q.F.copy()
+            for f in bf:
+                P = q.V[q.F[f]]
+                fn = _unit(np.cross(P[1] - P[0], P[2] - P[0]))
+                for k in range(3):
+                    if float(np.dot(fn, q.N[q.F[f, k]])) <= 0.0:
+                        V2.append(q.V[q.F[f, k]])
+                        N2.append(fn)
+                        F2[f, k] = len(V2) - 1
+            q = Piece(np.array(V2), F2, np.array(N2), p.mat, p.name)
+        out.append(q)
+    return out
+
+
 def _build_pieces(verbose=False):
     import time
     from model import yoke_cover as YC
     t0 = time.time()
     if verbose:
-        print("  yoke (rev M solids): meshing -- cached afterwards", flush=True)
+        print("  yoke (rev N solids): meshing -- cached afterwards", flush=True)
     out = []
     from model import yoke_patch as YP
-    for V, F, N, m in YP.collapse_needles(YC.cover_meshes(verbose=verbose), verbose=verbose, tag=" (cover)"):
-        out.append(Piece(V, F, N, m, "cover"))
-    for V, F, N, m in YP.moulding_parts(verbose=verbose):
+    cov = [Piece(V, F, N, m, "cover") for V, F, N, m in YP.collapse_needles(YC.cover_meshes(verbose=verbose),
+                                                                              verbose=verbose, tag=" (cover)")]
+    out += res_fixed_point(cov, G.cover, verbose=verbose, tag=" (cover)")
+    for V, F, N, m in YP.moulding_parts(verbose=verbose, cover=[(p.V, p.F) for p in cov]):
         if m != "frame":
             out.append(Piece(V, F, N, m, "moulding"))
             continue
@@ -593,9 +770,8 @@ def _build_pieces(verbose=False):
             Fm = F[mats == mt]
             u, inv = np.unique(Fm.ravel(), return_inverse=True)
             out.append(Piece(V[u], inv.reshape(-1, 3), N[u], str(mt), "moulding"))
-    out += tcs_pieces() + afcs_pieces() + button_pieces() + trim_pieces() + fwd_pieces()
-    ticks = tick_pieces()
-    out.append(merge(ticks, "legend_white", "ticks"))
+    out += tcs_pieces() + afcs_pieces() + button_pieces() + trim_pieces() + fwd_pieces() + badge_pieces()
+    out.append(merge(legend_pieces(), "legend_grey", "legends"))
     # one consistent winding per material (the part merges a material's pieces; fit_check 23): pieces that share
     # positions -- the frame and its pockets, the folds at the AFCS boss / badge corners -- traverse every edge once
     # each way, each component keeping its majority winding
@@ -604,6 +780,15 @@ def _build_pieces(verbose=False):
         idx = [i for i, p in enumerate(out) if p.mat == mat]
         for i, Fi in zip(idx, YT.orient_group([(out[i].V, out[i].F) for i in idx], 0.02)):
             out[i] = Piece(out[i].V, Fi, out[i].N, out[i].mat, out[i].name)
+    # folds (rev N, judges CR1-05: faces wound against their own corner normals -- pinholes under FrontSide culling, or
+    # a dark corner): collapsed inside each piece where they are geometric, else their normals repaired
+    n0 = sum(len(fold_faces(p)) for p in out)
+    for i, p in enumerate(out):
+        if len(fold_faces(p)):
+            out[i], _ = repair_folds(p)
+    out = fix_fold_normals(out)
+    if verbose:
+        print(f"  folds: {n0} -> {sum(len(fold_faces(p)) for p in out)}", flush=True)
     if verbose:
         print(f"  yoke: {sum(len(p.F) for p in out)} triangles in {len(out)} pieces, {time.time() - t0:.0f}s", flush=True)
     return out

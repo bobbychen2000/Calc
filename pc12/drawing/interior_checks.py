@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="M", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="-", rev="N", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-11")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -123,7 +123,7 @@ def crew_occupants(ds, x0, y0, x1, ctx):
         row("knee top WL", lambda o: mm(o["knee_top"]), f"lower panel edge {mm(I.PANEL['mfd_z'] + I.PANEL['lower_dz'])}; "
             f"grip solids' bottom {mm(I.PANEL['mfd_z'] + I.YOKE['hub_dz'] + I.yoke_grip_low())}"),
         row("knee to the lower panel", lambda o: mm(o["clear_panel"]), "side view"),
-        row(f"legs to the yoke, pitch ±{mm(I.YOKE['travel'][1])}, wings level", lambda o: sgn(o["yoke_pitch"]),
+        row(f"legs to the yoke, pitch {mm(-I.YOKE['travel'][0])} fwd / {mm(I.YOKE['travel'][1])} aft, wings level", lambda o: sgn(o["yoke_pitch"]),
             f"criterion >= {mm(kr)} kept; 95th {1000 * kr - 1000 * occ['p95m']['yoke_pitch']:.1f} short, ACCEPTED AS "
             f"MEASURED (owner 2026-10-05)"),
         row(f"... with roll ±{R:.0f}° [E]", lambda o: sgn(o["yoke_sweep"]), "pitch x roll sweep; - = contact"),
