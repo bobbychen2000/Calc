@@ -2202,7 +2202,11 @@ async def fd_look_checks(page, shots=True):
         img = np.asarray(Image.open(path).convert("RGB"), float)[:H, :W]
         L = 0.2126 * img[..., 0] + 0.7152 * img[..., 1] + 0.0722 * img[..., 2]
         top = k.copy()
-        top[H // 3:, :] = False                       # the upper third: the sky over the cowl
+        # the upper quarter: the sky over the cowl (flight deck fix r2b: at both crew stops the apron's far edge -- the
+        # hangars' feet -- lies at 0.24-0.26 of the frame height; the upper third reached ~70 px down into the apron, which
+        # fix r2 darkened at the judges' request (FDO2-08 / FID-FD2-08), and measured 211 / 221 with B - R 8 / 7 while the
+        # sky above the horizon stayed ~250, B - R 9-11)
+        top[H // 4:, :] = False
         stats[sid] = (float(np.median(L[k])) if k.sum() else 0.0, float(np.std(L[k])) if k.sum() else 0.0,
                       float(np.median(img[top][:, 2] - img[top][:, 0])) if top.sum() > 50 else -99.0, int(k.sum()),
                       float(np.median(L[top])) if top.sum() > 50 else 0.0)
@@ -2211,12 +2215,12 @@ async def fd_look_checks(page, shots=True):
                                  "cast: I.model.meshRecs.filter((r) => r.mesh.castShadow && /^(glass|lens)/.test(r.mesh.material.name)).length};")
         await js(pg, V + "T.exit({motion: false}); await V.frames(1);")
     # (flight deck fix r2 FDO2-08 / FID-FD2-08: the judges asked for the apron at ~150-180 as seen -- it filled the side
-    # windows near-white, ~230 -- so the whole-window median now sits ~190-215; the sky over the cowl, the upper third
+    # windows near-white, ~230 -- so the whole-window median now sits ~190-215; the sky over the cowl, the upper quarter
     # of the window pixels, stays as bright as P1046408 / 10's through the glass: >= 225)
     ok1 = all(v[4] >= 225 and v[0] >= 170 and v[1] > 4 and v[2] >= 8 and v[3] > 1000 for v in stats.values()) and \
         all(l["world"] and not l["grid"] and l["env"] == "outside" and l["sun"] > 0 and l["key"] == 0 and l["cast"] == 0 for l in look.values())
     check("[FD-L1] a real world through the glazing at the pilot / co-pilot stops: the sky over the cowl bright (upper "
-          "third median >= 225), the window pixels a lit world (median >= 170) and not a flat void (sd > 4), blue sky "
+          "quarter median >= 225), the window pixels a lit world (median >= 170) and not a flat void (sd > 4), blue sky "
           "above the cowl (B - R >= 8); the world, the sun and the outside environment on, the ground grid and the key "
           "light off, no glass casting", ok1,
           " | ".join(f"{s}: median {v[0]:.0f} (sky {v[4]:.0f}), sd {v[1]:.1f}, sky B-R {v[2]:.0f} ({v[3]} px)"

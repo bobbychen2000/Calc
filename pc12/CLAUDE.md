@@ -1074,4 +1074,9 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   look-dev queue out/tmp/fd_fix_r2/r4 / r5 / r6 (ld2.py jobs, per part:material medians), photo | judges' before |
   after sheets out/tmp/fd_fix_r2/r6/cmp_*.jpg.  Not changed (reported): the A-pillar / surround width from the seats
   (the approved L2 glazing outline + GEOM B's surround fit; a slimmer tubular post is a drawing change), the yoke
-  (wip/fd-yoke).
+  (wip/fd-yoke).  Tests: [FD-L1] reads the sky over the cowl in the upper QUARTER of the frame (at both crew stops the
+  apron's far edge lies at 0.24-0.26 of the height: the upper third reached into the apron r2 darkened and measured
+  211 / 221, B - R 8 / 7 -- r2's own threshold had never passed; now 248 / 251, B - R 11 / 9); viewer_test 224 / 225 in
+  the full run (149 min beside another worktree's runs) with [FD-L1] the one failure, then `--only fdlook` 10 / 10 after
+  the band change ([FD-L3] glareshield 53, lip 61 / underside 37; [FD-L6] p50 69, bands 31 / 48 / 13 %); fit_check
+  (1 open owner item, unchanged) and consistency_2d3d 143 / 143 on the final geometry; artifact_test 70 / 70.
