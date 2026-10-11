@@ -38,8 +38,11 @@ the approved Stage-2 drawing set is drawn from (sheets L1-L5, drawing/*.py -- th
     options: --glb PATH (default out/pc12.glb), --json PATH (default out/tmp/stage3_consistency/report.json),
              --plots (diagnostic PNGs next to the JSON), -v (worst locations of every row)
 
+  L6Y yoke               (rev M, sheets L6Y / L6Y2) the built yokes in yoke-local mm: front silhouette, cover and its
+                         inserts, pads (leather edge in the grip planes), switch centres on their axes, side silhouette
+
 Tolerances (mm): 5 OML / openings / glazing, 10 livery and interior (L6), 15 planform features (L4 outlines), 2 wheels
-(L4W).  Prints one PASS / FAIL / INFO / OPEN row per check (max and rms deviation, samples, tolerance) and
+(L4W), 1.5 the yoke (L6Y).  Prints one PASS / FAIL / INFO / OPEN row per check (max and rms deviation, samples, tolerance) and
 'CONSISTENCY OK' / 'CONSISTENCY FAIL'; OPEN = a known deviation waiting for an owner decision (CLAUDE.md open items;
 listed, not failing); exit code 1 on a FAIL, 2 when the GLB is missing.  The GLB must be newer than model/*.py and
 cad/*.py (first row) -- rebuild with
@@ -2895,33 +2898,37 @@ def _l6_details(ctx, rep, tol, fl):
     from model import interior as I
     Y = I.YOKE
     dev, lab = [], []
+    # rev M (L6 rev M draws the yoke from YOKE_DESIGN): the drawn front view (interior.yoke_front_mm) and the solids'
+    # side silhouettes (yoke_geom.view_silhouettes 'u', the sheets' L6Y side view) about the hub, in yoke-local mm
+    from model import yoke_geom as YG
+    FR = I.yoke_front_mm()
+    SV = YG.view_silhouettes("u", step=0.4, depth_step=0.5, parts=YG.PARTS + YG.SWITCHES)
+    sh = np.asarray(FR["shell"], float)
+    gr = np.vstack([np.asarray(FR[k], float) for k in ("grip_out", "grip_in", "body")])
+    cov_a = max(float(C[:, 0].max()) for C in SV["cover"])
+    blk_a = min(float(C[:, 0].min()) for k in ("body", "grip_out", "grip_in", "fwd_out", "fwd_in") for C in SV.get(k, []))
+    hd = float(Y["hub_whd"][2])
     for side in (-1, 1):
         hub = I.yoke_hub(side)
         nm = "L" if side < 0 else "R"
-        # the yoke's own part (flight deck r1: the pedal pads and lower-panel caps are grip_black too)
-        Vy = ctx.verts("yoke_" + nm, mats=("yoke_white", "panel_silver"))
+        Vy = ctx.verts("yoke_" + nm, mats=("yoke_white",))
         Vg = ctx.verts("yoke_" + nm, mats=("grip_black",))
-        q = Vy[np.abs(Vy[:, 1] - hub[1]) < 0.10]
-        g = Vg[(np.abs(Vg[:, 1] - hub[1]) < 0.20) & (np.abs(Vg[:, 1] - hub[1]) > 0.09)]      # the grips (body out)
-        if not len(q) or not len(g):
+        if not len(Vy) or not len(Vg):
             dev.append(1.0)
             lab.append(f"yoke {nm}: not found")
             continue
-        hd = float(Y["hub_whd"][2])
-        _ext_dev(dev, lab, f"yoke {nm} hub fwd face", float(Vg[np.abs(Vg[:, 1] - hub[1]) < 0.05, 0].min()),
-                 float(hub[0]))
-        _ext_dev(dev, lab, f"yoke {nm} hub aft face (max)", max(float(q[:, 0].max()), float(hub[0] + hd)),
-                 float(hub[0] + hd))
-        _ext_dev(dev, lab, f"yoke {nm} white hub centre BL", float(0.5 * (q[:, 1].min() + q[:, 1].max())), float(hub[1]))
-        _ext_dev(dev, lab, f"yoke {nm} hub top", float(q[:, 2].max()), float(hub[2] + 0.5 * float(Y["hub_whd"][1])
-                                                                                   + 0.005))
-        ends = [I.yoke_grip_axis(d) for d in (-1, 1)]
-        gtop = max(float(p1[1]) for _, p1 in ends) + float(Y["grip"][1])
-        _ext_dev(dev, lab, f"yoke {nm} grip tops", float(g[:, 2].max()), float(hub[2]) + gtop)
-        _ext_dev(dev, lab, f"yoke {nm} grip bottoms", float(g[:, 2].min()), float(hub[2] + Y["grip_dz"]))
-        _ext_dev(dev, lab, f"yoke {nm} grip span", float(g[:, 1].max() - g[:, 1].min()), float(Y["span"]))
-    rep.add("L6", "yokes: hub slab (hub_dx .. + hub depth), white hub, grip tops / bottoms / span (YOKE)",
-            np.array(dev), tol, "PC-24-style yokes", _wl(dev, lab))
+        x_ref = float(hub[0]) + hd
+        _ext_dev(dev, lab, f"yoke {nm} cover aft face", float(Vy[:, 0].max()), x_ref + 1e-3 * cov_a)
+        _ext_dev(dev, lab, f"yoke {nm} moulding fwd face", float(Vg[:, 0].min()), x_ref + 1e-3 * blk_a)
+        _ext_dev(dev, lab, f"yoke {nm} white cover centre BL", float(0.5 * (Vy[:, 1].min() + Vy[:, 1].max())),
+                 float(hub[1]))
+        _ext_dev(dev, lab, f"yoke {nm} cover top", float(Vy[:, 2].max()), float(hub[2]) + 1e-3 * float(sh[:, 1].max()))
+        _ext_dev(dev, lab, f"yoke {nm} grip tops", float(Vg[:, 2].max()), float(hub[2]) + 1e-3 * float(gr[:, 1].max()))
+        _ext_dev(dev, lab, f"yoke {nm} grip bottoms", float(Vg[:, 2].min()), float(hub[2]) + 1e-3 * float(gr[:, 1].min()))
+        _ext_dev(dev, lab, f"yoke {nm} grip span", float(Vg[:, 1].max() - Vg[:, 1].min()),
+                 1e-3 * float(gr[:, 0].max() - gr[:, 0].min()))
+    rep.add("L6", "yokes (rev M): cover aft face, moulding fwd face, cover centre / top, grip tops / bottoms / span",
+            np.array(dev), tol, "the L6 rev M yoke (YOKE_DESIGN front / side views)", _wl(dev, lab))
     # pedal pads: centres at seat CL +/- dy
     PD = I.PEDALS
     dev, lab = [], []
@@ -3100,6 +3107,148 @@ def _plot_livery(path, P, d):
 
 
 # =====================================================================================================================
+# L6Y  the yoke (rev M, sheets L6Y / L6Y2)
+# =====================================================================================================================
+def _yoke_local(V, side):
+    """Model-axes points of a yoke at its neutral pose -> yoke-local mm (u outboard, h up, a aft; model/yoke3d.place)."""
+    from model import interior as I
+    hub = I.yoke_hub(side)
+    x_ref = float(hub[0] + I.YOKE["hub_whd"][2])
+    return np.c_[side * (V[:, 1] - hub[1]), V[:, 2] - hub[2], V[:, 0] - x_ref] * 1000.0
+
+
+def _mask_edge_pts(mask, box, res):
+    """Centres of the boundary pixels of a raster mask (rows = second axis) as (n, 2) points."""
+    inner = mask.copy()
+    inner[1:-1, 1:-1] = mask[1:-1, 1:-1] & mask[:-2, 1:-1] & mask[2:, 1:-1] & mask[1:-1, :-2] & mask[1:-1, 2:]
+    j, i = np.nonzero(mask & ~inner)
+    return np.c_[box[0] + i * res, box[1] + j * res]
+
+
+def _sil_compare(T2, polys, res=0.1, pad=4.0):
+    """Two-way distances (mm) between the boundary of the union of the projected triangles T2 (m, 3, 2) and that of
+    the filled outlines `polys` (raster res mm): (dev both ways, the points)."""
+    allp = np.vstack([T2.reshape(-1, 2)] + [np.asarray(P, float) for P in polys])
+    box = (*(allp.min(0) - pad), *(allp.max(0) + pad))
+    from scipy.ndimage import binary_fill_holes
+    mb = binary_fill_holes(_raster_mask(box, tris=T2, res=res))     # outlines only (gaps between faces of a filtered
+    md = binary_fill_holes(_raster_mask(box, polys=polys, res=res))  # set, a drawn piece's inner contour)
+    pb, pd = _mask_edge_pts(mb, box, res), _mask_edge_pts(md, box, res)
+    d1, _ = cKDTree(pd).query(pb)
+    d2, _ = cKDTree(pb).query(pd)
+    return np.r_[d1, d2], np.vstack([pb, pd])
+
+
+def _axis_dist(P, c, n):
+    """Distance (mm) of points P from the line through c along n."""
+    n = np.asarray(n, float) / np.linalg.norm(n)
+    v = np.atleast_2d(P) - c
+    return np.linalg.norm(v - (v @ n)[:, None] * n, axis=1)
+
+
+def check_L6Y(ctx, rep, plots):
+    """The built rev M yokes (yoke_L / yoke_R at their neutral pose, in yoke-local mm) against the outlines sheets L6Y /
+    L6Y2 draw from the tables (interior.yoke_front_mm, the solids' side silhouettes yoke_geom.view_silhouettes 'u',
+    the switch axes): front silhouette, cover, inserts, pads, switch centres, side silhouette; 1.5 mm."""
+    from model import interior as I
+    from model import yoke_geom as YG
+    tol = 1.5
+    FR = I.yoke_front_mm()
+    SV = YG.view_silhouettes("u", step=0.4, depth_step=0.5, parts=YG.PARTS + YG.SWITCHES)
+    SF = YG.view_silhouettes("a", step=0.4, depth_step=0.5, parts=YG.PARTS + YG.SWITCHES)
+    D = YG.T()
+    for side, pid in ((1, "yoke_R"), (-1, "yoke_L")):
+        rs = ctx.get(pid)
+        who = "co-pilot" if side > 0 else "pilot"
+        if not rs:
+            rep.add("L6Y", f"{pid} ({who} yoke) in the GLB", status="FAIL", detail="missing")
+            continue
+        loc = [(r.mat, _yoke_local(r.V, side), r.F) for r in rs]
+
+        def tris(mats=None, exclude=("metal_dark",), axes=(0, 1), aft=False):
+            T = []
+            for m, V, Fi in loc:
+                if (mats is None or m in mats) and m not in exclude:
+                    Tm = V[Fi]
+                    if aft:                     # not the forward-facing faces (the cover's hidden front, which the
+                        nrm = np.cross(Tm[:, 1] - Tm[:, 0], Tm[:, 2] - Tm[:, 0])      # front view does not draw); the
+                        nz = nrm[:, 2] * side / np.maximum(np.linalg.norm(nrm, axis=1), 1e-30)   # pilot's mirror
+                        Tm = Tm[nz > -0.3]                                           # flips the winding
+                    T.append(Tm[:, :, list(axes)])
+            return np.concatenate(T) if T else np.zeros((0, 3, 2))
+        # ---- front silhouette (the column excepted) vs the drawn solids' front silhouettes (yoke_geom.view_silhouettes
+        # 'a': body, cover, grips and the switches -- the outlines interior.yoke_front_mm draws are their contours)
+        polys_f = [C for k_, Cs in SF.items() for C in Cs if len(C) > 8]
+        dev, P = _sil_compare(tris(), polys_f)
+        rep.add("L6Y", f"{who} yoke: front silhouette vs L6Y front view (solids + switches)", dev / 1000.0, tol,
+                "boundaries both ways, 0.1 mm raster", worst_list(dev / 1000.0, P, fmt="u {:.1f} h {:.1f}"))
+        # ---- cover and its inserts (front view)
+        cov = ("yoke_white", "yoke_silver", "yoke_silver_dark")
+        for what, mats, key in (("cover", cov, "shell"), ("upper insert", ("yoke_silver",), "insert_upper"),
+                                ("lower insert", ("yoke_silver_dark",), "insert_lower")):
+            dev, P = _sil_compare(tris(mats, aft=True), [FR[key]])
+            rep.add("L6Y", f"{who} yoke: {what} ({'/'.join(mats)}) vs L6Y {key}", dev / 1000.0, tol,
+                    "front view of the aft-facing faces, boundaries both ways",
+                    worst_list(dev / 1000.0, P, fmt="u {:.1f} h {:.1f}"))
+        # ---- pads: the leather's edge (the groove's inner wall) in the grip plane vs the drawn pad outline offset gw
+        gw = float(D["pad_section"][4])
+        dv, lab = [], []
+        for g, sg in (("out", 1.0), ("in", -1.0)):
+            V = np.vstack([V for m, V, F in loc if m == "leather_black"])
+            V = V[V[:, 0] * sg > 40.0]
+            Fp = YG.field("pad_" + g, YG.pad_outline(g))
+            z, uf, hf = YG._to_plane(sg * V[:, 0], V[:, 1], V[:, 2], g)
+            dp = Fp(uf, hf)
+            edge = dp > -gw - 0.2                       # the inner wall / bead foot: the leather's outer edge
+            dv.append(dp[edge] + gw)
+            lab += [f"{g} pad at u {u_:.1f} h {h_:.1f}" for u_, h_ in zip(V[edge, 0], V[edge, 1])]
+            # and the leather's whole outline (front view) inside the drawn pad outline
+            out_ = dp.max()
+            dv.append(np.array([max(out_ + gw, 0.0)]))
+            lab.append(f"{g} pad: outermost leather point {out_ + gw:+.2f} mm off the offset outline")
+        dv = np.concatenate(dv)
+        rep.add("L6Y", f"{who} yoke: pads -- leather edge on the pad outline offset pad_section gw (grip planes)",
+                dv / 1000.0, tol, f"pad_out / pad_in, gw {gw:g}", [lab[i] for i in np.argsort(-np.abs(dv))[:5]])
+        # ---- switch centres: each switch's vertex centroid on its drawn axis (the pieces are symmetric about it)
+        dv, lab = [], []
+        allV = {m: np.vstack([V for mm, V, F in loc if mm == m]) for m in {m for m, _, _ in loc}}
+        c, n = YG.tcs_axis()
+        for m, nm in (("gloss_black", "TCS bezel"),):
+            dv.append(float(_axis_dist(allV[m].mean(0), c, n)[0]))
+            lab.append(nm)
+        c, n = YG.afcs_axis()
+        dv.append(float(_axis_dist(allV["button_red"].mean(0), c, n)[0]))
+        lab.append("AFCS cap")
+        c, n = YG.head_out_face()
+        Vb = allV["black"]
+        sel = (np.linalg.norm(Vb - c, axis=1) < 16.0) & ((Vb - c) @ n > 0.1)
+        dv.append(float(_axis_dist(Vb[sel].mean(0), c, n)[0]) if sel.any() else 99.0)
+        lab.append("pitch-trim rocker")
+        cb, nb, _, _ = YG.button_frame()
+        cb, nb = cb * [-1.0, 1.0, 1.0], nb * [-1.0, 1.0, 1.0]
+        sel = (np.linalg.norm(Vb - cb, axis=1) < 9.0) & ((Vb - cb) @ nb > 0.05)
+        dv.append(float(_axis_dist(Vb[sel].mean(0), cb, nb)[0]) if sel.any() else 99.0)
+        lab.append("inboard push button")
+        Vg = allV["grip_black"]
+        for g, sg in (("out", 1.0), ("in", -1.0)):
+            cf, tf, wf, nf, row = YG.fwd_switch_frame(g)
+            m3 = np.array([sg, 1.0, 1.0])
+            cf, nf = cf * m3, nf * m3
+            Lh = 0.5 * float(row[1]) + 1.0
+            sel = (np.linalg.norm(Vg - cf, axis=1) < Lh) & ((Vg - cf) @ nf > 0.05)
+            dv.append(float(_axis_dist(Vg[sel].mean(0), cf, nf)[0]) if sel.any() else 99.0)
+            lab.append(f"forward-face switch ({g})")
+        dv = np.array(dv)
+        rep.add("L6Y", f"{who} yoke: switch centres on their drawn axes (TCS, AFCS, trim, button, fwd x2)", dv / 1000.0,
+                tol, "vertex centroids of the symmetric pieces", [f"{lab[i]} {dv[i]:.2f} mm" for i in np.argsort(-dv)[:5]])
+        # ---- side silhouette (seen along u) vs the solids' side silhouettes the sheet draws
+        polys = [C for k_, Cs in SV.items() for C in Cs if len(C) > 8]
+        dev, P = _sil_compare(tris(axes=(2, 1)), polys)
+        rep.add("L6Y", f"{who} yoke: side silhouette vs L6Y side view (solids + switches)", dev / 1000.0, tol,
+                "boundaries both ways, column excepted", worst_list(dev / 1000.0, P, fmt="a {:.1f} h {:.1f}"))
+
+
+# =====================================================================================================================
 def stale_sources(glb):
     t = glb.stat().st_mtime
     src = [p for d in ("model", "cad") for p in (ROOT / d).glob("*.py")]
@@ -3109,7 +3258,7 @@ def stale_sources(glb):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--glb", default=str(ROOT / "out" / "pc12.glb"))
-    ap.add_argument("--only", default="L1,L2,L3,L4,L4W,L5,L6")
+    ap.add_argument("--only", default="L1,L2,L3,L4,L4W,L5,L6,L6Y")
     ap.add_argument("--json", default=str(DEFAULT_JSON))
     ap.add_argument("--plots", action="store_true")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -3134,7 +3283,7 @@ def main(argv=None):
         plots = Path(a.json).parent
         plots.mkdir(parents=True, exist_ok=True)
     for sheet, fn in (("L1", check_L1), ("L2", check_L2), ("L3", check_L3), ("L4", check_L4), ("L4W", check_L4W),
-                      ("L5", check_L5), ("L6", check_L6)):
+                      ("L5", check_L5), ("L6", check_L6), ("L6Y", check_L6Y)):
         if sheet in a.only.split(","):
             try:
                 fn(ctx, rep, plots)

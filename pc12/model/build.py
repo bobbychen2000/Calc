@@ -248,8 +248,11 @@ def construction():
 # the seats x 2.9 (crew x 3.4: their sheepskin pads on a grid RES x finer, seats._sk_h) -- their rounded rims and outline
 # corners are built RES x finer (seats._rounds / _arc_k, review r1 RES1-01 / 03: 22 % of their area had been faceted)
 # --, the interior as a whole x 2.2
-INTERIOR_BUDGET = {"total": res.budget(250_000, 2.2), "crew_seat": res.budget(14_000, 3.4),
-                   "cabin_seat": res.budget(12_000, 2.9)}
+# -- the rev M yokes (model/yoke3d.py: one mesh at every RES, the light tier's LOW_FINE included) <= 40k each; the
+# total raised by their 2 x 40k over the rev H yokes' 2 x 22.6k
+YOKE_BUDGET = 40_000
+INTERIOR_BUDGET = {"total": res.budget(250_000, 2.2) + 2 * (YOKE_BUDGET - 22_600), "crew_seat": res.budget(14_000, 3.4),
+                   "cabin_seat": res.budget(12_000, 2.9), "yoke_L": YOKE_BUDGET, "yoke_R": YOKE_BUDGET}
 
 
 def cockpit_camera(side=-1):

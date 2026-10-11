@@ -15,6 +15,8 @@
 //           lamp's dark LED face behind its clear lens, drawn opaque)
 //   grooves the tyres' circumferential tread grooves (render_grooves), in the mesh's own frame about the wheel axis
 //   stripes woven transverse pinstripes (render_stripes: the cabin carpet), along the rest-pose station, band-limited
+//   fleece  band-limited world-space fBm in the albedo + a bump: the crew sheepskin's pile (VIEWER fleece) and the
+//           yoke pads' pebble-grain leather (render_pebble)
 // Patch flags live in material.userData.pc12 (JSON-able, so Material.clone() keeps them) and are
 // (re)installed with installPatch().
 import * as THREE from 'three';
@@ -243,6 +245,13 @@ function physicalFrom(name, e, src) {
   if (src.sheen > 0) { m.sheen = src.sheen; m.sheenColor.copy(src.sheenColor); m.sheenRoughness = src.sheenRoughness; }
   if (V.sheenRoughness != null) m.sheenRoughness = V.sheenRoughness;
   if (V.fleece) m.userData.pc12 = { ...(m.userData.pc12 || {}), fleece: { ...V.fleece } };
+  // pebble-grain leather (lookdev render_pebble: the yoke pads, L6Y item 6): the fleece patch's band-limited noise at
+  // the grain size -- a low bump (~0.12 x the grain) and a faint albedo mottle, faded out where a grain is sub-pixel
+  const pb = e.render_pebble;
+  if (pb && !V.fleece) {
+    m.userData.pc12 = { ...(m.userData.pc12 || {}), fleece: { freq: 1 / pb.size, oct: 2, lo: 1 - 0.4 * pb.amp,
+      hi: 1 + 0.2 * pb.amp, dist: 0.12 * pb.size, bump: Math.min(1, 2 * pb.amp) } };
+  }
   for (const k of ['roughness', 'metalness', 'specularIntensity', 'envMapIntensity']) if (V[k] != null) m[k] = V[k];
   if (V.color) m.color.copy(lin(V.color));
   const pol = polishOf(name, e);

@@ -115,9 +115,17 @@ MATERIALS = {
     "screen_cyan":         ((0.008, 0.045, 0.070), 0.0, 0.10),
     "screen_white":        ((0.080, 0.080, 0.080), 0.0, 0.10),
     "light_amber":         ((0.90, 0.50, 0.05), 0.0, 0.20),           # annunciators / switch legends (lit)
-    # PC-24-style yokes: gloss white hub, black grips
-    "yoke_white":          ((0.78, 0.78, 0.77), 0.0, 0.22, dict(clearcoat=1.0, clearcoat_rough=0.06)),
-    "grip_black":          ((0.018, 0.018, 0.020), 0.0, 0.62),
+    # PC-24-style yokes, rev M (sheet L6Y ITEMS & FINISHES): gloss clear-coat pearl-white cover, satin aluminium upper
+    # insert (crown, badge), smoke-silver lower insert, satin black moulding (crisp edge highlights), charcoal pebble-
+    # grain leather pads (the viewer adds the ~1.1 mm grain: lookdev 'pebble'), red AFCS cap (not emissive), white
+    # tick legends
+    "yoke_white":          ((0.77, 0.78, 0.80), 0.0, 0.22, dict(clearcoat=1.0, clearcoat_rough=0.06)),
+    "yoke_silver":         ((0.62, 0.62, 0.62), 0.85, 0.30),
+    "yoke_silver_dark":    ((0.30, 0.30, 0.30), 0.85, 0.34),
+    "grip_black":          ((0.018, 0.018, 0.020), 0.0, 0.42),
+    "leather_black":       ((0.05, 0.05, 0.05), 0.0, 0.58, dict(specular=0.5)),
+    "button_red":          ((0.70, 0.035, 0.04), 0.0, 0.30, dict(clearcoat=0.3, clearcoat_rough=0.06)),
+    "legend_white":        ((0.80, 0.80, 0.80), 0.0, 0.50),
     # divider / lavatory / cabinets / FR34 header: dark grey-brown (smoked) walnut veneer under a gloss lacquer
     # (P1046406 [M]: sRGB ~90/80/77 in the cabin light)
     "veneer_walnut":       ((0.060, 0.047, 0.040), 0.0, 0.35, dict(clearcoat=1.0, clearcoat_rough=0.06)),

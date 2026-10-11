@@ -547,9 +547,23 @@ SPEC.update({
                                note="standby horizon line"),
     "light_amber":        dict(kind="dielectric", base=(0.90, 0.50, 0.05), rough=0.20, emission=(1.00, 0.55, 0.05),
                                emission_strength=1.0, note="lit annunciators / legends"),
-    "yoke_white":         dict(kind="dielectric", base=(0.78, 0.78, 0.77), rough=0.22, **_ICC,
-                               note="PC-24-style yoke hub, gloss white"),
-    "grip_black":         dict(kind="dielectric", base=(0.018, 0.018, 0.020), rough=0.62, note="yoke grips"),
+    # the yoke, rev M (sheet L6Y ITEMS & FINISHES)
+    "yoke_white":         dict(kind="dielectric", base=(0.77, 0.78, 0.80), rough=0.22, **_ICC,
+                               note="yoke cover (Y shell): gloss clear-coat white, neutral-cool, fine pearl (L6Y item 1)"),
+    "yoke_silver":        dict(kind="dielectric", base=(0.62, 0.62, 0.62), metallic=0.85, rough=0.30,
+                               note="yoke upper insert = crown + badge: satin aluminium (L6Y item 2)"),
+    "yoke_silver_dark":   dict(kind="dielectric", base=(0.30, 0.30, 0.30), metallic=0.85, rough=0.34,
+                               note="yoke lower insert: smoke silver (L6Y item 3)"),
+    "grip_black":         dict(kind="dielectric", base=(0.018, 0.018, 0.020), rough=0.42,
+                               note="yoke body / grips / heads: satin black, crisp edge highlights (L6Y items 4 / 5)"),
+    "leather_black":      dict(kind="dielectric", base=(0.05, 0.05, 0.05), rough=0.58, spec=0.25,
+                               pebble=dict(size=0.0011, amp=0.35, rough_amp=0.10, creases=0.15),
+                               note="yoke pads (L6Y item 6): charcoal leather, ~1.1 mm pebble grain, faint creases "
+                                    "(viewer: a band-limited bump patch, materials.js); the glareshield lip"),
+    "button_red":         dict(kind="dielectric", base=(0.70, 0.035, 0.04), rough=0.30, coat=0.3, coat_rough=0.06,
+                               note="AFCS disconnect cap: red, light clear coat, NOT emissive (L6Y item 8)"),
+    "legend_white":       dict(kind="dielectric", base=(0.80, 0.80, 0.80), rough=0.50,
+                               note="yoke legend ticks (no lettering: L6Y items 7-10)"),
     "veneer_walnut":      dict(kind="dielectric", base=(0.060, 0.047, 0.040), rough=0.35, **_ICC,
                                grain=dict(scale=(70.0, 70.0, 2.5), amp=0.30, detail=4.0),
                                note="dark grey-brown walnut veneer, vertical grain, gloss lacquer (P1046406)"),
@@ -1886,6 +1900,8 @@ def gltf_table(overrides=None):
             d["render_grain"] = {k: (list(v) if isinstance(v, tuple) else v) for k, v in p["grain"].items()}
         if p.get("fleece"):
             d["render_fleece"] = dict(p["fleece"])
+        if p.get("pebble"):                        # leather pebble grain (three.js: a band-limited bump patch)
+            d["render_pebble"] = dict(p["pebble"])
         if p.get("stripes"):
             d["render_stripes"] = {k: (list(v) if isinstance(v, tuple) else v) for k, v in p["stripes"].items()}
         if p.get("texture"):                       # the GLB carries the image (cad/glb.py): 'emission' / 'base' slot

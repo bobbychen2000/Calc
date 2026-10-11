@@ -3,10 +3,10 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.38M tris of which the interior ~525k, ~40 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.49M tris of which the interior ~640k, ~42 MB
 incl. the 0.5 MB G3000 page atlas, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~1.92M tris, ~32 MB,
+review, but its seats, yokes, pedals, braces and nose leg as in the full model -- `build.LOW_FINE`: ~2.02M tris, ~34 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -33,12 +33,20 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   the lining, 22c curtain vs crew tracks; 23 closed interior shells wound outward,
                                 #   vertex normals with the face winding; 24 crew harness on the fleece, 25 armrests
                                 #   vs the pedestal over the seat travel, 26 no coplanar overlaps of different
-                                #   materials, 27 the PDU bezel tops visible from both design eyes; the main-gear leg
+                                #   materials, 27 the PDU bezel tops visible from both design eyes, 30 the rev M yokes
+                                #   over roll x pitch vs the panel / U recess / J band / glareshield / pedestal (exact
+                                #   distances both ways, >= 3 mm; 30a the column in its opening / sleeve, 30b full push
+                                #   [open], 30c the column vs the J band / recess top [open]);
+                                #   the main-gear leg
                                 #   door vs the skin cut-out every 0.5 % over 90-100 %, flush outside its tyre blister);
                                 #   '[open]' rows are known conflicts in the approved parameters that need an owner
                                 #   decision (they do not fail)
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
-                                #   (L4W: wheels / tyres / nose yoke, 2 mm)
+                                #   (L4W: wheels / tyres / nose yoke, 2 mm; L6Y: the built yokes in yoke-local mm vs the
+                                #   L6Y front / side views, cover, inserts, pads, switch axes, 1.5 mm)
+python3 test/yoke_mesh_check.py # the Stage-3 yoke mesh (~4 min): triangles vs build.YOKE_BUDGET (as built: cad.res +
+                                #   the column), watertight, slivers, corner normals vs the solids, the frame's
+                                #   highlight error (interpolated vs exact normals on the visible faces)
 python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from the parameter modules (~3 min;
                                 #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels,
                                 #   `L6Y L6Y2` the yoke design drawings: interior.YOKE_DESIGN through the solids of
@@ -673,13 +681,8 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   approved s/n 3001 anthracite, photo 130 (MSN 3008) shows it light.
 - Flight deck r1 GEOM A (owner 2026-10-04: "the flight deck ... 1/10", "the details are drastically missing"; the panel
   area: the owned `flightdeck.py` builders + `model/fd_detail_a.py`, L6 / L6B rev H; the G3000 PRIME / PC-12 PRO
-  research of 2026-10-05 applied where it corrects the tables): YOKES re-measured (P1046408 at 0.70 mm/px, P1046409 at
-  0.52, the JTF elevation; YOKE hub 140 x 120, the white Y shield -- horns to +/-70, +/-39 at mid-height, a round 45
-  foot (hub_bot_w kept: 0.076 is the mid-height width) --, paddle grips r 16 widening to 21 over their top 90, no round
-  head): shield domed 8.5 mm with two ridges along a stepped silver V funnel (an abstract bar badge), black horns from
-  the grips into its corners, flat-backed D-section paddles (`fd_detail_a.paddle_grip`) with a grained leather inset in
-  a moulded rim (`inset`), trim switch / knurled 4-way hat / PTT trigger, TCS on the white horn, red AP DISC on the black
-  arm, a satin dark column in an 8-pleat rubber bellows carried by the yoke (`yoke_bellows`, OD 90).  FOOTWELLS
+  research of 2026-10-05 applied where it corrects the tables): YOKES -- the rev H paddle yokes (shield, paddles,
+  bellows) are superseded by Yoke rev M (below).  FOOTWELLS
   (`footwell_walls`): dark tunnel-side and outboard walls, the panel's underside (rising 50 mm forward over the
   rudder-bar pivots), the cubby face under the cheek leg with the USB pair; pedals satin black pads with rubber ribs and
   a toe lip.  GLARESHIELD: the lip arch from both Pilatus 'Just the Facts' elevations (research C1: GLARESHIELD lip_dz,
@@ -698,8 +701,8 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   P1046410), V-speed placards above it; SDUs 110 x 195 (C6).  LOWER PANEL (`lower_panel`, `LOWER`): the face charcoal
   (panel_dark) round the PDU row and behind titanium plates -- a band under the PDUs, inner / yoke / outer sub-panels
   split at BL 0.290 / 0.575 [M], 2 mm dark seams, pan-head screws --, the cheek LEGS (research M17: the bottom edge
-  sweeps down 111 mm over |BL| 0.575-0.660, `z_bot`; the outer plate follows it, O2 / mic sockets on them), rounded yoke
-  wells with a satin lip, ICE PROTECTION 2 x 3 rockers, the gear handle with its wheel knob and V-LE / V-LO placard,
+  sweeps down 111 mm over |BL| 0.575-0.660, `z_bot`; the outer plate follows it, O2 / mic sockets on them), the yoke
+  columns' U recesses (Yoke rev M), ICE PROTECTION 2 x 3 rockers, the gear handle with its wheel knob and V-LE / V-LO placard,
   guarded FEATHER INHIBIT, the PARKING BRK lozenge; co-pilot ACS row of four lit caps, rockers, guarded DUMP, OXYGEN
   lever; skirted panel-end knobs.  STACK + PEDESTAL (`stack_shell`, `quadrant`): the waisted stack moulding (0.14 at the
   SDUs -> 0.098 waist -> the quadrant's 0.11, P1046408) with a moulded R 12 edge, the charcoal SDU surround, the recessed
@@ -712,16 +715,81 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   shared materials (leather_black, stitch_thread, rubber_black, annun_*) are the seed's block; until it lands
   `fd_detail_a.SHARED_FALLBACK` registers stand-ins by setdefault (the seed's values win).  Checks: `test/fit_fd_a.py`
   28 (pedals over their travel, the 95th's shoes and legs vs the footwell walls >= 10 mm: 10.1 / 27.5 / 20.9), 29
-  (yokes over the pull travel and 60 mm of push x roll +/-70 vs the panel detail >= 3 mm: 16.1) and 29b [open] -- at
+  (the rev H yokes over the pull travel and 60 mm of push x roll +/-70 vs the panel detail >= 3 mm: 16.1; the rev M
+  yokes: fit_check 30, Yoke rev M) and 29b [open] -- at
   the full [E] push (-90 mm) the grips reach within ~8 mm of the bare lower-panel face wings level and cross it from ~45
   deg of roll: the switch blocks under the inboard grips are hit; owner decision: a shorter [E] forward travel (~-65 mm)
   or accept; consistency rows select the yoke / pedal parts and the lip's leather_black (materials moved).  Triangles
   (RES 2):
-  flight_deck 35.6k -> 87.3k, yokes 13.75k -> 22.6k, pedals 1.9k -> 3.0k; the interior 601k is over
+  flight_deck 35.6k -> 87.3k, yokes 13.75k -> 22.6k (rev M: 39.9k, below), pedals 1.9k -> 3.0k; the interior 601k is over
   build.INTERIOR_BUDGET's 550k until the seed's caps land (flight_deck 150k, yoke 24k, pedal 3k).  Deferred: legends
   on the shared legend atlas (seed S had not landed), the flight deck in build.LOW_FINE (the seed's; the light tier
   builds it at RES 1 meanwhile), the pedestal front height (no PNL-04 figure in hand), PANEL.mfd_z (research C7: a
   camera fit first).
+- Yoke rev M (L6Y / L6Y2): sheets L6Y rev E / L6Y2 rev D, owner-approved 2026-10-05 as the 3-D basis; owner decisions
+  of that day: the 95th-percentile knee is ACCEPTED AS MEASURED (23.8 mm wings level against the 25 mm criterion,
+  contact from 12.5 deg of roll; the criterion text stays, L6B and fit_check 19 show the shortfall), the centre-post
+  compass stays.  The 3-D yokes are built from exactly the solids / tables the sheets draw (`model/yoke_geom.py`,
+  interior.YOKE_DESIGN) in yoke-local mm (u outboard in the co-pilot sense, h up, a aft) and placed by `yoke3d.place`
+  (x = hub x + hub_whd[2] + a, y = hub y + side u, z = hub z + h; the pilot's the mirror, winding flipped); `yoke_L` /
+  `yoke_R` stay own parts, children of flight_deck with the 'yoke' pivot (kinematics unchanged); the rev H builder
+  (shield, paddle grips, bellows) and interior.YOKE_REVH are gone.  MESHING (smooth highlights first; one mesh at every
+  RES, so the light tier's LOW_FINE yoke is the same; `yoke3d.yoke_pieces` disk-caches it in out/tmp/yoke_mesh_cache
+  under the design key + the mesher sources): the black MOULDING (body + grips + rolling-ball joins =
+  `yoke_mesh.moulding_smooth`, yoke_geom.moulding without the pads' pockets and the trim face's grooves) by octree dual
+  contouring (DC_EPS 0.02, 547k triangles, exact gradients), the pads and the trim face cut out along their tabled edges
+  (`yoke_patch.cut`: boundary vertices exactly on {field 0, cut 0}), then the HIGHLIGHT DECIMATION
+  (`yoke_mesh.decimate_interp`, 2026-10-10): every dense vertex is a sample its coarse face must reproduce -- the
+  corner normals interpolated there within `FRAME_TOL` 3.5 deg of its exact normal (x up to 6 on rounds tighter than
+  4 mm, `curvature_tol_k`: a few pixels across; x4 on the forward faces nobody's camera sees; 20 deg, cone / turn 30 /
+  40 under the cover), the face within 0.15 mm (0.40 / 0.50) -- besides decimate2's tests (flip, cone 12, turn 20 deg
+  over 0.02 mm of PN bow = cad.res interior, angle, link, the cut loops sliding within 0.02 mm); the first route
+  (QEM / cone bounds, 8-14 mm faces) had 43 % of the visible frame's area > 2 deg off (29 % > 4: the blotchy zebra),
+  refining it afterwards spent 46k faces, a 6 deg cone 103k.  Then exact projection, PN-midpoint splits where the
+  turn / bow criterion fails (not under the cover), `sliver_cleanup`.  The PAD POCKETS (`pad_pocket`: wall, groove
+  floor 1.0 x 0.5, inner wall, the R 0.4 bead in 5 rows, the crowned leather as a CDT refined where its interpolated
+  normals miss by > 4 deg) and the TRIM FACE (`trim_terrain`: V-grooves cut from the face plane) stitched into the
+  loops on shared positions; the COVER explicit (`yoke_cover`: strip columns along the shell outline -- aft round /
+  land / front rows, crease columns at the foot -- and a terrain whose groove crease chains are forced into a
+  constrained Delaunay, heights exact, normals per groove piece split only along the creases, fill 2.4 / 4.0 mm plus
+  centroid points wherever the interpolated normal misses its piece's by > 1 deg: 0.1 % of the area left);
+  SWITCHES parametric (`yoke3d`: revolves with exact arcs -- rows <= 15 deg on rounds >= 0.6 mm, so cad.res leaves
+  them --, rounded extrusions with mitred sharp corners); legend TICKS 0.35 mm slabs 0.12 proud (no letters).
+  `test/yoke_mesh_check.py` (~4 min): per yoke 38.8k triangles as meshed (frame 20.0k incl. the AFCS boss 1.8k,
+  pockets 6.2k, trim 0.8k, cover 6.9k, switches 4.2k, ticks 0.6k), 39.9k in the GLB part after cad.res's refinement
+  (+0.9k: the cover strip's and the rounded extrusions' quad diagonals) and the column (0.2k) -- `build.YOKE_BUDGET` 40k =
+  INTERIOR_BUDGET yoke_L / yoke_R, the interior total raised by 2 x (40k - 22.6k) (it was over before: flight-deck r1);
+  watertight (welded by position, 0 open edges); corner normals vs the solids' gradients p95 1.90 (cover) / 1.67
+  (moulding) deg; the frame's visible faces: interpolated vs exact normal p50 0.86, p95 2.97 deg, 16 % of the area
+  > 2 deg, 1.2 % > 4 (zebra / studio before-after: out/tmp/yoke3d/cmp_*); 17 sliver triangles (< 5 deg) left: cover
+  7 (sub-millimetre, strip foot / insert junction), trim chords' ends 4, pad_in leather 5 at the bead junction, frame 1
+  (forward face).  MATERIALS (L6Y items; assemble.MATERIALS = lookdev SPEC = web/viewer/materials.json): yoke_white
+  gloss pearl (clear coat), yoke_silver / yoke_silver_dark (new, metallic inserts), grip_black satin, leather_black
+  (pads: ~1.1 mm pebble grain -- lookdev render_pebble; the viewer's materials.js maps it onto the band-limited
+  'fleece' noise patch at the grain size), gloss_black TCS bezel, button_red AFCS cap (new, not emissive), legend_white
+  ticks (new), metal_dark column, pedestal_gunmetal J band / recess.  PANEL: only the recess changed -- the lower
+  panel's face is trimmed by the U (`fd_detail_a.recess_sdf`, YOKE_DESIGN column_recess: half-width 57, bottom h -72,
+  R 17, 8 deep) and `column_surround` adds its walls, a rim flange over the plates' notch, the floor with the column's
+  opening (column r + 1 mm, concentric with the column in the model's (y, z): the face points' offset along the tilted
+  face normal had moved it 0.9 mm off the axis) and a dark sleeve closed 10 mm beyond the column's forward end at full
+  push (`sleeve_depth` 0.22 m; it was 30 mm, the column ran through its cap), the J band (column_band 23 x 8, R 4
+  rolled edges, flat top, leg inboard, joint line, hook about h -24) and its pan-head screw; no bellows (none in any
+  PRO photo).  CHECKS: fit_check 30 (yokes over roll +/-70 x the pull travel + 60 mm push vs panel / recess / J band /
+  glareshield / pedestal, exact point-triangle distances both ways >= 3 mm: 18.4 mm), 30a (the column in its opening
+  and sleeve: radial 0.95 mm, its end 11 mm short of the sleeve's cap at full push), 30b [open] (the full [E] push, as
+  fit_fd_a 29b: 0.0 mm), 30c [open] (the column vs the J band and the panel face above the recess: -10.7 mm -- the
+  band and the recess were measured / drawn about the photos' column axis WL ~1.821, the column and roll pivot keep
+  the hub WL 1.845 (the sheets' open point): the band's inboard leg runs tangent to the column, the recess top h +12
+  [E] lies inside it; hidden behind the yoke from the crew / cabin stops); 19 on the yoke parts (wings level 24 mm,
+  L6B 24; full roll -17, L6B -19: the accepted shortfall); consistency_2d3d L6Y (front / side silhouettes, cover,
+  inserts, pads, switch axes, 1.5 mm: <= 0.4 mm, switch centres 1.2; all 157 rows pass).  Photo comparisons through the overlay cameras (P1046408 pilot /
+  co-pilot, P1046409, P1046410, Mexico pilot / co-pilot, AOPA / press pilot / co-pilot: refs/cache/overlays/yoke/3d,
+  private) and out/tmp/yoke3d (renders alone, viewer view_*_revM / _revH; the first mesh's _revM_qem).  Open: the AFCS
+  boss (its R 0.8 edges and 1.5 mm blend hold 1.8k faces: an explicit revolve would free them), the slivers above,
+  30c (the column axis vs the band / recess, owner),
+  the inboard grip's forward-face field kink (a ~2 mm scar in the solid, hidden); the sheets' own open points (the
+  fore-aft station, grip toe, trim head depth, crown soft break vs crease, J band vs full collar, shell skew, the [E]
+  forward-face switches).
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been

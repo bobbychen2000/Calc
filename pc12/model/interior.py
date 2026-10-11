@@ -253,14 +253,6 @@ YOKE = dict(
                  "knee_clear 25 kept, not loosened) and contact from 12.5 deg -- ACCEPTED AS MEASURED (L6B open point "
                  "1 closed; L6B detail F / fit_check 19 compute it)"),
 )
-# rev H front-outline parameters, FROZEN: read only by the rev H 3-D builder (flightdeck._yokes via the _revh_* helpers
-# below) so that a rebuild keeps today's GLB yoke until the Stage-3 yoke rebuild consumes YOKE_DESIGN; nothing else
-# reads them (the L6 / L6B sheets, the knee checks and L6Y draw rev I)
-YOKE_REVH = dict(hub_whd=(0.140, 0.120, 0.060), hub_bot_w=0.045, span=0.285, grip=(0.160, 0.016, 10.0),
-                 grip_dz=-0.040, grip_head=(0.090, 0.021),
-                 shield=((0.00, 1.00), (0.10, 0.97), (0.22, 0.74), (0.33, 0.52), (0.45, 0.38), (0.60, 0.28),
-                         (0.80, 0.14), (1.00, 0.00)),
-                 shield_dip=0.004, body_arm=(-0.004, 0.005))
 
 # ---------------------------------------------------------------------------------------------------- yoke design
 # YOKE_DESIGN (rev J; rev I 2026-10-05, owner "the yoke isn't quite right especially if you look at the details"): the
@@ -1846,44 +1838,6 @@ def yoke_hand_dz():
 
 
 # ---- rev H outline, FROZEN for the rev H 3-D builder (flightdeck._yokes) until the Stage-3 yoke rebuild
-def _revh_grip_axis(d=1):
-    gl, gr, gc = YOKE_REVH["grip"]
-    a = math.radians(gc)
-    p0 = np.array([d * (0.5 * YOKE_REVH["span"] - gr), YOKE_REVH["grip_dz"] + gr])
-    return p0, p0 + (gl - 2.0 * gr) * np.array([-d * math.sin(a), math.cos(a)])
-
-
-def _revh_grip_y(z, d=1):
-    p0, p1 = _revh_grip_axis(d)
-    return float(p0[0] + (z - p0[1]) * (p1[0] - p0[0]) / (p1[1] - p0[1]))
-
-
-def _revh_shield_yz():
-    hw, hh, _ = YOKE_REVH["hub_whd"]
-    bw = YOKE_REVH["hub_bot_w"]
-    tt, ff = (np.array(v, float) for v in zip(*YOKE_REVH["shield"]))
-    t = np.linspace(0.0, 1.0, 11)
-    w = 0.5 * bw + (0.5 * hw - 0.5 * bw) * np.interp(t, tt, ff)
-    z = 0.5 * hh - t * hh
-    return np.vstack([np.c_[w, z], np.c_[-w, z][::-1], [(0.0, 0.5 * hh - YOKE_REVH["shield_dip"])]])
-
-
-def _revh_body_yz():
-    hw, hh, _ = YOKE_REVH["hub_whd"]
-    bw = YOKE_REVH["hub_bot_w"]
-    za, rim = YOKE_REVH["body_arm"]
-    zs = 0.5 * hh + 0.005
-    half = [(0.5 * bw + rim, -0.5 * hh - rim)]
-    y_a = _revh_grip_y(za, 1)
-    for f in (0.35, 0.70):
-        q = np.array(half[0]) + f * (np.array([y_a, za]) - np.array(half[0]))
-        half.append((q[0] + 0.004 * f * (1 - f) * 4, q[1] - 0.004 * f * (1 - f) * 4))
-    half += [(y_a, za), (_revh_grip_y(zs, 1), zs), (0.5 * hw - 0.004, 0.5 * hh - 0.006)]
-    H = np.array(half)
-    cen = (0.0, 0.5 * hh - YOKE_REVH["shield_dip"] - 0.008)
-    return np.vstack([H[::-1] * [-1, 1], H, [cen]])[::-1]
-
-
 def leg_spheres(p, yc, legs=(-1, 1)):
     """Spheres (x, y, z, r) along the thighs (knee -> hip) and shanks (knee -> ankle) of a side-view pose; legs picks
     the leg(s): -1 = the one at yc - knee, +1 = at yc + knee.  Crew poses (leg_y): the thigh runs from the knee to the

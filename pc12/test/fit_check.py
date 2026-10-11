@@ -54,6 +54,13 @@
 27. G3000 PDU bezel tops (and so the glass) visible from both design eyes: sight lines from interior.design_eye to
     points along the PFD / MFD / far-PFD bezel tops cross no flight-deck, glareshield or lining triangle (model judging
     r1 INT-M1: the rev F eyebrow fascia hid the top 50-55 mm of the glass)
+30. the rev M yokes (yoke_L / yoke_R) swept over +/- YOKE roll x the pull travel and the first 60 mm of push vs the
+    flight deck round them -- the lower panel, its U column recess and J band, the glareshield, the pedestal: exact
+    point-to-triangle distances both ways >= 3 mm (the column excepted: 30a its clearance in the recess floor's hole
+    and sleeve over the travel, >= 0.5 mm, its end >= 5 mm short of the sleeve's closed end at full push; 30c [open]
+    the column vs the J band and the panel face above the recess: drawn about the photos' column axis WL ~1.821, 24 mm
+    under the hub the column / roll pivot keep -- the sheets' open point); 30b the full [E] push, reported as the owner decision of fit_fd_a 29b while it is not
+    clear
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
 """
@@ -863,8 +870,7 @@ for pid in [k for k in SEAT_IDS if k.startswith("seat_pax")]:
 Y = I.YOKE
 for side in (-1, 1):
     hub = I.yoke_hub(side)
-    Vy = np.vstack([m.V for k in ["flight_deck"] + FD_KIDS for m, mm in parts[k].meshes
-                    if mm in ("yoke_white", "grip_black", "black", "light_red", "panel_grey")])
+    Vy = np.vstack([m.V for m, mm in parts["yoke_" + ("L" if side < 0 else "R")].meshes])     # rev M: own part
     Vy = Vy[(np.abs(Vy[:, 1] - hub[1]) < 0.20) & (Vy[:, 0] > hub[0] - 0.05) & (Vy[:, 0] < hub[0] + 0.12) &
             (np.abs(Vy[:, 2] - hub[2]) < 0.15)]
     p95 = I.crew_setting(1.0, side)
@@ -887,7 +893,8 @@ for side in (-1, 1):
     report(f"95th-pct knees / legs vs the {'pilot' if side < 0 else 'co-pilot'} yoke (3-D mesh, pitch travel "
            f"{Y['travel'][0] * 1000:+.0f}/{Y['travel'][1] * 1000:+.0f} mm, roll +/-{Y['roll']:.0f} deg)",
            True, f"wings level {lvl * 1000:.0f} mm (L6B {l6b_lvl * 1000:.0f}), full roll sweep {rol * 1000:.0f} mm (L6B "
-                 f"{l6b_rol * 1000:.0f}); criterion {I.CRITERIA['knee_clear'] * 1000:.0f} mm (report)")
+                 f"{l6b_rol * 1000:.0f}); criterion {I.CRITERIA['knee_clear'] * 1000:.0f} mm (report; the shortfall accepted as "
+                 "measured: owner 2026-10-05, L6B)")
 
 # 20 ----------------------------------------------------------------------------------------------- furniture vs openings
 # the fixed cabin furniture (cabinets, ledges, lavatory, headliner fittings) (a) never in front of a cabin / door window
@@ -1393,6 +1400,160 @@ report("PDU bezel tops visible from the design eyes (sight lines clear of the br
        not vis_bad, f"{vis_n - len(vis_bad)}/{vis_n} clear; 2-D margin under the fascia foot: bezel tops "
                     f"{1000 * mb_:.1f} mm, glass tops {1000 * mg_:.1f} mm (worst {wpair})"
                     + ("; blocked: " + ", ".join(vis_bad[:6]) if vis_bad else ""))
+
+# 30 ------------------------------------------------------------------------ yokes over roll x pitch vs the panel
+YK = I.YOKE
+COL_R = float(YK["column_r"])
+
+
+def _subdiv(T, rmax=0.006):
+    """Triangles (n, 3, 3) split 1 -> 4 until each lies within rmax of its centroid (exact: planar)."""
+    out = []
+    while len(T):
+        c = T.mean(1)
+        r = np.linalg.norm(T - c[:, None], axis=2).max(1)
+        out.append(T[r <= rmax])
+        B = T[r > rmax]
+        if not len(B):
+            break
+        a, b, c_ = B[:, 0], B[:, 1], B[:, 2]
+        ab, bc, ca = 0.5 * (a + b), 0.5 * (b + c_), 0.5 * (c_ + a)
+        T = np.concatenate([np.stack(t, 1) for t in ((a, ab, ca), (ab, b, bc), (ca, bc, c_), (ab, bc, ca))])
+    return np.concatenate(out)
+
+
+def _pt_tri_k(P, T, idx):
+    """Exact distance of each point P (n, 3) to the candidate triangles T[idx] (n, k) (idx == len(T): none)."""
+    ok = idx < len(T)
+    Tc = T[np.minimum(idx, len(T) - 1)]                           # (n, k, 3, 3)
+    a, b, c = Tc[:, :, 0], Tc[:, :, 1], Tc[:, :, 2]
+    p = P[:, None, :]
+    ab, ac, ap = b - a, c - a, p - a
+    d1, d2 = (ab * ap).sum(-1), (ac * ap).sum(-1)
+    bp, cp = p - b, p - c
+    d3, d4 = (ab * bp).sum(-1), (ac * bp).sum(-1)
+    d5, d6 = (ab * cp).sum(-1), (ac * cp).sum(-1)
+    va, vb, vc = d3 * d6 - d5 * d4, d5 * d2 - d1 * d6, d1 * d4 - d3 * d2
+    den = np.where(np.abs(va + vb + vc) < 1e-30, 1e-30, va + vb + vc)
+    v, w = vb / den, vc / den
+    q = a + v[..., None] * ab + w[..., None] * ac                  # interior projection
+
+    def seg(s0, s1):
+        d = s1 - s0
+        t = np.clip(((p - s0) * d).sum(-1) / ((d * d).sum(-1) + 1e-30), 0, 1)
+        return np.linalg.norm(p - (s0 + t[..., None] * d), axis=-1)
+    inside = (va >= 0) & (vb >= 0) & (vc >= 0)
+    dist = np.where(inside, np.linalg.norm(p - q, axis=-1), np.minimum(np.minimum(seg(a, b), seg(b, c)), seg(c, a)))
+    return np.where(ok, dist, np.inf).min(1)
+
+
+def _closest(P, T, tree, rmax=0.006, reach=0.012, k=24):
+    """min distance (and the point index) of points P to the subdivided triangles T (KD tree of their centroids):
+    exact within `reach` (a triangle lies within rmax of its centroid)."""
+    _, idx = tree.query(P, k=k, distance_upper_bound=reach + rmax)
+    idx = np.atleast_2d(idx)
+    has = (idx < len(T)).any(1)
+    if not has.any():
+        return np.inf, -1
+    d = _pt_tri_k(P[has], T, idx[has])
+    i = int(np.argmin(d))
+    return float(d[i]), int(np.nonzero(has)[0][i])
+
+
+SWEEP_REACH = 0.040          # the sweep's distances are exact within this (beyond it: reported as '> 40 mm')
+
+
+def _mm(d):
+    return f"{d * 1000:.1f} mm" if np.isfinite(d) else f"> {SWEEP_REACH * 1000:.0f} mm"
+
+
+def _yoke_panel_sweep(pushes):
+    worst = (np.inf, "")
+    for side in (-1, 1):
+        pid = "yoke_" + ("L" if side < 0 else "R")
+        hub = I.yoke_hub(side)
+        To = np.vstack([m.V[m.F] for k in ("flight_deck", "fd_consoles") if k in parts for m, mat in parts[k].meshes
+                        if len(m.F)])
+        To = To[((np.abs(To[:, :, 1] - hub[1]) < 0.30) & (np.abs(To[:, :, 2] - hub[2]) < 0.30) &
+                 (To[:, :, 0] > hub[0] - 0.25) & (To[:, :, 0] < hub[0] + 0.20)).any(1)]
+        To = _subdiv(To)
+        tree_o = cKDTree(To.mean(1))
+        Po = np.unique(np.round(To.reshape(-1, 3), 6), axis=0)
+        Ty = np.vstack([m.V[m.F] for m, mat in parts[pid].meshes if len(m.F)])
+        cen = Ty.mean(1)
+        col = (np.hypot(cen[:, 1] - hub[1], cen[:, 2] - hub[2]) < COL_R + 0.002) & (cen[:, 0] < hub[0] + 0.012)
+        Ty = _subdiv(Ty[~col])
+        Py = np.unique(np.round(Ty.reshape(-1, 3), 6), axis=0)
+        for t in pushes:
+            for roll in np.arange(-float(YK["roll"]), float(YK["roll"]) + 1e-9, 10.0):
+                a = np.radians(roll)
+                R = np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+                Pr = (Py - hub) @ R.T + hub + [t, 0.0, 0.0]
+                Tr = (Ty - hub) @ R.T + hub + [t, 0.0, 0.0]
+                d1, i1 = _closest(Pr, To, tree_o, reach=SWEEP_REACH)
+                d2, i2 = _closest(Po, Tr, cKDTree(Tr.mean(1)), reach=SWEEP_REACH)
+                d, at = (d1, Pr[i1]) if d1 <= d2 else (d2, Po[i2] if i2 >= 0 else hub)
+                if d < worst[0]:
+                    worst = (d, f"{pid} pitch {t * 1000:+.0f} mm roll {roll:+.0f} deg at STA {at[0]:.3f} BL "
+                                f"{at[1]:+.3f} WL {at[2]:.3f}")
+    return worst
+
+
+_t0, _t1 = (float(v) for v in YK["travel"])
+_PUSH_HARD = -0.060
+_w = _yoke_panel_sweep(np.r_[np.linspace(_PUSH_HARD, 0.0, 4), np.linspace(0.0, _t1, 4)[1:]])
+report(f"yokes (rev M, own parts) over roll +/-{YK['roll']:.0f} deg x the pull travel and {_PUSH_HARD * 1000:+.0f} mm "
+       "of push vs the lower panel, U recess, J band, glareshield, pedestal (>= 3 mm, exact both ways; column excepted)",
+       _w[0] >= 0.003, f"{_mm(_w[0])}" + (f" ({_w[1]})" if _w[1] else ""))
+# 30a: the column in the recess floor's opening and its sleeve (the column only translates along / turns about its own
+# axis, so its disc in (y, z) is the same at every pose): radially clear of the sleeve (polygons' chords incl.; the
+# opening is its first ring), and its forward end short of the sleeve's closed end at full push.  30c [open]: the J band
+# and the recess were measured / drawn about the photos' column axis (YOKE_DESIGN column: WL ~1.821, 24 mm under the hub
+# the roll pivot keeps -- the sheets' open point): the band's inboard leg runs tangent to the column (inner edge |u| 22
+# = column_r) and the recess top (h +12 [E], hidden under the shell) lies inside its radius -- reported, not failed
+_cw, _ca, _nring, _cc = np.inf, np.inf, 0, (np.inf, "")
+from model import flightdeck as _FDK
+from model import fd_detail_a as _FDA
+for side in (-1, 1):
+    hub = I.yoke_hub(side)
+    Vc = np.vstack([m.V for m, mat in parts["yoke_" + ("L" if side < 0 else "R")].meshes if mat == "metal_dark"])
+    rc = np.hypot(Vc[:, 1] - hub[1], Vc[:, 2] - hub[2]).max()
+    x_fl = float(_FDK.face_x(hub[1], hub[2])) - _FDK.A_recess_depth()    # the recess floor (the opening)
+    for m, mat in parts["flight_deck"].meshes:
+        rad = np.hypot(m.V[:, 1] - hub[1], m.V[:, 2] - hub[2])
+        sl = (m.V[:, 0] < x_fl - 0.001) & (m.V[:, 0] > x_fl - _FDA.sleeve_depth() - 0.003)
+        ring = sl & (rad < COL_R + 0.003) & (rad > COL_R - 0.0005)              # the sleeve's walls
+        cap = sl & (rad <= COL_R - 0.0005)                                       # its closed end
+        if ring.any():
+            _nring += int(ring.sum())
+            ang = np.unique(np.round(np.arctan2(m.V[ring, 2] - hub[2], m.V[ring, 1] - hub[1]), 6))
+            gap_a = np.diff(np.r_[ang, ang[0] + 2 * np.pi]).max() if len(ang) > 2 else np.pi
+            _cw = min(_cw, float(rad[ring].min() * np.cos(0.5 * gap_a) - rc))
+            x_cap = float(m.V[ring, 0].min())
+            if cap.any():
+                x_cap = max(x_cap, float(m.V[cap, 0].max()))
+            _ca = min(_ca, float(Vc[:, 0].min()) + _t0 - x_cap)
+        near = (m.V[:, 0] >= x_fl - 0.001) & (m.V[:, 0] < x_fl + 0.020) & (rad < rc + 0.003)
+        if near.any():
+            i = int(np.argmin(rad[near]))
+            d = float(rad[near][i] - rc)
+            if d < _cc[0]:
+                q = m.V[near][i]
+                _cc = (d, f"{mat} at u {side * (hub[1] - q[1]) * 1000:+.0f} h {(q[2] - hub[2]) * 1000:+.0f} mm")
+if not _nring:
+    _cw = -np.inf                                                                # no sleeve found: fail loudly
+report("yoke columns clear the recess floor's opening and its sleeve over the travel (radial, polygons' chords incl., "
+       ">= 0.5 mm; the column's end >= 5 mm short of the sleeve's closed end at full push)",
+       np.isfinite(_cw) and _cw >= 0.0005 and _ca >= 0.005,
+       f"radial {_cw * 1000:.2f} mm ({_nring} sleeve vertices), axial {_ca * 1000:.1f} mm")
+report("yoke columns vs the J band and the panel face above the U recess (the band / recess about the photos' column "
+       "axis WL ~1.821, the column about the hub WL 1.845: the sheets' open point)", _cc[0] >= 0.0005,
+       f"{_cc[0] * 1000:+.1f} mm ({_cc[1]}; - = inside the column); owner decision: the column axis (hub / roll pivot) "
+       "vs the band and recess top as measured", open_item=_cc[0] < 0.0005)
+_wf = _yoke_panel_sweep(np.linspace(_t0, _PUSH_HARD, 4))
+report(f"yokes at full push ({_t0 * 1000:+.0f} mm, YOKE travel [E]) and roll vs the lower panel / recess (fit_fd_a 29b)",
+       _wf[0] >= 0.003, f"{_mm(_wf[0])} ({_wf[1]}); owner decision of fit_fd_a 29b (a shorter [E] push "
+                        "travel or accept)", open_item=_wf[0] < 0.003)
 
 tail = f" ({len(opens)} open owner decision{'s' if len(opens) != 1 else ''}: {'; '.join(opens)})" if opens else ""
 print(("FIT OK" + tail) if not fails else f"FIT FAIL ({len(fails)}): " + "; ".join(fails) + tail)

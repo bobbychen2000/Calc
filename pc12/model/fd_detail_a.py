@@ -92,107 +92,11 @@ def d_section(w, d, ra, rf, nc=4, ne=3):
     return np.array(out)
 
 
-def clip_below(P, z):
-    """The part of the closed polygon P (a, b) with b <= z (Sutherland-Hodgman against one half-plane)."""
-    P = np.asarray(P, float)
-    out = []
-    for k in range(len(P)):
-        a, b = P[k], P[(k + 1) % len(P)]
-        ina, inb = a[1] <= z, b[1] <= z
-        if ina:
-            out.append(a)
-        if ina != inb:
-            t = (z - a[1]) / (b[1] - a[1])
-            out.append(a + t * (b - a))
-    return np.array(out)
-
-
 def superellipse(hw, hh, e=0.5, n=24, cx=0.0, cy=0.0):
     """Closed superellipse outline (CCW): |x / hw|^(2/e) + |y / hh|^(2/e) = 1 (e 1 = ellipse, -> 0 = rectangle)."""
     a = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
     c, s = np.cos(a), np.sin(a)
     return np.c_[cx + hw * np.sign(c) * np.abs(c) ** e, cy + hh * np.sign(s) * np.abs(s) ** e]
-
-
-# =====================================================================================================================
-# yoke pieces (model/flightdeck._yokes)
-# =====================================================================================================================
-YOKE_DETAIL = dict(
-    # paddle grip [M: P1046408 at 0.70 mm/px, P1046409 at 0.52, brochure p.12]: D section, flat aft face carrying the
-    # leather inset; width from the YOKE grip / grip_head table (28-32 mm near the bottom, 42 under the head)
-    grip_d=0.014,                  # half-depth (fore-aft) [M: P1046409 side view ~28 mm]
-    grip_ra=0.0040,                # aft-face corner radius
-    grip_rf=0.0120,                # forward (finger) side radius
-    inset=(0.09, 0.80, 0.0018),    # leather inset on the aft face: s0, s1 along the grip, rim width [M: P1046409]
-    trigger=(0.66, 0.014, 0.020, 0.006),   # PTT trigger on the outboard grip's forward face: s, width, height, proud
-)
-
-
-def paddle_grip(o, ax, lat, dep, L, w_of, d, ra, rf, n_s=30, nc=4, ne=3, end_p=(2.0, 3.0)):
-    """Paddle grip lofted along ax from o (0 .. L): D sections (d_section) of half-width w_of(s) (s = 0 .. 1) across
-    lat, half-depth d along dep, flat aft face (+dep); both ends rounded over their half-width (the sections shrink on a
-    superellipse of exponent end_p: 2 = a quarter circle, 3 = the squarer head).  Returns (Mesh, aft-face function
-    (s) -> (centre point, flat half-width))."""
-    s = 0.5 * (1 - np.cos(np.linspace(0.0, np.pi, n_s)))
-    w = np.array([w_of(si) for si in s])
-    r0, r1 = w[0] / L, w[-1] / L
-    p0, p1 = end_p
-    k0 = np.clip(1.0 - np.clip((r0 - s) / r0, 0, 1) ** p0, 0.0, 1.0) ** (1.0 / p0)
-    k1 = np.clip(1.0 - np.clip((s - (1 - r1)) / r1, 0, 1) ** p1, 0.0, 1.0) ** (1.0 / p1)
-    k = np.maximum(np.minimum(k0, k1), 2e-3)
-    G = []
-    for si, wi, ki in zip(s, w, k):
-        S2 = d_section(wi, d, ra, rf, nc, ne) * ki
-        G.append(o + L * si * ax + np.outer(S2[:, 0], lat) + np.outer(S2[:, 1], dep))
-    G = np.array(G)
-    body = _orient_out(grid_surface(G, close_v=True), lambda C: o + np.outer((C - o) @ ax, ax))
-    caps = [_orient_out(_fan(G[0], G[0].mean(0)), lambda C: C + ax), _orient_out(_fan(G[-1], G[-1].mean(0)),
-                                                                                    lambda C: C - ax)]
-
-    def aft(si):
-        wi = float(w_of(si))
-        return o + L * si * ax + d * dep, wi - ra
-    return Mesh.merge([body] + caps), aft
-
-
-def taper_outline(L, s0, s1, hw_of, n=18, e=0.45):
-    """Closed outline (u along the grip, v across) of an inset from s0 to s1 (fractions of L), half-width hw_of(s),
-    the ends rounded (superellipse exponent e of the end caps).  CCW."""
-    t = np.linspace(0.0, np.pi, n)
-    uu = 0.5 * (1 - np.cos(t))                                      # 0 .. 1, dense at the ends
-    s = s0 + (s1 - s0) * uu
-    env = np.sin(t) ** e
-    hw = np.array([hw_of(si) for si in s]) * env
-    right = np.c_[s * L, -hw]
-    left = np.c_[s * L, hw][::-1]
-    P = np.vstack([right, left[1:-1]])
-    return P
-
-
-def inset(o, u, v, n, outline, rim, h_rim=0.0010, h_in=0.0005, nb=2):
-    """A grained leather inset on a flat face: the leather pad (outline (u, v) about o in the face, raised h_in along n,
-    its edge rolled) and its moulded rim, a band rim wide round it standing h_rim (rounded).  Returns
-    [(Mesh, material)]."""
-    P = np.asarray(outline, float)
-    c = P.mean(0)
-    nrm = _poly_normals(P)
-    # rim: outer foot -> top (outer) -> top (inner) -> inner foot (into the leather)
-    rings = []
-    for off, hgt in ((rim, 0.0), (rim, 0.6 * h_rim), (0.6 * rim, h_rim), (0.15 * rim, h_rim), (0.0, 0.4 * h_rim)):
-        Q = P + off * nrm
-        rings.append(o + np.outer(Q[:, 0], u) + np.outer(Q[:, 1], v) + hgt * n)
-    rim_m = grid_surface(np.array(rings), close_v=True)
-    rim_m = rim_m if np.mean(np.sum(rim_m.face_normals(), 0) @ n) >= 0 else rim_m.flipped()
-    # leather pad: the outline shrinking to the centre in a gentle crown
-    pr = []
-    for s, hgt in ((1.0, 0.4 * h_rim), (0.92, h_in + 0.2 * h_rim), (0.7, h_in + 0.25 * h_rim), (0.4, h_in + 0.3 * h_rim),
-                   (0.12, h_in + 0.32 * h_rim)):
-        Q = c + (P - c) * s
-        pr.append(o + np.outer(Q[:, 0], u) + np.outer(Q[:, 1], v) + hgt * n)
-    pg = grid_surface(np.array(pr), close_v=True)
-    pf = _fan(pr[-1], o + c[0] * u + c[1] * v + (h_in + 0.33 * h_rim) * n)
-    pad = Mesh.merge([m_ if np.mean(m_.face_normals() @ n) >= 0 else m_.flipped() for m_ in (pg, pf)])
-    return [(rim_m, "grip_black"), (pad, "leather_black")]
 
 
 def _poly_normals(P):
@@ -223,21 +127,6 @@ def knob(o, axis, ref, r, h, n=24, flutes=0, depth=0.0005, skirt=None, chamfer=0
     if cap:
         parts.append(_orient_out(_fan(G[-1], o + (z0 + h) * axis), lambda C: C - axis))
     return Mesh.merge(parts)
-
-
-def bellows(o, axis, ref, r_out, r_in, length, pleats=6, n=28):
-    """Rubber bellows boot along axis from o: pleats folds between r_out and r_in over length, open ends."""
-    axis = _unit(axis)
-    ref = _unit(np.asarray(ref, float) - axis * np.dot(ref, axis))
-    side = np.cross(axis, ref)
-    a = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
-    k = 4 * pleats + 1
-    t = np.linspace(0.0, 1.0, k)
-    rad = r_in + (r_out - r_in) * 0.5 * (1 + np.cos(2 * np.pi * pleats * t))      # r_out at the ends
-    rad = np.r_[rad[:1], rad[1:]]
-    G = np.array([o + ti * length * axis + np.outer(ri * np.cos(a), ref) + np.outer(ri * np.sin(a), side)
-                  for ti, ri in zip(t, rad)])
-    return _orient_out(grid_surface(G, close_v=True), lambda C: o + np.outer((C - o) @ axis, axis))
 
 
 # =====================================================================================================================
@@ -537,8 +426,9 @@ LOWER = dict(
     gap=0.002,                     # dark seams between the plates
     plate_off=0.004, band_off=0.003, plate_r=0.005,
     screw=(0.008, 0.002),          # pan-head screws: inset from the plate corners, radius
-    well=(0.056, 1.782, 0.050, 0.020),   # yoke well: half-width, bottom WL, depth, corner radius (open into the band)
-    bellows=(0.045, 0.036, 8),     # the column's rubber bellows (on the yoke part): r_out, r_in, pleats
+    # the yoke's column surround: the U recess and the J band are YOKE_DESIGN column_recess / column_band / column
+    # (sheet L6Y2 detail J; rev M); the column's opening in the recess floor clears it by this (m)
+    col_clear=0.0010,
     # the side cheeks' legs [M: research M17 (JTF PRO / NGX), P1046408 / 10]: outboard of the yoke sub-panel the lower
     # panel's bottom edge sweeps down to 0.111 below the lower-panel edge, over |BL| 0.575 -> 0.660
     leg=(0.575, 0.660, 0.111),
@@ -634,6 +524,227 @@ def guarded_toggle(f, guard_mat="yoke_white"):
     return out
 
 
+RECESS_MARGIN = 0.0030       # the titanium plates' notch stands this far outside the recess outline (the rim flange covers it)
+
+
+def recess_dims():
+    """(half-width, floor WL, corner R, depth, top WL) of the column recess (m): YOKE_DESIGN column_recess about the
+    column axis (the hub centre)."""
+    from model import interior as I
+    hw, hb, rc, dep, ht = (1e-3 * float(x) for x in I.YOKE_DESIGN["column_recess"])
+    zc = float(I.yoke_hub(-1)[2])
+    return hw, zc + hb, rc, dep, zc + ht
+
+
+def recess_outline(grow=0.0, n=10):
+    """The column recess's front outline (|BL|, WL) m, closed CCW (L6Y2 detail J recess_u: a U of half-width hw about
+    the column axis, floor at hb, bottom corners R rc, straight sides up to ht), its top corners R 4; grown by `grow`."""
+    from model import interior as I, seats as S
+    hw, zb_, rc, _, zt = recess_dims()
+    yc = float(I.YOKE["bl"])
+    P = np.array([(yc - hw - grow, zb_ - grow), (yc + hw + grow, zb_ - grow), (yc + hw + grow, zt + grow),
+                  (yc - hw - grow, zt + grow)])
+    return S.fillet(P, [rc + grow, rc + grow, 0.004 + grow, 0.004 + grow], max_len=0.004)
+
+
+def recess_sdf(ay, z, grow=0.0):
+    """Signed distance (m, negative inside) of the front-view points (|BL|, WL) to the recess outline grown by grow."""
+    from cad import sdf2d
+    return sdf2d.polygon(ay, z, recess_outline(grow))
+
+
+def sleeve_depth():
+    """Depth (m) of the dark sleeve behind the recess floor's column opening: the column's forward end lies 30 mm + the
+    pull travel behind the floor at neutral (flightdeck._yokes) and moves the push travel further forward, so the sleeve's
+    closed end stands 10 mm beyond it at full push (it was 30 mm deep: the column ran through its cap)."""
+    from model import interior as I
+    t0, t1 = (float(v) for v in I.YOKE["travel"])
+    return 0.030 + t1 - t0 + 0.010
+
+
+def column_surround(sg):
+    """The lower panel's column surround of one side (rev M, sheet L6Y2 detail J; YOKE_DESIGN column / column_band /
+    column_recess): the U recess cut column_recess[3] deep from the titanium plate's top (walls + floor, a 3 mm rim
+    flange over the plates' notch), the column's opening in its floor (+ a dark sleeve behind it) and the J BAND on the
+    floor -- 23 wide, 8 proud, R 4 rolled edges, a flat top 15 wide: its vertical leg on the inboard side (|BL| of its
+    inboard side column[0]) from a round top end at WL column[1] down to the joint line (WL column[2]), then hooking under
+    the stem on an arc about the column axis at h column_band[4]; a panel-fixed pan-head screw on the arc at WL
+    column[3].  The band is the panel's (no bellows: none in any PRO photo).  pedestal_gunmetal, screw steel_dark.
+    [(Mesh, material)]."""
+    FD = _FD()
+    from model import interior as I
+    from model import yoke_tri as YT
+    D = I.YOKE_DESIGN
+    q = LOWER
+    out = []
+    hw, zb_, rc, dep, zt = recess_dims()
+    yc = float(I.YOKE["bl"])
+    hub = I.yoke_hub(sg)
+    zc = float(hub[2])
+    off_top = q["plate_off"] + 0.0002
+    off_floor = q["plate_off"] - dep
+    W = recess_outline()                                   # CCW in (|BL|, WL)
+
+    def pt(ay, z, off):
+        return _face_pt(sg * ay, z, off)
+    ring_t = np.array([pt(y, z, off_top) for y, z in W])
+    ring_b = np.array([pt(y, z, off_floor) for y, z in W])
+    cw = np.array([FD.face_x(sg * yc, zc), sg * yc, zc])
+    out.append((FD._oriented(FD._strip(ring_t, ring_b), lambda C: cw - C), "pedestal_gunmetal"))
+    # rim flange on the plates (covers their notch)
+    Wo = recess_outline(RECESS_MARGIN + 0.0005)
+    ring_o = np.array([pt(y, z, off_top + 0.0001) for y, z in Wo])
+    out.append((FD._oriented(FD._strip(ring_o, ring_t), FD.N_AFT), "pedestal_gunmetal"))
+    edge_o = np.array([pt(y, z, q["plate_off"] - 0.0005) for y, z in Wo])
+    out.append((FD._oriented(FD._strip(edge_o, ring_o), lambda C: C - cw), "pedestal_gunmetal"))
+    # floor with the column's opening (CDT of the U with the round hole)
+    rh = float(I.YOKE["column_r"]) + q["col_clear"]
+    a = np.linspace(0.0, 2 * math.pi, 48, endpoint=False)
+    Hc = np.c_[yc + rh * np.cos(a), zc + rh * np.sin(a)]
+    # the opening concentric with the column in the model's (y, z): the face points move along the tilted face normal
+    # by off_floor, which shifted the drawn circle 0.9 mm off the axis (0.1 mm left on one side) -- pre-compensated
+    for _ in range(3):
+        Pq = np.array([pt(y, z, off_floor) for y, z in Hc])
+        Hc = Hc + np.c_[yc + rh * np.cos(a) - sg * Pq[:, 1], zc + rh * np.sin(a) - Pq[:, 2]]
+    X = np.vstack([W, Hc])
+    nW = len(W)
+    cons = [(i, (i + 1) % nW) for i in range(nW)] + [(nW + i, nW + (i + 1) % len(Hc)) for i in range(len(Hc))]
+    T = YT.cdt(X, cons)
+    T = YT.inside(T, X, [np.arange(nW), nW + np.arange(len(Hc))])
+    Pf = np.array([pt(y, z, off_floor) for y, z in X])
+    out.append((FD._oriented(Mesh(Pf, T), FD.N_AFT), "pedestal_gunmetal"))
+    # the sleeve behind the opening (dark), closed beyond the column's forward end at full push (sleeve_depth)
+    ring_h = Pf[nW:]
+    ring_s = ring_h - [sleeve_depth(), 0.0, 0.0]
+    out.append((FD._oriented(FD._strip(ring_h, ring_s), lambda C: np.c_[C[:, 0], np.full(len(C), sg * yc),
+                                                                     np.full(len(C), zc)] - C), "panel_dark"))
+    from cad.mesh import planar_cap
+    out.append((FD._oriented(planar_cap(ring_s, [1.0, 0, 0]), [1.0, 0, 0]), "panel_dark"))
+    # ---- the J band
+    col = D["column"]
+    bw, bh, br, bf, hcb = (1e-3 * float(x) for x in D["column_band"][:5])
+    u_in = -(float(col[0]) - yc)                                        # its inboard side, u (< 0), m
+    rcb = abs(u_in) - 0.5 * bw                                          # band centreline radius about (0, hcb)
+    h_top = float(col[1]) - zc
+    h_joint = float(col[2]) - zc
+    h_scr = float(col[3]) - zc
+    gap = 0.0005                                                         # the joint line: a 0.5 mm split
+    leg = np.c_[np.full(8, -rcb), np.linspace(h_top - 0.5 * bw, h_joint + 0.5 * gap, 8)]
+    a0 = math.pi + gap / rcb
+    th = np.linspace(a0, math.radians(330.0), 40)
+    arc = np.c_[rcb * np.cos(th), hcb + rcb * np.sin(th)]
+    prof = _band_profile(bw, bh, br)
+    for path, cap0 in ((leg, "round"), (arc, "flat")):
+        for m_ in _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
+            out.append((m_, "pedestal_gunmetal"))
+    # the screw on the arc (pan head, cross slot), on the band's top
+    us = -math.sqrt(max(rcb * rcb - (h_scr - hcb) ** 2, 0.0))
+    f = FD.face_frame(sg * (yc + us), zc + h_scr)
+    f = f.moved(c=off_floor + bh)
+    out.append((knob(f.o - 0.0002 * f.w, f.w, f.u, 0.0025, 0.0011, n=20, chamfer=0.45), "steel_dark"))
+    out.append((f.box(0.0, 0.0, 0.0011, (0.0036, 0.0006, 0.0004)), "black"))
+    # one consistent winding per material over the pieces that share positions (walls / floor, the band's body and
+    # caps: each was oriented by its own reference direction; fit_check 23 wants every shared edge once each way)
+    for mat in {m for _, m in out}:
+        idx = [i for i, (_, m) in enumerate(out) if m == mat]
+        newF = YT.orient_group([(out[i][0].V, out[i][0].F) for i in idx], 2e-5)
+        for i, Fi in zip(idx, newF):
+            out[i][0].F = Fi
+    return out
+
+
+def _band_profile(bw, bh, br, n_arc=5):
+    """The J band's section: points (w across, z up from the floor) with outward normals, from the floor on the -w side
+    over the top to the floor on the +w side; the rolled edges R br, the flat top between them."""
+    P, N = [(-0.5 * bw, 0.0)], [(-1.0, 0.0)]
+    P.append((-0.5 * bw, bh - br))
+    N.append((-1.0, 0.0))
+    for t in np.linspace(math.pi, 0.5 * math.pi, n_arc + 1)[1:]:
+        P.append((-0.5 * bw + br + br * math.cos(t), bh - br + br * math.sin(t)))
+        N.append((math.cos(t), math.sin(t)))
+    for t in np.linspace(0.5 * math.pi, 0.0, n_arc + 1)[1:]:
+        P.append((0.5 * bw - br + br * math.cos(t), bh - br + br * math.sin(t)))
+        N.append((math.cos(t), math.sin(t)))
+    P.append((0.5 * bw, 0.0))
+    N.append((1.0, 0.0))
+    return np.array(P), np.array(N)
+
+
+def _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
+    """The band swept along `path` ((u, h) m about the column axis, yoke-local sense: u outboard) on the recess floor:
+    [Mesh]: the swept surface (exact section normals), the end at path[-1] closed flat, the start closed flat or by a
+    half revolution of the section (cap0 'round': the band's round top end)."""
+    FD = _FD()
+    P2, N2 = prof
+    path = np.asarray(path, float)
+    T = np.gradient(path, axis=0)
+    T /= np.linalg.norm(T, axis=1)[:, None]
+    Nl = np.c_[-T[:, 1], T[:, 0]]                                  # left normal in (u, h)
+
+    def to3(u, h, w_dir, w, z):
+        y = sg * (yc + u + w * w_dir[0])
+        zz = zc + h + w * w_dir[1]
+        return _face_pt(y, zz, off_floor + z)
+    fr = FD.face_frame(sg * yc, zc)
+
+    def dir3(d2):                                                   # front-view (u, h) direction -> 3-D on the face
+        v = sg * d2[0] * fr.u + d2[1] / max(float(fr.v[2]), 1e-6) * fr.v
+        return v / np.linalg.norm(v)
+    G, NG = [], []
+    for (u, h), nl in zip(path, Nl):
+        G.append([to3(u, h, nl, w, z) for w, z in P2])
+        nl3 = dir3(nl)
+        NG.append([_unit(nw * nl3 + nz * fr.w) for nw, nz in N2])
+    G, NG = np.array(G), np.array(NG)
+    k, m = G.shape[:2]
+    V = G.reshape(-1, 3)
+    Nn = NG.reshape(-1, 3)
+    F = []
+    for i in range(k - 1):
+        for j in range(m - 1):
+            a, b, c, d = i * m + j, (i + 1) * m + j, (i + 1) * m + j + 1, i * m + j + 1
+            F += [(a, b, c), (a, c, d)]
+    body = Mesh(V, np.array(F), Nn)
+    body = FD._oriented(body, lambda C: C - np.array(to3(*path.mean(0), (0.0, 0.0), 0.0, 0.0)))
+    out = [_orient_by_normals(body)]
+    # the far end: flat cap
+    endr = G[-1]
+    out.append(FD._oriented(_fan(endr, endr.mean(0)), dir3(T[-1])))
+    if cap0 == "round":
+        half = P2[:, 0] <= 1e-9
+        c0 = path[0]
+        nl, t0 = Nl[0], T[0]
+        ring = []
+        nring = []
+        for ph in np.linspace(0.0, math.pi, 13):
+            d2 = math.cos(ph) * (-nl) + math.sin(ph) * (-t0)
+            d3 = dir3(d2)
+            ring.append([to3(c0[0], c0[1], d2, -w, z) for w, z in P2[half]])
+            nring.append([_unit(-nw * d3 + nz * fr.w) for nw, nz in N2[half]])
+        R_, NR = np.array(ring), np.array(nring)
+        kk, mm = R_.shape[:2]
+        V2, N2_ = R_.reshape(-1, 3), NR.reshape(-1, 3)
+        F2 = []
+        for i in range(kk - 1):
+            for j in range(mm - 1):
+                a, b, c, d = i * mm + j, (i + 1) * mm + j, (i + 1) * mm + j + 1, i * mm + j + 1
+                F2 += [(a, b, c), (a, c, d)]
+        out.append(_orient_by_normals(Mesh(V2, np.array(F2), N2_)))
+    else:
+        st = G[0]
+        out.append(FD._oriented(_fan(st, st.mean(0)), -dir3(T[0])))
+    return out
+
+
+def _orient_by_normals(m):
+    """Wind every face of m so its geometric normal agrees with its corner normals."""
+    fn = np.cross(m.V[m.F[:, 1]] - m.V[m.F[:, 0]], m.V[m.F[:, 2]] - m.V[m.F[:, 0]])
+    flip = np.sum(fn * m.N[m.F].sum(1), 1) < 0
+    F = m.F.copy()
+    F[flip] = F[flip][:, ::-1]
+    return Mesh(m.V, F, m.N)
+
+
 def lower_panel(sg):
     """The lower (yoke / switch) panel of one side (sg): [(Mesh, material)] -- see flightdeck._lower_panel."""
     FD = _FD()
@@ -649,13 +760,15 @@ def lower_panel(sg):
     cheek = float(PN["cheek_bl"])
     L = FD.lining()
     g = 0.5 * q["gap"]
-    ww, wz0, wd, wr = q["well"]
+    ww, wz0, wr, wd, zt_r = recess_dims()
+    mrg = RECESS_MARGIN
 
     def yend(z):
         return min(cheek, float(L.hw(float(FD.face_x(cheek, z)), z)) - 0.008)
-    # the band under the PDU row (two pieces either side of the yoke well)
-    for a, b in ((shw + 0.008, yc - ww - 0.006), (yc + ww + 0.006, yend(zb))):
-        ol = S.fillet(np.array([(a + g, zb + g), (b - g, zb + g), (b - g, z1 - g), (a + g, z1 - g)]), 0.004,
+    # the band under the PDU row: two pieces either side of the column recess and a bridge over its top (rev M)
+    for a, b, za in ((shw + 0.008, yc - ww - mrg, zb), (yc + ww + mrg, yend(zb), zb),
+                     (yc - ww - mrg, yc + ww + mrg, zt_r + mrg)):
+        ol = S.fillet(np.array([(a + g, za + g), (b - g, za + g), (b - g, z1 - g), (a + g, z1 - g)]), 0.004,
                       max_len=0.02)
         out += panel_plate(ol * [sg, 1] if sg > 0 else (ol * [sg, 1])[::-1], q["band_off"], "panel_titanium")
     # sub-panels: inner, yoke (notched round the well), outer
@@ -688,11 +801,11 @@ def lower_panel(sg):
                            (a + g + si, zb - g - si)):
                 out += screw(sg * y_, z_, q["plate_off"], sr)
             continue
-        if k == 1:                                                     # notch for the yoke well (open at the top)
-            pts = [(a + g, z0 + g), (b - g, z0 + g), (b - g, zb - g), (yc + ww + 0.006, zb - g),
-                   (yc + ww + 0.006, wz0 - 0.006), (yc - ww - 0.006, wz0 - 0.006), (yc - ww - 0.006, zb - g),
+        if k == 1:                                                     # notch for the column recess (open at the top)
+            pts = [(a + g, z0 + g), (b - g, z0 + g), (b - g, zb - g), (yc + ww + mrg, zb - g),
+                   (yc + ww + mrg, wz0 - mrg), (yc - ww - mrg, wz0 - mrg), (yc - ww - mrg, zb - g),
                    (a + g, zb - g)]
-            rad = [r, r, r, 0.003, wr + 0.006, wr + 0.006, 0.003, r]
+            rad = [r, r, r, 0.002, wr + mrg, wr + mrg, 0.002, r]
         else:
             pts = [(a + g, z0 + g), (b - g, z0 + g), (b - g, zb - g), (a + g, zb - g)]
             rad = [r, r, r, r]
@@ -703,23 +816,7 @@ def lower_panel(sg):
         for y_, z_ in ((a + g + si, z0 + g + si), (b - g - si, z0 + g + si), (b - g - si, zb - g - si),
                        (a + g + si, zb - g - si)):
             out += screw(sg * y_, z_, q["plate_off"], sr)
-    # yoke well: walls + floor round the column (panel_dark), a satin lip round its sides and bottom, the bellows
-    zt = z1 + 0.004
-    W = S.fillet(np.array([(yc - ww, wz0), (yc + ww, wz0), (yc + ww, zt), (yc - ww, zt)]), [wr, wr, 0.0, 0.0],
-                 max_len=0.008)
-    ring_f = np.array([_face_pt(sg * y, z, 0.0) for y, z in W])
-    ring_b = np.array([_face_pt(sg * y, z, -wd) for y, z in W])
-    cw = ring_f.mean(0)
-    out.append((FD._oriented(FD._strip(ring_f, ring_b), lambda C: cw - wd * FD.N_AFT - C), "panel_dark"))
-    from cad.mesh import planar_cap
-    out.append((FD._oriented(planar_cap(ring_b, FD.N_AFT), FD.N_AFT), "panel_dark"))
-    lip = np.array([_face_pt(sg * y, z, q["plate_off"] - 0.001) for y, z in W[W[:, 1] < zb - 0.004]])
-    if len(lip) > 3:
-        from cad.mesh import sweep_profile
-        prof = np.c_[0.0030 * np.cos(np.linspace(0, 2 * np.pi, 10, endpoint=False)),
-                     0.0030 * np.sin(np.linspace(0, 2 * np.pi, 10, endpoint=False))]
-        out.append((sweep_profile(lip, prof), "panel_silver"))
-    # (the column's rubber bellows rides on the yoke: flightdeck._yokes, yoke_bellows)
+    out += column_surround(sg)
     # inner sub-panel items
     if sg < 0:
         # ICE PROTECTION: two blocks of three rocker switches under their legend strokes [M: P1046408 / 10]
@@ -1258,21 +1355,6 @@ def vspeed_placard(sg):
         out.append((f.rect(-hl, v - 0.0008, hl - 0.010, v + 0.0008, 0.0016), "light_white"))
         out.append((f.rect(hl - 0.008, v - 0.0008, hl, v + 0.0008, 0.0016), "light_white"))
     return out
-
-
-def yoke_bellows(sg):
-    """The column's rubber bellows, carried by the yoke (it moves with it): from the hub's forward face forward to the
-    yoke well's floor at neutral (at full push it slides deeper behind the panel face, at full pull its end stands in
-    the well), 8 pleats, OD 90 (owner brief; the bare column read as a chrome pole between the hub and the panel)."""
-    FD = _FD()
-    from model import interior as I
-    hub = I.yoke_hub(sg)
-    ww, wz0, wd, wr = LOWER["well"]
-    r_o, r_i, n_p = LOWER["bellows"]
-    x_floor = float(FD.face_x(sg * float(I.YOKE["bl"]), float(hub[2]))) - wd + 0.004
-    L = float(hub[0]) + 0.004 - x_floor
-    o = np.array([x_floor, float(hub[1]), float(hub[2])])
-    return [(bellows(o, [1.0, 0, 0], [0, 1.0, 0], r_o, r_i, L, pleats=n_p, n=32), "rubber_black")]
 
 
 # =====================================================================================================================
