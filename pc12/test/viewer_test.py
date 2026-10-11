@@ -2053,6 +2053,11 @@ async def material_stats(page, png_path, groups):
 # highlight, the satin-aluminium / smoke inserts mid / dark grey -- photos P1046408 / 09: cover 214-228 with window
 # streaks, the inserts 0.85-0.95 / 0.8-0.9 of it); thresholds at the pilot stop (YOKE_LOOK)
 YOKE_LOOK = dict(cover=205.0, cover_p99=215.0, up=0.78, lo=0.70, column=70.0)   # rev M: 204 / 214, 0.50, 0.34, 111
+# rev O (3-D judges r2): the cover's highlight SPREAD (p99.5 - median: CR2-06, the gloss cover had read matte, +-2 %), the
+# inserts near the cover from the seat (FID2-04: photos 0.91-0.99 / 0.81-0.93), the satin-black body and the pads near
+# one tone (FID2-05: photos body / cover 0.27-0.30, pads / body 1.06-1.27), the AFCS cap a saturated red (FID2-03: photos
+# sat 0.71 / 0.96); the spread was 8 on rev N (1200 x 800), rev O 28 there and 25 on this test's page
+YOKE_LOOK_O = dict(spread=20.0, up=0.88, lo=0.78, body=(0.22, 0.34), pads_body=(1.0, 1.4), red_sat=0.75)
 
 
 async def yoke_look_checks(page, shots=True):
@@ -2064,7 +2069,9 @@ async def yoke_look_checks(page, shots=True):
     V = "const V = window.viewer, T = V.tour; "
     await js(page, V + "T.enter('pilot', {motion: false}); T.finish(); V.advance(0.5); await V.frames(3);")
     path = await shot(page, "45_yoke_look_pilot", "")
-    names = {"cover": ["yoke_white"], "up": ["yoke_silver"], "lo": ["yoke_silver_dark"], "column": ["yoke_column"]}
+    names = {"cover": ["yoke_white"], "up": ["yoke_silver"], "lo": ["yoke_silver_dark"], "column": ["yoke_column"],
+             "body": ["yoke_L:grip_black", "yoke_R:grip_black"], "pads": ["yoke_L:leather_black", "yoke_R:leather_black"],
+             "red": ["button_red"]}
     m = await js(page, MAT_MASK, [names[k] for k in names])
     W, H = m["W"], m["H"]
     k = np.array(m["mask"].split(","), int).reshape(H, W)
@@ -2076,7 +2083,9 @@ async def yoke_look_checks(page, shots=True):
         e = g.copy()
         e[1:, :] &= g[:-1, :]; e[:-1, :] &= g[1:, :]; e[:, 1:] &= g[:, :-1]; e[:, :-1] &= g[:, 1:]
         st[n] = (int(e.sum()), float(np.median(lum[e])) if e.sum() >= 20 else None,
-                 float(np.percentile(lum[e], 99)) if e.sum() >= 20 else None)
+                 float(np.percentile(lum[e], 99)) if e.sum() >= 20 else None,
+                 float(np.percentile(lum[e], 99.5)) if e.sum() >= 20 else None,
+                 np.median(img[e], 0) if e.sum() >= 20 else None)
     await js(page, V + "T.exit({motion: false}); await V.frames(1);")
     c, u, l_, col = st["cover"], st["up"], st["lo"], st["column"]
     L = YOKE_LOOK
@@ -2086,6 +2095,20 @@ async def yoke_look_checks(page, shots=True):
           f"(p99 >= {L['cover_p99']:.0f}), the upper / lower inserts >= {L['up']:.2f} / {L['lo']:.2f} of it, the column "
           f"dark (<= {L['column']:.0f}) (median sRGB luminance per material)", ok,
           ", ".join(f"{n} {v[1]:.0f} (p99 {v[2]:.0f}, {v[0]} px)" for n, v in st.items() if v[1] is not None))
+    O = YOKE_LOOK_O
+    b_, p_, r_ = st["body"], st["pads"], st["red"]
+    spread = c[3] - c[1] if c[1] is not None else 0.0
+    sat = float((r_[4].max() - r_[4].min()) / max(r_[4].max(), 1.0)) if r_[1] is not None else 0.0
+    okO = (c[1] is not None and spread >= O["spread"] and u[1] / c[1] >= O["up"] and l_[1] / c[1] >= O["lo"]
+           and b_[1] is not None and O["body"][0] <= b_[1] / c[1] <= O["body"][1] and p_[1] is not None
+           and O["pads_body"][0] <= p_[1] / b_[1] <= O["pads_body"][1] and sat >= O["red_sat"])
+    check(f"[Y1b] 3-D judges r2 (FID2-03..05, CR2-06): at the pilot stop the cover's highlight spread (p99.5 - median) "
+          f">= {O['spread']:.0f}, the inserts >= {O['up']:.2f} / {O['lo']:.2f} of the cover, the satin-black body "
+          f"{O['body'][0]:.2f}-{O['body'][1]:.2f} of it with the pads {O['pads_body'][0]:.1f}-{O['pads_body'][1]:.1f} x "
+          f"the body, the AFCS cap saturation >= {O['red_sat']:.2f}", okO,
+          (f"spread {spread:.0f} (p99.5 {c[3]:.0f}), up {u[1] / c[1]:.2f}, lo {l_[1] / c[1]:.2f}, body "
+           f"{b_[1] / c[1]:.2f}, pads / body {p_[1] / b_[1]:.2f}, red {[int(x) for x in r_[4]]} sat {sat:.2f}")
+          if c[1] and u[1] and l_[1] and b_[1] and p_[1] and r_[1] else str({k: v[:2] for k, v in st.items()}))
 
 
 async def tour_r4_checks(page, data, shots=True):

@@ -1512,26 +1512,26 @@
   },
   "button_red": {
    "baseColorFactor": [
-    0.7,
-    0.035,
-    0.04,
+    0.5,
+    0.004,
+    0.012,
     1.0
    ],
    "metallicFactor": 0.0,
    "roughnessFactor": 0.3,
-   "clearcoatFactor": 0.3,
+   "clearcoatFactor": 0.15,
    "clearcoatRoughnessFactor": 0.06,
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "AFCS disconnect cap: red, light clear coat, NOT emissive (L6Y item 8)",
-   "srgb_hex": "#DA3538"
+   "note": "AFCS disconnect cap: deep saturated red, light clear coat, NOT emissive (L6Y item 8; rev O, 3-D judges r2 FID2-03: 0.70 / 0.035 / 0.04 under a 0.3 coat read coral (sat 0.60) where P1046409 / Mexico R show sat 0.71 / 0.96)",
+   "srgb_hex": "#BC0D1D"
   },
   "legend_grey": {
    "baseColorFactor": [
-    0.3,
-    0.3,
-    0.3,
+    0.17,
+    0.17,
+    0.17,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1541,8 +1541,8 @@
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "yoke legends as plain letter blocks at the lettering's mean tone (white strokes ~35 % ink; no lettering: L6Y items 7-10, rev N)",
-   "srgb_hex": "#959595"
+   "note": "yoke legends as thin plain letter blocks (0.35 of the pitch), ~0.45 of white (no lettering: L6Y items 7-10; rev O, 3-D judges r2 FID2-06: rev N's 0.30 blocks at 0.70 of the pitch read as dial ticks)",
+   "srgb_hex": "#737373"
   },
   "yoke_nickel": {
    "baseColorFactor": [
@@ -1563,20 +1563,20 @@
   },
   "yoke_rocker": {
    "baseColorFactor": [
-    0.042,
-    0.042,
-    0.045,
+    0.02,
+    0.02,
+    0.022,
     1.0
    ],
    "metallicFactor": 0.0,
-   "roughnessFactor": 0.45,
+   "roughnessFactor": 0.3,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "yoke pitch-trim rocker lobes: satin dark grey #3A3A3C, lighter than the gloss bezel (L6Y item 9, rev N)",
-   "srgb_hex": "#3A3A3C"
+   "note": "yoke pitch-trim rocker lobes: near-black satin, read by its crisp edge highlights (L6Y item 9; rev O, 3-D judges r2 FID2-02: rev N's 0.042 / rough 0.45 read as a light grey flat bow-tie, the photos' rocker 0.15-0.30 of the cover)",
+   "srgb_hex": "#272729"
   },
   "yoke_column": {
    "baseColorFactor": [

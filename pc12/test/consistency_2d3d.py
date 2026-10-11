@@ -3228,16 +3228,32 @@ def check_L6Y(ctx, rep, plots):
         lab.append("pitch-trim rocker")
         cb, nb, _, _ = YG.button_frame()
         cb, nb = cb * [-1.0, 1.0, 1.0], nb * [-1.0, 1.0, 1.0]
-        Vb = np.vstack([allV[m] for m in ("black", "yoke_nickel") if m in allV])   # the cap + (rev N) its nickel collar
-        sel = (np.linalg.norm(Vb - cb, axis=1) < 9.0) & ((Vb - cb) @ nb > 0.05)
+        # the cap, its nickel hex and (rev O) the gloss-black legend disc under them (the disc's rim r 8.75: 9.2 mm)
+        Vb = np.vstack([allV[m] for m in ("black", "yoke_nickel", "gloss_black") if m in allV])
+        sel = (np.linalg.norm(Vb - cb, axis=1) < 9.2) & ((Vb - cb) @ nb > 0.05)
         dv.append(float(_axis_dist(Vb[sel].mean(0), cb, nb)[0]) if sel.any() else 99.0)
         lab.append("inboard push button")
-        Vg = allV["grip_black"]
         for g, sg in (("out", 1.0), ("in", -1.0)):
             cf, tf, wf, nf, row = YG.fwd_switch_frame(g)
             m3 = np.array([sg, 1.0, 1.0])
             cf, nf = cf * m3, nf * m3
             Lh = 0.5 * float(row[1]) + 1.0
+            # the switch's own pieces: grip_black is one primitive with the grip body, whose vertices in front of the
+            # switch plane inside the sphere are not symmetric about the switch (rev O: 128 of them beside the inboard
+            # switch moved the centroid 1.5 mm while the switch itself sits 0.00 mm on its axis) -- keep the connected
+            # pieces lying mostly inside the sphere
+            Vg = []
+            for m, V, Fi in loc:
+                if m != "grip_black":
+                    continue
+                n_ = len(V)
+                _, lab_ = connected_components(coo_matrix((np.ones(3 * len(Fi)), (np.r_[Fi[:, 0], Fi[:, 1], Fi[:, 2]],
+                                                                                np.r_[Fi[:, 1], Fi[:, 2], Fi[:, 0]])),
+                                                          shape=(n_, n_)), directed=False)
+                ins = np.linalg.norm(V - cf, axis=1) < Lh + 2.0
+                own = np.bincount(lab_, weights=ins.astype(float)) >= 0.5 * np.bincount(lab_)
+                Vg.append(V[own[lab_]])
+            Vg = np.vstack(Vg) if Vg else np.zeros((0, 3))
             sel = (np.linalg.norm(Vg - cf, axis=1) < Lh) & ((Vg - cf) @ nf > 0.05)
             dv.append(float(_axis_dist(Vg[sel].mean(0), cf, nf)[0]) if sel.any() else 99.0)
             lab.append(f"forward-face switch ({g})")

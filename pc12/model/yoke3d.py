@@ -193,11 +193,14 @@ def revolve(segs, c, axis, ref, mat, name="", n_max=64, max_len=None):
 
 
 # ============================================================================================ rounded extrusions
-def rounded_extrusion(outline, sharp, frame, z0, top, r_edge, mat, name="", inner_step=1.0):
+def rounded_extrusion(outline, sharp, frame, z0, top, r_edge, mat, name="", inner_step=1.0, bottom_step=3.0,
+                      edge_rows=None, side_max=None):
     """Closed solid: the outline (closed CCW polygon in the frame's (x, y), dense along its curves; sharp[i] marks the
     corners) extruded along z from z0 to the top height field top(x, y) -> (z, dz/dx, dz/dy), its top edge rounded R
     r_edge exactly as yoke_geom.rmax rounds it (rows theta: inward offset r (1 - cos), height top - r (1 - sin));
-    at a sharp corner the offsets mitre and the normals split.  frame = (c, ex, ey, ez)."""
+    at a sharp corner the offsets mitre and the normals split.  frame = (c, ex, ey, ez); edge_rows: the round's rows
+    (default _arc_rows; one row on a sub-pixel round keeps its strip from being slivers); side_max: the side wall split
+    into rows at most this tall (default one row: a tall wall over short outline steps is slivers)."""
     Q = np.asarray(outline, float)
     k = len(Q)
     sharp = np.asarray(sharp, bool)
@@ -206,8 +209,12 @@ def rounded_extrusion(outline, sharp, frame, z0, top, r_edge, mat, name="", inne
     n_in, n_outv = np.roll(n_edge, 1, 0), n_edge                        # incoming / outgoing edge normals at vertex i
     n_s = _unit(n_in + n_outv)
     miter = (n_in + n_outv) / (1.0 + np.sum(n_in * n_outv, 1))[:, None]
-    nth = _arc_rows(r_edge, 0.5 * math.pi)
+    nth = edge_rows or _arc_rows(r_edge, 0.5 * math.pi)
     th = np.linspace(0.0, 0.5 * math.pi, nth + 1)
+    n_side = 1
+    if side_max:
+        hmax = max(float(top(q[0], q[1])[0]) for q in Q) - r_edge - z0
+        n_side = max(1, int(math.ceil(hmax / side_max)))
     V, N, F = [], [], []
 
     def add(P, Nn):
@@ -224,6 +231,8 @@ def rounded_extrusion(outline, sharp, frame, z0, top, r_edge, mat, name="", inne
             col = []
             zt, _, _ = top(Q[i, 0], Q[i, 1])
             col.append(add(np.r_[Q[i], z0], np.r_[nc, 0.0]))
+            for f in np.arange(1, n_side) / n_side:                    # intermediate side rows (side_max)
+                col.append(add(np.r_[Q[i], z0 + f * (zt - r_edge - z0)], np.r_[nc, 0.0]))
             for t in th:
                 q = Q[i] - r_edge * (1.0 - math.cos(t)) * mv
                 z, zx, zy = top(q[0], q[1])
@@ -245,7 +254,7 @@ def rounded_extrusion(outline, sharp, frame, z0, top, r_edge, mat, name="", inne
         ids.append(add(np.r_[p, z], _unit(np.r_[-zx, -zy, 1.0])))
     F += [tuple(ids[j] for j in t) for t in tri]
     bot = [cols[i][1][0] for i in range(k)]
-    tri, Gp = _cap(Q, 3.0)                                             # hidden in the parent solid
+    tri, Gp = _cap(Q, bottom_step)                                     # hidden in the parent solid
     ids = [add(V[j], np.array([0.0, 0.0, -1.0])) for j in bot]
     ids += [add(np.r_[p, z0], np.array([0.0, 0.0, -1.0])) for p in Gp]
     F += [tuple(ids[j] for j in t) for t in tri]
@@ -336,36 +345,42 @@ def _mirror_u(p):
 
 
 def button_pieces():
-    """The inboard head's push button (MAP LIGHTS): the satin-nickel hex collar (rev N, judges FID1-04; rounded
-    extrusion, top edges R 0.3) and the
-    smooth cap (revolve: top R 1, the spherical centre dimple) on the shield facet; built in the inboard grip's own sense
-    and mirrored."""
-    D = G.T()
+    """The inboard head's push button (MAP LIGHTS; rev O, 3-D judges r2 FID2-01): the GLOSS-BLACK legend disc (revolve:
+    button[2] dia, button[5] proud, its outer edge rolled button[10], seated 1 in the shield facet), the small
+    SATIN-NICKEL hex on it (rounded extrusion, button[6] across the corners x button[9], top edges R 0.3, seated 0.5 in
+    the disc) and the smooth black cap (revolve: top R 1, the spherical centre dimple; seated 0.5 in the hex); built in
+    the inboard grip's own sense and mirrored."""
     c, n, eu, ev = G.button_frame()
-    b = D["button"]
-    rc, hp = 0.5 * float(b[2]), float(b[5])
+    d = G.button_dims()
+    R, zd, rd = 0.5 * d["disc_d"], d["disc_z"], d["disc_r"]
+    prof = [("L", (0.0, -1.0), (R, -1.0)), ("L", (R, -1.0), (R, zd - rd)), ("A", (R - rd, zd - rd), rd, 0.0, 0.5 * math.pi),
+            ("L", (R - rd, zd), (0.0, zd))]
+    disc = revolve(prof, c, n, eu, "gloss_black", "button_disc")
+    rc = 0.5 * d["hex_c"]
     ang = np.radians(np.arange(6) * 60.0 + 30.0)
     hexa = np.c_[rc * np.cos(ang), rc * np.sin(ang)]
-    parts = [outline_line(hexa[i], hexa[(i + 1) % 6], 1.5) for i in range(6)]
+    parts = [outline_line(hexa[i], hexa[(i + 1) % 6], 3.0) for i in range(6)]      # straight sides: 2 columns each
     P, sh = _closed(parts, set(range(6)))
-    collar = rounded_extrusion(P, sh, (c, eu, ev, n), -1.0, lambda x, y: (hp, 0.0, 0.0), 0.3, "yoke_nickel",
-                               "button_collar", inner_step=2.5)
-    r, hh, dd, ddep = 0.5 * float(b[3]), float(b[4]), float(b[7]), float(b[8])
-    zt = hp + hh
+    zh = d["hex_z"]
+    collar = rounded_extrusion(P, sh, (c, eu, ev, n), zd - 0.5, lambda x, y: (zh, 0.0, 0.0), 0.3, "yoke_nickel",
+                               "button_hex", inner_step=99.0, bottom_step=99.0, edge_rows=1)   # flat top: no slivers
+    r, zt, dd, ddep = 0.5 * d["cap_d"], d["cap_z"], d["dimple_d"], d["dimple_t"]
     rs = (0.25 * dd * dd + ddep * ddep) / (2.0 * ddep)
     zc = zt + rs - ddep
     a0 = math.atan2(zt - zc, 0.5 * dd)
-    prof = [("L", (0.0, 0.0), (r, 0.0)), ("L", (r, 0.0), (r, zt - 1.0)), ("A", (r - 1.0, zt - 1.0), 1.0, 0.0, 0.5 * math.pi),
+    z0 = zh - 0.5
+    prof = [("L", (0.0, z0), (r, z0)), ("L", (r, z0), (r, zt - 1.0)), ("A", (r - 1.0, zt - 1.0), 1.0, 0.0, 0.5 * math.pi),
             ("L", (r - 1.0, zt), (0.5 * dd, zt)), ("A", (0.0, zc), -rs, a0, -0.5 * math.pi)]
     cap = revolve(prof, c, n, eu, "black", "button_cap")
-    return [_mirror_u(collar), _mirror_u(cap)]
+    return [_mirror_u(disc), _mirror_u(collar), _mirror_u(cap)]
 
 
 def trim_pieces():
     """The split bow-tie pitch-trim rocker across the outboard head's round face: two mirrored lobes (yoke_geom
     rocker_lobe: from the split to the round end), extruded from 1 below the slot floor (rev N: the slot is recessed
-    trim_slot[0]) to the saddle top z = hm + (he - hm) (|x| / (L / 2)) ^ sexp, top edges R trim_grooves[2]; satin dark
-    grey yoke_rocker (rev N, judges FID1-05: lighter than the gloss-black lunes, as every photo)."""
+    trim_slot[0]) to the saddle top z = hm + (he - hm) (|x| / (L / 2)) ^ sexp, crowned across (rev O, trim_lunes[4]),
+    top edges R trim_grooves[2]; yoke_rocker (rev O, 3-D judges r2 FID2-02: a dark satin lever read by its edge
+    highlights; rev N's satin dark grey read as a light flat bow-tie)."""
     D = G.T()
     c, n = G.head_out_face()
     eu, ev = G._facet_frame(c, n)
@@ -383,17 +398,17 @@ def trim_pieces():
                                                                                 (0.5 * gap, -0.5 * ww), 1.2)]
         P, sh = _closed(parts, {0, 1, 2, 3})
 
-        def top(x, y, he=he, hm=hm):
+        def top(x, y, he=he, hm=hm, cr=G.rocker_crown()):
             ax = max(abs(x), 1e-9)
             t = ax / (0.5 * L)
-            z = hm + (he - hm) * t ** sexp
+            z = hm + (he - hm) * t ** sexp - cr * (y / r) ** 2               # rev O: crowned across (trim_lunes[4])
             dz = (he - hm) * sexp * t ** (sexp - 1.0) / (0.5 * L)
-            return z, dz * math.copysign(1.0, x), 0.0
+            return z, dz * math.copysign(1.0, x), -2.0 * cr * y / (r * r)
         Pm = P * [sg, 1.0]
         if sg < 0:
             Pm, sh = Pm[::-1], sh[::-1]
         out.append(rounded_extrusion(Pm, sh, (c, eu, ev, n), -1.0 - G.trim_slot_dims()[2], top, r_e, "yoke_rocker",
-                                     f"trim_lobe_{'r' if sg > 0 else 'l'}", inner_step=1.5))
+                                     f"trim_lobe_{'r' if sg > 0 else 'l'}", inner_step=1.5, side_max=7.0))
     return out
 
 
@@ -406,16 +421,21 @@ def fwd_pieces():
         _, L, W, proud, r_e, sag = row[:6]
         hl = max(0.5 * (L - W), 0.0)
         rw = 0.5 * W
-        parts = [outline_line((-hl, -rw), (hl, -rw), 2.4), outline_arc((hl, 0.0), rw, -0.5 * math.pi, 0.5 * math.pi,
-                                                                         max_len=1.6),
-                 outline_line((hl, rw), (-hl, rw), 2.4), outline_arc((-hl, 0.0), rw, 0.5 * math.pi, 1.5 * math.pi,
-                                                                       max_len=1.6)]
+        # rev O (3-D judges r2 CR2-07: triangles where they buy nothing): never seen (the grips' forward faces), so
+        # sampled for the shape only -- sides 5 mm, the ends' arcs and the top-edge round's rows just under cad.res's
+        # 20 deg split (1,000 -> 630 faces, 1,290 -> 930 after cad.res)
+        arc = math.radians(19.5)
+        parts = [outline_line((-hl, -rw), (hl, -rw), 5.0), outline_arc((hl, 0.0), rw, -0.5 * math.pi, 0.5 * math.pi,
+                                                                         step=arc, max_len=3.0),
+                 outline_line((hl, rw), (-hl, rw), 5.0), outline_arc((-hl, 0.0), rw, 0.5 * math.pi, 1.5 * math.pi,
+                                                                       step=arc, max_len=3.0)]
         P, sh = _closed(parts, set())
 
         def top(x, y, L=L, proud=proud, sag=sag):
             q = min(abs(x) / (0.5 * L), 1.0)
             return proud - sag * (1.0 - q * q), (sag * 2.0 * x / (0.5 * L) ** 2 if q < 1.0 else 0.0), 0.0
-        p = rounded_extrusion(P, sh, (c, t, w, nf), -1.0, top, r_e, "grip_black", f"fwd_{g}", inner_step=2.4)
+        p = rounded_extrusion(P, sh, (c, t, w, nf), -1.0, top, r_e, "grip_black", f"fwd_{g}", inner_step=4.5,
+                              edge_rows=4)
         out.append(p if g == "out" else _mirror_u(p))
     return out
 
@@ -480,7 +500,8 @@ def reading_blocks(k):
 def legend_pieces(reading=False):
     """The legends (YOKE_DESIGN legends: words of plain letter BLOCKS, rev N -- no lettering; yoke_geom.legend_blocks):
     TCS on its bezel's dish, AFCS DISC on the boss's aft face, TRIM DN / TRIM UP on the trim face's two lunes, MAP LIGHTS
-    on the shield facet round the push button's hex collar; each block a thin slab legend_style[1] proud, legend_grey.
+    on the push button's gloss-black legend disc round its hex (rev O); each block a thin slab legend_style[1] proud,
+    legend_grey.
     reading: the pilot yoke's layout (reading_blocks, mirrored by place())."""
     D = G.T()
     blocks = reading_blocks if reading else G.legend_blocks
@@ -513,8 +534,8 @@ def legend_pieces(reading=False):
     for k in (2, 3):
         for P0, P1, w in blocks(k):
             out.append(slab(P0, P1, 0.0, 0.0, fr, w))
-    # the shield facet round the hex collar: front-view blocks about the button (co-pilot sense) lifted along a onto the
-    # facet plane (as the sheet's button_pieces), then expressed in the facet frame
+    # the push button's legend disc: front-view blocks about the button (co-pilot sense) lifted along a onto the facet
+    # plane (as the sheet's button_pieces), then expressed in the facet frame and raised to the disc's top
     ci, ni = G.head_in_face()
     eui, evi = G._facet_frame(ci, ni)
     m = np.array([-1.0, 1.0, 1.0])
@@ -522,12 +543,13 @@ def legend_pieces(reading=False):
     b = D["button"]
     bc = np.array([-float(b[0]), float(b[1])])
     fr = (ci, eui, evi, ni)
+    zd = G.button_dims()["disc_z"]                                     # rev O: printed on the legend disc's top
     for P0, P1, w in blocks(4):
         Q = np.array([bc + P0, bc + P1])
         aa = ci[2] - ((Q[:, 0] - ci[0]) * ni[0] + (Q[:, 1] - ci[1]) * ni[1]) / ni[2]
         Q3 = np.c_[Q, aa] - ci
         q2 = np.c_[Q3 @ eui, Q3 @ evi]
-        out.append(slab(q2[0], q2[1], 0.0, 0.0, fr, w))
+        out.append(slab(q2[0], q2[1], zd, zd, fr, w))
     return out
 
 
@@ -540,17 +562,24 @@ def badge_pieces():
     fa_c = float(G.face_a(hc))
     slope = float(G.face_a(hc + 1.0) - G.face_a(hc - 1.0)) / 2.0           # da / dh of the face plane
     xs, ys = hw - rc, hh - rc
-    parts = [outline_line((-xs, -hh), (xs, -hh), 4.0), outline_arc((xs, -ys), rc, -0.5 * math.pi, 0.0),
-             outline_line((hw, -ys), (hw, ys), 4.0), outline_arc((xs, ys), rc, 0.0, 0.5 * math.pi),
-             outline_line((xs, hh), (-xs, hh), 4.0), outline_arc((-xs, ys), rc, 0.5 * math.pi, math.pi),
-             outline_line((-hw, ys), (-hw, -ys), 4.0), outline_arc((-xs, -ys), rc, math.pi, 1.5 * math.pi)]
+    # rev O (3-D judges r2 CR2-07: 96 slivers on the badge plate -- the R 0.2 top-edge round's 0.1 mm rows over 4 mm
+    # columns): the sides sampled every 2.4 mm, the R 1 corners in 30 deg steps (chord sag 0.034 mm), the sub-pixel
+    # edge round ONE row (0.28 mm across, exact normals at both edges), no interior points on the flat top (a Delaunay
+    # of its ring: one normal, nothing to interpolate)
+    seg = 2.4
+    arc = math.radians(30.0)
+    parts = [outline_line((-xs, -hh), (xs, -hh), seg), outline_arc((xs, -ys), rc, -0.5 * math.pi, 0.0, step=arc),
+             outline_line((hw, -ys), (hw, ys), seg), outline_arc((xs, ys), rc, 0.0, 0.5 * math.pi, step=arc),
+             outline_line((xs, hh), (-xs, hh), seg), outline_arc((-xs, ys), rc, 0.5 * math.pi, math.pi, step=arc),
+             outline_line((-hw, ys), (-hw, -ys), seg), outline_arc((-xs, -ys), rc, math.pi, 1.5 * math.pi, step=arc)]
     P, sh = _closed(parts, set())
     z0 = -abs(slope) * hh - 1.0
 
     def top(x, y):
         return slope * y + proud, 0.0, slope
     frame = (np.array([0.0, hc, fa_c]), np.array([1.0, 0.0, 0.0]), np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0]))
-    return [rounded_extrusion(P, sh, frame, z0, top, rt, "yoke_silver", "badge_plate", inner_step=3.0)]
+    return [rounded_extrusion(P, sh, frame, z0, top, rt, "yoke_silver", "badge_plate", inner_step=99.0,
+                              bottom_step=99.0, edge_rows=1)]
 
 
 # ============================================================================================ the moulding's materials
@@ -570,7 +599,7 @@ def moulding_materials(V, F):
 
 
 # ============================================================================================ the whole yoke (cached)
-MESH_VERSION = "m3"
+MESH_VERSION = "m4"            # rev O: legend disc + hex button, crowned rocker, badge top, ...
 
 
 def _src_key():
@@ -769,12 +798,32 @@ def fix_fold_normals(pieces):
     return out
 
 
+def _debris_keep(V, F, weld=1e-4, max_faces=4, max_area=1e-3):
+    """Per face: False on the connected components (welded by position) of fewer than `max_faces` faces covering less
+    than `max_area` mm^2 -- mesher debris, never a shape."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    if not len(F):
+        return np.ones(0, bool)
+    _, w = np.unique(np.round(V / weld).astype(np.int64), axis=0, return_inverse=True)
+    Fw = w.ravel()[F]
+    n = int(Fw.max()) + 1
+    A = coo_matrix((np.ones(3 * len(Fw)), (np.r_[Fw[:, 0], Fw[:, 1], Fw[:, 2]], np.r_[Fw[:, 1], Fw[:, 2], Fw[:, 0]])),
+                   shape=(n, n))
+    _, lab = connected_components(A, directed=False)
+    fl = lab[Fw[:, 0]]
+    area = 0.5 * np.linalg.norm(np.cross(V[F[:, 1]] - V[F[:, 0]], V[F[:, 2]] - V[F[:, 0]]), axis=1)
+    nf = np.bincount(fl, minlength=lab.max() + 1)
+    ar = np.bincount(fl, weights=area, minlength=lab.max() + 1)
+    return ~((nf < max_faces) & (ar < max_area))[fl]
+
+
 def _build_pieces(verbose=False):
     import time
     from model import yoke_cover as YC
     t0 = time.time()
     if verbose:
-        print("  yoke (rev N solids): meshing -- cached afterwards", flush=True)
+        print("  yoke (rev O solids): meshing -- cached afterwards", flush=True)
     out = []
     from model import yoke_patch as YP
     cov = [Piece(V, F, N, m, "cover") for V, F, N, m in YP.collapse_needles(YC.cover_meshes(verbose=verbose),
@@ -808,6 +857,17 @@ def _build_pieces(verbose=False):
     out = fix_fold_normals(out)
     if verbose:
         print(f"  folds: {n0} -> {sum(len(fold_faces(p)) for p in out)}", flush=True)
+    # debris (rev O: one isolated micro-triangle, 0.00003 mm^2, doubled with the same winding at the moulding's inboard
+    # web -- yoke_mesh_check's 3 same-way grip_black edges): components of < 4 faces and < 0.001 mm^2 dropped
+    nd = 0
+    for i, p in enumerate(out):
+        keep = _debris_keep(p.V, p.F)
+        if not keep.all():
+            nd += int((~keep).sum())
+            u, inv = np.unique(p.F[keep].ravel(), return_inverse=True)
+            out[i] = Piece(p.V[u], inv.reshape(-1, 3), p.N[u], p.mat, p.name)
+    if verbose:
+        print(f"  debris: {nd} faces dropped", flush=True)
     if verbose:
         print(f"  yoke: {sum(len(p.F) for p in out)} triangles in {len(out)} pieces, {time.time() - t0:.0f}s", flush=True)
     return out

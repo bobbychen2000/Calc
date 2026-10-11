@@ -5,11 +5,11 @@ python3 test/fit_fd_a.py builds the flight deck alone).
     footwell walls (fd_detail_a.footwell_walls: tunnel sides, outboard walls, the panel's underside, the cubby) by
     >= 10 mm; the 95th-pct legs (thighs, knees, shanks: interior.leg_spheres at his L6B seat setting) clear the walls and
     the cubby too
-29. the yokes over their pull travel and the first 60 mm of push (YOKE travel) and +/- YOKE roll clear the panel
-    around them -- the lower panel's plates, switch blocks, handles and knobs, the glareshield items, the stack -- by
-    >= 3 mm (the column runs through its bellows / well by design: column and bellows excepted); 29b the full push
-    travel -- 65 mm, OWNER DECISION 2026-10-11 (the [E] 90 brought the grips within ~8 mm of the bare panel face wings
-    level and into it from ~45 deg of roll: reported as an open item until then) -- >= 3 mm too
+29. the yokes over their whole pitch travel (YOKE travel: push 65 mm -- OWNER DECISION 2026-10-11, the [E] 90 brought
+    the grips within ~8 mm of the bare panel face wings level and into it from ~45 deg of roll -- and pull 90) and +/-
+    YOKE roll every 10 deg clear the panel around them -- the lower panel's plates, switch blocks, handles and knobs, the
+    glareshield items, the stack -- by >= 3 mm (the column runs through its well by design: column excepted); 29b the
+    full push at every 5 deg of roll, >= 3 mm too
 """
 from __future__ import annotations
 
@@ -121,10 +121,7 @@ for _h in _hubs:                                                 # only what the
     _near |= ((np.abs(PANEL_T[:, :, 1] - _h[1]) < 0.30) & (np.abs(PANEL_T[:, :, 2] - _h[2]) < 0.25) &
               (PANEL_T[:, :, 0] > _h[0] - 0.20)).any(1)
 PANEL_P = _tri_samples(PANEL_T[_near])
-PUSH_HARD = -0.060           # the hard row sweeps the pull travel and the push up to here; beyond it see 29b
-
-
-def _yoke_sweep(pushes):
+def _yoke_sweep(pushes, roll_step=10.0):
     worst = (np.inf, None)
     for side in (-1, 1):
         pid = "yoke_" + ("L" if side < 0 else "R")
@@ -140,7 +137,7 @@ def _yoke_sweep(pushes):
         near_P = PANEL_P[(np.abs(PANEL_P[:, 1] - hub[1]) < 0.30) & (np.abs(PANEL_P[:, 2] - hub[2]) < 0.25)]
         tree = cKDTree(near_P)
         for t in pushes:
-            for roll in np.arange(-float(Y["roll"]), float(Y["roll"]) + 1e-9, 10.0):
+            for roll in np.arange(-float(Y["roll"]), float(Y["roll"]) + 1e-9, roll_step):
                 Vr = _rot(V, hub, [-1.0, 0.0, 0.0], roll) + [t, 0.0, 0.0]
                 d, k = tree.query(Vr, distance_upper_bound=0.05)          # (far queries crawl in a planar cloud)
                 if not np.isfinite(d).any():
@@ -153,16 +150,16 @@ def _yoke_sweep(pushes):
 
 
 t0, t1 = (float(v) for v in Y["travel"])
-w_hard = _yoke_sweep(np.r_[np.linspace(PUSH_HARD, 0.0, 4), np.linspace(0.0, t1, 4)[1:]])
-report(f"yokes over the pull travel and {PUSH_HARD * 1000:+.0f} mm of push, roll +/-{Y['roll']:.0f} deg, clear the panel, "
-       "glareshield and stack detail (>= 3 mm; column / bellows excepted)", w_hard[0] >= 0.003,
-       f"{w_hard[0] * 1000:.1f} mm ({w_hard[1]})")
-# 29b: the full push travel.  With the measured hub (hub_dx) and the panel face's [E] 12 deg tilt the [E] 90 mm of push
-# brought the grips within ~8 mm of the bare lower-panel face wings level and across it from ~45 deg of roll (reported
-# as an open owner decision); OWNER DECISION 2026-10-11: the push shortened to 65 mm (YOKE travel), the pull kept
-w_full = _yoke_sweep(np.linspace(t0, PUSH_HARD, 4))
-report(f"yokes at full push ({t0 * 1000:+.0f} mm, YOKE travel: owner 2026-10-11) and roll vs the lower panel (>= 3 mm)",
-       w_full[0] >= 0.003, f"{w_full[0] * 1000:.1f} mm ({w_full[1]})")
+w_hard = _yoke_sweep(np.r_[np.linspace(t0, 0.0, 5), np.linspace(0.0, t1, 4)[1:]])
+report(f"yokes over the whole pitch travel ({t0 * 1000:+.0f} .. {t1 * 1000:+.0f} mm, YOKE travel: the push owner "
+       f"2026-10-11), roll +/-{Y['roll']:.0f} deg every 10, clear the panel, glareshield and stack detail (>= 3 mm; "
+       "column excepted)", w_hard[0] >= 0.003, f"{w_hard[0] * 1000:.1f} mm ({w_hard[1]})")
+# 29b: the full push at every 5 deg of roll.  With the measured hub (hub_dx) and the panel face's [E] 12 deg tilt the
+# [E] 90 mm of push brought the grips within ~8 mm of the bare lower-panel face wings level and across it from ~45 deg
+# of roll (reported as an open owner decision); OWNER DECISION 2026-10-11: the push shortened to 65 mm, the pull kept
+w_full = _yoke_sweep([t0], roll_step=5.0)
+report(f"yokes at full push ({t0 * 1000:+.0f} mm, YOKE travel: owner 2026-10-11), roll every 5 deg, vs the lower panel "
+       "(>= 3 mm)", w_full[0] >= 0.003, f"{w_full[0] * 1000:.1f} mm ({w_full[1]})")
 
 if _STANDALONE:
     print("FIT FD-A OK" if not fails else "FIT FD-A FAIL: " + "; ".join(fails))

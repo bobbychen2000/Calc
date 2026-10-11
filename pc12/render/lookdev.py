@@ -560,17 +560,21 @@ SPEC.update({
                                pebble=dict(size=0.0011, amp=0.35, rough_amp=0.10, creases=0.15),
                                note="yoke pads (L6Y item 6): charcoal leather, ~1.1 mm pebble grain, faint creases "
                                     "(viewer: a band-limited bump patch, materials.js); the glareshield lip"),
-    "button_red":         dict(kind="dielectric", base=(0.70, 0.035, 0.04), rough=0.30, coat=0.3, coat_rough=0.06,
-                               note="AFCS disconnect cap: red, light clear coat, NOT emissive (L6Y item 8)"),
-    "legend_grey":        dict(kind="dielectric", base=(0.30, 0.30, 0.30), rough=0.50,
-                               note="yoke legends as plain letter blocks at the lettering's mean tone (white strokes "
-                                    "~35 % ink; no lettering: L6Y items 7-10, rev N)"),
+    "button_red":         dict(kind="dielectric", base=(0.50, 0.004, 0.012), rough=0.30, coat=0.15, coat_rough=0.06,
+                               note="AFCS disconnect cap: deep saturated red, light clear coat, NOT emissive (L6Y item "
+                                    "8; rev O, 3-D judges r2 FID2-03: 0.70 / 0.035 / 0.04 under a 0.3 coat read coral "
+                                    "(sat 0.60) where P1046409 / Mexico R show sat 0.71 / 0.96)"),
+    "legend_grey":        dict(kind="dielectric", base=(0.17, 0.17, 0.17), rough=0.50,
+                               note="yoke legends as thin plain letter blocks (0.35 of the pitch), ~0.45 of white (no "
+                                    "lettering: L6Y items 7-10; rev O, 3-D judges r2 FID2-06: rev N's 0.30 blocks at "
+                                    "0.70 of the pitch read as dial ticks)"),
     "yoke_nickel":        dict(kind="dielectric", base=(0.60, 0.56, 0.50), metallic=0.90, rough=0.30,
                                note="yoke push button's hex collar: satin nickel (L6Y item 10, rev N: Mexico L / "
                                     "P1046409 / AOPA)"),
-    "yoke_rocker":        dict(kind="dielectric", base=(0.042, 0.042, 0.045), rough=0.45,
-                               note="yoke pitch-trim rocker lobes: satin dark grey #3A3A3C, lighter than the gloss "
-                                    "bezel (L6Y item 9, rev N)"),
+    "yoke_rocker":        dict(kind="dielectric", base=(0.020, 0.020, 0.022), rough=0.30,
+                               note="yoke pitch-trim rocker lobes: near-black satin, read by its crisp edge highlights "
+                                    "(L6Y item 9; rev O, 3-D judges r2 FID2-02: rev N's 0.042 / rough 0.45 read as a "
+                                    "light grey flat bow-tie, the photos' rocker 0.15-0.30 of the cover)"),
     "yoke_column":        dict(kind="dielectric", base=(0.022, 0.022, 0.024), rough=0.70, spec=0.25,
                                note="yoke column: satin black, non-metallic [E] (L6Y item 11, rev N: the dark metal "
                                     "read as a light grey pipe)"),

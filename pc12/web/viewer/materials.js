@@ -93,11 +93,21 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0.45, 1],
   // little fill, its reflections and the key's glint, the satin-aluminium / smoke inserts their reflections near full
   // (tuned at P1046408 / 09's fitted cameras and the pilot stop -- before: cover 184-204 flat, inserts 0.50-0.76 / 0.34-0.68
   // of it; photos: cover 214-228, 0.94 / 0.84-0.87)
-  yoke_white: [0.4, 1, 1, 1], yoke_silver: [0.5, 1, 0.9, 0.6], yoke_silver_dark: [0.5, 1, 0.9, 0.6],
-  yoke_nickel: [0, 1, 0.8, 0.6] };
-// ?cabTrim=name:share,factor,floor|... overrides entries (look development)
+  // A fifth entry 'up' (3-D judges r2 FID2-04, installPatch): reflections pointing below the horizon mirrored above it
+  // while inside -- from the crew seats the aft face's reflections point aft-down at the studio floor (the inserts
+  // 0.72-0.83 of the cover against the photos' 0.91-0.99 / 0.81-0.93); at the photo cameras (reflections aft-up) nothing
+  // changes.  A sixth, 'win' (CR2-06: the gloss cover read matte, its luminance +-2 %): a side-window radiance where the
+  // reflections turn sideways -- on the cover's planar aft face nowhere (one reflection direction: the drawn face is one
+  // plane), on its rolled perimeter, crown and arm tips a bright rim, the glossy edge highlights of the photos.  The
+  // cover's fill share 0.4 -> 0.25 for the headroom (AgX compressed every highlight above ~225).  'yoke:<material>'
+  // entries apply to the yoke parts only: the satin black moulding (FID2-05: body / cover 0.20 against the photos'
+  // 0.27-0.30, the pads 1.5-1.8 x the body against 1.06-1.27) more fill and a reflection floor for its form shading.
+  // Measured at the pilot stop / design eye (stats in CLAUDE.md, yoke rev O)
+  yoke_white: [0.25, 1, 1.4, 1, 1, 25], yoke_silver: [0.5, 1, 1.3, 0.6, 1, 4], yoke_silver_dark: [0.5, 1, 0.9, 0.6, 1, 4],
+  yoke_nickel: [0, 1, 0.8, 0.6, 1, 4], 'yoke:grip_black': [0, 1.45, 0.3] };
+// ?cabTrim=name:share,factor,floor,key,up|... overrides entries (look development)
 for (const it of (Q_M.get('cabTrim') || '').split('|')) {
-  const [k, v] = it.split(':');
+  const k = it.slice(0, it.lastIndexOf(':')), v = it.slice(it.lastIndexOf(':') + 1);   // 'yoke:grip_black:0,1.3,..'
   const a = (v || '').split(',').map(Number);
   if (k && a.length >= 2 && a.every(Number.isFinite)) CABIN_TRIM[k] = a;
 }
@@ -198,6 +208,10 @@ const VIEWER = {
   // mirror; a lighter base (the judges' 0.45-0.5: 0.52 read 0.99 of the cover at P1046409, 0.30 0.68 at P1046408) with
   // the CABIN_TRIM reflection floor below
   yoke_silver_dark: { color: [0.44, 0.44, 0.44] },
+  // the AFCS cap (3-D judges r2 FID2-03): AgX compresses a bright saturated red toward white -- the lookdev's 0.50 base
+  // read 205/69/62 (sat 0.70) at the pilot stop; a darker deep red keeps it saturated (P1046409 199/58/78, Mexico R
+  // 138/6/17)
+  button_red: { color: [0.34, 0.0, 0.006] },
   // the nose-gear lamp: a clear lens with nothing modelled behind it; its back face is the dark (switched-off) LED face.
   // Clear: no milky diffuse on the front (the lookdev's light base colour is for its transmission variant)
   lens: { color: [0.02, 0.02, 0.022], back: { base: [0.03, 0.03, 0.035], rough: 0.25, opaque: true } },
@@ -360,7 +374,7 @@ export function upgradeMaterials(root, spec) {
     }
   }
   const made = new Map();      // target name -> material
-  const interior = new Map();  // material -> its interior clone
+  const interior = new Map();  // material -> (CABIN_TRIM key -> its interior clone)
   const upgraded = new Set(), kept = new Set();
   root.updateMatrixWorld(true);
   root.traverse((o) => {
@@ -430,8 +444,12 @@ export function upgradeMaterials(root, spec) {
     if (GLASS_RE.test(name) && m.transparent) { f.glass = true; if (CABIN_GLASS_RE.test(name)) f.cabinGlass = true; }
     installPatch(m);
     if (INTERIOR_PARTS.has(part) || groupOf(o) === 'Interior' || INTERIOR_MATERIALS.has(name)) {
-      if (!interior.has(m)) interior.set(m, clonePatched(m, { interior: true, cabinFill: CABIN_TRIM[name] || null }));
-      m = interior.get(m);
+      // a part-scoped entry ('yoke:<material>', the yokes' own look) before the material's
+      const tk = /^yoke_/.test(part || '') && CABIN_TRIM['yoke:' + name] ? 'yoke:' + name : name;
+      if (!interior.has(m)) interior.set(m, new Map());
+      const im = interior.get(m);
+      if (!im.has(tk)) im.set(tk, clonePatched(m, { interior: true, cabinFill: CABIN_TRIM[tk] || null }));
+      m = im.get(tk);
     }
     o.material = m;
   });
@@ -669,6 +687,24 @@ export function installPatch(mat, extra = {}) {
     #endif
   }`);
       }
+    }
+    if (interior && cabinFill && cabinFill.length > 4 && +cabinFill[4] > 0 && physical) {
+      // CABIN_TRIM 'up' (3-D judges r2 FID2-04 / CR2-06): inside, the reflections that point below the horizon take the
+      // environment above it (mirrored about the horizontal) -- the studio's floor stands in for the cockpit's lap /
+      // pedestal / footwell, a dim grey that read the yoke's satin inserts grey and its gloss cover matte from the crew
+      // seats (looking down onto the aft face, the reflections point aft-down); mirrored, they show the softbox / window
+      // streaks the photos show on the cover and keep the inserts near-white; reflections above the horizon unchanged
+      // A sixth entry, 'win': the side windows' light -- reflections turned sideways (|glTF X| = |BL| over ~0.35-0.65)
+      // and level or up see a window of radiance win (linear, added to the studio's): the bright streaks the photos show
+      // where the cover's arms and stems turn sideways (P1046408); the studio's softboxes stand overhead, the side windows
+      // are what the yoke sees beside it
+      const up = (+cabinFill[4]).toFixed(3), win = (+(cabinFill[5] || 0)).toFixed(3);
+      fs = fs.replace('#include <envmap_physical_pars_fragment>', THREE.ShaderChunk.envmap_physical_pars_fragment.replace(
+        'reflectVec = inverseTransformDirection( reflectVec, viewMatrix );',
+        `reflectVec = inverseTransformDirection( reflectVec, viewMatrix );
+			reflectVec.y = mix( reflectVec.y, abs( reflectVec.y ), ${up} * uCabinIn );
+			float pcWin = ${win} * uCabinIn * smoothstep( 0.35, 0.65, abs( reflectVec.x ) ) * smoothstep( - 0.10, 0.20, reflectVec.y );`).replace(
+        'return envMapColor.rgb * envMapIntensity;', 'return envMapColor.rgb * envMapIntensity + vec3( pcWin );'));
     }
     if (lining || interior) {
       for (const k of ['cabinAO', 'cabinIn', 'cabinKey', 'cabinDiff', 'cabinSpec', 'cabinFill']) sh.uniforms['u' + k[0].toUpperCase() + k.slice(1)] = U[k];

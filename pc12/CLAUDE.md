@@ -45,10 +45,12 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
 python3 test/consistency_2d3d.py   # the built GLB projected / sliced against the parameter outlines of sheets L1-L6
                                 #   (L4W: wheels / tyres / nose yoke, 2 mm; L6Y: the built yokes in yoke-local mm vs the
                                 #   L6Y front / side views, cover, inserts, pads, switch axes, 1.5 mm)
-python3 test/yoke_mesh_check.py # the Stage-3 yoke mesh (~4 min): triangles vs build.YOKE_BUDGET (as built: cad.res +
-                                #   the column), cad.res a fixed point on the cover, watertight, folds, slivers, corner
+python3 test/yoke_mesh_check.py # the Stage-3 yoke mesh (~4-7 min): triangles vs build.YOKE_BUDGET (as built: cad.res
+                                #   + the column), cad.res a fixed point on the cover, watertight (no same-way edge
+                                #   inside a material), folds, slivers, corner
                                 #   normals vs the solids, the frame's highlight error (interpolated vs exact normals on
-                                #   the faces seen from the aft hemisphere: z-buffered visibility classes), the pilot
+                                #   the faces seen from the aft hemisphere: z-buffered visibility classes; rev O: per face
+                                #   on the heads, by area on every visible round, the trim face's gloss lunes), the pilot
                                 #   yoke's legends in reading order
 python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from the parameter modules (~3 min;
                                 #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels,
@@ -856,6 +858,52 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   button by 13.9 mm; a 6-DOF relative pose on all 9 landmarks (<= 4.2 mm) leaves the outboard grip -4.6 mean (-8.4
   low .. -0.3 high) and the inboard slot side -19.4 (out/tmp/yoke3d/r1fix/press6dof.py): a deeper grip is plausible
   but needs a fitted camera (and shortens 30b's push clearance) -- the next drawing revision, with the owner.
+- Yoke rev O (3-D judges r2, 2026-10-11; L6Y rev G / L6Y2 rev F): PUSH BUTTON (FID2-01, the major; L6Y item 10, a
+  table change for the owner's review): rev J-N's 17.3 hex collar was the photos' round GLOSS-BLACK LEGEND DISC (17.5-18.3
+  in Mexico L / P1046409, rev I's 'collar' 16.4-17.7) -- YOKE_DESIGN button = centre, disc 17.5 x 0.75 proud (R 0.5 rim,
+  gloss_black), cap 10.2 standing 5.75 over a small SATIN-NICKEL HEX 12 A/C x 1.5 (the top of the judges' 10-12: its
+  corners show 0.9 past the cap as Mexico L's lit facets), the cap top 8.0 above the facet as before (`yoke_geom
+  .button_dims / button_disc / hex_collar / button_cap`, `yoke3d.button_pieces`); MAP LIGHTS on the disc's rim (legends
+  row 4: r 6.3-8.0, arcs widened, printed on the disc's top).  TRIM ROCKER (FID2-02): lobe ends 9.5 proud (6.5; the
+  P1046409 / Mexico R projections put the outboard end past the ring, the face-on AOPA / Mexico L keep the 27 length
+  inside it), each lobe CROWNED 0.6 across (trim_lunes[4], `yoke_geom.rocker_crown`), yoke_rocker near-black satin 0.02
+  / rough 0.30; the side walls in rows <= 7 mm (`rounded_extrusion side_max`: 16 slivers each).  LEGENDS (FID2-06):
+  blocks 0.35 of the pitch (0.70), legend_grey 0.17 (sRGB ~0.45).  BADGE (FID2-06): ONE outline groove (badge_lines[4]
+  0 = no inner border: rev J-N's border 0.8 inside drew a double outline; the rectified views' second line is the
+  groove's lit flank), the speed lines run into it, the plate 0.2 proud (0.3), its R 0.2 edge one row and no interior
+  cap points (CR2-07: 96 slivers -> 0).  AFCS cap button_red 0.50 / 0.004 / 0.012, coat 0.15 (FID2-03; the viewer
+  0.34 / 0 / 0.006: AgX compresses a bright red toward white).  MESH: CR2-01 the curvature relaxation capped at 2 x on
+  every aft-visible vertex and none on the heads and their necks (`yoke_patch.CURV_KMAX_VIS / _HEADS`, HEADS_BOX |u| > 85,
+  h > 50; decimated on the cached rev N stages: k 2 / 1 23.66k -> 24.31k faces, the heads' per-face p95 3.9 -> 2.8 deg;
+  1 / 1 everywhere 25.4k); CR2-02 the trim face's terrain refined to the cover's 1 deg (`Terrain.interp_error`,
+  TRIM_INTERP: the lunes by area p95 0.29 deg, > 4 deg 0.3 % -- the judges' raster 5.3 %); CR2-03 the leather refined at
+  3.2 deg (4.0; the judges' 2.0 cost 1.4k faces a yoke, over the budget); CR2-07 budget: YOKE_BUDGET stays 43k (not
+  raised; the interior total's open item stays with the owner) -- the forward-face [E] switches sampled for shape only
+  (never seen), the cover strip's columns 2.4 -> 2.6 mm, the hex one edge row and no interior cap points; the AFCS-boss-as-a-revolve
+  suggestion is not taken: the boss stands 1.5 proud with the R 1.5 blend into the body, so its side is all blend and its
+  R 0.8 rim meets it -- only the flat aft face is a pure revolve, and that already holds few faces (its 1.8k faces are
+  the rims and the blend, held to the highlight criterion).  yoke_mesh_check rows added: the heads per face (p95 <= 2 x
+  FRAME_TOL), every visible round by area / per face (info), the lunes by area.  VIEWER (FID2-03..05, CR2-06;
+  materials.js): CABIN_TRIM entries may be part-scoped ('yoke:grip_black') and carry a 5th 'up' (inside, reflections
+  below the horizon mirrored above it: the crew seats saw the inserts reflect the studio floor) and a 6th 'win' (a
+  side-window radiance where reflections turn sideways: the cover's rims, crown and arm tips get bright edge highlights;
+  its planar aft face reflects one direction, the drawn face being one plane); the cover's fill share 0.4 -> 0.25 for
+  headroom; the body 1.45 x fill + a 0.3 reflection floor.  viewer_test [Y1b]: at the pilot stop the cover's spread
+  (p99.5 - median), the inserts / cover, body / cover, pads / body and the cap's saturation.  Kinematics comparisons use
+  the rev N travel (push 0.065, pull 0.09: FID2-08; judge_fidelity_r2/vjobs.json).  DEFERRED (owner): FID2-07 = FID1-03
+  (the AOPA co-pilot camera first).  AS BUILT: 41,848 triangles meshed, 42,708 in the GLB part a yoke (rev N 42,540;
+  YOKE_BUDGET 43k), GLB 2,495,682 / 42.07 MB, light tier 2,027,929 / 33.70 MB, interior 645,160 (the open budget item);
+  yoke_mesh_check: frame p95 2.22 deg by area, the heads per face p95 2.79 (> 4 deg 2.1 %), every visible round by area
+  p95 3.18, the lunes by area p95 0.29 (> 4 deg 0.3 %), 10 slivers (the hex's straight sides 1 row: 78 -> 0), no
+  same-way edge inside a material (new criterion: one isolated micro-triangle, 0.00003 mm^2, had been doubled at the
+  inboard web -- `yoke3d._debris_keep` drops components of < 4 faces and < 0.001 mm^2).  Viewer, final GLB (SwiftShader,
+  High, 4 passes; scratchpad vshots): pilot stop -- cover 216 (p99.5 244: spread 28), inserts 0.91 / 0.85 of it, body
+  0.27, pads 0.35 (1.30 x the body), AFCS cap 185 / 43 / 41 (saturation 0.78); the pilot's eye at the yoke -- cover 210,
+  inserts 0.90 / 0.82, body 0.24, cap saturation 0.82; viewer_test [Y1b] on its own page: spread 25 (>= 20; rev N 8),
+  inserts 0.91 / 0.84, body 0.27, pads / body 1.27, cap saturation 0.78.  consistency_2d3d 'switch centres' takes the forward-face
+  switches' own connected pieces (grip_black is one primitive with the grip body: 128 body vertices in front of the
+  inboard switch's plane had moved its centroid 1.53 mm once the switch was sampled coarser; the switch itself sits
+  0.00 mm on its axis; tolerance unchanged).
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been

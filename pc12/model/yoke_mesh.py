@@ -1357,10 +1357,11 @@ def interp_errors(name, V, F, N, iters=3, cache=None):
     return E, EF, e_err, Pm, Nm, f_err
 
 
-def highlight_report(name, V, F, N, tol_k=None):
+def highlight_report(name, V, F, N, tol_k=None, face_mask=None):
     """Area-weighted percentiles of the highlight error (deg; interp_errors: an edge's midpoint / a face's centroid,
-    each face its worst) over the faces with tol_k(centroids, face normals) == 1 (all faces without tol_k):
-    dict(p50, p95, over2, over4 (% of the area), faces)."""
+    each face its worst) over the faces with tol_k(centroids, face normals) == 1 (all faces without tol_k) and in
+    face_mask (optional): dict(p50, p95, over2, over4 (% of the area), faces, and unweighted -- rev O, 3-D judges r2
+    CR2-01: small rounds averaged away by area -- fp95 (deg), fover4 (% of the faces))."""
     E, EF, e_err, _, _, f_err = interp_errors(name, V, F, N)
     ef = f_err.copy()
     for col in (0, 1):
@@ -1369,12 +1370,15 @@ def highlight_report(name, V, F, N, tol_k=None):
         np.maximum.at(ef, f[ok], e_err[ok])
     fn, A = _face_normals(V, F)
     m = np.ones(len(F), bool) if tol_k is None else np.asarray(tol_k(V[F].mean(1), fn)) == 1.0
+    if face_mask is not None:
+        m &= np.asarray(face_mask, bool)
     x, w = ef[m], A[m] / max(A[m].sum(), 1e-30)
     o = np.argsort(x)
     cw = np.cumsum(w[o])
     pick = lambda q: float(x[o][min(np.searchsorted(cw, q), len(x) - 1)]) if len(x) else 0.0      # noqa: E731
     return dict(p50=pick(0.5), p95=pick(0.95), over2=float(100 * w[x > 2].sum()), over4=float(100 * w[x > 4].sum()),
-                faces=int(m.sum()))
+                faces=int(m.sum()), fp95=float(np.percentile(x, 95)) if len(x) else 0.0,
+                fover4=float(100 * (x > 4).mean()) if len(x) else 0.0)
 
 
 # ============================================================================================ the moulding, end to end

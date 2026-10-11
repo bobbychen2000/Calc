@@ -147,8 +147,12 @@ def boundary_loops(F):
 BEAD_ROWS = 5            # rows over the bead's half round R 0.4 (36 deg each: chord sag 0.0196 mm < cad.res interior 0.02)
 LEATHER_FILL = ((3.2, 0.0, 8.0), (6.0, 8.0, 1e9))   # the leather's fill points: spacing (mm) by depth inside the bead
 #                                                    (the crown rises over the first 8; flat beyond)
-LEATHER_TOL, LEATHER_MIN, LEATHER_ROUNDS = 4.0, 0.6, 3     # the leather's highlight criterion (deg: satin, under
-#                                                          the viewer's pebble bump), point spacing (mm)
+LEATHER_TOL, LEATHER_MIN, LEATHER_ROUNDS = 3.2, 0.5, 4     # the leather's highlight criterion (deg: satin, under
+#                                                          the viewer's pebble bump), point spacing (mm), rounds -- rev O
+#                                                          (3-D judges r2 CR2-03: at 4 deg a ring of 4-8 deg blobs 5-10 mm
+#                                                          inside each outline drew a sawtooth in the zebra / at grazing
+#                                                          light; rev N 4.0 / 0.6 / 3: 4,993 leather faces a yoke; 3.0:
+#                                                          5,471; the judges' 2.0: 6,341, over build.YOKE_BUDGET; 3.2)
 
 
 def _plane_maps(g):
@@ -497,9 +501,34 @@ class Terrain:
         E = E[E[:, 0] != E[:, 1]]
         return [Vc[c] for c in YT.chains([tuple(e) for e in E])]
 
-    def triangulate(self, B, fill=(1.2, 2.4), chain_tol=0.005, chain_lo=0.8):
+    def interp_error(self, X, T, lab, crease_v, kB=0):
+        """Per triangle: the largest angle (deg) between its corner normals interpolated (then normalised) and its
+        piece's exact normal, at the centroid and the three edge midpoints (yoke_cover.terrain_interp_error for this
+        terrain; the boundary loop's first kB points carry their own piece's normal)."""
+        labi = self.pieces_at(X)[0]
+        Lc = np.where(crease_v[T], lab[:, None], labi[T])
+        Nc = np.zeros(T.shape + (3,))
+        for L in np.unique(Lc):
+            m = Lc == L
+            Nc[m] = self.normal(int(L), X[T[m]])
+        err = np.zeros(len(T))
+        for w in ((1 / 3, 1 / 3, 1 / 3), (0.5, 0.5, 0.0), (0.0, 0.5, 0.5), (0.5, 0.0, 0.5)):
+            w = np.asarray(w)
+            S = np.einsum("k,fkd->fd", w, X[T])
+            Ni = _unit(np.einsum("k,fkd->fd", w, Nc))
+            Ne = np.zeros_like(Ni)
+            for L in np.unique(lab):
+                m = lab == L
+                Ne[m] = self.normal(int(L), S[m])
+            err = np.maximum(err, np.degrees(np.arccos(np.clip(np.sum(Ni * Ne, 1), -1.0, 1.0))))
+        return err
+
+    def triangulate(self, B, fill=(1.2, 2.4), chain_tol=0.005, chain_lo=0.8, interp=None):
         """Triangles of the terrain inside the boundary loop B (k, 2): (X points (first k = B), T, labels per
-        triangle, crease-vertex mask)."""
+        triangle, crease-vertex mask).  interp = (tol deg, min spacing mm, rounds): the HIGHLIGHT refinement (rev O,
+        3-D judges r2 CR2-02) -- where a triangle's interpolated corner normals miss its piece's exact normal by more
+        than tol at its centroid / an edge midpoint, the centroid becomes a fill point (clear of every point, the
+        creases and the boundary by the min spacing), as the cover's terrain."""
         from model import yoke_cover as YC
         from model import yoke_tri as YT
         from matplotlib.path import Path
@@ -530,13 +559,37 @@ class Terrain:
                 dd, _ = feat.query(Q)
                 pts.append(Q[(dd >= 0.6 * hx) & (dd < 0.6 * nxt)])
         Fp = np.vstack(pts) if pts else np.zeros((0, 2))
-        X = np.vstack([B, CP, Fp])
         cons = [(i, (i + 1) % kB) for i in range(kB)] + [(kB + a, kB + b) for a, b in CE]
-        T = YT.cdt(X, cons)
-        T = YT.inside(T, X, [np.arange(kB)])
-        lab = self.pieces_at(X[T].mean(1))[0]
-        crease_v = np.zeros(len(X), bool)
-        crease_v[kB:kB + len(CP)] = True
+        tol, dmin, rounds = interp if interp else (None, 0.0, 0)
+        if interp:
+            def _dens(P, step=0.1):
+                out = [P[:1]]
+                for a, b in zip(P[:-1], P[1:]):
+                    n = max(1, int(math.ceil(np.linalg.norm(b - a) / step)))
+                    out.append(a + (b - a) * np.linspace(0, 1, n + 1)[1:, None])
+                return np.vstack(out)
+            feat_dense = cKDTree(np.vstack([_dens(np.vstack([B, B[:1]]))] +
+                                           [_dens(CP[e]) for e in CE] if len(CE) else [_dens(np.vstack([B, B[:1]]))]))
+        for rd in range(rounds + 1):
+            X = np.vstack([B, CP, Fp])
+            T = YT.cdt(X, cons)
+            T = YT.inside(T, X, [np.arange(kB)])
+            lab = self.pieces_at(X[T].mean(1))[0]
+            crease_v = np.zeros(len(X), bool)
+            crease_v[kB:kB + len(CP)] = True
+            if rd == rounds:
+                break
+            err = self.interp_error(X, T, lab, crease_v, kB)
+            newp = X[T[err > tol]].mean(1)
+            if len(newp):
+                newp = newp[(cKDTree(X).query(newp)[0] > dmin) & (feat_dense.query(newp)[0] > dmin) &
+                            path.contains_points(newp)]
+            if not len(newp):
+                break
+            keep = np.ones(len(newp), bool)
+            for i, j in cKDTree(newp).query_pairs(dmin):
+                keep[j] = False
+            Fp = np.vstack([Fp, newp[keep]])
         return X, T, lab, crease_v
 
 
@@ -640,7 +693,7 @@ def trim_patch(V, N, loop, verbose=False):
     Tr = trim_terrain()
     Q = V[loop] - c
     B = np.c_[Q @ eu, Q @ ev]
-    X, T, lab, crease_v = Tr.triangulate(B, fill=TRIM_FILL, chain_tol=0.02, chain_lo=1.6)
+    X, T, lab, crease_v = Tr.triangulate(B, fill=TRIM_FILL, chain_tol=0.02, chain_lo=1.6, interp=TRIM_INTERP)
     kB = len(B)
     # heights: the exact smooth surface, the grooves' planes below it
     Xi = X[kB:]
@@ -699,6 +752,10 @@ PAD_CUT_DEPTH = 8.0      # mm: the pad cut reaches this far below the grip's pla
 TRIM_CUT_R = 15.3        # mm: the trim-face patch's radius (head_out R 16.3 - edge round 1.5 = the flat face's 14.8)
 TRIM_CUT_DEPTH = 2.5
 TRIM_FILL = (2.5, 5.0)
+TRIM_INTERP = (1.0, 0.45, 4)   # rev O (3-D judges r2 CR2-02: the gloss-black lunes p95 4.2 deg, 5 % of their pixels > 4 deg
+#                               off the solid's normals -- the face's fall-off into its edge round / the chamfer at the
+#                               bottom held by 2.5 / 5 mm fill): the highlight refinement as the gloss cover's (1 deg,
+#                               points >= 0.45 mm apart, 4 rounds; yoke_cover INTERP_*)
 # the frame's decimation: QEM distance 0.15 mm, edges <= 14 mm (exact normals: the flat faces need no more); the cut loops
 # slide within 0.02 mm of their exact curve, their segments <= 2.4 mm (the pockets' 0.25 mm bead rows stay >= 5.9 deg)
 PATCH_DEC = dict(dist=0.15, lmax=14.0, bnd_tol=0.02, bnd_turn=15.0, bnd_lmax=2.4)
@@ -720,6 +777,14 @@ DECI_VERSION = "deci2"
 
 
 CURV_R0, CURV_KMAX = 4.0, 6.0   # the tolerance grows as R0 / radius on rounds tighter than R0 mm, at most KMAX x
+CURV_KMAX_VIS, CURV_KMAX_HEADS = 2.0, 1.0   # ... at most VIS x on the faces seen from the aft hemisphere and none on
+#                                 the heads and their necks (|u| > HEADS_BOX[0], h > HEADS_BOX[1]) -- rev O, 3-D judges r2
+#                                 CR2-01: the R 0.8-4 rounds of the heads' necks, where L6Y item 4's crisp edge highlights
+#                                 run, reached 6 x FRAME_TOL = 15 deg and drew chevron kinks in the close-up zebra
+#                                 (decimated on the cached rev N stages: rev N 23.66k faces, the visible rounds > 4 deg on
+#                                 2.3 % of their area; 2 / 1: 24.31k, heads' faces p95 per face 3.9 -> ~2.8 deg; 1 / 1:
+#                                 25.40k)
+HEADS_BOX = (85.0, 50.0)
 
 
 def curvature_tol_k(V, F, N):
@@ -893,7 +958,10 @@ def moulding_parts(verbose=False, cover=None):
 
     def dec():
         vis = np.array([1.0, FWD_TOL_K, np.inf])[vcls]
-        ts = FRAME_TOL * np.minimum(vis * curvature_tol_k(V, F, N), HIDDEN_TOL / FRAME_TOL)
+        ck = curvature_tol_k(V, F, N)
+        heads = (np.abs(V[:, 0]) > HEADS_BOX[0]) & (V[:, 1] > HEADS_BOX[1])
+        ck = np.where(vcls == 0, np.minimum(ck, np.where(heads, CURV_KMAX_HEADS, CURV_KMAX_VIS)), ck)     # rev O
+        ts = FRAME_TOL * np.minimum(vis * ck, HIDDEN_TOL / FRAME_TOL)
         sd = np.where(np.isfinite(vis), np.where(vis > 1.0, FRAME_SDIST[1], FRAME_SDIST[0]), FRAME_SDIST[2])
         hid = ~np.isfinite(vis)
         prm = dict(PATCH_DEC, sdist=sd, dist=np.maximum(sd, 0.15), cone=np.where(hid, HIDDEN_CONE_TURN[0], YM.DEC["cone"]),
@@ -907,7 +975,8 @@ def moulding_parts(verbose=False, cover=None):
         V2[~bnd], N2[~bnd] = P, Nn
         return V2, F2, N2
     V, F, N = YM.stage_cached("deci", key + (tuple(sorted(dict(YM.DEC, **PATCH_DEC).items())), FRAME_TOL, FWD_TOL_K,
-                                             HIDDEN_TOL, FRAME_SDIST, HIDDEN_CONE_TURN, CURV_R0, CURV_KMAX, DECI_VERSION), dec)
+                                             HIDDEN_TOL, FRAME_SDIST, HIDDEN_CONE_TURN, CURV_R0, CURV_KMAX, CURV_KMAX_VIS,
+                                             CURV_KMAX_HEADS, HEADS_BOX, DECI_VERSION), dec)
     fn_, _ = YM._face_normals(V, F)
     hid_f = ~np.isfinite(vis_tol_k(V[F].mean(1), fn_))
     hid_v = np.ones(len(V), bool)

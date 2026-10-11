@@ -95,7 +95,7 @@ def main():
            "there, on the solid) and <= 1 % to the moulding", g_cov == 0 and g_mou <= 0.01 * n_mou,
            f"cover +{g_cov}, moulding +{g_mou} on {n_mou}")
     # 2 ------------------------------------------------------------------------------------------------ watertight
-    bad = []
+    bad, same_way = [], 0
     for mat in sorted({p.mat for p in ps}):
         grp = [p for p in ps if p.mat == mat]
         V = np.vstack([p.V for p in grp])
@@ -108,6 +108,7 @@ def main():
         key = np.sort(e, 1)
         _, inv, cnt = np.unique(key, axis=0, return_inverse=True, return_counts=True)
         d = np.unique(e, axis=0, return_counts=True)[1]
+        same_way += int((d > 1).sum())
         if (cnt != 2).any() or (d > 1).any():
             bad.append(f"{mat}: {int((cnt == 1).sum())} open, {int((cnt > 2).sum())} non-manifold, "
                        f"{int((d > 1).sum())} same-way edges")
@@ -121,10 +122,12 @@ def main():
     Fw = Fw[(Fw[:, 0] != Fw[:, 1]) & (Fw[:, 1] != Fw[:, 2]) & (Fw[:, 0] != Fw[:, 2])]
     key = np.sort(np.vstack([Fw[:, [0, 1]], Fw[:, [1, 2]], Fw[:, [2, 0]]]), 1)
     cnt = np.unique(key, axis=0, return_counts=True)[1]
-    report("watertight: every piece group welded by position closes with the others (each edge twice)",
-           int((cnt == 1).sum()) == 0, f"{int((cnt == 1).sum())} open edges, {int((cnt > 2).sum())} shared by > 2 "
-                                      f"faces over {len(Fw)} faces" + (f"; per material: {'; '.join(bad)}" if bad
-                                                                       else ""))
+    # rev O: and no edge traversed twice the same way inside a material (a doubled / flipped face: one isolated micro-
+    # triangle had been doubled at the inboard web; yoke3d._debris_keep)
+    report("watertight: every piece group welded by position closes with the others (each edge twice), no same-way "
+           "edge inside a material", int((cnt == 1).sum()) == 0 and same_way == 0,
+           f"{int((cnt == 1).sum())} open edges, {int((cnt > 2).sum())} shared by > 2 faces over {len(Fw)} faces, "
+           f"{same_way} same-way" + (f"; per material: {'; '.join(bad)}" if bad else ""))
     # 3 ------------------------------------------------------------------------------------------------ slivers
     sl = []
     for p in ps:
@@ -196,6 +199,47 @@ def main():
            f"p50 {hr['p50']:.2f}, p95 {hr['p95']:.2f} deg; area > 2 deg {hr['over2']:.1f} %, > 4 deg {hr['over4']:.1f} % "
            f"({hr['faces']} faces; rev M at 3.5 deg / the proxy: p50 0.86, p95 2.97, 16 % / 1.2 %; the first "
            f"QEM-decimated mesh: p50 1.40, p95 8.0, 43 % / 29 %)")
+    # rev O (3-D judges r2 CR2-01): the small rounds alone, and per face (not by area) -- the area-weighted row averages
+    # the R 0.8 - 4 rounds of the heads' necks away; a face is on a round where its corner normals turn faster than
+    # 1 / CURV_R0 per mm along its edges
+    Fr = frame.F
+    turn = np.zeros(len(Fr))
+    for a_, b_ in ((0, 1), (1, 2), (2, 0)):
+        na, nb = frame.N[Fr[:, a_]], frame.N[Fr[:, b_]]
+        ang = np.arccos(np.clip(np.sum(na * nb, 1), -1.0, 1.0))
+        turn = np.maximum(turn, ang / np.maximum(np.linalg.norm(frame.V[Fr[:, a_]] - frame.V[Fr[:, b_]], axis=1), 1e-3))
+    rnd = turn * YP.CURV_R0 > 1.0
+    hr3 = YM.highlight_report("msmooth", frame.V, frame.F, frame.N, tol_k=YP.vis_tol_k, face_mask=rnd)
+    Cf = frame.V[Fr].mean(1)
+    hd = (np.abs(Cf[:, 0]) > YP.HEADS_BOX[0]) & (Cf[:, 1] > YP.HEADS_BOX[1])
+    hr5 = YM.highlight_report("msmooth", frame.V, frame.F, frame.N, tol_k=YP.vis_tol_k, face_mask=hd)
+    report(f"frame highlights on the HEADS and their necks (|u| > {YP.HEADS_BOX[0]:g}, h > {YP.HEADS_BOX[1]:g}: no "
+           f"curvature relaxation, rev O judges CR2-01), 95th percentile PER FACE <= 2 x FRAME_TOL", hr5["fp95"] <= 2.0 *
+           YP.FRAME_TOL, f"per face p95 {hr5['fp95']:.2f} deg, > 4 deg {hr5['fover4']:.1f} % of {hr5['faces']} faces; "
+                         f"by area p95 {hr5['p95']:.2f}, > 4 deg {hr5['over4']:.2f} %")
+    info(f"frame highlights on every visible ROUND (faces turning > 1 / {YP.CURV_R0:g} mm; the relaxation capped at "
+         f"{YP.CURV_KMAX_VIS:g} x there)", f"by area p95 {hr3['p95']:.2f} deg, > 4 deg {hr3['over4']:.2f} %; per face p95 "
+         f"{hr3['fp95']:.2f}, > 4 deg {hr3['fover4']:.1f} % of {hr3['faces']} faces; all visible faces per face: p95 "
+         f"{hr['fp95']:.2f}, > 4 deg {hr['fover4']:.1f} %")
+    # rev O (3-D judges r2 CR2-02): the gloss-black lunes of the trim face (outside its ring groove and slot), the
+    # glossiest black on the yoke -- refined to the cover's 1 deg (yoke_patch.TRIM_INTERP)
+    lun = [q for q in ps if q.name == "moulding" and q.mat == "gloss_black"]
+    if lun:
+        q = lun[0]
+        c_, n_ = G.head_out_face()
+        eu_, ev_ = G._facet_frame(c_, n_)
+        C_ = q.V[q.F].mean(1) - c_
+        rr = np.hypot(C_ @ eu_, C_ @ ev_)
+        R0 = 0.5 * float(G.T()["trim"][2])
+        w_ = float(G.T()["trim_grooves"][0])
+        yl_ = G.trim_slot_dims()[0]
+        keep = (np.abs(rr - R0) > 0.5 * w_ + 0.1) & (np.abs(C_ @ ev_) > yl_ + 0.1)
+        hr4 = YM.highlight_report("msmooth", q.V, q.F, q.N, face_mask=keep)
+        report("trim-face lunes (gloss black, outside the ring groove / slot): interpolated vs exact normal, 95th "
+               "percentile by area <= 1 deg and > 4 deg on <= 1 % of the area (rev N: 5 % of their pixels > 4 deg)",
+               hr4["p95"] <= 1.0 and hr4["over4"] <= 1.0,
+               f"per face p95 {hr4['fp95']:.2f}, > 4 deg {hr4['fover4']:.1f} %; by area p95 {hr4['p95']:.2f} deg, "
+               f"> 4 deg {hr4['over4']:.1f} % ({hr4['faces']} of {len(q.F)} faces)")
     hr2 = YM.highlight_report("msmooth", frame.V, frame.F, frame.N, tol_k=YP.frame_tol_k)
     info("the same over rev M's proxy class (for comparison)", f"p50 {hr2['p50']:.2f}, p95 {hr2['p95']:.2f} deg; "
          f"> 2 deg {hr2['over2']:.1f} %, > 4 deg {hr2['over4']:.1f} % ({hr2['faces']} faces)")

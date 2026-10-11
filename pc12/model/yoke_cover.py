@@ -37,8 +37,10 @@ FILL_LEVELS = (2.4, 4.0)   # mm: the terrain's graded hexagonal fill spacings by
 #                          linearly over a 9 mm triangle of the lower face); the highlight refinement below adds points
 #                          where the interpolation still misses (1.8 / 3.0 without it: 0.9k triangles more, 1.8 % of the
 #                          area > 1 deg; 2.4 / 4.0 with it: 0.1 %)
-COL_LEN, COL_TURN = 2.4, 10.0  # strip columns: at most this far apart (mm) / this much outline turn (deg; the quads'
-#                                 diagonals across the ~18 deg rows that turn past cad.res's 20 deg are split at build)
+COL_LEN, COL_TURN = 2.6, 10.0  # strip columns: at most this far apart (mm) / this much outline turn (deg; the quads'
+#                                 diagonals across the ~18 deg rows that turn past cad.res's 20 deg are split at build);
+#                                 rev O (3-D judges r2 CR2-07, the yoke's budget): 2.4 -> 2.6 mm (cover 7,018 -> 6,802
+#                                 faces, 7 slivers; at 3.2 the perimeter round's 0.26 mm rows over 3.3 mm columns made 64)
 FRONT_FILL = 9.0         # mm: the hidden front face's hexagonal fill spacing (against the body; was a 4 mm square grid)
 FRONT_RING = (4.0, 6.5)  # mm: its ring of points this far inside the outline, this far apart
 N_AFT, N_FRONT = 5, 1    # strip rows: aft round + land (turn-equalised, ~20 deg a row: cad.res's criterion), front

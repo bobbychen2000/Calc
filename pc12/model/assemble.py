@@ -123,12 +123,14 @@ MATERIALS = {
     "yoke_silver_dark":    ((0.30, 0.30, 0.30), 0.85, 0.34),
     "grip_black":          ((0.018, 0.018, 0.020), 0.0, 0.42),
     "leather_black":       ((0.05, 0.05, 0.05), 0.0, 0.58, dict(specular=0.5)),
-    "button_red":          ((0.70, 0.035, 0.04), 0.0, 0.30, dict(clearcoat=0.3, clearcoat_rough=0.06)),
+    "button_red":          ((0.50, 0.004, 0.012), 0.0, 0.30, dict(clearcoat=0.15, clearcoat_rough=0.06)),
     # rev N (3-D judges r1): the legends as letter blocks at the lettering's mean tone (white strokes ~35 % ink),
     # the hex collar satin nickel, the trim rocker satin dark grey, the column satin black (non-metallic)
-    "legend_grey":         ((0.30, 0.30, 0.30), 0.0, 0.50),
+    # rev O (3-D judges r2): the AFCS cap a deeper red under less coat, thinner legend blocks at ~0.45 of white, the
+    # rocker near-black satin
+    "legend_grey":         ((0.17, 0.17, 0.17), 0.0, 0.50),
     "yoke_nickel":         ((0.60, 0.56, 0.50), 0.90, 0.30),
-    "yoke_rocker":         ((0.042, 0.042, 0.045), 0.0, 0.45),
+    "yoke_rocker":         ((0.020, 0.020, 0.022), 0.0, 0.30),
     "yoke_column":         ((0.022, 0.022, 0.024), 0.0, 0.70, dict(specular=0.5)),
     # divider / lavatory / cabinets / FR34 header: dark grey-brown (smoked) walnut veneer under a gloss lacquer
     # (P1046406 [M]: sRGB ~90/80/77 in the cabin light)
