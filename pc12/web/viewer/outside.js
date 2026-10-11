@@ -45,6 +45,7 @@ export const SKY = {
   // the windows from the bright horizon and the apron, not from the deep blue overhead (the full blue zenith tinted every
   // up-facing surface -- the sheepskin read slate blue, B - R ~50 against P1046408's ~22)
   envDesat: 0.6,
+  haze: [[1.36, 1.31, 1.22], 0.35, 28.0],     // warm horizon haze: colour (linear), share at the horizon, falloff / elevation
 };
 // flight deck fix r1 (FDO1-08): the apron as seen through the glazing x `shown` (0.86: the near-white concrete clipped
 // at the interior exposure); the image-based light inside keeps the full value (`environment()`: the calibrated cabin
@@ -58,6 +59,13 @@ const GROUND = { size: 400, y: -0.004, apron: [-120, -160, 240, 260], slab: 7.5,
   shown: 0.34, envK: 1.08, haze: ['198,205,212', 55, 200, 0.5],
   taxi: '#d9b43a', farColor: [0.20, 0.26, 0.13], farR: [199, 440], ridgeR: 400, ridgeColor: [0.42, 0.50, 0.58] };
 // hangars / buildings: centre X, Z, width, height, depth (m), albedo; pre-lit by facing the sun (vertex colours)
+// (flight deck fix r3 FDO3-07 asked for the building P1046408 shows behind the glare at the photo-fitted panel_408b
+// camera: through its fitted camera a tall block 12-14 deg right of the nose ~21 deg up and a long hall 20-31 deg right,
+// its roof 15-18 deg up, from the cabin eye.  A nearer hall there (22-50 deg right, eaves ~19 deg up) was tried and
+// taken out again: from the crew seats the same azimuths and elevations are open blue sky down to the hood on both sides
+// of the centre post in P1046410 and P1046409 -- the same aircraft, the same session --, the hall filled the right
+// windshield at the pilot stop and the Cockpit preset ([FD-L1] sky over the cowl 250 -> 203, [BV-5] 145).  The crew-seat
+// photos win: the buildings stay low and far)
 const HANGARS = [
   [55, -95, 70, 16, 40, [0.95, 0.97, 1.0]], [-70, -120, 60, 14, 35, [0.92, 0.92, 0.9]],
   [130, -20, 30, 10, 60, [0.8, 0.82, 0.85]], [-150, -40, 40, 9, 25, [0.85, 0.8, 0.75]],
@@ -200,6 +208,23 @@ function facadeTexture() {
   const gr = g.createLinearGradient(0, H * 0.75, 0, H);
   gr.addColorStop(0, 'rgba(60,58,54,0)'); gr.addColorStop(1, 'rgba(60,58,54,0.28)');
   g.fillStyle = gr; g.fillRect(0, H * 0.75, W, H * 0.25);
+  // (flight deck fix r3 FDO3-07: flat, toy-like boxes) the eaves' shadow band under the roof edge, the door leaves'
+  // vertical joints doubled with a light edge (a recessed seam catching the sun), a door track along the bay's top, a
+  // personnel door, down pipes and a darker plinth
+  const ev = g.createLinearGradient(0, 10, 0, 30);
+  ev.addColorStop(0, 'rgba(40,44,50,0.45)'); ev.addColorStop(1, 'rgba(40,44,50,0)');
+  g.fillStyle = ev; g.fillRect(0, 10, W, 20);
+  for (let i = 0; i <= 16; i++) {
+    const x = W * (0.08 + 0.84 * i / 16);
+    g.fillStyle = 'rgba(48,52,58,0.45)'; g.fillRect(x - 1, H * 0.34, 1.5, H * 0.66);
+    g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(x + 0.5, H * 0.34, 1, H * 0.66);
+  }
+  g.fillStyle = '#5a6068'; g.fillRect(W * 0.07, H * 0.325, W * 0.86, 4);
+  g.fillStyle = '#6e767e'; g.fillRect(W * 0.94, H * 0.62, W * 0.03, H * 0.38);
+  g.fillStyle = 'rgba(40,44,50,0.5)'; g.fillRect(W * 0.94, H * 0.62, W * 0.03, 2);
+  g.fillStyle = 'rgba(90,96,104,0.7)';
+  for (const x of [W * 0.03, W * 0.985]) g.fillRect(x, 10, 3, H - 10);
+  g.fillStyle = 'rgba(70,70,68,0.45)'; g.fillRect(0, H - 6, W, 6);
   return cv;
 }
 
@@ -242,6 +267,8 @@ void main() {
   vec3 c = mix( uHor, uZen, pow( e, ${SKY.blend.toFixed(3)} ) );
   float s = max( dot( d, uSun ), 0.0 );
   c += vec3( 1.0, 0.95, 0.85 ) * ( ${SKY.glow[0].toFixed(3)} * pow( s, ${SKY.glow[1].toFixed(1)} ) + ${SKY.disc[0].toFixed(3)} * pow( s, ${SKY.disc[1].toFixed(1)} ) );
+  // (flight deck fix r3 FDO3-07) a faint warm haze in the lowest few degrees over the horizon
+  c = mix( c, vec3( ${SKY.haze[0].map((x) => x.toFixed(3)).join(', ')} ), ${SKY.haze[1].toFixed(3)} * exp( - e * ${SKY.haze[2].toFixed(1)} ) );
   if ( d.y < 0.0 ) c = uHor * ${SKY.below.toFixed(3)};
   gl_FragColor = vec4( c, 1.0 );
   #include <tonemapping_fragment>

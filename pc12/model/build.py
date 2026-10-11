@@ -16,6 +16,7 @@ import numpy as np
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1]))
 from cad import res
 from cad.glb import to_gl
+from cad.mesh import Mesh
 from model import fuselage as F
 from model import fuselage_parts, wing, empennage, powerplant, gear, details, interior, livery, flightdeck
 from model import wing as W, empennage as E
@@ -251,8 +252,12 @@ def construction():
 # --; flight deck r1 (owner 2026-10-04 "the details are drastically missing"): per-part caps for the flight deck's
 # parts (keys = part ids; the build print reads them by part id) and the interior total raised for them; the counts are
 # taken after the interior-light bake's split (AO_SPLIT, below: the divider's large walnut faces +6.1k, so its cap 18k)
-INTERIOR_BUDGET = {"total": res.budget(370_000, 2.2), "crew_seat": res.budget(17_500, 3.4),
-                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(68_000, 2.2),
+# flight deck fix r3 (FDO3-03 / FID-FD3-05): the crew seat 17.5k -> 19.5k (the back's map pocket, welt and stitched seams,
+# the fleece rims' finer fringe sampled every 6.5 mm); (FDO3-01) the flight deck 68k -> 92k (the contact pass's split of
+# the panel box's broad triangles, AO_CONTACT_SPLIT: +62k at RES 2; the cove, lip, tray, brush tufts) and the interior
+# total 370k -> 390k
+INTERIOR_BUDGET = {"total": res.budget(390_000, 2.2), "crew_seat": res.budget(19_500, 3.4),
+                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(92_000, 2.2),
                    "yoke_L": 24_000, "yoke_R": 24_000, "pedal_LL": 3_000, "pedal_LR": 3_000, "pedal_RL": 3_000,
                    "pedal_RR": 3_000, "fd_consoles": 30_000, "fd_divider": 18_000, "interior_lining": 190_000}
 
@@ -357,6 +362,8 @@ def build_parts(ao=False):
         else:
             res.refine_part(pid, p)
     fuselage_parts.apply_skin_analytic_normals(parts)   # cowl / chin-lip vertices: the analytic skin normal (RES2-01)
+    from model import fd_detail_b
+    fd_detail_b.round_post_normals(parts.get("interior_lining"))   # the A-pillars shade round (flight deck fix r3)
     if ao:
         bake_interior_ao(parts)         # the cabin / flight-deck light as a vertex attribute (_AO: viewer, inside)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}
@@ -397,6 +404,18 @@ AO_DENOISE_X = 4.75
 AO_SKY_K = 24                           # window-sky directions per vertex (was 16: the gain x18 amplified its noise)
 AO_SKY_BOX = ((0.90, -1.05, 0.15), (13.70, 1.05, 2.95))
 GLASS = ("glass", "lens")
+# flight deck fix r3 (FDO3-01: no contact darkening along the panel's joints -- the bake's first step is 25 mm, its
+# vertices up to 35-60 mm apart): a near-field pass over the panel / glareshield / stack box -- the flight deck's
+# triangles there split to AO_CONTACT_SPLIT, the occluders sampled every 2.5 mm, steps 4-22 mm, its own 2 mm
+# representatives -- multiplied into the occlusion channel: the plates' seams, the bezels' feet, the fascia under the
+# glareshield lip, the tray's walls, the switch blocks darken as the photos' joints do
+AO_CONTACT_BOX = ((3.20, -0.80, 1.45), (4.15, 0.80, 2.40))
+AO_CONTACT_SPLIT = 0.016                # the long edges of the box's broad triangles (>= AO_CONTACT_AREA m^2) only:
+AO_CONTACT_AREA = 1.2e-4                # the face, fascia, cove, stack -- not every knob's and fin's slivers
+AO_CONTACT_POW = 0.6                    # its share: the occlusion x contact^0.6
+AO_CONTACT_SKIP = ("panel_grey",)       # the eyebrow fascia: under the lip it took 88 -> 72 at panel_408b, P1046408 ~120
+AO_CONTACT = dict(spacing=0.0025, steps=(0.004, 0.008, 0.014, 0.022), far=(1.0, 2.0, 1.0), offset=0.0008, k=12,
+                  edt_from=None, cell=0.002, smooth=1)
 AO_GLOW = 0.25                          # the cabin's general glow in the bounce's radiance proxy (x albedo)
 AO_EMIT = {"display_page": 0.25, "screen_white": 0.3, "light_cove": 0.8, "light_reading": 0.5}   # emitters' own light
 
@@ -410,6 +429,11 @@ def _albedo(mat):
     return float(0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2])
 
 
+def _contact_sel(lo, hi):
+    """presplit() selector of the contact pass: triangles in the box (lo, hi) (presplit min_area: AO_CONTACT_AREA)."""
+    return lambda c: np.all((c >= lo) & (c <= hi), axis=1)
+
+
 def bake_interior_ao(parts):
     from cad import ao
     t0 = time.time()
@@ -418,12 +442,39 @@ def bake_interior_ao(parts):
         lo, hi = (np.asarray(b) for b in box)
         sel = lambda c, lo=lo, hi=hi: np.all((c >= lo) & (c <= hi), axis=1)      # noqa: E731
         added += sum(ao.presplit([m for m, _ in parts[pid].meshes], ml, sel) for pid in AO_SPLIT_PARTS if pid in parts)
+    lo, hi = (np.asarray(b) for b in AO_CONTACT_BOX)
+    in_box = lambda c, lo=lo, hi=hi: np.all((c >= lo) & (c <= hi), axis=1)      # noqa: E731
+    if "flight_deck" in parts:
+        added += ao.presplit([m for m, _ in parts["flight_deck"].meshes], AO_CONTACT_SPLIT, _contact_sel(lo, hi),
+                             min_area=AO_CONTACT_AREA)
     t1 = time.time()
     rec = [m for p in parts.values() if p.group == "Interior" for m, _ in p.meshes]
     solid = lambda pid: [m for m, mat in parts[pid].meshes if not mat.startswith(GLASS)] if pid in parts else []  # noqa: E731
     occ = rec + [m for pid in AO_DOOR_PARTS for m in solid(pid)]
     dn = (AO_DENOISE, lambda P: P[:, 0] < AO_DENOISE_X)
     occl = ao.bake(rec, occ, denoise=dn)
+    # the near-field contact pass (AO_CONTACT) on the flight deck's meshes in the box, occluded by the interior there
+    tc = time.time()
+    near = lambda m: m.V[m.F].mean(1) if len(m.F) else np.zeros((0, 3))      # noqa: E731
+    lo2, hi2 = lo - 0.03, hi + 0.03
+    occ_c = []
+    for m in occ:
+        if not len(m.F):
+            continue
+        k_ = np.all((near(m) >= lo2) & (near(m) <= hi2), axis=1)
+        if k_.any():
+            occ_c.append(Mesh(m.V, m.F[k_], m.N))
+    fd_ids = {id(m) for m, mat in parts["flight_deck"].meshes if mat not in AO_CONTACT_SKIP} \
+        if "flight_deck" in parts else set()
+    rc = [(i, m) for i, m in enumerate(rec) if id(m) in fd_ids and np.any(in_box(m.V))]
+    n_c = 0
+    if rc and occ_c:
+        cont = ao.bake([m for _, m in rc], occ_c, **AO_CONTACT)
+        for (i, m), c in zip(rc, cont):
+            w = in_box(m.V)
+            occl[i] = np.where(w, occl[i] * np.clip(c, 0.0, 1.0) ** AO_CONTACT_POW, occl[i])
+            n_c += int(w.sum())
+    tc = time.time() - tc
     t2 = time.time()
     walls = rec + [m for pid in AO_SKIN_PARTS for m in solid(pid)]
     outside = lambda P: ~F.inside(P[:, 0], P[:, 1], P[:, 2], margin=-0.02)    # noqa: E731
@@ -440,8 +491,9 @@ def bake_interior_ao(parts):
     fl = [b[(m.V[:, 0] < 4.75)] for m, b in zip(rec, light)]
     fl = np.concatenate(fl) if fl else np.zeros(1)
     print(f"  interior light baked on {nv:,} vertices: +{added:,} split triangles ({t1 - t0:.0f} s), occlusion "
-          f"({t2 - t1:.0f} s), window sky ({t3 - t2:.0f} s) + one bounce ({time.time() - t3:.0f} s); flight deck medians "
-          f"sky {np.median(fd):.2f}, light {np.median(fl):.2f}", file=sys.stderr)
+          f"({t2 - t1:.0f} s, of it the panel's contact pass on {n_c:,} vertices {tc:.0f} s), window sky ({t3 - t2:.0f} s) "
+          f"+ one bounce ({time.time() - t3:.0f} s); flight deck medians sky {np.median(fd):.2f}, light {np.median(fl):.2f}",
+          file=sys.stderr)
 
 
 OUT = __import__("pathlib").Path(__file__).resolve().parents[1] / "out"

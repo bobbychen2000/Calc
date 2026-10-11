@@ -84,7 +84,7 @@ def _frames(N):
 
 
 def bake(receivers, occluders, spacing=0.010, steps=STEPS, far=(0.10, 0.36, 0.45), offset=0.003, k=K_DIRS,
-         smooth=1, workers=-1, chunk=60000, edt_from=0.08, edt_h=0.016, denoise=None):
+         smooth=1, workers=-1, chunk=60000, edt_from=0.08, edt_h=0.016, denoise=None, cell=0.006):
     """Ambient occlusion (n,) in [0, 1] (1 = open) per vertex of each mesh in `receivers` (list), occluded by the
     surfaces of `occluders` (list of meshes, normally including the receivers).  far = (t0, t1, w1): blockers beyond
     t0 count with a weight falling linearly to w1 at t1.  The steps from edt_from on (cone radius >= 40 mm) read the
@@ -109,7 +109,7 @@ def bake(receivers, occluders, spacing=0.010, steps=STEPS, far=(0.10, 0.36, 0.45
     steps = np.asarray(steps, float)
     t0, t1, w1 = far
     wt = np.clip(1.0 - (1.0 - w1) * (steps - t0) / (t1 - t0), w1, 1.0)
-    V, N, inv, cuts = _representatives(receivers)
+    V, N, inv, cuts = _representatives(receivers, cell=cell)
     ao = np.ones(len(V))
     for s in range(0, len(V), chunk):
         v, n = V[s:s + chunk], N[s:s + chunk]
@@ -337,7 +337,7 @@ def _march(receivers, occ, lo, h, reach, k, theta_max, offset, step, smooth, chu
     return [np.clip(a, 0.0, 1.0) for a in _scatter(receivers, res[inv], cuts, smooth)]
 
 
-def presplit(meshes, max_len, select=None, levels=3, tol=1e-7):
+def presplit(meshes, max_len, select=None, levels=3, tol=1e-7, min_area=0.0):
     """Split (flat midpoints, in place) every edge longer than max_len of the triangles `select(centroids)` keeps, over
     the meshes of one part together: an edge two meshes share (by position) is split in both, so they stay conforming.
     1 -> 2 / 3 / 4 by the pattern of a triangle's split edges; normals averaged, UVs interpolated.  Returns the number
@@ -353,6 +353,8 @@ def presplit(meshes, max_len, select=None, levels=3, tol=1e-7):
         for m, q in zip(meshes, keyed):
             T = m.V[m.F]
             sel = np.ones(len(m.F), bool) if select is None else select(T.mean(1))
+            if min_area > 0:                       # only the broad triangles (the contact pass: not every sliver)
+                sel = sel & (0.5 * np.linalg.norm(np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]), axis=1) >= min_area)
             for a, b in ((0, 1), (1, 2), (2, 0)):
                 L = np.linalg.norm(T[:, b] - T[:, a], axis=1)
                 for f in np.nonzero(sel & (L > max_len))[0]:

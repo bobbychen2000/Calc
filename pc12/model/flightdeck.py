@@ -746,12 +746,23 @@ def _plinth_floor(acc, floor=True):
     def hwf(x):
         return L.hw(x, FL + 0.002) - 0.001
 
-    for xs_, slot in ((np.linspace(xa, x0, 4), False), (np.linspace(x0, x1, 24), True), (np.linspace(x1, xd, 12),
-                                                                                         False)):
+    # (flight deck fix r3 FID-FD3-08: the slot strips started 2 mm inside the plinth's straight side all along, so at
+    # its rounded corners (r 0.05) the floor left a sliver open to the skin below -- white specks either side of the
+    # pedestal's aft end from the cabin: the strips' inner edge now follows the plinth outline, 2 mm inside it)
+    rc = 0.05
+    ang = np.linspace(0.0, 0.5 * np.pi, 9)
+    xs_slot = np.unique(np.round(np.r_[np.linspace(x0, x1, 24), x0 + rc * (1 - np.cos(ang)), x1 - rc * (1 - np.cos(ang))],
+                                 7))
+
+    def y_in(x):
+        dx = np.maximum(np.maximum(x0 + rc - x, x - (x1 - rc)), 0.0)
+        return phw - rc + np.sqrt(np.maximum(rc * rc - np.minimum(dx, rc) ** 2, 0.0)) - 0.002
+
+    for xs_, slot in ((np.linspace(xa, x0, 4), False), (xs_slot, True), (np.linspace(x1, xd, 12), False)):
         w = hwf(xs_)
         if slot:
             for sg in (-1, 1):
-                Y = np.stack([sg * np.full_like(w, phw - 0.002), sg * w], 1)
+                Y = np.stack([sg * y_in(xs_), sg * w], 1)
                 P = np.stack([np.repeat(xs_[:, None], 2, 1), Y, np.full_like(Y, FL)], -1)
                 acc.add(_oriented(grid_surface(P), [0, 0, 1.0]), "carpet_flightdeck")
         else:

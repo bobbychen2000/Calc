@@ -131,8 +131,11 @@ export const LOOK = {
   // every P1046408 row as it was -- only the sunlit pedestal 113 -> 121 -- and the pilot's glareshield 86 -> 90;
   // az 95 / el 35 lit the pilot's seat and console, which P1046408 does not show: sheepskin 107 -> 168, console 13 -> 54)
   // flight deck fix r1 (FDO1-05): 8 at outside.js SUN az 25 / el 45 -- a sunlit patch reads ~1.5 stops over its shade
-  sun: { intensity: qn('sun') ?? 8, color: 0xfff4e6, centre: [4.0, 0.0, 2.0], box: 1.9, dist: 8, near: 4, far: 13,
-    bias: -0.0003, normalBias: 0.006, radius: qn('sunrad') ?? 2 },   // (fix r2: PCF radius 3 -> 2, crisper post shadows; 1.5 showed the texels)
+  // flight deck fix r3 (FDO3-04: the sun patch on the hood stair-stepped in ~9 px blocks -- 1.9 mm texels over +-1.9 m,
+  // ~3.7 mm across the near-horizontal hood): the box +-1.35 m round the glareshield / crew seats and 4096 px on
+  // desktops (0.66 mm texels; phones keep 1024 -- 2.6 mm, was 3.7), the normal bias scaled with the texel
+  sun: { intensity: qn('sun') ?? 8, color: 0xfff4e6, centre: [3.95, 0.0, 2.05], box: 1.35, dist: 8, near: 4, far: 13,
+    bias: -0.0003, normalBias: 0.0035, radius: qn('sunrad') ?? 2 },   // (fix r2: PCF radius 3 -> 2, crisper post shadows; 1.5 showed the texels)
 };
 
 // Camera presets.  `dir` points from the target to the camera (glTF axes: X starboard, Y up, Z aft);
@@ -230,10 +233,10 @@ export class Stage {
     const S = LOOK.sun, sun = (this.sun = new THREE.DirectionalLight(S.color, 0));
     sun.name = 'sun';
     sun.castShadow = true;
-    const sunPx = QUALITY.low ? 1024 : 2048;
+    const sunPx = QUALITY.low ? 1024 : 4096;
     sun.shadow.mapSize.set(sunPx, sunPx);
     sun.shadow.bias = S.bias;
-    sun.shadow.normalBias = S.normalBias;
+    sun.shadow.normalBias = QUALITY.low ? 0.006 : S.normalBias;
     sun.shadow.radius = QUALITY.low ? 2 : S.radius;
     sun.shadow.autoUpdate = false;          // outside: never rendered (setInteriorLook)
     this.sunDir = sunDirection();

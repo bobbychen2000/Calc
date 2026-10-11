@@ -13,7 +13,8 @@ written by cad/glb.py), so the viewer, the GLB and every importer show the same 
   mfd            engine strip (TRQ / ITT / NG dials with green arcs, bar gauges) and a moving map: shaded relief in the
                  terrain palette, lakes, rivers, roads, towns, airspace rings, a magenta flight plan with waypoints, the
                  own-ship symbol, range ring and compass arc; a vertical-profile strip below
-  sdu_L / sdu_R  touch controllers: status bar and dense grids of rounded buttons with simple glyphs and legend marks
+  sdu_L / sdu_R  touch controllers: dark list pages -- the COM status box, rows of dark-grey keys with light legend
+                 bars (a flight-plan list / an approach page) and the icon row along the bottom
 Unbranded: no logos, and no lettering beyond instrument numerals (legends are short bars).  Everything is numpy + PIL,
 deterministic (fixed seeds); the atlas is cached by the hash of this file (out/tmp/displays, git-ignored).
 """
@@ -605,44 +606,122 @@ def _glyph(c: Canvas, x, y, s, kind, col):
                     (x + 0.95 * s * math.cos(th), y + 0.95 * s * math.sin(th))], col, 5)
 
 
+def _gtc_status(c: Canvas, W, H, variant):
+    """GTC status area (P1046408 / 09): the audio / radios key, the COM 1 box in a green frame (active numerals green,
+    standby cyan), COM 2 white, the transponder code; small green source tags (bars) under the active boxes."""
+    sb = 0.135 * H
+    c.rect(0, 0, W, sb, fill=(8, 10, 14))
+    # audio & radios key (dark grey, an icon square and two legend bars)
+    c.rect(0.02 * W, 0.08 * sb, 0.20 * W, 0.92 * sb, fill=(40, 45, 54), outline=(72, 80, 94), width=1.2, r=7)
+    c.rect(0.07 * W, 0.50 * sb, 0.15 * W, 0.80 * sb, fill=(46, 112, 200), r=3)
+    c.marks(0.05 * W, 0.24 * sb, 1, 0.09 * sb, (200, 206, 214), seed=720 + variant)
+    # COM 1 (active / standby) in its green frame, COM 2, XPDR
+    x0 = 0.22 * W
+    for k, (act, stb, frame) in enumerate((("123.450", "125.000", True), ("121.500", "123.450", False))):
+        bx = x0 + k * 0.30 * W
+        if frame:
+            c.rect(bx, 0.10 * sb, bx + 0.28 * W, 0.50 * sb, outline=GREEN, width=2.2, r=4)
+        c.text(bx + 0.27 * W, 0.30 * sb, act, 0.21 * sb, GREEN if frame else WHITE, anchor="rm", bold=True)
+        c.text(bx + 0.27 * W, 0.74 * sb, stb, 0.19 * sb, CYAN if frame else WHITE, anchor="rm", bold=True)
+        c.rect(bx + 0.01 * W, 0.64 * sb, bx + 0.05 * W, 0.84 * sb, fill=(30, 120, 60), r=2)
+    c.text(0.98 * W, 0.30 * sb, "7000", 0.21 * sb, WHITE, anchor="rm", bold=True)
+    c.marks(0.86 * W, 0.74 * sb, 1, 0.10 * sb, GREEN, seed=730 + variant)
+    return sb
+
+
+def _gtc_nav(c: Canvas, W, H, hi):
+    """The bottom icon row: five glyph keys, key `hi` filled blue (the active page)."""
+    by0, by1 = 0.895 * H, 0.985 * H
+    c.rect(0, by0 - 0.008 * H, W, H, fill=(8, 10, 14))
+    for k, g in enumerate((0, 1, 2, 3, 7)):
+        x = 0.02 * W + k * 0.192 * W
+        if k == hi:
+            c.rect(x + 6, by0, x + 0.192 * W - 6, by1, fill=(34, 104, 196), r=6)
+        _glyph(c, x + 0.096 * W, 0.5 * (by0 + by1), 0.024 * H, g, WHITE if k == hi else (40, 150, 235))
+
+
 def gtc_page(variant=0):
+    """GTC touch controller page (flight deck fix r3 FID-FD3-06: the photos' GTCs are dark list pages -- dark-grey key
+    rows with small light legends, the green-framed COM box at the top and the icon row only along the bottom; the
+    first build's grid of saturated cyan icon tiles read as another UI).  variant 0: the flight-plan list (P1046408 /
+    09 left GTC), 1: an approach-selection page (right GTC).  Legends are bars and numerals only (no lettering)."""
     W, H = SIZES["sdu"]
-    c = Canvas(W, H, bg=(6, 8, 12))
-    # status bar: COM / NAV frequencies (numerals), transponder
-    sb = 0.10 * H
-    c.rect(0, 0, W, sb, fill=(18, 22, 30))
-    for k, (v, col) in enumerate((("118.975", GREEN), ("121.500", WHITE))):
-        c.text(0.04 * W, (0.28 + 0.44 * k) * sb, v, 0.30 * sb, col, anchor="lm")
-    c.text(0.96 * W, 0.28 * sb, "7000", 0.30 * sb, WHITE, anchor="rm")
-    c.marks(0.60 * W, 0.72 * sb, 1, 0.20 * sb, GREEN, seed=700 + variant)
-    # page title bar
-    tb = 0.055 * H
-    c.rect(0, sb, W, sb + tb, fill=(34, 40, 52))
-    c.marks(0.36 * W, sb + 0.5 * tb, 1, 0.34 * tb, WHITE, seed=710 + variant)
-    # button grid
-    cols, rows = 3, 5
-    gx0, gy0, gx1, gy1 = 0.03 * W, sb + tb + 0.015 * H, 0.97 * W, 0.86 * H
-    bw, bh = (gx1 - gx0) / cols, (gy1 - gy0) / rows
+    c = Canvas(W, H, bg=(4, 5, 8))
     rng = np.random.default_rng(800 + variant)
-    for i in range(rows):
-        for j in range(cols):
-            x, y = gx0 + j * bw, gy0 + i * bh
-            hi = rng.random() < 0.18
-            fill = (44, 70, 104) if hi else (36, 42, 54)
-            c.rect(x + 5, y + 5, x + bw - 5, y + bh - 5, fill=fill, outline=(84, 96, 116), width=1.5, r=10)
-            c.rect(x + 7, y + 7, x + bw - 7, y + 0.45 * bh, fill=(255, 255, 255, 14), r=8)
-            gc = CYAN if rng.random() < 0.55 else WHITE
-            _glyph(c, x + 0.5 * bw, y + 0.40 * bh, 0.20 * min(bw, bh), int(rng.integers(0, 8)), gc)
-            L = bw * rng.uniform(0.35, 0.62)
-            c.rect(x + 0.5 * (bw - L), y + 0.76 * bh, x + 0.5 * (bw + L), y + 0.83 * bh, fill=(206, 212, 222), r=3)
-            if rng.random() < 0.3:
-                c.text(x + bw - 14, y + 16, f"{int(rng.integers(1, 99))}", 0.09 * bh, GREEN, anchor="rt")
-    # bottom row: home / back / knob hints
-    by = 0.88 * H
-    for k in range(4):
-        x = 0.03 * W + k * 0.235 * W
-        c.rect(x + 4, by, x + 0.235 * W - 4, 0.985 * H, fill=(28, 32, 40), outline=(70, 80, 96), width=1.2, r=8)
-        _glyph(c, x + 0.1175 * W, by + 0.045 * H, 0.030 * H, [3, 1, 5, 7][k], WHITE)
+    sb = _gtc_status(c, W, H, variant)
+    y = sb + 0.012 * H
+    KEY, KEY_HI, EDGE = (38, 42, 50), (52, 58, 70), (66, 74, 88)
+    if variant == 0:
+        # page header: the blue drop-down, a key and the menu icon
+        hb = 0.052 * H
+        c.rect(0.02 * W, y, 0.62 * W, y + hb, fill=(24, 92, 176), r=6)
+        c.marks(0.05 * W, y + 0.5 * hb, 2, 0.30 * hb, (228, 236, 246), seed=740)
+        c.poly([(0.57 * W, y + 0.38 * hb), (0.60 * W, y + 0.38 * hb), (0.585 * W, y + 0.62 * hb)], fill=WHITE)
+        c.rect(0.65 * W, y, 0.82 * W, y + hb, fill=KEY, outline=EDGE, width=1.2, r=6)
+        c.marks(0.69 * W, y + 0.5 * hb, 1, 0.28 * hb, WHITE, seed=741)
+        for k in range(3):
+            c.rect(0.87 * W, y + (0.22 + 0.25 * k) * hb, 0.96 * W, y + (0.32 + 0.25 * k) * hb, fill=WHITE)
+        y += hb + 0.016 * H
+        # column header + rule
+        c.marks(0.10 * W, y, 2, 0.012 * H, GREY, seed=742)
+        c.marks(0.52 * W, y, 3, 0.012 * H, GREY, seed=743)
+        c.line([(0.02 * W, y + 0.014 * H), (0.98 * W, y + 0.014 * H)], (60, 66, 78), 1.2)
+        y += 0.026 * H
+        rows, rh = 7, (0.885 * H - y) / 7
+        for i in range(rows):
+            yy = y + i * rh
+            act = i == 1
+            # waypoint key (two legend lines), the altitude and the speed / FPA keys
+            c.rect(0.02 * W, yy + 3, 0.42 * W, yy + rh - 3, fill=KEY_HI if act else KEY, r=5)
+            if act:
+                c.rect(0.02 * W, yy + 3, 0.04 * W, yy + rh - 3, fill=GREEN, r=2)
+            c.marks(0.07 * W, yy + 0.30 * rh, 1, 0.16 * rh, GREEN if act else GREY, seed=750 + i)
+            c.marks(0.07 * W, yy + 0.62 * rh, 1, 0.24 * rh, GREEN if act else WHITE, seed=760 + i)
+            c.rect(0.44 * W, yy + 3, 0.72 * W, yy + rh - 3, fill=KEY, r=5)
+            alt = ("1367", "-----", "-----", "5500", "FL120", "FL120", "-----")[i]
+            if alt.startswith("FL"):
+                c.marks(0.47 * W, yy + 0.5 * rh, 1, 0.20 * rh, WHITE, seed=770 + i)
+                c.text(0.69 * W, yy + 0.5 * rh, alt[2:], 0.30 * rh, WHITE, anchor="rm", bold=True)
+            else:
+                c.text(0.69 * W, yy + 0.5 * rh, alt, 0.30 * rh, WHITE if alt[0] != "-" else GREY, anchor="rm", bold=True)
+            c.rect(0.74 * W, yy + 3, 0.98 * W, yy + rh - 3, fill=KEY, r=5)
+            c.marks(0.78 * W, yy + 0.35 * rh, 1, 0.14 * rh, GREY, seed=780 + i)
+            c.marks(0.80 * W, yy + 0.68 * rh, 1, 0.18 * rh, WHITE if i in (2, 3, 4) else GREY, seed=790 + i)
+        # scroll bar
+        c.rect(0.985 * W, y, 0.995 * W, y + 0.45 * (0.885 * H - y), fill=(120, 126, 136), r=2)
+        _gtc_nav(c, W, H, 0)
+    else:
+        # back arrow, the page title bar, a key and the menu icon
+        hb = 0.050 * H
+        c.poly([(0.05 * W, y + 0.5 * hb), (0.10 * W, y + 0.2 * hb), (0.10 * W, y + 0.8 * hb)], fill=WHITE)
+        c.rect(0.10 * W, y + 0.42 * hb, 0.16 * W, y + 0.58 * hb, fill=WHITE)
+        c.marks(0.36 * W, y + 0.5 * hb, 1, 0.30 * hb, WHITE, seed=800)
+        c.rect(0.66 * W, y + 0.08 * hb, 0.82 * W, y + 0.92 * hb, fill=KEY, outline=EDGE, width=1.2, r=6)
+        c.marks(0.69 * W, y + 0.5 * hb, 1, 0.24 * hb, (130, 200, 255), seed=801)
+        for k in range(3):
+            c.rect(0.87 * W, y + (0.22 + 0.25 * k) * hb, 0.96 * W, y + (0.32 + 0.25 * k) * hb, fill=WHITE)
+        y += hb + 0.010 * H
+        # the selection frame with its keys
+        fy1 = 0.875 * H
+        c.rect(0.03 * W, y, 0.97 * W, fy1, outline=(150, 156, 166), width=1.6, r=10)
+        bh = 0.105 * H
+        keys = [(0.06, 0.40, 0, 1), (0.44, 0.94, 0, 2), (0.06, 0.40, 1, 2), (0.44, 0.67, 1, 3), (0.70, 0.94, 1, 3),
+                (0.70, 0.94, 2, 3)]
+        for x0, x1, r, n in keys:
+            ky = y + 0.020 * H + r * (bh + 0.014 * H)
+            c.rect(x0 * W, ky, x1 * W, ky + bh, fill=KEY, outline=EDGE, width=1.2, r=6)
+            c.marks(x0 * W + 0.03 * W, ky + 0.26 * bh, 1, 0.14 * bh, GREY, seed=810 + r * 7 + int(x0 * 10))
+            c.marks(x0 * W + 0.03 * W, ky + 0.58 * bh, 1, 0.24 * bh, CYAN, seed=820 + r * 7 + int(x0 * 10))
+            if n == 3:
+                c.text(x1 * W - 0.03 * W, ky + 0.80 * bh, f"{int(rng.integers(10, 99))}", 0.18 * bh, WHITE, anchor="rm")
+        ky = fy1 - 0.020 * H - bh
+        c.rect(0.06 * W, ky, 0.30 * W, ky + bh, fill=KEY, outline=EDGE, width=1.2, r=6)
+        c.marks(0.09 * W, ky + 0.36 * bh, 1, 0.18 * bh, WHITE, seed=830)
+        c.marks(0.09 * W, ky + 0.66 * bh, 1, 0.18 * bh, WHITE, seed=831)
+        c.rect(0.34 * W, ky + 0.15 * bh, 0.94 * W, ky + 0.85 * bh, fill=(20, 22, 28), outline=(170, 176, 186), width=1.6,
+               r=6)
+        c.marks(0.48 * W, ky + 0.5 * bh, 2, 0.20 * bh, WHITE, seed=832)
+        _gtc_nav(c, W, H, 1)
     return c.final()
 
 

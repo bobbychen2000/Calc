@@ -3,11 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.61M tris of which the interior ~760k, ~46 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.70M tris of which the interior ~851k, ~48 MB
 incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`: ~2.18M
-tris, ~38 MB,
+review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`: ~2.27M
+tris, ~40 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -34,7 +34,8 @@ python3 test/fit_check.py       # interference / kinematics checks (interior + e
                                 #   the lining, 22c curtain vs crew tracks; 23 closed interior shells wound outward,
                                 #   vertex normals with the face winding; 24 crew harness on the fleece, 25 armrests
                                 #   vs the pedestal over the seat travel, 26 no coplanar overlaps of different
-                                #   materials, 27 the PDU bezel tops visible from both design eyes; the main-gear leg
+                                #   materials, 27 the PDU bezel tops visible from both design eyes, (fit_fd_b) 32 the
+                                #   flight-deck floor closed in plan; the main-gear leg
                                 #   door vs the skin cut-out every 0.5 % over 90-100 %, flush outside its tyre blister);
                                 #   '[open]' rows are known conflicts in the approved parameters that need an owner
                                 #   decision (they do not fail)
@@ -59,8 +60,8 @@ python3 web/package.py          # static viewer bundle -> dist/ (gitignored): me
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~113 MB as base64 text parts: meshopt 17 + 14 MB, gzip of the full model 26 MB for desktops and of
-                                #   the light tier 22 MB for phones without WebAssembly, every part <= 11.8 MB; two publishes 63.5 + 49.4 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   (~116 MB as base64 text parts: meshopt 18 + 16 MB, gzip of the full model 27 MB for desktops and of
+                                #   the light tier 23 MB for phones without WebAssembly, every part <= 10.4 MB; two publishes 62.8 + 53.6 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
                                 #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
@@ -190,11 +191,12 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   the cabin floor + runner + tracks `cabin_floor` and the club tables are children of `cabin_interior`; side-wall /
   headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
   `interior.lining_offset` -- with window reveals and lined door wells; frames at the Pilatus frame stations;
-  interior triangles are budgeted in `build.INTERIOR_BUDGET` (370k, crew seat 17.5k, cabin seat 12k at PC12_RES=1; at
-  RES 2: 814k / 59.5k / 34.8k, built 760k / 58.3k / 34.8k, with per-part caps for the flight deck -- flight_deck 150k
-  (built 133k), yokes 24k (22.6k), pedals 3k (3.0k), fd_consoles 30k (16.3k), fd_divider 18k (16.8k), interior_lining
-  190k (177k); counted after the interior-light bake's split; flight deck fix r2 raised the crew seat 56.1k -> 59.5k and
-  interior_lining 175k -> 190k) and printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
+  interior triangles are budgeted in `build.INTERIOR_BUDGET` (390k, crew seat 19.5k, cabin seat 12k at PC12_RES=1; at
+  RES 2: 858k / 66.3k / 34.8k, built 851k / 66.0k / 34.8k, with per-part caps for the flight deck -- flight_deck 202k
+  (built 199k), yokes 24k (22.6k), pedals 3k (3.0k), fd_consoles 30k (16.3k), fd_divider 18k (16.8k), interior_lining
+  190k (185k); counted after the interior-light bake's splits; flight deck fix r2 raised the crew seat 56.1k -> 59.5k and
+  interior_lining 175k -> 190k, fix r3 the crew seat -> 66.3k, flight_deck 150k -> 202k, the total 814k -> 858k) and
+  printed by the build; the viewer's cockpit camera is `pc12_meta.json` 'cockpit' = `build.cockpit_camera()` at the L6 design
   eye),
   `details.py` (wing-to-body fairing: flat-bottomed belly fairing + upper root fillet / fairing nose built as a
   horizontal offset of the OML, so its side / plan outlines are the drawn ones -- the nose section is the concave
@@ -1080,3 +1082,82 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   the full run (149 min beside another worktree's runs) with [FD-L1] the one failure, then `--only fdlook` 10 / 10 after
   the band change ([FD-L3] glareshield 53, lip 61 / underside 37; [FD-L6] p50 69, bands 31 / 48 / 13 %); fit_check
   (1 open owner item, unchanged) and consistency_2d3d 143 / 143 on the final geometry; artifact_test 70 / 70.
+- Flight deck fix r3 (2026-10-11; the flight-deck judges' round 3: owner 5.5, fidelity 6.0; the yoke FDO3-09 stays with
+  wip/fd-yoke).  No table changed (L6 / L6B not regenerated: nothing they draw or check moved); builder detail, a
+  near-field occlusion pass in the bake, the viewer's cabin light / materials.  Look development in one page again
+  (out/tmp/fd_fix_r3/ld.py jobs: in-page material patches / uniforms, per part:material medians); photo | before |
+  after sheets out/tmp/fd_fix_r3/cmp_*.jpg.
+  LARGE SURFACES (FDO3-01, FID-FD3-01): the titanium sub-panels, tray and outer plates a brushed METAL (`materials.js
+  VIEWER panel_titanium`: metalness 0.75, roughness 0.26, a near-neutral base; the `brush` patch now also streaks the
+  reflection -- `spec` with the fine streaks, `band` / `bandLen` / `bandW` 10 mm x 16 cm bands at +-12 %, `pcBrushK`; at
+  metalness 0.85 with 4 mm bands at +-30 % it read as walnut-grain wood from the crew stops) whose reflections pointing aft
+  see a CABIN PROBE (`CABIN_LOOK probe` / `probe2`, U.cabinProbe / cabinProbe2: the dark cabin 0.55, the side windows
+  abeam, the lit cabin through the divider opening with its windows as azimuth stripes, the headliner -- the REFL_DIR
+  metals had mirrored the open apron behind the aircraft, one flat tone); panel_graphite a weak brush, the gunmetals an
+  isotropic 3.5 mm bead-blast grain.  `fd_detail_a.lower_panel`: the outer (PARKING BRK) plate ends on the sub-panel
+  row's line, sweeping down `LOWER outer_drop` 26 mm over |BL| 0.615-0.70 (`z_foot`); the cheek leg below it is the dark
+  cove (new material `fd_cove`, assemble / lookdev 'flight deck fix r3', CABIN_TRIM 1.45: ~40, P1046408 ~41) with a dual
+  USB charger and its legend stroke (`LOWER usb`); the plates' and the band's walls `panel_dark` (the 2 mm seams read as
+  dark lines); a satin rolled lip (`LOWER lip_r` 4.5 mm, trim_satin) along the row's bottom edge; the palm tray's floor
+  dished 2.5 mm (`STACK dish`).  Contact darkening: `build.bake_interior_ao` adds a near-field pass over the panel /
+  glareshield / stack box (`AO_CONTACT_BOX`): the box's broad triangles (>= `AO_CONTACT_AREA` 1.2 cm^2) split to
+  `AO_CONTACT_SPLIT` 16 mm (cad/ao.presplit `min_area`), occluders sampled every 2.5 mm, steps 4-22 mm, 2 mm
+  representatives (cad/ao.bake `cell`), multiplied in as contact^0.6 (`AO_CONTACT_POW`): the plates' seams, the bezels'
+  feet, the fascia under the lip, the tray walls (~37 s; flight_deck +62k triangles at RES 2).
+  SHADE / HOOD (FID-FD3-02): ahead of the divider the interior's indirect diffuse light takes a cool daylight tint
+  (`CABIN_LOOK shade` [#c8d6ff at unit luminance, 0.42 x (0.6 .. 1 facing the glazing)], U.cabinShade; the sun keeps its
+  warmth; shade B - R ~+10-17 at panel_408b); the hood's rolled lip / underside -- all panel_408b sees of the hood --
+  `PART_TRIM 'flight_deck:leather_black'` F90 1 (specularIntensity 1, F0 kept by a sky-tinted specularColor), roughness
+  0.38, specIn 1.9: the band 68 -> ~105 (P1046408 102); the hood top 'flight_deck:leather_glareshield' F90 1 too and
+  sunIn 0.3 -> 0.22.
+  POSTS (FDO3-02, FID-FD3-03): the slab's width is the approved L2 glazing (+ GEOM B's surround fit) -- its change stays
+  the deferred owner / drawing review; its shading: `fd_detail_b.round_post_normals` (build.build_parts, after the
+  refinement, before the bake) turns the A-pillar's vertex normals (interior_lining lining_flightdeck / lining_fd_reveal /
+  trim_satin within `POST_ROUND` r_in .. r_out of `post_axis`, the midline of the two pane outlines on the OML) to a
+  rounded section, never more than acos(min_dot 0.30) off the surface's own (fit_check 23); a satin bead `trim_satin` r 8
+  mm, ~8.6 mm proud, down the post's lining strip (`POST_ROUND bead`, its ends diving under the lining) and two flush
+  countersunk fasteners at its ends (`post_fasteners`, interior.build_lining); the bead lies on the lining (axis 0.6 mm in
+  front of it: sunk 1.5-3 mm only 84-89 % of it stood > 0.5 mm proud, fit_check 22b).
+  SHEEPSKIN (FDO3-03, FID-FD3-04): the fleece patch (`VIEWER sheepskin.fleece`) 95 / 200 / 520 per m curls, warp 0.12, no
+  stretch (the r2 warp's sines lined the cells up into a herringbone, a 70 / m coarse layer read as marble), bump 0.9, a
+  24 / m `clump` field (+-12 %, soft clusters) and a `rim` term (the albedo lifted up to +60 % below n.v 0.5: the fibre
+  tips along the silhouette), a lighter sheen; `seats.shag` adds a ragged fringe of 18-26 mm tufts (`SK_SHAG_FINE` 2.8 mm)
+  to the 0.7 x coarse clumps on rims sampled every 6.5 mm (`SK_SHAG_STEP_R3`).
+  MINORS: sun (FDO3-04) -- `scene.js LOOK.sun` box +-1.35 m round the glareshield / seats (centre 3.95 / 0 / 2.05), 4096
+  px on desktops (0.66 mm texels; phones 1024, 2.6 mm), normal bias 0.0035 (phones 0.006); PCL / quadrant (FDO3-05,
+  FID-FD3-07) -- `fd_detail_a.PCL_GRIP` a domed port end and two 2 mm finger flutes, the chrome ring moved inboard of the
+  flare, the brush seals a fringe of alternating tufts every 1.6 mm (`_bristles`), bolder flap detents, a second legend
+  stroke by every lighting knob; crew seats (FDO3-06, FID-FD3-05) -- `seats._crew_back_rear`: a padded map pocket
+  (leather_black, two-tone) with an elastic welt on the shell's rear face, two stitched seams up the back and one across
+  (`CREW_BACK_REAR`, ray-cast onto the shell), the harness weave coarser / deeper (VIEWER harness freq 1100); outside
+  (FDO3-07) -- eave shadow bands, door-leaf seams with a lit edge, a door track, personnel door, down pipes and a plinth
+  on the facades, a warm haze in the sky's lowest degrees (`SKY.haze`); NOT the building behind the glare at panel_408b:
+  P1046408 through its fitted camera puts a tall block 12-14 deg right of the nose ~21 deg up and a long hall 20-31 deg
+  right, roof 15-18 deg up, from the cabin eye, but P1046410 / P1046409 (the same aircraft and session) show open blue
+  sky down to the hood at those azimuths and elevations from the crew seats; a nearer hall there (22-50 deg right, eaves
+  ~19 deg up) filled the right windshield at the pilot stop and the Cockpit preset ([FD-L1] the pilot's sky over the
+  cowl 250 -> 203, [BV-5] 145 < 150) and was taken out again -- the crew-seat photos win (`outside.js HANGARS` comment); GTC pages (FID-FD3-06) -- `g3000_pages.gtc_page` redrawn as the photos' dark list
+  pages (the COM box in a green frame, dark-grey key rows with light legend bars and numerals, a flight-plan list / an
+  approach page, the icon row along the bottom); floor specks (FID-FD3-08) -- `flightdeck._plinth_floor`'s slot strips
+  follow the plinth's rounded corners 2 mm inside (they had left slivers open to the skin either side of its aft end);
+  fit_fd_b 32 rasterises the flight-deck floor plan (3 mm cells inside the lining, footwell front to divider) under the
+  interior's surfaces.  Budgets: flight_deck 68k -> 92k, crew seat 17.5k -> 19.5k, interior total 370k -> 390k (RES 1
+  figures; RES 2 x2.2 / x3.4).  Display bezels (fix r3: P1046408's satin black bezels read 37-58 round the displays,
+  the model's 24 -- a black field round every page): `PART_TRIM 'flight_deck:bezel_black'` specIn 2.0 (37 at
+  panel_408b, ~42 from the pilot stop, 40 at fd_cabin -- [T14] keeps them <= 50; 3.0 read 48 / 51); the palm tray, a
+  brushed mirror of the apron behind the aircraft as streaked frosted glass from the crew stops (141 in the pedestal
+  close-up): the brush patch's `up` [n0, n1, + roughness, streaks kept] -- `VIEWER panel_titanium brush.up` [0.40,
+  0.55, 0.32, 0.15], the up-facing faces (the tray, normal y 0.57; the sub-panels, soffit and plates face aft / down)
+  satin and isotropic (alphaT -> roughness^2): a soft gradient, 132 (look-dev out/tmp/fd_fix_r3/ld3, tray_cmp.png).
+  Not changed (reported): the A-pillar / surround WIDTH from the crew seats (the approved L2 glazing outline + GEOM B's
+  surround fit: a slimmer post is a drawing change for the owner's drawing review; r3 changed its shading and detail
+  only), the yoke (wip/fd-yoke).  Verification: both tiers rebuilt (2,699,206 / 2,268,281 triangles, 47.65 / 39.82
+  MB; interior 850k of 858k, flight_deck 199k of 202k, crew seats 66.0k of 66.3k, interior_lining 184k of 190k; the
+  aft cabin seats' 34,834 against the 34,800 cap flagged OVER as in r1 / r2, unchanged); fit_check incl. fit_fd_b 32 OK (1 open owner item, unchanged),
+  consistency_2d3d 143 / 143 on the final geometry; L6 / L6B not regenerated (no table they draw or check changed);
+  web/package.py and the Artifact bundle (116.4 MB, 2 publishes) verify.  viewer_test: the first full run 223 / 225
+  with the nearer hall ([FD-L1], [BV-5] -- above); after its removal the full run 201 / 201 checks ([FD-L1] the pilot's
+  sky 248, the co-pilot's 251; [BV-5] 154; [T14] bezels 42 / 40) until the sound section's first click timed out (the
+  drag's coast renders 15-35 s SwiftShader frames on the shared machine, load 8-13: HEAD's viewer measured the same,
+  15-21 s, on the same page), so that one click waits SHOT_TIMEOUT (`sound_checks`; no check changed) and `--only sound`
+  passes 25 / 25; artifact_test 70 / 70.

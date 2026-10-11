@@ -532,6 +532,12 @@ LOWER = dict(
     leg=(0.575, 0.660, 0.111),
     sockets=(0.665, 1.655),        # O2 mask / mic sockets on the legs: |BL|, WL
     edge_strip=0.020,              # satin trim strip down the outer plate's outboard edge (fix r2) [M: P1046409]
+    # flight deck fix r3 (FID-FD3-01 / FDO3-01) [M: P1046408 / 10 at their fitted cameras]: the outer (PARKING BRK)
+    # plate ends on the sub-panel row's bottom line, sweeping down `outer_drop` toward its outboard end over |BL|
+    # outer_sweep; the cheek leg below it is the dark sculpted cove (fd_cove) with the USB charger and a placard, not
+    # titanium; the plates' walls dark (the 2 mm seams read as dark lines), a rolled lip `lip_r` along the row's bottom
+    outer_drop=0.026, outer_sweep=(0.615, 0.700),
+    usb=(0.625, 1.700), lip_r=0.0045,
 )
 
 
@@ -542,15 +548,25 @@ def z_bot(ay):
     return _FD().Z_LO - dz * S.smoothstep(y0, y1, np.abs(np.asarray(ay, float)))
 
 
+def z_foot(ay):
+    """Bottom edge (WL) of the sub-panel row at |BL| ay (flight deck fix r3): the row's line, sweeping down
+    LOWER outer_drop over outer_sweep toward the outer plate's outboard end (never below the face's own edge)."""
+    from model import seats as S
+    q = LOWER
+    ay = np.abs(np.asarray(ay, float))
+    z = _FD().Z_LO + 0.008 - q["outer_drop"] * S.smoothstep(*q["outer_sweep"], ay)
+    return np.maximum(z, z_bot(ay) + 0.008)
+
+
 def _face_pt(y, z, off=0.0):
     FD = _FD()
     f = FD.face_frame(float(y), float(z))
     return f.o + off * f.w
 
 
-def panel_plate(outline_yz, off, mat, h=0.012, wall=True):
+def panel_plate(outline_yz, off, mat, h=0.012, wall=True, wall_mat=None):
     """A raised plate on the (wrapped, tilted) panel face: outline (y, z) CCW, the top `off` proud along the face
-    normal, side walls back to the face.  [(Mesh, material)]."""
+    normal, side walls back to the face (in `wall_mat`, default the plate's).  [(Mesh, material)]."""
     from model import seats as S
     FD = _FD()
     B = S._ccw(np.asarray(outline_yz, float))
@@ -562,7 +578,7 @@ def panel_plate(outline_yz, off, mat, h=0.012, wall=True):
     out = [(FD._oriented(m, FD.N_AFT), mat)]
     if wall:
         cen = top.mean(0) - 0.05 * FD.N_AFT
-        out.append((FD._oriented(FD._flat(FD._strip(top[:len(B)], base)), lambda C: C - cen), mat))
+        out.append((FD._oriented(FD._flat(FD._strip(top[:len(B)], base)), lambda C: C - cen), wall_mat or mat))
     return out
 
 
@@ -646,7 +662,8 @@ def lower_panel(sg):
     for a, b in ((shw + 0.008, yc - ww - 0.006), (yc + ww + 0.006, yend(zb))):
         ol = S.fillet(np.array([(a + g, zb + g), (b - g, zb + g), (b - g, z1 - g), (a + g, z1 - g)]), 0.004,
                       max_len=0.02)
-        out += panel_plate(ol * [sg, 1] if sg > 0 else (ol * [sg, 1])[::-1], q["band_off"], "panel_titanium")
+        out += panel_plate(ol * [sg, 1] if sg > 0 else (ol * [sg, 1])[::-1], q["band_off"], "panel_titanium",
+                           wall_mat="panel_dark")
     # sub-panels: inner, yoke (notched round the well), outer
     e1, e2 = q["edges"]
     plates = [(shw + 0.008, e1), (e1, e2), (e2, yend(0.5 * (z0 + zb)))]
@@ -656,25 +673,27 @@ def lower_panel(sg):
     ysl = np.linspace(q["leg"][0], cheek, 14)
     zsl = np.linspace(0.0, 1.0, 6)
     Yl, Tl = np.meshgrid(ysl, zsl, indexing="ij")
-    Zl = z_bot(Yl) + Tl * (FD.Z_LO + 0.002 - z_bot(Yl))
+    # (its top just under the face's bottom edge: since flight deck fix r3 the leg is the cove's own material, and the
+    # 2 mm the graphite leg ran up behind the face overlapped it coplanar -- fit_check 26)
+    Zl = z_bot(Yl) + Tl * (FD.Z_LO - 0.0002 - z_bot(Yl))
     Pl = np.stack([FD.face_x(Yl, Zl), Yl, Zl], -1)
     Pl = FD._clamp_lining(Pl, 0.004, cheek)
     Pl[..., 0] = FD.face_x(Pl[..., 1], Pl[..., 2])
     Pl[..., 1] *= sg
-    out.append((FD._oriented(grid_surface(Pl), FD.N_AFT), "panel_graphite"))
+    out.append((FD._oriented(grid_surface(Pl), FD.N_AFT), "fd_cove"))         # (fix r3: the dark cove, was graphite)
     bot = Pl[:, 0]
     out.append((FD._oriented(FD._strip(bot, bot - [0.045, 0.0, 0.004], closed=False), [0, 0, -1.0]), "panel_dark"))
     for k, (a, b) in enumerate(plates):
-        if k == 2:                                                     # outer plate: its foot follows the leg
+        if k == 2:                                                     # outer plate: its foot sweeps down outboard
             yy = np.linspace(a + g, b - g, 12)
-            pts = [(y_, float(z_bot(y_)) + 0.008 + g) for y_ in yy] + [(b - g, zb - g), (a + g, zb - g)]
+            pts = [(y_, float(z_foot(y_)) + g) for y_ in yy] + [(b - g, zb - g), (a + g, zb - g)]
             rad = [0.0] * len(yy) + [r, r]
             rad[0] = rad[-3] = r
             ol = S.fillet(np.array(pts), rad, max_len=0.02) * [sg, 1]
-            out += panel_plate(ol if sg > 0 else ol[::-1], q["plate_off"], "panel_titanium")
+            out += panel_plate(ol if sg > 0 else ol[::-1], q["plate_off"], "panel_titanium", wall_mat="panel_dark")
             si, sr = q["screw"]
-            for y_, z_ in ((a + g + si, float(z_bot(a + g + si)) + 0.008 + g + si),
-                           (b - g - si, float(z_bot(b - g - si)) + 0.008 + g + si), (b - g - si, zb - g - si),
+            for y_, z_ in ((a + g + si, float(z_foot(a + g + si)) + g + si),
+                           (b - g - si, float(z_foot(b - g - si)) + g + si), (b - g - si, zb - g - si),
                            (a + g + si, zb - g - si)):
                 out += screw(sg * y_, z_, q["plate_off"], sr)
             # (flight deck fix r2 FID-FD2-03) the satin trim strip down the panel's outboard edge -- from the band to the
@@ -682,7 +701,7 @@ def lower_panel(sg):
             # titanium swoop between the outer sub-panel and the breakers)
             # (1 mm inside the plates' edges all round: its walls must not lie on theirs -- fit_check 26)
             tw_, e_ = q["edge_strip"], 0.001
-            zs_ = np.linspace(float(z_bot(b - g)) + 0.008 + g + e_, z1 - g - e_, 10)
+            zs_ = np.linspace(float(z_foot(b - g)) + g + e_, z1 - g - e_, 10)
             pts = [(b - g - e_ - tw_, z_) for z_ in zs_] + [(b - g - e_, z_) for z_ in zs_[::-1]]
             ol = S.fillet(np.array(pts), [0.003] + [0.0] * 8 + [0.003, 0.003] + [0.0] * 8 + [0.003], max_len=0.02)
             ol = ol * [sg, 1]
@@ -698,11 +717,28 @@ def lower_panel(sg):
             rad = [r, r, r, r]
         ol = S.fillet(np.array(pts), rad, max_len=0.02)
         ol = ol * [sg, 1]
-        out += panel_plate(ol if sg > 0 else ol[::-1], q["plate_off"], "panel_titanium")
+        out += panel_plate(ol if sg > 0 else ol[::-1], q["plate_off"], "panel_titanium", wall_mat="panel_dark")
         si, sr = q["screw"]
         for y_, z_ in ((a + g + si, z0 + g + si), (b - g - si, z0 + g + si), (b - g - si, zb - g - si),
                        (a + g + si, zb - g - si)):
             out += screw(sg * y_, z_, q["plate_off"], sr)
+    # (flight deck fix r3 FID-FD3-01) the rolled lip along the sub-panel row's bottom edge: a satin half-round under the
+    # plates' foot from the stack to the outer plate's outboard end (P1046408: the light-catching rolled edge over the
+    # dark knee well), and the cove's dual USB charger with its legend stroke [M: P1046408 / 10]
+    from cad.mesh import sweep_profile
+    lr = q["lip_r"]
+    yl = np.linspace(shw + 0.008 + g, plates[2][1] - g - 0.004, 60)
+    lip = np.array([_face_pt(sg * y_, float(z_foot(y_)) + g - 0.25 * lr, q["plate_off"] - 0.9 * lr) for y_ in yl])
+    ang = np.linspace(0, 2 * np.pi, 14, endpoint=False)
+    out.append((sweep_profile(lip, np.c_[lr * np.cos(ang), lr * np.sin(ang)]), "trim_satin"))
+    uy, uz = q["usb"]
+    f = FD.face_frame(sg * uy, uz).moved(c=0.0005)
+    out.append((FD._extrusion(f, FD.rrect_loop(0.0125, 0.0085, 0.002, nc=3), 0.003, bevel=0.0007, nb=1),
+                "bezel_black"))
+    for du in (-0.0045, 0.0045):
+        out.append((FD._extrusion(f.moved(du, 0.0, 0.003), FD.rrect_loop(0.0016, 0.0042, 0.0012, nc=2), 0.0006,
+                                  bevel=0.0002, nb=1), "black"))
+    out.append((f.rect(-0.008, -0.0145, 0.008, -0.0125, 0.0001), "light_white"))
     # yoke well: walls + floor round the column (panel_dark), a satin lip round its sides and bottom, the bellows
     zt = z1 + 0.004
     W = S.fillet(np.array([(yc - ww, wz0), (yc + ww, wz0), (yc + ww, zt), (yc - ww, zt)]), [wr, wr, 0.0, 0.0],
@@ -816,6 +852,7 @@ STACK = dict(
     flare_s=0.385,                  # ... and flares to the quadrant's half-width (PEDESTAL hw) at its front
     pad=(0.2815, 0.0535, 0.0775, 0.012, 0.005),   # touch pad: centre s, half-length, half-width, r, recess (fix r2: 5)
     bezel=0.006,                    # the rolled titanium bead round the pad (its width; fix r2 FDO2-04)
+    dish=0.0025,                    # the pad floor's sag at its middle (fix r3 FDO3-01)
     com=(0.222, 0.100, 0.0095),     # COM 1/2 VOL knobs on the horns: s, |y|, radius (research M6: dia 19, BL +/-0.10)
 )
 QUAD = dict(
@@ -834,9 +871,12 @@ QUAD = dict(
 # the port end along the axis, m -- negative: from the inboard end --, radius / QUAD pcl_handle), the flared rolled
 # port end with a shallow dished face, a straight body with two finger flutes, a rounded inboard end (both ends closed
 # on the axis: the last point is the inboard end's centre, -1e-7 from it)
-PCL_GRIP = ((0.0025, 0.0), (0.0016, 0.55), (0.0, 0.92), (0.0010, 0.99), (0.0035, 1.0), (0.0075, 0.96),
-            (0.0125, 0.89), (0.024, 0.88), (0.028, 0.845), (0.032, 0.88), (0.040, 0.88), (0.044, 0.845),
-            (0.048, 0.88), (-0.012, 0.885), (-0.006, 0.865), (-0.0025, 0.80), (-0.0004, 0.66), (-1e-7, 0.0))
+# (flight deck fix r3 FDO3-05 / FID-FD3-07: the dished light end disc and 0.7 mm flutes read as a can / rolling pin from
+# the seats -- the photos' grip ends in a domed cap and its two finger flutes are deep, ~2 mm)
+PCL_GRIP = ((0.0, 0.0), (0.0007, 0.42), (0.0021, 0.72), (0.0040, 0.92), (0.0062, 1.0), (0.0095, 0.965),
+            (0.0145, 0.89), (0.023, 0.88), (0.0255, 0.80), (0.028, 0.775), (0.0305, 0.80), (0.033, 0.88),
+            (0.039, 0.88), (0.0415, 0.80), (0.044, 0.775), (0.0465, 0.80), (0.049, 0.88), (-0.012, 0.885),
+            (-0.006, 0.865), (-0.0025, 0.80), (-0.0004, 0.66), (-1e-7, 0.0))
 
 
 def _profile_stack():
@@ -961,7 +1001,14 @@ def stack_shell():
     # titanium floor 5 mm down (P1046408 / 09: the lid a mid grey a shade under its bezel) -- under a rolled light
     # satin bead round its edge (the photos' lighter bevelled lip)
     out.append((FD._oriented(FD._strip(top, bot), lambda C_: cc - C_), "panel_graphite"))
-    flc = planar_cap(bot, stack_frame(sc).w)
+    # (flight deck fix r3 FDO3-01 / FDO3-05: the flat floor read as a uniform light square, luminance sd 1) the floor
+    # dished `dish` m at its middle, falling smoothly from its edge over the first 35 mm, so it shades like a palm tray
+    B2 = S._ccw(np.asarray(ring, float))
+    tri, Gi = S._cap(B2, 0.008)
+    P2 = np.vstack([B2, Gi])
+    d_in = np.maximum(-sdf2d.rrect(P2[:, 0], P2[:, 1], 0.0, sc, hwp, hl, rp), 0.0)
+    dz = -rec - q["dish"] * S.smoothstep(0.0, 0.035, d_in)
+    flc = Mesh(np.array([at(y_, s_, d_) for (y_, s_), d_ in zip(P2, dz)]), tri)
     out.append((FD._oriented(flc, stack_frame(sc).w), "panel_titanium"))
     rb = 0.5 * bz                                                       # the bead: a half round on the face, its inner
     rings = []                                                          # side rolling into the tray wall
@@ -1023,8 +1070,10 @@ def arc_scale(f, r, w, c, a0=-135.0, a1=135.0, n=28, ticks=5):
     return Mesh.merge(parts)
 
 
-def _bristles(x0, x1, y, zt, w):
-    """Brush seal along a slot: two rows of black bristle fins meeting over its centre line."""
+def _bristles(x0, x1, y, zt, w, pitch=0.0016):
+    """Brush seal along a slot: two rows of black bristle fins meeting over its centre line, and over them the tufts --
+    thin fins across the slot every `pitch`, alternately long and short (flight deck fix r3 FID-FD3-07: the two flat
+    strips read as a plain dark slot; the throttle photo's seals are a ragged fringe)."""
     FD = _FD()
     out = []
     for sg in (-1, 1):
@@ -1032,6 +1081,19 @@ def _bristles(x0, x1, y, zt, w):
         b = np.array([[x0, y + sg * 0.0006, zt - 0.003], [x1, y + sg * 0.0006, zt - 0.003]])
         # dark grey fibres against the black slot (FDO1-07: the throttle photo's brush seals read; rubber_black did not)
         out.append((FD._oriented(FD._strip(a, b, closed=False), [0, 0, 1.0]), "brush_seal"))
+    rng = np.random.default_rng(int(1e4 * abs(y)) + 7)
+    V, F = [], []
+    for sg in (-1, 1):
+        for x_ in np.arange(x0 + 0.001, x1 - 0.001, pitch):
+            reach = (0.5 * w - 0.0004) * (0.80 + 0.2 * rng.random())       # tuft length from the slot's edge
+            xa = x_ + 0.0003 * (rng.random() - 0.5)
+            k = len(V)
+            ye, yt = y + sg * 0.5 * w, y + sg * (0.5 * w - reach)
+            V += [(xa - 0.00035, ye, zt + 0.0006), (xa + 0.00035, ye, zt + 0.0006),
+                  (xa + 0.00025, yt, zt - 0.0012), (xa - 0.00025, yt, zt - 0.0012)]
+            F += [(k, k + 1, k + 2), (k, k + 2, k + 3)]
+    if V:
+        out.append((FD._oriented(Mesh(np.array(V, float), np.array(F)), [0, 0, 1.0]), "brush_seal"))
     return out
 
 
@@ -1118,9 +1180,9 @@ def quadrant():
         x_ = pcx + 0.030 + 0.0055 * k
         out.append((fp.rect(x_ - cx, pcy - sw - 0.008, x_ + 0.005 - cx, pcy - sw - 0.002, 0.0003),
                     "paint_red" if k % 2 == 0 else "light_white"))
-    for k in range(4):                                                   # flap detents 0 / 15 / 30 / 40
-        x_ = fx - 0.050 + 0.040 * k
-        out.append((fp.rect(x_ - cx - 0.0015, fy + sw, x_ - cx + 0.0015, fy + sw + 0.007, 0.0003), "light_white"))
+    for k in range(4):                                                   # flap detents 0 / 15 / 30 / 40 (fix r3:
+        x_ = fx - 0.050 + 0.040 * k                                      # bolder, FID-FD3-07)
+        out.append((fp.rect(x_ - cx - 0.0022, fy + sw, x_ - cx + 0.0022, fy + sw + 0.009, 0.0003), "light_white"))
     # PCL: dark arm from the slot to the handle, a pewter cylinder handle across, the red flag at its root
     rh = q["pcl_handle"]
     gw = float(PE["pcl_grip"][1])
@@ -1142,8 +1204,8 @@ def quadrant():
     prof = [(s_ if s_ >= 0 else gw + s_, r_) for s_, r_ in prof]
     out.append((_FD().revolve(prof, n=40, axis_origin=hc - [0.0, 0.5 * gw, 0.0], axis_dir=[0, 1.0, 0],
                               ref_dir=[1.0, 0, 0], cap_ends=False), "pcl_pewter"))
-    out.append((_FD().revolve([(0.0098, 0.0), (0.0098, 0.905 * rh), (0.0104, 0.935 * rh), (0.0116, 0.935 * rh),
-                               (0.0122, 0.905 * rh), (0.0122, 0.0)], n=40,
+    out.append((_FD().revolve([(0.0163, 0.0), (0.0163, 0.905 * rh), (0.0169, 0.935 * rh), (0.0181, 0.935 * rh),
+                               (0.0187, 0.905 * rh), (0.0187, 0.0)], n=40,
                               axis_origin=hc - [0.0, 0.5 * gw, 0.0], axis_dir=[0, 1.0, 0], ref_dir=[1.0, 0, 0],
                               cap_ends=False), "chrome_trim"))
     for k in range(3):
@@ -1186,6 +1248,7 @@ def quadrant():
                              chamfer=0.2), "grip_black"))
             out.append((f.rect(-0.85 * r_, -0.0007, -0.40 * r_, 0.0007, 0.0136), "light_white"))
             out.append((f.rect(-r_ - 0.0125, -0.007, -r_ - 0.0112, 0.007, 0.0003), "light_white"))
+            out.append((f.rect(-r_ - 0.0102, -0.0045, -r_ - 0.0092, 0.0045, 0.0003), "light_white"))  # (fix r3: 2-line)
             out.append((arc_scale(f, r_ + 0.0062, 0.0011, 0.0003), "light_white"))   # white arc scale (research M20)
     out.append((FD.Fr([kx2, 0.0, zt], [1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0]).rect(-0.006, -0.032, 0.006, 0.032,
                                                                                     0.0003), "panel_dark"))

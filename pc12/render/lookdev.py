@@ -673,6 +673,9 @@ SPEC.update({
                                note="satin edge moulding along the glazing surround (FDO2-03)"),
     "stack_gunmetal":     dict(kind="dielectric", base=(0.088, 0.086, 0.088), metallic=0.40, rough=0.42,
                                note="the centre stack's flanks, the quadrant cheeks' gunmetal (FID-FD2-03)"),
+    # flight deck fix r3 (model/assemble.MATERIALS the same)
+    "fd_cove":            dict(kind="dielectric", base=(0.034, 0.034, 0.037), metallic=0.10, rough=0.55, spec=0.25,
+                               note="the dark sculpted cove below the outer sub-panels (FID-FD3-01)"),
 })
 
 

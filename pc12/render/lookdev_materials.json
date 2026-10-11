@@ -2386,6 +2386,23 @@
    "kind": "dielectric",
    "note": "the centre stack's flanks, the quadrant cheeks' gunmetal (FID-FD2-03)",
    "srgb_hex": "#545354"
+  },
+  "fd_cove": {
+   "baseColorFactor": [
+    0.034,
+    0.034,
+    0.037,
+    1.0
+   ],
+   "metallicFactor": 0.1,
+   "roughnessFactor": 0.55,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "the dark sculpted cove below the outer sub-panels (FID-FD3-01)",
+   "srgb_hex": "#343436"
   }
  }
 }

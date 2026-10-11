@@ -10,6 +10,8 @@ python3 test/fit_fd_b.py builds the forward skin / glazing and the interior alon
 31. the crew seats at full aft travel, both height extremes, both headrest locks, armrests down and up, clear the
     divider's flight-deck fittings (oxygen-mask cups, goggle box, headset hooks, document pocket, latches) and the
     console fittings (armrest pads, map pockets, keypads) by >= 5 mm
+32. the flight-deck floor is closed in plan (flight deck fix r3 FID-FD3-08): every 3 mm cell inside the lining from the
+    footwell front to the divider lies under an interior surface (no gap open to the skin below)
 """
 from __future__ import annotations
 
@@ -221,6 +223,59 @@ report("crew seats (full aft, height extremes, both headrest locks, armrests dow
        f"nearest {1000 * d31:.1f} mm ({'pilot' if w31[0] < 0 else 'co-pilot'}, dz {1000 * w31[1]:+.0f}, headrest "
        f"{w31[2]:.3f}, arms {'up' if w31[3][0] else 'down'}, at STA {w31[4][0]:.3f} BL {w31[4][1]:+.3f} WL "
        f"{w31[4][2]:.3f})")
+
+# 32 ------------------------------------------------------------------- the flight-deck floor closed in plan
+# (flight deck fix r3 FID-FD3-08: white specks either side of the pedestal's aft end were the skin seen through gaps
+# between the floor and the plinth's rounded corners): every 3 mm cell of the flight deck's floor plan -- from the
+# footwell front to the divider, |BL| up to 6 mm inside the lining at the floor -- is covered, seen from above, by an
+# interior surface between the floor's underside and the plinth top (the carpet, the plinth top, the consoles' and seats'
+# bases, the footwell walls' feet)
+from model import flightdeck as FDK  # noqa: E402
+xa_, xd_ = float(IB.FLOOR["fd_x0"]), float(IB.DIVIDER["x_aft"])
+_, _, _, pz_ = IB.pedestal_plinth()
+zlo, zhi = FL_ - float(IB.FLOOR["t"]) - 0.005, pz_ + 0.01
+h32 = 0.003
+xs32 = np.arange(xa_ + 0.004, xd_ - 0.004, h32)
+ys32 = np.arange(-0.80, 0.80, h32)
+cov = np.zeros((len(xs32), len(ys32)), bool)
+for pid32, p32 in parts.items():
+    if getattr(p32, "group", None) != "Interior" and pid32 not in ("flight_deck", "fd_consoles"):
+        continue
+    for m, mat in p32.meshes:
+        if not len(m.F):
+            continue
+        T = m.V[m.F]
+        c = T.mean(1)
+        fn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])
+        A2 = np.linalg.norm(fn, axis=1)
+        k = (c[:, 0] > xa_ - 0.05) & (c[:, 0] < xd_ + 0.05) & (c[:, 2] > zlo) & (c[:, 2] < zhi) & \
+            (np.abs(fn[:, 2]) > 0.3 * np.maximum(A2, 1e-18))
+        for t in T[k]:
+            x0_, x1_ = t[:, 0].min(), t[:, 0].max()
+            y0_, y1_ = t[:, 1].min(), t[:, 1].max()
+            i0, i1 = np.searchsorted(xs32, x0_), np.searchsorted(xs32, x1_, "right")
+            j0, j1 = np.searchsorted(ys32, y0_), np.searchsorted(ys32, y1_, "right")
+            if i1 <= i0 or j1 <= j0:
+                continue
+            X, Y = np.meshgrid(xs32[i0:i1], ys32[j0:j1], indexing="ij")
+            (ax_, ay_), (bx_, by_), (cx_, cy_) = t[0, :2], t[1, :2], t[2, :2]
+            d = (by_ - cy_) * (ax_ - cx_) + (cx_ - bx_) * (ay_ - cy_)
+            if abs(d) < 1e-14:
+                continue
+            l1 = ((by_ - cy_) * (X - cx_) + (cx_ - bx_) * (Y - cy_)) / d
+            l2 = ((cy_ - ay_) * (X - cx_) + (ax_ - cx_) * (Y - cy_)) / d
+            e = 1e-9
+            cov[i0:i1, j0:j1] |= (l1 >= -e) & (l2 >= -e) & (1.0 - l1 - l2 >= -e)
+Lf = FDK.lining()
+hw32 = np.array([float(Lf.hw(x, FL_ + 0.002)) for x in xs32]) - 0.006
+need = np.abs(ys32)[None, :] <= hw32[:, None]
+holes = need & ~cov
+ih, jh = np.nonzero(holes)
+report("flight-deck floor closed in plan: every 3 mm cell from the footwell front to the divider, inside the lining, "
+       "under an interior surface (floor, plinth top, bases)", not len(ih),
+       f"{int(need.sum()):,} cells covered" if not len(ih) else
+       f"{len(ih)} open cells, e.g. " + "; ".join(f"STA {xs32[i]:.3f} BL {ys32[j]:+.3f}" for i, j in
+                                                list(zip(ih, jh))[:: max(1, len(ih) // 6)][:6]))
 
 if _STANDALONE:
     print("FIT FD-B OK" if not fails else f"FIT FD-B FAIL ({len(fails)}): " + "; ".join(fails))

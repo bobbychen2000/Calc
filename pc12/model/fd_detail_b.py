@@ -495,6 +495,147 @@ def _reveal_zones(G, cols, funnel, closed):
     return out
 
 
+# flight deck fix r3 (FDO3-02 / FID-FD3-03: from the crew stops the A-pillar -- the windshield's pillar reveal, the
+# lining strip and the side window's front reveal, ~0.19 m across at the glass and 85 mm deep (the L6 LINING law) --
+# shaded as one flat grey slab; P1046409 / 10 show a rounded post, dark toward the windshield and catching the light on
+# its radius toward the side window).  The slab's width is the drawn glazing (L2; its change is the deferred owner
+# review); its shading here: the post's vertex normals turned to a rounded section -- the direction from the pillar's
+# axis (the midline of the two pane outlines on the OML, `depth` out along the OML normal) to each vertex, blended in over
+# r_out .. r_in from the axis and the first / last `t_fade` of its length, never more than acos(min_dot) from the
+# surface's own normal (the faces keep their winding, fit_check 23) -- and flush countersunk fasteners along the post's
+# lining strip (`screws`: fractions of its length, radius `screw_r`).  Applied after the refinement (build.build_parts:
+# the refiner would bow the PN curves of the turned normals into the geometry), before the interior light bake.
+POST_ROUND = dict(depth=0.0, r_in=0.115, r_out=0.17, t_fade=0.12, min_dot=0.30,
+                  mats=("lining_flightdeck", "lining_fd_reveal", "trim_satin"), screws=(0.06, 0.94),
+                  screw_r=0.0040, bead=(0.12, 0.88, 0.008, -0.0006))
+# (bead: a satin moulding down the post's lining strip between the fractions bead[0] .. bead[1] of its length, radius
+# bead[2], its axis bead[3] behind the lining (- in front: a round moulding lying on it, 8.6 mm proud -- sunk 1.5 / 3 mm,
+# only 84-89 % of its cabin-facing area stood > 0.5 mm proud, fit_check 22b): the light-catching ridge of P1046409's post)
+_POST_AXES = {}
+
+
+def post_axis(side):
+    """(c, a, s0, s1, M, N): the A-pillar's axis of one side (side -1 port, +1 starboard) -- a point c, the unit
+    direction a (up the post), the extent s0..s1 along it -- and the midline points M (12, 3) on the OML with their
+    outward normals N."""
+    if side in _POST_AXES:
+        return _POST_AXES[side]
+    q = POST_ROUND
+    edges = []
+    for kind, lab in (("ws", 1), ("sw", 3)):
+        _, O, L = _pane_pairs(kind, side)
+        P = oml_frame(O[L == lab, 0], O[L == lab, 1])[0]
+        edges.append(P[np.argsort(P[:, 2])])
+    z0 = max(e[:, 2].min() for e in edges) + 0.01
+    z1 = min(e[:, 2].max() for e in edges) - 0.01
+    zs = np.linspace(z0, z1, 12)
+    E = [np.stack([np.interp(zs, e[:, 2], e[:, i]) for i in range(3)], 1) for e in edges]
+    M = 0.5 * (E[0] + E[1])
+    from model import fuselage as F
+    xt = []
+    for Pm in M:                                            # the OML normal at each midline point (nearest loft sample)
+        xs = np.linspace(Pm[0] - 0.05, Pm[0] + 0.05, 21)
+        ts = np.linspace(-0.45, 0.45, 361)
+        X, T = np.meshgrid(xs, ts, indexing="ij")
+        S = F.section(X, T % 1.0)
+        k = np.argmin(np.linalg.norm(S - Pm, axis=-1))
+        xt.append((X.ravel()[k], T.ravel()[k]))
+    xt = np.array(xt)
+    _, N3, _, _, _ = oml_frame(xt[:, 0], xt[:, 1])
+    A = M + q["depth"] * N3
+    c = A.mean(0)
+    a = np.linalg.svd(A - c)[2][0]
+    a = a if a[2] > 0 else -a
+    t = (A - c) @ a
+    out = (c, a, float(t.min()), float(t.max()), M, N3)
+    _POST_AXES[side] = out
+    return out
+
+
+def round_post_normals(part):
+    """Turn the A-pillar's vertex normals of `part` (interior_lining) to the rounded section (POST_ROUND); returns the
+    number of vertices changed."""
+    from model import seats as S
+    q = POST_ROUND
+    if part is None:
+        return 0
+    n_ch = 0
+    axes = [post_axis(s_) for s_ in (-1, 1)]
+    for m, mat in part.meshes:
+        if mat not in q["mats"] or m.N is None or len(m.N) != len(m.V) or not len(m.V):
+            continue
+        N = m.N.copy()
+        for c, a, s0, s1, _, _ in axes:
+            d = m.V - c
+            t = d @ a
+            perp = d - t[:, None] * a
+            r = np.linalg.norm(perp, axis=1)
+            u = (t - s0) / (s1 - s0)
+            w = S.smoothstep(q["r_out"], q["r_in"], r) * S.smoothstep(-0.02, q["t_fade"], u) * \
+                S.smoothstep(1.02, 1.0 - q["t_fade"], u)
+            sel = np.nonzero((w > 1e-3) & (r > 1e-6))[0]
+            if not len(sel):
+                continue
+            n0 = N[sel]
+            nc = perp[sel] / r[sel, None]
+            wk = w[sel, None]
+            nb = _unit(wk * nc + (1.0 - wk) * n0)
+            for _ in range(12):                              # back toward the surface's own normal where it turned too far
+                bad = np.sum(nb * n0, 1) < q["min_dot"]
+                if not bad.any():
+                    break
+                wk[bad] *= 0.7
+                nb[bad] = _unit(wk[bad] * nc[bad] + (1.0 - wk[bad]) * n0[bad])
+            N[sel] = nb
+            n_ch += len(sel)
+        m.N = N
+    return n_ch
+
+
+def post_fasteners():
+    """The A-pillars' lining strip: a satin bead down its middle and flush countersunk fasteners at its ends
+    (POST_ROUND bead / screws): [(Mesh, material)]."""
+    from cad.mesh import sweep_profile
+    q = POST_ROUND
+    out = []
+    for side in (-1, 1):
+        c, a, s0, s1, M, N3 = post_axis(side)
+        zs = M[:, 2]
+        f0, f1, rb, sink = q["bead"]
+        path = []
+        for f in np.linspace(f0, f1, 40):
+            z = zs[0] + f * (zs[-1] - zs[0])
+            P = np.array([np.interp(z, zs, M[:, i]) for i in range(3)])
+            n = _unit(np.array([np.interp(z, zs, N3[:, i]) for i in range(3)]))
+            ns = _unit(np.array([0.0, n[1], n[2]]))
+            u = min(1.0, min(f - f0, f1 - f) / 0.02)               # its ends dive under the lining (no open end)
+            sk = sink + (rb + 0.0015 - sink) * (1.0 - u) ** 2
+            path.append(P - (float(lining_depth(ns[None])[0]) - sk) * ns)
+        ang = np.linspace(0.0, 2 * np.pi, 16, endpoint=False)
+        bead = sweep_profile(np.array(path), np.c_[rb * np.cos(ang), rb * np.sin(ang)])
+        cen = np.array(path)
+        from scipy.spatial import cKDTree
+        tr = cKDTree(cen)
+        out.append((_orient(bead, lambda C: C - cen[tr.query(C)[1]]), "trim_satin"))
+        for f in q["screws"]:
+            z = zs[0] + f * (zs[-1] - zs[0])
+            P = np.array([np.interp(z, zs, M[:, i]) for i in range(3)])
+            n = _unit(np.array([np.interp(z, zs, N3[:, i]) for i in range(3)]))
+            ns = _unit(np.array([0.0, n[1], n[2]]))
+            dl = float(lining_depth(ns[None])[0])
+            o = P - dl * ns - 0.0002 * n                 # on the lining (its offset along the section normal)
+            from cad.mesh import revolve
+            out.append((revolve([(0.0, q["screw_r"]), (0.0006, q["screw_r"]), (0.0010, 0.6 * q["screw_r"]),
+                                 (0.0011, 0.0)], n=16, axis_origin=o, axis_dir=-n, ref_dir=a, cap_ends=True),
+                        "steel_dark"))
+            u_ = _unit(np.cross(-n, a))
+            q0 = o - 0.00115 * n
+            V = np.array([q0 - 0.7 * q["screw_r"] * u_ - 0.00035 * a, q0 + 0.7 * q["screw_r"] * u_ - 0.00035 * a,
+                          q0 + 0.7 * q["screw_r"] * u_ + 0.00035 * a, q0 - 0.7 * q["screw_r"] * u_ + 0.00035 * a])
+            out.append((_orient(Mesh(V, np.array([[0, 1, 2], [0, 2, 3]])), -n), "black"))
+    return out
+
+
 def _toward(ref, C):
     """Per-point direction of the nearest face normal of `ref` (orient a split copy like its parent)."""
     from scipy.spatial import cKDTree

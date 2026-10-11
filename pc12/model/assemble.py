@@ -223,6 +223,9 @@ MATERIALS = {
     "lining_fd_reveal":   ((0.052, 0.051, 0.051), 0.20, 0.46, dict(specular=0.6)),
     "trim_satin":         ((0.20, 0.19, 0.18), 0.50, 0.30),
     "stack_gunmetal":     ((0.088, 0.086, 0.088), 0.40, 0.42),      # the stack's flanks (= pedestal_gunmetal's values)
+    # ---- flight deck fix r3 (append-only; render/lookdev.py SPEC 'flight deck fix r3' the same): the dark sculpted cove
+    #      below the outer sub-panels (FID-FD3-01: P1046408 / 10, anthracite, ~41 at the fitted camera)
+    "fd_cove":            ((0.034, 0.034, 0.037), 0.10, 0.55, dict(specular=0.5)),
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)

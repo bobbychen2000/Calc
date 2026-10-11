@@ -83,12 +83,18 @@ SK_TOP = 0.020                                 # the back shell's top sits this 
 # 25-50 mm clumps (P1046408 / 09 / 10, PRO Mexico photo: a ragged, tufted outline, not a smooth pillow edge); the rims
 # are sampled every SK_SHAG_STEP along the outline so the clumps are drawn, not aliased
 SK_SHAG, SK_SHAG_K, SK_SHAG_STEP = 0.005, (110.0, 150.0, 190.0), 0.008
+# flight deck fix r3 (FDO3-03 / FID-FD3-04: the 33-57 mm clumps alone drew a hard, lumpy outline -- "rock", not pile):
+# the coarse clumps at 0.7 x, plus a ragged fringe of finer tufts (18-26 mm, up to SK_SHAG_FINE) on a rim sampled every
+# SK_SHAG_STEP_R3
+SK_SHAG_FINE, SK_SHAG_FINE_K, SK_SHAG_STEP_R3 = 0.0028, (240.0, 290.0, 350.0), 0.0065
 
 
 def shag(seed):
-    """Clump displacement (m, 0 .. SK_SHAG) of a sheepskin pad's rim at outline points (a, b)."""
+    """Clump displacement (m, 0 .. ~SK_SHAG) of a sheepskin pad's rim at outline points (a, b)."""
     f = fleece(1.0, seed, k=SK_SHAG_K)
-    return lambda a, b: SK_SHAG * (0.5 + 0.5 * np.tanh(3.0 * f(a, b)))
+    g = fleece(1.0, seed + 101, k=SK_SHAG_FINE_K)
+    return lambda a, b: (0.7 * SK_SHAG * (0.5 + 0.5 * np.tanh(3.0 * f(a, b)))
+                         + SK_SHAG_FINE * (0.5 + 0.5 * np.tanh(2.5 * g(a, b))))
 
 
 # =====================================================================================================================
@@ -807,6 +813,124 @@ def draped_strap(obst, plan, A_c, B_c, dp, npn, width=0.046, th=0.002, clear=0.0
     return P3, U3
 
 
+# flight deck fix r3 (FID-FD3-05 / FDO3-06: from the cabin -- fd_cabin, the aisle -- the crew backs read as plain grey
+# slabs; P1046406, the IPECO line art: a stitched, panelled leather back with a map pocket): on the shell's rear face a
+# map pocket (a padded leather panel `pocket` = (b0, b1, half-width, thickness) along / across the back, its top edge an
+# elastic welt), two vertical stitched seams at +-`seam_a` from the pocket up to `seam_top` below the shell top, and a
+# stitched seam across the back above the pocket [E]
+CREW_BACK_REAR = dict(pocket=(0.16, 0.40, 0.135, 0.0055), welt_r=0.0032, seam_a=0.105, seam_top=0.035, pitch=0.007)
+
+
+def _ray_hits(geo, O, D):
+    """Nearest positive hit distance of rays O + t D (n, 3) on the triangles of geo (Moller-Trumbore); inf for a miss."""
+    T = geo.V[geo.F]
+    e1, e2 = T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]
+    out = np.full(len(O), np.inf)
+    for i in range(len(O)):
+        p = np.cross(D[i], e2)
+        det = np.einsum("ij,ij->i", e1, p)
+        ok = np.abs(det) > 1e-14
+        inv = np.where(ok, 1.0 / np.where(ok, det, 1.0), 0.0)
+        tv = O[i] - T[:, 0]
+        u = np.einsum("ij,ij->i", tv, p) * inv
+        qv = np.cross(tv, e1)
+        v = (qv @ D[i]) * inv
+        t = np.einsum("ij,ij->i", e2, qv) * inv
+        hit = ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 1e-6)
+        if hit.any():
+            out[i] = t[hit].min()
+    return out
+
+
+def _crew_back_rear(shell, db, nb, L_s):
+    """[Geo] on the crew back shell's rear face (CREW_BACK_REAR), seat-local, upright (the caller reclines them)."""
+    q = CREW_BACK_REAR
+    D3 = np.array([nb[0], 0.0, nb[1]])
+
+    def on_rear(a, b, lift):
+        """Rear-face points at lateral a, along-back b (arrays, same shape), lifted `lift` off it (outward, -nb)."""
+        a, b = np.broadcast_arrays(np.asarray(a, float), np.asarray(b, float))
+        O = np.stack([b.ravel() * db[0] - 0.25 * nb[0], a.ravel(), b.ravel() * db[1] - 0.25 * nb[1]], 1)
+        t = _ray_hits(shell, O, np.repeat(D3[None], len(O), 0))
+        P = O + np.where(np.isfinite(t), t, 0.25)[:, None] * D3
+        lift = np.broadcast_to(np.asarray(lift, float), a.shape).ravel()
+        return (P - lift[:, None] * D3).reshape(a.shape + (3,))
+    out = []
+    # the map pocket: a padded panel (top: thickness x a smooth rise over its first 12 mm from the edge; bottom 1 mm in
+    # the shell), closed by a wall strip
+    b0, b1, hw, th = q["pocket"]
+    na, nbb = 15, 11
+    A, Bb = np.meshgrid(np.linspace(-hw, hw, na), np.linspace(b0, b1, nbb), indexing="ij")
+    de = np.minimum.reduce([A + hw, hw - A, Bb - b0, b1 - Bb])
+    top = on_rear(A, Bb, 0.0005 + (th - 0.0005) * smoothstep(0.0, 0.012, de))
+    bot = on_rear(A, Bb, -0.001)
+    n1, n2 = top.shape[:2]
+    idx = lambda i, j, k: k * n1 * n2 + i * n2 + j                  # noqa: E731
+    F = []
+    for i in range(n1 - 1):
+        for j in range(n2 - 1):
+            for k, flip in ((0, False), (1, True)):
+                a_, b_, c_, d_ = idx(i, j, k), idx(i + 1, j, k), idx(i + 1, j + 1, k), idx(i, j + 1, k)
+                F += [(a_, c_, b_), (a_, d_, c_)] if flip else [(a_, b_, c_), (a_, c_, d_)]
+    ring = [(i, 0) for i in range(n1 - 1)] + [(n1 - 1, j) for j in range(n2 - 1)] + \
+        [(i, n2 - 1) for i in range(n1 - 1, 0, -1)] + [(0, j) for j in range(n2 - 1, 0, -1)]
+    for k_ in range(len(ring)):
+        (i0, j0), (i1, j1) = ring[k_], ring[(k_ + 1) % len(ring)]
+        F += [(idx(i0, j0, 0), idx(i0, j0, 1), idx(i1, j1, 1)), (idx(i0, j0, 0), idx(i1, j1, 1), idx(i1, j1, 0))]
+    V = np.vstack([top.reshape(-1, 3), bot.reshape(-1, 3)])
+    out.append(Geo(V, np.array(F), np.zeros(len(F)), {0: "leather_black"}))     # a shade darker: two-tone
+    # the elastic welt along the pocket's top edge (a dark webbing tube, half in the panel)
+    aw = np.linspace(-hw + 0.004, hw - 0.004, 24)
+    Pw = on_rear(aw, np.full(len(aw), b1 - 0.004), th - 0.0005)
+    out.append(_tube_path(Pw, q["welt_r"], M_HARN))
+    # stitched seams (closed boxes, 3.6 x 1.0 x 1.2 mm every `pitch`): two up the back from the pocket, one across
+    st = []
+    for a0 in (-q["seam_a"], q["seam_a"]):
+        bs_ = np.arange(b1 + 0.02, L_s - q["seam_top"], q["pitch"])
+        st.append((on_rear(np.full(len(bs_), a0), bs_, 0.0003), "b"))
+    as_ = np.arange(-q["seam_a"], q["seam_a"], q["pitch"])
+    st.append((on_rear(as_, np.full(len(as_), b1 + 0.02), 0.0003), "a"))
+    bx = np.array([[0, 1, 2], [0, 2, 3], [4, 6, 5], [4, 7, 6], [0, 4, 5], [0, 5, 1], [1, 5, 6], [1, 6, 2],
+                   [2, 6, 7], [2, 7, 3], [3, 7, 4], [3, 4, 0]])
+    Vs, Fs = [], []
+    dd3 = np.array([db[0], 0.0, db[1]])
+    for P, kind in st:
+        along = dd3 if kind == "b" else np.array([0.0, 1.0, 0.0])
+        side = np.array([0.0, 1.0, 0.0]) if kind == "b" else -dd3       # (the same handedness: every box outward)
+        for p_ in P:
+            k_ = len(Vs)
+            for c_ in (-0.0006, 0.0006):
+                for e_ in ((0, -1), (1, -1), (1, 1), (0, 1)):
+                    Vs.append(p_ + e_[0] * 0.0036 * along + e_[1] * 0.0005 * side - c_ * D3)
+            Fs += (bx + k_).tolist()
+    out.append(Geo(np.array(Vs), np.array(Fs), np.zeros(len(Fs)), {0: "stitch_thread"}))
+    return out
+
+
+def _tube_path(P, r, mat, n=8):
+    """Closed round tube Geo along the polyline P (k, 3), capped."""
+    P = np.asarray(P, float)
+    T = np.gradient(P, axis=0)
+    T /= np.linalg.norm(T, axis=1, keepdims=True)
+    a = np.array([0.0, 0.0, 1.0]) if abs(T[0, 2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+    U = np.cross(T, a)
+    U /= np.linalg.norm(U, axis=1, keepdims=True)
+    W = np.cross(T, U)
+    ang = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    R = P[:, None, :] + r * (np.cos(ang)[None, :, None] * U[:, None, :] + np.sin(ang)[None, :, None] * W[:, None, :])
+    k, m = R.shape[:2]
+    V = np.vstack([R.reshape(-1, 3), P[0], P[-1]])
+    F = []
+    for i in range(k - 1):
+        for j in range(m):
+            a_, b_ = i * m + j, i * m + (j + 1) % m
+            F += [(a_, b_, b_ + m), (a_, b_ + m, a_ + m)]
+    c0, c1 = k * m, k * m + 1
+    for j in range(m):
+        F += [(c0, (j + 1) % m, j), (c1, (k - 1) * m + j, (k - 1) * m + (j + 1) % m)]
+    return Geo(V, np.array(F), np.zeros(len(F)), {0: mat})
+
+
 def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, False), sheepskin=None,
               tracks=True, harness=True, finish=None):
     """IPECO 3A318-type crew seat of the pilot (side=-1) or co-pilot (+1) at interior.crew_srp(side, dx, dz): dx fore
@@ -892,7 +1016,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
             sleeves.append(_ccw(pp))
             g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.016), crown=dome(SK_CROWN_SEAT, 0.075),
-                       fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_SHAG_STEP)
+                       fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_SHAG_STEP_R3)
             g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
             geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
             obst.append(geos[-1])
@@ -964,6 +1088,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
     bw1 = 0.5 * float(c["back_w"][1])
     back.append(slab(bprof, -bw1, bw1, 0.012 if sk else 0.028, M_SHELL, max_len=0.05, h=0.045,
                      width=lambda u, v: _crew_back_hw(u * db[0] + v * db[1]) / bw1, post=rear_round(nb, 0.030)))
+    back += _crew_back_rear(back[-1], db, nb, L_s)
     bmap = _back_map(db, nb, front=_crew_front)
     if sk:
         # back cover: down the whole front and wrapped over the top edge toward the rear (AOPA, P1046408 / 10), the
@@ -976,7 +1101,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
         fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0), h_judged=0.021)
         g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, 0.06),
-                   fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_SHAG_STEP)
+                   fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_SHAG_STEP_R3)
         g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))
         back.append(_mats(g.map(lambda V: bmap(V - [0, 0, apex])), M_SHEEP))
     else:

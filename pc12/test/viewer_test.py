@@ -3732,7 +3732,9 @@ async def sound_checks(browser, base, out_dir: Path):
     await page.mouse.move(cx, cy); await page.mouse.down(); await page.mouse.move(cx + 60, cy + 10, steps=4); await page.mouse.up()
     await page.wait_for_timeout(300)
     r1 = await js(page, S + "V.advance(0.05); return {n: window.__acCreated, s: S.sync()};")
-    await page.click('[data-rpm="1000"]')
+    # (the drag's orbit coast renders moving frames: SwiftShader on a loaded machine took 15-35 s a frame, and the click's
+    # stability check needs two -- the default 30 s ran out with the button visible and still; flight deck fix r3)
+    await page.click('[data-rpm="1000"]', timeout=SHOT_TIMEOUT)
     r2 = await js(page, S + "V.advance(0.1); return {n: window.__acCreated, s: S.sync(), rpmCmd: V._internals.kin.t.rpm, pressed: [...document.querySelectorAll('#aSound, #soundChip')].map((b) => b.getAttribute('aria-pressed')), chip: !document.getElementById('soundChip').hidden, session: navigator.audioSession.type};")
     check("[sound] iOS audio session 'playback' once the engine sound starts (the silent switch does not mute it; SND8-01)",
           r2["session"] == "playback", f"navigator.audioSession.type {r2['session']!r} after the Idle click")
