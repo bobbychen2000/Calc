@@ -140,6 +140,11 @@ export class Kinematics {
         pull: pv.travel_pull ? modelToGl(pv.travel_pull) : null, push: pv.travel_push ? modelToGl(pv.travel_push) : null,
         rest: pv.rest ? modelToGl(pv.rest) : null });
     }
+    // rev Q (3-D judges r4 CR4-05): the yokes' fore-aft travel (pull, push, parked rest -- signed, + aft) for the
+    // elevators, which follow the yokes' own position (pitchPos)
+    const yk = this.controls.find((k) => k.pv.kind === 'yoke' && k.pull && k.push);
+    this.yokeTravel = yk ? { pull: yk.pull.length(), push: yk.push.length(),
+      rest: yk.rest ? (yk.rest.dot(yk.push) > 0 ? -1 : 1) * yk.rest.length() : 0 } : null;
 
     // club tables (model/cabin.py table_parts, review r3 F5): pivot kind 'table' on the outboard leaf (slides out of
     // the ledge fascia by pivot.slide, model axes, over open 0 .. 0.5; built at open 0.5 = pivot.rest, the leaf out)
@@ -335,6 +340,15 @@ export class Kinematics {
   }
 
   // ------------------------------------------------------------------ pose
+  // rev Q (3-D judges r4 CR4-05): the yokes' fore-aft position for a pitch command as a share of the pull (+) / push (-)
+  // travel: the command blends from the parked rest to the full pull / push (as the yokes' 'rest' pivot)
+  pitchPos(cmd) {
+    const t = this.yokeTravel;
+    if (!t || !t.rest) return cmd;
+    const a = Math.abs(cmd), x = (cmd >= 0 ? cmd * t.pull : -a * t.push) + (1 - a) * t.rest;
+    return x >= 0 ? x / t.pull : x / t.push;
+  }
+
   _rot(id, deg) {
     const s = this.surf[id];
     if (!s) return;
@@ -371,12 +385,17 @@ export class Kinematics {
         D[tabId] = td;
       }
     }
-    // elevators (children of the stabiliser): pull (pitch > 0) = trailing edge up = range[0]
+    // elevators (children of the stabiliser): pull (pitch > 0) = trailing edge up = range[0].  Rev Q (3-D judges r4
+    // CR4-05): they follow the yokes' own fore-aft position (pitchPos), so at a zero command -- the free yokes parked at
+    // their rest, ~35 mm forward as in the photos of the unlocked PRO yokes (Mexico, AOPA) -- the elevators hang
+    // trailing-edge DOWN by the same share of their travel (~8 deg: the parked droop of LX-FLI / MSN 3008 0517; the
+    // cable run allows no forward yoke over a neutral elevator); full pull / push still reach the stops
+    const pq = this.pitchPos(c.pitchCmd);
     for (const id of ['elevator_R', 'elevator_L']) {
       const s = S[id];
       if (!s) continue;
       const [lo, hi] = s.pv.range;
-      const d = c.pitchCmd >= 0 ? c.pitchCmd * lo : -c.pitchCmd * hi;
+      const d = pq >= 0 ? pq * lo : -pq * hi;
       this._rot(id, d);
       D[id] = d;
     }

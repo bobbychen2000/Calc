@@ -1438,26 +1438,9 @@
   },
   "yoke_silver": {
    "baseColorFactor": [
-    0.62,
-    0.62,
-    0.62,
-    1.0
-   ],
-   "metallicFactor": 0.85,
-   "roughnessFactor": 0.3,
-   "clearcoatFactor": 0.0,
-   "clearcoatRoughnessFactor": 0.0,
-   "ior": 1.5,
-   "specularFactor": 1.0,
-   "kind": "dielectric",
-   "note": "yoke upper insert = crown + badge: satin aluminium (L6Y item 2)",
-   "srgb_hex": "#CECECE"
-  },
-  "yoke_silver_dark": {
-   "baseColorFactor": [
-    0.3,
-    0.3,
-    0.3,
+    0.58,
+    0.61,
+    0.67,
     1.0
    ],
    "metallicFactor": 0.85,
@@ -1467,8 +1450,25 @@
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "yoke lower insert: smoke silver (L6Y item 3)",
-   "srgb_hex": "#959595"
+   "note": "yoke upper insert = crown + badge: COOL satin aluminium (L6Y item 2; rev Q, 3-D judges r4 FID4-02: the neutral 0.62 read as the cover's hue -- the photos' insert is cooler, B - R +35..+69 against the cover's +16..+30)",
+   "srgb_hex": "#C8CDD6"
+  },
+  "yoke_silver_dark": {
+   "baseColorFactor": [
+    0.29,
+    0.3,
+    0.33,
+    1.0
+   ],
+   "metallicFactor": 0.85,
+   "roughnessFactor": 0.36,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke lower insert: cool smoke silver (L6Y item 3; rev Q)",
+   "srgb_hex": "#93959B"
   },
   "grip_black": {
    "baseColorFactor": [
@@ -1580,20 +1580,20 @@
   },
   "yoke_column": {
    "baseColorFactor": [
-    0.014,
-    0.014,
-    0.015,
+    0.04,
+    0.04,
+    0.044,
     1.0
    ],
-   "metallicFactor": 0.0,
-   "roughnessFactor": 0.8,
+   "metallicFactor": 0.5,
+   "roughnessFactor": 0.4,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
-   "specularFactor": 0.5,
+   "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "yoke column: matte near-black, non-metallic [E] (L6Y item 11; rev N: the dark metal read as a light grey pipe; rev P, 3-D judges r3 FID3-02: from the crew seats it read as a lit cylinder in the recess)",
-   "srgb_hex": "#1F1F21"
+   "note": "yoke column: satin dark grey tube [E] (L6Y item 11; rev N: the dark metal read as a light grey pipe; rev P, 3-D judges r3 FID3-02: matte near-black; rev Q, 3-D judges r4 FID4-05: that read as a hole from the pilot's eye -- a polished tube going into the panel, ~40-50 there)",
+   "srgb_hex": "#38383B"
   },
   "yoke_trim_face": {
    "baseColorFactor": [
@@ -1628,6 +1628,23 @@
    "kind": "dielectric",
    "note": "yoke pitch-trim rocker slot: near-black matte, the darkest part of the head (L6Y item 9; rev P, 3-D judges r3 FID3-01)",
    "srgb_hex": "#19191B"
+  },
+  "yoke_groove": {
+   "baseColorFactor": [
+    0.03,
+    0.03,
+    0.033,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "yoke cover grooves: the V flanks of the insert parting grooves, the step's down-facing flank and end cones, the badge outline / speed lines as their cavity shadow (L6Y item 15; rev Q, 3-D judges r4 FID4-01: lit like the face they read as bright bevels, every photo shows dark lines -- the step 0.00-0.18 of the insert)",
+   "srgb_hex": "#303033"
   },
   "veneer_walnut": {
    "baseColorFactor": [

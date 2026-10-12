@@ -584,9 +584,15 @@ def badge_pieces():
 
 
 # ============================================================================================ the moulding's materials
+AFCS_BOSS_MAT = "grip_black"   # rev Q (3-D judges r4 FID4-06 (a)): the boss in the body's satin black -- rev M-P's
+#                                'black' (0.028, rough 0.50) read as a separate lighter puck with a bright rim ring where
+#                                Mexico L / R and AOPA show it melting into the body (only the red cap and the legend
+#                                arc stand out); L6Y item 8
+
+
 def moulding_materials(V, F):
     """Per face of the moulding's frame mesh (yoke_patch.moulding_parts' 'frame'): 'grip_black' (body, grips, heads),
-    'black' on the AFCS boss (its satin face under the red cap).  The pads (leather_black inside the groove's inner
+    AFCS_BOSS_MAT on the AFCS boss (its face under the red cap).  The pads (leather_black inside the groove's inner
     wall) and the trim face (black inside its legend ring) are their own patches."""
     C = V[F].mean(1)
     D = G.T()
@@ -595,12 +601,13 @@ def moulding_materials(V, F):
     Q = C - ca
     z = Q @ na
     r = np.linalg.norm(Q - z[:, None] * na, axis=1)
-    mat[(r < 0.5 * float(D["afcs"][4]) + 0.05) & (z > -float(D["afcs_boss"][1]) - 0.2)] = "black"
+    mat[(r < 0.5 * float(D["afcs"][4]) + 0.05) & (z > -float(D["afcs_boss"][1]) - 0.2)] = AFCS_BOSS_MAT
     return mat
 
 
 # ============================================================================================ the whole yoke (cached)
-MESH_VERSION = "m5"            # rev P: crown rows, junction normals, micro caps, trim materials, legend widths
+MESH_VERSION = "m6"            # rev P: crown rows, junction normals, micro caps, trim materials, legend widths; rev Q:
+#                                the groove finish, the AFCS boss in the body's finish, debris normals, legend clusters
 
 
 def _src_key():
@@ -890,6 +897,140 @@ def split_junction_normals(pieces, verbose=False):
     return out
 
 
+DEBRIS_DEV, DEBRIS_R = 30.0, 2.0   # deg, mm: rev Q (3-D judges r4 CR4-08), see repair_debris
+DEBRIS_CORNER = 58.0               # deg: a corner takes the solid's gradient only within this of its face (KNOB_DEV)
+
+
+def _face_dev(V, F, fn_=None):
+    """Per face: (angle deg between its plane and the solid's gradient at its centroid, 2 x area, unit normal)."""
+    fn_ = fn_ or G.moulding
+    P = V[F]
+    fn = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0])
+    a = np.linalg.norm(fn, axis=1)
+    fu = fn / np.maximum(a, 1e-30)[:, None]
+    g = _grad_mm(fn_, P.mean(1))
+    g = g / np.maximum(np.linalg.norm(g, axis=1, keepdims=True), 1e-12)
+    return np.degrees(np.arccos(np.clip(np.sum(fu * g, 1), -1.0, 1.0))), a, fu
+
+
+def _corner_grads(V, F, fn_=None):
+    """Per corner k: (the solid's unit gradient 0.03 mm inside the face, valid mask) -- yoke_mesh_check row 4's sample."""
+    fn_ = fn_ or G.moulding
+    P = V[F]
+    C = P.mean(1)
+    out = []
+    for k in range(3):
+        d = C - P[:, k]
+        dl = np.linalg.norm(d, axis=1, keepdims=True)
+        Q = P[:, k] + d / np.maximum(dl, 1e-9) * np.minimum(0.03, 0.5 * dl)
+        g = _grad_mm(fn_, Q)
+        gn = np.linalg.norm(g, axis=1)
+        out.append((g / np.maximum(gn, 1e-12)[:, None], (gn > 0.3) & (np.abs(fn_(*Q.T)) < 0.05)))
+    return out
+
+
+def repair_debris(pieces, verbose=False, rounds=8):
+    """The frame's DC debris (rev Q, 3-D judges r4 CR4-08): the inboard neck's forward face at u -79, h 46.5, a -32
+    carries ~28 folded sub-mm^2 faces whose corner normals sit 28-113 deg off the solid's gradient -- the solid itself has
+    a field kink there (the rev M 'forward-face scar', its gradient turning ~70 deg within 3 mm; hidden: seen only from
+    forward).  On the frame (the largest grip_black moulding piece: no tabled crease inside it -- pads, trim face and
+    switches are their own pieces): (1) faces within DEBRIS_R of a corner > DEBRIS_DEV off the gradient and whose plane
+    is > DEBRIS_DEV off the solid are collapsed away by their shortest edge where no ring face flips and the ring's worst
+    plane-vs-gradient angle does not grow; (2) there, a corner of a face that follows the solid (plane within DEBRIS_DEV)
+    takes the gradient (within DEBRIS_CORNER of its plane, else -- the kink running through the face -- the gradient at
+    the face's centroid), a face still bridging the kink is shaded flat (its own normal: no knob) -- own vertex copies,
+    positions as built."""
+    idx = [i for i, p in enumerate(pieces) if p.name == "moulding" and p.mat == "grip_black" and len(p.F)]
+    if not idx:
+        return pieces
+    i_fr = max(idx, key=lambda i: len(pieces[i].F))
+    p = pieces[i_fr]
+    V, F, N = p.V.copy(), p.F.copy(), p.N.copy()
+    off = np.zeros(len(F), bool)
+    for k, (g, ok) in enumerate(_corner_grads(V, F)):
+        off |= ok & (np.degrees(np.arccos(np.clip(np.sum(N[F[:, k]] * g, 1), -1.0, 1.0))) > DEBRIS_DEV)
+    if not off.any():
+        return pieces
+    cen = V[F[off]].mean(1)
+
+    def near(Ff):
+        return np.min(np.linalg.norm(V[Ff].mean(1)[:, None] - cen[None], axis=2), 1) < DEBRIS_R
+    n_col = 0
+    for _ in range(rounds):
+        sel = np.nonzero(near(F))[0]
+        dev, ar, _ = _face_dev(V, F[sel])
+        bad = sel[(dev > DEBRIS_DEV) & (ar > 1e-12)]
+        e = np.sort(np.vstack([F[:, [0, 1]], F[:, [1, 2]], F[:, [2, 0]]]), 1)
+        ue, cnt = np.unique(e, axis=0, return_counts=True)
+        bnd = np.zeros(len(V), bool)
+        bnd[ue[cnt == 1].ravel()] = True
+        alive = np.ones(len(F), bool)
+        moved, n = set(), 0
+        for f in bad:
+            if not alive[f]:
+                continue
+            tri = F[f]
+            cand = sorted((float(np.linalg.norm(V[tri[i]] - V[tri[(i + 1) % 3]])), tri[i], tri[(i + 1) % 3])
+                          for i in range(3))
+            done = False
+            for _, a, b in cand:
+                for src, dst in ((a, b), (b, a)):
+                    if bnd[src] or src in moved or dst in moved:
+                        continue
+                    ring = np.nonzero(alive & (F == src).any(1))[0]
+                    keep = [q for q in ring if dst not in F[q]]
+                    F2 = F[keep].copy()
+                    F2[F2 == src] = dst
+                    fn0 = np.cross(V[F[keep, 1]] - V[F[keep, 0]], V[F[keep, 2]] - V[F[keep, 0]])
+                    fn1 = np.cross(V[F2[:, 1]] - V[F2[:, 0]], V[F2[:, 2]] - V[F2[:, 0]])
+                    a1 = np.linalg.norm(fn1, axis=1)
+                    if (a1 < 1e-12).any() or (np.sum(fn0 * fn1, 1) <= 0).any():
+                        continue
+                    if _face_dev(V, F2)[0].max() > _face_dev(V, F[ring])[0].max() + 1e-6:
+                        continue
+                    alive[[q for q in ring if dst in F[q]]] = False
+                    F[keep] = F2
+                    moved.update((src, dst))
+                    n += 1
+                    done = True
+                    break
+                if done:
+                    break
+        F = F[alive]
+        n_col += n
+        if not n:
+            break
+    u, inv = np.unique(F.ravel(), return_inverse=True)
+    V, F, N = V[u], inv.reshape(-1, 3), N[u]
+    sel = np.nonzero(near(F))[0]
+    dev, ar, fu = _face_dev(V, F[sel])
+    cg = _corner_grads(V, F[sel])
+    gc = _grad_mm(G.moulding, V[F[sel]].mean(1))
+    gc = gc / np.maximum(np.linalg.norm(gc, axis=1, keepdims=True), 1e-12)
+    V2, N2, F2 = list(V), list(N), F.copy()
+    n_n = 0
+    for i, f in enumerate(sel):
+        for k in range(3):
+            g, ok = cg[k][0][i], cg[k][1][i]
+            if dev[i] > DEBRIS_DEV:
+                nn = fu[i]                                                 # bridging the kink: flat
+            elif ok and math.degrees(math.acos(min(1.0, max(-1.0, float(N[F[f, k]] @ g))))) <= DEBRIS_DEV:
+                continue                                                   # already on the solid
+            else:
+                nn = g if ok and math.degrees(math.acos(min(1.0, max(-1.0, float(fu[i] @ g))))) <= DEBRIS_CORNER \
+                    else gc[i]                                             # the kink runs through the face: its centroid's
+            V2.append(V[F[f, k]])
+            N2.append(nn)
+            F2[f, k] = len(V2) - 1
+            n_n += 1
+    out = list(pieces)
+    out[i_fr] = Piece(np.array(V2), F2, np.array(N2), p.mat, p.name)
+    if verbose:
+        print(f"  debris: {n_col} collapses, {n_n} corner normals; {int((dev > DEBRIS_DEV).sum())} faces still bridge "
+              f"the solid's kink ({0.5 * float(ar[dev > DEBRIS_DEV].sum()):.3f} mm^2, flat)", flush=True)
+    return out
+
+
 def _debris_keep(V, F, weld=1e-4, max_faces=4, max_area=1e-3):
     """Per face: False on the connected components (welded by position) of fewer than `max_faces` faces covering less
     than `max_area` mm^2 -- mesher debris, never a shape."""
@@ -961,6 +1102,7 @@ def _build_pieces(verbose=False):
     if verbose:
         print(f"  debris: {nd} faces dropped", flush=True)
     out = split_junction_normals(out, verbose=verbose)                  # rev P (3-D judges r3 CR3-01)
+    out = repair_debris(out, verbose=verbose)                            # rev Q (3-D judges r4 CR4-08)
     if verbose:
         print(f"  yoke: {sum(len(p.F) for p in out)} triangles in {len(out)} pieces, {time.time() - t0:.0f}s", flush=True)
     return out

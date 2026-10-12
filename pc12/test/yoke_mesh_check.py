@@ -209,6 +209,36 @@ def main():
             where.append(f"{p.name}/{p.mat} {int(k1.sum())} / {int(k2.sum())} (e.g. u {c[0]:.1f} h {c[1]:.1f} a {c[2]:.1f})")
     report("knobs: no face with a corner normal > 60 deg off its own plane; no face < 0.01 mm^2 with one > 30 deg off",
            kn == 0 and mi == 0, f"{kn} / {mi}" + (": " + "; ".join(where) if where else ""))
+    # 4c ----------------------------------------------------------------------------------------------- debris
+    # rev Q (3-D judges r4 CR4-08): on the frame (the largest grip_black moulding piece: no tabled crease inside it --
+    # pads, trim face and switches are their own pieces) no corner normal > 30 deg off the solid's gradient 0.03 mm
+    # inside its face, on the faces that follow the solid (plane within 30 deg of its gradient: the inboard neck's
+    # forward-face DC debris at u -79, h 46.5, a -32 had corners 28-113 deg off); the faces still bridging the solid's own
+    # field kink there (yoke3d.repair_debris: shaded flat) and the corners of faces that kink runs through (the solid's
+    # gradient turning > 30 deg between the corner and the centroid: no one normal fits both) are reported
+    frame_ = max((p for p in ps if p.name == "moulding" and p.mat == "grip_black"), key=lambda p: len(p.F))
+    dv, ar2, _ = Y._face_dev(frame_.V, frame_.F)
+    gcen = _grad(G.moulding, frame_.V[frame_.F].mean(1))
+    gcen = gcen / np.maximum(np.linalg.norm(gcen, axis=1, keepdims=True), 1e-12)
+    nd, nst, where = 0, 0, []
+    for k, (g, okg) in enumerate(Y._corner_grads(frame_.V, frame_.F)):
+        ang = np.degrees(np.arccos(np.clip(np.sum(frame_.N[frame_.F[:, k]] * g, 1), -1, 1)))
+        kink = np.degrees(np.arccos(np.clip(np.sum(g * gcen, 1), -1, 1))) > 30.0      # the solid turns > 30 deg in the face
+        nst += int((okg & (ang > 30.0) & (dv <= 30.0) & kink).sum())
+        bad = okg & (ang > 30.0) & (dv <= 30.0) & ~kink
+        nd += int(bad.sum())
+        if bad.any():
+            c = frame_.V[frame_.F[bad][0]].mean(0)
+            where.append(f"{int(bad.sum())} (e.g. u {c[0]:.1f} h {c[1]:.1f} a {c[2]:.1f})")
+    br = (dv > 30.0) & (ar2 > 1e-12)
+    cb = frame_.V[frame_.F[br]].mean(1) if br.any() else np.zeros((0, 3))
+    report("debris: no frame corner normal > 30 deg off the solid's gradient 0.03 mm inside its face (faces within 30 deg "
+           "of the solid)", nd == 0, f"{nd}" + (": " + "; ".join(where) if where else "") +
+           f"; corners on faces the solid's own kink runs through (its gradient turning > 30 deg inside the face): "
+           f"{nst}; faces bridging the kink (plane > 30 deg off its gradient, shaded flat): {int(br.sum())}, "
+           f"{0.5 * float(ar2[br].sum()):.3f} mm^2" + (f" (u {cb[:, 0].min():.1f}..{cb[:, 0].max():.1f}, h "
+                                                     f"{cb[:, 1].min():.1f}..{cb[:, 1].max():.1f}, a "
+                                                     f"{cb[:, 2].min():.1f}..{cb[:, 2].max():.1f})" if len(cb) else ""))
     # 5 ------------------------------------------------------------------------------------------------ highlights
     frame = max((p for p in ps if p.name == "moulding" and p.mat == "grip_black"), key=lambda p: len(p.F))
     _, vcls = YP.visibility()

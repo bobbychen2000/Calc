@@ -60,7 +60,7 @@
     clearance in the recess floor's hole and sleeve over the travel, >= 0.5 mm, its end >= 5 mm short of the sleeve's
     closed end at full push; 30c the column clear of the J band and the panel round the recess >= 0.5 mm (owner
     2026-10-11: band + recess re-centred on the column axis); 30d where the column shows from the design eyes / fd_cabin
-    stop, its finish dark and non-metallic); 30b the full push every 5 deg of roll (>= 3 mm; rev M reported the [E]
+    stop, its finish a dark satin tube: rev Q); 30b the full push every 5 deg of roll (>= 3 mm; rev M reported the [E]
     90 mm push as an open owner decision: the grips reached the lower panel from ~45 deg)
 Checks 10-15 are exact triangle-crossing tests (test/isect.py), not vertex tests.
 Prints one line per check and 'FIT OK' / 'FIT FAIL' (exit code 1 on failure).
@@ -1626,8 +1626,11 @@ for side in (-1, 1):
         _rows.append(f"{pid} from {nm}: {seen}/{len(Pc)} samples seen")
 _cm = _AM["yoke_column"]
 _lum = 0.2126 * _cm[0][0] + 0.7152 * _cm[0][1] + 0.0722 * _cm[0][2]
-report("yoke columns: where they show, dark and non-metallic (yoke_column base luminance <= 0.04, metallic 0)",
-       _lum <= 0.04 and _cm[1] == 0.0, f"exposed {min(_expo) * 1000:.0f}-{max(_expo) * 1000:.0f} mm at the drawn neutral "
+# rev Q (3-D judges r4 FID4-05): a SATIN DARK-GREY tube, not rev P's matte near-black (it read as a hole from the pilot's
+# design eye, 23): dark base (luminance <= 0.045) and at most half metallic -- no bright chrome pipe (rev N, FID1-02: the
+# rev M dark metal read light grey); viewer_test [Y1] holds its reading at the pilot stop <= 70
+report("yoke columns: where they show, a dark satin tube (yoke_column base luminance <= 0.045, metallic <= 0.5)",
+       _lum <= 0.045 and _cm[1] <= 0.5, f"exposed {min(_expo) * 1000:.0f}-{max(_expo) * 1000:.0f} mm at the drawn neutral "
                                        f"(the fore-aft station: OPEN, owner); " + "; ".join(_rows)
        + f"; base luminance {_lum:.3f}, metallic {_cm[1]:g}")
 # 30b: the full push (YOKE travel: 65, owner 2026-10-11 -- the [E] 90 put the grips into the lower panel from ~45 deg of

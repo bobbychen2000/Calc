@@ -108,9 +108,33 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0.45, 1],
   // studio's diffuse, no reflection floor: the slot the darkest part of the head, the column no lit cylinder in its
   // recess -- FID3-01 / 02), and the nickel hex keeps the key's glint but no reflection floor / window term (FID3-03:
   // every facet lit, 0.8-1.0 of the cover, where the photos' hex footprint reads 0.10-0.34 with one or two glints)
-  yoke_white: [0.25, 1, 1.4, 1, 1, 25], yoke_silver: [0.5, 1, 1.3, 0.6, 1, 4], yoke_silver_dark: [0.5, 1, 0.9, 0.6, 1, 4],
+  yoke_white: [0.25, 1, 1.4, 1, 1, 25], yoke_silver: [0.5, 1, 1, 0.6, 0, 0, 1], yoke_silver_dark: [0.5, 1, 1, 0.6, 0, 0, 1],
   yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 1.45, 0.3], yoke_trim_face: [0, 1.0, 0.25],
-  yoke_slot: [0, 0.5], yoke_column: [0, 0.5] };
+  yoke_slot: [0, 0.5],
+  // rev Q (3-D judges r4): the cover's groove flanks are cavities -- no fill, part of the studio's diffuse (FID4-01); the
+  // column a satin dark-grey tube, its reflections floored at 0.15 of the studio's (FID4-05: ~40-50 from the pilot's eye)
+  yoke_groove: [0, 0.6], yoke_column: [0, 0.8, 0.15] };
+// Rev Q (3-D judges r4 FID4-02: the satin-aluminium insert had the cover's hue and luminance -- 0.91-0.99 of it, 1.07 at
+// the AOPA camera, a p10-p90 spread of 7 levels: a flat grey paint): inside, the yoke's metal inserts mirror a CABIN
+// PROBE instead of the studio (YOKE_PROBE; installPatch 'probe') -- the studio's blurred overhead radiance x a cool
+// daylight tint x a law of the reflection direction: `k` [the dark cabin round and behind the crew, + the headliner /
+// windshield overhead (smoothstep over R.y `y[0..1]`), + the yoke's OWN side window (reflections turned outboard, toward
+// its side of the cockpit, near level: the far window lies across the cockpit behind the pedestal and the other seat),
+// + the crew's lap / seat below (1 - smoothstep over R.y `y[2..3]`)], times a near-field term (1 -+ k[4] over the WL
+// y[4..5], world: the face's upper part sees more of the sky over the glareshield, its lower part the lap and the panel's
+// shade -- the photos' insert brightens toward the crown and darkens toward the step; a planar face mirroring one
+// direction had read as one flat tone, p10-p90 7 levels against P1046408's 26).  The photos read
+// the insert by where it points: P1046408's low camera mirrors the cabin roof (insert / cover 0.93), the AOPA camera from
+// aft-outboard the dark cockpit centre (0.74; the smoke lower insert 0.37), and it is cooler than the cover throughout
+// (B - R +35..+69 against +16..+30).  Its studio reflection floor / 'up' / 'win' are off (CABIN_TRIM).
+const YOKE_PROBE = {
+  yoke_silver: { k: [0.22, 0.66, 0.45, 0.30, 0.22], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
+  yoke_silver_dark: { k: [0.20, 0.85, 0.35, 0.30, 0], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
+};
+for (const it of (Q_M.get('yokeProbe') || '').split('|')) {          // ?yokeProbe=name:k0,..,k4,y0,..,y5|...
+  const k = it.slice(0, it.lastIndexOf(':')), a = it.slice(it.lastIndexOf(':') + 1).split(',').map(Number);
+  if (k && YOKE_PROBE[k] && a.length >= 11 && a.every(Number.isFinite)) YOKE_PROBE[k] = { ...YOKE_PROBE[k], k: a.slice(0, 5), y: a.slice(5, 11) };
+}
 // A seventh entry, 'refl' (rev P, 3-D judges r3 FID3-03): the studio reflections' own factor inside -- the nickel hex
 // mirrors the bright studio from every facet where the cockpit round it is dark (the photos' hex: one or two glints)
 // ?cabTrim=name:share,factor,floor,key,up,win,refl|... overrides entries (look development)
@@ -215,7 +239,7 @@ const VIEWER = {
   // where P1046408 / 09 show 0.84-0.87 -- the viewer's image light has no window / headliner glow for its metal to
   // mirror; a lighter base (the judges' 0.45-0.5: 0.52 read 0.99 of the cover at P1046409, 0.30 0.68 at P1046408) with
   // the CABIN_TRIM reflection floor below
-  yoke_silver_dark: { color: [0.44, 0.44, 0.44] },
+  yoke_silver_dark: { color: [0.42, 0.44, 0.48] },          // rev Q: cool (FID4-02)
   // the AFCS cap (3-D judges r2 FID2-03): AgX compresses a bright saturated red toward white -- the lookdev's 0.50 base
   // read 205/69/62 (sat 0.70) at the pilot stop; a darker deep red keeps it saturated (P1046409 199/58/78, Mexico R
   // 138/6/17)
@@ -456,7 +480,8 @@ export function upgradeMaterials(root, spec) {
       const tk = /^yoke_/.test(part || '') && CABIN_TRIM['yoke:' + name] ? 'yoke:' + name : name;
       if (!interior.has(m)) interior.set(m, new Map());
       const im = interior.get(m);
-      if (!im.has(tk)) im.set(tk, clonePatched(m, { interior: true, cabinFill: CABIN_TRIM[tk] || null }));
+      if (!im.has(tk)) im.set(tk, clonePatched(m, { interior: true, cabinFill: CABIN_TRIM[tk] || null,
+        probe: (/^yoke_/.test(part || '') && YOKE_PROBE[name]) || null }));
       m = im.get(tk);
     }
     o.material = m;
@@ -536,7 +561,7 @@ const GLSL_BACKFACE = `bool pcIsBack() {
 export function installPatch(mat, extra = {}) {
   const f = { ...(mat.userData.pc12 || {}), ...extra };
   mat.userData.pc12 = f;
-  const { paint, lining, glass, cabinGlass, collar, interior, cabinFill, back, grooves, stripes, fleece, rest } = f;
+  const { paint, lining, glass, cabinGlass, collar, interior, cabinFill, back, grooves, stripes, fleece, rest, probe } = f;
   if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes && !fleece) return mat;
   const restP = !!(rest && (collar || grooves || stripes));
   const physical = !!mat.isMeshPhysicalMaterial;
@@ -696,7 +721,7 @@ export function installPatch(mat, extra = {}) {
   }`);
       }
     }
-    if (interior && cabinFill && cabinFill.length > 4 && +cabinFill[4] > 0 && physical) {
+    if (interior && physical && ((cabinFill && cabinFill.length > 4 && +cabinFill[4] > 0) || probe)) {
       // CABIN_TRIM 'up' (3-D judges r2 FID2-04 / CR2-06): inside, the reflections that point below the horizon take the
       // environment above it (mirrored about the horizontal) -- the studio's floor stands in for the cockpit's lap /
       // pedestal / footwell, a dim grey that read the yoke's satin inserts grey and its gloss cover matte from the crew
@@ -706,13 +731,26 @@ export function installPatch(mat, extra = {}) {
       // and level or up see a window of radiance win (linear, added to the studio's): the bright streaks the photos show
       // where the cover's arms and stems turn sideways (P1046408); the studio's softboxes stand overhead, the side windows
       // are what the yoke sees beside it
-      const up = (+cabinFill[4]).toFixed(3), win = (+(cabinFill[5] || 0)).toFixed(3);
+      // 'probe' (rev Q, YOKE_PROBE): the reflection's radiance inside is the cabin probe's, not the studio's
+      const up = (+((cabinFill && cabinFill[4]) || 0)).toFixed(3), win = (+((cabinFill && cabinFill[5]) || 0)).toFixed(3);
+      const f3 = (x) => (+x).toFixed(4);
+      const prb = probe ? `
+			vec3 pcR0 = reflectVec;
+			vec3 pcPWq = ( vec4( - vViewPosition, 0.0 ) * viewMatrix ).xyz + cameraPosition;` : '';
+      const prbRet = probe ? `
+			float pcLaw = ${f3(probe.k[0])} + ${f3(probe.k[1])} * smoothstep( ${f3(probe.y[0])}, ${f3(probe.y[1])}, pcR0.y )
+				+ ${f3(probe.k[2])} * smoothstep( 0.15, 0.5, pcR0.x * sign( pcPWq.x ) ) * ( 1.0 - smoothstep( 0.15, 0.55, abs( pcR0.y - 0.15 ) ) )
+				+ ${f3(probe.k[3] || 0)} * ( 1.0 - smoothstep( ${f3(probe.y[2] ?? -0.4)}, ${f3(probe.y[3] ?? 0.1)}, pcR0.y ) );
+			pcLaw *= mix( ${f3(1 - (probe.k[4] || 0))}, ${f3(1 + (probe.k[4] || 0))}, smoothstep( ${f3(probe.y[4] ?? 1.83)}, ${f3(probe.y[5] ?? 1.91)}, pcPWq.y ) );
+			vec3 pcRef = textureCubeUV( envMap, vec3( 0.0, 1.0, 0.0 ), 0.9 ).rgb * envMapIntensity;
+			pcEnv = mix( pcEnv, pcRef * vec3( ${probe.tint.map(f3).join(', ')} ) * pcLaw, uCabinIn );` : '';
       fs = fs.replace('#include <envmap_physical_pars_fragment>', THREE.ShaderChunk.envmap_physical_pars_fragment.replace(
         'reflectVec = inverseTransformDirection( reflectVec, viewMatrix );',
-        `reflectVec = inverseTransformDirection( reflectVec, viewMatrix );
+        `reflectVec = inverseTransformDirection( reflectVec, viewMatrix );${prb}
 			reflectVec.y = mix( reflectVec.y, abs( reflectVec.y ), ${up} * uCabinIn );
 			float pcWin = ${win} * uCabinIn * smoothstep( 0.35, 0.65, abs( reflectVec.x ) ) * smoothstep( - 0.10, 0.20, reflectVec.y );`).replace(
-        'return envMapColor.rgb * envMapIntensity;', 'return envMapColor.rgb * envMapIntensity + vec3( pcWin );'));
+        'return envMapColor.rgb * envMapIntensity;', `vec3 pcEnv = envMapColor.rgb * envMapIntensity + vec3( pcWin );${prbRet}
+			return pcEnv;`));
     }
     if (lining || interior) {
       for (const k of ['cabinAO', 'cabinIn', 'cabinKey', 'cabinDiff', 'cabinSpec', 'cabinFill']) sh.uniforms['u' + k[0].toUpperCase() + k.slice(1)] = U[k];
@@ -760,7 +798,7 @@ export function installPatch(mat, extra = {}) {
     sh.fragmentShader = fsHead + fs;
   };
   // the rest matrix is a uniform: programs are shared
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}`;
+  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${probe ? 'Q' + JSON.stringify(probe) : ''}`;
   mat.needsUpdate = true;
   return mat;
 }

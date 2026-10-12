@@ -3183,7 +3183,7 @@ def check_L6Y(ctx, rep, plots):
         rep.add("L6Y", f"{who} yoke: front silhouette vs L6Y front view (solids + switches)", dev / 1000.0, tol,
                 "boundaries both ways, 0.1 mm raster", worst_list(dev / 1000.0, P, fmt="u {:.1f} h {:.1f}"))
         # ---- cover and its inserts (front view)
-        cov = ("yoke_white", "yoke_silver", "yoke_silver_dark")
+        cov = ("yoke_white", "yoke_silver", "yoke_silver_dark", "yoke_groove")      # rev Q: the grooves' flanks
         for what, mats, key in (("cover", cov, "shell"), ("upper insert", ("yoke_silver",), "insert_upper"),
                                 ("lower insert", ("yoke_silver_dark",), "insert_lower")):
             dev, P = _sil_compare(tris(mats, aft=True), [FR[key]])

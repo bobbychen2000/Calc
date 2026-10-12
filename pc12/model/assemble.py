@@ -119,8 +119,10 @@ MATERIALS = {
     # insert (crown, badge), smoke-silver lower insert, satin black moulding (crisp edge highlights), charcoal pebble-
     # grain leather pads (the viewer adds the ~1.1 mm grain: lookdev 'pebble'), red AFCS cap (not emissive)
     "yoke_white":          ((0.77, 0.78, 0.80), 0.0, 0.22, dict(clearcoat=1.0, clearcoat_rough=0.06)),
-    "yoke_silver":         ((0.62, 0.62, 0.62), 0.85, 0.30),
-    "yoke_silver_dark":    ((0.30, 0.30, 0.30), 0.85, 0.34),
+    # rev Q (3-D judges r4 FID4-02): the inserts a COOL satin aluminium / smoke -- the photos' insert reads cooler than the
+    # cover throughout (B - R +35..+69 against +16..+30); the viewer mirrors a cabin probe in them (materials.js YOKE_PROBE)
+    "yoke_silver":         ((0.58, 0.61, 0.67), 0.85, 0.34),
+    "yoke_silver_dark":    ((0.29, 0.30, 0.33), 0.85, 0.36),
     "grip_black":          ((0.018, 0.018, 0.020), 0.0, 0.42),
     "leather_black":       ((0.05, 0.05, 0.05), 0.0, 0.58, dict(specular=0.5)),
     "button_red":          ((0.50, 0.004, 0.012), 0.0, 0.30, dict(clearcoat=0.15, clearcoat_rough=0.06)),
@@ -134,9 +136,15 @@ MATERIALS = {
     "legend_grey":         ((0.13, 0.13, 0.13), 0.0, 0.50),
     "yoke_nickel":         ((0.62, 0.55, 0.47), 0.90, 0.30),
     "yoke_rocker":         ((0.020, 0.020, 0.022), 0.0, 0.30),
-    "yoke_column":         ((0.014, 0.014, 0.015), 0.0, 0.80, dict(specular=0.5)),
+    # rev Q (3-D judges r4 FID4-05): the column a satin dark-grey tube (rev P's matte near-black read as a hole from the
+    # pilot's eye, 23 against the 40-50 of a polished tube going into the panel)
+    "yoke_column":         ((0.040, 0.040, 0.044), 0.50, 0.40),
     "yoke_trim_face":      ((0.040, 0.040, 0.043), 0.0, 0.45),
     "yoke_slot":           ((0.010, 0.010, 0.011), 0.0, 0.80, dict(specular=0.5)),
+    # rev Q (3-D judges r4 FID4-01): the cover's V-groove flanks (insert parting grooves, the step's down-facing flank and
+    # end cones, the badge outline / speed lines) as their cavity shadow -- every photo reads them as dark lines, the
+    # yoke carries no baked occlusion (L6Y item 15)
+    "yoke_groove":         ((0.030, 0.030, 0.033), 0.0, 0.60, dict(specular=0.5)),
     # divider / lavatory / cabinets / FR34 header: dark grey-brown (smoked) walnut veneer under a gloss lacquer
     # (P1046406 [M]: sRGB ~90/80/77 in the cabin light)
     "veneer_walnut":       ((0.060, 0.047, 0.040), 0.0, 0.35, dict(clearcoat=1.0, clearcoat_rough=0.06)),

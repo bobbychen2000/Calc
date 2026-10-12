@@ -383,10 +383,18 @@ async def numeric_checks(page):
         out['roll' + roll] = {aR: T.sub(w('aileron_R'), P.aileron_R.w0), aL: T.sub(w('aileron_L'), P.aileron_L.w0),
           tR: rel('ail_tab_R'), tL: rel('ail_tab_L'), defl: V.state.deflections};
       }
+      // rev Q (3-D judges r4 CR4-05): the elevators follow the yokes' position, parked (zero command) at their rest --
+      // pull / push measured from the drawn neutral (the command that puts the yokes there: rest / (pull + rest))
+      const ypv = V.partExtras('yoke_L').pivot, yr = Math.hypot(...(ypv.rest || [0, 0, 0])), yp = Math.hypot(...ypv.travel_pull);
+      const c0 = yr / (yp + yr);
+      out.parked = {d: V.state.deflections.elevator_R, rest: yr, push: Math.hypot(...ypv.travel_push), range: V.partExtras('elevator_R').pivot.range};
+      V.setControls({roll: 0, pitch: c0}, {instant: true});
+      out.neutral = {d: V.state.deflections.elevator_R, eR: T.sub(w('elevator_R'), P.elevator_R.w0)};
+      const n0 = {R: w('elevator_R'), L: w('elevator_L')};
       V.setControls({roll: 0, pitch: 1}, {instant: true});
-      out.pull = {eR: T.sub(w('elevator_R'), P.elevator_R.w0), eL: T.sub(w('elevator_L'), P.elevator_L.w0)};
+      out.pull = {eR: T.sub(w('elevator_R'), n0.R), eL: T.sub(w('elevator_L'), n0.L)};
       V.setControls({pitch: -1}, {instant: true});
-      out.push = {eR: T.sub(w('elevator_R'), P.elevator_R.w0), eL: T.sub(w('elevator_L'), P.elevator_L.w0)};
+      out.push = {eR: T.sub(w('elevator_R'), n0.R), eL: T.sub(w('elevator_L'), n0.L)};
       V.setControls({pitch: 0, yaw: 1}, {instant: true});
       out.yawR = {r: T.sub(w('rudder'), P.rudder.w0)};
       V.setControls({yaw: 0, stabTrim: -4}, {instant: true});
@@ -416,6 +424,12 @@ async def numeric_checks(page):
     check("pull: both elevator TEs up", p["eR"][1] > 0.05 and p["eL"][1] > 0.05, f"dY R {p['eR'][1]:+.3f}, L {p['eL'][1]:+.3f} m")
     p = r["push"]
     check("push: both elevator TEs down", p["eR"][1] < -0.05 and p["eL"][1] < -0.05, f"dY R {p['eR'][1]:+.3f}, L {p['eL'][1]:+.3f} m")
+    pk, nt = r["parked"], r["neutral"]
+    want = pk["rest"] / pk["push"] * pk["range"][1] if pk["rest"] else 0.0
+    check("[CR4-05] parked (zero pitch command): the elevators hang trailing-edge down with the parked yokes "
+          "(rest / push x the down travel), at the drawn neutral they are level", abs(pk["d"] - want) < 0.05 and
+          abs(nt["d"]) < 1e-6 and nt["eR"][1] > 0.02,
+          f"parked {pk['d']:+.2f} deg (want {want:+.2f}), neutral {nt['d']:+.2f} deg, TE {nt['eR'][1]:+.3f} m above parked")
     check("right yaw: rudder TE to starboard (+X)", r["yawR"]["r"][0] > 0.1, f"dX {r['yawR']['r'][0]:+.3f} m")
     s = r["stabNoseUp"]
     check("stab trim -4 (nose-up): leading edge down, elevators ride along", s["le"][1] < -0.02 and s["eR"][1] > 0.02,
@@ -2063,11 +2077,65 @@ YOKE_LOOK = dict(cover=205.0, cover_p99=215.0, up=0.78, lo=0.70, column=70.0)   
 # inserts near the cover from the seat (FID2-04: photos 0.91-0.99 / 0.81-0.93), the satin-black body and the pads near
 # one tone (FID2-05: photos body / cover 0.27-0.30, pads / body 1.06-1.27), the AFCS cap a saturated red (FID2-03: photos
 # sat 0.71 / 0.96); the spread was 8 on rev N (1200 x 800), rev O 28 there and 25 on this test's page
-YOKE_LOOK_O = dict(spread=20.0, up=0.88, lo=0.78, body=(0.22, 0.34), pads_body=(1.0, 1.4), red_sat=0.75)
+YOKE_LOOK_O = dict(spread=20.0, up=0.75, lo=0.65, body=(0.22, 0.34), pads_body=(1.0, 1.4), red_sat=0.75)
+# (rev Q, 3-D judges r4 FID4-02: the inserts' lower bounds from the seat 0.88 / 0.78 -> 0.75 / 0.65 -- r2's bounds came from
+# the photo cameras' ratios, which r4 re-measured as 0.74-1.00 / 0.37-0.93 and asked the satin insert DARKER than the
+# cover from the stops (<= 0.93, [Y1d]); the stop has no photo)
 # rev P (3-D judges r3 FID3-01 / 03): the trim head's tones the photos' way round -- the satin charcoal lunes at least as
 # light as the body (photo footprints face / body 1.0-3.2), the matte slot the darkest part (slot / lunes 0.14-0.90),
 # the rocker darker than the lunes (0.36-0.74) -- and the nickel hex no bright nut (footprint 0.10-0.34 of the cover)
 YOKE_LOOK_P = dict(lunes_body=(1.0, 1.8), slot_lunes=0.75, rocker_lunes=(0.35, 0.9), nickel_cover=0.5)
+# rev Q (3-D judges r4 FID4-01 / 02): the grooves read as DARK lines and the upper insert as a separate satin-metal part --
+# at the P1046408 pilot-yoke camera (the photo's fitted camera and yoke pose, judge_fidelity_r4 vjobs: photo step 0.02 of
+# the insert, badge p2 ~0.75 of it, insert / cover 0.93, the insert's B - R +48 against the cover's +21) the darkest
+# pixel across the step <= step x the upper insert (median over the columns), the badge region's 2nd percentile <=
+# badge x the insert, insert / cover in up, the insert at least cool bluer than the cover (B - R); from the pilot stop
+# the insert no brighter than stop_up x the cover (the judges' <= 0.93) and never brighter than it
+YOKE_LOOK_Q = dict(step=0.5, badge=0.75, up=(0.85, 0.97), cool=8.0, stop_up=0.93,
+                   cam=dict(pos=[0.0084, 1.9374, 4.594], target=[-0.3668, 1.8691, 3.6354], fov=11.652, roll=-0.04343,
+                            pitch=-0.8432, W=900, H=552))
+
+
+def yoke_insert_metrics(k, img, ids):
+    """The judges' r4 groove / insert measures on a material-ID mask k (ids: group -> index + 1) and its screenshot:
+    insert / cover medians (eroded 1 px), B - R of each, the step line (per column through the middle half of the lower
+    insert: the darkest pixel between the upper insert's bottom and the lower insert's top, +-2 px, over the upper
+    insert's median in the 8 rows above), the badge region's 2nd percentile (the upper insert + grooves in its top 8-40 %,
+    the middle 70 % across) over the insert median."""
+    import numpy as np
+    from scipy import ndimage as ndi
+    lum = 0.2126 * img[..., 0] + 0.7152 * img[..., 1] + 0.0722 * img[..., 2]
+    up, lo, cov, gr = (k == ids[n] for n in ("up", "lo", "cover", "groove"))
+    out = {}
+    ue, ce = ndi.binary_erosion(up), ndi.binary_erosion(cov)
+    if ue.sum() < 50 or ce.sum() < 50:
+        return out
+    um, cm = float(np.median(lum[ue])), float(np.median(lum[ce]))
+    cu, cc = np.median(img[ue], 0), np.median(img[ce], 0)
+    out.update(up=um, cover=cm, up_cover=um / cm, br_up=float(cu[2] - cu[0]), br_cover=float(cc[2] - cc[0]))
+    ys, xs = np.nonzero(lo)
+    rat = []
+    if len(xs):
+        for x in range(int(np.percentile(xs, 25)), int(np.percentile(xs, 75)) + 1):
+            uy, ly = np.nonzero(up[:, x])[0], np.nonzero(lo[:, x])[0]
+            if not len(uy) or not len(ly):
+                continue
+            yl = ly.min()
+            ub = uy[uy < yl]
+            if not len(ub):
+                continue
+            yb = ub.max()
+            ref = lum[max(yb - 9, 0):yb - 1, x][up[max(yb - 9, 0):yb - 1, x]]
+            if len(ref):
+                rat.append(lum[max(yb - 2, 0):yl + 3, x].min() / max(float(np.median(ref)), 1.0))
+    out["step"] = float(np.median(rat)) if rat else None
+    ys, xs = np.nonzero(up)
+    rows = np.arange(k.shape[0])[:, None]
+    cols = np.arange(k.shape[1])[None, :]
+    reg = ((up | gr) & (rows > ys.min() + 0.08 * (ys.max() - ys.min())) & (rows < ys.min() + 0.40 * (ys.max() - ys.min()))
+           & (cols > np.percentile(xs, 15)) & (cols < np.percentile(xs, 85)))
+    out["badge"] = float(np.percentile(lum[reg], 2)) / um if reg.sum() > 30 else None
+    return out
 
 
 async def yoke_look_checks(page, shots=True):
@@ -2120,6 +2188,8 @@ async def yoke_look_checks(page, shots=True):
           (f"spread {spread:.0f} (p99.5 {c[3]:.0f}), up {u[1] / c[1]:.2f}, lo {l_[1] / c[1]:.2f}, body "
            f"{b_[1] / c[1]:.2f}, pads / body {p_[1] / b_[1]:.2f}, red {[int(x) for x in r_[4]]} sat {sat:.2f}")
           if c[1] and u[1] and l_[1] and b_[1] and p_[1] and r_[1] else str({k: v[:2] for k, v in st.items()}))
+    Q_ = YOKE_LOOK_Q
+    up_stop = u[1] / c[1] if (u[1] and c[1]) else None
     P_ = YOKE_LOOK_P
     ln, sl, ro, ni = st["lunes"], st["slot"], st["rocker"], st["nickel"]
     have = all(v[1] is not None for v in (ln, sl, ro, b_, c))                 # the hex: where it shows >= 20 px
@@ -2134,6 +2204,31 @@ async def yoke_look_checks(page, shots=True):
            f"{ro[1] / ln[1]:.2f} ({ro[0]} px), nickel / cover "
            f"{(f'{ni[1] / c[1]:.2f}' if ni[1] is not None else 'n/a')} ({ni[0]} px)") if have
           else str({k: v[:2] for k, v in st.items()}))
+    # [Y1d] rev Q (3-D judges r4 FID4-01 / 02): the grooves dark, the insert a separate cool satin metal -- at the
+    # P1046408 pilot-yoke camera (the photo's yoke pose) and, for the insert's level, from the pilot stop (above)
+    cm_ = Q_["cam"]
+    await page.set_viewport_size({"width": cm_["W"], "height": cm_["H"]})
+    await js(page, "const V = window.viewer; V.panel(false); V.setControls({roll: arg.roll, pitch: arg.pitch}, {instant: true}); "
+             "V.setCamera({pos: arg.pos, target: arg.target, fov: arg.fov}, {instant: true}); await V.frames(4);", cm_)
+    path = await shot(page, "45b_yoke_look_p408", "")
+    gq = {"cover": ["yoke_white"], "up": ["yoke_silver"], "lo": ["yoke_silver_dark"], "groove": ["yoke_groove"]}
+    m = await js(page, MAT_MASK, [gq[k_] for k_ in gq])
+    kq = np.array(m["mask"].split(","), int).reshape(m["H"], m["W"])
+    iq = np.asarray(Image.open(path).convert("RGB"), float)[:m["H"], :m["W"]]
+    mq = yoke_insert_metrics(kq, iq, {n: i + 1 for i, n in enumerate(gq)})
+    await js(page, "const V = window.viewer; V.setControls({roll: 0, pitch: 0}, {instant: true}); V.setCamera('three_quarter', {instant: true}); await V.frames(1);")
+    await page.set_viewport_size({"width": W, "height": H})
+    okQ = (mq.get("step") is not None and mq["step"] <= Q_["step"] and mq.get("badge") is not None
+           and mq["badge"] <= Q_["badge"] and Q_["up"][0] <= mq["up_cover"] <= Q_["up"][1]
+           and mq["br_up"] - mq["br_cover"] >= Q_["cool"] and up_stop is not None and up_stop <= Q_["stop_up"])
+    check(f"[Y1d] 3-D judges r4 (FID4-01 / 02): at the P1046408 pilot-yoke camera the step line <= {Q_['step']:.2f} x the "
+          f"upper insert and the badge region's p2 <= {Q_['badge']:.2f} x it (the grooves dark, not bright bevels), the "
+          f"insert {Q_['up'][0]:.2f}-{Q_['up'][1]:.2f} of the cover and >= {Q_['cool']:.0f} bluer (B - R); from the pilot "
+          f"stop the insert <= {Q_['stop_up']:.2f} of the cover", okQ,
+          (f"step {mq['step']:.2f}, badge {mq['badge']:.2f}, insert / cover {mq['up_cover']:.2f} ({mq['up']:.0f} / "
+           f"{mq['cover']:.0f}), B - R insert {mq['br_up']:+.0f} cover {mq['br_cover']:+.0f}; pilot stop insert / cover "
+           f"{up_stop:.2f}") if mq.get("step") is not None and mq.get("badge") is not None and up_stop is not None
+          else str(mq))
 
 
 async def tour_r4_checks(page, data, shots=True):

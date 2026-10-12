@@ -18,7 +18,8 @@ The white COVER of the yoke as an explicit, crease-exact surface mesh (rev M, yo
             the last 1.5 mm before the strip: the solid cuts them on through the R 1 edge).
   FRONT     the hidden front face (against the body), coarse.
 Materials by front-view position (yoke_geom.cover_part): white cover, the upper insert (crown, badge) yoke_silver, the
-lower insert yoke_silver_dark; the TCS pocket's floor seen through the bezel's clearance ring black.
+lower insert yoke_silver_dark; the TCS pocket's floor seen through the bezel's clearance ring black; the grooves' flanks
+yoke_groove (rev Q: groove_faces, the step's up-facing flank excepted).
 """
 from __future__ import annotations
 
@@ -671,6 +672,33 @@ def terrain_interp_error(X, T, lab, crease_v, GR):
     return err
 
 
+# ============================================================================================ groove finish
+GROOVE_MAT = "yoke_groove"   # rev Q (3-D judges r4 FID4-01): the grooves' flanks as their cavity shadow -- every photo shows
+#                              the step V, the badge outline / speed lines and the insert parting grooves as DARK lines
+#                              (the darkest pixel across the step 0.00-0.18 of the insert in the s/n 3001 views); the yoke
+#                              carries no baked occlusion, so the 0.4-2 mm V flanks took the face's full light and their
+#                              up-facing flanks read as bright bevels (0.80-0.89, a 1.10-1.14 ridge).  L6Y item 15.
+GROOVE_LIT = ("step",)       # grooves whose UP-facing flank keeps the face's finish: the step's lower flank (Mexico L / R
+#                              at 3.8 px/mm: a dark upper flank over a lit lower one, 1 mm each; P1046408 a dark line over a
+#                              light one) -- its down-facing flank and both end cones (the round ends past the side grooves:
+#                              CR4-07's nubs) take the groove finish
+
+
+def groove_faces(lab, C, GR):
+    """Per terrain triangle (labels lab, front-view centroids C (n, 2)): True where it lies on a groove flank that takes
+    GROOVE_MAT -- every flank / end cone of the V-grooves, except the up-facing flank of a GROOVE_LIT groove."""
+    lab = np.asarray(lab)
+    out = lab != 0
+    for L in np.unique(lab[out]):
+        k, kind, j, _ = decode(int(L))
+        if GR[k].name not in GROOVE_LIT or kind == "cone":
+            continue
+        m = lab == L
+        n = label_normal(int(L), C[m], GR)
+        out[np.nonzero(m)[0][n[:, 1] > 0.0]] = False              # facing up (+h): the lit flank
+    return out
+
+
 # ============================================================================================ assembly
 def cover_meshes(verbose=False):
     """The cover as [(V (n, 3), F (m, 3), N (n, 3), material)] in yoke-local mm (welded by position across materials)."""
@@ -795,6 +823,9 @@ def cover_meshes(verbose=False):
     in_ring[:len(FF)] = False
     in_ring[len(FF) + len(FT):] = False
     mats = np.where(in_ring, "black", mats)
+    gf = np.zeros(len(allF), bool)
+    gf[len(FF):len(FF) + len(FT)] = groove_faces(lab, X[T].mean(1), GR)
+    mats = np.where(gf & ~in_ring, GROOVE_MAT, mats)
     fn = np.cross(V[allF[:, 1]] - V[allF[:, 0]], V[allF[:, 2]] - V[allF[:, 0]])
     flip = np.sum(fn * N[allF].sum(1), 1) < 0
     allF[flip] = allF[flip][:, ::-1]

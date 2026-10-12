@@ -128,7 +128,8 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   `door_airstair_cable`, the door's child; `joints` = their pinned ends in the built pose for tests),
   `yoke` (`yoke_L` / `yoke_R`, children of `flight_deck`: roll = roll command x `roll_deg` about the forward-pointing
   column axis, + `travel_pull` / `travel_push` (MODEL axes) x |pitch command| + `rest` (the free yokes' parked offset,
-  interior.YOKE rest, rev P) x (1 - |pitch command|)), `pedal` (`pedal_LL/LR/RL/RR`: hanging
+  interior.YOKE rest, rev P) x (1 - |pitch command|); the elevators follow that position, `kinematics.js pitchPos`, rev
+  Q: parked they hang ~8 deg trailing-edge down), `pedal` (`pedal_LL/LR/RL/RR`: hanging
   pedals, about the arm pivot under the lower panel (axis -y) by -`gearing` x yaw command x `travel_deg`;
   `flightdeck.control_pivots`), `steer` (`gear_nose_steer`, child of `gear_nose`: the steering collar, torque links,
   piston, fork and nose wheel turn about the strut axis by yaw command x `pedal_deg` (12) while the gear is down and
@@ -974,6 +975,55 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   1.50, slot / lunes 0.21, rocker / lunes 0.63) and its numeric section 62 / 62 (the pull row from the parked rest:
   hub +0.125 m) -- the full run was stopped at ~25 min of screenshots on a machine at load 10-12 (it would have passed
   the 2 h background limit; the sections the change touches were run instead).
+- Yoke rev Q (3-D judges r4, 2026-10-12: craft 8.0, photo fidelity 7.5; L6Y rev I / L6Y2 rev H): GROOVES DARK (FID4-01,
+  major): the cover's V-groove flanks -- the insert parting grooves, the step V's down-facing flank and both its round
+  end cones, the lower insert's outline, the badge outline / speed lines -- are finished `yoke_groove` (dark satin 0.03,
+  rough 0.6: their cavity shadow; the yoke carries no baked occlusion), the step's UP-facing flank keeps the cover white
+  (`yoke_cover.groove_faces`, GROOVE_LIT; L6Y item 15, the `grooves` note): the photos' profile down the centre through
+  the step reads ~190 / 3-10 / 155-231 / ~180 at P1046408 and ~130 / 0-16 / 145-197 / ~90 at the AOPA camera -- a dark
+  line over a lit one (out/tmp/yoke3d/r4fix/profile.py), so the lit lower flank (the judges' 'ridge') is kept; the end
+  cones dark also take CR4-07's nubs into the line.  CABIN_TRIM yoke_groove [0, 0.6].  SATIN-METAL INSERT (FID4-02,
+  major): the inserts a COOL satin aluminium / smoke (yoke_silver 0.58 / 0.61 / 0.67, rough 0.34; yoke_silver_dark 0.29 /
+  0.30 / 0.33, rough 0.36; viewer 0.42 / 0.44 / 0.48) and, inside, a CABIN PROBE in their reflections instead of the
+  studio (`materials.js YOKE_PROBE`, installPatch 'probe'; their studio floor / 'up' / 'win' off): the studio's blurred
+  overhead radiance x a cool tint (0.82 / 0.95 / 1.22) x [the dark cabin 0.22 + the headliner / windshield overhead 0.66
+  (smoothstep over R.y 0.15-0.6) + the yoke's OWN side window 0.45 (reflections turned outboard -- sign of the world BL
+  -- near level) + the crew's lap / seat 0.30 (below R.y 0.1)] x a near-field term 1 -+ 0.22 over WL 1.83-1.91 (the
+  face's top sees the sky over the glareshield; a planar face mirroring one direction had read as one flat tone); the
+  lower insert [0.20, 0.85, 0.35, 0.30, 0].  The photos disagree with each other at one reflection direction (the AOPA
+  and Mexico press shots both mirror R.y ~0.26: insert / cover 0.74 vs 0.96-1.09), so the law meets the judges' targets
+  (P1046408 0.93, AOPA <= 0.85, the stops <= 0.93, never above the cover).  Measured (SwiftShader High, ld page,
+  out/tmp/yoke3d/r4fix/ld, metrics.py; photos in brackets): upper insert / cover P1046408 0.94 (0.93), P1046409 co-pilot
+  0.94 (1.00), P1046410 0.94 (0.91), Mexico 0.87 / 0.83 (1.09 / 0.96), AOPA 0.81 (0.74), pilot stop 0.81, pilot's eye
+  0.79; lower insert 0.77 (0.85), 0.82 (0.91), 0.78 (0.82), 0.74 / 0.69 (0.68 / 0.67), 0.65 (0.37); B - R insert +16..+20
+  against the cover's +1..+2 (photos +35..+69 / +16..+30); the step line 0.06 of the insert (0.02), the badge region's
+  p2 0.20 (~0.75 judges' bound).  viewer_test [Y1d] (new) at the P1046408 pilot-yoke camera + the pilot stop; [Y1b]'s
+  insert floors 0.88 / 0.78 -> 0.75 / 0.65 (r2's came from photo-camera ratios r4 re-measured 0.74-1.00 / 0.37-0.93).
+  MINORS: FID4-05 the column a SATIN DARK-GREY tube (yoke_column 0.04, metallic 0.5, rough 0.4, CABIN_TRIM [0, 0.8, 0.15]:
+  ~56 at the pilot's design eye, 67 at the pilot stop -- [Y1] column <= 70; rev P's matte near-black read 23, a hole);
+  FID4-06 (a) the AFCS boss in the body's satin black (`yoke3d.AFCS_BOSS_MAT` grip_black: rev M-P's lighter 'black' puck
+  and rim; its R 0.8 / 1.5 rounds are solids values, kept); CR4-06 the legend letters SET (`yoke_legends`, legend_style
+  [3] 0.30 radial variation -- some letters short on the baseline or hanging from the cap line -- and [4] 0.60 gap
+  variation, a full mean gap kept free at each word's ends: clusters with clear word gaps, no letters); CR4-08 the
+  inboard neck's forward-face DC debris (`yoke3d.repair_debris`: 2 collapses, 61 corner normals onto the solid's
+  gradient; the 14-16 faces bridging the solid's own field kink -- the rev M scar, hidden -- shaded flat; yoke_mesh_check
+  row 'debris' 0, the kink's corners / faces reported); CR4-05 the parked rest COUPLED to the elevators
+  (`kinematics.js pitchPos`, interior.YOKE rest note: the cable run allows no forward yoke over a level elevator, and
+  parked PC-12 tails droop -- LX-FLI, MSN 3008 0517 -- so parked the elevators hang +8.08 deg; the drawn neutral level;
+  full pull / push -20 / +15 as before; viewer_test [CR4-05] and the pull / push rows measured from the drawn neutral).
+  MESH: 42,004 triangles meshed, 42,868 in the GLB part a yoke (YOKE_BUDGET 43k; cover: white 4,336, silver 1,066, smoke
+  158, groove 1,184, black 52); yoke_mesh_check OK (folds 0, knobs 0 / 0, debris 0, frame p95 2.23 deg, 12 slivers).
+  NOT FIXED: FID4-03 the cover specks -- not shadow acne (no model mesh receives shadows in this branch: Model receiveShadow
+  false; the sun with its receivers is the flight-deck branch's), not the GLB (ray casts: the cover's aft face, nothing
+  within 3 mm, no T-junction), not the clear coat, specular, key light nor the specular-AA kernel (each off: the same 7
+  pixels, 158-161 in a flat 209, every ~33 px down a line); they go only with the environment light: the diffuse
+  image-light path in SwiftShader (out/tmp/yoke3d/r4fix/ld s1-s6) -- not counted in [Y1]; CR4-07's nubs (dark now; the
+  cones' 1 mm past the side grooves is a solids change); FID4-06 (b) / (c) and CR4-01 (rocker lobe re-trace, the trim
+  ring junction: solids / drawing); CR4-02 (cover tight-round faces: over the 43k budget); CR4-03 (J band rows); CR4-04
+  (sub-pixel grooves: now dark lines; a screen-space groove AA not built); CR4-10 (the cover's planar face); FID4-04 (grip
+  oblique form: owner, the AOPA co-pilot camera first).  MERGE NOTE (wip/stage2-drawings, the flight-deck look): the
+  yoke's YOKE_PROBE and CABIN_TRIM entries were tuned on this branch's studio cabin light; after the merge the satin
+  inserts may rather join the flight deck's REFL_DIR cabin probe -- re-measure [Y1d] there.
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been

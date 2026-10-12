@@ -550,10 +550,12 @@ SPEC.update({
     # the yoke, rev M (sheet L6Y ITEMS & FINISHES)
     "yoke_white":         dict(kind="dielectric", base=(0.77, 0.78, 0.80), rough=0.22, **_ICC,
                                note="yoke cover (Y shell): gloss clear-coat white, neutral-cool, fine pearl (L6Y item 1)"),
-    "yoke_silver":        dict(kind="dielectric", base=(0.62, 0.62, 0.62), metallic=0.85, rough=0.30,
-                               note="yoke upper insert = crown + badge: satin aluminium (L6Y item 2)"),
-    "yoke_silver_dark":   dict(kind="dielectric", base=(0.30, 0.30, 0.30), metallic=0.85, rough=0.34,
-                               note="yoke lower insert: smoke silver (L6Y item 3)"),
+    "yoke_silver":        dict(kind="dielectric", base=(0.58, 0.61, 0.67), metallic=0.85, rough=0.34,
+                               note="yoke upper insert = crown + badge: COOL satin aluminium (L6Y item 2; rev Q, 3-D "
+                                    "judges r4 FID4-02: the neutral 0.62 read as the cover's hue -- the photos' insert "
+                                    "is cooler, B - R +35..+69 against the cover's +16..+30)"),
+    "yoke_silver_dark":   dict(kind="dielectric", base=(0.29, 0.30, 0.33), metallic=0.85, rough=0.36,
+                               note="yoke lower insert: cool smoke silver (L6Y item 3; rev Q)"),
     "grip_black":         dict(kind="dielectric", base=(0.018, 0.018, 0.020), rough=0.42,
                                note="yoke body / grips / heads: satin black, crisp edge highlights (L6Y items 4 / 5)"),
     "leather_black":      dict(kind="dielectric", base=(0.05, 0.05, 0.05), rough=0.58, spec=0.25,
@@ -575,10 +577,11 @@ SPEC.update({
                                note="yoke pitch-trim rocker lobes: near-black satin, read by its crisp edge highlights "
                                     "(L6Y item 9; rev O, 3-D judges r2 FID2-02: rev N's 0.042 / rough 0.45 read as a "
                                     "light grey flat bow-tie, the photos' rocker 0.15-0.30 of the cover)"),
-    "yoke_column":        dict(kind="dielectric", base=(0.014, 0.014, 0.015), rough=0.80, spec=0.25,
-                               note="yoke column: matte near-black, non-metallic [E] (L6Y item 11; rev N: the dark metal "
-                                    "read as a light grey pipe; rev P, 3-D judges r3 FID3-02: from the crew seats it "
-                                    "read as a lit cylinder in the recess)"),
+    "yoke_column":        dict(kind="dielectric", base=(0.040, 0.040, 0.044), metallic=0.50, rough=0.40,
+                               note="yoke column: satin dark grey tube [E] (L6Y item 11; rev N: the dark metal read as a "
+                                    "light grey pipe; rev P, 3-D judges r3 FID3-02: matte near-black; rev Q, 3-D judges "
+                                    "r4 FID4-05: that read as a hole from the pilot's eye -- a polished tube going into "
+                                    "the panel, ~40-50 there)"),
     "yoke_trim_face":     dict(kind="dielectric", base=(0.040, 0.040, 0.043), rough=0.45,
                                note="yoke pitch-trim legend ring / lunes: flat satin charcoal (L6Y item 9; rev P, 3-D "
                                     "judges r3 FID3-01: rev N / O's gloss black read darker than the body, the photos' "
@@ -586,6 +589,11 @@ SPEC.update({
     "yoke_slot":          dict(kind="dielectric", base=(0.010, 0.010, 0.011), rough=0.80, spec=0.25,
                                note="yoke pitch-trim rocker slot: near-black matte, the darkest part of the head (L6Y "
                                     "item 9; rev P, 3-D judges r3 FID3-01)"),
+    "yoke_groove":        dict(kind="dielectric", base=(0.030, 0.030, 0.033), rough=0.60, spec=0.25,
+                               note="yoke cover grooves: the V flanks of the insert parting grooves, the step's down-"
+                                    "facing flank and end cones, the badge outline / speed lines as their cavity shadow "
+                                    "(L6Y item 15; rev Q, 3-D judges r4 FID4-01: lit like the face they read as bright "
+                                    "bevels, every photo shows dark lines -- the step 0.00-0.18 of the insert)"),
     "veneer_walnut":      dict(kind="dielectric", base=(0.060, 0.047, 0.040), rough=0.35, **_ICC,
                                grain=dict(scale=(70.0, 70.0, 2.5), amp=0.30, detail=4.0),
                                note="dark grey-brown walnut veneer, vertical grain, gloss lacquer (P1046406)"),
