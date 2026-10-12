@@ -3,10 +3,10 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.70M tris of which the interior ~851k, ~48 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.67M tris of which the interior ~825k, ~47 MB
 incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
-review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`: ~2.27M
+review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`: ~2.25M
 tris, ~40 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
@@ -1161,3 +1161,69 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   drag's coast renders 15-35 s SwiftShader frames on the shared machine, load 8-13: HEAD's viewer measured the same,
   15-21 s, on the same page), so that one click waits SHOT_TIMEOUT (`sound_checks`; no check changed) and `--only sound`
   passes 25 / 25; artifact_test 70 / 70.
+- Flight deck fix r5 (2026-10-12; the flight-deck judges' round 4: owner 6.0, fidelity 6.3; the yoke stays with
+  wip/fd-yoke).  No table changed (L6 / L6B not regenerated: nothing they draw or check moved); builder detail and the
+  viewer's look.  Look development: the full viewer in one page (out/tmp/fd_fix_r5/ld.py jobs, per part:material medians
+  from an ID pass, `photomed.py` the photo's medians under the same masks at the photo-fitted cameras) and, for the
+  fleece, a seats-only LAB page (out/tmp/fd_fix_r5/lab: `subset.py` cuts the crew seats out of the GLB, the viewer's own
+  materials.js patch under a room light, ~30 s a try instead of ~4 min a view).
+  A-PILLARS (FDO4-02 / FID-FD4-02): the post's width was the moulding, not the approved glazing -- `fd_detail_b
+  GLAZING_TRIM` ws_margin's pillar edge 32 -> 8 mm and sw_margin's front edge 35 -> 6 mm (side projection: P1046408
+  through its fitted camera shows the side window's glass right behind the post), and along the post the two funnels are
+  ONE ROUND TUBE (`POST_TUBE`, `_post_tube`: each column a quarter ellipse from its glass edge, leaving it square, round to
+  the post's midline 7 mm proud of the lining, faded over 16 % of the axis at both ends -- the post flares into the
+  glareshield and the roof -- and from WL 2.24 up, below it the side window's leather sill) in its own darker satin
+  `lining_fd_post` (assemble / lookdev 'flight deck fix r5', CABIN_TRIM 0.5, SPEC_KEEP: its round section carries the
+  narrow highlight); r3's turned normals (`round_post_normals`), lining-strip bead and fasteners went (the strip lies
+  hidden behind the tube).  At panel_408b the left post measures 126 / 117 / 108 px (rows 240 / 300 / 360 of the
+  1920 x 1440 frame) against P1046408's 116 / 108 / 84 (it was 299 / 278 / 258); the tube is ~70 mm across at the glass,
+  ~48 mm deep.  The approved L2 outline (the panes 25 mm apart in side projection, ~43 mm across the skin) does NOT force
+  a wider post: no owner question.  fit_check 30: every piece >= 2 mm off the glass (nearest 2.9 mm, a bus bar).
+  FLEECE (FDO4-01 / FID-FD4-01): `materials.js` fleece `pile` mode (replaces r1-r3's `ridge` Worley curls, which read as
+  printed lichen / stone): `tufts` layers -- arms < 0 a CURLY WORM layer (the ridges of a domain-warped two-octave smooth
+  noise at 200 / m, pow 1.7: short, bent, interlaced bright strands with dark between them, the 4-6 mm curls of P1046408
+  / 09 / 10 packed tight), else a TUFT layer (Worley cells of random height `hgt` -- a short tuft sits in its neighbours'
+  shade, so the dark between them is broken, not a crackle net -- with a soft dome, optional loops and spiral curls; here
+  60 / m, 0.84-1.08) --, `lock` 15 / m +-12 % matted groups, fibre streaks, `rim` 0.25 tip lift, the sheen on the tips;
+  stretched along the pile's flow (down the vertical faces, forward over the tops).  The lab tried 17-60 mm tufts and
+  locks (rock / crazy paving), spiral curls and boucle loops (scales, craters), contour whorls (marble, caustics), fat
+  worms (leopard print) before the worms.  A warm grey with a mauve cast (VIEWER color (0.30, 0.262, 0.28): R ~ G < B
+  under the cabin's cool light), CABIN_TRIM 0.52 -> 0.42 ([FD-L5] at panel_408b 90-130).  Geometry (`seats.shag`): the rims' 33-57 mm clumps and 18-26 mm fringe replaced by a
+  ROLLED edge -- `SK_ROLL_OUT` 7 mm outward at the rim's middle rows, half at its edge rows, with a soft 4-8 cm wave of
+  `SK_WAVE` 1.8 mm, rims sampled every `SK_RIM_STEP` 10 mm (crew seat 66.0k -> 57.7k triangles).
+  PEDESTAL (FDO4-03 / FDO4-05 / FID-FD4-03): the PCL a PADDLE built to PEDESTAL pcl_grip's 36 x 80 x 72 (the r2 / r3
+  turned cylinder used only its width: a 40 mm can) -- `fd_detail_a PCL_PADDLE` / `pcl_paddle`: a superellipsoid across
+  the slot (flat rounded ends `e_end` 0.38, an oval section `e_sec` 0.8) narrowing to 0.70 of its width and 0.72 of its
+  depth at the foot (P1046408 / 09: from behind a trapezoid ~80 wide at the rounded top), tipped forward 12 deg, on a
+  flared dark neck with a chrome collar; satin pewter kept (P1046408 / 09 in daylight show it light -- the Pilatus
+  throttle photo is graded ~2 stops dark, its lavender sheepskin reads dark grey there too), out of REFL_DIR (the cabin
+  probe's stripes ran through it as a glass jar), specIn 0.8 / roughness 0.45.  The palm tray's floor its own matte
+  `tray_titanium` (CABIN_TRIM 0.3), its bead a 4.5 mm dark bronze `trim_bronze` (was a 6 mm light satin tube: a plastic
+  frame), the stack's face AND its moulded edges `stack_gunmetal` (CABIN_TRIM 0.45; the edges as titanium bands read as
+  light strips down the stack), the quadrant frame `pedestal_gunmetal` 0.6: at panel_408b the tray 113 against
+  P1046408's 117, the stack 82 / 76; from above (P1046409) the tray ~106, the face round it 51-60.  Trim panel: bezels /
+  caps x1.3 (`QUAD trim_k`), each item's title in two rows of word-length legend strokes, the AILERON TRIM bezel's white
+  outline with LWD / RWD marks.
+  MINORS: the titanium sub-panels warmer and satin (FID-FD4-04: VIEWER panel_titanium (0.245, 0.225, 0.205), roughness
+  0.26 -> 0.34, the brush streaks' share 0.15 -> 0.07, bands +-12 -> +-7 %); the hood's sun patch (FDO4-04 / FID-FD4-05:
+  PART_TRIM 'flight_deck:leather_glareshield' sunIn 0.22 -> 0.07; the sun's PCF radius 2 -> 3, `scene.js LOOK.sun`: the
+  patch's edge showed the texels on the grazing-lit hood); the footwell (FDO4-04: `CABIN_LOOK.foot` [0.8, below WL 1.72
+  (glTF Y), ahead of STA 3.95]: the diffuse x 1.8 there on all but the up-facing floor and the crew seats' fleece (which
+  reaches into that box) -- the pedal arms, linkage and side walls in a soft light, the carpet near-black as P1046408
+  ([FD-L2]: x 2.5 everywhere put it at 26, [FD-L6]'s dark share under 10 % and the cushions' fleece at 154-159),
+  ?cabFoot=);
+  the sky as SEEN a clear blue (`outside.js SKY.seen` [(0.50, 0.72, 1.0), sin e 0 .. 0.14]: x that tint above the horizon,
+  the image-based light keeps the untinted sky so the calibrated cabin light does not move): the pilot stop's sky over
+  the cowl 254 -> (221, 241, 255), L 237, B - R 34 against P1046410's (207, 232, 251); the crew seats' pose (FID-FD4-06, NOT
+  changed): through the fitted panel_408b camera P1046408's cushion tops sit ~45 px (900 px frame) above the neutral
+  seats', full forward or full up alone each ~40 px of the L6 travel; parked there in the viewer (35 mm forward + 25 up,
+  then 40 up alone) the seats covered the side consoles at that camera, which the photo shows clear beside its raised
+  cushions ([FD-L2] lost every console pixel) -- the seats / consoles disagree with the photo in plan, an L6 table
+  question, not the travel; the default stays the neutral SRP, `model.js SEAT_PARK` ?seatpark=1 shows the 40 mm up.
+  Build: 2,673,206 triangles / 47.21 MB, light tier 2,247,573 / 39.47 MB; interior 824.5k of 858k (flight_deck 199.6k of
+  202k, crew seats 57.7k, interior_lining 175k).  Verified: fit_check OK (132 ok, 1 open owner item -- 29b, unchanged),
+  consistency_2d3d 143 / 143, viewer_test `--only fdlook` 10 / 10 ([FD-L1] the sky over the cowl 234 / 238; [FD-L2]
+  carpet 14, consoles 18; [FD-L3] glareshield 60, lip 70 / underside 44; [FD-L5] sheepskin 102 / 107 / 128, lum 107;
+  [FD-L6] p10 15, p50 73, < 20: 14 %, bands 29 / 48 / 13 %), web/package.py verify OK (meshopt 17.2 + 14.7 MB).  Photo |
+  before (d3673c2, the judges' r4 renders) | after sheets: out/tmp/fd_fix_r5/ld/cmp_*.jpg (gitignored: they embed the
+  photos).

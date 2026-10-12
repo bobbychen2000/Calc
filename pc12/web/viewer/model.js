@@ -52,13 +52,15 @@ const NO_CAST_RE = /^(glass|lens)/;
 // crown skin): hidden while the camera is inside the cabin, where they would show as glossy blue blobs on the
 // ceiling.  A stopgap until model/details.py trims them at the OML.
 const CABIN_HIDDEN = new Set(['antennas']);
-// flight deck fix r5 (FID-FD4-06; the owner: the crew seats barely appear in the forward views): the crew seats shown
-// at a parked travel, 35 mm forward and 25 mm up of the neutral SRP the GLB is built at (inside the L6 travel, +-70 /
-// +-51 mm): through the photo-fitted panel_408b camera P1046408's cushion tops sit ~45 px (900 px frame) above the
-// neutral seats' -- full forward or full up alone each make up ~40 px, so the photo shows them about half way along
-// both.  glTF offsets (X = BL, Y = WL, Z = STA: forward is -Z); ?seatpark=0 shows the neutral pose.
-const SEAT_PARK = new URLSearchParams(location.search).get('seatpark') === '0' ? {}
-  : { seat_pilot: [0, 0.025, -0.035], seat_copilot: [0, 0.025, -0.035] };
+// flight deck fix r5 (FID-FD4-06; the owner: the crew seats barely appear in the forward views): through the photo-fitted
+// panel_408b camera P1046408's cushion tops sit ~45 px (900 px frame) above the neutral seats' -- full forward or full up
+// alone each ~40 px of the L6 travel.  Parked there (35 mm fwd + 25 up, then 40 up alone) the seat backs and cushions
+// covered the side consoles at that camera, which the photo shows clear beside the raised cushions ([FD-L2] lost every
+// console pixel): the seats / consoles disagree with the photo in plan, not in travel -- an L6 table question, so the
+// default stays the neutral SRP the GLB is built at; ?seatpark=1 shows the photo's 40 mm up (glTF offsets: X = BL,
+// Y = WL, Z = STA).
+const SEAT_PARK = new URLSearchParams(location.search).get('seatpark') === '1'
+  ? { seat_pilot: [0, 0.040, 0], seat_copilot: [0, 0.040, 0] } : {};
 
 const PAINT_RE = /^(paint_|trim_black$)/;
 const GLASS_RE = /^(glass|lens$)/;

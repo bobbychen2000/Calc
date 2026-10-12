@@ -122,7 +122,7 @@ export const CABIN_LOOK = { key: qv('cabKey', 0), diff: qv('cabDiff', [0.75, 1])
   // [the opening's window stripes: x (1 + this), -, -, -]
   probe2: qv('cabProbe2', [2.0, 0, 0, 0]),
   // flight deck fix r5 (FDO4-04): the footwell's soft fill -- [diffuse boost, below WL (glTF Y), ahead of STA (glTF Z), -]
-  foot: qv('cabFoot', [1.5, 1.72, 3.95, 0]) };
+  foot: qv('cabFoot', [0.8, 1.72, 3.95, 0]) };
 U.cabinShade.value.set(...CABIN_LOOK.shade);
 U.cabinProbe.value.set(...CABIN_LOOK.probe);
 U.cabinProbe2.value.set(...CABIN_LOOK.probe2);
@@ -146,9 +146,9 @@ U.cabinRefl.value.set(...CABIN_LOOK.refl);
 const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
-  sheepskin: [0, 0.25],     // (0.55 before the flight deck fix r1's soft knee / gain 27; fix r5: 0.52 -> 0.25 with the
-  //                          curly pile -- its lighter mean albedo and the crew seats' parked pose (model.js SEAT_PARK)
-  //                          put panel_408b's fleece at 154-159, P1046408 ~95-107: now ~120)
+  sheepskin: [0, 0.42],     // (0.55 before the flight deck fix r1's soft knee / gain 27; fix r5: 0.52 -> 0.42 with the
+  //                          curly pile -- its lighter mean albedo put panel_408b's fleece at 154-159 with the
+  //                          footwell fill, P1046408 ~95-107; the fill no longer reaches it: ~110)
   // the graphite of the side consoles, the overhead panel, the AFCS strip: near-black (P1046408 consoles 4-9, the
   // overhead ~45 under the windshield's light; T14 <= 50)
   panel_dark: [0, 0.5],
@@ -394,8 +394,11 @@ const VIEWER = {
   stack_gunmetal: { specIn: 1.5, brush: { aniso: 0, axis: [1, 1, 1], rough: 0.05, len: 0.0035, w: 0.0035, spec: 0.12,
     band: 0.18, bandLen: 0.10 } },
   // (flight deck fix r5 FDO4-05: a translucent glass jar from the quadrant view -- the probe's streaks; a solid satin
-  // pewter: fewer, broader reflections)
-  pcl_pewter: { specIn: 0.8, roughness: 0.45 },
+  // pewter: fewer, broader reflections, a shade warmer -- it read 116 / 124 / 140 against P1046408's 108 / 108 / 116)
+  pcl_pewter: { specIn: 0.8, roughness: 0.45, color: [0.125, 0.113, 0.106] },
+  // (fix r5 FDO4-03: the palm tray's matte floor a warm mauve-grey -- the cabin's cool light had left it 108 / 113 / 128,
+  // P1046408 123 / 114 / 130, P1046409 from above 106 / 100 / 113: R > G)
+  tray_titanium: { color: [0.225, 0.185, 0.182] },
   // the stitched black glareshield / crew leather: a fine pebble grain (1-2 mm) in the normal and the roughness
   // (a shade glossier in the viewer, 0.40: the rolled lip's highlight line of P1046408 / 10 against the hood)
   // (flight deck fix r1 FID-FD1-04: a coarser, deeper grain -- 1.4 mm pebbles, readable from the seats -- and the
@@ -1240,8 +1243,11 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
     // (flight deck fix r5 FDO4-04: the footwell under the panel read as a blue-black void with only the pedal pads; P1046408
     // / 09 show the pedal arms, linkage and side walls in a soft light from the side windows and the floor): its diffuse
     // x (1 + boost) below the panel's lower edge, ahead of the seats
+    // (not the floor: the up-facing carpet stays near-black, P1046408 5-15, [FD-L2] / [FD-L6]; nor the crew seats'
+    // fleece, which reaches into that box)${fleece ? `
+    if ( false )` : ''}
     pcDi *= 1.0 + uCabinFoot.x * pcFd * ( 1.0 - smoothstep( uCabinFoot.y, uCabinFoot.y + 0.12, pcPW.y ) )
-      * ( 1.0 - smoothstep( uCabinFoot.z, uCabinFoot.z + 0.15, pcPW.z ) );
+      * ( 1.0 - smoothstep( uCabinFoot.z, uCabinFoot.z + 0.15, pcPW.z ) ) * ( 1.0 - smoothstep( 0.45, 0.8, pcNW.y ) );
     float pcSi = pcAO * pcKs * pcSs${specIn ? ` * mix( 1.0, ${(+specIn).toFixed(3)}, pcIn )` : ''};${emisIn ? `
     totalEmissiveRadiance *= mix( 1.0, ${(+emisIn).toFixed(3)}, pcIn );` : ''}
     reflectedLight.directDiffuse *= pcKk; reflectedLight.directSpecular *= pcKk;
