@@ -137,7 +137,8 @@ export class Kinematics {
       const pv = rec.ex.pivot;
       if (!pv || (pv.kind !== 'yoke' && pv.kind !== 'pedal' && pv.kind !== 'steer')) continue;
       this.controls.push({ rec, pv, axis: new THREE.Vector3().fromArray(pv.axis).normalize(),
-        pull: pv.travel_pull ? modelToGl(pv.travel_pull) : null, push: pv.travel_push ? modelToGl(pv.travel_push) : null });
+        pull: pv.travel_pull ? modelToGl(pv.travel_pull) : null, push: pv.travel_push ? modelToGl(pv.travel_push) : null,
+        rest: pv.rest ? modelToGl(pv.rest) : null });
     }
 
     // club tables (model/cabin.py table_parts, review r3 F5): pivot kind 'table' on the outboard leaf (slides out of
@@ -402,7 +403,12 @@ export class Kinematics {
     for (const k of this.controls) {
       if (k.pv.kind === 'yoke') {
         k.rec.anim.quat.setFromAxisAngle(k.axis, c.roll * k.pv.roll_deg * DEG);
-        if (k.pull) k.rec.anim.pos.copy(c.pitchCmd >= 0 ? k.pull : k.push).multiplyScalar(Math.abs(c.pitchCmd));
+        if (k.pull) {
+          // rev P (3-D judges r3 FID3-02): at a zero command the free yoke stands at its parked rest (interior.YOKE rest,
+          // the photos' unlocked yokes ~35 mm forward); the command blends from there to the full push / pull
+          k.rec.anim.pos.copy(c.pitchCmd >= 0 ? k.pull : k.push).multiplyScalar(Math.abs(c.pitchCmd));
+          if (k.rest) k.rec.anim.pos.addScaledVector(k.rest, 1 - Math.abs(c.pitchCmd));
+        }
       } else if (k.pv.kind === 'steer') {
         const down = 1 - clamp(this.gear.pos / 0.05, 0, 1);
         k.angle = c.yaw * k.pv.pedal_deg * down;

@@ -103,9 +103,17 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0.45, 1],
   // entries apply to the yoke parts only: the satin black moulding (FID2-05: body / cover 0.20 against the photos'
   // 0.27-0.30, the pads 1.5-1.8 x the body against 1.06-1.27) more fill and a reflection floor for its form shading.
   // Measured at the pilot stop / design eye (stats in CLAUDE.md, yoke rev O)
+  // Rev P (3-D judges r3): the trim head's satin charcoal lunes take the body's light (FID3-01: face / body 1.0-1.6 as
+  // the photos' footprints), its slot and the column sit in pockets the cabin light hardly reaches (no fill, half the
+  // studio's diffuse, no reflection floor: the slot the darkest part of the head, the column no lit cylinder in its
+  // recess -- FID3-01 / 02), and the nickel hex keeps the key's glint but no reflection floor / window term (FID3-03:
+  // every facet lit, 0.8-1.0 of the cover, where the photos' hex footprint reads 0.10-0.34 with one or two glints)
   yoke_white: [0.25, 1, 1.4, 1, 1, 25], yoke_silver: [0.5, 1, 1.3, 0.6, 1, 4], yoke_silver_dark: [0.5, 1, 0.9, 0.6, 1, 4],
-  yoke_nickel: [0, 1, 0.8, 0.6, 1, 4], 'yoke:grip_black': [0, 1.45, 0.3] };
-// ?cabTrim=name:share,factor,floor,key,up|... overrides entries (look development)
+  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 1.45, 0.3], yoke_trim_face: [0, 1.0, 0.25],
+  yoke_slot: [0, 0.5], yoke_column: [0, 0.5] };
+// A seventh entry, 'refl' (rev P, 3-D judges r3 FID3-03): the studio reflections' own factor inside -- the nickel hex
+// mirrors the bright studio from every facet where the cockpit round it is dark (the photos' hex: one or two glints)
+// ?cabTrim=name:share,factor,floor,key,up,win,refl|... overrides entries (look development)
 for (const it of (Q_M.get('cabTrim') || '').split('|')) {
   const k = it.slice(0, it.lastIndexOf(':')), v = it.slice(it.lastIndexOf(':') + 1);   // 'yoke:grip_black:0,1.3,..'
   const a = (v || '').split(',').map(Number);
@@ -718,7 +726,7 @@ export function installPatch(mat, extra = {}) {
     ${lit ? `vec3 pcNW = inverseTransformDirection( geometryNormal, viewMatrix );
     vec3 pcRW = inverseTransformDirection( reflect( - geometryViewDir, geometryNormal ), viewMatrix );` : 'vec3 pcNW = vec3( 0.0 ), pcRW = vec3( 0.0 );'}
     float pcKd = mix( 1.0, mix( uCabinDiff.x, uCabinDiff.y, 0.5 + 0.5 * pcNW.y )${cabinFill ? ` * ${(+cabinFill[1]).toFixed(3)} * pow( uCabinFill, ${(+cabinFill[0]).toFixed(3)} )` : ''}, pcIn );
-    float pcKs = mix( 1.0, ${cabinFill && cabinFill.length > 2 ? `max( ${(+cabinFill[2]).toFixed(3)}, ` : '('} mix( uCabinSpec.x, uCabinSpec.y, smoothstep( - 0.5, 0.7, pcRW.y ) ) ), pcIn );
+    float pcKs = mix( 1.0, ${cabinFill && cabinFill.length > 2 ? `max( ${(+cabinFill[2]).toFixed(3)}, ` : '('} mix( uCabinSpec.x, uCabinSpec.y, smoothstep( - 0.5, 0.7, pcRW.y ) ) )${cabinFill && cabinFill.length > 6 ? ` * ${(+cabinFill[6]).toFixed(3)}` : ''}, pcIn );
     float pcKk = mix( pcAO * pcAO, uCabinKey, pcIn );
     float pcKks = mix( pcAO * pcAO, ${cabinFill && cabinFill.length > 3 ? `max( uCabinKey, ${(+cabinFill[3]).toFixed(3)} )` : 'uCabinKey'}, pcIn );
     reflectedLight.directDiffuse *= pcKk; reflectedLight.directSpecular *= pcKks;

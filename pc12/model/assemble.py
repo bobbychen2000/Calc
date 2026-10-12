@@ -128,10 +128,15 @@ MATERIALS = {
     # the hex collar satin nickel, the trim rocker satin dark grey, the column satin black (non-metallic)
     # rev O (3-D judges r2): the AFCS cap a deeper red under less coat, thinner legend blocks at ~0.45 of white, the
     # rocker near-black satin
-    "legend_grey":         ((0.17, 0.17, 0.17), 0.0, 0.50),
-    "yoke_nickel":         ((0.60, 0.56, 0.50), 0.90, 0.30),
+    # rev P (3-D judges r3): the trim head's legend ring a satin charcoal face and its rocker slot a near-black matte
+    # pocket (rev N / O: gloss black lunes over a satin slot -- inverted against every photo, FID3-01), the legends
+    # thinner and dimmer (CR3-05), the hex a warmer nickel (FID3-03), the column a matte near-black (FID3-02)
+    "legend_grey":         ((0.13, 0.13, 0.13), 0.0, 0.50),
+    "yoke_nickel":         ((0.62, 0.55, 0.47), 0.90, 0.30),
     "yoke_rocker":         ((0.020, 0.020, 0.022), 0.0, 0.30),
-    "yoke_column":         ((0.022, 0.022, 0.024), 0.0, 0.70, dict(specular=0.5)),
+    "yoke_column":         ((0.014, 0.014, 0.015), 0.0, 0.80, dict(specular=0.5)),
+    "yoke_trim_face":      ((0.040, 0.040, 0.043), 0.0, 0.45),
+    "yoke_slot":           ((0.010, 0.010, 0.011), 0.0, 0.80, dict(specular=0.5)),
     # divider / lavatory / cabinets / FR34 header: dark grey-brown (smoked) walnut veneer under a gloss lacquer
     # (P1046406 [M]: sRGB ~90/80/77 in the cabin light)
     "veneer_walnut":       ((0.060, 0.047, 0.040), 0.0, 0.35, dict(clearcoat=1.0, clearcoat_rough=0.06)),

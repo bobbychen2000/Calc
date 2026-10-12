@@ -26,6 +26,7 @@ import math
 import numpy as np
 
 from model import yoke_geom as G
+from model import yoke_legends as YL
 
 TICK_W = 0.35                  # mm: legend tick stroke width (drawn 0.20-0.30 at 1:1..2:1) [E]
 TICK_PROUD = 0.12              # mm: the ticks' paint layer stands this proud (above fit_check 26's 0.1 mm coplanarity)
@@ -481,7 +482,7 @@ def _slab(P0, P1, z0, z1, frame, width=TICK_W, proud=TICK_PROUD, sink=0.15, seg=
 
 
 def reading_blocks(k):
-    """yoke_geom.legend_blocks(k) laid out for the PILOT yoke, which place() builds as the co-pilot's mirror image: the
+    """yoke_legends.legend_blocks(k) laid out for the PILOT yoke, which place() builds as the co-pilot's mirror image: the
     moulding is mirrored, printed words are not -- each block's angle reflected about its row's centre (the middle of
     the row's span, YOKE_DESIGN legends), so that after the mirror the words keep their reading order and the row its
     place: TRIM / DN over the trim slot and TRIM / UP under it read left to right (Mexico L, AOPA pilot), MAP / LIGHTS
@@ -490,7 +491,7 @@ def reading_blocks(k):
     _, _, words = G.T()["legends"][k]
     c2 = min(float(w[0]) for w in words) + max(float(w[1]) for w in words)          # 2 x the row's centre angle
     out = []
-    for P0, P1, w in G.legend_blocks(k):
+    for P0, P1, w in YL.legend_blocks(k):
         a = math.radians(c2) - math.atan2(P0[1], P0[0])
         e = np.array([math.cos(a), math.sin(a)])
         out.append((np.linalg.norm(P0) * e, np.linalg.norm(P1) * e, w))
@@ -498,13 +499,13 @@ def reading_blocks(k):
 
 
 def legend_pieces(reading=False):
-    """The legends (YOKE_DESIGN legends: words of plain letter BLOCKS, rev N -- no lettering; yoke_geom.legend_blocks):
+    """The legends (YOKE_DESIGN legends: words of plain letter BLOCKS, rev N -- no lettering; yoke_legends.legend_blocks):
     TCS on its bezel's dish, AFCS DISC on the boss's aft face, TRIM DN / TRIM UP on the trim face's two lunes, MAP LIGHTS
     on the push button's gloss-black legend disc round its hex (rev O); each block a thin slab legend_style[1] proud,
     legend_grey.
     reading: the pilot yoke's layout (reading_blocks, mirrored by place())."""
     D = G.T()
-    blocks = reading_blocks if reading else G.legend_blocks
+    blocks = reading_blocks if reading else YL.legend_blocks
     proud = float(D["legend_style"][1])
     out = []
 
@@ -599,7 +600,7 @@ def moulding_materials(V, F):
 
 
 # ============================================================================================ the whole yoke (cached)
-MESH_VERSION = "m4"            # rev O: legend disc + hex button, crowned rocker, badge top, ...
+MESH_VERSION = "m5"            # rev P: crown rows, junction normals, micro caps, trim materials, legend widths
 
 
 def _src_key():
@@ -798,6 +799,97 @@ def fix_fold_normals(pieces):
     return out
 
 
+KNOB_DEV, MICRO_DEV, MICRO_AREA = 60.0, 30.0, 0.01   # deg, deg, mm^2: rev P, see split_junction_normals
+JUNCTION_SPLIT = (25.0, 10.0, 15.0)   # rev P (3-D judges r3 CR3-01): deg -- a corner normal this far off the solid's
+#                                       gradient just inside its face, the gradient that much closer to the face's own
+#                                       plane, regrouped within [2] deg
+
+
+def split_junction_normals(pieces, verbose=False):
+    """Corner normals at crease JUNCTIONS (rev P, 3-D judges r3 CR3-01): where three crease pieces meet in one point
+    (the insert step's V ends at |u| 12.9: step V / side groove / insert parting; the badge's speed lines running into
+    its outline groove), the mesher's one vertex carried one piece's normal into the faces of another -- 78-89 deg off
+    those faces, small bright knobs on the cover.  Each cover / moulding corner is compared with the solid's gradient
+    0.03 mm inside its face (as yoke_mesh_check row 4); where they differ by > JUNCTION_SPLIT[0] deg and the gradient lies
+    > [1] deg closer to the face's plane, the corner gets its own copy of the vertex carrying the mean gradient of the
+    corners round that vertex that agree within [2] deg (positions unchanged: watertight by position)."""
+    lim, gain, grp = JUNCTION_SPLIT
+    out, n_fix = [], 0
+    for p in pieces:
+        if p.name not in ("cover", "moulding") or not len(p.F):
+            out.append(p)
+            continue
+        fn_ = G.cover if p.name == "cover" else G.moulding
+        P = p.V[p.F]
+        fn = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0])
+        ar = np.linalg.norm(fn, axis=1)
+        fu = fn / np.maximum(ar, 1e-30)[:, None]
+        Nc = p.N[p.F]
+        dev = np.degrees(np.arccos(np.clip(np.einsum("fkd,fd->fk", Nc, fu), -1.0, 1.0)))
+        cf, ck = np.nonzero((dev > lim) & (ar[:, None] > 1e-12))        # candidate corners
+        if not len(cf):
+            out.append(p)
+            continue
+        C = P[cf].mean(1)
+        d = C - P[cf, ck]
+        dl = np.linalg.norm(d, axis=1, keepdims=True)
+        Q = P[cf, ck] + d / np.maximum(dl, 1e-9) * np.minimum(0.03, 0.5 * dl)
+        g = _grad_mm(fn_, Q)
+        gn = np.linalg.norm(g, axis=1)
+        ok = (gn > 0.3) & (np.abs(fn_(*Q.T)) < 0.05)
+        g = g / np.maximum(gn, 1e-12)[:, None]
+        a_cg = np.degrees(np.arccos(np.clip(np.sum(Nc[cf, ck] * g, 1), -1.0, 1.0)))
+        a_fg = np.degrees(np.arccos(np.clip(np.sum(fu[cf] * g, 1), -1.0, 1.0)))
+        sel = ok & (a_cg > lim) & (a_fg + gain < dev[cf, ck])
+        if not sel.any():
+            out.append(p)
+            continue
+        V2, N2, F2 = list(p.V), list(p.N), p.F.copy()
+        cf, ck, g = cf[sel], ck[sel], g[sel]
+        vid = p.F[cf, ck]
+        for v in np.unique(vid):
+            todo = list(np.nonzero(vid == v)[0])
+            while todo:
+                i0 = todo[0]
+                same = [i for i in todo if float(g[i] @ g[i0]) > math.cos(math.radians(grp))]
+                todo = [i for i in todo if i not in same]
+                V2.append(p.V[v])
+                N2.append(_unit(g[same].sum(0)))
+                for i in same:
+                    F2[cf[i], ck[i]] = len(V2) - 1
+                n_fix += len(same)
+        out.append(Piece(np.array(V2), F2, np.array(N2), p.mat, p.name))
+    # what is left (sub-mm faces at groove ends where the mesh does not follow the solid's gradient closely enough to
+    # say which side a corner belongs to): a corner > KNOB_DEV off its face's plane -- or > MICRO_DEV on a face under
+    # MICRO_AREA mm^2 (the trim ring's groove-bottom caps, the inboard neck's DC debris) -- takes its own copy of the
+    # vertex with the face's other corners' mean normal (or the face's own where those lean > 45 deg too): the face
+    # shades with its neighbours instead of as a bright / dark knob
+    n_knob = 0
+    for i, p in enumerate(out):
+        P = p.V[p.F]
+        fn = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0])
+        ar = np.linalg.norm(fn, axis=1)
+        fu = fn / np.maximum(ar, 1e-30)[:, None]
+        dev = np.degrees(np.arccos(np.clip(np.einsum("fkd,fd->fk", p.N[p.F], fu), -1.0, 1.0)))
+        micro = (0.5 * ar < MICRO_AREA)[:, None] & (dev > MICRO_DEV)
+        bf, bk = np.nonzero(((dev > KNOB_DEV) | micro) & (ar[:, None] > 1e-12))
+        if not len(bf):
+            continue
+        V2, N2, F2 = list(p.V), list(p.N), p.F.copy()
+        for f, k in zip(bf, bk):
+            oth = [j for j in range(3) if j != k and dev[f, j] <= min(45.0, MICRO_DEV if 0.5 * ar[f] < MICRO_AREA else 45.0)]
+            nn = _unit(p.N[p.F[f, oth]].sum(0)) if oth else fu[f]
+            V2.append(p.V[p.F[f, k]])
+            N2.append(nn)
+            F2[f, k] = len(V2) - 1
+            n_knob += 1
+        out[i] = Piece(np.array(V2), F2, np.array(N2), p.mat, p.name)
+    if verbose:
+        print(f"  junction normals: {n_fix} corners split onto their own side's normal, {n_knob} more onto their face's",
+              flush=True)
+    return out
+
+
 def _debris_keep(V, F, weld=1e-4, max_faces=4, max_area=1e-3):
     """Per face: False on the connected components (welded by position) of fewer than `max_faces` faces covering less
     than `max_area` mm^2 -- mesher debris, never a shape."""
@@ -823,7 +915,7 @@ def _build_pieces(verbose=False):
     from model import yoke_cover as YC
     t0 = time.time()
     if verbose:
-        print("  yoke (rev O solids): meshing -- cached afterwards", flush=True)
+        print("  yoke (rev P solids): meshing -- cached afterwards", flush=True)
     out = []
     from model import yoke_patch as YP
     cov = [Piece(V, F, N, m, "cover") for V, F, N, m in YP.collapse_needles(YC.cover_meshes(verbose=verbose),
@@ -868,6 +960,7 @@ def _build_pieces(verbose=False):
             out[i] = Piece(p.V[u], inv.reshape(-1, 3), p.N[u], p.mat, p.name)
     if verbose:
         print(f"  debris: {nd} faces dropped", flush=True)
+    out = split_junction_normals(out, verbose=verbose)                  # rev P (3-D judges r3 CR3-01)
     if verbose:
         print(f"  yoke: {sum(len(p.F) for p in out)} triangles in {len(out)} pieces, {time.time() - t0:.0f}s", flush=True)
     return out

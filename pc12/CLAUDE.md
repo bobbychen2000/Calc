@@ -48,14 +48,18 @@ python3 test/consistency_2d3d.py   # the built GLB projected / sliced against th
 python3 test/yoke_mesh_check.py # the Stage-3 yoke mesh (~4-7 min): triangles vs build.YOKE_BUDGET (as built: cad.res
                                 #   + the column), cad.res a fixed point on the cover, watertight (no same-way edge
                                 #   inside a material), folds, slivers, corner
-                                #   normals vs the solids, the frame's highlight error (interpolated vs exact normals on
-                                #   the faces seen from the aft hemisphere: z-buffered visibility classes; rev O: per face
-                                #   on the heads, by area on every visible round, the trim face's gloss lunes), the pilot
-                                #   yoke's legends in reading order
+                                #   normals vs the solids, KNOBS (rev P: no corner normal > 60 deg off its own face, none
+                                #   > 30 deg on a sub-0.01 mm^2 face), the frame's highlight error (interpolated vs exact
+                                #   normals on the faces seen from the aft hemisphere: z-buffered visibility classes; rev
+                                #   O: per face on the heads, by area on every visible round, the trim face's lunes), the
+                                #   pilot yoke's legends in reading order
 python3 -m drawing.master       # the Stage-2 drawing set L1-L6B incl. L4W from the parameter modules (~3 min;
                                 #   `python3 -m drawing.master L6 L6B` for the interior sheets only, `L4W` the wheels,
                                 #   `L6Y L6Y2` the yoke design drawings: interior.YOKE_DESIGN through the solids of
-                                #   model/yoke_geom.py, exact views / sections, disk cache out/tmp/yoke_geom_cache)
+                                #   model/yoke_geom.py, exact views / sections, disk cache out/tmp/yoke_geom_cache --
+                                #   keyed by yoke_geom.design_key(), which hashes yoke_geom.py's SOURCE: any edit there
+                                #   re-runs every cached view / section / acceptance check and the mesher's DC / cut /
+                                #   vis / deci stages (hours); printed finishes live elsewhere, e.g. model/yoke_legends.py)
 python3 -m drawing.yoke_overlay # the yoke solids ray-cast through the photo cameras -> refs/cache/overlays/yoke
                                 #   (private; landmarks, curated grip rows per band, pads, inboard neck -> deviations.json,
                                 #   the L6Y2 photo-check tables)
@@ -123,7 +127,8 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   origin: the telescoping upper rod `door_airstair_rail_up`, the lower rod's child, and the restraint cables
   `door_airstair_cable`, the door's child; `joints` = their pinned ends in the built pose for tests),
   `yoke` (`yoke_L` / `yoke_R`, children of `flight_deck`: roll = roll command x `roll_deg` about the forward-pointing
-  column axis, + `travel_pull` / `travel_push` (MODEL axes) x |pitch command|), `pedal` (`pedal_LL/LR/RL/RR`: hanging
+  column axis, + `travel_pull` / `travel_push` (MODEL axes) x |pitch command| + `rest` (the free yokes' parked offset,
+  interior.YOKE rest, rev P) x (1 - |pitch command|)), `pedal` (`pedal_LL/LR/RL/RR`: hanging
   pedals, about the arm pivot under the lower panel (axis -y) by -`gearing` x yaw command x `travel_deg`;
   `flightdeck.control_pivots`), `steer` (`gear_nose_steer`, child of `gear_nose`: the steering collar, torque links,
   piston, fork and nose wheel turn about the strut axis by yaw command x `pedal_deg` (12) while the gear is down and
@@ -904,6 +909,71 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   switches' own connected pieces (grip_black is one primitive with the grip body: 128 body vertices in front of the
   inboard switch's plane had moved its centroid 1.53 mm once the switch was sampled coarser; the switch itself sits
   0.00 mm on its axis; tolerance unchanged).
+- Yoke rev P (3-D judges r3, 2026-10-11; L6Y rev H / L6Y2 rev G): TRIM HEAD TONES (FID3-01, major; L6Y item 9, a
+  table change): rev N / O's gloss-black lunes over a satin slot read inverted against every photo (face darker than the
+  body, the slot lighter than the face) -- the legend ring / lunes a flat SATIN CHARCOAL (`yoke_trim_face` 0.040, rough
+  0.45, no coat; `yoke_patch.TRIM_FACE_MAT`), the slot walls / floor a near-black MATTE (`yoke_slot` 0.010, rough 0.8,
+  `TRIM_SLOT_MAT`); viewer CABIN_TRIM yoke_trim_face [0, 1.0, 0.25], yoke_slot [0, 0.5] (an occluded pocket).  Measured
+  (SwiftShader High, out/tmp/yoke3d/r3fix/viewer): lunes / body 1.28-1.60 (pilot eye 1.52, det_trim_L 1.28, Mexico L
+  1.60, P1046409 1.37; photos 1.0-3.2), slot / lunes 0.17-0.21 (photos 0.14-0.90), rocker / lunes 0.51-0.64 (P1046409
+  0.20; photos 0.36-0.74); viewer_test [Y1c] at the pilot stop.  COLUMN FROM THE SEATS (FID3-02, major; the photos cannot
+  settle it -- no PRO photo looks from a seated eye): (1) the viewer PARKS the free yokes at the photos' unlocked rest,
+  interior.YOKE rest -35 mm [M: Mexico -34 / -38, AOPA -14 / -26; P1046408-10's -37 .. -65 the gust lock] --
+  `flightdeck.control_pivots` pivot 'rest', `kinematics.js`: position = travel x |command| + rest x (1 - |command|), so
+  the full push / pull still reach travel; the drawn neutral, the knees (L6B) and fit_check 30 (whole travel) unchanged;
+  the elevators stay drawn at neutral; (2) the column matte near-black (`yoke_column` 0.014, rough 0.8; CABIN_TRIM [0,
+  0.5]: no fill in its recess) -- at the pilot's design eye its pixels 19,491 -> 11,454 (0.48 -> 0.30 of the cover's) at
+  luminance 54 -> 23; L6Y2 detail J records it (the column's free length 107 -> 72 mm).  NICKEL HEX (FID3-03): CABIN_TRIM
+  yoke_nickel [0, 1, 0, 0.35, 0, 0, 0.25] -- no reflection floor / window term, the key's glint kept, and a new 7th entry
+  'refl' (materials.js: the studio reflections' own factor inside); a warmer tint (0.62 / 0.55 / 0.47): hex / cover
+  median 0.28-0.35 at det_button_L / Mexico L / P1046410, 0.14 at P1046409 (photos 0.10-0.34; was 0.80-1.02); from the
+  pilot's eye only the lit upper facets show (0.66, as Mexico L's tan glints).  MESH: CR3-01 junction normals --
+  `yoke3d.split_junction_normals` (end of _build_pieces): a cover / moulding corner > 25 deg off the solid's gradient
+  0.03 mm inside its face, the gradient > 10 deg closer to the face's plane, gets its own vertex copy with that side's
+  normal (the step V's ends at |u| 12.9: 78-89 deg knobs, the lower insert's V apex), then any corner > KNOB_DEV 60 deg
+  off its own face -- or > 30 deg on a sub-0.01 mm^2 face -- takes its face's other corners' mean (the badge groove ends,
+  the inboard neck's DC debris); positions unchanged.  Row 4's p99 (40 deg) stays: of the cover's 521 corners > 10 deg
+  off the gradient 0.03 mm inside their face, 439 lie within 10 deg of their OWN face (the face spans a groove / step
+  crease and the sample point falls on the crease's other side -- the metric, not the shading), 78 are > 10 deg off their
+  own face, 10 > 30 (max 50.5 deg, all on sub-0.25 mm^2 faces at the insert / badge groove ends;
+  out/tmp/yoke3d/r3fix/p99/cov_p99.py) -- so a p99.9 <= 10 deg row (judges' example) would measure the crease sampling;
+  the 'knobs' row bounds what shades as a knob.  CR3-02 `yoke_patch.collapse_needles` also collapses MICRO faces
+  (< 0.01 mm^2 with a corner > 30 deg off: the trim ring's groove-bottom caps by the slot, 9 -> 0).  yoke_mesh_check
+  row 'knobs' (0 / 0).  CR3-03 the leather crown as ROWS (`yoke_patch._crown_rows`, CROWN_ROWS 7 / 3 / 12 / 5 / 0.3:
+  marching-squares contours of the smoothed inward distance the crown is built on, a row per 7 deg of slope turn,
+  points along each row per 3 deg of normal turn, constraint edges) refined at the judges' 2.0 deg (LEATHER_TOL): 5,477
+  leather faces a yoke (rev O 5,297), the crown's faces inside the bead interpolated vs exact normal p95 1.8-1.9 deg by
+  area, > 4 deg 0.1 % (rev O's 3.2 deg hex lattice: > 4 deg on 7 %; zebra out/tmp/yoke3d/r3fix/zebraX_*); the judges'
+  9-10.5 % 'facet' area is the bead's R 0.4 half round in 36 deg rows (Phong-exact on a circle; fewer rows and cad.res
+  splits them back at build) -- not the crown.  CR3-04 the J band's hook ends ROUND (`fd_detail_a._band_sweep` cap1,
+  BAND_HOOK_END 330 deg = the round tip, the drawn extent) and both round caps closed on top (rev M-O left a half-disc
+  'D' hole in the leg's round top end).  CR3-05 legends (legend_style (0.22, 0.12, 0.35), table change): blocks 0.22 of
+  the pitch with +/-35 % letter weights on a fixed sequence (`model/yoke_legends.py` -- NOT yoke_geom.py, whose source
+  is the solids' design key: an edit there re-runs every cached view / section / mesh stage; its old legend_blocks /
+  legend_quads stay unused), legend_grey 0.17 -> 0.13.  BUDGET: 42,010 triangles meshed, 42,876 in the GLB part a yoke
+  (YOKE_BUDGET 43k), GLB 2,496,464 / 42.09 MB, light tier 2,028,571 / 33.72 MB, interior 645,942 (the open budget item).
+  FID3-05 (single-pixel dark specks on the cover in det_centre_L, ~33 px apart): not the mesh (ray-cast: face interiors
+  of 4 mm equilateral cover faces, 0.6-2.3 mm from their corners and 0-1 mm from their edges, normals exact to 0.0 deg
+  there, no T-junction, no _AO on the yoke), not the still accumulation (?ssframes=1 the same), not 'up' / 'win'
+  (?cabTrim without them the same), not the studio reflections (cabTrim yoke_white 'refl' 0: the same 7 pixels); a 5 mm
+  camera shift moves them off the surface points -- view-dependent shading in the diffuse / clear-coat / key path,
+  passed to the picture lens (out/tmp/yoke3d/r3fix/viewer det_centre_L_p1 / q1).  CR3-02's residual: the small V at
+  the trim ring's lower edge in v_outb_head is on the moulding's R 1.5 face-edge round at r 14.7 from the ring centre
+  (the ring crosses the head's front silhouette by 0.61 mm there, L6Y's trim-face row) -- the exact solid's zebra draws
+  the same V (judge_craft_r3/d_trimlow_zebra0); the micro faces that darkened it are gone (lower contrast), a fairing of
+  the junction is a solids change (yoke_geom.py, a drawing revision).  L6Y item 8's finish text now carries the rev O red
+  (0.50 / 0.004 / 0.012, coat 0.15).  Deferred: FID3-01's secondary point (the rocker lobes' outer ends cut along the
+  ring in AOPA pilot / Mexico L, not round: a photo re-trace and a solids change -- yoke_geom.rocker_lobe), FID3-04 (the
+  cover flatter than P1046409: the studio env map lights a planar face uniformly; spatial falloff needs local light
+  probes -- with CR3-06 (b)), FID3-06 = FID2-07 grip depth (owner, the AOPA co-pilot camera first).  Before / after
+  sheets: out/tmp/yoke3d/r3fix/final/cmp_*.png (craft cameras at the drawn neutral, the J band raster, the pilot eye at
+  the parked rest), refs/cache/overlays/yoke/r3fix/cmp_trim_photo_O_P / cmp_button_photo_O_P (photo crops).
+  Verified on the final GLB (both tiers rebuilt byte-identical after a restart): yoke_mesh_check OK (knobs 0 / 0),
+  fit_check OK (131 ok; 30 / 30a-c 13.5 / 0.95 / 0.9 mm), fit_fd_a OK, consistency_2d3d 157 / 157, drawing.master L6Y /
+  L6Y2 clean; viewer_test --only tour 29 / 29 ([Y1b] spread 36 on the committed 20 -- CR3-06 (a); [Y1c] lunes / body
+  1.50, slot / lunes 0.21, rocker / lunes 0.63) and its numeric section 62 / 62 (the pull row from the parked rest:
+  hub +0.125 m) -- the full run was stopped at ~25 min of screenshots on a machine at load 10-12 (it would have passed
+  the 2 h background limit; the sections the change touches were run instead).
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been

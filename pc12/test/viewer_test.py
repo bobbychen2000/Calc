@@ -442,6 +442,8 @@ async def numeric_checks(page):
       out.rollR = T.sub(T.world('yoke_L', loc), g0);
       V.setControls({roll: 0, pitch: 1}, {instant: true});
       out.pull = T.sub(V.nodeWorldPoint('yoke_L', [0, 0, 0]), hub);
+      const pvY = V._internals.model.part('yoke_L').ex.pivot;
+      out.travelPull = pvY.travel_pull[0]; out.rest = pvY.rest ? pvY.rest[0] : 0;
       const nb = T.box('gear_nose_steer'), nw = [nb.center[0], nb.center[1], nb.min[2] + 0.02];   // tyre front
       const nloc = V._internals.model.part('gear_nose_steer') ? T.attach('gear_nose_steer', nw) : null;
       V.setControls({pitch: 0, yaw: 1}, {instant: true});
@@ -458,8 +460,12 @@ async def numeric_checks(page):
     else:
         check("right roll: the pilot's yoke turns clockwise (right grip goes down)", r["rollR"][1] < -0.03,
               f"grip point dY {r['rollR'][1]:+.3f} m")
-        check("pull: the yoke comes aft (+Z) by the pitch travel", abs(r["pull"][2] - 0.09) < 0.005,
-              f"hub dZ {r['pull'][2]:+.3f} m")
+        # rev P (3-D judges r3 FID3-02): at a zero command the yoke stands at its parked rest (pivot 'rest', ~35 mm
+        # forward of the drawn neutral), so full pull moves it travel_pull - rest
+        want = r.get("travelPull", 0.09) - r.get("rest", 0.0)
+        check("pull: the yoke comes aft (+Z) from its parked rest to the full pull travel", abs(r["pull"][2] - want) < 0.005,
+              f"hub dZ {r['pull'][2]:+.3f} m (want {want:+.3f}: pull {r.get('travelPull', 0):+.3f}, rest "
+              f"{r.get('rest', 0):+.3f})")
         check("right rudder: right-foot pedal forward, left-foot pedal aft", r["yawR"]["R"][2] < -0.03 and
               r["yawR"]["L"][2] > 0.03, f"pad dZ R {r['yawR']['R'][2]:+.3f}, L {r['yawR']['L'][2]:+.3f} m")
         check("[MJ r1 GR1-07] right rudder steers the nose wheel right (tyre front to +X), centred with the gear up",
@@ -2058,6 +2064,10 @@ YOKE_LOOK = dict(cover=205.0, cover_p99=215.0, up=0.78, lo=0.70, column=70.0)   
 # one tone (FID2-05: photos body / cover 0.27-0.30, pads / body 1.06-1.27), the AFCS cap a saturated red (FID2-03: photos
 # sat 0.71 / 0.96); the spread was 8 on rev N (1200 x 800), rev O 28 there and 25 on this test's page
 YOKE_LOOK_O = dict(spread=20.0, up=0.88, lo=0.78, body=(0.22, 0.34), pads_body=(1.0, 1.4), red_sat=0.75)
+# rev P (3-D judges r3 FID3-01 / 03): the trim head's tones the photos' way round -- the satin charcoal lunes at least as
+# light as the body (photo footprints face / body 1.0-3.2), the matte slot the darkest part (slot / lunes 0.14-0.90),
+# the rocker darker than the lunes (0.36-0.74) -- and the nickel hex no bright nut (footprint 0.10-0.34 of the cover)
+YOKE_LOOK_P = dict(lunes_body=(1.0, 1.8), slot_lunes=0.75, rocker_lunes=(0.35, 0.9), nickel_cover=0.5)
 
 
 async def yoke_look_checks(page, shots=True):
@@ -2071,7 +2081,8 @@ async def yoke_look_checks(page, shots=True):
     path = await shot(page, "45_yoke_look_pilot", "")
     names = {"cover": ["yoke_white"], "up": ["yoke_silver"], "lo": ["yoke_silver_dark"], "column": ["yoke_column"],
              "body": ["yoke_L:grip_black", "yoke_R:grip_black"], "pads": ["yoke_L:leather_black", "yoke_R:leather_black"],
-             "red": ["button_red"]}
+             "red": ["button_red"], "lunes": ["yoke_trim_face"], "slot": ["yoke_slot"], "rocker": ["yoke_rocker"],
+             "nickel": ["yoke_nickel"]}
     m = await js(page, MAT_MASK, [names[k] for k in names])
     W, H = m["W"], m["H"]
     k = np.array(m["mask"].split(","), int).reshape(H, W)
@@ -2109,6 +2120,20 @@ async def yoke_look_checks(page, shots=True):
           (f"spread {spread:.0f} (p99.5 {c[3]:.0f}), up {u[1] / c[1]:.2f}, lo {l_[1] / c[1]:.2f}, body "
            f"{b_[1] / c[1]:.2f}, pads / body {p_[1] / b_[1]:.2f}, red {[int(x) for x in r_[4]]} sat {sat:.2f}")
           if c[1] and u[1] and l_[1] and b_[1] and p_[1] and r_[1] else str({k: v[:2] for k, v in st.items()}))
+    P_ = YOKE_LOOK_P
+    ln, sl, ro, ni = st["lunes"], st["slot"], st["rocker"], st["nickel"]
+    have = all(v[1] is not None for v in (ln, sl, ro, b_, c))                 # the hex: where it shows >= 20 px
+    okP = (have and P_["lunes_body"][0] <= ln[1] / b_[1] <= P_["lunes_body"][1] and sl[1] / ln[1] <= P_["slot_lunes"]
+           and P_["rocker_lunes"][0] <= ro[1] / ln[1] <= P_["rocker_lunes"][1]
+           and (ni[1] is None or ni[1] / c[1] <= P_["nickel_cover"]))
+    check(f"[Y1c] 3-D judges r3 (FID3-01 / 03): at the pilot stop the trim head the photos' way round -- the satin "
+          f"lunes {P_['lunes_body'][0]:.1f}-{P_['lunes_body'][1]:.1f} x the body, the matte slot <= {P_['slot_lunes']:.2f} "
+          f"x the lunes, the rocker {P_['rocker_lunes'][0]:.2f}-{P_['rocker_lunes'][1]:.2f} x the lunes; the nickel hex "
+          f"<= {P_['nickel_cover']:.2f} of the cover (medians)", okP,
+          (f"lunes / body {ln[1] / b_[1]:.2f} ({ln[0]} px), slot / lunes {sl[1] / ln[1]:.2f} ({sl[0]} px), rocker / lunes "
+           f"{ro[1] / ln[1]:.2f} ({ro[0]} px), nickel / cover "
+           f"{(f'{ni[1] / c[1]:.2f}' if ni[1] is not None else 'n/a')} ({ni[0]} px)") if have
+          else str({k: v[:2] for k, v in st.items()}))
 
 
 async def tour_r4_checks(page, data, shots=True):

@@ -804,7 +804,9 @@ def control_pivots():
     """{group / part id: pivot} of the crew controls built as their own parts (review r2 M4), model axes:
     yoke_L / yoke_R: kind 'yoke' -- origin the hub centre, axis along the column pointing FORWARD (a + rotation is a
     right roll, clockwise as the pilot sees it), roll_deg = YOKE roll, travel = the column's pitch travel along +x (aft)
-    at full pull / full push (YOKE travel: push 65, owner 2026-10-11);
+    at full pull / full push (YOKE travel: push 65, owner 2026-10-11), rest = the free yokes' parked offset along the
+    same axis (YOKE rest, rev P: the viewer's pose at a zero pitch command; the command's full push / pull still reach
+    travel_push / travel_pull);
     pedal_<seat><foot> (LL, LR, RL, RR): kind 'pedal' -- origin the hanging arm pivot (PEDALS pivot, under the lower
     panel), axis -y, travel_deg = the rotation that moves the pad PEDALS travel, gearing +1 for the right-foot pedals
     (forward with right rudder), -1 for the left: angle = -gearing x yaw x travel_deg (+ yaw = right rudder; a -
@@ -815,7 +817,8 @@ def control_pivots():
         hub = I.yoke_hub(sg)
         out["yoke_" + SIDE[sg]] = dict(origin=tuple(float(v) for v in hub), axis=(-1.0, 0.0, 0.0), kind="yoke",
                                        roll_deg=float(YK["roll"]), travel_pull=(t1, 0.0, 0.0),
-                                       travel_push=(t0, 0.0, 0.0), note="interior.YOKE roll / travel")
+                                       travel_push=(t0, 0.0, 0.0), rest=(float(YK["rest"]), 0.0, 0.0),
+                                       note="interior.YOKE roll / travel / rest")
     pp = I.pedal_points(0.0)
     d = np.array([pp["dir"][0], pp["dir"][1]])
     pl = float(PD["pad_wh"][1])

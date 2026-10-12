@@ -147,12 +147,17 @@ def boundary_loops(F):
 BEAD_ROWS = 5            # rows over the bead's half round R 0.4 (36 deg each: chord sag 0.0196 mm < cad.res interior 0.02)
 LEATHER_FILL = ((3.2, 0.0, 8.0), (6.0, 8.0, 1e9))   # the leather's fill points: spacing (mm) by depth inside the bead
 #                                                    (the crown rises over the first 8; flat beyond)
-LEATHER_TOL, LEATHER_MIN, LEATHER_ROUNDS = 3.2, 0.5, 4     # the leather's highlight criterion (deg: satin, under
+LEATHER_TOL, LEATHER_MIN, LEATHER_ROUNDS = 2.0, 0.5, 5     # the leather's highlight criterion (deg: satin, under
 #                                                          the viewer's pebble bump), point spacing (mm), rounds -- rev O
 #                                                          (3-D judges r2 CR2-03: at 4 deg a ring of 4-8 deg blobs 5-10 mm
 #                                                          inside each outline drew a sawtooth in the zebra / at grazing
 #                                                          light; rev N 4.0 / 0.6 / 3: 4,993 leather faces a yoke; 3.0:
-#                                                          5,471; the judges' 2.0: 6,341, over build.YOKE_BUDGET; 3.2)
+#                                                          5,471; the judges' 2.0: 6,341, over build.YOKE_BUDGET; 3.2);
+#                                                          rev P (3-D judges r3 CR3-03: the stripes still zig-zag): the
+#                                                          judges' 2.0 on the crown's rows (CROWN_ROWS) -- 5,185 leather
+#                                                          faces a yoke (rev O 5,313); the crown's faces (inside the bead)
+#                                                          interpolated vs exact normal p95 1.9 deg by area, > 4 deg 0.1 %
+#                                                          (rev O's lattice at 3.2: > 4 deg on 7 % of that area)
 
 
 def _plane_maps(g):
@@ -177,6 +182,83 @@ def _plane_maps(g):
         z, uf, hf = G._to_plane(P[..., 0], P[..., 1], P[..., 2], g)
         return uf, hf, z
     return to_plane, from_plane, Minv_T
+
+
+CROWN_ROWS = (7.0, 3.0, 12.0, 5.0, 0.30)   # rev P (3-D judges r3 CR3-03): the crown (pad_section: the leather rising
+#                                       over wc inside the bead) as ROWS along the contours of the smoothed inward
+#                                       distance it is built on (yoke_geom.pad_soft, marching squares on its own 0.2 mm
+#                                       grid): a row wherever the slope angle across them has turned CROWN_ROWS[0] deg,
+#                                       points along each row wherever the normal turns [1] deg about it (sin slope x
+#                                       the row's own turn), the row's turn <= [2] deg, <= [3] mm apart, kept >= [4] mm
+#                                       from the junction loop; the rows are constraint edges, so the triangles lie between
+#                                       neighbouring rows -- rev O's hex lattice (3.2 mm) and centroid refinement drew
+#                                       the crown's highlights as zig-zags (the curvature runs ACROSS the rows); None: the
+#                                       hex lattice (LEATHER_FILL[0])
+
+
+def _crown_rows(B, g, rows=None):
+    """The crown's row points (plane coordinates) inside the junction loop B and their constraint edges [(i, j)]
+    (CROWN_ROWS)."""
+    import contourpy
+    from matplotlib.path import Path
+    from scipy.spatial import cKDTree
+    turn, along, row_turn, lmax, clear = rows or CROWN_ROWS
+    rec, cen, wc, bead, gw = (float(x) for x in G.T()["pad_section"][:5])
+    s0 = gw + 2.0 * bead
+    sig = np.linspace(s0, s0 + wc, 4001)
+    t = (sig - s0) / wc
+    dz = (rec + cen) / wc * 6.0 * t * (1.0 - t)                          # smoothstep's slope
+    th = np.arctan(dz)
+    tau = np.r_[0.0, np.cumsum(np.abs(np.diff(th)))]
+    n_lv = max(2, int(math.ceil(math.degrees(tau[-1]) / turn)))
+    lv_tau = np.linspace(0.0, tau[-1], n_lv + 1)[1:]
+    levels = np.interp(lv_tau, tau, sig)
+    slopes = np.interp(levels, sig, th)
+    ps = G.pad_soft(g)
+    ny, nx = ps.g.shape
+    xs = ps.lo[0] + ps.res * np.arange(nx)
+    ys = ps.lo[1] + ps.res * np.arange(ny)
+    gen = contourpy.contour_generator(xs, ys, ps.g, line_type="Separate")
+    inside = Path(np.vstack([B, B[:1]]))
+    treeB = cKDTree(B)
+    P_all, cons = [], []
+    n0 = 0
+    for lv, ph in zip(levels, slopes):
+        for L in gen.lines(lv):
+            if len(L) < 4 or np.linalg.norm(L[0] - L[-1]) > 1e-6:
+                continue                                               # open lines run off the grid: none here
+            L = L[:-1]
+            d = np.roll(L, -1, 0) - L
+            seg = np.linalg.norm(d, axis=1)
+            if seg.sum() < 3.0:
+                continue
+            psi = np.unwrap(np.arctan2(d[:, 1], d[:, 0]))
+            dpsi = np.abs(np.r_[np.diff(psi), 0.0])
+            sinp = max(math.sin(abs(ph)), 1e-3)
+            keep, acc_l, acc_n, acc_r = [0], 0.0, 0.0, 0.0
+            for i in range(1, len(L)):
+                acc_l += seg[i - 1]
+                acc_n += dpsi[i - 1] * sinp
+                acc_r += dpsi[i - 1]
+                if (acc_l >= lmax or math.degrees(acc_n) >= along or math.degrees(acc_r) >= row_turn):
+                    keep.append(i)
+                    acc_l = acc_n = acc_r = 0.0
+            Q = L[keep]
+            if len(Q) > 2 and np.linalg.norm(Q[-1] - Q[0]) < 0.5 * lmax:
+                Q = Q[:-1]                                             # the closing gap: merge the last point
+            if len(Q) < 3:
+                continue
+            ok = inside.contains_points(Q) & (treeB.query(Q)[0] > clear)
+            idx = np.full(len(Q), -1)
+            idx[ok] = n0 + np.arange(int(ok.sum()))
+            P_all.append(Q[ok])
+            for a in range(len(Q)):
+                b = (a + 1) % len(Q)
+                if idx[a] >= 0 and idx[b] >= 0:
+                    cons.append((int(idx[a]), int(idx[b])))
+            n0 += int(ok.sum())
+    P = np.vstack(P_all) if P_all else np.zeros((0, 2))
+    return P, cons
 
 
 def pad_pocket(V, N, loop, g):
@@ -271,7 +353,10 @@ def pad_pocket(V, N, loop, g):
     lo2, hi2 = B.min(0), B.max(0)
     path = Path(np.vstack([B, B[:1]]))
     pts = []
-    for hx, smin, smax in LEATHER_FILL:
+    crown, ccons = _crown_rows(B, g) if CROWN_ROWS else (np.zeros((0, 2)), [])
+    if len(crown):
+        pts.append(crown)
+    for hx, smin, smax in (LEATHER_FILL[1:] if CROWN_ROWS else LEATHER_FILL):
         ys = np.arange(lo2[1], hi2[1], hx * math.sqrt(3) / 2)
         for jj, y in enumerate(ys):
             xs = np.arange(lo2[0] + (0.5 * hx if jj % 2 else 0.0), hi2[0], hx)
@@ -280,7 +365,7 @@ def pad_pocket(V, N, loop, g):
             if not len(Q):
                 continue
             dd = -Fp(Q[:, 0], Q[:, 1]) - Lr[0].mean()
-            d2b, _ = cKDTree(B).query(Q)
+            d2b, _ = cKDTree(np.vstack([B, crown])).query(Q)
             Q = Q[(dd >= smin) & (dd < smax) & (d2b > 0.6 * hx)]
             pts.append(Q)
     Gp = np.vstack(pts) if pts else np.zeros((0, 2))
@@ -289,7 +374,7 @@ def pad_pocket(V, N, loop, g):
         lu_ = (lea(Q[:, 0] + e, Q[:, 1]) - lea(Q[:, 0] - e, Q[:, 1])) / (2 * e)
         lh_ = (lea(Q[:, 0], Q[:, 1] + e) - lea(Q[:, 0], Q[:, 1] - e)) / (2 * e)
         return _unit(np.c_[-lu_, -lh_, np.ones(len(Q))] @ MiT.T)
-    cons = [(i, (i + 1) % k) for i in range(k)]
+    cons = [(i, (i + 1) % k) for i in range(k)] + [(k + a, k + b) for a, b in ccons]
     for rd in range(LEATHER_ROUNDS + 1):
         X = np.vstack([B, Gp])
         T = YT.cdt(X, cons)
@@ -683,12 +768,18 @@ def trim_terrain():
     return Terrain(GR, base, base_normal, slot=G.trim_slot_dims())
 
 
+TRIM_FACE_MAT = "yoke_trim_face"   # rev P (3-D judges r3 FID3-01; L6Y item 9): the legend ring's lunes a flat SATIN
+#                                    charcoal (rev N / O gloss_black: a mirror that read darker than the body from the crew
+#                                    stops, where every photo shows a grey dial at least as light as the body)
+TRIM_SLOT_MAT = "yoke_slot"        # the rocker slot a near-black MATTE pocket, the darkest part of the head (rev N / O
+#                                    satin 'black' read lighter than the gloss lunes)
+
+
 def trim_patch(V, N, loop, verbose=False):
     """The trim face inside the cut loop (frame mesh V / N vertex ids) as [(V, F, N, material)]: inside the legend
-    ring's groove bottom the lunes 'gloss_black' (the bezel ring, rev N) and the recessed slot 'black', 'grip_black'
-    outside; heights exact (Newton on the
-    smooth field / the grooves' planes), normals split along the creases only.  The loop is no crease: its vertices
-    keep the frame mesh's normals."""
+    ring's groove bottom the lunes TRIM_FACE_MAT and the recessed slot TRIM_SLOT_MAT, 'grip_black' outside; heights
+    exact (Newton on the smooth field / the grooves' planes), normals split along the creases only.  The loop is no
+    crease: its vertices keep the frame mesh's normals."""
     c, eu, ev, n = trim_frame()
     Tr = trim_terrain()
     Q = V[loop] - c
@@ -735,8 +826,8 @@ def trim_patch(V, N, loop, verbose=False):
     Fo[flip] = Fo[flip][:, ::-1]
     R0 = 0.5 * float(G.T()["trim"][2])
     cen = X[T].mean(1)
-    mat = np.where(np.hypot(cen[:, 0], cen[:, 1]) < R0, "gloss_black", "grip_black").astype(object)
-    mat[lab >= SLOT_FLOOR] = "black"                                    # the recessed slot: satin black
+    mat = np.where(np.hypot(cen[:, 0], cen[:, 1]) < R0, TRIM_FACE_MAT, "grip_black").astype(object)
+    mat[lab >= SLOT_FLOOR] = TRIM_SLOT_MAT                              # the recessed slot
     out = []
     for mt in np.unique(mat):
         Fm = Fo[mat == mt]
@@ -1012,14 +1103,18 @@ def moulding_parts(verbose=False, cover=None):
 
 
 # ============================================================================================ needle triangles
-def collapse_needles(pieces, min_angle=5.0, ratio=0.35, rounds=6, verbose=False, tag=""):
+def collapse_needles(pieces, min_angle=5.0, ratio=0.35, rounds=6, verbose=False, tag="", micro=(0.01, 30.0)):
     """Remove the needle triangles (min angle < min_angle, shortest edge < ratio x the middle one) of a group of
     explicit pieces [(V, F, N, material)] -- where a strip's rows converge (a round meeting a crease, an offset row at a
     tight corner) or crease chains meet: the short edge collapses onto one end in POSITION space (every split-normal
     copy of that point moves, so creases and material seams stay welded); the group's open boundary (its seam with the
     moulding / the frame loop) never moves; a collapse that would flip a face, open or pinch the welded surface is
-    skipped.  Positions stay those of the kept end (no new geometry).  Returns the pieces."""
+    skipped.  Positions stay those of the kept end (no new geometry).  Rev P (3-D judges r3 CR3-02: a cluster of
+    0.0004-0.002 mm^2 caps along the trim ring's groove bottom by the slot, nearly collinear points of two crease chains,
+    shaded 37-70 deg off their planes -- a dark notch in the ring): MICRO faces too, area < micro[0] mm^2 with a corner
+    normal > micro[1] deg off the face, collapse their shortest edge likewise.  Returns the pieces."""
     Vs = [np.asarray(p[0], float).copy() for p in pieces]
+    Nall = np.vstack([np.asarray(p[2], float) for p in pieces])
     Fs = [np.asarray(p[1], np.int64).copy() for p in pieces]
     off = np.cumsum([0] + [len(v) for v in Vs])
     V = np.vstack(Vs)
@@ -1043,12 +1138,16 @@ def collapse_needles(pieces, min_angle=5.0, ratio=0.35, rounds=6, verbose=False,
         A = np.degrees(YM._min_angle(P[Fp[:, 0]], P[Fp[:, 1]], P[Fp[:, 2]]))
         L = np.stack([np.linalg.norm(P[Fp[:, (j + 1) % 3]] - P[Fp[:, j]], axis=1) for j in range(3)], 1)
         Ls = np.sort(L, 1)
-        cand = np.nonzero((A < min_angle) & (Ls[:, 0] < ratio * Ls[:, 1]))[0]
+        fn0 = np.cross(P[Fp[:, 1]] - P[Fp[:, 0]], P[Fp[:, 2]] - P[Fp[:, 0]])
+        ar = 0.5 * np.linalg.norm(fn0, axis=1)
+        fu = fn0 / np.maximum(2.0 * ar, 1e-30)[:, None]
+        dev = np.degrees(np.arccos(np.clip(np.einsum("fkd,fd->fk", Nall[Fall], fu), -1.0, 1.0))).max(1)
+        micro_f = (ar < micro[0]) & (dev > micro[1]) if micro else np.zeros(len(Fp), bool)
+        cand = np.nonzero(((A < min_angle) & (Ls[:, 0] < ratio * Ls[:, 1])) | micro_f)[0]
         if not len(cand):
             break
         used = np.zeros(len(P), bool)
         moved = 0
-        fn0 = np.cross(P[Fp[:, 1]] - P[Fp[:, 0]], P[Fp[:, 2]] - P[Fp[:, 0]])
         for f in cand[np.argsort(A[cand])]:
             j = int(np.argmin(L[f]))
             a, b = Fp[f, j], Fp[f, (j + 1) % 3]
@@ -1086,7 +1185,6 @@ def collapse_needles(pieces, min_angle=5.0, ratio=0.35, rounds=6, verbose=False,
             raise RuntimeError(f"collapse_needles{tag}: the welded surface opened ({op} -> {op2}, {nm} -> {nm2})")
     # back to the pieces: every vertex at its point's (possibly moved) position; degenerate faces dropped
     V = P[pid]
-    Nall = np.vstack([np.asarray(p[2], float) for p in pieces])
     out = []
     for i, (_, _, N, mat) in enumerate(pieces):
         Fi = Fall[owner == i]

@@ -33,6 +33,7 @@ sys.path.insert(0, str(ROOT))
 
 from model import yoke3d as Y          # noqa: E402
 from model import yoke_geom as G       # noqa: E402
+from model import yoke_legends as YL   # noqa: E402
 from model import yoke_mesh as YM      # noqa: E402
 from model import yoke_patch as YP     # noqa: E402
 
@@ -187,6 +188,27 @@ def main():
         report(f"{k}: corner normals vs the solid's gradient (0.03 mm inside each face), 95th percentile <= 2 deg",
                float(np.percentile(a, 95)) <= 2.0, f"p50 {np.percentile(a, 50):.2f}, p95 {np.percentile(a, 95):.2f}, "
                                                    f"p99 {np.percentile(a, 99):.2f} deg over {len(a)} corners")
+    # 4b ----------------------------------------------------------------------------------------------- knobs
+    # rev P (3-D judges r3 CR3-01 / 02): row 4 bounds the 95th percentile only (its p99 41.9 deg let ~200 corners pass);
+    # a corner normal far off its OWN face is what shades as a knob / notch whatever the solid says -- none > 60 deg on
+    # any face (the step V's ends at |u| 12.9 carried a groove wall's normal on a face-plane triangle, 78-89 deg), and
+    # no sub-0.01 mm^2 face with a corner > 30 deg off its plane (the trim ring's groove-bottom caps by the slot)
+    kn, mi, where = 0, 0, []
+    for p in ps:
+        P = p.V[p.F]
+        fnr = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0])
+        ar = np.linalg.norm(fnr, axis=1)
+        fu = fnr / np.maximum(ar, 1e-30)[:, None]
+        dev = np.degrees(np.arccos(np.clip(np.einsum("fkd,fd->fk", p.N[p.F], fu), -1.0, 1.0))).max(1)
+        k1 = (ar > 1e-12) & (dev > 60.0)
+        k2 = (ar > 1e-12) & (0.5 * ar < 0.01) & (dev > 30.0)
+        kn += int(k1.sum())
+        mi += int(k2.sum())
+        if k1.any() or k2.any():
+            c = P[k1 | k2].mean(1)[0]
+            where.append(f"{p.name}/{p.mat} {int(k1.sum())} / {int(k2.sum())} (e.g. u {c[0]:.1f} h {c[1]:.1f} a {c[2]:.1f})")
+    report("knobs: no face with a corner normal > 60 deg off its own plane; no face < 0.01 mm^2 with one > 30 deg off",
+           kn == 0 and mi == 0, f"{kn} / {mi}" + (": " + "; ".join(where) if where else ""))
     # 5 ------------------------------------------------------------------------------------------------ highlights
     frame = max((p for p in ps if p.name == "moulding" and p.mat == "grip_black"), key=lambda p: len(p.F))
     _, vcls = YP.visibility()
@@ -221,9 +243,9 @@ def main():
          f"{YP.CURV_KMAX_VIS:g} x there)", f"by area p95 {hr3['p95']:.2f} deg, > 4 deg {hr3['over4']:.2f} %; per face p95 "
          f"{hr3['fp95']:.2f}, > 4 deg {hr3['fover4']:.1f} % of {hr3['faces']} faces; all visible faces per face: p95 "
          f"{hr['fp95']:.2f}, > 4 deg {hr['fover4']:.1f} %")
-    # rev O (3-D judges r2 CR2-02): the gloss-black lunes of the trim face (outside its ring groove and slot), the
-    # glossiest black on the yoke -- refined to the cover's 1 deg (yoke_patch.TRIM_INTERP)
-    lun = [q for q in ps if q.name == "moulding" and q.mat == "gloss_black"]
+    # rev O (3-D judges r2 CR2-02): the lunes of the trim face (outside its ring groove and slot) -- refined to the
+    # cover's 1 deg (yoke_patch.TRIM_INTERP); rev P: satin charcoal (yoke_patch.TRIM_FACE_MAT), no longer gloss black
+    lun = [q for q in ps if q.name == "moulding" and q.mat == YP.TRIM_FACE_MAT]
     if lun:
         q = lun[0]
         c_, n_ = G.head_out_face()
@@ -235,7 +257,7 @@ def main():
         yl_ = G.trim_slot_dims()[0]
         keep = (np.abs(rr - R0) > 0.5 * w_ + 0.1) & (np.abs(C_ @ ev_) > yl_ + 0.1)
         hr4 = YM.highlight_report("msmooth", q.V, q.F, q.N, face_mask=keep)
-        report("trim-face lunes (gloss black, outside the ring groove / slot): interpolated vs exact normal, 95th "
+        report("trim-face lunes (outside the ring groove / slot): interpolated vs exact normal, 95th "
                "percentile by area <= 1 deg and > 4 deg on <= 1 % of the area (rev N: 5 % of their pixels > 4 deg)",
                hr4["p95"] <= 1.0 and hr4["over4"] <= 1.0,
                f"per face p95 {hr4['fp95']:.2f}, > 4 deg {hr4['fover4']:.1f} %; by area p95 {hr4['p95']:.2f} deg, "
@@ -250,7 +272,7 @@ def main():
         if len(words) < 2:
             continue
         wid = np.repeat(np.arange(len(words)), [int(w[2]) for w in words])
-        for side, blk, sg in (("co-pilot", G.legend_blocks(k), 1), ("pilot", Y.reading_blocks(k), -1)):
+        for side, blk, sg in (("co-pilot", YL.legend_blocks(k), 1), ("pilot", Y.reading_blocks(k), -1)):
             aw = np.array([math.degrees(math.atan2(P0[1], P0[0])) for P0, _, _ in blk])
             aw = aw if sg > 0 else 180.0 - aw                                   # front view (world): the pilot mirrored
             c = math.degrees(math.atan2(np.sin(np.radians(aw)).sum(), np.cos(np.radians(aw)).sum()))
