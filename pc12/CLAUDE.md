@@ -3,11 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.72M tris of which the interior ~873k, ~48 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.74M tris of which the interior ~893k, ~48.5 MB
 incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
 review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`; the
-yokes are one mesh at every RES, model/yoke3d.py: ~2.30M tris, ~40 MB,
+yokes are one mesh at every RES, model/yoke3d.py: ~2.32M tris, ~41 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -1673,3 +1673,71 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   Photo | before (d007ea8, GEOM A's paddle yoke) | merged sheets of the standard views: out/tmp/fd_yoke_merge/cmp_*.jpg
   (pilot, copilot, fd_cabin, cockpit_preset, panel_408b, cabin_fwd_406, pedestal, pilot / copilot_eye_yoke, ext_wind,
   yoke_p408_pilot / p409_copilot / mex_pilot / press_pilot; gitignored: they embed the photos).
+- Flight deck + yoke fix r1 (2026-10-12; the flight-deck judges' round 1 after the yoke merge, at 4d0f95e: owner 6.8
+  (yoke 7.0), fidelity 6.8 (yoke 7.8); FDY-O1-01..06, FIDY1-01..07).  No table changed; L6 regenerated (it draws the
+  lip through `interior.glareshield_lip`), L6B / L6Y / L6Y2 identical.  Look development in one viewer page again
+  (out/tmp/fdy_fix_r1/ld.py jobs: `?cabTrim=` / `?partTrim=` / `?viewer=` / `?yokeProbe=` overrides on a reload, or
+  in-page `LD.patch` material flags; `mstat.py` per part:material p5 / p50 / p95 and the local 9 px sd from the ID
+  pass) and, for the fleece's shape, the seats-only LAB page (out/tmp/fdy_fix_r1/lab).
+  HOOD (FDY-O1-03 / FIDY1-01, major): `interior.lip_dz` -- ONE C2 curve through the approved GLARESHIELD lip_dz knots (a
+  natural cubic spline mirrored about BL 0, so level on the centreline; checked monotone, else the monotone PCHIP;
+  straight with its end slope beyond the last knot, where the old clamp had put a second corner at |BL| 0.70 inside the
+  0.71 cheek), used by `glareshield_lip` (the drawing, the design-eye camera: unchanged to 0.1 mm) and
+  `flightdeck.lip_z` (hood, rolled lip, stitch rows, fascia top, `z_brow`).  np.interp had drawn the arch as a polyline
+  whose slope broke 18 -> 46 deg at |BL| 0.50: the hood, its lip, the stitching and the fascia turned down at the
+  outboard ends in straight facets with a V corner; the curve departs from the polyline by <= 9.3 mm (above it, |BL|
+  0.45, between the knots) and turns over a >= 0.18 m radius.  `flightdeck._hood_grids` rows every ~8 mm outboard of |BL| 0.40 (129 rows, were 81 at 17.8 mm).
+  FLEECE (FDY-O1-01 / FIDY1-02, major): `materials.js` fleece `locks` mode (replaces r5's `pile` worms -- veined marble /
+  crumpled foil): every jittered cell of a 3-D lattice carries one LOCK, an elongated soft blob in the tangent plane
+  (`locks` [freq, albedo lo, hi, bump, len min / max (cells), asp, jit, tipK, gap, seam]; `lockShape` [tip taper, bend,
+  strand contrast, strands, swirl, ragged edge]) laid along the pile's flow (down the vertical faces, forward over the
+  tops) turned +-0.9 rad and swirling over ~10 cm, lit toward its tip, a few fibre strands, a ragged edge; where locks
+  overlap the top one wins (max, not a sum) with a dark seam between them, the dark gaps where none reaches; 100 / m
+  (13-25 mm locks) over a fine 200 / m layer.  Base (0.33, 0.27, 0.27) R = G (P1046410 R = G, B - R 19), CABIN_TRIM
+  0.42 -> 0.60: at panel_408b luminance ~119 (P1046408 121), local sd 13.8 (13.9), B - R +20 (photos +15..+27).  The
+  lab's brighter room light had asked for a darker, contrastier mat that read as dark blue camouflage under the cabin
+  law -- tune it in the viewer.  Geometry (`seats.shag`): over the r5 rolled rim a soft FRINGE of 17-27 mm locks, 0 ..
+  4.2 mm out (`SK_FRINGE`, `SK_FRINGE_K`), its phase shifting round the roll (`SK_FRINGE_ROW`: lumps, not vertical
+  ribs), rims every `SK_RIM_STEP_F` 7.2 mm (5 / 6.5 mm put the crew seat over its 66.3k cap): crew seats 65.3k / 65.5k.
+  YOKE FINISH (FDY-O1-02 major / FIDY1-04, viewer): CABIN_TRIM entries 8-12 = a NEAR-FIELD term (x lo below WL y0 ..
+  x hi above y1 on the diffuse, a 12th entry its share on the reflections: the lower stem sees the dark lap and lower
+  panel, the crown the windshield over the glareshield) -- the cover [.., 0.5, 1.06, 1.79, 1.91, 0.7] (yoke close-up
+  p5 206 -> 183, median 209-214 kept), the pads [.., 0.7, 1.2, 1.78, 1.92] with a 1.7 mm grain (VIEWER yoke_leather; the
+  1.1 mm pebble had faded to one flat tone at every crew-seat distance); the body 'yoke:grip_black' [0, 0.40, 0.5, 1,
+  0, 12] + PART_TRIM 'yoke_L / _R:grip_black' roughness 0.22, specIn 3.5, a warm specularColor (the sky's blue out of
+  it): at the yoke close-up p10 / p50 / p95 45 / 58 / 106 (was 48 / 53 / 60, B - R +21 -> +9; P1046409 38 / 69 / 127),
+  at the pilot stop body / cover 0.30, pads / body 1.12 ([Y1b] 0.22-0.34 / 1.0-1.4); YOKE_PROBE yoke_silver x 1.25 (+5 %
+  at the close-up cameras; [Y1d] insert / cover 0.94 at the P1046408 camera, <= 0.97).
+  MINORS: FDY-O1-04 the windshield / side-window retainers 12 -> 8 mm (`fuselage_parts.GLAZING_RETAINER` -4.5 / +3.5)
+  in a darker satin metal (0.36, rough 0.30; assemble / lookdev): pro3001_stbd34_close / pro3005_port_close show a ~4-5
+  mm light edge line, not a polished ring (the fastener rows were not added: a glazing-part change the L2 rows read);
+  FDY-O1-05 the glazing seal lip 4 -> 1.8 mm (`GLAZING_TRIM seal_w`; fit_check 30 unchanged, nearest 2.9 mm);
+  FDY-O1-06 the harness webbing crowned 1.2 mm across with rounded edges (`seats.ribbon` crown, `HARN_CROWN`) and a
+  woven sheen (VIEWER harness sheen 0.7); FIDY1-03 pedestal_gunmetal CABIN_TRIM 0.6 -> 0.25 (panel_408b 63 -> ~48); FIDY1-06 CB panels
+  (`fd_detail_b.CB`): heads r 4 -> 3 mm on thin dark-metal rings (`sleeve_mat`; the white collars read as polka dots),
+  the dark label cells on a dark-grey strip framed by white rules (`cell_mat`) -- the "light-silver strips on both
+  consoles" of the finding REFUTED in part: P1046410's LH and P1046409's RH front blocks show dark cells with white text
+  over the bus band, only the AOPA RH rear block light silver cells, kept so; FIDY1-07 the walnut lighter and less
+  saturated (VIEWER veneer_walnut (0.105, 0.078, 0.058): the divider at cabin_fwd_406 ~(55, 50, 50) against P1046406's
+  (66, 53, 50)), the overhead's fill 0.5 -> 0.85 (PART_TRIM 'interior_lining:panel_dark': 30 -> 47 at cabin_fwd_406,
+  P1046406 70, held by [T14] <= 50 at the crew stops, 42 / 47 -- P1046408 reads it ~45; the CB bezel frames on the
+  lining share it), the
+  MASTER POWER guard 0.75 of a black recess frame in the dim placard red (`OVH master_k`).  FIDY1-05 (OPEN owner
+  question, the crew-seat / console tables' re-measure): evidence only -- `?seatpark=aft` parks both seats at full aft
+  travel (70 mm) for photo comparisons at the P1046410 / 09 / Mexico cameras; the default is unchanged.  Look-dev
+  overrides added to `materials.js`: `?partTrim=part:material={json}|..`, `?viewer=material={json}|..`.
+  Build (both tiers rebuilt): 2,740,904 triangles / 48.45 MB, light tier 2,315,271 / 40.71 MB; interior 892.7k of 896k
+  (crew seats 65.3k / 65.5k of 66.3k, flight_deck 210.4k of 211k, interior_lining 176.6k; seat_pax3-6 34,834 OVER the
+  34.8k cap as before).  Verified on this build: fit_check FIT OK (138 ok, no open row: 27 PDU bezel tops 54 / 54, 24
+  harness on the fleece +1.5 / +1.6 mm, 26 no coplanar overlaps, 30 nearest 2.9 mm, 30b / 22 all seated, 31 10.3 mm),
+  consistency_2d3d 157 / 157, drawing.master L6 L6B (L6: 25 texts crossed by lines, as before; L6B unchanged),
+  drawing.sheet + drawing.verify (the GA's glazing lines moved with the retainer band; the same dimension table),
+  web/tour_data.py --check current, viewer_test `--only fdlook` 10 / 10 and `--only tour` 31 / 31 (the first tour try
+  timed out on a screenshot beside the comparison captures; rerun clean), the FULL viewer_test 231 / 231 (~2 h beside
+  artifact_test: [FD-L2] carpet 14 / consoles 16, [FD-L3] glareshield 60 (lip 72 / underside 44), [FD-L4] yoke 212,
+  [FD-L5] sheepskin (113, 115, 133) lum 116, [FD-L6] p50 76, bands 26 / 50 / 13 %, [T14] overhead 42 / 47 / 48, walnut
+  47, [Y1] cover 212 / up 183 / lo 153 / body 63 / pads 70, [Y1b] body 0.30, pads / body 1.12, [Y1d] insert / cover
+  0.94, [Y1e] far 0.85 / near 0.38 / lower / cover 0.78 / band 53), web/package.py verify OK (meshopt 17.65 + 15.18 MB),
+  the Artifact bundle 119.0 MB in 2 publishes (63.3 + 55.7 MB), artifact_test 70 / 70.  Photo | before (4d0f95e, the
+  judges' renders) | after sheets of the standard views and close-ups: out/tmp/fdy_fix_r1/cmp_*.jpg (gitignored: they
+  embed the photos; the comparison captures ran at pedestal_gunmetal 0.33, the shipped value is 0.25).
