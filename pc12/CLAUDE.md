@@ -1023,7 +1023,11 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   (sub-pixel grooves: now dark lines; a screen-space groove AA not built); CR4-10 (the cover's planar face); FID4-04 (grip
   oblique form: owner, the AOPA co-pilot camera first).  MERGE NOTE (wip/stage2-drawings, the flight-deck look): the
   yoke's YOKE_PROBE and CABIN_TRIM entries were tuned on this branch's studio cabin light; after the merge the satin
-  inserts may rather join the flight deck's REFL_DIR cabin probe -- re-measure [Y1d] there.
+  inserts may rather join the flight deck's REFL_DIR cabin probe -- re-measure [Y1d] there.  Verified on this build (both
+  tiers rebuilt): yoke_mesh_check OK, fit_check OK (131 ok; the column row the rev Q finish rule, exposed 109 mm),
+  consistency_2d3d 157 / 157, L6Y / L6Y2 regenerated (no texts crossed), viewer_test numeric 63 / 63, --only tour 30 / 30,
+  the full run 221 / 221 (110 min).  Before / after: out/tmp/yoke3d/r4fix/cmp/cmp_*.png (renders only); the photo sheets
+  refs/cache/overlays/yoke/r4fix/cmp_yoke_*.png (gitignored).
 - Review r4 (owner 2026-10-04: every lens >= 8, the rendering / picture and smooth-curves lenses included):
   CABIN LOOK (NAV8-01 / INT8-01, viewer only): inside the closed cabin (`U.cabinIn`, Model.updateCabin) the interior
   materials take `materials.js CABIN_LOOK` instead of the studio x cabinAO -- no key light through the skin (it had been
