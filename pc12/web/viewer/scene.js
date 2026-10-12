@@ -135,7 +135,7 @@ export const LOOK = {
   // ~3.7 mm across the near-horizontal hood): the box +-1.35 m round the glareshield / crew seats and 4096 px on
   // desktops (0.66 mm texels; phones keep 1024 -- 2.6 mm, was 3.7), the normal bias scaled with the texel
   sun: { intensity: qn('sun') ?? 8, color: 0xfff4e6, centre: [3.95, 0.0, 2.05], box: 1.35, dist: 8, near: 4, far: 13,
-    bias: -0.0003, normalBias: 0.0035, radius: qn('sunrad') ?? 2 },   // (fix r2: PCF radius 3 -> 2, crisper post shadows; 1.5 showed the texels)
+    bias: -0.0003, normalBias: 0.0035, radius: qn('sunrad') ?? 3 },   // (fix r2: PCF radius 3 -> 2, crisper post shadows; 1.5 showed the texels; fix r5 FID-FD4-05: 3 again -- at 2 the sun patch's edge on the hood, lit at grazing angles, showed the texels' steps)
 };
 
 // Camera presets.  `dir` points from the target to the camera (glTF axes: X starboard, Y up, Z aft);

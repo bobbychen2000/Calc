@@ -91,13 +91,19 @@ GLAZING_TRIM = dict(
     # (flight deck fix r2b: the sill margin 3 -> 34 mm -- through the lowest ~30 mm of the pane the crew eyes looked past
     #  the 9 mm deep seal under the retainer / mask skin's overlap onto the skin's inner face, a sunlit white rim line
     #  under the windshield from both seats; P1046409 / 10 show the hood meeting the glass in a dark line)
-    ws_margin=(0.034, 0.032, 0.042), ws_post=0.047, ws_radii=(0.060, 0.045, 0.0), ws_post_r=0.045,
+    # (flight deck fix r5 FDO4-02 / FID-FD4-02: the A-pillar edges 32 -> 8 mm here and 35 -> 6 mm on the side window's
+    #  front edge -- the photo-fitted panel_408b camera puts P1046408's left post at 116 / 108 / 84 px (1920 px frame,
+    #  rows 240 / 300 / 360) where the two panes' edges alone are 81 / 75 / 69 px apart: the moulding covers only ~12 mm
+    #  (side projection) of glass in all, the side window's glass showing right behind the post; at 32 / 35 mm the
+    #  visible edges stood 299 / 278 / 258 px apart, a broad slab; now 126 / 117 / 108 px.  Along the post the reveals
+    #  are one round tube, POST_TUBE)
+    ws_margin=(0.034, 0.008, 0.042), ws_post=0.047, ws_radii=(0.060, 0.045, 0.0), ws_post_r=0.045,
     # side window: sill / aft / top / front (A-pillar) / lower-front chamfer: the visible opening from inside -- sill
     # WL 2.09-2.11, top 2.43-2.46, aft edge STA 4.15-4.19, front-low corner ~3.56 / 2.15 (S15 panoramas, +-0.03); the
     # front edge 35 mm in (P1046408 overlay: the glass shows up to ~1/3 of the 50 mm tried first) [M]
     # (flight deck fix r2b: the sill 12 -> 19 mm -- just over the seal lip the crew eyes saw the retainer band's glass-side
     #  face through the pane, ~0.3 deg of polished metal: a white line along each side window's sill from both seats)
-    sw_margin=(0.019, 0.175, 0.085, 0.035, 0.035), sw_radii=(0.120, 0.105, 0.045, 0.050, 0.050),
+    sw_margin=(0.019, 0.175, 0.085, 0.006, 0.035), sw_radii=(0.120, 0.105, 0.045, 0.050, 0.050),
     wire_d=(0.009,), wire_w=0.0007,   # [E] heating bus bar inside the visible edge (P1046408 / 10): ONE per edge, 9 mm
     #                        in, 0.7 mm, dark bronze (flight deck fix r2 FDO2-06 / FID-FD2-05: the two dark-metal lines
     #                        15 / 23 mm in read as stray wires / cracks across the glass from both seats)
@@ -295,9 +301,64 @@ def _surface_dir(Px, Pt, gq):
     return _unit(gq[:, :1] * Px + gq[:, 1:] * Pt)
 
 
+# flight deck fix r5 (FDO4-02 / FID-FD4-02: from the crew stops and at the photo-fitted panel_408b camera the A-pillar was a
+# broad flat slab, ~160 mm across at the glass -- the pillar reveals' margins (32 / 35 mm in side projection, ~65-70 mm
+# along the steeply inclined skin there) and the lining strip between them, ~50 mm deep with a flat bottom; P1046408
+# through its fitted camera shows a round post ~95-110 px across at 1920 px (~70-80 mm) with the side window's glass
+# right behind it, P1046409 / 10 / AOPA a slim dark tube): the windshield's pillar edge and the side window's front edge
+# now show the glass to within 8 / 6 mm (side projection) of their pane edges (GLAZING_TRIM), and along the post the
+# two reveals are one ROUND TUBE -- each column's profile a quarter ellipse from the glass (leaving it square, as the
+# reveal did) round to the post's midline (post_axis), `proud` in front of the lining there so the lining strip between
+# the panes lies hidden behind it; blended into the standard funnel profile over `fade` of the axis at both ends (the
+# post flares into the glareshield / sill and the roof as in the photos) and from `z0` up (below it the side window's
+# reveal is the leather sill).  The approved glazing (L2: the panes 25 mm apart in side projection, ~43 mm across the
+# skin) is unchanged; the post is ~70 mm across at the glass, ~48 mm deep, its own darker satin 'lining_fd_post' (no edge
+# bead along it: its round section carries the highlight).
+POST_TUBE = dict(fade=0.16, z0=2.24, proud=0.007, past=0.0015, mat="lining_fd_post")
+
+
+def _post_tube(kind, side, G, V, O, lab):
+    """The A-pillar columns of one pane's funnel grid G (n, rows, 3) re-profiled to the round post (POST_TUBE); returns
+    (G, w) with w (n,) the post weight of each column (0: the standard funnel, 1: the tube)."""
+    q = POST_TUBE
+    w = np.zeros(len(G))
+    lab_post = 1 if kind == "ws" else 3                 # the windshield's pillar edge / the side window's front edge
+    cols = np.nonzero(lab == lab_post)[0]
+    if not len(cols) or q is None:
+        return G, w
+    c, a, s0, s1, M, N3m = post_axis(side)
+    tM = (M - c) @ a
+    PV, N3V = oml_frame(V[cols, 0], V[cols, 1])[:2]
+    PO = oml_frame(O[cols, 0], O[cols, 1])[0]
+    t = (PO - c) @ a
+    u = (t - s0) / (s1 - s0)
+    from model import seats as S
+    wc = S.smoothstep(0.0, q["fade"], u) * S.smoothstep(1.0, 1.0 - q["fade"], u) * \
+        S.smoothstep(q["z0"], q["z0"] + 0.03, PO[:, 2])
+    Mi = np.stack([np.interp(t, tM, M[:, i]) for i in range(3)], 1)            # the midline point of each column
+    Nm = _unit(np.stack([np.interp(t, tM, N3m[:, i]) for i in range(3)], 1))
+    Nms = _unit(np.c_[np.zeros(len(Nm)), Nm[:, 1], Nm[:, 2]])
+    D = lining_depth(Nms) + q["proud"]                                        # the tube's bottom: in front of the lining
+    A = PV - GLAZING_TRIM["glass_d"] * N3V                                     # the funnel's glass end (row 0)
+    B = Mi - D[:, None] * Nms                                                  # on the midline: both halves meet there
+    Dv = np.sum((B - A) * N3V, 1)[:, None] * N3V                               # straight in from the glass ...
+    Lv = (B - A) - Dv                                                          # ... then across to the midline
+    R = G.shape[1]
+    th = 0.5 * np.pi * np.linspace(0.0, 1.0, R - 1)
+    T = np.empty((len(cols), R, 3))
+    for r, a_ in enumerate(th):                                                # a quarter ellipse A -> B
+        T[:, r] = A + (1.0 - math.cos(a_)) * Lv + math.sin(a_) * Dv
+    T[:, R - 1] = B + q["past"] * _unit(Lv)                                    # a hair past the midline (no crack)
+    G = G.copy()
+    G[cols] = (1.0 - wc)[:, None, None] * G[cols] + wc[:, None, None] * T
+    w[cols] = wc
+    return G, w
+
+
 def pane_moulding(kind, side):
     """The moulded reveal of one pane (kind 'ws' windshield, 'sw' side window; side -1 port, +1 starboard): funnel
-    (lining_flightdeck) and seal lip ('seal'); returns [(Mesh, material)] and the funnel grid (n, rows, 3)."""
+    (lining_flightdeck) and seal lip ('seal'); returns [(Mesh, material)], the funnel grid (n, rows, 3), the edge label
+    of each column and its A-pillar tube weight (POST_TUBE)."""
     g = GLAZING_TRIM
     V, O, lab = _pane_pairs(kind, side)
     # one row per tau (the glass end first), the overlap row last
@@ -327,6 +388,7 @@ def pane_moulding(kind, side):
     dlO = lining_depth(NsO)
     rows.append(PO + g["overlap"] * out_dir - (dlO - g["proud"])[:, None] * NsO)
     G = np.stack(rows, 1)                                                        # (n, rows, 3)
+    G, wpost = _post_tube(kind, side, G, V, O, lab)
     funnel = grid_surface(G, close_u=True)
     anchor = np.repeat(PO[:, None, :], G.shape[1], 1).reshape(-1, 3)
 
@@ -354,7 +416,7 @@ def pane_moulding(kind, side):
                 b = PV[idx] + (d0 + g["wire_w"]) * in_dir[idx] - g["wire_depth"] * N3V[idx]
                 w = grid_surface(np.stack([a, b], 1))
                 out.append((_orient(w, lambda C: -np.mean(N3V, 0)[None].repeat(len(C), 0)), "busbar_bronze"))
-    return out, G, lab
+    return out, G, lab, wpost
 
 
 def _label_spans(lab, keep, trim=0):
@@ -404,10 +466,10 @@ def glazing_mouldings():
     with res.coarse():
         for kind in ("ws", "sw"):
             for side in (-1, 1):
-                ms, G, lab = pane_moulding(kind, side)
+                ms, G, lab, wpost = pane_moulding(kind, side)
                 funnel = ms[0][0]
                 if kind == "ws":
-                    out += _reveal_zones(G, np.arange(len(G)), funnel, True)   # inner face / lining / edge bead
+                    out += _reveal_zones(G, np.arange(len(G)), funnel, True, wpost)   # inner face / lining / edge bead
                     out += ms[1:]
                     continue
                 out.append(ms[1])                                       # seal lip
@@ -422,7 +484,7 @@ def glazing_mouldings():
                 iu = np.r_[idx[nlow:], idx[0]]                          # lining columns (+ both boundary columns)
                 m = grid_surface(G[il])
                 out.append((_orient(m, lambda C, f=funnel: _toward(f, C)), "leather_glareshield"))
-                out += _reveal_zones(G, iu, funnel, False)
+                out += _reveal_zones(G, iu, funnel, False, wpost)
                 Nn = _grid_n(G[il], funnel)
                 for r in SILL["stitch_rows"]:
                     out.append((dashes(G[il, r], Nn[:, r]), "panel_grey"))      # tone-on-tone (FDO1-04)
@@ -458,9 +520,32 @@ def glazing_mouldings():
 REVEAL = dict(inner_row=6, bead_r=0.0028, bead_phi=(-20.0, 200.0, 13), bead_step=0.012)
 
 
-def _reveal_zones(G, cols, funnel, closed):
+def _reveal_zones(G, cols, funnel, closed, wpost=None):
     """[(Mesh, material)] of the funnel grid G's columns `cols` (cyclic when `closed`): the inner face, the lining
-    beyond it and the edge bead along the row between them."""
+    beyond it and the edge bead along the row between them; the A-pillar tube's columns (wpost > 0.5, POST_TUBE) one
+    piece in its own material, no bead."""
+    cols = np.asarray(cols)
+    isp = None if wpost is None else wpost[cols] > 0.5
+    if isp is None or not isp.any():
+        return _reveal_run(G, cols, funnel, closed)
+    n = len(cols)
+    if closed:                                         # start at the first column after a post run
+        k0 = int(np.nonzero(~isp & np.roll(isp, 1))[0][0])
+        cols, isp = np.roll(cols, -k0), np.roll(isp, -k0)
+    cuts = np.r_[0, np.nonzero(np.diff(isp.astype(int)))[0] + 1, n]
+    out = []
+    for a, b in zip(cuts[:-1], cuts[1:]):
+        ext = cols[a:b + 1] if (b < n) else (np.r_[cols[a:b], cols[0]] if closed else cols[a:b])
+        if isp[a]:
+            m = grid_surface(G[ext])
+            out.append((_orient(m, lambda C, f=funnel: _toward(f, C)), POST_TUBE["mat"]))
+        elif len(ext) >= 2:
+            out += _reveal_run(G, ext, funnel, False)
+    return out
+
+
+def _reveal_run(G, cols, funnel, closed):
+    """_reveal_zones of a run of columns without the post tube."""
     from scipy.spatial import cKDTree
     q = REVEAL
     k = q["inner_row"]
@@ -495,22 +580,8 @@ def _reveal_zones(G, cols, funnel, closed):
     return out
 
 
-# flight deck fix r3 (FDO3-02 / FID-FD3-03: from the crew stops the A-pillar -- the windshield's pillar reveal, the
-# lining strip and the side window's front reveal, ~0.19 m across at the glass and 85 mm deep (the L6 LINING law) --
-# shaded as one flat grey slab; P1046409 / 10 show a rounded post, dark toward the windshield and catching the light on
-# its radius toward the side window).  The slab's width is the drawn glazing (L2; its change is the deferred owner
-# review); its shading here: the post's vertex normals turned to a rounded section -- the direction from the pillar's
-# axis (the midline of the two pane outlines on the OML, `depth` out along the OML normal) to each vertex, blended in over
-# r_out .. r_in from the axis and the first / last `t_fade` of its length, never more than acos(min_dot) from the
-# surface's own normal (the faces keep their winding, fit_check 23) -- and flush countersunk fasteners along the post's
-# lining strip (`screws`: fractions of its length, radius `screw_r`).  Applied after the refinement (build.build_parts:
-# the refiner would bow the PN curves of the turned normals into the geometry), before the interior light bake.
-POST_ROUND = dict(depth=0.0, r_in=0.115, r_out=0.17, t_fade=0.12, min_dot=0.30,
-                  mats=("lining_flightdeck", "lining_fd_reveal", "trim_satin"), screws=(0.06, 0.94),
-                  screw_r=0.0040, bead=(0.12, 0.88, 0.008, -0.0006))
-# (bead: a satin moulding down the post's lining strip between the fractions bead[0] .. bead[1] of its length, radius
-# bead[2], its axis bead[3] behind the lining (- in front: a round moulding lying on it, 8.6 mm proud -- sunk 1.5 / 3 mm,
-# only 84-89 % of its cabin-facing area stood > 0.5 mm proud, fit_check 22b): the light-catching ridge of P1046409's post)
+# The A-pillar's axis (flight deck fix r3; the r3 bent vertex normals, satin bead and fasteners on the lining strip went
+# with fix r5's round post tube, POST_TUBE: the strip now lies hidden behind it)
 _POST_AXES = {}
 
 
@@ -520,7 +591,6 @@ def post_axis(side):
     outward normals N."""
     if side in _POST_AXES:
         return _POST_AXES[side]
-    q = POST_ROUND
     edges = []
     for kind, lab in (("ws", 1), ("sw", 3)):
         _, O, L = _pane_pairs(kind, side)
@@ -542,97 +612,13 @@ def post_axis(side):
         xt.append((X.ravel()[k], T.ravel()[k]))
     xt = np.array(xt)
     _, N3, _, _, _ = oml_frame(xt[:, 0], xt[:, 1])
-    A = M + q["depth"] * N3
+    A = M
     c = A.mean(0)
     a = np.linalg.svd(A - c)[2][0]
     a = a if a[2] > 0 else -a
     t = (A - c) @ a
     out = (c, a, float(t.min()), float(t.max()), M, N3)
     _POST_AXES[side] = out
-    return out
-
-
-def round_post_normals(part):
-    """Turn the A-pillar's vertex normals of `part` (interior_lining) to the rounded section (POST_ROUND); returns the
-    number of vertices changed."""
-    from model import seats as S
-    q = POST_ROUND
-    if part is None:
-        return 0
-    n_ch = 0
-    axes = [post_axis(s_) for s_ in (-1, 1)]
-    for m, mat in part.meshes:
-        if mat not in q["mats"] or m.N is None or len(m.N) != len(m.V) or not len(m.V):
-            continue
-        N = m.N.copy()
-        for c, a, s0, s1, _, _ in axes:
-            d = m.V - c
-            t = d @ a
-            perp = d - t[:, None] * a
-            r = np.linalg.norm(perp, axis=1)
-            u = (t - s0) / (s1 - s0)
-            w = S.smoothstep(q["r_out"], q["r_in"], r) * S.smoothstep(-0.02, q["t_fade"], u) * \
-                S.smoothstep(1.02, 1.0 - q["t_fade"], u)
-            sel = np.nonzero((w > 1e-3) & (r > 1e-6))[0]
-            if not len(sel):
-                continue
-            n0 = N[sel]
-            nc = perp[sel] / r[sel, None]
-            wk = w[sel, None]
-            nb = _unit(wk * nc + (1.0 - wk) * n0)
-            for _ in range(12):                              # back toward the surface's own normal where it turned too far
-                bad = np.sum(nb * n0, 1) < q["min_dot"]
-                if not bad.any():
-                    break
-                wk[bad] *= 0.7
-                nb[bad] = _unit(wk[bad] * nc[bad] + (1.0 - wk[bad]) * n0[bad])
-            N[sel] = nb
-            n_ch += len(sel)
-        m.N = N
-    return n_ch
-
-
-def post_fasteners():
-    """The A-pillars' lining strip: a satin bead down its middle and flush countersunk fasteners at its ends
-    (POST_ROUND bead / screws): [(Mesh, material)]."""
-    from cad.mesh import sweep_profile
-    q = POST_ROUND
-    out = []
-    for side in (-1, 1):
-        c, a, s0, s1, M, N3 = post_axis(side)
-        zs = M[:, 2]
-        f0, f1, rb, sink = q["bead"]
-        path = []
-        for f in np.linspace(f0, f1, 40):
-            z = zs[0] + f * (zs[-1] - zs[0])
-            P = np.array([np.interp(z, zs, M[:, i]) for i in range(3)])
-            n = _unit(np.array([np.interp(z, zs, N3[:, i]) for i in range(3)]))
-            ns = _unit(np.array([0.0, n[1], n[2]]))
-            u = min(1.0, min(f - f0, f1 - f) / 0.02)               # its ends dive under the lining (no open end)
-            sk = sink + (rb + 0.0015 - sink) * (1.0 - u) ** 2
-            path.append(P - (float(lining_depth(ns[None])[0]) - sk) * ns)
-        ang = np.linspace(0.0, 2 * np.pi, 16, endpoint=False)
-        bead = sweep_profile(np.array(path), np.c_[rb * np.cos(ang), rb * np.sin(ang)])
-        cen = np.array(path)
-        from scipy.spatial import cKDTree
-        tr = cKDTree(cen)
-        out.append((_orient(bead, lambda C: C - cen[tr.query(C)[1]]), "trim_satin"))
-        for f in q["screws"]:
-            z = zs[0] + f * (zs[-1] - zs[0])
-            P = np.array([np.interp(z, zs, M[:, i]) for i in range(3)])
-            n = _unit(np.array([np.interp(z, zs, N3[:, i]) for i in range(3)]))
-            ns = _unit(np.array([0.0, n[1], n[2]]))
-            dl = float(lining_depth(ns[None])[0])
-            o = P - dl * ns - 0.0002 * n                 # on the lining (its offset along the section normal)
-            from cad.mesh import revolve
-            out.append((revolve([(0.0, q["screw_r"]), (0.0006, q["screw_r"]), (0.0010, 0.6 * q["screw_r"]),
-                                 (0.0011, 0.0)], n=16, axis_origin=o, axis_dir=-n, ref_dir=a, cap_ends=True),
-                        "steel_dark"))
-            u_ = _unit(np.cross(-n, a))
-            q0 = o - 0.00115 * n
-            V = np.array([q0 - 0.7 * q["screw_r"] * u_ - 0.00035 * a, q0 + 0.7 * q["screw_r"] * u_ - 0.00035 * a,
-                          q0 + 0.7 * q["screw_r"] * u_ + 0.00035 * a, q0 - 0.7 * q["screw_r"] * u_ + 0.00035 * a])
-            out.append((_orient(Mesh(V, np.array([[0, 1, 2], [0, 2, 3]])), -n), "black"))
     return out
 
 

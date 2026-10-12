@@ -362,8 +362,6 @@ def build_parts(ao=False):
         else:
             res.refine_part(pid, p)
     fuselage_parts.apply_skin_analytic_normals(parts)   # cowl / chin-lip vertices: the analytic skin normal (RES2-01)
-    from model import fd_detail_b
-    fd_detail_b.round_post_normals(parts.get("interior_lining"))   # the A-pillars shade round (flight deck fix r3)
     if ao:
         bake_interior_ao(parts)         # the cabin / flight-deck light as a vertex attribute (_AO: viewer, inside)
     order = {k: i for i, (k, *_) in enumerate(STEPS)}

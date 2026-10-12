@@ -851,7 +851,8 @@ STACK = dict(
     waist=(0.335, 0.098),           # ... then narrows to the waist at the pad's foot [M: P1046408 x 830 / 1110]
     flare_s=0.385,                  # ... and flares to the quadrant's half-width (PEDESTAL hw) at its front
     pad=(0.2815, 0.0535, 0.0775, 0.012, 0.005),   # touch pad: centre s, half-length, half-width, r, recess (fix r2: 5)
-    bezel=0.006,                    # the rolled titanium bead round the pad (its width; fix r2 FDO2-04)
+    bezel=0.0045,                   # the rolled bead round the pad (its width; fix r2 FDO2-04; fix r5 FDO4-03: 6 -> 4.5 mm,
+    #                                 dark bronze -- P1046409 / 10: a dark bronze rim, the light tube read as a frame)
     dish=0.0025,                    # the pad floor's sag at its middle (fix r3 FDO3-01)
     com=(0.222, 0.100, 0.0095),     # COM 1/2 VOL knobs on the horns: s, |y|, radius (research M6: dia 19, BL +/-0.10)
 )
@@ -859,24 +860,37 @@ QUAD = dict(
     frame=(0.014, 0.006, 0.020),    # raised gunmetal frame: width, height above the plate, outer corner radius
     trim_x=(3.738, 3.800),          # framed trim panel fore / aft
     trim_items=(-0.062, -0.020, 0.024, 0.070),    # TRIM INTERRUPT, ALT STAB TRIM, AILERON TRIM, FLAP INTERRUPT (y)
+    trim_k=1.3,                     # the trim items' bezels / caps x this (fix r5 FID-FD4-03) [M: throttle photo]
     slot_w=0.012,                   # brush-sealed slots
     pcl_slot=(3.832, 3.985), flap_slot=(3.850, 3.985),
     placard_x=3.995,
     knobs=(4.020, (-0.080, -0.040, 0.0, 0.040, 0.080)),    # PILOT PFD, SDU 1, MFD, SDU 2, CO-PILOT PFD
     knobs2=(4.054, (-0.078, 0.078)),                        # PANEL / CKPT FLOOD, CAB FLOOD / CKPT DOME
-    pcl_handle=0.020,               # PCL handle radius (a cylinder across the slot: its length = PEDESTAL pcl_grip w)
     pcl_tines=(0.015, 0.0025, 0.0045),   # forked arm: tine width, thickness, the gap between them (fix r2) [M]
 )
-# the PCL grip's turned profile (fix r2 FDO2-04 / FID-FD2-07) [M: the Pilatus throttle photo, P1046409 / 10]: (s from
-# the port end along the axis, m -- negative: from the inboard end --, radius / QUAD pcl_handle), the flared rolled
-# port end with a shallow dished face, a straight body with two finger flutes, a rounded inboard end (both ends closed
-# on the axis: the last point is the inboard end's centre, -1e-7 from it)
-# (flight deck fix r3 FDO3-05 / FID-FD3-07: the dished light end disc and 0.7 mm flutes read as a can / rolling pin from
-# the seats -- the photos' grip ends in a domed cap and its two finger flutes are deep, ~2 mm)
-PCL_GRIP = ((0.0, 0.0), (0.0007, 0.42), (0.0021, 0.72), (0.0040, 0.92), (0.0062, 1.0), (0.0095, 0.965),
-            (0.0145, 0.89), (0.023, 0.88), (0.0255, 0.80), (0.028, 0.775), (0.0305, 0.80), (0.033, 0.88),
-            (0.039, 0.88), (0.0415, 0.80), (0.044, 0.775), (0.0465, 0.80), (0.049, 0.88), (-0.012, 0.885),
-            (-0.006, 0.865), (-0.0025, 0.80), (-0.0004, 0.66), (-1e-7, 0.0))
+# the PCL grip (flight deck fix r5 FDO4-05 / FID-FD4-03; the turned cylinder of fix r2 / r3 read as a can / glass jar
+# from the seats) [M: P1046408 / 09 through their fitted cameras, the Pilatus throttle photo]: a satin pewter PADDLE of
+# PEDESTAL pcl_grip's 36 x 80 x 72 (fore-aft, width, height incl. the neck) -- a superellipsoid across the slot (ends
+# `e_end`: flat with rounded edges, section `e_sec`: a rounded oval), its width narrowing to `w_bot` of the top's at the
+# body's foot and its section to `d_bot` (from behind the photos' trapezoid, ~80 wide at the rounded top, ~56 at the
+# foot), its top tipped forward by `lean` deg; on a `neck` tall dark stem of radius `neck_r` into the forked arm
+PCL_PADDLE = dict(e_end=0.38, e_sec=0.80, w_bot=0.70, d_bot=0.72, lean=12.0, neck=0.012, neck_r=0.0095, nu=16, nv=32)
+
+
+def pcl_paddle(c, hx, hy, hz):
+    """The PCL paddle grip's body (PCL_PADDLE) centred at c: half-depth hx (fore-aft), half-width hy, half-height hz."""
+    from cad.mesh import superellipsoid
+    q = PCL_PADDLE
+    m = superellipsoid([0.0, 0.0, 0.0], (hx, hz, hy), e=(q["e_end"], q["e_sec"]), nu=q["nu"], nv=q["nv"])
+    X, Zl, Yl = m.V[:, 0].copy(), m.V[:, 1].copy(), m.V[:, 2].copy()     # local: x fore-aft, y up, z lateral (poles)
+    t = np.clip((Zl + hz) / (2.0 * hz), 0.0, 1.0)                       # 0 at the body's foot .. 1 at its top
+    ky = q["w_bot"] + (1.0 - q["w_bot"]) * t * (2.0 - t)                 # the trapezoid, rounding into the top
+    kx = q["d_bot"] + (1.0 - q["d_bot"]) * np.sqrt(t)
+    V = np.c_[kx * X - math.tan(math.radians(q["lean"])) * Zl, ky * Yl, Zl] + np.asarray(c, float)
+    out = Mesh(V, m.F).compute_normals()
+    if np.mean(np.sum((out.V - np.asarray(c, float)) * out.N, 1)) < 0:
+        out = out.flipped()
+    return out
 
 
 def _profile_stack():
@@ -981,12 +995,15 @@ def stack_shell():
     k0, k1 = na / (len(sec) - 1.0), (len(sec) - 1.0 - na) / (len(sec) - 1.0)   # whole quads (no sawtooth)
     edge = (uvF[:, 0] < k0) | (uvF[:, 0] > k1)                         # the moulded radius edges (by section index)
     up = Mesh(face.V, face.F[upper & ~edge], face.N).compact() if np.any(upper & ~edge) else None
-    lo = Mesh(face.V, face.F[~(upper & ~edge)], face.N).compact()
     if up is not None:
         out.append((up, "panel_dark"))
     # (flight deck fix r2 FID-FD2-03: the stack's lower face in the graphite -- the titanium read as pale grey plastic
     # round the pad, 150-170 at panel_408b against P1046408's ~100-120 -- so the pad's bead and lid read against it)
-    out.append((lo, "panel_graphite"))
+    # (flight deck fix r5 FDO4-03 / FID-FD4-03: the shroud round the tray still read as light-grey plastic, 130-150 from
+    # above; the photos' a dark gunmetal with a thin bright edge: the face and its moulded radius edges the stack's
+    # satin gunmetal -- the rolled edges catch the thin highlight; as broad titanium bands they read as light strips
+    # down both sides of the stack at panel_408b and from the seats)
+    out.append((Mesh(face.V, face.F[~(upper & ~edge)], face.N).compact(), "stack_gunmetal"))
     # the recessed pad: walls + floor, a lighter lip along its foot, the bezel's raised edge
     ring = FD.rrect_loop(hwp, hl, rp, nc=6)
     ring = np.c_[ring[:, 0], ring[:, 1] + sc]
@@ -1009,7 +1026,7 @@ def stack_shell():
     d_in = np.maximum(-sdf2d.rrect(P2[:, 0], P2[:, 1], 0.0, sc, hwp, hl, rp), 0.0)
     dz = -rec - q["dish"] * S.smoothstep(0.0, 0.035, d_in)
     flc = Mesh(np.array([at(y_, s_, d_) for (y_, s_), d_ in zip(P2, dz)]), tri)
-    out.append((FD._oriented(flc, stack_frame(sc).w), "panel_titanium"))
+    out.append((FD._oriented(flc, stack_frame(sc).w), "tray_titanium"))     # (fix r5 FDO4-03: matte warm titanium)
     rb = 0.5 * bz                                                       # the bead: a half round on the face, its inner
     rings = []                                                          # side rolling into the tray wall
     for phi in np.radians(np.linspace(0.0, 180.0, 9)):
@@ -1017,10 +1034,10 @@ def stack_shell():
         rl = FD.rrect_loop(hwp + off, hl + off, rp + off, nc=6)
         rings.append(np.array([at(y, s_ + sc, dd) for y, s_ in rl]))
     bead = grid_surface(np.array(rings), close_v=True)
-    out.append((FD._oriented(bead, lambda C_: C_ - cc), "panel_silver"))
+    out.append((FD._oriented(bead, lambda C_: C_ - cc), "trim_bronze"))
     fl_ = stack_frame(sc + hl + 0.004)
     from cad.mesh import cylinder as _cyl
-    out.append((_cyl(fl_.p(-hwp + 0.004, 0.0, 0.002), fl_.p(hwp - 0.004, 0.0, 0.002), 0.0035, n=16), "panel_silver"))
+    out.append((_cyl(fl_.p(-hwp + 0.004, 0.0, 0.002), fl_.p(hwp - 0.004, 0.0, 0.002), 0.0035, n=16), "trim_bronze"))
     # COM 1/2 VOL knobs on the horns + their legend strokes
     cs, cy, cr = q["com"]
     for sg in (-1, 1):
@@ -1135,35 +1152,58 @@ def quadrant():
     out.append((FD._extrusion(ft.moved(c=0.0012), FD.rrect_loop(th, hw - fw - 0.006, 0.004, nc=4), 0.0024,
                               bevel=0.0006, nb=1), "bezel_black"))
     y1, y2, y3, y4 = q["trim_items"]
+    # (flight deck fix r5 FID-FD4-03: from the seats the trim panel read as three tiny switches; the Pilatus throttle
+    # photo and P1046409 / 10 show each item in its own black bezel, the bezels ~1.3 x the first build's: TRIM
+    # INTERRUPT a 30 mm framed square, the rockers in 22 x 34 mm bezels with the caps to match)
+    k5 = q["trim_k"]
     fk = ft.moved(0.004, y1, 0.0024)
-    out.append((FD._extrusion(fk.moved(c=0.002), FD.rrect_loop(0.012, 0.012, 0.002, nc=3), 0.004, bevel=0.0007, nb=1),
-                "pedestal_gunmetal"))
-    out.append((FD._extrusion(fk.moved(c=0.004), FD.rrect_loop(0.008, 0.008, 0.0015, nc=3), 0.004, bevel=0.0007,
-                              nb=1), "grip_black"))
+    out.append((FD._extrusion(fk.moved(c=0.002), FD.rrect_loop(0.012 * k5, 0.012 * k5, 0.002, nc=3), 0.004,
+                              bevel=0.0007, nb=1), "pedestal_gunmetal"))
+    out.append((FD._extrusion(fk.moved(c=0.004), FD.rrect_loop(0.008 * k5, 0.008 * k5, 0.0015, nc=3), 0.004,
+                              bevel=0.0007, nb=1), "grip_black"))
     # TRIM INTERRUPT: a black square cap with a white frame stroke, unlit (FID-FD1-03: the Pilatus throttle photo; the
     # red cap read as an alarm on the parked aircraft)
-    for a_, b_, c_, d_ in ((-0.0058, 0.0050, 0.0058, 0.0058), (-0.0058, -0.0058, 0.0058, -0.0050),
-                           (-0.0058, -0.0050, -0.0050, 0.0050), (0.0050, -0.0050, 0.0058, 0.0050)):
+    a5, b5 = 0.0058 * k5, 0.0050 * k5
+    for a_, b_, c_, d_ in ((-a5, b5, a5, a5), (-a5, -a5, a5, -b5), (-a5, -b5, -b5, b5), (b5, -b5, a5, b5)):
         out.append((fk.rect(a_, b_, c_, d_, 0.0063), "light_white"))
     for yy, horiz in ((y2, False), (y3, True)):                          # rockers in their raised bezels
         fk = ft.moved(0.006, yy, 0.0024)
-        bw, bh = (0.016, 0.026) if not horiz else (0.026, 0.016)
+        bw, bh = (0.016 * k5, 0.026 * k5) if not horiz else (0.026 * k5, 0.016 * k5)
         out.append((FD._extrusion(fk.moved(c=0.0015), FD.rrect_loop(0.5 * bh, 0.5 * bw, 0.002, nc=3), 0.003,
                                   bevel=0.0006, nb=1), "bezel_black"))
         if horiz:
             for s_ in (-1, 1):
-                out.append((_se(fk.p(0.0, s_ * 0.0055, 0.0055), (0.0055, 0.0045, 0.0028), (0.4, 0.4), nu=6, nv=10),
-                            "grip_black"))
-            out.append((fk.box(0.0, 0.0, 0.0085, (0.004, 0.002, 0.003)), "grip_black"))
+                out.append((_se(fk.p(0.0, s_ * 0.0055 * k5, 0.0055), (0.0055 * k5, 0.0045 * k5, 0.0028), (0.4, 0.4),
+                                nu=6, nv=10), "grip_black"))
+            out.append((fk.box(0.0, 0.0, 0.0085, (0.004 * k5, 0.002, 0.003)), "grip_black"))
         else:
             for s_ in (-1, 1):
-                out.append((_se(fk.p(s_ * 0.0058, 0.0, 0.0055), (0.0050, 0.0055, 0.0028), (0.4, 0.4), nu=6, nv=10),
-                            "grip_black"))
+                out.append((_se(fk.p(s_ * 0.0058 * k5, 0.0, 0.0055), (0.0050 * k5, 0.0055 * k5, 0.0028), (0.4, 0.4),
+                                nu=6, nv=10), "grip_black"))
     fk = ft.moved(0.004, y4, 0.0024)                                     # guarded FLAP INTERRUPT
     gt = FD.Fr(fk.o, fk.u, fk.v, fk.w)
     out += guarded_toggle(FD.Fr(gt.o, gt.v, -gt.u, gt.w), guard_mat="pedestal_gunmetal")
-    for yy, hl in ((y1, 0.010), (y2, 0.009), (y3, 0.012), (y4, 0.011)):   # legend strokes on the trim panel
-        out.append((ft.rect(-th + 0.003, yy - hl, -th + 0.0045, yy + hl, 0.0028), "light_white"))
+    # legend strokes on the trim panel: each item's title in two rows of word-length strokes ahead of it (fix r5
+    # FID-FD4-03: one bar per item read as a bare panel; P1046408 / 09: TRIM / INTERRUPT, ALTERNATE / STAB TRIM,
+    # AILERON TRIM, FLAP / INTERRUPT), the AILERON TRIM bezel's white outline with its LWD / RWD marks
+    for yy, rows in ((y1, ((0.008,), (0.017,))), (y2, ((0.017,), (0.007, 0.008))), (y3, ((0.013, 0.009),)),
+                     (y4, ((0.007,), (0.017,)))):
+        for r_, words in enumerate(rows):
+            u0 = -th + 0.0030 + 0.0042 * r_
+            tot = sum(words) + 0.0025 * (len(words) - 1)
+            v = yy - 0.5 * tot
+            for w_ in words:
+                out.append((ft.rect(u0, v, u0 + 0.0016, v + w_, 0.0028), "light_white"))
+                v += w_ + 0.0025
+    fk = ft.moved(0.006, y3, 0.0024)
+    bw, bh = 0.026 * k5, 0.016 * k5
+    oa, ob, ow = 0.5 * bh + 0.0012, 0.5 * bw + 0.0012, 0.0007
+    for a_, b_, c_, d_ in ((-oa - ow, -ob - ow, -oa, ob + ow), (oa, -ob - ow, oa + ow, ob + ow),
+                           (-oa, -ob - ow, oa, -ob), (-oa, ob, oa, ob + ow)):
+        out.append((ft.rect(0.006 + a_, y3 + b_, 0.006 + c_, y3 + d_, 0.0028), "light_white"))
+    for s_ in (-1, 1):
+        out.append((ft.rect(0.006 + oa + 0.0020, y3 + s_ * 0.6 * ob - 0.0030, 0.006 + oa + 0.0034,
+                            y3 + s_ * 0.6 * ob + 0.0030, 0.0028), "light_white"))
     # slots with brush seals, detent ticks, the striped reverse gate
     sw = q["slot_w"]
     pcx, pcy, pch = (float(v) for v in PE["pcl"])
@@ -1183,39 +1223,44 @@ def quadrant():
     for k in range(4):                                                   # flap detents 0 / 15 / 30 / 40 (fix r3:
         x_ = fx - 0.050 + 0.040 * k                                      # bolder, FID-FD3-07)
         out.append((fp.rect(x_ - cx - 0.0022, fy + sw, x_ - cx + 0.0022, fy + sw + 0.009, 0.0003), "light_white"))
-    # PCL: dark arm from the slot to the handle, a pewter cylinder handle across, the red flag at its root
-    rh = q["pcl_handle"]
-    gw = float(PE["pcl_grip"][1])
-    hc = np.array([pcx, pcy, FL + pch - rh])
+    # PCL: dark arm from the slot to the handle, the satin pewter paddle grip on its neck, the red flag at its root
+    # (flight deck fix r5 FDO4-05 / FID-FD4-03: the turned cylinder of r2 / r3 -- 40 mm across, PEDESTAL pcl_grip's
+    # height not used -- read as a can / glass jar from the seats; P1046408 / 09 through their cameras show a PADDLE:
+    # from behind a trapezoid ~80 wide at its rounded top narrowing to ~56 over the body, on a short neck into the dark
+    # arm; from the side (the Pilatus throttle photo) a rounded oval section.  Built now to the table's 36 x 80 x 72:
+    # PCL_PADDLE)
+    gd, gw, gh = (float(v) for v in PE["pcl_grip"])
+    pp = PCL_PADDLE
+    top = FL + pch
+    bh = 0.5 * (gh - pp["neck"])                                         # the body's half height
+    zc = top - bh
+    neck_bot = top - gh
+    lean = math.radians(pp["lean"])
     root = np.array([pcx + 0.022, pcy, zt - 0.006])
-    tip = hc + [0.004, 0.0, -0.006]
+    tip = np.array([pcx + math.tan(lean) * bh, pcy, neck_bot])
     fa_ = FD.Fr(0.5 * (root + tip), _unit(tip - root), [0, 1.0, 0])
-    # flight deck fix r2 (FDO2-04 / FID-FD2-07: the plain light cylinder read as a rolling pin / soap bar): a forked
-    # arm -- two dark tines either side of the slot's centre line (PCL q pcl_tines) --, and the sculpted grip of the
-    # Pilatus throttle photo / P1046409: a turned satin-pewter cylinder across the slot with a flared, rolled outboard
-    # (port) end and a shallow dished end face, two finger flutes, a chrome ring inboard of the flare (PCL_GRIP)
     tw, tt, tg = q["pcl_tines"]
     for s_ in (-1, 1):
         ft = FD.Fr(fa_.o + s_ * (0.5 * tg + 0.5 * tt) * np.array([0, 1.0, 0]), fa_.u, fa_.w, fa_.v)
         out.append((FD._extrusion(ft, FD.rrect_loop(0.5 * np.linalg.norm(tip - root) + 0.004, 0.5 * tw, 0.004, nc=4),
                                   tt, bevel=0.0008, nb=1), "metal_dark"))
     out.append((_box(root + [0.0, 0.0, 0.004], (0.016, tg + 2 * tt, 0.010)), "metal_dark"))   # the clevis in the slot
-    prof = [(s_, r_ * rh) for s_, r_ in PCL_GRIP]
-    prof = [(s_ if s_ >= 0 else gw + s_, r_) for s_, r_ in prof]
-    out.append((_FD().revolve(prof, n=40, axis_origin=hc - [0.0, 0.5 * gw, 0.0], axis_dir=[0, 1.0, 0],
-                              ref_dir=[1.0, 0, 0], cap_ends=False), "pcl_pewter"))
-    out.append((_FD().revolve([(0.0163, 0.0), (0.0163, 0.905 * rh), (0.0169, 0.935 * rh), (0.0181, 0.935 * rh),
-                               (0.0187, 0.905 * rh), (0.0187, 0.0)], n=40,
-                              axis_origin=hc - [0.0, 0.5 * gw, 0.0], axis_dir=[0, 1.0, 0], ref_dir=[1.0, 0, 0],
-                              cap_ends=False), "chrome_trim"))
+    out.append((pcl_paddle(np.array([pcx, pcy, zc]), 0.5 * gd, 0.5 * gw, bh), "pcl_pewter"))
+    # the neck: a satin-dark stem from the arm's tip into the body's underside, a chrome collar at its foot (the
+    # Pilatus throttle photo's root ring)
+    nr = pp["neck_r"]
+    nk_top = np.array([pcx + math.tan(lean) * 0.45 * bh, pcy, zc - 0.45 * bh])   # inside the body, on its lean
+    ln = float(np.linalg.norm(nk_top - tip))                            # flaring into the body (P1046408 / 09)
+    out.append((_FD().revolve([(0.0, 0.0), (0.0, nr), (0.35 * ln, 1.04 * nr), (0.6 * ln, 1.18 * nr),
+                               (0.8 * ln, 1.32 * nr), (ln, 1.5 * nr), (ln, 0.0)], n=24, axis_origin=tip,
+                              axis_dir=_unit(nk_top - tip), ref_dir=[0, 1.0, 0], cap_ends=False), "metal_dark"))
+    out.append((_FD().revolve([(0.0, 0.0), (0.0, nr + 0.0015), (0.0008, nr + 0.0025), (0.0042, nr + 0.0025),
+                               (0.0050, nr + 0.0015), (0.0050, 0.0)], n=28,
+                              axis_origin=tip + 0.002 * _unit(nk_top - tip), axis_dir=_unit(nk_top - tip),
+                              ref_dir=[0, 1.0, 0], cap_ends=False), "chrome_trim"))
     for k in range(3):
         out.append((_box(root + [0.0, 0.0, 0.020 + 0.006 * k], (0.010, 0.0035, 0.0055)),
                     "paint_red" if k % 2 == 0 else "light_white"))
-    # a chrome collar where the arm enters the handle (the Pilatus throttle photo: the handle's root ring)
-    out.append((_FD().revolve([(0.0, 0.0), (0.0, 0.0125), (0.001, 0.0135), (0.0045, 0.0135), (0.0055, 0.0125),
-                               (0.0055, 0.0)], n=28,
-                              axis_origin=tip - 0.021 * _unit(tip - root), axis_dir=_unit(tip - root),
-                              ref_dir=[0, 1.0, 0], cap_ends=False), "chrome_trim"))
     # abstract legend strokes on the plate (no lettering): the POWER title by the PCL slot, the flap angle marks' labels,
     # the stabilised-propeller caution line along the plate's port edge (FDO1-07: the face read empty)
     a0, b0 = q["pcl_slot"]

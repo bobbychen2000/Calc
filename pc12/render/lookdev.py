@@ -676,6 +676,13 @@ SPEC.update({
     # flight deck fix r3 (model/assemble.MATERIALS the same)
     "fd_cove":            dict(kind="dielectric", base=(0.034, 0.034, 0.037), metallic=0.10, rough=0.55, spec=0.25,
                                note="the dark sculpted cove below the outer sub-panels (FID-FD3-01)"),
+    # flight deck fix r5 (model/assemble.MATERIALS the same)
+    "lining_fd_post":     dict(kind="dielectric", base=(0.062, 0.061, 0.060), metallic=0.15, rough=0.40, spec=0.3,
+                               note="the A-pillar's round post moulding, darker satin anthracite (FDO4-02)"),
+    "tray_titanium":      dict(kind="dielectric", base=(0.20, 0.180, 0.185), metallic=0.30, rough=0.62,
+                               note="the palm tray's matte warm titanium floor (FDO4-03)"),
+    "trim_bronze":        dict(kind="dielectric", base=(0.085, 0.066, 0.052), metallic=0.55, rough=0.36,
+                               note="the dark bronze rim round the palm tray and the stack's hand-rest lip (FDO4-03)"),
 })
 
 

@@ -46,6 +46,10 @@ export const SKY = {
   // up-facing surface -- the sheepskin read slate blue, B - R ~50 against P1046408's ~22)
   envDesat: 0.6,
   haze: [[1.36, 1.31, 1.22], 0.35, 28.0],     // warm horizon haze: colour (linear), share at the horizon, falloff / elevation
+  // flight deck fix r5 (FDO4-04: through the windshield the sky read pure white, 254, against P1046410's clear blue
+  // 210 / 233 / 251): the sky as SEEN is multiplied by `seen` [tint (linear), from / to sin(elevation)] above the haze --
+  // the image-based light inside (environment()) keeps the untinted sky, so the calibrated cabin light does not move
+  seen: [[0.50, 0.72, 1.0], 0.0, 0.14],
 };
 // flight deck fix r1 (FDO1-08): the apron as seen through the glazing x `shown` (0.86: the near-white concrete clipped
 // at the interior exposure); the image-based light inside keeps the full value (`environment()`: the calibrated cabin
@@ -258,9 +262,10 @@ export class OutsideWorld {
     // ---- sky dome (camera far plane 500)
     const sky = new THREE.Mesh(new THREE.SphereGeometry(440, 64, 32), new THREE.ShaderMaterial({
       name: 'outside_sky', side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { uZen: { value: lin(SKY.zenith) }, uHor: { value: lin(SKY.horizon) }, uSun: { value: this.sun } },
+      uniforms: { uZen: { value: lin(SKY.zenith) }, uHor: { value: lin(SKY.horizon) }, uSun: { value: this.sun },
+        uSeen: { value: new THREE.Vector4(...SKY.seen[0], 1) } },
       vertexShader: 'varying vec3 vD;\nvoid main() { vD = normalize( position ); gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }',
-      fragmentShader: `uniform vec3 uZen; uniform vec3 uHor; uniform vec3 uSun; varying vec3 vD;
+      fragmentShader: `uniform vec3 uZen; uniform vec3 uHor; uniform vec3 uSun; uniform vec4 uSeen; varying vec3 vD;
 void main() {
   vec3 d = normalize( vD );
   float e = clamp( d.y, 0.0, 1.0 );
@@ -270,6 +275,8 @@ void main() {
   // (flight deck fix r3 FDO3-07) a faint warm haze in the lowest few degrees over the horizon
   c = mix( c, vec3( ${SKY.haze[0].map((x) => x.toFixed(3)).join(', ')} ), ${SKY.haze[1].toFixed(3)} * exp( - e * ${SKY.haze[2].toFixed(1)} ) );
   if ( d.y < 0.0 ) c = uHor * ${SKY.below.toFixed(3)};
+  // (flight deck fix r5) the sky as seen a clear blue (uSeen.w 0 while the image-based light is rendered)
+  c *= mix( vec3( 1.0 ), uSeen.xyz, uSeen.w * smoothstep( ${SKY.seen[1].toFixed(3)}, ${SKY.seen[2].toFixed(3)}, e ) );
   gl_FragColor = vec4( c, 1.0 );
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -433,9 +440,12 @@ void main() {
     zen.setRGB(zen.r + (y - zen.r) * k, zen.g + (y - zen.g) * k, zen.b + (y - zen.b) * k, THREE.LinearSRGBColorSpace);
     const gk = this._groundMat.color.clone();
     this._groundMat.color.setRGB(GROUND.envK, GROUND.envK, GROUND.envK, THREE.LinearSRGBColorSpace);
+    const seen = this._skyMat.uniforms.uSeen.value, seenW = seen.w;
+    seen.w = 0;
     const pm = new THREE.PMREMGenerator(renderer);
     this._env = pm.fromScene(es, 0, 0.1, 500).texture;
     pm.dispose();
+    seen.w = seenW;
     zen.copy(keep);
     this._groundMat.color.copy(gk);
     return this._env;

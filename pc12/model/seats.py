@@ -79,22 +79,18 @@ SK_WRAP_SEAT, SK_WRAP_BACK = 0.012, 0.050     # run-on past the cushion front / 
 SK_SPLIT = 0.010                               # gap between the two thigh-pad sleeves along the seat CL
 SK_FRONT = 0.022                               # the leather cushion's front sits this far behind the drawn front
 SK_TOP = 0.020                                 # the back shell's top sits this far below the drawn top (fleece over it)
-# silhouette shag (flight deck r1 GEOM B, B7 / FD-J03): the pile's clumps stand up to SK_SHAG out of the pads' rims, in
-# 25-50 mm clumps (P1046408 / 09 / 10, PRO Mexico photo: a ragged, tufted outline, not a smooth pillow edge); the rims
-# are sampled every SK_SHAG_STEP along the outline so the clumps are drawn, not aliased
-SK_SHAG, SK_SHAG_K, SK_SHAG_STEP = 0.005, (110.0, 150.0, 190.0), 0.008
-# flight deck fix r3 (FDO3-03 / FID-FD3-04: the 33-57 mm clumps alone drew a hard, lumpy outline -- "rock", not pile):
-# the coarse clumps at 0.7 x, plus a ragged fringe of finer tufts (18-26 mm, up to SK_SHAG_FINE) on a rim sampled every
-# SK_SHAG_STEP_R3
-SK_SHAG_FINE, SK_SHAG_FINE_K, SK_SHAG_STEP_R3 = 0.0028, (240.0, 290.0, 350.0), 0.0065
+# flight deck fix r5 (FDO4-01 / FID-FD4-01: the clumps and the fringe drew a lumpy, chipped outline -- "broken rock"; the
+# photos' pile ends in a soft ROLLED edge): the rim bulges SK_ROLL_OUT out (full at its middle rows, half at the top /
+# bottom edge rows -- an over-hanging roll of pile) plus a low soft wave of SK_WAVE at 4-8 cm (SK_WAVE_K); the fine
+# fringe and the 33-57 mm clumps are gone, the rims sampled every SK_RIM_STEP
+SK_ROLL_OUT, SK_WAVE, SK_WAVE_K, SK_RIM_STEP = 0.007, 0.0018, (80.0, 115.0, 150.0), 0.010
 
 
 def shag(seed):
-    """Clump displacement (m, 0 .. ~SK_SHAG) of a sheepskin pad's rim at outline points (a, b)."""
-    f = fleece(1.0, seed, k=SK_SHAG_K)
-    g = fleece(1.0, seed + 101, k=SK_SHAG_FINE_K)
-    return lambda a, b: (0.7 * SK_SHAG * (0.5 + 0.5 * np.tanh(3.0 * f(a, b)))
-                         + SK_SHAG_FINE * (0.5 + 0.5 * np.tanh(2.5 * g(a, b))))
+    """Outward displacement (m) of a sheepskin pad's rim at outline points (a, b): the rolled edge (SK_ROLL_OUT) and its
+    soft wave (0 .. SK_WAVE)."""
+    f = fleece(1.0, seed, k=SK_WAVE_K)
+    return lambda a, b: SK_ROLL_OUT + SK_WAVE * (0.5 + 0.5 * np.tanh(1.5 * f(a, b)))
 
 
 # =====================================================================================================================
@@ -404,9 +400,9 @@ def pillow(outline, t, r, rb=None, h=None, crown=None, fluff=None, n_round=3, ma
         w = 1.6 * fluff(Q[:, 0], Q[:, 1])
         rows = [(P2 + w[:, None] * N, c) for P2, c in rows]
     if shag is not None:
-        # silhouette shag (flight deck r1 GEOM B, B7): clumps standing out of the rim, full at its outermost rows,
-        # half at the top / bottom edge rows -- the pile's ragged outline seen edge-on (P1046408 / 09 / 10), not
-        # band-limited (the judged-grid limit of `fluff` keeps applying to the face's inner waves)
+        # the pile's edge (flight deck r1 GEOM B, B7; fix r5: a rolled edge, `shag`): full at the rim's outermost
+        # rows, half at the top / bottom edge rows -- not band-limited (the judged-grid limit of `fluff` keeps applying
+        # to the face's inner waves)
         w = shag(Q[:, 0], Q[:, 1])
         R_ = len(rows)
         prof = [0.5 + 0.5 * math.sin(math.pi * k / max(R_ - 1, 1)) for k in range(R_)]
@@ -1016,7 +1012,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
             sleeves.append(_ccw(pp))
             g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.016), crown=dome(SK_CROWN_SEAT, 0.075),
-                       fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_SHAG_STEP_R3)
+                       fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_RIM_STEP)
             g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
             geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
             obst.append(geos[-1])
@@ -1101,7 +1097,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
         fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0), h_judged=0.021)
         g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, 0.06),
-                   fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_SHAG_STEP_R3)
+                   fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_RIM_STEP)
         g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))
         back.append(_mats(g.map(lambda V: bmap(V - [0, 0, apex])), M_SHEEP))
     else:

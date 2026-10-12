@@ -1996,8 +1996,6 @@ def build_lining(parts):
     for q_, mat_ in FDB.glazing_mouldings():
         q_._reveal = q_._fd_glazing = True
         p.add(q_, mat_)
-    for q_, mat_ in FDB.post_fasteners():            # flight deck fix r3 (FDO3-02): the A-pillars' fasteners
-        p.add(q_, mat_)
     parts[p.id] = p
 
 

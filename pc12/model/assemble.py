@@ -226,6 +226,14 @@ MATERIALS = {
     # ---- flight deck fix r3 (append-only; render/lookdev.py SPEC 'flight deck fix r3' the same): the dark sculpted cove
     #      below the outer sub-panels (FID-FD3-01: P1046408 / 10, anthracite, ~41 at the fitted camera)
     "fd_cove":            ((0.034, 0.034, 0.037), 0.10, 0.55, dict(specular=0.5)),
+    # ---- flight deck fix r5 (append-only; render/lookdev.py SPEC 'flight deck fix r5' the same): the A-pillar's round
+    #      post moulding, a darker satin anthracite than the lining round it (FDO4-02 / FID-FD4-02: P1046409 / 10 slim
+    #      dark posts with a narrow bright edge); the palm tray's matte warm titanium floor (FDO4-03: P1046408 ~sRGB
+    #      128/117/132, a soft gradient, no recognisable reflection); the dark bronze rim round the tray and the stack's
+    #      hand-rest lip (P1046409 / 10: a dark bronze band, not a light tube)
+    "lining_fd_post":     ((0.062, 0.061, 0.060), 0.15, 0.40, dict(specular=0.6)),
+    "tray_titanium":      ((0.20, 0.180, 0.185), 0.30, 0.62),
+    "trim_bronze":        ((0.085, 0.066, 0.052), 0.55, 0.36),
 }
 # emissive factors (glTF emissiveFactor, linear): the G3000 PRIME page content and the cabin lights glow a little so
 # the displays read as ON in the viewer and the renders (render/lookdev.py SPEC 'emission' carries the same colours)

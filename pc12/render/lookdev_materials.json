@@ -2403,6 +2403,57 @@
    "kind": "dielectric",
    "note": "the dark sculpted cove below the outer sub-panels (FID-FD3-01)",
    "srgb_hex": "#343436"
+  },
+  "lining_fd_post": {
+   "baseColorFactor": [
+    0.062,
+    0.061,
+    0.06,
+    1.0
+   ],
+   "metallicFactor": 0.15,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.6,
+   "kind": "dielectric",
+   "note": "the A-pillar's round post moulding, darker satin anthracite (FDO4-02)",
+   "srgb_hex": "#464645"
+  },
+  "tray_titanium": {
+   "baseColorFactor": [
+    0.2,
+    0.18,
+    0.185,
+    1.0
+   ],
+   "metallicFactor": 0.3,
+   "roughnessFactor": 0.62,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "the palm tray's matte warm titanium floor (FDO4-03)",
+   "srgb_hex": "#7C7677"
+  },
+  "trim_bronze": {
+   "baseColorFactor": [
+    0.085,
+    0.066,
+    0.052,
+    1.0
+   ],
+   "metallicFactor": 0.55,
+   "roughnessFactor": 0.36,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "the dark bronze rim round the palm tray and the stack's hand-rest lip (FDO4-03)",
+   "srgb_hex": "#524940"
   }
  }
 }
