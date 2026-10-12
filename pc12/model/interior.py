@@ -255,7 +255,10 @@ YOKE = dict(
                       "photo puts the yoke 14-65 mm further forward, which would shorten it).  Rev P (3-D judges r3 "
                       "FID3-02: from the pilot's design eye a tall dark post in the recess, 0.48 x the cover's pixels): "
                       "MATTE near-black (0.014, rough 0.8), in the cabin light without fill (an occluded pocket) and the "
-                      "viewer's free yokes parked at YOKE rest (-35: its free length to the panel 107 -> 72 mm)"),
+                      "viewer's free yokes parked at YOKE rest (-35: its free length to the panel 107 -> 72 mm).  Rev Q "
+                      "(3-D judges r4 FID4-05: from the pilot's design eye the near-black post read as a hole, 23): a "
+                      "SATIN DARK-GREY tube (yoke_column 0.04, metallic 0.5, rough 0.4: ~50 there, a tube going into "
+                      "the panel)"),
     travel=PT((-0.065, 0.090), "pitch travel fwd (push) / aft (pull) of neutral: pull 90 [E]; push 65 -- OWNER "
                                "DECISION 2026-10-11 (fit_check 30b / fit_fd_a 29b: at the [E] 90 of push the grips reached "
                                "the lower panel from ~45 deg of roll and came within ~8 mm of its bare face wings level; "
@@ -267,7 +270,11 @@ YOKE = dict(
                    "viewer's PARKED pose -- the yokes sit here at a zero pitch command (pivot 'rest'; the command's "
                    "full push / pull still reach travel): the column seen from the crew seats 0.48 -> 0.30 of the "
                    "cover's pixels at the pilot's design eye (viewer, rev P).  The drawn neutral, the knee checks (L6B) and "
-                   "fit_check 30 (whole travel) are unchanged; the elevators stay drawn at neutral"),
+                   "fit_check 30 (whole travel) are unchanged; the elevators stay drawn at neutral.  Rev Q (3-D judges r4 "
+                   "CR4-05: the parked yokes stood 0.54 of the push travel forward over level elevators -- the cable run "
+                   "allows no such pose): the viewer moves the elevators with the yokes' own position "
+                   "(kinematics.js pitchPos), so parked they hang trailing-edge DOWN by rest / push x the down travel "
+                   "(~8 deg: a parked elevator droops -- LX-FLI, MSN 3008 0517 tails), level at the drawn neutral"),
     roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it.  OWNER DECISION "
                  "2026-10-05: the 95th's knee result on the rev L / M solids -- 23.8 mm wings level (CRITERIA "
                  "knee_clear 25 kept, not loosened) and contact from 12.5 deg -- ACCEPTED AS MEASURED (L6B open point "
@@ -376,7 +383,11 @@ YOKE_DESIGN = dict(
                "[M] parting grooves (width, depth): the upper insert's sides 0.6 x 0.5, the step a symmetric V 2.0 x "
                "1.0 (Mexico L / R at 3.8 px/mm: a dark upper flank, a lit lower flank, 1 mm each), the lower insert "
                "0.4 x 0.3 (a 1-1.5 px dark line, no wall seen from 14-21 deg above).  Rev J settles rev I's "
-               "proud / recessed contradiction: both inserts are FLUSH with the white cover (judges D1)"),
+               "proud / recessed contradiction: both inserts are FLUSH with the white cover (judges D1).  Rev Q (3-D "
+               "judges r4 FID4-01): every groove's flanks and end cones are finished yoke_groove (dark satin: their "
+               "cavity shadow, L6Y item 15) except the step's UP-facing flank, which keeps the white cover [M: the darkest pixel across the step 0.00-0.18 of the insert in the s/n 3001 views, the "
+               "photos' profile through the step at P1046408 ~190 / 3-10 / 155-231 / ~180 -- a dark line over a light "
+               "one -- and at the AOPA camera ~130 / 0-16 / 145-197 / ~90]"),
     crown=PT((56.0, 6.0, 2.0, 0.8, 20.0),
              "crown of the upper insert: a SOFT BREAK at h 56.0, 2.8 above the badge top, the insert's top above it "
              "leaning 6 deg further forward than the face, blended R 20 (tangent edges h 55.0 / 57.0) [M low: judges "
@@ -813,7 +824,7 @@ YOKE_DESIGN = dict(
                "TRIM and put LIGHTS over the collar): each block's angle reflected about its row's centre before the "
                "mirror (yoke3d.reading_blocks) -- TRIM / DN, TRIM / UP left to right over / under the slot as in Mexico L "
                "and the AOPA pilot view, LIGHTS on the inboard arc ~+45 .. -10 deg as in Mexico L"),
-    legend_style=PT((0.22, 0.12, 0.35),
+    legend_style=PT((0.22, 0.12, 0.35, 0.30, 0.60),
                     "[E] a legend letter is a plain block the cap height tall (the row's r0..r1), on average 0.22 of the "
                     "letter pitch wide (the word's arc / letters), each letter's width varied by +/-0.35 of that along "
                     "the word (index 2: a fixed sequence, model/yoke_legends.py -- letters differ in weight, so a "
@@ -821,7 +832,11 @@ YOKE_DESIGN = dict(
                     "legend_grey ~0.40 of white (sRGB).  Rev P (3-D judges r3 CR3-05: 12 equal bars 0.35 of the pitch "
                     "read as a chunky tick dial at close range): thinner, uneven, dimmer; rev O 0.35 / ~0.45, rev N 0.70 "
                     "(judges r2 FID2-06: chunky mid-grey rectangles read as dial ticks / LED segments where the photos' "
-                    "lettering is thin fine strokes)"),
+                    "lettering is thin fine strokes).  Rev Q (3-D judges r4 CR4-06: the widths alone left the EVEN "
+                    "PITCH -- the rings still read as scales at close range): index 3, each letter's radial extent up to "
+                    "0.30 shorter than the cap height, standing on the baseline or hanging from the cap line; index 4, "
+                    "the letters SET by their widths with gaps varied +/-0.60 of the mean gap, each word kept on its "
+                    "drawn arc (clusters with clear word gaps; model/yoke_legends.py)"),
     ptt=P(0.0, "[S: AOPA 2025-03-17 -- the PC-24-style yoke's one-hand functions 'pitch trim, push-to-talk, checklist, "
                "TCAS and autopilot quick disconnect' (TCAS: AOPA's word for the TCS button); JTF cockpit key lists push-to-talk] four of them are seen: "
                "trim, TCS, AFCS DISC and the inboard head's button, whose legend reads MAP LIGHTS (AOPA hbtn crop, "

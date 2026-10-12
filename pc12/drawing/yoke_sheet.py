@@ -36,7 +36,7 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                vline_gapped, hline_gapped)
 
 SHEET = dict(id="L6Y", title="CONTROL YOKE - VIEWS", subtitle="PC-24-STYLE CONTROL YOKE - VIEWS", size="A1",
-             scale="AS SHOWN", rev="H", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
+             scale="AS SHOWN", rev="I", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
 REVISIONS = (
     ("A", "2026-10-05", "first issue (owner 2026-10-05: 'the yoke isn't quite right especially if you look at the "
                         "details'): yoke re-measured on 8 PRO photos; YOKE_DESIGN rev I replaces the rev H outline"),
@@ -91,6 +91,12 @@ REVISIONS = (
                         "every photo); legend letters 0.22 of the pitch, uneven (+/-35 %), tone 0.40; item 10 hex 12 A/C "
                         "(text); item 11 column matte near-black; item 12 the J band's hook ends round; the viewer's "
                         "parked yokes at the photos' free rest, 35 forward (YOKE rest); item 8 text: the rev O red"),
+    ("I", "2026-10-12", "rev Q (3-D judges r4): item 15 (new) -- the cover's groove flanks DARK (yoke_groove: the step's "
+                        "down-facing flank and end cones, the parting grooves, the badge outline / speed lines; the "
+                        "step's lit lower flank keeps the white), FID4-01; items 2 / 3 the inserts a COOL satin metal "
+                        "(FID4-02); item 8 the AFCS boss in the body's satin black (FID4-06); item 11 the column a "
+                        "satin dark-grey tube, the parked elevators coupled to the parked yokes (FID4-05, CR4-05); item "
+                        "14 the legend letters set with uneven gaps and heights (CR4-06)"),
 )
 TRIM_COL = "#23292D"
 FR_O = (202.0, 134.0)       # front elevation: sheet position of the hub centre (1:1)
@@ -115,7 +121,7 @@ def make_views(ds):
 
 def draw(ds):
     v = make_views(ds)
-    ds.frame_and_title(fields=dict(date="2026-10-11"))
+    ds.frame_and_title(fields=dict(date="2026-10-12"))
     ctx = context()
     draw_front(ds, v["front"])
     front_annotations(ds, v["front"])
@@ -293,17 +299,20 @@ def draw_afcs(ds, v, k=1.0, c=None):
 ITEMS = (  # item, part, material (render/lookdev name), finish [source]
     (1, "WHITE COVER (Y SHELL)", "yoke_white", "gloss clear-coat white, neutral-cool (0.77 / 0.78 / 0.80), fine "
                                                "pearl; R 1 edges, top land [M]"),
-    (2, "UPPER INSERT = CROWN, BADGE", "yoke_silver", "satin aluminium 0.62, metallic 0.85, rough 0.30; flush, "
-                                                      "0.6 x 0.5 grooves; the badge's blank plate 0.2 proud [M / E]"),
-    (3, "LOWER INSERT", "yoke_silver_dark", "smoke silver 0.30, metallic 0.85, rough 0.34; flush [M]"),
+    (2, "UPPER INSERT = CROWN, BADGE", "yoke_silver", "COOL satin aluminium 0.58 / 0.61 / 0.67, metallic 0.85, rough "
+                                                      "0.34 (rev Q: cooler and darker than the cover); flush, 0.6 x "
+                                                      "0.5 grooves; the badge's blank plate 0.2 proud [M / E]"),
+    (3, "LOWER INSERT", "yoke_silver_dark", "cool smoke silver 0.29 / 0.30 / 0.33, metallic 0.85, rough 0.36 (rev Q); "
+                                            "flush [M]"),
     (4, "BLACK BODY (RIM, WEB, NECK)", "grip_black", "satin black, rough 0.42: crisp edge highlights; R 2 aft edge [M]"),
     (5, "GRIP (2) WITH FRAME, HEEL LIP", "grip_black", "satin black; 2.0 frame R 1.5, heel lip 3 proud R 4 [M]"),
     (6, "LEATHER PAD (2)", "leather_black", "charcoal 0.05, rough 0.58, 1.1 pebble grain, ~1 creases, 2.5 below the "
                                             "frame, groove 1.0 x 0.5 + bead 0.4 at its edge [M / E]"),
     (7, "TCS BUTTON", "gloss_black / black", "gloss black bezel 1 proud [E], satin domed button 2 proud of it "
                                              "[M low]; legend blocks (legend_grey)"),
-    (8, "AFCS DISCONNECT", "button_red / black", "deep red cap 0.50 / 0.004 / 0.012, clear coat 0.15 (rev O), "
-                                                 "NOT emissive, on a black boss [M]; legend blocks"),
+    (8, "AFCS DISCONNECT", "button_red / grip_black", "deep red cap 0.50 / 0.004 / 0.012, clear coat 0.15 (rev O), "
+                                                      "NOT emissive, on a boss in the body's satin black (rev Q) [M]; "
+                                                      "legend blocks"),
     (9, "PITCH TRIM ON ROUND FACE", "yoke_trim_face / yoke_rocker / yoke_slot", "rev P: SATIN CHARCOAL ring + "
                                                                                  "lunes 0.04, rough 0.45 (as light as "
                                                                                  "the body or lighter); rocker near-"
@@ -316,15 +325,21 @@ ITEMS = (  # item, part, material (render/lookdev name), finish [source]
                                                                        "NICKEL hex 12 A/C (warm); smooth black cap, "
                                                                        "centre dimple [M]; function: MAP LIGHTS (no "
                                                                        "lettering)"),
-    (11, "COLUMN", "yoke_column (new)", "matte near-black, non-metallic, dia 44 [E] (never seen in a PRO photo); the "
-                                        "viewer parks the free yokes 35 forward (YOKE rest, rev P)"),
+    (11, "COLUMN", "yoke_column (new)", "satin dark grey tube 0.04, metallic 0.5, rough 0.4 (rev Q), dia 44 [E] (never "
+                                        "seen in a PRO photo); the viewer parks the free yokes 35 forward (YOKE rest, "
+                                        "rev P), the elevators trailing-edge down with them (rev Q)"),
     (12, "COLUMN SURROUND (PANEL)", "pcl_pewter / panel_dark", "satin pewter J band 22 wide, both ends round (rev "
                                                                "P), charcoal dished recess [M / E]"),
     (13, "FORWARD-FACE SWITCHES (2) [E]", "grip_black", "PTT trigger (outboard grip), checklist rocker (inboard): "
                                                         "placeholders, never seen (L6Y2 detail W) [E]"),
     (14, "LEGENDS", "legend_grey (new)", "words of plain letter blocks 0.22 of the pitch, uneven widths (rev P), "
-                                         "tone ~0.40, 0.12 proud -- NO lettering (rev N); the pilot's in reading "
-                                         "order, not mirrored"),
+                                         "set with uneven gaps and heights (rev Q), tone ~0.40, 0.12 proud -- NO "
+                                         "lettering (rev N); the pilot's in reading order, not mirrored"),
+    (15, "COVER GROOVES / STEP", "yoke_groove (new)", "rev Q: the V flanks of the parting grooves, the step's down-"
+                                                      "facing flank and end cones, the badge outline / speed lines "
+                                                      "dark satin 0.03, rough 0.6 (their cavity shadow: dark lines in "
+                                                      "every photo); the step's lower flank keeps the cover white "
+                                                      "(the lit line under it) [M]"),
 )
 
 

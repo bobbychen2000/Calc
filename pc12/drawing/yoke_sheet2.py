@@ -34,7 +34,7 @@ from drawing import yoke_sheet as YS  # noqa: E402
 from drawing import master as M  # noqa: E402
 
 SHEET = dict(id="L6Y2", title="CONTROL YOKE - SECTIONS", subtitle="PC-24-STYLE CONTROL YOKE - SECTIONS & DETAILS",
-             size="A1", scale="AS SHOWN", rev="G", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
+             size="A1", scale="AS SHOWN", rev="H", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
 REVISIONS = (
     ("A", "2026-10-05", "first issue with L6Y rev B (judges r1): exact sections of the rev J solids, grip profiles with "
                         "the heel lip, trim face / shield, switch profiles, column surround, corner table, photo check"),
@@ -59,6 +59,8 @@ REVISIONS = (
     ("G", "2026-10-11", "rev P (3-D judges r3): F satin charcoal lunes, near-black matte slot; legends 0.22 of the pitch, "
                         "uneven; J the band's hook ends round (tip at 330 deg), the viewer's parked rest 35 forward "
                         "(YOKE rest), column matte near-black"),
+    ("H", "2026-10-12", "rev Q (3-D judges r4): J column a satin dark-grey tube, the parked yokes' elevators TE down "
+                        "~8 deg; legends set with uneven gaps / heights"),
 )
 COL_X = (588.0, 826.0)
 GRIP_SECTION_H = YS.GRIP_SECTION_H
@@ -83,7 +85,7 @@ def make_views(ds):
 
 def draw(ds):
     v = make_views(ds)
-    ds.frame_and_title(fields=dict(date="2026-10-11"))
+    ds.frame_and_title(fields=dict(date="2026-10-12"))
     draw_secZ(ds, v["Z"])
     draw_secK(ds, v["K"])
     draw_grip_sections(ds)
@@ -709,9 +711,9 @@ def draw_column(ds):
             f"band arc about h {hc_:g} (the axis);", f"top h {ht_:g} [E]: the column {ht_ - r:.0f} clear"],
            size=1.9, weight=500)
     dim(ds, vF.pt(-hw_, hb2), vF.pt(hw_, hb2), Y0 + 44.0, f"{2 * hw_:g}")
-    lbl(ds, X0 - 40.0, Y0 + 50.0, "phantom: the shell; hidden: the column dia 44 (matte near-black)", TXT_S,
+    lbl(ds, X0 - 40.0, Y0 + 50.0, "phantom: the shell; hidden: the column dia 44 (satin dark-grey tube, rev Q)", TXT_S,
         color=MUTED)
-    lbl(ds, X0 - 40.0, Y0 + 52.6, f"viewer (rev P): the free yokes parked {rest:+.0f} [M: unlocked photos], "
+    lbl(ds, X0 - 40.0, Y0 + 52.6, f"viewer: yokes parked {rest:+.0f} [M], elevators TE down (rev Q); "
                                   f"{col_rest:.0f} of the column to the panel", TXT_S, color=MUTED)
     view_title(ds, X0, Y0 + 58.0, "DETAIL J - SURROUND, FRONT", "LOOKING FORWARD (PILOT; INBOARD RIGHT) - 1:2",
                size=3.0)
