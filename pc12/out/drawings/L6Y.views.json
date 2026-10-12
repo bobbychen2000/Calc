@@ -1,0 +1,100 @@
+{
+ "sheet": "L6Y",
+ "size": "A1",
+ "sheet_mm": [
+  841.0,
+  594.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "front": {
+   "name": "front",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0
+    ]
+   ],
+   "t": [
+    202.0,
+    134.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "front elevation of the PILOT yoke looking forward: (u, h), u outboard = sheet left -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "side": {
+   "name": "side",
+   "axes": "xz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0
+    ]
+   ],
+   "t": [
+    508.0,
+    134.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "side elevation from outboard (port for the pilot yoke), nose left: (a, h) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "top": {
+   "name": "top",
+   "axes": "xy",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    202.0,
+    352.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "from above, forward up: (u, a), u outboard = left -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  },
+  "sec_B": {
+   "name": "sec_B",
+   "axes": "xy",
+   "A": [
+    [
+     -0.5,
+     0.0
+    ],
+    [
+     0.0,
+     0.5
+    ]
+   ],
+   "t": [
+    500.0,
+    342.0
+   ],
+   "scale": 2.0,
+   "box": null,
+   "note": "section B-B at h 48 from above, (u, a), forward up, outboard left -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, y)"
+  }
+ }
+}

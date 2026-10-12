@@ -28,7 +28,7 @@ HEAD = 3.0                             # table header text
 TITLE = 3.8                            # table title bar text
 
 SHEET = dict(id="L6B", title="INTERIOR ARRANGEMENT - CHECKS", subtitle="INTERIOR ARRANGEMENT - CHECKS & PARAMETERS",
-             size="A1", scale="-", rev="H", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="-", rev="N", order=61, sheet_no="2 OF 2", dwg="PC12-L6", date="2026-10-11")
 
 COLS = ((28.0, 286.0), (296.0, 556.0), (566.0, 826.0))
 Y_TOP = 16.0
@@ -121,11 +121,11 @@ def crew_occupants(ds, x0, y0, x1, ctx):
         row("over the nose (deg)", lambda o: f"{o['over_nose']:.1f}", "to the windshield lower edge"),
         row("knee angle (deg)", lambda o: f"{o['knee_angle']:.0f}", "neutral pedals"),
         row("knee top WL", lambda o: mm(o["knee_top"]), f"lower panel edge {mm(I.PANEL['mfd_z'] + I.PANEL['lower_dz'])}; "
-            f"grip bottoms {mm(I.PANEL['mfd_z'] + I.YOKE['hub_dz'] + I.YOKE['grip_dz'])}"),
+            f"grip solids' bottom {mm(I.PANEL['mfd_z'] + I.YOKE['hub_dz'] + I.yoke_grip_low())}"),
         row("knee to the lower panel", lambda o: mm(o["clear_panel"]), "side view"),
-        row(f"legs to the yoke, pitch ±{mm(I.YOKE['travel'][1])}, wings level", lambda o: sgn(o["yoke_pitch"]),
-            f"criterion >= {mm(kr)}; 3-D, knees on the hip-to-pedal line (pedals ±{mm(I.PEDALS['dy'])} [M]), 95th "
-            f"±{mm(occ['p95m']['pose']['leg_y'][1])}"),
+        row(f"legs to the yoke, pitch {mm(-I.YOKE['travel'][0])} fwd / {mm(I.YOKE['travel'][1])} aft, wings level", lambda o: sgn(o["yoke_pitch"]),
+            f"criterion >= {mm(kr)} kept; 95th {1000 * kr - 1000 * occ['p95m']['yoke_pitch']:.1f} short, ACCEPTED AS "
+            f"MEASURED (owner 2026-10-05)"),
         row(f"... with roll ±{R:.0f}° [E]", lambda o: sgn(o["yoke_sweep"]), "pitch x roll sweep; - = contact"),
         row(f"roll keeping {mm(kr)} / to contact (deg)",
             lambda o: f"{max(o['roll_clear'], 0):.0f} / {max(o['roll_contact'], 0):.0f}",
@@ -343,13 +343,16 @@ def deviations_block(ds, x0, y0, x1, ctx):
     tb = cc["table"]
     y = I.YOKE
     dev = [
-        ("yoke grips (r2)", f"built from the measured span {mm(y['span'])}: grips {mm(y['grip'][0])} long from "
-                            f"{sgn(y['grip_dz'])} below the hub centre, tops {y['grip'][2]:.0f}° inboard (JTF key, "
-                            "P1046408); rev B: 15° outboard from the hub centre, span unused"),
-        ("DECISION: yoke vs knees", f"keep the measured hub, grips and pedals: the 95th's knee meets a grip from "
-                                    f"{max(o95['roll_contact'], 0):.0f}° roll (neutral pedals). The outcome depends on "
-                                    "the estimated inputs more than on the measured ones (sensitivity table): the "
-                                    "owner is asked which input to fix, open point 1"),
+        ("yoke (rev M, L6Y)", f"YOKE_DESIGN: grips {mm(y['grip'][0])} long, solids' bottom "
+                              f"{sgn(I.yoke_grip_low())} (aft faces {sgn(y['grip_dz'])}), span {mm(y['span'])}, raked "
+                              f"20°, 27.5 deep [M]: 95th level 25 (rev K re-swept; 37 as issued, a band was dropped) -> "
+                              f"{1000 * o95['yoke_pitch']:.1f} (< 25: accepted as measured, owner 2026-10-05), keep-25 roll 0 -> "
+                              f"{max(o95['roll_clear'], 0):.1f}°"),
+        ("OWNER DECISION: yoke vs knees", f"2026-10-05: the measured hub, grips, pedals and seat rule kept; the "
+                                          f"95th's {1000 * o95['yoke_pitch']:.1f} mm wings level (criterion 25, kept, "
+                                          f"not loosened) and contact from {max(o95['roll_contact'], 0):.1f}° roll are "
+                                          "ACCEPTED AS MEASURED (open point 1 closed); L6Y rev D / L6Y2 rev C approved "
+                                          "as the 3-D yoke's basis"),
         ("pedals (r3)", f"±{mm(I.PEDALS['dy'])} centres, {mm(I.PEDALS['pad_wh'][0])} pads, measured face-on "
                         "(P1046408, MFD bezel scale + depth correction); rev B ±90 / 80 [E]. The crew knees sit on the "
                         f"hip-to-pedal line + {mm(I.MANIKIN['knee_splay'])} splay: 95th "
@@ -413,7 +416,7 @@ KEY_PARAMS = [("CREW_SEAT", "srp_x", "crew SRP STA (centre notch)"), ("CREW_SEAT
               ("PANEL", "glass_x", "PDU glass STA"), ("PANEL", "mfd_z", "MFD centre WL"),
               ("PANEL", "sdu_top_dz", "SDU top vs MFD centre"), ("PANEL", "sdu_recline", "SDU recline"),
               ("YOKE", "hub_dz", "yoke hub vs MFD centre"), ("YOKE", "span", "yoke grips overall"),
-              ("YOKE", "grip", "grip length / r / cant"), ("YOKE", "grip_dz", "grip bottoms vs hub"),
+              ("YOKE", "grip", "grip length / half-width / cant"), ("YOKE", "grip_dz", "grip bottoms vs hub"),
               ("YOKE", "roll", "yoke roll +/-"), ("PEDALS", "heel_x", "pedal heel point STA"),
               ("PEDALS", "travel", "rudder pedal travel +/-"), ("PEDESTAL", "top_h", "pedestal top above floor"),
               ("DIVIDER", "x_aft", "divider aft face"), ("EXEC_SEAT", "bl", "cabin seat BL"),
@@ -513,18 +516,9 @@ def open_points_items(ctx):
     e5 = o5f["pose"]["eye"]
     v200 = CG.vision(np.array([e5[0], -0.200, e5[1]]))["over_nose_down"]
     return [
-        f"KNEES vs YOKE: WHICH INPUT TO FIX? With the measured hub, grips and pedals (grip bottoms WL "
-        f"{mm(I.PANEL['mfd_z'] + I.YOKE['hub_dz'] + I.YOKE['grip_dz'])}, pedals ±{mm(I.PEDALS['dy'])}), the 95th's "
-        f"knee meets a grip from {max(o95['roll_contact'], 0):.0f}° roll with neutral pedals (50th "
-        f"{max(o50['roll_contact'], 0):.0f}°); with full rudder the 95th touches it wings level "
-        f"({sgn(o95['rud_pitch'])}) and the 50th from {max(o50['rud_roll_contact'], 0):.0f}°. The estimated inputs move "
-        f"this more than the measured ones (sensitivity table): knees 30 wider -> 95th neutral contact "
-        f"{_deg(sw['p95m']['contact'])}; a 130° knee target (seat further aft) -> {_deg(sk['p95m']['contact'])}, full "
-        f"rudder {sgn(sk['p95m']['rud'])}, but the 50th's forward rudder needs {sk['p50m']['ext']:.0f}° "
-        f"(> {lim:.0f}°); the hub 50 higher -> {_deg(sh['p95m']['contact'])}, full-rudder contact from "
-        f"{_deg(sh['p95m']['rud_contact'])}. Please choose what to pin down: the seat-setting rule (knee target), the "
-        "knee spacing, the rudder travel, the hub height, or the roll travel / a roll limit. Wanted: the control-wheel "
-        "roll and rudder travel (AMM / POH) and a side-on photo of a seated pilot at the yoke.",
+        f"KNEES vs YOKE -- CLOSED (owner 2026-10-05): the 95th's {1000 * o95['yoke_pitch']:.1f} mm wings level "
+        f"(criterion 25 kept) and contact from {max(o95['roll_contact'], 0):.1f}° roll are accepted as measured; the "
+        "measured hub, grips, pedals and seat rule stay (sensitivity table for the record).",
         f"5TH-FEMALE ACCOMMODATION. At the forward notch, pedals cranked fully aft and the seat full up "
         f"(+{mm(I.CREW_SEAT['travel_z'])}, the travel limit [E]), her eye is {mm(-o5f['eye_dz'])} below the design eye: "
         f"over the nose {o5f['over_nose']:.1f}° along her BL (design eye {kc['vision']['over_nose_down']:.1f}°), "
@@ -575,14 +569,17 @@ def _height(fn, width, ctx):
     return fn(tmp, 0.0, 0.0, width, ctx)
 
 
-REV_SHORT = (("A", "-", "first issue (legacy 3-D interior)"),
-             ("B", "2026-09-24", "Stage-2 parameter tables, checks; review r1"),
-             ("C", "2026-09-26", "review r2 + r3 (sheet 1): sensitivity, CG check, 5th-female point"),
-             ("D", "2026-09-26", "Stage-3 review r2: sheepskin in the crew outline, yoke grips, curtain / track"),
+# rev K: A-D in one row, rev L: I-J in one row (the column ran past the frame; sheet 1 lists every revision)
+REV_SHORT = (("A-D", "2026-09-26", "first issue .. Stage-3 review r2: tables, checks, CG, sheepskin (see sheet 1)"),
              ("E", "2026-09-27", "Stage-3 review r3: exec legrest, PC-24 yoke face, PCL grip, armrest / pedestal row"),
              ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 [M]"),
              ("G", "2026-10-03", "model judging r1: soffit bands + PSUs on them, headroom to the headliner, PDU-top row"),
-             ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU [M]; CB panel pairs, overhead [S+M]"))
+             ("H", "2026-10-05", "flight deck r1: yoke, CCD, lip arch, SDU [M]; CB panel pairs, overhead [S+M]"),
+             ("I-J", "2026-10-05", "yoke rev I (sheet L6Y), sweep per piece; rev J: the yoke as solids (L6Y2)"),
+             ("K", "2026-10-05", "yoke rev K: knee rows on the rev K solids, criteria unchanged"),
+             ("L", "2026-10-05", "yoke rev L: knee rows on the rev L solids, sweep band fix, criteria unchanged"),
+             ("M", "2026-10-05", "owner: L6Y rev D approved for 3-D; 95th knee 23.8 < 25 accepted as measured (row, "
+                                 "open point 1 closed); knee rows on the rev M solids"))
 
 
 def revisions(ds, x0, y0, x1, ctx):

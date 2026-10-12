@@ -40,38 +40,38 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="H", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-05")
+             size="A1", scale="AS SHOWN", rev="N", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-11")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
     ("B", "2026-09-24", "Stage-2 parameter tables (model/interior.py); crew / cabin checks; review r1"),
-    ("C", "2026-09-26", "review r2: yoke grips from the measured span, SDUs, one-arm cabin seats, lavatory, full "
-                        "rudder, grasp / touch reach, crew armrest hinge; review r3: divider curtain + extinguisher + "
-                        "autoland drawn, lav cabinet 350 [M], pedals +/-125 [M] with the crew knees on the hip-pedal "
-                        "line, knee / yoke sensitivity and POH-arm CG cross-check (L6B), 5th-female open point, "
-                        "section phantoms, seat tracks from parameters"),
-    ("D", "2026-09-26", "Stage-3 review r2: crew sheepskin 34 [M] drawn inside the cushion / back outline (the "
-                        "3-D cover had stood proud of it), yoke grips r 15.5 x 140 [M] (P1046408), crew tracks end "
-                        "15 mm past the rear foot (clear of the stowed curtain, L6B)"),
-    ("E", "2026-09-27", "Stage-3 review r3: legrest under the cushion of the forward-facing executive seats [M] "
-                        "(P1046402-05); PC-24 yoke face: white goblet shield (top +/-70) on a black body, grip heads "
-                        "r 20 [M] (P1046408); PCL paddle grip [M]; armrest vs pedestal row (L6B); yoke-roll knee "
-                        "contact recorded as an owner decision"),
-    ("F", "2026-10-03", "Stage-4 final judge r1 (I2, P1046408 re-measured): yoke shield a full U (half-width "
-                        "fractions 0.80 / 0.50 at 1/2 / 4/5 of its height, ~0.86 / 0.66 of the top width; the goblet "
-                        "left a broad black body), grips 160 long (tops 20 higher), heads r 18 over 42 [M]"),
-    ("G", "2026-10-03", "model judging r1: headliner soffit bands (LINING soffit: 50 step at the raised channel's "
-                        "edge, straight band to the lining at |BL| 400, P1046402 / 04 / 06) carrying the PSU pods "
-                        "(psu_bl 370 -> 320) and downlights, cabin headroom to the headliner underside (L6B); PDU "
-                        "bezel tops visible from the design eyes under the eyebrow fascia (L6B row)"),
-    ("H", "2026-10-05", "flight deck r1 (owner: details): yoke re-measured on P1046408 / 09 and the JTF elevation -- "
-                        "hub 140 x 120, white Y shield (horns to +/-70, mid-height +/-39, round 45 foot), paddle grips "
-                        "r 16 widening to 21 over their top 90 (no round head); CCD palm grip 100 x 85, top 385 above "
-                        "the floor [M]; glareshield lip arch from both JTF elevations (outboard 15-70 lower); GI 275 "
-                        "unit 82.6 square over its 79.4 cut-out [S]; SDUs 110 x 195 [M]; CB panels a pair per side (STA "
-                        "3630-4160, 505-700 above the floor, split 3900 / 3910, 12 / 11 x 4 breakers: NGX POH Fig "
-                        "7-13-2 / 3) [S+M]; overhead panel STA 3860-4070 x 470 wide (POH Fig 7-13-1, P1046406 "
-                        "camera) [S+M]"),
+    ("C", "2026-09-26", "review r2: yoke grips, SDUs, one-arm cabin seats, lavatory, full rudder, reach, armrest hinge; "
+                        "review r3: divider curtain, extinguisher, autoland, lav cabinet 350 [M], pedals +/-125 [M], "
+                        "knee / yoke sensitivity, POH-arm CG check (L6B), seat tracks from parameters"),
+    ("D", "2026-09-26", "Stage-3 review r2: crew sheepskin 34 [M] inside the cushion outline, yoke grips r 15.5 x 140 [M], "
+                        "crew tracks 15 past the rear foot (L6B)"),
+    ("E", "2026-09-27", "Stage-3 review r3: legrests of the forward-facing executive seats [M]; PC-24 yoke face (goblet "
+                        "shield), grip heads r 20 [M]; PCL paddle grip [M]; armrest vs pedestal row (L6B)"),
+    ("F", "2026-10-03", "Stage-4 final judge r1: yoke shield a full U, grips 160, heads r 18 over 42 [M] (P1046408)"),
+    ("G", "2026-10-03", "model judging r1: headliner soffit bands (50 step, band to |BL| 400) carrying the PSU pods "
+                        "(psu_bl 320) and downlights; headroom to the headliner, PDU bezel tops visible (L6B)"),
+    ("H", "2026-10-05", "flight deck r1: yoke re-measured (P1046408 / 09, JTF; superseded by rev I); CCD 100 x 85, top 385 "
+                        "[M]; glareshield lip arch (JTF, outboard 15-70 lower); GI 275 unit 82.6 [S]; SDUs 110 x 195 [M]; "
+                        "CB panel pairs STA 3630-4160, 505-700, split 3900 / 3910, 12 / 11 x 4 (NGX POH 7-13-2 / 3) "
+                        "[S+M]; overhead panel STA 3860-4070 x 470 (POH 7-13-1, P1046406 camera) [S+M]"),
+    ("I", "2026-10-05", "yoke rev I (owner: 'the yoke isn't quite right'): yoke detail sheet PC12-L6Y (YOKE_DESIGN: 8 PRO "
+                        "photos + a 4-photo bundle adjustment) -- Y shell with a raised silver crown, black rim / necks, "
+                        "grips from the arm tips (span 283), aft face 17.5 deg; per-piece knee sweep (detail F, L6B)"),
+    ("J", "2026-10-05", "yoke rev J (L6Y judges r1): the yoke as solids (model/yoke_geom.py, sheets L6Y / L6Y2) -- "
+                        "crown 65.3, outboard web / inboard low neck, round trim-face and shield heads (97 / 90), "
+                        "grips refitted per grip, toe 18 / 18; L6 / L6B take its outline and sweep pieces"),
+    ("K-L", "2026-10-05", "yoke rev K / L (L6Y judges r2 / r3): exact 2-D fields, switches as solids, grip planes "
+                          "fitted to the photos, head zones, C2 outlines; knee sweep fixed (a grip band was dropped)"),
+    ("M", "2026-10-05", "owner: L6Y rev D approved as the 3-D basis; the 95th's 24 level (< 25, criterion kept), contact "
+                        "12.5 deg: ACCEPTED AS MEASURED; yoke rev M (judges r4 drafting cleanup)"),
+    ("N", "2026-10-11", "owner 2026-10-11 (yoke 3-D judges r1): yoke push travel 65 (was 90 [E]; the grips reached the "
+                        "lower panel at full push + roll), pull 90 kept -- the knee sweeps and the phantoms take "
+                        "-65 / +90; the column's J band and U recess re-centred on the column axis (L6Y2 detail J)"),
 )
 
 # ---- fills (clean sheet)
@@ -559,7 +559,7 @@ def draw_clean(ds):
     M.detail_circle(ds, vp, 6.52, 1.75, 0.50, "G", at=(-0.2, -1.0))
     draw_tables(ds, ctx)
     draw_notes(ds, ctx)
-    revisions_block(ds, COL_X[0] + 4.0, 430.0, COL_X[1])
+    revisions_block(ds, COL_X[0] + 4.0, 419.0, COL_X[1])   # rev L: 12 rows clear of the title block
     M.break_paths_at_text(ds, lambda d: d.get("color") == GRID, pad=0.4)
     M.break_paths_at_text(ds, lambda d: d.get("w") == W_THIN and d.get("color") in (None, INK, MUTED)
                           and not d.get("closed"), pad=0.3)
@@ -806,22 +806,35 @@ def draw_fd_side(ds, v, bl, simple=False, crank=0.0, travel=False):
     px0, px1, phw, pz = I.pedestal_plinth()
     poly(ds, v, [(px0, fl), (px1, fl), (px1, pz), (px0, pz)], W_THIN, fill="#CDD1D3", color="#6F7B82")
     hub = I.yoke_hub(-1)
-    hw, hh, hd = I.YOKE["hub_whd"]
     xf = float(I.panel_x(hub[2]))
+    body, cover, grip = yoke_side_outlines()                            # rev I: the L6Y side elevation
     if travel:
         for t in I.YOKE["travel"]:
-            poly(ds, v, rrect(hub[0] + t, hub[2] - 0.5 * hh, hub[0] + hd + t, hub[2] + 0.5 * hh, 0.015), W_THIN,
-                 fill=None, dash=PHANTOM, color=MUTED)
+            for P in (body, grip):
+                poly(ds, v, P + [t, 0.0], W_THIN, fill=None, dash=PHANTOM, color=MUTED)
     line(ds, v, [(xf, hub[2]), (hub[0], hub[2])], 2 * I.YOKE["column_r"] * v.k * 0.9, None, "#6F7B82")
-    poly(ds, v, rrect(hub[0], hub[2] - 0.5 * hh, hub[0] + hd, hub[2] + 0.5 * hh, 0.015), W_FINE, fill="#F4F4F2")
-    p0, p1 = I.yoke_grip_axis(1)                                        # grip axis (y, z) about the hub centre
-    gr = I.YOKE["grip"][1]
-    g0 = np.array([hub[0] + 0.03, hub[2] + p0[1]])
-    poly(ds, v, capsule(g0, g0 + np.array([0.0, p1[1] - p0[1]]), gr), W_THIN, fill="#2B3338")
+    poly(ds, v, body, W_THIN, fill="#4A5257")
+    poly(ds, v, cover, W_THIN, fill="#F4F4F2")
+    poly(ds, v, grip, W_THIN, fill="#2B3338")
     pd = I.pedal_points(crank)
     piv = np.array([I.PEDALS["pivot"][0], fl + I.PEDALS["pivot"][1]])
     line(ds, v, [piv, pd["heel"] + 0.06 * pd["dir"] + np.array([0.02, 0.0])], W_FINE)
     line(ds, v, [pd["heel"] + 0.03 * pd["dir"], pd["toe"]], W_OBJ + 0.3, None, "#2B3338")
+
+
+@lru_cache(maxsize=1)
+def yoke_side_outlines():
+    """Side silhouettes (x, z) of the pilot yoke at neutral pitch, seen from port (model.yoke_geom, the rev L solids
+    sheet L6Y draws: body, cover and the outboard grip): (body, cover, grip)."""
+    from model import yoke_geom as YG
+    hub = I.yoke_hub(-1)
+    xr = float(hub[0] + I.YOKE["hub_whd"][2])
+    sil = YG.view_silhouettes("u")
+
+    def tm(name):
+        P = max(sil[name], key=len)
+        return np.c_[xr + P[:, 0] * 1e-3, hub[2] + P[:, 1] * 1e-3]
+    return tm("body"), tm("cover"), tm("grip_out")
 
 
 def _profile_labels(ds, v, ctx):
@@ -1657,7 +1670,7 @@ def _detail_dims(ds, v, ctx, e, s0, p):
     o95 = cc["occ"]["p95m"]
     kn = p["knee"]
     leader_to(ds, v, (kn[0] - 0.05, kn[1] - 0.03), (3.13, 1.66),
-              f"95TH KNEE: PANEL {mm(o95['clear_panel'])}, YOKE ±{mm(I.YOKE['travel'][1])} PITCH "
+              f"95TH KNEE: PANEL {mm(o95['clear_panel'])}, YOKE PITCH -{mm(-I.YOKE['travel'][0])} / +{mm(I.YOKE['travel'][1])} "
               f"{sgn_mm(o95['yoke_pitch'])}", "end", color=ACCENT, weight=600,
               lines=[f"FULL RUDDER (PHANTOM LEG, PEDAL {mm(I.PEDALS['travel'])} AFT): {sgn_mm(o95['rud_pitch'])}",
                      f"ROLL: CONTACT FROM {o95['roll_contact']:.0f}° (DETAIL F)", "DASHED CIRCLE: 5TH FEMALE KNEE"])
@@ -1696,7 +1709,7 @@ def _detail_dims(ds, v, ctx, e, s0, p):
     hub = I.yoke_hub(-1)
     leader_to(ds, v, (hub[0] + 0.05, hub[2] + 0.03), (3.97, 2.095), "YOKE HUB (PC-24 STYLE)", "start",
               lines=[f"{mm(hub[0])} / WL {mm(hub[2])}, BL {mm(I.YOKE['bl'])}",
-                     f"PITCH ±{mm(I.YOKE['travel'][1])} (PHANTOM)"])
+                     f"PITCH -{mm(-I.YOKE['travel'][0])} / +{mm(I.YOKE['travel'][1])} (PHANTOM)"])
     xl, zl_ = I.glareshield_lip(e[1])
     leader_to(ds, v, (xl, zl_), (3.02, 2.615), f"GLARESHIELD LIP {mm(zl_)}", "start",
               lines=["HOOD CLOSED ONTO THE WS FRAME"])
@@ -1800,9 +1813,11 @@ def draw_seat_details(ds, v1, v2, ctx):
                "CREW (NEUTRAL) / EXECUTIVE (UPRIGHT), SEEN FROM PORT - HEIGHTS ABOVE THE FLOOR - SCALE 1:10")
 
 
-def yoke_front(yc, zc, roll=0.0):
-    """Yoke pieces in a front view (y, z) about the hub centre (yc, zc) at roll deg (interior.yoke_outline_yz)."""
-    return [P + np.array([yc, zc]) for P in I.yoke_outline_yz(roll)]
+def yoke_front(yc, zc, roll=0.0, side=None):
+    """Yoke pieces in a front view (y, z) about the hub centre (yc, zc) at roll deg (interior.yoke_outline_yz; the
+    yoke on `side`, by default the side of yc: rev J / K, the body's necks and the grips differ outboard / inboard)."""
+    side = side if side is not None else (1 if yc > 0 else -1)
+    return [P + np.array([yc, zc]) for P in I.yoke_outline_yz(roll, side)]
 
 
 def draw_panel_view(ds, v, ctx):

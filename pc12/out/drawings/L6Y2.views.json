@@ -1,0 +1,628 @@
+{
+ "sheet": "L6Y2",
+ "size": "A1",
+ "sheet_mm": [
+  841.0,
+  594.0
+ ],
+ "png_dpi": 110,
+ "png_px_per_mm": 4.330708661417323,
+ "views": {
+  "sec_Z": {
+   "name": "sec_Z",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    168.0,
+    160.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "section Z-Z at u 0 from outboard, (a, h) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "sec_K": {
+   "name": "sec_K",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    186.0,
+    400.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "section K-K across the outboard arm, (a, across) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "prof_P": {
+   "name": "prof_P",
+   "axes": "xz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0
+    ]
+   ],
+   "t": [
+    288.0,
+    304.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip profile P-P (outboard), (aft, axis) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "prof_Q": {
+   "name": "prof_Q",
+   "axes": "xz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     -1.0
+    ]
+   ],
+   "t": [
+    352.0,
+    304.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip profile Q-Q (inboard), (aft, axis) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_L": {
+   "name": "det_L",
+   "axes": "xz",
+   "A": [
+    [
+     3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    424.0,
+    240.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail L (heel lip), (aft, axis) about the pad bottom -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "sec_A1": {
+   "name": "sec_A1",
+   "axes": "yz",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    272.0,
+    62.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section A1 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_A2": {
+   "name": "sec_A2",
+   "axes": "yz",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    338.0,
+    62.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section A2 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_A3": {
+   "name": "sec_A3",
+   "axes": "yz",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    404.0,
+    62.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section A3 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_A4": {
+   "name": "sec_A4",
+   "axes": "yz",
+   "A": [
+    [
+     -1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    470.0,
+    62.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section A4 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_N1": {
+   "name": "sec_N1",
+   "axes": "yz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    272.0,
+    136.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section N1 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_N2": {
+   "name": "sec_N2",
+   "axes": "yz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    338.0,
+    136.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section N2 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_N3": {
+   "name": "sec_N3",
+   "axes": "yz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    404.0,
+    136.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section N3 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "sec_N4": {
+   "name": "sec_N4",
+   "axes": "yz",
+   "A": [
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0
+    ]
+   ],
+   "t": [
+    470.0,
+    136.0
+   ],
+   "scale": 1.0,
+   "box": null,
+   "note": "grip section N4 (across, along the aft normal) -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_S": {
+   "name": "det_S",
+   "axes": "yz",
+   "A": [
+    [
+     -5.0,
+     0.0
+    ],
+    [
+     0.0,
+     5.0
+    ]
+   ],
+   "t": [
+    604.7499999999973,
+    118.0
+   ],
+   "scale": 0.2,
+   "box": null,
+   "note": "detail S -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_F": {
+   "name": "det_F",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    506.0,
+    236.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail F (trim face), face plane mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_F2": {
+   "name": "det_F2",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    506.0,
+    310.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail F rocker profile -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_G": {
+   "name": "det_G",
+   "axes": "yz_aft",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    512.0,
+    365.5
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail G (shield), facet plane mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_G2": {
+   "name": "det_G2",
+   "axes": "xz",
+   "A": [
+    [
+     3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    458.0,
+    410.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail G button profile -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_D": {
+   "name": "det_D",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    300.0,
+    456.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail D (TCS), mm about its centre -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_D2": {
+   "name": "det_D2",
+   "axes": "xz",
+   "A": [
+    [
+     3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    300.0,
+    512.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail D profile -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_E": {
+   "name": "det_E",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    395.0,
+    460.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail E (AFCS), mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_E2": {
+   "name": "det_E2",
+   "axes": "xz",
+   "A": [
+    [
+     3.0,
+     0.0
+    ],
+    [
+     0.0,
+     -3.0
+    ]
+   ],
+   "t": [
+    395.0,
+    522.0
+   ],
+   "scale": 0.3333333333333333,
+   "box": null,
+   "note": "detail E profile -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_H": {
+   "name": "det_H",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    510.0,
+    452.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail H (badge), mm about h 49.65 -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_J": {
+   "name": "det_J",
+   "axes": "xz",
+   "A": [
+    [
+     0.5,
+     0.0
+    ],
+    [
+     0.0,
+     -0.5
+    ]
+   ],
+   "t": [
+    672.0,
+    390.0
+   ],
+   "scale": 2.0,
+   "box": null,
+   "note": "detail J side, (a, h) mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_J2": {
+   "name": "det_J2",
+   "axes": "yz_aft",
+   "A": [
+    [
+     -0.5,
+     0.0
+    ],
+    [
+     0.0,
+     -0.5
+    ]
+   ],
+   "t": [
+    756.0,
+    384.0
+   ],
+   "scale": 2.0,
+   "box": null,
+   "note": "detail J front, (u, h) mm -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (y, z)"
+  },
+  "det_JJ": {
+   "name": "det_JJ",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    624.0,
+    452.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "section J-J of the band -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_W1": {
+   "name": "det_W1",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    505.0,
+    507.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail W1: section along the outboard grip axis through its forward switch -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  },
+  "det_W2": {
+   "name": "det_W2",
+   "axes": "xz",
+   "A": [
+    [
+     2.0,
+     0.0
+    ],
+    [
+     0.0,
+     -2.0
+    ]
+   ],
+   "t": [
+    505.0,
+    551.0
+   ],
+   "scale": 0.5,
+   "box": null,
+   "note": "detail W2: section along the inboard grip axis through its forward switch -- yoke-local mm",
+   "formula": "sheet_mm = A @ (a, b) + t; (a, b) = (x, z)"
+  }
+ }
+}

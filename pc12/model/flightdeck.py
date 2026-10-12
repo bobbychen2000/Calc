@@ -33,7 +33,6 @@ from collections import defaultdict
 
 import numpy as np
 
-from cad import sdf2d
 from cad.mesh import Mesh, superellipsoid, box, cylinder, revolve, disk, grid_surface, planar_cap, sweep_profile
 from model import interior as I
 
@@ -423,15 +422,15 @@ def _panel_face(acc):
     P = _clamp_lining(P, 0.004, cheek)
     P[..., 0] = face_x(P[..., 1], P[..., 2])
     m = grid_surface(P)
-    # drop the cells of the PDU-row recess and of the yoke wells (fd_detail_a.LOWER well: the well's walls cover the
-    # cut, the titanium plates hide its ragged edge)
+    # drop the cells of the PDU-row recess; cut the yoke columns' U recesses out exactly (fd_detail_a.recess_outline,
+    # YOKE_DESIGN column_recess: its walls and rim flange cover the cut, the titanium plates the rest)
     from model import fd_detail_a as A
+    from cad.mesh import trim
     C = m.V[m.F].mean(1)
     inside = (np.abs(C[:, 1]) < ry - 1e-6) & (C[:, 2] > rz0 + 1e-6) & (C[:, 2] < rz1 - 1e-6)
-    ww, wz0 = A.LOWER["well"][:2]
-    well = (np.abs(np.abs(C[:, 1]) - float(YK["bl"])) < ww - 0.004) & (C[:, 2] > wz0 + 0.004) & (C[:, 2] < rz0)
-    m.F = m.F[~(inside | well)]
+    m.F = m.F[~inside]
     m.compact()
+    m = trim(m, A.recess_sdf(np.abs(m.V[:, 1]), m.V[:, 2], 0.0005), keep="positive")
     # flight deck r1 (A6 zoning, P1046408 / 10, brochure p.10): the face itself is the graphite moulding round the PDU
     # row and behind the titanium sub-panels (their 2 mm seams read dark); titanium only on the band and sub-panels.
     # Graphite, not the consoles' near-black panel_dark (flight deck r1 merge): P1046408 at its fitted camera reads the
@@ -669,9 +668,9 @@ def _lower_panel(acc):
     """The lower (yoke / switch) panel, flight deck r1 (PNL-02, FD-J06; fd_detail_a.lower_panel): per side a satin
     titanium band under the PDU row and three titanium sub-panels (inner: ICE PROTECTION / ACS-CPCS, yoke, outer:
     PARKING BRK) proud of the charcoal face with dark 2 mm seams and pan-head screws 8 mm in from their corners; a
-    rounded yoke well round each column with a rubber bellows; on the pilot's side two blocks of three rocker
-    switches, the gear handle (wheel knob) beside its placard, the guarded FEATHER INHIBIT, the vertical PARKING BRK
-    lozenge; on the co-pilot's the ACS row of four lit caps, the rockers, the guarded DUMP and the OXYGEN lever; the
+    U recess round each yoke column with its J band (Yoke rev M, L6Y2 detail J: fd_detail_a.column_surround); on
+    the pilot's side two blocks of three rocker switches, the gear handle (wheel knob) beside its placard, the guarded
+    FEATHER INHIBIT, the vertical PARKING BRK lozenge; on the co-pilot's the ACS row of four lit caps, the rockers, the guarded DUMP and the OXYGEN lever; the
     panel-end rotary knobs and the O2 / mic sockets [M: P1046408 / 09 / 10, JTF p.18, brochure p.10]."""
     from model import fd_detail_a as A
     acc.group = "panel"
@@ -784,242 +783,40 @@ def _plinth_floor(acc, floor=True):
 # =====================================================================================================================
 # yokes, pedals
 # =====================================================================================================================
-def _loft_grip(fr, L, w0, w1, d0, d1, e=0.55, n=18, nr=16):
-    """Tapered, round-ended grip along fr.u (0 .. L from the bottom end): half-width across (fr.v) w0 -> w1, half-depth
-    (fr.w) d0 -> d1; superellipse sections (exponent e)."""
-    s = 0.5 * (1 - np.cos(np.linspace(0.0, np.pi, nr)))
-    end = np.sqrt(np.clip(1.0 - (np.clip(np.abs(2 * s - 1) - 0.62, 0, None) / 0.38) ** 2, 0.0, 1.0))
-    w = (w0 + (w1 - w0) * s) * end
-    d = (d0 + (d1 - d0) * s) * end
-    a = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
-    ca, sa = np.cos(a), np.sin(a)
-    cu = np.sign(ca) * np.abs(ca) ** e
-    su = np.sign(sa) * np.abs(sa) ** e
-    G = np.array([fr.p(np.full(n, L * si), wi * cu, di * su) for si, wi, di in zip(s, w, d)])
-    axis0 = fr.o
-    return _oriented(grid_surface(G, close_v=True),
-                     lambda C: C - (axis0 + np.outer((C - axis0) @ fr.u, fr.u)))
-
-
-def _taper(fr, m, hh, hd, k=(1.0, 0.80, 0.42)):
-    """Yoke hub depth taper: full depth at the stem (column side), thin shell at the top edge -- the white shield's
-    face leans back toward its top (P1046409, brochure p.12)."""
-    L = (m.V - fr.o) @ fr.R
-    f = np.interp(L[:, 1], [-0.5 * hh, 0.0, 0.5 * hh], list(k))
-    L[:, 2] = -0.5 * hd + (L[:, 2] + 0.5 * hd) * f
-    out = Mesh(fr.o + L @ fr.R.T, m.F)
-    return out
-
-
-def _geo_mesh(g, fr, lean=None, mat_of=None):
-    """seats.Geo pillow (a, b, c) -> [(Mesh, material)] in the hub frame fr (u = a, v = b, w = c); lean(a, b, c) -> dc:
-    an optional change of c (the hub's aft face leaning back toward its top)."""
-    V = g.V.copy()
-    if lean is not None:
-        V[:, 2] += lean(V[:, 0], V[:, 1], V[:, 2])
-    g2 = type(g)(fr.p(V[:, 0], V[:, 1], V[:, 2]), g.F, g.pid, g.mats)
-    return g2.meshes()
-
-
-def _top_height(g, a, b):
-    """c of a pillow's top face (piece 0, and 3: a re-coloured part of it) at (a, b): barycentric interpolation in the
-    plan (None outside it)."""
-    T = g.F[(g.pid == 0) | (g.pid == 3) | (g.pid == 4)]
-    P = g.V[T]
-    for tri in P:
-        (x0, y0, _), (x1, y1, _), (x2, y2, _) = tri
-        det = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2)
-        if abs(det) < 1e-16:
-            continue
-        l0 = ((y1 - y2) * (a - x2) + (x2 - x1) * (b - y2)) / det
-        l1 = ((y2 - y0) * (a - x2) + (x0 - x2) * (b - y2)) / det
-        l2 = 1.0 - l0 - l1
-        if min(l0, l1, l2) >= -1e-9:
-            return float(l0 * tri[0, 2] + l1 * tri[1, 2] + l2 * tri[2, 2])
-    return None
-
-
-def _grip_loft(o, ax, lat, dep, L, w_prof, d_prof, c_prof, n=16, nr=18, e=0.6):
-    """Paddle grip lofted along ax from o (0 .. L): superellipse sections, half-width w_prof(s) across (lat), half-depth
-    d_prof(s) along dep, centre offset c_prof(s) along dep, s = 0 .. 1; both ends rounded (the sections shrink on a
-    quarter circle over the end radius)."""
-    s = 0.5 * (1 - np.cos(np.linspace(0.0, np.pi, nr)))
-    w, d, c = w_prof(s), d_prof(s), c_prof(s)
-    r0, r1 = w[0] / L, w[-1] / L                                       # end radii as fractions of L
-    k0 = np.sqrt(np.clip(1.0 - np.clip((r0 - s) / r0, 0, 1) ** 2, 0.0, 1.0))
-    k1 = np.sqrt(np.clip(1.0 - np.clip((s - (1 - r1)) / r1, 0, 1) ** 2, 0.0, 1.0))
-    k = np.minimum(k0, k1)
-    k = np.maximum(k, 1e-3)
-    a = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
-    ca, sa = np.cos(a), np.sin(a)
-    cu = np.sign(ca) * np.abs(ca) ** e
-    su = np.sign(sa) * np.abs(sa) ** e
-    G = np.array([o + L * si * ax + (wi * ki) * np.outer(cu, lat) + (di * ki * su + ci)[:, None] * dep
-                  for si, wi, di, ci, ki in zip(s, w, d, c, k)])
-    m = grid_surface(G, close_v=True)
-    tip0, tip1 = G[0].mean(0), G[-1].mean(0)
-    n_ = len(G[0])
-    i = np.arange(n_)
-    caps = [Mesh(np.vstack([G[0], tip0[None]]), np.stack([i, (i + 1) % n_, np.full(n_, n_)], 1)),
-            Mesh(np.vstack([G[-1], tip1[None]]), np.stack([i, (i + 1) % n_, np.full(n_, n_)], 1))]
-    centre = lambda C: C - (o + np.outer((C - o) @ ax, ax))                    # noqa: E731
-    return Mesh.merge([_oriented(m, centre), _oriented(caps[0], -ax), _oriented(caps[1], ax)])
-
-
 def _yokes(acc):
-    """PC-24-style yokes (YOKE table; P1046408 face-on at 0.72 mm/px, P1046409, brochure p.12).  Flight deck r1 (rev H,
-    owner "the details are drastically missing"; PNL-01 / FD-J07): the white Y shield (interior.yoke_shield_yz: horns
-    flaring to the top corners over a broad body to a round 76 mm foot) domed 8.5 mm with two ridges along the silver
-    V's sides, the facets falling to its edges; the V a stepped recess (two 1.5 mm steps, panel_silver) with an abstract
-    silver bar badge at its top; the black body behind it (interior.yoke_body_yz) whose horns run from the grips into
-    the shield's top corners; flat-backed D-section paddle grips (fd_detail_a.paddle_grip: 40 mm across at the root,
-    flaring to 54 under the head, 28 deep) with a grained oval leather inset in a moulded rim on the aft face, the trim
-    switch on the outboard grip's head, the 4-way hat on the inboard one, the PTT trigger on the outboard grip's front;
-    TCS on the white horn, the red AP DISC on the black arm below it; a satin dark column (no chrome).  Everything stays
-    inside the envelope the L6B knee / yoke check sweeps (interior.yoke_roll_clearances): the x-slab hub face .. hub
-    face + hub depth times the drawn front-view outline.  The aft faces lean back 10 mm toward the top (P1046409)."""
-    from model import seats as S, fd_detail_a as A
-    acc.group = "yokes"
-    hw, hh, hd = (float(v) for v in YK["hub_whd"])
-    gl, gr, gc = (float(v) for v in YK["grip"])
-    hl, rh = (float(v) for v in YK["grip_head"])
-    YD = A.YOKE_DETAIL
-    lean_k = 0.010 / hh                                           # aft face 10 mm further forward at the top edge
-
-    def lean(a, b, c):
-        return -lean_k * np.clip(b + 0.5 * hh, 0.0, None) * np.clip(c / hd, 0.0, 1.0)
-    # black body: the drawn body outline (c 0.004 .. hd - 0.016, + dome), behind the shield
-    body_ol = S.fillet(I.yoke_body_yz(), 0.010, max_len=0.010)
-    cb0, cbt = 0.004, hd - 0.016
-    body = S.pillow(body_ol, cbt, 0.010, 0.005, h=0.010, crown=S.dome(0.003, 0.012), n_round=2)
-    body = body.map(lambda V: V + [0.0, 0.0, cb0])
-    body.mats = {0: "grip_black", 1: "grip_black", 2: "grip_black"}
-    # white Y shield (the drawn outline): sharp-ish horn corners, a broad round foot
-    shield = I.yoke_shield_yz()
-    tc = shield[np.abs(shield[:, 0]) > 0.5 * hw - 1e-9]                # the two top corners
-    far = np.min(np.linalg.norm(shield[:, None, :] - tc[None, :, :], axis=2), axis=1)
-    shield = shield[(far < 1e-9) | (far > 0.008)]
-    rad = np.where(shield[:, 1] < -0.5 * hh + 0.002, 0.022, 0.008)       # foot corners R 22, horns R 8
-    shield = S.fillet(shield, rad, max_len=0.004)
-    r_w = 0.005                                                       # the shield's rolled edge
-    top_in = 0.5 * hh - float(YK["shield_dip"]) - r_w - 0.0025          # the V's top, inside the top face
-    # the stepped silver V, a funnel [M: P1046408 at 0.70 mm/px, both yokes -- 63-66 mm across at the top, 36-42 a
-    # third down, 25-31 at the step, ~13 at its round foot, 80 tall; the lower step from 74 % of its height]
-    vh = 0.080
-    vb, vz = 0.0085, top_in - vh
-    vside = [(0.0325, 0.0), (0.0235, 0.14), (0.0195, 0.30), (0.0150, 0.60), (0.0110, 0.85), (vb, 1.0)]
-    V_ = np.array([(w_, top_in - t_ * vh) for w_, t_ in vside[::-1]] + [(-w_, top_in - t_ * vh) for w_, t_ in vside])
-    V_ = S.fillet(V_, np.r_[[0.0] * (len(vside) - 1) + [0.004, 0.004] + [0.0] * (len(vside) - 1)] *
-                  0 + np.where(np.abs(V_[:, 1] - vz) < 1e-9, 0.006, np.where(np.abs(V_[:, 1] - top_in) < 1e-9, 0.004,
-                                                                         0.0)), max_len=0.003)
-    zs_ = top_in - 0.74 * vh                                          # the step line
-    lo_ = A.clip_below(S._ccw(V_), zs_)
-    lo_ = S.fillet(S._dedup(S.offset_outline(S._dedup(lo_, 2e-4), -0.0012), 2e-4), 0.003, max_len=0.003)
-    rec1, rec2 = 0.0015, 0.0030
-    h0 = 0.0085
-
-    zk = np.array([top_in - t_ * vh for _, t_ in vside])[::-1]
-    wk = np.array([w_ for w_, _ in vside])[::-1]
-
-    def ridge_out(a, b):
-        """distance outboard of the V's side lines (0 inside the V)"""
-        ar = np.interp(b, np.r_[vz - 0.04, zk], np.r_[vb - 0.006, wk])
-        return np.clip(np.abs(a) - ar, 0.0, None)
-
-    def crown_w(a, b, d):
-        sd1 = sdf2d.polygon(a, b, V_)
-        sd2 = sdf2d.polygon(a, b, lo_)
-        return (h0 * S.smoothstep(0.0, 0.009, d) - 0.0022 * S.smoothstep(0.0, 0.030, ridge_out(a, b))
-                - rec1 * (sd1 < 0.0) - (rec2 - rec1) * (sd2 < 0.0))
-    cw0 = 0.022
-    cwt = hd - h0 - cw0
-    fb0 = S._STATS["cap_fallback"]
-    white = S.pillow(shield, cwt, r_w, 0.004, h=0.0045, crown=crown_w, seams=[V_, lo_])
-    assert S._STATS["cap_fallback"] == fb0, "yoke shield: the V's seams left the top face"
-    white = white.map(lambda V: V + [0.0, 0.0, cw0])
-    tops = np.nonzero(white.pid == 0)[0]
-    Pc = white.V[white.F[tops]]
-    in1 = sdf2d.polygon(Pc[..., 0].ravel(), Pc[..., 1].ravel(), V_).reshape(-1, 3) < 0.0
-    in2 = sdf2d.polygon(Pc[..., 0].ravel(), Pc[..., 1].ravel(), lo_).reshape(-1, 3) < 0.0
-    pid = white.pid.copy()
-    pid[tops[in1.all(1)]] = 3                                         # V floor
-    pid[tops[in1.any(1) & ~in1.all(1)]] = 4                           # V wall: own normals (crisp edge)
-    pid[tops[in2.all(1)]] = 5                                         # lower step floor
-    pid[tops[in2.any(1) & ~in2.all(1)]] = 6                           # its wall
-    white = S.Geo(white.V, white.F, pid, {0: "yoke_white", 1: "yoke_white", 2: "yoke_white", 3: "panel_silver",
-                                          4: "yoke_white", 5: "panel_silver", 6: "panel_silver"})
-    badge = _fillet(np.array([(-0.021, 0.0), (-0.017, 0.0030), (0.017, 0.0030), (0.021, 0.0), (0.017, -0.0030),
-                              (-0.017, -0.0030)]), 0.0008, n=2, max_seg=0.004)
+    """PC-24-style yokes, rev M (sheets L6Y rev E / L6Y2 rev D, interior.YOKE_DESIGN, owner-approved 2026-10-05): the
+    solids of model/yoke_geom.py meshed by model/yoke3d.py (white cover + inserts + grooves + badge, the black moulding
+    with its pads, heads and AFCS boss, the TCS / AFCS / trim rocker / push button / forward-face switches, the legend
+    ticks) in yoke-local mm, placed at the drawn neutral (yoke3d.place: the aft face at the insert step hub_whd[2] aft of
+    the hub's forward face, h about the column axis = the roll pivot); the pilot yoke the mirror image, its legends in
+    reading order (yoke3d.side_pieces).  Each yoke is its
+    own part (pivot 'yoke').  The column: a satin BLACK non-metallic cylinder (rev N, judges CR1-02: yoke_column;
+    YOKE column_r) from inside the body forward through the
+    lower panel's U recess into the panel, the full pull travel deeper than 30 mm behind the recess floor (at full pull it
+    stays in its opening); NO bellows -- the photos show a J band on the panel (fd_detail_a.lower_panel, L6Y2 detail J)."""
+    from model import yoke3d as Y3
+    pieces = Y3.yoke_pieces()
+    t1 = float(YK["travel"][1])
     for sg in (-1, 1):
         acc.group = "yoke_" + SIDE[sg]                                  # own part + pivot (review r2 M4)
+        for m, mat in Y3.place(sg, pieces):
+            acc.add(m, YOKE_MAT_RENAME.get(mat, mat))
         hub = I.yoke_hub(sg)
-        xf = float(I.panel_x(hub[2]))
-        fr = Fr([hub[0], hub[1], hub[2]], [0, 1.0, 0], [0, 0, 1.0])          # w = aft, c = 0 at the hub face
-        for g in (body, white):
-            for m, mat in _geo_mesh(g, fr, lean):
-                acc.add(m, mat)
+        x_floor = float(face_x(hub[1], hub[2])) - float(A_recess_depth())
+        acc.add(cylinder([x_floor - 0.030 - t1, hub[1], hub[2]], [hub[0] + 0.010, hub[1], hub[2]],
+                         float(YK["column_r"]), n=32), "yoke_column")
 
-        def on(g, a, b):
-            c = _top_height(g, a, b)
-            return None if c is None else c + float(lean(np.array(a), np.array(b), np.array(c)))
-        # abstract bar badge on the V floor along its top (no lettering)
-        zb = top_in - 0.0075
-        cbg = on(white, 0.0, zb)
-        fb = Fr(fr.p(0.0, zb, cbg + 0.0005), fr.u, fr.v, fr.w)
-        acc.add(_flat(_extrusion(fb, badge, 0.0012, bevel=0.0004, nb=1)), "panel_grey")   # crisp (thin) facets
-        ob = sg                                                        # outboard: TCS on the white horn, the red
-        # TCS: a black boss through the horn, its button in a ring (P1046408: on the horn tip)
-        c_t = on(white, ob * 0.052, 0.043)
-        ft = Fr(fr.p(ob * 0.054, 0.044, 0.0), fr.u, fr.v, fr.w)
-        acc.add(A.knob(ft.o + 0.040 * fr.w, fr.w, fr.u, 0.0080, c_t + 0.0012 - 0.040, n=20), "grip_black")
-        acc.add(A.knob(ft.o + (c_t + 0.0008) * fr.w, fr.w, fr.u, 0.0052, 0.0030, n=16, chamfer=0.3), "black")
-        # AP DISC: red button in a black collar on the black arm below the TCS
-        c_r = on(body, ob * 0.066, 0.020)
-        fa = ft.o + (ob * 0.012) * fr.u + (-0.026) * fr.v
-        acc.add(A.knob(fa + (c_r - 0.0015) * fr.w, fr.w, fr.u, 0.0060, 0.0025, n=16), "grip_black")
-        acc.add(A.knob(fa + (c_r + 0.0008) * fr.w, fr.w, fr.u, 0.0042, 0.0035, n=16, chamfer=0.35), "light_red")
-        # paddle grips on the canted axes (interior.yoke_grip_axis), centred in the hub slab, flat aft face
-        for d in (-1, 1):
-            p0, p1 = I.yoke_grip_axis(d)
-            ax2 = _unit(np.r_[p1 - p0])
-            b0 = p0 - gr * ax2                                          # bottom end of the grip (front view)
-            ax = ax2[0] * fr.u + ax2[1] * fr.v
-            lat = d * (ax2[1] * fr.u - ax2[0] * fr.v)                    # outboard, across the grip
-            o = fr.p(b0[0], b0[1], 0.5 * hd)
-            f0, f1 = (gl - hl - 0.010) / gl, (gl - rh) / gl              # the drawn widening (yoke_grip_outline)
-            w_of = lambda s_: gr + (rh - gr) * S.smoothstep(f0, f1, s_)        # noqa: E731
-            gm, aft = A.paddle_grip(o, ax, lat, fr.w, gl, w_of, YD["grip_d"], YD["grip_ra"], YD["grip_rf"])
-            acc.add(gm, "grip_black")
-            # grained leather inset in its moulded rim on the flat aft face, following the paddle's width [M: P1046409,
-            # brochure p.12]
-            s0, s1, rim = YD["inset"]
-            ol = A.taper_outline(gl, s0, s1, lambda s_: w_of(s_) - YD["grip_ra"] - rim + 0.0008, n=22)
-            for m, mat in A.inset(o + YD["grip_d"] * fr.w, ax, lat, fr.w, ol, rim):
-                acc.add(m, mat)
-            hdir = _unit(ax + 0.35 * fr.w)                              # switches on the head, aft-up
-            tip = o + (gl - 0.010) * ax + 0.004 * fr.w
-            if d == sg:                                                  # outboard grip: pitch trim switch, PTT
-                acc.add(A.knob(tip, hdir, lat, 0.0075, 0.0040, n=20, chamfer=0.2), "grip_black")
-                rk = tip + 0.0058 * hdir
-                acc.add(superellipsoid(rk, (0.0045, 0.0062, 0.0030), (0.35, 0.35), nu=8, nv=12,
-                                       R=np.stack([_unit(np.cross(hdir, lat)), lat, hdir], 1)), "black")
-                st, tw, th_, tp = YD["trigger"]
-                q = o + st * gl * ax - (YD["grip_d"] - 0.002) * fr.w
-                acc.add(superellipsoid(q - 0.5 * tp * fr.w, (0.5 * th_, 0.5 * tw, 0.5 * tp + 0.002), (0.4, 0.4),
-                                       nu=8, nv=12, R=np.stack([ax, lat, fr.w], 1)), "black")
-            else:                                                        # inboard grip: 4-way hat (knurled cap)
-                acc.add(A.knob(tip, hdir, lat, 0.0068, 0.0030, n=20, chamfer=0.2), "grip_black")
-                acc.add(A.knob(tip + 0.0028 * hdir, hdir, lat, 0.0034, 0.0042, n=12), "black")
-                acc.add(A.knob(tip + 0.0062 * hdir, hdir, lat, 0.0052, 0.0034, n=32, flutes=16, chamfer=0.3),
-                        "black")
-        # horizontal column into the lower panel (into the black body's forward face); it reaches the full pull
-        # travel deeper than 30 mm behind the panel face, so at full pull it is still in its boot (the animation review
-        # 2026-10-04: built 30 mm deep, the 90 mm pull drew it out of the boot, the panel showing through the hole);
-        # satin dark metal, not chrome (flight deck r1)
-        acc.add(cylinder([xf - 0.03 - float(YK["travel"][1]) - 0.005, hub[1], hub[2]], [hub[0] + 0.010, hub[1], hub[2]],
-                         float(YK["column_r"]), n=24), "metal_dark")
-        for m, mat in A.yoke_bellows(sg):                              # its rubber bellows, moving with the yoke
-            acc.add(m, mat)
+
+# the mesher's material names that the flight deck uses for something else (the yoke track's merge, 2026-10-12): the
+# pads' charcoal pebble-grain leather (L6Y item 6) is 'yoke_leather' in the parts -- the shared 'leather_black' is the
+# hood lip's / seat pockets' darker leather; renamed here, not in model/yoke_patch.py, so the yoke's mesh cache key (the
+# mesher sources, yoke3d._src_key) is unchanged
+YOKE_MAT_RENAME = {"leather_black": "yoke_leather"}
+
+
+def A_recess_depth():
+    """The lower panel's column recess depth (m): YOKE_DESIGN column_recess[3]."""
+    return 1e-3 * float(I.YOKE_DESIGN["column_recess"][3])
 
 
 SIDE = {-1: "L", 1: "R"}
@@ -1029,7 +826,9 @@ def control_pivots():
     """{group / part id: pivot} of the crew controls built as their own parts (review r2 M4), model axes:
     yoke_L / yoke_R: kind 'yoke' -- origin the hub centre, axis along the column pointing FORWARD (a + rotation is a
     right roll, clockwise as the pilot sees it), roll_deg = YOKE roll, travel = the column's pitch travel along +x (aft)
-    at full pull / full push (YOKE travel);
+    at full pull / full push (YOKE travel: push 65, owner 2026-10-11), rest = the free yokes' parked offset along the
+    same axis (YOKE rest, rev P: the viewer's pose at a zero pitch command; the command's full push / pull still reach
+    travel_push / travel_pull);
     pedal_<seat><foot> (LL, LR, RL, RR): kind 'pedal' -- origin the hanging arm pivot (PEDALS pivot, under the lower
     panel), axis -y, travel_deg = the rotation that moves the pad PEDALS travel, gearing +1 for the right-foot pedals
     (forward with right rudder), -1 for the left: angle = -gearing x yaw x travel_deg (+ yaw = right rudder; a -
@@ -1040,7 +839,8 @@ def control_pivots():
         hub = I.yoke_hub(sg)
         out["yoke_" + SIDE[sg]] = dict(origin=tuple(float(v) for v in hub), axis=(-1.0, 0.0, 0.0), kind="yoke",
                                        roll_deg=float(YK["roll"]), travel_pull=(t1, 0.0, 0.0),
-                                       travel_push=(t0, 0.0, 0.0), note="interior.YOKE roll / travel")
+                                       travel_push=(t0, 0.0, 0.0), rest=(float(YK["rest"]), 0.0, 0.0),
+                                       note="interior.YOKE roll / travel / rest")
     pp = I.pedal_points(0.0)
     d = np.array([pp["dir"][0], pp["dir"][1]])
     pl = float(PD["pad_wh"][1])

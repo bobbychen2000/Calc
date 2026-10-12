@@ -256,9 +256,20 @@ def construction():
 # the fleece rims' finer fringe sampled every 6.5 mm); (FDO3-01) the flight deck 68k -> 92k (the contact pass's split of
 # the panel box's broad triangles, AO_CONTACT_SPLIT: +62k at RES 2; the cove, lip, tray, brush tufts) and the interior
 # total 370k -> 390k
-INTERIOR_BUDGET = {"total": res.budget(390_000, 2.2), "crew_seat": res.budget(19_500, 3.4),
-                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(92_000, 2.2),
-                   "yoke_L": 24_000, "yoke_R": 24_000, "pedal_LL": 3_000, "pedal_LR": 3_000, "pedal_RL": 3_000,
+# -- the yokes (model/yoke3d.py, L6Y / L6Y2: one mesh at every RES, the light tier's LOW_FINE included) <= YOKE_BUDGET
+# each; the total raised by their 2 x 43k over GEOM A's 2 x 24k caps (merge of wip/fd-yoke, 2026-10-12)
+YOKE_BUDGET = 43_000       # rev N (3-D judges r1 FID1-07 / CR1-03: the frame's highlight tolerance 2.5 deg on every face
+#                            seen from the aft hemisphere, +3.6k; the badge plate, the trim slot): rev M's 40k
+# the interior budget's open items (printed by the build while it is over)
+BUDGET_OPEN = ("the rear cabin seats seat_pax3-6 34,834 at RES 2 against the 34,800 cap (the RES-2 rims, review r1 "
+               "RES1-02)",)
+# (and flight_deck 92k -> 96k: the yoke track's column surround -- the U recesses' walls, rim flanges and floors with the
+# columns' openings, the sleeves, the J bands and screws -- and the panel face's exact U trim, after the bake's contact
+# split of their broad faces: 199k -> 207.5k at RES 2; GEOM A's yoke wells and bellows are gone)
+INTERIOR_BUDGET = {"total": res.budget(390_000, 2.2) + 2 * (YOKE_BUDGET - 24_000),
+                   "crew_seat": res.budget(19_500, 3.4),
+                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(96_000, 2.2),
+                   "yoke_L": YOKE_BUDGET, "yoke_R": YOKE_BUDGET, "pedal_LL": 3_000, "pedal_LR": 3_000, "pedal_RL": 3_000,
                    "pedal_RR": 3_000, "fd_consoles": 30_000, "fd_divider": 18_000, "interior_lining": 190_000}
 
 
@@ -574,6 +585,8 @@ def main(low=True):
         rows.append(f"{k} {n:,}" + (f"/{lim // 1000}k{'' if n <= lim else ' OVER'}" if lim else ""))
     lim = INTERIOR_BUDGET["total"]
     print(f"  interior triangles {tot:,} (budget {lim:,}: {'OK' if tot <= lim else 'OVER'}): " + ", ".join(rows))
+    if tot > lim or any("OVER" in r for r in rows):
+        print("  OPEN budget item (owner decision): " + "; ".join(BUDGET_OPEN))
     # materials: livery palette <-> glTF table <-> the photo-fitted render/lookdev_materials.json
     from model.assemble import check_lookdev
     for what, bad in (("livery.PALETTE vs assemble.MATERIALS", livery.check_materials()),

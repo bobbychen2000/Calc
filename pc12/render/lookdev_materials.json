@@ -1438,9 +1438,9 @@
   },
   "yoke_white": {
    "baseColorFactor": [
-    0.78,
-    0.78,
     0.77,
+    0.78,
+    0.8,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1450,8 +1450,42 @@
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "PC-24-style yoke hub, gloss white",
-   "srgb_hex": "#E5E5E3"
+   "note": "yoke cover (Y shell): gloss clear-coat white, neutral-cool, fine pearl (L6Y item 1)",
+   "srgb_hex": "#E3E5E7"
+  },
+  "yoke_silver": {
+   "baseColorFactor": [
+    0.58,
+    0.61,
+    0.67,
+    1.0
+   ],
+   "metallicFactor": 0.85,
+   "roughnessFactor": 0.34,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke upper insert = crown + badge: COOL satin aluminium (L6Y item 2; rev Q, 3-D judges r4 FID4-02: the neutral 0.62 read as the cover's hue -- the photos' insert is cooler, B - R +35..+69 against the cover's +16..+30)",
+   "srgb_hex": "#C8CDD6"
+  },
+  "yoke_silver_dark": {
+   "baseColorFactor": [
+    0.29,
+    0.3,
+    0.33,
+    1.0
+   ],
+   "metallicFactor": 0.85,
+   "roughnessFactor": 0.36,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke lower insert: cool smoke silver (L6Y item 3; rev Q)",
+   "srgb_hex": "#93959B"
   },
   "grip_black": {
    "baseColorFactor": [
@@ -1461,14 +1495,173 @@
     1.0
    ],
    "metallicFactor": 0.0,
-   "roughnessFactor": 0.62,
+   "roughnessFactor": 0.42,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
    "kind": "dielectric",
-   "note": "yoke grips",
+   "note": "yoke body / grips / heads: satin black, crisp edge highlights (L6Y items 4 / 5)",
    "srgb_hex": "#242427"
+  },
+  "yoke_leather": {
+   "baseColorFactor": [
+    0.05,
+    0.05,
+    0.05,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.58,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "render_pebble": {
+    "size": 0.0011,
+    "amp": 0.35,
+    "rough_amp": 0.1,
+    "creases": 0.15
+   },
+   "kind": "dielectric",
+   "note": "yoke pads (L6Y item 6): charcoal leather, ~1.1 mm pebble grain, faint creases (viewer: a band-limited bump patch, materials.js); the meshes' leather_black, renamed in flightdeck._yokes (the flight deck's shared leather_black is the hood lip's)",
+   "srgb_hex": "#3F3F3F"
+  },
+  "button_red": {
+   "baseColorFactor": [
+    0.5,
+    0.004,
+    0.012,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.15,
+   "clearcoatRoughnessFactor": 0.06,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "AFCS disconnect cap: deep saturated red, light clear coat, NOT emissive (L6Y item 8; rev O, 3-D judges r2 FID2-03: 0.70 / 0.035 / 0.04 under a 0.3 coat read coral (sat 0.60) where P1046409 / Mexico R show sat 0.71 / 0.96)",
+   "srgb_hex": "#BC0D1D"
+  },
+  "legend_grey": {
+   "baseColorFactor": [
+    0.13,
+    0.13,
+    0.13,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.5,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke legends as thin plain letter blocks (0.22 +/- 35 % of the pitch), ~0.40 of white (no lettering: L6Y items 7-10; rev O, 3-D judges r2 FID2-06: rev N's 0.30 blocks at 0.70 of the pitch read as dial ticks; rev P, r3 CR3-05: thinner, dimmer)",
+   "srgb_hex": "#656565"
+  },
+  "yoke_nickel": {
+   "baseColorFactor": [
+    0.62,
+    0.55,
+    0.47,
+    1.0
+   ],
+   "metallicFactor": 0.9,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke push button's hex collar: satin nickel, a warm tint (L6Y item 10, rev N: Mexico L / P1046409 / AOPA; rev P, 3-D judges r3 FID3-03: the lit facets read tan)",
+   "srgb_hex": "#CEC4B6"
+  },
+  "yoke_rocker": {
+   "baseColorFactor": [
+    0.02,
+    0.02,
+    0.022,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke pitch-trim rocker lobes: near-black satin, read by its crisp edge highlights (L6Y item 9; rev O, 3-D judges r2 FID2-02: rev N's 0.042 / rough 0.45 read as a light grey flat bow-tie, the photos' rocker 0.15-0.30 of the cover)",
+   "srgb_hex": "#272729"
+  },
+  "yoke_column": {
+   "baseColorFactor": [
+    0.04,
+    0.04,
+    0.044,
+    1.0
+   ],
+   "metallicFactor": 0.5,
+   "roughnessFactor": 0.4,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke column: satin dark grey tube [E] (L6Y item 11; rev N: the dark metal read as a light grey pipe; rev P, 3-D judges r3 FID3-02: matte near-black; rev Q, 3-D judges r4 FID4-05: that read as a hole from the pilot's eye -- a polished tube going into the panel, ~40-50 there)",
+   "srgb_hex": "#38383B"
+  },
+  "yoke_trim_face": {
+   "baseColorFactor": [
+    0.04,
+    0.04,
+    0.043,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.45,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke pitch-trim legend ring / lunes: flat satin charcoal (L6Y item 9; rev P, 3-D judges r3 FID3-01: rev N / O's gloss black read darker than the body, the photos' face is a grey dial at least as light as it)",
+   "srgb_hex": "#38383A"
+  },
+  "yoke_slot": {
+   "baseColorFactor": [
+    0.01,
+    0.01,
+    0.011,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.8,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "yoke pitch-trim rocker slot: near-black matte, the darkest part of the head (L6Y item 9; rev P, 3-D judges r3 FID3-01)",
+   "srgb_hex": "#19191B"
+  },
+  "yoke_groove": {
+   "baseColorFactor": [
+    0.03,
+    0.03,
+    0.033,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.5,
+   "kind": "dielectric",
+   "note": "yoke cover grooves: the V flanks of the insert parting grooves, the step's down-facing flank and end cones, the badge outline / speed lines as their cavity shadow (L6Y item 15; rev Q, 3-D judges r4 FID4-01: lit like the face they read as bright bevels, every photo shows dark lines -- the step 0.00-0.18 of the insert)",
+   "srgb_hex": "#303033"
   },
   "veneer_walnut": {
    "baseColorFactor": [

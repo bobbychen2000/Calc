@@ -225,57 +225,681 @@ GLARESHIELD = dict(
     finish="grey stitched leather top [M: brochure p.10]",
 )
 YOKE = dict(
-    bl=P(0.375, "[M] +/-0.372 (cockpit key): on the seat centreline"),
-    hub_dx=P(0.140, "[M] hub face aft of the PDU glass (face-on photo, depth-corrected)"),
-    hub_dz=P(-0.155, "[M] hub centre 0.15-0.17 below the MFD centre"),
-    hub_whd=PT((0.140, 0.120, 0.060), "[M] white Y hub: width at the grip roots, height; depth [E].  Flight deck r1 "
-                                      "(rev H, P1046408 at 0.72 mm/px): height 0.110 -> 0.120 (the silver V's top to "
-                                      "the shield's round foot)"),
-    hub_bot_w=P(0.045, "[M] the Y hub narrows to a round foot this wide at its bottom (JTF cockpit key item 15).  "
-                       "Flight deck r1 (rev H) re-measured: the white foot is 0.040-0.045 on both P1046408 yokes (0.70 "
-                       "mm/px) and in the JTF elevation; 0.066-0.076 is the shield's MID-height width (the profile "
-                       "below), the black body's U rim round the foot ~0.055-0.08"),
-    span=P(0.285, "[M] grips overall, outer edge to outer edge at their bottoms (JTF cockpit key, P1046408 with the "
-                  "0.14 hub for scale); PC-24-style yoke [S]"),
-    grip=PT((0.160, 0.016, 10.0), "[M] grip length tip to tip, radius, cant from vertical with the TOPS INBOARD (JTF "
-                                   "key: tops +/-0.10, bottoms +/-0.125 from the hub CL; P1046408 ~8 deg); review r2 F2 "
-                                   "(P1046408 pair: slim paddles 55 px against the render's 70 px, rising well above "
-                                   "the hub): radius 0.020 -> 0.0155, length 0.125 -> 0.140 (the tops 15 mm higher); "
-                                   "final judge r1 I2 (P1046408: the grips rise ~0.07 above the shield top with the thumb "
-                                   "knob, the render's stopped at 0.045): 0.140 -> 0.160, the bottoms kept.  "
-                                   "Rev H: r 0.016 (28-32 mm across near the bottom, P1046408 / 09), widening to "
-                                   "the head (grip_head)"),
-    grip_dz=P(-0.040, "[M] grip bottoms 0.04 below the hub centre, near the hub bottom (JTF key: grips WL 1.80-1.93 "
-                      "on hub 1.79-1.90; P1046408 -0.05..+0.09); tops ~0.04 above the hub top (P1046408)"),
-    grip_head=PT((0.090, 0.021), "[M] paddle head: over its top 90 mm the grip widens gradually from the grip radius "
-                                 "to 0.021, the hat / trim switch on top (P1046409 at 0.52 mm/px: 42 mm across under "
-                                 "the head, 39 at mid-length, 29 near the bottom; P1046408: 39-42 / 28-30; brochure "
-                                 "p.12).  Flight deck r1 (rev H): no round swollen head -- rev F's 0.018 bulb over 42 "
-                                 "mm read as a lollipop; the paddle widens instead"),
-    shield=PT(((0.00, 1.00), (0.10, 0.97), (0.22, 0.74), (0.33, 0.52), (0.45, 0.38), (0.60, 0.28), (0.80, 0.14),
-               (1.00, 0.00)),
-              "[M] white shield (the hub's front cover): half-width from its top (t = 0) to the stem (t = 1) as the "
-              "fraction between hub_bot_w / 2 and hub_whd width / 2, its top corners at +/- hub width / 2 (P1046408: "
-              "~0.52 of the grip span; review r3 F2: rev C ran them out to the grips).  Final judge r1 I2 (P1046408 "
-              "re-measured on the shield's own height: 0.85 / 0.60 of its top width at 1/2 and 4/5 of the height, a "
-              "full U round to the stem): the rev D goblet (0.37 at mid-height, 0.05 at 0.85) left a broad black "
-              "body round a narrow white V.  Flight deck r1 (rev H; P1046408 right yoke at 0.70 mm/px: half-widths "
-              "70 / 61 / 44 / 33 / 29 / 25 / 20 mm at t 0.09 / 0.21 / 0.33 / 0.45 / 0.57 / 0.75 / 0.90, left yoke "
-              "39 at t 0.5; the JTF elevation 66 / 49 / 38 at t 0 / 0.25 / 0.5): a Y -- horns flaring to the top "
-              "corners over the top third, a slowly narrowing body, a round foot (the rev F U was 0.80 at "
-              "mid-height)"),
-    shield_dip=P(0.004, "[M] the shield's top edge dips this much to the centre under the badge (a shallow V)"),
-    body_arm=PT((-0.004, 0.005), "[M] black yoke body behind the shield: its lower edge leaves each grip's inner edge "
-                                 "this far above the hub centre and runs down-inboard to the shield foot, rimming it "
-                                 "by the second value; its top runs from the grip heads into the shield's top corners "
-                                 "(P1046408, review r3 F2)"),
-    column_r=P(0.022, "[E] horizontal column into the lower panel"),
-    travel=PT((-0.090, 0.090), "[E] pitch travel fwd / aft of neutral"),
-    roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it.  OPEN, owner decision "
-                 "(review r3 C3): at the L6B design seat setting the 95th-pct knees meet the yoke from ~17.5 deg of "
-                 "roll (50th ~25, 5th male ~22.5, 5th female ~87.5; L6B detail F / fit_check 19 compute it); options: "
-                 "the seat setting / pedal crank the 95th would use, a smaller roll [E], or the grip cant / span"),
+    bl=P(0.375, "[M] +/-0.372 (cockpit key): on the seat centreline.  Rev I: the insert axis measured 1.8 (pilot) / 4.2 "
+                "(co-pilot) mm outboard of it through panel_408, inside that camera's +/-7 mm: kept"),
+    hub_dx=P(0.140, "[M] hub face aft of the PDU glass (face-on photo, depth-corrected).  Rev I: the yoke's front face "
+                    "(the black body's forward face, YOKE_DESIGN body_depth ahead of the aft face at the insert step); "
+                    "the locked-pose photos put that aft face 60 +/-30 mm further forward (bundle adjustment of 4 "
+                    "photos, absolute station +/-30 mm): read as the gust-lock pose, not moved (OPEN, owner)"),
+    hub_dz=P(-0.155, "[M] hub centre 0.15-0.17 below the MFD centre = the column axis / roll pivot (WL 1.845).  Rev I: "
+                     "the shell is drawn -56 .. +65.3 mm about it (rev J; P1046408 through panel_408); the column surround's "
+                     "joint line reads WL 1.817-1.824 (+/-10 mm) -- OWNER DECISION 2026-10-11: the axis / roll pivot "
+                     "kept here, the band and the recess re-centred on it (YOKE_DESIGN column)"),
+    hub_whd=PT((0.1446, 0.1213, 0.060), "[M] rev J: white shell 144.6 across the arm tips, 121.3 tall (-56 .. +65.3 "
+                                        "about the hub centre, YOKE_DESIGN shell; rev I 123); depth [E] 60 = the black "
+                                        "body's forward face to the aft face at the insert step (hidden in every photo)"),
+    span=P(0.2813, "[M] rev K: grips 281.3 overall on the aft-face outlines (139.3 + 142.0, grip_out / grip_in "
+                   "measured apart; 280.7 on the front silhouettes); rev J 281.2, rev I 283, rev H 285 (JTF key)"),
+    grip=PT((0.1358, 0.019, 8.1), "[M] rev K (YOKE_DESIGN grip_out / grip_in aft-face outlines): length bottom to "
+                                  "head top 134.9 / 135.8 (outboard -37.5 .. 97.4, inboard -45.8 .. 90.0; rev J 136.2 / "
+                                  "135.8, rev H 160), mid-grip "
+                                  "half-width (sections A3 / N3 ~37 / 47 wide), cant of the mean axis from vertical "
+                                  "with the TOPS INBOARD 8 deg (grip_axis; rev I 15-17 as the silhouettes' tilt)"),
+    grip_dz=P(-0.0458, "[M] rev K: grip bottoms (aft-face outlines) -37.5 outboard (rev J -38.8, FID2-03) / -45.8 "
+                       "inboard about the hub centre, the lower one here (P1046408; rev I -42.3, rev H -40)"),
+    column_r=P(0.022, "[E] the column (never seen: behind the black body / in its surround): dia 44 kept.  Rev N (3-D "
+                      "judges CR1-02 / FID1-02): SATIN BLACK, non-metallic (yoke_column) -- the satin dark metal of rev "
+                      "M mirrored the studio and read as a light grey pipe from the crew stops where no PRO photo shows "
+                      "one (Mexico L: a dark column in the hand slot); ~100 mm of it shows at the drawn neutral between "
+                      "the body's forward face and the panel face (OPEN, owner: the fore-aft station -- every posed "
+                      "photo puts the yoke 14-65 mm further forward, which would shorten it).  Rev P (3-D judges r3 "
+                      "FID3-02: from the pilot's design eye a tall dark post in the recess, 0.48 x the cover's pixels): "
+                      "MATTE near-black (0.014, rough 0.8), in the cabin light without fill (an occluded pocket) and the "
+                      "viewer's free yokes parked at YOKE rest (-35: its free length to the panel 107 -> 72 mm).  Rev Q "
+                      "(3-D judges r4 FID4-05: from the pilot's design eye the near-black post read as a hole, 23): a "
+                      "SATIN DARK-GREY tube (yoke_column 0.04, metallic 0.5, rough 0.4: ~50 there, a tube going into "
+                      "the panel)"),
+    travel=PT((-0.065, 0.090), "pitch travel fwd (push) / aft (pull) of neutral: pull 90 [E]; push 65 -- OWNER "
+                               "DECISION 2026-10-11 (fit_check 30b / fit_fd_a 29b: at the [E] 90 of push the grips reached "
+                               "the lower panel from ~45 deg of roll and came within ~8 mm of its bare face wings level; "
+                               "3-D judges r1 CR1-09): the push shortened to 65, the pull kept"),
+    rest=P(-0.035, "[M] the FREE yokes' rest on the ground, along the pitch travel (- = forward of the drawn neutral): "
+                   "the photos' unlocked yokes stand forward -- Mexico pilot / co-pilot -34 / -38 (both within 4 mm), "
+                   "AOPA -14 / -26 (refs/cache/overlays/yoke/deviations.json poses; dx weakly constrained along each "
+                   "view); P1046408-10's -37 .. -65 read as the gust-lock pose.  Rev P (3-D judges r3 FID3-02): the "
+                   "viewer's PARKED pose -- the yokes sit here at a zero pitch command (pivot 'rest'; the command's "
+                   "full push / pull still reach travel): the column seen from the crew seats 0.48 -> 0.30 of the "
+                   "cover's pixels at the pilot's design eye (viewer, rev P).  The drawn neutral, the knee checks (L6B) and "
+                   "fit_check 30 (whole travel) are unchanged; the elevators stay drawn at neutral.  Rev Q (3-D judges r4 "
+                   "CR4-05: the parked yokes stood 0.54 of the push travel forward over level elevators -- the cable run "
+                   "allows no such pose): the viewer moves the elevators with the yokes' own position "
+                   "(kinematics.js pitchPos), so parked they hang trailing-edge DOWN by rest / push x the down travel "
+                   "(~8 deg: a parked elevator droops -- LX-FLI, MSN 3008 0517 tails), level at the drawn neutral"),
+    roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it.  OWNER DECISION "
+                 "2026-10-05: the 95th's knee result on the rev L / M solids -- 23.8 mm wings level (CRITERIA "
+                 "knee_clear 25 kept, not loosened) and contact from 12.5 deg -- ACCEPTED AS MEASURED (L6B open point "
+                 "1 closed; L6B detail F / fit_check 19 compute it)"),
 )
+
+# ---------------------------------------------------------------------------------------------------- yoke design
+# YOKE_DESIGN (rev J; rev I 2026-10-05, owner "the yoke isn't quite right especially if you look at the details"): the
+# yoke's own design drawing, sheets L6Y (views, sections, tables) and L6Y2 (sections, heads, switches, column; drawing/
+# yoke_sheet.py), drawn from this table through model/yoke_geom.py (the solids: curves by the curve law below, signed-
+# distance solids, exact sections and silhouettes); the knee / roll checks of L6B and the L6 views take the same solids
+# (yoke_outline_yz, yoke_sweep_pieces).  YOKE-LOCAL MILLIMETRES:
+#   u  lateral, + OUTBOARD (co-pilot yoke: + model y; pilot: - model y -- the pilot yoke is the mirror image, its
+#      switches outboard as well); 0 = the hub centreline (BL +/-YOKE bl)
+#   h  up from the hub centre (the column axis / roll pivot, WL = PANEL mfd_z + YOKE hub_dz)
+#   a  aft (+x, toward the pilot) from the aft face at the insert step line; model x = yoke_hub()[0] + YOKE
+#      hub_whd[2] + a at neutral pitch
+# Outlines are front-view (u, h) samples; '*_half' outlines run from the top centre round the OUTBOARD side to the
+# bottom centre and are mirrored (the white moulding is symmetric).  The black body is NOT symmetric (body_half = the
+# outboard half with the high web to the trim head, body_in = the inboard half with the low neck), nor are the grips
+# (grip_out / grip_in, pad_out / pad_in: each in its OWN sense, u > 0 away from the yoke centreline): rev J measured
+# them apart.  '*_corners' = ((sample index, radius), ...) of the outline's corners (curve_law).
+# Sources (git-ignored refs/cache/fd_research/yoke/measure, r2 = round 2 2026-10-05): P1046408 through the fitted camera
+# panel_408 (0.71 mm/px, both yokes), the Pilatus Mexico press photo (0.26 mm/px, both yokes, from above-inboard), the
+# AOPA (= Pilatus press) photo (0.31 mm/px; pilot yoke from aft-OUTBOARD, co-pilot yoke 54 deg from inboard), P1046409 /
+# 10, the JTF p.18 elevation; rev J: every photo's yoke pose fitted to the COVER landmarks only (TCS, AFCS cap, badge,
+# step ends, lower-insert corners, foot), the heads' switch centres triangulated from 7 views, the pads traced in 4
+# views (P1046408 L / R, Mexico L, AOPA from outboard) and back-projected onto the grips' aft planes, the inboard neck /
+# heads traced in P1046408 L / R.  The PC-24 (samuelnicz 1-4, same family) for what the PRO photos do not show.
+# NO MARKINGS: the badge is an abstract winged plate with a blank raised field, the legends plain letter blocks.
+# OWNER DECISIONS 2026-10-05: (1) sheets L6Y rev D / L6Y2 rev C APPROVED as the basis of the 3-D yoke (this table, rev M,
+# carries the drawing-stage cleanup of the judges' round 4 on top of it); (2) the 95th-percentile knee result accepted as
+# measured (YOKE roll, L6B); signed off with the approval: the hidden estimates changed in rev L -- the body's foot round
+# R 14 -> R 5 under a 4 mm draft cap (body_form) and the inboard head's cut round R 3 -> R 1.5 (head_zone r_t).
+YOKE_DESIGN = dict(
+    curve_law=PT((0.05, 0.5, 0.45),
+                 "[S: drawing rule, rev M text (judges DR4-03; the rule itself is rev L's, judges DR3-07)] every outline "
+                 "is split at the samples listed in its *_corners table into RUNS; each run is a C2 CUBIC SPLINE "
+                 "(scipy CubicSpline) through its samples on CENTRIPETAL knots (parameter step = chord length ** 0.5): "
+                 "'natural' end conditions (zero second derivative) at a run's two corner ends, PERIODIC for a closed "
+                 "outline that has no corners; a run of two samples is a straight line; every run is sampled every "
+                 "<= 0.05 mm along each chord, the fillet arcs likewise (index 0; rev M acceptance: at 0.25 mm the polylines' "
+                 "chords turned 3-7 deg round the R 2-5 corners, which the exact distance showed as creases on the "
+                 "walls) -- curvature is continuous at every sample that is not a "
+                 "corner.  A CORNER (sample index, R): R 0 = a sharp crease; R > 0 = a FILLET: the two runs' tangents "
+                 "at the corner (taken min(0.6 mm, 0.3 x the run length) from it) give the turning angle th; both runs are "
+                 "trimmed back by the tangent length t = R tan(th / 2) and joined by a cubic Bezier arc (control "
+                 "points 4/3 tan(th / 4) R along the tangents: a circular arc of radius R within 0.03 % at a 90 deg "
+                 "turn); t is CAPPED at 0.45 x the shorter of the two runs (index 2), which then draws a smaller "
+                 "radius R' = t_cap / tan(th / 2) -- model/yoke_geom.capped_fillets() lists every capped corner and "
+                 "the acceptance (L6Y2) prints it (none in rev M).  Turns under 1 deg are not filleted.  The aft-face "
+                 "profile below the step is a C1 cubic Hermite tangent to the face_tilt plane (face_lower).  The solids "
+                 "use the EXACT signed distance to these dense polylines within 0.3 mm of them, beyond it a C2 cubic B-spline "
+                 "of the exact distances at 0.1 mm nodes, the two blended C2 (model/yoke_geom.Field2D; rev M: the "
+                 "bilinear grid of rev L made the rounds' normals jump at its cell edges)"),
+    # ---- white shell (cover) and silver inserts, front view
+    shell_half=PT(((0.0, 65.3), (8.0, 65.1), (15.0, 64.4), (20.0, 63.5), (22.0, 62.8), (24.0, 61.3), (26.0, 58.9),
+                   (28.0, 56.2), (30.0, 54.1), (32.0, 52.6), (33.7, 52.0), (36.0, 52.9), (39.0, 54.4), (42.0, 56.0),
+                   (45.0, 57.6), (48.0, 59.0), (51.0, 60.2), (54.0, 61.2), (57.0, 61.7), (60.0, 61.6), (63.0, 61.1),
+                   (66.0, 60.2), (72.3, 54.8), (72.3, 47.8), (69.0, 44.6), (66.0, 41.9), (63.0, 39.5), (60.0, 37.2),
+                   (57.0, 34.9), (54.0, 32.6), (51.0, 30.6), (48.0, 28.8), (45.5, 26.6), (43.6, 25.0), (41.0, 22.4),
+                   (38.7, 20.0), (37.4, 17.5), (36.6, 15.0), (35.3, 10.0), (32.8, 0.0), (30.2, -10.0), (27.9, -20.0),
+                   (25.6, -30.0), (23.3, -40.0), (21.1, -50.0), (20.0, -55.3), (14.0, -55.5), (7.0, -55.9),
+                   (0.0, -56.0)),
+                  "[M] P1046408 through panel_408, both yokes (agree within 1.5 mm), each half-width the mean of the "
+                  "outboard (true edge) and inboard silhouette (the inboard one shows 2-8 mm of side wall); sigma 1.5.  "
+                  "The silver insert IS the crown (65.3 at the centre, 62.8 at +/-22, chamfered 45 deg to the arm junctions "
+                  "+/-33.7 / 52.0); the arms rise to 61.7 at |u| 57; FACETED tips (a vertical end 47.8-54.8 at |u| "
+                  "72.3 between 45 deg chamfers; Mexico R tips, P1046409); the stem 65.6 wide at h 0, 42.2 at h -50; "
+                  "foot -56.0.  Rev J: the crown, junctions and arm tops 1.7 mm LOWER than rev I -- the shell outline "
+                  "snapped to the photo edges with every yoke posed on its cover landmarks: crown top -1.7 / -2.4 "
+                  "(P1046408 L / R), -2.7 / -2.6 (Mexico L / R), -2.8 (P1046410), -0.7 (AOPA, from outboard), the "
+                  "outboard arm tops -1.4..-2.6 (rev I's outline came from a rectification frame 1-3 mm off the "
+                  "landmark poses); the foot corner is the corner sample (20.0, -55.3) with its R 6 (rev I drew the "
+                  "radius as two chords).  Rev K (judges FID2-08): posed on the SYMMETRIC landmarks only (badge, step "
+                  "ends, lower-insert corners, foot) the stem still reads outboard edge -0.5..-1.8 / inboard edge "
+                  "+0.9..+3.1 mm in all 7 views (the AOPA view from OUTBOARD too, so not a side wall seen from "
+                  "inboard -- rev J's explanation withdrawn), the arm tips +0.3..+1.9 / -0.1..-2.6: the stem ~1.6 "
+                  "inboard and the tips ~1.5 outboard of the inserts' centreline; the TCS / AFCS u read +0.2 / +0.7 "
+                  "(sd 1.0 / 1.7) under those poses, so the switch landmarks are not the cause.  Kept symmetric "
+                  "(1-2 px in 5 of the 7 views; a mould parted on the inserts' centreline).  Rev M (judges FID4-03): the "
+                  "residuals of the rev L poses follow ONE left / right pattern in all 8 views of both yokes, each in "
+                  "its own sense (means of 8, + = photo outside the drawn edge): stem outboard -1.5 / inboard +1.7 (the "
+                  "stem ~1.6 inboard), arm tips outboard +1.7 / inboard -1.5 (both tips ~1.6 outboard), inboard arm "
+                  "top -1.7 / lower edge +1.7 (the inboard arm ~1.7 low), crown, chamfers and foot within +/-1.2.  "
+                  "KEPT SYMMETRIC: one owner decision for the stem, both tips and the inboard arm (L6Y open point 4)"),
+    shell_half_corners=PT(((4, 3.0), (10, 1.5), (21, 2.0), (22, 2.0), (23, 2.0), (24, 2.0), (45, 6.0)),
+                          "[M] corners of the shell outline: crown chamfer start R 3, arm junction (concave) R 1.5, "
+                          "the four arm-tip facet corners R 2 (detail.json), the foot R 6"),
+    insert_side=PT(((33.7, 52.0), (30.0, 51.0), (26.0, 50.0), (22.5, 47.5), (21.0, 45.0), (19.5, 40.0), (17.8, 32.0),
+                    (16.0, 25.0), (14.8, 19.0), (13.6, 14.0), (13.1, 8.0), (12.9, 4.1)),
+                   "[M] parting groove of the upper insert from the arm junction to the step end (intensity minima, "
+                   "P1046408 R + L within 0.5 mm; Mexico): concave, 39 wide at h 40, 32 at h 25, 25.8 at the step"),
+    insert_corners=PT((("junction", 0.0), ("step_end", 0.5)),
+                      "[M] the insert's corners: sharp where its groove meets the shell edge at the junction, R 0.5 "
+                      "at the step ends; the step's centre is the V's apex (sharp)"),
+    step=PT(((0.0, 2.1), (12.9, 4.1)), "[M] the step / parting line, a V in the front view (apex h 2.1 at the "
+                                        "centre, ends h 4.1 at |u| 12.9) and a 2 x 1 V-groove in section (grooves)"),
+    insert_lower_half=PT(((0.0, 1.0), (12.6, 3.0), (11.6, -4.0), (10.4, -11.0), (9.6, -15.5), (8.8, -17.6),
+                          (6.5, -18.6), (0.0, -18.9)),
+                         "[M] darker (smoke) lower insert, 25.2 -> 17.6 wide, bottom -18.9 (P1046408 R + L; bundle "
+                         "adjustment -17.3 / -18.5)"),
+    insert_lower_half_corners=PT(((0, 0.0), (1, 0.5)), "[M] the top edge's V apex (sharp) and its ends R 0.5; the "
+                                                        "bottom corners are the samples' own round (~R 2.5)"),
+    grooves=PT(((0.6, 0.5), (2.0, 1.0), (0.4, 0.3)),
+               "[M] parting grooves (width, depth): the upper insert's sides 0.6 x 0.5, the step a symmetric V 2.0 x "
+               "1.0 (Mexico L / R at 3.8 px/mm: a dark upper flank, a lit lower flank, 1 mm each), the lower insert "
+               "0.4 x 0.3 (a 1-1.5 px dark line, no wall seen from 14-21 deg above).  Rev J settles rev I's "
+               "proud / recessed contradiction: both inserts are FLUSH with the white cover (judges D1).  Rev Q (3-D "
+               "judges r4 FID4-01): every groove's flanks and end cones are finished yoke_groove (dark satin: their "
+               "cavity shadow, L6Y item 15) except the step's UP-facing flank, which keeps the white cover [M: the darkest pixel across the step 0.00-0.18 of the insert in the s/n 3001 views, the "
+               "photos' profile through the step at P1046408 ~190 / 3-10 / 155-231 / ~180 -- a dark line over a light "
+               "one -- and at the AOPA camera ~130 / 0-16 / 145-197 / ~90]"),
+    crown=PT((56.0, 6.0, 2.0, 0.8, 20.0),
+             "crown of the upper insert: a SOFT BREAK at h 56.0, 2.8 above the badge top, the insert's top above it "
+             "leaning 6 deg further forward than the face, blended R 20 (tangent edges h 55.0 / 57.0) [M low: judges "
+             "FID1-05 read a crisp crease above the badge in Mexico L; the AOPA view (19 deg above) shows at most a faint "
+             "tone step, Mexico R a soft tone step ~3 mm above the badge (judges FID2-10): drawn as a blend, not a "
+             "crease, until a sharper view confirms it (OPEN, owner); the angle and the R are E]; the "
+             "TOP LAND along the crown and the arm tops: a narrow upward-facing chamfer 2.0 deep fore-aft x 0.8 high "
+             "[M low: Mexico from above (a lit 1.5-2 px rim), rev I crown_top 2 mm; P1046408 1-2 px dark band]"),
+    badge=PT(((22.0, 53.2), (15.8, 46.1)), "[M] badge groove outline, half: top corner, bottom corner (a winged "
+                                           "trapezoid 44.0 / 31.6 x 7.1, ends 41 deg from vertical; rectified Mexico R / "
+                                           "L, P1046409 / 10, AOPA, JTF at 16 px/mm; sigma 0.5).  Drawn ABSTRACT: ONE "
+                                           "outline groove (rev O), three speed-line grooves per wing, a plain field"),
+    badge_lines=PT((51.55, 50.25, 48.95, 14.0, 0.0),
+                   "[M] speed lines: z of the three grooves, from |u| to the outline; the inner border offset -- 0 = NO "
+                   "inner border, the speed lines run on into the outline groove (rev O, 3-D judges r2 FID2-06: rev J-N's "
+                   "border groove 0.8 inside drew a DOUBLE outline, 'an empty label holder'; the rectified views' second "
+                   "line 0.8 inside (detail_badge.jpg, cyan) is the single groove's lit lower flank / the raised field's "
+                   "edge, and the speed lines reach it; Mexico R / L vertical profiles at |u| 16 / 18: minima at "
+                   "51.5-51.75, 50.1-50.3, 48.6-49.3)"),
+    badge_field=PT((13.5, 47.0, 52.2, 0.2, 1.0, 0.2),
+                   "[M] plain centre field half-width, bottom, top (the extent of the lettering, NOT reproduced: no "
+                   "markings).  Rev N (3-D judges FID1-06: the blank field between the speed lines read as a vent "
+                   "grille): a RAISED blank plate over it -- 0.2 proud of the insert [E: the embossed lettering's "
+                   "relief; rev O (3-D judges r2 FID2-06: 'flush or 0.2 proud') -- rev N 0.3], corners R 1.0, top edge "
+                   "R 0.2 [E], inset to clear the border groove by 0.1 mm -- the speed lines running from it to the "
+                   "outline's slanted ends [M: Mexico L / R, P1046409, PC-24 samuelnicz-2: a raised name field between "
+                   "the wing-lines]"),
+    badge_relief=PT((0.3, 0.5), "[E] badge outline / speed-line groove depth 0.3, groove width 0.5 [M]"),
+    # ---- black body (behind the cover), front view: NOT symmetric
+    body_half=PT(((0.0, 60.5), (20.0, 58.5), (33.0, 55.0), (50.0, 56.5), (58.0, 59.0), (60.5, 62.9), (65.3, 70.8),
+                  (73.1, 79.4), (80.0, 84.1), (86.4, 86.6), (92.5, 87.4), (99.0, 86.8), (104.0, 82.0), (102.0, 60.0),
+                  (99.0, 30.0), (95.5, 19.5), (90.0, 21.8), (84.0, 23.2), (78.0, 23.9), (72.0, 24.2), (66.0, 23.8),
+                  (60.0, 22.0), (55.0, 18.8), (51.0, 14.5), (47.9, 10.0), (45.6, 5.0), (42.9, 0.0), (39.2, -10.0),
+                  (35.9, -20.0), (32.6, -30.0), (29.0, -40.0), (25.6, -50.0), (23.5, -55.5), (20.0, -59.3),
+                  (14.0, -61.0), (7.0, -61.6), (0.0, -61.8)),
+                 "[M] OUTBOARD half of the satin black body: a rim round the stem 13.0 / 10.1 / 9.0 / 8.0 / 7.0 / 5.7 "
+                 "/ 4.5 mm wide at h 10 / 0 / -10 / -20 / -30 / -40 / -50 and 5.8 under the foot (bottom -61.8; "
+                 "P1046408 R + L); the OPEN hand slot's top arching from the rim at h 10 to 24 at |u| 66-78 (+/-3); "
+                 "the HIGH WEB from the arm top (|u| 60): its top edge the outboard neck trace of P1046408 (rev I 57 / "
+                 "63.4 -> 86.4 / 93.6, shifted -1.7 into the landmark-pose frame like the shell) up to (80, 84.1), then "
+                 "(rev L, judges DR3-01) running TANGENTLY into the trim head under its rim's 10 o'clock point "
+                 "(99.0, 86.8: the rim's 150 deg point (98.5, 88.4) less the web's 3.5 under the face) -- Mexico R / L "
+                 "from above: the web's silhouette flows into the boss outline there, no "
+                 "notch; rev K's (93, 93) stood as a free fin 4-10 wide beside the head (h 85-93) and the P1046409 / "
+                 "P1046408 L overlays put the drawn fin 2-4 mm outside the photo.  The samples after the web's end, "
+                 "(104, 84) .. (92, 25), lie inside the head / the grip, hidden: rev M (judges DR4-01) cuts the pads' "
+                 "pockets after the body-grip join -- rev L's flush web filled the outboard pad's slot-side upper "
+                 "corner (yoke_checks pads_exposed); the first 12 samples are the top edge (body_top)"),
+    body_in=PT(((0.0, 60.5), (20.0, 58.5), (33.0, 55.0), (50.0, 56.0), (58.0, 57.0), (66.0, 57.6), (72.5, 59.1),
+                (77.5, 61.6), (82.6, 64.4), (87.3, 67.6), (90.7, 70.4), (96.0, 64.0), (100.0, 45.0), (92.0, 30.0),
+                (86.8, 23.6), (82.0, 24.2), (78.0, 24.2), (72.0, 24.2), (66.0, 23.8), (60.0, 22.0), (55.0, 18.8),
+                (51.0, 14.5), (47.9, 10.0), (45.6, 5.0), (42.9, 0.0), (39.2, -10.0), (35.9, -20.0), (32.6, -30.0),
+                (29.0, -40.0), (25.6, -50.0), (23.5, -55.5), (20.0, -59.3), (14.0, -61.0), (7.0, -61.6), (0.0, -61.8)),
+               "[M] INBOARD half (|u| sense) of the black body: as body_half but a LOW NECK (judges FID1-01): its top "
+               "edge rises at ~25-35 deg from the white arm's tip chamfer (72.5, 59.1) to the inboard head's inner side "
+               "at (90.7, 70.4) -- P1046408 L (73.1, 58.4) -> (90.3, 66.8) and R (71.8, 59.8) -> (91.2, 69.2) traced at 7x "
+               "and back-projected 10 mm ahead of the grip's aft plane; rev L (judges FID3-06) the last three samples "
+               "raised 0.6 / 1.4 / 2.2 mm toward the head (the P1046408 neck check read the drawn edge 4.5 / 0.6 mm LOW "
+               "on average, max -7.5 / -6.9 near the head); the red placard / PFD show through above it; the head's "
+               "inner side stands free above it (grip_in).  The first 11 samples are the top edge (body_top)"),
+    body_top=PT((12, 11),
+                "the body's TOP LINE (rev L, judges DR3-01 / 02): the first 12 / 11 samples of body_half / body_in -- the "
+                "outline's own top edge, behind the cover (dark in the crown / arm junction notches, P1046408 L / R: 55 "
+                "at |u| 33 [M]) and along the web / neck [M]; the body's TOP SURFACE falls forward from it at body_form[1] "
+                "(the outline gives the sides and the bottom only; rev K blended a plane through a separate top line "
+                "with the necks' depth -- a 70 deg knife edge along the web's top, judges DR3-02)"),
+    body_form=PT((60.0, 42.0, 10.0, 2.0, 8.0, 5.0, 8.0, 3.0, 4.0),
+                 "body depth / form: forward face 60 ahead of the aft face behind the stem [E: rev H hub depth; hidden in "
+                 "every photo], tapering (smoothstep over |u| 35 -> 62) to the necks' depth (neck[2]) so the top plane "
+                 "meets the forward face, not the hand slot's top (rev L: a 42 deg wedge there); its top falls away "
+                 "forward at 42 deg FROM THE HORIZONTAL from the top line (body_top) [M lower bound / E: nothing of the "
+                 "body shows above the crown or the arm tops from 14-21 deg above (Mexico L / R, press 19 deg; rev I's "
+                 "11 deg top showed 12 mm above the crown in Mexico L, judges FID1-07)]; side draft 10 deg (the walls "
+                 "close in going forward, behind the stem) [E: PC-24 photos 2 / 4]; the rounds (rev M: a SIDE piece "
+                 "and a TOP piece, each rounded onto the forward face R 8 [E] -- easing to R 5 [E] under the foot (rev "
+                 "K R 14), reduced to R 3 [E] over |u| 40 -> 62 where the body behind the arms is only 7-15 tall at "
+                 "its forward face --, joined sides x top by a ROLLING-BALL R 2, then the aft face cut R 2 [M: rim "
+                 "highlight]: rev L rounded the forward face last, onto the sides-top max(), whose internal ridge its "
+                 "R 8 read -- creases on the forward face at |u| 32-35 / 53 where the top plane meets the drafted "
+                 "sides; the top plane anchored on the crown bevel faded out over 2 mm beyond the insert groove); "
+                 "under the foot (below h -45, released by -30) the draft's inward offset capped smoothly at 4 [E] -- "
+                 "rev L acceptance: R 14 over the full 10 deg draft (10.6 at the forward face) reached the medial axis "
+                 "of the foot's R ~11 corners and creased them at h -50; 4 + 5 stays inside"),
+    web=PT((3.5, 8.0),
+           "the outboard web's aft surface (rev L, judges DR3-01): the trim face's PLANE 3.5 forward of it, where that "
+           "lies forward of the outboard grip's aft plane (above their crossing, h ~50-55 on the web), else the aft "
+           "plane, the two joined by a smooth minimum 8 wide [M: Mexico R / L from above -- the web's top surface "
+           "rises as one broad face into the boss and the face's inboard rim stays clear of it; P1046409: nothing "
+           "of the web stands above the face]; supersedes rev K's face_clear (3.5 under the face's disc + 6 only: the "
+           "web stood up to 10 aft of the face plane beside it)"),
+    neck=PT((62.0, 88.0, 30.0, 3.0),
+            "the necks (body outline outboard of |u| 62): their aft surface blends (smoothstep over |u| 62 -> 88) from "
+            "the cover's back (face - cover_t) onto the web's aft surface (outboard, web) / the grip's aft plane "
+            "(inboard) [E]; 30 deep fore-aft [E: = the grips' 27 along their normal, so the necks' forward face "
+            "continues the grips'; rev K 25]; the black body and the grips joined by a concave round R 3 [M: "
+            "P1046408 L / R notch corner; rev K a polynomial blend labelled R] -- rev M (judges DR4-01): a ROLLING-BALL "
+            "round (yoke_geom.rmin_ang: a true R 3 where the surfaces meet at an angle, none where they run flush -- "
+            "the web on the outboard grip's frame, rev L's circular round stood up to 0.9 proud there), the pads' "
+            "pockets cut after it"),
+    neck_in=PT((76.0, 90.0, 0.5),
+               "the inboard LOW NECK's aft surface where it meets the inboard head (rev L): the grip's aft plane, "
+               "blending (smoothstep over |u| 76 -> 90) onto the shield facet's plane 0.5 forward of it -- the facet is "
+               "the head's aft face (tilted 7 deg to the grip plane), and on the grip plane alone the neck's tip stood "
+               "aft of the head as a free island at h 62-68 [E]; the neck's top edge (front view) unchanged"),
+    cover_t=P(3.0, "[E] white cover thickness (no side face seen in P1046408 / 10 at 23-26 deg: <= ~4)"),
+    # ---- side profile of the aft face (a vs h) at the centreline
+    face_tilt=P(17.5, "[M] the aft face ABOVE the step is one plane, top forward 17.5 +/-4 deg (badge, TCS, AFCS cap, "
+                      "head collars, pad centres: bundle adjustment of P1046408 / 10, Mexico, press; TCS bezel ellipses "
+                      "in 6 views 16 +/-2; pad normals 21-24 deg up).  Rev H: 4.8 deg"),
+    face_lower=PT(((2.1, 0.0), (-8.0, 2.6), (-18.5, 4.2), (-30.0, 4.6), (-42.0, 3.4), (-52.0, 1.6), (-56.0, 0.5)),
+                  "[M] below the step the face is convex, near vertical: (h, a) -- lower-insert bottom +3..+6 aft of "
+                  "the step, the foot -1.5..+0.4 (bundle adjustment, 4 camera solutions); rev J: a C1 Hermite "
+                  "through these samples whose first slope is the face_tilt plane's (tangent at the step: the 3 deg "
+                  "break of rev I's linear interpolation is gone; the step V is the only crease there)"),
+    edges=PT((1.0, 2.0, 3.0, 2.0), "[M] cover edge radii: perimeter R 1 (10-90 % transitions 0.45-0.95 mm in 5 "
+                                   "photos), arm lower edges R 2, foot underside R 3, arm-tip facet corners R 2"),
+    # ---- grips (each in its own sense: u > 0 away from the yoke centreline)
+    grip_out=PT(((93.0, 93.0), (101.6, 95.6), (108.0, 97.0), (114.0, 97.4), (120.0, 97.1), (126.0, 96.0),
+                 (130.5, 93.6), (132.0, 88.0), (131.6, 81.0), (130.2, 73.0), (127.4, 66.0), (131.0, 55.0),
+                 (131.7, 50.0), (132.9, 40.0), (134.4, 30.0), (136.0, 20.0), (137.6, 10.0), (138.8, 0.0),
+                 (139.3, -10.0), (138.3, -20.0), (136.6, -30.4), (128.9, -35.4), (125.3, -37.0), (121.0, -35.5),
+                 (119.6, -30.0), (116.9, -20.0), (111.9, -10.0), (106.9, 0.0), (101.9, 10.0), (96.6, 20.0),
+                 (91.0, 30.0), (89.1, 36.0), (88.6, 45.0), (89.8, 54.0), (92.3, 62.0), (94.3, 70.0), (95.0, 78.0),
+                 (94.6, 86.0)),
+                "[M] OUTBOARD grip's aft-face outline G (own sense) -- a CONSTRUCTION CURVE (rev L, judges DR3-06): the "
+                "directrix of the grip prism on its aft plane; the part's front silhouette is G below the head zone, the "
+                "trim head (head_out, head_zone) above it, and the walls follow grip_walls.  A TAPERING paddle -- the pad "
+                "(pad_out) + the 2.0 frame on its sides [M: P1046408 L / R silhouettes vs the pads, rev J], 37 wide at "
+                "h 20, 21 at h -20; the heel ~9 below the pad (bottom -38.0 at the sample, -37.5 on the rounded outline) "
+                "[M]; the trim head on top: 97.4 at u 114, outer side 132 [M: P1046408 L 7x trace back-projected 8 mm "
+                "ahead of the aft plane, +/-3 with the depth] -- the head solid (the face's dome) trims it to 94.3 / "
+                "131.6; a WAIST under it at h 66: 127.4 (rev M, judges FID4-02: rev L's 129.8 was ~3 mm too wide at h 58-66 in "
+                "P1046408 L / R and Mexico L / R; P1046410 reads the other way there, its pose fitted to the cover only, "
+                "and does not veto it; at h 55 the pad's outer side + the 2.0 frame keep 131.0).  Rev L (judges DR3-01): "
+                "its inner side above the pad's "
+                "slot-side corner (89.1, 36) runs up into the head's inboard flank (94.3 / 70, 95.0 / 78) -- hidden in "
+                "every front view behind the web; P1046409 (from inboard) shows the grip's slot-side edge rising from "
+                "the pad corner to the boss -- rev K kept it at u 88-91 up to h 85, which left a 7 mm ledge under the "
+                "head.  Rev K (judges FID2-02 / 03): the walls run fore-aft (grip_walls 0.6), the bottom-outer corner "
+                "pulled in 1-3 mm (samples 21-23).  Rev M (judges FID4-01): the slot-side heel corner raised 2.5 mm "
+                "(sample 23 (121.0, -35.5), R 4 -> R 9) and sample 22 0.3 up: rev L drew it too low and too full in all "
+                "5 views that see it (slot rows +1.5..+4 below h -30).  Photo check (the grip's own ray-cast hits vs "
+                "the curated rows): L6Y2"),
+    grip_out_corners=PT(((6, 4.0), (20, 5.0), (23, 9.0)),
+                        "[M/E] the trim head's outer-top corner R 4, the bottom-outer corner R 5, the bottom-inner "
+                        "(slot-side heel) corner R 9 (rev M, judges FID4-01: R 4 drew it too full; P1046408 / Mexico / "
+                        "P1046409 / 10 grip bottoms)"),
+    grip_in=PT(((90.7, 67.5), (90.7, 76.0), (91.4, 84.0), (96.0, 89.3), (104.0, 90.0), (112.0, 89.6), (118.5, 87.6),
+                (122.5, 82.0), (123.8, 74.0), (124.6, 66.0), (125.6, 60.0), (129.6, 55.0), (130.7, 50.0),
+                (132.4, 40.0), (134.0, 30.0), (135.8, 20.0), (137.5, 10.0), (139.2, 0.0), (140.6, -10.0),
+                (141.7, -20.0), (141.9, -27.0), (140.5, -36.0), (134.0, -43.2), (126.0, -45.5), (118.5, -45.8),
+                (114.5, -38.0), (111.5, -30.0), (106.9, -20.0), (102.5, -10.0), (98.0, 0.0), (93.7, 10.0),
+                (89.5, 20.0), (87.8, 25.0), (86.6, 32.0), (86.0, 40.0), (86.2, 50.0), (88.0, 60.0)),
+               "[M] INBOARD grip's aft-face outline (own sense): a WIDE paddle -- the pad (pad_in) + the 2.0 frame, "
+               "41 wide at h 0, 35 at h -20 (its slot side 4-8 mm further in than rev I's averaged grip); bottom "
+               "-45.8, 11 below the pad [M: P1046408 L 16-18 px]; the head on top: 90.0 high (rev I 95.4: 4-9 mm too "
+               "tall, judges FID1-04), its inner side FREE above the low neck at u 90.7 from h 67.5 to 84 [M: "
+               "P1046408 L / R 7x, 89.8-91.6], outer side 122.5-125.6 [M].  Rev K (judges FID2-04): the slot side "
+               "hand-traced at 7x clear of the J band / panel seam behind it and ray-cast (L6Y2 photo check), h -30.."
+               "-10, band mean / signed max mm: P1046408 L -1.9 / -3.9, R -0.2 / -1.6, P1046410 +2.7 / +3.9, Mexico "
+               "L +1.2 / +1.4, R -3.3 / -4.6 -- the views split both ways (mean -0.3), so no 3-5 mm move toward the "
+               "stem: kept"),
+    grip_in_corners=PT(((2, 4.0), (6, 6.0), (10, 3.0), (21, 5.0), (24, 4.0)),
+                       "[M/E] the head's inner-top corner R 4, outer-top corner R 6, the waist under the head R 3, "
+                       "the bottom corners R 5 / R 4"),
+    grip_rake=PT((20.0, 20.0),
+                 "[M +/-2.5 outboard, +/-5 inboard] the grips' aft faces lean top FORWARD 20 deg in side view, outboard "
+                 "/ inboard.  Rev L (judges FID3-01): re-fitted per grip with P1046409 posed (its camera from a two-view "
+                 "adjustment with panel_408, 8 panel features + the cover landmarks; the co-pilot yoke seen 25 deg from "
+                 "inboard, level) -- rake, toe, a0, wall direction and the depth law jointly, the front outline held "
+                 "(FID3-04), on the curated silhouettes of the 6 views P1046408 L / R, P1046410, Mexico L / R, "
+                 "P1046409: outboard 20.1-20.4 at any toe 7-18 (cost +5-7 % at +/-2.5, +22 % at +/-5), inboard 21.3 "
+                 "(flat: +3-7 % at +/-5).  The AOPA photo is NOT used: its co-pilot-yoke camera is EXTRAPOLATED from "
+                 "the pilot-yoke solution (rev M, judges FID4-05; r3 had blamed a degenerate pose, which does not hold "
+                 "for the only strongly oblique view, 54 deg from inboard) -- re-calibrating it on the panel features "
+                 "round the co-pilot yoke (PDU / SDU bezel corners, ice panel, AFCS panel) is OPEN; until then the "
+                 "toe, the depth law and the head depths stay [M weak].  Kept 20 / 20"),
+    grip_toe=PT((18.0, 18.0),
+                "[M weak, +/-8] the aft faces are TOED OUT (normal turned away from the yoke centreline) 18 deg, both "
+                "grips.  Every usable view is from INBOARD (azimuth 15-27 deg), which pins the toe only weakly: the "
+                "6-view silhouette fit (rev L) prefers 7 outboard but rises only 5 % at 18 (11 % at 26), inboard 16.7 "
+                "(+2 % at +/-5); the pads back-projected from P1046408 L / R, Mexico L / R and P1046409 land on one "
+                "outline within 1.9-2.4 mm for any toe 0-26 -- rev M (judges FID4-06): that overstated the pads' "
+                "flatness for the INBOARD grip, whose pad traces alone lean toward ~26 against the silhouettes' 16.7: "
+                "both optima are stated in L6Y open point 2.  The one view from OUTBOARD (the AOPA pilot yoke, 15 deg) "
+                "puts the pads on one outline at 18-26 (r2 / r3, with that camera's caveat).  Kept 18 / 18 (rev I 13 / "
+                "28); a view from outboard of a PRO yoke would settle it"),
+    grip_a0=PT((14.0, -3.75, -6.0),
+               "[M +/-3 outboard, +/-5 inboard] the aft planes pass a = -3.75 / -6.0 at h 14 on the grip axis, outboard "
+               "/ inboard.  Rev L 6-view fit: outboard -1.8 at toe 18 (-4.4 at toe 7; cost +2-3 % at +/-2.5, +8 % at "
+               "+/-5): kept -3.75; inboard -6.1 (flat, +3 % at +2.5): -6.0 (rev K -3.75) -- it also puts the shield "
+               "facet flush with the grip's aft face below it (within +/-1.8 over the facet, rev K 1.5-5 recessed), as "
+               "Mexico L shows it (the facet continuous with the frame, no step).  The fore-aft station of the whole "
+               "yoke is a separate open point (YOKE hub_dx)"),
+    grip_walls=PT((0.6, 0.0),
+                  "[M +/-0.2] direction of the grips' side walls between the fore-aft (column / mould pull) axis (1) "
+                  "and the aft face's normal (0), outboard / inboard: the value at which the ray-cast solid's slot-side "
+                  "and outer silhouettes sit on the curated photo silhouettes with the pads and their 2 mm frame on the "
+                  "aft face: outboard 0.6 (walls ~7 deg off fore-aft; rev J's 0 put the forward face 6-8 mm into the "
+                  "hand slot, judges FID2-02), inboard 0.  Rev L 6-view fit: 0.64-0.65 outboard (+2 % / +12 % at -/+ "
+                  "0.2), inboard 0.04 (flat)"),
+    grip_frame=P(2.0, "[M] the black frame round the pad, pad edge to the side wall: 2.0 (the P1046408 L / R grip "
+                      "silhouettes 2-3 mm inside rev J's first 3.0; Mexico R 1.5-2 mm lit rim + roll)"),
+    grip_axis=PT(((129.0, -43.5), (109.5, 93.7)), "[M] mean grip axis (front view, own sense): mid of the bottom "
+                                                    "edges -> mid of the head tops (outboard 130 / -41 -> 114 / 97.4, "
+                                                    "inboard 128 / -46 -> 105 / 90); the aft planes' toe is about it"),
+    grip_depth=PT(((-47.0, 27.5, 27.5), (0.0, 27.0, 27.0), (45.0, 27.0, 27.0), (100.0, 27.0, 27.0)),
+                  "grip depth normal to the aft face (h, outboard, inboard), rev L (judges FID3-01): OUTBOARD 27 [M: "
+                  "P1046409 sees the outboard grip's slot-side wall from 25 deg inboard (17-18 mm projected at mid-pad) "
+                  "and P1046410 / P1046408 L / R its slot silhouette; the 6-view fit gives 27.2 +/-4 at h 0 (cost +10 % "
+                  "at +/-4, +36 % at +/-8), 27.8 at h -45 (+7 % at 25, +16 % at 20: no 'beak' taper -- rev K's 20 at the "
+                  "bottom came from the AOPA co-pilot view, which this round drops), 26.8 at h 45 (flat 22-34)]; "
+                  "INBOARD = outboard [E: its slot wall faces away from every view from inboard; one moulding family]; "
+                  "a PCHIP through the rows"),
+    grip_edges=PT((1.5, 11.0, 0.45), "[M/E] grip edge radii: the frame's outer edge rolls R 1.5 into the side wall "
+                                     "(the 6-8 px lit rim in Mexico = the 2.0 frame top + this roll; rev I's 'R 5' "
+                                     "cannot sit on a 2 mm frame), growing to the heel's R in the heel; forward edges "
+                                     "R 11 [E] CAPPED at 0.45 x the outline's inscribed half-width (rev K, judges "
+                                     "DR2-03: the two R 11 rounds met in a ridge where the grip is < 22 wide), the "
+                                     "cap C2 (rev M acceptance: the half-width table smoothed over 1 mm through a "
+                                     "cubic spline, a cubic soft minimum with R 11 over 2 mm -- the piecewise-linear "
+                                     "cap had creased the forward round above the heel by 5-7 deg)"),
+    pad_out=PT(((125.5, 60.0), (121.0, 58.1), (115.0, 54.8), (109.0, 51.3), (103.0, 47.8), (97.0, 44.2), (93.5, 41.0),
+                (91.0, 38.0), (92.0, 32.0), (93.2, 30.0), (98.8, 20.0), (104.1, 10.0), (109.1, 0.0), (114.1, -10.0),
+                (119.1, -20.0), (121.6, -25.0), (123.5, -28.4), (127.0, -28.8), (131.0, -28.0), (134.8, -25.5),
+                (136.3, -20.0), (137.3, -10.0), (136.8, 0.0), (135.6, 10.0), (134.0, 20.0), (132.4, 30.0),
+                (130.9, 40.0), (129.7, 50.0), (128.6, 56.0)),
+               "[M] OUTBOARD grained-leather pad on the aft plane (own sense): traced at 7x in P1046408 L and R and "
+               "back-projected onto the aft plane (toe 18, a0 -3.75), the two yokes within 1-3 mm (Mexico L and "
+               "the AOPA view from outboard checked: their means 1.5-4 mm wider, pose-limited): its TOP runs "
+               "DIAGONALLY 31 deg from the outer-top corner (125.5, 60) down to the slot-side corner (91, 38) along "
+               "the neck's underside (judges FID1-02; rev I a flat top at h 61); 28 wide at h 0, 17 at h -20; "
+               "bottom -28.8"),
+    pad_out_corners=PT(((0, 3.0), (7, 5.0), (16, 3.0), (19, 4.0)),
+                       "[M] pad corners: outer-top R 3, slot-top R 5 (the large sweep), bottom R 3 / R 4"),
+    pad_in=PT(((127.8, 55.3), (124.0, 54.8), (118.0, 52.8), (112.0, 49.2), (106.0, 45.1), (100.0, 40.6), (94.0, 36.8),
+               (89.4, 32.0), (89.5, 28.0), (90.0, 25.0), (91.7, 20.0), (95.9, 10.0), (100.2, 0.0), (104.7, -10.0),
+               (109.1, -20.0), (111.3, -25.0), (113.7, -30.0), (116.0, -34.4), (121.0, -35.2), (127.0, -34.0),
+               (133.0, -32.2), (139.0, -29.6), (139.9, -25.0), (139.7, -20.0), (138.6, -10.0), (137.2, 0.0),
+               (135.5, 10.0), (133.8, 20.0), (132.0, 30.0), (130.4, 40.0), (128.7, 50.0)),
+              "[M] INBOARD pad (own sense), same method (P1046408 L / R within 0.5-2 mm): the diagonal top 33 deg "
+              "from (127.8, 55.3) to the slot-side corner (89.4, 32), reaching 13 mm further toward the slot than "
+              "rev I at h 30 (P1046408 'pad in' residual 6.6 / 11 mm); 37 wide at h 0; bottom -35.2"),
+    pad_in_corners=PT(((0, 3.0), (7, 4.0), (17, 3.0), (21, 4.0)),
+                      "[M] pad corners: outer-top R 3, slot-top R 4, bottom R 3 / R 4"),
+    pad_section=PT((2.5, -0.5, 8.0, 0.4, 1.0, 0.5, 2.5, 3.0),
+                   "pad in its frame (rev K: built as solids, judges DR2-05): the leather's edge 2.5 below the frame "
+                   "top, crowned to 0.5 below it over 8 mm [M: Mexico R / P1046409, the frame stands 2-3 proud of the "
+                   "leather edge (judges FID1-06)]; along the frame's inner wall a groove 1.0 wide x 0.5 below the "
+                   "leather edge, then a half-round bead 0.4 high (0.8 wide) on the leather's edge [M: AOPA, Mexico, "
+                   "brochure p.12; the groove depth E]; the crown follows the inward distance smoothed over 2.5 mm (no creases along the "
+                   "corners' bisectors) [E]; the frame's inner top edge is a crisp step; grain 1.1 mm pebble "
+                   "[M: PC-24 close-up, brochure p.12], ~1 mm wavy creases along the grip [M: AOPA] (texture, not "
+                   "geometry); the LEATHER PAD as a material (rev M, judges DR4-07): the layer inside the groove's "
+                   "inner wall from its surface (bead included) 3.0 deep [E: leather over a foam pad on the moulding; "
+                   "hidden], the moulding's pocket floor under it"),
+    heel=PT((10.0, 3.0, 4.0),
+            "heel lip under the pad: scale 10 (the pad bottom to the grip bottom is 9.0 outboard / 10.6 inboard), "
+            "rising C1 (smoothstep) over the first 0.6 x 10 = 6 below the pad to 3 proud of the frame, held to the "
+            "bottom edge, which rolls R 4 (the aft-edge round grows from the "
+            "frame's R 1.5 to R 4 over the heel; rev K -- rev J's sin^0.6 bump was labelled R 4, judges DR2-05) [M: "
+            "PC-24 photo 2 polished heel lip, Mexico R outboard-grip lit lip edge, P1046409 flared dark lip; the "
+            "inboard grip's bottom slants: lowest at the inner corner, Mexico R]"),
+    # ---- heads
+    head_out=PT((111.5, 82.0, 32.6, 38.0, 10.0, 8.0, 1.5),
+                "OUTBOARD (trim) head: its ROUND flat top face (judges FID1-04; rev I a 36 mm rounded square that "
+                "stood out of the head): centre (u, h) = the trim ring centre TRIANGULATED from 7 views with the "
+                "cover-landmark poses (111.5 +/-0.6, 82.0 +/-0.4) [M]; dia 32.6 = ring 29.5 + 1.55 margins [M: Mexico "
+                "R / L thin margin]; facing aft-up 38 deg, turned 10 deg toward the yoke centreline [M: ring ellipses "
+                "in 5 views]; below it the head is a near-cylinder about the face normal, flaring 8 deg into the grip and "
+                "the web [M: Mexico R / L, the head's sides under the face nearly parallel; P1046408 head top 11 wide "
+                "at the top, 35 two mm lower = the tilted face's edge]; face edge R 1.5 [E]; the head zone: head_zone; "
+                "ray-cast through the photo cameras its top and outer side sit on P1046408 L / R"),
+    head_chamfer=P(45.0, "[E] below the round face the outboard head stands proud of the grip's aft plane (the face, "
+                         "38 deg up, leans 18 deg more than the 20 deg aft plane: its lower edge 7 aft of it); it "
+                         "falls back to the aft plane on a chamfer this steep from the face's lower edge (rev I "
+                         "'blends back into the aft face at 45 deg'; Mexico R: a lit lower lip under the face)"),
+    head_out_a=P(-27.0, "[M weak, +/-5] a of the trim face centre: triangulated (7 views; -18.6 without the AOPA view).  "
+                        "Rev M (judges FID4-04): the tag was +/-1.5 -- every usable view lies within +/-27 deg of aft, so "
+                        "the head's depth is weakly measured; the judges' re-triangulation gives (110.7, 83.7, -23.6) "
+                        "(the table's centre 1.7 lower, 3.4 forward of it), and P1046409 / P1046410 (posed independently) "
+                        "agree in sign: a consistent residual, not single-view scatter.  Kept (L6Y rev D approved), "
+                        "OPEN with the AOPA camera re-calibration (FID4-05).  "
+                        "Rev K (judges FID2-07) re-triangulated on the rev K poses, P1046410 and the AOPA co-pilot "
+                        "pick weighted like the rest: (110.8, 83.0, -24.3), within 0.7 / 1.0 / 2.7 of the table; "
+                        "P1046410 stays 5.2-5.4 mm off under any single head point (and any rocker height 0-8 above "
+                        "the face read as the pick) -- read then as that view's own scatter (withdrawn in rev M, above)"),
+    head_in=PT((106.0, 75.6, 12.0, 8.0, 45.0),
+               "INBOARD head: a flat SHIELD facet (judges FID1-04): through (106.0, 75.6) [M: the push button's cap "
+               "top triangulated from 6 views at (107.1, 77.2, -17.0) less the cap 6 and collar 2 along the facet "
+               "normal], facing aft-up 12 deg [M: collar ellipses 0.92-0.98 in P1046408, <= 15], toed out 8 deg "
+               "[M: same ellipses at the camera's 22 deg]; around the shield's top and sides the head falls forward at "
+               "45 deg [E: Mexico L / R inboard heads] (shield_edge: the facet edge R 1.5, the fall-off's directrix "
+               "continued straight down from the shield's widest points, tangent there); the facet within +/-1.8 of "
+               "the grip's aft plane (rev L): the head zone, head_zone"),
+    head_in_a=P(-23.8, "[M] a of the shield facet at that point: the triangulated cap top -17.0 less 8 along the "
+                       "normal (-24.75, +/-1.6), rev L taken 1.0 aft within that: the facet flush with the grip's aft "
+                       "face (grip_a0 inboard -6.0; Mexico L: no step between the frame and the facet).  Rev K: the 6 "
+                       "views without the AOPA co-pilot one put the cap top at (-107.5, 77.3, -17.7) (within 0.4-1.6 mm "
+                       "each); that view alone is 12.9 mm off it -- its camera is extrapolated from the pilot-yoke solution "
+                       "(rev M, judges FID4-05: not a degenerate pose; re-calibration OPEN)"),
+    head_zone=PT(((67.0, 3.0, 3.0, 1.5, 62.0, 3.0, 3.0, 3.0, 2.0, 3.0, 4.0),
+                  (61.0, 3.0, 1.0, 1.5, 50.0, 3.0, 0.0, 3.0, 2.0, 3.0, 4.0)),
+                 "the HEAD ZONE of each grip, outboard / inboard: (hz, kh, draft, r_t, h_hb, r_hb, r_ch, r_hf, r_w, r_u, "
+                 "rb).  Rev M (judges DR4-02) builds each grip as its AFT SIDE cut by the shared walls and forward face: "
+                 "(1) the prism's aft side (the raked / toed plane + heel lip) is TRIMMED above the plane height hz "
+                 "(outboard 67, rev L 70; inboard 61) kh = 3 inside the head's shaping surface (outboard: the face's "
+                 "flared near-cylinder; inboard: the shield facet + its 45 deg fall-off) -- kh >= r_u, so the join "
+                 "round never reaches the face / facet (rev L's kh 1 with R 1 stood 0.3 proud along them) -- and "
+                 "below hz that trimming surface is DRAFTED outward draft mm per mm (outboard 3 = 72 deg, inboard 1 = "
+                 "45 deg: the soft ramp from the frame onto the facet), the draft's start bent C1 with its tightest "
+                 "radius rb 4 (rev L: r_t 1.5, which the body's R 3 read past its focal line: the crease under the "
+                 "trim head, h 70.2) -- an EXACT 2-D distance to that curve in (shaping field, plane height), not "
+                 "rev L's offset divided by a piecewise gradient; the cut edge R r_t 1.5 [E]; outboard hz 67 so the "
+                 "longer bend still releases the walls under the face as before; (2) the HEAD's aft shape = the "
+                 "shaping surface x the lower chamfer (outboard, R r_ch 3) bounded below by the plane height h_hb (62 "
+                 "/ 50) R r_hb 3 [E]; (3) aft side + head joined by a ROLLING-BALL round R r_u 3 [E] (rev L: a "
+                 "circular R 1 between two whole solids that shared their walls and forward face: a ridge in the "
+                 "grip's field 1 mm out); (4) the walls (outline G) and the forward face cut both: the aft edge R "
+                 "grip_edges[0] (heel R 4) easing to R r_w 2 over hz -+ 3, the forward edge fwd_radius easing to R "
+                 "r_hf 3 above h_hb [E], and where the head's aft shape wraps forward over its top onto the forward "
+                 "face that edge is R r_hf too (the walls' edge radius following the nearer face; rev M acceptance: "
+                 "left sharp, it creased across the outboard head's front at h 78-83).  The pad pocket is cut after the body-grip join, so the inboard head's floor "
+                 "at h 50 (under the pad's top) cannot fill it (judges DR4-02 b).  Plane heights are the grip-plane "
+                 "coordinate hf (the h of a point's foot on the aft plane along the walls)"),
+    shield_edge=PT((1.5,), "[E] the shield facet's edge where the fall-off starts, R 1.5.  The fall-off's directrix is "
+                           "ONE closed curve: the shield outline over its top between its widest points, continued "
+                           "straight down from them -- tangent there, so no corner (rev M acceptance: rev L's union with "
+                           "a rectangle up to the facet point left a convex corner 1.5 outside the converging sides, a "
+                           "25 deg crease down the fall-off, beside a notch blended R 4; that R 4 is withdrawn)"),
+    shield=PT(((-15.5, 12.0), (15.5, 12.0), (14.0, 2.0), (9.0, -7.0), (3.5, -12.5), (0.0, -13.5), (-3.5, -12.5),
+               (-9.0, -7.0), (-14.0, 2.0)),
+              "[M] the shield facet's outline in its plane (x across, + away from the yoke centreline; y up the "
+              "facet) about the facet point: a straight top edge 31 wide, sides converging to a rounded lower point "
+              "13.5 below the button (Mexico L inboard head at 3.8 px/mm: top edge 2665-2790 px, point 2720 / 1960)"),
+    shield_corners=PT(((0, 3.0), (1, 3.0)), "[M] the top corners R 3"),
+    # ---- switches (u, h centre; sizes)
+    tcs=PT((58.5, 51.4, 19.2, 8.6, 1.0), "[M] TCS: centre -- u from the bundle adjustment (59.1 from the insert "
+                                         "axis, 56.8-62.4 over its camera solutions; the face-plane reads 55.4-57.0 "
+                                         "put it 3.5-4.5 mm inboard in all 6 photo projections of this drawing), h "
+                                         "front.json (Mexico R / L, P1046409 / 10 within 1.7); 4 mm from the tip facet; "
+                                         "gloss black bezel OD 19.2 +/-0.5 (ray-edge ellipse fits) <= 1 proud of the "
+                                         "white, a dish r 4.8-8.7, a 0.5 clearance ring, a satin black domed button "
+                                         "dia 8.6 STANDING PROUD of the bezel (rev K, judges FID2-06: tcs_profile); "
+                                         "legend: 3 ticks at 70-110 deg, r 7.2"),
+    tcs_seat=P(1.5, "[E] the TCS bezel and button sit in a round pocket of the bezel's diameter this deep in the "
+                    "white cover (the solids' seat; hidden)"),
+    tcs_profile=PT((1.0, 1.5, 0.8, 1.2, -2.0, 4.8, 8.7),
+                   "TCS profile: bezel 1.0 proud of the white [E], its outer edge rolled (R min(1.5, 1.0)), the dish 0.8 "
+                   "deep [E], the dish from r 4.8 to r 8.7 [M: tcs]; the button's dome 1.2 high [E] and its top 2.0 ABOVE "
+                   "the bezel top (index 4: - = proud) [M low, rev K (judges FID2-06): the button's top face is "
+                   "displaced from the bezel centre the same way as the red AFCS cap's top (5.5 high) in Mexico L (1.9 "
+                   "mm) and the AOPA co-pilot view (3.7 mm): 2.5 / 3.9 mm above the bezel's base, i.e. 1.5-2.9 above "
+                   "its top; rev J's 'recessed 1.0' read the AOPA pilot view, where the cap side is turned away; the "
+                   "PC-24's protrudes too]"),
+    afcs_boss=PT((1.5, 8.0, 0.8, 1.5, 1.0, 0.8),
+                 "AFCS boss as a solid (judges DR2-04): its aft face 1.5 proud of the body's aft surface [E], a disc "
+                 "8 deep [E] whose back face is free where it hangs below the body's lower edge over the hand slot (the "
+                 "body bulges round the button, Mexico L / R) [M: outline], aft edge R 0.8 [E], blended into the body "
+                 "R 1.5 [E]; the red cap's top edge R 1.0 [M: afcs]; the back face's edge R 0.8 [E] (rev L, judges "
+                 "DR3-02: rev K left it sharp)"),
+    afcs=PT((60.6, 23.4, 10.8, 5.5, 21.6), "[M] AFCS disconnect: red cap centre (red-blob centroids 60.2-60.6 / "
+                                           "23.4-23.9: Mexico R / L, P1046409 / 10), cap dia 10.8 +/-0.4 [M rev J: "
+                                           "0.56-0.60 x the 19.2 TCS bezel in Mexico L, P1046409, P1046408; rev I "
+                                           "9.8] x 5.5 +/-1.0 high (AOPA side drop), a plain glossy cylinder, top edge "
+                                           "R 1; on a ROUND black boss dia 21.6 (twice the cap) on the body's lower "
+                                           "edge, the legend (9 ticks) on its upper half [M: Mexico L / R, judges "
+                                           "FID1-09; rev I a half-ring sector], boss 1.5 proud [E]"),
+    trim=PT((111.5, 82.0, 29.5, 27.0, 8.0, 4.0, 0.8, 9.5, 3.5),
+            "[M] pitch trim on the OUTBOARD head's round face: centre = head_out (triangulated, rev J; rev I 109.5 / "
+            "81.5), flat SATIN legend ring OD 29.5 +/-1.1 flush in the face with a fine groove (rev P, 3-D judges r3 "
+            "FID3-01: a satin CHARCOAL face, yoke_trim_face, as light as or lighter than the body -- 6 of 7 photo "
+            "footprints read face / body 1.0-3.2, the slot the darkest part -- not rev N / O's gloss black); two legend "
+            "lunes ~7.3 deep (fore = DN, aft = UP; 7 ticks each over 84 deg at r 11, 3 long) and a ~15 mm slot "
+            "between them holding a split bow-tie rocker ACROSS the head: 27 +/-1.5 long, 8 wide at the ends, 4 at "
+            "the waist, 0.8 split (AOPA, Mexico R; Mexico L), saddle 9.5 at the ends / 3.5 at the split above the face "
+            "[rev O, 3-D judges r2 FID2-02: the lobe ends stand ~9-10 proud -- in P1046409 / Mexico R the outboard end "
+            "projects 4-7 mm further up / out than rev N's 6.5 and rises past the ring (ph_p409_trim_x6), the face-on "
+            "views (AOPA pilot, Mexico L) keep the 27 length inside the 29.5 ring; M low +/-1.5]"),
+    trim_grooves=PT((0.4, 0.3, 0.5),
+                    "[M/E] fine V-grooves in the round trim face, 0.4 wide x 0.3 deep: the legend ring's outer edge and "
+                    "the two chords bounding the rocker slot [M: Mexico R / L, a 1 px dark line]; the rocker's top edges "
+                    "R 0.5 [E]"),
+    trim_lunes=PT((7.3, 10.0, 13.0, 1.6, 0.6),
+                  "[M] legend lunes: depth 7.3 of each lune (the slot between them 2 x (14.75 - 7.3) = 14.9 wide), the "
+                  "legend band from r 10 to 13 (rev N: the legends' rows), the rocker's saddle exponent 1.6 [E]; rev O "
+                  "(3-D judges r2 FID2-02: a 'dark sculpted lever with crisp highlights', not a flat bow-tie): each "
+                  "lobe's top CROWNED 0.6 across its width (z - 0.6 (y / (end width / 2))^2) [E]"),
+    trim_slot=PT((2.5, 0.8, 7.0),
+                 "rev N (3-D judges FID1-05): the rocker SLOT between the two lunes is a recess, not flat face -- 2.5 "
+                 "deep [E 2-3] below the face, its side walls on the chords (|y| = trim[2] / 2 - trim_lunes[0], the "
+                 "chords' V-grooves of rev M become the slot's sharp top edges), its end walls on a circle 0.8 inside "
+                 "the legend ring's groove [E], the walls with a 7 deg moulding draft [E], every edge sharp; the "
+                 "lunes either side SATIN CHARCOAL (yoke_trim_face, item 9; rev N / O: gloss black), the slot walls and "
+                 "floor a near-black MATTE (yoke_slot: the darkest part of the head -- slot / lunes 0.14-0.90 in the 7 "
+                 "photo footprints, rev O's satin black read 2.2-2.9 x its gloss lunes), the rocker lobes standing from "
+                 "the slot floor [M: a deep black slot under the grey rocker in AOPA pilot / Mexico co-pilot / P1046409 "
+                 "(refs/cache/fd_research/yoke/measure/detail_switches.jpg); 3-D judges r3 FID3-01]"),
+    button=PT((106.3, 76.0, 17.5, 10.2, 5.75, 0.75, 12.0, 2.0, 0.4, 1.5, 0.5),
+              "[M] round push button on the INBOARD head's shield facet: centre (106.3, 76.0) [M rev J: the cap top "
+              "triangulated from 6 views at (107.1, 77.2) less the cap height along the facet normal; rev I 106.5 / "
+              "79.5 on the grip face].  REV O (3-D judges r2 FID2-01): a round GLOSS-BLACK LEGEND DISC dia 17.5 "
+              "(index 2) standing 0.75 proud of the facet (index 5; [E 0.5-1]), its outer edge rolled R 0.5 (index 10) "
+              "-- finished as the TCS bezel -- carrying the MAP LIGHTS legend at its rim (legends row 4) [M: the black "
+              "disc 17.6-18.3 in Mexico L (15.4 px/mm grid crop), 17.8 in P1046409, 16.4-17.7 in P1046408 R / L "
+              "(measure/detail_switches.jpg: rev I's 'collar'); the lettering inside it, at its rim]; on it a SMALL "
+              "SATIN-NICKEL HEX 12.0 across the corners (index 6; 10.4 across the flats) x 1.5 high (index 9) [M: 10-12 "
+              "under the cap in Mexico L / P1046409 / the AOPA co-pilot view, a bright faceted nut with a crisp corner "
+              "highlight (rev N's FID1-04 reading) showing round the cap (Mexico L: its lit lower facets reach ~2 mm "
+              "past the cap's side): the top of that range, so its corners stand 0.9 past the 10.2 cap; the height E]; the plain smooth cylindrical black cap dia 10.2 "
+              "+/-0.6 (index 3) standing 5.75 above the hex (index 4: its top 8.0 above the facet, as rev J-N's 2 + 6 "
+              "[M +/-2]), top R 1 with a ~2 mm centre dimple 0.4 deep (indices 7, 8) [E] (P1046408 R / L, P1046409).  "
+              "Rev J-N drew a 17.3 / 15.0 hex collar 2 proud over the whole disc: the photos' brightness in that "
+              "footprint is 0.20-0.36 of the cover's (a dark disc), the satin-nickel collar rendered 0.64-0.83"),
+    legends=PT(((6.3, 8.1, ((64.0, 116.0, 3),)),
+                (7.2, 9.4, ((95.0, 155.0, 4), (25.0, 85.0, 4))),
+                (10.4, 12.6, ((84.0, 132.0, 4), (48.0, 72.0, 2))),
+                (10.4, 12.6, ((228.0, 276.0, 4), (288.0, 312.0, 2))),
+                (6.3, 8.0, ((166.0, 212.0, 3), (60.0, 152.0, 6)))),
+               "[M] the legends as WORDS of plain letter BLOCKS (rev N, 3-D judges FID1-05: rev M's radial tick rows "
+               "read as a dial), NO lettering: per switch (r0, r1 = the cap-height band, ((from deg, to deg, letters), "
+               "...) one entry per word; the cap height 1.8-2.2, letters ~0.7 as wide: rev M's tick rows ran 3.4 deep "
+               "on the AFCS boss, drawn as blocks they still read as ticks) -- TCS on its bezel's dish (TCS), AFCS on the "
+               "boss's upper half (AFCS / DISC), "
+               "the trim face's fore lune (TRIM / DN) and aft lune (TRIM / UP, read along the lower arc: the fore "
+               "lune's angles mirrored about the horizontal, not turned 180), the push button's (MAP / LIGHTS, the upper "
+               "/ inboard arc) -- rev O (3-D judges r2 FID2-01): ON ITS GLOSS-BLACK LEGEND DISC at the rim, r 6.3-8.0 "
+               "outside the hex (rev N: on the shield round the hex collar, r 9.4-11.4), the words' arcs widened so the "
+               "letter pitch stays ~1.9 mm at the smaller radius; the letter count and each word's extent along its "
+               "arc as the photos' lettering (detail_switches.jpg: AOPA pilot trim, Mexico co-pilot trim / TCS / "
+               "AFCS DISC, P1046408 / 09 inboard heads; the AOPA hbtn crop reads MAP LIGHTS); angles in the front view "
+               "of the co-pilot yoke, 0 = outboard, 90 = up.  The pilot yoke is the moulding's mirror image but its PRINTED "
+               "words keep their reading order (rev N, 3-D judges r1 follow-up: the mirrored rows had read DN TRIM / UP "
+               "TRIM and put LIGHTS over the collar): each block's angle reflected about its row's centre before the "
+               "mirror (yoke3d.reading_blocks) -- TRIM / DN, TRIM / UP left to right over / under the slot as in Mexico L "
+               "and the AOPA pilot view, LIGHTS on the inboard arc ~+45 .. -10 deg as in Mexico L"),
+    legend_style=PT((0.22, 0.12, 0.35, 0.30, 0.60),
+                    "[E] a legend letter is a plain block the cap height tall (the row's r0..r1), on average 0.22 of the "
+                    "letter pitch wide (the word's arc / letters), each letter's width varied by +/-0.35 of that along "
+                    "the word (index 2: a fixed sequence, model/yoke_legends.py -- letters differ in weight, so a "
+                    "word reads as print, not as a scale), printed 0.12 proud (above fit_check 26's 0.1 mm coplanarity); "
+                    "legend_grey ~0.40 of white (sRGB).  Rev P (3-D judges r3 CR3-05: 12 equal bars 0.35 of the pitch "
+                    "read as a chunky tick dial at close range): thinner, uneven, dimmer; rev O 0.35 / ~0.45, rev N 0.70 "
+                    "(judges r2 FID2-06: chunky mid-grey rectangles read as dial ticks / LED segments where the photos' "
+                    "lettering is thin fine strokes).  Rev Q (3-D judges r4 CR4-06: the widths alone left the EVEN "
+                    "PITCH -- the rings still read as scales at close range): index 3, each letter's radial extent up to "
+                    "0.30 shorter than the cap height, standing on the baseline or hanging from the cap line; index 4, "
+                    "the letters SET by their widths with gaps varied +/-0.60 of the mean gap, each word kept on its "
+                    "drawn arc (clusters with clear word gaps; model/yoke_legends.py)"),
+    ptt=P(0.0, "[S: AOPA 2025-03-17 -- the PC-24-style yoke's one-hand functions 'pitch trim, push-to-talk, checklist, "
+               "TCAS and autopilot quick disconnect' (TCAS: AOPA's word for the TCS button); JTF cockpit key lists push-to-talk] four of them are seen: "
+               "trim, TCS, AFCS DISC and the inboard head's button, whose legend reads MAP LIGHTS (AOPA hbtn crop, "
+               "Mexico L) -- so the PUSH-TO-TALK (and probably a checklist switch) are expected on the grips' FORWARD "
+               "(finger-side) faces, which NO photo shows (P1046409, the AOPA co-pilot view and PC-24 photo 2 see "
+               "only the outboard grip's slot wall).  The forward faces are UNVERIFIED, not known-blank: not drawn, "
+               "OPEN (owner / source item); the PC-24's flat tab at its outboard grip's bottom is not on the PRO "
+               "(P1046409 / 10 show only the heel corner).  Rev M (judges FID4-08): drawn as [E] PLACEHOLDERS so the 3-D "
+               "build does not ship blank forward faces -- fwd_switch"),
+    fwd_switch=PT(((56.0, 22.0, 10.0, 4.0, 1.0, 0.0), (50.0, 18.0, 10.0, 3.5, 1.0, 1.0)),
+                  "[E] the forward-face (finger-side) switches, outboard / inboard grip: (plane height h of the centre, "
+                  "length along the grip axis, width across, proud of the forward face, top edge R, saddle dip at the "
+                  "centre) -- outboard a PUSH-TO-TALK TRIGGER (flat top), inboard a two-way CHECKLIST ROCKER (top "
+                  "dipped 1.0 at its middle), each a stadium centred across the forward face's flat (between its R 9-11 "
+                  "edges) where the index finger lies with the thumb on the head (~26-30 below the head switches), "
+                  "seated 1 into the face [E: PRO functions per AOPA 2025-03-17 (ptt); sizes from the PRO's visible "
+                  "switches -- the trim rocker's 8-wide lobes, the 10.2 push-button cap -- the PC-24 photos show no "
+                  "forward face either].  Satin black (grip_black).  OPEN (owner / source item): a photo of a grip's "
+                  "finger side would replace them"),
+    # ---- column and its surround (no bellows)
+    column=PT((0.330, 1.869, 1.845, 1.825, 23.0),
+              "[M] NO bellows / boot in any PRO photo (P1046408 L+R, P1046409 / 10, Mexico L+R, press): the rev H "
+              "8-pleat boot is deleted.  Seen through the inboard hand slot: a satin dark-grey moulded J band 23 "
+              "(22-25) wide round the column opening on the lower panel -- |BL| of its inboard side, WL of its "
+              "rounded top end, of a horizontal joint line, of a panel-fixed screw (back-projected onto the lower "
+              "panel face, 4 views, both poses: 0.330, 1.857, 1.821, 1.801); the column itself and where it meets the "
+              "black body are hidden.  The photos' joint line puts the column axis at WL ~1.821 +/-0.01, 24 mm under "
+              "the hub centre the roll pivot uses -- OWNER DECISION 2026-10-11 (fit_check 30c; 3-D judges r1 "
+              "CR1-01): the column / roll pivot stays on the hub (WL 1.845, the knee results kept) and the band and "
+              "the recess are RE-CENTRED ON THAT AXIS: drawn 24 mm up with it -- the joint line on the axis (WL "
+              "1.845), the screw WL 1.825; the leg's round top end WL 1.869 (+24 would put it at 1.881, above the "
+              "recess top under the PDU row: drawn 3 mm under it).  OPEN (owner): fixed split collar (PC-24 photo 4) "
+              "vs a part moving with the yoke"),
+    column_band=PT((22.0, 8.0, 4.0, 14.0, 0.0),
+                   "the J band in section (judges FID2-05): 22 wide [M: column 22-25; rev N (3-D judges CR1-01): the low "
+                   "end of the range -- with its inboard side on the measured |BL| and its hook concentric with the "
+                   "column its inner edge stands 1.0 mm off the column all round, as the floor's opening], standing 8 "
+                   "proud of the recess floor, its two edges rolled R 4 with a flat top 14 wide between them (rev M 15) "
+                   "[M low: P1046410 at ~5.4 px/mm (the "
+                   "band width 23 and the screw give the scale): two lit rolled edges 3-4 mm wide, the visible side "
+                   "where the band curves under the stem ~8 mm; P1046409]; its hook an arc about the column axis at h "
+                   "0 (rev M: h -24, the photos' joint line about the hub; OWNER DECISION 2026-10-11: re-centred on the "
+                   "axis, column above); both ends ROUND (rev P, 3-D judges r3 CR3-04: the hook's flat cut read as a "
+                   "light-grey wedge beside the column -- its round tip at 330 deg, fd_detail_a.BAND_HOOK_END, the drawn "
+                   "extent; the leg's round top end closed flat on top, rev M-O left a half-disc hole in it); OPEN "
+                   "(owner): a J or a full collar round the column opening whose outboard part hides behind the stem "
+                   "and the black body"),
+    column_recess=PT((57.0, -48.0, 17.0, 8.0, 27.0),
+                     "the lower panel's dished recess round the column, a U about the column axis (rev L, judges FID3-02: "
+                     "rev K drew a circle R 62 about h -24): half-width 57, bottom h -48, its bottom corners R 17, 8 "
+                     "deep [E], the straight sides running up under the shell to h 27 -- [M: the rim picked at 4x in "
+                     "P1046408 L / R and P1046409 and back-projected onto the lower-panel face: inboard wall u -56 / -54 "
+                     "/ -57 (+/-3) vertical from h +2 to -55 about the hub, bottom h -73 / -71 / -72 (+/-2), the corner R "
+                     "~17; P1046410 (oblique, -70 / -64) not used] -- OWNER DECISION 2026-10-11 (column above): re-centred "
+                     "on the column axis with the band, 24 mm up: bottom h -48 (48 under the axis as the photos' -72 is "
+                     "under their axis WL 1.821), the band's lowest point 3 mm above it as photographed; the top h 27 "
+                     "[E: hidden above; rev M's h 12 lay inside the column, r 22 about the hub; +24 would cut the PDU row] "
+                     "runs up through the titanium band under the PDU row, the rim flange's top edge on the band's top "
+                     "edge (WL 1.8755), the column 5 mm under it; the outboard half hidden behind the stem and the body: "
+                     "drawn symmetric [E]; the J band's vertical leg on the inboard side, its hook under the stem toward "
+                     "the outboard side"),
+)
+
 PEDALS = dict(
     dy=P(0.125, "[M] pedal-pad centres at seat CL +/- (P1046408 face-on: 0.24-0.26 apart, MFD-bezel scale + depth "
                 "correction, the grip span checks it); rev B 0.09 [E]"),
@@ -1083,96 +1707,263 @@ def cabin_pose(rec, scale=1.0, shank_deg=10.0):
                        scale=scale, shank_deg=shank_deg)
 
 
-# ---------------------------------------------------------------------------------------------------- yoke sweep
+# ---------------------------------------------------------------------------------------------------- yoke geometry
+# Rev J: the yoke is the set of solids model/yoke_geom.py builds from YOKE_DESIGN (sheets L6Y / L6Y2); everything below
+# works in yoke-local mm (u outboard, h up from the hub centre, a aft of the aft face at the insert step) and the public
+# helpers return model metres.
+_YD_CACHE = {}
+
+
+def _yg():
+    from model import yoke_geom
+    return yoke_geom
+
+
+def yd_mirror(half):
+    """Closed symmetric outline (N, 2) from a half outline running from the top centre (u = 0) round the +u side to the
+    bottom centre (u = 0) (the samples only; yoke_geom.outline applies the curve law)."""
+    H = np.asarray(half, float)
+    M = H[::-1].copy()
+    M[:, 0] *= -1.0
+    return np.vstack([H, M[1:-1]])
+
+
+def _clip_band(P, lo, hi):
+    """Sutherland-Hodgman clip of the polygon P (N, 2) to the strip lo <= P[:, 1] <= hi."""
+    def clip(Q, k, sg):
+        out = []
+        n = len(Q)
+        for i in range(n):
+            a, b = Q[i - 1], Q[i]
+            ia, ib = sg * (a[1] - k) >= 0, sg * (b[1] - k) >= 0
+            if ib:
+                if not ia:
+                    out.append(a + (b - a) * (k - a[1]) / (b[1] - a[1]))
+                out.append(b)
+            elif ia:
+                out.append(a + (b - a) * (k - a[1]) / (b[1] - a[1]))
+        return np.array(out) if out else np.zeros((0, 2))
+    Q = clip(np.asarray(P, float), lo, 1.0)
+    Q = clip(Q, hi, -1.0) if len(Q) else Q
+    if len(Q) > 1:      # rev L: no zero-length edges (a vertex on lo / hi was doubled: the exact polygon distance turned
+        keep = np.r_[True, np.any(np.abs(np.diff(Q, axis=0)) > 1e-9, axis=1)]    # NaN and dropped a whole band, rev K
+        Q = Q[keep]
+        if len(Q) > 1 and np.all(np.abs(Q[0] - Q[-1]) <= 1e-9):
+            Q = Q[:-1]
+    return Q
+
+
+def yoke_face_a(h):
+    """a (mm) of the shell's aft face on the centreline at height h (yoke_geom.face_a)."""
+    return _yg().face_a(h)
+
+
+def yoke_grip_axis_u(h):
+    """u (mm) of the mean grip axis (front view) at height h, own sense."""
+    return _yg().grip_axis_u(h)
+
+
+def yoke_grip_aft_a(u, h, g="out"):
+    """a (mm) of grip g's aft plane at the front-view point (u, h), own sense (u > 0 away from the yoke centreline)."""
+    return _yg().grip_plane_a(u, h, g)
+
+
+def _largest(lines):
+    return max(lines, key=lambda L: len(L)) if lines else np.zeros((0, 2))
+
+
+def yoke_grip_silhouette(g="out"):
+    """Front-view silhouette (u, h) of grip g's solid (own sense; looking along a), mm."""
+    Gm = _yg()
+
+    def fn():
+        lines, _ = Gm.silhouette("grip_" + g, "a", step=0.4, depth_step=1.0,
+                                 extent=(-154.0 if g == "in" else 76.0, -62.0, -76.0 if g == "in" else 154.0, 104.0))
+        P = _largest(lines)
+        return P * [-1.0, 1.0] if g == "in" else P
+    return Gm.disk_cached(("grip_sil", g), fn)
+
+
+def yoke_grip_low():
+    """Lowest point of the grips' solids below the hub centre (m, < 0): the front-view silhouettes' minimum (rev L: the
+    forward face runs 27.5 deep along the raked normal, ~9 below the aft-face outline's bottom grip_dz)."""
+    return 1e-3 * min(float(yoke_grip_silhouette(g)[:, 1].min()) for g in ("out", "in"))
+
+
+def yoke_front_mm():
+    """Every front-view piece of the yoke (mm, u outboard, h up; the co-pilot sense -- the pilot yoke is its mirror):
+    closed dense outlines 'shell', 'insert_upper', 'insert_lower', 'body', 'badge', 'badge_border' (None: rev O has
+    no inner border), 'badge_field',
+    'badge_plate' (rev N: the raised blank plate),
+    'grip_out' / 'grip_in' (solid silhouettes), 'aft_out' / 'aft_in' (aft-face outlines), 'pad_out' / 'pad_in',
+    'trim_face' (the trim head's round face), 'shield' (the inboard head's facet), open polylines 'step',
+    'badge_lines' (list), and circles 'tcs', 'afcs', 'trim', 'button' as (u, h, outer dia, inner dia); the grips' and
+    the inboard head's pieces at u < 0."""
+    if "front" in _YD_CACHE:
+        return _YD_CACHE["front"]
+    D = YOKE_DESIGN
+    Gm = _yg()
+    mir = np.array([-1.0, 1.0])
+    st = np.asarray(D["step"], float)
+    (bu0, bh0), (bu1, bh1) = D["badge"]
+    badge = np.array([(-bu0, bh0), (bu0, bh0), (bu1, bh1), (-bu1, bh1)])
+    z1, z2, z3, u0, off = (float(x) for x in D["badge_lines"])
+    ang = math.atan2(bu0 - bu1, bh0 - bh1)
+    du = off / math.cos(ang)
+    bt, bb = bh0 - off, bh1 + off
+
+    def end_u(z):
+        return bu1 + (z - bh1) * (bu0 - bu1) / (bh0 - bh1) - du
+    border = (np.array([(-end_u(bt), bt), (end_u(bt), bt), (end_u(bb), bb), (-end_u(bb), bb)]) if off > 0.0
+              else None)                     # rev O (3-D judges r2 FID2-06): one outline groove, no inner border
+    lines = [np.array([(sg * u0, z), (sg * end_u(z), z)]) for z in (z1, z2, z3) for sg in (-1, 1)]
+    fw, f0, f1 = (float(x) for x in D["badge_field"][:3])
+    field = np.array([(-fw, f1), (fw, f1), (fw, f0), (-fw, f0)])
+    c, n = Gm.head_out_face()
+    eu, ev = Gm._facet_frame(c, n)
+    R = 0.5 * float(D["head_out"][2])
+    t = np.linspace(0.0, 2.0 * np.pi, 97)[:-1]
+    face3 = c + R * (np.cos(t)[:, None] * eu + np.sin(t)[:, None] * ev)
+    ci, ni = Gm.head_in_face()
+    eui, evi = Gm._facet_frame(ci, ni)
+    S2 = Gm.shield_outline()
+    sh3 = ci + S2[:, :1] * eui + S2[:, 1:2] * evi
+    tc, a_, b_, bt_ = D["tcs"], D["afcs"], D["trim"], D["button"]
+    out = dict(shell=Gm.shell_outline(), insert_upper=Gm.insert_upper_outline(),
+               insert_lower=Gm.insert_lower_outline(),
+               step=np.array([(-st[1, 0], st[1, 1]), tuple(st[0]), tuple(st[1])]), body=Gm.body_outline(),
+               badge=badge, badge_border=border, badge_field=field, badge_lines=lines,
+               badge_plate=Gm.badge_plate_outline(),
+               grip_out=yoke_grip_silhouette("out"), grip_in=yoke_grip_silhouette("in") * mir,
+               aft_out=Gm.grip_outline("out"), aft_in=Gm.grip_outline("in") * mir,
+               pad_out=Gm.pad_outline("out"), pad_in=Gm.pad_outline("in") * mir,
+               trim_face=face3[:, :2], shield=sh3[:, :2] * mir,
+               tcs=(float(tc[0]), float(tc[1]), float(tc[2]), float(tc[3])),
+               afcs=(float(a_[0]), float(a_[1]), float(a_[4]), float(a_[2])),
+               trim=(float(b_[0]), float(b_[1]), float(b_[2]), float(b_[3])),
+               button=(-float(bt_[0]), float(bt_[1]), float(bt_[2]), float(bt_[3])))
+    _YD_CACHE["front"] = out
+    return out
+
+
+def _mm_yz(P, d=1.0):
+    """Yoke-local mm (u, h) -> metres (y, z) about the hub centre; d = -1 mirrors."""
+    return np.asarray(P, float) * [d * 1e-3, 1e-3]
+
+
 def yoke_grip_axis(d=1):
-    """(bottom, top) centres (y, z) of the right (d=+1) or left grip's capsule axis about the hub centre: the outer
-    edge at the bottom on YOKE span / 2, the outline bottom at grip_dz, length grip[0] tip to tip, the top leaning
-    inboard by the cant."""
-    gl, gr, gc = YOKE["grip"]
-    a = math.radians(gc)
-    p0 = np.array([d * (0.5 * YOKE["span"] - gr), YOKE["grip_dz"] + gr])
-    return p0, p0 + (gl - 2.0 * gr) * np.array([-d * math.sin(a), math.cos(a)])
+    """(bottom, top) of the right (d=+1) or left grip's mean axis (y, z) about the hub centre (m): the middle of the
+    grips' bottom edges and of their head tops (YOKE_DESIGN grip_axis)."""
+    (ub, hb), (ut, ht) = YOKE_DESIGN["grip_axis"]
+    return np.array([d * ub, hb]) * 1e-3, np.array([d * ut, ht]) * 1e-3
 
 
 def yoke_grip_y(z, d=1):
-    """y of the grip axis at height z (about the hub centre)."""
+    """y of the grip axis at height z (about the hub centre, m)."""
     p0, p1 = yoke_grip_axis(d)
     return float(p0[0] + (z - p0[1]) * (p1[0] - p0[0]) / (p1[1] - p0[1]))
 
 
-def yoke_grip_outline(d=1, n=10):
-    """Front-view outline (y, z) of the right (d=+1) or left grip about the hub centre: the capsule of yoke_grip_axis
-    (radius YOKE grip) swelling over its top grip_head[0] to the head radius grip_head[1], the tip where the capsule's
-    tip was (review r3 F2)."""
-    gl, gr, _ = YOKE["grip"]
-    hl, rh = YOKE["grip_head"]
-    p0, p1 = yoke_grip_axis(d)
-    ax = (p1 - p0) / np.linalg.norm(p1 - p0)
-    nrm = np.array([ax[1], -ax[0]])
-    tip = p1 + gr * ax
-    ch = tip - rh * ax                                                  # head circle centre
-    a = np.linspace(0.0, 1.0, 15)
-    C = p0[None, :] + a[:, None] * (ch - p0)[None, :]
-    along = (C - (p0 - gr * ax)) @ ax                                   # distance from the bottom tip
-    t = np.clip((along - (gl - hl - 0.010)) / (gl - rh - (gl - hl - 0.010)), 0.0, 1.0)
-    r = gr + (rh - gr) * t * t * (3.0 - 2.0 * t)
-    right, left = C + r[:, None] * nrm, C - r[:, None] * nrm
-    th0 = math.atan2(nrm[1], nrm[0])
-    top = [ch + rh * np.array([math.cos(th0 + u), math.sin(th0 + u)]) for u in np.linspace(0.0, math.pi, n)[1:-1]]
-    bot = [p0 + gr * np.array([math.cos(th0 + math.pi + u), math.sin(th0 + math.pi + u)])
-           for u in np.linspace(0.0, math.pi, n)[1:-1]]
-    return np.vstack([right, top, left[::-1], bot])
+def yoke_grip_outline(d=1, side=1):
+    """Front-view silhouette (y, z) of the grip on the right (d=+1) or left of the yoke on `side` (+1 co-pilot, -1
+    pilot) about the hub centre (m): the outboard grip where d == side."""
+    P = yoke_grip_silhouette("out" if d == side else "in")
+    return _mm_yz(P, d)
 
 
 def yoke_shield_yz():
-    """Front-view outline (y, z) of the white shield about the hub centre: top corners at +/- hub_whd width / 2 on the
-    hub top, the top edge dipping shield_dip to the centre, concave sides narrowing to the hub_bot_w stem (YOKE
-    shield)."""
-    hw, hh, _ = YOKE["hub_whd"]
-    bw = YOKE["hub_bot_w"]
-    tt, ff = (np.array(v, float) for v in zip(*YOKE["shield"]))
-    t = np.linspace(0.0, 1.0, 11)
-    w = 0.5 * bw + (0.5 * hw - 0.5 * bw) * np.interp(t, tt, ff)
-    z = 0.5 * hh - t * hh
-    right = np.c_[w, z]
-    left = np.c_[-w, z][::-1]
-    return np.vstack([right, left, [(0.0, 0.5 * hh - YOKE["shield_dip"])]])
+    """Front-view outline (y, z) of the white shell about the hub centre (m; symmetric)."""
+    return _mm_yz(_yg().shell_outline())
 
 
-def yoke_body_yz():
-    """Front-view outline (y, z) of the black yoke body about the hub centre: from the shield foot (rimmed by
-    body_arm[1]) its lower edge runs up-outboard to each grip's axis at body_arm[0], up the grip to the shoulder
-    (5 mm above the hub top) and back inboard under the shield's top corners (YOKE body_arm)."""
-    hw, hh, _ = YOKE["hub_whd"]
-    bw = YOKE["hub_bot_w"]
-    za, rim = YOKE["body_arm"]
-    zs = 0.5 * hh + 0.005
-    half = [(0.5 * bw + rim, -0.5 * hh - rim)]
-    y_a = yoke_grip_y(za, 1)
-    for f in (0.35, 0.70):                                              # slightly concave lower edge
-        q = np.array(half[0]) + f * (np.array([y_a, za]) - np.array(half[0]))
-        half.append((q[0] + 0.004 * f * (1 - f) * 4, q[1] - 0.004 * f * (1 - f) * 4))
-    half += [(y_a, za), (yoke_grip_y(zs, 1), zs), (0.5 * hw - 0.004, 0.5 * hh - 0.006)]
-    H = np.array(half)
-    cen = (0.0, 0.5 * hh - YOKE["shield_dip"] - 0.008)
-    return np.vstack([H[::-1] * [-1, 1], H, [cen]])[::-1]
+def yoke_body_yz(side=1):
+    """Front-view outline (y, z) of the black body of the yoke on `side` about the hub centre (m): the rim round the
+    stem, the slot tops, the outboard high web and the inboard low neck (asymmetric)."""
+    return _mm_yz(_yg().body_outline(), float(side))
 
 
-def yoke_outline_yz(roll=0.0):
-    """Front-view outline pieces [(N, 2) (y, z)] of one yoke about its column axis (origin = the hub centre): piece 0
-    the white shield (yoke_shield_yz), 1 the black body behind it (yoke_body_yz), 2 / 3 the left / right grips with
-    their swollen heads (yoke_grip_outline), rolled `roll` deg (counter-clockwise seen from behind).  Drawn in the order
-    1, 0, 2, 3 (the shield on the body)."""
-    out = [yoke_shield_yz(), yoke_body_yz()] + [yoke_grip_outline(d) for d in (-1, 1)]
+def yoke_outline_yz(roll=0.0, side=1):
+    """Front-view outline pieces [(N, 2) (y, z)] of the yoke on `side` (+1 co-pilot, -1 pilot) about its column axis
+    (origin = the hub centre, m): piece 0 the white shell, 1 the black body behind it, 2 / 3 the left / right grip
+    silhouettes, rolled `roll` deg (counter-clockwise seen from behind).  Drawn in the order 1, 0, 2, 3."""
+    out = [yoke_shield_yz(), yoke_body_yz(side)] + [yoke_grip_outline(d, side) for d in (-1, 1)]
     return [_rot(P, np.zeros(2), roll) for P in out] if roll else out
 
 
+def _solid_a_range(name, P, lo, hi, step=1.0):
+    """(a_min, a_max) of the part `name` (yoke_geom solid) over the front-view band lo <= h <= hi inside P."""
+    from cad import sdf2d
+    Gm = _yg()
+    b = Gm.BOX[name]
+    uu, hh = np.meshgrid(np.arange(P[:, 0].min(), P[:, 0].max() + step, step), np.arange(lo, hi + 0.5 * step, step))
+    m = sdf2d.polygon(uu, hh, P) <= 0.5
+    u, h = uu[m], hh[m]
+    aa = np.arange(b[2], b[5] + 0.5, 1.0)
+    U = np.repeat(u[:, None], len(aa), 1)
+    H = np.repeat(h[:, None], len(aa), 1)
+    A = np.broadcast_to(aa[None, :], U.shape)
+    s = Gm.part_sdf(name, U, H, A) <= 0.0
+    if not s.any():
+        return None
+    Ain = np.where(s, A, np.nan)
+    return float(np.nanmin(Ain)) - 0.5, float(np.nanmax(Ain)) + 0.5
+
+
+def yoke_sweep_pieces_mm(band=12.0):
+    """Pieces of the yoke for the knee / roll sweep (mm, about the hub centre, co-pilot sense u > 0 outboard; grips
+    in their own sense): [(front outline (N, 2), a_min, a_max, kind)] -- the shell (kind None) and the body ('body')
+    with their whole a-ranges, each grip ('out' / 'in') cut into h-bands `band` mm tall, every band with the a-range
+    of the grip's solid over that band (rev J: the raked, toed, recessed-pad grips and their heads)."""
+    Gm = _yg()
+    return Gm.disk_cached(("sweep", band), lambda: _sweep_pieces(band))
+
+
+def _sweep_pieces(band):
+    Gm = _yg()
+    sh = Gm.shell_outline()
+    bo = Gm.body_outline()
+    rc = _solid_a_range("cover", sh, sh[:, 1].min(), sh[:, 1].max(), 2.0)
+    rb = _solid_a_range("body", bo, bo[:, 1].min(), bo[:, 1].max(), 2.0)
+    out = [(sh, rc[0], rc[1], None), (bo, rb[0], rb[1], "body")]
+    for g in ("out", "in"):
+        S = yoke_grip_silhouette(g)
+        h_lo, h_hi = S[:, 1].min(), S[:, 1].max()
+        edges = np.arange(h_lo, h_hi + band, band)
+        edges[-1] = h_hi
+        for lo, hi in zip(edges[:-1], edges[1:]):
+            P = _clip_band(S, lo, hi)
+            if len(P) < 3:
+                continue
+            Pc = P * ([-1.0, 1.0] if g == "in" else [1.0, 1.0])
+            r = _solid_a_range("grip_" + g, Pc, lo, hi, 1.5)
+            if r is None:
+                continue
+            out.append((P, r[0], r[1], g))
+    return out
+
+
+def yoke_sweep_pieces(side=-1, roll=0.0):
+    """The yoke of the seat on `side` as sweep pieces in model terms: [(front outline (N, 2) (y - hub y, z - hub z) m,
+    rolled `roll` deg, x0, x1 at neutral pitch, bounding box min, max)] -- yoke_sweep_pieces_mm with the outboard
+    grip and the body's high web toward `side`."""
+    hub = yoke_hub(side)
+    x_ref = float(hub[0] + YOKE["hub_whd"][2])
+    out = []
+    for P, a0, a1, g in yoke_sweep_pieces_mm():
+        d = 1.0 if g is None else (-float(side) if g == "in" else float(side))
+        Q = _mm_yz(P, d)
+        Q = _rot(Q, np.zeros(2), roll) if roll else Q
+        out.append((Q, x_ref + a0 * 1e-3, x_ref + a1 * 1e-3, Q.min(0), Q.max(0)))
+    return out
+
+
 def yoke_hand_dz():
-    """Height of the hand (grip centre) above the hub centre: the middle of the grips."""
-    p0, p1 = yoke_grip_axis(1)
-    return float(0.5 * (p0[1] + p1[1]))
+    """Height of the hand (the outboard pad's centre) above the hub centre (m)."""
+    P = _yg().pad_outline("out")
+    return 0.5 * (float(P[:, 1].max()) + float(P[:, 1].min())) * 1e-3
 
 
+# ---- rev H outline, FROZEN for the rev H 3-D builder (flightdeck._yokes) until the Stage-3 yoke rebuild
 def leg_spheres(p, yc, legs=(-1, 1)):
     """Spheres (x, y, z, r) along the thighs (knee -> hip) and shanks (knee -> ankle) of a side-view pose; legs picks
     the leg(s): -1 = the one at yc - knee, +1 = at yc + knee.  Crew poses (leg_y): the thigh runs from the knee to the
@@ -1211,26 +2002,28 @@ def rudder_spheres(p_aft, p_fwd, side=-1, up=-1):
 
 
 def yoke_roll_clearances(p, side=-1, pitch=True, step=2.5, max_roll=90.0, spheres=None):
-    """{roll deg: (clearance, sphere)} of the pose's thighs, knees and shanks to the yoke (hub + grips) rolled +/-roll
-    (the worse of the two) and swept over its pitch travel (pitch=True): the x-slab of the travel times the rolled
-    front-view outline.  spheres: leg spheres to test instead of the pose's (e.g. rudder_spheres).  Clearance in m,
-    < 0 = interference."""
+    """{roll deg: (clearance, sphere)} of the pose's thighs, knees and shanks to the yoke (shell, body and the grips in
+    h-bands, yoke_sweep_pieces) rolled +/-roll (the worse of the two) and swept over its pitch travel (pitch=True):
+    each piece's x-slab (its own a-range: rev I, the grips rake 20 deg and their lower ends stand ~20 mm aft of the
+    step face) widened by the travel, times its rolled front-view outline.  spheres: leg spheres to test instead of
+    the pose's (e.g. rudder_spheres).  Clearance in m, < 0 = interference."""
     hub = yoke_hub(side)
-    hd = YOKE["hub_whd"][2]
     t0, t1 = YOKE["travel"] if pitch else (0.0, 0.0)
-    xa, xb = hub[0] + t0, hub[0] + hd + t1
-    sph = [(max(0.0, xa - x, x - xb), np.array([y - hub[1], z - hub[2]]), r, (x, y, z, r))
+    sph = [(np.array([y - hub[1], z - hub[2]]), x, r, (x, y, z, r))
            for x, y, z, r in (spheres if spheres is not None else leg_spheres(p, side * CREW_SEAT["bl"]))]
     out = {}
     for ang in np.arange(0.0, max_roll + 1e-9, step):
-        polys = yoke_outline_yz(ang) + (yoke_outline_yz(-ang) if ang else [])
+        pcs = yoke_sweep_pieces(side, ang) + (yoke_sweep_pieces(side, -ang) if ang else [])
         best = (np.inf, None)
-        for dx, q, r, s_ in sph:
-            if dx - r >= best[0]:
-                continue
-            cl = math.hypot(dx, min(_pt_poly_dist(q, P) for P in polys)) - r
-            if cl < best[0]:
-                best = (cl, s_)
+        for q, x, r, s_ in sph:
+            for P, x0, x1, lo, hi in pcs:
+                dx = max(0.0, x0 + t0 - x, x - x1 - t1)
+                bb = math.hypot(max(0.0, lo[0] - q[0], q[0] - hi[0]), max(0.0, lo[1] - q[1], q[1] - hi[1]))
+                if math.hypot(dx, bb) - r >= best[0]:
+                    continue
+                cl = math.hypot(dx, _pt_poly_dist(q, P)) - r
+                if cl < best[0]:
+                    best = (cl, s_)
         out[round(float(ang), 3)] = best
     return out
 
