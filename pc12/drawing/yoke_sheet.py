@@ -36,7 +36,7 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                vline_gapped, hline_gapped)
 
 SHEET = dict(id="L6Y", title="CONTROL YOKE - VIEWS", subtitle="PC-24-STYLE CONTROL YOKE - VIEWS", size="A1",
-             scale="AS SHOWN", rev="G", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
+             scale="AS SHOWN", rev="H", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
 REVISIONS = (
     ("A", "2026-10-05", "first issue (owner 2026-10-05: 'the yoke isn't quite right especially if you look at the "
                         "details'): yoke re-measured on 8 PRO photos; YOKE_DESIGN rev I replaces the rev H outline"),
@@ -86,6 +86,11 @@ REVISIONS = (
                         "(6.5), lobes crowned 0.6, satin black; legend blocks 0.35 of the pitch, tone 0.45; badge: ONE "
                         "outline groove (the inner border dropped), speed lines into it, plate 0.2 proud; open point 3 "
                         "closed (owner 2026-10-11)"),
+    ("H", "2026-10-11", "rev P (3-D judges r3): item 9 -- the legend ring / lunes a SATIN CHARCOAL face and the rocker "
+                        "slot a near-black MATTE pocket (rev N / O's gloss lunes over a satin slot read inverted against "
+                        "every photo); legend letters 0.22 of the pitch, uneven (+/-35 %), tone 0.40; item 10 hex 12 A/C "
+                        "(text); item 11 column matte near-black; item 12 the J band's hook ends round; the viewer's "
+                        "parked yokes at the photos' free rest, 35 forward (YOKE rest); item 8 text: the rev O red"),
 )
 TRIM_COL = "#23292D"
 FR_O = (202.0, 134.0)       # front elevation: sheet position of the hub centre (1:1)
@@ -297,23 +302,29 @@ ITEMS = (  # item, part, material (render/lookdev name), finish [source]
                                             "frame, groove 1.0 x 0.5 + bead 0.4 at its edge [M / E]"),
     (7, "TCS BUTTON", "gloss_black / black", "gloss black bezel 1 proud [E], satin domed button 2 proud of it "
                                              "[M low]; legend blocks (legend_grey)"),
-    (8, "AFCS DISCONNECT", "button_red / black", "red cap 0.70 / 0.035 / 0.04, clear coat 0.3, NOT emissive, "
-                                                 "on a black boss [M]; legend blocks"),
-    (9, "PITCH TRIM ON ROUND FACE", "gloss_black / yoke_rocker / black", "gloss black ring + lunes; rocker (rev O) "
-                                                                          "near-black satin 0.02, rough 0.30, ends 9.5 "
-                                                                          "proud, crowned; 2.5 deep satin black slot "
-                                                                          "[M / E]; legend blocks"),
+    (8, "AFCS DISCONNECT", "button_red / black", "deep red cap 0.50 / 0.004 / 0.012, clear coat 0.15 (rev O), "
+                                                 "NOT emissive, on a black boss [M]; legend blocks"),
+    (9, "PITCH TRIM ON ROUND FACE", "yoke_trim_face / yoke_rocker / yoke_slot", "rev P: SATIN CHARCOAL ring + "
+                                                                                 "lunes 0.04, rough 0.45 (as light as "
+                                                                                 "the body or lighter); rocker near-"
+                                                                                 "black satin 0.02, rough 0.30, ends "
+                                                                                 "9.5 proud, crowned; 2.5 deep near-"
+                                                                                 "black MATTE slot 0.01, rough 0.8 "
+                                                                                 "(the darkest part) [M / E]; legends"),
     (10, "PUSH BUTTON ON SHIELD", "gloss_black / yoke_nickel / black", "rev O: GLOSS-BLACK legend disc 17.5, 0.75 "
                                                                        "proud, legend blocks at its rim; small SATIN "
-                                                                       "NICKEL hex 11 A/C; smooth black cap, centre "
-                                                                       "dimple [M]; function: MAP LIGHTS (no lettering)"),
-    (11, "COLUMN", "yoke_column (new)", "satin black, non-metallic, dia 44 [E] (never seen in a PRO photo)"),
-    (12, "COLUMN SURROUND (PANEL)", "pcl_pewter / panel_dark", "satin pewter J band 22 wide, charcoal dished "
-                                                               "recess [M / E]"),
+                                                                       "NICKEL hex 12 A/C (warm); smooth black cap, "
+                                                                       "centre dimple [M]; function: MAP LIGHTS (no "
+                                                                       "lettering)"),
+    (11, "COLUMN", "yoke_column (new)", "matte near-black, non-metallic, dia 44 [E] (never seen in a PRO photo); the "
+                                        "viewer parks the free yokes 35 forward (YOKE rest, rev P)"),
+    (12, "COLUMN SURROUND (PANEL)", "pcl_pewter / panel_dark", "satin pewter J band 22 wide, both ends round (rev "
+                                                               "P), charcoal dished recess [M / E]"),
     (13, "FORWARD-FACE SWITCHES (2) [E]", "grip_black", "PTT trigger (outboard grip), checklist rocker (inboard): "
                                                         "placeholders, never seen (L6Y2 detail W) [E]"),
-    (14, "LEGENDS", "legend_grey (new)", "words of plain letter blocks, the lettering's mean tone, 0.12 proud -- NO "
-                                         "lettering (rev N); the pilot's in reading order, not mirrored"),
+    (14, "LEGENDS", "legend_grey (new)", "words of plain letter blocks 0.22 of the pitch, uneven widths (rev P), "
+                                         "tone ~0.40, 0.12 proud -- NO lettering (rev N); the pilot's in reading "
+                                         "order, not mirrored"),
 )
 
 
@@ -830,7 +841,8 @@ def draw_tables(ds, ctx):
         f"neutral {STATION_SHIFT:.0f} further forward (hub_dx 140 -> {140 - STATION_SHIFT:.0f}): the 95th's contact "
         f"roll {STATION_KNEE[0]:.1f}° -> {STATION_KNEE[1]:.1f}°, wings-level clearance {STATION_KNEE[2]:.1f} -> "
         f"{STATION_KNEE[3]:.1f} mm (L6B sweep: the knees lie inside the +/-90 pitch-swept slab either way, so the "
-        f"station does not move the knee rows).  Kept 140 (owner).",
+        f"station does not move the knee rows).  Kept 140 (owner); rev P: the viewer parks the free yokes at the "
+        f"unlocked photos' rest, 35 forward (YOKE rest; 3-D judges r3 FID3-02).",
         "Grip toe: all six usable views look from INBOARD (15-27°): the silhouettes prefer 7 (outboard, +5 % at 18) "
         "and 16.7 (inboard), the inboard PAD traces alone ~26 (judges FID4-06: both optima); the one view from "
         "outboard (AOPA, its camera extrapolated from the pilot-yoke solution, FID4-05) favours 18-26, and there the "

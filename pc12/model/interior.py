@@ -252,11 +252,22 @@ YOKE = dict(
                       "M mirrored the studio and read as a light grey pipe from the crew stops where no PRO photo shows "
                       "one (Mexico L: a dark column in the hand slot); ~100 mm of it shows at the drawn neutral between "
                       "the body's forward face and the panel face (OPEN, owner: the fore-aft station -- every posed "
-                      "photo puts the yoke 14-65 mm further forward, which would shorten it)"),
+                      "photo puts the yoke 14-65 mm further forward, which would shorten it).  Rev P (3-D judges r3 "
+                      "FID3-02: from the pilot's design eye a tall dark post in the recess, 0.48 x the cover's pixels): "
+                      "MATTE near-black (0.014, rough 0.8), in the cabin light without fill (an occluded pocket) and the "
+                      "viewer's free yokes parked at YOKE rest (-35: its free length to the panel 107 -> 72 mm)"),
     travel=PT((-0.065, 0.090), "pitch travel fwd (push) / aft (pull) of neutral: pull 90 [E]; push 65 -- OWNER "
                                "DECISION 2026-10-11 (fit_check 30b / fit_fd_a 29b: at the [E] 90 of push the grips reached "
                                "the lower panel from ~45 deg of roll and came within ~8 mm of its bare face wings level; "
                                "3-D judges r1 CR1-09): the push shortened to 65, the pull kept"),
+    rest=P(-0.035, "[M] the FREE yokes' rest on the ground, along the pitch travel (- = forward of the drawn neutral): "
+                   "the photos' unlocked yokes stand forward -- Mexico pilot / co-pilot -34 / -38 (both within 4 mm), "
+                   "AOPA -14 / -26 (refs/cache/overlays/yoke/deviations.json poses; dx weakly constrained along each "
+                   "view); P1046408-10's -37 .. -65 read as the gust-lock pose.  Rev P (3-D judges r3 FID3-02): the "
+                   "viewer's PARKED pose -- the yokes sit here at a zero pitch command (pivot 'rest'; the command's "
+                   "full push / pull still reach travel): the column seen from the crew seats 0.48 -> 0.30 of the "
+                   "cover's pixels at the pilot's design eye (viewer, rev P).  The drawn neutral, the knee checks (L6B) and "
+                   "fit_check 30 (whole travel) are unchanged; the elevators stay drawn at neutral"),
     roll=P(70.0, "[E] roll travel each way (PC-12 figure not found): the knee check sweeps it.  OWNER DECISION "
                  "2026-10-05: the 95th's knee result on the rev L / M solids -- 23.8 mm wings level (CRITERIA "
                  "knee_clear 25 kept, not loosened) and contact from 12.5 deg -- ACCEPTED AS MEASURED (L6B open point "
@@ -736,7 +747,9 @@ YOKE_DESIGN = dict(
                                            "FID1-09; rev I a half-ring sector], boss 1.5 proud [E]"),
     trim=PT((111.5, 82.0, 29.5, 27.0, 8.0, 4.0, 0.8, 9.5, 3.5),
             "[M] pitch trim on the OUTBOARD head's round face: centre = head_out (triangulated, rev J; rev I 109.5 / "
-            "81.5), flat satin black legend ring OD 29.5 +/-1.1 flush in the face with a fine groove; two legend "
+            "81.5), flat SATIN legend ring OD 29.5 +/-1.1 flush in the face with a fine groove (rev P, 3-D judges r3 "
+            "FID3-01: a satin CHARCOAL face, yoke_trim_face, as light as or lighter than the body -- 6 of 7 photo "
+            "footprints read face / body 1.0-3.2, the slot the darkest part -- not rev N / O's gloss black); two legend "
             "lunes ~7.3 deep (fore = DN, aft = UP; 7 ticks each over 84 deg at r 11, 3 long) and a ~15 mm slot "
             "between them holding a split bow-tie rocker ACROSS the head: 27 +/-1.5 long, 8 wide at the ends, 4 at "
             "the waist, 0.8 split (AOPA, Mexico R; Mexico L), saddle 9.5 at the ends / 3.5 at the split above the face "
@@ -757,10 +770,11 @@ YOKE_DESIGN = dict(
                  "deep [E 2-3] below the face, its side walls on the chords (|y| = trim[2] / 2 - trim_lunes[0], the "
                  "chords' V-grooves of rev M become the slot's sharp top edges), its end walls on a circle 0.8 inside "
                  "the legend ring's groove [E], the walls with a 7 deg moulding draft [E], every edge sharp; the "
-                 "lunes either side gloss black (the bezel ring, item 9), the slot "
-                 "satin black, the rocker lobes standing from the slot floor [M: a deep black slot under the grey "
-                 "rocker in AOPA pilot / Mexico co-pilot / P1046409 (refs/cache/fd_research/yoke/measure/"
-                 "detail_switches.jpg)]"),
+                 "lunes either side SATIN CHARCOAL (yoke_trim_face, item 9; rev N / O: gloss black), the slot walls and "
+                 "floor a near-black MATTE (yoke_slot: the darkest part of the head -- slot / lunes 0.14-0.90 in the 7 "
+                 "photo footprints, rev O's satin black read 2.2-2.9 x its gloss lunes), the rocker lobes standing from "
+                 "the slot floor [M: a deep black slot under the grey rocker in AOPA pilot / Mexico co-pilot / P1046409 "
+                 "(refs/cache/fd_research/yoke/measure/detail_switches.jpg); 3-D judges r3 FID3-01]"),
     button=PT((106.3, 76.0, 17.5, 10.2, 5.75, 0.75, 12.0, 2.0, 0.4, 1.5, 0.5),
               "[M] round push button on the INBOARD head's shield facet: centre (106.3, 76.0) [M rev J: the cap top "
               "triangulated from 6 views at (107.1, 77.2) less the cap height along the facet normal; rev I 106.5 / "
@@ -799,12 +813,15 @@ YOKE_DESIGN = dict(
                "TRIM and put LIGHTS over the collar): each block's angle reflected about its row's centre before the "
                "mirror (yoke3d.reading_blocks) -- TRIM / DN, TRIM / UP left to right over / under the slot as in Mexico L "
                "and the AOPA pilot view, LIGHTS on the inboard arc ~+45 .. -10 deg as in Mexico L"),
-    legend_style=PT((0.35, 0.12),
-                    "[E] a legend letter is a plain block the cap height tall (the row's r0..r1) and 0.35 of the letter "
-                    "pitch wide (the word's arc / letters; rev N 0.70 -- 3-D judges r2 FID2-06: chunky mid-grey "
-                    "rectangles read as dial ticks / LED segments where the photos' lettering is thin fine strokes), "
-                    "printed 0.12 proud (above fit_check 26's 0.1 mm coplanarity); legend_grey ~0.45 of white (sRGB; "
-                    "rev N 0.58: judges FID1-05 'legend_white at reduced contrast', FID2-06 'tone about 0.45')"),
+    legend_style=PT((0.22, 0.12, 0.35),
+                    "[E] a legend letter is a plain block the cap height tall (the row's r0..r1), on average 0.22 of the "
+                    "letter pitch wide (the word's arc / letters), each letter's width varied by +/-0.35 of that along "
+                    "the word (index 2: a fixed sequence, model/yoke_legends.py -- letters differ in weight, so a "
+                    "word reads as print, not as a scale), printed 0.12 proud (above fit_check 26's 0.1 mm coplanarity); "
+                    "legend_grey ~0.40 of white (sRGB).  Rev P (3-D judges r3 CR3-05: 12 equal bars 0.35 of the pitch "
+                    "read as a chunky tick dial at close range): thinner, uneven, dimmer; rev O 0.35 / ~0.45, rev N 0.70 "
+                    "(judges r2 FID2-06: chunky mid-grey rectangles read as dial ticks / LED segments where the photos' "
+                    "lettering is thin fine strokes)"),
     ptt=P(0.0, "[S: AOPA 2025-03-17 -- the PC-24-style yoke's one-hand functions 'pitch trim, push-to-talk, checklist, "
                "TCAS and autopilot quick disconnect' (TCAS: AOPA's word for the TCS button); JTF cockpit key lists push-to-talk] four of them are seen: "
                "trim, TCS, AFCS DISC and the inboard head's button, whose legend reads MAP LIGHTS (AOPA hbtn crop, "
@@ -847,8 +864,11 @@ YOKE_DESIGN = dict(
                    "band width 23 and the screw give the scale): two lit rolled edges 3-4 mm wide, the visible side "
                    "where the band curves under the stem ~8 mm; P1046409]; its hook an arc about the column axis at h "
                    "0 (rev M: h -24, the photos' joint line about the hub; OWNER DECISION 2026-10-11: re-centred on the "
-                   "axis, column above); OPEN (owner): a J or a full collar round the column opening whose "
-                   "outboard part hides behind the stem and the black body"),
+                   "axis, column above); both ends ROUND (rev P, 3-D judges r3 CR3-04: the hook's flat cut read as a "
+                   "light-grey wedge beside the column -- its round tip at 330 deg, fd_detail_a.BAND_HOOK_END, the drawn "
+                   "extent; the leg's round top end closed flat on top, rev M-O left a half-disc hole in it); OPEN "
+                   "(owner): a J or a full collar round the column opening whose outboard part hides behind the stem "
+                   "and the black body"),
     column_recess=PT((57.0, -48.0, 17.0, 8.0, 27.0),
                      "the lower panel's dished recess round the column, a U about the column axis (rev L, judges FID3-02: "
                      "rev K drew a circle R 62 about h -24): half-width 57, bottom h -48, its bottom corners R 17, 8 "

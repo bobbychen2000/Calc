@@ -34,7 +34,7 @@ from drawing import yoke_sheet as YS  # noqa: E402
 from drawing import master as M  # noqa: E402
 
 SHEET = dict(id="L6Y2", title="CONTROL YOKE - SECTIONS", subtitle="PC-24-STYLE CONTROL YOKE - SECTIONS & DETAILS",
-             size="A1", scale="AS SHOWN", rev="F", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
+             size="A1", scale="AS SHOWN", rev="G", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
 REVISIONS = (
     ("A", "2026-10-05", "first issue with L6Y rev B (judges r1): exact sections of the rev J solids, grip profiles with "
                         "the heel lip, trim face / shield, switch profiles, column surround, corner table, photo check"),
@@ -56,6 +56,9 @@ REVISIONS = (
     ("F", "2026-10-11", "rev O (3-D judges r2): G push button = gloss-black legend disc 17.5 + nickel hex 12 A/C + cap "
                         "10.2, MAP LIGHTS on the disc; F rocker ends 9.5, crowned 0.6; H one outline groove, plate 0.2; "
                         "legends 0.35 of the pitch"),
+    ("G", "2026-10-11", "rev P (3-D judges r3): F satin charcoal lunes, near-black matte slot; legends 0.22 of the pitch, "
+                        "uneven; J the band's hook ends round (tip at 330 deg), the viewer's parked rest 35 forward "
+                        "(YOKE rest), column matte near-black"),
 )
 COL_X = (588.0, 826.0)
 GRIP_SECTION_H = YS.GRIP_SECTION_H
@@ -411,11 +414,11 @@ def draw_heads(ds):
     leader(ds, vF.pt(10.0, 1.0), (X0 + 44.0, Y0 - 12.0), f"ROCKER {float(tr[3]):g} x {float(tr[4]):g}",
            [f"waist {float(tr[5]):g}, split {float(tr[6]):g}", "two mirrored lobes"], size=TXT_S, weight=500)
     sd_ = D["trim_slot"]
-    leader(ds, vF.pt(0.0, 11.5), (X0 + 44.0, Y0 - 30.0), "DN LUNE (FWD), GLOSS",
+    leader(ds, vF.pt(0.0, 11.5), (X0 + 44.0, Y0 - 30.0), "DN LUNE (FWD), SATIN CHARCOAL",
            ["legend: 2 words of letter", "blocks (no lettering)"], size=TXT_S, weight=500)
     leader(ds, vF.pt(0.0, -11.5), (X0 + 44.0, Y0 + 16.0), "UP LUNE (AFT)",
            [f"ring groove {float(tg[0]):g} x {float(tg[1]):g}; SLOT", f"RECESSED {float(sd_[0]):g}, walls on the",
-            f"chords, draft {float(sd_[2]):g}°, ends {float(sd_[1]):g}", "inside the ring"],
+            f"chords, draft {float(sd_[2]):g}°, ends {float(sd_[1]):g}", "inside the ring; MATTE NEAR-BLACK"],
            size=TXT_S, weight=500)
     from model import yoke_checks as YC
     pr = YC.run_all()["proud"]
@@ -654,6 +657,8 @@ def draw_column(ds):
     dim(ds, vJ.pt(a_p0, -r), vJ.pt(-depth, -r), Y0 + 22.0, f"{-depth - a_p0:.0f}")
     lbl(ds, X0 - 70.0, Y0 + 33.0, f"PHANTOM: FULL PUSH {t0:+.0f} (OWNER 2026-10-11; WAS -90 [E]), leaves "
                                   f"{-depth + t0 - a_p0:.0f} to the panel", TXT_S)
+    rest = 1000.0 * float(I.YOKE["rest"])
+    col_rest = -depth + rest - a_p0                                      # rev P: the viewer's parked yoke (YOKE rest)
     view_title(ds, X0 - 30.0, Y0 + 38.0, "DETAIL J - COLUMN, SIDE", "AT THE LOWER PANEL, FROM OUTBOARD - 1:2", size=3.0)
     # front view of the surround on the panel (pilot: inboard = right)
     vF = ds.add_view(mkview("det_J2", "yz_aft", -1, -1, (756.0, 384.0), 0.5, "detail J front, (u, h) mm"))
@@ -665,7 +670,10 @@ def draw_column(ds):
     poly(ds, vF, recess_u(hw_, hb2, rcr, ht_), W_FINE, fill="#E3E6E8")
     # band: vertical leg (inboard) from the top end down to the joint, then an arc about (0, hc_) under the stem
     leg = np.array([(-rc, h_top - 0.5 * bw), (-rc, hc_)])
-    th = np.radians(np.linspace(180.0, 330.0, 40))
+    # rev P (3-D judges r3 CR3-04): the hook ends ROUND, its tip at fd_detail_a.BAND_HOOK_END (the centreline half a band
+    # width short of it)
+    from model import fd_detail_a as FDA
+    th = np.radians(np.linspace(180.0, FDA.BAND_HOOK_END - math.degrees(0.5 * bw / rc), 40))
     arc = np.c_[rc * np.cos(th), hc_ + rc * np.sin(th)]
     cl = np.vstack([leg, arc[1:]])
     t_ = np.gradient(cl, axis=0)
@@ -673,6 +681,7 @@ def draw_column(ds):
     band = np.vstack([cl + 0.5 * bw * n_, (cl - 0.5 * bw * n_)[::-1]])
     poly(ds, vF, band, W_FINE, fill=COLLAR)
     circ(ds, vF, (-rc, h_top - 0.5 * bw), bw, W_FINE, fill=COLLAR)
+    circ(ds, vF, tuple(arc[-1]), bw, W_FINE, fill=COLLAR)
     line(ds, vF, [(-rc - 0.5 * bw, h_joint), (-rc + 0.5 * bw, h_joint)], W_FINE, color=INK)
     hs_ = h_screw
     us_ = -math.sqrt(max(rc * rc - (hs_ - hc_) ** 2, 0.0))
@@ -700,7 +709,10 @@ def draw_column(ds):
             f"band arc about h {hc_:g} (the axis);", f"top h {ht_:g} [E]: the column {ht_ - r:.0f} clear"],
            size=1.9, weight=500)
     dim(ds, vF.pt(-hw_, hb2), vF.pt(hw_, hb2), Y0 + 44.0, f"{2 * hw_:g}")
-    lbl(ds, X0 - 40.0, Y0 + 50.0, "phantom: the shell; hidden: the column dia 44 (satin black)", TXT_S, color=MUTED)
+    lbl(ds, X0 - 40.0, Y0 + 50.0, "phantom: the shell; hidden: the column dia 44 (matte near-black)", TXT_S,
+        color=MUTED)
+    lbl(ds, X0 - 40.0, Y0 + 52.6, f"viewer (rev P): the free yokes parked {rest:+.0f} [M: unlocked photos], "
+                                  f"{col_rest:.0f} of the column to the panel", TXT_S, color=MUTED)
     view_title(ds, X0, Y0 + 58.0, "DETAIL J - SURROUND, FRONT", "LOOKING FORWARD (PILOT; INBOARD RIGHT) - 1:2",
                size=3.0)
     hJ = 0.5 * (h_top - 0.5 * bw + h_joint)                              # mid-leg (re-centred: h 0 .. 13)

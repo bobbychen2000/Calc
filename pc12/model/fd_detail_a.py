@@ -564,6 +564,10 @@ def sleeve_depth():
     return 0.030 + t1 - t0 + 0.010
 
 
+BAND_HOOK_END = 330.0      # deg (front view about the column axis, 0 = outboard, co-pilot sense): where the J band's
+#                            hook ends under the stem -- its round end's tip (rev P; L6Y2 detail J)
+
+
 def column_surround(sg):
     """The lower panel's column surround of one side (rev M, sheet L6Y2 detail J; YOKE_DESIGN column / column_band /
     column_recess): the U recess cut column_recess[3] deep from the titanium plate's top (walls + floor, a 3 mm rim
@@ -636,11 +640,13 @@ def column_surround(sg):
     gap = 0.0005                                                         # the joint line: a 0.5 mm split
     leg = np.c_[np.full(8, -rcb), np.linspace(h_top - 0.5 * bw, h_joint + 0.5 * gap, 8)]
     a0 = math.pi + gap / rcb
-    th = np.linspace(a0, math.radians(330.0), 40)
+    # rev P (3-D judges r3 CR3-04): the hook ends ROUND -- its centreline stops half a band width short of the drawn
+    # end (BAND_HOOK_END) and the round cap reaches it, so the band's extent is the drawn one
+    th = np.linspace(a0, math.radians(BAND_HOOK_END) - 0.5 * bw / rcb, 40)
     arc = np.c_[rcb * np.cos(th), hcb + rcb * np.sin(th)]
     prof = _band_profile(bw, bh, br)
-    for path, cap0 in ((leg, "round"), (arc, "flat")):
-        for m_ in _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
+    for path, cap0, cap1 in ((leg, "round", "flat"), (arc, "flat", "round")):
+        for m_ in _band_sweep(path, prof, sg, yc, zc, off_floor, cap0, cap1):
             out.append((m_, BAND_MAT))
     # the screw on the arc (pan head, cross slot), on the band's top
     us = -math.sqrt(max(rcb * rcb - (h_scr - hcb) ** 2, 0.0))
@@ -675,10 +681,11 @@ def _band_profile(bw, bh, br, n_arc=5):
     return np.array(P), np.array(N)
 
 
-def _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
+def _band_sweep(path, prof, sg, yc, zc, off_floor, cap0, cap1="flat"):
     """The band swept along `path` ((u, h) m about the column axis, yoke-local sense: u outboard) on the recess floor:
-    [Mesh]: the swept surface (exact section normals), the end at path[-1] closed flat, the start closed flat or by a
-    half revolution of the section (cap0 'round': the band's round top end)."""
+    [Mesh]: the swept surface (exact section normals), each end closed flat or by a half revolution of the section
+    (cap0 / cap1 'round': the band's round top end; rev P, 3-D judges r3 CR3-04: the hook's end too -- cut flat it read
+    as a light-grey wedge beside the column)."""
     FD = _FD()
     P2, N2 = prof
     path = np.asarray(path, float)
@@ -713,17 +720,13 @@ def _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
     # wound by its own (exact, outward) section normals -- rev N: FD._oriented's mean-normal test flipped the mirrored
     # pilot band together with its normals, so the pilot's band came out inside-out (its caps wound the other way)
     out = [_orient_by_normals(body)]
-    # the far end: flat cap
-    endr = G[-1]
-    out.append(FD._oriented(_fan(endr, endr.mean(0)), dir3(T[-1])))
-    if cap0 == "round":
+
+    def round_cap(c0, nl, tout):
+        # a half revolution of the section's half (w <= 0) about the end's centre, from -nl over tout to +nl
         half = P2[:, 0] <= 1e-9
-        c0 = path[0]
-        nl, t0 = Nl[0], T[0]
-        ring = []
-        nring = []
+        ring, nring = [], []
         for ph in np.linspace(0.0, math.pi, 13):
-            d2 = math.cos(ph) * (-nl) + math.sin(ph) * (-t0)
+            d2 = math.cos(ph) * (-nl) + math.sin(ph) * tout
             d3 = dir3(d2)
             ring.append([to3(c0[0], c0[1], d2, -w, z) for w, z in P2[half]])
             nring.append([_unit(-nw * d3 + nz * fr.w) for nw, nz in N2[half]])
@@ -735,7 +738,21 @@ def _band_sweep(path, prof, sg, yc, zc, off_floor, cap0):
             for j in range(mm - 1):
                 a, b, c, d = i * mm + j, (i + 1) * mm + j, (i + 1) * mm + j + 1, i * mm + j + 1
                 F2 += [(a, b, c), (a, c, d)]
-        out.append(_orient_by_normals(Mesh(V2, np.array(F2), N2_)))
+        # the flat top inside the rolled edges' revolution (rev P: rev M-O left it open -- a half-disc 'D' hole in the
+        # leg's round top end): a fan from the first ring's top point, whose diameter edge is the body's flat top edge
+        top = R_[:, -1]
+        k0 = len(V2)
+        V2 = np.vstack([V2, top])
+        N2_ = np.vstack([N2_, np.tile(fr.w, (kk, 1))])
+        F2 += [(k0, k0 + i, k0 + i + 1) for i in range(1, kk - 1)]
+        return _orient_by_normals(Mesh(V2, np.array(F2), N2_))
+    if cap1 == "round":
+        out.append(round_cap(path[-1], Nl[-1], T[-1]))
+    else:
+        endr = G[-1]
+        out.append(FD._oriented(_fan(endr, endr.mean(0)), dir3(T[-1])))
+    if cap0 == "round":
+        out.append(round_cap(path[0], Nl[0], -T[0]))
     else:
         st = G[0]
         out.append(FD._oriented(_fan(st, st.mean(0)), -dir3(T[0])))
