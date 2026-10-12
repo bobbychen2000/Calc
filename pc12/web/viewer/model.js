@@ -59,8 +59,13 @@ const CABIN_HIDDEN = new Set(['antennas']);
 // console pixel): the seats / consoles disagree with the photo in plan, not in travel -- an L6 table question, so the
 // default stays the neutral SRP the GLB is built at; ?seatpark=1 shows the photo's 40 mm up (glTF offsets: X = BL,
 // Y = WL, Z = STA).
-const SEAT_PARK = new URLSearchParams(location.search).get('seatpark') === '1'
-  ? { seat_pilot: [0, 0.040, 0], seat_copilot: [0, 0.040, 0] } : {};
+// (flight deck fix FDY r1, FIDY1-05 -- an OPEN owner question, the crew-seat / console tables' re-measure: at the
+// bundle-adjusted P1046410 / 09 / Mexico cameras the neutral seat backs fill ~1/3 of the frame where the photos show none;
+// ?seatpark=aft parks both seats at full aft travel, CREW_SEAT travel_x 70 mm, to compare those photos like with like;
+// the default is unchanged)
+const SEAT_PARK_Q = new URLSearchParams(location.search).get('seatpark');
+const SEAT_PARK = SEAT_PARK_Q === '1' ? { seat_pilot: [0, 0.040, 0], seat_copilot: [0, 0.040, 0] }
+  : SEAT_PARK_Q === 'aft' ? { seat_pilot: [0, 0, 0.070], seat_copilot: [0, 0, 0.070] } : {};
 
 const PAINT_RE = /^(paint_|trim_black$)/;
 const GLASS_RE = /^(glass|lens$)/;
