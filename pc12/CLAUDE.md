@@ -73,7 +73,7 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 225 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 231 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
                                 #   --only fdlook: [FD-L1]-[FD-L9] the flight-deck look, ~20 min)
@@ -84,8 +84,8 @@ python3 web/package.py          # static viewer bundle -> dist/ (gitignored): me
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~116 MB as base64 text parts: meshopt 18 + 16 MB, gzip of the full model 27 MB for desktops and of
-                                #   the light tier 23 MB for phones without WebAssembly, every part <= 10.4 MB; two publishes 62.8 + 53.6 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   (~118 MB as base64 text parts: meshopt 18 + 16 MB, gzip of the full model 27 MB for desktops and of
+                                #   the light tier 23 MB for phones without WebAssembly, every part <= 10.6 MB; two publishes 63.7 + 54.2 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
                                 #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
@@ -1635,7 +1635,8 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   follows from the geometry at every camera; the step and the badge outline / speed lines (insert on both sides) by the
   light from above (`GROOVE_LIGHT` (0, 1): the down-facing flank dark, as rev Q's step); the step's end cones keep the
   face (`GROOVE_END_LIT`: dark, they were the black nubs past the side grooves; the step's line now ends on the side
-  groove's).  yoke_groove faces 1,184 -> 605 (the meshes and triangle counts unchanged: only the material split).
+  groove's).  The cover's yoke_groove faces 1,184 -> 591 (the meshes and triangle counts unchanged: only the material
+  split).
   Measured (look-dev page out/tmp/fd_yoke_merge/ldr / ldz, `edges.py` = the judge's edges.py; native / at the photo's
   px/mm): side grooves far / near at P1046408 0.85 / 0.21 (1.00 / 0.68), P1046410 0.81 / 0.22 (1.00 / 0.71), P1046409
   co-pilot 0.80 / 0.19 (0.98 / 0.58), P1046408 co-pilot 0.80 / 0.20 (1.00 / 0.73), Mexico 1.00 / 0.21 and 0.80 / 0.22
@@ -1658,3 +1659,17 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   the band 35-70; from the pilot stop lower / upper <= 0.90.  KEPT, reported: the yoke track's elevator coupling (parked,
   the elevators hang +8.08 deg TE down with the parked yokes -- photos 0517 / LX-FLI); it moves the exterior default pose
   (the horn balances stand out of the fixed tips parked).
+  Build (both tiers rebuilt): 2,721,764 triangles / 48.08 MB, light tier 2,296,131 / 40.34 MB (the triangle counts of the
+  merge; interior 873.0k of 896k, yokes 42,868 of 43k each).  Verified on this build: fit_check FIT OK (138 ok, no open
+  row; ~69 min), consistency_2d3d 157 / 157, test/yoke_mesh_check.py YOKE MESH OK (42,004 meshed, 42,868 in the GLB
+  part; cover groove 591 faces), model.yoke_checks not rerun (the solids are unchanged: only the cover's material
+  split), drawing.master L6 / L6B / L6Y / L6Y2 (no text crossings on L6Y / L6Y2; L6 / L6B only their PDF timestamps,
+  left alone), drawing.sheet + drawing.verify (SVGs unchanged, the same dimension table), the FULL viewer_test 231 / 231
+  (132 min, beside fit_check and artifact_test: [Y1] cover 213 / inserts 175 / 153 / column 50, [Y1d] step 0.14 / badge
+  0.57 / insert 0.89, [Y1e] far 0.87 / near 0.38 / badge 0.57 / lower / cover 0.77 / band 53 / stop lower / upper 0.87,
+  [FD-L3] glareshield 60 (lip 71 / underside 44), [FD-L4] yoke 216, [FD-L6] p50 75 bands 26 / 51 / 13 %, [T4] pilot 94
+  / fd_cabin 77, [CR4-05] the parked elevator droop, [FD-L7] the exterior default view unchanged), web/package.py verify
+  OK (meshopt 17.50 + 15.03 MB), the Artifact bundle 117.8 MB in 2 publishes (63.7 + 54.2 MB), artifact_test 70 / 70.
+  Photo | before (d007ea8, GEOM A's paddle yoke) | merged sheets of the standard views: out/tmp/fd_yoke_merge/cmp_*.jpg
+  (pilot, copilot, fd_cabin, cockpit_preset, panel_408b, cabin_fwd_406, pedestal, pilot / copilot_eye_yoke, ext_wind,
+  yoke_p408_pilot / p409_copilot / mex_pilot / press_pilot; gitignored: they embed the photos).
