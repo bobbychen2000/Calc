@@ -1224,6 +1224,10 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   202k, crew seats 57.7k, interior_lining 175k).  Verified: fit_check OK (132 ok, 1 open owner item -- 29b, unchanged),
   consistency_2d3d 143 / 143, viewer_test `--only fdlook` 10 / 10 ([FD-L1] the sky over the cowl 234 / 238; [FD-L2]
   carpet 14, consoles 18; [FD-L3] glareshield 60, lip 70 / underside 44; [FD-L5] sheepskin 102 / 107 / 128, lum 107;
-  [FD-L6] p10 15, p50 73, < 20: 14 %, bands 29 / 48 / 13 %), web/package.py verify OK (meshopt 17.2 + 14.7 MB).  Photo |
-  before (d3673c2, the judges' r4 renders) | after sheets: out/tmp/fd_fix_r5/ld/cmp_*.jpg (gitignored: they embed the
+  [FD-L6] p10 15, p50 73, < 20: 14 %, bands 29 / 48 / 13 %), `--only tour` 26 / 26 (the first try timed out on a
+  screenshot with four SwiftShader browsers on the shared machine, load ~20; rerun clean); the full viewer_test run NOT
+  run this round (~3 h at that load); web/package.py verify OK (meshopt 17.2 + 14.7 MB); the Artifact bundle 115.2 MB in
+  2 publishes (62.5 + 52.7 MB), artifact_test: the no-WebAssembly scenario's 46 checks passed before the harness timed
+  out loading the WebAssembly page (30 s, same load), `--only wasm,runtime` rerun 48 / 48.  Photo |
+  before (d3673c2, the judges' r4 renders) | after sheets: out/tmp/fd_fix_r5/cmp_*.jpg (gitignored: they embed the
   photos).
