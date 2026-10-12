@@ -36,7 +36,7 @@ from drawing.yoke_draw import (D, I, G, TXT, TXT_S, WHITE, SILVER, SMOKE, BLACK,
                                vline_gapped, hline_gapped)
 
 SHEET = dict(id="L6Y", title="CONTROL YOKE - VIEWS", subtitle="PC-24-STYLE CONTROL YOKE - VIEWS", size="A1",
-             scale="AS SHOWN", rev="I", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
+             scale="AS SHOWN", rev="J", order=62, sheet_no="1 OF 2", dwg="PC12-L6Y")
 REVISIONS = (
     ("A", "2026-10-05", "first issue (owner 2026-10-05: 'the yoke isn't quite right especially if you look at the "
                         "details'): yoke re-measured on 8 PRO photos; YOKE_DESIGN rev I replaces the rev H outline"),
@@ -97,6 +97,11 @@ REVISIONS = (
                         "(FID4-02); item 8 the AFCS boss in the body's satin black (FID4-06); item 11 the column a "
                         "satin dark-grey tube, the parked elevators coupled to the parked yokes (FID4-05, CR4-05); item "
                         "14 the legend letters set with uneven gaps and heights (CR4-06)"),
+    ("J", "2026-10-12", "rev R (yoke judge r5, the flight-deck merge): item 15 -- ONE flank of each groove dark: the "
+                        "parting grooves' insert-side flank (the cover's edge lit), the step's / badge outline's / "
+                        "speed lines' down-facing flank, the step's end cones the face's finish (rev Q's two dark "
+                        "flanks read as an ink outline, FID5-01 / 07); item 12 the J band its own satin dark grey "
+                        "(yoke_band, FID5-05)"),
 )
 TRIM_COL = "#23292D"
 FR_O = (202.0, 134.0)       # front elevation: sheet position of the hub centre (1:1)
@@ -328,18 +333,19 @@ ITEMS = (  # item, part, material (render/lookdev name), finish [source]
     (11, "COLUMN", "yoke_column (new)", "satin dark grey tube 0.04, metallic 0.5, rough 0.4 (rev Q), dia 44 [E] (never "
                                         "seen in a PRO photo); the viewer parks the free yokes 35 forward (YOKE rest, "
                                         "rev P), the elevators trailing-edge down with them (rev Q)"),
-    (12, "COLUMN SURROUND (PANEL)", "pcl_pewter / panel_dark", "satin pewter J band 22 wide, both ends round (rev "
-                                                               "P), charcoal dished recess [M / E]"),
+    (12, "COLUMN SURROUND (PANEL)", "yoke_band / panel_dark", "satin dark-grey metal J band 22 wide (rev R; was the "
+                                                              "PCL's pewter), both ends round (rev P), charcoal "
+                                                              "dished recess [M / E]"),
     (13, "FORWARD-FACE SWITCHES (2) [E]", "grip_black", "PTT trigger (outboard grip), checklist rocker (inboard): "
                                                         "placeholders, never seen (L6Y2 detail W) [E]"),
     (14, "LEGENDS", "legend_grey (new)", "words of plain letter blocks 0.22 of the pitch, uneven widths (rev P), "
                                          "set with uneven gaps and heights (rev Q), tone ~0.40, 0.12 proud -- NO "
                                          "lettering (rev N); the pilot's in reading order, not mirrored"),
-    (15, "COVER GROOVES / STEP", "yoke_groove (new)", "rev Q: the V flanks of the parting grooves, the step's down-"
-                                                      "facing flank and end cones, the badge outline / speed lines "
-                                                      "dark satin 0.03, rough 0.6 (their cavity shadow: dark lines in "
-                                                      "every photo); the step's lower flank keeps the cover white "
-                                                      "(the lit line under it) [M]"),
+    (15, "COVER GROOVES / STEP", "yoke_groove", "ONE flank of each V dark satin 0.03, rough 0.6 (rev R): the parting "
+                                                "grooves' INSERT-side flank (the cover's rolled edge stays lit), the "
+                                                "step's, badge outline's and speed lines' DOWN-facing flank; the "
+                                                "step's lower flank and its end cones keep the face (rev Q had both "
+                                                "flanks dark: an ink outline) [M]"),
 )
 
 

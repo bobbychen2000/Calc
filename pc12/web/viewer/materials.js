@@ -243,9 +243,15 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
 // at P1046408's low camera the headliner (R.y ~0.6: k[0] + k[1]), so the dark-cabin term rose most: upper [0.22, 0.66,
 // 0.45, 0.30] -> [1.3, 1.2, 0.82, 1.3], lower [0.20, 0.85, 0.35, 0.30] -> [1.0, 1.53, 0.63, 1.0] -- the stop 0.82 / 0.74,
 // P1046408 0.89, B - R insert +34 against the cover's +12)
+// (rev R, yoke judge r5 FID5-02: from the crew eyes the smoke lower insert merged with the upper -- 0.91 of it, photos
+// 0.90-0.955 -- and at the P1046408 camera it was too dark, 0.71 of the cover against 0.82-0.93.  The two cameras see it
+// in different directions: from the stop / design eye its reflection points aft-DOWN (R.y ~ -0.5: the lap term k[3]),
+// from P1046408's low centreline camera aft-up-OUTBOARD (R.y 0.2-0.35, R across 0.39 toward its own side window: the
+// side term k[2]), so the lower insert's lap term 1.0 -> 0.72 and side term 0.63 -> 1.7: lower / upper 0.87 at the stop and
+// the design eye, lower / cover 0.77 at P1046408, 0.79 at P1046409 co-pilot; viewer_test [Y1e])
 const YOKE_PROBE = {
   yoke_silver: { k: [1.3, 1.2, 0.82, 1.3, 0.22], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
-  yoke_silver_dark: { k: [1.0, 1.53, 0.63, 1.0, 0], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
+  yoke_silver_dark: { k: [1.0, 1.53, 1.7, 0.72, 0], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
 };
 for (const it of (Q_M.get('yokeProbe') || '').split('|')) {          // ?yokeProbe=name:k0,..,k4,y0,..,y5|...
   const k = it.slice(0, it.lastIndexOf(':')), a = it.slice(it.lastIndexOf(':') + 1).split(',').map(Number);
@@ -302,6 +308,8 @@ const PART_TRIM = {
 // fdb_ trim -- takes the interior law with no entry (diffuse x gain x occlusion x window light, reflections by facing),
 // and an emissive one (legend_lit, the annunciators' glow, fdb_cb_glow_*) keeps its emission as built)
 const SPEC_KEEP = new Set(['panel_titanium', 'panel_graphite', 'pedestal_gunmetal', 'stack_gunmetal', 'pcl_pewter', 'chrome_trim', 'bezel_black',
+  // rev R (yoke judge r5 FID5-05): the yoke's J band, its own satin dark-grey metal (it was the PCL's pewter)
+  'yoke_band',
   // flight deck fix r5: the A-pillar post's satin edge highlight, the tray's dark bronze rim
   'lining_fd_post', 'trim_bronze',
   'leather_glareshield', 'leather_black', 'yoke_white', 'display_page', 'screen',
@@ -474,6 +482,12 @@ const VIEWER = {
   // (flight deck fix r5 FDO4-05: a translucent glass jar from the quadrant view -- the probe's streaks; a solid satin
   // pewter: fewer, broader reflections, a shade warmer -- it read 116 / 124 / 140 against P1046408's 108 / 108 / 116)
   pcl_pewter: { specIn: 0.8, roughness: 0.45, color: [0.125, 0.113, 0.106] },
+  // (rev R, yoke judge r5 FID5-05: the J band beside the column -- in the PCL's pewter it read a light-grey thumb on the
+  // yoke branch, 105-117; the photos a darker grey tube with lit rolled edges, medians 26-57, p90 109-128 at P1046408 /
+  // 09 / 10.  In the merged flight deck's light the pewter read 33-37 / p90 54-56, its edges unlit; the band's own dark
+  // satin metal (the GLB's 0.075 / metallic 0.6) lit only by the cabin law read 24-26: a lighter, more metallic base with
+  // a tighter sheen kept by the cabin law (SPEC_KEEP) -- 53-54 / p90 73-75 at P1046408 / 09)
+  yoke_band: { color: [0.16, 0.155, 0.152], metalness: 0.9, roughness: 0.22, specIn: 2.5 },
   // (fix r5 FDO4-03: the palm tray's matte floor a warm mauve-grey -- the cabin's cool light had left it 108 / 113 / 128,
   // P1046408 123 / 114 / 130, P1046409 from above 106 / 100 / 113: R > G)
   tray_titanium: { color: [0.225, 0.185, 0.182] },

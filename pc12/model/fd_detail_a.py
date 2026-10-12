@@ -531,7 +531,8 @@ def guarded_toggle(f, guard_mat="yoke_white"):
 
 RECESS_MARGIN = 0.0030       # the titanium plates' notch stands this far outside the recess outline (the rim flange covers it)
 RECESS_MAT = "panel_dark"    # the U recess's walls, rim flange and floor (rev N, judges FID1-08: pedestal_gunmetal read pale)
-BAND_MAT = "pcl_pewter"      # the J band: satin pewter, the slimmer dark-grey / metallic arc of P1046408 / 09
+BAND_MAT = "yoke_band"       # the J band: satin dark-grey metal, the slimmer dark-grey / metallic arc of P1046408 / 09
+#                              (rev R, yoke judge r5 FID5-05: its own material -- the PCL grip's pcl_pewter read light)
 
 
 def recess_dims():
@@ -582,8 +583,9 @@ def column_surround(sg):
     hooking under the stem on an arc about the column axis at h column_band[4]; a panel-fixed pan-head screw on the arc at
     WL column[3].  The band is the panel's (no bellows: none in any PRO photo).  Rev N (judges FID1-08: the band and the
     floor read as a large pale hook beside the cover): the recess walls / flange / floor charcoal (RECESS_MAT), the band
-    satin pewter (BAND_MAT), the screw steel_dark; owner 2026-10-11 (judges CR1-01, fit_check 30c): the band and the
-    recess re-centred on the column axis (the hub: joint line on it, the hook concentric with the column, 1 mm off it).
+    satin pewter (BAND_MAT; rev R its own satin dark grey, yoke_band), the screw steel_dark; owner 2026-10-11 (judges
+    CR1-01, fit_check 30c): the band and the recess re-centred on the column axis (the hub: joint line on it, the hook
+    concentric with the column, 1 mm off it).
     [(Mesh, material)]."""
     FD = _FD()
     from model import interior as I

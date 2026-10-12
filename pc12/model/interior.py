@@ -387,7 +387,13 @@ YOKE_DESIGN = dict(
                "judges r4 FID4-01): every groove's flanks and end cones are finished yoke_groove (dark satin: their "
                "cavity shadow, L6Y item 15) except the step's UP-facing flank, which keeps the white cover [M: the darkest pixel across the step 0.00-0.18 of the insert in the s/n 3001 views, the "
                "photos' profile through the step at P1046408 ~190 / 3-10 / 155-231 / ~180 -- a dark line over a light "
-               "one -- and at the AOPA camera ~130 / 0-16 / 145-197 / ~90]"),
+               "one -- and at the AOPA camera ~130 / 0-16 / 145-197 / ~90].  Rev R (yoke judge r5 FID5-01 / 07: "
+               "both flanks dark read as a uniform ink outline): ONE flank of each groove dark -- the parting grooves' "
+               "flank on the INSERT's side (the cover's rolled edge lit), the step's / badge outline's / speed lines' "
+               "DOWN-facing flank; the step's round end cones keep the face [M: in every photo one flank of a side "
+               "groove dark, the other lit; seen from aside the near groove shows its insert flank, the far one its "
+               "cover flank -- the darkest pixel across the upper insert's sides 0.28-0.70 near / 0.79-0.96 far of "
+               "the reference from the centreline cameras, AOPA from aft-outboard 0.02 / 0.86]"),
     crown=PT((56.0, 6.0, 2.0, 0.8, 20.0),
              "crown of the upper insert: a SOFT BREAK at h 56.0, 2.8 above the badge top, the insert's top above it "
              "leaning 6 deg further forward than the face, blended R 20 (tangent edges h 55.0 / 57.0) [M low: judges "
@@ -883,7 +889,10 @@ YOKE_DESIGN = dict(
                    "light-grey wedge beside the column -- its round tip at 330 deg, fd_detail_a.BAND_HOOK_END, the drawn "
                    "extent; the leg's round top end closed flat on top, rev M-O left a half-disc hole in it); OPEN "
                    "(owner): a J or a full collar round the column opening whose outboard part hides behind the stem "
-                   "and the black body"),
+                   "and the black body.  Finish: rev R (yoke judge r5 FID5-05) its own satin dark-grey metal "
+                   "(yoke_band 0.075, metallic 0.6, rough 0.3; it shared the PCL grip's pewter and read a light-grey "
+                   "thumb beside the column) [M: the photos' band a darker grey tube with a lit top, medians 26-57, "
+                   "p90 109-128 at P1046408 / 09 / 10]"),
     column_recess=PT((57.0, -48.0, 17.0, 8.0, 27.0),
                      "the lower panel's dished recess round the column, a U about the column axis (rev L, judges FID3-02: "
                      "rev K drew a circle R 62 about h -24): half-width 57, bottom h -48, its bottom corners R 17, 8 "

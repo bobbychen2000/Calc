@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841 594" width="841mm" height="594mm">
 <title>PC-12 CONTROL YOKE - SECTIONS</title>
-<desc>PC12-L6Y2 rev H, AS SHOWN, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
+<desc>PC12-L6Y2 rev I, AS SHOWN, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
 <defs><style><![CDATA[@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');]]></style></defs>
 <rect width="841" height="594" fill="#FCFCFA"/>
 <g fill="none" stroke="#1B2429" stroke-linecap="round" stroke-linejoin="round">
@@ -76,7 +76,7 @@
 <text x="577" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">PC12-L6Y2</text>
 <path stroke-width="0.18" d="M634.39 531l0 14"/>
 <text x="636.39" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">REV</text>
-<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">H</text>
+<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">I</text>
 <path stroke-width="0.18" d="M655.11 531l0 14"/>
 <text x="657.11" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">SCALE</text>
 <text x="657.11" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.2" stroke="none" fill="#1B2429" font-weight="500">AS SHOWN</text>
@@ -899,32 +899,35 @@
 <text x="591.04" y="482.62" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">B</text>
 <text x="601.49" y="482.62" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
 <path stroke-width="0.18" d="M588 483.5l238 0"/>
-<text x="609.9" y="485.72" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev L (judges r3): K-K through TCS / AFCS; grip sections cut the moulding; dimensions off the solids; head-zone surfaces and rounds tabled; acceptance on heads / necks / web / tops / forward faces + one-piece and C2 rows;</text>
-<text x="609.9" y="488.23" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">photo check on 6 views; detail J U recess</text>
+<text x="609.9" y="485.72" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev L (judges r3): K-K through TCS / AFCS; grip sections cut the moulding; dimensions off the solids; head-zone surfaces / rounds tabled; acceptance (heads, necks, web, tops, fwd faces, one-piece, C2); photo check; J recess</text>
 <text x="591.04" y="485.72" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">C</text>
 <text x="601.49" y="485.72" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
-<path stroke-width="0.18" d="M588 489.12l238 0"/>
-<text x="609.9" y="491.34" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev M (judges r4): pads exposed as drawn (pocket cut after the join); rolling-ball R 3 joins; head zones share walls / forward face; leather hatched apart; detail S, break lines, detail W [E] switches; adaptive crease / ridge / pad</text>
-<text x="609.9" y="493.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">acceptance, all clean (head top R 3 onto the forward face, body sides x top rolling ball, C2 forward-radius cap, tangent inboard directrix, 0.05 sampling, C2 fields); photo check re-run</text>
-<text x="591.04" y="491.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">D</text>
-<text x="601.49" y="491.34" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
-<path stroke-width="0.18" d="M588 494.74l238 0"/>
-<text x="609.9" y="496.96" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev N (3-D judges r1): F rocker slot 2.5 deep (draft 7 deg), letter-block legends in the pilot's reading order; G MAP LIGHTS blocks, satin-nickel collar; H raised blank plate; J recess to h 27, band 22 wide; OWNER DECISIONS</text>
-<text x="609.9" y="499.46" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">2026-10-11: J band + recess re-centred on the column axis (hub WL 1845; photos 1821), push 65 (was 90 [E])</text>
-<text x="591.04" y="496.96" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">E</text>
-<text x="601.49" y="496.96" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-11</text>
-<path stroke-width="0.18" d="M588 500.35l238 0"/>
-<text x="609.9" y="502.57" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev O (3-D judges r2): G push button = gloss-black legend disc 17.5 + nickel hex 12 A/C + cap 10.2, MAP LIGHTS on the disc; F rocker ends 9.5, crowned 0.6; H one outline groove, plate 0.2; legends 0.35 of the pitch</text>
-<text x="591.04" y="502.57" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">F</text>
-<text x="601.49" y="502.57" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-11</text>
-<path stroke-width="0.18" d="M588 503.46l238 0"/>
-<text x="609.9" y="505.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev P (3-D judges r3): F satin charcoal lunes, near-black matte slot; legends 0.22 of the pitch, uneven; J the band's hook ends round (tip at 330 deg), the viewer's parked rest 35 forward (YOKE rest), column matte near-black</text>
-<text x="591.04" y="505.68" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">G</text>
-<text x="601.49" y="505.68" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-11</text>
-<path stroke-width="0.18" d="M588 506.57l238 0"/>
-<text x="609.9" y="508.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev Q (3-D judges r4): J column a satin dark-grey tube, the parked yokes' elevators TE down ~8 deg; legends set with uneven gaps / heights</text>
-<text x="591.04" y="508.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">H</text>
-<text x="601.49" y="508.79" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-12</text>
-<path stroke-width="0.18" d="M588 509.68l238 0M594.08 474.18l0 35.5M608.9 474.18l0 35.5"/>
-<path stroke-width="0.35" d="M588 470l238 0 0 39.68-238 0z"/>
+<path stroke-width="0.18" d="M588 486.61l238 0"/>
+<text x="609.9" y="488.83" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev M (judges r4): pads exposed as drawn (pocket cut after the join); rolling-ball R 3 joins; head zones share walls / forward face; leather hatched apart; detail S, break lines, detail W [E] switches; adaptive crease / ridge / pad</text>
+<text x="609.9" y="491.34" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">acceptance, all clean (head top R 3 onto the forward face, body sides x top rolling ball, C2 forward-radius cap, tangent inboard directrix, 0.05 sampling, C2 fields); photo check re-run</text>
+<text x="591.04" y="488.83" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">D</text>
+<text x="601.49" y="488.83" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
+<path stroke-width="0.18" d="M588 492.23l238 0"/>
+<text x="609.9" y="494.45" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev N (3-D judges r1): F rocker slot 2.5 deep (draft 7 deg), letter-block legends in the pilot's reading order; G MAP LIGHTS blocks, satin-nickel collar; H raised blank plate; J recess to h 27, band 22 wide; OWNER DECISIONS</text>
+<text x="609.9" y="496.96" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">2026-10-11: J band + recess re-centred on the column axis (hub WL 1845; photos 1821), push 65 (was 90 [E])</text>
+<text x="591.04" y="494.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">E</text>
+<text x="601.49" y="494.45" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-11</text>
+<path stroke-width="0.18" d="M588 497.84l238 0"/>
+<text x="609.9" y="500.06" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev O (3-D judges r2): G push button = gloss-black legend disc 17.5 + nickel hex 12 A/C + cap 10.2, MAP LIGHTS on the disc; F rocker ends 9.5, crowned 0.6; H one outline groove, plate 0.2; legends 0.35 of the pitch</text>
+<text x="591.04" y="500.06" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">F</text>
+<text x="601.49" y="500.06" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-11</text>
+<path stroke-width="0.18" d="M588 500.95l238 0"/>
+<text x="609.9" y="503.17" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev P (3-D judges r3): F satin charcoal lunes, near-black matte slot; legends 0.22 of the pitch, uneven; J the band's hook ends round (tip at 330 deg), the viewer's parked rest 35 forward (YOKE rest), column matte near-black</text>
+<text x="591.04" y="503.17" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">G</text>
+<text x="601.49" y="503.17" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-11</text>
+<path stroke-width="0.18" d="M588 504.06l238 0"/>
+<text x="609.9" y="506.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev Q (3-D judges r4): J column a satin dark-grey tube, the parked yokes' elevators TE down ~8 deg; legends set with uneven gaps / heights</text>
+<text x="591.04" y="506.28" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">H</text>
+<text x="601.49" y="506.28" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-12</text>
+<path stroke-width="0.18" d="M588 507.17l238 0"/>
+<text x="609.9" y="509.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="1.9" stroke="none" fill="#1B2429">rev R (yoke judge r5): J the band its own satin dark-grey metal (yoke_band; the PCL's pewter read light); grooves one flank dark (L6Y item 15)</text>
+<text x="591.04" y="509.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">I</text>
+<text x="601.49" y="509.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="1.9" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-12</text>
+<path stroke-width="0.18" d="M588 510.28l238 0M594.08 474.18l0 36.1M608.9 474.18l0 36.1"/>
+<path stroke-width="0.35" d="M588 470l238 0 0 40.28-238 0z"/>
 </g></svg>

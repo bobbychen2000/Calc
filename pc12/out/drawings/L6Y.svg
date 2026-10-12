@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841 594" width="841mm" height="594mm">
 <title>PC-12 CONTROL YOKE - VIEWS</title>
-<desc>PC12-L6Y rev I, AS SHOWN, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
+<desc>PC12-L6Y rev J, AS SHOWN, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
 <defs><style><![CDATA[@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');]]></style></defs>
 <rect width="841" height="594" fill="#FCFCFA"/>
 <g fill="none" stroke="#1B2429" stroke-linecap="round" stroke-linejoin="round">
@@ -76,7 +76,7 @@
 <text x="577" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">PC12-L6Y</text>
 <path stroke-width="0.18" d="M634.39 531l0 14"/>
 <text x="636.39" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">REV</text>
-<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">I</text>
+<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">J</text>
 <path stroke-width="0.18" d="M655.11 531l0 14"/>
 <text x="657.11" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">SCALE</text>
 <text x="657.11" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.2" stroke="none" fill="#1B2429" font-weight="500">AS SHOWN</text>
@@ -650,8 +650,8 @@
 <text x="688.3" y="78.08" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">35 forward (YOKE rest, rev P), the elevators trailing-edge down with them (rev Q)</text>
 <text x="595.5" y="81.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">12</text>
 <text x="600.3" y="81.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">COLUMN SURROUND (PANEL)</text>
-<text x="650.3" y="81.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">pcl_pewter / panel_dark</text>
-<text x="688.3" y="81.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">satin pewter J band 22 wide, both ends round (rev P), charcoal dished recess [M / E]</text>
+<text x="650.3" y="81.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">yoke_band / panel_dark</text>
+<text x="688.3" y="81.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">satin dark-grey metal J band 22 wide (rev R; was the PCL's pewter), both ends round (rev P), charcoal dished recess [M / E]</text>
 <text x="595.5" y="84.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">13</text>
 <text x="600.3" y="84.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">FORWARD-FACE SWITCHES (2) [E]</text>
 <text x="650.3" y="84.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">grip_black</text>
@@ -666,195 +666,199 @@
 <text x="688.3" y="91.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">proud -- NO lettering (rev N); the pilot's in reading order, not mirrored</text>
 <text x="595.5" y="94.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">15</text>
 <text x="600.3" y="94.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">COVER GROOVES / STEP</text>
-<text x="650.3" y="94.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">yoke_groove (new)</text>
-<text x="688.3" y="94.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">rev Q: the V flanks of the parting grooves, the step's down-facing flank and end cones, the badge outline / speed lines dark satin</text>
+<text x="650.3" y="94.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">yoke_groove</text>
+<text x="688.3" y="94.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">ONE flank of each V dark satin 0.03, rough 0.6 (rev R): the parting grooves' INSERT-side flank (the cover's rolled edge stays lit),</text>
 <text x="595.5" y="97.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle"></text>
 <text x="600.3" y="97.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
 <text x="650.3" y="97.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
-<text x="688.3" y="97.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">0.03, rough 0.6 (their cavity shadow: dark lines in every photo); the step's lower flank keeps the cover white (the lit line under it) [M]</text>
-<path stroke-width="0.18" d="M599 21l0 77.8M649 21l0 77.8M687 21l0 77.8"/>
-<path stroke-width="0.35" d="M592 15l234 0 0 83.8-234 0z"/>
-<path stroke-width="0.35" fill="#1B2429" d="M592 101.8l234 0 0 6-234 0z"/>
-<text x="594" y="105.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.25">MAIN DIMENSIONS (read from the table / the solids)</text>
-<text x="635" y="111.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DIMENSION (mm, YOKE-LOCAL)</text>
-<text x="717" y="111.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">VALUE</text>
-<text x="791" y="111.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SOURCE</text>
-<path stroke-width="0.35" d="M592 113l234 0"/>
-<text x="593.3" y="115.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">shell height / about h 0</text>
-<text x="679.3" y="115.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">121.3 / -56.0..+65.3</text>
-<text x="757.3" y="115.38" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] rev J landmark-pose frame</text>
-<text x="593.3" y="118.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">arm tips / stem at h 0 / at h -50</text>
-<text x="679.3" y="118.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">144.6 / 65.6 / 42.2</text>
-<text x="757.3" y="118.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] sigma 1.5</text>
-<text x="593.3" y="121.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">crown above the arm junctions</text>
-<text x="679.3" y="121.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">13.3</text>
-<text x="757.3" y="121.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] parting grooves</text>
-<text x="593.3" y="125.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">step / lower insert bottom</text>
-<text x="679.3" y="125.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">h 2.1 (V) / -18.9</text>
-<text x="757.3" y="125.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]</text>
-<text x="593.3" y="128.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">black rim outboard of the stem at h 10 / 0 / -50 / under the foot</text>
-<text x="679.3" y="128.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">12.6 / 10.1 / 4.5 / 5.8</text>
-<text x="757.3" y="128.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] body - shell outlines</text>
-<text x="593.3" y="131.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">aft face above the step</text>
-<text x="679.3" y="131.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">17.5° top fwd</text>
-<text x="757.3" y="131.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] bundle adj., +/-4</text>
-<text x="593.3" y="135.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">body depth / top / cover</text>
-<text x="679.3" y="135.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">60 / 42° from horiz. / 3</text>
-<text x="757.3" y="135.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[E] / [M lower bound] / [E]</text>
-<text x="593.3" y="138.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">heads top: FRONT SILHOUETTE out / in</text>
-<text x="679.3" y="138.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">94.3 / 89.1</text>
-<text x="757.3" y="138.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[derived: solids from M / E]</text>
-<text x="593.3" y="141.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">grip bottoms (front silhouette) out / in</text>
-<text x="679.3" y="141.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">-40.6 / -54.4</text>
-<text x="757.3" y="141.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[derived: solids, rake / toe M, depth M / E]</text>
-<text x="593.3" y="145.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">grips overall: front silhouette (out + in)</text>
-<text x="679.3" y="145.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">280.7 (139.1 + 141.6)</text>
-<text x="757.3" y="145.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[derived: solids]</text>
-<text x="593.3" y="148.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">CONSTRUCTION G (prism directrix): head tops / span</text>
-<text x="679.3" y="148.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">97.4 / 90.1; 281.3</text>
-<text x="757.3" y="148.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] table; NOT the part (head solids trim it)</text>
-<text x="593.3" y="151.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">rake / toe-out / a0 @ h 14: out; in</text>
-<text x="679.3" y="151.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">20° / 18° / -3.75; 20° / 18° / -6</text>
-<text x="757.3" y="151.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] 6 views incl. P1046409: +/-2.5° / toe weak / +/-3</text>
-<text x="593.3" y="154.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">walls (0 = aft normal, 1 = fore-aft) out / in</text>
-<text x="679.3" y="154.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">0.6 / 0</text>
-<text x="757.3" y="154.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] +/-0.2</text>
-<text x="593.3" y="158.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">grip depth (normal) bottom / mid / head, out; in</text>
-<text x="679.3" y="158.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">27.5 / 27 / 27; 27.5 / 27 / 27</text>
-<text x="757.3" y="158.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] P1046409 slot wall +/-4; in = out [E]</text>
-<text x="593.3" y="161.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">pad out: top / slot corner / bottom</text>
-<text x="679.3" y="161.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">59.5 / (91, 38) / -28.8</text>
-<text x="757.3" y="161.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] diagonal top 31°</text>
-<text x="593.3" y="164.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">pad in: top / slot corner / bottom</text>
-<text x="679.3" y="164.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">55.0 / (89.4, 32) / -35.2</text>
-<text x="757.3" y="164.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] diagonal top 33°</text>
-<text x="593.3" y="168.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">frame / leather below it / heel lip</text>
-<text x="679.3" y="168.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">2 / 2.5 / 3 proud R 4</text>
-<text x="757.3" y="168.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]</text>
-<text x="593.3" y="171.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">trim face centre (u, h, a) / dia / normal</text>
-<text x="679.3" y="171.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(111.5, 82, -27) / 32.6 / 38° up, 10° in</text>
-<text x="757.3" y="171.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] (u, h) 7 views; a [M weak +/-5]</text>
-<text x="593.3" y="174.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">shield facet point (u, h, a) / normal / size</text>
-<text x="679.3" y="174.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(106, 75.6, -23.8) / 12° up, toe 8° / 31 x 25.5</text>
-<text x="757.3" y="174.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] (inboard: -u)</text>
-<text x="593.3" y="178.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">switch axes (u, h, a): button / TCS / AFCS</text>
-<text x="679.3" y="178.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(106.3, 76.0, -23.9) along the facet normal / (58.5, 51.4, -15.5) / (60.6,</text>
-<text x="757.3" y="178.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]; TCS on the face, AFCS boss face = face - 3 + 1.5</text>
-<text x="593.3" y="181.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
-<text x="679.3" y="181.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">23.4, -8.2) along the 17.5° face's normal</text>
-<text x="757.3" y="181.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
-<text x="593.3" y="184.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">TCS / AFCS cap / boss</text>
-<text x="679.3" y="184.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(58.5, 51.4) 19.2 / 10.8 x 5.5 / 21.6</text>
-<text x="757.3" y="184.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]</text>
-<text x="593.3" y="187.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">forward-face switches out / in (h, L x W, proud)</text>
-<text x="679.3" y="187.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">h 56, 22 x 10, 4 / h 50, 18 x 10, 3.5</text>
-<text x="757.3" y="187.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[E] placeholders</text>
-<text x="593.3" y="191.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">column dia / axis</text>
-<text x="679.3" y="191.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">44 [E] / h 0 = WL 1845</text>
-<text x="757.3" y="191.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">kept; surround re-centred on it (owner 2026-10-11)</text>
-<text x="593.3" y="194.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">pitch travel push / pull / roll</text>
-<text x="679.3" y="194.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">65 / 90 [E] / +/-70 [E]</text>
-<text x="757.3" y="194.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">push: owner 2026-10-11 (was 90 [E])</text>
-<path stroke-width="0.18" d="M678 107.8l0 87.7M756 107.8l0 87.7"/>
-<path stroke-width="0.35" d="M592 101.8l234 0 0 93.7-234 0z"/>
-<path stroke-width="0.35" fill="#1B2429" d="M592 198.5l234 0 0 6-234 0z"/>
-<text x="594" y="202.55" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.25">KNEES vs YOKE (L6B), REV H &gt; I &gt; J &gt; K (RE-SWEPT) &gt; M - CRITERIA UNCHANGED, ACCEPTED AS MEASURED</text>
-<text x="602" y="207.91" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">OCCUPANT</text>
-<text x="632" y="207.91" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">LEVEL mm</text>
-<text x="673" y="207.91" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">ROLL+/-70 mm</text>
-<text x="719" y="207.91" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CONTACT deg</text>
-<text x="767" y="207.91" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">KEEP 25 deg</text>
-<text x="808" y="207.91" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">RUDDER mm</text>
-<path stroke-width="0.35" d="M592 209.7l234 0"/>
-<text x="593.3" y="212.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">95th male</text>
-<text x="632" y="212.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">38 &gt; 35 &gt; 40 &gt; 25 &gt; 24</text>
-<text x="673" y="212.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-19 &gt; -18 &gt; -19 &gt; -19 &gt; -19</text>
-<text x="719" y="212.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">17.5 &gt; 17.5 &gt; 15.0 &gt; 12.5 &gt; 12.5</text>
-<text x="767" y="212.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">5.0 &gt; 2.5 &gt; 5.0 &gt; 0.0 &gt; -1.0</text>
-<text x="808" y="212.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-11 &gt; -13 &gt; -9 &gt; -22 &gt; -24</text>
-<text x="593.3" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">50th male</text>
-<text x="632" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">50 &gt; 48 &gt; 52 &gt; 38 &gt; 36</text>
-<text x="673" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-13 &gt; -14 &gt; -14 &gt; -14 &gt; -14</text>
-<text x="719" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">25.0 &gt; 25.0 &gt; 22.5 &gt; 22.5 &gt; 22.5</text>
-<text x="767" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">10.0 &gt; 10.0 &gt; 10.0 &gt; 5.0 &gt; 5.0</text>
-<text x="808" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">5 &gt; 3 &gt; 7 &gt; -7 &gt; -8</text>
-<text x="593.3" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5th male</text>
-<text x="632" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">51 &gt; 48 &gt; 51 &gt; 37 &gt; 35</text>
-<text x="673" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-21 &gt; -21 &gt; -22 &gt; -22 &gt; -21</text>
-<text x="719" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">22.5 &gt; 22.5 &gt; 22.5 &gt; 17.5 &gt; 17.5</text>
+<text x="688.3" y="97.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">the step's, badge outline's and speed lines' DOWN-facing flank; the step's lower flank and its end cones keep the face (rev Q had</text>
+<text x="595.5" y="101.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle"></text>
+<text x="600.3" y="101.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
+<text x="650.3" y="101.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
+<text x="688.3" y="101.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">both flanks dark: an ink outline) [M]</text>
+<path stroke-width="0.18" d="M599 21l0 81.1M649 21l0 81.1M687 21l0 81.1"/>
+<path stroke-width="0.35" d="M592 15l234 0 0 87.1-234 0z"/>
+<path stroke-width="0.35" fill="#1B2429" d="M592 105.1l234 0 0 6-234 0z"/>
+<text x="594" y="109.15" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.25">MAIN DIMENSIONS (read from the table / the solids)</text>
+<text x="635" y="114.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">DIMENSION (mm, YOKE-LOCAL)</text>
+<text x="717" y="114.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">VALUE</text>
+<text x="791" y="114.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">SOURCE</text>
+<path stroke-width="0.35" d="M592 116.3l234 0"/>
+<text x="593.3" y="118.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">shell height / about h 0</text>
+<text x="679.3" y="118.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">121.3 / -56.0..+65.3</text>
+<text x="757.3" y="118.68" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] rev J landmark-pose frame</text>
+<text x="593.3" y="121.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">arm tips / stem at h 0 / at h -50</text>
+<text x="679.3" y="121.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">144.6 / 65.6 / 42.2</text>
+<text x="757.3" y="121.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] sigma 1.5</text>
+<text x="593.3" y="125.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">crown above the arm junctions</text>
+<text x="679.3" y="125.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">13.3</text>
+<text x="757.3" y="125.28" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] parting grooves</text>
+<text x="593.3" y="128.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">step / lower insert bottom</text>
+<text x="679.3" y="128.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">h 2.1 (V) / -18.9</text>
+<text x="757.3" y="128.58" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]</text>
+<text x="593.3" y="131.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">black rim outboard of the stem at h 10 / 0 / -50 / under the foot</text>
+<text x="679.3" y="131.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">12.6 / 10.1 / 4.5 / 5.8</text>
+<text x="757.3" y="131.88" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] body - shell outlines</text>
+<text x="593.3" y="135.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">aft face above the step</text>
+<text x="679.3" y="135.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">17.5° top fwd</text>
+<text x="757.3" y="135.18" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] bundle adj., +/-4</text>
+<text x="593.3" y="138.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">body depth / top / cover</text>
+<text x="679.3" y="138.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">60 / 42° from horiz. / 3</text>
+<text x="757.3" y="138.48" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[E] / [M lower bound] / [E]</text>
+<text x="593.3" y="141.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">heads top: FRONT SILHOUETTE out / in</text>
+<text x="679.3" y="141.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">94.3 / 89.1</text>
+<text x="757.3" y="141.78" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[derived: solids from M / E]</text>
+<text x="593.3" y="145.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">grip bottoms (front silhouette) out / in</text>
+<text x="679.3" y="145.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">-40.6 / -54.4</text>
+<text x="757.3" y="145.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[derived: solids, rake / toe M, depth M / E]</text>
+<text x="593.3" y="148.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">grips overall: front silhouette (out + in)</text>
+<text x="679.3" y="148.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">280.7 (139.1 + 141.6)</text>
+<text x="757.3" y="148.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[derived: solids]</text>
+<text x="593.3" y="151.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">CONSTRUCTION G (prism directrix): head tops / span</text>
+<text x="679.3" y="151.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">97.4 / 90.1; 281.3</text>
+<text x="757.3" y="151.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] table; NOT the part (head solids trim it)</text>
+<text x="593.3" y="154.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">rake / toe-out / a0 @ h 14: out; in</text>
+<text x="679.3" y="154.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">20° / 18° / -3.75; 20° / 18° / -6</text>
+<text x="757.3" y="154.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] 6 views incl. P1046409: +/-2.5° / toe weak / +/-3</text>
+<text x="593.3" y="158.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">walls (0 = aft normal, 1 = fore-aft) out / in</text>
+<text x="679.3" y="158.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">0.6 / 0</text>
+<text x="757.3" y="158.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] +/-0.2</text>
+<text x="593.3" y="161.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">grip depth (normal) bottom / mid / head, out; in</text>
+<text x="679.3" y="161.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">27.5 / 27 / 27; 27.5 / 27 / 27</text>
+<text x="757.3" y="161.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] P1046409 slot wall +/-4; in = out [E]</text>
+<text x="593.3" y="164.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">pad out: top / slot corner / bottom</text>
+<text x="679.3" y="164.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">59.5 / (91, 38) / -28.8</text>
+<text x="757.3" y="164.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] diagonal top 31°</text>
+<text x="593.3" y="168.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">pad in: top / slot corner / bottom</text>
+<text x="679.3" y="168.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">55.0 / (89.4, 32) / -35.2</text>
+<text x="757.3" y="168.19" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] diagonal top 33°</text>
+<text x="593.3" y="171.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">frame / leather below it / heel lip</text>
+<text x="679.3" y="171.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">2 / 2.5 / 3 proud R 4</text>
+<text x="757.3" y="171.49" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]</text>
+<text x="593.3" y="174.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">trim face centre (u, h, a) / dia / normal</text>
+<text x="679.3" y="174.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(111.5, 82, -27) / 32.6 / 38° up, 10° in</text>
+<text x="757.3" y="174.79" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] (u, h) 7 views; a [M weak +/-5]</text>
+<text x="593.3" y="178.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">shield facet point (u, h, a) / normal / size</text>
+<text x="679.3" y="178.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(106, 75.6, -23.8) / 12° up, toe 8° / 31 x 25.5</text>
+<text x="757.3" y="178.09" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M] (inboard: -u)</text>
+<text x="593.3" y="181.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">switch axes (u, h, a): button / TCS / AFCS</text>
+<text x="679.3" y="181.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(106.3, 76.0, -23.9) along the facet normal / (58.5, 51.4, -15.5) / (60.6,</text>
+<text x="757.3" y="181.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]; TCS on the face, AFCS boss face = face - 3 + 1.5</text>
+<text x="593.3" y="184.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
+<text x="679.3" y="184.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">23.4, -8.2) along the 17.5° face's normal</text>
+<text x="757.3" y="184.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429"></text>
+<text x="593.3" y="187.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">TCS / AFCS cap / boss</text>
+<text x="679.3" y="187.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(58.5, 51.4) 19.2 / 10.8 x 5.5 / 21.6</text>
+<text x="757.3" y="187.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[M]</text>
+<text x="593.3" y="191.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">forward-face switches out / in (h, L x W, proud)</text>
+<text x="679.3" y="191.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">h 56, 22 x 10, 4 / h 50, 18 x 10, 3.5</text>
+<text x="757.3" y="191.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">[E] placeholders</text>
+<text x="593.3" y="194.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">column dia / axis</text>
+<text x="679.3" y="194.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">44 [E] / h 0 = WL 1845</text>
+<text x="757.3" y="194.59" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">kept; surround re-centred on it (owner 2026-10-11)</text>
+<text x="593.3" y="197.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">pitch travel push / pull / roll</text>
+<text x="679.3" y="197.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">65 / 90 [E] / +/-70 [E]</text>
+<text x="757.3" y="197.89" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">push: owner 2026-10-11 (was 90 [E])</text>
+<path stroke-width="0.18" d="M678 111.1l0 87.7M756 111.1l0 87.7"/>
+<path stroke-width="0.35" d="M592 105.1l234 0 0 93.7-234 0z"/>
+<path stroke-width="0.35" fill="#1B2429" d="M592 201.8l234 0 0 6-234 0z"/>
+<text x="594" y="205.85" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.25">KNEES vs YOKE (L6B), REV H &gt; I &gt; J &gt; K (RE-SWEPT) &gt; M - CRITERIA UNCHANGED, ACCEPTED AS MEASURED</text>
+<text x="602" y="211.21" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">OCCUPANT</text>
+<text x="632" y="211.21" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">LEVEL mm</text>
+<text x="673" y="211.21" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">ROLL+/-70 mm</text>
+<text x="719" y="211.21" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">CONTACT deg</text>
+<text x="767" y="211.21" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">KEEP 25 deg</text>
+<text x="808" y="211.21" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">RUDDER mm</text>
+<path stroke-width="0.35" d="M592 213l234 0"/>
+<text x="593.3" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">95th male</text>
+<text x="632" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">38 &gt; 35 &gt; 40 &gt; 25 &gt; 24</text>
+<text x="673" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-19 &gt; -18 &gt; -19 &gt; -19 &gt; -19</text>
+<text x="719" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">17.5 &gt; 17.5 &gt; 15.0 &gt; 12.5 &gt; 12.5</text>
+<text x="767" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">5.0 &gt; 2.5 &gt; 5.0 &gt; 0.0 &gt; -1.0</text>
+<text x="808" y="215.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-11 &gt; -13 &gt; -9 &gt; -22 &gt; -24</text>
+<text x="593.3" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">50th male</text>
+<text x="632" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">50 &gt; 48 &gt; 52 &gt; 38 &gt; 36</text>
+<text x="673" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-13 &gt; -14 &gt; -14 &gt; -14 &gt; -14</text>
+<text x="719" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">25.0 &gt; 25.0 &gt; 22.5 &gt; 22.5 &gt; 22.5</text>
 <text x="767" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">10.0 &gt; 10.0 &gt; 10.0 &gt; 5.0 &gt; 5.0</text>
-<text x="808" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">20 &gt; 18 &gt; 22 &gt; 8 &gt; 7</text>
-<text x="593.3" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5th female</text>
-<text x="632" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">76 &gt; 78 &gt; 81 &gt; 67 &gt; 65</text>
-<text x="673" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">5 &gt; 0 &gt; 0 &gt; 0 &gt; 0</text>
-<text x="719" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">87.5 &gt; 87.5 &gt; 87.5 &gt; 87.5 &gt; 87.5</text>
-<text x="767" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">27.5 &gt; 25.0 &gt; 25.0 &gt; 20.0 &gt; 20.0</text>
-<text x="808" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">55 &gt; 53 &gt; 56 &gt; 42 &gt; 40</text>
-<path stroke-width="0.18" d="M612 204.5l0 18.4M652 204.5l0 18.4M694 204.5l0 18.4M744 204.5l0 18.4M790 204.5l0 18.4"/>
-<path stroke-width="0.35" d="M592 198.5l234 0 0 24.4-234 0z"/>
-<text x="592" y="228.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">NOTES</text>
-<text x="592" y="233.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">1.</text>
-<text x="597.5" y="233.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">OWNER 2026-10-05: L6Y rev D / L6Y2 rev C APPROVED as the basis of the 3-D yoke; this rev E carries the judges' round-4 drawing-stage cleanup (the measured outline unchanged but the outboard grip's heel corner</text>
-<text x="597.5" y="236.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">and waist, FID4-01 / 02). Signed off with the approval: the rev L hidden estimates foot round R 14 -&gt; R 5 under a 4 mm draft cap and inboard head cut R 3 -&gt; R 1.5.</text>
-<text x="592" y="240.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">2.</text>
-<text x="597.5" y="240.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Yoke-local mm: u outboard (pilot: -y), h up from the hub centre = the column axis / roll pivot (WL 1845, BL -/+375), a aft of the aft face at the insert step (X 3700 at neutral pitch). Drawn from model/interior.py</text>
-<text x="597.5" y="243.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">YOKE_DESIGN rev M through the solids of model/yoke_geom.py; L6 / L6B take the same solids (yoke_outline_yz, yoke_sweep_pieces).</text>
-<text x="592" y="247.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">3.</text>
-<text x="597.5" y="247.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">CURVE LAW (table curve_law, rev M text): each outline split at its corner samples into runs, each run a C2 cubic spline on centripetal knots ('natural' ends at the corners, periodic for a closed outline without corners),</text>
-<text x="597.5" y="250.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">sampled every 0.05 (arcs too); corners R 0 sharp, R &gt; 0 a tangent fillet (cubic Bezier arc, tangent length R tan(th/2) capped at 0.45 of the shorter run: none capped in rev M); the lower aft face a C1 Hermite tangent to</text>
-<text x="597.5" y="253.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">the 17.5° plane. The solids use the EXACT distance to those polylines (no raster; beyond 0.3 mm a C2 B-spline of exact node distances); views are exact silhouettes, sections exact cuts.</text>
-<text x="592" y="257.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">4.</text>
-<text x="597.5" y="257.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">SURFACES: the cover's face (the 17.5° plane, the lower Hermite, the crown bevel) trimmed by its outline; the body: sides / bottom = its outline without the top edge, top = a plane 42° from the horizontal through the</text>
-<text x="597.5" y="260.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">outline's top edge (body_top, a C2 cubic in |u|), forward face, rounds in order R 2 / R 2 / R 8 (R 5 at the foot, the draft's offset capped at 4 there; the crown's top edge h 65.2 = the outline's 65.3 less its R 1); the web's aft</text>
-<text x="597.5" y="263.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">face = the trim face's plane 3.5 below it (web); each grip: its AFT SIDE = the prism's aft plane trimmed 3 inside the head's shaping surface above the plane height 67 / 61, drafted outward below it from a bend of R 4 (an</text>
-<text x="597.5" y="266.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">exact 2-D distance), cut edge R 1.5, joined R 3 to the HEAD's aft shape (round face on its flared cylinder / shield facet + fall-off, x chamfer R 3, floor R 3); then the walls (outline G, a construction curve) and the forward</text>
-<text x="597.5" y="269.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">face cut both, edges R 1.5 easing to R 2 / R 11 (capped) easing to R 3 over the head, the head's top onto the forward face R 3; body + grips one moulding joined by a ROLLING-BALL R 3 (a true round where they meet</text>
-<text x="597.5" y="272.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">at an angle, none where they run flush); the pad pocket, groove and bead cut after that join. Every edge is a tabled round or a tabled crease (L6Y2 CORNERS &amp; RADII).</text>
-<text x="592" y="276.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5.</text>
-<text x="597.5" y="276.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">STAGE-3 SURFACE ROUTE: each named surface a grid_surface over its parametrisation (planes, the face Hermite, the head cylinder about the face normal) trimmed by cad.mesh.trim with these exact 2-D fields; each</text>
-<text x="597.5" y="279.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">tabled round a sweep_profile of its radius; the head-zone trimming surface is a draft from the head surface's offset curve; vertex normals from the analytic surfaces. The solids stay the inside / outside oracle. Acceptance</text>
-<text x="597.5" y="282.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(model/yoke_checks.py, L6Y2): vertex normals within 2° at the 95th percentile on 9 patches; NO UNTABLED CREASE in an adaptive scan of 14 views (every pixel pair turning &gt; 4° refined 256x); the joins read smooth</text>
-<text x="597.5" y="285.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">fields (no ridge at their rounds' own surface points); each pad's exposed surface = its drawn section; no untabled section cusps; one piece per side in every h section above 62; nothing above the trim face / shield.</text>
-<text x="592" y="289.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">6.</text>
-<text x="597.5" y="289.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">White moulding symmetric; the black body and the grips are NOT: an outboard web running into the trim head's rim (10-11 o'clock), an inboard LOW NECK with an open notch under the inboard head; switches outboard</text>
-<text x="597.5" y="292.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(TCS, AFCS, trim), the MAP LIGHTS push button on the inboard head; co-pilot yoke = mirror image.</text>
-<text x="592" y="296.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">7.</text>
-<text x="597.5" y="296.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">NO MARKINGS: the badge is an abstract winged plate with a blank raised field, every legend plain letter blocks.</text>
-<text x="592" y="300.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">8.</text>
-<text x="597.5" y="300.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Not modelled: the rev H column bellows (none in 8 photos), the PC-24's grip tab (not on the PRO). The grips' FORWARD (finger-side) faces are UNVERIFIED -- no photo shows them; AOPA (2025-03-17) lists</text>
-<text x="597.5" y="303.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">push-to-talk and checklist among the yoke's one-hand functions and only trim, TCS, AFCS DISC and MAP LIGHTS are seen: drawn as [E] PLACEHOLDERS (rev M, judges FID4-08): a PTT trigger on the outboard grip,</text>
-<text x="597.5" y="306.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">a checklist rocker on the inboard grip (item 13, L6Y2 detail W; open point 7).</text>
-<text x="592" y="310.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">9.</text>
-<text x="597.5" y="310.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">GRIPS' 3-D LIE (L6Y2 photo check): rake / toe / a0 / walls / depth fitted per grip to the curated silhouettes of 6 views -- P1046408 L / R, P1046410, Mexico L / R and P1046409 (posed with a two-view camera, the</text>
-<text x="597.5" y="313.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">co-pilot yoke 25° from inboard) -- with the front outline held: rake 20 +/-2.5, a0 -3.75 +/-3, walls 0.6 / 0 +/-0.2, depth 27 +/-4 (P1046409's slot wall; no bottom taper); the toe is weakly determined by views from inboard</text>
-<text x="597.5" y="316" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">only (open point 2). The AOPA photo is not used: its co-pilot camera is EXTRAPOLATED from the pilot-yoke solution (judges FID4-05; re-calibrating it on the panel round the co-pilot yoke is open) -- until then the toe,</text>
-<text x="597.5" y="318.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">the depth law and the head depths stay [M weak].</text>
-<text x="592" y="323" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">10.</text>
-<text x="597.5" y="323" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Knee checks on the rev M solids: the 95th clears the yoke by 23.8 mm wings level (criterion 25 kept: short by 1.2), roll to contact 12.5°, keeping 25 mm to 0.0° -- ACCEPTED AS MEASURED (owner 2026-10-05; L6B</text>
-<text x="597.5" y="325.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">open point 1 closed). K column = rev K re-swept: as issued (37 mm, 15°) the sweep had dropped a band of the inboard grip (a doubled vertex in the band clip, fixed in rev L).</text>
-<text x="592" y="334.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">OPEN POINTS FOR THE OWNER</text>
-<text x="592" y="340" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">1.</text>
-<text x="597.5" y="340" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Fore-aft station: EVERY posed photo puts the aft face forward of the drawn neutral -- P1046408 -60 / -55, P1046410 -65, P1046409 -37 (s/n 3001, gust lock on: 'CONTROLS LOCKED'), Mexico -38 / -34 and the AOPA</text>
-<text x="597.5" y="342.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">photo -14 / -26 (no lock placard) [+/-20-30 each along the line of sight]. Unlocked, a parked yoke rests forward: the elevator droops trailing-edge down under its weight [E: physics, no PC-12 source]. Option: neutral 45</text>
-<text x="597.5" y="345.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">further forward (hub_dx 140 -&gt; 95): the 95th's contact roll 12.5° -&gt; 12.5°, wings-level clearance 23.8 -&gt; 23.8 mm (L6B sweep: the knees lie inside the +/-90 pitch-swept slab either way, so the station does not move the</text>
-<text x="597.5" y="348.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">knee rows). Kept 140 (owner); rev P: the viewer parks the free yokes at the unlocked photos' rest, 35 forward (YOKE rest; 3-D judges r3 FID3-02).</text>
-<text x="592" y="352.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">2.</text>
-<text x="597.5" y="352.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Grip toe: all six usable views look from INBOARD (15-27°): the silhouettes prefer 7 (outboard, +5 % at 18) and 16.7 (inboard), the inboard PAD traces alone ~26 (judges FID4-06: both optima); the one view from</text>
-<text x="597.5" y="355.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">outboard (AOPA, its camera extrapolated from the pilot-yoke solution, FID4-05) favours 18-26, and there the outboard pad's lower outer edge reaches the drawn grip silhouette (FID4-07: leather wrapping the outer edge</text>
-<text x="597.5" y="358.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">low on the grip, or an outer frame + roll under 2.0 + R 1.5?) -- to decide after that camera's re-calibration. Kept 18 / 18. The trim head's depth is weak too: a -27 vs the judges' fit (110.7, 83.7, -23.6), P1046409 / 10</text>
-<text x="597.5" y="361.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">agreeing in sign (FID4-04).</text>
-<text x="592" y="365.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">3.</text>
-<text x="597.5" y="365.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Column: CLOSED (owner 2026-10-11) -- the J band and the U recess re-centred on the column axis / roll pivot (hub WL 1845; the photos' joint line reads 1821 +/-10): recess h -48 .. 27 about it, the band 1.0 off the</text>
-<text x="597.5" y="368.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">column; push travel 65 (was 90 [E]), pull 90 (L6Y2 detail J). Still open: a J band or a full collar round the column.</text>
-<text x="592" y="372.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">4.</text>
-<text x="597.5" y="372.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Shell skew (judges FID4-03): ONE left / right pattern in all 8 views of both yokes, each in its own sense (means of 8, + = photo outside): stem -1.5 / +1.7 (~1.6 inboard), arm tips +1.7 / -1.5 (both ~1.6 outboard), inboard</text>
-<text x="597.5" y="375.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">arm top -1.7 / lower edge +1.7 (~1.7 low); crown, chamfers, foot within 1.2. Kept SYMMETRIC: one decision for the stem, both tips and the inboard arm.</text>
-<text x="592" y="379.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5.</text>
-<text x="597.5" y="379.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Knees: CLOSED (owner 2026-10-05) -- the 95th's 23.8 mm wings level (criterion 25 kept) and contact from 12.5° are accepted as measured.</text>
-<text x="592" y="383.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">6.</text>
-<text x="597.5" y="383.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Crown soft break (R 20 [E]) vs a crease; hidden: body depth 60, the necks' depth 30, rocker / cap heights.</text>
-<text x="592" y="387.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">7.</text>
-<text x="597.5" y="387.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Forward-face switches (PTT, checklist): drawn as [E] placeholders (item 13, L6Y2 detail W) -- a photo of a grip's finger side would replace them.</text>
+<text x="808" y="218.69" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">5 &gt; 3 &gt; 7 &gt; -7 &gt; -8</text>
+<text x="593.3" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5th male</text>
+<text x="632" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">51 &gt; 48 &gt; 51 &gt; 37 &gt; 35</text>
+<text x="673" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">-21 &gt; -21 &gt; -22 &gt; -22 &gt; -21</text>
+<text x="719" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">22.5 &gt; 22.5 &gt; 22.5 &gt; 17.5 &gt; 17.5</text>
+<text x="767" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">10.0 &gt; 10.0 &gt; 10.0 &gt; 5.0 &gt; 5.0</text>
+<text x="808" y="221.99" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">20 &gt; 18 &gt; 22 &gt; 8 &gt; 7</text>
+<text x="593.3" y="225.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5th female</text>
+<text x="632" y="225.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">76 &gt; 78 &gt; 81 &gt; 67 &gt; 65</text>
+<text x="673" y="225.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">5 &gt; 0 &gt; 0 &gt; 0 &gt; 0</text>
+<text x="719" y="225.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">87.5 &gt; 87.5 &gt; 87.5 &gt; 87.5 &gt; 87.5</text>
+<text x="767" y="225.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">27.5 &gt; 25.0 &gt; 25.0 &gt; 20.0 &gt; 20.0</text>
+<text x="808" y="225.29" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">55 &gt; 53 &gt; 56 &gt; 42 &gt; 40</text>
+<path stroke-width="0.18" d="M612 207.8l0 18.4M652 207.8l0 18.4M694 207.8l0 18.4M744 207.8l0 18.4M790 207.8l0 18.4"/>
+<path stroke-width="0.35" d="M592 201.8l234 0 0 24.4-234 0z"/>
+<text x="592" y="231.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">NOTES</text>
+<text x="592" y="237.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">1.</text>
+<text x="597.5" y="237.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">OWNER 2026-10-05: L6Y rev D / L6Y2 rev C APPROVED as the basis of the 3-D yoke; this rev E carries the judges' round-4 drawing-stage cleanup (the measured outline unchanged but the outboard grip's heel corner</text>
+<text x="597.5" y="240.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">and waist, FID4-01 / 02). Signed off with the approval: the rev L hidden estimates foot round R 14 -&gt; R 5 under a 4 mm draft cap and inboard head cut R 3 -&gt; R 1.5.</text>
+<text x="592" y="244.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">2.</text>
+<text x="597.5" y="244.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Yoke-local mm: u outboard (pilot: -y), h up from the hub centre = the column axis / roll pivot (WL 1845, BL -/+375), a aft of the aft face at the insert step (X 3700 at neutral pitch). Drawn from model/interior.py</text>
+<text x="597.5" y="247.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">YOKE_DESIGN rev M through the solids of model/yoke_geom.py; L6 / L6B take the same solids (yoke_outline_yz, yoke_sweep_pieces).</text>
+<text x="592" y="251.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">3.</text>
+<text x="597.5" y="251.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">CURVE LAW (table curve_law, rev M text): each outline split at its corner samples into runs, each run a C2 cubic spline on centripetal knots ('natural' ends at the corners, periodic for a closed outline without corners),</text>
+<text x="597.5" y="254.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">sampled every 0.05 (arcs too); corners R 0 sharp, R &gt; 0 a tangent fillet (cubic Bezier arc, tangent length R tan(th/2) capped at 0.45 of the shorter run: none capped in rev M); the lower aft face a C1 Hermite tangent to</text>
+<text x="597.5" y="257" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">the 17.5° plane. The solids use the EXACT distance to those polylines (no raster; beyond 0.3 mm a C2 B-spline of exact node distances); views are exact silhouettes, sections exact cuts.</text>
+<text x="592" y="261.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">4.</text>
+<text x="597.5" y="261.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">SURFACES: the cover's face (the 17.5° plane, the lower Hermite, the crown bevel) trimmed by its outline; the body: sides / bottom = its outline without the top edge, top = a plane 42° from the horizontal through the</text>
+<text x="597.5" y="264" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">outline's top edge (body_top, a C2 cubic in |u|), forward face, rounds in order R 2 / R 2 / R 8 (R 5 at the foot, the draft's offset capped at 4 there; the crown's top edge h 65.2 = the outline's 65.3 less its R 1); the web's aft</text>
+<text x="597.5" y="266.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">face = the trim face's plane 3.5 below it (web); each grip: its AFT SIDE = the prism's aft plane trimmed 3 inside the head's shaping surface above the plane height 67 / 61, drafted outward below it from a bend of R 4 (an</text>
+<text x="597.5" y="269.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">exact 2-D distance), cut edge R 1.5, joined R 3 to the HEAD's aft shape (round face on its flared cylinder / shield facet + fall-off, x chamfer R 3, floor R 3); then the walls (outline G, a construction curve) and the forward</text>
+<text x="597.5" y="272.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">face cut both, edges R 1.5 easing to R 2 / R 11 (capped) easing to R 3 over the head, the head's top onto the forward face R 3; body + grips one moulding joined by a ROLLING-BALL R 3 (a true round where they meet</text>
+<text x="597.5" y="275.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">at an angle, none where they run flush); the pad pocket, groove and bead cut after that join. Every edge is a tabled round or a tabled crease (L6Y2 CORNERS &amp; RADII).</text>
+<text x="592" y="279.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5.</text>
+<text x="597.5" y="279.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">STAGE-3 SURFACE ROUTE: each named surface a grid_surface over its parametrisation (planes, the face Hermite, the head cylinder about the face normal) trimmed by cad.mesh.trim with these exact 2-D fields; each</text>
+<text x="597.5" y="282.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">tabled round a sweep_profile of its radius; the head-zone trimming surface is a draft from the head surface's offset curve; vertex normals from the analytic surfaces. The solids stay the inside / outside oracle. Acceptance</text>
+<text x="597.5" y="285.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(model/yoke_checks.py, L6Y2): vertex normals within 2° at the 95th percentile on 9 patches; NO UNTABLED CREASE in an adaptive scan of 14 views (every pixel pair turning &gt; 4° refined 256x); the joins read smooth</text>
+<text x="597.5" y="288.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">fields (no ridge at their rounds' own surface points); each pad's exposed surface = its drawn section; no untabled section cusps; one piece per side in every h section above 62; nothing above the trim face / shield.</text>
+<text x="592" y="292.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">6.</text>
+<text x="597.5" y="292.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">White moulding symmetric; the black body and the grips are NOT: an outboard web running into the trim head's rim (10-11 o'clock), an inboard LOW NECK with an open notch under the inboard head; switches outboard</text>
+<text x="597.5" y="295.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">(TCS, AFCS, trim), the MAP LIGHTS push button on the inboard head; co-pilot yoke = mirror image.</text>
+<text x="592" y="299.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">7.</text>
+<text x="597.5" y="299.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">NO MARKINGS: the badge is an abstract winged plate with a blank raised field, every legend plain letter blocks.</text>
+<text x="592" y="303.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">8.</text>
+<text x="597.5" y="303.6" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Not modelled: the rev H column bellows (none in 8 photos), the PC-24's grip tab (not on the PRO). The grips' FORWARD (finger-side) faces are UNVERIFIED -- no photo shows them; AOPA (2025-03-17) lists</text>
+<text x="597.5" y="306.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">push-to-talk and checklist among the yoke's one-hand functions and only trim, TCS, AFCS DISC and MAP LIGHTS are seen: drawn as [E] PLACEHOLDERS (rev M, judges FID4-08): a PTT trigger on the outboard grip,</text>
+<text x="597.5" y="309.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">a checklist rocker on the inboard grip (item 13, L6Y2 detail W; open point 7).</text>
+<text x="592" y="313.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">9.</text>
+<text x="597.5" y="313.5" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">GRIPS' 3-D LIE (L6Y2 photo check): rake / toe / a0 / walls / depth fitted per grip to the curated silhouettes of 6 views -- P1046408 L / R, P1046410, Mexico L / R and P1046409 (posed with a two-view camera, the</text>
+<text x="597.5" y="316.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">co-pilot yoke 25° from inboard) -- with the front outline held: rake 20 +/-2.5, a0 -3.75 +/-3, walls 0.6 / 0 +/-0.2, depth 27 +/-4 (P1046409's slot wall; no bottom taper); the toe is weakly determined by views from inboard</text>
+<text x="597.5" y="319.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">only (open point 2). The AOPA photo is not used: its co-pilot camera is EXTRAPOLATED from the pilot-yoke solution (judges FID4-05; re-calibrating it on the panel round the co-pilot yoke is open) -- until then the toe,</text>
+<text x="597.5" y="322.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">the depth law and the head depths stay [M weak].</text>
+<text x="592" y="326.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">10.</text>
+<text x="597.5" y="326.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Knee checks on the rev M solids: the 95th clears the yoke by 23.8 mm wings level (criterion 25 kept: short by 1.2), roll to contact 12.5°, keeping 25 mm to 0.0° -- ACCEPTED AS MEASURED (owner 2026-10-05; L6B</text>
+<text x="597.5" y="329.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">open point 1 closed). K column = rev K re-swept: as issued (37 mm, 15°) the sweep had dropped a band of the inboard grip (a doubled vertex in the band clip, fixed in rev L).</text>
+<text x="592" y="337.7" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.4" stroke="none" fill="#1B2429" font-weight="600" letter-spacing="0.3">OPEN POINTS FOR THE OWNER</text>
+<text x="592" y="343.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">1.</text>
+<text x="597.5" y="343.3" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Fore-aft station: EVERY posed photo puts the aft face forward of the drawn neutral -- P1046408 -60 / -55, P1046410 -65, P1046409 -37 (s/n 3001, gust lock on: 'CONTROLS LOCKED'), Mexico -38 / -34 and the AOPA</text>
+<text x="597.5" y="346.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">photo -14 / -26 (no lock placard) [+/-20-30 each along the line of sight]. Unlocked, a parked yoke rests forward: the elevator droops trailing-edge down under its weight [E: physics, no PC-12 source]. Option: neutral 45</text>
+<text x="597.5" y="349.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">further forward (hub_dx 140 -&gt; 95): the 95th's contact roll 12.5° -&gt; 12.5°, wings-level clearance 23.8 -&gt; 23.8 mm (L6B sweep: the knees lie inside the +/-90 pitch-swept slab either way, so the station does not move the</text>
+<text x="597.5" y="352" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">knee rows). Kept 140 (owner); rev P: the viewer parks the free yokes at the unlocked photos' rest, 35 forward (YOKE rest; 3-D judges r3 FID3-02).</text>
+<text x="592" y="356.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">2.</text>
+<text x="597.5" y="356.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Grip toe: all six usable views look from INBOARD (15-27°): the silhouettes prefer 7 (outboard, +5 % at 18) and 16.7 (inboard), the inboard PAD traces alone ~26 (judges FID4-06: both optima); the one view from</text>
+<text x="597.5" y="359" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">outboard (AOPA, its camera extrapolated from the pilot-yoke solution, FID4-05) favours 18-26, and there the outboard pad's lower outer edge reaches the drawn grip silhouette (FID4-07: leather wrapping the outer edge</text>
+<text x="597.5" y="361.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">low on the grip, or an outer frame + roll under 2.0 + R 1.5?) -- to decide after that camera's re-calibration. Kept 18 / 18. The trim head's depth is weak too: a -27 vs the judges' fit (110.7, 83.7, -23.6), P1046409 / 10</text>
+<text x="597.5" y="364.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">agreeing in sign (FID4-04).</text>
+<text x="592" y="368.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">3.</text>
+<text x="597.5" y="368.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Column: CLOSED (owner 2026-10-11) -- the J band and the U recess re-centred on the column axis / roll pivot (hub WL 1845; the photos' joint line reads 1821 +/-10): recess h -48 .. 27 about it, the band 1.0 off the</text>
+<text x="597.5" y="371.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">column; push travel 65 (was 90 [E]), pull 90 (L6Y2 detail J). Still open: a J band or a full collar round the column.</text>
+<text x="592" y="375.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">4.</text>
+<text x="597.5" y="375.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Shell skew (judges FID4-03): ONE left / right pattern in all 8 views of both yokes, each in its own sense (means of 8, + = photo outside): stem -1.5 / +1.7 (~1.6 inboard), arm tips +1.7 / -1.5 (both ~1.6 outboard), inboard</text>
+<text x="597.5" y="378.8" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">arm top -1.7 / lower edge +1.7 (~1.7 low); crown, chamfers, foot within 1.2. Kept SYMMETRIC: one decision for the stem, both tips and the inboard arm.</text>
+<text x="592" y="382.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">5.</text>
+<text x="597.5" y="382.9" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Knees: CLOSED (owner 2026-10-05) -- the 95th's 23.8 mm wings level (criterion 25 kept) and contact from 12.5° are accepted as measured.</text>
+<text x="592" y="387" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">6.</text>
+<text x="597.5" y="387" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Crown soft break (R 20 [E]) vs a crease; hidden: body depth 60, the necks' depth 30, rocker / cap heights.</text>
+<text x="592" y="391.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">7.</text>
+<text x="597.5" y="391.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">Forward-face switches (PTT, checklist): drawn as [E] placeholders (item 13, L6Y2 detail W) -- a photo of a grip's finger side would replace them.</text>
 <path stroke-width="0.35" fill="#1B2429" d="M25 472l537 0 0 4.56-537 0z"/>
 <text x="26.5" y="475.12" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.4" stroke="none" fill="#FCFCFA" font-weight="600">REVISIONS - PC12-L6Y</text>
 <text x="28.36" y="478.98" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">REV</text>
@@ -903,6 +907,10 @@
 <text x="49.1" y="528.73" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">with uneven gaps and heights (CR4-06)</text>
 <text x="28.36" y="525.96" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">I</text>
 <text x="39.91" y="525.96" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-12</text>
-<path stroke-width="0.18" d="M25 529.68l537 0M31.72 476.56l0 53.12M48.1 476.56l0 53.12"/>
-<path stroke-width="0.35" d="M25 472l537 0 0 57.68-537 0z"/>
+<path stroke-width="0.18" d="M25 529.68l537 0"/>
+<text x="49.1" y="532.1" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.1" stroke="none" fill="#1B2429">rev R (yoke judge r5, the flight-deck merge): item 15 -- ONE flank of each groove dark: the parting grooves' insert-side flank (the cover's edge lit), the step's / badge outline's / speed lines' down-facing flank, the step's end cones the face's finish (rev Q's two dark flanks read as an ink outline, FID5-01 / 07); item 12 the J band its own satin dark grey (yoke_band, FID5-05)</text>
+<text x="28.36" y="532.1" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">J</text>
+<text x="39.91" y="532.1" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="2.1" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-12</text>
+<path stroke-width="0.18" d="M25 533.06l537 0M31.72 476.56l0 56.5M48.1 476.56l0 56.5"/>
+<path stroke-width="0.35" d="M25 472l537 0 0 61.06-537 0z"/>
 </g></svg>

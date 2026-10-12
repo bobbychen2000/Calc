@@ -595,6 +595,10 @@ SPEC.update({
                                     "light grey pipe; rev P, 3-D judges r3 FID3-02: matte near-black; rev Q, 3-D judges "
                                     "r4 FID4-05: that read as a hole from the pilot's eye -- a polished tube going into "
                                     "the panel, ~40-50 there)"),
+    "yoke_band":          dict(kind="dielectric", base=(0.075, 0.073, 0.072), metallic=0.60, rough=0.30,
+                               note="yoke column surround's J band: satin dark-grey metal, lit along its rolled top "
+                                    "edge (L6Y2 detail J; rev R, yoke judge r5 FID5-05: the PCL's pewter read a "
+                                    "light-grey thumb beside the column, the photos a darker grey tube, medians 26-57)"),
     "yoke_trim_face":     dict(kind="dielectric", base=(0.040, 0.040, 0.043), rough=0.45,
                                note="yoke pitch-trim legend ring / lunes: flat satin charcoal (L6Y item 9; rev P, 3-D "
                                     "judges r3 FID3-01: rev N / O's gloss black read darker than the body, the photos' "
@@ -603,10 +607,11 @@ SPEC.update({
                                note="yoke pitch-trim rocker slot: near-black matte, the darkest part of the head (L6Y "
                                     "item 9; rev P, 3-D judges r3 FID3-01)"),
     "yoke_groove":        dict(kind="dielectric", base=(0.030, 0.030, 0.033), rough=0.60, spec=0.25,
-                               note="yoke cover grooves: the V flanks of the insert parting grooves, the step's down-"
-                                    "facing flank and end cones, the badge outline / speed lines as their cavity shadow "
-                                    "(L6Y item 15; rev Q, 3-D judges r4 FID4-01: lit like the face they read as bright "
-                                    "bevels, every photo shows dark lines -- the step 0.00-0.18 of the insert)"),
+                               note="yoke cover grooves: ONE flank of each V groove as its cavity shadow -- the "
+                                    "insert's side of the parting grooves, the down-facing flank of the step and the "
+                                    "badge outline / speed lines (L6Y item 15; rev Q, 3-D judges r4 FID4-01: lit like "
+                                    "the face they read as bright bevels; rev R, yoke judge r5 FID5-01: both flanks dark "
+                                    "read as an ink outline -- the photos show one flank dark, the other lit)"),
     "veneer_walnut":      dict(kind="dielectric", base=(0.060, 0.047, 0.040), rough=0.35, **_ICC,
                                grain=dict(scale=(70.0, 70.0, 2.5), amp=0.30, detail=4.0),
                                note="dark grey-brown walnut veneer, vertical grain, gloss lacquer (P1046406)"),

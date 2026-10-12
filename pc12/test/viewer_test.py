@@ -2096,6 +2096,47 @@ YOKE_LOOK_Q = dict(step=0.5, badge=0.75, up=(0.85, 0.97), cool=8.0, stop_up=0.93
                             pitch=-0.8432, W=900, H=552))
 
 
+# rev R (yoke judge r5, the flight-deck merge): FID5-01 the side grooves DIRECTIONAL -- in every photo one flank of a side
+# groove is dark and the other lit; from the centreline cameras the near (inboard) groove reads dark and the far
+# (outboard) one light (P1046408 0.70 / 0.93, P1046410 0.37 / 0.79, Mexico 0.43 / 0.87 of the reference) where rev Q's two
+# dark flanks read the same dark line both sides (0.19 / 0.21): at the P1046408 pilot-yoke camera the far side's darkest
+# pixel >= far x the reference and the near side at least gap darker; the badge region's p2 at least badge[0] of the insert
+# (its lines a relief, not an ink outline: rev Q 0.20, photos 0.64-0.82); FID5-02 the smoke lower insert visibly darker
+# than the upper from the pilot stop (lower / upper <= lo_up; rev Q 0.91 in the merged light, photos 0.90-0.955) and not
+# too dark at the P1046408 camera (lower / cover >= lo_cover; rev Q 0.71, photo 0.82-0.93); FID5-05 the J band a darker
+# grey tube there (median in band; in the PCL's pewter it read 105 on the yoke branch, the photos 26-57)
+# (rev R on the look-dev page at 1200 x 736: far 0.85 / near 0.21, at 900 px 0.92 / 0.36; badge 0.57; lower / cover
+# 0.77; band 53; the pilot stop's lower / upper 0.87)
+YOKE_LOOK_R = dict(far=0.75, gap=0.25, badge=0.40, lo_up=0.90, lo_cover=0.75, band=(35.0, 70.0))
+
+
+def yoke_side_edges(k, img, up_id, cover_id, win=4, ref_w=6):
+    """The darkest pixel within +-win of the upper insert's left / right boundary over min(median insert, median cover)
+    taken win + 2 .. win + 2 + ref_w px either side, for the rows 30-80 % down the insert; the median over the rows per
+    side (yoke judge r5 edges.py)."""
+    import numpy as np
+    lum = 0.2126 * img[..., 0] + 0.7152 * img[..., 1] + 0.0722 * img[..., 2]
+    up = k == up_id
+    ys, _ = np.nonzero(up)
+    if not len(ys):
+        return {}
+    y0, y1 = ys.min(), ys.max()
+    res = {"L": [], "R": []}
+    for y in range(int(y0 + 0.30 * (y1 - y0)), int(y0 + 0.80 * (y1 - y0))):
+        xr = np.nonzero(up[y])[0]
+        if len(xr) < 8:
+            continue
+        for sd, xb in (("L", xr.min()), ("R", xr.max())):
+            seg = lum[y, max(xb - win, 0):min(xb + win + 1, lum.shape[1])]
+            a_in = (xb + win + 2, xb + win + 2 + ref_w) if sd == "L" else (max(xb - win - 2 - ref_w, 0), max(xb - win - 2, 0))
+            a_cv = (max(xb - win - 2 - ref_w, 0), max(xb - win - 2, 0)) if sd == "L" else (xb + win + 2, xb + win + 2 + ref_w)
+            ins, cov = lum[y, a_in[0]:a_in[1]], lum[y, a_cv[0]:a_cv[1]]
+            if len(ins) < 3 or len(cov) < 3 or not len(seg):
+                continue
+            res[sd].append(seg.min() / max(min(float(np.median(ins)), float(np.median(cov))), 1.0))
+    return {sd: float(np.median(v)) for sd, v in res.items() if v}
+
+
 def yoke_insert_metrics(k, img, ids):
     """The judges' r4 groove / insert measures on a material-ID mask k (ids: group -> index + 1) and its screenshot:
     insert / cover medians (eroded 1 px), B - R of each, the step line (per column through the middle half of the lower
@@ -2211,7 +2252,8 @@ async def yoke_look_checks(page, shots=True):
     await js(page, "const V = window.viewer; V.panel(false); V.setControls({roll: arg.roll, pitch: arg.pitch}, {instant: true}); "
              "V.setCamera({pos: arg.pos, target: arg.target, fov: arg.fov}, {instant: true}); await V.frames(4);", cm_)
     path = await shot(page, "45b_yoke_look_p408", "")
-    gq = {"cover": ["yoke_white"], "up": ["yoke_silver"], "lo": ["yoke_silver_dark"], "groove": ["yoke_groove"]}
+    gq = {"cover": ["yoke_white"], "up": ["yoke_silver"], "lo": ["yoke_silver_dark"], "groove": ["yoke_groove"],
+          "band": ["yoke_band"]}
     m = await js(page, MAT_MASK, [gq[k_] for k_ in gq])
     kq = np.array(m["mask"].split(","), int).reshape(m["H"], m["W"])
     iq = np.asarray(Image.open(path).convert("RGB"), float)[:m["H"], :m["W"]]
@@ -2229,6 +2271,30 @@ async def yoke_look_checks(page, shots=True):
            f"{mq['cover']:.0f}), B - R insert {mq['br_up']:+.0f} cover {mq['br_cover']:+.0f}; pilot stop insert / cover "
            f"{up_stop:.2f}") if mq.get("step") is not None and mq.get("badge") is not None and up_stop is not None
           else str(mq))
+    # [Y1e] rev R (yoke judge r5 FID5-01 / 02 / 05): at the same camera -- the pilot yoke seen from the centreline, so its
+    # inboard (near) groove is the image's RIGHT one
+    from scipy import ndimage as ndi
+    R_ = YOKE_LOOK_R
+    se = yoke_side_edges(kq, iq, 2, 1)
+    far, near = se.get("L"), se.get("R")
+    lq = 0.2126 * iq[..., 0] + 0.7152 * iq[..., 1] + 0.0722 * iq[..., 2]
+    loe, coe, bde = (ndi.binary_erosion(kq == i_, iterations=it) for i_, it in ((3, 1), (1, 1), (5, 2)))
+    lo_cover = float(np.median(lq[loe]) / np.median(lq[coe])) if loe.sum() > 30 and coe.sum() > 30 else None
+    band = float(np.median(lq[bde])) if bde.sum() > 30 else None
+    lo_up = l_[1] / u[1] if (l_[1] and u[1]) else None
+    okR = (far is not None and near is not None and far >= R_["far"] and far - near >= R_["gap"]
+           and mq.get("badge") is not None and mq["badge"] >= R_["badge"] and lo_up is not None and lo_up <= R_["lo_up"]
+           and lo_cover is not None and lo_cover >= R_["lo_cover"] and band is not None
+           and R_["band"][0] <= band <= R_["band"][1])
+    check(f"[Y1e] yoke judge r5 (FID5-01 / 02 / 05): at the P1046408 pilot-yoke camera the side grooves directional -- "
+          f"the far (outboard) side's darkest pixel >= {R_['far']:.2f} of the reference, the near (inboard) side >= "
+          f"{R_['gap']:.2f} darker -- the badge's p2 >= {R_['badge']:.2f} of the insert, the lower insert >= "
+          f"{R_['lo_cover']:.2f} of the cover, the J band {R_['band'][0]:.0f}-{R_['band'][1]:.0f}; from the pilot stop the "
+          f"lower insert <= {R_['lo_up']:.2f} of the upper", okR,
+          (f"far {far:.2f}, near {near:.2f}, badge {mq['badge']:.2f}, lower / cover {lo_cover:.2f}, band {band:.0f}; "
+           f"pilot stop lower / upper {lo_up:.2f}") if (far is not None and near is not None and mq.get('badge') is not None
+                                                       and lo_cover is not None and band is not None and lo_up is not None)
+          else f"edges {se}, badge {mq.get('badge')}, lower / cover {lo_cover}, band {band}, lower / upper {lo_up}")
 
 
 async def tour_r4_checks(page, data, shots=True):

@@ -1620,3 +1620,41 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   drawing.master (all sheets; L1-L5 / L4W / GA / sections changed only their PDF timestamps and were left alone),
   drawing.sheet + drawing.verify OK; the viewer's yoke rows [Y1]-[Y1d] and [FD-L4] measured on the look-dev page
   (above); the full viewer_test, the package and the Artifact bundle: the next entry.
+- Flight deck + yoke merge, follow-up = YOKE REV R (2026-10-12; the yoke's fidelity re-judge r5 on rev Q scored 7.5 --
+  FID5-01 major: the grooves an INK outline -- and ran while the merge was being verified; L6Y rev J / L6Y2 rev I, the
+  YOKE_DESIGN grooves / column_band notes).  GROOVES DIRECTIONAL (FID5-01 / 07, `yoke_cover.groove_faces`): rev Q
+  finished every flank of every V groove but the step's up-facing one `yoke_groove`, so the side parting grooves, the
+  lower insert's outline and the badge read as a uniform near-black line on both flanks from every direction (judge:
+  0.10-0.21 of the reference both sides at every camera); every photo shows ONE flank dark and the other lit, and from the
+  centreline cameras the NEAR (inboard) groove dark, the FAR one light (P1046408 0.70 / 0.93, P1046410 0.37 / 0.79,
+  P1046409 co-pilot 0.28 / 0.86, Mexico 0.43 / 0.87), from the aft-outboard AOPA camera the other way round (0.02 /
+  0.86).  Rule: on the parting grooves between the cover and an insert (`GROOVE_INSERT_DARK`: side_l / side_r / lower)
+  the flank on the INSERT's side is dark (the insert's cut edge in the gap's shadow; `yoke_geom.cover_part` just beyond
+  the flank), the cover's side keeps the white (its rolled gloss edge) -- seen from aside a V shows mostly the flank
+  facing the camera, the insert's on the near groove and the cover's on the far one, so the photos' near / far pattern
+  follows from the geometry at every camera; the step and the badge outline / speed lines (insert on both sides) by the
+  light from above (`GROOVE_LIGHT` (0, 1): the down-facing flank dark, as rev Q's step); the step's end cones keep the
+  face (`GROOVE_END_LIT`: dark, they were the black nubs past the side grooves; the step's line now ends on the side
+  groove's).  yoke_groove faces 1,184 -> 605 (the meshes and triangle counts unchanged: only the material split).
+  Measured (look-dev page out/tmp/fd_yoke_merge/ldr / ldz, `edges.py` = the judge's edges.py; native / at the photo's
+  px/mm): side grooves far / near at P1046408 0.85 / 0.21 (1.00 / 0.68), P1046410 0.81 / 0.22 (1.00 / 0.71), P1046409
+  co-pilot 0.80 / 0.19 (0.98 / 0.58), P1046408 co-pilot 0.80 / 0.20 (1.00 / 0.73), Mexico 1.00 / 0.21 and 0.80 / 0.22
+  (rev Q in the merged light: 0.19-0.21 both sides); the badge region's p2 0.57-0.62 of the insert (rev Q 0.20, photos
+  0.64-0.82; the AOPA studio shot 0.19); the step line 0.13-0.14 (kept).  LOWER INSERT (FID5-02, viewer): from the stop /
+  design eye its reflection points aft-DOWN (R.y ~ -0.5), from P1046408's low centreline camera aft-up-OUTBOARD -- so
+  `YOKE_PROBE` yoke_silver_dark's lap term 1.0 -> 0.72 and side term 0.63 -> 1.7 (k [1.0, 1.53, 1.7, 0.72, 0]; the
+  judge's 'lower k[1]' was the yoke branch's light): lower / upper 0.87 at the stop and the design eye (0.91; photos
+  0.90-0.955 -- the judge's <= 0.90), lower / cover 0.77 at P1046408 (0.71; photo 0.82-0.93), 0.79 at P1046409, the stop's
+  lower / cover 0.72 ([Y1] >= 0.70).  J BAND (FID5-05): its own material `yoke_band` (assemble / lookdev: satin dark grey
+  0.075, metallic 0.6, rough 0.30; `fd_detail_a.BAND_MAT`) instead of the PCL grip's pcl_pewter (owner's open question:
+  the PCL's colour stays); in the merged light the pewter band read 33-37 / p90 54-56 at the photo cameras (the judge's
+  105-117 was the yoke branch's light), the photos 26-57 / p90 109-128 with lit rolled edges: viewer VIEWER yoke_band a
+  lighter, more metallic base with a tighter sheen kept by the cabin law (color 0.16, metalness 0.9, roughness 0.22,
+  specIn 2.5, SPEC_KEEP): 53-57 / p90 73-75 at P1046408 / 09 / 10 (Mexico 51 / 64).  Not taken (minors, reported):
+  FID5-03 (the insert's bead-blast grain / near-field term), FID5-04 (the badge band as a raised satin field: a drawing
+  revision), FID5-06 (the cover specks: SwiftShader's diffuse image light, as rev Q), FID5-08 (deferred owner items).
+  viewer_test [Y1e] (new; `YOKE_LOOK_R`, `yoke_side_edges`): at the P1046408 pilot-yoke camera the far side >= 0.75 of
+  the reference and the near >= 0.25 darker, the badge's p2 >= 0.40 of the insert, the lower insert >= 0.75 of the cover,
+  the band 35-70; from the pilot stop lower / upper <= 0.90.  KEPT, reported: the yoke track's elevator coupling (parked,
+  the elevators hang +8.08 deg TE down with the parked yokes -- photos 0517 / LX-FLI); it moves the exterior default pose
+  (the horn balances stand out of the fixed tips parked).

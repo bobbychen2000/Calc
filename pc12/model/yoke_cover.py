@@ -19,7 +19,8 @@ The white COVER of the yoke as an explicit, crease-exact surface mesh (rev M, yo
   FRONT     the hidden front face (against the body), coarse.
 Materials by front-view position (yoke_geom.cover_part): white cover, the upper insert (crown, badge) yoke_silver, the
 lower insert yoke_silver_dark; the TCS pocket's floor seen through the bezel's clearance ring black; the grooves' flanks
-yoke_groove (rev Q: groove_faces, the step's up-facing flank excepted).
+yoke_groove where they turn away from GROOVE_LIGHT (rev R: groove_faces, directional -- one flank of a groove dark, the
+other lit; rev Q had every flank but the step's up-facing one dark).
 """
 from __future__ import annotations
 
@@ -678,24 +679,64 @@ GROOVE_MAT = "yoke_groove"   # rev Q (3-D judges r4 FID4-01): the grooves' flank
 #                              (the darkest pixel across the step 0.00-0.18 of the insert in the s/n 3001 views); the yoke
 #                              carries no baked occlusion, so the 0.4-2 mm V flanks took the face's full light and their
 #                              up-facing flanks read as bright bevels (0.80-0.89, a 1.10-1.14 ridge).  L6Y item 15.
-GROOVE_LIT = ("step",)       # grooves whose UP-facing flank keeps the face's finish: the step's lower flank (Mexico L / R
-#                              at 3.8 px/mm: a dark upper flank over a lit lower one, 1 mm each; P1046408 a dark line over a
-#                              light one) -- its down-facing flank and both end cones (the round ends past the side grooves:
-#                              CR4-07's nubs) take the groove finish
+GROOVE_INSERT_DARK = ("side_r", "side_l", "lower")
+GROOVE_LIGHT = (0.0, 1.0)
+GROOVE_END_LIT = ("step",)
+#                            rev R (yoke judge r5 FID5-01 / 07: rev Q's every flank dark drew the side grooves, the lower
+#                            insert's outline and the badge as a uniform near-black INK line on both flanks, from every
+#                            direction; in every photo only ONE flank of a groove is dark and the other reads as a lit
+#                            rim): the flanks are DIRECTIONAL.  The parting grooves between the white cover and an insert
+#                            (GROOVE_INSERT_DARK): the flank on the INSERT's side -- the insert's cut edge in the gap's
+#                            shadow -- takes GROOVE_MAT, the cover's side keeps the white (its rolled gloss edge catching
+#                            the light).  Seen from aside, a groove shows mostly the flank facing the camera, which is the
+#                            insert's on the NEAR groove and the cover's on the FAR one: from the centreline cameras
+#                            (P1046408 / 09 / 10, Mexico) the inboard groove reads dark and the outboard one lit, from the
+#                            aft-outboard AOPA camera the other way round -- the photos' darkest pixel across the upper
+#                            insert's sides (judge r5: 0.28-0.70 near / 0.79-0.96 far of the reference; AOPA 0.02 / 0.86).
+#                            The step and the badge outline / speed lines (both sides an insert) by the light from ABOVE
+#                            (GROOVE_LIGHT, front view (u, h)): the down-facing flank dark, the up-facing one keeps the
+#                            face's finish -- the step's dark upper flank over its lit lower one as rev Q, the badge a
+#                            relief shadowed along its lower edges.  The step's round end cones (GROOVE_END_LIT: ~1 mm past
+#                            the side grooves, CR4-07) keep the face's finish -- dark, they read as black faceted nubs
+#                            (FID5-07); the step's dark line now ends on the side groove's line, as in Mexico / AOPA
+
+
+def flank_facing(lab, X, GR):
+    """Unit front-view (u, h) direction a groove flank / end cone of label `lab` faces at the points X (n, 2): toward the
+    groove's bottom line (the in-plane part of the flank's normal, the face's own slope aside)."""
+    X = np.atleast_2d(np.asarray(X, float))
+    k, kind, j, sg = decode(lab)
+    gr = GR[k]
+    if kind == "run":
+        _, foot, dirn, _ = gr.runs[j].query(X)
+        gd = np.c_[-dirn[:, 1], dirn[:, 0]] * sg            # away from the bottom line, on the label's own side
+    else:
+        v = X - gr.vertices[j]
+        gd = v / np.maximum(np.linalg.norm(v, axis=1), 1e-12)[:, None]
+    return -gd
 
 
 def groove_faces(lab, C, GR):
-    """Per terrain triangle (labels lab, front-view centroids C (n, 2)): True where it lies on a groove flank that takes
-    GROOVE_MAT -- every flank / end cone of the V-grooves, except the up-facing flank of a GROOVE_LIT groove."""
+    """Per terrain triangle (labels lab, front-view centroids C (n, 2)): True where it lies on a groove flank / end cone
+    that takes GROOVE_MAT (rev R, directional): on a GROOVE_INSERT_DARK groove the flank on the insert's side (the face
+    just beyond it, on its own side, an insert: yoke_geom.cover_part > 0), on the others the flank turned away from
+    GROOVE_LIGHT (the end cones of a GROOVE_END_LIT groove never); the other flank keeps the face's finish."""
     lab = np.asarray(lab)
-    out = lab != 0
-    for L in np.unique(lab[out]):
-        k, kind, j, _ = decode(int(L))
-        if GR[k].name not in GROOVE_LIT or kind == "cone":
+    C = np.asarray(C, float)[:, :2]
+    out = np.zeros(len(lab), bool)
+    Ld = np.asarray(GROOVE_LIGHT, float)
+    for L in np.unique(lab[lab != 0]):
+        m = np.nonzero(lab == L)[0]
+        k, kind, _, _ = decode(int(L))
+        gr = GR[k]
+        if kind == "cone" and gr.name in GROOVE_END_LIT:
             continue
-        m = lab == L
-        n = label_normal(int(L), C[m], GR)
-        out[np.nonzero(m)[0][n[:, 1] > 0.0]] = False              # facing up (+h): the lit flank
+        f = flank_facing(int(L), C[m], GR)
+        if gr.name in GROOVE_INSERT_DARK:
+            Q = C[m] - f * (0.5 * gr.w + 0.15)                  # just beyond the groove's edge on the flank's own side
+            out[m[G.cover_part(Q[:, 0], Q[:, 1]) > 0]] = True
+        else:
+            out[m[f @ Ld < 0.0]] = True
     return out
 
 

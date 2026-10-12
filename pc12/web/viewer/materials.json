@@ -1612,6 +1612,23 @@
    "note": "yoke column: satin dark grey tube [E] (L6Y item 11; rev N: the dark metal read as a light grey pipe; rev P, 3-D judges r3 FID3-02: matte near-black; rev Q, 3-D judges r4 FID4-05: that read as a hole from the pilot's eye -- a polished tube going into the panel, ~40-50 there)",
    "srgb_hex": "#38383B"
   },
+  "yoke_band": {
+   "baseColorFactor": [
+    0.075,
+    0.073,
+    0.072,
+    1.0
+   ],
+   "metallicFactor": 0.6,
+   "roughnessFactor": 0.3,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 1.0,
+   "kind": "dielectric",
+   "note": "yoke column surround's J band: satin dark-grey metal, lit along its rolled top edge (L6Y2 detail J; rev R, yoke judge r5 FID5-05: the PCL's pewter read a light-grey thumb beside the column, the photos a darker grey tube, medians 26-57)",
+   "srgb_hex": "#4D4C4C"
+  },
   "yoke_trim_face": {
    "baseColorFactor": [
     0.04,
@@ -1660,7 +1677,7 @@
    "ior": 1.5,
    "specularFactor": 0.5,
    "kind": "dielectric",
-   "note": "yoke cover grooves: the V flanks of the insert parting grooves, the step's down-facing flank and end cones, the badge outline / speed lines as their cavity shadow (L6Y item 15; rev Q, 3-D judges r4 FID4-01: lit like the face they read as bright bevels, every photo shows dark lines -- the step 0.00-0.18 of the insert)",
+   "note": "yoke cover grooves: ONE flank of each V groove as its cavity shadow -- the insert's side of the parting grooves, the down-facing flank of the step and the badge outline / speed lines (L6Y item 15; rev Q, 3-D judges r4 FID4-01: lit like the face they read as bright bevels; rev R, yoke judge r5 FID5-01: both flanks dark read as an ink outline -- the photos show one flank dark, the other lit)",
    "srgb_hex": "#303033"
   },
   "veneer_walnut": {

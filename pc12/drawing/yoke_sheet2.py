@@ -34,7 +34,7 @@ from drawing import yoke_sheet as YS  # noqa: E402
 from drawing import master as M  # noqa: E402
 
 SHEET = dict(id="L6Y2", title="CONTROL YOKE - SECTIONS", subtitle="PC-24-STYLE CONTROL YOKE - SECTIONS & DETAILS",
-             size="A1", scale="AS SHOWN", rev="H", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
+             size="A1", scale="AS SHOWN", rev="I", order=63, sheet_no="2 OF 2", dwg="PC12-L6Y2")
 REVISIONS = (
     ("A", "2026-10-05", "first issue with L6Y rev B (judges r1): exact sections of the rev J solids, grip profiles with "
                         "the heel lip, trim face / shield, switch profiles, column surround, corner table, photo check"),
@@ -42,8 +42,8 @@ REVISIONS = (
                         "groove + bead, heel lip R 4; D / E / G exact switch cuts; J-J; acceptance; photo check on "
                         "curated silhouettes, grip planes fitted to 7 views"),
     ("C", "2026-10-05", "rev L (judges r3): K-K through TCS / AFCS; grip sections cut the moulding; dimensions off the "
-                        "solids; head-zone surfaces and rounds tabled; acceptance on heads / necks / web / tops / "
-                        "forward faces + one-piece and C2 rows; photo check on 6 views; detail J U recess"),
+                        "solids; head-zone surfaces / rounds tabled; acceptance (heads, necks, web, tops, fwd faces, "
+                        "one-piece, C2); photo check; J recess"),
     ("D", "2026-10-05", "rev M (judges r4): pads exposed as drawn (pocket cut after the join); rolling-ball R 3 joins; "
                         "head zones share walls / forward face; leather hatched apart; detail S, break lines, detail W "
                         "[E] switches; adaptive crease / ridge / pad acceptance, all clean (head top R 3 onto the "
@@ -61,6 +61,8 @@ REVISIONS = (
                         "(YOKE rest), column matte near-black"),
     ("H", "2026-10-12", "rev Q (3-D judges r4): J column a satin dark-grey tube, the parked yokes' elevators TE down "
                         "~8 deg; legends set with uneven gaps / heights"),
+    ("I", "2026-10-12", "rev R (yoke judge r5): J the band its own satin dark-grey metal (yoke_band; the PCL's pewter "
+                        "read light); grooves one flank dark (L6Y item 15)"),
 )
 COL_X = (588.0, 826.0)
 GRIP_SECTION_H = YS.GRIP_SECTION_H

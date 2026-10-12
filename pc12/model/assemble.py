@@ -145,11 +145,14 @@ MATERIALS = {
     # rev Q (3-D judges r4 FID4-05): the column a satin dark-grey tube (rev P's matte near-black read as a hole from the
     # pilot's eye, 23 against the 40-50 of a polished tube going into the panel)
     "yoke_column":         ((0.040, 0.040, 0.044), 0.50, 0.40),
+    # rev R (yoke judge r5 FID5-05): the J band its own satin dark-grey metal -- it shared the PCL grip's pcl_pewter and
+    # read a light-grey thumb beside the column (photos: a darker grey tube with a lit top, medians 26-57, p90 109-128)
+    "yoke_band":           ((0.075, 0.073, 0.072), 0.60, 0.30),
     "yoke_trim_face":      ((0.040, 0.040, 0.043), 0.0, 0.45),
     "yoke_slot":           ((0.010, 0.010, 0.011), 0.0, 0.80, dict(specular=0.5)),
-    # rev Q (3-D judges r4 FID4-01): the cover's V-groove flanks (insert parting grooves, the step's down-facing flank and
-    # end cones, the badge outline / speed lines) as their cavity shadow -- every photo reads them as dark lines, the
-    # yoke carries no baked occlusion (L6Y item 15)
+    # rev Q (3-D judges r4 FID4-01): the cover's V-groove flanks as their cavity shadow -- every photo reads them as dark
+    # lines (L6Y item 15); rev R (yoke judge r5 FID5-01): one flank of each groove only -- the insert's side of the
+    # parting grooves, the down-facing flank of the step / badge outline / speed lines (yoke_cover.groove_faces)
     "yoke_groove":         ((0.030, 0.030, 0.033), 0.0, 0.60, dict(specular=0.5)),
     # divider / lavatory / cabinets / FR34 header: dark grey-brown (smoked) walnut veneer under a gloss lacquer
     # (P1046406 [M]: sRGB ~90/80/77 in the cabin light)
