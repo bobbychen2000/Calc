@@ -315,8 +315,11 @@ SPEC = {
     # VQA r2 LIV2-05: the flight-deck panes' retainers (the 18-20 mm band round each pane, fuselage_parts
     # build_glazing): satin-polished metal -- photo 0517 a bright silver edge in sun, 82 / 130 a light-grey line with
     # dark fastener heads inside the black mask (the mask alone read as a heavy black goggle)
-    "glazing_retainer": dict(kind="metal", base=(0.50, 0.51, 0.52), rough=0.22,
-                             note="polished windshield / side-window retainer strips inside the PRO mask"),
+    # (flight deck fix FDY r1 FDY-O1-04: the 12 mm polished band read as a bright toy-canopy ring round every pane in
+    # the close exterior 3/4; pro3001_stbd34_close_aero25 / pro3005_port_close show a ~4-5 mm light blue-grey edge
+    # line: 8 mm wide (fuselage_parts GLAZING_RETAINER), a darker, satin metal that mirrors the sky softly)
+    "glazing_retainer": dict(kind="metal", base=(0.36, 0.37, 0.38), rough=0.30,
+                             note="satin windshield / side-window retainer strips inside the PRO mask"),
     "seal_cabin":       dict(kind="dielectric", base=(0.05, 0.055, 0.06), rough=0.12, spec=0.5,
                              note="(render-only) cabin-window / cargo-door / exit-hatch window rings: NGX panes are "
                                   "flush with only a thin, barely darker edge (photos 130, 0517) -- a glossy dark "

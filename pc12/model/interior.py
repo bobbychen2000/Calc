@@ -1224,10 +1224,41 @@ def sdu_centre(side=-1):
     return np.array([x, side * pn["sdu_bl"], z])
 
 
+_LIP_CURVE = {}
+
+
+def lip_dz(bl):
+    """Height of the glareshield lip above the MFD centre at butt line bl (scalar or array): ONE C2 curve through the
+    approved GLARESHIELD lip_dz knots, shared by the drawing (glareshield_lip, sheet L6) and the 3-D hood / lip /
+    fascia (flightdeck.lip_z).  Flight deck fix FDY r1 (FDY-O1-03 / FIDY1-01): np.interp drew the arch as a polyline
+    whose slope broke at every knot -- 18 -> 46 deg at |BL| 0.50 -- and the hood, its rolled lip, the stitch rows and
+    the fascia top turned down at the outboard ends in straight facets with a V corner; the elevations it was read
+    from (JTF PRO p.18 / NGX p.8) and P1046408 / 09 / 10 show one smooth arc into the side sill.  A natural cubic
+    spline through the knots mirrored about BL 0 (zero slope on the centreline), checked monotone (else the monotone
+    PCHIP through the same knots), continued straight with its end slope beyond the last knot (the clamp to the last
+    value had put a second corner at |BL| 0.70, inside the cheek 0.71).  The table values are unchanged."""
+    t = np.array(GLARESHIELD["lip_dz"], float)
+    key = t.tobytes()
+    f = _LIP_CURVE.get(key)
+    if f is None:
+        from scipy.interpolate import CubicSpline, PchipInterpolator
+        x = np.r_[-t[:0:-1, 0], t[:, 0]]
+        y = np.r_[t[:0:-1, 1], t[:, 1]]
+        f = CubicSpline(x, y, bc_type="natural")
+        xs = np.linspace(0.0, t[-1, 0], 1401)
+        if np.any(np.diff(f(xs)) > 1e-12):               # an overshoot: the monotone C1 curve instead
+            f = PchipInterpolator(x, y)
+        _LIP_CURVE.clear()
+        _LIP_CURVE[key] = f
+    a = np.abs(np.asarray(bl, float))
+    x1 = float(t[-1, 0])
+    out = np.where(a <= x1, f(np.minimum(a, x1)), float(f(x1)) + float(f(x1, 1)) * (a - x1))
+    return float(out) if np.ndim(out) == 0 else out
+
+
 def glareshield_lip(bl):
-    """(x, WL) of the glareshield lip at butt line bl."""
-    t = np.array(GLARESHIELD["lip_dz"])
-    return GLARESHIELD["lip_x"], PANEL["mfd_z"] + float(np.interp(abs(bl), t[:, 0], t[:, 1]))
+    """(x, WL) of the glareshield lip at butt line bl (the C2 arch of lip_dz)."""
+    return GLARESHIELD["lip_x"], PANEL["mfd_z"] + lip_dz(bl)
 
 
 def ws_lower_edge(bl, x0=3.15, x1=3.75, n=6001):

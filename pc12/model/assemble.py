@@ -64,7 +64,7 @@ MATERIALS = {
     "tire_groove":   ((0.014, 0.014, 0.015), 0.0, 0.85, dict(specular=0.8)),
     "wheel":         ((0.62, 0.63, 0.64), 0.25, 0.35, dict(clearcoat=0.6, clearcoat_rough=0.03, specular=0.2)),
     "gear_leg":      ((0.72, 0.73, 0.74), 0.0, 0.32, dict(clearcoat=0.6, clearcoat_rough=0.03, specular=0.2)),
-    "glazing_retainer": ((0.50, 0.51, 0.52), 1.0, 0.22),         # satin-polished windshield / side-window retainers
+    "glazing_retainer": ((0.36, 0.37, 0.38), 1.0, 0.30),         # satin windshield / side-window retainers (FDY r1)
     "chrome":        ((0.90, 0.91, 0.92), 1.0, 0.035),             # polished spinner, oleo chrome, inlet lip
     "zinc_chromate": ((0.62, 0.66, 0.22), 0.0, 0.60),             # primer: internal structure only
     "gear_bay":      ((0.30, 0.31, 0.32), 0.0, 0.55, dict(specular=0.8)),      # grey wheel-well liners

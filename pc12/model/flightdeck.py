@@ -316,8 +316,8 @@ class _Acc:
 # panel face geometry (PDU plane + the wrapped cheeks)
 # =====================================================================================================================
 def lip_z(y):
-    t = np.array(GS["lip_dz"], float)
-    return ZM + np.interp(np.abs(y), t[:, 0], t[:, 1])
+    """WL of the glareshield lip at butt line y: interior.lip_dz's C2 arch (the same curve sheet L6 draws)."""
+    return ZM + I.lip_dz(y)
 
 
 def wrap(ay):
@@ -559,7 +559,11 @@ def _hood_grids():
     cheek = float(PN["cheek_bl"])
     yw = np.linspace(0.0, 0.62, 14)
     we = np.array([I.ws_lower_edge(y) for y in yw])
-    ys = np.linspace(-cheek, cheek, 81)
+    # rows every ~16 mm inboard of |BL| 0.40, every ~8 mm outboard where the arch turns down into the side sill
+    # (FDY r1: 17.75 mm rows drew the C2 arch's turn at |BL| 0.45-0.62 in visible facets)
+    yo = np.linspace(0.40, cheek, int(np.ceil((cheek - 0.40) / 0.008)) + 1)
+    yi = np.linspace(0.0, 0.40, 26)[:-1]
+    ys = np.r_[-yo[::-1], -yi[:0:-1], yi, yo]
     lx = float(GS["lip_x"])
     r = DETAIL["lip_r"]
     hood, lip, und, fas, sof = [], [], [], [], []

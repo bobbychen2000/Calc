@@ -520,7 +520,9 @@ CABIN_RING = (-0.004, 0.004)
 # flight-deck pane retainers (VQA r2 LIV2-05, material 'glazing_retainer'): signed-distance band round each pane, over
 # the glass / on the skin.  VQA r3: 20 mm (-6 / +14) read as a broad silver frame and turned the 46 mm centre post
 # silver (photo 130: a black post with a bright fastener line, thin bright edges round the panes) -> 12 mm (-6 / +6)
-GLAZING_RETAINER = (-0.006, 0.006)
+# flight deck fix FDY r1 (FDY-O1-04: still a bright polished ring round every pane in the close exterior 3/4; the s/n
+# 3001 / 3005 close-ups show a ~4-5 mm light edge line) -> 8 mm (-4.5 / +3.5), a darker satin metal (assemble)
+GLAZING_RETAINER = (-0.0045, 0.0035)
 
 
 def build_glazing(parts_out):

@@ -84,13 +84,27 @@ SK_TOP = 0.020                                 # the back shell's top sits this 
 # bottom edge rows -- an over-hanging roll of pile) plus a low soft wave of SK_WAVE at 4-8 cm (SK_WAVE_K); the fine
 # fringe and the 33-57 mm clumps are gone, the rims sampled every SK_RIM_STEP
 SK_ROLL_OUT, SK_WAVE, SK_WAVE_K, SK_RIM_STEP = 0.007, 0.0018, (80.0, 115.0, 150.0), 0.010
+# flight deck fix FDY r1 (FDY-O1-01 / FIDY1-02: the rolled rims kept a hard, smooth CAD outline -- the photos' cushions
+# end in a soft, irregular edge of locks): a low FRINGE over the roll, SK_FRINGE (0 .. 4.2 mm out) of a lumpy noise at
+# 17-27 mm (SK_FRINGE_K rad/m) that also varies round the roll (row phase SK_FRINGE_ROW), so the outline breaks into
+# soft locks without the r3 clumps' chipped-rock steps (33-57 mm, up to 12 mm); the rims sampled every SK_RIM_STEP_F
+# (7.2 mm: about three samples a lock; 5 / 6.5 mm put the crew seat over its 66.3k triangle cap)
+SK_FRINGE, SK_FRINGE_K, SK_FRINGE_ROW, SK_RIM_STEP_F = 0.0042, (230.0, 300.0, 370.0), 0.006, 0.0072
+HARN_CROWN = 0.0012                            # the harness webbing's crown across its width (ribbon)
 
 
 def shag(seed):
-    """Outward displacement (m) of a sheepskin pad's rim at outline points (a, b): the rolled edge (SK_ROLL_OUT) and its
-    soft wave (0 .. SK_WAVE)."""
+    """Outward displacement (m) of a sheepskin pad's rim at outline points (a, b) (row r of the rim, 0 .. 1 from the
+    bottom edge to the top one): the rolled edge (SK_ROLL_OUT), its soft wave (0 .. SK_WAVE) and the fringe of locks
+    (0 .. SK_FRINGE)."""
     f = fleece(1.0, seed, k=SK_WAVE_K)
-    return lambda a, b: SK_ROLL_OUT + SK_WAVE * (0.5 + 0.5 * np.tanh(1.5 * f(a, b)))
+    g = fleece(1.0, seed + 101, k=SK_FRINGE_K)
+
+    def w(a, b, r=0.5):
+        o = SK_FRINGE_ROW * (r - 0.5)
+        lock = 0.5 + 0.5 * np.tanh(2.2 * g(np.asarray(a) + o, np.asarray(b) - 0.7 * o))
+        return SK_ROLL_OUT + SK_WAVE * (0.5 + 0.5 * np.tanh(1.5 * f(a, b))) + SK_FRINGE * lock ** 1.5
+    return w
 
 
 # =====================================================================================================================
@@ -403,10 +417,10 @@ def pillow(outline, t, r, rb=None, h=None, crown=None, fluff=None, n_round=3, ma
         # the pile's edge (flight deck r1 GEOM B, B7; fix r5: a rolled edge, `shag`): full at the rim's outermost
         # rows, half at the top / bottom edge rows -- not band-limited (the judged-grid limit of `fluff` keeps applying
         # to the face's inner waves)
-        w = shag(Q[:, 0], Q[:, 1])
         R_ = len(rows)
         prof = [0.5 + 0.5 * math.sin(math.pi * k / max(R_ - 1, 1)) for k in range(R_)]
-        rows = [(P2 + (pk * w)[:, None] * N, c) for (P2, c), pk in zip(rows, prof)]
+        rows = [(P2 + (pk * shag(Q[:, 0], Q[:, 1], k / max(R_ - 1, 1)))[:, None] * N, c)
+                for k, ((P2, c), pk) in enumerate(zip(rows, prof))]
     R = len(rows)
     V = [np.c_[P2, np.full(n, c)] for P2, c in rows]
     i = np.arange(n)
@@ -556,11 +570,13 @@ def _catmull(P, n=24):
     return np.array(out)
 
 
-def ribbon(ctrl, up, width, mat, th=0.0035, n=20, rounded=False):
+def ribbon(ctrl, up, width, mat, th=0.0035, n=20, rounded=False, crown=0.0):
     """Webbing strap through the control points ctrl (k, 3) lying flat with its face normal along up (k, 3) (the
     surface under it): a thin closed box section swept along a Catmull-Rom path, crisp edges; rounded: the long edges
-    rounded (a six-sided section, each side's two chamfers smooth-shaded: review r3 K1).  n=None: ctrl / up are
-    already dense, taken as they are."""
+    rounded (a six-sided section, each side's two chamfers smooth-shaded: review r3 K1).  crown (m, rounded only): the
+    outer face bulges this much at the middle across the width, a parabola over 6 strips (FDY r1 FDY-O1-06: the flat
+    ribbons read as hard CAD strips beside the fleece; woven webbing crowns over its edge cords).  n=None: ctrl / up
+    are already dense, taken as they are."""
     if n is None:
         P, U = np.asarray(ctrl, float).copy(), np.asarray(up, float).copy()
         n = len(P)
@@ -588,7 +604,12 @@ def ribbon(ctrl, up, width, mat, th=0.0035, n=20, rounded=False):
              P - W * (hw - e) + U * ht]
         V, F = [], []
         ii = np.arange(n - 1)
-        for rows in ((C[5], C[0]), (C[0], C[1], C[2]), (C[2], C[3]), (C[3], C[4], C[5])):
+        if crown > 0.0:                         # the outer face: 7 points across, a parabolic crown
+            xs = np.linspace(-(hw - e), hw - e, 7)
+            top_rows = tuple(P + W * x + U * (ht + crown * (1.0 - (x / (hw - e)) ** 2)) for x in xs)
+        else:
+            top_rows = (C[5], C[0])
+        for rows in (top_rows, (C[0], C[1], C[2]), (C[2], C[3]), (C[3], C[4], C[5])):
             o = sum(len(x) for x in V)
             V.append(np.vstack(rows))
             for r_ in range(len(rows) - 1):
@@ -1012,7 +1033,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
             sleeves.append(_ccw(pp))
             g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.016), crown=dome(SK_CROWN_SEAT, 0.075),
-                       fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_RIM_STEP)
+                       fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_RIM_STEP_F)
             g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
             geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
             obst.append(geos[-1])
@@ -1097,7 +1118,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
         fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0), h_judged=0.021)
         g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, 0.06),
-                   fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_RIM_STEP)
+                   fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_RIM_STEP_F)
         g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))
         back.append(_mats(g.map(lambda V: bmap(V - [0, 0, apex])), M_SHEEP))
     else:
@@ -1225,7 +1246,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             mid = 0.55 * pts[-1] + 0.45 * end + [0.010, 0.0, 0.004]
             Ps, Us = _catmull(np.vstack([pts, mid, end]), 30), _catmull(np.vstack([ups, [[0.6, 0, 0.8]] * 2]), 30)
             Ps, Us = strap_clear(Ps, Us, rest_on, 0.046, 0.0035)
-            geos.append(ribbon(Ps, Us, 0.046, M_HARN, n=None))
+            geos.append(ribbon(Ps, Us, 0.046, M_HARN, n=None, rounded=True, crown=HARN_CROWN))
         # lap-belt halves (review r3 K1): from a bracket on the pan's side at its rear, up the cushion side, over the
         # sleeve's roll and across it to the buckle, draped under tension over the modelled fleece (draped_strap: the
         # upper hull of the fleece / cushion under the belt, 1.5 mm clear), 2 mm webbing with rounded edges
@@ -1241,7 +1262,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
                              (0.5 * (ua + a_b) + 0.012, sg * 0.080), (a_b, float(bend[1]))])
             Pb, Ub = draped_strap(obst, plan, ca, c_b, dp, npn)
             Pb, Ub = strap_clear(Pb, Ub, rest_on, 0.046, 0.002)
-            geos.append(ribbon(Pb, Ub, 0.046, M_HARN, th=0.002, n=None, rounded=True))
+            geos.append(ribbon(Pb, Ub, 0.046, M_HARN, th=0.002, n=None, rounded=True, crown=HARN_CROWN))
             # the anchor bracket on the pan side (the belt end inside it)
             s_out = float(Pb[0, 1])
             geos.append(cbox((ua + 0.002, 0.5 * (s_pan + s_out), ca), (0.030, abs(s_out - s_pan) + 0.006, 0.026),
@@ -1253,7 +1274,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
                          z_split(a_n - 0.03), z_split(0.30), z_split(0.21), buckle + [0.030, 0.0, -0.006]])
         ups = np.array([[1, 0, 0], [0.7, 0, 0.7], [0, 0, 1], [0, 0, 1], [0, 0, 1], [-0.2, 0, 1]])
         Pc, Uc = strap_clear(_catmull(ctrl, 20), _catmull(ups, 20), rest_on, 0.040, 0.0035)
-        geos.append(ribbon(Pc, Uc, 0.040, M_HARN, n=None))
+        geos.append(ribbon(Pc, Uc, 0.040, M_HARN, n=None, rounded=True, crown=HARN_CROWN))
         nrm = _unit3([0.25, 0.0, 0.97])
         # rotary buckle (flight deck r1 GEOM B, B7): black body, thin satin rim, a ridged black turn knob, the four
         # strap tongues entering it

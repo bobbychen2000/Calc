@@ -108,9 +108,10 @@ GLAZING_TRIM = dict(
     #                        in, 0.7 mm, dark bronze (flight deck fix r2 FDO2-06 / FID-FD2-05: the two dark-metal lines
     #                        15 / 23 mm in read as stray wires / cracks across the glass from both seats)
     wire_depth=0.0070,     # 2.5 mm off the glass's inner face (fit_check 30 >= 2 mm; 22: seated within 3 mm)
-    seal_w=0.004,          # [M] black seal lip over the glass: 4 mm (P1046409 / 10, AOPA and the PRO simulator photos
+    seal_w=0.0018,         # [M] black seal lip over the glass: 1.8 mm (P1046409 / 10, AOPA and the PRO simulator photos
     #                        show at most a hairline dark edge at the glass; the 8 mm first tried drew a heavy black outline
-    #                        round every pane from the crew seats)
+    #                        round every pane from the crew seats; flight deck fix FDY r1 FDY-O1-05: the 4 mm lip, seen
+    #                        nearly face-on from the design eyes, still drew a hard toon line round the side windows)
     glass_d=0.0090,        # funnel / seal depth inside the OML at the glass (panes 4-5 mm in: >= 3.5 mm clear) [E]
     proud=0.0015,          # the funnel's outer edge 1.5 mm in front of the lining, overlapping its hole edge
     overlap=0.010,         # ... by 10 mm
@@ -779,10 +780,13 @@ def lining_map(side, x0, x1, z0, z1, off, nx=None, nz=None, step=0.01):
 # slot (zip edge), red placards, the map light and the operating-limitations placard (abstract strokes)
 # =====================================================================================================================
 CB = dict(
-    head_r=0.0040, head_h=0.0065, collar=0.0004,   # [M] breaker heads (P1046409 / 10, AOPA): small black, white collar
+    head_r=0.0030, head_h=0.0065, collar=0.0004,   # [M] breaker heads (P1046409 / 10, AOPA): small black, white collar
     # (flight deck fix r2 FID-FD2-09: the heads read as holes in a black field from the seats -- each now stands on a
     #  white collar SLEEVE `sleeve` = (radial width, height) and 3 mm higher, `raise`)
-    sleeve=(0.0012, 0.0025), raise_=0.0030,
+    # (flight deck fix FDY r1 FIDY1-06: the 8 mm heads on 10.4 mm white collars read as a grid of polka-dot knobs from
+    #  the co-pilot stop; the AOPA close-up / P1046409 / 10 show small dark heads over thin satin rings, the label cells
+    #  the dominant feature: heads r 4 -> 3 mm, the sleeve a thin dark-metal ring, `sleeve_mat`)
+    sleeve=(0.0007, 0.0016), raise_=0.0030, sleeve_mat="metal_dark",
     frame=0.013, frame_proud=0.0065, plate_proud=0.0025,   # [E] bezel frame width, faces (4 mm recess)
     band=0.0026,                                   # [E] lit bus band height
     # lit bus bands per row (1-4) [M]: LH rows blue (P1046410, PRO Mexico photo); RH front yellow / green, rear white
@@ -792,7 +796,10 @@ CB = dict(
     glow={-1: (("white",) * 4, ("white",) * 4), 1: (("yellow", "green", "green", "green"), ("white",) * 4)},
     # label strips per block [M]: backlit white legend cells on the black plate, except the RH rear block's light
     # silver strips with dark legends (AOPA studio photo, P1046409)
-    label={-1: ("dark", "dark"), 1: ("dark", "light")},
+    # (flight deck fix FDY r1 FIDY1-06: the dark cells now sit on a dark-grey label strip, `cell_mat`, each framed by
+    #  white rules with two rows of legend strokes -- P1046410's LH and P1046409's RH front blocks show dark cells with
+    #  white text over the lit bus band, the AOPA RH rear block light silver cells; both consoles kept that way)
+    label={-1: ("dark", "dark"), 1: ("dark", "light")}, cell_mat="legend_grey",
     slot=(0.010, 0.032),                           # [M] stowage slot height, its centre above the bezel top
 )
 
@@ -857,14 +864,16 @@ def cb_panels(fl):
                 out.append((M.patch(u(pa), b0, u(pb), b1, pp, step=0.02), "bezel_black"))
                 rows = _row_layout(0.0, z1 - z0, nrow)
                 du = (pb - pa) / ncol
-                legends, white, strips = [], [], []
+                legends, white, strips, cells = [], [], [], []
                 for r, (vk, (l0, l1), (g0, g1)) in enumerate(rows):
                     out.append((M.quads([(u(pa) + 0.004, b0 + g0, u(pb) - 0.004, b0 + g1)], pp + 0.0007),
                                 f"fdb_cb_glow_{glow[r]}"))
                     if lab == "light":                 # a light label strip under the row's legends
                         strips.append((u(pa) + 0.004, b0 + l0 - 0.0006, u(pb) - 0.004, b0 + l1 + 0.0006))
-                    else:
-                        white += [(u(pa) + 0.004, b0 + l1 - 0.0005, u(pb) - 0.004, b0 + l1)]
+                    else:                              # a dark-grey strip of cells, framed top and bottom
+                        cells.append((u(pa) + 0.004, b0 + l0 - 0.0006, u(pb) - 0.004, b0 + l1 + 0.0006))
+                        white += [(u(pa) + 0.004, b0 + l1 - 0.0005, u(pb) - 0.004, b0 + l1),
+                                  (u(pa) + 0.004, b0 + l0, u(pb) - 0.004, b0 + l0 + 0.0005)]
                     for c in range(ncol):
                         uc = u(pa) + (c + 0.5) * du
                         if c:
@@ -874,7 +883,8 @@ def cb_panels(fl):
                         P, Nn = M.frame(uc, b0 + vk)
                         P = P + pp * Nn
                         sw_, sh_ = CB["sleeve"]
-                        out.append((cylinder(P - 0.0002 * Nn, P + sh_ * Nn, CB["head_r"] + sw_, n=10), "light_white"))
+                        out.append((cylinder(P - 0.0002 * Nn, P + sh_ * Nn, CB["head_r"] + sw_, n=10),
+                                    CB["sleeve_mat"]))
                         out.append((cylinder(P + 0.0010 * Nn, P + (CB["head_h"] + CB["raise_"]) * Nn, CB["head_r"],
                                              n=10), "grip_black"))
                     if pa == x0:                       # row marks: 1-4 dots on the frame's forward band
@@ -885,7 +895,8 @@ def cb_panels(fl):
                     out.append((M.quads(strips, pp + 0.0006), "fdb_cb_label"))
                     out.append((M.quads(white, pp + 0.0008), "black"))
                     out.append((M.quads(legends, pp + 0.0009), "black"))
-                else:                                  # backlit white legends on the black plate
+                else:                                  # backlit white legends on the dark cells
+                    out.append((M.quads(cells, pp + 0.0005), CB["cell_mat"]))
                     out.append((M.quads(white, pp + 0.0008), "light_white"))
                     out.append((M.quads(legends, pp + 0.0009), "fdb_cb_legend"))
             out.append((M.patch(u(xs0) - 0.0005, b0, u(xs1) + 0.0005, b1, fp, step=0.02), "panel_dark"))
@@ -951,7 +962,7 @@ OVH = dict(
     squares=((0.077, 0.745, "panel_dark"), (0.187, 0.745, "panel_dark"), (0.157, 0.172, "panel_silver")),
     paddles=((0.601, 0.147), (0.644, 0.147)),          # LANDING, PULSE RECOG (white)
     run=(0.090, 0.150),                                 # RUN lever under its guard
-    master=(0.849, 0.775, 0.106, 0.196),                # red guard: centre fs, fa, size fs, fa
+    master=(0.849, 0.775, 0.106, 0.196), master_k=0.75,  # red guard: centre fs, fa, size fs, fa; guard / frame
     screws=((0.214, 0.913), (0.780, 0.902), (0.243, 0.095), (0.743, 0.091)),
     # white lines: (fs0, fa0, fs1, fa1, dashed)
     lines=((0.248, 0.33, 0.248, 0.95, 0), (0.03, 0.59, 0.248, 0.59, 0), (0.04, 0.33, 0.93, 0.33, 0),
@@ -1130,9 +1141,15 @@ def overhead_panel():
         out.append((box(c + 0.014 * f.w - 0.004 * f.u, (0.022, 0.011, 0.012), R=f.R), "panel_silver"))
         fs, fa, ws_, wa_ = O["master"]                                              # MASTER POWER guard
         c = Pp(fs, fa)
-        out.append((box(c + 0.004 * f.w, (wa_ * 2 * hli, ws_ * 2 * hwi, 0.006), R=f.R), "placard_red"))
-        out.append((cylinder(c + 0.006 * f.w, c + 0.016 * f.w + 0.004 * f.u, 0.0018, n=8), "panel_silver"))
-        out.append((box(c + 0.012 * f.w - 0.012 * f.u, (0.006, 0.022, 0.010), R=f.R), "paint_red"))
+        # (flight deck fix FDY r1 FIDY1-07: the full-size saturated red block read large and loud from the cabin; the
+        # Pilatus overhead photo shows a smaller darker-red guard sitting in a black recess frame: the frame the old
+        # footprint 0.7-3.7 mm proud of the plate, the guard O["master_k"] of it standing 2.8 mm out of the frame, in the dim
+        # placard red)
+        k_ = O["master_k"]
+        out.append((box(c + 0.0022 * f.w, (wa_ * 2 * hli, ws_ * 2 * hwi, 0.003), R=f.R), "bezel_black"))
+        out.append((box(c + 0.0045 * f.w, (k_ * wa_ * 2 * hli, k_ * ws_ * 2 * hwi, 0.004), R=f.R), "placard_red_dim"))
+        out.append((cylinder(c + 0.006 * f.w, c + 0.014 * f.w + 0.003 * f.u, 0.0016, n=8), "panel_silver"))
+        out.append((box(c + 0.010 * f.w - 0.009 * f.u, (0.005, 0.017, 0.008), R=f.R), "paint_red"))
         for fs, fa in O["screws"]:
             c = Pp(fs, fa)
             out.append((superellipsoid(c, (0.0035, 0.0035, 0.0015), (1, 1), 4, 8), "metal_dark"))
