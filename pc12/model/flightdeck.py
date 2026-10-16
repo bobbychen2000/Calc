@@ -776,12 +776,14 @@ def _plinth_floor(acc, floor=True):
     ob0, ob1 = (float(v) for v in DV["open_bl"])
     # (final judge r1 I7: a polished strip, 55 mm, as P1046406's bright threshold; was a 40 mm satin bar)
     acc.add(box([xd, 0.5 * (ob0 + ob1), FL + 0.0015], (0.055, ob1 - ob0 + 0.02, 0.003)), "chrome_trim")
-    # footwell front closure at the forward end of the lining (dark)
+    # footwell front closure at the forward end of the lining (dark; flight deck + yoke fix r3 FDY-O3-03: the neutral
+    # panel_dark -- in the shared 'black' it took the quadrant plate's warm tint, PART_TRIM 'flight_deck:black', and read
+    # as a brown wall behind the pedals; P1046408 / 09: a black blanket)
     S = I.lining_section(xa, n=361)
     S = S[S[:, 1] >= zb]
     k = np.argsort(np.arctan2(S[:, 1] - 1.7, S[:, 0]))
     ring = np.c_[np.full(len(S), xa + 0.001), S[k, 0] * 0.995, S[k, 1]]
-    acc.add(_oriented(planar_cap(ring, [1.0, 0, 0]), [1.0, 0, 0]), "black")
+    acc.add(_oriented(planar_cap(ring, [1.0, 0, 0]), [1.0, 0, 0]), "panel_dark")
 
 
 # =====================================================================================================================
@@ -913,6 +915,12 @@ def _pedals(acc):
         acc.add(box(c, (0.040, 0.050, 0.050)), "metal_dark")
         acc.add(cylinder(c + [0.02, 0, 0.0], c + [0.045, 0, 0.0], 0.006, n=8), "steel_dark")
         acc.add(cylinder(c + [0.045, 0, 0.0], c + [0.045, 0, 0.035], 0.005, n=8), "grip_black")
+        # the rudder-bar linkage ahead of the pair: horn, push-pull rod, return springs, toe-brake hoses (fix r3
+        # FDY-O3-03; with the footwell walls in fit_fd_a 28)
+        acc.group = "footwell"
+        for m, mat in A.rudder_linkage(sg, sg * float(I.CREW_SEAT["bl"]), (hx, FL + hz), FL, (y0, y1)):
+            acc.add(m, mat)
+        acc.group = "pedals"
     # the footwells: dark walls, the panel's underside, the outboard cubby with the USB pair (FD-J04)
     acc.group = "footwell"
     for m, mat in A.footwell_walls():

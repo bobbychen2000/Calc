@@ -266,9 +266,12 @@ BUDGET_OPEN = ("the rear cabin seats seat_pax3-6 34,834 at RES 2 against the 34,
 # (and flight_deck 92k -> 96k: the yoke track's column surround -- the U recesses' walls, rim flanges and floors with the
 # columns' openings, the sleeves, the J bands and screws -- and the panel face's exact U trim, after the bake's contact
 # split of their broad faces: 199k -> 207.5k at RES 2; GEOM A's yoke wells and bellows are gone)
-INTERIOR_BUDGET = {"total": res.budget(390_000, 2.2) + 2 * (YOKE_BUDGET - 24_000),
+# (flight deck + yoke fix r3, FDY-O3-03: flight_deck 96k -> 99.5k and the total 390k -> 393.5k -- the rudder-bar
+# linkage ahead of the pedals, fd_detail_a.rudder_linkage: horns, push-pull rods, return springs, toe-brake hoses, the
+# front wall's insulation blankets and the pedal housings, ~7k at RES 2)
+INTERIOR_BUDGET = {"total": res.budget(393_500, 2.2) + 2 * (YOKE_BUDGET - 24_000),
                    "crew_seat": res.budget(19_500, 3.4),
-                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(96_000, 2.2),
+                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(99_500, 2.2),
                    "yoke_L": YOKE_BUDGET, "yoke_R": YOKE_BUDGET, "pedal_LL": 3_000, "pedal_LR": 3_000, "pedal_RL": 3_000,
                    "pedal_RR": 3_000, "fd_consoles": 30_000, "fd_divider": 18_000, "interior_lining": 190_000}
 
@@ -425,7 +428,7 @@ AO_CONTACT_POW = 0.6                    # its share: the occlusion x contact^0.6
 # (flight deck fix FDY r2 FIDY2-02: the titanium sub-panels read as flat light-grey plastic -- P1046408's plates fall to
 # ~30-40 along their seams, round the switch-block bezels and toward the rolled lip at their foot, a spread of 27-147 at
 # the fitted camera against the model's 72-128: the contact pass weighs more on the brushed titanium)
-AO_CONTACT_POW_MAT = {"panel_titanium": 1.3}
+AO_CONTACT_POW_MAT = {"panel_titanium": 1.6}   # (FDY r3 FIDY3-02: 1.3 -> 1.6, the plates' seams and feet darker)
 AO_CONTACT_SKIP = ("panel_grey",)       # the eyebrow fascia: under the lip it took 88 -> 72 at panel_408b, P1046408 ~120
 AO_CONTACT = dict(spacing=0.0025, steps=(0.004, 0.008, 0.014, 0.022), far=(1.0, 2.0, 1.0), offset=0.0008, k=12,
                   edt_from=None, cell=0.002, smooth=1)

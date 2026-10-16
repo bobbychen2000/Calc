@@ -201,6 +201,109 @@ def footwell_walls():
     return out
 
 
+
+# the rudder-bar linkage ahead of the pedals (flight deck + yoke fix r3, FDY-O3-03: P1046408 / 09 show a dark, busy
+# footwell behind the pedals -- vertical rods with return springs, hoses, brackets -- where the model had the pedal arms
+# alone in front of a plain wall).  Builder detail [E], no table: per pedal pair a bell-crank horn on the torque tube,
+# the push-pull rod forward to the footwell front, two return springs from the horn's cross pin down to floor anchors,
+# and the toe-brake hoses from the torque-tube brackets forward and down; all forward of the pedal arms' sweep and
+# between the pads (test/fit_fd_a.py 28 takes them with the footwell walls: pedals over their travel, the 95th-pct
+# shoes and legs >= 10 mm)
+RUDDER_LINK = dict(
+    horn=(0.105, 0.40, 0.013, 0.0045),   # horn length down-forward from the tube axis, its forward lean (dx / dz),
+    #                                      half-width, half-thickness [E]
+    rod_r=0.005, rod_end_r=0.009, rod_x=3.080,  # push-pull rod radius, rod-end eye, its forward end STA [E] (a
+    #                                      clevis bracket from there to the footwell front closure, FLOOR fd_x0)
+    spring_dy=0.032,                     # return springs at the pair centre +/- this [E: P1046408 right footwell]
+    spring=(0.0065, 0.0012, 0.130, 13, 5, 4),  # coil radius, wire radius, coil length, turns, points / turn, wire sides
+    anchor_x=3.075, anchor_h=0.035,      # floor anchors: STA, height of the eye above the floor [E]
+    hose_r=0.003,                        # toe-brake hoses (rubber_black) [E]
+    # P1046408's footwells (brightened): a crinkled silver insulation blanket on the upper front wall, dark boxes low
+    # down at the front (the pedal assembly's housings), bright rod-end bolts at the rods' ends
+    foil=(1.50, 0.16, 0.0045, 0.045),    # blanket: from WL, half-width about the pair centre, quilt depth, pillow size [E]
+    box=(0.090, (0.030, 0.050, 0.036)),  # housings at the pair centre +/-, half-sizes x / y / z, on the floor (low:
+    #                                      the 95th-pct shoes pass over them at full rudder, fit_fd_a 28) [E]
+)
+
+
+def rudder_linkage(sg, yp, piv, FL, tube_ends):
+    """[(Mesh, material)] of one pedal pair's rudder-bar linkage (RUDDER_LINK): sg the side, yp the pair centre BL,
+    piv (x, z) the torque-tube axis, FL the floor WL, tube_ends the two bracket BLs."""
+    from cad.mesh import cylinder, superellipsoid, sweep_tube
+    q = RUDDER_LINK
+    hx, hz = float(piv[0]), float(piv[1])
+    out = []
+    L, lean, hw, ht = q["horn"]
+    dh = np.array([-lean, 0.0, -1.0]); dh /= np.linalg.norm(dh)
+    c0 = np.array([hx, yp, hz])
+    # horn: a rounded plate hanging down-forward from a boss on the tube
+    w = np.cross(dh, [0.0, 1.0, 0.0])
+    R = np.stack([dh, [0.0, 1.0, 0.0], w], 1)
+    out.append((superellipsoid(c0 + 0.5 * L * dh, (0.5 * L + hw, ht, hw), (0.3, 0.6), nu=6, nv=7, R=R), "metal_dark"))
+    out.append((cylinder(c0 - [0, 0.013, 0], c0 + [0, 0.013, 0], 0.0165, n=12), "metal_dark"))
+    tip = c0 + L * dh
+    # push-pull rod forward to the footwell front, rod-end eyes at both ends
+    fwd = np.array([q["rod_x"], yp, tip[2] - 0.006])
+    out.append((cylinder(tip + [-0.008, 0, 0], fwd, q["rod_r"], n=10), "steel_dark"))
+    for pe in (tip, fwd):
+        out.append((superellipsoid(pe, (q["rod_end_r"],) * 3, (1.0, 1.0), nu=6, nv=7), "chrome_trim"))
+    from model import interior as I
+    x0 = float(I.FLOOR["fd_x0"])
+    xb = 0.5 * (x0 + fwd[0] - 0.004)
+    out.append((superellipsoid([xb, yp, fwd[2]], (0.5 * (fwd[0] - x0) + 0.004, 0.012, 0.016), (0.3, 0.3), nu=6, nv=7),
+                "metal_dark"))
+    # return springs: a cross pin through the horn, a close-coiled spring hanging from each end, a wire on to a floor eye
+    pin = c0 + 0.62 * L * dh
+    dy = q["spring_dy"]
+    out.append((cylinder(pin - [0, dy + 0.006, 0], pin + [0, dy + 0.006, 0], 0.0035, n=8), "steel_dark"))
+    rc, rw, cl, nt, ppt, ns = q["spring"]
+    for sy in (-1.0, 1.0):
+        top = pin + [0.0, sy * dy, 0.0]
+        anc = np.array([q["anchor_x"], yp + sy * dy, FL + q["anchor_h"]])
+        ax = anc - top; ax /= np.linalg.norm(ax)
+        e1 = np.cross(ax, [0.0, 1.0, 0.0]); e1 /= np.linalg.norm(e1)
+        e2 = np.cross(ax, e1)
+        s0 = top + 0.012 * ax                                     # the hook, then the coil
+        k = np.arange(int(nt * ppt) + 1) / ppt
+        th = 2 * np.pi * k
+        path = s0[None] + (cl * k / nt)[:, None] * ax[None] + rc * (np.cos(th)[:, None] * e1 + np.sin(th)[:, None] * e2)
+        out.append((sweep_tube(path, rw, n=ns), "steel_dark"))
+        out.append((cylinder(top, s0 + rc * e1, rw, n=ns), "steel_dark"))               # hook to the pin
+        out.append((cylinder(path[-1], anc + [0, 0, 0.004], 0.0012, n=ns), "steel_dark"))   # wire to the floor eye
+        out.append((superellipsoid(anc - [0, 0, 0.012], (0.016, 0.010, 0.014), (0.3, 0.3), nu=6, nv=7), "metal_dark"))
+    # toe-brake hoses: from the torque-tube brackets' forward faces, forward and down to the footwell front
+    for yb in tube_ends:
+        yo = yb + np.sign(yb - yp) * 0.013                       # outboard of the bracket (clear of the pedal arms)
+        P = np.array([[hx - 0.024, yo, hz + 0.060], [hx - 0.050, yo, hz + 0.050], [hx - 0.075, yo, hz + 0.010],
+                      [q["rod_x"] - 0.002, yo, hz - 0.060], [q["rod_x"] - 0.012, yo, FL + 0.220],
+                      [x0 + 0.004, yo, FL + 0.080]])
+        from scipy.interpolate import CubicSpline
+        tt = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))]
+        cs = CubicSpline(tt, P, bc_type="natural")
+        out.append((sweep_tube(cs(np.linspace(0, tt[-1], 16)), q["hose_r"], n=5), "rubber_black"))
+        out.append((cylinder([hx - 0.0225, yo, hz + 0.060], [hx - 0.030, yo, hz + 0.060], 0.0055, n=8), "steel_dark"))
+        out.append((cylinder([x0 + 0.001, yo, FL + 0.080], [x0 + 0.010, yo, FL + 0.080], 0.0055, n=8), "steel_dark"))
+    # the insulation blanket on the upper front wall: quilted pillows with a fine crinkle (panel_silver foil)
+    z0, hw_, dq, pq = q["foil"]
+    z1 = hz + 0.040                                              # up to the panel's underside at the front
+    nu_, nv_ = 26, 12
+    U, Vv = np.meshgrid(np.linspace(-hw_, hw_, nu_), np.linspace(z0, z1, nv_), indexing="ij")
+    pil = np.abs(np.sin(np.pi * U / pq) * np.sin(np.pi * (Vv - z0) / pq)) ** 0.5
+    crk = 0.35 * (np.sin(173.0 * U + 41.0 * Vv) * np.sin(97.0 * Vv - 29.0 * U))
+    fade = np.clip(np.minimum(U + hw_, hw_ - U) / 0.02, 0, 1) * np.clip(np.minimum(Vv - z0, z1 - Vv) / 0.02, 0, 1)
+    X = x0 + 0.003 + dq * fade * (pil + crk) * 0.7
+    P = np.stack([X, yp + U, Vv], -1)
+    from cad.mesh import grid_surface
+    m = grid_surface(P)
+    fn = m.face_normals()
+    out.append((m.flipped() if fn[:, 0].mean() < 0 else m, "panel_silver"))
+    # the pedal assembly's housings low at the front, either side of the crank
+    bdy, (bx, by, bz) = q["box"]
+    for sy in (-1.0, 1.0):
+        out.append((superellipsoid([x0 + 0.004 + bx, yp + sy * bdy, FL + 0.008 + bz], (bx, by, bz), (0.15, 0.2), nu=6, nv=7),
+                    "panel_dark"))
+    return out
+
 # =====================================================================================================================
 # glareshield (A3): stitching, the lip / hood end section for the sidewall sill (track B), ECS vent pods
 # =====================================================================================================================
