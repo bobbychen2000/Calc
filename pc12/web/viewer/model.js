@@ -3,7 +3,7 @@
 // The materials themselves (lookdev PBR values and the shader patches) live in materials.js.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { U as MU, CABIN, INTERIOR_PARTS as LIT_INTERIOR, upgradeMaterials, clonePatched } from './materials.js';
+import { U as MU, CABIN, INTERIOR_PARTS as LIT_INTERIOR, upgradeMaterials, clonePatched, addFur } from './materials.js';
 
 // Skin parts clipped by the cutaway plane (model y = 0, glTF X = 0; the port half X < 0 is removed).
 export const CUT_PARTS = new Set([
@@ -64,8 +64,11 @@ const CABIN_HIDDEN = new Set(['antennas']);
 // ?seatpark=aft parks both seats at full aft travel, CREW_SEAT travel_x 70 mm, to compare those photos like with like;
 // the default is unchanged)
 const SEAT_PARK_Q = new URLSearchParams(location.search).get('seatpark');
+// (flight deck fix FDY r2, FIDY2-03: ?seatpark=dy,dz -- any up / aft offset in m, glTF Y / Z, for the photo comparisons)
+const SEAT_PARK_XYZ = /^-?[\d.]+,-?[\d.]+$/.test(SEAT_PARK_Q || '') ? [0, ...SEAT_PARK_Q.split(',').map(Number)] : null;
 const SEAT_PARK = SEAT_PARK_Q === '1' ? { seat_pilot: [0, 0.040, 0], seat_copilot: [0, 0.040, 0] }
-  : SEAT_PARK_Q === 'aft' ? { seat_pilot: [0, 0, 0.070], seat_copilot: [0, 0, 0.070] } : {};
+  : SEAT_PARK_Q === 'aft' ? { seat_pilot: [0, 0, 0.070], seat_copilot: [0, 0, 0.070] }
+  : SEAT_PARK_XYZ ? { seat_pilot: SEAT_PARK_XYZ, seat_copilot: SEAT_PARK_XYZ } : {};
 
 const PAINT_RE = /^(paint_|trim_black$)/;
 const GLASS_RE = /^(glass|lens$)/;
@@ -152,7 +155,7 @@ const noRaycast = () => {};
 const _g = new THREE.Vector3();
 
 export class Model {
-  constructor(gltf, meta, { materials = null } = {}) {
+  constructor(gltf, meta, { materials = null, fur = 0 } = {}) {
     this.root = gltf.scene;
     this.meta = meta;
     // lookdev materials (MeshPhysicalMaterial by name) before anything references the GLB ones
@@ -250,6 +253,16 @@ export class Model {
         this.meshRecs.push(mr);
         this.meshToPart.set(ch, rec);
         this.pickables.push(ch);
+      }
+    }
+    // shell fur on the crew seats' sheepskin (materials.js addFur: `fur` shells drawn after each fleece mesh)
+    this.furMeshes = 0;
+    // (the part's other meshes are the obstacles that bound the pile's root: the leather the pads sink into)
+    if (fur > 0) {
+      for (const mr of this.meshRecs) {
+        const rec = this.meshToPart.get(mr.mesh);
+        const obst = rec ? rec.meshes.map((m) => m.mesh).filter((m) => m !== mr.mesh && !/^(harness|stitch|chrome)/.test(m.material.name || '')) : [];
+        if (addFur(mr.mesh, fur, obst)) this.furMeshes++;
       }
     }
     this.root.updateMatrixWorld(true);

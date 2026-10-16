@@ -159,7 +159,13 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // the look track's geometry, 0.6 since the flight deck r1 merge: the proud plates and the moulded face round them
   // rendered them 64, now 72) and the graphite panel face round the PDU row and the cheek legs (the merge: 64, a shade
   // under the plates as the Garmin / brochure renders; P1046408 reads the face ~90)
-  panel_titanium: [0, 0.8], panel_graphite: [0, 0.85],     // (titanium 0.6 -> 0.8 with the warmer base, fix r2 FDO2-01)
+  panel_graphite: [0, 0.85],     // (titanium 0.6 -> 0.8 with the warmer base, fix r2 FDO2-01; 0.6 since FDY r2, below)
+  // (flight deck fix FDY r2 FIDY2-02: the sub-panels / plates read as flat light neutral-grey plastic -- 96 / 114 at
+  // panel_408b with a 69-129 spread against P1046408's darker mauve brushed metal, 82 / 91, 28-148: a mauve base, more
+  // metal and wider brushed bands (VIEWER), the fill 0.8 -> 0.5, and a NEAR-FIELD term x 1.05 below WL 1.78 .. x 0.8
+  // above 1.88 (the band under the PDUs had read 114-128 against the photo's 91; half of it on the reflections): at
+  // panel_408b 52 / 84 / 125, (82, 83, 93), the band 96 and the plates' foot 90 against the photo's 91 / 89)
+  panel_titanium: [0, 0.5, 0, 0, 0, 0, 1, 1.05, 0.8, 1.78, 1.88, 0.5],
   // the near-black footwell carpet (P1046408 5-15)
   carpet_flightdeck: [0, 0.85],
   // the flight deck's anthracite lining -- posts, window surrounds, side walls, headliner (flight deck fix r1 FDO1-04 /
@@ -167,7 +173,11 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // P1046410's posts 88-97, P1046408's 120-128 in its brighter frame)
   // (flight deck fix r2 FDO2-01 / 03: 0.72 -> 0.5 -- the A-pillar / side-window surround still read as a light slab,
   // 98-102 at the crew stops; now ~80 with the darker reveal face and the satin edge bead of the builder)
-  lining_flightdeck: [0, 0.5],
+  // (0.5 since fix r2 FDO2-01 / 03 -- flight deck fix FDY r2 FIDY2-04: the A-pillars, centre post and surround read near-black charcoal from every interior
+  // camera -- 57 / 68 at panel_408b against P1046408's light warm-grey 127 / 128, P1046410's 108: the windshield framed
+  // in black where the photos frame it in grey: 0.5 -> 0.95 / 1.05, ~86 / 99 at panel_408b, ~100 / 108 from the pilot
+  // stop; the funnel next to the glass keeps its darker satin reveal face)
+  lining_flightdeck: [0, 0.95],
   // the glazing surround's darker satin inner face (fix r2 FDO2-03; without a factor it read 85, as light as the lining)
   lining_fd_reveal: [0, 0.5],
   // the eyebrow fascia (flight deck fix r2b FDO2-01: the light band over the PDUs, 126 from the crew seats and 122 at
@@ -179,14 +189,16 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // flight deck fix r5: the A-pillar's round post (FDO4-02 / FID-FD4-02: P1046409 / 10 slim dark posts, ~60-90 with a
   // narrow bright edge -- its satin reflection of the glazing, SPEC_KEEP) and the palm tray's matte warm titanium floor
   // (FDO4-03: P1046408 ~128 / 117 / 132, no recognisable reflection)
-  lining_fd_post: [0, 0.5], tray_titanium: [0, 0.3],
+  // (FDY r2 FIDY2-04 above: the post 0.5 -> 1.05; the palm tray 0.3 -> 0.42 -- 91 at panel_408b against P1046408's 117)
+  lining_fd_post: [0, 1.05], tray_titanium: [0, 0.42],
   // (fix r5 FDO4-03 / FID-FD4-03: from above, the quadrant / pedestal views, the palm tray read 135-165 and the
   // stack's gunmetal shroud and the quadrant frame 100-135, light-grey plastic; P1046409 from the co-pilot's seat: the
   // tray 106 / 100 / 113, the face round it 51-60, the frame ~60-70)
   // (flight deck fix FDY r1 FIDY1-03: the quadrant frame / stack flanks read light grey, 65 / 86 / 76 at panel_408b /
   // P1046410 / P1046409's cameras against the photos' 28 / 43 / 39 under the same masks: 0.6 -> 0.25, its reflections kept;
   // 0.33 read 52 at panel_408b)
-  stack_gunmetal: [0, 0.45], pedestal_gunmetal: [0, 0.25],
+  // (flight deck fix FDY r2: the quadrant frame still 45 at panel_408b against P1046408's 27: 0.25 -> 0.15)
+  stack_gunmetal: [0, 0.45], pedestal_gunmetal: [0, 0.15],
   // the yoke (3-D judges r1 FID1-01 / CR1-06): a third entry is the material's own REFLECTION floor -- the reflections
   // keep at least this share of the studio's (its clear coat / metal shows the windshield and headliner as in the
   // photos, not the floor-facing 0.06-0.3 of the dark trim) -- and a fourth the key light's share in its specular
@@ -216,9 +228,12 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // darker (0.40) with a reflection floor of 0.5, the side-window term 12 and PART_TRIM's sharper, stronger, slightly warm
   // reflections (p10 / p50 / p95 45 / 58 / 106, B - R +9: near-black with lit rims); the pads a near-field gradient
   // (x 0.7 .. 1.2 up the grip) and a finer grain (VIEWER yoke_leather), framed lighter than the body (pads / body 1.15)
+  // (FDY r2 FIDY2-06 asked for a softer rim along the cover's shaded flank -- 'win' 12 / 19 took the cover's highlight
+  // spread at the pilot stop to 16 / 19, under [Y1b]'s 20 (CR2-06: the gloss cover's edge highlights, the r2 yoke
+  // judges): kept at 25)
   yoke_white: [0.25, 1, 1.4, 1, 1, 25, 1, 0.5, 1.06, 1.79, 1.91, 0.7], yoke_silver: [0.5, 1, 1, 0.6, 0, 0, 1],
   yoke_silver_dark: [0.5, 1, 1, 0.6, 0, 0, 1],
-  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.40, 0.5, 1, 0, 12], yoke_trim_face: [0, 1.0, 0.25],
+  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.40, 0.45, 1, 0, 14], yoke_trim_face: [0, 1.0, 0.25],
   yoke_slot: [0, 0.5],
   // rev Q (3-D judges r4): the cover's groove flanks are cavities -- no fill, part of the studio's diffuse (FID4-01); the
   // column a satin dark-grey tube, its reflections floored at 0.15 of the studio's (FID4-05: ~40-50 from the pilot's eye)
@@ -264,7 +279,10 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
 const YOKE_PROBE = {
   // (FDY r1 FIDY1-04: the upper insert x 1.25 -- 187 at P1046409's camera against the photo's 200-210)
   yoke_silver: { k: [1.625, 1.5, 1.025, 1.625, 0.22], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
-  yoke_silver_dark: { k: [1.0, 1.53, 1.7, 0.72, 0], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
+  // (FDY r2 FIDY2-06: the lower insert 0.84-0.86 of the upper at panel_408b against the photos' 0.92-0.95, and bluer:
+  // its terms x 1.2, the side term x 1.3 -- P1046408's low camera sees it mirror the side window -- with a less blue base
+  // (VIEWER): 0.91 there, lower / upper 0.89 from the pilot stop ([Y1e] <= 0.90))
+  yoke_silver_dark: { k: [1.2, 1.85, 2.2, 0.84, 0], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
 };
 for (const it of (Q_M.get('yokeProbe') || '').split('|')) {          // ?yokeProbe=name:k0,..,k4,y0,..,y5|...
   const k = it.slice(0, it.lastIndexOf(':')), a = it.slice(it.lastIndexOf(':') + 1).split(',').map(Number);
@@ -298,8 +316,11 @@ const PART_TRIM = {
   // (flight deck fix r5 FDO4-04 / FID-FD4-05: the sunlit patch still read near-white paint, ~160-200, where sunlit black
   // leather stays dark with a broad sheen: sunIn 0.22 -> 0.07 -- the glare close-up's patch 160 -> ~125 against the
   // shade's ~95-105, its edge softened by the sun's PCF radius 3, scene.js)
-  'flight_deck:leather_glareshield': { specIn: 0.35, roughness: 0.55, sunIn: 0.07, specularIntensity: 1.0,
-    specularColor: [0.375, 0.435, 0.5] },
+  // (flight deck fix FDY r2 FDY-O2-03: from the crew stops the hood still a mid blue-grey vinyl, 89-104 / 96 against
+  // P1046410's dark charcoal 67: its fill 0.55, specIn 0.35 -> 0.2, sunIn 0.07 -> 0.03 -- 73 / 69 from the pilot /
+  // co-pilot stop; panel_408b sees the rolled lip / underside, its own entry below, unchanged)
+  'flight_deck:leather_glareshield': { specIn: 0.2, roughness: 0.55, sunIn: 0.03, specularIntensity: 1.0,
+    specularColor: [0.375, 0.435, 0.5], fill: [0, 0.55] },
   // (fix r3 FID-FD3-02: the hood's rolled lip and underside -- what the photo-fitted panel_408b camera sees of the hood
   // from below -- read 53-75 against P1046408's sky-sheen band 86-125, B - R +31: the lip's grazing reflection of the
   // windshield; F90 1, F0 kept and tinted to the sky, a smoother 0.38, its reflections x 1.9)
@@ -319,8 +340,16 @@ const PART_TRIM = {
   'interior_lining:panel_dark': { fill: [0, 0.85] },
   // (FDY r1 FDY-O1-02 / FIDY1-04: the yoke body's satin black -- sharper, stronger reflections, a warm specular tint taking
   // the world sky's blue out of it; CABIN_TRIM 'yoke:grip_black' above)
-  'yoke_L:grip_black': { roughness: 0.22, specIn: 3.5, specularColor: [1.0, 0.95, 0.88] },
-  'yoke_R:grip_black': { roughness: 0.22, specIn: 3.5, specularColor: [1.0, 0.95, 0.88] },
+  // (FDY r2 FDY-O2-02 / FIDY2-06: still matte slate without the photos' satin streaks down the grip faces: sharper and
+  // stronger reflections, neutral-cool -- the median kept dark for [Y1b], the lit edges brighter)
+  'yoke_L:grip_black': { roughness: 0.2, specIn: 4.0, specularColor: [0.95, 0.97, 1.0] },
+  'yoke_R:grip_black': { roughness: 0.2, specIn: 4.0, specularColor: [0.95, 0.97, 1.0] },
+  // (FDY r2 FDY-O2-02: the pads' blue-grey speckle -- a warm specular tint takes the sky's blue out of their sheen)
+  'yoke_L:yoke_leather': { specularColor: [1.0, 0.95, 0.9] },
+  'yoke_R:yoke_leather': { specularColor: [1.0, 0.95, 0.9] },
+  // (FDY r2 FDY-O2-04: the quadrant plate and the flight deck's black parts read navy from above, B - R +26 at the
+  // quadrant close-up, the photos satin black: a warm base and specular tint, less reflection inside)
+  'flight_deck:black': { color: [0.036, 0.029, 0.022], specIn: 0.5, specularColor: [1.0, 0.9, 0.75] },
 };
 // ?partTrim=part:material={json}|... merges look-development overrides into PART_TRIM (as ?cabTrim for CABIN_TRIM)
 for (const it of (Q_M.get('partTrim') || '').split('|')) {
@@ -466,10 +495,21 @@ const VIEWER = {
   // (tuned in the full viewer, out/tmp/fdy_fix_r1/ld c01-c03: at panel_408b luminance 112 -> ~119 with CABIN_TRIM 0.60,
   // local 9 px sd 13.8 against P1046408's 13.9, (109, 111, 129) B - R +20 against the photos' +15..+27; the lab's
   // brighter room light had asked for a darker, contrastier mat that read as dark blue camouflage in the cabin light)
-  sheepskin: { color: [0.33, 0.27, 0.27], sheenColor: [0.44, 0.40, 0.40], sunIn: 0.45,
+  sheepskin: { color: [0.245, 0.198, 0.212], sheenColor: [0.35, 0.32, 0.34], sunIn: 0.45,
     fleece: { locks: [[100, 0.55, 1.08, 0.0024, 0.6, 1.15, 0.42, 0.9, 0.35, 0.45, 0.4],
       [200, 0.88, 1.06, 0.0006, 0.6, 0.9, 0.38, 0.9, 0.2, 0.25, 0.2]], lockShape: [0.25, 0.8, 0.3, 4.5, 0.8, 0.6],
       bump: 0.8, flat: [0.55, 0.85], lock: [15, 0.12], fibre: [900, 140, 0.05], rim: [0.5, 0.25], sheen: [0.5, 1.4] },
+    // (flight deck fix FDY r2, FDY-O2-01 / FIDY2-01: SHELL FUR -- see furPatch.  The pile ~9 mm: the root 8 mm under the
+    // drawn surface (less where the leather lies closer: furDirs), the tips 1 mm over it; two octaves of tufts, 2.2 / 3.3
+    // mm (the plain blobs and the ridged curls, drawn 1.3 x longer down the faces, twisting with the height), the
+    // threshold rising 0.05 -> 0.75 toward the tips, 40 / m lumps (taller, +-24 % albedo), short gated partings at 30 and
+    // 60 / m, a fray at 1100 / m; the albedo from 0.18 at the root to 1 at the tips.  Tuned at panel_408b against
+    // P1046408's cushions (the judges' texture measure: high-pass sd 8.9 / 10.9 / 12.4 / 14.9 at sigma 1 / 2 / 4 / 8
+    // against 6.5 / 9.7 / 12.4 / 16.9, hp4 skew +0.13 / -0.19, p10 / p50 / p90 97 / 117 / 139 against 87 / 116 / 146;
+    // look-dev out/tmp/fdy_fix_r2/ld2 n05)
+    fur: { h: [0.008, 0.001], root: 0.18, mean: 0.75, oct: [[450, 0.45, 0.5, 0, 1.3, 0, 0.5], [300, 0.55, 0.6, 1, 1.3, 0.4, 0.5]],
+      t: [0.05, 0.75, 1.3], curl: [55, 0.8, 5.0], lump: [40, 0.16, 0.24], part: [[30, 0.45, 0.82, 40, 0.55, 1.3],
+        [60, 0.35, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.18, 1.0, 0.9], tilt: 0.9, sheen: [0.5, 1.1], far: [2.2, 3.2] },
     sheenRoughness: 0.8 },
   // the pleated divider curtain: deep burnt orange in P1046406 (77/23/0), read tan (208/166/116) under the old cabin light
   curtain: { color: [0.36, 0.11, 0.012] },
@@ -481,7 +521,9 @@ const VIEWER = {
   // the table tops) at `amp` of the albedo and +-`rough` (fd_ngx2281_cfsjets_entry_left: strong vertical streaks)
   // (flight deck fix FDY r1 FIDY1-07: at the photo-fitted cabin_fwd_406 camera the divider read a dark saturated
   // mahogany, (41, 27, 16) against P1046406's smoky grey-brown (66, 53, 50): a lighter, less saturated walnut)
-  veneer_walnut: { color: [0.105, 0.078, 0.058], envMapIntensity: 0.5, grain: { amp: 0.28, rough: 0.05 } },
+  // (flight deck fix FDY r2 FIDY2-08: still darker and warmer than P1046406's mauve-grey walnut, (50, 44, 40) against
+  // (78, 70, 73) at cabin_fwd_406: lighter, R ~ B, a little more clear-coat reflection -- (72, 69, 74))
+  veneer_walnut: { color: [0.15, 0.123, 0.118], envMapIntensity: 0.6, grain: { amp: 0.28, rough: 0.05 } },
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   // flight deck r1 LOOK (L5): no occlusion stand-in any more (the baked occlusion / window sky do it); brushed along the
@@ -504,9 +546,14 @@ const VIEWER = {
   // to ~200 and a cool steel hue, B > R, where P1046408 / 09 / 10 show a satin warm titanium with soft broad gradients,
   // R >= B: a warmer base, roughness 0.26 -> 0.34, the streaks' share of the reflection 0.15 -> 0.07 and the bands
   // +-12 -> +-7 %)
-  panel_titanium: { color: [0.245, 0.225, 0.205], metalness: 0.75, roughness: 0.34, specIn: 2.2,
-    brush: { aniso: 0.75, axis: [1, 0, 0], rough: 0.05, len: 0.05, w: 0.0006, spec: 0.07, band: 0.07, bandLen: 0.16,
-      bandW: 0.010, up: [0.40, 0.55, 0.32, 0.15] } },
+  // (flight deck fix FDY r2 FIDY2-02: a flat light neutral grey, (112, 114, 118), where P1046408 / 09 / 10 show a darker
+  // mauve-bronze brushed metal, R > G, B > G, with lit bands and dark seams: a mauve base (0.25, 0.225, 0.245), metalness
+  // 0.85, roughness 0.27, its reflections inside x 1.9 (2.2), the brushed bands +-35 % over 5 cm x 30 cm, the streaks
+  // 15 %; the contact pass weighs more on
+  // the plates' seams and feet, build.AO_CONTACT_POW_MAT)
+  panel_titanium: { color: [0.25, 0.225, 0.245], metalness: 0.85, roughness: 0.27, specIn: 1.9,
+    brush: { aniso: 0.75, axis: [1, 0, 0], rough: 0.05, len: 0.05, w: 0.0006, spec: 0.15, band: 0.35, bandLen: 0.3,
+      bandW: 0.05, up: [0.40, 0.55, 0.32, 0.15] } },
   // (FDO3-01: the graphite face, the stack / pedestal gunmetal: a fine bead-blast grain -- isotropic, `len` 3-4 mm -- in
   // the roughness and the reflection, and a weaker band wander)
   panel_graphite: { specIn: 1.5, brush: { aniso: 0.35, axis: [1, 0, 0], rough: 0.04, len: 0.05, w: 0.0008, spec: 0.12,
@@ -549,10 +596,12 @@ const VIEWER = {
   // where P1046408 / 09 show 0.84-0.87 -- the viewer's image light has no window / headliner glow for its metal to
   // mirror; a lighter base (the judges' 0.45-0.5: 0.52 read 0.99 of the cover at P1046409, 0.30 0.68 at P1046408) with
   // the CABIN_TRIM reflection floor below
-  yoke_silver_dark: { color: [0.42, 0.44, 0.48] },          // rev Q: cool (FID4-02)
+  yoke_silver_dark: { color: [0.45, 0.46, 0.47] },          // rev Q: cool (FID4-02); FDY r2 FIDY2-06: less blue
   // (FDY r1 FIDY1-04: the pads' pebble grain, 1.1 mm, had faded to a flat tone at every crew-seat distance -- a 1.7 mm
   // grain at +-15 % with a lower roughness, the photos' grained, softly lit leather panels)
-  yoke_leather: { fleece: { freq: 600, oct: 2, lo: 0.8, hi: 1.12, dist: 0.0002, bump: 0.6 }, roughness: 0.45 },
+  // (flight deck fix FDY r2 FDY-O2-02: up close the 1.7 mm grain at +-15 % read as a coarse blue-grey granite / denim
+  // speckle; P1046409 / 10 show smooth black leather with a very fine grain: 0.9 mm at -10 / +6 %, half the bump)
+  yoke_leather: { fleece: { freq: 1100, oct: 2, lo: 0.9, hi: 1.06, dist: 0.00012, bump: 0.5 }, roughness: 0.45 },
   // the AFCS cap (3-D judges r2 FID2-03): AgX compresses a bright saturated red toward white -- the lookdev's 0.50 base
   // read 205/69/62 (sat 0.70) at the pilot stop; a darker deep red keeps it saturated (P1046409 199/58/78, Mexico R
   // 138/6/17)
@@ -632,7 +681,8 @@ function physicalFrom(name, e, src) {
   if (src.sheen > 0) { m.sheen = src.sheen; m.sheenColor.copy(src.sheenColor); m.sheenRoughness = src.sheenRoughness; }
   if (V.sheenRoughness != null) m.sheenRoughness = V.sheenRoughness;
   if (V.sheenColor) m.sheenColor.copy(lin(V.sheenColor));
-  if (V.fleece) m.userData.pc12 = { ...(m.userData.pc12 || {}), fleece: { ...V.fleece } };
+  if (V.fur && FUR.on) m.userData.pc12 = { ...(m.userData.pc12 || {}), fur: { ...V.fur, role: 'root' } };
+  else if (V.fleece) m.userData.pc12 = { ...(m.userData.pc12 || {}), fleece: { ...V.fleece } };
   for (const k of ['leather', 'brush']) if (V[k]) m.userData.pc12 = { ...(m.userData.pc12 || {}), [k]: { ...V[k] } };
   if (V.emisIn) m.userData.pc12 = { ...(m.userData.pc12 || {}), emisIn: V.emisIn };
   if (V.specIn) m.userData.pc12 = { ...(m.userData.pc12 || {}), specIn: V.specIn };
@@ -830,6 +880,7 @@ export function upgradeMaterials(root, spec) {
         if (pt && pt.roughness != null) c.roughness = pt.roughness;
         if (pt && pt.specularColor && c.specularColor) c.specularColor.copy(lin(pt.specularColor));
         if (pt && pt.specularIntensity != null) c.specularIntensity = pt.specularIntensity;
+        if (pt && pt.color) c.color.copy(lin(pt.color));
         im.set(ck, c);
       }
       m = im.get(ck);
@@ -913,14 +964,319 @@ const GLSL_BACKFACE = `bool pcIsBack() {
 }
 `;
 
+// ------------------------------------------------------------------------------------ shell fur
+// The crew seats' sheepskin as SHELL FUR (flight deck fix FDY r2, FDY-O2-01 / FIDY2-01: six judge rounds of flat 2-D pile
+// patterns on the cushion surface -- lichen, marble, foil / worms, coral, leaf / fish-scale locks -- read as a print on a
+// smooth slab).  The fleece mesh is drawn as a stack of offset layers along its (welded) normal: the base mesh itself is
+// the ROOT layer, `h[0]` inside the drawn surface (the GLB's crowned fleece face IS the drawn cushion outline, so the pile
+// grows inward and its tips reach the outline, `h[1]` beyond it), dark (`root`); `n` SHELLS at even heights up to the
+// tips are drawn after it in one instanced call (gl_InstanceID -> height t, outermost first) and each keeps only its
+// cross-section of the pile: a dense field of curly tufts (`oct`: octaves of value noise, ridged ones the curls, each
+// turned off the grid and swirled with height, `curl`) above a threshold rising with the height (`t`), grouped in lumps
+// (`lump`) and frayed (`fray`) -- so the tufts taper, the gaps between them are the lower, darker layers (`ao`: the
+// albedo from the root to the tips) and the silhouette breaks up by itself.  The tufts' sides tilt the normal (`tilt`),
+// the sheen sits on the tips (`sheen`).  Shadow coordinates, the world position of the pile field and the baked
+// occlusion stay those of the drawn surface (only gl_Position moves), so every layer of a column reads one field and
+// one shadow.  Beyond `far` [from, to] m from the eye the shells thin out and the root takes the pile's mean albedo
+// (`mean`): sub-pixel tufts only alias.  The shells are drawn from the base mesh's onAfterRender (addFur) while it
+// carries its own material: an ID pass, the X-ray, the cutaway or a highlight swap the material and draw no shells;
+// they cast no shadow (the drawn surface does), are never picked, and follow the mesh's visibility and transform.
+// ?fur=0 falls back to the flat `fleece` patch, ?furN= sets the shell count (8 on the low quality tier, 14 elsewhere:
+// main.js).  The root's depth is bounded by the part's other surfaces under the pile (furDirs: the leather the pads
+// sink into would otherwise show through the partings as pale holes).
+const Q_F = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+export const FUR = { on: Q_F.get('fur') !== '0', n: +(Q_F.get('furN') || 0) || null };
+
+const GLSL_FUR = `
+// value noise and its analytic gradient (cell units)
+vec4 pcNoiseD( vec3 x ) {
+  vec3 i = floor( x ), f = fract( x );
+  vec3 u = f * f * ( 3.0 - 2.0 * f ), du = 6.0 * f * ( 1.0 - f );
+  float a = pcHash( i ), b = pcHash( i + vec3( 1, 0, 0 ) ), c = pcHash( i + vec3( 0, 1, 0 ) ), d = pcHash( i + vec3( 1, 1, 0 ) );
+  float e = pcHash( i + vec3( 0, 0, 1 ) ), g = pcHash( i + vec3( 1, 0, 1 ) ), h = pcHash( i + vec3( 0, 1, 1 ) ), k = pcHash( i + vec3( 1, 1, 1 ) );
+  float k1 = b - a, k2 = c - a, k3 = e - a, k4 = a - b - c + d, k5 = a - c - e + h, k6 = a - b - e + g, k7 = - a + b + c - d + e - g - h + k;
+  return vec4( a + k1 * u.x + k2 * u.y + k3 * u.z + k4 * u.x * u.y + k5 * u.y * u.z + k6 * u.z * u.x + k7 * u.x * u.y * u.z,
+    du * vec3( k1 + k4 * u.y + k6 * u.z + k7 * u.y * u.z, k2 + k5 * u.z + k4 * u.x + k7 * u.z * u.x, k3 + k6 * u.x + k5 * u.y + k7 * u.x * u.y ) );
+}
+`;
+// fixed rotations that turn each octave off the lattice (value noise shows its grid along the axes)
+const FUR_ROT = [
+  [0.36, 0.48, -0.80, -0.80, 0.60, 0.00, 0.48, 0.64, 0.60],
+  [0.00, 0.80, 0.60, -0.80, 0.36, -0.48, -0.60, -0.48, 0.64],
+  [0.60, 0.00, 0.80, 0.64, 0.60, -0.48, -0.48, 0.80, 0.36],
+];
+
+function furPatch(q, vs, fs, fsHead) {
+  const f4 = (x) => (+x).toFixed(5), shell = q.role === 'shell', n = Math.max(1, q.n | 0);
+  const [h0, h1] = q.h || [0.010, 0.001];
+  // the welded offset direction (addFur: the mean normal of the vertices at a position, so the layers do not tear open
+  // along the mesh's creases), the layer height t (0 = the root, the base mesh)
+  vs = `attribute vec4 pcFurDir;\nvarying float vPcFurT;\n` + vs.replace('#include <project_vertex>', `#include <project_vertex>
+  {
+    float pcFt = ${shell ? `1.0 - float( gl_InstanceID ) / ${f4(n)}` : '0.0'};
+    vec3 pcFd = normalize( normalMatrix * pcFurDir.xyz );
+    mvPosition.xyz += pcFd * mix( ${f4(-h0)} * pcFurDir.w, ${f4(h1)}, pcFt );
+    gl_Position = projectionMatrix * mvPosition;
+    vPcFurT = pcFt;
+  }`);
+  fsHead += 'varying float vPcFurT;\n' + GLSL_FUR;
+  const far = q.far || [2.0, 3.0];
+  if (!shell) {
+    fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
+  float pcFurA = mix( ${f4(q.root ?? 0.3)}, ${f4(q.mean ?? 0.8)}, smoothstep( ${f4(far[0])}, ${f4(far[1])}, length( vViewPosition ) ) ), pcFurT = 0.0;
+  diffuseColor.rgb *= pcFurA;`);
+  } else {
+    const oct = q.oct || [[220, 0.65, 0.4, 0], [480, 0.35, 0.6, 1]];
+    const cu = q.curl || [60, 0.5, 6.0], lu = q.lump || [35, 0.08, 0.08], fr = q.fray || [0, 0], th = q.t || [0.2, 0.74, 1.0];
+    const ao = q.ao || [0.35, 1.0, 0.8];
+    const parts = !q.part ? [] : Array.isArray(q.part[0]) ? q.part : [q.part];
+    // octaves [freq per m, weight, twist (cells per unit height), mode, vertical stretch, warp (cells), crease power]:
+    // mode 0 the noise itself (blobs), 1 ridged (raised strands along its 0.5 isolines), 2 CREASED (|2n - 1|^power:
+    // broad plateaus cut by narrow dark creases along the isolines -- the lit mat parted into tufts); the vertical
+    // stretch draws the tufts longer down the cushions' and backs' faces (world Y: no swimming on the curved pads), the
+    // warp bends the creases into curls (a domain warp at 0.4 x the octave's frequency)
+    const octs = oct.map(([fq, w, wk, ridged, stY = 1, dw = 0, cp = 0.5], i) => {
+      const R = FUR_ROT[i % FUR_ROT.length];
+      const S = `vec3( 1.0, ${f4(1 / stY)}, 1.0 )`;
+      return `
+    {
+      mat3 pcR = mat3( ${R.map(f4).join(', ')} );
+      vec3 pcQ = pcR * ( vPcW * ${f4(fq)} * ${S} ) + ${f4(wk)} * pcW + ${f4(5.3 + 7.1 * i)};${dw ? `
+      pcQ += ${f4(2 * dw)} * ( vec3( pcNoise( pcQ * 0.4 + 1.7 ), pcNoise( pcQ * 0.4 + 9.2 ), pcNoise( pcQ * 0.4 + 15.9 ) ) - 0.5 );` : ''}
+      vec4 nd = pcNoiseD( pcQ );
+      ${ridged === 1 ? `float s = sign( 2.0 * nd.x - 1.0 ); nd = vec4( 1.0 - abs( 2.0 * nd.x - 1.0 ), - 2.0 * s * nd.yzw );` : ''}${ridged === 2 ? `
+      { float a = abs( 2.0 * nd.x - 1.0 ) + 1e-4, s = sign( 2.0 * nd.x - 1.0 );
+        nd = vec4( pow( a, ${f4(cp)} ), ${f4(2 * cp)} * pow( a, ${f4(cp - 1)} ) * s * nd.yzw ); }` : ''}
+      pcF += ${f4(w)} * nd.x;
+      pcG += ${f4(w * fq)} * ( ${S} * ( transpose( pcR ) * nd.yzw ) );
+    }`;
+    }).join('');
+    const w0 = oct.reduce((a, o) => a + o[1], 0) || 1;
+    fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
+  float pcFurA = 1.0, pcFurT = vPcFurT;
+  vec3 pcFurG = vec3( 0.0 );
+  {
+    float pcFar = smoothstep( ${f4(far[0])}, ${f4(far[1])}, length( vViewPosition ) );
+    if ( pcFar > 0.999 ) discard;
+    float t = vPcFurT;
+    // the curl: each octave's lookup swirls with the height, its phase a slow noise (the tufts twist as they rise)
+    float pcPh = 6.2832 * pcNoise( vPcW * ${f4(cu[0])} + 3.7 ) + ${f4(cu[2])} * t;
+    vec3 pcW = ${f4(cu[1])} * t * vec3( cos( pcPh ), sin( pcPh ), cos( 0.7 * pcPh + 1.3 ) );
+    float pcF = 0.0; vec3 pcG = vec3( 0.0 );${octs}
+    pcF /= ${f4(w0)}; pcG /= ${f4(w0)};
+    // lumps: the pile taller in cm-scale patches (the threshold lower)
+    float pcL = pcNoise( vPcW * ${f4(lu[0])} + 23.9 );
+    float pcT = mix( ${f4(th[0])}, ${f4(th[1])}, pow( t, ${f4(th[2])} ) ) - ${f4(lu[1])} * ( 2.0 * pcL - 1.0 );${fr[1] ? `
+    pcT += ${f4(fr[1])} * ( pcNoise( vPcW * ${f4(fr[0])} + vec3( 7.7, 1.3, 4.1 ) + 3.1 * t ) - 0.5 );` : ''}
+${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
+      // partings: the pile parted along the 0.5 isolines of a noise (the dark creases between the lumps / curls),
+      // stretched `st` down the vertical faces; with a gate [freq, level] only where a second noise exceeds the level --
+      // short slits instead of a connected crackle net
+      const S = `vec3( 1.0, ${f4(1 / st)}, 1.0 )`;
+      return `
+    {
+      float pcP = smoothstep( ${f4(pw)}, 1.0, 1.0 - abs( 2.0 * pcNoise( vPcW * ${S} * ${f4(pf)} + ${f4(41.0 + 13.7 * i)} ) - 1.0 ) );${gf ? `
+      pcP *= smoothstep( ${f4(gl)}, ${f4(gl + 0.2)}, pcNoise( vPcW * ${S} * ${f4(gf)} + ${f4(63.0 + 5.1 * i)} ) );` : ''}
+      pcT += ${f4(pa)} * pcP;
+    }`;
+    }).join('')}
+    pcT = mix( pcT, 1.5, pcFar );
+    if ( pcF < pcT ) discard;
+    #ifndef FLAT_SHADED
+      vec3 pcFnW = normalize( ( vec4( vNormal, 0.0 ) * viewMatrix ).xyz );
+    #else
+      vec3 pcFnW = normalize( cross( dFdx( vPcW ), dFdy( vPcW ) ) );
+    #endif
+    pcFurA = mix( ${f4(ao[0])}, ${f4(ao[1])}, pow( t, ${f4(ao[2])} ) ) * ( 1.0 + ${f4(lu[2])} * ( 2.0 * pcL - 1.0 ) );
+    pcFurG = pcG - pcFnW * dot( pcG, pcFnW );
+  }
+  diffuseColor.rgb *= pcFurA;`);
+    // the tufts' sides: the normal tilted down the field's slope (world gradient per metre, scaled to the first octave)
+    fs = fs.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  normal = normalize( normal - ${f4((q.tilt ?? 0.6) / oct[0][0])} * ( viewMatrix * vec4( pcFurG, 0.0 ) ).xyz );`);
+  }
+  const sh = q.sheen || [0.5, 1.4];
+  fs = fs.replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
+  #ifdef USE_SHEEN
+    material.sheenColor *= pcFurA * mix( ${f4(sh[0])}, ${f4(sh[1])}, pcFurT );
+  #endif`);
+  return { vs, fs, fsHead };
+}
+
+// the shell materials, one per base material (the shell count: main.js, 8 on the low quality tier, 14 elsewhere)
+const SHELL_MATS = new WeakMap();
+// the offset direction of the fur layers: the mean normal of the vertices sharing a position (object space), and in w
+// the pile depth's share at the vertex -- 0.4 of the pad's local thickness (world metres, measured along the inward
+// normal to the nearest opposite-facing vertex within reach; a thin pad -- the armrests' -- would otherwise have its
+// root layers pushed out through the far face, dark), at most h0
+function furDirs(g, mw, h0, obstacles = []) {
+  const P = g.attributes.position, N = g.attributes.normal, n = P.count;
+  const out = new Float32Array(4 * n), key = new Map(), acc = [], idx = new Int32Array(n);
+  for (let i = 0; i < n; i++) {
+    const k = `${P.getX(i).toFixed(6)},${P.getY(i).toFixed(6)},${P.getZ(i).toFixed(6)}`;
+    let j = key.get(k);
+    if (j === undefined) { j = acc.length; key.set(k, j); acc.push([0, 0, 0]); }
+    const a = acc[j]; a[0] += N.getX(i); a[1] += N.getY(i); a[2] += N.getZ(i);
+    idx[i] = j;
+  }
+  // world positions / normals of the welded points
+  const m = acc.length, W = new Float32Array(3 * m), WN = new Float32Array(3 * m), D = new Float32Array(3 * m);
+  const nm = new THREE.Matrix3().getNormalMatrix(mw), v = new THREE.Vector3();
+  for (let i = 0; i < n; i++) {
+    const j = idx[i];
+    v.fromBufferAttribute(P, i).applyMatrix4(mw); W[3 * j] = v.x; W[3 * j + 1] = v.y; W[3 * j + 2] = v.z;
+  }
+  for (let j = 0; j < m; j++) {
+    const a = acc[j], l = Math.hypot(a[0], a[1], a[2]) || 1;
+    D[3 * j] = a[0] / l; D[3 * j + 1] = a[1] / l; D[3 * j + 2] = a[2] / l;
+    v.set(D[3 * j], D[3 * j + 1], D[3 * j + 2]).applyMatrix3(nm).normalize();
+    WN[3 * j] = v.x; WN[3 * j + 1] = v.y; WN[3 * j + 2] = v.z;
+  }
+  const C = 0.012, R = 2.5 * h0, cell = new Map(), ck = (x, y, z) => `${x},${y},${z}`;
+  for (let j = 0; j < m; j++) {
+    const kk = ck(Math.floor(W[3 * j] / C), Math.floor(W[3 * j + 1] / C), Math.floor(W[3 * j + 2] / C));
+    let l = cell.get(kk); if (!l) cell.set(kk, l = []); l.push(j);
+  }
+  const share = new Float32Array(m);
+  for (let j = 0; j < m; j++) {
+    const px = W[3 * j], py = W[3 * j + 1], pz = W[3 * j + 2], nx = WN[3 * j], ny = WN[3 * j + 1], nz = WN[3 * j + 2];
+    const cx = Math.floor(px / C), cy = Math.floor(py / C), cz = Math.floor(pz / C);
+    let th = Infinity;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) {
+      const l = cell.get(ck(cx + a, cy + b, cz + c));
+      if (!l) continue;
+      for (const q of l) {
+        if (nx * WN[3 * q] + ny * WN[3 * q + 1] + nz * WN[3 * q + 2] > -0.2) continue;
+        const dx = px - W[3 * q], dy = py - W[3 * q + 1], dz = pz - W[3 * q + 2];
+        const al = dx * nx + dy * ny + dz * nz;
+        if (al <= 0 || al > R) continue;
+        const lat2 = dx * dx + dy * dy + dz * dz - al * al;
+        if (lat2 < Math.max(9e-6, 0.64 * al * al) && al < th) th = al;
+      }
+    }
+    share[j] = Math.min(1, Math.max(0.15, 0.4 * th / h0));
+  }
+  // the part's other surfaces under the pile (flight deck fix FDY r2: the pads sink into the leather cushion and wrap
+  // its rolled front / the back's top -- 40 % of the fleece vertices have leather within 11 mm along the inward normal):
+  // the root no deeper than 0.6 of the free depth to them, so the leather never shows through the pile's partings.
+  // Their triangles near the fleece are sampled every ~3 mm (deterministic), hashed in 8 mm cells.
+  if (obstacles.length) {
+    let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    for (let j = 0; j < m; j++) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], W[3 * j + k]); hi[k] = Math.max(hi[k], W[3 * j + k]); }
+    const pad = 1.3 * h0; lo = lo.map((x) => x - pad); hi = hi.map((x) => x + pad);
+    const pts = [], a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), s2 = 9e-6;
+    let seed = 12345;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    for (const om of obstacles) {
+      const og = om.geometry, OP = og.attributes.position, idx = og.index;
+      om.updateWorldMatrix(true, false);
+      const nt = idx ? idx.count / 3 : OP.count / 3;
+      for (let t = 0; t < nt; t++) {
+        const i0 = idx ? idx.getX(3 * t) : 3 * t, i1 = idx ? idx.getX(3 * t + 1) : 3 * t + 1, i2 = idx ? idx.getX(3 * t + 2) : 3 * t + 2;
+        a.fromBufferAttribute(OP, i0).applyMatrix4(om.matrixWorld);
+        b.fromBufferAttribute(OP, i1).applyMatrix4(om.matrixWorld);
+        c.fromBufferAttribute(OP, i2).applyMatrix4(om.matrixWorld);
+        if (Math.max(a.x, b.x, c.x) < lo[0] || Math.min(a.x, b.x, c.x) > hi[0] || Math.max(a.y, b.y, c.y) < lo[1] ||
+            Math.min(a.y, b.y, c.y) > hi[1] || Math.max(a.z, b.z, c.z) < lo[2] || Math.min(a.z, b.z, c.z) > hi[2]) continue;
+        const ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z, vx = c.x - a.x, vy = c.y - a.y, vz = c.z - a.z;
+        const ar = 0.5 * Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
+        const ns = Math.min(4000, Math.max(1, Math.ceil(ar / s2)));
+        for (let q = 0; q < ns; q++) {
+          let r1 = ns === 1 ? 1 / 3 : rnd(), r2 = ns === 1 ? 1 / 3 : rnd();
+          if (r1 + r2 > 1) { r1 = 1 - r1; r2 = 1 - r2; }
+          pts.push(a.x + r1 * ux + r2 * vx, a.y + r1 * uy + r2 * vy, a.z + r1 * uz + r2 * vz);
+        }
+      }
+    }
+    const np_ = pts.length / 3, OC = 0.008, ok = new Map();
+    for (let q = 0; q < np_; q++) {
+      const kk = ck(Math.floor(pts[3 * q] / OC), Math.floor(pts[3 * q + 1] / OC), Math.floor(pts[3 * q + 2] / OC));
+      let l = ok.get(kk); if (!l) ok.set(kk, l = []); l.push(q);
+    }
+    const reach = 1.2 * h0, rc = Math.ceil(reach / OC);
+    for (let j = 0; j < m; j++) {
+      const px = W[3 * j], py = W[3 * j + 1], pz = W[3 * j + 2], nx = WN[3 * j], ny = WN[3 * j + 1], nz = WN[3 * j + 2];
+      const cx = Math.floor(px / OC), cy = Math.floor(py / OC), cz = Math.floor(pz / OC);
+      let free = Infinity;
+      for (let ia = -rc; ia <= rc; ia++) for (let ib = -rc; ib <= rc; ib++) for (let ic = -rc; ic <= rc; ic++) {
+        const l = ok.get(ck(cx + ia, cy + ib, cz + ic));
+        if (!l) continue;
+        for (const q of l) {
+          const dx = pts[3 * q] - px, dy = pts[3 * q + 1] - py, dz = pts[3 * q + 2] - pz;
+          const al = -(dx * nx + dy * ny + dz * nz);
+          if (al <= 0 || al > reach || al >= free) continue;
+          const lat2 = dx * dx + dy * dy + dz * dz - al * al;
+          if (lat2 < Math.max(9e-6, 0.25 * al * al)) free = al;
+        }
+      }
+      if (free < Infinity) share[j] = Math.min(share[j], Math.max(0.05, 0.6 * free / h0));
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    const j = idx[i];
+    out[4 * i] = D[3 * j]; out[4 * i + 1] = D[3 * j + 1]; out[4 * i + 2] = D[3 * j + 2]; out[4 * i + 3] = share[j];
+  }
+  return new THREE.BufferAttribute(out, 4);
+}
+// Shell fur on a mesh whose material carries the `fur` root flag (Model: the crew seats' sheepskin): the welded offset
+// directions, an instanced copy of its geometry (the same buffers) and the shell material, drawn right after the mesh
+// whenever the mesh draws with that material.  Returns true when the mesh got shells.
+export function addFur(mesh, shells, obstacles = []) {
+  const base = mesh.material, f = base && base.userData.pc12 && base.userData.pc12.fur;
+  if (!f || f.role !== 'root' || !(shells >= 1)) return false;
+  const g = mesh.geometry;
+  mesh.updateWorldMatrix(true, false);
+  if (!g.attributes.pcFurDir) g.setAttribute('pcFurDir', furDirs(g, mesh.matrixWorld, (f.h || [0.010])[0], obstacles));
+  const sg = new THREE.InstancedBufferGeometry();
+  sg.index = g.index;
+  for (const k of Object.keys(g.attributes)) sg.setAttribute(k, g.attributes[k]);
+  sg.instanceCount = shells;
+  if (!g.boundingSphere) g.computeBoundingSphere();
+  sg.boundingSphere = g.boundingSphere;
+  let sm = SHELL_MATS.get(base);
+  if (!sm) {
+    sm = clonePatched(base, { fur: { ...f, role: 'shell', n: shells } });
+    sm.side = THREE.FrontSide;
+    SHELL_MATS.set(base, sm);
+  }
+  mesh.userData.pcFur = { geometry: sg, material: sm, base };
+  mesh.onAfterRender = (renderer, scene, camera, geometry, material) => {
+    const u = mesh.userData.pcFur;
+    if (material === u.base && FUR.on && u.geometry.instanceCount > 0) renderer.renderBufferDirect(camera, scene, u.geometry, u.material, mesh, null);
+  };
+  return true;
+}
+// look development: rebuild the shells of the fur meshes under `root` from their base materials' current `fur` flags
+// (after a patch of the root material), `shells` layers (default: as built)
+export function refreshFur(root, shells = null) {
+  const done = new Map();
+  root.traverse((o) => {
+    const u = o.isMesh && o.userData.pcFur;
+    if (!u) return;
+    const f = u.base.userData.pc12 && u.base.userData.pc12.fur;
+    if (!f) return;
+    const n = shells || u.geometry.instanceCount;
+    let sm = done.get(u.base);
+    if (!sm) {
+      sm = clonePatched(u.base, { fur: { ...f, role: 'shell', n } });
+      sm.side = THREE.FrontSide;
+      SHELL_MATS.set(u.base, sm);
+      done.set(u.base, sm);
+    }
+    u.material = sm;
+    u.geometry.instanceCount = n;
+  });
+  return done.size;
+}
+
 export function installPatch(mat, extra = {}) {
   const f = { ...(mat.userData.pc12 || {}), ...extra };
   mat.userData.pc12 = f;
   const { paint, lining, glass, cabinGlass, collar, interior, cabinFill, back, grooves, stripes, fleece, rest, specKeep, reflDir, ao,
-    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe } = f;
-  if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes && !fleece && !ao && !leather && !brush && !grain) return mat;
+    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe, fur } = f;
+  if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes && !fleece && !ao && !leather && !brush && !grain && !fur) return mat;
   const restP = !!(rest && (collar || grooves || stripes || grain));
-  const worldP = !!(fleece || leather || brush);
+  const worldP = !!(fleece || leather || brush || fur);
   const physical = !!mat.isMeshPhysicalMaterial;
   if (glass) {
     // premultiplied output: src = diffuse * a + reflections, dst * (1 - a)
@@ -1077,6 +1433,7 @@ export function installPatch(mat, extra = {}) {
         .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
   roughnessFactor = clamp( roughnessFactor + ${f4(q.rough)} * ( 2.0 * pcGr - 1.0 ), 0.04, 1.0 );`);
     }
+    if (fur) ({ vs, fs, fsHead } = furPatch(fur, vs, fs, fsHead));
     if (fleece) {
       // sheepskin pile (review r4 INT8-04): band-limited fBm clumps in world space darken / lighten the albedo and bump
       // the normal (the stacks' surface-gradient bump, explicit forward differences); fades out where a tuft is sub-pixel
@@ -1094,7 +1451,7 @@ export function installPatch(mat, extra = {}) {
         // pile mode.  Each layer fades to its mean where a cell is sub-pixel.  (P1046410 / 09 / 08: 10-20 mm locks, 5-8
         // mm wide, lit tips over dark gaps; the lab out/tmp/fdy_fix_r1/lab)
         const LL = q.locks, fl = q.flat || [0.55, 0.85];
-        const fib = q.fibre, lk = q.lock, rimq = q.rim, shq = q.sheen || [1, 1];
+        const fib = q.fibre, lk = q.lock, rimq = q.rim, shq = q.sheen || [1, 1], lb = q.lumpB;
         const LS = q.lockShape || [0.25, 1.0, 0.0, 6.0, 0.0, 0.0];   // [tip taper, bend, strand contrast, strands across, swirl rad, ragged edge]
         fsHead += `vec4 pcLocks( vec3 q, vec3 n, vec3 flow, float lmin, float lmax, float asp, float jit, float gk ) {
   vec3 e1 = flow - n * dot( flow, n );
@@ -1121,10 +1478,30 @@ export function installPatch(mat, extra = {}) {
   return vec4( h1, s1, smoothstep( 0.0, gk, h1 - h2 ), t1 );
 }
 `;
-        const one = (ax, sv) => LL.map(([fq, lo, hi, dep, l0, l1, asp, jit, tipK, gk, seam], li) => {
+        const one = (ax, sv) => LL.map(([fq, lo, hi, dep, l0, l1, asp, jit, tipK, gk, seam, mode = 0], li) => {
           const A = `${f4(l0)}, ${f4(l1)}, ${f4(asp)}, ${f4(jit)}, ${f4(gk)}`;
           const flow = ax === 0 ? 'vec3( 0.0, -1.0, 0.0 )' : 'vec3( 0.0, 0.0, -1.0 )';
           const mean = lo + (hi - lo) * 0.62;
+          if (mode === 1) {
+            // (FDY r2) a SLIT layer: thin, bent, dark partings in the pile -- each cell's lock drawn as a crevice (the
+            // albedo down to `lo` over its core, darkest toward one end by `tipK`: a comma; the height a groove of
+            // `dep`), the pile lit everywhere else (`hi`): the photos' short dark slits where the curls part, on a
+            // light mat (P1046408 / 09 / 10 at 1-3 px/mm)
+            const meanS = hi - (hi - lo) * 0.12;
+            return `
+    {
+      vec3 pq = vPcW * ${f4(fq)} + ${f4(2.1 + 3.3 * ax + 7.9 * li)};
+      vec3 pdx = dFdx( pq ), pdy = dFdy( pq );
+      float fw = length( abs( pdx ) + abs( pdy ) ), k = 1.0 - smoothstep( 0.3, 0.8, fw );
+      vec4 t0 = pcLocks( pq, pcFnW, ${flow}, ${A} ), t1 = pcLocks( pq + pdx, pcFnW, ${flow}, ${A} ),
+           t2 = pcLocks( pq + pdy, pcFnW, ${flow}, ${A} );
+      float sl = smoothstep( ${f4(gk)}, ${f4(Math.min(0.98, gk + seam))}, t0.x );${q.slitMod ? `
+      sl *= mix( ${f4(q.slitMod[1])}, ${f4(q.slitMod[2])}, smoothstep( 0.25, 0.75, pcNoise( pq * ${f4(q.slitMod[0])} + 5.5 ) ) );` : ''}
+      float a = mix( ${f4(hi)}, ${f4(lo)}, sl * mix( ${f4(1 - tipK)}, 1.0, smoothstep( -1.0, 1.0, t0.y ) ) );
+      ${sv}M *= mix( ${f4(meanS)}, a, k );
+      ${sv}D -= k * ${f4(dep)} * vec2( t1.x - t0.x, t2.x - t0.x );
+    }`;
+          }
           return `
     {
       vec3 pq = vPcW * ${f4(fq)} + ${f4(2.1 + 3.3 * ax + 7.9 * li)};
@@ -1171,6 +1548,16 @@ export function installPatch(mat, extra = {}) {
     vec3 pcCq = vPcW * ${f4(lk[0])} + 11.7;
     float pcCn = pcFbm( pcCq, 2, length( abs( dFdx( pcCq ) ) + abs( dFdy( pcCq ) ) ) );
     pcFleeceM *= 1.0 + ${f4(lk[1])} * ( 2.0 * smoothstep( 0.2, 0.8, pcCn ) - 1.0 );
+  }` : ''}${lb ? `
+  {
+    // soft LUMPS (FDY r2, FDY-O2-01 / FIDY2-01): the pile's depth from cm-scale matted lumps in the bump -- the photos'
+    // shading comes from soft lumps, not from lit lock tips; lumpB [freq per m, depth m, albedo share]
+    vec3 pcLq = vPcW * ${f4(lb[0])} + 23.9;
+    vec3 pcLx = dFdx( pcLq ), pcLy = dFdy( pcLq );
+    float pcLw = length( abs( pcLx ) + abs( pcLy ) );
+    float pcL0 = pcFbm( pcLq, 2, pcLw ), pcL1 = pcFbm( pcLq + pcLx, 2, pcLw ), pcL2 = pcFbm( pcLq + pcLy, 2, pcLw );
+    pcFdh += ${f4(lb[1])} * vec2( pcL1 - pcL0, pcL2 - pcL0 ) * ( 1.0 - smoothstep( 0.3, 0.8, pcLw ) );
+    pcFleeceM *= 1.0 + ${f4(lb[2] ?? 0)} * ( 2.0 * pcL0 - 1.0 );
   }` : ''}${rimq ? `
   {
     #ifndef FLAT_SHADED
@@ -1554,7 +1941,7 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
     // / 09 show the pedal arms, linkage and side walls in a soft light from the side windows and the floor): its diffuse
     // x (1 + boost) below the panel's lower edge, ahead of the seats
     // (not the floor: the up-facing carpet stays near-black, P1046408 5-15, [FD-L2] / [FD-L6]; nor the crew seats'
-    // fleece, which reaches into that box)${fleece ? `
+    // fleece, which reaches into that box)${fleece || fur ? `
     if ( false )` : ''}
     pcDi *= 1.0 + uCabinFoot.x * pcFd * ( 1.0 - smoothstep( uCabinFoot.y, uCabinFoot.y + 0.12, pcPW.y ) )
       * ( 1.0 - smoothstep( uCabinFoot.z, uCabinFoot.z + 0.15, pcPW.z ) ) * ( 1.0 - smoothstep( 0.45, 0.8, pcNW.y ) );
@@ -1596,7 +1983,7 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
     sh.fragmentShader = fsHead + fs;
   };
   // the rest matrix is a uniform: programs are shared
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}`;
+  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}${fur ? 'H' + JSON.stringify(fur) : ''}`;
   mat.needsUpdate = true;
   return mat;
 }

@@ -2410,7 +2410,7 @@ def photo_cam(key):
 
 
 async def fd_look_checks(page, shots=True):
-    """[FD-L1]-[FD-L9] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
+    """[FD-L1]-[FD-L10] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
     window sky, the PRO's dark palette (median sRGB luminance of each material's pixels: the MAT_MASK pass), the
     exterior unchanged, the Cockpit preset lit as the tour.  1200 x 900 pages (the photos' 4:3) in their own context."""
     import numpy as np
@@ -2517,6 +2517,33 @@ async def fd_look_checks(page, shots=True):
     sh = ms["sheep"]
     check("[FD-L5] the crew sheepskin lavender-grey: 90-130 with blue above red (B - R >= 10) at panel_408b (P1046408 / 09)",
           sh[1] is not None and 90 <= sh[2] <= 130 and sh[1][2] - sh[1][0] >= 10, f"sheepskin {sh[1]} lum {sh[2]}")
+    # [FD-L10] the sheepskin as SHELL FUR (flight deck fix FDY r2, FDY-O2-01 / FIDY2-01: six rounds of flat 2-D pile
+    # patterns read as prints -- leaf scales, foil, marble -- on a smooth slab): both crew seats' fleece meshes carry the
+    # instanced pile layers, and at panel_408b the pile has P1046408's STRUCTURE -- the judges' texture measure on the
+    # cushions (rows 760-845, the fleece mask eroded 6 px): a lit mat with narrow dark gaps, not bright flakes on a dark
+    # field (the high-pass at sigma 4 skewed -0.6 .. +0.7; the r1 locks +1.09, P1046408 -0.18), the shaded crevices
+    # present (p10 75-105; P1046408 83, the locks 101), the tuft-scale relief there (sd at sigma 4 8-18: P1046408 12.4, a
+    # smooth felt 4) without pixel noise (sd at sigma 1 <= 11: P1046408 6.4)
+    fur = await js(pg, "const I = window.viewer._internals; let n = 0, s = 0; I.model.root.traverse((o) => { if (o.isMesh && "
+                       "o.userData.pcFur) { n++; s = o.userData.pcFur.geometry.instanceCount; } }); return {n, s, m: I.model.furMeshes};")
+    m = await js(pg, MAT_MASK, [G["sheep"]])
+    from scipy import ndimage as _ndi
+    kf = _ndi.binary_erosion(np.array(m["mask"].split(","), int).reshape(m["H"], m["W"]) == 1, iterations=6)
+    kf[:760, :] = False
+    kf[845:, :] = False
+    if kf.sum() > 2000:
+        hp4 = (L - _ndi.gaussian_filter(L, 4))[kf]
+        sk4 = float((hp4 ** 3).mean() / hp4.std() ** 3)
+        f10 = float(np.percentile(L[kf], 10))
+        sd1 = float((L - _ndi.gaussian_filter(L, 1))[kf].std())
+        sd4 = float(hp4.std())
+    else:
+        sk4, f10, sd1, sd4 = 99.0, 0.0, 99.0, 0.0
+    check("[FD-L10] the crew sheepskin is shell fur (both seats' fleece with the pile layers) with P1046408's structure "
+          "at panel_408b: high-pass skew -0.6 .. +0.7, p10 75-105, sd at sigma 4 8-18, at sigma 1 <= 11",
+          fur["n"] >= 2 and fur["s"] >= 6 and -0.6 <= sk4 <= 0.7 and 75 <= f10 <= 105 and 8 <= sd4 <= 18 and sd1 <= 11,
+          f"{fur['n']} fleece meshes x {fur['s']} layers; hp4 skew {sk4:+.2f}, p10 {f10:.0f}, sd4 {sd4:.1f}, sd1 {sd1:.1f} "
+          f"({int(kf.sum())} px)")
     Lall = L[60:, :]
     p10, p50 = float(np.percentile(Lall, 10)), float(np.percentile(Lall, 50))
     dark = float((Lall < 20).mean())
@@ -4324,7 +4351,7 @@ def main():
                     help="sound: only the engine-sound section (its own page; ~2 min); tour: only the interior tour "
                          "[T1]-[T18] on the desktop page; prop / phone / picture: those sections alone (a rerun of a "
                          "section that timed out or was starved under load); fdlook: the flight-deck look rows "
-                         "[FD-L1]-[FD-L9] (1200 x 900, ~10 min)")
+                         "[FD-L1]-[FD-L10] (1200 x 900, ~10 min)")
     ap.add_argument("--sound-out", type=Path, default=OUT / "sound",
                     help="folder for the offline render pc12_engine_sequence.wav + spectrogram.png (default out/tmp/viewer/sound)")
     args = ap.parse_args()

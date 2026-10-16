@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { Stage, PRESETS, QUALITY, LOOK, DARK_MQ, prefersDark } from './scene.js';
 import { loadGLB, parseGLB, Model, INTERNAL_PARTS } from './model.js';
-import { loadMaterialSpec, setLights } from './materials.js';
+import { loadMaterialSpec, setLights, FUR } from './materials.js';
 import { Kinematics, PROP_RPM } from './kinematics.js';
 import { Build } from './build.js';
 import { PartsPanel, InfoCard, DrawingViewer, buildSpecs } from './panels.js';
@@ -157,7 +157,8 @@ async function init(gltf, matSpec) {
     PRESETS.cockpit.pos = meta.cockpit.design_eye.slice();
     PRESETS.cockpit.target = meta.cockpit.target.slice();
   }
-  model = new Model(gltf, meta, { materials: matSpec });
+  // the crew seats' shell fur: 8 layers on the low quality tier (phones), 14 elsewhere (materials.js FUR, ?furN=)
+  model = new Model(gltf, meta, { materials: matSpec, fur: FUR.on ? (FUR.n || (stage.quality.low ? 8 : 14)) : 0 });
   // part cards: the triangle counts of the GLB this page loaded (the light tier on phones: its node extras)
   for (const b of meta.bom) { const r = model.part(b.id); if (r && r.ex.tris != null) b.tris = r.ex.tris; }
   stage.scene.add(model.root);
