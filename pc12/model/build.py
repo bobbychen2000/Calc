@@ -428,7 +428,12 @@ AO_CONTACT_POW = 0.6                    # its share: the occlusion x contact^0.6
 # (flight deck fix FDY r2 FIDY2-02: the titanium sub-panels read as flat light-grey plastic -- P1046408's plates fall to
 # ~30-40 along their seams, round the switch-block bezels and toward the rolled lip at their foot, a spread of 27-147 at
 # the fitted camera against the model's 72-128: the contact pass weighs more on the brushed titanium)
-AO_CONTACT_POW_MAT = {"panel_titanium": 1.6}   # (FDY r3 FIDY3-02: 1.3 -> 1.6, the plates' seams and feet darker)
+AO_CONTACT_POW_MAT = {"panel_titanium": 1.5}   # (FDY r3 FIDY3-02: 1.3 -> 1.6, the plates' seams and feet darker)
+# (flight deck + yoke fix r4 FDY-O4-02: on the titanium the 14 / 22 mm steps drew a 30-40 mm soot halo round every
+# proud fitting -- the PARKING BRK handle stands 26-38 mm off its plate --, where P1046410 shows a crisp knob on clean
+# satin with a thin shadow at its foot: the titanium's own contact reach 3-10 mm (it hugs the seams, the bezels' and
+# plates' feet and the rolled lip) at x contact^1.5)
+AO_CONTACT_MAT = {"panel_titanium": dict(steps=(0.003, 0.006, 0.010))}
 AO_CONTACT_SKIP = ("panel_grey",)       # the eyebrow fascia: under the lip it took 88 -> 72 at panel_408b, P1046408 ~120
 AO_CONTACT = dict(spacing=0.0025, steps=(0.004, 0.008, 0.014, 0.022), far=(1.0, 2.0, 1.0), offset=0.0008, k=12,
                   edt_from=None, cell=0.002, smooth=1)
@@ -486,7 +491,13 @@ def bake_interior_ao(parts):
     fd_mat = {id(m): mat for m, mat in parts["flight_deck"].meshes} if "flight_deck" in parts else {}
     n_c = 0
     if rc and occ_c:
-        cont = ao.bake([m for _, m in rc], occ_c, **AO_CONTACT)
+        groups = {}
+        for i, m in rc:
+            groups.setdefault(fd_mat.get(id(m)) if fd_mat.get(id(m)) in AO_CONTACT_MAT else None, []).append((i, m))
+        cont, rc = [], []
+        for gk, g in groups.items():
+            cont += ao.bake([m for _, m in g], occ_c, **{**AO_CONTACT, **AO_CONTACT_MAT.get(gk, {})})
+            rc += g
         for (i, m), c in zip(rc, cont):
             w = in_box(m.V)
             pw = AO_CONTACT_POW_MAT.get(fd_mat.get(id(m)), AO_CONTACT_POW)

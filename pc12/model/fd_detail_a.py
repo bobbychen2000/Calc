@@ -442,13 +442,15 @@ def gfc700(f, aw, ah):
         out.append((knob(c + 0.0010 * f.w, f.w, f.u, 0.5 * rd - 0.0016, 0.0012, n=40, chamfer=0.0), "bezel_black"))
         # flight deck fix r1 (FID-FD1-07): the knobs stand ~19 mm proud as the knurled cylinders of AOPA / P1046408
         # (the first build's 15.6 mm stack read as shallow discs), a satin ring between the outer and inner knob
-        out.append((fluted_knob(c + 0.0022 * f.w, f.w, f.u, 0.5 * od, 0.0086, flutes=24), "black"))
+        # (flight deck + yoke fix r4 FIDY4-04: the knobs in the panel knobs' cool satin `grip_black`, not the shared
+        # `black` the quadrant plate's warm viewer tint carried onto them -- P1046408's knob tops read B - R +30..+37)
+        out.append((fluted_knob(c + 0.0022 * f.w, f.w, f.u, 0.5 * od, 0.0086, flutes=24), "grip_black"))
         out.append((knob(c + 0.0108 * f.w, f.w, f.u, 0.5 * od - 0.0012, 0.0008, n=40, chamfer=0.0), "panel_silver"))
-        out.append((fluted_knob(c + 0.0116 * f.w, f.w, f.u, 0.5 * idm, 0.0074, flutes=18, depth=0.0004), "black"))
+        out.append((fluted_knob(c + 0.0116 * f.w, f.w, f.u, 0.5 * idm, 0.0074, flutes=18, depth=0.0004), "grip_black"))
     su_, sv_ = q["sensor"]
     out.append((knob(f.p(su_, sv_, zf - 0.0002), f.w, f.u, 0.0016, 0.0005, n=12, chamfer=0.4), "screen"))
     wu, wv, wd, ww = q["wheel"]                                        # VS thumbwheel: slot + ribbed wheel across u
-    out.append((f.box(wu, wv, zf - 0.0005, (ww + 0.002, 0.028, 0.0012)), "black"))
+    out.append((f.box(wu, wv, zf - 0.0005, (ww + 0.002, 0.028, 0.0012)), "rubber_black"))          # (fix r4: matte slot)
     wc = f.p(wu, wv, zf - 0.004)
     a = np.linspace(0.0, 2 * np.pi, 60, endpoint=False)
     rw = 0.5 * wd - 0.0004 * (0.5 * (1 - np.cos(20 * a)))
@@ -479,7 +481,7 @@ def eyebrow_items(fascia_frame, zc, sg):
     f = fascia_frame(sg * D["baro_bl"], zc)
     out.append((FD._extrusion(f.moved(c=0.0025), FD.rrect_loop(0.0155, 0.0175, 0.004, nc=4), 0.005, bevel=0.001, nb=1),
                 "bezel_black"))
-    out.append((fluted_knob(f.p(0, 0.002, 0.005), f.w, f.u, 0.0085, 0.0110, flutes=20), "black"))
+    out.append((fluted_knob(f.p(0, 0.002, 0.005), f.w, f.u, 0.0085, 0.0110, flutes=20), "grip_black"))   # (fix r4)
     out.append((f.rect(-0.0012, 0.0045, 0.0012, 0.0065, 0.0165), "light_white"))                    # index
     f = fascia_frame(sg * D["warn_bl"], zc)
     out.append((FD._extrusion(f.moved(c=0.002), FD.rrect_loop(0.0375, 0.016, 0.003, nc=4), 0.004, bevel=0.0008, nb=1),
@@ -1643,8 +1645,8 @@ def standby_details(f, ub, ud):
     out = [(FD.revolve([(0.0118, r + 0.0045), (0.0128, r + 0.0030), (0.0128, r + 0.0006), (0.0122, r)], n=48,
                        axis_origin=f.o, axis_dir=f.w, ref_dir=f.u, cap_ends=False), "metal_dark")]
     c = f.p(-0.5 * ub + 0.0085, -0.5 * ub + 0.0085, 0.0118)
-    out.append((knob(c, f.w, f.u, 0.0072, 0.0030, n=36, chamfer=0.2), "black"))
-    out.append((fluted_knob(c + 0.0030 * f.w, f.w, f.u, 0.0058, 0.0065, flutes=18), "black"))
+    out.append((knob(c, f.w, f.u, 0.0072, 0.0030, n=36, chamfer=0.2), "grip_black"))                  # (fix r4)
+    out.append((fluted_knob(c + 0.0030 * f.w, f.w, f.u, 0.0058, 0.0065, flutes=18), "grip_black"))
     out.append((knob(f.p(0.5 * ub - 0.008, 0.5 * ub - 0.008, 0.0118), f.w, f.u, 0.0015, 0.0006, n=10, chamfer=0.4),
                 "screen"))
     return out
