@@ -3,11 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.74M tris of which the interior ~893k, ~48.5 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.74M tris of which the interior ~888k, ~48.4 MB
 incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
 review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`; the
-yokes are one mesh at every RES, model/yoke3d.py: ~2.32M tris, ~41 MB,
+yokes are one mesh at every RES, model/yoke3d.py: ~2.31M tris, ~40.6 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -76,7 +76,7 @@ python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=
 python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 231 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
-                                #   --only fdlook: [FD-L1]-[FD-L9] the flight-deck look, ~20 min)
+                                #   --only fdlook: [FD-L1]-[FD-L10] the flight-deck look, ~20 min)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -1741,3 +1741,104 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   the Artifact bundle 119.0 MB in 2 publishes (63.3 + 55.7 MB), artifact_test 70 / 70.  Photo | before (4d0f95e, the
   judges' renders) | after sheets of the standard views and close-ups: out/tmp/fdy_fix_r1/cmp_*.jpg (gitignored: they
   embed the photos; the comparison captures ran at pedestal_gunmetal 0.33, the shipped value is 0.25).
+- Flight deck + yoke fix r2 (2026-10-16; the flight-deck judges' round 2 after the yoke merge, at e6f8914: owner 7.1
+  (yoke 7.5), fidelity 6.8 (yoke 7.5); FDY-O2-01..06, FIDY2-01..08).  No table changed (L6 / L6B / L6Y / L6Y2 not
+  regenerated: nothing they draw or check moved).  Look development in one viewer page again (out/tmp/fdy_fix_r2/ld2.py
+  jobs; tools/furjob.py patches the fleece's fur in the page and rebuilds the shells, tools/paljob.py reloads with
+  ?cabTrim= / ?viewer= / ?partTrim= / ?yokeProbe=, tools/fdm.py / mm.py the per-material medians and the judges' fleece
+  texture measure under the page's own ID masks), a numpy preview of the fur field (tools/furprev.py).
+  SHEEPSKIN AS SHELL FUR (FDY-O2-01 / FIDY2-01, the major of seven judge rounds; six flat 2-D pile patterns had read as
+  prints -- lichen, marble, foil / worms, coral, leaf / fish-scale locks -- on a smooth slab): `materials.js` furPatch /
+  addFur / furDirs -- the crew seats' fleece meshes are drawn as a stack of offset layers along the welded normal: the
+  base mesh is the ROOT layer 8 mm under the drawn surface (dark, `root` 0.18), FUR.n SHELLS (14; 8 on the low quality
+  tier, main.js; ?furN=, ?fur=0 the flat `fleece` patch) at even heights up to the tips 1 mm over it, drawn after the
+  mesh in ONE instanced call from its onAfterRender while it carries its own material -- the ID pass, the X-ray, the
+  cutaway and the highlight swap the material and draw none; they cast no shadow, are never picked and follow the mesh's
+  visibility.  Each shell keeps its cross-section of one pile field evaluated at the drawn surface point (only
+  gl_Position moves, so every layer of a column reads one field, one shadow, one bake): two octaves of value noise
+  (`oct` [freq, weight, twist, mode, vertical stretch, warp, crease power]: 450 / m blobs + 300 / m ridged curls, 1.3 x
+  longer down the faces, twisting with the height, the second domain-warped) above a threshold rising 0.05 -> 0.75
+  toward the tips (`t`), 40 / m lumps (taller, +-24 % albedo), short GATED partings at 30 and 60 / m (a parting only where a
+  second noise exceeds the gate: slits, not a crackle net), a 1100 / m fray; the albedo 0.18 at the root -> 1 at the
+  tips (`ao`), the normal tilted down the field's slope (`tilt` 0.9), the sheen on the tips; beyond 2.2-3.2 m from the
+  eye the shells thin out and the root takes the pile's mean albedo.  The root's depth is bounded by the part's other
+  surfaces under the pile (furDirs `obstacles`: the leather the pads sink into and wrap -- 40 % of the fleece vertices
+  have it within 11 mm -- had shown through the partings as pale holes; the root no deeper than 0.6 of the free depth,
+  sampled every ~3 mm).  Base (0.245, 0.198, 0.212), sheen (0.35, 0.32, 0.34).  At panel_408b, the judges' measure
+  (rows 760-845, the fleece mask eroded 6 px), model / P1046408: median 118 / 116, p10 99 / 87, p90 140 / 146, high-pass
+  sd at sigma 1 / 2 / 4 / 8 8.6 / 10.4 / 11.9 / 14.5 against 6.5 / 9.7 / 12.4 / 16.9, hp4 skew +0.48 / -0.19 (the r1
+  locks: +1.09, p10 101); the whole cushion (117, 118, 139) against (109, 113, 136).  The silhouette breaks up by itself
+  (the photos' fuzzy outline).  Builder (`seats.py`): the pads' crown 16 / 12 -> 24 / 18 mm reached over SK_CROWN_R
+  75 mm, the top roll 17 -> 22 mm (pillow() scales it to the thinner edge) -- puffy loaves instead of flat slabs, the
+  apex on the drawn cushion top / back front (an 85 mm rise put the pads' rear 10 mm under the drawn top at
+  consistency_2d3d's pan bins, its tolerance; 75: 5.0 mm); the pads' bottoms stay where the 16 / 12 mm crowns had them
+  (SK_T_SEAT / SK_T_BACK, the edge 8 / 6 mm thinner): sunk deeper than the leather's front-roll radius the wrap
+  (`_wrap`) turned the lowest rows through its axis -- an inside-out sliver coplanar with the leather (fit_check 26,
+  0.9 cm2), found by a seat-only copy of that check (out/tmp/fdy_fix_r2/tools/seatcop.py, ~1 min).
+  viewer_test [FD-L10] (new): both seats' fleece with the pile layers and P1046408's structure at panel_408b.
+  Look-dev route: the lab and the preview showed what the structure measures cannot -- shells read as grass spikes /
+  coral where the threshold falls slowly (tall prisms seen grazing), as a smooth felt where it rises late; the
+  partings as isolines of one noise drew a crackle net, gated they are short slits.
+  TITANIUM (FIDY2-02): the sub-panels / plates a mauve brushed metal (VIEWER panel_titanium (0.25, 0.225, 0.245),
+  metalness 0.85, roughness 0.27, specIn 1.9, brushed bands +-35 % over 5 x 30 cm, streaks 15 %), CABIN_TRIM 0.8 -> 0.5
+  with a near-field term (x 1.05 below WL 1.78 .. x 0.8 above 1.88, half on the reflections: the band under the PDUs had
+  read 114-128 against P1046408's 91), the bake's contact pass weighted more on it (build.AO_CONTACT_POW_MAT 1.3: the
+  seams, bezel feet and plate feet): at panel_408b p10 / p50 / p90 52 / 84 / 125, (82, 83, 93), against 28 / 82 / 148,
+  (81, 81, 94) (was 69 / 96 / 129, neutral (94, 96, 100)); the band / the plates' foot 96 / 90 against 91 / 89.
+  POSTS (FIDY2-04): lining_flightdeck 0.5 -> 0.95, lining_fd_post 0.5 -> 1.05 (panel_408b 57 / 70 -> 86 / 99 against
+  P1046408's 134 / 128; the pilot stop 100 / 108, P1046410 ~108); the reveal funnel next to the glass keeps its darker
+  face.  HOOD (FDY-O2-03): PART_TRIM 'flight_deck:leather_glareshield' fill [0, 0.55], specIn 0.35 -> 0.2, sunIn 0.07
+  -> 0.03 -- 104 / 99 -> 73 / 69 from the pilot / co-pilot stop (P1046410 67); the lip / underside panel_408b sees keep
+  their entry.  YOKE (FDY-O2-02, FIDY2-06): the pads' grain 0.9 mm at -10 / +6 % (was 1.7 mm +-15 %: granite / denim
+  speckle) with a warm specular tint; the grips' satin black sharper and stronger (roughness 0.2, specIn 4.0, reflection
+  floor 0.45, side-window term 14; body / cover 0.30 at the pilot stop, [Y1b] 0.22-0.34); the lower insert less blue
+  (0.45, 0.46, 0.47) and its probe terms x 1.2, the side term x 1.3 (lower / upper 0.90 at panel_408b against the
+  photos' 0.92-0.95, 0.88 from the pilot stop, [Y1e] <= 0.90); the cover's 'win' rim term KEPT at 25 (FIDY2-06's
+  softer rim on the shaded flank: 12 / 19 took the cover's highlight spread at the pilot stop to 16 / 19, under [Y1b]'s
+  20 -- the r2 yoke judges' CR2-06 edge highlights; the two findings pull against each other).  QUADRANT / PEDESTAL
+  (FDY-O2-04): the trim panel's TRIM INTERRUPT a proud gloss-black cap with a rolled
+  rim, the trim rockers solid gloss-black caps split across the middle (one half pressed 1.5 mm lower), one short legend
+  stroke each, the AILERON TRIM outline gone (`fd_detail_a.quadrant`); 'flight_deck:black' a warm base / specular,
+  specIn 0.5 (PART_TRIM `color`, new): the quadrant plate (27, 35, 53) -> (33, 32, 37), B - R +26 -> +4; pedestal
+  gunmetal 0.25 -> 0.15 (45 -> 39 at panel_408b, P1046408 27); the palm tray 0.3 -> 0.42 (91 -> 106, P1046408 117).
+  CB PANELS (FDY-O2-05, FIDY2-05; `fd_detail_b.CB`): the collar rings satin black, 0.5 mm (the dark-metal rings mirrored
+  the windshield: bright bead chains), the label cells in the plate's black (the legend_grey cells read as light piano
+  keys), the LH bus bands BLUE again (P1046410), 1.6 mm (`band_blue`).  WALNUT (FIDY2-08): (0.15, 0.123, 0.118), env
+  0.6 -- (72, 69, 74) at cabin_fwd_406 against P1046406's (78, 70, 73) (was (50, 44, 40)).  RETAINER (FDY-O2-06 /
+  FIDY2-07): glazing_retainer a dark satin metal 0.10 / rough 0.40 (assemble / lookdev): no light ring round the panes
+  from outside; the surround's screw rows (optional in the finding) not added.
+  OWNER-DELEGATED DECISIONS (2026-10-16, "use your best taste and judgement"): (1) glareshield outboard lip KEPT -- at
+  the photo-fitted panel_408b the model's lip outline lies on P1046408's along the outboard sweeps within a few px (the
+  judge: 10-15 px at the crown, less toward the ends); the bundle-adjusted P1046409 / 10 cameras sit 40-60 px off on the
+  hood's CROWN as well (a camera error, the same at every station), so no camera shows the arc consistently > 5 mm
+  larger / rounder; (2) the crew seats KEPT at the neutral SRP, no table change (FIDY2-03) -- at the bundle-adjusted P1046410
+  camera the seat back fills the left third at the neutral seat and MORE at full aft travel (?seatpark=aft: closer to
+  the camera), full forward still leaves it in frame (the camera, STA 4.685 WL 1.92, stands aft of and below the backs'
+  tops, STA 4.35-4.46 WL 2.43), while the photo shows no back at all and its cushions near the lens: the photo's camera
+  stood ahead of the backs (or they were reclined) -- the BA depth / fov trade-off, not a seat pose; at the photo-fitted
+  panel_408b the cushions sit ~45-55 px under P1046408's, but the poses that lift them there (fix r5: up / forward
+  travel) cover the side consoles the photo shows clear; no pose within the L6 travel fits two photos with the consoles
+  visible and no table is demonstrably off in two photos (evidence: out/tmp/fdy_fix_r2/ld2 c01 / c02 / r00,
+  seat_p410_neutral_aft.png: P1046410 | neutral | full aft); (3) PCL pewter, overhead tone, satin dark-grey column, the
+  parked elevator droop stay; the grip depth and the badge field deferred (the yoke solids' cache
+  re-runs).  ?seatpark=dy,dz (glTF Y / Z offsets, m) added for the photo comparisons.
+  Build (both tiers rebuilt): 2,736,464 triangles / 48.38 MB, light tier 2,310,831 / 40.64 MB; interior 888.3k of 896k
+  (crew seats 63.7k / 63.9k of 66.3k; seat_pax3-6 34,834 OVER the 34.8k cap as before).  Verified on this build:
+  fit_check FIT OK (138 ok, no open row: 24 harness on the fleece +1.6 mm, 26 no coplanar overlaps, 31 10.3 mm),
+  consistency_2d3d 157 / 157 (the crew cushion crown row 5.0 mm of 10), drawing.sheet + drawing.verify (SVGs
+  unchanged), web/tour_data.py --check current, the FULL viewer_test 231 / 232 (~2 h, beside artifact_test) with
+  [Y1b] failing at the cover rim term 19 (its highlight spread 19 < 20) -> reverted to 25 and `--only tour` rerun
+  31 / 31 ([Y1b] spread 22); in the full run [FD-L2] carpet 14 / consoles 17 / titanium 84 / lining_fd 93, [FD-L3]
+  glareshield 60 (lip 71 / underside 44), [FD-L4] yoke 211, [FD-L5] sheepskin (117, 119, 139) lum 120, [FD-L10] 2 x 14
+  layers, hp4 skew +0.33, p10 100, sd4 12.2, sd1 8.8, [FD-L6] p50 75, bands 26 / 50 / 13 %, [T4] pilot 103 / fd_cabin 78,
+  [T14] overhead 42-48, bezels 31-45, walnut 73, [Y1] cover 212 / up 183 / lo 161 / body 65 / pads 71, [Y1d] insert /
+  cover 0.94, [Y1e] far 0.84 / near 0.38 / lower / cover 0.83 / band 53, pilot stop lower / upper 0.88;
+  web/package.py verify OK (meshopt 17.62 + 15.16 MB), the Artifact bundle 118.8 MB in 2 publishes (63.2 + 55.6 MB).
+  After a container restart, on the committed code (6a181cf; the bundle's viewer files byte-identical to it):
+  artifact_test 70 / 70, `--only tour` 31 / 31 again ([Y1b] spread 22; a first try timed out on a screenshot beside the
+  comparison captures), drawing.sheet + drawing.verify (SVGs unchanged, the same dimension table).  Photo | before
+  (e6f8914, the judges' r2 renders) | after (ld2/p05_final) sheets of the standard views and close-ups:
+  out/tmp/fdy_fix_r2/cmp_*.jpg, the cushion close-ups cmp_cushions.jpg (gitignored: they embed the photos).  Seen
+  there and not tuned: on the crew seat backs seen from behind (seats_aft) and at close range the pile's gated partings
+  read as scattered dark seams in the light fleece; at panel_408b the structure still measures hp4 skew +0.46 / p10 101
+  against P1046408's -0.19 / 86 (the fidelity judge's target band: skew -0.4..+0.2, p10 80-90).
