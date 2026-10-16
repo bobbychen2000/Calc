@@ -3,11 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.74M tris of which the interior ~888k, ~48.4 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.74M tris of which the interior ~896k, ~48.5 MB
 incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
 review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`; the
-yokes are one mesh at every RES, model/yoke3d.py: ~2.31M tris, ~40.6 MB,
+yokes are one mesh at every RES, model/yoke3d.py: ~2.32M tris, ~40.8 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -73,10 +73,10 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 231 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 233 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
-                                #   --only fdlook: [FD-L1]-[FD-L10] the flight-deck look, ~20 min)
+                                #   --only fdlook: [FD-L1]-[FD-L10b] the flight-deck look, ~30 min)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -1842,3 +1842,75 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   there and not tuned: on the crew seat backs seen from behind (seats_aft) and at close range the pile's gated partings
   read as scattered dark seams in the light fleece; at panel_408b the structure still measures hp4 skew +0.46 / p10 101
   against P1046408's -0.19 / 86 (the fidelity judge's target band: skew -0.4..+0.2, p10 80-90).
+- Flight deck + yoke fix r3 (2026-10-16; the flight-deck judges' round 3 after the yoke merge, at 5d01757: owner 7.5
+  (yoke 7.5), fidelity 7.2 provisional (yoke 7.8) -- the fidelity judge's renders had not finished under the shared
+  SwiftShader load, FIDY3-00; FDY-O3-01..03, FIDY3-01..03).  No table changed (L6 / L6B / L6Y / L6Y2 not regenerated:
+  nothing they draw or check moved).  Look development in one viewer page (out/tmp/fdy_fix_r3/ld.py jobs; fj.py the fur
+  in-page, furstat.py the fleece structure on the page's own ID masks -- eroded 10 px, the toolbar / Panel button
+  excluded: the judges' close-up masks had taken the white Panel button into the fleece's dark tail --, pmat.py model vs
+  photo per part:material, ymet.py the yoke; phstat.py the photos' cushions; tools/furprev.py the pile field's albedo).
+  SHEEPSKIN (FDY-O3-01 major, FIDY3-03; tuning, not a new pattern: the shell fur stays): within ~1 m the gated
+  partings read as scattered dark pits / streaks -- grime on a lavender popcorn -- on the seat backs from the cabin and
+  the cushion tops: the gaps fell through to a 0.18 root (0.2 of the tips), the partings raised the threshold by 0.45 /
+  0.35 (straight down to the root), the 40 / m lumps blotched the albedo +-24 %.  `materials.js VIEWER sheepskin.fur`:
+  root and lowest layers 0.34, the layers' albedo convex in the height (ao [0.34, 1.13, 1.8]) over a threshold that
+  rises faster near the root (t power 0.9) -- the visible layers spread evenly instead of piling up at the tips with a
+  long dark tail --, partings 0.2 / 0.15, lumps +-10 %, the fine tilt 0.9 -> 0.55, and a new `clump` term (furPatch:
+  [freq, height, vertical stretch] -- the slope of soft 28 / 65 per m mounds 5 / 1.8 mm high tips the shading normal, so
+  the clumps are lit on one side and shaded on the other: the photos' dark sits in the shaded folds); `partCap` (cap on
+  the partings' threshold rise) added, unused.  High-pass skew at sigma 4 / 8 (fleece eroded 10 px): the owner judge's
+  cush_close -0.70 / -0.98 -> -0.38 / -0.40 (sd8 9.3 -> 11.9), seats_aft -1.32 / -1.32 -> -0.56 / -0.46, quadrant
+  -1.29 / -1.40 -> -0.47 / -0.43; P1046409 / 10's cushions -0.50 / -0.49 and -0.31 / -0.32, sd8 12.5 / 13.3; panel_408b
+  (the judges' rows 760-845) skew +0.46 -> +0.18, p10 101 -> 99 -- those rows lie over the model's cushion TOPS but over
+  P1046408's cushion fronts (the model's cushions sit ~45-55 px lower in that frame, the open seat-pose question), so
+  the photo's p10 86 there is not the same surface.  viewer_test [FD-L10b] (new, `--only fdlook`): the close poses'
+  skew >= -0.6 / -0.75 and sd8 8-17.  Also tried: lighter gaps alone (f03: the close-up skew went positive, the fleece a
+  flat felt), finer tufts (aliasing at panel_408b).
+  FOOTWELL (FDY-O3-03): the "brown back wall" was the footwell's front closure in the shared `black` -- fix r2's warm
+  PART_TRIM 'flight_deck:black' (the quadrant plate) tinted it --: now `panel_dark`; `fd_detail_a.rudder_linkage`
+  (RUDDER_LINK, builder detail [E], P1046408 / 09 brightened): per pedal pair a bell-crank horn on the torque tube, the
+  push-pull rod forward to a clevis on the front closure with bright rod-end eyes, two close-coiled return springs from
+  the horn's cross pin to floor eyes, the toe-brake hoses from the tube brackets forward and down to bulkhead fittings,
+  a quilted crinkled-foil insulation blanket (panel_silver) on the upper front wall and two low pedal housings at the
+  front (P1046408's footwells: foil blanket, dark boxes, black rods with bright bolts); in fit_fd_a 28 with the walls
+  (pedals over their travel 10.1 mm -- the walls, as before --, shoes 26.7 mm, legs 20.9 mm; the housings first stood
+  55 mm high and the 95th's toe at full rudder crossed them, -10 mm: now 36 mm).  Budget: flight_deck 96k -> 99.5k,
+  interior total 390k -> 393.5k (RES 1 figures; 216.7k of 218.9k built at RES 2).
+  YOKE CLOSE-UP (FDY-O3-02, minor): the pads (CABIN_TRIM yoke_leather) a steeper top-lit gradient x 0.6 at WL 1.80 ..
+  x 1.45 at 1.90, a 0.3 reflection floor and the side-window term, glossier (VIEWER roughness 0.32, PART_TRIM specIn
+  2.5): p10 / p50 / p90 60 / 70 / 76 -> 56 / 76 / 85 at the judge's yoke close-up (P1046409 68-90), the pilot stop's
+  pads / body 1.24 ([Y1b] 1.0-1.4, photos 1.06-1.27).  The upper insert less blue (VIEWER yoke_silver (0.60, 0.61, 0.63),
+  B - R +37 -> +33), its LUMINANCE kept, the finding refuted in part: the judge's yoke close-up is no photo's camera --
+  at the photo-fitted cameras the insert is 0.94 / 0.95 of the cover (P1046409 / P1046408) against the photos' ~1.0 /
+  0.93, and [Y1d] holds it <= 0.97 at P1046408's; the probe's overhead term +15 % and a warmer tint changed the
+  close-up by < 1 % (the reflection there is not the overhead term); the lower insert kept ([Y1e] lower / upper <= 0.90
+  from the pilot stop, 0.88).
+  LINING / POSTS (FIDY3-01): measured on this build -- panel_408b lining_flightdeck 77 / post 96 against P1046408's 135
+  / 123, the pilot stop 100 / 108 against P1046410's ~108: CABIN_TRIM lining_flightdeck 0.95 -> 1.15, lining_fd_post 1.05
+  -> 1.2 (panel_408b 87 / 103, the pilot stop 111 / 114, fd_cabin 118 / 110); the rest of P1046408's gap is that photo's A-
+  pillar region against the blown windshield / side windows (1.2 / 1.25 read 89 / 104 there and put the pilot stop 5-7
+  over P1046410), so not taken further.
+  TITANIUM (FIDY3-02): VIEWER panel_titanium brush band +-35 -> +-50 % and the bake's contact pass on it 1.3 -> 1.6
+  (build.AO_CONTACT_POW_MAT): p10 / p50 / p90 at panel_408b 52 / 84 / 126 -> 47 / 82 / 129 (P1046408 27 / 84 / 147).
+  FIDY3-00 (the provisional fidelity verdict): the numbers above are this round's own measurements under the page's ID
+  masks at the photo-fitted / judges' cameras (out/tmp/fdy_fix_r3/ld b00 = before, v02 = after).
+  OWNER-DELEGATED DECISIONS (2026-10-16, as fix r2 recorded): the glareshield outboard lip kept (no fitted camera shows
+  the arc consistently > 5 mm larger); the crew seats at the neutral SRP, no table change (fix r2's evidence; the lead's
+  decision of 12:25); PCL pewter, overhead tone, the satin dark-grey column and the parked elevator droop stay; the grip
+  depth and the badge field deferred.
+  Build (both tiers rebuilt): 2,743,884 triangles / 48.53 MB, light tier 2,318,251 / 40.79 MB; interior 895.8k of 903.7k
+  (flight_deck 216.7k of 218.9k; seat_pax3-6 34,834 OVER the 34.8k cap as before).  Verified on this build: fit_check FIT
+  OK (138 ok, no open row: 28 shoes 26.7 mm, 23 shells wound outward -- the linkage's clevis bracket at e 0.2 / nv 7 had
+  folded 8 directed edges, now e 0.3 --, 24 harness +1.6 mm, 26 none), consistency_2d3d 157 / 157, the FULL viewer_test
+  232 / 233 (~2 h beside fit_check and the package: [FD-L2] carpet 14 / consoles 17 / lining_fd 104 / titanium 81, [FD-L3]
+  glareshield 60 (lip 71 / underside 44), [FD-L4] yoke 212, [FD-L5] sheepskin (118, 120, 141) lum 121, [FD-L6] p50 76,
+  bands 26 / 50 / 13 %, [FD-L10] skew +0.07, p10 98, sd4 13.0, sd1 9.0, [T4] pilot 108 / fd_cabin 78, [T14] overhead
+  42-48, bezels 31-46, walnut 72, [Y1] cover 212 / up 183 / lo 161 / pads 78, [Y1b] spread 22, body 0.30, pads / body
+  1.20, [Y1d] insert / cover 0.94, [Y1e] far 0.85 / near 0.38 / lower / cover 0.83 / band 54, pilot stop lower / upper
+  0.88) with [FD-L10b] the one failure -- the tour's controls hint (a dark pill with white text) lay over the fleece at
+  the close poses (skew -2.50 / -1.73): the test hides it for those two shots, and `--only fdlook` 12 / 12 ([FD-L10b]
+  cush_close -0.39 / -0.41, sd8 11.9; seats_aft -0.55 / -0.46, sd8 12.6); web/package.py verify OK (meshopt 17.67 +
+  15.21 MB), the Artifact bundle 119.1 MB in 2 publishes (63.4 + 55.7 MB), artifact_test 70 / 70.  Photo | before
+  (5d01757, the judges' r3
+  renders) | after sheets of the standard views and close-ups: out/tmp/fdy_fix_r3/cmp/cmp_*.jpg (gitignored: they embed
+  the photos).
