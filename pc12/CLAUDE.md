@@ -76,7 +76,7 @@ python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=
 python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 233 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
-                                #   --only fdlook: [FD-L1]-[FD-L10b] the flight-deck look, ~30 min)
+                                #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -1914,3 +1914,73 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   (5d01757, the judges' r3
   renders) | after sheets of the standard views and close-ups: out/tmp/fdy_fix_r3/cmp/cmp_*.jpg (gitignored: they embed
   the photos).
+- Flight deck + yoke fix r4 (2026-10-16; the flight-deck judges' round 4 after the yoke merge, at 61c8255: owner 7.8
+  (yoke 7.6), fidelity 7.6 (yoke 7.7); FDY-O4-01..05, FIDY4-01..06).  No table changed (L6 / L6B / L6Y / L6Y2 not
+  regenerated: nothing they draw or check moved).  Look development in one viewer page again (out/tmp/fdy_fix_r4/ld.py
+  jobs, tools/paljob.py reloads with ?cabTrim= / ?partTrim= / ?viewer= / ?yokeProbe= / ?footSkip= / ?cabProbe2=,
+  tools/m408.py the panel_408b checks -- the judge's knee boxes, the knob tops, the lip's column profiles, the titanium
+  under P1046408 --, pmat.py / ymet.py per material); photo | judges' before (61c8255) | after sheets
+  out/tmp/fdy_fix_r4/cmp/cmp_*.jpg (gitignored: they embed the photos).
+  KNEE AREAS (FIDY4-01, the major): at panel_408b the cove under the outer sub-panels and the footwell's outboard walls
+  read flat mid-grey -- the judge's boxes 43 / 37 against P1046408's 5 / 12; under the model's masks fd_cove 66 against
+  8 (fix r3's ~41 had been read over the cove's lit rim), the consoles' forward faces (fd_consoles:lining_flightdeck)
+  113 against 6 (124 in the footwell close-up, P1046409 ~31), the footwell's foil blanket / the outer plates' edge strips
+  (panel_silver) 119 / 109 against ~25 / 31.  `materials.js FOOT_SKIP` (lining_flightdeck, fd_cove, panel_dark,
+  panel_silver; ?footSkip=): CABIN_LOOK.foot's x 1.8 footwell fill only on the pedals, the linkage and the hoses
+  (new shader flag `noFoot`); fd_cove CABIN_TRIM 1.45 -> 0.5; PART_TRIM 'fd_consoles:lining_flightdeck' fill 0.25,
+  'flight_deck:panel_silver' fill 0.4 / specIn 0.3: the boxes 12 / 14, the cove 12, the console faces ~20, the blanket /
+  strips ~58; [FD-L6]'s bands 29 / 49 / 12 % (P1046408 24.7 / 46.6 / 15.3).  viewer_test [FD-L11] (new): the boxes <= 22
+  and the console faces <= 25 at panel_408b.  The judge's optional builder swoop not needed (the outer plate's
+  outer_drop and the rolled lip are there; the walls round it were the lit part).
+  KNOBS (FIDY4-04): the GFC 700's dual knobs, the BARO and GI 275 knobs in grip_black (`fd_detail_a.gfc700 /
+  eyebrow_items / standby_details`; the VS wheel's slot rubber_black) -- the shared `black` carried fix r2's warm
+  quadrant-plate tint, B - R -2..-5 against P1046408's +30..+37 -- and PART_TRIM 'flight_deck:grip_black' a 0.8
+  reflection floor x 2.2 (the windshield on their knurled sides): 40 -> 59 at panel_408b, B - R +12 (P1046408's knob
+  tops 61-82 / +34, the masks take the knobs' sides too).  The GFC face's streaky reflections of the apron:
+  'flight_deck:bezel_black' roughness 0.45 (the display bezels' level kept, [T14] <= 50).
+  TITANIUM (FDY-O4-01 / -02, FIDY4-06): the wavy vertical white streaks down the plates in the footwell / pedestal
+  views were the cabin probe's window stripes (CABIN_LOOK probe2) mirrored by a 0.27-rough metal through fix r3's
+  +-50 % bands: the stripes now fade to their mean over the roughness 0.15 .. 0.30 (and wherever a pixel spans > ~1/100
+  of a stripe period; probe2 [2.0, 0.15, 0.30], ?cabProbe2=), the bands +-25 % over 12 x 60 cm (were 5 x 30 cm at +-50 %),
+  the brushed streaks kept at 0.6 mm / +-15 % (1 mm at +-18 % -- FIDY4-06's finer, stronger streaks -- read as grey wood
+  grain at the yoke close-up), the near-field over the PDU band x 0.9 (0.8); the
+  contact pass on the titanium its own 3-10 mm reach at ^1.5 (`build.AO_CONTACT_MAT`, was 4-22 mm at ^1.6: the 30-40 mm
+  soot halo round the 26-38 mm proud PARKING BRK handle gone; both tiers rebuilt).  At panel_408b p10 / p50 / p90 53 /
+  85 / 116 (P1046408 28 / 82 / 148; fix r3 47 / 82 / 129): the median kept, the streaks and halos gone; the photo's
+  remaining fine structure (high-pass sd 10-23 against 2-9) is mostly its lettering on the plates, which the model does
+  not carry (no readable markings) -- FIDY4-06's range is only partly met.
+  YOKE (FDY-O4-03, FIDY4-02 / -03): the grips and pads a flat mid-grey up close (49 / 60 / 87, 55 / 75 / 85 at the yoke
+  close-up against P1046409's 38 / 60 / 183, 33 / 82 / 121): their reflections take a directional cabin probe
+  (YOKE_PROBE grip_black [0.95, 0.9, 4.0, 0.12, 0.3], yoke_leather [0.25, 2.6, 2.6, 0.12, 0.35]: the dark cabin low, the
+  overhead / windshield and the yoke's own side window bright), the 'yoke:grip_black' reflection floor 0.45 -> 0.1 and
+  side-window term 25, PART_TRIM roughness 0.15 / specIn 5.0; the pads' floor 0.3 -> 0.1, the sun's glint 0.6,
+  roughness 0.28, specIn 3.0 (?yokeProbe= now adds a probe for any yoke material): the close-up 25 / 65 / 120 (p99 138)
+  and 51 / 74 / 99, the pilot stop body / cover 0.27, pads / body 1.29 ([Y1b] 0.22-0.34 / 1.0-1.4), panel_408b grips
+  ~86 (P1046408 68 / 86).  The upper insert's dark-cabin term +20 % and overhead -15 % (YOKE_PROBE yoke_silver k
+  [1.95, 1.27, ...]: the stop's reflections point aft, R.y ~0.2-0.3, P1046408's low camera up, R.y ~0.6): 0.85-0.86 ->
+  0.88-0.90 of the cover from the crew eyes, P1046408's camera unchanged ([Y1d] <= 0.97) -- the judge's 0.95 would put
+  the photo-fitted camera over the photo's 0.93, so not further.
+  LIP (FIDY4-05): PART_TRIM 'flight_deck:leather_black' `facing` [0.75, 2.4, -0.5, 0.5, 0.5] (new: the reflections x lo
+  facing down .. x hi facing up, half of it on the diffuse): down the roll at panel_408b 80 flat -> 121 / 112 / 108 /
+  103 / 96 (P1046408 ~144 -> 104); from the pilot stop the lip 81 -> ~95.
+  HARNESS (FDY-O4-04): VIEWER harness a dark warm charcoal (0.036, 0.031, 0.027), the sheen 0.3 warm, the weave deeper
+  (0.5 mm) and in the albedo (`leather.albedo` +-8 %, new) with the edges turned from the eye a shade darker
+  (`leather.edge` 0.25, new): the cushion close-up 108 (98, 110, 130) -> 68 (67, 68, 77), the AOPA photo's dark grey
+  belt.
+  OUTSIDE (FDY-O4-05, `outside.js`): the hangars' roofs (`ROOFS`: a shallow gable, a barrel vault with ribs, flat with
+  a parapet and roof plant), an eave band with its shadow line under every roof edge, low office annexes with ribbon
+  windows in front of four of them (`ANNEX`, `officeTexture`), four generic business jets (low wing, aft engines,
+  T-tail) and two high-wing singles at 60-170 m, seven light poles, ground crew in hi-vis vests, a baggage cart and a
+  ground power unit (their shadows baked into the apron), a tree line of 420 crowns on the far ring, a cooler haze over
+  the lowest degrees (`SKY.haze2`, as seen only) and the slab joints fading out from ~30 m (0.55 -> 0.10 alpha).  All
+  of it SEEN only (`userData.seenOnly`, merged into one mesh: the image-based light is rendered without it, the
+  calibrated cabin light does not move); no markings.  [FD-L1] at the crew stops: window median 194, the sky over the
+  cowl 233 / 236, B - R 18.
+  OWNER-DELEGATED DECISIONS (2026-10-16): the glareshield outboard lip KEPT (fix r2's measure stands: at the photo-fitted
+  panel_408b the lip outline lies on P1046408's along the outboard sweeps within a few px; the bundle-adjusted P1046409 /
+  10 cameras sit 40-60 px off on the hood's crown as well, a camera error -- no fitted camera shows the arc consistently
+  > 5 mm larger); the crew seats KEPT at the neutral SRP, no table change (fix r2's evidence, out/tmp/fdy_fix_r2/ld2
+  c01 / c02, seat_p410_neutral_aft.png: at the bundle-adjusted P1046410 camera the backs fill the frame MORE at full aft
+  travel, the photo's camera stood ahead of the backs -- the BA depth / fov trade-off, not a pose; at panel_408b the
+  poses that lift the cushions cover the consoles the photo shows clear); PCL pewter, the overhead tone, the satin
+  dark-grey column and the parked elevator droop stay; the grip depth and the badge field deferred.
