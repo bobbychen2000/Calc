@@ -120,8 +120,11 @@ export const CABIN_LOOK = { key: qv('cabKey', 0), diff: qv('cabDiff', [0.75, 1])
   // into the cabin see a cabin probe instead: [the dark cabin (seats, walnut, the crew), + the side windows (|R.x| > 0.55
   // near level), + the lit cabin through the divider opening (dead aft, level), + the headliner (up)]
   probe: qv('cabProbe', [0.55, 2.2, 1.1, 0.45]),
-  // [the opening's window stripes: x (1 + this), -, -, -]
-  probe2: qv('cabProbe2', [2.0, 0, 0, 0]),
+  // [the opening's window stripes: x (1 + this), their fade to the mean over the roughness from .. to, -]
+  // (flight deck + yoke fix r4 FDY-O4-01: the stripes drew thin wavy white streaks down the 0.27-rough titanium plates in
+  // the close / oblique views -- 'water running down glass'; a satin metal blurs a 6-7 deg stripe into a soft gradient:
+  // faded to their mean from roughness 0.15 to 0.30, and wherever a pixel spans more than ~1/100 of a stripe period)
+  probe2: qv('cabProbe2', [2.0, 0.15, 0.30, 0]),
   // flight deck fix r5 (FDO4-04): the footwell's soft fill -- [diffuse boost, below WL (glTF Y), ahead of STA (glTF Z), -]
   foot: qv('cabFoot', [0.8, 1.72, 3.95, 0]) };
 U.cabinShade.value.set(...CABIN_LOOK.shade);
@@ -165,7 +168,8 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // metal and wider brushed bands (VIEWER), the fill 0.8 -> 0.5, and a NEAR-FIELD term x 1.05 below WL 1.78 .. x 0.8
   // above 1.88 (the band under the PDUs had read 114-128 against the photo's 91; half of it on the reflections): at
   // panel_408b 52 / 84 / 125, (82, 83, 93), the band 96 and the plates' foot 90 against the photo's 91 / 89)
-  panel_titanium: [0, 0.5, 0, 0, 0, 0, 1, 1.05, 0.8, 1.78, 1.88, 0.5],
+  // (flight deck + yoke fix r4 FIDY4-06: the band under the PDUs x 0.8 -> 0.9, a little more of the plates' range)
+  panel_titanium: [0, 0.5, 0, 0, 0, 0, 1, 1.05, 0.9, 1.78, 1.88, 0.5],
   // the near-black footwell carpet (P1046408 5-15)
   carpet_flightdeck: [0, 0.85],
   // the flight deck's anthracite lining -- posts, window surrounds, side walls, headliner (flight deck fix r1 FDO1-04 /
@@ -189,7 +193,9 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   panel_grey: [0, 0.72],
   // the dark cove below the outer sub-panels (flight deck fix r3 FID-FD3-01: P1046408's cove ~41 at the fitted camera;
   // at x 1 it read 28)
-  fd_cove: [0, 1.45],
+  // (flight deck + yoke fix r4 FIDY4-01: the cove read 66 at panel_408b against P1046408's 8 under the same mask -- the
+  // fix r3 measure, ~41, was taken over the cove's lit rim; with the footwell fill off (FOOT_SKIP) 1.45 -> 0.5: 12)
+  fd_cove: [0, 0.5],
   // flight deck fix r5: the A-pillar's round post (FDO4-02 / FID-FD4-02: P1046409 / 10 slim dark posts, ~60-90 with a
   // narrow bright edge -- its satin reflection of the glazing, SPEC_KEEP) and the palm tray's matte warm titanium floor
   // (FDO4-03: P1046408 ~128 / 117 / 132, no recognisable reflection)
@@ -237,7 +243,11 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // judges): kept at 25)
   yoke_white: [0.25, 1, 1.4, 1, 1, 25, 1, 0.5, 1.06, 1.79, 1.91, 0.7], yoke_silver: [0.5, 1, 1, 0.6, 0, 0, 1],
   yoke_silver_dark: [0.5, 1, 1, 0.6, 0, 0, 1],
-  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.40, 0.45, 1, 0, 14], yoke_trim_face: [0, 1.0, 0.25],
+  // (flight deck + yoke fix r4 FDY-O4-03 / FIDY4-02: the grips and pads a flat mid-grey slate plastic up close -- the
+  // range compressed, 49 / 60 / 87 and 55 / 75 / 85 at the yoke close-up against P1046409's 38 / 60 / 183 and 33 / 82 /
+  // 121: the reflection floor 0.45 -> 0.1 (it lit every flank alike), their reflections a directional cabin probe
+  // instead (YOKE_PROBE grip_black / yoke_leather): dark toward the cabin, lit by the overhead and the side window)
+  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.40, 0.1, 1, 0, 25], yoke_trim_face: [0, 1.0, 0.25],
   yoke_slot: [0, 0.5],
   // rev Q (3-D judges r4): the cover's groove flanks are cavities -- no fill, part of the studio's diffuse (FID4-01); the
   // column a satin dark-grey tube, its reflections floored at 0.15 of the studio's (FID4-05: ~40-50 from the pilot's eye)
@@ -256,7 +266,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // owner judge's yoke close-up against P1046409's 68-90 with sheen streaks: a steeper top-lit gradient (x 0.6 at WL 1.80
   // .. x 1.45 at 1.90), a 0.3 reflection floor and the side-window term, glossier (VIEWER roughness 0.32, PART_TRIM
   // specIn 2.5): 56 / 76 / 85 there, the pilot stop's pads / body 1.24 -- [Y1b] 1.0-1.4, the photos 1.06-1.27)
-  yoke_leather: [0, 0.68, 0.3, 0, 0, 12, 1, 0.6, 1.45, 1.80, 1.90, 0.5], button_red: [0, 0.75],     // (FDY r1: [0, 0.65] + near field)
+  yoke_leather: [0, 0.68, 0.1, 0.6, 0, 20, 1, 0.6, 1.45, 1.80, 1.90, 0.5], button_red: [0, 0.75],     // (FDY r1: [0, 0.65] + near field; fix r4: floor 0.3 -> 0.1, the sun's glint 0.6)
 };
 // Rev Q (3-D judges r4 FID4-02: the satin-aluminium insert had the cover's hue and luminance -- 0.91-0.99 of it, 1.07 at
 // the AOPA camera, a p10-p90 spread of 7 levels: a flat grey paint): inside, the yoke's metal inserts mirror a CABIN
@@ -286,16 +296,24 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
 // the design eye, lower / cover 0.77 at P1046408, 0.79 at P1046409 co-pilot; viewer_test [Y1e])
 const YOKE_PROBE = {
   // (FDY r1 FIDY1-04: the upper insert x 1.25 -- 187 at P1046409's camera against the photo's 200-210)
-  yoke_silver: { k: [1.625, 1.5, 1.025, 1.625, 0.22], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
+  // (flight deck + yoke fix r4 FIDY4-03: from the crew eyes 0.85-0.86 of the cover, P1046409's crop ~1.0 -- the stop's
+  // reflections point aft and a little up, R.y ~0.2-0.3, P1046408's low camera mostly up, R.y ~0.6: the dark-cabin term
+  // +20 %, the overhead -15 %, the P1046408 camera unchanged ([Y1d] <= 0.97))
+  yoke_silver: { k: [1.95, 1.27, 1.025, 1.625, 0.22], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
   // (FDY r2 FIDY2-06: the lower insert 0.84-0.86 of the upper at panel_408b against the photos' 0.92-0.95, and bluer:
   // its terms x 1.2, the side term x 1.3 -- P1046408's low camera sees it mirror the side window -- with a less blue base
   // (VIEWER): 0.91 there, lower / upper 0.89 from the pilot stop ([Y1e] <= 0.90))
   yoke_silver_dark: { k: [1.2, 1.85, 2.2, 0.84, 0], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [0.82, 0.95, 1.22] },
+  // (flight deck + yoke fix r4 FDY-O4-03 / FIDY4-02) the satin-black body and the leather pads: a directional law --
+  // the dark cabin behind the crew low, the overhead / windshield and the yoke's own side window bright -- so the aft
+  // faces fall near-black and the rolled rims and tops catch the light (P1046409: 38 / 60 / 183 on the body)
+  grip_black: { k: [0.95, 0.9, 4.0, 0.12, 0.3], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [1.0, 1.0, 1.04] },
+  yoke_leather: { k: [0.25, 2.6, 2.6, 0.12, 0.35], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [1.0, 1.0, 1.0] },
 };
 for (const it of (Q_M.get('yokeProbe') || '').split('|')) {          // ?yokeProbe=name:k0,..,k4,y0,..,y5[,tr,tg,tb]|...
   const k = it.slice(0, it.lastIndexOf(':')), a = it.slice(it.lastIndexOf(':') + 1).split(',').map(Number);
-  if (k && YOKE_PROBE[k] && a.length >= 11 && a.every(Number.isFinite)) {
-    YOKE_PROBE[k] = { ...YOKE_PROBE[k], k: a.slice(0, 5), y: a.slice(5, 11) };
+  if (k && a.length >= 11 && a.every(Number.isFinite)) {
+    YOKE_PROBE[k] = { tint: [1, 1, 1], ...(YOKE_PROBE[k] || {}), k: a.slice(0, 5), y: a.slice(5, 11) };
     if (a.length >= 14) YOKE_PROBE[k].tint = a.slice(11, 14);
   }
 }
@@ -336,7 +354,12 @@ const PART_TRIM = {
   // from below -- read 53-75 against P1046408's sky-sheen band 86-125, B - R +31: the lip's grazing reflection of the
   // windshield; F90 1, F0 kept and tinted to the sky, a smoother 0.38, its reflections x 1.9)
   // (tuned at panel_408b: the band 68 -> ~105, P1046408 102; specIn 3.0 / roughness 0.32 read 131)
-  'flight_deck:leather_black': { specIn: 1.9, specularIntensity: 1.0, specularColor: [0.30, 0.44, 0.64], roughness: 0.38 },
+  // (flight deck + yoke fix r4 FIDY4-05: at panel_408b the roll read one flat slate band, 80 down every column, where
+  // P1046408's roll catches the sky along its top, ~144, and darkens toward the fascia, ~104: `facing` -- its reflections
+  // x 0.75 facing down .. x 2.4 facing up (half of it on the diffuse): 121 -> 96 down the roll; from the pilot stop the
+  // lip 81 -> ~95)
+  'flight_deck:leather_black': { specIn: 1.9, specularIntensity: 1.0, specularColor: [0.30, 0.44, 0.64], roughness: 0.38,
+    facing: [0.75, 2.4, -0.5, 0.5, 0.5] },
   // the side-window sills of the same leather (FDO2-03: a broad light-grey band from the seats, 86-120 in the window
   // light): a little less diffuse and sky sheen; [FD-L3] reads them at panel_408b (63 -> ~55; >= 50)
   'interior_lining:leather_glareshield': { fill: [0, 0.8], specIn: 1.15 },
@@ -344,7 +367,9 @@ const PART_TRIM = {
   // and crew it mirrors: its bezels 37-58 along the columns between and round the displays, the model's read 24 at the
   // fitted camera, a black field round every display; its reflections x 2 read 37 there, 42 from the pilot stop
   // ([T14] keeps them <= 50, [FD-L6] the frame's tonal bands); the CB panels on the lining keep theirs)
-  'flight_deck:bezel_black': { specIn: 2.0 },
+  // (flight deck + yoke fix r4 FIDY4-04: the GFC 700's face mirrored the apron and hangars as streaky light bands where
+  // the photo's black face is matte: a rougher 0.45, the reflections' share kept)
+  'flight_deck:bezel_black': { specIn: 2.0, roughness: 0.45 },
   // (flight deck fix FDY r1 FIDY1-07: the overhead panel read near-black from the cabin, 30 at cabin_fwd_406 against
   // P1046406's lit mid-grey 70; P1046408 reads it ~45 under the windshield's light and [T14] keeps it <= 50 at the pilot /
   // fd_cabin stops: its fill 0.5 -> 0.85, ~47 there and ~48 from the cabin -- the two photos' exposures disagree)
@@ -353,14 +378,24 @@ const PART_TRIM = {
   // the world sky's blue out of it; CABIN_TRIM 'yoke:grip_black' above)
   // (FDY r2 FDY-O2-02 / FIDY2-06: still matte slate without the photos' satin streaks down the grip faces: sharper and
   // stronger reflections, neutral-cool -- the median kept dark for [Y1b], the lit edges brighter)
-  'yoke_L:grip_black': { roughness: 0.2, specIn: 4.0, specularColor: [0.95, 0.97, 1.0] },
-  'yoke_R:grip_black': { roughness: 0.2, specIn: 4.0, specularColor: [0.95, 0.97, 1.0] },
+  // (flight deck + yoke fix r4 FDY-O4-03 / FIDY4-02: tighter and stronger again under the YOKE_PROBE law)
+  'yoke_L:grip_black': { roughness: 0.15, specIn: 5.0, specularColor: [0.95, 0.97, 1.0] },
+  'yoke_R:grip_black': { roughness: 0.15, specIn: 5.0, specularColor: [0.95, 0.97, 1.0] },
   // (FDY r2 FDY-O2-02: the pads' blue-grey speckle -- a warm specular tint takes the sky's blue out of their sheen)
-  'yoke_L:yoke_leather': { specularColor: [1.0, 0.95, 0.9], specIn: 2.5 },
-  'yoke_R:yoke_leather': { specularColor: [1.0, 0.95, 0.9], specIn: 2.5 },
+  'yoke_L:yoke_leather': { specularColor: [1.0, 0.95, 0.9], specIn: 3.0 },
+  'yoke_R:yoke_leather': { specularColor: [1.0, 0.95, 0.9], specIn: 3.0 },
   // (FDY r2 FDY-O2-04: the quadrant plate and the flight deck's black parts read navy from above, B - R +26 at the
   // quadrant close-up, the photos satin black: a warm base and specular tint, less reflection inside)
   'flight_deck:black': { color: [0.036, 0.029, 0.022], specIn: 0.5, specularColor: [1.0, 0.9, 0.75] },
+  // (flight deck + yoke fix r4 FIDY4-01 / 04) the consoles' forward faces in the knees' shade (113 at panel_408b against
+  // P1046408's 6; 124 in the footwell close-up against P1046409's ~31, exposed ~1.3 x darker: 0.25 -> ~22 / ~30); the
+  // panel's knobs -- cool satin
+  // grip_black since this round's build -- keep the windshield's reflection on their knurled sides (a floor of 0.8 of
+  // the reflections: 40 -> 59 at panel_408b, P1046408's knob tops 61-82 with B - R +30); the satin-silver trim of the
+  // footwell's foil blanket and the outer plates' edge strips not a lit band in the shade (119 / 109 against ~25 / 31)
+  'fd_consoles:lining_flightdeck': { fill: [0, 0.25] },
+  'flight_deck:grip_black': { fill: [0, 1, 0.8], specIn: 2.2 },
+  'flight_deck:panel_silver': { fill: [0, 0.4], specIn: 0.3 },
 };
 // ?partTrim=part:material={json}|... merges look-development overrides into PART_TRIM (as ?cabTrim for CABIN_TRIM)
 for (const it of (Q_M.get('partTrim') || '').split('|')) {
@@ -368,6 +403,13 @@ for (const it of (Q_M.get('partTrim') || '').split('|')) {
   if (i < 1) continue;
   try { PART_TRIM[it.slice(0, i)] = { ...(PART_TRIM[it.slice(0, i)] || {}), ...JSON.parse(it.slice(i + 1)) }; } catch (e) { /* ignored */ }
 }
+// (flight deck + yoke fix r4 FIDY4-01) the materials CABIN_LOOK.foot's footwell fill leaves alone: the walls round the
+// knees -- the consoles' forward faces and the side walls (lining_flightdeck), the cove under the outer sub-panels --
+// read mid-grey walls where P1046408 / 09 show near-black sculpted console ends (5-11 at the fitted camera); the fill
+// stays on the pedals, the linkage and the footwell's own dark walls
+// (and the footwell's own dark walls / front closure (panel_dark) and its foil blanket / the outer plates' edge strips
+// (panel_silver): P1046408's footwells read 5-17 round the pedals, the x 1.8 had them 22-43 and the blanket 119)
+const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark,panel_silver').split(',').filter(Boolean));
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
 // the gunmetal, the bezels, the black leather and the displays to flat matte); the sky law and the occlusion still apply
 // (+ the flight deck's shared detail materials (seed) and the geometry tracks' glossy ones: the annunciator / key caps,
@@ -578,9 +620,14 @@ const VIEWER = {
   // the plates' seams and feet, build.AO_CONTACT_POW_MAT)
   // (flight deck + yoke fix r3 FIDY3-02: the median and hue right, the range compressed -- p10 / p90 52 / 126 at
   // panel_408b against P1046408's 27 / 147: the bands +-35 -> +-50 % and the contact pass 1.3 -> 1.6 (build.py): 47 / 129)
+  // (flight deck + yoke fix r4 FDY-O4-01 / FIDY4-06: the +-50 % bands, 5 cm across, and the cabin probe's window stripes
+  // drew wavy white streaks down the plates in the footwell / pedestal views -- water down glass; the photos an even
+  // satin with a faint brush: the window stripes faded by the roughness (CABIN_LOOK probe2), the bands broad and soft,
+  // +-25 % over 12 x 60 cm; the brushed streaks kept fine, 0.6 mm at +-15 % of the reflection -- 1 mm at +-18 % read as
+  // grey wood grain at the yoke close-up)
   panel_titanium: { color: [0.25, 0.225, 0.245], metalness: 0.85, roughness: 0.27, specIn: 1.9,
-    brush: { aniso: 0.75, axis: [1, 0, 0], rough: 0.05, len: 0.05, w: 0.0006, spec: 0.15, band: 0.5, bandLen: 0.3,
-      bandW: 0.05, up: [0.40, 0.55, 0.32, 0.15] } },
+    brush: { aniso: 0.75, axis: [1, 0, 0], rough: 0.05, len: 0.05, w: 0.0006, spec: 0.15, band: 0.25, bandLen: 0.6,
+      bandW: 0.12, up: [0.40, 0.55, 0.32, 0.15] } },
   // (FDO3-01: the graphite face, the stack / pedestal gunmetal: a fine bead-blast grain -- isotropic, `len` 3-4 mm -- in
   // the roughness and the reflection, and a weaker band wander)
   panel_graphite: { specIn: 1.5, brush: { aniso: 0.35, axis: [1, 0, 0], rough: 0.04, len: 0.05, w: 0.0008, spec: 0.12,
@@ -615,8 +662,12 @@ const VIEWER = {
   // (flight deck fix r3 FDO3-06: still flat grey card) a coarser, deeper weave (~1 mm) and more roughness wander
   // (flight deck fix FDY r1 FDY-O1-06: the straps read as flat hard-edged grey CAD ribbons -- the builder crowns them
   // across, seats.ribbon crown; here the woven webbing's sheen at grazing angles, AOPA / P1046409's satin bands)
-  harness: { leather: { freq: 1100, dist: 0.00028, bump: 1.0, rough: 0.16 }, sheen: 0.7, sheenColor: [0.34, 0.34, 0.35],
-    sheenRoughness: 0.35 },
+  // (flight deck + yoke fix r4 FDY-O4-04: still wide flat light blue-grey bands up close -- 108 / (98, 110, 130) at the
+  // cushion close-up, 150 from behind the seats -- where the AOPA photo's webbing is a dark charcoal woven belt with a
+  // soft sheen and darker edges: a darker warm base, the sheen a third of it and warm, the weave deeper (0.5 mm) and in
+  // the albedo too (+-8 %), the edges turned away from the eye a shade darker)
+  harness: { color: [0.036, 0.031, 0.027], leather: { freq: 1100, dist: 0.0005, bump: 1.0, rough: 0.16, albedo: 0.08, edge: 0.25 },
+    sheen: 0.3, sheenColor: [0.12, 0.11, 0.10], sheenRoughness: 0.45 },
   // the G3000 PRIME pages brighter inside (LK-07: x1.25 read 78-95 against the photos' >= 90 at the cabin exposure)
   display_page: { emisIn: 1.45 },
   // the yoke's smoke-silver lower insert (3-D judges r1 FID1-01): 0.30 read 0.34-0.68 of the cover in the cabin light
@@ -632,7 +683,7 @@ const VIEWER = {
   // grain at +-15 % with a lower roughness, the photos' grained, softly lit leather panels)
   // (flight deck fix FDY r2 FDY-O2-02: up close the 1.7 mm grain at +-15 % read as a coarse blue-grey granite / denim
   // speckle; P1046409 / 10 show smooth black leather with a very fine grain: 0.9 mm at -10 / +6 %, half the bump)
-  yoke_leather: { fleece: { freq: 1100, oct: 2, lo: 0.9, hi: 1.06, dist: 0.00012, bump: 0.5 }, roughness: 0.32 },
+  yoke_leather: { fleece: { freq: 1100, oct: 2, lo: 0.9, hi: 1.06, dist: 0.00012, bump: 0.5 }, roughness: 0.28 },   // (fix r4: 0.32 -> 0.28)
   // the AFCS cap (3-D judges r2 FID2-03): AgX compresses a bright saturated red toward white -- the lookdev's 0.50 base
   // read 205/69/62 (sat 0.70) at the pilot stop; a darker deep red keeps it saturated (P1046409 199/58/78, Mexico R
   // 138/6/17)
@@ -907,6 +958,7 @@ export function upgradeMaterials(root, spec) {
       if (!im.has(ck)) {
         const c = clonePatched(m, { interior: true, cabinFill: (pt && pt.fill) || CABIN_TRIM[yk || name] || null, specKeep: SPEC_KEEP.has(name), reflDir: REFL_DIR.has(name),
           ...(pt && pt.specIn ? { specIn: pt.specIn } : {}), ...(pt && pt.sunIn ? { sunIn: pt.sunIn } : {}),
+          ...(pt && pt.facing ? { facing: pt.facing } : {}), ...(FOOT_SKIP.has(name) ? { noFoot: true } : {}),
           probe: (isYoke && YOKE_PROBE[name]) || null });
         if (pt && pt.roughness != null) c.roughness = pt.roughness;
         if (pt && pt.specularColor && c.specularColor) c.specularColor.copy(lin(pt.specularColor));
@@ -1318,7 +1370,7 @@ export function installPatch(mat, extra = {}) {
   const f = { ...(mat.userData.pc12 || {}), ...extra };
   mat.userData.pc12 = f;
   const { paint, lining, glass, cabinGlass, collar, interior, cabinFill, back, grooves, stripes, fleece, rest, specKeep, reflDir, ao,
-    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe, fur } = f;
+    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe, fur, noFoot, facing } = f;
   if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes && !fleece && !ao && !leather && !brush && !grain && !fur) return mat;
   const restP = !!(rest && (collar || grooves || stripes || grain));
   const worldP = !!(fleece || leather || brush || fur);
@@ -1414,7 +1466,11 @@ export function installPatch(mat, extra = {}) {
     float dhy = ( pcFbm( pcLq + pcLdy, 2, pcLfw ) - pcLn ) * ${f4(q.dist)};
     float pcLk = 1.0 - smoothstep( 0.3, 0.9, pcLfw );
     normal = normalize( mix( normal, pcBump( - vViewPosition, normal, dhx, dhy, faceDirection ), ${f4(q.bump)} * pcLk ) );
-    roughnessFactor = clamp( roughnessFactor + ${f4(q.rough)} * pcLk * ( 2.0 * pcLn - 1.0 ), 0.05, 1.0 );
+    roughnessFactor = clamp( roughnessFactor + ${f4(q.rough)} * pcLk * ( 2.0 * pcLn - 1.0 ), 0.05, 1.0 );${q.albedo ? `
+    // (flight deck + yoke fix r4 FDY-O4-04: the harness webbing) the weave in the albedo too, x 1 -+ albedo, and the
+    // webbing's edges -- turned away from the eye over the crowned strap -- a shade darker (\`edge\`)
+    diffuseColor.rgb *= 1.0 + ${f4(q.albedo)} * pcLk * ( 2.0 * clamp( ( pcLn - 0.3 ) / 0.4, 0.0, 1.0 ) - 1.0 );` : ''}${q.edge ? `
+    diffuseColor.rgb *= 1.0 - ${f4(q.edge)} * ( 1.0 - smoothstep( 0.15, 0.65, abs( dot( normal, normalize( vViewPosition ) ) ) ) );` : ''}
   }`);
     }
     if (brush) {
@@ -1966,6 +2022,13 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
       float pcSide = smoothstep( 0.55, 0.85, abs( pcRW.x ) ) * ( 1.0 - smoothstep( 0.12, 0.5, abs( pcRW.y - 0.05 ) ) );
       float pcOpen = ( 1.0 - smoothstep( 0.36, 0.46, pcAz ) ) * smoothstep( - 0.22, - 0.10, pcRW.y ) * ( 1.0 - smoothstep( 0.25, 0.4, pcRW.y ) );
       float pcWin = smoothstep( 0.35, 0.95, sin( sqrt( pcAz ) * 34.0 ) ) * smoothstep( 0.04, 0.10, pcAz ) * ( 1.0 - smoothstep( 0.03, 0.16, abs( pcRW.y - 0.04 ) ) );
+      // (flight deck + yoke fix r4 FDY-O4-01: on the brushed titanium the window stripes drew thin wavy white streaks down
+      // the plates in close / oblique views -- a 0.27-rough metal blurs a 6-7 deg stripe into a soft gradient: the stripes
+      // fade to their mean over the roughness probe2.y .. probe2.z, and with the pixel's own change of azimuth)
+      if ( uCabinProbe2.z > uCabinProbe2.y ) {
+        float pcWb = max( smoothstep( uCabinProbe2.y, uCabinProbe2.z, material.roughness ), smoothstep( 0.02, 0.06, fwidth( sqrt( pcAz ) * 34.0 ) ) );
+        pcWin = mix( pcWin, 0.3 * smoothstep( 0.04, 0.10, pcAz ) * ( 1.0 - smoothstep( 0.03, 0.16, abs( pcRW.y - 0.04 ) ) ), pcWb );
+      }
       float pcUp = smoothstep( 0.25, 0.85, pcRW.y );
       float pcPrb = uCabinProbe.x + uCabinProbe.y * pcSide + uCabinProbe.z * pcOpen * ( 1.0 + uCabinProbe2.x * pcWin ) + uCabinProbe.w * pcUp;
       pcKs *= mix( 1.0, pcPrb, pcFd * smoothstep( - 0.25, 0.25, pcRW.z ) );${brush ? `
@@ -1986,11 +2049,19 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
     // / 09 show the pedal arms, linkage and side walls in a soft light from the side windows and the floor): its diffuse
     // x (1 + boost) below the panel's lower edge, ahead of the seats
     // (not the floor: the up-facing carpet stays near-black, P1046408 5-15, [FD-L2] / [FD-L6]; nor the crew seats'
-    // fleece, which reaches into that box)${fleece || fur ? `
+    // fleece, which reaches into that box; nor -- flight deck + yoke fix r4 FIDY4-01 -- the walls round the knees, FOOT_SKIP)${fleece || fur || noFoot ? `
     if ( false )` : ''}
     pcDi *= 1.0 + uCabinFoot.x * pcFd * ( 1.0 - smoothstep( uCabinFoot.y, uCabinFoot.y + 0.12, pcPW.y ) )
       * ( 1.0 - smoothstep( uCabinFoot.z, uCabinFoot.z + 0.15, pcPW.z ) ) * ( 1.0 - smoothstep( 0.45, 0.8, pcNW.y ) );
-    float pcSi = pcAO * pcKs * pcSs${specIn ? ` * mix( 1.0, ${(+specIn).toFixed(3)}, pcIn )` : ''}${cabinFill && cabinFill.length > 11 ? ` * mix( 1.0, pcNf, ${(+cabinFill[11]).toFixed(3)} )` : ''};${emisIn ? `
+    float pcSi = pcAO * pcKs * pcSs${specIn ? ` * mix( 1.0, ${(+specIn).toFixed(3)}, pcIn )` : ''}${cabinFill && cabinFill.length > 11 ? ` * mix( 1.0, pcNf, ${(+cabinFill[11]).toFixed(3)} )` : ''};${facing ? `
+    {
+      // PART_TRIM 'facing' [lo, hi, n0, n1, share on the diffuse] (flight deck + yoke fix r4 FIDY4-05): inside, the
+      // reflections x lo where the world normal points down (y <= n0) .. x hi where it points up (y >= n1) -- the
+      // glareshield's rolled lip catches the sky along its upper roll and darkens toward the fascia under it
+      float pcFc = mix( ${(+facing[0]).toFixed(3)}, ${(+facing[1]).toFixed(3)}, smoothstep( ${(+facing[2]).toFixed(3)}, ${(+facing[3]).toFixed(3)}, pcNW.y ) );
+      pcSi *= mix( 1.0, pcFc, pcIn );
+      pcDi *= mix( 1.0, mix( 1.0, pcFc, ${(+(facing[4] || 0)).toFixed(3)} ), pcIn );
+    }` : ''}${emisIn ? `
     totalEmissiveRadiance *= mix( 1.0, ${(+emisIn).toFixed(3)}, pcIn );` : ''}
     reflectedLight.directDiffuse *= pcKk; reflectedLight.directSpecular *= pcKks;
     reflectedLight.indirectDiffuse *= pcDi; reflectedLight.indirectSpecular *= pcSi;
@@ -2028,7 +2099,7 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
     sh.fragmentShader = fsHead + fs;
   };
   // the rest matrix is a uniform: programs are shared
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}${fur ? 'H' + JSON.stringify(fur) : ''}`;
+  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}${fur ? 'H' + JSON.stringify(fur) : ''}${noFoot ? 'V' : ''}${facing ? 'J' + facing.join('/') : ''}`;
   mat.needsUpdate = true;
   return mat;
 }

@@ -2410,7 +2410,7 @@ def photo_cam(key):
 
 
 async def fd_look_checks(page, shots=True):
-    """[FD-L1]-[FD-L10b] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
+    """[FD-L1]-[FD-L11] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
     window sky, the PRO's dark palette (median sRGB luminance of each material's pixels: the MAT_MASK pass), the
     exterior unchanged, the Cockpit preset lit as the tour.  1200 x 900 pages (the photos' 4:3) in their own context."""
     import numpy as np
@@ -2558,6 +2558,17 @@ async def fd_look_checks(page, shots=True):
           and abs(b230 - 0.153) <= 0.08,
           f"p10 {p10:.0f}, p50 {p50:.0f} (photo 93), < 20: {100 * dark:.0f} %, bands {100 * b40:.0f} / {100 * bmid:.0f} / "
           f"{100 * b230:.0f} %")
+    # [FD-L11] the knee areas (flight deck + yoke fix r4, FIDY4-01: below the sub-panel row the cove under the cheek leg and
+    # the footwell's outboard walls read flat mid-grey walls, 43 / 37 at panel_408b, where P1046408 shows near-black
+    # sculpted console ends, 5 / 11 in the same boxes): the judge's boxes (x 20-120 / 1080-1180, y 640-760 of the 1200 x
+    # 900 frame) dark, and the console's forward face (fd_consoles:lining_flightdeck; P1046408 ~6) no light wall
+    kb = [float(np.median(Lpanel[640:760, x0:x0 + 100])) for x0 in (20, 1080)]
+    mcf = await material_stats(pg, str(path), {"cface": ["fd_consoles:lining_flightdeck"]})
+    cfv = mcf["cface"][2] if mcf["cface"][1] is not None else None
+    check("[FD-L11] the knee areas at panel_408b near-black (the judge's boxes <= 22; P1046408 5 / 11) and the "
+          "consoles' forward faces dark (<= 25; P1046408 ~6)",
+          max(kb) <= 22 and (cfv is None or cfv <= 25),
+          f"knee boxes {kb[0]:.0f} / {kb[1]:.0f}, console face {cfv}")
     # [FD-L10b] the sheepskin at CLOSE range (flight deck + yoke fix r3, FDY-O3-01: within ~1 m the pile's partings read
     # as scattered dark pits and streaks -- grime / mould on a lavender popcorn -- on the seat backs seen from the cabin and
     # the cushion tops; P1046409 / 10's cushions a soft light clumpy pile, dark only in the shaded folds): at the owner
@@ -4387,7 +4398,7 @@ def main():
                     help="sound: only the engine-sound section (its own page; ~2 min); tour: only the interior tour "
                          "[T1]-[T18] on the desktop page; prop / phone / picture: those sections alone (a rerun of a "
                          "section that timed out or was starved under load); fdlook: the flight-deck look rows "
-                         "[FD-L1]-[FD-L10b] (1200 x 900, ~20 min)")
+                         "[FD-L1]-[FD-L11] (1200 x 900, ~20 min)")
     ap.add_argument("--sound-out", type=Path, default=OUT / "sound",
                     help="folder for the offline render pc12_engine_sequence.wav + spectrogram.png (default out/tmp/viewer/sound)")
     args = ap.parse_args()

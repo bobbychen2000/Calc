@@ -50,6 +50,9 @@ export const SKY = {
   // 210 / 233 / 251): the sky as SEEN is multiplied by `seen` [tint (linear), from / to sin(elevation)] above the haze --
   // the image-based light inside (environment()) keeps the untinted sky, so the calibrated cabin light does not move
   seen: [[0.50, 0.72, 1.0], 0.0, 0.14],
+  // flight deck + yoke fix r4 (FDY-O4-05: a hazier horizon, P1046409 / 10): a second, cooler haze over the lowest few
+  // degrees -- as SEEN only (uSeen.w), the image-based light keeps the calibrated sky: [colour (linear), share, falloff]
+  haze2: [[1.12, 1.18, 1.24], 0.55, 16.0],
 };
 // flight deck fix r1 (FDO1-08): the apron as seen through the glazing x `shown` (0.86: the near-white concrete clipped
 // at the interior exposure); the image-based light inside keeps the full value (`environment()`: the calibrated cabin
@@ -83,6 +86,28 @@ const TUGS = [[30, -58, 70]];
 // (fix r2 FID-FD2-08) a fuel truck and cones off the port beam, seen through the pilot's side window [x, z, heading]
 const TRUCKS = [[-27, 4, 80]];
 const CONES = [[-9.5, 1.5], [-9.5, -3.5], [9.5, 1.5]];
+
+// flight deck + yoke fix r4 (FDY-O4-05: from the crew stops the outside read as a game level -- toy box hangars with flat
+// regular facades, an empty apron with a grid of slab joints, a lone cone; P1046409 / 10 show a busy airfield with parked
+// jets, people, lamp posts, trees and a hazy horizon): the hangars' silhouettes broken by their roofs (`ROOFS`: a shallow
+// gable, a barrel vault, flat with a parapet), an eave band with its shadow line under every roof edge and low office
+// annexes in front of them (`ANNEX` [hangar, offset along its width, width, height, depth]); generic business jets and a
+// high-wing single at 60-170 m, light poles, ground crew in hi-vis vests, a baggage cart and a ground power unit, a tree
+// line on the far ring, a hazier horizon (`SKY.haze2`, as seen only), and the slab joints fading out beyond ~40 m.  All
+// of it is SEEN only: the image-based light inside (environment()) is rendered without it, so the calibrated cabin light
+// does not move.  No markings, no lettering.
+const ROOFS = ['gable', 'barrel', 'flat', 'gable', 'flat'];
+const ANNEX = [[0, 20, 24, 7.0, 9], [1, 16, 18, 6.0, 8], [4, -28, 28, 7.5, 10], [3, 0, 16, 5.5, 7]];
+// [x, z, heading deg (0 = nose to -Z), scale]
+const JETS = [[-104, -70, 120, 1.0], [104, -60, 235, 1.05], [-10, -150, 175, 0.95], [-28, -118, 205, 1.0]];
+const HIGHWING = [[-14, -86, 75, 1.0], [8, -102, 160, 0.95]];
+const POLES = [[-48, -90], [70, -40], [-100, -46], [2, -128], [116, -100], [-122, -124], [150, -60]];
+// [x, z, vest colour]
+const PEOPLE = [[-30.2, -46.8, [0.95, 0.78, 0.08]], [-31.6, -46.1, [0.12, 0.13, 0.16]], [37.8, -60.4, [0.95, 0.45, 0.06]],
+  [28.2, -55.6, [0.95, 0.78, 0.08]], [-96, -63, [0.12, 0.13, 0.16]]];
+const CARTS = [[-41, -43, 60], [47, -57, 160]];
+const GPUS = [[-99.5, -64.5, 30]];
+const TREES = { r: [232, 330], n: 420, h: [8, 17], seed: 4711 };
 
 // a deterministic PRNG (the apron's mottling is the same on every load and device)
 function rng(seed) {
@@ -123,10 +148,22 @@ function groundTexture(px, sun = sunDirection()) {
     g.fillStyle = `rgba(${R() < 0.5 ? '90,88,84' : '235,232,226'},${0.05 + 0.08 * R()})`;
     g.fillRect((ax + o + R() * aw) * S, (az + o + R() * ad) * S, G.slab * S * R(), G.slab * S * R());
   }
-  // slab joints
-  g.strokeStyle = 'rgba(70,68,64,0.55)'; g.lineWidth = Math.max(1, 1.2 * px / 2048);
-  for (let x = ax; x <= ax + aw + 1e-6; x += G.slab) { g.beginPath(); g.moveTo((x + o) * S, (az + o) * S); g.lineTo((x + o) * S, (az + ad + o) * S); g.stroke(); }
-  for (let z = az; z <= az + ad + 1e-6; z += G.slab) { g.beginPath(); g.moveTo((ax + o) * S, (z + o) * S); g.lineTo((ax + aw + o) * S, (z + o) * S); g.stroke(); }
+  // slab joints (fix r4 FDY-O4-05: fading out beyond ~40 m from the aircraft -- at a uniform 0.55 the far apron's joints
+  // read as a sim-floor grid through the windshield; near the aircraft they stay as they were)
+  g.lineWidth = Math.max(1, 1.2 * px / 2048);
+  const jointA = (x, z) => { const d = Math.hypot(x, z), t = Math.min(1, Math.max(0, (d - 30) / 45)); return 0.55 - 0.45 * t * t * (3 - 2 * t); };
+  for (let x = ax; x <= ax + aw + 1e-6; x += G.slab) {
+    for (let z = az; z < az + ad - 1e-6; z += G.slab) {
+      g.strokeStyle = `rgba(70,68,64,${jointA(x, z + 0.5 * G.slab).toFixed(3)})`;
+      g.beginPath(); g.moveTo((x + o) * S, (z + o) * S); g.lineTo((x + o) * S, (z + G.slab + o) * S); g.stroke();
+    }
+  }
+  for (let z = az; z <= az + ad + 1e-6; z += G.slab) {
+    for (let x = ax; x < ax + aw - 1e-6; x += G.slab) {
+      g.strokeStyle = `rgba(70,68,64,${jointA(x + 0.5 * G.slab, z).toFixed(3)})`;
+      g.beginPath(); g.moveTo((x + o) * S, (z + o) * S); g.lineTo((x + G.slab + o) * S, (z + o) * S); g.stroke();
+    }
+  }
   // the taxi line along the aircraft's axis and a lead-in arc (0.15 m wide)
   g.strokeStyle = G.taxi; g.lineWidth = Math.max(1, 0.3 * S);
   g.beginPath(); g.moveTo(o * S, (az + o) * S); g.lineTo(o * S, (az + ad + o) * S); g.stroke();
@@ -182,6 +219,26 @@ function groundTexture(px, sun = sunDirection()) {
   for (const [x, z, hd, bw, bl] of [...TUGS.map(([a, b, c]) => [a, b, c, 1.5, 2.6]), ...TRUCKS.map(([a, b, c]) => [a, b, c, 2.5, 8.2])]) {
     poly([[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([dx, dz]) => rot(x + kx * 1.2, z + kz * 1.2, hd * D2R, 1, dx * bw, dz * bl)), 'rgba(38,40,46,0.40)');
   }
+  // (fix r4) the annexes', jets', high-wing's, poles' and carts' shadows
+  for (const [hi, off, aw_, ah_, ad_] of ANNEX) {
+    const [cx, cz, , , bd] = HANGARS[hi];
+    poly(boxShadow(cx + off, cz + 0.5 * bd + 0.5 * ad_, aw_, ad_, ah_, sun), 'rgba(38,40,46,0.40)');
+  }
+  for (const [x, z, hd, sc] of [...JETS, ...HIGHWING]) {
+    const h = hd * D2R;
+    const ell = []; for (let k = 0; k < 24; k++) { const a = 2 * Math.PI * k / 24; ell.push(rot(x + kx * 1.6 * sc, z + kz * 1.6 * sc, h, sc, 0.9 * Math.cos(a), 0.5 + 7.2 * Math.sin(a))); }
+    poly(ell, 'rgba(38,40,46,0.38)');
+    poly([[-7.5, -0.8], [7.5, -0.8], [7.5, 1.0], [-7.5, 1.0]].map(([dx, dz]) => rot(x + kx * 1.2 * sc, z + kz * 1.2 * sc, h, sc, dx, dz)), 'rgba(38,40,46,0.34)');
+  }
+  g.lineCap = 'butt';
+  for (const [x, z] of POLES) {
+    g.strokeStyle = 'rgba(38,40,46,0.30)'; g.lineWidth = Math.max(1, 0.25 * S);
+    const [u0, v0] = W2(x, z), [u1, v1] = W2(x + kx * 16, z + kz * 16);
+    g.beginPath(); g.moveTo(u0, v0); g.lineTo(u1, v1); g.stroke();
+  }
+  for (const [x, z, hd, bw, bl] of [...CARTS.map(([a, b, c]) => [a, b, c, 1.5, 3.2]), ...GPUS.map(([a, b, c]) => [a, b, c, 1.3, 2.1])]) {
+    poly([[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([dx, dz]) => rot(x + kx * 0.5, z + kz * 0.5, hd * D2R, 1, dx * bw, dz * bl)), 'rgba(38,40,46,0.36)');
+  }
   // distance haze toward the horizon
   const [hc, h0, h1, hk] = G.haze;
   const gr = g.createRadialGradient(o * S, o * S, h0 * S, o * S, o * S, h1 * S);
@@ -232,6 +289,40 @@ function facadeTexture() {
   return cv;
 }
 
+// (fix r4) a low office annex's facade: light cladding, two ribbon windows of dark glass catching the sky along their top,
+// mullions, a glazed door and a dark plinth (no lettering)
+function officeTexture() {
+  const W = 256, H = 128, cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const g = cv.getContext('2d');
+  g.fillStyle = '#d6d7d8'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#8c9298'; g.fillRect(0, 0, W, 5);
+  for (const [y0, y1] of [[0.16, 0.40], [0.56, 0.80]]) {
+    const gr = g.createLinearGradient(0, H * y0, 0, H * y1);
+    gr.addColorStop(0, '#7f8fa0'); gr.addColorStop(0.35, '#4a5866'); gr.addColorStop(1, '#36414c');
+    g.fillStyle = gr; g.fillRect(W * 0.04, H * y0, W * 0.92, H * (y1 - y0));
+    g.fillStyle = 'rgba(210,214,218,0.85)';
+    for (let x = W * 0.04; x <= W * 0.96 + 1; x += W * 0.92 / 12) g.fillRect(x - 1, H * y0, 2, H * (y1 - y0));
+    g.fillRect(W * 0.04, H * y1 - 1, W * 0.92, 2);
+  }
+  g.fillStyle = '#3c4650'; g.fillRect(W * 0.70, H * 0.56, W * 0.10, H * 0.40);
+  g.fillStyle = 'rgba(60,60,58,0.55)'; g.fillRect(0, H - 6, W, 6);
+  return cv;
+}
+
+// (fix r4) merge non-indexed pre-lit geometries (position, normal, color) into one -- one draw call for the parked shapes
+function mergeNI(geos) {
+  const n = geos.reduce((a, g) => a + g.attributes.position.count, 0), out = new THREE.BufferGeometry();
+  for (const k of ['position', 'normal', 'color']) {
+    const a = new Float32Array(3 * n);
+    let o = 0;
+    for (const g of geos) { const s = g.attributes[k]; if (s) a.set(s.array.subarray(0, 3 * s.count), o); o += 3 * g.attributes.position.count; }
+    out.setAttribute(k, new THREE.BufferAttribute(a, 3));
+  }
+  out.computeBoundingSphere();
+  return out;
+}
+
 // (fix r2) the distance haze on the pre-lit shapes: their vertex colours mixed toward the haze colour (linear) by distance
 const HAZE_LIN = [0.56, 0.61, 0.66];
 function hazeK(x, z) {
@@ -277,6 +368,8 @@ void main() {
   if ( d.y < 0.0 ) c = uHor * ${SKY.below.toFixed(3)};
   // (flight deck fix r5) the sky as seen a clear blue (uSeen.w 0 while the image-based light is rendered)
   c *= mix( vec3( 1.0 ), uSeen.xyz, uSeen.w * smoothstep( ${SKY.seen[1].toFixed(3)}, ${SKY.seen[2].toFixed(3)}, e ) );
+  // (fix r4) the horizon's haze as seen
+  if ( d.y >= 0.0 ) c = mix( c, vec3( ${SKY.haze2[0].map((x) => x.toFixed(3)).join(', ')} ), uSeen.w * ${SKY.haze2[1].toFixed(3)} * exp( - e * ${SKY.haze2[2].toFixed(1)} ) );
   gl_FragColor = vec4( c, 1.0 );
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -308,6 +401,101 @@ void main() {
     this._fac = fac;
     const side = new THREE.MeshBasicMaterial({ name: 'outside_facade', map: fac, vertexColors: true });
     const roof = new THREE.MeshBasicMaterial({ name: 'outside_roof', vertexColors: true });
+    const prelit = (geo, col) => {
+      const nrm = geo.attributes.normal, c = [], n = new THREE.Vector3();
+      for (let i = 0; i < nrm.count; i++) {
+        n.fromBufferAttribute(nrm, i);
+        const k = lit(n);
+        c.push(col[0] * k, col[1] * k, col[2] * k);
+      }
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+      return geo;
+    };
+    const vmat = new THREE.MeshBasicMaterial({ name: 'outside_parked', vertexColors: true });
+    const part = (geo, col, x, y, z, rx = 0, ry = 0, rz = 0) => {
+      geo.rotateX(rx); geo.rotateY(ry); geo.rotateZ(rz); geo.translate(x, y, z);
+      return prelit(geo.index ? geo.toNonIndexed() : geo, col);
+    };
+    // (fix r4) the seen-only additions: pre-lit, hazed, placed geometries merged into one mesh at the end
+    const seen = [];
+    const place = (geos, px, pz, hd = 0, sc = 1) => {
+      const M = new THREE.Matrix4().compose(new THREE.Vector3(px, 0, pz), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -hd * D2R),
+        new THREE.Vector3(sc, sc, sc));
+      const k = hazeK(px, pz);
+      for (const g of geos) { g.applyMatrix4(M); seen.push(hazeGeo(g, k)); }
+    };
+    // triangles with flat normals facing `out` (a point inside the shape), pre-lit
+    const tris = (T, col, inside) => {
+      const pos = [], c = new THREE.Vector3(...inside);
+      for (const [a, b, d] of T) {
+        const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), D = new THREE.Vector3(...d);
+        const n = new THREE.Vector3().crossVectors(B.clone().sub(A), D.clone().sub(A));
+        const m = A.clone().add(B).add(D).multiplyScalar(1 / 3);
+        if (n.dot(m.sub(c)) < 0) pos.push(...a, ...d, ...b); else pos.push(...a, ...b, ...d);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      geo.computeVertexNormals();
+      return prelit(geo, col);
+    };
+    const TRIM = [0.50, 0.52, 0.55], ROOFC = [0.62, 0.64, 0.66];
+    HANGARS.forEach(([cx, cz, bw, bh, bd, col], hi) => {
+      // the eave band round the roof edge (its shaded underside: the shadow line under the eaves), then the roof
+      const ov = 0.7, gs = [part(new THREE.BoxGeometry(bw + 2 * ov, 0.5, bd + 2 * ov), TRIM, 0, bh - 0.2, 0)];
+      const alongX = bw >= bd, a0 = 0.5 * (alongX ? bw : bd), b0 = 0.5 * (alongX ? bd : bw), a = a0 + ov, b = b0 + ov;
+      const P = (u, y, v) => (alongX ? [u, y, v] : [v, y, u]);
+      const kind = ROOFS[hi] || 'flat';
+      if (kind === 'gable') {
+        const rise = 0.16 * b0, y0 = bh + 0.05, ye = y0 - ov * rise / b0, y1 = y0 + rise;
+        gs.push(tris([[P(-a, ye, -b), P(a, ye, -b), P(a, y1, 0)], [P(-a, ye, -b), P(a, y1, 0), P(-a, y1, 0)],
+          [P(-a, ye, b), P(a, ye, b), P(a, y1, 0)], [P(-a, ye, b), P(a, y1, 0), P(-a, y1, 0)]], ROOFC, P(0, bh - 3, 0)));
+        gs.push(tris([[P(-a0, y0, -b0), P(-a0, y0, b0), P(-a0, y1, 0)], [P(a0, y0, -b0), P(a0, y0, b0), P(a0, y1, 0)]], col, P(0, bh, 0)));
+      } else if (kind === 'barrel') {
+        const rise = 0.22 * b0, y0 = bh + 0.05, N = 14, T = [], E = [];
+        for (let i = 0; i < N; i++) {
+          const t0 = Math.PI * i / N, t1 = Math.PI * (i + 1) / N;
+          const v0 = -b * Math.cos(t0), v1 = -b * Math.cos(t1), h0 = y0 + rise * Math.sin(t0), h1 = y0 + rise * Math.sin(t1);
+          T.push([P(-a, h0, v0), P(a, h0, v0), P(a, h1, v1)], [P(-a, h0, v0), P(a, h1, v1), P(-a, h1, v1)]);
+          const w0 = -b0 * Math.cos(t0), w1 = -b0 * Math.cos(t1), g0 = y0 + rise * Math.sin(t0) * Math.min(1, b0 / b), g1 = y0 + rise * Math.sin(t1) * Math.min(1, b0 / b);
+          for (const u of [-a0, a0]) E.push([P(u, y0, 0), P(u, g0, w0), P(u, g1, w1)]);
+        }
+        gs.push(tris(T, ROOFC, P(0, bh - 3, 0)), tris(E, col, P(0, bh, 0)));
+        // ribs over the vault every ~8 m (the joint lines of a vaulted hangar)
+        for (let u = -a0 + 4; u < a0 - 2; u += 8) {
+          const R = [];
+          for (let i = 0; i < N; i++) {
+            const t0 = Math.PI * i / N, t1 = Math.PI * (i + 1) / N;
+            const v0 = -(b + 0.05) * Math.cos(t0), v1 = -(b + 0.05) * Math.cos(t1), h0 = y0 + 0.05 + rise * Math.sin(t0), h1 = y0 + 0.05 + rise * Math.sin(t1);
+            R.push([P(u - 0.15, h0, v0), P(u + 0.15, h0, v0), P(u + 0.15, h1, v1)], [P(u - 0.15, h0, v0), P(u + 0.15, h1, v1), P(u - 0.15, h1, v1)]);
+          }
+          gs.push(tris(R, TRIM, P(u, bh - 3, 0)));
+        }
+      } else {
+        // flat: a parapet (the band, taller) and roof plant boxes
+        gs.push(part(new THREE.BoxGeometry(bw + 2 * ov, 0.9, bd + 2 * ov), TRIM, 0, bh + 0.1, 0));
+        const R = rng(77 + hi);
+        for (let k = 0; k < 3; k++) {
+          const ux = (R() - 0.5) * 0.6 * bw, uz = (R() - 0.5) * 0.5 * bd;
+          gs.push(part(new THREE.BoxGeometry(2.5 + 3 * R(), 1.2 + 1.4 * R(), 2 + 2 * R()), [0.66, 0.68, 0.70], ux, bh + 1.0, uz));
+        }
+      }
+      place(gs, cx, cz);
+    });
+    // low office annexes in front of the hangars (their own facade: ribbon windows), a parapet each
+    const off = new THREE.CanvasTexture(officeTexture());
+    off.colorSpace = THREE.SRGBColorSpace; off.anisotropy = 4;
+    this._off = off;
+    const offMat = new THREE.MeshBasicMaterial({ name: 'outside_office', map: off, vertexColors: true });
+    for (const [hi, ox, aw, ah, ad] of ANNEX) {
+      const [cx, cz, , , bd] = HANGARS[hi], x = cx + ox, z = cz + 0.5 * bd + 0.5 * ad;
+      const geo = prelit(new THREE.BoxGeometry(aw, ah, ad), [0.93, 0.93, 0.92]);
+      hazeGeo(geo, hazeK(x, z));
+      const m = new THREE.Mesh(geo, [offMat, offMat, roof, roof, offMat, offMat]);
+      m.position.set(x, ah / 2, z);
+      m.userData.seenOnly = true;
+      w.add(m);
+      place([part(new THREE.BoxGeometry(aw + 0.6, 0.7, ad + 0.6), TRIM, 0, ah + 0.1, 0)], x, z);
+    }
     for (const [cx, cz, bw, bh, bd, col] of HANGARS) {
       const geo = new THREE.BoxGeometry(bw, bh, bd);
       const nrm = geo.attributes.normal, c = [], n = new THREE.Vector3();
@@ -324,21 +512,6 @@ void main() {
       w.add(m);
     }
     // ---- parked aircraft and a tug (pre-lit like the hangars; generic shapes, no markings)
-    const prelit = (geo, col) => {
-      const nrm = geo.attributes.normal, c = [], n = new THREE.Vector3();
-      for (let i = 0; i < nrm.count; i++) {
-        n.fromBufferAttribute(nrm, i);
-        const k = lit(n);
-        c.push(col[0] * k, col[1] * k, col[2] * k);
-      }
-      geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
-      return geo;
-    };
-    const vmat = new THREE.MeshBasicMaterial({ name: 'outside_parked', vertexColors: true });
-    const part = (geo, col, x, y, z, rx = 0, ry = 0, rz = 0) => {
-      geo.rotateX(rx); geo.rotateY(ry); geo.rotateZ(rz); geo.translate(x, y, z);
-      return prelit(geo.toNonIndexed(), col);
-    };
     const WHITE = [0.86, 0.87, 0.88], GREY = [0.42, 0.44, 0.47], DARK = [0.06, 0.065, 0.07];
     for (const [px, pz, hd, sc] of PARKED) {
       const gs = [
@@ -402,6 +575,109 @@ void main() {
         w.add(m);
       }
     }
+    // ---- (fix r4) generic business jets (low wing, aft engines, T-tail), a high-wing single, light poles, ground crew,
+    // a baggage cart and a ground power unit, a tree line on the far ring -- seen only, merged into one mesh
+    const pre = (geo) => geo;                              // (already translated / rotated by part())
+    const wingHalf = (len, chord, th, sweep, s_, col, x, y, z, dihedral = 0) => {
+      const g = new THREE.BoxGeometry(len, th, chord);
+      g.translate(0.5 * len * s_, 0, 0);
+      g.rotateZ(s_ * dihedral); g.rotateY(-s_ * sweep);
+      return part(g, col, x, y, z);
+    };
+    const strut = (p0, p1, r, col) => {
+      const A = new THREE.Vector3(...p0), B = new THREE.Vector3(...p1), L = B.clone().sub(A);
+      const g = new THREE.CylinderGeometry(r, r, L.length(), 6);
+      g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), L.clone().normalize()));
+      const m = A.add(B).multiplyScalar(0.5);
+      return part(g, col, m.x, m.y, m.z);
+    };
+    for (const [px, pz, hd, sc] of JETS) {
+      const nose = new THREE.SphereGeometry(0.85, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2); nose.scale(1, 1.9, 1);
+      const fin = new THREE.BoxGeometry(0.18, 2.5, 2.0); fin.translate(0, 1.25, 0); fin.rotateX(0.55);
+      place([
+        part(new THREE.CylinderGeometry(0.85, 0.85, 9.0, 16), WHITE, 0, 1.55, 0.0, Math.PI / 2),
+        part(nose, WHITE, 0, 1.55, -4.5, -Math.PI / 2),
+        part(new THREE.ConeGeometry(0.85, 4.2, 16), WHITE, 0, 1.75, 6.6, Math.PI / 2),
+        wingHalf(7.4, 1.9, 0.20, 0.45, 1, WHITE, 0.6, 1.05, 0.8, 0.05), wingHalf(7.4, 1.9, 0.20, 0.45, -1, WHITE, -0.6, 1.05, 0.8, 0.05),
+        part(new THREE.CylinderGeometry(0.44, 0.38, 2.7, 12), WHITE, 1.45, 2.05, 4.5, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.44, 0.38, 2.7, 12), WHITE, -1.45, 2.05, 4.5, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.30, 0.30, 0.05, 12), DARK, 1.45, 2.05, 3.13, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.30, 0.30, 0.05, 12), DARK, -1.45, 2.05, 3.13, Math.PI / 2),
+        part(new THREE.BoxGeometry(0.5, 0.14, 0.9), WHITE, 1.0, 2.0, 4.6), part(new THREE.BoxGeometry(0.5, 0.14, 0.9), WHITE, -1.0, 2.0, 4.6),
+        part(fin, WHITE, 0, 2.2, 6.4),
+        part(new THREE.BoxGeometry(4.6, 0.12, 1.2), WHITE, 0, 2.2 + 2.5 * Math.cos(0.55), 6.4 + 2.5 * Math.sin(0.55) + 0.2),
+        part(new THREE.BoxGeometry(1.74, 0.26, 4.2), DARK, 0, 1.78, -0.6),                                   // window band
+        part(new THREE.BoxGeometry(1.2, 0.34, 0.06), DARK, 0, 2.05, -3.75, 0.7),                              // windshield
+        part(new THREE.CylinderGeometry(0.08, 0.08, 1.0, 6), GREY, 0, 0.6, -3.4),
+        part(new THREE.CylinderGeometry(0.24, 0.24, 0.18, 10), DARK, 0, 0.24, -3.4, 0, 0, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.30, 0.30, 0.22, 10), DARK, -1.6, 0.30, 1.4, 0, 0, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.30, 0.30, 0.22, 10), DARK, 1.6, 0.30, 1.4, 0, 0, Math.PI / 2),
+      ].map(pre), px, pz, hd, sc);
+    }
+    for (const [px, pz, hd, sc] of HIGHWING) {
+      place([
+        part(new THREE.BoxGeometry(1.1, 1.3, 4.0), WHITE, 0, 1.35, 0),
+        part(new THREE.CylinderGeometry(0.16, 0.55, 3.6, 10), WHITE, 0, 1.55, 3.7, Math.PI / 2),
+        part(new THREE.BoxGeometry(1.0, 0.95, 1.2), WHITE, 0, 1.2, -2.6),
+        part(new THREE.ConeGeometry(0.22, 0.4, 10), GREY, 0, 1.2, -3.4, -Math.PI / 2),
+        part(new THREE.BoxGeometry(11.0, 0.14, 1.5), WHITE, 0, 2.1, -0.4),
+        strut([0.5, 0.75, -0.3], [2.6, 2.05, -0.3], 0.05, GREY), strut([-0.5, 0.75, -0.3], [-2.6, 2.05, -0.3], 0.05, GREY),
+        part(new THREE.BoxGeometry(0.12, 1.3, 1.1), WHITE, 0, 2.15, 5.0),
+        part(new THREE.BoxGeometry(3.4, 0.10, 0.9), WHITE, 0, 1.55, 5.1),
+        part(new THREE.BoxGeometry(1.12, 0.42, 1.7), DARK, 0, 1.78, -0.6),
+        part(new THREE.CylinderGeometry(0.06, 0.06, 0.9, 6), GREY, 0, 0.5, -2.4),
+        part(new THREE.CylinderGeometry(0.2, 0.2, 0.14, 10), DARK, 0, 0.2, -2.4, 0, 0, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.24, 0.24, 0.16, 10), DARK, -1.15, 0.24, 0.4, 0, 0, Math.PI / 2),
+        part(new THREE.CylinderGeometry(0.24, 0.24, 0.16, 10), DARK, 1.15, 0.24, 0.4, 0, 0, Math.PI / 2),
+        strut([-0.4, 0.7, 0.4], [-1.15, 0.24, 0.4], 0.04, GREY), strut([0.4, 0.7, 0.4], [1.15, 0.24, 0.4], 0.04, GREY),
+      ], px, pz, hd, sc);
+    }
+    const POLE = [0.56, 0.58, 0.61];
+    for (const [px, pz] of POLES) {
+      place([part(new THREE.CylinderGeometry(0.09, 0.15, 16, 8), POLE, 0, 8, 0),
+        part(new THREE.BoxGeometry(1.7, 0.12, 0.12), POLE, 0.7, 15.8, 0),
+        part(new THREE.BoxGeometry(0.75, 0.22, 0.45), [0.78, 0.80, 0.82], 1.45, 15.7, 0),
+        part(new THREE.BoxGeometry(0.62, 0.04, 0.34), [0.95, 0.94, 0.88], 1.45, 15.58, 0)], px, pz, Math.atan2(px, pz) / D2R + 90);
+    }
+    const SKIN = [0.55, 0.40, 0.32], LEGS = [0.12, 0.13, 0.16];
+    PEOPLE.forEach(([px, pz, vest], i) => {
+      const lean = ((i * 37) % 11 - 5) * 0.01;
+      place([part(new THREE.BoxGeometry(0.15, 0.86, 0.2), LEGS, -0.09, 0.43, 0), part(new THREE.BoxGeometry(0.15, 0.86, 0.2), LEGS, 0.09, 0.43, 0.02),
+        part(new THREE.BoxGeometry(0.44, 0.62, 0.26), vest, 0, 1.17, 0, lean),
+        part(new THREE.BoxGeometry(0.1, 0.6, 0.12), vest, -0.27, 1.12, 0.02), part(new THREE.BoxGeometry(0.1, 0.6, 0.12), vest, 0.27, 1.12, -0.03),
+        part(new THREE.SphereGeometry(0.115, 10, 8), SKIN, 0, 1.62, 0)], px, pz, i * 67);
+    });
+    for (const [px, pz, hd] of CARTS) {
+      const wh = [-0.6, 0.6].flatMap((x) => [-1.2, 1.2].map((z) => part(new THREE.CylinderGeometry(0.2, 0.2, 0.12, 10), DARK, x, 0.2, z, 0, 0, Math.PI / 2)));
+      place([part(new THREE.BoxGeometry(1.5, 0.12, 3.2), [0.24, 0.29, 0.40], 0, 0.5, 0),
+        part(new THREE.BoxGeometry(0.06, 0.5, 3.2), [0.24, 0.29, 0.40], -0.72, 0.8, 0), part(new THREE.BoxGeometry(0.06, 0.5, 3.2), [0.24, 0.29, 0.40], 0.72, 0.8, 0),
+        part(new THREE.BoxGeometry(0.6, 0.45, 0.8), [0.10, 0.10, 0.12], -0.3, 0.8, -0.8), part(new THREE.BoxGeometry(0.5, 0.35, 0.7), [0.45, 0.12, 0.10], 0.3, 0.75, 0.2),
+        part(new THREE.BoxGeometry(0.55, 0.4, 0.6), [0.16, 0.20, 0.30], -0.2, 0.78, 1.0), ...wh], px, pz, hd);
+    }
+    for (const [px, pz, hd] of GPUS) {
+      const wh = [-0.55, 0.55].flatMap((x) => [-0.7, 0.7].map((z) => part(new THREE.CylinderGeometry(0.22, 0.22, 0.14, 10), DARK, x, 0.22, z, 0, 0, Math.PI / 2)));
+      place([part(new THREE.BoxGeometry(1.3, 1.0, 2.0), [0.82, 0.64, 0.10], 0, 0.85, 0), part(new THREE.BoxGeometry(1.32, 0.12, 2.02), DARK, 0, 1.38, 0), ...wh], px, pz, hd);
+    }
+    {
+      // the tree line: clumps of rounded crowns on the far ring, dark greens hazed toward the horizon's blue-grey
+      const R = rng(TREES.seed), ico = new THREE.IcosahedronGeometry(1, 1);
+      let n = 0;
+      while (n < TREES.n) {
+        const ang = 2 * Math.PI * R(), rr = TREES.r[0] + (TREES.r[1] - TREES.r[0]) * R(), m = 3 + Math.floor(7 * R());
+        for (let k = 0; k < m && n < TREES.n; k++, n++) {
+          const a2 = ang + (R() - 0.5) * 18 / rr, r2 = rr + (R() - 0.5) * 14;
+          const h = TREES.h[0] + (TREES.h[1] - TREES.h[0]) * R(), wd = (0.32 + 0.18 * R()) * h;
+          const g = ico.clone(); g.scale(wd, 0.55 * h, wd);
+          const tone = 0.8 + 0.4 * R();
+          seen.push(hazeGeo(part(g, [0.085 * tone, 0.13 * tone, 0.06 * tone], r2 * Math.cos(a2), 0.55 * h + 0.6, r2 * Math.sin(a2)), 0.16));
+        }
+      }
+    }
+    {
+      const m = new THREE.Mesh(mergeNI(seen), vmat);
+      m.userData.seenOnly = true;
+      w.add(m);
+    }
     // ---- the ridge on the horizon (a hazy blue-grey band of hills)
     const N = 256, pos = [], idx = [];
     for (let i = 0; i <= N; i++) {
@@ -433,6 +709,10 @@ void main() {
     if (this._env) return this._env;
     const es = new THREE.Scene(), copy = this.group.clone(true);
     copy.visible = true;
+    // (fix r4) the seen-only shapes stay out of the image-based light (the calibrated cabin light does not move)
+    const drop = [];
+    copy.traverse((o) => { if (o.userData && o.userData.seenOnly) drop.push(o); });
+    for (const o of drop) o.removeFromParent();
     es.add(copy);
     // (the clone shares the sky's material: its zenith desaturated for this render only, SKY.envDesat)
     const zen = this._skyMat.uniforms.uZen.value, keep = zen.clone();
@@ -451,6 +731,6 @@ void main() {
     return this._env;
   }
   // the cached environment belongs to a lost context: forget it (not disposed: its GL objects are gone)
-  contextLost() { this._env = null; this._tex.needsUpdate = true; this._fac.needsUpdate = true; }
+  contextLost() { this._env = null; this._tex.needsUpdate = true; this._fac.needsUpdate = true; this._off.needsUpdate = true; }
   ownsEnv(tex) { return !!tex && tex === this._env; }
 }
