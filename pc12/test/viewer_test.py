@@ -2410,7 +2410,7 @@ def photo_cam(key):
 
 
 async def fd_look_checks(page, shots=True):
-    """[FD-L1]-[FD-L10] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
+    """[FD-L1]-[FD-L10b] flight deck r1 LOOK: the world outside the glazing, the sun with its shadows, the baked occlusion /
     window sky, the PRO's dark palette (median sRGB luminance of each material's pixels: the MAT_MASK pass), the
     exterior unchanged, the Cockpit preset lit as the tour.  1200 x 900 pages (the photos' 4:3) in their own context."""
     import numpy as np
@@ -2546,6 +2546,7 @@ async def fd_look_checks(page, shots=True):
           f"({int(kf.sum())} px)")
     Lall = L[60:, :]
     p10, p50 = float(np.percentile(Lall, 10)), float(np.percentile(Lall, 50))
+    Lpanel = L
     dark = float((Lall < 20).mean())
     # the tonal bands of P1046408 at the same camera (sRGB luminance below the toolbar): < 40 24.7 %, 40-140 46.6 %,
     # > 230 15.3 %; its median 93 comes from a mid band a shade lighter than the per-material targets above allow
@@ -2557,6 +2558,41 @@ async def fd_look_checks(page, shots=True):
           and abs(b230 - 0.153) <= 0.08,
           f"p10 {p10:.0f}, p50 {p50:.0f} (photo 93), < 20: {100 * dark:.0f} %, bands {100 * b40:.0f} / {100 * bmid:.0f} / "
           f"{100 * b230:.0f} %")
+    # [FD-L10b] the sheepskin at CLOSE range (flight deck + yoke fix r3, FDY-O3-01: within ~1 m the pile's partings read
+    # as scattered dark pits and streaks -- grime / mould on a lavender popcorn -- on the seat backs seen from the cabin and
+    # the cushion tops; P1046409 / 10's cushions a soft light clumpy pile, dark only in the shaded folds): at the owner
+    # judge's close poses (the cushion and back at ~0.5 m, the backs from the divider) the fleece eroded 10 px, the
+    # toolbar / Panel button out, its high-pass at sigma 4 / 8 no long dark tail (skew >= -0.6 / -0.75; P1046409 / 10
+    # -0.50 / -0.49, -0.31 / -0.32; fix r2 -0.70 / -0.98 and -1.32 / -1.32) and the clump-scale relief there (sd at sigma 8
+    # 8-17: the photos 12.5 / 13.3)
+    from scipy import ndimage as _ndi2
+    close = {}
+    for nm, (x, y, z, yd, pd, fov) in (("cush_close", (3.62, -0.30, 1.98, 8.0, -32.0, 42.0)),
+                                        ("seats_aft", (3.75, 0.0, 2.25, 0.0, -22.0, 70.0))):
+        cp, sp, cy, sy = math.cos(math.radians(pd)), math.sin(math.radians(pd)), math.cos(math.radians(yd)), math.sin(math.radians(yd))
+        await js(pg, V + "T.place({eye: arg.eye, target: arg.target, fov: arg.fov}, {clamp: false}); V.advance(0.3);",
+                 {"eye": [x, y, z], "target": [x + cp * cy, y + cp * sy, z + sp], "fov": fov})
+        # the tour's controls hint (a dark pill with white text low in the frame) lies over the fleece at these poses:
+        # hidden for the shot, as the toolbar / Panel button rows are masked below
+        await js(pg, "const h = document.getElementById('tourHint'); if (h) h.style.visibility = 'hidden';")
+        pth = await snap(f"47b_fd_look_{nm}")
+        await js(pg, "const h = document.getElementById('tourHint'); if (h) h.style.visibility = '';")
+        mm = await js(pg, MAT_MASK, [G["sheep"]])
+        kc = _ndi2.binary_erosion(np.array(mm["mask"].split(","), int).reshape(mm["H"], mm["W"]) == 1, iterations=10)
+        kc[:70, :260] = False
+        kc[:70, mm["W"] - 150:] = False
+        im = np.asarray(Image.open(pth).convert("RGB"), float)[:mm["H"], :mm["W"]]
+        Lc = 0.2126 * im[..., 0] + 0.7152 * im[..., 1] + 0.0722 * im[..., 2]
+        if kc.sum() > 20000:
+            h4, h8 = (Lc - _ndi2.gaussian_filter(Lc, 4))[kc], (Lc - _ndi2.gaussian_filter(Lc, 8))[kc]
+            close[nm] = (float((h4 ** 3).mean() / h4.std() ** 3), float((h8 ** 3).mean() / h8.std() ** 3), float(h8.std()),
+                         int(kc.sum()))
+        else:
+            close[nm] = (-99.0, -99.0, 0.0, int(kc.sum()))
+    check("[FD-L10b] the sheepskin at close range (cushion / back ~0.5 m, the backs from the divider): no dark pits -- "
+          "high-pass skew at sigma 4 >= -0.6 and at sigma 8 >= -0.75 (P1046409 / 10 -0.3 .. -0.5), sd at sigma 8 8-17",
+          all(v[0] >= -0.6 and v[1] >= -0.75 and 8 <= v[2] <= 17 for v in close.values()),
+          "; ".join(f"{k}: skew {v[0]:+.2f} / {v[1]:+.2f}, sd8 {v[2]:.1f} ({v[3]} px)" for k, v in close.items()))
     await js(pg, V + "T.exit({motion: false}); await V.frames(1);")
     # [FD-L7] the exterior default view: the world and the sun add nothing outside -- the 3/4 view rendered with them and
     # without them (removed from the scene: the light count changes, every program recompiles) is the same picture,
@@ -4351,7 +4387,7 @@ def main():
                     help="sound: only the engine-sound section (its own page; ~2 min); tour: only the interior tour "
                          "[T1]-[T18] on the desktop page; prop / phone / picture: those sections alone (a rerun of a "
                          "section that timed out or was starved under load); fdlook: the flight-deck look rows "
-                         "[FD-L1]-[FD-L10] (1200 x 900, ~10 min)")
+                         "[FD-L1]-[FD-L10b] (1200 x 900, ~20 min)")
     ap.add_argument("--sound-out", type=Path, default=OUT / "sound",
                     help="folder for the offline render pc12_engine_sequence.wav + spectrogram.png (default out/tmp/viewer/sound)")
     args = ap.parse_args()
