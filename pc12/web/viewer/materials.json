@@ -282,19 +282,19 @@
   },
   "glazing_retainer": {
    "baseColorFactor": [
-    0.36,
-    0.37,
-    0.38,
+    0.1,
+    0.1,
+    0.11,
     1.0
    ],
    "metallicFactor": 1.0,
-   "roughnessFactor": 0.3,
+   "roughnessFactor": 0.4,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "kind": "metal",
    "note": "satin windshield / side-window retainer strips inside the PRO mask",
-   "srgb_hex": "#A2A4A6"
+   "srgb_hex": "#59595D"
   },
   "seal_cabin": {
    "baseColorFactor": [

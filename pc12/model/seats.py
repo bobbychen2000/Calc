@@ -72,8 +72,19 @@ M_METAL, M_RAIL, M_WHITE, M_BLACK = "metal", "metal_dark", "paint_white", "seat_
 # round the cushion front and over the back top.  The crowned outer face is the DRAWN outline (CREW_SEAT sheepskin_t
 # inside cushion_t and the back's front offset, review r2 M1): the leather cushion / back front lie sheepskin_t inside
 # it, the pad's bottom sinks into the leather by whatever the pad's loft exceeds sheepskin_t.
-SK_T, SK_CROWN_SEAT, SK_CROWN_BACK = 0.034, 0.016, 0.012
-SK_ROLL, SK_ROLL_B, SK_FLUFF, SK_LUMP = 0.017, 0.012, 0.0022, 0.0030
+# (flight deck fix FDY r2, FDY-O2-01: the pads read as flat-topped slabs with near-vertical sides -- P1046408 / 09 / 10
+# show puffy loaves: the crown 16 / 12 -> 24 / 18 mm, reached over SK_CROWN_R 75 mm from the edge, the top roll 17 -> 22
+# mm; the apex stays ON the drawn cushion top / back front.  An 85 mm rise put the thigh pads' rear 10 mm under the
+# drawn cushion top at consistency_2d3d's pan bins (its 10 mm tolerance): at 75 mm ~6.5 mm)
+SK_T, SK_CROWN_SEAT, SK_CROWN_BACK = 0.034, 0.024, 0.018
+SK_CROWN_R = (0.075, 0.075)                    # the crown's rise from the edge: seat, back
+# the pads keep their bottoms where the 16 / 12 mm crowns had them (the edge 8 / 6 mm thinner): the pad sinks `sink`
+# into the leather and is wrapped round its front roll / the back's top about an axis `sink - roll` above its bottom --
+# sunk deeper than the roll radius its lowest rows wrapped through the axis (inside out: a coplanar sliver on the
+# leather, fit_check 26)
+SK_T_SEAT, SK_T_BACK = SK_T - (SK_CROWN_SEAT - 0.016), SK_T - (SK_CROWN_BACK - 0.012)
+SK_ROLL, SK_ROLL_B, SK_FLUFF, SK_LUMP = 0.022, 0.012, 0.0022, 0.0030
+SK_ROLL_SEAT = SK_ROLL * min(1.0, SK_T_SEAT / (SK_ROLL + SK_ROLL_B))      # pillow() scales both rolls to the thickness
 SK_LUMP_K = (48.0, 71.0, 105.0, 150.0)          # tuft waves (rad/m): 4-13 cm lumps, visible at the panel camera
 SK_WRAP_SEAT, SK_WRAP_BACK = 0.012, 0.050     # run-on past the cushion front / the back top: ~100 deg of wrap
 SK_SPLIT = 0.010                               # gap between the two thigh-pad sleeves along the seat CL
@@ -1018,7 +1029,7 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
         # two sleeves, one over each thigh pad, split along the seat CL and at the U-notch (P1046408 / 10: two puffy
         # lumps per seat, the fleece wrapped round each pad's front)
         top_c = t0 - SK_CROWN_SEAT - SK_LUMP
-        sink = SK_T - (top_c - (t0 - sk_t))
+        sink = SK_T_SEAT - (top_c - (t0 - sk_t))
         g2 = 0.5 * SK_SPLIT
         ai = np.linspace(-0.045 + 0.04, D - 0.035, 14)                   # the inner edge: the split, then the notch
         bi = g2 + (0.5 * nw - 0.01 - g2) * smoothstep(D - nd - 0.07, D - nd, ai) + 0.01 * smoothstep(D - nd, D, ai)
@@ -1032,10 +1043,10 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             pp[:, 0] -= SK_FRONT * smoothstep(D - 0.10, D - 0.03, pp[:, 0])
             pp[:, 0] += SK_WRAP_SEAT * smoothstep(D - 0.07, D - 0.015, pp[:, 0])
             sleeves.append(_ccw(pp))
-            g = pillow(pp, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.016), crown=dome(SK_CROWN_SEAT, 0.075),
+            g = pillow(pp, SK_T_SEAT, SK_ROLL, SK_ROLL_B, h=_sk_h(0.016), crown=dome(SK_CROWN_SEAT, SK_CROWN_R[0]),
                        fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(21 + sg_), max_len=SK_RIM_STEP_F)
             g = g.map(lambda V: _wrap(V, 0, D - SK_FRONT - rl, rl + 0.002, sink + 0.002))
-            geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T)), M_SHEEP))
+            geos.append(_mats(g.map(lambda V: pan_map(top_c)(V, SK_T_SEAT)), M_SHEEP))
             obst.append(geos[-1])
 
     # ---- pan shell under the cushion (black), side plates, life-vest box, cross tubes, tracks, fittings
@@ -1110,14 +1121,14 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
     if sk:
         # back cover: down the whole front and wrapped over the top edge toward the rear (AOPA, P1046408 / 10), the
         # shell's front-top roll (r 0.018) as the roll; the crowned, lumpy face on the drawn front (review r2 M1)
-        apex = SK_T + SK_CROWN_BACK + SK_LUMP
+        apex = SK_T_BACK + SK_CROWN_BACK + SK_LUMP
         sink_b = apex - sk_t                                  # the pad bottom into the shell front
         Rb = 0.018 + 0.002
         ol = _outline_from_hw(0.035, L_s - 0.018 + 1.9 * Rb,
                               lambda b: _crew_back_hw(np.minimum(b, L_s - 0.004), 0.004), 0.03)
         lump = fleece(SK_LUMP, 12, k=SK_LUMP_K)
         fine = fleece(SK_FLUFF, 2, k=(95.0, 120.0, 170.0), h_judged=0.021)
-        g = pillow(ol, SK_T, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, 0.06),
+        g = pillow(ol, SK_T_BACK, SK_ROLL, SK_ROLL_B, h=_sk_h(0.021), crown=dome(SK_CROWN_BACK, SK_CROWN_R[1]),
                    fluff=lambda a, b: lump(a, b) + fine(a, b), shag=shag(25), max_len=SK_RIM_STEP_F)
         g = g.map(lambda V: _wrap(V, 1, L_s - 0.018, Rb, sink_b + 0.002))
         back.append(_mats(g.map(lambda V: bmap(V - [0, 0, apex])), M_SHEEP))
@@ -1190,11 +1201,11 @@ def crew_seat(side=-1, dx=0.0, dz=0.0, recline=0.0, head_c=None, arm_up=(False, 
             ol_ = sleeves[1] if b > 0 else sleeves[0]
             d = -float(sdf2d.polygon(np.array([a]), np.array([b]), ol_)[0])
             if d > 0:
-                cc = top_c + SK_T + float(dome(SK_CROWN_SEAT, 0.075)(a, b, d)) + float(lump(a, b) + fine(a, b))
-                cc -= SK_ROLL - math.sqrt(max(SK_ROLL ** 2 - max(SK_ROLL - d, 0.0) ** 2, 0.0))
+                cc = top_c + SK_T_SEAT + float(dome(SK_CROWN_SEAT, SK_CROWN_R[0])(a, b, d)) + float(lump(a, b) + fine(a, b))
+                cc -= SK_ROLL_SEAT - math.sqrt(max(SK_ROLL_SEAT ** 2 - max(SK_ROLL_SEAT - d, 0.0) ** 2, 0.0))
             else:
                 cc = t0 - sk_t
-            cc -= SK_T
+            cc -= SK_T_SEAT
         else:
             cc = t0
         cc += lift

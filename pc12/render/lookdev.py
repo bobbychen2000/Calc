@@ -318,7 +318,10 @@ SPEC = {
     # (flight deck fix FDY r1 FDY-O1-04: the 12 mm polished band read as a bright toy-canopy ring round every pane in
     # the close exterior 3/4; pro3001_stbd34_close_aero25 / pro3005_port_close show a ~4-5 mm light blue-grey edge
     # line: 8 mm wide (fuselage_parts GLAZING_RETAINER), a darker, satin metal that mirrors the sky softly)
-    "glazing_retainer": dict(kind="metal", base=(0.36, 0.37, 0.38), rough=0.30,
+    # (flight deck fix FDY r2 FDY-O2-06 / FIDY2-07: still a continuous light-silver ring 3-4 px wide round every pane at
+    # the close exterior 3/4 -- the photo shows the panes in the dark navy surround with a dark edge: a dark satin metal,
+    # 0.10, that keeps a faint sky sheen on the edge)
+    "glazing_retainer": dict(kind="metal", base=(0.10, 0.10, 0.11), rough=0.40,
                              note="satin windshield / side-window retainer strips inside the PRO mask"),
     "seal_cabin":       dict(kind="dielectric", base=(0.05, 0.055, 0.06), rough=0.12, spec=0.5,
                              note="(render-only) cabin-window / cargo-door / exit-hatch window rings: NGX panes are "

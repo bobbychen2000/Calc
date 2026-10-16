@@ -1288,27 +1288,38 @@ def quadrant():
     fk = ft.moved(0.004, y1, 0.0024)
     out.append((FD._extrusion(fk.moved(c=0.002), FD.rrect_loop(0.012 * k5, 0.012 * k5, 0.002, nc=3), 0.004,
                               bevel=0.0007, nb=1), "pedestal_gunmetal"))
-    out.append((FD._extrusion(fk.moved(c=0.004), FD.rrect_loop(0.008 * k5, 0.008 * k5, 0.0015, nc=3), 0.004,
-                              bevel=0.0007, nb=1), "grip_black"))
-    # TRIM INTERRUPT: a black square cap with a white frame stroke, unlit (FID-FD1-03: the Pilatus throttle photo; the
+    # TRIM INTERRUPT: a proud gloss-black square cap with a rolled rim, unlit (FID-FD1-03: the Pilatus throttle photo; the
     # red cap read as an alarm on the parked aircraft)
-    a5, b5 = 0.0058 * k5, 0.0050 * k5
-    for a_, b_, c_, d_ in ((-a5, b5, a5, a5), (-a5, -a5, a5, -b5), (-a5, -b5, -b5, b5), (b5, -b5, a5, b5)):
-        out.append((fk.rect(a_, b_, c_, d_, 0.0063), "light_white"))
-    for yy, horiz in ((y2, False), (y3, True)):                          # rockers in their raised bezels
+    # (flight deck fix FDY r2 FDY-O2-04: the white frame stroke on its top read as a bare outline square -- a placeholder
+    # -- from the pedestal close-up; the throttle photo shows a black cap standing ~3 mm proud of its bezel, its rolled
+    # rim catching the light, no stroke on it)
+    out.append((FD._extrusion(fk.moved(c=0.0045), FD.rrect_loop(0.0082 * k5, 0.0082 * k5, 0.0018, nc=3), 0.005,
+                              bevel=0.0012, nb=2), "gloss_black"))
+    # the trim rockers: solid gloss-black caps in their raised bezels, split across the middle (the two halves of the
+    # rocker, one pressed: 1.5 mm lower), each half with one short legend stroke on it (DOWN / UP, LWD / RWD: abstract)
+    # (fix FDY r2 FDY-O2-04: the r5 superellipsoid bumps with the AILERON TRIM bezel's white outline read as bare white
+    # outlines; the throttle photo: framed black rocker caps standing in black bezels)
+    for yy, horiz in ((y2, False), (y3, True)):
         fk = ft.moved(0.006, yy, 0.0024)
         bw, bh = (0.016 * k5, 0.026 * k5) if not horiz else (0.026 * k5, 0.016 * k5)
         out.append((FD._extrusion(fk.moved(c=0.0015), FD.rrect_loop(0.5 * bh, 0.5 * bw, 0.002, nc=3), 0.003,
                                   bevel=0.0006, nb=1), "bezel_black"))
-        if horiz:
-            for s_ in (-1, 1):
-                out.append((_se(fk.p(0.0, s_ * 0.0055 * k5, 0.0055), (0.0055 * k5, 0.0045 * k5, 0.0028), (0.4, 0.4),
-                                nu=6, nv=10), "grip_black"))
-            out.append((fk.box(0.0, 0.0, 0.0085, (0.004 * k5, 0.002, 0.003)), "grip_black"))
-        else:
-            for s_ in (-1, 1):
-                out.append((_se(fk.p(s_ * 0.0058 * k5, 0.0, 0.0055), (0.0050 * k5, 0.0055 * k5, 0.0028), (0.4, 0.4),
-                                nu=6, nv=10), "grip_black"))
+        cu, cv = 0.40 * bh, 0.37 * bw                     # the cap's half extent (u fore-aft, v across)
+        gap = 0.0006
+        for s_, top in ((-1, 0.0072), (1, 0.0058)):
+            if horiz:      # split across v
+                hu, hv, cu_, cv_ = cu, 0.5 * (cv - gap), 0.0, s_ * 0.5 * (cv + gap)
+            else:          # split across u
+                hu, hv, cu_, cv_ = 0.5 * (cu - gap), cv, s_ * 0.5 * (cu + gap), 0.0
+            dep = top - 0.0020
+            out.append((FD._extrusion(fk.moved(cu_, cv_, top - 0.5 * dep), FD.rrect_loop(hu, hv, 0.0012, nc=3), dep,
+                                      bevel=0.0009, nb=2), "gloss_black"))
+            lv = 0.45 * hv
+            if horiz:
+                out.append((fk.rect(cu_ - 0.45 * hu, cv_ - 0.0006, cu_ + 0.45 * hu, cv_ + 0.0006, top + 0.0002),
+                            "light_white"))
+            else:
+                out.append((fk.rect(cu_ - 0.0006, cv_ - lv, cu_ + 0.0006, cv_ + lv, top + 0.0002), "light_white"))
     fk = ft.moved(0.004, y4, 0.0024)                                     # guarded FLAP INTERRUPT
     gt = FD.Fr(fk.o, fk.u, fk.v, fk.w)
     out += guarded_toggle(FD.Fr(gt.o, gt.v, -gt.u, gt.w), guard_mat="pedestal_gunmetal")
@@ -1324,13 +1335,9 @@ def quadrant():
             for w_ in words:
                 out.append((ft.rect(u0, v, u0 + 0.0016, v + w_, 0.0028), "light_white"))
                 v += w_ + 0.0025
-    fk = ft.moved(0.006, y3, 0.0024)
     bw, bh = 0.026 * k5, 0.016 * k5
-    oa, ob, ow = 0.5 * bh + 0.0012, 0.5 * bw + 0.0012, 0.0007
-    for a_, b_, c_, d_ in ((-oa - ow, -ob - ow, -oa, ob + ow), (oa, -ob - ow, oa + ow, ob + ow),
-                           (-oa, -ob - ow, oa, -ob), (-oa, ob, oa, ob + ow)):
-        out.append((ft.rect(0.006 + a_, y3 + b_, 0.006 + c_, y3 + d_, 0.0028), "light_white"))
-    for s_ in (-1, 1):
+    oa, ob = 0.5 * bh + 0.0012, 0.5 * bw + 0.0012
+    for s_ in (-1, 1):                                                   # LWD / RWD marks (the outline went, FDY r2)
         out.append((ft.rect(0.006 + oa + 0.0020, y3 + s_ * 0.6 * ob - 0.0030, 0.006 + oa + 0.0034,
                             y3 + s_ * 0.6 * ob + 0.0030, 0.0028), "light_white"))
     # slots with brush seals, detent ticks, the striped reverse gate

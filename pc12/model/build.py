@@ -422,6 +422,10 @@ AO_CONTACT_BOX = ((3.20, -0.80, 1.45), (4.15, 0.80, 2.40))
 AO_CONTACT_SPLIT = 0.016                # the long edges of the box's broad triangles (>= AO_CONTACT_AREA m^2) only:
 AO_CONTACT_AREA = 1.2e-4                # the face, fascia, cove, stack -- not every knob's and fin's slivers
 AO_CONTACT_POW = 0.6                    # its share: the occlusion x contact^0.6
+# (flight deck fix FDY r2 FIDY2-02: the titanium sub-panels read as flat light-grey plastic -- P1046408's plates fall to
+# ~30-40 along their seams, round the switch-block bezels and toward the rolled lip at their foot, a spread of 27-147 at
+# the fitted camera against the model's 72-128: the contact pass weighs more on the brushed titanium)
+AO_CONTACT_POW_MAT = {"panel_titanium": 1.3}
 AO_CONTACT_SKIP = ("panel_grey",)       # the eyebrow fascia: under the lip it took 88 -> 72 at panel_408b, P1046408 ~120
 AO_CONTACT = dict(spacing=0.0025, steps=(0.004, 0.008, 0.014, 0.022), far=(1.0, 2.0, 1.0), offset=0.0008, k=12,
                   edt_from=None, cell=0.002, smooth=1)
@@ -476,12 +480,14 @@ def bake_interior_ao(parts):
     fd_ids = {id(m) for m, mat in parts["flight_deck"].meshes if mat not in AO_CONTACT_SKIP} \
         if "flight_deck" in parts else set()
     rc = [(i, m) for i, m in enumerate(rec) if id(m) in fd_ids and np.any(in_box(m.V))]
+    fd_mat = {id(m): mat for m, mat in parts["flight_deck"].meshes} if "flight_deck" in parts else {}
     n_c = 0
     if rc and occ_c:
         cont = ao.bake([m for _, m in rc], occ_c, **AO_CONTACT)
         for (i, m), c in zip(rc, cont):
             w = in_box(m.V)
-            occl[i] = np.where(w, occl[i] * np.clip(c, 0.0, 1.0) ** AO_CONTACT_POW, occl[i])
+            pw = AO_CONTACT_POW_MAT.get(fd_mat.get(id(m)), AO_CONTACT_POW)
+            occl[i] = np.where(w, occl[i] * np.clip(c, 0.0, 1.0) ** pw, occl[i])
             n_c += int(w.sum())
     tc = time.time() - tc
     t2 = time.time()

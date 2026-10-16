@@ -786,20 +786,29 @@ CB = dict(
     # (flight deck fix FDY r1 FIDY1-06: the 8 mm heads on 10.4 mm white collars read as a grid of polka-dot knobs from
     #  the co-pilot stop; the AOPA close-up / P1046409 / 10 show small dark heads over thin satin rings, the label cells
     #  the dominant feature: heads r 4 -> 3 mm, the sleeve a thin dark-metal ring, `sleeve_mat`)
-    sleeve=(0.0007, 0.0016), raise_=0.0030, sleeve_mat="metal_dark",
+    # (flight deck fix FDY r2 FDY-O2-05: from the crew stops the rows still read as bright silver bead chains -- the
+    #  satin dark-metal rings mirror the sunlit windshield; the photos' heads are black on dark plates, the rows read
+    #  through their lit legend strips: a thinner ring in the satin black)
+    sleeve=(0.0005, 0.0016), raise_=0.0030, sleeve_mat="black",
     frame=0.013, frame_proud=0.0065, plate_proud=0.0025,   # [E] bezel frame width, faces (4 mm recess)
     band=0.0026,                                   # [E] lit bus band height
+    band_blue=0.0016,                              # [E] the LH blue bands, thinner (FDY r2 FIDY2-05)
     # lit bus bands per row (1-4) [M]: LH rows blue (P1046410, PRO Mexico photo); RH front yellow / green, rear white
     # (P1046409, AOPA studio photo)
     # (flight deck fix r2 FID-FD2-09: LH white -- the blue bands read as diagonal blue lines across the black field from
     #  the pilot seat; the AOPA studio photo shows the lit strips white / green / yellow)
-    glow={-1: (("white",) * 4, ("white",) * 4), 1: (("yellow", "green", "green", "green"), ("white",) * 4)},
+    # (flight deck fix FDY r2 FIDY2-05: back to BLUE on the LH, P1046410's black plate with blue lit bands behind the
+    #  white legends and row numbers; thinner than r2's, `band_blue`, so they read as lit strips and not as diagonal lines)
+    glow={-1: (("blue",) * 4, ("blue",) * 4), 1: (("yellow", "green", "green", "green"), ("white",) * 4)},
     # label strips per block [M]: backlit white legend cells on the black plate, except the RH rear block's light
     # silver strips with dark legends (AOPA studio photo, P1046409)
     # (flight deck fix FDY r1 FIDY1-06: the dark cells now sit on a dark-grey label strip, `cell_mat`, each framed by
     #  white rules with two rows of legend strokes -- P1046410's LH and P1046409's RH front blocks show dark cells with
     #  white text over the lit bus band, the AOPA RH rear block light silver cells; both consoles kept that way)
-    label={-1: ("dark", "dark"), 1: ("dark", "light")}, cell_mat="legend_grey",
+    # (flight deck fix FDY r2 FDY-O2-05 / FIDY2-05: the dark-grey cells -- legend_grey, 0.13 -- read as light-grey strips,
+    #  rows of silver piano keys, wherever the sun or the side window lit them (150-180 from the pilot stop): the cells
+    #  in the plate's satin black, so only the white rules, the legends and the lit bands carry the rows)
+    label={-1: ("dark", "dark"), 1: ("dark", "light")}, cell_mat="black",
     slot=(0.010, 0.032),                           # [M] stowage slot height, its centre above the bezel top
 )
 
@@ -866,6 +875,8 @@ def cb_panels(fl):
                 du = (pb - pa) / ncol
                 legends, white, strips, cells = [], [], [], []
                 for r, (vk, (l0, l1), (g0, g1)) in enumerate(rows):
+                    if glow[r] == "blue":
+                        g1 = g0 + CB["band_blue"]
                     out.append((M.quads([(u(pa) + 0.004, b0 + g0, u(pb) - 0.004, b0 + g1)], pp + 0.0007),
                                 f"fdb_cb_glow_{glow[r]}"))
                     if lab == "light":                 # a light label strip under the row's legends
