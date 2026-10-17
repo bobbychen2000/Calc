@@ -247,7 +247,11 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // range compressed, 49 / 60 / 87 and 55 / 75 / 85 at the yoke close-up against P1046409's 38 / 60 / 183 and 33 / 82 /
   // 121: the reflection floor 0.45 -> 0.1 (it lit every flank alike), their reflections a directional cabin probe
   // instead (YOKE_PROBE grip_black / yoke_leather): dark toward the cabin, lit by the overhead and the side window)
-  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.40, 0.1, 1, 0, 25], yoke_trim_face: [0, 1.0, 0.25],
+  // (fix r4 verification: at 0.1 the full viewer_test read the pilot stop's body 0.21 of the cover, the pads 1.65 x and
+  // the lunes 1.81 x the body -- outside [Y1b] / [Y1c]'s photo bands (body 0.27-0.30, pads 1.06-1.27); a floor of 0.3
+  // lifts the shaded flanks, hardly the median up close: the stop's body 0.28, pads / body 1.24, lunes / body 1.35; the
+  // yoke close-up 37 / 69 / 122 (p99 148) against 25 / 65 / 120 at 0.1 and P1046409's 38 / 60 / 183)
+  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.40, 0.3, 1, 0, 25], yoke_trim_face: [0, 1.0, 0.25],
   yoke_slot: [0, 0.5],
   // rev Q (3-D judges r4): the cover's groove flanks are cavities -- no fill, part of the studio's diffuse (FID4-01); the
   // column a satin dark-grey tube, its reflections floored at 0.15 of the studio's (FID4-05: ~40-50 from the pilot's eye)
