@@ -3,11 +3,11 @@
 A from-scratch parametric CAD model of the **Pilatus PC-12 PRO** (NGX airframe), built in a sandbox
 where no CAD packages (CadQuery/OCC/Blender) could be installed. Everything is plain Python + numpy:
 a small surface-lofting kernel ("loftkit"), component builders, a glTF exporter, and a hidden-line
-engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.74M tris of which the interior ~896k, ~48.5 MB
+engineering-drawing generator. Output: `out/pc12.glb` (98 parts, ~2.81M tris of which the interior ~938k, ~49.6 MB
 incl. the 0.5 MB G3000 page atlas and the interior's baked occlusion / window light `_AO`, 16-bit normals; built at the tessellation quality `PC12_RES` = 2, `cad/res.py`;
 hinge pivots in node extras), its light tier `out/pc12_low.glb` (the builders' own grids, `PC12_RES=1`, as judged in
 review, but its seats, yokes, pedals, braces, nose leg and the flight deck as in the full model -- `build.LOW_FINE`; the
-yokes are one mesh at every RES, model/yoke3d.py: ~2.32M tris, ~40.8 MB,
+yokes are one mesh at every RES, model/yoke3d.py: ~2.37M tris, ~41.7 MB,
 16-bit normals too; phones load it (and its gzip when
 WebAssembly is refused), the Specs panel -- and once a stage chip on capable devices -- offer the full model there), `out/pc12_meta.json` (build steps, BOM, construction lines, dimension checks; `stats.low` = the light tier),
 `out/drawings/L1..L6B` (the Stage-2 drawing set, drawn from the parameters: `python3 -m drawing.master`; L1-L5 the
@@ -73,7 +73,7 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 234 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 236 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
                                 #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min)
@@ -84,8 +84,8 @@ python3 web/package.py          # static viewer bundle -> dist/ (gitignored): me
                                 #   quantisation kept: gltf-transform's API, reorder + EXT_meshopt_compression), vendored
                                 #   three.js, verify step
 python3 web/package_artifact.py --out DIR && python3 test/artifact_test.py --dir DIR   # the claude.ai Artifact bundle
-                                #   (~118 MB as base64 text parts: meshopt 18 + 16 MB, gzip of the full model 27 MB for desktops and of
-                                #   the light tier 23 MB for phones without WebAssembly, every part <= 10.6 MB; two publishes 63.7 + 54.2 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
+                                #   (~122 MB as base64 text parts: meshopt 18 + 16 MB, gzip of the full model 28 MB for desktops and of
+                                #   the light tier 24 MB for phones without WebAssembly, every part <= 10.9 MB; two publishes 58.5 + 63.1 MB; ARTIFACT.json 'publishes' = groups of <= 64 MB,
                                 #   one publish call each to the same url)
 python3 web/tour_data.py        # interior tour data web/viewer/tour_data.js from the interior tables (--check: current?)
 python3 render/beauty.py --preset cockpit_fwd,panel_faceon,cabin_aft_fwd,cabin_club --size 1000x750 --compare
@@ -217,8 +217,9 @@ The repo is public: Pilatus drawings, photos and data extracted from them live o
   the cabin floor + runner + tracks `cabin_floor` and the club tables are children of `cabin_interior`; side-wall /
   headliner lining `interior_lining` by the L6 LINING law -- 40 mm inside the OML at the crown, 85 mm at the sides,
   `interior.lining_offset` -- with window reveals and lined door wells; frames at the Pilatus frame stations;
-  interior triangles are budgeted in `build.INTERIOR_BUDGET` (390k + 2 x (YOKE_BUDGET 43k - 24k), crew seat 19.5k,
-  cabin seat 12k at PC12_RES=1; at RES 2: 896k / 66.3k / 34.8k, built 873k / 57.7k / 34.8k, with per-part caps for the
+  interior triangles are budgeted in `build.INTERIOR_BUDGET` (415k + 2 x (YOKE_BUDGET 43k - 24k), crew seat 19.5k,
+  cabin seat 14k at PC12_RES=1; at RES 2: 951k / 66.3k / 40.6k, built 938k / 63.9k / 40.6k (all-lens fix r1), with
+  per-part caps for the
   flight deck -- flight_deck 211k (built 207.5k), yokes 43k each at every RES (42.9k: model/yoke3d.py meshes them once),
   pedals 3k (3.0k), fd_consoles 30k (16.3k), fd_divider 18k (16.8k), interior_lining 190k (175k); counted after the
   interior-light bake's splits; flight deck fix r2 raised the crew seat 56.1k -> 59.5k and interior_lining 175k -> 190k,
@@ -2003,3 +2004,98 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   lower / cover 0.83, band 54), web/package.py verify OK (meshopt 17.67 + 15.21 MB), the Artifact bundle 119.2 MB in 2
   publishes (63.4 + 55.7 MB), artifact_test 70 / 70 (on 140102a's bundle and again on 119a4fa's).  L6 / L6B / L6Y /
   L6Y2 not regenerated (no table changed).
+- All-lens fix r1 (2026-10-17; the all-lens judges' round 1 on every lens below the owner's 8: flightdeck 7.9, cabin
+  7.4, picture 7.8, exterior 7.8, gear 7.8; FD8-01..05, CAB1-01..06, CRA1-01..06, EXT-A1-01..05, GEAR-A1-01..03). One
+  table changed: `wheels.MAIN_AXLE` boss_r (L4W regenerated); no L6 / L6B / L6Y / L6Y2 table changed. Look development
+  in one viewer page (out/tmp/all8_fix_r1/ld.py jobs, per part:material median / sd / p10 / p90 from the ID pass;
+  xshots.py the judges' exterior cameras on a dev GLB, devbuild.py a one-tier build with the bake).
+  GEAR: GEAR-A1-01 the main shock's top was a lateral web ending in mid-air 0.27 m behind the leg --
+  `gear.MAIN_SHOCK_LUG`: a swept DRAG LUG (tapered superelliptic section 45 x 32 -> 35 x 25 mm, a slight arch) from the
+  leg's axis at WL 0.99 aft and inboard to a fork base box under the shock's upper clevis (`build_main`); GEAR-A1-02 the
+  trailing arm a forged swan-neck, not a pipe -- `gear.MAIN_ARM` a (0.044, 0.034) / b (0.024, 0.021) m half-depths (88
+  -> 68 mm deep), the bow flattened to ((0.30, 0.010), (0.66, 0.006)), p 2.8, running into a 19 % larger axle boss
+  (`wheels.MAIN_AXLE` boss_r 0.058 -> 0.069, a TABLE change: L4W regenerated, `drawing/wheel_sheet.py` ARM depth 0.039);
+  fit_check 5 / 10 / 14 (stowed arm, shock and lug in the bay liner) pass. GEAR-A1-03 (the leg door's edge-on lean)
+  REFUTED as a finding: it is the documented LD-1 deviation (the blister leans the door's lower part out; the drawn
+  2358-2472 lean is the L4 call-out), kept.
+  EXTERIOR: EXT-A1-01 (major) the gear-bay liner z-fought the wing's upper skin from above -- mirrored ghost 'lettering'
+  at 45 m, sparkle at 90 m: `web/viewer/model.js` gives gear_bays the structure's polygon offset (factor 2, units 8);
+  EXT-A1-02 the chin lip a rolled mirror -- `powerplant.CHIN_LIP_NOSE` 0.008 -> 0.018 on the lower lip, 8 mm kept on the
+  arms (`CHIN_LIP_NOSE_ARM`, `chin_nose(th)` over CHIN_ARM_TH: there the face's foot stands one nose length ahead of the
+  drawn LE line, and 18 mm put the polished face 18-24 mm outside the drawn side crescent -- consistency L4 'chin-inlet
+  lip (side view)' 24.6 mm; now front ring 9.0 / side 7.4 mm of 10) -- the drawn lip outlines kept, `inlet_lip`
+  roughness 0.12 -> 0.06 (assemble / lookdev / materials.json), the duct entry darker (viewer `inlet_dark` specular 0.3
+  / env 0.35, `composite` (0.03, 0.03, 0.034)); EXT-A1-03 the root fillet's nose -- `ROOT_FILLET_ROUND` run 0.40 -> 0.60
+  / behind 0.25 -> 0.35, `ROOT_FILLET_TIP_RUNIN` 0.03 -> 0.08 (fewer, broader lobes at e_rootlow; fit_check 16);
+  EXT-A1-04 the canoes' crimped aft tips -- `details._canoe_profile` sampled by arc length (rows dense toward the tail
+  point), `_weld_poles` merges the converging rows' coincident vertices before `_crease_split`, and aft of the flap's TE
+  the top runs under the lower surface's tangent through a soft minimum (`CANOE_TAIL_SOFT` 6 mm); EXT-A1-05 the horn
+  balance's exposed cut faces (its inboard cap, the fixed tip's outboard and aft gap faces) in the gap shade
+  (`empennage.HORN_GAP_MAT` 'seam'), the droop kept (owner-delegated); the Z-shaped highlight at the horn's inboard
+  upper corner (the oblique front-face crease meeting the end rows) is left: a horn front-face re-layout.
+  CABIN: CAB1-01 (major, white clay) -- `materials.js CABIN_FORM` (lining class 0, the executive seats' leathers /
+  shells class 1): aft of the divider (STA 4.55-4.75 blend) their indirect diffuse x gain x the bake's occlusion^p x the
+  bake's window light (mix lo .. hi up to `formC.x`) x a facing term (inboard .. outboard, down .. up) x a height term
+  (WL `formC` y / z / w: floor .. belt .. ceiling) -- the halo round each window, the side wall darker toward the sill,
+  the soffit steps' shade, lit / shaded bolsters: formA [1.82, 2.2, 0.38, 1.55] / [1.5, 2.0, 0.5, 1.35] (gain, occlusion
+  power, x at no / full window light), formB [0.88, 1.05, 0.8, 1.0] / [0.7, 1.2, 0.65, 1.15], formD [0.55, 1, 0.85] /
+  [0.6, 1, 1.15] over WL 1.3 / 1.95 / 2.7, full window light 0.3 (`?cabFormA0=` .. `?cabFormC=` override them); look
+  development a00 -> d02: at cabin_fwd_406 in the judge's boxes (lining / leather masks) the headliner centre sd 5.9 ->
+  11.5, the side wall 9.6 -> 16.5, the seat backs 17.6 (the new welts and seams) -> ~30, their medians ~194-202 (AgX's
+  shoulder at the near-white trim compresses the spread, so the factors run wide); [T4b] 201, [T14] lining kept;
+  viewer_test [CAB1] at the photo-fitted cabin_fwd_406 (the judge's boxes, the lining / leather masks). CAB1-02 (major,
+  exec seat) -- `seats.cabin_seat`: the cushion CROWNED 14 mm over 0.12 m with a rolled front (`EXEC_CUSH` roll 45 /
+  roll_b 22 mm), piping welts r 3 mm (`EXEC_WELT`) round the cushion front, the back's front edge and the side panels,
+  stitch rows (`EXEC_STITCH`, stitch_thread dashes) beside the V seams, the bolsters' inner edges and the cushion
+  panels, a 24 mm leather apron over the legrest top on the forward-facing seats (an 11 mm slab with a 4 mm edge round:
+  the 12 mm round inset its outline past itself and folded the end caps, fit_check 23), the bolster gap 6 -> 8 mm;
+  consistency_2d3d's exec rows pass (the drawn L6 outlines kept). CAB1-03 the cargo door's ledge segment lit by the
+  cabin law: `build.AO_DOOR_CABIN` bakes _AO on its interior-side meshes (ledge_top, ledge_panel, gloss_black,
+  chrome_trim, psu_panel, black) and `materials.js` routes a door part's _AO meshes through the interior patch: at
+  cargo_lining the door's ledge panel 77 against the fixed segment's 68 and its top 31 (the judge's 114 / 84 against 82
+  / 22). CAB1-04 a moulded window BEZEL round every cabin window's lining hole (`interior.WINDOW_BEZEL` profile, 30 mm
+  wide, 5 mm proud, rolled into the reveal; `_window_bezel`, part of the reveal: fit_check 20 / 22b clear); the shade
+  cassette / pleated shade stays the deferred INT8-07 (an L6 reveal-profile change). CAB1-05 the club-table tops gloss
+  black inside the walnut rim (`cabin.TABLE_TOP_MAT`; P1046404-07, the model judging r1 walnut tops superseded). CAB1-06
+  the walnut grain fine and straight (viewer veneer_walnut grain scale [420, 420, 8], 3 octaves, amp 0.26, env 0.7; the
+  GLB's gloss lacquer coat kept): [T14] walnut 78 at cabin_fwd (<= 90).
+  FLIGHT DECK: FD8-01 the fleece's shell silhouettes -- toward the silhouette (|n.v| < 0.25) a soft coverage
+  (`pcFurCov`, alpha to coverage on the shells; inside only, alpha written off by colorMask so the canvas stays opaque)
+  and the outer shells thinned (`FUR.graze` 0.55), head-on the hard test as before (soft coverage everywhere had lifted
+  the shaded gaps -- [FD-L5] 130, [FD-L10] p10 113, [FD-L10b] skew -1.15 -- now 121 / 98 / -0.55, as fix r4). FD8-02 the
+  palm tray 15 mm shorter with its top edge kept (`fd_detail_a.STACK` pad half-length 0.0535 -> 0.046, centre 0.2815 ->
+  0.274, waist 0.335 -> 0.320, flare 0.385 -> 0.372); the quadrant's trim panel already starts at the quadrant's front
+  frame -- raising it means moving L6's PEDESTAL stack foot (3.719, -0.400), an L6 table with the armrest checks
+  (fit_check 25): deferred to the drawing review. FD8-03 the grips' satin black -- 'yoke:grip_black' [0, 0.30, 0.22, 1,
+  0, 25], PART_TRIM roughness 0.12 with a neutral specular, the pads' specular warmer (1.0, 0.92, 0.84) and their fill
+  0.68 -> 0.60 (body / cover 0.28 -> 0.23, pads / body 1.36: [Y1b] 0.22-0.34 / 1.0-1.4). FD8-04 the titanium warmer
+  (VIEWER (0.262, 0.236, 0.222)), the tray `tray_titanium` (0.235, 0.208, 0.198), CABIN_TRIM 0.42 -> 0.5, specIn 1.6,
+  its edge a crisp 45-deg titanium CHAMFER with a small nose and a thin titanium foot lip (`fd_detail_a.TRAY_EDGE_MAT`;
+  was the 4.5 mm dark-bronze bead). FD8-05 the harness a cool charcoal (0.030, 0.031, 0.034), sunIn 0.5, a coarser 700 /
+  m weave.
+  PICTURE: CRA1-01 the procedural footprints measure the DISPLAYED pixel -- `U.pcSS` (Picture's pass supersampling,
+  `_renderSS`) scales every dFdx / dFdy / fwidth of the patches (`GLSL_SS` pcDX / pcDY / pcFW), so the still passes and
+  the moving frames band-limit the leather / fleece / pebble / harness / stripes / brush alike (the sunlit sill grain no
+  longer pops in after a stop); viewer_test [CRA1-01]: the sill's median 115 still / 115 moving at 480 x 320. CRA1-02
+  the yoke's groove flanks on MOVING frames (`U.pcMove`): where a display pixel spans more than the 0.8 mm groove the
+  flank's colour fades toward 0.7 cover + 0.3 groove (`VIEWER yoke_groove.gaa`) -- a soft continuous line instead of
+  dotted specks; the still keeps its dark line. CRA1-03 phones move at their still dprMax (`scene.js` dprMoveBase =
+  dprMax; Auto's _adapt still steps a slow phone down to 1). CRA1-04 inside the tour the temporal AA's motion uses >= 1
+  m depth (`TAA_IN_DIST`; the orbit target 0.3 m ahead had scored a 5 cm step as 60 px). CRA1-05 a motion-weighted
+  sharpen on the temporal blend (`TAA_SHARP` 0.22 x clamp(motion px / 8), clamped to the neighbourhood; ?taaSharp=).
+  CRA1-06 (the light tier barely lighter) DEFERRED: of its 2.37M triangles the exterior and the lining at the judged RES
+  1 grids (both tiers' own) carry ~1.4M, the LOW_FINE parts (seats, yokes, pedals, braces, nose leg, flight deck at RES
+  2: GEO8-01, the smooth lens) ~0.9M; reaching ~1.6M means phones losing GEO8-01's smoothness or a separately streamed
+  interior GLB (loader, bundle, tests) -- its own track.
+  Budget: `build.INTERIOR_BUDGET` cabin_seat 12k -> 14k (RES 1; 40,572 / 38,328 at RES 2 against 40.6k -- it also closes
+  the old 34,834 / 34,800 open item) and the total 393.5k -> 415k (938,331 of 951,000 built). Build: 2,805,993 triangles
+  / 49.63 MB, light tier 2,366,262 / 41.70 MB. Verified: fit_check FIT OK (138 ok, no open row; 23 shells wound outward
+  after the apron fix, 26 no coplanar overlaps, 5 / 10 / 14 the stowed tyre 33 mm under the liner roof; sections 1 / 2
+  rerun on the final chin lip), consistency_2d3d 157 / 157 (L4 chin lip ring 9.0 / side 7.4 mm), drawing.master L4W,
+  drawing.sheet + drawing.verify (the same dimension table), web/tour_data.py --check current, the FULL viewer_test 236
+  / 236 (~115 min beside artifact_test and a look-dev page: [T4] cabin_fwd 193 / club 198, [T4b] 201, [T14] lining 197 /
+  walnut 78 / ledges 51, [FD-L5] sheepskin (118, 120, 141), [FD-L10] skew +0.20 / p10 98, [FD-L10b] -0.38 / -0.55,
+  [FD-L6] p50 72, bands 29 / 48 / 13 %, [Y1b] body 0.23, pads / body 1.36, [CAB1] seat backs sd 29.7 / 29.8, headliner
+  11.2, [CRA1-01] sill 115 / 115), web/package.py verify OK (meshopt 18.07 + 15.54 MB), the Artifact bundle 121.6 MB in
+  2 publishes (58.5 + 63.1 MB), artifact_test 70 / 70. Before / after sheets (judges' r1 renders | fix r1, and P1046406
+  | fix r1): out/tmp/all8_fix_r1/cmp/cmp_*.jpg (gitignored: the cabin one embeds the photo).
