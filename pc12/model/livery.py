@@ -79,7 +79,7 @@ PALETTE = {
     "exhaust_polished":  ("#BCAD95", 1.00, 0.06, "polished exhaust stacks (heat tint)"),
     # chin-inlet lip: neutral polished aluminium (photo 130: 208/207/205 with a yellow-brown heat stain low aft; review
     # r4 EXT8-02: the stacks' gold-tinted metal read as a khaki washer round the inlet in the white studio)
-    "inlet_lip":         ("#CFCCC6", 1.00, 0.12, "chin-inlet lip (polished aluminium)"),
+    "inlet_lip":         ("#CFCCC6", 1.00, 0.06, "chin-inlet lip (polished aluminium; 0.12 -> 0.06 all-lens r1 EXT-A1-02: a mirror crescent)"),
     "prop_blade":        ("#212123", 0.00, 0.45, "propeller blade (satin black composite)"),
     "prop_tip":          ("#E7E7E5", 0.00, 0.36, "propeller blade tip (white)"),
     "prop_band_red":     ("#8E2D0D", 0.00, 0.40, "propeller blade red band"),

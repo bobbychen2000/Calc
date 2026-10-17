@@ -839,6 +839,7 @@ def build(parts: dict):
 
     # ---------------- tailplane (one piece, trimmable) + elevators
     stab_meshes = []
+    gap_faces = []
     for sgn in (1, -1):
         def sec_fn(y, sgn=sgn):
             s = stab_section(abs(y))
@@ -882,7 +883,7 @@ def build(parts: dict):
         xs_u = cos_pts(10, 0, 1) * (xu - xg) + xg
         xs_l = (cos_pts(10, 0, 1) * (xl - xg) + xg)[::-1]
         poly = np.vstack([np.stack([xs_u, af.upper(xs_u)], 1)[:-1], cove[:-1], np.stack([xs_l, af.lower(xs_l)], 1)])
-        ms.append(planar_cap(sec.point(poly[:, 0], poly[:, 1]), (0, sgn, 0)))
+        gap_faces.append(planar_cap(sec.point(poly[:, 0], poly[:, 1]), (0, sgn, 0)))
         # aft face of the fixed tip along the horn gap (BL 2270 -> the point where the gap line leaves the LE)
         yy = np.linspace(ELEV_Y[1], STAB_NOTCH_Y, 24)
         up, lo = [], []
@@ -891,7 +892,7 @@ def build(parts: dict):
             xc = float(np.clip((float(horn_gap_x(y)) - sc.le[0]) / sc.chord, 0.0, 1.0))
             up.append(sc.upper(np.array(xc)))
             lo.append(sc.lower(np.array(xc)))
-        ms.append(planar_cap(np.vstack([np.array(up), np.array(lo)[::-1][:-1]]), (1, 0, 0)))
+        gap_faces.append(planar_cap(np.vstack([np.array(up), np.array(lo)[::-1][:-1]]), (1, 0, 0)))
         m = Mesh.merge(ms)
         if sgn < 0:
             # skins built with mirrored sections have inverted orientation -> fix by normal test
@@ -905,9 +906,12 @@ def build(parts: dict):
               info={"span": "5,200 mm", "root chord": f"{STAB_ROOT_C*1000:.0f} mm",
                     "LE sweep": f"{np.degrees(STAB_SWEEP):.1f} deg, horn-balanced tips (drawing)"})
     sp.add(Mesh.merge(stab_meshes), "paint_white")
+    if gap_faces:
+        sp.add(Mesh.merge(gap_faces), HORN_GAP_MAT)
     parts[sp.id] = sp
 
-    horn = horn_body()
+    horn_gap = []
+    horn = horn_body(horn_gap)
     for side, sgn in (("R", 1), ("L", -1)):
         ys = span_stations(ELEV_Y[0] + 0.012, ELEV_HORN[0] + 0.006, 0.15)
         em = Mesh.merge([closed_body(stab_section, ys, lambda s: plain_surface_loop(s, ELEV_XH)), horn])
@@ -923,6 +927,8 @@ def build(parts: dict):
                   explode=(0.5, sgn * 0.35, 0.0), group="Flight controls",
                   material_note="Paired elevators with horn-balanced tips")
         ep.add(em, "paint_white")
+        hg = Mesh.merge(horn_gap)
+        ep.add(hg.mirrored_y() if sgn < 0 else hg, HORN_GAP_MAT)
         parts[ep.id] = ep
 
     # bullet fairing
@@ -937,7 +943,13 @@ HORN_TIP_STEP = 0.003     # m: spanwise station pitch on the raked tip outboard 
 STAB_RAKE_STEP = 0.003    # m: the fixed tip's rows along its raked LE (was 0.010)
 
 
-def horn_body():
+# all-lens review r1 EXT-A1-05: with the parked elevator droop (+8 deg) the horn stands 2-3 cm proud of the fixed tip and
+# the flat cut faces between them -- the horn's inboard end, the fixed tip's outboard face and its aft face along the
+# horn gap -- caught the studio as light-grey slabs; they are the gap's walls, in its shade
+HORN_GAP_MAT = "seam"
+
+
+def horn_body(gap_cap=None):
     """Starboard horn balance (moves with the elevator): the tailplane tip aft of its front face (horn_front_x) from
     the elevator's outboard end (ELEV_HORN[0] + 6 mm) to the tip, capped at both ends.  Review r4 GEO8-04: the airfoil
     surface and the flat front face are separate patches (a crease, each with its own normals: averaged across the
@@ -978,7 +990,11 @@ def horn_body():
             F_ = F_.flipped()
         out.append(F_)
     span_dir = P[-1].mean(0) - P[0].mean(0)
-    out += [cap_ring(P[0], -span_dir), cap_ring(P[-1], span_dir)]
+    out += [cap_ring(P[-1], span_dir)]
+    if gap_cap is not None:
+        gap_cap.append(cap_ring(P[0], -span_dir))           # the inboard cut face: in the gap shade (HORN_GAP_MAT)
+    else:
+        out.append(cap_ring(P[0], -span_dir))
     return Mesh.merge(out)
 
 

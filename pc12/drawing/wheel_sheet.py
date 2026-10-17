@@ -287,12 +287,13 @@ def main_axle():
     return float(G.MAIN_AXLE[0]), float(G.MAIN_AXLE[2])
 
 
-ARM = dict(s=-0.14, t=0.0175, depth=0.035, yoke=(-0.14, -0.03), yoke_r=0.036)   # gear.build_main (port: s < 0 inboard)
+ARM = dict(s=-0.14, t=0.0225, depth=0.039, yoke=(-0.14, -0.03), yoke_r=0.036)   # gear.build_main (port: s < 0 inboard;
+#                                                    all-lens r1 GEAR-A1-02: MAIN_ARM 88 -> 68 mm deep, 48 -> 42 mm thick)
 
 
 def arm_pts():
     """Trailing arm context in the wheel plane (dx, dz about the axle): pivot, the bar outline (gear.build_main: a
-    70 mm deep bar from the link pivot to the axle boss), leg direction."""
+    tapered beam ~78 mm deep on average from the link pivot to the axle boss), leg direction."""
     ax, az = main_axle()
     L = np.array([G.MAIN_LINK_PIVOT[0] - ax, G.MAIN_LINK_PIVOT[2] - az])
     T = np.array([G.MAIN_TRUNNION[0] - ax, G.MAIN_TRUNNION[2] - az])

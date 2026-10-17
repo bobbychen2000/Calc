@@ -580,7 +580,13 @@ def chin_inlet_outline(part):
 # (CHIN_CHEEK_TOP: the drawn loop's upper ends are the cheek line into the stack roots, painted -- the polished arms
 # end at the crescent top, as on the s/n 3001 / 3008 photos).  The polished lip = the raised skin inside the front-view
 # lip outline and the side-view crescent; the mouth = the lip face inside the drawn mouth outline.
-CHIN_LIP_NOSE = 0.008          # m (along x): rounded lip nose, from the LE face to the full lip radius
+CHIN_LIP_NOSE = 0.018          # m (along x): rounded lip nose, from the LE face to the full lip radius, on the lower lip
+#                                (all-lens review r1 EXT-A1-02: at 8 mm the lip face read as a flat forward-facing washer --
+#                                one tone of the studio -- where photo 130 shows a rolled crescent with streaks; the drawn
+#                                outlines, front view and side crescent, are those of the raise and stay) ...
+CHIN_LIP_NOSE_ARM = 0.008      # ... and on the arms (CHIN_ARM_TH), where the face's foot stands one nose length AHEAD of
+#                                the drawn LE line: 18 mm there put the polished face 18-24 mm outside the drawn side
+#                                crescent (consistency L4 'chin-inlet lip (side view)', 10 mm)
 CHIN_CHEEK_AFT = (1.50, 1.70)  # STA range over which the cheek fades into the cowl
 CHIN_CHEEK_TOP = (1.52, 1.60)  # lip-outline WL range over which the cheek fades out above the side crescent
 CHIN_CHEEK_SOFT = 0.004        # m: soft maximum of the raise (no crease where the OML catches up)
@@ -652,7 +658,7 @@ def chin_cheek_offset(P):
     rho_L = chin_lip_rho(th)
     zL = zc - rho_L * np.cos(th)
     xf = _chin_face_x(th, zL)
-    s = np.clip((x - xf) / CHIN_LIP_NOSE, 0.0, 1.0)
+    s = np.clip((x - xf) / chin_nose(th), 0.0, 1.0)
     g = 1.0 - (1.0 - s) ** 2                                         # lip face -> rounded leading edge
     k = CHIN_CHEEK_SOFT
     base = k * np.logaddexp(0.0, (rho_L - rho) / k)
@@ -819,12 +825,22 @@ CHIN_ARM_TH = (20.0, 35.0)      # deg: over this polar range the lip face moves 
 #                                 outermost point -- its side-view leading edge -- on the drawn LE line)
 
 
-def _chin_face_x(th, zL):
-    """Station of the lip face's foot at polar angle th (rad) for the lip's outer WL zL."""
+def _chin_arm_w(th):
+    """0 on the lower lip .. 1 on the arms (CHIN_ARM_TH, smoothstep) at polar angle th (rad)."""
     a0, a1 = np.radians(CHIN_ARM_TH)
     w = np.clip((np.abs(th) - a0) / (a1 - a0), 0.0, 1.0)
-    w = w * w * (3.0 - 2.0 * w)
-    return chin_lip_x(zL, "fwd") - w * CHIN_LIP_NOSE
+    return w * w * (3.0 - 2.0 * w)
+
+
+def chin_nose(th):
+    """The lip nose's length (m along x) at polar angle th: CHIN_LIP_NOSE on the lower lip -> CHIN_LIP_NOSE_ARM on the
+    arms."""
+    return CHIN_LIP_NOSE + (CHIN_LIP_NOSE_ARM - CHIN_LIP_NOSE) * _chin_arm_w(th)
+
+
+def _chin_face_x(th, zL):
+    """Station of the lip face's foot at polar angle th (rad) for the lip's outer WL zL."""
+    return chin_lip_x(zL, "fwd") - _chin_arm_w(th) * chin_nose(th)
 
 
 def chin_face_s(V):
@@ -835,7 +851,7 @@ def chin_face_s(V):
     th = np.arctan2(np.abs(V[:, 1]), zc - V[:, 2])
     thL, rL = chin_lip_polar()
     zL = zc - chin_lip_rho(th) * np.cos(th)
-    return (V[:, 0] - _chin_face_x(th, zL)) / CHIN_LIP_NOSE
+    return (V[:, 0] - _chin_face_x(th, zL)) / chin_nose(th)
 
 
 def _weld(m, tol=1e-9):
@@ -867,7 +883,7 @@ def chin_mouth_field(V):
     th = np.arctan2(np.abs(V[:, 1]), zc - V[:, 2])
     thL, rL = chin_lip_polar()
     zL = zc - chin_lip_rho(th) * np.cos(th)
-    xf = _chin_face_x(th, zL) + CHIN_LIP_NOSE + CHIN_MOUTH_DX
+    xf = _chin_face_x(th, zL) + chin_nose(th) + CHIN_MOUTH_DX
     return np.maximum(chin_fields(V)[0], V[:, 0] - xf)
 
 

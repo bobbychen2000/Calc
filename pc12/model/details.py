@@ -196,13 +196,15 @@ ROOT_FILLET_MIN_D = 0.0015         # standoffs below this are left to the fusela
 # blended into the fillet over 0.08 / 0.2 m behind it: the bump either stood up as a ridge or left a dome on the wing,
 # and its blend with the fillet (infinite slope at the foot) creased the foot line -- the knotted highlight of the
 # hero / apron renders.)
-ROOT_FILLET_ROUND = dict(e_nose=0.90, e_le=0.25, run=0.40, behind=0.25)   # run: m ahead of the LE over which e falls
+ROOT_FILLET_ROUND = dict(e_nose=0.90, e_le=0.25, run=0.60, behind=0.35)   # run: m ahead of the LE over which e falls
+# (all-lens review r1 EXT-A1-03: 0.40 / 0.25 still drew 4-5 wavy highlight lobes on the nose where the LE boot meets it;
+# a slower change of the round-over's share along x: run 0.60 / behind 0.35, the tip run-in 0.03 -> 0.08)
 # (review r4 EXT8-04: run 0.20 / behind 0.10 changed the round-over's share so fast along x near the LE that the crest's
 # rows bent with up to ~600 1/m^2 curvature along x just above the foot -- several tight wiggling highlight bands on the
 # nose where the LE boot meets the fillet; 0.40 / 0.25: ~180, the foot / plan edge unchanged)
 ROOT_FILLET_TAIL_K = 3.0           # tail bump law (1 - u)^k (1 + k u) behind the wing TE (ROOT_FILLET_TE_BLEND; rev r2 k 2:
 #                                    a sharper fold where the fillet turns back into the bump)
-ROOT_FILLET_TIP_RUNIN = 0.030     # m behind the nose tip over which the standoff runs in from zero (smoothstep)
+ROOT_FILLET_TIP_RUNIN = 0.080     # m behind the nose tip over which the standoff runs in from zero (smoothstep; was 0.03)
 ROOT_FILLET_TE_BLEND = (0.050, 0.030)   # m ahead of / behind the wing TE over which the fillet turns back into the bump
 ROOT_FILLET_DOOR_CLEAR = 0.015     # m between the fairing nose and the open airstair door (door slab included)
 ROOT_FILLET_DOOR_RELAX = 4.0       # m of standoff per m of STA by which that limit relaxes aft of the door edge
@@ -539,6 +541,7 @@ CANOE_SURF_GAP = 0.0015                # canoe top under the skin it hangs from 
 # canoe's emergence it stays where it was, < 0.3 mm) and the lower half keeps at least CANOE_NOSE_DEPTH of its radius
 # below that axis, so the nose is a real tapering body closing a few mm under the skin (the plan outline L5 draws,
 # canoe_plan, unchanged)
+CANOE_TAIL_SOFT = 0.006                # m: softness of the tail's top under the lower surface's tangent (EXT-A1-04)
 CANOE_NOSE_DROP = 0.002                # m: nose axis under the clamp height
 CANOE_NOSE_SOFT = 0.001                # m: softness of that drop
 CANOE_NOSE_DEPTH = 0.4                 # lower half at the nose: >= this x the radius below the axis
@@ -562,8 +565,16 @@ def canoe_plan(y, n=60):
 
 
 def _canoe_profile(t0, t1, L, depth, n=40):
-    """Meridian (x, r) over t in [t0, t1] of the canoe (canoe_law), closed by flat ends."""
-    t = np.linspace(t0, t1, max(4, int(np.ceil(n * (t1 - t0))) + 1))
+    """Meridian (x, r) over t in [t0, t1] of the canoe (canoe_law), closed by flat ends.  The rows are spaced evenly
+    along the meridian's arc (x = t L, r), not in t (all-lens review r1 EXT-A1-04: the tail law r ~ (1 - t)^0.5 has an
+    infinite slope at t = 1, so even steps in t ended the tail on a ~95 mm ring closed by a 34 mm cone to the pole -- a
+    crimped tube end with radial wrinkles; by arc length the tail is a round dome of small rings)."""
+    m = max(4, int(np.ceil(n * (t1 - t0))) + 1)
+    tf = np.linspace(t0, t1, 40 * m)
+    tf = np.unique(np.r_[tf, t1 - (t1 - t0) * np.linspace(0.0, 0.02, 60) ** 2])
+    rf = depth * canoe_law(tf)
+    s = np.r_[0.0, np.cumsum(np.hypot(np.diff(tf) * L, np.diff(rf)))]
+    t = np.interp(np.linspace(0.0, s[-1], int(round(1.6 * m))), s, tf)
     r = depth * canoe_law(t)
     prof = list(zip(t * L, r))
     if r[0] > 1e-9:
@@ -576,6 +587,17 @@ def _canoe_profile(t0, t1, L, depth, n=40):
 def _lower_surface_z(sec, x):
     xc = np.clip((x - sec.le[0]) / sec.chord, 0.0, 1.0)
     return sec.lower(xc)[:, 2]
+
+
+def _weld_poles(m, tol=1e-9):
+    """m with coincident vertices merged (the revolve's pole rows: n copies of the nose / tail point, each of which took
+    the normal of its one sliver triangle -- a fan of radial normals that drew the 'pleated' tail, EXT-A1-04)."""
+    key = np.round(m.V / tol).astype(np.int64)
+    _, first, inv = np.unique(key, axis=0, return_index=True, return_inverse=True)
+    inv = inv.ravel()
+    F = inv[m.F]
+    ok = (F[:, 0] != F[:, 1]) & (F[:, 1] != F[:, 2]) & (F[:, 0] != F[:, 2])
+    return Mesh(m.V[first], F[ok]), first
 
 
 def _crease_split(m, top):
@@ -625,7 +647,20 @@ def flap_canoes():
             # lower contour aft of the lip); aft of the trailing edge the tail stays round
             clamp = (V[:, 0] <= te) & (V[:, 2] > zs)
             V[:, 2] = np.where(clamp, zs, V[:, 2])
-            c = _crease_split(Mesh(V, c.F), clamp)
+            # aft of the trailing edge the round top stood up to ~20 mm over the clamped top just ahead of it -- a step
+            # across the TE line whose transitional faces drew the tail's 'pleated' highlights (EXT-A1-04): there the top
+            # is held under the lower surface's tangent continued aft (soft minimum, CANOE_TAIL_SOFT), so it runs on
+            # smoothly from the flattened part and rounds down into the tail
+            aft_ = V[:, 0] > te
+            if np.any(aft_):
+                z_te = float(_lower_surface_z(sec, np.array([te]))[0]) - CANOE_SURF_GAP
+                z_te0 = float(_lower_surface_z(sec, np.array([te - 0.02]))[0]) - CANOE_SURF_GAP
+                zx = z_te + (z_te - z_te0) / 0.02 * (V[:, 0] - te)
+                kk = CANOE_TAIL_SOFT
+                zsm = zx - kk * np.logaddexp(0.0, (zx - V[:, 2]) / kk)          # soft min(z, zx), <= both
+                V[:, 2] = np.where(aft_ & (V[:, 2] > za), np.maximum(zsm, za), V[:, 2])
+            c, keep = _weld_poles(Mesh(V, c.F))
+            c = _crease_split(c, clamp[keep])
             if dst == "fixed":
                 fixed += [c, c.mirrored_y()]
             else:

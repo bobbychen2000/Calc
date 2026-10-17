@@ -2718,6 +2718,41 @@ def _to_seam(P, pan, depth):
     return Q - depth * _oml_normal(Q)
 
 
+# cabin window bezel (all-lens review r1 CAB1-04; P1046402 / 04 / 06 / 07: every cabin window sits in a raised, rolled,
+# light lip ~20-30 mm wide round the lining opening with its own highlight; the r4 lining ran flat into the reveal, a
+# featureless hole): profile (out, up) in m from the lining hole edge -- outward in the lining's tangent plane, up toward
+# the cabin --, from its foot tucked under the lining surface over a 5 mm crown, rolling into the reveal where it joins
+# the reveal wall WINDOW_BEZEL_IN down it.  Part of the reveal (the lining material, _reveal: it ends in the opening)
+WINDOW_BEZEL = ((0.030, -0.0016), (0.022, 0.0016), (0.014, 0.0040), (0.0075, 0.0050), (0.0035, 0.0042), (0.0013, 0.0018),
+                (0.0010, 0.0))
+WINDOW_BEZEL_IN = 0.004
+
+
+def _window_bezel(Lv, Ov):
+    """(bezel strip Mesh facing the cabin, the reveal's new inner loop) for a cabin-window hole loop Lv (on the lining)
+    over its OML loop Ov: WINDOW_BEZEL swept round the loop (local frame: up = from the skin opening to the hole, out =
+    the loop's outward normal in the lining's tangent plane, neighbour-smoothed)."""
+    n_ = Lv - Ov
+    n_ /= np.maximum(np.linalg.norm(n_, axis=1, keepdims=True), 1e-12)
+    t_ = np.roll(Lv, -1, 0) - np.roll(Lv, 1, 0)
+    d_ = np.cross(t_, n_)
+    d_ /= np.maximum(np.linalg.norm(d_, axis=1, keepdims=True), 1e-12)
+    c = Lv.mean(0)
+    if np.mean(np.sum(d_ * (Lv - c), 1)) < 0:
+        d_ = -d_
+    for _ in range(6):                                   # irregular trim loops: smooth the frame round the loop
+        d_ = 0.25 * np.roll(d_, 1, 0) + 0.5 * d_ + 0.25 * np.roll(d_, -1, 0)
+        d_ -= np.sum(d_ * n_, 1)[:, None] * n_
+        d_ /= np.maximum(np.linalg.norm(d_, axis=1, keepdims=True), 1e-12)
+    rows = [Lv + o * d_ + h * n_ for o, h in WINDOW_BEZEL]
+    L_in = Lv - WINDOW_BEZEL_IN * n_ + 0.0006 * d_
+    rows.append(L_in)
+    b = grid_surface(np.array(rows), close_v=True)
+    if np.mean(np.sum(b.N[:len(Lv) * 4] * np.tile(n_, (4, 1)), 1)) < 0:
+        b = b.flipped()                                                               # facing the cabin
+    return b, L_in
+
+
 def build_lining(parts):
     """Side-wall and headliner lining inside the OML by the L6 LINING law (lining_offset: 40 mm at the crown, D1's
     1.47 m cabin height, blending to 85 mm at the sides, the published 1.52 m width -- the section lining_section()
@@ -2790,6 +2825,9 @@ def build_lining(parts):
             Ov = _to_seam(Ov, door, FP.DOOR_T + 0.004)
         elif c[1] * FP.EXIT["side"] > 0 and abs(c[0] - exit_cx) < 0.2:
             Ov = Ov - FP.DOOR_T * _oml_normal(Ov)
+        bez = None
+        if door is None and Lv[:, 0].mean() > F.STA["cockpit_aft"]:
+            bez, Lv = _window_bezel(Lv, Ov)          # cabin windows: the rolled bezel lip (all-lens r1 CAB1-04)
         n = len(loop)
         i = np.arange(n)
         j = (i + 1) % n
@@ -2797,7 +2835,7 @@ def build_lining(parts):
         c = Ov.mean(0)
         if np.mean(np.sum((r.V[r.F].mean(1) - c) * r.face_normals(), 1)) > 0:
             r = r.flipped()                                                           # facing into the opening
-        reveals.append(r)
+        reveals.append(r if bez is None else Mesh.merge([bez, r]))
     # the floors (the airstair and cargo door holes run below them)
     m = trim(m, m.V[:, 2] - LINING_Z0, "positive")
     rv = Mesh.merge(reveals)

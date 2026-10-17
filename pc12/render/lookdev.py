@@ -426,7 +426,9 @@ SPEC = {
                              note="polished exhaust stacks (heat tint) with a heat-blackened outlet collar"),
     # review r4 EXT8-02: the chin-inlet lip its own neutral polished aluminium (photo 130: 208/207/205, a yellow-brown heat
     # stain low aft), no longer the stacks' gold-tinted metal (a khaki washer round the inlet in the white studio)
-    "inlet_lip":        dict(kind="metal", base=(0.624, 0.6038, 0.5647), rough=0.12,
+    # (all-lens review r1 EXT-A1-02: photo 130's lip is a rolled MIRROR crescent with bright streaks; at 0.12 the flat
+    # face read as an even light-grey washer -- the lip rolled longer, powerplant.CHIN_LIP_NOSE, and polished to 0.06)
+    "inlet_lip":        dict(kind="metal", base=(0.624, 0.6038, 0.5647), rough=0.06,
                              note="chin-inlet lip: polished aluminium (neutral silver)"),
     "exhaust_soot":     dict(kind="dielectric", base=(0.006, 0.006, 0.006), rough=0.60, spec=0.08,
                              note="(render-only) heat-blackened outlet band, inner wall and rim of the exhaust stacks "

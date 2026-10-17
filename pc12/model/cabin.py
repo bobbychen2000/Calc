@@ -728,6 +728,9 @@ def _ledges(acc, layout, tables, door_ledge):
             _ledge_run(acc, side, xa, xb, layout, tables, _yo_fixed, _wall_fixed)
 
 
+TABLE_TOP_MAT = "gloss_black"      # club-table tops (all-lens review r1 CAB1-05; was veneer_walnut)
+
+
 def _table(acc, key, state):
     """Club table deployed (TABLES): the outboard leaf slid out of the ledge fascia below the cap ('leaf'), and the
     inboard leaf unfolded over the aisle ('deployed'): anthracite leaves with a thin wood edge round the gloss-black
@@ -750,12 +753,13 @@ def _table(acc, key, state):
     for ya, yb in leaves:
         a0, a1 = sorted((s * ya, s * yb))
         Q = rrect2(x0, a0, x1, a1, ro, 4)
-        # anthracite leaf, the whole top dark smoked walnut under a gloss coat inside a thin dark-grey edge band
-        # (P1046404 / 06; model judging r1 INT-m3: the rev F gloss-black inlay read as a black glass top)
+        # anthracite leaf, the whole top a gloss-black piano finish inside a thin dark-grey edge band (P1046404 / 05 /
+        # 06 / 07; all-lens review r1 CAB1-05 -- model judging r1 INT-m3 had made it dark walnut, which the viewer drew
+        # as a matte grey-mauve wood no photo of the aircraft shows)
         acc.add(slab(fr, Q, z0, z1, 0.004, "ledge_panel"))
         e0, e1 = sorted((s * (ya + 0.004), s * (min(yb, YI) - 0.004)))
         acc.add(fr.poly(rrect2(x0 + 0.004, e0, x1 - 0.004, e1, max(ro - 0.004, 0.004)), z1 + 0.0004),
-                "veneer_walnut")
+                TABLE_TOP_MAT)
     # carriage tray under the outboard leaf, slid out of the fascia slot with it (anthracite [M]), hinge, bracket
     ya, yb = yh + 0.030, YI + 0.015
     a0, a1 = sorted((s * ya, s * yb))
@@ -793,7 +797,9 @@ def table_parts(key):
         a0, a1 = sorted((s * ya, s * yb))
         acc.add(slab(fr, rrect2(x0, a0, x1, a1, r, 4), z0, z1, 0.004, "ledge_panel"))
         e0, e1 = sorted((s * (ya + 0.004), s * (yin_b - 0.004)))
-        acc.add(fr.poly(rrect2(x0 + 0.004, e0, x1 - 0.004, e1, max(r - 0.004, 0.004)), z1 + 0.0004), "veneer_walnut")
+        # all-lens review r1 CAB1-05: the s/n 3001 tables (P1046404 / 05 / 06 / 07) are gloss-black piano tops that
+        # mirror the windows, inside the dark edge band (model judging r1's walnut tops matched no photo of the aircraft)
+        acc.add(fr.poly(rrect2(x0 + 0.004, e0, x1 - 0.004, e1, max(r - 0.004, 0.004)), z1 + 0.0004), TABLE_TOP_MAT)
         return acc
     out = leaf_meshes(yh + 0.0015, YI + 0.015, YI)                     # into the slot by 15 mm
     out.add(cylinder([x0 + 0.03, s * yh, z0 + 0.0045], [x1 - 0.03, s * yh, z0 + 0.0045], 0.0045, n=10), "chrome_trim")

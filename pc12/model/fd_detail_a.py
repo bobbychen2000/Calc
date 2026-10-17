@@ -1082,10 +1082,13 @@ def lower_panel(sg):
 STACK = dict(
     edge_r=0.012,                   # moulded radius along the stack's front edges (was 9 mm tube rails)
     horn_s=0.215,                   # the stack keeps its SDU width (PANEL stack_hw) down to here (arc length, m)
-    waist=(0.335, 0.098),           # ... then narrows to the waist at the pad's foot [M: P1046408 x 830 / 1110]
-    flare_s=0.385,                  # ... and flares to the quadrant's half-width (PEDESTAL hw) at its front
-    pad=(0.2815, 0.0535, 0.0775, 0.012, 0.005),   # touch pad: centre s, half-length, half-width, r, recess (fix r2: 5)
-    bezel=0.0045,                   # the rolled bead round the pad (its width; fix r2 FDO2-04; fix r5 FDO4-03: 6 -> 4.5 mm,
+    waist=(0.320, 0.098),           # ... then narrows to the waist at the pad's foot [M: P1046408 x 830 / 1110]
+    flare_s=0.372,                  # ... and flares to the quadrant's half-width (PEDESTAL hw) at its front
+    # touch pad: centre s, half-length, half-width, r, recess (fix r2: 5).  All-lens review r1 FD8-02 (P1046408 through
+    # the fitted panel_408b camera: the tray ~20 px longer / lower than the photo's, the stack stretched below the
+    # SDUs): half-length 0.0535 -> 0.046 with its top edge kept (s 0.228), the waist / flare 15 / 13 mm higher with it
+    pad=(0.274, 0.046, 0.0775, 0.012, 0.005),
+    bezel=0.0040,                   # the chamfer round the pad (its width; fix r2 FDO2-04; fix r5 FDO4-03: 6 -> 4.5 mm,
     #                                 dark bronze -- P1046409 / 10: a dark bronze rim, the light tube read as a frame)
     dish=0.0025,                    # the pad floor's sag at its middle (fix r3 FDO3-01)
     com=(0.222, 0.100, 0.0095),     # COM 1/2 VOL knobs on the horns: s, |y|, radius (research M6: dia 19, BL +/-0.10)
@@ -1125,6 +1128,9 @@ def pcl_paddle(c, hx, hy, hz):
     if np.mean(np.sum((out.V - np.asarray(c, float)) * out.N, 1)) < 0:
         out = out.flipped()
     return out
+
+
+TRAY_EDGE_MAT = "panel_titanium"   # the tray's chamfer and foot lip (all-lens r1 FD8-04; fix r5: trim_bronze)
 
 
 def _profile_stack():
@@ -1261,17 +1267,19 @@ def stack_shell():
     dz = -rec - q["dish"] * S.smoothstep(0.0, 0.035, d_in)
     flc = Mesh(np.array([at(y_, s_, d_) for (y_, s_), d_ in zip(P2, dz)]), tri)
     out.append((FD._oriented(flc, stack_frame(sc).w), "tray_titanium"))     # (fix r5 FDO4-03: matte warm titanium)
-    rb = 0.5 * bz                                                       # the bead: a half round on the face, its inner
-    rings = []                                                          # side rolling into the tray wall
-    for phi in np.radians(np.linspace(0.0, 180.0, 9)):
-        off, dd = rb * (1.0 + math.cos(phi)), rb * math.sin(phi)
+    # all-lens review r1 FD8-04 (P1046408: a crisp light titanium tray with a sharp chamfer and lip; the fix r5 dark
+    # bronze half-round bead read as a brown frame round a soft cushion): a flat 45-deg CHAMFER `bz` wide from the face
+    # down into the tray wall, in the brushed titanium (TRAY_EDGE_MAT), a small rounded nose at its top edge; the hand-rest
+    # lip at the pad's foot the same titanium, thinner
+    rings = []
+    for off, dd in ((bz + 0.0006, 0.0), (bz, -0.0002), (bz - 0.0005, -0.0006), (0.0, -bz), (0.0, -bz - 0.0004)):
         rl = FD.rrect_loop(hwp + off, hl + off, rp + off, nc=6)
         rings.append(np.array([at(y, s_ + sc, dd) for y, s_ in rl]))
     bead = grid_surface(np.array(rings), close_v=True)
-    out.append((FD._oriented(bead, lambda C_: C_ - cc), "trim_bronze"))
+    out.append((FD._oriented(bead, lambda C_: C_ - cc), TRAY_EDGE_MAT))
     fl_ = stack_frame(sc + hl + 0.004)
     from cad.mesh import cylinder as _cyl
-    out.append((_cyl(fl_.p(-hwp + 0.004, 0.0, 0.002), fl_.p(hwp - 0.004, 0.0, 0.002), 0.0035, n=16), "trim_bronze"))
+    out.append((_cyl(fl_.p(-hwp + 0.004, 0.0, 0.0018), fl_.p(hwp - 0.004, 0.0, 0.0018), 0.0028, n=16), TRAY_EDGE_MAT))
     # COM 1/2 VOL knobs on the horns + their legend strokes
     cs, cy, cr = q["com"]
     for sg in (-1, 1):

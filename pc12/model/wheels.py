@@ -273,7 +273,8 @@ MAIN_AXLE = PTable(
     "Main axle and trailing-arm boss (context)",
     r=(0.026, "G", "axle radius (gear.build_main); cantilevered outboard from the arm boss"),
     bore_r=(0.0225, "M", "open axle bore, facing inboard (~45 mm)"),
-    boss_r=(0.058, "M", "trailing-arm axle boss radius (dia 0.11-0.12)"),
+    boss_r=(0.069, "M", "trailing-arm axle boss radius (dia ~0.14: all-lens r1 GEAR-A1-02, 3036 mx5 scaled from the "
+                        "0.64 m tyre; r4 dia 0.11-0.12)"),
     boss_s=((-0.158, -0.110), "E", "boss faces: inboard face flush with the arm's (s = -0.14 -/+ 0.0175, "
                                    "gear.build_main; stowed, 12 mm under the wing upper skin)"),
     thread_r=(0.020, "E", "threaded axle end outboard of the outboard bearing"),

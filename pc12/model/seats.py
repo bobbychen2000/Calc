@@ -64,6 +64,7 @@ M_CREW, M_SHELL, M_SHEEP, M_BASE, M_HARN = "leather_crew", "leather_crew_shell",
     "harness"
 M_CAB, M_CAB_DARK, M_TAB = "leather", "seat_shell_dark", "seat_tab_red"
 M_CAB_SHELL = "seat_back_shell"         # mid-grey rear shell of the executive back (cab_pro_aero25_0405 [M], review r1)
+M_STITCH = "stitch_thread"              # tone-on-tone top-stitching (exec seats: all-lens review r1 CAB1-02)
 M_METAL, M_RAIL, M_WHITE, M_BLACK = "metal", "metal_dark", "paint_white", "seat_base_black"
 
 # sheepskin pads [E, review r1 F3: the fleece is the PRO crew seat's signature, thick and rolled over the edges]:
@@ -1403,6 +1404,110 @@ def _densify_top(P, o, db, b0, step):
     return np.array(out)
 
 
+# executive-seat upholstery detail (all-lens review r1 CAB1-02, P1046403 / 04 / 05 / 06: a plump crowned cushion with a
+# rolled front edge whose leather apron hangs over the recessed legrest top -- a shadow line between them --, piping
+# along the cushion's top edge and the back's front edge, double top-stitching beside the V seams; the r4 cushion,
+# drape and legrest read as one tall white box with a flat top).  All inside the drawn L6 outlines.
+#   EXEC_CUSH  crown (m, reached crown_r inside the top face's edge; the crown's top stays where the 8 mm crown had it,
+#              the rim drops by crown - 0.008), roll / roll_b the top / bottom edge radii, apron (how far the front
+#              apron hangs below the cushion bottom over the legrest's face, forward-facing seats) and its thickness
+#   EXEC_WELT  piping welt radius;  EXEC_STITCH pitch, dash length, dash width, inset from a panel's top-face edge
+EXEC_CUSH = dict(crown=0.014, crown_r=0.12, roll=0.045, roll_b=0.022, apron=0.024, apron_t=0.011)
+EXEC_WELT = 0.003
+EXEC_STITCH = (0.0065, 0.0038, 0.0009, 0.0045)
+
+
+def _round_path(Q, t, r, ang_deg=45.0, out=0.0):
+    """Points (n, 3) in pillow coordinates (a, b, c) on a pillow's top round (outline Q CCW, thickness t, top radius r)
+    at ang_deg up from its side, `out` along the round's normal; and the normals (n, 3)."""
+    N = _normals2(Q)
+    ph = math.radians(ang_deg)
+    P = np.c_[Q - r * N + (r + out) * math.cos(ph) * N, np.full(len(Q), t - r + (r + out) * math.sin(ph))]
+    return P, np.c_[math.cos(ph) * N, np.full(len(Q), math.sin(ph))]
+
+
+def _open_run(Q, keep):
+    """The longest cyclic run of outline points where keep is True, as an open polyline index array."""
+    k = np.asarray(keep, bool)
+    if k.all():
+        return np.r_[np.arange(len(k)), 0]
+    s0 = int(np.argmin(k))                                       # start after a False
+    idx = (np.arange(len(k)) + s0) % len(k)
+    runs, cur = [], []
+    for i in idx:
+        if k[i]:
+            cur.append(i)
+        elif cur:
+            runs.append(cur)
+            cur = []
+    if cur:
+        runs.append(cur)
+    return np.array(max(runs, key=len)) if runs else np.zeros(0, int)
+
+
+def _welt(P3, mat, r=None, n=6):
+    """Piping welt: a round tube along the open polyline P3 (seat-local, after mapping)."""
+    r = EXEC_WELT if r is None else r
+    if len(P3) < 2:
+        return None
+    return _tube_path(P3, r, mat, n=n)
+
+
+def _stitches(P, D, Nrm, mat):
+    """Stitch dashes: flat quads at points P (k, 3) along unit directions D, lying on normals Nrm, EXEC_STITCH sized,
+    as one Geo (seat-local)."""
+    _, ln, w, _ = EXEC_STITCH
+    S = np.cross(Nrm, D)
+    S /= np.maximum(np.linalg.norm(S, axis=1, keepdims=True), 1e-12)
+    V, F = [], []
+    for i in range(len(P)):
+        c = P[i] + 0.0004 * Nrm[i]
+        a, b = 0.5 * ln * D[i], 0.5 * w * S[i]
+        k = len(V)
+        V += [c - a - b, c + a - b, c + a + b, c - a + b]
+        F += [(k, k + 1, k + 2), (k, k + 2, k + 3)]
+    if not F:
+        return None
+    return Geo(np.array(V), np.array(F), np.zeros(len(F)), {0: mat})
+
+
+def _edge_samples(Q, pitch):
+    """Points every `pitch` along the closed outline Q, their unit tangents and their running index (float)."""
+    Q2 = np.vstack([Q, Q[:1]])
+    seg = np.linalg.norm(np.diff(Q2, axis=0), axis=1)
+    s = np.r_[0.0, np.cumsum(seg)]
+    t = np.arange(0.5 * pitch, s[-1], pitch)
+    P = np.c_[np.interp(t, s, Q2[:, 0]), np.interp(t, s, Q2[:, 1])]
+    T = np.c_[np.interp(t + 1e-4, s, Q2[:, 0]) - np.interp(t - 1e-4, s, Q2[:, 0]),
+              np.interp(t + 1e-4, s, Q2[:, 1]) - np.interp(t - 1e-4, s, Q2[:, 1])]
+    T /= np.maximum(np.linalg.norm(T, axis=1, keepdims=True), 1e-12)
+    return P, T
+
+
+def _pillow_stitches(outline, t, r, crown, mapfn, keep, mat, eps=1e-4):
+    """Top-stitching on a pillow's top face, EXEC_STITCH[3] inside its edge (outline CCW, top radius r, crown fn),
+    where keep(a, b) -- mapped by mapfn (pillow -> seat-local); the dashes follow the mapped surface (finite
+    differences of mapfn for the direction / normal)."""
+    pitch, _, _, inset = EXEC_STITCH
+    Q = _ccw(np.asarray(outline, float))
+    Qi = Q - (r + inset) * _normals2(Q)
+    P2, T2 = _edge_samples(Qi, pitch)
+    ok = keep(P2[:, 0], P2[:, 1])
+    if not ok.any():
+        return None
+    P2, T2 = P2[ok], T2[ok]
+    c = t + (crown(P2[:, 0], P2[:, 1], np.full(len(P2), inset)) if crown is not None else 0.0)
+    A = np.c_[P2, c]
+    X = mapfn(A)
+    Xa = mapfn(A + np.c_[eps * T2, np.zeros(len(A))])
+    Xn = mapfn(A + np.c_[np.zeros((len(A), 2)), np.full(len(A), eps)])
+    D = Xa - X
+    D /= np.maximum(np.linalg.norm(D, axis=1, keepdims=True), 1e-12)
+    Nr = Xn - X
+    Nr /= np.maximum(np.linalg.norm(Nr, axis=1, keepdims=True), 1e-12)
+    return _stitches(X, D, Nr, mat)
+
+
 def seat_record(seat_id, layout=None):
     layout = layout or I.DEFAULT_LAYOUT
     for r in I.seat_map(layout):
@@ -1496,21 +1601,50 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
         return fn
     cush = rrect(-0.05, -cw, sf, cw, 0.05, max_len=0.05)
     tc = ctop - (pt - 0.01)
-    g = pillow(cush, tc, 0.035, 0.010, h=0.04, crown=dome(0.008, 0.08))
+    kc = EXEC_CUSH
+    t_c = tc - (kc["crown"] - 0.008)                  # the crown's top where the 8 mm crown had it (CAB1-02)
+    crown_c = dome(kc["crown"], kc["crown_r"])
+    g = pillow(cush, t_c, kc["roll"], kc["roll_b"], h=0.04, crown=crown_c)
     geos.append(_mats(g.map(cush_map(tc)), M_CAB))
-    # raised side panels of the cushion (the V-stitch lines run on down the seat, photos)
+    # piping along the cushion's top edge between the side panels (front) (CAB1-02)
+    Qc = _ccw(_subdivide(cush, 0.012))
+    Pw, _ = _round_path(Qc, t_c, kc["roll"], 45.0, 0.4 * EXEC_WELT)
+    run = _open_run(Qc, (np.abs(Qc[:, 1]) < 0.118) & (Qc[:, 0] > sf - 0.06))
+    if len(run) > 1:
+        geos.append(_welt(cush_map(tc)(Pw[run]), M_CAB))
+    # raised side panels of the cushion (the V-stitch lines run on down the seat, photos), piped along their top edge
+    # and top-stitched beside the seam to the centre (CAB1-02)
     for sg in (-1, 1):
         a0, a1 = (0.125, cw + 0.003) if sg > 0 else (-cw - 0.003, -0.125)
-        g = pillow(rrect(-0.045, a0, sf + 0.002, a1, 0.035, max_len=0.05), tc, 0.033, 0.010, h=0.04,
-                   crown=dome(0.006, 0.03))
+        ol = rrect(-0.045, a0, sf + 0.002, a1, 0.035, max_len=0.05)
+        crown_s = dome(0.008, 0.03)
+        g = pillow(ol, tc - 0.002, 0.033, 0.012, h=0.04, crown=crown_s)
         geos.append(_mats(g.map(cush_map(tc, extra=0.004)), M_CAB))
+        Qs = _ccw(_subdivide(ol, 0.012))
+        Pw, _ = _round_path(Qs, tc - 0.002, 0.033, 45.0, 0.4 * EXEC_WELT)
+        run = _open_run(Qs, Qs[:, 0] > 0.0)
+        if len(run) > 1:
+            geos.append(_welt(cush_map(tc, extra=0.004)(Pw[run]), M_CAB))
+        st = _pillow_stitches(ol, tc - 0.002, 0.033, crown_s, cush_map(tc, extra=0.004),
+                              lambda a, b, sg=sg: (np.abs(b) < 0.168) & (a > -0.01), M_STITCH)
+        if st is not None:
+            geos.append(st)
     # soft front drape: the leather rolls over the cushion's front edge down onto the skirt (P1046402 / 03 [M], review
-    # r1 F10), inside the drawn cushion front
-    d_lo = (0.004, 0.003) if lrest is not None else (0.052, 0.040)    # with a legrest it stops at its top (r3 F1)
-    drape = fillet([(sf - 0.055, pt - d_lo[0]), (sf - 0.006, pt - d_lo[1]), (sf - 0.002, pt + 0.030),
-                    (sf - 0.055, pt + 0.030)], [0.012, 0.012, 0.020, 0.012] if lrest is not None else
-                   [0.016, 0.022, 0.020, 0.016], max_len=0.03)
-    geos.append(slab(drape, -(cw - 0.014), cw - 0.014, 0.012, M_CAB))
+    # r1 F10), inside the drawn cushion front.  Forward-facing seats (CAB1-02): an APRON that hangs kc['apron'] below the
+    # cushion bottom in front of the legrest's face (set back EXEC_SEAT legrest[2]), so a shadow line runs between them
+    if lrest is not None:
+        ua = sf - 0.003
+        ui = ua - kc["apron_t"]
+        za = pt - kc["apron"]
+        drape = fillet([(sf - 0.055, pt - 0.004), (ui, pt - 0.004), (ui, za), (ua, za), (sf - 0.0005, pt - 0.006),
+                        (sf - 0.002, pt + 0.030), (sf - 0.055, pt + 0.030)],
+                       [0.010, 0.004, 0.004, 0.0052, 0.020, 0.020, 0.012], max_len=0.012)
+    else:
+        drape = fillet([(sf - 0.055, pt - 0.052), (sf - 0.006, pt - 0.040), (sf - 0.002, pt + 0.030),
+                        (sf - 0.055, pt + 0.030)], [0.016, 0.022, 0.020, 0.016], max_len=0.03)
+    # (the apron is 11 mm thick: the slab's 12 mm edge round inset its outline past itself at the ends -- a folded end cap,
+    # fit_check 23 -- so it takes a 4 mm round)
+    geos.append(slab(drape, -(cw - 0.014), cw - 0.014, 0.004 if lrest is not None else 0.012, M_CAB))
 
     # ---- back group (upright, then reclined about the SRP): shell, V-stitched front panels, rear insert + pocket,
     # headrest on two posts, shoulder-belt guide
@@ -1540,6 +1674,17 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
         b = np.asarray(b, float)
         t = np.clip((b - b_lum) / (b80 - b_lum), 0.0, 1.0)
         return np.minimum(lum_top + (v80 - lum_top) * t, hwf(b) - 0.020)
+    # piping along the back's front edge (CAB1-02): on the slab's lateral round (r 0.03) at 45 deg, up both sides and
+    # across the top (the outline a = +-hw(b) with its rounded top corners)
+    rs_ = 0.03
+    b_w = s_top - rs_ * (1.0 - math.sin(math.radians(45.0)))     # the top run: on the profile's front-top fillet (r 0.03)
+    bq = np.linspace(0.06, b_w, 60)
+    hq = hwf(bq) - rs_ * (1.0 - math.cos(math.radians(45.0))) + 0.4 * EXEC_WELT * math.cos(math.radians(45.0))
+    cq = 0.02 - rs_ * (1.0 - math.sin(math.radians(45.0))) + 0.4 * EXEC_WELT * math.sin(math.radians(45.0))
+    top_a = np.linspace(-0.6, 0.6, 9) * float(hq[-1])
+    PwA = np.vstack([np.c_[-hq, bq][::-1], np.c_[top_a[1:-1], np.full(7, b_w)], np.c_[hq, bq]])
+    bmap = _back_map(db, nb, o=o)
+    back.append(_welt(bmap(np.c_[PwA, np.full(len(PwA), cq)])[:, [0, 1, 2]], M_CAB))
     # lumbar panel: flush, no crown (the seam round it is the joint)
     g = pillow(fillet([(-lum_bot, b0_ + 0.004), (lum_bot, b0_ + 0.004), (lum_top, b_lum - 0.004),
                        (-lum_top, b_lum - 0.004)], [0.03, 0.03, 0.014, 0.014], max_len=0.04), 0.024, 0.010, 0.006,
@@ -1548,13 +1693,17 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     # centre panel: the V from the lumbar top, then the full width over the shoulders
     bs = np.r_[np.linspace(b_lum + 0.004, b80, 9), np.linspace(b80 + 0.03, b_v, 4)]
     P = np.vstack([np.c_[vin(bs), bs], np.c_[-vin(bs[::-1]), bs[::-1]]])
-    g = pillow(fillet(P, np.r_[0.014, np.zeros(len(bs) - 2), 0.04, 0.04, np.zeros(len(bs) - 2), 0.014], max_len=0.05),
-               0.026, 0.012, 0.006, h=0.045, crown=dome(0.004, 0.05), n_round=2)
+    olc = fillet(P, np.r_[0.014, np.zeros(len(bs) - 2), 0.04, 0.04, np.zeros(len(bs) - 2), 0.014], max_len=0.05)
+    g = pillow(olc, 0.026, 0.012, 0.006, h=0.045, crown=dome(0.004, 0.05), n_round=2)
     back.append(_mats(g.map(lambda V: fmap(V - [0, 0, 0.018])), M_CAB))
+    st = _pillow_stitches(olc, 0.026, 0.012, dome(0.004, 0.05), lambda V: fmap(V - [0, 0, 0.018]),
+                          lambda a, b: (b > b_lum + 0.01) & (b < b80 + 0.01), M_STITCH)     # beside the V seams
+    if st is not None:
+        back.append(st)
     # side bolsters: raised, from beside the lumbar panel up along the V seam, tapering to a rounded tip at the shoulder
     for sg in (-1, 1):
         bb_ = np.linspace(b0_ + 0.004, b80, 40)
-        inner = np.where(bb_ < b_lum, np.interp(bb_, [b0_, b_lum], [lum_bot, lum_top]) + 0.006, vin(bb_) + 0.006)
+        inner = np.where(bb_ < b_lum, np.interp(bb_, [b0_, b_lum], [lum_bot, lum_top]) + 0.008, vin(bb_) + 0.008)
         outer = hwf(bb_, -0.010)
         ok = outer - inner > 0.030
         bb_, inner, outer = bb_[ok], inner[ok], outer[ok]
@@ -1566,8 +1715,14 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
         tip = np.c_[sg * (inner[-1] + rt + rt * np.cos(ang)), bs[-1] + 1.3 * rt * np.sin(ang)]
         Pb = np.vstack([np.c_[sg * inner[:-1], bs[:-1]], tip, np.c_[sg * outer[-2::-1], bs[-2::-1]]])
         rb_ = np.r_[0.016, np.full(len(bs) - 2, 0.014), np.zeros(len(tip)), np.full(len(bs) - 2, 0.014), 0.016]
-        g = pillow(fillet(Pb, rb_), 0.032, 0.012, 0.006, h=0.045, crown=dome(0.008, 0.03), n_round=2)
+        olb = fillet(Pb, rb_)
+        g = pillow(olb, 0.032, 0.012, 0.006, h=0.045, crown=dome(0.008, 0.03), n_round=2)
         back.append(_mats(g.map(lambda V: fmap(V - [0, 0, 0.018])), M_CAB))
+        vin_b = lambda b: np.where(b < b_lum, np.interp(b, [b0_, b_lum], [lum_bot, lum_top]), vin(b))   # noqa: E731
+        st = _pillow_stitches(olb, 0.032, 0.012, dome(0.008, 0.03), lambda V: fmap(V - [0, 0, 0.018]),
+                              lambda a, b: (np.abs(a) < vin_b(b) + 0.030) & (b > b0_ + 0.02), M_STITCH)
+        if st is not None:
+            back.append(st)
     # rear: dark insert with an arched top over the lower two thirds and a map pocket, following the rounded rear
     # face (photos: seat backs seen from behind)
     b_bot = float(np.dot(pr["back"][-1] - o, db))               # the profile's rear line: bottom -> top

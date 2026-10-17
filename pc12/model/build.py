@@ -269,9 +269,13 @@ BUDGET_OPEN = ("the rear cabin seats seat_pax3-6 34,834 at RES 2 against the 34,
 # (flight deck + yoke fix r3, FDY-O3-03: flight_deck 96k -> 99.5k and the total 390k -> 393.5k -- the rudder-bar
 # linkage ahead of the pedals, fd_detail_a.rudder_linkage: horns, push-pull rods, return springs, toe-brake hoses, the
 # front wall's insulation blankets and the pedal housings, ~7k at RES 2)
-INTERIOR_BUDGET = {"total": res.budget(393_500, 2.2) + 2 * (YOKE_BUDGET - 24_000),
+# (all-lens review r1, CAB1-02 / CAB1-04: the cabin seat 12k -> 14k -- the executive seats' crowned cushion with its
+# rolled front, the leather apron over the legrest, piping welts round the cushion / back / side panels and the stitch
+# rows beside the V seams: 34.8k -> 40.6k a seat at RES 2, which also closes the old 34,834 / 34,800 open item; the
+# cabin windows' moulded bezels on interior_lining (+10.5k, inside its 190k); the total 393.5k -> 415k)
+INTERIOR_BUDGET = {"total": res.budget(415_000, 2.2) + 2 * (YOKE_BUDGET - 24_000),
                    "crew_seat": res.budget(19_500, 3.4),
-                   "cabin_seat": res.budget(12_000, 2.9), "flight_deck": res.budget(99_500, 2.2),
+                   "cabin_seat": res.budget(14_000, 2.9), "flight_deck": res.budget(99_500, 2.2),
                    "yoke_L": YOKE_BUDGET, "yoke_R": YOKE_BUDGET, "pedal_LL": 3_000, "pedal_LR": 3_000, "pedal_RL": 3_000,
                    "pedal_RR": 3_000, "fd_consoles": 30_000, "fd_divider": 18_000, "interior_lining": 190_000}
 
@@ -399,6 +403,7 @@ def build_parts(ao=False):
 # Moving children (yokes, pedals, tables, doors) are baked at their built pose.  The flight deck's large flat triangles
 # (floor, kick panels, consoles, footwell walls) are split first to <= AO_SPLIT so the per-vertex light resolves there.
 AO_DOOR_PARTS = ("door_airstair", "door_cargo", "exit_hatch", "door_frames")
+AO_DOOR_CABIN = {"door_cargo": ("ledge_top", "ledge_panel", "gloss_black", "chrome_trim", "psu_panel", "black")}
 AO_SKIN_PARTS = ("fus_fwd", "fus_center", "fus_aft", "cowl_upper", "cowl_lower", "glazing_flightdeck", "glazing_cabin",
                  "door_frames", "door_airstair", "door_cargo", "exit_hatch", "firewall")
 AO_SPLIT = 0.060                        # m: the longest edge left on the flight deck's floor / walls / consoles
@@ -469,7 +474,11 @@ def bake_interior_ao(parts):
         added += ao.presplit([m for m, _ in parts["flight_deck"].meshes], AO_CONTACT_SPLIT, _contact_sel(lo, hi),
                              min_area=AO_CONTACT_AREA)
     t1 = time.time()
-    rec = [m for p in parts.values() if p.group == "Interior" for m, _ in p.meshes]
+    rec_m = [(m, mat) for p in parts.values() if p.group == "Interior" for m, mat in p.meshes]
+    # (all-lens review r1 CAB1-03) the port ledge segment the cargo door carries is cabin furniture: baked with the
+    # interior, so the viewer lights it by the cabin law like the fixed ledge beside it
+    rec_m += [(m, mat) for pid, ms in AO_DOOR_CABIN.items() if pid in parts for m, mat in parts[pid].meshes if mat in ms]
+    rec = [m for m, _ in rec_m]
     solid = lambda pid: [m for m, mat in parts[pid].meshes if not mat.startswith(GLASS)] if pid in parts else []  # noqa: E731
     occ = rec + [m for pid in AO_DOOR_PARTS for m in solid(pid)]
     dn = (AO_DENOISE, lambda P: P[:, 0] < AO_DENOISE_X)
@@ -509,7 +518,7 @@ def bake_interior_ao(parts):
     outside = lambda P: ~F.inside(P[:, 0], P[:, 1], P[:, 2], margin=-0.02)    # noqa: E731
     skyv = ao.sky(rec, walls, outside, AO_SKY_BOX, k=AO_SKY_K, denoise=dn)
     t3 = time.time()
-    mats = [mat for p in parts.values() if p.group == "Interior" for _, mat in p.meshes]
+    mats = [mat for _, mat in rec_m]
     rad = [_albedo(mat) * (sv + AO_GLOW) + AO_EMIT.get(mat, 0.0) for mat, sv in zip(mats, skyv)]
     light = ao.sky(rec, walls, outside, AO_SKY_BOX, bounce=(rec, rad), k=AO_SKY_K, denoise=dn)
     for m, a, b in zip(rec, occl, light):

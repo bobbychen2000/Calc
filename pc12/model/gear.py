@@ -58,6 +58,13 @@ MAIN_SHOCK = ((6.333 - GEAR_SHIFT, 0.930), (6.340 - GEAR_SHIFT, 0.415))   # shoc
 # ~90 mm ahead of and ~135 mm above the axle boss (the arm at 0.7 of its length), not on the boss at 6.380 / 0.400;
 # a forked lug with a pin at either end (MAIN_SHOCK_CLEVIS: plate half-gap, thickness, pin radius)
 MAIN_SHOCK_CLEVIS = (0.023, 0.006, 0.008)
+# all-lens review r1 GEAR-A1-01 (= WG8R2-01): the shock's upper eye (MAIN_SHOCK[0], ~0.30 m aft of the leg axis -- fixed by
+# the stowage) hangs on a cast DRAG LUG from the leg: a tapered rounded-rectangle beam from the leg axis at WL `z_leg` aft
+# and down to a fork base just ahead of the eye, whose two plates straddle it (the r4 'web' ran sideways at the eye's
+# station from the leg's butt line and ended in mid-air, ~0.27 m behind the leg tube; photo 3036 mx5: the shock rises
+# into a casting on the leg's upper part): half-depth / half-thickness at the leg -> at the fork, the fork base's length
+# along x, the section's superellipse power
+MAIN_SHOCK_LUG = dict(z_leg=0.990, a=(0.0225, 0.0175), b=(0.016, 0.0125), base=0.024, p=3.0)
 # side brace A (wing fitting), B0 (lug on the leg).  WL as drawn (front view); A at the drawn BL; stations hidden (behind
 # the door in the side view, inside the wing).
 # LD-1: A 5,950 -> 6,058 and B0 6,040 -> 6,056 (drawing frame), so the brace plane lies just behind the door's
@@ -577,7 +584,10 @@ def main_brake_line(sgn, C, aa, fy_s):
 # the link-pivot yoke to the big axle boss, not a flat bar): a swept oval tube on the arm plane (s = -fy inboard of the
 # wheel), bowed up by `bow` (fractions along the pivot -> axle chord, offsets normal to it) and tapering in depth
 # (half-depth `a`, half-thickness `b`, pivot end -> axle end); the shock strut's chrome rod MAIN_SHOCK_ROD_R
-MAIN_ARM = dict(fy=0.14, bow=((0.30, 0.022), (0.66, 0.014)), a=(0.031, 0.026), b=(0.021, 0.019), p=2.6)
+# all-lens review r1 GEAR-A1-02 (= WG8R2-02; 3036 mx4 / mx5 stbdmain_inboard, scaled from the 0.64 m tyre: ~80-95 mm deep
+# at the pivot yoke, a nearly straight heavy forged beam into a big axle boss): 88 -> 68 mm deep, 48 -> 42 mm thick, the
+# bows flattened (was 62 -> 52 x 42 -> 38 mm, bows 22 / 14 mm: it read as a bent pipe); the boss WH.MAIN_AXLE boss_r +19 %
+MAIN_ARM = dict(fy=0.14, bow=((0.30, 0.010), (0.66, 0.006)), a=(0.044, 0.034), b=(0.024, 0.021), p=2.8)
 MAIN_SHOCK_ROD_R = 0.0175
 
 
@@ -640,9 +650,19 @@ def build_main(parts, side):
         zb_, zt_ = a_top - 0.012, S2[2] + 0.024
         lugs.append(box(np.array([S2[0], S2[1] + sy * (gy + 0.5 * gt), 0.5 * (zb_ + zt_)]), (0.046, gt, zt_ - zb_)))
     lugs.append(cylinder(S2 - [0, gy + gt + 0.004, 0], S2 + [0, gy + gt + 0.004, 0], pr, n=12))
-    # forked lug on the leg at the top: a web from the leg out to two plates round the upper eye, + its pin
-    ty = S1[1] - T[1]
-    lugs.append(box(np.array([S1[0], T[1] + 0.5 * (ty - np.sign(ty) * 0.035), S1[2]]), (0.040, abs(ty) - 0.035, 0.030)))
+    # drag lug on the leg at the top (MAIN_SHOCK_LUG, all-lens r1 GEAR-A1-01): a tapered cast beam from the leg axis aft,
+    # inboard and down to a fork base ahead of the upper eye, two plates round the eye, + its pin
+    kl = MAIN_SHOCK_LUG
+    P0 = T + (L - T) * (T[2] - kl["z_leg"]) / (T[2] - L[2])                 # on the leg axis (inside the tube)
+    gb = 0.030 + gt + 0.001                                                 # fork base half-width (to the plates' outsides)
+    xb = S1[0] - 0.030 - 0.5 * kl["base"] + 0.001                           # fork base centre, ahead of the eye / plates
+    P1 = np.array([xb - 0.5 * kl["base"], S1[1], S1[2] + 0.004])
+    u_ = np.linspace(0.0, 1.0, 14)
+    Cl = P0[None, :] + u_[:, None] * (P1 - P0)[None, :]
+    Cl[:, 2] += 0.010 * np.sin(np.pi * u_)                                  # a slight arch, as a casting
+    struct.append(sweep_section(Cl, kl["a"][0] + (kl["a"][1] - kl["a"][0]) * u_, kl["b"][0] + (kl["b"][1] - kl["b"][0]) * u_,
+                                n_sec=20, fore=(0.0, 0.0, 1.0), p=kl["p"]))
+    lugs.append(box(np.array([xb, S1[1], S1[2]]), (kl["base"], 2.0 * gb, 0.050)))
     for sy in (-1.0, 1.0):
         lugs.append(box(np.array([S1[0], S1[1] + sy * (0.030 + 0.5 * gt + 0.001), S1[2]]), (0.060, gt, 0.070)))
     lugs.append(cylinder(S1 - [0, 0.030 + gt + 0.005, 0], S1 + [0, 0.030 + gt + 0.005, 0], pr + 0.001, n=12))

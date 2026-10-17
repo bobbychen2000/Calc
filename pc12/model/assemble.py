@@ -209,7 +209,7 @@ MATERIALS = {
     "paint_silver":     ((0.42, 0.42, 0.43), 0.55, 0.36, PAINT),       # sRGB #ADADAF silver-grey tailplane
     "paint_black":      ((0.012, 0.013, 0.015), 0.0, 0.30, dict(CC, specular=0.0)),   # sRGB #1D1E21 gloss radome
     "exhaust_polished": ((0.50, 0.42, 0.30), 1.0, 0.06),               # sRGB #BCAD95 polished, heat-tinted stacks
-    "inlet_lip":        ((0.624, 0.6038, 0.5647), 1.0, 0.12),          # sRGB #CFCCC6 polished aluminium chin-inlet lip
+    "inlet_lip":        ((0.624, 0.6038, 0.5647), 1.0, 0.06),          # sRGB #CFCCC6 polished aluminium chin-inlet lip
     "prop_band_red":    ((0.27, 0.026, 0.004), 0.0, 0.40, dict(specular=0.4)),   # sRGB #8E2D0D deep signal red
     # ---- flight deck detail B (flight deck r1 GEOM B, model/fd_detail_b.py; append-only): the CB panels' lit bus bands
     #      (P1046409 / 10, AOPA, PRO Mexico photo: LH blue, RH yellow / green front and white rear rows), dim

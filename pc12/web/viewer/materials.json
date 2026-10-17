@@ -710,7 +710,7 @@
     1.0
    ],
    "metallicFactor": 1.0,
-   "roughnessFactor": 0.12,
+   "roughnessFactor": 0.06,
    "clearcoatFactor": 0.0,
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
