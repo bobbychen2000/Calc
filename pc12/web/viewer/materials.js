@@ -29,6 +29,10 @@ import * as THREE from 'three';
 
 // Uniforms shared by every patched material (one write updates all of them).
 export const U = {
+  // the supersampling factor of the pass being rendered (picture.js _renderSS): the patches' footprints x this (CRA1-01)
+  pcSS: { value: 1 },
+  pcMove: { value: 0 },            // 1 on the camera-moving frames (picture.js _path; the groove AA, CRA1-02)
+  furSoft: { value: 0 },          // the fur shells' soft coverage on (inside: addFur's onAfterRender)
   paintSweep: { value: 100 },
   primer: { value: new THREE.Color(0x9fae8c) },       // light grey-green zinc-chromate-ish primer
   lining: { value: new THREE.Color() },                // set from LINING below (linear)
@@ -61,6 +65,13 @@ export const U = {
   // reflection pointing aft / down into the dark cabin, y / z the smoothstep over dot(reflection, toward the glazing),
   // w the glazing direction's up component (forward = -Z)
   cabinRefl: { value: new THREE.Vector4(1, -0.3, 0.6, 0.35) },
+  // the cabin's form light (all-lens review r1 CAB1-01; CABIN_FORM): per class [gain, occlusion power, x at no window light,
+  // x at full], [x facing inboard (toward the aisle), x facing outboard (toward its own side wall), x facing down, x facing
+  // up], [x at WL C.y, x at WL C.z, x at WL C.w, -]; and [the window light that counts as full, WL low, belt, ceiling]
+  cabinFormA: { value: [new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1)] },
+  cabinFormB: { value: [new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1)] },
+  cabinFormD: { value: [new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0)] },
+  cabinFormC: { value: new THREE.Vector4(0.3, 1.3, 1.95, 2.7) },
   // inside, the flight deck (flight deck fix r3): the shade's daylight colour (xyz: a luminance-neutral tint, w: its share)
   // and the satin metals' cabin reflection probe ([dark, side windows, aisle, headliner] levels, see CABIN_LOOK)
   cabinShade: { value: new THREE.Vector4(1, 1, 1, 0) },
@@ -200,7 +211,7 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // narrow bright edge -- its satin reflection of the glazing, SPEC_KEEP) and the palm tray's matte warm titanium floor
   // (FDO4-03: P1046408 ~128 / 117 / 132, no recognisable reflection)
   // (FDY r2 FIDY2-04 above: the post 0.5 -> 1.05; the palm tray 0.3 -> 0.42 -- 91 at panel_408b against P1046408's 117)
-  lining_fd_post: [0, 1.2], tray_titanium: [0, 0.42],
+  lining_fd_post: [0, 1.2], tray_titanium: [0, 0.5],
   // (fix r5 FDO4-03 / FID-FD4-03: from above, the quadrant / pedestal views, the palm tray read 135-165 and the
   // stack's gunmetal shroud and the quadrant frame 100-135, light-grey plastic; P1046409 from the co-pilot's seat: the
   // tray 106 / 100 / 113, the face round it 51-60, the frame ~60-70)
@@ -251,7 +262,10 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // the lunes 1.81 x the body -- outside [Y1b] / [Y1c]'s photo bands (body 0.27-0.30, pads 1.06-1.27); a floor of 0.3
   // lifts the shaded flanks, hardly the median up close: the stop's body 0.28, pads / body 1.24, lunes / body 1.35; the
   // yoke close-up 37 / 69 / 122 (p99 148) against 25 / 65 / 120 at 0.1 and P1046409's 38 / 60 / 183)
-  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.40, 0.3, 1, 0, 25], yoke_trim_face: [0, 1.0, 0.25],
+  // (all-lens review r1 FD8-03: up close the grips still read as slate-blue grey plastic -- 66-75 with B - R +18 from the
+  // pilot's eye, a uniform 67 / 86 / 102 at the yoke close-up, where P1046410 / 09's black satin grips put their light in
+  // sharp glints: the diffuse fill -25 %, the reflection floor 0.3 -> 0.22, the lobe tighter (PART_TRIM roughness 0.12))
+  yoke_nickel: [0, 1, 0, 0.35, 0, 0, 0.25], 'yoke:grip_black': [0, 0.30, 0.22, 1, 0, 25], yoke_trim_face: [0, 1.0, 0.25],
   yoke_slot: [0, 0.5],
   // rev Q (3-D judges r4): the cover's groove flanks are cavities -- no fill, part of the studio's diffuse (FID4-01); the
   // column a satin dark-grey tube, its reflections floored at 0.15 of the studio's (FID4-05: ~40-50 from the pilot's eye)
@@ -270,7 +284,9 @@ const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], 
   // owner judge's yoke close-up against P1046409's 68-90 with sheen streaks: a steeper top-lit gradient (x 0.6 at WL 1.80
   // .. x 1.45 at 1.90), a 0.3 reflection floor and the side-window term, glossier (VIEWER roughness 0.32, PART_TRIM
   // specIn 2.5): 56 / 76 / 85 there, the pilot stop's pads / body 1.24 -- [Y1b] 1.0-1.4, the photos 1.06-1.27)
-  yoke_leather: [0, 0.68, 0.1, 0.6, 0, 20, 1, 0.6, 1.45, 1.80, 1.90, 0.5], button_red: [0, 0.75],     // (FDY r1: [0, 0.65] + near field; fix r4: floor 0.3 -> 0.1, the sun's glint 0.6)
+  // (all-lens review r1 FD8-03: with the grips' satin black darker -- body / cover 0.28 -> 0.23 -- the pads' fill 0.68 ->
+  // 0.60 keeps them one near tone with it, pads / body <= 1.4 as [Y1b] and the photos 1.06-1.27)
+  yoke_leather: [0, 0.60, 0.1, 0.6, 0, 20, 1, 0.6, 1.45, 1.80, 1.90, 0.5], button_red: [0, 0.75],     // (FDY r1: [0, 0.65] + near field; fix r4: floor 0.3 -> 0.1, the sun's glint 0.6)
 };
 // Rev Q (3-D judges r4 FID4-02: the satin-aluminium insert had the cover's hue and luminance -- 0.91-0.99 of it, 1.07 at
 // the AOPA camera, a p10-p90 spread of 7 levels: a flat grey paint): inside, the yoke's metal inserts mirror a CABIN
@@ -383,11 +399,12 @@ const PART_TRIM = {
   // (FDY r2 FDY-O2-02 / FIDY2-06: still matte slate without the photos' satin streaks down the grip faces: sharper and
   // stronger reflections, neutral-cool -- the median kept dark for [Y1b], the lit edges brighter)
   // (flight deck + yoke fix r4 FDY-O4-03 / FIDY4-02: tighter and stronger again under the YOKE_PROBE law)
-  'yoke_L:grip_black': { roughness: 0.15, specIn: 5.0, specularColor: [0.95, 0.97, 1.0] },
-  'yoke_R:grip_black': { roughness: 0.15, specIn: 5.0, specularColor: [0.95, 0.97, 1.0] },
+  'yoke_L:grip_black': { roughness: 0.12, specIn: 5.0, specularColor: [0.97, 0.97, 0.97] },
+  'yoke_R:grip_black': { roughness: 0.12, specIn: 5.0, specularColor: [0.97, 0.97, 0.97] },
   // (FDY r2 FDY-O2-02: the pads' blue-grey speckle -- a warm specular tint takes the sky's blue out of their sheen)
-  'yoke_L:yoke_leather': { specularColor: [1.0, 0.95, 0.9], specIn: 3.0 },
-  'yoke_R:yoke_leather': { specularColor: [1.0, 0.95, 0.9], specIn: 3.0 },
+  // (all-lens r1 FD8-03: the pads a shade blue in their sheen, B - R +18: a warmer tint, B - R ~+10)
+  'yoke_L:yoke_leather': { specularColor: [1.0, 0.92, 0.84], specIn: 3.0 },
+  'yoke_R:yoke_leather': { specularColor: [1.0, 0.92, 0.84], specIn: 3.0 },
   // (FDY r2 FDY-O2-04: the quadrant plate and the flight deck's black parts read navy from above, B - R +26 at the
   // quadrant close-up, the photos satin black: a warm base and specular tint, less reflection inside)
   'flight_deck:black': { color: [0.036, 0.029, 0.022], specIn: 0.5, specularColor: [1.0, 0.9, 0.75] },
@@ -413,6 +430,27 @@ for (const it of (Q_M.get('partTrim') || '').split('|')) {
 // stays on the pedals, the linkage and the footwell's own dark walls
 // (and the footwell's own dark walls / front closure (panel_dark) and its foil blanket / the outer plates' edge strips
 // (panel_silver): P1046408's footwells read 5-17 round the pedals, the x 1.8 had them 22-43 and the blanket 119)
+// CABIN FORM (all-lens review r1 CAB1-01, the cabin judge's major: aft of the divider the lining, headliner and the
+// executive seats read as white clay -- within-surface spread 2-7x lower than P1046406 / 02 / 04 at matched framings: the
+// light trim's flat cove / window fill sat over all shading).  Inside, aft of the divider (STA 4.55-4.75 blend), the
+// class's indirect diffuse x gain x occlusion^p (the bake, full strength) x mix(lo, hi, the baked window light) x a
+// facing term (fore / aft .. toward a side wall; down .. up): the light halo round each window, the walls darker toward
+// the sills and between the windows, the soffit steps' shade, lit and shaded bolsters.  Classes: 0 the lining /
+// headliner, 1 the executive seats' leathers and shells
+const CABIN_FORM = { lining: 0, leather: 1, leather_dark: 1, seat_back_shell: 1, seat_shell_dark: 1 };
+const qf4 = (k, d) => { const v = qv(k, d); return v; };
+// tuned at the photo-fitted cabin_fwd_406 (P1046406) / cabin_fwd / p404 views in one look-dev page (out/tmp/all8_fix_r1/ld
+// jobs a00 .. d02): the headliner centre's sd 5.9 -> ~11.5, the side wall's 9.6 -> ~16.5, the seat backs' 17.6 (the new
+// welts / seams) -> ~30, the medians kept for [T4b] / [T14] (the light trim near-white: AgX's shoulder compresses the
+// spread there, so the factors run wide -- x 0.38 .. 1.55 with the window light, 0.55 .. 1 from the floor to the belt)
+CABIN_LOOK.formA = [qf4('cabFormA0', [1.82, 2.2, 0.38, 1.55]), qf4('cabFormA1', [1.5, 2.0, 0.5, 1.35])];
+CABIN_LOOK.formB = [qf4('cabFormB0', [0.88, 1.05, 0.8, 1.0]), qf4('cabFormB1', [0.7, 1.2, 0.65, 1.15])];
+CABIN_LOOK.formD = [qf4('cabFormD0', [0.55, 1.0, 0.85, 0]), qf4('cabFormD1', [0.6, 1.0, 1.15, 0])];
+CABIN_LOOK.formC = qf4('cabFormC', [0.3, 1.3, 1.95, 2.7]);
+U.cabinFormA.value.forEach((v, i) => v.set(...CABIN_LOOK.formA[i]));
+U.cabinFormB.value.forEach((v, i) => v.set(...CABIN_LOOK.formB[i]));
+U.cabinFormD.value.forEach((v, i) => v.set(...CABIN_LOOK.formD[i]));
+U.cabinFormC.value.set(...CABIN_LOOK.formC);
 const FOOT_SKIP = new Set((Q_M.get('footSkip') ?? 'lining_flightdeck,fd_cove,panel_dark,panel_silver').split(',').filter(Boolean));
 // the satin / gloss trim of the flight deck keeps its reflections inside (FD-J10: the facing weights cut the titanium,
 // the gunmetal, the bezels, the black leather and the displays to flat matte); the sky law and the occlusion still apply
@@ -506,6 +544,10 @@ const VIEWER = {
   // the deep ultramarine fuselage / fin blue: the white studio's fill in its clear coat lifted and greyed it to
   // periwinkle (review r4 EXT8-03: cowl top 81/123/184 vs photo 130's 57/111/198; B/R 2.3 vs 3.5); the light blue and
   // the white strokes keep the studio's
+  // the chin inlet's duct behind the lip (all-lens review r1 EXT-A1-02: mid-grey through the mouth where photo 130 shows
+  // a near-black duct): the entry's near-black and the composite duct beyond it, both mostly in the duct's own shade
+  inlet_dark: { specularIntensity: 0.3, envMapIntensity: 0.35 },
+  composite: { color: [0.03, 0.03, 0.034], specularIntensity: 0.4, envMapIntensity: 0.35 },
   paint_blue: { envMapIntensity: 0.75 },
   paint_navy: { envMapIntensity: 0.75 },
   // the cabin floor lies in the shade of the seats, ledges and furniture (P1046402 / 06: the AI Orange bands ~sRGB
@@ -594,7 +636,11 @@ const VIEWER = {
   // mahogany, (41, 27, 16) against P1046406's smoky grey-brown (66, 53, 50): a lighter, less saturated walnut)
   // (flight deck fix FDY r2 FIDY2-08: still darker and warmer than P1046406's mauve-grey walnut, (50, 44, 40) against
   // (78, 70, 73) at cabin_fwd_406: lighter, R ~ B, a little more clear-coat reflection -- (72, 69, 74))
-  veneer_walnut: { color: [0.15, 0.123, 0.118], envMapIntensity: 0.6, grain: { amp: 0.28, rough: 0.05 } },
+  // (all-lens review r1 CAB1-06: the figure read as coarse blotchy smoke smears 10-40 mm wide; P1046411 / 07 show a fine,
+  // dense, straight vertical grain, ~1-3 mm streaks under a clear lacquer that mirrors the room: the streaks 6x finer
+  // across (420 / m) and 3x along (8 / m: ~45:1), three octaves -- the coarse blotch octave gone --, the lacquer's
+  // reflection a little stronger)
+  veneer_walnut: { color: [0.15, 0.123, 0.118], envMapIntensity: 0.7, grain: { amp: 0.26, rough: 0.05, scale: [420, 420, 8], oct: 3 } },
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   // flight deck r1 LOOK (L5): no occlusion stand-in any more (the baked occlusion / window sky do it); brushed along the
@@ -629,7 +675,9 @@ const VIEWER = {
   // satin with a faint brush: the window stripes faded by the roughness (CABIN_LOOK probe2), the bands broad and soft,
   // +-25 % over 12 x 60 cm; the brushed streaks kept fine, 0.6 mm at +-15 % of the reflection -- 1 mm at +-18 % read as
   // grey wood grain at the yoke close-up)
-  panel_titanium: { color: [0.25, 0.225, 0.245], metalness: 0.85, roughness: 0.27, specIn: 1.9,
+  // (all-lens review r1 FD8-04: the inner sub-panel (71, 80, 94) at panel_408b -- the level right, but cool and uniform
+  // against P1046408's warm (74, 71, 79) with broad bright streaks: a warmer base, R >= G >= B)
+  panel_titanium: { color: [0.262, 0.236, 0.222], metalness: 0.85, roughness: 0.27, specIn: 1.9,
     brush: { aniso: 0.75, axis: [1, 0, 0], rough: 0.05, len: 0.05, w: 0.0006, spec: 0.15, band: 0.25, bandLen: 0.6,
       bandW: 0.12, up: [0.40, 0.55, 0.32, 0.15] } },
   // (FDO3-01: the graphite face, the stack / pedestal gunmetal: a fine bead-blast grain -- isotropic, `len` 3-4 mm -- in
@@ -651,7 +699,9 @@ const VIEWER = {
   yoke_band: { color: [0.16, 0.155, 0.152], metalness: 0.9, roughness: 0.22, specIn: 2.5 },
   // (fix r5 FDO4-03: the palm tray's matte floor a warm mauve-grey -- the cabin's cool light had left it 108 / 113 / 128,
   // P1046408 123 / 114 / 130, P1046409 from above 106 / 100 / 113: R > G)
-  tray_titanium: { color: [0.225, 0.185, 0.182] },
+  // (all-lens r1 FD8-04: a soft mauve cushion, 109 against P1046408's crisp light titanium 121: a lighter, less pink
+  // floor with more of its satin sheen; CABIN_TRIM 0.42 -> 0.5)
+  tray_titanium: { color: [0.235, 0.208, 0.198], specIn: 1.6 },
   // the stitched black glareshield / crew leather: a fine pebble grain (1-2 mm) in the normal and the roughness
   // (a shade glossier in the viewer, 0.40: the rolled lip's highlight line of P1046408 / 10 against the hood)
   // (flight deck fix r1 FID-FD1-04: a coarser, deeper grain -- 1.4 mm pebbles, readable from the seats -- and the
@@ -670,8 +720,11 @@ const VIEWER = {
   // cushion close-up, 150 from behind the seats -- where the AOPA photo's webbing is a dark charcoal woven belt with a
   // soft sheen and darker edges: a darker warm base, the sheen a third of it and warm, the weave deeper (0.5 mm) and in
   // the albedo too (+-8 %), the edges turned away from the eye a shade darker)
-  harness: { color: [0.036, 0.031, 0.027], leather: { freq: 1100, dist: 0.0005, bump: 1.0, rough: 0.16, albedo: 0.08, edge: 0.25 },
-    sheen: 0.3, sheenColor: [0.12, 0.11, 0.10], sheenRoughness: 0.45 },
+  // (all-lens review r1 FD8-05: in the sun the shoulder straps read as warm taupe ribbons, ~(128, 121, 117), with crisp
+  // edges and no weave: a neutral, slightly cool base (R <= B), the sun at 0.5 on it, a coarser twill in the albedo
+  // (~1.4 mm, +-8 %) that reads at ~1 m; the sheen neutral)
+  harness: { color: [0.030, 0.031, 0.034], sunIn: 0.5, leather: { freq: 700, dist: 0.0005, bump: 1.0, rough: 0.16, albedo: 0.08, edge: 0.3 },
+    sheen: 0.3, sheenColor: [0.10, 0.10, 0.105], sheenRoughness: 0.45 },
   // the G3000 PRIME pages brighter inside (LK-07: x1.25 read 78-95 against the photos' >= 90 at the cabin exposure)
   display_page: { emisIn: 1.45 },
   // the yoke's smoke-silver lower insert (3-D judges r1 FID1-01): 0.30 read 0.34-0.68 of the cover in the cabin light
@@ -683,6 +736,12 @@ const VIEWER = {
   // at the yoke close-up against the cover's +13; the GLB's (0.58, 0.61, 0.67)): +33, its luminance kept ([Y1d] <= 0.97
   // at the P1046408 camera, 0.94)
   yoke_silver: { color: [0.60, 0.61, 0.63] },
+  // (all-lens review r1 CRA1-02: the cover's 0.5-1 mm dark groove flanks are sub-pixel at the crew eyes -- moving, the
+  // 4x MSAA frame dotted them into chains of dark specks on the white cover): screen-space groove AA on the MOVING frames
+  // (U.pcMove; the converged still keeps the crisp dark line its 2x passes resolve, [Y1d] / [Y1e]) -- where a display
+  // pixel spans more than the groove (`gaa` [width m, colour]), the flank's colour fades toward 0.7 cover + 0.3 groove, so
+  // a sub-pixel groove draws as a continuous soft grey line instead of dropouts)
+  yoke_groove: { gaa: [0.0008, 0.55, 0.56, 0.57] },
   // (FDY r1 FIDY1-04: the pads' pebble grain, 1.1 mm, had faded to a flat tone at every crew-seat distance -- a 1.7 mm
   // grain at +-15 % with a lower roughness, the photos' grained, softly lit leather panels)
   // (flight deck fix FDY r2 FDY-O2-02: up close the 1.7 mm grain at +-15 % read as a coarse blue-grey granite / denim
@@ -770,6 +829,7 @@ function physicalFrom(name, e, src) {
   if (V.fur && FUR.on) m.userData.pc12 = { ...(m.userData.pc12 || {}), fur: { ...V.fur, role: 'root' } };
   else if (V.fleece) m.userData.pc12 = { ...(m.userData.pc12 || {}), fleece: { ...V.fleece } };
   for (const k of ['leather', 'brush']) if (V[k]) m.userData.pc12 = { ...(m.userData.pc12 || {}), [k]: { ...V[k] } };
+  if (V.gaa) m.userData.pc12 = { ...(m.userData.pc12 || {}), gaa: V.gaa.slice() };
   if (V.emisIn) m.userData.pc12 = { ...(m.userData.pc12 || {}), emisIn: V.emisIn };
   if (V.specIn) m.userData.pc12 = { ...(m.userData.pc12 || {}), specIn: V.specIn };
   if (V.sunIn) m.userData.pc12 = { ...(m.userData.pc12 || {}), sunIn: V.sunIn };
@@ -912,7 +972,8 @@ export function upgradeMaterials(root, spec) {
         // matrix is a uniform: the program is shared)
         const g = e.render_grain, sc = g.scale || [70, 70, 2.5];
         m = m.clone();
-        m.userData.pc12 = { ...(m.userData.pc12 || {}), grain: { scale: [sc[1], sc[2], sc[0]], oct: Math.max(1, Math.min(5, Math.round(g.detail ?? 4))),
+        const sv = gv.scale || sc;
+        m.userData.pc12 = { ...(m.userData.pc12 || {}), grain: { scale: [sv[1], sv[2], sv[0]], oct: gv.oct ?? Math.max(1, Math.min(5, Math.round(g.detail ?? 4))),
           amp: gv.amp ?? g.amp ?? 0.3, rough: gv.rough ?? 0 }, rest: o.matrixWorld.toArray() };
       }
       if (e.render_stripes) {
@@ -948,7 +1009,10 @@ export function upgradeMaterials(root, spec) {
     if (LINING_RE.test(name) && m.side === THREE.DoubleSide) f.lining = true;
     if (GLASS_RE.test(name) && m.transparent) { f.glass = true; if (CABIN_GLASS_RE.test(name)) f.cabinGlass = true; }
     installPatch(m);
-    if (INTERIOR_PARTS.has(part) || groupOf(o) === 'Interior' || INTERIOR_MATERIALS.has(name)) {
+    // (all-lens review r1 CAB1-03: the port ledge segment on the cargo door -- baked with the interior, build.AO_DOOR_CABIN --
+    // had taken the exterior path: a pale block 3x lighter than the fixed ledge beside it)
+    const doorCabin = /^door_/.test(part || '') && !!(o.geometry && o.geometry.attributes._ao);
+    if (INTERIOR_PARTS.has(part) || groupOf(o) === 'Interior' || INTERIOR_MATERIALS.has(name) || doorCabin) {
       // one interior clone per material -- or per part:material where PART_TRIM has an entry (flight deck fix r2: the
       // hood's leather apart from the side-window sills of the same leather), or per 'yoke:<material>' where CABIN_TRIM
       // has a yoke-scoped entry (the yokes' own look, yoke track); the yokes' metal inserts mirror their own cabin probe
@@ -963,6 +1027,7 @@ export function upgradeMaterials(root, spec) {
         const c = clonePatched(m, { interior: true, cabinFill: (pt && pt.fill) || CABIN_TRIM[yk || name] || null, specKeep: SPEC_KEEP.has(name), reflDir: REFL_DIR.has(name),
           ...(pt && pt.specIn ? { specIn: pt.specIn } : {}), ...(pt && pt.sunIn ? { sunIn: pt.sunIn } : {}),
           ...(pt && pt.facing ? { facing: pt.facing } : {}), ...(FOOT_SKIP.has(name) ? { noFoot: true } : {}),
+          ...(name in CABIN_FORM ? { form: CABIN_FORM[name] + 1 } : {}),
           probe: (isYoke && YOKE_PROBE[name]) || null });
         if (pt && pt.roughness != null) c.roughness = pt.roughness;
         if (pt && pt.specularColor && c.specularColor) c.specularColor.copy(lin(pt.specularColor));
@@ -1040,6 +1105,11 @@ float pcPolish( vec3 p, int oct, float fw ) { return clamp( ( pcFbm( p, oct, fw 
 const GLSL_COLLAR_VS = 'uniform mat4 uRestM;\nvarying vec3 vRestP;\n';
 // back face?  Transparent double-sided materials draw a BackSide pass (FLIP_SIDED defined; gl_FrontFacing is flipped
 // there) and then a FrontSide pass; opaque double-sided ones one pass (DOUBLE_SIDED).
+const GLSL_SS = `uniform float uPcSS;
+#define pcDX( v ) ( dFdx( v ) * uPcSS )
+#define pcDY( v ) ( dFdy( v ) * uPcSS )
+#define pcFW( v ) ( fwidth( v ) * uPcSS )
+`;
 const GLSL_BACKFACE = `bool pcIsBack() {
 #if defined( FLIP_SIDED )
   return true;
@@ -1106,7 +1176,7 @@ function furPatch(q, vs, fs, fsHead) {
     gl_Position = projectionMatrix * mvPosition;
     vPcFurT = pcFt;
   }`);
-  fsHead += 'varying float vPcFurT;\n' + GLSL_FUR;
+  fsHead += 'varying float vPcFurT;\nuniform float uPcFurSoft;\n' + GLSL_FUR;
   const far = q.far || [2.0, 3.0];
   if (!shell) {
     fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
@@ -1145,7 +1215,7 @@ function furPatch(q, vs, fs, fsHead) {
     }).join('');
     const w0 = oct.reduce((a, o) => a + o[1], 0) || 1;
     fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
-  float pcFurA = 1.0, pcFurT = vPcFurT;
+  float pcFurA = 1.0, pcFurT = vPcFurT, pcFurCov = 1.0;
   vec3 pcFurG = vec3( 0.0 ), pcFurC = vec3( 0.0 );
   {
     float pcFar = smoothstep( ${f4(far[0])}, ${f4(far[1])}, length( vViewPosition ) );
@@ -1174,7 +1244,21 @@ ${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
     }).join('')}
     pcT = mix( pcT, 1.5, pcFar );${q.partCap ? `
     pcT = min( pcT, mix( ${f4(th[0])}, ${f4(th[1])}, pow( t, ${f4(th[2])} ) ) + ${f4(q.partCap)} );` : ''}
-    if ( pcF < pcT ) discard;
+    // (all-lens review r1 FD8-01: a hard alpha test drew the grazing silhouettes -- the seat backs' rims at the fd_cabin
+    // stop -- as 14 terraced steps with pixel jaggies) the layer's coverage, smooth over a pixel of the field (alpha to
+    // coverage on the shell material: addFur), and at grazing view the outer layers thinned (the threshold raised with
+    // the height below |n.v| 0.3): the outline a few soft layers instead of a stack of hard contour steps
+    // (only toward the silhouette, |n.v| < 0.25: head-on the hard test as before -- soft coverage there had lifted the
+    // shaded gaps between the tufts, flattening the pile [FD-L5] / [FD-L10] and deepening the close-range pits [FD-L10b])
+    {
+      float pcGz = smoothstep( 0.06, 0.25, abs( dot( normalize( vNormal ), normalize( vViewPosition ) ) ) );
+      float pcTe = pcT + ( 1.0 - pcGz ) * t * ${f4(q.graze ?? 0.55)};
+      float pcFw = max( fwidth( pcF ), 1e-4 );
+      float pcSoft = uPcFurSoft * ( 1.0 - pcGz );
+      float pcCov = mix( step( pcTe, pcF ), smoothstep( pcTe - pcFw, pcTe + pcFw, pcF ), pcSoft );
+      if ( pcCov < 0.02 ) discard;
+      pcFurCov = pcCov;
+    }
     #ifndef FLAT_SHADED
       vec3 pcFnW = normalize( ( vec4( vNormal, 0.0 ) * viewMatrix ).xyz );
     #else
@@ -1191,7 +1275,8 @@ ${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
     }`;
     }).join('')}
   }
-  diffuseColor.rgb *= pcFurA;`);
+  diffuseColor.rgb *= pcFurA;
+  diffuseColor.a = pcFurCov;`);
     // the tufts' sides: the normal tilted down the field's slope (world gradient per metre, scaled to the first octave)
     fs = fs.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   normal = normalize( normal - ( viewMatrix * vec4( ${f4((q.tilt ?? 0.6) / oct[0][0])} * pcFurG + pcFurC, 0.0 ) ).xyz );`);
@@ -1338,12 +1423,22 @@ export function addFur(mesh, shells, obstacles = []) {
   if (!sm) {
     sm = clonePatched(base, { fur: { ...f, role: 'shell', n: shells } });
     sm.side = THREE.FrontSide;
+    sm.alphaToCoverage = true;          // the layers' soft coverage (FD8-01): resolved by the MSAA targets
     SHELL_MATS.set(base, sm);
   }
   mesh.userData.pcFur = { geometry: sg, material: sm, base };
   mesh.onAfterRender = (renderer, scene, camera, geometry, material) => {
     const u = mesh.userData.pcFur;
-    if (material === u.base && FUR.on && u.geometry.instanceCount > 0) renderer.renderBufferDirect(camera, scene, u.geometry, u.material, mesh, null);
+    if (!(material === u.base && FUR.on && u.geometry.instanceCount > 0)) return;
+    // soft layer edges (FD8-01) inside the closed cabin only: the shells' alpha is their coverage (alpha to coverage)
+    // and the target's alpha channel is left as the opaque cabin behind them wrote it (the canvas is transparent over
+    // the CSS studio); outside -- a cutaway's seats against the studio -- the hard 0 / 1 edges as before
+    const soft = U.cabinIn.value > 0.5;
+    U.furSoft.value = soft ? 1 : 0;
+    const gl = soft ? renderer.getContext() : null;
+    if (gl) gl.colorMask(true, true, true, false);
+    renderer.renderBufferDirect(camera, scene, u.geometry, u.material, mesh, null);
+    if (gl) gl.colorMask(true, true, true, true);
   };
   return true;
 }
@@ -1361,6 +1456,7 @@ export function refreshFur(root, shells = null) {
     if (!sm) {
       sm = clonePatched(u.base, { fur: { ...f, role: 'shell', n } });
       sm.side = THREE.FrontSide;
+      sm.alphaToCoverage = true;
       SHELL_MATS.set(u.base, sm);
       done.set(u.base, sm);
     }
@@ -1374,8 +1470,8 @@ export function installPatch(mat, extra = {}) {
   const f = { ...(mat.userData.pc12 || {}), ...extra };
   mat.userData.pc12 = f;
   const { paint, lining, glass, cabinGlass, collar, interior, cabinFill, back, grooves, stripes, fleece, rest, specKeep, reflDir, ao,
-    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe, fur, noFoot, facing } = f;
-  if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes && !fleece && !ao && !leather && !brush && !grain && !fur) return mat;
+    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe, fur, noFoot, facing, form, gaa } = f;
+  if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes && !fleece && !ao && !leather && !brush && !grain && !fur && !gaa) return mat;
   const restP = !!(rest && (collar || grooves || stripes || grain));
   const worldP = !!(fleece || leather || brush || fur);
   const physical = !!mat.isMeshPhysicalMaterial;
@@ -1538,7 +1634,18 @@ export function installPatch(mat, extra = {}) {
         .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
   roughnessFactor = clamp( roughnessFactor + ${f4(q.rough)} * ( 2.0 * pcGr - 1.0 ), 0.04, 1.0 );`);
     }
-    if (fur) ({ vs, fs, fsHead } = furPatch(fur, vs, fs, fsHead));
+    if (fur) { ({ vs, fs, fsHead } = furPatch(fur, vs, fs, fsHead)); sh.uniforms.uPcFurSoft = U.furSoft; }
+    if (gaa) {
+      // screen-space groove AA (CRA1-02): the display pixel's footprint against the groove's width
+      const f5 = (x) => (+x).toFixed(5);
+      fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
+  {
+    float pcGa = length( fwidth( vViewPosition ) ) / ${f5(gaa[0])};
+    diffuseColor.rgb = mix( diffuseColor.rgb, vec3( ${f5(gaa[1])}, ${f5(gaa[2])}, ${f5(gaa[3])} ), uPcMove * smoothstep( 0.6, 1.8, pcGa ) );
+  }`);
+      fsHead += 'uniform float uPcMove;\n';
+      sh.uniforms.uPcMove = U.pcMove;
+    }
     if (fleece) {
       // sheepskin pile (review r4 INT8-04): band-limited fBm clumps in world space darken / lighten the albedo and bump
       // the normal (the stacks' surface-gradient bump, explicit forward differences); fades out where a tuft is sub-pixel
@@ -1986,9 +2093,9 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
 			return pcEnv;`));
     }
     if (lining || interior) {
-      for (const k of ['cabinAO', 'cabinIn', 'cabinKey', 'cabinDiff', 'cabinSpec', 'cabinFill', 'cabinOcc', 'cabinSky', 'cabinGain', 'cabinKnee', 'cabinRefl', 'cabinShade', 'cabinProbe', 'cabinProbe2', 'cabinFoot']) sh.uniforms['u' + k[0].toUpperCase() + k.slice(1)] = U[k];
+      for (const k of ['cabinAO', 'cabinIn', 'cabinKey', 'cabinDiff', 'cabinSpec', 'cabinFill', 'cabinOcc', 'cabinSky', 'cabinGain', 'cabinKnee', 'cabinRefl', 'cabinShade', 'cabinProbe', 'cabinProbe2', 'cabinFoot', 'cabinFormA', 'cabinFormB', 'cabinFormC', 'cabinFormD']) sh.uniforms['u' + k[0].toUpperCase() + k.slice(1)] = U[k];
       const lit = !mat.isMeshBasicMaterial;   // geometryNormal / geometryViewDir: the lit materials' lights chunks
-      fsHead += 'uniform float uCabinKnee;\nuniform float uCabinAO;\nuniform float uCabinIn;\nuniform float uCabinKey;\nuniform vec2 uCabinDiff;\nuniform vec2 uCabinSpec;\nuniform float uCabinFill;\nuniform vec3 uCabinOcc;\nuniform vec2 uCabinSky;\nuniform vec3 uCabinGain;\nuniform vec4 uCabinRefl;\nuniform vec4 uCabinShade;\nuniform vec4 uCabinProbe;\nuniform vec4 uCabinProbe2;\nuniform vec4 uCabinFoot;\n';
+      fsHead += 'uniform float uCabinKnee;\nuniform float uCabinAO;\nuniform float uCabinIn;\nuniform float uCabinKey;\nuniform vec2 uCabinDiff;\nuniform vec2 uCabinSpec;\nuniform float uCabinFill;\nuniform vec3 uCabinOcc;\nuniform vec2 uCabinSky;\nuniform vec3 uCabinGain;\nuniform vec4 uCabinRefl;\nuniform vec4 uCabinShade;\nuniform vec4 uCabinProbe;\nuniform vec4 uCabinProbe2;\nuniform vec4 uCabinFoot;\nuniform vec4 uCabinFormA[2];\nuniform vec4 uCabinFormB[2];\nuniform vec4 uCabinFormD[2];\nuniform vec4 uCabinFormC;\n';
       // the window sky law's weight: the light trim keeps its fill share out of it (the cabin lining: all of it)
       const skyW = cabinFill ? Math.max(0, 1 - cabinFill[0]) : 1;
       fs = fs.replace('#include <aomap_fragment>', `{
@@ -2057,6 +2164,19 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
     if ( false )` : ''}
     pcDi *= 1.0 + uCabinFoot.x * pcFd * ( 1.0 - smoothstep( uCabinFoot.y, uCabinFoot.y + 0.12, pcPW.y ) )
       * ( 1.0 - smoothstep( uCabinFoot.z, uCabinFoot.z + 0.15, pcPW.z ) ) * ( 1.0 - smoothstep( 0.45, 0.8, pcNW.y ) );
+${form && ao ? `
+    {
+      // CABIN FORM (CAB1-01): aft of the divider, the class's form light on the indirect diffuse (CABIN_FORM)
+      vec4 pcFa = uCabinFormA[${form - 1}], pcFb = uCabinFormB[${form - 1}], pcFh = uCabinFormD[${form - 1}];
+      float pcCab = pcIn * smoothstep( 4.55, 4.75, pcPW.z );
+      // (side: + facing its own side wall / windows, - facing the aisle; glTF X = BL; height: glTF Y = WL)
+      float pcOb = clamp( pcNW.x * sign( pcPW.x + 1e-4 ), - 1.0, 1.0 );
+      float pcHt = pcPW.y < uCabinFormC.z ? mix( pcFh.x, pcFh.y, smoothstep( uCabinFormC.y, uCabinFormC.z, pcPW.y ) )
+        : mix( pcFh.y, pcFh.z, smoothstep( uCabinFormC.z, uCabinFormC.w, pcPW.y ) );
+      float pcFo = pcFa.x * pow( max( vPcAO.x, 0.03 ), pcFa.y ) * mix( pcFa.z, pcFa.w, smoothstep( 0.0, uCabinFormC.x, vPcAO.y ) )
+        * mix( pcFb.x, pcFb.y, 0.5 + 0.5 * pcOb ) * mix( pcFb.z, pcFb.w, 0.5 + 0.5 * pcNW.y ) * pcHt;
+      pcDi *= mix( 1.0, pcFo, pcCab );
+    }` : ''}
     float pcSi = pcAO * pcKs * pcSs${specIn ? ` * mix( 1.0, ${(+specIn).toFixed(3)}, pcIn )` : ''}${cabinFill && cabinFill.length > 11 ? ` * mix( 1.0, pcNf, ${(+cabinFill[11]).toFixed(3)} )` : ''};${facing ? `
     {
       // PART_TRIM 'facing' [lo, hi, n0, n1, share on the diffuse] (flight deck + yoke fix r4 FIDY4-05): inside, the
@@ -2100,10 +2220,18 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
       // no clear coat, so the output above is complete)
     }
     sh.vertexShader = vs;
-    sh.fragmentShader = fsHead + fs;
+    // (all-lens review r1 CRA1-01) the procedural patches' band limits measure the DISPLAYED pixel: every dFdx / dFdy /
+    // fwidth of their code scaled by uPcSS, the supersampling factor of the pass (Picture sets it per target: 2 in the
+    // 2x still passes, 1 at the canvas size and in the temporal AA) -- the 2x still had switched the leather grain, the
+    // fleece / pebble / harness noise, the carpet stripes and the brush streaks back on that the moving frames fade out
+    // (a mottled sun band popping in on the pilot's sill each time the camera stopped); three's own chunks (included
+    // after this hook) keep theirs
+    sh.uniforms.uPcSS = U.pcSS;
+    sh.fragmentShader = GLSL_SS + (fsHead + fs).replace(/\bdFdx\s*\(/g, 'pcDX(').replace(/\bdFdy\s*\(/g, 'pcDY(')
+      .replace(/\bfwidth\s*\(/g, 'pcFW(');
   };
   // the rest matrix is a uniform: programs are shared
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}${fur ? 'H' + JSON.stringify(fur) : ''}${noFoot ? 'V' : ''}${facing ? 'J' + facing.join('/') : ''}`;
+  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}${fur ? 'H' + JSON.stringify(fur) : ''}${noFoot ? 'V' : ''}${facing ? 'J' + facing.join('/') : ''}${form ? 'M' + form : ''}${gaa ? 'T' + gaa.join('/') : ''}`;
   mat.needsUpdate = true;
   return mat;
 }

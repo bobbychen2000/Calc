@@ -68,6 +68,7 @@
 //                   frames on or off (tests, look development: a software renderer never measures it as fitting);
 //                   ?taa=0 turns the temporal anti-aliasing of moving frames off, ?layer=0 the layered spinning prop.
 import * as THREE from 'three';
+import { U as MU } from './materials.js';
 
 const Q_ = new URLSearchParams(location.search);
 const qn = (k) => (Q_.has(k) && Q_.get(k) !== '' && isFinite(+Q_.get(k)) ? +Q_.get(k) : undefined);
@@ -125,9 +126,12 @@ const CALIB_N = 3;          // start-up calibration: plain frames measured (thei
 // [0.1, 0.25] at 24 px kept too much resampled history (softer than the plain frame); sharper kernels and a display
 // sharpen measured worse
 const TAA_ALPHA = [0.15, 0.6], TAA_FAST = 1, TAA_GAMMA = 1.25, TAA_KEYS = -0.5, TAA_CYCLE = 8;
+// the new frame's motion-weighted sharpen (CRA1-05; ?taaSharp=): its strength at 8 px of motion a frame and above
+const TAA_SHARP = Number.isFinite(+new URLSearchParams(location.search).get('taaSharp')) && new URLSearchParams(location.search).get('taaSharp') !== null
+  ? +new URLSearchParams(location.search).get('taaSharp') : 0.22;
 // a cut, not a motion: the view turns by more than TAA_CUT_RAD, or the eye moves by more than TAA_CUT_DIST x its distance
 // to the orbit centre, or the field of view changes by more than a fifth, between the history's camera and this one
-const TAA_CUT_RAD = 0.35, TAA_CUT_DIST = 0.3;
+const TAA_CUT_RAD = 0.35, TAA_CUT_DIST = 0.3, TAA_IN_DIST = 1.0;
 
 // still target bytes: colour + depth per MSAA sample, plus the resolved colour and depth
 const rtBytes = (px, samples) => px * (8 * Math.max(1, samples) + 8);
@@ -289,6 +293,7 @@ uniform float uFast;
 uniform float uGamma;
 uniform float uValid;      // 0: no history
 uniform float uKeys;
+uniform float uSharp;      // motion-weighted sharpen of the new frame (CRA1-05): its strength at >= 8 px a frame
 vec3 pcYCoCg( vec3 c ) { return vec3( 0.25 * c.r + 0.5 * c.g + 0.25 * c.b, 0.5 * c.r - 0.5 * c.b, -0.25 * c.r + 0.5 * c.g - 0.25 * c.b ); }
 vec3 pcRGB( vec3 c ) { return vec3( c.x + c.y - c.z, c.x + c.z, c.x - c.y - c.z ); }
 // bicubic history sample (Keys' kernel, uKeys: -0.5 = Catmull-Rom, sharper below) in 5 bilinear taps (the 4 x 4
@@ -344,7 +349,12 @@ void main() {
 	float k = max( max( u.x, u.y ), max( u.z, u.w ) );
 	if ( k > 1.0 ) hy = mu + v / k;
 	h = clamp( vec4( pcRGB( hy.xyz ), hy.w ), lo, hi );
-	float a = mix( uAlpha.x, uAlpha.y, clamp( length( mv * uOut ) / uFast, 0.0, 1.0 ) );
+	float mpx = length( mv * uOut ), a = mix( uAlpha.x, uAlpha.y, clamp( mpx / uFast, 0.0, 1.0 ) );
+	// (all-lens review r1 CRA1-05: at speed the blend of a resampled history with a soft new frame read slightly smeared
+	// -- livery strokes, windscreen posts): the new frame sharpened against its 3 x 3 mean in proportion to the motion
+	// (none on a still camera), held inside the neighbourhood's range (no halos)
+	float sk = uSharp * clamp( mpx / 8.0, 0.0, 1.0 );
+	if ( sk > 0.0 ) c = clamp( c + sk * ( c - vec4( pcRGB( mu.xyz ), mu.w ) ), lo, hi );
 	gl_FragColor = clamp( mix( h, c, a ), 0.0, 1.0 );
 }`;
 
@@ -411,7 +421,7 @@ export class Picture {
       uHistVP: { value: new THREE.Matrix4() }, uGround: { value: 0 },
       uOut: { value: new THREE.Vector2(1, 1) }, uDScale: { value: new THREE.Vector2(1, 1) }, uDMax: { value: [0, 0] },
       uHist: { value: new THREE.Vector2(1, 1) }, uAlpha: { value: new THREE.Vector2(TAA_ALPHA[0], TAA_ALPHA[1]) },
-      uFast: { value: TAA_FAST }, uGamma: { value: TAA_GAMMA }, uValid: { value: 0 }, uKeys: { value: TAA_KEYS },
+      uFast: { value: TAA_FAST }, uGamma: { value: TAA_GAMMA }, uValid: { value: 0 }, uKeys: { value: TAA_KEYS }, uSharp: { value: TAA_SHARP },
     });
     // the temporal AA's settings (look development may change them on a live page; jitter: x the MSAA cell)
     this.taaP = { alpha: TAA_ALPHA.slice(), fast: TAA_FAST, gamma: TAA_GAMMA, keys: TAA_KEYS, jitter: 1 };
@@ -666,6 +676,7 @@ export class Picture {
     st._needs = false; st._refine = false; st._ovl = false;
     if (ext) { this.extRun = this.lastExt === this.frame - 1 ? this.extRun + 1 : 1; this.lastExt = this.frame; }
     const camMoving = this.movingInput;
+    MU.pcMove.value = camMoving ? 1 : 0;                    // the moving frames' groove AA (materials.js gaa, CRA1-02)
     const animating = !camMoving && (st.busy || (ext && this.extRun >= 2));
     if (camMoving || animating) this.lastMove = this.frame;
     this._gc(now);
@@ -812,9 +823,11 @@ export class Picture {
     const lines = this._scaleLines(Math.sqrt(plan.sx * plan.sy));
     const vis = hide ? hide.map((o) => o.visible) : null;
     if (hide) for (const o of hide) o.visible = false;
+    MU.pcSS.value = Math.sqrt(plan.sx * plan.sy);           // the patches' footprints in display pixels (CRA1-01)
     R.setRenderTarget(rt);
     R.render(st.scene, cam);
     R.setRenderTarget(null);
+    MU.pcSS.value = 1;
     if (hide) hide.forEach((o, i) => { o.visible = vis[i]; });
     for (const [m, op] of lines) m.opacity = op;
     if (g) g.value = 1;
@@ -959,7 +972,12 @@ export class Picture {
   // distance, times the focal length in pixels), and whether it is a cut (TAA_CUT_*)
   _motion(a, b) {
     const st = this.stage, cam = st.camera, H = this._out().y, t = st.controls && st.controls.target;
-    const dist = Math.max(0.05, t ? b.pos.distanceTo(t) : 1), ang = a.dir.angleTo(b.dir), mv = a.pos.distanceTo(b.pos);
+    // inside (the tour, the cockpit), the orbit target is a 0.3 m pseudo-target: the cabin at 1-3 m moves far less than
+    // a step / that (all-lens review r1 CRA1-04: a 5 cm walk step scored 60 px, so the history weight sat at the fast
+    // 0.6 and a step over 9 cm a frame was a cut); there the distance is at least TAA_IN_DIST
+    let dist = Math.max(0.05, t ? b.pos.distanceTo(t) : 1);
+    if (st.interiorLook) dist = Math.max(TAA_IN_DIST, dist);
+    const ang = a.dir.angleTo(b.dir), mv = a.pos.distanceTo(b.pos);
     const f = cam.isPerspectiveCamera ? H / (2 * Math.tan((cam.fov * Math.PI) / 360)) : (H * cam.zoom * dist) / Math.max(1e-6, cam.top - cam.bottom);
     const cut = ang > TAA_CUT_RAD || mv > TAA_CUT_DIST * dist || (a.fov > 0 && Math.abs(a.fov - b.fov) > 0.2 * b.fov);
     return { px: (ang + mv / dist) * f, cut };

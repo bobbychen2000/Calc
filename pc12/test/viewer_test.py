@@ -2078,6 +2078,9 @@ YOKE_LOOK = dict(cover=205.0, cover_p99=215.0, up=0.78, lo=0.70, column=70.0)   
 # one tone (FID2-05: photos body / cover 0.27-0.30, pads / body 1.06-1.27), the AFCS cap a saturated red (FID2-03: photos
 # sat 0.71 / 0.96); the spread was 8 on rev N (1200 x 800), rev O 28 there and 25 on this test's page
 YOKE_LOOK_O = dict(spread=20.0, up=0.75, lo=0.65, body=(0.22, 0.34), pads_body=(1.0, 1.4), red_sat=0.75)
+# [CAB1] the cabin's form light at the photo-fitted cabin_fwd_406 camera (all-lens review r1 CAB1-01): the seat backs' /
+# headliner centre's luminance sd floors and the medians' floor (P1046406 11.5 / 8.4 / 12.9 at a darker exposure)
+CAB_FORM = dict(seat=20.0, head=9.0, med=160.0)   # fix r1 look-dev: before 17.6 / 5.9 (the welts alone), after ~30 / 11.5
 # (rev Q, 3-D judges r4 FID4-02: the inserts' lower bounds from the seat 0.88 / 0.78 -> 0.75 / 0.65 -- r2's bounds came from
 # the photo cameras' ratios, which r4 re-measured as 0.74-1.00 / 0.37-0.93 and asked the satin insert DARKER than the
 # cover from the stops (<= 0.93, [Y1d]); the stop has no photo)
@@ -2604,6 +2607,33 @@ async def fd_look_checks(page, shots=True):
           "high-pass skew at sigma 4 >= -0.6 and at sigma 8 >= -0.75 (P1046409 / 10 -0.3 .. -0.5), sd at sigma 8 8-17",
           all(v[0] >= -0.6 and v[1] >= -0.75 and 8 <= v[2] <= 17 for v in close.values()),
           "; ".join(f"{k}: skew {v[0]:+.2f} / {v[1]:+.2f}, sd8 {v[2]:.1f} ({v[3]} px)" for k, v in close.items()))
+    # [CAB1] the cabin's FORM light (all-lens review r1 CAB1-01, the cabin judge's major: aft of the divider the lining,
+    # headliner and executive seats read as white clay -- within-surface spread 2-7x lower than P1046406 at the
+    # photo-fitted cabin_fwd_406 camera): in the judge's boxes of that frame (the seat backs, the headliner centre, the
+    # lower side wall), the pixels of the lining / the seats' leathers, the luminance sd and the median
+    cam = photo_cam("cabin_fwd_406")
+    await js(pg, V + "T.place({eye: arg.eye, target: arg.target, fov: arg.fov}, {clamp: false, stop: 'cabin_fwd'}); V.advance(0.3);", cam)
+    await js(pg, "const h = document.getElementById('tourHint'); if (h) h.style.visibility = 'hidden';")
+    pth = await snap("47c_cab_form_406")
+    await js(pg, "const h = document.getElementById('tourHint'); if (h) h.style.visibility = '';")
+    mm = await js(pg, MAT_MASK, [["lining"], ["leather", "leather_dark", "seat_back_shell"]])
+    km = np.array(mm["mask"].split(","), int).reshape(mm["H"], mm["W"])
+    im = np.asarray(Image.open(pth).convert("RGB"), float)[:mm["H"], :mm["W"]]
+    Lf = 0.2126 * im[..., 0] + 0.7152 * im[..., 1] + 0.0722 * im[..., 2]
+    form = {}
+    for nm, cls, (x0, y0, x1, y1) in (("seatback_L", 2, (0.25, 0.36, 0.39, 0.58)), ("seatback_R", 2, (0.60, 0.36, 0.76, 0.58)),
+                                      ("headliner_c", 1, (0.43, 0.00, 0.56, 0.12)), ("wall_L", 1, (0.00, 0.46, 0.15, 0.53))):
+        box = np.zeros_like(km, bool)
+        box[int(y0 * mm["H"]):int(y1 * mm["H"]), int(x0 * mm["W"]):int(x1 * mm["W"])] = True
+        sel = box & _ndi2.binary_erosion(km == cls, iterations=2)
+        form[nm] = (float(np.median(Lf[sel])), float(Lf[sel].std()), int(sel.sum())) if sel.sum() > 500 else (0.0, 0.0, int(sel.sum()))
+    fb = [form["seatback_L"][1], form["seatback_R"][1]]
+    check("[CAB1] the cabin's form light at cabin_fwd_406: the seat backs and the headliner centre shaded, not flat (luminance sd "
+          f">= {CAB_FORM['seat']} / {CAB_FORM['head']}; P1046406 11.5 / 8.4, 12.9 at its darker exposure; the judge's 5.0 / 2.2), "
+          f"medians kept light (>= {CAB_FORM['med']})",
+          min(fb) >= CAB_FORM["seat"] and form["headliner_c"][1] >= CAB_FORM["head"]
+          and min(form[k][0] for k in ("seatback_L", "seatback_R", "headliner_c")) >= CAB_FORM["med"],
+          "; ".join(f"{k}: p50 {v[0]:.0f} sd {v[1]:.1f} ({v[2]} px)" for k, v in form.items()))
     await js(pg, V + "T.exit({motion: false}); await V.frames(1);")
     # [FD-L7] the exterior default view: the world and the sun add nothing outside -- the 3/4 view rendered with them and
     # without them (removed from the scene: the light count changes, every program recompiles) is the same picture,
@@ -3652,6 +3682,38 @@ async def picture_motion_checks(browser, base):
     """)
     check("[CR1-02] a camera cut (preset jump) restarts the temporal history instead of smearing the old view",
           cut["kind"] == "taa" and cut["cuts"] >= 1, str(cut))
+    # [CRA1-01] (all-lens review r1: the side-window sill's leather grain -- band-limited by its fwidth footprint -- came
+    # back in the 2x still passes only, so a sunlit grain band faded in ~1 s after every stop at the pilot stop): the
+    # procedural footprints measure the DISPLAYED pixel (U.pcSS = the pass's supersampling), so the converged still and the
+    # plain 1x moving frame (no temporal history: what the eye sees mid-drag) agree on the sill's median within 5 levels
+    await js(page, "const V = window.viewer; V.tour.enter('pilot', {motion: false}); V.tour.finish(); V.advance(0.5);"
+                   " await PQ.converge();")
+    s_still = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "35_picture_sill_still.png").write_bytes(s_still)
+    mv = await js(page, r"""
+      const st = PQ.st(), P = PQ.P();
+      P.allowTaa = false; st.interacting = true; st.dragged = true; PQ.orbit(0.01); await PQ.rendered(1);
+      return [P.kind, st.dpr];
+    """)
+    s_move = await page.screenshot(timeout=SHOT_TIMEOUT)
+    (OUT / "35_picture_sill_move.png").write_bytes(s_move)
+    msk = await js(page, MAT_MASK, [["interior_lining:leather_glareshield"]])
+    await js(page, "const st = PQ.st(), P = PQ.P(); st.interacting = false; st.dragged = false; P.allowTaa = true; st.needsRender = true;"
+                   " window.viewer.tour.exit({motion: false}); await window.viewer.frames(1);")
+    sill = None
+    try:
+        import numpy as np
+        from scipy.ndimage import binary_erosion
+        kk = binary_erosion(np.array(msk["mask"].split(","), int).reshape(msk["H"], msk["W"]) == 1, iterations=2)
+        if kk.sum() > 200:
+            lum = lambda x: 0.2126 * x[..., 0] + 0.7152 * x[..., 1] + 0.0722 * x[..., 2]
+            sill = [float(np.median(lum(png_array(b)[:msk["H"], :msk["W"]])[kk])) for b in (s_still, s_move)] + [int(kk.sum())]
+    except ImportError:
+        pass
+    check("[CRA1-01] no pop on stopping: the pilot stop's side-window sill (its leather grain band-limited per displayed "
+          "pixel) reads the same in the converged still and the plain moving frame (medians within 5 / 255)",
+          sill is not None and abs(sill[0] - sill[1]) <= 5 and mv[0] == "move",
+          f"sill still {sill and round(sill[0])} / moving {sill and round(sill[1])} ({sill and sill[2]} px), frame {mv}")
     # [CR1-03] the spinning propeller, camera still: still passes without the overlay, then the overlay alone per frame
     pr = await js(page, r"""
       const V = window.viewer, st = PQ.st(), P = PQ.P(), R = st.renderer, out = {kinds: []};

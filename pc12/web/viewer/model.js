@@ -219,9 +219,12 @@ export class Model {
         if (!ch.isMesh) continue;
         let base = ch.material;
         const name = base.name || '';
-        if (rec.id === 'structure') {
+        if (rec.id === 'structure' || rec.id === 'gear_bays') {
           // frames / stringers / rib caps nearly coincide with the skins: push them back in depth
-          // (own clones, so gear_bays keeps the shared zinc_chromate) to stop the skins z-fighting
+          // (own clones, so other parts keep the shared materials) to stop the skins z-fighting; the main-gear bay
+          // liner's roof lies 4 mm under the wing's upper skin (gear.MAIN_BAY_ROOF_GAP): without the offset it drew
+          // ghost outlines of the bays through the skin from above and sparkled at far cameras (all-lens review r1
+          // EXT-A1-01: the Top preset, the 45 m top view, the fitted 90 m top_048 camera)
           base = clonePatched(base);
           base.polygonOffset = true;
           base.polygonOffsetFactor = 2;

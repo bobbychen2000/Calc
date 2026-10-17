@@ -71,7 +71,10 @@ export const QUALITY = (() => {
   const dprMax = Math.min(dpr, cap);
   const dprNative = fixed ? dprMax : Math.min(dpr, 3);
   const picture = pictureChoice().mode, P = PROFILES[low ? 'phone' : 'desktop'][picture];
-  const dprMoveBase = low ? Math.min(dprMax, 1) : dprMax;
+  // moving pixel ratio: the still one's dprMax everywhere (all-lens review r1 CRA1-03: phones moved at 1.0 and stopped at
+  // up to 3 -- the G3000 pages turned to smudges and the yoke grooves to specks on every drag, and popped back on
+  // release); Auto's run-time adaptation still steps a slow phone's moving ratio down to 1 (picture.js _adapt)
+  const dprMoveBase = dprMax;
   return {
     mobile, low, dprMax, dprMoveBase, dprNative, picture,
     dprMove: picture === 'max' ? dprMax : dprMoveBase,
