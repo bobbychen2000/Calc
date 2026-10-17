@@ -73,7 +73,7 @@ python3 -m drawing.verify       # measures the SVG itself against the dimensions
 python3 -m http.server 8765 --directory .   # then test/shot.py renders headless screenshots:
 python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=40"
 #   options: ortho=1&s=HALF_HEIGHT, only=part_prefix,.., hide=.., clip=1 (cutaway), f2=other.glb&f2edges=1
-python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 233 checks; slower on a
+python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 234 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
                                 #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min)
@@ -1952,11 +1952,14 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   YOKE (FDY-O4-03, FIDY4-02 / -03): the grips and pads a flat mid-grey up close (49 / 60 / 87, 55 / 75 / 85 at the yoke
   close-up against P1046409's 38 / 60 / 183, 33 / 82 / 121): their reflections take a directional cabin probe
   (YOKE_PROBE grip_black [0.95, 0.9, 4.0, 0.12, 0.3], yoke_leather [0.25, 2.6, 2.6, 0.12, 0.35]: the dark cabin low, the
-  overhead / windshield and the yoke's own side window bright), the 'yoke:grip_black' reflection floor 0.45 -> 0.1 and
+  overhead / windshield and the yoke's own side window bright), the 'yoke:grip_black' reflection floor 0.45 -> 0.3 and
   side-window term 25, PART_TRIM roughness 0.15 / specIn 5.0; the pads' floor 0.3 -> 0.1, the sun's glint 0.6,
-  roughness 0.28, specIn 3.0 (?yokeProbe= now adds a probe for any yoke material): the close-up 25 / 65 / 120 (p99 138)
-  and 51 / 74 / 99, the pilot stop body / cover 0.27, pads / body 1.29 ([Y1b] 0.22-0.34 / 1.0-1.4), panel_408b grips
-  ~86 (P1046408 68 / 86).  The upper insert's dark-cabin term +20 % and overhead -15 % (YOKE_PROBE yoke_silver k
+  roughness 0.28, specIn 3.0 (?yokeProbe= now adds a probe for any yoke material): the close-up 37 / 69 / 122 (p99 148)
+  and 50 / 73 / 99, from the pilot stop (both yokes, the test's 960 x 600 page) body / cover 0.28, pads / body 1.24,
+  lunes / body 1.35 ([Y1b] 0.22-0.34 / 1.0-1.4, [Y1c] 1.0-1.8), panel_408b grips ~86 (P1046408 68 / 86).  (The round's
+  first floor, 0.1, had been tuned on the pilot's yoke alone at 1200 x 900 -- 0.27 / 1.29 there --; the full
+  viewer_test's both-yoke measure read 0.21 / 1.65 / 1.81 and failed [Y1b] / [Y1c]: 0.3 lifts the shaded flanks, hardly
+  the close-up's median; tools/ytune.py runs viewer_test's yoke_look_checks on override queries.)  The upper insert's dark-cabin term +20 % and overhead -15 % (YOKE_PROBE yoke_silver k
   [1.95, 1.27, ...]: the stop's reflections point aft, R.y ~0.2-0.3, P1046408's low camera up, R.y ~0.6): 0.85-0.86 ->
   0.88-0.90 of the cover from the crew eyes, P1046408's camera unchanged ([Y1d] <= 0.97) -- the judge's 0.95 would put
   the photo-fitted camera over the photo's 0.93, so not further.
@@ -1984,3 +1987,19 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   travel, the photo's camera stood ahead of the backs -- the BA depth / fov trade-off, not a pose; at panel_408b the
   poses that lift the cushions cover the consoles the photo shows clear); PCL pewter, the overhead tone, the satin
   dark-grey column and the parked elevator droop stay; the grip depth and the badge field deferred.
+  Build (both tiers, bd26847): 2,743,884 triangles / 48.53 MB, light tier 2,318,251 / 40.79 MB (the counts of fix r3;
+  interior 895.8k of 903.7k, seat_pax3-6 34,834 OVER the 34.8k cap as before).  Verified: fit_check FIT OK (138 ok, no
+  open row; 26 no coplanar overlaps, 24 harness +1.6 mm) and consistency_2d3d 157 / 157 on bd26847's geometry (the
+  viewer commits change no GLB); `--only fdlook` 12 / 13 on 140102a with [FD-L9] at 1 Hz rAF while a look-dev
+  SwiftShader browser rendered beside it -- LOAD, not a regression: in the full runs it idles after 52 s at 46-53 Hz
+  (nothing in 140102a requests frames); the first full run on 140102a 232 / 234 with [Y1b] (body 0.21, pads / body 1.65)
+  and [Y1c] (lunes / body 1.81) failing -> the grips' reflection floor 0.3 (119a4fa, YOKE above), then the FULL
+  viewer_test 234 / 234 on 119a4fa (101 min; [FD-L1] sky 233 / 236, B - R 18; [FD-L2] carpet 14 / consoles 7 /
+  titanium 87; [FD-L3] glareshield 61, lip 71 / underside 44; [FD-L4] yoke 212; [FD-L5] sheepskin (118, 120, 141);
+  [FD-L6] p10 11, p50 72, bands 29 / 48 / 13 %; [FD-L10] skew +0.08, p10 98, sd4 13.0; [FD-L10b] cush_close -0.38 /
+  -0.36, seats_aft -0.55 / -0.40; [FD-L11] knee boxes 12 / 14, console face 24.5; [T4] pilot 109 / fd_cabin 76; [T14]
+  overhead 41-48, bezels 27-42, walnut 72; [Y1] cover 212, inserts 188 / 161, body 59, pads 73, column 50; [Y1b] spread
+  22, body 0.28, pads / body 1.24; [Y1c] lunes / body 1.35; [Y1d] insert / cover 0.94; [Y1e] far 0.85 / near 0.38,
+  lower / cover 0.83, band 54), web/package.py verify OK (meshopt 17.67 + 15.21 MB), the Artifact bundle 119.2 MB in 2
+  publishes (63.4 + 55.7 MB), artifact_test 70 / 70 (on 140102a's bundle and again on 119a4fa's).  L6 / L6B / L6Y /
+  L6Y2 not regenerated (no table changed).
