@@ -33,6 +33,7 @@ export const U = {
   pcSS: { value: 1 },
   pcMove: { value: 0 },            // 1 on the camera-moving frames (picture.js _path; the groove AA, CRA1-02)
   furSoft: { value: 0 },          // the fur shells' soft coverage on (inside: addFur's onAfterRender)
+  furSeed: { value: 0 },          // the dither's per-draw offset (FD9-03: the passes / frames average it out)
   paintSweep: { value: 100 },
   primer: { value: new THREE.Color(0x9fae8c) },       // light grey-green zinc-chromate-ish primer
   lining: { value: new THREE.Color() },                // set from LINING below (linear)
@@ -68,9 +69,9 @@ export const U = {
   // the cabin's form light (all-lens review r1 CAB1-01; CABIN_FORM): per class [gain, occlusion power, x at no window light,
   // x at full], [x facing inboard (toward the aisle), x facing outboard (toward its own side wall), x facing down, x facing
   // up], [x at WL C.y, x at WL C.z, x at WL C.w, -]; and [the window light that counts as full, WL low, belt, ceiling]
-  cabinFormA: { value: [new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1)] },
-  cabinFormB: { value: [new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1)] },
-  cabinFormD: { value: [new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0)] },
+  cabinFormA: { value: [new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1), new THREE.Vector4(1, 0, 1, 1)] },
+  cabinFormB: { value: [new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1), new THREE.Vector4(1, 1, 1, 1)] },
+  cabinFormD: { value: [new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0), new THREE.Vector4(1, 1, 1, 0)] },
   cabinFormC: { value: new THREE.Vector4(0.3, 1.3, 1.95, 2.7) },
   // inside, the flight deck (flight deck fix r3): the shade's daylight colour (xyz: a luminance-neutral tint, w: its share)
   // and the satin metals' cabin reflection probe ([dark, side windows, aisle, headliner] levels, see CABIN_LOOK)
@@ -159,7 +160,7 @@ U.cabinRefl.value.set(...CABIN_LOOK.refl);
 // (the trim with a share of the fill keeps that share of its light out of the window sky law: the cabin lining all of
 // it, T4b / T14; the flight deck's anthracite lining_flightdeck has no entry since look L5: the sky law and the baked
 // occlusion darken it where the photos do)
-const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
+const CABIN_TRIM = { lining: [1, 1], leather: [0.5, 1], stitch_light: [0.5, 1], leather_crew: [0, 0.8], leather_dark: [0.6, 1],
   lav_white: [0.8, 1], toilet_white: [0.8, 1], psu_housing: [0.7, 1],
   // the crew seats' lavender-grey sheepskin (P1046408 / 09 ~90-130 in the cabin light, B > R)
   sheepskin: [0, 0.60],     // (FDY r1: 0.42 -> 0.60 for the LOCKS fleece's darker mean albedo: panel_408b ~119, P1046408 121)
@@ -327,7 +328,11 @@ const YOKE_PROBE = {
   // (flight deck + yoke fix r4 FDY-O4-03 / FIDY4-02) the satin-black body and the leather pads: a directional law --
   // the dark cabin behind the crew low, the overhead / windshield and the yoke's own side window bright -- so the aft
   // faces fall near-black and the rolled rims and tops catch the light (P1046409: 38 / 60 / 183 on the body)
-  grip_black: { k: [0.95, 0.9, 4.0, 0.12, 0.3], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [1.0, 1.0, 1.04] },
+  // (all-lens review r2 FD9-02: up close B - R +24, slate blue: a warm tint, the side-window term 4 -> 6 for brighter
+  // edge glints (yoke close-up p90 120 -> 135, P1046409 183); the fill / dark-cabin cut the judge proposed (-25 %) is not
+  // taken: at the pilot stop it put the body at 0.18-0.21 of the cover, pads / body 1.55-1.73, lunes / body 1.84-2.07 --
+  // outside [Y1b] / [Y1c]'s photo bands -- and up close the body's median 64 already sits at P1046409's 60)
+  grip_black: { k: [0.95, 0.9, 6.0, 0.12, 0.3], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [1.04, 1.0, 0.92] },
   yoke_leather: { k: [0.25, 2.6, 2.6, 0.12, 0.35], y: [0.15, 0.6, -0.4, 0.1, 1.83, 1.91], tint: [1.0, 1.0, 1.0] },
 };
 for (const it of (Q_M.get('yokeProbe') || '').split('|')) {          // ?yokeProbe=name:k0,..,k4,y0,..,y5[,tr,tg,tb]|...
@@ -399,8 +404,19 @@ const PART_TRIM = {
   // (FDY r2 FDY-O2-02 / FIDY2-06: still matte slate without the photos' satin streaks down the grip faces: sharper and
   // stronger reflections, neutral-cool -- the median kept dark for [Y1b], the lit edges brighter)
   // (flight deck + yoke fix r4 FDY-O4-03 / FIDY4-02: tighter and stronger again under the YOKE_PROBE law)
-  'yoke_L:grip_black': { roughness: 0.12, specIn: 5.0, specularColor: [0.97, 0.97, 0.97] },
-  'yoke_R:grip_black': { roughness: 0.12, specIn: 5.0, specularColor: [0.97, 0.97, 0.97] },
+  // (all-lens review r2 FD9-02: up close the grip body still slate-blue -- (89, 97, 112) at the yoke close-up, B - R +24,
+  // against P1046409's near-black satin with thin glints: a warm specular tint, the lobe a shade tighter)
+  'yoke_L:grip_black': { roughness: 0.10, specIn: 5.0, specularColor: [1.0, 0.94, 0.86] },
+  'yoke_R:grip_black': { roughness: 0.10, specIn: 5.0, specularColor: [1.0, 0.94, 0.86] },
+  // (all-lens review r2 CAB2-04: the club tables' gloss-black tops read as matte slate -- p10 / p50 / p90 / p99 7 / 12 /
+  // 49 / 113 deployed, P1046404 / 05 / 07 38-45 / 63-106 / 116-124 / 220-234 with the window mirrored in them: a piano
+  // lacquer, roughness 0.06, mirroring the CABIN (mirrorGLSL: the ledge, the light wall, the windows, the headliner)
+  // instead of the studio, unscaled by the cabin law's reflection weights (floor 1); a uniform 'win' radiance had
+  // greyed the whole top to 155-185; the wall at 1.0 x the overhead radiance mirrored brighter than the wall itself --
+  // the low P1046405 pose 93 / 107 / 182 / 206 --: 0.45, the windows 12, the radiance a neutral grey (tint 0.3: the sky's
+  // blue had read as slate), the window outlines sharper (blur 0.25); look-dev ld3 t1 / w1)
+  ...Object.fromEntries(['table_club_p', 'table_club_s', 'table_club_p_leaf', 'table_club_s_leaf'].map((p) =>
+    [p + ':gloss_black', { fill: [0, 1, 1], roughness: 0.06, mirror: { k: [0.08, 0.45, 12.0, 1.8, 0.05], tint: 0.3, blur: 0.25 } }])),
   // (FDY r2 FDY-O2-02: the pads' blue-grey speckle -- a warm specular tint takes the sky's blue out of their sheen)
   // (all-lens r1 FD8-03: the pads a shade blue in their sheen, B - R +18: a warmer tint, B - R ~+10)
   'yoke_L:yoke_leather': { specularColor: [1.0, 0.92, 0.84], specIn: 3.0 },
@@ -437,15 +453,23 @@ for (const it of (Q_M.get('partTrim') || '').split('|')) {
 // facing term (fore / aft .. toward a side wall; down .. up): the light halo round each window, the walls darker toward
 // the sills and between the windows, the soffit steps' shade, lit and shaded bolsters.  Classes: 0 the lining /
 // headliner, 1 the executive seats' leathers and shells
-const CABIN_FORM = { lining: 0, leather: 1, leather_dark: 1, seat_back_shell: 1, seat_shell_dark: 1 };
+// (all-lens review r2 CAB2-01: the exec seats' tone-on-tone stitching stitch_light takes the leather's form light)
+// (all-lens review r2 CAB2-03 / FD9-04: the walnut a class of its own, 2 -- everywhere inside, the divider included:
+// x lo where the bake's window light is low (the lavatory's bi-fold doors, the FR34 arch: P1046411 / 02 dark brown) .. x
+// hi in the windows' light (the divider's daylit aft faces, P1046406 / 07), x 0.8 facing the aisle (the lavatory's
+// bi-fold doors: (69, 53, 49) at the lav close-up against P1046411's (48, 36, 36), the divider's aft faces -- facing aft
+// -- at cabin_fwd_406 (62, 48, 46) against P1046406's (62, 49, 46)))
+const CABIN_FORM = { lining: 0, leather: 1, leather_dark: 1, seat_back_shell: 1, seat_shell_dark: 1, stitch_light: 1,
+  veneer_walnut: 2 };
 const qf4 = (k, d) => { const v = qv(k, d); return v; };
 // tuned at the photo-fitted cabin_fwd_406 (P1046406) / cabin_fwd / p404 views in one look-dev page (out/tmp/all8_fix_r1/ld
 // jobs a00 .. d02): the headliner centre's sd 5.9 -> ~11.5, the side wall's 9.6 -> ~16.5, the seat backs' 17.6 (the new
 // welts / seams) -> ~30, the medians kept for [T4b] / [T14] (the light trim near-white: AgX's shoulder compresses the
 // spread there, so the factors run wide -- x 0.38 .. 1.55 with the window light, 0.55 .. 1 from the floor to the belt)
-CABIN_LOOK.formA = [qf4('cabFormA0', [1.82, 2.2, 0.38, 1.55]), qf4('cabFormA1', [1.5, 2.0, 0.5, 1.35])];
-CABIN_LOOK.formB = [qf4('cabFormB0', [0.88, 1.05, 0.8, 1.0]), qf4('cabFormB1', [0.7, 1.2, 0.65, 1.15])];
-CABIN_LOOK.formD = [qf4('cabFormD0', [0.55, 1.0, 0.85, 0]), qf4('cabFormD1', [0.6, 1.0, 1.15, 0])];
+CABIN_LOOK.formA = [qf4('cabFormA0', [1.82, 2.2, 0.38, 1.55]), qf4('cabFormA1', [1.5, 2.0, 0.5, 1.35]),
+  qf4('cabFormA2', [1.0, 1.0, 0.80, 1.10])];
+CABIN_LOOK.formB = [qf4('cabFormB0', [0.88, 1.05, 0.8, 1.0]), qf4('cabFormB1', [0.7, 1.2, 0.65, 1.15]), qf4('cabFormB2', [0.8, 1, 1, 1])];
+CABIN_LOOK.formD = [qf4('cabFormD0', [0.55, 1.0, 0.85, 0]), qf4('cabFormD1', [0.6, 1.0, 1.15, 0]), qf4('cabFormD2', [1, 1, 1, 0])];
 CABIN_LOOK.formC = qf4('cabFormC', [0.3, 1.3, 1.95, 2.7]);
 U.cabinFormA.value.forEach((v, i) => v.set(...CABIN_LOOK.formA[i]));
 U.cabinFormB.value.forEach((v, i) => v.set(...CABIN_LOOK.formB[i]));
@@ -620,6 +644,12 @@ const VIEWER = {
     // -0.50 / -0.49 and -0.31 / -0.32, sd 12.5 / 13.3; panel_408b (the judges' rows) skew +0.46 -> +0.18, p10 101 -> 99;
     // look-dev out/tmp/fdy_fix_r3/ld b00 / f02)
     fur: { h: [0.008, 0.001], root: 0.34, mean: 0.84, oct: [[450, 0.45, 0.5, 0, 1.3, 0, 0.5], [300, 0.55, 0.6, 1, 1.3, 0.4, 0.5]],
+      // (all-lens r2 FD9-03: the grazing band wider and softer -- the outer layers thinned x graze below |n.v| grazeN,
+      // the coverage edge widened there (grazeW: alpha to coverage on the multisampled canvas / targets), the layers' root
+      // darkening, tilt (grazeFlat) and sheen growth up the pile (grazeSheen) flattened toward the silhouette; was 0.55 /
+      // 0.25 / 0 / 0 / 0.  A per-pixel dithered coverage (dither: true) and the band at 0.55 put sparse bright tips into
+      // [FD-L10]'s silhouette band at panel_408b (high-pass skew +1.1 .. +1.6; look-dev ld3 a0-a2 / u0-u2))
+      graze: 0.8, grazeN: 0.4, grazeW: 0.1, grazeFlat: 0.6, grazeSheen: 0.6,
       t: [0.05, 0.75, 0.9], curl: [55, 0.8, 5.0], lump: [40, 0.10, 0.10], part: [[30, 0.2, 0.82, 40, 0.55, 1.3],
         [60, 0.15, 0.85, 80, 0.55, 1.5]], fray: [1100, 0.1], ao: [0.34, 1.13, 1.8], tilt: 0.55,
       clump: [[28, 0.005, 1.3], [65, 0.0018, 1.3]], sheen: [0.5, 1.1], far: [2.2, 3.2] },
@@ -640,7 +670,13 @@ const VIEWER = {
   // dense, straight vertical grain, ~1-3 mm streaks under a clear lacquer that mirrors the room: the streaks 6x finer
   // across (420 / m) and 3x along (8 / m: ~45:1), three octaves -- the coarse blotch octave gone --, the lacquer's
   // reflection a little stronger)
-  veneer_walnut: { color: [0.15, 0.123, 0.118], envMapIntensity: 0.7, grain: { amp: 0.26, rough: 0.05, scale: [420, 420, 8], oct: 3 } },
+  // (all-lens review r2 FD9-04 / CAB2-03: neutral mauve-grey with no figure from 1-3 m -- (72, 68, 71) at cabin_fwd_406
+  // against P1046406's warm (62, 49, 46), the lavatory's bi-fold doors (89, 84, 88) against P1046411's (48, 36, 36): a
+  // warm base, R > G > B; the figure from ~6.7 mm streaks (150 / m across, three octaves to 600 / m) at +-35 %, so it
+  // survives the pcSS band limit at 1-3 m; the bake's occlusion and window light on it (CABIN_FORM class 2: its baked
+  // window light hardly differs between the divider, the lavatory and the arch, 0.10-0.17, so one darker base serves
+  // them -- between P1046406's divider and P1046411 / 02's lavatory / arch exposures)
+  veneer_walnut: { color: [0.094, 0.055, 0.042], envMapIntensity: 0.7, grain: { amp: 0.35, rough: 0.05, scale: [150, 150, 6], oct: 3 } },
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   // flight deck r1 LOOK (L5): no occlusion stand-in any more (the baked occlusion / window sky do it); brushed along the
@@ -1028,6 +1064,7 @@ export function upgradeMaterials(root, spec) {
           ...(pt && pt.specIn ? { specIn: pt.specIn } : {}), ...(pt && pt.sunIn ? { sunIn: pt.sunIn } : {}),
           ...(pt && pt.facing ? { facing: pt.facing } : {}), ...(FOOT_SKIP.has(name) ? { noFoot: true } : {}),
           ...(name in CABIN_FORM ? { form: CABIN_FORM[name] + 1 } : {}),
+          ...(pt && pt.mirror ? { mirror: pt.mirror } : {}),
           probe: (isYoke && YOKE_PROBE[name]) || null });
         if (pt && pt.roughness != null) c.roughness = pt.roughness;
         if (pt && pt.specularColor && c.specularColor) c.specularColor.copy(lin(pt.specularColor));
@@ -1176,7 +1213,7 @@ function furPatch(q, vs, fs, fsHead) {
     gl_Position = projectionMatrix * mvPosition;
     vPcFurT = pcFt;
   }`);
-  fsHead += 'varying float vPcFurT;\nuniform float uPcFurSoft;\n' + GLSL_FUR;
+  fsHead += 'varying float vPcFurT;\nuniform float uPcFurSoft;\nuniform float uPcFurSeed;\n' + GLSL_FUR;
   const far = q.far || [2.0, 3.0];
   if (!shell) {
     fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
@@ -1215,7 +1252,7 @@ function furPatch(q, vs, fs, fsHead) {
     }).join('');
     const w0 = oct.reduce((a, o) => a + o[1], 0) || 1;
     fs = fs.replace('#include <color_fragment>', `#include <color_fragment>
-  float pcFurA = 1.0, pcFurT = vPcFurT, pcFurCov = 1.0;
+  float pcFurA = 1.0, pcFurT = vPcFurT, pcFurCov = 1.0, pcFurGw = 0.0;
   vec3 pcFurG = vec3( 0.0 ), pcFurC = vec3( 0.0 );
   {
     float pcFar = smoothstep( ${f4(far[0])}, ${f4(far[1])}, length( vViewPosition ) );
@@ -1250,14 +1287,28 @@ ${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
     // the height below |n.v| 0.3): the outline a few soft layers instead of a stack of hard contour steps
     // (only toward the silhouette, |n.v| < 0.25: head-on the hard test as before -- soft coverage there had lifted the
     // shaded gaps between the tufts, flattening the pile [FD-L5] / [FD-L10] and deepening the close-range pits [FD-L10b])
+    // (all-lens review r2 FD9-03: the armrests' and seat backs' grazing rims at the fd_cabin stop still read as terraced
+    // 'cauliflower' florets -- r1's band was narrow: a wider grazing band (|n.v| < q.grazeN), the coverage edge widened
+    // there (q.grazeW), the outer layers thinned more (q.graze); head-on the hard test as before.  Alpha to coverage
+    // resolves on the antialiased canvas and the Picture targets alike; q.dither swaps it for a DITHERED test -- a stable
+    // interleaved-gradient threshold per pixel, shifted per layer and per draw (uPcFurSeed) -- which single-sample frames
+    // would need, but its sparse bright tips raised [FD-L10]'s high-pass skew at panel_408b (+0.2 -> +0.55): off)
     {
-      float pcGz = smoothstep( 0.06, 0.25, abs( dot( normalize( vNormal ), normalize( vViewPosition ) ) ) );
+      float pcGz = smoothstep( 0.06, ${f4(q.grazeN ?? 0.25)}, abs( dot( normalize( vNormal ), normalize( vViewPosition ) ) ) );
       float pcTe = pcT + ( 1.0 - pcGz ) * t * ${f4(q.graze ?? 0.55)};
-      float pcFw = max( fwidth( pcF ), 1e-4 );
+      float pcFw = max( fwidth( pcF ), 1e-4 ) + ${f4(q.grazeW ?? 0)} * ( 1.0 - pcGz );
       float pcSoft = uPcFurSoft * ( 1.0 - pcGz );
+      pcFurGw = pcSoft;
       float pcCov = mix( step( pcTe, pcF ), smoothstep( pcTe - pcFw, pcTe + pcFw, pcF ), pcSoft );
-      if ( pcCov < 0.02 ) discard;
-      pcFurCov = pcCov;
+      if ( ${q.dither ? 'pcSoft > 0.001' : 'false'} ) {
+        vec2 pcDq = gl_FragCoord.xy + vec2( 5.588238, 5.588238 ) * ( uPcFurSeed + 13.0 * t );
+        float pcIg = fract( 52.9829189 * fract( dot( pcDq, vec2( 0.06711056, 0.00583715 ) ) ) );
+        if ( pcCov < mix( 0.5, pcIg, pcSoft ) ) discard;
+        pcFurCov = 1.0;
+      } else {
+        if ( pcCov < 0.02 ) discard;
+        pcFurCov = pcCov;
+      }
     }
     #ifndef FLAT_SHADED
       vec3 pcFnW = normalize( ( vec4( vNormal, 0.0 ) * viewMatrix ).xyz );
@@ -1265,6 +1316,9 @@ ${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
       vec3 pcFnW = normalize( cross( dFdx( vPcW ), dFdy( vPcW ) ) );
     #endif
     pcFurA = mix( ${f4(ao[0])}, ${f4(ao[1])}, pow( t, ${f4(ao[2])} ) ) * ( 1.0 + ${f4(lu[2])} * ( 2.0 * pcL - 1.0 ) );
+    // (FD9-03) toward the silhouette the layers' root darkening and the tufts' tilt fade (q.grazeFlat): seen edge-on the
+    // dark gaps between the stacked tops and their lit / shaded sides had drawn hard florets
+    pcFurA = mix( pcFurA, ${f4(q.mean ?? 0.84)}, ${f4(q.grazeFlat ?? 0)} * pcFurGw );
     pcFurG = pcG - pcFnW * dot( pcG, pcFnW );${clumps.map(([cf, ca, cs = 1], i) => {
       const S = `vec3( 1.0, ${f4(1 / cs)}, 1.0 )`;
       return `
@@ -1279,12 +1333,12 @@ ${parts.map(([pf, pa, pw, gf = 0, gl = 0.5, st = 1], i) => {
   diffuseColor.a = pcFurCov;`);
     // the tufts' sides: the normal tilted down the field's slope (world gradient per metre, scaled to the first octave)
     fs = fs.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-  normal = normalize( normal - ( viewMatrix * vec4( ${f4((q.tilt ?? 0.6) / oct[0][0])} * pcFurG + pcFurC, 0.0 ) ).xyz );`);
+  normal = normalize( normal - ( viewMatrix * vec4( ${f4((q.tilt ?? 0.6) / oct[0][0])} * pcFurG + pcFurC, 0.0 ) ).xyz * ( 1.0 - ${f4(q.grazeFlat ?? 0)} * pcFurGw ) );`);
   }
   const sh = q.sheen || [0.5, 1.4];
   fs = fs.replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
   #ifdef USE_SHEEN
-    material.sheenColor *= pcFurA * mix( ${f4(sh[0])}, ${f4(sh[1])}, pcFurT );
+    material.sheenColor *= pcFurA * mix( ${f4(sh[0])}, ${f4(sh[1])}, ${shell && q.grazeSheen ? `mix( pcFurT, 0.5, ${f4(q.grazeSheen)} * pcFurGw )` : 'pcFurT'} );
   #endif`);
   return { vs, fs, fsHead };
 }
@@ -1435,6 +1489,7 @@ export function addFur(mesh, shells, obstacles = []) {
     // the CSS studio); outside -- a cutaway's seats against the studio -- the hard 0 / 1 edges as before
     const soft = U.cabinIn.value > 0.5;
     U.furSoft.value = soft ? 1 : 0;
+    U.furSeed.value = (U.furSeed.value + 1) % 251;      // the dither's offset per draw (FD9-03)
     const gl = soft ? renderer.getContext() : null;
     if (gl) gl.colorMask(true, true, true, false);
     renderer.renderBufferDirect(camera, scene, u.geometry, u.material, mesh, null);
@@ -1466,11 +1521,57 @@ export function refreshFur(root, shells = null) {
   return done.size;
 }
 
+// CABIN MIRROR (all-lens review r2 CAB2-04): a gloss surface in the cabin -- the club tables' piano-black tops --
+// reflects the cabin, not the studio: inside, the reflection ray from the surface point is traced against a box cabin
+// (glTF X = BL, Y = WL, Z = STA) -- the ledge fascia below the ledge top, the side-wall lining above it with the cabin
+// windows cut into it (fuselage_parts.FIXED_WINDOWS / DOOR_WINDOWS: Lame outlines W 0.300 x H 0.385, n 4.2, centre WL
+// 2.1875), the headliner, the carpet -- each a multiple of the studio's blurred overhead radiance (as YOKE_PROBE), the
+// window outlines softened by the roughness over the ray length.  P1046404 / 05 / 07: the dark top with the windows and
+// the light wall mirrored sharply in it (judge: 38-45 / 63-106 / 116-124 / 220-234 p10 / p50 / p90 / p99)
+const CABIN_WINDOWS = { port: [5.605, 6.200, 6.980, 7.958], stbd: [5.359, 6.205, 6.980, 7.730, 8.494],
+  cz: 2.1875, hx: 0.150, hz: 0.1925, n: 4.2 };
+const CABIN_BOX = { ledgeBL: 0.655, ledgeWL: 1.869, wallBL: 0.690, ceilWL: 2.66, floorWL: 1.259 };
+function mirrorGLSL(m) {
+  const f = (x) => (+x).toFixed(4);
+  const k = m.k || [0.08, 1.0, 3.0, 1.1, 0.05];      // [ledge fascia, wall, window, headliner, carpet]
+  const W = CABIN_WINDOWS, B = CABIN_BOX;
+  const win = (side, xs) => xs.map((x) => `
+				{ vec2 pcMd = abs( vec2( pcMh.z - ${f(x)}, pcMh.y - ${f(W.cz)} ) ) * vec2( ${f(1 / W.hx)}, ${f(1 / W.hz)} );
+				  float pcMg = pow( pow( pcMd.x, ${f(W.n)} ) + pow( pcMd.y, ${f(W.n)} ), ${f(1 / W.n)} );
+				  pcMw = max( pcMw, ${side} * ( 1.0 - smoothstep( 1.0 - pcMe, 1.0 + pcMe, pcMg ) ) ); }`).join('');
+  return `
+			{
+				vec3 pcMp = ( vec4( - vViewPosition, 0.0 ) * viewMatrix ).xyz + cameraPosition;
+				vec3 pcMr = reflectVec;
+				float pcMs = pcMr.x >= 0.0 ? 1.0 : - 1.0;
+				float pcMax = max( abs( pcMr.x ), 1e-4 );
+				float pcMt1 = max( ${f(B.ledgeBL)} - pcMs * pcMp.x, 0.0 ) / pcMax;
+				float pcMt2 = max( ${f(B.wallBL)} - pcMs * pcMp.x, 0.0 ) / pcMax;
+				float pcMtc = pcMr.y > 1e-4 ? ( ${f(B.ceilWL)} - pcMp.y ) / pcMr.y : 1e9;
+				float pcMtf = pcMr.y < - 1e-4 ? ( ${f(B.floorWL)} - pcMp.y ) / pcMr.y : 1e9;
+				float pcMy1 = pcMp.y + pcMr.y * pcMt1;
+				float pcMt = pcMy1 < ${f(B.ledgeWL)} ? pcMt1 : pcMt2;
+				vec3 pcMh = pcMp + pcMr * pcMt;
+				float pcMe = clamp( 0.03 + ${f(m.blur ?? 0.5)} * roughness * pcMt / ${f(W.hx)}, 0.03, 0.5 );
+				float pcMw = 0.0;
+				if ( pcMs < 0.0 ) {${win('1.0', W.port)}
+				} else {${win('1.0', W.stbd)}
+				}
+				float pcMk = pcMy1 < ${f(B.ledgeWL)} ? ${f(k[0])} : mix( ${f(k[1])}, ${f(k[2])}, pcMw );
+				pcMk = pcMtc < pcMt ? ${f(k[3])} : pcMk;
+				pcMk = pcMtf < min( pcMt, pcMtc ) ? ${f(k[4])} : pcMk;
+				vec3 pcMref = textureCubeUV( envMap, vec3( 0.0, 1.0, 0.0 ), 0.9 ).rgb * envMapIntensity;
+				// (the cabin's white trim, not the blue sky overhead: the radiance's luminance, ${f(m.tint ?? 0.3)} of its colour)
+				pcMref = mix( vec3( dot( pcMref, vec3( 0.2126, 0.7152, 0.0722 ) ) ), pcMref, ${f(m.tint ?? 0.3)} );
+				pcEnv = mix( pcEnv, pcMref * pcMk, uCabinIn );
+			}`;
+}
+
 export function installPatch(mat, extra = {}) {
   const f = { ...(mat.userData.pc12 || {}), ...extra };
   mat.userData.pc12 = f;
   const { paint, lining, glass, cabinGlass, collar, interior, cabinFill, back, grooves, stripes, fleece, rest, specKeep, reflDir, ao,
-    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe, fur, noFoot, facing, form, gaa } = f;
+    leather, brush, grain, emisIn, specIn, sunIn, liningBase, probe, fur, noFoot, facing, form, gaa, mirror } = f;
   if (!paint && !lining && !glass && !collar && !interior && !back && !grooves && !stripes && !fleece && !ao && !leather && !brush && !grain && !fur && !gaa) return mat;
   const restP = !!(rest && (collar || grooves || stripes || grain));
   const worldP = !!(fleece || leather || brush || fur);
@@ -1634,7 +1735,7 @@ export function installPatch(mat, extra = {}) {
         .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
   roughnessFactor = clamp( roughnessFactor + ${f4(q.rough)} * ( 2.0 * pcGr - 1.0 ), 0.04, 1.0 );`);
     }
-    if (fur) { ({ vs, fs, fsHead } = furPatch(fur, vs, fs, fsHead)); sh.uniforms.uPcFurSoft = U.furSoft; }
+    if (fur) { ({ vs, fs, fsHead } = furPatch(fur, vs, fs, fsHead)); sh.uniforms.uPcFurSoft = U.furSoft; sh.uniforms.uPcFurSeed = U.furSeed; }
     if (gaa) {
       // screen-space groove AA (CRA1-02): the display pixel's footprint against the groove's width
       const f5 = (x) => (+x).toFixed(5);
@@ -2061,7 +2162,7 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
       const chunk = THREE.ShaderChunk.shadowmap_pars_fragment, head = 'float shadow = 1.0;\n\t\tshadowCoord.xyz /= shadowCoord.w;';
       if (chunk.includes(head)) fs = fs.replace('#include <shadowmap_pars_fragment>', chunk.replace(head, 'float shadow = 0.0;\n\t\tshadowCoord.xyz /= shadowCoord.w;'));
     }
-    if (interior && physical && ((cabinFill && cabinFill.length > 4 && +cabinFill[4] > 0) || probe)) {
+    if (interior && physical && ((cabinFill && cabinFill.length > 4 && +cabinFill[4] > 0) || probe || mirror)) {
       // CABIN_TRIM 'up' (3-D judges r2 FID2-04 / CR2-06): inside, the reflections that point below the horizon take the
       // environment above it (mirrored about the horizontal) -- the studio's floor stands in for the cockpit's lap /
       // pedestal / footwell, a dim grey that read the yoke's satin inserts grey and its gloss cover matte from the crew
@@ -2089,13 +2190,13 @@ vec3 pcWorm( vec3 q, float wv, float sharp ) {
         `reflectVec = inverseTransformDirection( reflectVec, viewMatrix );${prb}
 			reflectVec.y = mix( reflectVec.y, abs( reflectVec.y ), ${up} * uCabinIn );
 			float pcWin = ${win} * uCabinIn * smoothstep( 0.35, 0.65, abs( reflectVec.x ) ) * smoothstep( - 0.10, 0.20, reflectVec.y );`).replace(
-        'return envMapColor.rgb * envMapIntensity;', `vec3 pcEnv = envMapColor.rgb * envMapIntensity + vec3( pcWin );${prbRet}
+        'return envMapColor.rgb * envMapIntensity;', `vec3 pcEnv = envMapColor.rgb * envMapIntensity + vec3( pcWin );${prbRet}${mirror ? mirrorGLSL(mirror) : ''}
 			return pcEnv;`));
     }
     if (lining || interior) {
       for (const k of ['cabinAO', 'cabinIn', 'cabinKey', 'cabinDiff', 'cabinSpec', 'cabinFill', 'cabinOcc', 'cabinSky', 'cabinGain', 'cabinKnee', 'cabinRefl', 'cabinShade', 'cabinProbe', 'cabinProbe2', 'cabinFoot', 'cabinFormA', 'cabinFormB', 'cabinFormC', 'cabinFormD']) sh.uniforms['u' + k[0].toUpperCase() + k.slice(1)] = U[k];
       const lit = !mat.isMeshBasicMaterial;   // geometryNormal / geometryViewDir: the lit materials' lights chunks
-      fsHead += 'uniform float uCabinKnee;\nuniform float uCabinAO;\nuniform float uCabinIn;\nuniform float uCabinKey;\nuniform vec2 uCabinDiff;\nuniform vec2 uCabinSpec;\nuniform float uCabinFill;\nuniform vec3 uCabinOcc;\nuniform vec2 uCabinSky;\nuniform vec3 uCabinGain;\nuniform vec4 uCabinRefl;\nuniform vec4 uCabinShade;\nuniform vec4 uCabinProbe;\nuniform vec4 uCabinProbe2;\nuniform vec4 uCabinFoot;\nuniform vec4 uCabinFormA[2];\nuniform vec4 uCabinFormB[2];\nuniform vec4 uCabinFormD[2];\nuniform vec4 uCabinFormC;\n';
+      fsHead += 'uniform float uCabinKnee;\nuniform float uCabinAO;\nuniform float uCabinIn;\nuniform float uCabinKey;\nuniform vec2 uCabinDiff;\nuniform vec2 uCabinSpec;\nuniform float uCabinFill;\nuniform vec3 uCabinOcc;\nuniform vec2 uCabinSky;\nuniform vec3 uCabinGain;\nuniform vec4 uCabinRefl;\nuniform vec4 uCabinShade;\nuniform vec4 uCabinProbe;\nuniform vec4 uCabinProbe2;\nuniform vec4 uCabinFoot;\nuniform vec4 uCabinFormA[3];\nuniform vec4 uCabinFormB[3];\nuniform vec4 uCabinFormD[3];\nuniform vec4 uCabinFormC;\n';
       // the window sky law's weight: the light trim keeps its fill share out of it (the cabin lining: all of it)
       const skyW = cabinFill ? Math.max(0, 1 - cabinFill[0]) : 1;
       fs = fs.replace('#include <aomap_fragment>', `{
@@ -2168,7 +2269,7 @@ ${form && ao ? `
     {
       // CABIN FORM (CAB1-01): aft of the divider, the class's form light on the indirect diffuse (CABIN_FORM)
       vec4 pcFa = uCabinFormA[${form - 1}], pcFb = uCabinFormB[${form - 1}], pcFh = uCabinFormD[${form - 1}];
-      float pcCab = pcIn * smoothstep( 4.55, 4.75, pcPW.z );
+      float pcCab = pcIn${form === 3 ? '' : ' * smoothstep( 4.55, 4.75, pcPW.z )'};     // (the walnut, class 2: everywhere)
       // (side: + facing its own side wall / windows, - facing the aisle; glTF X = BL; height: glTF Y = WL)
       float pcOb = clamp( pcNW.x * sign( pcPW.x + 1e-4 ), - 1.0, 1.0 );
       float pcHt = pcPW.y < uCabinFormC.z ? mix( pcFh.x, pcFh.y, smoothstep( uCabinFormC.y, uCabinFormC.z, pcPW.y ) )
@@ -2231,7 +2332,7 @@ ${form && ao ? `
       .replace(/\bfwidth\s*\(/g, 'pcFW(');
   };
   // the rest matrix is a uniform: programs are shared
-  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}${fur ? 'H' + JSON.stringify(fur) : ''}${noFoot ? 'V' : ''}${facing ? 'J' + facing.join('/') : ''}${form ? 'M' + form : ''}${gaa ? 'T' + gaa.join('/') : ''}`;
+  mat.customProgramCacheKey = () => `pc12:${paint ? 'P' : ''}${lining ? 'L' + (liningBase ? liningBase.join('/') : '') : ''}${glass ? (cabinGlass ? 'G' : 'g') : ''}${interior ? 'I' : ''}${cabinFill ? 'F' + cabinFill.join('/') : ''}${back ? 'B' + back.base.join('/') + (back.opaque ? 'o' : '') : ''}${collar ? 'C' + JSON.stringify(collar) : ''}${grooves ? 'R' + JSON.stringify(grooves) : ''}${stripes ? 'S' + JSON.stringify(stripes) : ''}${fleece ? 'W' + JSON.stringify(fleece) : ''}${specKeep ? 'K' : ''}${reflDir ? 'D' : ''}${ao ? 'A' : ''}${leather ? 'E' + JSON.stringify(leather) : ''}${brush ? 'U' + JSON.stringify(brush) : ''}${grain ? 'N' + JSON.stringify(grain) : ''}${emisIn ? 'X' + emisIn : ''}${specIn ? 'Q' + specIn : ''}${sunIn ? 'Z' + sunIn : ''}${probe ? 'Y' + JSON.stringify(probe) : ''}${fur ? 'H' + JSON.stringify(fur) : ''}${noFoot ? 'V' : ''}${facing ? 'J' + facing.join('/') : ''}${form ? 'M' + form : ''}${gaa ? 'T' + gaa.join('/') : ''}${mirror ? 'O' + JSON.stringify(mirror) : ''}`;
   mat.needsUpdate = true;
   return mat;
 }

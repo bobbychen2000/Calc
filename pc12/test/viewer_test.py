@@ -2081,6 +2081,11 @@ YOKE_LOOK_O = dict(spread=20.0, up=0.75, lo=0.65, body=(0.22, 0.34), pads_body=(
 # [CAB1] the cabin's form light at the photo-fitted cabin_fwd_406 camera (all-lens review r1 CAB1-01): the seat backs' /
 # headliner centre's luminance sd floors and the medians' floor (P1046406 11.5 / 8.4 / 12.9 at a darker exposure)
 CAB_FORM = dict(seat=20.0, head=9.0, med=160.0)   # fix r1 look-dev: before 17.6 / 5.9 (the welts alone), after ~30 / 11.5
+# (all-lens review r2 CAB2-01: r1's seat-back sd ~30 came from the seams' wide dark channels -- P1046406's backs read sd
+# 8.8 / 11.9 with thin tone-on-tone creases: the raw floor 20 -> 9 (the judge's flat 5.0 still fails), plus the LOW-PASS
+# sd (6 px gaussian: the form shading; photo 5.5 / 9.5 at its darker exposure) >= 7 and the high-pass sd (the lines; photo
+# 5.2 / 5.5, r1 14.5, the first r2 seams 20.4) <= 12; r2 build: raw 15-16, low-pass 11.6 / 12.7, high-pass 8.0)
+CAB_FORM.update(seat=9.0, seat_lp=7.0, seat_hp=12.0)
 # (rev Q, 3-D judges r4 FID4-02: the inserts' lower bounds from the seat 0.88 / 0.78 -> 0.75 / 0.65 -- r2's bounds came from
 # the photo cameras' ratios, which r4 re-measured as 0.74-1.00 / 0.37-0.93 and asked the satin insert DARKER than the
 # cover from the stops (<= 0.93, [Y1d]); the stop has no photo)
@@ -2626,14 +2631,27 @@ async def fd_look_checks(page, shots=True):
         box = np.zeros_like(km, bool)
         box[int(y0 * mm["H"]):int(y1 * mm["H"]), int(x0 * mm["W"]):int(x1 * mm["W"])] = True
         sel = box & _ndi2.binary_erosion(km == cls, iterations=2)
-        form[nm] = (float(np.median(Lf[sel])), float(Lf[sel].std()), int(sel.sum())) if sel.sum() > 500 else (0.0, 0.0, int(sel.sum()))
+        if sel.sum() > 500:
+            # (all-lens review r2 CAB2-01: the raw sd passed on the seams' dark lines alone) the LOW-PASS sd -- a gaussian
+            # (6 px) of the masked pixels, read 4 px inside the mask -- is the form shading; the high-pass sd the lines
+            w_ = _ndi2.gaussian_filter(sel.astype(float), 6)
+            lp = _ndi2.gaussian_filter(np.where(sel, Lf, 0.0), 6) / np.maximum(w_, 1e-6)
+            inner = sel & _ndi2.binary_erosion(sel, iterations=4)
+            form[nm] = (float(np.median(Lf[sel])), float(Lf[sel].std()), int(sel.sum()), float(lp[inner].std()),
+                        float((Lf - lp)[inner].std()))
+        else:
+            form[nm] = (0.0, 0.0, int(sel.sum()), 0.0, 99.0)
     fb = [form["seatback_L"][1], form["seatback_R"][1]]
+    fl = [form["seatback_L"][3], form["seatback_R"][3]]
+    fh = [form["seatback_L"][4], form["seatback_R"][4]]
     check("[CAB1] the cabin's form light at cabin_fwd_406: the seat backs and the headliner centre shaded, not flat (luminance sd "
           f">= {CAB_FORM['seat']} / {CAB_FORM['head']}; P1046406 11.5 / 8.4, 12.9 at its darker exposure; the judge's 5.0 / 2.2), "
-          f"medians kept light (>= {CAB_FORM['med']})",
+          f"medians kept light (>= {CAB_FORM['med']}); the seat backs' low-pass sd (6 px gaussian) >= {CAB_FORM['seat_lp']} and "
+          f"their high-pass sd <= {CAB_FORM['seat_hp']} (the form shading, not the seam lines: CAB2-01)",
           min(fb) >= CAB_FORM["seat"] and form["headliner_c"][1] >= CAB_FORM["head"]
-          and min(form[k][0] for k in ("seatback_L", "seatback_R", "headliner_c")) >= CAB_FORM["med"],
-          "; ".join(f"{k}: p50 {v[0]:.0f} sd {v[1]:.1f} ({v[2]} px)" for k, v in form.items()))
+          and min(form[k][0] for k in ("seatback_L", "seatback_R", "headliner_c")) >= CAB_FORM["med"]
+          and min(fl) >= CAB_FORM["seat_lp"] and max(fh) <= CAB_FORM["seat_hp"],
+          "; ".join(f"{k}: p50 {v[0]:.0f} sd {v[1]:.1f} lp {v[3]:.1f} hp {v[4]:.1f} ({v[2]} px)" for k, v in form.items()))
     await js(pg, V + "T.exit({motion: false}); await V.frames(1);")
     # [FD-L7] the exterior default view: the world and the sun add nothing outside -- the 3/4 view rendered with them and
     # without them (removed from the scene: the light count changes, every program recompiles) is the same picture,
