@@ -1081,6 +1081,23 @@
    "note": "executive-seat back rear shell, mid grey (cab_pro_aero25_0405, review r1 F10)",
    "srgb_hex": "#7E8083"
   },
+  "stitch_light": {
+   "baseColorFactor": [
+    0.36,
+    0.356,
+    0.348,
+    1.0
+   ],
+   "metallicFactor": 0.0,
+   "roughnessFactor": 0.6,
+   "clearcoatFactor": 0.0,
+   "clearcoatRoughnessFactor": 0.0,
+   "ior": 1.5,
+   "specularFactor": 0.7,
+   "kind": "dielectric",
+   "note": "executive-seat top-stitching, tone-on-tone (0.8 x the leather; all-lens r2 CAB2-01)",
+   "srgb_hex": "#A2A19F"
+  },
   "panel_dark": {
    "baseColorFactor": [
     0.04,

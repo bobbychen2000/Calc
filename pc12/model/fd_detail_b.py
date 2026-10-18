@@ -1674,6 +1674,10 @@ DIV = dict(
     hook=(0.285, 2.240),                             # [E] headset hook |BL|, WL (beside the aisle edge)
     pocket=((0.600, 0.720), (1.360, 1.560)),         # [E] RH clear document pocket |BL|, WL (below the extinguisher)
     latch=((0.420, 1.420), (0.420, 1.900)),          # [E] access-panel latch plates |BL|, WL (both walls)
+    # (all-lens review r2 FD9-04) [M: P1046406] a satin-framed grille plate high on the RH wall's AFT face, ~0.1 m
+    # outboard of its aisle edge (the LH wall carries a placard there): |BL| of its centre, width, height, its centre
+    # below the headliner
+    grille=(0.440, 0.086, 0.032, 0.080),
 )
 
 
@@ -1740,6 +1744,19 @@ def divider_fittings(fl):
                     fl_ = FD.Fr(fl_.o, [0, -1.0, 0], [0, 0, 1.0])
                 out.append((fl_.rect(-0.018, -0.010, 0.018, 0.010, 0.0), "bezel_black"))
                 out.append((fl_.se(0, 0, 0.0012, (0.012, 0.0035, 0.0012), (0.4, 0.4), (4, 8)), "panel_silver"))
+            # the grille plate on the RH wall's aft face (DIV grille): a satin frame, a dark slot with three slats
+            gy, gw, gh, gdz = DIV["grille"]
+            fg = FD.Fr([xa + 0.0004, sg * gy, float(L.crown(xa, gy)) - gdz], [0, 1.0, 0], [0, 0, 1.0])
+            if np.dot(fg.w, [1.0, 0, 0]) < 0:
+                fg = FD.Fr(fg.o, [0, -1.0, 0], [0, 0, 1.0])
+            if sg > 0:
+                out.append((FD._extrusion(fg.moved(c=0.0010), FD.rrect_loop(0.5 * gw, 0.5 * gh, 0.004, nc=3), 0.002,
+                                          bevel=0.0006, nb=1), "panel_silver"))
+                out.append((fg.rect(-0.5 * gw + 0.007, -0.5 * gh + 0.006, 0.5 * gw - 0.007, 0.5 * gh - 0.006, 0.0024),
+                            "black"))
+                for k in (-1, 0, 1):
+                    out.append((fg.rect(-0.5 * gw + 0.009, k * 0.0055 - 0.0008, 0.5 * gw - 0.009, k * 0.0055 + 0.0008,
+                                        0.0028), "panel_silver"))
             if sg < 0:
                 # smoke-goggle box behind the pilot
                 d, (gy0, gy1), (gz0, gz1) = DIV["goggles"]

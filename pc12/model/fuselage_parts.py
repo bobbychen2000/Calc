@@ -661,6 +661,15 @@ def build_door(pid, o):
             ip = trim(ip, window_sdf(ip.V[:, 0], ip.V[:, 2], wcx), "positive")
         ip = ip.offset(-DOOR_T)
         part.add(solidify(ip, INNER_BODY["t"]), "lining")
+        if wcx is not None:
+            # the window's rolled bezel lip on the inner panel, as round every fixed cabin window (all-lens review r2
+            # CAB2-02: interior.build_lining's bezels skip the door holes; the cargo door's window was a bare hole)
+            from model.interior import _window_bezel
+            loop = _loop_near(ip, lambda x, z: window_sdf(x, z, wcx))
+            if loop is not None:
+                Lo = ip.V[loop]
+                bez, _ = _window_bezel(Lo - INNER_BODY["t"] * ip.N[loop], Lo)
+                part.add(bez, "lining")
     if wcx is not None:
         wo = dict(cx=wcx, cz=WIN_CZ, hx=WIN_HX, hz=WIN_HZ, r=WIN_R)
         wp = side_patch(wo, side, pad=0.03, d=0.010)

@@ -513,6 +513,8 @@ SPEC.update({
     "seat_tab_red":       dict(kind="dielectric", base=(0.45, 0.02, 0.02), rough=0.40, note="red pull tab"),
     "seat_back_shell":    dict(kind="dielectric", base=(0.21, 0.215, 0.228), rough=0.55, spec=0.35,
                                note="executive-seat back rear shell, mid grey (cab_pro_aero25_0405, review r1 F10)"),
+    "stitch_light":       dict(kind="dielectric", base=(0.36, 0.356, 0.348), rough=0.60, spec=0.35,
+                               note="executive-seat top-stitching, tone-on-tone (0.8 x the leather; all-lens r2 CAB2-01)"),
     # flight deck
     "panel_dark":         dict(kind="dielectric", base=(0.040, 0.041, 0.044), metallic=0.25, rough=0.48, spec=0.25,
                                note="graphite instrument-panel face"),

@@ -1082,12 +1082,16 @@ def lower_panel(sg):
 STACK = dict(
     edge_r=0.012,                   # moulded radius along the stack's front edges (was 9 mm tube rails)
     horn_s=0.215,                   # the stack keeps its SDU width (PANEL stack_hw) down to here (arc length, m)
-    waist=(0.320, 0.098),           # ... then narrows to the waist at the pad's foot [M: P1046408 x 830 / 1110]
-    flare_s=0.372,                  # ... and flares to the quadrant's half-width (PEDESTAL hw) at its front
+    waist=(0.312, 0.098),           # ... then narrows to the waist at the pad's foot [M: P1046408 x 830 / 1110]
+    flare_s=0.330,                  # ... and flares to the quadrant's half-width (PEDESTAL hw) over the trim panel's top
     # touch pad: centre s, half-length, half-width, r, recess (fix r2: 5).  All-lens review r1 FD8-02 (P1046408 through
     # the fitted panel_408b camera: the tray ~20 px longer / lower than the photo's, the stack stretched below the
-    # SDUs): half-length 0.0535 -> 0.046 with its top edge kept (s 0.228), the waist / flare 15 / 13 mm higher with it
-    pad=(0.274, 0.046, 0.0775, 0.012, 0.005),
+    # SDUs): half-length 0.0535 -> 0.046 with its top edge kept (s 0.228), the waist / flare 15 / 13 mm higher with it.
+    # All-lens review r2 FD9-01 (the same camera: the tray still 7-10 px low, the trim panel hidden behind the PCL head on
+    # the plate, the stack a long plain slab under the tray): the stack face runs straight down to the plate
+    # (PEDESTAL stack), the pad 8 mm higher (s 0.274 -> 0.266: y 678-767 of 900, P1046408 675-769), the waist / flare
+    # with it, and the trim panel on the face under it (QUAD trim_s: y ~778-840, P1046408 775-830)
+    pad=(0.266, 0.046, 0.0775, 0.012, 0.005),
     bezel=0.0040,                   # the chamfer round the pad (its width; fix r2 FDO2-04; fix r5 FDO4-03: 6 -> 4.5 mm,
     #                                 dark bronze -- P1046409 / 10: a dark bronze rim, the light tube read as a frame)
     dish=0.0025,                    # the pad floor's sag at its middle (fix r3 FDO3-01)
@@ -1095,7 +1099,9 @@ STACK = dict(
 )
 QUAD = dict(
     frame=(0.014, 0.006, 0.020),    # raised gunmetal frame: width, height above the plate, outer corner radius
-    trim_x=(3.738, 3.800),          # framed trim panel fore / aft
+    trim_s=(0.322, 0.383),          # framed trim panel on the stack face: arc length from / to (FD9-01; rev N: the plate
+    #                                 x 3.738-3.800, behind the PCL head from the crew / cabin eyes)
+    trim_hw=0.088,                  # its half-width (the stack face's flat 0.093-0.098 there)
     trim_items=(-0.062, -0.020, 0.024, 0.070),    # TRIM INTERRUPT, ALT STAB TRIM, AILERON TRIM, FLAP INTERRUPT (y)
     trim_k=1.3,                     # the trim items' bezels / caps x this (fix r5 FID-FD4-03) [M: throttle photo]
     slot_w=0.012,                   # brush-sealed slots
@@ -1387,11 +1393,14 @@ def quadrant():
     frame = grid_surface(np.array(rings), close_v=True)
     out.append((FD._oriented(frame, lambda C: C - fp.p(0, 0, -0.05)), "pedestal_gunmetal"))
     out.append((FD._oriented(planar_cap(fp.p(Iin[:, 0], Iin[:, 1], 0.0), [0, 0, 1.0]), [0, 0, 1.0]), "black"))
-    # framed trim panel at the forward end
-    tx0, tx1 = q["trim_x"]
-    ft = FD.Fr([0.5 * (tx0 + tx1), 0.0, zt], [1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0])
-    th = 0.5 * (tx1 - tx0)
-    out.append((FD._extrusion(ft.moved(c=0.0012), FD.rrect_loop(th, hw - fw - 0.006, 0.004, nc=4), 0.0024,
+    # framed trim panel on the stack face under the tray (all-lens review r2 FD9-01: P1046408 through the fitted
+    # panel_408b camera -- on the plate it lay behind the PCL head): u down the face (toward the plate), v starboard,
+    # w out of the face; the items keep their layout (titles above them, toward the tray)
+    ts0, ts1 = q["trim_s"]
+    fs_ = stack_frame(0.5 * (ts0 + ts1))
+    ft = FD.Fr(fs_.o, -fs_.v, fs_.u, fs_.w)
+    th = 0.5 * (ts1 - ts0)
+    out.append((FD._extrusion(ft.moved(c=0.0012), FD.rrect_loop(th, q["trim_hw"], 0.004, nc=4), 0.0024,
                               bevel=0.0006, nb=1), "bezel_black"))
     y1, y2, y3, y4 = q["trim_items"]
     # (flight deck fix r5 FID-FD4-03: from the seats the trim panel read as three tiny switches; the Pilatus throttle

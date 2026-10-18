@@ -337,11 +337,12 @@ def _march(receivers, occ, lo, h, reach, k, theta_max, offset, step, smooth, chu
     return [np.clip(a, 0.0, 1.0) for a in _scatter(receivers, res[inv], cuts, smooth)]
 
 
-def presplit(meshes, max_len, select=None, levels=3, tol=1e-7, min_area=0.0):
+def presplit(meshes, max_len, select=None, levels=3, tol=1e-7, min_area=0.0, only=None):
     """Split (flat midpoints, in place) every edge longer than max_len of the triangles `select(centroids)` keeps, over
     the meshes of one part together: an edge two meshes share (by position) is split in both, so they stay conforming.
-    1 -> 2 / 3 / 4 by the pattern of a triangle's split edges; normals averaged, UVs interpolated.  Returns the number
-    of triangles added."""
+    1 -> 2 / 3 / 4 by the pattern of a triangle's split edges; normals averaged, UVs interpolated.  only: a bool per
+    mesh -- only those meshes' triangles are selected (the others are still split along shared edges).  Returns the
+    number of triangles added."""
     added = 0
     for _ in range(levels):
         keyed = []
@@ -350,7 +351,9 @@ def presplit(meshes, max_len, select=None, levels=3, tol=1e-7, min_area=0.0):
             keyed.append(q)
         # long edges of the selected triangles, by position key
         marks = set()
-        for m, q in zip(meshes, keyed):
+        for mi, (m, q) in enumerate(zip(meshes, keyed)):
+            if only is not None and not only[mi]:
+                continue
             T = m.V[m.F]
             sel = np.ones(len(m.F), bool) if select is None else select(T.mean(1))
             if min_area > 0:                       # only the broad triangles (the contact pass: not every sliver)

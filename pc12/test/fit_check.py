@@ -1360,7 +1360,9 @@ def _zf_pairs(S):
 
 
 _ord = np.argsort(zC[:, 0], kind="stable")
-_got = [_zf_pairs(_ord[k:k + 40000]) for k in range(0, len(_ord), 40000)]
+# (all-lens fix r2: slabs of 20k triangles -- at 40k the 945k-triangle interior peaked at ~8.7 GB and was OOM-killed beside
+# a viewer_test run; the same pairs)
+_got = [_zf_pairs(_ord[k:k + 20000]) for k in range(0, len(_ord), 20000)]
 ii = np.concatenate([g[0] for g in _got]) if _got else np.zeros(0, int)
 jj = np.concatenate([g[1] for g in _got]) if _got else np.zeros(0, int)
 

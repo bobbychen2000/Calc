@@ -403,7 +403,11 @@ def build_parts(ao=False):
 # Moving children (yokes, pedals, tables, doors) are baked at their built pose.  The flight deck's large flat triangles
 # (floor, kick panels, consoles, footwell walls) are split first to <= AO_SPLIT so the per-vertex light resolves there.
 AO_DOOR_PARTS = ("door_airstair", "door_cargo", "exit_hatch", "door_frames")
-AO_DOOR_CABIN = {"door_cargo": ("ledge_top", "ledge_panel", "gloss_black", "chrome_trim", "psu_panel", "black")}
+AO_DOOR_CABIN = {"door_cargo": ("ledge_top", "ledge_panel", "gloss_black", "chrome_trim", "psu_panel", "black", "lining"),
+                 "door_airstair": ("lining",), "door_frames": ("lining",)}
+# (all-lens review r2 CAB2-02: the doors' cabin-side lining -- the cargo door's inner panel and window bezel, the airstair
+# door's inner body, the door wells' lining -- had no _AO: no form light, a flat paper-white panel at the tone ceiling
+# with a tone step at both seams; baked with the interior, in the closed pose)
 AO_SKIN_PARTS = ("fus_fwd", "fus_center", "fus_aft", "cowl_upper", "cowl_lower", "glazing_flightdeck", "glazing_cabin",
                  "door_frames", "door_airstair", "door_cargo", "exit_hatch", "firewall")
 AO_SPLIT = 0.060                        # m: the longest edge left on the flight deck's floor / walls / consoles
@@ -418,6 +422,14 @@ AO_SPLIT_BOX_HI = ((2.85, -1.0, 1.75), (4.30, 1.0, 2.75))
 # (cad/ao._denoise; the cabin aft of AO_DENOISE_X keeps its edge smoothing only, as tuned for T4 / T14)
 AO_DENOISE = 0.035
 AO_DENOISE_X = 4.75
+# (all-lens review r2 CAB2-03: the walnut -- the divider's aft faces, the lavatory's bi-fold doors, the FR34 arch -- read
+# as cloudy dark blotches: its big flat triangles carried one vertex's estimate each.  Its longest edges are split to
+# AO_WALNUT_SPLIT (2 levels: +5.9k triangles on cabin_interior; 50 mm had cost +66k) and both bake channels filtered
+# over AO_WALNUT_DENOISE of like-facing walnut afterwards)
+AO_WALNUT = ("veneer_walnut",)
+AO_WALNUT_SPLIT = 0.150
+AO_WALNUT_DENOISE = 0.120
+AO_DOOR_DENOISE = 0.080
 AO_SKY_K = 24                           # window-sky directions per vertex (was 16: the gain x18 amplified its noise)
 AO_SKY_BOX = ((0.90, -1.05, 0.15), (13.70, 1.05, 2.95))
 GLASS = ("glass", "lens")
@@ -468,6 +480,10 @@ def bake_interior_ao(parts):
         lo, hi = (np.asarray(b) for b in box)
         sel = lambda c, lo=lo, hi=hi: np.all((c >= lo) & (c <= hi), axis=1)      # noqa: E731
         added += sum(ao.presplit([m for m, _ in parts[pid].meshes], ml, sel) for pid in AO_SPLIT_PARTS if pid in parts)
+    for p in parts.values():                # (all of a part's meshes, the walnut's triangles selected: conforming)
+        if p.group == "Interior" and any(mat in AO_WALNUT for _, mat in p.meshes):
+            added += ao.presplit([m for m, _ in p.meshes], AO_WALNUT_SPLIT, levels=2,
+                                 only=[mat in AO_WALNUT for _, mat in p.meshes])
     lo, hi = (np.asarray(b) for b in AO_CONTACT_BOX)
     in_box = lambda c, lo=lo, hi=hi: np.all((c >= lo) & (c <= hi), axis=1)      # noqa: E731
     if "flight_deck" in parts:
@@ -475,6 +491,7 @@ def bake_interior_ao(parts):
                              min_area=AO_CONTACT_AREA)
     t1 = time.time()
     rec_m = [(m, mat) for p in parts.values() if p.group == "Interior" for m, mat in p.meshes]
+    n_int = len(rec_m)
     # (all-lens review r1 CAB1-03) the port ledge segment the cargo door carries is cabin furniture: baked with the
     # interior, so the viewer lights it by the cabin law like the fixed ledge beside it
     rec_m += [(m, mat) for pid, ms in AO_DOOR_CABIN.items() if pid in parts for m, mat in parts[pid].meshes if mat in ms]
@@ -521,8 +538,33 @@ def bake_interior_ao(parts):
     mats = [mat for _, mat in rec_m]
     rad = [_albedo(mat) * (sv + AO_GLOW) + AO_EMIT.get(mat, 0.0) for mat, sv in zip(mats, skyv)]
     light = ao.sky(rec, walls, outside, AO_SKY_BOX, bounce=(rec, rad), k=AO_SKY_K, denoise=dn)
+    # the doors' cabin-side meshes (AO_DOOR_CABIN) both ways round, the larger (cad/ao.two_sided): their solidified
+    # panels' hole walls -- the cargo door window's reveal -- are wound into the panel, and baked one-sided they read as a
+    # black ring inside the window bezel (CAB2-02)
+    di = [i for i, (m, mat) in enumerate(rec_m) if i >= n_int]
+    if di:
+        flip = [Mesh(rec[i].V, rec[i].F, -rec[i].N) for i in di]
+        o2 = ao.bake(flip, occ)
+        l2 = ao.sky(flip, walls, outside, AO_SKY_BOX, bounce=(rec, rad), k=AO_SKY_K)
+        for j, i in enumerate(di):
+            occl[i] = np.maximum(occl[i], o2[j])
+            light[i] = np.maximum(light[i], l2[j])
     for m, a, b in zip(rec, occl, light):
         m.AO = np.stack([a, b], 1)
+    # the walnut's channels filtered over AO_WALNUT_DENOISE of like-facing walnut (CAB2-03), the doors' cabin linings'
+    # over AO_DOOR_DENOISE (CAB2-02: cloudy patches on the cargo door's inner panel)
+    for group, rad_ in (([m for m, mat in rec_m if mat in AO_WALNUT and len(m.V)], AO_WALNUT_DENOISE),
+                        ([rec[i] for i in di if rec_m[i][1] == "lining" and len(rec[i].V)], AO_DOOR_DENOISE)):
+        if not group:
+            continue
+        Vw = np.vstack([m.V for m in group])
+        Nw = np.vstack([m.N / np.maximum(np.linalg.norm(m.N, axis=1, keepdims=True), 1e-12) for m in group])
+        Aw = np.vstack([m.AO for m in group])
+        Aw = np.stack([ao._denoise(Vw, Nw, Aw[:, c], rad_, ndot=0.9) for c in (0, 1)], 1)
+        k = 0
+        for m in group:
+            m.AO = Aw[k:k + len(m.V)]
+            k += len(m.V)
     nv = sum(len(m.V) for m in rec)
     fd = [b[(m.V[:, 0] < 4.75)] for m, b in zip(rec, skyv)]
     fd = np.concatenate(fd) if fd else np.zeros(1)

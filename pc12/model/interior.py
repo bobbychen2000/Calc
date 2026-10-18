@@ -926,12 +926,17 @@ PEDALS = dict(
                              "toe-brake master cylinders on the arms [S: POH 7-4-7]"),
 )
 PEDESTAL = dict(
-    x=PT((3.730, 4.150), "[M] control quadrant fwd / aft end (plan render 3.73-4.15)"),
+    x=PT((3.745, 4.150), "[M] control quadrant fwd / aft end (plan render 3.73-4.15; all-lens review r2 FD9-01: the "
+                         "plate's front 3.730 -> 3.745, where the stack face now runs into it)"),
     hw=P(0.110, "[M] 0.22 wide (cockpit key, render)"),
     top_h=P(0.300, "[M] aft face ~0.30-0.32 tall above the floor with FUEL / ACS T-handles (P1046406)"),
-    stack=PT(((3.525, -0.118), (3.530, -0.130), (3.639, -0.286), (3.719, -0.400)),
+    stack=PT(((3.525, -0.118), (3.530, -0.130), (3.639, -0.286), (3.735, -0.4264)),
              "[M] centre stack side profile at BL 0 (x, dz vs the MFD): MFD bezel foot, SDU top, SDU bottom (the "
-             "0.19 face reclined 35 deg), pad; the face runs on at 35 deg to the quadrant (P1046406 / P1046408)"),
+             "0.19 face reclined 35 deg), foot; the face runs on at 35 deg to the quadrant (P1046406 / P1046408).  "
+             "All-lens review r2 FD9-01 [M: P1046408 through the fitted panel_408b camera -- the trim panel (TRIM "
+             "INTERRUPT / ALT STAB TRIM / AILERON TRIM) lies on the stack face right under the tray, y 775-830 of "
+             "900, above the PCL head]: rev N's pad point (3.719, -0.400) and its steep 41 mm drop to the plate "
+             "became one straight face from the SDU bottom down to the quadrant plate, the trim panel on it"),
     pcl=PT((3.950, -0.050, 0.470), "[M] PCL knob x, BL, height above floor (0.45-0.5)"),
     pcl_grip=PT((0.036, 0.080, 0.072), "[M] PCL grip: a satin pewter paddle, fore-aft, width, height, its top at the "
                                        "PCL height, tipped forward (throttle photo, P1046408-10; review r3 F3: rev C "
@@ -999,12 +1004,17 @@ EXEC_SEAT = dict(
     head_wh=PT((0.26, 0.19), "[M]"),
     base_wh=PT((0.36, 0.17), "[M] anthracite base shroud, life-vest pictogram"),
     base_u=P(0.380, "[E] base shroud front, from the SRP (+ = forward): under the front of the cushion (P1046405)"),
-    legrest=PT((0.360, 0.160, 0.020, 0.070),
+    legrest=PT((0.360, 0.149, 0.028, 0.070),
                "[M] FORWARD-facing seats only (review r3 F1; P1046402 / 03 / 04 / 05: a light leather block hanging "
                "under the cushion front, about the base-shroud width, its face about as tall as the shroud face below "
                "it, its lower edge over the shroud's top edge; the aft-facing PAX 1 / 2 have none, P1046406): width, "
-               "face height down from the cushion underside, face set back from the cushion front, depth [E]; the "
-               "cushion's leather drape stops at the legrest top"),
+               "face height down from its top, face set back from the cushion front, depth [E].  All-lens review r2 "
+               "CAB2-01 [M: P1046402 / 03 / 04 -- the cushion's rolled front overhangs a separate, set-back legrest "
+               "face]: set back 20 -> 28, its top legrest_gap below the cushion underside (face 160 -> 149: the lower "
+               "edge unchanged)"),
+    legrest_gap=P(0.016, "[M] the legrest's top below the drawn cushion underside (P1046403 / 04: a dark shadow line "
+                         "under the cushion roll; the 3-D cushion's rolled bottom reaches 10 below the drawn line, so "
+                         "6 mm show; rev E-N tucked the top 5 under it)"),
     travel=PT((0.1016, 0.0508, 0.0914), "[S] POH 7-7-1.2: fwd/aft 4 in (fwd-facing), 2 in (aft-facing), inboard 3.6 in"),
     recline_deg=P(45.0, "[E] recline for the drawing envelope (lay-flat where space allows [S])"),
 )
@@ -1522,7 +1532,7 @@ def exec_under_profile(facing=1):
     out = dict(skirt=np.array([(-0.08, bh), (sf - 0.04, bh), (sf - 0.02, pt), (-0.06, pt)]), legrest=None)
     if facing > 0:
         lw, lh, lset, ld = e["legrest"]
-        uf, vt = sf - lset, pt - 0.005                                   # face; top tucked under the cushion
+        uf, vt = sf - lset, pt - e["legrest_gap"]                       # face; top under the cushion roll (CAB2-01)
         vb = vt - lh
         ur = uf - ld
         lip = bu + 0.002                                                 # lip rear: just in front of the shroud

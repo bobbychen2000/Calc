@@ -40,7 +40,7 @@ from model import fuselage_parts as FP  # noqa: E402
 from model import cockpit_glazing as CG  # noqa: E402
 
 SHEET = dict(id="L6", title="INTERIOR ARRANGEMENT", subtitle="INTERIOR ARRANGEMENT - FLIGHT DECK & CABIN",
-             size="A1", scale="AS SHOWN", rev="N", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-11")
+             size="A1", scale="AS SHOWN", rev="O", order=60, sheet_no="1 OF 2", dwg="PC12-L6", date="2026-10-17")
 # revision history of PC12-L6 (both sheets): (rev, date, description)
 REVISIONS = (
     ("A", "-", "first issue of the interior (legacy 3-D interior, not drawn from parameters)"),
@@ -72,6 +72,9 @@ REVISIONS = (
     ("N", "2026-10-11", "owner 2026-10-11 (yoke 3-D judges r1): yoke push travel 65 (was 90 [E]; the grips reached the "
                         "lower panel at full push + roll), pull 90 kept -- the knee sweeps and the phantoms take "
                         "-65 / +90; the column's J band and U recess re-centred on the column axis (L6Y2 detail J)"),
+    ("O", "2026-10-17", "all-lens review r2: centre stack straight from the SDUs to the quadrant plate (foot 3735 / -426, "
+                        "plate front 3745; the trim panel on the face under the tray) [M P1046408]; exec legrest set "
+                        "back 28, its top 16 under the cushion (a shadow gap) [M P1046403 / 04]"),
 )
 
 # ---- fills (clean sheet)

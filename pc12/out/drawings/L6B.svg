@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841 594" width="841mm" height="594mm">
 <title>PC-12 INTERIOR ARRANGEMENT - CHECKS</title>
-<desc>PC12-L6 rev N, -, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
+<desc>PC12-L6 rev O, -, A1. RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION.</desc>
 <defs><style><![CDATA[@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');]]></style></defs>
 <rect width="841" height="594" fill="#FCFCFA"/>
 <g fill="none" stroke="#1B2429" stroke-linecap="round" stroke-linejoin="round">
@@ -76,7 +76,7 @@
 <text x="577" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">PC12-L6</text>
 <path stroke-width="0.18" d="M634.39 531l0 14"/>
 <text x="636.39" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">REV</text>
-<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">N</text>
+<text x="636.39" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">O</text>
 <path stroke-width="0.18" d="M655.11 531l0 14"/>
 <text x="657.11" y="534.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">SCALE</text>
 <text x="657.11" y="542.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="5" stroke="none" fill="#1B2429" font-weight="500">-</text>
@@ -90,7 +90,7 @@
 <text x="577" y="555.4" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="4.4" stroke="none" fill="#1B2429" font-weight="500">Claude - loftkit parametric model</text>
 <path stroke-width="0.18" d="M739.36 545l0 13"/>
 <text x="741.36" y="548.2" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="2.2" stroke="none" fill="#1B2429" font-weight="500">DATE</text>
-<text x="741.36" y="555.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.6" stroke="none" fill="#1B2429" font-weight="500">2026-10-11</text>
+<text x="741.36" y="555.4" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="4.6" stroke="none" fill="#1B2429" font-weight="500">2026-10-17</text>
 <path stroke-width="0.35" fill="#1B2429" d="M575 558l250 0 0 20-250 0z"/>
 <text x="700" y="569.26" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.6" stroke="none" fill="#FCFCFA" text-anchor="middle" font-weight="700" letter-spacing="0.25">RECONSTRUCTION FROM PUBLISHED DATA - NOT FOR CONSTRUCTION</text>
 <path stroke-width="0.35" fill="#1B2429" d="M28 16l258 0 0 7-258 0z"/>
@@ -742,8 +742,12 @@
 <text x="330" y="567.39" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">owner: L6Y rev D approved for 3-D; 95th knee 23.8 &lt; 25 accepted as measured (row, open point 1 closed); knee rows on the rev M solids</text>
 <text x="300.8" y="567.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">M</text>
 <text x="317.3" y="567.39" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-05</text>
-<path stroke-width="0.18" d="M296 568.62l260 0M305.6 523.02l0 45.6M329 523.02l0 45.6"/>
-<path stroke-width="0.35" d="M296 515.8l260 0 0 52.82-260 0z"/>
+<path stroke-width="0.18" d="M296 568.62l260 0"/>
+<text x="330" y="571.95" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429">yoke push 65 (rev N); stack straight to the plate, exec legrest set back 28 (rev O)</text>
+<text x="300.8" y="571.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">N-O</text>
+<text x="317.3" y="571.95" font-family="'IBM Plex Mono',ui-monospace,monospace" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle">2026-10-17</text>
+<path stroke-width="0.18" d="M296 573.18l260 0M305.6 523.02l0 50.16M329 523.02l0 50.16"/>
+<path stroke-width="0.35" d="M296 515.8l260 0 0 57.38-260 0z"/>
 <path stroke-width="0.35" fill="#1B2429" d="M566 16l260 0 0 7-260 0z"/>
 <text x="568" y="20.83" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3.8" stroke="none" fill="#FCFCFA" font-weight="600" letter-spacing="0.2">KEY PARAMETERS ([S] SOURCED [M] MEASURED [E] ESTIMATED [H] HARD)</text>
 <text x="589" y="27.05" font-family="'Barlow Condensed','Arial Narrow',sans-serif" font-size="3" stroke="none" fill="#1B2429" text-anchor="middle" font-weight="600">PARAMETER</text>

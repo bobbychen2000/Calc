@@ -90,6 +90,9 @@ MATERIALS = {
     "seat_tab_red":       ((0.45, 0.02, 0.02), 0.0, 0.40),                              # base-shroud pull tab
     # mid-grey exec back rear shell (final judge r1 I5: lighter -- 0.15 read anthracite from behind in cabin_aft_fwd)
     "seat_back_shell":    ((0.21, 0.215, 0.228), 0.0, 0.55, dict(specular=0.7)),
+    # exec-seat top-stitching: tone-on-tone, 0.8 x the leather (all-lens review r2 CAB2-01: stitch_thread read as a black
+    # dotted 'cut here' line on the light leather; the photos show the thread a shade under the leather)
+    "stitch_light":       ((0.36, 0.356, 0.348), 0.0, 0.60, dict(specular=0.7)),
     # flight deck: graphite panel face, brushed titanium-grey sub-panels / stack, grey leather hood, dark carpet
     "panel_dark":          ((0.040, 0.041, 0.044), 0.25, 0.48, dict(specular=0.5)),
     "panel_grey":          ((0.21, 0.195, 0.18), 0.18, 0.45),          # (flight deck r1 LOOK: darker; fix r2: warm, R > G > B)
