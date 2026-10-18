@@ -2708,13 +2708,16 @@ async def fd_look_checks(page, shots=True):
     # idles: animation frames run at the display rate again and no render happens (the hidden contact shadow, left dirty
     # inside, had requested a render every frame -- each a plain 'move' / 'busyss' frame: the picture never supersampled,
     # the viewer never idled).  Measured on the clock and with the page's own rAF rate, not with V.frames() (whose forced
-    # frames are themselves render requests).
+    # frames are themselves render requests).  The wait is 600 s (all-lens fix r2: when Auto's start-up calibration gives
+    # SwiftShader the still refinement -- 16 passes at 1200 x 900 -- the passes alone took ~350 s at load 8 on the
+    # shared machine and the row failed at 300 s; with the refinement forced on, ?quality=high, the page idled at 44 Hz
+    # after 367 s, no render requested once the passes were done).
     r9 = await js(pg, V + """T.enter('pilot', {motion: false}); T.finish(); V.advance(0.5);
       const I = V._internals, st = I.stage, p = st.picture, seen = [], t0 = performance.now();
       const rate = async (ms) => { let n = 0, on = true; const f = () => { n++; if (on) requestAnimationFrame(f); };
         requestAnimationFrame(f); await new Promise((r) => setTimeout(r, ms)); on = false; return n * 1000 / ms; };
       let hz = 0, idle = false;
-      while (performance.now() - t0 < 300000) {
+      while (performance.now() - t0 < 600000) {
         const r0 = st.stats.renders;
         hz = await rate(2000);
         if (seen[seen.length - 1] !== p.kind) seen.push(p.kind);
