@@ -2439,10 +2439,10 @@ async def fd_look_checks(page, shots=True):
          "yoke": ["yoke_white"], "sheep": ["sheepskin"], "lining_fd": ["lining_flightdeck"], "titanium": ["panel_titanium"],
          "display": ["display_page"]}
 
-    async def snap(name):
+    async def snap(name, k=2):
         await js(pg, "await window.viewer.frames(3);")
         path = OUT / f"{name}.png"
-        await pg.screenshot(path=str(path), timeout=SHOT_TIMEOUT * 2)
+        await pg.screenshot(path=str(path), timeout=SHOT_TIMEOUT * k)
         print(f"  shot {path.relative_to(ROOT)}")
         return path
 
@@ -2594,7 +2594,9 @@ async def fd_look_checks(page, shots=True):
         # the tour's controls hint (a dark pill with white text low in the frame) lies over the fleece at these poses:
         # hidden for the shot, as the toolbar / Panel button rows are masked below
         await js(pg, "const h = document.getElementById('tourHint'); if (h) h.style.visibility = 'hidden';")
-        pth = await snap(f"47b_fd_look_{nm}")
+        # (all-lens fix r2: the backs from the divider fill the frame with the 14 pile layers -- under the shared
+        # machine's load 13-24 that one SwiftShader shot ran past SHOT_TIMEOUT x 2 three times in a row: x 4)
+        pth = await snap(f"47b_fd_look_{nm}", k=4)
         await js(pg, "const h = document.getElementById('tourHint'); if (h) h.style.visibility = '';")
         mm = await js(pg, MAT_MASK, [G["sheep"]])
         kc = _ndi2.binary_erosion(np.array(mm["mask"].split(","), int).reshape(mm["H"], mm["W"]) == 1, iterations=10)
