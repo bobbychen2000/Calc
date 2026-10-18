@@ -677,6 +677,10 @@ const VIEWER = {
   // window light hardly differs between the divider, the lavatory and the arch, 0.10-0.17, so one darker base serves
   // them -- between P1046406's divider and P1046411 / 02's lavatory / arch exposures)
   veneer_walnut: { color: [0.094, 0.055, 0.042], envMapIntensity: 0.7, grain: { amp: 0.35, rough: 0.05, scale: [150, 150, 6], oct: 3 } },
+  // (all-lens r2 CAB2-01: the exec seats' tone-on-tone stitching -- at the club stop's 2-3 m its sub-pixel dashes read as
+  // scattered grey dots 30-50 levels under the leather; the GLB's 0.8 x the leather -> 0.95 x: the dashes' relief and
+  // the crease carry the seam up close, at a distance they melt into the leather)
+  stitch_light: { color: [0.428, 0.423, 0.413] },
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   // flight deck r1 LOOK (L5): no occlusion stand-in any more (the baked occlusion / window sky do it); brushed along the
