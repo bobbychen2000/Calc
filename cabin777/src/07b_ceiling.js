@@ -88,7 +88,7 @@ const CEILMAT = {
   emergBase: { c: '#eceae6', r: 0.5, l: LAYER.plastic, e: 0.06 },
   // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
   bezel: { c: '#e6e4df', r: 0.7, l: LAYER.plastic },   // vault tone (c120 speaker 188 on a 188 vault; w6a/w6b: a bright plank)
-  bezelIn: { c: '#a9a7a3', r: 0.7, l: LAYER.grille },   // darker perforated pocket (c120 slot) [V look, A tone]   // perforated face, near the vault tone (c119, c120; w5a/w5b: #d9d9d5 read grey) [V]
+  bezelIn: { c: '#cfcdc9', r: 0.7, l: LAYER.grille },   // perforated pocket a little darker than the vault (c120); baked with the vault since w7 [V look, A tone]
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
   lightPanel: { c: '#fffaf0', r: 0.5, e: 0.45 },
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
