@@ -1,0 +1,111 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": 11,
+  "score": 8.2,
+  "renderNote": "Rated on r11v/r11p/r11st/r11q (renders 17:11 UTC, HEAD ee521f1 + the w11 cameras in dbb98b5). They include the w10 commit 2b060c7 (door-3 barSoffit closures over the cove/grille/bin-crest ends, crest groove at x 0.724 / 18 mm). The working tree holds an uncommitted 08_bins.js paintBinDecals change (framed seat glyph + person). It is NOT in these renders: r11p/v6 still shows '33' followed by three seat strokes, so it was not rated. The door 1/2/4/5 cross-aisle ceilings are rated for the first time (d1*, d2*, d4*, d5*). They have no photo check, so they were judged for plausibility and for consistency with the aisle vault and the verified door-3 soffit. The aisle ceiling scores are essentially unchanged from w10. The overall score drops from 8.4 to 8.2 because the newly rated door zones are well below the rest of the ceiling: flat unshaded domes with no fittings, and a floating dark slab at door 2. Lighting notes (not scored): the bins still clip to near-white in q06/q13/q16, and fore-aft vault streaks remain (r11p/v12, x 1100-1400).",
+  "previousStatus": {
+    "fixed": [
+      "w9a medium (lighting): dark strip under the outboard bins. It stays a light-grey lip in r11v/v4 and v9, as in w10."
+    ],
+    "notFixed": [
+      "w9a/w10a/w10b low: crest-rail to vault groove. The x 0.724 / 18 mm move did not make it visible. In r11p/v12, on a normal line from (850,560) to (878,532), the readings are rail 246-250, a 1-px line at 202, rail 246-247 for 3 px, then vault 159-165. There is no dark channel; c120 shows a metallic dark band about 1/3 of the rail height.",
+      "w8b/w9a/w9b/w10a/w10b low: row-placard pictograms. r11p/v6 (1450,800) still reads '33' followed by three inverted-Y strokes. The fix is uncommitted and not in these renders.",
+      "w8b/w9a/w10a/w10b low: the vault speaker still has no shadow side. No code change since w10. The new close camera (r11p/v12 910-1180,240-410) shows a pale rounded rim, but there is no dark recess crescent as in c120 (490,175 in the 1000-px thumb). In the 1x views (v2 at 370,140 and v5 at 500,160) it is still a faint pale bar.",
+      "w10a low: bin door seams and latches vanish at QA distance. q13 and q16 bins read as plain white tubes, while py_37302 and y_47301 show door arcs and latch pockets. Exposure contributes.",
+      "w8a-w10b low (lighting): fore-aft vault streaks in r11p/v12 (vault x 1100-1400) and v1/v2."
+    ],
+    "partiallyFixed": [
+      "w8b-w10b low: door-3 white arcs. The barSoffit closures are in: the outboard end next to the bin crest is now dark (r11p/v3 (1200,200) = 69, (500,240) = 83). White curved slivers still sit between the near J-zone vault end, the EXIT sign and the bin tops: r11p/v3 (620,170) = 239 (left, x 450-700, y 140-250) and (1150,110) = 252 (right, x 1050-1240, y 90-130). They are lighter than the vault anywhere else (178), so they still read as a white arch round the tray. c133/c134 show dark soffit right up to the bins and walls.",
+      "w7a-w10b low: door 1/2/4/5 ceilings unverified. Review cameras now exist (d1*, d2*, d4*, d5*) and are rated below, but there is still no photo, so they remain unverified."
+    ],
+    "regressed": []
+  },
+  "details": [
+    {"detail": "Aisle vault panels, joint ribs + crest rib", "score": 8.6, "refs": ["b_lalf_c120", "b_lalf_c119"]},
+    {"detail": "Cove light band + slotted grille", "score": 8.7, "refs": ["b_lalf_c120", "y_47300"]},
+    {"detail": "Vault fittings (speaker, emergency light)", "score": 7.7, "refs": ["b_lalf_c120 vault (490,175)/(585,163) in 1000-px thumb"]},
+    {"detail": "Outboard bins (doors, latches, rail, seams)", "score": 8.4, "refs": ["y_47301", "py_37302", "b_lalf_c120"]},
+    {"detail": "Row placards", "score": 7.4, "refs": ["b_lalf_c120 '17' crop (0,0,420,200)"]},
+    {"detail": "Centre bins (doors, crest rail, caps, groove, PSU channel)", "score": 8.3, "refs": ["b_lalf_c120", "y_47300 (PSU channel edge lines L 0-50, matches r11p/v6 L 25)"]},
+    {"detail": "Outboard PSU band (shingles, housings, sign windows)", "score": 8.4, "refs": ["b_lalf_c26", "y_47301", "rb_omaat_room23"]},
+    {"detail": "Centre PSUs", "score": 8.4, "refs": ["y_47300", "b_sany_y22"]},
+    {"detail": "EXIT signs", "score": 8.5, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door-3 bar soffit (tray, frame, downlights, louvre, speaker, closures)", "score": 8.4, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door 1 cross-aisle ceiling (d1, d1b, r11p/d1)", "score": 7.0, "refs": ["none (plausibility; typical 777 door-area ceilings)"]},
+    {"detail": "Door 2 cross-aisle ceiling (d2, d2b)", "score": 6.5, "refs": ["none for door 2; dark soffit compared with b_lalf_c133/c134"]},
+    {"detail": "Door 4 cross-aisle ceiling (d4, d4b, v7)", "score": 7.0, "refs": ["none (plausibility)"]},
+    {"detail": "Door 5 cross-aisle ceiling (d5b; d5 is blocked by the curtain)", "score": 7.0, "refs": ["none (plausibility)"]},
+    {"detail": "Other monument ceilings (rear galley q19)", "score": 7.5, "refs": ["none"]}
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "detail": "Door 1/2/4/5 domes are flat, unshaded and brighter than the aisle vault",
+      "problem": "The light door domes render as one uniform tone with no falloff, no AO and no joints. A 200x100 px patch of the d1 dome reads exactly 229 everywhere (min = max = 229), and so do d4b and d5b. The aisle vault next to them reads 178 (v1, v2), with the baked grille-to-crease falloff. The door zones therefore read as glowing, featureless placeholder boxes, unlike the detailed vault on either side. Real 777 door-area ceilings use the same panel material as the vault, with visible panel joints and the same soft shading.",
+      "evidence": "r11v/d1_door1Cross (300-500,100-200) 229/229/229; r11v/d4b_door4Cross (300-500,180-260) 229/229/229; r11v/d5b_door5Cross (300-500,50-130) 229/229/229; vault r11v/v1 (330-420,60-120) mean 178",
+      "fix": "src/07b_ceiling.js door branch (l.288-293): after the DOME gSweep, bake the same falloff used for the vault (f = lerp(0.85, 0.66, clamp((xg - |x|)/(xg - 0.735), 0, 1)), applied per vertex as at l.255-259) onto the dome vertices. Drop the eFn base from 0.07 to about 0.02 so the shadow/AO terms can act. Add transverse joint ribs at z0 + 0.02 and z1 - 0.02, plus one at zc for zones longer than 1 m, using the existing vault rib material/profile. Target: dome centre about 0.95x the adjacent vault crest, with a visible gradient toward the shoulders."
+    },
+    {
+      "severity": "medium",
+      "detail": "Door 2: the dark passage soffit floats under a white dome, and the two files disagree about door 2",
+      "problem": "10_mono.js passageSoffit draws a dark slab (L 65) at y 2.13 across the door-2 passage. 07b_ceiling.js still sweeps a light dome above it (beyond the slab's far edge: L 253, blown out). The slab ends in a hard straight edge with no fascia, trim or step, and the white curved dome shoulders show behind it on both sides. In c133/c134 the dark soffit has a metallic edge trim and a vertical return down to a lighter header. d2 (looking forward) shows a cluttered stack under the door-2 EXIT sign: white arch, grey band 223, white plank 237 (the 1.30 m header box), grey band 223-229, then the dark slab 94-106. The source is also unclear: 07b says the c133/c134 dark tray is door 3 (the bar), while 10_mono cites the same lalf_133/134 photos for the door-2 galley passage.",
+      "evidence": "r11v/d2b_door2Cross slab (200-600,40-120) mean 65, beyond (300-500,330-380) mean 253, white dome arcs at x 200-260 and 540-600, y 320-390; r11v/d2_door2Fwd column x 400: y 100-140 = 223, y 150 = 237, y 160-240 = 214-229, y 250-290 = 94-106",
+      "fix": "src/07b_ceiling.js door branch: for zn.door === 1 (where 10_mono adds a passage soffit), give the DOME sweep CEILMAT.barSoffit, as at door 3, and skip the entry light strips there. Alternatively, add a 0.10-0.30 m vertical fascia (CEILMAT.barFrame on the dark side, CEILMAT.flat outside) from y 2.13 up to the dome along the slab's fore/aft edges. Ask the monuments owner (10_mono.js) to add a 15 mm metallic edge trim on the slab. Resolve with the user which door c133/c134 show (see questions)."
+    },
+    {
+      "severity": "low",
+      "detail": "Door domes have no fittings",
+      "problem": "Apart from two strip lights and two downlights, the door domes are empty. A 777 door/galley/lav area ceiling normally shows a PA speaker, an emergency light, a smoke detector next to the lavatories, and often attendant/lav-occupied indicators. The aisle vault next door has a speaker and an emergency light, so the door zones look less finished than the zones on either side.",
+      "evidence": "r11p/d1_door1Cross (whole dome, one downlight at 800,472); r11v/d5b_door5Cross; r11v/d4b_door4Cross",
+      "fix": "src/07b_ceiling.js door branch (non-bar): per dome add one vault-style speaker (reuse the vault speaker geometry, 0.30 x 0.06 m) at x = -0.9, an emergency light box (0.10 x 0.04 m, as on the vault) at x = +0.9, and at door 1/4/5 a 90 mm round smoke-detector disc (c '#e9e8e4', 8 mm proud, with a darker 3 mm vent ring) near the lavatory side."
+    },
+    {
+      "severity": "low",
+      "detail": "Door-3: white slivers remain at the upper corners of the tray (5th report, partly fixed)",
+      "problem": "The outboard closures are now dark. A bright curved surface remains between the near J-zone vault end, the EXIT sign and the bin tops on both sides. It reads 239-252, against 178 for the vault elsewhere, so it still looks like a white arch round the dark tray.",
+      "evidence": "r11p/v3_door3Up (620,170) = 239 (left region x 450-700, y 140-250); (1150,110) = 252 (right region x 1050-1240, y 90-130); closures (1200,200) = 69, (500,240) = 83",
+      "fix": "src/07b_ceiling.js: in the seat-zone vault bake (l.255-259), when the next or previous zone is the bar (bar(q)), darken the last 0.15 m of the vault toward the bar end (f *= lerp(1, 0.45, (z - (z1 - 0.15))/0.15)), or extend the barSoffit closure poly 0.02 m proud of the vault so it overlaps the vault's end edge. Re-check v3."
+    },
+    {
+      "severity": "low",
+      "detail": "Crest-rail to vault groove still invisible",
+      "problem": "Moving the groove to x 0.724 and widening it to 18 mm left no visible change. The rail meets the vault with only a 1-px mid-grey line. c120 shows a dark metallic channel with a specular line.",
+      "evidence": "r11p/v12_cPlacardClose normal line from (850,560): 249 -> 202 (1 px) -> 246 -> 159; ref c120 crop (0,0,420,200)",
+      "fix": "src/08_bins.js centerBinModule: replace the horizontal groove box with a riser face on the rail's outboard top edge, gBox(0.003, 0.016, L) at the rail's top tangent, coloured #6e7074 with r 0.35 and m 0.4. If the vault bottom edge hides it, lower the vault's inboard edge by 10 mm in 07b_ceiling.js so the channel opens toward the aisle."
+    },
+    {
+      "severity": "low",
+      "detail": "Row-placard pictograms (uncommitted fix not yet rendered)",
+      "problem": "The placards still show three inverted-Y seat strokes. c120 shows '17', then a framed seat glyph, then a person.",
+      "evidence": "r11p/v6_y34Eup (1450,800) '33' + three strokes; r11v/v9 (640,20) '36' + strokes",
+      "fix": "src/08_bins.js: commit the working-tree paintBinDecals change (framed seatBox + person) and re-render v6/v9. The v12/v13 cameras are too grazing to read a placard; add a view such as V(1.0, 1.55, 50.6, -0.55, 0.55)."
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker lacks a shadow side",
+      "problem": "In the 1x views the fitting is still a faint pale bar. c120 shows a crisp raised rim with a dark recess crescent along one long edge.",
+      "evidence": "r11v/v2 (370,140), r11v/v5 (500,160); r11p/v12 (910-1180,240-410)",
+      "fix": "src/07b_ceiling.js vault speaker: add a 6 mm dark strip (#8f8d89) inside the rim on the side away from the grille, and set bezelIn to about 0.90x the vault tone at 6 mm depth."
+    },
+    {
+      "severity": "low",
+      "detail": "Bin door seams and latch pockets disappear at QA distance (exposure contributes)",
+      "problem": "In q13/q16/q06 the bins read as smooth white tubes. py_37302, y_47301 and c_27312 show the door arcs and latch pockets clearly.",
+      "evidence": "r11q/q13_pyFront vs py_37302 (top band); r11q/q16_econAisle vs y_47301; r11q/q06_roomMain vs c_27312",
+      "fix": "src/08_bins.js: add a 2-3 mm dark core (#9ea2a8) inside the doorSeam bead, and darken the latch pocket ring to about 0.8x the door tone. Lighting team: pull bin-door exposure below clipping."
+    },
+    {
+      "severity": "low",
+      "detail": "Door-4 bin end: keyhole gap between the bin end cap and the dome",
+      "problem": "Looking across door 4, a narrow arched slot opens between the outboard bin's rounded end and the dome shoulder. The next zone's EXIT sign and a glowing strip show through it, which reads as unfinished trim.",
+      "evidence": "r11v/d4b_door4Cross (195-275, 240-345)",
+      "fix": "src/08_bins.js / 07b_ceiling.js: at bin runs ending at a door zone, add a flat end closure (CEILMAT.flat, 10 mm) from the bin crest up to the DOME profile at z = zone end, as is already done for the bar zone at l.284."
+    }
+  ],
+  "questionsForUser": [
+    "Which door do the b_lalf_c133/c134 dark-soffit photos show, door 2 (welcome galley) or door 3 (self-service bar)? 07b_ceiling.js puts the dark tray at door 3, and 10_mono.js also puts a dark passage soffit at door 2, citing the same photos.",
+    "Do you have any photo of the door 1, 2, 4 or 5 cross-aisle ceilings on the 212-seat 777-300ER? They are still unverified light domes.",
+    "Do you have a clear photo of an economy or PY row placard, to confirm the seat + person pictograms?"
+  ]
+}

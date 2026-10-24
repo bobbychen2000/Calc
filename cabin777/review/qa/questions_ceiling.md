@@ -16,3 +16,8 @@
 8. **Row placards.** c120 seems to show the row number, then a boxed seat-letter panel, then a standing-person pictogram. The model draws the row number and one side-view seat glyph per seat. Is there a clear close-up of an ANA 777 row placard?
 9. **Cove grille slats.** Are they lit white, as c120 suggests? The model now uses light backlit slots.
 10. **Vault fitting.** Is the bowed rounded rectangle on each vault panel in c120 a speaker or a recess? A close-up would settle its face finish.
+
+## Wave 3c (w11)
+
+11. **Which door is the bar at?** b_lalf_c133/c134 show the dark tray. `07b_ceiling.js` puts it at door 3 (the bar, per the seat map), and `10_mono.js` also uses the photos for a door-2 passage soffit. Which door do these photos show?
+12. **Door 1/2/4/5 ceilings.** They were rated for the first time in w11 (A 6.5-7.0, B 7.1-7.4), but no photo of them exists yet. The model keeps the light dome and, in w12, adds panel joints, a falloff, recessed strips, downlight rings, a speaker, an emergency light and a smoke detector. c133 shows the ceiling right at the door is light with small round fittings. A photo of any of them would settle it.

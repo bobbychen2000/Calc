@@ -89,10 +89,13 @@ const CEILMAT = {
   // per-panel raised panel: lit by the same cove wash as the vault around it (sany_10/11 show it barely darker) [A e]
   bezel: { c: '#e6e4df', r: 0.7, l: LAYER.plastic },   // vault tone (c120 speaker 188 on a 188 vault; w6a/w6b: a bright plank)
   bezelIn: { c: '#dedcd7', r: 0.7, l: LAYER.plastic },   // smooth face (w9a: c120 shows no slats)   // perforated pocket a little darker than the vault (c120); baked with the vault since w7 [V look, A tone]
+  bezelShadow: { c: '#8f8d89', r: 0.8 },
   flat: { c: '#efeeea', r: 0.72, l: LAYER.plastic },
-  lightPanel: { c: '#fffaf0', r: 0.5, e: 0.45 },
+  lightPanel: { c: '#fffaf0', r: 0.5, e: 0.3 },   // w11b: a flat 251 wedge beside the door-4 dome
   // narrow warm fore-aft light strip along the edge of the flat door-area panel (up_F_Forward-Look [V shape, colour])
   lightStrip: { c: '#fff4d6', r: 0.5, e: 0.8 },
+  stripHousing: { c: '#cfcecb', r: 0.6 },   // recess round the door-area strips [A]
+  ringLight: { c: '#d9d7d2', r: 0.4 },      // downlight trim ring [A]
   // cove diffuser band on the cove LED circuit (layer 12 = u_led): near white like the c119 / y22 band [V]
   cove: { c: '#ffffff', r: 0.5, l: 12, e: 0.36 },   // w6b: the inner half fell to 227 (c120 one bright field)   // the brightest thing in the ceiling (w3a)
   signBox: { c: '#e2e1dd', r: 0.45, l: LAYER.plastic },   // light housing (thrifty_j_cabin-1 header sign [V])
@@ -246,6 +249,8 @@ function buildCeilings(upper, layout) {
           upper.add(vaultPanel(0.70, side, zc, 0.34, 0.10, 0.025, 0.0015, 12, 0.03), null, CEILMAT.bezel);   // outer ring in vault tone (c120 ~1.06x; w7a)
           upper.add(vaultPanel(0.70, side, zc, 0.332, 0.092, 0.022, 0.003, 12, 0.03), null, CEILMAT.bezel);
           upper.add(vaultPanel(0.70, side, zc, 0.312, 0.074, 0.014, 0.0036, 12, 0.03), null, CEILMAT.bezelIn);
+          // recess shadow: a dark crescent inside the rim along one long edge (c120 [V]; w8-w11: a faint pale bar)
+          upper.add(vaultPanel(0.70, side, zc + 0.031, 0.30, 0.008, 0.004, 0.0039, 12, 0.03), null, CEILMAT.bezelShadow);
           upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), vaultXF(0.45, side, zc + 0.25, 0.003), CEILMAT.emergBase);
           upper.add(gRBox(0.05, 0.004, 0.022, 0.004, 1), vaultXF(0.45, side, zc + 0.25, 0.0068), CEILMAT.emerg);
         }
@@ -281,16 +286,34 @@ function buildCeilings(upper, layout) {
         for (const [z, q] of [[z0 - 0.006, zones[zi - 1]], [z1 + 0.006, zones[zi + 1]]]) {
           upper.add(gExtrude(poly, 0.01), M4.trs(0, 0, z), bar(q) ? CEILMAT.barSoffit : CEILMAT.flat);
           // ...and on to the outboard bin top, over the cove / grille / bin-crest ends (w9a/w9b/w10b: white arcs)
-          if (bar(q)) upper.add(gExtrude([[1.62 * side, 2.22], [2.35 * side, 2.22], [2.35 * side, 2.62], [1.62 * side, 2.62]], 0.01), M4.trs(0, 0, z), CEILMAT.barSoffit);
+          // every door, not just door 3: the dome stands ~0.1 m above the bin top there (w11a d4b: keyhole onto the next EXIT sign)
+          if (q && q.type === 'door') upper.add(gExtrude([[1.62 * side, 2.22], [2.35 * side, 2.22], [2.35 * side, 2.62], [1.62 * side, 2.62]], 0.01), M4.trs(0, 0, z), bar(q) ? CEILMAT.barSoffit : CEILMAT.flat);
         }
       }
     } else if (zn.type === 'door') {
       const zc = (z0 + z1) / 2;
       for (const side of [-1, 1]) {
         const prof = DOME.map(([x, y]) => [x * side, y]);
-        const eFn = (p) => { const ax = Math.abs(p[0]); return ax > 2.55 ? 0.5 : 0.07 + 0.16 * Math.exp(-(2.55 - ax) / 0.3); };   // w1: floor 0.03 read grey #c8c8c8
+        // emission ramps up toward the door instead of stepping to 0.5 (w11b: a flat 254 band at the door end) [A]
+        const eFn = (p) => { const ax = Math.abs(p[0]); const q = clamp((ax - 1.7) / 1.05, 0, 1); return 0.06 + 0.2 * q * q * (3 - 2 * q); };   // w1: floor 0.03 read grey #c8c8c8
         // door 3: the whole soffit is dark wall to wall (b_lalf_c133/c134; w6b: a dark patch inside a white dome)
-        upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: 2 }), null, zn.door === 2 ? CEILMAT.barSoffit : { ...CEILMAT.vault, eFn });
+        const v0 = upper.p.length / 3;
+        upper.add(gSweep(prof, z0, z1, { side: side > 0 ? 1 : -1, zsteps: 6 }), null, zn.door === 2 ? CEILMAT.barSoffit : { ...CEILMAT.vault, eFn });
+        if (zn.door !== 2) {
+          // two transverse panel joints (raised rib + aft shadow lip, as on the aisle vault) splitting the dome into
+          // three panels (c133: a light panelled ceiling outboard of the bar tray [V look]; 0.4 m panels [A])
+          for (const f of [-1, 1]) {
+            const zj = zc + f * 0.2;
+            upper.add(profileRibbon(DOME, side, zj, 0.014, 0.004), null, CEILMAT.rib);
+            upper.add(profileRibbon(DOME, side, zj + 0.0085, 0.005, 0.0022), null, CEILMAT.ribShadow);
+          }
+          // baked falloff like the aisle vault: x0.92 at the door wall -> x0.76 at the crown, over the dome and its
+          // ribs (w11a/w11b: the dome read one flat 229-230 field next to a 178 vault) [D]
+          for (let k = v0; k < upper.p.length / 3; k++) {
+            const f = lerp(0.76, 0.92, clamp((Math.abs(upper.p[k * 3]) - 0.6) / 2.0, 0, 1));
+            for (let c = 0; c < 3; c++) upper.c[k * 4 + c] = Math.round(upper.c[k * 4 + c] * f);
+          }
+        }
       }
       if (zn.door === 2) {
         // door-3 (bar) cross-aisle: a flat dark tray across the aisle in a light frame, two rows of round downlights
@@ -315,8 +338,27 @@ function buildCeilings(upper, layout) {
       } else {
         // entry lights: two narrow fore-aft strips along the edges of the flat centre panel (up_F_Forward-Look [V];
         // 70 mm wide, x = ±0.55 [A])
-        for (const s of [-1, 1]) upper.add(gRBox(0.07, 0.012, Math.max(0.2, z1 - z0 - 0.25), 0.02, 1), M4.trs(0.55 * s, 2.505, zc), CEILMAT.lightStrip);
-        for (const dx of [-1.45, 1.45]) upper.add(gCyl(0.045, 0.045, 0.012, 14), M4.trs(dx, ceilOutline('door', dx) - 0.008, zc), { c: '#fffaf0', r: 0.4, e: 0.75 });
+        // strips sit in a recessed light-grey housing, lit lower (w11b: two bare 253 planks) [A]
+        const ls = Math.max(0.2, z1 - z0 - 0.25);
+        for (const s of [-1, 1]) {
+          upper.add(gRBox(0.10, 0.006, ls + 0.03, 0.02, 1), M4.trs(0.55 * s, ceilOutline('door', 0.55) - 0.001, zc), CEILMAT.stripHousing);
+          upper.add(gRBox(0.07, 0.008, ls, 0.02, 1), M4.trs(0.55 * s, ceilOutline('door', 0.55) - 0.003, zc), { ...CEILMAT.lightStrip, e: 0.55 });
+        }
+        // downlights with a trim ring, as at door 3 (c133 [V])
+        for (const dx of [-1.45, 1.45]) {
+          const y = ceilOutline('door', dx), a = Math.atan2(ceilOutline('door', Math.abs(dx) + 0.01) - ceilOutline('door', Math.abs(dx) - 0.01), 0.02) * Math.sign(dx);
+          upper.add(gCyl(0.055, 0.055, 0.006, 18), M4.trs(dx, y - 0.003, zc, 0, 0, a), CEILMAT.ringLight);
+          upper.add(gCyl(0.04, 0.04, 0.006, 18), M4.trs(dx, y - 0.005, zc, 0, 0, a), CEILMAT.downlight);
+        }
+        // on the flat crown between the strips: a rounded speaker grille, an emergency light and a smoke detector
+        // (c133: speaker + small lit fitting on the door-area soffit [V]; positions [A])
+        const yc = ceilOutline('door', 0);
+        upper.add(gRBox(0.30, 0.006, 0.10, 0.025, 1), M4.trs(0, yc - 0.002, zc - 0.32), CEILMAT.bezel);
+        upper.add(gRBox(0.27, 0.004, 0.075, 0.02, 1), M4.trs(0, yc - 0.005, zc - 0.32), { c: '#a9a7a3', r: 0.7, l: LAYER.grille });
+        upper.add(gRBox(0.07, 0.008, 0.04, 0.005, 1), M4.trs(0, yc - 0.004, zc + 0.32), CEILMAT.emergBase);
+        upper.add(gRBox(0.05, 0.004, 0.022, 0.004, 1), M4.trs(0, yc - 0.0085, zc + 0.32), CEILMAT.emerg);
+        upper.add(gCyl(0.05, 0.05, 0.02, 18), M4.trs(-0.25, yc - 0.01, zc), CEILMAT.flat);
+        upper.add(gCyl(0.03, 0.03, 0.004, 18), M4.trs(-0.25, yc - 0.021, zc), CEILMAT.ribShadow);
       }
       // bilingual EXIT signs on the fascia facing fore and aft (up_F_Forward-Look [V]; 0.40 x 0.10 m face [A])
       for (const f of [-1, 1]) {

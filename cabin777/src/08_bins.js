@@ -45,6 +45,7 @@ const BINMAT = {
   bandC: { c: '#dcdcda', r: 0.5, l: LAYER.plastic, e: 0.08 },   // w6a: channel 154-163 vs 190-209 in y_47300   // channel ~0.76 of the door in y_47300 (w3b) [V]
   housingC: { c: '#bfc0bf', r: 0.5, l: LAYER.plastic, e: 0.05 },   // centre PSU housings: bandC x0.86 (not baked by shadeUpper; w5 render read white) [D]
   signPod: { c: '#2a2e34', r: 0.45 },
+  seamCore: { c: '#9ea2a8', r: 0.8 },   // [A] (w10a/w11a fix suggestion)
   seam: { c: '#c3c6ca', r: 0.8, e: 0.08 },   // soft light joint, not a dark hairline (c120, c_th1, b_sany_y22 [V]; w8a: 0.59x read hard)
   lipGap: { c: '#4a4f56', r: 0.8 },
   lipLine: { c: '#9ea2a7', r: 0.8 },   // door/band junction: thin mid-grey line (b_lalf_c26, c120; w5a/w5b: a 12 mm #4a4f56 slot read black) [V]
@@ -66,7 +67,7 @@ const BINMAT = {
   groove: { c: '#9aa0a6', r: 0.7 },
   cap: { c: '#d6d6d3', r: 0.4, l: LAYER.plastic },   // 0.92x the rail (w9b)
   capGap: { c: '#b8b8b6', r: 0.8 },
-  crestGroove: { c: '#8a8c90', r: 0.5, m: 0.3 },
+  crestGroove: { c: '#74777c', r: 0.35, m: 0.45 },   // dark metallic channel with a specular line (c120 [V look]; w11a/w11b: #8a8c90 never read)
   joint: { c: '#dcdedf', r: 0.7 },
   riser: { c: '#d2d3d4', r: 0.7, l: LAYER.plastic, e: 0.14 },   // lit edge-on, so self-lifted to ~0.85x the band (y_47301; w7a/w8a/w8b pinstripes)   // w7a: #a9acb0 read as dark pinstripes (y_47301 ~200 on 235)   // shingle step face (w5b) [A]
   psuBox: { c: '#e6e6e3', r: 0.4, l: LAYER.plastic },
@@ -198,7 +199,11 @@ function addDoor(B, face, L, xs, inward, mat = BINMAT.door) {
   B.add(gExtrude(faceShell(face, xs, inward, 0.006, 0.004), L - 0.006, 45), null, mat);
 }
 // hairline between modules: fills the 6 mm door gap just below the skin (w1: a 12 mm gap read as a black arc)
-const doorSeam = (B, face, xs, inward, z = 0) => B.add(gExtrude(faceShell(face, xs, inward, 0.0058, 0.002), 0.0064, 45), M4.trs(0, 0, z), BINMAT.seam);
+// light bead with a 2.5 mm darker core so the joint survives at QA distance (y_47301 dark arcs; w10a/w11a: vanished at 10 m)
+const doorSeam = (B, face, xs, inward, z = 0) => {
+  B.add(gExtrude(faceShell(face, xs, inward, 0.0058, 0.002), 0.0064, 45), M4.trs(0, 0, z), BINMAT.seam);
+  B.add(gExtrude(faceShell(face, xs, inward, 0.0060, 0.002), 0.0025, 45), M4.trs(0, 0, z), BINMAT.seamCore);
+};
 // baked shading for the bins (the shader's hemisphere fill leaves them flat): x1.0 (ny 0.5) .. x0.95 (facing down),
 // continuous in the normal, calibrated on photo samples (y_47301 door #c7c6cb..#dcdcdc, bin bottom #c0c3c8,
 // centre bin #c2c3c7; c_27312 centre bin #c3c7cb; py_37302 door #b2bcc6, vault #f0f1ef) [D factors; r2 raised
@@ -258,7 +263,8 @@ function centerBinModule() {
     addDoor(B, CBIN_DOOR, L, s, -1, BINMAT.doorC);
     addLatch(B, faceM((hx + 0.006) * s, hy, htx * s, hty, 0, s));
     // plain crease filler where the vault meets the centre-bin crest (no cove light on this edge: see 07b header)
-    B.add(gBox(0.05, 0.01, L - 0.006), M4.trs(0.70 * s, 2.268, 0), BINMAT.door);
+    // ...in the groove's dark metallic tone: light, it filled exactly where c120 shows the dark channel (w11b)
+    B.add(gBox(0.05, 0.01, L - 0.006), M4.trs(0.70 * s, 2.268, 0), BINMAT.crestGroove);
     // dark recessed groove between the crest rail and the vault (c120 [V]; 14 mm [A]; w9a)
     B.add(gBox(0.018, 0.004, L), M4.trs(0.724 * s, 2.258, 0), BINMAT.crestGroove);   // w10b: at 0.712 it hid under the rail
     // raised top rail along the crest, carrying the row placard (b_lalf_c120 '17' on the centre-bin top [V]; 18 mm [A])
