@@ -309,7 +309,7 @@ function monoLayoutQA(L) {
   const d1R = find('closet', 1.62, 7.40); if (d1R) d1R.back = 'F';
   // w1: charcoal curtains in both F aisles at the front wall (ffF_cabin-overview-from-aisle, tpa_IMG_0220, tpg_147)
   // w5: one loose untied drape per aisle, gathered against the centre wall (omaatF_ANA-First-Class-Suite-777-40, ml_DSC_1914)
-  for (const [a, b] of [[-1.68, -0.88], [0.82, 1.62]]) M('curtain', a, b, 7.43, 7.43, { xg: a < 0 ? b - 0.26 : a + 0.26, tone: 'F', h: 0 });
+  for (const [a, b] of [[-1.68, -0.88], [0.82, 1.62]]) M('curtain', a, b, 7.43, 7.43, { xg: a < 0 ? b - 0.15 : a + 0.15, tone: 'F', h: 0 }   /* w8b: bunched at the wall edge */);
   // w1: door-2 forward monuments seen from rows 5-6 are cream J laminate with wall boxes (tpg_70 / _71), curtains tied
   // back at both aisle openings; the passage between the two centre galleys has a dark soffit (lalf_133)
   for (const m of mon) if (near(m.z0, 14.86) && near(m.z1, dz[1][0])) { m.back = 'J'; if (m.welcome) m.soffitTo = dz[1][1]; }

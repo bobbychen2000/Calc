@@ -329,9 +329,8 @@ function buildWelcomeGalley(B, m) {
   for (const sx of [-1, 1]) B.add(gBox(0.05, 0.8, 0.03), V(gc + 0.02 + sx * 0.195, 1.44, o + 0.085), MONMAT.welcomeChar);
   for (const sy of [-1, 1]) B.add(gBox(0.44, 0.05, 0.03), V(gc + 0.02, 1.44 + sy * 0.375, o + 0.085), MONMAT.welcomeChar);
   // w7a/b: a smoked pane with sheen in front (no alpha: shelf shadows are drawn on the pane, kna_31_full / lalf_133)
-  B.add(gQuad(0.34, 0.70), V(gc + 0.02, 1.44, o + 0.088), { c: '#5d5b56', r: 0.08, m: 0.2 });
+  B.add(gQuad(0.34, 0.70), V(gc + 0.02, 1.44, o + 0.088), { c: '#6a645f', r: 0.08, m: 0.15, e: 0.08 });   // w8b: lit pane (lalf_134 #5f5151-#64575e)
   for (const y of [1.2, 1.45, 1.7]) B.add(gQuad(0.34, 0.012), V(gc + 0.02, y, o + 0.0885), { c: '#3a3835', r: 0.2 });
-  B.add(gQuad(0.05, 0.66), M4.mul(V(gc - 0.04, 1.44, o + 0.0887), M4.trs(0, 0, 0, 0, 0, 0.1)), { c: '#77766f', r: 0.05, m: 0.3 });
   B.add(gCyl(0.05, 0.05, 0.016, 20), M4.mul(V(gc - 0.17, 1.44, o + 0.104), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.welcomeChar);   // round boss
   B.add(gCyl(0.028, 0.028, 0.016, 16), M4.mul(V(gc - 0.17, 1.44, o + 0.118), M4.trs(0, 0, 0, 0, Math.PI / 2)), MONMAT.latch);
   B.add(gRBox(0.26, 0.07, 0.012, 0.035, 2), V(gc, 1.92, o + 0.02), { c: '#e9e2cf', r: 0.5 });          // w7: single cream oval tag
