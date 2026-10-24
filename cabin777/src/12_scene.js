@@ -46,8 +46,11 @@ const MOODS = {
   // Levels [D]: the raters' fit ([0.05, 0.06, 0.30] hemi, vault [0.04, 0.05, 0.35]) read 1.7x the sany_47 mean (bl16f
   // 50/60/139, crown #1a207e) with the THE Suite ottoman at L23 (ml #454987 L77) and the wall over-saturated (#7184eb vs
   // #5a61b2), so a darker deep-blue top (hemiTop, vault: crown #181a39), a lavender seat level (lowTint / lowGain, ml
-  // ottoman / console G/R ~1.05, B/R ~1.9) and a weaker lens; emisGain as Night (signs dimmed)
-  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.025, 0.028, 0.10], lowTint: [1.8, 1.7, 1.0], lowGain: 1.2, monFill: [0.06, 0.05, 0.035], cove: 0.35, k: 1, exposure: 2.0, screenGain: 0.6, scrSpill: 1, emisGain: 0.55, strips: true },
+  // ottoman / console G/R ~1.05, B/R ~1.9) and a weaker lens; emisGain as Night (signs dimmed). Second pass: the two
+  // photos are exposed ~2x apart (sany_47 mean 29/28/81, ml_DSC_1945 81/79/111), exposure 1.7 sits between them, the
+  // bin doors' fill lift at 0.4 (sany_47 dark bins under bright cove lines), seat level x1.6 (b8: Y mean 49/56/124,
+  // F ottoman L26) [D renders]
+  blue: { label: 'Blue', hemiTop: [0.035, 0.04, 0.21], hemiBot: [0.008, 0.009, 0.035], wash: [0.015, 0.015, 0.07], led: [0.06, 0.08, 1.0], sideLed: [0.05, 0.06, 0.70], bandCut: 0.8, sideLow: 0.6, vault: [0.025, 0.028, 0.10], lowTint: [1.8, 1.7, 1.0], lowGain: 1.6, fillLift: 0.4, monFill: [0.06, 0.05, 0.035], cove: 0.35, k: 1, exposure: 1.7, screenGain: 0.6, scrSpill: 1, emisGain: 0.55, strips: true },
   // dining / sunrise, QA r2: ANA's amber phase is a saturated amber LED line on the bin lens and cove, amber-washed bin
   // faces and a much darker lower cabin, not a beige high key [V: ff_door-gap lens #ffa43d (h32 s0.76), bins #955b2d /
   // #673e1e (s ~0.7)]. Sunrise uses the same levels with a pinker LED [A: no ANA sunrise photo]

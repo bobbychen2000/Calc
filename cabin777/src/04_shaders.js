@@ -204,9 +204,9 @@ void main(){
   // night; lamps use e >= 0.2) is a fill lift for faces the hemisphere fill under-lights (08_bins doorC / bandC), not a lamp: it
   // follows the cabin light colour and level (1 at boarding / cruise), so the dimmed moods do not leave the centre bins
   // glowing grey (QA r2 night: #a0a1a3 vs ucr_room-night-lighting bins #322a1f) [D]
-  // QA r2 (light): x u_fillLift per mood (0.35 in the amber moods): the lift kept the PSU band glowing tan in the amber
-  // phase, where the photos show it as a dark amber-brown strip beside the clipped lens [V: ff_door-gap PSU band
-  // #603b1d L65, ucr_the-room-cabin #6f482a L79 vs q21 #ad7c42 L131, d06 #926532]
+  // QA r2 (light): x u_fillLift per mood (0.15 in the amber moods, 0.4 in Blue): the lift kept the PSU band glowing
+  // tan in the amber phase, where the photos show it as a dark amber-brown strip beside the clipped lens [V: ff_door-gap
+  // PSU band #603b1d L65, ucr_the-room-cabin #6f482a L79 vs q21 #ad7c42 L131, d06 #926532]
   if (emis > 0.0 && (layer < 12 || layer > 15))
     emissive += base * emis * 3.0 * (emis < 0.2 ? min(u_hemiTop / 0.8, vec3(1.0)) * u_fillLift : vec3(u_emisGain));
   // specular anti-aliasing: widen roughness where the normal varies across pixels
@@ -252,7 +252,14 @@ void main(){
     // QA r3: up-facing floor (fl) takes the AO 2.5 cm above the carpet as well, so the seat bases / monument toes
     // leave a contact line [V: c_27312 dark line along every monument base]
     float fl = step(0.7, N.y) * (1.0 - smoothstep(0.02, 0.15, v_wpos.y));
-    if (fl > 0.5) ao = min(ao, texture(u_ao, (v_wpos + N*0.025 - u_aoMin) / u_aoSize).r);
+    // QA r2 (integration): aoPk = the pocket AO for the floor / underside terms below: on the carpet the larger of the
+    // AO here and 0.35 m up, which stays low under a seat pan but opens up in an aisle next to a bulkhead or curtain
+    // (the plain AO darkened the q13 PY aisle to < 30 vs py_37302 charcoal carpet ~L45-60) [D]
+    float aoPk = ao;
+    if (fl > 0.5) {
+      ao = min(ao, texture(u_ao, (v_wpos + N*0.025 - u_aoMin) / u_aoSize).r);
+      aoPk = max(ao, texture(u_ao, (v_wpos + vec3(0.0, 0.35, 0.0) - u_aoMin) / u_aoSize).r);
+    }
     float up = clamp(N.y*0.5 + 0.5, 0.0, 1.0);
     float down = clamp(-N.y, 0.0, 1.0);
     vec3 hemi = mix(u_hemiBot, u_hemiTop, up);
@@ -329,7 +336,7 @@ void main(){
     // QA r2 (integration): carpet under the seat pans / between the seat legs loses most of its bounce too (the
     // occluded floor read L35-50 against < 30 in the photos) [V: y_47300 bottom band < 30 20 % vs q15 3.2 %]
     // (only where the volume reads occluded, ao < ~0.4: the open aisle keeps its level, render tuning [D])
-    bounce *= mix(1.0, 0.6, fl * (1.0 - smoothstep(0.1, 0.4, ao)));
+    bounce *= mix(1.0, 0.6, fl * (1.0 - smoothstep(0.1, 0.4, aoPk)));
     // QA r3: unoccluded share of the hemisphere (u_aoTune.x, was 0.15) and a bounce gain (u_aoTune.y), AO_TUNE in
     // 12_scene.js: vertical faces between the seats read 2-3x too dark against the lit tops (charcoal shells #191b1f
     // vs c_27312 #394049-#414755, ash ends #848078 vs #bdbaab)
@@ -359,7 +366,7 @@ void main(){
     // vs q13 14.6 %; c_27312 < 30 18.4 % vs q06 12.7 %; frame p5 y_47300 21 vs q15 40] (from_econ w14)
     // The raters' AO ramp 0.08-0.55 (floor 0.25) also took ~30 % off the open aisle carpet (ao ~0.35-0.5) and crushed
     // q16 / q13 to p5 10 / 8 (y_47301 21, py_37302 25): ramp 0.05-0.35, floor 0.3 [D renders r2a]
-    float crevF = (1.0 - mix(0.3, 1.0, smoothstep(0.05, 0.35, ao))) * (1.0 - smoothstep(0.30, 0.50, v_wpos.y))
+    float crevF = (1.0 - mix(0.3, 1.0, smoothstep(0.05, 0.35, aoPk))) * (1.0 - smoothstep(0.30, 0.50, v_wpos.y))
                 * max(fl, step(0.3, down)) * (1.0 - wallProx*facingIn);
     amb *= 1.0 - crevF;
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
