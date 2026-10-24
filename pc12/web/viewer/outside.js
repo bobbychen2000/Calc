@@ -98,6 +98,9 @@ const CONES = [[-9.5, 1.5], [-9.5, -3.5], [9.5, 1.5]];
 // does not move.  No markings, no lettering.
 const ROOFS = ['gable', 'barrel', 'flat', 'gable', 'flat'];
 const ANNEX = [[0, 20, 24, 7.0, 9], [1, 16, 18, 6.0, 8], [4, -28, 28, 7.5, 10], [3, 0, 16, 5.5, 7]];
+// the same apron and buildings for the cockpit displays' synthetic vision / SafeTaxi (avionics.js): [cx, cz, w, h, d]
+export const WORLD = { apron: GROUND.apron, hangars: HANGARS.map((h) => h.slice(0, 5)),
+  annex: ANNEX.map(([hi, off, aw, ah, ad]) => [HANGARS[hi][0] + off, HANGARS[hi][1] + 0.5 * HANGARS[hi][4] + 0.5 * ad, aw, ah, ad]) };
 // [x, z, heading deg (0 = nose to -Z), scale]
 const JETS = [[-104, -70, 120, 1.0], [104, -60, 235, 1.05], [-10, -150, 175, 0.95], [-28, -118, 205, 1.0]];
 const HIGHWING = [[-14, -86, 75, 1.0], [8, -102, 160, 0.95]];

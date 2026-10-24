@@ -76,7 +76,10 @@ python3 test/shot.py out/x.png "f=../out/pc12.glb&cam=-9,4,-3&tgt=0,1.4,6.6&fov=
 python3 test/viewer_test.py     # viewer checks + screenshots (headless Chromium / SwiftShader, ~60-85 min, 236 checks; slower on a
                                 #   loaded machine -- rerun once on a screenshot / click timeout); [T1]-[T18] the interior tour
                                 #   (--only tour: those alone on the desktop page, ~6 min; --only prop / phone / picture / sound likewise;
-                                #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min)
+                                #   --only fdlook: [FD-L1]-[FD-L11] the flight-deck look, ~30 min; --only avx: [AVX-1]-[AVX-15] the
+                                #   live G3000 PRIME pages, ~20 min)
+node test/avx_model_test.mjs    # the live avionics' engine / atmosphere model (engine.js, env.js) against the POH / TCDS
+                                #   figures and the start / feather / shutdown timings (pure JS, ~2 s)
 python3 test/viewer_test.py --only sound --sound-out DIR   # the engine-sound section alone (~2 min): its checks + the
                                 #   offline renders DIR/pc12_engine_sequence.wav + spectrogram.png, pc12_sound_loudest /
                                 #   _close_idle / _steady / _pilot.wav (default out/tmp/viewer/sound)
@@ -2213,3 +2216,43 @@ nose-gear stowage tunnel and brace link split, livery details (camera-matched ph
   build re-meshes the yokes (~24 min) to 43,008 triangles each (42,868 committed before), printed OVER the 43k cap
   (track 3 raises the cap; the lead reconciles at the merge).  Tools (scratch, not committed): a look-dev pose harness
   over viewer_test's helpers, a baseline worktree of e3d0a17 rendered with its own viewer.
+- Live G3000 PRIME displays + Environment knobs (track 2, branch claude/pc12-live-avionics; owner 2026-10-18 "the actual
+  characteristics, not screenshots ... if I turn on props, you can see gauges moving", "some control knob ... to tweak the
+  environment"; owner 2026-10-24: the labels ON by default).  Viewer only, no GLB change (the GLB's static atlas stays the
+  fallback: ?avx=0, other glTF viewers, an error).  `web/viewer/avionics.js`: one CanvasTexture `g3000_live` replaces the
+  'display_page' emissive map before the materials are cloned; each page (pfd_L / pfd_R / mfd / sdu_L / sdu_R at their
+  GLB meta 'displays' rectangles) is drawn into its own canvas when its quantised view key changes (avx_pages.js view*),
+  at most 20 Hz (phones 10; 2 Hz under 120 px on screen, none under 24 px / off screen), and uploaded alone
+  (copyTextureToTexture, mips once per batch); parked and still nothing is drawn, uploaded or rendered ([AVX-14]).  While
+  pages change the glass joins Stage.overlay (picture.js: the still without it, the glass composed over it), sampled with
+  a texture LOD bias of -log2(the still's scale), capped at -0.5 (materials.js U.avxBias, ?avxbias=) so the pages keep the still's
+  sharpness; the glass stays in the overlay for as long as the spinning propeller's disc is there (a still under the disc
+  is not re-rendered for a page change).  `verify()` reads
+  the GPU's copy (level 0 and 1) back against the canvases ([AVX-13]).  `avx_pages.js` the pages (PFD with SVT, HSI,
+  tapes, CAS; MFD with the engine strip, map, VSD; SDU flight plan / take-off data), `avx_font.js` stroke numerals and
+  LEGENDS (labels as a condensed system sans squeezed to 1.9 x the stroke layout's room; ?avxlabels=0 abstract strokes;
+  no brand words -- 'SafeTaxi' became 'Airport'; a plausible EDNY RW24 departure with invented fixes).  `engine.js` ONE
+  engine model (the sound reads it too, kin.gg === kin.eng): PT6E-67XP + Hartzell laws inside the POH limits (ground
+  idle 64.5 % Ng / >= 1,000 rpm, T/O flat 44.3 psi to the 850 C ITT limit, reverse governed 1,615 rpm), fix r1 (pilot
+  judges r1 7.4 -> r2 7.6 -> r3 8.0): the start at a PT6's pace (`START`: 13 % Ng in ~4.6 s, light-off 2 s after the fuel
+  ~6.6 s at ~15 %, 1.4 .. 3.6 %/s, ground idle ~28 s, the propeller turning with the power turbine from the light-off),
+  the run-down ~32 s (Ng) / ~20-25 s (propeller); running, the torque meter reads the turbine's torque at the CURRENT Ng
+  (rises with Ng, idle -> T/O ~4 s; `NG_RATE` 8 / 7 %/s); feather selected with the engine running (pitch >=
+  `FEATHER_SEL` 55) = Ng to ground idle and the propeller on its power balance (`J_PROP` 26 kg m^2; the static Cp stays
+  high past the stall to feather) down to ~600 rpm, no torque spike; a pitch the rating cannot turn droops the propeller
+  at the rating; ITT amber above 820 C, the unlit ITT follows the cooling hot section; QTY amber with fuel low;
+  upper-case CAS strings (FUEL LOW, TAKEOFF CONFIG -- only with power set for take-off --, STARTER, GPU).  `env.js` the
+  ISA day of the Animate tab's Environment panel (OAT, elevation, QNH inHg / hPa, wind, fuel, ground power; localStorage
+  'pc12.viewer.env', ?oat= ?elev= ?qnh= ?wind= ?fuel= ?gpu=) through first principles to the engine and the air data;
+  a T/O button sets the day's rating.  Tests: node test/avx_model_test.mjs (34), viewer_test --only avx [AVX-1]-[AVX-15],
+  artifact_test's live-pages row per scenario; the sound / prop-spool rows retimed to the slower start (SOUND_SCRIPT:
+  1,700 at 34 s, 100 s render).  Decisions (owner-delegated): the amber readouts stay reverse video (G1000 / G3000
+  practice); the TRQ green arc to 40.63 kept (the recovered table); the cold-day idle Np above 1,000 kept (the power
+  balance); no generator-off CAS with the engine stopped (P1046410 shows the parked pages without them).  Verified (1ce7fa0): avx_model_test 34 / 34;
+  the FULL viewer_test 249 / 251 (88 min) with two [PQ] rows of the picture section (Auto's calibration under load, one
+  gl.getError() 1282) -> `--only picture` 15 / 15 on a rerun; `--only avx` 16 / 16, `--only sound` 25 / 25, `--only prop`
+  28 / 28 (the prop pixel rows had projected their ring through a stale camera matrix: projected after a frame now);
+  web/package.py verify OK (meshopt 18.15 + 15.62 MB); the Artifact bundle in 2 publishes; artifact_test (76 rows: + the
+  live pages under the CSP per scenario).  Judges r3: pilot 8.0, picture 8.0 (no blocker / major).  Open (minors): the
+  close-ups a little washed out by the cover glass' reflection, a mip regeneration per upload batch at liveScale 2, the
+  phone tier soft in close-up (scale 1), CAS wording / generator amps per the real NGX unknown.

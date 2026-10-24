@@ -8,6 +8,8 @@ import { Build } from './build.js';
 import { PartsPanel, InfoCard, DrawingViewer, buildSpecs } from './panels.js';
 import { Tour, TourUI, TOUR, project as tourProject, toGL } from './tour.js';
 import { Sound, renderOfflineWav } from './sound.js';
+import { Environment, ENV_DEFAULTS, ENV_LIMITS, HPA_PER_INHG } from './env.js';
+import { Avionics, prepareLiveAtlas, liveScale, AVX } from './avionics.js';
 
 const $ = (id) => document.getElementById(id);
 const app = $('app');
@@ -60,6 +62,8 @@ function fail(err, what) {
 
 let stage, model, kin, build, parts, info, drawings, meta, tour, tourUI;
 let sound = null;      // engine / propeller sound (sound.js)
+let env = null;        // the Environment knobs (env.js)
+let avx = null;        // the live G3000 PRIME pages (avionics.js)
 const S = {
   explode: { target: 0, cur: 0 },
   cutUser: false, xray: false, lines: false,
@@ -147,6 +151,7 @@ function onContextChange(lost) {
   } else {
     note.hidden = true;
     if (stage) { stage.needsRender = true; forceFrames = Math.max(forceFrames, 2); }
+    if (avx) avx.contextRestored();
   }
 }
 
@@ -157,6 +162,14 @@ async function init(gltf, matSpec) {
     PRESETS.cockpit.pos = meta.cockpit.design_eye.slice();
     PRESETS.cockpit.target = meta.cockpit.target.slice();
   }
+  // the live cockpit displays: the GLB's page atlas becomes a canvas texture before the materials are cloned
+  // (avionics.js); the day of the Environment knobs (env.js: localStorage, ?oat= ?elev= ?qnh= ?wind= ?fuel=)
+  env = new Environment();
+  let live = null;
+  try {
+    const caps = stage.picture.caps;
+    live = prepareLiveAtlas(gltf, { scale: liveScale({ low: stage.quality.low, software: caps.software, maxSize: caps.maxSize }) });
+  } catch (e) { console.warn('live displays unavailable:', e); live = null; }
   // the crew seats' shell fur: 8 layers on the low quality tier (phones), 14 elsewhere (materials.js FUR, ?furN=)
   model = new Model(gltf, meta, { materials: matSpec, fur: FUR.on ? (FUR.n || (stage.quality.low ? 8 : 14)) : 0 });
   // part cards: the triangle counts of the GLB this page loaded (the light tier on phones: its node extras)
@@ -165,6 +178,9 @@ async function init(gltf, matSpec) {
   stage.addToContactLayer(model.root);
   stage.setModelBox(model.box, model.silhouettePoints());
   kin = new Kinematics(model);
+  kin.setEnv(env);
+  try { avx = live ? new Avionics({ model, stage, kin, env, live, low: stage.quality.low }) : null; }
+  catch (e) { console.warn('live displays off:', e); avx = null; }
   build = new Build({ model, meta, scene: stage.scene, labelsEl: $('labels') });
   // interior tour: the pilot stop is the cockpit camera of the metadata when it carries one (the same design eye)
   if (meta.cockpit && meta.cockpit.design_eye_model && meta.cockpit.target_model) {
@@ -486,6 +502,63 @@ function setDoor(id, v, { instant = false } = {}) { kin.setDoor(id, v, instant);
 function setTable(v, { instant = false } = {}) { kin.setTable(v, instant); if (instant) poseNow(); syncAnimUI(); }
 function setProp(o, { instant = false } = {}) { kin.setProp(o, instant); if (instant) poseNow(); syncAnimUI(); }
 function setControls(o, { instant = false } = {}) { kin.setControls(o, instant); if (instant) poseNow(); syncAnimUI(); }
+function setTakeoff({ instant = false } = {}) { kin.setTakeoff(instant); if (instant) poseNow(); syncAnimUI(); }
+
+// ------------------------------------------------------------------ the Environment knobs (env.js)
+// plain labels and units in the UI (the no-lettering rule is for the model and its displays); every change goes to
+// env.set (live: the engine follows with its own lags, the air data with its 1 s filter); a double click resets a knob
+const ENV_ROWS = [['eOat', 'oat'], ['eElev', 'elev'], ['eQnh', 'qnh'], ['eWindDir', 'windDir'], ['eWindKt', 'windKt'], ['eFuel', 'fuelLb']];
+const fmt0 = (v) => Math.round(v).toLocaleString('en-US');
+// (nothing in the scene changes: the displays redraw themselves and ask for their own composed frame)
+function setEnv(o, opt = {}) { env.set(o, opt); syncEnvUI(); return env.get(); }
+function wireEnvUI() {
+  for (const [id, k] of ENV_ROWS) {
+    const el = $(id);
+    if (!el) continue;
+    el.addEventListener('input', (e) => setEnv({ [k]: +e.target.value }));
+    el.addEventListener('dblclick', () => setEnv({ [k]: ENV_DEFAULTS[k] }));
+  }
+  // the altimeter steppers: one step (0.01 inHg / 1 hPa), repeating while held (400 ms, then every 60 ms)
+  const step = (s) => {
+    const v = env.get();
+    if (v.qnhUnit === 'inHg') setEnv({ qnh: (Math.round(v.qnh / HPA_PER_INHG * 100) + s) / 100 * HPA_PER_INHG });
+    else setEnv({ qnh: Math.round(v.qnh) + s });
+  };
+  for (const [id, s] of [['eQnhDn', -1], ['eQnhUp', 1]]) {
+    const b = $(id);
+    let t0 = 0, t1 = 0;
+    const stop = () => { clearTimeout(t0); clearInterval(t1); t0 = t1 = 0; };
+    b.addEventListener('pointerdown', (e) => { if (e.button) return; stop(); step(s); t0 = setTimeout(() => { t1 = setInterval(() => step(s), 60); }, 400); b.setPointerCapture && b.setPointerCapture(e.pointerId); });
+    for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, stop);
+    b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); step(s); } });
+  }
+  for (const b of document.querySelectorAll('[data-qunit]')) b.addEventListener('click', () => setEnv({ qnhUnit: b.dataset.qunit }));
+  $('eGpu').addEventListener('click', () => setEnv({ gpu: !env.get().gpu }));
+  $('eReset').addEventListener('click', () => { env.reset(); syncEnvUI(); });
+  syncEnvUI();
+}
+function syncEnvUI() {
+  if (!env || !$('eOat')) return;
+  const v = env.get(), a = env.atm;
+  const inHg = (h) => (h / HPA_PER_INHG).toFixed(2);
+  $('eOat').value = v.oat; $('oOat').value = `${v.oat > 0 ? '+' : ''}${v.oat} °C`;
+  $('eElev').value = v.elev; $('oElev').value = `${fmt0(v.elev)} ft`;
+  $('eQnh').value = Math.round(v.qnh);
+  $('oQnh').value = v.qnhUnit === 'hPa' ? `${Math.round(v.qnh)} hPa` : `${inHg(v.qnh)} inHg`;
+  for (const b of document.querySelectorAll('[data-qunit]')) b.setAttribute('aria-pressed', String(b.dataset.qunit === v.qnhUnit));
+  $('eWindDir').value = v.windDir; $('oWindDir').value = `${String(Math.round(v.windDir) % 360).padStart(3, '0')}°`;
+  $('eWindKt').value = v.windKt; $('oWindKt').value = `${v.windKt} kt`;
+  const fmax = env.fuelMax();
+  $('eFuel').max = String(fmax); $('eFuel').value = v.fuelLb;
+  $('oFuel').value = `${fmt0(v.fuelLb)} lb`;
+  $('eFuel').setAttribute('aria-valuetext', `${fmt0(v.fuelLb)} pounds, ${(v.fuelLb / 2 / (6.725 * (1 - 0.00092 * (v.oat - 15)))).toFixed(0)} US gallons a side`);
+  $('eGpu').setAttribute('aria-pressed', String(!!v.gpu));
+  const isa = Math.round(a.isaDev);
+  $('rEnv').textContent = `${v.oat > 0 ? '+' : ''}${v.oat} °C · ${fmt0(v.elev)} ft`;
+  const rating = kin ? kin.eng.rating() : null;
+  $('eDerived').textContent = `Pressure alt ${fmt0(a.pa)} ft · density alt ${fmt0(a.da)} ft · ISA ${isa >= 0 ? '+' : '−'}${Math.abs(isa)} °C`
+    + (rating != null ? ` · take-off torque ${rating.toFixed(1)} psi` : '') + ` · fuel ${fmt0(v.fuelLb / (6.725 * (1 - 0.00092 * (v.oat - 15))))} US gal`;
+}
 function setNavLights(on) { S.lights = !!on; setLights(S.lights); $('aLights').setAttribute('aria-pressed', String(S.lights)); stage.needsRender = true; }
 
 function neutral({ instant = false } = {}) {
@@ -594,11 +667,12 @@ async function demo() {
   try {
     if (build.index !== build.n - 1) build.setStep(build.n - 1, { instant: true });
     stage.goTo('three_quarter');
-    // engine start: the propeller spools up to ground idle (~12 s, kinematics.js) while the controls are checked
+    // engine start: the propeller spools up to ground idle (~28 s, engine.js) while the controls are checked
     setProp({ rpm: PROP_RPM.idle }); await w(2.2);         // (out of feather once it turns: kinematics.js)
     setFlaps(15); await w(1.8);
     for (const [k, v, t] of [['roll', 1, 1.1], ['roll', -1, 1.4], ['roll', 0, 0.8], ['pitch', 1, 1.1], ['pitch', -1, 1.3],
       ['pitch', 0, 0.8], ['yaw', 1, 1.1], ['yaw', -1, 1.3], ['yaw', 0, 0.8]]) { setControls({ [k]: v }); await w(t); }
+    for (let i = 0; i < 40 && kin.eng.phase !== 'run'; i++) await w(0.5);     // stabilised at ground idle first
     setProp({ rpm: PROP_RPM.max }); await w(2.5);
     setGear('up'); await w(6.0);
     setFlaps(0); await w(1.6);
@@ -612,7 +686,7 @@ async function demo() {
     // shutdown: the propeller feathers and runs down; the doors open once it has (nearly) stopped
     setProp({ pitch: 62, rpm: 0 }); await w(1.5);
     stage.goTo('side');
-    for (let i = 0; i < 40 && kin.c.rpm > 60; i++) await w(0.5);
+    for (let i = 0; i < 60 && kin.c.rpm > 60; i++) await w(0.5);
     setDoor('door_airstair', 1); setDoor('door_cargo', 1); await w(3.2);
     setDoor('door_airstair', 0); setDoor('door_cargo', 0); await w(3.0);
     setFlaps(0);                                            // the propeller stays feathered, as parked
@@ -733,7 +807,8 @@ function syncToolbar() {
 function syncAnimUI() {
   if (!kin) return;
   const t = kin.t;
-  for (const b of document.querySelectorAll('[data-rpm]')) b.setAttribute('aria-pressed', String(+b.dataset.rpm === t.rpm));
+  for (const b of document.querySelectorAll('[data-rpm]')) b.setAttribute('aria-pressed', String(+b.dataset.rpm === t.rpm && !(kin.toMode && t.rpm === PROP_RPM.max)));
+  $('aTO').setAttribute('aria-pressed', String(!!kin.toMode));
   for (const b of document.querySelectorAll('[data-flap]')) b.setAttribute('aria-pressed', String(+b.dataset.flap === t.flaps));
   $('sPitch').value = t.pitch; $('oPitch').value = `${t.pitch.toFixed(0)}°`;
   $('sRoll').value = t.roll; $('sPitchCtl').value = t.pitchCmd; $('sYaw').value = t.yaw;
@@ -835,6 +910,8 @@ function wireUI() {
   // Off = shutdown: the propeller goes to feather as it runs down and stays feathered (PT6 / Hartzell; review r1
   // PR1-04); a start from feather unfeathers once it turns (kinematics.js setProp)
   for (const b of document.querySelectorAll('[data-rpm]')) b.addEventListener('click', () => { manual(); setProp(shutdownOr(+b.dataset.rpm)); });
+  $('aTO').addEventListener('click', () => { manual(); setTakeoff(); });
+  wireEnvUI();
   $('sPitch').addEventListener('input', (e) => { manual(); setProp({ pitch: +e.target.value }); });
   $('aReverse').addEventListener('click', () => { manual(); setProp({ pitch: -38 }); });
   $('aFine').addEventListener('click', () => { manual(); setProp({ pitch: 0 }); });
@@ -990,6 +1067,7 @@ function syncUI() {
 let last = performance.now(), frameCount = 0, forceFrames = 0, readoutT = 0, shadowSkip = 0;
 let readoutsDirty = false, kinMoving = false, overlayOnly = false;
 const frameWaiters = [];
+const OVL = [];         // the merged per-frame overlay (the propeller's blur + the display glass), one stable array
 function waitFrames(n = 1) {
   forceFrames = Math.max(forceFrames, n);
   return new Promise((res) => frameWaiters.push({ at: frameCount + n, res }));
@@ -1057,7 +1135,12 @@ function frame(now) {
   stage.applyQuality();
   if (forceFrames > 0) { forceFrames--; stage.needsRender = true; }
   stage.busy = posed && !overlayOnly;
-  stage.overlay = kin.blur ? kin.blur.overlay : null;
+  // the live cockpit displays (avionics.js): a redrawn page needs one composed frame, not a full render (picture.js
+  // layered path: the glass joins the propeller's overlay while pages change)
+  if (avx && avx.update(S.paused ? 0 : dt, now)) stage.overlayDirty = true;
+  const pb = kin.blur ? kin.blur.overlay : null, ax = avx ? avx.overlayFor(pb, now) : null;
+  if (pb && ax) { OVL.length = 0; for (const o of pb) OVL.push(o); for (const o of ax) OVL.push(o); stage.overlay = OVL; }
+  else stage.overlay = pb || ax;
   // shadows skipped while animating on the low tier (Stage.render): one more frame once the motion stops.  Inside the
   // cabin the ground's contact shadow is hidden and Stage.render leaves it dirty for the way back out: it asks for no
   // frame there (it had re-requested one every frame, so the still image never settled into its refinement passes)
@@ -1110,6 +1193,7 @@ const hooks = {
       cameraPreset: stage.preset, dark: stage.dark, tour: tour.state(),
       linesVisible: build.root.children.reduce((n, g) => n + (g.visible ? g.children.length : 0), 0),
       loading: !$('loading').hidden,
+      engine: kin.eng.state, env: env.get(), atm: { ...kin.atm }, toMode: !!kin.toMode,
     };
   },
   setStep: (i, o = {}) => setStep(i, o),
@@ -1125,6 +1209,7 @@ const hooks = {
   setTable: (v, o = {}) => setTable(v, o),
   setProp: (p, o = {}) => setProp(p, o),
   setControls: (p, o = {}) => setControls(p, o),
+  setTakeoff: (o = {}) => setTakeoff(o),
   setLights: (on) => setNavLights(on),
   select: (id, o = {}) => select(id, { frame: true, ...o }),
   isolate: (id) => setIsolate(id || null),
@@ -1164,6 +1249,32 @@ const hooks = {
     sync: () => { if (sound) sound.update(); return sound ? sound.state() : null; },
     toggle: (on) => (sound ? sound.toggle(on) : null),
     render: (o = {}) => renderOfflineWav({ kin, ...o }),
+  },
+  // the Environment knobs (env.js): get(), set(o, {instant}) -- {instant: true} snaps the engine's and the air data's
+  // lags --, reset(), atm() (pressure / density altitude, delta / theta / sigma, ISA deviation, the altimeter), limits()
+  env: {
+    get: () => env.get(),
+    set: (o = {}, opt = {}) => setEnv(o, opt),
+    reset: (opt = {}) => { env.reset(opt); syncEnvUI(); return env.get(); },
+    atm: () => ({ ...kin.atm }),
+    limits: () => ({ ...ENV_LIMITS, fuelMax: env.fuelMax() }),
+  },
+  // the live G3000 PRIME pages (avionics.js): state() (uploads, draws, the numerals each page drew), flush() (draw and
+  // upload everything due now, ignoring rate and visibility), rects(page, widget) (CSS-px quad), snapshot(page) (PNG),
+  // enable(on)
+  avionics: {
+    state: () => (avx ? avx.state() : { live: false }),
+    flush: () => (avx ? avx.flush() : { live: false }),
+    rects: (p, w) => (avx ? avx.rects(p, w) : null),
+    snapshot: (p) => (avx ? avx.snapshot(p) : null),
+    staticSnapshot: (p) => (avx ? avx.staticSnapshot(p) : null),
+    enable: (on) => (avx ? avx.setEnabled(on) : false),
+    redraw: () => { if (avx) avx.redrawAll(); return avx ? avx.state() : null; },
+    config: () => ({ ...AVX }),
+    verify: () => (avx ? avx.verify() : null),
+    labels: (on) => (avx ? avx.setLabels(on) : null),
+    closeup: (p, d, f) => (avx ? avx.closeup(p, d, f) : null),
+    overlay: (m) => (avx ? avx.setOverlay(m) : null),
   },
   // interior tour: stops (model axes), enter / go / exit ({motion}: force the flights on / off), walk({f, s, u, turn},
   // sec) integrates held inputs through the walk clamp, project(p) = the walkable volume's nearest point (model axes)
