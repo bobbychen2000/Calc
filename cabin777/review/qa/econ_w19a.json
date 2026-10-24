@@ -1,0 +1,227 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w19",
+ "lens": "Skeptic, re-measured on the current head (code unchanged since wG; renders r19 / s19). Fabrics compared at matched physical scale with the 0.43 m seat width as the ruler: q15 at x0.63 against y_47300, e4 at x0.81 against y_47306, q16 at x1.0 against y_47301 (near seat ~235 px wide in both). Measured: box mean, B/R, saturation, luminance p10/p50/p90, column CV, high-pass CV, fleck blobs (pixels above 1.4x median: coverage, count per 1000 px, mean blob area in cm^2, fleck/ground L, fleck B/R). Big picture checked at thumbnail scale (q15 vs y_47300, studio fronts vs y_47302 / 47303). New in-flight photos: sanspotter ana-777-300er-economy-10..23 downloaded to ref/web/econ/a_sans_*.jpg (13: seat fronts, 15: back, 18: armrest side). Official photos decide colour; in-flight photos decide geometry. Code read in src/09a_econ.js to locate defects. Scratch: /tmp/claude-0/-home-user-Calc/c9a2a8cb-81cb-5472-b5d8-4290c91941cc/scratchpad/raterA19/ (st.py, blob.py, hero_pair.png, e4pair.png, q16pair.png, y303arm.png, y302arm.png, aislearm.png, sans_sheet.jpg). Note: the working tree has an uncommitted 09a_econ.js armrest change (C moulding, w19 A + B) by another session; it is NOT in the r19/s19 renders and was not rated. The hem/stitch/logo defect (w19a-1) is at HEAD lines 117-120.",
+ "score": 7.8,
+ "priorIssues": [
+  {
+   "issue": "wGa-1 / wGb-1 headrest cover: flat albedo, no grazing sheen; head-on middle covers too light",
+   "status": "not fixed",
+   "evidence": "Head-on q15 covers #373c55 L61 B/R 1.54 (middle) and #282d45 L47 (outer) vs y_47300 L35-70, middle pair L37-46 B/R 1.83-2.00 (identical to wG). Oblique: q16 near cover #222740 L40 vs y_47301 #383d5d L63; q16 row-2 L56 vs L81; e4 #23283d L41 vs y_47306 near cover #455072 L81 and middle cover L121. Still 0.5-0.7x the photo off-axis. New: the hem band, stitch line and logo exist in code but are buried behind the plate (see w19a-1)."
+  },
+  {
+   "issue": "wGa-2 tick columns wander and cancel at row distance; too strong close up",
+   "status": "not fixed",
+   "evidence": "q15 at x0.63, seats 1/3: colCV 0.093/0.074 vs y_47300 0.160/0.209; p10/p50 0.56/0.55 vs 0.45/0.43. Close up e4 at x0.81: colCV 0.182 vs y_47306 0.099. hero_pair.png: the render reads as random vertical 'rain' streaks, the photo as straight ribs of dashes."
+  },
+  {
+   "issue": "wGa-3 / wGb-2 petal fleck faint and too blue at distance, round",
+   "status": "not fixed; new evidence that it is also too coarse close up",
+   "evidence": "q15 x0.63 seats 2/4: coverage 0.17/0.17 vs 0.20/0.20; fleck/ground 1.80/1.79 vs 2.25/2.25; fleck #415282 B/R 2.01 vs #5b6993 B/R 1.61; overall p90/p10 2.03 vs 2.97. q16 near crown at matched scale: 18.6 blobs per 1000 px vs 41.1 in y_47301, mean blob 0.35 cm^2 vs 0.19 (p90 13 px vs 5 px) - the near seat reads as large 'snow' flecks where the photo has a fine dense speckle."
+  },
+  {
+   "issue": "wGb-3 cover tall / overhangs the pad",
+   "status": "not fixed (waits on user)",
+   "evidence": "q15 cover h/w 0.91 and 0.66 of the back width; y_47300 0.68 and 0.55. Part is camera (q15 higher and closer), but y_47302 covers are also ~0.6 tall/wide."
+  },
+  {
+   "issue": "wGb-6 diamond ground greyish",
+   "status": "not fixed",
+   "evidence": "e1 diamond back #495689 B/R 1.87 sat 0.47 vs y_47306 #5068a9 B/R 2.10 sat 0.52; q16 right block #475073 B/R 1.62."
+  },
+  {
+   "issue": "wGa-4 armrest rear post loop (low)",
+   "status": "not fixed",
+   "evidence": "e7 / e1: triangular window between the J, the rear post and the pad. sans 18 and y_47303 show an open-fronted C (top bar, rear bend, lower bar)."
+  },
+  {
+   "issue": "wGa-5 pans all tick (low)",
+   "status": "partly (code already cycles)",
+   "evidence": "econPan cycles tick / fleck / mosaic / tick / diamond->tick; e1 pans measure differently (hpCV 0.30 / 0.25 / 0.18) but all three still read as knit-tick at thumbnail size."
+  },
+  {
+   "issue": "wGa-6 pillow seam (low)",
+   "status": "not fixed",
+   "evidence": "e4b: smooth. q15 pillow p90/p10 1.25-1.34 vs y_47300 2.33-2.40 (flat, no dome shading or seam highlight)."
+  },
+  {
+   "issue": "wGa-7 lower-bezel dots (low)",
+   "status": "not fixed",
+   "evidence": "q18 / e5 plain chin; y_47305 shows 4-5 dots."
+  },
+  {
+   "issue": "wGa-8 fabric smear at grazing angles (lighting)",
+   "status": "not fixed",
+   "evidence": "q18 left back side still a blurred wash."
+  },
+  {
+   "issue": "wGa-9 QA cameras (camera)",
+   "status": "not fixed",
+   "evidence": "q15 higher and closer than y_47300 (pillows seen from above, no armrests); q17 frames backs, y_47303 fronts."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 7.5,
+   "refs": "hero_pair.png; q15 colCV 0.07-0.09 vs 0.16-0.21; e4 colCV 0.18 vs 0.10"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.5,
+   "refs": "e1 B/R 1.87 vs y_47306 2.10; far-row stars prominent"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.0,
+   "refs": "q15 fleck/ground 1.80 vs 2.25, B/R 2.0 vs 1.6; q16 near crown blobs 2x area, half the count of y_47301"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.0,
+   "refs": "e4 left pad vs y_47306 right"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.0,
+   "refs": "hero row tick / fleck / tick / fleck as y_47300"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 7.0,
+   "refs": "e4pair.png: render cover near-black #23283d with no visible hem / stitch / logo vs y_47306 silver-slate #455072-#6c7c9f with a lit hem band and logo; head-on middle covers L61 vs 37-46"
+  },
+  {
+   "detail": "Pillow",
+   "score": 7.5,
+   "refs": "e4b, q15 vs y_47300: right mean colour, flat tonal range, no seam"
+  },
+  {
+   "detail": "Armrests",
+   "score": 7.5,
+   "refs": "e7 vs sans 18 / y_47303: triangular window instead of an open-fronted C"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.5,
+   "refs": "e1, e7 vs y_47303"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.5,
+   "refs": "e7 / e1 vs y_47302 / 47303"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "q15 vs y_47300 at thumbnail; shell sliver within ratio"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.0,
+   "refs": "q17 / q18 / e9 vs y_47305, sans 15"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.0,
+   "refs": "q18 / e5 vs y_47305, sans 16; no chin dots"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 8.0,
+   "refs": "e6, q18 vs sans 20 / 21"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.5,
+   "refs": "e8 vs y_47302 / 47304"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.5,
+   "refs": "q15 / q16 far rows: tick uniform, diamond stars too visible"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w19a-1",
+   "severity": "medium",
+   "title": "Cover hem band, stitch line and wing logo are hidden behind the cover plate (bug), and the cover has no grazing sheen",
+   "detail": "Headrest pad + cover",
+   "evidence": "econSeat: the plate loft runs SEC(0.575, ..., z -0.12) -> SEC(0.61, ..., z -0.111), so at y 0.586 its rear face is at z ~ -0.1147 and at y 0.5965 ~ -0.112. The hem quad (y 0.586, z -0.1058), stitch quad (y 0.5965, z -0.1061) and logo (y 0.592, z -0.1062) sit 6-9 mm BEHIND the plate since w10 tipped the foot forward - so they never render (e4pair.png: plain dark plate; y_47306 shows a lighter hem band ~13 % of the height below a stitch line and the logo lower right). Colour: e4 cover L41 vs y_47306 81-121, q16 near L40 vs 63, q16 row 2 L56 vs 81; head-on q15 middle L61 vs 37-46.",
+   "fix": "09a_econ.js econSeat: place the three decals on the plate's front face - z = plateZ(y) - 0.0035 where plateZ interpolates the plate sections (y 0.586 -> z -0.1207; y 0.5965 -> -0.1185; y 0.592 -> -0.1195), or better make the hem a second thin loft over the plate's bottom 0.02 m in #454c68 r 0.38. Then SEATMAT.yCover: albedo back to #2a2f45 with a sheen lobe or Fresnel lift (sheen colour ~#8a90a8, ~0.5) so 60-75 deg from normal reaches L65-85 while q15 middle covers drop to L40-48 B/R >= 1.8."
+  },
+  {
+   "id": "w19a-2",
+   "severity": "medium",
+   "title": "Tick columns still random 'rain' rather than straight ribs; cancel at row distance",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 x0.63 colCV 0.093 / 0.074 vs 0.160 / 0.209; p10/p50 0.56 vs 0.44; close up e4 colCV 0.18 vs 0.10 (hero_pair.png, e4pair.png).",
+   "fix": "make_swatches.py synth_y_tick: straight continuous dark channels at a fixed column phase (no per-row x jitter), channel ~2 texels and ~30 % darker than the ground, pale stroke contrast cut ~30 %. Map the tick layer with u along the back width (econCrownLoft already writes u = i/n; use it instead of a triplanar blend for LAYER.yJacq) so columns stay vertical over the crown. Targets: q15 x0.63 colCV >= 0.15, p10/p50 <= 0.50; e4 colCV ~0.10-0.12."
+  },
+  {
+   "id": "w19a-3",
+   "severity": "medium",
+   "title": "Petal fleck: too faint and blue at row distance, too coarse and sparse close up",
+   "detail": "Fabric: petal fleck",
+   "evidence": "q15 x0.63: fleck/ground 1.80 vs 2.25, fleck B/R 2.0 vs 1.61, p90/p10 2.03 vs 2.97. q16 near crown at matched scale: 18.6 blobs per 1000 px vs 41.1, mean blob 0.35 cm^2 vs 0.19 (q16pair.png: 'snow' vs fine speckle). Close up e4 right back 0.20 cm^2 with ratio 1.91 vs y_47306 pad 0.25 cm^2 ratio 2.36. A larger, sparser fleck on the curved crown suggests the triplanar projection stretches it there.",
+   "fix": "make_swatches.py y_fleck: ~2x as many flecks at ~0.6x the area (target ~0.2 cm^2 mean, 40 per 1000 px at q16 scale), each slightly elongated (1.4-1.6:1, random angle), core L +15 % and more neutral (tile fleck B/R ~1.5). Keep coverage ~0.20. Check the crown uses the same texel density as the back face (econCrownLoft UVs / layer scale). Targets: q15 fleck/ground >= 2.1, fleck B/R <= 1.75; q16 near crown blob <= 0.22 cm^2."
+  },
+  {
+   "id": "w19a-4",
+   "severity": "low",
+   "title": "Close-up fabrics greyer than the official photos",
+   "detail": "Fabric colours",
+   "evidence": "e4 tick #404d7b B/R 1.92 vs y_47306 #495c98 2.08; e1 diamond B/R 1.87 vs 2.10; q16 row-2 back #596792 B/R 1.64 sat 0.39 vs y_47301 #475c9b 2.16 sat 0.54 (partly lighting: q15 head-on tick 1.87 matches 1.89-1.99).",
+   "fix": "SEATMAT.yFabricB #626c96 -> ~#5f6ba0 (B/R +0.15). Leave yFabric for now; the q16 greying belongs with the lighting/sheen (owner lighting) - check the fabric sheen/F0 is not adding white at grazing angles."
+  },
+  {
+   "id": "w19a-5",
+   "severity": "low",
+   "title": "Armrest support reads as a closed triangle, not the open-fronted C",
+   "detail": "Armrests",
+   "evidence": "e7 / e1 vs sans 18 and y_47303 (y303arm.png): top bar, rear bend dropping nearly vertically just ahead of the back, a horizontal lower bar at about pan-cushion height running forward to a rounded nose; open at the front.",
+   "fix": "econUnit jp Bezier: control point from (0.505, -0.215) to (0.50, -0.09) so the rear drop is near-vertical, end at (0.50, -0.36) with a rounded nose; drop the separate rear post."
+  },
+  {
+   "id": "w19a-6",
+   "severity": "low",
+   "title": "Pillow flat in tone, no seam",
+   "detail": "Pillow",
+   "evidence": "q15 pillow p90/p10 1.25-1.34 vs y_47300 2.33-2.40.",
+   "fix": "Raise the dome to ~0.06 (0.046 -> 0.06 in the y profile), add a 4 mm piping tube round the rim in SEATMAT.yPillow r 0.5."
+  },
+  {
+   "id": "w19a-7",
+   "severity": "low",
+   "title": "No lower-bezel dots",
+   "detail": "Screen / handset",
+   "evidence": "q18 / e5 vs y_47305.",
+   "fix": "4-5 gCyl dots r 0.002 #3a3a44 on the glass chin at y SY-0.095."
+  },
+  {
+   "id": "w19a-8",
+   "severity": "low",
+   "owner": "lighting/integration (texture filtering)",
+   "title": "Fabric smears at grazing angles",
+   "detail": "q18",
+   "evidence": "q18 left back side.",
+   "fix": "Anisotropic filtering 8x on the fabric layers. Not scored."
+  },
+  {
+   "id": "w19a-9",
+   "severity": "low",
+   "owner": "lighting/integration (camera)",
+   "title": "QA cameras do not match their photos",
+   "detail": "q15 / q17",
+   "evidence": "q15 higher and closer than y_47300; q17 frames backs where y_47303 is a side view of fronts. Not scored.",
+   "fix": "test/qa.js: re-aim to the photo viewpoints."
+  }
+ ],
+ "questionsForUser": [
+  "The headrest covers look deep navy head-on (y_47300) but silver-slate from above or at an angle (y_47301 / 47303 / 47306). Do you remember them as dark navy leather with a sheen, or as grey?",
+  "A 1:1 close-up photo of the petal-fleck and tick fabrics would settle fleck size and column pitch, if you have one."
+ ],
+ "extraRefsSearched": "Downloaded sanspotter ana-777-300er-economy-10..23 (1024 px) to ref/web/econ/a_sans_*.jpg; used 13 (seat fronts, fleck backs), 15 / 16 (screen, handset), 18 (armrest side), 20 / 21 (pocket, AC)."
+}
