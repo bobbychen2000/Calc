@@ -1,0 +1,76 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": 13,
+  "score": 8.7,
+  "renderNote": "Rated on r13v/r13p/r13st/r13q (head 7301cfe, final round). The door-2 slab belongs to 10_mono and has been handed off; it is rated for completeness but left out of the overall.",
+  "lightingNote": "The aisle tones are unchanged: r13v/v1 vault mean 177.9 and v2 vault 176. The terraces also remain: v1 row 60 still shows the 184/191 plateaus, and r13st/d_up still shows the stripes. The new dome falloff (x0.90 -> x0.64) hardly reaches the screen. The crown is 215 in r13p/d1 (217 in w12), the r13v/d4b dome mean is 213.9 (216), the d5b mean 219.0, and the door wall 247-248 (250). The ceiling now asks for a ratio of about 1.4 from door wall to crown, but the frame shows about 1.15. That suggests the tonemapper's shoulder, or the door-area light level, compresses it. This belongs to the lighting team: check the exposure and tonemap shoulder at door zones, or how many cabin lights reach the dome.",
+  "previousStatus": {
+    "fixed": [
+      "w9a-w12b low: crest-rail channel. It now sits tight against the rail. r13p/v15 column 400 reads vault 163-165, then 154 (1 px), then the channel at 94-95 for y 475-499, then 152 (1 px), then the rail at 250. r13v/v12 column 350 reads vault 163, then the channel at 116-125 for y 196-208, then 182, then the rail at 247, with no vault-tone gap left (w12: 15 px of vault between the strip and the rail). It now reads like c120's dark channel framing the rail (crops raterB rB11/v15c13.png, rB11/v12c13.png). The 'light metallic top line' does not resolve (154 at the top edge, not lighter than the vault); that is cosmetic",
+      "w12b: placards, vault speaker crescent and dome fittings stay fixed. v2 speaker column reads 176 -> 181 -> 178 -> 129 -> 176, and the placards read '35 [seat][person]' in r13p/v15"
+    ],
+    "notFixed": [
+      "w11b/w12b/w12a low: door-3 white hairline on the tray's far edge. r13p/v3 column 600 reads 173 x9, then 239 at y 177, then 70, 185, 139 and the soffit at 83, which is pixel-identical to r12. Column 1150 has 239 at y 144. Removing the 4 cm overlap of the centre board did not remove it",
+      "w11b/w12b low: flat white wedge at the door-4 dome/monument junction. r13p/d4b (1520,400), (1560,380) and (1500,440) still read 248, against the dome at 216 (unchanged by design this round)",
+      "w8b-w12b low: vault terraces (lighting/bake, not scored)"
+    ],
+    "partiallyFixed": [
+      "w12b/w12a low: door-dome crown plateau and brightness. The ceiling-side fix is in: the falloff runs across the whole arc, the fittings are baked (the smoke detector and speaker now read greyer in r13p/d4b, at 800,120 and 1120,15), and the wall emission is capped at 0.2. On screen, though, the crown drops only 2-4 L (215-217), so the domes still read about 1.2x brighter than the aisle vault (178). What is left is mostly lighting (see lightingNote)",
+      "w11b/w12b low: door-end clipping. The door wall reads 247-248 (r13p/d1 column 700 at y 680-770), against 250 in w12 and 254 in w11. It is a smoother ramp now (d1 column 800 runs 219 -> 228 -> 237 -> 243 -> 246 -> 248) but still near white",
+      "w10a-w12a low: bin seams at QA distance. They are visible in close views (v2 seam 198 on 233) and still washed out in q13/q16 (exposure)"
+    ],
+    "regressed": []
+  },
+  "details": [
+    {"detail": "Vault panel shape, joint ribs, crest rib", "score": 8.8, "refs": ["b_lalf_c120", "b_lalf_c119"]},
+    {"detail": "Vault tone and falloff", "score": 8.4, "refs": ["b_lalf_c120", "b_sany_y22"]},
+    {"detail": "Cove light band + slotted grille", "score": 8.8, "refs": ["b_lalf_c120", "y_47300"]},
+    {"detail": "Vault fittings (speaker, emergency light)", "score": 8.6, "refs": ["b_lalf_c120", "r13v/v2"]},
+    {"detail": "Outboard bins (doors, latches, seams, top rail, lip)", "score": 8.8, "refs": ["y_47301", "b_lalf_c120", "py_37302"]},
+    {"detail": "Row placards", "score": 8.8, "refs": ["b_lalf_c120 '17'", "r13p/v14", "r13p/v15"]},
+    {"detail": "Centre bins (doors, crest rail + channel, caps, PSU channel lip gap)", "score": 8.8, "refs": ["b_lalf_c120", "y_47300", "r13p/v15", "r13v/v12"]},
+    {"detail": "Outboard PSU band", "score": 8.8, "refs": ["b_lalf_c26", "y_47301", "rb_omaat_room23"]},
+    {"detail": "Centre PSUs", "score": 8.6, "refs": ["b_sany_y22", "y_47300"]},
+    {"detail": "EXIT signs", "score": 8.6, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door 3 dark bar soffit", "score": 8.6, "refs": ["b_lalf_c133", "b_lalf_c134", "r13p/v3"]},
+    {"detail": "Door 1 cross-aisle ceiling", "score": 8.2, "refs": ["no photo; r13p/d1, r13v/d1b"]},
+    {"detail": "Door 2 cross-aisle ceiling (10_mono slab, handed off; not in the overall)", "score": 7.4, "refs": ["no photo; r13v/d2, r13v/d2b"]},
+    {"detail": "Door 4 cross-aisle ceiling", "score": 8.1, "refs": ["no photo; r13p/d4b, r13v/d4"]},
+    {"detail": "Door 5 cross-aisle ceiling", "score": 8.0, "refs": ["no photo; r13v/d5b"]}
+  ],
+  "issues": [
+    {
+      "severity": "low",
+      "detail": "Door-dome falloff does not reach the screen (lighting)",
+      "problem": "The ceiling asks for a falloff of about 1.4 (x0.90 -> x0.64), but the render shows about 1.15. The crown stays at 215 while the aisle vault next to it is at 178, so the door zones still read flat and bright.",
+      "evidence": "r13p/d1 column 800: 215-217 at y 100-460; r13v/d4b (300-500,180-260) mean 213.9 (216 in w12); r13v/v1 vault 177.9",
+      "fix": "Lighting/integration (12_scene.js / 04_shaders.js): check the tonemap shoulder and the door-zone light level, since the dome probably sits above about 0.8 linear, where the curve flattens. Ceiling side (07b_ceiling.js), only if lighting cannot: lower the base colour of the dome sweep to about 0.88x the vault colour rather than relying on the bake"
+    },
+    {
+      "severity": "low",
+      "detail": "Door-3 white hairline (3rd report)",
+      "problem": "A 1 px white line (239) still separates the next zone's grey vault from the dark tray's far frame. It was not caused by the centre-board overlap.",
+      "evidence": "r13p/v3 column 600 at y 177 = 239 (pixel-identical to r12); column 1150 at y 144 = 239",
+      "fix": "src/07b_ceiling.js: likely candidates are the 10 mm rim of the zone-end closure (l.282, its edge faces down toward the camera) or the far edge of the 3.1 m flat soffit box at y 2.43 showing past the tray. Give the closure's rim barSoffit, or extend the flat soffit box 0.02 m in z so it tucks under the closure. A one-frame material probe (paint each candidate red) will settle it"
+    },
+    {
+      "severity": "low",
+      "detail": "Door-4 monument-junction wedge (3rd report)",
+      "problem": "A flat, unshaded 248 wedge remains between the dome side band and the galley top.",
+      "evidence": "r13p/d4b (1430-1600, 330-460) = 248; dome 216",
+      "fix": "src/07b_ceiling.js: a CEILMAT.flat closure poly between the DOME and MONOC profiles at door/monument zone boundaries"
+    },
+    {
+      "severity": "low",
+      "detail": "Vault terraces (lighting/bake, not scored)",
+      "problem": "This is unchanged since w8.",
+      "evidence": "r13v/v1 row 60; r13st/d_up",
+      "fix": "07b: bake the falloff on arc length; lighting: smooth the AO lookup over y 2.2-2.7"
+    }
+  ],
+  "questionsForUser": [
+    "Have you got a photo of any door-1, door-4 or door-5 cross-aisle ceiling on the 212-seat 777-300ER? The light domes are detailed but approximated.",
+    "Do the bar photos b_lalf_c133/c134 show door 2 or door 3? (This now sits with the monuments area.)"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "area": "ceiling",
+  "rater": "A",
+  "round": 13,
+  "score": 8.5,
+  "renderNote": "Final round. Rated on r13v/r13p/r13st/r13q (head 7301cfe). Pixel diffs against r12 locate what changed: the crest channel (v1, v12, v15 and the top-left of v3), the door-dome shading (d1 9.3k px, v7 16.9k px), and some lighting and monument areas (q16; the bar in v3). v6 is pixel-identical. The door-2 slab is 10_mono's and is left out of the overall score. I accept the coordinator's reading of the door-4 'keyhole' (the aisle's own vault section and EXIT sign seen from the door zone) and drop it. Lighting notes (not scored): bins near-white at QA framing; vault fore-aft streaks.",
+  "previousStatus": {
+    "fixed": [
+      "w9a-w12a low: crest-rail channel. It now sits tight on the rail. r13v/v12 column 400 reads vault 164 -> highlight 175 (y 236) -> channel 129-119 for 12 px -> rail 247; in r12 a 14 px grey band separated them. r13p/v15 shows a continuous dark band directly on the rail top (y 474-500) with a soft lighter top transition (154 -> 125). It reads as the c120 channel.",
+      "w12a: placards and vault speaker crescent stay fixed (r13p/v14 and v15: '35 [seat][person]'; v2 crescent present)."
+    ],
+    "notFixed": [
+      "w11a/w12a/w12b low: door-dome crown tone. The crown falloff did not take effect in the render. r13v/d1 crown (300-500,100-200) has mean 214, max 217; r12 was 216/218. r13p/d4b column 800 reads 214-218 from crown to mid-dome (r12: 217-219). A row across the dome at y 400 is a flat 215 apart from the ribs (r12: 217). A x0.64 crown factor would put the crown near 150-170; it still reads 1.2x the aisle vault (178). The likely cause is the dome emission or exposure clamp rather than the vertex bake.",
+      "w12b/w12a low: door-3 white hairline. r13p/v3 column 600 still reads 173 -> 239 (y 176-178) -> 70, and column 1150 reads 255 -> 239 (y 144-146) -> 71, identical to r12. The board-overlap change did not remove this line, which sits on the near (vault-side) edge of the soffit, not under the tray.",
+      "Handed off (10_mono): door-2 slab with no fascia (r13v/d2b, essentially unchanged).",
+      "Lighting: vault streaks; bin exposure at QA framing."
+    ],
+    "partiallyFixed": [
+      "w12a low: dome fittings. Speaker, smoke detector and trimmed downlights are visible (r13p/d4b). The emergency light, moved to x 0.25, was not identifiable in d1, d4b or d5b at this framing."
+    ],
+    "regressed": [],
+    "dropped": [
+      "w11a/w12a low: door-4 keyhole slot. Accepted as the aisle's own vault cross-section and EXIT sign seen from the door zone (coordinator and rater B)."
+    ]
+  },
+  "details": [
+    {"detail": "Aisle vault panels, joint ribs + crest rib", "score": 8.7, "refs": ["b_lalf_c120", "b_lalf_c119"]},
+    {"detail": "Cove light band + slotted grille", "score": 8.7, "refs": ["b_lalf_c120", "y_47300"]},
+    {"detail": "Vault fittings (speaker with crescent, emergency light)", "score": 8.4, "refs": ["b_lalf_c120"]},
+    {"detail": "Outboard bins (doors, latches, rail, seams)", "score": 8.6, "refs": ["y_47301", "py_37302", "b_lalf_c120"]},
+    {"detail": "Row placards", "score": 8.6, "refs": ["b_lalf_c120 '17' crop"]},
+    {"detail": "Centre bins (doors, crest rail, caps, channel, PSU channel)", "score": 8.7, "refs": ["b_lalf_c120 (0,0,420,200)", "y_47300"]},
+    {"detail": "Outboard PSU band", "score": 8.5, "refs": ["b_lalf_c26", "y_47301", "rb_omaat_room23"]},
+    {"detail": "Centre PSUs", "score": 8.5, "refs": ["y_47300", "b_sany_y22"]},
+    {"detail": "EXIT signs", "score": 8.5, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door-3 bar soffit", "score": 8.4, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door 1 cross-aisle ceiling", "score": 7.8, "refs": ["none (plausibility)"]},
+    {"detail": "Door 2 cross-aisle ceiling (10_mono slab; not in the overall)", "score": 6.8, "refs": ["none; slab vs b_lalf_c133/c134"]},
+    {"detail": "Door 4 cross-aisle ceiling", "score": 7.8, "refs": ["none (plausibility)"]},
+    {"detail": "Door 5 cross-aisle ceiling", "score": 7.8, "refs": ["none (plausibility)"]},
+    {"detail": "Other monument ceilings (rear galley)", "score": 7.6, "refs": ["none"]}
+  ],
+  "issues": [
+    {
+      "severity": "low",
+      "detail": "Door-dome crown falloff not visible in the render",
+      "problem": "The stated x0.90 -> x0.64 bake does not show. The crown is still a flat 214-215 across its width, against 178 on the aisle vault, so each light door zone reads as a brighter box than the aisle on either side.",
+      "evidence": "r13v/d1 (300-500,100-200) mean 214 (r12: 216); r13p/d4b row y 400: 215 flat except at the ribs; r13v/v1 vault mean 178",
+      "fix": "src/07b_ceiling.js door branch: check that the bake loop runs after the dome sweep is added and covers its vertex range (v0 taken before the gSweep call), and that the dome material's eFn emission is not lifting the crown to the exposure cap. Cap eFn at about 0.02 on the crown. Target: crown about 165-175 in d1."
+    },
+    {
+      "severity": "low",
+      "detail": "Door-3 white hairline on the near soffit edge (3rd report)",
+      "problem": "A 2 px white line (239) still edges the dark soffit where it meets the J-zone vault, next to the EXIT sign.",
+      "evidence": "r13p/v3 column 600 at y 176-178 = 239; column 1150 at y 144-146 = 239 (identical to r12)",
+      "fix": "src/07b_ceiling.js zone-end closure (bar(q) case): give the extruded closure's rim faces CEILMAT.barSoffit, or move the closure 3 mm into the door-3 zone so its rim hides behind the soffit edge."
+    },
+    {
+      "severity": "low",
+      "detail": "Crest channel slightly heavy in the head-on view",
+      "problem": "Head-on, the channel band is about 60 % of the rail height and reads slate blue (90,95,103) rather than the specified #86898e. c120's channel is about 1/3 of the rail height and metallic grey. It is correct at the oblique aisle angles (v1, v12).",
+      "evidence": "r13p/v15 (1000,474-500) about 94, 26 px, against the rail band y 500-545",
+      "fix": "src/08_bins.js / 07b_ceiling.js channel strip: trim the strip height by about 40 %, and add a small upward normal tilt or metalness so it doesn't read as shadow-dark slate."
+    },
+    {
+      "severity": "medium",
+      "detail": "Door-2 slab (10_mono, handed off; not counted)",
+      "problem": "Unchanged: a hard-edged dark slab with no trim or return under a blown-out dome.",
+      "evidence": "r13v/d2b",
+      "fix": "10_mono.js passageSoffit: add an edge trim and a vertical return (monuments owner)."
+    }
+  ],
+  "questionsForUser": [
+    "Which door do the b_lalf_c133/c134 dark-soffit photos show, door 2 or door 3?",
+    "Do you have any photo of the door 1, 2, 4 or 5 cross-aisle ceilings? They remain approximations."
+  ]
+}

@@ -202,7 +202,14 @@ function addDoor(B, face, L, xs, inward, mat = BINMAT.door) {
 // light bead with a 2.5 mm darker core so the joint survives at QA distance (y_47301 dark arcs; w10a/w11a: vanished at 10 m)
 const doorSeam = (B, face, xs, inward, z = 0) => {
   B.add(gExtrude(faceShell(face, xs, inward, 0.0058, 0.002), 0.0064, 45), M4.trs(0, 0, z), BINMAT.seam);
-  B.add(gExtrude(faceShell(face, xs, inward, 0.0060, 0.002), 0.0025, 45), M4.trs(0, 0, z), BINMAT.seamCore);
+  // the core is one face-only ribbon over the bead (a second extruded shell doubled the seam triangles: budget)
+  const g = raw(), o = faceShell(face, xs, inward, 0.0060, 0).slice(0, face.length), on = faceShell(face, xs, inward, 0.0070, 0).slice(0, face.length);
+  for (let k = 0; k < o.length; k++) {
+    const nx = on[k][0] - o[k][0], ny = on[k][1] - o[k][1], l = Math.hypot(nx, ny) || 1;
+    for (const dz of [-0.00125, 0.00125]) { g.p.push(o[k][0], o[k][1], z + dz); g.n.push(nx / l, ny / l, 0); g.u.push(0, 0); }
+  }
+  for (let k = 0; k < o.length - 1; k++) { const q = k * 2; g.i.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+  B.add(fixWinding(g), null, BINMAT.seamCore);
 };
 // baked shading for the bins (the shader's hemisphere fill leaves them flat): x1.0 (ny 0.5) .. x0.95 (facing down),
 // continuous in the normal, calibrated on photo samples (y_47301 door #c7c6cb..#dcdcdc, bin bottom #c0c3c8,

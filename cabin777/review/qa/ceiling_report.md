@@ -174,3 +174,63 @@
 - **liveandletsfly ANA 777-300ER THE Room review:** images 3–6, 11–13, 20, 26, 27, 119, 120, 124, 133, 134.
 - **SANspotter economy:** y10–y52.
 - **OMAAT THE Room:** 23, 31, 37.
+
+## Wave 3c (2026-10-24): confirm and polish, w11–w13
+
+- **Result:** A 8.5 / B 8.7 (mean 8.6) in w13. Both raters are at or above 8.5 and no high issue is open, so **the ceiling meets the bar.** The round cap is also reached.
+- The one medium is the door-2 dark slab, which belongs to `10_mono.js`. Both raters left it out of the overall score.
+- **Rating files:** `ceiling_w{11,12,13}{a,b}.json`. Each rater was calibrated against its two previous files and the other rater's latest.
+- **Cameras:** `review/qa/ceiling_views.js` (new and committed).
+  - v1–v13 cover the aisle ceilings, bins and PSUs.
+  - v14/v15 are head-on placards.
+  - d1/d1b, d2/d2b, d4/d4b and d5/d5b are the door cross-aisle ceilings, which were first rated in w11.
+- **Renders:** each round rebuilt on the pulled head: w11 ee521f1, w12 9a81648, w13 7301cfe.
+
+| Round | Rater A | Rater B | Mean | Note |
+|---|---|---|---|---|
+| w11 (fresh, current head) | 8.2 | 8.5 | 8.35 | Door 1/2/4/5 rated for the first time: A 6.5–7.0, B 7.1–7.4. The aisle ceiling was the same as w10. |
+| w12 | 8.4 | 8.6 | 8.5 | |
+| w13 | 8.5 | 8.7 | 8.6 | |
+
+- **Regression guard:** the w11 drop of 0.2 from w10's 8.55 is under the 0.3 guard, and it came only from the newly rated door zones. No round regressed an issue.
+- **Triangles:** measured as instanced totals (`upper` plus every bin mesh × instances), the same way at both heads.
+  - w10: 487.6k. w13 + budget fix: 501.8k.
+  - Against the 414k wave-3 start that is +21 %, inside the +25 % budget.
+  - A full extruded seam core briefly took the count to 522.9k (+26 %). It became a face-only ribbon after w13, with the same look (pixel diff ≤ 35 L on ~350 px of v5).
+- **Before/after sheet:** `ceiling_before_after_w13.jpg`, w11 against w13, own renders only.
+
+### What changed (wave 3c), by evidence
+
+1. **Door 1/2/4/5 domes** (w11 medium from both raters: "blank white placeholder", a flat 229–230 field).
+   - Two transverse panel joints, each a rib with a shadow lip.
+   - Light strips in recessed housings at e 0.55, and downlights with trim rings (c133).
+   - On the crown: a speaker, an emergency light and a smoke detector.
+   - Emission ramps instead of stepping, capped at 0.2 at the door wall.
+   - A baked falloff from x0.90 to x0.64 that covers the fittings.
+   - Door scores went from A 6.5–7.0 / B 7.1–7.4 to A 7.8 / B 8.0–8.2.
+2. **Outboard zone-end closures at every door.** Before, only door 3 had them, and the dome stands about 0.1 m above the bin top.
+3. **Crest-rail channel** (open since w9). Two red/green tests found why it never showed:
+   - The groove boxes in `08_bins.js` sat under the vault edge, behind the rail.
+   - Strips on the true arc sank behind the 48-segment sweep, which runs inside the arc near the rail.
+   - It is now a quad on the sweep's last chord, 3 mm proud, tight against the rail, #86898e, with a light top line. Raters measured vault 164 → channel 119–129 → rail 247, as in c120.
+4. **Row placards.** They now read row number, framed seat glyph, person, after the c120 '17' crop. Before, three seat strokes read as "⅄⅄⅄". Scores: A 7.4 → 8.6, B 8.0 → 8.8.
+5. **Vault speaker.** A dark recess crescent along one long edge (c120): 129 on a 176 vault. Fittings scores: A 7.7 → 8.4, B 7.9 → 8.6.
+6. **Bin seams.** A 2.5 mm darker core inside the light bead (y_47301). It shows in close views; at QA framing the bin exposure still washes it out (lighting).
+7. **Build break fixed.**
+   - 3ea3f24 (monuments) declared `function gPlate`, which clashed with `const gPlate` in `08_bins.js`.
+   - The page never loaded until the bins copy was renamed `binPlate` (34b066a).
+
+### Open (all low)
+
+- **Dome crown tone.**
+  - The bake runs from x0.90 to x0.64, but the crown renders 214–215 against 178 on the aisle vault. The ratio on screen is about 1.15, where 1.4 is intended.
+  - The vault material is on the cove-LED layer (`l: 12`). The tonemap shoulder or the LED term probably lifts the dome regardless of base colour, so this went to lighting in `from_ceiling.md`.
+  - If lighting can't fix it, lower the dome base colour to about 0.88x the vault.
+- **Door-3 hairline.**
+  - A 2 px line at 239 runs on the near edge of the dark soffit beside the vault.
+  - It is not caused by the centre board: removing its 4 cm overlap changed nothing.
+  - Suspects: the closure rim faces and the 3.1 m flat soffit edge. A red test is next.
+- **Door-4 wedge.** A flat 248 wedge sits at the dome/monument-ceiling junction. Suggested: a closure between the DOME and MONOC profiles.
+- **Crest channel seen head-on** (v15). Rater A finds it slightly heavy and slate blue. It is right at aisle angles.
+- **Doors 1, 2, 4 and 5:** still no photo (questions 11 and 12). Door 2's dark soffit is 10_mono's and is handed off.
+- **Lighting:** vault fore-aft terraces, and bins near-white at QA framing.
