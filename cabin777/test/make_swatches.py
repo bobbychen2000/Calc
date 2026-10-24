@@ -262,19 +262,21 @@ def make(name, photo, box, size, rot=0):
 # in the 930 x 575 photos; scale from the 0.255 m headrest cover (or the 0.43 m back) in the same photo [D].
 # name: (photo, box, tile size m, high-pass sigma in source px, rotation deg (PIL, + = ccw), sharpen, contrast exponent,
 #        soft floor). The last two match the rendered contrast to the photo's own L p10/p50/p90 at the same scale
-#        (JPEG blocks and the upsampling left the darks too deep: c1 tick p10/p50 0.39 vs 0.55 in y_47306) [D]
+#        (JPEG blocks and the upsampling left the darks too deep: c1 tick p10/p50 0.39 vs 0.55 in y_47306; w15 B: then too flat
+#        at row distance - tick p90/p50 1.81 vs 2.27, mosaic 1.59 vs 2.14; diamond stars ~20 % too strong) [D]
 Y_PHOTO = {
     # middle seat back, chevron tick columns; cover 0.27 m = 165 px -> 611 px/m, 152 px = 0.249 m [D]
-    'y_tick':    ('y_47306', (260, 385, 412, 537), 0.249, 14, 0, 0.15, 0.8, 0.25),
+    'y_tick':    ('y_47306', (260, 385, 412, 537), 0.249, 14, 0, 0.15, 0.92, 0.15),
     # left seat back, harlequin diamonds; seen obliquely: cover 108 px wide (423 px/m) but 133 px tall for 0.235 m
     # (566 px/m) -> the 82 x 115 crop is stretched 1.34x in x to a square 0.203 m [D]
-    'y_diamond': ('y_47306', (62, 358, 144, 473), 0.203, 30, 0, 0.3, 1.0, 0.0),
+    'y_diamond': ('y_47306', (62, 358, 144, 473), 0.203, 30, 0, 0.3, 0.8, 0.0),
     # y_47300 front-row seat 2 back (the only frontal, evenly lit fleck back): back 0.43 m = 127 px -> 295 px/m, 95 px =
-    # 0.32 m; but at 0.32 the fleck pitch in q15 was ~1.2x the photo's -> 0.27 m [D]; flecks are 1-2 px in the source
-    'y_fleck':   ('y_47300', (352, 308, 447, 403), 0.27, 8, 0, 0.0, 0.8, 0.3),
+    # 0.32 m; but at 0.32 the fleck pitch in q15 was ~1.2x the photo's, and at 0.27 the flecks read ~1.3 cm against ~0.6 cm
+    # (w15 B) and 27 % bright against 11 % -> 0.18 m, the flecks shrunk to their cores and tinted pale blue (FLECK) [D]
+    'y_fleck':   ('y_47300', (352, 308, 447, 403), 0.18, 8, 0, 0.0, 0.8, 0.3),
     # right seat back below the cover: dash mosaic; cover 0.255 m = 270 px -> 1059 px/m, 135 px = 0.128 m [D]; rows
     # levelled by 3 deg (perspective tilt)
-    'y_mosaic':  ('y_47306', (560, 427, 695, 562), 0.128, 14, 3, 0.3, 1.0, 0.1),
+    'y_mosaic':  ('y_47306', (560, 427, 695, 562), 0.128, 14, 3, 0.3, 1.15, 0.1),
 }
 
 
@@ -342,6 +344,11 @@ def y_photo(name):
     if sharp: r = r + sharp * (r - _blur_wrap_rgb(r, 1.5))
     r = np.maximum(r, 0.03) ** k
     if floor: r = np.sqrt(r * r + floor * floor)       # lift the darkest yarn shadows only
+    if name == 'y_fleck':
+        # the 3.4 mm/px source smears each 3-5 mm fleck over ~3 px: keep only the core of the excess over the ground
+        # (bright area 27 % -> ~12 %, y_47306 pad 11 %) and tint it pale blue (#9fb0e0 vs white, w15 A) [D]
+        g = np.median(r.mean(2)); e = np.maximum(r - g, 0); ep = e.max()
+        r = np.minimum(r, g) + ep * (e / ep) ** 1.5 * np.array([0.85, 0.95, 1.1], np.float32)
     r /= r.reshape(-1, 3).mean(0)
     enc = ENC[name]
     lum = r.mean(2, keepdims=True); lim = enc * 0.95                # clip glints (as make())

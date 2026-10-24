@@ -30,3 +30,10 @@
    y_47306? [modelled lowered, back ~5.5 cm above the cover fold; head-on a ~1.5 cm white hood rim shows]
 16. (wave 3) Regular-row aisle ends: an open frame under the J armrest (y_47303) or a solid white panel (y_47301)? [solid
    panel]
+17. (wave 3c, w15 B) Headrest cover hang: in y_47300 the flap ends at the pad bottom; in y_47306 it hangs ~3 cm below it.
+   [modelled as y_47306, the close-up]. Question 15 (raised headrests) is now answered the other way: the w14 gap analysis
+   found the back ~0-4 cm above the cover fold in y_47300 / 47301 / 47302 and only ~5.5 cm in y_47306, so the headrest
+   now sits 2.5 cm higher (back ~3 cm above the fold).
+18. (wave 3c) Fabric tiles are now cut straight from your official photos (y_47306 tick / diamond / mosaic, y_47300
+   fleck). The diamond's only usable source is the oblique left seat of y_47306 (~2 mm/px), so it is soft up close; a
+   frontal close-up of a diamond seat (and of a fleck seat) would sharpen both.

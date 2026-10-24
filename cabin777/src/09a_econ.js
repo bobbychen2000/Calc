@@ -72,13 +72,15 @@ function econSeat(B, x0, lod, opts = {}) {
   // hood and the pocket zone, so the hood overhangs it (sanspotter 15, w3 B) [D]
   // [y, rear-face z, depth, width, corner r]
   const RS = [[-0.12, 0.066, 0.03, 0.44, 0.018], [-0.06, 0.07, 0.03, 0.446, 0.018], [0.1, 0.078, 0.03, 0.446, 0.018], [0.2, 0.08, 0.032, 0.44, 0.018],
-    [0.24, 0.081, 0.034, 0.345, 0.016], [0.44, 0.086, 0.04, 0.345, 0.016], [0.49, 0.106, 0.06, 0.39, 0.015], [0.53, 0.12, 0.08, 0.405, 0.015], [0.80, 0.122, 0.09, 0.40, 0.015],
-    [0.835, 0.114, 0.09, 0.40, 0.025], [0.855, 0.10, 0.092, 0.39, 0.03], [0.866, 0.086, 0.058, 0.30, 0.02]];   // w8 B: thinner cap from the front; w14 A + B: cap 8 mm aft and under the fabric roll (y_47300: fabric to the top, no white rim head-on)
+    [0.24, 0.081, 0.034, 0.345, 0.016], [0.44, 0.086, 0.04, 0.345, 0.016], [0.49, 0.106, 0.06, 0.38, 0.015], [0.53, 0.12, 0.08, 0.388, 0.015], [0.80, 0.122, 0.09, 0.385, 0.015],
+    [0.835, 0.114, 0.09, 0.385, 0.025], [0.855, 0.10, 0.092, 0.375, 0.03], [0.866, 0.086, 0.058, 0.30, 0.02]];   // w8 B: thinner cap from the front; w14 A + B: cap 8 mm aft and under the fabric roll (y_47300: fabric to the top, no white rim head-on)
   // w6 A + B: flat hood face with tight corners, 0.40 wide -> bezel 0.79 of it (y_47305 0.81, sans 15 / 22 0.86-0.87;
   // the 0.03 radius curled the sides away, 0.89-0.93); the top row caps the back top 7 mm above it, its front face ~1.5 cm
   // behind the fabric front so a ~1 cm navy rim shows from behind (sans 15 / 22, fr57325 124234) [D]
   // econ w5 (A high): the shell's rounded top rolls forward over the back top, so from behind only a ~1 cm navy rim shows
   // (sans 15, fr57325 124234: no fabric above the white hood) [V]
+  // w15 B: hood ~1.5 cm narrower (0.385; bezel ring 0.85 of it, y_47305 0.81-0.87), so its white sides hide behind the
+  // ~0.41 back fabric head-on (3-3.5 cm bands vs ~1 cm in y_47300) [D]
   const rs = (y, j) => { let k = 1; while (k < RS.length - 1 && RS[k][0] < y) k++; const a = RS[k - 1], b = RS[k], t = clamp((y - a[0]) / (b[0] - a[0]), 0, 1); return a[j] + (b[j] - a[j]) * t; };
   const zr = (y) => rs(y, 1);
   loftAt(B, RS.map(([y, z, d, w, r]) => SEC(y, w, d, z - d / 2, r)), BH, SEATMAT.yShell, lod ? 2 : 3);
