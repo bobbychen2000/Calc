@@ -1,0 +1,175 @@
+{
+ "area": "econ",
+ "rater": "B",
+ "round": "w23",
+ "candidate": "066375f",
+ "lens": "Geometry and proportion first (hem / rolled foot vs the cover plate head-on and close up, block-end panel corner vs b_ss_18 and the legs), then materials, colour, lighting and artefacts. Same patches and scripts as w22b (raterB23/m.py, m2.py, m3.py = raterB22 with r22/r23, s22/s23), hem row profiles in q15 (x 320-400, 560-620, rows 335-370) and e4 (x 300-360, 600-630, rows 255-330), plate-corner zooms in e4, diamond patches (e4 left seat, a23/e3s left back vs y_47306 left seat), render diffs r22 -> r23 / s22 -> s23 (q15 1.18, q16 1.01, q17 0.22, q18 0.31; e1 1.07, e4b 1.50, e7 0.91, e3s 0.75, e5 0.55, e2 / e3 / e6 / e9 <= 0.35, e8 0.00). Note 066375f also carries a 12_scene.js lighting edit. Scratch: /tmp/claude-0/-home-user-Calc/c9a2a8cb-81cb-5472-b5d8-4290c91941cc/scratchpad/raterB23/ (z_q15hem.png, z_e4.png, z_hemends.png, z_corners.png, z_e3s.png, z_panel.png).",
+ "score": 8.2,
+ "priorIssues": [
+  {
+   "issue": "w22b-1 / w22a-1 (medium) head-on light chin band under the cover plate; rolled foot overhanging the plate edge",
+   "status": "fixed",
+   "evidence": "q15 row profiles (z_q15hem.png): band now L54 = cover face 54 (1.00x; w22 83-85 = 1.56x over 9 px), target <= 1.15 met. What remains head-on is a 1 px stitch line at L84-85 on top and a 1 px lip at L97 (1.8x) over a 1 px L64-65 ramp, then the shadow L61; y_47300 has a 1-2 px lip at 1.3-1.5x - the lip is 1 px wide, so it reads as a crease highlight, not a chin. e4 corners (z_corners.png): the foot now stops ~1 px inside both plate edges, no overhang (w22 ~3 px past the right edge). Close up the lift is now the foot alone: e4 band L40-42 over face 37 (1.08x), foot peak L61-64 (1.65x) over ~4 px; mean of the lowest 15 px ~1.27x (target was >= 1.35, y_47306 hem 1.55-1.6x) - slightly under, acceptable as the compromise between head-on and oblique. Far LOD: with the band now at face colour the missing LOD hem no longer pops."
+  },
+  {
+   "issue": "w22b-2 / w22a-2 (medium) Y fabric contrast at row distance (mip bias -0.5)",
+   "status": "fleck fixed; tick improved but not fixed; q16 not fixed",
+   "evidence": "q15 x0.62 tick s1 / s3 bright 0.118 / 0.121 (w22 0.140 / 0.144) vs y_47300 0.083 / 0.082 (target 0.08-0.10); p90/50 1.54 / 1.54 (1.58) vs 1.47 (target 1.46-1.52); B/R 2.06 vs 1.88-1.96. Fleck s2 / s4 bright 0.171 / 0.164 (0.185 / 0.176) vs 0.153 / 0.154, p90/50 1.79 / 1.75 vs 1.76 / 1.75 (on target), B/R 2.53 / 2.48 vs 2.50 / 2.58 (on target). q16 row 2 bright 0.194 (0.212) vs y_47301 0.064 (target <= 0.12); near-top blobs 9 / 19 px unchanged. Close up e4 tick bright 0.239 vs y_47306 0.251, fleck 0.177 - fine."
+  },
+  {
+   "issue": "w22b-3 (low) block-end panel lower-rear corner too square",
+   "status": "fixed",
+   "evidence": "a23/e3s (z_panel.png): the lower edge now rises into the rear post on a ~10 cm radius as in b_ss_18; the panel stays clear of the legs and the spreader tube (>= 2 cm gap, no intersection). Side effect: a ~1.5 cm wedge of the pan's blue side now shows under the swept corner (image x 160-195, y 365-378) where w22 showed white panel - plausible against b_ss_18, which shows the dark cushion under the C there."
+  },
+  {
+   "issue": "w22a-3 / w22b-4 (medium / low) petal fleck close up clustered",
+   "status": "not fixed (core exponent only)",
+   "evidence": "e4 fleck blobs median 8 / p90 14 px (w22 8 / 15) vs b_ss_14 ~3 px."
+  },
+  {
+   "issue": "w19b-7 (low) diamond ground grey",
+   "status": "partly fixed",
+   "evidence": "e4 left back B/R 2.07 (w22 1.86), e3s 2.31 (2.09) vs y_47306 left seat 2.25 - on target in e3s, near in e4. But the lattice weakened: e4 bright 0.032 (0.050) vs 0.107, p90/50 1.44 vs 1.52."
+  },
+  {
+   "issue": "w22b-L1 (medium, lighting) cover body dark oblique; q16 near fabric blotchy",
+   "status": "not fixed (not scored)",
+   "evidence": "e4 cover L39 / 38 vs y_47306 129 / 86 (identical to w22); q16 near-top blobs 9 / 19 px vs 1 / 3 px."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 8.0,
+   "refs": "q15 bright 0.12 vs 0.083 (w22 0.14), p90/50 1.54 vs 1.47; still the snowiest of the four at row distance"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.7,
+   "refs": "ground B/R 2.07-2.31 vs 2.25 (was 1.86-2.09); lattice contrast low (bright 0.03 vs 0.11 in e4)"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 8.2,
+   "refs": "row distance on target (bright 0.164-0.171 vs 0.153, p90/50 1.75-1.79 vs 1.76, B/R 2.48-2.53 vs 2.50-2.58); close-up clusters unchanged"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.2,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.1,
+   "refs": "pairing right; q15 speckle down, q16 row 2 still ~3x the photo"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.1,
+   "refs": "head-on chin band gone (1.00x vs 1.56x), 1 px lip; foot inside the plate; close-up lift only a 4 px foot line (lowest 15 px 1.27x vs 1.55x); body oblique dark (lighting)"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.4,
+   "refs": "e4b diff 1.5 = tile change only"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.7,
+   "refs": "end panel corner sweeps up as in b_ss_18; clear of the legs; still no inset border line / concave top fillet (A)"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.5,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.8,
+   "refs": "unchanged (tick pans streakier than y_47303)"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "unchanged"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.1,
+   "refs": "e2 / e9 diff 0.22 / 0.35: unchanged"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.3,
+   "refs": "e5 diff 0.55: unchanged"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 7.8,
+   "refs": "e6 diff 0.22: unchanged (flat pocket strip carried)"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.7,
+   "refs": "e8 identical"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 8.0,
+   "refs": "hem pop gone (band = face colour); far tick rows still speckled"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w23b-1",
+   "severity": "medium",
+   "owner": "econ (+ integration)",
+   "title": "Tick weave still ~40 % too bright-speckled at row distance",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 x0.62 s1 / s3 bright 0.118 / 0.121 vs y_47300 0.083 / 0.082, p90/50 1.54 vs 1.47; q16 row 2 0.194 vs 0.064. The w23 step (gb 0.3 -> 0.1, strokes 0.9 -> 0.8) moved bright 0.140 -> 0.119, i.e. ~0.02 per 0.1 of stroke factor.",
+   "fix": "test/make_swatches.py y_tick: strokes m + 0.8 * (r - m) -> m + 0.65 * (r - m) (expected bright ~0.09-0.095, p90/50 ~1.49); keep gb 0.1 and c ** 0.15. Alternatively (integration, one line in 03_tex.js LAYER_PARAMS / 04_shaders.js) mip bias 0 for the y_tick layer only. Targets q15 x0.62: bright 0.08-0.10, p90/50 1.46-1.51; e4 close bright >= 0.21 (now 0.239 vs 0.251, keep); q16 row 2 <= 0.15."
+  },
+  {
+   "id": "w23b-2",
+   "severity": "low",
+   "title": "Diamond lattice washed out after the bluer ground",
+   "detail": "Fabric: diamond lattice",
+   "evidence": "e4 left back bright 0.032 (w22 0.050) vs y_47306 0.107, p90/50 1.44 vs 1.52; ground B/R now right (2.07-2.31 vs 2.25).",
+   "fix": "Keep #5f6ba0; raise the diamond layer contrast ~1.3x (LAYER.yDiamond amplitude in 03_tex.js LAYER_PARAMS, shared one-liner) or in make_swatches.py y_diamond lift above-median luminance m + 1.25 * (r - m). Target e4 bright 0.08-0.11, p90/50 1.50-1.55."
+  },
+  {
+   "id": "w23b-3",
+   "severity": "low",
+   "title": "Close-up hem lift slightly short (foot line only)",
+   "detail": "Headrest pad + cover",
+   "evidence": "e4 lowest 15 px ~1.27x the face (band 1.08x, foot 1.65x over ~4 px) vs y_47306 1.55-1.6x; head-on q15 is now right (band 1.00x, 1 px lip) - do not relighten the band.",
+   "fix": "Optional only: foot radius 0.0045 -> 0.0055 with the same z (+0.001) so close up it spans ~5-6 px; recheck q15 lip <= 2 px. Leave the band at #2a3049."
+  },
+  {
+   "id": "w23b-4",
+   "severity": "low",
+   "title": "Carried: fleck close-up clusters, flat pocket strip, hood side band, legs",
+   "detail": "Fabric: petal fleck / Tray / pocket / AC",
+   "evidence": "e4 fleck blobs 8 / 14 px vs ~3 px (b_ss_14); e6 / e8 / e2 unchanged.",
+   "fix": "As w22b-4 / w19b-5 / 6."
+  },
+  {
+   "id": "w23b-L1",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Cover body dark at oblique views; q16 near fabric blotchy (not scored)",
+   "detail": "Lighting",
+   "evidence": "e4 cover L38-39 vs y_47306 86-129; q16 near-top blobs 9 / 19 px vs 1 / 3 px.",
+   "fix": "As w22b-L1."
+  },
+  {
+   "id": "w23b-C1",
+   "severity": "info",
+   "owner": "QA cameras",
+   "title": "Camera mismatches (not scored)",
+   "evidence": "As w22b-C1: q15 closer / lower than y_47300, q16 across-cabin vs down-aisle, q17 high rear vs window-side profile.",
+   "fix": "Carried."
+  }
+ ],
+ "questionsForUser": []
+}
