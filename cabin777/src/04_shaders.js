@@ -336,10 +336,10 @@ void main(){
     vec3 tr = u_exterior > 0.5 ? vec3(1.0) : windowT(v_wpos);
     sun = u_sunCol * ndl * sh * tr;
     // QA r1 (light): interior sun soft-clipped on high-albedo faces (1 / (1 + max albedo); 0.6 left q04 at L246) and
-    // capped at 2.5, so pale fabric keeps its weave inside a patch (patch <= ~1.5x the fabric) and a white sheet keeps
+    // capped at 2.0, so pale fabric keeps its weave inside a patch (patch <= ~1.5x the fabric) and a white sheet keeps
     // a visible edge under the ACES shoulder [V: omaat_f59 bed #d8bfa2 L194 vs q04 patch #f9f8f7 (clipped); q14 PY patch
     // #e0e0e4 on #787f92 fabric] (lighting / integration r1, from_suite 2)
-    if (u_exterior < 0.5) sun = min(sun / (1.0 + max(max(base.r, base.g), base.b)), vec3(2.5));
+    if (u_exterior < 0.5) sun = min(sun / (1.0 + max(max(base.r, base.g), base.b)), vec3(2.0));
   }
   vec3 F0 = mix(vec3(0.04), base, metal);
   vec3 diff = base * (1.0 - metal);

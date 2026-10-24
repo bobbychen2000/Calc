@@ -49,3 +49,41 @@ says the same.
   - Suite `doors`: the "Close door" button is already there. Implement `suiteUnit({doors: 1})` and it takes effect with no other change.
   - Combinations the viewer can reach: `bed` + `doors`, and `divider` with either (centre suites). Please make sure they combine cleanly.
 - The prebuilt `bed_*` meshes are gone. Bed geometry now comes from the same variant path (`{bed: true}`), so render your bed mode via `seatVariantGeo` or the `UNITS` entries.
+
+# Items from the lighting fixer (QA r1, light group)
+
+The r1 light changes (04_shaders.js / 12_scene.js) are: boarding exposure 1.38 / cruise 1.12 with a black-only toe, a
+crevice term limited to low pockets (below ~0.75 m, not up-facing, not the sidewall), the lens band / bin shade only in
+the seat zones (none over doors, galleys, lavs), cove-LED specular line lights, a superellipse sun gate per pane, a sun
+soft-clip on pale faces, warm-dim amber phase at seat level, a neutral night. Re-check your area in the renders after
+this commit, but judge material albedos in the studio first.
+
+## To room (`09_seats.js` SEATMAT, shared one-line keys)
+- **Charcoal shells read flat matte; no sheen line on the cap rims** (lighting r1 medium). Evidence: c_27312 bright sheen
+  lines along the rounded charcoal cap rims and monitor-shell edges (shell back #5c626a, dark side #4e4f55); tlfl_IMG_9217
+  specular streaks on the cap rails; q06 shell_top_L (150-180, 330-345) #626874, cap #474c56 with no highlight.
+  The cove LED line lights are now in the interior specular (mainFS `coveSpec`), but at r 0.45-0.46 the lobe is broad.
+  **Fix:** `jShell` r 0.46 -> 0.34 and `jCap` r 0.45 -> 0.34 (satin). Target: shell top edges about 1.3x the face.
+
+## To suite (`09_seats.js` SEATMAT / `09d_suite.js`)
+- **`fShell` r 0.45 -> 0.34** for the same sheen lines (lighting r1 medium; omaat_f2 / f5 shell rims).
+- **Bed sheet / duvet too bright under cabin light** (lighting r1 low). q04 bed shade (520-560, 320-360) #e0dfdd L224,
+  sun patch L246; omaat_f59 (real THE Suite bed) #d8bfa2 L194. The shader now soft-clips the sun on pale faces, but at L224
+  without sun the ACES shoulder leaves no room for a patch. **Fix:** sheet albedo about #d4cfc6 (renders ~L200-205),
+  duvet a step darker; the patch then reads as soft light, not clipped white.
+
+## To econ (`09_seats.js` SEATMAT)
+- **`yShell` r 0.42 -> 0.34** (satin white shells and armrests; lighting r1 medium). Evidence: y_47303 armrest tops p50
+  189-194, p99 248-251 (glossy streaks); y_47300 satin armrests. The cove specular needs the narrower lobe to show.
+- **yCover (headrest flap) lighter** (integration r1 medium). Evidence: y_47301 flaps (460-580, 400-520) #3a3e5d L63,
+  y_47300 #393e5b L63, y_47306 flap face #445072 L80 vs q16 flaps #232a48 L42 (rated on `#343a52`; econ w7 has since set
+  `#474c5e`). **Fix:** re-measure q16 flaps after this lighting commit; target face about #3a4060 (L60-65), still darker
+  than the Y fabric mean. Note from_econ w10 (the economy darkening from the snapshot commits) is addressed in the
+  lighting code (low-face-only AO weight / crevice), so do not retune the fabrics to the snapshot renders.
+
+## To ceiling/bins (`08_bins.js`)
+- **Z-fight dashes on the lower lip of an outboard bin near door 3** (integration r1 low). Evidence:
+  scratchpad/integ/shots3/w04_d3_cross.png (bin right, y ~185 px), crops w04_bin.png / z04_psu.png: irregular dark dashes
+  along ~0.6 m of the lip, flicker while walking; c_27312 / y_47300 lips are clean. **Fix:** find the strip whose end
+  coincides with the door-3 zone boundary (seamR / band / lens on the outboard module ending at z ~32.0-33.3) and offset it
+  1.5 mm off the body along the face normal, or shorten it 2 cm at the zone end; re-render z04 at DPR 2.

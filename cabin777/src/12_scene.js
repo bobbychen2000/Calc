@@ -44,13 +44,14 @@ const MOODS = {
   // #afafaf / #acb1ba (s <= 0.08), grey shell #6f7982]; the lens light reaches the wall less red (sideWall) and not past
   // the window tops (sideLow 0) [A: no amber-phase sidewall photo, questions_lighting.md 2]
   // QA r1 (light): the amber reaches seat level, warm and dimmer, in every real photo of the phase: lowTint [1.3, 2.6,
-  // 6.5] -> [1.0, 1.25, 1.8] (hemi x lowTint ~h28 s0.55) and 0.6 gain below 1.25 m (lowGain); lens light on the wall
+  // 6.5] -> [1.0, 1.35, 2.0] (hemi x lowTint ~h28; [1, 1.25, 1.8] rendered the ash #624023 s0.64, a little over the
+  // photos' s0.5-0.6) and 0.6 gain below 1.25 m (lowGain: d07 lower third L132 -> 90); lens light on the wall
   // down to half way past the windows (sideLow 0.5) in the hemi's amber (sideWall = hemiTop / sideLed share: the
   // sideLed that renders the clipped lens #ffa33c is near-red below the clip, and with the cool day window light it
   // left the lower wall pink, #635655 h6; sideWall 1 tried, salmon) [V: ff_seat-with-door-closed ash cabinet #ab7f58, shell #251f17, ottoman #2e2219;
   // ff_door-gap ash #b29f84 / #6b5946 at 1024 px; ucr_the-room-cabin ash #ae7134 / #885635, sidewall #ba895b-#bb8a60,
   // reveal shadow #b48357, bottom third L55; kn_room_35 ash fronts #804e10-#8f5c20] (lighting r1)
-  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.5, sideWall: [0.4, 2.4, 4.5], bandCut: 0.3, vault: [0.52, 0.26, 0.11], lowTint: [1.0, 1.25, 1.8], lowGain: 0.6, k: 0.9, exposure: 1.3, strips: true },
+  dining: { label: 'Dining', hemiTop: [0.62, 0.30, 0.11], hemiBot: [0.15, 0.07, 0.025], wash: [0.30, 0.14, 0.05], led: [0.55, 0.042, 0.009], sideLed: [1.25, 0.10, 0.02], sideLow: 0.5, sideWall: [0.4, 2.4, 4.5], bandCut: 0.3, vault: [0.52, 0.26, 0.11], lowTint: [1.0, 1.35, 2.0], lowGain: 0.6, k: 0.9, exposure: 1.3, strips: true },
   // night, QA r2: THE Room in service at night is near-black and neutral-warm; the light comes from the IFE screens, the
   // warm strip under each screen, small white reading lamps and amber PSU lamps [V: ucr_room-night-lighting ceiling
   // #1e1915, sidewall #24211c, bins #322a1f, PSU lamp #9e5e38, strip #ffeb97, mean RGB 39/34/33]. The blue night refs
@@ -61,11 +62,14 @@ const MOODS = {
   // ucr 39/35/33)
   // QA r1 (light): the r3 amber came from one cove sample (stwis_img_6223) and washed the vault and the whole sidewall
   // orange (#26150a / #301607, s0.73-0.87); none of the four real night photos looks like that. Neutral-warm cove and
-  // vault (G/R ~0.85), a cool-grey dim lens light down the wall (sideLow 0.6), and a dim neutral fill in the galley /
+  // vault (G/R ~0.85; vault 0.020 rendered the mid-vault L12 vs ucr #211a14 L27 at the same place, so 2.5x), a cool-grey
+  // dim lens light down the wall (sideLow 0.6), and a dim neutral fill in the galley /
   // door zones (monFill: #c8c0b4 at ~0.25 of the boarding level, after exposure) [V: ucr_room-night-lighting ceiling
   // #352f2a / #16110e (s0.2-0.38), bins #312820, sidewall #23201c, lower sidewall #4f515b, far galley wall #645f57;
-  // sany_40 ceiling #42413d-#605d5f (s <= 0.08), sidewall #434c67-#8d9bc1] (lighting r1); hemi, screens, strips unchanged
-  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.050, 0.042, 0.034], sideLed: [0.018, 0.020, 0.028], sideLow: 0.6, vault: [0.020, 0.017, 0.014], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.2, readingLights: true, strips: true, screenGain: 0.6 },
+  // sany_40 ceiling #42413d-#605d5f (s <= 0.08), sidewall #434c67-#8d9bc1] (lighting r1); hemi, screens, strips unchanged.
+  // Exposure 2.2 -> 2.5: q20 median L25 vs ucr 30, and economy at night (sany_40, median L58) read about half as bright
+  // as the photo (wall L25-43 vs #494f67 L80, ceiling L39 vs #474647 L71) [D: renders r1b]
+  sleep: { label: 'Night', hemiTop: [0.030, 0.027, 0.024], hemiBot: [0.010, 0.009, 0.008], wash: [0.012, 0.010, 0.008], led: [0.050, 0.042, 0.034], sideLed: [0.018, 0.021, 0.032], sideLow: 0.6, vault: [0.050, 0.043, 0.035], monFill: [0.060, 0.055, 0.047], cove: 0.35, k: 1, exposure: 2.5, readingLights: true, strips: true, screenGain: 0.6 },
   // QA r1 (light): sunrise follows dining at seat level (lowTint [1.0, 1.3, 1.6], lowGain 0.6, sideWall = hemiTop share,
   // sideLow 0.5)
   wake: { label: 'Sunrise', hemiTop: [0.62, 0.30, 0.16], hemiBot: [0.15, 0.07, 0.035], wash: [0.30, 0.14, 0.07], led: [0.55, 0.05, 0.03], sideLed: [1.2, 0.11, 0.06], sideLow: 0.5, sideWall: [0.42, 2.25, 2.2], bandCut: 0.3, vault: [0.52, 0.235, 0.16], lowTint: [1.0, 1.3, 1.6], lowGain: 0.6, k: 0.9, exposure: 1.3 },
