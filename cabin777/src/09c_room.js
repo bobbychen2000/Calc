@@ -70,8 +70,8 @@ function roomSeatCore(B, bed, lod, w = 0.64, fs = 1) {
   const BK = M4.mul(CU, M4.trs(0.25, 0.051, -0.17, -0.45)), CH = { c: '#d4d8dc', r: 0.15, m: 0.95 };
   B.add(gRBox(0.05, 0.014, 0.07, 0.006, 1), BK, CH);
   B.add(gRBox(0.034, 0.006, 0.036, 0.004, 1), M4.mul(BK, M4.trs(0, 0.009, -0.008, 0, -4 * DEG)), { c: '#aeb3b8', r: 0.2, m: 0.9 });   // lift lever
-  B.add(gBox(0.045, 0.004, 0.10), M4.mul(CU, M4.trs(0.32, 0.047, -0.36, 0.3)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
-  B.add(gRBox(0.032, 0.006, 0.05, 0.003, 1), M4.mul(CU, M4.trs(0.30, 0.050, -0.29, 0.3)), CH);   // latch tongue
+  B.add(gBox(0.045, 0.004, 0.10), M4.mul(CU, M4.trs(0.34, 0.047, -0.17, 0.3)), { c: '#2c4250', r: 0.8, l: LAYER.fabric });
+  B.add(gRBox(0.032, 0.006, 0.05, 0.003, 1), M4.mul(CU, M4.trs(0.32, 0.050, -0.10, 0.3)), CH);   // latch tongue
 }
 
 // charcoal frame round an ash panel (every ash face in the photos sits in a ~3 cm dark frame, c_27312-27315):
