@@ -82,3 +82,15 @@ The ANA ones are seat-confirmed: `lalf_ANA77W_NH212_136/137` (11A) and `alv_ANA7
     whole registration.
 16. **Item 14 still open (medium).** w12: near flap L163, far skin L173 (w19A). A per-vertex roughness ramp (0.72 -> 0.92
     outboard, w12) only took ~4 L off the far skin, so the albedo-blind grazing `specEnv` term is the remaining lever.
+
+## Wave 3d (w16 raters + gap analysis; to lighting)
+
+17. **The albedo-scaled exterior sky reflection (8d7ae91, `04_shaders.js` ~l.443) is a no-op on the wing (low, FYI).** It divides
+    the baked luma by 0.39 (the old #636466 paint). The wing is #76787a now (luma 0.47), so the factor clamps to 1 on nearly every
+    wing vertex and w19A moved <= 1 L (r15 -> r16). The gap analyst also showed the near-far reversal was mostly diffuse (no exterior
+    sun spec at all only took 5 L off the far skin), so exterior fixed it in albedo (w17 ramp 1.22 -> 0.66). **Fix:** renormalise to
+    0.47, or drop the term; either way nothing more is needed from lighting for the near-far value.
+18. **Long-hairline aliasing on the wing at 20-30 m (low, A artefacts).** The hinge / gap strips shimmer in w26K / w30K. Only MSAA
+    or a supersampled exterior pass fixes it; exterior already widened the strips to the limit.
+19. **Night nav light washes only down-facing faces (low).** The red/green tip light (`lights` from buildExterior, no `light` gain)
+    could wash the upper raked tip faintly at night (point light within ~1.5 m). Optional.
