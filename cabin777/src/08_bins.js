@@ -250,7 +250,7 @@ function centerBinModule() {
     // plain crease filler where the vault meets the centre-bin crest (no cove light on this edge: see 07b header)
     B.add(gBox(0.05, 0.01, L - 0.006), M4.trs(0.70 * s, 2.268, 0), BINMAT.door);
     // dark recessed groove between the crest rail and the vault (c120 [V]; 14 mm [A]; w9a)
-    B.add(gBox(0.014, 0.004, L), M4.trs(0.712 * s, 2.2615, 0), BINMAT.crestGroove);
+    B.add(gBox(0.018, 0.004, L), M4.trs(0.724 * s, 2.258, 0), BINMAT.crestGroove);   // w10b: at 0.712 it hid under the rail
     // raised top rail along the crest, carrying the row placard (b_lalf_c120 '17' on the centre-bin top [V]; 18 mm [A])
     const [rx, ry, rtx, rty] = faceAtY(CBIN_DOOR, 2.19);
     B.add(gExtrude(faceShell(CBIN_DOOR.filter((p) => p[1] > 2.165 && p[1] < 2.245), s, -1, 0.008, 0.001), L - 0.014, 45), null, BINMAT.rail);

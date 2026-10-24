@@ -1,0 +1,75 @@
+{
+  "area": "ceiling",
+  "rater": "B",
+  "round": 10,
+  "score": 8.7,
+  "lightingNote": "r10 is about 6 L brighter overall than r9 (mean v1 202->208, v4 203->213), from the lighting team's exposure work. The crevice-term regression under the outboard bins is gone: the lip/handhold strip is L 147-165 in r10 v4/v9, against 79-105 in r9 (w9a medium). Tone relationships match the studio renders r10st. No new lighting regression on the ceiling. The vault's fore-aft streaks also show in the studio render r10st/d_up, so they are not only an AO-volume artefact.",
+  "previousStatus": {
+    "fixed": [
+      "w9a medium: dark band under the outboard bins (lighting). Lip now L 147 (v4) and 165 (v9) against a PSU band of 215-217, a thin light-grey line as in y_47301",
+      "w9b/w9a low: row-placard pictograms. They now draw as side-view seat glyphs ('35 [seat][seat][seat]', r10p v12/v13) and read as seats, not dashes. c120 also has a standing-person icon, but that is cosmetic",
+      "w9b low: centre crest-rail joint caps. A distinct raised cap with an end shadow is visible in the r10p/v12 close-up. At QA distance (v5) it is still barely visible, which is acceptable"
+    ],
+    "notFixed": [
+      "w8b/w9a/w9b low: door-3 white arcs. r10v/v3 still shows white curved slivers at the upper left (x 290-340, y 55-100) and upper right (x 650-700) of the dark tray, between the tray, the bin ends and the EXIT header. The zone-end closure poly in 07b_ceiling.js:278 now takes barSoffit, so the remaining white is outboard of VAULT[0]: the cove band, grille and bin-top end beyond the closure poly",
+      "w9a low: crest-rail to vault groove. r10p/v12 column x400 goes from vault 159 straight to rail 245 with no dark line between them. The 14 mm crestGroove box at y 2.2615 (08_bins.js:253) is hidden behind the rail lip at this angle, or z-fights with it",
+      "w8b/w9a/w9b low: vault speaker outline. In-cabin the face equals the vault (v2 175 vs 175, v6 176 vs 176), so the fitting reads as a faint pale bar with no dark crescent on one long edge (c120). It reads well in the studio (r10st d_up), but only because the studio's vault is darker",
+      "w8b/w9a/w9b low: vault fore-aft streaks. Faint stripes run along the vault (r10v v1/v2 crops, and also the studio r10st/d_up)"
+    ],
+    "regressed": []
+  },
+  "details": [
+    {"detail": "Vault panel shape, joint ribs, crest rib", "score": 8.8, "refs": ["b_lalf_c120", "b_lalf_c119"]},
+    {"detail": "Vault tone and falloff (grille 0.85 -> crease 0.66)", "score": 8.4, "refs": ["b_lalf_c120", "b_sany_y22"]},
+    {"detail": "Cove light band + slotted grille", "score": 8.8, "refs": ["b_lalf_c120", "y_47300"]},
+    {"detail": "Vault fittings (speaker, emergency light)", "score": 7.9, "refs": ["b_lalf_c120", "b_lalf_c119"]},
+    {"detail": "Outboard bins (doors, latches, seams, top rail, lip)", "score": 8.9, "refs": ["y_47301", "b_lalf_c120"]},
+    {"detail": "Row placards", "score": 8.6, "refs": ["b_lalf_c120", "b_sany_y22"]},
+    {"detail": "Centre bins (doors, crest rail, joint caps, groove)", "score": 8.6, "refs": ["b_lalf_c120", "y_47300"]},
+    {"detail": "Outboard PSU band (stepped strips, housings, sign windows)", "score": 8.8, "refs": ["b_lalf_c26", "y_47301", "rb_omaat_room23"]},
+    {"detail": "Centre PSUs", "score": 8.6, "refs": ["b_sany_y22", "y_47300"]},
+    {"detail": "EXIT signs", "score": 8.6, "refs": ["b_lalf_c133"]},
+    {"detail": "Door-3 dark soffit with downlights, louvre, speaker", "score": 8.3, "refs": ["b_lalf_c133", "b_lalf_c134"]},
+    {"detail": "Door 1/2/4/5 cross-aisle and monument ceilings", "score": 8.0, "refs": ["(no photo check: q01 camera sits between monuments, only a sliver of ceiling)"]}
+  ],
+  "issues": [
+    {
+      "severity": "low",
+      "detail": "Door-3: white arcs beside the dark soffit (4th report)",
+      "problem": "Curved white slivers remain between the dark tray, the bin ends and the EXIT header at the upper left and upper right. In c133/c134 the dark ceiling runs flat to the monument walls and the bin ends.",
+      "evidence": "r10v/v3_door3Aft x 290-340 y 55-100 and x 650-700 y 70-110 (raterB10/v3crop.png); identical to r9v/v3",
+      "fix": "07b_ceiling.js ~l.278: for bar(q) closures, extend the poly outboard past VAULT[0] to cover the cove band, grille and bin-top (e.g. prepend [xBinTop*side, yBinTop] .. [XG_OUT*side, 2.62]) or add a barSoffit gExtrude cap over the cove/grille ends (TROUGH.w + 0.03 wide, 10 mm) at z0-0.006 / z1+0.006 next to door 2. Also check the door-3 DOME sweep at |x| > 1.55: if the bin-end gap shows the dome, give the whole sweep barSoffit (already done) and lower its outboard foot to meet the bin end"
+    },
+    {
+      "severity": "low",
+      "detail": "Vault speaker reads as a faint pale bar",
+      "problem": "The face equals the vault tone in-cabin, and the rim has no shadow side. c120 shows a dark crescent along one long edge (the recess) and a light rim on the other.",
+      "evidence": "r10v/v2 (450,385) 175 on a 175 vault; v6 (530,255) 176 on 176; v1 crop",
+      "fix": "07b_ceiling.js l.246-248: add a 6 mm dark crescent strip along the grille-side long edge: vaultPanel(0.70 - 0.045/R, side, zc, 0.30, 0.008, 0.004, 0.0038, 12, 0.03) in {c:'#8f8d89'}, and bake bezelIn at x0.93. Or lift the outer ring to 0.004 proud so the shadow map catches an edge"
+    },
+    {
+      "severity": "low",
+      "detail": "Crest-rail to vault groove not visible",
+      "problem": "The 14 mm dark groove added in w9 does not show. The vault goes straight to the white rail.",
+      "evidence": "r10p/v12 column 400: 159 (vault) -> 245 (rail) at y 118-120, no dark pixels",
+      "fix": "08_bins.js l.253: move crestGroove outboard of the rail lip and slightly below the vault (x 0.712 -> 0.724, y 2.2615 -> 2.258) and widen it to 0.018 so it shows past the rail at aisle viewing angles; or draw it as a vertical riser face (gBox(0.003, 0.014, L)) on the rail's outboard edge"
+    },
+    {
+      "severity": "low",
+      "detail": "Vault fore-aft streaks",
+      "problem": "Faint lengthwise stripes run along the vault. They also appear in the studio, so they come from per-vertex shading, normals or the bake, not only the AO volume.",
+      "evidence": "r10v/v1 and v2 (raterB10/v1crop.png); r10st/d_up",
+      "fix": "07b_ceiling.js vault build: compute normals analytically from the vault arc (not from facet averaging across rib/speaker seams), and apply the falloff bake as a smooth function of arc length t instead of |x| (lerp on t avoids plateaus where |x| changes slowly near the crest); lighting team: check the shadow-map PCF footprint over y 2.3-2.7"
+    },
+    {
+      "severity": "low",
+      "detail": "Door 1/2/4/5 ceilings not rated",
+      "problem": "q01 still looks between two marble monuments, so the door-1 dome cannot be judged.",
+      "evidence": "r10/q01_door1",
+      "fix": "test/qa.js (integration): walk(-0.6, 1.62, 5.4, 'Math.PI+0.12', -0.08) as proposed in from_ceiling.md"
+    }
+  ],
+  "questionsForUser": [
+    "Have you got (or flown) a photo of the door-1 or door-2 cross-aisle ceiling on the 212-seat 777-300ER? The model uses a white dome there (approximated), and no photo has confirmed it."
+  ]
+}

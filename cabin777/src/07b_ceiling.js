@@ -278,7 +278,11 @@ function buildCeilings(upper, layout) {
         const poly = [...VAULT.map(([x, y]) => [x * side, y]), [0, 2.27], [0, 2.62], [VAULT[0][0] * side, 2.62]];   // over the centre-bin crest too (w3b sliver)
         // closures facing the dark door-3 soffit take its colour (w8b: white arch round the tray in v3)
         const bar = (q) => q && q.type === 'door' && q.door === 2;
-        for (const [z, q] of [[z0 - 0.006, zones[zi - 1]], [z1 + 0.006, zones[zi + 1]]]) upper.add(gExtrude(poly, 0.01), M4.trs(0, 0, z), bar(q) ? CEILMAT.barSoffit : CEILMAT.flat);
+        for (const [z, q] of [[z0 - 0.006, zones[zi - 1]], [z1 + 0.006, zones[zi + 1]]]) {
+          upper.add(gExtrude(poly, 0.01), M4.trs(0, 0, z), bar(q) ? CEILMAT.barSoffit : CEILMAT.flat);
+          // ...and on to the outboard bin top, over the cove / grille / bin-crest ends (w9a/w9b/w10b: white arcs)
+          if (bar(q)) upper.add(gExtrude([[1.62 * side, 2.22], [2.35 * side, 2.22], [2.35 * side, 2.62], [1.62 * side, 2.62]], 0.01), M4.trs(0, 0, z), CEILMAT.barSoffit);
+        }
       }
     } else if (zn.type === 'door') {
       const zc = (z0 + z1) / 2;
