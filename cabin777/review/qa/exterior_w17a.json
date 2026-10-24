@@ -1,0 +1,94 @@
+{
+ "area": "exterior",
+ "rater": "A skeptic",
+ "build": "w17 = 5eaed93",
+ "score": 7.8,
+ "details": {
+  "wing planform / raked tip / bending": 7.5,
+  "wing surface detail (seams, fastener rows, panel tone, gear stripe, slat band, placards, grime)": 7.6,
+  "control surfaces & gaps (slats, spoilers, flaps, flaperon, aileron)": 7.7,
+  "canoes (flap-track fairings)": 8.5,
+  "pylon": 7.2,
+  "nacelle shape (cowl, lip, splits, strake, access panel)": 7.6,
+  "nacelle colour / materials (incl. GE logo)": 7.8,
+  "inlet / fan / spinner": 7.9,
+  "livery / registration JA795A": 7.5,
+  "lights & static dischargers": 7.2,
+  "artefacts": 7.3
+ },
+ "previous": [
+  {"issue": "w16a medium: pylon fairing nose a fat round tube ending in an overhanging bulb (regression)", "status": "fixed, with new defects", "measure": "ratA17/w13A_r16_r17.png, s13A_r16_r17.png, c_nac_pylon_zoom.png. The bulb and its visible underside are gone; the fairing is now a low blister (crown well under the w16 height) that grows out of the cowl, as in LALF _137. New defects: (a) the tent taper (l.493, x0.4 at the crown) leaves a hard crease between a narrow lit crown band and the flank, visible as a two-tone stripe along the whole fairing in w13A / s13A; (b) the top line is lumpy: hump, kink, then a flat plateau over the aft cowl (c_nacelle_left), not _137's smooth dome -> saddle -> rise into the strut; (c) aft of the saddle the fairing reads as a flat-topped white slab with a vertical flank wall where nacTop falls toward the core; (d) the nose ends in a small pointed tongue just aft of the inlet split in w11A (zoom), not a rounded toe."},
+  {"issue": "w16a medium: canoe near-pod crown on the sun side (K) 0.78 of the skin over 8-12 px", "status": "fixed", "measure": "w26K x 540/560/580: crown 174-194 over 4-5 samples (12-15 px) on the 187-191 skin = 0.92-1.0 (r16 128-147); flank unchanged 112 -> 84 (0.60 -> 0.45), keel 50-67. _7250: crown 224-231 / flank 123-128 / keel 74-86 on 220. Matches."},
+  {"issue": "w16a low: inlet lip shadow 1.5x too dark at 11A; spinner unreadable", "status": "partly fixed", "measure": "w11A row 420 x 564-596: 20/23/27/33/25/36/37 (r16 14/17/21/25/21/31/34); LALF _136 31-66, still ~1.3x too dark. w11K row 450 liner 83 -> 59 (r16 82 -> 50), direction right. Spinner still not seen from any window seat (camera geometry), only in c_nacelle_left as a small nub."},
+  {"issue": "w16a low: access panel outline 0.70 of the cowl", "status": "fixed (marginally)", "measure": "w11A panel min 139 on 184 = 0.76 (r16 0.73); w11K 167 on 206 = 0.81. _136 0.88. Acceptable."},
+  {"issue": "w16a low: fan-cowl upper hinge line / pylon joint seam missing", "status": "not fixed", "measure": "w11A / c_nacelle_left fan cowl still blank above the strake; _136 shows the long hinge seam."},
+  {"issue": "w16a medium (lighting-owned): wing near-far value reversed in w19A", "status": "fixed in direction, magnitude short", "measure": "w19A near flap (600,440) 173, (560,500) 176; far (680,195) 162, (720,220) 173, (740,160) 167 (r16 162/164 vs 169/171/178). Near is now >= far, but only by 0-7 % where KN41 falls ~25 % (191 -> 136-148). No banding seen on the far wing in w19A / w30K / c_wing_panel from the steeper ramp."},
+  {"issue": "w16 gap item 1: no fine fastener detail on the near panels (fine SD 0.00)", "status": "fixed, with new artefacts", "measure": "Rows now visible in w19A / w26K (ratA17/w19A_r16_r17.png, w26K_r16_r17.png). But the 50 mm strips are LIGHTER than the movable panels they sit on: w19A row 500 strip base 175-176 vs flap 169-170, dots 158-167. The strips read as pale ribbons carrying a double column of dots (zipper / ladder), most visibly on the chordwise rows at the spoiler breaks (w19A x 660-680, y 430-560) and the inboard spoiler/flap rows in w26K (pale parallel rails). KN41 rows are single dark dot lines on unchanged paint."},
+  {"issue": "w16 gap item 4: 14-pin discharger comb read as a dark fringe", "status": "fixed", "measure": "w19A tip zoom (ratA17/w19A_tip.png): comb gone, 7 faint ticks. n19A: the red lens glow still sits as a blob on top of the tip LE corner (ratA17/n19A_tip.png), a little smaller than r16."}
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "near-panel fastener strips read as pale zippers (new w17 artefact)",
+   "problem": "The x_rivet strips are coloured with the fixed-skin ramp only, so on the movable panels (tinted x0.92-0.95 and bluer at l.261-263) they sit ~4 % lighter than the panel and show as pale 50 mm ribbons with two dot columns. KN41 shows single dark dot rows with no ribbon.",
+   "evidence": "w19A row 500: flap 169-170, strip 175-176, dots 158-167; ratA17/w19A_r16_r17.png, w26K_r16_r17.png.",
+   "fix": "src/11_exterior.js l.354: multiply the strip vertices by the panel tint as well, e.g. f = lerp(1.22, 0.66, smooth(5, 20, |x|)) * (onMovable ? 0.92 : 1) with tint [0.97, 0.985, 1.03] (on-movable = every row in l.340-347 except the chordwise ones at the fixed spoiler-break edges), or simply darken rv.c '#66686b' -> '#5f6266' so the strip base lands 1-2 L under the panel. l.339: rw 0.05 -> 0.03 so the triplanar 25 mm tile gives one dot column, not two. Target: strip base within +-2 L of the panel, dots 8-12 L under it."
+  },
+  {
+   "severity": "medium",
+   "detail": "pylon fairing: crease, lumpy top line, aft slab, pointed nose tip",
+   "problem": "The bulb is gone but the new tent taper puts a hard crease along the fairing (lit crown band over a darker flank), the top line goes hump -> kink -> flat plateau, the aft part over the core is a flat-topped white slab with a vertical wall, and the nose ends in a small pointed tongue. _137: one smooth dome, front sloping into the cowl, a saddle, then the pylon rising into the strut, all in soft gradients.",
+   "evidence": "ratA17/w13A_r16_r17.png, s13A_r16_r17.png, w11A_r16_r17.png, c_nac_pylon_zoom.png vs ref/web/exterior/b_lalf_ANA77W_11A_137.jpg.",
+   "fix": "src/11_exterior.js l.493: taper 0.4 -> 0.65 and drive it by t^1.5 (not smoothstep) so the flank curves into the crown without a crease; recomputeNormals already follows. l.474: replace the 0.35 * smooth(2.9, 3.6) dip with a symmetric saddle hA = 0.26 * nose * (1 - 0.30 * bump(3.4, 4.4)) where bump = smooth(a, m) * (1 - smooth(m, b)), and start hB later, smooth(4.0, leE - E.x0, x), so the plateau becomes dome -> saddle -> rise. l.476: for x > 3.8 keep the base sunk relative to the ridge, not to nacTop (bot = ridge - max(0.42, d_prev)), so the flank does not stand as a wall where the cowl falls toward the core. l.470: nose = smooth(1.65, 2.6, x) ** 0.5 is fine for height, but use lerp(0.45, 1, nose) for the width at l.483 so the tip is a rounded toe, not a tongue. Check w11A, w13A, s13A, c_nacelle_left."
+  },
+  {
+   "severity": "low",
+   "detail": "hinge smudges read as flat grey tape",
+   "problem": "Each smudge is a uniform 0.90 rectangle (154 on 170) with hard ends, 30+ px long in w19A. KN41 smudges are small, dark, irregular and fade out aft.",
+   "evidence": "w19A row 465 x 465-497: flat 154; ratA17/w19A_r16_r17.png (grey bars at the spoiler/flap junction).",
+   "fix": "l.350-352: half the length (0.26 -> 0.13), darker core '#4a4d51' on a second, narrower segment that fades (use the two-segment pattern of l.362-363: dark 0.05 m wide head, lighter 0.025 m tail), and per-smudge hsh jitter in length/angle so they are not identical."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet depth / fan-cowl hinge seam",
+   "problem": "11A near-side lip shadow still ~1.3x darker than _136; the long upper fan-cowl hinge line of _136 is still missing.",
+   "evidence": "w11A row 420 20-37 vs _136 31-66.",
+   "fix": "l.403-406: liner floor 1 - 0.65 -> 1 - 0.55 at the lip end only (smooth(0.3, 1.2) -> smooth(0.5, 1.4)). Hairline cowlPatch (#8a9097, 8 mm) at ~62 deg above the inboard horizontal from x 1.35 to 3.1 next to the strake patch."
+  },
+  {
+   "severity": "low",
+   "detail": "near-far value (lighting-owned remainder)",
+   "problem": "Direction now right but only 0-7 % near > far vs ~25 % in KN41.",
+   "evidence": "w19A near 173-176, far 162-173.",
+   "fix": "Do not steepen the albedo ramp further (l.252 already 1.22 -> 0.66; more would band the far wing in w30K). Remaining gap is the grazing sky specular (04_shaders.js exterior spec), lighting owner."
+  },
+  {
+   "severity": "low",
+   "detail": "tip nav light at night",
+   "problem": "n19A still shows the red glow as a blob sitting above the tip LE corner, not a lens inside the fairing.",
+   "evidence": "ratA17/n19A_tip.png.",
+   "fix": "l.533-536: move the light point (lights.push) to tip.y0 - 0.03 and tip.le + 0.10 so the glow centre is inside the fairing, and s 1.0 -> 0.7."
+  }
+ ],
+ "worthPlus03": [
+  "Rivet strips the panel tone and one dot column (l.339 / l.354): removes the only new artefact in the near-wing views.",
+  "Pylon crease and top-line fix (l.474-493): dome -> saddle -> rise without the crown stripe."
+ ],
+ "questionsForUser": [
+  "A side-on photo of the GE90 pylon fairing from rows 11-13 A (not into the sun) would still settle the dome height and saddle position."
+ ],
+ "photos": [
+  "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg",
+  "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg",
+  "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg",
+  "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/w13A_r16_r17.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/s13A_r16_r17.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/w11A_r16_r17.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/c_nac_pylon_zoom.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/w19A_r16_r17.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/w26K_r16_r17.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/w19A_tip.png",
+  "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratA17/n19A_tip.png"
+ ]
+}

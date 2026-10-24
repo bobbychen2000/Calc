@@ -1,0 +1,212 @@
+{
+ "area": "exterior",
+ "rater": "B geometry",
+ "build": "w17 = 5eaed93",
+ "score": 8.2,
+ "details": [
+  {
+   "detail": "Planform, raked tip, cruise bending",
+   "score": 7.5,
+   "note": "Unchanged geometry; LE sweep, rake, tip lift still match KN41 / _7331.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/w19A.png",
+    "ref/web/exterior/a5_kn_ANA77W_TheRoom_41.jpg"
+   ]
+  },
+  {
+   "detail": "Surface detail: value, panel tone, seams, fastener rows, slat band, gear stripe, placards, grime",
+   "score": 8.0,
+   "note": "Near-far value FIXED: w19A near flap (600,440) 162 -> 173, (560,500) 164 -> 175; far outboard skin x=580-640 y 130-160 141-164 -> 113-139 (ratio ~0.70, KN41 194 -> 146 = 0.75). No banding from the steeper ramp. Fastener rows now give fine detail, but read as stitching: double/triple columns of 1-px dots at 98-162 on a 169 flap (0.58; KN41 single soft rows 136 on 170 = 0.80), riding on a strip that is 5-12 L LIGHTER than the skin (w19A row 520: strip 174-176 vs flap 169; w26K rows 280-290: 184-188 vs 175), so at range the rows become pale ladders. Hinge smudges are flat hard-edged rectangles (w19A 149-153 on 164-170, 5-7 px tall, 20-30 px long) = tape, not soot.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w19A_near.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w19A_rowzoom.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w19A_smudge.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_kn41_rows.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w26K.png"
+   ]
+  },
+  {
+   "detail": "Control-surface lines (spoilers, flaperon, aileron)",
+   "score": 8.1,
+   "note": "Unchanged, hierarchy and taper correct.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/w19A.png"
+   ]
+  },
+  {
+   "detail": "Flap-track fairings (canoes)",
+   "score": 8.5,
+   "note": "Pod bodies unchanged (w26K x=600 flank 120 -> 65, identical to r16); the near-pod top now carries a lit crown band (w26K x=560 y 308-312: 131/136 -> 173/185), closer to _7250's white-topped prism. Far pods unchanged.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w26K.png",
+    "ref/web/exterior/b_alv_ANA77W_PY_IMG_7250-2-scaled.jpeg"
+   ]
+  },
+  {
+   "detail": "Pylon",
+   "score": 8.0,
+   "note": "Bulb gone: now a low blister on the fan cowl, a saddle, then the rise to the strut, nose just aft of the inlet split (x_pylon_high, x_pylon_side) - the _137 sequence. Residuals: the crown outline is faceted (straight runs and kinks from the 8-segment loft, visible in x_pylon_side / c_nacelle_left as a lumpy top), the tent-tapered flank meets the cowl along a hard shading step, and from w13A the blister is lower and flatter than _137's dome (reads as a skirted cap).",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/cmp_pylon_side.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/c17/x_pylon_high.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_pylon_w13A.png",
+    "ref/web/exterior/b_lalf_ANA77W_11A_137.jpg"
+   ]
+  },
+  {
+   "detail": "Nacelle geometry (cowl, lip, splits, strake, access panel)",
+   "score": 7.9,
+   "note": "Access panel w11A col 518: 166/190 on 205 (0.81, _136 0.69-0.88). Cowl, lip, splits, strake unchanged. Fresh studio renders identical to the supplied r17 c_* (0 % px diff): the pipeline issue is fixed.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/c_nacelle_left.png"
+   ]
+  },
+  {
+   "detail": "Nacelle colour / materials (incl. GE monogram)",
+   "score": 7.9,
+   "note": "Unchanged; monogram present.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/c_ge_inboard_left.png"
+   ]
+  },
+  {
+   "detail": "Inlet / fan / spinner",
+   "score": 7.9,
+   "note": "w11A row 420 throat 13-37 -> 16-37 (lip end slightly lighter, LALF _136 31-66). But w11K row 450 now 82 -> 59 vs r16 81 -> 50: the fan end got LIGHTER, opposite to the intent (knav _9 falls to ~10). Spinner still unreadable from seats.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/w11K.png",
+    "ref/web/exterior/b5_knav_ANA77W_7A_GE90_takeoff_9.jpg"
+   ]
+  },
+  {
+   "detail": "Livery / registration JA795A",
+   "score": 7.7,
+   "note": "Unchanged and correct.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/w26K.png"
+   ]
+  },
+  {
+   "detail": "Nav lights and static dischargers",
+   "score": 7.6,
+   "note": "FIXED: the 14-pin dark comb in w19A is now 7 fine light wicks (no fringe); n19A glow sits flush in the tip instead of a cherry on top.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_tip_day.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_tip_night.png"
+   ]
+  },
+  {
+   "detail": "Artefacts",
+   "score": 7.5,
+   "note": "New: rivet strips lighter than the skin (pale bands/ladders in w26K and on the outboard skin in w19A), smudges as tape, and visible 1-px dot crawl on the near rows; pylon crown faceting. No z-fighting, gaps or floating parts.",
+   "refs": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w26K.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w19A_rowzoom.png"
+   ]
+  }
+ ],
+ "previous": [
+  {
+   "issue": "B w16 medium: stale studio renders",
+   "status": "FIXED. r17 c_* match fresh CABIN_PAGE renders pixel for pixel."
+  },
+  {
+   "issue": "B/A w16 medium: wing near-far value",
+   "status": "FIXED. w19A near 173-175 / far 113-139 (r16 162 / 141-164)."
+  },
+  {
+   "issue": "B/A w16 low: pylon saddle and nose station; A w16 bulb regression",
+   "status": "FIXED (mostly). Blister + saddle + rise present; crown faceted, flank edge hard."
+  },
+  {
+   "issue": "B w16 low: canoe far pods / crown step",
+   "status": "PARTLY FIXED. Near crown lit (131-136 -> 173-185); far pods unchanged."
+  },
+  {
+   "issue": "B w16 low: inlet depth from 11K",
+   "status": "REGRESSED slightly. w11K liner 82 -> 59 (r16 81 -> 50)."
+  },
+  {
+   "issue": "gap w16 item 1: no fine detail on near panels",
+   "status": "ADDED but with artefacts (double-dot ladders, strips brighter than skin, tape smudges)."
+  },
+  {
+   "issue": "gap w16 item 4: discharger comb / nav cherry",
+   "status": "FIXED."
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "fastener strips brighter than the skin",
+   "problem": "The x_rivet strips are 5-12 L above the panel they lie on (w19A 174-176 vs 169; w26K 184-188 vs 175), so they read as pale ladders/grid lines at range; the skin gets extra per-vertex tone factors the strips do not.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w26K.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w19A_near.png"
+   ],
+   "fix": "l.339: c '#66686b' -> '#5e6063' (about -8 %), or at l.354 copy the colour of the nearest skin vertex under each strip vertex instead of re-applying the ramp from |p.x|."
+  },
+  {
+   "severity": "medium",
+   "detail": "fastener rows read as stitching",
+   "problem": "2-3 parallel columns of hard 1-px dots at 0.58 of the panel; KN41 shows one soft row at ~0.80 next to a seam line.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w19A_rowzoom.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_kn41_rows.png"
+   ],
+   "fix": "l.339 rw 0.05 -> 0.025 so the strip covers one dot column of the tile (or regenerate tex_x_rivet with a single row, make_swatches.py x_rivet), and raise the dot floor to ~0.8 (03_tex.js LAYER_PARAMS 35 strength / PHOTO_GAIN)."
+  },
+  {
+   "severity": "low",
+   "detail": "hinge smudges read as tape",
+   "problem": "Uniform flat rectangles 149-153 on 164-170 with hard edges.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/z_w19A_smudge.png"
+   ],
+   "fix": "l.350-352: taper the width along the path (w as a function: 0.06 -> 0.015) and use 3-4 points with the colour fading to the skin tone at the tail, or put them on the xSkin layer so they inherit the streak texture."
+  },
+  {
+   "severity": "low",
+   "detail": "pylon crown faceting / hard flank edge",
+   "problem": "Lumpy top outline and a crisp shading step where the tent flank meets the cowl.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/ratB17/cmp_pylon_side.png",
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/c_nacelle_left.png"
+   ],
+   "fix": "l.490 gLoft(fs, 8, ...) -> 12 segments; l.474 raise hA 0.26 -> 0.30 with the crown at x~2.4 for the _137 dome height."
+  },
+  {
+   "severity": "low",
+   "detail": "inlet fan end lighter at 11K",
+   "problem": "w11K liner fan end 59 vs 50 in r16; knav _9 ~10.",
+   "evidence": [
+    "/tmp/claude-0/-home-user-Calc/0185d7bc-6b95-54c6-a367-1813fba44537/scratchpad/r17/w11K.png"
+   ],
+   "fix": "l.404: 1 - 0.65*smooth(0.3,1.2) -> 1 - 0.75*smooth(0.3,1.1)."
+  }
+ ],
+ "worth_0_3": [
+  {
+   "item": "Darken rivet strips to the skin tone",
+   "gain": "artefacts +0.3, surface +0.2"
+  },
+  {
+   "item": "Single soft fastener row",
+   "gain": "surface +0.2"
+  },
+  {
+   "item": "Tapered smudges",
+   "gain": "surface +0.1"
+  },
+  {
+   "item": "Pylon 12-segment loft",
+   "gain": "pylon +0.2"
+  },
+  {
+   "item": "Inlet fan end darker",
+   "gain": "inlet +0.1"
+  }
+ ],
+ "questions": [],
+ "photos": []
+}

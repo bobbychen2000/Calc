@@ -536,6 +536,31 @@ def x_rivet():
     return size
 
 
+def x_cowl():
+    """exterior w18: fan-cowl weathering tile (soft grey mottle on the white GE90 cowls, LALF ANA 11A _136: inlet and fan cowl
+    panels clear of the access panel, splits and the strake). The x_skin recipe without the flow smear (that streaked the
+    cowl vertically through the side projection, gap w16), luminance-only, skewed dark, stored at SD 0.08. Tile 1.5 m
+    [A: the 4.2 m cowl spans ~600 px of _136 -> 180 px ~ 1.3 m]"""
+    srcs = [('web/exterior/b_lalf_ANA77W_11A_136.jpg', (300, 790, 470, 940)),     # inlet cowl below the access panel
+            ('web/exterior/b_lalf_ANA77W_11A_136.jpg', (60, 760, 220, 900))]      # fan cowl above the strake
+    acc = 0
+    for f, box in srcs:
+        im = Image.open(os.path.join(root, 'ref', f)).convert('L').crop(box).filter(ImageFilter.MedianFilter(3))
+        im = im.resize((S, S), Image.LANCZOS).filter(ImageFilter.GaussianBlur(3))
+        a = (np.asarray(im).astype(np.float32) / 255.0) ** 2.2
+        b = np.asarray(im.filter(ImageFilter.GaussianBlur(48))).astype(np.float32) / 255.0
+        r = np.clip(a / np.maximum(b ** 2.2, 1e-3), 0.8, 1.2)
+        acc = acc + tileable((r / r.mean())[:, :, None])[:, :, 0]
+    r = acc / len(srcs)
+    r = np.where(r > 1, 1 + (r - 1) * 0.5, r)   # grime darkens
+    r = r / r.mean()
+    r = 1 + (r - 1) * (0.08 / max(float(r.std()), 1e-4))
+    print('x_cowl sd', round(float(r.std()), 4), 'p5/p95', np.percentile(r, [5, 95]).round(3))
+    out = np.clip(np.repeat(r[:, :, None], 3, 2) / 2, 0, 1)
+    Image.fromarray((out * 255 + 0.5).astype(np.uint8)).save(os.path.join(root, 'tex', 'tex_x_cowl.png'))
+    return 1.5
+
+
 if __name__ == '__main__':
     os.makedirs(os.path.join(root, 'tex'), exist_ok=True)
     import json, sys
@@ -548,5 +573,6 @@ if __name__ == '__main__':
     if not only or 'g_alu' in only: sizes['g_alu'] = g_alu()
     if not only or 's_pleat' in only: sizes['s_pleat'] = s_pleat()
     if not only or 'x_rivet' in only: sizes['x_rivet'] = x_rivet()
+    if not only or 'x_cowl' in only: sizes['x_cowl'] = x_cowl()
     json.dump(sizes, open(os.path.join(root, 'tex/sizes.json'), 'w'))
     print('swatches', sizes)
