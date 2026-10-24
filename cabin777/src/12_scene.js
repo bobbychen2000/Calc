@@ -600,6 +600,7 @@ class Scene {
       G.draw(this.ext.mesh);
       G.set('u_extBounce', [0, 0, 0]); G.set('u_extPtP', new Float32Array(8));   // the studio (same program) keeps its plain fill
     }
+    G.set('u_toe', 0);   // ... and its plain tone (14_studio renders through the same program)
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
     const S = this.progs.sky;
