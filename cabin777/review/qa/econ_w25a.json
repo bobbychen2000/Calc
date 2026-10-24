@@ -1,0 +1,208 @@
+{
+ "area": "econ",
+ "rater": "A",
+ "round": "w25",
+ "candidate": "5146ec6",
+ "lens": "Skeptic at matched physical scale. q15 vs y_47300 1:1 (pitch 162 vs 154 px) with the w24 boxes (raterA24/boxes.json; pillow boxes re-cut for the lowered pillow: render 188-262 x 382-434 etc.), st.py stats (mean RGB, L, B/R, p10/50/90, coverage > 1.4x median, fl/gr, blob sizes, colCV, hpCV), cover column / row profiles, arm colour on the bright 60 % of the arm pixels, whole-frame fabric-pixel tone for q15-q17. Close-up e4 vs y_47306 with the render scaled x0.81 to the photo seat width. Every number diffed against the w24base renders of the same cameras. Scripts and crops: /tmp/claude-0/-home-user-Calc/9bd9f3c4-d0cf-5926-80e2-5fc8be0f1dcf/scratchpad/raterA25.",
+ "score": 8.0,
+ "priorIssues": [
+  {
+   "issue": "w24a-1 / w24b-3 (medium) hero-row pans permuted; diamond pan a bold light-star field",
+   "status": "order fixed; diamond pan not fixed (still bold, now over-saturated)",
+   "evidence": "q15 pans D-G now tick / tick / diamond / mosaic = y_47300. F diamond pan 1:1: L67.7 vs 73.8 (tone ok), but B/R 2.41 vs 1.82 (w24 E diamond pan 2.00: bluer), coverage 0.23 vs 0.08, blob mean 21 vs 5.6 px, p90/p10 2.74 vs 1.82. The light stars are still the most eye-catching fabric in q15. The y_diamond tile went 1.25x, so ECON_PAN_B being darker was cancelled."
+  },
+  {
+   "issue": "w24a-2 (medium) petal fleck weak at row distance",
+   "status": "regressed at row distance; close-up improved",
+   "evidence": "q15 1:1 E / G backs: p90/p10 2.17 / 2.23 vs 3.02 / 3.07 (w24 2.47 / 2.49), coverage 0.16 / 0.16 vs 0.21 / 0.20 (w24 0.20, on target), fl/gr 1.96 vs 2.26, hpCV 0.35 vs 0.50. The Poisson thinning (keep 0.7) removed the flecks that carried the distance read. e4 right pad x0.81: coverage 0.18 (w24 0.28) vs y_47306 ~0.13, blobs 6.5 vs 10.3: better."
+  },
+  {
+   "issue": "w24a-3 / w24b-4 (medium) tick strokes fat, coverage 1.5x",
+   "status": "partly fixed: close-up contrast better, but at row distance the strokes were dimmed, not thinned",
+   "evidence": "q15 1:1 D / F backs: coverage 0.24 vs 0.17-0.18 (w24 0.26), blob mean 3.25 vs 2.55 (w24 3.65), p90/p10 3.15 vs 3.37-3.63 (w24 3.41, now below target), colCV 0.23 vs 0.15-0.20. e4 middle back: p90/p10 4.21 vs 3.39 (w24 4.54), blobs 13.5 vs 7.8 px (still 1.7x fat)."
+  },
+  {
+   "issue": "w24a-4 / w24b-L1 (medium, lighting) covers too dark off-axis",
+   "status": "not fixed (lighting)",
+   "evidence": "e4 middle cover L34.5 vs y_47306 83-124 (unchanged from w24 34.4). q16 / q17 unchanged by eye. Head-on q15 covers L52-55 vs y_47300 35-64."
+  },
+  {
+   "issue": "w24a-5 / w24b-2 (low / medium) pillow: no weave, flat, high",
+   "status": "placement fixed; weave and shape not fixed; now a touch flat",
+   "evidence": "q15: pillow 110 x 70 px (0.68 x 0.43 pitch) vs y_47300 102 x 75 (0.66 x 0.49); h/w 0.64 vs 0.74 (w24 was too tall, overshot a little). Its foot now meets the pan crease. Tone L47-50 vs 39-52 ok. hpCV 0.009-0.010 vs 0.035-0.055 (no weave); no dog-ear corners or puffed top, the piping still reads as an outline at thumbnail size."
+  },
+  {
+   "issue": "w24a-6 (low) cover foot: no crease, no lightening toward the foot",
+   "status": "not fixed",
+   "evidence": "q15 column through cover D: 58 -> 47 -> 52, then a 1-row lip at 61 and straight into the pad. y_47300 has a 2-3-row dark crease (L23-35 at x390 / 540) right under the foot."
+  },
+  {
+   "issue": "w24a-7 / w24b-1 (low / medium) cover too tall head-on",
+   "status": "partly fixed",
+   "evidence": "q15 cover D-G 84 x 64 px (h/w 0.76; w24 87 x 70, 0.80) vs y_47300 70-84 x 46 (0.55-0.66), so it is still ~1.2x tall. Close up the trend reverses: e4 middle cover h/w 0.86 vs y_47306 0.89-1.1. The photos conflict, so do not shorten it further (see w25a-7)."
+  },
+  {
+   "issue": "w24a-8 / w24b-5 / w24b-6 (low) belts, buckles, arm colour, carried items",
+   "status": "arm colour fixed; buckle covers partly fixed; belts, block-end, bezel dots, pocket and legs not fixed",
+   "evidence": "Inner arm D/E: B/R 1.00 vs y_47300 0.97 (w24 1.056), L186 vs 191. The end arm (G side) is L203 vs 161, a lighting / AO matter. The buckle cover is darker, but the left silver tongue (SEATMAT.buckle #c3c7cc) still reads at L~170-240 mid-pan. The bold V straps are unchanged; the photo shows none. e3 / e6 / e8 are identical to w24."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Fabric: tick weave",
+   "score": 7.9,
+   "refs": "q15 1:1 coverage 0.24 vs 0.175, blobs 3.25 vs 2.55, p90/p10 3.15 vs 3.37-3.63 (now low); e4 4.21 vs 3.39, blobs 1.7x"
+  },
+  {
+   "detail": "Fabric: diamond lattice",
+   "score": 7.3,
+   "refs": "q15 seat C back at row distance: coverage 0.23 vs 0.12 (w24 0.17), blobs 14 vs 7; diamond pan B/R 2.41 vs 1.82, coverage 0.23 vs 0.08"
+  },
+  {
+   "detail": "Fabric: petal fleck",
+   "score": 7.4,
+   "refs": "q15 E / G p90/p10 2.2 vs 3.05, coverage 0.16 vs 0.20 (regressed); close pad coverage 0.18 vs 0.13 (better)"
+  },
+  {
+   "detail": "Fabric: dash mosaic",
+   "score": 8.2,
+   "refs": "q15 G pan now mosaic as y_47300: p90/p10 2.82 vs 2.94, coverage 0.16 vs 0.18, B/R 1.90 vs 1.73"
+  },
+  {
+   "detail": "Fabric mix (backs, pans, pads)",
+   "score": 8.4,
+   "refs": "backs tick / fleck / tick / fleck and pans tick / tick / diamond / mosaic both = y_47300"
+  },
+  {
+   "detail": "Headrest pad + cover",
+   "score": 8.0,
+   "refs": "head-on h/w 0.76 vs 0.55-0.66, close 0.86 vs 0.89-1.1; no foot crease; off-axis colour is lighting"
+  },
+  {
+   "detail": "Pillow",
+   "score": 8.0,
+   "refs": "0.68 x 0.43 pitch vs 0.66 x 0.49; sits on the crease ok; hpCV 0.009 vs 0.035-0.055; no ears or puff"
+  },
+  {
+   "detail": "Armrests",
+   "score": 8.6,
+   "refs": "B/R 1.00 vs 0.97, L186 vs 191"
+  },
+  {
+   "detail": "Belts",
+   "score": 8.3,
+   "refs": "bold V straps + silver tongue L~170-240 mid-pan; y_47300 shows none"
+  },
+  {
+   "detail": "Seat pan / front",
+   "score": 7.8,
+   "refs": "order right; tick pans L72.6 / 65.6 vs 90.7 / 77.4 (0.8-0.85x), B/R 1.99 / 2.05 vs 1.74 / 1.80; diamond pan stars"
+  },
+  {
+   "detail": "Back silhouette",
+   "score": 8.0,
+   "refs": "unchanged; headrest wing ends less distinct than y_47300's rounded ears"
+  },
+  {
+   "detail": "Rear shell / hood / back top",
+   "score": 8.0,
+   "refs": "q17 / e2 / e9 unchanged"
+  },
+  {
+   "detail": "Screen / handset",
+   "score": 8.0,
+   "refs": "q18 / e5 unchanged; no lower-bezel dots"
+  },
+  {
+   "detail": "Tray / pocket / AC",
+   "score": 8.0,
+   "refs": "e6 unchanged"
+  },
+  {
+   "detail": "Legs / footrest / under-seat",
+   "score": 7.5,
+   "refs": "e8 unchanged"
+  },
+  {
+   "detail": "Far-LOD rows",
+   "score": 7.7,
+   "refs": "q15-q17 fabric-pixel tone L64 / 68 / 69 vs 68 / 71 / 64 ok; q16 diamond backs read as light cloud patches"
+  }
+ ],
+ "issues": [
+  {
+   "id": "w25a-1",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Diamond: pan stars still bold and now over-saturated; the back lattice is bolder at row distance after the 1.25x tile boost",
+   "detail": "Fabric: diamond lattice; Seat pan / front",
+   "evidence": "q15 F pan: B/R 2.41 vs 1.82, coverage 0.23 vs 0.08, blobs 21 vs 5.6 px, p90/p10 2.74 vs 1.82 (L67.7 vs 73.8 ok). q15 seat C back: coverage 0.23 vs 0.12 (w24 0.17), blobs 14 vs 7, B/R 2.15 vs 1.95. q16: diamond backs read as light cloud patches.",
+   "fix": "test/make_swatches.py l.390: the 1.25x boost served e4 but costs every distance view. Make it 1.1x. Add a pan-only tile, y_diamond_pan: y_diamond with m + 0.5 * (r - m), a 1 px wrap blur, and saturation x0.7 about the mean. In 09a_econ.js l.50, set ECON_PAN_B = { ...SEATMAT.yFabricB, c: photoBase('#525a74', 'y_diamond_pan') }. If a new tile cannot be embedded, use l: LAYER.yJacq on the y_tick tile tinted '#525a74' instead. Targets on the q15 F pan: B/R 1.8-1.95, coverage <= 0.10, blob mean <= 8 px, p90/p10 1.8-2.0, L 70-78. Seat C back: coverage 0.12-0.16, blobs <= 9 px."
+  },
+  {
+   "id": "w25a-2",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Petal fleck regressed at row distance (thinning removed the distance read)",
+   "detail": "Fabric: petal fleck",
+   "evidence": "q15 E / G: p90/p10 2.17 / 2.23 vs 3.02 / 3.07 (w24 2.47), coverage 0.16 vs 0.20-0.21 (w24 0.20 was on target), fl/gr 1.96 vs 2.26, hpCV 0.35 vs 0.50. Close e4 pad coverage 0.18 vs 0.13 improved.",
+   "fix": "test/make_swatches.py l.398: keep=0.7 -> 0.85 (still breaks the merged clusters), and l.403 flecks 1.1 -> 1.35 * ep. SEATMAT.yFabricD #444d6b -> #3f486a (shared, one line) for a darker ground. Targets q15 E / G: p90/p10 2.8-3.1, coverage 0.19-0.21, fl/gr 2.2-2.3, B/R 2.2-2.3. e4 pad coverage <= 0.20. Prefer distance over close-up if both cannot be met (regression guard: w24 distance was better)."
+  },
+  {
+   "id": "w25a-3",
+   "severity": "medium",
+   "owner": "econ",
+   "title": "Tick strokes dimmed instead of thinned: contrast now low at distance, strokes still 1.3-1.7x fat",
+   "detail": "Fabric: tick weave",
+   "evidence": "q15 D / F: p90/p10 3.15 vs 3.37-3.63 (w24 3.41), coverage 0.24 vs 0.175, blob mean 3.25 vs 2.55; e4 blobs 13.5 vs 7.8 px.",
+   "fix": "test/make_swatches.py l.387: 0.65 -> 0.8 back, then thin geometrically: stroke = lum > m; core = binary erosion of stroke with a 1x2 (horizontal) kernel at tile resolution; r = where(stroke & ~core, m + 0.3 * (r - m), r), which narrows the vertical strokes by ~1 px each side. Targets q15 D / F: coverage 0.17-0.20, blob mean 2.5-2.9, p90/p10 3.35-3.6; e4 blobs <= 10, p90/p10 3.4-3.8."
+  },
+  {
+   "id": "w25a-4",
+   "severity": "medium",
+   "owner": "lighting",
+   "title": "Headrest covers 2.4-3.5x too dark off-axis (carried)",
+   "detail": "Headrest pad + cover (not scored)",
+   "evidence": "e4 L34.5 vs y_47306 83-124; q16 / q17 as w24.",
+   "fix": "As w24a-4: a cover-only grazing sheen (albedo ~3x at grazing, tint #9aa3bd) for SEATMAT.yCover in 04_shaders.js. Targets e4 >= 80, q16 near cover >= 55, q15 head-on <= 52."
+  },
+  {
+   "id": "w25a-5",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Tick pans too dark and still too blue",
+   "detail": "Seat pan / front",
+   "evidence": "q15 D / E tick pans L72.6 / 65.6 vs 90.7 / 77.4, B/R 1.99 / 2.05 vs 1.74 / 1.80, p90/p10 3.5-3.9 vs 4.6-4.8.",
+   "fix": "09a_econ.js l.48: ECON_PAN c '#4a5378' -> '#575d76' (about +15 % L, less blue). Targets q15 D / E: L 85-90 / 74-80, B/R 1.75-1.85."
+  },
+  {
+   "id": "w25a-6",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Pillow: no weave, no dog-ear corners, now a touch flat",
+   "detail": "Pillow",
+   "evidence": "h/w 0.64 vs 0.74; hpCV 0.009 vs 0.035-0.055; uniform rounded rectangle with an outlining pipe, where y_47300 / b_ss_13 show pointed corners and a puffed top.",
+   "fix": "09a_econ.js l.147 / l.159: half-height 0.11 -> 0.125 (both). Corner pull 0.15 -> 0.3 (ears). Thickness: peak sy * 0.046 -> 0.055. SEATMAT.yPillow (shared, one line): l: LAYER.yJacq with photoBase('#3d4763', 'y_tick') or a fabric layer that shows (target hpCV 0.03-0.05). Piping colour = pillow colour."
+  },
+  {
+   "id": "w25a-7",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Cover: keep the size; add the foot crease",
+   "detail": "Headrest pad + cover",
+   "evidence": "head-on h/w 0.76 vs 0.55-0.66 (y_47300), close 0.86 vs 0.89-1.1 (y_47306): the photos conflict, so this is a perspective / wing-fold matter, not size. There is no 2-3-row dark crease under the foot (y_47300 L23-35).",
+   "fix": "No size change. 09a_econ.js after the hem (l.~127): a 3 mm contact band just below the foot, SEC(0.590..0.594, 0.24, 0.004, cz(y) + 0.004), { c: '#151a2e', r: 0.95 }. Target: crease <= 0.7x the cover over 2 rows in q15. Optionally fold the hero-row wing bolsters in 15 deg over the cover edges."
+  },
+  {
+   "id": "w25a-8",
+   "severity": "low",
+   "owner": "econ",
+   "title": "Belts / silver tongue; carried block-end, bezel dots, pocket, legs",
+   "detail": "Belts / Armrests / Screen / Tray / Legs",
+   "evidence": "q15: V straps + silver tongue L~170-240 at mid-pan; y_47300 shows the belts tucked under the pillows. e3 / e5 / e6 / e8 unchanged.",
+   "fix": "l.262: lay both straps flat on the rear 6 cm of the pan (y 0.474 -> 0.47, z -0.31 -> -0.36, so the buckles sit under the pillow foot). SEATMAT.buckle stays as it is for the other views; use { c: '#8c9198', m: 0.9, r: 0.3 } here. Target q15 buckle L <= 150. Carried items as w23a-5 / 6."
+  }
+ ],
+ "questionsForUser": [],
+ "extraRefsSearched": "Used ref/web/econ/b_ss_12..18 (sanspotter ana-777-300er-economy, already in this container) by eye for pillow shape (b_ss_13 / 14: square, puffed, pointed corners) and in-flight tone. Official y_47300 / 47301 / 47303 / 47305 / 47306. Nothing new downloaded."
+}
