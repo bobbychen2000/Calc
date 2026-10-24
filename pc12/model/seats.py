@@ -1441,20 +1441,24 @@ EXEC_STITCH = (0.0065, 0.0038, 0.0009, 0.0045)
 #   EXEC_GAP    the forward-facing seats' shadow gap under the cushion roll (EXEC_SEAT legrest_gap): the dark strip
 #               in it, its set-back behind the legrest face and its depth (the face sits EXEC_SEAT legrest[2] behind
 #               the cushion front)
-EXEC_SEAM = dict(gap=-0.0010, r_centre=0.004, r_lumbar=0.004, r_bolster=0.005, r_side=0.008, sink=0.022, sink_b=0.026,
+EXEC_SEAM = dict(gap=-0.0010, r_centre=0.006, r_lumbar=0.005, r_bolster=0.007, r_side=0.008, sink=0.022, sink_b=0.026,
                  sink_l=0.020)
-EXEC_WING = dict(w=0.046, crown=0.010, crown0=0.003, rise=(0.50, 0.80))
-EXEC_HEAD = dict(r=0.036, rb=0.040, crown=0.020, crown_r=0.080, seam_r=0.0018, seam_a=0.062, wing=0.016)
+EXEC_WING = dict(w=0.046, crown=0.012, crown0=0.014, rise=(0.50, 0.80))
+EXEC_HEAD = dict(r=0.036, rb=0.040, crown=0.020, crown_r=0.080, seam_r=0.0030, seam_a=0.062, seam_taper=0.80,
+                 wing=0.016)
 EXEC_GAP = dict(back=0.010, depth=0.040)
 # all-lens review r3 CAB3-01 (P1046402 / 03 / 04 / 06): from 0.5-1.5 m the r2 back still read as a flat sheet with its
 # panels drawn on (bolsters 6 mm, centre 2 mm proud of the slab, crowned 7-8 mm, edge radii 6-8 mm) and the cushion as a
 # tray framed by welts: the photos' backs are sculpted -- the side bolsters / shoulder wings stand ~20 mm proud of the
 # centre panel and roll over on 14 mm radii, the centre and lumbar panels puffed --, the cushion a plump loaf.  The panels'
 # crowns: (rise, reach inside the panel's edge) for the back's centre / lumbar panel, the bolsters' rise reach
-EXEC_PANEL_CROWN = dict(centre=(0.004, 0.05), lumbar=(0.005, 0.04), bolster_r=0.040)
+EXEC_PANEL_CROWN = dict(centre=(0.004, 0.05), lumbar=(0.005, 0.04), bolster_r=0.032)
 # (CAB4-01: the r3 panels crowned 12-13 mm each over r 9-14 edges read as tiles; now all lifted by one shell crown
-# EXEC_SHELL h at the back's centreline falling to 0 at its sides -- one convex leather shell, the seams 3-4 mm grooves)
+# EXEC_SHELL h at the back's centreline falling to 0 at its sides -- one convex leather shell, the seams 3-4 mm grooves.
+# CAB5-01: that read flat -- the bolsters DOMED (EXEC_WING crown0 14 + 12 mm over the shoulders, reached bolster_r
+# inside their edges): they rise out of a soft valley at the seam and roll over the back's sides, P1046402 / 04 / 06)
 EXEC_SHELL = dict(h=0.016)
+EXEC_V_EASE = 1.7       # the centre panel's seams: narrow up the lumbar, flaring to the shoulders (P1046404 / 06)
 M_STITCH_EXEC = "stitch_light"          # tone-on-tone thread on the exec leather (CAB2-01; stitch_thread read black)
 
 
@@ -1724,7 +1728,7 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
         """Half-width of the centre panel (the V seams): lum_top at the lumbar top, linear to the wing's inner edge at
         80 %, then along it (hw - 0.010 - W - gap) to the top."""
         b = np.asarray(b, float)
-        t = np.clip((b - b_lum) / (b80 - b_lum), 0.0, 1.0)
+        t = np.clip((b - b_lum) / (b80 - b_lum), 0.0, 1.0) ** EXEC_V_EASE      # (CAB5-01: a U, not a straight V)
         return np.minimum(lum_top + (v80 - lum_top) * t, hwf(b) - 0.010 - W_w - gap)
     # piping along the back's front edge (CAB1-02): on the slab's lateral round (r 0.03) at 45 deg, up both sides and
     # across the top (the outline a = +-hw(b) with its rounded top corners)
@@ -1833,11 +1837,11 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     back.append(_mats(g.map(lambda V: hmap(hwing(V) - [0, 0, 0.06])), M_CAB))
     out_ = 0.45 * kh["seam_r"]
     for sa in (-1.0, 1.0):
-        a_ = sa * kh["seam_a"]
         bb = np.linspace(hcen - 0.5 * hh_ + kh["r"] + 0.004, hcen + 0.5 * hh_ - kh["r"] - 0.004, 18)
-        dd = np.minimum(hx_ - kh["r"] - abs(a_), (0.5 * hh_ - kh["r"]) - np.abs(bb - hcen))
-        cc = th_ + crh(np.full_like(bb, a_), bb, np.maximum(dd, 0.0)) + out_
-        Ps = np.c_[np.full_like(bb, a_), bb, cc]
+        a_ = sa * kh["seam_a"] * np.interp(bb, [bb[0], bb[-1]], [kh["seam_taper"], 1.0])     # (CAB5-01: tapering in)
+        dd = np.minimum(hx_ - kh["r"] - np.abs(a_), (0.5 * hh_ - kh["r"]) - np.abs(bb - hcen))
+        cc = th_ + crh(a_, bb, np.maximum(dd, 0.0)) + out_
+        Ps = np.c_[a_, bb, cc]
         back.append(_welt(hmap(hwing(Ps) - [0, 0, 0.06]), M_CAB, r=kh["seam_r"], n=6))
     g = pillow(rrect(-0.075, hcen - 0.5 * hh_ + 0.03, 0.075, hcen + 0.01, 0.03), 0.010, 0.004, 0.003)
     hrmap = _back_map(db, -nb, o=o)

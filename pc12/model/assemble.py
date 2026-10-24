@@ -173,7 +173,7 @@ MATERIALS = {
     "floor_panel":     ((0.20, 0.21, 0.22), 0.1, 0.60),
     # side ledges: dark anthracite satin top, gloss-black fascia band, anthracite kick panels, brushed trim
     "ledge_top":       ((0.024, 0.026, 0.030), 0.0, 0.40, dict(specular=0.5)),
-    "ledge_panel":     ((0.060, 0.066, 0.078), 0.0, 0.55, dict(specular=0.5)),
+    "ledge_panel":     ((0.066, 0.066, 0.068), 0.0, 0.55, dict(specular=0.5)),     # neutral (r3 CAB5-06)
     "gloss_black":     ((0.008, 0.008, 0.010), 0.0, 0.10, dict(clearcoat=1.0, clearcoat_rough=0.06)),
     "chrome_trim":     ((0.62, 0.62, 0.61), 1.0, 0.22),
     # headliner fittings, placards

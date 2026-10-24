@@ -1836,6 +1836,17 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
+   "render_stripes": {
+    "pitch": 0.012,
+    "duty": 0.34,
+    "colour": [
+     0.42,
+     0.14,
+     0.012
+    ],
+    "wobble": 0.15,
+    "pile": 0.35
+   },
    "kind": "dielectric",
    "note": "AI Orange runner",
    "srgb_hex": "#D88926"
@@ -1853,6 +1864,17 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
+   "render_stripes": {
+    "pitch": 0.012,
+    "duty": 0.34,
+    "colour": [
+     0.32,
+     0.32,
+     0.32
+    ],
+    "wobble": 0.15,
+    "pile": 0.35
+   },
    "kind": "dielectric",
    "note": "runner, light-grey strands (review r4 INT8-05: P1046406 / 07 / 11, not cream)",
    "srgb_hex": "#BFBFBD"
@@ -1870,6 +1892,17 @@
    "clearcoatRoughnessFactor": 0.0,
    "ior": 1.5,
    "specularFactor": 1.0,
+   "render_stripes": {
+    "pitch": 0.012,
+    "duty": 0.34,
+    "colour": [
+     0.15,
+     0.16,
+     0.17
+    ],
+    "wobble": 0.15,
+    "pile": 0.35
+   },
    "kind": "dielectric",
    "note": "runner, grey",
    "srgb_hex": "#8B9095"
@@ -1910,9 +1943,9 @@
   },
   "ledge_panel": {
    "baseColorFactor": [
-    0.06,
     0.066,
-    0.078,
+    0.066,
+    0.068,
     1.0
    ],
    "metallicFactor": 0.0,
@@ -1922,8 +1955,8 @@
    "ior": 1.5,
    "specularFactor": 0.5,
    "kind": "dielectric",
-   "note": "anthracite ledge kick panels",
-   "srgb_hex": "#45494F"
+   "note": "anthracite ledge kick panels (neutral: the slate-navy read wrong, all-lens r3 CAB5-06)",
+   "srgb_hex": "#49494A"
   },
   "gloss_black": {
    "baseColorFactor": [

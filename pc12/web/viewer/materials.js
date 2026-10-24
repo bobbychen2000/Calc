@@ -470,7 +470,7 @@ const qf4 = (k, d) => { const v = qv(k, d); return v; };
 // welts / seams) -> ~30, the medians kept for [T4b] / [T14] (the light trim near-white: AgX's shoulder compresses the
 // spread there, so the factors run wide -- x 0.38 .. 1.55 with the window light, 0.55 .. 1 from the floor to the belt)
 CABIN_LOOK.formA = [qf4('cabFormA0', [1.82, 2.2, 0.38, 1.55]), qf4('cabFormA1', [1.5, 2.0, 0.5, 1.35]),
-  qf4('cabFormA2', [1.0, 1.0, 0.80, 1.10]), qf4('cabFormA3', [1.6, 0.8, 0.75, 1.15])];
+  qf4('cabFormA2', [1.0, 1.0, 0.80, 1.10]), qf4('cabFormA3', [1.3, 0.8, 0.75, 1.15])];
 CABIN_LOOK.formB = [qf4('cabFormB0', [0.88, 1.05, 0.8, 1.0]), qf4('cabFormB1', [0.7, 1.2, 0.65, 1.15]), qf4('cabFormB2', [0.8, 1, 1, 1]),
   qf4('cabFormB3', [0.9, 1.1, 0.7, 1.1])];
 CABIN_LOOK.formD = [qf4('cabFormD0', [0.55, 1.0, 0.85, 0]), qf4('cabFormD1', [0.6, 1.0, 1.15, 0]), qf4('cabFormD2', [1, 1, 1, 0]),
@@ -696,7 +696,7 @@ const VIEWER = {
   stitch_light: { color: [0.428, 0.423, 0.413] },
   // (all-lens review r3 CAB4-04: a hard white streak across the cushion tops -- the exec leather a softer satin; with
   // CABIN_TRIM leather x 0.93 its tone a shade down toward P1046406's seats)
-  leather: { roughness: 0.62 },
+  leather: { roughness: 0.62, color: [0.462, 0.447, 0.427] },     // (CAB5-01: warmer, R > B as the photos)
   // the titanium panel face / sub-panels / stack sit under the glareshield and the cabin roof (P1046408: the face round
   // the PDUs ~sRGB 65-70, the inner sub-panels ~130); unoccluded they read as light grey plastic (~150-170)
   // flight deck r1 LOOK (L5): no occlusion stand-in any more (the baked occlusion / window sky do it); brushed along the
