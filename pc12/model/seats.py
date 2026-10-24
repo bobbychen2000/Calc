@@ -1443,7 +1443,7 @@ EXEC_STITCH = (0.0065, 0.0038, 0.0009, 0.0045)
 #               the cushion front)
 EXEC_SEAM = dict(gap=-0.0010, r_centre=0.006, r_lumbar=0.005, r_bolster=0.007, r_side=0.008, sink=0.022, sink_b=0.026,
                  sink_l=0.020)
-EXEC_WING = dict(w=0.046, crown=0.012, crown0=0.014, rise=(0.50, 0.80))
+EXEC_WING = dict(w=0.046, crown=0.0, crown0=0.004, rise=(0.50, 0.80))
 EXEC_HEAD = dict(r=0.036, rb=0.040, crown=0.020, crown_r=0.080, seam_r=0.0030, seam_a=0.062, seam_taper=0.80,
                  wing=0.016)
 EXEC_GAP = dict(back=0.010, depth=0.040)
@@ -1457,7 +1457,7 @@ EXEC_PANEL_CROWN = dict(centre=(0.004, 0.05), lumbar=(0.005, 0.04), bolster_r=0.
 # EXEC_SHELL h at the back's centreline falling to 0 at its sides -- one convex leather shell, the seams 3-4 mm grooves.
 # CAB5-01: that read flat -- the bolsters DOMED (EXEC_WING crown0 14 + 12 mm over the shoulders, reached bolster_r
 # inside their edges): they rise out of a soft valley at the seam and roll over the back's sides, P1046402 / 04 / 06)
-EXEC_SHELL = dict(h=0.016)
+EXEC_SHELL = dict(h=0.012, bolster=0.014, wing=0.010, e0=0.40, e1=0.85)
 EXEC_V_EASE = 1.7       # the centre panel's seams: narrow up the lumbar, flaring to the shoulders (P1046404 / 06)
 M_STITCH_EXEC = "stitch_light"          # tone-on-tone thread on the exec leather (CAB2-01; stitch_thread read black)
 
@@ -1751,7 +1751,12 @@ def cabin_seat(seat_id, layout=None, recline=None, raised=False, belts=True):
     def shell(V):
         a, b = V[:, 0], V[:, 1]
         e = np.clip(np.abs(a) / np.maximum(hwf(b), 1e-3), 0.0, 1.0)
-        return V + np.c_[np.zeros(len(V)), np.zeros(len(V)), hs_ * (1.0 - e * e)]
+        kx = EXEC_SHELL
+        # the bolsters' rise is part of the same shell -- continuous across the seams, which are only the narrow dips
+        # where two small edge rounds meet (lead / judges r3: the seam a shading dip a few mm wide, not a line or a step)
+        bo = (kx["bolster"] + kx["wing"] * smoothstep(kw["rise"][0] * s_top, kw["rise"][1] * s_top, b)) \
+            * smoothstep(kx["e0"], kx["e1"], e)
+        return V + np.c_[np.zeros(len(V)), np.zeros(len(V)), hs_ * (1.0 - e * e) + bo]
     pmap = lambda V: fmap(shell(V) - [0, 0, ks["sink"]])         # noqa: E731
     pmap_b = lambda V: fmap(shell(V) - [0, 0, ks["sink_b"]])     # noqa: E731
     pmap_l = lambda V: fmap(shell(V) - [0, 0, ks["sink_l"]])     # noqa: E731
