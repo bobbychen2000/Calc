@@ -103,12 +103,11 @@ DETAIL = dict(
 # review r4 INT8-05 (P1046406 / 07 / 11): long, continuous stripes with angular jogs, mostly AI Orange with a few
 # light-grey (not cream) strands -- the r3 bands (0.45-1.40 m, 0.03-0.25 m navy breaks, 28 % cream) read as scattered
 # blocks; now 0.9-2.4 m with 5-60 mm breaks, the jogs (step_slope) the main discontinuity, 70 / 18 / 12 %
-# all-lens review r3 (CAB4-05 / CAB5-02, P1046402 / 06 / 11): the r4 bands read as planks -- five narrower lanes (40-72 mm
-# bands in 10 mm gaps), long pointed ends, wider navy breaks, orange / light / grey 55 / 30 / 15 % (the navy ground
-# showing between them about half the runner)
-RUNNER = {"lanes": 5, "gap": 0.010, "width": (0.040, 0.072), "length": (0.60, 2.00), "break": (0.02, 0.15),
-          "end_cut": (1.2, 2.5), "step_slope": 1.0,
-          "mix": (("carpet_orange", 0.55), ("carpet_light", 0.30), ("carpet_grey", 0.15))}
+# (all-lens review r3: the runner table kept as shipped -- two judges pulled its mix opposite ways; the bands carry the
+# ground's pinstripe and a cut pile in the viewer instead, CAB5-02)
+RUNNER = {"lanes": 4, "gap": 0.016, "width": (0.050, 0.085), "length": (0.90, 2.40), "break": (0.005, 0.06),
+          "end_cut": (0.4, 1.0), "step_slope": 1.0,
+          "mix": (("carpet_orange", 0.70), ("carpet_light", 0.18), ("carpet_grey", 0.12))}
 
 FL = float(I.FLOOR["wl"])
 LG = I.LEDGES
