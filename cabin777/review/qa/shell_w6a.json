@@ -1,0 +1,254 @@
+{
+ "area": "shell",
+ "rater": "A",
+ "round": "w6",
+ "score": 7.0,
+ "previousIssues": [
+  {
+   "issue": "w5a M: recess (tub) has almost no top-to-bottom shading",
+   "status": "partly fixed: the grade is now visible and darkest just above the opening, as in the photos, but too shallow (render 0.90-0.93 of the wall, photos 0.65-0.78)"
+  },
+  {
+   "issue": "w5a M: dado grilles squarish instead of wide and low",
+   "status": "fixed: 0.41 x 0.19 m with a narrow placard gap (studio win_front grille 0.78 of the pitch; py_37303 0.78)"
+  },
+  {
+   "issue": "w5a M: dado mid-grey (0.52 of the wall)",
+   "status": "fixed in-cabin: ra_dadoPY dado L65 vs wall L200 = 0.33, grille/dado 0.72 (py_37303 0.47 / 0.64; sans_14 night 0.13). The studio still shows 0.73, but that is the flat studio light."
+  },
+  {
+   "issue": "w5a M: blackout too light, pleats too faint",
+   "status": "fixed, with overshoot: pleat column cv 0.168 vs omaat_room24 0.172 (was 0.105). Tone is now 0.42 of the bezel vs 0.54 (was 0.57)."
+  },
+  {
+   "issue": "w5a M: pane tunnel lining as bright as the bezel",
+   "status": "not fixed: ra_jWin lining L195 vs bezel L227 = 0.86; tt_window lining L104 vs bezel L180 = 0.58"
+  },
+  {
+   "issue": "w5a M: stowed manual shade grip hidden",
+   "status": "fixed: a clear cream band across the top of each PY/Y pane (s02, ra_yWin, win_front), as in y_47303 / sp_py14"
+  },
+  {
+   "issue": "w5a L: LED ring pale cyan",
+   "status": "fixed: violet ring (s05, win_close), as in omaat_room24 / tt_window"
+  },
+  {
+   "issue": "w5a L: PY/Y pane centred in its tub",
+   "status": "fixed: win_front tub above/below the bezel 1.30 (sp_py14 1.24); bezel/tub height 0.43 (0.41)"
+  },
+  {
+   "issue": "w5a L: door surround flat slab, window centred",
+   "status": "partly fixed: the window moved to c+0.28 m and got glass and a seal. The lining is still one flat cream slab, and the window now collides with the red arming-arc arrowhead (see issues)."
+  },
+  {
+   "issue": "w5b M: upper-tub shading inverted",
+   "status": "fixed (direction): darkest just above the opening, lighter toward the lip (s02 col 710: 203 at the top to 192 above the bezel; w5c went 174 to 229)"
+  },
+  {
+   "issue": "w5b M: PY/Y bezel too large for the tub and centred",
+   "status": "mostly fixed: bezel/tub width 0.68 vs sp_py14 0.64; vertical offset fixed"
+  },
+  {
+   "issue": "w5b M: dado too light in the cabin",
+   "status": "fixed (0.33 in-cabin)"
+  },
+  {
+   "issue": "w5b M: door viewing window centred on the leaf",
+   "status": "changed (c+0.28 m), but the position is still unverified from inside, and it now overlaps the monument arc arrowhead"
+  },
+  {
+   "issue": "w5b L: blackout light with a residual beat",
+   "status": "tone fixed (overshot); the beat remains: diagonal moire band across the blackout in win_front / win_oblique"
+  },
+  {
+   "issue": "w5b L: grille ribs print as a 7-column grid",
+   "status": "not fixed: 8 light ribs still read in win_low / win_front. py_37303 crop shows only faint ribs, darker than the slats."
+  },
+  {
+   "issue": "w5b L: dado placard too white",
+   "status": "acceptable: py_37303 label L201 vs render L214"
+  },
+  {
+   "issue": "w5b L: no glass on the door window",
+   "status": "fixed (glass instance + seal)"
+  },
+  {
+   "issue": "w5b L: J carpet plum, F carpet red",
+   "status": "not re-measured (floor hidden in the w6 views); carpet values unchanged since w5"
+  },
+  {
+   "issue": "w5b L: reveal and bowl too cool and neutral",
+   "status": "not fixed: ra_jWin bowl #cacbcc h203 s0.01 vs tt_window #c2b395 h40 s0.27. Mostly a lighting issue; ANA f_17313 is near-white."
+  }
+ ],
+ "details": [
+  {
+   "detail": "Sidewall panels and seams (joint every second window, satin white)",
+   "score": 7.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "F/J bowl geometry (width, short bowl, pill under the opening)",
+   "score": 7.8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/ml_DSC_1920.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/omf_5.jpg"
+   ]
+  },
+  {
+   "detail": "PY/Y full-height tub geometry",
+   "score": 8.0,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Recess tonal modelling (upper tub shading)",
+   "score": 6.3,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Pane tunnel lining and seal rim",
+   "score": 5.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell_a/kn_room_16.jpg"
+   ]
+  },
+  {
+   "detail": "Electric shades (sheer + pleated blackout, violet LED button)",
+   "score": 7.4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room24.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell_a/kn_room_16.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/tt_window.jpg"
+   ]
+  },
+  {
+   "detail": "Manual PY/Y shades (stowed band, half, closed)",
+   "score": 7.4,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py14.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py24.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Dado panel, air-return grilles, placards",
+   "score": 7.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/py_37303-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/py_37301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/ana/y_47303-lang-multi.jpg"
+   ]
+  },
+  {
+   "detail": "Carpets (F, J, PY/Y navy) and Y seat-track covers",
+   "score": 7.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/ana/y_47301-lang-multi.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/omaat_room7.jpg"
+   ]
+  },
+  {
+   "detail": "Door cross-aisle / galley floor",
+   "score": 5.5,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py09.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sans_09.jpg"
+   ]
+  },
+  {
+   "detail": "Type A door surround / lining and viewing window",
+   "score": 5.8,
+   "refs": [
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py53.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/sp_py09.jpg",
+    "/home/user/Calc/cabin777/ref/web/shell/fr_20220604_123806.jpg"
+   ]
+  }
+ ],
+ "issues": [
+  {
+   "severity": "medium",
+   "detail": "Pane tunnel lining still nearly as light as the bezel (carried over from w5a)",
+   "problem": "The grey tunnel lining is the strongest cue that the opening is deep. In the render it is a pale ring only 0.86 of the bezel, so the glass looks set nearly flush in the bowl (q12, ra_jWin, win_close). The photos also show a dark shade-channel gap line between the bezel and the lining. The model has no such line.",
+   "evidence": "tt_window.jpg (full-res px): lining #6e6758 L104 at (1620-1660,1250-1700) vs bezel #c2b395 L180 at (1760-1860,1250-1700) = 0.58. Render ra_jWin: lining #c3c3c1 L195 at (700-710,380-430) vs bezel L227 at (675-690,380-430) = 0.86. q12: the lining reads as a light grey ring, with only the thin blue seal line darker.",
+   "fix": "src/07_shell.js l.123: WMAT.lining '#aba69d' -> '#8a857c'. In windowParts l.318 (lining loft), add a shade fn as the 3rd tuple entry that grades by depth, e.g. (y)=>0.85 (or a per-ring colour 1.0 at the 0.992 ring to 0.75 at the pane ring), so the inner end reads darker. Add a 3 mm dark channel ring between the rolled opening and the lining: a ringLoft [[scl(open,0.992),D+0.026],[scl(open,0.986),D+0.030]] in WMAT.seal. Target in-cabin lining/bezel 0.60-0.70."
+  },
+  {
+   "severity": "medium",
+   "detail": "Upper-tub shading now points the right way but is too shallow",
+   "problem": "The w6 grade correctly puts the darkest tone just above the opening (fixing w5b's inversion). On screen, though, it bottoms out at only 0.90-0.93 of the wall, so the bowls still read white on white from aisle distance (s01, s09, q16). The real upper tub just above the bezel is clearly grey.",
+   "evidence": "Column profiles: w6 s02 x710: tub 203 at the top, 192 above the bezel, wall 213 (0.90). s09 x610: 201 vs 216 (0.93). s01 x500: 201 vs 216 (0.93). sp_py14 x560: 186 near the top, 127-136 above the bezel, pier x470 ~175 (0.72-0.78). tt_window: 99-101 above the opening vs pier 153 (0.65), 131 near the top (0.86). y_47303 x393: 129-140 above the pane vs tub 185-204 (0.68).",
+   "fix": "l.314 tubShade: minimum 0.60 -> 0.42 in both lerps, and start the down-grade lower (d - 0.04 instead of d - 0.08). The reveal glow (04_shaders) lifts it by ~1.5x, which should land ~0.75 on screen. If the glow still flattens it, ask lighting to mask the glow on faces whose normal points down (ny < -0.2)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Door cross-aisle floor between the galley blocks is brown carpet; the photos show grey mottled vinyl",
+   "problem": "floor zones of type 'door' all use MAT.doorCarpet (l.561), so the whole walkway between the galley blocks at door 2 renders dark warm brown (s06, s07, ra_door2floor). The real door-2 walkway between the galley carts is grey stone-look vinyl. Only the bay right at the door, outboard of the galley ends, is a darker brown.",
+   "evidence": "sp_py09.jpg walkway (330-520,600-750) #686469 L102 h285 s0.02, door bay (370-480,440-480) #4a433b L68 h30. sans_09 same: #666264 L99 / #4e463e L72. Render s06 (380-560,520-570) #433733 L58 h15 s0.13; ra_door2floor #433632 L57; s07 #443733 L58.",
+   "fix": "src/07_shell.js l.556-562: split each door zone's floor box in x. Use MAT.vinyl for |x| < ~1.9 m (out to the outboard ends of the galley/closet blocks), and MAT.doorCarpet only for the outboard ~0.9 m bays by each door. Also make doorCarpet less red: '#5c4f49' -> '#57504a' (target h~30, s~0.10)."
+  },
+  {
+   "severity": "medium",
+   "detail": "Door viewing window collides with the red arming-arc arrowhead (shell/monuments conflict)",
+   "problem": "The shell puts the glazed slot at c+0.28 m (0.18-0.38 aft), 0.75-1.21 m high. The monuments' red arc spans c +/- 0.25 at 1.12-1.27 m, with its arrowhead box at c+0.25, 1.10 m, so the red block sits on the window glass in every door view. No real door shows a red marking over the viewing window.",
+   "evidence": "s06/s07 (w6 and w5c): red arrowhead over the upper half of the glass at (493-517, 315-340). The sp_py53 exterior shows the viewing window as a clear tall slot about 0.22 x 0.40 m (frame incl.), clear of any marking, roughly mid-leaf (0.41 of the leaf width from the hinge edge; perspective, low confidence).",
+   "fix": "Coordinate with monuments (10_mono.js l.757-761): shorten the arc to c-0.25..c+0.12 (arrowhead at c+0.12), or raise it above 1.25 m. Shell side: keep wz = c+0.28 until an inside photo confirms it; then possibly move it toward c+0.10 (sp_py53). Also add a soft 6 mm seam ring round the door window reveal (l.622) so it reads as a moulded frame, not a hole in the slab."
+  },
+  {
+   "severity": "low",
+   "detail": "Blackout now slightly too dark, and a diagonal moire band runs across it",
+   "problem": "After w6 the closed blackout is 0.42 of the bezel. omaat_room24 gives 0.54, and w5a's sample 0.64. In the studio views a diagonal light streak crosses the pleats (win_front leftmost window, win_oblique), a beat between the 62-row zig-zag and the pixel grid.",
+   "evidence": "s05 w6: shade #5c5851 L89 vs bezel L211 (0.42); w5c 0.57. omaat_room24: shade #757164 L113 vs bezel #d7cfbf L208 (0.54). Pleat column cv 0.168 vs photo 0.172 (good).",
+   "fix": "l.65 blackout '#79736a' -> '#857f75' (keep kf 0.68 at l.409 so the stripe contrast stays). For the moire, fade the pleat valley factor toward 1 with screen-space derivative in the shader (lighting file), or drop n from 62 to 56 rows."
+  },
+  {
+   "severity": "low",
+   "detail": "Grille ribs still read as light vertical bars",
+   "problem": "8 ribs per grille are lighter than the louvres in the studio (win_low, win_front), so the grille reads as a gridded tile. In py_37303's crop the ribs are faint and darker than the slats; py_37301 shows them lighter only in low raking light.",
+   "evidence": "cmp crop of py_37303 grille: horizontal louvres dominant, 3-4 faint verticals. win_low: 8 clearly lighter verticals per grille.",
+   "fix": "l.129 WMAT.rib '#4a4e56' -> '#3a3e46' and l.356 offset 0.0045 -> 0.0030 (behind the slat front edge 0.0055) so the ribs fall into shadow."
+  },
+  {
+   "severity": "low",
+   "detail": "Bowls and wall render neutral to cool white; real F/J bowls are warm cream",
+   "problem": "MAT.reveal '#ebe6dc' renders at s0.01-0.02, h~203. Lighting is the main cause (white boarding mood), but the reveal could carry slightly more warmth than the sidewall so that the bowl vs pier difference reads.",
+   "evidence": "ra_jWin bowl #cacbcc h203 s0.01; tt_window bezel #c2b395 h40 s0.27, pier #a39884 s0.15; omaat_room24 bezel #d7cfbf s0.23. ANA f_17313 (official) near-white.",
+   "fix": "l.25 reveal '#ebe6dc' -> '#ece4d6' for F/J only (a separate MAT.revealJ for electric windows); [OTHER AREA: lighting] warm the cabin white point."
+  },
+  {
+   "severity": "low",
+   "detail": "[OTHER AREA: monuments] door lining furniture",
+   "problem": "Flag only: the arc/arrowhead overlap above. Also the lever and assist bar sit on a single flat lining slab with no recessed handhold (fr_123806).",
+   "evidence": "s06/s07",
+   "fix": "monuments worker"
+  }
+ ],
+ "questionsForUser": [
+  "Type A door viewing window: the only door evidence is exterior (sp_py53: a tall slot near mid-leaf) plus the YouTube face-on frame quoted in the code (c+0.28 m aft). Do you have an inside photo of an ANA 777 L2/L4 door so the window and the red arming arc can be placed without overlapping?",
+  "Door 2 floor: SANspotter (sp_py09 / sans_09) shows grey vinyl between the galley blocks and darker brown only at the door bay. Should all five door cross-aisles follow that split, or only door 2?"
+ ],
+ "photosDownloaded": [
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell_a/kn_room_16.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-16.jpg"
+  },
+  {
+   "path": "/home/user/Calc/cabin777/ref/web/shell_a/kn_room_8.jpg",
+   "url": "https://knaviation.net/wp-content/uploads/2021/03/ANA-The-Room-Business-Class-8.jpg"
+  }
+ ],
+ "notes": "Rated the head build (CABIN_DIST build identical to scratchpad/b/test.html). Extra in-cabin views rendered by rater A: /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/ra_out/ (ra_dadoPY, ra_dadoY, ra_door2floor, ra_jWin, ra_fWin, ra_yWin) via /tmp/claude-0/-home-user-Calc/0ed99896-ecef-596b-9423-893865e3345b/scratchpad/ra_sv.js. Changes from w5c to w6: the stowed PY/Y shade band HELPS (now matches y_47303 / sp_py14). The upper-tub grade HELPS (direction fixed) but is too weak. Wide low grilles and a darker dado HELP. The violet LED HELPS. The blackout pleat contrast HELPS, but the tone overshoots (slight hurt on tone). PY/Y tub proportions HELP. The door window move plus glass is neutral: better glazing, but it now collides with the arc. No regressions in sidewall seams or geometry. Lighting notes [OTHER AREA]: the reveal glow flattens the tub grade, and the shell renders neutral or cool against warm cream in every trip-report photo. The w5b B rating (7.5) looks generous given the lining and floor mismatches. A 7.0 reflects real progress from 6.6, with the lining, tub depth and door floor still clearly off."
+}

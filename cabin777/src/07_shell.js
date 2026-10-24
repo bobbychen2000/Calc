@@ -37,7 +37,7 @@ const MAT = {
   // door / galley floors: dark mottled stone-look grey vinyl (sans_09 door-2 galley #666268 / #585353; QA w1 rendered
   // #a0a5ad, ~1.13x the albedo) [V]
   vinyl: { c: '#5a585c', r: 0.55, l: LAYER.vinyl },
-  doorCarpet: { c: '#5c4f49', r: 0.95, l: LAYER.fabric },
+  doorCarpet: { c: '#57504a', r: 0.95, l: LAYER.fabric },        // QA w6: less red (h ~30)
   // QA r2: no aisle path strips are visible in any ANA photo (y_47301, y_47304, py_37301/02, c_27312), so none are
   // modelled; Y instead shows glossy royal-blue seat-track covers along each seat-leg line [V: y_47304 #2965bd, y_47301]
   trackCover: { c: '#2965bd', r: 0.35 },
@@ -62,7 +62,7 @@ const MAT = {
   sheer: { c: '#e6e1d6', r: 0.9, l: LAYER.fabric, e: 0.5 },
   // opaque pleated blackout: light warm grey, clearly darker than the bezel when closed (omaat Room-24 shade #787367
   // vs bezel #bdb4a9 = 0.64; QA w1 0.87) [V]
-  blackout: { c: '#79736a', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64
+  blackout: { c: '#837d73', r: 0.85, l: LAYER.fabric },          // QA w2-w5: 0.81 -> 0.76 of the bezel, target 0.62-0.64; w6 #79736a overshot to 0.42 (room24 0.54)
   shadeBtn: { c: '#d9d6cf', r: 0.35 },
 };
 
@@ -120,13 +120,13 @@ const REC = { hw: 0.195, top: 0.46, bot: -0.33, rTop: 0.15, rBot: 0.075, depth: 
 // QA w5: tub/bezel width 1.5-1.6 (y_47303 pane-scaled tub ~0.46 m, sp_py14; was 1.24) -> hw 0.222 [V: ratio; D]
 const REC_Y = { ...REC, hw: 0.222, top: 0.565, bot: -0.49, rTop: 0.15, rBot: 0.12, ext: 0.055 };
 const WMAT = {
-  lining: { c: '#aba69d', r: 0.5 },           // grey tunnel lining round the pane; QA w5: rendered ~bezel tone, tt_window 0.64 of the bezel [V]
+  lining: { c: '#8f8a81', r: 0.5 },           // grey tunnel lining round the pane; QA w5/w6: rendered 0.86 of the bezel, tt_window 0.58-0.64 [V]
   seam: { c: '#b3b1ac', r: 0.6 },                               // sidewall panel joint, every second window
   grilleBack: { c: '#43474f', r: 0.8 },                         // QA w3: grille/panel 0.57-0.69 vs ~0.85 (py_37303)                         // plenum behind the louvres, keeps their depth [A]
   // QA w2: the grille is a cut-out in the dado panel; its rounded edge is a low lip at or below the panel tone, not a
   // light bezel (py_37303 crop: no light frame; py_37301's lighter rim is a reflection) [V]
   grilleFrame: { c: '#5d6067', r: 0.5 },
-  rib: { c: '#4a4e56', r: 0.6 },                                // vertical ribs in the plenum tone: faint (py_37303; QA w4)
+  rib: { c: '#3a3e46', r: 0.6 },                                // vertical ribs in the plenum tone: faint (py_37303; QA w4)
   label: { c: '#d6d5cf', r: 0.5 },                              // small white placards on the dado (py_37301/37303)
   halo: { c: '#5a55ff', r: 0.3, e: 0.55 },                      // violet-blue LED ring (tt_window #716ef0; QA w5: e 0.8 read pale cyan) [V]
   pin: { c: '#2a2c30', r: 0.6 },
@@ -308,16 +308,20 @@ function windowParts(side, pat) {
   // QA w4: the tub floor keeps flat normals (see above), so its upper part is darkened in vertex colour instead, x1 at
   // 0.12 m above the pane centre to x0.78 at the recess top (DSC_1920 upper tub ~0.78 of the wall, sans_14 0.74-0.82) [V]
   // QA w5: the photos are darkest just above the opening and light again toward the lip (sans_14 1.0 -> 0.65 above the
-  // bezel, DSC_1920 0.74, tt_window, sp_py14); w4 graded the other way (darkest at the recess top) [V]. x0.60 albedo lands
-  // ~0.8 on screen against the reveal glow (04_shaders) [A]
+  // bezel, DSC_1920 0.74, tt_window, sp_py14); w4 graded the other way (darkest at the recess top) [V]. QA w6: x0.60 albedo
+  // rendered 0.90-0.93 of the wall against the reveal glow (04_shaders), photos 0.65-0.78 -> x0.45 [A: albedo]
   const oTop = W.holeH / 2 + 0.01;
-  const tubShade = (y) => { const d = y - vc; return d < oTop ? lerp(1, 0.60, clamp((d - 0.08) / (oTop - 0.08), 0, 1)) : lerp(0.60, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 0.7); };
+  const tubShade = (y) => { const d = y - vc; return d < oTop ? lerp(1, 0.45, clamp((d - 0.04) / (oTop - 0.04), 0, 1)) : lerp(0.45, 1, clamp((d - oTop) / (rec.top - 0.03 - oTop), 0, 1) ** 0.7); };
+  // lining: x1 at the mouth to x0.78 at the pane by depth (tt_window inner end darker) [V: tone; A: split]
+  const liningShade = (y, i, n) => [1, 0.95, 0.78][Math.floor((i * 3) / n)];
   const parts = [
     [lip, MAT.reveal, tubShade],
     [sill, MAT.reveal, tubShade],
     [ringLoft([[scl(open, 1.085), D], [scl(open, 1.02), D + 0.007], [scl(open, 0.992), D + 0.026]], map, hint), MAT.reveal, tubShade],
     // lining: straight shade channel (both shades run here), then necks down to the pane
-    [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.986), D + 0.056], [scl(pane, 1.02), 0.1045]], map, hint), WMAT.lining],
+    // QA w6: thin dark shade-channel gap at the lining mouth (tt_window), then the lining graded darker toward the pane
+    [ringLoft([[scl(open, 0.992), D + 0.026], [scl(open, 0.989), D + 0.030]], map, hint), WMAT.seal],
+    [ringLoft([[scl(open, 0.989), D + 0.030], [scl(open, 0.986), D + 0.056], [scl(pane, 1.02), 0.1045]], map, hint), WMAT.lining, liningShade],
     // dark rubber seal / scratch-pane rim round the glass, ~4 mm (sp_py_24, MileLion DSC_1920; QA w2) [V]
     [ringLoft([[scl(pane, 1.02), 0.1045], [pane, 0.106]], map, hint), WMAT.seal],
   ];
@@ -354,7 +358,7 @@ function windowParts(side, pat) {
   const rb = raw(); qg = rb;
   for (let k = 0; k < 8; k++) {                                 // vertical ribs, recessed behind the slat edges and slat-
     const z = lerp(-ghw + 0.03, ghw - 0.03, k / 7);             // toned (QA w1: read as white bars) [V: py_37301 8 ribs]
-    quad(gm(z - 0.002, v0 - 0.004, 0.0045), gm(z + 0.002, v0 - 0.004, 0.0045), gm(z + 0.002, v1 + 0.004, 0.0045), gm(z - 0.002, v1 + 0.004, 0.0045));
+    quad(gm(z - 0.002, v0 - 0.004, 0.003), gm(z + 0.002, v0 - 0.004, 0.003), gm(z + 0.002, v1 + 0.004, 0.003), gm(z - 0.002, v1 + 0.004, 0.003));  // QA w6: behind the slats
   }
   grille.push([faceTo(rb, ghint), WMAT.rib]);
   // placard mid-pier, ~70 x 18 mm in the gap between the grilles, a little above their centre (py_37303) [V: position]
@@ -376,7 +380,7 @@ function windowParts(side, pat) {
 function addPart(B, [pg, m, shade], xf) {
   const b0 = B.p.length / 3;
   B.add(pg, xf, m);
-  if (shade) for (let k = b0; k < B.p.length / 3; k++) { const f = shade(B.p[k * 3 + 1]); for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(B.c[k * 4 + c] * f); }
+  if (shade) for (let k = b0; k < B.p.length / 3; k++) { const f = shade(B.p[k * 3 + 1], k - b0, B.p.length / 3 - b0); for (let c = 0; c < 3; c++) B.c[k * 4 + c] = Math.round(B.c[k * 4 + c] * f); }
 }
 
 // Shade geometry in the window-local frame: unit panel spanning y in [-H/2, H/2]; scaled per instance by the
@@ -558,7 +562,15 @@ function buildShell(gl, layout) {
     const f = gBox(CAB.floorHalf * 2, 0.02, zn.z1 - zn.z0);
     // door cross-aisles: dark warm brown carpet up to the door sill (TPG ANA 777-300ER door 2L, sans_09 #4a433b);
     // vinyl stays in the galley / lav (monument) zones (sans_09 galley #666268) [V: door 2; A: doors 1, 3-5]
-    const m = carpet ? (zn.cls === 'F' ? MAT.carpetF : zn.cls === 'J' ? MAT.carpetJ : MAT.carpet) : zn.type === 'door' ? MAT.doorCarpet : MAT.vinyl;
+    // QA w6: the walkway between the galley blocks is the same grey vinyl, brown carpet only in the bays by the doors
+    // (sans_09 / sp_py09 door 2: vinyl #686469 to ~1.9 m off the centreline) [V: door 2; A: doors 1, 3-5]
+    if (zn.type === 'door') {
+      const xb = 1.9, wb = CAB.floorHalf - xb, zc = (zn.z0 + zn.z1) / 2, L = zn.z1 - zn.z0;
+      shell.add(gBox(xb * 2, 0.02, L), M4.trs(0, -0.01, zc), MAT.vinyl);
+      for (const sd of [-1, 1]) shell.add(gBox(wb, 0.02, L), M4.trs(sd * (xb + wb / 2), -0.01, zc), MAT.doorCarpet);
+      continue;
+    }
+    const m = carpet ? (zn.cls === 'F' ? MAT.carpetF : zn.cls === 'J' ? MAT.carpetJ : MAT.carpet) : MAT.vinyl;
     shell.add(f, M4.trs(0, -0.01, (zn.z0 + zn.z1) / 2), m);
   }
   // ---- sidewalls (continuous through seat + monument zones; door zones get their own surround) ----

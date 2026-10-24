@@ -96,3 +96,11 @@ cameras, should be checked. q07 and q12 look fine.
 - **Fix:** weight `reveal` by how much the face looks at the pane: fade it on down-facing faces above the opening, e.g.
   `reveal *= mix(1.0, 0.35, smoothstep(0.24, 0.40, v_wpos.y - 1.02) * down)`. Or narrow it to `smoothstep(0.14, 0.24, ...)`,
   so it lights the tunnel and the sill but not the upper tub.
+
+## Wave 3 (w6)
+
+### To monuments (`src/10_mono.js`): the red arming arc runs over the door viewing window
+- **Evidence:** shell_w6a (rater A). The window glass sits at z = c + 0.28 (0.18-0.38), y 0.75-1.21 (07_shell, from the face-on ANA
+  door-lining frame). The arc arrowhead is at about c + 0.25, y 1.10 (10_mono ~l.757-761), so it overlaps the window's forward edge.
+- **Fix:** end the arc forward of c + 0.15 (the corrected spec above: radius 0.29 centred at c - 0.10, top at ~1.22), so the
+  arrowhead sits on the housing face, clear of the window.
