@@ -43,9 +43,11 @@ const BINMAT = {
   door: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic },
   doorC: { c: '#e3e5e8', r: 0.34, l: LAYER.plastic, e: 0.10 },   // + 0.84 shading floor: y_47300 door 245 -> 190 (w3a)   // w2a: q15 #abafb6 vs y_47300 #dddddb
   bandC: { c: '#d4d4d2', r: 0.5, l: LAYER.plastic, e: 0.05 },   // channel ~0.76 of the door in y_47300 (w3b) [V]
+  housingC: { c: '#b6b7b6', r: 0.5, l: LAYER.plastic, e: 0.05 },   // centre PSU housings: bandC x0.86 (not baked by shadeUpper; w5 render read white) [D]
   signPod: { c: '#2a2e34', r: 0.45 },
   seam: { c: '#a7abb0', r: 0.8 },   // thin mid-grey hairline, not a black arc (c_th1, b_sany_y22 [V])
   lipGap: { c: '#4a4f56', r: 0.8 },
+  lipLine: { c: '#9ea2a7', r: 0.8 },   // door/band junction: thin mid-grey line (b_lalf_c26, c120; w5a/w5b: a 12 mm #4a4f56 slot read black) [V]
   lip: { c: '#e2e2df', r: 0.36, l: LAYER.plastic },
   bezel: { c: '#d3d5d6', r: 0.4 },
   recess: { c: '#3c4046', r: 0.6 },
@@ -63,6 +65,7 @@ const BINMAT = {
   rail: { c: '#e8e8e5', r: 0.36, l: LAYER.plastic },
   groove: { c: '#9aa0a6', r: 0.7 },
   joint: { c: '#dcdedf', r: 0.7 },
+  riser: { c: '#b9bcc0', r: 0.7 },   // shingle step face (w5b) [A]
   psuBox: { c: '#e6e6e3', r: 0.4, l: LAYER.plastic },
   pod: { c: '#eceae6', r: 0.4, l: LAYER.plastic },
   bezelDark: { c: '#8a9096', r: 0.4 },
@@ -110,9 +113,9 @@ function paintBinDecals(A, layout) {
   const q = rect('psuSigns');
   if (q) {
     // smoked lens: amber cigarette in a red ring + slash, amber belt halves with a red arrow between them
-    // (b_lalf_c26 / thrifty_j_overhead-vent close-ups [V]; ground #2b2826 smoke [A])
+    // (b_lalf_c26 / thrifty_j_overhead-vent close-ups [V]; ground black: under the glow layer #1e1f21 still printed a grey rectangle in the pill, w5a)
     const [x, y, w, h] = q, A_ = '#ffa634', R_ = '#e8322a';
-    g.fillStyle = '#1e1f21'; g.fillRect(x, y, w, h);
+    g.fillStyle = '#000000'; g.fillRect(x, y, w, h);
     g.lineCap = 'round';
     g.fillStyle = A_; g.fillRect(x + 16, y + 28, 30, 8); g.fillRect(x + 48, y + 28, 5, 8);
     g.fillStyle = '#d8d0c0'; g.fillRect(x + 54, y + 20, 3, 6);
@@ -122,7 +125,7 @@ function paintBinDecals(A, layout) {
     g.fillStyle = A_;
     g.beginPath(); g.roundRect(x + 72, y + 25, 20, 14, 3); g.fill();
     g.beginPath(); g.roundRect(x + 114, y + 25, 20, 14, 3); g.fill();
-    g.fillStyle = '#1e1f21'; g.fillRect(x + 77, y + 29, 10, 6);
+    g.fillStyle = '#000000'; g.fillRect(x + 77, y + 29, 10, 6);
     g.strokeStyle = R_; g.lineWidth = 3;
     g.beginPath(); g.moveTo(x + 110, y + 32); g.lineTo(x + 96, y + 32); g.moveTo(x + 102, y + 26); g.lineTo(x + 96, y + 32); g.lineTo(x + 102, y + 38); g.stroke();
   }
@@ -193,6 +196,15 @@ function shadeUpper(geo, floor = 0.95) {
   return geo;
 }
 
+// n transverse strips along a band (w across, run L along z, built in the band frame xf): each strip falls 'step'
+// from its forward edge (flush) to its aft edge, so every joint reads as a small stepped lip, not a drawn line
+function shingles(B, w, L, n, step, xf, mat) {
+  const l = L / n, a = Math.atan2(step, l);
+  for (let k = 0; k < n; k++) {
+    B.add(gBox(w, 0.004, l + 0.001), M4.mul(xf, M4.trs(0, -step / 2, -L / 2 + (k + 0.5) * l, 0, -a)), mat);
+    if (k < n - 1) B.add(gBox(w - 0.004, step, 0.0015), M4.mul(xf, M4.trs(0, -0.002 - step / 2, -L / 2 + (k + 1) * l - 0.0008)), BINMAT.riser);   // step face
+  }
+}
 function sideBinModule(side) {
   const L = BIN.side;
   const B = new Builder();
@@ -200,7 +212,7 @@ function sideBinModule(side) {
   addDoor(B, OBIN_DOOR, L, side, 1);
   // bottom edge lip of the door + dark gap line to the PSU band
   B.add(gRBox(0.028, 0.016, L - 0.014, 0.007, 1), M4.trs(1.516 * side, 1.804, 0), BINMAT.lip);
-  B.add(gBox(0.012, 0.002, L), M4.trs(1.548 * side, binBottomY(1.548) - 0.0015, 0, 0, 0, -TILT_O * side), BINMAT.lipGap);
+  B.add(gBox(0.004, 0.002, L), M4.trs(1.548 * side, binBottomY(1.548) - 0.0015, 0, 0, 0, -TILT_O * side), BINMAT.lipLine);
   // latch ~45 % down the door below the rail (py_37302 ~38 %), module centre: one per 2-frame module [V]
   const [hx, hy, htx, hty] = faceAtY(OBIN_DOOR, 2.03);
   addLatch(B, faceM((hx - 0.006) * side, hy, htx * side, hty, 0, -side));
@@ -210,9 +222,10 @@ function sideBinModule(side) {
   B.add(gExtrude(faceShell([[gx, gy], ...OBIN_DOOR.filter((p) => p[1] > RAIL_Y + 0.005 && p[1] < 2.2)], side, 1, 0.009, 0.001), L - 0.014, 45), null, BINMAT.rail);
   B.add(gBox(L - 0.02, 0.003, 0.002), faceM(gx * side, gy - 0.002, gtx * side, gty, 0, -side, 0.0062), BINMAT.groove);
   // PSU band over the bin bottom, filler-panel joints ~0.27 m apart (py_37302, thrifty_j_overhead-vent [V pitch])
-  const bw = 1.19, bx = 2.155, by = binBottomY(bx) - 0.003;
-  B.add(gBox(bw, 0.004, L), M4.trs(bx * side, by, 0, 0, 0, -TILT_O * side), BINMAT.band);
-  for (let k = 0; k < 4; k++) B.add(gBox(bw - 0.02, 0.002, 0.0015), M4.trs(bx * side, by - 0.0025, -L / 2 + (k + 0.5) * L / 4, 0, 0, -TILT_O * side), BINMAT.joint);
+  // PSU band as shingled transverse filler strips, ~0.13 m pitch (8 per module: y_47301 band ribs; stepped
+  // panels in b_lalf_c26 / rb_omaat_room23 [V look, A 4 mm step]); reaches the door lip (w5b: bare underside showed)
+  const bw = 1.215, bx = 2.142, by = binBottomY(bx) - 0.003;
+  shingles(B, bw, L, 8, 0.004, M4.trs(bx * side, by, 0, 0, 0, -TILT_O * side), BINMAT.band);
   // cove LED along the top inner edge (washes the aisle panel) + sidewall wash lens under the bin
   B.add(gBox(0.05, 0.01, L - 0.03), M4.trs(1.70 * side, 2.238, 0), MAT.led);
   B.add(gBox(0.045, 0.006, L), M4.trs(2.80 * side, 1.607, 0, 0, 0, side * 0.12), { c: '#ffffff', r: 0.4, l: 12, e: 0.35 });
@@ -229,12 +242,15 @@ function centerBinModule() {
     addLatch(B, faceM((hx + 0.006) * s, hy, htx * s, hty, 0, s));
     // plain crease filler where the vault meets the centre-bin crest (no cove light on this edge: see 07b header)
     B.add(gBox(0.05, 0.01, L - 0.006), M4.trs(0.70 * s, 2.268, 0), BINMAT.door);
+    // raised top rail along the crest, carrying the row placard (b_lalf_c120 '17' on the centre-bin top [V]; 18 mm [A])
+    const [rx, ry, rtx, rty] = faceAtY(CBIN_DOOR, 2.19);
+    B.add(gExtrude(faceShell(CBIN_DOOR.filter((p) => p[1] > 2.165 && p[1] < 2.245), s, -1, 0.008, 0.001), L - 0.014, 45), null, BINMAT.rail);
+    B.add(gBox(L - 0.02, 0.003, 0.002), faceM((rx + 0.002) * s, 2.163, rtx * s, rty, 0, s, 0.005), BINMAT.groove);
     // dark gap between the wrapped door edge and the PSU channel (the two converging lines in y_47300)
     B.add(gBox(0.007, 0.002, L), M4.trs((CBIN_DOOR[0][0] + 0.003) * s, CBIN_Y - 0.0065, 0), BINMAT.lipGap);
   }
-  B.add(gBox(CBIN_BAND, 0.004, L), M4.trs(0, CBIN_Y - 0.0045, 0), BINMAT.bandC);
-  // channel filler-panel joints, irregular (b_sany_y22 shows unequal panels, not a slatted run [V look, A spacing])
-  for (const f of [-0.41, -0.16, 0.13, 0.37]) B.add(gBox(CBIN_BAND - 0.03, 0.002, 0.0015), M4.trs(0, CBIN_Y - 0.0075, f * L), BINMAT.joint);
+  // channel as stepped transverse panels, ~0.18 m (b_sany_y22: a run of shingled panels aft of the PSU housing [V look, A pitch])
+  shingles(B, CBIN_BAND, L, 6, 0.004, M4.trs(0, CBIN_Y - 0.0045, 0), BINMAT.bandC);
   return shadeUpper(B.build(), 0.84);   // deeper floor: the bulge keeps its form (w3b: flat 219 in the ACES shoulder)
 }
 // seams between neighbouring modules (instanced at the joints only, so no dark outline at the run ends)
@@ -277,21 +293,21 @@ function signWindow(B, x, z, w = 0.16, d = 0.048) {
 // on the channel [A]. pitch = fitting spacing.
 function psuModule(n, pitch = PSU_C_PITCH) {
   const B = new Builder();
-  const w = (n - 1) * pitch + 0.058;
-  stadiumWell(B, w, 0.05, 0, -0.10, BINMAT.wellC, BINMAT.wellRimC);
-  stadiumWell(B, w, 0.05, 0, -0.03, BINMAT.wellC, BINMAT.wellRimC);
-  for (let k = 0; k < n; k++) {
-    const x = (k - (n - 1) / 2) * pitch;
-    eyeball(B, x, -0.10, 0.02, BINMAT.socket);   // deep dark sockets, not white rings (b_sany_y22, w4a)
-    gasper(B, x, -0.03);
-  }
-  signWindow(B, 0, 0.065, Math.max(0.16, w * 0.75), 0.045);   // long smoked pill (b_sany_y22 [V]); no O2 plate or
+  // one raised dished housing with a single row of n dark sockets, the smoked sign pill on its own raised panel aft
+  // (b_sany_y22 [V]; w5a: two slim wells did not match)
+  const w = (n - 1) * pitch + 0.058, sw = Math.max(0.16, w * 0.75);
+  housing(B, w + 0.05, 0.11, 0.04, -0.06, BINMAT.housingC);
+  stadiumWell(B, w + 0.01, 0.065, 0, -0.06, BINMAT.wellC, BINMAT.wellRimC);
+  for (let k = 0; k < n; k++) eyeball(B, (k - (n - 1) / 2) * pitch, -0.06, 0.022, BINMAT.socket);   // deep dark sockets (w4a)
+  housing(B, sw + 0.03, 0.07, 0.03, 0.065, BINMAT.housingC);
+  signWindow(B, 0, 0.065, sw, 0.045);   // long smoked pill (b_sany_y22 [V]); no O2 plate or
   // call button drawn: neither reads in y_47300 / b_sany_y22 (w2a)
   return B.build();
 }
 // outboard sign pod: the same flush smoked window once per seat row on the band
 function signPodModule() {
   const B = new Builder();
+  housing(B, 0.20, 0.085, 0.03);
   signWindow(B, 0, 0);
   return B.build();
 }
@@ -300,6 +316,7 @@ function signPodModule() {
 // panels; b_lalf_c26: 2 eyeballs ~1/3 and 2/3 along the well [V]; sizes [A]). Symmetric in x, so no mirror needed.
 function psuBoxModule(air = false) {
   const B = new Builder();
+  housing(B, 0.32, 0.16, 0.035);   // the deeper light/gasper module of c26
   stadiumWell(B, 0.26, 0.10, 0, 0);
   for (const x of [-0.065, 0.065]) air ? gasper(B, x, 0, 0.026) : eyeball(B, x, 0, 0.03);
   return B.build();
@@ -311,13 +328,17 @@ function fitModules(z0, z1, nominal) {
   for (let k = 0; k < n; k++) out.push([z0 + L * (k + 0.5), L / nominal]);
   return out;
 }
-// (outboard origin 1.5 mm under the band so the filler-panel joint strips never poke through a well)
-const psuXF = (x, z) => Math.abs(x) < 1.1 ? M4.trs(x, CBIN_Y - 0.009, z) : M4.trs(x, binBottomY(x) - 0.0065, z, 0, 0, -TILT_O * Math.sign(x));
+// (origin under the lowest shingle edge; each module carries a raised housing that fills the gap up to the band)
+const PSU_DROP = 0.0125;
+const psuXF = (x, z) => Math.abs(x) < 1.1 ? M4.trs(x, CBIN_Y - 0.0045 - PSU_DROP, z) : M4.trs(x, binBottomY(x) - 0.003 - PSU_DROP, z, 0, 0, -TILT_O * Math.sign(x));
+// raised housing (w across, d along z) from the module origin up into the band (b_lalf_c26: the light module and
+// the sign panel stand proud of the stepped band [V]; rounded plan corners [A r])
+const housing = (B, w, d, r, z = 0, mat = BINMAT.band) => B.add(gPlate(w, d, r, PSU_DROP + 0.002), padM(0, (PSU_DROP + 0.002) / 2, z), mat);
 // row placard on the outboard door's top rail, above the latch (py_37302, c_th1, b_sany_y22 [V])
 function placardXF(group, z) {
   const out = [];
   if (group !== 1) { const s = group === 0 ? -1 : 1, [x, y, tx, ty] = faceAtY(OBIN_DOOR, 2.135); out.push(faceM(x * s, y, tx * s, ty, z, -s, 0.0105)); }
-  else { const [x, y, tx, ty] = faceAtY(CBIN_DOOR, 2.19); for (const s of [-1, 1]) out.push(faceM((x + 0.006) * s, y, tx * s, ty, z, s, 0.0015)); }
+  else { const [x, y, tx, ty] = faceAtY(CBIN_DOOR, 2.19); for (const s of [-1, 1]) out.push(faceM((x + 0.006) * s, y, tx * s, ty, z, s, 0.0095)); }   // on the crest rail (c120)
   return out;
 }
 

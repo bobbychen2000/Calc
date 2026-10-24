@@ -5,3 +5,8 @@
 3. **Door-area (cross-aisle) ceilings:** no photo of the new-config door-area ceilings was found. The model uses a raised dome with a flat centre panel and two fore-aft light strips (after up_F_Forward-Look). Do your photos show one?
 4. **Centre-bin width ratio:** channel/bin width reads about 0.27 in y_47300 and about 0.47 in b_sany_y22. The model uses 0.36 in plan. Is there a straight-up photo of a centre-bin underside?
 5. **THE Room centre gaspers:** b_frugal_c_vents shows gasper nozzles on THE Room seat shell, and thrifty_j_overhead-vent shows overhead gaspers on the J outboard band. The model keeps a light + gasper well per seat in the centre-bin channel over the D/G seats. Should the ceiling gaspers there go?
+
+## Wave 3 (w5)
+
+6. **Door-area ceilings.** The first real photos of a door-area ceiling (b_lalf_c133/c134, at the door-3 bar) show a dark bronze tray with round downlights, a louvred vent and a speaker. The model now uses that tray at door 3 only. Doors 1, 2, 4 and 5 keep the light dome. Is the dark tray used at every door cross aisle, or only at the bar?
+7. **Economy centre PSU** (replaces question 2). b_sany_y22 shows one raised dished housing with 4 dark sockets, then a smoked sign pill and stepped channel panels. The model now follows it. Does anyone have a photo showing a separate gasper row there?

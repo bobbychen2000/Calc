@@ -1,0 +1,122 @@
+{
+ "area": "ceiling",
+ "rater": "A",
+ "round": 5,
+ "score": 7.0,
+ "note": "Rated on the r5 (QA), r5v (close-up) and r5st (studio) renders. Crops and samples are in /tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/. The ref/web/ceiling folder had lost the SANspotter and Thrifty files, so I re-downloaded the SANspotter economy set (b_sany_y10..y52; source sanspotter.com/ana-777-300er-economy, 2023) and new liveandletsfly ANA 777-300ER THE Room shots (b_lalf_c3/4/5/6/11/12/13/20/27/120/124/133/134). Two new real photos change the picture. b_lalf_c120 is the clearest close-up so far of the J aisle vault: it shows raised panel ribs that curve aft into a fore-aft rib along the centre-bin crest, plus a rail with placards on the centre bin. b_lalf_c133/c134 are the first real photos of a door-area ceiling, the one over the self-service bar: a dark charcoal recessed tray with round downlights and a louvred vent. The QA views (q*) show almost no ceiling, so all tone checks use v1/v5/v6 against c119/c120/y22. Score is 7.0 against my 7.2 in w4. The overall look improved, but the newly verified door-area ceiling and the vault ribs are visibly wrong, and they now count with evidence.",
+ "previousStatus": {
+  "fixed": [
+   "Outboard PSU wells no longer read as grey stickers. The well floor renders 209 against a band of 210, with a soft light rim and dark-ringed eyeballs (raterA5/v4_psu.png). This matches the dished look in b_lalf_c27.",
+   "Light-blue hairline at the outboard band/sidewall joint is gone: 0 light-blue pixels in the upper half of every r5v view.",
+   "Centre-bin door now grades from 228 at the crest to 188 at the wrap (v5 col 600). The channel is 166, a ratio of 0.86 to the door, inside the 0.76-0.87 range of y_47300/y22. The rolled form reads.",
+   "No zone-end sky leaks in v3, v7, v8 or the studio views."
+  ],
+  "partlyFixed": [
+   "Centre PSU polarity: the reading-light row now has dark socket rings with cream lenses, and the gaspers are light grey (v5_psu). But it is still 2 slim wells, where y22 shows ONE raised dished housing with 4 deep dark sockets.",
+   "Sign icon quad: its ground is now (43,45,50) against the pill's (10,11,13), down from 70 in w4. It still shows as a grey rectangle inside the black pill (v4, rows 334-350).",
+   "Vault against band: the baked x0.84 falloff works at the crease. v6 row 60: 238 by the grille falling to 216 at the centre bin, against a band of 247, so 0.96 to 0.87. The real photos give 0.64-0.78: c120 row 200 is 162-200 against a 255 band, and c119 is 139-193 against 246. The inboard-of-grille strip is still almost as bright as the band."
+  ],
+  "notFixed": [
+   "Centre channel is still flat, with 4 hairline joints. b_sany_y22 (raterA5/y22_centre.png) shows 5-6 proud transverse stepped panels between the gasper housing and the sign.",
+   "Outboard PSU band is still one flat plate with hairline joints. b_lalf_c26/c27 show proud pillow-edged modules separated by shadowed steps.",
+   "Vault joints are still flat hairline arcs. The cosmetic B note is now verified by c120 and is raised to medium.",
+   "Door-area ceilings: still a white dome with a downlight (v3). c133/c134 now show the bar-door ceiling as a DARK recessed tray (see issues). The earlier 'black canopy is wrong' note to monuments is withdrawn: the real ceiling there IS dark."
+  ],
+  "regressed": [
+   "A near-black stripe (20,23,29), 8 px wide in v9, now runs along the whole outboard bin bottom between the door lip and the PSU band (v4, v9, v1, v10). It replaced the blue hairline and reads as an open slot. No photo shows a black slot there (c26/c27: a light step with a soft shadow)."
+  ],
+  "unverifiable": [
+   "Row placards: no r5v view frames the outboard top rail or a centre-bin placard (v9_placard shows the bin lip and band, not the rail), so the w4 plate-outline issue cannot be checked. Recommend re-aiming v9 to the rail at y 2.105."
+  ]
+ },
+ "details": [
+  {"detail": "Aisle vault panels and joints. The arc sweep and the speaker/emergency-light positions are right. Tone is still 0.87-0.96 of the band where the photos give 0.64-0.78. The joints are 8 mm flat hairlines. c120 shows raised, rounded ribs about 15-20 mm wide with a shadow lip. Each transverse rib curves aft (R about 0.4-0.5 m) into a continuous fore-aft rib along the centre-bin crest, so each vault panel is a tile with a rounded inboard-aft corner. This is the most distinctive feature of the photo ceiling and the model lacks it.", "score": 6.5, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5v/v6_yAisleUp.png", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c120_vault.jpg", "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c120.jpg", "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c119.jpg"]},
+  {"detail": "Cove light band. Continuous, 3-4x the grille width, saturated at 247. It reads as the light line, but only weakly, because the vault next to it is nearly as bright.", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5v/v6_yAisleUp.png", "/home/user/Calc/cabin777/ref/web/ceiling/b_sany_y22.jpg"]},
+  {"detail": "Slotted grille. The slot darkness (80-131) matches c120 (94-131). The bars are 212, against c120's lit white 254, so the grille reads as a grey ladder rather than a white lit louvre. c120 shows a transverse white bridge about every 0.25 m; the model has 2 segments per panel.", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c120_vault.jpg", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5v/v6_yAisleUp.png"]},
+  {"detail": "Vault fittings. Speaker and emergency light are at the right places and sizes. The speaker interior #d9d9d5 renders as a grey-filled plate (209 against a 229 vault). In c120 it is a vault-tone dished scoop with a shadow on one lip.", "score": 7, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c120_vault.jpg", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5v/v2_jAisleSteep.png"]},
+  {"detail": "Outboard bins. The modules, seams, latch and lip all match y22. Two defects: the new black slot along the bottom (regression), and the door seam drawn as a kinked polyline (v10 top right) where the photos show a smooth seam. Placards could not be checked in r5.", "score": 7, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/v10_tr.png", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5v/v9_placard.png", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/y22_left.png"]},
+  {"detail": "Centre bins. The tone gradient is now right (v5). The crest is wrong: c120 and c119 show a proud rail along the centre-bin top edge carrying row placards and seat icons, with a dark reveal to the vault. The model blends the bin into the vault with only a hairline (v1, v6).", "score": 7, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5v/v5_yCbin.png", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c120_vault.jpg"]},
+  {"detail": "Latches. Stadium ring, dark well and paddle, at the right size and placement.", "score": 8, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5st/g_latch.png"]},
+  {"detail": "Outboard PSU band. The wells are now the right tone and dished. The band is still one flat plate with hairline joints. c26/c27 show each module as a proud pillow-edged panel with a visible shadowed step to the next one.", "score": 7, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/v4_psu.png", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c26_27.jpg"]},
+  {"detail": "Centre PSU and channel. The channel tone is right. Two problems remain: 2 slim stadium wells where y22 shows one raised dished rounded-rect housing with 4 deep dark sockets, and no proud transverse steps along the channel.", "score": 6.5, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/v5_psu.png", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/y22_centre.png"]},
+  {"detail": "No-smoking and fasten-belt sign windows. Black pill with legible amber and red icons. The icon quad still shows as a grey rectangle: 43 against 10.", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/v4_psu.png"]},
+  {"detail": "Ceiling EXIT signs. Bilingual, light housing, double-faced (v3, v7). Matches the c133 '非常口 EXIT' header.", "score": 7.5, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/r5v/v3_door3Aft.png", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c133_top.jpg"]},
+  {"detail": "Door-area and monument ceilings. Now verified against real photos and wrong at the bar door. In c133/c134 the ceiling over the bar and door cross-aisle is a DARK charcoal-bronze recessed tray, sampled (87,76,74) to (97,83,76). It holds 4-6 round flush white downlights, a square 5-slat louvred vent and a small speaker slot, and is edged by a light ash soffit beam on the bar side. The model draws a white dome with one downlight (v3). The economy galley ceiling (b_sany_y45) is light grey with flat square light panels; this is monuments' area and is not modelled in any view.", "score": 4.5, "refs": ["/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c133_top.jpg", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c134_top.jpg", "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/door_cmp.jpg"]}
+ ],
+ "issues": [
+  {
+   "severity": "high",
+   "detail": "Bar-door (cross-aisle) ceiling is white; the real one is a dark recessed tray with downlights",
+   "problem": "v3_door3Aft shows a white flat dome with a single downlight. Real photos of the self-service bar door area show a charcoal-bronze tray set into a lighter frame, with 4-6 round downlights, a louvred square vent and a speaker slot.",
+   "evidence": "/home/user/Calc/cabin777/ref/web/ceiling/b_lalf_c133.jpg and b_lalf_c134.jpg (liveandletsfly ANA-777-300ER-The-Room-Business-Class-Review-133/134.jpeg). Tray sampled (87,76,74) to (97,83,76), against the light ash walls (170,146,136). The downlights are about 0.06 m round, spaced about 0.5 m. Model v3: (230+) white.",
+   "fix": "07b_ceiling.js buildCeilings, zone.type==='door' branch: when the zone is the bar door (the door-3 zone holding the BAR monument), add CEILMAT.barTray = { c: '#5c524d', r: 0.35, l: LAYER.plastic }. Build it as a gBox(1.9, 0.01, z1-z0-0.2) at y = 2.36, centred over the cross-aisle, with a 30 mm CEILMAT.flat frame (gRBox lip 0.03 high) around it. Add 2 rows of 3 gCyl(0.03, 0.03, 0.006) downlights { c:'#fffaf0', e:0.8 } at x = ±0.55 and z spaced 0.45 m. Add one louvred vent: a 0.12 x 0.10 gBox in '#d8d8d6' carrying 5 dark slats '#2a2a2a'. Drop the two lightStrips in that zone. Coordinate with monuments, whose bar-side soffit should be the light ash wood."
+  },
+  {
+   "severity": "medium",
+   "detail": "Vault still almost as bright as the cove band",
+   "problem": "v6 row 60: band 247, vault 238 by the grille falling to 216 at the crease (0.96 to 0.87). c120: band 255, vault 162-200 (0.64-0.78). c119: 139-193 against 246. The baked x0.84 crease falloff exists, but the strip just inboard of the grille still glows near band level.",
+   "evidence": "c120 row 200 sampled; v6 rows 60/150 sampled (raterA5).",
+   "fix": "07b_ceiling.js: CEILMAT.vault.c '#f3f2ee' -> '#dcdad5'. Change the baked falloff from lerp(1, 0.84, ...) to lerp(0.86, 0.70, ...), so the vault starts at 0.86 next to the grille. Keep CEILMAT.cove at e 0.30 with c '#ffffff'. Target in v6: about 200 by the grille and about 170 at the crease, with the band at 247."
+  },
+  {
+   "severity": "medium",
+   "detail": "Vault joints are flat hairlines and lack the signature aft-curving ribs and the fore-aft crest rib",
+   "problem": "In c120 each transverse joint is a raised rounded rib that curves aft with R about 0.45 m into a fore-aft rib along the centre-bin crest, giving tile-like panels. The model has straight 8 mm hairline arcs and no crest rib.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c120_vault.jpg; also visible in b_lalf_c119 (830-1000, 150-300) and b_sany_y22 (top right).",
+   "fix": "07b_ceiling.js profileRibbon: make the rib proud. Change the off argument at the call site (line ~170) from 0.0015 to 0.004, dz 0.008 -> 0.016, and CEILMAT.seam c '#d6d8da' -> '#eceae6' (lighter than the vault, so the shading gives the shadow lip). Over the inboard 40 % of VAULT, offset z by +0.45*(1-cos(pi/2*s)) with s = smoothstep(0.6, 1, k/(n-1)) so the rib turns aft. Add a continuous fore-aft rib: vaultStrip(0.97, side, z0+0.03, z1-0.03, 0.016, 0.004) with CEILMAT.seam, along the centre-bin edge."
+  },
+  {
+   "severity": "medium",
+   "detail": "Black slot along the outboard bin bottom (regression from the blue-hairline fix)",
+   "problem": "An 8 px (20,23,29) stripe between the door lip and the PSU band runs the length of every outboard bin and reads as an open gap. c26/c27 and y22 show a light step with a soft shadow.",
+   "evidence": "v9 col 400 rows 264-272 = (20,23,29); col 800 rows 224-232 the same; visible in v1, v4 and v10.",
+   "fix": "08_bins.js sideBinModule: BINMAT.lipGap c '#4a4f56' -> '#9ea2a7', and its gBox width 0.012 -> 0.004. If the stripe is the unlit underside of BINMAT.lip (gRBox 0.028 x 0.016 at y 1.804), also lower the lip 3 mm onto the band (y 1.801) so no cavity opens between them."
+  },
+  {
+   "severity": "medium",
+   "detail": "Centre channel is still flat (no stepped panels), with 2 slim wells instead of one gasper housing",
+   "problem": "y22 shows a raised rounded-rect housing, about 0.8 of the channel width and about 0.12 m deep, with 4 deep dark round sockets, followed by 5-6 proud transverse step panels, then the sign window. The model has two slim 0.05 m wells and 4 hairline joints.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/y22_centre.png against raterA5/v5_psu.png",
+   "fix": "08_bins.js psuModule (economy n=4): replace the two stadiumWell calls with one gRBox(w+0.04, 0.012, 0.12, 0.03) housing in BINMAT.bandC, proud 12 mm, at z -0.07. Inside it put 4 gCyl(0.022, 0.022, 0.01) sockets in '#3a3c40' with a gasper nozzle in one, or keep the eyeballs at 0.022. centerBinModule: replace the 4 joint hairlines with 5 proud steps, gBox(CBIN_BAND-0.03, 0.004, 0.06) at z f*L for f in [-0.38,-0.22,-0.06,0.10,0.26], each offset 4 mm below CBIN_Y, in BINMAT.bandC."
+  },
+  {
+   "severity": "low",
+   "detail": "Centre bin has no crest rail with placards",
+   "problem": "c120 and c119 show a proud rail along the centre-bin top edge carrying placards and seat icons, with a dark reveal to the vault. In the model the bin merges into the vault.",
+   "evidence": "c120_vault.jpg, bottom left (rail with placards at about 100,440 and 320,545 in the crop).",
+   "fix": "08_bins.js centerBinModule: replace the crease-filler gBox(0.05,0.01) at x 0.70 with a rail, gRBox(0.06, 0.018, L-0.014, 0.008, 1) in BINMAT.rail at (0.715*s, 2.258). Add a gBox(0.004, 0.003, L) reveal in '#8d9196' just inboard of the vault edge. Move the centre-bin placard onto the rail face (placardXF, centre group)."
+  },
+  {
+   "severity": "low",
+   "detail": "Outboard PSU band is still flat, with no proud pillowed modules",
+   "problem": "c26/c27 show each band module as a separate proud panel with a rounded front lip and a shadowed step to the next.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/c26_27.jpg",
+   "fix": "08_bins.js sideBinModule: replace the 4 joint hairlines with 4 gRBox(bw-0.02, 0.008, L/4-0.012, 0.006, 1) plates in BINMAT.band, 6 mm proud of the band, one per quarter module, leaving 12 mm shadow gaps."
+  },
+  {
+   "severity": "low",
+   "detail": "The grille reads as a grey ladder, not a lit white louvre",
+   "problem": "Model bars are 212 and c120's are 254. c120 has a white bridge about every 0.25 m.",
+   "evidence": "c120 row 200 cols 940-1010; v6 row 100 cols 330-400.",
+   "fix": "07b_ceiling.js: give CEILMAT.troughRim e 0.25 on layer 12 (cove circuit) so the bars glow, or lighten the atlas 'grille' bar colour to #ffffff with the slat material e 0.2. Set TROUGH.seg 2 -> 4."
+  },
+  {
+   "severity": "low",
+   "detail": "Sign icon quad still shows as a grey rectangle; the speaker reads as a grey plate",
+   "problem": "Icon ground (43,45,50) inside a (10,11,13) pill. Speaker interior 209 against a 229 vault.",
+   "evidence": "v4 rows 334-350; v6.",
+   "fix": "06_atlas psuSigns background -> #000 (or BINMAT.smoke at e 0 for the background via a texture alpha). 07b CEILMAT.bezelIn c '#d9d9d5' -> '#eae9e5'."
+  },
+  {
+   "severity": "low",
+   "detail": "Outboard door seam drawn as a kinked polyline",
+   "problem": "v10, top right: the seam between modules has a visible corner. Photo seams are smooth.",
+   "evidence": "/tmp/claude-0/-home-user-Calc/9fcf3772-7a4d-51e9-b6cf-492a40bafae8/scratchpad/raterA5/v10_tr.png",
+   "fix": "08_bins.js doorSeam / binSeams: build the seam from crResample(OBIN_DOOR) (as the centre door does) rather than from the raw OBIN_DOOR points."
+  }
+ ],
+ "questionsForUser": [
+  "b_lalf_c133/c134 show a dark charcoal ceiling tray with downlights over the self-service bar at the door. Is this the same on every new-config ship and at door 3 in the model? Do the plain door-1, door-2 and door-4 cross-aisles also have dark trays, or the white dome the model uses?",
+  "Can you confirm that the economy centre PSU is one raised housing with 4 sockets (b_sany_y22) and not two rows? The model still has two rows."
+ ]
+}
