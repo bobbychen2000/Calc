@@ -29,7 +29,7 @@ uniform vec3 u_sunDir; uniform vec3 u_sunCol;
 uniform mat4 u_shadowMat; uniform sampler2DShadow u_shadow; uniform vec2 u_shadowTexel;
 uniform vec3 u_hemiTop; uniform vec3 u_hemiBot; uniform vec3 u_wash; uniform vec3 u_led; uniform vec3 u_sideLed; uniform vec3 u_winGlow;
 uniform vec3 u_vault; uniform vec3 u_lowTint; uniform float u_bandCut; uniform float u_sideLow; uniform vec3 u_sideWall; uniform vec3 u_extBounce; uniform vec2 u_aoTune; uniform vec3 u_fZone;
-uniform float u_lowGain; uniform vec3 u_monFill; uniform float u_cove;
+uniform float u_lowGain; uniform vec3 u_monFill; uniform float u_cove; uniform float u_toe;
 uniform vec4 u_extPtP[2]; uniform vec3 u_extPtC[2];
 uniform vec4 u_spotP[8]; uniform vec4 u_spotT[8]; uniform vec3 u_spotCol;
 uniform vec4 u_stripP[8]; uniform vec4 u_stripA[8]; uniform vec3 u_stripCol;
@@ -247,11 +247,12 @@ void main(){
     // QA r2: (0.35 + 0.65 ao) / mix(0.55, 1, height) crushed vertical fabric in the dense Y seat block to navy-black
     // (#141c47 vs y_47300 seat backs #2c3a63) and THE Room ash to #7a766d (c_27312 ash #bdb6a3): AO weight halved and the
     // height falloff eased to 0.75 on faces that do not look down; undersides keep the r1 falloff [V: y_47300, c_27312]
-    // QA r1 (light): faces that do not look up (N.y < 0.3) take the bounce at AO weight 0.35 + 0.65 ao (up-facing fabric
-    // keeps the r2 lift), so the footwells / under-ottoman pockets go deep [V: c_27314 footwell #332e30 (L47) vs q09
-    // #494852 (L73); omaat_f11 under-ottoman / top 0.21 vs q03 0.46] (integration r1)
+    // QA r1 (light): low faces (below ~0.75 m) that do not look up (N.y < 0.3) take the bounce at AO weight 0.35 + 0.65
+    // ao, so the footwells / under-ottoman pockets go deep [V: c_27314 footwell #332e30 (L47) vs q09 #494852 (L73);
+    // omaat_f11 under-ottoman / top 0.21 vs q03 0.46] (integration r1). Up-facing fabric and everything above keep the
+    // r2 weight: applied to all heights it darkened the dense Y block (from_econ w10: q18 hood L166 -> 114)
     float noDown = 1.0 - down;
-    float aoW = mix(0.35 + 0.65*ao, 0.5 + 0.5*ao, smoothstep(0.2, 0.4, N.y));
+    float aoW = mix(0.35 + 0.65*ao, 0.5 + 0.5*ao, max(smoothstep(0.2, 0.4, N.y), smoothstep(0.35, 0.75, v_wpos.y)));
     vec3 bounce = mix(u_hemiBot, u_hemiTop, 0.62) * u_fill * aoW
                 * mix(0.45, 1.0, up) * mix(mix(0.55, 0.75, noDown), 1.0, smoothstep(0.0, 1.4, v_wpos.y));
     // reveal glow: faces within ~0.12 m of a pane pick up the window light (alpha of the window LUT = window span in z,
@@ -298,10 +299,14 @@ void main(){
     // night: the galley / lav / door zones (sz = 0) keep a dim neutral fill, the galley lights and lit bulkheads at the
     // end of the dark cabin [V: ucr_room-night-lighting far galley wall #645f57; sany_40 lit galley end] (lighting r1)
     amb += u_monFill * (1.0 - sz) * mix(0.45, 1.0, up) * (0.3 + 0.7*ao);
-    // QA r1 (light): crevice term, only for deeply occluded points (ao < 0.5): the tonal range lacked near-blacks in the
-    // footwells, console gaps and seat undersides [V: pixels < 30: c_27312 10.2 % vs q06 2.9 %, c_27314 3.6 % vs q09
-    // 0.5 %; c_27314 footwell L47 vs q09 L73] (integration r1)
-    amb *= mix(0.4, 1.0, smoothstep(0.06, 0.5, ao));
+    // QA r1 (light): crevice term for occluded low pockets: the tonal range lacked near-blacks in the footwells, console
+    // gaps, under the ottomans and seats [V: pixels < 30: c_27312 10.2 % vs q06 2.9 %, c_27314 3.6 % vs q09 0.5 %;
+    // c_27314 footwell L47 vs q09 L73; omaat_f11 under-ottoman / top 0.21 vs q03 0.46] (integration r1). Kept below
+    // ~0.75 m and off up-facing faces and the sidewall: the 8 cm volume reads 0.2-0.5 on open seat faces in the dense Y
+    // block and on the wall as well (probe), so an AO threshold alone would have darkened them too [D]
+    float crev = (1.0 - mix(0.4, 1.0, smoothstep(0.06, 0.5, ao))) * (1.0 - smoothstep(0.35, 0.75, v_wpos.y))
+               * (1.0 - smoothstep(0.2, 0.5, N.y)) * (1.0 - 0.6*wallProx*facingIn);
+    amb *= 1.0 - crev;
     // reading lights (night): warm cone from the lamp lens to the seat, 0.35 m pool [V: tlfl_IMG_9377 pools on the bed]
     for (int i = 0; i < 8; i++) {
       if (u_spotP[i].w < 0.5) continue;
@@ -330,10 +335,11 @@ void main(){
     float sh = u_exterior > 0.5 ? 1.0 : shadowF(v_wpos, N);
     vec3 tr = u_exterior > 0.5 ? vec3(1.0) : windowT(v_wpos);
     sun = u_sunCol * ndl * sh * tr;
-    // QA r1 (light): interior sun soft-clipped on high-albedo faces and capped at 3, so a white sheet tops out near L235
-    // and fabric keeps its weave inside a patch [V: omaat_f59 bed #d8bfa2 L194 vs q04 patch #f9f8f7 (clipped); q14 PY
-    // patch #e0e0e4 on #787f92 fabric] (lighting / integration r1, from_suite 2)
-    if (u_exterior < 0.5) sun = min(sun / (1.0 + 0.6*max(max(base.r, base.g), base.b)), vec3(3.0));
+    // QA r1 (light): interior sun soft-clipped on high-albedo faces (1 / (1 + max albedo); 0.6 left q04 at L246) and
+    // capped at 2.5, so pale fabric keeps its weave inside a patch (patch <= ~1.5x the fabric) and a white sheet keeps
+    // a visible edge under the ACES shoulder [V: omaat_f59 bed #d8bfa2 L194 vs q04 patch #f9f8f7 (clipped); q14 PY patch
+    // #e0e0e4 on #787f92 fabric] (lighting / integration r1, from_suite 2)
+    if (u_exterior < 0.5) sun = min(sun / (1.0 + max(max(base.r, base.g), base.b)), vec3(2.5));
   }
   vec3 F0 = mix(vec3(0.04), base, metal);
   vec3 diff = base * (1.0 - metal);
@@ -355,6 +361,10 @@ void main(){
   vec3 col = diff * (amb + sun) + specSun + specEnv + emissive;
   col += vec3(0.30, 0.62, 1.0) * hl * (0.35 + 0.9*pow(1.0 - NdV, 2.0));
   col = aces(col * u_exposure);
+  // QA r1 (light): toe after ACES in the white moods (u_toe 1): only near-blacks (luminance < ~0.03 linear, sRGB L48)
+  // go deeper, navy fabric / charcoal mid-darks stay put [V: p5 c_27312 15, y_47301 28 vs q06 40, q16 35]
+  // (integration r1; the suggested S-curve also took 12 % off the Y fabric, which already reads L56 vs 66)
+  col *= mix(1.0 - 0.45*u_toe, 1.0, smoothstep(0.002, 0.03, dot(col, vec3(0.2126, 0.7152, 0.0722))));
   o = vec4(toSRGB(col), 1.0);
 }`;
 
@@ -379,7 +389,7 @@ precision highp float;
 in vec2 v_ndc;
 uniform mat4 u_invViewProj; uniform vec3 u_camPos; uniform vec3 u_sunDir; uniform float u_time;
 uniform vec3 u_zenith; uniform vec3 u_horizon; uniform vec3 u_haze; uniform vec3 u_sunTint; uniform float u_night; uniform float u_skyK;
-uniform vec3 u_cloudLit; uniform vec3 u_cloudShade; uniform float u_exposure; uniform float u_sunVis;
+uniform vec3 u_cloudLit; uniform vec3 u_cloudShade; uniform float u_exposure; uniform float u_sunVis; uniform float u_toe;
 uniform sampler2D u_cloud;
 out vec4 o;
 vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0); }
@@ -420,6 +430,7 @@ void main(){
     col = mix(col, u_horizon, smoothstep(-0.05, -0.02, h));
   }
   col = aces(col * u_exposure);
+  col *= mix(1.0 - 0.45*u_toe, 1.0, smoothstep(0.002, 0.03, dot(col, vec3(0.2126, 0.7152, 0.0722))));   // the mainFS toe
   o = vec4(mix(col*12.92, 1.055*pow(col, vec3(1.0/2.4)) - 0.055, step(vec3(0.0031308), col)), 1.0);   // sRGB, as mainFS
 }`;
 
