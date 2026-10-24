@@ -27,3 +27,13 @@
    headrest). The model sits in between (~1.0 head-on).
 9. **Back cloth in py_37301 vs py_37302:** 37301 reads as a blocky brick mosaic, 37302's foreground seat as sparse cream
    flecks, with petals over the upper back. Is row 25 dressed differently? The model uses the 37301 / 37305 cloth everywhere.
+
+## Wave 3b (w11, not blocking)
+
+10. **Two seat trims (answers 4 and 9 by evidence).** ANA dresses PY in two trims: A has a dash-weave back and cushion
+    with petal ears, and B has a petal back and cushion with dash-weave ears. py_37302's foreground seat (a centre-block
+    aisle seat) is B, and so is SANspotter's 26G (san_12) next to a trim-A 26F. Both seats of the py_37301 window pair are A.
+    The model puts B on the centre block's aisle seats D / G and A everywhere else. If you know the real pattern (per row,
+    per seat letter or random), say so; it is one line in `pyUnit`.
+11. **Literature pocket.** It now follows san_26, an open tray in a dark recess with a smile-shaped grey rim and mesh
+    across the lower bulge. Is it the same on every row? Row 25 faces the bulkhead, so it has none.
